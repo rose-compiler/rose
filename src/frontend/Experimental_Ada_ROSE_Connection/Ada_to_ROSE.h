@@ -10,14 +10,17 @@
 #include <utility>
 #include <sstream>
 
-#include <Rose/Diagnostics.h>
+
+#include "Rose/Diagnostics.h"
+#include "cmdline.h"
 #include "sageGeneric.h"
 
 #include "a_nodes.h"
 
+#define ADA_ASSERT(COND)      (sg::report_error_if(!(COND), "assertion failed: ", __FILE__, __LINE__))
+
 namespace Ada_ROSE_Translation
 {
-static constexpr bool FAIL_ON_ERROR = false;
 
 //
 // logging
@@ -33,7 +36,8 @@ extern Sawyer::Message::Facility mlog;
 /// \param file        the ROSE root for the translation unit
 void convertAsisToROSE(Nodes_Struct& head_nodes, SgSourceFile* file);
 
-
+/// initialize translation settins
+void initialize(const Rose::Cmdline::Ada::CmdlineSettings& settings);
 
 //
 // node mapping accessors, storage, and retrieval
@@ -198,8 +202,12 @@ struct AstContext
     LabelAndLoopManager* all_labels_loops;
     const std::string*   unit_file_name;
     Element_Struct*      elem;
-
 };
+
+/// returns true if an assertion failure should be triggered,
+///   or if some fallback processing should continue
+bool FAIL_ON_ERROR(AstContext ctx);
+
 
 
 /// functor to create elements that are added to the current scope
@@ -367,7 +375,7 @@ namespace
   void
   recordNode(map_t<KeyT, DclT*>& m, KeyT key, ValT& val, bool replace = false)
   {
-    //~ ROSE_ASSERT(replace || m.find(key) == m.end());
+    //~ ADA_ASSERT(replace || m.find(key) == m.end());
     if (!(replace || m.find(key) == m.end()))
     {
       logError() << "replace node " << typeid(*m[key]).name()
@@ -404,7 +412,7 @@ namespace
   {
     typename map_t<KeyT, DclT*>::const_iterator pos = m.find(key);
 
-    ROSE_ASSERT(pos != m.end());
+    ADA_ASSERT(pos != m.end());
     return *(pos->second);
   }
 
