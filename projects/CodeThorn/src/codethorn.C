@@ -4,8 +4,6 @@
 
 #include "rose.h"
 
-//#include "rose_config.h"
-
 #include "codethorn.h"
 #include "SgNodeHelper.h"
 #include "Labeler.h"
