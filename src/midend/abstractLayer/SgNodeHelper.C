@@ -153,18 +153,18 @@ SgVarRefExp* SgNodeHelper::Pattern::matchSingleVarScanf(SgNode* node) {
       if(actualParams.size()==2) {
         SgAddressOfOp* addressOp=isSgAddressOfOp(actualParams[1]);
         if(!addressOp) {
-	  // check argument #2. Required form: scanf(\"%d\",&v).");
-	  return 0;
+          // check argument #2. Required form: scanf(\"%d\",&v).");
+          return 0;
         }
         SgVarRefExp* varRefExp=isSgVarRefExp(SgNodeHelper::getFirstChild(addressOp));
         if(!varRefExp) {
-	  // check scanf argument #2. Required form: scanf(\"%d\",&v).");
+          // check scanf argument #2. Required form: scanf(\"%d\",&v).");
           return 0;
         }
         // matched: SgAddressOfOp(SgVarRefExp())
         return varRefExp;
       } else {
-	return 0;
+        return 0;
       }
     }
   }
