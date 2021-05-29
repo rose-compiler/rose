@@ -17,18 +17,18 @@ COLORED_PASS=${grn}PASS${end}
 
 TESTDIR=$1
 echo "------------------------------------------------"
-echo "running DOMAIN TESTS"
+echo "running IOC TESTS"
 echo "------------------------------------------------"
 
 BENCH_PASS=0
 BENCH_FAIL=0
 
-function DomainTests {
+function IOCTests {
     testNumbers=`echo {001..002}`
     echo "Scheduled tests: $testNumbers"
     for testNumber in $testNumbers; do
-        benchmarkprefix=$TESTDIR/IO${testNumber};
-        for benchmark in ${benchmarkprefix}*.[Cc]; do
+        benchmarkprefix=$TESTDIR/IOC${testNumber};
+        for benchmark in ${benchmarkprefix}*.[c]; do
             benchmarkname=$(basename $benchmark)
             printf "Testing %-35s: " $benchmarkname
 #            CT_OUTPUT_FILE=$benchmarkname.imout
@@ -38,11 +38,11 @@ function DomainTests {
 	        echo $COLORED_FAIL
                 exit 1
             else
-                echo -n "$COLORED_PASS "
+                echo "$COLORED_PASS"
             fi
         done
     done
 }
 
-IOTests
-
+IOCTests
+echo

@@ -748,7 +748,7 @@ check-matcher-demo:
 check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
-CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization unit-test check-omp-cfg
+CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-io unit-test check-omp-cfg check-vis
 
 CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 
@@ -787,6 +787,11 @@ check-codethorn-internal:
 
 check-domain:
 	$(srcdir)/scripts/runDomainTests $(srcdir)/tests
+
+check-io: check-ioc
+
+check-ioc:
+	$(srcdir)/scripts/runIOCTests $(srcdir)/tests
 
 unit-test:
 	$(srcdir)/scripts/runUnitTests $(srcdir)/tests
@@ -936,7 +941,7 @@ docs:
 	cd "$(srcdir)" && doxygen
 
 clean-local:
-	rm -f *.dot
+	rm -f *.dot *.dat
 	rm -f *.ps
 	rm -f *.jpg
 	rm -f vis/*

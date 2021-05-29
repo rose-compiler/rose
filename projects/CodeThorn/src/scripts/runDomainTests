@@ -58,13 +58,11 @@ function DomainTests {
                 else
                     echo $COLORED_PASS
                 fi
+		rm -f $GCC_OUTPUT_FILE
+		rm -f $EXEFILE
             fi
         done
     done
 }
 
 DomainTests
-
-rm -f rose_normalization*.C
-rm -f a.out
-
