@@ -132,7 +132,7 @@ Visualizer::Visualizer(CTAnalysis* analyzer):
 }
 
   //! For providing specific information. For some visualizations not all information is required. The respective set-function can be used as well to set specific program information (this allows to also visualize computed subsets of information (such as post-processed transition graphs etc.).
-Visualizer::Visualizer(IOLabeler* l, VariableIdMapping* vim, Flow* f, PStateSet* ss, EStateSet* ess, TransitionGraph* tg):
+Visualizer::Visualizer(Labeler* l, VariableIdMapping* vim, Flow* f, PStateSet* ss, EStateSet* ess, TransitionGraph* tg):
   labeler(l),
   variableIdMapping(vim),
   flow(f),
@@ -145,7 +145,7 @@ Visualizer::Visualizer(IOLabeler* l, VariableIdMapping* vim, Flow* f, PStateSet*
 {}
 
 void Visualizer::setOptionTransitionGraphDotHtmlNode(bool x) {optionTransitionGraphDotHtmlNode=x;}
-void Visualizer::setLabeler(IOLabeler* x) { labeler=x; }
+void Visualizer::setLabeler(Labeler* x) { labeler=x; }
 void Visualizer::setVariableIdMapping(VariableIdMapping* x) { variableIdMapping=x; }
 void Visualizer::setFlow(Flow* x) { flow=x; }
 void Visualizer::setPStateSet(PStateSet* x) { pstateSet=x; }
@@ -272,16 +272,17 @@ string Visualizer::transitionGraphDotHtmlNode(Label lab) {
     string bgcolor="lightgrey";
 
     if((*j)->isConst(variableIdMapping)) bgcolor="mediumpurple2";
-    if(labeler->isStdInLabel((*j)->label())) bgcolor="dodgerblue";
-    if(labeler->isStdOutLabel((*j)->label())) bgcolor="orange";
-    if(labeler->isStdErrLabel((*j)->label())) bgcolor="orangered";
-
-    if(SgNodeHelper::Pattern::matchAssertExpr(labeler->getNode((*j)->label()))) {bgcolor="black";textcolor="white";}
-    if((*j)->io.isFailedAssertIO()) {
-      bgcolor="black";textcolor="red";
-      // FAILEDASSERTVIS
-      continue;
+    if(IOLabeler* iolabeler=dynamic_cast<IOLabeler*>(labeler)) {
+      if(iolabeler->isStdInLabel((*j)->label())) bgcolor="dodgerblue";
+      if(iolabeler->isStdOutLabel((*j)->label())) bgcolor="orange";
+      if(iolabeler->isStdErrLabel((*j)->label())) bgcolor="orangered";
+      if((*j)->io.isFailedAssertIO()) {
+	bgcolor="black";textcolor="red";
+	// FAILEDASSERTVIS
+	continue;
+      }
     }
+    if(SgNodeHelper::Pattern::matchAssertExpr(labeler->getNode((*j)->label()))) {bgcolor="black";textcolor="white";}
 
     // check for start state
     if(transitionGraph->getStartLabel()==(*j)->label()) {bgcolor="white";} 
@@ -464,17 +465,20 @@ string Visualizer::transitionGraphWithIOToDot(EStatePtrSet displayedEStates,
       // determine color based on IO type
       Label lab=(*i)->label();
       string color="grey";
-      if(labeler->isStdInLabel(lab))
-        color="dodgerblue";
-      if(labeler->isStdOutLabel(lab))
-        color="orange";
-      if(labeler->isStdErrLabel(lab))
-        color="orangered";
-      if((*i)->io.op==InputOutput::FAILED_ASSERT||SgNodeHelper::Pattern::matchAssertExpr(labeler->getNode(lab)))
-         color="black";
+
+      if(IOLabeler* iolabeler=dynamic_cast<IOLabeler*>(labeler)) {
+	if(iolabeler->isStdInLabel(lab))
+	  color="dodgerblue";
+	if(iolabeler->isStdOutLabel(lab))
+	  color="orange";
+	if(iolabeler->isStdErrLabel(lab))
+	  color="orangered";
+	if((*i)->io.op==InputOutput::FAILED_ASSERT||SgNodeHelper::Pattern::matchAssertExpr(iolabeler->getNode(lab)))
+	  color="black";
+	if((*i)->io.isStdErrIO())
+	  ss <<" fontcolor=orangered "; // do not show input value in stdErr states
+      }
       ss<<" color="<<color<<" style=\"filled\" fontsize=24 ";
-      if((*i)->io.isStdErrIO())
-        ss <<" fontcolor=orangered "; // do not show input value in stdErr states
       ss<<"];";
       ss<<endl;
     }
@@ -599,16 +603,16 @@ string Visualizer::transitionGraphWithIOToDot() {
     
     // determine color based on IO type
     string color="grey";
-    if(labeler->isStdInLabel(lab))
-      color="dodgerblue";
-    if(labeler->isStdOutLabel(lab))
-      color="orange";
-    if(labeler->isStdErrLabel(lab))
-      color="orangered";
-
-
+    if(IOLabeler* iolabeler=dynamic_cast<IOLabeler*>(labeler)) {
+      if(iolabeler->isStdInLabel(lab))
+	color="dodgerblue";
+      if(iolabeler->isStdOutLabel(lab))
+	color="orange";
+      if(iolabeler->isStdErrLabel(lab))
+	color="orangered";
+    }
     if((*i)->io.op==InputOutput::FAILED_ASSERT||SgNodeHelper::Pattern::matchAssertExpr(labeler->getNode(lab)))
-       color="black";
+      color="black";
     ss<<" color="<<color<<" style=\"filled\"";
     ss<<"];";
     ss<<endl;

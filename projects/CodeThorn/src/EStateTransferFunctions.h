@@ -463,7 +463,7 @@ namespace CodeThorn {
     std::list<SingleEvalResultConstInt> evalLValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
     std::list<SingleEvalResultConstInt> evalLValuePointerDerefExp(SgPointerDerefExp* node, EState estate);
     // handles DotExp and ArrowExp
-    std::list<SingleEvalResultConstInt> evalLValueExp(SgNode* node, EState estate, EvalMode mode=MODE_VALUE);
+    std::list<SingleEvalResultConstInt> evalLValueDotOrArrowExp(SgNode* node, EState estate, EvalMode mode=MODE_VALUE);
 
     std::list<SingleEvalResultConstInt> evalRValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
     std::list<SingleEvalResultConstInt> evalValueExp(SgValueExp* node, EState estate, EvalMode mode);

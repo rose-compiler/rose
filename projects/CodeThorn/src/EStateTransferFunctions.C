@@ -1301,7 +1301,7 @@ namespace CodeThorn {
 	  } else if(SgAssignInitializer* assignInitializer=isSgAssignInitializer(initializer)) {
 	    SgExpression* rhs=assignInitializer->get_operand_i();
 	    ROSE_ASSERT(rhs);
-	    SAWYER_MESG(logger[TRACE])<<"declaration with assign initializer:"<<" lhs:"<<initDeclVarId.toString(getVariableIdMapping())<<" rhs:"<<assignInitializer->unparseToString()<<" decl-term:"<<AstTerm::astTermWithNullValuesToString(initName)<<endl;
+	    SAWYER_MESG(logger[DEBUG])<<"declaration with assign initializer:"<<" lhs:"<<initDeclVarId.toString(getVariableIdMapping())<<" rhs:"<<assignInitializer->unparseToString()<<" decl-term:"<<AstTerm::astTermWithNullValuesToString(initName)<<endl;
 
 	    // only create string in state with variable as pointer-address if it is an array (not for the case it is a char* pointer)
 	    // in the case of char* it is handled as a pointer initializer (and the string-pointer is already available in state)
@@ -1893,7 +1893,7 @@ namespace CodeThorn {
   }
 
   void EStateTransferFunctions::printTransferFunctionInfo(TransferFunctionCode tfCode, SgNode* node, Edge edge, const EState* estate) {
-    cout<<"transfer: L"<<estate->label().toString()<<": "<<std::setw(22)<<std::left<<transerFunctionCodeToString(tfCode)<<": ";
+    cout<<"transfer: "<<std::setw(6)<<"L"+estate->label().toString()<<": "<<std::setw(22)<<std::left<<transerFunctionCodeToString(tfCode)<<": ";
     if(getLabeler()->isFunctionEntryLabel(edge.source())||getLabeler()->isFunctionExitLabel(edge.source())) {
       cout<<SgNodeHelper::getFunctionName(node);
     } else {
@@ -1903,7 +1903,7 @@ namespace CodeThorn {
   }
 
   void EStateTransferFunctions::printEvaluateExpressionInfo(SgNode* node,EState& estate, EvalMode mode) {
-    cout<<"          "<<"      evaluateExpression    : "<<node->unparseToString()<<" [evalmode"<<mode<<": "<<AstTerm::astTermWithNullValuesToString(node)<<"]"<<endl;
+    cout<<"          "<<std::setw(6+2)<<" "<<"evaluateExpression    : "<<node->unparseToString()<<" [evalmode"<<mode<<": "<<AstTerm::astTermWithNullValuesToString(node)<<"]"<<endl;
   }
 
   list<EState> EStateTransferFunctions::transferEdgeEStateDispatch(TransferFunctionCode tfCode, SgNode* node, Edge edge, const EState* estate) {
@@ -2187,9 +2187,9 @@ namespace CodeThorn {
     } else if(SgPntrArrRefExp* arrRef=isSgPntrArrRefExp(node)) {
       return evalLValuePntrArrRefExp(arrRef,estate);
     } else if(SgDotExp* dotExp=isSgDotExp(node)) {
-      return evalLValueExp(dotExp,estate);
+      return evalLValueDotOrArrowExp(dotExp,estate);
     } else if(SgArrowExp* arrowExp=isSgArrowExp(node)) {
-      return evalLValueExp(arrowExp,estate);
+      return evalLValueDotOrArrowExp(arrowExp,estate);
     } else if(SgPointerDerefExp* ptrDerefExp=isSgPointerDerefExp(node)) {
       return evalLValuePointerDerefExp(ptrDerefExp,estate);
     } else {
@@ -3395,9 +3395,7 @@ namespace CodeThorn {
     throw CodeThorn::Exception("Internal error: EStateTransferFunctions::evalMinusMinusOp: "+node->unparseToString());
   }
 
-
-  // for evaluating LValue Arrow, Dot,
-  list<SingleEvalResultConstInt> EStateTransferFunctions::evalLValueExp(SgNode* node, EState estate, EvalMode mode) {
+  list<SingleEvalResultConstInt> EStateTransferFunctions::evalLValueDotOrArrowExp(SgNode* node, EState estate, EvalMode mode) {
     ROSE_ASSERT(isSgDotExp(node)||isSgArrowExp(node));
     PState oldPState=*estate.pstate();
     SingleEvalResultConstInt res;
@@ -4181,11 +4179,9 @@ namespace CodeThorn {
   }
 
   void EStateTransferFunctions::initializeMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue) {
-    SAWYER_MESG(logger[TRACE])<<"DEBUG: init memory location:start"<<endl;
+    SAWYER_MESG(logger[TRACE])<<"initializeMemoryLocation: "<<memLoc.toString()<<" := "<<newValue.toString()<<endl;
     reserveMemoryLocation(lab,pstate,memLoc);
-    SAWYER_MESG(logger[TRACE])<<"DEBUG: init memory location:p0"<<endl;
     writeToMemoryLocation(lab,pstate,memLoc,newValue);
-    SAWYER_MESG(logger[TRACE])<<"DEBUG: init memory location:end"<<endl;
   }
 
   void EStateTransferFunctions::reserveMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc) {
