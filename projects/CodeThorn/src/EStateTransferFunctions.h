@@ -206,6 +206,7 @@ namespace CodeThorn {
     std::list<SingleEvalResultConstInt> evaluateExpression(SgNode* node,EState estate, EvalMode mode=MODE_VALUE);
     //! uses AbstractValue::getVariableIdMapping()
     AbstractValue evaluateExpressionWithEmptyState(SgExpression* expr);
+
     void setVariableIdMapping(VariableIdMappingExtended* variableIdMapping);
 
     void setSkipUnknownFunctionCalls(bool skip);
@@ -227,27 +228,17 @@ namespace CodeThorn {
     bool getPrintDetectedViolations();
     void setPrintDetectedViolations(bool flag);
 
-    // deprecated (superseded by checkMemoryAccessBounds
-    bool accessIsWithinArrayBounds(VariableId arrayVarId,int accessIndex);
-    // supersedes accessIsWithinArrayBounds
     enum MemoryAccessBounds checkMemoryAccessBounds(AbstractValue address);
-
-    // deprecated
-    //VariableId resolveToAbsoluteVariableId(AbstractValue abstrValue) const;
-    AbstractValue computeAbstractAddress(SgVarRefExp* varRefExp);
 
     // record detected errors in programs
     ProgramLocationsReport getProgramLocationsReport(enum AnalysisSelector analysisSelector);
-
-    // deprecated (use getProgramLocationsReport instead)
-    ProgramLocationsReport getViolatingLocations(enum AnalysisSelector analysisSelector);
 
     // record detected errors in programs
     void recordDefinitiveViolatingLocation(enum AnalysisSelector analysisSelector, Label lab);
     void recordPotentialViolatingLocation(enum AnalysisSelector analysisSelector, Label lab);
     std::string analysisSelectorToString(AnalysisSelector sel);
 
-    // deprecated
+    // deprecated (still being used here)
     void recordDefinitiveNullPointerDereferenceLocation(Label lab);
     void recordPotentialNullPointerDereferenceLocation(Label lab);
     void recordDefinitiveOutOfBoundsAccessLocation(Label lab);

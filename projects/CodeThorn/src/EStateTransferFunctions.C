@@ -3129,11 +3129,6 @@ namespace CodeThorn {
     return listify(res);
   }
 
-  AbstractValue EStateTransferFunctions::computeAbstractAddress(SgVarRefExp* varRefExp) {
-    VariableId varId=_variableIdMapping->variableId(varRefExp);
-    return AbstractValue::createAddressOfVariable(varId);
-  }
-
   list<SingleEvalResultConstInt> EStateTransferFunctions::evalArrowOp(SgArrowExp* node,
 								      SingleEvalResultConstInt lhsResult,
 								      SingleEvalResultConstInt rhsResult,
@@ -3960,14 +3955,6 @@ namespace CodeThorn {
   }
 
 
-  // true if access is correct. false if out-of-bounds access.
-  // TODO: rewrite using new abstract values with array address references
-  bool EStateTransferFunctions::accessIsWithinArrayBounds(VariableId arrayVarId,int accessIndex) {
-    // check array bounds
-    int arraySize=_variableIdMapping->getNumberOfElements(arrayVarId);
-    return !(accessIndex<0||accessIndex>=arraySize);
-  }
-
   enum MemoryAccessBounds EStateTransferFunctions::checkMemoryAccessBounds(AbstractValue address) {
     if(address.isTop()) {
       return ACCESS_POTENTIALLY_OUTSIDE_BOUNDS;
@@ -4007,11 +3994,6 @@ namespace CodeThorn {
 #pragma omp critical(VIOLATIONRECORDING)
     report=_violatingLocations.at(analysisSelector);
     return report;
-  }
-
-  // deprecated
-  ProgramLocationsReport EStateTransferFunctions::getViolatingLocations(enum AnalysisSelector analysisSelector) {
-    return getProgramLocationsReport(analysisSelector);
   }
 
   void EStateTransferFunctions::initViolatingLocations() {
