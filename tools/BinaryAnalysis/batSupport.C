@@ -1,7 +1,7 @@
 // Library for all bat toolstState
 
 #include <rose.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsState.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/State.h>
 #include <Rose/BinaryAnalysis/Unparser/Base.h>
 #include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>

@@ -3,15 +3,18 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsTypes.h>
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/split_member.hpp>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellState.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Types.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/MemoryCellState.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
+#include <Rose/BinaryAnalysis/SymbolicExpr.h>
+
 #include <Sawyer/IntervalMap.h>
 #include <Sawyer/Message.h>
 #include <Sawyer/Optional.h>
 #include <Sawyer/Set.h>
+
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/split_member.hpp>
 
 namespace Rose {
 namespace BinaryAnalysis {

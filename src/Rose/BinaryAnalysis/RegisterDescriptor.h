@@ -77,7 +77,14 @@ public:
         minorNumber(minr);
         setOffsetWidth(offset, width);
     }
-    
+
+    /** Construct a descriptor from a raw value. */
+    static RegisterDescriptor fromRaw(uint32_t raw) {
+        RegisterDescriptor retval;
+        retval.data_ = raw;
+        return retval;
+    }
+
     /** Property: Major number.
      *
      *  Each family of registers is identified by a major number. Major numbers are in the range 0 through 15, inclusive.

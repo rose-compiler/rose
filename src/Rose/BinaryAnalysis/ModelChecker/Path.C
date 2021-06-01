@@ -5,7 +5,7 @@
 
 #include <Rose/BinaryAnalysis/ModelChecker/PathNode.h>
 #include <Rose/BinaryAnalysis/ModelChecker/ExecutionUnit.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsState.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/State.h>
 #include <rose_isnan.h>
 
 namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;

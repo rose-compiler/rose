@@ -36,7 +36,7 @@ Settings::commandLineSwitches() {
                                            "units that have more than one step.");
 
     Rose::CommandLine::insertBooleanSwitch(sg, "ignore-semantic-failures", ignoreSemanticFailures,
-                                           "Ignore all semantic failures when executing an instruction, and use the whatever "
+                                           "Ignore all semantic failures when executing an instruction, and use whatever "
                                            "machine state resulted from the part of the execution that worked (if any). Normally, "
                                            "a semantic failure would cause the affected execution path to not be extended any "
                                            "farther.");
