@@ -1,6 +1,12 @@
 #include <stdio.h>
 #include <assert.h>
-#include <ROSE_ABORT.h>
+#include <stdlib.h>
+//#include <ROSE_ABORT.h> 
+// This is a supportive libary , please don't add ROSE stuff in this lib. Liao, May 25, 2021
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 void __ci_writeResultsToFile (char* input_file_name, char* output_file_name, int* loop_iter_counters, int loop_count)
 {
@@ -8,7 +14,7 @@ void __ci_writeResultsToFile (char* input_file_name, char* output_file_name, int
   if (input_file == NULL)
   {
     printf ("Error: cannot open input program information file!");
-    ROSE_ABORT ();
+    abort();
   }
 
   // This happens only once for the main() of an instrumented application.
@@ -18,7 +24,7 @@ void __ci_writeResultsToFile (char* input_file_name, char* output_file_name, int
   if (output_file == NULL)
   {
     printf ("Error: cannot open input program information file!");
-    ROSE_ABORT ();
+    abort();
   }
 
   int __lc_init_i; 
@@ -37,3 +43,6 @@ void __ci_writeResultsToFile (char* input_file_name, char* output_file_name, int
   fclose(output_file);
 } 
 
+#ifdef __cplusplus
+} 
+#endif 
