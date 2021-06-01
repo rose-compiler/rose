@@ -1,8 +1,9 @@
 #include "sage3basic.h"
 
 #include <type_traits>
+#include <algorithm>
 
-#include <Rose/Diagnostics.h>
+#include "Rose/Diagnostics.h"
 #include "rose_config.h"
 #include "sageGeneric.h"
 #include "sageBuilder.h"
@@ -30,6 +31,8 @@ namespace Ada_ROSE_Translation
 // logger
 
 extern Sawyer::Message::Facility mlog;
+
+static bool fail_on_error = false;
 
 
 //
@@ -103,7 +106,7 @@ void LabelAndLoopManager::label(Element_ID id, SgLabelStatement& lblstmt)
 {
   SgLabelStatement*& mapped = labels[id];
 
-  ROSE_ASSERT(mapped == nullptr);
+  ADA_ASSERT(mapped == nullptr);
   mapped = &lblstmt;
 }
 
@@ -122,7 +125,7 @@ AstContext AstContext::scope_npc(SgScopeStatement& s) const
 
 AstContext AstContext::scope(SgScopeStatement& s) const
 {
-  ROSE_ASSERT(s.get_parent());
+  ADA_ASSERT(s.get_parent());
 
   return scope_npc(s);
 }
@@ -145,7 +148,7 @@ AstContext AstContext::sourceFileName(std::string& file) const
 
 void updFileInfo(Sg_File_Info* n, const Sg_File_Info* orig)
 {
-  ROSE_ASSERT(n && orig);
+  ADA_ASSERT(n && orig);
 
   n->unsetCompilerGenerated();
   n->unsetTransformation();
@@ -314,7 +317,7 @@ namespace
       case An_Association:            // Asis.Expressions
       default:
         logWarn() << "Unhandled element " << elem.Element_Kind << std::endl;
-        ROSE_ASSERT(!FAIL_ON_ERROR);
+        ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
   }
 
@@ -547,7 +550,7 @@ namespace
 
       default:
         logWarn() << "unit kind unhandled: " << adaUnit.Unit_Kind << std::endl;
-        ROSE_ASSERT(!FAIL_ON_ERROR);
+        ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
   }
 
@@ -611,7 +614,7 @@ namespace
 
     void operator()(Element_Struct& elem)
     {
-      ROSE_ASSERT(elem.Element_Kind == A_Clause);
+      ADA_ASSERT(elem.Element_Kind == A_Clause);
 
       Clause_Struct& clause = elem.The_Union.Clause;
 
@@ -624,7 +627,7 @@ namespace
       traverseIDs( idRange(clause.Clause_Names), elemMap(),
                    [&res, &ctx](Element_Struct& el) -> void
                    {
-                     ROSE_ASSERT (el.Element_Kind == An_Expression);
+                     ADA_ASSERT (el.Element_Kind == An_Expression);
                      NameData imported = getName(el, ctx);
 
                      res.push_back(imported.fullName);
@@ -682,25 +685,25 @@ namespace
     // build maps for all units
     for (Unit_Struct_List_Struct* unit = adaUnit; unit != nullptr; unit = unit->Next)
     {
-      ROSE_ASSERT(unit);
+      ADA_ASSERT(unit);
 
       UniqueUnitId uniqueId = uniqueUnitName(unit->Unit);
 
       auto depres = deps.emplace( uniqueId,
                                   UnitEntry{&(unit->Unit), std::vector<AdaIdentifier>{}, false}
                                 );
-      ROSE_ASSERT(depres.second);
+      ADA_ASSERT(depres.second);
 
       // map specifications to their name
       auto idmres = idmap.emplace(unit->Unit.ID, depres.first);
-      ROSE_ASSERT(idmres.second);
+      ADA_ASSERT(idmres.second);
     }
 
     // link the units
     for (Unit_Struct_List_Struct* unit = adaUnit; unit != nullptr; unit = unit->Next)
     {
       IdEntryMap::iterator    uit = idmap.find(unit->Unit.ID);
-      ROSE_ASSERT(uit != idmap.end());
+      ADA_ASSERT(uit != idmap.end());
 
       DependencyMap::iterator pos = uit->second;
       const size_t            parentID = unit->Unit.Corresponding_Parent_Declaration;
@@ -763,13 +766,13 @@ namespace
       if (n == nullptr || !n->isTransformation()) return;
 
       SgLocatedNode* parentNode = isSgLocatedNode(n->get_parent());
-      ROSE_ASSERT(parentNode && !parentNode->isTransformation());
+      ADA_ASSERT(parentNode && !parentNode->isTransformation());
 
       updFileInfo(n->get_file_info(),        parentNode->get_file_info());
       updFileInfo(n->get_startOfConstruct(), parentNode->get_startOfConstruct());
       updFileInfo(n->get_endOfConstruct(),   parentNode->get_endOfConstruct());
 
-      ROSE_ASSERT(!n->isTransformation());
+      ADA_ASSERT(!n->isTransformation());
     }
   };
 
@@ -854,7 +857,7 @@ void ElemCreator::operator()(Element_Struct& elem)
 
 void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
 {
-  ROSE_ASSERT(file);
+  ADA_ASSERT(file);
 
   logInfo() << "Building ROSE AST .." << std::endl;
 
@@ -881,6 +884,25 @@ void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
   logInfo() << "Building ROSE AST done" << std::endl;
 }
 
+bool FAIL_ON_ERROR(AstContext ctx)
+{
+  static const char* failSuffix = ".adb";
+
+  if (!fail_on_error)
+    return fail_on_error;
+
+  const std::string& filename = ctx.sourceFileName();
+
+  return (  filename.size() > 3
+         && std::equal(filename.end()-4, filename.end(), failSuffix)
+         );
+}
+
+/// initialize translation settins
+void initialize(const Rose::Cmdline::Ada::CmdlineSettings& settings)
+{
+  if (settings.failhardAdb) fail_on_error = true;
+}
 
 
 }

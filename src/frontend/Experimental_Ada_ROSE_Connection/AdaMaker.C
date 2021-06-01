@@ -52,7 +52,7 @@ namespace
     SgFunctionDeclaration& sdcl = SG_DEREF(funcsy.get_declaration());
 
     // defining and first non-defining must differ
-    ROSE_ASSERT(&sdcl != &func);
+    ADA_ASSERT(&sdcl != &func);
 
     sdcl.set_definingDeclaration(&func);
     func.set_firstNondefiningDeclaration(&sdcl);
@@ -131,7 +131,7 @@ void setSymbolTableCaseSensitivity(SgScopeStatement& n)
 // types
 
 SgAdaRangeConstraint&
-mkAdaRangeConstraint(SgRangeExp& range)
+mkAdaRangeConstraint(SgExpression& range)
 {
   SgAdaRangeConstraint& sgnode = mkLocatedNode<SgAdaRangeConstraint>(&range);
 
@@ -610,7 +610,7 @@ mkAdaPackageBodyDecl(SgAdaPackageSpecDecl& specdcl, SgScopeStatement& scope)
   pkgbody.set_spec(&pkgspec);
 
   // \todo make sure assertion holds
-  // ROSE_ASSERT(scope.symbol_exists(specdcl.get_name()));
+  // ADA_ASSERT(scope.symbol_exists(specdcl.get_name()));
 /*
   if (!scope.symbol_exists(specdcl.get_name()))
     scope.insert_symbol(specdcl.get_name(), new SgAdaPackageSymbol(&sgnode));
@@ -700,7 +700,7 @@ mkAdaTaskBodyDecl(SgDeclarationStatement& tskdecl, SgAdaTaskBody& tskbody, SgSco
   tskspec.set_body(&tskbody);
   tskbody.set_spec(&tskspec);
 
-  ROSE_ASSERT(scope.symbol_exists(specinfo.name));
+  ADA_ASSERT(scope.symbol_exists(specinfo.name));
   return sgnode;
 }
 
@@ -720,7 +720,7 @@ mkAdaTaskBodyDecl(const std::string& name, SgAdaTaskBody& tskbody, SgScopeStatem
   tskbody.set_spec(&tskspec);
   */
 
-  //~ ROSE_ASSERT(scope.symbol_exists(specinfo.name));
+  //~ ADA_ASSERT(scope.symbol_exists(specinfo.name));
   scope.insert_symbol(name, &mkBareNode<SgAdaTaskSymbol>(&sgnode));
   return sgnode;
 }
@@ -755,7 +755,7 @@ namespace
     }
 
     SgFunctionDefinition* defn = isSgFunctionDefinition(&parmScope);
-    ROSE_ASSERT(defn);
+    ADA_ASSERT(defn);
     sg::linkParentChild(decl, *defn, &SgFunctionDeclaration::set_definition);
   }
 
@@ -805,7 +805,7 @@ namespace
 
     SgFunctionDeclaration&   sgnode    = SG_DEREF(sb::buildNondefiningFunctionDeclaration(nm, &retty, &lst, &scope, nullptr));
 
-    ROSE_ASSERT(sgnode.get_type() != nullptr);
+    ADA_ASSERT(sgnode.get_type() != nullptr);
 
     linkParameterScope(sgnode, lst, parmScope);
 
@@ -868,17 +868,17 @@ mkAdaFunctionRenamingDecl( const std::string& name,
   SgAdaFunctionRenamingDecl& sgnode = mkLocatedNode<SgAdaFunctionRenamingDecl>(name, nullptr, nullptr);
   SgFunctionParameterList&   lst    = SG_DEREF(sgnode.get_parameterList());
   SgFunctionParameterScope&  psc    = mkScopeStmt<SgFunctionParameterScope>(&mkFileInfo());
-  ROSE_ASSERT(sgnode.get_functionParameterScope() == nullptr);
+  ADA_ASSERT(sgnode.get_functionParameterScope() == nullptr);
 
   sg::linkParentChild<SgFunctionDeclaration>(sgnode, psc, &SgFunctionDeclaration::set_functionParameterScope);
   complete(lst, psc);
 
   SgFunctionType& funty = mkAdaFunctionRenamingDeclType(retty, lst);
   sgnode.set_type(&funty);
-  ROSE_ASSERT(sgnode.get_parameterList_syntax() == nullptr);
+  ADA_ASSERT(sgnode.get_parameterList_syntax() == nullptr);
 
   SgFunctionSymbol *funsy = scope.find_symbol_by_type_of_function<SgFunctionDeclaration>(name, &funty, NULL, NULL);
-  ROSE_ASSERT(funsy == nullptr);
+  ADA_ASSERT(funsy == nullptr);
 
   funsy = &mkBareNode<SgFunctionSymbol>(&sgnode);
   scope.insert_symbol(name, funsy);
@@ -901,7 +901,7 @@ mkAdaEntryDecl( const std::string& name,
   SgFunctionParameterList&  lst    = SG_DEREF(sgnode.get_parameterList());
   SgFunctionParameterScope& psc    = mkScopeStmt<SgFunctionParameterScope>(&mkFileInfo());
 
-  ROSE_ASSERT(sgnode.get_functionParameterScope() == nullptr);
+  ADA_ASSERT(sgnode.get_functionParameterScope() == nullptr);
   sg::linkParentChild<SgFunctionDeclaration>(sgnode, psc, &SgFunctionDeclaration::set_functionParameterScope);
 
   complete(lst, psc);
@@ -910,16 +910,16 @@ mkAdaEntryDecl( const std::string& name,
 
   sgnode.set_type(&funty);
 
-  //~ ROSE_ASSERT(sgnode.get_parameterList() == nullptr);
+  //~ ADA_ASSERT(sgnode.get_parameterList() == nullptr);
   //~ sg::linkParentChild<SgFunctionDeclaration>(sgnode, lst, &SgFunctionDeclaration::set_parameterList);
 
   // not used
-  ROSE_ASSERT(sgnode.get_parameterList_syntax() == nullptr);
+  ADA_ASSERT(sgnode.get_parameterList_syntax() == nullptr);
 
   //~ SgFunctionSymbol*         funsy  = scope.find_symbol_by_type_of_function<SgAdaEntryDecl>(name, &funty, NULL, NULL);
   SgFunctionSymbol*         funsy  = scope.find_symbol_by_type_of_function<SgFunctionDeclaration>(name, &funty, NULL, NULL);
 
-  ROSE_ASSERT(funsy == nullptr);
+  ADA_ASSERT(funsy == nullptr);
   funsy = &mkBareNode<SgFunctionSymbol>(&sgnode);
 
   scope.insert_symbol(name, funsy);
@@ -938,10 +938,10 @@ mkAdaAcceptStmt(SgExpression& ref, SgExpression& idx)
   SgFunctionParameterScope& psc    = mkScopeStmt<SgFunctionParameterScope>(&mkFileInfo());
   SgFunctionParameterList&  lst    = mkFunctionParameterList();
 
-  ROSE_ASSERT(sgnode.get_parameterScope() == nullptr);
+  ADA_ASSERT(sgnode.get_parameterScope() == nullptr);
   sg::linkParentChild(sgnode, psc, &SgAdaAcceptStmt::set_parameterScope);
 
-  ROSE_ASSERT(sgnode.get_parameterList() == nullptr);
+  ADA_ASSERT(sgnode.get_parameterList() == nullptr);
   sg::linkParentChild(sgnode, lst, &SgAdaAcceptStmt::set_parameterList);
 
   sg::linkParentChild(sgnode, ref, &SgAdaAcceptStmt::set_entry);
@@ -990,7 +990,7 @@ namespace
 
     SgInitializer* res = sg::dispatch(InitMaker(vartype), n);
 
-    ROSE_ASSERT(res);
+    ADA_ASSERT(res);
     return res;
   }
 }
@@ -998,7 +998,7 @@ namespace
 SgInitializedName&
 mkInitializedName(const std::string& varname, SgType& vartype, SgExpression* val)
 {
-  ROSE_ASSERT(! (val && val->isTransformation()));
+  ADA_ASSERT(! (val && val->isTransformation()));
   SgInitializer*     varinit = mkInitializerAsNeeded(vartype, val);
   SgInitializedName& sgnode  = SG_DEREF( sb::buildInitializedName_nfi(varname, &vartype, varinit) );
 
@@ -1024,7 +1024,7 @@ mkParameter( const std::vector<SgInitializedName*>& parms,
   for (SgInitializedName* prm : parms)
   {
     // \note set_definition is the same as set_declptr
-    ROSE_ASSERT(prm);
+    ADA_ASSERT(prm);
     prm->set_definition(&parmDecl);
     names.push_back(prm);
   }
@@ -1034,8 +1034,8 @@ mkParameter( const std::vector<SgInitializedName*>& parms,
   si::fixVariableDeclaration(&parmDecl, &scope);
   parmDecl.set_parent(&scope);
 
-  ROSE_ASSERT(parmDecl.get_definingDeclaration() == nullptr);
-  ROSE_ASSERT(parmDecl.get_firstNondefiningDeclaration() == nullptr);
+  ADA_ASSERT(parmDecl.get_definingDeclaration() == nullptr);
+  ADA_ASSERT(parmDecl.get_firstNondefiningDeclaration() == nullptr);
 
   parmDecl.set_firstNondefiningDeclaration(&parmDecl);
   return parmDecl;
@@ -1067,8 +1067,8 @@ namespace
   {
     SgVariableDeclaration&    vardcl = mkVarExceptionDeclInternal(aa, zz, scope);
 
-    ROSE_ASSERT(vardcl.get_definingDeclaration() == nullptr);
-    ROSE_ASSERT(vardcl.get_firstNondefiningDeclaration() == nullptr);
+    ADA_ASSERT(vardcl.get_definingDeclaration() == nullptr);
+    ADA_ASSERT(vardcl.get_firstNondefiningDeclaration() == nullptr);
     vardcl.set_firstNondefiningDeclaration(&vardcl);
 
     return vardcl;
@@ -1109,7 +1109,7 @@ mkAdaComponentClause(SgVarRefExp& field, SgExpression& offset, SgRangeExp& range
 }
 
 SgAdaRecordRepresentationClause&
-mkAdaRecordRepresentationClause(SgClassType& record, SgExpression& align)
+mkAdaRecordRepresentationClause(SgType& record, SgExpression& align)
 {
   SgBasicBlock&                    elems  = mkBasicBlock();
   SgAdaRecordRepresentationClause& sgnode = mkLocatedNode<SgAdaRecordRepresentationClause>(&record, &align, &elems);
@@ -1120,7 +1120,7 @@ mkAdaRecordRepresentationClause(SgClassType& record, SgExpression& align)
 }
 
 SgAdaEnumRepresentationClause&
-mkAdaEnumRepresentationClause(SgEnumType& enumtype, SgExprListExp& initlst)
+mkAdaEnumRepresentationClause(SgType& enumtype, SgExprListExp& initlst)
 {
   SgAdaEnumRepresentationClause& sgnode = mkLocatedNode<SgAdaEnumRepresentationClause>(&enumtype, &initlst);
 
@@ -1288,7 +1288,7 @@ namespace
 {
   SgCommaOpExp* commaOpExpMaker(SgExpression* lhs, SgExpression* rhs)
   {
-    ROSE_ASSERT(lhs && rhs);
+    ADA_ASSERT(lhs && rhs);
 
     SgCommaOpExp* sgnode = sb::buildCommaOpExp(lhs, rhs);
 
@@ -1299,7 +1299,7 @@ namespace
 
 SgExpression& mkChoiceExpIfNeeded(std::vector<SgExpression*>&& choices)
 {
-  ROSE_ASSERT(choices.size() > 0);
+  ADA_ASSERT(choices.size() > 0);
 
   return SG_DEREF( std::accumulate( choices.begin()+1, choices.end(),
                                     choices.front(),
@@ -1317,7 +1317,7 @@ mkForLoopIncrement(bool forward, SgVariableDeclaration& var)
   SgUnaryOp*   sgnode = forward ? static_cast<SgUnaryOp*>(sb::buildPlusPlusOp(&varref, mode))
                                 : sb::buildMinusMinusOp(&varref, mode)
                                 ;
-  ROSE_ASSERT(sgnode);
+  ADA_ASSERT(sgnode);
 
   markCompilerGenerated(varref);
   markCompilerGenerated(*sgnode);
@@ -1364,10 +1364,10 @@ mkAdaAttributeExp(SgExpression& expr, const std::string& ident, SgExprListExp& a
 template <>
 SgStringVal& mkValue<SgStringVal>(const char* textrep)
 {
-  ROSE_ASSERT(textrep);
+  ADA_ASSERT(textrep);
 
   const char delimiter = *textrep;
-  ROSE_ASSERT(delimiter == '"' || delimiter == '%');
+  ADA_ASSERT(delimiter == '"' || delimiter == '%');
 
   SgStringVal& sgnode = mkLocatedNode<SgStringVal>(si::ada::convertStringLiteral(textrep));
 
