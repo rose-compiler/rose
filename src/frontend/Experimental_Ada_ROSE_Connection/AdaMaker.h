@@ -75,8 +75,11 @@ namespace Ada_ROSE_Translation
   // Type Makers
 
   /// builds a range constraint from \ref range
+  /// \details
+  ///   \ref range is typically of type SgRangeExp, or SgAdaRangeAttributeExp.
+  ///        ?? may also be an SgTypeExpression for a full type range. ??
   SgAdaRangeConstraint&
-  mkAdaRangeConstraint(SgRangeExp& range);
+  mkAdaRangeConstraint(SgExpression& range);
 
   /// builds an index constraint from \ref ranges
   /// \param ranges a sequence of ranges.
@@ -471,13 +474,17 @@ namespace Ada_ROSE_Translation
   mkAdaComponentClause(SgVarRefExp& field, SgExpression& offset, SgRangeExp& range);
 
   /// creates an Ada Record representation clause for \ref record aligned at \ref align.
+  /// \details
+  ///   the type of \ref record should be either SgClassType or SgTypedefType
   SgAdaRecordRepresentationClause&
-  mkAdaRecordRepresentationClause(SgClassType& record, SgExpression& align);
+  mkAdaRecordRepresentationClause(SgType& record, SgExpression& align);
 
   /// creates an Ada Enum representation clause for \ref enumtype and
   ///   enumerator initializations \ref initlst.
+  /// \details
+  ///   the type of \ref enumtype should be either SgEnumType or SgTypedefType
   SgAdaEnumRepresentationClause&
-  mkAdaEnumRepresentationClause(SgEnumType& enumtype, SgExprListExp& initlst);
+  mkAdaEnumRepresentationClause(SgType& enumtype, SgExprListExp& initlst);
 
   /// creates an Ada length clause for attribute \ref attr aligned and length \ref size.
   SgAdaLengthClause&
@@ -649,7 +656,7 @@ namespace Ada_ROSE_Translation
 
     typedef decltype(std::declval<SageValue>().get_value()) rose_rep_t;
 
-    ROSE_ASSERT(textrep);
+    ADA_ASSERT(textrep);
     return mkLocatedNode<SageValue>(convAdaLiteral<rose_rep_t>(textrep), textrep);
   }
 

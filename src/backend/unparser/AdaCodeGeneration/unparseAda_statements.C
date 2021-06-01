@@ -20,8 +20,6 @@
 #include "sageGeneric.h"
 #include "sageInterfaceAda.h"
 
-#include <boost/algorithm/string.hpp>
-
 namespace si = SageInterface;
 
 Unparse_Ada::Unparse_Ada(Unparser* unp, std::string fname)
@@ -78,20 +76,6 @@ namespace
   SgName nameOf(const SgVarRefExp& n)
   {
     return nameOf(symOf(n));
-  }
-
-  inline
-  SgName nameOf(const SgEnumType& n)
-  {
-    SgEnumDeclaration& dcl = SG_DEREF(isSgEnumDeclaration(n.get_declaration()));
-
-    return dcl.get_name();
-  }
-
-  inline
-  SgName nameOf(const SgClassType& n)
-  {
-    return n.get_name();
   }
 
   inline
@@ -506,11 +490,10 @@ namespace
       prn("task body ");
       prn(n.get_name());
       prn(" is\n");
-      prn("begin\n");
 
       stmt(n.get_definition());
 
-      prn("end ");
+      prn(" ");
       prn(n.get_name());
       prn(STMT_SEP);
     }
@@ -547,7 +530,16 @@ namespace
     {
       ScopeUpdateGuard scopeGuard(info, n);
 
-      list(n.get_statements());
+      SgStatementPtrList&          stmts    = n.get_statements();
+      SgStatementPtrList::iterator aa       = stmts.begin();
+      SgStatementPtrList::iterator zz       = stmts.end();
+      SgStatementPtrList::iterator dcllimit = si::ada::declarationLimit(stmts);
+
+      list(aa, dcllimit);
+
+      prn("begin\n");
+      list(dcllimit, zz);
+      prn("end"); // omit newline, which will be added by the parent
     }
 
     void handle(SgAdaPackageSpecDecl& n)
@@ -929,11 +921,10 @@ namespace
 
     void handle(SgAdaRecordRepresentationClause& n)
     {
-      SgClassType&  rec = SG_DEREF(n.get_recordType());
       SgBasicBlock& blk = SG_DEREF(n.get_components());
 
       prn("for ");
-      prn(nameOf(rec));
+      type(n.get_recordType());
       prn(" use record\n");
       expr_opt(n.get_alignment(), "at mod ", STMT_SEP);
 
@@ -973,11 +964,10 @@ namespace
 
     void handle(SgAdaEnumRepresentationClause& n)
     {
-      SgEnumType&    enumtype   = SG_DEREF(n.get_enumType());
       SgExprListExp& components = SG_DEREF(n.get_components());
 
       prn("for ");
-      prn(nameOf(enumtype));
+      type(n.get_enumType());
       prn(" use (");
       enuminiList(components.get_expressions());
       prn(")");
@@ -1259,16 +1249,15 @@ namespace
     SgStatementPtrList::iterator aa       = stmts.begin();
     SgStatementPtrList::iterator zz       = stmts.end();
     SgStatementPtrList::iterator dcllimit = si::ada::declarationLimit(stmts);
+    const std::string            label    = n.get_string_label();
+    const bool                   requiresBeginEnd = !adaStmtSequence(n);
+    //~ ROSE_ASSERT(aa == dcllimit || requiresBeginEnd);
+
+    // was: ( functionbody || (aa != dcllimit) || label.size() );
 
     if (!functionbody && (aa != dcllimit))
       prn("declare\n");
 
-    const std::string label = n.get_string_label();
-    const bool        requiresBeginEnd    = !adaStmtSequence(n);
-                                            //~ (  functionbody
-                                            //~ || (aa != dcllimit)
-                                            //~ || label.size()
-                                            //~ );
     list(aa, dcllimit);
 
     if (requiresBeginEnd)
@@ -1527,6 +1516,8 @@ namespace
     void handle(SgTypedefDeclaration& n)  { usetype(n.get_name()); }
     void handle(SgAdaTaskTypeDecl& n)     { usetype(n.get_name()); }
     void handle(SgClassDeclaration& n)    { usetype(n.get_name()); }
+    void handle(SgEnumDeclaration& n)     { usetype(n.get_name()); }
+    void handle(SgAdaRenamingDecl& n)     { usetype(n.get_name()); }
   };
 
   std::pair<std::string, std::string>

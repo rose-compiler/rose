@@ -169,43 +169,44 @@ ROSE_PASSING_ADA_TESTS :=                           \
 ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=                \
   access_to_subprogram.ads                          \
   access_to_object.ads                              \
-  discriminant.adb                                  \
-  discriminant_constraint.ads                       \
-  discriminant_specification.ads                    \
-  extension_aggregate.adb                           \
-  fixed_point_definition.ads                        \
-  function_instantiation.adb                        \
-  generic_function_declaration.ads                  \
-  generic_package_declaration.ads                   \
-  package_instantiation.adb                         \
-  procedure_instantiation.adb                       \
-  protected_type_declaration.ads                    \
-  single_protected_declaration.ads                  \
-  test.adb                                          \
-  object_renaming_declaration.adb                   \
-  entry_body_declaration.adb                        \
-  function_body_stub.adb                            \
-  generic_function_renaming_declaration.ads         \
-  generic_package_renaming_declaration.ads          \
-  generic_procedure_renaming_declaration.ads        \
-  protected_body_declaration.adb                    \
-  protected_body_declaration.ads                    \
-  procedure_body_stub.adb                           \
-  unknown_discriminant.ads                          \
-  variable_variant_record.adb                       \
-  variant_record.ads
+  fixed_point_definition.ads
 
 ROSE_FAILING_ADA_TESTS :=                           \
   all_modes.ads                                     \
   complex.adb                                       \
   delay_until.adb                                   \
+  discriminant.adb                                  \
+  discriminant_constraint.ads                       \
+  discriminant_specification.ads                    \
+  entry_body_declaration.adb                        \
+  extension_aggregate.adb                           \
+  function_body_stub.adb                            \
+  function_instantiation.adb                        \
+  generic_function_declaration.ads                  \
+  generic_function_renaming_declaration.ads         \
+  generic_package_declaration.ads                   \
+  generic_package_renaming_declaration.ads          \
+  generic_procedure_renaming_declaration.ads        \
   iterate_range.adb                                 \
+  io_test2.adb                                      \
   mpiuse.ads                                        \
+  object_renaming_declaration.adb                   \
+  protected_body_declaration.adb                    \
+  protected_body_declaration.ads                    \
+  procedure_body_stub.adb                           \
+  package_instantiation.adb                         \
+  procedure_instantiation.adb                       \
+  protected_type_declaration.ads                    \
   requeue_statement_2.adb                           \
   requeue_statements.adb                            \
+  single_protected_declaration.ads                  \
+  test.adb                                          \
   test_unit.adb                                     \
+  unknown_discriminant.ads                          \
   unit_2.adb                                        \
-  unit_2.ads
+  unit_2.ads                                        \
+  variable_variant_record.adb                       \
+  variant_record.ads
 
 # defines tests that are supported by ASIS
 ASIS_PASSING_TESTS :=                               \

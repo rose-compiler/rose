@@ -367,6 +367,7 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           // TOO1 (2/13/2014): Starting to refactor CLI handling into separate namespaces
           Rose::Cmdline::Unparser::OptionRequiresArgument(argument) ||
           Rose::Cmdline::Fortran::OptionRequiresArgument(argument) ||
+          Rose::Cmdline::Ada::OptionRequiresArgument(argument) ||
           Rose::Cmdline::Java::OptionRequiresArgument(argument) ||
 
        // negara1 (08/16/2011)
@@ -1090,6 +1091,7 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 
       Rose::Cmdline::Unparser::Process(this, local_commandLineArgumentList);
       Rose::Cmdline::Fortran::Process(this, local_commandLineArgumentList);
+      Rose::Cmdline::Ada::Process(this, local_commandLineArgumentList);
       Rose::Cmdline::Java::Process(this, local_commandLineArgumentList);
       Rose::Cmdline::Gnu::Process(this, local_commandLineArgumentList);
       Rose::Cmdline::X10::Process(this, local_commandLineArgumentList);
@@ -1708,6 +1710,7 @@ StripRoseOptions (std::vector<std::string>& argv)
   Cmdline::Unparser::StripRoseOptions(argv);
   Cmdline::Fortran::StripRoseOptions(argv);
   Cmdline::Java::StripRoseOptions(argv);
+  Cmdline::Ada::StripRoseOptions(argv);
 }// Cmdline::StripRoseOptions
 
 void
@@ -2107,6 +2110,76 @@ ProcessParam (SgProject* project, std::vector<std::string>& argv)
       if (SgProject::get_verbose() > 1)
           std::cout << "[INFO] Detected GNU --param " << param << std::endl;
   }
+}
+
+//------------------------------------------------------------------------------
+//                                  Ada
+//------------------------------------------------------------------------------
+
+static const char* ADA_OPTION_PREFIX = "-rose:ada:";
+
+bool
+Rose::Cmdline::Ada::
+OptionRequiresArgument (const std::string& option)
+{
+  // currently no option requires a second argument
+  return false;
+}
+
+Rose::Cmdline::Ada::CmdlineSettings adaSettings;
+
+Rose::Cmdline::Ada::CmdlineSettings
+Rose::Cmdline::Ada::commandlineSettings()
+{
+  return adaSettings;
+}
+
+void
+Rose::Cmdline::Ada::
+Process(SgProject*, std::vector<std::string>& argv)
+{
+  if (CommandlineProcessing::isOption(argv, ADA_OPTION_PREFIX, "debug_external_frontend", true))
+    adaSettings.asisDebug = true;
+
+  if (CommandlineProcessing::isOption(argv, ADA_OPTION_PREFIX, "without_predefined_units", true))
+    adaSettings.processPredefinedUnits = false;
+
+  if (CommandlineProcessing::isOption(argv, ADA_OPTION_PREFIX, "without_implementation_defined_units", true))
+    adaSettings.processImplementationUnits = false;
+
+  if (CommandlineProcessing::isOption(argv, ADA_OPTION_PREFIX, "fail_hard_adb", true))
+    adaSettings.failhardAdb = true;
+
+  if (CommandlineProcessing::isOption(argv, ADA_OPTION_PREFIX, "warn", true))
+    adaSettings.logWarn = true;
+
+  if (CommandlineProcessing::isOption(argv, ADA_OPTION_PREFIX, "trace", true))
+    adaSettings.logTrace = true;
+
+  if (CommandlineProcessing::isOption(argv, ADA_OPTION_PREFIX, "info", true))
+    adaSettings.logInfo = true;
+}
+
+void
+Rose::Cmdline::Ada::
+StripRoseOptions (std::vector<std::string>& argv)
+{
+  //
+  // (1) Options WITHOUT an argument
+  //~ sla(argv, ADA_OPTION_PREFIX, "($)", "()", 1 /* remove */);
+  auto isAdaOption = [](const std::string& arg) -> bool
+                     {
+                       return arg.rfind(ADA_OPTION_PREFIX, 0) == 0;
+                     };
+
+  std::vector<std::string>::iterator zz  = argv.end();
+  std::vector<std::string>::iterator pos = std::remove_if(argv.begin(), zz, isAdaOption);
+  argv.erase(pos, zz);
+
+  //
+  // (2) Options WITH an argument
+
+  // see Java for an example
 }
 
 //------------------------------------------------------------------------------
@@ -3402,6 +3475,23 @@ SgFile::usage ( int status )
 "                             (Note: not implemented in front-end (OFP) yet.)\n"
 "     -fortran:XXX            pass -XXX to independent semantic analysis\n"
 "                             (useful for turning on specific warnings in front-end)\n"
+"\n"
+"Control debugging of experimental Ada processing:\n"
+"     -rose:ada:debug_external_frontend\n"
+"                             turn on debugging flag in external Ada frontend\n"
+"     -rose:ada:without_predefined_units\n"
+"                             excludes processing of Ada predefined units (for debugging)\n"
+"     -rose:ada:without_implementation_defined_units\n"
+"                             excludes processing of Ada implementation defined units (for debugging)\n"
+"     -rose:ada:fail_hard_adb\n"
+"                             fails immediately with an assertion error when support for an Ada language element\n"
+"                             has not been implemented. This fails only in in .adb files. (for ACATS testing)\n"
+"     -rose:ada:warn\n"
+"                             enable warnings messages\n"
+"     -rose:ada:info\n"
+"                             enable info messages\n"
+"     -rose:ada:trace\n"
+"                             enable tracing messages\n"
 "\n"
 "Control code generation:\n"
 "     -rose:unparser:clobber_input_file\n"
