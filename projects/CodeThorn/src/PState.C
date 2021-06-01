@@ -170,10 +170,6 @@ bool PState::varExists(AbstractValue varId) const {
   * \date 2012.
  */
 bool PState::memLocExists(AbstractValue memLoc) const {
-  if(AbstractValue::byteMode) {
-    AlignedMemLoc aMemLoc=memLoc.alignedMemLoc();
-    return find(aMemLoc.memLoc)!=end();
-  }
   return find(memLoc)!=end();
 }
 
@@ -455,47 +451,7 @@ void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
     }
     return;
   } else {
-    if(AbstractValue::byteMode) {
-      ROSE_ASSERT(!abstractMemLoc.isPtrSet());
-      VariableId varId=abstractMemLoc.getVariableId();
-      long int offset=abstractMemLoc.getIndexIntValue();
-      ROSE_ASSERT(AbstractValue::_variableIdMapping);
-      long int pointerValueElemSize=abstractMemLoc.getElementTypeSize();
-      long int inStateElemSize=(long int)AbstractValue::_variableIdMapping->getElementSize(varId);
-      abstractMemLoc.setElementTypeSize(inStateElemSize); // adapt element size when storing in state
-      if(pointerValueElemSize!=inStateElemSize) {
-        //cout<<"DEBUG: memloc:"<<abstractMemLoc.toString(AbstractValue::_variableIdMapping)<<endl;
-        //cout<<"DEBUG: elemSize: "<<elemSize<<endl;
-        if(inStateElemSize!=0) {
-          //cout<<"DEBUG: offset     : "<<offset<<endl;
-          long int withinElementOffset=offset%inStateElemSize;
-          //cout<<"DEBUG: withinElementOffset: "<<withinElementOffset<<endl;
-          if(withinElementOffset!=0) {
-            // TODO: access within element with mod as byte offset
-            offset-=withinElementOffset;
-            abstractMemLoc.setValue(offset); // adjustment of address to element-aligned offset
-          }
-          // conservative destruction of values if unaligned write
-          operator[](abstractMemLoc)=AbstractValue::createTop(); // loosing value, loosing precision
-          if(withinElementOffset+pointerValueElemSize>inStateElemSize) {
-            int long numModifiedElements=(pointerValueElemSize/inStateElemSize); // one is already modifed above
-            for(int i=0;i<numModifiedElements;i++) {
-              AbstractValue change=AbstractValue(inStateElemSize);
-              abstractMemLoc=AbstractValue::operatorAdd(abstractMemLoc,change); // advance pointer
-              // TODO: check for memory bound
-	      conditionalApproximateRawWriteToMemoryLocation(abstractMemLoc,AbstractValue::createTop(),strongUpdate);
-            }
-          }
-        } else {
-          conditionalApproximateRawWriteToMemoryLocation(abstractMemLoc,abstractValue,strongUpdate); // should not happen (elemsize=0)
-        }
-      } else {
-	// elem size is the same, keeping precision
-	conditionalApproximateRawWriteToMemoryLocation(abstractMemLoc,abstractValue,strongUpdate);
-      }
-    } else {
-      conditionalApproximateRawWriteToMemoryLocation(abstractMemLoc,abstractValue,strongUpdate);
-    }
+    conditionalApproximateRawWriteToMemoryLocation(abstractMemLoc,abstractValue,strongUpdate);
   }
 }
 

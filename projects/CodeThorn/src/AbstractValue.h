@@ -22,7 +22,6 @@ using std::ostream;
 namespace CodeThorn {
   
   class AbstractValue;
-  class AlignedMemLoc;
   class AbstractValueSet;
   
   bool strictWeakOrderingIsSmaller(const AbstractValue& c1, const AbstractValue& c2);
@@ -108,7 +107,9 @@ class AbstractValue {
 
   static AbstractValue applyOperator(AbstractValue::Operator op, AbstractValue& v1, AbstractValue& v2);
 
+  static AbstractValue operatorAdd(AbstractValue& a,AbstractValue& b, AbstractValue elemSize);
   static AbstractValue operatorAdd(AbstractValue& a,AbstractValue& b);
+  static AbstractValue operatorSub(AbstractValue& a,AbstractValue& b, AbstractValue elemSize);
   static AbstractValue operatorSub(AbstractValue& a,AbstractValue& b);
   static AbstractValue operatorMul(AbstractValue& a,AbstractValue& b);
   static AbstractValue operatorDiv(AbstractValue& a,AbstractValue& b);
@@ -155,6 +156,7 @@ class AbstractValue {
   static AbstractValue createAddressOfVariable(CodeThorn::VariableId varId);
   static AbstractValue createAddressOfArray(CodeThorn::VariableId arrayVariableId);
   static AbstractValue createAddressOfArrayElement(CodeThorn::VariableId arrayVariableId, AbstractValue Index);
+  static AbstractValue createAddressOfArrayElement(CodeThorn::VariableId arrayVariableId, AbstractValue Index, AbstractValue elementType);
   static AbstractValue createAddressOfFunction(CodeThorn::Label lab);
   static AbstractValue createNullPtr();
   static AbstractValue createUndefined(); // used to model values of uninitialized variables/memory locations
@@ -204,18 +206,16 @@ class AbstractValue {
   long hash() const;
   std::string valueTypeToString() const;
 
-  CodeThorn::TypeSize getTypeSize() const;
-  void setTypeSize(CodeThorn::TypeSize valueSize);
-  CodeThorn::TypeSize getElementTypeSize() const;
-  void setElementTypeSize(CodeThorn::TypeSize valueSize);
+  //CodeThorn::TypeSize getTypeSize() const;
+  //void setTypeSize(CodeThorn::TypeSize valueSize);
+  //CodeThorn::TypeSize getElementTypeSize() const;
+  //void setElementTypeSize(CodeThorn::TypeSize valueSize);
+
   static void setVariableIdMapping(CodeThorn::VariableIdMappingExtended* varIdMapping);
   static CodeThorn::VariableIdMappingExtended* getVariableIdMapping();
   static bool approximatedBy(AbstractValue val1, AbstractValue val2);
   static AbstractValue combine(AbstractValue val1, AbstractValue val2);
   static bool strictChecking; // if turned off, some error conditions are not active, but the result remains sound.
-  // returns a memLoc aligned to the declared element size of the memory region it's referring to
-  // with the offset into the element. If the offset is 0, then it's exactly aligned.
-  AlignedMemLoc alignedMemLoc();
   static AbstractValue convertPtrToPtrSet(AbstractValue val); // requires val to be PTR
  private:
   // functions used for (de)allocating additional memory for some abstractions
@@ -234,8 +234,8 @@ class AbstractValue {
     void* extension; // not used yet
   };
   Label label;
-  CodeThorn::TypeSize typeSize=0;
-  CodeThorn::TypeSize elementTypeSize=0; // shapr: set, use in +,- operations
+  //CodeThorn::TypeSize typeSize=0;
+  //CodeThorn::TypeSize elementTypeSize=0; // shapr: set, use in +,- operations
  public:
   static CodeThorn::VariableIdMappingExtended* _variableIdMapping;
   static bool byteMode; // computes byte offset for array and struct elements
@@ -260,12 +260,6 @@ class AbstractValue {
     std::string toString(VariableIdMapping* vim) const;
   };
   AbstractValueSet& operator+=(AbstractValueSet& s1, AbstractValueSet& s2);
-
-  struct AlignedMemLoc {
-    AlignedMemLoc(AbstractValue,int);
-    AbstractValue memLoc;
-    int offset=0;
-  };
 
 }
 
