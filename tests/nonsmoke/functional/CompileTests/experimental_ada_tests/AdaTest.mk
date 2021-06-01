@@ -169,7 +169,7 @@ ROSE_PASSING_ADA_TESTS :=                           \
 ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=                \
   access_to_subprogram.ads                          \
   access_to_object.ads                              \
-  fixed_point_definition.ads                        
+  fixed_point_definition.ads
 
 ROSE_FAILING_ADA_TESTS :=                           \
   all_modes.ads                                     \
@@ -180,7 +180,7 @@ ROSE_FAILING_ADA_TESTS :=                           \
   discriminant_specification.ads                    \
   entry_body_declaration.adb                        \
   extension_aggregate.adb                           \
-  function_body_stub.adb                            \ 
+  function_body_stub.adb                            \
   function_instantiation.adb                        \
   generic_function_declaration.ads                  \
   generic_function_renaming_declaration.ads         \

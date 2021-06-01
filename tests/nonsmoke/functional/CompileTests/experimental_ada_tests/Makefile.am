@@ -41,10 +41,10 @@ include $(srcdir)/passing-tests-list.mk
 #~ include $(srcdir)/asis-todo-list.mk
 include $(srcdir)/AdaTest.mk
 
-NOT_SEPARATELY_CHECKED_DEPENDENCIES := \
-  comm.ads                             \
-  mpi.ads                              \
-  EndOfList
+#NOT_SEPARATELY_CHECKED_DEPENDENCIES := \
+#  comm.ads                             \
+#  mpi.ads                              \
+#  EndOfList
 
 #
 # define test suite

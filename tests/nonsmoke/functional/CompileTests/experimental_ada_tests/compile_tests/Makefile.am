@@ -36,11 +36,11 @@ include $(srcdir)/../passing-incomplete-tests-list.mk
 #~ include $(srcdir)/../rose-frontend-todo-list.mk
 #~ include $(srcdir)/../asis-todo-list.mk
 
-NOT_SEPARATELY_CHECKED_DEPENDENCIES := \
-  parent.ads                           \
-  comm.ads                             \
-  mpi.ads                              \
-  EndOfList
+#NOT_SEPARATELY_CHECKED_DEPENDENCIES := \
+#  parent.ads                           \
+#  comm.ads                             \
+#  mpi.ads                              \
+#  EndOfList
 
 #
 # define test suite
