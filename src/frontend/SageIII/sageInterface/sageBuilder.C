@@ -11448,6 +11448,13 @@ SgModifierType* SageBuilder::buildConstType(SgType* base_type /*=NULL*/)
   // DQ (9/3/2012): Added assertion.
      ROSE_ASSERT(base_type != NULL);
 
+#if 0 // Liao May 18, 2021
+     if (isConstType(base_type))
+     {
+       cerr<<"Error in SageBuilder::buildConstType(): base_type is already a const type!"<<endl;
+       ROSE_ASSERT(false);
+     }
+#endif 
   // DQ (7/28/2010): New (similar) approach using type table support.
      SgModifierType *result = new SgModifierType(base_type);
      ROSE_ASSERT(result!=NULL);
