@@ -207,7 +207,7 @@ protected:
     TermNames termNames_;                               // maps ROSE exprs to SMT exprs and their basic type
     Memoization memoization_;                           // cached of previously computed results
     bool doMemoization_;                                // use the memoization_ table?
-    SymbolicExpr::Hash latestMemoizationId_;            // key for last found or inserted memoization, or zero
+    Sawyer::Optional<SymbolicExpr::Hash> latestMemoizationId_; // key for last found or inserted memoization, or nothing
     SymbolicExpr::ExprExprHashMap latestMemoizationRewrite_; // variables rewritten, need to be undone when parsing evidence
 
     // Statistics
@@ -253,7 +253,7 @@ protected:
      *  situation by reading the @p linkage property, or just wait for one of the other methods to throw an @ref
      *  SmtSolver::Exception. */
     SmtSolver(const std::string &name, unsigned linkages)
-        : name_(name), errorIfReset_(false), linkage_(LM_NONE), doMemoization_(true), latestMemoizationId_(0) {
+        : name_(name), errorIfReset_(false), linkage_(LM_NONE), doMemoization_(true) {
         init(linkages);
     }
     
@@ -330,7 +330,7 @@ public:
     /** @} */
 
     /** Id for latest memoized result, or zero. */
-    SymbolicExpr::Hash latestMemoizationId() const {
+    Sawyer::Optional<SymbolicExpr::Hash> latestMemoizationId() const {
         return latestMemoizationId_;
     }
     
