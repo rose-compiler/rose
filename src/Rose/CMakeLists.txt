@@ -1,3 +1,9 @@
+# This header file is only for things in the ::Rose namespace. If
+# you're adding something that's not in ::Rose you're doing it wrong!
+
+# Namespaces within ::Rose (see top comment). Every namespace will
+# have a directory listed here, and every directory here is a
+# namespace.
 add_subdirectory(BinaryAnalysis)
 add_subdirectory(Color)
 add_subdirectory(CommandLine)
@@ -8,6 +14,7 @@ add_subdirectory(StringUtility)
 # needed to properly define ROSE_UTIL_API
 add_definitions(-DROSE_UTIL_EXPORTS)
 
+# .C files for the ::Rose namespace (see top comment)
 add_library(roseNamespace OBJECT
   Initialize.C
   Progress.C
@@ -15,6 +22,7 @@ add_library(roseNamespace OBJECT
 
 add_dependencies(roseNamespace rosetta_generated)
 
+# Public header files for the ::Rose namespace (see top comment)
 install(FILES
   BinaryAnalysis.h
   BitFlags.h

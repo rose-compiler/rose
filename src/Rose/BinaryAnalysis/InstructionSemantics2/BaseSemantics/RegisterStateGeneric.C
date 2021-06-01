@@ -1,13 +1,16 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/RegisterStateGeneric.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/RegisterStateGeneric.h>
 
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Formatter.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/RiscOperators.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/Util.h>
-#include <boost/algorithm/string/erase.hpp>
-#include <boost/format.hpp>
 #include <Rose/Diagnostics.h>
 #include <Rose/FormatRestorer.h>
+
+#include <boost/algorithm/string/erase.hpp>
+#include <boost/format.hpp>
 #include <boost/format.hpp>
 
 // Define this if you want extra consistency checking before and after each mutator.  This slows things down considerably but

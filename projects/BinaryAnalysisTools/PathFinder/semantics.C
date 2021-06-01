@@ -2,7 +2,7 @@
 
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <PathFinder/semantics.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicMemory.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/SymbolicMemory.h>
 
 using namespace Rose;
 using namespace Rose::Diagnostics;

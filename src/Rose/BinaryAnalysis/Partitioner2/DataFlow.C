@@ -4,7 +4,7 @@
 
 #include <AsmUnparser_compat.h>
 #include <Rose/Color.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellList.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/MemoryCellList.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 #include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesElf.h>
@@ -371,11 +371,10 @@ isStackAddress(const Rose::BinaryAnalysis::SymbolicExpr::Ptr &expr,
 
 // Info about stack variables that is distributed across function frame offsets using a Sawyer::IntervalMap.
 struct StackVariableMeta {
-    InstructionSemantics2::BaseSemantics::MemoryCellList::AddressSet writers;
+    AddressSet writers;
     InstructionSemantics2::BaseSemantics::InputOutputPropertySet ioProperties;
 
-    StackVariableMeta(const InstructionSemantics2::BaseSemantics::MemoryCellList::AddressSet &writers,
-                      const InstructionSemantics2::BaseSemantics::InputOutputPropertySet &io)
+    StackVariableMeta(const AddressSet &writers, const InstructionSemantics2::BaseSemantics::InputOutputPropertySet &io)
         : writers(writers), ioProperties(io) {}
 
     bool operator==(const StackVariableMeta &other) const {
@@ -504,7 +503,7 @@ findGlobalVariables(const BaseSemantics::RiscOperatorsPtr &ops, size_t wordNByte
         if (auto va = cell->address()->toUnsigned()) {
             // There may have been many writers for an address. Rather than write an algorithm to find the largest sets of
             // addresses written by the same writer, we'll just arbitrarily choose the least address.
-            const BaseSemantics::MemoryCell::AddressSet &allWriters = cell->getWriters();
+            const AddressSet &allWriters = cell->getWriters();
             rose_addr_t leastWriter = 0;
             if (!allWriters.isEmpty())
                 leastWriter = allWriters.least();

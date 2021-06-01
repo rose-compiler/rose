@@ -1,14 +1,35 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCell.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/MemoryCell.h>
 
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Formatter.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/RiscOperators.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/SValue.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/Util.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace BaseSemantics {
+
+MemoryCell::MemoryCell() {}
+
+MemoryCell::MemoryCell(const SValuePtr &address, const SValuePtr &value)
+    : address_(address), value_(value) {
+    ASSERT_not_null(address);
+    ASSERT_not_null(value);
+}
+
+MemoryCell::MemoryCell(const MemoryCell &other)
+    : boost::enable_shared_from_this<MemoryCell>(other) {
+    address_ = other.address_->copy();
+    value_ = other.value_->copy();
+    writers_ = other.writers_;
+    ioProperties_ = other.ioProperties_;
+}
+
+MemoryCell::~MemoryCell() {}
 
 bool
 MemoryCell::NonWrittenCells::operator()(const MemoryCellPtr &cell) const {
@@ -98,6 +119,12 @@ MemoryCell::hash(Combinatorics::Hasher &hasher) const {
 }
 
 void
+MemoryCell::print(std::ostream &stream) const {
+    Formatter fmt;
+    print(stream, fmt);
+}
+
+void
 MemoryCell::print(std::ostream &stream, Formatter &fmt) const
 {
     stream <<"addr=" <<(*address_+fmt);
@@ -135,6 +162,23 @@ MemoryCell::print(std::ostream &stream, Formatter &fmt) const
     stream <<" value=" <<(*value_+fmt);
 }
 
+MemoryCell::WithFormatter
+MemoryCell::with_format(Formatter &fmt) {
+    return WithFormatter(shared_from_this(), fmt);
+}
+
+MemoryCell::WithFormatter
+MemoryCell::operator+(Formatter &fmt) {
+    return with_format(fmt);
+}
+
+MemoryCell::WithFormatter
+MemoryCell::operator+(const std::string &linePrefix) {
+    static Formatter fmt;
+    fmt.set_line_prefix(linePrefix);
+    return with_format(fmt);
+}
+
 void
 MemoryCell::setWriter(rose_addr_t writerVa) {
     eraseWriters();
@@ -155,5 +199,7 @@ std::ostream& operator<<(std::ostream &o, const MemoryCell::WithFormatter &x) {
 } // namespace
 } // namespace
 } // namespace
+
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::MemoryCell);
 
 #endif

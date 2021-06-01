@@ -46,7 +46,7 @@ findFile(const boost::filesystem::path &name, const std::vector<boost::filesyste
 concolic::SpecimenId
 copyBinaryToDB( concolic::Database::Ptr db,
                 const boost::filesystem::path& executableName,
-                concolic::Update::Flag update = concolic::Update::YES
+                concolic::Update update = concolic::Update::YES
               )
 {
   try
@@ -55,7 +55,7 @@ copyBinaryToDB( concolic::Database::Ptr db,
     concolic::SpecimenId    id = db->id(binary, update);
     std::cout << "dbtest: copying over " << executableName
               << " new id: " << (id ? id.get() : -1)
-              << " update: " << update
+              << " update: " << (concolic::Update::YES==update ? "yes" : "no")
               << std::endl;
 
     return id;

@@ -1,12 +1,12 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsRiscOperators.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/RiscOperators.h>
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsException.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsFormatter.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsState.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsSValue.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Exception.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Formatter.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/State.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/SValue.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/Util.h>
 
 using namespace Sawyer::Message::Common;
@@ -533,5 +533,7 @@ RiscOperators::operator+(const std::string &linePrefix) {
 } // namespace
 } // namespace
 } // namespace
+
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperators);
 
 #endif

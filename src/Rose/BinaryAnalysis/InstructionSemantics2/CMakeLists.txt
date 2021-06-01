@@ -1,13 +1,6 @@
+add_subdirectory(BaseSemantics)
+
 add_library(roseBinaryAnalysisInstructionSemantics2 OBJECT
-  BaseSemantics.C
-  BaseSemanticsDispatcher.C
-  BaseSemanticsException.C
-  BaseSemanticsMemoryState.C
-  BaseSemanticsMerger.C
-  BaseSemanticsRegisterState.C
-  BaseSemanticsRiscOperators.C
-  BaseSemanticsState.C
-  BaseSemanticsSValue.C
   ConcreteSemantics.C
   DataFlowSemantics.C
   DispatcherAarch32.C
@@ -17,18 +10,12 @@ add_library(roseBinaryAnalysisInstructionSemantics2 OBJECT
   DispatcherX86.C
   IntervalSemantics.C
   LlvmSemantics.C
-  MemoryCell.C
-  MemoryCellList.C
-  MemoryCellMap.C
-  MemoryCellState.C
   MultiSemantics.C
   NativeSemantics.C
   NullSemantics.C
   PartialSymbolicSemantics.C
-  RegisterStateGeneric.C
   SourceAstSemantics.C
   StaticSemantics.C
-  SymbolicMemory.C
   SymbolicSemantics.C
   TraceSemantics.C
   Util.C)

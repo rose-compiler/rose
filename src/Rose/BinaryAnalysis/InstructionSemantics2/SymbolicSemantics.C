@@ -4,7 +4,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
 
 #include <integerOps.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellList.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/MemoryCellList.h>
 #include <SageBuilderAsm.h>
 
 namespace Rose {

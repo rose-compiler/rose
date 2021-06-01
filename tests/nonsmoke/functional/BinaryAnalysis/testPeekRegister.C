@@ -1,5 +1,5 @@
 #include <rose.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/RegisterStateGeneric.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/RegisterStateGeneric.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
 #include <sstream>
 

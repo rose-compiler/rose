@@ -14,9 +14,20 @@ namespace Concolic {
 // Flags and enums
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-namespace Update {
-enum Flag { NO, YES };
-} // namespace
+enum class Update { NO, YES };
+
+enum class ShowEvents { NO, YES };
+
+enum class ShowAssertions { NO, YES };
+
+/** The different kinds of program inputs. */
+enum class InputType {
+    NONE,                                       /**< Not an input type. */
+    PROGRAM_ARGUMENT_COUNT,                     /**< Number of program arguments. */
+    PROGRAM_ARGUMENT,                           /**< Variable is (part of) a program argument. */
+    ENVIRONMENT,                                /**< Variable is (part of) a program environment. */
+    SYSTEM_CALL_RETVAL                          /**< Variable is return value of system call. */
+};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Exceptions, errors, etc.
@@ -39,40 +50,64 @@ public:
 // Forward references
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+class Architecture;
+using ArchitecturePtr = Sawyer::SharedPointer<Architecture>;
+
+class ConcolicExecutor;
+using ConcolicExecutorPtr = Sawyer::SharedPointer<ConcolicExecutor>;
+
+class ConcreteExecutor;
+using ConcreteExecutorPtr = Sawyer::SharedPointer<ConcreteExecutor>;
+class ConcreteExecutorResult;
+
+class Database;
+using DatabasePtr = Sawyer::SharedPointer<Database>;
+
+class ExecutionEvent;
+using ExecutionEventPtr = Sawyer::SharedPointer<ExecutionEvent>;
+
+class ExecutionManager;
+using ExecutionManagerPtr = Sawyer::SharedPointer<ExecutionManager>;
+
+class InputVariables;
+
+class LinuxExecutor;
+using LinuxExecutorPtr = Sawyer::SharedPointer<LinuxExecutor>;
+
+class LinuxI386;
+using LinuxI386Ptr = Sawyer::SharedPointer<LinuxI386>;
+
 class Specimen;
 using SpecimenPtr = Sawyer::SharedPointer<Specimen>;
 
 class TestCase;
 using TestCasePtr = Sawyer::SharedPointer<TestCase>;
 
-class ConcreteExecutor;
-using ConcreteExecutorPtr = Sawyer::SharedPointer<ConcreteExecutor>;
-
-class ExecutionEvent;
-using ExecutionEventPtr = Sawyer::SharedPointer<ExecutionEvent>;
-
-class LinuxExecutor;
-using LinuxExecutorPtr = Sawyer::SharedPointer<LinuxExecutor>;
-
-class LinuxI386Executor;
-using LinuxI386ExecutorPtr = Sawyer::SharedPointer<LinuxI386Executor>;
-
-class ConcolicExecutor;
-using ConcolicExecutorPtr = Sawyer::SharedPointer<ConcolicExecutor>;
-
 class TestSuite;
 using TestSuitePtr = Sawyer::SharedPointer<TestSuite>;
-
-class Database;
-using DatabasePtr = Sawyer::SharedPointer<Database>;
-
-class ExecutionManager;
-using ExecutionManagerPtr = Sawyer::SharedPointer<ExecutionManager>;
 
 class LinuxExitStatus;
 using LinuxExitStatusPtr = Sawyer::SharedPointer<LinuxExitStatus>;
 
-class ConcreteExecutorResult;
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Simple structs.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Location of event.
+ *
+ *  An event location consists of a primary value and a secondary value, both of which are unsigned integers. Depending on the
+ *  architecture, the primary value might be the number of instructions executed (i.e, the length of the current execution
+ *  path). The secondary value is usually just a sequence number for ordering events that all occur at the same primary
+ *  value. */
+struct ExecutionLocation {
+    uint64_t primary;                               /**< Primary location value. */
+    uint64_t secondary;                             /**< Secondary location value. */
+
+    ExecutionLocation()
+        : primary(0), secondary(0) {}
+    ExecutionLocation(uint64_t primary, uint64_t secondary)
+        : primary(primary), secondary(secondary) {}
+};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Database
@@ -137,6 +172,11 @@ public:
     template<class _Tag>
     friend
     bool operator<(const ObjectId<_Tag>& lhs, const ObjectId<_Tag>& rhs);
+
+    // Useful for database operations
+    const Super& optional() const {
+        return *this;
+    }
 };
 
 /** defines ordering of ObjectIds. */

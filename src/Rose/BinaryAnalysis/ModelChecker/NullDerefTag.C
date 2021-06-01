@@ -3,7 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/NullDerefTag.h>
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsSValue.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/SValue.h>
 
 namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
 

@@ -5,7 +5,7 @@
 #include <bROwSE/FunctionUtil.h>
 #include <bROwSE/WSemantics.h>
 #include <bROwSE/WToggleButton.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellList.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/MemoryCellList.h>
 #include <Wt/WAbstractTableModel>
 #include <Wt/WHBoxLayout>
 #include <Wt/WPanel>

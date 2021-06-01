@@ -1,8 +1,12 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellList.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/MemoryCellList.h>
 
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Formatter.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Merger.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/RiscOperators.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/SValue.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/Util.h>
 
 using namespace Sawyer::Message::Common;
@@ -339,7 +343,7 @@ MemoryCellList::mergeCellValues(const CellList &cells, const SValuePtr &dflt, Ri
     return retval ? retval : dflt;
 }
 
-MemoryCellList::AddressSet
+AddressSet
 MemoryCellList::mergeCellWriters(const CellList &cells) {
     AddressSet writers;
     BOOST_FOREACH (const MemoryCellPtr &cell, cells)
@@ -389,18 +393,18 @@ MemoryCellList::insertReadCell(const SValuePtr &addr, const SValuePtr &value,
     return cell;
 }
 
-MemoryCell::AddressSet
+AddressSet
 MemoryCellList::getWritersUnion(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps, RiscOperators *valOps) {
-    MemoryCell::AddressSet retval;
+    AddressSet retval;
     CellList::iterator cursor = get_cells().begin();
     BOOST_FOREACH (const MemoryCellPtr &cell, scan(cursor, addr, nBits, addrOps, valOps))
         retval |= cell->getWriters();
     return retval;
 }
 
-MemoryCell::AddressSet
+AddressSet
 MemoryCellList::getWritersIntersection(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps, RiscOperators *valOps) {
-    MemoryCell::AddressSet retval;
+    AddressSet retval;
     CellList::iterator cursor = get_cells().begin();
     size_t nCells = 0;
     BOOST_FOREACH (const MemoryCellPtr &cell, scan(cursor, addr, nBits, addrOps, valOps)) {

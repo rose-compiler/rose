@@ -8,7 +8,7 @@
 #include <Rose/BinaryAnalysis/ModelChecker/SemanticCallbacks.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsState.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/State.h>
 #include <rose_isnan.h>
 
 using namespace Sawyer::Message::Common;

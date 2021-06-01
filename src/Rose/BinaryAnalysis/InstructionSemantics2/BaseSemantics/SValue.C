@@ -1,9 +1,9 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsSValue.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/SValue.h>
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsFormatter.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Formatter.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -103,5 +103,7 @@ SValue::operator+(const std::string &linePrefix) {
 } // namespace
 } // namespace
 } // namespace
+
+BOOST_CLASS_EXPORT_IMPLEMENT(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValue);
 
 #endif
