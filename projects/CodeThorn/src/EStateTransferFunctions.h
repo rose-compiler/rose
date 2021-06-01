@@ -284,8 +284,10 @@ namespace CodeThorn {
     void writeUndefToMemoryLocation(PState* pstate, AbstractValue memLoc);
 
     // utilify functions
-    int getMemoryRegionNumElements(CodeThorn::AbstractValue ptrToRegion);
-    int getMemoryRegionElementSize(CodeThorn::AbstractValue);
+    AbstractValue getMemoryRegionAbstractElementSize(CodeThorn::AbstractValue regionAddress);
+    AbstractValue getMemoryRegionAbstractNumElements(CodeThorn::AbstractValue regionAddress);
+    int getMemoryRegionNumElements(CodeThorn::AbstractValue regionAddress);
+    int getMemoryRegionElementSize(CodeThorn::AbstractValue regionAddress);
 
     // if set to 0 then no listner active. By default it is 0.
     void setReadWriteListener(ReadWriteListener* listener);

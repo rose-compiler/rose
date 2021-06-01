@@ -39,8 +39,6 @@ AbstractValue::AbstractValue(VariableId varId):valueType(AbstractValue::PTR),var
   if(byteMode) {
     // also set element type size
     ROSE_ASSERT(_variableIdMapping);
-    size_t elemSize=_variableIdMapping->getElementSize(varId);
-    setElementTypeSize(elemSize);
   }
 }
 
@@ -77,8 +75,6 @@ void AbstractValue::copy(const AbstractValue& other) {
   valueType = other.valueType;
   variableId = other.variableId;
   label= other.label;
-  typeSize=other.typeSize;
-  elementTypeSize=other.elementTypeSize;
   switch(valueType) {
   case BOT:
   case TOP:
@@ -129,13 +125,11 @@ CodeThorn::TypeSize AbstractValue::calculateTypeSize(CodeThorn::BuiltInType btyp
 }
 
 void AbstractValue::setValue(long int val) {
-  ROSE_ASSERT(getTypeSize()!=0);
   // TODO: truncate here if necessary
   intValue=val;
 }
 
 void AbstractValue::setValue(double fval) {
-  ROSE_ASSERT(getTypeSize()!=0);
   // TODO: adapt here if necessary
   floatValue=fval;
 }
@@ -148,7 +142,7 @@ AbstractValue AbstractValue::createIntegerValue(CodeThorn::BuiltInType btype, lo
 
 void AbstractValue::initInteger(CodeThorn::BuiltInType btype, long int ival) {
   valueType=AbstractValue::INTEGER;
-  setTypeSize(calculateTypeSize(btype));
+  //setTypeSize(calculateTypeSize(btype));
   setValue(ival);
 }
 
@@ -225,14 +219,8 @@ AbstractValue::createAddressOfArray(CodeThorn::VariableId arrayVarId) {
 }
 AbstractValue 
 AbstractValue::createAddressOfArrayElement(CodeThorn::VariableId arrayVariableId, 
-                                             AbstractValue index) {
-#if 0
-  cout<<"AbstractValue::createAddressOfArrayElement:arrayVariable:"<<arrayVariableId.toString(_variableIdMapping)
-      <<" index:"<<index.toString(_variableIdMapping)
-      <<" #"<<_variableIdMapping->getNumberOfElements(arrayVariableId)
-      <<" elemsize:"<<_variableIdMapping->getElementSize(arrayVariableId)
-      <<endl;
-#endif
+					   AbstractValue index) {
+  ROSE_ASSERT(arrayVariableId.isValid());
   AbstractValue val;
   if(index.isTop()) {
     return Top();
@@ -243,16 +231,30 @@ AbstractValue::createAddressOfArrayElement(CodeThorn::VariableId arrayVariableId
     val.variableId=arrayVariableId;
     ROSE_ASSERT(index.isConstInt());
     val.intValue=index.getIntValue();
-    if(AbstractValue::byteMode) {
-      // multiple with type size
-      size_t elemSize=_variableIdMapping->getElementSize(arrayVariableId);
-      val.intValue=index.getIntValue()*elemSize;
-      val.setElementTypeSize(elemSize);
-    }
     if(pointerSetsEnabled) {
       return convertPtrToPtrSet(val);
     } else {
       return val;
+    }
+  } else {
+    cerr<<"Error: createAddressOfArray: unknown index type."<<endl;
+    exit(1);
+  }
+}
+
+AbstractValue 
+AbstractValue::createAddressOfArrayElement(CodeThorn::VariableId arrayVariableId, AbstractValue index, AbstractValue elementSize) {
+  if(index.isTop()||elementSize.isTop()) {
+    return Top();
+  } else if(index.isBot()) {
+    return Bot();
+  } else if(index.isConstInt()) {
+    AbstractValue addr0=createAddressOfArray(arrayVariableId);
+    AbstractValue addrElem=operatorAdd(addr0,index,elementSize);
+    if(pointerSetsEnabled) {
+      return convertPtrToPtrSet(addrElem);
+    } else {
+      return addrElem;
     }
   } else {
     cerr<<"Error: createAddressOfArray: unknown index type."<<endl;
@@ -492,14 +494,16 @@ bool CodeThorn::strictWeakOrderingIsSmaller(const AbstractValue& c1, const Abstr
       if(c1.getVariableId()!=c2.getVariableId()) {
         return c1.getVariableId()<c2.getVariableId();
       } else {
-        if(c1.getIntValue()!=c2.getIntValue()) {
+        //if(c1.getIntValue()!=c2.getIntValue()) {
           return c1.getIntValue()<c2.getIntValue();
-        } else {
+	//}
+	/*else {
           if(c1.getTypeSize()!=c2.getTypeSize())
             return c1.getTypeSize()<c2.getTypeSize();
           else
             return c1.getElementTypeSize()<c2.getElementTypeSize();
         }
+	*/
       }
     } else if(c1.isPtrSet() && c2.isPtrSet()) {
       if(c1.getPtrSetSize()!=c2.getPtrSetSize()) {
@@ -538,9 +542,9 @@ bool CodeThorn::strictWeakOrderingIsSmaller(const AbstractValue& c1, const Abstr
 bool CodeThorn::strictWeakOrderingIsEqual(const AbstractValue& c1, const AbstractValue& c2) {
   if(c1.getValueType()==c2.getValueType()) {
     if(c1.isConstInt() && c2.isConstInt())
-      return c1.getIntValue()==c2.getIntValue() && c1.getTypeSize()==c2.getTypeSize();
+      return c1.getIntValue()==c2.getIntValue() /*&& c1.getTypeSize()==c2.getTypeSize()*/;
     else if(c1.isPtr() && c2.isPtr()) {
-      return c1.getVariableId()==c2.getVariableId() && c1.getIntValue()==c2.getIntValue() && c1.getTypeSize()==c2.getTypeSize() && c1.getElementTypeSize()==c2.getElementTypeSize();
+      return c1.getVariableId()==c2.getVariableId() && c1.getIntValue()==c2.getIntValue() /*&& c1.getTypeSize()==c2.getTypeSize() && c1.getElementTypeSize()==c2.getElementTypeSize()*/;
     } else if(c1.isFunctionPtr() && c2.isFunctionPtr()) {
       return c1.getLabel()==c2.getLabel();
     } else if(c1.isPtrSet() && c2.isPtrSet()) {
@@ -591,10 +595,10 @@ AbstractValue AbstractValue::operatorEq(AbstractValue other) const {
     return *this;
   } else if(isPtr() && other.isPtr()) {
     // element type size is not relevant in byteMode when comparing pointers
-    return AbstractValue(variableId==other.variableId && intValue==other.intValue && getTypeSize()==other.getTypeSize());
+    return AbstractValue(variableId==other.variableId && intValue==other.intValue /*&& getTypeSize()==other.getTypeSize()*/);
   } else if(isConstInt() && other.isConstInt()) {
     // includes case for two null pointer values
-    return AbstractValue(intValue==other.intValue && getTypeSize()==other.getTypeSize());
+    return AbstractValue(intValue==other.intValue /*&& getTypeSize()==other.getTypeSize()*/);
   } else if((isPtr() && other.isNullPtr()) || (isNullPtr() && other.isPtr()) ) {
     return AbstractValue(0);
   } else {
@@ -616,7 +620,7 @@ AbstractValue AbstractValue::operatorLess(AbstractValue other) const {
   if(isPtr() && other.isPtr()) {
     // check is same memory region
     if(variableId==other.variableId) {
-      return AbstractValue(intValue<other.intValue && getTypeSize()==other.getTypeSize());
+      return AbstractValue(intValue<other.intValue /*&& getTypeSize()==other.getTypeSize()*/);
     } else {
       // incompatible pointer comparison (can be true or false)
       return AbstractValue::createTop();
@@ -829,8 +833,8 @@ string AbstractValue::toString(CodeThorn::VariableIdMapping* vim) const {
         <<variableId.toUniqueString(vim)
         <<","
         <<getIntValue()
-        <<","
-        <<getElementTypeSize()
+        //<<","
+        //<<getElementTypeSize()
         <<")";
       return ss.str();
       //    } else {
@@ -923,6 +927,7 @@ AbstractValue::ValueType AbstractValue::getValueType() const {
   return valueType;
 }
 
+/*
 CodeThorn::TypeSize AbstractValue::getTypeSize() const {
   if(typeSize==0)
     return getElementTypeSize();
@@ -941,6 +946,7 @@ CodeThorn::TypeSize AbstractValue::getElementTypeSize() const {
 void AbstractValue::setElementTypeSize(CodeThorn::TypeSize typeSize) {
   this->elementTypeSize=typeSize;
 }
+*/
 
 AbstractValue AbstractValue::getIndexValue() const { 
   if(isTop()||isBot()) {
@@ -1034,6 +1040,33 @@ AbstractValue AbstractValue::operatorUnaryMinus() {
   return tmp;
 }
 
+AbstractValue AbstractValue::operatorAdd(AbstractValue& a,AbstractValue& b, AbstractValue elementSize) {
+  if(a.isPtr()) {
+    AbstractValue offset=operatorMul(b,elementSize);
+    return operatorAdd(a,offset);
+  } else if(b.isPtr()) {
+    AbstractValue offset=operatorMul(a,elementSize);
+    return operatorAdd(b,offset);
+  } else {
+    return operatorAdd(a,b);
+  }
+}
+
+AbstractValue AbstractValue::operatorSub(AbstractValue& a,AbstractValue& b, AbstractValue elementSize) {
+  if(a.isPtr() && b.isPtr()) {
+    AbstractValue diffVal=operatorSub(a,b);
+    return operatorMul(diffVal,elementSize);
+  } else if(a.isPtr()) {
+    AbstractValue offset=operatorMul(b,elementSize);
+    return operatorSub(a,offset);
+  } else if(b.isPtr()) {
+    AbstractValue offset=operatorMul(a,elementSize);
+    return operatorSub(b,offset);
+  } else {
+    return operatorSub(a,b);
+  }
+}
+
 AbstractValue AbstractValue::operatorAdd(AbstractValue& a,AbstractValue& b) {
   if(a.isTop() || b.isTop())
     return Top();
@@ -1043,31 +1076,11 @@ AbstractValue AbstractValue::operatorAdd(AbstractValue& a,AbstractValue& b) {
     return a;
   if(a.isPtr() && b.isConstInt()) {
     AbstractValue val=a;
-    if(byteMode) {
-      int pointerElementSize=0;
-      if(a.getElementTypeSize()>0) {
-        pointerElementSize=a.getElementTypeSize();
-      } else {
-        pointerElementSize=_variableIdMapping->getElementSize(a.getVariableId());
-      }
-      val.intValue+=b.intValue*pointerElementSize;
-    } else {
-      val.intValue+=b.intValue;
-    }
+    val.intValue+=b.intValue;
     return val;
   } else if(a.isConstInt() && b.isPtr()) {
     AbstractValue val=b;
-    if(byteMode) {
-      int pointerElementSize=0;
-      if(b.getElementTypeSize()>0) {
-        pointerElementSize=b.getElementTypeSize();
-      } else {
-        pointerElementSize=_variableIdMapping->getElementSize(b.getVariableId());
-      }
-      val.intValue+=a.intValue*pointerElementSize;
-    } else {
-      val.intValue+=a.intValue;
-    }
+    val.intValue+=a.intValue;
     return val;
   } else if(a.isPtr() && b.isPtr()) {
     if(strictChecking)
@@ -1429,28 +1442,3 @@ AbstractValueSet& CodeThorn::operator+=(AbstractValueSet& s1, AbstractValueSet& 
   return s1;
 }
 
-CodeThorn::AlignedMemLoc AbstractValue::alignedMemLoc() {
-  AbstractValue arbitraryMemLoc=*this;
-  VariableId varId=arbitraryMemLoc.getVariableId();
-  long int offset=arbitraryMemLoc.getIndexIntValue();
-  ROSE_ASSERT(AbstractValue::_variableIdMapping);
-  long int pointerValueElemSize=arbitraryMemLoc.getElementTypeSize();
-  long int inStateElemSize=(long int)AbstractValue::_variableIdMapping->getElementSize(varId);
-  arbitraryMemLoc.setElementTypeSize(inStateElemSize); // adapt element size when storing in state
-  if(pointerValueElemSize!=inStateElemSize) {
-    if(inStateElemSize!=0) {
-      long int withinElementOffset=offset%inStateElemSize;
-      if(withinElementOffset!=0) {
-        // TODO: access within element with mod as byte offset
-        // need to know the element size of the pointer to mask it properly
-        arbitraryMemLoc.setValue(offset-withinElementOffset); // adjustment to element-aligned offset
-      }
-    }
-  }
-  return AlignedMemLoc(arbitraryMemLoc,offset);
-}
-
-AlignedMemLoc::AlignedMemLoc(AbstractValue av,int offset) {
-  memLoc=av;
-  this->offset=offset;
-}
