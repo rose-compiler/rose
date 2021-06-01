@@ -95,7 +95,7 @@ SmtSolver::reset() {
     stack_.clear();
     push();
     clearEvidence();
-    latestMemoizationId_ = 0;
+    latestMemoizationId_.reset();
     // stats not cleared
 }
 
@@ -353,7 +353,7 @@ SmtSolver::check() {
             mlog[DEBUG] <<"  " <<*expr <<"\n";
     }
     
-    latestMemoizationId_ = 0;
+    latestMemoizationId_.reset();
     latestMemoizationRewrite_.clear();
     clearEvidence();
     bool wasTrivial = false;
