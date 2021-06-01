@@ -55,6 +55,7 @@ public:
 
 public:
     void print(std::ostream &out, const std::string &prefix) const override;
+    void toYaml(std::ostream &out, const std::string &prefix) const override;
 };
 
 } // namespace

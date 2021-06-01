@@ -54,6 +54,22 @@ InstructionUnit::printSteps(const Settings::Ptr &settings, std::ostream &out, co
     }
 }
 
+void
+InstructionUnit::toYaml(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1,
+                        size_t stepOrigin, size_t maxSteps) const {
+    if (maxSteps > 0) {
+        out <<prefix1 <<"instruction: " <<StringUtility::yamlEscape(insn_->toString()) <<"\n";
+
+        if (sourceLocation()) {
+            std::string prefix(prefix1.size(), ' ');
+            out <<prefix <<"    source-file: " <<StringUtility::yamlEscape(sourceLocation().fileName().string()) <<"\n"
+                <<prefix <<"    source-line: " <<sourceLocation().line() <<"\n";
+            if (sourceLocation().column())
+                out <<prefix <<"    source-column: " <<*sourceLocation().column() <<"\n";
+        }
+    }
+}
+
 size_t
 InstructionUnit::nSteps() const {
     return 1;
