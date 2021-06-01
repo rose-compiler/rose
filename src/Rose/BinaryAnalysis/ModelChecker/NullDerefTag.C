@@ -5,6 +5,8 @@
 
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/SValue.h>
 
+#include <boost/lexical_cast.hpp>
+
 namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
 
 namespace Rose {
@@ -75,6 +77,38 @@ NullDerefTag::print(std::ostream &out, const std::string &prefix) const {
     out <<"\n";
 
     out <<prefix <<"  attempted " <<toFrom <<" address " <<*addr_ <<"\n";
+}
+
+void
+NullDerefTag::toYaml(std::ostream &out, const std::string &prefix1) const {
+    // No locks necessary since all the data members are read-only.
+    out <<prefix1 <<"weakness: null pointer dereference\n";
+    std::string prefix(prefix1.size(), ' ');
+
+    switch (ioMode_) {
+        case IoMode::READ:
+            out <<prefix <<"direction: read\n";
+            break;
+        case IoMode::WRITE:
+            out <<prefix <<"direction: write\n";
+            break;
+    }
+
+    switch (testMode_) {
+        case TestMode::OFF:
+            break;
+        case TestMode::MAY:
+            out <<prefix <<"test-mode: may\n";
+            break;
+        case TestMode::MUST:
+            out <<prefix <<"test-mode: must\n";
+            break;
+    }
+
+    if (insn_)
+        out <<prefix <<"instruction: " <<StringUtility::yamlEscape(insn_->toString()) <<"\n";
+
+    out <<prefix <<"memory-address: " <<StringUtility::yamlEscape(boost::lexical_cast<std::string>(*addr_)) <<"\n";
 }
 
 } // namespace

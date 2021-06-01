@@ -4,11 +4,13 @@
 #include <Rose/BinaryAnalysis/ModelChecker/ExternalFunctionUnit.h>
 
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/RiscOperators.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 #include <Rose/BinaryAnalysis/ModelChecker/SemanticCallbacks.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
+
 #include <boost/format.hpp>
-#include <Rose/BinaryAnalysis/Partitioner2/Function.h>
+#include <boost/lexical_cast.hpp>
 
 using namespace Sawyer::Message::Common;
 namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
@@ -54,6 +56,22 @@ ExternalFunctionUnit::printSteps(const Settings::Ptr &settings, std::ostream &ou
         out <<(boost::format("%s#%-6d no definition available\n")
                %prefix
                %stepOrigin);
+    }
+}
+
+void
+ExternalFunctionUnit::toYaml(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1,
+                                 size_t stepOrigin, size_t maxSteps) const {
+    if (maxSteps > 0) {
+        out <<prefix1 <<"definition: none available\n";
+
+        if (sourceLocation()) {
+            std::string prefix(prefix1.size(), ' ');
+            out <<prefix <<"    source-file: " <<StringUtility::yamlEscape(sourceLocation().fileName().string()) <<"\n"
+                <<prefix <<"    source-line: " <<sourceLocation().line() <<"\n";
+            if (sourceLocation().column())
+                out <<prefix <<"    source-column: " <<*sourceLocation().column() <<"\n";
+        }
     }
 }
 
