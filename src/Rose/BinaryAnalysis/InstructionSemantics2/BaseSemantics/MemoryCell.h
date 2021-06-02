@@ -4,7 +4,10 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Types.h>
+
 #include <Sawyer/Set.h>
+
+#include <boost/enable_shared_from_this.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/list.hpp>

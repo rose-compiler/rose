@@ -7,6 +7,8 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/MemoryState.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/RegisterState.h>
 
+#include <boost/enable_shared_from_this.hpp>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {

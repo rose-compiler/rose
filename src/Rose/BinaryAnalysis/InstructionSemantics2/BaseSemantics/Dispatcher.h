@@ -6,6 +6,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Types.h>
 #include <Rose/BinaryAnalysis/Registers.h>
 
+#include <boost/enable_shared_from_this.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/nvp.hpp>

@@ -8,6 +8,8 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/SValue.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/Util.h>
 
+#include <boost/enable_shared_from_this.hpp>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
