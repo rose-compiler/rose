@@ -9,10 +9,15 @@ class SgProject;
 namespace Rose {
 namespace AST {
 
-// Remove redundant (shareable) nodes from AST. Used when building multiple
-// translation units from the same command lines, and when serialized ASTs
-// are loaded from files.
+void load(SgProject *, std::list<std::string> const &);
+
 void merge(SgProject *);
+
+void shareRedundantNodes(SgProject *);
+void deleteIslands(SgProject *);
+void link(SgProject *);
+
+void consistency(SgProject *);
 
 }
 }
