@@ -8,6 +8,7 @@
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
 
 using namespace Sawyer::Message::Common;
 namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
@@ -63,6 +64,22 @@ FailureUnit::printSteps(const Settings::Ptr &settings, std::ostream &out, const 
         out <<(boost::format("%s#%-6d this step is automatic failure\n")
                %prefix
                %stepOrigin);
+    }
+}
+
+void
+FailureUnit::toYaml(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1,
+                    size_t stepOrigin, size_t maxSteps) const {
+    if (maxSteps > 0) {
+        out <<prefix1 <<"definition: automatic-failure\n";
+
+        if (sourceLocation()) {
+            std::string prefix(prefix1.size(), ' ');
+            out <<prefix <<"    source-file: " <<StringUtility::yamlEscape(sourceLocation().fileName().string()) <<"\n"
+                <<prefix <<"    source-line: " <<sourceLocation().line() <<"\n";
+            if (sourceLocation().column())
+                out <<prefix <<"    source-column: " <<*sourceLocation().column() <<"\n";
+        }
     }
 }
 

@@ -10,6 +10,7 @@
 #include <Rose/BinaryAnalysis/ModelChecker/SourceLister.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
 
 using namespace Sawyer::Message::Common;
 namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
@@ -74,6 +75,35 @@ BasicBlockUnit::printSteps(const Settings::Ptr &settings, std::ostream &out, con
                %prefix
                %(stepOrigin + i)
                %(insns[i]->toString()));
+    }
+}
+
+void
+BasicBlockUnit::toYaml(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1,
+                           size_t stepOrigin, size_t maxSteps) const {
+    // No lock necessary since the basic block pointer cannot be changed after construction. However, the BasicBlock API itself
+    // might not be thread safe.
+    ASSERT_not_null(bblock_);
+    out <<prefix1 <<"steps:\n";
+    std::string prefix(prefix1.size(), ' ');
+
+    std::vector<SgAsmInstruction*> insns = bblock_->instructions();
+    SourceLocation prevLoc;
+    for (size_t i = 0; i < insns.size() && maxSteps > 0; ++i, --maxSteps) {
+        SgAsmInstruction *insn = insns[i];
+        ASSERT_not_null(insn);
+
+        out <<prefix <<"  - instruction: " <<StringUtility::yamlEscape(insns[i]->toString()) <<"\n";
+
+        if (SourceLocation sloc = partitioner_.sourceLocations().get(insn->get_address())) {
+            if (sloc != prevLoc) {
+                out <<prefix <<"    source-file: " <<StringUtility::yamlEscape(sloc.fileName().string()) <<"\n"
+                    <<prefix <<"    source-line: " <<sloc.line() <<"\n";
+                if (sloc.column())
+                    out <<prefix <<"    source-column: " <<*sloc.column() <<"\n";
+                prevLoc = sloc;
+            }
+        }
     }
 }
 

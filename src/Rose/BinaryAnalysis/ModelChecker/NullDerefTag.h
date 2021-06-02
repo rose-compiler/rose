@@ -37,6 +37,7 @@ public:
 public:
     virtual std::string printableName() const override;
     virtual void print(std::ostream&, const std::string &prefix) const override;
+    virtual void toYaml(std::ostream&, const std::string &prefix) const override;
 };
 
 } // namespace

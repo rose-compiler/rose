@@ -221,6 +221,8 @@ yamlEscape(const std::string &s) {
     std::string escaped = cEscape(s);
     if (s.empty() || s != escaped) {
         return "\"" + escaped + "\"";
+    } else if (s.find(':') != std::string::npos) {
+        return "\"" + s + "\"";
     } else {
         return s;
     }

@@ -163,6 +163,24 @@ Path::print(const SettingsPtr &settings, std::ostream &out, const std::string &p
     }
 }
 
+void
+Path::toYaml(const SettingsPtr &settings, std::ostream &out, const std::string &prefix1, size_t maxSteps) const {
+    if (!isEmpty()) {
+        std::vector<PathNode::Ptr> vertices = nodes();
+        maxSteps = std::min(maxSteps, nSteps());
+        out <<prefix1 <<"path:\n";
+        std::string prefix(prefix1.size(), ' ');
+        size_t step = 0;
+        for (size_t i = 0; i < vertices.size() && maxSteps > 0; ++i) {
+            ExecutionUnit::Ptr unit = vertices[i]->executionUnit();
+            out <<prefix <<"  - vertex: " <<StringUtility::yamlEscape(vertices[i]->printableName()) <<"\n";
+            unit->toYaml(settings, out, prefix+"    ", step, maxSteps);
+            step += unit->nSteps();
+            maxSteps -= std::min(maxSteps, vertices[i]->nSteps());
+        }
+    }
+}
+
 } // namespace
 } // namespace
 } // namespace
