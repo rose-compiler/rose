@@ -6,6 +6,9 @@
 #include "unparser.h"
 //~ #include "Utf8.h"
 #include "sageGeneric.h"
+#include "sageInterfaceAda.h"
+
+namespace si = SageInterface;
 
 //~ using namespace std;
 
@@ -54,6 +57,14 @@ namespace
     SgVariableSymbol& sy = symOf(n);
 
     return SG_DEREF(sy.get_declaration());
+  }
+
+  const SgExprListExp* callArguments(const SgFunctionRefExp& n)
+  {
+    if (const SgCallExpression* callexp = isSgCallExpression(n.get_parent()))
+      return callexp->get_args();
+
+    return nullptr;
   }
 
   std::string
@@ -181,6 +192,7 @@ namespace
     {
       prn("others");
     }
+
 
     void handle(SgPntrArrRefExp& n)
     {
@@ -360,10 +372,24 @@ namespace
 
     void handle(SgFunctionRefExp& n)
     {
-      SgFunctionDeclaration& fundcl = SG_DEREF(n.getAssociatedFunctionDeclaration());
+      SgFunctionDeclaration& fundcl   = SG_DEREF(n.getAssociatedFunctionDeclaration());
+      SgScopeStatement*      dclscope = fundcl.get_scope();
+      const SgExprListExp*   args     = ctxRequiresScopeQualification ? callArguments(n) : nullptr;
+
+      // if args is not null check if the scope is implied with a derived type
+      if (args)
+      {
+        auto              primitiveArgs   = si::ada::primitiveParameterPositions(fundcl);
+        SgScopeStatement* overridingScope = si::ada::overridingScope(*args, primitiveArgs);
+
+        if (overridingScope)
+        {
+          dclscope = overridingScope;
+        }
+      }
 
       if (ctxRequiresScopeQualification)
-        prn(scopeQual(fundcl.get_scope()));
+        prn(scopeQual(dclscope));
 
       prn(nameOf(n));
     }
