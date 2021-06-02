@@ -298,6 +298,37 @@ namespace
     return find(n, dim);
   }
 
+  struct BaseTypeDecl : sg::DispatchHandler<SgDeclarationStatement*>
+  {
+      static
+      ReturnType find(SgType* n);
+
+      ReturnType
+      recurse(SgType* n);
+
+      void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
+      void handle(SgType& n) { /* not found */ }
+
+      void handle(SgNamedType& n)           { res = n.get_declaration(); }
+
+      void handle(SgAdaSubtype& n)          { res = recurse(n.get_base_type()); }
+      void handle(SgAdaDerivedType& n)      { res = recurse(n.get_base_type()); }
+      void handle(SgModifierType& n)        { res = recurse(n.get_base_type()); }
+  };
+
+
+  BaseTypeDecl::ReturnType
+  BaseTypeDecl::find(SgType* n)
+  {
+    return sg::dispatch(BaseTypeDecl{}, n);
+  }
+
+  BaseTypeDecl::ReturnType
+  BaseTypeDecl::recurse(SgType* n)
+  {
+    return find(n);
+  }
+
   void convertSymbolTablesToCaseSensitive_internal(SgNode* node)
   {
     using SymbolTableEntry    = std::pair<const SgName, SgSymbol*>;
@@ -327,6 +358,29 @@ namespace
       symap.insert(elTmp);
 
     ROSE_ASSERT(symap.size() == mapsize);
+  }
+
+  struct BaseScope : sg::DispatchHandler<const SgScopeStatement*>
+  {
+    static
+    ReturnType find(const SgScopeStatement* n);
+
+    void handle(const SgNode& n)           { SG_UNEXPECTED_NODE(n); }
+    void handle(const SgScopeStatement& n) { res = &n; }
+    void handle(const SgAdaPackageBody& n) { res = n.get_spec(); }
+  };
+
+  BaseScope::ReturnType
+  BaseScope::find(const SgScopeStatement* n)
+  {
+    return sg::dispatch(BaseScope{}, n);
+  }
+
+  bool isSameScope(const SgScopeStatement* lhs, const SgScopeStatement* rhs)
+  {
+    ROSE_ASSERT(lhs && rhs);
+
+    return (lhs == rhs) || (BaseScope::find(lhs) == BaseScope::find(rhs));
   }
 }
 
@@ -371,7 +425,6 @@ namespace ada
   {
     return range(SG_DEREF(n));
   }
-
 
   bool unconstrained(const SgArrayType& ty)
   {
@@ -419,7 +472,6 @@ namespace ada
     if (!body) return nullptr;
 
     return isSgAdaPackageBodyDecl(body->get_parent());
-
   }
 
   SgAdaPackageBodyDecl&
@@ -759,6 +811,11 @@ namespace
 
     return computeLiteral(res, base, exp);
   }
+
+  bool isNamedArgument(const SgExpression* expr)
+  {
+    return isSgActualArgumentExpression(expr);
+  }
 } // anonymous
 
 
@@ -870,7 +927,123 @@ long double convertRealLiteral(const char* img)
   return computeLiteral(res, base, exp);
 }
 
-} // Ada
+std::vector<PrimitiveParameterDesc>
+primitiveParameterPositions(const SgFunctionDeclaration& dcl)
+{
+  std::vector<PrimitiveParameterDesc> res;
+  size_t                              parmpos = 0;
+  const SgScopeStatement*             scope = dcl.get_scope();
+
+  for (const SgInitializedName* parm : SG_DEREF(dcl.get_parameterList()).get_args())
+  {
+    ROSE_ASSERT(parm);
+    const SgDeclarationStatement* tydcl = BaseTypeDecl::find(parm->get_type());
+
+    if (tydcl && isSameScope(tydcl->get_scope(), scope))
+      res.emplace_back(parmpos, parm);
+
+    ++parmpos;
+  }
+
+  return res;
+}
+
+std::vector<PrimitiveParameterDesc>
+primitiveParameterPositions(const SgFunctionDeclaration* dcl)
+{
+  ROSE_ASSERT(dcl);
+
+  return primitiveParameterPositions(*dcl);
+}
+
+size_t
+positionalArgumentLimit(const SgExprListExp& args)
+{
+  using ConstIterator = SgExpressionPtrList::const_iterator;
+
+  const SgExpressionPtrList& arglst = args.get_expressions();
+  ConstIterator              aa     = arglst.begin();
+  ConstIterator              pos    = std::find_if(aa, arglst.end(), isNamedArgument);
+
+  return std::distance(aa, pos);
+}
+
+size_t
+positionalArgumentLimit(const SgExprListExp* args)
+{
+  ROSE_ASSERT(args);
+
+  return positionalArgumentLimit(*args);
+}
+
+
+SgScopeStatement*
+overridingScope(const SgExprListExp& args, const std::vector<PrimitiveParameterDesc>& primitiveArgs)
+{
+  using PrimitiveParmIterator = std::vector<PrimitiveParameterDesc>::const_iterator;
+  using ArgumentIterator      = SgExpressionPtrList::const_iterator;
+
+  if (primitiveArgs.size() == 0)
+    return nullptr;
+
+  const SgExpressionPtrList& arglst      = args.get_expressions();
+  const size_t               posArgLimit = positionalArgumentLimit(args);
+  PrimitiveParmIterator      aa          = primitiveArgs.begin();
+  PrimitiveParmIterator      zz          = primitiveArgs.end();
+
+  // check for all positional arguments
+  while ((aa != zz) && (aa->pos() < posArgLimit))
+  {
+    const SgExpression*           arg = arglst.at(aa->pos());
+
+    if (const SgDeclarationStatement* tydcl = BaseTypeDecl::find(arg->get_type()))
+      return tydcl->get_scope();
+
+    ++aa;
+  }
+
+  ROSE_ASSERT(posArgLimit <= arglst.size());
+  ArgumentIterator firstNamed = arglst.begin() + posArgLimit;
+  ArgumentIterator argLimit   = arglst.end();
+
+  // check all named arguments
+  while (aa != zz)
+  {
+    const std::string parmName = SG_DEREF(aa->name()).get_name();
+    auto              sameNamePred = [&parmName](const SgExpression* arg) -> bool
+                                     {
+                                       const SgActualArgumentExpression* actarg = isSgActualArgumentExpression(arg);
+
+                                       ROSE_ASSERT(actarg);
+                                       return parmName == std::string{actarg->get_argument_name()};
+                                     };
+    ArgumentIterator argpos   = std::find_if(firstNamed, argLimit, sameNamePred);
+
+    ++aa;
+
+    if (argpos == argLimit)
+      continue;
+
+    if (const SgDeclarationStatement* tydcl = BaseTypeDecl::find((*argpos)->get_type()))
+      return tydcl->get_scope();
+  }
+
+  // not found
+  return nullptr;
+}
+
+
+SgScopeStatement*
+overridingScope(const SgExprListExp* args, const std::vector<PrimitiveParameterDesc>& primitiveArgs)
+{
+  ROSE_ASSERT(args);
+
+  return overridingScope(*args, primitiveArgs);
+}
+
+
+
+} // ada
 } // SageInterface
 
 namespace sg

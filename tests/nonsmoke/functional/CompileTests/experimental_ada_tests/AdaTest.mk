@@ -121,6 +121,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   floating_point_definition.ads        \
   goto_loop_v2.adb                     \
   hello_world.adb                      \
+  inherited_primitive_operation.adb    \
   io_test.adb                          \
   linkedlists.ads                      \
   modular_type_definition.ads          \
