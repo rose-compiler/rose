@@ -9,6 +9,7 @@
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <Combinatorics.h>
 
+#include <boost/enable_shared_from_this.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/nvp.hpp>
