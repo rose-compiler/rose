@@ -193,6 +193,10 @@ namespace
       prn("others");
     }
 
+    void handle(SgNullptrValExp&)
+    {
+      prn("null");
+    }
 
     void handle(SgPntrArrRefExp& n)
     {
