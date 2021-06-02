@@ -49,7 +49,7 @@ commandLineSwitches(Settings &settings) {
                         ->with("must", TestMode::MUST))
               .doc("Method by which to test for null pointer dereferences during memory read operations. Memory addresses "
                    "are tested during read operations to determine if the address falls within the \"null page\", which "
-                   "consists of the lowest memory addresses as defined by @s{null-page-max}. The choices are:"
+                   "consists of the lowest memory addresses as defined by @s{max-null-page}. The choices are:"
 
                    "@named{off}{Do not check for null pointer dereferences during read operations." +
                    std::string(TestMode::OFF == settings.nullRead ? " This is the default." : "") + "}"
@@ -67,7 +67,7 @@ commandLineSwitches(Settings &settings) {
                         ->with("must", TestMode::MUST))
               .doc("Method by which to test for null pointer dereferences during memory write operations. Memory addresses "
                    "are tested during write operations to determine if the address falls within the \"null page\", which "
-                   "consists of the lowest memory addresses as defined by @s{null-page-max}. The choices are:"
+                   "consists of the lowest memory addresses as defined by @s{max-null-page}. The choices are:"
 
                    "@named{off}{Do not check for null pointer dereferences during write operations." +
                    std::string(TestMode::OFF == settings.nullWrite ? " This is the default." : "") + "}"
