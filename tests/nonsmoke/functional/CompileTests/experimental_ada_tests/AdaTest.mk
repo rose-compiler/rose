@@ -128,6 +128,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   multidimensional_array.adb           \
   multidimensional_array.ads           \
   nested_package.ads                   \
+  nullptr.adb                          \
   opaque.ads                           \
   ordinary_type_declaration_range_constraint.ads    \
   package_renaming_declaration.ads     \
