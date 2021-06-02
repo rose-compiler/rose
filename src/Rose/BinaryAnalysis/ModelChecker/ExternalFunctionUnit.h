@@ -51,6 +51,8 @@ public:
     virtual std::string printableName() const override;
     virtual void printSteps(const SettingsPtr&, std::ostream&, const std::string &prefix,
                             size_t stepOrigin, size_t maxSteps) const override;
+    virtual void toYaml(const SettingsPtr&, std::ostream&, const std::string &prefix,
+                        size_t stepOrigin, size_t maxSteps) const override;
     virtual size_t nSteps() const override;
     virtual Sawyer::Optional<rose_addr_t> address() const override;
     virtual std::vector<TagPtr> execute(const SettingsPtr&, const SemanticCallbacksPtr&,

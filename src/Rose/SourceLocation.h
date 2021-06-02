@@ -45,7 +45,7 @@ namespace Rose {
  *  @li This class exists in the Rose name space instead of the global name space.
  *
  *  @li The names used in this class are camelCase instead of a weird mixture of camelCase and underscores.  All names follow
- *  the ROSE Binary Analysis naming convention.  In particular, property accessors are nouns without a leading "get".
+ *  the ROSE Binary %Analysis naming convention.  In particular, property accessors are nouns without a leading "get".
  *
  *  Line and column numbers are conventionally one-origin values, but nothing in this API or the implementation prevents
  *  you from storing line zero and/or column zero. You're free to use zero-origin number if you desire.

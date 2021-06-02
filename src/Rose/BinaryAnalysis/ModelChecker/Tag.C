@@ -46,6 +46,11 @@ NameTag::print(std::ostream &out, const std::string &prefix) const {
     out <<prefix <<printableName() <<"\n";
 }
 
+void
+NameTag::toYaml(std::ostream &out, const std::string &prefix) const {
+    out <<prefix <<StringUtility::yamlEscape(name_) <<"\n";
+}
+
 } // namespace
 } // namespace
 } // namespace

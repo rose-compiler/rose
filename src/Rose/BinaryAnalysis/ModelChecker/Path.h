@@ -133,6 +133,16 @@ public:
      *  Thread safety: This method is thread safe although the output from this thread may interleave with output from other
      *  threads. */
     void print(const SettingsPtr&, std::ostream&, const std::string &prefix, size_t maxSteps) const;
+
+    /** Multi-line output of path.
+     *
+     *  Prints details about a path in YAML format. Up to @p maxSteps steps are printed.
+     *
+     *  Thread safety: This method is thread safe although the output from this thread may interleave with output from other
+     *  threads. */
+    void toYaml(const SettingsPtr&, std::ostream&, const std::string &prefix, size_t maxSteps) const;
+
+
 };
 
 } // namespace
