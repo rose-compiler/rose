@@ -1312,7 +1312,6 @@ namespace CodeThorn {
 		// handle special cases of: char a[]="abc"; char a[4]="abc";
 		// TODO: a[5]="ab";
 		SAWYER_MESG(logger[TRACE])<<"Initalizing (array) with string: "<<stringValNode->unparseToString()<<endl;
-		//size_t stringLen=stringValNode->get_value().size();
 		if(getVariableIdMapping()->getNumberOfElements(initDeclVarId)==0) {
 		  VariableId stringLiteralId=getVariableIdMapping()->getStringLiteralVariableId(stringValNode);
 		  size_t stringLiteralMemoryRegionSize=getVariableIdMapping()->getNumberOfElements(stringLiteralId);
@@ -1321,10 +1320,21 @@ namespace CodeThorn {
 		} else {
 		  SAWYER_MESG(logger[TRACE])<<"Determined size of array from array variable (containing string memory region) size: "<<getVariableIdMapping()->getNumberOfElements(initDeclVarId)<<endl;
 		}
-		SgType* variableType=initializer->get_type(); // for char and wchar
-		setElementSize(initDeclVarId,variableType); // this must be a pointer, if it's not an array
+		//SgType* variableType=initializer->get_type(); // for char and wchar
+		//setElementSize(initDeclVarId,variableType); // this must be a pointer, if it's not an array
+		CodeThorn::TypeSize stringLen=stringValNode->get_value().size();
+		CodeThorn::TypeSize memRegionNumElements=getVariableIdMapping()->getNumberOfElements(initDeclVarId);
 		PState newPState=*currentEState.pstate();
 		_analyzer->initializeStringLiteralInState(newPState,stringValNode,initDeclVarId);
+		// handle case that string is shorter than allocated memory
+		if(stringLen+1<memRegionNumElements) {
+		  CodeThorn::TypeSize numDefaultValuesToAdd=memRegionNumElements-stringLen+1;
+		  for(CodeThorn::TypeSize  i=0;i<numDefaultValuesToAdd;i++) {
+		  AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(stringLen+i),AbstractValue(1));
+		  // set default init value for past string elements of reserved array
+		  initializeMemoryLocation(label,&newPState,newArrayElementAddr,AbstractValue(0));
+		  }
+		}
 		ConstraintSet cset=*currentEState.constraints();
 		return createEState(targetLabel,cs,newPState,cset);
 	      }
@@ -1434,7 +1444,7 @@ namespace CodeThorn {
 	      SAWYER_MESG(logger[TRACE])<<"DECLARING ARRAY of unknown size: "<<decl->unparseToString()<<":"<<length<<endl;
 	      AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(0)); // use elem index 0
 	      // set default init value
-	      reserveMemoryLocation(label,&newPState,newArrayElementAddr); // TODO: reserve summary memory location	    
+	      reserveMemoryLocation(label,&newPState,newArrayElementAddr);
 	    }
 
 	  } else if(getVariableIdMapping()->isOfClassType(initDeclVarId)) {

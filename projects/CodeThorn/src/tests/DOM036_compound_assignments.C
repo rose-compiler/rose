@@ -34,9 +34,11 @@ int main() {
   p=&s.u;
   (*p)+=1;
   printf("*p=%d\n",*p);
-  (*p)++; // not working
+  //(*p)++; // not working
+  (*p)=(*p)+1;
   printf("*p=%d\n",*p);
-  s.u++;
+  //s.u++;
+  s.u=s.u+1;
   printf("s.u=%d\n",s.u);
   if((*p+=g(1)) > 0) {
     f=f+1;
