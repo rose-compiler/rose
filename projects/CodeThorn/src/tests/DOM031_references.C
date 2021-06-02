@@ -13,4 +13,10 @@ int main() {
   printf("a:%d, b:%d, ra:%d, rb:%d\n",a,b,ra,rb);
   ra=ra+4;
   printf("a:%d, b:%d, ra:%d, rb:%d\n",a,b,ra,rb);
+  ++a;
+  printf("a:%d, b:%d, ra:%d, rb:%d\n",a,b,ra,rb);
+  ra++;
+  printf("a:%d, b:%d, ra:%d, rb:%d\n",a,b,ra,rb);
+  --rb;
+  printf("a:%d, b:%d, ra:%d, rb:%d\n",a,b,ra,rb);
 }

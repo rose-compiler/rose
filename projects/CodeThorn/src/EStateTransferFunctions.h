@@ -269,15 +269,22 @@ namespace CodeThorn {
     std::string getInterpreterModeFileName();
     void setInterpreterModeFileName(std::string);
 
-    // reserves memory location and sets as value 'undef'
+    // reserves memory location at address memLoc and sets as value 'undef'
     void reserveMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc);
-    // reserves and initializes memory location with newValue
+    // reserves and initializes memory location at address memLoc with newValue
     void initializeMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue);
+    // handles addresses only
     AbstractValue readFromMemoryLocation(Label lab, const PState* pstate, AbstractValue memLoc);
-    void writeToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue);
-
+    // handles only references (models indirection)
     AbstractValue readFromReferenceMemoryLocation(Label lab, const PState* pstate, AbstractValue memLoc);
+    // handles both addresses and references
+    AbstractValue readFromAnyMemoryLocation(Label lab, const PState* pstate, AbstractValue memLoc);
+    // handles addresses only
+    void writeToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue);
+    // handles only references (models indirection)
     void writeToReferenceMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue);
+    // handles both addresses and references
+    void writeToAnyMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue);
 
     // memory must already be reserved (hence, this function is redundant if reserves is used before)
     void writeUndefToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc);
