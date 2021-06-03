@@ -361,7 +361,6 @@ namespace CodeThorn {
         }
         evalResultValue=evalResult.value();
       }
-      // above evaluateExpression does not use constraints (par3==false). Therefore top vars remain top vars
       initializeMemoryLocation(currentLabel,&newPState,AbstractValue::createAddressOfVariable(formalParameterVarId),evalResultValue);
       ++i;++j;
     }
@@ -652,7 +651,7 @@ namespace CodeThorn {
       ++pIter;
     }        
     SgExpression* actualParameterExpr=*pIter;
-    // general case: the actual argument is an arbitrary expression (including a single variable)
+    // general case: the argument is an arbitrary expression (including a single variable)
     list<SingleEvalResultConstInt> evalResultList=evaluateExpression(actualParameterExpr,currentEState);
     if(evalResultList.size()==0) {
       SAWYER_MESG(logger[FATAL])<<"Internal error: no state computed for argument evaluation at: "<<SgNodeHelper::sourceLineColumnToString(getLabeler()->getNode(edge.source()))<<endl;
@@ -1035,18 +1034,17 @@ namespace CodeThorn {
     //ConstraintSet newCSet;
     if(edge.isType(EDGE_TRUE) || edge.isType(EDGE_FALSE)) {
       return transferTrueFalseEdge(nextNodeToAnalyze2, edge, estate);
-    } else if(SgNodeHelper::isPrefixIncDecOp(nextNodeToAnalyze2) || SgNodeHelper::isPostfixIncDecOp(nextNodeToAnalyze2)) {
-      cout<<"DEBUG: transferIncDecOp: DETECTED (P1)"<<endl;
+      } else if(SgNodeHelper::isPrefixIncDecOp(nextNodeToAnalyze2) || SgNodeHelper::isPostfixIncDecOp(nextNodeToAnalyze2)) {
       return transferIncDecOp(nextNodeToAnalyze2,edge,estate);
     } else if(SgAssignOp* assignOp=isSgAssignOp(nextNodeToAnalyze2)) {
       return transferAssignOp(assignOp, edge, estate);
     } else if(isSgCompoundAssignOp(nextNodeToAnalyze2)) {
-      logger[ERROR] <<"compound assignment operators not supported. Use normalization to eliminate these operators."<<endl;
+      logger[ERROR] <<"compound assignment operators not supported. Normalization required."<<endl;
       logger[ERROR] <<"expr: "<<nextNodeToAnalyze2->unparseToString()<<endl;
       exit(1);
     } else if(isSgConditionalExp(nextNodeToAnalyze2)) {
       // this is meanwhile modeled in the ExprAnalyzer - TODO: utilize as expr-stmt.
-      logger[ERROR] <<"found conditional expression outside expression (should have been dispatched to ExprAnalyzer)."<<endl;
+      logger[ERROR] <<"found conditional expression outside expression. Normalization required."<<endl;
       exit(1);
     } else {
       return transferIdentity(edge,estate);
@@ -1063,7 +1061,11 @@ namespace CodeThorn {
 
 
   std::list<EState> EStateTransferFunctions::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, const EState* estate) {
-    SAWYER_MESG(logger[TRACE]) << "transferAssignOp:"<<nextNodeToAnalyze2->unparseToString()<<endl;
+
+    if(_analyzer->getOptionsRef().info.printTransferFunctionInfo) {
+      //printTransferFunctionInfo(TransferFunctionCode::Assign,nextNodeToAnalyze2,edge,estate);
+      cout<<"subtransfer     : transferAssignOp      : "<<nextNodeToAnalyze2->unparseToString()<<endl;
+    }
     auto pList=evalAssignOpMemUpdates(nextNodeToAnalyze2, edge, estate); // adjusts adresses to element size of memory region
     std::list<EState> estateList;
     for (auto p : pList) {
@@ -1073,12 +1075,13 @@ namespace CodeThorn {
       Label label=estate.label();
       PState newPState=*estate.pstate();
       ConstraintSet cset=*estate.constraints();
-      if(lhsAddress.isReferenceVariableAddress())
-	writeToReferenceMemoryLocation(label,&newPState,lhsAddress,rhsValue);
-      else
-	writeToMemoryLocation(label,&newPState,lhsAddress,rhsValue);
+      writeToAnyMemoryLocation(label,&newPState,lhsAddress,rhsValue);
       CallString cs=estate.callString;
       estateList.push_back(createEState(edge.target(),cs,newPState,cset));
+    }
+    if(estateList.size()==0) {
+      // no effects recorded, create copy-state to continue
+      estateList.push_back(createEState(edge.target(),estate->callString,*estate->pstate(),*estate->constraints()));
     }
     SAWYER_MESG(logger[TRACE]) << "transferAssignOp: finished"<<endl;
     return estateList;
@@ -1111,15 +1114,48 @@ namespace CodeThorn {
     }
   }
   
+  // wrapper function for calling eval functions for inc/dec ops at top-level AST
+  // THIS FUNCTION IS NOT USED YET because evaluateExpression is still using transferIncDecOp (which calls this function)
+  list<EState> EStateTransferFunctions::transferIncDecOpEvalWrapper(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate) {
+    list<SingleEvalResultConstInt> res;
+    switch(nextNodeToAnalyze2->variantT()) {
+      case V_SgPlusPlusOp:
+      case V_SgMinusMinusOp:
+	res=evaluateExpression(nextNodeToAnalyze2,*estate,MODE_VALUE);
+	break;
+      default:
+	logger[ERROR] << "Operator-AST:"<<AstTerm::astTermToMultiLineString(nextNodeToAnalyze2,2)<<endl;
+	logger[ERROR] << "Operator:"<<SgNodeHelper::nodeToString(nextNodeToAnalyze2)<<endl;
+	logger[ERROR] << "transferIncDecOp (top level): programmatic error in handling of inc/dec operators."<<endl;
+	exit(1);
+    }
+    ROSE_ASSERT(res.size()==1);
+    list<SingleEvalResultConstInt>::iterator i=res.begin();
+#if 1
+    // this is the better way, only forwarding the estate
+    EState newEState=(*i).estate;
+    return elistify(newEState);
+#else
+    // this builds a new estate (resets cs, in case this is not passed through all eval functions yet)
+    PState newPState=*estate.pstate();
+    CallString cs=estate->callString;
+    ConstraintSet cset=*estate.constraints();
+    return elistify(createEState(edge.target(),cs,newPState,cset));
+#endif
+  }
+
+  // used for top-level evaluation
   list<EState> EStateTransferFunctions::transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate) {
-    cout<<"DEBUG: transferIncDecOp P2:"<<nextNodeToAnalyze2->unparseToString()<<endl;
+    if(_analyzer->getOptionsRef().info.printTransferFunctionInfo) {
+      printTransferFunctionInfo(TransferFunctionCode::IncDec,nextNodeToAnalyze2,edge,estate);
+    }
     EState currentEState=*estate;
     CallString cs=estate->callString;
     SgNode* nextNodeToAnalyze3=SgNodeHelper::getUnaryOpChild(nextNodeToAnalyze2);
     VariableId var;
     if(checkIfVariableAndDetermineVarId(nextNodeToAnalyze3,var)) {
       list<SingleEvalResultConstInt> res=evaluateExpression(nextNodeToAnalyze3,currentEState);
-      ROSE_ASSERT(res.size()==1); // must hold for currently supported limited form of ++,--
+      ROSE_ASSERT(res.size()==1);
       list<SingleEvalResultConstInt>::iterator i=res.begin();
       EState estate=(*i).estate;
       PState newPState=*estate.pstate();
@@ -2780,7 +2816,7 @@ namespace CodeThorn {
 
   list<SingleEvalResultConstInt>
   EStateTransferFunctions::evalAssignOp(SgAssignOp* node,
-					SingleEvalResultConstInt lhsResult,
+					SingleEvalResultConstInt lhsResult /* ignored */,
 					SingleEvalResultConstInt rhsResult,
 					EState estate, EvalMode mode) {
     list<SingleEvalResultConstInt> resultList;
@@ -2788,7 +2824,7 @@ namespace CodeThorn {
     Edge fakeEdge;
     ROSE_ASSERT(_analyzer);
     ROSE_ASSERT(_analyzer->getEStateTransferFunctions());
-    std::list<EState> estateList=_analyzer->getEStateTransferFunctions()->transferAssignOp(node,fakeEdge,&estate);
+    std::list<EState> estateList=transferAssignOp(node,fakeEdge,&estate);
     ROSE_ASSERT(estateList.size()==1);
     res.result=rhsResult.result; // value result of assignment
     res.estate=*estateList.begin();
@@ -3202,8 +3238,7 @@ namespace CodeThorn {
     SingleEvalResultConstInt res;
     res.estate=estate;
     // L.R : L evaluates to address, R evaluates to offset value (a struct member always evaluates to an offset)
-    //SAWYER_MESG(logger[DEBUG])<<"DotOp: lhs:"<<lhsResult.result.toString(_variableIdMapping)<<" rhs: "<<rhsResult.result.toString(_variableIdMapping)<<endl;
-    //cout<<"DotOp: "<<node->unparseToString()<<":"<<lhsResult.result.toString(_variableIdMapping)<<"."<<rhsResult.result.toString(_variableIdMapping)<<endl;
+    SAWYER_MESG(logger[TRACE])<<"DotOp: lhs:"<<lhsResult.result.toString(_variableIdMapping)<<" rhs: "<<rhsResult.result.toString(_variableIdMapping)<<endl;
   
     if(mode==EStateTransferFunctions::MODE_EMPTY_STATE) {
       // arbitrary value
@@ -3212,36 +3247,24 @@ namespace CodeThorn {
       return resultList;
     }
 
-    // lhs of dot-op should never be 0 (except if uninitialized memory is used)
-    bool continueExec=checkAndRecordNullPointer(lhsResult.result, estate.label());
-    if(continueExec) {
-      AbstractValue address=AbstractValue::operatorAdd(lhsResult.result,rhsResult.result); // data member offset
-      // only if rhs is *not* a dot-operator, needs the value be
-      // read. Otherwise this is not the end of the access path and only the address is computed.
-      if(true||!isSgDotExp(SgNodeHelper::getRhs(node))) {
-	// reached end of dot sequence (a.b.<here>c)
-	switch(mode) {
-	case MODE_VALUE:
-	  SAWYER_MESG(logger[TRACE])<<"Dot op: reading from struct location."<<address.toString(_variableIdMapping)<<endl;
-	  res.result=readFromMemoryLocation(estate.label(),estate.pstate(),address);
-	  break;
-	case MODE_ADDRESS:
-	  res.result=address;
-	  break;
-	case MODE_EMPTY_STATE:
-	  throw CodeThorn::Exception("Interal error: EStateTransferFunctions::evalArrowOp: empty state mode.");
-	  // intentionally no default case, all cases must be represented
-	} 
-      } else {
-	// evaluation of dot sequence (a.<here>b.c)
-	res.result=address;
-      }
-      resultList.push_back(res);
-      return resultList;
-    } else {
-      list<SingleEvalResultConstInt> empty;
-      return empty;
-    }
+    //bool continueExec=checkAndRecordNullPointer(lhsResult.result, estate.label());
+    AbstractValue address=AbstractValue::operatorAdd(lhsResult.result,rhsResult.result); // data member offset
+    SAWYER_MESG(logger[TRACE])<<"DotOp: address:"<<address.toString(_variableIdMapping)<<endl;
+    switch(mode) {
+    case MODE_VALUE:
+      res.result=readFromMemoryLocation(estate.label(),estate.pstate(),address);
+      break;
+    case MODE_ADDRESS:
+      res.result=address;
+      break;
+    case MODE_EMPTY_STATE:
+      throw CodeThorn::Exception("Interal error: EStateTransferFunctions::evalDotOp: empty state mode.");
+      // intentionally no default case, all cases must be represented
+    } 
+
+    SAWYER_MESG(logger[TRACE])<<"DotOp: result:"<<res.result.toString(_variableIdMapping)<<endl;
+    resultList.push_back(res);
+    return resultList;
   }
 
   bool EStateTransferFunctions::checkAndRecordNullPointer(AbstractValue derefOperandValue, Label label) {

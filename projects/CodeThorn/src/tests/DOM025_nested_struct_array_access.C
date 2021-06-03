@@ -13,11 +13,17 @@ struct S1 {
 struct S1 global1;
 
 int main() {
-  char x=1;
+  int x=1;
+  //x=2;
+  printf("1 x:%d\n",x);
+  global1.member1_2=10;
+  printf("2 global1.member1_2:%d\n",global1.member1_2);
   // assignment NORM(LHS)=NUMBER
-  global1.member1_1.member2_1[2]=1;
+  global1.member1_1.member2_1[2]=2;
+  printf("3 global1.member1_1.member2_1[2]:%d\n",global1.member1_1.member2_1[2]);
   // assignment VAR=NORM(RHS)
+  printf("4 x:%d\n",x);
   x=global1.member1_1.member2_1[2];
   // expression: NORM(FUNCTION-ARG)
-  printf("%d\n",global1.member1_1.member2_1[2]);
+  printf("5 x:%d\n",x);
 }
