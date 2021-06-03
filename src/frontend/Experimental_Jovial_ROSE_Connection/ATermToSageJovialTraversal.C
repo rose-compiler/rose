@@ -378,6 +378,8 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
 
    ATerm t_precision, t_scale_spec, t_frac_spec, t_formula;
 
+   expr = nullptr;
+
    if (ATmatch(term, "BITSINBYTE")) {
 #if PRINT_WARNINGS
       cerr << "WARNING UNIMPLEMENTED: IntegerMachineParameter - BITSINBYTE\n";
@@ -385,7 +387,9 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
    }
    else if (ATmatch(term, "BITSINWORD")) {
      expr = SageBuilder::buildVarRefExp("BITSINWORD", SageBuilder::topScopeStack());
-     setSourcePosition(expr, term);
+   }
+   else if (ATmatch(term, "BYTESINWORD")) {
+     expr = SageBuilder::buildVarRefExp("BYTESINWORD", SageBuilder::topScopeStack());
    }
    else if (ATmatch(term, "LOCSINWORD")) {
 #if PRINT_WARNINGS
@@ -402,8 +406,7 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
       } else return ATfalse;
    }
 
-   //TODO: 'BYTESINWORD'              -> IntegerMachineParameter {cons("BYTESINWORD")}
-   //      'BITSINPOINTER'            -> IntegerMachineParameter {cons("BITSINPOINTER")}
+   //TODO: 'BITSINPOINTER'            -> IntegerMachineParameter {cons("BITSINPOINTER")}
    //      'INTPRECISION'             -> IntegerMachineParameter {cons("INTPRECISION")}
    //      'FLOATPRECISION'           -> IntegerMachineParameter {cons("FLOATPRECISION")}
    //      'FIXEDPRECISION'           -> IntegerMachineParameter {cons("FIXEDPRECISION")}
@@ -432,6 +435,9 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
       } else return ATfalse;
    }
    else return ATfalse;
+
+   ROSE_ASSERT(expr);
+   setSourcePosition(expr, term);
 
    return ATtrue;
 }
