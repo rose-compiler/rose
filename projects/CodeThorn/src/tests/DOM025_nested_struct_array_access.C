@@ -2,22 +2,31 @@
 
 #include <stdio.h>
 
-struct S2 {
-  char member2_1[4];
-  int member2_2;
+struct T {
+  char tm1[4];
+  int tm2;
 };
-struct S1 {
-  struct S2 member1_1;
-  int member1_2;
+struct S {
+  struct T sm1;
+  int sm2;
 };
-struct S1 global1;
+
+struct S var;
 
 int main() {
-  char x=1;
+  int x=1;
+  //x=2;
+  printf("1 x:%d\n",x);
+  var.sm2=10;
+  printf("2 var.sm2:%d\n",var.sm2);
+  var.sm1.tm2=100;
+  printf("3 var.sm1.tm2:%d\n",var.sm1.tm2);
   // assignment NORM(LHS)=NUMBER
-  global1.member1_1.member2_1[2]=1;
+  var.sm1.tm1[2]=2;
+  printf("4 var.sm1.tm1[2]:%d\n",var.sm1.tm1[2]);
   // assignment VAR=NORM(RHS)
-  x=global1.member1_1.member2_1[2];
+  printf("5 x:%d\n",x);
+  x=var.sm1.tm1[2];
   // expression: NORM(FUNCTION-ARG)
-  printf("%d\n",global1.member1_1.member2_1[2]);
+  printf("6 x:%d\n",x);
 }

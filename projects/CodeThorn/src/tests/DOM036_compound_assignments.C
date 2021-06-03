@@ -34,14 +34,15 @@ int main() {
   p=&s.u;
   (*p)+=1;
   printf("*p=%d\n",*p);
-  (*p)++; // not working
+  (*p)++;
   printf("*p=%d\n",*p);
   s.u++;
   printf("s.u=%d\n",s.u);
-  if((*p+=g(1)) > 0) {
-    f=f+1;
+  (*p)+=1;
+  (*p)+=2000;
+  if((*p)>0) {
+    f=f+100;
   }
-  // x=2,y=30,z=16, f=14, s.u=5
   int t=s.u;
   printf("x=%d,y=%d,z=%d,f=%d,t=%d\n",x,y,z,f,t);
   return 0;
