@@ -1191,6 +1191,34 @@ namespace CodeThorn {
     }
   }
 
+  // struct address is already determined, but no memory is reserved
+  void EStateTransferFunctions::declareUninitializedStruct(Label lab,PState* pstate,AbstractValue structAddress, VariableId structVarId) {
+    //cout<<"DEBUG: declareUninitializedStruct:"<<structAddress.toString()<<endl;
+    ROSE_ASSERT(structVarId.isValid());
+    SgType* structType=getVariableIdMapping()->getType(structVarId);
+    ROSE_ASSERT(structType);
+    auto structMemberList=getVariableIdMapping()->getRegisteredClassMemberVars(structType);
+    for(auto varId : structMemberList) {
+      AbstractValue dmAddress=createStructDataMemberAddress(structAddress,varId);
+      SgType* dmType=getVariableIdMapping()->getType(varId);
+      if(isSgClassType(dmType)) {
+	// nested struct type
+	declareUninitializedStruct(lab,pstate,dmAddress,varId);
+      } else {
+	//cout<<"DEBUG: declare data member: "<<varId.toString()<<":"<<dmAddress.toString()<<endl;
+	reserveMemoryLocation(lab,pstate,dmAddress);
+      }
+    }
+  }
+
+  AbstractValue EStateTransferFunctions::createStructDataMemberAddress(AbstractValue structAddress,VariableId varId) {
+    ROSE_ASSERT(getVariableIdMapping()->isMemberVariable(varId));
+    TypeSize offset=getVariableIdMapping()->getOffset(varId);
+    AbstractValue offsetAV(offset);
+    AbstractValue structDataMemberAddr=AbstractValue::operatorAdd(structAddress,offsetAV);
+    return structDataMemberAddr;
+  }
+  
   EState EStateTransferFunctions::analyzeVariableDeclaration(SgVariableDeclaration* decl,EState currentEState, Label targetLabel) {
 
     /*
@@ -1496,7 +1524,8 @@ namespace CodeThorn {
 	    AbstractValue pointerVal=AbstractValue::createAddressOfVariable(initDeclVarId);
 	    SAWYER_MESG(logger[TRACE])<<"declaration of struct: "<<getVariableIdMapping()->getVariableDeclaration(initDeclVarId)->unparseToString()<<" : "<<pointerVal.toString(getVariableIdMapping())<<endl;
 	    // TODO: STRUCT VARIABLE DECLARATION
-	    reserveMemoryLocation(label,&newPState,pointerVal);
+	    //reserveMemoryLocation(label,&newPState,pointerVal);
+	    declareUninitializedStruct(label,&newPState,pointerVal,initDeclVarId);
 	  } else if(getVariableIdMapping()->isOfPointerType(initDeclVarId)) {
 	    SAWYER_MESG(logger[TRACE])<<"PState: upd: pointer"<<endl;
 	    // create pointer value and set it to top (=any value possible (uninitialized pointer variable declaration))
@@ -2348,12 +2377,6 @@ namespace CodeThorn {
       //cout<<"DEBUG: evalExp at: "<<AstTerm::astTermWithNullValuesToString(node)<<endl;
     }
 
-#if 0
-    if(SgNodeHelper::isPostfixIncDecOp(node)) {
-      cerr << "Error: incdec-op not supported in conditions."<<endl;
-      exit(1);
-    }
-#endif
     if(SgStatementExpression* gnuExtensionStmtExpr=isSgStatementExpression(node)) {
       //cout<<"WARNING: ignoring GNU extension StmtExpr."<<endl;
       res.result=AbstractValue::createTop();
@@ -3252,7 +3275,12 @@ namespace CodeThorn {
     SAWYER_MESG(logger[TRACE])<<"DotOp: address:"<<address.toString(_variableIdMapping)<<endl;
     switch(mode) {
     case MODE_VALUE:
-      res.result=readFromMemoryLocation(estate.label(),estate.pstate(),address);
+      if(isSgDotExp(node->get_parent())) {
+	res.result=address;
+      } else {
+	res.result=readFromMemoryLocation(estate.label(),estate.pstate(),address);
+	SAWYER_MESG(logger[TRACE])<<"DotOp: reading from memory:@"<<address.toString()<<" : "<<res.result.toString()<<endl;
+      }
       break;
     case MODE_ADDRESS:
       res.result=address;

@@ -22,14 +22,14 @@ echo "------------------------------------------------"
 
 function DomainTests {
     testNumbers=`echo {001..028}`
-    testNumbers2=`echo {030..043}`
+    testNumbers2=`echo {030..044}`
     testNumbers+=" $testNumbers2"
     echo "Scheduled tests: $testNumbers"
     echo "Skipping 029"
     numPass=0
     numWarn=0
     numFail=0
-    numWarnExpected=7
+    numWarnExpected=8
     numFailExpected=0
     for testNumber in $testNumbers; do
         benchmarkprefix=$TESTDIR/DOM${testNumber};

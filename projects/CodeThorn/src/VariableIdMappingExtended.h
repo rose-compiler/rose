@@ -123,12 +123,14 @@ namespace CodeThorn {
     CodeThorn::TypeSizeMapping typeSizeMapping;
     std::unordered_map<SgType*,CodeThorn::TypeSize> _typeSize;
 
+  public:
     // maintain class members for each type (required for operations such as copy struct)
     std::vector<VariableId> getRegisteredClassMemberVars(SgType*);
     bool isRegisteredClassMemberVar(SgType*,VariableId);
     void registerClassMemberVar(SgType*,VariableId);
     std::map<SgType*,std::vector<VariableId> > classMembers;
 
+  private:
     bool isMemberVariableDeclaration(SgVariableDeclaration*);
     // determines all size information obtainable from SgType and sets values in varidinfo
     // 3rd param can be a nullptr, in which case no decl is determined and no aggregate initializer is checked for size (this is the case for formal function parameters)
