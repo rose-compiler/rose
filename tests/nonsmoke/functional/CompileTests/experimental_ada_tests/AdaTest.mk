@@ -110,6 +110,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   based_numbers.ads                    \
   choice_parameter_specification.adb   \
   complex.ads                          \
+  default_function_argument.adb        \
   dynamic_array.adb                    \
   empty_private.ads                    \
   entry_call.adb                       \
