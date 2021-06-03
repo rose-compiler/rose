@@ -138,9 +138,7 @@ namespace
 
   struct AdaEnumeratorUnparser : AdaDetailsUnparser
   {
-    AdaEnumeratorUnparser(Unparse_Ada& unp, SgUnparse_Info& inf, std::ostream& outp)
-    : AdaDetailsUnparser(unp, inf, outp)
-    {}
+    using AdaDetailsUnparser::AdaDetailsUnparser;
 
     void operator()(SgInitializedName* enumerator)
     {
@@ -155,9 +153,7 @@ namespace
 
   struct AdaParamUnparser : AdaDetailsUnparser
   {
-    AdaParamUnparser(Unparse_Ada& unp, SgUnparse_Info& inf, std::ostream& outp)
-    : AdaDetailsUnparser(unp, inf, outp)
-    {}
+    using AdaDetailsUnparser::AdaDetailsUnparser;
 
     void handle(SgVariableDeclaration& n)
     {
@@ -180,6 +176,12 @@ namespace
       unparseModifiers(*this, n);
 
       unparser.unparseType(primary.get_type(), info);
+
+      if (SgInitializer* init = primary.get_initializer())
+      {
+        prn(" := ");
+        unparser.unparseExpression(init, info);
+      }
     }
 
     void operator()(SgVariableDeclaration* s)
@@ -201,9 +203,7 @@ namespace
 
   struct AdaElseUnparser : AdaDetailsUnparser
   {
-    AdaElseUnparser(Unparse_Ada& unp, SgUnparse_Info& inf, std::ostream& outp)
-    : AdaDetailsUnparser(unp, inf, outp)
-    {}
+    using AdaDetailsUnparser::AdaDetailsUnparser;
 
     void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
 

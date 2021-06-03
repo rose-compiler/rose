@@ -5,6 +5,8 @@
 
 #include "sage3basic.hhh"
 
+#include <tuple>
+
 namespace SageInterface
 {
 
@@ -86,6 +88,61 @@ namespace ada
   bool isFunctionTryBlock(const SgTryStmt& n);
   bool isFunctionTryBlock(const SgTryStmt* n);
   /// @}
+
+  struct PrimitiveParameterDesc : std::tuple<size_t, const SgInitializedName*>
+  {
+    using base = std::tuple<size_t, const SgInitializedName*>;
+    using base::base;
+
+    /// the position within the parameter list
+    size_t
+    pos()  const { return std::get<0>(*this); }
+
+    /// the parameters name in form of an SgInitializedName
+    const SgInitializedName*
+    name() const { return std::get<1>(*this); }
+  };
+
+  /// returns the descriptions for parameters that make an operations primitive
+  /// @{
+  std::vector<PrimitiveParameterDesc>
+  primitiveParameterPositions(const SgFunctionDeclaration&);
+
+  std::vector<PrimitiveParameterDesc>
+  primitiveParameterPositions(const SgFunctionDeclaration*);
+  /// @}
+
+  /// returns the overriding scope of a primitive function based on the
+  ///   associated arguments as defined by the argument list \ref args and
+  ///   the primitive argument positions defined by \ref primitiveArgs.
+  /// \return the scope of an overriding argument (incl. the original associated type);
+  ///         nullptr if no such scope can be found.
+  /// \note does not resolve conflicting scopes
+  /// \see also \ref primitiveParameterPositions
+  /// @{
+  SgScopeStatement*
+  overridingScope(const SgExprListExp& args, const std::vector<PrimitiveParameterDesc>& primitiveArgs);
+
+  SgScopeStatement*
+  overridingScope(const SgExprListExp* args, const std::vector<PrimitiveParameterDesc>& primitiveArgs);
+  /// @}
+
+  /// finds the one past the last positional argument (aka the first named argument position).
+  /// \return one past the index of the last positional argument.
+  /// \details
+  ///   examples:
+  ///   - argument lists without positional arguments => 0
+  ///   - argument lists without named arguments => args.size()
+  ///   - empty argument lists => 0
+  ///   - (1, 2, LEN => 3) => 2
+  /// @{
+  size_t
+  positionalArgumentLimit(const SgExprListExp& args);
+
+  size_t
+  positionalArgumentLimit(const SgExprListExp* args);
+  /// @}
+
 
   /// converts all Ada style comments to C++ comments
   // \todo mv into Ada to C++ converter

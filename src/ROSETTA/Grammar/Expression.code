@@ -7888,15 +7888,19 @@ SgConstructorInitializer::post_construction_initialization()
      ROSE_ASSERT(p_expression_type != NULL);
      if (p_declaration == NULL)
         {
+         // PP (4/17/21) : Added exception for Ada
+         //   In Ada, SgConstructorInitializer nodes can be used with
+         //   typedef types and built in types (e.g., x := new Integer'(2); )
+          const bool isAdaCode = SageInterface::is_Ada_language();
+
        // This can be NULL for the case of an undeclared constructor.
        // 12/16/12 PC added case of SgJavaParameterizedType... Note that Strictly speaking,
        // an SgJavaParameterizedType is a class.  However, this is not the case in the current
        // SAGE Representation.
        //01/24/15 added case of SgJavaQualifiedType...
 
-       // PP (4/17/21) : Added exception for typedef types to support
        // DQ (1/19/2019): This is failing in the copyAST tests for test2005_24.C
-          if ( !((isSgJavaParameterizedType(p_expression_type) || isSgJavaQualifiedType(p_expression_type) || isSgTypedefType(p_expression_type) || isSgClassType(p_expression_type) != NULL) || (p_associated_class_unknown == true)) )
+          if ( !((isAdaCode || isSgJavaParameterizedType(p_expression_type) || isSgJavaQualifiedType(p_expression_type) || isSgClassType(p_expression_type) != NULL) || (p_associated_class_unknown == true)) )
              {
                printf ("In SgConstructorInitializer::post_construction_initialization(): What is this failing case?  p_expression_type = %p \n",p_expression_type);
                if (p_expression_type != NULL)
@@ -7905,7 +7909,7 @@ SgConstructorInitializer::post_construction_initialization()
                   }
              }
 
-          ROSE_ASSERT( (isSgJavaParameterizedType(p_expression_type) || isSgJavaQualifiedType(p_expression_type) || isSgTypedefType(p_expression_type) || isSgClassType(p_expression_type) != NULL) || (p_associated_class_unknown == true) );
+          ROSE_ASSERT( isAdaCode || (isSgJavaParameterizedType(p_expression_type) || isSgJavaQualifiedType(p_expression_type) || isSgTypedefType(p_expression_type) || isSgClassType(p_expression_type) != NULL) || (p_associated_class_unknown == true) );
         }
 
   // DQ (11/15/2006): avoid setting newArgs this late in the process.
