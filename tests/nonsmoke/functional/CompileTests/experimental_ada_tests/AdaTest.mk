@@ -110,6 +110,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   based_numbers.ads                    \
   choice_parameter_specification.adb   \
   complex.ads                          \
+  default_function_argument.adb        \
   dynamic_array.adb                    \
   empty_private.ads                    \
   entry_call.adb                       \
@@ -121,12 +122,14 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   floating_point_definition.ads        \
   goto_loop_v2.adb                     \
   hello_world.adb                      \
+  inherited_primitive_operation.adb    \
   io_test.adb                          \
   linkedlists.ads                      \
   modular_type_definition.ads          \
   multidimensional_array.adb           \
   multidimensional_array.ads           \
   nested_package.ads                   \
+  nullptr.adb                          \
   opaque.ads                           \
   ordinary_type_declaration_range_constraint.ads    \
   package_renaming_declaration.ads     \
