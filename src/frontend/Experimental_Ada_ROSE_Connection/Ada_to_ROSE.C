@@ -312,7 +312,7 @@ namespace
 
       case A_Pragma:                  // Asis.Elements
 
-      case Not_An_Element: /* break; */ // Nil_Element
+      case Not_An_Element:  // Nil_Element
       case A_Path:                    // Asis.Statements
       case An_Association:            // Asis.Expressions
       default:
@@ -412,7 +412,7 @@ namespace
                Unit_ID             Corresponding_Body;
                Unit_List           Subunits;
           */
-          /* break; */
+
           break;
         }
 
@@ -433,7 +433,7 @@ namespace
                Unit_List           Subunits;
           */
 
-          /* break; */
+
           break;
         }
 
@@ -493,7 +493,7 @@ namespace
           break;
         }
 
-      case Not_A_Unit: /* break; */
+      case Not_A_Unit:
       case A_Package_Instance:
       case A_Generic_Package:
 
@@ -630,7 +630,7 @@ namespace
                      ADA_ASSERT (el.Element_Kind == An_Expression);
                      NameData imported = getName(el, ctx);
 
-                     res.push_back(imported.fullName);
+                     res.emplace_back(imported.fullName);
                    }
                  );
     }
@@ -642,7 +642,7 @@ namespace
 
   void addWithClausDependencies(Unit_Struct& unit, std::vector<AdaIdentifier>& res, AstContext ctx)
   {
-    ElemIdRange              range = idRange(unit.Context_Clause_Elements);
+    ElemIdRange range = idRange(unit.Context_Clause_Elements);
 
     traverseIDs(range, elemMap(), DependencyExtractor{res, ctx});
   }
@@ -657,8 +657,22 @@ namespace
 
     el.second.marked = true;
 
-    for (const std::string& depname : el.second.dependencies)
-      dfs(m, *m.find(UniqueUnitId{false, depname}), res);
+    for (const AdaIdentifier& depname : el.second.dependencies)
+    {
+      auto pos = m.find(UniqueUnitId{false, depname});
+
+      // functional and procedural units may have bodies
+      if (pos == m.end())
+        pos = m.find(UniqueUnitId{true, depname});
+
+      if (pos == m.end())
+      {
+        logError() << "unknown unit: " << depname << std::endl;
+        continue;
+      }
+
+      dfs(m, *pos, res);
+    }
 
     res.push_back(el.second.unit);
   }
@@ -711,7 +725,7 @@ namespace
 
       if (idpos != idmap.end())
       {
-        pos->second.dependencies.push_back(idpos->second->first.name);
+        pos->second.dependencies.emplace_back(idpos->second->first.name);
       }
       else if (parentID > 0)
       {
