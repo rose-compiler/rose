@@ -3,6 +3,7 @@
 
 #include <string>
 #include <map>
+#include <set>
 #include <vector>
 #include <boost/unordered_set.hpp>
 
@@ -191,6 +192,23 @@ namespace CodeThorn {
       std::string toString();
       std::string aggregateTypeToString();
       std::string variableScopeToString();
+
+      void addVariableDeclaration(SgVariableDeclaration*);
+      void setTypeFromInitializedName(SgInitializedName*); // for function parameters and used by addVariableDeclaration
+      std::set<SgVariableDeclaration*>* getVariableDeclarations();
+      /* returns 0 if there is none. If there is more than one
+	 initializer this function returns always the same one. The
+	 function getVariableDeclarations() can be used to investigate
+	 one-time definition rule violations. */
+      SgExpression* getInitializer();
+      SgType* getType(); // this abstracts away the problem of having multiple declarations of the same variable (extern, global, etc.)
+      SgVariableDeclaration* getVarDecl();
+      
+    private:
+      std::set<SgVariableDeclaration*> _varDecls;
+      SgExpression* _initializer; // is maintained as cached value
+      SgType* _varType;  // is maintained as cached value for variable declarations and formal function parameters
+      SgVariableDeclaration* _varDecl;
     };
     std::map<SgStringVal*,VariableId> sgStringValueToVariableIdMapping;
     std::map<VariableId, SgStringVal*> variableIdToSgStringValueMapping;

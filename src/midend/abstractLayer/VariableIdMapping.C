@@ -616,19 +616,15 @@ void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
   ROSE_ASSERT(sym);
   // ensure every symbol is only registered once (symbols of linked global variables can be processed multiple times)
   if(mappingSymToVarId.find(sym)==mappingSymToVarId.end()) {
-    // Due to arrays there can be multiple ids for one symbol (one id
-    //  for each array element but only one symbol for the whole array)
-    //  but there can not be multiple symbols for one id. The symbol count
-    //  therefore must be less than or equal to the id count:
-    ROSE_ASSERT(mappingSymToVarId.size() <= mappingVarIdToInfo.size());
     // If one of the sizes is zero, the other size have to be zero too:
     ROSE_ASSERT(mappingSymToVarId.size() == 0 ? mappingVarIdToInfo.size() == 0 : true);
     ROSE_ASSERT(mappingVarIdToInfo.size() == 0 ? mappingSymToVarId.size() == 0 : true);
 
     // Create new mapping entry:
     size_t newIdCode = mappingVarIdToInfo.size();
-    mappingSymToVarId[sym] = variableIdFromCode(newIdCode);
-    mappingVarIdToInfo[variableIdFromCode(newIdCode)].sym=sym;
+    VariableId newVarId=variableIdFromCode(newIdCode);
+    mappingSymToVarId[sym] = newVarId;
+    mappingVarIdToInfo[newVarId].sym=sym;
 
     ROSE_ASSERT(sym);
     // exclude temporary variables from link analysis
@@ -641,11 +637,9 @@ void VariableIdMapping::registerNewSymbol(SgSymbol* sym) {
         mappingGlobalVarNameToSymSet[name].insert(sym); // set of symbols that map to a variable with the same name
       }
     }
-
-    VariableId newVarId=variableId(sym);
     setNumberOfElements(newVarId,unknownSizeValue()); // unknown number of elements
     // Mapping in both directions must be possible:
-    ROSE_ASSERT(mappingSymToVarId.at(mappingVarIdToInfo[variableIdFromCode(newIdCode)].sym) == variableIdFromCode(newIdCode));
+    ROSE_ASSERT(mappingSymToVarId.at(mappingVarIdToInfo[newVarId].sym) == newVarId);
     ROSE_ASSERT(mappingVarIdToInfo[mappingSymToVarId.at(sym)].sym == sym);
   }
 }
@@ -666,20 +660,6 @@ VariableIdMapping::UniqueTemporaryVariableSymbol::UniqueTemporaryVariableSymbol(
 
 SgName VariableIdMapping::UniqueTemporaryVariableSymbol::get_name() const {
   return SgName(_tmpName);
-}
-
-VariableIdMapping::VariableIdInfo::VariableIdInfo():
-  sym(0),
-  numberOfElements(VariableIdMapping::unknownSizeValue()),
-  elementSize(VariableIdMapping::unknownSizeValue()),
-  totalSize(VariableIdMapping::unknownSizeValue()),
-  offset(VariableIdMapping::unknownSizeValue()),
-  aggregateType(AT_UNKNOWN),
-  variableScope(VS_UNKNOWN),
-  isVolatileFlag(false),
-  relinked(false),
-  unspecifiedSize(false)
-{
 }
 
 VariableId::VariableId():_id(-1) {
@@ -751,38 +731,6 @@ VariableIdMapping::VariableIdInfo* VariableIdMapping::getVariableIdInfoPtr(Varia
 
 void VariableIdMapping::setVariableIdInfo(VariableId vid, VariableIdInfo vif) {
   mappingVarIdToInfo[vid]=vif;
-}
-
-std::string VariableIdMapping::VariableIdInfo::aggregateTypeToString() {
-  switch(aggregateType) {
-  case AT_UNKNOWN:
-    return "unknown";
-  case AT_SINGLE:
-    return "single";
-  case AT_ARRAY:
-    return "array";
-  case AT_STRUCT:
-    return "struct";
-  case AT_STRING_LITERAL:
-    return "string";
-  }
-  return "undefined-aggregate-type-enum";
-}
-
-std::string VariableIdMapping::VariableIdInfo::variableScopeToString() {
-  switch(variableScope) {
-  case VS_UNKNOWN:
-    return "unknown";
-  case VS_LOCAL:
-    return "local";
-  case VS_GLOBAL:
-    return "global";
-  case VS_MEMBER:
-    return "member";
-  case VS_FUNPARAM:
-    return "parameter";
-  }
-  return "undefined-variable-scope-enum";
 }
 
 VariableIdMapping::VariableIdSet VariableIdMapping::determineVariableIdsOfVariableDeclarations(set<SgVariableDeclaration*> varDecls) {
@@ -914,4 +862,92 @@ void VariableIdMapping::registerStringLiterals(SgNode* root) {
       }
     }
   }
+}
+
+VariableIdMapping::VariableIdInfo::VariableIdInfo():
+  sym(0),
+  numberOfElements(VariableIdMapping::unknownSizeValue()),
+  elementSize(VariableIdMapping::unknownSizeValue()),
+  totalSize(VariableIdMapping::unknownSizeValue()),
+  offset(VariableIdMapping::unknownSizeValue()),
+  aggregateType(AT_UNKNOWN),
+  variableScope(VS_UNKNOWN),
+  isVolatileFlag(false),
+  relinked(false),
+  unspecifiedSize(false),
+  _initializer(0),
+  _varType(0),
+  _varDecl(0)
+{
+}
+
+std::string VariableIdMapping::VariableIdInfo::aggregateTypeToString() {
+  switch(aggregateType) {
+  case AT_UNKNOWN:
+    return "unknown";
+  case AT_SINGLE:
+    return "single";
+  case AT_ARRAY:
+    return "array";
+  case AT_STRUCT:
+    return "struct";
+  case AT_STRING_LITERAL:
+    return "string";
+  }
+  return "undefined-aggregate-type-enum";
+}
+
+std::string VariableIdMapping::VariableIdInfo::variableScopeToString() {
+  switch(variableScope) {
+  case VS_UNKNOWN:
+    return "unknown";
+  case VS_LOCAL:
+    return "local";
+  case VS_GLOBAL:
+    return "global";
+  case VS_MEMBER:
+    return "member";
+  case VS_FUNPARAM:
+    return "parameter";
+  }
+  return "undefined-variable-scope-enum";
+}
+
+void VariableIdMapping::VariableIdInfo::addVariableDeclaration(SgVariableDeclaration* varDecl) {
+  if(_varDecls.find(varDecl)==_varDecls.end()) {
+    _varDecls.insert(varDecl);
+    if(_initializer==nullptr) {
+      SgExpression* init=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(varDecl);
+      _initializer=init;
+      _varType=nullptr; // ensure the varType is always obtained from the initialized var (see below)
+      _varDecl=nullptr;
+    }
+    // set the type from the very first declaration, but reset it if an initializer is found (see above)
+    if(_varType==nullptr) {
+      SgInitializedName* initName=SgNodeHelper::getInitializedNameOfVariableDeclaration(varDecl);
+      ROSE_ASSERT(initName);
+      setTypeFromInitializedName(initName);
+      _varDecl=varDecl;
+    }
+  }
+}
+
+void VariableIdMapping::VariableIdInfo::setTypeFromInitializedName(SgInitializedName* initName) {
+  _varType=initName->get_type();
+}
+
+std::set<SgVariableDeclaration*>* VariableIdMapping::VariableIdInfo::getVariableDeclarations() {
+  return &_varDecls;
+}
+
+SgExpression* VariableIdMapping::VariableIdInfo::getInitializer() {
+  return _initializer;
+}
+
+SgType* VariableIdMapping::VariableIdInfo::getType() {
+  return _varType;
+}
+
+SgVariableDeclaration* VariableIdMapping::VariableIdInfo::getVarDecl() {
+  return _varDecl;
 }
