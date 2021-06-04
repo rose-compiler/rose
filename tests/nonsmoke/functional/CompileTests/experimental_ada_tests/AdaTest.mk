@@ -218,7 +218,7 @@ ASIS_PASSING_TESTS :=                               \
   $(ROSE_FAILING_ADA_TESTS)
 
 ASIS_FAILING_TESTS :=                               \
-  enum_subtype.adb                                  \
+  enum_derived_type.adb                             \
   entry_index_specification.adb                     \
   mpi.ads
 

@@ -882,7 +882,7 @@ void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
 
   std::vector<Unit_Struct*> units    = sortUnitsTopologically(adaUnit, AstContext{}.scope(astScope));
 
-  initializeAdaTypes(astScope);
+  initializePkgStandard(astScope);
   std::for_each(units.begin(), units.end(), UnitCreator{AstContext{}.scope(astScope)});
   clearMappings();
 

@@ -841,25 +841,30 @@ getTypeFoundation(const std::string& name, Declaration_Struct& decl, AstContext 
   return getTypeFoundation(name, def, ctx);
 }
 
-void initializeAdaTypes(SgGlobal& global)
+void initializePkgStandard(SgGlobal& global)
 {
+  // make available declarations from the package standard
+  // https://www.adaic.org/resources/add_content/standards/05rm/html/RM-A-1.html
+
   constexpr auto ADAMAXINT = std::numeric_limits<int>::max();
 
-  SgAdaPackageSpec& hiddenScope = mkLocatedNode<SgAdaPackageSpec>();
+  SgAdaPackageSpecDecl& stddecl = mkAdaPackageSpecDecl("Standard", global);
+  SgAdaPackageSpec&     stdspec = SG_DEREF(stddecl.get_definition());
+  SgType&               exceptionType = SG_DEREF(sb::buildOpaqueType("Exception", &stdspec));
 
-  hiddenScope.set_parent(&global);
-
-  SgType&           exceptionType = SG_DEREF(sb::buildOpaqueType("Exception", &hiddenScope));
+  stddecl.set_scope(&global);
 
   // \todo reconsider using a true Ada exception representation
   adaTypes()["EXCEPTION"]           = &exceptionType;
 
   adaTypes()["INTEGER"]             = sb::buildIntType();
   adaTypes()["CHARACTER"]           = sb::buildCharType();
+  adaTypes()["WIDE_CHARACTER"]      = sb::buildChar16Type();
+  adaTypes()["WIDE_WIDE_CHARACTER"] = sb::buildChar32Type();
   adaTypes()["LONG_INTEGER"]        = sb::buildLongType(); // Long int
   adaTypes()["LONG_LONG_INTEGER"]   = sb::buildLongLongType(); // Long long int
   adaTypes()["SHORT_INTEGER"]       = sb::buildShortType(); // Long long int
-  adaTypes()["SHORT_SHORT_INTEGER"] = declareIntSubtype("Short_Short_Integer", -(1 << 7), (1 << 7)-1, hiddenScope).get_type();
+  adaTypes()["SHORT_SHORT_INTEGER"] = declareIntSubtype("Short_Short_Integer", -(1 << 7), (1 << 7)-1, stdspec).get_type();
 
   // \todo items
   adaTypes()["FLOAT"]               = sb::buildFloatType();  // Float is a subtype of Real
@@ -868,8 +873,8 @@ void initializeAdaTypes(SgGlobal& global)
   adaTypes()["LONG_LONG_FLOAT"]     = sb::buildLongDoubleType(); // Long long Double?
 
   // \todo instead of ADAMAXINT a type attribute Integer'Last shall be set
-  adaTypes()["POSITIVE"]            = declareIntSubtype("Positive", 1, ADAMAXINT, hiddenScope).get_type();
-  adaTypes()["NATURAL"]             = declareIntSubtype("Natural",  0, ADAMAXINT, hiddenScope).get_type();
+  adaTypes()["POSITIVE"]            = declareIntSubtype("Positive", 1, ADAMAXINT, stdspec).get_type();
+  adaTypes()["NATURAL"]             = declareIntSubtype("Natural",  0, ADAMAXINT, stdspec).get_type();
 
   //\todo reconsider modeling Boolean as an enumeration of True and False
   adaTypes()["BOOLEAN"]             = sb::buildBoolType();
@@ -878,12 +883,12 @@ void initializeAdaTypes(SgGlobal& global)
   adaTypes()["STRING"]              = sb::buildStringType(sb::buildNullExpression());
 
   // Ada standard exceptions
-  adaExcps()["CONSTRAINT_ERROR"]    = &declareException("Constraint_Error", exceptionType, hiddenScope);
-  adaExcps()["PROGRAM_ERROR"]       = &declareException("Program_Error",    exceptionType, hiddenScope);
-  adaExcps()["STORAGE_ERROR"]       = &declareException("Storage_Error",    exceptionType, hiddenScope);
-  adaExcps()["TASKING_ERROR"]       = &declareException("Tasking_Error",    exceptionType, hiddenScope);
+  adaExcps()["CONSTRAINT_ERROR"]    = &declareException("Constraint_Error", exceptionType, stdspec);
+  adaExcps()["PROGRAM_ERROR"]       = &declareException("Program_Error",    exceptionType, stdspec);
+  adaExcps()["STORAGE_ERROR"]       = &declareException("Storage_Error",    exceptionType, stdspec);
+  adaExcps()["TASKING_ERROR"]       = &declareException("Tasking_Error",    exceptionType, stdspec);
 
-  adaPkgs()["STANDARD.ASCII"]       = &declarePackage("Ascii", hiddenScope);
+  adaPkgs()["STANDARD.ASCII"]       = &declarePackage("Ascii", stdspec);
   adaPkgs()["ASCII"]                = adaPkgs()["STANDARD.ASCII"];
 }
 
