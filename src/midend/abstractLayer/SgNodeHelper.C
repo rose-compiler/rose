@@ -29,23 +29,26 @@ SgVariableSymbol* SgNodeHelper::isFunctionParameterVariableSymbol(SgNode* node) 
 bool SgNodeHelper::isVariableSymbolInFunctionForwardDeclaration(SgNode* varsym) {
   if(!(varsym && isSgVariableSymbol(varsym)))
     return false;
-  SgInitializedName* initname=isSgVariableSymbol(varsym)->get_declaration();
-  SgDeclarationStatement* declstmt=initname->get_declaration();
-  SgFunctionParameterList* fpl=isSgFunctionParameterList(declstmt);
-  return fpl && SgNodeHelper::isForwardFunctionDeclaration(fpl->get_parent());
+  if(SgInitializedName* initname=isSgVariableSymbol(varsym)->get_declaration())
+    if(SgDeclarationStatement* declstmt=initname->get_declaration())
+      if(SgFunctionParameterList* fpl=isSgFunctionParameterList(declstmt))
+	return fpl && SgNodeHelper::isForwardFunctionDeclaration(fpl->get_parent());
+  return false;
 }
 
 SgDeclarationStatement* SgNodeHelper::findVariableDeclarationWithVariableSymbol(SgNode* node) {
   if(SgVariableSymbol* varsym=isSgVariableSymbol(node)) {
-    if(SgNodeHelper::isVariableSymbolInFunctionForwardDeclaration(node)) {
+    //if(SgNodeHelper::isVariableSymbolInFunctionForwardDeclaration(node)) {
       // in this case no Ast node representing a declaration exists in the ROSE AST.
-      return 0;
+    //  return 0;
+    //}
+    if(SgInitializedName* initname=varsym->get_declaration()) {
+      if(initname->get_definition())
+	return initname->get_definition();
+      else
+	return initname->get_declaration();
     }
-    SgInitializedName* initname=varsym->get_declaration();
-    ROSE_ASSERT(initname);
-    SgDeclarationStatement* declstmt=initname->get_declaration();
-    ROSE_ASSERT(declstmt);
-    return declstmt;
+    return 0;
   } else {
     throw CodeThorn::Exception("SgNodeHelper::getSgVariableDeclarationOfSgVariableSymbol : parameter not a SgVariableSymbol");
   }
