@@ -205,6 +205,15 @@ int main(int argc, char** argv)
 
      mprintf ("END.\n");
 
+     auto h = Rose::failedAssertionBehavior();
+
+     if (h == Rose::abortOnFailedAssertion)
+       std::cerr << "abort" << std::endl;
+     if (h == Rose::exitOnFailedAssertion)
+       std::cerr << "exit" << std::endl;
+     if (h == Rose::throwOnFailedAssertion)
+       std::cerr << "throw" << std::endl;
+
      try
      {
        Ada_ROSE_Translation::initialize(settings);

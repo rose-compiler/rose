@@ -1605,6 +1605,29 @@ namespace
     res = sg::dispatch(*this, n.get_parent());
   }
 
+  namespace
+  {
+    struct RootScope : sg::DispatchHandler<bool>
+    {
+      bool isStandardPkg(const SgAdaPackageSpec& n)
+      {
+        const SgAdaPackageSpecDecl& dcl = SG_DEREF(isSgAdaPackageSpecDecl(n.get_parent()));
+
+        return (dcl.get_name() == "Standard") && isSgGlobal(dcl.get_parent());
+      }
+
+      void handle(const SgNode& n)           { SG_UNEXPECTED_NODE(n); }
+      void handle(const SgScopeStatement&)   { res = false; }
+      void handle(const SgGlobal&)           { res = true; }
+      void handle(const SgAdaPackageSpec& n) { res = isStandardPkg(n); }
+    };
+
+    bool rootScope(const SgScopeStatement* n)
+    {
+      return sg::dispatch(RootScope{}, n);
+    }
+  };
+
   typedef std::vector<std::string> ScopePath;
 
   ScopePath
@@ -1617,7 +1640,7 @@ namespace
     ScopePath         res;
     SgScopeStatement* curr = &n;
 
-    while (!isSgGlobal(curr))
+    while (!rootScope(curr))
     {
       std::pair<std::string, bool> data = sg::dispatch(IsNamedScope(), curr);
 
