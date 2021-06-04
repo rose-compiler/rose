@@ -1,4 +1,4 @@
-procedure Enum_Subtype is
+procedure Enum_Derived_Type is
 
   type Rainbow is (Red, Orange, Yellow, Green, Blue, Indigo, Violet);
   type ColdColors is new Rainbow range Blue .. Violet;
@@ -6,4 +6,4 @@ procedure Enum_Subtype is
   BlueColor : ColdColors := Blue;
 begin
   null;
-end Enum_Subtype;
+end Enum_Derived_Type;

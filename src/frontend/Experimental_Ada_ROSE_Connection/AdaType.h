@@ -11,9 +11,9 @@
 namespace Ada_ROSE_Translation
 {
 
-/// initializes a hidden scope with built-in ada types
+/// initializes a standard package with built-in ada types
 /// \todo this should disappear as soon as the Standard package is included in Asis
-void initializeAdaTypes(SgGlobal& global);
+void initializePkgStandard(SgGlobal& global);
 
 /// represents a (partially) converted type
 struct TypeData
