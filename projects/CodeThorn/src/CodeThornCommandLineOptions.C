@@ -105,7 +105,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("edg:no_warnings", po::bool_switch(&ctOpt.edgNoWarningsFlag),"EDG frontend flag.")
     ("rose:ast:read", po::value<std::string>(&ctOpt.roseAstReadFileName),"read in binary AST from comma separated list (no spaces)")
     ("rose:ast:write", po::value<bool>(&ctOpt.roseAstWrite),"write AST binary file.")
-    ("rose:ast:merge", po::value<bool>(&ctOpt.roseAstWrite),"merge ASTs of read files (is implict for rose:ast:read).")
+    ("rose:ast:merge", po::value<bool>(&ctOpt.roseAstMerge),"merge ASTs of read files (is implict for rose:ast:read).")
     ;
 
   cegpraOptions.add_options()

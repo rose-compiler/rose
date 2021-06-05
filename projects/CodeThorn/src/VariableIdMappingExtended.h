@@ -24,6 +24,9 @@ namespace CodeThorn {
     void computeVariableSymbolMapping(SgProject* project, int maxWarningsCount = 3) override;
     void computeVariableSymbolMapping1(SgProject* project, int maxWarningsCount);
     void computeVariableSymbolMapping2(SgProject* project, int maxWarningsCount);
+
+    SgVariableDeclaration* getVariableDeclaration(VariableId varId) override;
+    
     // direct lookup
     CodeThorn::TypeSize getTypeSize(SgType* type);
     CodeThorn::TypeSize getTypeSize(VariableId varId);
@@ -54,6 +57,7 @@ namespace CodeThorn {
     std::list<SgVariableDeclaration*> getListOfGlobalVarDecls();
     std::list<SgVariableDeclaration*> getVariableDeclarationsOfVariableIdSet(VariableIdSet&);
 
+    void addVariableDeclaration(SgVariableDeclaration* decl);
     CodeThorn::TypeSize registerClassMembers(SgClassType* classType, CodeThorn::TypeSize offset);
     CodeThorn::TypeSize registerClassMembers(SgClassType* classType, std::list<SgVariableDeclaration*>& memberList, CodeThorn::TypeSize offset);
     void classMemberOffsetsToStream(std::ostream& os, SgType* type, std::int32_t level);

@@ -1573,22 +1573,28 @@ namespace CodeThorn {
       ROSE_ASSERT(getVariableIdMapping());
       CodeThorn::VariableIdSet setOfGlobalVars=getVariableIdMapping()->getSetOfGlobalVarIds();
       CodeThorn::VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,getVariableIdMapping());
-      std::set<VariableId> setOfFilteredGlobalVars=CodeThorn::setIntersect(setOfGlobalVars, setOfUsedVars);
-      uint32_t numFilteredVars=setOfGlobalVars.size()-setOfFilteredGlobalVars.size();
+      std::set<VariableId> setOfUsedGlobalVars=CodeThorn::setIntersect(setOfGlobalVars, setOfUsedVars);
+
+      uint32_t numFilteredVars=setOfGlobalVars.size()-setOfUsedGlobalVars.size();
       if(getAnalyzer()->_ctOpt.status) {
 	cout<< "STATUS: Number of global variables: "<<setOfGlobalVars.size()<<endl;
 	cout<< "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
       }
       std::list<SgVariableDeclaration*> relevantGlobalVariableDecls=(getAnalyzer()->_ctOpt.initialStateFilterUnusedVariables)?
-	getVariableIdMapping()->getVariableDeclarationsOfVariableIdSet(setOfFilteredGlobalVars)
+	getVariableIdMapping()->getVariableDeclarationsOfVariableIdSet(setOfUsedGlobalVars)
 	: getVariableIdMapping()->getVariableDeclarationsOfVariableIdSet(setOfGlobalVars)
 	;
       uint32_t declaredInGlobalState=0;
       for(auto decl : relevantGlobalVariableDecls) {
-	estate=analyzeVariableDeclaration(decl,estate,estate.label());
-	declaredInGlobalState++;
-	// this data is only used by globalVarIdByName to determine rers 'output' variable name in binary mode
-	globalVarName2VarIdMapping[getVariableIdMapping()->variableName(getVariableIdMapping()->variableId(decl))]=getVariableIdMapping()->variableId(decl);
+	if(decl) {
+	  //cout<<"DEBUG: init global decl: "<<decl->unparseToString()<<endl;
+	  estate=analyzeVariableDeclaration(decl,estate,estate.label());
+	  declaredInGlobalState++;
+	  // this data is only used by globalVarIdByName to determine rers 'output' variable name in binary mode
+	  globalVarName2VarIdMapping[getVariableIdMapping()->variableName(getVariableIdMapping()->variableId(decl))]=getVariableIdMapping()->variableId(decl);
+	} else {
+	  //cout<<"DEBUG: init global decl: 0 !!!"<<endl;
+	}
       }
       if(getAnalyzer()->_ctOpt.status) {
 	cout<< "STATUS: Number of unused variables filtered in initial state: "<<numFilteredVars<<endl;
