@@ -114,6 +114,7 @@ PathNode::execute(const Settings::Ptr &settings, const SemanticCallbacksPtr &sem
         return;                                         // already executed
     } else if (settings->rejectUnknownInsns && executionUnit_->containsUnknownInsn()) {
         SAWYER_MESG(mlog[DEBUG]) <<"  contains not-allowed \"unknown\" instruction(s)\n";
+        executionFailed_ = true;
         return;
     }
 
