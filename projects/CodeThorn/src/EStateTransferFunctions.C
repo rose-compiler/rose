@@ -1066,11 +1066,11 @@ namespace CodeThorn {
       //printTransferFunctionInfo(TransferFunctionCode::Assign,nextNodeToAnalyze2,edge,estate);
       cout<<"subtransfer     : transferAssignOp      : "<<nextNodeToAnalyze2->unparseToString()<<endl;
     }
-    auto pList=evalAssignOpMemUpdates(nextNodeToAnalyze2, edge, estate); // adjusts adresses to element size of memory region
+    auto pList=evalAssignOpMemUpdates(nextNodeToAnalyze2, edge, estate);
     std::list<EState> estateList;
     for (auto p : pList) {
       EState estate=p.first;
-      AbstractValue lhsAddress=p.second.first; // already adjusted to element size of memory region
+      AbstractValue lhsAddress=p.second.first;
       AbstractValue rhsValue=p.second.second;
       Label label=estate.label();
       PState newPState=*estate.pstate();
@@ -1249,15 +1249,14 @@ namespace CodeThorn {
 	SgInitializer* initializer=initName->get_initializer();
 	if(initializer) {
 	  //cout<<"DEBUG: decl-init: "<<decl->unparseToString()<<":AST:"<<AstTerm::astTermWithNullValuesToString(initializer)<<endl;
-	  // special case that initializer is an assignment (reusing transferAssignOp)
 	  if(SgAssignInitializer* assignInit=isSgAssignInitializer(initializer)) {
+	    //cout<<"DEBUG: decl-init: AssignInitializer: "<<assignInit->unparseToString()<<":AST:"<<AstTerm::astTermWithNullValuesToString(assignInit)<<endl;
 	    SgExpression* assignInitOperand=assignInit->get_operand_i();
 	    ROSE_ASSERT(assignInitOperand);
 	    if(SgAssignOp* assignOp=isSgAssignOp(assignInitOperand)) {
 	      SAWYER_MESG(logger[TRACE])<<"assignment in initializer: "<<decl->unparseToString()<<endl;
 	      //cout<<"DEBUG: assignment in initializer: "<<decl->unparseToString()<<endl;
 	      Edge dummyEdge(targetLabel,EDGE_FORWARD,targetLabel); // only target label is used in transferAssignOp
-	      //std::list<EState> estateList=transferAssignOp(assignOp, dummyEdge, &currentEState);
 	      CodeThorn::EStateTransferFunctions::MemoryUpdateList memUpdList=evalAssignOpMemUpdates(assignOp,dummyEdge,&currentEState);
 	      std::list<EState> estateList;
 	      ROSE_ASSERT(memUpdList.size()==1);
@@ -1308,14 +1307,14 @@ namespace CodeThorn {
 	    return createEState(targetLabel,cs,newPState,cset);
 	  }
 	  if(getVariableIdMapping()->isOfReferenceType(initDeclVarId)) {
-	    SAWYER_MESG(logger[TRACE])<<"initialization of reference:"<<SgNodeHelper::sourceFilenameLineColumnToString(decl)<<endl;
+	    SAWYER_MESG(logger[TRACE])<<"initialization of reference 1:"<<SgNodeHelper::sourceFilenameLineColumnToString(decl)<<endl;
 	    SgAssignInitializer* assignInit=isSgAssignInitializer(initializer);
 	    ROSE_ASSERT(assignInit);
 	    SgExpression* assignInitOperand=assignInit->get_operand_i();
 	    ROSE_ASSERT(assignInitOperand);
+	    SAWYER_MESG(logger[TRACE])<<"initialization of reference 2:"<<AstTerm::astTermWithNullValuesToString(assignInitOperand)<<endl;
 	    list<SingleEvalResultConstInt> res=evaluateLExpression(assignInitOperand,currentEState);
 
-	    SAWYER_MESG(logger[TRACE])<<"initialization of reference:"<<AstTerm::astTermWithNullValuesToString(assignInitOperand)<<endl;
 	    if(res.size()>1) {
 	      SAWYER_MESG(logger[ERROR])<<"Error: multiple results in rhs evaluation."<<endl;
 	      SAWYER_MESG(logger[ERROR])<<"expr: "<<SgNodeHelper::sourceLineColumnToString(decl)<<": "<<decl->unparseToString()<<endl;
@@ -1732,7 +1731,18 @@ namespace CodeThorn {
     EState currentEState=*estatePtr;
     SgNode* lhs=SgNodeHelper::getLhs(nextNodeToAnalyze2);
     SgNode* rhs=SgNodeHelper::getRhs(nextNodeToAnalyze2);
+
+#if 0
+    // for handling special case of C++ reference intialization (address is used below to copy reference)
+    EvalMode evalMode=getVariableIdMapping()->isOfReferenceType(lhsVar)?MODE_ADDRESS:MODE_VALUE;
+    list<SingleEvalResultConstInt> res=evaluateExpression(rhs,currentEState, evalMode);xxxx
+    if(evalMode==MODE_ADDRESS) {
+      cout<<"DEBUG: reference-init: res:"<<*res.begin().result.toString()<<endl;
+    }
+#else
     list<SingleEvalResultConstInt> res=evaluateExpression(rhs,currentEState, CodeThorn::EStateTransferFunctions::MODE_VALUE);
+#endif
+    
     for(list<SingleEvalResultConstInt>::iterator i=res.begin();i!=res.end();++i) {
       VariableId lhsVar;
       bool isLhsVar=checkIfVariableAndDetermineVarId(lhs,lhsVar);
@@ -2507,9 +2517,7 @@ namespace CodeThorn {
 
     ROSE_ASSERT(!dynamic_cast<SgBinaryOp*>(node) && !dynamic_cast<SgUnaryOp*>(node));
 
-    // ALL REMAINING CASES DO NOT GENERATE CONSTRAINTS
     // EXPRESSION LEAF NODES
-    // this test holds for all subclasses of SgValueExp
 
     // special case sizeof operator (operates on types and types of expressions)
     if(SgSizeOfOp* sizeOfOp=isSgSizeOfOp(node)) {
@@ -2521,7 +2529,15 @@ namespace CodeThorn {
     }
     switch(node->variantT()) {
     case V_SgVarRefExp:
-      return evalRValueVarRefExp(isSgVarRefExp(node),estate,mode);
+#if 0
+      if(mode==MODE_VALUE)
+	return evalRValueVarRefExp(isSgVarRefExp(node),estate,mode); // TODO: merge evalR and evalL ValueVarRefExp functions
+      if(mode==MODE_ADDRESS)
+	return evalLValueVarRefExp(isSgVarRefExp(node),estate,mode);
+      ROSE_ASSERT(0);
+#else
+      return evalRValueVarRefExp(isSgVarRefExp(node),estate,mode); 
+#endif
     case V_SgFunctionCallExp: {
       return evalFunctionCall(isSgFunctionCallExp(node),estate);
     }
@@ -3267,7 +3283,7 @@ namespace CodeThorn {
     SingleEvalResultConstInt res;
     res.estate=estate;
     // L.R : L evaluates to address, R evaluates to offset value (a struct member always evaluates to an offset)
-    SAWYER_MESG(logger[TRACE])<<"DotOp: lhs:"<<lhsResult.result.toString(_variableIdMapping)<<" rhs: "<<rhsResult.result.toString(_variableIdMapping)<<endl;
+    SAWYER_MESG(logger[TRACE])<<"evalDotOp: lhs:"<<lhsResult.result.toString(_variableIdMapping)<<" rhs: "<<rhsResult.result.toString(_variableIdMapping)<<endl;
   
     if(mode==EStateTransferFunctions::MODE_EMPTY_STATE) {
       // arbitrary value
@@ -3476,8 +3492,10 @@ namespace CodeThorn {
     SgExpression* arrExp=isSgExpression(SgNodeHelper::getLhs(node));
     SgExpression* indexExp=isSgExpression(SgNodeHelper::getRhs(node));
 
-    list<SingleEvalResultConstInt> lhsResultList=evaluateExpression(arrExp,estate,MODE_VALUE);
-    list<SingleEvalResultConstInt> rhsResultList=evaluateExpression(indexExp,estate,MODE_VALUE);
+    //list<SingleEvalResultConstInt> lhsResultList=evaluateExpression(arrExp,estate,MODE_VALUE);
+    //list<SingleEvalResultConstInt> rhsResultList=evaluateExpression(indexExp,estate,MODE_VALUE);
+    list<SingleEvalResultConstInt> lhsResultList=evaluateExpression(arrExp,estate,MODE_ADDRESS);
+    list<SingleEvalResultConstInt> rhsResultList=evaluateExpression(indexExp,estate,MODE_ADDRESS);
     list<SingleEvalResultConstInt> resultList;
     for(list<SingleEvalResultConstInt>::iterator riter=rhsResultList.begin();
 	riter!=rhsResultList.end();
@@ -3550,16 +3568,23 @@ namespace CodeThorn {
     ROSE_ASSERT(varId.isValid());
     if(isMemberVariable(varId)) {
       ROSE_ASSERT(_variableIdMapping);
-      int offset=AbstractValue::getVariableIdMapping()->getOffset(varId);
+      CodeThorn::TypeSize offset=AbstractValue::getVariableIdMapping()->getOffset(varId);
       SAWYER_MESG(logger[TRACE])<<"evalLValueVarRefExp found STRUCT member: "<<_variableIdMapping->variableName(varId)<<" offset: "<<offset<<endl;
-      //res.result=AbstractValue(offset);
-      //return listify(res);
+      if(!VariableIdMapping::isUnknownSizeValue(offset)) {
+	res.result=AbstractValue::createTop();
+	return listify(res);
+      } else {
+	res.result=AbstractValue(offset);
+	return listify(res);
+      }
     }
     if(pstate->varExists(varId)) {
       SAWYER_MESG(logger[TRACE])<<"evalLValueVarRefExp: var exists: "<<_variableIdMapping->variableName(varId)<<endl;
       if(_variableIdMapping->isOfArrayType(varId)) {
 	SAWYER_MESG(logger[TRACE])<<"lvalue array address(?): "<<node->unparseToString()<<"EState label:"<<estate.label().toString()<<endl;
 	res.result=AbstractValue::createAddressOfArray(varId);
+      } else if(_variableIdMapping->isOfReferenceType(varId)) {
+	res.result=readFromMemoryLocation(estate.label(),pstate,varId); // address of a reference is the value it contains
       } else {
 	res.result=AbstractValue::createAddressOfVariable(varId);
       }
@@ -3667,7 +3692,11 @@ namespace CodeThorn {
 	res.result=AbstractValue::createAddressOfArray(varId);
       } else {
 	if(_variableIdMapping->isOfReferenceType(varId)) {
-	  res.result=readFromReferenceMemoryLocation(estate.label(),pstate,varId);
+	  //cout<<"DEBUG: evalRValueVarRefExp: REFERENCE: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl;
+	  if(mode==MODE_ADDRESS)
+	    res.result=readFromMemoryLocation(estate.label(),pstate,varId); // address of a reference is the value it contains
+	  else
+	    res.result=readFromReferenceMemoryLocation(estate.label(),pstate,varId);
 	} else {
 	  res.result=readFromMemoryLocation(estate.label(),pstate,varId);
 	}
