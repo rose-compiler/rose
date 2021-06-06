@@ -125,30 +125,47 @@ namespace CodeThorn {
     }
     return numVarErrors==0 && numStructErrors==0;
   }
-  
-  std::pair<bool,std::list<SgVariableDeclaration*> > VariableIdMappingExtended::memberVariableDeclarationsList(SgClassType* classType) {
-    std::list<SgVariableDeclaration*> declVarList;
+
+  bool VariableIdMappingExtended::isUnion(SgClassType* type) {
+    if(SgClassDeclaration* classDecl=getClassDeclarationOfClassType(type)) {
+      SgClassDeclaration::class_types classType=classDecl->get_class_type();
+      return classType==SgClassDeclaration::e_union;
+    }
+    return false;
+  }
+
+  SgClassDeclaration* VariableIdMappingExtended::getClassDeclarationOfClassType(SgClassType* classType) {
     if(SgDeclarationStatement* declStmt1=classType->get_declaration()) {
       if(SgClassDeclaration* classDecl1=isSgClassDeclaration(declStmt1)) {
 	if(SgDeclarationStatement* declStmt2=classDecl1->get_definingDeclaration()) {
 	  if(SgClassDeclaration* classDecl2=isSgClassDeclaration(declStmt2)) {
-	    if(SgClassDefinition* classDef=classDecl2->get_definition()) {
-	      auto classMemberList=classDef->get_members();
-	      for( auto classMember : classMemberList) {
-		if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(classMember)) {
-		  declVarList.push_back(varDecl);
-		}
-	      }
-	    }
-	    return make_pair(true,declVarList);
+	    return classDecl2;
 	  }
 	}
       }
+    }
+    return nullptr;
+  }
+  
+  std::pair<bool,std::list<SgVariableDeclaration*> > VariableIdMappingExtended::memberVariableDeclarationsList(SgClassType* classType) {
+    std::list<SgVariableDeclaration*> declVarList;
+    if(SgClassDeclaration* classDecl2=getClassDeclarationOfClassType(classType)) {
+      if(SgClassDefinition* classDef=classDecl2->get_definition()) {
+	auto classMemberList=classDef->get_members();
+	for( auto classMember : classMemberList) {
+	  if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(classMember)) {
+	    declVarList.push_back(varDecl);
+	  }
+	}
+      }
+      return make_pair(true,declVarList);
     }
     return make_pair(false,declVarList);
   }
   
   CodeThorn::TypeSize VariableIdMappingExtended::registerClassMembers(SgClassType* classType, CodeThorn::TypeSize offset) {
+    ROSE_ASSERT(offset==0); // this parameter can be removed
+
     //cout<<"DEBUG: register class members/2:"<<endl;
     auto result=memberVariableDeclarationsList(classType);
     // if member variables of class cannot be determined, return
@@ -172,7 +189,9 @@ namespace CodeThorn {
   }
 
   CodeThorn::TypeSize VariableIdMappingExtended::registerClassMembers(SgClassType* classType, std::list<SgVariableDeclaration*>& memberList, CodeThorn::TypeSize offset) {
+    ROSE_ASSERT(offset==0); // this parameter can be removed
     ROSE_ASSERT(classType!=nullptr);
+    CodeThorn::TypeSize totalSize=0;
     //cout<<"DEBUG: Class members of: "<<classType->unparseToString()<<":"<<memberList.size()<<endl;
     for(auto memberVarDecl : memberList) {
       if(TypeSizeMapping::isUnionDeclaration(memberVarDecl)) {
@@ -211,13 +230,20 @@ namespace CodeThorn {
 	  getVariableIdInfoPtr(varId)->aggregateType=AT_SINGLE;
 	}
 	if(typeSize!=unknownSizeValue()) {
-	  offset+=typeSize;
+	  if(isUnion(classType)) {
+	    // offset remains unchanged (=0)
+	    totalSize=std::max(totalSize,typeSize);
+	  } else {
+	    offset+=typeSize;
+	    totalSize+=typeSize;
+	  }
 	} else {
 	  offset=unknownSizeValue();
+	  totalSize=unknownSizeValue();
 	}
       }
     }
-    return offset;
+    return totalSize;
   }
 
   SgType* VariableIdMappingExtended::strippedType(SgType* type) {

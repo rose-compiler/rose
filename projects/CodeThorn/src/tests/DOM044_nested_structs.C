@@ -21,7 +21,7 @@ int main() {
   var.sm1=10;
   printf("var.sm1:%d\n",var.sm1);
   var.sm3='A';
-  printf("var.sm1:%d\n",var.sm3);
+  printf("var.sm3:%d\n",var.sm3);
   var.sm2.tm2='B';
-  printf("var.sm1.tm2:%d\n",var.sm2.tm2);
+  printf("var.sm2.tm2:%d\n",var.sm2.tm2);
 }

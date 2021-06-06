@@ -65,6 +65,8 @@ namespace CodeThorn {
     // does not strip pointer types, to avoid infinite recursion in rekursive data types
     SgType* strippedType2(SgType* type);
     SgExprListExp* getAggregateInitExprListExp(SgVariableDeclaration* varDecl);
+    static SgClassDeclaration* getClassDeclarationOfClassType(SgClassType* type);
+    static bool isUnion(SgClassType* type);
     static std::pair<bool,std::list<SgVariableDeclaration*> > memberVariableDeclarationsList(SgClassType* classType);
     static bool isDataMemberAccess(SgVarRefExp* varRefExp);
     static bool isGlobalOrLocalVariableAccess(SgVarRefExp* varRefExp);

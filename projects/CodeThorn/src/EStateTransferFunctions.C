@@ -3787,7 +3787,7 @@ namespace CodeThorn {
 	SgExpression* arg=*iter++;
 	list<SingleEvalResultConstInt> argResList=evaluateExpression(arg,estate);
 	if(argResList.size()>1) {
-	  cerr<<"Error: conditional control-flow in printf argument not supported. Expression normalization required."<<endl;
+	  cerr<<"Error: conditional control-flow in printf argument in interpreter-mode not supported. Expression normalization required."<<endl;
 	  exit(1);
 	} else {
 	  AbstractValue av=(*argResList.begin()).value();
@@ -3799,7 +3799,9 @@ namespace CodeThorn {
       size_t j=0;
       for(size_t i=0;i<formatString.size();++i) {
 	if(formatString[i]=='%') {
-	  i++; // skip next character
+	  i++; // go to next character after '%'
+	  if(formatString.size()>2 && formatString[i]=='l') // for handling %ld, %lf
+	    i+=1;
 	  if(j>=avStringVector.size()) {
 	    // number of arguments and uses of '%' don't match in input
 	    // program. This could be reported as program error.  For now
