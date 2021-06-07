@@ -635,6 +635,12 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2021_16.c \
      test2021_17.c \
      test2021_18.c \
+     test2021_20.c \
+     test2021_21.c \
+     test2021_22.c \
+     test2021_23.c \
+     test2021_24.c \
+     test2021_25.c \
      test2022_01.c 
 
 

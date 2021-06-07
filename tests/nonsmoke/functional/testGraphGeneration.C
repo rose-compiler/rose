@@ -41,6 +41,11 @@ int main( int argc, char * argv[] )
      const int MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH = 10000;
      generateAstGraph(project,MAX_NUMBER_OF_IR_NODES_TO_GRAPH_FOR_WHOLE_GRAPH,"");
 
+#if 1
+  // DQ (5/24/2021): Add the support to generate graph with header files.
+     generateDOTforMultipleFile(*project,"with_header_files");
+#endif
+
 #if 0
   // DQ (8/20/2013): Added initial support for IR node specific DOT graphs.
   // std::vector<VariantT> nodeKindList = {V_SgTemplateFunctionDeclaration,V_SgTemplateMemberFunctionDeclaration};

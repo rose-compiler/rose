@@ -36,7 +36,18 @@ transformVariable_LDADD    = $(ROSE_LIBS)
 # TEST_SPECIMENS = test0 test1 test2 test3 test4 test5 test7 test11 test12 test13 test14 test15 test16
 # TEST_SPECIMENS = test0 test1 test2 test3 test4 test5 test6 test7 test11 test12 test13 test14 test15 test16
 # TEST_SPECIMENS = test7 test4 test0 test1 test2 test3 test5 test6 test11 test12 test13 test14 test15 test16
-TEST_SPECIMENS = test17 test0 test1 test2 test3 test5 test6 test7 test11 test12 test13 test14 test15 test16
+
+# DQ (5/29/2021): Focus on the tests that are passing and then expand from there to the tests that are failing...
+# TEST_SPECIMENS = test17 test18 test19 test21 test22 test0 test1 test2 test3 test5 test6 test7 test11 test12 test13 test14 test15 test16
+# TEST_SPECIMENS = test0 test1 test2 test3 test5 test6 test7 test11 test12 test13 test14 test15 test16 test17 test18 test19 test21 test22 
+TEST_SPECIMENS = test0 test1 test2 test3 test5 test6 test7 test11 test12 test13 test14 test15 test16 test17 test18 test19 test21 test22  
+
+# Fixed: DQ (5/20/2021): Failing files
+# test12
+# test13 
+
+# Fixed: DQ (5/29/2021): Failing files
+# test0
 
 # DQ (7/2/2020): Failing files
 # test8 (unclear what the issue is for this failing test (need to revisit).
@@ -52,6 +63,9 @@ EXTRA_DIST += $(TEST_SPECIMENS) UnparseHeadersTransformVisitorUsingTokens.h
 ROSE_SWITCHES = --edg:no_warnings --edg:restrict -w -rose:verbose 0 -rose:unparseHeaderFiles -rose:unparse_tokens
 
 HDR_ROOT_SWITCHES = -rose:unparseHeaderFilesRootFolder unparsedHeaders
+
+# DQ (5/23/2021): I'm not clear if this is required to be an absolute path or not.
+HDR_ROOT_SWITCHES += -rose:applicationRootDirectory $(srcdir)
 
 # Test targets are the makefile targets upon which "make check" depends (via check-local). The directory in which the
 # tests run needs to be recreated each time we run the test, or else the test will likely pick up the wrong header files: the

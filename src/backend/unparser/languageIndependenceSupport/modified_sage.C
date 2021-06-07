@@ -1522,7 +1522,10 @@ Unparse_MOD_SAGE::printSpecifier1 ( SgDeclarationStatement * decl_stmt, SgUnpars
                               info.set_isDefaultAccess();
                               if (flag)
                                  {
+#if 0
+                                // DQ (6/3/2021): Removing this output spew in the generated code..
                                    curprint(" /* default access mode */ ");
+#endif
                                  }
                             }
                        }

@@ -1,6 +1,6 @@
 #include "Simple.h"
 
-Simple::Simple(){
+Simple::Simple() {
   v1_rename_me = 15;
 }
 

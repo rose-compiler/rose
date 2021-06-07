@@ -706,6 +706,14 @@ Grammar::setUpStatements ()
      ScopeStatement.setDataPrototype    ( "SgPragma*","pragma","= NULL",
                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE, NO_COPY_DATA);
 
+  // DQ (5/9/2021): Added to support token-based unparsing with unparsing of headers.  Each scope records which header files are included in that scope.
+  // This is done so that we can determine which scopes are characterized by only included files and which ones also have other statements.
+  // ScopeStatement.setDataPrototype    ( "std::set<SgIncludeFile*>","includeFileSet","",
+  //                                      NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+  // DQ (5/9/2021): Support for token-based unparsing when used with header file unparsing.
+  // ScopeStatement.setDataPrototype   ( "bool", "allStatementsAreFromHeaderFiles", "= false",
+  //                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      FunctionTypeTable.setFunctionPrototype( "HEADER_FUNCTION_TYPE_TABLE", "../Grammar/Statement.code" );
      FunctionTypeTable.setDataPrototype    ( "SgSymbolTable*","function_type_table","= NULL",
                                              CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);

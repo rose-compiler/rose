@@ -1660,8 +1660,11 @@ Outliner::insert (SgFunctionDeclaration* func,
           ROSE_ASSERT(firstStatement != NULL);
           if (firstStatement != NULL)
              {
-               printf ("In outliner: before inserting outlined function prototype: firstStatement = %p = %s = %s \n",firstStatement,firstStatement->class_name().c_str(),SageInterface::get_name(firstStatement).c_str());
-
+#if 0
+            // DQ (6/5/2021): Supress this output spew for the quarterly review (not an error).
+               printf ("In outliner: before inserting outlined function prototype: firstStatement = %p = %s = %s \n",firstStatement,
+                    firstStatement->class_name().c_str(),SageInterface::get_name(firstStatement).c_str());
+#endif
             // DQ (3/17/2021): When using the token-based unparsing we need to set this so that the surrounding 
             // whitespace will be unparsed from the AST, instead of the token stream.
                firstStatement->set_containsTransformationToSurroundingWhitespace(true);

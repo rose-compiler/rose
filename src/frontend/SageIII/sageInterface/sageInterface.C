@@ -1120,7 +1120,7 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
   // with the old name and add a symbol with the new name.
      ROSE_ASSERT(initializedNameNode != NULL);
 
-#define DEBUG_SET_NAME 1
+#define DEBUG_SET_NAME 0
 
   // SgNode * node = this;
 #if DEBUG_SET_NAME
@@ -1313,8 +1313,9 @@ SageInterface::set_name ( SgInitializedName *initializedNameNode, SgName new_nam
                       // DQ (5/1/2021): I think that we may have to set the physical node id and maybe make it to be output.  This is 
                       // special to the case of using the header file unparsing (any maybe the token-based unparsing with the header 
                       // file unparsing, but I think just the header file unparsing).
+#if 0
                          printf ("In SageInterface::set_name(): When unparsing header files, we need to set the physical file id to the correct file \n");
-
+#endif
                       // DQ (4/23/2021): I think it is a problem that the statement is not marked as a transformation so that we 
                       // know how to handle it with the token-based unparsing.  
                          SgStatement* associatedStatement = getEnclosingStatement(varRefExp);
@@ -1381,6 +1382,79 @@ SageInterface::listHeaderFiles ( SgIncludeFile* includeFile )
      PrefixTraversal traversal;
      traversal.traverse(includeFile, preorder);
 
+   }
+
+
+bool 
+SageInterface::scopeHasStatementsFromSameFile(SgScopeStatement* scope)
+   {
+  // DQ (5/9/2021): Adding support for detection of statements in a scope that must be unparsed.
+  // This function supports the token-based unparsing when used with unparsing of header files 
+  // to know when the scope can be unparsed via it's token stream, even though a statement from 
+  // a header file may contain a transformation.
+  //    returns true if there is a statement in the scope that has to be unparsed (is from the same file as the scope).
+  //    returns false if the scope is empty or contains only statements associated with one or more header files.
+  // When the scope has statements from the same file, then if there is a transformation contained in any of 
+  // those statements then we have to unparse the scope one statement at a time when using the token-based 
+  // unparsing.  If the scope has no statements from the same file, then the existance of any statement that 
+  // contains a transformation does not case the statements to be unparsed individually.
+
+     ROSE_ASSERT(scope != NULL);
+     int scope_file_id = scope->get_file_info()->get_physical_file_id();
+
+     bool return_value = false;
+
+     if (scope->containsOnlyDeclarations() == true)
+        {
+          SgDeclarationStatementPtrList & declarationStatementList = scope->getDeclarationList();
+#if 1
+          printf ("In scopeHasStatementsFromSameFile(): DeclarationStatementList not implemented \n");
+#endif
+#if 1
+          printf ("declarationStatementList.size() = %zu \n",declarationStatementList.size());
+#endif
+          SgDeclarationStatementPtrList::iterator i = declarationStatementList.begin();
+
+          while (i != declarationStatementList.end() && return_value == false)
+             {
+               SgDeclarationStatement* statement = *i;
+               int statement_file_id = statement->get_file_info()->get_physical_file_id();
+
+               if (statement_file_id == scope_file_id)
+                 {
+                   return_value = true;
+                 }
+
+               i++;
+             }
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+       else
+        {
+          SgStatementPtrList & statementList = scope->getStatementList();
+#if 1
+          printf ("In scopeHasStatementsFromSameFile(): StatementList not implemented \n");
+#endif
+          SgStatementPtrList::iterator i = statementList.begin();
+
+          while (i != statementList.end() && return_value == false)
+             {
+               SgStatement* statement = *i;
+               int statement_file_id = statement->get_file_info()->get_physical_file_id();
+
+               if (statement_file_id == scope_file_id)
+                 {
+                   return_value = true;
+                 }
+
+               i++;
+             }
+        }
+
+     return return_value;
    }
 
 
@@ -10748,6 +10822,8 @@ SageInterface::isTemplateInstantiationNode(SgNode* node)
    }
 
 #if 0
+// DQ (5/23/2021): Added (uncommented, and added to the header file) function to support test for template declaration.
+// Commented back out, since this is not required for what I am debugging currently.
 // DQ (6/27/2018): This will be the template declaration test version of the template instantiation test function above.
 bool
 SageInterface::isTemplateDeclarationNode(SgNode* node)
@@ -10762,7 +10838,7 @@ SageInterface::isTemplateDeclarationNode(SgNode* node)
 
      return isSgTemplateInstantiationDecl(node)
       // DQ (1/3/2016): Allow SgTemplateInstantiationDefn IR nodes.
-//       || isSgTemplateInstantiationDefn(node)
+      // || isSgTemplateInstantiationDefn(node)
          || isSgTemplateInstantiationDefn(node)
          || isSgTemplateInstantiationFunctionDecl(node)
          || isSgTemplateInstantiationMemberFunctionDecl(node)
@@ -15953,10 +16029,9 @@ void SageInterface::updateDefiningNondefiningLinks(SgFunctionDeclaration* func, 
              }
         }
 
-#if 1
+#if 0
      printf ("func                            = %p \n",func);
      printf ("func->get_definingDeclaration() = %p \n",func->get_definingDeclaration());
-     printf ("func                            = %p \n",func);
 #endif
 
      ROSE_ASSERT(func != NULL);
@@ -24190,10 +24265,12 @@ SageInterface::statementCanBeTransformed(SgStatement* stmt)
              }
             else
              {
-#if 1
+            // DQ (5/13/2021): I think that the default (returing true) will work well.
+            // This is likely just the original input source file (not a header file).
+#if 0
                printf ("Not found in Rose::includeFileMapForUnparsing: source_filename = %s \n",source_filename.c_str());
 #endif
-#if 1
+#if 0
                printf ("Exiting as a test! \n");
                ROSE_ABORT();
 #endif

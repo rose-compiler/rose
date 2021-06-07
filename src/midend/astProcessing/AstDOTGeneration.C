@@ -1144,6 +1144,19 @@ sourcePositionInformation (SgNode* node)
                          ss += generateFileLineColumnString(fileInfo);
                        }
                   }
+
+            // string physical_file = fileInfo->get_physical_filename();
+            // physical_file = Rose::utility_stripPathFromFileName(physical_file);
+
+            // ss += physical_file;
+            // ss += "\\n";
+
+               int physical_file_id = fileInfo->get_physical_file_id();
+               string physical_file_from_id = Sg_File_Info::getFilenameFromID(physical_file_id);
+               physical_file_from_id = Rose::utility_stripPathFromFileName(physical_file_from_id);
+
+               ss += "physical_file_from_id: " + physical_file_from_id;
+               ss += "\\n";
              }
             else
              {
