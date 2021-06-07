@@ -334,6 +334,7 @@ namespace CodeThorn {
     return mappingSymToVarId.find(sym)!=mappingSymToVarId.end();
   }
 
+  // returns nullptr for string-literal varIds
   SgVariableDeclaration* VariableIdMappingExtended::getVariableDeclaration(VariableId varId) {
     ROSE_ASSERT(varId.isValid());
     return getVariableIdInfoPtr(varId)->getVarDecl();

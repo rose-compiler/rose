@@ -1567,18 +1567,35 @@ namespace CodeThorn {
     getVariableIdMapping()->setElementSize(variableId,typeSize);
   }
 
+  CodeThorn::VariableIdSet EStateTransferFunctions::determineUsedGlobalVars(SgProject* project, CodeThorn::VariableIdSet& setOfGlobalVars) {
+    CodeThorn::VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,getVariableIdMapping());
+    CodeThorn::VariableIdSet setOfUsedGlobalVars;
+    int32_t numUsedVars=0;
+    int32_t numStringLiterals=0;
+    for(auto var : setOfGlobalVars) {
+      bool isUsed=(setOfUsedVars.find(var)!=setOfUsedVars.end());
+      bool isStringLiteral=getVariableIdMapping()->isStringLiteralAddress(var);
+      if(isUsed)
+	numUsedVars++;
+      if(isStringLiteral)
+	numStringLiterals++;
+      if(isUsed||isStringLiteral) {
+	setOfUsedGlobalVars.insert(var);
+      }
+    }
+    if(getAnalyzer()->_ctOpt.status) {
+      cout<< "STATUS: Number of global variables: "<<setOfGlobalVars.size()<<endl;
+      cout<< "STATUS: Number of used variables  : "<<numUsedVars<<endl;
+      cout<< "STATUS: Number of string literals : "<<numStringLiterals<<endl;
+    }
+    return setOfUsedGlobalVars;
+  }
+  
   void EStateTransferFunctions::initializeGlobalVariablesNew(SgProject* root, EState& estate) {
     if(SgProject* project=isSgProject(root)) {
       ROSE_ASSERT(getVariableIdMapping());
       CodeThorn::VariableIdSet setOfGlobalVars=getVariableIdMapping()->getSetOfGlobalVarIds();
-      CodeThorn::VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,getVariableIdMapping());
-      std::set<VariableId> setOfUsedGlobalVars=CodeThorn::setIntersect(setOfGlobalVars, setOfUsedVars);
-
-      uint32_t numFilteredVars=setOfGlobalVars.size()-setOfUsedGlobalVars.size();
-      if(getAnalyzer()->_ctOpt.status) {
-	cout<< "STATUS: Number of global variables: "<<setOfGlobalVars.size()<<endl;
-	cout<< "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
-      }
+      std::set<VariableId> setOfUsedGlobalVars=determineUsedGlobalVars(root,setOfGlobalVars);
       std::list<SgVariableDeclaration*> relevantGlobalVariableDecls=(getAnalyzer()->_ctOpt.initialStateFilterUnusedVariables)?
 	getVariableIdMapping()->getVariableDeclarationsOfVariableIdSet(setOfUsedGlobalVars)
 	: getVariableIdMapping()->getVariableDeclarationsOfVariableIdSet(setOfGlobalVars)
@@ -1595,7 +1612,9 @@ namespace CodeThorn {
 	  //cout<<"DEBUG: init global decl: 0 !!!"<<endl;
 	}
       }
+
       if(getAnalyzer()->_ctOpt.status) {
+	uint32_t numFilteredVars=setOfGlobalVars.size()-setOfUsedGlobalVars.size();
 	cout<< "STATUS: Number of unused variables filtered in initial state: "<<numFilteredVars<<endl;
 	cout<< "STATUS: Number of global variables declared in initial state: "<<declaredInGlobalState<<endl;
       }
@@ -3012,6 +3031,13 @@ namespace CodeThorn {
 	  cerr<<node->unparseToString()<<" of type "<<node->get_type()->unparseToString()<<endl;
 	  exit(1);
 	}
+	if(arrayPtrValue.isNullPtr()) {
+	  recordDefinitiveViolatingLocation(ANALYSIS_NULL_POINTER,estate.label());
+	  res.result=CodeThorn::Top();
+	  res.estate.io.recordVerificationError();
+	  resultList.push_back(res);
+	  return resultList;
+	}
 	AbstractValue indexExprResultValue=indexExprResult.value();
 	AbstractValue elementSize=getMemoryRegionAbstractElementSize(arrayPtrValue);
 	AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexExprResultValue,elementSize);
@@ -4252,7 +4278,11 @@ namespace CodeThorn {
     if(_readWriteListener) {
       _readWriteListener->writingToMemoryLocation(lab,pstate,memLoc,newValue);
     }
-    pstate->writeToMemoryLocation(memLoc,newValue);
+    if(memLoc.isNullPtr()) {
+      recordDefinitiveNullPointerDereferenceLocation(lab);
+    } else {
+      pstate->writeToMemoryLocation(memLoc,newValue);
+    }
     SAWYER_MESG(logger[TRACE])<<"EStateTransferFunctions::writeToMemoryLocation1:done"<<endl;
   }
 
