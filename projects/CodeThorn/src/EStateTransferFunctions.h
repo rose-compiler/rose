@@ -170,6 +170,7 @@ namespace CodeThorn {
     CallString transferFunctionCallContext(CallString cs, Label lab);
     bool isFeasiblePathContext(CallString& cs,Label lab);
 
+    CodeThorn::VariableIdSet determineUsedGlobalVars(SgProject* root, CodeThorn::VariableIdSet& setOfGlobalVars);
     void initializeGlobalVariablesNew(SgProject* root, EState& estate);
     // modifies PState with written initializers
     EState analyzeVariableDeclaration(SgVariableDeclaration* decl,EState currentEState, Label targetLabel);

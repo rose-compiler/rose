@@ -325,12 +325,51 @@ namespace CodeThorn {
       ROSE_ASSERT(formalParameterName);
       // test formal parameter (instead of argument type) to allow for expressions in arguments
       VariableId formalParameterVarId=_analyzer->getVariableIdMapping()->variableId(formalParameterName);
-      AbstractValue evalResultValue;
+      
       if(_analyzer->getVariableIdMapping()->isOfClassType(formalParameterVarId)) {
-        if(getOptionOutputWarnings()) {
-          cout<<"Warning: imprecision: "<<SgNodeHelper::sourceLineColumnToString(funCall)<< ": passing of class/Struct/Union types per value as function parameters (assuming top)."<<endl;
+	SgExpression* actualParameterExpr=*j;
+	VariableId actualParameterVarId;
+	// general case: the actual argument is an arbitrary expression (including a single variable)
+        list<SingleEvalResultConstInt> evalResultList=evaluateLExpression(actualParameterExpr,currentEState);
+        if(evalResultList.size()==0) {
+          SAWYER_MESG(logger[FATAL])<<"Internal error: no state computed for argument evaluation at: "<<SgNodeHelper::sourceLineColumnToString(getLabeler()->getNode(edge.source()))<<endl;
+          SAWYER_MESG(logger[FATAL])<<"Argument expression: "<<actualParameterExpr->unparseToString()<<endl;
+          SAWYER_MESG(logger[FATAL])<<"EState: "<<currentEState.toString(getVariableIdMapping())<<endl;
+          exit(1);
         }
-        evalResultValue=AbstractValue::createTop();
+        list<SingleEvalResultConstInt>::iterator resultListIter=evalResultList.begin();
+        SingleEvalResultConstInt evalResult=*resultListIter;
+	
+        if(evalResultList.size()>1) {
+          SAWYER_MESG(logger[ERROR]) <<"multi-state generating operators in function call parameters not supported."<<endl;
+          exit(1);
+        }
+	AbstractValue actualParamAddress=evalResult.value();
+	AbstractValue formalParamAddress=AbstractValue::createAddressOfVariable(formalParameterVarId);
+        if(getOptionOutputWarnings()) {
+          //cout<<"Warning: imprecision: "<<SgNodeHelper::sourceLineColumnToString(funCall)<< ": passing of class/Struct/Union types per value as function parameters (assuming top): ";
+	  SgType* ctype=_analyzer->getVariableIdMapping()->getType(formalParameterVarId);
+	  auto membersList=_analyzer->getVariableIdMapping()->getClassMembers(ctype);
+	  //cout<<" #classmembers: "<<membersList.size()<<endl;
+	  for(auto mvarId : membersList) {
+	    CodeThorn::TypeSize offset=_analyzer->getVariableIdMapping()->getOffset(mvarId);
+#if 0
+	    cout<<" formal param    : "<<formalParamAddress.toString(_analyzer->getVariableIdMapping())<<endl;
+	    cout<<" actual param (L): "<<actualParamAddress.toString(_analyzer->getVariableIdMapping())<<endl;
+	    cout<<" actual param-vid: "<<mvarId.toString()<<endl;
+	    cout<<" actual param-vid: "<<mvarId.toString(_analyzer->getVariableIdMapping())<<endl;
+	    cout<<" offset          : "<<offset<<endl;
+#endif
+	    AbstractValue offsetAV(offset);
+	    AbstractValue formalParameterStructMemberAddress=AbstractValue::operatorAdd(formalParamAddress,offsetAV);
+	    AbstractValue actualParameterStructMemberAddress=AbstractValue::operatorAdd(actualParamAddress,offsetAV);
+	    // read from evalResultValue+offset and write to formal-param-address+offset
+	    AbstractValue newVal=readFromAnyMemoryLocation(currentLabel,&newPState,actualParameterStructMemberAddress);
+	    // TODO: check for copying of references
+	    initializeMemoryLocation(currentLabel,&newPState,formalParameterStructMemberAddress,newVal);
+	  }
+	}
+	
       } else {
         // VariableName varNameString=name->get_name();
         SgExpression* actualParameterExpr=*j;
@@ -338,13 +377,7 @@ namespace CodeThorn {
         // check whether the actualy parameter is a single variable: In this case we can propagate the constraints of that variable to the formal parameter.
         // pattern: call: f(x), callee: f(int y) => constraints of x are propagated to y
         VariableId actualParameterVarId;
-        ROSE_ASSERT(actualParameterExpr);
-#if 0
-        if(getExprAnalyzer.checkIfVariableAndDetermineVarId(actualParameterExpr,actualParameterVarId)) {
-          // propagate constraint from actualParamterVarId to formalParameterVarId
-          cset.addAssignEqVarVar(formalParameterVarId,actualParameterVarId);
-        }
-#endif
+
         // general case: the actual argument is an arbitrary expression (including a single variable)
         list<SingleEvalResultConstInt> evalResultList=evaluateExpression(actualParameterExpr,currentEState);
         if(evalResultList.size()==0) {
@@ -359,9 +392,9 @@ namespace CodeThorn {
           SAWYER_MESG(logger[ERROR]) <<"multi-state generating operators in function call parameters not supported."<<endl;
           exit(1);
         }
-        evalResultValue=evalResult.value();
+        AbstractValue evalResultValue=evalResult.value();
+	initializeMemoryLocation(currentLabel,&newPState,AbstractValue::createAddressOfVariable(formalParameterVarId),evalResultValue);
       }
-      initializeMemoryLocation(currentLabel,&newPState,AbstractValue::createAddressOfVariable(formalParameterVarId),evalResultValue);
       ++i;++j;
     }
     // assert must hold if #formal-params==#actual-params (TODO: default values)
@@ -1066,11 +1099,11 @@ namespace CodeThorn {
       //printTransferFunctionInfo(TransferFunctionCode::Assign,nextNodeToAnalyze2,edge,estate);
       cout<<"subtransfer     : transferAssignOp      : "<<nextNodeToAnalyze2->unparseToString()<<endl;
     }
-    auto pList=evalAssignOpMemUpdates(nextNodeToAnalyze2, edge, estate); // adjusts adresses to element size of memory region
+    auto pList=evalAssignOpMemUpdates(nextNodeToAnalyze2, edge, estate);
     std::list<EState> estateList;
     for (auto p : pList) {
       EState estate=p.first;
-      AbstractValue lhsAddress=p.second.first; // already adjusted to element size of memory region
+      AbstractValue lhsAddress=p.second.first;
       AbstractValue rhsValue=p.second.second;
       Label label=estate.label();
       PState newPState=*estate.pstate();
@@ -1249,15 +1282,14 @@ namespace CodeThorn {
 	SgInitializer* initializer=initName->get_initializer();
 	if(initializer) {
 	  //cout<<"DEBUG: decl-init: "<<decl->unparseToString()<<":AST:"<<AstTerm::astTermWithNullValuesToString(initializer)<<endl;
-	  // special case that initializer is an assignment (reusing transferAssignOp)
 	  if(SgAssignInitializer* assignInit=isSgAssignInitializer(initializer)) {
+	    //cout<<"DEBUG: decl-init: AssignInitializer: "<<assignInit->unparseToString()<<":AST:"<<AstTerm::astTermWithNullValuesToString(assignInit)<<endl;
 	    SgExpression* assignInitOperand=assignInit->get_operand_i();
 	    ROSE_ASSERT(assignInitOperand);
 	    if(SgAssignOp* assignOp=isSgAssignOp(assignInitOperand)) {
 	      SAWYER_MESG(logger[TRACE])<<"assignment in initializer: "<<decl->unparseToString()<<endl;
 	      //cout<<"DEBUG: assignment in initializer: "<<decl->unparseToString()<<endl;
 	      Edge dummyEdge(targetLabel,EDGE_FORWARD,targetLabel); // only target label is used in transferAssignOp
-	      //std::list<EState> estateList=transferAssignOp(assignOp, dummyEdge, &currentEState);
 	      CodeThorn::EStateTransferFunctions::MemoryUpdateList memUpdList=evalAssignOpMemUpdates(assignOp,dummyEdge,&currentEState);
 	      std::list<EState> estateList;
 	      ROSE_ASSERT(memUpdList.size()==1);
@@ -1308,14 +1340,14 @@ namespace CodeThorn {
 	    return createEState(targetLabel,cs,newPState,cset);
 	  }
 	  if(getVariableIdMapping()->isOfReferenceType(initDeclVarId)) {
-	    SAWYER_MESG(logger[TRACE])<<"initialization of reference:"<<SgNodeHelper::sourceFilenameLineColumnToString(decl)<<endl;
+	    SAWYER_MESG(logger[TRACE])<<"initialization of reference 1:"<<SgNodeHelper::sourceFilenameLineColumnToString(decl)<<endl;
 	    SgAssignInitializer* assignInit=isSgAssignInitializer(initializer);
 	    ROSE_ASSERT(assignInit);
 	    SgExpression* assignInitOperand=assignInit->get_operand_i();
 	    ROSE_ASSERT(assignInitOperand);
+	    SAWYER_MESG(logger[TRACE])<<"initialization of reference 2:"<<AstTerm::astTermWithNullValuesToString(assignInitOperand)<<endl;
 	    list<SingleEvalResultConstInt> res=evaluateLExpression(assignInitOperand,currentEState);
 
-	    SAWYER_MESG(logger[TRACE])<<"initialization of reference:"<<AstTerm::astTermWithNullValuesToString(assignInitOperand)<<endl;
 	    if(res.size()>1) {
 	      SAWYER_MESG(logger[ERROR])<<"Error: multiple results in rhs evaluation."<<endl;
 	      SAWYER_MESG(logger[ERROR])<<"expr: "<<SgNodeHelper::sourceLineColumnToString(decl)<<": "<<decl->unparseToString()<<endl;
@@ -1568,30 +1600,56 @@ namespace CodeThorn {
     getVariableIdMapping()->setElementSize(variableId,typeSize);
   }
 
+  CodeThorn::VariableIdSet EStateTransferFunctions::determineUsedGlobalVars(SgProject* project, CodeThorn::VariableIdSet& setOfGlobalVars) {
+    CodeThorn::VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,getVariableIdMapping());
+    CodeThorn::VariableIdSet setOfUsedGlobalVars;
+    int32_t numUsedVars=0;
+    int32_t numStringLiterals=0;
+    for(auto var : setOfGlobalVars) {
+      bool isUsed=(setOfUsedVars.find(var)!=setOfUsedVars.end());
+      bool isStringLiteral=getVariableIdMapping()->isStringLiteralAddress(var);
+      if(isUsed)
+	numUsedVars++;
+      if(isStringLiteral)
+	numStringLiterals++;
+      if(isUsed||isStringLiteral) {
+	setOfUsedGlobalVars.insert(var);
+      }
+    }
+    if(getAnalyzer()->_ctOpt.status) {
+      cout<< "STATUS: Number of global variables     : "<<setOfGlobalVars.size()<<endl;
+      cout<< "STATUS: Number of used variables       : "<<setOfUsedVars.size()<<endl;
+      cout<< "STATUS: Number of string literals      : "<<numStringLiterals<<endl;
+      cout<< "STATUS: Number of used global variables: "<<numUsedVars<<endl;
+    }
+    return setOfUsedGlobalVars;
+  }
+  
   void EStateTransferFunctions::initializeGlobalVariablesNew(SgProject* root, EState& estate) {
     if(SgProject* project=isSgProject(root)) {
       ROSE_ASSERT(getVariableIdMapping());
       CodeThorn::VariableIdSet setOfGlobalVars=getVariableIdMapping()->getSetOfGlobalVarIds();
-      CodeThorn::VariableIdSet setOfUsedVars=AstUtility::usedVariablesInsideFunctions(project,getVariableIdMapping());
-      std::set<VariableId> setOfFilteredGlobalVars=CodeThorn::setIntersect(setOfGlobalVars, setOfUsedVars);
-      uint32_t numFilteredVars=setOfGlobalVars.size()-setOfFilteredGlobalVars.size();
-      if(getAnalyzer()->_ctOpt.status) {
-	cout<< "STATUS: Number of global variables: "<<setOfGlobalVars.size()<<endl;
-	cout<< "STATUS: Number of used variables: "<<setOfUsedVars.size()<<endl;
-      }
+      std::set<VariableId> setOfUsedGlobalVars=determineUsedGlobalVars(root,setOfGlobalVars);
       std::list<SgVariableDeclaration*> relevantGlobalVariableDecls=(getAnalyzer()->_ctOpt.initialStateFilterUnusedVariables)?
-	getVariableIdMapping()->getVariableDeclarationsOfVariableIdSet(setOfFilteredGlobalVars)
+	getVariableIdMapping()->getVariableDeclarationsOfVariableIdSet(setOfUsedGlobalVars)
 	: getVariableIdMapping()->getVariableDeclarationsOfVariableIdSet(setOfGlobalVars)
 	;
       uint32_t declaredInGlobalState=0;
       for(auto decl : relevantGlobalVariableDecls) {
-	estate=analyzeVariableDeclaration(decl,estate,estate.label());
-	declaredInGlobalState++;
-	// this data is only used by globalVarIdByName to determine rers 'output' variable name in binary mode
-	globalVarName2VarIdMapping[getVariableIdMapping()->variableName(getVariableIdMapping()->variableId(decl))]=getVariableIdMapping()->variableId(decl);
+	if(decl) {
+	  //cout<<"DEBUG: init global decl: "<<decl->unparseToString()<<endl;
+	  estate=analyzeVariableDeclaration(decl,estate,estate.label());
+	  declaredInGlobalState++;
+	  // this data is only used by globalVarIdByName to determine rers 'output' variable name in binary mode
+	  globalVarName2VarIdMapping[getVariableIdMapping()->variableName(getVariableIdMapping()->variableId(decl))]=getVariableIdMapping()->variableId(decl);
+	} else {
+	  //cout<<"DEBUG: init global decl: 0 !!!"<<endl;
+	}
       }
+
       if(getAnalyzer()->_ctOpt.status) {
-	cout<< "STATUS: Number of unused variables filtered in initial state: "<<numFilteredVars<<endl;
+	//uint32_t numFilteredVars=setOfGlobalVars.size()-setOfUsedGlobalVars.size();
+	//cout<< "STATUS: Number of unused variables filtered in initial state: "<<numFilteredVars<<endl;
 	cout<< "STATUS: Number of global variables declared in initial state: "<<declaredInGlobalState<<endl;
       }
     } else {
@@ -1726,7 +1784,18 @@ namespace CodeThorn {
     EState currentEState=*estatePtr;
     SgNode* lhs=SgNodeHelper::getLhs(nextNodeToAnalyze2);
     SgNode* rhs=SgNodeHelper::getRhs(nextNodeToAnalyze2);
+
+#if 0
+    // for handling special case of C++ reference intialization (address is used below to copy reference)
+    EvalMode evalMode=getVariableIdMapping()->isOfReferenceType(lhsVar)?MODE_ADDRESS:MODE_VALUE;
+    list<SingleEvalResultConstInt> res=evaluateExpression(rhs,currentEState, evalMode);
+    if(evalMode==MODE_ADDRESS) {
+      cout<<"DEBUG: reference-init: res:"<<*res.begin().result.toString()<<endl;
+    }
+#else
     list<SingleEvalResultConstInt> res=evaluateExpression(rhs,currentEState, CodeThorn::EStateTransferFunctions::MODE_VALUE);
+#endif
+    
     for(list<SingleEvalResultConstInt>::iterator i=res.begin();i!=res.end();++i) {
       VariableId lhsVar;
       bool isLhsVar=checkIfVariableAndDetermineVarId(lhs,lhsVar);
@@ -2501,9 +2570,7 @@ namespace CodeThorn {
 
     ROSE_ASSERT(!dynamic_cast<SgBinaryOp*>(node) && !dynamic_cast<SgUnaryOp*>(node));
 
-    // ALL REMAINING CASES DO NOT GENERATE CONSTRAINTS
     // EXPRESSION LEAF NODES
-    // this test holds for all subclasses of SgValueExp
 
     // special case sizeof operator (operates on types and types of expressions)
     if(SgSizeOfOp* sizeOfOp=isSgSizeOfOp(node)) {
@@ -2515,7 +2582,15 @@ namespace CodeThorn {
     }
     switch(node->variantT()) {
     case V_SgVarRefExp:
-      return evalRValueVarRefExp(isSgVarRefExp(node),estate,mode);
+#if 0
+      if(mode==MODE_VALUE)
+	return evalRValueVarRefExp(isSgVarRefExp(node),estate,mode); // TODO: merge evalR and evalL ValueVarRefExp functions
+      if(mode==MODE_ADDRESS)
+	return evalLValueVarRefExp(isSgVarRefExp(node),estate,mode);
+      ROSE_ASSERT(0);
+#else
+      return evalRValueVarRefExp(isSgVarRefExp(node),estate,mode); 
+#endif
     case V_SgFunctionCallExp: {
       return evalFunctionCall(isSgFunctionCallExp(node),estate);
     }
@@ -2990,6 +3065,13 @@ namespace CodeThorn {
 	  cerr<<node->unparseToString()<<" of type "<<node->get_type()->unparseToString()<<endl;
 	  exit(1);
 	}
+	if(arrayPtrValue.isNullPtr()) {
+	  recordDefinitiveViolatingLocation(ANALYSIS_NULL_POINTER,estate.label());
+	  res.result=CodeThorn::Top();
+	  res.estate.io.recordVerificationError();
+	  resultList.push_back(res);
+	  return resultList;
+	}
 	AbstractValue indexExprResultValue=indexExprResult.value();
 	AbstractValue elementSize=getMemoryRegionAbstractElementSize(arrayPtrValue);
 	AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexExprResultValue,elementSize);
@@ -3023,7 +3105,7 @@ namespace CodeThorn {
 	    resultList.push_back(res);
 	    return resultList;
 	  }
-	  exit(1); // not reachable
+	  ROSE_ASSERT(false); // not reachable
 	}
 	if(pstate2.varExists(arrayPtrPlusIndexValue)) {
 	  // address of denoted memory location
@@ -3098,8 +3180,10 @@ namespace CodeThorn {
 	      return listify(res);
 	    }
 	  } else if(_variableIdMapping->isStringLiteralAddress(arrayVarId)) {
-	    SAWYER_MESG(logger[ERROR])<<"Error: Found string literal address, but data not present in state."<<endl;
-	    exit(1);
+	    SAWYER_MESG(logger[WARN])<<"Error: Found string literal address, but data not present in state."<<endl;
+	    AbstractValue val=AbstractValue::createTop();
+	    res.result=val;
+	    return listify(res);
 	  } else {
 	    //cout<<estate.toString(_variableIdMapping)<<endl;
 	    SAWYER_MESG(logger[TRACE])<<"Program error detected: potential out of bounds access (P1) : array: "<<arrayPtrValue.toString(_variableIdMapping)<<", access: address: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
@@ -3261,7 +3345,7 @@ namespace CodeThorn {
     SingleEvalResultConstInt res;
     res.estate=estate;
     // L.R : L evaluates to address, R evaluates to offset value (a struct member always evaluates to an offset)
-    SAWYER_MESG(logger[TRACE])<<"DotOp: lhs:"<<lhsResult.result.toString(_variableIdMapping)<<" rhs: "<<rhsResult.result.toString(_variableIdMapping)<<endl;
+    SAWYER_MESG(logger[TRACE])<<"evalDotOp: lhs:"<<lhsResult.result.toString(_variableIdMapping)<<" rhs: "<<rhsResult.result.toString(_variableIdMapping)<<endl;
   
     if(mode==EStateTransferFunctions::MODE_EMPTY_STATE) {
       // arbitrary value
@@ -3470,8 +3554,10 @@ namespace CodeThorn {
     SgExpression* arrExp=isSgExpression(SgNodeHelper::getLhs(node));
     SgExpression* indexExp=isSgExpression(SgNodeHelper::getRhs(node));
 
-    list<SingleEvalResultConstInt> lhsResultList=evaluateExpression(arrExp,estate,MODE_VALUE);
-    list<SingleEvalResultConstInt> rhsResultList=evaluateExpression(indexExp,estate,MODE_VALUE);
+    //list<SingleEvalResultConstInt> lhsResultList=evaluateExpression(arrExp,estate,MODE_VALUE);
+    //list<SingleEvalResultConstInt> rhsResultList=evaluateExpression(indexExp,estate,MODE_VALUE);
+    list<SingleEvalResultConstInt> lhsResultList=evaluateExpression(arrExp,estate,MODE_ADDRESS);
+    list<SingleEvalResultConstInt> rhsResultList=evaluateExpression(indexExp,estate,MODE_ADDRESS);
     list<SingleEvalResultConstInt> resultList;
     for(list<SingleEvalResultConstInt>::iterator riter=rhsResultList.begin();
 	riter!=rhsResultList.end();
@@ -3544,16 +3630,23 @@ namespace CodeThorn {
     ROSE_ASSERT(varId.isValid());
     if(isMemberVariable(varId)) {
       ROSE_ASSERT(_variableIdMapping);
-      int offset=AbstractValue::getVariableIdMapping()->getOffset(varId);
+      CodeThorn::TypeSize offset=AbstractValue::getVariableIdMapping()->getOffset(varId);
       SAWYER_MESG(logger[TRACE])<<"evalLValueVarRefExp found STRUCT member: "<<_variableIdMapping->variableName(varId)<<" offset: "<<offset<<endl;
-      //res.result=AbstractValue(offset);
-      //return listify(res);
+      if(!VariableIdMapping::isUnknownSizeValue(offset)) {
+	res.result=AbstractValue::createTop();
+	return listify(res);
+      } else {
+	res.result=AbstractValue(offset);
+	return listify(res);
+      }
     }
     if(pstate->varExists(varId)) {
       SAWYER_MESG(logger[TRACE])<<"evalLValueVarRefExp: var exists: "<<_variableIdMapping->variableName(varId)<<endl;
       if(_variableIdMapping->isOfArrayType(varId)) {
 	SAWYER_MESG(logger[TRACE])<<"lvalue array address(?): "<<node->unparseToString()<<"EState label:"<<estate.label().toString()<<endl;
 	res.result=AbstractValue::createAddressOfArray(varId);
+      } else if(_variableIdMapping->isOfReferenceType(varId)) {
+	res.result=readFromMemoryLocation(estate.label(),pstate,varId); // address of a reference is the value it contains
       } else {
 	res.result=AbstractValue::createAddressOfVariable(varId);
       }
@@ -3661,7 +3754,11 @@ namespace CodeThorn {
 	res.result=AbstractValue::createAddressOfArray(varId);
       } else {
 	if(_variableIdMapping->isOfReferenceType(varId)) {
-	  res.result=readFromReferenceMemoryLocation(estate.label(),pstate,varId);
+	  //cout<<"DEBUG: evalRValueVarRefExp: REFERENCE: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl;
+	  if(mode==MODE_ADDRESS)
+	    res.result=readFromMemoryLocation(estate.label(),pstate,varId); // address of a reference is the value it contains
+	  else
+	    res.result=readFromReferenceMemoryLocation(estate.label(),pstate,varId);
 	} else {
 	  res.result=readFromMemoryLocation(estate.label(),pstate,varId);
 	}
@@ -3781,7 +3878,7 @@ namespace CodeThorn {
 	SgExpression* arg=*iter++;
 	list<SingleEvalResultConstInt> argResList=evaluateExpression(arg,estate);
 	if(argResList.size()>1) {
-	  cerr<<"Error: conditional control-flow in printf argument not supported. Expression normalization required."<<endl;
+	  cerr<<"Error: conditional control-flow in printf argument in interpreter-mode not supported. Expression normalization required."<<endl;
 	  exit(1);
 	} else {
 	  AbstractValue av=(*argResList.begin()).value();
@@ -3793,7 +3890,9 @@ namespace CodeThorn {
       size_t j=0;
       for(size_t i=0;i<formatString.size();++i) {
 	if(formatString[i]=='%') {
-	  i++; // skip next character
+	  i++; // go to next character after '%'
+	  if(formatString.size()>2 && formatString[i]=='l') // for handling %ld, %lf
+	    i+=1;
 	  if(j>=avStringVector.size()) {
 	    // number of arguments and uses of '%' don't match in input
 	    // program. This could be reported as program error.  For now
@@ -4215,7 +4314,11 @@ namespace CodeThorn {
     if(_readWriteListener) {
       _readWriteListener->writingToMemoryLocation(lab,pstate,memLoc,newValue);
     }
-    pstate->writeToMemoryLocation(memLoc,newValue);
+    if(memLoc.isNullPtr()) {
+      recordDefinitiveNullPointerDereferenceLocation(lab);
+    } else {
+      pstate->writeToMemoryLocation(memLoc,newValue);
+    }
     SAWYER_MESG(logger[TRACE])<<"EStateTransferFunctions::writeToMemoryLocation1:done"<<endl;
   }
 

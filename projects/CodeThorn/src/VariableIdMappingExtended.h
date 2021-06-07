@@ -24,6 +24,9 @@ namespace CodeThorn {
     void computeVariableSymbolMapping(SgProject* project, int maxWarningsCount = 3) override;
     void computeVariableSymbolMapping1(SgProject* project, int maxWarningsCount);
     void computeVariableSymbolMapping2(SgProject* project, int maxWarningsCount);
+
+    SgVariableDeclaration* getVariableDeclaration(VariableId varId) override;
+    
     // direct lookup
     CodeThorn::TypeSize getTypeSize(SgType* type);
     CodeThorn::TypeSize getTypeSize(VariableId varId);
@@ -54,6 +57,7 @@ namespace CodeThorn {
     std::list<SgVariableDeclaration*> getListOfGlobalVarDecls();
     std::list<SgVariableDeclaration*> getVariableDeclarationsOfVariableIdSet(VariableIdSet&);
 
+    void addVariableDeclaration(SgVariableDeclaration* decl);
     CodeThorn::TypeSize registerClassMembers(SgClassType* classType, CodeThorn::TypeSize offset);
     CodeThorn::TypeSize registerClassMembers(SgClassType* classType, std::list<SgVariableDeclaration*>& memberList, CodeThorn::TypeSize offset);
     void classMemberOffsetsToStream(std::ostream& os, SgType* type, std::int32_t level);
@@ -61,6 +65,8 @@ namespace CodeThorn {
     // does not strip pointer types, to avoid infinite recursion in rekursive data types
     SgType* strippedType2(SgType* type);
     SgExprListExp* getAggregateInitExprListExp(SgVariableDeclaration* varDecl);
+    static SgClassDeclaration* getClassDeclarationOfClassType(SgClassType* type);
+    static bool isUnion(SgClassType* type);
     static std::pair<bool,std::list<SgVariableDeclaration*> > memberVariableDeclarationsList(SgClassType* classType);
     static bool isDataMemberAccess(SgVarRefExp* varRefExp);
     static bool isGlobalOrLocalVariableAccess(SgVarRefExp* varRefExp);
@@ -118,6 +124,7 @@ namespace CodeThorn {
     void registerClassMembersNew();
     std::list<SgVarRefExp*> structAccessesInsideFunctions(SgProject* project);
     std::list<SgVarRefExp*> variableAccessesInsideFunctions(SgProject* project);
+    std::int32_t repairVarRefExpAccessList(std::list<SgVarRefExp*>& l, std::string accessName); // workaround
     std::int32_t checkVarRefExpAccessList(std::list<SgVarRefExp*>& l, std::string accessName);
       
     CodeThorn::TypeSizeMapping typeSizeMapping;
@@ -128,6 +135,8 @@ namespace CodeThorn {
     std::vector<VariableId> getRegisteredClassMemberVars(SgType*);
     bool isRegisteredClassMemberVar(SgType*,VariableId);
     void registerClassMemberVar(SgType*,VariableId);
+
+    std::vector<VariableId> getClassMembers(SgType*);
     std::map<SgType*,std::vector<VariableId> > classMembers;
 
   private:

@@ -5,7 +5,6 @@
 using namespace Sawyer::Message;
 using namespace std;
 
-
 namespace CodeThorn {
 
   void VariableIdMappingExtended::createTypeLists() {
@@ -84,6 +83,43 @@ namespace CodeThorn {
     return varRefExpList;
   }
 
+  int32_t VariableIdMappingExtended::repairVarRefExpAccessList(list<SgVarRefExp*>& accesses, string accessName) {
+    int32_t numErrors=0;
+    // check if all symbols of VarRefExp in structure accesses are represented in gathered class data members' symbols
+    for(auto v:accesses) {
+      VariableId varId=variableId(v);
+      if(!varId.isValid()) {
+	// report error, and record error
+	numErrors++;
+	SgVariableSymbol* varSym=v->get_symbol();
+	SgInitializedName* initName=varSym->get_declaration();
+	SgVariableDeclaration* decl=isSgVariableDeclaration(initName->get_declaration());
+	if(decl && isMemberVariableDeclaration(decl)) {
+	  if(SgClassDefinition* cdef=isSgClassDefinition(decl->get_parent())) {
+	    //cout<<": found class of unregistered symbol:"<<cdef->get_qualified_name ()<<" defined in:"<<SgNodeHelper::sourceFilenameLineColumnToString(cdef)<<endl;
+	    SgClassDeclaration* classDecl=cdef->get_declaration();
+	    ROSE_ASSERT(classDecl);
+	    SgClassType* classType=classDecl->get_type();
+	    ROSE_ASSERT(classType);
+	    //cout<<": registering class members. of unregistered symbol:"<<cdef->get_qualified_name ()<<" defined in:"<<SgNodeHelper::sourceFilenameLineColumnToString(cdef)<<endl;
+	    // register class members based on definition (not SgType)
+	    std::list<SgVariableDeclaration*> memberList;
+	    auto classMemberList=cdef->get_members();
+	    for( auto classMember : classMemberList) {
+	      if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(classMember)) {
+		memberList.push_back(varDecl);
+	      }
+	    }
+	    registerClassMembers(classType, memberList , 0); // this is *not* the classType through which this definition can be found (BUG), but an equivalent one
+	  } else {
+	    //cout<<": could not find class of unregistered symbol!";
+	  }
+	}
+      }
+    }
+    return numErrors;
+  }
+
   int32_t VariableIdMappingExtended::checkVarRefExpAccessList(list<SgVarRefExp*>& accesses, string accessName) {
     int32_t numErrors=0;
     // check if all symbols of VarRefExp in structure accesses are represented in gathered class data members' symbols
@@ -103,7 +139,11 @@ namespace CodeThorn {
 	SgVariableDeclaration* decl=isSgVariableDeclaration(initName->get_declaration());
 	if(decl && isMemberVariableDeclaration(decl)) {
 	  if(SgClassDefinition* cdef=isSgClassDefinition(decl->get_parent())) {
-	    cout<<": found class of unregistered symbol:"<<cdef->get_qualified_name ()<<" defined in:"<<SgNodeHelper::sourceFilenameLineColumnToString(cdef);
+	    cout<<": found class of unregistered symbol:"<<cdef->get_qualified_name ()<<" defined in:"<<SgNodeHelper::sourceFilenameLineColumnToString(cdef)<<endl;
+	    //SgClassDeclaration* classDecl=cdef->get_declaration();
+	    //ROSE_ASSERT(classDecl);
+	    //SgClassType* classType=classDecl->get_type();
+	    //ROSE_ASSERT(classType);
 	  } else {
 	    cout<<": could not find class of unregistered symbol!";
 	  }
@@ -114,10 +154,12 @@ namespace CodeThorn {
     return numErrors;
   }
   
+
   bool VariableIdMappingExtended::consistencyCheck(SgProject* project) {
     list<SgVarRefExp*> varAccesses=variableAccessesInsideFunctions(project);
     int32_t numVarErrors=checkVarRefExpAccessList(varAccesses,"var access");
     list<SgVarRefExp*> structAccesses=structAccessesInsideFunctions(project);
+    int32_t numStructErrorsDetected=repairVarRefExpAccessList(structAccesses,"struct access"); // has no effect if no errors are found
     int32_t numStructErrors=checkVarRefExpAccessList(structAccesses,"struct access");
     if(numVarErrors>0||numStructErrors) {
       cout<<"\nINFO: ROSE AST Symbol Consistency check FAILED (var access errors:"<<numVarErrors<<", struct access errors:"<<numStructErrors<<")"<<endl;
@@ -126,30 +168,47 @@ namespace CodeThorn {
     }
     return numVarErrors==0 && numStructErrors==0;
   }
-  
-  std::pair<bool,std::list<SgVariableDeclaration*> > VariableIdMappingExtended::memberVariableDeclarationsList(SgClassType* classType) {
-    std::list<SgVariableDeclaration*> declVarList;
+
+  bool VariableIdMappingExtended::isUnion(SgClassType* type) {
+    if(SgClassDeclaration* classDecl=getClassDeclarationOfClassType(type)) {
+      SgClassDeclaration::class_types classType=classDecl->get_class_type();
+      return classType==SgClassDeclaration::e_union;
+    }
+    return false;
+  }
+
+  SgClassDeclaration* VariableIdMappingExtended::getClassDeclarationOfClassType(SgClassType* classType) {
     if(SgDeclarationStatement* declStmt1=classType->get_declaration()) {
       if(SgClassDeclaration* classDecl1=isSgClassDeclaration(declStmt1)) {
 	if(SgDeclarationStatement* declStmt2=classDecl1->get_definingDeclaration()) {
 	  if(SgClassDeclaration* classDecl2=isSgClassDeclaration(declStmt2)) {
-	    if(SgClassDefinition* classDef=classDecl2->get_definition()) {
-	      auto classMemberList=classDef->get_members();
-	      for( auto classMember : classMemberList) {
-		if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(classMember)) {
-		  declVarList.push_back(varDecl);
-		}
-	      }
-	    }
-	    return make_pair(true,declVarList);
+	    return classDecl2;
 	  }
 	}
       }
+    }
+    return nullptr;
+  }
+  
+  std::pair<bool,std::list<SgVariableDeclaration*> > VariableIdMappingExtended::memberVariableDeclarationsList(SgClassType* classType) {
+    std::list<SgVariableDeclaration*> declVarList;
+    if(SgClassDeclaration* classDecl2=getClassDeclarationOfClassType(classType)) {
+      if(SgClassDefinition* classDef=classDecl2->get_definition()) {
+	auto classMemberList=classDef->get_members();
+	for( auto classMember : classMemberList) {
+	  if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(classMember)) {
+	    declVarList.push_back(varDecl);
+	  }
+	}
+      }
+      return make_pair(true,declVarList);
     }
     return make_pair(false,declVarList);
   }
   
   CodeThorn::TypeSize VariableIdMappingExtended::registerClassMembers(SgClassType* classType, CodeThorn::TypeSize offset) {
+    ROSE_ASSERT(offset==0); // this parameter can be removed
+
     //cout<<"DEBUG: register class members/2:"<<endl;
     auto result=memberVariableDeclarationsList(classType);
     // if member variables of class cannot be determined, return
@@ -173,7 +232,9 @@ namespace CodeThorn {
   }
 
   CodeThorn::TypeSize VariableIdMappingExtended::registerClassMembers(SgClassType* classType, std::list<SgVariableDeclaration*>& memberList, CodeThorn::TypeSize offset) {
+    ROSE_ASSERT(offset==0); // this parameter can be removed
     ROSE_ASSERT(classType!=nullptr);
+    CodeThorn::TypeSize totalSize=0;
     //cout<<"DEBUG: Class members of: "<<classType->unparseToString()<<":"<<memberList.size()<<endl;
     for(auto memberVarDecl : memberList) {
       if(TypeSizeMapping::isUnionDeclaration(memberVarDecl)) {
@@ -212,13 +273,20 @@ namespace CodeThorn {
 	  getVariableIdInfoPtr(varId)->aggregateType=AT_SINGLE;
 	}
 	if(typeSize!=unknownSizeValue()) {
-	  offset+=typeSize;
+	  if(isUnion(classType)) {
+	    // offset remains unchanged (=0)
+	    totalSize=std::max(totalSize,typeSize);
+	  } else {
+	    offset+=typeSize;
+	    totalSize+=typeSize;
+	  }
 	} else {
 	  offset=unknownSizeValue();
+	  totalSize=unknownSizeValue();
 	}
       }
     }
-    return offset;
+    return totalSize;
   }
 
   SgType* VariableIdMappingExtended::strippedType(SgType* type) {
@@ -291,11 +359,17 @@ namespace CodeThorn {
   void VariableIdMappingExtended::computeVariableSymbolMapping(SgProject* project, int maxWarningsCount) {
     //computeVariableSymbolMapping1(project,maxWarningsCount);
     computeVariableSymbolMapping2(project,maxWarningsCount);
+
+    // repair struct access symbols if necessary (temporary workaround)
+    list<SgVarRefExp*> structAccesses=structAccessesInsideFunctions(project);
+    int32_t numStructErrorsDetected=repairVarRefExpAccessList(structAccesses,"struct access");
+
     if(getAstConsistencySymbolCheckFlag()) {
-      if(!consistencyCheck(project))
+      bool checkOk=consistencyCheck(project);
+      if(!checkOk)
 	exit(1);
     } else {
-      cout<<"INFO: AST consistency symbol check: disabled by user."<<endl;
+      //cout<<"INFO: AST consistency symbol check: disabled by user."<<endl;
     }
   }
 
@@ -309,6 +383,12 @@ namespace CodeThorn {
     return mappingSymToVarId.find(sym)!=mappingSymToVarId.end();
   }
 
+  // returns nullptr for string-literal varIds
+  SgVariableDeclaration* VariableIdMappingExtended::getVariableDeclaration(VariableId varId) {
+    ROSE_ASSERT(varId.isValid());
+    return getVariableIdInfoPtr(varId)->getVarDecl();
+  }
+  
   SgVariableDeclaration* VariableIdMappingExtended::getVariableDeclarationFromSym(SgSymbol* sym) {
     return dynamic_cast<SgVariableDeclaration*>(SgNodeHelper::findVariableDeclarationWithVariableSymbol(sym));
   }
@@ -338,11 +418,13 @@ namespace CodeThorn {
   std::list<SgVariableDeclaration*> VariableIdMappingExtended::getVariableDeclarationsOfVariableIdSet(VariableIdSet& vidSet) {
     std::list<SgVariableDeclaration*> decls;
     for(auto vid : vidSet) {
-      decls.push_back(getVariableDeclaration(vid));
+      auto d=getVariableDeclaration(vid);
+      if(d)
+	decls.push_back(d);
     }
     return decls;
   }
-
+  
   std::list<SgVariableDeclaration*> VariableIdMappingExtended::getListOfGlobalVarDecls() {
     list<SgVariableDeclaration*> globalVarDecls;
     for(auto p : mappingSymToVarId) {
@@ -370,7 +452,20 @@ namespace CodeThorn {
                totalTypeSize=elementSize*getNumberOfElements(varId)
     builtinType: totalTypeSize=typeSizeMapping.getBuiltInTypeSize(biType)
    */
-  void VariableIdMappingExtended::setVarIdInfoFromType(VariableId varId, SgType* type, SgVariableDeclaration* linkedDecl) {
+  void VariableIdMappingExtended::setVarIdInfoFromType(VariableId varId, SgType* type_ignored, SgVariableDeclaration* linkedDecl_ignored) {
+    VariableIdInfo* varIdInfo=getVariableIdInfoPtr(varId);
+      
+    if(varIdInfo->getVarDecl()) {
+      if(SgNodeHelper::isGlobalVariableDeclaration(varIdInfo->getVarDecl())) {
+	varIdInfo->variableScope=VS_GLOBAL;
+      } else {
+	varIdInfo->variableScope=VS_LOCAL;
+      }
+    }
+
+    SgType* type=varIdInfo->getType();
+    if(type==nullptr)
+      return;
     type=strippedType(type);// strip typedef and const
     //cout<<"DEBUG:  setVarIdInfoFrom type: "<<type->unparseToString()<<endl;
     if(SgClassType* classType=isSgClassType(type)) {
@@ -396,8 +491,8 @@ namespace CodeThorn {
 
       // if number of elements hasn't been determined from type (e.g. int a[]={};) determine number of elements from initializer
       // initializer can only exist if decl is available, which is not the case for formal function parameters (function is called with 3rd arg=0 in this case)
-      if(getNumberOfElements(varId)==unknownSizeValue() && linkedDecl) {
-	if(SgExprListExp* initList=getAggregateInitExprListExp(linkedDecl)) {
+      if(getNumberOfElements(varId)==unknownSizeValue() && varIdInfo->getVarDecl()) {
+	if(SgExprListExp* initList=getAggregateInitExprListExp(varIdInfo->getVarDecl())) {
 	  ROSE_ASSERT(initList);
 	  SgExpressionPtrList& exprPtrList=initList->get_expressions();
 	  CodeThorn::TypeSize numInitializerElements=exprPtrList.size();
@@ -478,8 +573,6 @@ namespace CodeThorn {
     initTypeSizes();
     computeTypeSizes();
     registerClassMembersNew();
-    //dumpTypeSizes();
-    //return;
 
 #if 0
     RoseAst ast(project);
@@ -504,7 +597,7 @@ namespace CodeThorn {
     for(auto classDef:_memPoolTraversal.classDefinitions) {
       SgClassDeclaration* classDecl=classDef->get_declaration();
       SgClassType* classType=classDecl->get_type();
-      //registerClassMembers(classType, 0);
+      registerClassMembers(classType, 0);
       ct++;
     }
 #endif
@@ -520,38 +613,12 @@ namespace CodeThorn {
       for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
 	CodeThorn::TypeSize totalSize=0;
 	if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
-	  SgSymbol* sym=SgNodeHelper::getSymbolOfVariableDeclaration(varDecl);
-	  if(sym->get_symbol_basis()!=0) {
-	    if(symbolExists(sym)) {
-	      //cout<<"VID: found symbol again: "<<sym->unparseToString()<<" (skipping)."<<endl;
-	      numSymbolExists++;
-	      continue;
-	    }
-	    if(isMemberVariableDeclaration(varDecl))
-	      continue;
-	    //cout<<"DEBUG: registering var decl: "<<numVarDecls++<<":"<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<":"<<sym<<":"<<varDecl->unparseToString()<<endl;
-	    numVarDecls++;
-	    registerNewSymbol(sym);
-	    VariableId varId=variableId(sym);
-	    // the getVariableDeclaration function obtains the declaration through the symbol
-	    SgVariableDeclaration* linkedDecl=getVariableDeclaration(varId);
-#if 0
-	    if(linkedDecl!=varDecl) {
-	      cout<<"INFO: using linked decl instead of matched decl:"<<endl;
-	      cout<<"      matched: "<<varDecl->unparseToString();
-	      cout<<"      linked : "<<linkedDecl->unparseToString();
-	    }
-#endif
-	    if(SgNodeHelper::isGlobalVariableDeclaration(linkedDecl)) {
-	      getVariableIdInfoPtr(varId)->variableScope=VS_GLOBAL;
-	    } else {
-	      getVariableIdInfoPtr(varId)->variableScope=VS_LOCAL;
-	    }
-	    setVarIdInfoFromType(varId,sym->get_type(),linkedDecl);
-	  } else {
-	    cout<<"Warning: no symbol basis for sym:"<<sym<<endl;
-	  }
+	  if(isMemberVariableDeclaration(varDecl))
+	    continue;
+	  addVariableDeclaration(varDecl);
+	  //cout<<"DEBUG: registering var decl: "<<numVarDecls++<<":"<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<":"<<varDecl->unparseToString()<<endl;
 	}
+
 	if(SgFunctionDefinition* funDef=isSgFunctionDefinition(*i)) {
 	  //cout<<"DEBUG: fun def : "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<":"<<funDef->unparseToString()<<endl;
 	  std::vector<SgInitializedName *> & funFormalParams=SgNodeHelper::getFunctionDefinitionFormalParameterList(*i);
@@ -576,12 +643,39 @@ namespace CodeThorn {
 	  }
 	}
       }
+
+      // 2nd pass over all variable declarations, to ensure all settings are based on the variable declaration with an initializer (if available)
+      for (auto pair: mappingVarIdToInfo) {
+	setVarIdInfoFromType(pair.first,0,0);
+      }
+
       // creates variableid for each string literal in the entire program
       registerStringLiterals(project);
     }
     //cout<<"INFO: Number of registered class types    : "<<ct<<endl;
     //cout<<"INFO: Number of registered var decls      : "<<numVarDecls<<endl;
     //cout<<"INFO: Number of registered function params: "<<numFunctionParams<<endl;
+  }
+
+  void VariableIdMappingExtended::addVariableDeclaration(SgVariableDeclaration* varDecl) {
+    SgSymbol* sym=SgNodeHelper::getSymbolOfVariableDeclaration(varDecl);
+    //cout<<"DEBUG: computeVariableSymbolMapping2: addVariableDeclaration: "<<varDecl->unparseToString()<<": sym="<<sym<<endl;
+    if(sym->get_symbol_basis()!=0) {
+      VariableIdInfo* vidInfo=0;
+      if(symbolExists(sym)) {
+	vidInfo=getVariableIdInfoPtr(variableId(sym));
+	//cout<<"DEBUG: VID: found symbol again: "<<sym->unparseToString();
+      } else {
+	registerNewSymbol(sym);
+	vidInfo=getVariableIdInfoPtr(variableId(sym));
+      }
+      ROSE_ASSERT(vidInfo);
+      vidInfo->addVariableDeclaration(varDecl); // record all variable declarations that map to the same symbol
+    } else {
+      stringstream ss;
+      ss<<sym;
+      recordWarning("no symbol basis for sym:"+ss.str());
+    }
   }
 
   // class members handling
@@ -827,10 +921,14 @@ std::string VariableIdMappingExtended::varIdInfoToString(VariableId varId) {
 void VariableIdMappingExtended::setAstConsistencySymbolCheckFlag(bool flag) {
   _astConsistencySymbolCheckFlag=flag;
 }
+
 bool VariableIdMappingExtended::getAstConsistencySymbolCheckFlag() {
   return _astConsistencySymbolCheckFlag;
 }
 
+std::vector<VariableId> VariableIdMappingExtended::getClassMembers(SgType* type) {
+  return classMembers[type];
+}
 
 // OLD METHODS (VIM2)
 
