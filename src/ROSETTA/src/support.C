@@ -606,6 +606,12 @@ Grammar::setUpSupport ()
      Unparse_Info.setDataPrototype("bool","context_for_added_parentheses","= false",
                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/5/2021): Support for debuging, we wnat to debug the transitions between token-based unparsing and unparsing from the AST.
+     Unparse_Info.setDataPrototype("static SgStatement*","previouslyUnparsedStatement","= NULL",
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     Unparse_Info.setDataPrototype("static bool","previousStatementUnparsedFromTokenStream","= false",
+                                NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
 
      BaseClass.setFunctionPrototype           ( "HEADER_BASECLASS", "../Grammar/Support.code");
      ExpBaseClass.setFunctionPrototype        ( "HEADER_EXP_BASE_CLASS", "../Grammar/Support.code");
@@ -935,6 +941,14 @@ Grammar::setUpSupport ()
      SourceFile.setDataPrototype   ( "bool", "isDynamicLibrary", "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (5/20/2021): Save the first and last statement associated with the source file (required to support the 
+  // token-based unparsing (e.g. detecting the last statement so that we can output the trailing whitespace).
+     SourceFile.setDataPrototype ( "SgStatement*", "firstStatement", " = NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+     SourceFile.setDataPrototype ( "SgStatement*", "lastStatement", " = NULL",
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+
      UnknownFile.setDataPrototype   ( "SgGlobal*", "globalScope", "= NULL",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
@@ -1048,6 +1062,10 @@ Grammar::setUpSupport ()
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      IncludeFile.setDataPrototype ( "SgStatement*", "lastStatement", " = NULL",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
+  // DQ (5/9/2021): Support for token-based unparsing when used with header file unparsing.
+  // IncludeFile.setDataPrototype   ( "bool", "headerFileRepresentsAllStatementsInParentScope", "= false",
+  //                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
   // DQ (9/18/2018): We can likely eliminate this IR node now that we store the include file tree directly

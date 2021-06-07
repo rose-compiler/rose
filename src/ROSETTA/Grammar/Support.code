@@ -5761,6 +5761,11 @@ HEADER_FILE_INFORMATION_START
           int  get_physical_line() const;
           void set_physical_source_position_to_match_logical_source_position();
 
+#if 1
+       // DQ (5/20/2021): Added to support debugging.
+          int*  get_physical_file_id_reference ();
+#endif
+
        // DQ (2/28/2019): Support for multi-file handling.
       //! Where this is a shared IR node across multiple files, return the line number location of the IR node for a specific file.
           int  get_physical_line(int file_id) const;
@@ -7550,6 +7555,14 @@ HEADER_UNPARSE_INFO_START
           static bool get_extern_C_with_braces();
           static void set_extern_C_with_braces( bool extern_C_with_braces );
 
+       // DQ (6/5/2021): Support for debugging, we want to debug the transitions between token-based unparsing and unparsing from the AST.
+          static SgStatement* get_previouslyUnparsedStatement();
+          static void set_previouslyUnparsedStatement( SgStatement* previouslyUnparsedStatement );
+
+       // DQ (6/5/2021): Support for debugging, we want to debug the transitions between token-based unparsing and unparsing from the AST.
+          static bool get_previousStatementUnparsedFromTokenStream();
+          static void set_previousStatementUnparsedFromTokenStream( bool previousStatementUnparsedFromTokenStream );
+
 HEADER_UNPARSE_INFO_END
 
 
@@ -7562,6 +7575,7 @@ HEADER_UNPARSE_POSTDECLARATION_START
 extern std::string getSgVariant ( int x);
 
 HEADER_UNPARSE_POSTDECLARATION_END
+
 
 HEADER_TEMPLATE_PARAMETER_START
      public:
@@ -14515,6 +14529,15 @@ Sg_File_Info::get_physical_file_id() const
      int file_id = get_file_id();
 #endif
 
+#if 0
+     printf ("In Sg_File_Info::get_physical_file_id(): \n");
+     printf (" --- (before being set) return_physical_file_id = %d \n",return_physical_file_id);
+     printf (" --- p_physical_file_id                         = %d \n",p_physical_file_id);
+     printf (" --- physicalFileOK                             = %s \n",physicalFileOK ? "true" : "false");
+     printf (" --- file_id                                    = %d \n",file_id);
+     printf (" --- isCompilerGenerated()                      = %s \n",isCompilerGenerated() ? "true" : "false");
+#endif
+
   // DQ (8/20/2018): Not clear why this language specific rule is a good idea.
   // PHL (01/06/2014) use get_line for Fortran frontend
      if (SageInterface::is_Fortran_language() )
@@ -14543,7 +14566,22 @@ Sg_File_Info::get_physical_file_id() const
 #endif
           if (isCompilerGenerated() == true)
              {
+#if 1
                return_physical_file_id = file_id;
+#else
+            // DQ (5/20/2021): If the physical_file_id has been set (as we now do to support the header file unparsing) 
+            // then where it is a physical file (id >= 0) then we want to return this value, even of this is marked as 
+            // compiler generated.
+            // if (physicalFileOK == false && file_id < 0)
+               if (physicalFileOK == true)
+                  {
+                    return_physical_file_id = p_physical_file_id;
+                  }
+                 else
+                  {
+                    return_physical_file_id = file_id;
+                  }
+#endif
              }
             else
              {
@@ -14552,8 +14590,24 @@ Sg_File_Info::get_physical_file_id() const
 #endif
         }
 
+#if 0
+     printf ("Leaving Sg_File_Info::get_physical_file_id(): return_physical_file_id = %d \n",return_physical_file_id);
+#endif
+
      return return_physical_file_id;
    }
+
+
+#if 1
+// DQ (5/20/2021): Added to support debugging.
+int*
+Sg_File_Info::get_physical_file_id_reference()
+   {
+     assert (this != NULL);
+
+     return &p_physical_file_id;
+   }
+#endif
 
 
 int
@@ -14666,7 +14720,7 @@ Sg_File_Info::set_physical_file_id( int physical_file_id )
      set_isModified(true);
 
 #if 0
-     mprintf ("In Sg_File_Info::set_physical_file_id(physical_file_id = %d) this = %p \n",physical_file_id,this);
+     printf ("In Sg_File_Info::set_physical_file_id(physical_file_id = %d) this = %p \n",physical_file_id,this);
 #endif
 
      p_physical_file_id = physical_file_id;
@@ -16441,7 +16495,12 @@ SgFile::initialization()
   // DQ (9/17/2020): Added these missing variable initializations.
      p_standard     = e_default_standard;
      p_gnu_standard = false;
+
+  // DQ (5/20/2021): Support for token-based unparsing (computation of first and last statement in source file.
+  // p_firstStatement = NULL;
+  // p_lastStatement  = NULL;
    }
+
 
 #if 0
 // DQ (9/4/2008): This is now in SgSourceFile (and built using ROSETTA with a different name)
@@ -17152,6 +17211,10 @@ SgFile::display ( const std::string & label ) const
   // DQ (12/23/2015): Suppress variable declaration normalizations
      printf ("     p_suppress_variable_declaration_normalization = %s \n",(p_suppress_variable_declaration_normalization == true) ? "true" : "false");
 
+  // DQ (5/20/2021): Support for token-based unparsing (computation of first and last statement in source file.
+  // printf ("     p_firstStatement                            = %p \n",p_firstStatement);
+  // printf ("     p_lastStatement                             = %p \n",p_lastStatement);
+
 #if 0
 // Order of data member entries in support.C, matched against the
 // initialization to make sure that all data members are initialized.
@@ -17683,22 +17746,6 @@ SgSourceFile::get_token_unparse_frontier()
    }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 void
 SgSourceFile::set_token_unparse_frontier_adjacency(std::map<SgNode*,PreviousAndNextNodeData*> & tokenStreamSequenceMap)
    {
@@ -17781,21 +17828,6 @@ SgSourceFile::get_token_unparse_frontier_adjacency()
 
      return *result;
    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 // DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
@@ -17892,20 +17924,6 @@ SgSourceFile::get_redundantlyMappedTokensToStatementMultimap()
    }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // DQ (11/29/2013): Added to support access to multi-map of redundant mapping of frontier IR nodes to token subsequences.
 void
 SgSourceFile::set_redundantTokenEndingsSet(std::set<int> & X)
@@ -17991,18 +18009,6 @@ SgSourceFile::get_redundantTokenEndingsSet()
    }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 void
 SgSourceFile::set_representativeWhitespaceStatementMap(std::map<SgScopeStatement*,SgStatement*> & representativeWhitespaceStatementMap)
    {
@@ -18062,6 +18068,7 @@ SgSourceFile::set_representativeWhitespaceStatementMap(std::map<SgScopeStatement
 #endif
    }
 
+
 std::map<SgScopeStatement*,SgStatement*> &
 SgSourceFile::get_representativeWhitespaceStatementMap()
    {
@@ -18107,21 +18114,6 @@ SgSourceFile::get_representativeWhitespaceStatementMap()
      return *result;
    }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 void
 SgSourceFile::set_macroExpansionMap(std::map<SgStatement*,MacroExpansion*> & macroExpansionMap)
    {
@@ -18160,6 +18152,7 @@ SgSourceFile::set_macroExpansionMap(std::map<SgStatement*,MacroExpansion*> & mac
      mprintf ("In SgSourceFile::set_macroExpansionMap(): (after): frontierMap.size() = %zu \n",frontierMap.size());
 #endif
    }
+
 
 std::map<SgStatement*,MacroExpansion*> &
 SgSourceFile::get_macroExpansionMap()
@@ -18205,30 +18198,6 @@ SgSourceFile::get_macroExpansionMap()
 
      return *result;
    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 SOURCE_APPLICATION_SOURCE_FILE_END
 
@@ -21393,6 +21362,36 @@ SgUnparse_Info::dec_nestingLevel() {
         cerr << "warning: SgUnparse_Info.p_nestingLevel decremented below zero." << endl;
     }
 }
+
+
+// DQ (6/5/2021): Support for debugging, we want to debug the transitions between token-based unparsing and unparsing from the AST.
+SgStatement* SgUnparse_Info::p_previouslyUnparsedStatement              = NULL;
+bool         SgUnparse_Info::p_previousStatementUnparsedFromTokenStream = false;
+
+// DQ (6/5/2021): Support for debugging, we want to debug the transitions between token-based unparsing and unparsing from the AST.
+SgStatement* SgUnparse_Info::get_previouslyUnparsedStatement()
+   {
+     return p_previouslyUnparsedStatement;
+   }
+
+// DQ (6/5/2021): Support for debugging, we want to debug the transitions between token-based unparsing and unparsing from the AST.
+void SgUnparse_Info::set_previouslyUnparsedStatement( SgStatement* previouslyUnparsedStatement )
+   {
+     p_previouslyUnparsedStatement = previouslyUnparsedStatement;
+   }
+
+// DQ (6/5/2021): Support for debugging, we want to debug the transitions between token-based unparsing and unparsing from the AST.
+bool SgUnparse_Info::get_previousStatementUnparsedFromTokenStream()
+   {
+     return p_previousStatementUnparsedFromTokenStream;
+   }
+
+// DQ (6/5/2021): Support for debugging, we want to debug the transitions between token-based unparsing and unparsing from the AST.
+void SgUnparse_Info::set_previousStatementUnparsedFromTokenStream( bool previousStatementUnparsedFromTokenStream )
+   {
+     p_previousStatementUnparsedFromTokenStream = previousStatementUnparsedFromTokenStream;
+   }
+
 
 SOURCE_UNPARSE_INFO_END
 

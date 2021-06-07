@@ -16521,10 +16521,6 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
      Rose_STL_Container<std::string> arglist;
      int nextErrorCode = 0;
 
-#if 0
-     bool set_header_file_unparsing_optimization = false;
-#endif
-
   // DQ (11/10/2019): Shared nodes between existing files that are copied need to be marked as shared.
      bool isCopyOfExistingFile_testForSharedNodes = false;
      SgFile* fileBeingCopied = NULL;
@@ -17066,7 +17062,11 @@ SageBuilder::buildSourceFile(const std::string& outputFileName, SgProject* proje
   // Currently this is taken from the input file (generated from a prefix on the output filename.
 
 #if 0
+     printf ("B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1 \n");
+     printf ("B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1 \n");
      printf ("In SageBuilder::buildSourceFile(outputFileName = %s, project = %p) \n",outputFileName.c_str(),project);
+     printf ("B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1 \n");
+     printf ("B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1 \n");
 #endif
 
   // Call the supporting function to build a file.
@@ -17104,10 +17104,14 @@ SageBuilder::buildSourceFile(const std::string& outputFileName, SgProject* proje
 SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project, bool clear_globalScopeAcrossFiles /*=false*/)
    {
 #if 0
+     printf ("B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2  \n");
+     printf ("B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2  \n");
      printf ("In SageBuilder::buildSourceFile(const std::string& inputFileName,const std::string& outputFileName, SgProject* project): calling buildFile() \n");
   // printf (" --- inputFileName  = %s outputFileName = %s \n",inputFileName.c_str(),outputFileName.c_str());
      printf (" --- inputFileName  = %s \n",inputFileName.c_str());
      printf (" --- outputFileName = %s \n",outputFileName.c_str());
+     printf ("B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2  \n");
+     printf ("B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2  \n");
 #endif
 
      SgFile* file = buildFile(inputFileName, outputFileName,project,clear_globalScopeAcrossFiles);
@@ -17315,13 +17319,36 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
      printf ("sourceFile->getFileName() = %s \n",sourceFile->getFileName().c_str());
 #endif
 
+     SgGlobal* globalScope = sourceFile->get_globalScope();
+
 #if 0
      printf ("Leaving SageBuilder::buildSourceFile() sourceFile = %p globalScope = %p \n",sourceFile,sourceFile->get_globalScope());
      printf ("sourceFile->get_file_info()->get_file_id()          = %d \n",sourceFile->get_file_info()->get_file_id());
      printf ("sourceFile->get_file_info()->get_physical_file_id() = %d \n",sourceFile->get_file_info()->get_physical_file_id());
      printf ("sourceFile->get_token_list.size()                   = %zu \n",sourceFile->get_token_list().size());
      printf ("sourceFile->get_tokenSubsequenceMap().size()        = %zu \n",sourceFile->get_tokenSubsequenceMap().size());
+     printf ("inputFileName                                       = %s \n",inputFileName.c_str());
+     printf ("outputFileName                                      = %s \n",outputFileName.c_str());
+     printf ("sourceFile->getFileName()                           = %s \n",sourceFile->getFileName().c_str());
+
+     printf ("sourceFile->get_globalScope()                       = %p \n",globalScope);
+     printf ("globalScope->get_isModified()                       = %s \n",globalScope->get_isModified() ? "true" : "false");
 #endif
+
+  // DQ (6/1/2021): We need to end this function with the isModified flag set to false.  This is 
+  // important for the support of the token based unparsing when building a dynamic library.
+  // This is important in permitting the simpleFrontierDetectionForTokenStreamMapping() function 
+  // to generate the correct settings for nodes in the second file constructed from the original file.
+     if (globalScope->get_isModified() == true)
+        {
+#if 0
+          printf ("globalScope->get_isModified() == true: reset to false \n");
+#endif
+          globalScope->set_isModified(false);
+#if 0
+          printf ("Verify false setting: globalScope->get_isModified() = %s \n",globalScope->get_isModified() ? "true" : "false");
+#endif
+        }
 
 #if 0
      printf ("Exiting as a test! \n");

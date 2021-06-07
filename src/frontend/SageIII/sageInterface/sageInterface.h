@@ -1809,8 +1809,14 @@ NodeType* getEnclosingNode(const SgNode* astNode, const bool includingSelf = fal
 
   // DQ (11/15/2018): Adding support for traversals over the include file tree.
   //! return path prefix for subtree of include files.
-  void listHeaderFiles ( SgIncludeFile* includeFile );
+  ROSE_DLL_API void listHeaderFiles ( SgIncludeFile* includeFile );
 
+  // DQ (5/9/2021): Adding support for detection of statements in a scope that must be unparsed.
+  /*! \brief This function supports the token-based unparsing when used with unparsing of header files to know when the scope can be unparsed via it's token stream, even though a statement from a header file may contain a transformation.
+     returns true if there is a statement in the scope that has to be unparsed (is from the same file as the scope).
+     returns false if the scope is empty or contains only statements associated with one or more header files.
+  */
+  ROSE_DLL_API bool scopeHasStatementsFromSameFile(SgScopeStatement* scope);
 
 //@}
 
@@ -2185,6 +2191,9 @@ ROSE_DLL_API void moveCommentsToNewStatement(SgStatement* sourceStatement, const
 ROSE_DLL_API void moveDeclarationToAssociatedNamespace ( SgDeclarationStatement* declarationStatement );
 
 ROSE_DLL_API bool isTemplateInstantiationNode(SgNode* node);
+
+// DQ (5/23/2021): Added function to support test for template declaration (commented out, not required).
+// ROSE_DLL_API bool isTemplateDeclarationNode(SgNode* node);
 
 ROSE_DLL_API void wrapAllTemplateInstantiationsInAssociatedNamespaces(SgProject* root);
 

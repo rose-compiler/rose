@@ -187,6 +187,10 @@ std::map<int,std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* > Rose::tokenS
 // DQ (1/19/2021): This is part of moving to a new map that uses the SgSourceFile pointer instead of the file_id.
 std::map<SgSourceFile*,std::map<SgNode*,TokenStreamSequenceToNodeMapping*>* > Rose::tokenSubsequenceMapOfMapsBySourceFile;
 
+// DQ (5/27/2021): This is required for the token-based unparsing, specifically for knowing when to 
+// unparse the trailing whitespace at the end of the last statement in a scope to the end of the scope.
+std::map<SgSourceFile*,std::map<SgScopeStatement*,std::pair<SgStatement*,SgStatement*> > > Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile;
+
 // DQ (11/27/2013): Adding vector of nodes in the AST that defines the token unparsing AST frontier.
 // std::vector<FrontierNode*> Rose::frontierNodes;
 // std::map<SgStatement*,FrontierNode*> Rose::frontierNodes;
@@ -212,6 +216,10 @@ std::map<int,std::map<SgStatement*,MacroExpansion*>*> Rose::macroExpansionMapOfM
 
 // DQ (10/29/2018): Build a map for the unparser to use to locate SgIncludeFile IR nodes.
 std::map<std::string, SgIncludeFile*> Rose::includeFileMapForUnparsing;
+
+// DQ (5/8/2021): Added support for source file (header file) specific scope-based reporting on containsTransformation information.
+// This may or may not be required to be a multi-map.
+// std::map<SgIncludeFile*,std::map<SgScopeStatement*,bool>*> Rose::containsTransformationMap;
 
 
 // DQ (11/25/2020): These are the boolean variables that are computed in the function compute_language_kind()

@@ -34,7 +34,18 @@ class FrontierDetectionForTokenStreamMapping_InheritedAttribute
 
           bool unparseUsingTokenStream;
           bool unparseFromTheAST;
-          bool containsNodesToBeUnparsedFromTheAST;
+       // bool containsNodesToBeUnparsedFromTheAST;
+
+       // DQ (5/11/2021): Added to support header file unparsing.
+          bool isInCurrentFile;
+          SgNode* node;
+
+       // DQ (5/23/2021): Added to support C++.
+          bool isPartOfTemplateInstantiation;
+
+       // DQ (5/12/2021): Added to support header file unparsing.
+       // int subtree_color_index;
+       // std::string subtree_color;
 
        // DQ (12/1/2013): Support specific restrictions in where frontiers can be placed.
        // For now: avoid class declarations in typedefs using a mixture of unparsing from tokens and unparsing from the AST.
@@ -44,9 +55,25 @@ class FrontierDetectionForTokenStreamMapping_InheritedAttribute
 
        // Specific constructors are required
           FrontierDetectionForTokenStreamMapping_InheritedAttribute();
-          FrontierDetectionForTokenStreamMapping_InheritedAttribute(SgSourceFile* input_sourceFile, int start, int end,bool processed);
+       // FrontierDetectionForTokenStreamMapping_InheritedAttribute( SgSourceFile* file, SgNode* n, int color_index );
+          FrontierDetectionForTokenStreamMapping_InheritedAttribute( SgSourceFile* file, SgNode* n );
 
-          FrontierDetectionForTokenStreamMapping_InheritedAttribute ( const FrontierDetectionForTokenStreamMapping_InheritedAttribute & X ); // : processChildNodes(X.processChildNodes) {};
+       // DQ (5/11/2021): This is used to start the traversal.
+          FrontierDetectionForTokenStreamMapping_InheritedAttribute( SgSourceFile* file );
+
+#if 0
+       // DQ (5/11/2021): I don't think this is used.
+          FrontierDetectionForTokenStreamMapping_InheritedAttribute(SgSourceFile* input_sourceFile, int start, int end,bool processed);
+#endif
+
+          FrontierDetectionForTokenStreamMapping_InheritedAttribute ( const FrontierDetectionForTokenStreamMapping_InheritedAttribute & X );
+
+       // DQ (5/15/2021): Added operator=() support.
+          FrontierDetectionForTokenStreamMapping_InheritedAttribute operator= ( const FrontierDetectionForTokenStreamMapping_InheritedAttribute & X );
+
+
+       // DQ (5/11/2021): More appropriate function to determine when statements are in the source file.
+          bool isNodeFromCurrentFile ( SgStatement* statement );
    };
 
 
@@ -59,18 +86,25 @@ class FrontierNode
           bool unparseUsingTokenStream;
           bool unparseFromTheAST;
 
+       // DQ (5/16/2021): This data member is not used.
           bool redundant_token_subsequence;
 
        // FrontierNode(SgStatement* n,bool unparseUsingTokenStream,bool unparseFromTheAST) : node(node), unparseUsingTokenStream(unparseUsingTokenStream), unparseFromTheAST(unparseFromTheAST)
           FrontierNode(SgStatement* n,bool unparseUsingTokenStream,bool unparseFromTheAST);
 
          std::string display();
+
+         FrontierNode(const FrontierNode & X);
+         FrontierNode operator=(const FrontierNode & X);
    };
    
 
 class FrontierDetectionForTokenStreamMapping_SynthesizedAttribute
    {
      public:
+       // DQ (5/14/2021): I think that we need the sourceFile information to support header file unparsing.
+          SgSourceFile* sourceFile;
+
           SgStatement* node;
 
           bool isFrontier;
@@ -81,12 +115,17 @@ class FrontierDetectionForTokenStreamMapping_SynthesizedAttribute
           bool containsNodesToBeUnparsedFromTheTokenStream;
 
        // std::vector<SgStatement*> frontierNodes;
-          std::vector<FrontierNode*> frontierNodes;
+       // std::vector<FrontierNode*> frontierNodes;
 
           FrontierDetectionForTokenStreamMapping_SynthesizedAttribute();
-          FrontierDetectionForTokenStreamMapping_SynthesizedAttribute(SgNode* n);
+
+       // FrontierDetectionForTokenStreamMapping_SynthesizedAttribute(SgNode* n);
+          FrontierDetectionForTokenStreamMapping_SynthesizedAttribute(SgNode* n, SgSourceFile* file);
 
           FrontierDetectionForTokenStreamMapping_SynthesizedAttribute(const FrontierDetectionForTokenStreamMapping_SynthesizedAttribute & X);
+
+       // DQ (5/15/2021): Added operator=() support.
+          FrontierDetectionForTokenStreamMapping_SynthesizedAttribute operator= (const FrontierDetectionForTokenStreamMapping_SynthesizedAttribute & X);
    };
 
 
@@ -94,6 +133,25 @@ class FrontierDetectionForTokenStreamMapping : public SgTopDownBottomUpProcessin
    {
      public:
           int numberOfNodes;
+
+       // DQ (5/13/2021): Adding accumulator attribute.
+       // int filenameToColorCodeMap;
+
+       // DQ (5/13/2021): Using a vector is not sufficient to support the most general cases (need a map).
+       // DQ (5/13/2021): Save the set of supported filenames so that we can use the size of the set to 
+       // distinquish the number of files supported (and the color code for different header files).
+       // std::vector<std::string> supportedFilesList;
+       // std::map<std::string,int> filenameToColorCodeMap;
+
+       // DQ (5/16/2021): Moved the collection of FrontierNode to here from the FrontierDetectionForTokenStreamMapping_SynthesizedAttribute.
+       // std::vector<FrontierNode*> frontierNodes;
+       // std::map<int,std::vector<FrontierNode*> > frontierNodes;
+       // std::map<int,std::map<SgStatement*,FrontierNode*> > frontierNodes;
+          std::map<int,std::map<SgStatement*,FrontierNode*>* > frontierNodes;
+
+          void addFrontierNode (SgStatement* statement, FrontierNode* frontierNode );
+          FrontierNode* getFrontierNode (SgStatement* statement );
+          void outputFrontierNodes();
 
           FrontierDetectionForTokenStreamMapping( SgSourceFile* sourceFile);
 
@@ -107,11 +165,18 @@ class FrontierDetectionForTokenStreamMapping : public SgTopDownBottomUpProcessin
 
        // This is used to test the random association of AST node to either token unparsing or AST unparsing.
           int numberOfNodesInSubtree(SgSourceFile* sourceFile);
+
+       // DQ (5/11/2021): Added to better organize code (and support for unparsing headers).
+          bool isChildNodeFromSameFileAsCurrentNode (SgStatement* statement, SgStatement* child_statement);
    };
 
 
+#if 0
 void frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile );
-
+#else
+// DQ (5/10/2021): Activate this code.
+void frontierDetectionForTokenStreamMapping ( SgSourceFile* sourceFile, bool traverseHeaderFiles );
+#endif
 
 class FrontierDetectionForTokenStreamMappingAttribute : public AstAttribute
    {

@@ -1408,7 +1408,8 @@ class SymbolMapOfTwoFiles
             dict[i1->second]= funcSymDict[fsym1->get_declaration()->get_qualified_name()]; 
           else if (vsym1) 
             dict[i1->second]= varSymDict[vsym1->get_declaration()->get_qualified_name()]; 
-#if 1
+#if 0
+       // DQ (6/5/2021): Supress this output spew for the quarterly review (not an error).
           if (fsym1|| vsym1)
           {
             if (dict[i1->second] == NULL)
@@ -1564,7 +1565,10 @@ Outliner::generateFunction ( SgBasicBlock* s,  // block to be outlined
             }
             else
             {
+#if 0
+           // DQ (6/5/2021): Supress this output spew for the quarterly review (not an error).
               cerr<<"Warning: cannot find new symbol for old sym:"<<sym << " "<< sym->get_name() <<endl; 
+#endif
             }
           }
         }
