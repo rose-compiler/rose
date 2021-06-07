@@ -920,7 +920,8 @@ Grammar::setUpTypes ()
                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
      JovialTableType.setDataPrototype ("int", "rank" , "= 0",
                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL,  NO_DELETE);
-     JovialTableType.setDataPrototype ("unsigned int", "structure_specifier", "= 0",
+     JovialTableType.setDataPrototype ("SgJovialTableType::StructureSpecifier",
+                                       "structure_specifier", "= SgJovialTableType::StructureSpecifier::e_default",
                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL,  NO_DELETE);
      JovialTableType.setDataPrototype ("unsigned int", "bits_per_entry" , "= 0",
                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL,  NO_DELETE);

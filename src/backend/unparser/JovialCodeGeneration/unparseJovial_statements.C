@@ -954,10 +954,11 @@ Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
 
   // OptStructureSpecifier
-     if (table_type->get_structure_specifier() == SgJovialTableType::e_parallel) {
+     using StructureSpecifier = SgJovialTableType::StructureSpecifier;
+     if (table_type->get_structure_specifier() == StructureSpecifier::e_parallel) {
         curprint("PARALLEL ");
      }
-     else if (table_type->get_structure_specifier() == SgJovialTableType::e_tight) {
+     else if (table_type->get_structure_specifier() == StructureSpecifier::e_tight) {
         curprint("T ");
         if (table_type->get_bits_per_entry() > 0) {
            std::string value = Rose::StringUtility::numberToString(table_type->get_bits_per_entry());
@@ -967,16 +968,16 @@ Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      }
 
   // WordsPerEntry
-     if (table_decl->get_has_table_entry_size())
-        {
-        // TODO - fix ROSETTA so this doesn't depend on NULL for entry size, has_table_entry_size should be table_entry_enum (or some such)
-           if (table_decl->get_table_entry_size() != NULL)
-              {
-                 curprint("W ");
-                 unparseExpression(table_decl->get_table_entry_size(), info);
-              }
-           else curprint("V");
+     using WordsPerEntry = SgJovialTableStatement::WordsPerEntry;
+     if (table_decl->get_words_per_entry() == WordsPerEntry::e_fixed_length) {
+        curprint("W ");
+        if (table_decl->get_has_table_entry_size()) {
+           unparseExpression(table_decl->get_table_entry_size(), info);
         }
+     }
+     else if (table_decl->get_words_per_entry() == WordsPerEntry::e_variable_length) {
+        curprint("V");
+     }
 
   // Unparse base type or base class name if present
   //
@@ -1173,20 +1174,22 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
 
   // WordsPerEntry (for anonymous table declarations)
      SgJovialTableStatement* table_decl = nullptr;
+     using WordsPerEntry = SgJovialTableStatement::WordsPerEntry;
      if (!type_has_base_type && var_decl->get_variableDeclarationContainsBaseTypeDefiningDeclaration())
         {
         // typedefs (e.g., TYPE utype U) also have a base_type (in this case U)
            table_decl = dynamic_cast<SgJovialTableStatement*>(var_decl->get_baseTypeDefiningDeclaration());
-           if (table_decl && table_decl->get_has_table_entry_size())
-             {
-               // TODO - fix ROSETTA so this doesn't depend on NULL for entry size, has_table_entry_size should be table_entry_enum (or some such)
-               if (table_decl->get_table_entry_size() != NULL)
-                 {
-                   curprint("W ");
-                   unparseExpression(table_decl->get_table_entry_size(), info);
+           if (table_decl) {
+              if (table_decl->get_words_per_entry() == WordsPerEntry::e_fixed_length) {
+                 curprint("W ");
+                 if (table_decl->get_has_table_entry_size()) {
+                    unparseExpression(table_decl->get_table_entry_size(), info);
                  }
-               else curprint("V");
-             }
+              }
+              else if (table_decl->get_words_per_entry() == WordsPerEntry::e_variable_length) {
+                 curprint("V");
+              }
+           }
         }
 
   // Initialization

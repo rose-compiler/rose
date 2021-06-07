@@ -1453,6 +1453,14 @@ HEADER_JOVIAL_COMPOOL_STATEMENT_END
 
 HEADER_JOVIAL_TABLE_STATEMENT_START
       virtual SgName get_mangled_name (void) const $ROSE_OVERRIDE;
+
+      //! Enum for words-per-entry in a Jovial table
+          enum class WordsPerEntry
+             {
+               e_default = 0,    /*!< words-per-entry is unspecified */
+               e_fixed_length,   /*!< fixed-length-entry specified table */
+               e_variable_length /*!< variable-length-entry specified table */
+             };
 HEADER_JOVIAL_TABLE_STATEMENT_END
 
 
