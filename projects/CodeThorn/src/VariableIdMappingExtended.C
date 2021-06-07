@@ -83,6 +83,43 @@ namespace CodeThorn {
     return varRefExpList;
   }
 
+  int32_t VariableIdMappingExtended::repairVarRefExpAccessList(list<SgVarRefExp*>& accesses, string accessName) {
+    int32_t numErrors=0;
+    // check if all symbols of VarRefExp in structure accesses are represented in gathered class data members' symbols
+    for(auto v:accesses) {
+      VariableId varId=variableId(v);
+      if(!varId.isValid()) {
+	// report error, and record error
+	numErrors++;
+	SgVariableSymbol* varSym=v->get_symbol();
+	SgInitializedName* initName=varSym->get_declaration();
+	SgVariableDeclaration* decl=isSgVariableDeclaration(initName->get_declaration());
+	if(decl && isMemberVariableDeclaration(decl)) {
+	  if(SgClassDefinition* cdef=isSgClassDefinition(decl->get_parent())) {
+	    //cout<<": found class of unregistered symbol:"<<cdef->get_qualified_name ()<<" defined in:"<<SgNodeHelper::sourceFilenameLineColumnToString(cdef)<<endl;
+	    SgClassDeclaration* classDecl=cdef->get_declaration();
+	    ROSE_ASSERT(classDecl);
+	    SgClassType* classType=classDecl->get_type();
+	    ROSE_ASSERT(classType);
+	    //cout<<": registering class members. of unregistered symbol:"<<cdef->get_qualified_name ()<<" defined in:"<<SgNodeHelper::sourceFilenameLineColumnToString(cdef)<<endl;
+	    // register class members based on definition (not SgType)
+	    std::list<SgVariableDeclaration*> memberList;
+	    auto classMemberList=cdef->get_members();
+	    for( auto classMember : classMemberList) {
+	      if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(classMember)) {
+		memberList.push_back(varDecl);
+	      }
+	    }
+	    registerClassMembers(classType, memberList , 0); // this is *not* the classType through which this definition can be found (BUG), but an equivalent one
+	  } else {
+	    //cout<<": could not find class of unregistered symbol!";
+	  }
+	}
+      }
+    }
+    return numErrors;
+  }
+
   int32_t VariableIdMappingExtended::checkVarRefExpAccessList(list<SgVarRefExp*>& accesses, string accessName) {
     int32_t numErrors=0;
     // check if all symbols of VarRefExp in structure accesses are represented in gathered class data members' symbols
@@ -102,7 +139,11 @@ namespace CodeThorn {
 	SgVariableDeclaration* decl=isSgVariableDeclaration(initName->get_declaration());
 	if(decl && isMemberVariableDeclaration(decl)) {
 	  if(SgClassDefinition* cdef=isSgClassDefinition(decl->get_parent())) {
-	    cout<<": found class of unregistered symbol:"<<cdef->get_qualified_name ()<<" defined in:"<<SgNodeHelper::sourceFilenameLineColumnToString(cdef);
+	    cout<<": found class of unregistered symbol:"<<cdef->get_qualified_name ()<<" defined in:"<<SgNodeHelper::sourceFilenameLineColumnToString(cdef)<<endl;
+	    //SgClassDeclaration* classDecl=cdef->get_declaration();
+	    //ROSE_ASSERT(classDecl);
+	    //SgClassType* classType=classDecl->get_type();
+	    //ROSE_ASSERT(classType);
 	  } else {
 	    cout<<": could not find class of unregistered symbol!";
 	  }
@@ -113,10 +154,12 @@ namespace CodeThorn {
     return numErrors;
   }
   
+
   bool VariableIdMappingExtended::consistencyCheck(SgProject* project) {
     list<SgVarRefExp*> varAccesses=variableAccessesInsideFunctions(project);
     int32_t numVarErrors=checkVarRefExpAccessList(varAccesses,"var access");
     list<SgVarRefExp*> structAccesses=structAccessesInsideFunctions(project);
+    int32_t numStructErrorsDetected=repairVarRefExpAccessList(structAccesses,"struct access"); // has no effect if no errors are found
     int32_t numStructErrors=checkVarRefExpAccessList(structAccesses,"struct access");
     if(numVarErrors>0||numStructErrors) {
       cout<<"\nINFO: ROSE AST Symbol Consistency check FAILED (var access errors:"<<numVarErrors<<", struct access errors:"<<numStructErrors<<")"<<endl;
@@ -316,8 +359,14 @@ namespace CodeThorn {
   void VariableIdMappingExtended::computeVariableSymbolMapping(SgProject* project, int maxWarningsCount) {
     //computeVariableSymbolMapping1(project,maxWarningsCount);
     computeVariableSymbolMapping2(project,maxWarningsCount);
-    if(false && getAstConsistencySymbolCheckFlag()) {
-      if(!consistencyCheck(project))
+
+    // repair struct access symbols if necessary (temporary workaround)
+    list<SgVarRefExp*> structAccesses=structAccessesInsideFunctions(project);
+    int32_t numStructErrorsDetected=repairVarRefExpAccessList(structAccesses,"struct access");
+
+    if(getAstConsistencySymbolCheckFlag()) {
+      bool checkOk=consistencyCheck(project);
+      if(!checkOk)
 	exit(1);
     } else {
       //cout<<"INFO: AST consistency symbol check: disabled by user."<<endl;
@@ -524,8 +573,6 @@ namespace CodeThorn {
     initTypeSizes();
     computeTypeSizes();
     registerClassMembersNew();
-    //dumpTypeSizes();
-    //return;
 
 #if 0
     RoseAst ast(project);
@@ -550,7 +597,7 @@ namespace CodeThorn {
     for(auto classDef:_memPoolTraversal.classDefinitions) {
       SgClassDeclaration* classDecl=classDef->get_declaration();
       SgClassType* classType=classDecl->get_type();
-      //registerClassMembers(classType, 0);
+      registerClassMembers(classType, 0);
       ct++;
     }
 #endif
@@ -879,6 +926,9 @@ bool VariableIdMappingExtended::getAstConsistencySymbolCheckFlag() {
   return _astConsistencySymbolCheckFlag;
 }
 
+std::vector<VariableId> VariableIdMappingExtended::getClassMembers(SgType* type) {
+  return classMembers[type];
+}
 
 // OLD METHODS (VIM2)
 

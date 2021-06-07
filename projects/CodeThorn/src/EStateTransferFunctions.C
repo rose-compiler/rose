@@ -325,12 +325,51 @@ namespace CodeThorn {
       ROSE_ASSERT(formalParameterName);
       // test formal parameter (instead of argument type) to allow for expressions in arguments
       VariableId formalParameterVarId=_analyzer->getVariableIdMapping()->variableId(formalParameterName);
-      AbstractValue evalResultValue;
+      
       if(_analyzer->getVariableIdMapping()->isOfClassType(formalParameterVarId)) {
-        if(getOptionOutputWarnings()) {
-          cout<<"Warning: imprecision: "<<SgNodeHelper::sourceLineColumnToString(funCall)<< ": passing of class/Struct/Union types per value as function parameters (assuming top)."<<endl;
+	SgExpression* actualParameterExpr=*j;
+	VariableId actualParameterVarId;
+	// general case: the actual argument is an arbitrary expression (including a single variable)
+        list<SingleEvalResultConstInt> evalResultList=evaluateLExpression(actualParameterExpr,currentEState);
+        if(evalResultList.size()==0) {
+          SAWYER_MESG(logger[FATAL])<<"Internal error: no state computed for argument evaluation at: "<<SgNodeHelper::sourceLineColumnToString(getLabeler()->getNode(edge.source()))<<endl;
+          SAWYER_MESG(logger[FATAL])<<"Argument expression: "<<actualParameterExpr->unparseToString()<<endl;
+          SAWYER_MESG(logger[FATAL])<<"EState: "<<currentEState.toString(getVariableIdMapping())<<endl;
+          exit(1);
         }
-        evalResultValue=AbstractValue::createTop();
+        list<SingleEvalResultConstInt>::iterator resultListIter=evalResultList.begin();
+        SingleEvalResultConstInt evalResult=*resultListIter;
+	
+        if(evalResultList.size()>1) {
+          SAWYER_MESG(logger[ERROR]) <<"multi-state generating operators in function call parameters not supported."<<endl;
+          exit(1);
+        }
+	AbstractValue actualParamAddress=evalResult.value();
+	AbstractValue formalParamAddress=AbstractValue::createAddressOfVariable(formalParameterVarId);
+        if(getOptionOutputWarnings()) {
+          //cout<<"Warning: imprecision: "<<SgNodeHelper::sourceLineColumnToString(funCall)<< ": passing of class/Struct/Union types per value as function parameters (assuming top): ";
+	  SgType* ctype=_analyzer->getVariableIdMapping()->getType(formalParameterVarId);
+	  auto membersList=_analyzer->getVariableIdMapping()->getClassMembers(ctype);
+	  //cout<<" #classmembers: "<<membersList.size()<<endl;
+	  for(auto mvarId : membersList) {
+	    CodeThorn::TypeSize offset=_analyzer->getVariableIdMapping()->getOffset(mvarId);
+#if 0
+	    cout<<" formal param    : "<<formalParamAddress.toString(_analyzer->getVariableIdMapping())<<endl;
+	    cout<<" actual param (L): "<<actualParamAddress.toString(_analyzer->getVariableIdMapping())<<endl;
+	    cout<<" actual param-vid: "<<mvarId.toString()<<endl;
+	    cout<<" actual param-vid: "<<mvarId.toString(_analyzer->getVariableIdMapping())<<endl;
+	    cout<<" offset          : "<<offset<<endl;
+#endif
+	    AbstractValue offsetAV(offset);
+	    AbstractValue formalParameterStructMemberAddress=AbstractValue::operatorAdd(formalParamAddress,offsetAV);
+	    AbstractValue actualParameterStructMemberAddress=AbstractValue::operatorAdd(actualParamAddress,offsetAV);
+	    // read from evalResultValue+offset and write to formal-param-address+offset
+	    AbstractValue newVal=readFromAnyMemoryLocation(currentLabel,&newPState,actualParameterStructMemberAddress);
+	    // TODO: check for copying of references
+	    initializeMemoryLocation(currentLabel,&newPState,formalParameterStructMemberAddress,newVal);
+	  }
+	}
+	
       } else {
         // VariableName varNameString=name->get_name();
         SgExpression* actualParameterExpr=*j;
@@ -338,13 +377,7 @@ namespace CodeThorn {
         // check whether the actualy parameter is a single variable: In this case we can propagate the constraints of that variable to the formal parameter.
         // pattern: call: f(x), callee: f(int y) => constraints of x are propagated to y
         VariableId actualParameterVarId;
-        ROSE_ASSERT(actualParameterExpr);
-#if 0
-        if(getExprAnalyzer.checkIfVariableAndDetermineVarId(actualParameterExpr,actualParameterVarId)) {
-          // propagate constraint from actualParamterVarId to formalParameterVarId
-          cset.addAssignEqVarVar(formalParameterVarId,actualParameterVarId);
-        }
-#endif
+
         // general case: the actual argument is an arbitrary expression (including a single variable)
         list<SingleEvalResultConstInt> evalResultList=evaluateExpression(actualParameterExpr,currentEState);
         if(evalResultList.size()==0) {
@@ -359,9 +392,9 @@ namespace CodeThorn {
           SAWYER_MESG(logger[ERROR]) <<"multi-state generating operators in function call parameters not supported."<<endl;
           exit(1);
         }
-        evalResultValue=evalResult.value();
+        AbstractValue evalResultValue=evalResult.value();
+	initializeMemoryLocation(currentLabel,&newPState,AbstractValue::createAddressOfVariable(formalParameterVarId),evalResultValue);
       }
-      initializeMemoryLocation(currentLabel,&newPState,AbstractValue::createAddressOfVariable(formalParameterVarId),evalResultValue);
       ++i;++j;
     }
     // assert must hold if #formal-params==#actual-params (TODO: default values)
@@ -1584,9 +1617,10 @@ namespace CodeThorn {
       }
     }
     if(getAnalyzer()->_ctOpt.status) {
-      cout<< "STATUS: Number of global variables: "<<setOfGlobalVars.size()<<endl;
-      cout<< "STATUS: Number of used variables  : "<<numUsedVars<<endl;
-      cout<< "STATUS: Number of string literals : "<<numStringLiterals<<endl;
+      cout<< "STATUS: Number of global variables     : "<<setOfGlobalVars.size()<<endl;
+      cout<< "STATUS: Number of used variables       : "<<setOfUsedVars.size()<<endl;
+      cout<< "STATUS: Number of string literals      : "<<numStringLiterals<<endl;
+      cout<< "STATUS: Number of used global variables: "<<numUsedVars<<endl;
     }
     return setOfUsedGlobalVars;
   }
@@ -1614,8 +1648,8 @@ namespace CodeThorn {
       }
 
       if(getAnalyzer()->_ctOpt.status) {
-	uint32_t numFilteredVars=setOfGlobalVars.size()-setOfUsedGlobalVars.size();
-	cout<< "STATUS: Number of unused variables filtered in initial state: "<<numFilteredVars<<endl;
+	//uint32_t numFilteredVars=setOfGlobalVars.size()-setOfUsedGlobalVars.size();
+	//cout<< "STATUS: Number of unused variables filtered in initial state: "<<numFilteredVars<<endl;
 	cout<< "STATUS: Number of global variables declared in initial state: "<<declaredInGlobalState<<endl;
       }
     } else {
@@ -1754,7 +1788,7 @@ namespace CodeThorn {
 #if 0
     // for handling special case of C++ reference intialization (address is used below to copy reference)
     EvalMode evalMode=getVariableIdMapping()->isOfReferenceType(lhsVar)?MODE_ADDRESS:MODE_VALUE;
-    list<SingleEvalResultConstInt> res=evaluateExpression(rhs,currentEState, evalMode);xxxx
+    list<SingleEvalResultConstInt> res=evaluateExpression(rhs,currentEState, evalMode);
     if(evalMode==MODE_ADDRESS) {
       cout<<"DEBUG: reference-init: res:"<<*res.begin().result.toString()<<endl;
     }
@@ -3071,7 +3105,7 @@ namespace CodeThorn {
 	    resultList.push_back(res);
 	    return resultList;
 	  }
-	  exit(1); // not reachable
+	  ROSE_ASSERT(false); // not reachable
 	}
 	if(pstate2.varExists(arrayPtrPlusIndexValue)) {
 	  // address of denoted memory location
@@ -3146,8 +3180,10 @@ namespace CodeThorn {
 	      return listify(res);
 	    }
 	  } else if(_variableIdMapping->isStringLiteralAddress(arrayVarId)) {
-	    SAWYER_MESG(logger[ERROR])<<"Error: Found string literal address, but data not present in state."<<endl;
-	    exit(1);
+	    SAWYER_MESG(logger[WARN])<<"Error: Found string literal address, but data not present in state."<<endl;
+	    AbstractValue val=AbstractValue::createTop();
+	    res.result=val;
+	    return listify(res);
 	  } else {
 	    //cout<<estate.toString(_variableIdMapping)<<endl;
 	    SAWYER_MESG(logger[TRACE])<<"Program error detected: potential out of bounds access (P1) : array: "<<arrayPtrValue.toString(_variableIdMapping)<<", access: address: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;

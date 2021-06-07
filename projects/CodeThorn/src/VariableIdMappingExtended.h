@@ -124,6 +124,7 @@ namespace CodeThorn {
     void registerClassMembersNew();
     std::list<SgVarRefExp*> structAccessesInsideFunctions(SgProject* project);
     std::list<SgVarRefExp*> variableAccessesInsideFunctions(SgProject* project);
+    std::int32_t repairVarRefExpAccessList(std::list<SgVarRefExp*>& l, std::string accessName); // workaround
     std::int32_t checkVarRefExpAccessList(std::list<SgVarRefExp*>& l, std::string accessName);
       
     CodeThorn::TypeSizeMapping typeSizeMapping;
@@ -134,6 +135,8 @@ namespace CodeThorn {
     std::vector<VariableId> getRegisteredClassMemberVars(SgType*);
     bool isRegisteredClassMemberVar(SgType*,VariableId);
     void registerClassMemberVar(SgType*,VariableId);
+
+    std::vector<VariableId> getClassMembers(SgType*);
     std::map<SgType*,std::vector<VariableId> > classMembers;
 
   private:
