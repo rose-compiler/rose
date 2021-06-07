@@ -197,9 +197,9 @@ namespace CodeThorn {
       void setTypeFromInitializedName(SgInitializedName*); // for function parameters and used by addVariableDeclaration
       std::set<SgVariableDeclaration*>* getVariableDeclarations();
       /* returns 0 if there is none. If there is more than one
-	 initializer this function returns always the same one. The
-	 function getVariableDeclarations() can be used to investigate
-	 one-time definition rule violations. */
+         initializer this function returns always the same one. The
+         function getVariableDeclarations() can be used to investigate
+         one-time definition rule violations. */
       SgExpression* getInitializer();
       SgType* getType(); // this abstracts away the problem of having multiple declarations of the same variable (extern, global, etc.)
       SgVariableDeclaration* getVarDecl();

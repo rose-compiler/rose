@@ -32,7 +32,7 @@ bool SgNodeHelper::isVariableSymbolInFunctionForwardDeclaration(SgNode* varsym) 
   if(SgInitializedName* initname=isSgVariableSymbol(varsym)->get_declaration())
     if(SgDeclarationStatement* declstmt=initname->get_declaration())
       if(SgFunctionParameterList* fpl=isSgFunctionParameterList(declstmt))
-	return fpl && SgNodeHelper::isForwardFunctionDeclaration(fpl->get_parent());
+        return fpl && SgNodeHelper::isForwardFunctionDeclaration(fpl->get_parent());
   return false;
 }
 
@@ -44,9 +44,9 @@ SgDeclarationStatement* SgNodeHelper::findVariableDeclarationWithVariableSymbol(
     //}
     if(SgInitializedName* initname=varsym->get_declaration()) {
       if(initname->get_definition())
-	return initname->get_definition();
+        return initname->get_definition();
       else
-	return initname->get_declaration();
+        return initname->get_declaration();
     }
     return 0;
   } else {
