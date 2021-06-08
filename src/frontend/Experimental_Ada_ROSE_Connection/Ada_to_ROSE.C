@@ -288,7 +288,6 @@ namespace
       case A_Statement:               // Asis.Statements
         {
           // handled in StmtCreator
-
           ROSE_ABORT();
         }
 
@@ -729,7 +728,7 @@ namespace
       }
       else if (parentID > 0)
       {
-        // parentID == 1.. is 1 used for the package standard??
+        // parentID == 1.. 1 refers to the package standard (currently not extracted from Asis)
         logWarn() << "unknown unit dependency: "
                   << pos->first.name << ' '
                   << (pos->first.isbody ? "[body]" : "[spec]")
