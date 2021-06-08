@@ -15,5 +15,9 @@ begin
   return val.Re;
 end Real;
 
+function Origin return Complex is
+begin
+  return zero;
+end Origin;
 
 end Complex;
