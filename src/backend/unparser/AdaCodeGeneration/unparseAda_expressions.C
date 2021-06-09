@@ -466,13 +466,13 @@ namespace
     // print either lhs binop rhs
     //           or "binop" (lhs, rhs)
 
-    SgExpression* lhs    = n.get_lhs_operand();
-    SgExpression* rhs    = n.get_rhs_operand();
-    const bool    prefix = (  argRequiresCallSyntax(lhs)
-                           || argRequiresCallSyntax(rhs)
-                           );
+    SgExpression* lhs      = n.get_lhs_operand();
+    SgExpression* rhs      = n.get_rhs_operand();
+    const bool    callsytx = (  argRequiresCallSyntax(lhs)
+                             || argRequiresCallSyntax(rhs)
+                             );
 
-    if (prefix)
+    if (callsytx)
     {
       prn("\"");
       prn(operator_sym(n));
@@ -481,20 +481,25 @@ namespace
 
     expr(lhs);
     prn(" ");
-    prn(prefix ? std::string(", ") : operator_sym(n));
+    prn(callsytx ? std::string(", ") : operator_sym(n));
     prn(" ");
     expr(rhs);
 
-    if (prefix) prn(")");
+    if (callsytx) prn(")");
   }
 
   void AdaExprUnparser::handle(SgUnaryOp& n)
   {
-    const bool isprefix = true; // \todo
+    SgExpression* oper     = n.get_operand();
+    const bool    callsytx = argRequiresCallSyntax(oper);
 
-    if (isprefix) { prn(operator_sym(n)); prn(" "); }
+    // are there any postfix operators in Ada
+
+    if (callsytx) prn("\"");
+    prn(operator_sym(n));
+    if (callsytx) prn("\" (");
     expr(n.get_operand());
-    if (!isprefix) prn(operator_sym(n));
+    if (callsytx) prn(")");
   }
 
   void AdaExprUnparser::exprlst(SgExprListExp& exp, std::string sep)
@@ -555,11 +560,13 @@ void Unparse_Ada::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
   SG_UNEXPECTED_NODE(*expr);
 }
 
-void Unparse_Ada::unparseExpression(SgExpression* expr, SgUnparse_Info& info)
+void Unparse_Ada::unparseExpression(SgExpression* n, SgUnparse_Info& info)
 {
-  const bool withScopeQual = info.get_current_scope() != NULL;
+  const bool withScopeQual = info.get_current_scope() != nullptr;
 
-  sg::dispatch(AdaExprUnparser{*this, info, std::cerr, withScopeQual}, expr);
+  AdaExprUnparser exprUnparser{*this, info, std::cerr, false /* scope qual, will be passed to expr(...) */};
+
+  exprUnparser.expr(n, withScopeQual);
 }
 
 
