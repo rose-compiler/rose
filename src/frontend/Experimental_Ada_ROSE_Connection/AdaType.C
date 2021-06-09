@@ -656,6 +656,17 @@ namespace
     return sgnode;
   }
 
+  SgTypedefDeclaration&
+  declareStringType(const std::string& name, SgType& positive, SgType& comp, SgAdaPackageSpec& scope)
+  {
+    SgExprListExp&        idx     = mkExprListExp({sb::buildTypeExpression(&positive)});
+    SgArrayType&          strtype = mkArrayType(comp, idx, true);
+    SgTypedefDeclaration& sgnode  = mkTypeDecl(name, strtype, scope);
+
+    scope.append_statement(&sgnode);
+    return sgnode;
+  }
+
   SgInitializedName&
   declareException(const std::string& name, SgType& base, SgAdaPackageSpec& scope)
   {
@@ -850,37 +861,49 @@ void initializePkgStandard(SgGlobal& global)
 
   SgAdaPackageSpecDecl& stddecl = mkAdaPackageSpecDecl("Standard", global);
   SgAdaPackageSpec&     stdspec = SG_DEREF(stddecl.get_definition());
-  SgType&               exceptionType = SG_DEREF(sb::buildOpaqueType("Exception", &stdspec));
 
   stddecl.set_scope(&global);
 
   // \todo reconsider using a true Ada exception representation
+  SgType&               exceptionType = SG_DEREF(sb::buildOpaqueType("Exception", &stdspec));
+
   adaTypes()["EXCEPTION"]           = &exceptionType;
 
-  adaTypes()["INTEGER"]             = sb::buildIntType();
-  adaTypes()["CHARACTER"]           = sb::buildCharType();
-  adaTypes()["WIDE_CHARACTER"]      = sb::buildChar16Type();
-  adaTypes()["WIDE_WIDE_CHARACTER"] = sb::buildChar32Type();
+  // \todo reconsider modeling Boolean as an enumeration of True and False
+  adaTypes()["BOOLEAN"]             = sb::buildBoolType();
+
+  // integral types
+  SgType& intType                   = SG_DEREF(sb::buildIntType());
+  SgType& characterType             = SG_DEREF(sb::buildCharType());
+  SgType& wideCharacterType         = SG_DEREF(sb::buildChar16Type());
+  SgType& wideWideCharacterType     = SG_DEREF(sb::buildChar32Type());
+
+  adaTypes()["INTEGER"]             = &intType;
+  adaTypes()["CHARACTER"]           = &characterType;
+  adaTypes()["WIDE_CHARACTER"]      = &wideCharacterType;
+  adaTypes()["WIDE_WIDE_CHARACTER"] = &wideWideCharacterType;
   adaTypes()["LONG_INTEGER"]        = sb::buildLongType(); // Long int
   adaTypes()["LONG_LONG_INTEGER"]   = sb::buildLongLongType(); // Long long int
   adaTypes()["SHORT_INTEGER"]       = sb::buildShortType(); // Long long int
   adaTypes()["SHORT_SHORT_INTEGER"] = declareIntSubtype("Short_Short_Integer", -(1 << 7), (1 << 7)-1, stdspec).get_type();
 
-  // \todo items
+  // \todo floating point types
   adaTypes()["FLOAT"]               = sb::buildFloatType();  // Float is a subtype of Real
   adaTypes()["SHORT_FLOAT"]         = sb::buildFloatType();  // Float is a subtype of Real
   adaTypes()["LONG_FLOAT"]          = sb::buildDoubleType(); // Float is a subtype of Real
   adaTypes()["LONG_LONG_FLOAT"]     = sb::buildLongDoubleType(); // Long long Double?
 
-  // \todo instead of ADAMAXINT a type attribute Integer'Last shall be set
-  adaTypes()["POSITIVE"]            = declareIntSubtype("Positive", 1, ADAMAXINT, stdspec).get_type();
+  // int subtypes
+  SgType& positiveType              = SG_DEREF(declareIntSubtype("Positive", 1, ADAMAXINT, stdspec).get_type());
+
+  adaTypes()["POSITIVE"]            = &positiveType;
   adaTypes()["NATURAL"]             = declareIntSubtype("Natural",  0, ADAMAXINT, stdspec).get_type();
 
-  //\todo reconsider modeling Boolean as an enumeration of True and False
-  adaTypes()["BOOLEAN"]             = sb::buildBoolType();
 
-  // String is represented as Fortran-String with null
-  adaTypes()["STRING"]              = sb::buildStringType(sb::buildNullExpression());
+  // String types
+  adaTypes()["STRING"]              = declareStringType("String",           positiveType, characterType,         stdspec).get_type();
+  adaTypes()["WIDE_STRING"]         = declareStringType("Wide_String",      positiveType, wideCharacterType,     stdspec).get_type();
+  adaTypes()["WIDE_WIDE_STRING"]    = declareStringType("Wide_Wide_String", positiveType, wideWideCharacterType, stdspec).get_type();
 
   // Ada standard exceptions
   adaExcps()["CONSTRAINT_ERROR"]    = &declareException("Constraint_Error", exceptionType, stdspec);
@@ -888,6 +911,7 @@ void initializePkgStandard(SgGlobal& global)
   adaExcps()["STORAGE_ERROR"]       = &declareException("Storage_Error",    exceptionType, stdspec);
   adaExcps()["TASKING_ERROR"]       = &declareException("Tasking_Error",    exceptionType, stdspec);
 
+  // added packages
   adaPkgs()["STANDARD.ASCII"]       = &declarePackage("Ascii", stdspec);
   adaPkgs()["ASCII"]                = adaPkgs()["STANDARD.ASCII"];
 }
