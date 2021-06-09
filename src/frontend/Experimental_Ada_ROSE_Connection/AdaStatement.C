@@ -103,7 +103,8 @@ namespace
     Expression_Struct& expr = elem.The_Union.Expression;
 
     if (expr.Expression_Kind == A_Selected_Component)
-      return getScopeID(expr.Prefix, ctx);
+      //~ return getScopeID(expr.Prefix, ctx);
+      return getScopeID(expr.Selector, ctx);
 
     if (expr.Expression_Kind != An_Identifier)
       logError() << "unexpected identifier" << expr.Expression_Kind;
