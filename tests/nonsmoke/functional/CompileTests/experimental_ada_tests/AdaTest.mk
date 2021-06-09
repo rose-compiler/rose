@@ -134,6 +134,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   ordinary_type_declaration_range_constraint.ads    \
   package_renaming_declaration.ads     \
   package_with_body.adb                \
+  parenthesis_matters.adb              \ 
   pkgrename.ads                        \
   procedure_renaming.adb               \
   qualified_expression.adb             \

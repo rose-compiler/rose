@@ -10,6 +10,7 @@
 #include <utility>
 #include <sstream>
 
+#include <boost/algorithm/string/case_conv.hpp>
 
 #include "Rose/Diagnostics.h"
 #include "cmdline.h"
