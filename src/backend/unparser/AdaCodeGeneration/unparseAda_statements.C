@@ -13,6 +13,7 @@
 #include "sage3basic.h"
 #include "unparser.h"
 
+#include <boost/algorithm/string/case_conv.hpp>
 
 #define ROSE_TRACK_PROGRESS_OF_ROSE_COMPILING_ROSE 0
 
@@ -1309,9 +1310,9 @@ namespace
 
   std::set<std::string> adaOperatorNames()
   {
-    std::string elems[] = { "+",   "-",   "*",  "/",   "**", "rem", "mod", "abs"
+    std::string elems[] = { "+",   "-",   "*",  "/",   "**", "REM", "MOD", "ABS"
                           , "=",   "/=",  "<",  ">",   "<=", ">="
-                          , "not", "and", "or", "xor", "&"
+                          , "NOT", "AND", "OR", "XOR", "&"
                           };
 
     return std::set<std::string>(elems, elems + sizeof(elems) / sizeof(elems[0]));
@@ -1321,7 +1322,9 @@ namespace
   {
     static std::set<std::string> adaops = adaOperatorNames();
 
-    return adaops.find(id) != adaops.end();
+    const std::string canonicalname = boost::to_upper_copy(id);
+
+    return adaops.find(canonicalname) != adaops.end();
   }
 
   std::string convertOperatorNames(const std::string& name)

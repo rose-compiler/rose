@@ -380,7 +380,7 @@ namespace
       SgScopeStatement*      dclscope = fundcl.get_scope();
       const SgExprListExp*   args     = ctxRequiresScopeQualification ? callArguments(n) : nullptr;
 
-      // if args is not null check if the scope is implied with a derived type
+      // if args is not null: check if the scope is implied with a derived type
       if (args)
       {
         auto              primitiveArgs   = si::ada::primitiveParameterPositions(fundcl);
@@ -466,13 +466,13 @@ namespace
     // print either lhs binop rhs
     //           or "binop" (lhs, rhs)
 
-    SgExpression* lhs      = n.get_lhs_operand();
-    SgExpression* rhs      = n.get_rhs_operand();
-    const bool    callsytx = (  argRequiresCallSyntax(lhs)
-                             || argRequiresCallSyntax(rhs)
-                             );
+    SgExpression* lhs        = n.get_lhs_operand();
+    SgExpression* rhs        = n.get_rhs_operand();
+    const bool    callsyntax = (  argRequiresCallSyntax(lhs)
+                               || argRequiresCallSyntax(rhs)
+                               );
 
-    if (callsytx)
+    if (callsyntax)
     {
       prn("\"");
       prn(operator_sym(n));
@@ -481,25 +481,25 @@ namespace
 
     expr(lhs);
     prn(" ");
-    prn(callsytx ? std::string(", ") : operator_sym(n));
+    prn(callsyntax ? std::string(", ") : operator_sym(n));
     prn(" ");
     expr(rhs);
 
-    if (callsytx) prn(")");
+    if (callsyntax) prn(")");
   }
 
   void AdaExprUnparser::handle(SgUnaryOp& n)
   {
-    SgExpression* oper     = n.get_operand();
-    const bool    callsytx = argRequiresCallSyntax(oper);
+    SgExpression* oper       = n.get_operand();
+    const bool    callsyntax = argRequiresCallSyntax(oper);
 
     // are there any postfix operators in Ada
 
-    if (callsytx) prn("\"");
+    if (callsyntax) prn("\"");
     prn(operator_sym(n));
-    if (callsytx) prn("\" (");
+    prn(callsyntax ? "\" (" : " ");
     expr(n.get_operand());
-    if (callsytx) prn(")");
+    if (callsyntax) prn(")");
   }
 
   void AdaExprUnparser::exprlst(SgExprListExp& exp, std::string sep)
