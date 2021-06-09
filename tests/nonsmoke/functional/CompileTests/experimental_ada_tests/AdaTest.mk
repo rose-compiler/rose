@@ -157,7 +157,8 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   task_with_body.ads                   \
   test.ads                             \
   test_unit.ads                        \
-  type_in_local_pkg.adb
+  type_in_local_pkg.adb                \
+  uppercase.adb
 
 ADA_TRANSLATOR_PENDING_TESTS :=
 

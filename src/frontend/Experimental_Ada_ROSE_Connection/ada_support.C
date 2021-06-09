@@ -205,6 +205,7 @@ int main(int argc, char** argv)
 
      mprintf ("END.\n");
 
+/*
      auto h = Rose::failedAssertionBehavior();
 
      if (h == Rose::abortOnFailedAssertion)
@@ -213,6 +214,7 @@ int main(int argc, char** argv)
        std::cerr << "exit" << std::endl;
      if (h == Rose::throwOnFailedAssertion)
        std::cerr << "throw" << std::endl;
+*/
 
      try
      {

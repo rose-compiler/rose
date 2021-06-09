@@ -303,34 +303,22 @@ namespace
       std::string renamedName;
   };
 
-  bool declaredInMainFile(SgDeclarationStatement& dcl, const std::string& mainFile)
-  {
-    Sg_File_Info& fileInfo = SG_DEREF(dcl.get_startOfConstruct());
-
-    //~ std::cerr << typeid(dcl).name() << ": " << fileInfo.get_filenameString()
-              //~ << std::endl;
-
-    return fileInfo.get_filenameString() == mainFile;
-  }
-
   std::pair<SgDeclarationStatementPtrList::iterator, SgDeclarationStatementPtrList::iterator>
   declsInPackage(SgDeclarationStatementPtrList& lst, const std::string& mainFile)
   {
-    SgDeclarationStatementPtrList::iterator aa = lst.begin();
-    SgDeclarationStatementPtrList::iterator zz = lst.end();
+    auto declaredInMainFile = [&mainFile](const SgDeclarationStatement* dcl)
+                              {
+                                ROSE_ASSERT(dcl);
 
-    // skip over imported packages
-    while (aa != zz && !declaredInMainFile(SG_DEREF(*aa), mainFile))
-      ++aa;
+                                const Sg_File_Info& fileInfo = SG_DEREF(dcl->get_startOfConstruct());
 
-    return std::make_pair(aa, zz);
-/*
-    SgDeclarationStatementPtrList::iterator lim = aa;
-    while (lim != zz && declaredInMainFile(SG_DEREF(*lim), mainFile))
-      ++lim;
+                                return fileInfo.get_filenameString() == mainFile;
+                              };
 
-    return std::make_pair(aa, lim);
-*/
+    SgDeclarationStatementPtrList::iterator zz    = lst.end();
+    SgDeclarationStatementPtrList::iterator first = std::find_if(lst.begin(), zz, declaredInMainFile);
+
+    return std::make_pair(first, zz);
   }
 
 
