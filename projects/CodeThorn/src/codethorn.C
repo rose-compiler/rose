@@ -172,33 +172,31 @@ int main( int argc, char * argv[] ) {
     optionallySetRersMapping(ctOpt,ltlOpt,analyzer);
     tc.stopTimer();
 
-    SgProject* sageProject=runRoseFrontEnd(argc,argv,ctOpt,tc);
+    SgProject* project=runRoseFrontEnd(argc,argv,ctOpt,tc);
     if(ctOpt.status) cout << "STATUS: Parsing and creating AST finished."<<endl;
 
     if(ctOpt.info.printVariableIdMapping) {
       cout<<"VariableIdMapping:"<<endl;
-      VariableIdMappingExtended* vim=new VariableIdMappingExtended();
+      VariableIdMappingExtended* vim=CodeThorn::createVariableIdMapping(ctOpt,project); // print varid mapping and exit
       //AbstractValue::setVariableIdMapping(vim);
-
-      vim->computeVariableSymbolMapping(sageProject,0);
       vim->toStream(cout);
+      delete vim;
       exit(0);
     }
     
-    optionallyGenerateAstStatistics(ctOpt, sageProject);
-    optionallyGenerateTraversalInfoAndExit(ctOpt, sageProject);
+    optionallyGenerateAstStatistics(ctOpt, project);
+    optionallyGenerateTraversalInfoAndExit(ctOpt, project);
     if(ctOpt.status) cout<<"STATUS: analysis started."<<endl;
 
-    //analyzer->initialize(sageProject,0); initializeSolverWithStartFunction calls this function
+    //analyzer->initialize(project,0); initializeSolverWithStartFunction calls this function
 
     optionallyPrintProgramInfos(ctOpt, analyzer);
-    optionallyRunRoseAstChecksAndExit(ctOpt, sageProject);
+    optionallyRunRoseAstChecksAndExit(ctOpt, project);
 
-    VariableIdMappingExtended* vimOrig=new VariableIdMappingExtended(); // only used for program statistics of original non-normalized program
+    VariableIdMappingExtended* vimOrig=CodeThorn::createVariableIdMapping(ctOpt,project); // only used for program statistics of original non-normalized program
     //AbstractValue::setVariableIdMapping(vim);
-    vimOrig->computeVariableSymbolMapping(sageProject,0);
 
-    ProgramInfo originalProgramInfo(sageProject,vimOrig);
+    ProgramInfo originalProgramInfo(project,vimOrig);
     originalProgramInfo.compute();
     
     if(ctOpt.programStatsFileName.size()>0) {
@@ -214,29 +212,29 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
-    initializeSolverWithStartFunction(ctOpt,analyzer,sageProject,tc);
+    initializeSolverWithStartFunction(ctOpt,analyzer,project,tc);
 
     if(ctOpt.programStats) {
       analyzer->printStatusMessageLine("==============================================================");
-      ProgramInfo normalizedProgramInfo(sageProject,analyzer->getVariableIdMapping());
+      ProgramInfo normalizedProgramInfo(project,analyzer->getVariableIdMapping());
       normalizedProgramInfo.compute();
       originalProgramInfo.printCompared(&normalizedProgramInfo);
       analyzer->getVariableIdMapping()->typeSizeOverviewtoStream(cout);
     }
 
     optionallyGenerateExternalFunctionsFile(ctOpt, analyzer->getFunctionCallMapping());
-    optionallyGenerateSourceProgramAndExit(ctOpt, sageProject);
+    optionallyGenerateSourceProgramAndExit(ctOpt, project);
     tc.startTimer();tc.stopTimer();
 
-    setAssertConditionVariablesInAnalyzer(sageProject,analyzer);
-    optionallyEliminateRersArraysAndExit(ctOpt,sageProject,analyzer);
+    setAssertConditionVariablesInAnalyzer(project,analyzer);
+    optionallyEliminateRersArraysAndExit(ctOpt,project,analyzer);
     if(analyzer->getFlow()->getStartLabelSet().size()==0) {
       // exit early
       if(ctOpt.status) cout<<color("normal")<<"done."<<endl;
       exit(0);
     }
     SAWYER_MESG(logger[INFO])<<"registered string literals: "<<analyzer->getVariableIdMapping()->numberOfRegisteredStringLiterals()<<endl;
-    analyzer->initLabeledAssertNodes(sageProject);
+    analyzer->initLabeledAssertNodes(project);
     optionallyInitializePatternSearchSolver(ctOpt,analyzer,tc);
     AbstractValue::pointerSetsEnabled=ctOpt.pointerSetsEnabled;
 
@@ -244,7 +242,7 @@ int main( int argc, char * argv[] ) {
       analyzer->getExprAnalyzer()->setReadWriteListener(new ConstantConditionAnalysis());
     }
     if(ctOpt.runSolver) {
-      runSolver(ctOpt,analyzer,sageProject,tc);
+      runSolver(ctOpt,analyzer,project,tc);
     } else {
       cout<<"STATUS: skipping solver run."<<endl;
     }
@@ -263,14 +261,14 @@ int main( int argc, char * argv[] ) {
     tc.stopTimer(TimingCollector::callGraphDotFile);
 
     runLTLAnalysis(ctOpt,ltlOpt,analyzer,tc);
-    processCtOptGenerateAssertions(ctOpt, analyzer, sageProject);
+    processCtOptGenerateAssertions(ctOpt, analyzer, project);
 
     tc.startTimer();
-    optionallyRunVisualizer(ctOpt,analyzer,sageProject);
+    optionallyRunVisualizer(ctOpt,analyzer,project);
     tc.stopTimer(TimingCollector::visualization);
 
     optionallyRunIOSequenceGenerator(ctOpt, analyzer);
-    optionallyAnnotateTermsAndUnparse(ctOpt, sageProject, analyzer);
+    optionallyAnnotateTermsAndUnparse(ctOpt, project, analyzer);
 
     optionallyPrintRunTimeAndMemoryUsage(ctOpt,tc);
     if(ctOpt.status) cout<<color("normal")<<"done."<<endl;

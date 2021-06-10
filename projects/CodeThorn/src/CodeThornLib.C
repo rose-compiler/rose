@@ -158,7 +158,7 @@ namespace CodeThorn {
     CTAnalysis* analyzer=new CTAnalysis();
     EStateTransferFunctions* exprAnalyzer=new EStateTransferFunctions();
     exprAnalyzer->setAnalyzer(analyzer);
-    VariableIdMappingExtended* vid=new VariableIdMappingExtended();
+    VariableIdMappingExtended* vid=new VariableIdMappingExtended();  // only empty vim required
     VariableIdMappingExtended* oldVID=AbstractValue::_variableIdMapping;
     AbstractValue::setVariableIdMapping(vid);
     AbstractValue aVal=exprAnalyzer->evaluateExpressionWithEmptyState(expr);
@@ -182,11 +182,6 @@ namespace CodeThorn {
       }
       normalization.normalizeAst(sageProject,ctOpt.normalizeLevel);
     }
-    //CTAnalysis* analyzer=new CTAnalysis();
-    //EStateTransferFunctions* exprAnalyzer=new EStateTransferFunctions();
-    //exprAnalyzer->setAnalyzer(analyzer);
-    //VariableIdMappingExtended* vid=new VariableIdMappingExtended();
-    //AbstractValue::setVariableIdMapping(vid);
     RoseAst ast(sageProject);
     for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
       // match on expr stmts and test the expression
@@ -762,7 +757,7 @@ namespace CodeThorn {
   }
 
   VariableIdMappingExtended* createVariableIdMapping(CodeThornOptions& ctOpt, SgProject* project) {
-    VariableIdMappingExtended* variableIdMapping=new VariableIdMappingExtended();
+    VariableIdMappingExtended* variableIdMapping=new VariableIdMappingExtended(); // createvid
     variableIdMapping->setAstConsistencySymbolCheckFlag(ctOpt.astConsistencySymbolCheckFlag);
     variableIdMapping->computeVariableSymbolMapping(project);
     return variableIdMapping;

@@ -96,7 +96,7 @@ namespace CodeThorn {
 	SgVariableDeclaration* decl=isSgVariableDeclaration(initName->get_declaration());
 	if(decl && isMemberVariableDeclaration(decl)) {
 	  if(SgClassDefinition* cdef=isSgClassDefinition(decl->get_parent())) {
-	    cout<<"Repairing AST symbol inconsistency #"<<numErrors<<": found class of unregistered symbol:"<<cdef->get_qualified_name ()<<" defined in:"<<SgNodeHelper::sourceFilenameLineColumnToString(cdef)<<endl;
+	    //cout<<"Repairing AST symbol inconsistency #"<<numErrors<<": found class of unregistered symbol:"<<cdef->get_qualified_name ()<<" defined in:"<<SgNodeHelper::sourceFilenameLineColumnToString(cdef)<<endl;
 	    SgClassDeclaration* classDecl=cdef->get_declaration();
 	    ROSE_ASSERT(classDecl);
 	    SgClassType* classType=classDecl->get_type();
@@ -110,7 +110,8 @@ namespace CodeThorn {
 		memberList.push_back(varDecl);
 	      }
 	    }
-	    registerClassMembers(classType, memberList , 0); // this is *not* the classType through which this definition can be found (BUG), but an equivalent one
+	    bool repairMode=true;
+	    registerClassMembers(classType, memberList , 0, repairMode); // this is *not* the classType through which this definition can be found (BUG), but an equivalent one
 	  } else {
 	    //cout<<": could not find class of unregistered symbol!";
 	  }
@@ -205,7 +206,25 @@ namespace CodeThorn {
     return make_pair(false,declVarList);
   }
   
-  CodeThorn::TypeSize VariableIdMappingExtended::registerClassMembers(SgClassType* classType, CodeThorn::TypeSize offset) {
+  CodeThorn::TypeSize VariableIdMappingExtended::numClassMembers(SgType* classType) {
+    auto iter=classMembers.find(classType);
+    if(iter!=classMembers.end()) {
+      return static_cast<CodeThorn::TypeSize>(classMembers[classType].size());
+    } else {
+      return unknownSizeValue();
+    }
+  }
+
+  void VariableIdMappingExtended::removeDataMembersOfClass(SgClassType* classType) {
+    auto iter=classMembers.find(classType);
+    //cout<<"Removing data members of class:"<<classType->unparseToString()<<" : "<<(*iter).second.size()<<endl;
+    if(iter!=classMembers.end()) {
+      // TODO: mark varids as invalidated
+      (*iter).second.clear();
+    }
+  }
+
+  CodeThorn::TypeSize VariableIdMappingExtended::registerClassMembers(SgClassType* classType, CodeThorn::TypeSize offset, bool repairMode) {
     ROSE_ASSERT(offset==0); // this parameter can be removed
 
     //cout<<"DEBUG: register class members/2:"<<endl;
@@ -218,27 +237,20 @@ namespace CodeThorn {
     if(result.first==false)
       return unknownSizeValue();
     else
-      return registerClassMembers(classType,result.second,offset);
+      return registerClassMembers(classType,result.second,offset,repairMode);
   }
 
-  CodeThorn::TypeSize VariableIdMappingExtended::numClassMembers(SgType* classType) {
-    auto iter=classMembers.find(classType);
-    if(iter!=classMembers.end()) {
-      return static_cast<CodeThorn::TypeSize>(classMembers[classType].size());
-    } else {
-      return unknownSizeValue();
-    }
-  }
-
-  CodeThorn::TypeSize VariableIdMappingExtended::registerClassMembers(SgClassType* classType, std::list<SgVariableDeclaration*>& memberList, CodeThorn::TypeSize offset) {
-    ROSE_ASSERT(offset==0); // this parameter can be removed
+  CodeThorn::TypeSize VariableIdMappingExtended::registerClassMembers(SgClassType* classType, std::list<SgVariableDeclaration*>& memberList, CodeThorn::TypeSize offset, bool repairMode) {
+    ROSE_ASSERT(offset==0); // this parameter can be removed and turned into a local variable
     ROSE_ASSERT(classType!=nullptr);
     CodeThorn::TypeSize totalSize=0;
     //cout<<"DEBUG: Class members of: "<<classType->unparseToString()<<":"<<memberList.size()<<endl;
+    if(repairMode) {
+      // remove current entries of classType (will be replaced with new ones)
+      removeDataMembersOfClass(classType);
+    }
+
     for(auto memberVarDecl : memberList) {
-      if(TypeSizeMapping::isUnionDeclaration(memberVarDecl)) {
-	//cout<<"DEBUG: union detected! : "<<memberVarDecl->unparseToString()<<endl;
-      }
       SgSymbol* sym=SgNodeHelper::getSymbolOfVariableDeclaration(memberVarDecl);
       if(sym->get_symbol_basis()!=0) {
 	//cout<<"DEBUG: Register member decl:"<<memberVarDecl->unparseToString()<<endl;
@@ -252,7 +264,7 @@ namespace CodeThorn {
 	//cout<<"DEBUG: Type:"<<type->unparseToString()<<endl;
 	CodeThorn::TypeSize typeSize=unknownSizeValue();
 	if(SgClassType* memberClassType=isSgClassType(type)) {
-	  typeSize=registerClassMembers(memberClassType,0); // start with 0 for each nested type
+	  typeSize=registerClassMembers(memberClassType,0,repairMode); // start with 0 for each nested type
 	  setTypeSize(type,typeSize);
 	  setNumberOfElements(varId,classMembers[type].size());
 	  setTotalSize(varId,typeSize);
@@ -572,7 +584,7 @@ namespace CodeThorn {
 
     createTypeLists();
     initTypeSizes();
-    computeTypeSizes();
+    computeTypeSizes(); // currently does not compute any typesizes
     registerClassMembersNew();
 
 #if 0
