@@ -58,8 +58,8 @@ namespace CodeThorn {
     std::list<SgVariableDeclaration*> getVariableDeclarationsOfVariableIdSet(VariableIdSet&);
 
     void addVariableDeclaration(SgVariableDeclaration* decl);
-    CodeThorn::TypeSize registerClassMembers(SgClassType* classType, CodeThorn::TypeSize offset);
-    CodeThorn::TypeSize registerClassMembers(SgClassType* classType, std::list<SgVariableDeclaration*>& memberList, CodeThorn::TypeSize offset);
+    CodeThorn::TypeSize registerClassMembers(SgClassType* classType, CodeThorn::TypeSize offset, bool repairMode=false);
+    CodeThorn::TypeSize registerClassMembers(SgClassType* classType, std::list<SgVariableDeclaration*>& memberList, CodeThorn::TypeSize offset, bool repairMode=false);
     void classMemberOffsetsToStream(std::ostream& os, SgType* type, std::int32_t level);
     SgType* strippedType(SgType* type);
     // does not strip pointer types, to avoid infinite recursion in rekursive data types
@@ -135,7 +135,7 @@ namespace CodeThorn {
     std::vector<VariableId> getRegisteredClassMemberVars(SgType*);
     bool isRegisteredClassMemberVar(SgType*,VariableId);
     void registerClassMemberVar(SgType*,VariableId);
-
+    void removeDataMembersOfClass(SgClassType* type);
     std::vector<VariableId> getClassMembers(SgType*);
     std::map<SgType*,std::vector<VariableId> > classMembers;
 

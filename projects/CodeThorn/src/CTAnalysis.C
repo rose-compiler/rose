@@ -62,8 +62,6 @@ CodeThorn::CTAnalysis::CTAnalysis():
   _contextSensitiveAnalysis(false)
 {
   initDiagnostics();
-  //variableIdMapping=new VariableIdMappingExtended();
-  //variableIdMapping->setModeVariableIdForEachArrayElement(true);
   for(int i=0;i<100;i++) {
     binaryBindingAssert.push_back(false);
   }
