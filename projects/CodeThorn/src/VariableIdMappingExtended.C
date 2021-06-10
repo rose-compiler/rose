@@ -96,7 +96,7 @@ namespace CodeThorn {
 	SgVariableDeclaration* decl=isSgVariableDeclaration(initName->get_declaration());
 	if(decl && isMemberVariableDeclaration(decl)) {
 	  if(SgClassDefinition* cdef=isSgClassDefinition(decl->get_parent())) {
-	    //cout<<": found class of unregistered symbol:"<<cdef->get_qualified_name ()<<" defined in:"<<SgNodeHelper::sourceFilenameLineColumnToString(cdef)<<endl;
+	    cout<<"Repairing AST symbol inconsistency #"<<numErrors<<": found class of unregistered symbol:"<<cdef->get_qualified_name ()<<" defined in:"<<SgNodeHelper::sourceFilenameLineColumnToString(cdef)<<endl;
 	    SgClassDeclaration* classDecl=cdef->get_declaration();
 	    ROSE_ASSERT(classDecl);
 	    SgClassType* classType=classDecl->get_type();
@@ -139,7 +139,7 @@ namespace CodeThorn {
 	SgVariableDeclaration* decl=isSgVariableDeclaration(initName->get_declaration());
 	if(decl && isMemberVariableDeclaration(decl)) {
 	  if(SgClassDefinition* cdef=isSgClassDefinition(decl->get_parent())) {
-	    cout<<": found class of unregistered symbol:"<<cdef->get_qualified_name ()<<" defined in:"<<SgNodeHelper::sourceFilenameLineColumnToString(cdef)<<endl;
+	    cout<<": found class of unregistered symbol:"<<cdef->get_qualified_name ()<<" defined in:"<<SgNodeHelper::sourceFilenameLineColumnToString(cdef);
 	    //SgClassDeclaration* classDecl=cdef->get_declaration();
 	    //ROSE_ASSERT(classDecl);
 	    //SgClassType* classType=classDecl->get_type();
@@ -159,7 +159,6 @@ namespace CodeThorn {
     list<SgVarRefExp*> varAccesses=variableAccessesInsideFunctions(project);
     int32_t numVarErrors=checkVarRefExpAccessList(varAccesses,"var access");
     list<SgVarRefExp*> structAccesses=structAccessesInsideFunctions(project);
-    int32_t numStructErrorsDetected=repairVarRefExpAccessList(structAccesses,"struct access"); // has no effect if no errors are found
     int32_t numStructErrors=checkVarRefExpAccessList(structAccesses,"struct access");
     if(numVarErrors>0||numStructErrors) {
       cout<<"\nINFO: ROSE AST Symbol Consistency check FAILED (var access errors:"<<numVarErrors<<", struct access errors:"<<numStructErrors<<")"<<endl;
@@ -358,18 +357,20 @@ namespace CodeThorn {
   
   void VariableIdMappingExtended::computeVariableSymbolMapping(SgProject* project, int maxWarningsCount) {
     //computeVariableSymbolMapping1(project,maxWarningsCount);
+
+
     computeVariableSymbolMapping2(project,maxWarningsCount);
 
-    // repair struct access symbols if necessary (temporary workaround)
-    list<SgVarRefExp*> structAccesses=structAccessesInsideFunctions(project);
-    int32_t numStructErrorsDetected=repairVarRefExpAccessList(structAccesses,"struct access");
-
     if(getAstConsistencySymbolCheckFlag()) {
+      cout<<"INFO: running AST symbol check."<<endl;
       bool checkOk=consistencyCheck(project);
       if(!checkOk)
 	exit(1);
     } else {
-      //cout<<"INFO: AST consistency symbol check: disabled by user."<<endl;
+      // use temporary workaround (would make check pass, but creates more than one entry per data member of same struct)
+      // repair struct access symbols if necessary
+      list<SgVarRefExp*> structAccesses=structAccessesInsideFunctions(project);
+      int32_t numStructErrorsDetected=repairVarRefExpAccessList(structAccesses,"struct access");
     }
   }
 
