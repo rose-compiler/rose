@@ -4,6 +4,7 @@ with Asis.Implementation;
 -- GNAT specific:
 with Asis.Extensions;
 with Gnat.OS_Lib;
+with GNAT.String_Split;
 
 with Asis_Adapter.Unit;
 
@@ -15,24 +16,28 @@ package body Asis_Adapter.Tool is
    procedure Process
      (This                         : in out Class;
       File_Name                    : in     String;
-      Output_Dir                   : in     String := "";
       GNAT_Home                    : in     String;
+      AsisArgs                     : in     String;
+      Output_Dir                   : in     String := "";
       Process_Predefined_Units     : in     Boolean;
       Process_Implementation_Units : in     Boolean;
       Debug                        : in     Boolean)
    is
+      use GNAT;
       Parent_Name : constant String := Module_Name;
       Module_Name : constant String := Parent_Name & ".Process";
       package Logging is new Generic_Logging (Module_Name); use Logging;
 
       package AD renames Ada.Directories;
       Full_File_Name   : constant String := AD.Full_Name (File_Name);
+      Full_FName       : aliased String := AD.Full_Name (File_Name);
       Source_File_Dir  : constant String :=
         Ada.Directories.Containing_Directory (Full_File_Name);
       Simple_File_Name : aliased String := AD.Simple_Name (Full_File_Name);
       Base_File_Name   : constant String := AD.Base_Name (Simple_File_Name);
 
-      Tree_File_Dir    : constant String := AD.Compose (AD.Current_Directory, "obj");
+      -- Tree_File_Dir    : constant String := AD.Compose (AD.Current_Directory, "obj");
+      Tree_File_Dir    : constant String := AD.Current_Directory;
       Tree_File_Name   : constant String :=
         AD.Compose (Tree_File_Dir, Base_File_Name, "adt");
       Real_Output_Dir  : constant String :=
@@ -74,7 +79,7 @@ package body Asis_Adapter.Tool is
       --    -P<proj file> in Args
       -- 2) Use_GPRBUILD => True
       -- Using GNAT_Home to avoid calling the wrong (non-GNAT) gcc
-      Compile_Command     : aliased String := GNAT_Home & "/bin/gprbuild";
+      Compile_Command     : aliased String := GNAT_Home & "/bin/gcc";
       Create_Missing_Dirs : aliased String := "-p";
       Project_File        : aliased String :=
         "-P" & Source_File_Dir & "/default.gpr";
@@ -84,17 +89,25 @@ package body Asis_Adapter.Tool is
       -- file in case of the GPRBUILD call."
       -- Unchecked_Access is safe because Asis.Extensions.Compile does not use
       -- the pointed-to strings out of scope:
-      GPRBUILD_Args       : Gnat.OS_Lib.Argument_List :=
-        (1 => Create_Missing_Dirs'Unchecked_Access,
-         2 => Project_File'Unchecked_Access,
-         3 => Relocate_build_tree'Unchecked_Access);
+      -- GPRBUILD_Args       : Gnat.OS_Lib.Argument_List :=
+      --   (1 => Create_Missing_Dirs'Unchecked_Access,
+      --    2 => Project_File'Unchecked_Access,
+      --    3 => Relocate_build_tree'Unchecked_Access);
+      -- GPRBUILD_Args       : Gnat.OS_Lib.Argument_List (1 .. 0) := (others => null);
+      ASISArgs_Str       : aliased String := ASISArgs;
+      -- prepare for split arg string
+      Subs : String_Split.Slice_Set;
+      Seps : constant String := " ";
+      ArgNum : Integer := 0;
    begin
+
       Asis_Adapter.Trace_On := Debug;
       Asis_Adapter.Log_On := Debug;
       Log ("BEGIN");
       Log ("File_Name  => """ & File_Name & """");
       Log ("Output_Dir => """ & Output_Dir & """");
       Log ("GNAT_Home  => """ & GNAT_Home & """");
+      Log ("AsisArgs   => """ & AsisArgs & """");
       if File_Name = "" then
          raise Usage_Error with "File_Name must be provided, was empty.";
       end if;
@@ -107,18 +120,59 @@ package body Asis_Adapter.Tool is
       Log ("Calling Asis.Extensions.Compile");
       -- Unchecked_Access is safe because Asis.Extensions.Compile does not use
       -- the pointed-to strings out of scope:
-      Asis.Extensions.Compile
-        (Source_File           => Simple_File_Name'Unchecked_Access,
-         Args                  => GPRBUILD_Args,
-         Success               => Compile_Succeeded,
-         GCC                   => Compile_Command'Unchecked_Access,
-         Use_GPRBUILD          => True,
-         -- Only effective when Use_GPRBUILD is True:
-         Result_In_Current_Dir => False,
-         -- Send compiler output here instead of stderr:
---           Compiler_Out          => "",
---           All_Warnings_Off      => True,
-         Display_Call          => True);
+
+      -- Split argument string
+      String_Split.Create (S       => Subs,
+                        From       => ASISArgs_Str, 
+                        Separators => Seps,
+                        Mode       => String_Split.Multiple);
+
+      ArgNum := Integer(String_Split.Slice_Count (Subs));
+      
+      declare
+         ASIS_EmptyArgs     : Gnat.OS_Lib.Argument_List (1 .. 0) := (others => null);
+         ASIS_Args          : Gnat.OS_Lib.Argument_List (1 .. ArgNum);
+      begin
+         for I in 1 .. String_Split.Slice_Count (Subs) loop
+            --  Loop though the substrings.  
+            declare
+               Sub : constant String := String_Split.Slice (Subs, I);
+            begin
+               ASIS_Args(Integer(I)) := new String'(Sub);
+            end;
+         end loop; 
+
+      if AsisArgs = "" then  
+         Log ("Calling with no Args");
+         Asis.Extensions.Compile
+           (Source_File           => Full_FName'Unchecked_Access,
+            Args                  => ASIS_EmptyArgs,
+            Success               => Compile_Succeeded,
+            GCC                   => Compile_Command'Unchecked_Access,
+            Use_GPRBUILD          => FALSE,
+            -- Only effective when Use_GPRBUILD is True:
+            Result_In_Current_Dir => False,
+            -- Send compiler output here instead of stderr:
+--              Compiler_Out          => "",
+--              All_Warnings_Off      => True,
+            Display_Call          => True);
+      else 
+         Log ("Calling with Args """ & AsisArgs & """");
+         Asis.Extensions.Compile
+           (Source_File           => Full_FName'Unchecked_Access,
+            Args                  => ASIS_Args,
+            Success               => Compile_Succeeded,
+            GCC                   => Compile_Command'Unchecked_Access,
+            Use_GPRBUILD          => FALSE,
+            -- Only effective when Use_GPRBUILD is True:
+            Result_In_Current_Dir => False,
+            -- Send compiler output here instead of stderr:
+--              Compiler_Out          => "",
+--              All_Warnings_Off      => True,
+            Display_Call          => True);
+      end if;
+      end;
+ 
       if Compile_Succeeded then
          Init_And_Process_Context;
       else
