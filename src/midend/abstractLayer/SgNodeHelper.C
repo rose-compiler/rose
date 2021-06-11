@@ -10,10 +10,6 @@
 
 using namespace std;
 
-// set to true for matching C++ ctor calls
-bool SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL = false;
-//~ const bool SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL = true;
-
 SgVariableSymbol* SgNodeHelper::isFunctionParameterVariableSymbol(SgNode* node) {
   if(node) {
     if(SgVariableSymbol* varsym=isSgVariableSymbol(node))

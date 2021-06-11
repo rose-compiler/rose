@@ -50,9 +50,6 @@ class SgOmpClauseBodyStatement;
 
 namespace SgNodeHelper {
   
-  /// defines if extended normalized call matching (functions+ctors) is enabled
-  extern bool WITH_EXTENDED_NORMALIZED_CALL;
-
 /*! \brief Functions for simplifying access to SgNode information
 
   * \author Markus Schordan
