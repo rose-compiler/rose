@@ -1,10 +1,6 @@
 #ifndef CFANALYZER_H
 #define CFANALYZER_H
 
-/*************************************************************
- * Author   : Markus Schordan                                *
- *************************************************************/
-
 #include "SgNodeHelper.h"
 #include "Labeler.h"
 #include "CommandLineOptions.h"
@@ -106,7 +102,7 @@ class CFAnalysis {
   // external functions are not represented (if they are only represented by external edges in the ICFG)
   int reduceToFunctionEntryNodes(Flow& flow);
   /*
-    eliminates empty codition nodes. This requires that only one successor is left in the icfg.
+    eliminates empty condition nodes. This requires that only one successor is left in the icfg.
     this function can be applied after optimizations (e.g. empty blocks have been removed from the icfg).
   */
   int reduceEmptyConditionNodes(Flow& flow);
@@ -141,10 +137,16 @@ class CFAnalysis {
   void setInterProcedural(bool flag); // by default true
   bool getInterProcedural();
 
-  // this function stores the Flow and InterFlow in this object.
-  void createICFG(SgProject* project);
-
- protected:
+  // these functions store the Flow and InterFlow in this object.
+  //void createICFG(SgProject* project); // deprecated
+  void createCICFG(SgProject* project); // deprecated
+  void createCppICFG(SgProject* project); // deprecated
+  void createCICFG(SgProject* project, FunctionCallMapping* functionCallMapping);
+  void createCppICFG(SgProject* project, FunctionCallMapping2* functionCallMapping2);
+  Flow* getIcfgFlow();
+  InterFlow* getInterFlow();
+  
+protected:
   SgFunctionDefinition* determineFunctionDefinition2(SgFunctionCallExp* funCall);
   FunctionCallTargetSet determineFunctionDefinition4(SgFunctionCallExp* funCall);
   FunctionCallTargetSet determineFunctionDefinition5(Label lbl, SgLocatedNode* astnode);

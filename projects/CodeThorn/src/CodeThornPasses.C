@@ -5,6 +5,9 @@
 
 namespace CodeThorn {
 
+  // set to true for matching C++ ctor calls
+  bool Pass::WITH_EXTENDED_NORMALIZED_CALL = false;
+  
   void Pass::normalization(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc) {
     tc.startTimer();
     if(ctOpt.status) cout<<"Phase: normalization";
@@ -21,12 +24,58 @@ namespace CodeThorn {
     return CodeThorn::createVariableIdMapping(ctOpt,root);
   }
 
-  CodeThorn::Labeler* Pass::createLabeler(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, VariableIdMapping* variableIdMapping) {
+  CodeThorn::Labeler* Pass::createLabeler(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, VariableIdMappingExtended* variableIdMapping) {
     tc.startTimer();
     if(ctOpt.status) cout<<"Phase: program location labeling"<<endl;
     Labeler* labeler=createLabeler(root,variableIdMapping);
     tc.stopTimer(TimingCollector::labeler);
+    return labeler;
   }
-}
 
+  // not used
+  ClassHierarchyWrapper* Pass::createClassHierarchy(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc) {
+    tc.startTimer();
+    if(ctOpt.status) cout<<"Phase: class hierarchy analysis"<<endl;
+    auto classHierarchy=new ClassHierarchyWrapper(root);
+    tc.stopTimer(TimingCollector::classHierarchyAnalysis);
+    return classHierarchy;
+  }
+
+  CFAnalysis* Pass::createForwardIcfg(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, Labeler* labeler, ClassHierarchyWrapper* classHierarchy) {
+    bool isForardIcfg=true;
+    return Pass::createIcfg(ctOpt,root,tc,labeler,classHierarchy,ICFG_forward);
+  }
+    
+  CFAnalysis* Pass::createBackwardIcfg(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, Labeler* labeler, ClassHierarchyWrapper* classHierarchy) {
+    return Pass::createIcfg(ctOpt,root,tc,labeler,classHierarchy,ICFG_backward);
+  }
+  
+  CFAnalysis* Pass::createIcfg(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, Labeler* labeler, ClassHierarchyWrapper* classHierarchy, ICFGDirection icfgDirection) {
+    tc.startTimer();
+
+    CodeThorn::Pass::WITH_EXTENDED_NORMALIZED_CALL=ctOpt.extendedNormalizedCppFunctionCalls; // to be removed
+
+    CFAnalysis* cfanalyzer=new CFAnalysis(labeler);
+    if(!ctOpt.extendedNormalizedCppFunctionCalls) {
+      if(ctOpt.status) cout<<"Phase: C ICFG construction"<<endl;
+      cfanalyzer->createCICFG(root);
+    } else {
+      if(ctOpt.status) cout<<"Phase: C++ ICFG construction"<<endl;
+      cfanalyzer->createCppICFG(root);
+    }
+    tc.stopTimer(TimingCollector::icfgConstruction);
+    
+    if(ctOpt.status) {
+      cout<<"Phase: ICFG construction"<<endl;
+      size_t icfgSize=cfanalyzer->getIcfgFlow()->size();
+      size_t interSize=cfanalyzer->getInterFlow()->size();
+      size_t intraSize=icfgSize-interSize;
+      cout<<"    intra-procedural edges: " << intraSize<<endl;
+      cout<<"    inter-procedural edges: " << interSize <<endl;
+      cout<<"    ICFG total       edges: " << icfgSize <<endl;
+    }
+    
+    return cfanalyzer;
+  }
+  
 } // namespace CodeThorn

@@ -10,7 +10,7 @@ using namespace std;
 #include "CollectionOperators.h"
 #include "DFTransferFunctions.h"
 #include "AstUtility.h"
-
+#include "CodeThornPasses.h" // only required because of CodeThorn::Pass::WITH_EXTENDED_NORMALIZED_CALL
 using namespace CodeThorn;
 
 namespace
@@ -82,7 +82,7 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
     // 1) f(x), 2) y=f(x) (but not y+=f(x))
     SgNodeHelper::ExtendedCallInfo callinfo = SgNodeHelper::matchExtendedNormalizedCall(node);
     
-    SgFunctionCallExp* funCall = SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL 
+    SgFunctionCallExp* funCall = CodeThorn::Pass::WITH_EXTENDED_NORMALIZED_CALL 
                                        ? callinfo.callExpression()
                                        : SgNodeHelper::Pattern::matchFunctionCall(node);
 

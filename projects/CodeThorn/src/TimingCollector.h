@@ -15,6 +15,7 @@ namespace CodeThorn {
     extractAssertionTraces,
     classHierarchyAnalysis,
     variableIdMapping,
+    labeler,
     functionCallMapping,
     icfgConstruction,
     reverseIcfgConstruction,

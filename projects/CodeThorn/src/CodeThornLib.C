@@ -766,9 +766,9 @@ namespace CodeThorn {
   Labeler* createLabeler(SgProject* project, VariableIdMappingExtended* variableIdMapping) {
     return new CTIOLabeler(project,variableIdMapping);
   }
-    
+
+#if 0
   CFAnalysis* createControlFlowGraph(CodeThornOptions& ctOpt, SgProject* project, Labeler* labeler) {
-    //SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL=true;
     CFAnalysis* cfAnalyzer=new CFAnalysis(labeler);
     FunctionCallMapping2* functionCallMapping2=new FunctionCallMapping2();
     ClassHierarchyWrapper* classHierarchy=new ClassHierarchyWrapper(project);
@@ -779,7 +779,8 @@ namespace CodeThorn {
     cfAnalyzer->createICFG(project);
     return cfAnalyzer;
   }
-
+#endif
+  
   IOAnalyzer* runMemoryAnalysis(CodeThornOptions& ctOpt, VariableIdMapping* vim, Labeler* labeler, CFAnalysis* icfg, TimingCollector& timingCollector) {
     //new: IOAnalyzer* ioAnalysis=new IOAnalyzer(ctOpt,vim,labeler,icfg,timingCollector);
     IOAnalyzer* ioAnalysis=new IOAnalyzer();
@@ -792,4 +793,5 @@ namespace CodeThorn {
     if(ctOpt.status) cout<<tc.toString();
     if(ctOpt.status) cout<<"Total memory                   : "<<CodeThorn::getPhysicalMemorySize()/(1024*1024) <<" MiB"<<endl;
   }
+
 } // end of namespace CodeThorn

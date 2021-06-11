@@ -53,7 +53,7 @@ namespace CodeThorn {
   void normalizationPass(CodeThornOptions& ctOpt, SgProject* sageProject);
   Labeler* createLabeler(SgProject* sageProject, VariableIdMappingExtended* variableIdMapping);
   VariableIdMappingExtended* createVariableIdMapping(CodeThornOptions& ctOpt, SgProject* sageProject);
-  CFAnalysis* createControlFlowGraph(CodeThornOptions& ctOpt, SgProject* project, Labeler* labeler);
+  //CFAnalysis* createControlFlowGraph(CodeThornOptions& ctOpt, SgProject* project, Labeler* labeler);
   //CFAnalysis* createBackwardControlFlowGraph(SgProject* sageProject*, CodeThornOptions& ctOpt, SgProject* sageProject);
   IOAnalyzer* runMemoryAnalysis(CodeThornOptions& ctOpt, VariableIdMapping* vim, Labeler* labeler, CFAnalysis* icfg, TimingCollector& timingCollector);
   //IOAnalyzer* runLTLVerification(CodeThornOptions&, CFAnalysis*,TimingCollector& timingCollector));
