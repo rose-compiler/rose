@@ -13,11 +13,13 @@ void asis_adapterfinal (void);
 Nodes_Struct adapter_wrapper
   (char *target_file_in,
    char *gnat_home,
+   char *asisArgs,
    char *output_dir);
 
 Nodes_Struct adapter_wrapper_with_flags
   (char *target_file_in,
    char *gnat_home,
+   char *asisArgs,
    char *output_dir,
    bool process_predefined_units,
    bool process_implementation_units,

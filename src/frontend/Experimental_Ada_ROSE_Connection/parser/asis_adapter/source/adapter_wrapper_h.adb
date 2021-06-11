@@ -14,6 +14,7 @@ package body adapter_wrapper_h is
    function adapter_wrapper
      (target_file_in               : in Interfaces.C.Strings.chars_ptr;
       gnat_home                    : in Interfaces.C.Strings.chars_ptr;
+      AsisArgs                     : in Interfaces.C.Strings.chars_ptr;
       output_dir                   : in Interfaces.C.Strings.chars_ptr
      )
       return a_nodes_h.Nodes_Struct
@@ -23,6 +24,7 @@ package body adapter_wrapper_h is
       return adapter_wrapper_with_flags
         (target_file_in               => target_file_in,
          gnat_home                    => gnat_home,
+         AsisArgs                     => AsisArgs,
          output_dir                   => output_dir,
          process_predefined_units     => ICE.bool(False),
          process_implementation_units => ICE.bool(False),
@@ -35,6 +37,7 @@ package body adapter_wrapper_h is
    function adapter_wrapper_with_flags
      (target_file_in               : in Interfaces.C.Strings.chars_ptr;
       gnat_home                    : in Interfaces.C.Strings.chars_ptr;
+      AsisArgs                     : in Interfaces.C.Strings.chars_ptr;
       output_dir                   : in Interfaces.C.Strings.chars_ptr;
       process_predefined_units     : in Interfaces.C.Extensions.bool;
       process_implementation_units : in Interfaces.C.Extensions.bool;
@@ -57,6 +60,9 @@ package body adapter_wrapper_h is
       GNAT_Home_String_Access : access String :=
         new String'(Interfaces.C.To_Ada
                     (Interfaces.C.Strings.Value (gnat_home)));
+      ASIS_Args_String_Access : access String :=
+        new String'(Interfaces.C.To_Ada
+                    (Interfaces.C.Strings.Value (AsisArgs)));
       Output_Dir_String_Access : access String :=
         new String'(Interfaces.C.To_Ada
                     (Interfaces.C.Strings.Value (output_dir)));
@@ -69,6 +75,7 @@ package body adapter_wrapper_h is
       Tool.Process
         (File_Name                    => Target_File_In_String_Access.all,
          GNAT_Home                    => GNAT_Home_String_Access.all,
+         AsisArgs                     => ASIS_Args_String_Access.all,
          Output_Dir                   => Output_Dir_String_Access.all,
          Process_Predefined_Units     => Boolean (process_predefined_units),
          Process_Implementation_Units => Boolean (process_implementation_units),

@@ -7,7 +7,9 @@ int main (int argc, char *argv[])
   char *prefix = "run_parser_adapter.main";
   // argv[1] should be "-f":
   char *target_file = argv[2];
-  // argv[3] should be "-g":
+  // argv[3] should be "-g"
+  // asisArgs should specify the include path with prefix "-I"
+  char *asisArgs = argv[3];
   char *gnat_home   = argv[4];
   // argv[o] should be "-o":
   char *output_dir  = argv[6];
@@ -22,6 +24,7 @@ int main (int argc, char *argv[])
   nodes = adapter_wrapper_with_flags 
     (target_file,
     gnat_home, 
+    asisArgs;
     output_dir,
     process_predefined_units,
     process_implementation_units,
