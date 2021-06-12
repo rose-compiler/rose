@@ -76,11 +76,7 @@ CodeThorn::CTAnalysis::CTAnalysis():
 
 // override
 void CodeThorn::CTAnalysis::initializeSolver() {
-  if(_transferFunctions==nullptr) {
-    EStateTransferFunctions* etf=new EStateTransferFunctions();
-    etf->setAnalyzer(this);
-    _transferFunctions=etf;
-  }
+  // empty
 }
 
 // override
@@ -1376,8 +1372,16 @@ void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgP
 
   CallString::setMaxLength(_ctOpt.callStringLength);
 
-  initializeSolver();
-  initializeTransferFunctions();
+  //initializeSolver();
+  if(_transferFunctions==nullptr) {
+    EStateTransferFunctions* etf=new EStateTransferFunctions();
+    etf->setAnalyzer(this);
+    _transferFunctions=etf;
+  }
+  
+  //initializeTransferFunctions();
+  _transferFunctions->setProgramAbstractionLayer(_programAbstractionLayer);
+  _transferFunctions->addParameterPassingVariables(); // DFTransferFunctions: adds pre-defined var-ids to VID for parameter passing
   
   if(_ctOpt.getInterProceduralFlag()) {
     Label slab2=getLabeler()->getLabel(_startFunRoot);
