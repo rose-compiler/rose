@@ -15,6 +15,7 @@ procedure Run_Parser_Adapter is
       Debug      : aliased Boolean := False;
       File_Name  : aliased GNAT.Strings.String_Access; -- Initialized
       GNAT_Home  : aliased GNAT.Strings.String_Access; -- Initialized
+      AsisArgs   : aliased GNAT.Strings.String_Access; -- Initialized
       Output_Dir : aliased GNAT.Strings.String_Access; -- Initialized
       Process_Predefined_Units
                  : aliased Boolean := False;
@@ -43,6 +44,9 @@ procedure Run_Parser_Adapter is
       GCL.Define_Switch (Options.Config, Options.Gnat_Home'Access,
                          "-g:", Long_Switch => "--gnat_home=",
                          Help => "GNAT home directory");
+      GCL.Define_Switch (Options.Config, Options.AsisArgs'Access,
+                         "-a:", Long_Switch => "--asis_arg=",
+                         Help => "ASIS Argument");
       GCL.Define_Switch (Options.Config, Options.Output_Dir'Access,
                          "-o:", Long_Switch => "--output_dir=",
                          Help => "Output directory");
@@ -73,6 +77,7 @@ begin
      (File_Name                    => Options.File_Name.all,
       Output_Dir                   => Options.Output_Dir.all,
       GNAT_Home                    => Options.GNAT_Home.all,
+      AsisArgs                     => Options.AsisArgs.all,
       Process_Predefined_Units     => Options.Process_Predefined_Units,
       Process_Implementation_Units => Options.Process_Implementation_Units,
       Debug                        => Options.Debug);
