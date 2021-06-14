@@ -27,11 +27,11 @@ $foundInDir  = "";
 
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "6";
-$mkinstaller_ver_build = "8";
-$mkinstaller_ver_patch = "1";
-$mkinstaller_ver_name  = "2.6.8.1";
-$mkinstaller_ver_time  = "19Mar2021,18:42:47z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.8.1 - 19Mar2021,18:42:47z";
+$mkinstaller_ver_build = "10";
+$mkinstaller_ver_patch = "";
+$mkinstaller_ver_name  = "2.6.10";
+$mkinstaller_ver_time  = "12Jun2021,22:14:07z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.10 - 12Jun2021,22:14:07z";
 
 # MyUniqueFileId: d34be5e4-1cfc-49b6-d988-25ab878c795f
 
@@ -23997,11 +23997,11 @@ EOF1
    |CONTACT
    |    Please contact:
    |
-   |        totebag.help (totebag.help\@gmail.com) with questions.
+   |        totebagware.help (totebagware.help\@gmail.com) with questions.
    |
-   |        totebag.bugs (totebag.bugs\@gmail.com) to report problems.
+   |        totebagware.bugs (totebagware.bugs\@gmail.com) to report problems.
    |
-   |        totebag.more (totebag.more\@gmail.com) to request enhancements.
+   |        totebagware.more (totebagware.more\@gmail.com) to request enhancements.
    |
    |
    |    Be sure to provide as much information as possible.
@@ -24977,7 +24977,7 @@ EOF1
    |         details are determined at <i>mkinstaller</i> script run time. Note that on
    |         Windows-like hosts the script will fail with an error message if it
    |         can't find/run <i>makensis</i> (make sure <i>makensis</i> is reachable through the
-   |         <b><big><code>PATH</code></big></b> environment variable).
+   |         <big><code>PATH</code></big> environment variable).
    |      </blockquote>
    |      <blockquote>
    |         The directory where temporary files are to be placed is determined
@@ -25284,11 +25284,11 @@ EOF1
    |      <blockquote>
    |         Please contact: <br>
    |         <blockquote>
-   |            <a href="mailto:totebag.help\@gmail.com?subject=Help: mkinstaller">totebag.help</a> with questions. <br>
+   |            <a href="mailto:totebagware.help\@gmail.com?subject=Help: mkinstaller">totebagware.help</a> with questions. <br>
    |            <br>
-   |            <a href="mailto:totebag.bugs\@gmail.com?subject=Bug: mkinstaller">totebag.bugs</a> to report problems. <br>
+   |            <a href="mailto:totebagware.bugs\@gmail.com?subject=Bug: mkinstaller">totebagware.bugs</a> to report problems. <br>
    |            <br>
-   |            <a href="mailto:totebag.more\@gmail.com?subject=Enhance: mkinstaller">totebag.more</a> to request enhancements. <br>
+   |            <a href="mailto:totebagware.more\@gmail.com?subject=Enhance: mkinstaller">totebagware.more</a> to request enhancements. <br>
    |            <br>
    |         </blockquote>
    |         Be sure to provide as much information as possible.
