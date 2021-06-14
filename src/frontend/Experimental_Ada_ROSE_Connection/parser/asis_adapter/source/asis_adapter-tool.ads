@@ -16,8 +16,9 @@ package Asis_Adapter.Tool is
    procedure Process
      (This                         : in out Class;
       File_Name                    : in     String;
-      Output_Dir                   : in     String := "";
       GNAT_Home                    : in     String;
+      AsisArgs                     : in     String;
+      Output_Dir                   : in     String := "";
       Process_Predefined_Units     : in     Boolean;
       Process_Implementation_Units : in     Boolean;
       Debug                        : in     Boolean);
