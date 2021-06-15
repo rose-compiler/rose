@@ -144,7 +144,8 @@ using namespace std;
 using namespace Rose;
 using namespace SageBuilder;
 
-
+// Used by serialize() to collect all types visited
+std::set<SgType*> type_set; 
 // DQ (1/18/2015): Define this container locally in this file only.
 namespace SageInterface
    {
@@ -24939,6 +24940,7 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   {
     out<<" "<< v->get_qualified_name();
     out<<" type@"<< v->get_type();
+    type_set.insert (v->get_type());
   }
 
   // associated class, function and variable declarations
@@ -24965,6 +24967,12 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   if (SgTemplateInstantiationMemberFunctionDecl* cnode= isSgTemplateInstantiationMemberFunctionDecl(node) )
     out<<" template member func decl@"<< cnode->get_templateDeclaration();
 
+  if (SgTypedefDeclaration * v= isSgTypedefDeclaration(node))
+  {
+    out<<" base_type@"<< v->get_base_type();
+    type_set.insert (v->get_base_type());
+  }
+
   out<<endl;
 
   std::vector<SgNode* > children = node->get_traversalSuccessorContainer();
@@ -24988,13 +24996,11 @@ void SageInterface::printAST(SgNode* node)
   cout<<oss.str();
 }
 
-void printAST2TextFile (SgNode* node, std::string filename)
+void SageInterface::printAST2TextFile (SgNode* node, std::string filename)
 {
   // Rasmussen 9/21/2020: This leads to infinite recursion (clang warning message) and should be removed from API)
-  ROSE_ABORT();
-#if 0 // [Robb Matzke 2021-03-24]: unreachable
+//  ROSE_ABORT();
   printAST2TextFile (node, filename.c_str());
-#endif
 }
 
 void SageInterface::printAST2TextFile(SgNode* node, const char* filename)
@@ -25005,6 +25011,14 @@ void SageInterface::printAST2TextFile(SgNode* node, const char* filename)
   ofstream textfile;
   textfile.open(filename, ios::out);
   textfile<<oss.str();
+
+  // append type information also
+  textfile<<"Types encountered ...."<<endl;
+  ostringstream oss2;
+  set<SgType*>::iterator iter;  
+  for (iter = type_set.begin(); iter!= type_set.end(); iter++)
+    serialize (*iter, prefix, false, oss2);
+  textfile<<oss2.str();
   textfile.close();
 }
 
