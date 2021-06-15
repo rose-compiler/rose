@@ -103,7 +103,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
 
 #define DEBUG_FIGURE_OUT 0
 
-#if DEBUG_FIGURE_OUT
+#if DEBUG_FIGURE_OUT || 0
      printf ("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF \n");
      printf ("In IncludedFilesUnparser::figureOutWhichFilesToUnparse(): \n");
      printf (" --- projectNode->usingDeferredTransformations = %s \n",projectNode->get_usingDeferredTransformations() ? "true" : "false");
@@ -676,7 +676,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
           FileHelper::ensureFolderExists(it -> second);
         }
 
-#if 0
+#if 1
   // DQ (2/22/2021): We have made this function static and the data it accesses static, so that it 
   // can be referenced from any tools that need to build the diffs between the original files and 
   // the unparsed (modified) files).
@@ -689,7 +689,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
      SageInterface::reportModifiedStatements("Leaving figureOutWhichFilesToUnparse()",projectNode);
 #endif
 
-#if DEBUG_FIGURE_OUT
+#if DEBUG_FIGURE_OUT || 0
   // DQ (4/13/2020): Added header file unparsing feature specific debug level.
      if (SgProject::get_unparseHeaderFilesDebug() >= 0)
         {
@@ -1430,10 +1430,16 @@ IncludedFilesUnparser::initializeFilesToUnparse()
 
                  // DQ (10/11/2019): This is required to be set when using the header file optimization (tested in AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute()).
 #if DEBUG_INITIALIZER_FILES_TO_UNPARSE
-                    printf ("Setting sourceFile->set_header_file_unparsing_optimization_header_file(true), but it should have been set previously, I think! \n");
+                 // DQ (6/12/2021): The header_file_unparsing_optimization is now a static data member and the
+                 // header_file_unparsing_optimization_source_file and header_file_unparsing_optimization_header_file 
+                 // data members have been removed.
+                 // printf ("Setting sourceFile->set_header_file_unparsing_optimization_header_file(true), but it should have been set previously, I think! \n");
 #endif
+                 // DQ (6/12/2021): The header_file_unparsing_optimization is now a static data member and the
+                 // header_file_unparsing_optimization_source_file and header_file_unparsing_optimization_header_file 
+                 // data members have been removed.
                  // DQ (4/24/2021): Debugging header file optimization.
-                    sourceFile->set_header_file_unparsing_optimization_header_file(true);
+                 // sourceFile->set_header_file_unparsing_optimization_header_file(true);
 
 #if 0
                     printf ("In IncludedFilesUnparser::initializeFilesToUnparse(): source file: file->get_unparse_tokens() = %s \n",file->get_unparse_tokens() ? "true" : "false");
@@ -1448,8 +1454,11 @@ IncludedFilesUnparser::initializeFilesToUnparse()
 #endif
                       }
 
-                // DQ (10/11/2019): This is required to be set when using the header file optimization (tested in AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute()).
-                    ROSE_ASSERT (sourceFile->get_header_file_unparsing_optimization_header_file() == true);
+                 // DQ (6/12/2021): The header_file_unparsing_optimization is now a static data member and the
+                 // header_file_unparsing_optimization_source_file and header_file_unparsing_optimization_header_file 
+                 // data members have been removed.
+                 // DQ (10/11/2019): This is required to be set when using the header file optimization (tested in AttachPreprocessingInfoTreeTrav::evaluateInheritedAttribute()).
+                 // ROSE_ASSERT (sourceFile->get_header_file_unparsing_optimization_header_file() == true);
 
                  // DQ (10/21/2019): This will be tested below, in secondaryPassOverSourceFile(), if it is not in place then we need to do it here.
                  // ROSEAttributesListContainerPtr filePreprocInfo = sourceFile->get_preprocessorDirectivesAndCommentsList();
@@ -1615,7 +1624,10 @@ IncludedFilesUnparser::initializeFilesToUnparse()
 #if 1
 
 #if DEBUG_INITIALIZER_FILES_TO_UNPARSE
-          printf ("In initializeFilesToUnparse(): file = %p = %s name = %s Calling file->set_header_file_unparsing_optimization_header_file(false) \n",file,file->class_name().c_str(),file->getFileName().c_str());
+       // DQ (6/12/2021): The header_file_unparsing_optimization is now a static data member and the
+       // header_file_unparsing_optimization_source_file and header_file_unparsing_optimization_header_file 
+       // data members have been removed.
+       // printf ("In initializeFilesToUnparse(): file = %p = %s name = %s Calling file->set_header_file_unparsing_optimization_header_file(false) \n",file,file->class_name().c_str(),file->getFileName().c_str());
 #endif
        // DQ (4/24/2021): Debugging header file optimization.
        // DQ (9/19/2019): Unclear to me why we want to set this to false, or if we are doing so for the correct file.

@@ -9,8 +9,9 @@ markTransformationsForOutput( SgNode* node )
   // This is required since the unparsing will check for either transformation 
   // or IR nodes marked explicitly for output (typically compiler generated IR nodes).
 
+  // DQ (6/11/2021): This is called so many times that it is not reasonable to collect it performance.
   // DQ (7/7/2005): Introduce tracking of performance of ROSE.
-     TimingPerformance timer ("Mark transformations for output:");
+  // TimingPerformance timer ("Mark transformations for output:");
 
      MarkTransformationsForOutput declarationFixupTraversal;
 

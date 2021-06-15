@@ -8276,7 +8276,7 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile, bool traverseHeaderFiles)
      printf ("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff \n");
 #endif
 
-#if DEBUG_TOKEN_FRONTIER || 1
+#if DEBUG_TOKEN_FRONTIER || 0
   // DQ (11/20/2013): Test using support for multiple files for Java testing.
   // Output an optional graph of the AST (just the tree, when active)
   // generateDOT ( *project );
@@ -8331,6 +8331,14 @@ buildTokenStreamMapping(SgSourceFile* sourceFile, vector<stream_element*> & toke
      printf (" --- tokenVector.size()                        = %zu \n",tokenVector.size());
      printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
      printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
+#endif
+
+#if 0
+     if (sourceFile->getFileName() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/sources/test_163_1.h")
+        {
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+        }
 #endif
 
 #if 0
@@ -8802,7 +8810,7 @@ buildTokenStreamMapping(SgSourceFile* sourceFile, vector<stream_element*> & toke
         }
 #endif
 
-#if DEBUG_TOKEN_STREAM_MAPPING || 1
+#if DEBUG_TOKEN_STREAM_MAPPING || 0
   // DQ (12/26/2018): This is an error for badInput3.c (when using "-rose:verbose 2".
   // DQ (12/1/2013): Make the output of this graph consitional upon the verbose level.
      if ( SgProject::get_verbose() > -1 )

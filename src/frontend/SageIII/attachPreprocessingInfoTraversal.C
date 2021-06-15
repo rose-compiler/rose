@@ -85,7 +85,7 @@ using namespace Rose;
 // #define ROSE_ASSERT assert
 
 // DQ (8/23/2018): Adding function declaration to generate comments, CPP directives and the token stream.
-void buildTokenStreamMapping(SgSourceFile* sourceFile);
+// void buildTokenStreamMapping(SgSourceFile* sourceFile);
 
 // It is needed because otherwise, the default destructor breaks something.
 
@@ -1662,7 +1662,7 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
      printf ("tokenVector.size()        = %zu \n",getTokenStream(sourceFile).size());
 #endif
 
-#if DEBUG_BUILD_COMMENT_AND_CPP_DIRECTIVE_LIST
+#if DEBUG_BUILD_COMMENT_AND_CPP_DIRECTIVE_LIST || 0
      printf ("Leaving AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList(use_Wave = %s) file = %s \n",use_Wave ? "true" : "false",fileNameForDirectivesAndComments.c_str());
 #endif
 

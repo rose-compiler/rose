@@ -1689,6 +1689,7 @@ Grammar::setUpSupport ()
      File.setDataPrototype("bool", "unparse_edg_normalized_method_ROSE_1392", "= false",
                  NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+  // DQ (6/12/2021): I think that all static data members must not provide an initializer (else it appears in the generated constructor).
   // DQ (4/24/2021): Change this to be a static data member.
   // DQ (8/19/2019): Adding support to optimize the performance of the header file unarsing.
   // Specifically we want to limit the collection of comments and CPP dirctives to a set determined
@@ -1696,12 +1697,16 @@ Grammar::setUpSupport ()
   // immediiately before the unparsing of each file.
   // File.setDataPrototype("bool", "header_file_unparsing_optimization", "= false",
   //             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     File.setDataPrototype("static bool", "header_file_unparsing_optimization", "= false",
+  // File.setDataPrototype("static bool", "header_file_unparsing_optimization", "= false",
+  //             NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     File.setDataPrototype("static bool", "header_file_unparsing_optimization", "",
                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     File.setDataPrototype("bool", "header_file_unparsing_optimization_source_file", "= false",
-                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     File.setDataPrototype("bool", "header_file_unparsing_optimization_header_file", "= false",
-                 NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (6/12/2021): Eliminate this in favor of the now static data member header_file_unparsing_optimization.
+  // File.setDataPrototype("bool", "header_file_unparsing_optimization_source_file", "= false",
+  //             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // File.setDataPrototype("bool", "header_file_unparsing_optimization_header_file", "= false",
+  //             NO_CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype("SgFile::standard_enum", "standard", "= e_default_standard",
                  NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      File.setDataPrototype("bool", "gnu_standard", "= false",
