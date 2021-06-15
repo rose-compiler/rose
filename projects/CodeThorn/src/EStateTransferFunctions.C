@@ -346,30 +346,25 @@ namespace CodeThorn {
         }
 	AbstractValue actualParamAddress=evalResult.value();
 	AbstractValue formalParamAddress=AbstractValue::createAddressOfVariable(formalParameterVarId);
-        if(getOptionOutputWarnings()) {
-          //cout<<"Warning: imprecision: "<<SgNodeHelper::sourceLineColumnToString(funCall)<< ": passing of class/Struct/Union types per value as function parameters (assuming top): ";
-	  SgType* ctype=_analyzer->getVariableIdMapping()->getType(formalParameterVarId);
-	  auto membersList=_analyzer->getVariableIdMapping()->getClassMembers(ctype);
-	  //cout<<" #classmembers: "<<membersList.size()<<endl;
-	  for(auto mvarId : membersList) {
-	    CodeThorn::TypeSize offset=_analyzer->getVariableIdMapping()->getOffset(mvarId);
-#if 0
-	    cout<<" formal param    : "<<formalParamAddress.toString(_analyzer->getVariableIdMapping())<<endl;
-	    cout<<" actual param (L): "<<actualParamAddress.toString(_analyzer->getVariableIdMapping())<<endl;
-	    cout<<" actual param-vid: "<<mvarId.toString()<<endl;
-	    cout<<" actual param-vid: "<<mvarId.toString(_analyzer->getVariableIdMapping())<<endl;
-	    cout<<" offset          : "<<offset<<endl;
-#endif
-	    AbstractValue offsetAV(offset);
-	    AbstractValue formalParameterStructMemberAddress=AbstractValue::operatorAdd(formalParamAddress,offsetAV);
-	    AbstractValue actualParameterStructMemberAddress=AbstractValue::operatorAdd(actualParamAddress,offsetAV);
-	    // read from evalResultValue+offset and write to formal-param-address+offset
-	    AbstractValue newVal=readFromAnyMemoryLocation(currentLabel,&newPState,actualParameterStructMemberAddress);
-	    // TODO: check for copying of references
-	    initializeMemoryLocation(currentLabel,&newPState,formalParameterStructMemberAddress,newVal);
-	  }
+	SAWYER_MESG(logger[TRACE])<<SgNodeHelper::sourceLineColumnToString(funCall)<< ": passing of class/Struct/Union types per value as function parameter: ";
+	SgType* ctype=_analyzer->getVariableIdMapping()->getType(formalParameterVarId);
+	auto membersList=_analyzer->getVariableIdMapping()->getClassMembers(ctype);
+	SAWYER_MESG(logger[TRACE])<<" #classmembers: "<<membersList.size()<<endl;
+	for(auto mvarId : membersList) {
+	  CodeThorn::TypeSize offset=_analyzer->getVariableIdMapping()->getOffset(mvarId);
+	  SAWYER_MESG(logger[TRACE])<<" formal param    : "<<formalParamAddress.toString(_analyzer->getVariableIdMapping())<<endl;
+	  SAWYER_MESG(logger[TRACE])<<" actual param (L): "<<actualParamAddress.toString(_analyzer->getVariableIdMapping())<<endl;
+	  SAWYER_MESG(logger[TRACE])<<" actual param-vid: "<<mvarId.toString()<<endl;
+	  SAWYER_MESG(logger[TRACE])<<" actual param-vid: "<<mvarId.toString(_analyzer->getVariableIdMapping())<<endl;
+	  SAWYER_MESG(logger[TRACE])<<" offset          : "<<offset<<endl;
+	  AbstractValue offsetAV(offset);
+	  AbstractValue formalParameterStructMemberAddress=AbstractValue::operatorAdd(formalParamAddress,offsetAV);
+	  AbstractValue actualParameterStructMemberAddress=AbstractValue::operatorAdd(actualParamAddress,offsetAV);
+	  // read from evalResultValue+offset and write to formal-param-address+offset
+	  AbstractValue newVal=readFromAnyMemoryLocation(currentLabel,&newPState,actualParameterStructMemberAddress);
+	  // TODO: check for copying of references
+	  initializeMemoryLocation(currentLabel,&newPState,formalParameterStructMemberAddress,newVal);
 	}
-	
       } else {
         // VariableName varNameString=name->get_name();
         SgExpression* actualParameterExpr=*j;
