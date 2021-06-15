@@ -7,8 +7,11 @@
 #include <string>
 #include <typeinfo>
 #include "ObserveObject.h"
+#include <rosedll.h>
+#include <Rose/Diagnostics.h>
 
 class AstNodePtr;
+class SgNode;
 
 class AST_Error { 
    std::string msg;
@@ -82,8 +85,12 @@ class AstInterface
 {
 protected:
   AstInterfaceImpl *impl;
-
+  
 public:
+  // Adding Robb's meageage mechanism (data member and function).
+  static Sawyer::Message::Facility mlog;
+  static void initDiagnostics();
+
   // Types:
   typedef enum {OP_NONE = 0, 
            UOP_MINUS, UOP_ADDR, UOP_DEREF, UOP_ALLOCATE, UOP_NOT,
@@ -199,6 +206,8 @@ public:
   bool GetFunctionCallSideEffect( const AstNodePtr& fc,  
                      CollectObject<AstNodePtr>& collectmod,  
                      CollectObject<AstNodePtr>& collectread);
+  //! \brief Returns true iff s is a function call, false otherwise. But also attempts to extract
+  //!        a bunch of info about the call.
   bool IsFunctionCall( const AstNodePtr& s, AstNodePtr* f = 0, 
                        AstList* args = 0, AstList* outargs = 0, 
                        AstTypeList* paramtypes = 0, AstNodeType* returntype=0);
@@ -231,6 +240,10 @@ public:
   bool IsConstant( const AstNodePtr& exp, std::string* valtype=0, std::string* value = 0) ;
   //! Create AST for constant values of  types int, bool, string, float, etc. as well as names of variable and function references. e.g: CreateConstant("memberfunction","floatArray::length")
   AstNodePtr CreateConstant( const std::string& valtype, const std::string& val);
+
+  //! If there is a case, extract the operand and return it, otherwise return exp
+  static SgNode* SkipCasting(SgNode*  exp);
+
   //! Check whether $exp$ is a variable reference; If yes, return type, name, scope, and global/local etc.
   static bool IsVarRef( const AstNodePtr& exp, AstNodeType* vartype = 0,
                    std::string* varname = 0, AstNodePtr* scope = 0, 

@@ -4,6 +4,7 @@
 #include "markLhsValues.h"
 #include "fixupNames.h"
 #include "FileUtility.h"
+#include <Sawyer/Message.h>
 
 #if ROSE_WITH_LIBHARU
 #include "AstPDFGeneration.h"
@@ -12235,12 +12236,11 @@ SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
   }
   else
   {
-    if (getProject()->get_verbose()>0)
-    {
-      cerr<<"Warning: SageInterface::getLoopIndexVariable(). Unhandled init_stmt type of SgForStatement"<<endl;
-      cerr<<"Init statement is :"<<init1->class_name() <<" " <<init1->unparseToString()<<endl;
-      init1->get_file_info()->display("Debug");
-    }
+    
+    mlog[Sawyer::Message::Common::WARN] <<"Warning: SageInterface::getLoopIndexVariable(). Unhandled init_stmt type of SgForStatement"<<endl;
+    mlog[Sawyer::Message::Common::WARN] <<"Init statement is :"<<init1->class_name() <<" " <<init1->unparseToString()<<endl;
+    init1->get_file_info()->display("Debug");
+    
     return NULL;
     //ROSE_ASSERT (false);
   }
@@ -21629,6 +21629,19 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current, b
     }
     name = isSgVarRefExp(current)->get_symbol()->get_declaration();
   }
+  else if (isSgFunctionRefExp(current) != NULL ||
+           isSgTemplateFunctionRefExp(current) != NULL ||
+           isSgMemberFunctionRefExp(current) != NULL ||
+           isSgTemplateMemberFunctionRefExp(current) != NULL)
+  {
+    //If a function is here it's probably related to a function pointer, it can't be converted to an SgInitailizedName
+    return NULL;
+  }
+  else if (isSgNonrealRefExp(current) != NULL)
+  {
+    //SgNonrealRefExp is not a reasonable thing to convert to an SgInitializedName (I think) -Jim Leek
+    return NULL;
+  }
   else if (isSgDotExp(current))
   {
     SgExpression* child = NULL;
@@ -21803,9 +21816,13 @@ void SageInterface::dumpInfo(SgNode* node, std::string desc/*=""*/)
 //! Collect all read and write references within stmt, which can be a function, a scope statement, or a single statement. Note that a reference can be both read and written, like i++
 //! This is a wrapper function to Qing's side effect analysis from loop optimization
 //! Liao, 2/26/2009
+//! Returns true if the side effect analysis was complete, false otherwise.  Note that a false result is expected
+//! if any functions are called in the body
 bool
 SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& readRefs, std::vector<SgNode*>& writeRefs, bool useCachedDefUse)
 {   // The type cannot be SgExpression since variable declarations have SgInitializedName as the reference, not SgVarRefExp.
+  bool retVal = true;
+  
   ROSE_ASSERT(stmt !=NULL);
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -21860,10 +21877,9 @@ SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& rea
   // Actual side effect analysis
   if (!AnalyzeStmtRefs(fa, s1, cwRef1, crRef1))
   {
-    if(getProject()->get_verbose()>1)
-     cerr<<"Warning: failed in side effect analysis within SageInterface::collectReadWriteRefs()!"<<endl;
-    //ROSE_ASSERT (false);
-    return false;
+    mlog[Sawyer::Message::Common::WARN] << "Side Effect Analysis incomplete on " << funcDef->get_declaration()->get_qualified_name() << endl;
+    //It's incomplete, but it's not useless, we still want the reflist returned. -Jim
+    retVal = false;
   }
 
   // transfer results into STL containers.
@@ -21893,7 +21909,7 @@ SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& rea
 
 #endif
 
-  return true;
+  return retVal;
 }
 #if 0
 // The side effect analysis will report three references for a statement like this->x = ...
@@ -21910,10 +21926,8 @@ bool SageInterface::collectReadWriteVariables(SgStatement* stmt, set<SgInitializ
 {
   ROSE_ASSERT(stmt != NULL);
   vector <SgNode* > readRefs, writeRefs;
-  if (!collectReadWriteRefs(stmt, readRefs, writeRefs))
-  {
-    return false;
-  }
+
+  bool retVal = collectReadWriteRefs(stmt, readRefs, writeRefs);
   // process read references
   vector<SgNode*>::iterator iter = readRefs.begin();
   for (; iter!=readRefs.end();iter++)
@@ -21943,7 +21957,7 @@ bool SageInterface::collectReadWriteVariables(SgStatement* stmt, set<SgInitializ
    // We use std::set to ensure uniqueness now
     writeVars.insert(name);
   }
-  return true;
+  return retVal;
 }
 
 //!Collect read only variables within a statement. The statement can be either of a function, a scope, or a single line statement.
@@ -22631,8 +22645,7 @@ void SageInterface::ReductionRecognition(SgForStatement* loop, std::set< std::pa
     // referenced once only
     if (var_references[initname].size()==1)
     {
-      if(getProject()->get_verbose()>1) //TODO: a new parameter to control this
-        cout<<"Debug: SageInterface::ReductionRecognition() A candidate used once:"<<initname->get_name().getString()<<endl;
+      mlog[Sawyer::Message::Common::DEBUG] << "Debug: SageInterface::ReductionRecognition() A candidate used once:"<<initname->get_name().getString()<<endl;
       SgVarRefExp* ref_exp = *(var_references[initname].begin());
       if (isSingleAppearanceReduction (ref_exp, optype))
         isReduction = true;
@@ -22640,8 +22653,7 @@ void SageInterface::ReductionRecognition(SgForStatement* loop, std::set< std::pa
     // referenced twice within a same statement
     else if (var_references[initname].size()==2)
     {
-      if(getProject()->get_verbose()>1)
-        cout<<"Debug: A candidate used twice:"<<initname->get_name().getString()<<endl;
+      mlog[Sawyer::Message::Common::DEBUG] << "Debug: A candidate used twice:"<<initname->get_name().getString()<<endl;
       SgVarRefExp* ref_exp1 = *(var_references[initname].begin());
       SgVarRefExp* ref_exp2 = *(++var_references[initname].begin());
       // TODO: recognize  maxV = array[i]>maxV? array[i]:maxV // this can be normalized to if () stmt
