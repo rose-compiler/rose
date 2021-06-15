@@ -480,8 +480,8 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
      printf ("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ \n");
      printf ("In unparseFile(): file = %p filename = %s unparseScope = %p \n",file,file->getFileName().c_str(),unparseScope);
      printf (" --- file->get_header_file_unparsing_optimization()             = %s \n",file->get_header_file_unparsing_optimization() ? "true" : "false");
-     printf (" --- file->get_header_file_unparsing_optimization_source_file() = %s \n",file->get_header_file_unparsing_optimization_source_file() ? "true" : "false");
-     printf (" --- file->get_header_file_unparsing_optimization_header_file() = %s \n",file->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
+  // printf (" --- file->get_header_file_unparsing_optimization_source_file() = %s \n",file->get_header_file_unparsing_optimization_source_file() ? "true" : "false");
+  // printf (" --- file->get_header_file_unparsing_optimization_header_file() = %s \n",file->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
      if (unparseScope != NULL)
         {
           printf ("   --- unparseScope = %p = %s \n",unparseScope,unparseScope->class_name().c_str());
@@ -494,6 +494,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
      SgSourceFile* sourceFile = info.get_current_source_file();
      ROSE_ASSERT(sourceFile != NULL);
 
+#if 0
   // DQ (4/24/2021): Sorting out the header file optimization, so that we can correctly handle when both ON or OFF.
   // This data member appears to always be false.
   // ROSE_ASSERT(file->get_header_file_unparsing_optimization_header_file() == false);
@@ -501,6 +502,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
         {
           printf ("Found case of file->get_header_file_unparsing_optimization_header_file() == true \n");
         }
+#endif
 
 #if 0
   // DQ (11/20/2019): Added assertion, if we are unparsing this file, then it should have had comments and CPP directives already added.
@@ -900,6 +902,10 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
           u_exprStmt->markGeneratedFile();
         }
 
+#if 0
+  // DQ (6/11/2021): This is debugging code to support output fo the token stream as a file for inspection.  
+  // However, because of changes to the unparseFileUsingTokenStream() it not longer works for the case of 
+  // the dynamic library file when one if constructed within some of the recent ROSE tools.
      if ( SgProject::get_verbose() > 0 )
         {
           if (file->get_unparse_tokens() == true)
@@ -918,6 +924,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
             // (and modify that code to selectively use the token stream).
              }
         }
+#endif
 
 #if 0
      printf ("Exiting as a test! \n");
@@ -1527,7 +1534,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
      ROSE_ASSERT(file != NULL);
      string fileNameForTokenStream = file->getFileName();
 
-#if 0
+#if 1
      printf ("In Unparser::unparseFileUsingTokenStream(): fileNameForTokenStream = %s \n",fileNameForTokenStream.c_str());
 #endif
 
@@ -1546,7 +1553,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
      ASSERT_not_null(file->get_preprocessorDirectivesAndCommentsList());
      ROSEAttributesListContainerPtr filePreprocInfo = file->get_preprocessorDirectivesAndCommentsList();
 
-#if 0
+#if 1
      printf ("filePreprocInfo->getList().size() = %" PRIuPTR " \n",filePreprocInfo->getList().size());
 #endif
 
@@ -1561,15 +1568,18 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
   // This is an empty list not useful outside of the Flex file to gather the CPP directives, comments, and tokens.
      ROSE_ASSERT(mapFilenameToAttributes.empty() == true);
 
-#if 0
+#if 1
      printf ("In unparseFileUsingTokenStream(): Evaluate what files are processed in map (filePreprocInfo->getList().size() = %" PRIuPTR ") \n",filePreprocInfo->getList().size());
      std::map<std::string,ROSEAttributesList* >::iterator map_iterator = filePreprocInfo->getList().begin();
+     int counter = 0;
      while (map_iterator != filePreprocInfo->getList().end())
         {
+          printf ("map entry: %d \n",counter);
           printf ("   --- map_iterator->first  = %s \n",map_iterator->first.c_str());
           printf ("   --- map_iterator->second = %p \n",map_iterator->second);
 
           map_iterator++;
+          counter++;
         }
      printf ("DONE: Evaluate what files are processed in map (filePreprocInfo->getList().size() = %" PRIuPTR ") \n",filePreprocInfo->getList().size());
 #endif
@@ -1577,6 +1587,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
   // std::map<std::string,ROSEAttributesList* >::iterator currentFileItr = mapFilenameToAttributes.find(fileNameForTokenStream);
      std::map<std::string,ROSEAttributesList* >::iterator currentFileItr = filePreprocInfo->getList().find(fileNameForTokenStream);
   // ROSE_ASSERT(currentFileItr != mapFilenameToAttributes.end());
+  // ROSE_ASSERT(currentFileItr != NULL);
      ROSE_ASSERT(currentFileItr != filePreprocInfo->getList().end());
 
 #if 0
@@ -7880,13 +7891,19 @@ void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, 
              {
             // #if 1
             // DQ (4/4/2020): Added header file unparsing feature specific debug level.
-               if (SgProject::get_unparseHeaderFilesDebug() >= 4)
+               if (SgProject::get_unparseHeaderFilesDebug() >= 2)
                   {
                     printf ("In unparseProject(): loop over all files: calling computeNameQualification() for sourceFile = %p = %s \n",sourceFile,sourceFile->getFileName().c_str());
                   }
             // #endif
 
                Unparser::computeNameQualification(sourceFile);
+
+            // DQ (4/4/2020): Added header file unparsing feature specific debug level.
+               if (SgProject::get_unparseHeaderFilesDebug() >= 2)
+                  {
+                    printf ("DONE: In unparseProject(): loop over all files: calling computeNameQualification() for sourceFile = %p = %s \n",sourceFile,sourceFile->getFileName().c_str());
+                  }
 #if 0
                SgHeaderFileReport* reportData = sourceFile->get_headerFileReport();
 

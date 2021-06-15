@@ -16489,8 +16489,10 @@ SgFile::initialization()
   // DQ (9/19/2019): Support optimizations of header file unparsing (specifically restricting
   // the number of header files for which we collect comments and CPP directives).
   // p_header_file_unparsing_optimization             = false;
-     p_header_file_unparsing_optimization_source_file = false;
-     p_header_file_unparsing_optimization_header_file = false;
+
+  // DQ (6/12/2021): Eliminate this in favor of the now static data member header_file_unparsing_optimization.
+  // p_header_file_unparsing_optimization_source_file = false;
+  // p_header_file_unparsing_optimization_header_file = false;
 
   // DQ (9/17/2020): Added these missing variable initializations.
      p_standard     = e_default_standard;
@@ -17347,7 +17349,6 @@ SgFile::set_header_file_unparsing_optimization( bool b )
 
      p_header_file_unparsing_optimization = b;
    }
-
 
 SOURCE_APPLICATION_FILE_END
 

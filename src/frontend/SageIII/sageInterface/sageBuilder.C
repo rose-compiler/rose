@@ -16665,10 +16665,13 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
      printf ("DONE: Calling outputFileIds() \n");
 #endif
 
-#if 0
+#if 1
   // DQ (9/18/2019): Adding debugging support.
      printf ("In SageBuilder::buildFile(): file = %p = %s result->get_header_file_unparsing_optimization() = %s \n",
           result,result->class_name().c_str(),result->get_header_file_unparsing_optimization() ? "true" : "false");
+#endif
+
+#if 0
      printf ("In SageBuilder::buildFile(): file = %p = %s result->get_header_file_unparsing_optimization_source_file() = %s \n",
           result,result->class_name().c_str(),result->get_header_file_unparsing_optimization_source_file() ? "true" : "false");
      printf ("In SageBuilder::buildFile(): file = %p = %s result->get_header_file_unparsing_optimization_header_file() = %s \n",
@@ -16676,9 +16679,9 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 #endif
 
   // DQ (9/18/2019): Adding debugging support.
-     ROSE_ASSERT(result->get_header_file_unparsing_optimization() == false);
-     ROSE_ASSERT(result->get_header_file_unparsing_optimization_source_file() == false);
-     ROSE_ASSERT(result->get_header_file_unparsing_optimization_header_file() == false);
+  // ROSE_ASSERT(result->get_header_file_unparsing_optimization() == false);
+  // ROSE_ASSERT(result->get_header_file_unparsing_optimization_source_file() == false);
+  // ROSE_ASSERT(result->get_header_file_unparsing_optimization_header_file() == false);
 
   // ROSE_ASSERT(result->get_header_file_unparsing_optimization() == true);
 
@@ -17168,9 +17171,12 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
                  // (usually as a part of the outlining to a seperate file).  and we need to mark at least the
                  // unparsing headr file optimizations to be the same across thje two file.
 
-                    temp_file->set_header_file_unparsing_optimization(sourceFile->get_header_file_unparsing_optimization());
-                    temp_file->set_header_file_unparsing_optimization_source_file(sourceFile->get_header_file_unparsing_optimization_source_file());
-                    temp_file->set_header_file_unparsing_optimization_header_file(sourceFile->get_header_file_unparsing_optimization_header_file());
+                 // DQ (6/12/2021): The header_file_unparsing_optimization is now a static data member and the
+                 // header_file_unparsing_optimization_source_file and header_file_unparsing_optimization_header_file 
+                 // data members have been removed.
+                 // temp_file->set_header_file_unparsing_optimization(sourceFile->get_header_file_unparsing_optimization());
+                 // temp_file->set_header_file_unparsing_optimization_source_file(sourceFile->get_header_file_unparsing_optimization_source_file());
+                 // temp_file->set_header_file_unparsing_optimization_header_file(sourceFile->get_header_file_unparsing_optimization_header_file());
 #if 0
                     printf ("sourceFile = %p = %s \n",sourceFile,sourceFile->class_name().c_str());
                     printf ("sourceFile->get_header_file_unparsing_optimization()             = %s \n",sourceFile->get_header_file_unparsing_optimization() ? "true" : "false");

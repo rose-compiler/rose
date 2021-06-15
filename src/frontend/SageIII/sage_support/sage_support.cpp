@@ -818,6 +818,9 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
         }
 #endif
 
+  // DQ (6/12/2021): Added assertion.
+  // ROSE_ASSERT(SgFile::get_header_file_unparsing_optimization() == true);
+
   // DQ (2/4/2009): The specification of "-rose:binary" causes filenames to be interpreted
   // differently if they are object files or libary archive files.
   // DQ (4/21/2006): New version of source file name handling (set the source file name early)
@@ -831,6 +834,9 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
      printf ("In determineFileType(): listToString(argv) = %s \n",StringUtility::listToString(argv).c_str());
      printf ("In determineFileType(): listToString(fileList) = %s \n",StringUtility::listToString(fileList).c_str());
 #endif
+
+  // DQ (6/12/2021): Added assertion.
+  // ROSE_ASSERT(SgFile::get_header_file_unparsing_optimization() == true);
 
   // DQ (2/6/2009): This fails for the build function SageBuilder::buildFile(), so OK to comment it out.
   // DQ (12/23/2008): I think that we may be able to assert this is true, if so then we can simplify the code below.
@@ -896,6 +902,9 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                printf ("Warning: detected use of /dev/null as input filename: not yet supported (exiting with 0 exit code) \n");
                exit(0);
              }
+
+       // DQ (6/12/2021): Added assertion.
+       // ROSE_ASSERT(SgFile::get_header_file_unparsing_optimization() == true);
 
        // DQ (5/18/2008): Set this to true (redundant, since the default already specified as true)
        // file->set_requires_C_preprocessor(true);
@@ -1072,9 +1081,15 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
                  // if (StringUtility::isCppFileNameSuffix(filenameExtension) == true)
                     if (CommandlineProcessing::isCppFileNameSuffix(filenameExtension) == true)
                        {
+                      // DQ (6/12/2021): Added assertion.
+                      // ROSE_ASSERT(SgFile::get_header_file_unparsing_optimization() == true);
+
                       // file = new SgSourceFile ( argv,  project );
                          SgSourceFile* sourceFile = new SgSourceFile ( argv,  project );
                          file = sourceFile;
+
+                      // DQ (6/12/2021): Added assertion.
+                      // ROSE_ASSERT(SgFile::get_header_file_unparsing_optimization() == true);
 
                       // This is a C++ file (so define __cplusplus, just like GNU gcc would)
                       // file->set_requires_cplusplus_macro(true);
@@ -1518,6 +1533,9 @@ determineFileType ( vector<string> argv, int & nextErrorCode, SgProject* project
 
      ASSERT_not_null(file);
 
+  // DQ (6/12/2021): Added assertion.
+  // ROSE_ASSERT(SgFile::get_header_file_unparsing_optimization() == true);
+
 #if 0
      printf ("Leaving determineFileType() = %d \n",file->get_outputLanguage());
      printf ("Leaving determineFileType() = %s \n",SgFile::get_outputLanguageOptionName(file->get_outputLanguage()).c_str());
@@ -1869,6 +1887,9 @@ SgProject::parse(const vector<string>& argv)
   // DQ (7/6/2005): Introduce tracking of performance of ROSE.
      TimingPerformance timer ("AST (SgProject::parse(argc,argv)):");
 
+  // DQ (6/12/2021): Added assertion.
+  // ROSE_ASSERT(SgFile::get_header_file_unparsing_optimization() == true);
+
   // DQ (4/10/2017): Experiment with Saywer for comment line parsing.
   // Parse Sawyer-recognized switches and the rest we'll pass to Outliner and frontend like before.
      std::vector<std::string> sawyer_args = parseCommandLine(argv);
@@ -1921,6 +1942,10 @@ SgProject::parse(const vector<string>& argv)
                     Rose::Frontend::X10::X10c::jserver_init();
 #endif
 #endif
+
+                 // DQ (6/12/2021): Added assertion.
+                 // ROSE_ASSERT(SgFile::get_header_file_unparsing_optimization() == true);
+
                     errorCode = parse();
                   }
 
@@ -2191,6 +2216,9 @@ SgProject::parse()
 
   // ROSE_ASSERT (p_fileList != NULL);
 
+  // DQ (6/12/2021): Added assertion.
+  // ROSE_ASSERT(SgFile::get_header_file_unparsing_optimization() == true);
+
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
   // FMZ (5/29/2008)
      FortranModuleInfo::setCurrentProject(this);
@@ -2230,9 +2258,16 @@ SgProject::parse()
 #endif
           int nextErrorCode = 0;
 
+       // DQ (6/12/2021): Added assertion.
+       // ROSE_ASSERT(SgFile::get_header_file_unparsing_optimization() == true);
+
        // DQ (4/20/2006): Exclude other files from list in argc and argv
           vector<string> argv = get_originalCommandLineArgumentList();
           string currentFileName = *nameIterator;
+
+       // DQ (6/12/2021): Added assertion.
+       // ROSE_ASSERT(SgFile::get_header_file_unparsing_optimization() == true);
+
 #if 0
           printf ("In SgProject::parse(): before removeAllFileNamesExcept() file = %s argv = %s \n",
                currentFileName.c_str(),CommandlineProcessing::generateStringFromArgList(argv,false,false).c_str());
@@ -2247,6 +2282,9 @@ SgProject::parse()
 #if 0
           printf ("In SgProject::parse(): Calling determineFileType() currentFileName = %s \n",currentFileName.c_str());
 #endif
+       // DQ (6/12/2021): Added assertion.
+       // ROSE_ASSERT(SgFile::get_header_file_unparsing_optimization() == true);
+
           SgFile* newFile = determineFileType(argv, nextErrorCode, this);
           ASSERT_not_null(newFile);
 #if 0
@@ -2270,6 +2308,9 @@ SgProject::parse()
           vectorOfFiles.push_back(newFile);
 
        // newFile->display("Called from SgProject::parse()");
+
+       // DQ (6/12/2021): Added assertion.
+       // ROSE_ASSERT(SgFile::get_header_file_unparsing_optimization() == true);
 
           nameIterator++;
           i++;
@@ -2347,6 +2388,9 @@ SgProject::parse()
      printf ("In SgProject::parse() before AstPostProcessing() \n");
 #endif
 
+  // DQ (6/12/2021): Added assertion.
+  // ROSE_ASSERT(SgFile::get_header_file_unparsing_optimization() == true);
+
   // GB (8/19/2009): Moved the AstPostProcessing call from
   // SgFile::callFrontEnd to this point. Thus, it is only called once for
   // the whole project rather than once per file. Repeated calls to
@@ -2399,6 +2443,9 @@ SgProject::parse()
 #endif
         }
 
+  // DQ (6/12/2021): Added assertion.
+  // ROSE_ASSERT(SgFile::get_header_file_unparsing_optimization() == true);
+
   // GB (9/4/2009): Moved the secondary pass over source files (which
   // attaches the preprocessing information) to this point. This way, the
   // secondary pass over each file runs after all fixes have been done. This
@@ -2412,8 +2459,8 @@ SgProject::parse()
         {
           printf ("file = %s \n",file->getFileName().c_str());
           printf (" --- file->get_header_file_unparsing_optimization()             = %s \n",file->get_header_file_unparsing_optimization() ? "true" : "false");
-          printf (" --- file->get_header_file_unparsing_optimization_source_file() = %s \n",file->get_header_file_unparsing_optimization_source_file() ? "true" : "false");
-          printf (" --- file->get_header_file_unparsing_optimization_header_file() = %s \n",file->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
+       // printf (" --- file->get_header_file_unparsing_optimization_source_file() = %s \n",file->get_header_file_unparsing_optimization_source_file() ? "true" : "false");
+       // printf (" --- file->get_header_file_unparsing_optimization_header_file() = %s \n",file->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
         }
 #endif
 
@@ -2498,6 +2545,8 @@ SgProject::parse()
                     printf ("Exiting after test! \n");
                     ROSE_ABORT();
 #endif
+                 // DQ (6/12/2021): Added assertion.
+                 // ROSE_ASSERT(SgFile::get_header_file_unparsing_optimization() == true);
 #if 0
                     printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
                     printf ("Calling secondaryPassOverSourceFile(): file = %s \n",file->getFileName().c_str());
@@ -2511,8 +2560,9 @@ SgProject::parse()
                  // DQ (1/27/2019): Comment out enough to generate the dot file to debug symbol with null basis.
                  // printf ("ERROR: In Project::parse(): Comment out file->secondaryPassOverSourceFile() to generate the dot file to debug symbol with null basis \n");
 #if 0
-                    file->set_header_file_unparsing_optimization(false);
-                    file->secondaryPassOverSourceFile();
+#error "DEAD CODE!"
+                 // file->set_header_file_unparsing_optimization(false);
+                 // file->secondaryPassOverSourceFile();
 #else
 #if 0
                     printf ("############### Setting file->set_header_file_unparsing_optimization(true): file = %p = %s \n",file,file->class_name().c_str());
@@ -2532,6 +2582,9 @@ SgProject::parse()
                     printf ("Processing comments and CPP directives for source file \n");
                     printf ("###################################################### \n");
 #endif
+                 // DQ (6/12/2021): Added assertion.
+                 // ROSE_ASSERT(SgFile::get_header_file_unparsing_optimization() == true);
+
                     file->secondaryPassOverSourceFile();
 #if 0
                     printf ("Exiting after test! processed first phase of collecting comments and CPP directives for source file) \n");
@@ -2546,7 +2599,7 @@ SgProject::parse()
 
 
 #if 0
-                    file->set_header_file_unparsing_optimization_header_file(true);
+                 // file->set_header_file_unparsing_optimization_header_file(true);
 
 #error "DEAD CODE!"
 
@@ -2566,15 +2619,16 @@ SgProject::parse()
                     printf ("############### Setting file->set_header_file_unparsing_optimization_header_file(false): file = %p = %s \n",file,file->class_name().c_str());
 #endif
 #error "DEAD CODE!"
-                    file->set_header_file_unparsing_optimization_header_file(false);
+                 // file->set_header_file_unparsing_optimization_header_file(false);
 #endif
 #endif
                  // DQ (4/25/2021): Test without this assertion.
                  // DQ (9/18/2019): I think this is true, though it might depend on the command-line options.
                  // ROSE_ASSERT(file->get_header_file_unparsing_optimization() == true);
 
-                    ROSE_ASSERT(file->get_header_file_unparsing_optimization_source_file() == false);
-                    ROSE_ASSERT(file->get_header_file_unparsing_optimization_header_file() == false);
+                 // DQ (6/12/2021): Eliminate this data member.
+                 // ROSE_ASSERT(file->get_header_file_unparsing_optimization_source_file() == false);
+                 // ROSE_ASSERT(file->get_header_file_unparsing_optimization_header_file() == false);
 #if 0
                     printf ("In SgProject::parse(): DONE: Calling secondaryPassOverSourceFile() \n");
 #endif
@@ -2660,8 +2714,8 @@ SgProject::parse()
              {
                printf ("file = %s \n",file->getFileName().c_str());
                printf (" --- file->get_header_file_unparsing_optimization()             = %s \n",file->get_header_file_unparsing_optimization() ? "true" : "false");
-               printf (" --- file->get_header_file_unparsing_optimization_source_file() = %s \n",file->get_header_file_unparsing_optimization_source_file() ? "true" : "false");
-               printf (" --- file->get_header_file_unparsing_optimization_header_file() = %s \n",file->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
+            // printf (" --- file->get_header_file_unparsing_optimization_source_file() = %s \n",file->get_header_file_unparsing_optimization_source_file() ? "true" : "false");
+            // printf (" --- file->get_header_file_unparsing_optimization_header_file() = %s \n",file->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
              }
 #endif
        // ROSE_ASSERT(file->get_header_file_unparsing_optimization() == true);
@@ -3320,9 +3374,16 @@ SgFile::secondaryPassOverSourceFile()
      printf ("################ In SgFile::secondaryPassOverSourceFile(): this = %p = %s \n",this,this->class_name().c_str());
      printf (" --- filename ============================================= %s \n",this->getFileName().c_str());
      printf (" --- get_header_file_unparsing_optimization()             = %s \n",this->get_header_file_unparsing_optimization() ? "true" : "false");
-     printf (" --- get_header_file_unparsing_optimization_source_file() = %s \n",this->get_header_file_unparsing_optimization_source_file() ? "true" : "false");
-     printf (" --- get_header_file_unparsing_optimization_header_file() = %s \n",this->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
+  // printf (" --- get_header_file_unparsing_optimization_source_file() = %s \n",this->get_header_file_unparsing_optimization_source_file() ? "true" : "false");
+  // printf (" --- get_header_file_unparsing_optimization_header_file() = %s \n",this->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
+     printf (" --- SgFile::get_header_file_unparsing_optimization()     = %s \n",SgFile::get_header_file_unparsing_optimization() ? "true" : "false");
 #endif
+
+  // DQ (6/12/2021): Added assertion.
+  // ROSE_ASSERT(SgFile::get_header_file_unparsing_optimization() == true);
+  // ROSE_ASSERT(this->get_header_file_unparsing_optimization() == true);
+  // ROSE_ASSERT(this->get_header_file_unparsing_optimization_source_file() == true);
+  // ROSE_ASSERT(this->get_header_file_unparsing_optimization_header_file() == true);
 
 #define DEBUG_SECONDARY_PASS 0
 
@@ -3351,6 +3412,7 @@ SgFile::secondaryPassOverSourceFile()
                     this,this->class_name().c_str(),this->getFileName().c_str(),this->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
 #endif
 
+#error "DEAD CODE!"
             // DQ (4/24/2021): Trying to debug the header file optimization support.
             // DQ (9/19/2019): Set this to false explicitly (testing).
             // if (this->get_header_file_unparsing_optimization_header_file() == true)
@@ -3372,7 +3434,8 @@ SgFile::secondaryPassOverSourceFile()
              }
             else
              {
-               ROSE_ASSERT(this->get_header_file_unparsing_optimization_source_file() == false);
+            // DQ (6/12/2021): Eliminate this data member.
+            // ROSE_ASSERT(this->get_header_file_unparsing_optimization_source_file() == false);
 
             // DQ (4/24/2021): Trying to debug the header file optimization support.
             // if (this->get_header_file_unparsing_optimization_header_file() == true)
@@ -3396,8 +3459,8 @@ SgFile::secondaryPassOverSourceFile()
      printf (" --- filename ============================================= %s \n",this->getFileName().c_str());
   // printf (" --- header_file_unparsing_optimization_header_file       = %s \n",header_file_unparsing_optimization_header_file ? "true" : "false");
      printf (" --- get_header_file_unparsing_optimization()             = %s \n",this->get_header_file_unparsing_optimization() ? "true" : "false");
-     printf (" --- get_header_file_unparsing_optimization_source_file() = %s \n",this->get_header_file_unparsing_optimization_source_file() ? "true" : "false");
-     printf (" --- get_header_file_unparsing_optimization_header_file() = %s \n",this->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
+  // printf (" --- get_header_file_unparsing_optimization_source_file() = %s \n",this->get_header_file_unparsing_optimization_source_file() ? "true" : "false");
+  // printf (" --- get_header_file_unparsing_optimization_header_file() = %s \n",this->get_header_file_unparsing_optimization_header_file() ? "true" : "false");
 #endif
 
   // **************************************************************************
@@ -6748,17 +6811,22 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
 #endif
                   }
                printf("End of command line for backend compiler\n");
-
+#if 0
             // DQ (6/19/2020): Error checking for embedded application name.
                string finalCommandLine = CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false);
                printf ("finalCommandLine = %s \n",finalCommandLine.c_str());
                size_t substringPosition = finalCommandLine.find("TestUnparseHeaders");
                printf ("substringPosition = %zu \n",substringPosition);
                ROSE_ASSERT(substringPosition == string::npos);
-
+#endif
             // I need the exact command line used to compile the generate code with the backendcompiler (so that I can reuse it to test the generated code).
                printf ("SgFile::compileOutput(): get_skipfinalCompileStep() == false: compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
              }
+
+#if 1
+       // I need the exact command line used to compile the generate code with the backendcompiler (so that I can reuse it to test the generated code).
+          printf ("SgFile::compileOutput(): compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
+#endif
 #if 0
           printf ("In SgFile::compileOutput(): get_compileOnly() = %s \n",get_compileOnly() ? "true" : "false");
 #endif
