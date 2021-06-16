@@ -94,12 +94,12 @@ bool CodeThorn::ProgramLocationsReport::isRecordedLocation(Label lab) {
 }
 
 // unused function
-LabelSet CodeThorn::ProgramLocationsReport::determineRecordFreeFunctions(CFAnalysis& cfAnalyzer, Flow& flow) {
-  LabelSet funEntries=cfAnalyzer.functionEntryLabels(flow);
+LabelSet CodeThorn::ProgramLocationsReport::determineRecordFreeFunctions(CFAnalysis& cfAnalysis, Flow& flow) {
+  LabelSet funEntries=cfAnalysis.functionEntryLabels(flow);
   LabelSet verifiedFunctions;
   for (Label entryLab : funEntries) {
     bool locationsRecorded=false;
-    LabelSet funLabelSet=cfAnalyzer.functionLabelSet(entryLab,flow);
+    LabelSet funLabelSet=cfAnalysis.functionLabelSet(entryLab,flow);
     // determine whether all labels are verified
     for (Label funLab : funLabelSet) {
       if(isRecordedLocation(funLab)) {

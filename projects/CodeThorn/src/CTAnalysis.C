@@ -618,7 +618,7 @@ void CodeThorn::CTAnalysis::setVariableIdMapping(VariableIdMappingExtended* vid)
 }
 
 CFAnalysis* CodeThorn::CTAnalysis::getCFAnalyzer() {
-  return _cfAnalyzer;
+  return _cfAnalysis;
 }
 
 
@@ -1332,7 +1332,7 @@ void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgP
   _variableIdMapping=Pass::createVariableIdMapping(ctOpt, root, tc);
   _labeler=Pass::createLabeler(ctOpt, root, tc, _variableIdMapping);
   _classHierarchy=Pass::createClassHierarchy(ctOpt, root, tc);
-  _cfAnalyzer=Pass::createForwardIcfg(ctOpt,root,tc,_labeler,_classHierarchy);
+  _cfAnalysis=Pass::createForwardIcfg(ctOpt,root,tc,_labeler,_classHierarchy);
   
   //initialize(_ctOpt,root,programAbstractionLayer);
   //_programAbstractionLayer=programAbstractionLayer;
@@ -1822,13 +1822,13 @@ CodeThorn::FunctionCallMapping2* CodeThorn::CTAnalysis::getFunctionCallMapping2(
 }
 
 CodeThorn::Flow* CodeThorn::CTAnalysis::getFlow() {
-  ROSE_ASSERT(_cfAnalyzer);
-  return _cfAnalyzer->getIcfgFlow();
+  ROSE_ASSERT(_cfAnalysis);
+  return _cfAnalysis->getIcfgFlow();
 }
 
 CodeThorn::InterFlow* CodeThorn::CTAnalysis::getInterFlow() {
-  ROSE_ASSERT(_cfAnalyzer);
-  return _cfAnalyzer->getInterFlow();
+  ROSE_ASSERT(_cfAnalysis);
+  return _cfAnalysis->getInterFlow();
 }
 
 CodeThorn::EStateSet* CodeThorn::CTAnalysis::getEStateSet() { return &estateSet; }

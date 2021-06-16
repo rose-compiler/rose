@@ -490,7 +490,7 @@ namespace CodeThorn {
     FunctionCallMapping* _functionCallMapping=nullptr;
     FunctionCallMapping2* _functionCallMapping2=nullptr;
     ClassHierarchyWrapper* _classHierarchy=nullptr;
-    CFAnalysis* _cfAnalyzer=nullptr;
+    CFAnalysis* _cfAnalysis=nullptr;
     Solver* _solver;
     
     const CodeThorn::PState* _initialPStateStored=nullptr;

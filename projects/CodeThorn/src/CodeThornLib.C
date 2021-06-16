@@ -765,15 +765,15 @@ namespace CodeThorn {
 
 #if 0
   CFAnalysis* createControlFlowGraph(CodeThornOptions& ctOpt, SgProject* project, Labeler* labeler) {
-    CFAnalysis* cfAnalyzer=new CFAnalysis(labeler);
+    CFAnalysis* cfAnalysis=new CFAnalysis(labeler);
     FunctionCallMapping2* functionCallMapping2=new FunctionCallMapping2();
     ClassHierarchyWrapper* classHierarchy=new ClassHierarchyWrapper(project);
     functionCallMapping2->setLabeler(labeler);
     functionCallMapping2->setClassHierarchy(classHierarchy);
     functionCallMapping2->computeFunctionCallMapping(project);
-    cfAnalyzer->setFunctionCallMapping2(functionCallMapping2);
-    cfAnalyzer->createICFG(project);
-    return cfAnalyzer;
+    cfAnalysis->setFunctionCallMapping2(functionCallMapping2);
+    cfAnalysis->createICFG(project);
+    return cfAnalysis;
   }
 #endif
   
