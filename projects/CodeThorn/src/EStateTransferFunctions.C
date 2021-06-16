@@ -63,7 +63,7 @@ namespace CodeThorn {
       Rose::Diagnostics::mfacilities.insertAndAdjust(logger);
     }
   }
-  CTIOLabeler* EStateTransferFunctions::getLabeler() {
+  Labeler* EStateTransferFunctions::getLabeler() {
     ROSE_ASSERT(_analyzer);
     return _analyzer->getLabeler();
   }
@@ -760,7 +760,10 @@ namespace CodeThorn {
 	}
       }
     }
-    if(isExternalNonDetXFunction || _analyzer->getLabeler()->isStdInLabel(lab,&varId)) {
+    CTIOLabeler* ctioLabeler=dynamic_cast<CTIOLabeler*>(_analyzer->getLabeler());
+    ROSE_ASSERT(ctioLabeler);
+    
+    if(isExternalNonDetXFunction || ctioLabeler->isStdInLabel(lab,&varId)) {
       if(_analyzer->_inputSequence.size()>0) {
 	PState newPState=*currentEState.pstate();
 	ConstraintSet newCSet=*currentEState.constraints();
@@ -822,14 +825,14 @@ namespace CodeThorn {
 
     if(_analyzer->getInterpreterMode()!=IM_ENABLED) {
       int constvalue=0;
-      if(_analyzer->getLabeler()->isStdOutVarLabel(lab,&varId)) {
+      if(ctioLabeler->isStdOutVarLabel(lab,&varId)) {
 	newio.recordVariable(InputOutput::STDOUT_VAR,varId);
 	ROSE_ASSERT(newio.var==varId);
 	return elistify(createEState(edge.target(),cs,*currentEState.pstate(),*currentEState.constraints(),newio));
-      } else if(_analyzer->getLabeler()->isStdOutConstLabel(lab,&constvalue)) {
+      } else if(ctioLabeler->isStdOutConstLabel(lab,&constvalue)) {
 	newio.recordConst(InputOutput::STDOUT_CONST,constvalue);
 	return elistify(createEState(edge.target(),cs,*currentEState.pstate(),*currentEState.constraints(),newio));
-      } else if(_analyzer->getLabeler()->isStdErrLabel(lab,&varId)) {
+      } else if(ctioLabeler->isStdErrLabel(lab,&varId)) {
 	newio.recordVariable(InputOutput::STDERR_VAR,varId);
 	ROSE_ASSERT(newio.var==varId);
 	return elistify(createEState(edge.target(),cs,*currentEState.pstate(),*currentEState.constraints(),newio));

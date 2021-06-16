@@ -737,13 +737,9 @@ namespace CodeThorn {
       case 1:
 	analyzer->runSolver();
 	break;
-      case 2:
-	cout<<"INFO: PA framework: initialization."<<endl;
-	analyzer->initialize(ctOpt,sageProject);
-	cout<<"INFO: running PA Framework solver."<<endl;
-	analyzer->run();
-	cout<<"INFO: PA framework: finished."<<endl;
-	exit(0);
+      default:
+	cout<<"Error: unknown abstraction mode "<<ctOpt.abstractionMode<<endl;
+	exit(1);
       }
     }
     tc.stopTimer(TimingCollector::transitionSystemAnalysis);
@@ -781,14 +777,6 @@ namespace CodeThorn {
   }
 #endif
   
-  IOAnalyzer* runMemoryAnalysis(CodeThornOptions& ctOpt, VariableIdMapping* vim, Labeler* labeler, CFAnalysis* icfg, TimingCollector& timingCollector) {
-    //new: IOAnalyzer* ioAnalysis=new IOAnalyzer(ctOpt,vim,labeler,icfg,timingCollector);
-    IOAnalyzer* ioAnalysis=new IOAnalyzer();
-    ioAnalysis->initializeSolver();
-    ioAnalysis->runSolver();
-    return ioAnalysis;
-  }
-
   void optionallyPrintRunTimeAndMemoryUsage(CodeThornOptions& ctOpt,TimingCollector& tc) {
     if(ctOpt.status) cout<<tc.toString();
     if(ctOpt.status) cout<<"Total memory                   : "<<CodeThorn::getPhysicalMemorySize()/(1024*1024) <<" MiB"<<endl;

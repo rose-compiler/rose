@@ -83,7 +83,7 @@ namespace CodeThorn {
    */
 
 
-  class CTAnalysis : public CSDFAnalysisBaseWithoutData<CodeThorn::CallString> {
+  class CTAnalysis {
     friend class Solver;
     friend class Solver5;
     friend class Solver8;
@@ -96,17 +96,8 @@ namespace CodeThorn {
     static void initDiagnostics();
     CTAnalysis();
     virtual ~CTAnalysis();
+    virtual void run();
 
-    virtual void run() override;
-    virtual void initializeSolver() override; // required (abstract in DFAnalysisWithoutData)
-
-  protected:    
-    virtual void initializeAnalyzerDataInfo() override;
-#if 0
-    virtual Lattice* getPreInfo(Label lab) override;
-    virtual Lattice* getPostInfo(Label lab) override;
-    virtual void setPostInfo(Label lab,Lattice*) override;
-#endif
   public:
     
     void initAstNodeInfo(SgNode* node);
@@ -166,9 +157,15 @@ namespace CodeThorn {
     FunctionCallMapping* getFunctionCallMapping();
     FunctionCallMapping2* getFunctionCallMapping2();
     //Label getFunctionEntryLabel(SgFunctionRefExp* funRefExp);
-    CTIOLabeler* getLabeler() const override;
-    //Flow* getFlow(); // this is NOT overriding 'DFAnalysis::getFlow() const'
+
+    Labeler* getLabeler() const;
+    CTIOLabeler* getIOLabeler() const;
+    Flow* getFlow();
     InterFlow* getInterFlow();
+    VariableIdMappingExtended* getVariableIdMapping();
+    void setVariableIdMapping(VariableIdMappingExtended* vid);
+    CFAnalysis* getCFAnalyzer(); 
+
     CodeThorn::PStateSet* getPStateSet();
     EStateSet* getEStateSet();
     TransitionGraph* getTransitionGraph();
@@ -426,7 +423,6 @@ namespace CodeThorn {
     int _resourceLimitDiff;
     int _numberOfThreadsToUse;
     VariableIdMapping::VariableIdSet _variablesToIgnore;
-    //    Solver* _solver;
     AnalyzerMode _analyzerMode;
     long int _maxTransitions;
     long int _maxIterations;
@@ -489,9 +485,18 @@ namespace CodeThorn {
     typedef std::unordered_map <CallString ,const EState*> SummaryCSStateMap;
     std::unordered_map< int, SummaryCSStateMap > _summaryCSStateMapMap;
 
+    Labeler* _labeler=nullptr;
+    VariableIdMappingExtended* _variableIdMapping=nullptr;
+    FunctionCallMapping* _functionCallMapping=nullptr;
+    FunctionCallMapping2* _functionCallMapping2=nullptr;
+    ClassHierarchyWrapper* _classHierarchy=nullptr;
+    CFAnalysis* _cfAnalyzer=nullptr;
+    Solver* _solver;
+    
     const CodeThorn::PState* _initialPStateStored=nullptr;
     const CodeThorn::ConstraintSet* _emptycsetstored=nullptr;
     CodeThorn::EStateTransferFunctions* _estateTransferFunctions=nullptr;
+
   }; // end of class CTAnalysis
 } // end of namespace CodeThorn
 

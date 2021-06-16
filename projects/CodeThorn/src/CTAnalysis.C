@@ -25,6 +25,7 @@
 #include "CodeThornLib.h"
 #include "TopologicalSort.h"
 #include "Miscellaneous2.h"
+#include "CodeThornPasses.h"
 
 using namespace std;
 using namespace Sawyer::Message;
@@ -75,37 +76,9 @@ CodeThorn::CTAnalysis::CTAnalysis():
 }
 
 // override
-void CodeThorn::CTAnalysis::initializeSolver() {
-  // empty
-}
-
-// override
 void CodeThorn::CTAnalysis::run() {
   runSolver();
 }
-
-// override
-void CodeThorn::CTAnalysis::initializeAnalyzerDataInfo() {
-  // will be changed for added context
-  SAWYER_MESG(logger[INFO])<<"INFO: CTAnalysis::initializeAnalyzerDataInfo (empty)."<<endl;
-}
-
-#if 0
-Lattice* CodeThorn::CTAnalysis::getPreInfo(Label lab) {
-  // will be changed for added context
-  ROSE_ASSERT(false);
-}
-Lattice* CodeThorn::CTAnalysis::getPostInfo(Label lab) {
-  // will be changed for added context
-  ROSE_ASSERT(false);
-}
-
-void CodeThorn::CTAnalysis::setPostInfo(Label lab,Lattice*) {
-  // will be changed for added context
-  ROSE_ASSERT(false);
-
-}
-#endif
 
 void CodeThorn::CTAnalysis::insertInputVarValue(int i) {
   _inputVarValues.insert(i);
@@ -525,8 +498,10 @@ void CodeThorn::CTAnalysis::disableSVCompFunctionSemantics() {
   _externalNonDetLongFunctionName="";
   _externalExitFunctionName="";
   ROSE_ASSERT(getLabeler());
-  getLabeler()->setExternalNonDetIntFunctionName(_externalNonDetIntFunctionName);
-  getLabeler()->setExternalNonDetLongFunctionName(_externalNonDetLongFunctionName);
+  if(CTIOLabeler* ctioLabeler=dynamic_cast<CTIOLabeler*>(getLabeler())) {
+    ctioLabeler->setExternalNonDetIntFunctionName(_externalNonDetIntFunctionName);
+    ctioLabeler->setExternalNonDetLongFunctionName(_externalNonDetLongFunctionName);
+  }
 }
 
 bool CodeThorn::CTAnalysis::svCompFunctionSemantics() { return _svCompFunctionSemantics; }
@@ -633,6 +608,19 @@ void CodeThorn::CTAnalysis::runSolver() {
   ctSolver->run();
   stopAnalysisTimer();
 }
+
+VariableIdMappingExtended* CodeThorn::CTAnalysis::getVariableIdMapping() {
+  return _variableIdMapping;
+}
+
+void CodeThorn::CTAnalysis::setVariableIdMapping(VariableIdMappingExtended* vid) {
+  _variableIdMapping=vid;
+}
+
+CFAnalysis* CodeThorn::CTAnalysis::getCFAnalyzer() {
+  return _cfAnalyzer;
+}
+
 
 set<string> CodeThorn::CTAnalysis::variableIdsToVariableNames(CodeThorn::VariableIdSet s) {
   set<string> res;
@@ -1336,11 +1324,19 @@ void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgP
   startAnalysisTimer();
   ROSE_ASSERT(root);
 
-  ProgramAbstractionLayer* programAbstractionLayer=new ProgramAbstractionLayer();
-  programAbstractionLayer->initialize(_ctOpt,root,tc);
-  initialize(_ctOpt,root,programAbstractionLayer);
-  _programAbstractionLayer=programAbstractionLayer;
-  _programAbstractionLayerOwner=true;
+  CodeThornOptions& ctOpt=getOptionsRef();
+  
+  //ProgramAbstractionLayer* programAbstractionLayer=new ProgramAbstractionLayer();
+  //programAbstractionLayer->initialize(_ctOpt,root,tc);
+  Pass::normalization(ctOpt,root,tc);
+  _variableIdMapping=Pass::createVariableIdMapping(ctOpt, root, tc);
+  _labeler=Pass::createLabeler(ctOpt, root, tc, _variableIdMapping);
+  _classHierarchy=Pass::createClassHierarchy(ctOpt, root, tc);
+  _cfAnalyzer=Pass::createForwardIcfg(ctOpt,root,tc,_labeler,_classHierarchy);
+  
+  //initialize(_ctOpt,root,programAbstractionLayer);
+  //_programAbstractionLayer=programAbstractionLayer;
+  //_programAbstractionLayerOwner=true;
 
   resetInputSequenceIterator();
   RoseAst completeast(root);
@@ -1367,21 +1363,24 @@ void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgP
   initAstNodeInfo(root);
 
   getCFAnalyzer()->setInterProcedural(_ctOpt.getInterProceduralFlag());
-  getLabeler()->setExternalNonDetIntFunctionName(_externalNonDetIntFunctionName);
-  getLabeler()->setExternalNonDetLongFunctionName(_externalNonDetLongFunctionName);
+
+  if(CTIOLabeler* ctioLabeler=dynamic_cast<CTIOLabeler*>(getLabeler())) {
+    ctioLabeler->setExternalNonDetIntFunctionName(_externalNonDetIntFunctionName);
+    ctioLabeler->setExternalNonDetLongFunctionName(_externalNonDetLongFunctionName);
+  }
 
   CallString::setMaxLength(_ctOpt.callStringLength);
 
   //initializeSolver();
-  if(_transferFunctions==nullptr) {
+  if(_estateTransferFunctions==nullptr) {
     EStateTransferFunctions* etf=new EStateTransferFunctions();
     etf->setAnalyzer(this);
-    _transferFunctions=etf;
+    _estateTransferFunctions=etf;
   }
   
   //initializeTransferFunctions();
-  _transferFunctions->setProgramAbstractionLayer(_programAbstractionLayer);
-  _transferFunctions->addParameterPassingVariables(); // DFTransferFunctions: adds pre-defined var-ids to VID for parameter passing
+  //_estateTransferFunctions->setProgramAbstractionLayer(_programAbstractionLayer);
+  _estateTransferFunctions->addParameterPassingVariables(); // DFTransferFunctions: adds pre-defined var-ids to VID for parameter passing
   
   if(_ctOpt.getInterProceduralFlag()) {
     Label slab2=getLabeler()->getLabel(_startFunRoot);
@@ -1411,12 +1410,11 @@ void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgP
     SAWYER_MESG(logger[TRACE])<< "CFG reduction OK. (eliminated "<<cnt<<" nodes)"<<endl;
   }
   SAWYER_MESG(logger[TRACE])<< "Intra-Flow OK. (size: " << getFlow()->size() << " edges)"<<endl;
-  ROSE_ASSERT(_programAbstractionLayer);
-  ROSE_ASSERT(_programAbstractionLayer->getCFAnalyzer());
+  ROSE_ASSERT(getCFAnalyzer());
 
 #if 0
   if(_ctOpt.reduceCfg) {
-    int cnt=cfanalyzer->inlineTrivialFunctions(flow);
+    int cnt=getCFAnalyzer()->inlineTrivialFunctions(flow);
     cout << "CFG reduction OK. (inlined "<<cnt<<" functions; eliminated "<<cnt*4<<" nodes)"<<endl;
   }
 #endif
@@ -1565,11 +1563,16 @@ bool CodeThorn::CTAnalysis::isConsistentEStatePtrSet(set<const EState*> estatePt
   return true;
 }
 
-CTIOLabeler* CodeThorn::CTAnalysis::getLabeler() const {
-  ROSE_ASSERT(_programAbstractionLayer);
-  CTIOLabeler* ioLabeler=dynamic_cast<CTIOLabeler*>(_programAbstractionLayer->getLabeler());
-  ROSE_ASSERT(ioLabeler);
-  return ioLabeler;
+Labeler* CodeThorn::CTAnalysis::getLabeler() const {
+  return _labeler;
+}
+
+CTIOLabeler* CodeThorn::CTAnalysis::getIOLabeler() const {
+  CTIOLabeler* ctioLabeler=dynamic_cast<CTIOLabeler*>(getLabeler());
+  if(ctioLabeler==nullptr) {
+    cerr<<"Warning: CodeThorn::CTAnalysis was initialized with a default Labeler, but CTIOLabeler is required in function getIOLabeler."<<endl;
+  }
+  return ctioLabeler;
 }
 
 /*
@@ -1809,18 +1812,25 @@ long CodeThorn::CTAnalysis::analysisRunTimeInSeconds() {
 //  return getVariableIdMapping(); }
 
 CodeThorn::FunctionCallMapping* CodeThorn::CTAnalysis::getFunctionCallMapping() {
-  ROSE_ASSERT(_programAbstractionLayer);
-  return _programAbstractionLayer->getFunctionCallMapping();
+  ROSE_ASSERT(getCFAnalyzer());
+  return getCFAnalyzer()->getFunctionCallMapping();
 }
+
 CodeThorn::FunctionCallMapping2* CodeThorn::CTAnalysis::getFunctionCallMapping2() {
-  ROSE_ASSERT(_programAbstractionLayer);
-  return _programAbstractionLayer->getFunctionCallMapping2();
+  ROSE_ASSERT(getCFAnalyzer());
+  return getCFAnalyzer()->getFunctionCallMapping2();
+}
+
+CodeThorn::Flow* CodeThorn::CTAnalysis::getFlow() {
+  ROSE_ASSERT(_cfAnalyzer);
+  return _cfAnalyzer->getIcfgFlow();
 }
 
 CodeThorn::InterFlow* CodeThorn::CTAnalysis::getInterFlow() {
-  ROSE_ASSERT(_programAbstractionLayer);
-  return _programAbstractionLayer->getInterFlow();
+  ROSE_ASSERT(_cfAnalyzer);
+  return _cfAnalyzer->getInterFlow();
 }
+
 CodeThorn::EStateSet* CodeThorn::CTAnalysis::getEStateSet() { return &estateSet; }
 CodeThorn::PStateSet* CodeThorn::CTAnalysis::getPStateSet() { return &pstateSet; }
 TransitionGraph* CodeThorn::CTAnalysis::getTransitionGraph() { return &transitionGraph; }

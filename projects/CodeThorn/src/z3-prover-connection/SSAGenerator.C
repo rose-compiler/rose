@@ -25,7 +25,8 @@ SSAGenerator::SSAGenerator(CTAnalysis* analyzer, Sawyer::Message::Facility* logg
   this->analyzer = analyzer;
   this->logger = *logger;
   this->flow = analyzer->getFlow();
-  this->labeler = analyzer->getLabeler();
+  this->labeler = analyzer->getIOLabeler();
+  ROSE_ASSERT(this->labeler);
   prepareReachabilityAnalysisZ3 = false;	
 }
 
