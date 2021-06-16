@@ -1609,7 +1609,7 @@ Grammar::setUpNodes ()
 
   // PP: Ada Constraints
      AdaRangeConstraint.setDataPrototype("SgExpression*", "range", "",
-                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 /*
      AdaIndexConstraint.editSubstitute( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
      AdaIndexConstraint.editSubstitute( "LIST_DATA_TYPE", "SgExpressionPtrList" );
@@ -1619,7 +1619,7 @@ Grammar::setUpNodes ()
      AdaIndexConstraint.editSubstitute( "LIST_ELEMENT_DATA_TYPE", "SgRangeExp*" );
 */
      AdaIndexConstraint.setDataPrototype("SgExpressionPtrList", "indexRanges", "",
-                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
 
