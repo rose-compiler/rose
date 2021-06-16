@@ -316,6 +316,11 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
                       BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=0
                       BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
                       ;;
+                  5)
+                      BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=11
+                      BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=1
+                      BACKEND_CXX_COMPILER_PATCH_VERSION_NUMBER=0
+                      ;;
                   *)
                       AC_MSG_FAILURE([unknown or unsupported version of XCode: XCODE_VERSION_MINOR = "$XCODE_VERSION_MINOR"])
                       ;;
