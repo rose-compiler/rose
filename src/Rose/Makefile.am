@@ -22,4 +22,4 @@ librose_partial_la_SOURCES =			\
 	Progress.C				\
 	SourceLocation.C
 
-# Header files are installed from parent makefiles.
+# Public header files are installed from parent makefiles.

@@ -1,5 +1,5 @@
 /* compile as:
- *   gcc -nostdlib -o concolic-specimen-01 concolic-specimen-01-source.c
+ *   gcc -static -m32 -nostdlib -nostartfiles -O0 -g -Wall -o concolic-specimen-01 -Wl,-e_start concolic-specimen-01-source.c
  */
 void halt() {
     asm("hlt");
@@ -8,7 +8,7 @@ void halt() {
 void exit(int n) {
     asm("int $0x80"
         : /* no output */
-        : "D"(n), "a"(231)
+        : "D"(n), "a"(252)
         :
         );
 }

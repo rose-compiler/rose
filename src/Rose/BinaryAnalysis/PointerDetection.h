@@ -4,7 +4,6 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellList.h>
 #include <Sawyer/Set.h>
 
 namespace Rose {

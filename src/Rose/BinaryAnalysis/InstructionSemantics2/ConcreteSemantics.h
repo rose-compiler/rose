@@ -10,7 +10,6 @@
 
 #include "integerOps.h"
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/RegisterStateGeneric.h>
 #include <Sawyer/BitVector.h>
 
 namespace Rose {

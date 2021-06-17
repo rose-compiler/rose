@@ -9,7 +9,8 @@
 #include "sage3basic.h"
 #include "rose_config.h"
 
-#include "CommandLine.h"
+#include "cmdline.h"
+#include "Rose/CommandLine.h"
 #include "Sawyer/CommandLine.h"
 
 
@@ -22,6 +23,7 @@
 // #include <stdio.h>
 #include "a_nodes.h"
 #include "adapter_wrapper.h"
+#include "FileUtility.h"
 
 // extern "C" void asis_adapterinit (void);
 // extern "C" void asis_adapterfinal (void);
@@ -29,20 +31,31 @@
 namespace boostfs = boost::filesystem;
 namespace scl     = Sawyer::CommandLine;
 
+
+// minimal declarations from Ada_to_ROSE.h
 namespace Ada_ROSE_Translation
 {
   Sawyer::Message::Facility mlog;
 
-  struct Settings
-  {
-    bool processPredefinedUnits = true;
-    bool processImplementationUnits = true;
-    bool asisDebug = false;
-    bool logTrace  = false;
-    bool logInfo   = false;
-    bool logWarn   = false;
-  };
+  /// initialize translation settins
+  void initialize(const Rose::Cmdline::Ada::CmdlineSettings& settings);
+}
 
+namespace
+{
+  bool eq( const Rose::Cmdline::Ada::CmdlineSettings& lhs,
+           const Rose::Cmdline::Ada::CmdlineSettings& rhs
+         )
+  {
+    return (  lhs.processPredefinedUnits == rhs.processPredefinedUnits
+           && lhs.processImplementationUnits == rhs.processImplementationUnits
+           && lhs.failhardAdb == rhs.failhardAdb
+           && lhs.asisDebug == rhs.asisDebug
+           && lhs.logWarn == rhs.logWarn
+           && lhs.logInfo == rhs.logInfo
+           && lhs.logTrace == rhs.logTrace
+           );
+  }
 }
 
 
@@ -62,7 +75,8 @@ int main(int argc, char** argv)
 
      mlog = Sawyer::Message::Facility("Ada2ROSE", Rose::Diagnostics::destination);
 
-     Ada_ROSE_Translation::Settings settings;
+     Rose::Cmdline::Ada::CmdlineSettings settings = Rose::Cmdline::Ada::commandlineSettings();
+     Rose::Cmdline::Ada::CmdlineSettings settingscpy = settings;
 
      scl::Parser p = Rose::CommandLine::createEmptyParserStage("", "");
 
@@ -99,7 +113,35 @@ int main(int argc, char** argv)
            .intrinsicValue(true, settings.logInfo)
            .doc("Enables info messages"));
 
-     p.with(ada2Rose).parse(args).apply();
+     Sawyer::CommandLine::ParserResult cmdline = p.with(ada2Rose).parse(args).apply();
+
+     // the unparsed commands is likely to be passed into ASIS 
+     std::vector<std::string> unparsedArgs = cmdline.unparsedArgs();
+     std::string ASISIncludeArgs;
+
+
+     vector<string> includePaths;
+     for (unsigned int i=1; i < unparsedArgs.size(); i++)
+        {
+       // most options appear as -<option>
+       // have to process +w2 (warnings option) on some compilers so include +<option>
+          if ( unparsedArgs[i].size() >= 2 && (unparsedArgs[i][0] == '-') && (unparsedArgs[i][1] == 'I') )
+             {
+               std::string includeDirectorySpecifier =  unparsedArgs[i].substr(2);
+               includeDirectorySpecifier = Rose::StringUtility::getAbsolutePathFromRelativePath(includeDirectorySpecifier );
+               includePaths.push_back(includeDirectorySpecifier);
+             }
+        }
+
+     for (vector<string>::const_iterator i = includePaths.begin(); i != includePaths.end(); ++i)
+        {
+          ASISIncludeArgs.append("-I" + *i + " ");
+        }
+     if (includePaths.size() != 0)
+        ASISIncludeArgs = ASISIncludeArgs.substr(0, ASISIncludeArgs.length()-1);
+
+     if (!eq(settings, settingscpy))
+       mprintf("--asis: options HAVE BEEN DEPRECATED and have been replaced by -rose:ada: options!\n");
 
      std::string warninglevels = "none, error, fatal";
      Sawyer::Message::Facilities logctrl;
@@ -158,6 +200,7 @@ int main(int argc, char** argv)
        boostfs::current_path(gnatOutputDir);
 
        char* cstring_SrcFile = const_cast<char*>(srcFile.c_str());
+       char* cstring_Args = const_cast<char*>(ASISIncludeArgs.c_str());
        char* cstring_GnatOutputDir = const_cast<char*>(gnatOutputDir.c_str());
 
     // DQ (31/8/2017): Definitions of these functions still need to be provided to via libraries to be able to link ROSE.
@@ -170,12 +213,13 @@ int main(int argc, char** argv)
               );
 
        head_nodes = adapter_wrapper_with_flags( cstring_SrcFile,
-                                               const_cast<char*>(gnat_home),
-                                               cstring_GnatOutputDir,
-                                               settings.processPredefinedUnits,
-                                               settings.processImplementationUnits,
-                                               settings.asisDebug
-                                             );
+                                                const_cast<char*>(gnat_home),
+                                                cstring_Args,
+                                                cstring_GnatOutputDir,
+                                                settings.processPredefinedUnits,
+                                                settings.processImplementationUnits,
+                                                settings.asisDebug
+                                              );
 
        if (head_nodes.Elements == NULL) {
           mprintf ("adapter_wrapper_with_flags returned NO elements.\n");
@@ -189,7 +233,27 @@ int main(int argc, char** argv)
 
      mprintf ("END.\n");
 
-     Ada_ROSE_Translation::ada_to_ROSE_translation(head_nodes, file);
+/*
+     auto h = Rose::failedAssertionBehavior();
+
+     if (h == Rose::abortOnFailedAssertion)
+       std::cerr << "abort" << std::endl;
+     if (h == Rose::exitOnFailedAssertion)
+       std::cerr << "exit" << std::endl;
+     if (h == Rose::throwOnFailedAssertion)
+       std::cerr << "throw" << std::endl;
+*/
+
+     try
+     {
+       Ada_ROSE_Translation::initialize(settings);
+       Ada_ROSE_Translation::ada_to_ROSE_translation(head_nodes, file);
+     }
+     catch (const std::runtime_error& e)
+     {
+       mprintf ("%s\n", e.what());
+       status = 1;
+     }
 
      asis_adapterfinal();
      mprintf ("Leaving ada_main(): status = %d \n", status);

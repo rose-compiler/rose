@@ -265,11 +265,12 @@ Unparse_Jovial::unparseJovialType(SgJovialTableType* table_type, SgUnparse_Info&
         }
 
   // OptStructureSpecifier
-     if (table_type->get_structure_specifier() == SgJovialTableType::e_parallel)
+     using StructureSpecifier = SgJovialTableType::StructureSpecifier;
+     if (table_type->get_structure_specifier() == StructureSpecifier::e_parallel)
         {
           curprint("PARALLEL ");
         }
-     else if (table_type->get_structure_specifier() == SgJovialTableType::e_tight)
+     else if (table_type->get_structure_specifier() == StructureSpecifier::e_tight)
         {
           curprint("T ");
           if (table_type->get_bits_per_entry() > 0) {

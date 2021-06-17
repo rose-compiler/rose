@@ -845,6 +845,8 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgInitializedName::excess_specifier_enum" ) ||
                  ( varTypeString == "SgJovialDirectiveStatement::directive_types" ) ||
                  ( varTypeString == "SgJovialForThenStatement::loop_statement_type_enum" ) ||
+                 ( varTypeString == "SgJovialTableStatement::WordsPerEntry" ) ||
+                 ( varTypeString == "SgJovialTableType::StructureSpecifier" ) ||
                  ( varTypeString == "SgProcessControlStatement::control_enum" ) ||
                  ( varTypeString == "SgTypeComplex::floating_point_precision_enum" ) ||
                  ( varTypeString == "SgTypeImaginary::floating_point_precision_enum" ) ||

@@ -56,6 +56,14 @@ public:
      *  Thread safety: The implementation must be thread safe for gathering the information but need not concern itself
      *  with ensuring that no other threads are sending output to the same stream. */
     virtual void print(std::ostream&, const std::string &prefix) const = 0;
+
+    /** Print multi-line information about the tag in YAML format.
+     *
+     *  The first line starts with the @p prefix, and the following lines start with that number of spaces.
+     *
+     *  Thread safety: The implementation must be thread safe for gathering the information but need not concern itself
+     *  with ensuring that no other threads are sending output to the same stream. */
+    virtual void toYaml(std::ostream&, const std::string &prefix) const = 0;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -93,6 +101,7 @@ public:
 public:
     virtual std::string printableName() const override;
     virtual void print(std::ostream&, const std::string &prefix) const override;
+    virtual void toYaml(std::ostream&, const std::string &prefix) const override;
 };
 
 } // namespace

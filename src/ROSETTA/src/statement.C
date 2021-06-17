@@ -3124,7 +3124,7 @@ Grammar::setUpStatements ()
                                            //~ CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AdaRecordRepresentationClause.setFunctionPrototype("HEADER_ADA_RECORD_REPRESENTATION_CLAUSE", "../Grammar/Statement.code" );
-     AdaRecordRepresentationClause.setDataPrototype ( "SgClassType*", "recordType", "= NULL",
+     AdaRecordRepresentationClause.setDataPrototype ( "SgType*", "recordType", "= NULL",
                                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AdaRecordRepresentationClause.setDataPrototype ( "SgExpression*", "alignment", "= NULL",
                                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -3143,7 +3143,7 @@ Grammar::setUpStatements ()
 */
 
      AdaEnumRepresentationClause.setFunctionPrototype("HEADER_ADA_ENUM_REPRESENTATION_CLAUSE", "../Grammar/Statement.code" );
-     AdaEnumRepresentationClause.setDataPrototype ( "SgEnumType*", "enumType", "= NULL",
+     AdaEnumRepresentationClause.setDataPrototype ( "SgType*", "enumType", "= NULL",
                                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AdaEnumRepresentationClause.setDataPrototype ( "SgExprListExp*", "components", "= NULL",
                                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -3824,6 +3824,9 @@ Grammar::setUpStatements ()
      JovialTableStatement.setDataPrototype ( "SgExpression*", "table_entry_size", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      JovialTableStatement.setDataPrototype ( "bool", "has_table_entry_size", "= false",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     JovialTableStatement.setDataPrototype ("SgJovialTableStatement::WordsPerEntry",
+                                            "words_per_entry", "= SgJovialTableStatement::WordsPerEntry::e_default",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // DQ (9/11/2007): Added support for new IR nodes, but have not added the correct data members yet!

@@ -33,10 +33,10 @@ namespace
   SgExpression&
   getArg(Element_Struct& elem, AstContext ctx)
   {
-    ROSE_ASSERT(elem.Element_Kind == An_Association);
+    ADA_ASSERT(elem.Element_Kind == An_Association);
 
     Association_Struct& assoc      = elem.The_Union.Association;
-    ROSE_ASSERT(  assoc.Association_Kind == A_Parameter_Association
+    ADA_ASSERT(  assoc.Association_Kind == A_Parameter_Association
                || assoc.Association_Kind == A_Pragma_Argument_Association
                );
     logKind( assoc.Association_Kind == A_Parameter_Association
@@ -54,10 +54,10 @@ namespace
 
     if (!formalParm) return arg;
 
-    ROSE_ASSERT(formalParm->Element_Kind == An_Expression);
+    ADA_ASSERT(formalParm->Element_Kind == An_Expression);
 
     Expression_Struct&  formalName = formalParm->The_Union.Expression;
-    ROSE_ASSERT(formalName.Expression_Kind == An_Identifier);
+    ADA_ASSERT(formalName.Expression_Kind == An_Identifier);
 
     logKind("An_Identifier");
     SgExpression&       namedArg = SG_DEREF(sb::buildActualArgumentExpression(formalName.Name_Image, &arg));
@@ -103,10 +103,10 @@ namespace
         return;
       }
 
-      ROSE_ASSERT(range.size() == 1);
+      ADA_ASSERT(range.size() == 1);
       std::vector<SgExpression*> args = computeArguments();
 
-      ROSE_ASSERT(args.size() == 1);
+      ADA_ASSERT(args.size() == 1);
       n.set_operand(args[0]);
       res = &n;
     }
@@ -114,7 +114,7 @@ namespace
     void handle(SgBinaryOp& n)
     {
       // lhs and rhs must be null or not-null
-      ROSE_ASSERT((n.get_lhs_operand() == nullptr) == (n.get_rhs_operand() == nullptr));
+      ADA_ASSERT((n.get_lhs_operand() == nullptr) == (n.get_rhs_operand() == nullptr));
 
       // computed target ?
       if (n.get_lhs_operand() != nullptr)
@@ -123,10 +123,10 @@ namespace
         return;
       }
 
-      ROSE_ASSERT(range.size() == 2);
+      ADA_ASSERT(range.size() == 2);
       std::vector<SgExpression*> args = computeArguments();
 
-      ROSE_ASSERT(args.size() == 2);
+      ADA_ASSERT(args.size() == 2);
       n.set_lhs_operand(args[0]);
       n.set_rhs_operand(args[1]);
       res = &n;
@@ -169,17 +169,17 @@ namespace
 
   void ArrayAggregateCreator::operator()(Element_Struct& el)
   {
-    ROSE_ASSERT(el.Element_Kind == An_Association);
+    ADA_ASSERT(el.Element_Kind == An_Association);
 
     Association_Struct&        assoc  = el.The_Union.Association;
-    ROSE_ASSERT(assoc.Association_Kind == An_Array_Component_Association);
+    ADA_ASSERT(assoc.Association_Kind == An_Array_Component_Association);
     logKind("An_Array_Component_Association");
 
     SgExpression&              init   = getExprID(assoc.Component_Expression, ctx);
     SgExpression*              sgnode = &init;
     ElemIdRange                range  = idRange(assoc.Array_Component_Choices);
 
-    ROSE_ASSERT(namedElements || range.size() < 2);
+    ADA_ASSERT(namedElements || range.size() < 2);
 
     if (!range.empty())
     {
@@ -187,10 +187,10 @@ namespace
       SgExprListExp&             choicelst = mkExprListExp(exprs);
 
       sgnode = &mkAdaNamedInitializer(choicelst, init);
-      ROSE_ASSERT(choicelst.get_parent());
+      ADA_ASSERT(choicelst.get_parent());
     }
 
-    ROSE_ASSERT(sgnode);
+    ADA_ASSERT(sgnode);
     attachSourceLocation(*sgnode, el, ctx);
     elems.push_back(sgnode);
   }
@@ -229,10 +229,10 @@ namespace
 
   void RecordAggregateCreator::operator()(Element_Struct& el)
   {
-    ROSE_ASSERT(el.Element_Kind == An_Association);
+    ADA_ASSERT(el.Element_Kind == An_Association);
 
     Association_Struct&        assoc = el.The_Union.Association;
-    ROSE_ASSERT(assoc.Association_Kind == A_Record_Component_Association);
+    ADA_ASSERT(assoc.Association_Kind == A_Record_Component_Association);
     logKind("A_Record_Component_Association");
 
     SgExpression&              init = getExprID(assoc.Component_Expression, ctx);
@@ -245,7 +245,7 @@ namespace
       SgExprListExp&             choicelst = mkExprListExp(exprs);
 
       sgnode = &mkAdaNamedInitializer(choicelst, init);
-      ROSE_ASSERT(choicelst.get_parent());
+      ADA_ASSERT(choicelst.get_parent());
     }
 
     attachSourceLocation(SG_DEREF(sgnode), el, ctx);
@@ -297,7 +297,7 @@ namespace
       { A_Not_Operator,                   {"A_Not_Operator",                   mk1_wrapper<SgNotOp,            sb::buildNotOp> }},
     };
 
-    ROSE_ASSERT(expr.Expression_Kind == An_Operator_Symbol);
+    ADA_ASSERT(expr.Expression_Kind == An_Operator_Symbol);
 
     operator_maker_map_t::const_iterator pos = maker_map.find(expr.Operator_Kind);
 
@@ -307,7 +307,7 @@ namespace
       return SG_DEREF(pos->second.second());
     }
 
-    ROSE_ASSERT(expr.Operator_Kind != Not_An_Operator);
+    ADA_ASSERT(expr.Operator_Kind != Not_An_Operator);
 
     /* unused fields:
          Defining_Name_ID      Corresponding_Name_Definition;
@@ -325,7 +325,7 @@ namespace
   SgExpression&
   getEnumLiteral(Expression_Struct& expr, AstContext ctx)
   {
-    ROSE_ASSERT(expr.Expression_Kind == An_Enumeration_Literal);
+    ADA_ASSERT(expr.Expression_Kind == An_Enumeration_Literal);
 
     SgExpression* res = NULL;
 
@@ -375,7 +375,7 @@ namespace
   bool roseRequiresPrefixID(Element_ID el, AstContext ctx)
   {
     Element_Struct&    elem = retrieveAs<Element_Struct>(elemMap(), el);
-    ROSE_ASSERT(elem.Element_Kind == An_Expression);
+    ADA_ASSERT(elem.Element_Kind == An_Expression);
 
     Expression_Struct& expr = elem.The_Union.Expression;
 
@@ -396,7 +396,7 @@ namespace
              || roseRequiresPrefixID(expr.Selector, ctx);
     }
 
-    ROSE_ASSERT(!FAIL_ON_ERROR);
+    ADA_ASSERT(!FAIL_ON_ERROR(ctx) && "untested expression-kind");
     logWarn() << "roseRequiresPrefixID: untested expression-kind: "
               << expr.Expression_Kind
               << std::endl;
@@ -405,56 +405,76 @@ namespace
 
   struct ExprRefMaker : sg::DispatchHandler<SgExpression*>
   {
-    void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
+      using base = sg::DispatchHandler<SgExpression*>;
 
-    void handle(SgDeclarationStatement& n)
-    {
-      logError() << "ExprRefMaker: " << typeid(n).name() << std::endl;
+      explicit
+      ExprRefMaker(AstContext astctx)
+      : base(), ctx(astctx)
+      {}
 
-      res = sb::buildIntVal();
-      ROSE_ASSERT(!FAIL_ON_ERROR);
-    }
+      void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
 
-    // void handle(SgImportStatement& n)
+      void handle(SgDeclarationStatement& n)
+      {
+        logError() << "ExprRefMaker: " << typeid(n).name() << std::endl;
 
-    void handle(SgFunctionDeclaration& n) { res = sb::buildFunctionRefExp(&n); }
-    void handle(SgAdaRenamingDecl& n)     { res = &mkAdaRenamingRefExp(n); }
-    void handle(SgAdaTaskSpecDecl& n)     { res = &mkAdaTaskRefExp(n); }
+        res = sb::buildIntVal();
+        ADA_ASSERT(!FAIL_ON_ERROR(ctx));
+      }
+
+      // void handle(SgImportStatement& n)
+
+      void handle(SgFunctionDeclaration& n) { res = sb::buildFunctionRefExp(&n); }
+      void handle(SgAdaRenamingDecl& n)     { res = &mkAdaRenamingRefExp(n); }
+      void handle(SgAdaTaskSpecDecl& n)     { res = &mkAdaTaskRefExp(n); }
+
+    private:
+      AstContext ctx;
   };
 
   struct TypeRefMaker : sg::DispatchHandler<SgExpression*>
   {
-    void set(SgType* ty);
+      using base = sg::DispatchHandler<SgExpression*>;
 
-    void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
+      explicit
+      TypeRefMaker(AstContext astctx)
+      : base(), ctx(astctx)
+      {}
 
-    void handle(SgDeclarationStatement& n)
-    {
-      logError() << "TypeRefMaker: " << typeid(n).name() << std::endl;
+      void set(SgType* ty);
 
-      set(sb::buildVoidType());
-      ROSE_ASSERT(!FAIL_ON_ERROR);
-    }
+      void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
 
-    // void handle(SgImportStatement& n)
+      void handle(SgDeclarationStatement& n)
+      {
+        logError() << "TypeRefMaker: " << typeid(n).name() << std::endl;
 
-    void handle(SgClassDeclaration& n)   { set(n.get_type()); }
-    void handle(SgTypedefDeclaration& n) { set(n.get_type()); }
-    void handle(SgEnumDeclaration& n)    { set(n.get_type()); }
+        set(sb::buildVoidType());
+        ADA_ASSERT(!FAIL_ON_ERROR(ctx));
+      }
+
+      // void handle(SgImportStatement& n)
+
+      void handle(SgClassDeclaration& n)   { set(n.get_type()); }
+      void handle(SgTypedefDeclaration& n) { set(n.get_type()); }
+      void handle(SgEnumDeclaration& n)    { set(n.get_type()); }
+
+    private:
+      AstContext ctx;
   };
 
   void TypeRefMaker::set(SgType* ty)
   {
-    ROSE_ASSERT(ty);
+    ADA_ASSERT(ty);
     res = sb::buildTypeExpression(ty);
-    ROSE_ASSERT(res);
+    ADA_ASSERT(res);
   }
 
 
   SgExprListExp&
   getRecordAggregate(Element_Struct& elem, Expression_Struct& expr, AstContext ctx)
   {
-    ROSE_ASSERT(expr.Expression_Kind == A_Record_Aggregate);
+    ADA_ASSERT(expr.Expression_Kind == A_Record_Aggregate);
 
     logKind("A_Record_Aggregate");
     ElemIdRange                range  = idRange(expr.Record_Component_Associations);
@@ -468,7 +488,7 @@ namespace
   SgExprListExp&
   getArrayAggregate(Element_Struct& elem, Expression_Struct& expr, AstContext ctx)
   {
-    ROSE_ASSERT(  expr.Expression_Kind == A_Named_Array_Aggregate
+    ADA_ASSERT(  expr.Expression_Kind == A_Named_Array_Aggregate
                || expr.Expression_Kind == A_Positional_Array_Aggregate
                );
 
@@ -502,7 +522,7 @@ namespace
 SgAdaAttributeExp&
 getAttributeExpr(Expression_Struct& expr, AstContext ctx)
 {
-  ROSE_ASSERT(expr.Expression_Kind == An_Attribute_Reference);
+  ADA_ASSERT(expr.Expression_Kind == An_Attribute_Reference);
 
   SgAdaAttributeExp* res = nullptr;
   NameData           name = getNameID(expr.Attribute_Designator_Identifier, ctx);
@@ -650,7 +670,7 @@ getAttributeExpr(Expression_Struct& expr, AstContext ctx)
                    << std::endl;
 
         res = &mkAdaAttributeExp(obj, "ErrorAttr:" + name.fullName, mkExprListExp());
-        ROSE_ASSERT(!FAIL_ON_ERROR);
+        ADA_ASSERT(!FAIL_ON_ERROR(ctx));
       }
   }
 
@@ -662,7 +682,7 @@ getAttributeExprID(Element_ID el, AstContext ctx)
 {
   Element_Struct& elem = retrieveAs<Element_Struct>(elemMap(), el);
 
-  ROSE_ASSERT(elem.Element_Kind == An_Expression);
+  ADA_ASSERT(elem.Element_Kind == An_Expression);
   SgAdaAttributeExp& sgnode = getAttributeExpr(elem.The_Union.Expression, ctx);
 
   attachSourceLocation(sgnode, elem, ctx);
@@ -688,7 +708,7 @@ namespace
   SgExpression&
   getExpr_undecorated(Element_Struct& elem, AstContext ctx)
   {
-    ROSE_ASSERT(elem.Element_Kind == An_Expression);
+    ADA_ASSERT(elem.Element_Kind == An_Expression);
 
     Expression_Struct& expr      = elem.The_Union.Expression;
     SgExpression*      res       = NULL;
@@ -705,7 +725,7 @@ namespace
           }
           else if (SgDeclarationStatement* dcl = getDecl_opt(expr, ctx))
           {
-            res = sg::dispatch(ExprRefMaker{}, dcl);
+            res = sg::dispatch(ExprRefMaker{ctx}, dcl);
           }
           else if (SgInitializedName* exc = findFirst(asisExcps(), expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))
           {
@@ -713,9 +733,9 @@ namespace
           }
           else if (SgDeclarationStatement* tydcl = findFirst(asisTypes(), expr.Corresponding_Name_Definition, expr.Corresponding_Name_Declaration))
           {
-            res = sg::dispatch(TypeRefMaker{}, tydcl);
+            res = sg::dispatch(TypeRefMaker{ctx}, tydcl);
           }
-          else if (SgType* ty = findFirst(adaTypes(), AdaIdentifier(expr.Name_Image)))
+          else if (SgType* ty = findFirst(adaTypes(), AdaIdentifier{expr.Name_Image}))
           {
             res = sb::buildTypeExpression(ty);
           }
@@ -848,7 +868,7 @@ namespace
                                                                            : &mkExprListExp(idxexpr));
 
           res = sb::buildPntrArrRefExp(&prefix, &indices);
-          ROSE_ASSERT(indices.get_parent());
+          ADA_ASSERT(indices.get_parent());
           /* unused fields
              Declaration_ID        Corresponding_Called_Function; // An_Indexed_Component (Is_Generalized_Indexing == true) //ASIS 2012 // 4.1.1
              bool                  Is_Generalized_Indexing
@@ -909,7 +929,7 @@ namespace
           SgExprListExp& explst = getArrayAggregate(elem, expr, ctx);
 
           res = sb::buildAggregateInitializer(&explst);
-          ROSE_ASSERT(explst.get_parent());
+          ADA_ASSERT(explst.get_parent());
           */
           break;
         }
@@ -921,7 +941,7 @@ namespace
           SgExprListExp& explst = getRecordAggregate(elem, expr, ctx);
 
           res = sb::buildAggregateInitializer(&explst);
-          ROSE_ASSERT(explst.get_parent());
+          ADA_ASSERT(explst.get_parent());
           */
           break;
         }
@@ -1028,10 +1048,10 @@ namespace
           logKind("An_Allocation_From_Qualified_Expression");
 
           Element_Struct&    allocElem = retrieveAs<Element_Struct>(elemMap(), expr.Allocator_Qualified_Expression);
-          ROSE_ASSERT(allocElem.Element_Kind == An_Expression);
+          ADA_ASSERT(allocElem.Element_Kind == An_Expression);
 
           Expression_Struct& allocExpr = allocElem.The_Union.Expression;
-          ROSE_ASSERT(allocExpr.Expression_Kind == A_Qualified_Expression);
+          ADA_ASSERT(allocExpr.Expression_Kind == A_Qualified_Expression);
           logKind("A_Qualified_Expression");
 
           SgType&            ty  = getDeclTypeID(allocExpr.Converted_Or_Qualified_Subtype_Mark, ctx);
@@ -1040,7 +1060,7 @@ namespace
 
   /*
           Element_Struct&    initElem = retrieveAs<Element_Struct>(elemMap(), allocExpr.Converted_Or_Qualified_Expression);
-          ROSE_ASSERT(initElem.Element_Kind == An_Expression);
+          ADA_ASSERT(initElem.Element_Kind == An_Expression);
           Expression_Struct& initExpr = initElem.The_Union.Expression;
 
           SgExprListExp&     tyinit  = getAggregate(initElem, initExpr, ctx);
@@ -1070,7 +1090,7 @@ namespace
       default:
         logWarn() << "unhandled expression: " << expr.Expression_Kind << std::endl;
         res = sb::buildIntVal();
-        ROSE_ASSERT(!FAIL_ON_ERROR);
+        ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
 
     attachSourceLocation(SG_DEREF(res), elem, ctx);
@@ -1097,10 +1117,10 @@ getExpr(Element_Struct& elem, AstContext ctx)
     case A_Record_Aggregate:                        // 4.3
       {
         SgExprListExp* explst = isSgExprListExp(res);
-        ROSE_ASSERT(explst);
+        ADA_ASSERT(explst);
 
         res = sb::buildAggregateInitializer(explst);
-        ROSE_ASSERT(explst->get_parent());
+        ADA_ASSERT(explst->get_parent());
         attachSourceLocation(SG_DEREF(res), elem, ctx);
       }
 
@@ -1155,7 +1175,7 @@ namespace
             ty = &mkAdaSubtype(SG_DEREF(ty), constraint);
           }
 
-          ROSE_ASSERT(ty);
+          ADA_ASSERT(ty);
           res = sb::buildTypeExpression(ty);
           break;
         }
@@ -1183,7 +1203,7 @@ namespace
       default:
         logWarn() << "Unhandled range: " << range.Discrete_Range_Kind << std::endl;
         res = &mkRangeExp();
-        ROSE_ASSERT(!FAIL_ON_ERROR);
+        ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
 
     attachSourceLocation(SG_DEREF(res), el, ctx);
@@ -1195,7 +1215,7 @@ namespace
   SgExpression&
   getDiscreteRange(Element_Struct& el, Definition_Struct& def, AstContext ctx)
   {
-    ROSE_ASSERT(def.Definition_Kind == A_Discrete_Range);
+    ADA_ASSERT(def.Definition_Kind == A_Discrete_Range);
 
     return getDiscreteRangeGeneric(el, def, def.The_Union.The_Discrete_Range, ctx);
   }
@@ -1203,7 +1223,7 @@ namespace
   SgExpression&
   getDiscreteRange(Element_Struct& el, AstContext ctx)
   {
-    ROSE_ASSERT(el.Element_Kind == A_Definition);
+    ADA_ASSERT(el.Element_Kind == A_Definition);
 
     return getDiscreteRange(el, el.The_Union.Definition, ctx);
   }
@@ -1211,7 +1231,7 @@ namespace
   SgExpression&
   getDiscreteSubtype(Element_Struct& el, Definition_Struct& def, AstContext ctx)
   {
-    ROSE_ASSERT(def.Definition_Kind == A_Discrete_Subtype_Definition);
+    ADA_ASSERT(def.Definition_Kind == A_Discrete_Subtype_Definition);
 
     return getDiscreteRangeGeneric(el, def, def.The_Union.The_Discrete_Subtype_Definition, ctx);
   }
@@ -1219,7 +1239,7 @@ namespace
   SgExpression&
   getConstraintExpr(Definition_Struct& def, AstContext ctx)
   {
-    ROSE_ASSERT(def.Definition_Kind == A_Constraint);
+    ADA_ASSERT(def.Definition_Kind == A_Constraint);
 
     Constraint_Struct& constraint = def.The_Union.The_Constraint;
 
@@ -1231,7 +1251,7 @@ namespace
     }
 
 
-    ROSE_ASSERT (constraint.Constraint_Kind == A_Simple_Expression_Range);
+    ADA_ASSERT (constraint.Constraint_Kind == A_Simple_Expression_Range);
     logKind("A_Simple_Expression_Range");
 
     SgExpression& lb = getExprID(constraint.Lower_Bound, ctx);
@@ -1249,7 +1269,7 @@ void ExprSeqCreator::operator()(Element_Struct& el)
   else if (el.Element_Kind == A_Definition)
     res = &getDefinitionExpr(el, ctx);
 
-  ROSE_ASSERT(res);
+  ADA_ASSERT(res);
   elems.push_back(res);
 }
 
@@ -1269,7 +1289,7 @@ void RangeListCreator::operator()(Element_Struct& elem)
 SgExpression&
 getDefinitionExpr(Element_Struct& el, AstContext ctx)
 {
-  ROSE_ASSERT(el.Element_Kind == A_Definition);
+  ADA_ASSERT(el.Element_Kind == A_Definition);
 
   Definition_Struct& def = el.The_Union.Definition;
   SgExpression*      res = nullptr;
@@ -1299,7 +1319,7 @@ getDefinitionExpr(Element_Struct& el, AstContext ctx)
     default:
       logWarn() << "Unhandled definition expr: " << def.Definition_Kind << std::endl;
       res = sb::buildNullExpression();
-      ROSE_ASSERT(!FAIL_ON_ERROR);
+      ADA_ASSERT(!FAIL_ON_ERROR(ctx));
   }
 
   attachSourceLocation(SG_DEREF(res), el, ctx);

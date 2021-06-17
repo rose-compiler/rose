@@ -12,9 +12,6 @@
 #include "Cxx_GrammarSerialization.h"
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <Rose/BinaryAnalysis/SymbolicExpr.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/RegisterStateGeneric.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellList.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellMap.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
@@ -261,6 +258,12 @@ public:
     /** Instantiate a new concrete value. */
     static SValuePtr instance_integer(size_t nbits, uint64_t value) {
         return SValuePtr(new SValue(SymbolicExpr::makeIntegerConstant(nbits, value)));
+    }
+
+    /** Instantiate a new symbolic value. */
+    static SValuePtr instance_symbolic(const SymbolicExpr::Ptr &value) {
+        ASSERT_not_null(value);
+        return SValuePtr(new SValue(value));
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

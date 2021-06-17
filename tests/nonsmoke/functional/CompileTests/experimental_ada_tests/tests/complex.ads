@@ -15,6 +15,8 @@ package Complex is
   -- extracts real component
   function Real(val : in Complex) return Float;
 
+  function Origin return Complex;
+
 private
 
   type Complex is record

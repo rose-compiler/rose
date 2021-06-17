@@ -9,6 +9,8 @@
 #include <CommandOptions.h>
 #include <stdexcept>
 
+
+
 #include "AstTraversal.h"
 #include "astPostProcessing.h"
 #ifdef _MSC_VER
@@ -17,6 +19,9 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #endif
+
+using namespace Rose::Diagnostics;
+Sawyer::Message::Facility AstInterface::mlog;
 
 // jichi (9/29/2009): Add test for Fortran language
 #define IS_FORTRAN_LANGUAGE() \
@@ -125,6 +130,17 @@ void AstInterface :: AttachObserver( AstObserver* ob)
 void AstInterface :: DetachObserver( AstObserver* ob)
 {
   impl->DetachObserver(ob);
+}
+
+void AstInterface::initDiagnostics()
+{
+  static bool initialized = false;
+  if (!initialized)
+    {
+      initialized = true;
+      Rose::Diagnostics::initAndRegister(&mlog, "Rose::AstInterface");
+      mlog.comment("Qing's side effect analysis");
+    }
 }
 
 AstNodePtr AstInterface::GetFunctionDefinition( const AstNodePtr &n, std::string* name)
@@ -1302,11 +1318,15 @@ AstNodePtr GetFunctionDecl( const AstNodePtr& _s)
     switch (t) {
     case V_SgFunctionDefinition: 
          return AstNodePtrImpl(isSgFunctionDefinition(s)->get_declaration());
+    case V_SgTemplateFunctionRefExp:
+      return AstNodePtrImpl(isSgTemplateFunctionDefinition(s)->get_declaration());
     case V_SgFunctionDeclaration:
     case V_SgMemberFunctionDeclaration:
         return _s;
     case V_SgMemberFunctionRefExp:
          return AstNodePtrImpl(isSgMemberFunctionRefExp(s)->get_symbol()->get_declaration());
+    case V_SgNonrealRefExp:
+         return AstNodePtrImpl(isSgNonrealRefExp(s)->get_symbol()->get_declaration());
     case V_SgFunctionSymbol:
           return AstNodePtrImpl(isSgFunctionSymbol(s)->get_declaration());
     case V_SgFunctionRefExp:
@@ -1349,6 +1369,18 @@ IsFunctionDefinition(  const AstNodePtr& _s, std:: string* name,
         *name =  string(decl->get_name().str());
       if (paramtype != 0 || params != 0) 
         l = decl->get_parameterList();
+      break;
+    }
+  case V_SgNonrealDecl: 
+    { 
+      SgNonrealDecl *decl = isSgNonrealDecl(d);
+      if (returntype != 0)
+        *returntype = AstNodeTypeImpl(decl->get_type());
+      if (name != 0) 
+        *name =  string(decl->get_name().str());
+      // I can't seem to get parameters from an SgNonrealDecl -Jim Leek
+      //      if (paramtype != 0 || params != 0) 
+      //  l = decl->get_parameterList();
       break;
     }
     // Liao 2/6/2015, try to extend to support Fortran
@@ -1654,7 +1686,7 @@ bool AstInterface:: IsMin( const AstNodePtr& _exp)
    return false;
 }
 
-bool AstInterface:: IsMax( const AstNodePtr& _exp)
+bool AstInterface::IsMax( const AstNodePtr& _exp)
 {
    std::string name;
    if (!IsVarRef(_exp, 0, &name, 0, 0))
@@ -1666,12 +1698,25 @@ bool AstInterface:: IsMax( const AstNodePtr& _exp)
 
 //! Check if $_exp$ is a variable reference (including all name references which may have
 //! functions or objects have values)
+/* Does not deal correctly with templates SgNorealExp */
 bool AstInterfaceImpl::
 IsVarRef( SgNode* exp, SgType** vartype, string* varname,
           SgNode** _scope, bool *isglobal ) 
 { 
+  exp = AstInterface::SkipCasting(exp); //If there's a cast, skip it
   SgNode *decl = 0;
   switch (exp->variantT()) {
+    case V_SgNonrealRefExp:
+      {
+         SgNonrealSymbol *sb = isSgNonrealRefExp(exp)->get_symbol();
+         SgScopeStatement *cdef = sb->get_scope();
+         if (varname != 0) {
+            *varname = StripGlobalQualifier(cdef->get_qualified_name())+"::"+StripGlobalQualifier(sb->get_name().str());
+         }
+         if (vartype != 0) *vartype = sb->get_type();
+      }
+      break;
+
     case V_SgMemberFunctionRefExp: 
       {
          SgMemberFunctionSymbol *sb = isSgMemberFunctionRefExp(exp)->get_symbol();
@@ -1682,10 +1727,28 @@ IsVarRef( SgNode* exp, SgType** vartype, string* varname,
          if (vartype != 0) *vartype = sb->get_type();
       }
       break;
+    case V_SgTemplateMemberFunctionRefExp: 
+      {
+         SgTemplateMemberFunctionSymbol *sb = isSgTemplateMemberFunctionRefExp(exp)->get_symbol();
+         if (varname != 0) { //Getting the scope returned null, not sure if this gives complete info -Jim Leek
+           *varname = sb->get_name().getString();
+         }
+         if (vartype != 0) *vartype = sb->get_type();
+      }
+      break;
   case V_SgFunctionRefExp:
     {
       const SgFunctionRefExp *var = isSgFunctionRefExp( exp );
       SgFunctionSymbol *sb = var->get_symbol();
+      if (vartype != 0) *vartype = sb->get_type();
+      if (varname != 0)  *varname = sb->get_name().str();
+      decl = 0; // sb->get_declaration();
+    }
+    break;
+  case V_SgTemplateFunctionRefExp:
+    {
+      const SgTemplateFunctionRefExp *var = isSgTemplateFunctionRefExp( exp );
+      SgTemplateFunctionSymbol *sb = var->get_symbol();
       if (vartype != 0) *vartype = sb->get_type();
       if (varname != 0)  *varname = sb->get_name().str();
       decl = 0; // sb->get_declaration();
@@ -1781,6 +1844,20 @@ IsVarRef( SgNode* exp, SgType** vartype, string* varname,
   return true;
 }
 
+//! Strip the casting operations to get to the real expression.
+SgNode* AstInterface::SkipCasting(SgNode*  exp)
+{
+  SgCastExp* cast_exp = isSgCastExp(exp);
+  if (cast_exp != NULL)
+    {
+      SgExpression* operand = cast_exp->get_operand();
+      assert(operand != 0);
+      return SkipCasting(operand);
+    }
+  else      
+    return exp;
+}
+
 bool AstInterface::
 IsVarRef( const AstNodePtr& _exp, AstNodeType* vartype, string* varname,
           AstNodePtr* scope, bool *isglobal ) 
@@ -1789,20 +1866,6 @@ IsVarRef( const AstNodePtr& _exp, AstNodeType* vartype, string* varname,
   SgType** _vartype = (vartype==0)? (SgType**)0 : (SgType**)&vartype->get_ptr();
   SgNode** _scope = (scope==0)? (SgNode**) 0 : (SgNode**)&scope->get_ptr();
   return AstInterfaceImpl::IsVarRef(exp,_vartype, varname, _scope, isglobal);
-}
-
-//! Strip the casting operations to get to the real expression.
-SgNode* SkipCasting(SgNode*  exp)
-{
-  SgCastExp* cast_exp = isSgCastExp(exp);
-   if (cast_exp != NULL)
-   {
-      SgExpression* operand = cast_exp->get_operand();
-      assert(operand != 0);
-      return SkipCasting(operand);
-   }
-  else      
-    return exp;
 }
 
 std::string AstInterface::GetScopeName( const AstNodePtr& _scope)
@@ -2289,6 +2352,9 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args)
   SgExprListExp *argexp = 0;
   
   switch (exp->variantT()) {
+    //  case V_SgNonrealRefExp:
+    // This may be a call, but I don't know how to interpret it.  -Jim Leek
+    //return false;
   case V_SgExprStatement:
      exp = isSgExprStatement(exp)->get_expression();
      return IsFunctionCall(exp, func, args);
@@ -2339,6 +2405,11 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args)
         if (args != 0) args->push_back(0);
          break;
       }
+  case V_SgVarRefExp:
+    {  // If we got a SgVarRefExp for f, it was a function pointer call, so we don't know
+       // What function it actually points to.  Give up now!  -leek2 2021
+      return false;
+    }
   default: break;
   }
   if (argexp != 0) {
@@ -2351,7 +2422,7 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args)
     *func = f;
   return true;
 }
-
+/* Does not deal correctly with templates SgNorealExp */
 bool AstInterface::
 IsFunctionCall( const AstNodePtr& _s, AstNodePtr* fname, AstNodeList* args, 
                 AstNodeList* outargs, AstTypeList* paramtypes, AstNodeType* returntype)
@@ -2365,6 +2436,11 @@ IsFunctionCall( const AstNodePtr& _s, AstNodePtr* fname, AstNodeList* args,
   if (!impl->IsFunctionCall(s.get_ptr(), &f, args))
      return false;
      
+  if(f->variantT() == V_SgNonrealRefExp) {
+    //I don't know what to do about NonrealRefExp, so just bail. -Jim Leek
+    return false;
+  }
+
   if (f->variantT() == V_SgPointerDerefExp)
      f = isSgPointerDerefExp(f)->get_operand();
   if (fname != 0) {
@@ -2376,8 +2452,11 @@ IsFunctionCall( const AstNodePtr& _s, AstNodePtr* fname, AstNodeList* args,
          paramtypes = &PTlist;
      AstNodeType _ftype;
      if (!IsVarRef(AstNodePtrImpl(f), &_ftype))
-     {
-        ROSE_ABORT();
+     { //IsVarRef can also be used to get the (return?) type of a function
+       mlog[ERROR] << "Could not get function information from " << f->class_name() << std::endl;
+       mlog[ERROR] <<"Expression is " << f->unparseToString() << std::endl;
+       mlog[ERROR] << " at " << f->get_file_info()->get_filenameString() << ":" << f->get_file_info()->get_line() << std::endl;
+       ROSE_ABORT();
      }
      SgType* t = AstNodeTypeImpl(_ftype).get_ptr();
      ROSE_ASSERT(t != NULL);
@@ -2737,7 +2816,7 @@ bool AstInterfaceImpl::IsFortranLoop( const SgNode* s, SgNode** ivar , SgNode** 
   
       SgNode* testlhs = isSgBinaryOp(test)->get_lhs_operand();
       string testvarname;
-      if (!IsVarRef(SkipCasting(testlhs), 0, &testvarname) ||
+      if (!IsVarRef(AstInterface::SkipCasting(testlhs), 0, &testvarname) ||
            varname != testvarname)
         return false;
   
@@ -2752,7 +2831,7 @@ bool AstInterfaceImpl::IsFortranLoop( const SgNode* s, SgNode** ivar , SgNode** 
   
       SgNode* incrlhs = isSgBinaryOp(incr)->get_lhs_operand();
       string incrvarname;
-      if ( !IsVarRef(SkipCasting(incrlhs), 0, &incrvarname) ||
+      if ( !IsVarRef(AstInterface::SkipCasting(incrlhs), 0, &incrvarname) ||
           varname != incrvarname) 
         return false;
       stepast = isSgBinaryOp(incr)->get_rhs_operand();

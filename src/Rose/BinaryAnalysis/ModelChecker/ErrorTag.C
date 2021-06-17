@@ -3,7 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/ErrorTag.h>
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsSValue.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/SValue.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
 
 namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
@@ -69,6 +69,20 @@ ErrorTag::print(std::ostream &out, const std::string &prefix) const {
         fmt.expr_formatter.max_depth = 10;
         out <<prefix <<"  value = " <<(*svalue_+fmt) <<"\n";
     }
+}
+
+void
+ErrorTag::toYaml(std::ostream &out, const std::string &prefix1) const {
+    // No lock necessary because name_ and mesg_ are read-only properties initialized in the constructor.
+    out <<prefix1 <<"name: " <<StringUtility::yamlEscape(name_) <<"\n";
+    std::string prefix(prefix1.size(), ' ');
+    out <<prefix <<"message: " <<StringUtility::yamlEscape(mesg_) <<"\n";
+    if (insn_)
+        out <<prefix <<"instruction: " <<StringUtility::yamlEscape(insn_->toString()) <<"\n";
+    if (concrete_)
+        out <<prefix <<"concrete-value: " <<StringUtility::toHex(*concrete_) <<"\n";
+    if (symbolic_)
+        out <<prefix <<"symbolic-value: " <<StringUtility::yamlEscape(boost::lexical_cast<std::string>(*svalue_)) <<"\n";
 }
 
 } // namespace

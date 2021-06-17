@@ -1,9 +1,7 @@
 
 #include "sage3basic.h"
 
-#include "link.h"
-#include "delete.h"
-#include "share.h"
+#include "merge.h"
 
 #define TAKE_MEMPOOL_SNAPSHOT 0
 #if TAKE_MEMPOOL_SNAPSHOT
@@ -256,10 +254,7 @@ void merge(SgProject * project) {
   Rose::MemPool::snapshot("mempool-astmerge-pruned.csv");
 #endif
 
-  link_variable(project);
-  link_function(project);
-  link_class(project);
-  link_namespace(project);
+  link(project);
 
 #if ENABLE_plot_links
   { std::ofstream ofs("mergelink-linked.dot"); plot_links(ofs); }
@@ -267,6 +262,8 @@ void merge(SgProject * project) {
 #if TAKE_MEMPOOL_SNAPSHOT
   Rose::MemPool::snapshot("mempool-astmerge-linked.csv");
 #endif
+
+  consistency(project);
 
 #if !DEBUG__ROSE_AST_MERGE
   if (SgProject::get_verbose() > 0) {

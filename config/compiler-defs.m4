@@ -172,6 +172,11 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
                             CXX_VERSION_MINOR=0
                             CXX_VERSION_PATCH=0
                             ;;
+                        5)
+                            CXX_VERSION_MAJOR=11
+                            CXX_VERSION_MINOR=1
+                            CXX_VERSION_PATCH=0
+                            ;;
                         *)
                             AC_MSG_FAILURE([unknown or unsupported version of XCode (XCODE_VERSION_MINOR = "$XCODE_VERSION_MINOR")])
                             ;;

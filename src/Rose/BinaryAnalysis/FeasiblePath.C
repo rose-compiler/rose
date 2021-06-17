@@ -18,7 +18,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/ModulesElf.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Sawyer/GraphAlgorithm.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicMemory.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/SymbolicMemory.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
 
 #include <boost/algorithm/string/trim.hpp>

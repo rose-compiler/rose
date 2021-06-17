@@ -5,7 +5,7 @@
 
 #include <Rose/BinaryAnalysis/ModelChecker/Types.h>
 
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsTypes.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Types.h>
 #include <Rose/SourceLocation.h>
 
 namespace Rose {
@@ -47,6 +47,16 @@ public:
      *  concurrently. */
     virtual void printSteps(const SettingsPtr&, std::ostream&, const std::string &prefix,
                             size_t stepOrigin, size_t maxSteps) const = 0;
+
+    /** Print the steps for this execution unit in YAML format.
+     *
+     *  The output should show each step starting on its own line indented by the specified prefix. The steps should be
+     *  numbered starting from @p stepOrigin. Additional details about the steps should be indented further.
+     *
+     *  Thread safety: The implementation must be thread safe but may allow other threads to output to the same stream
+     *  concurrently. */
+    virtual void toYaml(const SettingsPtr&, std::ostream&, const std::string &prefix,
+                        size_t stepOrigin, size_t maxSteps) const = 0;
 
     /** List source location.
      *

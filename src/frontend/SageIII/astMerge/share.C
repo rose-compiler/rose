@@ -67,7 +67,11 @@ static std::string generate_sharing_identifier(SgNode * const node) {
       case V_SgTemplateInstantiationDecl:
       case V_SgTemplateInstantiationFunctionDecl:
       case V_SgTemplateInstantiationMemberFunctionDecl:
-        return declstmt->get_mangled_name() + ":" + declaration_position(declstmt) + declaration_is_defining(declstmt);
+        if ( declstmt->get_file_info()->get_file_id() == -2 && declstmt->get_definingDeclaration() != nullptr ) {
+          return declstmt->get_mangled_name() + ":" + declaration_position(declstmt->get_definingDeclaration()) + declaration_is_defining(declstmt);
+        } else {
+          return declstmt->get_mangled_name() + ":" + declaration_position(declstmt) + declaration_is_defining(declstmt);
+        }
       default:
         return ""; // Not shared
     }

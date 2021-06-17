@@ -30,7 +30,7 @@ public:
 
     /** Type of events. */
     enum class Action {
-        NONE,                                           // Don't perform any action
+        NONE,                                           // Don't perform any action. Often just to force execution
 
         // Actions that have an effect on the simulated process.
         MAP_MEMORY,                                     // Add addresses to the memory map
@@ -45,36 +45,27 @@ public:
         OS_SYSCALL,
     };
 
-    /** Location of event.
-     *
-     *  An event location consists of a primary value and a secondary value, both of which are unsigned integers. Depending on
-     *  the architecture, the primary value might be the number of instructions executed (i.e, the length of the current
-     *  execution path). The secondary value is usually just a sequence number for ordering events that all occur at the same
-     *  primary value. */
-    struct Location {
-        uint64_t primary;                               /**< Primary location value. */
-        uint64_t secondary;                             /**< Secondary location value. */
-
-        Location()
-            : primary(0), secondary(0) {}
-        Location(uint64_t primary, uint64_t secondary)
-            : primary(primary), secondary(secondary) {}
-    };
-
 private:
+    //     !!!!!!! DONT FORGET TO UPDATE ExecutionEvent::copy !!!!!!!!!
     std::string timestamp_;                             // time of creation, needed by the database
     TestCasePtr testCase_;                              // each event belongs to a particular test case
 
     // Event identification
-    Location location_;                                 // location event occurs
+    ExecutionLocation location_;                        // location event occurs
     size_t instructionPointer_ = 0;                     // value of instruction pointer when event occurs
-    std::string comment_;                               // optional comment
+    std::string name_;                                  // optional name for debugging
+
+    // Association with a symbolic input variable
+    InputType inputType_ = InputType::NONE;             // type of input
+    SymbolicExpr::Ptr inputVariable_;                   // associated symbolic variable, if any
+    size_t inputI1_ = 0, inputI2_ = 0;                  // InputVariable fields
 
     // Action to be taken, based on event type
     Action action_ = Action::NONE;                      // type of action to perform on the subordinate when replaying
     AddressInterval memoryLocation_;                    // memory locations affected by the action, if any
     uint64_t scalar_ = 0;                               // scalar value
     std::vector<uint8_t> bytes_;                        // byte data needed by action, if any
+    //     !!!!!!! DONT FORGET TO UPDATE ExecutionEvent::copy !!!!!!!!!
 
 protected:
     ExecutionEvent();
@@ -85,71 +76,128 @@ public:
     /** Allocating constructor. */
     static Ptr instance();
 
+    /** Allocating constructor for unbound event. */
+    static Ptr instance(rose_addr_t ip);
+
     /** Allocating constructor setting location.
      *
      *  Constructs an event at a particular location having no action. */
-    static Ptr instance(const TestCasePtr&, const Location&, rose_addr_t ip);
+    static Ptr instance(const TestCasePtr&, const ExecutionLocation&, rose_addr_t ip);
 
     /** Allocating constructor for memory map events.
      *
      *  Creates an event at a particular location that will cause the specified addresses to be mapped. The protections
-     *  are specified as a string containing zero or more of the letters "r", "w", or "x" in any order. */
-    static Ptr instanceMapMemory(const TestCasePtr&, const Location&, rose_addr_t ip,
+     *  are specified as a string containing zero or more of the letters "r", "w", or "x" in any order. If the test case
+     *  and location are unspecified then the returned event has unbound.
+     *
+     * @{ */
+    static Ptr instanceMapMemory(const TestCasePtr&, const ExecutionLocation&, rose_addr_t ip,
                                  const AddressInterval &addresses, const std::string &prot);
+    static Ptr instanceMapMemory(rose_addr_t ip,
+                                 const AddressInterval &addresses, const std::string &prot);
+    /** @} */
 
     /** Allocating constructor for memory unmap events.
      *
-     *  Creates an event at a particular location that will cause the specified memory addresses to be unmapped. */
-    static Ptr instanceUnmapMemory(const TestCasePtr&, const Location&, rose_addr_t ip,
+     *  Creates an event at a particular location that will cause the specified memory addresses to be unmapped. If the
+     *  test case and location are unspecified then the returned event is unbound.
+     *
+     * @{ */
+    static Ptr instanceUnmapMemory(const TestCasePtr&, const ExecutionLocation&, rose_addr_t ip,
                                    const AddressInterval &addresses);
+    static Ptr instanceUnmapMemory(rose_addr_t ip,
+                                   const AddressInterval &addresses);
+    /** @} */
 
     /** Allocating constructor for memory write events.
      *
      *  Creates an event at a particular location that will cause the specified memory addresses to be written with specified
      *  bytes.
      *
+     *  If the test case and location are unspecified then the returned event is unbound.
+     *
      * @{ */
-    static Ptr instanceWriteMemory(const TestCasePtr&, const Location&, rose_addr_t ip,
+    static Ptr instanceWriteMemory(const TestCasePtr&, const ExecutionLocation&, rose_addr_t ip,
+                                   rose_addr_t va, const std::vector<uint8_t> &bytes);
+    static Ptr instanceWriteMemory(rose_addr_t ip,
                                    rose_addr_t va, const std::vector<uint8_t> &bytes);
 
     template<typename Unsigned>
-    static Ptr instanceWriteMemory(const TestCasePtr &tc, const Location &loc, rose_addr_t ip, rose_addr_t va, Unsigned value) {
+    static Ptr instanceWriteMemory(const TestCasePtr &tc, const ExecutionLocation &loc, rose_addr_t ip,
+                                   rose_addr_t va, Unsigned value) {
+        Ptr retval = instanceWriteMemory(ip, va, value);
+        retval->bind(tc, loc);
+        return retval;
+    }
+
+    template<typename Unsigned>
+    static Ptr instanceWriteMemory(rose_addr_t ip,
+                                   rose_addr_t va, Unsigned value) {
         std::vector<uint8_t> bytes;
         for (size_t i = 0; i < sizeof value; ++i)
             bytes.push_back(BitOps::bits(value, i*8, i*8+7));
-        return instanceWriteMemory(tc, loc, ip, va, bytes);
+        return instanceWriteMemory(ip, va, bytes);
     }
     /** @} */
 
     /** Allocating constructor describing a memory hash.
      *
      *  Creates an event at a particular location that will hash the specified memory and compare it with the specified
-     *  hash. The hash uses SHA256 since ROSE has a built-in version of this hasher. */
-    static Ptr instanceHashMemory(const TestCasePtr&, const Location&, rose_addr_t ip,
+     *  hash. The hash uses SHA256 since ROSE has a built-in version of this hasher.  If the test case and location are
+     *  unspecified then the returned event is unbound.
+     *
+     * @{ */
+    static Ptr instanceHashMemory(const TestCasePtr&, const ExecutionLocation&, rose_addr_t ip,
                                   const AddressInterval &addresses, const Combinatorics::Hasher::Digest&);
+    static Ptr instanceHashMemory(rose_addr_t ip,
+                                  const AddressInterval &addresses, const Combinatorics::Hasher::Digest&);
+    /** @} */
 
     /** Allocating constructor describing one register.
      *
-     *  Create an event at a particular location that will set the specified register to the specified value when replayed. */
-    static Ptr instanceWriteRegister(const TestCasePtr&, const Location&, rose_addr_t ip,
+     *  Create an event at a particular location that will set the specified register to the specified value when replayed.
+     *  If the test case and location are unspecified then the returned event is unbound.
+     *
+     * @{ */
+    static Ptr instanceWriteRegister(const TestCasePtr&, const ExecutionLocation&, rose_addr_t ip,
                                      RegisterDescriptor, uint64_t value);
+    static Ptr instanceWriteRegister(rose_addr_t ip,
+                                     RegisterDescriptor, uint64_t value);
+    /** @} */
 
     /** Allocating constructor describing all registers.
      *
-     *  Create an even at a particular location that will initialize all registers to previously obtained values. */
-    static Ptr instanceRestoreRegisters(const TestCasePtr&, const Location&, rose_addr_t ip,
+     *  Create an even at a particular location that will initialize all registers to previously obtained values. If the
+     *  test case and location are unspecified then the returned event is unbound.
+     *
+     * @{ */
+    static Ptr instanceRestoreRegisters(const TestCasePtr&, const ExecutionLocation&, rose_addr_t ip,
                                         const Debugger::AllRegisters&);
+    static Ptr instanceRestoreRegisters(rose_addr_t ip,
+                                        const Debugger::AllRegisters&);
+    /** @} */
 
     /** Allocating constructor for marking a system call.
      *
      *  A system call event is a marker for a system call, and the action depends on the system call. Usually the action
      *  only affects the simulated operating system and will be followed by zero or more other events to adjust the memory
-     *  and registers in the subordinate process. */
-    static Ptr instanceSyscall(const TestCasePtr&, const Location&, rose_addr_t ip,
+     *  and registers in the subordinate process. If the test case and location are unspecified then the returned event is
+     *  unbound.
+     *
+     * @{ */
+    static Ptr instanceSyscall(const TestCasePtr&, const ExecutionLocation&, rose_addr_t ip,
                                uint64_t functionNumber, const std::vector<uint64_t> &arguments);
+    static Ptr instanceSyscall(rose_addr_t ip,
+                               uint64_t functionNumber, const std::vector<uint64_t> &arguments);
+    /** @} */
 
     /** Make a copy of this event. */
     Ptr copy() const;
+
+    /** Bind an execution event to a test case and location.
+     *
+     *  The @ref testCase and @ref location properties are set to the specified values. */
+    void bind(const TestCasePtr&, const ExecutionLocation&);
 
     /** Property: Owning test case.
      *
@@ -172,18 +220,18 @@ public:
     void timestamp(const std::string&);
     /** @} */
 
-    /** Property: Arbitrary comment for debugging.
+    /** Property: Arbitrary name for debugging.
      *
      * @{ */
-    const std::string& comment() const;
-    void comment(const std::string&);
+    const std::string& name() const;
+    void name(const std::string&);
     /** @} */
 
     /** Property: Event location.
      *
      * @{ */
-    Location location() const;
-    void location(const Location&);
+    ExecutionLocation location() const;
+    void location(const ExecutionLocation&);
     /** @} */
 
     /** Property: Instruction pointer.
@@ -194,6 +242,56 @@ public:
      * @{ */
     rose_addr_t instructionPointer() const;
     void instructionPointer(rose_addr_t);
+    /** @} */
+
+    /** Property: Test case input type.
+     *
+     * @{ */
+    InputType inputType() const {
+        return inputType_;
+    }
+    void inputType(InputType it) {
+        inputType_ = it;
+    }
+    /** @} */
+
+    /** Property: Input variable name.
+     *
+     *  Name of the symbolic variable associated with this event, if any.
+     *
+     * @{ */
+    const SymbolicExpr::Ptr& inputVariable() const {
+        return inputVariable_;
+    }
+    void inputVariable(const SymbolicExpr::Ptr &v) {
+        inputVariable_ = v;
+    }
+    /** @} */
+
+    /** Property: Input variable integer field one.
+     *
+     *  Stores input variable information depending on the @ref inputType.
+     *
+     * @{ */
+    size_t inputI1() const {
+        return inputI1_;
+    }
+    void inputI1(size_t i) {
+        inputI1_ = i;
+    }
+    /** @} */
+
+    /** Property: Input variable integer field two.
+     *
+     *  Stores input variable information depending on the @ref inputType.
+     *
+     * @{ */
+    size_t inputI2() const {
+        return inputI2_;
+    }
+    void inputI2(size_t i) {
+        inputI2_ = i;
+    }
     /** @} */
 
     /** Property: Type of action.
@@ -247,6 +345,13 @@ public:
 
     /** Print as YAML node. */
     void toYaml(std::ostream&, const DatabasePtr&, std::string prefix);
+
+    /** Returns printable name of execution event for diagnostic output.
+     *
+     *  Returns a string suitable for printing to a terminal, containing the words "execution event", the database ID if
+     *  appropriate, and the execution event name using C-style double-quoted string literal syntax if not empty.  The database
+     *  ID is shown if a non-null database is specified and this executon event exists in that database. */
+    std::string printableName(const DatabasePtr &db = DatabasePtr());
 };
 
 } // namespace

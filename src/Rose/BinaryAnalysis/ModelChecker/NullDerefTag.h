@@ -4,7 +4,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsTypes.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Types.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -37,6 +37,7 @@ public:
 public:
     virtual std::string printableName() const override;
     virtual void print(std::ostream&, const std::string &prefix) const override;
+    virtual void toYaml(std::ostream&, const std::string &prefix) const override;
 };
 
 } // namespace

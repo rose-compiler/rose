@@ -378,6 +378,8 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
 
    ATerm t_precision, t_scale_spec, t_frac_spec, t_formula;
 
+   expr = nullptr;
+
    if (ATmatch(term, "BITSINBYTE")) {
 #if PRINT_WARNINGS
       cerr << "WARNING UNIMPLEMENTED: IntegerMachineParameter - BITSINBYTE\n";
@@ -385,7 +387,9 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
    }
    else if (ATmatch(term, "BITSINWORD")) {
      expr = SageBuilder::buildVarRefExp("BITSINWORD", SageBuilder::topScopeStack());
-     setSourcePosition(expr, term);
+   }
+   else if (ATmatch(term, "BYTESINWORD")) {
+     expr = SageBuilder::buildVarRefExp("BYTESINWORD", SageBuilder::topScopeStack());
    }
    else if (ATmatch(term, "LOCSINWORD")) {
 #if PRINT_WARNINGS
@@ -402,8 +406,7 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
       } else return ATfalse;
    }
 
-   //TODO: 'BYTESINWORD'              -> IntegerMachineParameter {cons("BYTESINWORD")}
-   //      'BITSINPOINTER'            -> IntegerMachineParameter {cons("BITSINPOINTER")}
+   //TODO: 'BITSINPOINTER'            -> IntegerMachineParameter {cons("BITSINPOINTER")}
    //      'INTPRECISION'             -> IntegerMachineParameter {cons("INTPRECISION")}
    //      'FLOATPRECISION'           -> IntegerMachineParameter {cons("FLOATPRECISION")}
    //      'FIXEDPRECISION'           -> IntegerMachineParameter {cons("FIXEDPRECISION")}
@@ -432,6 +435,9 @@ ATbool ATermToSageJovialTraversal::traverse_IntegerMachineParameter(ATerm term, 
       } else return ATfalse;
    }
    else return ATfalse;
+
+   ROSE_ASSERT(expr);
+   setSourcePosition(expr, term);
 
    return ATtrue;
 }
@@ -1491,10 +1497,10 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
 // Set the structure specifier if present
    const StructureSpecifier& struct_spec = table_spec.struct_spec;
    if (struct_spec.is_parallel) {
-      table_type->set_structure_specifier(SgJovialTableType::e_parallel);
+      table_type->set_structure_specifier(StrucSpecEnum::e_parallel);
    }
    else if (struct_spec.is_tight) {
-      table_type->set_structure_specifier(SgJovialTableType::e_tight);
+      table_type->set_structure_specifier(StrucSpecEnum::e_tight);
       table_type->set_bits_per_entry(struct_spec.bits_per_entry);
    }
 
@@ -2076,36 +2082,37 @@ ATbool ATermToSageJovialTraversal::
 traverse_SpecifiedEntrySpecifierType(ATerm term, SgType* &type, LocationSpecifier &loc_spec, SgExpression* &preset, SgExprListExp* attr_list)
 {
 #if PRINT_ATERM_TRAVERSAL
-   printf("... traverse_SpecifiedEntrySpecifierType: %s\n", ATwriteToString(term));
+  printf("... traverse_SpecifiedEntrySpecifierType: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_words, t_item_desc, t_preset;
+  ATerm t_words, t_item_desc, t_preset;
 
-   type = nullptr;
-   preset = nullptr;
+  type = nullptr;
+  preset = nullptr;
 
-   Sawyer::Optional<SgExpression*> words_per_entry;
+  Sawyer::Optional<SgExpression*> entry_size;
+  WordsPerEntry wpe;
 
-   if (ATmatch(term, "SpecifiedEntrySpecifier(<term>,<term>,<term>)", &t_words, &t_item_desc, &t_preset)) {
+  if (ATmatch(term, "SpecifiedEntrySpecifier(<term>,<term>,<term>)", &t_words, &t_item_desc, &t_preset)) {
 
-      if (traverse_WordsPerEntry(t_words, words_per_entry)) {
-         // MATCHED WordsPerEntry
-      } else return ATfalse;
+    if (traverse_WordsPerEntry(t_words, entry_size, wpe)) {
+      // MATCHED WordsPerEntry
+    } else return ATfalse;
 
-      if (traverse_SpecifiedItemDescription(t_item_desc, type, loc_spec, attr_list)) {
-         // MATCHED SpecifiedItemDescription
-      } else return ATfalse;
+    if (traverse_SpecifiedItemDescription(t_item_desc, type, loc_spec, attr_list)) {
+      // MATCHED SpecifiedItemDescription
+    } else return ATfalse;
       
-      if (traverse_TablePreset(t_preset, preset)) {
-         // MATCHED TablePreset
-      } else return ATfalse;
-   }
-   else return ATfalse;
+    if (traverse_TablePreset(t_preset, preset)) {
+      // MATCHED TablePreset
+    } else return ATfalse;
+  }
+  else return ATfalse;
 
-   if (words_per_entry) {
-      cout << ".x. TODO_ADD_ME!!! words_per_entry is " << *words_per_entry << ": " << (*words_per_entry)->class_name() << endl;
-   }
-   ROSE_ABORT();
+  if (entry_size) {
+    cerr << "WARNING UNIMPLEMENTED: entry_size is " << *entry_size << ": " << (*entry_size)->class_name() << endl;
+  }
+  ROSE_ABORT();
 }
 
 ATbool ATermToSageJovialTraversal::
@@ -2116,13 +2123,14 @@ traverse_SpecifiedEntrySpecifierBody(ATerm term, SgJovialTableStatement* table_d
 #endif
 
    ATerm t_words, t_preset, t_body;
-   Sawyer::Optional<SgExpression*> words_per_entry;
+   Sawyer::Optional<SgExpression*> entry_size;
+   WordsPerEntry wpe;
 
    preset = nullptr;
 
    if (ATmatch(term, "SpecifiedEntrySpecifierBody(<term>,<term>,<term>)", &t_words, &t_preset, &t_body)) {
 
-      if (traverse_WordsPerEntry(t_words, words_per_entry)) {
+      if (traverse_WordsPerEntry(t_words, entry_size, wpe)) {
          // MATCHED WordsPerEntry
       } else return ATfalse;
 
@@ -2137,10 +2145,11 @@ traverse_SpecifiedEntrySpecifierBody(ATerm term, SgJovialTableStatement* table_d
    }
    else return ATfalse;
 
-   if (words_per_entry) {
+   table_decl->set_words_per_entry(wpe);
+   if (entry_size) {
       table_decl->set_has_table_entry_size(true);
-      table_decl->set_table_entry_size(*words_per_entry);
-      (*words_per_entry)->set_parent(table_decl);
+      table_decl->set_table_entry_size(*entry_size);
+      (*entry_size)->set_parent(table_decl);
    }
 
    return ATtrue;
@@ -2348,7 +2357,7 @@ ATbool ATermToSageJovialTraversal::traverse_SpecifiedTableItemDeclaration(ATerm 
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_WordsPerEntry(ATerm term, Sawyer::Optional<SgExpression*> &words_per_entry)
+ATbool ATermToSageJovialTraversal::traverse_WordsPerEntry(ATerm term, Sawyer::Optional<SgExpression*> &entry_size, WordsPerEntry &wpe)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_WordsPerEntry: %s\n", ATwriteToString(term));
@@ -2356,22 +2365,23 @@ ATbool ATermToSageJovialTraversal::traverse_WordsPerEntry(ATerm term, Sawyer::Op
 
    ATerm t_size;
 
-   SgExpression* entry_size = nullptr;
+   SgExpression* table_entry_size = nullptr;
+   entry_size = Sawyer::Nothing();
+   wpe = WordsPerEntry::e_default;
 
    if (ATmatch(term, "WordsPerEntryW(<term>)", &t_size)) {
-      if (ATmatch(term, "no-entry-size()")) {
-         // MATCHED no-entry-list
-         words_per_entry = Sawyer::Nothing();
+      wpe = WordsPerEntry::e_fixed_length;
+      if (ATmatch(t_size, "no-entry-size()")) {
+         // MATCHED no-entry-size
       }
-      else if (traverse_Formula(t_size, entry_size)) {
-         ROSE_ASSERT(entry_size);
-         words_per_entry = Sawyer::Optional<SgExpression*>(entry_size);
+      else if (traverse_Formula(t_size, table_entry_size)) {
+         ROSE_ASSERT(table_entry_size);
+         entry_size = Sawyer::Optional<SgExpression*>(table_entry_size);
       }
       else return ATfalse;
    }
    else if (ATmatch(term, "WordsPerEntryV()")) {
-   // TODO - fix ROSETTA so this doesn't depend on NULL for entry size, has_table_entry_size should be table_entry_enum (or some such)
-      words_per_entry = Sawyer::Optional<SgExpression*>(nullptr);
+      wpe = WordsPerEntry::e_variable_length;
    }
    else return ATfalse;
 
@@ -3215,10 +3225,10 @@ traverse_TableTypeSpecifier(ATerm term, SgJovialTableStatement* table_decl)
 // Set the structure specifier if present
    StructureSpecifier& struct_spec = table_spec.struct_spec;
    if (struct_spec.is_parallel) {
-      table_type->set_structure_specifier(SgJovialTableType::e_parallel);
+      table_type->set_structure_specifier(StrucSpecEnum::e_parallel);
    }
    else if (struct_spec.is_tight) {
-      table_type->set_structure_specifier(SgJovialTableType::e_tight);
+      table_type->set_structure_specifier(StrucSpecEnum::e_tight);
       table_type->set_bits_per_entry(struct_spec.bits_per_entry);
    }
 
