@@ -2,6 +2,7 @@
 #include "sage3basic.h"
 #include "CodeThornPasses.h"
 #include <iostream>
+using namespace CodeThorn::CodeThornLib;
 
 namespace CodeThorn {
 
@@ -21,13 +22,13 @@ namespace CodeThorn {
     tc.startTimer();
     if(ctOpt.status) cout<<"Phase: variable-id mapping"<<endl;
     tc.stopTimer(TimingCollector::variableIdMapping);
-    return CodeThorn::createVariableIdMapping(ctOpt,root);
+    return CodeThorn::CodeThornLib::createVariableIdMapping(ctOpt,root);
   }
 
   CodeThorn::Labeler* Pass::createLabeler(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, VariableIdMappingExtended* variableIdMapping) {
     tc.startTimer();
     if(ctOpt.status) cout<<"Phase: program location labeling"<<endl;
-    Labeler* labeler=createLabeler(root,variableIdMapping);
+    Labeler* labeler=CodeThorn::CodeThornLib::createLabeler(root,variableIdMapping);
     tc.stopTimer(TimingCollector::labeler);
     return labeler;
   }

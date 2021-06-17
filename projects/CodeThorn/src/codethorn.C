@@ -67,6 +67,7 @@ using namespace boost;
 
 #include "Rose/Diagnostics.h"
 using namespace Sawyer::Message;
+using namespace CodeThornLib;
 
 // required for createSolver function
 #include "Solver5.h"
@@ -77,7 +78,7 @@ using namespace Sawyer::Message;
 #include "ltlthorn-lib/Solver12.h"
 
 
-const std::string versionString="1.13.4";
+const std::string versionString="1.13.5";
 
 void configureRersSpecialization() {
 #ifdef RERS_SPECIALIZATION
@@ -150,7 +151,7 @@ void optionallyRunSSAGeneratorAndExit(CodeThornOptions& ctOpt, CTAnalysis* analy
 int main( int argc, char * argv[] ) {
   try {
     ROSE_INITIALIZE;
-    CodeThorn::configureRose();
+    CodeThorn::CodeThornLib::configureRose();
     configureRersSpecialization();
     CodeThorn::initDiagnosticsLTL();
 
@@ -163,9 +164,9 @@ int main( int argc, char * argv[] ) {
     parseCommandLine(argc, argv, logger,versionString,ctOpt,ltlOpt,parProOpt);
     mfacilities.control(ctOpt.logLevel); SAWYER_MESG(logger[TRACE]) << "Log level is " << ctOpt.logLevel << endl;
 
-    IOAnalyzer* analyzer=createAnalyzer(ctOpt,ltlOpt); // sets ctOpt,ltlOpt in analyzer
-    optionallyRunInternalChecks(ctOpt,argc,argv);
-    optionallyRunExprEvalTestAndExit(ctOpt,argc,argv);
+    IOAnalyzer* analyzer=CodeThornLib::createAnalyzer(ctOpt,ltlOpt); // sets ctOpt,ltlOpt in analyzer
+    CodeThornLib::optionallyRunInternalChecks(ctOpt,argc,argv);
+    CodeThornLib::optionallyRunExprEvalTestAndExit(ctOpt,argc,argv);
     analyzer->configureOptions(ctOpt,ltlOpt,parProOpt);
     analyzer->setSolver(createSolver(ctOpt));
     analyzer->setOptionContextSensitiveAnalysis(ctOpt.contextSensitive);
@@ -177,7 +178,7 @@ int main( int argc, char * argv[] ) {
 
     if(ctOpt.info.printVariableIdMapping) {
       cout<<"VariableIdMapping:"<<endl;
-      VariableIdMappingExtended* vim=CodeThorn::createVariableIdMapping(ctOpt,project); // print varid mapping and exit
+      VariableIdMappingExtended* vim=CodeThorn::CodeThornLib::createVariableIdMapping(ctOpt,project); // print varid mapping and exit
       //AbstractValue::setVariableIdMapping(vim);
       vim->toStream(cout);
       delete vim;
@@ -193,7 +194,7 @@ int main( int argc, char * argv[] ) {
     optionallyPrintProgramInfos(ctOpt, analyzer);
     optionallyRunRoseAstChecksAndExit(ctOpt, project);
 
-    VariableIdMappingExtended* vimOrig=CodeThorn::createVariableIdMapping(ctOpt,project); // only used for program statistics of original non-normalized program
+    VariableIdMappingExtended* vimOrig=CodeThorn::CodeThornLib::createVariableIdMapping(ctOpt,project); // only used for program statistics of original non-normalized program
     //AbstractValue::setVariableIdMapping(vim);
 
     ProgramInfo originalProgramInfo(project,vimOrig);
@@ -235,7 +236,7 @@ int main( int argc, char * argv[] ) {
     }
     SAWYER_MESG(logger[INFO])<<"registered string literals: "<<analyzer->getVariableIdMapping()->numberOfRegisteredStringLiterals()<<endl;
     analyzer->initLabeledAssertNodes(project);
-    optionallyInitializePatternSearchSolver(ctOpt,analyzer,tc);
+    CodeThorn::optionallyInitializePatternSearchSolver(ctOpt,analyzer,tc);
     AbstractValue::pointerSetsEnabled=ctOpt.pointerSetsEnabled;
 
     if(ctOpt.constantConditionAnalysisFileName.size()>0) {

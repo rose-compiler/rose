@@ -109,7 +109,7 @@ namespace CodeThorn {
 #if 1
       AbstractValueSet varSet=pstate.getVariableIds();
       for(AbstractValueSet::iterator i=varSet.begin();i!=varSet.end();++i) {
-	if(_analyzer->variableValueMonitor.isHotVariable(_analyzer,*i)) {
+	if(_analyzer->getVariableValueMonitor()->isHotVariable(_analyzer,*i)) {
 	  //ROSE_ASSERT(false); // this branch is live
 	  _analyzer->topifyVariable(pstate, cset, *i);
 	}
@@ -672,7 +672,7 @@ namespace CodeThorn {
     ConstraintSet cset=*currentEState.constraints();
 
     SgExpressionPtrList& actualParameters=SgNodeHelper::getFunctionCallActualParameterList(funCall);
-    SAWYER_MESG(logger[TRACE])<<getAnalyzer()->_ctOpt.forkFunctionName<<" #args:"<<actualParameters.size()<<endl;
+    SAWYER_MESG(logger[TRACE])<<getAnalyzer()->getOptionsRef().forkFunctionName<<" #args:"<<actualParameters.size()<<endl;
     // get 5th argument
     SgExpressionPtrList::iterator pIter=actualParameters.begin();
     for(int j=1;j<5;j++) {
@@ -750,20 +750,10 @@ namespace CodeThorn {
     _analyzer->recordExternalFunctionCall(funCall);
     evaluateFunctionCallArguments(edge,funCall,*estate,false);
 
-    // TODO: check whether the following test is superfluous meanwhile, since isStdInLabel does take NonDetX functions into account
-    bool isExternalNonDetXFunction=false;
-    if(_analyzer->svCompFunctionSemantics()) {
-      if(funCall) {
-	string externalFunctionName=SgNodeHelper::getFunctionName(funCall);
-	if(externalFunctionName==_analyzer->_externalNonDetIntFunctionName||externalFunctionName==_analyzer->_externalNonDetLongFunctionName) {
-	  isExternalNonDetXFunction=true;
-	}
-      }
-    }
     CTIOLabeler* ctioLabeler=dynamic_cast<CTIOLabeler*>(_analyzer->getLabeler());
     ROSE_ASSERT(ctioLabeler);
     
-    if(isExternalNonDetXFunction || ctioLabeler->isStdInLabel(lab,&varId)) {
+    if(ctioLabeler->isStdInLabel(lab,&varId)) {
       if(_analyzer->_inputSequence.size()>0) {
 	PState newPState=*currentEState.pstate();
 	ConstraintSet newCSet=*currentEState.constraints();
@@ -842,41 +832,8 @@ namespace CodeThorn {
     /* handling of specific semantics for external function */
     if(funCall) {
       string funName=SgNodeHelper::getFunctionName(funCall);
-      if(_analyzer->svCompFunctionSemantics()) {
-	if(funName==_analyzer->_externalErrorFunctionName) {
-	  //cout<<"DETECTED error function: "<<_externalErrorFunctionName<<endl;
-	  return elistify(_analyzer->createVerificationErrorEState(currentEState,edge.target()));
-	} else if(funName==_analyzer->_externalExitFunctionName) {
-	  /* the exit function is modeled to terminate the program
-	     (therefore no successor state is generated)
-	  */
-	  return elistify();
-	} else {
-	  // dispatch all other external function calls to the other
-	  // transferFunctions where the external function call is handled as an expression
-	  if(isFunctionCallWithAssignmentFlag) {
-	    // here only the specific format x=f(...) can exist
-	    SgAssignOp* assignOp=isSgAssignOp(AstUtility::findExprNodeInAstUpwards(V_SgAssignOp,funCall));
-	    ROSE_ASSERT(assignOp);
-	    return transferAssignOp(assignOp,edge,estate);
-	  } else {
-	    // special case: void function call f(...);
-	    list<SingleEvalResultConstInt> res=evalFunctionCall(funCall,currentEState);
-	    // build new estate(s) from single eval result list
-	    list<EState> estateList;
-	    for(list<SingleEvalResultConstInt>::iterator i=res.begin();i!=res.end();++i) {
-	      EState estate=(*i).estate;
-	      PState newPState=*estate.pstate();
-	      ConstraintSet cset=*estate.constraints();
-	      estateList.push_back(createEState(edge.target(),cs,newPState,cset));
-	    }
-	    return estateList;
-	  }
-	}
-      }
-
-      if(getAnalyzer()->_ctOpt.forkFunctionEnabled) {
-	if(funName==getAnalyzer()->_ctOpt.forkFunctionName) {
+      if(getAnalyzer()->getOptionsRef().forkFunctionEnabled) {
+	if(funName==getAnalyzer()->getOptionsRef().forkFunctionName) {
 	  return transferForkFunction(edge,estate,funCall);
 	}
       }
@@ -1614,7 +1571,7 @@ namespace CodeThorn {
 	setOfUsedGlobalVars.insert(var);
       }
     }
-    if(getAnalyzer()->_ctOpt.status) {
+    if(getAnalyzer()->getOptionsRef().status) {
       cout<< "STATUS: Number of global variables     : "<<setOfGlobalVars.size()<<endl;
       cout<< "STATUS: Number of used variables       : "<<setOfUsedVars.size()<<endl;
       cout<< "STATUS: Number of string literals      : "<<numStringLiterals<<endl;
@@ -1628,7 +1585,7 @@ namespace CodeThorn {
       ROSE_ASSERT(getVariableIdMapping());
       CodeThorn::VariableIdSet setOfGlobalVars=getVariableIdMapping()->getSetOfGlobalVarIds();
       std::set<VariableId> setOfUsedGlobalVars=determineUsedGlobalVars(root,setOfGlobalVars);
-      std::list<SgVariableDeclaration*> relevantGlobalVariableDecls=(getAnalyzer()->_ctOpt.initialStateFilterUnusedVariables)?
+      std::list<SgVariableDeclaration*> relevantGlobalVariableDecls=(getAnalyzer()->getOptionsRef().initialStateFilterUnusedVariables)?
 	getVariableIdMapping()->getVariableDeclarationsOfVariableIdSet(setOfUsedGlobalVars)
 	: getVariableIdMapping()->getVariableDeclarationsOfVariableIdSet(setOfGlobalVars)
 	;
@@ -1645,7 +1602,7 @@ namespace CodeThorn {
 	}
       }
 
-      if(getAnalyzer()->_ctOpt.status) {
+      if(getAnalyzer()->getOptionsRef().status) {
 	//uint32_t numFilteredVars=setOfGlobalVars.size()-setOfUsedGlobalVars.size();
 	//cout<< "STATUS: Number of unused variables filtered in initial state: "<<numFilteredVars<<endl;
 	cout<< "STATUS: Number of global variables declared in initial state: "<<declaredInGlobalState<<endl;
@@ -2152,11 +2109,11 @@ namespace CodeThorn {
   }
 
   bool EStateTransferFunctions::getIgnoreUndefinedDereference() {
-    return _analyzer->_ctOpt.ignoreUndefinedDereference;
+    return _analyzer->getOptionsRef().ignoreUndefinedDereference;
   }
 
   bool EStateTransferFunctions::getIgnoreFunctionPointers() {
-    return _analyzer->_ctOpt.ignoreFunctionPointers;
+    return _analyzer->getOptionsRef().ignoreFunctionPointers;
   }
 
   // TODO: all following options to read from ctOpt (as above)

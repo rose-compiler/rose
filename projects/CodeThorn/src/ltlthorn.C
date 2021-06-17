@@ -115,7 +115,7 @@ Solver* createSolver(CodeThornOptions& ctOpt) {
 int main( int argc, char * argv[] ) {
   try {
     ROSE_INITIALIZE;
-    CodeThorn::configureRose();
+    CodeThorn::CodeThornLib::configureRose();
     configureRersSpecialization();
     CodeThorn::initDiagnosticsLTL();
 

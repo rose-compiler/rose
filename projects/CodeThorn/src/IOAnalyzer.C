@@ -317,7 +317,7 @@ void IOAnalyzer::setup(CTAnalysis* analyzer, Sawyer::Message::Facility logger,
   }
 
   if(ctOpt.stgTraceFileName.size()>0) {
-    analyzer->setStgTraceFileName(ctOpt.stgTraceFileName);
+    analyzer->openStgTraceFile();
   }
 
   if(ctOpt.analyzedProgramCLArgs.size()>0) {

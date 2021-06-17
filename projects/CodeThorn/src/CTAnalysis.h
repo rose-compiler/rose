@@ -202,7 +202,7 @@ namespace CodeThorn {
     void resetToEmptyInputSequence() { _inputSequence.clear(); }
     void resetInputSequenceIterator() { _inputSequenceIterator=_inputSequence.begin(); }
 
-    void setStgTraceFileName(std::string filename);
+    void openStgTraceFile();
 
     void setAnalyzerMode(AnalyzerMode am) { _analyzerMode=am; } // not used
     // 0: concrete, 1: abstract, 2: strict abstract (does not try to approximate all non-supported operators, rejects program instead)
@@ -385,15 +385,16 @@ namespace CodeThorn {
     size_t getNumberOfErrorLabels();
     std::string labelNameOfAssertLabel(Label lab);
     bool isCppLabeledAssertLabel(Label lab);
+    
     std::list<FailedAssertion> _firstAssertionOccurences;
 
     // specific to the loop-aware exploration modes
     bool isLoopCondLabel(Label lab);
     void incIterations();
 
-    //Flow flow;
-    InterFlow _interFlow;
-    //CFAnalysis* cfanalyzer;
+    VariableValueMonitor* getVariableValueMonitor();
+
+    // to be moved to IOAnalyzer
     std::list<std::pair<SgLabelStatement*,SgNode*> > _assertNodes;
     GlobalTopifyMode _globalTopifyMode;
     set<AbstractValue> _compoundIncVarsSet;
@@ -403,10 +404,9 @@ namespace CodeThorn {
     LtlRersMapping _ltlRersMapping; // only used for LTL verification
     std::list<int> _inputSequence;
     std::list<int>::iterator _inputSequenceIterator;
-    
-    // abstract layer
-    //FunctionCallMapping functionCallMapping;
-    //FunctionCallMapping2 functionCallMapping2;
+    size_t getEStateSetSize();
+    size_t getTransitionGraphSize();
+  protected:
 
     // EStateWorkLists: Current and Next should point to One and Two (or swapped)
     EStateWorkList* estateWorkListCurrent=0;
@@ -455,8 +455,6 @@ namespace CodeThorn {
     string _externalNonDetIntFunctionName;
     string _externalNonDetLongFunctionName;
     string _externalExitFunctionName;
-
-    std::string _stg_trace_filename;
 
     TimeMeasurement _analysisTimer;
     bool _timerRunning = false;

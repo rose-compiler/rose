@@ -38,9 +38,7 @@ CodeThorn::CTAnalysis::CTAnalysis():
   _globalTopifyMode(GTM_IO),
   _stgReducer(&estateSet, &transitionGraph),
   _counterexampleGenerator(&transitionGraph),
-  _displayDiff(10000),
   _resourceLimitDiff(10000),
-  _numberOfThreadsToUse(1),
   //  _solver(nullptr),
   _analyzerMode(AM_ALL_STATES),
   _maxTransitions(-1),
@@ -75,7 +73,6 @@ CodeThorn::CTAnalysis::CTAnalysis():
   _estateTransferFunctions->setAnalyzer(this);
 }
 
-// override
 void CodeThorn::CTAnalysis::run() {
   runSolver();
 }
@@ -171,12 +168,12 @@ CodeThorn::CTAnalysis::SubSolverResultType CodeThorn::CTAnalysis::subSolver(cons
   bool earlyTermination = false;
   int threadNum = 0; //subSolver currently does not support multiple threads.
   // print status message if required
-  if (_ctOpt.status && _displayDiff) {
+  if (_ctOpt.status && _ctOpt.displayDiff) {
 #pragma omp critical(HASHSET)
     {
       estateSetSize = estateSet.size();
     }
-    if(threadNum==0 && (estateSetSize>(_prevStateSetSizeDisplay+_displayDiff))) {
+    if(threadNum==0 && (estateSetSize>(_prevStateSetSizeDisplay+_ctOpt.displayDiff))) {
       printStatusMessage(true);
       _prevStateSetSizeDisplay=estateSetSize;
     }
@@ -621,6 +618,18 @@ CFAnalysis* CodeThorn::CTAnalysis::getCFAnalyzer() {
   return _cfAnalysis;
 }
 
+VariableValueMonitor* CodeThorn::CTAnalysis::getVariableValueMonitor() {
+  return &variableValueMonitor;
+}
+
+size_t CodeThorn::CTAnalysis::getEStateSetSize() {
+  return estateSet.size();
+}
+
+size_t CodeThorn::CTAnalysis::getTransitionGraphSize() {
+  return transitionGraph.size();
+}
+
 
 set<string> CodeThorn::CTAnalysis::variableIdsToVariableNames(CodeThorn::VariableIdSet s) {
   set<string> res;
@@ -662,10 +671,9 @@ CodeThorn::CTAnalysis::VariableDeclarationList CodeThorn::CTAnalysis::computeUse
   }
 }
 
-void CodeThorn::CTAnalysis::setStgTraceFileName(string filename) {
-  _stg_trace_filename=filename;
+void CodeThorn::CTAnalysis::openStgTraceFile() {
   ofstream fout;
-  fout.open(_stg_trace_filename.c_str());    // create new file/overwrite existing file
+  fout.open(getOptionsRef().stgTraceFileName.c_str());    // create new file/overwrite existing file
   fout<<"START"<<endl;
   fout.close();    // close. Will be used with append.
 }
@@ -1478,8 +1486,8 @@ void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgP
 
     if(_ctOpt.rers.rersBinary) {
       //initialize the global variable arrays in the linked binary version of the RERS problem
-      SAWYER_MESG(logger[DEBUG])<< "init of globals with arrays for "<< _numberOfThreadsToUse << " threads. " << endl;
-      RERS_Problem::rersGlobalVarsArrayInitFP(_numberOfThreadsToUse);
+      SAWYER_MESG(logger[DEBUG])<< "init of globals with arrays for "<< _ctOpt.threads << " threads. " << endl;
+      RERS_Problem::rersGlobalVarsArrayInitFP(_ctOpt.threads);
       RERS_Problem::createGlobalVarAddressMapsFP(this);
     }
     SAWYER_MESG(logger[INFO])<<"Initializing solver finished."<<endl;

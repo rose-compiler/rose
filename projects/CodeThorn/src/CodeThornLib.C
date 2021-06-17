@@ -106,6 +106,8 @@ void codethornBackTraceHandler(int sig) {
   exit(1);
 }
 
+
+
 void CodeThorn::initDiagnostics() {
   Rose::Diagnostics::initialize();
   // general logger for CodeThorn library functions
@@ -122,7 +124,13 @@ void CodeThorn::initDiagnostics() {
 
 Sawyer::Message::Facility CodeThorn::logger;
 
+// deprecated, wrapper for CodeThornLib::evaluateExpressionWithEmptyState
+AbstractValue CodeThorn::evaluateExpressionWithEmptyState(SgExpression* expr) {
+  return CodeThorn::CodeThornLib::evaluateExpressionWithEmptyState(expr);
+}
+  
 namespace CodeThorn {
+  namespace CodeThornLib {
   void turnOffRoseWarnings() {
     string turnOffRoseWarnings=string("Rose(none,>=error),Rose::EditDistance(none,>=error),Rose::FixupAstDeclarationScope(none,>=error),")
       +"Rose::FixupAstSymbolTablesToSupportAliasedSymbols(none,>=error),"
@@ -329,6 +337,12 @@ namespace CodeThorn {
     return analyzer;
   }
 
+  IOAnalyzer* createEStateAnalyzer(CodeThornOptions& ctOpt, LTLOptions& ltlOpt, Labeler* labeler, VariableIdMappingExtended* vid, CFAnalysis* cfAnalysis, Solver* solver) {
+    IOAnalyzer* ioAnalyzer=CodeThornLib::createAnalyzer(ctOpt,ltlOpt);
+    return ioAnalyzer;
+  }
+
+  
   void optionallyRunInternalChecks(CodeThornOptions& ctOpt, int argc, char * argv[]) {
     if(ctOpt.internalChecks) {
       if(CodeThorn::internalChecks(argc,argv)==false) {
@@ -628,7 +642,7 @@ namespace CodeThorn {
       normalization.normalizeAst(sageProject,ctOpt.normalizeLevel);
     }
     timingCollector.stopTimer(TimingCollector::normalization);
-    CodeThorn::optionallyRunInliner(ctOpt,normalization, sageProject);
+    optionallyRunInliner(ctOpt,normalization, sageProject);
   }
 
   void setAssertConditionVariablesInAnalyzer(SgNode* root,CTAnalysis* analyzer) {
@@ -781,5 +795,6 @@ namespace CodeThorn {
     if(ctOpt.status) cout<<tc.toString();
     if(ctOpt.status) cout<<"Total memory                   : "<<CodeThorn::getPhysicalMemorySize()/(1024*1024) <<" MiB"<<endl;
   }
-
+  } // end of namespace CodeThornLib
+    
 } // end of namespace CodeThorn

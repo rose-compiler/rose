@@ -152,7 +152,7 @@ void optionallyRunSSAGeneratorAndExit(CodeThornOptions& ctOpt, CTAnalysis* analy
 int main( int argc, char * argv[] ) {
   try {
     ROSE_INITIALIZE;
-    CodeThorn::configureRose();
+    CodeThorn::CodeThornLib::configureRose();
     configureRersSpecialization();
     CodeThorn::initDiagnosticsLTL();
 
@@ -169,25 +169,25 @@ int main( int argc, char * argv[] ) {
     ctOpt.intraProcedural=true; // do not check for start function
     ctOpt.runSolver=false; // do not run solver
 
-    IOAnalyzer* analyzer=createAnalyzer(ctOpt,ltlOpt); // sets ctOpt,ltlOpt in analyzer
-    optionallyRunInternalChecks(ctOpt,argc,argv);
+    IOAnalyzer* analyzer=CodeThorn::CodeThornLib::createAnalyzer(ctOpt,ltlOpt); // sets ctOpt,ltlOpt in analyzer
+    CodeThorn::CodeThornLib::optionallyRunInternalChecks(ctOpt,argc,argv);
     analyzer->configureOptions(ctOpt,ltlOpt,parProOpt);
     analyzer->setSolver(createSolver(ctOpt));
     analyzer->setOptionContextSensitiveAnalysis(ctOpt.contextSensitive);
-    optionallySetRersMapping(ctOpt,ltlOpt,analyzer);
+    CodeThorn::CodeThornLib::optionallySetRersMapping(ctOpt,ltlOpt,analyzer);
     tc.stopTimer();
 
-    SgProject* project=runRoseFrontEnd(argc,argv,ctOpt,tc);
+    SgProject* project=CodeThorn::CodeThornLib::runRoseFrontEnd(argc,argv,ctOpt,tc);
     if(ctOpt.status) cout << "STATUS: Parsing and creating AST finished."<<endl;
 
-    optionallyGenerateAstStatistics(ctOpt, project);
+    CodeThorn::CodeThornLib::optionallyGenerateAstStatistics(ctOpt, project);
 
     //analyzer->initialize(project,0); initializeSolverWithStartFunction calls this function
 
-    optionallyPrintProgramInfos(ctOpt, analyzer);
-    optionallyRunRoseAstChecksAndExit(ctOpt, project);
+    CodeThorn::CodeThornLib::optionallyPrintProgramInfos(ctOpt, analyzer);
+    CodeThorn::CodeThornLib::optionallyRunRoseAstChecksAndExit(ctOpt, project);
 
-    VariableIdMappingExtended* vimOrig=createVariableIdMapping(ctOpt,project); // only used for program statistics of original non-normalized program
+    VariableIdMappingExtended* vimOrig=CodeThorn::CodeThornLib::createVariableIdMapping(ctOpt,project); // only used for program statistics of original non-normalized program
     //AbstractValue::setVariableIdMapping(vim);
     
     ProgramInfo originalProgramInfo(project,vimOrig);
@@ -226,7 +226,7 @@ int main( int argc, char * argv[] ) {
       analyzer->getVariableIdMapping()->typeSizeOverviewtoStream(cout);
     }
     
-    optionallyGenerateExternalFunctionsFile(ctOpt, analyzer->getFunctionCallMapping());
+    CodeThorn::CodeThornLib::optionallyGenerateExternalFunctionsFile(ctOpt, analyzer->getFunctionCallMapping());
     tc.startTimer();tc.stopTimer();
 
     if(ctOpt.status) cout<<color("normal")<<"done."<<endl;

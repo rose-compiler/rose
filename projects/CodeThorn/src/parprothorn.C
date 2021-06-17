@@ -112,7 +112,7 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger,
   }
 
   if(ctOpt.stgTraceFileName.size()>0) {
-    analyzer->setStgTraceFileName(ctOpt.stgTraceFileName);
+    analyzer->openStgTraceFile();
   }
 
   if(ctOpt.analyzedProgramCLArgs.size()>0) {
@@ -274,7 +274,7 @@ int main( int argc, char * argv[] ) {
 int main( int argc, char * argv[] ) {
   try {
     ROSE_INITIALIZE;
-    CodeThorn::configureRose();
+    CodeThorn::CodeThornLib::configureRose();
     configureRersSpecialization();
 
     TimeMeasurement timer;
@@ -799,7 +799,7 @@ int main( int argc, char * argv[] ) {
       if(ltlOpt.ltlRersMappingFileName.size()>0) {
         // load and parse file into ltlInAlphabet and ltlOutAlphabet
         // input/output alphabet
-        if(!readAndParseLTLRersMappingFile(ltlOpt.ltlRersMappingFileName,ltlRersMapping)) {
+        if(!CodeThorn::CodeThornLib::readAndParseLTLRersMappingFile(ltlOpt.ltlRersMappingFileName,ltlRersMapping)) {
           cerr<<"Error: could not open RERS mapping file "<<ltlOpt.ltlRersMappingFileName<<endl;
           exit(1);
         }
