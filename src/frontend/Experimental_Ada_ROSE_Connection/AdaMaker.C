@@ -189,6 +189,14 @@ mkAdaFloatType(SgExpression& digits, SgAdaRangeConstraint* range_opt)
   return sgnode;
 }
 
+SgAdaFormalType&
+mkAdaFormalType(const std::string& name)
+{
+  SgAdaFormalType& ty = mkNonSharedTypeNode<SgAdaFormalType>();
+  ty.set_type_name(name);
+  return ty;
+}
+
 SgDeclType&
 mkExceptionType(SgExpression& n)
 {
@@ -564,6 +572,36 @@ mkAdaPackageSpecDecl(const std::string& name, SgScopeStatement& scope)
   scope.insert_symbol(name, &mkBareNode<SgAdaPackageSymbol>(&sgnode));
   return sgnode;
 }
+
+SgAdaGenericDecl&
+mkAdaGenericDecl(SgScopeStatement& scope)
+{
+   SgAdaGenericDefn&   defn   = mkLocatedNode<SgAdaGenericDefn>();
+   SgAdaGenericDecl&   sgnode = mkLocatedNode<SgAdaGenericDecl>(&defn);
+
+   defn.setCaseInsensitive(true);
+
+   sgnode.set_parent(&scope);
+   sgnode.set_firstNondefiningDeclaration(&sgnode);
+
+   sg::linkParentChild(sgnode, defn, &SgAdaGenericDecl::set_definition);
+
+   return sgnode;
+ }
+
+ SgAdaFormalTypeDecl&
+ mkAdaFormalTypeDecl(const std::string& name, SgAdaFormalType& ty, SgScopeStatement& scope)
+ {
+   SgAdaFormalTypeDecl&  sgnode = mkLocatedNode<SgAdaFormalTypeDecl>(SgName(name),&ty);
+
+   sgnode.set_parent(&scope);
+   sgnode.set_firstNondefiningDeclaration(&sgnode);
+
+   scope.insert_symbol(name, new SgAdaGenericSymbol(&sgnode));
+
+   return sgnode;
+ }
+
 
 namespace
 {

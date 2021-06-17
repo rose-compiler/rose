@@ -1892,6 +1892,30 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
               break;
             }
 
+          case V_SgAdaFormalTypeDecl:
+             {
+              name = "_ada_formal_type_decl_" + genericGetName(isSgAdaFormalTypeDecl(declaration));
+               break;
+             }
+
+          case V_SgAdaGenericDecl:
+            {
+              // need to look inside the declaration wrapped by the generic.
+              const SgAdaGenericDecl* dcl = isSgAdaGenericDecl(declaration);
+              if (isSgFunctionDeclaration(dcl->get_declaration())) {
+                name = "_ada_generic_decl_" + genericGetName(isSgFunctionDeclaration(dcl->get_declaration()));
+                break;
+              }
+              if (isSgAdaPackageSpecDecl(dcl->get_declaration())) {
+                name = "_ada_generic_decl_" + genericGetName(isSgAdaPackageSpecDecl(dcl->get_declaration()));
+                break;
+              }
+
+              // something malformed in the tree if we get here
+              ROSE_ASSERT(false);
+              break;
+            }
+
 
        // Note that the case for SgVariableDeclaration is not implemented
           default:

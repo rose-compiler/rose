@@ -437,7 +437,7 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (AdaPackageSpec, "AdaPackageSpec", "ADA_PACKAGE_SPEC");
      NEW_TERMINAL_MACRO (AdaTaskBody,    "AdaTaskBody",    "ADA_TASK_BODY");
      NEW_TERMINAL_MACRO (AdaTaskSpec,    "AdaTaskSpec",    "ADA_TASK_SPEC");
-
+     NEW_TERMINAL_MACRO (AdaGenericDefn, "AdaGenericDefn", "ADA_GENERIC_DEFN" );
 
   // Note that the associate statement is really a scope, with its own declarations of variables declared by reference to
   // other variables or expressions.  They are only l-values if and only if the rhs is a l-value (I think).
@@ -449,7 +449,7 @@ Grammar::setUpStatements ()
           NamespaceDefinitionStatement | BlockDataStatement   | AssociateStatement        | FortranDo              | ForAllStatement    |
           UpcForAllStatement           | CAFWithTeamStatement | JavaForEachStatement      | JavaLabelStatement     | MatlabForStatement |
           FunctionParameterScope       | DeclarationScope     | RangeBasedForStatement    | JovialForThenStatement | AdaAcceptStmt  |
-          AdaPackageSpec               | AdaPackageBody       | AdaTaskSpec               | AdaTaskBody
+          AdaPackageSpec               | AdaPackageBody       | AdaTaskSpec               | AdaTaskBody            | AdaGenericDefn
      /* | TemplateInstantiationDefn */ ,
           "ScopeStatement","SCOPE_STMT", false);
 
@@ -549,6 +549,8 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (AdaComponentClause,            "AdaComponentClause",            "ADA_COMPONENT_CLAUSE" );
   // PP (07/14/20): Adding Ada renaming declarations
      NEW_TERMINAL_MACRO (AdaRenamingDecl,       "AdaRenamingDecl", "ADA_RENAMING_DECL_STMT" );
+     NEW_TERMINAL_MACRO (AdaGenericDecl,        "AdaGenericDecl", "ADA_GENERIC_DECL" );
+     NEW_TERMINAL_MACRO (AdaFormalTypeDecl,     "AdaFormalTypeDecl", "ADA_FORMAL_TYPE_DECL_STMT" );
 
      NEW_NONTERMINAL_MACRO (DeclarationStatement,
           FunctionParameterList                   | VariableDeclaration       | VariableDefinition           |
@@ -569,7 +571,7 @@ Grammar::setUpStatements ()
           AdaPackageBodyDecl                      | AdaPackageSpecDecl        | AdaRenamingDecl              |
           AdaTaskSpecDecl                         | AdaTaskBodyDecl           | AdaTaskTypeDecl              |
           AdaRecordRepresentationClause           | AdaComponentClause        | AdaLengthClause              |
-          AdaEnumRepresentationClause
+          AdaEnumRepresentationClause             | AdaGenericDecl            | AdaFormalTypeDecl
           /*| ClassPropertyList |*/,
           "DeclarationStatement", "DECL_STMT", false);
 
@@ -3096,6 +3098,23 @@ Grammar::setUpStatements ()
      AdaPackageSpecDecl.setDataPrototype ( "SgScopeStatement*", "scope", "= NULL",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     // generics
+     AdaGenericDefn.setFunctionPrototype ( "HEADER_ADA_GENERIC_DEFN", "../Grammar/Statement.code" );
+     AdaGenericDefn.setDataPrototype     ( "SgDeclarationStatementPtrList", "declarations", "",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     AdaGenericDecl.setFunctionPrototype ( "HEADER_ADA_GENERIC_DECL", "../Grammar/Statement.code" );
+     AdaGenericDecl.setDataPrototype     ( "SgAdaGenericDefn*", "definition", "= NULL",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AdaGenericDecl.setDataPrototype     ( "SgDeclarationStatement*", "declaration", "= NULL",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     AdaFormalTypeDecl.setFunctionPrototype ( "HEADER_ADA_FORMAL_TYPE_DECL_STATEMENT", "../Grammar/Statement.code" );
+     AdaFormalTypeDecl.setDataPrototype ( "SgName", "name", "=\"\"",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaFormalTypeDecl.setDataPrototype ( "SgAdaFormalType*", "formal_type", "= NULL",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      // tasks
      AdaTaskSpecDecl.setFunctionPrototype  ( "HEADER_ADA_TASK_SPEC_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaTaskSpecDecl.setDataPrototype ( "SgName", "name", "= \"\"",
@@ -4300,6 +4319,9 @@ Grammar::setUpStatements ()
      AdaEnumRepresentationClause.setFunctionSource ( "SOURCE_ADA_ENUM_REPRESENTATION_CLAUSE", "../Grammar/Statement.code" );
      AdaComponentClause.setFunctionSource ( "SOURCE_ADA_COMPONENT_CLAUSE", "../Grammar/Statement.code");
      AdaLengthClause.setFunctionSource ( "SOURCE_ADA_LENGTH_CLAUSE", "../Grammar/Statement.code" );
+     AdaGenericDecl.setFunctionSource ( "SOURCE_ADA_GENERIC_DECL", "../Grammar/Statement.code" );
+     AdaGenericDefn.setFunctionSource ( "SOURCE_ADA_GENERIC_DEFN", "../Grammar/Statement.code" );
+     AdaFormalTypeDecl.setFunctionSource ( "SOURCE_ADA_FORMAL_TYPE_DECL_STATEMENT", "../Grammar/Statement.code" );
 
   // DQ (3/22/2019): Adding EmptyDeclaration to support addition of comments and CPP directives that will permit
   // token-based unparsing to work with greater precision. For example, used to add an include directive with
@@ -4672,21 +4694,3 @@ Grammar::setUpStatements ()
      MicrosoftAttributeDeclaration.setFunctionSource ( "SOURCE_MICROSOFT_ATTRIBUTE_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
 
    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

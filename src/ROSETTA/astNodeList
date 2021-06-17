@@ -985,3 +985,8 @@ SgAsmBinaryPostupdate
 SgAdaOthersExp
 SgAdaRenamingSymbol
 SgAdaRenamingRefExp
+SgAdaGenericDecl
+SgAdaGenericDefn
+SgAdaFormalType
+SgAdaGenericSymbol
+SgAdaFormalTypeDecl

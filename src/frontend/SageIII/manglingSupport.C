@@ -446,6 +446,21 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                     break;
                   }
 
+               case V_SgAdaGenericDefn:
+                  {
+                    const SgAdaGenericDefn*   defn = isSgAdaGenericDefn(scope);
+                    const SgAdaGenericDecl*   parent = isSgAdaGenericDecl(defn->get_parent());
+                    ROSE_ASSERT(parent);
+
+                    if (const SgFunctionDeclaration* fundec = isSgFunctionDeclaration(parent->get_declaration()))
+                      mangled_name = fundec->get_name().getString();
+                    else if (const SgAdaPackageSpecDecl* pkgdec = isSgAdaPackageSpecDecl(parent->get_declaration()))
+                      mangled_name = pkgdec->get_name().getString();
+                    else
+                      ROSE_ABORT();
+
+                    break;
+                  }
 
            // PP (06/01/20) - not sure how to handle function parameter scope;
            //                 for now, handle like SgGlobal
@@ -1623,4 +1638,3 @@ std::string mangleTranslationUnitQualifiers (const SgDeclarationStatement * decl
     return "";
   }
 }
-

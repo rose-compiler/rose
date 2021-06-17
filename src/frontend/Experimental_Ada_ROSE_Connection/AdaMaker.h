@@ -162,6 +162,12 @@ namespace Ada_ROSE_Translation
   /// creates the most general real type
   SgType& mkRealType();
 
+  /// create a formal type
+  SgAdaFormalType& mkAdaFormalType(const std::string& name);
+
+  SgAdaFormalTypeDecl&
+  mkAdaFormalTypeDecl(const std::string& name, SgAdaFormalType& ty, SgScopeStatement& scope);
+
   //
   // Statement Makers
 
@@ -300,6 +306,10 @@ namespace Ada_ROSE_Translation
   /// creates an Ada package declaration
   SgAdaPackageSpecDecl&
   mkAdaPackageSpecDecl(const std::string& name, SgScopeStatement& scope);
+
+  /// creates an Ada generic declaration
+  SgAdaGenericDecl&
+  mkAdaGenericDecl(SgScopeStatement& scope);
 
   /// creates an Ada renaming declaration
   /// \param name    the new name
@@ -667,5 +677,3 @@ namespace Ada_ROSE_Translation
 } // namespace Ada_ROSE_Translation
 
 #endif /* _ADA_MAKER_H */
-
-
