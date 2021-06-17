@@ -54,7 +54,7 @@ namespace CodeThorn {
   CFAnalysis* Pass::createIcfg(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, Labeler* labeler, ClassHierarchyWrapper* classHierarchy, ICFGDirection icfgDirection) {
     tc.startTimer();
 
-    CodeThorn::Pass::WITH_EXTENDED_NORMALIZED_CALL=ctOpt.extendedNormalizedCppFunctionCalls; // to be removed
+    CodeThorn::Pass::WITH_EXTENDED_NORMALIZED_CALL=ctOpt.extendedNormalizedCppFunctionCalls; // to be used without global var
 
     CFAnalysis* cfanalyzer=new CFAnalysis(labeler);
     if(!ctOpt.extendedNormalizedCppFunctionCalls) {

@@ -303,7 +303,7 @@ InterFlow CFAnalysis::interFlow2(Flow& flow) {
     if (insideTemplatedCode(callNode))
       continue;
 
-    SgNodeHelper::ExtendedCallInfo callInfo = SgNodeHelper::matchExtendedNormalizedCall(callNode);
+    SgNodeHelper::ExtendedCallInfo callInfo = SgNodeHelper::matchExtendedNormalizedCall(callNode, CodeThorn::Pass::WITH_EXTENDED_NORMALIZED_CALL);
     if(!callInfo)
     {
       SAWYER_MESG(logger[ERROR]) << callNode->unparseToString() << std::endl;
@@ -399,7 +399,7 @@ Label CFAnalysis::initialLabel(SgNode* node) {
     return labeler->getLabel(node);
 
   // special case of function call
-  if(SgNodeHelper::matchExtendedNormalizedCall(node) || SgNodeHelper::Pattern::matchFunctionCall(node))
+  if(SgNodeHelper::matchExtendedNormalizedCall(node,CodeThorn::Pass::WITH_EXTENDED_NORMALIZED_CALL) || SgNodeHelper::Pattern::matchFunctionCall(node))
     return labeler->getLabel(node);
 
   if(!labeler->numberOfAssociatedLabels(node)) {
@@ -541,7 +541,7 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     return finalSet;
   }
   
-  if (SgNodeHelper::matchExtendedNormalizedCall(node))
+  if (SgNodeHelper::matchExtendedNormalizedCall(node,CodeThorn::Pass::WITH_EXTENDED_NORMALIZED_CALL))
   {
     finalSet.insert(labeler->functionCallReturnLabel(node));
     return finalSet;
@@ -1218,7 +1218,7 @@ Flow CFAnalysis::flow(SgNode* n) {
     return edgeSet;
   }
   
-  if(SgNodeHelper::matchExtendedNormalizedCall(node)) {
+  if(SgNodeHelper::matchExtendedNormalizedCall(node),CodeThorn::Pass::WITH_EXTENDED_NORMALIZED_CALL) {
     Label callLabel=labeler->functionCallLabel(node);
     Label callReturnLabel=labeler->functionCallReturnLabel(node);
     edgeSet.insert(Edge(callLabel,EDGE_FORWARD,callReturnLabel));
