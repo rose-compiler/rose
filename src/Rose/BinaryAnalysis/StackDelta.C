@@ -8,7 +8,7 @@
 #include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/RegisterStateGeneric.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/RegisterStateGeneric.h>
 #include <Sawyer/ProgressBar.h>
 #include <integerOps.h>
 

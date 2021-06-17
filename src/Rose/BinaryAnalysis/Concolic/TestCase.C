@@ -39,6 +39,16 @@ TestCase::name(const std::string& tcname) {
   name_ = tcname;
 }
 
+TestCaseId
+TestCase::parent() const {
+    return parent_;
+}
+
+void
+TestCase::parent(TestCaseId p) {
+    parent_ = p;
+}
+
 std::string
 TestCase::printableName(const Database::Ptr &db) {
     std::string retval = "testcase";                    // no white space
@@ -52,7 +62,8 @@ TestCase::printableName(const Database::Ptr &db) {
 }
 
 void
-TestCase::toYaml(std::ostream &out, const Database::Ptr &db, std::string prefix) {
+TestCase::toYaml(std::ostream &out, const Database::Ptr &db, std::string prefix,
+                 ShowEvents showEvents, ShowAssertions showAssertions) {
     ASSERT_not_null(db);
     const TestCaseId tcid = db->id(sharedFromThis(), Update::NO);
     ASSERT_require(tcid);
@@ -64,7 +75,7 @@ TestCase::toYaml(std::ostream &out, const Database::Ptr &db, std::string prefix)
         out <<prefix <<"name: " <<StringUtility::yamlEscape(name()) <<"\n";
 
     out <<prefix <<"created:  " <<timestamp() <<"\n";
-    out <<prefix <<"specimen: " <<db->id(specimen(), Update::NO) <<" " <<StringUtility::yamlEscape(specimen()->name()) <<"\n";
+    out <<prefix <<"specimen: " <<*db->id(specimen(), Update::NO) <<" # " <<StringUtility::yamlEscape(specimen()->name()) <<"\n";
 
     //-------- Inputs ---------
     out <<prefix <<"inputs:\n";
@@ -81,13 +92,31 @@ TestCase::toYaml(std::ostream &out, const Database::Ptr &db, std::string prefix)
         }
     }
 
-    std::vector<ExecutionEventId> events = db->executionEvents(tcid);
-    if (!events.empty()) {
-        out <<prefix <<"  execution-events:\n";
-        for (ExecutionEventId eeid: events) {
-            ExecutionEvent::Ptr ee = db->object(eeid);
-            ee->toYaml(out, db, prefix + "    - ");
+    if (TestCaseId p = parent()) {
+        out <<prefix <<"  parent: " <<*p <<" # test case ID\n";
+    } else {
+        out <<prefix <<"  parent: none\n";
+    }
+
+    if (ShowEvents::YES == showEvents) {
+        std::vector<ExecutionEventId> events = db->executionEvents(tcid);
+        if (!events.empty()) {
+            out <<prefix <<"  execution-events:\n";
+            for (ExecutionEventId eeid: events) {
+                ExecutionEvent::Ptr ee = db->object(eeid);
+                ee->toYaml(out, db, prefix + "    - ");
+            }
         }
+    } else {
+        out <<prefix <<"  execution-events: " <<db->executionEvents(tcid).size() <<"\n";
+    }
+
+    if (ShowAssertions::YES == showAssertions) {
+        out <<prefix <<"  assertions:\n";
+        for (SymbolicExpr::Ptr assertion: assertions())
+            out <<prefix <<"    - " <<*assertion <<"\n";
+    } else {
+        out <<prefix <<"  assertions: " <<assertions().size() <<"\n";
     }
 
     //-------- Concrete results ---------

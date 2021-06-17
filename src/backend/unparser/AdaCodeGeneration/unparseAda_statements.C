@@ -13,14 +13,13 @@
 #include "sage3basic.h"
 #include "unparser.h"
 
+#include <boost/algorithm/string/case_conv.hpp>
 
 #define ROSE_TRACK_PROGRESS_OF_ROSE_COMPILING_ROSE 0
 
 #include "sage_support.h"
 #include "sageGeneric.h"
 #include "sageInterfaceAda.h"
-
-#include <boost/algorithm/string.hpp>
 
 namespace si = SageInterface;
 
@@ -78,20 +77,6 @@ namespace
   SgName nameOf(const SgVarRefExp& n)
   {
     return nameOf(symOf(n));
-  }
-
-  inline
-  SgName nameOf(const SgEnumType& n)
-  {
-    SgEnumDeclaration& dcl = SG_DEREF(isSgEnumDeclaration(n.get_declaration()));
-
-    return dcl.get_name();
-  }
-
-  inline
-  SgName nameOf(const SgClassType& n)
-  {
-    return n.get_name();
   }
 
   inline
@@ -154,9 +139,7 @@ namespace
 
   struct AdaEnumeratorUnparser : AdaDetailsUnparser
   {
-    AdaEnumeratorUnparser(Unparse_Ada& unp, SgUnparse_Info& inf, std::ostream& outp)
-    : AdaDetailsUnparser(unp, inf, outp)
-    {}
+    using AdaDetailsUnparser::AdaDetailsUnparser;
 
     void operator()(SgInitializedName* enumerator)
     {
@@ -171,9 +154,7 @@ namespace
 
   struct AdaParamUnparser : AdaDetailsUnparser
   {
-    AdaParamUnparser(Unparse_Ada& unp, SgUnparse_Info& inf, std::ostream& outp)
-    : AdaDetailsUnparser(unp, inf, outp)
-    {}
+    using AdaDetailsUnparser::AdaDetailsUnparser;
 
     void handle(SgVariableDeclaration& n)
     {
@@ -196,6 +177,12 @@ namespace
       unparseModifiers(*this, n);
 
       unparser.unparseType(primary.get_type(), info);
+
+      if (SgInitializer* init = primary.get_initializer())
+      {
+        prn(" := ");
+        unparser.unparseExpression(init, info);
+      }
     }
 
     void operator()(SgVariableDeclaration* s)
@@ -217,9 +204,7 @@ namespace
 
   struct AdaElseUnparser : AdaDetailsUnparser
   {
-    AdaElseUnparser(Unparse_Ada& unp, SgUnparse_Info& inf, std::ostream& outp)
-    : AdaDetailsUnparser(unp, inf, outp)
-    {}
+    using AdaDetailsUnparser::AdaDetailsUnparser;
 
     void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
 
@@ -319,34 +304,22 @@ namespace
       std::string renamedName;
   };
 
-  bool declaredInMainFile(SgDeclarationStatement& dcl, const std::string& mainFile)
-  {
-    Sg_File_Info& fileInfo = SG_DEREF(dcl.get_startOfConstruct());
-
-    //~ std::cerr << typeid(dcl).name() << ": " << fileInfo.get_filenameString()
-              //~ << std::endl;
-
-    return fileInfo.get_filenameString() == mainFile;
-  }
-
   std::pair<SgDeclarationStatementPtrList::iterator, SgDeclarationStatementPtrList::iterator>
   declsInPackage(SgDeclarationStatementPtrList& lst, const std::string& mainFile)
   {
-    SgDeclarationStatementPtrList::iterator aa = lst.begin();
-    SgDeclarationStatementPtrList::iterator zz = lst.end();
+    auto declaredInMainFile = [&mainFile](const SgDeclarationStatement* dcl)
+                              {
+                                ROSE_ASSERT(dcl);
 
-    // skip over imported packages
-    while (aa != zz && !declaredInMainFile(SG_DEREF(*aa), mainFile))
-      ++aa;
+                                const Sg_File_Info& fileInfo = SG_DEREF(dcl->get_startOfConstruct());
 
-    return std::make_pair(aa, zz);
-/*
-    SgDeclarationStatementPtrList::iterator lim = aa;
-    while (lim != zz && declaredInMainFile(SG_DEREF(*lim), mainFile))
-      ++lim;
+                                return fileInfo.get_filenameString() == mainFile;
+                              };
 
-    return std::make_pair(aa, lim);
-*/
+    SgDeclarationStatementPtrList::iterator zz    = lst.end();
+    SgDeclarationStatementPtrList::iterator first = std::find_if(lst.begin(), zz, declaredInMainFile);
+
+    return std::make_pair(first, zz);
   }
 
 
@@ -506,11 +479,10 @@ namespace
       prn("task body ");
       prn(n.get_name());
       prn(" is\n");
-      prn("begin\n");
 
       stmt(n.get_definition());
 
-      prn("end ");
+      prn(" ");
       prn(n.get_name());
       prn(STMT_SEP);
     }
@@ -547,7 +519,16 @@ namespace
     {
       ScopeUpdateGuard scopeGuard(info, n);
 
-      list(n.get_statements());
+      SgStatementPtrList&          stmts    = n.get_statements();
+      SgStatementPtrList::iterator aa       = stmts.begin();
+      SgStatementPtrList::iterator zz       = stmts.end();
+      SgStatementPtrList::iterator dcllimit = si::ada::declarationLimit(stmts);
+
+      list(aa, dcllimit);
+
+      prn("begin\n");
+      list(dcllimit, zz);
+      prn("end"); // omit newline, which will be added by the parent
     }
 
     void handle(SgAdaPackageSpecDecl& n)
@@ -929,11 +910,10 @@ namespace
 
     void handle(SgAdaRecordRepresentationClause& n)
     {
-      SgClassType&  rec = SG_DEREF(n.get_recordType());
       SgBasicBlock& blk = SG_DEREF(n.get_components());
 
       prn("for ");
-      prn(nameOf(rec));
+      type(n.get_recordType());
       prn(" use record\n");
       expr_opt(n.get_alignment(), "at mod ", STMT_SEP);
 
@@ -973,11 +953,10 @@ namespace
 
     void handle(SgAdaEnumRepresentationClause& n)
     {
-      SgEnumType&    enumtype   = SG_DEREF(n.get_enumType());
       SgExprListExp& components = SG_DEREF(n.get_components());
 
       prn("for ");
-      prn(nameOf(enumtype));
+      type(n.get_enumType());
       prn(" use (");
       enuminiList(components.get_expressions());
       prn(")");
@@ -1224,6 +1203,34 @@ namespace
     unparser.UnparseLanguageIndependentConstructs::unparseStatement(&n, info);
   }
 
+  namespace
+  {
+    // returns true for basic blocks that have been introduced to store
+    //   statement sequences in Ada, but are not true Ada scopes.
+    struct AdaStmtSequence : sg::DispatchHandler<bool>
+    {
+      void handle(SgNode&)                          { /* default: false */ }
+      void handle(SgTryStmt&)                       { res = true; }
+      void handle(SgIfStmt&)                        { res = true; }
+      void handle(SgWhileStmt&)                     { res = true; }
+      void handle(SgForStatement&)                  { res = true; }
+      void handle(SgAdaLoopStmt&)                   { res = true; }
+      void handle(SgSwitchStatement&)               { res = true; }
+      void handle(SgCaseOptionStmt&)                { res = true; }
+      void handle(SgCatchOptionStmt&)               { res = true; }
+      void handle(SgDefaultOptionStmt&)             { res = true; }
+      void handle(SgAdaSelectStmt&)                 { res = true; }
+      void handle(SgAdaSelectAlternativeStmt&)      { res = true; }
+      void handle(SgAdaAcceptStmt&)                 { res = true; }
+      void handle(SgAdaRecordRepresentationClause&) { res = true; }
+    };
+
+    bool adaStmtSequence(SgBasicBlock& n)
+    {
+      return sg::dispatch(AdaStmtSequence{}, n.get_parent());
+    }
+  }
+
 
   void AdaStatementUnparser::handleBasicBlock(SgBasicBlock& n, bool functionbody)
   {
@@ -1231,15 +1238,14 @@ namespace
     SgStatementPtrList::iterator aa       = stmts.begin();
     SgStatementPtrList::iterator zz       = stmts.end();
     SgStatementPtrList::iterator dcllimit = si::ada::declarationLimit(stmts);
+    const std::string            label    = n.get_string_label();
+    const bool                   requiresBeginEnd = !adaStmtSequence(n);
+    //~ ROSE_ASSERT(aa == dcllimit || requiresBeginEnd);
+
+    // was: ( functionbody || (aa != dcllimit) || label.size() );
 
     if (!functionbody && (aa != dcllimit))
       prn("declare\n");
-
-    const std::string label = n.get_string_label();
-    const bool        requiresBeginEnd = (  functionbody
-                                         || (aa != dcllimit)
-                                         || label.size()
-                                         );
 
     list(aa, dcllimit);
 
@@ -1304,9 +1310,9 @@ namespace
 
   std::set<std::string> adaOperatorNames()
   {
-    std::string elems[] = { "+",   "-",   "*",  "/",   "**", "rem", "mod", "abs"
+    std::string elems[] = { "+",   "-",   "*",  "/",   "**", "REM", "MOD", "ABS"
                           , "=",   "/=",  "<",  ">",   "<=", ">="
-                          , "not", "and", "or", "xor", "&"
+                          , "NOT", "AND", "OR", "XOR", "&"
                           };
 
     return std::set<std::string>(elems, elems + sizeof(elems) / sizeof(elems[0]));
@@ -1316,7 +1322,9 @@ namespace
   {
     static std::set<std::string> adaops = adaOperatorNames();
 
-    return adaops.find(id) != adaops.end();
+    const std::string canonicalname = boost::to_upper_copy(id);
+
+    return adaops.find(canonicalname) != adaops.end();
   }
 
   std::string convertOperatorNames(const std::string& name)
@@ -1499,6 +1507,8 @@ namespace
     void handle(SgTypedefDeclaration& n)  { usetype(n.get_name()); }
     void handle(SgAdaTaskTypeDecl& n)     { usetype(n.get_name()); }
     void handle(SgClassDeclaration& n)    { usetype(n.get_name()); }
+    void handle(SgEnumDeclaration& n)     { usetype(n.get_name()); }
+    void handle(SgAdaRenamingDecl& n)     { usetype(n.get_name()); }
   };
 
   std::pair<std::string, std::string>
@@ -1586,6 +1596,29 @@ namespace
     res = sg::dispatch(*this, n.get_parent());
   }
 
+  namespace
+  {
+    struct RootScope : sg::DispatchHandler<bool>
+    {
+      bool isStandardPkg(const SgAdaPackageSpec& n)
+      {
+        const SgAdaPackageSpecDecl& dcl = SG_DEREF(isSgAdaPackageSpecDecl(n.get_parent()));
+
+        return (dcl.get_name() == "Standard") && isSgGlobal(dcl.get_parent());
+      }
+
+      void handle(const SgNode& n)           { SG_UNEXPECTED_NODE(n); }
+      void handle(const SgScopeStatement&)   { res = false; }
+      void handle(const SgGlobal&)           { res = true; }
+      void handle(const SgAdaPackageSpec& n) { res = isStandardPkg(n); }
+    };
+
+    bool rootScope(const SgScopeStatement* n)
+    {
+      return sg::dispatch(RootScope{}, n);
+    }
+  };
+
   typedef std::vector<std::string> ScopePath;
 
   ScopePath
@@ -1598,7 +1631,7 @@ namespace
     ScopePath         res;
     SgScopeStatement* curr = &n;
 
-    while (!isSgGlobal(curr))
+    while (!rootScope(curr))
     {
       std::pair<std::string, bool> data = sg::dispatch(IsNamedScope(), curr);
 

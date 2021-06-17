@@ -1,12 +1,14 @@
 add_library(roseBinaryAnalysisConcolic OBJECT
+  Architecture.C
   ConcolicExecutor.C
   ConcreteExecutor.C
   Database.C
   ExecutionEvent.C
   ExecutionManager.C
+  InputVariables.C
   LinuxExecutor.C
   LinuxExitStatus.C
-  LinuxI386Executor.C
+  LinuxI386.C
   LinuxTraceExecutor.C
   Specimen.C
   TestCase.C
@@ -16,15 +18,17 @@ add_library(roseBinaryAnalysisConcolic OBJECT
 add_dependencies(roseBinaryAnalysisConcolic rosetta_generated)
 
 install(FILES
+  Architecture.h
   BasicTypes.h
   ConcolicExecutor.h
   ConcreteExecutor.h
   Database.h
   ExecutionEvent.h
   ExecutionManager.h
+  InputVariables.h
   LinuxExecutor.h
   LinuxExitStatus.h
-  LinuxI386Executor.h
+  LinuxI386.h
   LinuxTraceExecutor.h
   Specimen.h
   TestCase.h

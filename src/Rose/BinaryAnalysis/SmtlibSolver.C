@@ -1239,9 +1239,9 @@ SmtlibSolver::parseEvidence() {
     // variable renaming. That is, the memoized result is in terms of renumbered variables, so we need to use the
     // latestMemoizationRewrite_ to rename the memoized variables back to the variable names used in the actual query from the
     // caller.
-    SymbolicExpr::Hash memoId = latestMemoizationId();
-    if (memoId > 0) {
-        MemoizedEvidence::iterator found = memoizedEvidence.find(memoId);
+    Sawyer::Optional<SymbolicExpr::Hash> memoId = latestMemoizationId();
+    if (memoId) {
+        MemoizedEvidence::iterator found = memoizedEvidence.find(*memoId);
         if (found != memoizedEvidence.end()) {
             SymbolicExpr::ExprExprHashMap denorm = latestMemoizationRewrite_.invert();
             evidence.clear();
@@ -1310,8 +1310,8 @@ SmtlibSolver::parseEvidence() {
     }
 
     // Cache the evidence. We must cache using the normalized form of expressions.
-    if (memoId > 0) {
-        ExprExprMap &me = memoizedEvidence[memoId];
+    if (memoId) {
+        ExprExprMap &me = memoizedEvidence[*memoId];
         BOOST_FOREACH (const ExprExprMap::Node &node, evidence.nodes()) {
             me.insert(node.key()->substituteMultiple(latestMemoizationRewrite_),
                       node.value()->substituteMultiple(latestMemoizationRewrite_));

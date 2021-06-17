@@ -11,6 +11,8 @@ namespace rb = Rose::builder;
 namespace ATermSupport {
 
    using namespace LanguageTranslation;
+   using StrucSpecEnum = SgJovialTableType::StructureSpecifier;
+   using WordsPerEntry = SgJovialTableStatement::WordsPerEntry;
 
 class ATermToSageJovialTraversal : public ATermTraversal
 {
@@ -130,7 +132,7 @@ ATbool traverse_SpecifiedEntrySpecifierBody   (ATerm term, SgJovialTableStatemen
 ATbool traverse_SpecifiedTableBody            (ATerm term);
 ATbool traverse_SpecifiedTableItemDeclaration (ATerm term);
 ATbool traverse_SpecifiedItemDescription      (ATerm term, SgType* &type, LocationSpecifier &loc_spec, SgExprListExp* attr_list);
-ATbool traverse_WordsPerEntry                 (ATerm term, Sawyer::Optional<SgExpression*> &words_per_entry);
+ATbool traverse_WordsPerEntry                 (ATerm term, Sawyer::Optional<SgExpression*> &entry_size, WordsPerEntry &wpe);
 
 // 2.1.3 CONSTANT DECLARATIONS
 ATbool traverse_ConstantDeclaration(ATerm term, int def_or_ref = 0);

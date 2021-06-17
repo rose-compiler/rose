@@ -21,8 +21,6 @@
 #include "integerOps.h"
 #include <Rose/BinaryAnalysis/MemoryMap.h>
 #include <Rose/FormatRestorer.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/RegisterStateGeneric.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/MemoryCellList.h>
 
 namespace Rose {
 namespace BinaryAnalysis {              // documented elsewhere

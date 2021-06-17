@@ -3,15 +3,6 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
-#include <Rose/Progress.h>
-#include <Rose/Exception.h>
-#include <boost/filesystem.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/thread.hpp>
-#include <Sawyer/Message.h>
-#include <Sawyer/ProgressBar.h>
-#include <Sawyer/Synchronization.h>
-
 // Define this if you need to debug SerialIo -- it causes everything to run in the calling thread and avoid catching exceptions.
 //#define ROSE_DEBUG_SERIAL_IO
 
@@ -34,6 +25,7 @@
     #define ROSE_SUPPORTS_SERIAL_IO /*supported*/
 #endif
 
+// These have to be included early, before the definitions of the ROSE classes that are serialized
 #ifdef ROSE_SUPPORTS_SERIAL_IO
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/binary_oarchive.hpp>
@@ -44,6 +36,15 @@
 #include <boost/iostreams/device/file_descriptor.hpp>
 #include <boost/iostreams/stream.hpp>
 #endif
+
+#include <Rose/Progress.h>
+#include <Rose/Exception.h>
+#include <boost/filesystem.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/thread.hpp>
+#include <Sawyer/Message.h>
+#include <Sawyer/ProgressBar.h>
+#include <Sawyer/Synchronization.h>
 
 namespace Rose {
 namespace BinaryAnalysis {

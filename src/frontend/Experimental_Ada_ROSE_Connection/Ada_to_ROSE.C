@@ -1,8 +1,9 @@
 #include "sage3basic.h"
 
 #include <type_traits>
+#include <algorithm>
 
-#include <Rose/Diagnostics.h>
+#include "Rose/Diagnostics.h"
 #include "rose_config.h"
 #include "sageGeneric.h"
 #include "sageBuilder.h"
@@ -30,6 +31,8 @@ namespace Ada_ROSE_Translation
 // logger
 
 extern Sawyer::Message::Facility mlog;
+
+static bool fail_on_error = false;
 
 
 //
@@ -103,7 +106,7 @@ void LabelAndLoopManager::label(Element_ID id, SgLabelStatement& lblstmt)
 {
   SgLabelStatement*& mapped = labels[id];
 
-  ROSE_ASSERT(mapped == nullptr);
+  ADA_ASSERT(mapped == nullptr);
   mapped = &lblstmt;
 }
 
@@ -122,7 +125,7 @@ AstContext AstContext::scope_npc(SgScopeStatement& s) const
 
 AstContext AstContext::scope(SgScopeStatement& s) const
 {
-  ROSE_ASSERT(s.get_parent());
+  ADA_ASSERT(s.get_parent());
 
   return scope_npc(s);
 }
@@ -145,7 +148,7 @@ AstContext AstContext::sourceFileName(std::string& file) const
 
 void updFileInfo(Sg_File_Info* n, const Sg_File_Info* orig)
 {
-  ROSE_ASSERT(n && orig);
+  ADA_ASSERT(n && orig);
 
   n->unsetCompilerGenerated();
   n->unsetTransformation();
@@ -285,7 +288,6 @@ namespace
       case A_Statement:               // Asis.Statements
         {
           // handled in StmtCreator
-
           ROSE_ABORT();
         }
 
@@ -309,12 +311,12 @@ namespace
 
       case A_Pragma:                  // Asis.Elements
 
-      case Not_An_Element: /* break; */ // Nil_Element
+      case Not_An_Element:  // Nil_Element
       case A_Path:                    // Asis.Statements
       case An_Association:            // Asis.Expressions
       default:
         logWarn() << "Unhandled element " << elem.Element_Kind << std::endl;
-        ROSE_ASSERT(!FAIL_ON_ERROR);
+        ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
   }
 
@@ -409,7 +411,7 @@ namespace
                Unit_ID             Corresponding_Body;
                Unit_List           Subunits;
           */
-          /* break; */
+
           break;
         }
 
@@ -430,7 +432,7 @@ namespace
                Unit_List           Subunits;
           */
 
-          /* break; */
+
           break;
         }
 
@@ -490,7 +492,7 @@ namespace
           break;
         }
 
-      case Not_A_Unit: /* break; */
+      case Not_A_Unit:
       case A_Package_Instance:
       case A_Generic_Package:
 
@@ -547,7 +549,7 @@ namespace
 
       default:
         logWarn() << "unit kind unhandled: " << adaUnit.Unit_Kind << std::endl;
-        ROSE_ASSERT(!FAIL_ON_ERROR);
+        ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
   }
 
@@ -611,7 +613,7 @@ namespace
 
     void operator()(Element_Struct& elem)
     {
-      ROSE_ASSERT(elem.Element_Kind == A_Clause);
+      ADA_ASSERT(elem.Element_Kind == A_Clause);
 
       Clause_Struct& clause = elem.The_Union.Clause;
 
@@ -624,10 +626,10 @@ namespace
       traverseIDs( idRange(clause.Clause_Names), elemMap(),
                    [&res, &ctx](Element_Struct& el) -> void
                    {
-                     ROSE_ASSERT (el.Element_Kind == An_Expression);
+                     ADA_ASSERT (el.Element_Kind == An_Expression);
                      NameData imported = getName(el, ctx);
 
-                     res.push_back(imported.fullName);
+                     res.emplace_back(imported.fullName);
                    }
                  );
     }
@@ -639,7 +641,7 @@ namespace
 
   void addWithClausDependencies(Unit_Struct& unit, std::vector<AdaIdentifier>& res, AstContext ctx)
   {
-    ElemIdRange              range = idRange(unit.Context_Clause_Elements);
+    ElemIdRange range = idRange(unit.Context_Clause_Elements);
 
     traverseIDs(range, elemMap(), DependencyExtractor{res, ctx});
   }
@@ -654,8 +656,22 @@ namespace
 
     el.second.marked = true;
 
-    for (const std::string& depname : el.second.dependencies)
-      dfs(m, *m.find(UniqueUnitId{false, depname}), res);
+    for (const AdaIdentifier& depname : el.second.dependencies)
+    {
+      auto pos = m.find(UniqueUnitId{false, depname});
+
+      // functional and procedural units may have bodies
+      if (pos == m.end())
+        pos = m.find(UniqueUnitId{true, depname});
+
+      if (pos == m.end())
+      {
+        logError() << "unknown unit: " << depname << std::endl;
+        continue;
+      }
+
+      dfs(m, *pos, res);
+    }
 
     res.push_back(el.second.unit);
   }
@@ -682,25 +698,25 @@ namespace
     // build maps for all units
     for (Unit_Struct_List_Struct* unit = adaUnit; unit != nullptr; unit = unit->Next)
     {
-      ROSE_ASSERT(unit);
+      ADA_ASSERT(unit);
 
       UniqueUnitId uniqueId = uniqueUnitName(unit->Unit);
 
       auto depres = deps.emplace( uniqueId,
                                   UnitEntry{&(unit->Unit), std::vector<AdaIdentifier>{}, false}
                                 );
-      ROSE_ASSERT(depres.second);
+      ADA_ASSERT(depres.second);
 
       // map specifications to their name
       auto idmres = idmap.emplace(unit->Unit.ID, depres.first);
-      ROSE_ASSERT(idmres.second);
+      ADA_ASSERT(idmres.second);
     }
 
     // link the units
     for (Unit_Struct_List_Struct* unit = adaUnit; unit != nullptr; unit = unit->Next)
     {
       IdEntryMap::iterator    uit = idmap.find(unit->Unit.ID);
-      ROSE_ASSERT(uit != idmap.end());
+      ADA_ASSERT(uit != idmap.end());
 
       DependencyMap::iterator pos = uit->second;
       const size_t            parentID = unit->Unit.Corresponding_Parent_Declaration;
@@ -708,11 +724,11 @@ namespace
 
       if (idpos != idmap.end())
       {
-        pos->second.dependencies.push_back(idpos->second->first.name);
+        pos->second.dependencies.emplace_back(idpos->second->first.name);
       }
       else if (parentID > 0)
       {
-        // parentID == 1.. is 1 used for the package standard??
+        // parentID == 1.. 1 refers to the package standard (currently not extracted from Asis)
         logWarn() << "unknown unit dependency: "
                   << pos->first.name << ' '
                   << (pos->first.isbody ? "[body]" : "[spec]")
@@ -763,13 +779,13 @@ namespace
       if (n == nullptr || !n->isTransformation()) return;
 
       SgLocatedNode* parentNode = isSgLocatedNode(n->get_parent());
-      ROSE_ASSERT(parentNode && !parentNode->isTransformation());
+      ADA_ASSERT(parentNode && !parentNode->isTransformation());
 
       updFileInfo(n->get_file_info(),        parentNode->get_file_info());
       updFileInfo(n->get_startOfConstruct(), parentNode->get_startOfConstruct());
       updFileInfo(n->get_endOfConstruct(),   parentNode->get_endOfConstruct());
 
-      ROSE_ASSERT(!n->isTransformation());
+      ADA_ASSERT(!n->isTransformation());
     }
   };
 
@@ -854,7 +870,7 @@ void ElemCreator::operator()(Element_Struct& elem)
 
 void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
 {
-  ROSE_ASSERT(file);
+  ADA_ASSERT(file);
 
   logInfo() << "Building ROSE AST .." << std::endl;
 
@@ -865,7 +881,7 @@ void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
 
   std::vector<Unit_Struct*> units    = sortUnitsTopologically(adaUnit, AstContext{}.scope(astScope));
 
-  initializeAdaTypes(astScope);
+  initializePkgStandard(astScope);
   std::for_each(units.begin(), units.end(), UnitCreator{AstContext{}.scope(astScope)});
   clearMappings();
 
@@ -881,6 +897,25 @@ void convertAsisToROSE(Nodes_Struct& headNodes, SgSourceFile* file)
   logInfo() << "Building ROSE AST done" << std::endl;
 }
 
+bool FAIL_ON_ERROR(AstContext ctx)
+{
+  static const char* failSuffix = ".adb";
+
+  if (!fail_on_error)
+    return fail_on_error;
+
+  const std::string& filename = ctx.sourceFileName();
+
+  return (  filename.size() > 3
+         && std::equal(filename.end()-4, filename.end(), failSuffix)
+         );
+}
+
+/// initialize translation settins
+void initialize(const Rose::Cmdline::Ada::CmdlineSettings& settings)
+{
+  if (settings.failhardAdb) fail_on_error = true;
+}
 
 
 }

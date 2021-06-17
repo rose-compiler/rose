@@ -349,6 +349,14 @@ static std::string toStringForRTI(const SgFunctionModifier::opencl_work_group_si
   return os.str();
 }
 
+// Rasmussen (6/4/2021): scoped enumerations from ROSETTA
+static std::string toStringForRTI(SgJovialTableStatement::WordsPerEntry &e) {
+  return std::to_string(static_cast<int>(e));
+}
+static std::string toStringForRTI(SgJovialTableType::StructureSpecifier &e) {
+  return std::to_string(static_cast<int>(e));
+}
+
 #if 0
 // None of these seem to be used
 

@@ -1117,107 +1117,111 @@ Z3Solver::parseEvidence() {
         return SmtlibSolver::parseEvidence();
 
 #ifdef ROSE_HAVE_Z3
-    Sawyer::Stopwatch evidenceTimer;
+    try {
+        Sawyer::Stopwatch evidenceTimer;
 
-    // If memoization is being used and we have a previous result, then use the previous result. However, we need to undo the
-    // variable renaming. That is, the memoized result is in terms of renumbered variables, so we need to use the
-    // latestMemoizationRewrite_ to rename the memoized variables back to the variable names used in the actual query from the
-    // caller.
-    SymbolicExpr::Hash memoId = latestMemoizationId();
-    if (memoId > 0) {
-        MemoizedEvidence::iterator found = memoizedEvidence.find(memoId);
-        if (found != memoizedEvidence.end()) {
-            evidence.clear();
-            SymbolicExpr::ExprExprHashMap undo = latestMemoizationRewrite_.invert();
-            evidence.clear();
-            BOOST_FOREACH (const ExprExprMap::Node &node, found->second.nodes())
-                evidence.insert(node.key()->substituteMultiple(undo),
-                                node.value()->substituteMultiple(undo));
-            stats.evidenceTime += evidenceTimer.stop();
+        // If memoization is being used and we have a previous result, then use the previous result. However, we need to undo the
+        // variable renaming. That is, the memoized result is in terms of renumbered variables, so we need to use the
+        // latestMemoizationRewrite_ to rename the memoized variables back to the variable names used in the actual query from the
+        // caller.
+        Sawyer::Optional<SymbolicExpr::Hash> memoId = latestMemoizationId();
+        if (memoId) {
+            MemoizedEvidence::iterator found = memoizedEvidence.find(*memoId);
+            if (found != memoizedEvidence.end()) {
+                evidence.clear();
+                SymbolicExpr::ExprExprHashMap undo = latestMemoizationRewrite_.invert();
+                evidence.clear();
+                BOOST_FOREACH (const ExprExprMap::Node &node, found->second.nodes())
+                    evidence.insert(node.key()->substituteMultiple(undo),
+                                    node.value()->substituteMultiple(undo));
+                stats.evidenceTime += evidenceTimer.stop();
+                return;
+            }
+        }
+
+        // If there are no assertions, then there is no evidence.
+        bool hasAssertions = false;
+        for (size_t i=0; i<z3Stack_.size() && !hasAssertions; ++i)
+            hasAssertions = !z3Stack_[i].empty();
+        if (!hasAssertions)
             return;
-        }
-    }
 
-    // If there are no assertions, then there is no evidence.
-    bool hasAssertions = false;
-    for (size_t i=0; i<z3Stack_.size() && !hasAssertions; ++i)
-        hasAssertions = !z3Stack_[i].empty();
-    if (!hasAssertions)
-        return;
+        // Get all the variables in all the assertions regardless of transaction level. This is somewhat expensive but is needed
+        // below because the Z3 interface lacks a way to get type information from the variables returned as part of the evidence.
+        VariableSet allVariables;
+        std::vector<SymbolicExpr::Ptr> allAssertions = assertions();
+        BOOST_FOREACH (const SymbolicExpr::Ptr &expr, allAssertions)
+            findVariables(expr, allVariables /*in,out*/);
 
-    // Get all the variables in all the assertions regardless of transaction level. This is somewhat expensive but is needed
-    // below because the Z3 interface lacks a way to get type information from the variables returned as part of the evidence.
-    VariableSet allVariables;
-    std::vector<SymbolicExpr::Ptr> allAssertions = assertions();
-    BOOST_FOREACH (const SymbolicExpr::Ptr &expr, allAssertions)
-        findVariables(expr, allVariables /*in,out*/);
+        // Parse the evidence
+        ASSERT_not_null(solver_);
+        z3::model model = solver_->get_model();
+        for (size_t i=0; i<model.size(); ++i) {
+            z3::func_decl fdecl = model[i];
 
-    // Parse the evidence
-    ASSERT_not_null(solver_);
-    z3::model model = solver_->get_model();
-    for (size_t i=0; i<model.size(); ++i) {
-        z3::func_decl fdecl = model[i];
+            if (fdecl.arity() != 0)
+                continue;
 
-        if (fdecl.arity() != 0)
-            continue;
-
-        // There's got to be a better way to get information about a z3::expr, but I haven't found it yet.  For bit vectors, we
-        // need to know the number of bits and the value, even if the value is wider than 64 bits. Threfore, we obtain the list
-        // of all variables from above (regardless of transaction level) and try to match of the z3 variable name with the ROSE
-        // variable name and obtain the type information from the ROSE variable.
-        SymbolicExpr::LeafPtr var;
-        BOOST_FOREACH (const SymbolicExpr::LeafPtr &v, allVariables.values()) {
-            if (v->toString() == fdecl.name().str()) {
-                var = v;
-                break;
+            // There's got to be a better way to get information about a z3::expr, but I haven't found it yet.  For bit vectors, we
+            // need to know the number of bits and the value, even if the value is wider than 64 bits. Threfore, we obtain the list
+            // of all variables from above (regardless of transaction level) and try to match of the z3 variable name with the ROSE
+            // variable name and obtain the type information from the ROSE variable.
+            SymbolicExpr::LeafPtr var;
+            BOOST_FOREACH (const SymbolicExpr::LeafPtr &v, allVariables.values()) {
+                if (v->toString() == fdecl.name().str()) {
+                    var = v;
+                    break;
+                }
             }
-        }
-        if (NULL == var) {
-            mlog[WARN] <<"cannot find evidence variable " <<fdecl.name() <<"\n";
-            continue;
-        }
+            if (NULL == var) {
+                mlog[WARN] <<"cannot find evidence variable " <<fdecl.name() <<"\n";
+                continue;
+            }
 
-        // Get the value
-        SymbolicExpr::Ptr val;
-        z3::expr interp = model.get_const_interp(fdecl);
-        if (interp.is_bv()) {
-            if (var->nBits() <= 64) {
-                val = SymbolicExpr::makeIntegerConstant(var->nBits(), interp.get_numeral_uint64());
+            // Get the value
+            SymbolicExpr::Ptr val;
+            z3::expr interp = model.get_const_interp(fdecl);
+            if (interp.is_bv()) {
+                if (var->nBits() <= 64) {
+                    val = SymbolicExpr::makeIntegerConstant(var->nBits(), interp.get_numeral_uint64());
+                } else {
+                    // Z3 doesn't have an API function to obtain the bits of a constant if the constant is wider than 64 bits. We
+                    // can't use the trick of splitting the Z3 bit vector into 64-bit chunks and converting each to a uint64_t and
+                    // concatenating the results because "bv.extract(hi,lo)" is no longer a number but rather an extraction
+                    // expression.  What we can do is get a string of decimal digits and parse it to binary. This isn't
+                    // particularly efficient since the conversions to/from string require divide/multiply by 10.
+                    std::string digits = interp.get_decimal_string(0);
+                    Sawyer::Container::BitVector bits(var->nBits());
+                    bits.fromDecimal(bits.hull(), digits);
+                    val = SymbolicExpr::makeIntegerConstant(bits);
+                    ASSERT_require(val->nBits() == var->nBits());
+                    ASSERT_require(val->isLeafNode() && val->isLeafNode()->isIntegerConstant());
+                }
+            } else if (interp.is_bool()) {
+                val = SymbolicExpr::makeBooleanConstant(interp.get_numeral_uint() != 0);
             } else {
-                // Z3 doesn't have an API function to obtain the bits of a constant if the constant is wider than 64 bits. We
-                // can't use the trick of splitting the Z3 bit vector into 64-bit chunks and converting each to a uint64_t and
-                // concatenating the results because "bv.extract(hi,lo)" is no longer a number but rather an extraction
-                // expression.  What we can do is get a string of decimal digits and parse it to binary. This isn't
-                // particularly efficient since the conversions to/from string require divide/multiply by 10.
-                std::string digits = interp.get_decimal_string(0);
-                Sawyer::Container::BitVector bits(var->nBits());
-                bits.fromDecimal(bits.hull(), digits);
-                val = SymbolicExpr::makeIntegerConstant(bits);
-                ASSERT_require(val->nBits() == var->nBits());
-                ASSERT_require(val->isLeafNode() && val->isLeafNode()->isIntegerConstant());
+                mlog[WARN] <<"cannot parse evidence expression for " <<*var <<"\n";
+                continue;
             }
-        } else if (interp.is_bool()) {
-            val = SymbolicExpr::makeBooleanConstant(interp.get_numeral_uint() != 0);
-        } else {
-            mlog[WARN] <<"cannot parse evidence expression for " <<*var <<"\n";
-            continue;
+
+            ASSERT_not_null(var);
+            ASSERT_not_null(val);
+            evidence.insert(var, val);
         }
 
-        ASSERT_not_null(var);
-        ASSERT_not_null(val);
-        evidence.insert(var, val);
-    }
-
-    // Cache the evidence. We need to cache the evidence in terms of the normalized variable names.
-    if (memoId > 0) {
-        ExprExprMap &me = memoizedEvidence[memoId];
-        BOOST_FOREACH (const ExprExprMap::Node &node, evidence.nodes()) {
-            me.insert(node.key()->substituteMultiple(latestMemoizationRewrite_),
-                      node.value()->substituteMultiple(latestMemoizationRewrite_));
+        // Cache the evidence. We need to cache the evidence in terms of the normalized variable names.
+        if (memoId) {
+            ExprExprMap &me = memoizedEvidence[*memoId];
+            BOOST_FOREACH (const ExprExprMap::Node &node, evidence.nodes()) {
+                me.insert(node.key()->substituteMultiple(latestMemoizationRewrite_),
+                          node.value()->substituteMultiple(latestMemoizationRewrite_));
+            }
         }
-    }
 
-    stats.evidenceTime += evidenceTimer.stop();
+        stats.evidenceTime += evidenceTimer.stop();
+    } catch (const z3::exception &e) {
+        throw Exception("Z3 failure: " + std::string(e.msg()));
+    }
 #else
     ASSERT_not_reachable("z3 not enabled");
 #endif

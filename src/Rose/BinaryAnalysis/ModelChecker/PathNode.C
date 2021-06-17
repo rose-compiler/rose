@@ -8,7 +8,7 @@
 #include <Rose/BinaryAnalysis/ModelChecker/SemanticCallbacks.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemanticsState.h>
+#include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/State.h>
 #include <rose_isnan.h>
 
 using namespace Sawyer::Message::Common;
@@ -114,6 +114,7 @@ PathNode::execute(const Settings::Ptr &settings, const SemanticCallbacksPtr &sem
         return;                                         // already executed
     } else if (settings->rejectUnknownInsns && executionUnit_->containsUnknownInsn()) {
         SAWYER_MESG(mlog[DEBUG]) <<"  contains not-allowed \"unknown\" instruction(s)\n";
+        executionFailed_ = true;
         return;
     }
 

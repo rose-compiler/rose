@@ -334,6 +334,68 @@ public:
     /** Execute one instruction. */
     void singleStep();
 
+    /** Execute to a system call. */
+    void stepIntoSyscall();
+
+#if 0 // [Robb Matzke 2021-05-26]: doesn't seem to work on Linux 5.4: always says PTRACE_SYSCALL_INFO_NONE
+    /** Information about a system call entry. */
+    struct SyscallEntry {
+        uint64_t functionNumber;                        /**< System call function number being invoked. */
+        std::vector<uint64_t> arguments;                /**< Up to six arguments. */
+
+        SyscallEntry()
+            : functionNumber(0) {}
+        SyscallEntry(uint64_t functionNumber, uint64_t arguments[6])
+            : functionNumber(functionNumber), arguments(arguments+0, arguments+6) {}
+    };
+
+    /** Returns information about a system call entry.
+     *
+     *  If the subordinate is stopped at a system call entry point, then information about the system call is
+     *  returned. Otherwise nothing is returned. */
+    Sawyer::Optional<SyscallEntry> syscallEntryInfo();
+
+    /** Information about a system call exit. */
+    class SyscallExit {
+        bool isError_;                                  // if true, then retval is -errno
+        int64_t retval_;
+    public:
+        SyscallExit()
+            : isError_(true), retval_(-EINVAL) {}
+        SyscallExit(int64_t retval, uint8_t isError)
+            : isError_(isError != 0), retval_(retval) {}
+
+        /** Return value if not an error. */
+        Sawyer::Optional<int64_t> returnValue() const {
+            if (isError_) {
+                return Sawyer::Nothing();
+            } else {
+                return retval_;
+            }
+        }
+
+        /** Return error number if present. */
+        Sawyer::Optional<int> errorNumber() const {
+            if (isError_) {
+                return -retval_;
+            } else {
+                return Sawyer::Nothing();
+            }
+        }
+
+        /** Raw return value. */
+        uint64_t rawReturn() const {
+            return (uint64_t)retval_;
+        }
+    };
+
+    /** Returns information about a system call exit.
+     *
+     *  If the subordinate is stopped at a system call exit, then information about the system call is returned. Otherwise
+     *  nothing is returned. */
+    Sawyer::Optional<SyscallExit> syscallExitInfo();
+#endif
+
     /** Run until the next breakpoint is reached. */
     void runToBreakpoint();
 

@@ -6,6 +6,9 @@
 #include "unparser.h"
 //~ #include "Utf8.h"
 #include "sageGeneric.h"
+#include "sageInterfaceAda.h"
+
+namespace si = SageInterface;
 
 //~ using namespace std;
 
@@ -54,6 +57,14 @@ namespace
     SgVariableSymbol& sy = symOf(n);
 
     return SG_DEREF(sy.get_declaration());
+  }
+
+  const SgExprListExp* callArguments(const SgFunctionRefExp& n)
+  {
+    if (const SgCallExpression* callexp = isSgCallExpression(n.get_parent()))
+      return callexp->get_args();
+
+    return nullptr;
   }
 
   std::string
@@ -182,6 +193,11 @@ namespace
       prn("others");
     }
 
+    void handle(SgNullptrValExp&)
+    {
+      prn("null");
+    }
+
     void handle(SgPntrArrRefExp& n)
     {
       SgExpression* lhs    = n.get_lhs_operand();
@@ -252,15 +268,17 @@ namespace
 
     void handle(SgCastExp& n)
     {
-      const bool typequal = n.get_cast_type() == SgCastExp::e_ada_type_qualification;
-
-      // only type qualifications have expression lists as arguments
-      //~ ROSE_ASSERT(typequal ^ (!isSgExprListExp(n.get_operand())));
+      const bool    qualexpr = n.get_cast_type() == SgCastExp::e_ada_type_qualification;
+      SgExpression& operand  = SG_DEREF(n.get_operand());
+      const bool    hasparen = operand.get_need_paren() || isSgAggregateInitializer(&operand);
 
       type(n.get_type());
-      prn(typequal ? "'" : "(");
+      if (qualexpr) prn("'");
+
+      // requires paren even if the expr has not set them
+      if (!hasparen) prn("(");
       expr(n.get_operand());
-      if (!typequal) prn(")");
+      if (!hasparen) prn(")");
     }
 
     void handle(SgTypeExpression& n)
@@ -342,6 +360,9 @@ namespace
 
     void handle(SgConstructorInitializer& n)
     {
+      ROSE_ASSERT(n.get_need_paren());
+      // n has get_need_paren set and thus they are printed by expr(...)
+
       //~ prn("(");
       exprlst(SG_DEREF(n.get_args()));
       //~ prn(")");
@@ -355,10 +376,24 @@ namespace
 
     void handle(SgFunctionRefExp& n)
     {
-      SgFunctionDeclaration& fundcl = SG_DEREF(n.getAssociatedFunctionDeclaration());
+      SgFunctionDeclaration& fundcl   = SG_DEREF(n.getAssociatedFunctionDeclaration());
+      SgScopeStatement*      dclscope = fundcl.get_scope();
+      const SgExprListExp*   args     = ctxRequiresScopeQualification ? callArguments(n) : nullptr;
+
+      // if args is not null: check if the scope is implied with a derived type
+      if (args)
+      {
+        auto              primitiveArgs   = si::ada::primitiveParameterPositions(fundcl);
+        SgScopeStatement* overridingScope = si::ada::overridingScope(*args, primitiveArgs);
+
+        if (overridingScope)
+        {
+          dclscope = overridingScope;
+        }
+      }
 
       if (ctxRequiresScopeQualification)
-        prn(scopeQual(fundcl.get_scope()));
+        prn(scopeQual(dclscope));
 
       prn(nameOf(n));
     }
@@ -431,13 +466,13 @@ namespace
     // print either lhs binop rhs
     //           or "binop" (lhs, rhs)
 
-    SgExpression* lhs    = n.get_lhs_operand();
-    SgExpression* rhs    = n.get_rhs_operand();
-    const bool    prefix = (  argRequiresCallSyntax(lhs)
-                           || argRequiresCallSyntax(rhs)
-                           );
+    SgExpression* lhs        = n.get_lhs_operand();
+    SgExpression* rhs        = n.get_rhs_operand();
+    const bool    callsyntax = (  argRequiresCallSyntax(lhs)
+                               || argRequiresCallSyntax(rhs)
+                               );
 
-    if (prefix)
+    if (callsyntax)
     {
       prn("\"");
       prn(operator_sym(n));
@@ -446,20 +481,25 @@ namespace
 
     expr(lhs);
     prn(" ");
-    prn(prefix ? std::string(", ") : operator_sym(n));
+    prn(callsyntax ? std::string(", ") : operator_sym(n));
     prn(" ");
     expr(rhs);
 
-    if (prefix) prn(")");
+    if (callsyntax) prn(")");
   }
 
   void AdaExprUnparser::handle(SgUnaryOp& n)
   {
-    const bool isprefix = true; // \todo
+    SgExpression* oper       = n.get_operand();
+    const bool    callsyntax = argRequiresCallSyntax(oper);
 
-    if (isprefix) { prn(operator_sym(n)); prn(" "); }
+    // are there any postfix operators in Ada
+
+    if (callsyntax) prn("\"");
+    prn(operator_sym(n));
+    prn(callsyntax ? "\" (" : " ");
     expr(n.get_operand());
-    if (!isprefix) prn(operator_sym(n));
+    if (callsyntax) prn(")");
   }
 
   void AdaExprUnparser::exprlst(SgExprListExp& exp, std::string sep)
@@ -520,11 +560,13 @@ void Unparse_Ada::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
   SG_UNEXPECTED_NODE(*expr);
 }
 
-void Unparse_Ada::unparseExpression(SgExpression* expr, SgUnparse_Info& info)
+void Unparse_Ada::unparseExpression(SgExpression* n, SgUnparse_Info& info)
 {
-  const bool withScopeQual = info.get_current_scope() != NULL;
+  const bool withScopeQual = info.get_current_scope() != nullptr;
 
-  sg::dispatch(AdaExprUnparser{*this, info, std::cerr, withScopeQual}, expr);
+  AdaExprUnparser exprUnparser{*this, info, std::cerr, false /* scope qual, will be passed to expr(...) */};
+
+  exprUnparser.expr(n, withScopeQual);
 }
 
 

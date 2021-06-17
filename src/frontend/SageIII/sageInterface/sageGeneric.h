@@ -11,12 +11,10 @@
 
 // note: the comments are right aligned to support code-blocks doxygen 1.3.X :)
 
-#include <stdexcept>
 #include <type_traits>
 
 #if !defined(NDEBUG)
 #include <typeinfo>
-#include <iostream>
 #include <sstream>
 #endif /* NDEBUG */
 
@@ -77,24 +75,18 @@ namespace sg
     return res;
   }
 
-  static inline
-  void report_error(std::string desc, const char* file = 0, size_t ln = 0)
-  {
-    if (file)
-    {
-      const std::string at(" at ");
-      const std::string sep(" : ");
-      const std::string num(conv<std::string>(ln));
+  // \note implemented in SageInterfaceAda.h
+  // \{
+  [[noreturn]]
+  void report_error(std::string desc, const char* file = nullptr, size_t ln = 0);
 
-      desc = desc + at + file + sep + num;
-    }
+  [[noreturn]]
+  void unexpected_node(const SgNode& n, const char* file = nullptr, size_t ln = 0);
+  /// \}
 
-    std::cerr << desc << std::endl;
-    throw std::logic_error(desc);
-  }
 
   static inline
-  void report_error_if(bool iserror, const std::string& desc, const char* file = 0, size_t ln = 0)
+  void report_error_if(bool iserror, const std::string& desc, const char* file = nullptr, size_t ln = 0)
   {
     if (!iserror) return;
 
@@ -105,17 +97,11 @@ namespace sg
   template <class T>
   T& deref(T* ptr, const char* file = 0, size_t ln = 0)
   {
-    report_error_if(!ptr, "null dereference ", file, ln);
+    report_error_if(!ptr, "assertion failed: null dereference ", file, ln);
     return *ptr;
   }
 
-  static inline
-  void unexpected_node(const SgNode& n, const char* file = 0, size_t ln = 0)
-  {
-    static const std::string msg = "unexpected node-type: ";
-
-    report_error(msg + typeid(n).name(), file, ln);
-  }
+  // \note implemented in SageInterfaceAda.h
 
 /**
  * struct DispatchHandler

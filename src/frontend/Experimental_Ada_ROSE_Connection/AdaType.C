@@ -33,7 +33,7 @@ namespace
       : base(), el(elem), ctx(astctx)
       {}
 
-      void set(SgType* ty)                       { ROSE_ASSERT(ty); res = ty; }
+      void set(SgType* ty)                       { ADA_ASSERT(ty); res = ty; }
 
       void handle(SgNode& n)                     { SG_UNEXPECTED_NODE(n); }
 
@@ -92,7 +92,7 @@ namespace
                       << " / " << typeEx.Corresponding_Name_Definition
                       << std::endl;
 
-            ROSE_ASSERT(!FAIL_ON_ERROR);
+            ADA_ASSERT(!FAIL_ON_ERROR(ctx));
             res = sb::buildVoidType();
           }
 
@@ -115,7 +115,7 @@ namespace
 
       default:
         logWarn() << "Unknown type expression: " << typeEx.Expression_Kind << std::endl;
-        ROSE_ASSERT(!FAIL_ON_ERROR);
+        ADA_ASSERT(!FAIL_ON_ERROR(ctx));
         res = sb::buildVoidType();
     }
 
@@ -126,7 +126,7 @@ namespace
   getExprTypeID(Element_ID tyid, AstContext ctx)
   {
     Element_Struct& elem = retrieveAs<Element_Struct>(elemMap(), tyid);
-    ROSE_ASSERT(elem.Element_Kind == An_Expression);
+    ADA_ASSERT(elem.Element_Kind == An_Expression);
 
     return getExprType(elem.The_Union.Expression, ctx);
   }
@@ -135,7 +135,7 @@ namespace
   SgType&
   getAccessType(Definition_Struct& def, AstContext ctx)
   {
-    ROSE_ASSERT(def.Definition_Kind == An_Access_Definition);
+    ADA_ASSERT(def.Definition_Kind == An_Access_Definition);
 
     logKind("An_Access_Definition");
 
@@ -144,8 +144,22 @@ namespace
 
     switch (access.Access_Definition_Kind)
     {
-      case An_Anonymous_Access_To_Variable:            // [...] access subtype_mark
       case An_Anonymous_Access_To_Constant:            // [...] access constant subtype_mark
+      case An_Anonymous_Access_To_Variable:            // [...] access subtype_mark
+        {
+          const bool isConstant = access.Access_Definition_Kind == An_Anonymous_Access_To_Constant;
+          logKind(isConstant ? "An_Anonymous_Access_To_Constant" : "An_Anonymous_Access_To_Variable");
+
+          SgType& ty = getDeclTypeID(access.Anonymous_Access_To_Object_Subtype_Mark, ctx);
+
+          res = &mkAdaAccessType(&ty);
+
+          /** unused fields:
+                 bool                         Has_Null_Exclusion;
+           */
+          break;
+        }
+
       case An_Anonymous_Access_To_Procedure:           // access procedure
       case An_Anonymous_Access_To_Protected_Procedure: // access protected procedure
       case An_Anonymous_Access_To_Function:            // access function
@@ -153,8 +167,8 @@ namespace
       case Not_An_Access_Definition: /* break; */ // An unexpected element
       default:
         logWarn() << "ak? " << access.Access_Definition_Kind << std::endl;
-        res = sb::buildPointerType(sb::buildVoidType());
-        ROSE_ASSERT(!FAIL_ON_ERROR);
+        res = &mkAdaAccessType(sb::buildVoidType());
+        ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
 
     return SG_DEREF(res);
@@ -171,7 +185,7 @@ namespace
       return SG_DEREF(res);
     }
 
-    ROSE_ASSERT(elem.Element_Kind == A_Definition);
+    ADA_ASSERT(elem.Element_Kind == A_Definition);
     Definition_Struct& def = elem.The_Union.Definition;
 
     if (def.Definition_Kind == An_Access_Definition)
@@ -179,7 +193,7 @@ namespace
 
     logError() << "getDeclType: unhandled definition kind: " << def.Definition_Kind
                << std::endl;
-    ROSE_ASSERT(!FAIL_ON_ERROR);
+    ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     return SG_DEREF(sb::buildVoidType());
   }
 
@@ -215,7 +229,7 @@ namespace
   getRecordBodyID(Element_ID recid, AstContext ctx)
   {
     Element_Struct&           elem = retrieveAs<Element_Struct>(elemMap(), recid);
-    ROSE_ASSERT(elem.Element_Kind == A_Definition);
+    ADA_ASSERT(elem.Element_Kind == A_Definition);
 
     Definition_Struct&        def = elem.The_Union.Definition;
 
@@ -228,7 +242,7 @@ namespace
       return sgdef;
     }
 
-    ROSE_ASSERT(def.Definition_Kind == A_Record_Definition);
+    ADA_ASSERT(def.Definition_Kind == A_Record_Definition);
 
     logKind("A_Record_Definition");
     return getRecordBody(def.The_Union.The_Record_Definition, ctx);
@@ -237,15 +251,15 @@ namespace
   SgClassDeclaration&
   getParentRecordDecl(Definition_Struct& def, AstContext ctx)
   {
-    ROSE_ASSERT(def.Definition_Kind == A_Subtype_Indication);
+    ADA_ASSERT(def.Definition_Kind == A_Subtype_Indication);
 
     logKind("A_Subtype_Indication");
 
     Subtype_Indication_Struct& subtype = def.The_Union.The_Subtype_Indication;
-    ROSE_ASSERT (subtype.Subtype_Constraint == 0);
+    ADA_ASSERT (subtype.Subtype_Constraint == 0);
 
     Element_Struct&            subelem = retrieveAs<Element_Struct>(elemMap(), subtype.Subtype_Mark);
-    ROSE_ASSERT(subelem.Element_Kind == An_Expression);
+    ADA_ASSERT(subelem.Element_Kind == An_Expression);
 
     SgNode*                    basenode = &getExprType(subelem.The_Union.Expression, ctx);
     SgClassDeclaration*        res = isSgClassDeclaration(basenode);
@@ -268,15 +282,15 @@ namespace
 
       void operator()(Element_Struct& elem)
       {
-        ROSE_ASSERT(elem.Element_Kind == A_Declaration);
+        ADA_ASSERT(elem.Element_Kind == A_Declaration);
         logKind("A_Declaration");
 
         Declaration_Struct& decl = elem.The_Union.Declaration;
-        ROSE_ASSERT(decl.Declaration_Kind == An_Enumeration_Literal_Specification);
+        ADA_ASSERT(decl.Declaration_Kind == An_Enumeration_Literal_Specification);
         logKind("An_Enumeration_Literal_Specification");
 
         NameData            name = singleName(decl, ctx);
-        ROSE_ASSERT(name.ident == name.fullName);
+        ADA_ASSERT(name.ident == name.fullName);
 
         // \todo name.ident could be a character literal, such as 'c'
         //       since SgEnumDeclaration only accepts SgInitializedName as enumerators
@@ -287,7 +301,7 @@ namespace
         attachSourceLocation(sgnode, elem, ctx);
         //~ sg::linkParentChild(enumdcl, sgnode, &SgEnumDeclaration::append_enumerator);
         enumdcl.append_enumerator(&sgnode);
-        ROSE_ASSERT(sgnode.get_parent() == &enumdcl);
+        ADA_ASSERT(sgnode.get_parent() == &enumdcl);
 
         recordNode(asisVars(), name.id(), sgnode);
       }
@@ -301,7 +315,7 @@ namespace
   TypeData
   getTypeFoundation(const std::string& name, Definition_Struct& def, AstContext ctx)
   {
-    ROSE_ASSERT(def.Definition_Kind == A_Type_Definition);
+    ADA_ASSERT(def.Definition_Kind == A_Type_Definition);
 
     logKind("A_Type_Definition");
 
@@ -352,7 +366,7 @@ namespace
 
       case An_Enumeration_Type_Definition:         // 3.5.1(2)
         {
-          ROSE_ASSERT(name.size());
+          ADA_ASSERT(name.size());
 
           logKind("An_Enumeration_Type_Definition");
 
@@ -398,7 +412,7 @@ namespace
           SgExpression&         digits     = getExprID_opt(typenode.Digits_Expression, ctx);
           SgAdaTypeConstraint*  constraint = getConstraintID_opt(typenode.Real_Range_Constraint, ctx);
           SgAdaRangeConstraint* rngconstr  = isSgAdaRangeConstraint(constraint);
-          ROSE_ASSERT(!constraint || rngconstr);
+          ADA_ASSERT(!constraint || rngconstr);
 
           res.n = &mkAdaFloatType(digits, rngconstr);
           break;
@@ -414,7 +428,7 @@ namespace
           SgType&                    compType    = getDefinitionTypeID(typenode.Array_Component_Definition, ctx);
 
           res.n = &mkArrayType(compType, indicesAst, false /* constrained */);
-          ROSE_ASSERT(indicesAst.get_parent());
+          ADA_ASSERT(indicesAst.get_parent());
           /* unused fields:
           */
           break ;
@@ -430,7 +444,7 @@ namespace
           SgType&                    compType    = getDefinitionTypeID(typenode.Array_Component_Definition, ctx);
 
           res.n = &mkArrayType(compType, indicesAst, true /* unconstrained */);
-          ROSE_ASSERT(indicesAst.get_parent());
+          ADA_ASSERT(indicesAst.get_parent());
           /* unused fields:
           */
           break;
@@ -552,12 +566,12 @@ namespace
       default:
         {
           logWarn() << "unhandled type kind " << typenode.Type_Kind << std::endl;
-          ROSE_ASSERT(!FAIL_ON_ERROR);
+          ADA_ASSERT(!FAIL_ON_ERROR(ctx));
           res.n = sb::buildVoidType();
         }
     }
 
-    ROSE_ASSERT(res.n);
+    ADA_ASSERT(res.n);
     return res;
   }
 
@@ -573,7 +587,7 @@ namespace
           TypeData resdata = getTypeFoundation("", def, ctx);
 
           res = isSgType(resdata.n);
-          ROSE_ASSERT(res);
+          ADA_ASSERT(res);
           break;
         }
 
@@ -621,7 +635,7 @@ namespace
       default:
         logWarn() << "Unhandled type definition: " << def.Definition_Kind << std::endl;
         res = sb::buildVoidType();
-        ROSE_ASSERT(!FAIL_ON_ERROR);
+        ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
 
     return SG_DEREF(res);
@@ -637,6 +651,17 @@ namespace
     SgAdaRangeConstraint& constraint = mkAdaRangeConstraint(range);
     SgAdaSubtype&         subtype = mkAdaSubtype(ty, constraint);
     SgTypedefDeclaration& sgnode = mkTypeDecl(name, subtype, scope);
+
+    scope.append_statement(&sgnode);
+    return sgnode;
+  }
+
+  SgTypedefDeclaration&
+  declareStringType(const std::string& name, SgType& positive, SgType& comp, SgAdaPackageSpec& scope)
+  {
+    SgExprListExp&        idx     = mkExprListExp({sb::buildTypeExpression(&positive)});
+    SgArrayType&          strtype = mkArrayType(comp, idx, true);
+    SgTypedefDeclaration& sgnode  = mkTypeDecl(name, strtype, scope);
 
     scope.append_statement(&sgnode);
     return sgnode;
@@ -672,12 +697,12 @@ namespace
 std::pair<SgInitializedName*, SgAdaRenamingDecl*>
 getExceptionBase(Element_Struct& el, AstContext ctx)
 {
-  ROSE_ASSERT(el.Element_Kind == An_Expression);
+  ADA_ASSERT(el.Element_Kind == An_Expression);
 
   NameData        name = getQualName(el, ctx);
   Element_Struct& elem = name.elem();
 
-  ROSE_ASSERT(elem.Element_Kind == An_Expression);
+  ADA_ASSERT(elem.Element_Kind == An_Expression);
   Expression_Struct& ex  = elem.The_Union.Expression;
 
   //~ use this if package standard is included
@@ -700,7 +725,7 @@ getExceptionBase(Element_Struct& el, AstContext ctx)
     return std::make_pair(ini, nullptr);
 
   // last resort: create a new initialized name representing the exception
-  ROSE_ASSERT(!FAIL_ON_ERROR);
+  ADA_ASSERT(!FAIL_ON_ERROR(ctx));
   logError() << "Unknown exception: " << ex.Name_Image << std::endl;
 
   // \todo create an SgInitializedName if the exception was not found
@@ -722,10 +747,10 @@ getConstraintID(Element_ID el, AstContext ctx)
 
   SgAdaTypeConstraint*  res = nullptr;
   Element_Struct&       elem = retrieveAs<Element_Struct>(elemMap(), el);
-  ROSE_ASSERT(elem.Element_Kind == A_Definition);
+  ADA_ASSERT(elem.Element_Kind == A_Definition);
 
   Definition_Struct&    def = elem.The_Union.Definition;
-  ROSE_ASSERT(def.Definition_Kind == A_Constraint);
+  ADA_ASSERT(def.Definition_Kind == A_Constraint);
 
   logKind("A_Constraint");
 
@@ -749,8 +774,7 @@ getConstraintID(Element_ID el, AstContext ctx)
       {
         logKind("A_Range_Attribute_Reference");
 
-        SgExpression& expr     = getExprID(constraint.Range_Attribute, ctx);
-        SgRangeExp&   rangeExp = SG_DEREF(isSgRangeExp(&expr));
+        SgExpression& rangeExp = getExprID(constraint.Range_Attribute, ctx);
 
         res = &mkAdaRangeConstraint(rangeExp);
         break;
@@ -773,7 +797,7 @@ getConstraintID(Element_ID el, AstContext ctx)
     case A_Discriminant_Constraint:             // 3.2.2
     default:
       logWarn() << "Unhandled constraint: " << constraint.Constraint_Kind << std::endl;
-      ROSE_ASSERT(!FAIL_ON_ERROR);
+      ADA_ASSERT(!FAIL_ON_ERROR(ctx));
       res = &mkAdaRangeConstraint(mkRangeExp());
   }
 
@@ -799,7 +823,7 @@ getDefinitionTypeID(Element_ID defid, AstContext ctx)
   }
 
   Element_Struct&     elem = retrieveAs<Element_Struct>(elemMap(), defid);
-  ROSE_ASSERT(elem.Element_Kind == A_Definition);
+  ADA_ASSERT(elem.Element_Kind == A_Definition);
 
   return getDefinitionType(elem.The_Union.Definition, ctx);
 }
@@ -808,7 +832,7 @@ SgClassDeclaration&
 getParentRecordDeclID(Element_ID defid, AstContext ctx)
 {
   Element_Struct&     elem = retrieveAs<Element_Struct>(elemMap(), defid);
-  ROSE_ASSERT(elem.Element_Kind == A_Definition);
+  ADA_ASSERT(elem.Element_Kind == A_Definition);
 
   return getParentRecordDecl(elem.The_Union.Definition, ctx);
 }
@@ -817,60 +841,78 @@ getParentRecordDeclID(Element_ID defid, AstContext ctx)
 TypeData
 getTypeFoundation(const std::string& name, Declaration_Struct& decl, AstContext ctx)
 {
-  ROSE_ASSERT( decl.Declaration_Kind == An_Ordinary_Type_Declaration );
+  ADA_ASSERT( decl.Declaration_Kind == An_Ordinary_Type_Declaration );
 
   Element_Struct&         elem = retrieveAs<Element_Struct>(elemMap(), decl.Type_Declaration_View);
-  ROSE_ASSERT(elem.Element_Kind == A_Definition);
+  ADA_ASSERT(elem.Element_Kind == A_Definition);
 
   Definition_Struct&      def = elem.The_Union.Definition;
-  ROSE_ASSERT(def.Definition_Kind == A_Type_Definition);
+  ADA_ASSERT(def.Definition_Kind == A_Type_Definition);
 
   return getTypeFoundation(name, def, ctx);
 }
 
-void initializeAdaTypes(SgGlobal& global)
+void initializePkgStandard(SgGlobal& global)
 {
+  // make available declarations from the package standard
+  // https://www.adaic.org/resources/add_content/standards/05rm/html/RM-A-1.html
+
   constexpr auto ADAMAXINT = std::numeric_limits<int>::max();
 
-  SgAdaPackageSpec& hiddenScope = mkLocatedNode<SgAdaPackageSpec>();
+  SgAdaPackageSpecDecl& stddecl = mkAdaPackageSpecDecl("Standard", global);
+  SgAdaPackageSpec&     stdspec = SG_DEREF(stddecl.get_definition());
 
-  hiddenScope.set_parent(&global);
-
-  SgType&           exceptionType = SG_DEREF(sb::buildOpaqueType("Exception", &hiddenScope));
+  stddecl.set_scope(&global);
 
   // \todo reconsider using a true Ada exception representation
+  SgType&               exceptionType = SG_DEREF(sb::buildOpaqueType("Exception", &stdspec));
+
   adaTypes()["EXCEPTION"]           = &exceptionType;
 
-  adaTypes()["INTEGER"]             = sb::buildIntType();
-  adaTypes()["CHARACTER"]           = sb::buildCharType();
+  // \todo reconsider modeling Boolean as an enumeration of True and False
+  adaTypes()["BOOLEAN"]             = sb::buildBoolType();
+
+  // integral types
+  SgType& intType                   = SG_DEREF(sb::buildIntType());
+  SgType& characterType             = SG_DEREF(sb::buildCharType());
+  SgType& wideCharacterType         = SG_DEREF(sb::buildChar16Type());
+  SgType& wideWideCharacterType     = SG_DEREF(sb::buildChar32Type());
+
+  adaTypes()["INTEGER"]             = &intType;
+  adaTypes()["CHARACTER"]           = &characterType;
+  adaTypes()["WIDE_CHARACTER"]      = &wideCharacterType;
+  adaTypes()["WIDE_WIDE_CHARACTER"] = &wideWideCharacterType;
   adaTypes()["LONG_INTEGER"]        = sb::buildLongType(); // Long int
   adaTypes()["LONG_LONG_INTEGER"]   = sb::buildLongLongType(); // Long long int
   adaTypes()["SHORT_INTEGER"]       = sb::buildShortType(); // Long long int
-  adaTypes()["SHORT_SHORT_INTEGER"] = declareIntSubtype("Short_Short_Integer", -(1 << 7), (1 << 7)-1, hiddenScope).get_type();
+  adaTypes()["SHORT_SHORT_INTEGER"] = declareIntSubtype("Short_Short_Integer", -(1 << 7), (1 << 7)-1, stdspec).get_type();
 
-  // \todo items
+  // \todo floating point types
   adaTypes()["FLOAT"]               = sb::buildFloatType();  // Float is a subtype of Real
   adaTypes()["SHORT_FLOAT"]         = sb::buildFloatType();  // Float is a subtype of Real
   adaTypes()["LONG_FLOAT"]          = sb::buildDoubleType(); // Float is a subtype of Real
   adaTypes()["LONG_LONG_FLOAT"]     = sb::buildLongDoubleType(); // Long long Double?
 
-  // \todo instead of ADAMAXINT a type attribute Integer'Last shall be set
-  adaTypes()["POSITIVE"]            = declareIntSubtype("Positive", 1, ADAMAXINT, hiddenScope).get_type();
-  adaTypes()["NATURAL"]             = declareIntSubtype("Natural",  0, ADAMAXINT, hiddenScope).get_type();
+  // int subtypes
+  SgType& positiveType              = SG_DEREF(declareIntSubtype("Positive", 1, ADAMAXINT, stdspec).get_type());
 
-  //\todo reconsider modeling Boolean as an enumeration of True and False
-  adaTypes()["BOOLEAN"]             = sb::buildBoolType();
+  adaTypes()["POSITIVE"]            = &positiveType;
+  adaTypes()["NATURAL"]             = declareIntSubtype("Natural",  0, ADAMAXINT, stdspec).get_type();
 
-  // String is represented as Fortran-String with null
-  adaTypes()["STRING"]              = sb::buildStringType(sb::buildNullExpression());
+
+  // String types
+  adaTypes()["STRING"]              = declareStringType("String",           positiveType, characterType,         stdspec).get_type();
+  adaTypes()["WIDE_STRING"]         = declareStringType("Wide_String",      positiveType, wideCharacterType,     stdspec).get_type();
+  adaTypes()["WIDE_WIDE_STRING"]    = declareStringType("Wide_Wide_String", positiveType, wideWideCharacterType, stdspec).get_type();
 
   // Ada standard exceptions
-  adaExcps()["CONSTRAINT_ERROR"]    = &declareException("Constraint_Error", exceptionType, hiddenScope);
-  adaExcps()["PROGRAM_ERROR"]       = &declareException("Program_Error",    exceptionType, hiddenScope);
-  adaExcps()["STORAGE_ERROR"]       = &declareException("Storage_Error",    exceptionType, hiddenScope);
-  adaExcps()["TASKING_ERROR"]       = &declareException("Tasking_Error",    exceptionType, hiddenScope);
+  adaExcps()["CONSTRAINT_ERROR"]    = &declareException("Constraint_Error", exceptionType, stdspec);
+  adaExcps()["PROGRAM_ERROR"]       = &declareException("Program_Error",    exceptionType, stdspec);
+  adaExcps()["STORAGE_ERROR"]       = &declareException("Storage_Error",    exceptionType, stdspec);
+  adaExcps()["TASKING_ERROR"]       = &declareException("Tasking_Error",    exceptionType, stdspec);
 
-  adaPkgs()["STANDARD.ASCII"]       = &declarePackage("Ascii", hiddenScope);
+  // added packages
+  adaPkgs()["STANDARD.ASCII"]       = &declarePackage("Ascii", stdspec);
   adaPkgs()["ASCII"]                = adaPkgs()["STANDARD.ASCII"];
 }
 
@@ -901,7 +943,7 @@ void ExHandlerTypeCreator::operator()(Element_Struct& elem)
 
 ExHandlerTypeCreator::operator SgType&() const
 {
-  ROSE_ASSERT(lst.size() > 0);
+  ADA_ASSERT(lst.size() > 0);
 
   if (lst.size() == 1)
     return SG_DEREF(lst[0]);

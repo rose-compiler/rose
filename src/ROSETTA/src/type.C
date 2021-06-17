@@ -920,7 +920,8 @@ Grammar::setUpTypes ()
                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, DEF_DELETE);
      JovialTableType.setDataPrototype ("int", "rank" , "= 0",
                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL,  NO_DELETE);
-     JovialTableType.setDataPrototype ("unsigned int", "structure_specifier", "= 0",
+     JovialTableType.setDataPrototype ("SgJovialTableType::StructureSpecifier",
+                                       "structure_specifier", "= SgJovialTableType::StructureSpecifier::e_default",
                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL,  NO_DELETE);
      JovialTableType.setDataPrototype ("unsigned int", "bits_per_entry" , "= 0",
                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS,  NO_TRAVERSAL,  NO_DELETE);
@@ -1123,7 +1124,7 @@ Grammar::setUpTypes ()
      AdaAccessType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
 
      AdaAccessType.setDataPrototype ("SgType*"      , "base_type", "= NULL",
-                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      // MS: is it object or subprogram access type?
      AdaAccessType.setDataPrototype ("bool", "is_object_type", "= true",
@@ -1140,11 +1141,11 @@ Grammar::setUpTypes ()
      // MS: for subprogram access types, retain profile of parameters at access type
      //     definition site
      AdaAccessType.setDataPrototype ("SgFunctionParameterList*", "subprogram_profile", "= NULL",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      // for function access types, retain the return type
      AdaAccessType.setDataPrototype ("SgType*", "return_type", "= NULL",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      // MS: is subprogram access type protected?
      AdaAccessType.setDataPrototype ("bool", "is_protected", "= false",
@@ -1155,10 +1156,10 @@ Grammar::setUpTypes ()
      AdaSubtype.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
 
      AdaSubtype.setDataPrototype ("SgType*"      , "base_type", "= NULL",
-                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      AdaSubtype.setDataPrototype ("SgAdaTypeConstraint*", "constraint", "= NULL",
-                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      AdaSubtype.setDataPrototype ("bool", "fromRootType", "= false",
                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1168,14 +1169,14 @@ Grammar::setUpTypes ()
      AdaDerivedType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
 
      AdaDerivedType.setDataPrototype ("SgType*"      , "base_type", "= NULL",
-                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      AdaModularType.setFunctionPrototype ("HEADER_ADA_MODULAR_TYPE", "../Grammar/Type.code" );
 
      AdaModularType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
 
      AdaModularType.setDataPrototype ("SgExpression*", "modexpr", "= NULL",
-                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                  CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
      AdaFloatType.setFunctionPrototype ("HEADER_ADA_FLOAT_TYPE", "../Grammar/Type.code" );
@@ -1183,10 +1184,10 @@ Grammar::setUpTypes ()
      AdaFloatType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
 
      AdaFloatType.setDataPrototype ("SgExpression*", "digits", "= NULL",
-                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      AdaFloatType.setDataPrototype ("SgAdaRangeConstraint*", "constraint", "= NULL",
-                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      JovialBitType.setFunctionPrototype ("HEADER_JOVIAL_BIT_TYPE", "../Grammar/Type.code" );
      JovialBitType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );

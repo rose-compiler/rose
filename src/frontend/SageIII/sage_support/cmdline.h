@@ -146,6 +146,35 @@ namespace Cmdline {
     ProcessParam (SgProject* project, std::vector<std::string>& argv);
   } // namespace Rose::Cmdline::Gnu
 
+  namespace Ada {
+    static const std::string option_prefix = "-rose:ada:";
+
+    struct CmdlineSettings
+    {
+      bool processPredefinedUnits     = true;
+      bool processImplementationUnits = true;
+      bool failhardAdb                = false;
+      bool asisDebug                  = false;
+      bool logTrace                   = false;
+      bool logInfo                    = false;
+      bool logWarn                    = false;
+    };
+
+    /** @returns true if the Ada option requires a user-specified argument.
+     */
+    bool
+    OptionRequiresArgument (const std::string& option);
+
+    void
+    Process(SgProject* project, std::vector<std::string>& argv);
+
+    void
+    StripRoseOptions (std::vector<std::string>& argv);
+
+    // returns the settings after they have been processed.
+    CmdlineSettings commandlineSettings();
+  }
+
   namespace Java {
     static const std::string option_prefix = "-rose:java:";
 
