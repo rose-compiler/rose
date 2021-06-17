@@ -178,7 +178,7 @@ genericSwitches() {
                     "or \"throw\" a Rose::Diagnostics::FailedAssertion exception. The default behavior depends on how ROSE "
                     "was configured."));
 
-    gen.insert(Switch("threads")
+    gen.insert(Switch("threads", 'j')
                .argument("n", nonNegativeIntegerParser(genericSwitchArgs.threads))
                .doc("Number of threads to use for algorithms that support multi-threading.  The default is " +
                     StringUtility::numberToString(genericSwitchArgs.threads) + ". A value of zero means use the "
