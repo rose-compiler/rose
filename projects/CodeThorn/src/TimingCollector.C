@@ -33,6 +33,7 @@ namespace CodeThorn {
     stringstream ss;
     ss<<"Front end                      : "<<runtime(t[frontEnd])<<endl;
     ss<<"Normalization                  : "<<runtime(t[normalization])<<endl;
+    ss<<"Labeler                        : "<<runtime(t[labeler])<<endl;
     ss<<"VariableIdMapping              : "<<runtime(t[variableIdMapping])<<endl;
     ss<<"FunctionCallMapping            : "<<runtime(t[functionCallMapping])<<endl;
     ss<<"Class hierarchy analysis       : "<<runtime(t[classHierarchyAnalysis])<<endl;

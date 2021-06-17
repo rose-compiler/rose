@@ -48,7 +48,7 @@ namespace CodeThorn {
   private:
 
     // provide set of all locations (unused function)
-    LabelSet determineRecordFreeFunctions(CFAnalysis& cfAnalyzer, Flow& flow);
+    LabelSet determineRecordFreeFunctions(CFAnalysis& cfAnalysis, Flow& flow);
 
     CodeThorn::LabelSet definitiveLocations;
     CodeThorn::LabelSet potentialLocations;

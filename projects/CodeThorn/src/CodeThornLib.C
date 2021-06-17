@@ -106,6 +106,8 @@ void codethornBackTraceHandler(int sig) {
   exit(1);
 }
 
+
+
 void CodeThorn::initDiagnostics() {
   Rose::Diagnostics::initialize();
   // general logger for CodeThorn library functions
@@ -122,7 +124,13 @@ void CodeThorn::initDiagnostics() {
 
 Sawyer::Message::Facility CodeThorn::logger;
 
+// deprecated, wrapper for CodeThornLib::evaluateExpressionWithEmptyState
+AbstractValue CodeThorn::evaluateExpressionWithEmptyState(SgExpression* expr) {
+  return CodeThorn::CodeThornLib::evaluateExpressionWithEmptyState(expr);
+}
+  
 namespace CodeThorn {
+  namespace CodeThornLib {
   void turnOffRoseWarnings() {
     string turnOffRoseWarnings=string("Rose(none,>=error),Rose::EditDistance(none,>=error),Rose::FixupAstDeclarationScope(none,>=error),")
       +"Rose::FixupAstSymbolTablesToSupportAliasedSymbols(none,>=error),"
@@ -329,6 +337,12 @@ namespace CodeThorn {
     return analyzer;
   }
 
+  IOAnalyzer* createEStateAnalyzer(CodeThornOptions& ctOpt, LTLOptions& ltlOpt, Labeler* labeler, VariableIdMappingExtended* vid, CFAnalysis* cfAnalysis, Solver* solver) {
+    IOAnalyzer* ioAnalyzer=CodeThornLib::createAnalyzer(ctOpt,ltlOpt);
+    return ioAnalyzer;
+  }
+
+  
   void optionallyRunInternalChecks(CodeThornOptions& ctOpt, int argc, char * argv[]) {
     if(ctOpt.internalChecks) {
       if(CodeThorn::internalChecks(argc,argv)==false) {
@@ -628,7 +642,7 @@ namespace CodeThorn {
       normalization.normalizeAst(sageProject,ctOpt.normalizeLevel);
     }
     timingCollector.stopTimer(TimingCollector::normalization);
-    CodeThorn::optionallyRunInliner(ctOpt,normalization, sageProject);
+    optionallyRunInliner(ctOpt,normalization, sageProject);
   }
 
   void setAssertConditionVariablesInAnalyzer(SgNode* root,CTAnalysis* analyzer) {
@@ -737,13 +751,9 @@ namespace CodeThorn {
       case 1:
 	analyzer->runSolver();
 	break;
-      case 2:
-	cout<<"INFO: PA framework: initialization."<<endl;
-	analyzer->initialize(ctOpt,sageProject);
-	cout<<"INFO: running PA Framework solver."<<endl;
-	analyzer->run();
-	cout<<"INFO: PA framework: finished."<<endl;
-	exit(0);
+      default:
+	cout<<"Error: unknown abstraction mode "<<ctOpt.abstractionMode<<endl;
+	exit(1);
       }
     }
     tc.stopTimer(TimingCollector::transitionSystemAnalysis);
@@ -766,30 +776,25 @@ namespace CodeThorn {
   Labeler* createLabeler(SgProject* project, VariableIdMappingExtended* variableIdMapping) {
     return new CTIOLabeler(project,variableIdMapping);
   }
-    
+
+#if 0
   CFAnalysis* createControlFlowGraph(CodeThornOptions& ctOpt, SgProject* project, Labeler* labeler) {
-    //SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL=true;
-    CFAnalysis* cfAnalyzer=new CFAnalysis(labeler);
+    CFAnalysis* cfAnalysis=new CFAnalysis(labeler);
     FunctionCallMapping2* functionCallMapping2=new FunctionCallMapping2();
     ClassHierarchyWrapper* classHierarchy=new ClassHierarchyWrapper(project);
     functionCallMapping2->setLabeler(labeler);
     functionCallMapping2->setClassHierarchy(classHierarchy);
     functionCallMapping2->computeFunctionCallMapping(project);
-    cfAnalyzer->setFunctionCallMapping2(functionCallMapping2);
-    cfAnalyzer->createICFG(project);
-    return cfAnalyzer;
+    cfAnalysis->setFunctionCallMapping2(functionCallMapping2);
+    cfAnalysis->createICFG(project);
+    return cfAnalysis;
   }
-
-  IOAnalyzer* runMemoryAnalysis(CodeThornOptions& ctOpt, VariableIdMapping* vim, Labeler* labeler, CFAnalysis* icfg, TimingCollector& timingCollector) {
-    //new: IOAnalyzer* ioAnalysis=new IOAnalyzer(ctOpt,vim,labeler,icfg,timingCollector);
-    IOAnalyzer* ioAnalysis=new IOAnalyzer();
-    ioAnalysis->initializeSolver();
-    ioAnalysis->runSolver();
-    return ioAnalysis;
-  }
-
+#endif
+  
   void optionallyPrintRunTimeAndMemoryUsage(CodeThornOptions& ctOpt,TimingCollector& tc) {
     if(ctOpt.status) cout<<tc.toString();
     if(ctOpt.status) cout<<"Total memory                   : "<<CodeThorn::getPhysicalMemorySize()/(1024*1024) <<" MiB"<<endl;
   }
+  } // end of namespace CodeThornLib
+    
 } // end of namespace CodeThorn

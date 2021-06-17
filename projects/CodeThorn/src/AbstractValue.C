@@ -24,6 +24,8 @@ bool AbstractValue::strictChecking=false;
 bool AbstractValue::byteMode=false;
 bool AbstractValue::pointerSetsEnabled=false;
 
+using CodeThorn::logger;
+
 istream& CodeThorn::operator>>(istream& is, AbstractValue& value) {
   value.fromStream(is);
   return is;
@@ -1107,7 +1109,7 @@ AbstractValue AbstractValue::operatorSub(AbstractValue& a,AbstractValue& b) {
       if(byteMode) {
         int pointerElementSize=_variableIdMapping->getElementSize(a.getVariableId());
         if((a.intValue-b.intValue)%pointerElementSize!=0) {
-          SAWYER_MESG(CodeThorn::logger[WARN])<<"Byte pointer subtraction gives value non-divisible by element size. Using top as result:"<<a.toString(_variableIdMapping)<<"-"<<b.toString(_variableIdMapping)<<endl;
+          SAWYER_MESG(logger[WARN])<<"Byte pointer subtraction gives value non-divisible by element size. Using top as result:"<<a.toString(_variableIdMapping)<<"-"<<b.toString(_variableIdMapping)<<endl;
           return Top();
         } else {
           val.intValue=(a.intValue-b.intValue)/pointerElementSize;

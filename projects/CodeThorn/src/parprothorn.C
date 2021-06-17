@@ -112,7 +112,7 @@ void analyzerSetup(IOAnalyzer* analyzer, Sawyer::Message::Facility logger,
   }
 
   if(ctOpt.stgTraceFileName.size()>0) {
-    analyzer->setStgTraceFileName(ctOpt.stgTraceFileName);
+    analyzer->openStgTraceFile();
   }
 
   if(ctOpt.analyzedProgramCLArgs.size()>0) {
@@ -274,7 +274,7 @@ int main( int argc, char * argv[] ) {
 int main( int argc, char * argv[] ) {
   try {
     ROSE_INITIALIZE;
-    CodeThorn::configureRose();
+    CodeThorn::CodeThornLib::configureRose();
     configureRersSpecialization();
 
     TimeMeasurement timer;
@@ -482,81 +482,9 @@ int main( int argc, char * argv[] ) {
       SAWYER_MESG(logger[TRACE])<<"inlined "<<numInlined<<" functions"<<endl;
     }
 
-    if(ctOpt.unparse) {
-      sageProject->unparse(0,0);
-      return 0;
-    }
-
-    if(ctOpt.info.printAstNodeStats||ctOpt.info.astNodeStatsCSVFileName.size()>0) {
-      // from: src/midend/astDiagnostics/AstStatistics.C
-      if(ctOpt.info.printAstNodeStats) {
-        ROSE_Statistics::AstNodeTraversalStatistics astStats;
-        string s=astStats.toString(sageProject);
-        cout<<s; // output includes newline at the end
-      }
-      if(ctOpt.info.astNodeStatsCSVFileName.size()>0) {
-        ROSE_Statistics::AstNodeTraversalCSVStatistics astCSVStats;
-        string fileName=ctOpt.info.astNodeStatsCSVFileName;
-        astCSVStats.setMinCountToShow(1); // default value is 1
-        if(!CppStdUtilities::writeFile(fileName, astCSVStats.toString(sageProject))) {
-          cerr<<"Error: cannot write AST node statistics to CSV file "<<fileName<<endl;
-          exit(1);
-        }
-      }
-    }
-
     if(ctOpt.status) {
       cout<<"STATUS: analysis started."<<endl;
     }
-    analyzer->initialize(ctOpt, sageProject,nullptr);
-    logger[INFO]<<"registered string literals: "<<analyzer->getVariableIdMapping()->numberOfRegisteredStringLiterals()<<endl;
-
-    if(ctOpt.info.printVariableIdMapping) {
-      analyzer->getVariableIdMapping()->toStream(cout);
-    }
-  
-    if(ctOpt.info.printTypeSizeMapping||ctOpt.info.typeSizeMappingCSVFileName.size()>0) {
-      // from: src/midend/astDiagnostics/AstStatistics.C
-      string s=analyzer->typeSizeMappingToString();
-      if(ctOpt.info.printTypeSizeMapping) {
-        cout<<"Type size mapping:"<<endl;
-        cout<<s; // output includes newline at the end
-      }
-      if(ctOpt.info.typeSizeMappingCSVFileName.size()>0) {
-        string fileName=ctOpt.info.typeSizeMappingCSVFileName;
-        if(!CppStdUtilities::writeFile(fileName, s)) {
-          cerr<<"Error: cannot write type-size mapping to CSV file "<<fileName<<endl;
-          exit(1);
-        }
-      }
-    }
-    
-    if(ctOpt.runRoseAstChecks) {
-      cout << "ROSE tests started."<<endl;
-      // Run internal consistency tests on AST
-      AstTests::runAllTests(sageProject);
-
-      // test: constant expressions
-      {
-        SAWYER_MESG(logger[TRACE]) <<"STATUS: testing constant expressions."<<endl;
-        CppConstExprEvaluator* evaluator=new CppConstExprEvaluator();
-        list<SgExpression*> exprList=AstUtility::exprRootList(sageProject);
-        logger[INFO] <<"found "<<exprList.size()<<" expressions."<<endl;
-        for(list<SgExpression*>::iterator i=exprList.begin();i!=exprList.end();++i) {
-          EvalResult r=evaluator->traverse(*i);
-          if(r.isConst()) {
-            SAWYER_MESG(logger[TRACE])<<"Found constant expression: "<<(*i)->unparseToString()<<" eq "<<r.constValue()<<endl;
-          }
-        }
-        delete evaluator;
-      }
-      cout << "ROSE tests finished."<<endl; 
-      mfacilities.shutdown();
-      return 0;
-    }
-
-    // TODO: exit here if no analysis option is selected
-    // exit(0);
 
     SgNode* root=sageProject;
     ROSE_ASSERT(root);
@@ -871,7 +799,7 @@ int main( int argc, char * argv[] ) {
       if(ltlOpt.ltlRersMappingFileName.size()>0) {
         // load and parse file into ltlInAlphabet and ltlOutAlphabet
         // input/output alphabet
-        if(!readAndParseLTLRersMappingFile(ltlOpt.ltlRersMappingFileName,ltlRersMapping)) {
+        if(!CodeThorn::CodeThornLib::readAndParseLTLRersMappingFile(ltlOpt.ltlRersMappingFileName,ltlRersMapping)) {
           cerr<<"Error: could not open RERS mapping file "<<ltlOpt.ltlRersMappingFileName<<endl;
           exit(1);
         }

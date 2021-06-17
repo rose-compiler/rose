@@ -63,7 +63,7 @@ namespace CodeThorn {
       Rose::Diagnostics::mfacilities.insertAndAdjust(logger);
     }
   }
-  CTIOLabeler* EStateTransferFunctions::getLabeler() {
+  Labeler* EStateTransferFunctions::getLabeler() {
     ROSE_ASSERT(_analyzer);
     return _analyzer->getLabeler();
   }
@@ -109,7 +109,7 @@ namespace CodeThorn {
 #if 1
       AbstractValueSet varSet=pstate.getVariableIds();
       for(AbstractValueSet::iterator i=varSet.begin();i!=varSet.end();++i) {
-	if(_analyzer->variableValueMonitor.isHotVariable(_analyzer,*i)) {
+	if(_analyzer->getVariableValueMonitor()->isHotVariable(_analyzer,*i)) {
 	  //ROSE_ASSERT(false); // this branch is live
 	  _analyzer->topifyVariable(pstate, cset, *i);
 	}
@@ -346,30 +346,25 @@ namespace CodeThorn {
         }
 	AbstractValue actualParamAddress=evalResult.value();
 	AbstractValue formalParamAddress=AbstractValue::createAddressOfVariable(formalParameterVarId);
-        if(getOptionOutputWarnings()) {
-          //cout<<"Warning: imprecision: "<<SgNodeHelper::sourceLineColumnToString(funCall)<< ": passing of class/Struct/Union types per value as function parameters (assuming top): ";
-	  SgType* ctype=_analyzer->getVariableIdMapping()->getType(formalParameterVarId);
-	  auto membersList=_analyzer->getVariableIdMapping()->getClassMembers(ctype);
-	  //cout<<" #classmembers: "<<membersList.size()<<endl;
-	  for(auto mvarId : membersList) {
-	    CodeThorn::TypeSize offset=_analyzer->getVariableIdMapping()->getOffset(mvarId);
-#if 0
-	    cout<<" formal param    : "<<formalParamAddress.toString(_analyzer->getVariableIdMapping())<<endl;
-	    cout<<" actual param (L): "<<actualParamAddress.toString(_analyzer->getVariableIdMapping())<<endl;
-	    cout<<" actual param-vid: "<<mvarId.toString()<<endl;
-	    cout<<" actual param-vid: "<<mvarId.toString(_analyzer->getVariableIdMapping())<<endl;
-	    cout<<" offset          : "<<offset<<endl;
-#endif
-	    AbstractValue offsetAV(offset);
-	    AbstractValue formalParameterStructMemberAddress=AbstractValue::operatorAdd(formalParamAddress,offsetAV);
-	    AbstractValue actualParameterStructMemberAddress=AbstractValue::operatorAdd(actualParamAddress,offsetAV);
-	    // read from evalResultValue+offset and write to formal-param-address+offset
-	    AbstractValue newVal=readFromAnyMemoryLocation(currentLabel,&newPState,actualParameterStructMemberAddress);
-	    // TODO: check for copying of references
-	    initializeMemoryLocation(currentLabel,&newPState,formalParameterStructMemberAddress,newVal);
-	  }
+	SAWYER_MESG(logger[TRACE])<<SgNodeHelper::sourceLineColumnToString(funCall)<< ": passing of class/Struct/Union types per value as function parameter: ";
+	SgType* ctype=_analyzer->getVariableIdMapping()->getType(formalParameterVarId);
+	auto membersList=_analyzer->getVariableIdMapping()->getClassMembers(ctype);
+	SAWYER_MESG(logger[TRACE])<<" #classmembers: "<<membersList.size()<<endl;
+	for(auto mvarId : membersList) {
+	  CodeThorn::TypeSize offset=_analyzer->getVariableIdMapping()->getOffset(mvarId);
+	  SAWYER_MESG(logger[TRACE])<<" formal param    : "<<formalParamAddress.toString(_analyzer->getVariableIdMapping())<<endl;
+	  SAWYER_MESG(logger[TRACE])<<" actual param (L): "<<actualParamAddress.toString(_analyzer->getVariableIdMapping())<<endl;
+	  SAWYER_MESG(logger[TRACE])<<" actual param-vid: "<<mvarId.toString()<<endl;
+	  SAWYER_MESG(logger[TRACE])<<" actual param-vid: "<<mvarId.toString(_analyzer->getVariableIdMapping())<<endl;
+	  SAWYER_MESG(logger[TRACE])<<" offset          : "<<offset<<endl;
+	  AbstractValue offsetAV(offset);
+	  AbstractValue formalParameterStructMemberAddress=AbstractValue::operatorAdd(formalParamAddress,offsetAV);
+	  AbstractValue actualParameterStructMemberAddress=AbstractValue::operatorAdd(actualParamAddress,offsetAV);
+	  // read from evalResultValue+offset and write to formal-param-address+offset
+	  AbstractValue newVal=readFromAnyMemoryLocation(currentLabel,&newPState,actualParameterStructMemberAddress);
+	  // TODO: check for copying of references
+	  initializeMemoryLocation(currentLabel,&newPState,formalParameterStructMemberAddress,newVal);
 	}
-	
       } else {
         // VariableName varNameString=name->get_name();
         SgExpression* actualParameterExpr=*j;
@@ -677,7 +672,7 @@ namespace CodeThorn {
     ConstraintSet cset=*currentEState.constraints();
 
     SgExpressionPtrList& actualParameters=SgNodeHelper::getFunctionCallActualParameterList(funCall);
-    SAWYER_MESG(logger[TRACE])<<getAnalyzer()->_ctOpt.forkFunctionName<<" #args:"<<actualParameters.size()<<endl;
+    SAWYER_MESG(logger[TRACE])<<getAnalyzer()->getOptionsRef().forkFunctionName<<" #args:"<<actualParameters.size()<<endl;
     // get 5th argument
     SgExpressionPtrList::iterator pIter=actualParameters.begin();
     for(int j=1;j<5;j++) {
@@ -755,17 +750,10 @@ namespace CodeThorn {
     _analyzer->recordExternalFunctionCall(funCall);
     evaluateFunctionCallArguments(edge,funCall,*estate,false);
 
-    // TODO: check whether the following test is superfluous meanwhile, since isStdInLabel does take NonDetX functions into account
-    bool isExternalNonDetXFunction=false;
-    if(_analyzer->svCompFunctionSemantics()) {
-      if(funCall) {
-	string externalFunctionName=SgNodeHelper::getFunctionName(funCall);
-	if(externalFunctionName==_analyzer->_externalNonDetIntFunctionName||externalFunctionName==_analyzer->_externalNonDetLongFunctionName) {
-	  isExternalNonDetXFunction=true;
-	}
-      }
-    }
-    if(isExternalNonDetXFunction || _analyzer->getLabeler()->isStdInLabel(lab,&varId)) {
+    CTIOLabeler* ctioLabeler=dynamic_cast<CTIOLabeler*>(_analyzer->getLabeler());
+    ROSE_ASSERT(ctioLabeler);
+    
+    if(ctioLabeler->isStdInLabel(lab,&varId)) {
       if(_analyzer->_inputSequence.size()>0) {
 	PState newPState=*currentEState.pstate();
 	ConstraintSet newCSet=*currentEState.constraints();
@@ -827,14 +815,14 @@ namespace CodeThorn {
 
     if(_analyzer->getInterpreterMode()!=IM_ENABLED) {
       int constvalue=0;
-      if(_analyzer->getLabeler()->isStdOutVarLabel(lab,&varId)) {
+      if(ctioLabeler->isStdOutVarLabel(lab,&varId)) {
 	newio.recordVariable(InputOutput::STDOUT_VAR,varId);
 	ROSE_ASSERT(newio.var==varId);
 	return elistify(createEState(edge.target(),cs,*currentEState.pstate(),*currentEState.constraints(),newio));
-      } else if(_analyzer->getLabeler()->isStdOutConstLabel(lab,&constvalue)) {
+      } else if(ctioLabeler->isStdOutConstLabel(lab,&constvalue)) {
 	newio.recordConst(InputOutput::STDOUT_CONST,constvalue);
 	return elistify(createEState(edge.target(),cs,*currentEState.pstate(),*currentEState.constraints(),newio));
-      } else if(_analyzer->getLabeler()->isStdErrLabel(lab,&varId)) {
+      } else if(ctioLabeler->isStdErrLabel(lab,&varId)) {
 	newio.recordVariable(InputOutput::STDERR_VAR,varId);
 	ROSE_ASSERT(newio.var==varId);
 	return elistify(createEState(edge.target(),cs,*currentEState.pstate(),*currentEState.constraints(),newio));
@@ -844,41 +832,8 @@ namespace CodeThorn {
     /* handling of specific semantics for external function */
     if(funCall) {
       string funName=SgNodeHelper::getFunctionName(funCall);
-      if(_analyzer->svCompFunctionSemantics()) {
-	if(funName==_analyzer->_externalErrorFunctionName) {
-	  //cout<<"DETECTED error function: "<<_externalErrorFunctionName<<endl;
-	  return elistify(_analyzer->createVerificationErrorEState(currentEState,edge.target()));
-	} else if(funName==_analyzer->_externalExitFunctionName) {
-	  /* the exit function is modeled to terminate the program
-	     (therefore no successor state is generated)
-	  */
-	  return elistify();
-	} else {
-	  // dispatch all other external function calls to the other
-	  // transferFunctions where the external function call is handled as an expression
-	  if(isFunctionCallWithAssignmentFlag) {
-	    // here only the specific format x=f(...) can exist
-	    SgAssignOp* assignOp=isSgAssignOp(AstUtility::findExprNodeInAstUpwards(V_SgAssignOp,funCall));
-	    ROSE_ASSERT(assignOp);
-	    return transferAssignOp(assignOp,edge,estate);
-	  } else {
-	    // special case: void function call f(...);
-	    list<SingleEvalResultConstInt> res=evalFunctionCall(funCall,currentEState);
-	    // build new estate(s) from single eval result list
-	    list<EState> estateList;
-	    for(list<SingleEvalResultConstInt>::iterator i=res.begin();i!=res.end();++i) {
-	      EState estate=(*i).estate;
-	      PState newPState=*estate.pstate();
-	      ConstraintSet cset=*estate.constraints();
-	      estateList.push_back(createEState(edge.target(),cs,newPState,cset));
-	    }
-	    return estateList;
-	  }
-	}
-      }
-
-      if(getAnalyzer()->_ctOpt.forkFunctionEnabled) {
-	if(funName==getAnalyzer()->_ctOpt.forkFunctionName) {
+      if(getAnalyzer()->getOptionsRef().forkFunctionEnabled) {
+	if(funName==getAnalyzer()->getOptionsRef().forkFunctionName) {
 	  return transferForkFunction(edge,estate,funCall);
 	}
       }
@@ -1616,7 +1571,7 @@ namespace CodeThorn {
 	setOfUsedGlobalVars.insert(var);
       }
     }
-    if(getAnalyzer()->_ctOpt.status) {
+    if(getAnalyzer()->getOptionsRef().status) {
       cout<< "STATUS: Number of global variables     : "<<setOfGlobalVars.size()<<endl;
       cout<< "STATUS: Number of used variables       : "<<setOfUsedVars.size()<<endl;
       cout<< "STATUS: Number of string literals      : "<<numStringLiterals<<endl;
@@ -1630,7 +1585,7 @@ namespace CodeThorn {
       ROSE_ASSERT(getVariableIdMapping());
       CodeThorn::VariableIdSet setOfGlobalVars=getVariableIdMapping()->getSetOfGlobalVarIds();
       std::set<VariableId> setOfUsedGlobalVars=determineUsedGlobalVars(root,setOfGlobalVars);
-      std::list<SgVariableDeclaration*> relevantGlobalVariableDecls=(getAnalyzer()->_ctOpt.initialStateFilterUnusedVariables)?
+      std::list<SgVariableDeclaration*> relevantGlobalVariableDecls=(getAnalyzer()->getOptionsRef().initialStateFilterUnusedVariables)?
 	getVariableIdMapping()->getVariableDeclarationsOfVariableIdSet(setOfUsedGlobalVars)
 	: getVariableIdMapping()->getVariableDeclarationsOfVariableIdSet(setOfGlobalVars)
 	;
@@ -1647,7 +1602,7 @@ namespace CodeThorn {
 	}
       }
 
-      if(getAnalyzer()->_ctOpt.status) {
+      if(getAnalyzer()->getOptionsRef().status) {
 	//uint32_t numFilteredVars=setOfGlobalVars.size()-setOfUsedGlobalVars.size();
 	//cout<< "STATUS: Number of unused variables filtered in initial state: "<<numFilteredVars<<endl;
 	cout<< "STATUS: Number of global variables declared in initial state: "<<declaredInGlobalState<<endl;
@@ -2154,11 +2109,11 @@ namespace CodeThorn {
   }
 
   bool EStateTransferFunctions::getIgnoreUndefinedDereference() {
-    return _analyzer->_ctOpt.ignoreUndefinedDereference;
+    return _analyzer->getOptionsRef().ignoreUndefinedDereference;
   }
 
   bool EStateTransferFunctions::getIgnoreFunctionPointers() {
-    return _analyzer->_ctOpt.ignoreFunctionPointers;
+    return _analyzer->getOptionsRef().ignoreFunctionPointers;
   }
 
   // TODO: all following options to read from ctOpt (as above)
@@ -3021,7 +2976,7 @@ namespace CodeThorn {
 	if(_variableIdMapping->isOfArrayType(arrayVarId)) {
 	  if(_variableIdMapping->isFunctionParameter(arrayVarId)) {
 	    // function parameter of array type contains a pointer value in C/C++
-	    arrayPtrValue=readFromMemoryLocation(estate.label(),&pstate2,arrayVarId); // pointer value of array function paramter only (without index)
+	    arrayPtrValue=readFromMemoryLocation(estate.label(),&pstate2,arrayVarId); // pointer value of array function paramter
 	    SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp:"<<" arrayPtrValue (of function parameter) read from memory, arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
 	  } else {
 	    arrayPtrValue=AbstractValue::createAddressOfArray(arrayVarId);

@@ -25,6 +25,7 @@
 #include "CodeThornLib.h"
 #include "TopologicalSort.h"
 #include "Miscellaneous2.h"
+#include "CodeThornPasses.h"
 
 using namespace std;
 using namespace Sawyer::Message;
@@ -37,9 +38,7 @@ CodeThorn::CTAnalysis::CTAnalysis():
   _globalTopifyMode(GTM_IO),
   _stgReducer(&estateSet, &transitionGraph),
   _counterexampleGenerator(&transitionGraph),
-  _displayDiff(10000),
   _resourceLimitDiff(10000),
-  _numberOfThreadsToUse(1),
   //  _solver(nullptr),
   _analyzerMode(AM_ALL_STATES),
   _maxTransitions(-1),
@@ -74,42 +73,9 @@ CodeThorn::CTAnalysis::CTAnalysis():
   _estateTransferFunctions->setAnalyzer(this);
 }
 
-// override
-void CodeThorn::CTAnalysis::initializeSolver() {
-  if(_transferFunctions==nullptr) {
-    EStateTransferFunctions* etf=new EStateTransferFunctions();
-    etf->setAnalyzer(this);
-    _transferFunctions=etf;
-  }
-}
-
-// override
 void CodeThorn::CTAnalysis::run() {
   runSolver();
 }
-
-// override
-void CodeThorn::CTAnalysis::initializeAnalyzerDataInfo() {
-  // will be changed for added context
-  SAWYER_MESG(logger[INFO])<<"INFO: CTAnalysis::initializeAnalyzerDataInfo (empty)."<<endl;
-}
-
-#if 0
-Lattice* CodeThorn::CTAnalysis::getPreInfo(Label lab) {
-  // will be changed for added context
-  ROSE_ASSERT(false);
-}
-Lattice* CodeThorn::CTAnalysis::getPostInfo(Label lab) {
-  // will be changed for added context
-  ROSE_ASSERT(false);
-}
-
-void CodeThorn::CTAnalysis::setPostInfo(Label lab,Lattice*) {
-  // will be changed for added context
-  ROSE_ASSERT(false);
-
-}
-#endif
 
 void CodeThorn::CTAnalysis::insertInputVarValue(int i) {
   _inputVarValues.insert(i);
@@ -202,12 +168,12 @@ CodeThorn::CTAnalysis::SubSolverResultType CodeThorn::CTAnalysis::subSolver(cons
   bool earlyTermination = false;
   int threadNum = 0; //subSolver currently does not support multiple threads.
   // print status message if required
-  if (_ctOpt.status && _displayDiff) {
+  if (_ctOpt.status && _ctOpt.displayDiff) {
 #pragma omp critical(HASHSET)
     {
       estateSetSize = estateSet.size();
     }
-    if(threadNum==0 && (estateSetSize>(_prevStateSetSizeDisplay+_displayDiff))) {
+    if(threadNum==0 && (estateSetSize>(_prevStateSetSizeDisplay+_ctOpt.displayDiff))) {
       printStatusMessage(true);
       _prevStateSetSizeDisplay=estateSetSize;
     }
@@ -529,8 +495,10 @@ void CodeThorn::CTAnalysis::disableSVCompFunctionSemantics() {
   _externalNonDetLongFunctionName="";
   _externalExitFunctionName="";
   ROSE_ASSERT(getLabeler());
-  getLabeler()->setExternalNonDetIntFunctionName(_externalNonDetIntFunctionName);
-  getLabeler()->setExternalNonDetLongFunctionName(_externalNonDetLongFunctionName);
+  if(CTIOLabeler* ctioLabeler=dynamic_cast<CTIOLabeler*>(getLabeler())) {
+    ctioLabeler->setExternalNonDetIntFunctionName(_externalNonDetIntFunctionName);
+    ctioLabeler->setExternalNonDetLongFunctionName(_externalNonDetLongFunctionName);
+  }
 }
 
 bool CodeThorn::CTAnalysis::svCompFunctionSemantics() { return _svCompFunctionSemantics; }
@@ -638,6 +606,31 @@ void CodeThorn::CTAnalysis::runSolver() {
   stopAnalysisTimer();
 }
 
+VariableIdMappingExtended* CodeThorn::CTAnalysis::getVariableIdMapping() {
+  return _variableIdMapping;
+}
+
+void CodeThorn::CTAnalysis::setVariableIdMapping(VariableIdMappingExtended* vid) {
+  _variableIdMapping=vid;
+}
+
+CFAnalysis* CodeThorn::CTAnalysis::getCFAnalyzer() {
+  return _cfAnalysis;
+}
+
+VariableValueMonitor* CodeThorn::CTAnalysis::getVariableValueMonitor() {
+  return &variableValueMonitor;
+}
+
+size_t CodeThorn::CTAnalysis::getEStateSetSize() {
+  return estateSet.size();
+}
+
+size_t CodeThorn::CTAnalysis::getTransitionGraphSize() {
+  return transitionGraph.size();
+}
+
+
 set<string> CodeThorn::CTAnalysis::variableIdsToVariableNames(CodeThorn::VariableIdSet s) {
   set<string> res;
   for(CodeThorn::VariableIdSet::iterator i=s.begin();i!=s.end();++i) {
@@ -678,10 +671,9 @@ CodeThorn::CTAnalysis::VariableDeclarationList CodeThorn::CTAnalysis::computeUse
   }
 }
 
-void CodeThorn::CTAnalysis::setStgTraceFileName(string filename) {
-  _stg_trace_filename=filename;
+void CodeThorn::CTAnalysis::openStgTraceFile() {
   ofstream fout;
-  fout.open(_stg_trace_filename.c_str());    // create new file/overwrite existing file
+  fout.open(getOptionsRef().stgTraceFileName.c_str());    // create new file/overwrite existing file
   fout<<"START"<<endl;
   fout.close();    // close. Will be used with append.
 }
@@ -1340,12 +1332,19 @@ void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgP
   startAnalysisTimer();
   ROSE_ASSERT(root);
 
-  ProgramAbstractionLayer* programAbstractionLayer=new ProgramAbstractionLayer();
-  programAbstractionLayer->setNormalizationLevel(_ctOpt.normalizeLevel);
-  programAbstractionLayer->initialize(_ctOpt,root,tc);
-  initialize(_ctOpt,root,programAbstractionLayer);
-  _programAbstractionLayer=programAbstractionLayer;
-  _programAbstractionLayerOwner=true;
+  CodeThornOptions& ctOpt=getOptionsRef();
+  
+  //ProgramAbstractionLayer* programAbstractionLayer=new ProgramAbstractionLayer();
+  //programAbstractionLayer->initialize(_ctOpt,root,tc);
+  Pass::normalization(ctOpt,root,tc);
+  _variableIdMapping=Pass::createVariableIdMapping(ctOpt, root, tc);
+  _labeler=Pass::createLabeler(ctOpt, root, tc, _variableIdMapping);
+  _classHierarchy=Pass::createClassHierarchy(ctOpt, root, tc);
+  _cfAnalysis=Pass::createForwardIcfg(ctOpt,root,tc,_labeler,_classHierarchy);
+  
+  //initialize(_ctOpt,root,programAbstractionLayer);
+  //_programAbstractionLayer=programAbstractionLayer;
+  //_programAbstractionLayerOwner=true;
 
   resetInputSequenceIterator();
   RoseAst completeast(root);
@@ -1372,13 +1371,24 @@ void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgP
   initAstNodeInfo(root);
 
   getCFAnalyzer()->setInterProcedural(_ctOpt.getInterProceduralFlag());
-  getLabeler()->setExternalNonDetIntFunctionName(_externalNonDetIntFunctionName);
-  getLabeler()->setExternalNonDetLongFunctionName(_externalNonDetLongFunctionName);
+
+  if(CTIOLabeler* ctioLabeler=dynamic_cast<CTIOLabeler*>(getLabeler())) {
+    ctioLabeler->setExternalNonDetIntFunctionName(_externalNonDetIntFunctionName);
+    ctioLabeler->setExternalNonDetLongFunctionName(_externalNonDetLongFunctionName);
+  }
 
   CallString::setMaxLength(_ctOpt.callStringLength);
 
-  initializeSolver();
-  initializeTransferFunctions();
+  //initializeSolver();
+  if(_estateTransferFunctions==nullptr) {
+    EStateTransferFunctions* etf=new EStateTransferFunctions();
+    etf->setAnalyzer(this);
+    _estateTransferFunctions=etf;
+  }
+  
+  //initializeTransferFunctions();
+  //_estateTransferFunctions->setProgramAbstractionLayer(_programAbstractionLayer);
+  _estateTransferFunctions->addParameterPassingVariables(); // DFTransferFunctions: adds pre-defined var-ids to VID for parameter passing
   
   if(_ctOpt.getInterProceduralFlag()) {
     Label slab2=getLabeler()->getLabel(_startFunRoot);
@@ -1408,12 +1418,11 @@ void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgP
     SAWYER_MESG(logger[TRACE])<< "CFG reduction OK. (eliminated "<<cnt<<" nodes)"<<endl;
   }
   SAWYER_MESG(logger[TRACE])<< "Intra-Flow OK. (size: " << getFlow()->size() << " edges)"<<endl;
-  ROSE_ASSERT(_programAbstractionLayer);
-  ROSE_ASSERT(_programAbstractionLayer->getCFAnalyzer());
+  ROSE_ASSERT(getCFAnalyzer());
 
 #if 0
   if(_ctOpt.reduceCfg) {
-    int cnt=cfanalyzer->inlineTrivialFunctions(flow);
+    int cnt=getCFAnalyzer()->inlineTrivialFunctions(flow);
     cout << "CFG reduction OK. (inlined "<<cnt<<" functions; eliminated "<<cnt*4<<" nodes)"<<endl;
   }
 #endif
@@ -1477,8 +1486,8 @@ void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgP
 
     if(_ctOpt.rers.rersBinary) {
       //initialize the global variable arrays in the linked binary version of the RERS problem
-      SAWYER_MESG(logger[DEBUG])<< "init of globals with arrays for "<< _numberOfThreadsToUse << " threads. " << endl;
-      RERS_Problem::rersGlobalVarsArrayInitFP(_numberOfThreadsToUse);
+      SAWYER_MESG(logger[DEBUG])<< "init of globals with arrays for "<< _ctOpt.threads << " threads. " << endl;
+      RERS_Problem::rersGlobalVarsArrayInitFP(_ctOpt.threads);
       RERS_Problem::createGlobalVarAddressMapsFP(this);
     }
     SAWYER_MESG(logger[INFO])<<"Initializing solver finished."<<endl;
@@ -1562,11 +1571,16 @@ bool CodeThorn::CTAnalysis::isConsistentEStatePtrSet(set<const EState*> estatePt
   return true;
 }
 
-CTIOLabeler* CodeThorn::CTAnalysis::getLabeler() const {
-  ROSE_ASSERT(_programAbstractionLayer);
-  CTIOLabeler* ioLabeler=dynamic_cast<CTIOLabeler*>(_programAbstractionLayer->getLabeler());
-  ROSE_ASSERT(ioLabeler);
-  return ioLabeler;
+Labeler* CodeThorn::CTAnalysis::getLabeler() const {
+  return _labeler;
+}
+
+CTIOLabeler* CodeThorn::CTAnalysis::getIOLabeler() const {
+  CTIOLabeler* ctioLabeler=dynamic_cast<CTIOLabeler*>(getLabeler());
+  if(ctioLabeler==nullptr) {
+    cerr<<"Warning: CodeThorn::CTAnalysis was initialized with a default Labeler, but CTIOLabeler is required in function getIOLabeler."<<endl;
+  }
+  return ctioLabeler;
 }
 
 /*
@@ -1806,18 +1820,25 @@ long CodeThorn::CTAnalysis::analysisRunTimeInSeconds() {
 //  return getVariableIdMapping(); }
 
 CodeThorn::FunctionCallMapping* CodeThorn::CTAnalysis::getFunctionCallMapping() {
-  ROSE_ASSERT(_programAbstractionLayer);
-  return _programAbstractionLayer->getFunctionCallMapping();
+  ROSE_ASSERT(getCFAnalyzer());
+  return getCFAnalyzer()->getFunctionCallMapping();
 }
+
 CodeThorn::FunctionCallMapping2* CodeThorn::CTAnalysis::getFunctionCallMapping2() {
-  ROSE_ASSERT(_programAbstractionLayer);
-  return _programAbstractionLayer->getFunctionCallMapping2();
+  ROSE_ASSERT(getCFAnalyzer());
+  return getCFAnalyzer()->getFunctionCallMapping2();
+}
+
+CodeThorn::Flow* CodeThorn::CTAnalysis::getFlow() {
+  ROSE_ASSERT(_cfAnalysis);
+  return _cfAnalysis->getIcfgFlow();
 }
 
 CodeThorn::InterFlow* CodeThorn::CTAnalysis::getInterFlow() {
-  ROSE_ASSERT(_programAbstractionLayer);
-  return _programAbstractionLayer->getInterFlow();
+  ROSE_ASSERT(_cfAnalysis);
+  return _cfAnalysis->getInterFlow();
 }
+
 CodeThorn::EStateSet* CodeThorn::CTAnalysis::getEStateSet() { return &estateSet; }
 CodeThorn::PStateSet* CodeThorn::CTAnalysis::getPStateSet() { return &pstateSet; }
 TransitionGraph* CodeThorn::CTAnalysis::getTransitionGraph() { return &transitionGraph; }

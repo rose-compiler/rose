@@ -78,6 +78,7 @@ CODETHORN_HEADER_FILES=\
   ClassHierarchyAnalysis.h \
   ClassHierarchyWriter.h \
   CodeThornLib.h \
+  CodeThornPasses.h \
   CommandLineOptions.h \
   ConstraintRepresentation.h \
   ContNodeAttribute.h \
@@ -215,6 +216,7 @@ CODETHORN_SOURCE_FILES=\
   ClassHierarchyAnalysis.C \
   ClassHierarchyWriter.C \
   CodeThornLib.C \
+  CodeThornPasses.C \
   CommandLineOptions.C \
   ConstraintRepresentation.C \
   ContNodeAttribute.C \

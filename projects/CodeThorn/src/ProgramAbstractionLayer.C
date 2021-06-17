@@ -4,6 +4,7 @@
 #include "Normalization.h"
 #include "CTIOLabeler.h"
 #include "CodeThornLib.h"
+#include "CodeThornPasses.h"
 
 #include <iostream>
 
@@ -30,64 +31,15 @@ void CodeThorn::ProgramAbstractionLayer::initialize(CodeThornOptions& ctOpt, SgP
 void CodeThorn::ProgramAbstractionLayer::initialize(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc) {
   _root=root;
 
-  tc.startTimer();
-  if(ctOpt.status) cout<<"Phase: normalization";
-  if(ctOpt.status && ctOpt.normalizeLevel==0) cout<<" (skipped)";
-  if(ctOpt.status) cout<<endl;
-  normalizationPass(ctOpt,root);
-  tc.stopTimer(TimingCollector::normalization);
- 
-  tc.startTimer();
-  if(ctOpt.status) cout<<"Phase: variable-id mapping"<<endl;
-  _variableIdMapping=CodeThorn::createVariableIdMapping(ctOpt,root);
-  if(ctOpt.status) cout<<"Phase: program location labeling"<<endl;
-  _labeler=createLabeler(root,_variableIdMapping);
-  tc.stopTimer(TimingCollector::variableIdMapping);
-  
-  tc.startTimer();
-  if(ctOpt.status) cout<<"Phase: class hierarchy analysis"<<endl;
-  _classHierarchy=new ClassHierarchyWrapper(root);
-  _cfanalyzer=new CFAnalysis(_labeler);
-  _functionCallMapping=nullptr; 
-  _functionCallMapping2=nullptr;
-  tc.stopTimer(TimingCollector::classHierarchyAnalysis);
-
-  tc.startTimer();
-  if(ctOpt.status) cout<<"Phase: function call mapping"<<endl;
-  if (!SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL)
-  {
-    // another function resolution mode
-    _functionCallMapping = new FunctionCallMapping();
-  
-    getFunctionCallMapping()->setClassHierarchy(_classHierarchy);
-    getFunctionCallMapping()->computeFunctionCallMapping(root);
-    _cfanalyzer->setFunctionCallMapping(getFunctionCallMapping());
-  }
-  else
-  {
-    // PP (02/17/20) add class hierarchy and call mapping
-    _functionCallMapping2=new FunctionCallMapping2();
-    getFunctionCallMapping2()->setLabeler(_labeler);
-    getFunctionCallMapping2()->setClassHierarchy(_classHierarchy);
-    getFunctionCallMapping2()->computeFunctionCallMapping(root);
-    _cfanalyzer->setFunctionCallMapping2(getFunctionCallMapping2());
-  }
-  tc.stopTimer(TimingCollector::functionCallMapping);
-  
-  tc.startTimer();
-  if(ctOpt.status) cout<<"Phase: ICFG construction"<<endl;
-  _fwFlow = _cfanalyzer->flow(root);
-  if(ctOpt.status) cout<<"    intra-procedural edges: " << _fwFlow.size()<<endl;
-  _interFlow=_cfanalyzer->interFlow(_fwFlow);
-  if(ctOpt.status) cout<<"    inter-procedural edges: " << _interFlow.size() <<endl;
-  _cfanalyzer->intraInterFlow(_fwFlow,_interFlow);
-  if(ctOpt.status) cout<<"    ICFG total size       : " << _fwFlow.size() << " edges"<<endl;
-  tc.stopTimer(TimingCollector::icfgConstruction);
-
-  tc.startTimer();
-  if(ctOpt.status) cout<<"Phase: generating reverse ICFG"<<endl;
-  _bwFlow = _fwFlow.reverseFlow();
-  tc.stopTimer(TimingCollector::reverseIcfgConstruction);
+  Pass::normalization(ctOpt,root,tc);
+  setNormalizationLevel(ctOpt.normalizeLevel); // only for get function
+  _variableIdMapping=Pass::createVariableIdMapping(ctOpt, root, tc);
+  _labeler=Pass::createLabeler(ctOpt, root, tc, _variableIdMapping);
+  _classHierarchy=Pass::createClassHierarchy(ctOpt, root, tc);
+  _cfanalyzer=Pass::createForwardIcfg(ctOpt,root,tc,_labeler,_classHierarchy);
+  _fwFlow=*_cfanalyzer->getIcfgFlow();
+  _bwFlow=_fwFlow.reverseFlow();
+  _interFlow=*_cfanalyzer->getInterFlow();
 
   if(ctOpt.status) cout<<"STATUS: Abstraction layer established."<<endl;
 
@@ -134,13 +86,11 @@ CodeThorn::VariableIdMappingExtended* CodeThorn::ProgramAbstractionLayer::getVar
 }
 
 CodeThorn::FunctionCallMapping* CodeThorn::ProgramAbstractionLayer::getFunctionCallMapping(){
-  ROSE_ASSERT(_functionCallMapping!=0);
-  return _functionCallMapping;
+  return _cfanalyzer->getFunctionCallMapping();
 }
 
 CodeThorn::FunctionCallMapping2* CodeThorn::ProgramAbstractionLayer::getFunctionCallMapping2(){
-  ROSE_ASSERT(_functionCallMapping2!=0);
-  return _functionCallMapping2;
+  return _cfanalyzer->getFunctionCallMapping2();
 }
 
 void CodeThorn::ProgramAbstractionLayer::setNormalizationLevel(unsigned int level) {

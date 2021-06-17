@@ -153,12 +153,12 @@ void Solver12::run() {
             // newEstate is passed by value (not created yet)
             EState newEState=*nesListIter;
             ROSE_ASSERT(newEState.label()!=Labeler::NO_LABEL);
-            if(_analyzer->_stg_trace_filename.size()>0 && !newEState.constraints()->disequalityExists()) {
+            if(_analyzer->getOptionsRef().stgTraceFileName.size()>0 && !newEState.constraints()->disequalityExists()) {
               std::ofstream fout;
               // _csv_stg_trace_filename is the member-variable of analyzer
 #pragma omp critical
               {
-                fout.open(_analyzer->_stg_trace_filename.c_str(),ios::app);    // open file for appending
+                fout.open(_analyzer->getOptionsRef().stgTraceFileName.c_str(),ios::app);    // open file for appending
                 assert (!fout.fail( ));
                 fout<<"PSTATE-IN:"<<currentEStatePtr->pstate()->toString(_analyzer->getVariableIdMapping());
                 string sourceString=_analyzer->getCFAnalyzer()->getLabeler()->getNode(currentEStatePtr->label())->unparseToString().substr(0,20);

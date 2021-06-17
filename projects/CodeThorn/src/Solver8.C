@@ -44,9 +44,11 @@ void Solver8::run() {
         if(e.isType(EDGE_EXTERNAL)) {
           SgNode* nextNodeToAnalyze1=_analyzer->getCFAnalyzer()->getNode(e.source());
           InputOutput newio;
-          Label lab=_analyzer->getLabeler()->getLabel(nextNodeToAnalyze1);
+	  CTIOLabeler* ctioLabeler=_analyzer->getIOLabeler();
+	  ROSE_ASSERT(ctioLabeler);
+          Label lab=ctioLabeler->getLabel(nextNodeToAnalyze1);
           VariableId varId;
-          if(_analyzer->getLabeler()->isStdInLabel(lab,&varId)) {
+          if(ctioLabeler->isStdInLabel(lab,&varId)) {
             _analyzer->_estateBeforeMissingInput = currentEStatePtr; //store the state where input was missing in member variable
           }
         }

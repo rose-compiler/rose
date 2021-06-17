@@ -120,7 +120,7 @@ void runEStateAnalysis(CodeThornOptions& ctOpt, SgProject* astRoot, SgNode* star
 int main( int argc, char * argv[] ) {
   try {
     ROSE_INITIALIZE;
-    CodeThorn::configureRose();
+    CodeThorn::CodeThornLib::configureRose();
     configureRersSpecialization();
 
     TimeMeasurement timer;

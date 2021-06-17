@@ -317,7 +317,7 @@ void IOAnalyzer::setup(CTAnalysis* analyzer, Sawyer::Message::Facility logger,
   }
 
   if(ctOpt.stgTraceFileName.size()>0) {
-    analyzer->setStgTraceFileName(ctOpt.stgTraceFileName);
+    analyzer->openStgTraceFile();
   }
 
   if(ctOpt.analyzedProgramCLArgs.size()>0) {
@@ -448,7 +448,6 @@ void CodeThorn::IOAnalyzer::configureOptions(CodeThornOptions ctOpt, LTLOptions 
   AbstractValue::byteMode=ctOpt.byteMode;
   AbstractValue::strictChecking=ctOpt.strictChecking;
 
-  SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL=ctOpt.extendedNormalizedCppFunctionCalls;
   if (ctOpt.callStringLength >= 2) 
     setFiniteCallStringMaxLength(ctOpt.callStringLength);
 

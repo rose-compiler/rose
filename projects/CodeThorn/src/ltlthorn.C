@@ -115,7 +115,7 @@ Solver* createSolver(CodeThornOptions& ctOpt) {
 int main( int argc, char * argv[] ) {
   try {
     ROSE_INITIALIZE;
-    CodeThorn::configureRose();
+    CodeThorn::CodeThornLib::configureRose();
     configureRersSpecialization();
     CodeThorn::initDiagnosticsLTL();
 
@@ -128,42 +128,7 @@ int main( int argc, char * argv[] ) {
     ParProOptions parProOpt; // options only available in parprothorn
     parseCommandLine(argc, argv, logger,versionString,ctOpt,ltlOpt,parProOpt);
     mfacilities.control(ctOpt.logLevel); SAWYER_MESG(logger[TRACE]) << "Log level is " << ctOpt.logLevel << endl;
-    IOAnalyzer* analyzer=createAnalyzer(ctOpt,ltlOpt);
-    optionallyRunInternalChecks(ctOpt,argc,argv);
-    optionallyRunExprEvalTestAndExit(ctOpt,argc,argv);
-    analyzer->configureOptions(ctOpt,ltlOpt,parProOpt);
-    analyzer->setSolver(createSolver(ctOpt));
-    analyzer->setOptionContextSensitiveAnalysis(ctOpt.contextSensitive);
-    tc.stopTimer();
-
-    SgProject* sageProject=runRoseFrontEnd(argc,argv,ctOpt,tc);
-    if(ctOpt.status) cout << "STATUS: Parsing and creating AST finished."<<endl;
-    optionallyRunNormalization(ctOpt,sageProject,tc);
-    optionallyGenerateAstStatistics(ctOpt, sageProject);
-    optionallyGenerateTraversalInfoAndExit(ctOpt, sageProject);
-    optionallyGenerateSourceProgramAndExit(ctOpt, sageProject);
-    if(ctOpt.status) cout<<"STATUS: analysis started."<<endl;
-    analyzer->initialize(ctOpt,sageProject,nullptr);
-    logger[INFO]<<"registered string literals: "<<analyzer->getVariableIdMapping()->numberOfRegisteredStringLiterals()<<endl;
-    optionallyPrintProgramInfos(ctOpt, analyzer);
-    optionallyRunRoseAstChecksAndExit(ctOpt, sageProject);
-    SgNode* root=sageProject;ROSE_ASSERT(root);
-    setAssertConditionVariablesInAnalyzer(root,analyzer);
-    optionallyEliminateRersArraysAndExit(ctOpt,sageProject,analyzer);
-    initializeSolverWithStartFunction(ctOpt,analyzer,sageProject,tc);
-    analyzer->initLabeledAssertNodes(sageProject);
-    optionallyInitializePatternSearchSolver(ctOpt,analyzer,tc);
-    runSolver(ctOpt,analyzer,sageProject,tc);
-    analyzer->printStatusMessageLine("==============================================================");
-    optionallyWriteSVCompWitnessFile(ctOpt, analyzer);
-    optionallyAnalyzeAssertions(ctOpt, ltlOpt, analyzer, tc);
-    runLTLAnalysis(ctOpt,ltlOpt,analyzer,tc);
-    processCtOptGenerateAssertions(ctOpt, analyzer, sageProject);
-    optionallyRunVisualizer(ctOpt,analyzer,root);
-    optionallyRunIOSequenceGenerator(ctOpt, analyzer);
-    optionallyAnnotateTermsAndUnparse(ctOpt, sageProject, analyzer);
-    if(ctOpt.status) cout<<color("normal")<<"done."<<endl;
-
+    cout<<"LTLThorn: analysis not implemented yet."<<endl;
     // main function try-catch
   } catch(const CodeThorn::Exception& e) {
     cerr << "Error: " << e.what() << endl;

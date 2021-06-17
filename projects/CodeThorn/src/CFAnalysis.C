@@ -11,6 +11,7 @@
 #include "AstTerm.h"
 #include <boost/foreach.hpp>
 #include "CodeThornException.h"
+#include "CodeThornPasses.h"
 
 using namespace CodeThorn;
 using namespace std;
@@ -173,7 +174,7 @@ definingDecl(SageNode* decl)
 }
 
 InterFlow CFAnalysis::interFlow(Flow& flow) {
-  if (SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL)
+  if (CodeThorn::Pass::WITH_EXTENDED_NORMALIZED_CALL)
     return interFlow2(flow);
 
   // 1) for each call use AST information to find its corresponding called function
@@ -302,7 +303,7 @@ InterFlow CFAnalysis::interFlow2(Flow& flow) {
     if (insideTemplatedCode(callNode))
       continue;
 
-    SgNodeHelper::ExtendedCallInfo callInfo = SgNodeHelper::matchExtendedNormalizedCall(callNode);
+    SgNodeHelper::ExtendedCallInfo callInfo = SgNodeHelper::matchExtendedNormalizedCall(callNode, CodeThorn::Pass::WITH_EXTENDED_NORMALIZED_CALL);
     if(!callInfo)
     {
       SAWYER_MESG(logger[ERROR]) << callNode->unparseToString() << std::endl;
@@ -398,7 +399,7 @@ Label CFAnalysis::initialLabel(SgNode* node) {
     return labeler->getLabel(node);
 
   // special case of function call
-  if(SgNodeHelper::matchExtendedNormalizedCall(node) || SgNodeHelper::Pattern::matchFunctionCall(node))
+  if(SgNodeHelper::matchExtendedNormalizedCall(node,CodeThorn::Pass::WITH_EXTENDED_NORMALIZED_CALL) || SgNodeHelper::Pattern::matchFunctionCall(node))
     return labeler->getLabel(node);
 
   if(!labeler->numberOfAssociatedLabels(node)) {
@@ -540,7 +541,7 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     return finalSet;
   }
   
-  if (SgNodeHelper::matchExtendedNormalizedCall(node))
+  if (SgNodeHelper::matchExtendedNormalizedCall(node,CodeThorn::Pass::WITH_EXTENDED_NORMALIZED_CALL))
   {
     finalSet.insert(labeler->functionCallReturnLabel(node));
     return finalSet;
@@ -1150,7 +1151,6 @@ namespace
   };
 }
 
-
 Flow CFAnalysis::flow(SgNode* n) {
   SgNode* const node = n;
   ROSE_ASSERT(node);
@@ -1218,7 +1218,7 @@ Flow CFAnalysis::flow(SgNode* n) {
     return edgeSet;
   }
   
-  if(SgNodeHelper::matchExtendedNormalizedCall(node)) {
+  if(SgNodeHelper::matchExtendedNormalizedCall(node),CodeThorn::Pass::WITH_EXTENDED_NORMALIZED_CALL) {
     Label callLabel=labeler->functionCallLabel(node);
     Label callReturnLabel=labeler->functionCallReturnLabel(node);
     edgeSet.insert(Edge(callLabel,EDGE_FORWARD,callReturnLabel));
@@ -1816,13 +1816,53 @@ bool CFAnalysis::forkJoinConsistencyChecks(Flow &flow) const {
   return forksEqualJoins;
 }
 
+#if 0
+// deprecated
 void CFAnalysis::createICFG(SgProject* project) {
   ClassHierarchyWrapper* classHierarchy=new ClassHierarchyWrapper(project);
   FunctionCallMapping2* functionCallMapping2=new FunctionCallMapping2();
   functionCallMapping2->setClassHierarchy(classHierarchy);
   functionCallMapping2->computeFunctionCallMapping(project);
+  createCppICFG(project,functionCallMapping2);
+}
+#endif
+
+void CFAnalysis::createCICFG(SgProject* project) {
+  FunctionCallMapping* functionCallMapping = new FunctionCallMapping();
+  functionCallMapping->computeFunctionCallMapping(project);
+  createCICFG(project,functionCallMapping);
+}
+
+void CFAnalysis::createCICFG(SgProject* project, FunctionCallMapping* functionCallMapping) {
+  setFunctionCallMapping(functionCallMapping);
+  _icfgFlow=flow(project);
+  _interFlow=interFlow(_icfgFlow);
+  intraInterFlow(_icfgFlow, _interFlow);
+}
+
+void CFAnalysis::createCppICFG(SgProject* project) {
+  // PP (02/17/20) add class hierarchy and call mapping
+  ClassHierarchyWrapper* classHierarchy=new ClassHierarchyWrapper(project);
+  FunctionCallMapping2* functionCallMapping2=new FunctionCallMapping2();
+  functionCallMapping2->setLabeler(labeler);
+  functionCallMapping2->setClassHierarchy(classHierarchy);
+  functionCallMapping2->computeFunctionCallMapping(project);
+  createCppICFG(project,functionCallMapping2);
+}
+  
+void CFAnalysis::createCppICFG(SgProject* project, FunctionCallMapping2* functionCallMapping2) {
+  ROSE_ASSERT(_functionCallMapping2->getClassHierarchy());
+  ROSE_ASSERT(_functionCallMapping2->getLabeler());
   setFunctionCallMapping2(functionCallMapping2);
   _icfgFlow=flow(project);
   _interFlow=interFlow(_icfgFlow);
   intraInterFlow(_icfgFlow, _interFlow);
+}
+
+Flow* CFAnalysis::getIcfgFlow() {
+  return &_icfgFlow;
+}
+
+InterFlow* CFAnalysis::getInterFlow() {
+  return &_interFlow;
 }

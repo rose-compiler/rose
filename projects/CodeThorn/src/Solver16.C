@@ -54,12 +54,12 @@ void Solver16::initializeSummaryStatesFromWorkList() {
  */
 void Solver16::run() {
   logger[INFO]<<"Running solver "<<getId()<<endl;
-  if(_analyzer->_ctOpt.abstractionMode==0) {
+  if(_analyzer->getOptionsRef().abstractionMode==0) {
     cerr<<"Error: abstraction mode is 0, but >= 1 required."<<endl;
     exit(1);
   }
-  if(_analyzer->_ctOpt.explorationMode!="topologic-sort") {
-    cerr<<"Error: topologic-sort required for exploration mode, but it is "<<_analyzer->_ctOpt.explorationMode<<endl;
+  if(_analyzer->getOptionsRef().explorationMode!="topologic-sort") {
+    cerr<<"Error: topologic-sort required for exploration mode, but it is "<<_analyzer->getOptionsRef().explorationMode<<endl;
     exit(1);
   }
 
@@ -73,7 +73,7 @@ void Solver16::run() {
   logger[INFO]<<"number of error labels: "<<_analyzer->reachabilityResults.size()<<endl;
   size_t prevStateSetSize=0; // force immediate report at start
   int threadNum;
-  int workers=_analyzer->_numberOfThreadsToUse;
+  int workers=_analyzer->getOptionsRef().threads;
   vector<bool> workVector(workers);
   _analyzer->set_finished(workVector,true);
   bool terminateEarly=false;
@@ -95,18 +95,18 @@ void Solver16::run() {
     threadNum=omp_get_thread_num();
     while(!_analyzer->all_false(workVector)) {
       // logger[DEBUG]<<"running : WL:"<<estateWorkListCurrent->size()<<endl;
-      if(threadNum==0 && _analyzer->_displayDiff && (_analyzer->estateSet.size()>(prevStateSetSize+_analyzer->_displayDiff))) {
+      if(threadNum==0 && _analyzer->getOptionsRef().displayDiff && (_analyzer->getEStateSetSize()>(prevStateSetSize+_analyzer->getOptionsRef().displayDiff))) {
         _analyzer->printStatusMessage(true);
-        prevStateSetSize=_analyzer->estateSet.size();
+        prevStateSetSize=_analyzer->getEStateSetSize();
       }
       //perform reduction to I/O/worklist states only if specified threshold was reached
       if (ioReductionActive) {
 #pragma omp critical
         {
-          if (_analyzer->estateSet.size() > (estatesLastReduction + ioReductionThreshold)) {
+          if (_analyzer->getEStateSetSize() > (estatesLastReduction + ioReductionThreshold)) {
             _analyzer->reduceStgToInOutAssertWorklistStates();
-            estatesLastReduction = _analyzer->estateSet.size();
-            cout<< "STATUS: transition system reduced to I/O/worklist states. remaining transitions: " << _analyzer->transitionGraph.size() << endl;
+            estatesLastReduction = _analyzer->getEStateSetSize();
+            cout<< "STATUS: transition system reduced to I/O/worklist states. remaining transitions: " << _analyzer->getTransitionGraphSize() << endl;
           }
         }
       }
@@ -140,7 +140,7 @@ void Solver16::run() {
         continue;
       if(!currentEStatePtr) {
         //cerr<<"Thread "<<threadNum<<" found empty worklist. Continue without work. "<<endl;
-        ROSE_ASSERT(threadNum>=0 && threadNum<=_analyzer->_numberOfThreadsToUse);
+        ROSE_ASSERT(threadNum>=0 && threadNum<=_analyzer->getOptionsRef().threads);
       } else {
         ROSE_ASSERT(currentEStatePtr);
         Flow edgeSet=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
@@ -155,12 +155,11 @@ void Solver16::run() {
             // newEstate is passed by value (not created yet)
             EState newEState=*nesListIter;
             ROSE_ASSERT(newEState.label()!=Labeler::NO_LABEL);
-            if(_analyzer->_stg_trace_filename.size()>0 && !newEState.constraints()->disequalityExists()) {
+            if(_analyzer->getOptionsRef().stgTraceFileName.size()>0 && !newEState.constraints()->disequalityExists()) {
               std::ofstream fout;
-              // _csv_stg_trace_filename is the member-variable of analyzer
 #pragma omp critical
               {
-                fout.open(_analyzer->_stg_trace_filename.c_str(),ios::app);    // open file for appending
+                fout.open(_analyzer->getOptionsRef().stgTraceFileName.c_str(),ios::app);    // open file for appending
                 assert (!fout.fail( ));
                 fout<<"ESTATE-IN :"<<currentEStatePtr->toString(_analyzer->getVariableIdMapping());
                 string sourceString=_analyzer->getCFAnalyzer()->getLabeler()->getNode(currentEStatePtr->label())->unparseToString().substr(0,40);
@@ -290,15 +289,15 @@ void Solver16::run() {
     _analyzer->printStatusMessage(true);
     _analyzer->printStatusMessage("STATUS: analysis finished (incomplete STG due to specified resource restriction).",true);
     _analyzer->reachabilityResults.finishedReachability(_analyzer->isPrecise(),!isComplete);
-    _analyzer->transitionGraph.setIsComplete(!isComplete);
+    _analyzer->getTransitionGraph()->setIsComplete(!isComplete);
   } else {
     bool tmpcomplete=true;
     _analyzer->reachabilityResults.finishedReachability(_analyzer->isPrecise(),tmpcomplete);
     _analyzer->printStatusMessage(true);
-    _analyzer->transitionGraph.setIsComplete(tmpcomplete);
+    _analyzer->getTransitionGraph()->setIsComplete(tmpcomplete);
     _analyzer->printStatusMessage("STATUS: analysis finished (worklist is empty).",true);
   }
-  _analyzer->transitionGraph.setIsPrecise(_analyzer->isPrecise());
+  _analyzer->getTransitionGraph()->setIsPrecise(_analyzer->isPrecise());
 }
 
 void Solver16::initDiagnostics() {

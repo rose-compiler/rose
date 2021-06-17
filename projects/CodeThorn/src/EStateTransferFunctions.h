@@ -70,7 +70,7 @@ namespace CodeThorn {
     AbstractValue::Operator sgNodeToAbstractValueOperator(SgNode* node);
     
     // obtained from analyzer
-    CTIOLabeler* getLabeler() override;
+    Labeler* getLabeler() override;
     // obtained from analyzer
     VariableIdMappingExtended* getVariableIdMapping() override;
 
