@@ -1,10 +1,6 @@
 #ifndef SgNodeHelper_H
 #define SgNodeHelper_H
 
-/*************************************************************
- * Author   : Markus Schordan                                *
- *************************************************************/
-
 #include <set>
 #include <list>
 #include <vector>
@@ -50,9 +46,6 @@ class SgOmpClauseBodyStatement;
 
 namespace SgNodeHelper {
   
-  /// defines if extended normalized call matching (functions+ctors) is enabled
-  extern bool WITH_EXTENDED_NORMALIZED_CALL;
-
 /*! \brief Functions for simplifying access to SgNode information
 
   * \author Markus Schordan
@@ -591,7 +584,7 @@ namespace SgNodeHelper {
  
   /// matches C and C++ function calls (also ctor and dtor) 
   ExtendedCallInfo
-  matchExtendedNormalizedCall(SgNode*);
+  matchExtendedNormalizedCall(SgNode*, bool matchExtended=false);
 } // end of namespace SgNodeHelper
 
 #endif

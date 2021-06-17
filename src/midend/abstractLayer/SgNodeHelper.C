@@ -10,10 +10,6 @@
 
 using namespace std;
 
-// set to true for matching C++ ctor calls
-bool SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL = false;
-//~ const bool SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL = true;
-
 SgVariableSymbol* SgNodeHelper::isFunctionParameterVariableSymbol(SgNode* node) {
   if(node) {
     if(SgVariableSymbol* varsym=isSgVariableSymbol(node))
@@ -1862,21 +1858,21 @@ namespace
       
 
 SgNodeHelper::ExtendedCallInfo
-SgNodeHelper::matchExtendedNormalizedCall(SgNode* n)
+SgNodeHelper::matchExtendedNormalizedCall(SgNode* n, bool matchExtended)
 {
   static const bool TEST_EXTENDED_NORMALIZED_CALL = true;
-  
-  if (!SgNodeHelper::WITH_EXTENDED_NORMALIZED_CALL) 
+  if(matchExtended) {    
+    SgNodeHelper::ExtendedCallInfo res = sg::dispatch(ExtendedCallMatcherOuter(), n);
+    
+    // for every match of matchFunctionCall, res should also match.  
+    ROSE_ASSERT(  !TEST_EXTENDED_NORMALIZED_CALL 
+                  || !SgNodeHelper::Pattern::matchFunctionCall(n) 
+                  || res
+                  );
+    return res;
+  } else {
     return SgNodeHelper::ExtendedCallInfo();
-    
-  SgNodeHelper::ExtendedCallInfo res = sg::dispatch(ExtendedCallMatcherOuter(), n);
-    
-  // for every match of matchFunctionCall, res should also match.  
-  ROSE_ASSERT(  !TEST_EXTENDED_NORMALIZED_CALL 
-             || !SgNodeHelper::Pattern::matchFunctionCall(n) 
-             || res
-             );
-  return res;
+  }
 }
 
 std::list<SgVariableDeclaration*> SgNodeHelper::memberVariableDeclarationsList(SgClassType* sgType) {
