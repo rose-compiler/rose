@@ -683,6 +683,46 @@ namespace
       handleBasicBlock(n.get_body(), true /* function body */);
     }
 
+    void handle(SgAdaGenericDefn& n)
+    {
+      SgDeclarationStatementPtrList& decls = n.get_declarations();
+      list(decls);
+    }
+
+    void handle(SgAdaFormalTypeDecl& n)
+    {
+      prn("type ");
+      prn(n.get_name());
+      prn(" is ");
+      SgAdaFormalType* ty = n.get_formal_type();
+      if (ty->get_is_limited()) {
+        prn("limited ");
+      }
+      if (ty->get_is_private()) {
+        prn("private");
+      }
+      prn(";\n");
+    }
+
+    void handle(SgAdaGenericDecl& n)
+    {
+      prn("generic\n");
+      stmt(n.get_definition());
+      // check which kind of generic we have:
+      if (isSgAdaPackageSpecDecl(n.get_declaration())) {
+        SgAdaPackageSpecDecl* pkgspec = isSgAdaPackageSpecDecl((SgNode*)n.get_declaration());
+        stmt(pkgspec);
+        return;
+      }
+      if (isSgFunctionDeclaration(n.get_declaration())) {
+        SgFunctionDeclaration* fundec = isSgFunctionDeclaration((SgNode*)n.get_declaration());
+        stmt(fundec);
+        return;
+      }
+
+      ROSE_ABORT();
+    }
+
     void handle(SgIfStmt& n)
     {
       prn("if ");
@@ -1425,6 +1465,7 @@ namespace
     void handle(SgNode& n)         { SG_UNEXPECTED_NODE(n); }
 
     void handle(SgType&)           { res = ReturnType{"subtype", ""    }; }
+    void handle(SgAdaFormalType&)  { res = ReturnType{"type",    ""    }; }
     void handle(SgAdaAccessType&)  { res = ReturnType{"type",    ""    }; }
     void handle(SgAdaDerivedType&) { res = ReturnType{"type",    " new"}; }
     void handle(SgAdaModularType&) { res = ReturnType{"type",    ""    }; }

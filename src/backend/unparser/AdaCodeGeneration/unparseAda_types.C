@@ -89,6 +89,12 @@ namespace
       expr(n.get_modexpr());
     }
 
+    void handle(SgAdaFormalType& n)
+    {
+      prn(" ");
+      prn(n.get_type_name());
+    }
+
     void handle(SgModifierType& n)
     {
       if (n.get_typeModifier().get_constVolatileModifier().isConst())
@@ -275,4 +281,3 @@ Unparse_Ada::unparseType(SgType* type, SgUnparse_Info& info)
 
   sg::dispatch(AdaTypeUnparser(*this, info, std::cerr), type);
 }
-

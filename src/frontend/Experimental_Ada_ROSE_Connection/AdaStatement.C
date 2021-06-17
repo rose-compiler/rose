@@ -550,6 +550,13 @@ namespace
       {}
 
       void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
+
+      void handle(SgAdaFormalType& n)
+      {
+        res = &mkAdaFormalTypeDecl(dclname, n, dclscope);
+        n.set_declaration(res);
+      }
+
       void handle(SgType& n)
       {
         res = &mkTypeDecl(dclname, n, dclscope);
@@ -2501,6 +2508,145 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         break;
       }
 
+    case A_Generic_Package_Declaration:            // 12.1(2)
+      {
+        logKind("A_Generic_Package_Declaration");
+
+        SgScopeStatement&       outer      = ctx.scope();
+        NameData                adaname    = singleName(decl, ctx);
+        // create generic declaration
+        SgAdaGenericDecl&       sgnode     = mkAdaGenericDecl(outer);
+        SgAdaGenericDefn&       gen_defn   = SG_DEREF(sgnode.get_definition());
+
+        // create package in the scope of the generic
+        SgAdaPackageSpecDecl&   pkgnode    = mkAdaPackageSpecDecl(adaname.ident, gen_defn);
+        SgAdaPackageSpec&       pkgspec    = SG_DEREF(pkgnode.get_definition());
+
+        // set declaration component of generic decl to package decl
+        sgnode.set_declaration(&pkgnode);
+
+        // set scopes
+        //gen_defn.set_scope(&adaname.parent_scope());
+        pkgnode.set_scope(&gen_defn);
+
+        // record ID to sg node mapping
+        recordNode(asisDecls(), elem.ID, sgnode);
+        recordNode(asisDecls(), adaname.id(), sgnode);
+
+        privatize(pkgnode, isPrivate);
+        attachSourceLocation(pkgspec, elem, ctx);
+        attachSourceLocation(pkgnode, elem, ctx);
+        attachSourceLocation(gen_defn, elem, ctx);
+        attachSourceLocation(sgnode, elem, ctx);
+
+        outer.append_statement(&sgnode);
+        ADA_ASSERT(sgnode.get_parent() == &outer);
+        ADA_ASSERT(pkgnode.get_parent() == &gen_defn);
+
+        ADA_ASSERT(pkgnode.search_for_symbol_from_symbol_table());
+
+        // generic formal part: this must be done first so the types defined in
+        // the generic formal part exist when the package definition is processed.
+        {
+          ElemIdRange range = idRange(decl.Generic_Formal_Part);
+
+          traverseIDs(range, elemMap(), ElemCreator{ctx.scope(gen_defn)});
+        }
+
+        // visible items
+        {
+          ElemIdRange range = idRange(decl.Visible_Part_Declarative_Items);
+
+          traverseIDs(range, elemMap(), ElemCreator{ctx.scope(pkgspec)});
+        }
+
+        // private items
+        {
+          ElemIdRange range = idRange(decl.Private_Part_Declarative_Items);
+          //ADA_ASSERT((!range.empty()) == decl.Is_Private_Present);
+
+          traverseIDs(range, elemMap(), ElemCreator{ctx.scope(pkgspec), true});
+        }
+
+
+        placePragmas(decl.Pragmas, ctx, std::ref(pkgspec));
+
+        /* unused nodes:
+               Element_ID                     Corresponding_End_Name;
+               bool                           Is_Name_Repeated;
+               Declaration_ID                 Corresponding_Declaration;
+         */
+        break;
+      }
+
+    case A_Generic_Procedure_Declaration:          // 12.1(2)
+    case A_Generic_Function_Declaration:           // 12.1(2)
+      {
+        logKind(decl.Declaration_Kind == A_Generic_Function_Declaration
+                ? "A_Generic_Function_Declaration"
+                : "A_Generic_Procedure_Declaration");
+
+        const bool             isFunc  = decl.Declaration_Kind == A_Generic_Function_Declaration;
+        SgScopeStatement&      outer   = ctx.scope();
+        NameData               adaname = singleName(decl, ctx);
+
+        ADA_ASSERT(adaname.fullName == adaname.ident);
+        SgAdaGenericDecl&          sgnode     = mkAdaGenericDecl(outer);
+        SgAdaGenericDefn&          gen_defn   = SG_DEREF(sgnode.get_definition());
+
+        outer.insert_symbol(adaname.ident, &mkBareNode<SgAdaGenericSymbol>(&sgnode));
+
+        // generic formal part
+        {
+          ElemIdRange range = idRange(decl.Generic_Formal_Part);
+
+          traverseIDs(range, elemMap(), ElemCreator{ctx.scope(gen_defn)});
+        }
+
+        ElemIdRange            params  = idRange(decl.Parameter_Profile);
+        SgType&                rettype = isFunc ? getDeclTypeID(decl.Result_Profile, ctx)
+                                                : SG_DEREF(sb::buildVoidType());
+
+        SgFunctionDeclaration&  fundec     = mkProcedure(adaname.fullName, gen_defn, rettype, ParameterCompletion{params, ctx});
+
+        sgnode.set_declaration(&fundec);
+
+        setOverride(fundec.get_declarationModifier(), decl.Is_Overriding_Declaration);
+
+        recordNode(asisDecls(), elem.ID, sgnode);
+        recordNode(asisDecls(), adaname.id(), sgnode);
+
+        privatize(fundec, isPrivate);
+        attachSourceLocation(fundec, elem, ctx);
+        attachSourceLocation(sgnode, elem, ctx);
+        attachSourceLocation(gen_defn, elem, ctx);
+
+        outer.append_statement(&sgnode);
+        ADA_ASSERT(fundec.get_parent() == &gen_defn);
+        ADA_ASSERT(sgnode.get_parent() == &outer);
+
+
+        /* unhandled fields
+
+           bool                          Has_Abstract
+           bool                          Is_Not_Overriding_Declaration
+           bool                          Is_Dispatching_Operation
+           Declaration_ID                Corresponding_Declaration
+           Declaration_ID                Corresponding_Body
+           Declaration_ID                Corresponding_Subprogram_Derivation
+           Type_Definition_ID            Corresponding_Type
+
+         +func:
+           bool                          Is_Not_Null_Return
+           Declaration_ID                Corresponding_Equality_Operator
+
+           break;
+        */
+
+
+        break;
+      }
+
     case A_Function_Declaration:                   // 6.1(4)   -> Trait_Kinds
     case A_Procedure_Declaration:                  // 6.1(4)   -> Trait_Kinds
       {
@@ -2721,6 +2867,28 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         break;
       }
 
+    case A_Formal_Type_Declaration:                // 12.5(2)
+      {
+        logKind("A_Formal_Type_Declaration");
+
+        NameData              adaname = singleName(decl, ctx);
+        ROSE_ASSERT(adaname.fullName == adaname.ident);
+        TypeData              ty = getFormalTypeFoundation(adaname.ident, decl, ctx);
+        SgScopeStatement&     scope = ctx.scope();
+        ROSE_ASSERT(scope.get_parent());
+
+        Element_ID              id     = adaname.id();
+        SgDeclarationStatement* nondef = findFirst(asisTypes(), id);
+        SgDeclarationStatement& sgnode = sg::dispatch(MakeDeclaration(adaname.ident, scope, ty, nondef), ty.n);
+
+        privatize(sgnode, isPrivate);
+        recordNode(asisTypes(), id, sgnode, nondef != nullptr);
+        attachSourceLocation(sgnode, elem, ctx);
+        scope.append_statement(&sgnode);
+        ROSE_ASSERT(sgnode.get_parent() == &scope);
+
+        break;
+      }
 
     case A_Subtype_Declaration:                    // 3.2.2(2)
       {
@@ -3159,14 +3327,10 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case A_Package_Body_Stub:                      // 10.1.3(4)
     case A_Task_Body_Stub:                         // 10.1.3(5)
     case A_Protected_Body_Stub:                    // 10.1.3(6)
-    case A_Generic_Procedure_Declaration:          // 12.1(2)
-    case A_Generic_Function_Declaration:           // 12.1(2)
-    case A_Generic_Package_Declaration:            // 12.1(2)
     case A_Package_Instantiation:                  // 12.3(2)
     case A_Procedure_Instantiation:                // 12.3(2)
     case A_Function_Instantiation:                 // 12.3(2)
     case A_Formal_Object_Declaration:              // 12.4(2)  -> Mode_Kinds
-    case A_Formal_Type_Declaration:                // 12.5(2)
     case A_Formal_Incomplete_Type_Declaration:
     case A_Formal_Procedure_Declaration:           // 12.6(2)
     case A_Formal_Function_Declaration:            // 12.6(2)
