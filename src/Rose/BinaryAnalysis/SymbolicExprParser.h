@@ -5,6 +5,7 @@
 
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/SymbolicExpr.h>
+#include <Rose/Exception.h>
 #include <Sawyer/BiMap.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>
@@ -30,7 +31,7 @@ class SymbolicExprParser {
 public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     /** Syntax errors that are thrown. */
-    class SyntaxError: public std::runtime_error {
+    class SyntaxError: public Rose::Exception {
     public:
         std::string inputName;                          /**< Name of input, usually a file name. */
         unsigned lineNumber;                            /**< Line number (1-origin). Zero if position info is not available. */
@@ -41,10 +42,10 @@ public:
     };
 
     /** Substitution error during expansion. */
-    class SubstitutionError: public std::runtime_error {
+    class SubstitutionError: public Rose::Exception {
     public:
         SubstitutionError(const std::string &mesg)
-            : std::runtime_error(mesg) {}
+            : Rose::Exception(mesg) {}
         ~SubstitutionError() throw () {}
         void print(std::ostream&) const;
     };
