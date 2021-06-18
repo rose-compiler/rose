@@ -574,7 +574,15 @@ SemanticCallbacks::nextUnits(const Path::Ptr &path, const BS::RiscOperatorsPtr &
         SmtSolver::Transaction tx(solver);
         auto assertion = SymbolicExpr::makeEq(ip, SymbolicExpr::makeIntegerConstant(ip->nBits(), va));
         solver->insert(assertion);
-        switch (solver->check()) {
+
+        SmtSolver::Satisfiable satisfied = SmtSolver::SAT_UNKNOWN;
+        try {
+            satisfied = solver->check();
+        } catch (const SmtSolver::Exception &e) {
+            satisfied = SmtSolver::SAT_UNKNOWN;
+        }
+
+        switch (satisfied) {
             case SmtSolver::SAT_YES:
                 // Create the next execution unit
                 if (ExecutionUnit::Ptr unit = findUnit(va)) {
@@ -595,7 +603,7 @@ SemanticCallbacks::nextUnits(const Path::Ptr &path, const BS::RiscOperatorsPtr &
                 // Do not extend the current path in this direction since it is infeasible.
                 break;
             case SmtSolver::SAT_UNKNOWN: {
-                // The SMT solver failed. This is probably due to a timeout, so count it as a timeout failure.
+                // The SMT solver failed. This is could be a timeout or some other failure.
                 SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
                 ++nSolverFailures_;
                 break;
