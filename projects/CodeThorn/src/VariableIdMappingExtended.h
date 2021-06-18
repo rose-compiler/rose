@@ -70,7 +70,7 @@ namespace CodeThorn {
     static std::pair<bool,std::list<SgVariableDeclaration*> > memberVariableDeclarationsList(SgClassType* classType);
     static bool isDataMemberAccess(SgVarRefExp* varRefExp);
     static bool isGlobalOrLocalVariableAccess(SgVarRefExp* varRefExp);
-    void setAstConsistencySymbolCheckFlag(bool flag);
+    void setAstSymbolCheckFlag(bool flag);
     bool getAstConsistencySymbolCheckFlag();
     
   private:

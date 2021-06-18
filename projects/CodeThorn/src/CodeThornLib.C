@@ -768,7 +768,7 @@ namespace CodeThorn {
 
   VariableIdMappingExtended* createVariableIdMapping(CodeThornOptions& ctOpt, SgProject* project) {
     VariableIdMappingExtended* variableIdMapping=new VariableIdMappingExtended(); // createvid
-    variableIdMapping->setAstConsistencySymbolCheckFlag(ctOpt.astConsistencySymbolCheckFlag);
+    variableIdMapping->setAstSymbolCheckFlag(ctOpt.astSymbolCheckFlag);
     variableIdMapping->computeVariableSymbolMapping(project);
     return variableIdMapping;
   }
