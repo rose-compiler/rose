@@ -3539,7 +3539,7 @@ HEADER_ADA_FORMAL_TYPE_DECL_STATEMENT_END
 
 HEADER_ADA_GENERIC_DEFN_START
   SgName get_mangled_name() const ROSE_OVERRIDE;
-  SgName get_qualified_name() const;
+  SgName get_qualified_name() const ROSE_OVERRIDE;
 protected:
   bool insert_child(SgStatement*, SgStatement*, bool inFront = true, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
   bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
