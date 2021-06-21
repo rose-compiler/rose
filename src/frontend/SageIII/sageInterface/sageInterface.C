@@ -25009,6 +25009,12 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
     type_set.insert (v->get_base_type());
   }
 
+  if (SgDeclarationStatement* v= isSgDeclarationStatement(node))
+  {
+    out<<" first nondefining decl@"<< v->get_firstNondefiningDeclaration();
+    out<<" defining decl@"<< v->get_definingDeclaration();
+  }
+
   out<<endl;
 
   std::vector<SgNode* > children = node->get_traversalSuccessorContainer();
