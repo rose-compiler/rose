@@ -21191,6 +21191,13 @@ namespace {
 
 
 SgClassType*
+SageBuilder::buildTemplateClassType(SgTemplateClassDeclaration* template_decl,
+Rose_STL_Container<SgNode *>& template_args)
+{
+   return buildClassTemplateType (template_decl,template_args);
+}
+
+SgClassType*
 SageBuilder::buildClassTemplateType(SgTemplateClassDeclaration* template_decl,
 Rose_STL_Container<SgNode *>& template_args)
 {
