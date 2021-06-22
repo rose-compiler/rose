@@ -37,9 +37,7 @@
 #include "ltlthorn-lib/Solver10.h"
 #include "ltlthorn-lib/Solver11.h"
 #include "ltlthorn-lib/Solver12.h"
-#include "ReadWriteAnalyzer.h"
 #include "AnalysisParameters.h"
-#include "CodeThornException.h"
 #include "CodeThornException.h"
 #include "ProgramInfo.h"
 #include "FunctionCallMapping.h"
@@ -213,7 +211,7 @@ int main( int argc, char * argv[] ) {
 
     if(ctOpt.status) cout<<"STATUS: analysis started."<<endl;
     string startFunctionName="";
-    analyzer->initializeSolver3(startFunctionName,project,tc);
+    analyzer->runAnalysisPhase1Sub1(startFunctionName,project,tc);
 
     if(ctOpt.programStats) {
       analyzer->printStatusMessageLine("==============================================================");

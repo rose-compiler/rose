@@ -4,7 +4,6 @@
 #include <regex>
 
 #include "IOAnalyzer.h"
-#include "ReadWriteAnalyzer.h"
 #include "CounterexampleGenerator.h"
 #include "CodeThornLib.h"
 #include "LTLThornLib.h"
@@ -37,7 +36,6 @@ namespace CodeThorn {
 
 void initDiagnosticsLTL() {
   IOAnalyzer::initDiagnostics();
-  ReadWriteAnalyzer::initDiagnostics();
   CounterexampleGenerator::initDiagnostics();
 }
 

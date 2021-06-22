@@ -7,7 +7,7 @@ COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counte
 EXTRA_DIST = Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
 # 
-bin_PROGRAMS = codethorn memthorn thorn1 parprothorn ltlthorn woodpecker analyterix addressTakenAnalysis cldemo
+bin_PROGRAMS = codethorn memthorn thorn1 ltlthorn woodpecker analyterix addressTakenAnalysis cldemo
 
 # matcher_demo matcher astinfo cldemo
 noinst_PROGRAMS = addressTakenAnalysis cldemo
@@ -150,7 +150,6 @@ CODETHORN_HEADER_FILES=\
   Options.h \
   CodeThornOptions.h \
   LTLOptions.h \
-  ParProOptions.h \
   LTLRersMapping.h \
   DFSolver1.h \
   DFSolver2.h \
@@ -171,15 +170,12 @@ CODETHORN_HEADER_FILES=\
   RDLattice.h \
   RDTransferFunctions.h \
   ReachabilityAnalysis.h \
-  ReadWriteAnalyzer.h \
-  ReadWriteHistory.h \
   RersSpecialization.h \
   RERS_empty_specialization.h \
   RersCounterexample.h \
   RewriteStatistics.h \
   RewriteSystem.h \
   RoseCompatibility.h \
-  RWState.h \
   Solver5.h \
   Solver16.h \
   Solver8.h \
@@ -306,14 +302,11 @@ CODETHORN_SOURCE_FILES=\
   RDLattice.C \
   RDTransferFunctions.C \
   ReachabilityAnalysis.C \
-  ReadWriteAnalyzer.C \
-  ReadWriteHistory.C \
   RERS_empty_specialization.C \
   RersCounterexample.C \
   RewriteStatistics.C \
   RewriteSystem.C \
   RoseCompatibility.C \
-  RWState.C \
   Solver5.C \
   Solver16.C \
   Solver8.C \
@@ -494,42 +487,6 @@ ltlthorn_SOURCES = \
   LTLThornCommandLineOptions.C \
   ltlthorn.C
 
-
-##############################################################
-# TOOL: PARPROTHORN
-##############################################################
-
-# yacc flags for LTL parser
-parprothorn_YFLAGS = -p ltl_ 
-
-# this line creates speparately named object files
-parprothorn_CXXFLAGS = -fopenmp -Wall -O3 
-
-# parprothorn has most of its code organized in two separate libraries
-parprothorn_DEPENDENCIES=libcodethorn.la libltlthorn.la
-
-if ROSE_WITH_SPOT
-#spot and bdd need to be linked last with gcc 5.4
-parprothorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn $(Z3_LINK) -lspot -lbdd 
-parprothorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
-else
-parprothorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn
-endif
-
-parprothorndir=.
-
-# only informative
-parprothorn_xHEADERS = \
-  CommandLineOptions.h \
-  ParProThornCommandLineOptions.h \
-  codethorn.h \
-  LTL.h
-
-# codethorn sources in addition to libcodethorn and libltlthorn
-parprothorn_SOURCES = \
-  LTLParser.y++ \
-  ParProThornCommandLineOptions.C \
-  parprothorn.C
 
 ##############################################################
 # TOOL: MEMTHORN

@@ -570,7 +570,7 @@ int main( int argc, char * argv[] ) {
 
     TimingCollector tc; // new feature, other timers can be removed
     if(option_specialize_fun_name!="") {
-      analyzer->initializeSolver3(option_specialize_fun_name,sageProject,tc);
+      analyzer->runAnalysisPhase1Sub1(option_specialize_fun_name,sageProject,tc);
     } else {
       // if main function exists, start with main-function
       // if a single function exist, use this function
@@ -596,7 +596,7 @@ int main( int argc, char * argv[] ) {
         }
       }
       ROSE_ASSERT(startFunction!="");
-      analyzer->initializeSolver3(startFunction,sageProject,tc);
+      analyzer->runAnalysisPhase1Sub1(startFunction,sageProject,tc);
     }
     analyzer->initLabeledAssertNodes(sageProject);
 

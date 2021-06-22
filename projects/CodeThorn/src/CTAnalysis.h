@@ -108,7 +108,7 @@ namespace CodeThorn {
 
   protected:
     // overridden in IOAnalyzer
-    virtual void initializeSolver3(std::string functionToStartAt, SgProject* root, TimingCollector& tc);
+    virtual void runAnalysisPhase1Sub1(std::string functionToStartAt, SgProject* root, TimingCollector& tc);
   public:
     virtual void runSolver();
   

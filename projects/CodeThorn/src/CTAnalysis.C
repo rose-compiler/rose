@@ -1352,12 +1352,12 @@ void CodeThorn::CTAnalysis::runAnalysisPhase1(CodeThornOptions& ctOptxx,SgProjec
       startFunctionName = "main";
     }
     tc.stopTimer(TimingCollector::init);
-    this->initializeSolver3(startFunctionName,root,tc);
+    this->runAnalysisPhase1Sub1(startFunctionName,root,tc);
     SAWYER_MESG(logger[INFO])<< "Initializing solver "<<this->getSolver()->getId()<<" finished"<<endl;
   }
 
-void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgProject* root, TimingCollector& tc) {
-  SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver3 started."<<endl;
+void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(std::string functionToStartAt, SgProject* root, TimingCollector& tc) {
+  SAWYER_MESG(logger[INFO])<<"CTAnalysis::runAnalysisPhase1Sub1 started."<<endl;
   startAnalysisTimer();
   ROSE_ASSERT(root);
 
