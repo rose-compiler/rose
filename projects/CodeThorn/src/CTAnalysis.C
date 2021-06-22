@@ -598,23 +598,22 @@ void CodeThorn::CTAnalysis::runSolver() {
   startAnalysisTimer();
   CodeThorn::Solver* ctSolver=dynamic_cast<CodeThorn::Solver*>(_solver);
   ROSE_ASSERT(ctSolver);
-  //_solver->run();
-  //cout<<"STATUS: running solver "<<ctSolver->getId()<<endl;
+  if(_ctOpt.status) cout<<"STATUS: running solver "<<ctSolver->getId()<<endl;
   ctSolver->run();
   stopAnalysisTimer();
 }
 
-void CodeThorn::CTAnalysis::runSolver(CodeThornOptions& ctOpt, TimingCollector& tc) {
+void CodeThorn::CTAnalysis::runAnalysisPhase2(TimingCollector& tc) {
     tc.startTimer();
     this->printStatusMessageLine("==============================================================");
-    if(!this->getModeLTLDriven() && ctOpt.z3BasedReachabilityAnalysis==false && ctOpt.ssa==false) {
-      switch(ctOpt.abstractionMode) {
+    if(!this->getModeLTLDriven() && _ctOpt.z3BasedReachabilityAnalysis==false && _ctOpt.ssa==false) {
+      switch(_ctOpt.abstractionMode) {
       case 0:
       case 1:
 	this->runSolver();
 	break;
       default:
-	cout<<"Error: unknown abstraction mode "<<ctOpt.abstractionMode<<endl;
+	cout<<"Error: unknown abstraction mode "<<_ctOpt.abstractionMode<<endl;
 	exit(1);
       }
     }
@@ -1342,8 +1341,9 @@ void CodeThorn::CTAnalysis::run(CodeThornOptions& ctOpt, SgProject* root, Labele
   ROSE_ASSERT(false);
 }
 
-void CodeThorn::CTAnalysis::initializeSolverWithStartFunction(CodeThornOptions& ctOpt,SgProject* root, TimingCollector& tc) {
+void CodeThorn::CTAnalysis::runAnalysisPhase1(CodeThornOptions& ctOptxx,SgProject* root, TimingCollector& tc) {
     tc.startTimer();
+    CodeThornOptions& ctOpt=getOptionsRef();
     SAWYER_MESG(logger[INFO])<< "Ininitializing solver "<<this->getSolver()->getId()<<" started"<<endl;
     string startFunctionName;
     if(ctOpt.startFunctionName.size()>0) {

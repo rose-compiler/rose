@@ -211,7 +211,7 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
-    analyzer->initializeSolverWithStartFunction(ctOpt,project,tc);
+    analyzer->runAnalysisPhase1(ctOpt,project,tc);
 
     if(ctOpt.programStats) {
       analyzer->printStatusMessageLine("==============================================================");
@@ -242,7 +242,7 @@ int main( int argc, char * argv[] ) {
     }
 
     if(ctOpt.runSolver) {
-      analyzer->runSolver(ctOpt,tc);
+      analyzer->runAnalysisPhase2(tc);
     } else {
       cout<<"STATUS: skipping solver run."<<endl;
     }

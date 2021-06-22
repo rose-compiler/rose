@@ -103,9 +103,13 @@ namespace CodeThorn {
     
     void initAstNodeInfo(SgNode* node);
 
-    void initializeSolverWithStartFunction(CodeThornOptions& ctOpt,SgProject* root, TimingCollector& tc);
+    void runAnalysisPhase1(CodeThornOptions& ctOpt,SgProject* root, TimingCollector& tc);
+    void runAnalysisPhase2(TimingCollector& tc);
+
+  protected:
+    // overridden in IOAnalyzer
     virtual void initializeSolver3(std::string functionToStartAt, SgProject* root, TimingCollector& tc);
-    void runSolver(CodeThornOptions& ctOpt,TimingCollector& tc);
+  public:
     virtual void runSolver();
   
     void initLabeledAssertNodes(SgProject* root);
