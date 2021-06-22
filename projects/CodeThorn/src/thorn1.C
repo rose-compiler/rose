@@ -182,8 +182,6 @@ int main( int argc, char * argv[] ) {
 
     CodeThorn::CodeThornLib::optionallyGenerateAstStatistics(ctOpt, project);
 
-    //analyzer->initialize(project,0); initializeSolverWithStartFunction calls this function
-
     CodeThorn::CodeThornLib::optionallyPrintProgramInfos(ctOpt, analyzer);
     CodeThorn::CodeThornLib::optionallyRunRoseAstChecksAndExit(ctOpt, project);
 
@@ -214,7 +212,6 @@ int main( int argc, char * argv[] ) {
     }
 
     if(ctOpt.status) cout<<"STATUS: analysis started."<<endl;
-    //initializeSolverWithStartFunction(ctOpt,analyzer,project,tc);
     string startFunctionName="";
     analyzer->initializeSolver3(startFunctionName,project,tc);
 

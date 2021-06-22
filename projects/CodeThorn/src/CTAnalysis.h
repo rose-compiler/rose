@@ -96,6 +96,7 @@ namespace CodeThorn {
     static void initDiagnostics();
     CTAnalysis();
     virtual ~CTAnalysis();
+    void deleteAllStates();
     virtual void run();
 
   public:
@@ -150,8 +151,7 @@ namespace CodeThorn {
     bool isConsistentEStatePtrSet(std::set<const EState*> estatePtrSet);
     bool checkTransitionGraph();
 
-    // deprecated, only for backward compatibility
-    EStateTransferFunctions* getExprAnalyzer();
+    EStateTransferFunctions* getEStateTransferFunctions();
 
     // access  functions for computed information
     FunctionCallMapping* getFunctionCallMapping();
@@ -275,8 +275,6 @@ namespace CodeThorn {
     // only used in binary-prototype binding
     VariableId globalVarIdByName(std::string varName);
 
-    CodeThorn::EStateTransferFunctions* getEStateTransferFunctions();
-    
     // functions related to abstractions during the analysis
     void eventGlobalTopifyTurnedOn();
     bool isActiveGlobalTopify();

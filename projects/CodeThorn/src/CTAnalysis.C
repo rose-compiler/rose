@@ -73,6 +73,22 @@ CodeThorn::CTAnalysis::CTAnalysis():
   _estateTransferFunctions->setAnalyzer(this);
 }
 
+CodeThorn::CTAnalysis::~CTAnalysis() {
+  if(_estateTransferFunctions)
+    delete _estateTransferFunctions;
+  deleteWorkLists();
+  deleteAllStates();
+}
+
+void CodeThorn::CTAnalysis::deleteAllStates() {
+  logger[INFO]<<"INFO::deleting estates."<<endl;
+  estateSet.clear();
+  logger[INFO]<<"INFO::deleting pstates."<<endl;
+  pstateSet.clear();
+  logger[INFO]<<"INFO::deleting transition system."<<endl;
+  transitionGraph.clear();
+}
+
 void CodeThorn::CTAnalysis::run() {
   runSolver();
 }
@@ -151,12 +167,6 @@ void CodeThorn::CTAnalysis::setExplorationMode(ExplorationMode em) {
 
 ExplorationMode CodeThorn::CTAnalysis::getExplorationMode() {
   return _explorationMode;
-}
-
-CodeThorn::CTAnalysis::~CTAnalysis() {
-  if(_estateTransferFunctions)
-    delete _estateTransferFunctions;
-  deleteWorkLists();
 }
 
 CodeThorn::CTAnalysis::SubSolverResultType CodeThorn::CTAnalysis::subSolver(const CodeThorn::EState* currentEStatePtr) {
@@ -505,14 +515,6 @@ bool CodeThorn::CTAnalysis::svCompFunctionSemantics() { return _svCompFunctionSe
 bool CodeThorn::CTAnalysis::getStdFunctionSemantics() { return _estateTransferFunctions->getStdFunctionSemantics(); }
 void CodeThorn::CTAnalysis::setStdFunctionSemantics(bool flag) { _estateTransferFunctions->setStdFunctionSemantics(flag); }
 
-// TODO: move to flow analyzer (reports label,init,final sets)
-string CodeThorn::CTAnalysis::astNodeInfoAttributeAndNodeToString(SgNode* node) {
-  string textual;
-  if(node->attributeExists("info"))
-    textual=node->getAttribute("info")->toString()+":";
-  return textual+SgNodeHelper::nodeToString(node);
-}
-
 void CodeThorn::CTAnalysis::writeWitnessToFile(string filename) {
   _counterexampleGenerator.setType(CounterexampleGenerator::TRACE_TYPE_SVCOMP_WITNESS);
   ROSE_ASSERT(_firstAssertionOccurences.size() == 1); //SV-COMP: Expecting exactly one reachability property
@@ -579,10 +581,6 @@ bool CodeThorn::CTAnalysis::isIncompleteSTGReady() {
   }
   // at least one maximum mode is active, but the corresponding limit has not yet been reached
   return false;
-}
-
-CodeThorn::EStateTransferFunctions* CodeThorn::CTAnalysis::getExprAnalyzer() {
-  return getEStateTransferFunctions();
 }
 
 void CodeThorn::CTAnalysis::setSolver(Solver* solver) {
@@ -1334,8 +1332,6 @@ void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgP
 
   CodeThornOptions& ctOpt=getOptionsRef();
   
-  //ProgramAbstractionLayer* programAbstractionLayer=new ProgramAbstractionLayer();
-  //programAbstractionLayer->initialize(_ctOpt,root,tc);
   Pass::normalization(ctOpt,root,tc);
   _variableIdMapping=Pass::createVariableIdMapping(ctOpt, root, tc);
   _labeler=Pass::createLabeler(ctOpt, root, tc, _variableIdMapping);
@@ -1379,15 +1375,11 @@ void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgP
 
   CallString::setMaxLength(_ctOpt.callStringLength);
 
-  //initializeSolver();
   if(_estateTransferFunctions==nullptr) {
     EStateTransferFunctions* etf=new EStateTransferFunctions();
     etf->setAnalyzer(this);
     _estateTransferFunctions=etf;
   }
-  
-  //initializeTransferFunctions();
-  //_estateTransferFunctions->setProgramAbstractionLayer(_programAbstractionLayer);
   _estateTransferFunctions->addParameterPassingVariables(); // DFTransferFunctions: adds pre-defined var-ids to VID for parameter passing
   
   if(_ctOpt.getInterProceduralFlag()) {
@@ -1419,13 +1411,6 @@ void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgP
   }
   SAWYER_MESG(logger[TRACE])<< "Intra-Flow OK. (size: " << getFlow()->size() << " edges)"<<endl;
   ROSE_ASSERT(getCFAnalyzer());
-
-#if 0
-  if(_ctOpt.reduceCfg) {
-    int cnt=getCFAnalyzer()->inlineTrivialFunctions(flow);
-    cout << "CFG reduction OK. (inlined "<<cnt<<" functions; eliminated "<<cnt*4<<" nodes)"<<endl;
-  }
-#endif
 
   // create empty state
   PState initialPState;
@@ -1459,7 +1444,10 @@ void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgP
   
   setWorkLists(_explorationMode);
   
+  // initialize summary states map for abstract model checking mode
+  initializeSummaryStates(initialPStateStored,emptycsetstored);
   estate.io.recordNone(); // ensure that extremal value is different to bot
+
   if(_ctOpt.runSolver) {
     if(_ctOpt.getInterProceduralFlag()) {
       const EState* initialEState=processNew(estate); // START_INIT 6
@@ -1481,8 +1469,6 @@ void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgP
 	SAWYER_MESG(logger[TRACE]) << "INIT: start state intra-procedural (extremal value): "<<initialEState->toString(getVariableIdMapping())<<endl;
       }
     }
-    // initialize summary states map for abstract model checking mode
-    initializeSummaryStates(initialPStateStored,emptycsetstored);
 
     if(_ctOpt.rers.rersBinary) {
       //initialize the global variable arrays in the linked binary version of the RERS problem
@@ -1535,6 +1521,14 @@ void CodeThorn::CTAnalysis::generateAstNodeInfo(SgNode* node) {
     else cout<<": no attribute!"<<endl;
 #endif
   }
+}
+
+// TODO: move to flow analyzer (reports label,init,final sets)
+string CodeThorn::CTAnalysis::astNodeInfoAttributeAndNodeToString(SgNode* node) {
+  string textual;
+  if(node->attributeExists("info"))
+    textual=node->getAttribute("info")->toString()+":";
+  return textual+SgNodeHelper::nodeToString(node);
 }
 
 // experimental functions
@@ -1728,9 +1722,9 @@ void CodeThorn::CTAnalysis::reduceStgToInOutAssertWorklistStates() {
 
 int CodeThorn::CTAnalysis::reachabilityAssertCode(const EState* currentEStatePtr) {
   ROSE_ASSERT(_estateTransferFunctions);
-  ROSE_ASSERT(getExprAnalyzer());
+  ROSE_ASSERT(getEStateTransferFunctions());
   if(_ctOpt.rers.rersBinary) {
-    int outputVal = getExprAnalyzer()->readFromMemoryLocation(currentEStatePtr->label(),currentEStatePtr->pstate(),_estateTransferFunctions->globalVarIdByName("output")).getIntValue();
+    int outputVal = getEStateTransferFunctions()->readFromMemoryLocation(currentEStatePtr->label(),currentEStatePtr->pstate(),_estateTransferFunctions->globalVarIdByName("output")).getIntValue();
     if (outputVal > -100) {  //either not a failing assertion or a stderr output treated as a failing assertion)
       return -1;
     }

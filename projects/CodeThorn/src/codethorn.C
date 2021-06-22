@@ -189,8 +189,6 @@ int main( int argc, char * argv[] ) {
     optionallyGenerateTraversalInfoAndExit(ctOpt, project);
     if(ctOpt.status) cout<<"STATUS: analysis started."<<endl;
 
-    //analyzer->initialize(project,0); initializeSolverWithStartFunction calls this function
-
     optionallyPrintProgramInfos(ctOpt, analyzer);
     optionallyRunRoseAstChecksAndExit(ctOpt, project);
 
@@ -240,7 +238,7 @@ int main( int argc, char * argv[] ) {
     AbstractValue::pointerSetsEnabled=ctOpt.pointerSetsEnabled;
 
     if(ctOpt.constantConditionAnalysisFileName.size()>0) {
-      analyzer->getExprAnalyzer()->setReadWriteListener(new ConstantConditionAnalysis());
+      analyzer->getEStateTransferFunctions()->setReadWriteListener(new ConstantConditionAnalysis());
     }
     if(ctOpt.runSolver) {
       runSolver(ctOpt,analyzer,project,tc);
@@ -273,6 +271,8 @@ int main( int argc, char * argv[] ) {
 
     optionallyPrintRunTimeAndMemoryUsage(ctOpt,tc);
     if(ctOpt.status) cout<<color("normal")<<"done."<<endl;
+
+    delete analyzer;
 
     // main function try-catch
   } catch(const CodeThorn::Exception& e) {

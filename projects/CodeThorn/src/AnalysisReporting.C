@@ -49,7 +49,7 @@ namespace CodeThorn {
         printSeparationLine();
         cout<<"Analysis results for "<<analysisName<<" analysis:"<<endl;
         printSeparationLine();
-        ProgramLocationsReport report=analyzer->getExprAnalyzer()->getProgramLocationsReport(analysisSel);
+        ProgramLocationsReport report=analyzer->getEStateTransferFunctions()->getProgramLocationsReport(analysisSel);
         LabelSet labelsOfInterest2=AnalysisReporting::functionLabels(analyzer);
         // compute partioning
         LabelSet reachableLabels;
@@ -135,8 +135,8 @@ namespace CodeThorn {
   }
 
   void AnalysisReporting::generateConstantConditionVerificationReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, AnalysisSelector analysisSel) {
-    ROSE_ASSERT(analyzer->getExprAnalyzer());
-    if(ReadWriteListener* readWriteListener=analyzer->getExprAnalyzer()->getReadWriteListener()) {
+    ROSE_ASSERT(analyzer->getEStateTransferFunctions());
+    if(ReadWriteListener* readWriteListener=analyzer->getEStateTransferFunctions()->getReadWriteListener()) {
       ROSE_ASSERT(readWriteListener);
       ConstantConditionAnalysis* constCondAnalysis=dynamic_cast<ConstantConditionAnalysis*>(readWriteListener);
       ROSE_ASSERT(constCondAnalysis);
@@ -202,7 +202,7 @@ namespace CodeThorn {
         continue;
       string analysisName=analysisInfo.second;
       if(ctOpt.getAnalysisReportFileName(analysisSel).size()>0) {
-        ProgramLocationsReport locations=analyzer->getExprAnalyzer()->getProgramLocationsReport(analysisSel);
+        ProgramLocationsReport locations=analyzer->getEStateTransferFunctions()->getProgramLocationsReport(analysisSel);
         string fileName=ctOpt.getAnalysisReportFileName(analysisSel);
         if(!ctOpt.quiet)
           cout<<"Writing "<<analysisName<<" analysis results to file "<<fileName<<endl;
