@@ -604,6 +604,23 @@ void CodeThorn::CTAnalysis::runSolver() {
   stopAnalysisTimer();
 }
 
+void CodeThorn::CTAnalysis::runSolver(CodeThornOptions& ctOpt, TimingCollector& tc) {
+    tc.startTimer();
+    this->printStatusMessageLine("==============================================================");
+    if(!this->getModeLTLDriven() && ctOpt.z3BasedReachabilityAnalysis==false && ctOpt.ssa==false) {
+      switch(ctOpt.abstractionMode) {
+      case 0:
+      case 1:
+	this->runSolver();
+	break;
+      default:
+	cout<<"Error: unknown abstraction mode "<<ctOpt.abstractionMode<<endl;
+	exit(1);
+      }
+    }
+    tc.stopTimer(TimingCollector::transitionSystemAnalysis);
+  }
+
 VariableIdMappingExtended* CodeThorn::CTAnalysis::getVariableIdMapping() {
   return _variableIdMapping;
 }
@@ -1325,6 +1342,20 @@ void CodeThorn::CTAnalysis::run(CodeThornOptions& ctOpt, SgProject* root, Labele
   ROSE_ASSERT(false);
 }
 
+void CodeThorn::CTAnalysis::initializeSolverWithStartFunction(CodeThornOptions& ctOpt,SgProject* root, TimingCollector& tc) {
+    tc.startTimer();
+    SAWYER_MESG(logger[INFO])<< "Ininitializing solver "<<this->getSolver()->getId()<<" started"<<endl;
+    string startFunctionName;
+    if(ctOpt.startFunctionName.size()>0) {
+      startFunctionName = ctOpt.startFunctionName;
+    } else {
+      startFunctionName = "main";
+    }
+    tc.stopTimer(TimingCollector::init);
+    this->initializeSolver3(startFunctionName,root,tc);
+    SAWYER_MESG(logger[INFO])<< "Initializing solver "<<this->getSolver()->getId()<<" finished"<<endl;
+  }
+
 void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgProject* root, TimingCollector& tc) {
   SAWYER_MESG(logger[INFO])<<"CTAnalysis::initializeSolver3 started."<<endl;
   startAnalysisTimer();
@@ -1338,10 +1369,6 @@ void CodeThorn::CTAnalysis::initializeSolver3(std::string functionToStartAt, SgP
   _classHierarchy=Pass::createClassHierarchy(ctOpt, root, tc);
   _cfAnalysis=Pass::createForwardIcfg(ctOpt,root,tc,_labeler,_classHierarchy);
   
-  //initialize(_ctOpt,root,programAbstractionLayer);
-  //_programAbstractionLayer=programAbstractionLayer;
-  //_programAbstractionLayerOwner=true;
-
   resetInputSequenceIterator();
   RoseAst completeast(root);
 
@@ -1806,12 +1833,6 @@ long CodeThorn::CTAnalysis::analysisRunTimeInSeconds() {
   }
   return result;
 }
-
-//void CodeThorn::CTAnalysis::setCFAnalyzer(CFAnalysis* cf) { cfanalyzer=cf; }
-//CodeThorn::CFAnalysis* CodeThorn::CTAnalysis::getCFAnalyzer() const { return cfanalyzer; }
-
-//VariableIdMappingExtended* CodeThorn::CTAnalysis::getVariableIdMapping() {
-//  return getVariableIdMapping(); }
 
 CodeThorn::FunctionCallMapping* CodeThorn::CTAnalysis::getFunctionCallMapping() {
   ROSE_ASSERT(getCFAnalyzer());

@@ -211,7 +211,7 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
-    initializeSolverWithStartFunction(ctOpt,analyzer,project,tc);
+    analyzer->initializeSolverWithStartFunction(ctOpt,project,tc);
 
     if(ctOpt.programStats) {
       analyzer->printStatusMessageLine("==============================================================");
@@ -240,8 +240,9 @@ int main( int argc, char * argv[] ) {
     if(ctOpt.constantConditionAnalysisFileName.size()>0) {
       analyzer->getEStateTransferFunctions()->setReadWriteListener(new ConstantConditionAnalysis());
     }
+
     if(ctOpt.runSolver) {
-      runSolver(ctOpt,analyzer,project,tc);
+      analyzer->runSolver(ctOpt,tc);
     } else {
       cout<<"STATUS: skipping solver run."<<endl;
     }

@@ -727,22 +727,9 @@ namespace CodeThorn {
       }
     }
   }
-  
-  void initializeSolverWithStartFunction(CodeThornOptions& ctOpt,CTAnalysis* analyzer,SgProject* root, TimingCollector& tc) {
-    tc.startTimer();
-    SAWYER_MESG(logger[INFO])<< "Ininitializing solver "<<analyzer->getSolver()->getId()<<" started"<<endl;
-    string startFunctionName;
-    if(ctOpt.startFunctionName.size()>0) {
-      startFunctionName = ctOpt.startFunctionName;
-    } else {
-      startFunctionName = "main";
-    }
-    tc.stopTimer(TimingCollector::init);
-    analyzer->initializeSolver3(startFunctionName,root,tc);
-    SAWYER_MESG(logger[INFO])<< "Initializing solver "<<analyzer->getSolver()->getId()<<" finished"<<endl;
-  }
 
-  void runSolver(CodeThornOptions& ctOpt,CTAnalysis* analyzer, SgProject* sageProject,TimingCollector& tc) {
+    /*
+    void runSolver(CodeThornOptions& ctOpt,CTAnalysis* analyzer, SgProject* sageProject,TimingCollector& tc) {
     tc.startTimer();
     analyzer->printStatusMessageLine("==============================================================");
     if(!analyzer->getModeLTLDriven() && ctOpt.z3BasedReachabilityAnalysis==false && ctOpt.ssa==false) {
@@ -758,7 +745,8 @@ namespace CodeThorn {
     }
     tc.stopTimer(TimingCollector::transitionSystemAnalysis);
   }
-
+    */
+    
   void normalizationPass(CodeThornOptions& ctOpt, SgProject* project) {
     CodeThorn::Normalization normalization;
     normalization.options.printPhaseInfo=ctOpt.normalizePhaseInfo;

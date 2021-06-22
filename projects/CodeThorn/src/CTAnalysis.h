@@ -102,7 +102,12 @@ namespace CodeThorn {
   public:
     
     void initAstNodeInfo(SgNode* node);
+
+    void initializeSolverWithStartFunction(CodeThornOptions& ctOpt,SgProject* root, TimingCollector& tc);
     virtual void initializeSolver3(std::string functionToStartAt, SgProject* root, TimingCollector& tc);
+    void runSolver(CodeThornOptions& ctOpt,TimingCollector& tc);
+    virtual void runSolver();
+  
     void initLabeledAssertNodes(SgProject* root);
     
     void setExplorationMode(ExplorationMode em);
@@ -110,9 +115,6 @@ namespace CodeThorn {
     
     void setSolver(Solver* solver);
     Solver* getSolver();
-
-    //! requires init
-    virtual void runSolver();
 
     // experimental: analysis reset and/or backup
     virtual void resetAnalysis();
