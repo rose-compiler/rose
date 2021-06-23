@@ -36,7 +36,6 @@
 #include "ltlthorn-lib/Solver10.h"
 #include "ltlthorn-lib/Solver11.h"
 #include "ltlthorn-lib/Solver12.h"
-#include "ReadWriteAnalyzer.h"
 #include "AnalysisParameters.h"
 #include "CodeThornException.h"
 #include "CodeThornException.h"

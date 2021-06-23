@@ -37,9 +37,7 @@
 #include "ltlthorn-lib/Solver10.h"
 #include "ltlthorn-lib/Solver11.h"
 #include "ltlthorn-lib/Solver12.h"
-#include "ReadWriteAnalyzer.h"
 #include "AnalysisParameters.h"
-#include "CodeThornException.h"
 #include "CodeThornException.h"
 #include "ProgramInfo.h"
 #include "FunctionCallMapping.h"
@@ -79,7 +77,7 @@ using namespace Sawyer::Message;
 #include "ltlthorn-lib/Solver12.h"
 
 
-const std::string versionString="0.9.5";
+const std::string versionString="0.9.6";
 
 void configureRersSpecialization() {
 #ifdef RERS_SPECIALIZATION
@@ -182,8 +180,6 @@ int main( int argc, char * argv[] ) {
 
     CodeThorn::CodeThornLib::optionallyGenerateAstStatistics(ctOpt, project);
 
-    //analyzer->initialize(project,0); initializeSolverWithStartFunction calls this function
-
     CodeThorn::CodeThornLib::optionallyPrintProgramInfos(ctOpt, analyzer);
     CodeThorn::CodeThornLib::optionallyRunRoseAstChecksAndExit(ctOpt, project);
 
@@ -214,9 +210,7 @@ int main( int argc, char * argv[] ) {
     }
 
     if(ctOpt.status) cout<<"STATUS: analysis started."<<endl;
-    //initializeSolverWithStartFunction(ctOpt,analyzer,project,tc);
-    string startFunctionName="";
-    analyzer->initializeSolver3(startFunctionName,project,tc);
+    analyzer->runAnalysisPhase1(project,tc);
 
     if(ctOpt.programStats) {
       analyzer->printStatusMessageLine("==============================================================");

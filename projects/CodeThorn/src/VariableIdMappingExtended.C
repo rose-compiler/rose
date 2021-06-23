@@ -374,7 +374,7 @@ namespace CodeThorn {
     computeVariableSymbolMapping2(project,maxWarningsCount);
 
     if(getAstConsistencySymbolCheckFlag()) {
-      cout<<"INFO: running AST symbol check."<<endl;
+      //cout<<"INFO: running AST symbol check."<<endl;
       bool checkOk=consistencyCheck(project);
       if(!checkOk)
 	exit(1);
@@ -931,7 +931,7 @@ std::string VariableIdMappingExtended::varIdInfoToString(VariableId varId) {
   return ss.str();
 }
 
-void VariableIdMappingExtended::setAstConsistencySymbolCheckFlag(bool flag) {
+void VariableIdMappingExtended::setAstSymbolCheckFlag(bool flag) {
   _astConsistencySymbolCheckFlag=flag;
 }
 

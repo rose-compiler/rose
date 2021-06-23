@@ -27,12 +27,14 @@ namespace CodeThorn {
     void setup(CTAnalysis* analyzer, Sawyer::Message::Facility logger,
                CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt);
     // overwritten or extended analyzer functions
-    virtual void initializeSolver3(std::string functionToStartAt, SgProject* root, TimingCollector& tc) override;
+    virtual void runAnalysisPhase1(SgProject* root, TimingCollector& tc)  override;
     void resetAnalysis();
     void printAnalyzerStatistics(double totalRunTime, string title = "state transition system computed");
+
     // only used in LTL-driven mode
     void setSpotConnection(SpotConnection* connection) { _spotConnection = connection; }
-    void setStartEState(const EState* estate);
+    void setLTLDrivenStartEState(const EState* estate);
+
     // only used to initialize solver 10
     void setStartPState(PState startPState) { _startPState=startPState; }
 

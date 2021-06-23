@@ -96,12 +96,22 @@ namespace CodeThorn {
     static void initDiagnostics();
     CTAnalysis();
     virtual ~CTAnalysis();
+    void deleteAllStates();
     virtual void run();
 
   public:
     
     void initAstNodeInfo(SgNode* node);
-    virtual void initializeSolver3(std::string functionToStartAt, SgProject* root, TimingCollector& tc);
+
+    virtual void runAnalysisPhase1(SgProject* root, TimingCollector& tc);
+    virtual void runAnalysisPhase2(TimingCollector& tc);
+
+  protected:
+    // overridden in IOAnalyzer
+    void runAnalysisPhase1Sub1(SgProject* root, TimingCollector& tc);
+  public:
+    virtual void runSolver();
+  
     void initLabeledAssertNodes(SgProject* root);
     
     void setExplorationMode(ExplorationMode em);
@@ -109,9 +119,6 @@ namespace CodeThorn {
     
     void setSolver(Solver* solver);
     Solver* getSolver();
-
-    //! requires init
-    virtual void runSolver();
 
     // experimental: analysis reset and/or backup
     virtual void resetAnalysis();
@@ -150,8 +157,7 @@ namespace CodeThorn {
     bool isConsistentEStatePtrSet(std::set<const EState*> estatePtrSet);
     bool checkTransitionGraph();
 
-    // deprecated, only for backward compatibility
-    EStateTransferFunctions* getExprAnalyzer();
+    EStateTransferFunctions* getEStateTransferFunctions();
 
     // access  functions for computed information
     FunctionCallMapping* getFunctionCallMapping();
@@ -275,8 +281,6 @@ namespace CodeThorn {
     // only used in binary-prototype binding
     VariableId globalVarIdByName(std::string varName);
 
-    CodeThorn::EStateTransferFunctions* getEStateTransferFunctions();
-    
     // functions related to abstractions during the analysis
     void eventGlobalTopifyTurnedOn();
     bool isActiveGlobalTopify();

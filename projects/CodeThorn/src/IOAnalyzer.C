@@ -32,18 +32,18 @@ IOAnalyzer::IOAnalyzer():CTAnalysis() {
   initDiagnostics();
 }
 
-void IOAnalyzer::initializeSolver3(std::string functionToStartAt,SgProject* root, TimingCollector& tc) {
-  super::initializeSolver3(functionToStartAt, root, tc);
+void IOAnalyzer::runAnalysisPhase1(SgProject* root, TimingCollector& tc) {
+  runAnalysisPhase1Sub1(root, tc);
   if(_ctOpt.runSolver) {
     const EState* currentEState=estateWorkListCurrent->front();
     ROSE_ASSERT(currentEState);
     if(getModeLTLDriven()) {
-      setStartEState(currentEState);
+      setLTLDrivenStartEState(currentEState);
     }
   }
 }
 
-void IOAnalyzer::setStartEState(const EState* estate) {
+void IOAnalyzer::setLTLDrivenStartEState(const EState* estate) {
   // this function is only used in ltl-driven mode (otherwise it is not necessary)
   ROSE_ASSERT(getModeLTLDriven());
   transitionGraph.setStartEState(estate);

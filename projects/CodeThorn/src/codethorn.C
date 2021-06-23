@@ -28,14 +28,12 @@
 #include "Miscellaneous2.h"
 #include "FIConstAnalysis.h"
 #include "ReachabilityAnalysis.h"
-//#include "EquivalenceChecking.h"
 #include "Solver5.h"
 #include "Solver16.h"
 #include "Solver8.h"
 #include "ltlthorn-lib/Solver10.h"
 #include "ltlthorn-lib/Solver11.h"
 #include "ltlthorn-lib/Solver12.h"
-#include "ReadWriteAnalyzer.h"
 #include "AnalysisParameters.h"
 #include "CodeThornException.h"
 #include "CodeThornException.h"
@@ -189,8 +187,6 @@ int main( int argc, char * argv[] ) {
     optionallyGenerateTraversalInfoAndExit(ctOpt, project);
     if(ctOpt.status) cout<<"STATUS: analysis started."<<endl;
 
-    //analyzer->initialize(project,0); initializeSolverWithStartFunction calls this function
-
     optionallyPrintProgramInfos(ctOpt, analyzer);
     optionallyRunRoseAstChecksAndExit(ctOpt, project);
 
@@ -213,7 +209,7 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
-    initializeSolverWithStartFunction(ctOpt,analyzer,project,tc);
+    analyzer->runAnalysisPhase1(project,tc);
 
     if(ctOpt.programStats) {
       analyzer->printStatusMessageLine("==============================================================");
@@ -240,10 +236,11 @@ int main( int argc, char * argv[] ) {
     AbstractValue::pointerSetsEnabled=ctOpt.pointerSetsEnabled;
 
     if(ctOpt.constantConditionAnalysisFileName.size()>0) {
-      analyzer->getExprAnalyzer()->setReadWriteListener(new ConstantConditionAnalysis());
+      analyzer->getEStateTransferFunctions()->setReadWriteListener(new ConstantConditionAnalysis());
     }
+
     if(ctOpt.runSolver) {
-      runSolver(ctOpt,analyzer,project,tc);
+      analyzer->runAnalysisPhase2(tc);
     } else {
       cout<<"STATUS: skipping solver run."<<endl;
     }
@@ -273,6 +270,8 @@ int main( int argc, char * argv[] ) {
 
     optionallyPrintRunTimeAndMemoryUsage(ctOpt,tc);
     if(ctOpt.status) cout<<color("normal")<<"done."<<endl;
+
+    delete analyzer;
 
     // main function try-catch
   } catch(const CodeThorn::Exception& e) {
