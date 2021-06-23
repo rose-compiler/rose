@@ -209,7 +209,7 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
-    analyzer->runAnalysisPhase1(ctOpt,project,tc);
+    analyzer->runAnalysisPhase1(project,tc);
 
     if(ctOpt.programStats) {
       analyzer->printStatusMessageLine("==============================================================");

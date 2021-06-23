@@ -103,12 +103,12 @@ namespace CodeThorn {
     
     void initAstNodeInfo(SgNode* node);
 
-    void runAnalysisPhase1(CodeThornOptions& ctOpt,SgProject* root, TimingCollector& tc);
-    void runAnalysisPhase2(TimingCollector& tc);
+    virtual void runAnalysisPhase1(SgProject* root, TimingCollector& tc);
+    virtual void runAnalysisPhase2(TimingCollector& tc);
 
   protected:
     // overridden in IOAnalyzer
-    virtual void runAnalysisPhase1Sub1(std::string functionToStartAt, SgProject* root, TimingCollector& tc);
+    void runAnalysisPhase1Sub1(SgProject* root, TimingCollector& tc);
   public:
     virtual void runSolver();
   

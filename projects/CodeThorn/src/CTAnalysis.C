@@ -1341,27 +1341,26 @@ void CodeThorn::CTAnalysis::run(CodeThornOptions& ctOpt, SgProject* root, Labele
   ROSE_ASSERT(false);
 }
 
-void CodeThorn::CTAnalysis::runAnalysisPhase1(CodeThornOptions& ctOptxx,SgProject* root, TimingCollector& tc) {
-    tc.startTimer();
-    CodeThornOptions& ctOpt=getOptionsRef();
-    SAWYER_MESG(logger[INFO])<< "Ininitializing solver "<<this->getSolver()->getId()<<" started"<<endl;
-    string startFunctionName;
-    if(ctOpt.startFunctionName.size()>0) {
-      startFunctionName = ctOpt.startFunctionName;
-    } else {
-      startFunctionName = "main";
-    }
-    tc.stopTimer(TimingCollector::init);
-    this->runAnalysisPhase1Sub1(startFunctionName,root,tc);
-    SAWYER_MESG(logger[INFO])<< "Initializing solver "<<this->getSolver()->getId()<<" finished"<<endl;
-  }
+void CodeThorn::CTAnalysis::runAnalysisPhase1(SgProject* root, TimingCollector& tc) {
+  SAWYER_MESG(logger[INFO])<< "Ininitializing solver "<<this->getSolver()->getId()<<" started"<<endl;
+  this->runAnalysisPhase1Sub1(root,tc);
+  SAWYER_MESG(logger[INFO])<< "Initializing solver "<<this->getSolver()->getId()<<" finished"<<endl;
+}
 
-void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(std::string functionToStartAt, SgProject* root, TimingCollector& tc) {
+void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(SgProject* root, TimingCollector& tc) {
   SAWYER_MESG(logger[INFO])<<"CTAnalysis::runAnalysisPhase1Sub1 started."<<endl;
-  startAnalysisTimer();
   ROSE_ASSERT(root);
 
   CodeThornOptions& ctOpt=getOptionsRef();
+
+  tc.startTimer();
+  string startFunctionName;
+  if(ctOpt.startFunctionName.size()>0) {
+    startFunctionName = ctOpt.startFunctionName;
+  } else {
+    startFunctionName = "main";
+  }
+  tc.stopTimer(TimingCollector::init);
   
   Pass::normalization(ctOpt,root,tc);
   _variableIdMapping=Pass::createVariableIdMapping(ctOpt, root, tc);
@@ -1375,19 +1374,17 @@ void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(std::string functionToStartAt,
   _estateTransferFunctions->setVariableIdMapping(getVariableIdMapping());
   AbstractValue::setVariableIdMapping(getVariableIdMapping());
 
-  // START_INIT 2
   if(_ctOpt.getInterProceduralFlag()) {
-    _startFunRoot=completeast.findFunctionByName(functionToStartAt);
+    _startFunRoot=completeast.findFunctionByName(startFunctionName);
     if(_startFunRoot==0) {
-      SAWYER_MESG(logger[ERROR]) << "Function '"<<functionToStartAt<<"' not found.\n";
+      SAWYER_MESG(logger[ERROR]) << "Function '"<<startFunctionName<<"' not found.\n";
       exit(1);
     } else {
-      SAWYER_MESG(logger[INFO])<< "starting at function '"<<functionToStartAt<<"'."<<endl;
-      SAWYER_MESG(logger[TRACE])<<"CTAnalysis::initializeSolver3d."<<endl;
+      SAWYER_MESG(logger[INFO])<< "Starting at function '"<<startFunctionName<<"'."<<endl;
     }
   } else {
     // temporary to remain compatible
-    _startFunRoot=completeast.findFunctionByName(functionToStartAt);
+    _startFunRoot=completeast.findFunctionByName(startFunctionName);
   }
    
   SAWYER_MESG(logger[TRACE])<< "Initializing AST node info."<<endl;

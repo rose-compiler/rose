@@ -32,8 +32,8 @@ IOAnalyzer::IOAnalyzer():CTAnalysis() {
   initDiagnostics();
 }
 
-void IOAnalyzer::runAnalysisPhase1Sub1(std::string functionToStartAt,SgProject* root, TimingCollector& tc) {
-  super::runAnalysisPhase1Sub1(functionToStartAt, root, tc);
+void IOAnalyzer::runAnalysisPhase1(SgProject* root, TimingCollector& tc) {
+  runAnalysisPhase1Sub1(root, tc);
   if(_ctOpt.runSolver) {
     const EState* currentEState=estateWorkListCurrent->front();
     ROSE_ASSERT(currentEState);

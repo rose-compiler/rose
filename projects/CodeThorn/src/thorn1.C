@@ -210,8 +210,7 @@ int main( int argc, char * argv[] ) {
     }
 
     if(ctOpt.status) cout<<"STATUS: analysis started."<<endl;
-    string startFunctionName="";
-    analyzer->runAnalysisPhase1Sub1(startFunctionName,project,tc);
+    analyzer->runAnalysisPhase1(project,tc);
 
     if(ctOpt.programStats) {
       analyzer->printStatusMessageLine("==============================================================");

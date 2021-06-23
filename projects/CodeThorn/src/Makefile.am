@@ -149,6 +149,7 @@ CODETHORN_HEADER_FILES=\
   NumberIntervalLattice.h \
   Options.h \
   CodeThornOptions.h \
+  ParProOptions.h \
   LTLOptions.h \
   LTLRersMapping.h \
   DFSolver1.h \
