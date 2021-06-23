@@ -155,8 +155,11 @@ void ModuleBuilder::loadSymbol(SgSymbol* symbol, SgSymbolTable* symbol_table, Sg
   if (SgVariableSymbol* variable_symbol = isSgVariableSymbol(symbol)) {
     loadSymbol(variable_symbol, symbol_table, file_scope);
   }
-  if (SgClassSymbol* class_symbol = isSgClassSymbol(symbol)) {
+  else if (SgClassSymbol* class_symbol = isSgClassSymbol(symbol)) {
     loadSymbol(class_symbol, symbol_table, file_scope);
+  }
+  else if (SgEnumSymbol* enum_symbol = isSgEnumSymbol(symbol)) {
+    loadSymbol(enum_symbol, symbol_table, file_scope);
   }
 }
 
