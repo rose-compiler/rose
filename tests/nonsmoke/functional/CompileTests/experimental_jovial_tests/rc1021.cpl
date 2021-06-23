@@ -1,0 +1,4 @@
+START
+COMPOOL rc1021;
+  TYPE stype3 status(V(NULL), V(RED));
+TERM
