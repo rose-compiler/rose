@@ -1592,8 +1592,12 @@ namespace CodeThorn {
       uint32_t declaredInGlobalState=0;
       for(auto decl : relevantGlobalVariableDecls) {
 	if(decl) {
-	  //cout<<"DEBUG: init global decl: "<<decl->unparseToString()<<endl;
+	  size_t sizeBefore=estate.pstate()->stateSize();
 	  estate=analyzeVariableDeclaration(decl,estate,estate.label());
+	  size_t sizeAfter=estate.pstate()->stateSize();
+	  size_t numNewEntries=sizeAfter-sizeBefore;
+	  //if(getAnalyzer()->getOptionsRef().status)
+	  //  cout<<"STATUS: init global decl: "<<SgNodeHelper::sourceLocationAndNodeToString(decl)<<": entries: "<<numNewEntries<<endl;
 	  declaredInGlobalState++;
 	  // this data is only used by globalVarIdByName to determine rers 'output' variable name in binary mode
 	  globalVarName2VarIdMapping[getVariableIdMapping()->variableName(getVariableIdMapping()->variableId(decl))]=getVariableIdMapping()->variableId(decl);
