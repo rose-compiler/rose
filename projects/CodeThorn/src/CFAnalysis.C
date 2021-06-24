@@ -1015,10 +1015,10 @@ void CFAnalysis::createIntraProceduralCallEdges(Flow& flow, InterFlow& interFlow
 
 void CFAnalysis::intraInterFlow(Flow& flow, InterFlow& interFlow) {
   if(getInterProcedural()) {
-    SAWYER_MESG(logger[INFO])<<"Creating inter-procedural analysis."<<endl;
+    SAWYER_MESG(logger[INFO])<<"Creating inter-procedural CFG."<<endl;
     createInterProceduralCallEdges(flow,interFlow);
   } else {
-    SAWYER_MESG(logger[INFO])<<"Creating intra-procedural analysis."<<endl;
+    SAWYER_MESG(logger[INFO])<<"Creating intra-procedural CFG."<<endl;
     createIntraProceduralCallEdges(flow,interFlow);
   }
 }

@@ -28,7 +28,11 @@ namespace CodeThorn {
  *
  * [1] Nielson, F. and Nielson, H. and Hankin, C.: Principles of Program Analysis. 1999, Springer-Verlag Berlin Heidelberg. ISBN: 978-3-642-08474-4.
  *
- * \author Markus Schordan, Jan-Patrick Lehr
+ * Notes on some of the functions: 
+ * intraInterFlow creates an ICFG from a set of function CFGs and call/return-edges. If the flag get/setInterProcedural is set to false, "external" edges are generated
+   instead of inter-procedural call/return edges. This allows to represent multiple functions in one CFG for intra-procedural analysis.
+
+* \author Markus Schordan, Jan-Patrick Lehr
  * \date 2012.
  */
 class CFAnalysis {
@@ -62,8 +66,10 @@ class CFAnalysis {
   LabelSet functionLabelSet(Label entryLabel, Flow& flow);
   LabelSet initialLabelsOfStmtsInBlockSet(SgNode* node);
   LabelSet labelsOfInterestSet();
-  // computes a map where the entry label of the corresponding function is provided
-  // if the label is not inside a function then the returned label is an invalid label
+
+  /* computes a map where for each label to the entry label of the function it belongs to
+     if the label is not inside a function then the returned label is an invalid label
+  */
   InterFlow::LabelToFunctionMap labelToFunctionMap(Flow& flow);
   /**
    * \brief Computes the control flow for an AST subtree rooted at node.
@@ -154,7 +160,8 @@ protected:
   void createInterProceduralCallEdges(Flow& flow, InterFlow& interFlow);
   void createIntraProceduralCallEdges(Flow& flow, InterFlow& interFlow);
   bool _interProcedural=true;
- private:
+
+private:
   SgStatement* getCaseOrDefaultBodyStmt(SgNode* node);
   Flow WhileAndDoWhileLoopFlow(SgNode* node, Flow edgeSet, EdgeType param1, EdgeType param2);
   CodeThorn::Labeler* labeler;
