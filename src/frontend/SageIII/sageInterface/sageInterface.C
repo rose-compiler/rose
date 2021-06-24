@@ -24937,6 +24937,29 @@ void SageInterface::recursivePrintCurrentAndParent (SgNode* n)
   // track back to its parent
   recursivePrintCurrentAndParent (n->get_parent());
 }
+// forward declaration is needed here
+static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringstream& out);
+
+// A special node in the AST text dump
+static void serialize(SgTemplateArgumentPtrList& plist, string& prefix, bool hasRemaining, ostringstream& out)
+{
+  out<<prefix;
+  out<< (hasRemaining?"|---": "|___");
+
+  // print address
+  out<<"@"<<&plist<<" "<< "SgTemplateArgumentPtrList ";
+
+  out<<endl;
+  for (size_t i=0; i< plist.size(); i++ )
+  {
+    bool n_hasRemaining=false;
+    if (i+1 < plist.size())
+      n_hasRemaining=true;
+    string suffix= hasRemaining? "|   " : "    ";
+    string n_prefix = prefix+suffix;
+    serialize (plist[i], n_prefix, n_hasRemaining, out);
+  }
+}
 
 // print essential information from any AST node
 // hasRemaining if this node has a sibling node to be visited next.
@@ -25018,11 +25041,35 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   out<<endl;
 
   std::vector<SgNode* > children = node->get_traversalSuccessorContainer();
+  int total_count = children.size(); 
+  int current_index=0;
+
+  // some Sg??PtrList are not AST nodes, not part of children , we need to handle them separatedly
+  // we sum all children into single total_count to tell if there is remaining children.
+  if (isSgTemplateInstantiationDecl (node)) 
+    total_count += 1; // sn->get_templateArguments().size();
+
+   // handling SgTemplateArgumentPtrList first
+  if (SgTemplateInstantiationDecl* sn = isSgTemplateInstantiationDecl (node)) 
+  {
+    SgTemplateArgumentPtrList& plist = sn->get_templateArguments();
+     bool n_hasRemaining=false;
+    if (current_index+1<total_count)
+      n_hasRemaining=true;
+    current_index++;
+
+    string suffix= hasRemaining? "|   " : "    ";
+    string n_prefix = prefix+suffix;
+    serialize(plist, n_prefix, n_hasRemaining, out);
+  }
+
+   // finish sucessors
   for (size_t i =0; i< children.size(); i++)
   {
     bool n_hasRemaining=false;
-    if (i+1<children.size())
+    if (current_index+1<total_count)
       n_hasRemaining=true;
+    current_index++;
 
     string suffix= hasRemaining? "|   " : "    ";
     string n_prefix = prefix+suffix;
