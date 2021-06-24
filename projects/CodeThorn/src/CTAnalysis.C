@@ -1354,12 +1354,6 @@ void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(SgProject* root, TimingCollect
   CodeThornOptions& ctOpt=getOptionsRef();
 
   tc.startTimer();
-  string startFunctionName;
-  if(ctOpt.startFunctionName.size()>0) {
-    startFunctionName = ctOpt.startFunctionName;
-  } else {
-    startFunctionName = "main";
-  }
   tc.stopTimer(TimingCollector::init);
   
   Pass::normalization(ctOpt,root,tc);
@@ -1374,19 +1368,29 @@ void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(SgProject* root, TimingCollect
   _estateTransferFunctions->setVariableIdMapping(getVariableIdMapping());
   AbstractValue::setVariableIdMapping(getVariableIdMapping());
 
-  if(_ctOpt.getInterProceduralFlag()) {
-    _startFunRoot=completeast.findFunctionByName(startFunctionName);
-    if(_startFunRoot==0) {
-      SAWYER_MESG(logger[ERROR]) << "Function '"<<startFunctionName<<"' not found.\n";
-      exit(1);
+  /* set start function */
+  {
+    string startFunctionName;
+    if(ctOpt.startFunctionName.size()>0) {
+      startFunctionName = ctOpt.startFunctionName;
     } else {
-      SAWYER_MESG(logger[INFO])<< "Starting at function '"<<startFunctionName<<"'."<<endl;
+      startFunctionName = "main";
     }
-  } else {
-    // temporary to remain compatible
-    _startFunRoot=completeast.findFunctionByName(startFunctionName);
+    if(_ctOpt.getInterProceduralFlag()) {
+      _startFunRoot=completeast.findFunctionByName(startFunctionName);
+      if(_startFunRoot==0) {
+	SAWYER_MESG(logger[ERROR]) << "Function '"<<startFunctionName<<"' not found.\n";
+	exit(1);
+      } else {
+	SAWYER_MESG(logger[INFO])<< "Starting at function '"<<startFunctionName<<"'."<<endl;
+      }
+    } else {
+      // should not be required
+      _startFunRoot=completeast.findFunctionByName(startFunctionName);
+    }
+    ROSE_ASSERT((_ctOpt.getInterProceduralFlag() && _startFunRoot) || (!_ctOpt.getInterProceduralFlag()));
   }
-   
+  
   SAWYER_MESG(logger[TRACE])<< "Initializing AST node info."<<endl;
   initAstNodeInfo(root);
 
