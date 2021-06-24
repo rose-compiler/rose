@@ -287,9 +287,6 @@ namespace CodeThorn {
     bool isIncompleteSTGReady();
     bool isPrecise();
 
-
-    // temporary option
-    bool optionStringLiteralsInState=false;
     void reduceStg(function<bool(const EState*)> predicate);
 
     virtual Lattice* getPreInfo(Label lab, CallString context);

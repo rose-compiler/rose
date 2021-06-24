@@ -1443,7 +1443,7 @@ void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(SgProject* root, TimingCollect
   // create empty state
   PState initialPState;
   initializeCommandLineArgumentsInState(initialPState);
-  if(optionStringLiteralsInState) {
+  if(_ctOpt.inStateStringLiterals) {
     initializeStringLiteralsInState(initialPState);
     if(_ctOpt.status) {
       cout<<"STATUS: created "<<getVariableIdMapping()->numberOfRegisteredStringLiterals()<<" string literals in initial state."<<endl;
