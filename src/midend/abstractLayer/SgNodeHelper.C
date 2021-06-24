@@ -111,7 +111,13 @@ std::string SgNodeHelper::sourceFilenameLineColumnToString(SgNode* node) {
 }
 
 std::string SgNodeHelper::sourceLocationAndNodeToString(SgNode* node) {
-  return SgNodeHelper::sourceFilenameLineColumnToString(node)+" : "+node->unparseToString();
+  size_t maxLen=40;
+  string sourceLine=node->unparseToString();
+  stringstream ss;
+  if(sourceLine.size()>maxLen) {
+    ss<<sourceLine.substr(0,maxLen)+"... ("<<sourceLine.size()<<" chars)";
+  }
+  return SgNodeHelper::sourceFilenameLineColumnToString(node)+" : "+ss.str();
 }
   
 std::string SgNodeHelper::lineColumnNodeToString(SgNode* node) {
