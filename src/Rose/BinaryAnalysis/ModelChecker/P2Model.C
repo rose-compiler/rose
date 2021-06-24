@@ -120,17 +120,19 @@ commandLineSwitches(Settings &settings) {
 // Instruction semantics domain
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-RiscOperators::RiscOperators(const Settings &settings, const P2::Partitioner &partitioner, SemanticCallbacks *semantics,
-                             const BS::SValuePtr &protoval, const SmtSolver::Ptr &solver)
-    : Super(protoval, solver), settings_(settings), partitioner_(partitioner), semantics_(semantics) {
-    ASSERT_not_null(semantics);
+RiscOperators::RiscOperators(const Settings &settings, const P2::Partitioner &partitioner,
+                             ModelChecker::SemanticCallbacks *semantics, const BS::SValuePtr &protoval,
+                             const SmtSolver::Ptr &solver)
+    : Super(protoval, solver), settings_(settings), partitioner_(partitioner),
+      semantics_(dynamic_cast<P2Model::SemanticCallbacks*>(semantics)) {
+    ASSERT_not_null(semantics_);
     name("P2Model");
 }
 
 RiscOperators::~RiscOperators() {}
 
 RiscOperators::Ptr
-RiscOperators::instance(const Settings &settings, const P2::Partitioner &partitioner, SemanticCallbacks *semantics,
+RiscOperators::instance(const Settings &settings, const P2::Partitioner &partitioner, ModelChecker::SemanticCallbacks *semantics,
                         const BS::SValuePtr &protoval, const SmtSolver::Ptr &solver) {
     ASSERT_not_null(protoval);
     return Ptr(new RiscOperators(settings, partitioner, semantics, protoval, solver));
