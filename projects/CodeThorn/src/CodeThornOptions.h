@@ -56,21 +56,24 @@ struct CodeThornOptions : public CodeThorn::Options {
   int normalizeLevel=0;
   bool normalizePhaseInfo=false;
   bool extendedNormalizedCppFunctionCalls=false; // support for CPP method calls (virtual etc.)
+  bool traceMode=false; // trace mode in solver 16
+  std::string stgTraceFileName;
+  bool arraysNotInState=false;
   bool strictChecking=false; // only used for testing when a certain level of precision is enforced, does not impact correctness
+  int32_t arrayAbstractionIndex=0; // all elements at and beyond this index are summarized in one summary object
+  
   bool inlineFunctions=false;
   int inlineFunctionsDepth=10;
   bool annotateTerms=false; // unparsing
   bool eliminateSTGBackEdges=false;
   bool generateAssertions=false; // unparsing
   bool precisionExactConstraints=false; // obsolete
-  std::string stgTraceFileName;
-  bool arraysNotInState=false; // exceptional case (double negation intentional)
+
   bool z3BasedReachabilityAnalysis=false;
   int z3UpperInputBound=-1;
   int z3VerifierErrorNumber=-1;
   bool ssa=false; // transformation
-  bool traceMode=false; // trace mode in solver 16
-  
+
   bool nullPointerAnalysis=false;
   bool outOfBoundsAnalysis=false;
   bool uninitializedMemoryAnalysis=false;

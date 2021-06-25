@@ -156,7 +156,7 @@ class AbstractValue {
   static AbstractValue createAddressOfVariable(CodeThorn::VariableId varId);
   static AbstractValue createAddressOfArray(CodeThorn::VariableId arrayVariableId);
   static AbstractValue createAddressOfArrayElement(CodeThorn::VariableId arrayVariableId, AbstractValue Index);
-  static AbstractValue createAddressOfArrayElement(CodeThorn::VariableId arrayVariableId, AbstractValue Index, AbstractValue elementType);
+  static AbstractValue createAddressOfArrayElement(CodeThorn::VariableId arrayVariableId, AbstractValue Index, AbstractValue elementSize);
   static AbstractValue createAddressOfFunction(CodeThorn::Label lab);
   static AbstractValue createNullPtr();
   static AbstractValue createUndefined(); // used to model values of uninitialized variables/memory locations
@@ -231,7 +231,7 @@ class AbstractValue {
   union {
     long intValue=0;
     double floatValue;
-    void* extension; // not used yet
+    void* extension; // used for AVSet
   };
   Label label;
   //CodeThorn::TypeSize typeSize=0;

@@ -215,51 +215,40 @@ AbstractValue
 AbstractValue::createAddressOfVariable(CodeThorn::VariableId varId) {
   return AbstractValue::createAddressOfArray(varId);
 }
+
 AbstractValue 
 AbstractValue::createAddressOfArray(CodeThorn::VariableId arrayVarId) {
   return AbstractValue::createAddressOfArrayElement(arrayVarId,AbstractValue(0));
 }
+
 AbstractValue 
 AbstractValue::createAddressOfArrayElement(CodeThorn::VariableId arrayVariableId, 
 					   AbstractValue index) {
   ROSE_ASSERT(arrayVariableId.isValid());
-  AbstractValue val;
-  if(index.isTop()) {
-    return Top();
-  } else if(index.isBot()) {
-    return Bot();
-  } else if(index.isConstInt()) {
-    val.valueType=PTR;
-    val.variableId=arrayVariableId;
-    ROSE_ASSERT(index.isConstInt());
-    val.intValue=index.getIntValue();
-    if(pointerSetsEnabled) {
-      return convertPtrToPtrSet(val);
-    } else {
-      return val;
-    }
-  } else {
-    cerr<<"Error: createAddressOfArray: unknown index type."<<endl;
-    exit(1);
-  }
+  return createAddressOfArrayElement(arrayVariableId, index, AbstractValue(1));
 }
 
 AbstractValue 
 AbstractValue::createAddressOfArrayElement(CodeThorn::VariableId arrayVariableId, AbstractValue index, AbstractValue elementSize) {
+  ROSE_ASSERT(arrayVariableId.isValid());
   if(index.isTop()||elementSize.isTop()) {
     return Top();
   } else if(index.isBot()) {
     return Bot();
   } else if(index.isConstInt()) {
-    AbstractValue addr0=createAddressOfArray(arrayVariableId);
-    AbstractValue addrElem=operatorAdd(addr0,index,elementSize);
+    // create address of array element 0 and add index by multiplying it with element size
+    AbstractValue addr0;
+    addr0.valueType=PTR;
+    addr0.variableId=arrayVariableId;
+    addr0.intValue=0;
+    AbstractValue arrayElemAddress=operatorAdd(addr0,index,elementSize);
     if(pointerSetsEnabled) {
-      return convertPtrToPtrSet(addrElem);
+      return convertPtrToPtrSet(arrayElemAddress);
     } else {
-      return addrElem;
+      return arrayElemAddress;
     }
   } else {
-    cerr<<"Error: createAddressOfArray: unknown index type."<<endl;
+    cerr<<"Error: createAddressOfArray: non-const index and not top or bot either."<<endl;
     exit(1);
   }
 }
