@@ -146,7 +146,7 @@ using namespace Rose;
 using namespace SageBuilder;
 
 // Used by serialize() to collect all types visited
-std::set<SgType*> type_set; 
+//std::set<SgType*> type_set; 
 // DQ (1/18/2015): Define this container locally in this file only.
 namespace SageInterface
    {
@@ -24999,7 +24999,7 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   {
     out<<" "<< v->get_qualified_name();
     out<<" type@"<< v->get_type();
-    type_set.insert (v->get_type());
+//    type_set.insert (v->get_type());
   }
 
   // associated class, function and variable declarations
@@ -25029,7 +25029,7 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   if (SgTypedefDeclaration * v= isSgTypedefDeclaration(node))
   {
     out<<" base_type@"<< v->get_base_type();
-    type_set.insert (v->get_base_type());
+//    type_set.insert (v->get_base_type());
   }
 
   if (SgDeclarationStatement* v= isSgDeclarationStatement(node))
@@ -25104,9 +25104,18 @@ void SageInterface::printAST2TextFile(SgNode* node, const char* filename)
   // append type information also
   textfile<<"Types encountered ...."<<endl;
   ostringstream oss2;
+#if 0  
   set<SgType*>::iterator iter;  
   for (iter = type_set.begin(); iter!= type_set.end(); iter++)
     serialize (*iter, prefix, false, oss2);
+#else
+  VariantVector vv(V_SgType);
+  Rose_STL_Container<SgNode*> tnodes= NodeQuery::queryMemoryPool(vv);
+  for (Rose_STL_Container<SgNode*>::const_iterator i = tnodes.begin(); i != tnodes.end(); ++i) 
+  {
+    serialize (*i, prefix, false, oss2);
+  }
+#endif  
   textfile<<oss2.str();
   textfile.close();
 }
