@@ -2,28 +2,109 @@
 #include <algorithm>
 #include <unordered_set>
 #include <cassert>
+#include <iterator>
 
 #include "ClassHierarchyAnalysis.h"
+
+namespace ct = CodeThorn;
+
+namespace
+{
+    /// pseudo type to indicate that an element is not in a sequence
+  struct unavailable_t {};
+
+  template <class First, class Second>
+  auto key(const std::pair<First, Second>& keyval) -> const First&
+  {
+    return keyval.first;
+  }
+
+  template <class... Elems>
+  auto key(const std::tuple<Elems...>& keydata) -> decltype( std::get<0>(keydata) )
+  {
+    return std::get<0>(keydata);
+  }
+
+  auto key(ct::FunctionId keydata) -> ct::FunctionId
+  {
+    return keydata;
+  }
+
+  /// \brief  traverses two ordered associative sequences in order of their elements.
+  ///         The elements in the sequences must be convertible. A merge object
+  ///         is called with sequence elements in order of their keys in [aa1, zz1) and [aa2, zz2).
+  /// \tparam _Iterator1 an iterator of an ordered associative container
+  /// \tparam _Iterator2 an iterator of an ordered associative container
+  /// \tparam BinaryOperator a merge object that provides three operator()
+  ///         functions.
+  ///         - void operator()(_Iterator1::value_type, unavailable_t);
+  ///           called when an element is in sequence 1 but not in sequence 2.
+  ///         - void operator()(unavailable_t, _Iterator2::value_type);
+  ///           called when an element is in sequence 2 but not in sequence 1.
+  ///         - void operator()(_Iterator1::value_type, _Iterator2::value_type);
+  ///           called when an element is in both sequences.
+  /// \tparam Comparator compares elements in sequences.
+  ///         called using both (_Iterator1::key_type, _Iterator2::key_type)
+  //          and (_Iterator2::key_type, _Iterator1::key_type).
+  template <class _Iterator1, class _Iterator2, class BinaryOperator, class Comparator>
+  BinaryOperator
+  merge_keys( _Iterator1 aa1, _Iterator1 zz1,
+              _Iterator2 aa2, _Iterator2 zz2,
+              BinaryOperator binop,
+              Comparator comp
+            )
+  {
+    static constexpr unavailable_t unavail;
+
+    while (aa1 != zz1 && aa2 != zz2)
+    {
+      if (comp(key(*aa1), key(*aa2)))
+      {
+        binop(*aa1, unavail);
+        ++aa1;
+      }
+      else if (comp(key(*aa2), key(*aa1)))
+      {
+        binop(unavail, *aa2);
+        ++aa2;
+      }
+      else
+      {
+        binop(*aa1, *aa2);
+        ++aa1; ++aa2;
+      }
+    }
+
+    while (aa1 != zz1)
+    {
+      binop(*aa1, unavail);
+      ++aa1;
+    }
+
+    while (aa2 != zz2)
+    {
+      binop(unavail, *aa2);
+      ++aa2;
+    }
+
+    return std::move(binop);
+  }
+}
 
 namespace CodeThorn
 {
 
-std::string typeNameOfClassKeyType(ClassKeyType def)
-{
-  return typeNameOf(def);
-}
-
-
 void
-ClassAnalysis::addInheritanceEdge(value_type& descendant, ClassKeyType ancestorKey, bool virtualEdge, bool directEdge, bool throughVirtual)
+ClassAnalysis::addInheritanceEdge(value_type& descendantEntry, ClassKeyType ancestorKey, bool virtualEdge, bool directEdge)
 {
-  ClassKeyType descendantKey = descendant.first;
-  value_type&  ancestor = lookup(*this, ancestorKey);
+  ClassKeyType descendantKey = descendantEntry.first;
+  ClassData&   descendant = descendantEntry.second;
+  ClassData&   ancestor = this->at(ancestorKey);
 
-  descendant.second.parents().emplace_back(ancestorKey,   virtualEdge, directEdge, throughVirtual);
-  ancestor.second.children() .emplace_back(descendantKey, virtualEdge, directEdge, throughVirtual);
+  descendant.ancestors().emplace_back(ancestorKey,   virtualEdge, directEdge);
+  ancestor.descendants(). emplace_back(descendantKey, virtualEdge, directEdge);
 
-  //~ std::cerr << typeNameOfClassKeyType(descendantKey) << " from " << typeNameOfClassKeyType(ancestorKey)
+  //~ std::cerr << nameOfClass(descendantKey) << " from " << typeNameOf(ancestorKey)
             //~ << " [" << (directEdge ? "d":"") << (virtualEdge ? "v":"") << "]"
             //~ << std::endl;
 }
@@ -31,15 +112,15 @@ ClassAnalysis::addInheritanceEdge(value_type& descendant, ClassKeyType ancestorK
 void
 ClassAnalysis::addInheritanceEdge(value_type& descendant, const InheritanceDesc& ancestor)
 {
-  addInheritanceEdge(descendant, ancestor.getClass(), ancestor.isVirtual(), ancestor.isDirect(), ancestor.throughVirtual());
+  addInheritanceEdge(descendant, ancestor.getClass(), ancestor.isVirtual(), ancestor.isDirect());
 }
 
 bool
-ClassAnalysis::isBaseDerived(ClassKeyType ancestorKey, ClassKeyType descendantKey) const
+ClassAnalysis::areBaseDerived(ClassKeyType ancestorKey, ClassKeyType descendantKey) const
 {
   using container = ClassData::AncestorContainer;
 
-  const container&          ancestors = lookup(*this, descendantKey).second.parents();
+  const container&          ancestors = this->at(descendantKey).ancestors();
   container::const_iterator zz = ancestors.end();
 
   return zz != std::find_if( ancestors.begin(), zz,
@@ -52,6 +133,18 @@ ClassAnalysis::isBaseDerived(ClassKeyType ancestorKey, ClassKeyType descendantKe
 
 namespace
 {
+  template <class Map>
+  inline
+  auto
+  lookup(Map& m, const typename Map::key_type& key) -> decltype(*m.find(key))
+  {
+    auto pos = m.find(key);
+    assert(pos != m.end());
+
+    return *pos;
+  }
+
+
   using RelationAccessor = std::vector<InheritanceDesc>& (ClassData::*)();
   using RelationAccessorConst = const std::vector<InheritanceDesc>& (ClassData::*)() const;
 
@@ -85,28 +178,28 @@ namespace
 
 void topDownTraversal(ClassAnalysis& all, ClassAnalysisFn fn)
 {
-  RelationAccessor ancestors = &ClassData::parents;
+  RelationAccessor ancestors = &ClassData::ancestors;
 
   traversal(all, fn, ancestors);
 }
 
 void topDownTraversal(const ClassAnalysis& all, ClassAnalysisConstFn fn)
 {
-  RelationAccessorConst ancestors = &ClassData::parents;
+  RelationAccessorConst ancestors = &ClassData::ancestors;
 
   traversal(all, fn, ancestors);
 }
 
 void bottomUpTraversal(ClassAnalysis& all, ClassAnalysisFn fn)
 {
-  RelationAccessor descendants = &ClassData::children;
+  RelationAccessor descendants = &ClassData::descendants;
 
   traversal(all, fn, descendants);
 }
 
 void bottomUpTraversal(const ClassAnalysis& all, ClassAnalysisConstFn fn)
 {
-  RelationAccessorConst descendants = &ClassData::children;
+  RelationAccessorConst descendants = &ClassData::descendants;
 
   traversal(all, fn, descendants);
 }
@@ -123,66 +216,51 @@ void unorderedTraversal(const ClassAnalysis& all, ClassAnalysisConstFn fn)
     fn(elem);
 }
 
-bool hasVirtualFunctions(const ClassAnalysis::value_type& clazz)
+bool ClassData::hasVirtualFunctions() const
 {
-  return clazz.second.virtualMethods() || clazz.second.inheritsVirtualMethods();
+  return declaresVirtualFunctions() || inheritsVirtualFunctions();
 }
 
-bool isVirtualInheritance(const InheritanceDesc& desc)
+bool ClassData::hasVirtualInheritance() const
 {
-  return desc.isVirtual();
-}
-
-bool hasVirtualInheritance(const ClassAnalysis::value_type& clazz)
-{
-  const ClassData::AncestorContainer&          ancestors = clazz.second.parents();
-  ClassData::AncestorContainer::const_iterator aa = ancestors.begin();
-  ClassData::AncestorContainer::const_iterator zz = ancestors.end();
+  ClassData::AncestorContainer::const_iterator aa = ancestors().begin();
+  ClassData::AncestorContainer::const_iterator zz = ancestors().end();
+  auto isVirtualInheritance = [](const InheritanceDesc& desc) -> bool
+                              {
+                                return desc.isVirtual();
+                              };
 
   return zz != std::find_if(aa, zz, isVirtualInheritance);
 }
 
-bool hasVirtualTable(const ClassAnalysis::value_type& clazz)
+bool ClassData::hasVirtualTable() const
 {
-  return hasVirtualFunctions(clazz) || hasVirtualInheritance(clazz);
+  return hasVirtualFunctions() || hasVirtualInheritance();
 }
 
 
 namespace
 {
-  // does a class define a virtual method?
-  void analyzeVirtualMethod(ClassAnalysis::value_type& rep)
+  bool inheritsVirtualFunctions(const ClassAnalysis& classes, const ClassAnalysis::value_type& entry)
   {
-    rep.second.virtualMethods(classHasVirtualMethods(rep.first));
-  }
-
-  bool hasVirtualMethods(const ClassAnalysis::value_type& clazz)
-  {
-    const ClassData& cd = clazz.second;
-
-    return cd.virtualMethods() || cd.inheritsVirtualMethods();
-  }
-
-  bool inheritsVirtualMethods(const ClassAnalysis& all, const ClassAnalysis::value_type& entry)
-  {
-    const std::vector<InheritanceDesc>&          parents = entry.second.parents();
+    const std::vector<InheritanceDesc>&          parents = entry.second.ancestors();
     std::vector<InheritanceDesc>::const_iterator aa = parents.begin();
     std::vector<InheritanceDesc>::const_iterator zz = parents.end();
 
-    while (aa != zz && !hasVirtualMethods(lookup(all, aa->getClass())))
+    while (aa != zz && !classes.at(aa->getClass()).hasVirtualFunctions())
       ++aa;
 
     return aa != zz;
   }
 
 
-  void integrateIndirectInheritance(ClassAnalysis& all, ClassAnalysis::value_type& entry)
+  void integrateIndirectInheritance(ClassAnalysis& classes, ClassAnalysis::value_type& entry)
   {
     std::vector<InheritanceDesc>  tmp;
 
     // collect addition ancestors
-    for (InheritanceDesc& parent : entry.second.parents())
-      for (InheritanceDesc ancestor : lookup(all, parent.getClass()).second.parents())
+    for (InheritanceDesc& parent : entry.second.ancestors())
+      for (InheritanceDesc ancestor : classes.at(parent.getClass()).ancestors())
       {
         // skip virtual bases (they have already been propagated to derived)
         if (ancestor.isVirtual()) continue;
@@ -194,7 +272,7 @@ namespace
     // add additional ancestors
     for (InheritanceDesc ancestor : tmp)
     {
-      all.addInheritanceEdge(entry, ancestor);
+      classes.addInheritanceEdge(entry, ancestor);
     }
   }
 
@@ -227,19 +305,19 @@ namespace
   };
 
 
-  void copyVirtualInhertanceToDerived(ClassAnalysis& all, ClassAnalysis::value_type& entry)
+  void copyVirtualInhertanceToDerived(ClassAnalysis& classes, ClassAnalysis::value_type& entry)
   {
     using iterator = std::vector<InheritanceDesc>::iterator;
 
     std::vector<InheritanceDesc> tmp;
 
     // collect addition ancestors
-    for (InheritanceDesc& parent : entry.second.parents())
+    for (InheritanceDesc& parent : entry.second.ancestors())
     {
       if (parent.isVirtual())
         tmp.push_back(parent);
 
-      for (InheritanceDesc ancestor : lookup(all, parent.getClass()).second.parents())
+      for (InheritanceDesc ancestor : classes.at(parent.getClass()).ancestors())
       {
         if (!ancestor.isVirtual()) continue;
 
@@ -254,15 +332,15 @@ namespace
 
     // add additional ancestors
     std::for_each( tmp.begin(), zz,
-                   [&all, &entry](const InheritanceDesc& ancestor) -> void
+                   [&classes, &entry](const InheritanceDesc& ancestor) -> void
                    {
                      if (!ancestor.isDirect())
-                       all.addInheritanceEdge(entry, ancestor);
+                       classes.addInheritanceEdge(entry, ancestor);
                    }
                  );
   }
 
-  void analyzeClasses(ClassAnalysis& all)
+  void analyzeClassRelationships(ClassAnalysis& all)
   {
     logTrace() << all.size() << std::endl;
 
@@ -280,12 +358,10 @@ namespace
            };
     topDownTraversal(all, flattenInheritance);
 
-    unorderedTraversal(all, analyzeVirtualMethod);
-
     auto analyzeInheritedVirtualMethod =
            [&all](ClassAnalysis::value_type& rep) -> void
            {
-             rep.second.inheritsVirtualMethods(inheritsVirtualMethods(all, rep));
+             rep.second.inheritsVirtualFunctions(inheritsVirtualFunctions(all, rep));
            };
     topDownTraversal(all, analyzeInheritedVirtualMethod);
   }
@@ -296,28 +372,170 @@ namespace
     for (ClassAnalysis::value_type& elem : classes)
     {
       inheritanceEdges( elem.first,
-                        [&elem, &classes](ClassKeyType child, ClassKeyType parent, bool virt, bool direct) -> void
+                        [&elem, &classes](ClassKeyType child, ClassKeyType parent, bool virt) -> void
                         {
                           assert(elem.first == child);
 
-                          classes.addInheritanceEdge(elem, parent, virt, direct);
+                          classes.addInheritanceEdge(elem, parent, virt, true /* direct ancestor */);
                         }
                       );
     }
   }
+
+  // returns true iff lhs < rhs
+  struct VFNameTypeOrder
+  {
+    bool operator()(FunctionId lhs, FunctionId rhs) const
+    {
+      static constexpr bool firstDecisiveComparison = false;
+
+      int res = 0;
+
+      firstDecisiveComparison
+      || (res = rcb.compareNames(lhs, rhs))
+      || (res = rcb.compareTypes(lhs, rhs))
+      ;
+
+      return res < 0;
+    }
+
+    template <class TupleWithFunctionId>
+    bool operator()(const TupleWithFunctionId& lhs, const TupleWithFunctionId& rhs) const
+    {
+      return (*this)(std::get<0>(lhs), std::get<0>(rhs));
+    }
+
+    const RoseCompatibilityBridge& rcb;
+  };
+
+/*
+  VirtualFunctionContainer
+  extractVirtualFunctionsFromClass(const RoseCompatibilityBridge& rcb, ClassKeyType clkey)
+  {
+    using BasicVirtualFunctions = std::vector<std::tuple<FunctionId, bool> >;
+
+    VirtualFunctionContainer res;
+    BasicVirtualFunctions    funcs = rcb.getVirtualFunctions(clkey);
+
+    res.reserve(funcs.size());
+    std::sort(funcs.begin(), funcs.end(), VFNameTypeOrder{ rcb });
+
+    //~ std::move(funcs.begin(), funcs.end(), std::back_inserter(virtualFuncs));
+    for (const std::tuple<FunctionId, bool>& func : funcs)
+      res.emplace_back(func);
+
+    return res;
+  }
+*/
+}
+
+struct ComputeVFunctionRelation
+{
+  void operator()(FunctionId drv, FunctionId bas) const
+  {
+    using ReturnTypeRelation = RoseCompatibilityBridge::ReturnTypeRelation;
+
+    const ReturnTypeRelation rel = rcb.haveSameOrCovariantReturn(classes, bas, drv);
+    ROSE_ASSERT(rel != RoseCompatibilityBridge::unrelated);
+
+    if (rel == RoseCompatibilityBridge::unrelated)
+    {
+      logError() << "oops, covariant return assertion failed: "
+                 << rcb.nameOf(bas) << " <> " << rcb.nameOf(drv)
+                 << std::endl;
+      return;
+    }
+
+    const bool               covariant = rel == RoseCompatibilityBridge::covariant;
+
+    vfunAnalysis.at(drv).overridden().emplace_back(bas, covariant);
+    vfunAnalysis.at(bas).overriders().emplace_back(drv, covariant);
+  }
+
+  void operator()(FunctionId, unavailable_t) const {}
+
+  void operator()(unavailable_t, FunctionId) const {}
+
+  // data members
+  const RoseCompatibilityBridge& rcb;
+  const ClassAnalysis&           classes;
+  VirtualFunctionAnalysis&       vfunAnalysis;
+  ClassKeyType                   ancestor;
+  ClassKeyType                   descendant;
+};
+
+using SortedVirtualMemberFunctions = std::unordered_map<ClassKeyType, ClassData::VirtualFunctionContainer>;
+
+void computeOverriders( const RoseCompatibilityBridge& rcb,
+                        const ClassAnalysis& classes,
+                        VirtualFunctionAnalysis& vfunAnalysis,
+                        const ClassAnalysis::value_type& entry,
+                        SortedVirtualMemberFunctions& sortedVFunMap
+                      )
+{
+  using VirtualFunctionContainer = ClassData::VirtualFunctionContainer;
+
+  // create a new entry
+  VirtualFunctionContainer& vfunSorted = sortedVFunMap[entry.first];
+
+  ROSE_ASSERT(vfunSorted.empty());
+
+  vfunSorted = entry.second.virtualFunctions();
+  std::sort(vfunSorted.begin(), vfunSorted.end(), VFNameTypeOrder{ rcb });
+
+  std::for_each( vfunSorted.begin(), vfunSorted.end(),
+                 [&vfunAnalysis, &entry, &rcb](FunctionId id) -> void
+                 {
+                   vfunAnalysis.emplace(id, VirtualFunctionDesc{entry.first, rcb.isPureVirtual(id)});
+                 }
+               );
+
+  for (const InheritanceDesc& parentDesc : entry.second.ancestors())
+  {
+    VirtualFunctionContainer& parentVFunSorted = sortedVFunMap.at(parentDesc.getClass());
+
+    merge_keys( vfunSorted.begin(), vfunSorted.end(),
+                parentVFunSorted.begin(), parentVFunSorted.end(),
+                ComputeVFunctionRelation{rcb, classes, vfunAnalysis, entry.first, parentDesc.getClass()},
+                VFNameTypeOrder{rcb}
+              );
+  }
+}
+
+VirtualFunctionAnalysis
+virtualFunctionAnalysis(const RoseCompatibilityBridge& rcb, const ClassAnalysis& all)
+{
+  VirtualFunctionAnalysis      res;
+  SortedVirtualMemberFunctions tmpSorted;
+
+  topDownTraversal( all,
+                    [&rcb, &all, &res, &tmpSorted]
+                    (const ClassAnalysis::value_type& clrep) -> void
+                    {
+                      computeOverriders(rcb, all, res, clrep, tmpSorted);
+                    }
+                  );
+
+  return res;
 }
 
 AnalysesTuple
-extractFromProject(SgProject* n)
+analyzeClassesAndCasts(const RoseCompatibilityBridge& rcb, ASTRootType n)
 {
   ClassAnalysis classes;
   CastAnalysis  casts;
 
-  extractFromProject(classes, casts, n);
+  rcb.extractFromProject(classes, casts, n);
   inheritanceRelations(classes);
-  analyzeClasses(classes);
+  analyzeClassRelationships(classes);
 
   return AnalysesTuple{std::move(classes), std::move(casts)};
+}
+
+ClassAnalysis
+analyzeClasses(const RoseCompatibilityBridge& rcb, ASTRootType n)
+{
+  return std::move(analyzeClassesAndCasts(rcb, n).classAnalysis());
 }
 
 }

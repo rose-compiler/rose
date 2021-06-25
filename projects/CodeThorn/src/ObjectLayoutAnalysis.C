@@ -6,17 +6,16 @@ namespace ct = CodeThorn;
 
 namespace
 {
-  void addDataMembers(ct::RoseCompatibilityBridge& ctx, ct::ObjectLayout& ol, const ct::ClassAnalysis::value_type& clazz)
+  void addDataMembers(ct::ObjectLayout& ol, const ct::ClassAnalysis::value_type& clazz)
   {
-    std::vector<ct::VariableId> members = getDataMembers(ctx, clazz.first);
+    const std::vector<ct::VariableId>& members = clazz.second.dataMembers();
 
     for (ct::VariableId id : members)
       ol.emplace_back(0, ct::Field{id});
   }
 
   ct::ObjectLayout
-  computeObjectLayout( ct::RoseCompatibilityBridge& ctx,
-                       const ct::ClassAnalysis& all,
+  computeObjectLayout( const ct::ClassAnalysis& all,
                        const ct::ObjectLayoutContainer& layouts,
                        const ct::ClassAnalysis::value_type& clazz
                      )
@@ -25,10 +24,10 @@ namespace
 
     ct::ObjectLayout          res;
     bool                      primary = true;
-    const Vec&                parents = clazz.second.parents();
+    const Vec&                parents = clazz.second.ancestors();
     const Vec::const_iterator zz = parents.end();
 
-    if (ct::hasVirtualTable(clazz))
+    if (clazz.second.hasVirtualTable())
     {
       res.emplace_back(0, ct::VTable{clazz.first, true});
     }
@@ -39,7 +38,7 @@ namespace
       if (aa->isVirtual() || !aa->isDirect())
         continue;
 
-      if (!primary && ct::hasVirtualTable(lookup(all, aa->getClass())))
+      if (!primary && all.at(aa->getClass()).hasVirtualTable())
       {
         res.emplace_back(0, ct::VTable{aa->getClass(), false});
       }
@@ -49,13 +48,13 @@ namespace
       if (primary)
       {
         primary = false;
-        addDataMembers(ctx, res, clazz);
+        addDataMembers(res, clazz);
       }
     }
 
     if (primary)
     {
-      addDataMembers(ctx, res, clazz);
+      addDataMembers(res, clazz);
     }
 
     // compute entries for all virtual ancestors
@@ -75,17 +74,17 @@ namespace CodeThorn
 {
 
 ObjectLayoutContainer
-computeObjectLayouts(RoseCompatibilityBridge& ctx, const ClassAnalysis& all, bool onlyClassesWithVTable)
+computeObjectLayouts(const ClassAnalysis& all, bool onlyClassesWithVTable)
 {
   ObjectLayoutContainer res;
 
   auto objectLayoutComputation =
-          [&ctx, &all, &res, onlyClassesWithVTable]
+          [&all, &res, onlyClassesWithVTable]
           (const ClassAnalysis::value_type& clazz) -> void
           {
-            if (!onlyClassesWithVTable || hasVirtualTable(clazz))
+            if (!onlyClassesWithVTable || clazz.second.hasVirtualTable())
             {
-              res[clazz.first] = computeObjectLayout(ctx, all, res, clazz);
+              res[clazz.first] = computeObjectLayout(all, res, clazz);
             }
           };
 
@@ -96,28 +95,26 @@ computeObjectLayouts(RoseCompatibilityBridge& ctx, const ClassAnalysis& all, boo
 struct ObjectLayoutElementPrinter : boost::static_visitor<void>
 {
     explicit
-    ObjectLayoutElementPrinter(const ObjectLayoutElement& el, RoseCompatibilityBridge* ctx = nullptr)
-    : entry(el), astctx(ctx), os(nullptr)
+    ObjectLayoutElementPrinter(const ObjectLayoutElement& el, const RoseCompatibilityBridge* ctx = nullptr)
+    : entry(el), rcb(ctx), os(nullptr)
     {}
 
     void operator()(const Subobject& subobj) const
     {
-      (*os) << "subobj " << typeNameOfClassKeyType(subobj.ref)
+      (*os) << "subobj " << typeNameOf(subobj.ref)
             << (subobj.isVirtual ? " [virtual]" : "");
     }
 
     void operator()(const Field& fld) const
     {
-      ct::VariableIdMapping* vmap = astctx ? &astctx->vmap() : nullptr;
-
       (*os) << "field  "
-            << (astctx ? fld.id.toString(vmap) : std::string{})
+            << (rcb ? rcb->nameOf(fld.id) : std::string{})
             << " " << fld.id.toString();
     }
 
     void operator()(const VTable& vtbl) const
     {
-      (*os) << "vtable " << typeNameOfClassKeyType(vtbl.ref)
+      (*os) << "vtable " << typeNameOf(vtbl.ref)
             << (vtbl.isPrimary ? " [primary]" : "");
     }
 
@@ -126,9 +123,9 @@ struct ObjectLayoutElementPrinter : boost::static_visitor<void>
     const ObjectLayoutElement& obj() const { return entry; }
 
   private:
-    const ObjectLayoutElement& entry;
-    RoseCompatibilityBridge*         astctx;
-    mutable std::ostream*      os;
+    const ObjectLayoutElement&     entry;
+    const RoseCompatibilityBridge* rcb;
+    mutable std::ostream*          os;
 };
 
 std::ostream& operator<<(std::ostream& os, const ObjectLayoutElementPrinter& prn)
@@ -148,7 +145,7 @@ std::ostream& operator<<(std::ostream& os, const ObjectLayoutContainer& cont)
 {
   for (const ObjectLayoutContainer::value_type& entry : cont)
   {
-    os << '\n' << typeNameOfClassKeyType(entry.first) << std::endl;
+    os << '\n' << typeNameOf(entry.first) << std::endl;
 
     for (const ObjectLayoutEntry& elem : entry.second)
     {
@@ -165,7 +162,7 @@ std::ostream& operator<<(std::ostream& os, const ObjectLayoutPrinter& prn)
 
   for (const ObjectLayoutContainer::value_type& entry : cont)
   {
-    os << '\n' << typeNameOfClassKeyType(entry.first) << std::endl;
+    os << '\n' << typeNameOf(entry.first) << std::endl;
 
     for (const ObjectLayoutEntry& elem : entry.second)
     {
