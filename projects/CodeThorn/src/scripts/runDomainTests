@@ -22,7 +22,7 @@ echo "------------------------------------------------"
 
 function DomainTests {
     testNumbers=`echo {001..028}`
-    testNumbers2=`echo {030..046}`
+    testNumbers2=`echo {030..047}`
     testNumbers+=" $testNumbers2"
     echo "Scheduled tests: $testNumbers"
     echo "Skipping 029"

@@ -45,11 +45,13 @@ AbstractValue::AbstractValue(VariableId varId):valueType(AbstractValue::PTR),var
 }
 
 AbstractValue::AbstractValue(Label lab):valueType(AbstractValue::FUN_PTR),label(lab) {}
+
 AbstractValue::~AbstractValue() {
   switch(valueType) {
   case BOT:
   case INTEGER:
   case FLOAT:
+  case DOUBLE:
   case PTR:
   case REF:
   case FUN_PTR:
@@ -88,6 +90,8 @@ void AbstractValue::copy(const AbstractValue& other) {
   case INTEGER: intValue=other.intValue;
     break;
   case FLOAT: floatValue=other.floatValue;
+    break;
+  case DOUBLE: doubleValue=other.doubleValue;
     break;
   case AV_SET: extension=other.abstractValueSetCopy();
     break;
@@ -131,9 +135,11 @@ void AbstractValue::setValue(long int val) {
   intValue=val;
 }
 
-void AbstractValue::setValue(double fval) {
-  // TODO: adapt here if necessary
+void AbstractValue::setValue(float fval) {
   floatValue=fval;
+}
+void AbstractValue::setValue(double fval) {
+  doubleValue=fval;
 }
 
 AbstractValue AbstractValue::createIntegerValue(CodeThorn::BuiltInType btype, long long int ival) {
@@ -144,18 +150,19 @@ AbstractValue AbstractValue::createIntegerValue(CodeThorn::BuiltInType btype, lo
 
 void AbstractValue::initInteger(CodeThorn::BuiltInType btype, long int ival) {
   valueType=AbstractValue::INTEGER;
-  //setTypeSize(calculateTypeSize(btype));
   setValue(ival);
 }
 
-void AbstractValue::initFloat(CodeThorn::BuiltInType btype, double fval) {
-  valueType=AbstractValue::TOP;intValue=0;
-  /* implementation of algebraic operators for floats not implemented yet
-  using top instead
+void AbstractValue::initFloat(CodeThorn::BuiltInType btype, float fval) {
+  ROSE_ASSERT(btype==BITYPE_FLOAT);
   valueType=AbstractValue::FLOAT;
-  setTypeSize(calculateTypeSize(btype));
   setValue(fval);
-  */
+}
+
+void AbstractValue::initDouble(CodeThorn::BuiltInType btype, double dval) {
+  ROSE_ASSERT(btype==BITYPE_DOUBLE);
+  valueType=AbstractValue::DOUBLE;
+  setValue(dval);
 }
 
 // type conversion
@@ -198,7 +205,7 @@ AbstractValue::AbstractValue(float x) {
   initFloat(BITYPE_FLOAT,x);
 }
 AbstractValue::AbstractValue(double x) {
-  initFloat(BITYPE_DOUBLE,x);
+  initDouble(BITYPE_DOUBLE,x);
 }
 /*
 AbstractValue::AbstractValue(long double x) {
@@ -292,6 +299,7 @@ bool AbstractValue::isFalse() const {return valueType==AbstractValue::INTEGER &&
 bool AbstractValue::isBot() const {return valueType==AbstractValue::BOT;}
 bool AbstractValue::isConstInt() const {return valueType==AbstractValue::INTEGER;}
 bool AbstractValue::isConstFloat() const {return valueType==AbstractValue::FLOAT;}
+bool AbstractValue::isConstDouble() const {return valueType==AbstractValue::DOUBLE;}
 bool AbstractValue::isConstPtr() const {return (valueType==AbstractValue::PTR);}
 bool AbstractValue::isPtr() const {return (valueType==AbstractValue::PTR);}
 // deprecated
@@ -306,6 +314,7 @@ long AbstractValue::hash() const {
   else if(isBot()) return LONG_MIN;
   else if(isConstInt()) return getIntValue();
   else if(isConstFloat()) return getFloatValue();
+  else if(isConstDouble()) return getDoubleValue();
   else if(isPtr()||isRef()) {
     VariableId varId=getVariableId();
     ROSE_ASSERT(varId.isValid());
@@ -481,6 +490,10 @@ bool CodeThorn::strictWeakOrderingIsSmaller(const AbstractValue& c1, const Abstr
     ROSE_ASSERT(c1.getValueType()==c2.getValueType()); 
     if(c1.isConstInt() && c2.isConstInt()) {
       return c1.getIntValue()<c2.getIntValue();
+    } else if(c1.isConstFloat() && c2.isConstFloat()) {
+      return c1.getFloatValue()<c2.getFloatValue();
+    } else if(c1.isConstDouble() && c2.isConstDouble()) {
+      return c1.getDoubleValue()<c2.getDoubleValue();
     } else if(c1.isPtr() && c2.isPtr()) {
       if(c1.getVariableId()!=c2.getVariableId()) {
         return c1.getVariableId()<c2.getVariableId();
@@ -533,9 +546,13 @@ bool CodeThorn::strictWeakOrderingIsSmaller(const AbstractValue& c1, const Abstr
 bool CodeThorn::strictWeakOrderingIsEqual(const AbstractValue& c1, const AbstractValue& c2) {
   if(c1.getValueType()==c2.getValueType()) {
     if(c1.isConstInt() && c2.isConstInt())
-      return c1.getIntValue()==c2.getIntValue() /*&& c1.getTypeSize()==c2.getTypeSize()*/;
+      return c1.getIntValue()==c2.getIntValue();
+    if(c1.isConstFloat() && c2.isConstFloat())
+      return c1.getFloatValue()==c2.getFloatValue();
+    if(c1.isConstDouble() && c2.isConstDouble())
+      return c1.getDoubleValue()==c2.getDoubleValue();
     else if(c1.isPtr() && c2.isPtr()) {
-      return c1.getVariableId()==c2.getVariableId() && c1.getIntValue()==c2.getIntValue() /*&& c1.getTypeSize()==c2.getTypeSize() && c1.getElementTypeSize()==c2.getElementTypeSize()*/;
+      return c1.getVariableId()==c2.getVariableId() && c1.getIntValue()==c2.getIntValue();
     } else if(c1.isFunctionPtr() && c2.isFunctionPtr()) {
       return c1.getLabel()==c2.getLabel();
     } else if(c1.isPtrSet() && c2.isPtrSet()) {
@@ -814,7 +831,8 @@ string AbstractValue::toString(CodeThorn::VariableIdMapping* vim) const {
     ss<<getIntValue();
     return ss.str();
   }
-  case FLOAT: {
+  case FLOAT:
+  case DOUBLE: {
     return getFloatValueString();
   }
   case PTR: {
@@ -866,7 +884,8 @@ string AbstractValue::toString() const {
     ss<<getIntValue();
     return ss.str();
   }
-  case FLOAT: {
+  case FLOAT:
+  case DOUBLE: {
     return getFloatValueString();
   }
   case PTR: {
@@ -972,7 +991,7 @@ float AbstractValue::getFloatValue() const {
   return (float)floatValue;
 }
 double AbstractValue::getDoubleValue() const {
-  return (double)floatValue;
+  return (double)doubleValue;
 }
 /*
 long double AbstractValue::getLongDoubleValue() const {
@@ -980,12 +999,17 @@ long double AbstractValue::getLongDoubleValue() const {
 }
 */
 std::string AbstractValue::getFloatValueString() const { 
-   if(valueType!=FLOAT) {
+   if(valueType!=FLOAT && valueType!=DOUBLE) {
      cerr << "AbstractValue: valueType="<<valueTypeToString()<<endl;
      throw CodeThorn::Exception("Error: AbstractValue::getFloatValueString operation failed.");
    } else {
      stringstream ss;
-     ss<<floatValue;
+     // emulate printf output
+     if(valueType==FLOAT) {
+       ss<<std::fixed<<std::setprecision(6)<<floatValue;
+     } else {
+       ss<<std::fixed<<std::setprecision(6)<<doubleValue;
+     }
      return ss.str();
    }
 }
@@ -1013,6 +1037,10 @@ AbstractValue AbstractValue::operatorUnaryMinus() {
   case AbstractValue::FLOAT: 
     tmp.valueType=AbstractValue::FLOAT;
     tmp.floatValue=-floatValue; // unary minus
+    break;
+  case AbstractValue::DOUBLE: 
+    tmp.valueType=AbstractValue::DOUBLE;
+    tmp.doubleValue=-doubleValue; // unary minus
     break;
   case AbstractValue::TOP:
     tmp=Top();break;
@@ -1079,6 +1107,10 @@ AbstractValue AbstractValue::operatorAdd(AbstractValue& a,AbstractValue& b) {
     return createTop();
   } else if(a.isConstInt() && b.isConstInt()) {
     return a.getIntValue()+b.getIntValue();
+  } else if(a.isConstFloat() && b.isConstFloat()) {
+    return a.getFloatValue()+b.getFloatValue();
+  } else if(a.isConstDouble() && b.isConstDouble()) {
+    return a.getDoubleValue()+b.getDoubleValue();
   } else {
     if(strictChecking)
       throw CodeThorn::Exception("Error: undefined behavior in '+' operation: "+a.toString()+","+b.toString());
@@ -1129,6 +1161,10 @@ AbstractValue AbstractValue::operatorSub(AbstractValue& a,AbstractValue& b) {
     return createTop();
   } else if(a.isConstInt() && b.isConstInt()) {
     return a.getIntValue()-b.getIntValue();
+  } else if(a.isConstFloat() && b.isConstFloat()) {
+    return a.getFloatValue()-b.getFloatValue();
+  } else if(a.isConstDouble() && b.isConstDouble()) {
+    return a.getDoubleValue()-b.getDoubleValue();
   } else {
     if(strictChecking)
       throw CodeThorn::Exception("Error: undefined behavior in binary '-' operation.");
@@ -1151,9 +1187,14 @@ AbstractValue AbstractValue::operatorMul(AbstractValue& a,AbstractValue& b) {
     return b;
   if(b.isBot())
     return a;
-  // TODO multiplication of pointer values
-  assert(a.isConstInt() && b.isConstInt());
-  return a.getIntValue()*b.getIntValue();
+  else if(a.isConstInt() && b.isConstInt()) {
+    return a.getIntValue()*b.getIntValue();
+  } else if(a.isConstFloat() && b.isConstFloat()) {
+    return a.getFloatValue()*b.getFloatValue();
+  } else if(a.isConstDouble() && b.isConstDouble()) {
+    return a.getDoubleValue()*b.getDoubleValue();
+  }
+  return createTop();
 }
 AbstractValue AbstractValue::operatorDiv(AbstractValue& a,AbstractValue& b) {
   if(a.isTop() || b.isTop())
@@ -1162,11 +1203,16 @@ AbstractValue AbstractValue::operatorDiv(AbstractValue& a,AbstractValue& b) {
     return b;
   if(b.isBot())
     return a;
-  // TODO division of pointer values
-  assert(a.isConstInt() && b.isConstInt());
-  return a.getIntValue()/b.getIntValue();
-
+  else if(a.isConstInt() && b.isConstInt()) {
+    return a.getIntValue()/b.getIntValue();
+  } else if(a.isConstFloat() && b.isConstFloat()) {
+    return a.getFloatValue()/b.getFloatValue();
+  } else if(a.isConstDouble() && b.isConstDouble()) {
+    return a.getDoubleValue()/b.getDoubleValue();
+  }
+  return createTop();
 }
+
 AbstractValue AbstractValue::operatorMod(AbstractValue& a,AbstractValue& b) {
   if(a.isTop() || b.isTop())
     return Top();
@@ -1198,6 +1244,7 @@ bool AbstractValue::approximatedBy(AbstractValue val1, AbstractValue val2) {
     case BOT: return true;
     case INTEGER: return (val1.intValue==val2.intValue);
     case FLOAT: return (val1.floatValue==val2.floatValue);
+    case DOUBLE: return (val1.doubleValue==val2.doubleValue);
     case PTR:
     case REF: return (val1.getVariableId()==val2.getVariableId()&&val1.intValue==val2.intValue);
     case FUN_PTR: return (val1.label==val2.label);
@@ -1247,6 +1294,13 @@ AbstractValue AbstractValue::combine(AbstractValue val1, AbstractValue val2) {
     }
     case FLOAT: {
       if(val1.floatValue==val2.floatValue) {
+        return val1;
+      } else {
+        return createTop();
+      }
+    }
+    case DOUBLE: {
+      if(val1.doubleValue==val2.doubleValue) {
         return val1;
       } else {
         return createTop();

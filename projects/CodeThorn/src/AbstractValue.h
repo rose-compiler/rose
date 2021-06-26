@@ -43,7 +43,7 @@ class AbstractValue {
      - INTERVAL represents an interval of abstract number values // TODO
      - INDEX_RANGE represents a range of a consecutive memory region (e.g. array) // TODO
   */
-  enum ValueType { BOT, INTEGER, FLOAT, PTR, REF, FUN_PTR, TOP, UNDEFINED, AV_SET, /*INTERVAL, INDEX_RANGE*/ };
+  enum ValueType { BOT, INTEGER, FLOAT, DOUBLE, PTR, REF, FUN_PTR, TOP, UNDEFINED, AV_SET, /*INTERVAL, INDEX_RANGE*/ };
   AbstractValue();
   AbstractValue(bool val);
   // type conversion
@@ -75,7 +75,8 @@ class AbstractValue {
   AbstractValue(CodeThorn::VariableId varId); // allows implicit type conversion
   ~AbstractValue(); // also deallocates extensions
   void initInteger(CodeThorn::BuiltInType btype, long int ival);
-  void initFloat(CodeThorn::BuiltInType btype, double fval);
+  void initFloat(CodeThorn::BuiltInType btype, float fval);
+  void initDouble(CodeThorn::BuiltInType btype, double fval);
   static AbstractValue createIntegerValue(CodeThorn::BuiltInType btype, long long int ival);
   CodeThorn::TypeSize calculateTypeSize(CodeThorn::BuiltInType btype);
   // currently this maps to isTop() - in preparation to handle
@@ -89,6 +90,7 @@ class AbstractValue {
   // determines whether the value is known and constant. Otherwise it can be bot or top.
   bool isConstInt() const;
   bool isConstFloat() const;
+  bool isConstDouble() const;
   // currently identical to isPtr() but already used where one unique value is required
   bool isConstPtr() const;
   bool isPtr() const;
@@ -201,6 +203,7 @@ class AbstractValue {
   CodeThorn::VariableId getVariableId() const;
   // sets value according to type size (truncates if necessary)
   void setValue(long int ival);
+  void setValue(float fval);
   void setValue(double fval);
   Label getLabel() const;
   long hash() const;
@@ -229,9 +232,10 @@ class AbstractValue {
   ValueType valueType;
   CodeThorn::VariableId variableId;
   union {
-    long intValue=0;
-    double floatValue;
-    void* extension; // used for AVSet
+    long intValue;
+    float floatValue;
+    double doubleValue;
+    void* extension=nullptr; // used for AVSet
   };
   Label label;
   //CodeThorn::TypeSize typeSize=0;
