@@ -238,7 +238,7 @@ namespace CodeThorn {
             return getAnalyzer()->elistify(_eState);
           }
           cout <<"PState:"<< _pstate<<endl;
-          logger[ERROR] <<"RERS-MODE: call of unknown function."<<endl;
+          SAWYER_MESG(logger[ERROR]) <<"RERS-MODE: call of unknown function."<<endl;
           exit(1);
           // _pstate now contains the current state obtained from the binary
         }
@@ -1378,7 +1378,7 @@ namespace CodeThorn {
 		CodeThorn::TypeSize stringLen=stringValNode->get_value().size();
 		CodeThorn::TypeSize memRegionNumElements=getVariableIdMapping()->getNumberOfElements(initDeclVarId);
 		PState newPState=*currentEState.pstate();
-		_analyzer->initializeStringLiteralInState(newPState,stringValNode,initDeclVarId);
+		initializeStringLiteralInState(label,newPState,stringValNode,initDeclVarId);
 		// handle case that string is shorter than allocated memory
 		if(stringLen+1<memRegionNumElements) {
 		  CodeThorn::TypeSize numDefaultValuesToAdd=memRegionNumElements-stringLen+1;
@@ -4224,7 +4224,7 @@ namespace CodeThorn {
 	    int indexInt=val.getIndexIntValue();
 	    // TODO: multiply with element size
 	    if(indexInt>=arrayAbstractionIndex) {
-	      cout<<"DEBUG: array abstraction active remapping index: "<<indexInt<<" -> "<<arrayAbstractionIndex<<endl;
+	      SAWYER_MESG(logger[DEBUG])<<"array abstraction active: remapping index: "<<indexInt<<" -> "<<arrayAbstractionIndex<<endl;
 	      val.setValue((long int)arrayAbstractionIndex);
 	      // TOOD: set flag that address is a summary now
 	    }
@@ -4236,7 +4236,6 @@ namespace CodeThorn {
 
   AbstractValue EStateTransferFunctions::readFromMemoryLocation(Label lab, const PState* pstate, AbstractValue memLoc) {
     conditionallyApplyArrayAbstraction(memLoc);
-    cout<<"DEBUG: After cond apply: "<<memLoc.toString()<<endl;
     
     // inspect memory location here
     if(memLoc.isNullPtr()) {
@@ -4302,7 +4301,7 @@ namespace CodeThorn {
   }
 
   AbstractValue EStateTransferFunctions::readFromAnyMemoryLocation(Label lab, const PState* pstate, AbstractValue memLoc) {
-    logger[TRACE]<<"readFromAnyMemoryLocation: "<<memLoc.toString()<<"=>"<<memLoc.isReferenceVariableAddress()<<endl;
+    SAWYER_MESG(logger[TRACE])<<"readFromAnyMemoryLocation: "<<memLoc.toString()<<"=>"<<memLoc.isReferenceVariableAddress()<<endl;
     if(memLoc.isReferenceVariableAddress())
       return readFromReferenceMemoryLocation(lab,pstate,memLoc);
     else
@@ -4387,6 +4386,126 @@ namespace CodeThorn {
     ConstraintSet cset=*evalResult.estate.constraints();
     return elistify(createEState(edge.target(),cs,newPState,cset));
   }
+
+void EStateTransferFunctions::initializeStringLiteralInState(Label lab, PState& initialPState,SgStringVal* stringValNode, VariableId stringVarId) {
+  logger[TRACE]<<"initializeStringLiteralInState: "<<stringValNode->unparseToString()<<endl;
+  string theString=stringValNode->get_value();
+  int pos;
+  for(pos=0;pos<(int)theString.size();pos++) {
+    AbstractValue character(theString[pos]);
+    writeToMemoryLocation(lab, &initialPState, AbstractValue::createAddressOfArrayElement(stringVarId,pos),character);
+  }
+  // add terminating 0 to string in state
+  writeToMemoryLocation(lab, &initialPState, AbstractValue::createAddressOfArrayElement(stringVarId,pos),AbstractValue(0));
+}
+
+void EStateTransferFunctions::initializeStringLiteralsInState(Label lab, PState& initialPState) {
+  ROSE_ASSERT(getVariableIdMapping());
+  std::map<SgStringVal*,VariableId>* map=getVariableIdMapping()->getStringLiteralsToVariableIdMapping();
+  logger[INFO]<<"Creating "<<map->size()<<" string literals in state."<<endl;
+  for(auto iter=map->begin();iter!=map->end();++iter) {
+    auto dataPair=*iter;
+    SgStringVal* stringValNode=dataPair.first;
+    VariableId stringVarId=dataPair.second;
+    initializeStringLiteralInState(lab,initialPState,stringValNode,stringVarId);
+    /*
+    string theString=stringValNode->get_value();
+    for(int pos=0;pos<(int)theString.size();pos++) {
+      AbstractValue character(theString[pos]);
+      initialPState.writeToMemoryLocation(AbstractValue::createAddressOfArrayElement(stringVarId,pos),character);
+    }
+    */
+  }
+}
+
+void EStateTransferFunctions::initializeCommandLineArgumentsInState(PState& initialPState) {
+  // TODO1: add formal paramters of solo-function
+  // SgFunctionDefinition* startFunRoot: node of function
+  SgNode* startFunRoot=_analyzer->getStartFunRoot();
+  if(startFunRoot==0) {
+    // no main function, therefore nothing to initialize
+    return;
+  }
+  string functionName=SgNodeHelper::getFunctionName(startFunRoot);
+  SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(startFunRoot);
+  VariableId argcVarId;
+  VariableId argvVarId;
+  size_t mainFunArgNr=0;
+  for(SgInitializedNamePtrList::iterator i=initNamePtrList.begin();i!=initNamePtrList.end();++i) {
+    VariableId varId=getVariableIdMapping()->variableId(*i);
+    if(functionName=="main" && initNamePtrList.size()==2) {
+      //string varName=getVariableIdMapping()->variableName(varId)) {
+      switch(mainFunArgNr) {
+      case 0:
+	argcVarId=varId;
+	SAWYER_MESG(logger[TRACE])<<"INIT CLARGS: found argc in main function."<<endl;
+	break;
+      case 1:
+	argvVarId=varId;
+	SAWYER_MESG(logger[TRACE])<<"INIT CLARGS: found argv in main function."<<endl;
+	break;
+      default:
+        throw CodeThorn::Exception("Error: main function has more than 2 parameters.");
+      }
+      mainFunArgNr++;
+    }
+    ROSE_ASSERT(varId.isValid());
+    // initialize all formal parameters of function (of extremal label) with top
+    //initialPState[varId]=AbstractValue(CodeThorn::Top());
+    AbstractValue address=AbstractValue::createAddressOfVariable(varId);
+    initialPState.writeTopToMemoryLocation(address);
+  }
+  // if function main exists and has 2 arguments then argcvarid and argvvarid have valid ids now.
+  // otherwise the command line options are ignored (because this is the correct behaviour)
+  if(argcVarId.isValid() && argvVarId.isValid()) {
+    auto commandLineOptions=_analyzer->getCommandLineOptions();
+    if(commandLineOptions.size()>0) {
+      // create command line option array argv and argc in initial pstate if argv and argc exist in the program
+      int argc=0;
+      VariableId argvArrayMemoryId=getVariableIdMapping()->createAndRegisterNewMemoryRegion("$argvmem",(int)commandLineOptions.size());
+      AbstractValue argvAddress=AbstractValue::createAddressOfArray(argvArrayMemoryId);
+      initialPState.writeToMemoryLocation(argvVarId,argvAddress);
+      for (auto argvElem:commandLineOptions) {
+	SAWYER_MESG(logger[TRACE])<<"INIT: Initial state: "
+		     <<getVariableIdMapping()->variableName(argvVarId)<<"["<<argc+1<<"]: "
+		     <<argvElem<<endl;
+	int regionSize=(int)string(argvElem).size();
+	SAWYER_MESG(logger[TRACE])<<"argv["<<argc+1<<"] size: "<<regionSize<<endl;
+
+	stringstream memRegionName;
+	memRegionName<<"$argv"<<argc<<"mem";
+	VariableId argvElemArrayMemoryId=getVariableIdMapping()->createAndRegisterNewMemoryRegion(memRegionName.str(),regionSize);
+	AbstractValue argvElemAddress=AbstractValue::createAddressOfArray(argvElemArrayMemoryId);
+	initialPState.writeToMemoryLocation(AbstractValue::createAddressOfArrayElement(argvVarId,argc),argvElemAddress);
+
+	// copy concrete command line argument strings char by char to State
+	for(int j=0;commandLineOptions[argc][j]!=0;j++) {
+	  SAWYER_MESG(logger[TRACE])<<"INIT: Copying: @argc="<<argc<<" char: "<<commandLineOptions[argc][j]<<endl;
+	  AbstractValue argvElemAddressWithIndexOffset;
+	  AbstractValue AbstractIndex=AbstractValue(j);
+	  argvElemAddressWithIndexOffset=AbstractValue::operatorAdd(argvElemAddress,AbstractIndex);
+	  initialPState.writeToMemoryLocation(argvElemAddressWithIndexOffset,AbstractValue(commandLineOptions[argc][j]));
+	}
+	argc++;
+      }
+      // this also covers the case that no command line options were provided. In this case argc==0. argv is non initialized.
+      SAWYER_MESG(logger[TRACE])<<"INIT: Initial state argc:"<<argc<<endl;
+      AbstractValue abstractValueArgc(argc);
+      initialPState.writeToMemoryLocation(argcVarId,abstractValueArgc);
+    } else {
+      // argc and argv present in program but no command line arguments provided
+      SAWYER_MESG(logger[TRACE])<<"INIT: no command line arguments provided. Initializing argc=0."<<endl;
+      AbstractValue abstractValueArgc(0);
+      initialPState.writeToMemoryLocation(argcVarId,abstractValueArgc);
+    }
+  } else {
+    // argv and argc not present in program. argv and argc are not added to initialPState.
+    // in this case it is irrelevant whether command line arguments were provided (correct behaviour)
+    // nothing to do.
+  }
+}
+
+
 
   
 } // end of namespace

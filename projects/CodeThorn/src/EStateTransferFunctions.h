@@ -315,6 +315,12 @@ namespace CodeThorn {
     void setReadWriteListener(ReadWriteListener* listener);
     ReadWriteListener* getReadWriteListener();
 
+
+    // initialize command line arguments provided by option "--cl-options" in PState
+    void initializeCommandLineArgumentsInState(PState& initialPState);
+    void initializeStringLiteralInState(Label lab, PState& initialPState,SgStringVal* stringValNode, VariableId stringVarId);
+    void initializeStringLiteralsInState(Label lab, PState& initialPState);
+
   protected:
     AbstractValue abstractValueFromSgValueExp(SgValueExp* valueExp, EvalMode mode);
     ReadWriteListener* _readWriteListener=nullptr;

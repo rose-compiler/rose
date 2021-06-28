@@ -133,14 +133,7 @@ namespace CodeThorn {
     void reduceStgToInOutAssertErrStates();
     void reduceStgToInOutAssertWorklistStates();
 
-    // initialize command line arguments provided by option "--cl-options" in PState
-    void initializeCommandLineArgumentsInState(PState& initialPState);
-    void initializeStringLiteralInState(PState& initialPState,SgStringVal* stringValNode, VariableId stringVarId);
-    void initializeStringLiteralsInState(PState& initialPState);
-
     // set the size of an element determined by this type
-    void setElementSize(VariableId variableId, SgType* elementType);
-
     int computeNumberOfElements(SgVariableDeclaration* decl);
 
     // thread save; only prints if option status messages is enabled.
@@ -263,6 +256,7 @@ namespace CodeThorn {
        if set they are used to initialize the initial state with argv and argc domain abstractions
     */
     void setCommandLineOptions(vector<string> clOptions);
+    vector<string> getCommandLineOptions();
     SgNode* getStartFunRoot();
   protected:
     void setFunctionResolutionModeInCFAnalysis(CodeThornOptions& ctOpt);
