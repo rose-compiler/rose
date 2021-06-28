@@ -6,6 +6,7 @@
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
 #include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
 #include <Rose/BinaryAnalysis/Concolic/InputVariables.h>
+#include <Rose/BinaryAnalysis/Concolic/SystemCall.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 
 using namespace Sawyer::Message::Common;
@@ -39,6 +40,16 @@ TestCase::Ptr
 Architecture::testCase() const {
     ASSERT_not_null(testCase_);
     return testCase_;
+}
+
+const Architecture::SystemCallMap&
+Architecture::systemCalls() const {
+    return systemCalls_;
+}
+
+Architecture::SystemCallMap&
+Architecture::systemCalls() {
+    return systemCalls_;
 }
 
 void
