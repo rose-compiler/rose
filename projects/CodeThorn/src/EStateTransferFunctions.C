@@ -4211,7 +4211,33 @@ namespace CodeThorn {
     return false;
   }
 
+  void EStateTransferFunctions::conditionallyApplyArrayAbstraction(AbstractValue& val) {
+    //cout<<"DEBUG: condapply: "<<val.toString(_analyzer->getVariableIdMapping())<<endl;
+    int arrayAbstractionIndex=_analyzer->getOptionsRef().arrayAbstractionIndex;
+    if(arrayAbstractionIndex>=0) {
+      //cout<<"DEBUG: array abstraction active starting at index: "<<arrayAbstractionIndex<<endl;
+      if(val.isPtr()&&!val.isNullPtr()) {
+	VariableId memLocId=val.getVariableId();
+	if(_analyzer->getVariableIdMapping()->isOfArrayType(memLocId)) {
+	  AbstractValue index=val.getIndexValue();
+	  if(!index.isTop()&&!index.isBot()) {
+	    int indexInt=val.getIndexIntValue();
+	    // TODO: multiply with element size
+	    if(indexInt>=arrayAbstractionIndex) {
+	      cout<<"DEBUG: array abstraction active remapping index: "<<indexInt<<" -> "<<arrayAbstractionIndex<<endl;
+	      val.setValue((long int)arrayAbstractionIndex);
+	      // TOOD: set flag that address is a summary now
+	    }
+	  }
+	}
+      }
+    }
+  }
+
   AbstractValue EStateTransferFunctions::readFromMemoryLocation(Label lab, const PState* pstate, AbstractValue memLoc) {
+    conditionallyApplyArrayAbstraction(memLoc);
+    cout<<"DEBUG: After cond apply: "<<memLoc.toString()<<endl;
+    
     // inspect memory location here
     if(memLoc.isNullPtr()) {
       recordDefinitiveNullPointerDereferenceLocation(lab);
@@ -4239,6 +4265,8 @@ namespace CodeThorn {
   }
 
   void EStateTransferFunctions::writeToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue) {
+    conditionallyApplyArrayAbstraction(memLoc);
+
     // inspect everything here
     SAWYER_MESG(logger[TRACE])<<"EStateTransferFunctions::writeToMemoryLocation1:"<<memLoc.toString()<<endl;
     if(memLoc.isTop()) {
@@ -4299,10 +4327,12 @@ namespace CodeThorn {
   }
 
   void EStateTransferFunctions::writeUndefToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc) {
+    conditionallyApplyArrayAbstraction(memLoc);
     pstate->writeUndefToMemoryLocation(memLoc);
   }
 
   void EStateTransferFunctions::writeUndefToMemoryLocation(PState* pstate, AbstractValue memLoc) {
+    conditionallyApplyArrayAbstraction(memLoc);
     pstate->writeUndefToMemoryLocation(memLoc);
   }
 

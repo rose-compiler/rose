@@ -60,7 +60,7 @@ struct CodeThornOptions : public CodeThorn::Options {
   std::string stgTraceFileName;
   bool arraysNotInState=false;
   bool strictChecking=false; // only used for testing when a certain level of precision is enforced, does not impact correctness
-  int32_t arrayAbstractionIndex=0; // all elements at and beyond this index are summarized in one summary object
+  int32_t arrayAbstractionIndex=-1; // all elements at and beyond this index are summarized in one summary object. -1 indicates no abstraction
   
   bool inlineFunctions=false;
   int inlineFunctionsDepth=10;

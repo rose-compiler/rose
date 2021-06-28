@@ -281,6 +281,9 @@ namespace CodeThorn {
     std::string getInterpreterModeFileName();
     void setInterpreterModeFileName(std::string);
 
+    // converts memLoc if array abstraction is active
+    // remaps index if necessary and sets summary flag
+    void conditionallyApplyArrayAbstraction(AbstractValue& memLoc);
     // reserves memory location at address memLoc and sets as value 'undef'
     void reserveMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc);
     // reserves and initializes memory location at address memLoc with newValue

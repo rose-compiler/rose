@@ -169,7 +169,8 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ;
 
   experimentalOptions.add_options()
-    ("ast-symbol-check",po::value< bool >(&ctOpt.astSymbolCheckFlag),"Allows to turn off the AST consistency symbol check (by default the check is enabled).")
+    ("ast-symbol-check",po::value< bool >(&ctOpt.astSymbolCheckFlag)->default_value(true),"Allows to turn off the AST consistency symbol check (by default the check is enabled).")
+    ("array-abstraction-index",po::value< int > (&ctOpt.arrayAbstractionIndex)->default_value(-1),"Set array abstraction index, starting at which an array summary is computed.")
     ("run-solver", po::value< bool >(&ctOpt.runSolver)->default_value(true),"If turned off all fix-point algorithms are skipped.")
     ("omp-ast", po::value< bool >(&ctOpt.ompAst)->default_value(false)->implicit_value(true),"Flag for using the OpenMP AST - useful when visualizing the ICFG.")
     ("normalize-level", po::value< int >(&ctOpt.normalizeLevel)->default_value(0),"Normalize all expressions (2), only fcalls (1), turn off (0).")
