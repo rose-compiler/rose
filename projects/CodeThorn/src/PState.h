@@ -50,9 +50,9 @@ namespace CodeThorn {
     bool memLocExists(AbstractValue memLoc) const;
     bool varIsTop(AbstractValue varId) const;
 
-    // depreacted, to be replaced with readFromMemoryLocation
+    // deprecated, to be replaced with readFromMemoryLocation
     CodeThorn::AbstractValue varValue(AbstractValue varId) const;
-    // depreacted, to be replaced by functio using readFromMemoryLocation
+    // deprecated, to be replaced by functio using readFromMemoryLocation
     string varValueToString(AbstractValue varId) const;
 
     void deleteVar(AbstractValue varname);
@@ -90,12 +90,13 @@ namespace CodeThorn {
     AbstractValueSet getVariableIds() const;
 
     // additional information required for abstraction of memory regions
+    // currently not used
     void registerApproximateMemRegion(VariableId memId);
     void unregisterApproximateMemRegion(VariableId memId);
     bool isApproximateMemRegion(VariableId memId) const;
     int32_t numApproximateMemRegions() const;
-    // this operation can be expensive
     bool hasEqualMemRegionApproximation(const PState& other) const;
+
   private:
     VariableIdSet _approximationVarIdSet;
     void conditionalApproximateRawWriteToMemoryLocation(AbstractValue abstractAddress, AbstractValue abstractValue,bool strongUpdate);

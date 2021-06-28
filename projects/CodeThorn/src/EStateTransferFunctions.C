@@ -290,7 +290,8 @@ namespace CodeThorn {
         //cout<<"DEBUG: function pointer var id: "<<varId.toString(getVariableIdMapping())<<endl;
         AbstractValue varAddress=AbstractValue::createAddressOfVariable(varId);
         //cout<<"DEBUG: function pointer var address: "<<varAddress.toString(getVariableIdMapping())<<endl;
-        AbstractValue funcPtrVal=estate->pstate()->readFromMemoryLocation(varAddress);
+	//AbstractValue funcPtrVal=estate->pstate()->readFromMemoryLocation(varAddress);
+        AbstractValue funcPtrVal=readFromMemoryLocation(currentLabel,estate->pstate(),varAddress);
         //cout<<"DEBUG: function pointer value: "<<funcPtrVal.toString(getVariableIdMapping())<<": isFunPtr:"<<funcPtrVal.isFunctionPtr()<<endl;
         if(funcPtrVal.isFunctionPtr()&&!funcPtrVal.isTop()&&!funcPtrVal.isBot()) {
           Label  funTargetLabel=funcPtrVal.getLabel();
@@ -3111,7 +3112,6 @@ namespace CodeThorn {
 		  ROSE_ASSERT(initExp);
 		  if(SgIntVal* intValNode=isSgIntVal(initExp)) {
 		    int intVal=intValNode->get_value();
-		    //newPState.writeToMemoryLocation(arrayElemId,CodeThorn::AbstractValue(AbstractValue(intVal)));
 		    int index2=arrayPtrPlusIndexValue.getIndexIntValue();
 		    if(elemIndex==index2) {
 		      AbstractValue val=AbstractValue(intVal); // TODO BYTEMODE
@@ -3265,9 +3265,6 @@ namespace CodeThorn {
     }
 
     // L->R : L evaluates to pointer value (address), R evaluates to offset value (a struct member always evaluates to an offset)
-    //AbstractValue address=lhsResult.result;
-    //cout<<"DEBUG: ArrowOp: address(lhs):"<<address.toString(_variableIdMapping)<<endl;
-    //AbstractValue referencedAddress=estate.pstate()->readFromMemoryLocation(address);
     AbstractValue referencedAddress=lhsResult.result;
     bool continueExec=checkAndRecordNullPointer(referencedAddress, estate.label());
     if(continueExec) {
@@ -4014,19 +4011,6 @@ namespace CodeThorn {
       resNullPtr.init(estate,nullPtr);
       resList2.push_back(resNullPtr);
 #endif
-#if 0
-      // TODO: update of state (not allowed here)
-      // generate representation of allocated memory (we only have the address so far)
-      if(memoryRegionSize>0 && memoryRegionSize<=_analyzer->getOptionsRef().maxExactMemorySizeRepresentation) {
-	// reserve memory
-	for(int i=0;i<memoryRegionSize;++i) {
-	  AbstractValue arrayElemAddr=AbstractValue::createAddressOfArrayElement(memLocVarId,AbstractValue::createIntegerValue(CodeThorn::BITYPE_UINT,i));
-	  AbstractValue undefVal=AbstractValue::createUndefined();
-	  PState* pstate=estate.pstate();
-	  pstate->writeToMemoryLocation(arrayElemAddr,undefVal);
-	}
-      }
-#endif
       return resList2;
     } else {
       // this will become an error in future
@@ -4242,7 +4226,7 @@ namespace CodeThorn {
       //recordPotentialOutOfBoundsAccessLocation(lab);
       recordPotentialUninitializedAccessLocation(lab);
     }
-    AbstractValue val=pstate->readFromMemoryLocation(memLoc);
+    AbstractValue val=pstate->readFromMemoryLocation(memLoc); // relegating to pstate in esate->readFromMemoryLocation
     // investigate value here
     if(val.isUndefined()) {
       recordPotentialUninitializedAccessLocation(lab);
