@@ -58,7 +58,7 @@ namespace
     os << "}" << std::endl;
   }
 
-  void dot_inheritance(std::ostream& os, const ct::ClassAnalysis& all, ct::FilterFn include)
+  void dot_inheritance(std::ostream& os, const ct::ClassAnalysis& all, ct::ClassFilterFn include)
   {
     static constexpr const char* normal_color  = "color=green";
     static constexpr const char* virtual_color = "color=red";
@@ -67,7 +67,7 @@ namespace
     {
       if (!include(elem.first)) continue;
 
-      for (const ct::InheritanceDesc& child : elem.second.children())
+      for (const ct::InheritanceDesc& child : elem.second.descendants())
       {
         const bool virt   = child.isVirtual();
         const bool direct = child.isDirect();
@@ -86,7 +86,7 @@ namespace
   }
 
 
-  void dot_casts(std::ostream& os, const ct::ClassAnalysis& classes, const ct::CastAnalysis& casts, ct::FilterFn include)
+  void dot_casts(std::ostream& os, const ct::ClassAnalysis& classes, const ct::CastAnalysis& casts, ct::ClassFilterFn include)
   {
     using ClassTypePair     = std::pair<ct::ClassKeyType, ct::TypeKeyType>;
     using ClassCastAnalysis = std::unordered_map<ct::ClassCastDesc, std::vector<ct::CastKeyType> >;
@@ -129,8 +129,8 @@ namespace
     {
       const ct::ClassKeyType src         = std::get<0>(elem.first);
       const ct::ClassKeyType tgt         = std::get<1>(elem.first);
-      const bool             isDownCast  = classes.isBaseDerived(src, tgt);
-      const bool             isUpCast    = !isDownCast && classes.isBaseDerived(tgt, src);
+      const bool             isDownCast  = classes.areBaseDerived(src, tgt);
+      const bool             isUpCast    = !isDownCast && classes.areBaseDerived(tgt, src);
       const bool             isCrossCast = !isDownCast && !isUpCast;
 
       // exclude up casts
@@ -152,36 +152,125 @@ namespace
 
       if (0)
       {
-        std::cerr << '\n'
-                  << ct::typeNameOfClassKeyType(src) << " -> " << ct::typeNameOfClassKeyType(tgt)
-                  << (isUpCast    ? "  up"    : "")
-                  << (isDownCast  ? "  down"  : "")
-                  << (isCrossCast ? "  cross" : "")
-                  << std::endl;
+        logTrace() << '\n'
+                   << ct::typeNameOf(src) << " -> " << ct::typeNameOf(tgt)
+                   << (isUpCast    ? "  up"    : "")
+                   << (isDownCast  ? "  down"  : "")
+                   << (isCrossCast ? "  cross" : "")
+                   << std::endl;
 
         for (ct::CastKeyType cast : elem.second)
         {
-          std::cerr << "  " << ct::unparseToString(cast)
-                    << " [" << ct::typeOf(cast) << "] "
-                    << ct::FileInfo{cast};
-
-          std::cerr << std::endl;
+          logTrace() << ct::CastWriterDbg{cast}
+                     << std::endl;
         }
       }
     }
+  }
+
+
+  void printFunctions( std::ostream& os,
+                       const std::string& desc,
+                       ct::ClassNameFn& className,
+                       ct::FuncNameFn& funcName,
+                       const ct::VirtualFunctionAnalysis& vfuns,
+                       const ct::OverrideContainer& functions,
+                       bool skipEmpty = true
+                     )
+  {
+    if (skipEmpty && functions.size() == 0)
+      return;
+
+    os << "    " << desc << ": ";
+
+    for (const ct::OverrideDesc& fn: functions)
+    {
+      const ct::FunctionId           funid = fn.functionId();
+      const ct::VirtualFunctionDesc& other = vfuns.at(funid);
+
+      os << className(other.classId())
+         << "::" << funcName(funid)
+         << " #" << funid.getIdCode()
+         << (fn.covariantReturn() ? " (covariant)" : "")
+         << ", ";
+    }
+
+    os << std::endl;
+  }
+
+  void printOverriders( std::ostream& os,
+                        ct::ClassNameFn& className,
+                        ct::FuncNameFn& funcName,
+                        const ct::VirtualFunctionAnalysis& vfuns,
+                        const ct::VirtualFunctionDesc& vfn
+                      )
+  {
+    printFunctions(os, "Overriden by", className, funcName, vfuns, vfn.overriders(), false /* do not skip empty */);
+  }
+
+  void printOverridden( std::ostream& os,
+                        ct::ClassNameFn& className,
+                        ct::FuncNameFn& funcName,
+                        const ct::VirtualFunctionAnalysis& vfuns,
+                        const ct::VirtualFunctionDesc& vfn
+                      )
+  {
+    printFunctions(os, "Overrides", className, funcName, vfuns, vfn.overridden());
+  }
+
+  bool printsData(const ct::VirtualFunctionDesc& vfn, bool withOverridden)
+  {
+    return vfn.overriders().size() || vfn.overridden().size();
+  }
+
+  void writeFunctionsInClass( std::ostream& os,
+                              ct::ClassNameFn& className,
+                              ct::FuncNameFn& funcName,
+                              const ct::VirtualFunctionAnalysis& vfuns,
+                              const ct::ClassAnalysis::value_type& clazz,
+                              bool withOverridden = false
+                            )
+  {
+    os << "Class " << className(clazz.first) << "\n"
+       << std::endl;
+
+    for (ct::FunctionId vfnId : clazz.second.virtualFunctions())
+    {
+      const ct::VirtualFunctionDesc& vfn = vfuns.at(vfnId);
+
+      if (!printsData(vfn, withOverridden))
+        continue;
+
+      os << "  Function " << funcName(vfnId)
+         << " #" << vfnId.getIdCode()
+         << (vfn.isPureVirtual() ? " (pure virtual)" : "")
+         << std::endl;
+
+      printOverriders(os, className, funcName, vfuns, vfn);
+
+      if (withOverridden)
+        printOverridden(os, className, funcName, vfuns, vfn);
+    }
+
+    os << std::endl;
   }
 }
 
 namespace CodeThorn
 {
 
-void write(std::ostream& os, NameFn nameOf, FilterFn include, const ClassAnalysis& classes, const CastAnalysis& casts)
+void writeClassDotFile( std::ostream& os,
+                        ClassNameFn& nameOf,
+                        ClassFilterFn include,
+                        const ClassAnalysis& classes,
+                        const CastAnalysis& casts
+                      )
 {
   static constexpr const char* class_color = "color=blue";
 
   dot_header(os);
 
-  auto dotClasses = [&os, nameOf, include](const ClassAnalysis::value_type& elem) -> void
+  auto dotClasses = [&os, &nameOf, include](const ClassAnalysis::value_type& elem) -> void
                     {
                       if (include(elem.first))
                         node(os, elem.first, nameOf(elem.first), class_color);
@@ -195,5 +284,32 @@ void write(std::ostream& os, NameFn nameOf, FilterFn include, const ClassAnalysi
   dot_casts(os, classes, casts, include);
   dot_footer(os);
 }
+
+void writeVirtualFunctions( std::ostream& os,
+                            ClassNameFn& className,
+                            FuncNameFn& funcName,
+                            ClassFilterFn include,
+                            const ClassAnalysis& classes,
+                            const VirtualFunctionAnalysis& vfuns,
+                            bool overridden
+                          )
+{
+  topDownTraversal( classes,
+                    [&os, &className, &funcName, &vfuns, &include, overridden]
+                    (const ClassAnalysis::value_type& elem) -> void
+                    {
+                      if (!include(elem.first)) return;
+
+                      writeFunctionsInClass( os,
+                                             className,
+                                             funcName,
+                                             vfuns,
+                                             elem,
+                                             overridden
+                                           );
+                    }
+                  );
+}
+
 
 }
