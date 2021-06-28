@@ -315,6 +315,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Concolic/LinuxI386.h					\
 	Rose/BinaryAnalysis/Concolic/LinuxTraceExecutor.h				\
 	Rose/BinaryAnalysis/Concolic/Specimen.h						\
+	Rose/BinaryAnalysis/Concolic/SystemCall.h					\
 	Rose/BinaryAnalysis/Concolic/TestCase.h						\
 	Rose/BinaryAnalysis/Concolic/TestSuite.h					\
 	Rose/BinaryAnalysis/Concolic/io-utility.h					\

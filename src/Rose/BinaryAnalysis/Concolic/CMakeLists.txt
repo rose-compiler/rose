@@ -11,6 +11,7 @@ add_library(roseBinaryAnalysisConcolic OBJECT
   LinuxI386.C
   LinuxTraceExecutor.C
   Specimen.C
+  SystemCall.C
   TestCase.C
   TestSuite.C
   Utility.C)
@@ -31,6 +32,7 @@ install(FILES
   LinuxI386.h
   LinuxTraceExecutor.h
   Specimen.h
+  SystemCall.h
   TestCase.h
   TestSuite.h
 

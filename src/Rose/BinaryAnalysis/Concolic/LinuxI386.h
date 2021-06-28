@@ -26,11 +26,6 @@ private:
     bool markingArgvAsInput_ = true;
     bool markingEnvpAsInput_ = false;
 
-    // Some system calls always return the same value within a single process no matter how often they're called. For
-    // example, SYS_getpid always returns the process ID. This map, indexed by system call function number (e.g., SYS_getpid)
-    // stores the input variable we used the first time this system call returned a value.
-    Sawyer::Container::Map<uint64_t, InstructionSemantics2::BaseSemantics::SValuePtr> syscallFirstReturns_;
-
     // In order to give system calls unique names, we number them sequentially per function.
     std::map<uint64_t, size_t> syscallSequenceNumbers_;
 
@@ -56,6 +51,7 @@ public:
 
 public:
     // These are documented in the base class.
+    virtual void configureSystemCalls() override;
     virtual void load(const boost::filesystem::path&) override;
     virtual bool isTerminated() override;
     virtual ByteOrder::Endianness memoryByteOrder() override;

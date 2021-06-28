@@ -80,6 +80,9 @@ using LinuxI386Ptr = Sawyer::SharedPointer<LinuxI386>;
 class Specimen;
 using SpecimenPtr = Sawyer::SharedPointer<Specimen>;
 
+class SystemCall;
+using SystemCallPtr = Sawyer::SharedPointer<SystemCall>;
+
 class TestCase;
 using TestCasePtr = Sawyer::SharedPointer<TestCase>;
 
