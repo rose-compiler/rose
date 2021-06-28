@@ -1,11 +1,9 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
-#include <Rose/BinaryAnalysis/ModelChecker/NullDerefTag.h>
+#include <Rose/BinaryAnalysis/ModelChecker/OobTag.h>
 
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/SValue.h>
-
-#include <boost/lexical_cast.hpp>
 
 namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
 
@@ -13,20 +11,20 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace ModelChecker {
 
-NullDerefTag::NullDerefTag(size_t nodeStep, TestMode tm, IoMode io, SgAsmInstruction *insn, const BS::SValuePtr &addr)
+OobTag::OobTag(size_t nodeStep, TestMode tm, IoMode io, SgAsmInstruction *insn, const BS::SValuePtr &addr)
     : Tag(nodeStep), testMode_(tm), ioMode_(io), insn_(insn), addr_(addr) {}
 
-NullDerefTag::~NullDerefTag() {}
+OobTag::~OobTag() {}
 
-NullDerefTag::Ptr
-NullDerefTag::instance(size_t nodeStep, TestMode tm, IoMode io, SgAsmInstruction *insn, const BS::SValuePtr &addr) {
+OobTag::Ptr
+OobTag::instance(size_t nodeStep, TestMode tm, IoMode io, SgAsmInstruction *insn, const BS::SValuePtr &addr) {
     ASSERT_forbid(TestMode::OFF == tm);
     ASSERT_not_null(addr);
-    return Ptr(new NullDerefTag(nodeStep, tm, io, insn, addr));
+    return Ptr(new OobTag(nodeStep, tm, io, insn, addr));
 }
 
 std::string
-NullDerefTag::printableName() const {
+OobTag::printableName() const {
     // No lock necessary because ioMode and testMode are read-only properties initialized in the constructor.
     std::string retval;
     switch (testMode_) {
@@ -39,7 +37,7 @@ NullDerefTag::printableName() const {
         case TestMode::OFF:
             break;
     }
-    retval += "-null";
+    retval += "-oob";
     switch (ioMode_) {
         case IoMode::READ:
             retval += "-read";
@@ -48,28 +46,27 @@ NullDerefTag::printableName() const {
             retval += "-write";
             break;
     }
-
     return retval;
 }
 
 void
-NullDerefTag::print(std::ostream &out, const std::string &prefix) const {
+OobTag::print(std::ostream &out, const std::string &prefix) const {
     // No locks necessary since all the data members are read-only.
-    out <<prefix <<"null pointer dereference\n";
+    out <<prefix <<"out-of-bounds access\n";
 
     std::string io = IoMode::READ == ioMode_ ? "read" : "write";
     std::string toFrom = IoMode::READ == ioMode_ ? "read from" : "write to";
 
     out <<prefix <<"  " <<io;
     switch (testMode_) {
-        case TestMode::OFF:                             // shouldn't normally occur
-            out <<" is null";
+        case TestMode::OFF:
+            out <<" is out of bounds";
             break;
         case TestMode::MAY:
-            out <<" may be null";
+            out <<" may be out of bounds";
             break;
         case TestMode::MUST:
-            out <<" must be null";
+            out <<" must be out of bounds";
             break;
     }
     if (insn_)
@@ -80,9 +77,9 @@ NullDerefTag::print(std::ostream &out, const std::string &prefix) const {
 }
 
 void
-NullDerefTag::toYaml(std::ostream &out, const std::string &prefix1) const {
+OobTag::toYaml(std::ostream &out, const std::string &prefix1) const {
     // No locks necessary since all the data members are read-only.
-    out <<prefix1 <<"weakness: null pointer dereference\n";
+    out <<prefix1 <<"weakness: out-of-bounds access\n";
     std::string prefix(prefix1.size(), ' ');
 
     switch (ioMode_) {

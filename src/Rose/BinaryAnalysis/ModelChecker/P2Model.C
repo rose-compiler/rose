@@ -9,6 +9,7 @@
 #include <Rose/BinaryAnalysis/ModelChecker/FailureUnit.h>
 #include <Rose/BinaryAnalysis/ModelChecker/InstructionUnit.h>
 #include <Rose/BinaryAnalysis/ModelChecker/NullDerefTag.h>
+#include <Rose/BinaryAnalysis/ModelChecker/OobTag.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Path.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 #include <Rose/BinaryAnalysis/SymbolicExpr.h>
@@ -46,10 +47,12 @@ commandLineSwitches(Settings &settings) {
               .argument("method", enumParser<TestMode>(settings.nullRead)
                         ->with("off", TestMode::OFF)
                         ->with("may", TestMode::MAY)
-                        ->with("must", TestMode::MUST))
+                        ->with("must", TestMode::MUST),
+                        "must")
               .doc("Method by which to test for null pointer dereferences during memory read operations. Memory addresses "
                    "are tested during read operations to determine if the address falls within the \"null page\", which "
-                   "consists of the lowest memory addresses as defined by @s{max-null-page}. The choices are:"
+                   "consists of the lowest memory addresses as defined by @s{max-null-page}. If no switch argument is "
+                   "supplied, then \"must\" is assumed. The arguments are:"
 
                    "@named{off}{Do not check for null pointer dereferences during read operations." +
                    std::string(TestMode::OFF == settings.nullRead ? " This is the default." : "") + "}"
@@ -64,10 +67,12 @@ commandLineSwitches(Settings &settings) {
               .argument("method", enumParser<TestMode>(settings.nullWrite)
                         ->with("off", TestMode::OFF)
                         ->with("may", TestMode::MAY)
-                        ->with("must", TestMode::MUST))
+                        ->with("must", TestMode::MUST),
+                        "must")
               .doc("Method by which to test for null pointer dereferences during memory write operations. Memory addresses "
                    "are tested during write operations to determine if the address falls within the \"null page\", which "
-                   "consists of the lowest memory addresses as defined by @s{max-null-page}. The choices are:"
+                   "consists of the lowest memory addresses as defined by @s{max-null-page}. If no switch argument is "
+                   "supplied, then \"must\" is assumed. The arguments are:"
 
                    "@named{off}{Do not check for null pointer dereferences during write operations." +
                    std::string(TestMode::OFF == settings.nullWrite ? " This is the default." : "") + "}"
@@ -77,6 +82,44 @@ commandLineSwitches(Settings &settings) {
 
                    "@named{must}{Find writes that must necessarily access the null page." +
                    std::string(TestMode::MUST == settings.nullWrite ? " This is the default." : "") + "}"));
+
+    sg.insert(Switch("detect-oob-reads")
+              .argument("method", enumParser<TestMode>(settings.oobRead)
+                        ->with("off", TestMode::OFF)
+                        ->with("may", TestMode::MAY)
+                        ->with("must", TestMode::MUST),
+                        "must")
+              .doc("Method by which to test for out-of-bounds variable acceess during memory read operations. Memory addresses "
+                   "are tested during read operations to determine if the address falls outside the variable(s) associated with "
+                   "that instruction. If no switch argument is supplied, then \"must\" is assumed. The arguments are:"
+
+                   "@named{off}{Do not check for out-of-bounds variable accesses during read operations." +
+                   std::string(TestMode::OFF == settings.oobRead ? " This is the default." : "") + "}"
+
+                   "@named{may}{Find out-of-bounds variable reads that may occur, but possibly not necessarily occur." +
+                   std::string(TestMode::MAY == settings.oobRead ? " This is the default." : "") + "}"
+
+                   "@named{must}{Find out-of-bounds variable reads that must necessarily occur." +
+                   std::string(TestMode::MUST == settings.oobRead ? " This is the default." : "") + "}"));
+
+    sg.insert(Switch("detect-oob-writes")
+              .argument("method", enumParser<TestMode>(settings.oobWrite)
+                        ->with("off", TestMode::OFF)
+                        ->with("may", TestMode::MAY)
+                        ->with("must", TestMode::MUST),
+                        "must")
+              .doc("Method by which to test for out-of-bounds variable acceess during memory write operations. Memory addresses "
+                   "are tested during write operations to determine if the address falls outside the variable(s) associated with "
+                   "that instruction. If no switch argument is supplied, then \"must\" is assumed. The arguments are:"
+
+                   "@named{off}{Do not check for out-of-bounds variable accesses during write operations." +
+                   std::string(TestMode::OFF == settings.oobWrite ? " This is the default." : "") + "}"
+
+                   "@named{may}{Find out-of-bounds variable writes that may occur, but possibly not necessarily occur." +
+                   std::string(TestMode::MAY == settings.oobWrite ? " This is the default." : "") + "}"
+
+                   "@named{must}{Find out-of-bounds variable writes that must necessarily occur." +
+                   std::string(TestMode::MUST == settings.oobWrite ? " This is the default." : "") + "}"));
 
     sg.insert(Switch("max-null-page")
               .argument("address", nonNegativeIntegerParser(settings.maxNullAddress))
@@ -100,7 +143,6 @@ commandLineSwitches(Settings &settings) {
                    "byte value stored at that address. Although this is faster and uses less memory, it is generally unable "
                    "to answer questions about aliasing." +
                    std::string(Settings::MemoryType::MAP == settings.memoryType ? " This is the default." : "") + "}"));
-
 
     insertBooleanSwitch(sg, "debug-null-deref", settings.debugNull,
                         "If this feature is enabled, then the diagnostic output (if it is also enabled) "
@@ -155,6 +197,11 @@ RiscOperators::promote(const BS::RiscOperatorsPtr &x) {
     return retval;
 }
 
+const Partitioner2::Partitioner&
+RiscOperators::partitioner() const {
+    return partitioner_;
+}
+
 SmtSolver::Ptr
 RiscOperators::modelCheckerSolver() const {
     return modelCheckerSolver_;
@@ -165,56 +212,109 @@ RiscOperators::modelCheckerSolver(const SmtSolver::Ptr &solver) {
     modelCheckerSolver_ = solver;
 }
 
-bool
-RiscOperators::isNull(const BS::SValuePtr &addr_, TestMode testMode, IoMode ioMode) {
+void
+RiscOperators::checkNullAccess(const BS::SValuePtr &addrSVal, TestMode testMode, IoMode ioMode) {
     // Null-dereferences are only tested when we're actually executing an instruciton. Other incidental operations such as
     // initializing the first state are not checked.
     if (!currentInstruction())
-        return false;
+        return;
+    if (TestMode::OFF == testMode)
+        return;
 
-    ASSERT_not_null(addr_);
+    ASSERT_not_null(addrSVal);
     ASSERT_not_null(modelCheckerSolver_);               // should have all the path assertions already
-    SymbolicExpr::Ptr addr = IS::SymbolicSemantics::SValue::promote(addr_)->get_expression();
+    SymbolicExpr::Ptr addr = IS::SymbolicSemantics::SValue::promote(addrSVal)->get_expression();
     const char *direction = IoMode::READ == ioMode ? "read" : "write";
 
-
-    bool retval = false;
+    bool isNull = false;
     switch (testMode) {
         case TestMode::OFF:
             break;
 
         case TestMode::MAY: {
             // May be null if addr <= max is satisfied
-            SymbolicExpr::Ptr maxNull = SymbolicExpr::makeIntegerConstant(addr->nBits(), settings_.maxNullAddress);
-            SymbolicExpr::Ptr isNull = SymbolicExpr::makeLe(addr, maxNull);
+            SymbolicExpr::Ptr maxNullExpr = SymbolicExpr::makeIntegerConstant(addr->nBits(), settings_.maxNullAddress);
+            SymbolicExpr::Ptr isNullExpr = SymbolicExpr::makeLe(addr, maxNullExpr);
             SmtSolver::Transaction tx(modelCheckerSolver_);
-            modelCheckerSolver_->insert(isNull);
-            retval = modelCheckerSolver_->check() == SmtSolver::SAT_YES;
-            (settings_.debugNull || retval) && SAWYER_MESG(mlog[DEBUG])
-                <<"      " <<direction <<" address may be in [0," <<settings_.maxNullAddress <<"]? " <<(retval?"yes":"no")
+            modelCheckerSolver_->insert(isNullExpr);
+            isNull = modelCheckerSolver_->check() == SmtSolver::SAT_YES;
+            (settings_.debugNull || isNull) && SAWYER_MESG(mlog[DEBUG])
+                <<"      " <<direction <<" address may be in [0," <<settings_.maxNullAddress <<"]? " <<(isNull?"yes":"no")
                 <<"; address = " <<*addr <<"\n";
             break;
         }
 
         case TestMode::MUST: {
             // Must be null if addr > max cannot be satisfied
-            SymbolicExpr::Ptr maxNull = SymbolicExpr::makeIntegerConstant(addr->nBits(), settings_.maxNullAddress);
-            SymbolicExpr::Ptr isNull = SymbolicExpr::makeGt(addr, maxNull);
+            SymbolicExpr::Ptr maxNullExpr = SymbolicExpr::makeIntegerConstant(addr->nBits(), settings_.maxNullAddress);
+            SymbolicExpr::Ptr isNullExpr = SymbolicExpr::makeGt(addr, maxNullExpr);
             SmtSolver::Transaction tx(modelCheckerSolver_);
-            modelCheckerSolver_->insert(isNull);
-            retval = modelCheckerSolver_->check() == SmtSolver::SAT_NO;
-            (settings_.debugNull || retval) && SAWYER_MESG(mlog[DEBUG])
-                <<"      " <<direction <<" address must be in [0," <<settings_.maxNullAddress <<"]? " <<(retval?"yes":"no")
+            modelCheckerSolver_->insert(isNullExpr);
+            isNull = modelCheckerSolver_->check() == SmtSolver::SAT_NO;
+            (settings_.debugNull || isNull) && SAWYER_MESG(mlog[DEBUG])
+                <<"      " <<direction <<" address must be in [0," <<settings_.maxNullAddress <<"]? " <<(isNull?"yes":"no")
                 <<"; address = " <<*addr <<"\n";
             break;
         }
     }
 
-    if (retval && !semantics_->filterNullDeref(addr_, testMode, ioMode)) {
+    if (isNull && !semantics_->filterNullDeref(addrSVal, testMode, ioMode)) {
         SAWYER_MESG(mlog[DEBUG]) <<"      nullptr dereference rejected by user; this one is ignored\n";
-        retval = false;
+        isNull = false;
     }
-    return retval;
+
+    if (isNull) {
+        currentState(BS::StatePtr());                   // indicates that execution failed
+        throw ThrownTag{NullDerefTag::instance(nInstructions(), testMode, ioMode, currentInstruction(), addrSVal)};
+    }
+}
+
+void
+RiscOperators::checkOobAccess(const BS::SValuePtr &addrSVal, TestMode testMode, IoMode ioMode, size_t nBytes) {
+    ASSERT_not_null(addrSVal);
+
+    // Out of bounds references are only tested when we're actually executing an instruction. Other incidental operations such
+    // as initializing the first state are not checked.
+    if (!currentInstruction())
+        return;
+    if (TestMode::OFF == testMode)
+        return;
+
+    // Get the list of local variables for this function.
+    P2::Function::Ptr function = variableFinder_.functionForInstruction(partitioner_, currentInstruction());
+    ASSERT_not_null(function);
+    bool firstTime = !variableFinder_.isCached(function);
+    Variables::StackVariables lvars = variableFinder_.findStackVariables(partitioner_, function);
+    if (firstTime && mlog[DEBUG]) {
+        mlog[DEBUG] <<"local variables for " <<function->printableName() <<":\n";
+        Variables::print(lvars, partitioner_, mlog[DEBUG], "  ");
+    }
+
+    // What's being accessed?
+    SymbolicExpr::Ptr addrExpr = IS::SymbolicSemantics::SValue::promote(addrSVal)->get_expression();
+    ASSERT_not_null(addrExpr);
+    Variables::OffsetInterval accessInterval =
+        variableFinder_.referencedFrameArea(partitioner_, shared_from_this(), addrExpr, nBytes);
+    if (accessInterval.isEmpty())
+        return;
+
+    // Of the variables associated with the current instruction, how many are we accessing and how many are we not accessing.
+    size_t nOutside = 0;                                // access is outside a variable
+    size_t nInside = 0;                                 // access is inside a variable
+    for (const Variables::StackVariable &lvar: lvars.values()) {
+        if (lvar.definingInstructionVas().exists(currentInstruction()->get_address())) {
+            if (lvar.interval().isContaining(accessInterval)) {
+                ++nInside;
+            } else {
+                ++nOutside;
+            }
+        }
+    }
+
+    if (nOutside > 1 && 0 == nInside) {
+        currentState(BS::StatePtr());                   // indicates that execution failed
+        throw ThrownTag{OobTag::instance(nInstructions(), testMode, ioMode, currentInstruction(), addrSVal)};
+    }
 }
 
 size_t
@@ -252,12 +352,9 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BS::SValuePtr &addr, 
         adjustedVa = add(addr, signExtend(segregValue, addr->nBits()));
     }
 
-    // Check for null pointer dereference
-    if (isNull(adjustedVa, settings_.nullRead, IoMode::READ)) {
-        currentState(BS::StatePtr());               // indicates that execution failed
-        throw ThrownTag{NullDerefTag::instance(nInstructions(), settings_.nullRead, IoMode::READ, currentInstruction(),
-                                               adjustedVa)};
-    }
+    // Check the model and throw exception if violated.
+    checkNullAccess(adjustedVa, settings_.nullRead, IoMode::READ);
+    checkOobAccess(adjustedVa, settings_.oobRead, IoMode::READ, dflt->nBits() / 8);
 
     // Read from memory map. If we know the address and that memory exists, then read the memory to obtain the default value
     // which we'll use to update the symbolic state in a moment.
@@ -306,12 +403,9 @@ RiscOperators::writeMemory(RegisterDescriptor segreg, const BS::SValuePtr &addr,
         adjustedVa = add(addr, signExtend(segregValue, addr->nBits()));
     }
 
-    // Check for null pointer dereference
-    if (isNull(adjustedVa, settings_.nullWrite, IoMode::WRITE)) {
-        currentState(BS::StatePtr());               // indicates that execution failed
-        throw ThrownTag{NullDerefTag::instance(nInstructions(), settings_.nullWrite, IoMode::WRITE,
-                                               currentInstruction(), adjustedVa)};
-    }
+    // Check the model and throw exception if violated.
+    checkNullAccess(adjustedVa, settings_.nullWrite, IoMode::WRITE);
+    checkOobAccess(adjustedVa, settings_.oobWrite, IoMode::READ, value->nBits() / 8);
 
     Super::writeMemory(segreg, addr, value, cond);
 }

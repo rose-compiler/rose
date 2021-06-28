@@ -7,6 +7,7 @@ add_library(roseBinaryAnalysisModelChecker OBJECT
   FailureUnit.C
   InstructionUnit.C
   NullDerefTag.C
+  OobTag.C
   P2Model.C
   Path.C
   PathNode.C
@@ -30,6 +31,7 @@ install(FILES
   FailureUnit.h
   InstructionUnit.h
   NullDerefTag.h
+  OobTag.h
   P2Model.h
   Path.h
   PathNode.h

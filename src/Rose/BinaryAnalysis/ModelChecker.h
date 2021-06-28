@@ -12,6 +12,7 @@
 #include <Rose/BinaryAnalysis/ModelChecker/FailureUnit.h>
 #include <Rose/BinaryAnalysis/ModelChecker/InstructionUnit.h>
 #include <Rose/BinaryAnalysis/ModelChecker/NullDerefTag.h>
+#include <Rose/BinaryAnalysis/ModelChecker/OobTag.h>
 #include <Rose/BinaryAnalysis/ModelChecker/P2Model.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Path.h>
 #include <Rose/BinaryAnalysis/ModelChecker/PathNode.h>

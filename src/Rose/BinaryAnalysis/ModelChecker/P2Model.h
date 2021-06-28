@@ -36,6 +36,8 @@ struct Settings {
 
     TestMode nullRead = TestMode::MUST;                 /**< How to test for reads from the null page. */
     TestMode nullWrite = TestMode::MUST;                /**< How to test for writes from the null page. */
+    TestMode oobRead = TestMode::OFF;                   /**< How to test for out-of-bounds reads. */
+    TestMode oobWrite = TestMode::OFF;                  /**< How to test for out-of-bounds writes. */
     rose_addr_t maxNullAddress = 4095;                  /**< Maximum address of the null page. */
     bool debugNull = false;                             /**< When debugging is enabled, show null pointer checking? */
     Sawyer::Optional<rose_addr_t> initialStackVa;       /**< Address for initial stack pointer. */
@@ -67,6 +69,7 @@ private:
     SmtSolver::Ptr modelCheckerSolver_;
     size_t nInstructions_ = 0;
     SemanticCallbacks *semantics_ = nullptr;
+    Variables::VariableFinder variableFinder_;          // FIXME[Robb Matzke 2021-06-25]: should be global & thread safe, not per ops
 
 protected:
     RiscOperators(const Settings&, const Partitioner2::Partitioner&, ModelChecker::SemanticCallbacks*,
@@ -87,6 +90,11 @@ public: // Standard public construction-like functions
     static Ptr promote(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &x);
 
 public: // Supporting functions
+    /** Property: Partitioner.
+     *
+     *  The partitioner specified when this object was constructed. */
+    const Partitioner2::Partitioner& partitioner() const;
+
     /** Property: Model checker SMT solver.
      *
      *  This property holds the solver used for model checking, which can be different or the same as the solver used generally
@@ -102,8 +110,15 @@ public: // Supporting functions
      *
      *  An address need not be zero in order to be null. For instance, on Linux the entire first page of memory is generally
      *  unmapped in order to increase the chance that a null pointer to a struct/class/array still causes a segmentation fault
-     *  even when accessing a member other than the first member. */
-    bool isNull(const InstructionSemantics2::BaseSemantics::SValuePtr &addr, TestMode, IoMode);
+     *  even when accessing a member other than the first member.
+     *
+     *  If a null dereference is detected, then a NullDerefTag is thrown. */
+    void checkNullAccess(const InstructionSemantics2::BaseSemantics::SValuePtr &addr, TestMode, IoMode);
+
+    /** Test whether the specified address is out of bounds for variables.
+     *
+     *  If an OOB access is detected, then an OobTag is thrown. */
+    void checkOobAccess(const InstructionSemantics2::BaseSemantics::SValuePtr &addr, TestMode, IoMode, size_t nBytes);
 
     /** Property: Number of instructions executed.
      *

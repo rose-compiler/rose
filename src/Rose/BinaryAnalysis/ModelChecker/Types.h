@@ -52,6 +52,9 @@ using NameTagPtr = std::shared_ptr<NameTag>;
 class NullDerefTag;
 using NullDerefTagPtr = std::shared_ptr<NullDerefTag>;
 
+class OobTag;
+using OobTagPtr = std::shared_ptr<OobTag>;
+
 class Path;
 using PathPtr = std::shared_ptr<Path>;
 
