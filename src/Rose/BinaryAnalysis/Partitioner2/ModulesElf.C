@@ -341,7 +341,8 @@ PltEntryMatcher::match(const Partitioner &partitioner, rose_addr_t anchor) {
     functionNumber_ = 0;
 
     SgAsmInstruction *insn = partitioner.discoverInstruction(anchor);
-    ASSERT_not_null(insn);
+    if (!insn)
+        return false;
 
     // Look for the PLT entry.
     if (isSgAsmX86Instruction(insn)) {
