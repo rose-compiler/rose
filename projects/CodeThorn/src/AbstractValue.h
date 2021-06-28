@@ -107,6 +107,7 @@ class AbstractValue {
   size_t getAVSetSize() const;
   enum Operator { UnaryMinus, Not, BitwiseComplement, Add, Sub, Mul, Div, Mod, Or, And, Eq, NotEq, Less, LessOrEq, More, MoreOrEq, BitwiseAnd, BitwiseOr, BitwiseXor, BitwiseShiftLeft, BitwiseShiftRight};
 
+  static uint32_t arrayAbstractionIndex;
   static AbstractValue applyOperator(AbstractValue::Operator op, AbstractValue& v1, AbstractValue& v2);
 
   static AbstractValue operatorAdd(AbstractValue& a,AbstractValue& b, AbstractValue elemSize);

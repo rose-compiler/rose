@@ -418,8 +418,41 @@ AbstractValue PState::readFromMemoryLocation(AbstractValue abstractMemLoc) const
   if(abstractMemLoc.isTop()) {
     // result can be any value
     return AbstractValue(CodeThorn::Top());
+  } else if(abstractMemLoc.isPtrSet()) {
+    // call recursively for all values in the set
+    //cout<<"DEBUG: ptr set recursion."<<endl;
+    AbstractValue combinedValue; // default: bot
+    AbstractValueSet& avSet=*abstractMemLoc.getAbstractValueSet();
+    auto iter=avSet.begin();
+    while(iter!=avSet.end()) {
+      AbstractValue currentValue=readFromMemoryLocation(*iter);
+      combinedValue=AbstractValue::combine(combinedValue,currentValue);
+      ++iter;
+    }
+    return combinedValue;
   }
   return this->varValue(abstractMemLoc);
+}
+
+void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
+                                   AbstractValue abstractValue,
+                                   bool strongUpdate) {
+  if(abstractValue.isBot()) {
+    // writing bot to memory (bot->top conversion)
+    abstractValue=AbstractValue(CodeThorn::Top()); // INVESTIGATE
+    conditionalApproximateRawWriteToMemoryLocation(abstractMemLoc,abstractValue,strongUpdate);
+  } else if(abstractMemLoc.isTop()) {
+    combineValueAtAllMemoryLocations(abstractValue); // BUG: leads to infinite loop in DOM029
+  } else if(abstractMemLoc.isPtrSet()) {
+    // call recursively for all values in the set
+    //cout<<"DEBUG: ptr set recursion."<<endl;
+    AbstractValueSet& avSet=*abstractMemLoc.getAbstractValueSet();
+    for (auto av : avSet) {
+      writeToMemoryLocation(av,abstractValue,false /*weak update*/);
+    }
+  } else {
+    conditionalApproximateRawWriteToMemoryLocation(abstractMemLoc,abstractValue,strongUpdate);
+  }
 }
 
 void PState::conditionalApproximateRawWriteToMemoryLocation(AbstractValue memLoc,
@@ -430,28 +463,6 @@ void PState::conditionalApproximateRawWriteToMemoryLocation(AbstractValue memLoc
     combineAtMemoryLocation(memLoc,abstractValue);
   } else {
     rawWriteAtAbstractAddress(memLoc,abstractValue);
-  }
-}
-
-void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
-                                   AbstractValue abstractValue,
-                                   bool strongUpdate) {
-  if(abstractValue.isBot()) {
-    // writing bot to memory (bot->top conversion)
-    abstractValue=AbstractValue(CodeThorn::Top()); // INVESTIGATE
-  } else if(abstractMemLoc.isTop()) {
-    combineValueAtAllMemoryLocations(abstractValue); // BUG: leads to infinite loop in DOM029
-    return;
-  } else if(abstractMemLoc.isPtrSet()) {
-    // call recursively for all values in the set
-    //cout<<"DEBUG: ptr set recursion."<<endl;
-    AbstractValueSet& avSet=*abstractMemLoc.getAbstractValueSet();
-    for (auto av : avSet) {
-      writeToMemoryLocation(av,abstractValue,false /*weak update*/);
-    }
-    return;
-  } else {
-    conditionalApproximateRawWriteToMemoryLocation(abstractMemLoc,abstractValue,strongUpdate);
   }
 }
 

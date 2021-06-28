@@ -8,7 +8,7 @@
 #include "assert.h"
 #include "CommandLineOptions.h"
 #include <iostream>
-#include <climits>
+#include <limits>
 #include "Miscellaneous.h"
 #include "Miscellaneous2.h"
 #include "CodeThornException.h"
@@ -17,9 +17,11 @@
 
 using namespace std;
 using namespace CodeThorn;
-using namespace Sawyer::Message; // required for logger[WARN]
+using namespace Sawyer::Message; // required for logger
 
-VariableIdMappingExtended* AbstractValue::_variableIdMapping=nullptr;
+uint32_t CodeThorn::AbstractValue::arrayAbstractionIndex=std::numeric_limits<uint32_t>::max();
+
+  VariableIdMappingExtended* AbstractValue::_variableIdMapping=nullptr;
 bool AbstractValue::strictChecking=false;
 bool AbstractValue::byteMode=false;
 bool AbstractValue::pointerSetsEnabled=false;

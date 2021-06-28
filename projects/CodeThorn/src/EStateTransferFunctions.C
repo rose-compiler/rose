@@ -4256,9 +4256,7 @@ namespace CodeThorn {
 
   void EStateTransferFunctions::writeToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue) {
     // inspect everything here
-    SAWYER_MESG(logger[TRACE])<<"EStateTransferFunctions::writeToMemoryLocation1:started"<<endl;
     SAWYER_MESG(logger[TRACE])<<"EStateTransferFunctions::writeToMemoryLocation1:"<<memLoc.toString()<<endl;
-    SAWYER_MESG(logger[TRACE])<<"EStateTransferFunctions::writeToMemoryLocation1:cont"<<endl;
     if(memLoc.isTop()) {
       SAWYER_MESG(logger[WARN])<<"writing to arbitrary memloc: "<<lab.toString()<<":"<<memLoc.toString(_variableIdMapping)<<":="<<newValue.toString(_variableIdMapping)<<endl;
       recordPotentialOutOfBoundsAccessLocation(lab);
