@@ -173,7 +173,8 @@ StackVariable::setDefaultName() {
         }
     }
 
-    if (frameOffset() < 0)
+    // Negative frame offsets are more common, so add "y" to the uncommon cases.
+    if (frameOffset() >= 0)
         s += "y";
 
     name(s);
@@ -223,7 +224,7 @@ StackVariable::print(std::ostream &out) const {
     out <<"local-variable";
     if (!name().empty())
         out <<" \"" <<StringUtility::cEscape(name()) <<"\"";
-    out <<" @" <<offsetStr(frameOffset()) <<"+" <<sizeStr(maxSizeBytes());
+    out <<" (loc=" <<offsetStr(frameOffset()) <<", size=" <<sizeStr(maxSizeBytes()) <<")";
 }
 
 std::string
@@ -275,7 +276,7 @@ GlobalVariable::print(std::ostream &out) const {
     out <<"global-variable";
     if (!name().empty())
         out <<" \"" <<StringUtility::cEscape(name()) <<"\"";
-    out <<"@" <<StringUtility::addrToString(address()) <<"+" <<sizeStr(maxSizeBytes());
+    out <<"(va=" <<StringUtility::addrToString(address()) <<", size=" <<sizeStr(maxSizeBytes()) <<")";
 }
 
 std::string

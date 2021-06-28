@@ -406,6 +406,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/ModelChecker/FailureUnit.h					\
 	Rose/BinaryAnalysis/ModelChecker/InstructionUnit.h				\
 	Rose/BinaryAnalysis/ModelChecker/NullDerefTag.h					\
+	Rose/BinaryAnalysis/ModelChecker/OobTag.h					\
 	Rose/BinaryAnalysis/ModelChecker/P2Model.h					\
 	Rose/BinaryAnalysis/ModelChecker/Path.h						\
 	Rose/BinaryAnalysis/ModelChecker/PathNode.h					\
