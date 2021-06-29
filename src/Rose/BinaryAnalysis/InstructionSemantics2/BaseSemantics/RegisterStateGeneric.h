@@ -5,6 +5,7 @@
 
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Types.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/RegisterState.h>
+#include <Rose/Exception.h>
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
@@ -45,11 +46,11 @@ public:
      *
      *  If the @ref accessCreatesLocations property is clear and a caller attempts to access a register (or part) that is not
      *  stored in the state, then an exception of this type is thrown. */
-    class RegisterNotPresent: public std::runtime_error {
+    class RegisterNotPresent: public Rose::Exception {
         RegisterDescriptor desc_;
     public:
         explicit RegisterNotPresent(RegisterDescriptor)
-            : std::runtime_error("accessed register is not available in register state") {}
+            : Rose::Exception("accessed register is not available in register state") {}
     };
 
     /** A range of bits indexes.

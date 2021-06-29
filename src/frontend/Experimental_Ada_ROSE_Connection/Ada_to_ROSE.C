@@ -436,6 +436,7 @@ namespace
           break;
         }
 
+      case A_Generic_Package:
       case A_Package:
         {
           logTrace() << "A package"
@@ -494,7 +495,6 @@ namespace
 
       case Not_A_Unit:
       case A_Package_Instance:
-      case A_Generic_Package:
 
       case A_Generic_Procedure:
       case A_Generic_Function:

@@ -37,6 +37,7 @@ namespace
 
       void handle(SgNode& n)                     { SG_UNEXPECTED_NODE(n); }
 
+      void handle(SgAdaFormalTypeDecl& n)        { set(n.get_formal_type()); }
       void handle(SgType& n)                     { set(&n); }
       void handle(SgClassDeclaration& n)         { set(&mkRecordType(n)); }
       void handle(SgAdaTaskTypeDecl& n)          { set(&mkAdaTaskType(n)); }
@@ -311,6 +312,70 @@ namespace
       SgType&            enumty;
       AstContext         ctx;
   };
+
+  TypeData
+  getFormalTypeFoundation(const std::string& name, Definition_Struct& def, AstContext ctx)
+  {
+    ADA_ASSERT(def.Definition_Kind == A_Formal_Type_Definition);
+    logKind("A_Formal_Type_Definition");
+
+    Formal_Type_Definition_Struct& typenode = def.The_Union.The_Formal_Type_Definition;
+    TypeData                       res{nullptr, false, false, false};
+
+    switch (typenode.Formal_Type_Kind)
+      {
+        // MS: types relevant right now
+
+      case A_Formal_Private_Type_Definition:         // 12.5.1(2)   -> Trait_Kinds
+        {
+          logKind("A_Formal_Private_Type_Definition");
+          SgAdaFormalType* t = &mkAdaFormalType(name);
+          if (typenode.Has_Private) {
+            t->set_is_private(true);
+          }
+          if (typenode.Has_Limited) {
+            t->set_is_limited(true);
+          }
+          res.n = t;
+          break;
+        }
+
+      case A_Formal_Access_Type_Definition:          // 3.10(3),3.10(5)
+        // TODO: finish me
+        std::cout << "*********** getFormalTypeFoundation Formal_Access_type_Definition" << std::endl;
+        ADA_ASSERT(false);
+        logKind("A_Formal_Access_Type_Definition");
+        break;
+
+        // MS: types to do later when we need them
+      case A_Formal_Tagged_Private_Type_Definition:  // 12.5.1(2)   -> Trait_Kinds
+      case A_Formal_Derived_Type_Definition:         // 12.5.1(3)   -> Trait_Kinds
+      case A_Formal_Discrete_Type_Definition:        // 12.5.2(2)
+      case A_Formal_Signed_Integer_Type_Definition:  // 12.5.2(3)
+      case A_Formal_Modular_Type_Definition:         // 12.5.2(4)
+      case A_Formal_Floating_Point_Definition:       // 12.5.2(5)
+      case A_Formal_Ordinary_Fixed_Point_Definition: // 12.5.2(6)
+      case A_Formal_Decimal_Fixed_Point_Definition:  // 12.5.2(7)
+
+        //|A2005 start
+      case A_Formal_Interface_Type_Definition:       // 12.5.5(2) -> Interface_Kinds
+        //|A2005 end
+
+      case A_Formal_Unconstrained_Array_Definition:  // 3.6(3)
+      case A_Formal_Constrained_Array_Definition:    // 3.6(5)
+
+      default:
+        logWarn() << "unhandled formal type kind " << typenode.Formal_Type_Kind << std::endl;
+        // NOTE: temporarily create an AdaFormalType with the given name,
+        //       but set no fields.  This is sufficient to pass some test cases but
+        //       is not correct.
+        SgAdaFormalType* t = &mkAdaFormalType(name);
+        res.n = t;
+        //ADA_ASSERT(!FAIL_ON_ERROR);
+      }
+
+    return res;
+  }
 
   TypeData
   getTypeFoundation(const std::string& name, Definition_Struct& def, AstContext ctx)
@@ -837,6 +902,16 @@ getParentRecordDeclID(Element_ID defid, AstContext ctx)
   return getParentRecordDecl(elem.The_Union.Definition, ctx);
 }
 
+TypeData
+getFormalTypeFoundation(const std::string& name, Declaration_Struct& decl, AstContext ctx)
+{
+  ADA_ASSERT( decl.Declaration_Kind == A_Formal_Type_Declaration );
+  Element_Struct&         elem = retrieveAs<Element_Struct>(elemMap(), decl.Type_Declaration_View);
+  ADA_ASSERT(elem.Element_Kind == A_Definition);
+  Definition_Struct&      def = elem.The_Union.Definition;
+  ADA_ASSERT(def.Definition_Kind == A_Formal_Type_Definition);
+  return getFormalTypeFoundation(name, def, ctx);
+}
 
 TypeData
 getTypeFoundation(const std::string& name, Declaration_Struct& decl, AstContext ctx)
@@ -952,4 +1027,3 @@ ExHandlerTypeCreator::operator SgType&() const
 }
 
 }
-

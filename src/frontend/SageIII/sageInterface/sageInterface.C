@@ -146,7 +146,7 @@ using namespace Rose;
 using namespace SageBuilder;
 
 // Used by serialize() to collect all types visited
-std::set<SgType*> type_set; 
+//std::set<SgType*> type_set; 
 // DQ (1/18/2015): Define this container locally in this file only.
 namespace SageInterface
    {
@@ -1889,6 +1889,30 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
           case V_SgAdaComponentClause:
             {
               name = "_ada_component_clause_";
+              break;
+            }
+
+          case V_SgAdaFormalTypeDecl:
+             {
+              name = "_ada_formal_type_decl_" + genericGetName(isSgAdaFormalTypeDecl(declaration));
+               break;
+             }
+
+          case V_SgAdaGenericDecl:
+            {
+              // need to look inside the declaration wrapped by the generic.
+              const SgAdaGenericDecl* dcl = isSgAdaGenericDecl(declaration);
+              if (isSgFunctionDeclaration(dcl->get_declaration())) {
+                name = "_ada_generic_decl_" + genericGetName(isSgFunctionDeclaration(dcl->get_declaration()));
+                break;
+              }
+              if (isSgAdaPackageSpecDecl(dcl->get_declaration())) {
+                name = "_ada_generic_decl_" + genericGetName(isSgAdaPackageSpecDecl(dcl->get_declaration()));
+                break;
+              }
+
+              // something malformed in the tree if we get here
+              ROSE_ASSERT(false);
               break;
             }
 
@@ -24913,6 +24937,29 @@ void SageInterface::recursivePrintCurrentAndParent (SgNode* n)
   // track back to its parent
   recursivePrintCurrentAndParent (n->get_parent());
 }
+// forward declaration is needed here
+static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringstream& out);
+
+// A special node in the AST text dump
+static void serialize(SgTemplateArgumentPtrList& plist, string& prefix, bool hasRemaining, ostringstream& out)
+{
+  out<<prefix;
+  out<< (hasRemaining?"|---": "|___");
+
+  // print address
+  out<<"@"<<&plist<<" "<< "SgTemplateArgumentPtrList ";
+
+  out<<endl;
+  for (size_t i=0; i< plist.size(); i++ )
+  {
+    bool n_hasRemaining=false;
+    if (i+1 < plist.size())
+      n_hasRemaining=true;
+    string suffix= hasRemaining? "|   " : "    ";
+    string n_prefix = prefix+suffix;
+    serialize (plist[i], n_prefix, n_hasRemaining, out);
+  }
+}
 
 // print essential information from any AST node
 // hasRemaining if this node has a sibling node to be visited next.
@@ -24952,7 +24999,7 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   {
     out<<" "<< v->get_qualified_name();
     out<<" type@"<< v->get_type();
-    type_set.insert (v->get_type());
+//    type_set.insert (v->get_type());
   }
 
   // associated class, function and variable declarations
@@ -24982,17 +25029,47 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   if (SgTypedefDeclaration * v= isSgTypedefDeclaration(node))
   {
     out<<" base_type@"<< v->get_base_type();
-    type_set.insert (v->get_base_type());
+//    type_set.insert (v->get_base_type());
+  }
+
+  if (SgDeclarationStatement* v= isSgDeclarationStatement(node))
+  {
+    out<<" first nondefining decl@"<< v->get_firstNondefiningDeclaration();
+    out<<" defining decl@"<< v->get_definingDeclaration();
   }
 
   out<<endl;
 
   std::vector<SgNode* > children = node->get_traversalSuccessorContainer();
+  int total_count = children.size(); 
+  int current_index=0;
+
+  // some Sg??PtrList are not AST nodes, not part of children , we need to handle them separatedly
+  // we sum all children into single total_count to tell if there is remaining children.
+  if (isSgTemplateInstantiationDecl (node)) 
+    total_count += 1; // sn->get_templateArguments().size();
+
+   // handling SgTemplateArgumentPtrList first
+  if (SgTemplateInstantiationDecl* sn = isSgTemplateInstantiationDecl (node)) 
+  {
+    SgTemplateArgumentPtrList& plist = sn->get_templateArguments();
+     bool n_hasRemaining=false;
+    if (current_index+1<total_count)
+      n_hasRemaining=true;
+    current_index++;
+
+    string suffix= hasRemaining? "|   " : "    ";
+    string n_prefix = prefix+suffix;
+    serialize(plist, n_prefix, n_hasRemaining, out);
+  }
+
+   // finish sucessors
   for (size_t i =0; i< children.size(); i++)
   {
     bool n_hasRemaining=false;
-    if (i+1<children.size())
+    if (current_index+1<total_count)
       n_hasRemaining=true;
+    current_index++;
 
     string suffix= hasRemaining? "|   " : "    ";
     string n_prefix = prefix+suffix;
@@ -25027,9 +25104,18 @@ void SageInterface::printAST2TextFile(SgNode* node, const char* filename)
   // append type information also
   textfile<<"Types encountered ...."<<endl;
   ostringstream oss2;
+#if 0  
   set<SgType*>::iterator iter;  
   for (iter = type_set.begin(); iter!= type_set.end(); iter++)
     serialize (*iter, prefix, false, oss2);
+#else
+  VariantVector vv(V_SgType);
+  Rose_STL_Container<SgNode*> tnodes= NodeQuery::queryMemoryPool(vv);
+  for (Rose_STL_Container<SgNode*>::const_iterator i = tnodes.begin(); i != tnodes.end(); ++i) 
+  {
+    serialize (*i, prefix, false, oss2);
+  }
+#endif  
   textfile<<oss2.str();
   textfile.close();
 }
