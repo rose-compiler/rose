@@ -133,9 +133,6 @@ namespace CodeThorn {
     void reduceStgToInOutAssertErrStates();
     void reduceStgToInOutAssertWorklistStates();
 
-    // set the size of an element determined by this type
-    int computeNumberOfElements(SgVariableDeclaration* decl);
-
     // thread save; only prints if option status messages is enabled.
     void printStatusMessage(bool);
     void printStatusMessage(string s);

@@ -1002,33 +1002,6 @@ void CodeThorn::CTAnalysis::swapWorkLists() {
   incIterations();
 }
 
-
-#if 1
-// for arrays: number of elements (nested arrays not implemented yet)
-// for variable: 1
-// for structs: not implemented yet
-int CodeThorn::CTAnalysis::computeNumberOfElements(SgVariableDeclaration* decl) {
-  SgNode* initName0=decl->get_traversalSuccessorByIndex(1);
-  if(SgInitializedName* initName=isSgInitializedName(initName0)) {
-    SgInitializer* initializer=initName->get_initializer();
-    if(SgAggregateInitializer* aggregateInitializer=isSgAggregateInitializer(initializer)) {
-      SgArrayType* arrayType=isSgArrayType(aggregateInitializer->get_type());
-      ROSE_ASSERT(arrayType);
-      //SgType* arrayElementType=arrayType->get_base_type();
-      SgExprListExp* initListObjPtr=aggregateInitializer->get_initializers();
-      SgExpressionPtrList& initList=initListObjPtr->get_expressions();
-      // TODO: nested initializers, currently only outermost elements: {{1,2,3},{1,2,3}} evaluates to 2.
-      SAWYER_MESG(logger[TRACE])<<"computeNumberOfElements returns "<<initList.size()<<": case : SgAggregateInitializer"<<aggregateInitializer->unparseToString()<<endl;
-      return initList.size();
-    } else if(isSgAssignInitializer(initializer)) {
-      SAWYER_MESG(logger[TRACE])<<"computeNumberOfElements returns 0: case SgAssignInitializer: "<<initializer->unparseToString()<<endl;
-      return 0; // MS 3/5/2019: changed from 1 to 0
-    }
-  }
-  return 0;
-}
-#endif
-
 bool CodeThorn::CTAnalysis::isFailedAssertEState(const EState* estate) {
   if(estate->io.isFailedAssertIO())
     return true;
@@ -1330,7 +1303,7 @@ void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(SgProject* root, TimingCollect
   PState initialPState;
   Label slab=getFlow()->getStartLabel();
   ROSE_ASSERT(slab.isValid());
-  _estateTransferFunctions->initializeCommandLineArgumentsInState(initialPState);
+  _estateTransferFunctions->initializeCommandLineArgumentsInState(slab,initialPState);
   if(_ctOpt.inStateStringLiterals) {
     ROSE_ASSERT(_estateTransferFunctions);
     _estateTransferFunctions->initializeStringLiteralsInState(slab,initialPState);

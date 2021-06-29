@@ -317,7 +317,7 @@ namespace CodeThorn {
 
 
     // initialize command line arguments provided by option "--cl-options" in PState
-    void initializeCommandLineArgumentsInState(PState& initialPState);
+    void initializeCommandLineArgumentsInState(Label lab, PState& initialPState);
     void initializeStringLiteralInState(Label lab, PState& initialPState,SgStringVal* stringValNode, VariableId stringVarId);
     void initializeStringLiteralsInState(Label lab, PState& initialPState);
 
@@ -500,6 +500,9 @@ namespace CodeThorn {
     std::list<SingleEvalResultConstInt> execFunctionCallScanf(SgFunctionCallExp* funCall, EState estate);
     std::string sourceLocationAndNodeToString(Label lab);
   private:
+    // outdated function, to be eliminated
+    int computeNumberOfElements(SgVariableDeclaration* decl);
+
     void printLoggerWarning(EState& estate);
     void initViolatingLocations();
     VariableIdMappingExtended* _variableIdMapping=nullptr;

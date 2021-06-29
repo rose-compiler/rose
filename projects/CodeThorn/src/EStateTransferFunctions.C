@@ -701,7 +701,7 @@ namespace CodeThorn {
       // handle like any other external function call
       return transferForkFunctionWithExternalTargetFunction(edge,estate,funCall);
     }
-    // TODO: create state with this function label as start state
+    // create state with this function label as start state
     EState forkedEState=*estate;
     // set target label in new state to function pointer label
     forkedEState.setLabel(arg5Value.getLabel());
@@ -733,13 +733,11 @@ namespace CodeThorn {
     PState currentPState=*currentEState.pstate();
     ConstraintSet cset=*currentEState.constraints();
 
-    // 1. we handle the edge as outgoing edge
+    // handle the edge as outgoing edge
     SgNode* nextNodeToAnalyze1=_analyzer->getCFAnalyzer()->getNode(edge.source());
     ROSE_ASSERT(nextNodeToAnalyze1);
 
     SAWYER_MESG(logger[TRACE]) << "transferFunctionCallExternal: "<<nextNodeToAnalyze1->unparseToString()<<endl;
-
-    //cout<<"DEBUG: transferFunctionCallExternal: "<<nextNodeToAnalyze1->unparseToString()<<endl;
 
     InputOutput newio;
     Label lab=_analyzer->getLabeler()->getLabel(nextNodeToAnalyze1);
@@ -758,13 +756,11 @@ namespace CodeThorn {
       if(_analyzer->_inputSequence.size()>0) {
 	PState newPState=*currentEState.pstate();
 	ConstraintSet newCSet=*currentEState.constraints();
-	//newCSet.removeAllConstraintsOfVar(varId);
 	list<EState> resList;
 	int newValue;
 	if(_analyzer->_inputSequenceIterator!=_analyzer->_inputSequence.end()) {
 	  newValue=*_analyzer->_inputSequenceIterator;
 	  ++_analyzer->_inputSequenceIterator;
-	  //cout<<"INFO: input sequence value: "<<newValue<<endl;
 	} else {
 	  return resList; // return no state (this ends the analysis)
 	}
@@ -802,7 +798,6 @@ namespace CodeThorn {
 	  PState newPState=*currentEState.pstate();
 	  ConstraintSet newCSet=*currentEState.constraints();
 	  // update input var
-	  //newCSet.removeAllConstraintsOfVar(varId);
 	  newPState.writeTopToMemoryLocation(varId);
 	  newio.recordVariable(InputOutput::STDIN_VAR,varId);
 
@@ -846,13 +841,11 @@ namespace CodeThorn {
 	return transferAssignOp(assignOp,edge,estate);
       } else {
 	// all other cases, evaluate function call as expression
-	//cout<<"DEBUG: external function call: "<<funCall->unparseToString()<<"; evaluating as expression."<<endl;
 	list<SingleEvalResultConstInt> res2=evaluateExpression(funCall,currentEState);
 	ROSE_ASSERT(res2.size()==1);
 	SingleEvalResultConstInt evalResult2=*res2.begin();
 	SAWYER_MESG(logger[TRACE])<<"EXTERNAL FUNCTION: "<<SgNodeHelper::getFunctionName(funCall)<<" result(added to state):"<<evalResult2.result.toString()<<endl;
 
-	//EState estate2=evalResult2.estate;
 	// create new estate with added return variable (for inter-procedural analysis)
 	CallString cs=evalResult2.estate.callString;
 	PState newPState=*evalResult2.estate.pstate();
@@ -865,7 +858,6 @@ namespace CodeThorn {
 	// added function call result value to state. The returnVarId does not correspond to a declaration, and therefore it ise
 	// treated as being initialized (and declared).
 	initializeMemoryLocation(currentEState.label(),&newPState,returnVarId,evalResult2.result);
-	//estate2.setLabel(edge.target());
 	return elistify(createEState(edge.target(),cs,newPState,cset,evalResult2.estate.io));
       }
     }
@@ -1023,7 +1015,7 @@ namespace CodeThorn {
     //ConstraintSet newCSet;
     if(edge.isType(EDGE_TRUE) || edge.isType(EDGE_FALSE)) {
       return transferTrueFalseEdge(nextNodeToAnalyze2, edge, estate);
-      } else if(SgNodeHelper::isPrefixIncDecOp(nextNodeToAnalyze2) || SgNodeHelper::isPostfixIncDecOp(nextNodeToAnalyze2)) {
+    } else if(SgNodeHelper::isPrefixIncDecOp(nextNodeToAnalyze2) || SgNodeHelper::isPostfixIncDecOp(nextNodeToAnalyze2)) {
       return transferIncDecOp(nextNodeToAnalyze2,edge,estate);
     } else if(SgAssignOp* assignOp=isSgAssignOp(nextNodeToAnalyze2)) {
       return transferAssignOp(assignOp, edge, estate);
@@ -1108,15 +1100,15 @@ namespace CodeThorn {
   list<EState> EStateTransferFunctions::transferIncDecOpEvalWrapper(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate) {
     list<SingleEvalResultConstInt> res;
     switch(nextNodeToAnalyze2->variantT()) {
-      case V_SgPlusPlusOp:
-      case V_SgMinusMinusOp:
-	res=evaluateExpression(nextNodeToAnalyze2,*estate,MODE_VALUE);
-	break;
-      default:
-	logger[ERROR] << "Operator-AST:"<<AstTerm::astTermToMultiLineString(nextNodeToAnalyze2,2)<<endl;
-	logger[ERROR] << "Operator:"<<SgNodeHelper::nodeToString(nextNodeToAnalyze2)<<endl;
-	logger[ERROR] << "transferIncDecOp (top level): programmatic error in handling of inc/dec operators."<<endl;
-	exit(1);
+    case V_SgPlusPlusOp:
+    case V_SgMinusMinusOp:
+      res=evaluateExpression(nextNodeToAnalyze2,*estate,MODE_VALUE);
+      break;
+    default:
+      logger[ERROR] << "Operator-AST:"<<AstTerm::astTermToMultiLineString(nextNodeToAnalyze2,2)<<endl;
+      logger[ERROR] << "Operator:"<<SgNodeHelper::nodeToString(nextNodeToAnalyze2)<<endl;
+      logger[ERROR] << "transferIncDecOp (top level): programmatic error in handling of inc/dec operators."<<endl;
+      exit(1);
     }
     ROSE_ASSERT(res.size()==1);
     list<SingleEvalResultConstInt>::iterator i=res.begin();
@@ -1336,11 +1328,10 @@ namespace CodeThorn {
 	  // has aggregate initializer
 	  if(SgAggregateInitializer* aggregateInitializer=isSgAggregateInitializer(initializer)) {
 	    if(SgArrayType* arrayType=isSgArrayType(aggregateInitializer->get_type())) {
-	      //SgType* arrayElementType=arrayType->get_base_type();
-	      //setElementSize(initDeclVarId,arrayElementType);
-	      // only set size from aggregate initializer if not known from type
+	      // only set size from aggregate initializer if not already determined
 	      if(getVariableIdMapping()->getNumberOfElements(initDeclVarId)==getVariableIdMapping()->unknownSizeValue()) {
-		getVariableIdMapping()->setNumberOfElements(initDeclVarId, _analyzer->computeNumberOfElements(decl));
+		SAWYER_MESG(logger[TRACE])<<"Obtaining number of array elements from initializer in analyze declaration."<<endl;
+		getVariableIdMapping()->setNumberOfElements(initDeclVarId, computeNumberOfElements(decl));
 	      }
 	      PState newPState=*currentEState.pstate();
 	      newPState=analyzeSgAggregateInitializer(initDeclVarId, aggregateInitializer,newPState, currentEState);
@@ -1383,9 +1374,9 @@ namespace CodeThorn {
 		if(stringLen+1<memRegionNumElements) {
 		  CodeThorn::TypeSize numDefaultValuesToAdd=memRegionNumElements-stringLen+1;
 		  for(CodeThorn::TypeSize  i=0;i<numDefaultValuesToAdd;i++) {
-		  AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(stringLen+i),AbstractValue(1));
-		  // set default init value for past string elements of reserved array
-		  initializeMemoryLocation(label,&newPState,newArrayElementAddr,AbstractValue(0));
+		    AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(stringLen+i),AbstractValue(1));
+		    // set default init value for past string elements of reserved array
+		    initializeMemoryLocation(label,&newPState,newArrayElementAddr,AbstractValue(0));
 		  }
 		}
 		ConstraintSet cset=*currentEState.constraints();
@@ -4387,125 +4378,139 @@ namespace CodeThorn {
     return elistify(createEState(edge.target(),cs,newPState,cset));
   }
 
-void EStateTransferFunctions::initializeStringLiteralInState(Label lab, PState& initialPState,SgStringVal* stringValNode, VariableId stringVarId) {
-  logger[TRACE]<<"initializeStringLiteralInState: "<<stringValNode->unparseToString()<<endl;
-  string theString=stringValNode->get_value();
-  int pos;
-  for(pos=0;pos<(int)theString.size();pos++) {
-    AbstractValue character(theString[pos]);
-    writeToMemoryLocation(lab, &initialPState, AbstractValue::createAddressOfArrayElement(stringVarId,pos),character);
-  }
-  // add terminating 0 to string in state
-  writeToMemoryLocation(lab, &initialPState, AbstractValue::createAddressOfArrayElement(stringVarId,pos),AbstractValue(0));
-}
-
-void EStateTransferFunctions::initializeStringLiteralsInState(Label lab, PState& initialPState) {
-  ROSE_ASSERT(getVariableIdMapping());
-  std::map<SgStringVal*,VariableId>* map=getVariableIdMapping()->getStringLiteralsToVariableIdMapping();
-  logger[INFO]<<"Creating "<<map->size()<<" string literals in state."<<endl;
-  for(auto iter=map->begin();iter!=map->end();++iter) {
-    auto dataPair=*iter;
-    SgStringVal* stringValNode=dataPair.first;
-    VariableId stringVarId=dataPair.second;
-    initializeStringLiteralInState(lab,initialPState,stringValNode,stringVarId);
-    /*
+  void EStateTransferFunctions::initializeStringLiteralInState(Label lab, PState& initialPState,SgStringVal* stringValNode, VariableId stringVarId) {
+    logger[TRACE]<<"initializeStringLiteralInState: "<<stringValNode->unparseToString()<<endl;
     string theString=stringValNode->get_value();
-    for(int pos=0;pos<(int)theString.size();pos++) {
+    int pos;
+    for(pos=0;pos<(int)theString.size();pos++) {
       AbstractValue character(theString[pos]);
-      initialPState.writeToMemoryLocation(AbstractValue::createAddressOfArrayElement(stringVarId,pos),character);
+      writeToMemoryLocation(lab, &initialPState, AbstractValue::createAddressOfArrayElement(stringVarId,pos),character);
     }
-    */
+    // add terminating 0 to string in state
+    writeToMemoryLocation(lab, &initialPState, AbstractValue::createAddressOfArrayElement(stringVarId,pos),AbstractValue(0));
   }
-}
 
-void EStateTransferFunctions::initializeCommandLineArgumentsInState(PState& initialPState) {
-  // TODO1: add formal paramters of solo-function
-  // SgFunctionDefinition* startFunRoot: node of function
-  SgNode* startFunRoot=_analyzer->getStartFunRoot();
-  if(startFunRoot==0) {
-    // no main function, therefore nothing to initialize
-    return;
-  }
-  string functionName=SgNodeHelper::getFunctionName(startFunRoot);
-  SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(startFunRoot);
-  VariableId argcVarId;
-  VariableId argvVarId;
-  size_t mainFunArgNr=0;
-  for(SgInitializedNamePtrList::iterator i=initNamePtrList.begin();i!=initNamePtrList.end();++i) {
-    VariableId varId=getVariableIdMapping()->variableId(*i);
-    if(functionName=="main" && initNamePtrList.size()==2) {
-      //string varName=getVariableIdMapping()->variableName(varId)) {
-      switch(mainFunArgNr) {
-      case 0:
-	argcVarId=varId;
-	SAWYER_MESG(logger[TRACE])<<"INIT CLARGS: found argc in main function."<<endl;
-	break;
-      case 1:
-	argvVarId=varId;
-	SAWYER_MESG(logger[TRACE])<<"INIT CLARGS: found argv in main function."<<endl;
-	break;
-      default:
-        throw CodeThorn::Exception("Error: main function has more than 2 parameters.");
-      }
-      mainFunArgNr++;
+  void EStateTransferFunctions::initializeStringLiteralsInState(Label lab, PState& initialPState) {
+    ROSE_ASSERT(getVariableIdMapping());
+    std::map<SgStringVal*,VariableId>* map=getVariableIdMapping()->getStringLiteralsToVariableIdMapping();
+    logger[INFO]<<"Creating "<<map->size()<<" string literals in state."<<endl;
+    for(auto iter=map->begin();iter!=map->end();++iter) {
+      auto dataPair=*iter;
+      SgStringVal* stringValNode=dataPair.first;
+      VariableId stringVarId=dataPair.second;
+      initializeStringLiteralInState(lab,initialPState,stringValNode,stringVarId);
     }
-    ROSE_ASSERT(varId.isValid());
-    // initialize all formal parameters of function (of extremal label) with top
-    //initialPState[varId]=AbstractValue(CodeThorn::Top());
-    AbstractValue address=AbstractValue::createAddressOfVariable(varId);
-    initialPState.writeTopToMemoryLocation(address);
   }
-  // if function main exists and has 2 arguments then argcvarid and argvvarid have valid ids now.
-  // otherwise the command line options are ignored (because this is the correct behaviour)
-  if(argcVarId.isValid() && argvVarId.isValid()) {
-    auto commandLineOptions=_analyzer->getCommandLineOptions();
-    if(commandLineOptions.size()>0) {
-      // create command line option array argv and argc in initial pstate if argv and argc exist in the program
-      int argc=0;
-      VariableId argvArrayMemoryId=getVariableIdMapping()->createAndRegisterNewMemoryRegion("$argvmem",(int)commandLineOptions.size());
-      AbstractValue argvAddress=AbstractValue::createAddressOfArray(argvArrayMemoryId);
-      initialPState.writeToMemoryLocation(argvVarId,argvAddress);
-      for (auto argvElem:commandLineOptions) {
-	SAWYER_MESG(logger[TRACE])<<"INIT: Initial state: "
-		     <<getVariableIdMapping()->variableName(argvVarId)<<"["<<argc+1<<"]: "
-		     <<argvElem<<endl;
-	int regionSize=(int)string(argvElem).size();
-	SAWYER_MESG(logger[TRACE])<<"argv["<<argc+1<<"] size: "<<regionSize<<endl;
 
-	stringstream memRegionName;
-	memRegionName<<"$argv"<<argc<<"mem";
-	VariableId argvElemArrayMemoryId=getVariableIdMapping()->createAndRegisterNewMemoryRegion(memRegionName.str(),regionSize);
-	AbstractValue argvElemAddress=AbstractValue::createAddressOfArray(argvElemArrayMemoryId);
-	initialPState.writeToMemoryLocation(AbstractValue::createAddressOfArrayElement(argvVarId,argc),argvElemAddress);
-
-	// copy concrete command line argument strings char by char to State
-	for(int j=0;commandLineOptions[argc][j]!=0;j++) {
-	  SAWYER_MESG(logger[TRACE])<<"INIT: Copying: @argc="<<argc<<" char: "<<commandLineOptions[argc][j]<<endl;
-	  AbstractValue argvElemAddressWithIndexOffset;
-	  AbstractValue AbstractIndex=AbstractValue(j);
-	  argvElemAddressWithIndexOffset=AbstractValue::operatorAdd(argvElemAddress,AbstractIndex);
-	  initialPState.writeToMemoryLocation(argvElemAddressWithIndexOffset,AbstractValue(commandLineOptions[argc][j]));
+  void EStateTransferFunctions::initializeCommandLineArgumentsInState(Label lab, PState& initialPState) {
+    // SgFunctionDefinition* startFunRoot: node of function
+    SgNode* startFunRoot=_analyzer->getStartFunRoot();
+    if(startFunRoot==0) {
+      // no main function, therefore nothing to initialize
+      return;
+    }
+    string functionName=SgNodeHelper::getFunctionName(startFunRoot);
+    SgInitializedNamePtrList& initNamePtrList=SgNodeHelper::getFunctionDefinitionFormalParameterList(startFunRoot);
+    VariableId argcVarId;
+    VariableId argvVarId;
+    size_t mainFunArgNr=0;
+    for(SgInitializedNamePtrList::iterator i=initNamePtrList.begin();i!=initNamePtrList.end();++i) {
+      VariableId varId=getVariableIdMapping()->variableId(*i);
+      if(functionName=="main" && initNamePtrList.size()==2) {
+	switch(mainFunArgNr) {
+	case 0:
+	  argcVarId=varId;
+	  SAWYER_MESG(logger[TRACE])<<"INIT CLARGS: found argc in main function."<<endl;
+	  break;
+	case 1:
+	  argvVarId=varId;
+	  SAWYER_MESG(logger[TRACE])<<"INIT CLARGS: found argv in main function."<<endl;
+	  break;
+	default:
+	  throw CodeThorn::Exception("Error: main function has more than 2 parameters.");
 	}
-	argc++;
+	mainFunArgNr++;
       }
-      // this also covers the case that no command line options were provided. In this case argc==0. argv is non initialized.
-      SAWYER_MESG(logger[TRACE])<<"INIT: Initial state argc:"<<argc<<endl;
-      AbstractValue abstractValueArgc(argc);
-      initialPState.writeToMemoryLocation(argcVarId,abstractValueArgc);
-    } else {
-      // argc and argv present in program but no command line arguments provided
-      SAWYER_MESG(logger[TRACE])<<"INIT: no command line arguments provided. Initializing argc=0."<<endl;
-      AbstractValue abstractValueArgc(0);
-      initialPState.writeToMemoryLocation(argcVarId,abstractValueArgc);
+      ROSE_ASSERT(varId.isValid());
     }
-  } else {
-    // argv and argc not present in program. argv and argc are not added to initialPState.
-    // in this case it is irrelevant whether command line arguments were provided (correct behaviour)
-    // nothing to do.
+    // if function main exists and has 2 arguments then argcvarid and argvvarid have valid ids now.
+    // otherwise the command line options are ignored (because this is the correct behaviour)
+    CodeThorn::TypeSize ptrSize=getVariableIdMapping()->getBuiltInTypeSize(CodeThorn::BuiltInType::BITYPE_POINTER);
+    if(argcVarId.isValid() && argvVarId.isValid()) {
+      auto commandLineOptions=_analyzer->getCommandLineOptions();
+      // argv is an array of pointers to memory regions
+      if(commandLineOptions.size()>0) {
+	// create command line option array argv and argc in initial pstate if argv and argc exist in the program
+	int argc=0;
+	VariableId argvArrayMemoryId=getVariableIdMapping()->createAndRegisterNewMemoryRegion("$argvmem",(int)commandLineOptions.size());
+	getVariableIdMapping()->setElementSize(argvArrayMemoryId,ptrSize);
+	AbstractValue argvArrayAddress=AbstractValue::createAddressOfArray(argvArrayMemoryId);
+	AbstractValue argvElementAddress=argvArrayAddress; // element [0]
+	initializeMemoryLocation(lab,&initialPState,AbstractValue::createAddressOfVariable(argvVarId),argvArrayAddress); // argv
+	for (auto argvElem:commandLineOptions) {
+	  SAWYER_MESG(logger[TRACE])<<"INIT: Initial state: "
+				    <<getVariableIdMapping()->variableName(argvVarId)<<"["<<argc+1<<"]: "
+				    <<argvElem<<endl;
+	  int stringLen=(int)string(argvElem).size();
+	  SAWYER_MESG(logger[TRACE])<<"argv["<<argc+1<<"] size (num elements): "<<stringLen<<endl;
+	  stringstream memRegionName;
+	  memRegionName<<"$argv"<<argc<<"mem";
+	  VariableId stringMemoryId_i=getVariableIdMapping()->createAndRegisterNewMemoryRegion(memRegionName.str(),stringLen+1);
+	  getVariableIdMapping()->setElementSize(stringMemoryId_i,1);
+	  AbstractValue stringAddress=AbstractValue::createAddressOfArray(stringMemoryId_i);
+	  // argv[i]=&string_i[0]
+	  initializeMemoryLocation(lab,&initialPState,argvElementAddress,stringAddress); // argv[i]=&string_i[0]
+	  // copy concrete command line argument strings char by char to State
+	  int j; // also used after loop
+	  AbstractValue stringCharAddress=stringAddress;
+	  AbstractValue plusOne(1);
+	  for(j=0;commandLineOptions[argc][j]!=0;j++) {
+	    SAWYER_MESG(logger[TRACE])<<"INIT: Copying: @argc="<<argc<<" char: "<<commandLineOptions[argc][j]<<endl;
+	    initializeMemoryLocation(lab,&initialPState,stringCharAddress,AbstractValue(commandLineOptions[argc][j]));
+	    stringCharAddress=AbstractValue::operatorAdd(stringCharAddress,plusOne,AbstractValue(1));
+	  }
+	  // write terminating 0
+	  initializeMemoryLocation(lab,&initialPState,stringCharAddress,AbstractValue(0));
+	  argvElementAddress=AbstractValue::operatorAdd(argvElementAddress,plusOne,AbstractValue(ptrSize)); // argv++;
+	  argc++;
+	}
+	// this also covers the case that no command line options were provided. In this case argc==0. argv is non initialized.
+	SAWYER_MESG(logger[TRACE])<<"INIT: Initial state argc:"<<argc<<endl;
+	AbstractValue abstractValueArgc(argc);
+	initializeMemoryLocation(lab,&initialPState,argcVarId,abstractValueArgc);
+      } else {
+	// argc and argv present in program but no command line arguments provided
+	SAWYER_MESG(logger[TRACE])<<"INIT: no command line arguments provided. Initializing argc=0."<<endl;
+	AbstractValue abstractValueArgc(0);
+	initializeMemoryLocation(lab,&initialPState,argcVarId,abstractValueArgc);
+      }
+    } else {
+      // argv and argc not present in program. argv and argc are not added to initialPState.
+      // in this case it is irrelevant whether command line arguments were provided (correct behaviour)
+      // nothing to do.
+    }
   }
-}
 
-
-
+  // only used in analyzeDeclaration
+  int EStateTransferFunctions::computeNumberOfElements(SgVariableDeclaration* decl) {
+    SgNode* initName0=decl->get_traversalSuccessorByIndex(1);
+    if(SgInitializedName* initName=isSgInitializedName(initName0)) {
+      SgInitializer* initializer=initName->get_initializer();
+      if(SgAggregateInitializer* aggregateInitializer=isSgAggregateInitializer(initializer)) {
+	SgArrayType* arrayType=isSgArrayType(aggregateInitializer->get_type());
+	ROSE_ASSERT(arrayType);
+	//SgType* arrayElementType=arrayType->get_base_type();
+	SgExprListExp* initListObjPtr=aggregateInitializer->get_initializers();
+	SgExpressionPtrList& initList=initListObjPtr->get_expressions();
+	// TODO: nested initializers, currently only outermost elements: {{1,2,3},{1,2,3}} evaluates to 2.
+	SAWYER_MESG(logger[TRACE])<<"computeNumberOfElements returns "<<initList.size()<<": case : SgAggregateInitializer"<<aggregateInitializer->unparseToString()<<endl;
+	return initList.size();
+      } else if(isSgAssignInitializer(initializer)) {
+	SAWYER_MESG(logger[TRACE])<<"computeNumberOfElements returns 0: case SgAssignInitializer: "<<initializer->unparseToString()<<endl;
+	return 0; // MS 3/5/2019: changed from 1 to 0
+      }
+    }
+    return 0;
+  }
   
 } // end of namespace

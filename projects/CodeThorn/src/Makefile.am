@@ -708,7 +708,7 @@ check-matcher-demo:
 check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
-CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-io unit-test check-omp-cfg check-vis
+CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-io unit-test check-omp-cfg check-commandline-options check-vis
 
 CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 
@@ -873,7 +873,7 @@ check-commandline-options: ./codethorn
 	@echo ================================================================
 	@echo RUNNING COMMAND LINE OPTION TESTS
 	@echo ================================================================
-	@./codethorn --cl-options="a bbb cc" $(srcdir)/tests/commandlineoptions1.C --vis
+	@./codethorn --cl-args="a bbb cc" $(srcdir)/tests/commandlineoptions1.C --vis --tg1-estate-memory-subgraphs
 	@dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
 check-deadcode:

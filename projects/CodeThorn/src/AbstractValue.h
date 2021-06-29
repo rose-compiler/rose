@@ -221,6 +221,7 @@ class AbstractValue {
   static AbstractValue combine(AbstractValue val1, AbstractValue val2);
   static bool strictChecking; // if turned off, some error conditions are not active, but the result remains sound.
   static AbstractValue convertPtrToPtrSet(AbstractValue val); // requires val to be PTR
+  bool isSummary() const;
  private:
   // functions used for (de)allocating additional memory for some abstractions
   AbstractValueSet* abstractValueSetCopy() const;

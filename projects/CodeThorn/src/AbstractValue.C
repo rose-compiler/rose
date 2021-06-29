@@ -21,7 +21,7 @@ using namespace Sawyer::Message; // required for logger
 
 uint32_t CodeThorn::AbstractValue::arrayAbstractionIndex=std::numeric_limits<uint32_t>::max();
 
-  VariableIdMappingExtended* AbstractValue::_variableIdMapping=nullptr;
+VariableIdMappingExtended* AbstractValue::_variableIdMapping=nullptr;
 bool AbstractValue::strictChecking=false;
 bool AbstractValue::byteMode=false;
 bool AbstractValue::pointerSetsEnabled=false;
@@ -1359,6 +1359,15 @@ AbstractValue AbstractValue::combine(AbstractValue val1, AbstractValue val2) {
     }
   }
   return createTop();
+}
+
+bool AbstractValue::isSummary() const {
+  if(isTop())
+     return true;
+  if(isAVSet()) {
+    return getAVSetSize() > 1;
+  }
+  return false;
 }
 
 AbstractValue AbstractValue::createTop() {
