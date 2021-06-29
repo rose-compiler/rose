@@ -30,7 +30,7 @@ static boost::regex hexLiteralRe, signedDecimalLiteralRe;
 
 SymbolicExprParser::SyntaxError::SyntaxError(const std::string &mesg, const std::string &inputName,
                                              unsigned lineNumber, unsigned columnNumber)
-    : std::runtime_error(mesg), inputName(inputName), lineNumber(lineNumber), columnNumber(columnNumber) {}
+    : Rose::Exception(mesg), inputName(inputName), lineNumber(lineNumber), columnNumber(columnNumber) {}
 
 void
 SymbolicExprParser::SyntaxError::print(std::ostream &out) const {

@@ -14,7 +14,9 @@
 
 // Programmatic headers
 //~ #include "ClassHierarchyGraph.h"
+#include "CodeThornLib.h"
 #include "VariableIdMapping.h"
+#include "FunctionIdMapping.h"
 #include "sageGeneric.h"
 
 #include "ClassHierarchyAnalysis.h"
@@ -27,100 +29,279 @@ namespace scl = Sawyer::CommandLine;
 
 namespace
 {
-  std::string
-  classNameGenerator(const ct::ClassKeyType key)
-  {
-    static constexpr size_t MAXLEN = 3;
 
-    static int uniquenum = 0;
+/// \private
+template <class Fn>
+struct fn_traits : fn_traits<decltype(&Fn::operator())> { /* use overloads */ };
 
-    std::stringstream buf;
-    std::string       origname = ct::typeNameOfClassKeyType(key);
-    size_t            len = std::min(MAXLEN, origname.length());
+/// \private
+/// for const member operator() and non-mutable lambda's
+template <class R, class C, class... Args>
+struct fn_traits<R (C::*) (Args...) const>
+{
+  typedef std::tuple<Args...> arguments_t;
+  typedef R                   result_t;
+};
 
-    buf << (MAXLEN ? origname.substr(0, len) : std::string{"Cl"})
-        << (++uniquenum);
+/// \private
+/// for non-const member operator() and mutable lambda's
+template <class R, class C, class... Args>
+struct fn_traits<R (C::*) (Args...)>
+{
+  typedef std::tuple<Args...> arguments_t;
+  typedef R                   result_t;
+};
 
-    return buf.str();
-  }
+/// \private
+/// for freestanding functions
+template <class R, class... Args>
+struct fn_traits<R (*) (Args...)>
+{
+  typedef std::tuple<Args...> arguments_t;
+  typedef R                   result_t;
+};
 
+/*
+template <class Elem>
+void printArgs(std::ostream& os, Elem&& elem)
+{
+  os << elem << ", ";
+}
 
-  struct IncludeInOutputSet : std::unordered_set<ct::ClassKeyType>
-  {
-    using base = std::unordered_set<ct::ClassKeyType>;
-    using base::base;
+template <class Elem, class... Args>
+void printArgs(std::ostream& os, Elem&& elem, Args&&... args)
+{
+  printArgs(os, elem);
+  printArgs(os, args...);
+}
+*/
 
-    bool operator()(ct::ClassKeyType key) const
+/// \brief   decorator on functions to cache and reuse results
+/// \details On the first invocation with a set of arguments, the result
+///          is computed and memoized. On later invocations, the memoized
+///          result is returned.
+/// \tparam Fn the type of the function or functor
+/// \todo unordered_map may be faster
+template <class Fn>
+struct Memoizer
+{
+    typedef Fn                                      func_t;
+    typedef typename fn_traits<func_t>::result_t    result_t;
+    typedef typename fn_traits<func_t>::arguments_t arguments_t;
+    typedef std::map<arguments_t, result_t>         result_cache_t;
+
+    explicit
+    Memoizer(Fn f)
+    : func(f)
+    {}
+
+    Memoizer()                           = default;
+    Memoizer(const Memoizer&)            = default;
+    Memoizer(Memoizer&&)                 = default;
+    Memoizer& operator=(Memoizer&&)      = default;
+    Memoizer& operator=(const Memoizer&) = default;
+
+    /// \tparam Args an argument pack consisting of less-than comparable components
+    /// \param  args the arguments to func
+    /// \return the result of calling func(args...)
+    template <class... Args>
+    result_t& operator()(Args&&... args)
     {
-      return find(key) != end();
+      typedef typename result_cache_t::iterator cache_iterator;
+
+      cache_iterator pos = cache.find(std::tie(args...));
+
+      if (pos != cache.end())
+      {
+        ++num_hits;
+        return pos->second;
+      }
+
+      arguments_t desc(args...);
+      result_t    res = func(std::forward<Args>(args)...);
+      auto        cached = cache.emplace(std::move(desc), std::move(res));
+      assert(cached.second);
+
+      return cached.first->second;
     }
-  };
 
-  bool includeInOutput(const IncludeInOutputSet& outset, const ct::ClassAnalysis::value_type& elem)
+    void clear() { cache.clear(); }
+
+    size_t size() const { return cache.size(); }
+    size_t hits() const { return num_hits; }
+
+  private:
+    size_t         num_hits = 0;
+    func_t         func;
+    result_cache_t cache;
+};
+
+template <class Fn>
+inline
+Memoizer<Fn> memoizer(Fn fn)
+{
+  return Memoizer<Fn>(fn);
+}
+
+std::string encodedName(std::string origname, const char* prefix, size_t maxlen)
+{
+  static size_t uid = 0;
+
+  std::stringstream buf;
+  size_t            len = std::min(maxlen, origname.length());
+
+  buf << (maxlen ? origname.substr(0, len) : std::string{prefix})
+      << (++uid);
+
+  return buf.str();
+}
+
+std::string encodedKey(ClassKeyType key, ClassNameFn* fn, const char* prefix, size_t maxlen)
+{
+  return encodedName((*fn)(key), prefix, maxlen);
+}
+
+
+/// For classes the memoization is applied to class key type
+/// \details
+///    different classes get different names
+template <class GeneratorFunction>
+struct NameGenerator {};
+
+template <>
+struct NameGenerator<ClassNameFn>
+{
+    NameGenerator(ClassNameFn gen, const char* nameprefix, size_t numCharsOfOriginalName)
+    : memo(&encodedKey), nameGen(gen), prefix(nameprefix), maxlen(numCharsOfOriginalName)
+    {}
+
+    std::string operator()(ClassKeyType key)
+    {
+      return memo(key, &nameGen, prefix, maxlen);
+    }
+
+  private:
+    using EncoderFn = decltype(&encodedKey);
+
+    Memoizer<EncoderFn> memo;
+    ClassNameFn         nameGen;
+    const char* const   prefix;
+    const size_t        maxlen;
+};
+
+/// For functions the memoization is applied to the actual function name
+/// \details
+///    to preserve overload and override relationships
+template <>
+struct NameGenerator<FuncNameFn>
+{
+    NameGenerator(FuncNameFn gen, const char* nameprefix, size_t numCharsOfOriginalName)
+    : memo(&encodedName), nameGen(gen), prefix(nameprefix), maxlen(numCharsOfOriginalName)
+    {}
+
+    std::string operator()(FunctionId id)
+    {
+      return memo(nameGen(id), prefix, maxlen);
+    }
+
+  private:
+    using EncoderFn = decltype(&encodedName);
+
+    Memoizer<EncoderFn> memo;
+    FuncNameFn          nameGen;
+    const char* const   prefix;
+    const size_t        maxlen;
+};
+
+
+template <class NameGen>
+NameGenerator<NameGen>
+nameGenerator(NameGen gen, const char* prefix, size_t maxlen)
+{
+  return NameGenerator<NameGen>{gen, prefix, maxlen};
+}
+
+
+template <class NameGen>
+NameGen createNameGenerator(NameGen defaultNomenclator, const char* prefix, int maxLen)
+{
+  if (maxLen < 0)
+    return defaultNomenclator;
+
+  return nameGenerator(defaultNomenclator, prefix, maxLen);
+}
+
+
+struct IncludeInOutputSet : std::unordered_set<ct::ClassKeyType>
+{
+  using base = std::unordered_set<ct::ClassKeyType>;
+  using base::base;
+
+  bool operator()(ct::ClassKeyType key) const
   {
-    if (ct::hasVirtualTable(elem))
-      return true;
-
-    // or any of the children is included in output
-    const std::vector<ct::InheritanceDesc>&          descendants = elem.second.children();
-    std::vector<ct::InheritanceDesc>::const_iterator aa = descendants.begin();
-    std::vector<ct::InheritanceDesc>::const_iterator zz = descendants.end();
-
-    while (aa != zz && !outset(aa->getClass()))
-      ++aa;
-
-    return aa != zz;
+    return find(key) != end();
   }
+};
+
+bool includeInOutput(const IncludeInOutputSet& outset, const ct::ClassAnalysis::value_type& elem)
+{
+  if (elem.second.hasVirtualTable())
+    return true;
+
+  // or any of the children is included in output
+  const std::vector<ct::InheritanceDesc>&          descendants = elem.second.descendants();
+  std::vector<ct::InheritanceDesc>::const_iterator aa = descendants.begin();
+  std::vector<ct::InheritanceDesc>::const_iterator zz = descendants.end();
+
+  while (aa != zz && !outset(aa->getClass()))
+    ++aa;
+
+  return aa != zz;
+}
 
 
-  IncludeInOutputSet
-  buildOutputSet(const ct::ClassAnalysis& classes)
-  {
-    IncludeInOutputSet res;
+IncludeInOutputSet
+buildOutputSet(const ct::ClassAnalysis& classes)
+{
+  IncludeInOutputSet res;
 
-    bottomUpTraversal( classes,
-                       [&res](const ct::ClassAnalysis::value_type& elem) -> void
-                       {
-                         if (!includeInOutput(res, elem)) return;
+  bottomUpTraversal( classes,
+                     [&res](const ct::ClassAnalysis::value_type& elem) -> void
+                     {
+                       if (!includeInOutput(res, elem)) return;
 
-                         const bool success = res.insert(elem.first).second;
+                       const bool success = res.insert(elem.first).second;
 
-                         ROSE_ASSERT(success);
-                       }
-                     );
+                       ROSE_ASSERT(success);
+                     }
+                   );
 
-    return res;
-  }
-
-// \brief handlers to skip template processing
-
-  struct Settings
-  {
-    bool processPredefinedUnits = true;
-    bool processImplementationUnits = true;
-    bool asisDebug = false;
-    bool logTrace  = false;
-    bool logInfo   = false;
-    bool logWarn   = false;
-  };
+  return res;
+}
 
 
 struct Parameters
 {
-  std::string dotfile_orig   = opt_none;
-  std::string dotfile_code   = opt_none;
-  std::string txtfile_layout = opt_none;
+  std::string dotfile_output         = opt_none;
+  std::string txtfile_layout         = opt_none;
+  std::string txtfile_vfun           = opt_none;
+  int         numCharsOfOriginalName = -1;
+  bool        withOverridden         = false;
 
-  static const std::string dot_orig;
-  static const std::string dot_code;
+  static const std::string dot_output;
   static const std::string txt_layout;
+  static const std::string txt_vfun;
+  static const std::string name_encoding;
+  static const std::string vfun_overridden;
 
   static const std::string opt_none;
 };
 
-const std::string Parameters::dot_orig("dot");
-const std::string Parameters::dot_code("dot_enc");
-const std::string Parameters::txt_layout("txt_layout");
+const std::string Parameters::dot_output("dot");
+const std::string Parameters::txt_layout("layout");
+const std::string Parameters::txt_vfun("virtual_functions");
+const std::string Parameters::name_encoding("original_name");
+const std::string Parameters::vfun_overridden("with_overriden");
 const std::string Parameters::opt_none("");
 
 
@@ -146,17 +327,26 @@ struct Acuity : Rose::PluginAction
 
       acuity.name("acuity");  // the optional switch prefix
 
-      acuity.insert(scl::Switch(Parameters::dot_orig)
-            .argument("filename", scl::anyParser(params.dotfile_orig))
+      acuity.insert(scl::Switch(Parameters::dot_output)
+            .argument("filename", scl::anyParser(params.dotfile_output))
             .doc("filename for printing class hierarchy"));
-
-      acuity.insert(scl::Switch(Parameters::dot_code)
-            .argument("filename", scl::anyParser(params.dotfile_code))
-            .doc("filename for printing class hierarchy (encoded names)"));
 
       acuity.insert(scl::Switch(Parameters::txt_layout)
             .argument("filename", scl::anyParser(params.txtfile_layout))
             .doc("filename for printing object layout tables"));
+
+      acuity.insert(scl::Switch(Parameters::txt_vfun)
+            .argument("filename", scl::anyParser(params.txtfile_vfun))
+            .doc("filename for printing virtual function information"));
+
+      acuity.insert(scl::Switch(Parameters::name_encoding)
+            //~ .intrinsicValue(true, params.nameEncoding)
+            .argument("int", scl::anyParser(params.numCharsOfOriginalName))
+            .doc("length of original name to be used in output\n(default: use original name entirely)."));
+
+      acuity.insert(scl::Switch(Parameters::vfun_overridden, 'o')
+            .intrinsicValue(true, params.withOverridden)
+            .doc("lists all overriding functions in derived classes."));
 
       p.with(acuity).parse(args).apply();
 
@@ -164,34 +354,65 @@ struct Acuity : Rose::PluginAction
     }
 
     void
-    writeDotFileIfRequested( const std::string& filename,
-                             ct::NameFn namefn,
-                             const IncludeInOutputSet& outset,
+    writeDotFileIfRequested( const Parameters& params,
+                             ct::ClassNameFn& namefn,
+                             ct::ClassFilterFn include,
                              const ct::AnalysesTuple& analyses
                            );
 
     void
-    writeObjLayoutIfRequested(const std::string& filename, const ct::ClassAnalysis& analysis, SgProject*);
+    writeObjLayoutIfRequested( const ct::RoseCompatibilityBridge& compatLayer,
+                               const Parameters& params,
+                               ct::ClassNameFn& classNameFn,
+                               ct::FuncNameFn& funcNameFn,
+                               const ct::AnalysesTuple& analyses
+                             );
+
+    void
+    writeVFunInfoIfRequested( const ct::RoseCompatibilityBridge& compatLayer,
+                              const Parameters& params,
+                              ct::ClassNameFn& classNameFn,
+                              ct::FuncNameFn& funcNameFn,
+                              ct::ClassFilterFn include,
+                              const ct::AnalysesTuple& analyses
+                            );
 
 
     void process(SgProject* n) ROSE_OVERRIDE
     {
+      using CompatibilityBridge = ct::RoseCompatibilityBridge;
+
+      static constexpr size_t MAX_ERROR_MSG = 99;
+
       ROSE_ASSERT(n);
+
+      ct::initDiagnostics();
+
       logInfo() << "Acuity: "
-                << params.dotfile_orig
-                << " - " << params.dotfile_code
+                << params.dotfile_output
                 << " - " << params.txtfile_layout
                 << std::endl;
 
+      ct::VariableIdMapping vmap;
+      ct::FunctionIdMapping fmap;
+
+      logInfo() << "initializing data structures.. " << std::endl;
+      vmap.computeVariableSymbolMapping(n, MAX_ERROR_MSG);
+      fmap.computeFunctionSymbolMapping(n);
+
       logInfo() << "getting all classes.. " << std::endl;
-      ct::AnalysesTuple analyses = ct::extractFromProject(n);
+      CompatibilityBridge   compatLayer{vmap, fmap};
+      ct::AnalysesTuple     analyses = ct::analyzeClassesAndCasts(compatLayer, n);
       logInfo() << "getting all classes done. " << std::endl;
 
-      IncludeInOutputSet outset = buildOutputSet(std::get<0>(analyses));
+      IncludeInOutputSet    outset = buildOutputSet(std::get<0>(analyses));
+      const int             maxlen = params.numCharsOfOriginalName;
+      ct::ClassNameFn       clsNameGen = createNameGenerator(compatLayer.classNomenclator(), "Cl", maxlen);
+      ct::FuncNameFn        funNameGen = createNameGenerator(compatLayer.functionNomenclator(), "fn", maxlen);
 
-      writeDotFileIfRequested  (params.dotfile_orig,   ct::typeNameOfClassKeyType, outset, analyses);
-      writeDotFileIfRequested  (params.dotfile_code,   classNameGenerator,         outset, analyses);
-      writeObjLayoutIfRequested(params.txtfile_layout, std::get<0>(analyses), n);
+      writeDotFileIfRequested  (params, clsNameGen, outset, analyses);
+      writeObjLayoutIfRequested(compatLayer, params, clsNameGen, funNameGen, analyses);
+      writeVFunInfoIfRequested (compatLayer, params, clsNameGen, funNameGen, outset, analyses);
     }
 
   private:
@@ -199,49 +420,91 @@ struct Acuity : Rose::PluginAction
 };
 
 
+
+
 void
-Acuity::writeObjLayoutIfRequested(const std::string& filename, const ct::ClassAnalysis& classes, SgProject* prj)
+Acuity::writeObjLayoutIfRequested( const ct::RoseCompatibilityBridge& compatLayer,
+                                   const Parameters& params,
+                                   ct::ClassNameFn& classNameFn,
+                                   ct::FuncNameFn& funcNameFn,
+                                   const ct::AnalysesTuple& analyses
+                                 )
 {
-  if (filename == Parameters::opt_none)
+  if (params.txtfile_layout == Parameters::opt_none)
     return;
 
   logInfo() << "computing class layout"
             << std::endl;
 
-  ct::VariableIdMapping       vmap;
+  ct::ObjectLayoutContainer layouts = ct::computeObjectLayouts(analyses.classAnalysis());
 
-  vmap.computeVariableSymbolMapping(prj, 99);
-
-  ct::RoseCompatibilityBridge astctx{vmap};
-  ct::ObjectLayoutContainer   layouts = computeObjectLayouts(astctx, classes);
-
-  logInfo() << "writing class layout file " << filename << ".."
+  logInfo() << "writing class layout file " << params.txtfile_layout << ".."
             << std::endl;
 
-  std::ofstream                      outfile{filename};
+  std::ofstream             outfile{params.txtfile_layout};
 
-  outfile << ct::ObjectLayoutPrinter{astctx, layouts} << std::endl;
+  outfile << ct::ObjectLayoutPrinter{compatLayer, layouts} << std::endl;
 
   logInfo() << "writing layout file done" << std::endl;
 }
 
 
 void
-Acuity::writeDotFileIfRequested( const std::string& filename,
-                                 ct::NameFn namefn,
-                                 const IncludeInOutputSet& outset,
+Acuity::writeVFunInfoIfRequested( const ct::RoseCompatibilityBridge& compatLayer,
+                                  const Parameters& params,
+                                  ct::ClassNameFn& classNameFn,
+                                  ct::FuncNameFn& funcNameFn,
+                                  ct::ClassFilterFn include,
+                                  const ct::AnalysesTuple& analyses
+                                )
+{
+  if (params.txtfile_vfun == Parameters::opt_none)
+    return;
+
+  logInfo() << "computing virtual function information"
+            << std::endl;
+
+  ct::VirtualFunctionAnalysis vfa = virtualFunctionAnalysis(compatLayer, analyses.classAnalysis());
+
+  logInfo() << "writing virtual function information file " << params.txtfile_vfun << ".."
+            << std::endl;
+
+  std::ofstream outfile{params.txtfile_vfun};
+
+  writeVirtualFunctions( outfile,
+                         classNameFn,
+                         funcNameFn,
+                         include,
+                         analyses.classAnalysis(),
+                         vfa,
+                         params.withOverridden
+                       );
+
+  logInfo() << "writing virtual function information done" << std::endl;
+}
+
+
+void
+Acuity::writeDotFileIfRequested( const Parameters& params,
+                                 ct::ClassNameFn& classNameFn,
+                                 ct::ClassFilterFn include,
                                  const ct::AnalysesTuple& analyses
                                )
 {
-  if (filename == Parameters::opt_none)
+  if (params.dotfile_output == Parameters::opt_none)
     return;
 
-  logInfo() << "writing dot file " << filename << ".."
+  logInfo() << "writing dot file " << params.dotfile_output << ".."
             << std::endl;
 
-  std::ofstream outfile{filename};
+  std::ofstream outfile{params.dotfile_output};
 
-  write(outfile, namefn, outset, std::get<0>(analyses), std::get<1>(analyses));
+  writeClassDotFile( outfile,
+                     classNameFn,
+                     include,
+                     analyses.classAnalysis(),
+                     analyses.castAnalysis()
+                   );
 
   logInfo() << "writing dot file done" << std::endl;
 }

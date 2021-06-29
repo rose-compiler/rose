@@ -8,6 +8,8 @@
 #endif
 
 #include <Rose/BinaryAnalysis/SymbolicExpr.h>
+#include <Rose/Exception.h>
+
 #include <boost/chrono.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/noncopyable.hpp>
@@ -62,8 +64,8 @@ public:
     typedef Sawyer::Container::Map<SymbolicExpr::Ptr, SymbolicExpr::Ptr> ExprExprMap;
 
     /** Exceptions for all things SMT related. */
-    struct Exception: std::runtime_error {
-        Exception(const std::string &mesg): std::runtime_error(mesg) {}
+    struct Exception: Rose::Exception {
+        Exception(const std::string &mesg): Rose::Exception(mesg) {}
         ~Exception() throw () {}
     };
 

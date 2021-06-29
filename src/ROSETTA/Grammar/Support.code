@@ -6350,7 +6350,7 @@ public:
           static bool get_skip_unparse_asm_commands();
 
        // DQ (4/24/2021): Added support for p_header_file_unparsing_optimization to be implemented
-       // as a static member variable instead of non-static member variable.  Part of header file 
+       // as a static member variable instead of non-static member variable.  Part of header file
        // optimization support.
           static void set_header_file_unparsing_optimization( bool b );
           static bool get_header_file_unparsing_optimization();
@@ -8144,6 +8144,34 @@ SgSymbolTable::get_name( const SgNode* node) const
           case V_SgAdaPackageBodyDecl:
              {
                const SgAdaPackageBodyDecl* dcl = isSgAdaPackageBodyDecl(node);
+               name = dcl->get_name();
+               break;
+             }
+
+          case V_SgAdaGenericDecl:
+             {
+               const SgAdaGenericDecl* dcl = isSgAdaGenericDecl(node);
+
+               ROSE_ASSERT(dcl->get_declaration() != NULL);
+
+               if (isSgAdaPackageSpecDecl(dcl->get_declaration())) {
+                 SgAdaPackageSpecDecl* inner_dcl = isSgAdaPackageSpecDecl(dcl->get_declaration());
+                 name = inner_dcl->get_name();
+                 break;
+               }
+               if (isSgFunctionDeclaration(dcl->get_declaration())) {
+                 SgFunctionDeclaration* inner_dcl = isSgFunctionDeclaration(dcl->get_declaration());
+                 name = inner_dcl->get_name();
+                 break;
+               }
+               mprintf ("Malformed input: SgAdaGenericDecl expected PackageSpecDecl or FunctionDeclaration\n");
+               assert(false);
+               break;
+             }
+
+          case V_SgAdaFormalTypeDecl:
+             {
+               const SgAdaFormalTypeDecl* dcl = isSgAdaFormalTypeDecl(node);
                name = dcl->get_name();
                break;
              }
@@ -14818,7 +14846,7 @@ Sg_File_Info::set_line(int line)
         {
           if (line !=0) // Liao, 11/12/2012. get_line() won't return the value being set!!
              {
-               mprintf ("warning: Sg_File_Info::set_line() tried to set non-zero line number to a transformation or compiler generated file info obj.");
+               mprintf ("warning: Sg_File_Info::set_line() tried to set non-zero line number to a transformation or compiler generated file info obj.\n");
              }
         }
        else
@@ -23129,5 +23157,3 @@ SgTypeTable::lookup_type(const SgName& n)
    }
 
 SOURCE_TYPE_TABLE_END
-
-

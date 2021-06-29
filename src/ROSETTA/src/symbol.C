@@ -100,6 +100,7 @@ Grammar::setUpSymbols ()
   // PP (06/03/2020) Adding Ada support
      NEW_TERMINAL_MACRO ( AdaPackageSymbol,  "AdaPackageSymbol", "ADA_PACKAGE_SYMBOL" );
      NEW_TERMINAL_MACRO ( AdaTaskSymbol,     "AdaTaskSymbol", "ADA_TASK_SYMBOL" );
+     NEW_TERMINAL_MACRO ( AdaGenericSymbol,  "AdaGenericSymbol", "ADA_GENERIC_SYMBOL" );
 
   // PP (04/29/2021) Add symbol for renaming declarations
      NEW_TERMINAL_MACRO ( AdaRenamingSymbol, "AdaRenamingSymbol", "ADA_RENAMING_SYMBOL" );
@@ -111,7 +112,7 @@ Grammar::setUpSymbols ()
           TypedefSymbol    | LabelSymbol            | DefaultSymbol          | NamespaceSymbol    |
           IntrinsicSymbol  | ModuleSymbol           | InterfaceSymbol        | CommonSymbol       |
           AliasSymbol      | AsmBinaryAddressSymbol | AsmBinaryDataSymbol    | JavaLabelSymbol    |
-          AdaPackageSymbol | AdaTaskSymbol          | AdaRenamingSymbol /* | RenameSymbol */,
+          AdaPackageSymbol | AdaTaskSymbol          | AdaRenamingSymbol      | AdaGenericSymbol /* | RenameSymbol */,
           "Symbol","SymbolTag", false);
 #else
      NEW_NONTERMINAL_MACRO (Symbol,
@@ -120,7 +121,7 @@ Grammar::setUpSymbols ()
           TypedefSymbol    | LabelSymbol            | DefaultSymbol          | NamespaceSymbol    |
           IntrinsicSymbol  | ModuleSymbol           | InterfaceSymbol        | CommonSymbol       |
           AliasSymbol      |                                                   JavaLabelSymbol    |
-          AdaPackageSymbol | AdaTaskSymbol          | AdaRenamingSymbol /* | RenameSymbol */,
+          AdaPackageSymbol | AdaTaskSymbol          | AdaRenamingSymbol      | AdaGenericSymbol /* | RenameSymbol */,
           "Symbol","SymbolTag", false);
 #endif
 
@@ -202,6 +203,9 @@ Grammar::setUpSymbols ()
 
      AdaTaskSymbol.setDataPrototype    ( "SgDeclarationStatement*",   "declaration", "= NULL",
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     AdaGenericSymbol.setDataPrototype    ( "SgDeclarationStatement*",   "declaration", "= NULL",
+                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      AdaRenamingSymbol.setDataPrototype ( "SgAdaRenamingDecl*",   "declaration", "= NULL",
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -441,6 +445,10 @@ Grammar::setUpSymbols ()
      AdaTaskSymbol.setFunctionSource        ( "SOURCE_ADA_TASK_SYMBOL", "../Grammar/Symbol.code" );
      AdaTaskSymbol.setFunctionSource        ( "SOURCE_EMPTY_GET_TYPE", "../Grammar/Symbol.code" );
 
+  // MS (05/01/21): Ada generics
+     AdaGenericSymbol.setFunctionSource     ( "SOURCE_ADA_GENERIC_SYMBOL", "../Grammar/Symbol.code" );
+     AdaGenericSymbol.setFunctionSource     ( "SOURCE_EMPTY_GET_TYPE", "../Grammar/Symbol.code" );
+
      AdaRenamingSymbol.setFunctionSource    ( "SOURCE_ADA_RENAMING_SYMBOL", "../Grammar/Symbol.code" );
      AdaRenamingSymbol.setFunctionSource    ( "SOURCE_EMPTY_GET_TYPE", "../Grammar/Symbol.code" );
 
@@ -478,4 +486,3 @@ Grammar::setUpSymbols ()
      AsmBinaryDataSymbol.setFunctionSource    ( "SOURCE_ASM_BINARY_DATA_SYMBOL",    "../Grammar/Symbol.code" );
 #endif
    }
-

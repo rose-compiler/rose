@@ -1,0 +1,10 @@
+START
+!COMPOOL 'rc1021' stype3;
+
+DEF PROC proc1();
+  BEGIN
+    ITEM uvar U = V(NULL);
+    uvar = 13;
+  END
+
+TERM

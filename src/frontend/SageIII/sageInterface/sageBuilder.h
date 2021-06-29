@@ -329,7 +329,10 @@ ROSE_DLL_API
 SgClassType*
 buildClassTemplateType(SgTemplateClassDeclaration* template_decl, Rose_STL_Container<SgNode *>& template_args);
 
-
+//! Same as buildClassTemplateType(), just better name
+ROSE_DLL_API
+SgClassType*
+buildTemplateClassType(SgTemplateClassDeclaration* template_decl, Rose_STL_Container<SgNode *>& template_args);
 
  //! Build an opaque type with a name, useful when a type's details are unknown during transformation, especially for a runtime library's internal type. Must provide scope here.
  /*! Some types are not known during translation but nevertheless are needed. For example, some

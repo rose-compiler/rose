@@ -69,13 +69,13 @@ private:
     SemanticCallbacks *semantics_ = nullptr;
 
 protected:
-    RiscOperators(const Settings&, const Partitioner2::Partitioner&, SemanticCallbacks*,
+    RiscOperators(const Settings&, const Partitioner2::Partitioner&, ModelChecker::SemanticCallbacks*,
                   const InstructionSemantics2::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr&);
 
 public: // Standard public construction-like functions
     ~RiscOperators();
 
-    static Ptr instance(const Settings&, const Partitioner2::Partitioner&, SemanticCallbacks*,
+    static Ptr instance(const Settings&, const Partitioner2::Partitioner&, ModelChecker::SemanticCallbacks*,
                         const InstructionSemantics2::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr&);
 
     virtual InstructionSemantics2::BaseSemantics::RiscOperatorsPtr

@@ -16446,46 +16446,47 @@ void Grammar::setUpBinaryInstructions() {
         /** Exception for reading past the end of something.
          *
          *  This object is thrown when an attempt is made to read past the end of a file, section, header, segment, etc. */
-        class ShortRead {
+        class ShortRead: public Rose::Exception {
         public:
             const SgAsmGenericSection *section;         /**< Section from which read occurred; null implies file-level write. */
             rose_addr_t offset;                         /**< Byte offset into section (or file). */
             rose_addr_t size;                           /**< Number of bytes of attempted read. */
-            std::string mesg;                           /**< Optional message. */
 
             ShortRead(const class SgAsmGenericSection *section, size_t offset, size_t size)
-                : section(section), offset(offset), size(size) {}
+                : Rose::Exception("short read"), section(section), offset(offset), size(size) {}
             ShortRead(const class SgAsmGenericSection *section, size_t offset, size_t size, const std::string &mesg)
-                : section(section), offset(offset), size(size), mesg(mesg) {}
+                : Rose::Exception(mesg), section(section), offset(offset), size(size) {}
             ShortRead(const class SgAsmGenericSection *section, size_t offset, size_t size, const char *mesg)
-                : section(section), offset(offset), size(size), mesg(mesg) {}
+                : Rose::Exception(mesg), section(section), offset(offset), size(size) {}
+            ~ShortRead() throw () {}
         };
 
         /** Exception for writing past the end of something.
          *
          *  This object is thrown when an attempt is made to write past the end of a file, section, header, segment, etc. */
-        class ShortWrite {
+        class ShortWrite: public Rose::Exception {
         public:
             const SgAsmGenericSection *section;         /**< Section to which write occurred; null implies file-level write. */
             rose_addr_t          offset;                /**< Byte offset into section (or file). */
             rose_addr_t          size;                  /**< Number of bytes of attempted write. */
-            std::string          mesg;                  /**< Optional message. */
 
             ShortWrite(const class SgAsmGenericSection *section, size_t offset, size_t size)
-                : section(section), offset(offset), size(size) {}
+                : Rose::Exception(""), section(section), offset(offset), size(size) {}
             ShortWrite(const class SgAsmGenericSection *section, size_t offset, size_t size, const std::string &mesg)
-                : section(section), offset(offset), size(size), mesg(mesg) {}
+                : Rose::Exception(mesg), section(section), offset(offset), size(size) {}
             ShortWrite(const class SgAsmGenericSection *section, size_t offset, size_t size, const char *mesg)
-                : section(section), offset(offset), size(size), mesg(mesg) {}
+                : Rose::Exception(mesg), section(section), offset(offset), size(size) {}
         };
 
         /** Exception for container syntax errors.
          *
          *  This object is thrown when the file contains an error that prevents ROSE from parsing it. */
-        class FormatError: public std::runtime_error {
+        class FormatError: public Rose::Exception {
         public:
-            FormatError(const std::string &mesg): std::runtime_error(mesg) {}
-            FormatError(const char *mesg): std::runtime_error(mesg) {}
+            FormatError(const std::string &mesg)
+                : Rose::Exception(mesg) {}
+            FormatError(const char *mesg)
+                : Rose::Exception(mesg) {}
             ~FormatError() throw () {}
         };
 

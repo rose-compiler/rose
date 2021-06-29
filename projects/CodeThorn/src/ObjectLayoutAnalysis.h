@@ -88,11 +88,11 @@ struct ObjectLayout : private std::vector<ObjectLayoutEntry>
 using ObjectLayoutContainer = std::unordered_map<ClassKeyType, ObjectLayout>;
 
 ObjectLayoutContainer
-computeObjectLayouts(RoseCompatibilityBridge& ctx, const ClassAnalysis& all, bool onlyClassesWithVTable = true);
+computeObjectLayouts(const ClassAnalysis& all, bool onlyClassesWithVTable = true);
 
-struct ObjectLayoutPrinter : std::tuple<RoseCompatibilityBridge&, ObjectLayoutContainer&>
+struct ObjectLayoutPrinter : std::tuple<const RoseCompatibilityBridge&, const ObjectLayoutContainer&>
 {
-  using base = std::tuple<RoseCompatibilityBridge&, ObjectLayoutContainer&>;
+  using base = std::tuple<const RoseCompatibilityBridge&, const ObjectLayoutContainer&>;
   using base::base;
 };
 

@@ -3491,6 +3491,13 @@ TestAstSymbolTables::visit ( SgNode* node )
                          break;
                        }
 
+                    case V_SgAdaGenericSymbol:
+                       {
+                         SgAdaGenericSymbol* sy = isSgAdaGenericSymbol(symbol);
+
+                         ROSE_ASSERT(sy && sy->get_declaration() != NULL);
+                         break;
+                       }
 
                     case V_SgNonrealSymbol:
                        {

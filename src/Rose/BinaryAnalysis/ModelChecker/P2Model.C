@@ -120,17 +120,19 @@ commandLineSwitches(Settings &settings) {
 // Instruction semantics domain
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-RiscOperators::RiscOperators(const Settings &settings, const P2::Partitioner &partitioner, SemanticCallbacks *semantics,
-                             const BS::SValuePtr &protoval, const SmtSolver::Ptr &solver)
-    : Super(protoval, solver), settings_(settings), partitioner_(partitioner), semantics_(semantics) {
-    ASSERT_not_null(semantics);
+RiscOperators::RiscOperators(const Settings &settings, const P2::Partitioner &partitioner,
+                             ModelChecker::SemanticCallbacks *semantics, const BS::SValuePtr &protoval,
+                             const SmtSolver::Ptr &solver)
+    : Super(protoval, solver), settings_(settings), partitioner_(partitioner),
+      semantics_(dynamic_cast<P2Model::SemanticCallbacks*>(semantics)) {
+    ASSERT_not_null(semantics_);
     name("P2Model");
 }
 
 RiscOperators::~RiscOperators() {}
 
 RiscOperators::Ptr
-RiscOperators::instance(const Settings &settings, const P2::Partitioner &partitioner, SemanticCallbacks *semantics,
+RiscOperators::instance(const Settings &settings, const P2::Partitioner &partitioner, ModelChecker::SemanticCallbacks *semantics,
                         const BS::SValuePtr &protoval, const SmtSolver::Ptr &solver) {
     ASSERT_not_null(protoval);
     return Ptr(new RiscOperators(settings, partitioner, semantics, protoval, solver));
@@ -574,7 +576,15 @@ SemanticCallbacks::nextUnits(const Path::Ptr &path, const BS::RiscOperatorsPtr &
         SmtSolver::Transaction tx(solver);
         auto assertion = SymbolicExpr::makeEq(ip, SymbolicExpr::makeIntegerConstant(ip->nBits(), va));
         solver->insert(assertion);
-        switch (solver->check()) {
+
+        SmtSolver::Satisfiable satisfied = SmtSolver::SAT_UNKNOWN;
+        try {
+            satisfied = solver->check();
+        } catch (const SmtSolver::Exception &e) {
+            satisfied = SmtSolver::SAT_UNKNOWN;
+        }
+
+        switch (satisfied) {
             case SmtSolver::SAT_YES:
                 // Create the next execution unit
                 if (ExecutionUnit::Ptr unit = findUnit(va)) {
@@ -595,7 +605,7 @@ SemanticCallbacks::nextUnits(const Path::Ptr &path, const BS::RiscOperatorsPtr &
                 // Do not extend the current path in this direction since it is infeasible.
                 break;
             case SmtSolver::SAT_UNKNOWN: {
-                // The SMT solver failed. This is probably due to a timeout, so count it as a timeout failure.
+                // The SMT solver failed. This is could be a timeout or some other failure.
                 SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
                 ++nSolverFailures_;
                 break;

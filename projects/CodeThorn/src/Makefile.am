@@ -708,7 +708,8 @@ check-matcher-demo:
 check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
-CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-io unit-test check-omp-cfg check-commandline-options check-vis
+
+CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-io unit-test check-omp-cfg check-commandline-options check-vis check-acuity
 
 CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 
@@ -888,10 +889,16 @@ check-vis0:
 check-vis:
 	$(srcdir)/scripts/runVisTests $(srcdir)/tests
 
+
+.PHONY: check-acuity-with-sage3
+check-acuity-with-sage3:
+	$(bindir)/rose-compiler -I$(includedir) -I$(includedir)/rose -rose:plugin_lib .libs/libacuity.so -rose:plugin_action Acuity -rose:plugin_arg_Acuity --dot=sage3.dot  -rose:plugin_arg_Acuity --layout=sage3_class_layout.txt -rose:plugin_arg_Acuity --virtual_functions=sage3_virtual_functions.txt -rose:skipfinalCompileStep -rose:skip_unparse  $(srcdir)/tests/acuity/sage3.cc
+	$(bindir)/rose-compiler -I$(includedir) -I$(includedir)/rose -rose:plugin_lib .libs/libacuity.so -rose:plugin_action Acuity -rose:plugin_arg_Acuity --dot=sage3-e.dot  -rose:plugin_arg_Acuity --layout=sage3-e_class_layout.txt -rose:plugin_arg_Acuity --virtual_functions=sage3-e_virtual_functions.txt -rose:plugin_arg_Acuity --original_name=5 -rose:skipfinalCompileStep -rose:skip_unparse $(srcdir)/tests/acuity/sage3.cc
+
 .PHONY: check-acuity
 check-acuity: 
-	$(bindir)/rose-compiler -I$(includedir) -I$(includedir)/rose -rose:plugin_lib libacuity.so -rose:plugin_action Acuity -rose:plugin_arg_Acuity --dot=simple.dot -rose:plugin_arg_Acuity --dot_enc=simple_enc.dot -rose:plugin_arg_Acuity --txt_layout=simple_class_layout.txt -rose:skipfinalCompileStep -rose:skip_unparse -c $(srcdir)/tests/acuity/simple.cc 
-	$(bindir)/rose-compiler -I$(includedir) -I$(includedir)/rose -rose:plugin_lib libacuity.so -rose:plugin_action Acuity -rose:plugin_arg_Acuity --dot=sage3.dot -rose:plugin_arg_Acuity --txt_layout=sage3_class_layout.txt -rose:skipfinalCompileStep -rose:skip_unparse -c $(srcdir)/tests/acuity/sage3.cc 
+	$(bindir)/rose-compiler -I$(includedir) -I$(includedir)/rose -rose:plugin_lib .libs/libacuity.so -rose:plugin_action Acuity -rose:plugin_arg_Acuity --dot=simple.dot  -rose:plugin_arg_Acuity --layout=simple_class_layout.txt -rose:plugin_arg_Acuity --virtual_functions=simple_virtual_functions.txt -rose:skipfinalCompileStep -rose:skip_unparse  $(srcdir)/tests/acuity/simple.cc
+	$(bindir)/rose-compiler -I$(includedir) -I$(includedir)/rose -rose:plugin_lib .libs/libacuity.so -rose:plugin_action Acuity -rose:plugin_arg_Acuity --dot=simple-e.dot  -rose:plugin_arg_Acuity --layout=simple-e_class_layout.txt -rose:plugin_arg_Acuity --virtual_functions=simple-e_virtual_functions.txt -rose:plugin_arg_Acuity --original_name=0 -rose:skipfinalCompileStep -rose:skip_unparse $(srcdir)/tests/acuity/simple.cc
 
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))

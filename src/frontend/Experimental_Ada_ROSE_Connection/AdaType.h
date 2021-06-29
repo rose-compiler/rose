@@ -65,6 +65,9 @@ getConstraintID(Element_ID el, AstContext ctx);
 SgClassDeclaration&
 getParentRecordDeclID(Element_ID defid, AstContext ctx);
 
+TypeData
+getFormalTypeFoundation(const std::string& name, Declaration_Struct& decl, AstContext ctx);
+
 /// returns a ROSE representation of the type represented by \ref decl
 /// \post res.n is not NULL
 TypeData

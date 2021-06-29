@@ -1075,6 +1075,12 @@ HEADER_ADA_FLOAT_TYPE_START
 
 HEADER_ADA_FLOAT_TYPE_END
 
+HEADER_ADA_FORMAL_TYPE_START
+
+          //SgName get_name() const;
+
+HEADER_ADA_FORMAL_TYPE_END
+
 // CR (4/4/2020): Added SgJovialBitType for Jovial. This type participates in logical
 //                       operations with literals TRUE and FALSE.
 HEADER_JOVIAL_BIT_TYPE_START
@@ -6800,6 +6806,17 @@ SgAdaFloatType::get_mangled(void) const {
 
 SOURCE_ADA_FLOAT_TYPE_END
 
+SOURCE_ADA_FORMAL_TYPE_START
+
+SgName
+SgAdaFormalType::get_mangled(void) const {
+  string name("ft'");
+  name.append(get_type_name());
+  return SgName(name);
+}
+
+SOURCE_ADA_FORMAL_TYPE_END
+
 SOURCE_JOVIAL_BIT_TYPE_START
 SgName
 SgJovialBitType::get_mangled(void) const {
@@ -8798,6 +8815,19 @@ SgAdaAccessType::createType (SgType* base_type, SgExpression* /*optional_fortran
 }
 
 SOURCE_CREATE_TYPE_FOR_ADA_ACCESS_TYPE_END
+
+SOURCE_CREATE_TYPE_FOR_ADA_FORMAL_TYPE_START
+SgAdaFormalType*
+SgAdaFormalType::createType(SgType* type, SgExpression* /*optional_fortran_type_kind*/)
+{
+  ROSE_ASSERT(type != NULL);
+  SgAdaFormalType* res  = new SgAdaFormalType(NULL, type);
+  SgName           name = res->get_mangled();
+
+  get_globalTypeTable()->insert_type(name, res);
+  return res;
+}
+SOURCE_CREATE_TYPE_FOR_ADA_FORMAL_TYPE_END
 
 SOURCE_CREATE_TYPE_FOR_ADA_TASK_TYPE_START
 
