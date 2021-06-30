@@ -120,6 +120,7 @@ namespace CodeThorn {
     void printEvaluateExpressionInfo(SgNode* node,EState& estate, EvalMode mode);
 
   protected:
+    void fatalErrorExit(SgNode* node, std::string errorMessage);
     std::list<EState> transferFunctionCallLocalEdge(Edge edge, const EState* estate);
     std::list<EState> transferFunctionCall(Edge edge, const EState* estate);
     std::list<EState> transferFunctionCallExternal(Edge edge, const EState* estate);
@@ -173,7 +174,10 @@ namespace CodeThorn {
     CodeThorn::VariableIdSet determineUsedGlobalVars(SgProject* root, CodeThorn::VariableIdSet& setOfGlobalVars);
     void initializeGlobalVariablesNew(SgProject* root, EState& estate);
     // modifies PState with written initializers
-    EState analyzeVariableDeclaration(SgVariableDeclaration* decl,EState currentEState, Label targetLabel);
+    EState transferVariableDeclarationEState(SgVariableDeclaration* decl,EState currentEState, Label targetLabel);
+    EState transferVariableDeclarationWithInitializerEState(SgVariableDeclaration* decl, SgInitializedName* initName, SgInitializer* initializer, VariableId initDeclVarId, EState& currentEState, Label targetLabel);
+    EState transferVariableDeclarationWithoutInitializerEState(SgVariableDeclaration* decl, SgInitializedName* initName, VariableId initDeclVarId, EState& currentEState, Label targetLabel);
+    
     PState analyzeSgAggregateInitializer(VariableId initDeclVarId, SgAggregateInitializer* aggregateInitializer,PState pstate, /* for evaluation only  */ EState currentEState);
   private:
     // auxiliary semantic functions

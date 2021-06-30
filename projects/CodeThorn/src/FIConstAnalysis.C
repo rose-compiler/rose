@@ -94,7 +94,7 @@ bool FIConstAnalysis::analyzeAssignment(SgExpression* assignOp,VariableIdMapping
   return false;
 }
 
-VariableValuePair FIConstAnalysis::analyzeVariableDeclaration(SgVariableDeclaration* decl,VariableIdMapping& varIdMapping) {
+VariableValuePair FIConstAnalysis::transferVariableDeclarationEState(SgVariableDeclaration* decl,VariableIdMapping& varIdMapping) {
   SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
   if(initName0) {
     if(SgInitializedName* initName=isSgInitializedName(initName0)) {
@@ -128,7 +128,7 @@ void FIConstAnalysis::determineVarConstValueSet(SgNode* node, VariableIdMapping&
   cout<< "STATUS: Collecting information."<<endl;
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
-      VariableValuePair res=analyzeVariableDeclaration(varDecl,varIdMapping);
+      VariableValuePair res=transferVariableDeclarationEState(varDecl,varIdMapping);
       if(detailedOutput) cout<<"INFO: analyzing variable declaration :"<<res.toString(varIdMapping)<<endl;
       //update map
       map[res.varId].insert(res.varValue);
@@ -339,7 +339,7 @@ VarConstSetMap FIConstAnalysis::computeVarConstValues(SgProject* project, SgFunc
   for(list<SgVariableDeclaration*>::iterator i=globalVars.begin();i!=globalVars.end();++i) {
     VariableId globalVarId=variableIdMapping.variableId(*i);
     if(setOfUsedVars.find(globalVarId)!=setOfUsedVars.end()) {
-      VariableValuePair p=analyzeVariableDeclaration(*i,variableIdMapping);
+      VariableValuePair p=transferVariableDeclarationEState(*i,variableIdMapping);
       AbstractValue varValue=p.varValue;
       varConstIntMap[p.varId]=emptySet; // create mapping
       varConstIntMap[p.varId].insert(AbstractValue(varValue));

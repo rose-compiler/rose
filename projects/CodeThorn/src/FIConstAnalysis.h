@@ -95,7 +95,7 @@ class FIConstAnalysis {
   static bool determineVariable(SgNode* node, VariableId& varId, VariableIdMapping& _variableIdMapping);
   // allows to analyse SgAssignOp and SgCompoundAssignOp
   static bool analyzeAssignment(SgExpression* assignOp,VariableIdMapping& varIdMapping, VariableValuePair* result);
-  VariableValuePair analyzeVariableDeclaration(SgVariableDeclaration* decl,VariableIdMapping& varIdMapping);
+  VariableValuePair transferVariableDeclarationEState(SgVariableDeclaration* decl,VariableIdMapping& varIdMapping);
 
   void determineVarConstValueSet(SgNode* node, VariableIdMapping& varIdMapping, VarConstSetMap& map);
   VarConstSetMap computeVarConstValues(SgProject* project, SgFunctionDefinition* mainFunctionRoot, VariableIdMapping& variableIdMapping);
