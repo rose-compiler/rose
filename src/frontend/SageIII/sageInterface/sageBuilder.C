@@ -11930,6 +11930,24 @@ SgRangeExp* SageBuilder::buildRangeExp(SgExpression *start)
   return result;
 }
 
+SgRangeExp* SageBuilder::buildRangeExp(SgExpression *start, SgExpression *end, SgExpression *stride)
+{
+  SgRangeExp *result = new SgRangeExp();
+  SageInterface::setOneSourcePositionForTransformation(result);
+  ROSE_ASSERT(result != NULL);
+
+  result->set_start(start);
+  start->set_parent(result);
+
+  result->set_end(end);
+  end->set_parent(result);
+
+  result->set_stride(stride);
+  stride->set_parent(result);
+  return result;
+}
+
+
 SgMatrixExp* SageBuilder::buildMatrixExp(SgExprListExp *firstRow)
 {
   SgMatrixExp *result = new SgMatrixExp();

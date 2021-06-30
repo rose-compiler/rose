@@ -939,6 +939,7 @@ ROSE_DLL_API SgChooseExpression * buildChooseExpression_nfi();
 //! Build a Matlab range expression like start:end or start:stride:end
  ROSE_DLL_API SgRangeExp* buildRangeExp(SgExpression *start);
 
+
  //! Build a Matlab Matrix
  ROSE_DLL_API SgMatrixExp* buildMatrixExp(SgExprListExp *firstRow);
 
@@ -949,7 +950,15 @@ ROSE_DLL_API SgChooseExpression * buildChooseExpression_nfi();
  ROSE_DLL_API SgMatlabForStatement* buildMatlabForStatement(SgExpression* loop_index, SgExpression* loop_range, SgBasicBlock* loop_body);
 //@}
 
+//@{
+/*! @name Builders for Ada nodes
+ */
 
+// ! Build a range expression using start:end:stride for Ada 
+ ROSE_DLL_API SgRangeExp* buildRangeExp(SgExpression *start, SgExpression *end, SgExpression *stride);
+
+//@}
+//
 //--------------------------------------------------------------
 //@{
 /*! @name Builders for support nodes
