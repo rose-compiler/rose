@@ -362,11 +362,14 @@ namespace
   /// defines ROSE AST types for which we do not generate scope qualification
   struct RoseRequiresScopeQual : sg::DispatchHandler<bool>
   {
-    void handle(SgNode& n)               { SG_UNEXPECTED_NODE(n); }
+    void handle(const SgNode& n)               { SG_UNEXPECTED_NODE(n); }
 
-    void handle(SgDeclarationStatement&) { res = true; }
-    void handle(SgAdaTaskSpecDecl&)      { res = false; }
-    void handle(SgAdaPackageSpecDecl&)   { res = false; }
+    void handle(const SgDeclarationStatement&) { res = true; }
+    void handle(const SgAdaTaskSpecDecl&)      { res = false; }
+    void handle(const SgAdaPackageSpecDecl&)   { res = false; }
+    void handle(const SgImportStatement&)      { res = false; }
+    //~ void handle(const SgFunctionDeclaration&)  { res = false; }
+    void handle(const SgAdaRenamingDecl&)      { res = false; }
   };
 
 
@@ -381,17 +384,16 @@ namespace
 
     if (expr.Expression_Kind == An_Identifier)
     {
-    /// \todo dcl == nullptr should be an error (as soon as the Asis AST
-    ///       is generated completely.
-    SgDeclarationStatement* dcl = getDecl_opt(expr, ctx);
+      const SgDeclarationStatement* dcl = getDecl_opt(expr, ctx);
 
+      // \note getDecl_opt does not retrieve variable declarations
+      //       => assuming a is a variable of record: a.x (the dcl for a would be nullptr)
       return dcl == nullptr || sg::dispatch(RoseRequiresScopeQual(), dcl);
+      //~ return dcl != nullptr && sg::dispatch(RoseRequiresScopeQual(), dcl);
     }
 
     if (expr.Expression_Kind == A_Selected_Component)
     {
-      /// \todo dcl == nullptr should be an error (as soon as the Asis AST
-      ///       is generated completely.
       return    roseRequiresPrefixID(expr.Prefix, ctx)
              || roseRequiresPrefixID(expr.Selector, ctx);
     }
@@ -427,6 +429,7 @@ namespace
       void handle(SgFunctionDeclaration& n) { res = sb::buildFunctionRefExp(&n); }
       void handle(SgAdaRenamingDecl& n)     { res = &mkAdaRenamingRefExp(n); }
       void handle(SgAdaTaskSpecDecl& n)     { res = &mkAdaTaskRefExp(n); }
+      void handle(SgAdaPackageSpecDecl& n)  { res = &mkAdaUnitRefExp(n); }
 
     private:
       AstContext ctx;
@@ -458,6 +461,7 @@ namespace
       void handle(SgClassDeclaration& n)   { set(n.get_type()); }
       void handle(SgTypedefDeclaration& n) { set(n.get_type()); }
       void handle(SgEnumDeclaration& n)    { set(n.get_type()); }
+      void handle(SgAdaFormalTypeDecl& n)  { set(n.get_formal_type()); }
 
     private:
       AstContext ctx;

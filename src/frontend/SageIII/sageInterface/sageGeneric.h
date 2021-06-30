@@ -1058,6 +1058,7 @@ namespace sg
     GEN_VISIT(SgHereExp)
     GEN_VISIT(SgDotDotExp)
     GEN_VISIT(SgAdaOthersExp)
+    GEN_VISIT(SgAdaUnitRefExp)
 #if WITH_BINARY_NODES
     GEN_VISIT(SgAsmNullInstruction)
 #endif /* WITH_BINARY_NODES */

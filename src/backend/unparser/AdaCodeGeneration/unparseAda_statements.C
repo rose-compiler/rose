@@ -12,6 +12,7 @@
  */
 #include "sage3basic.h"
 #include "unparser.h"
+#include "Rose/Diagnostics.h"
 
 #include <boost/algorithm/string/case_conv.hpp>
 
@@ -31,7 +32,7 @@ Unparse_Ada::Unparse_Ada(Unparser* unp, std::string fname)
 
 
 void
-Unparse_Ada::unparseAdaFile(SgSourceFile *sourcefile, SgUnparse_Info& info)
+Unparse_Ada::unparseAdaFile(SgSourceFile* sourcefile, SgUnparse_Info& info)
 {
   SgGlobal* globalScope = sourcefile->get_globalScope();
   ASSERT_not_null(globalScope);
@@ -42,6 +43,37 @@ Unparse_Ada::unparseAdaFile(SgSourceFile *sourcefile, SgUnparse_Info& info)
 
 namespace
 {
+  inline
+  auto logTrace() -> decltype(Rose::Diagnostics::mlog[Sawyer::Message::TRACE])
+  {
+    return Rose::Diagnostics::mlog[Sawyer::Message::TRACE];
+  }
+
+  inline
+  auto logInfo() -> decltype(Rose::Diagnostics::mlog[Sawyer::Message::INFO])
+  {
+    return Rose::Diagnostics::mlog[Sawyer::Message::INFO];
+  }
+
+  inline
+  auto logWarn() -> decltype(Rose::Diagnostics::mlog[Sawyer::Message::WARN])
+  {
+    return Rose::Diagnostics::mlog[Sawyer::Message::WARN];
+  }
+
+  inline
+  auto logError() -> decltype(Rose::Diagnostics::mlog[Sawyer::Message::ERROR])
+  {
+    return Rose::Diagnostics::mlog[Sawyer::Message::ERROR];
+  }
+
+  inline
+  auto logFatal() -> decltype(Rose::Diagnostics::mlog[Sawyer::Message::FATAL])
+  {
+    return Rose::Diagnostics::mlog[Sawyer::Message::FATAL];
+  }
+
+
   struct ScopeUpdateGuard
   {
       ScopeUpdateGuard(SgUnparse_Info& info, SgScopeStatement& scope)
@@ -67,6 +99,51 @@ namespace
     return SG_DEREF(n.get_symbol());
   }
 
+  SgFunctionSymbol& symOf(const SgFunctionRefExp& n)
+  {
+    return SG_DEREF(n.get_symbol());
+  }
+
+  inline
+  SgFunctionDeclaration& declOf(const SgFunctionSymbol& n)
+  {
+    return SG_DEREF(n.get_declaration());
+  }
+
+  inline
+  SgFunctionDeclaration& declOf(const SgFunctionRefExp& n)
+  {
+    return declOf(symOf(n));
+  }
+
+  inline
+  SgVariableDeclaration& declOf(const SgVariableSymbol& n)
+  {
+    SgNode* varnode = SG_DEREF(n.get_declaration()).get_parent();
+
+    return SG_DEREF(isSgVariableDeclaration(varnode));
+  }
+
+  inline
+  SgVariableDeclaration& declOf(const SgVarRefExp& n)
+  {
+    return declOf(symOf(n));
+  }
+
+  inline
+  SgAdaRenamingDecl& declOf(const SgAdaRenamingRefExp& n)
+  {
+    return SG_DEREF(n.get_decl());
+  }
+
+
+  inline
+  SgAdaPackageSpecDecl& declOf(const SgAdaUnitRefExp& n)
+  {
+    return SG_DEREF(isSgAdaPackageSpecDecl(n.get_decl()));
+  }
+
+
   inline
   SgName nameOf(const SgSymbol& sy)
   {
@@ -80,6 +157,33 @@ namespace
   }
 
   inline
+  SgName nameOf(const SgAdaUnitRefExp& n)
+  {
+    return declOf(n).get_name();
+  }
+
+  inline
+  SgName nameOf(const SgFunctionRefExp& n)
+  {
+    return nameOf(symOf(n));
+  }
+
+  inline
+  SgName nameOf(const SgAdaRenamingDecl& n)
+  {
+    return n.get_name();
+  }
+
+  inline
+  SgName nameOf(const SgAdaRenamingRefExp& n)
+  {
+    return nameOf(declOf(n));
+  }
+
+
+
+/*
+  inline
   SgName nameOf(const SgImportStatement& import)
   {
     const SgExpressionPtrList& lst = import.get_import_list();
@@ -87,6 +191,7 @@ namespace
 
     return nameOf(SG_DEREF(isSgVarRefExp(lst.back())));
   }
+*/
 
   const std::string NO_SEP = "";
   const std::string COMMA_SEP = ", ";
@@ -304,7 +409,9 @@ namespace
       std::string renamedName;
   };
 
-  std::pair<SgDeclarationStatementPtrList::iterator, SgDeclarationStatementPtrList::iterator>
+  using StatementRange = std::pair<SgDeclarationStatementPtrList::iterator, SgDeclarationStatementPtrList::iterator>;
+
+  StatementRange
   declsInPackage(SgDeclarationStatementPtrList& lst, const std::string& mainFile)
   {
     auto declaredInMainFile = [&mainFile](const SgDeclarationStatement* dcl)
@@ -322,6 +429,111 @@ namespace
     return std::make_pair(first, zz);
   }
 
+  struct ImportedUnitResult : std::tuple<std::string, const SgDeclarationStatement*, const SgAdaRenamingDecl*>
+  {
+    using base = std::tuple<std::string, const SgDeclarationStatement*, const SgAdaRenamingDecl*>;
+    using base::base;
+
+    const std::string&            name()         const { return std::get<0>(*this); }
+    const SgDeclarationStatement& decl()         const { return SG_DEREF(std::get<1>(*this)); }
+    const SgAdaRenamingDecl*      renamingDecl() const { return std::get<2>(*this); }
+  };
+
+  struct ImportedUnit : sg::DispatchHandler<ImportedUnitResult>
+  {
+      using base = sg::DispatchHandler<ImportedUnitResult>;
+
+      explicit
+      ImportedUnit(const SgImportStatement& import)
+      : base(), impdcl(import)
+      {}
+
+      void handle(const SgNode& n) { SG_UNEXPECTED_NODE(n); }
+
+      void handle(const SgFunctionRefExp& n)
+      {
+        res = ReturnType{ nameOf(n), &declOf(n), nullptr };
+      }
+
+      void handle(const SgAdaUnitRefExp& n)
+      {
+        res = ReturnType{ nameOf(n), &declOf(n), nullptr };
+      }
+
+      void handle(const SgAdaRenamingRefExp& n)
+      {
+        res = ReturnType{ nameOf(n), n.get_decl(), n.get_decl() };
+      }
+
+      void handle(const SgVarRefExp& n)
+      {
+        res = ReturnType{ nameOf(n), &impdcl, nullptr };
+      }
+
+    private:
+      const SgImportStatement& impdcl; // fallback package when unit is not avail
+  };
+
+  ImportedUnitResult
+  importedUnit(const SgExpression* n, const SgImportStatement& impdcl)
+  {
+    return sg::dispatch(ImportedUnit{ impdcl }, n);
+  }
+
+  ImportedUnitResult
+  importedUnit(const SgImportStatement& n)
+  {
+    const SgExpressionPtrList& lst = n.get_import_list();
+    ROSE_ASSERT(lst.size() == 1);
+
+    return importedUnit(lst.back(), n);
+  }
+
+  struct UseClauseSyntaxResult : std::tuple<std::string, std::string, const SgDeclarationStatement*>
+  {
+    using base = std::tuple<std::string, std::string, const SgDeclarationStatement*>;
+    using base::base;
+
+    const std::string& keyword()         const { return std::get<0>(*this); }
+    const std::string& name()            const { return std::get<1>(*this); }
+    const SgDeclarationStatement& decl() const { return SG_DEREF(std::get<2>(*this)); }
+  };
+
+  struct UseClauseSyntax : sg::DispatchHandler<UseClauseSyntaxResult>
+  {
+    void usepkg(const std::string& s, const SgDeclarationStatement& dcl)
+    {
+      res = ReturnType{"", s, &dcl};
+    }
+
+    void usetype(const std::string& s, const SgDeclarationStatement& dcl)
+    {
+      res = ReturnType{"type ", s, &dcl};
+    }
+
+    void handle(const SgNode& n)                { SG_UNEXPECTED_NODE(n); }
+    void handle(const SgAdaPackageSpecDecl& n)  { usepkg(n.get_name(), n); }
+    void handle(const SgAdaPackageBodyDecl& n)  { usepkg(n.get_name(), n); }
+    void handle(const SgAdaRenamingDecl& n)     { usepkg(n.get_name(), n); }
+    void handle(const SgTypedefDeclaration& n)  { usetype(n.get_name(), n); }
+    void handle(const SgAdaTaskTypeDecl& n)     { usetype(n.get_name(), n); }
+    void handle(const SgClassDeclaration& n)    { usetype(n.get_name(), n); }
+    void handle(const SgEnumDeclaration& n)     { usetype(n.get_name(), n); }
+
+    void handle(const SgImportStatement& n)
+    {
+      ImportedUnitResult imported = importedUnit(n);
+
+      usepkg(imported.name(), imported.decl());
+    }
+  };
+
+  UseClauseSyntaxResult
+  useClauseSyntax(SgDeclarationStatement* n)
+  {
+    return sg::dispatch(UseClauseSyntax{}, n);
+  }
+
 
   struct AdaStatementUnparser : AdaDetailsUnparser
   {
@@ -334,6 +546,8 @@ namespace
 
     template <class ForwardIterator>
     void list(ForwardIterator aa, ForwardIterator zz, bool hasPrivateSection = false);
+
+    std::string qual(const std::string& scopeprefix, std::string name);
 
     void handleBasicBlock(SgBasicBlock& n, bool functionbody = false);
 
@@ -356,10 +570,6 @@ namespace
     RenamingSyntax
     renamingDeclSyntax(SgSymbol* n);
 
-    static
-    std::pair<std::string, std::string>
-    useClauseSyntax(SgDeclarationStatement*);
-
     void startPrivateIfNeeded(SgDeclarationStatement* n);
 
     void modifiers(SgDeclarationStatement& n);
@@ -374,13 +584,10 @@ namespace
 
     void handle(SgGlobal& n)
     {
-      typedef SgDeclarationStatementPtrList::iterator Iterator;
-
       ScopeUpdateGuard scopeGuard(info, n);
+      StatementRange   pkgRange = declsInPackage(n.get_declarations(), unparser.getFileName());
 
-      std::pair<Iterator, Iterator> declRange = declsInPackage(n.get_declarations(), unparser.getFileName());
-
-      list(declRange.first, declRange.second);
+      list(pkgRange.first, pkgRange.second);
     }
 
     void handle(SgNullStatement& n)
@@ -533,17 +740,17 @@ namespace
 
     void handle(SgAdaPackageSpecDecl& n)
     {
-      const std::string qual = scopeQual(n.get_scope());
+      const std::string pkgqual = scopeQual(n.get_scope());
 
       prn("package ");
-      prn(qual);
+      prn(pkgqual);
       prn(n.get_name());
       prn(" is\n");
 
       stmt(n.get_definition());
 
       prn("end ");
-      prn(qual);
+      prn(pkgqual);
       prn(n.get_name());
       prn(STMT_SEP);
     }
@@ -592,32 +799,33 @@ namespace
 
     void handle(SgAdaRenamingDecl& n)
     {
-      SgSymbol*      orig    = n.get_renamed();
-      RenamingSyntax renamed = renamingDeclSyntax(orig);
+      SgSymbol*      orig     = n.get_renamed();
+      RenamingSyntax renamed  = renamingDeclSyntax(orig);
+      std::string    newName  = n.get_name();
+      std::string    origName = qual(scopeQual(orig->get_scope()), renamed.renamedName);
 
       prn(renamed.prefixSyntax);
-      prn(n.get_name());
+      prn(newName);
       prn(renamed.infixSyntax);
       prn(" renames ");
-      prn(scopeQual(orig->get_scope()));
-      prn(renamed.renamedName);
+      prn(origName);
       prn(STMT_SEP);
+
+      unparser.renamedScopes().emplace_back(std::move(newName), std::move(origName));
     }
 
     void handle(SgUsingDeclarationStatement& n)
     {
-      typedef std::pair<std::string, std::string> syntax_t;
-
-      SgDeclarationStatement* orig      = n.get_declaration();
-      syntax_t                usesyntax = useClauseSyntax(orig);
-
-      // \todo record usedName for improved scope qualification
+      UseClauseSyntaxResult useSyntax = useClauseSyntax(n.get_declaration());
+      SgScopeStatement*     origScope = useSyntax.decl().get_scope();
+      std::string           useName   = qual(scopeQual(origScope), useSyntax.name());
 
       prn("use ");
-      prn(usesyntax.first);
-      prn(scopeQual(orig->get_scope()));
-      prn(usesyntax.second);
+      prn(useSyntax.keyword());
+      prn(useName);
       prn(STMT_SEP);
+
+      unparser.usedScopes().push_back(std::move(useName));
     }
 
     void handle(SgTypedefDeclaration& n)
@@ -861,22 +1069,24 @@ namespace
 
     void handle(SgImportStatement& n)
     {
+      ImportedUnitResult imported = importedUnit(n);
+      SgScopeStatement*  scope    = imported.decl().get_scope();
+      std::string        fullName = qual(scopeQual(scope), imported.name());
+
       prn("with ");
-
-      SgExpressionPtrList& lst = n.get_import_list();
-      //~ ROSE_ASSERT(lst.size() != 0);
-      ROSE_ASSERT(lst.size() == 1);
-
-      /*
-      for (size_t i = 0; i < lst.size()-1; ++i)
-      {
-        expr(lst[i]);
-        prn(".");
-      }
-      */
-
-      expr(lst.back());
+      prn(fullName);
       prn(STMT_SEP);
+
+      if (const SgAdaRenamingDecl* rendcl = imported.renamingDecl())
+      {
+        SgSymbol*      orig     = rendcl->get_renamed();
+        RenamingSyntax renamed  = renamingDeclSyntax(orig);
+        std::string    origName = qual(scopeQual(orig->get_scope()), renamed.renamedName);
+
+        unparser.renamedScopes().emplace_back(fullName, std::move(origName));
+      }
+
+      unparser.visibleScopes().emplace_back(std::move(fullName));
     }
 
     void handle(SgProcessControlStatement& n)
@@ -1480,6 +1690,15 @@ namespace
     }
   };
 
+  std::string
+  AdaStatementUnparser::qual(const std::string& scopeName, std::string name)
+  {
+    if (scopeName.size())
+      name.insert(0, scopeName);
+
+    return name;
+  }
+
   std::pair<std::string, std::string>
   AdaStatementUnparser::typedeclSyntax(SgType* n)
   {
@@ -1531,31 +1750,6 @@ namespace
   AdaStatementUnparser::renamingDeclSyntax(SgSymbol* n)
   {
     return sg::dispatch(RenamingDeclSyntax{}, n);
-  }
-
-  struct UseClauseSyntax : sg::DispatchHandler<std::pair<std::string, std::string> >
-  {
-    void usepkg(const std::string& s)     { res = ReturnType{"", s}; }
-    void usetype(const std::string& s)    { res = ReturnType{"type ", s}; }
-
-    void handle(SgNode& n)                { SG_UNEXPECTED_NODE(n); }
-    void handle(SgAdaPackageSpecDecl& n)  { usepkg(n.get_name()); }
-    void handle(SgAdaPackageBodyDecl& n)  { usepkg(n.get_name()); }
-
-    // band-aid until generic packages are supported
-    void handle(SgImportStatement& n)     { usepkg(nameOf(n)); }
-
-    void handle(SgTypedefDeclaration& n)  { usetype(n.get_name()); }
-    void handle(SgAdaTaskTypeDecl& n)     { usetype(n.get_name()); }
-    void handle(SgClassDeclaration& n)    { usetype(n.get_name()); }
-    void handle(SgEnumDeclaration& n)     { usetype(n.get_name()); }
-    void handle(SgAdaRenamingDecl& n)     { usetype(n.get_name()); }
-  };
-
-  std::pair<std::string, std::string>
-  AdaStatementUnparser::useClauseSyntax(SgDeclarationStatement* n)
-  {
-    return sg::dispatch(UseClauseSyntax{}, n);
   }
 
   bool isPrivate(SgDeclarationStatement& dcl)
@@ -1660,7 +1854,29 @@ namespace
     }
   };
 
-  typedef std::vector<std::string> ScopePath;
+  struct ScopePath : std::vector<std::string>
+  {
+    using base = std::vector<std::string>;
+    using base::base;
+
+    std::string path() const;
+    std::string path(const_reverse_iterator pos) const;
+  };
+
+  std::string ScopePath::path() const
+  {
+    return path(rbegin());
+  }
+
+  std::string ScopePath::path(const_reverse_iterator pos) const
+  {
+    std::stringstream qual;
+
+    for ( ; pos != rend(); ++pos)
+      qual << *pos << '.';
+
+    return qual.str();
+  }
 
   ScopePath
   pathToGlobal(SgScopeStatement& n)
@@ -1695,39 +1911,89 @@ namespace
   }
 }
 
+struct VisibilityCtrl
+{
+    bool operator()(const std::string& visPath) const
+    {
+      using const_iterator = std::string::const_iterator;
+
+      //~ std::cerr << visPath << "(" << remotePath << "), ";
+
+      const size_t   pathlen  = std::min(remotePath.size(), visPath.size());
+      const_iterator visFirst = visPath.begin();
+      const_iterator remFirst = remotePath.begin();
+      const_iterator remPos   = std::mismatch(visFirst, visFirst + pathlen, remFirst).second;
+      const size_t   lenMatch = std::distance(remFirst, remPos);
+
+      return lenMatch == remotePath.size();
+    }
+
+  //~ private:
+    const std::string& remotePath;
+};
+
+namespace
+{
+  std::string
+  withoutCommonPrefix(const ScopePath& remote, const ScopePath& local)
+  {
+    using PathIterator = ScopePath::const_reverse_iterator;
+
+    size_t         pathlen    = std::min(local.size(), remote.size());
+    PathIterator   localstart = local.rbegin();
+    PathIterator   remotePos  = std::mismatch( localstart, localstart + pathlen,
+                                               remote.rbegin()
+                                             ).second;
+
+    return remote.path(remotePos);
+  }
+
+  std::string
+  tryRenamePrefix(const Unparse_Ada::ScopeRenamingContainer& renamed, const std::string& prefix)
+  {
+    using const_iterator = Unparse_Ada::ScopeRenamingContainer::const_iterator;
+
+    const_iterator zz  = renamed.end();
+    const_iterator pos = std::find_if( renamed.begin(), zz,
+                                       [&prefix](const AdaRenamedNames& cand) -> bool
+                                       {
+                                         //~ std::cerr << ":" << prefix << "(" << cand.original() << ") ";
+                                         return prefix == cand.original();
+                                       }
+                                     );
+
+    return pos != zz ? (pos->newname() + ".") : std::string{};
+  }
+}
+
 std::string
 Unparse_Ada::computeScopeQual(SgScopeStatement& local, SgScopeStatement& remote)
 {
-  typedef ScopePath::reverse_iterator PathIterator;
+  using iterator = VisibleScopeContainer::iterator;
 
-  ScopePath         localPath  = pathToGlobal(local);
-  ScopePath         remotePath = pathToGlobal(remote);
+  ScopePath   remotePath    = pathToGlobal(remote);
 
-/*
-  std::cerr << "localPath " << typeid(local).name() << ": ";
-  for (std::string x : localPath)
-    std::cerr << x << '.';
+  if (remotePath.size() == 0) return "";
 
-  std::cerr << "\nremotePath: ";
-  for (std::string x : remotePath)
-    std::cerr << x << '.';
+  std::string res;
+  std::string fullRemote    = remotePath.path();
 
-  std::cerr << std::endl;
-*/
+  ROSE_ASSERT(fullRemote.back() == '.');
+  fullRemote.erase(fullRemote.size()-1, 1);
 
-  size_t            pathlen    = std::min(localPath.size(), remotePath.size());
-  PathIterator      localstart = localPath.rbegin();
-  PathIterator      pathit     = std::mismatch( localstart, localstart + pathlen,
-                                                remotePath.rbegin()
-                                              ).second;
-  std::stringstream qual;
+  iterator    visLimit = visibleScopes().end();
+  const bool  remoteVisible = visLimit != std::find_if( visibleScopes().begin(), visLimit,
+                                                        VisibilityCtrl{fullRemote}
+                                                      );
 
-  for (; pathit != remotePath.rend(); ++pathit)
+  //~ std::cerr << fullRemote << "? " << remoteVisible << std::endl;
+
+  if (!remoteVisible)
   {
-    qual << *pathit << '.';
+    res = tryRenamePrefix(renamedScopes(), fullRemote);
   }
 
-  return qual.str();
+  return res.size() ? res : withoutCommonPrefix(remotePath, pathToGlobal(local));
 }
 
 void

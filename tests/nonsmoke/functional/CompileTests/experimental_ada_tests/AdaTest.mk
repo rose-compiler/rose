@@ -123,7 +123,9 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   goto_loop_v2.adb                     \
   hello_world.adb                      \
   inherited_primitive_operation.adb    \
+  io.ads                               \
   io_test.adb                          \
+  io_test2.adb                         \
   linkedlists.ads                      \
   modular_type_definition.ads          \
   multidimensional_array.adb           \
@@ -149,6 +151,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   simple_select_accept_guarded.adb     \
   simple_use_type.ads                  \
   signed_integer_type_definition.ads   \
+  simple_hello_world_with_renamed.adb  \
   std_ascii_user.adb                   \
   sub_derived_types.ads                \
   task_type_declaration.ads            \
@@ -193,7 +196,6 @@ ROSE_FAILING_ADA_TESTS :=                           \
   generic_package_renaming_declaration.ads          \
   generic_procedure_renaming_declaration.ads        \
   iterate_range.adb                                 \
-  io_test2.adb                                      \
   mpiuse.ads                                        \
   object_renaming_declaration.adb                   \
   protected_body_declaration.adb                    \

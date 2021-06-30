@@ -1300,6 +1300,11 @@ mkAdaTaskRefExp(SgAdaTaskSpecDecl& task)
   return mkBareNode<SgAdaTaskRefExp>(&task);
 }
 
+SgAdaUnitRefExp&
+mkAdaUnitRefExp(SgAdaPackageSpecDecl& unit)
+{
+  return mkBareNode<SgAdaUnitRefExp>(&unit);
+}
 
 SgAdaRenamingRefExp&
 mkAdaRenamingRefExp(SgAdaRenamingDecl& decl)

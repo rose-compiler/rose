@@ -1798,6 +1798,7 @@ namespace
     return elem.The_Union.Expression;
   }
 
+
   /// Functor to create an import statement (actually, a declaration)
   ///   for each element of a with clause; e.g., with Ada.Calendar, Ada.Clock;
   ///   yields two important statements, each of them is its own declaration
@@ -1814,20 +1815,39 @@ namespace
         ADA_ASSERT (el.Element_Kind == An_Expression);
 
         NameData                   imported = getName(el, ctx);
+        Element_Struct&            impEl    = imported.elem();
+        Element_ID                 impID    = asisExpression(impEl).Corresponding_Name_Declaration;
+        SgExpression*              res      = &getExpr(impEl, ctx);
         SgScopeStatement&          scope = ctx.scope();
-        SgExpression&              res = mkUnresolvedName(imported.fullName, scope);
-        std::vector<SgExpression*> elems{&res};
+
+        if (SgVarRefExp* varref = isSgVarRefExp(res))
+        {
+          // PP: we should not get here in the first place (after the frontend is complete).
+          logError() << "Unresolved Unit Name: " << SG_DEREF(varref->get_symbol()).get_name()
+                     << std::endl;
+
+          // \todo band-aid until frontend is complete
+          // HACK: the unit was not found, and its name is not properly scope qualified
+          //       ==> create a properly qualified name
+          // LEAK: symbol, and initialized name will leak
+          //~ scope.remove_symbol(varref->get_symbol());
+          delete res;
+
+          res = &mkUnresolvedName(imported.fullName, scope);
+        }
+
+        std::vector<SgExpression*> elems{res};
         SgImportStatement&         sgnode = mkWithClause(elems);
 
         recordNode(asisDecls(), el.ID, sgnode);
         attachSourceLocation(sgnode, el, ctx);
+
 
         //~ sg::linkParentChild(scope, as<SgStatement>(sgnode), &SgScopeStatement::append_statement);
         scope.append_statement(&sgnode);
 
         // an imported element may not be in the AST
         //   -> add the mapping if the element has not been seen.
-        Element_ID                 impID    = asisExpression(imported.elem()).Corresponding_Name_Declaration;
 
         recordNonUniqueNode(asisDecls(), impID, sgnode);
         ADA_ASSERT(sgnode.get_parent() == &scope);

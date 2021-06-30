@@ -3,6 +3,8 @@
 
 #include "unparser.h"
 
+#include <tuple>
+
 #if 1
 class SgExpression;
 class SgStatement;
@@ -21,9 +23,21 @@ class SgAsmOp;
 
 class Unparser;
 
+struct AdaRenamedNames : std::tuple<std::string, std::string>
+{
+  using base = std::tuple<std::string, std::string>;
+  using base::base;
+
+  const std::string& newname()  const { return std::get<0>(*this); }
+  const std::string& original() const { return std::get<1>(*this); }
+};
+
 struct Unparse_Ada : UnparseLanguageIndependentConstructs
    {
-          typedef UnparseLanguageIndependentConstructs base;
+          using base                   = UnparseLanguageIndependentConstructs;
+          using VisibleScopeContainer  = std::vector<std::string>;
+          using UsePkgContainer        = std::vector<std::string>;
+          using ScopeRenamingContainer = std::vector<AdaRenamedNames>;
 
           //
           // in unparseAda_statements.C
@@ -55,8 +69,24 @@ struct Unparse_Ada : UnparseLanguageIndependentConstructs
           // virtual std::string languageName() const;
           std::string languageName() const ROSE_OVERRIDE { return "Ada Unparser"; }
 
+                VisibleScopeContainer& visibleScopes()       { return visible_scopes; }
+          const VisibleScopeContainer& visibleScopes() const { return visible_scopes; }
 
+                UsePkgContainer& usedScopes()       { return use_scopes; }
+          const UsePkgContainer& usedScopes() const { return use_scopes; }
 
+                ScopeRenamingContainer& renamedScopes()       { return renamed_scopes; }
+          const ScopeRenamingContainer& renamedScopes() const { return renamed_scopes; }
+
+     private:
+          /// fully-qualified names of visible scopes
+          VisibleScopeContainer  visible_scopes;
+
+          /// fully-qualified names of used scopes (i.e., use the.used.package;)
+          UsePkgContainer        use_scopes;
+
+          /// renamed scopes
+          ScopeRenamingContainer renamed_scopes;
    };
 
 #endif
