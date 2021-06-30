@@ -887,7 +887,7 @@ namespace CodeThorn {
     EState currentEState=*estate;
 
     // value of switch expression
-    AbstractValue switchCondVal=singleValevaluateExpression(condExpr,currentEState);
+    AbstractValue switchCondVal=evaluateExpressionAV(condExpr,currentEState);
 
     // if there is at least one case that is definitely reachable, then
     // the default (label) is non-reachable (fall-through still
@@ -903,8 +903,8 @@ namespace CodeThorn {
       SgExpression* caseExpr=caseStmt->get_key();
       SgExpression* caseExprOptionalRangeEnd=caseStmt->get_key_range_end();
       if(caseExprOptionalRangeEnd) {
-	AbstractValue caseValRangeBegin=singleValevaluateExpression(caseExpr,currentEState);
-	AbstractValue caseValRangeEnd=singleValevaluateExpression(caseExprOptionalRangeEnd,currentEState);
+	AbstractValue caseValRangeBegin=evaluateExpressionAV(caseExpr,currentEState);
+	AbstractValue caseValRangeEnd=evaluateExpressionAV(caseExprOptionalRangeEnd,currentEState);
 	AbstractValue comparisonValBegin=caseValRangeBegin.operatorLessOrEq(switchCondVal);
 	AbstractValue comparisonValEnd=caseValRangeEnd.operatorMoreOrEq(switchCondVal);
 	if(comparisonValBegin.isTrue()&&comparisonValEnd.isTrue()) {
@@ -914,7 +914,7 @@ namespace CodeThorn {
 	}
       }
       // value of constant case value
-      AbstractValue caseVal=singleValevaluateExpression(caseExpr,currentEState);
+      AbstractValue caseVal=evaluateExpressionAV(caseExpr,currentEState);
       // compare case constant with switch expression value
       SAWYER_MESG(logger[TRACE])<<"switch-default filter cmp: "<<switchCondVal.toString(getVariableIdMapping())<<"=?="<<caseVal.toString(getVariableIdMapping())<<endl;
       // check that not any case label may be equal to the switch-expr value (exact for concrete values)
@@ -957,13 +957,13 @@ namespace CodeThorn {
     EState currentEState=*estate;
 
     // value of switch expression
-    AbstractValue switchCondVal=singleValevaluateExpression(condExpr,currentEState);
+    AbstractValue switchCondVal=evaluateExpressionAV(condExpr,currentEState);
 
     SgExpression* caseExpr=caseStmt->get_key();
     SgExpression* caseExprOptionalRangeEnd=caseStmt->get_key_range_end();
     if(caseExprOptionalRangeEnd) {
-      AbstractValue caseValRangeBegin=singleValevaluateExpression(caseExpr,currentEState);
-      AbstractValue caseValRangeEnd=singleValevaluateExpression(caseExprOptionalRangeEnd,currentEState);
+      AbstractValue caseValRangeBegin=evaluateExpressionAV(caseExpr,currentEState);
+      AbstractValue caseValRangeEnd=evaluateExpressionAV(caseExprOptionalRangeEnd,currentEState);
       AbstractValue comparisonValBegin=caseValRangeBegin.operatorLessOrEq(switchCondVal);
       AbstractValue comparisonValEnd=caseValRangeEnd.operatorMoreOrEq(switchCondVal);
       if(comparisonValBegin.isTop()||comparisonValEnd.isTop()||(comparisonValBegin.isTrue()&&comparisonValEnd.isTrue())) {
@@ -977,7 +977,7 @@ namespace CodeThorn {
       }
     }
     // value of constant case value
-    AbstractValue caseVal=singleValevaluateExpression(caseExpr,currentEState);
+    AbstractValue caseVal=evaluateExpressionAV(caseExpr,currentEState);
     // compare case constant with switch expression value
     SAWYER_MESG(logger[TRACE])<<"switch cmp: "<<switchCondVal.toString(getVariableIdMapping())<<"=?="<<caseVal.toString(getVariableIdMapping())<<endl;
     AbstractValue comparisonVal=caseVal.operatorEq(switchCondVal);
@@ -1306,7 +1306,10 @@ namespace CodeThorn {
 	// only set size from aggregate initializer if not already determined
 	if(getVariableIdMapping()->getNumberOfElements(initDeclVarId)==getVariableIdMapping()->unknownSizeValue()) {
 	  SAWYER_MESG(logger[TRACE])<<"Obtaining number of array elements from initializer in analyze declaration."<<endl;
-	  getVariableIdMapping()->setNumberOfElements(initDeclVarId, computeNumberOfElements(decl));
+	  SgExprListExp* initListObjPtr=aggregateInitializer->get_initializers();
+	  SgExpressionPtrList& initList=initListObjPtr->get_expressions();
+	  // TODO: nested initializers, currently only outermost elements: {{1,2,3},{1,2,3}} evaluates to 2.
+	  getVariableIdMapping()->setNumberOfElements(initDeclVarId, initList.size());
 	}
 	PState newPState=*currentEState.pstate();
 	newPState=analyzeSgAggregateInitializer(initDeclVarId, aggregateInitializer,newPState, currentEState);
@@ -1586,7 +1589,7 @@ namespace CodeThorn {
     return setOfUsedGlobalVars;
   }
   
-  void EStateTransferFunctions::initializeGlobalVariablesNew(SgProject* root, EState& estate) {
+  void EStateTransferFunctions::initializeGlobalVariables(SgProject* root, EState& estate) {
     if(SgProject* project=isSgProject(root)) {
       ROSE_ASSERT(getVariableIdMapping());
       CodeThorn::VariableIdSet setOfGlobalVars=getVariableIdMapping()->getSetOfGlobalVarIds();
@@ -1654,7 +1657,7 @@ namespace CodeThorn {
 	// initialize element of array initializer in state
 	SgExpression* assignInitExpr=assignInit->get_operand();
 	// currentEState from above, newPState must be the same as in currentEState.
-	AbstractValue newVal=singleValevaluateExpression(assignInitExpr,currentEState);
+	AbstractValue newVal=evaluateExpressionAV(assignInitExpr,currentEState);
 	initializeMemoryLocation(label,&newPState,arrayElemAddr,newVal);
       }
       elemIndex++;
@@ -1681,7 +1684,7 @@ namespace CodeThorn {
     return newPState;
   }
 
-  AbstractValue EStateTransferFunctions::singleValevaluateExpression(SgExpression* expr,EState currentEState) {
+  AbstractValue EStateTransferFunctions::evaluateExpressionAV(SgExpression* expr,EState currentEState) {
     list<SingleEvalResultConstInt> resultList=evaluateExpression(expr,currentEState);
     ROSE_ASSERT(resultList.size()==1);
     SingleEvalResultConstInt valueResult=*resultList.begin();

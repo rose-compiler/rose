@@ -172,7 +172,7 @@ namespace CodeThorn {
     bool isFeasiblePathContext(CallString& cs,Label lab);
 
     CodeThorn::VariableIdSet determineUsedGlobalVars(SgProject* root, CodeThorn::VariableIdSet& setOfGlobalVars);
-    void initializeGlobalVariablesNew(SgProject* root, EState& estate);
+    void initializeGlobalVariables(SgProject* root, EState& estate);
     // modifies PState with written initializers
     EState transferVariableDeclarationEState(SgVariableDeclaration* decl,EState currentEState, Label targetLabel);
     EState transferVariableDeclarationWithInitializerEState(SgVariableDeclaration* decl, SgInitializedName* initName, SgInitializer* initializer, VariableId initDeclVarId, EState& currentEState, Label targetLabel);
@@ -196,7 +196,7 @@ namespace CodeThorn {
 
     // uses ExprAnalyzer to compute the result. Limits the number of results to one result only. Does not permit state splitting.
     // requires normalized AST
-    AbstractValue singleValevaluateExpression(SgExpression* expr,EState currentEState);
+    AbstractValue evaluateExpressionAV(SgExpression* expr,EState currentEState);
 
     // only used in hybrid prototype binding
     VariableId globalVarIdByName(std::string varName);
