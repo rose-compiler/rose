@@ -493,6 +493,19 @@ namespace
           break;
         }
 
+      case A_Package_Renaming:
+        {
+          logTrace() << "A package renaming"
+                     << PrnUnitHeader(adaUnit)
+                     << std::endl;
+
+          ElemIdRange range = idRange(adaUnit.Context_Clause_Elements);
+
+          traverseIDs(range, elemMap(), ElemCreator{ctx});
+          handleElementID(adaUnit.Unit_Declaration, ctx);
+          break;
+        }
+
       case Not_A_Unit:
       case A_Package_Instance:
 
@@ -504,7 +517,6 @@ namespace
 
       case A_Procedure_Renaming:
       case A_Function_Renaming:
-      case A_Package_Renaming:
 
       case A_Generic_Procedure_Renaming:
       case A_Generic_Function_Renaming:

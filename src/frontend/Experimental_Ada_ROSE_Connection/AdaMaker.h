@@ -549,6 +549,10 @@ namespace Ada_ROSE_Translation
   SgAdaTaskRefExp&
   mkAdaTaskRefExp(SgAdaTaskSpecDecl& task);
 
+  /// Creates a reference to a package \ref unit
+  SgAdaUnitRefExp&
+  mkAdaUnitRefExp(SgAdaPackageSpecDecl& unit);
+
   /// Creates a reference to an Ada renaming declaration \ref decl
   SgAdaRenamingRefExp&
   mkAdaRenamingRefExp(SgAdaRenamingDecl& decl);
