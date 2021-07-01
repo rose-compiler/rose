@@ -3,10 +3,6 @@
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_ASM_AARCH32
 
-#if __cplusplus < 201703L
-#error "your compiler is too old"
-#endif
-
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
 
 #include <boost/serialization/access.hpp>
