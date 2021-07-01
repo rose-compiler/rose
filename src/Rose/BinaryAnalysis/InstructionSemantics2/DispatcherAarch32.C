@@ -77,7 +77,11 @@ struct IP_adc: P {
         SValuePtr a = d->read(args[1]);
         SValuePtr b = d->read(args[2]);
         SValuePtr c = ops->readRegister(d->REG_PSTATE_C);
-        auto [result, nzcv] = d->addWithCarry(a, b, c);
+
+        auto sumAndFlags = d->addWithCarry(a, b, c);
+        SValuePtr result = std::get<0>(sumAndFlags);
+        SValuePtr nzcv = std::get<1>(sumAndFlags);
+
         if (d->isIpRegister(args[0])) {
             if (insn->get_updatesFlags()) {
                 d->aluExceptionReturn(enabled, result);
@@ -98,7 +102,11 @@ struct IP_add: P {
         assert_args(insn, args, 3);
         SValuePtr a = d->read(args[1], 32);
         SValuePtr b = d->read(args[2], 32);
-        auto [result, nzcv] = d->addWithCarry(a, b, ops->boolean_(false));
+
+        auto sumAndFlags = d->addWithCarry(a, b, ops->boolean_(false));
+        SValuePtr result = std::get<0>(sumAndFlags);
+        SValuePtr nzcv = std::get<1>(sumAndFlags);
+
         if (d->isIpRegister(args[0])) {
             if (insn->get_updatesFlags()) {
                 d->aluExceptionReturn(enabled, result);
@@ -314,7 +322,11 @@ struct IP_cmn: P {
         assert_args(insn, args, 2);
         SValuePtr a = d->read(args[0], 32);
         SValuePtr b = d->read(args[1], 32);
-        auto [result, nzcv] = d->addWithCarry(a, b, ops->boolean_(false));
+
+        auto sumAndFlags = d->addWithCarry(a, b, ops->boolean_(false));
+        SValuePtr result = std::get<0>(sumAndFlags);
+        SValuePtr nzcv = std::get<1>(sumAndFlags);
+
         d->maybeWriteRegister(enabled, d->REG_PSTATE_NZCV, nzcv);
     }
 };
@@ -326,7 +338,7 @@ struct IP_cmp: P {
         SValuePtr a = d->read(args[0]);
         SValuePtr b = d->read(args[1]);
         SValuePtr notB = ops->invert(b);
-        auto [ _, nzcv ] = d->addWithCarry(a, notB, ops->boolean_(true));
+        SValuePtr nzcv = std::get<1>(d->addWithCarry(a, notB, ops->boolean_(true)));
         d->maybeWriteRegister(enabled, d->REG_PSTATE_NZCV, nzcv);
     }
 };
@@ -1017,8 +1029,15 @@ struct IP_qdadd: P {
         assert_args(insn, args, 3);
         SValuePtr a = ops->signExtend(d->read(args[1], 32), 33);
         SValuePtr b = ops->signExtend(d->read(args[2], 32), 33);
-        auto [dbl, ov1] = d->signedSatQ(ops->add(a, a), 32);
-        auto [result, ov2] = d->signedSatQ(ops->add(ops->unsignedExtend(dbl, 33), b), 32);
+
+        auto satAndOverflow = d->signedSatQ(ops->add(a, a), 32);
+        SValuePtr dbl = std::get<0>(satAndOverflow);
+        SValuePtr ov1 = std::get<1>(satAndOverflow);
+
+        satAndOverflow = d->signedSatQ(ops->add(ops->unsignedExtend(dbl, 33), b), 32);
+        SValuePtr result = std::get<0>(satAndOverflow);
+        SValuePtr ov2 = std::get<1>(satAndOverflow);
+
         SValuePtr overflowed = ops->or_(ov1, ov2);
         SValuePtr yes = ops->boolean_(true);
         d->maybeWrite(enabled, args[0], result);
@@ -1032,8 +1051,15 @@ struct IP_qdsub: P {
         assert_args(insn, args, 3);
         SValuePtr a = ops->signExtend(d->read(args[1], 32), 33);
         SValuePtr b = ops->signExtend(d->read(args[2], 32), 33);
-        auto [dbl, ov1] = d->signedSatQ(ops->add(a, a), 32);
-        auto [result, ov2] = d->signedSatQ(ops->subtract(b, ops->unsignedExtend(dbl, 33)), 32);
+
+        auto satAndOverflow = d->signedSatQ(ops->add(a, a), 32);
+        SValuePtr dbl = std::get<0>(satAndOverflow);
+        SValuePtr ov1 = std::get<1>(satAndOverflow);
+
+        satAndOverflow = d->signedSatQ(ops->subtract(b, ops->unsignedExtend(dbl, 33)), 32);
+        SValuePtr result = std::get<0>(satAndOverflow);
+        SValuePtr ov2 = std::get<1>(satAndOverflow);
+
         SValuePtr overflowed = ops->or_(ov1, ov2);
         SValuePtr yes = ops->boolean_(true);
         d->maybeWrite(enabled, args[0], result);
@@ -1067,7 +1093,11 @@ struct IP_qsub: P {
         SValuePtr a = ops->signExtend(d->read(args[1], 32), 33);
         SValuePtr b = ops->signExtend(d->read(args[2], 32), 33);
         SValuePtr diff = ops->subtract(a, b);
-        auto [result, sat] = d->signedSatQ(diff, 32);
+
+        auto satAndOverflow = d->signedSatQ(diff, 32);
+        SValuePtr result = std::get<0>(satAndOverflow);
+        SValuePtr sat = std::get<1>(satAndOverflow);
+
         d->maybeWrite(enabled, args[0], result);
         SValuePtr yes = ops->boolean_(true);
         d->maybeWriteRegister(ops->and_(enabled, sat), d->REG_PSTATE_Q, yes);
@@ -1174,7 +1204,11 @@ struct IP_rsb: P {
         SValuePtr notA = ops->invert(a);
         SValuePtr b = d->read(args[2], 32);
         SValuePtr c = ops->boolean_(true);
-        auto [result, nzcv] = d->addWithCarry(notA, b, c);
+
+        auto sumAndFlags = d->addWithCarry(notA, b, c);
+        SValuePtr result = std::get<0>(sumAndFlags);
+        SValuePtr nzcv = std::get<1>(sumAndFlags);
+
         if (d->isIpRegister(args[0])) {
             if (insn->get_updatesFlags()) {
                 d->aluExceptionReturn(enabled, result);
@@ -1197,7 +1231,11 @@ struct IP_rsc: P {
         SValuePtr notA = ops->invert(a);
         SValuePtr b = d->read(args[2], 32);
         SValuePtr c = ops->readRegister(d->REG_PSTATE_C);
-        auto [result, nzcv] = d->addWithCarry(notA, b, c);
+
+        auto sumAndFlags = d->addWithCarry(notA, b, c);
+        SValuePtr result = std::get<0>(sumAndFlags);
+        SValuePtr nzcv = std::get<1>(sumAndFlags);
+
         if (d->isIpRegister(args[0])) {
             if (insn->get_updatesFlags()) {
                 d->aluExceptionReturn(enabled, result);
@@ -1301,7 +1339,11 @@ struct IP_sbc: P {
         SValuePtr b = d->read(args[2]);
         SValuePtr notB = ops->invert(b);
         SValuePtr c = ops->readRegister(d->REG_PSTATE_C);
-        auto [result, nzcv] = d->addWithCarry(a, notB, c);
+
+        auto sumAndFlags = d->addWithCarry(a, notB, c);
+        SValuePtr result = std::get<0>(sumAndFlags);
+        SValuePtr nzcv = std::get<1>(sumAndFlags);
+
         if (d->isIpRegister(args[0])) {
             if (insn->get_updatesFlags()) {
                 d->aluExceptionReturn(enabled, result);
@@ -1474,7 +1516,11 @@ struct IP_smlabb: P {
         SValuePtr b = ops->extract(d->read(args[2], 32), 0, 16);
         SValuePtr c = d->read(args[3], 32);
         SValuePtr product = ops->signedMultiply(a, b);
-        auto [result, nzcv] = d->addWithCarry(product, c, ops->boolean_(false));
+
+        auto sumAndFlags = d->addWithCarry(product, c, ops->boolean_(false));
+        SValuePtr result = std::get<0>(sumAndFlags);
+        SValuePtr nzcv = std::get<1>(sumAndFlags);
+
         d->maybeWrite(enabled, args[0], result);
         SValuePtr overflowed = ops->extract(nzcv, 0, 1);
         SValuePtr yes = ops->boolean_(true);
@@ -1490,7 +1536,11 @@ struct IP_smlabt: P {
         SValuePtr b = ops->extract(d->read(args[2], 32), 16, 32);
         SValuePtr c = d->read(args[3], 32);
         SValuePtr product = ops->signedMultiply(a, b);
-        auto [result, nzcv] = d->addWithCarry(product, c, ops->boolean_(false));
+
+        auto sumAndFlags = d->addWithCarry(product, c, ops->boolean_(false));
+        SValuePtr result = std::get<0>(sumAndFlags);
+        SValuePtr nzcv = std::get<1>(sumAndFlags);
+
         d->maybeWrite(enabled, args[0], result);
         SValuePtr overflowed = ops->extract(nzcv, 0, 1);
         SValuePtr yes = ops->boolean_(true);
@@ -1700,7 +1750,11 @@ struct IP_smlatb: P {
         SValuePtr b = ops->extract(d->read(args[2], 32), 0, 16);
         SValuePtr c = d->read(args[3], 32);
         SValuePtr product = ops->signedMultiply(a, b);
-        auto [result, nzcv] = d->addWithCarry(product, c, ops->boolean_(false));
+
+        auto sumAndFlags = d->addWithCarry(product, c, ops->boolean_(false));
+        SValuePtr result = std::get<0>(sumAndFlags);
+        SValuePtr nzcv = std::get<1>(sumAndFlags);
+
         d->maybeWrite(enabled, args[0], result);
         SValuePtr overflowed = ops->extract(nzcv, 0, 1);
         SValuePtr yes = ops->boolean_(true);
@@ -1716,7 +1770,11 @@ struct IP_smlatt: P {
         SValuePtr b = ops->extract(d->read(args[2], 32), 16, 32);
         SValuePtr c = d->read(args[3], 32);
         SValuePtr product = ops->signedMultiply(a, b);
-        auto [result, nzcv] = d->addWithCarry(product, c, ops->boolean_(false));
+
+        auto sumAndFlags = d->addWithCarry(product, c, ops->boolean_(false));
+        SValuePtr result = std::get<0>(sumAndFlags);
+        SValuePtr nzcv = std::get<1>(sumAndFlags);
+
         d->maybeWrite(enabled, args[0], result);
         SValuePtr overflowed = ops->extract(nzcv, 0, 1);
         SValuePtr yes = ops->boolean_(true);
@@ -1987,7 +2045,11 @@ struct IP_ssat: P {
         ASSERT_require(isSgAsmIntegerValueExpression(args[1]));
         size_t nBits = isSgAsmIntegerValueExpression(args[1])->get_absoluteValue();
         SValuePtr value = d->read(args[2], 32);
-        auto [sat, overflowed] = d->signedSatQ(value, nBits);
+
+        auto satAndOverflow = d->signedSatQ(value, nBits);
+        SValuePtr sat = std::get<0>(satAndOverflow);
+        SValuePtr overflowed = std::get<1>(satAndOverflow);
+
         SValuePtr result = ops->signExtend(sat, 32);
         d->maybeWrite(enabled, args[0], result);
         SValuePtr yes = ops->boolean_(true);
@@ -2296,7 +2358,11 @@ struct IP_sub: P {
         SValuePtr b = d->read(args[2], 32);
         SValuePtr notB = ops->invert(b);
         SValuePtr c = ops->boolean_(true);
-        auto [result, nzcv] = d->addWithCarry(a, notB, c);
+
+        auto sumAndFlags = d->addWithCarry(a, notB, c);
+        SValuePtr result = std::get<0>(sumAndFlags);
+        SValuePtr nzcv = std::get<1>(sumAndFlags);
+
         if (d->isIpRegister(args[0])) {
             if (insn->get_updatesFlags()) {
                 d->aluExceptionReturn(enabled, result);
@@ -2743,7 +2809,11 @@ struct IP_usat: P {
         ASSERT_require(isSgAsmIntegerValueExpression(args[1]));
         size_t nBits = isSgAsmIntegerValueExpression(args[1])->get_absoluteValue();
         SValuePtr value = d->read(args[2], 32);
-        auto [sat, overflowed] = d->unsignedSatQ(value, nBits);
+
+        auto satAndOverflow = d->unsignedSatQ(value, nBits);
+        SValuePtr sat = std::get<0>(satAndOverflow);
+        SValuePtr overflowed = std::get<1>(satAndOverflow);
+
         SValuePtr result = sat ? ops->unsignedExtend(sat, 32) : ops->number_(32, 0);
         d->maybeWrite(enabled, args[0], result);
         SValuePtr yes = ops->boolean_(true);
