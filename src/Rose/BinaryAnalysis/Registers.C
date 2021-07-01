@@ -101,15 +101,6 @@ RegisterDictionary::findOrThrow(const std::string &name) const {
     return fi->second;
 }
 
-// deprecated 2020-04-17
-const RegisterDescriptor *
-RegisterDictionary::lookup(const std::string &name) const {
-    Entries::const_iterator fi = forward.find(name);
-    if (fi==forward.end())
-        return NULL;
-    return &(fi->second);
-}
-
 const std::string &
 RegisterDictionary::lookup(RegisterDescriptor rdesc) const {
     Reverse::const_iterator ri = reverse.find(rdesc);

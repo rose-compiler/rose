@@ -27,7 +27,6 @@ add_library(roseBinaryAnalysis OBJECT
   DisassemblerNull.C
   DisassemblerPowerpc.C
   DisassemblerX86.C
-  Dominance.C
   FeasiblePath.C
   FunctionCall.C
   FunctionSimilarity.C
@@ -86,7 +85,6 @@ install(FILES
   DisassemblerNull.h
   DisassemblerPowerpc.h
   DisassemblerX86.h
-  Dominance.h
   FeasiblePath.h
   FunctionCall.h
   FunctionSimilarity.h

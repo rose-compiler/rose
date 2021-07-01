@@ -487,49 +487,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
     void init();                                        // Further initializations in a *.C file.
-
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Deprecated members.
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-public:    
-    // [Robb Matzke 2019-01-30]: deprecated
-    static void register_subclass(const Ptr &loader) ROSE_DEPRECATED("use registerSubclass") {
-        return registerSubclass(loader);
-    }
-    void set_perform_dynamic_linking(bool b) ROSE_DEPRECATED("use performingDynamicLinking") {
-        performingDynamicLinking(b);
-    }
-    bool get_perform_dynamic_linking() const ROSE_DEPRECATED("use performingDynamicLinking") {
-        return performingDynamicLinking();
-    }
-    void set_perform_remap(bool b) ROSE_DEPRECATED("use performingRemap") {
-        performingRemap(b);
-    }
-    bool get_perform_remap() const ROSE_DEPRECATED("use performingRemap") {
-        return performingRemap();
-    }
-    void set_perform_relocations(bool b) ROSE_DEPRECATED("use performingRelocations") {
-        performingRelocations(b);
-    }
-    bool get_perform_relocations() const ROSE_DEPRECATED("use performingRelocations") {
-        return performingRelocations();
-    }
-    void add_preload(const std::string &libname) ROSE_DEPRECATED("use preloads") {
-        preloads().push_back(libname);
-    }
-    const std::vector<std::string>& get_preloads() const ROSE_DEPRECATED("use preloads") {
-        return preloads();
-    }
-    void add_directory(const std::string &dirname) ROSE_DEPRECATED("use directories") {
-        directories().push_back(dirname);
-    }
-    void add_directories(const std::vector<std::string> &dirnames) ROSE_DEPRECATED("use appendDirectories") {
-        appendDirectories(dirnames);
-    }
-    const std::vector<std::string>& get_directories() const ROSE_DEPRECATED("use directories") {
-        return directories();
-    }
 };
 
 } // namespace

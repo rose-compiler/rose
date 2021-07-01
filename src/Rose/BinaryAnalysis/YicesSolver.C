@@ -56,12 +56,6 @@ YicesSolver::availableLinkages()
     return retval;
 }
 
-// FIXME[Robb Matzke 2017-10-17]: deprecated
-unsigned
-YicesSolver::available_linkage() {
-    return availableLinkages();
-}
-
 /* See YicesSolver.h */
 SmtSolver::Satisfiable
 YicesSolver::checkLib() {
