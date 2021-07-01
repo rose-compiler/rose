@@ -135,12 +135,19 @@ DisassemblerAarch32::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, A
     // Initial work-arounds for Capstone bugs
     //--------------------------------------------------------------------------------
     if (((arm_insn)r.csi->id == ARM_INS_RFEDA || (arm_insn)r.csi->id == ARM_INS_RFEDB ||
-         (arm_insn)r.csi->id == ARM_INS_RFEIA || (arm_insn)r.csi->id == ARM_INS_RFEIB) &&
-        BitOps::bits(word, 0, 15) != 0x0a00 /*A1*/ && BitOps::bits(word, 0, 15) != 0xc000 /*T1,T2*/) {
-        // Capstone mis-decodes random data as this instruction. E.g., the word 0xf8364650 gets decoded as "rfeda #3!", which
-        // doesn't even make any sense. Similarly, 0xf9b4f001 is "rfeib #2!".
-        return isSgAsmAarch32Instruction(makeUnknownInstruction(Exception("unable to decode instruction", va,
-                                                                          SgUnsignedCharList(bytes+0, bytes+nRead), 0)));
+         (arm_insn)r.csi->id == ARM_INS_RFEIA || (arm_insn)r.csi->id == ARM_INS_RFEIB)) {
+        if (BitOps::bits(word, 0, 15) != 0x0a00 /*A1*/ && BitOps::bits(word, 0, 15) != 0xc000 /*T1,T2*/) {
+            // Capstone mis-decodes random data as this instruction. E.g., the word 0xf8364650 gets decoded as "rfeda #3!", which
+            // doesn't even make any sense. Similarly, 0xf9b4f001 is "rfeib #2!".
+            return isSgAsmAarch32Instruction(makeUnknownInstruction(Exception("unable to decode instruction", va,
+                                                                              SgUnsignedCharList(bytes+0, bytes+nRead), 0)));
+        } else if (r.csi->detail->arm.op_count == 1 && r.csi->detail->arm.operands[0].type == ARM_OP_IMM) {
+            // Even when bits [0,15] are correct (0x0a00 or 0xc000), Capstone decodes invalid opcodes as this instruction but
+            // with an argument like "#X!" where X is an integer. E.g., 0xf8bac000 is invalid (bits [25,31] are the A1 decoding
+            // which requires bits [0,15] to be 0x0a00, not 0xc000.
+            return isSgAsmAarch32Instruction(makeUnknownInstruction(Exception("unable to decode instruction", va,
+                                                                              SgUnsignedCharList(bytes+0, bytes+nRead), 0)));
+        }
     }
 
     //--------------------------------------------------------------------------------
@@ -1387,7 +1394,7 @@ DisassemblerAarch32::wrapPrePostIncrement(SgAsmAarch32Instruction *insn, const c
             // First argument is the register that will be updated. The remaining variable number of arguments are the
             // registers read/written to memory. The first register is decremented according to how many other registers are
             // specified.
-            ASSERT_require(arm.op_count > 1);
+            ASSERT_require2(arm.op_count > 1, "insn = " + StringUtility::addrToString(word));
 
             // Does the first argument register also appear again in the rest of the arguments?
             size_t nBytesTransferred = 0;
@@ -1401,9 +1408,9 @@ DisassemblerAarch32::wrapPrePostIncrement(SgAsmAarch32Instruction *insn, const c
             }
 
             // Unlink the register (eventual lhs of the postupdate) from the AST.
-            ASSERT_require(nOperands == arm.op_count);
+            ASSERT_require2(nOperands == arm.op_count, "insn = " + StringUtility::addrToString(word));
             auto lhs = isSgAsmDirectRegisterExpression(operands->get_operands()[0]); // the register
-            ASSERT_not_null(lhs);
+            ASSERT_not_null2(lhs, "insn = " + StringUtility::addrToString(word));
             operands->get_operands()[0] = nullptr;  // illegal, but just temporary
             lhs->set_parent(nullptr);
 
@@ -1449,7 +1456,8 @@ DisassemblerAarch32::wrapPrePostIncrement(SgAsmAarch32Instruction *insn, const c
                 auto inc = new SgAsmIntegerValueExpression(nBytesTransferred, oldValue->get_type());
                 newValue = SageBuilderAsm::buildAddExpression(oldValue, inc);
             } else {
-                ASSERT_not_reachable("instruction not handled: id = " + boost::lexical_cast<std::string>(id));
+                ASSERT_not_reachable("instruction not handled: id = " + boost::lexical_cast<std::string>(id) +
+                                     " insn = " + StringUtility::addrToString(word));
             }
 
             // Create the post-update expression and link it into the AST. The update is always a post-update regardless of
@@ -1464,8 +1472,9 @@ DisassemblerAarch32::wrapPrePostIncrement(SgAsmAarch32Instruction *insn, const c
         case ARM_INS_RFEIA:
         case ARM_INS_RFEIB: {
             // Last argument (a register) is incremented by 8.
-            ASSERT_require(operands->get_operands().size() >= 1);
-            ASSERT_require(isSgAsmDirectRegisterExpression(operands->get_operands().back()));
+            ASSERT_require2(operands->get_operands().size() >= 1, "insn = " + StringUtility::addrToString(word));
+            ASSERT_require2(isSgAsmDirectRegisterExpression(operands->get_operands().back()),
+                            "insn = " + StringUtility::addrToString(word));
             auto last = isSgAsmDirectRegisterExpression(operands->get_operands().back());
 
             // Unlink from AST
@@ -1486,8 +1495,9 @@ DisassemblerAarch32::wrapPrePostIncrement(SgAsmAarch32Instruction *insn, const c
         case ARM_INS_RFEDA:
         case ARM_INS_RFEDB: {
             // Last argument (a register) is decremented by 8.
-            ASSERT_require(operands->get_operands().size() >= 1);
-            ASSERT_require(isSgAsmDirectRegisterExpression(operands->get_operands().back()));
+            ASSERT_require2(operands->get_operands().size() >= 1, "insn = " + StringUtility::addrToString(word));
+            ASSERT_require2(isSgAsmDirectRegisterExpression(operands->get_operands().back()),
+                            "insn = " + StringUtility::addrToString(word));
             auto last = isSgAsmDirectRegisterExpression(operands->get_operands().back());
 
             // Unlink from AST
@@ -1581,7 +1591,7 @@ DisassemblerAarch32::wrapPrePostIncrement(SgAsmAarch32Instruction *insn, const c
 
             break;
     }
-    ASSERT_not_reachable("no pre/post update replacement performed for " + StringUtility::addrToString(word));
+    ASSERT_not_reachable("no pre/post update replacement performed for insn = " + StringUtility::addrToString(word));
 }
 
 } // namespace
