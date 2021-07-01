@@ -83,6 +83,7 @@ namespace CodeThorn {
     return varRefExpList;
   }
 
+  // workaround function, no longer necessary
   int32_t VariableIdMappingExtended::repairVarRefExpAccessList(list<SgVarRefExp*>& accesses, string accessName) {
     int32_t numErrors=0;
     // check if all symbols of VarRefExp in structure accesses are represented in gathered class data members' symbols
@@ -465,7 +466,7 @@ namespace CodeThorn {
                totalTypeSize=elementSize*getNumberOfElements(varId)
     builtinType: totalTypeSize=typeSizeMapping.getBuiltInTypeSize(biType)
    */
-  void VariableIdMappingExtended::setVarIdInfoFromType(VariableId varId, SgType* type_ignored, SgVariableDeclaration* linkedDecl_ignored) {
+  void VariableIdMappingExtended::setVarIdInfoFromType(VariableId varId) {
     VariableIdInfo* varIdInfo=getVariableIdInfoPtr(varId);
       
     if(varIdInfo->getVarDecl()) {
@@ -529,29 +530,6 @@ namespace CodeThorn {
       setElementSize(varId,typeSizeMapping.getBuiltInTypeSize(biType));
       setNumberOfElements(varId,1);
       setTotalSize(varId,getElementSize(varId));
-      /*
-      // register (but do not include in total size computation) pointed-to types
-      if(SgPointerType* ptrType=isSgPointerType(type)) {
-	cout<<"DEBUG: pointer type: "<<ptrType->unparseToString()<<endl;
-	type=strippedType2(type);
-	cout<<"DEBUG: pointer typ after striptype2: "<<type->unparseToString()<<endl;
-	if(SgClassType* classType=isSgClassType(type)) {
-	  cout<<"DEBUG: class type: "<<classType->unparseToString()<<endl;
-	  if(true || !isRegisteredType(classType)) {
-	    cout<<"DEBUG: register new type: "<<classType->unparseToString()<<endl;
-	    auto result=memberVariableDeclarationsList(classType);
-	    CodeThorn::TypeSize totalTypeSize=unknownSizeValue();
-	    if(true || result.first) {
-	      totalTypeSize=registerClassMembers(classType,result.second,0); // start with offset 0
-	    } else {
-	      totalTypeSize=unknownSizeValue();
-	    }
-	    setTypeSize(classType,totalTypeSize); // size can also be unknown
-	    registerType(classType);
-	  }
-	}
-      }
-      */
     }
   }
 
@@ -587,25 +565,6 @@ namespace CodeThorn {
     computeTypeSizes(); // currently does not compute any typesizes
     registerClassMembersNew();
 
-#if 0
-    RoseAst ast(project);
-    int ct=0;
-    for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-      /*
-      if(SgClassDeclaration* classDecl=isSgClassDeclaration(*i)) {
-	SgClassType* classType=classDecl->get_type();
-	registerClassMembers(classType, 0);
-	ct++;
-      }
-      */
-      if(SgClassDefinition* classDef=isSgClassDefinition(*i)) {
-	SgClassDeclaration* classDecl=classDef->get_declaration();
-	SgClassType* classType=classDecl->get_type();
-	registerClassMembers(classType, 0);
-	ct++;
-      }
-    }
-#else
     int ct=0;
     for(auto classDef:_memPoolTraversal.classDefinitions) {
       SgClassDeclaration* classDecl=classDef->get_declaration();
@@ -613,7 +572,6 @@ namespace CodeThorn {
       registerClassMembers(classType, 0);
       ct++;
     }
-#endif
 
     list<SgGlobal*> globList=SgNodeHelper::listOfSgGlobal(project);
     int numVarDecls=0;
@@ -647,8 +605,7 @@ namespace CodeThorn {
 	      registerNewSymbol(sym);
 	      VariableId varId=variableId(sym);
 	      getVariableIdInfoPtr(varId)->variableScope=VS_FUNPARAM; // formal parameter declaration
-	      //cout<<"DEBUG: setting varidfromtype for param: "<<initName->unparseToString()<<endl;
-	      setVarIdInfoFromType(varId,sym->get_type(),0); // last arg indicates variable declaration (does not exist for formal parameters in ROSE AST)
+	      setVarIdInfoFromType(varId);
 	      numFunctionParams++;
 	    } else {
 	      cout<<"Warning: no symbol basis found for function parameter: "<<initName->unparseToString()<<endl;
@@ -659,7 +616,7 @@ namespace CodeThorn {
 
       // 2nd pass over all variable declarations, to ensure all settings are based on the variable declaration with an initializer (if available)
       for (auto pair: mappingVarIdToInfo) {
-	setVarIdInfoFromType(pair.first,0,0);
+	setVarIdInfoFromType(pair.first);
       }
 
       // creates variableid for each string literal in the entire program
@@ -817,7 +774,7 @@ void VariableIdMappingExtended::typeSizeOverviewtoStream(ostream& os) {
       case AT_UNKNOWN:
 	unknownSizeNum++;
 	break;
-	// intentionally no default case to get compiler warning if not properly supported
+	// intentionally no default case to get compiler warning if any enum is missing
       }
       if(getVariableIdInfo(varId).unspecifiedSize) {
 	unspecifiedSizeNum++;
@@ -829,7 +786,7 @@ void VariableIdMappingExtended::typeSizeOverviewtoStream(ostream& os) {
     case VS_FUNPARAM: paramVarNum++; break;
     case VS_MEMBER: memberVarNum++; break;
     case VS_UNKNOWN: if(getVariableIdInfo(varId).aggregateType!=AT_STRING_LITERAL) unknownVarNum++; break;
-      // intentionally no default case to get compiler warning if not properly supported
+      // intentionally no default case to get compiler warning if any enum is missing
     }
 
   }

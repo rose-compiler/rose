@@ -143,7 +143,7 @@ namespace CodeThorn {
     bool isMemberVariableDeclaration(SgVariableDeclaration*);
     // determines all size information obtainable from SgType and sets values in varidinfo
     // 3rd param can be a nullptr, in which case no decl is determined and no aggregate initializer is checked for size (this is the case for formal function parameters)
-    void setVarIdInfoFromType(VariableId varId, SgType* type, SgVariableDeclaration* linkedDecl);
+    void setVarIdInfoFromType(VariableId varId);
     std::string varIdInfoToString(VariableId varId);
   
     void recordWarning(std::string);
