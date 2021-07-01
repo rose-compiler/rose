@@ -81,36 +81,6 @@ SgAsmGenericSymbol::set_name(SgAsmGenericString *s)
     }
 }
 
-std::string
-SgAsmGenericSymbol::stringifyDefState() const
-{
-#ifndef _MSC_VER
-    return stringifySgAsmGenericSymbolSymbolDefState(p_def_state);
-#else
-        ROSE_ABORT();
-#endif
-}
-
-std::string
-SgAsmGenericSymbol::stringifyType() const
-{
-#ifndef _MSC_VER
-    return stringifySgAsmGenericSymbolSymbolType(p_type);
-#else
-        ROSE_ABORT();
-#endif
-}
-
-std::string
-SgAsmGenericSymbol::stringifyBinding() const
-{
-#ifndef _MSC_VER
-    return stringifySgAsmGenericSymbolSymbolBinding(p_binding);
-#else
-        ROSE_ABORT();
-#endif
-}
-
 void
 SgAsmGenericSymbol::dump(FILE *f, const char *prefix, ssize_t idx) const
 {

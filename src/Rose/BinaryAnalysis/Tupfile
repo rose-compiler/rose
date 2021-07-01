@@ -23,7 +23,6 @@ run $(librose_compile)				\
     DisassemblerNull.C				\
     DisassemblerPowerpc.C			\
     DisassemblerX86.C				\
-    Dominance.C					\
     FeasiblePath.C				\
     FunctionCall.C				\
     FunctionSimilarity.C			\
@@ -79,7 +78,6 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis	\
     DisassemblerNull.h						\
     DisassemblerPowerpc.h					\
     DisassemblerX86.h						\
-    Dominance.h							\
     FeasiblePath.h						\
     FunctionCall.h						\
     FunctionSimilarity.h					\

@@ -84,29 +84,6 @@ shuffle(std::vector<T> &vector, size_t nitems = UNLIMITED, size_t limit = UNLIMI
     }
 }
 
-// [Robb Matzke 2018-05-09]: deprecated. Use HasherSha1 instead.
-//  Compute a SHA1 digest.  The returned vector will contain 20 bytes and can be converted to a string of 40 hexadecimal
-// characters via digest_to_string().  If called when a SHA1 algorithm is not available (due to ROSE configuration) an
-// empty vector is returned.
-ROSE_DLL_API std::vector<uint8_t> sha1_digest(const uint8_t *data, size_t size) ROSE_DEPRECATED("use HasherSha1");
-ROSE_DLL_API std::vector<uint8_t> sha1_digest(const std::vector<uint8_t> &data) ROSE_DEPRECATED("use HasherSha1");
-ROSE_DLL_API std::vector<uint8_t> sha1_digest(const std::string &data) ROSE_DEPRECATED("use HasherSha1");
-
-// [Robb Matzke 2018-05-09]: deprecated. Use HasherFnv instead.
-// Compute the Fowler–Noll–Vo fast string hash.  This is not a cryptographic hash. Speed is marginally slower than Murmur
-// hash, but collision rate is slightly less.
-ROSE_DLL_API uint64_t fnv1a64_digest(const uint8_t *data, size_t size) ROSE_DEPRECATED("use HasherFnv");
-ROSE_DLL_API uint64_t fnv1a64_digest(const std::vector<uint8_t> &data) ROSE_DEPRECATED("use HasherFnv");
-ROSE_DLL_API uint64_t fnv1a64_digest(const std::string &data) ROSE_DEPRECATED("use HasherFnv");
-
-// [Robb Matzke 2018-05-09]: deprecated. Use the Hasher API instead.
-// Converts a binary digest to a string of hexadecimal characters.  The input can actually be any type of data and any
-// length. The output will be twice as long as the input.  If you're using this to convert binary data to a printable format
-// you're doing it wrong--use StringUtility::encode_base64() instead.
-ROSE_DLL_API std::string digest_to_string(const uint8_t *data, size_t size) ROSE_DEPRECATED("use Hasher");
-ROSE_DLL_API std::string digest_to_string(const std::vector<uint8_t> &digest) ROSE_DEPRECATED("use Hasher");
-ROSE_DLL_API std::string digest_to_string(const std::string &data) ROSE_DEPRECATED("use Hasher");
-
 /** Hash interface.
  *
  *  This class defines the API for hash functions. A hash function takes an arbitrary size message as input and returns a

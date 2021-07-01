@@ -14733,11 +14733,6 @@ void Grammar::setUpBinaryInstructions() {
         /** Print some debugging info. */
         virtual void dump(FILE*, const char *prefix, ssize_t idx) const;
 
-        // [Robb P Matzke 2017-03-22]: These are deprecated because the stringify facility is better.
-        std::string stringifyDefState() const ROSE_DEPRECATED("use stringifySgAsmGenericSymbolSymbolDefState");
-        std::string stringifyType() const ROSE_DEPRECATED("use stringifySgAsmGenericSymbolSymbolType");
-        std::string stringifyBinding() const ROSE_DEPRECATED("use stringifySgAsmGenericSymbolSymbolBinding");
-
         /** Property: Name.
          *
          * @{ */

@@ -638,32 +638,6 @@ public:
 
 private:
     void init(unsigned linkages);                       // Called during construction
-
-
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Deprecated junk
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-    // FIXME[Robb Matzke 2017-10-17]: these are all deprecated
-public:
-    virtual Satisfiable trivially_satisfiable(const std::vector<SymbolicExpr::Ptr> &exprs)
-        ROSE_DEPRECATED("use triviallySatisfiable");
-    virtual SymbolicExpr::Ptr evidence_for_variable(uint64_t varno) ROSE_DEPRECATED("use evidenceForVariable");
-    virtual SymbolicExpr::Ptr evidence_for_variable(const SymbolicExpr::Ptr &var) ROSE_DEPRECATED("use evidenceForVariable");
-    virtual SymbolicExpr::Ptr evidence_for_name(const std::string&) ROSE_DEPRECATED("use evidenceForName");
-    virtual SymbolicExpr::Ptr evidence_for_address(uint64_t addr) ROSE_DEPRECATED("use evidenceForAddress");
-    virtual std::vector<std::string> evidence_names() ROSE_DEPRECATED("use evidenceNames");
-    virtual void clear_evidence() ROSE_DEPRECATED("use clearEvidence");
-    const Stats& get_stats() const ROSE_DEPRECATED("use statistics");
-    static Stats get_class_stats() ROSE_DEPRECATED("use classStatistics");
-    void reset_stats() ROSE_DEPRECATED("use resetStatistics");
-    void reset_class_stats() ROSE_DEPRECATED("use resetClassStatistics");
-protected:
-    virtual void generate_file(std::ostream&, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*)
-        ROSE_DEPRECATED("use generateFile");
-    virtual std::string get_command(const std::string &config_name) ROSE_DEPRECATED("use getCommand");
-    virtual void parse_evidence() ROSE_DEPRECATED("use parseEvidence");
 };
 
 std::ostream& operator<<(std::ostream&, const SmtSolver::SExpr&);
