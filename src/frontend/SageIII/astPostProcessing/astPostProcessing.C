@@ -540,11 +540,22 @@ void postProcessingSupport (SgNode* node)
           if (project != NULL && project->get_suppressConstantFoldingPostProcessing() == false) 
              {
                resetConstantFoldedValues(node);
-             } else if (project != NULL && SgProject::get_verbose() >= 1) {
-            mprintf ("In postProcessingSupport: skipping call to resetConstantFoldedValues(): project->get_suppressConstantFoldingPostProcessing() = %s \n",project->get_suppressConstantFoldingPostProcessing() ? "true" : "false");
-          } else if (project == NULL) {
-            mprintf ("postProcessingSupport should not be called for non SgProject IR nodes \n");
-          }
+             } 
+            else 
+             {
+               if (project != NULL && SgProject::get_verbose() >= 1) 
+                  {
+                    mprintf ("In postProcessingSupport: skipping call to resetConstantFoldedValues(): project->get_suppressConstantFoldingPostProcessing() = %s \n",
+                         project->get_suppressConstantFoldingPostProcessing() ? "true" : "false");
+                  } 
+                 else 
+                  {
+                    if (project == NULL) 
+                       {
+                         mprintf ("postProcessingSupport should not be called for non SgProject IR nodes \n");
+                       }
+                  }
+            }
 
 #if 0
        // DQ (7/14/2020): DEBUGGING: Check initializers.
@@ -600,7 +611,13 @@ void postProcessingSupport (SgNode* node)
        // DQ (2/25/2019): Adding support to mark shared defining declarations across multiple files.
           markSharedDeclarationsForOutputInCodeGeneration(node);
 #endif
-          if (SgProject::get_verbose() > 1)
+
+#if 0
+       // DQ (6/24/2021): This code to reset the isModified flags, at each node, has been moved below 
+       // from here where it was mistakenly placed before some other functions that left the isModified 
+       // flags true in some cases (like the default argument fixup which effected a few locations in 
+       // the STL header files (which proved to be a problem for the header file unparsing)).
+          if (SgProject::get_verbose() > -1)
              {
                printf ("Calling checkIsModifiedFlag() \n");
              }
@@ -610,13 +627,33 @@ void postProcessingSupport (SgNode* node)
        // the AST are done, even just building it, this step should be the final
        // step.
 
-#if 0
+#if 1
           printf ("In postProcessingSupport(): noPostprocessing == false: calling unsetNodesMarkedAsModified(): node = %p = %s \n",node,node->class_name().c_str());
 #endif
 
        // DQ (4/16/2015): This is replaced with a better implementation.
        // checkIsModifiedFlag(node);
           unsetNodesMarkedAsModified(node);
+#endif
+
+#if 0
+          SageInterface::reportModifiedStatements("In postProcessingSupport(): calling reportModifiedStatements(): node",node);
+#endif
+
+#if 0
+       // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+          ROSE_ASSERT(node != NULL);
+          std::set<SgLocatedNode*> tmp1_collectionOfModifiedLocatedNodes = SageInterface::collectModifiedLocatedNodes(node);
+
+          if (tmp1_collectionOfModifiedLocatedNodes.size() > 0)
+             {
+               printf ("In postProcessingSupport(): tmp1_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp1_collectionOfModifiedLocatedNodes.size());
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+#endif
 
           if (SgProject::get_verbose() > 1)
              {
@@ -632,6 +669,25 @@ void postProcessingSupport (SgNode* node)
              }
 
 #if 0
+          SageInterface::reportModifiedStatements("In postProcessingSupport(): calling reportModifiedStatements(): node",node);
+#endif
+
+#if 0
+       // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+          ROSE_ASSERT(node != NULL);
+          std::set<SgLocatedNode*> tmp15_collectionOfModifiedLocatedNodes = SageInterface::collectModifiedLocatedNodes(node);
+
+          if (tmp15_collectionOfModifiedLocatedNodes.size() > 0)
+             {
+               printf ("In postProcessingSupport(): tmp15_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp15_collectionOfModifiedLocatedNodes.size());
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+#endif
+
+#if 0
        // DQ (4/26/2013): Debugging code.
           printf ("In postProcessingSupport: Test 10: Calling postProcessingTestFunctionCallArguments() \n");
           postProcessingTestFunctionCallArguments(node);
@@ -645,6 +701,25 @@ void postProcessingSupport (SgNode* node)
        // DQ (4/24/2013): Detect the correct function declaration to declare the use of default arguments.
        // This can only be a single function and it can't be any function (this is a moderately complex issue).
           fixupFunctionDefaultArguments(node);
+
+#if 0
+          SageInterface::reportModifiedStatements("In postProcessingSupport(): calling reportModifiedStatements(): node",node);
+#endif
+
+#if 0
+       // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+          ROSE_ASSERT(node != NULL);
+          std::set<SgLocatedNode*> tmp2_collectionOfModifiedLocatedNodes = SageInterface::collectModifiedLocatedNodes(node);
+
+          if (tmp2_collectionOfModifiedLocatedNodes.size() > 0)
+             {
+               printf ("In postProcessingSupport(): tmp2_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp2_collectionOfModifiedLocatedNodes.size());
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+#endif
 
           if (SgProject::get_verbose() > 1)
              {
@@ -664,6 +739,48 @@ void postProcessingSupport (SgNode* node)
 
        // DQ (8/25/2020): Remove the redundent include files for initializers.
           fixupInitializersUsingIncludeFiles(node);
+#endif
+
+#if 1
+       // DQ (6/24/2021): This code to reset the isModified flags, at each node, has been moved here from 
+       // where it was above and mistakenly placed before some other functions that left the isModified 
+       // flags true in some cases (like the default argument fixup which effected a few locations in the 
+       // STL header files (which proved to be a problem for the header file unparsing.
+          if (SgProject::get_verbose() > 1)
+             {
+               printf ("Calling checkIsModifiedFlag() \n");
+             }
+
+       // This resets the isModified flag on each IR node so that we can record 
+       // where transformations are done in the AST.  If any transformations on
+       // the AST are done, even just building it, this step should be the final
+       // step.
+
+#if 0
+          printf ("In postProcessingSupport(): noPostprocessing == false: calling unsetNodesMarkedAsModified(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
+
+       // DQ (4/16/2015): This is replaced with a better implementation.
+       // checkIsModifiedFlag(node);
+          unsetNodesMarkedAsModified(node);
+#endif
+#if 0
+          SageInterface::reportModifiedStatements("In postProcessingSupport(): calling reportModifiedStatements(): node",node);
+#endif
+
+#if 0
+       // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+          ROSE_ASSERT(node != NULL);
+          std::set<SgLocatedNode*> tmp3_collectionOfModifiedLocatedNodes = SageInterface::collectModifiedLocatedNodes(node);
+
+          if (tmp3_collectionOfModifiedLocatedNodes.size() > 0)
+             {
+               printf ("In postProcessingSupport(): tmp3_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp3_collectionOfModifiedLocatedNodes.size());
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
 #endif
 
        // DQ (12/20/2012): We now store the logical and physical source position information.
@@ -707,6 +824,29 @@ void postProcessingSupport (SgNode* node)
        // DQ (8/14/2020): Adding support for debugging symbol visability (see Cxx_tests/test2020_33.C).
           printf ("Calling checkAccessPermissions() at END of astPostprocessing \n");
           SageInterface::checkSymbolTables(node);
+#endif
+
+#if 0
+          SageInterface::reportModifiedStatements("In postProcessingSupport(): calling reportModifiedStatements(): node",node);
+#endif
+
+#if 0
+       // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+          ROSE_ASSERT(node != NULL);
+          std::set<SgLocatedNode*> tmp10_collectionOfModifiedLocatedNodes = SageInterface::collectModifiedLocatedNodes(node);
+
+          if (tmp10_collectionOfModifiedLocatedNodes.size() > 0)
+             {
+               printf ("In postProcessingSupport(): tmp10_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp10_collectionOfModifiedLocatedNodes.size());
+#if 1
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+            else
+             {
+               printf ("In postProcessingSupport(): tmp10_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp10_collectionOfModifiedLocatedNodes.size());
+             }
 #endif
 
 #ifdef ROSE_DEBUG_NEW_EDG_ROSE_CONNECTION

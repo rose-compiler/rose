@@ -136,7 +136,7 @@ SageBuilder::buildDefaultConstructor (SgClassType* classType)
 
      SgName className = classDeclaration->get_name();
 
-#if 1
+#if 0
      printf ("In SageBuilder::buildDefaultConstructor(): building default constructor for class = %s \n",className.str());
 #endif
 
@@ -197,6 +197,17 @@ SageBuilder::buildDefaultConstructor (SgClassType* classType)
      memberFunctionDeclaration->get_declarationModifier().get_accessModifier().setPublic();
 
      ROSE_ASSERT (memberFunctionDeclaration->get_declarationModifier().get_accessModifier().isPublic() == true);
+
+#if 0
+  // DQ (6/27/2021): Added debugging information.  It appears that when we build the prototype for a default 
+  // constructor we also build the defining declaration, which might not always exist in the original source 
+  // file.  So this seems like a potential subtle error.
+     printf ("In SageBuilder::buildDefaultConstructor(): building default constructor for class = %s \n",className.str());
+     printf (" --- memberFunctionDeclaration                                    = %p \n",memberFunctionDeclaration);
+     printf (" --- first_nondefining_declaration                                = %p \n",first_nondefining_declaration);
+     printf (" --- memberFunctionDeclaration->get_firstNondefiningDeclaration() = %p \n",memberFunctionDeclaration->get_firstNondefiningDeclaration());
+     printf (" --- memberFunctionDeclaration->get_definingDeclaration()         = %p \n",memberFunctionDeclaration->get_definingDeclaration());
+#endif
 
 #if 0
      printf ("Exiting as a test! \n");
@@ -16468,6 +16479,21 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
   // printf (" --- fullname = %s \n",fullname.c_str());
 #endif
 
+#if 0
+  // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+     ROSE_ASSERT(project != NULL);
+     std::set<SgLocatedNode*> tmp1_collectionOfModifiedLocatedNodes = collectModifiedLocatedNodes(project);
+
+     if (tmp1_collectionOfModifiedLocatedNodes.size() > 0)
+        {
+          printf ("In Traversal::evaluateInheritedAttribute(): tmp1_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp1_collectionOfModifiedLocatedNodes.size());
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
+
      ROSE_ASSERT(inputFileName.size() != 0); // empty file name is not allowed.
 
   // DQ (9/18/2019): I am unclear what the use of fullname is below.
@@ -16603,7 +16629,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 
        // DQ (2/6/2009): Avoid closing this file twice (so put this here, instead of below).
           testfile.close();
-          // should remove the old one here, Liao, 5/1/2009
+       // should remove the old one here, Liao, 5/1/2009
         }
 
   // DQ (2/6/2009): Avoid closing this file twice (moved to false branch above).
@@ -16657,6 +16683,66 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
      printf ("In SageBuilder::buildFile(): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
 #endif
 
+     SgSourceFile* sourceFile = isSgSourceFile(result);
+     if (sourceFile != NULL)
+        {
+          SgGlobal* globalScope = sourceFile->get_globalScope();
+          ROSE_ASSERT(globalScope != NULL);
+
+       // DQ (6/24/2021): We need to end this function with the isModified flag set to false.  This is 
+       // important for the support of the token based unparsing when building a dynamic library.
+       // This is important in permitting the simpleFrontierDetectionForTokenStreamMapping() function 
+       // to generate the correct settings for nodes in the second file constructed from the original file.
+          if (globalScope->get_isModified() == true)
+             {
+#if 0
+               printf ("In SageBuilder::buildFile(): globalScope->get_isModified() == true: reset to false \n");
+#endif
+               globalScope->set_isModified(false);
+#if 0
+               printf ("In SageBuilder::buildFile(): Verify false setting: globalScope->get_isModified() = %s \n",globalScope->get_isModified() ? "true" : "false");
+#endif
+             }
+        }
+
+#if 0
+     reportModifiedStatements("In SageBuilder::buildFile(): calling reportModifiedStatements(): project",project);
+     reportModifiedStatements("In SageBuilder::buildFile(): calling reportModifiedStatements(): result",result);
+
+     reportModifiedLocatedNodes("In SageBuilder::buildFile(): calling reportModifiedLocatedNodes(): project",project);
+     reportModifiedLocatedNodes("In SageBuilder::buildFile(): calling reportModifiedLocatedNodes(): result",result);
+#endif
+
+#if 0
+  // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+     ROSE_ASSERT(project != NULL);
+     std::set<SgLocatedNode*> tmp2_collectionOfModifiedLocatedNodes = collectModifiedLocatedNodes(project);
+
+     if (tmp2_collectionOfModifiedLocatedNodes.size() > 0)
+        {
+          printf ("In Traversal::evaluateInheritedAttribute(): tmp2_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp2_collectionOfModifiedLocatedNodes.size());
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
+
+#if 0
+  // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+     ROSE_ASSERT(project != NULL);
+     std::set<SgLocatedNode*> tmp22_collectionOfModifiedLocatedNodes = collectModifiedLocatedNodes(result);
+
+     if (tmp22_collectionOfModifiedLocatedNodes.size() > 0)
+        {
+          printf ("In Traversal::evaluateInheritedAttribute(): tmp22_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp22_collectionOfModifiedLocatedNodes.size());
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
+
 #if 0
      printf ("Calling outputFileIds() \n");
 
@@ -16665,7 +16751,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
      printf ("DONE: Calling outputFileIds() \n");
 #endif
 
-#if 1
+#if 0
   // DQ (9/18/2019): Adding debugging support.
      printf ("In SageBuilder::buildFile(): file = %p = %s result->get_header_file_unparsing_optimization() = %s \n",
           result,result->class_name().c_str(),result->get_header_file_unparsing_optimization() ? "true" : "false");
@@ -16741,6 +16827,36 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
      printf ("In SageBuilder::buildFile(): Outliner::use_dlopen = %s \n",Outliner::use_dlopen ? "true" : "false");
 #endif
 
+#if 0
+  // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+     ROSE_ASSERT(project != NULL);
+     std::set<SgLocatedNode*> tmp23_collectionOfModifiedLocatedNodes = collectModifiedLocatedNodes(result);
+
+     if (tmp23_collectionOfModifiedLocatedNodes.size() > 0)
+        {
+          printf ("In Traversal::evaluateInheritedAttribute(): tmp23_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp23_collectionOfModifiedLocatedNodes.size());
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
+
+#if 0
+  // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+     ROSE_ASSERT(project != NULL);
+     std::set<SgLocatedNode*> tmp24_collectionOfModifiedLocatedNodes = collectModifiedLocatedNodes(project);
+
+     if (tmp24_collectionOfModifiedLocatedNodes.size() > 0)
+        {
+          printf ("In Traversal::evaluateInheritedAttribute(): tmp24_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp24_collectionOfModifiedLocatedNodes.size());
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
+
   // DQ (3/5/2014): I need to check with Liao to understand this part of the code better.
   // I think that the default value for Outliner::use_dlopen is false, so that when the
   // Java support is used the true branch is taken.  However, if might be the we need
@@ -16749,18 +16865,21 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
      if (!Outliner::use_dlopen)
         {
 #if 0
-          printf ("In SageBuilder::buildFile(): (after test for (!Outliner::use_dlopen) == true: project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
+          printf ("In SageBuilder::buildFile(): (after test for (!Outliner::use_dlopen) == true: project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",
+               project,project->get_fileList_ptr()->get_listOfFiles().size());
 #endif
        // DQ (3/5/2014): If we added the file above, then don't add it here since it is redundant.
           project->set_file(*result);  // equal to push_back()
 #if 0
-          printf ("In SageBuilder::buildFile(): (after 2nd project->set_file()): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
+          printf ("In SageBuilder::buildFile(): (after 2nd project->set_file()): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",
+               project,project->get_fileList_ptr()->get_listOfFiles().size());
 #endif
         }
        else
         {
 #if 0
-          printf ("In SageBuilder::buildFile(): (after test for (!Outliner::use_dlopen) == false: project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
+          printf ("In SageBuilder::buildFile(): (after test for (!Outliner::use_dlopen) == false: project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",
+               project,project->get_fileList_ptr()->get_listOfFiles().size());
 #endif
 
        // Liao, 5/1/2009,
@@ -16773,12 +16892,28 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
        // So we only turn this on if Outliner:: use_dlopen is used for now
        // The semantics of adding a new source file can cause changes to linking phase (new object files etc.)
        // But ROSE has a long-time bug in handling combined compiling and linking command like "translator -o a.out a.c b.c"
-       // It will generated two command line: "translator -o a.out a.c" and "translator -o a.out b.c", which are totally wrong.
+       // It will generated two command lines: "translator -o a.out a.c" and "translator -o a.out b.c", which are totally wrong.
        // This problem is very relevant to the bug.
           SgFilePtrList& flist = project->get_fileList();
           flist.insert(flist.begin(),result);
 #if 0
-          printf ("In SageBuilder::buildFile(): (after flist.insert(flist.begin(),result)): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",project,project->get_fileList_ptr()->get_listOfFiles().size());
+          printf ("In SageBuilder::buildFile(): (after flist.insert(flist.begin(),result)): project = %p project->get_fileList_ptr()->get_listOfFiles().size() = %" PRIuPTR " \n",
+               project,project->get_fileList_ptr()->get_listOfFiles().size());
+#endif
+        }
+#endif
+
+#if 0
+  // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+     ROSE_ASSERT(project != NULL);
+     std::set<SgLocatedNode*> tmp25_collectionOfModifiedLocatedNodes = collectModifiedLocatedNodes(project);
+
+     if (tmp25_collectionOfModifiedLocatedNodes.size() > 0)
+        {
+          printf ("In Traversal::evaluateInheritedAttribute(): tmp25_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp25_collectionOfModifiedLocatedNodes.size());
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
 #endif
         }
 #endif
@@ -16806,6 +16941,29 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
   // SageInterface::collectModifiedLocatedNodes() has previously been implemented and used for debugging.
      std::set<SgLocatedNode*> modifiedNodeSet = collectModifiedLocatedNodes(project);
 
+#if 0
+     reportModifiedStatements("In SageBuilder::buildFile(): calling reportModifiedStatements(): project",project);
+  // reportModifiedStatements("In SageBuilder::buildFile(): calling reportModifiedStatements(): result",result);
+
+     reportModifiedLocatedNodes("In SageBuilder::buildFile(): calling reportModifiedLocatedNodes(): project",project);
+  // reportModifiedLocatedNodes("In SageBuilder::buildFile(): calling reportModifiedLocatedNodes(): result",result);
+#endif
+
+#if 0
+  // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+     ROSE_ASSERT(project != NULL);
+     std::set<SgLocatedNode*> tmp251_collectionOfModifiedLocatedNodes = collectModifiedLocatedNodes(project);
+
+     if (tmp251_collectionOfModifiedLocatedNodes.size() > 0)
+        {
+          printf ("In Traversal::evaluateInheritedAttribute(): tmp251_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp251_collectionOfModifiedLocatedNodes.size());
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
+
   // DQ (3/6/2014): For Java, this function can only be called AFTER the SgFile has been added to the file list in the SgProject.
   // For C/C++ it does not appear to matter if the call is made before the SgFile has been added to the file list in the SgProject.
   // DQ (6/14/2013): Since we seperated the construction of the SgFile IR nodes from the invocation of the frontend, we have to call the frontend explicitly.
@@ -16821,6 +16979,31 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
      SageInterface::outputFileIds(result);
 
      printf ("DONE: After result->runFrontend(): calling outputFileIds() \n");
+#endif
+
+#if 0
+     reportModifiedStatements("In SageBuilder::buildFile(): calling reportModifiedStatements(): project",project);
+  // reportModifiedStatements("In SageBuilder::buildFile(): calling reportModifiedStatements(): result",result);
+
+     reportModifiedLocatedNodes("In SageBuilder::buildFile(): calling reportModifiedLocatedNodes(): project",project);
+  // reportModifiedLocatedNodes("In SageBuilder::buildFile(): calling reportModifiedLocatedNodes(): result",result);
+#endif
+
+#if 0
+  // DQ (6/24/2021): This can be expected to fail, because the new AST has been build and all of the 
+  // nodes are marked as isModified until rest in the AstPostProcessing() step (below).
+  // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+     ROSE_ASSERT(project != NULL);
+     std::set<SgLocatedNode*> tmp26_collectionOfModifiedLocatedNodes = collectModifiedLocatedNodes(project);
+
+     if (tmp26_collectionOfModifiedLocatedNodes.size() > 0)
+        {
+          printf ("In Traversal::evaluateInheritedAttribute(): tmp26_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp26_collectionOfModifiedLocatedNodes.size());
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
 #endif
 
 #if 0
@@ -16856,6 +17039,29 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 #endif
 
 #if 0
+     reportModifiedStatements("In SageBuilder::buildFile(): calling reportModifiedStatements(): project",project);
+  // reportModifiedStatements("In SageBuilder::buildFile(): calling reportModifiedStatements(): result",result);
+
+     reportModifiedLocatedNodes("In SageBuilder::buildFile(): calling reportModifiedLocatedNodes(): project",project);
+  // reportModifiedLocatedNodes("In SageBuilder::buildFile(): calling reportModifiedLocatedNodes(): result",result);
+#endif
+
+#if 0
+  // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+     ROSE_ASSERT(project != NULL);
+     std::set<SgLocatedNode*> tmp265_collectionOfModifiedLocatedNodes = collectModifiedLocatedNodes(project);
+
+     if (tmp265_collectionOfModifiedLocatedNodes.size() > 0)
+        {
+          printf ("In Traversal::evaluateInheritedAttribute(): tmp265_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp265_collectionOfModifiedLocatedNodes.size());
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
+
+#if 0
      result->display("SageBuilder::buildFile()");
 #endif
 
@@ -16877,6 +17083,21 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 #if 0
      printf ("Exiting as a test! \n");
      ROSE_ABORT();
+#endif
+
+#if 0
+  // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+     ROSE_ASSERT(project != NULL);
+     std::set<SgLocatedNode*> tmp27_collectionOfModifiedLocatedNodes = collectModifiedLocatedNodes(project);
+
+     if (tmp27_collectionOfModifiedLocatedNodes.size() > 0)
+        {
+          printf ("In Traversal::evaluateInheritedAttribute(): tmp27_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp27_collectionOfModifiedLocatedNodes.size());
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
 #endif
 
   // DQ (11/10/2019): Shared nodes between existing files that are copied need to be marked as shared.
@@ -16942,6 +17163,22 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
                ROSE_ABORT();
 #endif
              }
+
+#if 0
+  // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+     ROSE_ASSERT(project != NULL);
+     std::set<SgLocatedNode*> tmp28_collectionOfModifiedLocatedNodes = collectModifiedLocatedNodes(project);
+
+     if (tmp28_collectionOfModifiedLocatedNodes.size() > 0)
+        {
+          printf ("In Traversal::evaluateInheritedAttribute(): tmp28_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp28_collectionOfModifiedLocatedNodes.size());
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
+
 #else
 
 #error "DEAD CODE!"
@@ -17042,6 +17279,21 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
   // DQ (7/2/2020): Added assertion (fails for snippet tests).
      ROSE_ASSERT(result->get_preprocessorDirectivesAndCommentsList() != NULL);
 
+#if 0
+  // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+     ROSE_ASSERT(project != NULL);
+     std::set<SgLocatedNode*> tmp3_collectionOfModifiedLocatedNodes = collectModifiedLocatedNodes(project);
+
+     if (tmp3_collectionOfModifiedLocatedNodes.size() > 0)
+        {
+          printf ("In Traversal::evaluateInheritedAttribute(): tmp3_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp3_collectionOfModifiedLocatedNodes.size());
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
+
      return result;
 #else
 
@@ -17064,7 +17316,7 @@ SageBuilder::buildSourceFile(const std::string& outputFileName, SgProject* proje
   // This function needs a way to specify the associated language for the generated file.
   // Currently this is taken from the input file (generated from a prefix on the output filename.
 
-#if 0
+#if 1
      printf ("B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1 \n");
      printf ("B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1B1 \n");
      printf ("In SageBuilder::buildSourceFile(outputFileName = %s, project = %p) \n",outputFileName.c_str(),project);
@@ -17117,11 +17369,41 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
      printf ("B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2B2  \n");
 #endif
 
+#if 0
+  // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+     ROSE_ASSERT(project != NULL);
+     std::set<SgLocatedNode*> tmp1_collectionOfModifiedLocatedNodes = collectModifiedLocatedNodes(project);
+
+     if (tmp1_collectionOfModifiedLocatedNodes.size() > 0)
+        {
+          printf ("In Traversal::evaluateInheritedAttribute(): tmp1_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp1_collectionOfModifiedLocatedNodes.size());
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
+
      SgFile* file = buildFile(inputFileName, outputFileName,project,clear_globalScopeAcrossFiles);
      ROSE_ASSERT(file != NULL);
 
 #if 0
      printf ("DONE: In SageBuilder::buildSourceFile(): calling buildFile() \n");
+#endif
+
+#if 0
+  // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+     ROSE_ASSERT(project != NULL);
+     std::set<SgLocatedNode*> tmp2_collectionOfModifiedLocatedNodes = collectModifiedLocatedNodes(project);
+
+     if (tmp2_collectionOfModifiedLocatedNodes.size() > 0)
+        {
+          printf ("In Traversal::evaluateInheritedAttribute(): tmp2_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp2_collectionOfModifiedLocatedNodes.size());
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
 #endif
 
      SgSourceFile* sourceFile = isSgSourceFile(file);
@@ -17355,6 +17637,21 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
           printf ("Verify false setting: globalScope->get_isModified() = %s \n",globalScope->get_isModified() ? "true" : "false");
 #endif
         }
+
+#if 0
+  // DQ (6/21/2021): Checking for any modifications to located nodes (an issue when we are detecting which header files to unparse).
+     ROSE_ASSERT(project != NULL);
+     std::set<SgLocatedNode*> tmp3_collectionOfModifiedLocatedNodes = collectModifiedLocatedNodes(project);
+
+     if (tmp3_collectionOfModifiedLocatedNodes.size() > 0)
+        {
+          printf ("In Traversal::evaluateInheritedAttribute(): tmp3_collectionOfModifiedLocatedNodes.size() = %zu \n",tmp3_collectionOfModifiedLocatedNodes.size());
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
 
 #if 0
      printf ("Exiting as a test! \n");

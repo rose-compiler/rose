@@ -24778,6 +24778,10 @@ SageInterface::collectModifiedStatements( SgNode* node )
   // DQ (6/11/2015): This reports the statements that are marked as modified (isModified flag).
   // It is useful for debugging the token-based unparsing.
 
+#if 1
+     printf ("In collectModifiedStatements(): node = %p = %s \n",node,node->class_name().c_str());
+#endif
+
      class StatementTraversal : public AstSimpleProcessing
         {
           public:
@@ -24809,7 +24813,7 @@ SageInterface::outputFileIds( SgNode* node )
    {
   // DQ (12/2/2019): This reports the file id values of all located nodes in the AST subtree represented by the input node.
 
-#if 1
+#if 0
      printf ("In outputFileIds(): node = %p = %s \n",node,node->class_name().c_str());
 #endif
 
@@ -24822,7 +24826,7 @@ SageInterface::outputFileIds( SgNode* node )
                     SgLocatedNode* locatedNode = isSgLocatedNode(node);
                     if (locatedNode != NULL)
                        {
-#if 1
+#if 0
                          printf ("In outputFileIds(): isModified() == %s: locatedNode = %p = %s \n",locatedNode->get_isModified() ? "true" : "false",locatedNode,locatedNode->class_name().c_str());
                          printf (" --- file id = %d physical_file_id = %d \n",node->get_file_info()->get_file_id(),node->get_file_info()->get_physical_file_id());
 #endif
@@ -24848,7 +24852,6 @@ SageInterface::outputFileIds( SgNode* node )
      ROSE_ABORT();
 #endif
    }
-
 
 
 std::set<SgLocatedNode*>
@@ -24888,6 +24891,7 @@ SageInterface::collectModifiedLocatedNodes( SgNode* node )
 
      return traversal.returnset;
    }
+
 
 //! Use the set of IR nodes and set the isModified flag in each IR node to true.
 void
@@ -24940,7 +24944,7 @@ SageInterface::reportModifiedStatements( const string & label, SgNode* node )
      ROSE_ASSERT(node != NULL);
      std::set<SgStatement*> collection = collectModifiedStatements(node);
 
-#if 1
+#if 0
      printf ("In reportModifiedStatements(): collection.size() = %zu \n",collection.size());
 #endif
 
@@ -24976,6 +24980,83 @@ SageInterface::reportModifiedStatements( const string & label, SgNode* node )
      printf ("reportModifiedStatements(): Called using label = %s \n",label.c_str());
 #endif
      printf ("########################################################## \n\n\n");
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
+   }
+
+
+
+void
+SageInterface::reportModifiedLocatedNodes( const string & label, SgNode* node )
+   {
+  // DQ (6/21/2021): This reports the nodes in the AST that are marked as modified (isModified flag).
+  // It is useful for debugging the token-based unparsing.
+
+     printf ("\n\n##################################################### \n");
+     printf ("Report on modified locatedNodes: label = %s \n",label.c_str());
+
+     SgSourceFile* sourceFile = isSgSourceFile(node);
+     if (sourceFile != NULL)
+        {
+          printf ("   --- (SgSourceFile) filename = %s \n",sourceFile->getFileName().c_str());
+        }
+       else
+        {
+          SgGlobal* globalScope = isSgGlobal(node);
+          if (globalScope != NULL)
+             {
+               sourceFile = isSgSourceFile(globalScope->get_parent());
+               printf ("   --- (SgGlobal) filename = %s \n",sourceFile->getFileName().c_str());
+             }
+        }
+
+     ROSE_ASSERT(node != NULL);
+     std::set<SgLocatedNode*> collection = collectModifiedLocatedNodes(node);
+
+#if 0
+     printf ("In reportModifiedLocatedNode(): collection.size() = %zu \n",collection.size());
+#endif
+
+     std::set<SgLocatedNode*>::iterator i = collection.begin();
+     while (i != collection.end())
+        {
+       // DQ (10/9/2019): Adding filename to debug output.
+          string filename = (*i)->get_file_info()->get_filename();
+
+       // DQ (10/14/2019): Get the best name possible.
+          if (filename == "transformation")
+             {
+#if 0
+               printf ("   --- filename == transformation: sourceFile = %p using physical filename \n",sourceFile);
+#endif
+            // filename = (*i)->get_file_info()->get_physical_filename();
+               SgSourceFile* sourceFile = TransformationSupport::getSourceFile(*i);
+               if (sourceFile != NULL)
+                  {
+                    filename = sourceFile->getFileName();
+                  }
+             }
+
+          printf ("   --- filename = %s modified locatedNode = %p = %s \n",filename.c_str(),(*i),(*i)->class_name().c_str());
+
+          i++;
+        }
+
+#if 1
+  // DQ (6/8/2019): This helps track down where this is being called when are are cleaning up
+  // output spew else the message output at the top of this function will scroll off the screen.
+     printf ("########################################################## \n");
+     printf ("reportModifiedLocatedNodes(): Called using label = %s \n",label.c_str());
+#endif
+     printf ("########################################################## \n\n\n");
+
+#if 0
+     printf ("Exiting as a test! \n");
+     ROSE_ASSERT(false);
+#endif
    }
 
 
