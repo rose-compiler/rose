@@ -34,6 +34,10 @@ if(enable-binary-analysis)
 
   add_executable(rose-symbolic-simplifier symbolicSimplifier.C)
   target_link_libraries(rose-symbolic-simplifier ROSE_DLL ${Boost_LIBRARIES})
+  if(READLINE_FOUND)
+    target_include_directories(rose-symbolic-simplifier PRIVATE ${READLINE_INCLUDE_DIR})
+    target_link_libraries(rose-symbolic-simplifier ${READLINE_LIBRARY})
+  endif()
   install(TARGETS rose-symbolic-simplifier DESTINATION bin)
 
   add_executable(rose-binary-to-source binaryToSource.C)
