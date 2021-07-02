@@ -271,6 +271,12 @@ std::string ofpVersionString()
 static std::string
 readlineVersionString() {
 #ifdef ROSE_HAVE_LIBREADLINE
+    #if !defined(RL_VERSION_MAJOR) || !defined(RL_VERSION_MINOR)
+        // It appears as though RL_READLINE_VERSION is a 16-bit number whose low 8 bits are the minor version and whose high 8
+        // bits are the major version.
+        #define RL_VERSION_MAJOR ((RL_READLINE_VERSION & 0xff00) >> 8)
+        #define RL_VERSION_MINOR (RL_READLINE_VERSION & 0xff)
+    #endif
     return StringUtility::numberToString(RL_VERSION_MAJOR) + "." + StringUtility::numberToString(RL_VERSION_MINOR);
 #else
     return "unknown (readline is disabled)";
