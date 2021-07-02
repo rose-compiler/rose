@@ -131,9 +131,10 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
 #if 0
   // DQ (10/23/2018): Output report of AST nodes marked as modified!
      SageInterface::reportModifiedStatements("In figureOutWhichFilesToUnparse()",projectNode);
+     SageInterface::reportModifiedLocatedNodes("In figureOutWhichFilesToUnparse()",projectNode);
 #endif
 
-#if 0
+#if 1
      printf ("TOP of figureOutWhichFilesToUnparse(): EDG_ROSE_Translation::edg_include_file_map.size() = %zu \n",EDG_ROSE_Translation::edg_include_file_map.size());
 #endif
 
@@ -203,10 +204,14 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
   // DQ (4/6/2020): We need a way to know when we want to trigger unparsing of all header files.
      bool unparseAllHeaderFiles = (projectNode->get_usingDeferredTransformations() == false);
 
+#if 1
+     printf ("In figureOutWhichFilesToUnparse(): unparseAllHeaderFiles = %s \n",unparseAllHeaderFiles ? "true" : "false");
+#endif
+
   // DQ (4/8/2020): if we are not using the defered evaluation (default) then the default behavior is to unparse all header files.
      if (unparseAllHeaderFiles == true)
         {
-#if 0
+#if 1
        // DQ (4/13/2020): Added debugging code.
           if (modifiedFiles.empty() == false)
             {
@@ -220,7 +225,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
        // DQ (4/14/2020): Commented out (valid for test6 but not test0.
        // ROSE_ASSERT(modifiedFiles.empty() == true);
 
-#if 0
+#if 1
           printf ("In figureOutWhichFilesToUnparse(): before first while loop: EDG_ROSE_Translation::edg_include_file_map.size() = %zu \n",EDG_ROSE_Translation::edg_include_file_map.size());
 #endif
 
@@ -228,11 +233,14 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
           set<string>::iterator i = allFiles.begin();
           while (i != allFiles.end())
              {
-#if 0
+#if 1
                printf ("   --- allFiles = %s \n",(*i).c_str());
                printf ("unparseSourceFileMap.size() = %zu \n",unparseSourceFileMap.size());
 #endif
                string filename = *i;
+#if 1
+               printf ("filename = %s \n",filename.c_str());
+#endif
                if (unparseSourceFileMap.find(filename) == unparseSourceFileMap.end())
                   {
                  // #if 1
@@ -242,6 +250,9 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
                          printf ("Adding filename = %s to modifiedFiles (IS a header file) \n",filename.c_str());
                        }
                  // #endif
+#if 1
+                    printf ("unparseSourceFileMap.find(filename) == unparseSourceFileMap.end(): adding to modifiedFiles: filename = %s \n",filename.c_str());
+#endif
                     modifiedFiles.insert(filename);
                   }
                  else
@@ -270,7 +281,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
 #endif
         }
 
-#if 0
+#if 1
   // DQ (4/6/2020): Added header file unparsing feature specific debug level.
      if (SgProject::get_unparseHeaderFilesDebug() >= 1)
         {
@@ -686,12 +697,17 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
 
 #if 0
   // DQ (10/23/2018): Output report of AST nodes marked as modified!
-     SageInterface::reportModifiedStatements("Leaving figureOutWhichFilesToUnparse()",projectNode);
+     SageInterface::reportModifiedStatements  ("Leaving figureOutWhichFilesToUnparse()",projectNode);
+     SageInterface::reportModifiedLocatedNodes("Leaving figureOutWhichFilesToUnparse()",projectNode);
 #endif
 
-#if DEBUG_FIGURE_OUT || 0
+#if 0
+     printf ("In IncludedFilesUnparser::figureOutWhichFilesToUnparse(): SgProject::get_unparseHeaderFilesDebug() = %d \n",SgProject::get_unparseHeaderFilesDebug());
+#endif
+
+#if DEBUG_FIGURE_OUT || 1
   // DQ (4/13/2020): Added header file unparsing feature specific debug level.
-     if (SgProject::get_unparseHeaderFilesDebug() >= 0)
+     if (SgProject::get_unparseHeaderFilesDebug() >= 2)
         {
           printf ("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF \n");
           printf ("Leaving IncludedFilesUnparser::figureOutWhichFilesToUnparse(): \n");
@@ -2039,8 +2055,9 @@ void IncludedFilesUnparser::visit(SgNode* node)
 
 #define DEBUG_INCLUDE_FILE_UNPARSER_VISIT 0
 
-#if DEBUG_INCLUDE_FILE_UNPARSER_VISIT
-     printf ("In IncludedFilesUnparser::visit(): node = %p = %s = %s isModified = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str(),node->get_isModified() ? "true" : "false");
+#if DEBUG_INCLUDE_FILE_UNPARSER_VISIT || 0
+     printf ("In IncludedFilesUnparser::visit(): node = %p = %s = %s isModified = %s \n",node,node->class_name().c_str(),
+          SageInterface::get_name(node).c_str(),node->get_isModified() ? "true" : "false");
      SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(node);
      if (functionDeclaration != NULL)
         {
@@ -2317,7 +2334,8 @@ void IncludedFilesUnparser::visit(SgNode* node)
 #if DEBUG_INCLUDE_FILE_UNPARSER_VISIT
                printf ("In IncludedFilesUnparser::visit(): node -> get_isModified(): node = %p = %s  \n",node,node->class_name().c_str());
 #endif
-               if (SgProject::get_verbose() > 2)
+            // if (SgProject::get_verbose() > 2)
+               if (SgProject::get_verbose() >= 2)
                   {
                     cout << "Found a modified node: "    << node -> class_name() << endl;
                     cout << "   In file: "               << normalizedFileName << endl;
@@ -2327,9 +2345,10 @@ void IncludedFilesUnparser::visit(SgNode* node)
 #if 0
             // DQ (6/8/2019): Adding debugging support.
                printf ("Processing this IR node as a modified statement: \n");
-               printf (" --- isModified         = %s \n",isModified ? "true" : "false");
-               printf (" --- isTransformation   = %s \n",isTransformation ? "true" : "false");
-               printf (" --- normalizedFileName = %s \n",normalizedFileName.c_str());
+               printf (" --- isModified          = %s \n",isModified ? "true" : "false");
+               printf (" --- isTransformation    = %s \n",isTransformation ? "true" : "false");
+               printf (" --- normalizedFileName  = %s \n",normalizedFileName.c_str());
+               printf (" --- line number in file = %d \n",fileInfo->get_line());
 #endif
             // In a preorder traversal, this is not meaningful, since I understand that the parent statement has already been visited.
             // DQ (9/24/2018): If this is not a statement, then mark the enclosing statement as modified.
@@ -2346,6 +2365,7 @@ void IncludedFilesUnparser::visit(SgNode* node)
                          node->get_file_info()->display("Error: enclosingStatement == NULL: debug");
                        }
                     ASSERT_not_null(enclosingStatement);
+
 #if DEBUG_INCLUDE_FILE_UNPARSER_VISIT
                     printf ("Found non-statement = %p = %s as modified, marking enclosing statement = %p = %s \n",
                          node,node->class_name().c_str(),enclosingStatement,enclosingStatement->class_name().c_str());
@@ -2363,9 +2383,10 @@ void IncludedFilesUnparser::visit(SgNode* node)
                if (isTransformation == true && isCompilerGenerated == false)
                   {
                  // avoid infos that do not have real file names
-#if DEBUG_INCLUDE_FILE_UNPARSER_VISIT
+#if DEBUG_INCLUDE_FILE_UNPARSER_VISIT || 0
                  // printf ("In IncludedFilesUnparser::visit(): node -> get_isModified(): !isTransformation && !isCompilerGenerated: normalizedFileName = %s \n",normalizedFileName.c_str());
-                    printf ("In IncludedFilesUnparser::visit(): node -> get_isModified(): (isTransformation == true && isCompilerGenerated == false): normalizedFileName = %s \n",normalizedFileName.c_str());
+                    printf ("In IncludedFilesUnparser::visit(): node -> get_isModified(): (isTransformation == true && isCompilerGenerated == false): normalizedFileName = %s \n",
+                         normalizedFileName.c_str());
 #endif
                     modifiedFiles.insert(normalizedFileName);
 
@@ -2434,7 +2455,7 @@ void IncludedFilesUnparser::visit(SgNode* node)
         }
 #endif
 
-#if DEBUG_INCLUDE_FILE_UNPARSER_VISIT
+#if DEBUG_INCLUDE_FILE_UNPARSER_VISIT || 0
      if (isStatement == true)
         {
        // printf ("Leaving IncludedFilesUnparser::visit(): node = %p = %s modifiedFiles.size() = %zu \n",node,SageInterface::get_name(node).c_str(),modifiedFiles.size());

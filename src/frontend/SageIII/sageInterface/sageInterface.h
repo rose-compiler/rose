@@ -2296,6 +2296,9 @@ ROSE_DLL_API void resetModifiedLocatedNodes(const std::set<SgLocatedNode*> & mod
 // DQ (10/23/2018): Report nodes that are marked as modified.
 ROSE_DLL_API void reportModifiedStatements(const std::string & label, SgNode* node);
 
+// DQ (6/21/2021): Report nodes that are marked as modified.
+ROSE_DLL_API void reportModifiedLocatedNodes( const std::string & label, SgNode* node );
+
 // DQ (3/22/2019): Translate CPP directives from attached preprocessor information to CPP Directive Declaration IR nodes.
 ROSE_DLL_API void translateToUseCppDeclarations( SgNode* n );
 

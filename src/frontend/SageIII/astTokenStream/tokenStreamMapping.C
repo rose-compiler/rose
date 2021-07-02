@@ -5537,6 +5537,17 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
         }
 #endif
 
+#if 0
+  // DQ (6/28/2021): Adding debuging information to computation of tokens for member functions preceded 
+  // by access permision keyword (e.g. public, protected, private).
+     SgClassDefinition* classDefinition = isSgClassDefinition(n);
+     if (classDefinition != NULL)
+        {
+          printf ("Leaving evaluateSynthesizedAttribute(): found SgClassDefinition: Exiting as a test! \n");
+          ROSE_ABORT();
+        }
+#endif
+
 #if ERROR_CONSISTANCY_CHECKING
   // DQ (10/14/2013): Added consistancy test.
      consistancyCheck();
@@ -6464,8 +6475,16 @@ TokenMappingTraversal::evaluateInheritedAttribute(SgNode* n, InheritedAttribute 
                                    if ( (start_of_token_subsequence > original_start_of_token_subsequence) && 
                                         ( (tokenStream[start_of_token_subsequence]->p_tok_elem->token_lexeme != ";") && (tokenStream[start_of_token_subsequence]->p_tok_elem->token_lexeme != "}") ) )
                                       {
+                                     // DQ (6/28/2021): In searching backwards if this is a member function or fritned function declared 
+                                     // in a class declaration, we want to stop before we see "public:" access privledge keywords as well.  
+                                     // This is a bug demonstrated in codeSegregation, BAtest_168.cpp and more simplily in test_170.cpp.
+                                     // while ( (start_of_token_subsequence > original_start_of_token_subsequence) && 
+                                     //         ( (tokenStream[start_of_token_subsequence-1]->p_tok_elem->token_lexeme != ";") && 
+                                     //           (tokenStream[start_of_token_subsequence-1]->p_tok_elem->token_lexeme != "}") ) )
                                         while ( (start_of_token_subsequence > original_start_of_token_subsequence) && 
-                                                ( (tokenStream[start_of_token_subsequence-1]->p_tok_elem->token_lexeme != ";") && (tokenStream[start_of_token_subsequence-1]->p_tok_elem->token_lexeme != "}") ) )
+                                                ( (tokenStream[start_of_token_subsequence-1]->p_tok_elem->token_lexeme != ";") && 
+                                                  (tokenStream[start_of_token_subsequence-1]->p_tok_elem->token_lexeme != "}") && 
+                                                  (tokenStream[start_of_token_subsequence-1]->p_tok_elem->token_lexeme != ":") ) )
                                            {
                                              start_of_token_subsequence--;
 #if DEBUG_TOKEN_MAPPING
@@ -7859,6 +7878,7 @@ outputSourceCodeFromTokenStream_globalScope(SgSourceFile* sourceFile, vector<str
      file.close();
    }
 
+
 #if 0
 void
 buildTokenStreamFrontier(SgSourceFile* sourceFile)
@@ -8813,7 +8833,7 @@ buildTokenStreamMapping(SgSourceFile* sourceFile, vector<stream_element*> & toke
 #if DEBUG_TOKEN_STREAM_MAPPING || 0
   // DQ (12/26/2018): This is an error for badInput3.c (when using "-rose:verbose 2".
   // DQ (12/1/2013): Make the output of this graph consitional upon the verbose level.
-     if ( SgProject::get_verbose() > -1 )
+     if ( SgProject::get_verbose() >= 0 )
         {
           printf ("In buildTokenStreamMapping(): Calling Graph_TokenMappingTraversal::graph_ast_and_token_stream() \n");
           printf (" --- sourceFile filename = %s \n",sourceFile->getFileName().c_str());
