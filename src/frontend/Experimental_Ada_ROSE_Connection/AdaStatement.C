@@ -3031,6 +3031,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ADA_ASSERT(sgnode.get_parent() == &ctx.scope());
         recordNode(asisTypes(), adaname.id(), sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
+        recordNode(asisDecls(), elem.ID, sgnode);
 
         /* unused fields:
              bool                           Has_Task;
@@ -3064,6 +3065,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ctx.scope().append_statement(&sgnode);
         ADA_ASSERT(sgnode.get_parent() == &ctx.scope());
         //~ recordNode(asisTypes(), adaname.id(), sgnode);
+        recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
 
         /* unused fields:
@@ -3084,12 +3086,18 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgAdaTaskBody&          tskbody = mkAdaTaskBody();
         NameData                adaname = singleName(decl, ctx);
         Element_ID              declID  = decl.Corresponding_Declaration;
-        SgDeclarationStatement* tskdecl = findNode(asisDecls(), declID);
+        SgDeclarationStatement& tskdecl = lookupNode(asisDecls(), declID);
         ADA_ASSERT(adaname.fullName == adaname.ident);
 
         // \todo \review not sure why a task body could be independently created
-        SgAdaTaskBodyDecl&      sgnode  = tskdecl ? mkAdaTaskBodyDecl(*tskdecl, tskbody, ctx.scope())
-                                                  : mkAdaTaskBodyDecl(adaname.fullName, tskbody, ctx.scope());
+        //~ SgDeclarationStatement* tskdecl = findNode(asisDecls(), declID);
+        //~ if (tskdecl == nullptr)
+          //~ logError() << adaname.fullName << " task body w/o decl" << std::endl;
+
+        //~ SgAdaTaskBodyDecl&      sgnode  = tskdecl ? mkAdaTaskBodyDecl(*tskdecl, tskbody, ctx.scope())
+                                                  //~ : mkAdaTaskBodyDecl(adaname.fullName, tskbody, ctx.scope());
+
+        SgAdaTaskBodyDecl&      sgnode  = mkAdaTaskBodyDecl(tskdecl, tskbody, ctx.scope());
 
         attachSourceLocation(sgnode, elem, ctx);
         privatize(sgnode, isPrivate);

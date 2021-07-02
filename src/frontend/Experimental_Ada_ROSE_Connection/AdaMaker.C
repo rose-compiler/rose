@@ -649,25 +649,9 @@ mkAdaPackageBodyDecl(SgAdaPackageSpecDecl& specdcl, SgScopeStatement& scope)
 
   // \todo make sure assertion holds
   // ADA_ASSERT(scope.symbol_exists(specdcl.get_name()));
-/*
   if (!scope.symbol_exists(specdcl.get_name()))
-    scope.insert_symbol(specdcl.get_name(), new SgAdaPackageSymbol(&sgnode));
-*/
+    scope.insert_symbol(specdcl.get_name(), &mkBareNode<SgAdaPackageSymbol>(&sgnode));
 
-/*
-  nsdcl.set_parent(&scope);
-  sg::linkParentChild(nsdcl, nsdef, &SgNamespaceDeclarationStatement::set_definition);
-
-  // set if first definition
-  if (nsdef.get_global_definition() == nullptr)
-  {
-    SgNamespaceDefinitionStatement&  globdef = SG_DEREF(sb::buildNamespaceDefinition(&nsdcl));
-
-    globdef.set_parent(&scope);
-    globdef.set_global_definition(&globdef);
-    nsdef.set_global_definition(&globdef);
-  }
-*/
   return sgnode;
 }
 
@@ -702,13 +686,13 @@ mkAdaTaskSpecDecl(const std::string& name, SgAdaTaskSpec& spec, SgScopeStatement
 
 namespace
 {
-  struct TaskDeclInfo
+  struct TaskDeclInfoResult
   {
     std::string    name;
     SgAdaTaskSpec* spec;
   };
 
-  struct ExtractTaskDeclinfo : sg::DispatchHandler<TaskDeclInfo>
+  struct TaskDeclInfo : sg::DispatchHandler<TaskDeclInfoResult>
   {
     template <class SageTaskDecl>
     void handleTaskDecl(SageTaskDecl& n)
@@ -727,7 +711,7 @@ SgAdaTaskBodyDecl&
 mkAdaTaskBodyDecl(SgDeclarationStatement& tskdecl, SgAdaTaskBody& tskbody, SgScopeStatement& scope)
 {
   //~ SgAdaPackageBody&     pkgbody = SG_DEREF( new SgAdaPackageBody() );
-  TaskDeclInfo       specinfo = sg::dispatch(ExtractTaskDeclinfo(), &tskdecl);
+  TaskDeclInfoResult specinfo = sg::dispatch(TaskDeclInfo(), &tskdecl);
   SgAdaTaskBodyDecl& sgnode   = mkLocatedNode<SgAdaTaskBodyDecl>(specinfo.name, &tskbody);
 
   tskbody.set_parent(&sgnode);
@@ -738,11 +722,16 @@ mkAdaTaskBodyDecl(SgDeclarationStatement& tskdecl, SgAdaTaskBody& tskbody, SgSco
   tskspec.set_body(&tskbody);
   tskbody.set_spec(&tskspec);
 
-  ADA_ASSERT(scope.symbol_exists(specinfo.name));
+  // \todo make sure assertion holds
+  // ADA_ASSERT(scope.symbol_exists(specinfo.name));
+
+  if (!scope.symbol_exists(specinfo.name))
+    scope.insert_symbol(specinfo.name, &mkBareNode<SgAdaTaskSymbol>(&sgnode));
+
   return sgnode;
 }
 
-
+#if 0
 SgAdaTaskBodyDecl&
 mkAdaTaskBodyDecl(const std::string& name, SgAdaTaskBody& tskbody, SgScopeStatement& scope)
 {
@@ -762,6 +751,7 @@ mkAdaTaskBodyDecl(const std::string& name, SgAdaTaskBody& tskbody, SgScopeStatem
   scope.insert_symbol(name, &mkBareNode<SgAdaTaskSymbol>(&sgnode));
   return sgnode;
 }
+#endif
 
 SgAdaTaskSpec&
 mkAdaTaskSpec() { return mkScopeStmt<SgAdaTaskSpec>(); }
@@ -873,7 +863,7 @@ mkProcedureDef( SgFunctionDeclaration& ndef,
   SgName                 nm     = ndef.get_name();
   SgFunctionDeclaration& sgnode = mkProcedureInternal(nm, scope, retty, std::move(complete), mkProcDef);
   SgSymbol*              baseSy = ndef.search_for_symbol_from_symbol_table();
-  SgFunctionSymbol&      funcSy = *SG_ASSERT_TYPE(SgFunctionSymbol, baseSy);
+  SgFunctionSymbol&      funcSy = SG_DEREF(isSgFunctionSymbol(baseSy));
 
   linkDecls(funcSy, sgnode);
   sgnode.set_definingDeclaration(&sgnode);

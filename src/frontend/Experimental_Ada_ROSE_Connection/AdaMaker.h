@@ -351,8 +351,8 @@ namespace Ada_ROSE_Translation
   /// creates an independent task body with name \ref name, body \ref body, in scope \ref scope.
   // \todo not sure why a task body can independently exist without prior declaration.
   //       maybe this function is not needed.
-  SgAdaTaskBodyDecl&
-  mkAdaTaskBodyDecl(const std::string& name, SgAdaTaskBody& tskbody, SgScopeStatement& scope);
+  //~ SgAdaTaskBodyDecl&
+  //~ mkAdaTaskBodyDecl(const std::string& name, SgAdaTaskBody& tskbody, SgScopeStatement& scope);
 
   /// creates an empty task specification definition node
   SgAdaTaskSpec&
