@@ -100,6 +100,7 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
 ADA_TRANSLATOR_FAILING_TESTS :=        \
   allocators.adb                       \
   accept_statement.adb                 \
+  accept_statement_task_decl.adb       \
   alignment_component_clause.adb       \
   array_declare.adb                    \
   array_declare_2.ads                  \
@@ -130,6 +131,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   modular_type_definition.ads          \
   multidimensional_array.adb           \
   multidimensional_array.ads           \
+  named_block.adb                      \
   nested_package.ads                   \
   nullptr.adb                          \
   opaque.ads                           \
