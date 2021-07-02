@@ -216,6 +216,16 @@ if(DLIB_FOUND)
   target_link_libraries(ROSE_DLL ${DLIB_LIBRARY})
 endif()
 
+# Capstone is used to disassemble ARM.
+if(CAPSTONE_FOUND)
+  target_link_libraries(ROSE_DLL ${CAPSTONE_LIBRARY})
+endif()
+
+# If readline was found.
+if(READLINE_FOUND)
+  target_link_libraries(ROSE_DLL ${READLINE_LIBRARY})
+endif()
+
 # The GNU GCrypt library is used for computing a wide variety of hashes. It needs the GPG-Error library.
 if(GCRYPT_FOUND AND GPGERROR_FOUND)
   target_link_libraries(ROSE_DLL ${GCRYPT_LIBRARY})
@@ -316,7 +326,7 @@ target_link_libraries(rose-config ROSE_DLL ${link_with_libraries} ${edg_lib})
 install(TARGETS rose-config DESTINATION bin)
 
 ########################################################################################################################
-# The rose-compiler tool 
+# The rose-compiler tool
 ########################################################################################################################
 
 add_executable(rose-compiler rose-compiler.C)
