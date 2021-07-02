@@ -369,9 +369,6 @@ namespace CodeThorn {
   }
   
   void VariableIdMappingExtended::computeVariableSymbolMapping(SgProject* project, int maxWarningsCount) {
-    //computeVariableSymbolMapping1(project,maxWarningsCount);
-
-
     computeVariableSymbolMapping2(project,maxWarningsCount);
 
     if(getAstConsistencySymbolCheckFlag()) {
@@ -385,12 +382,7 @@ namespace CodeThorn {
       list<SgVarRefExp*> structAccesses=structAccessesInsideFunctions(project);
       int32_t numStructErrorsDetected=repairVarRefExpAccessList(structAccesses,"struct access");
     }
-  }
-
-  void VariableIdMappingExtended::computeVariableSymbolMapping1(SgProject* project, int maxWarningsCount) {
-    VariableIdMapping::computeVariableSymbolMapping(project, maxWarningsCount);
-    cerr<<"Computevariablesymbolmapping1 has been removed."<<endl;
-    exit(1);
+    computeMemOffsetRemap();
   }
 
   bool VariableIdMappingExtended::symbolExists(SgSymbol* sym) {
@@ -828,6 +820,102 @@ void VariableIdMappingExtended::toStream(ostream& os) {
       }
     }
   }
+}
+std::vector<VariableId> VariableIdMappingExtended::getClassMembers(VariableId varId) {
+  ROSE_ASSERT(getVariableIdInfo(varId).aggregateType==AT_STRUCT);
+  //SgType* type=getVariableIdInfo(varId).getType();
+  SgType* type=getType(varId);
+  if(type) {
+    return getClassMembers(type);
+  }
+  std::vector<VariableId> emptyVec;
+  return emptyVec;
+}
+
+// (memId,byteoffset) -> abstractbyteoffset
+// a[2].b[2].f=(2*a.elemSize)+(b.offset+2*b.elemSize)+(f.offset) => 
+
+void VariableIdMappingExtended::computeMemOffsetRemap() {
+  for(auto varIdPair : mappingVarIdToInfo) {
+    if(varIdPair.second.variableScope!=VS_MEMBER) 
+      memOffsetRemap(varIdPair.first,varIdPair.first,1,0,0, IDX_ORIGINAL);
+  }
+  cout<<"DEBUG: -------------------------------------"<<endl<<endl;
+}
+
+void VariableIdMappingExtended::memOffsetRemap(VariableId memRegId, VariableId varId, int32_t remapIndex, CodeThorn::TypeSize regionOffset, CodeThorn::TypeSize remappedOffset, IndexRemappingEnum mappingType) {
+  cout<<"DEBUG: :memOffsetRemap:"<<varId.toString(this)<<": "<<regionOffset<<" -> "<<remappedOffset<<" ("<<mappingType<<")"<<endl;
+  switch(getVariableIdInfo(varId).aggregateType) {
+  case AT_STRUCT: {
+    registerMapping(memRegId, regionOffset, remappedOffset, mappingType);
+    std::vector<VariableId> members=getClassMembers(varId);
+    cout<<"DEBUG: members:"<<varId.toString(this)<<": "<<members.size()<<endl;
+    for(auto memberVarId : members) {
+      CodeThorn::TypeSize mVarOffset=getOffset(memberVarId);
+      if(mVarOffset==unknownSizeValue()) {
+	cout<<"DEBUG: skipping2"<<endl;
+	return; // skip remapping for rest of type if offset is unknown
+      }
+      regionOffset+=mVarOffset;
+      remappedOffset+=mVarOffset;
+      cout<<"DEBUG: :memOffsetRemap(REK):"<<memberVarId.toString(this)<<": "<<regionOffset<<" -> "<<remappedOffset<<" ("<<mappingType<<")"<<endl;
+      memOffsetRemap(memRegId,memberVarId,remapIndex,regionOffset,remappedOffset,mappingType);
+    }
+    break;
+  }
+  case AT_ARRAY: {
+    auto elemSize=getElementSize(varId);
+    if(elemSize==unknownSizeValue()) {
+      cout<<"DEBUG: skipping1"<<endl;
+      return; // skip remapping for rest of type if elemSize is unknown
+    }
+    for(CodeThorn::TypeSize i=0;i<getNumberOfElements(varId);i++) {
+      regionOffset+=elemSize;
+      if(i>=remapIndex) {
+	registerMapping(memRegId, regionOffset,remappedOffset, IDX_REMAPPED);
+	remappedOffset=remapIndex*elemSize;
+      } else {
+	registerMapping(memRegId, regionOffset,remappedOffset, mappingType);
+	remappedOffset+=elemSize;
+      }
+      //memOffsetRemap(xxxx,remapIndex,regionOffset,remappedOffset); multidim? dimensionvector?
+    }
+    break;
+  }
+  case AT_STRING_LITERAL: {
+    auto elemSize=getElementSize(varId);
+    if(elemSize==unknownSizeValue()) {
+      cout<<"DEBUG: skipping1"<<endl;
+      return; // skip remapping for rest of type if elemSize is unknown
+    }
+    for(CodeThorn::TypeSize i=0;i<getNumberOfElements(varId);i++) {
+      regionOffset+=elemSize;
+      if(i>=remapIndex) {
+	registerMapping(memRegId, regionOffset,remappedOffset, IDX_REMAPPED);
+	remappedOffset=remapIndex*elemSize;
+      } else {
+	registerMapping(memRegId, regionOffset,remappedOffset, mappingType);
+	remappedOffset+=elemSize;
+      }
+    }
+    break;
+  }
+  case AT_SINGLE: {
+    registerMapping(memRegId, regionOffset,remappedOffset, mappingType);
+    regionOffset+=getTotalSize(varId);
+    remappedOffset+=getTotalSize(varId);
+    break;
+  }
+  case AT_UNKNOWN:
+    // do not include in mapping
+    break;
+  default:
+    cerr<<"Error: VariableIdMappingExtended::memOffsetRemap: Undefined aggregate type in variable id mapping."<<endl;
+    exit(1);
+  }
+}
+void VariableIdMappingExtended::registerMapping(VariableId varId, CodeThorn::TypeSize regionOffset,CodeThorn::TypeSize remappedOffset, IndexRemappingEnum mappingType) {
+  cout<<"DEBUG: :register:"<<varId.toString(this)<<": "<<regionOffset<<" -> "<<remappedOffset<<" ("<<mappingType<<")"<<endl;
 }
 
 void VariableIdMappingExtended::classMemberOffsetsToStream(ostream& os, SgType* type, int32_t nestingLevel) {
