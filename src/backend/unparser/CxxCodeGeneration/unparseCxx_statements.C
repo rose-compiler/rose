@@ -4544,10 +4544,16 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
                            // Also if the false block is a transformation then we need to output a CR or a space.
                               if (true_body->isTransformation() == true || false_body->isTransformation() == true)
                                  {
+#if 0
+                                   curprint ("\n/* either the true_body or the false_body are a transformation */ \n");
+#endif
                                    curprint(" else ");
                                  }
                                 else
                                  {
+#if 0
+                                   curprint ("\n/* neither the true_body or the false_body are a transformation */ \n");
+#endif
 #if 0
                                    printf ("In unparseIfStmt(): true and false body not transformed: output the else part of token stream \n");
 #endif
@@ -4576,7 +4582,7 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
                          unp->cur.format(tmp_stmt, info, FORMAT_BEFORE_NESTED_STATEMENT);
                        }
 #if 0
-                    curprint("/* Unparse the if false body */");
+                    curprint("\n/* Unparse the if false body */ \n");
 #endif
 #if 0
                     curprint("\n/* Unparse the if false body */ \n");
@@ -4617,9 +4623,14 @@ void Unparse_ExprStmt::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
 #else
                if (saved_unparsedPartiallyUsingTokenStream == true)
                   {
+#if 0
+                    curprint("\n/* DONE: Unparse the if false body (skipping the false_body leading whitespace) */ \n");
+#endif
+                 // DQ (7/2/2021): I think this should be unparsed via the unparseStatement called fro the false body.
                  // New code where we unparse the whitespace between the else and the nested if statement.
                  // unparseStatementFromTokenStream (false_body, false_body, e_leading_whitespace_start, e_token_subsequence_start);
-                    unparseStatementFromTokenStream (if_stmt, e_leading_whitespace_start, e_token_subsequence_start, info);
+                 // unparseStatementFromTokenStream (if_stmt, e_leading_whitespace_start, e_token_subsequence_start, info);
+                 // unparseStatementFromTokenStream (if_stmt, e_leading_whitespace_start, e_leading_whitespace_end, info);
                   }
                  else
                   {

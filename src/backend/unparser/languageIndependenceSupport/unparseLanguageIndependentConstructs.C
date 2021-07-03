@@ -4528,7 +4528,8 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 #endif
 
 #if DEBUG_USING_CURPRINT
-     string s = "\n/* Processing training white space: firstStatement = " + StringUtility::numberToString(firstStatement) + " lastStatement = " + StringUtility::numberToString(lastStatement) + " */\n";
+  // string s = "\n/* Processing training white space: firstStatement = " + StringUtility::numberToString(firstStatement) + " lastStatement = " + StringUtility::numberToString(lastStatement) + " */\n";
+     string s = "\n/* Processing training white space: lastStatement = " + StringUtility::numberToString(lastStatement) + " */\n";
      curprint (s);
 #endif
 
