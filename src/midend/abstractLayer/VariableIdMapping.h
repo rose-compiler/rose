@@ -99,7 +99,7 @@ namespace CodeThorn {
     std::string uniqueVariableName(VariableId varId);
 
     // set number of elements of the memory region determined by this variableid
-    virtual void setNumberOfElements(VariableId variableId, size_t size);
+    virtual void setNumberOfElements(VariableId variableId, TypeSize size);
     // get number of elements of the memory region determined by this variableid
     virtual TypeSize getNumberOfElements(VariableId variableId);
 
@@ -189,7 +189,7 @@ namespace CodeThorn {
       std::map<TypeSize,TypeSize> numDimensionElements; // in elements, if unknown -1 or non existent (getDimensionElements(0) returns -1)
       bool relinked; // true if link analysis relinked this entry
       bool unspecifiedSize; // true if no declaration can be found to determine type size
-      std::string toString();
+      //std::string toString();
       std::string aggregateTypeToString();
       std::string variableScopeToString();
 
