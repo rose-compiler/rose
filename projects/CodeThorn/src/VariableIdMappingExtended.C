@@ -265,17 +265,22 @@ namespace CodeThorn {
 	//cout<<"DEBUG: Type:"<<type->unparseToString()<<endl;
 	CodeThorn::TypeSize typeSize=unknownSizeValue();
 	if(SgClassType* memberClassType=isSgClassType(type)) {
+	  getVariableIdInfoPtr(varId)->aggregateType=AT_STRUCT;
 	  typeSize=registerClassMembers(memberClassType,0,repairMode); // start with 0 for each nested type
 	  setTypeSize(type,typeSize);
 	  setNumberOfElements(varId,classMembers[type].size());
 	  setTotalSize(varId,typeSize);
-	  getVariableIdInfoPtr(varId)->aggregateType=AT_STRUCT;
 	} else if(SgArrayType* arrayType=isSgArrayType(type)) {
+	  getVariableIdInfoPtr(varId)->aggregateType=AT_ARRAY;
 	  typeSize=determineTypeSize(type);
 	  setTypeSize(type,typeSize);
-	  setNumberOfElements(varId,determineNumberOfArrayElements(arrayType));
+	  auto numElements=determineNumberOfArrayElements(arrayType);
+	  //cout<<"DEBUG: registerClassMembers: set numElements: "<<numElements<<endl;
+	  setNumberOfElements(varId,numElements);
+	  SgType* elementType=SageInterface::getArrayElementType(arrayType);
+	  setElementSize(varId,determineTypeSize(elementType));
 	  setTotalSize(varId,typeSize);
-	  getVariableIdInfoPtr(varId)->aggregateType=AT_ARRAY;
+	  //cout<<"DEBUG: registerClassMembers: arraytype: "<<varIdInfoToString(varId)<<" set numElements: "<<numElements<<endl;
 	} else {
 	  // only built-in scalar types
 	  typeSize=determineTypeSize(type);
@@ -672,18 +677,19 @@ CodeThorn::TypeSize VariableIdMappingExtended::determineElementTypeSize(SgArrayT
 }
 
 CodeThorn::TypeSize VariableIdMappingExtended::determineNumberOfArrayElements(SgArrayType* arrayType) {
-  //cout<<"DEBUG: VariableIdMappingExtended::determineNumberOfArrayElements:" <<arrayType->unparseToString()<<endl;
   SgExpression * indexExp =  arrayType->get_index();
-  //cout<<"DEBUG:VariableIdMappingExtended::determineNumberOfArrayElements: indexExp: "<< indexExp->unparseToString()<<endl;
+  CodeThorn::TypeSize numElems=unknownSizeValue();
   if((indexExp == nullptr) || isSgNullExpression(indexExp)) {
-    return unknownSizeValue();
+    numElems=unknownSizeValue();
   } else { 
     if(arrayType->get_is_variable_length_array()) {
-      return unknownSizeValue();
+      numElems=unknownSizeValue();
     } else {
-      return arrayType->get_number_of_elements();
+      numElems=arrayType->get_number_of_elements();
     }
   }
+  //cout<<"DEBUG:VariableIdMappingExtended::determineNumberOfArrayElements:"<<arrayType->unparseToString()<<" size: "<<numElems<<endl;
+  return numElems;
 }
 
 // also uses registerClassMembers 
@@ -700,8 +706,10 @@ CodeThorn::TypeSize VariableIdMappingExtended::determineTypeSize(SgType* type0) 
       SgType* elementType=SageInterface::getArrayElementType(arrayType);
       CodeThorn::TypeSize elementTypeSize=determineTypeSize(elementType);
       CodeThorn::TypeSize numberOfElements=determineNumberOfArrayElements(arrayType);
+      //cout<<"DEBUG: arraytype: elementTypeSize: "<<elementTypeSize<<" numElements: "<<numberOfElements<<endl;
       if(numberOfElements!=unknownSizeValue()&&elementTypeSize!=unknownSizeValue()) {
 	CodeThorn::TypeSize totalArraySize=elementTypeSize*numberOfElements;
+	//cout<<"DEBUG: total array size: "<<totalArraySize<<endl;
 	return totalArraySize;
       } else {
 	//cout<<"DEBUG: array size unknown: "<<type->unparseToString()<<":"<<numberOfElements<<" * "<<elementTypeSize<<endl;
@@ -840,7 +848,6 @@ void VariableIdMappingExtended::computeMemOffsetRemap() {
     if(varIdPair.second.variableScope!=VS_MEMBER) 
       memOffsetRemap(varIdPair.first,varIdPair.first,1,0,0, IDX_ORIGINAL);
   }
-  cout<<"DEBUG: -------------------------------------"<<endl<<endl;
 }
 
 void VariableIdMappingExtended::memOffsetRemap(VariableId memRegId, VariableId varId, int32_t remapIndex, CodeThorn::TypeSize regionOffset, CodeThorn::TypeSize remappedOffset, IndexRemappingEnum mappingType) {
@@ -849,7 +856,6 @@ void VariableIdMappingExtended::memOffsetRemap(VariableId memRegId, VariableId v
   case AT_STRUCT: {
     registerMapping(memRegId, regionOffset, remappedOffset, mappingType);
     std::vector<VariableId> members=getClassMembers(varId);
-    cout<<"DEBUG: members:"<<varId.toString(this)<<": "<<members.size()<<endl;
     for(auto memberVarId : members) {
       CodeThorn::TypeSize mVarOffset=getOffset(memberVarId);
       if(mVarOffset==unknownSizeValue()) {
@@ -858,45 +864,30 @@ void VariableIdMappingExtended::memOffsetRemap(VariableId memRegId, VariableId v
       }
       regionOffset+=mVarOffset;
       remappedOffset+=mVarOffset;
-      cout<<"DEBUG: :memOffsetRemap(REK):"<<memberVarId.toString(this)<<": "<<regionOffset<<" -> "<<remappedOffset<<" ("<<mappingType<<")"<<endl;
+      //cout<<"DEBUG: :memOffsetRemap(REK):"<<memberVarId.toString(this)<<": "<<regionOffset<<" -> "<<remappedOffset<<" ("<<mappingType<<")"<<endl;
       memOffsetRemap(memRegId,memberVarId,remapIndex,regionOffset,remappedOffset,mappingType);
     }
     break;
   }
-  case AT_ARRAY: {
-    auto elemSize=getElementSize(varId);
-    if(elemSize==unknownSizeValue()) {
-      cout<<"DEBUG: skipping1"<<endl;
-      return; // skip remapping for rest of type if elemSize is unknown
-    }
-    for(CodeThorn::TypeSize i=0;i<getNumberOfElements(varId);i++) {
-      regionOffset+=elemSize;
-      if(i>=remapIndex) {
-	registerMapping(memRegId, regionOffset,remappedOffset, IDX_REMAPPED);
-	remappedOffset=remapIndex*elemSize;
-      } else {
-	registerMapping(memRegId, regionOffset,remappedOffset, mappingType);
-	remappedOffset+=elemSize;
-      }
-      //memOffsetRemap(xxxx,remapIndex,regionOffset,remappedOffset); multidim? dimensionvector?
-    }
-    break;
-  }
+  case AT_ARRAY:
   case AT_STRING_LITERAL: {
     auto elemSize=getElementSize(varId);
     if(elemSize==unknownSizeValue()) {
       cout<<"DEBUG: skipping1"<<endl;
       return; // skip remapping for rest of type if elemSize is unknown
     }
+    CodeThorn::TypeSize regionStartOffset=regionOffset;
     for(CodeThorn::TypeSize i=0;i<getNumberOfElements(varId);i++) {
-      regionOffset+=elemSize;
       if(i>=remapIndex) {
 	registerMapping(memRegId, regionOffset,remappedOffset, IDX_REMAPPED);
-	remappedOffset=remapIndex*elemSize;
+	remappedOffset=regionStartOffset+remapIndex*elemSize;
       } else {
 	registerMapping(memRegId, regionOffset,remappedOffset, mappingType);
 	remappedOffset+=elemSize;
       }
+      regionOffset+=elemSize; // concrete offset
+      //if(getVariableIdInfo(varId).aggregateType==AT_ARRAY)
+      //memOffsetRemap(xxxx,remapIndex,regionOffset,remappedOffset); multidim? dimensionvector? (only difference to STRING_LITERAL)
     }
     break;
   }
