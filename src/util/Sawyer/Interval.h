@@ -32,6 +32,7 @@ namespace Container {
 template<class T>
 class Interval {
 public:
+    /** Types of values in the interval. */
     typedef T Value;
 private:
     T lo_, hi_;
@@ -159,8 +160,20 @@ public:
      *  Returns the smallest interval that contains @p lo (inclusive) through @p lo + @p size (exclusive).  If @p size is zero
      *  then an empty interval is created, in which case @p lo is irrelevant. */
     static Interval baseSize(T lo, T size) {
-        ASSERT_require2(lo + size >= lo, "overflow");
+        ASSERT_forbid(baseSizeOverflows(lo, size));
         return 0==size ? Interval() : Interval::hull(lo, lo+size-1);
+    }
+
+    /** Construct an interval from one endpoint and size, and clip overflows.
+     *
+     *  Returns the smallest interval that contains @p lo (inclusive) through @p lo + @p size (exclusvie). If @p lo + @p size
+     *  doesn't fit in an instance of @ref Value then the greatest possible value is used. */
+    static Interval baseSizeSat(T lo, T size) {
+        if (baseSizeOverflows(lo, size)) {
+            return hull(lo, boost::integer_traits<T>::const_max);
+        } else {
+            return baseSize(lo, size);
+        }
     }
 
     /** Construct an interval that covers the entire domain. */
@@ -179,6 +192,15 @@ public:
     Interval& operator=(T value) {
         lo_ = hi_ = value;
         return *this;
+    }
+
+    /** Tests whether a base and size overflows.
+     *
+     *  If the base (least value) plus the size would be larger than the maximum possible value, then returns true, otherwise
+     *  returns false. */
+    static bool baseSizeOverflows(T base, T size) {
+        // Warning: This only works when T is unsigned since signed integer overflow is undefined behavior in C++.
+        return base + size < base;
     }
 
     /** Returns lower limit. */
@@ -254,7 +276,9 @@ public:
     /** Size of interval.
      *
      *  If the interval is the whole space then the return value is zero due to overflow. */
-    Value size() const { return isEmpty() ? 0 : hi_ - lo_ + 1; }
+    Value size() const {
+        return isEmpty() ? 0 : hi_ - lo_ + 1;
+    }
 
     /** Equality test.
      *
@@ -344,6 +368,21 @@ public:
         } else {
             ASSERT_require(greatest()+1 == right.least() && right.least() > greatest());
             return hull(right);
+        }
+    }
+
+    /** Shift interval upward.
+     *
+     *  Adds @p n to all values of the interval to return a new interval.  An empty interval is returned if this interval
+     *  is empty or adding @p n to its least value would overflow.  A smaller interval is returned if adding @p n to the
+     *  greatest value would overflow. */
+    Interval shiftRightSat(Value n) const {
+        if (isEmpty() || baseSizeOverflows(least(), n)) {
+            return Interval();
+        } else if (baseSizeOverflows(greatest(), n)) {
+            return hull(least() + n, boost::integer_traits<T>::const_max);
+        } else {
+            return hull(least() + n, greatest() + n);
         }
     }
 
