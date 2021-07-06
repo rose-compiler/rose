@@ -11,7 +11,20 @@ namespace CodeThorn {
 
   class VariableIdMappingExtended : public VariableIdMapping {
   public:
-    
+
+    enum IndexRemappingEnum { IDX_ORIGINAL, IDX_REMAPPED };
+
+    class OffsetAbstractionMappingEntry {
+    public:
+      OffsetAbstractionMappingEntry();
+      OffsetAbstractionMappingEntry(CodeThorn::TypeSize,IndexRemappingEnum);
+      CodeThorn::TypeSize getRemappedOffset();
+      IndexRemappingEnum getIndexRemappingType();
+    private:
+      TypeSize remappedOffset=-1;
+      IndexRemappingEnum mappingType=IDX_ORIGINAL;
+    };
+  
     /**
      * create the mapping between symbols in the AST and associated
      * variable-ids. Each variable in the project is assigned one
@@ -22,9 +35,9 @@ namespace CodeThorn {
      * param[in] maxWarningsCount: A limit for the number of warnings to print.  0 = no warnings -1 = all warnings
     */    
     void computeVariableSymbolMapping(SgProject* project, int maxWarningsCount = 3) override;
-    void computeVariableSymbolMapping1(SgProject* project, int maxWarningsCount);
     void computeVariableSymbolMapping2(SgProject* project, int maxWarningsCount);
-
+    void computeMemOffsetRemap();
+    
     SgVariableDeclaration* getVariableDeclaration(VariableId varId) override;
     
     // direct lookup
@@ -61,6 +74,18 @@ namespace CodeThorn {
     CodeThorn::TypeSize registerClassMembers(SgClassType* classType, CodeThorn::TypeSize offset, bool repairMode=false);
     CodeThorn::TypeSize registerClassMembers(SgClassType* classType, std::list<SgVariableDeclaration*>& memberList, CodeThorn::TypeSize offset, bool repairMode=false);
     void classMemberOffsetsToStream(std::ostream& os, SgType* type, std::int32_t level);
+
+    // support for offset remapping abstraction
+  public:
+    void setArrayAbstractionIndex(int32_t remapIndex);
+    int32_t getArrayAbstractionIndex();
+    OffsetAbstractionMappingEntry getOffsetAbstractionMappingEntry(VariableId varId, CodeThorn::TypeSize regionOffset);
+  private:
+    void memOffsetRemap(VariableId memRegId, VariableId varId, int32_t remapIndex, CodeThorn::TypeSize regionOffset, CodeThorn::TypeSize remappedOffset, IndexRemappingEnum mappingType);
+    void registerMapping(VariableId memRegId, CodeThorn::TypeSize regionOffset,CodeThorn::TypeSize remappedOffset, IndexRemappingEnum idx);
+    int32_t _arrayAbstractionIndex=-1;
+    
+  public:
     SgType* strippedType(SgType* type);
     // does not strip pointer types, to avoid infinite recursion in rekursive data types
     SgType* strippedType2(SgType* type);
@@ -137,13 +162,15 @@ namespace CodeThorn {
     void registerClassMemberVar(SgType*,VariableId);
     void removeDataMembersOfClass(SgClassType* type);
     std::vector<VariableId> getClassMembers(SgType*);
+    std::vector<VariableId> getClassMembers(VariableId);
     std::map<SgType*,std::vector<VariableId> > classMembers;
+    
 
   private:
     bool isMemberVariableDeclaration(SgVariableDeclaration*);
     // determines all size information obtainable from SgType and sets values in varidinfo
     // 3rd param can be a nullptr, in which case no decl is determined and no aggregate initializer is checked for size (this is the case for formal function parameters)
-    void setVarIdInfoFromType(VariableId varId, SgType* type, SgVariableDeclaration* linkedDecl);
+    void setVarIdInfoFromType(VariableId varId);
     std::string varIdInfoToString(VariableId varId);
   
     void recordWarning(std::string);
@@ -157,6 +184,10 @@ namespace CodeThorn {
     std::list<SgFunctionDefinition*> _functionDefinitions;
     std::list<SgFunctionDeclaration*> _functionDeclarations;
     std::unordered_set<SgType*> _registeredTypes;
+
+    typedef std::unordered_map<TypeSize,OffsetAbstractionMappingEntry> TypeSizeOffsetAbstractionMapType;
+    typedef std::unordered_map<CodeThorn::VariableId, TypeSizeOffsetAbstractionMapType, VariableIdHash> VariableIdTypeSizeMappingType;
+    VariableIdTypeSizeMappingType _offsetAbstractionMapping;
 
   };
 }

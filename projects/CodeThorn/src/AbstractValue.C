@@ -81,6 +81,7 @@ void AbstractValue::copy(const AbstractValue& other) {
   valueType = other.valueType;
   variableId = other.variableId;
   label= other.label;
+  _summaryFlag=other._summaryFlag;
   switch(valueType) {
   case BOT:
   case TOP:
@@ -489,7 +490,7 @@ bool CodeThorn::strictWeakOrderingIsSmaller(const AbstractValue& c1, const Abstr
   if (c1.getValueType()!=c2.getValueType()) {
     return c1.getValueType()<c2.getValueType();
   } else {
-    ROSE_ASSERT(c1.getValueType()==c2.getValueType()); 
+    ROSE_ASSERT(c1.getValueType()==c2.getValueType());
     if(c1.isConstInt() && c2.isConstInt()) {
       return c1.getIntValue()<c2.getIntValue();
     } else if(c1.isConstFloat() && c2.isConstFloat()) {
@@ -502,7 +503,7 @@ bool CodeThorn::strictWeakOrderingIsSmaller(const AbstractValue& c1, const Abstr
       } else {
         //if(c1.getIntValue()!=c2.getIntValue()) {
           return c1.getIntValue()<c2.getIntValue();
-	//}
+	  //}
 	/*else {
           if(c1.getTypeSize()!=c2.getTypeSize())
             return c1.getTypeSize()<c2.getTypeSize();
@@ -535,6 +536,8 @@ bool CodeThorn::strictWeakOrderingIsSmaller(const AbstractValue& c1, const Abstr
         }
         return true;
       }
+    } else if(c1.isSummary()!=c2.isSummary()) {
+      return c1.isSummary()==false && c2.isSummary()==true;
     } else if (c1.isBot()==c2.isBot()) {
       return false;
     } else if (c1.isTop()==c2.isTop()) {
@@ -559,6 +562,8 @@ bool CodeThorn::strictWeakOrderingIsEqual(const AbstractValue& c1, const Abstrac
       return c1.getLabel()==c2.getLabel();
     } else if(c1.isPtrSet() && c2.isPtrSet()) {
       return c1.getAbstractValueSet()->isEqual(*c2.getAbstractValueSet());
+    } else if(c1.isSummary()!=c2.isSummary()) {
+      return false;
     } else {
       ROSE_ASSERT((c1.isTop()&&c2.isTop()) || (c1.isBot()&&c2.isBot()));
       return true;
@@ -1362,14 +1367,27 @@ AbstractValue AbstractValue::combine(AbstractValue val1, AbstractValue val2) {
 }
 
 bool AbstractValue::isSummary() const {
-  if(isTop())
+  if(isTop()||_summaryFlag)
      return true;
   if(isAVSet()) {
-    return getAVSetSize() > 1;
+    if(getAVSetSize() > 1) {
+      // if more than one value it is always considered to be a summary
+      return true;
+    } else if(getAVSetSize()==1) {
+      // special case of one AV element only, can be both abstract or concrete
+      AbstractValueSet* avSet=getAbstractValueSet();
+      AbstractValue av=*avSet->begin();
+      return av.isSummary();
+    }
+    // an empty AV set is not a summary
   }
   return false;
 }
 
+void AbstractValue::setSummaryFlag(bool flag) {
+  _summaryFlag=flag;
+}
+  
 AbstractValue AbstractValue::createTop() {
   CodeThorn::Top top;
   return AbstractValue(top);

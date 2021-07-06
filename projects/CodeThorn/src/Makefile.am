@@ -709,7 +709,11 @@ check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
 
-CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-io unit-test check-omp-cfg check-commandline-options check-vis check-acuity
+CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-io unit-test check-omp-cfg check-commandline-options check-vis
+
+CHECK_DEFAULT_FAILING_NEW=check-acuity
+# install_tree//lib/libcodethorn.so.0: undefined symbol: _ZTIN5boost15program_options13variables_mapE when loading .libs/libacuity.so
+# is not compiled with openmp enabled
 
 CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 

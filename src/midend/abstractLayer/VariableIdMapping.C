@@ -294,7 +294,7 @@ SgSymbol* VariableIdMapping::getSymbol(VariableId varid) {
   return mappingVarIdToInfo[varid].sym;
 }
 
-void VariableIdMapping::setNumberOfElements(VariableId variableId, size_t size) {
+void VariableIdMapping::setNumberOfElements(VariableId variableId, TypeSize size) {
   ROSE_ASSERT(variableId.isValid());
   //cout<<"DEBUG: VariableIdMapping::setNumberOfElements: "<<variableName(variableId)<<" size: "<<size<<endl;
   mappingVarIdToInfo[variableId].numberOfElements=size;

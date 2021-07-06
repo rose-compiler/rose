@@ -1327,7 +1327,7 @@ void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(SgProject* root, TimingCollect
 
   //initializeGlobalVariablesOld(root, estate);
   ROSE_ASSERT(_estateTransferFunctions);
-  _estateTransferFunctions->initializeGlobalVariablesNew(root, estate);
+  _estateTransferFunctions->initializeGlobalVariables(root, estate);
   SAWYER_MESG(logger[INFO]) <<"Initial state: number of entries:"<<estate.pstate()->stateSize()<<endl;
   
   setWorkLists(_explorationMode);

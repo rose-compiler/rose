@@ -222,6 +222,8 @@ class AbstractValue {
   static bool strictChecking; // if turned off, some error conditions are not active, but the result remains sound.
   static AbstractValue convertPtrToPtrSet(AbstractValue val); // requires val to be PTR
   bool isSummary() const;
+  // forces abstract value to be handled as a summary
+  void setSummaryFlag(bool flag); 
  private:
   // functions used for (de)allocating additional memory for some abstractions
   AbstractValueSet* abstractValueSetCopy() const;
@@ -240,9 +242,8 @@ class AbstractValue {
     void* extension=nullptr; // used for AVSet
   };
   Label label;
-  //CodeThorn::TypeSize typeSize=0;
-  //CodeThorn::TypeSize elementTypeSize=0; // shapr: set, use in +,- operations
- public:
+  bool _summaryFlag=false;
+public:
   static CodeThorn::VariableIdMappingExtended* _variableIdMapping;
   static bool byteMode; // computes byte offset for array and struct elements
   static bool pointerSetsEnabled;
