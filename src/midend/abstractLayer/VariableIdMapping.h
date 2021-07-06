@@ -274,6 +274,12 @@ namespace CodeThorn {
   bool operator!=(VariableId id1, VariableId id2);
   VariableIdSet& operator+=(VariableIdSet& s1, VariableIdSet& s2);
 
+  class VariableIdHash {
+  public:
+    size_t operator()(const VariableId& vid) const {
+      return vid.getIdCode();
+    }
+  };
 }
 
 // backward compatibility
