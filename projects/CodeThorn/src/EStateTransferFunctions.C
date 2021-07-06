@@ -4229,12 +4229,12 @@ namespace CodeThorn {
 	if(_analyzer->getVariableIdMapping()->isOfArrayType(memLocId)) {
 	  AbstractValue index=val.getIndexValue();
 	  if(!index.isTop()&&!index.isBot()) {
-	    int indexInt=val.getIndexIntValue();
-	    // TODO: multiply with element size
-	    if(indexInt>=arrayAbstractionIndex) {
-	      SAWYER_MESG(logger[DEBUG])<<"array abstraction active: remapping index: "<<indexInt<<" -> "<<arrayAbstractionIndex<<endl;
-	      val.setValue((long int)arrayAbstractionIndex);
-	      // TOOD: set flag that address is a summary now
+	    int offset=val.getIndexIntValue();
+	    auto remappingEntry=_analyzer->getVariableIdMapping()->getOffsetAbstractionMappingEntry(memLocId,offset);
+	    if(remappingEntry.getIndexRemappingType()==VariableIdMappingExtended::IndexRemappingEnum::IDX_REMAPPED) {
+	      //logger[TRACE]<<"remapping index "<<offset<<" -> "<<remappingEntry.getRemappedOffset()<<endl;
+	      val.setValue(remappingEntry.getRemappedOffset());
+	      val.setSummaryFlag(true);
 	    }
 	  }
 	}
