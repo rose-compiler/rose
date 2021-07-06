@@ -33,6 +33,10 @@ namespace Concolic {
 static const unsigned i386_NR_mmap   = 192;             //  | 0x40000000; // __X32_SYSCALL_BIT
 static const unsigned i386_NR_munmap = 91;              //  | 0x40000000; // __X32_SYSCALL_BIT
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Supporting functions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 static void
 hashMemoryRegion(Combinatorics::Hasher &hasher, const MemoryMap::Ptr &map, AddressInterval where) {
     while (!where.isEmpty()) {
@@ -46,6 +50,197 @@ hashMemoryRegion(Combinatorics::Hasher &hasher, const MemoryMap::Ptr &map, Addre
         where = AddressInterval::hull(regionRead.greatest() + 1, where.greatest());
     }
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// LinuxI386::SyscallContext
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+LinuxI386::SyscallContext::SyscallContext(const LinuxI386::Ptr &architecture, const BS::RiscOperatorsPtr &ops,
+                                          const P2::Partitioner &partitioner)
+    : partitioner(partitioner) {
+    ASSERT_not_null(architecture);
+    this->architecture = architecture;
+    ASSERT_not_null(ops);
+    this->ops = ops;
+}
+
+LinuxI386::SyscallContext::~SyscallContext() {}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// System call behaviors
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+class SyscallExitsProcess: public SyscallCallback {
+public:
+    static Ptr instance() {
+        return Ptr(new SyscallExitsProcess);
+    }
+
+    bool operator()(bool handled, SyscallContext &ctx) const override {
+        if (!handled) {
+            auto ops = Emulation::RiscOperators::promote(ctx.ops);
+            ops->doExit(ctx.argsConcrete[0]);
+            handled = true;
+        }
+        return handled;
+    }
+};
+
+class SyscallReturnsConstant: public SyscallCallback {
+public:
+    static Ptr instance() {
+        return Ptr(new SyscallReturnsConstant);
+    }
+
+    bool operator()(bool handled, SyscallContext &ctx_) const override {
+        LinuxI386::SyscallContext &ctx = dynamic_cast<LinuxI386::SyscallContext&>(ctx_);
+
+        if (!handled) {
+            Sawyer::Message::Stream debug(mlog[DEBUG]);
+            LinuxI386::Ptr architecture = ctx.architecture.dynamicCast<LinuxI386>();
+            ASSERT_not_null(architecture);
+
+            ctx.debugger->stepIntoSyscall();                // after this, we're in the syscall-exit-stop state
+            ctx.retEvent = architecture->applySystemCallReturn(ctx.partitioner, ctx.ops, ctx.syscallEvent->name(), ctx.callSite);
+
+            const RegisterDescriptor SYS_RET = architecture->systemCallReturnRegister();
+            ctx.retSValue = ctx.ops->undefined_(SYS_RET.nBits());
+            SymbolicExpr::Ptr retSymbolic = IS::SymbolicSemantics::SValue::promote(ctx.retSValue)->get_expression();
+            uint64_t retConcrete = ctx.retEvent->words()[0];
+
+            if (Sawyer::Optional<uint64_t> prevRetConcrete = ctx.systemCall->previousReturnConcrete()) {
+                // Make the syscall return the same symbolic value as before. We do this by adding a solver constraint to say that
+                // the current return value is the same as the past return value.
+                SymbolicExpr::Ptr prevRetSymbolic = ctx.systemCall->previousReturnSymbolic();
+                ASSERT_not_null(prevRetSymbolic);
+                SAWYER_MESG(debug) <<"  symbolic return must equal previous symbolic return\n";
+                SymbolicExpr::Ptr retvalsAreEqual = SymbolicExpr::makeEq(prevRetSymbolic, retSymbolic);
+                ctx.ops->solver()->insert(retvalsAreEqual);
+
+                // Make the syscall return the same concrete value as before.
+                if (*prevRetConcrete != retConcrete) {
+                    SAWYER_MESG(debug) <<"  replacing return value with " <<StringUtility::toHex2(*prevRetConcrete, SYS_RET.nBits()) <<"\n";
+                    ctx.retEvent->words(std::vector<uint64_t>{*prevRetConcrete});
+                    ctx.debugger->writeRegister(SYS_RET, *prevRetConcrete);
+                }
+            }
+
+            // Save the concrete and symbolic return values so we can make subsequent calls return the same.
+            ctx.systemCall->previousReturnConcrete(retConcrete);
+            ctx.systemCall->previousReturnSymbolic(retSymbolic);
+            ctx.ops->writeRegister(SYS_RET, ctx.retSValue);
+
+            handled = true;
+        }
+        return handled;
+    }
+};
+
+class SyscallReturnsIncreasing: public SyscallCallback {
+public:
+    static Ptr instance() {
+        return Ptr(new SyscallReturnsIncreasing);
+    }
+
+    bool operator()(bool handled, SyscallContext &ctx_) const override {
+        LinuxI386::SyscallContext &ctx = dynamic_cast<LinuxI386::SyscallContext&>(ctx_);
+
+        if (!handled) {
+            Sawyer::Message::Stream debug(mlog[DEBUG]);
+            LinuxI386::Ptr architecture = ctx.architecture.dynamicCast<LinuxI386>();
+            ASSERT_not_null(architecture);
+
+            ctx.debugger->stepIntoSyscall();                // after this, we're in the syscall-exit-stop state
+            ctx.retEvent = architecture->applySystemCallReturn(ctx.partitioner, ctx.ops, ctx.syscallEvent->name(), ctx.callSite);
+
+            const RegisterDescriptor SYS_RET = architecture->systemCallReturnRegister();
+            ctx.retSValue = ctx.ops->undefined_(SYS_RET.nBits());
+            SymbolicExpr::Ptr retSymbolic = IS::SymbolicSemantics::SValue::promote(ctx.retSValue)->get_expression();
+            uint64_t retConcrete = ctx.retEvent->words()[0];
+
+            if (Sawyer::Optional<uint64_t> prevRetConcrete = ctx.systemCall->previousReturnConcrete()) {
+                // Make the syscall return a symbolic value that's not less than the previous return value.
+                SymbolicExpr::Ptr prevRetSymbolic = ctx.systemCall->previousReturnSymbolic();
+                ASSERT_not_null(prevRetSymbolic);
+                SAWYER_MESG(debug) <<"  symbolic return must be >= previous symbolic return\n";
+                SymbolicExpr::Ptr retvalsAreIncreasing = SymbolicExpr::makeGe(retSymbolic, prevRetSymbolic);
+                ctx.ops->solver()->insert(retvalsAreIncreasing);
+
+                // Make the syscall return a concrete value that's not less than the previous concrete return value.
+                if (retConcrete < *prevRetConcrete) {
+                    SAWYER_MESG(debug) <<"  replacing return value with " <<StringUtility::toHex2(*prevRetConcrete, SYS_RET.nBits()) <<"\n";
+                    ctx.retEvent->words(std::vector<uint64_t>{*prevRetConcrete});
+                    ctx.debugger->writeRegister(SYS_RET, *prevRetConcrete);
+                }
+            }
+
+            // Save the concrete and symbolic return values for comparisons in the next call.
+            ctx.systemCall->previousReturnConcrete(retConcrete);
+            ctx.systemCall->previousReturnSymbolic(retSymbolic);
+            ctx.ops->writeRegister(SYS_RET, ctx.retSValue);
+
+            handled = true;
+        }
+        return handled;
+    }
+};
+
+void
+LinuxI386::configureSystemCalls() {
+    // These are the generally useful configurations. Feel free to override these to accomplish whatever kind of testing you
+    // need.
+
+    SystemCall::Ptr sc;
+
+    // SYS_exit
+    sc = SystemCall::instance();
+    sc->callbacks().append(SyscallExitsProcess::instance());
+    systemCalls().insert(1, sc);
+
+    // SYS_time
+    sc = SystemCall::instance();
+    sc->callbacks().append(SyscallReturnsIncreasing::instance());
+    systemCalls().insert(13, sc);
+
+    // SYS_getpid
+    sc = SystemCall::instance();
+    sc->callbacks().append(SyscallReturnsConstant::instance());
+    systemCalls().insert(20, sc);
+
+    // SYS_getuid: assumes SYS_setuid is never successfully called
+    sc = SystemCall::instance();
+    sc->callbacks().append(SyscallReturnsConstant::instance());
+    systemCalls().insert(24, sc);
+
+    // SYS_getgid: assumes SYS_setgid is never successfully called
+    sc = SystemCall::instance();
+    sc->callbacks().append(SyscallReturnsConstant::instance());
+    systemCalls().insert(47, sc);
+
+    // SYS_geteuid: assumes SYS_setuid is never successfully called
+    sc = SystemCall::instance();
+    sc->callbacks().append(SyscallReturnsConstant::instance());
+    systemCalls().insert(50, sc);
+
+    // SYS_getppid
+    sc = SystemCall::instance();
+    sc->callbacks().append(SyscallReturnsConstant::instance());
+    systemCalls().insert(64, sc);
+
+    // SYS_getpgrp
+    sc = SystemCall::instance();
+    sc->callbacks().append(SyscallReturnsConstant::instance());
+    systemCalls().insert(65, sc);
+
+    // SYS_exit_group
+    sc = SystemCall::instance();
+    sc->callbacks().append(SyscallExitsProcess::instance());
+    systemCalls().insert(252, sc);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// LinuxI386
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 LinuxI386::LinuxI386(const Database::Ptr &db, TestCaseId tcid)
     : Architecture(db, tcid) {}
@@ -236,17 +431,9 @@ LinuxI386::playEvent(const ExecutionEvent::Ptr &event) {
             if (playingSyscall_.second == event->location().primary) {
                 uint64_t functionNumber = playingSyscall_.first;
                 if (SystemCallPtr systemCall = systemCalls().getOrDefault(functionNumber)) {
-                    if (systemCall->isConstantReturn()) {
-                        if (!systemCall->constantReturnSymbolic()) {
-                            SymbolicExpr::Ptr symbolicRetval = event->inputVariable();
-                            SAWYER_MESG(mlog[DEBUG]) <<"    saved first symbolic return value: " <<*symbolicRetval <<"\n";
-                            systemCall->constantReturnSymbolic(symbolicRetval);
-                        }
-                        if (!systemCall->constantReturnConcrete()) {
-                            uint64_t concreteRetval = event->words()[0];
-                            SAWYER_MESG(mlog[DEBUG]) <<"    saved first concrete return value: " <<concreteRetval <<"\n";
-                            systemCall->constantReturnConcrete(concreteRetval);
-                        }
+                    if (RegisterDescriptor::fromRaw(event->scalar()) == systemCallReturnRegister()) {
+                        systemCall->previousReturnSymbolic(event->inputVariable());
+                        systemCall->previousReturnConcrete(event->words()[0]);
                     }
                 }
             }
@@ -652,7 +839,7 @@ ExecutionEvent::Ptr
 LinuxI386::applySystemCallReturn(const P2::Partitioner &partitioner, const BS::RiscOperatorsPtr &ops,
                                  const std::string &syscallName, rose_addr_t syscallVa) {
     ASSERT_not_null(ops);
-    const RegisterDescriptor SYS_RET = systemCallReturnRegister(partitioner);
+    const RegisterDescriptor SYS_RET = systemCallReturnRegister();
 
     // Get the concrete return value from the system call, and write it to the symbolic state.
     uint64_t retConcrete = debugger_->readRegister(SYS_RET).toInteger();
@@ -672,7 +859,7 @@ LinuxI386::createSystemCallReturnInput(const P2::Partitioner &partitioner, const
                                        const std::string &syscallName, const ExecutionEvent::Ptr &retEvent) {
     auto ops = Emulation::RiscOperators::promote(ops_);
     ASSERT_not_null(ops);
-    const RegisterDescriptor SYS_RET = systemCallReturnRegister(partitioner);
+    const RegisterDescriptor SYS_RET = systemCallReturnRegister();
 
     // Create a symolic variable to represent that there was a system call return value that's being treated as a program
     // input that could change in subsequent runs, and link this variable to the execution event.
@@ -730,14 +917,14 @@ LinuxI386::systemCallArgument(const P2::Partitioner &partitioner, const BS::Risc
 }
 
 RegisterDescriptor
-LinuxI386::systemCallReturnRegister(const P2::Partitioner &partitioner) {
-    return partitioner.instructionProvider().registerDictionary()->findOrThrow("eax");
+LinuxI386::systemCallReturnRegister() {
+    return RegisterDescriptor(x86_regclass_gpr, x86_gpr_ax, 0, 32);
 }
 
 BS::SValuePtr
 LinuxI386::systemCallReturnValue(const P2::Partitioner &partitioner, const BS::RiscOperatorsPtr &ops) {
     ASSERT_not_null(ops);
-    const RegisterDescriptor reg = systemCallReturnRegister(partitioner);
+    const RegisterDescriptor reg = systemCallReturnRegister();
     return ops->readRegister(reg);
 }
 
@@ -745,57 +932,9 @@ BS::SValuePtr
 LinuxI386::systemCallReturnValue(const P2::Partitioner &partitioner, const BS::RiscOperatorsPtr &ops,
                                  const BS::SValuePtr &retval) {
     ASSERT_not_null(ops);
-    const RegisterDescriptor reg = systemCallReturnRegister(partitioner);
+    const RegisterDescriptor reg = systemCallReturnRegister();
     ops->writeRegister(reg, retval);
     return retval;
-}
-
-void
-LinuxI386::configureSystemCalls() {
-    // These are the generally useful configurations. Feel free to override these to accomplish whatever kind of testing you
-    // need.
-
-    SystemCall::Ptr sc;
-
-    // SYS_exit
-    sc = SystemCall::instance();
-    sc->exitsProcess(true);
-    systemCalls().insert(1, sc);
-
-    // SYS_getpid
-    sc = SystemCall::instance();
-    sc->isConstantReturn(true);
-    systemCalls().insert(20, sc);
-
-    // SYS_getuid: assumes SYS_setuid is never successfully called
-    sc = SystemCall::instance();
-    sc->isConstantReturn(true);
-    systemCalls().insert(24, sc);
-
-    // SYS_getgid: assumes SYS_setgid is never successfully called
-    sc = SystemCall::instance();
-    sc->isConstantReturn(true);
-    systemCalls().insert(47, sc);
-
-    // SYS_geteuid: assumes SYS_setuid is never successfully called
-    sc = SystemCall::instance();
-    sc->isConstantReturn(true);
-    systemCalls().insert(50, sc);
-
-    // SYS_getppid
-    sc = SystemCall::instance();
-    sc->isConstantReturn(true);
-    systemCalls().insert(64, sc);
-
-    // SYS_getpgrp
-    sc = SystemCall::instance();
-    sc->isConstantReturn(true);
-    systemCalls().insert(65, sc);
-
-    // SYS_exit_group
-    sc = SystemCall::instance();
-    sc->exitsProcess(true);
-    systemCalls().insert(252, sc);
 }
 
 void
@@ -808,6 +947,8 @@ LinuxI386::systemCall(const P2::Partitioner &partitioner, const BS::RiscOperator
     // to adjust the instruction pointer), and the concrete execution has stepped into the system call but has not yet executed
     // it (i.e., the subordinate process is in the syscall-enter-stop state).
 
+    SyscallContext ctx(sharedFromThis(), ops_, partitioner);
+
     //-------------------------------------
     // Create system call execution event.
     //-------------------------------------
@@ -815,20 +956,19 @@ LinuxI386::systemCall(const P2::Partitioner &partitioner, const BS::RiscOperator
     // Gather info about the system call such as its arguments. On Linux, system calls have up to six arguments stored
     // in registers, so we just grab all six for now since we don't want to maintain a big switch statement to say how
     // many arguments each system call actually uses.
-    rose_addr_t va = debugger_->executionAddress();
+    ctx.callSite = debugger_->executionAddress();
     uint64_t functionNumber = systemCallFunctionNumber(partitioner, ops);
-    std::vector<uint64_t> arguments;
     for (size_t i = 0; i < 6; ++i) {
         BS::SValuePtr argSymbolic = systemCallArgument(partitioner, ops, i);
         if (auto argConcrete = argSymbolic->toUnsigned()) {
-            arguments.push_back(*argConcrete);
+            ctx.argsConcrete.push_back(*argConcrete);
         } else {
             ASSERT_not_implemented("non-concrete system call argument");
         }
     }
     if (debug) {
         debug <<"syscall-" <<functionNumber <<", args = (";
-        for (uint64_t arg: arguments)
+        for (uint64_t arg: ctx.argsConcrete)
             debug <<" " <<StringUtility::toHex(arg);
         debug <<" )\n";
     }
@@ -837,88 +977,45 @@ LinuxI386::systemCall(const P2::Partitioner &partitioner, const BS::RiscOperator
     // happened yet). Since the side effect events (created shortly) are general things like "write this value to this
     // register", the fact that they're preceded by this syscall event is what marks them as being side effects of this system
     // call.
-    auto syscallEvent = ExecutionEvent::instanceSyscall(testCase(), nextLocation(), va, functionNumber, arguments);
-    syscallEvent->name((boost::format("syscall-%d.%d") % functionNumber % syscallSequenceNumbers_[functionNumber]++).str());
-    ExecutionEventId syscallEventId = database()->id(syscallEvent);
-    SAWYER_MESG(debug) <<"  created execution event " <<*syscallEventId <<" for " <<syscallEvent->name() <<"\n";
+    ctx.syscallEvent = ExecutionEvent::instanceSyscall(testCase(), nextLocation(), ctx.callSite, functionNumber, ctx.argsConcrete);
+    ctx.syscallEvent->name((boost::format("syscall-%d.%d") % functionNumber % syscallSequenceNumbers_[functionNumber]++).str());
+    ExecutionEventId syscallEventId = database()->id(ctx.syscallEvent);
+    SAWYER_MESG(debug) <<"  created execution event " <<*syscallEventId <<" for " <<ctx.syscallEvent->name() <<"\n";
 
-    //-----------------------------------------------------------------------------------------
-    // Process the system call concretely. The debugger is in the syscall-enter-stop state now.
-    //-----------------------------------------------------------------------------------------
+    // Process the system call by invoking callbacks that the user can override.
+    if ((ctx.systemCall = systemCalls().getOrDefault(functionNumber))) {
+        bool handled = ctx.systemCall->callbacks().apply(false, ctx);
+        if (!handled) {
+            mlog[ERROR] <<"syscall-" <<functionNumber <<" was not handled by any callback\n";
+            debugger_->stepIntoSyscall();                   // after this, we're in the syscall-exit-stop state
 
-    const RegisterDescriptor SYS_RET = systemCallReturnRegister(partitioner);
-    ExecutionEvent::Ptr retEvent;                       // optional system call return to be replayed in child test cases
-    BS::SValuePtr retSValue;                            // optional input variable for child test cases
-
-    SystemCall::Ptr systemCall = systemCalls().getOrDefault(functionNumber);
-    ASSERT_not_null2(systemCall, "system call " + boost::lexical_cast<std::string>(functionNumber) + " is not declared\n");
-
-    if (systemCall->exitsProcess()) {
-        // These don't return
-        ops->doExit(arguments[0]);
-
-    } else if (systemCall->isConstantReturn()) {
-        // These always return the same value
-        debugger_->stepIntoSyscall();                   // after this, we're in the syscall-exit-stop state
-        retEvent = applySystemCallReturn(partitioner, ops, syscallEvent->name(), va);
-
-        retSValue = ops->undefined_(SYS_RET.nBits());
-        SymbolicExpr::Ptr retSymbolic = IS::SymbolicSemantics::SValue::promote(retSValue)->get_expression();
-        uint64_t retConcrete = retEvent->words()[0];
-
-        if (Sawyer::Optional<uint64_t> firstRetConcrete = systemCall->constantReturnConcrete()) {
-            // Make the syscall return the same symbolic value as before. We do this by adding a solver constraint to say that
-            // the current return value is the same as the past return value.
-            SymbolicExpr::Ptr firstRetSymbolic = systemCall->constantReturnSymbolic();
-            ASSERT_not_null(firstRetSymbolic);
-            SAWYER_MESG(debug) <<"  symbolic return must equal previous symbolic return\n";
-            SymbolicExpr::Ptr retvalsAreEqual = SymbolicExpr::makeEq(firstRetSymbolic, retSymbolic);
-            ops->solver()->insert(retvalsAreEqual);
-
-            // Make the syscall return the same concrete value as before.
-            if (*firstRetConcrete != retConcrete) {
-                SAWYER_MESG(debug) <<"  replacing return value with " <<StringUtility::toHex2(*firstRetConcrete, SYS_RET.nBits()) <<"\n";
-                retEvent->words(std::vector<uint64_t>{*firstRetConcrete});
-                debugger_->writeRegister(SYS_RET, *firstRetConcrete);
-            }
-
-        } else {
-            // Save the concrete and symbolic return values so we can make subsequent calls return the same.
-            SAWYER_MESG(debug) <<"  this is a constant-returning system call\n"
-                               <<"    concrete returns will all be " <<StringUtility::toHex2(retConcrete, SYS_RET.nBits()) <<"\n"
-                               <<"    symbolic returns will all equal " <<*retSymbolic <<"\n";
-            systemCall->constantReturnConcrete(retConcrete);
-            systemCall->constantReturnSymbolic(retSymbolic);
+            // Create an event and input variable for the system call return value.
+            ctx.retEvent = applySystemCallReturn(partitioner, ops, ctx.syscallEvent->name(), ctx.callSite);
+            const RegisterDescriptor SYS_RET = systemCallReturnRegister();
+            ctx.retSValue = ops->undefined_(SYS_RET.nBits());
+            ops->writeRegister(SYS_RET, ctx.retSValue);
         }
-
-        ops->writeRegister(SYS_RET, retSValue);
-
     } else {
-        // Other system calls
+        mlog[ERROR] <<"syscall-" <<functionNumber <<" has no declaration\n";
         debugger_->stepIntoSyscall();                   // after this, we're in the syscall-exit-stop state
-
-        // Create an event and input variable for the system call return value.
-        retEvent = applySystemCallReturn(partitioner, ops, syscallEvent->name(), va);
-        retSValue = ops->undefined_(SYS_RET.nBits());
-        ops->writeRegister(SYS_RET, retSValue);
     }
 
     //------------------------------------
     // Record any additional side effects
     //------------------------------------
 
-    if (retSValue) {
-        ASSERT_not_null(retEvent);
-        SymbolicExpr::Ptr retSymbolic = IS::SymbolicSemantics::SValue::promote(retSValue)->get_expression();
-        ops->inputVariables().insertSystemCallReturn(retEvent, retSymbolic);
-        SAWYER_MESG(mlog[DEBUG]) <<"  created input variable " <<*retSValue
-                                 <<" for " <<retEvent->printableName(database()) <<"\n";
+    if (ctx.retSValue) {
+        ASSERT_not_null(ctx.retEvent);
+        SymbolicExpr::Ptr retSymbolic = IS::SymbolicSemantics::SValue::promote(ctx.retSValue)->get_expression();
+        ops->inputVariables().insertSystemCallReturn(ctx.retEvent, retSymbolic);
+        SAWYER_MESG(debug) <<"  created input variable " <<*ctx.retSValue
+                           <<" for " <<ctx.retEvent->printableName(database()) <<"\n";
     }
 
-    if (retEvent) {
-        ExecutionEventId retEventId = database()->id(retEvent);
-        SAWYER_MESG(mlog[DEBUG]) <<"  created execution event " <<*retEventId
-                                 <<" for " <<retEvent->name() <<"\n";
+    if (ctx.retEvent) {
+        ExecutionEventId retEventId = database()->id(ctx.retEvent);
+        SAWYER_MESG(debug) <<"  created execution event " <<*retEventId
+                           <<" for " <<ctx.retEvent->name() <<"\n";
     }
 }
 

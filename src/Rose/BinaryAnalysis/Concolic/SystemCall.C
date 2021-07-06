@@ -3,9 +3,22 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Concolic/SystemCall.h>
 
+#include <Rose/BinaryAnalysis/Concolic/Architecture.h>
+#include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SyscallContext
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+SyscallContext::~SyscallContext() {}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SystemCall
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SystemCall::SystemCall() {}
 
@@ -16,51 +29,34 @@ SystemCall::instance() {
     return Ptr(new SystemCall);
 }
 
-bool
-SystemCall::exitsProcess() const {
-    return exitsProcess_;
-}
-
-void
-SystemCall::exitsProcess(bool b) {
-    exitsProcess_ = b;
-}
-
-bool
-SystemCall::isConstantReturn() const {
-    return constantReturn_.enabled;
-}
-
-void
-SystemCall::isConstantReturn(bool b) {
-    constantReturn_.enabled = b;
-    if (!b) {
-        constantReturn_.concrete = Sawyer::Nothing();
-        constantReturn_.symbolic = SymbolicExpr::Ptr();
-    }
-}
-
 const Sawyer::Optional<uint64_t>&
-SystemCall::constantReturnConcrete() const {
-    return constantReturn_.concrete;
+SystemCall::previousReturnConcrete() const {
+    return prevReturnConcrete_;
 }
 
 void
-SystemCall::constantReturnConcrete(uint64_t value) {
-    constantReturn_.enabled = true;
-    constantReturn_.concrete = value;
+SystemCall::previousReturnConcrete(uint64_t value) {
+    prevReturnConcrete_ = value;
 }
 
 SymbolicExpr::Ptr
-SystemCall::constantReturnSymbolic() const {
-    return constantReturn_.symbolic;
+SystemCall::previousReturnSymbolic() const {
+    return prevReturnSymbolic_;
 }
 
 void
-SystemCall::constantReturnSymbolic(const SymbolicExpr::Ptr &value) {
-    ASSERT_not_null(value);
-    constantReturn_.enabled = true;
-    constantReturn_.symbolic = value;
+SystemCall::previousReturnSymbolic(const SymbolicExpr::Ptr &value) {
+    prevReturnSymbolic_ = value;
+}
+
+const SystemCall::Callbacks&
+SystemCall::callbacks() const {
+    return callbacks_;
+}
+
+SystemCall::Callbacks&
+SystemCall::callbacks() {
+    return callbacks_;
 }
 
 } // namespace
