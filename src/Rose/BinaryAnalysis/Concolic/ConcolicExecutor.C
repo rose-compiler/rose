@@ -349,6 +349,8 @@ ConcolicExecutor::handleBranch(const Database::Ptr &db, const TestCase::Ptr &tes
 
         // Add the branch taken condition to the solver since all future assertions will also depend on having taken this branch.
         solver->insert(followedCond);
+    } else if (inode) {
+        SAWYER_MESG(mlog[ERROR]) <<"instruction pointer expression no handled (not a constant or ITE): " <<*inode <<"\n";
     }
 }
 
@@ -367,10 +369,10 @@ ConcolicExecutor::run(const Database::Ptr &db, const TestCase::Ptr &testCase, co
     SmtSolver::Ptr solver = ops->solver();
     ops->printInputVariables(debug);
     ops->printAssertions(debug);
-    if (mlog[DEBUG]) {
+    if (debug) {
         BS::Formatter fmt;
         fmt.set_line_prefix("  ");
-        mlog[DEBUG] <<"initial state:\n" <<(*ops->currentState() + fmt);
+        debug <<"initial state:\n" <<(*ops->currentState() + fmt);
     }
     const P2::Partitioner &partitioner = ops->partitioner();
 
@@ -405,6 +407,11 @@ ConcolicExecutor::run(const Database::Ptr &db, const TestCase::Ptr &testCase, co
 //            }
         }
 
+#if 0 // DEBUGGING [Robb Matzke 2021-06-29]
+        if (insn->get_address() == 0x0804903b)
+            debug.enable();
+        SAWYER_MESG(debug) <<"state:\n" <<*ops->currentState();
+#endif
         if (cpu->isTerminated()) {
             SAWYER_MESG_OR(trace, debug) <<"subordinate has terminated\n";
             break;
