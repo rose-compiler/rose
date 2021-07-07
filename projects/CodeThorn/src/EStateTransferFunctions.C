@@ -602,7 +602,7 @@ namespace CodeThorn {
     // ignore AsmStmt
     return transferIdentity(edge,estate);
   }
-  
+  long int functionAnalyzedNr=0;
   std::list<EState> EStateTransferFunctions::transferFunctionEntry(Edge edge, const EState* estate) {
     Label lab=estate->label();
     SgNode* node=_analyzer->getLabeler()->getNode(lab);
@@ -610,7 +610,7 @@ namespace CodeThorn {
     if(funDef) {
       string functionName=SgNodeHelper::getFunctionName(node);
       string fileName=SgNodeHelper::sourceFilenameToString(node);
-      SAWYER_MESG(logger[INFO])<<"Analyzing Function:"<<fileName<<" : "<<functionName<<endl;
+      if(_analyzer->getOptionsRef().status) cout<<"Analyzing Function #"<<functionAnalyzedNr++<<": "<<fileName<<" : "<<functionName<<endl;
       SgInitializedNamePtrList& formalParameters=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
       SAWYER_MESG(logger[TRACE])<<"Function:"<<functionName<<" Parameters: ";
       for(auto fParam : formalParameters) {
@@ -1408,7 +1408,7 @@ namespace CodeThorn {
     SgArrayType* arrayType=isSgArrayType(initName->get_type());
     if(arrayType) {
       SgType* arrayElementType=arrayType->get_base_type();
-      setElementSize(initDeclVarId,arrayElementType);
+      //setElementSize(initDeclVarId,arrayElementType); // DO NOT OVERRIDE
       int numElements=getVariableIdMapping()->getArrayElementCount(arrayType);
       if(numElements==0) {
 	SAWYER_MESG(logger[TRACE])<<"Number of elements in array is 0 (from variableIdMapping) - evaluating expression"<<endl;
@@ -1447,7 +1447,7 @@ namespace CodeThorn {
       // set type info for initDeclVarId
       getVariableIdMapping()->setNumberOfElements(initDeclVarId,1); // single variable
       SgType* variableType=initName->get_type();
-      setElementSize(initDeclVarId,variableType);
+      //setElementSize(initDeclVarId,variableType); DO NOT OVERRIDE
     }
 
     SAWYER_MESG(logger[TRACE])<<"Creating new PState"<<endl;
@@ -1866,8 +1866,7 @@ namespace CodeThorn {
 		arrayPtrValue=AbstractValue::createTop();
 	      }
 	    } else {
-	      SAWYER_MESG(logger[ERROR]) <<"lhs array access: unknown type of array or pointer."<<endl;
-	      exit(1);
+	      fatalErrorExit(nextNodeToAnalyze2,"lhs array access: unknown type of array or pointer.");
 	    }
 
 	    list<SingleEvalResultConstInt> res=evaluateExpression(indexExp,currentEState);
@@ -1945,11 +1944,7 @@ namespace CodeThorn {
 	if(_analyzer->getSkipArrayAccesses()&&isSgPointerDerefExp(lhs)) {
 	  SAWYER_MESG(logger[WARN])<<"skipping pointer dereference: "<<lhs->unparseToString()<<endl;
 	} else {
-	  SAWYER_MESG(logger[ERROR]) << "transferfunction:SgAssignOp: unrecognized expression on lhs."<<endl;
-	  SAWYER_MESG(logger[ERROR]) << "expr: "<< lhs->unparseToString()<<endl;
-	  SAWYER_MESG(logger[ERROR]) << "type: "<<lhs->class_name()<<endl;
-	  //cerr << "performing no update of state!"<<endl;
-	  exit(1);
+	  fatalErrorExit(nextNodeToAnalyze2,"transferfunction:SgAssignOp: unrecognized expression on lhs.");
 	}
       }
     }
@@ -2094,8 +2089,7 @@ namespace CodeThorn {
       // TODO: this case should be handled as part of transferExprStmt (or ExpressionRoot)
       //cout<<"DEBUG: function call"<<(isCondition?" (inside condition) ":"")<<nextNodeToAnalyze->unparseToString()<<endl;
       // this case cannot happen for normalized code
-      SAWYER_MESG(logger[ERROR])<<"Function call detected not represented in ICFG. Normalization required:"<<SgNodeHelper::sourceLineColumnToString(funCall)<<":"<<funCall->unparseToString()<<endl;
-      exit(1);
+      fatalErrorExit(funCall,"Function call detected not represented in ICFG. Normalization required.");
     } else {
       ROSE_ASSERT(!edge.isType(EDGE_EXTERNAL));
       ROSE_ASSERT(!edge.isType(EDGE_CALLRETURN));
@@ -2254,8 +2248,9 @@ namespace CodeThorn {
       else if(val==1)
 	return AbstractValue(true);
       else {
-	SAWYER_MESG(logger[ERROR])<<"Error: unknown bool value (not 0 or 1): SgBoolExp::get_value()=="<<val<<endl;
-	exit(1);
+	stringstream ss;
+	ss<<"Error: unknown bool value (not 0 or 1): SgBoolExp::get_value()=="<<val;
+	fatalErrorExit(valueExp,ss.str());
       }
     }
     default:
@@ -3166,9 +3161,7 @@ namespace CodeThorn {
 	  }
 	}
       } else {
-	SAWYER_MESG(logger[ERROR])<<"Unsupported array-access of multi-dimensional array: ";
-	SAWYER_MESG(logger[ERROR])<<SgNodeHelper::lineColumnNodeToString(node)<<" ";
-	exit(1);
+	fatalErrorExit(node,"Unsupported array-access of multi-dimensional array");
       }
       return resultList;
     }

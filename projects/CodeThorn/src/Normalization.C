@@ -178,6 +178,7 @@ namespace CodeThorn {
     printNormalizationPhase();
     if(options.normalizeCompoundAssignments) {
       normalizeCompoundAssignmentsInAst(root);
+    } else {
     }
     printNormalizationPhase();
     if(options.hoistConditionExpressions) {

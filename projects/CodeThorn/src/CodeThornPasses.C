@@ -57,6 +57,7 @@ namespace CodeThorn {
     CodeThorn::Pass::WITH_EXTENDED_NORMALIZED_CALL=ctOpt.extendedNormalizedCppFunctionCalls; // to be used without global var
 
     CFAnalysis* cfanalyzer=new CFAnalysis(labeler);
+    cfanalyzer->setInterProcedural(ctOpt.getInterProceduralFlag());
     if(!ctOpt.extendedNormalizedCppFunctionCalls) {
       if(ctOpt.status) cout<<"Phase: C ICFG construction"<<endl;
       cfanalyzer->createCICFG(root);
