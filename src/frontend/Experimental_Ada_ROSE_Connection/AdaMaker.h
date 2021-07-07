@@ -162,6 +162,12 @@ namespace Ada_ROSE_Translation
   /// creates the most general real type
   SgType& mkRealType();
 
+  /// creates a constant type for \ref basety
+  SgType& mkConstType(SgType& underType);
+
+  /// creates an aliased type for \ref basety
+  SgType& mkAliasedType(SgType& underType);
+
   /// create a formal type
   SgAdaFormalType& mkAdaFormalType(const std::string& name);
 

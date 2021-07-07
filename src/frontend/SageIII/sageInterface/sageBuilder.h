@@ -267,6 +267,9 @@ ROSE_DLL_API SgModifierType* buildModifierType(SgType* base_type = NULL);
 //! Build a const type.
 ROSE_DLL_API SgModifierType* buildConstType(SgType* base_type = NULL);
 
+//! Build an aliased type for Ada.
+ROSE_DLL_API SgModifierType* buildAliasedType(SgType* base_type = NULL);
+
 //! Build a volatile type.
 ROSE_DLL_API SgModifierType* buildVolatileType(SgType* base_type = NULL);
 
@@ -811,24 +814,24 @@ buildFunctionCallExp(const SgName& name, SgType* return_type, SgExprListExp* par
 
 
 //! Build member function calls
-/*! 
+/*!
  *Create a member function call
  *  This function looks for the function symbol in the given className
  *  The function should exist in the class
  *  The class should be #included or present in the source file parsed by frontend
- *   
- * Parameters: 
+ *
+ * Parameters:
  *  className: template class name, e.g. vector
- *  objectExpression: the variable reference expression to an object of template class instantiation:  vector<int> var1; 
+ *  objectExpression: the variable reference expression to an object of template class instantiation:  vector<int> var1;
  *  functionName: member function name: size
  *  params: function parameter list
  *  scope: the scope this function call expression will be inserted into.
- * Credit to Peter's previous work at:  
+ * Credit to Peter's previous work at:
  * projects/MatlabTranslation/src/transformations/MatlabSimpleTransformer.cc
  */
-ROSE_DLL_API SgFunctionCallExp* 
+ROSE_DLL_API SgFunctionCallExp*
 buildMemberFunctionCall (std::string className, SgExpression *objectExpression, std::string functionName, SgExprListExp *params, SgScopeStatement *scope);
-  
+
 //! Build member function calls. objectExpression: the variable reference expression to an object of template class instantiation:  vector<int> var1;
 ROSE_DLL_API SgFunctionCallExp* buildMemberFunctionCall (SgExpression*     objectExpression, SgMemberFunctionSymbol* functionSymbol,
                                           SgExprListExp*    params);
@@ -999,8 +1002,8 @@ buildVariableDeclaration(const std::string & name, SgType *type, SgInitializer *
 ROSE_DLL_API SgVariableDeclaration*
 buildVariableDeclaration(const char* name, SgType *type, SgInitializer *varInit=NULL, SgScopeStatement* scope=NULL);
 
-// DQ (6/25/2019): Added support to force building the varialbe declaration from the variable use (e.g. within a class) 
-// instead of from a declaration.  Variable declaration built from a use are reused when the declaration is seen (later 
+// DQ (6/25/2019): Added support to force building the varialbe declaration from the variable use (e.g. within a class)
+// instead of from a declaration.  Variable declaration built from a use are reused when the declaration is seen (later
 // in processing of the class members).
 // ROSE_DLL_API SgVariableDeclaration*
 // buildVariableDeclaration_nfi(const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope);
@@ -1261,8 +1264,8 @@ ROSE_DLL_API void buildForStatement_nfi(SgForStatement* result, SgForInitStateme
 // DQ (3/26/2018): Adding support for range based for statement.
 // ROSE_DLL_API SgRangeBasedForStatement* buildRangeBasedForStatement_nfi(SgVariableDeclaration* initializer, SgExpression* range, SgStatement* body);
 ROSE_DLL_API SgRangeBasedForStatement* buildRangeBasedForStatement_nfi(
-     SgVariableDeclaration* initializer, SgVariableDeclaration* range, 
-     SgVariableDeclaration* begin_declaration, SgVariableDeclaration* end_declaration, 
+     SgVariableDeclaration* initializer, SgVariableDeclaration* range,
+     SgVariableDeclaration* begin_declaration, SgVariableDeclaration* end_declaration,
      SgExpression* not_equal_expression, SgExpression* increment_expression,
      SgStatement* body);
 
@@ -1639,7 +1642,7 @@ ROSE_DLL_API PreprocessingInfo* buildCpreprocessorDefineDeclaration(SgLocatedNod
                PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before);
 
 //! Build a dangling #include "x.h" header,  insertHeader() is needed to actually insert it
-ROSE_DLL_API PreprocessingInfo* buildHeader(const std::string& header_filename, 
+ROSE_DLL_API PreprocessingInfo* buildHeader(const std::string& header_filename,
                PreprocessingInfo::RelativePositionType position=PreprocessingInfo::before,
                bool isSystemHeader =false);
 
@@ -1663,7 +1666,7 @@ ROSE_DLL_API void fixupCopyOfNodeFromSeparateFileInNewTargetAst(SgStatement* ins
 ROSE_DLL_API SgType* getTargetFileTypeSupport(SgType* snippet_type, SgScopeStatement* targetScope);
 ROSE_DLL_API SgType* getTargetFileType(SgType* snippet_type, SgScopeStatement* targetScope);
 
-// DQ (12/6/2020): This is the original function (modified slightly, but mostly I have defined a new function that 
+// DQ (12/6/2020): This is the original function (modified slightly, but mostly I have defined a new function that
 // will not effect the AST snippet support that is used by this function.
 ROSE_DLL_API SgSymbol* findAssociatedSymbolInTargetAST(SgDeclarationStatement* snippet_declaration, SgScopeStatement* targetScope);
 

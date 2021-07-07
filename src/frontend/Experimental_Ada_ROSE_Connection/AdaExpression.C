@@ -398,10 +398,10 @@ namespace
              || roseRequiresPrefixID(expr.Selector, ctx);
     }
 
-    ADA_ASSERT(!FAIL_ON_ERROR(ctx) && "untested expression-kind");
     logWarn() << "roseRequiresPrefixID: untested expression-kind: "
               << expr.Expression_Kind
               << std::endl;
+    ADA_ASSERT(!FAIL_ON_ERROR(ctx) && "untested expression-kind");
     return true;
   }
 

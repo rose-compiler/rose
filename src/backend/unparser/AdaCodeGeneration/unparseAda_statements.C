@@ -874,7 +874,6 @@ namespace
       prn(" ");
       prn(n.get_name());
 
-
       const bool isDefinition    = &n == n.get_definingDeclaration();
       const bool requiresPrivate = (!isDefinition) && si::ada::withPrivateDefinition(&n);
       const bool requiresIs      = (  requiresPrivate
@@ -1325,9 +1324,7 @@ namespace
 
       if (SgClassDefinition* def = n.get_definition())
       {
-        const bool explicitNullrec = (  def->get_members().empty()
-                                     && def->get_inheritances().empty()
-                                     );
+        const bool explicitNullrec = si::ada::explicitNullRecord(*def);
 
         prn(" is");
         if (!explicitNullrec) parentRecord_opt(*def);
@@ -1670,6 +1667,13 @@ namespace
 
     if (!def)
     {
+      prn(STMT_SEP);
+      return;
+    }
+
+    if (si::ada::explicitNullProcedure(*def))
+    {
+      prn("is null");
       prn(STMT_SEP);
       return;
     }
