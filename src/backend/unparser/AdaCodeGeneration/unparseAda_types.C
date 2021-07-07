@@ -55,6 +55,8 @@ namespace
 
     void handle(SgTypeBool&)       { prn(" Boolean"); }
     void handle(SgTypeChar&)       { prn(" Character"); }
+    void handle(SgTypeChar16&)     { prn(" Wide_Character"); }
+    void handle(SgTypeChar32&)     { prn(" Wide_Wide_Character"); }
     void handle(SgTypeInt&)        { prn(" Integer"); }
     void handle(SgTypeFloat&)      { prn(" Float"); }
     void handle(SgTypeDouble&)     { prn(" Long_Float"); }
@@ -97,6 +99,9 @@ namespace
 
     void handle(SgModifierType& n)
     {
+      if (n.get_typeModifier().isAliased())
+        prn("aliased ");
+
       if (n.get_typeModifier().get_constVolatileModifier().isConst())
         prn("constant ");
 

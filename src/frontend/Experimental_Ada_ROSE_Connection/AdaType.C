@@ -691,8 +691,10 @@ namespace
           res = &getDefinitionTypeID(component.Component_Subtype_Indication, ctx);
 #endif /* ADA_2005_OR_MORE_RECENT */
 
+          if (component.Has_Aliased)
+            res = &mkAliasedType(*res);
+
           /* unused fields:
-               bool       Has_Aliased;
           */
           break;
         }
@@ -946,6 +948,9 @@ void initializePkgStandard(SgGlobal& global)
 
   // \todo reconsider modeling Boolean as an enumeration of True and False
   adaTypes()["BOOLEAN"]             = sb::buildBoolType();
+
+  // \todo reconsider adding a true Ada Duration type
+  adaTypes()["DURATION"]            = sb::buildOpaqueType("Duration", &stdspec);
 
   // integral types
   SgType& intType                   = SG_DEREF(sb::buildIntType());

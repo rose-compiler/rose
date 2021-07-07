@@ -284,6 +284,17 @@ SgType& mkRealType()
   return SG_DEREF(sb::buildLongDoubleType());
 }
 
+SgType& mkConstType(SgType& underType)
+{
+  return SG_DEREF(sb::buildConstType(&underType));
+}
+
+SgType& mkAliasedType(SgType& underType)
+{
+  return SG_DEREF(sb::buildAliasedType(&underType));
+}
+
+
 
 //
 // Statements
