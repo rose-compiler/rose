@@ -1463,6 +1463,7 @@ namespace CodeThorn {
 	  if(!getVariableIdMapping()->isUnknownSizeValue(elemSize)) {
 	    AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex),AbstractValue(elemSize));
 	    // set default init value
+	    //cout<<"DEBUG: reserving at: "<<newArrayElementAddr.toString()<<endl;
 	    reserveMemoryLocation(label,&newPState,newArrayElementAddr);
 	  }
 	}
@@ -3165,10 +3166,9 @@ namespace CodeThorn {
 	  }
 	}
       } else {
-	SAWYER_MESG(logger[WARN])<<"Array-access uses expr for denoting the array (not supported yet) ";
-	SAWYER_MESG(logger[WARN])<<"@"<<SgNodeHelper::lineColumnNodeToString(node)<<" ";
-	SAWYER_MESG(logger[WARN])<<"expr: "<<arrayExpr->unparseToString()<<" ";
-	SAWYER_MESG(logger[WARN])<<"arraySkip: "<<getSkipArrayAccesses()<<endl;
+	SAWYER_MESG(logger[ERROR])<<"Unsupported array-access of multi-dimensional array: ";
+	SAWYER_MESG(logger[ERROR])<<SgNodeHelper::lineColumnNodeToString(node)<<" ";
+	exit(1);
       }
       return resultList;
     }
@@ -4219,7 +4219,7 @@ namespace CodeThorn {
     return false;
   }
 
-  void EStateTransferFunctions::conditionallyApplyArrayAbstraction(AbstractValue& val) {
+  AbstractValue EStateTransferFunctions::conditionallyApplyArrayAbstraction(AbstractValue val) {
     //cout<<"DEBUG: condapply: "<<val.toString(_analyzer->getVariableIdMapping())<<endl;
     int arrayAbstractionIndex=_analyzer->getOptionsRef().arrayAbstractionIndex;
     if(arrayAbstractionIndex>=0) {
@@ -4232,7 +4232,7 @@ namespace CodeThorn {
 	    int offset=val.getIndexIntValue();
 	    auto remappingEntry=_analyzer->getVariableIdMapping()->getOffsetAbstractionMappingEntry(memLocId,offset);
 	    if(remappingEntry.getIndexRemappingType()==VariableIdMappingExtended::IndexRemappingEnum::IDX_REMAPPED) {
-	      //logger[TRACE]<<"remapping index "<<offset<<" -> "<<remappingEntry.getRemappedOffset()<<endl;
+	      logger[TRACE]<<"remapping index "<<offset<<" -> "<<remappingEntry.getRemappedOffset()<<endl;
 	      val.setValue(remappingEntry.getRemappedOffset());
 	      val.setSummaryFlag(true);
 	    }
@@ -4240,10 +4240,11 @@ namespace CodeThorn {
 	}
       }
     }
+    return val;
   }
 
   AbstractValue EStateTransferFunctions::readFromMemoryLocation(Label lab, const PState* pstate, AbstractValue memLoc) {
-    conditionallyApplyArrayAbstraction(memLoc);
+    memLoc=conditionallyApplyArrayAbstraction(memLoc);
     
     // inspect memory location here
     if(memLoc.isNullPtr()) {
@@ -4272,7 +4273,7 @@ namespace CodeThorn {
   }
 
   void EStateTransferFunctions::writeToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue) {
-    conditionallyApplyArrayAbstraction(memLoc);
+    memLoc=conditionallyApplyArrayAbstraction(memLoc);
 
     // inspect everything here
     SAWYER_MESG(logger[TRACE])<<"EStateTransferFunctions::writeToMemoryLocation1:"<<memLoc.toString()<<endl;
@@ -4327,6 +4328,7 @@ namespace CodeThorn {
     SAWYER_MESG(logger[TRACE])<<"initializeMemoryLocation: "<<memLoc.toString()<<" := "<<newValue.toString()<<endl;
     reserveMemoryLocation(lab,pstate,memLoc);
     writeToMemoryLocation(lab,pstate,memLoc,newValue);
+    SAWYER_MESG(logger[TRACE])<<"initializeMemoryLocation: done: "<<memLoc.toString()<<endl;    
   }
 
   void EStateTransferFunctions::reserveMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc) {
@@ -4334,12 +4336,12 @@ namespace CodeThorn {
   }
 
   void EStateTransferFunctions::writeUndefToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc) {
-    conditionallyApplyArrayAbstraction(memLoc);
+    memLoc=conditionallyApplyArrayAbstraction(memLoc);
     pstate->writeUndefToMemoryLocation(memLoc);
   }
 
   void EStateTransferFunctions::writeUndefToMemoryLocation(PState* pstate, AbstractValue memLoc) {
-    conditionallyApplyArrayAbstraction(memLoc);
+    memLoc=conditionallyApplyArrayAbstraction(memLoc);
     pstate->writeUndefToMemoryLocation(memLoc);
   }
 

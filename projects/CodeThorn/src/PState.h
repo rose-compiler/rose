@@ -73,7 +73,7 @@ namespace CodeThorn {
     void writeUndefToMemoryLocation(AbstractValue varId);
     void writeTopToMemoryLocation(AbstractValue varId);
     AbstractValue readFromMemoryLocation(AbstractValue abstractMemLoc) const;
-    void combineAtMemoryLocation(AbstractValue abstractMemLoc,
+    void rawCombineAtMemoryLocation(AbstractValue abstractMemLoc,
                                  AbstractValue abstractValue);  
     // strong update overwrites (destructive), if false then it is a weak update and combines with existing values
     void writeToMemoryLocation(AbstractValue abstractMemLoc,
@@ -100,7 +100,10 @@ namespace CodeThorn {
   private:
     VariableIdSet _approximationVarIdSet;
     void conditionalApproximateRawWriteToMemoryLocation(AbstractValue abstractAddress, AbstractValue abstractValue,bool strongUpdate);
-    void rawWriteAtAbstractAddress(AbstractValue abstractAddress, AbstractValue abstractValue);
+    // "raw" read does not perform any checks, it reads from the abstractAddress (no top/bot checks, reads a single value from one abstract address (sets cannot be passed))
+    AbstractValue rawReadFromMemoryLocation(AbstractValue abstractAddress);
+    // "raw" write does not perform any checks, it writes to the abstractAddress (no top/bot checks, writes a single value to one abstract address (sets cannot be passed))
+    void rawWriteAtMemoryLocation(AbstractValue abstractAddress, AbstractValue abstractValue);
     static bool combineConsistencyCheck;
   };
   

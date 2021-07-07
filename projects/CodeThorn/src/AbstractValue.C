@@ -897,7 +897,7 @@ string AbstractValue::toString() const {
   }
   case PTR: {
     stringstream ss;
-    ss<<"("<<variableId.toString()<<","<<getIntValue()<<")";
+    ss<<"("<<variableId.toString()<<","<<getIntValue()<<","<<isSummary()<<")";
     return ss.str();
   }
   case FUN_PTR: {

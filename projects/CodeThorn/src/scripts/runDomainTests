@@ -20,24 +20,31 @@ echo "------------------------------------------------"
 echo "running DOMAIN TESTS"
 echo "------------------------------------------------"
 
-function DomainTests {
-    testNumbers=`echo {001..028}`
-    testNumbers2=`echo {030..047}`
-    testNumbers+=" $testNumbers2"
-    echo "Scheduled tests: $testNumbers"
-    echo "Skipping 029"
+
+function printStats {
+    echo "PASS: $numPass, WARN: $numWarn (expected: $numWarnExpected), FAIL: $numFail (expected: $numFailExpected)"
+    if [ $numWarn -gt $numWarnExpected ]; then
+	echo "${red}Error: more warnings than expected${end}"
+	exit 1
+    fi
+    if [ $numFail -gt $numFailExpected ]; then
+	echo "${red}Error: more failing runs than expected${end}"
+	exit 1
+    fi
+}
+
+function runDomainTestsLevel3 {
+    echo "scheduled tests: $testNumbers"
     numPass=0
     numWarn=0
     numFail=0
-    numWarnExpected=7
-    numFailExpected=0
     for testNumber in $testNumbers; do
         benchmarkprefix=$TESTDIR/DOM${testNumber};
         for benchmark in ${benchmarkprefix}*.[Cc]; do
             benchmarkname=$(basename $benchmark)
             printf "Testing %-38s: " $benchmarkname
             CT_OUTPUT_FILE=$benchmarkname.imout
-            ./codethorn $benchmark --normalize-level=2 --interpreter-mode=1 --in-state-string-literals --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR > /dev/null
+            ./codethorn $benchmark $CT_MODE_OPTIONS --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR > /dev/null
             if [ ! $? -eq 0 ]
             then
 	        echo $COLORED_FAIL
@@ -67,16 +74,47 @@ function DomainTests {
             fi
         done
     done
+    printStats
 }
 
-DomainTests
-echo "PASS: $numPass, WARN: $numWarn (expected: $numWarnExpected), FAIL: $numFail (expected: $numFailExpected)"
-if [ $numWarn -gt $numWarnExpected ]; then
-    echo "${red}Error: more warnings than expected${end}"
-    exit 1
-fi
-if [ $numFail -gt $numFailExpected ]; then
-    echo "${red}Error: more failing runs than expected${end}"
-    exit 1
-fi
-    
+function runDomainTestsLevel2 {
+    echo "Scheduled tests: $testNumbers"
+    numPass=0
+    numWarn=0
+    numFail=0
+    for testNumber in $testNumbers; do
+        benchmarkprefix=$TESTDIR/DOM${testNumber};
+        for benchmark in ${benchmarkprefix}*.[Cc]; do
+            benchmarkname=$(basename $benchmark)
+            printf "Testing %-38s: " $benchmarkname
+            CT_OUTPUT_FILE=$benchmarkname.imout
+            ./codethorn $benchmark $CT_MODE_OPTIONS --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR > /dev/null
+            if [ ! $? -eq 0 ]
+            then
+	        echo $COLORED_FAIL
+                ((numFail++))
+            else
+                echo "$COLORED_PASS"
+		((numPass++))
+            fi
+        done
+    done
+    printStats
+}
+
+testNumbers=`echo {001..048}`
+numWarnExpected=7
+numFailExpected=0
+CT_MODE_OPTIONS="--normalize-level=2 --interpreter-mode=1 --in-state-string-literals"
+echo -n "Level 3 (interpreter mode): " 
+runDomainTestsLevel3
+
+testNumbers=`echo {049..050}`
+numWarnExpected=0
+numFailExpected=0
+CT_MODE_OPTIONS="--normalize-level=2 --interpreter-mode=0 --in-state-string-literals --abstraction-mode=1 --array-abstraction-index=2"
+echo
+echo -n "Level 2 (abstraction mode, array abstraction index=2): " 
+runDomainTestsLevel2
+
+
