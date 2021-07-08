@@ -7,7 +7,7 @@
 
 using namespace std;
 
-// DQ (3/24/2016): Adding Robb's message logging mechanism to contrl output debug message from the EDG/ROSE connection code.
+// DQ (3/24/2016): Adding Robb's message logging mechanism to control output debug message from the EDG/ROSE connection code.
 using namespace Rose::Diagnostics;
 
 namespace si = SageInterface;
@@ -25,7 +25,7 @@ namespace si = SageInterface;
 // #define DEBUG_INITIALIZED_NAME DEBUG_NAME_QUALIFICATION_LEVEL
 
 // DQ (10/17/2020): Worked with Tristan, but this was the only way that I could turn on the debug output for my tool in ROSE_GARDEN.
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
 #define mfprintf(a) printf
 #endif
 
@@ -1621,12 +1621,16 @@ generateNameQualificationSupport( SgNode* node, std::set<SgNode*>& referencedNam
   // nested types.
 
 #if 0
+     printf ("NQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQ \n");
+     printf ("NQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQ \n");
      printf ("In generateNameQualificationSupport(): node = %p = %s \n",node,node->class_name().c_str());
      SgSourceFile* sourceFile = isSgSourceFile(node);
      if (sourceFile != NULL)
         {
           printf (" --- sourceFile = %p filename = %s \n",sourceFile,sourceFile->getFileName().c_str());
         }
+     printf ("NQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQ \n");
+     printf ("NQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQNQ \n");
 #endif
 
 #if 0
@@ -8103,6 +8107,8 @@ NameQualificationTraversal::nameQualificationTypeSupport  ( SgType* type, SgScop
 
        // else for type handling.
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("NQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTS \n");
+          printf ("NQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTS \n");
           mfprintf(mlog [ WARN ] ) ("Case SgInitializedName: initializedName->get_type(): before stripType(): type = %p = %s \n",type,type->class_name().c_str());
 #endif
        // DQ (4/15/2019): Reset the type so that we don't miss the SgPointerMemberType.
@@ -8791,6 +8797,11 @@ NameQualificationTraversal::nameQualificationTypeSupport  ( SgType* type, SgScop
 
        // endif for type handling.
 
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+          printf ("NQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTS \n");
+          printf ("Leaving nameQualificationTypeSupport \n");
+          printf ("NQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTSNQTS \n");
+#endif
    }
 
 
@@ -9404,6 +9415,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           SgInitializedName* initializedName = SageInterface::getFirstInitializedName(variableDeclaration);
           ASSERT_not_null(initializedName);
 
+#error "DEAD CODE!"
+
        // This is not always the correct current scope (see test2011_70.C for an example).
           SgScopeStatement* currentScope = SageInterface::getScope(variableDeclaration);
        // SgScopeStatement* currentScope = isSgScopeStatement(variableDeclaration->get_parent());
@@ -9423,6 +9436,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
              }
        // ROSE_ASSERT(currentScope == inheritedAttribute.get_currentScope());
 
+#error "DEAD CODE!"
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           mfprintf(mlog [ WARN ] ) ("================ Calling nameQualificationDepthForType to evaluate the type \n");
 #endif
@@ -9440,10 +9455,13 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                mfprintf(mlog [ WARN ] ) ("Putting the name qualification for the type into the SgInitializedName = %p = %s \n",initializedName,initializedName->get_name().str());
 #endif
 
+#error "DEAD CODE!"
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
                mfprintf(mlog [ WARN ] ) ("declaration = %p = %s \n",declaration,declaration->class_name().c_str());
 #endif
+
+#error "DEAD CODE!"
 
 #if 1
             // **************************************************
@@ -9480,6 +9498,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
              }
 
+#error "DEAD CODE!"
+
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
           mfprintf(mlog [ WARN ] ) ("\n++++++++++++++++ Calling nameQualificationDepth to evaluate the name currentScope = %p = %s \n",currentScope,currentScope->class_name().c_str());
 #endif
@@ -9490,6 +9510,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
 
        // DQ (6/5/2011): Debugging test2011_75.C ...
+
+#error "DEAD CODE!"
 
        // If there is a previous declaration then that is the original declaration (see test2011_30.C for an example of this case).
           SgInitializedName* originalInitializedName = initializedName->get_prev_decl_item();
@@ -9888,8 +9910,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
              }
         }
 
-
   // Handle SgType name qualification where SgInitializedName's appear outside of SgVariableDeclaration's (e.g. in function parameter declarations).
+  // DQ (7/4/2021): Note that as of 2019 this code is used to handle the SgInitializedName IR node in variable declarations.
      SgInitializedName* initializedName = isSgInitializedName(n);
      if (initializedName != NULL)
         {
@@ -9901,7 +9923,14 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_INITIALIZED_NAME
-          mfprintf(mlog [ WARN ] ) ("Case of SgInitializedName: type = %p = %s name = %s \n",initializedName->get_type(),initializedName->get_type()->class_name().c_str(),initializedName->get_name().str());
+          mfprintf(mlog [ WARN ] ) ("Case of SgInitializedName: type = %p = %s name = %s \n",initializedName->get_type(),
+               initializedName->get_type()->class_name().c_str(),initializedName->get_name().str());
+          SgFunctionDeclaration* enclosingFunction = SageInterface::getEnclosingFunctionDeclaration(initializedName);
+          if (enclosingFunction != NULL)
+             {
+               printf (" --- enclosingFunction = %p = %s name = %s \n",enclosingFunction,enclosingFunction->class_name().c_str(),enclosingFunction->get_name().str());
+               printf (" --- enclosingFunction->get_scope() = %p = %s \n",enclosingFunction->get_scope(),enclosingFunction->get_scope()->class_name().c_str());
+             }
 #endif
        // DQ (3/31/2019): Adding debugging support to debug pointer-to-membr name qualification.
        // bool debugging = (initializedName->get_name() == "callback_func_ptr");
@@ -10011,7 +10040,11 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
           ASSERT_not_null(type);
 
 #if 1
-       // if for type handling.
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_INITIALIZED_NAME
+          printf ("From case SgIntializedName: calling nameQualificationTypeSupport() \n");
+#endif
+
        // Refactored this code.
           nameQualificationTypeSupport (type,currentScope,initializedName);
 #else
@@ -13120,8 +13153,10 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
                            else
                             {
                               mfprintf(mlog [ WARN ] ) ("Error: Location of where we can NOT associate the expression to a statement \n");
+#if DEBUG_MEMBER_FUNCTION_REF
                               memberFunctionRefExp->get_file_info()     ->display("Error: currentStatement == NULL: memberFunctionRefExp: debug");
                               memberFunctionDeclaration->get_file_info()->display("Error: currentStatement == NULL: memberFunctionDeclaration: debug");
+#endif
                             }
 
                       // DQ (7/11/2014): Added support for when this is a nested call and the scope where the call is made from is essential.
@@ -17475,6 +17510,11 @@ NameQualificationTraversal::setNameQualification ( SgNamespaceAliasDeclarationSt
         }
    }
 
+// DQ (7/7/2021): Added function to trim the leading "::" from the qualified name.
+static void trimLeadingGlobalNameQualification(std::string &s) 
+   {
+     s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) { return ch != ':'; }));
+   }
 
 // DQ (3/31/2019): Renamed this function to make it more clear now that we have two versions, one to name
 // qualify the SgInitializedName and one to name qualify the type used in the SgInitializedName.
@@ -17495,7 +17535,7 @@ NameQualificationTraversal::setNameQualificationOnType(SgInitializedName* initia
   // DQ (4/28/2019): Added assertion.
      ASSERT_not_null(initializedName);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
      mfprintf(mlog [ WARN ] ) ("In setNameQualificationOnType(SgInitializedName*): initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
 #endif
 
@@ -17505,11 +17545,11 @@ NameQualificationTraversal::setNameQualificationOnType(SgInitializedName* initia
      SgScopeStatement * scope = traverseNonrealDeclForCorrectScope(declaration);
      string qualifier = setNameQualificationSupport(scope,amountOfNameQualificationRequired, outputNameQualificationLength, outputGlobalQualification, outputTypeEvaluation);
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
      mfprintf(mlog [ WARN ] ) ("In setNameQualificationOnType(SgInitializedName*): qualifier = %s \n",qualifier.c_str());
 #endif
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
      mfprintf(mlog [ WARN ] ) ("declaration = %p = %s \n",declaration,declaration->class_name().c_str());
      mfprintf(mlog [ WARN ] ) ("declaration->get_firstNondefiningDeclaration() = %p \n",declaration->get_firstNondefiningDeclaration());
      mfprintf(mlog [ WARN ] ) ("declaration->get_definingDeclaration()         = %p \n",declaration->get_definingDeclaration());
@@ -17531,13 +17571,24 @@ NameQualificationTraversal::setNameQualificationOnType(SgInitializedName* initia
           sourceSequenceForTypeDeclaration = definingDeclaration->get_file_info()->get_source_sequence_number();
           sourceSequenceForInitializedName = initializedName->get_file_info()->get_source_sequence_number();
         }
+       else
+        {
+       // DQ (7/7/2021): If these is no defining declaration then use the nondefining declaration (important for typedefs and namespaces).
+          sourceSequenceForTypeDeclaration = declaration->get_firstNondefiningDeclaration()->get_file_info()->get_source_sequence_number();
+          sourceSequenceForInitializedName = initializedName->get_file_info()->get_source_sequence_number();
+        }
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
      mfprintf(mlog [ WARN ] ) ("sourceSequenceForInitializedName = %u \n",sourceSequenceForInitializedName);
      mfprintf(mlog [ WARN ] ) ("sourceSequenceForTypeDeclaration = %u \n",sourceSequenceForTypeDeclaration);
 #endif
 
-     bool outputNameQualification = sourceSequenceForTypeDeclaration < sourceSequenceForInitializedName;
+  // DQ (7/7/2021): For a transformation (e.g. outlining), the values will be zero, so test for this explicitly 
+  // and if so, then we want to output the name qualification. Note that zero for the source sequence implaies 
+  // that this is a transformation.
+  // bool outputNameQualification = sourceSequenceForTypeDeclaration < sourceSequenceForInitializedName;
+  // bool outputNameQualification = (sourceSequenceForTypeDeclaration == 0 && sourceSequenceForInitializedName == 0) || sourceSequenceForTypeDeclaration < sourceSequenceForInitializedName;
+     bool outputNameQualification = (sourceSequenceForInitializedName == 0) || sourceSequenceForTypeDeclaration < sourceSequenceForInitializedName;
 
   // DQ (5/15/2018): If this is a SgTemplateInstantiationTypedefDeclaration then output the name qualification.
      if (isSgTemplateInstantiationTypedefDeclaration(declaration) != NULL)
@@ -17545,8 +17596,12 @@ NameQualificationTraversal::setNameQualificationOnType(SgInitializedName* initia
           outputNameQualification = true;
         }
 
-#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+     mfprintf(mlog [ WARN ] ) ("In setNameQualificationOnType(SgInitializedName*): skipGlobalQualification = %s \n",skipGlobalQualification ? "true" : "false");
      mfprintf(mlog [ WARN ] ) ("In setNameQualificationOnType(SgInitializedName*): outputNameQualification = %s \n",outputNameQualification ? "true" : "false");
+#endif
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+     mfprintf(mlog [ WARN ] ) ("In setNameQualificationOnType(SgInitializedName*): qualifier = %s \n",qualifier.c_str());
 #endif
 
   // DQ (5/15/2018): Explicitly check for qualifier == "::" (see Cxxx11_tests/test2018_97.C).
@@ -17572,6 +17627,24 @@ NameQualificationTraversal::setNameQualificationOnType(SgInitializedName* initia
           ROSE_ABORT();
 #endif
         }
+       else
+        {
+          if (skipGlobalQualification == true)
+             {
+            // trim the leading "::" from the qualifier.
+#if 0
+               printf ("Calling trimLeadingGlobalNameQualification(): qualifier = %s \n",qualifier.c_str());
+#endif
+               trimLeadingGlobalNameQualification(qualifier);
+#if 0
+               printf ("DONE: Calling trimLeadingGlobalNameQualification(): qualifier = %s \n",qualifier.c_str());
+#endif
+             }
+        }
+
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || 0
+     mfprintf(mlog [ WARN ] ) ("In setNameQualificationOnType(SgInitializedName*): after modification: qualifier = %s \n",qualifier.c_str());
+#endif
 
      initializedName->set_global_qualification_required_for_type(outputGlobalQualification);
      initializedName->set_name_qualification_length_for_type(outputNameQualificationLength);
@@ -17584,6 +17657,9 @@ NameQualificationTraversal::setNameQualificationOnType(SgInitializedName* initia
      mfprintf(mlog [ WARN ] ) ("In NameQualificationTraversal::setNameQualificationOnType(): initializedName->get_name_qualification_length_for_type()     = %d \n",initializedName->get_name_qualification_length_for_type());
      mfprintf(mlog [ WARN ] ) ("In NameQualificationTraversal::setNameQualificationOnType(): initializedName->get_type_elaboration_required_for_type()     = %s \n",initializedName->get_type_elaboration_required_for_type() ? "true" : "false");
      mfprintf(mlog [ WARN ] ) ("In NameQualificationTraversal::setNameQualificationOnType(): initializedName->get_global_qualification_required_for_type() = %s \n",initializedName->get_global_qualification_required_for_type() ? "true" : "false");
+#endif
+#if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+     mfprintf(mlog [ WARN ] ) ("In setNameQualificationOnType(SgInitializedName*): qualifier = %s \n",qualifier.c_str());
 #endif
 
      if (qualifiedNameMapForTypes.find(initializedName) == qualifiedNameMapForTypes.end())

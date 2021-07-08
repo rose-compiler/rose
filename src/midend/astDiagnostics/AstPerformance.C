@@ -528,13 +528,13 @@ ProcessingPhase::outputReport ( int n )
 
 void AstPerformance::generateReport() 
    {
-#if 1
+#if 0
      printf ("In AstPerformance::generateReport(): calling AstPerformance(\"\",false).generateReportFromObject() \n");
 #endif
 
      AstPerformance("", false).generateReportFromObject();
 
-#if 1
+#if 0
      printf ("In AstPerformance::generateReport(): DONE: calling AstPerformance(\"\",false).generateReportFromObject() \n");
 #endif
    }
@@ -595,7 +595,7 @@ struct rusage
   };
 #endif
 
-#if 1
+#if 0
      printf ("AstPerformance::generateReportFromObject(): outputCompilationPerformance = %s \n",outputCompilationPerformance ? "true" : "false");
 #endif
 

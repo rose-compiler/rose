@@ -445,6 +445,73 @@ Unparser::computeNameQualification(SgSourceFile* file)
      printf ("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ \n");
      printf ("\n\n");
 #endif
+
+#if 0
+#if 1
+     printf ("\n\n");
+     printf ("################################################################ \n");
+     printf ("########### CALLING generateDOTforMultipleFile() ############### \n");
+     printf ("################################################################ \n");
+     printf ("\n\n");
+#endif
+
+  // generateDOTforMultipleFile(*file);
+  // generateDOT ( *project , ".unparsing_headers" );
+  // generateDOT_withIncludes ( *project , ".unparsing_headers" );
+     SgProject* project = TransformationSupport::getProject(file);
+     generateDOT ( *project , ".after_name_qualification" );
+#endif
+
+#if 0
+  // if (file->getFileName() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/test_176/rose_test_176_lib.cpp")
+  // if (file->getFileName() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/sources/test_176.cpp")
+  // if (file->getFileName() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/sources/test_176.cpp" && file->get_isDynamicLibrary() == true)
+     if (file->getFileName() == "rose_test_176_lib.cpp" && file->get_isDynamicLibrary() == true)
+        {
+          printf (" --- file->get_isDynamicLibrary() = %s \n",file->get_isDynamicLibrary() ? "true" : "false");
+
+          printf ("Exiting after name qualification on lib file \n");
+          ROSE_ASSERT(false);
+        }
+       else
+        {
+          printf (" --- file->getFileName() = %s \n",file->getFileName().c_str());
+          printf (" --- file->get_isDynamicLibrary() = %s \n",file->get_isDynamicLibrary() ? "true" : "false");
+        }
+#endif
+#if 0
+  // if (file->getFileName() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/test_176/rose_test_176_lib.cpp")
+  // if (file->getFileName() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/sources/test_176.cpp")
+  // if (file->getFileName() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/sources/test_176.cpp" && file->get_isDynamicLibrary() == true)
+     if (file->getFileName() == "rose_test_120_lib.cpp" && file->get_isDynamicLibrary() == true)
+        {
+          printf (" --- file->getFileName() = %s \n",file->getFileName().c_str());
+          printf (" --- file->get_isDynamicLibrary() = %s \n",file->get_isDynamicLibrary() ? "true" : "false");
+
+#if 1
+#if 1
+     printf ("\n\n");
+     printf ("################################################################ \n");
+     printf ("########### CALLING generateDOTforMultipleFile() ############### \n");
+     printf ("################################################################ \n");
+     printf ("\n\n");
+#endif
+
+       // generateDOTforMultipleFile(*file);
+       // generateDOT ( *project , ".unparsing_headers" );
+       // generateDOT_withIncludes ( *project , ".unparsing_headers" );
+          SgProject* project = TransformationSupport::getProject(file);
+          generateDOT ( *project , ".after_name_qualification" );
+#endif
+          printf ("Exiting after name qualification on lib file \n");
+          ROSE_ASSERT(false);
+        }
+       else
+        {
+          printf (" --- file->getFileName() = %s \n",file->getFileName().c_str());
+          printf (" --- file->get_isDynamicLibrary() = %s \n",file->get_isDynamicLibrary() ? "true" : "false");
+        }
+#endif
    }
 
 

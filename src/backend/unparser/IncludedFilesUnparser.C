@@ -134,7 +134,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
      SageInterface::reportModifiedLocatedNodes("In figureOutWhichFilesToUnparse()",projectNode);
 #endif
 
-#if 1
+#if 0
      printf ("TOP of figureOutWhichFilesToUnparse(): EDG_ROSE_Translation::edg_include_file_map.size() = %zu \n",EDG_ROSE_Translation::edg_include_file_map.size());
 #endif
 
