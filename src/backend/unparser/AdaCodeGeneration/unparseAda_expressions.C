@@ -27,36 +27,54 @@ namespace si = SageInterface;
 
 namespace
 {
+  inline
   SgVariableSymbol& symOf(const SgVarRefExp& n)
   {
     return SG_DEREF(n.get_symbol());
   }
 
+  inline
   SgFunctionSymbol& symOf(const SgFunctionRefExp& n)
   {
     return SG_DEREF(n.get_symbol());
   }
 
-  SgName nameOf(const SgSymbol& sy)
-  {
-    return sy.get_name();
-  }
-
-  SgName nameOf(const SgVarRefExp& n)
-  {
-    return nameOf(symOf(n));
-  }
-
-  SgName nameOf(const SgFunctionRefExp& n)
-  {
-    return nameOf(symOf(n));
-  }
-
+  inline
   SgInitializedName& declOf(const SgVarRefExp& n)
   {
     SgVariableSymbol& sy = symOf(n);
 
     return SG_DEREF(sy.get_declaration());
+  }
+
+  inline
+  SgAdaPackageSpecDecl& declOf(const SgAdaUnitRefExp& n)
+  {
+    return SG_DEREF(isSgAdaPackageSpecDecl(n.get_decl()));
+  }
+
+  inline
+  SgName nameOf(const SgSymbol& sy)
+  {
+    return sy.get_name();
+  }
+
+  inline
+  SgName nameOf(const SgVarRefExp& n)
+  {
+    return nameOf(symOf(n));
+  }
+
+  inline
+  SgName nameOf(const SgFunctionRefExp& n)
+  {
+    return nameOf(symOf(n));
+  }
+
+  inline
+  SgName nameOf(const SgAdaUnitRefExp& n)
+  {
+    return declOf(n).get_name();
   }
 
   const SgExprListExp* callArguments(const SgFunctionRefExp& n)
@@ -155,6 +173,8 @@ namespace
 
   struct AdaExprUnparser
   {
+    static constexpr bool SUPPRESS_SCOPE_QUAL = false; // no scope qual on selectors
+
     AdaExprUnparser(Unparse_Ada& unp, SgUnparse_Info& inf, std::ostream& outp, bool requiresScopeQual)
     : unparser(unp), info(inf), os(outp), ctxRequiresScopeQualification(requiresScopeQual)
     {}
@@ -216,7 +236,7 @@ namespace
 
       expr(lhs);
       prn(".");
-      expr(rhs, false /* no need to scope qual right hand side */);
+      expr(rhs, SUPPRESS_SCOPE_QUAL /* no need to scope qual right hand side */);
     }
 
     void handle(SgCommaOpExp& n)
@@ -348,7 +368,8 @@ namespace
 
     void handle(SgDesignatedInitializer& n)
     {
-      exprlst(SG_DEREF(n.get_designatorList()), "| ");
+      // suppress scope qual on selectors
+      exprlst(SG_DEREF(n.get_designatorList()), "| ", SUPPRESS_SCOPE_QUAL);
       prn(" => ");
       expr(n.get_memberInit());
     }
@@ -406,6 +427,12 @@ namespace
       prn(tskdcl.get_name());
     }
 
+    void handle(SgAdaUnitRefExp& n)
+    {
+      // really needed?
+      prn(nameOf(n));
+    }
+
     void handle(SgNewExp& n)
     {
       SgConstructorInitializer* init = n.get_constructor_args();
@@ -417,7 +444,7 @@ namespace
     }
 
     void expr(SgExpression* exp, bool requiresScopeQual = true);
-    void exprlst(SgExprListExp& exp, std::string sep = ", ");
+    void exprlst(SgExprListExp& exp, std::string sep = ", ", bool requiresScopeQual = true);
     void arglst_opt(SgExprListExp& args);
 
     void operator()(SgExpression* exp)
@@ -502,18 +529,18 @@ namespace
     if (callsyntax) prn(")");
   }
 
-  void AdaExprUnparser::exprlst(SgExprListExp& exp, std::string sep)
+  void AdaExprUnparser::exprlst(SgExprListExp& exp, std::string sep, bool reqScopeQual)
   {
     SgExpressionPtrList& lst = exp.get_expressions();
 
     if (lst.empty()) return;
 
-    expr(lst[0]);
+    expr(lst[0], reqScopeQual);
 
     for (size_t i = 1; i < lst.size(); ++i)
     {
       prn(sep);
-      expr(lst[i]);
+      expr(lst[i], reqScopeQual);
     }
   }
 

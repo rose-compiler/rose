@@ -1618,6 +1618,9 @@ HEADER_TYPE_MODIFIER_START
                e_truncate                            = 36,/*!< Jovial truncation specifier */
                e_truncate_towards_zero               = 37,/*!< Jovial truncation towards zero specifier */
 
+            // PP (7/7/21): add support for Ada aliased declarations
+               e_aliased                             = 38,/*!< Ada aliased variable/parameter/field declaration */
+
             // Last attribute enum (used for internal bounds checking)
                e_last_modifier /*!< last value (upper bound on range of values, used in error checking) */
              };
@@ -1882,6 +1885,11 @@ HEADER_TYPE_MODIFIER_START
           bool isTruncateTowardsZero() const;
           void setTruncateTowardsZero();
           void unsetTruncateTowardsZero();
+
+       // Ada attribute for aliased variables, parameters, and components
+          bool isAliased() const;
+          void setAliased();
+          void unsetAliased();
 
           std::string displayString() const;
           void display ( std::string label ) const;
@@ -3964,6 +3972,10 @@ bool SgTypeModifier::isTruncateTowardsZero() const  { return checkBit(e_truncate
 void SgTypeModifier::setTruncateTowardsZero()       { setBit(e_truncate_towards_zero,p_modifierVector); }
 void SgTypeModifier::unsetTruncateTowardsZero()     { unsetBit(e_truncate_towards_zero,p_modifierVector); }
 
+bool SgTypeModifier::isAliased() const  { return checkBit(e_aliased,p_modifierVector); }
+void SgTypeModifier::setAliased()       { setBit(e_aliased,p_modifierVector); }
+void SgTypeModifier::unsetAliased()     { unsetBit(e_aliased,p_modifierVector); }
+
 string
 $CLASSNAME::displayString() const
    {
@@ -3971,6 +3983,7 @@ $CLASSNAME::displayString() const
      s += std::string("isUnknown() = ")                + std::string(isUnknown()  ? "true " : "false ");
      s += std::string("isDefault() = ")                + std::string(isDefault()  ? "true " : "false ");
      s += std::string("isRestrict() = ")               + std::string(isRestrict() ? "true " : "false ");
+     s += std::string("isAliased() = ")                + std::string(isAliased()  ? "true " : "false ");
      s += std::string("gnu_extension_machine_mode = ") + Rose::StringUtility::numberToString((int)p_gnu_extension_machine_mode) + " ";
      s += std::string("gnu_attribute_alignment = ")    + Rose::StringUtility::numberToString((int)p_gnu_attribute_alignment)    + " ";
      s += std::string("gnu_attribute_sentinel = ")     + Rose::StringUtility::numberToString((int)p_gnu_attribute_sentinel)     + " ";

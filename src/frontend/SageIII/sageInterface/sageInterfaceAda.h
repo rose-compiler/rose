@@ -127,6 +127,12 @@ namespace ada
   overridingScope(const SgExprListExp* args, const std::vector<PrimitiveParameterDesc>& primitiveArgs);
   /// @}
 
+  /// returns true, iff \ref fndef is the body of an explicit null procedure
+  bool explicitNullProcedure(const SgFunctionDefinition& fndef);
+
+  /// returns true, iff \ref recdef is the body of an explicit null record
+  bool explicitNullRecord(const SgClassDefinition& recdef);
+
   /// finds the one past the last positional argument (aka the first named argument position).
   /// \return one past the index of the last positional argument.
   /// \details

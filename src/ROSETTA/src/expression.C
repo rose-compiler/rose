@@ -14,6 +14,7 @@ Grammar::setUpExpressions ()
 
      NEW_TERMINAL_MACRO (VarRefExp,              "VarRefExp",              "VAR_REF" );
      NEW_TERMINAL_MACRO (NonrealRefExp,          "NonrealRefExp",          "NONREAL_REF" );
+     NEW_TERMINAL_MACRO (AdaUnitRefExp,          "AdaUnitRefExp",          "ADA_UNIT_REF" );
      NEW_TERMINAL_MACRO (AdaTaskRefExp,          "AdaTaskRefExp",          "ADA_TASK_REF" );
      NEW_TERMINAL_MACRO (AdaRenamingRefExp,      "AdaRenamingRefExp",      "ADA_RENAMING_REF" );
      NEW_TERMINAL_MACRO (AdaAttributeExp,        "AdaAttributeExp",        "ADA_ATTRIBUTE_EXP" );
@@ -476,7 +477,8 @@ Grammar::setUpExpressions ()
           TypeTraitBuiltinOperator | CompoundLiteralExp | JavaAnnotation           | JavaTypeExpression           | TypeExpression |
           ClassExp            | FunctionParameterRefExp | LambdaExp | HereExp | AtExp | FinishExp | NoexceptOp | NonrealRefExp |
           AdaTaskRefExp       | FoldExpression | AwaitExpression | ChooseExpression | AdaAttributeExp |
-          JovialTablePresetExp| JovialPresetPositionExp | AdaOthersExp | AdaRenamingRefExp, "Expression", "ExpressionTag", false);
+          JovialTablePresetExp| JovialPresetPositionExp | AdaOthersExp | AdaRenamingRefExp |
+          AdaUnitRefExp, "Expression", "ExpressionTag", false);
 
   // ***********************************************************************
   // ***********************************************************************
@@ -636,6 +638,9 @@ Grammar::setUpExpressions ()
   // function on certain types of expressions (because the type should be computed from the operands
   // or the value types directly).
      VarRefExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
+                                  "../Grammar/Expression.code" );
+
+     AdaUnitRefExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                   "../Grammar/Expression.code" );
 
      AdaTaskRefExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
@@ -1322,6 +1327,11 @@ Grammar::setUpExpressions ()
                                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      NonrealRefExp.setDataPrototype ("bool","global_qualification_required","= false",
                                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     AdaUnitRefExp.setFunctionPrototype ( "HEADER_ADA_UNIT_REF_EXPRESSION", "../Grammar/Expression.code" );
+     // PP (06/30/21): For now AdaUnitRefExp can refer to any declaration. Consider narrowing that to packages via SgAdaPackageSymbol/SgAdaPackageSpecDecl once we have generic packages.
+     AdaUnitRefExp.setDataPrototype ( "SgDeclarationStatement*", "decl", "= NULL",
+                                      CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AdaTaskRefExp.setFunctionPrototype ( "HEADER_ADA_TASK_REF_EXPRESSION", "../Grammar/Expression.code" );
      AdaTaskRefExp.setDataPrototype ( "SgAdaTaskSpecDecl*", "decl", "= NULL",
@@ -3062,6 +3072,7 @@ Grammar::setUpExpressions ()
      Float128Val.setFunctionSource ( "SOURCE_FLOAT_128_VALUE_EXPRESSION","../Grammar/Expression.code" );
      AdaFloatVal.setFunctionSource ( "SOURCE_ADA_FLOAT_VALUE_EXPRESSION","../Grammar/Expression.code" );
      JovialBitVal.setFunctionSource ( "SOURCE_JOVIAL_BIT_VALUE_EXPRESSION","../Grammar/Expression.code" );
+     AdaUnitRefExp.setFunctionSource ( "SOURCE_ADA_UNIT_REF_EXPRESSION","../Grammar/Expression.code" );
      AdaTaskRefExp.setFunctionSource ( "SOURCE_ADA_TASK_REF_EXPRESSION","../Grammar/Expression.code" );
      AdaRenamingRefExp.setFunctionSource ( "SOURCE_ADA_RENAMING_REF_EXPRESSION","../Grammar/Expression.code" );
      AdaAttributeExp.setFunctionSource ( "SOURCE_ADA_ATTRIBUTE_EXPRESSION","../Grammar/Expression.code" );

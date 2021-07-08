@@ -3,6 +3,8 @@
 
 #include "unparser.h"
 
+#include <tuple>
+
 #if 1
 class SgExpression;
 class SgStatement;
@@ -21,9 +23,27 @@ class SgAsmOp;
 
 class Unparser;
 
+struct ScopeStackEntry
+{
+  explicit
+  ScopeStackEntry(SgUnparse_Info* info = nullptr, SgScopeStatement* scope = nullptr)
+  : unparseInfo(info), parentScope(scope), addedRenamings(), addedUsedScopes()
+  {}
+
+  SgUnparse_Info*                      unparseInfo = nullptr;
+  SgScopeStatement*                    parentScope = nullptr;
+  std::vector<const SgScopeStatement*> addedRenamings;
+  std::vector<const SgScopeStatement*> addedUsedScopes;
+};
+
 struct Unparse_Ada : UnparseLanguageIndependentConstructs
    {
-          typedef UnparseLanguageIndependentConstructs base;
+          using base                   = UnparseLanguageIndependentConstructs;
+          using VisibleScopeContainer  = std::set<const SgScopeStatement*>;
+          using UsePkgContainer        = std::set<const SgScopeStatement*>;
+          using ScopeRenamingContainer = std::map<const SgScopeStatement*, const SgDeclarationStatement*>;
+          using AdaRenamedNames        = ScopeRenamingContainer::value_type;
+          using ScopeSnapshot          = std::tuple<size_t, size_t, size_t>;
 
           //
           // in unparseAda_statements.C
@@ -56,7 +76,33 @@ struct Unparse_Ada : UnparseLanguageIndependentConstructs
           std::string languageName() const ROSE_OVERRIDE { return "Ada Unparser"; }
 
 
+          //
+          // API to keep track of visible scopes
+          // impl. in unparseAda_statements.C
+          void addVisibleScope(const SgScopeStatement*);
+          bool isVisibleScope(const SgScopeStatement*) const;
 
+          void addUsedScope(const SgScopeStatement*);
+          bool isUsedScope(const SgScopeStatement*) const;
+
+          void addRenamedScope(ScopeRenamingContainer::key_type, ScopeRenamingContainer::mapped_type);
+          ScopeRenamingContainer::mapped_type renamedScope(ScopeRenamingContainer::key_type) const;
+
+          void openScope(SgUnparse_Info& info, SgScopeStatement& scope);
+          void closeScope();
+
+     private:
+          /// fully-qualified names of visible scopes
+          VisibleScopeContainer  visible_scopes;
+
+          /// fully-qualified names of used scopes (i.e., use the.used.package;)
+          UsePkgContainer        use_scopes;
+
+          /// renamed scopes
+          ScopeRenamingContainer renamed_scopes;
+
+          /// stores info about scope state
+          std::vector<ScopeStackEntry> scope_state;
    };
 
 #endif

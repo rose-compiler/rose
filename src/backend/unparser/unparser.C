@@ -1021,7 +1021,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
                     printf ("temp_globalScope->get_declarations().size() = %zu \n",temp_globalScope->get_declarations().size());
 #endif
                     ASSERT_not_null(globalScope->get_parent());
-#if DEBUG_UNPARSE_FILE 
+#if DEBUG_UNPARSE_FILE
                 // if (this->currentFile != globalScope->get_parent())
                        {
                          printf ("Error: In Unparser::unparseFile(): this->currentFile != globalScope->get_parent() \n");
@@ -1046,7 +1046,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
                        }
 #endif
                  // ROSE_ASSERT(this->currentFile == globalScope->get_parent());
-#if DEBUG_UNPARSE_FILE 
+#if DEBUG_UNPARSE_FILE
                     if (this->currentFile == globalScope->get_parent())
                        {
                          printf ("Unparsing a header file of an AST from a given source file \n");
@@ -4394,17 +4394,17 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
 #endif
 
 #if 0
-  // DQ (4/11/2021): We should already have a valid global scope, plus this is a bug because 
-  // the global scope that we traverse should be in the in the token sequence list (else the 
-  // statementInFile functionality will not alow the global scope to be unparsed when unparsing 
+  // DQ (4/11/2021): We should already have a valid global scope, plus this is a bug because
+  // the global scope that we traverse should be in the in the token sequence list (else the
+  // statementInFile functionality will not alow the global scope to be unparsed when unparsing
   // the header file (resulting in an empty header file being unparsed)).
   // Set SgGlobal to avoid problems with checks during unparsing.
      SgGlobal* headerFileGlobal = new SgGlobal();
      include_sourceFile->set_globalScope(headerFileGlobal);
 #else
-  // DQ (4/11/2021): We should already have a valid global scope, plus this is a bug because 
-  // the global scope that we traverse should be in the in the token sequence list (else the 
-  // statementInFile functionality will not alow the global scope to be unparsed when unparsing 
+  // DQ (4/11/2021): We should already have a valid global scope, plus this is a bug because
+  // the global scope that we traverse should be in the in the token sequence list (else the
+  // statementInFile functionality will not alow the global scope to be unparsed when unparsing
   // the header file (resulting in an empty header file being unparsed)).
   // DQ (11/22/2019): We don't want to overwrite the global scope in the include_sourceFile (note it is a valid global scope).
      SgGlobal* headerFileGlobal = include_sourceFile->get_globalScope();
@@ -4437,7 +4437,7 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
   // printf ("include_sourceFile->get_globalScope()->get_startOfConstruct()->get_filename() = %s \n",include_sourceFile->get_globalScope()->get_startOfConstruct()->get_filename());
 #endif
 
-  // DQ (4/11/2021): We are not overwritting the global scope, and a new global scope should 
+  // DQ (4/11/2021): We are not overwritting the global scope, and a new global scope should
   // not be needed (so we should have a valid source position as a result.
   // DQ (11/20/2019): If we build a new SgGlobal then this will be NULL.
   // ROSE_ASSERT(include_sourceFile->get_globalScope()->get_startOfConstruct() == NULL);

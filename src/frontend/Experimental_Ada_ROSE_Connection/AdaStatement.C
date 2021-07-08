@@ -439,7 +439,8 @@ namespace
     // SgType&                   dcltype = tyModifier(getVarType(decl, ctx));
     ElemIdRange              range    = idRange(asisDecl.Names);
     name_container           names    = traverseIDs(range, elemMap(), NameCreator{ctx});
-    SgType&                  parmtype = getDeclTypeID(asisDecl.Object_Declaration_View, ctx);
+    SgType&                  basety   = getDeclTypeID(asisDecl.Object_Declaration_View, ctx);
+    SgType&                  parmtype = asisDecl.Has_Aliased ? mkAliasedType(basety) : basety;
     SgInitializedNamePtrList dclnames = constructInitializedNamePtrList( ctx, asisVars(), names,
                                                                          parmtype, getVarInit(asisDecl, &parmtype, ctx)
                                                                        );
@@ -447,7 +448,6 @@ namespace
 
     attachSourceLocation(sgnode, elem, ctx);
     /* unused fields:
-         bool                           Has_Aliased;
          bool                           Has_Null_Exclusion;
     */
     return sgnode;
@@ -624,18 +624,15 @@ namespace
 */
 
 
-  typedef SgType& (*TypeModiferFn) (SgType&);
+  using TypeModifierFn = std::function<SgType&(SgType&)>;
 
   SgType& tyIdentity(SgType& ty) { return ty; }
-
-  SgType& tyConstify(SgType& ty) { return SG_DEREF(sb::buildConstType(&ty)); }
-
 
   //
   // helper function for combined handling of variables and constant declarations
 
   void
-  handleNumVarCstDecl(Declaration_Struct& decl, AstContext ctx, bool isPrivate, SgType& dclType, SgType* expectedType, Element_Struct& elem)
+  handleNumVarCstDecl(Element_Struct& elem, Declaration_Struct& decl, AstContext ctx, bool isPrivate, SgType& dclType, SgType* expectedType = nullptr)
   {
     typedef NameCreator::result_container name_container;
 
@@ -655,17 +652,25 @@ namespace
   }
 
   void
-  handleNumberDecl(Declaration_Struct& decl, AstContext ctx, bool isPrivate, SgType& numty, SgType& expctty, Element_Struct& elem)
+  handleNumberDecl(Element_Struct& elem, Declaration_Struct& decl, AstContext ctx, bool isPrivate, SgType& numty, SgType& expctty)
   {
     SgType& cstty = SG_DEREF( sb::buildConstType(&numty) );
 
-    handleNumVarCstDecl(decl, ctx, isPrivate, cstty, &expctty, elem);
+    handleNumVarCstDecl(elem, decl, ctx, isPrivate, cstty, &expctty);
   }
 
   void
-  handleVarCstDecl(Declaration_Struct& dcl, AstContext ctx, bool isPrivate, TypeModiferFn tyModifier, Element_Struct& elem)
+  handleVarCstDecl( Element_Struct& elem,
+                    Declaration_Struct& dcl,
+                    AstContext ctx,
+                    bool isPrivate,
+                    TypeModifierFn constMaker
+                  )
   {
-    handleNumVarCstDecl(dcl, ctx, isPrivate, tyModifier(getVarType(dcl, ctx)), nullptr /* no expected type */, elem);
+    SgType& basety = constMaker(getVarType(dcl, ctx));
+    SgType& varty  = dcl.Has_Aliased ? mkAliasedType(basety) : basety;
+
+    handleNumVarCstDecl(elem, dcl, ctx, isPrivate, varty);
   }
 
   SgDeclarationStatement&
@@ -1798,6 +1803,7 @@ namespace
     return elem.The_Union.Expression;
   }
 
+
   /// Functor to create an import statement (actually, a declaration)
   ///   for each element of a with clause; e.g., with Ada.Calendar, Ada.Clock;
   ///   yields two important statements, each of them is its own declaration
@@ -1814,20 +1820,39 @@ namespace
         ADA_ASSERT (el.Element_Kind == An_Expression);
 
         NameData                   imported = getName(el, ctx);
+        Element_Struct&            impEl    = imported.elem();
+        Element_ID                 impID    = asisExpression(impEl).Corresponding_Name_Declaration;
+        SgExpression*              res      = &getExpr(impEl, ctx);
         SgScopeStatement&          scope = ctx.scope();
-        SgExpression&              res = mkUnresolvedName(imported.fullName, scope);
-        std::vector<SgExpression*> elems{&res};
+
+        if (SgVarRefExp* varref = isSgVarRefExp(res))
+        {
+          // PP: we should not get here in the first place (after the frontend is complete).
+          logError() << "Unresolved Unit Name: " << SG_DEREF(varref->get_symbol()).get_name()
+                     << std::endl;
+
+          // \todo band-aid until frontend is complete
+          // HACK: the unit was not found, and its name is not properly scope qualified
+          //       ==> create a properly qualified name
+          // LEAK: symbol, and initialized name will leak
+          //~ scope.remove_symbol(varref->get_symbol());
+          delete res;
+
+          res = &mkUnresolvedName(imported.fullName, scope);
+        }
+
+        std::vector<SgExpression*> elems{res};
         SgImportStatement&         sgnode = mkWithClause(elems);
 
         recordNode(asisDecls(), el.ID, sgnode);
         attachSourceLocation(sgnode, el, ctx);
+
 
         //~ sg::linkParentChild(scope, as<SgStatement>(sgnode), &SgScopeStatement::append_statement);
         scope.append_statement(&sgnode);
 
         // an imported element may not be in the AST
         //   -> add the mapping if the element has not been seen.
-        Element_ID                 impID    = asisExpression(imported.elem()).Corresponding_Name_Declaration;
 
         recordNonUniqueNode(asisDecls(), impID, sgnode);
         ADA_ASSERT(sgnode.get_parent() == &scope);
@@ -2101,6 +2126,10 @@ namespace
   */
 
       default:
+        // \todo
+        //   An_Enumeration_Type_Definition
+        //   A_Constrained_Array_Definition
+        //   An_Access_Type_Definition
         logWarn() << "unhandled opaque type declaration: " << tyKind
                   << std::endl;
         ADA_ASSERT(!FAIL_ON_ERROR(ctx));
@@ -2691,11 +2720,16 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         break;
       }
 
-
+    case A_Null_Procedure_Declaration:             // 6.7
     case A_Function_Body_Declaration:              // 6.3(2)
     case A_Procedure_Body_Declaration:             // 6.3(2)
       {
-        logKind(decl.Declaration_Kind == A_Function_Declaration ? "A_Function_Body_Declaration" : "A_Procedure_Body_Declaration");
+        if (decl.Declaration_Kind == A_Function_Declaration)
+          logKind("A_Function_Body_Declaration");
+        else if (decl.Declaration_Kind == A_Procedure_Body_Declaration)
+          logKind("A_Procedure_Body_Declaration");
+        else
+          logKind("A_Null_Procedure_Declaration");
 
         const bool              isFunc  = decl.Declaration_Kind == A_Function_Body_Declaration;
         SgScopeStatement&       outer   = ctx.scope();
@@ -2718,6 +2752,12 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         attachSourceLocation(sgnode, elem, ctx);
         outer.append_statement(&sgnode);
         ADA_ASSERT(sgnode.get_parent() == &outer);
+
+        if (decl.Declaration_Kind == A_Null_Procedure_Declaration)
+        {
+          // \todo add pragma association if any
+          break;
+        }
 
         ElemIdRange             hndlrs  = idRange(decl.Body_Exception_Handlers);
         //~ logInfo() << "block ex handlers: " << hndlrs.size() << std::endl;
@@ -2752,6 +2792,9 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         /* unhandled field
            Declaration_ID                 Body_Block_Statement;
+           bool                           Is_Overriding_Declaration;
+           bool                           Is_Not_Overriding_Declaration;
+
 
          +func:
            bool                           Is_Not_Null_Return
@@ -2919,9 +2962,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         logKind("A_Variable_Declaration");
 
-        handleVarCstDecl(decl, ctx, isPrivate, tyIdentity, elem);
+        handleVarCstDecl(elem, decl, ctx, isPrivate, tyIdentity);
         /* unused fields:
-             bool                           Has_Aliased;
         */
         break;
       }
@@ -2930,7 +2972,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         logKind("An_Integer_Number_Declaration");
 
-        handleNumberDecl(decl, ctx, isPrivate, SG_DEREF(sb::buildAutoType()), mkIntegralType(), elem);
+        handleNumberDecl(elem, decl, ctx, isPrivate, SG_DEREF(sb::buildAutoType()), mkIntegralType());
 
         /* unused fields:
         */
@@ -2942,11 +2984,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         logKind(decl.Declaration_Kind == A_Constant_Declaration ? "A_Constant_Declaration" : "A_Deferred_Constant_Declaration");
 
-        handleVarCstDecl(decl, ctx, isPrivate, tyConstify, elem);
+        handleVarCstDecl(elem, decl, ctx, isPrivate, mkConstType);
         /* unused fields:
-             bool                           Has_Aliased;
-
-           break;
         */
         break;
       }
@@ -2955,7 +2994,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         logKind("A_Real_Number_Declaration");
 
-        handleNumberDecl(decl, ctx, isPrivate, SG_DEREF(sb::buildAutoType()), mkRealType(), elem);
+        handleNumberDecl(elem, decl, ctx, isPrivate, SG_DEREF(sb::buildAutoType()), mkRealType());
 
         /* unused fields:
          */
@@ -3011,6 +3050,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ADA_ASSERT(sgnode.get_parent() == &ctx.scope());
         recordNode(asisTypes(), adaname.id(), sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
+        recordNode(asisDecls(), elem.ID, sgnode);
 
         /* unused fields:
              bool                           Has_Task;
@@ -3044,6 +3084,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ctx.scope().append_statement(&sgnode);
         ADA_ASSERT(sgnode.get_parent() == &ctx.scope());
         //~ recordNode(asisTypes(), adaname.id(), sgnode);
+        recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
 
         /* unused fields:
@@ -3064,12 +3105,18 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgAdaTaskBody&          tskbody = mkAdaTaskBody();
         NameData                adaname = singleName(decl, ctx);
         Element_ID              declID  = decl.Corresponding_Declaration;
-        SgDeclarationStatement* tskdecl = findNode(asisDecls(), declID);
+        SgDeclarationStatement& tskdecl = lookupNode(asisDecls(), declID);
         ADA_ASSERT(adaname.fullName == adaname.ident);
 
         // \todo \review not sure why a task body could be independently created
-        SgAdaTaskBodyDecl&      sgnode  = tskdecl ? mkAdaTaskBodyDecl(*tskdecl, tskbody, ctx.scope())
-                                                  : mkAdaTaskBodyDecl(adaname.fullName, tskbody, ctx.scope());
+        //~ SgDeclarationStatement* tskdecl = findNode(asisDecls(), declID);
+        //~ if (tskdecl == nullptr)
+          //~ logError() << adaname.fullName << " task body w/o decl" << std::endl;
+
+        //~ SgAdaTaskBodyDecl&      sgnode  = tskdecl ? mkAdaTaskBodyDecl(*tskdecl, tskbody, ctx.scope())
+                                                  //~ : mkAdaTaskBodyDecl(adaname.fullName, tskbody, ctx.scope());
+
+        SgAdaTaskBodyDecl&      sgnode  = mkAdaTaskBodyDecl(tskdecl, tskbody, ctx.scope());
 
         attachSourceLocation(sgnode, elem, ctx);
         privatize(sgnode, isPrivate);
@@ -3150,12 +3197,11 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         logKind("A_Component_Declaration");
 
-        handleVarCstDecl(decl, ctx, isPrivate, tyIdentity, elem);
+        handleVarCstDecl(elem, decl, ctx, isPrivate, tyIdentity);
         /* unused clause:
               Pragma_Element_ID_List         Corresponding_Pragmas;
               Element_ID_List                Aspect_Specifications;
               Representation_Clause_List     Corresponding_Representation_Clauses;
-              bool                           Has_Aliased;
         */
         break;
       }
@@ -3314,7 +3360,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case An_Element_Iterator_Specification:        // 5.5.2    -> Trait_Kinds
     case A_Return_Variable_Specification:          // 6.5
     case A_Return_Constant_Specification:          // 6.5
-    case A_Null_Procedure_Declaration:             // 6.7
     case An_Object_Renaming_Declaration:           // 8.5.1(2)
     case A_Generic_Package_Renaming_Declaration:   // 8.5.5(2)
     case A_Generic_Procedure_Renaming_Declaration: // 8.5.5(2)
