@@ -1041,6 +1041,19 @@ overridingScope(const SgExprListExp* args, const std::vector<PrimitiveParameterD
   return overridingScope(*args, primitiveArgs);
 }
 
+bool
+explicitNullProcedure(const SgFunctionDefinition& fndef)
+{
+  const SgBasicBlock& body = SG_DEREF(fndef.get_body());
+
+  return body.get_statements().empty();
+}
+
+bool
+explicitNullRecord(const SgClassDefinition& recdef)
+{
+  return recdef.get_members().empty() && recdef.get_inheritances().empty();
+}
 
 
 } // ada

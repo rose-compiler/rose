@@ -162,6 +162,12 @@ namespace Ada_ROSE_Translation
   /// creates the most general real type
   SgType& mkRealType();
 
+  /// creates a constant type for \ref basety
+  SgType& mkConstType(SgType& underType);
+
+  /// creates an aliased type for \ref basety
+  SgType& mkAliasedType(SgType& underType);
+
   /// create a formal type
   SgAdaFormalType& mkAdaFormalType(const std::string& name);
 
@@ -351,8 +357,8 @@ namespace Ada_ROSE_Translation
   /// creates an independent task body with name \ref name, body \ref body, in scope \ref scope.
   // \todo not sure why a task body can independently exist without prior declaration.
   //       maybe this function is not needed.
-  SgAdaTaskBodyDecl&
-  mkAdaTaskBodyDecl(const std::string& name, SgAdaTaskBody& tskbody, SgScopeStatement& scope);
+  //~ SgAdaTaskBodyDecl&
+  //~ mkAdaTaskBodyDecl(const std::string& name, SgAdaTaskBody& tskbody, SgScopeStatement& scope);
 
   /// creates an empty task specification definition node
   SgAdaTaskSpec&
@@ -548,6 +554,10 @@ namespace Ada_ROSE_Translation
   /// Creates a reference to a task \ref task
   SgAdaTaskRefExp&
   mkAdaTaskRefExp(SgAdaTaskSpecDecl& task);
+
+  /// Creates a reference to a package \ref unit
+  SgAdaUnitRefExp&
+  mkAdaUnitRefExp(SgAdaPackageSpecDecl& unit);
 
   /// Creates a reference to an Ada renaming declaration \ref decl
   SgAdaRenamingRefExp&

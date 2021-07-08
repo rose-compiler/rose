@@ -80,6 +80,8 @@ namespace Ada_ROSE_Translation
 
   /// returns the declaration identified by \ref expr
   ///   if no record was found, nullptr is returned
+  /// \note the declaration is only looked up in the map returned by
+  ///       asisDecls(). => variables and exceptions are not found.
   SgDeclarationStatement*
   getDecl_opt(Expression_Struct& expr, AstContext ctx);
 

@@ -126,7 +126,7 @@ SageBuilder::SourcePositionClassification SageBuilder::SourcePositionClassificat
 
 // ROSE_DLL_API SgMemberFunctionDeclaration* buildConstructor ( const SgName & typeName, SgClassType* initializedName_classType, SgClassDefinition* classDefinition);
 // SgMemberFunctionDeclaration* SageBuilder::buildConstructor ( const SgName & typeName, SgClassType* classType, SgClassDefinition* classDefinition)
-SgMemberFunctionDeclaration* 
+SgMemberFunctionDeclaration*
 SageBuilder::buildDefaultConstructor (SgClassType* classType)
    {
      ROSE_ASSERT(classType != NULL);
@@ -183,7 +183,7 @@ SageBuilder::buildDefaultConstructor (SgClassType* classType)
         }
      ROSE_ASSERT(first_nondefining_declaration->get_firstNondefiningDeclaration() == first_nondefining_declaration);
 
-     SgMemberFunctionDeclaration* memberFunctionDeclaration = SageBuilder::buildDefiningMemberFunctionDeclaration (className, return_type, functionParameterList, 
+     SgMemberFunctionDeclaration* memberFunctionDeclaration = SageBuilder::buildDefiningMemberFunctionDeclaration (className, return_type, functionParameterList,
           classDefinition, decoratorList, buildTemplateInstantiation, functionConstVolatileFlags, first_nondefining_declaration, &templateArgumentsList);
      ROSE_ASSERT(memberFunctionDeclaration != NULL);
 
@@ -1678,7 +1678,7 @@ SageBuilder::buildVariableDeclaration_nfi (const SgName & name, SgType* type, Sg
              }
 
        // DQ (9/11/2020): Added to test valgrind.
-          if ((associatedVariableDeclaration != NULL) && 
+          if ((associatedVariableDeclaration != NULL) &&
               (associatedVariableDeclaration->get_builtFromUseOnly() == true))
              {
                printf ("test get_builtFromUseOnly(): true branch \n");
@@ -2136,7 +2136,7 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
      SgNamedType* namedType = isSgNamedType(stripedBaseType);
      if (namedType != NULL)
         {
-       // DQ (12/28/2019): the problem with getting the base declaration from the type is that it forces sharing 
+       // DQ (12/28/2019): the problem with getting the base declaration from the type is that it forces sharing
        // of the base declaration when the typedef has a defining declaration for a base type in multiple files.
 #if 0
           printf ("NOTE: Using the base declaration from the type forces sharing of the base declaration across multiple translation units \n");
@@ -3703,7 +3703,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (
 #endif
           SgFunctionParameterTypeList * typeList = buildFunctionParameterTypeList(paralist);
 
-       // DQ (1/10/2020): This was a default argument that was initialized to zero, I would like to remove the 
+       // DQ (1/10/2020): This was a default argument that was initialized to zero, I would like to remove the
        // use of the default argument to better support debugging new regerence qualifiers for member functions.
        // func_type = buildMemberFunctionType(return_type,typeList,scope, functionConstVolatileFlags);
           unsigned int reference_modifiers = 0;
@@ -4631,7 +4631,7 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (
      printf ("Leaving buildNondefiningFunctionDeclaration_T(): func: unparseNameToString() = %s \n",func->unparseNameToString().c_str());
 #endif
 
-     ROSE_ASSERT(paralist->get_parent() != NULL); 
+     ROSE_ASSERT(paralist->get_parent() != NULL);
      return func;
    }
 
@@ -11454,7 +11454,7 @@ SgModifierType* SageBuilder::buildConstType(SgType* base_type /*=NULL*/)
        cerr<<"Error in SageBuilder::buildConstType(): base_type is already a const type!"<<endl;
        ROSE_ASSERT(false);
      }
-#endif 
+#endif
   // DQ (7/28/2010): New (similar) approach using type table support.
      SgModifierType *result = new SgModifierType(base_type);
      ROSE_ASSERT(result!=NULL);
@@ -11690,6 +11690,24 @@ SgModifierType* SageBuilder::buildRestrictType(SgType* base_type)
 
      return result2;
    }
+
+
+// PP (7/7/21): model builder function after buildRestrictType
+SgModifierType* SageBuilder::buildAliasedType(SgType* base_type)
+   {
+     ROSE_ASSERT(base_type != NULL);
+
+     SgModifierType* result = new SgModifierType(base_type);
+     ROSE_ASSERT(result!=NULL);
+
+     result->get_typeModifier().setAliased();
+
+     SgModifierType * result2 = SgModifierType::insertModifierTypeIntoTypeTable(result);
+     if (result != result2) delete result;
+
+     return result2;
+   }
+
 
 // DQ (7/29/2010): Changed return type from SgType to SgModifierType
   //! Build a UPC strict type.
@@ -12164,7 +12182,7 @@ SageBuilder::buildLambdaCaptureList_nfi()
    }
 
 // DQ (7/25/2020): Adding C++17 support
-SgFoldExpression* 
+SgFoldExpression*
 SageBuilder::buildFoldExpression(SgExpression* operands, string operator_token_string, bool is_left_associative)
    {
      SgFoldExpression* result = new SgFoldExpression(NULL,operands,operator_token_string,is_left_associative);
@@ -14156,7 +14174,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
              }
 
 #if 0
-       // DQ (12/22/2019): This is the code that causes the class declarations between defining 
+       // DQ (12/22/2019): This is the code that causes the class declarations between defining
        // class declarations across multiple translation units to be shared.
 
        // DQ (9/7/2012): I think this might be the root of a problem in the haskell tests (ROSE compiling ROSE).
@@ -14370,7 +14388,7 @@ SageBuilder::buildClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaratio
           ROSE_ASSERT(nondefdecl->get_scope() != NULL);
 
        // DQ (8/2/2019): The was required becuase the parent pointers were not being set when reading a file from the SageBuilder::buildFil() API.
-       // However the bug was that the astPostprocessing's call to resetParentPointersInMemoryPool() was not properly working to find the global 
+       // However the bug was that the astPostprocessing's call to resetParentPointersInMemoryPool() was not properly working to find the global
        // scope in anyother case but when it was called usign a SgProject node.  This is not fixed to permit caloling using a SgSourceFile node
        // and it is now an error to call it using any other kind of IR node.
        // DQ (8/1/2019): Set the parent for the non defining declaration to be the same as the scope by default.
@@ -16244,7 +16262,7 @@ SageBuilder::buildAccessModifier ( unsigned int access )
 void
 SageBuilder::fixupSourcePositionFileSpecification(SgNode* subtreeRoot, const std::string& newFileName)
    {
-  // DQ (11/8/2019): This function changes the filename designation in all of the Sg_File_Info objects 
+  // DQ (11/8/2019): This function changes the filename designation in all of the Sg_File_Info objects
   // associated with the designated AST subtree.
 
      ROSE_ASSERT(subtreeRoot != NULL);
@@ -16403,7 +16421,7 @@ SageBuilder::fixupSourcePositionFileSpecification(SgNode* subtreeRoot, const std
 
      if (file != NULL)
         {
-       // We need to set the filename in at least one Sg_File_Info object so that we can have 
+       // We need to set the filename in at least one Sg_File_Info object so that we can have
        // the file_id be computed ans saved into the file_id to filename maps.
 
           originalFileId = file->get_startOfConstruct()->get_file_id();
@@ -16496,7 +16514,7 @@ SageBuilder::fixupSourcePositionFileSpecification(SgNode* subtreeRoot, const std
 void
 SageBuilder::fixupSharingSourcePosition(SgNode* subtreeRoot, int new_file_id)
    {
-  // DQ (11/8/2019): This function changes the filename designation in all of the Sg_File_Info objects 
+  // DQ (11/8/2019): This function changes the filename designation in all of the Sg_File_Info objects
   // associated with the designated AST subtree.
 
      ROSE_ASSERT(subtreeRoot != NULL);
@@ -16642,7 +16660,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 #endif
 
 
-  // DQ (11/5/2020): Experiment with clearing the global scope that is supporting multiple translation 
+  // DQ (11/5/2020): Experiment with clearing the global scope that is supporting multiple translation
   // units, since it is the cause of some problem when a tool is designed to read an input file twice.
      if (project != NULL)
         {
@@ -16663,7 +16681,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 #endif
 
        // DQ (11/5/2020): Clear the symbol table used to support multifile handling.
-       // This breaks only one of the test codes in the codeSegregation tool, but it is a name 
+       // This breaks only one of the test codes in the codeSegregation tool, but it is a name
        // qualification that should likely be handled better so I think this is a good fix.
           if (clear_globalScopeAcrossFiles == true)
              {
@@ -16785,7 +16803,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
   // DQ (2/6/2009): We will be compiling the source code generated in the
   // "rose_<inputFileName>" file, so we don't want this on the argument stack.
   // TV (09/19/2018): only add if not already present
-     if (std::find(arglist.begin(), arglist.end(), sourceFilename) == arglist.end()) 
+     if (std::find(arglist.begin(), arglist.end(), sourceFilename) == arglist.end())
         {
           arglist.push_back(sourceFilename);
         }
@@ -17107,7 +17125,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
 #error "DEAD CODE!"
 
        // This is the older implementation that is sensitive to transforamtions in the original AST from the file.
-       // DQ (11/21/2019): Remove elements in the vector that are SgEmptyDeclarations which 
+       // DQ (11/21/2019): Remove elements in the vector that are SgEmptyDeclarations which
        // are associated with some transformations (include header, for example).
           std::vector<SgDeclarationStatementPtrList::iterator> removeList;
           SgDeclarationStatementPtrList::iterator i = fileBeingCopied_declarationList.begin();
@@ -17131,7 +17149,7 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
                fileBeingCopied_declarationList.erase(*i);
              }
 
-       // DQ (11/21/2019): These might be a different size if for example the file being 
+       // DQ (11/21/2019): These might be a different size if for example the file being
        // copied is being copied after some transformations to the AST from the original file.
           if (fileBeingCopied_declarationList.size() != result_declarationList.size())
              {
@@ -17319,8 +17337,8 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
              {
                if (temp_file->getFileName() == file->getFileName())
                   {
-                 // Then the temp_file is the original version of the file we are building for a second time 
-                 // (usually as a part of the outlining to a seperate file).  and we need to mark at least the 
+                 // Then the temp_file is the original version of the file we are building for a second time
+                 // (usually as a part of the outlining to a seperate file).  and we need to mark at least the
                  // unparsing headr file optimizations to be the same across thje two file.
 
                     temp_file->set_header_file_unparsing_optimization(sourceFile->get_header_file_unparsing_optimization());
@@ -17395,9 +17413,9 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
      ROSE_ASSERT (sourceFile->get_preprocessorDirectivesAndCommentsList() != NULL);
 
 #if 0
-  // DQ (5/22/2020): If this is processing a previously processed file, then this 
+  // DQ (5/22/2020): If this is processing a previously processed file, then this
   // will cause comments and CPP directives to be collected twice. This happens
-  // in the case where we build a copy of the source file to support construction 
+  // in the case where we build a copy of the source file to support construction
   // of a dynamic library.
      printf ("NOTE: SageBuilder::buildSourceFile(): If this is processing a previously processed source file then this will cause the source file comments and CPP directives to be collected redundently \n");
 #endif
@@ -17427,7 +17445,7 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
 #error "DEAD CODE!"
 
   // DQ (1/4/2020): Adding support to permit comments and CPP directives and token stream to be defined using the outputFileName.
-  // Liao, 2019, 1/31: We often need the preprocessing info. (e.g. #include ..) attached to make the new file compilable. 
+  // Liao, 2019, 1/31: We often need the preprocessing info. (e.g. #include ..) attached to make the new file compilable.
   // attachPreprocessingInfo (sourceFile);
      attachPreprocessingInfo (sourceFile,outputFileName);
 #else
@@ -17460,10 +17478,10 @@ SgSourceFile* SageBuilder::buildSourceFile(const std::string& inputFileName,cons
 #endif
 
   // DQ (1/8/2021): Set the filename used in the generated SgSourceFile to be the output file.
-  // This appears to be important so that we can get either key correct for the comments and CPP 
+  // This appears to be important so that we can get either key correct for the comments and CPP
   // directives and or the comments and CPP directives to be consistant as well as the token stream,
   // I think this might be less about the comments and CPP directives than the key for the token stream.
-  // Either that or I need to have an extra field for the SgSourceFile name when it is read from one 
+  // Either that or I need to have an extra field for the SgSourceFile name when it is read from one
   // file, but trying to be another file.
   // sourceFile->setFileName(outputFileName);
 
@@ -17511,7 +17529,7 @@ PreprocessingInfo* SageBuilder::buildHeader(const std::string& header_filename,
   ROSE_ASSERT(result);
 
   result->get_file_info()->setTransformation();
-  return result; 
+  return result;
 }
 
 //! #define xxx yyy
@@ -17845,9 +17863,9 @@ SageBuilder::findAssociatedSymbolInTargetAST(SgDeclarationStatement* snippet_dec
 SgDeclarationStatement*
 SageBuilder::findAssociatedDeclarationInTargetAST(SgDeclarationStatement* snippet_declaration, SgScopeStatement* targetScope)
    {
-  // DQ (12/6/2020): This is a similar function to findAssociatedSymbolInTargetAST() but since 
+  // DQ (12/6/2020): This is a similar function to findAssociatedSymbolInTargetAST() but since
   // I need to modify it to support the requirements of the codeSegregation, it was useful to not
-  // modify the existing findAssociatedSymbolInTargetAST() function too much so as to avoid 
+  // modify the existing findAssociatedSymbolInTargetAST() function too much so as to avoid
   // compromizing the snippet transformation support.
 
 #define DEBUG_FIND_ASSOCIATED_DECLARATION 0
@@ -17903,7 +17921,7 @@ SageBuilder::findAssociatedDeclarationInTargetAST(SgDeclarationStatement* snippe
 #endif
           snippet_scope_list.push_back(snippet_scope);
 
-       // DQ (12/7/2020): At this point the scopes that we are traversing to the global scope should 
+       // DQ (12/7/2020): At this point the scopes that we are traversing to the global scope should
        // have the same global scope as the input declaration.
           ROSE_ASSERT(SageInterface::hasSameGlobalScope(snippet_declaration,snippet_scope) == true);
         }
@@ -17916,10 +17934,10 @@ SageBuilder::findAssociatedDeclarationInTargetAST(SgDeclarationStatement* snippe
           printf (" --- *i = %p = %s name = %s \n",scope,scope->class_name().c_str(),SageInterface::get_name(scope).c_str());
           SgGlobal* global_scope_from_declarations_scope = TransformationSupport::getGlobalScope(scope);
           printf (" --- --- global_scope_from_declarations_scope = %p \n",global_scope_from_declarations_scope);
-        } 
+        }
 #endif
 
-  // DQ (12/7/2020): At this point the scopes that we are traversing to the global scope should 
+  // DQ (12/7/2020): At this point the scopes that we are traversing to the global scope should
   // have the same global scope as the input declaration.
      ROSE_ASSERT(SageInterface::hasSameGlobalScope(snippet_declaration,snippet_scope) == true);
 
