@@ -36,6 +36,13 @@ typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Type of values manipulated by the IntervalSemantics domain. */
 class SValue: public BaseSemantics::SValue {
+public:
+    /** Base type. */
+    using Super = BaseSemantics::SValue;
+
+    /** Shared-ownership pointer. */
+    using Ptr = SValuePtr;
+
 protected:
     Intervals intervals_;
     bool isBottom_;
@@ -252,6 +259,12 @@ typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
  *
  *  A memory read operation scans the memory cell list and returns the union of all possible matches. */
 class MemoryState: public BaseSemantics::MemoryCellList {
+public:
+    /** Base type. */
+    using Super = BaseSemantics::MemoryCellList;
+
+    /** Shared-ownership pointer. */
+    using Ptr = MemoryStatePtr;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
@@ -337,6 +350,13 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** RISC operators for interval domains. */
 class RiscOperators: public BaseSemantics::RiscOperators {
+public:
+    /** Base type. */
+    using Super = BaseSemantics::RiscOperators;
+
+    /** Shared-ownership pointer. */
+    using Ptr = RiscOperatorsPtr;
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:

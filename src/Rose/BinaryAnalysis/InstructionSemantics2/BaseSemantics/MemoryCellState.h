@@ -23,6 +23,13 @@ typedef boost::shared_ptr<class MemoryCellState> MemoryCellStatePtr;
  *
  *  This is the base class for cell-based memory states. */
 class MemoryCellState: public MemoryState {
+public:
+    /** Base type. */
+    using Super = MemoryState;
+
+    /** Shared-ownership pointer. */
+    using Ptr = MemoryCellStatePtr;
+
 protected:
     MemoryCellPtr protocell;                            // prototypical memory cell used for its virtual constructors
     MemoryCellPtr latestWrittenCell_;                   // the cell whose value was most recently written to, if any

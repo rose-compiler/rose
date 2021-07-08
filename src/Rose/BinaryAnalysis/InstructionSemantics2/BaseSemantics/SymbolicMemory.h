@@ -22,7 +22,16 @@ typedef boost::shared_ptr<class SymbolicMemory> SymbolicMemoryPtr;
  *  symbolically. The memory state can be passed to SMT solvers and included in if-then-else symbolic expressions to represent
  *  different memory states according to different paths through a specimen. */
 class SymbolicMemory: public MemoryState {
+public:
+    /** Base type. */
+    using Super = MemoryState;
+
+    /** Shared-ownership pointer. */
+    using Ptr = SymbolicMemoryPtr;
+
+private:
     SymbolicExpr::Ptr mem_;
+
 protected:
     // All memory states should be heap allocated; use instance(), create(), or clone() instead.
     explicit SymbolicMemory(const SValuePtr &addrProtoval, const SValuePtr &valProtoval)

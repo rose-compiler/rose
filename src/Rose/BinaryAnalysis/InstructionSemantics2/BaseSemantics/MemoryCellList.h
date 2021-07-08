@@ -38,6 +38,12 @@ typedef boost::shared_ptr<class MemoryCellList> MemoryCellListPtr;
  *  beginning of the list.  Subclasses, of course, are free to reorder the list however they want. */
 class MemoryCellList: public MemoryCellState {
 public:
+    /** Base type. */
+    using Super = MemoryCellState;
+
+    /** Shared-ownership pointer. */
+    using Ptr = MemoryCellStatePtr;
+
     typedef std::list<MemoryCellPtr> CellList;          /**< List of memory cells. */
 protected:
     CellList cells;                                     // list of cells in reverse chronological order
