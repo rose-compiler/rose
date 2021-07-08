@@ -37,6 +37,11 @@ namespace BaseSemantics {
  *  the interface.  See the Rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts fit
  *  together.  */
 class State: public boost::enable_shared_from_this<State> {
+public:
+    /** Shared-ownership pointer for a @ref State. See @ref heap_object_shared_ownership. */
+    using Ptr = StatePtr;
+
+private:
     SValuePtr protoval_;                                // Initial value used to create additional values as needed.
     RegisterStatePtr registers_;                        // All machine register values for this semantic state.
     MemoryStatePtr memory_;                             // All memory for this semantic state.
@@ -65,10 +70,6 @@ protected:
 
     // deep-copy the registers and memory
     State(const State &other);
-
-public:
-    /** Shared-ownership pointer for a @ref State. See @ref heap_object_shared_ownership. */
-    typedef StatePtr Ptr;
 
 public:
     virtual ~State();

@@ -63,8 +63,14 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
  *  (reading and writing registers and memory) are handled above these two subdomains: read operations instantiate a value with
  *  a given set of definers, and write operations insert information into the final data flow graph. */
 class RiscOperators: public MultiSemantics::RiscOperators {
-    typedef                 MultiSemantics::RiscOperators Super;
+public:
+    /** Base type. */
+    using Super = MultiSemantics::RiscOperators;
 
+    /** Shared-ownership pointer. */
+    using Ptr = RiscOperatorsPtr;
+
+private:
     const RegisterDictionary *regdict_;                 // register dictionary used to print abstract locations
     size_t innerDomainId_;                              // subdomain identifier for the dataflow's inner domain
     size_t userDomainId_;                               // subdomain identifier for the user-supplied domain (memory addrs)

@@ -25,7 +25,11 @@ typedef boost::shared_ptr<class DispatcherX86> DispatcherX86Ptr;
 
 class DispatcherX86: public BaseSemantics::Dispatcher {
 public:
-    typedef BaseSemantics::Dispatcher Super;
+    /** Base type. */
+    using Super = BaseSemantics::Dispatcher;
+
+    /** Shared-ownership pointer. */
+    using Ptr = DispatcherX86Ptr;
 
 protected:
     X86InstructionSize processorMode_;

@@ -39,6 +39,13 @@ typedef BaseSemantics::State State;
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 class RiscOperators: public SymbolicSemantics::RiscOperators {
+public:
+    /** Base type. */
+    using Super = SymbolicSemantics::RiscOperators;
+
+    /** Shared-ownership pointer. */
+    using Ptr = RiscOperatorsPtr;
+
 private:
     typedef Map<SymbolicExpr::Hash, LeafPtr> Rewrites;
     typedef Map<uint64_t, std::string> Variables;

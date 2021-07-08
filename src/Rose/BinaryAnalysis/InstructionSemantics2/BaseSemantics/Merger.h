@@ -31,6 +31,11 @@ namespace BaseSemantics {
  *  objects. Therefore they have no public C++ constructors but instead use factory methods named "instance". Users should not
  *  explicitly delete these objects -- they will be deleted automatically. */
 class Merger: public Sawyer::SharedObject {
+public:
+    /** Shared ownership pointer for @ref Merger. See @ref heap_object_shared_ownership. */
+    typedef MergerPtr Ptr;
+
+private:
     bool memoryAddressesMayAlias_;
     bool memoryMergeDebugging_;
 
@@ -38,9 +43,6 @@ protected:
     Merger();
 
 public:
-    /** Shared ownership pointer for @ref Merger. See @ref heap_object_shared_ownership. */
-    typedef MergerPtr Ptr;
-
     ~Merger();
 
     /** Allocating constructor. */

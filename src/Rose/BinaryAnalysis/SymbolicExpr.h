@@ -1640,6 +1640,9 @@ Ptr substitute(const Ptr &src, Substitution &subber, const SmtSolverPtr &solver 
 }
 
 } // namespace
+
+using SymbolicExprPtr = SymbolicExpr::Ptr;
+
 } // namespace
 } // namespace
 

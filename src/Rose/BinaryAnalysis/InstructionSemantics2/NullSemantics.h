@@ -25,6 +25,12 @@ typedef Sawyer::SharedPointer<class SValue> SValuePtr;
 
 /** Values in the NullSemantics domain.  Values are essentially void. */
 class SValue: public BaseSemantics::SValue {
+public:
+    /** Base type. */
+    using Super = BaseSemantics::SValue;
+
+    /** Shared-ownership pointer. */
+    using Ptr = SValuePtr;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors.
@@ -149,6 +155,13 @@ typedef boost::shared_ptr<class RegisterState> RegisterStatePtr;
  *
  *  This register state does not store any values.  Read operations always return (new) undefined values. */
 class RegisterState: public BaseSemantics::RegisterState {
+public:
+    /** Base type. */
+    using Super = BaseSemantics::RegisterState;
+
+    /** Shared-ownership pointer. */
+    using Ptr = RegisterStatePtr;
+
 protected:
     RegisterState(const RegisterState &other)
         : BaseSemantics::RegisterState(other) {}
@@ -215,6 +228,13 @@ typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
  *
  *  This memory state does not store any values. Read operations always return (new) undefined values. */
 class MemoryState: public BaseSemantics::MemoryState {
+public:
+    /** Base type. */
+    using Super = BaseSemantics::MemoryState;
+
+    /** Shared-ownership pointer. */
+    using Ptr = MemoryStatePtr;
+
 protected:
     MemoryState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval)
         : BaseSemantics::MemoryState(addrProtoval, valProtoval) {}
@@ -291,6 +311,12 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** NullSemantics operators always return a new undefined value.  They do, however, check certain preconditions. */
 class RiscOperators: public BaseSemantics::RiscOperators {
+public:
+    /** Base type. */
+    using Super = BaseSemantics::RiscOperators;
+
+    /** Shared-ownership pointer. */
+    using Ptr = RiscOperatorsPtr;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
