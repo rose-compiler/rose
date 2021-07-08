@@ -2413,7 +2413,8 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
             // DQ (12/1/2013): I am not clear if there are cases where we need to output the associated trailing tokens.
             // None of these cases appear to be an issue in the C regression tests.
 
-               bool isLastStatementOfScope = false;
+            // DQ (7/7/2021): Comment out to remove compiler warning about set but not used (so we don't need it).
+            // bool isLastStatementOfScope = false;
 
             // DQ (1/7/2015): We want the parent instead of the scope, because this is a structural issue.
             // SgScopeStatement* scope = stmt->get_scope();
@@ -2468,16 +2469,16 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                     printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
                     printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");
 #endif
-
-                    SgStatement* lastStatement = SageInterface::lastStatementOfScopeWithTokenInfo (scope, tokenStreamSequenceMap);
+                 // DQ (7/7/2021): Comment out to remove compiler warning about set but not used (so we don't need it).
+                 // SgStatement* lastStatement = SageInterface::lastStatementOfScopeWithTokenInfo (scope, tokenStreamSequenceMap);
 
 #if OUTPUT_TOKEN_STREAM_FOR_DEBUGGING
-                    printf ("computed lastStatement of scope = %p = %s stmt = %p = %s \n",lastStatement,lastStatement->class_name().c_str(),stmt,stmt->class_name().c_str());
+                 // printf ("computed lastStatement of scope = %p = %s stmt = %p = %s \n",lastStatement,lastStatement->class_name().c_str(),stmt,stmt->class_name().c_str());
 #endif
-                    isLastStatementOfScope = (stmt == lastStatement);
+                 // isLastStatementOfScope = (stmt == lastStatement);
 
 #if OUTPUT_TOKEN_STREAM_FOR_DEBUGGING
-                    printf ("isLastStatementOfScope = %s \n",isLastStatementOfScope ? "true" : "false");
+                 // printf ("isLastStatementOfScope = %s \n",isLastStatementOfScope ? "true" : "false");
 #endif
 
 #else
@@ -2556,7 +2557,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
 #if 0
                               printf ("In unparseStatementFromTokenStream(): identified last statement: stmt = %p = %s \n",stmt,stmt->class_name().c_str());
 #endif
-                              isLastStatementOfScope = true;
+                           // isLastStatementOfScope = true;
                             }
 #error "DEAD CODE!"
 
@@ -2592,7 +2593,7 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
                curprint("\n/* DONE: In UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFile*,,,): calling unparseAttachedPreprocessingInfoUsingTokenStream test 0 */");
 #endif
 #if 0
-               printf ("In unparseStatementFromTokenStream(): isLastStatementOfScope     = %s \n",isLastStatementOfScope ? "true" : "false");
+            // printf ("In unparseStatementFromTokenStream(): isLastStatementOfScope     = %s \n",isLastStatementOfScope ? "true" : "false");
             // printf ("In unparseStatementFromTokenStream(): unparseTrailingTokenStream = %s \n",unparseTrailingTokenStream ? "true" : "false");
 #endif
 
@@ -4323,7 +4324,8 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
      SgSourceFile* sourceFile = info.get_current_source_file();
   // ROSE_ASSERT(sourceFile != NULL);
 
-#if 1
+#if 0
+  // DQ (7/7/2021): This happens a lot so, we need to supresss this output.
      if (sourceFile == NULL)
         {
           printf ("NOTE: In unparseStatement(): outputStatementAsTokens = %s sourceFile == NULL \n",outputStatementAsTokens ? "true" : "false");
@@ -4916,8 +4918,8 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                   {
                     printf ("   --- computed lastStatement of scope = %p = %s stmt = %p = %s \n",lastStatement,lastStatement->class_name().c_str(),stmt,stmt->class_name().c_str());
                   }
-               printf ("   --- isLastStatementOfScope            = %s \n",isLastStatementOfScope ? "true" : "false");
-               printf ("   --- isLastStatementOfScopeTransformed = %s \n",isLastStatementOfScopeTransformed ? "true" : "false");
+            // printf ("   --- isLastStatementOfScope            = %s \n",isLastStatementOfScope ? "true" : "false");
+            // printf ("   --- isLastStatementOfScopeTransformed = %s \n",isLastStatementOfScopeTransformed ? "true" : "false");
 #endif
 
 #error "DEAD CODE!"
@@ -6220,7 +6222,7 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
      curprint(string("\n/* Leaving unparseGlobalStmt(): global scope size = ") + StringUtility::numberToString(globalScope->get_declarations().size()) + " */ \n");
 #endif
 
-#if 1
+#if 0
      printf ("Leaving UnparseLanguageIndependentConstructs::unparseGlobalStmt() \n\n");
 #endif
 

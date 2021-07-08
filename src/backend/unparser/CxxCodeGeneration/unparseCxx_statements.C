@@ -6966,7 +6966,7 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      SgMemberFunctionDeclaration* mfuncdecl_stmt = isSgMemberFunctionDeclaration(stmt);
      ASSERT_not_null(mfuncdecl_stmt);
 
-#if 1
+#if 0
      printf ("Inside of Unparse_ExprStmt::unparseMFuncDeclStmt(stmt = %p = %s) \n",stmt,stmt->class_name().c_str());
      curprint ("\n/* Inside of Unparse_ExprStmt::unparseMFuncDeclStmt */ \n"); 
 #endif
@@ -6976,7 +6976,7 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
          mfuncdecl_stmt->get_qualified_name().str(), isTransformed (mfuncdecl_stmt) ? "true" : "false", (mfuncdecl_stmt->get_definition() == NULL) ? "true" : "false");
 #endif
 
-#if 1
+#if 0
   // printf ("Inside of Unparse_ExprStmt::unparseMFuncDeclStmt(): mfuncdecl_stmt->get_from_template() = %s \n",
   //      mfuncdecl_stmt->get_from_template() ? "true" : "false");
   // if (mfuncdecl_stmt->get_from_template() == true)
@@ -7001,7 +7001,7 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      bool saved_unparsedPartiallyUsingTokenStream = info.unparsedPartiallyUsingTokenStream();
      if (saved_unparsedPartiallyUsingTokenStream == true)
         {
-#if 1
+#if 0
           curprint ("\n/* Inside of Unparse_ExprStmt::unparseMFuncDeclStmt(): unparsing from the token stream */ \n"); 
 #endif
           SgFunctionDefinition* function_definition = mfuncdecl_stmt->get_definition();
@@ -7037,7 +7037,7 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 #endif
              }
 
-#if 1
+#if 0
           curprint ("\n/* Inside of Unparse_ExprStmt::unparseMFuncDeclStmt(): DONE unparsing from the token stream */ \n"); 
 #endif
 #if 0
@@ -7049,7 +7049,7 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
      if (saved_unparsedPartiallyUsingTokenStream == false)
         {
-#if 1
+#if 0
           curprint ("\n/* Inside of Unparse_ExprStmt::unparseMFuncDeclStmt(): unparsing from the AST */ \n"); 
 #endif
   // DQ (12/3/2007): This causes a bug in the output of access level (public, protected, private)
@@ -7149,7 +7149,7 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
           if (mfuncdecl_stmt->isExternBrace())
              {
-#if 1
+#if 0
                printf ("Inside of unparseMFuncDeclStmt(): Output extern closing brace \n");
                curprint("/* Inside of unparseMFuncDeclStmt(): Output extern closing brace */ \n");
 #endif
@@ -7633,7 +7633,7 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                curprint(";");
                if (mfuncdecl_stmt->isExternBrace())
                   {
-#if 1
+#if 0
                     printf ("Inside of unparseMFuncDeclStmt(): Output extern closing brace \n");
                     curprint("/* Inside of unparseMFuncDeclStmt(): Output extern closing brace */ \n");
 #endif
@@ -7762,14 +7762,14 @@ Unparse_ExprStmt::unparseMFuncDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
           unparseAttachedPreprocessingInfo(mfuncdecl_stmt->get_CtorInitializerList(), info, PreprocessingInfo::after);
         }
 
-#if 1
+#if 0
           curprint ("\n/* Inside of Unparse_ExprStmt::unparseMFuncDeclStmt(): DONE: unparsing from the AST */ \n"); 
 #endif
 
        // DQ (6/2/2021): This is the ending brace for if (xxx == false)
         }
 
-#if 1
+#if 0
      printf ("Leaving Unparse_ExprStmt::unparseMFuncDeclStmt(stmt = %p = %s) \n",stmt,stmt->class_name().c_str());
      curprint ("/*  Leaving Unparse_ExprStmt::unparseMFuncDeclStmt(stm) */ ");
 #endif
