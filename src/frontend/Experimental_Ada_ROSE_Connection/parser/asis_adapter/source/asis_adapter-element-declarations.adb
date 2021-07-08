@@ -689,14 +689,17 @@ package body Asis_Adapter.Element.Declarations is
          Add_Corresponding_Last_Subtype;
 
       when A_Variable_Declaration =>
+         Add_Has_Aliased;
          Add_Object_Declaration_View;
          Add_Initialization_Expression;
 
       when A_Constant_Declaration =>
+         Add_Has_Aliased;
          Add_Object_Declaration_View;
          Add_Initialization_Expression;
 
       when A_Deferred_Constant_Declaration =>
+         Add_Has_Aliased;
          Add_Object_Declaration_View;
 
       when A_Single_Task_Declaration =>
@@ -733,6 +736,7 @@ package body Asis_Adapter.Element.Declarations is
          Add_Has_Null_Exclusion;
 
       when A_Component_Declaration =>
+         Add_Has_Aliased;
          Add_Object_Declaration_View;
          Add_Initialization_Expression;
 

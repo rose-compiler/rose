@@ -166,7 +166,8 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   type_in_local_pkg.adb                \
   uppercase.adb
 
-ADA_TRANSLATOR_PENDING_TESTS :=
+ADA_TRANSLATOR_PENDING_TESTS :=        \
+  access_variable.adb
 
 # defines tests that are fully supported by ROSE
 ROSE_PASSING_ADA_TESTS :=                           \
