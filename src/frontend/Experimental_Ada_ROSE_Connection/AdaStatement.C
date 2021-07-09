@@ -699,20 +699,6 @@ namespace
     return getAliased(elem.The_Union.Expression, ctx);
   }
 
-/*
-  PP (04/30/21) integrated into getExceptionBase
-
-  SgInitializedName&
-  getAliasedExcnDecl(Element_ID declid, AstContext ctx)
-  {
-    Element_Struct& elem = retrieveAs<Element_Struct>(elemMap(), declid);
-    ADA_ASSERT(elem.Element_Kind == A_Defining_Name);
-
-    SgInitializedName* the_name = findFirst(asisExcps(), elem.ID);
-    return SG_DEREF(the_name);
-  }
-*/
-
 
   void
   fillTaskBody(Declaration_Struct& decl, SgAdaTaskBody& sgnode, AstContext ctx)
