@@ -402,12 +402,15 @@ namespace
     // \returns the assumed scope of a function declaration if scope qualification is needed
     //          nullptr if no scope qualification is required
     SgScopeStatement*
-    declarativeScope(const SgFunctionRefExp& fnref)
+    assumedDeclarativeScope(const SgFunctionRefExp& n)
     {
       if (!ctxRequiresScopeQualification)
         return nullptr;
 
-      const SgExprListExp&   args = callArguments(n);
+      const SgExprListExp*   args = callArguments(n);
+      if (!args)
+        return nullptr;
+
       SgFunctionDeclaration& fundcl = SG_DEREF(n.getAssociatedFunctionDeclaration());
       auto                   primitiveArgs = si::ada::primitiveParameterPositions(fundcl);
       SgScopeStatement*      overridingScope = si::ada::overridingScope(args, primitiveArgs);
@@ -417,7 +420,7 @@ namespace
 
     void handle(SgFunctionRefExp& n)
     {
-      if (SgScopeStatement* dclscope = declarativeScope(n))
+      if (SgScopeStatement* dclscope = assumedDeclarativeScope(n))
         prn(scopeQual(dclscope));
 
       prn(nameOf(n));
