@@ -1344,8 +1344,6 @@ namespace
         const bool requiresPrivate = si::ada::withPrivateDefinition(&n);
         const bool requiresIs = requiresPrivate || hasModifiers(n);
 
-        //~ std::cerr << "private type: " << requiresPrivate << std::endl;
-
         if (requiresIs)
         {
           prn(" is");
@@ -1673,7 +1671,7 @@ namespace
 
     if (si::ada::explicitNullProcedure(*def))
     {
-      prn("is null");
+      prn(" is null");
       prn(STMT_SEP);
       return;
     }
@@ -1868,7 +1866,7 @@ namespace
 
   struct RequiresScopeQual : sg::DispatchHandler<bool>
   {
-      bool reqScopeQual(const SgAdaPackageSpec& n)
+      bool isNormalPkg(const SgAdaPackageSpec& n)
       {
         const SgAdaPackageSpecDecl& dcl = SG_DEREF(isSgAdaPackageSpecDecl(n.get_parent()));
 
@@ -1878,7 +1876,7 @@ namespace
       void handle(const SgNode& n)           { SG_UNEXPECTED_NODE(n); }
       void handle(const SgScopeStatement&)   { res = true; }
       void handle(const SgGlobal&)           { res = false; }
-      void handle(const SgAdaPackageSpec& n) { res = reqScopeQual(n); }
+      void handle(const SgAdaPackageSpec& n) { res = isNormalPkg(n); }
   };
 
   /// returns true iff \ref n requires scope qualification
@@ -1909,7 +1907,10 @@ namespace
     using base::size;
 
     /// returns a string version of the scopes in range [rbegin(), rend())
-    //~ std::string path() const;
+    std::string path() const
+    {
+      return path(rbegin());
+    }
 
     /// returns a string version of the scopes in range [\ref pos, rend())
     std::string path(const_reverse_iterator pos) const;
@@ -1924,13 +1925,6 @@ namespace
     }
   };
 
-/*
-  std::string
-  ScopePath::path() const
-  {
-    return path(rbegin());
-  }
-*/
 
   std::string
   ScopePath::path(const_reverse_iterator pos) const
@@ -2024,17 +2018,17 @@ Unparse_Ada::computeScopeQual(SgScopeStatement& local, SgScopeStatement& remote)
 {
   using PathIterator = ScopePath::const_reverse_iterator;
 
-  ScopePath remotePath = pathToGlobal(remote, *this);
+  const ScopePath remotePath = pathToGlobal(remote, *this);
 
   if (remotePath.size() == 0)
     return "";
 
-  ScopePath      localPath  = pathToGlobal(local, *this);
-  size_t         pathlen    = std::min(localPath.size(), remotePath.size());
-  PathIterator   localstart = localPath.rbegin();
-  PathIterator   remotePos  = std::mismatch( localstart, localstart + pathlen,
-                                             remotePath.rbegin()
-                                           ).second;
+  const ScopePath localPath  = pathToGlobal(local, *this);
+  size_t          pathlen    = std::min(localPath.size(), remotePath.size());
+  PathIterator    localstart = localPath.rbegin();
+  PathIterator    remotePos  = std::mismatch( localstart, localstart + pathlen,
+                                              remotePath.rbegin()
+                                            ).second;
 
   // \todo
   // a case that is currently not handled is if an inner scope

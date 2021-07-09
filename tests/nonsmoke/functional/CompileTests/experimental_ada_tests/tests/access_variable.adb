@@ -7,7 +7,7 @@ begin
 null;
 end Press;
 
-Red_Button : aliased Button; --Has_Aliased is not set in Asis
+Red_Button : aliased Button;
 
 begin
 Press(Red_Button'Access);

@@ -395,25 +395,29 @@ namespace
       prn("<null>");
     }
 
+    // Ada's derived types "inherit" the primitive functions of their base type.
+    // Asis does not create new declaration for these functions, but instead links
+    // to the original operation functions. However, the scope qualification needs to
+    // be generated as if the functions were located in the scope of the derived type.
+    // \returns the assumed scope of a function declaration if scope qualification is needed
+    //          nullptr if no scope qualification is required
+    SgScopeStatement*
+    declarativeScope(const SgFunctionRefExp& fnref)
+    {
+      if (!ctxRequiresScopeQualification)
+        return nullptr;
+
+      const SgExprListExp&   args = callArguments(n);
+      SgFunctionDeclaration& fundcl = SG_DEREF(n.getAssociatedFunctionDeclaration());
+      auto                   primitiveArgs = si::ada::primitiveParameterPositions(fundcl);
+      SgScopeStatement*      overridingScope = si::ada::overridingScope(args, primitiveArgs);
+
+      return overridingScope ? overridingScope : fundcl.get_scope();
+    }
+
     void handle(SgFunctionRefExp& n)
     {
-      SgFunctionDeclaration& fundcl   = SG_DEREF(n.getAssociatedFunctionDeclaration());
-      SgScopeStatement*      dclscope = fundcl.get_scope();
-      const SgExprListExp*   args     = ctxRequiresScopeQualification ? callArguments(n) : nullptr;
-
-      // if args is not null: check if the scope is implied with a derived type
-      if (args)
-      {
-        auto              primitiveArgs   = si::ada::primitiveParameterPositions(fundcl);
-        SgScopeStatement* overridingScope = si::ada::overridingScope(*args, primitiveArgs);
-
-        if (overridingScope)
-        {
-          dclscope = overridingScope;
-        }
-      }
-
-      if (ctxRequiresScopeQualification)
+      if (SgScopeStatement* dclscope = declarativeScope(n))
         prn(scopeQual(dclscope));
 
       prn(nameOf(n));
@@ -471,7 +475,6 @@ namespace
   void AdaExprUnparser::handle(SgExpression& n)
   {
     // if not handled here, have the language independent parser handle it..
-    //~ std::cerr << "XXXXXXX " << typeid(n).name() << std::endl;
     unparser.UnparseLanguageIndependentConstructs::unparseExpression(&n, info);
   }
 

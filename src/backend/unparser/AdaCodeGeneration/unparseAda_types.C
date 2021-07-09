@@ -151,7 +151,7 @@ namespace
       prn("(");
       arrayDimList(SG_DEREF(n.get_dim_info()), (si::ada::unconstrained(n) ? " range <>" : ""));
       prn(")");
-      prn(" of");
+      prn(" of ");
       type(n.get_base_type());
     }
 
