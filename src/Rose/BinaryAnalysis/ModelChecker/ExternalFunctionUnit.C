@@ -87,10 +87,11 @@ ExternalFunctionUnit::address() const {
     return function_->address();
 }
 
-BS::SValuePtr
-ExternalFunctionUnit::readLocation(const BS::DispatcherPtr &cpu, const CC::ParameterLocation &param, const BS::SValuePtr &dflt) {
+BS::SValue::Ptr
+ExternalFunctionUnit::readLocation(const BS::Dispatcher::Ptr &cpu, const CC::ParameterLocation &param,
+                                   const BS::SValue::Ptr &dflt) {
     ASSERT_not_null(cpu);
-    BS::RiscOperatorsPtr ops = cpu->operators();
+    BS::RiscOperators::Ptr ops = cpu->operators();
 
     switch (param.type()) {
         case CC::ParameterLocation::REGISTER:
@@ -98,15 +99,15 @@ ExternalFunctionUnit::readLocation(const BS::DispatcherPtr &cpu, const CC::Param
 
         case CC::ParameterLocation::STACK: {
             const RegisterDescriptor baseReg = param.reg();
-            BS::SValuePtr base = ops->readRegister(baseReg);
-            BS::SValuePtr offset = ops->number_(baseReg.nBits(), BitOps::signExtend(param.offset(), baseReg.nBits()));
-            BS::SValuePtr stackVa = ops->add(base, offset);
+            BS::SValue::Ptr base = ops->readRegister(baseReg);
+            BS::SValue::Ptr offset = ops->number_(baseReg.nBits(), BitOps::signExtend(param.offset(), baseReg.nBits()));
+            BS::SValue::Ptr stackVa = ops->add(base, offset);
             return ops->readMemory(RegisterDescriptor(), stackVa, dflt, ops->boolean_(true));
         }
 
         case CC::ParameterLocation::ABSOLUTE: {
             size_t nBits = cpu->stackPointerRegister().nBits();
-            BS::SValuePtr va = ops->number_(nBits, param.address());
+            BS::SValue::Ptr va = ops->number_(nBits, param.address());
             ops->readMemory(RegisterDescriptor(), va, dflt, ops->boolean_(true));
             break;
         }
@@ -118,9 +119,10 @@ ExternalFunctionUnit::readLocation(const BS::DispatcherPtr &cpu, const CC::Param
 }
 
 void
-ExternalFunctionUnit::writeLocation(const BS::DispatcherPtr &cpu, const CC::ParameterLocation &param, const BS::SValuePtr &value) {
+ExternalFunctionUnit::writeLocation(const BS::Dispatcher::Ptr &cpu, const CC::ParameterLocation &param,
+                                    const BS::SValue::Ptr &value) {
     ASSERT_not_null(cpu);
-    BS::RiscOperatorsPtr ops = cpu->operators();
+    BS::RiscOperators::Ptr ops = cpu->operators();
 
     switch (param.type()) {
         case CC::ParameterLocation::REGISTER:
@@ -128,15 +130,15 @@ ExternalFunctionUnit::writeLocation(const BS::DispatcherPtr &cpu, const CC::Para
 
         case CC::ParameterLocation::STACK: {
             const RegisterDescriptor baseReg = param.reg();
-            BS::SValuePtr base = ops->readRegister(baseReg);
-            BS::SValuePtr offset = ops->number_(baseReg.nBits(), BitOps::signExtend(param.offset(), baseReg.nBits()));
-            BS::SValuePtr stackVa = ops->add(base, offset);
+            BS::SValue::Ptr base = ops->readRegister(baseReg);
+            BS::SValue::Ptr offset = ops->number_(baseReg.nBits(), BitOps::signExtend(param.offset(), baseReg.nBits()));
+            BS::SValue::Ptr stackVa = ops->add(base, offset);
             return ops->writeMemory(RegisterDescriptor(), stackVa, value, ops->boolean_(true));
         }
 
         case CC::ParameterLocation::ABSOLUTE: {
             size_t nBits = cpu->stackPointerRegister().nBits();
-            BS::SValuePtr va = ops->number_(nBits, param.address());
+            BS::SValue::Ptr va = ops->number_(nBits, param.address());
             ops->writeMemory(RegisterDescriptor(), va, value, ops->boolean_(true));
             break;
         }
@@ -148,9 +150,9 @@ ExternalFunctionUnit::writeLocation(const BS::DispatcherPtr &cpu, const CC::Para
 }
 
 void
-ExternalFunctionUnit::clearReturnValues(const BS::DispatcherPtr &cpu) {
+ExternalFunctionUnit::clearReturnValues(const BS::Dispatcher::Ptr &cpu) {
     ASSERT_not_null(cpu);
-    BS::RiscOperatorsPtr ops = cpu->operators();
+    BS::RiscOperators::Ptr ops = cpu->operators();
     const RegisterDictionary *regDict = cpu->registerDictionary();
 
     // Set return value locations to unknown values. Using calling convention analysis is the right way,
@@ -179,7 +181,7 @@ ExternalFunctionUnit::clearReturnValues(const BS::DispatcherPtr &cpu) {
                     param.print(mlog[DEBUG], regDict);
                     mlog[DEBUG] <<" (" <<ccDefn->name() <<" calling convention)\n";
                 }
-                BS::SValuePtr undef = ops->undefined_(nBits);
+                BS::SValue::Ptr undef = ops->undefined_(nBits);
                 writeLocation(cpu, param, undef);
             }
         }
@@ -215,16 +217,16 @@ ExternalFunctionUnit::clearReturnValues(const BS::DispatcherPtr &cpu) {
         for (RegisterDescriptor reg: retRegs) {
             RegisterNames regNames(regDict);
             SAWYER_MESG(mlog[DEBUG]) <<"    clearing return value " <<regNames(reg) <<" (hard coded)\n";
-            BS::SValuePtr undef = ops->undefined_(reg.nBits());
+            BS::SValue::Ptr undef = ops->undefined_(reg.nBits());
             ops->writeRegister(reg, undef);
         }
     }
 }
 
 void
-ExternalFunctionUnit::simulateReturn(const BS::DispatcherPtr &cpu) {
+ExternalFunctionUnit::simulateReturn(const BS::Dispatcher::Ptr &cpu) {
     ASSERT_not_null(cpu);
-    BS::RiscOperatorsPtr ops = cpu->operators();
+    BS::RiscOperators::Ptr ops = cpu->operators();
 
     // FIXME[Robb Matzke 2021-04-02]: dynamic casting the CPU to each known architecture is certainly not the right
     // way to do this! These operations should be abstracted in the BaseSemantics::Dispatcher class as virtual functions.
@@ -233,7 +235,7 @@ ExternalFunctionUnit::simulateReturn(const BS::DispatcherPtr &cpu) {
         // PowerPC calling convention stores the return address in the link register (LR)
         const RegisterDescriptor LR = cpu->callReturnRegister();
         ASSERT_forbid(LR.isEmpty());
-        BS::SValuePtr returnTarget = ops->readRegister(LR, ops->undefined_(LR.nBits()));
+        BS::SValue::Ptr returnTarget = ops->readRegister(LR, ops->undefined_(LR.nBits()));
         ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
 
     } else if (boost::dynamic_pointer_cast<IS::DispatcherX86>(cpu) ||
@@ -241,8 +243,8 @@ ExternalFunctionUnit::simulateReturn(const BS::DispatcherPtr &cpu) {
         // x86, amd64, and m68k store the return address at the top of the stack
         const RegisterDescriptor SP = cpu->stackPointerRegister();
         ASSERT_forbid(SP.isEmpty());
-        BS::SValuePtr stackPointer = ops->readRegister(SP, ops->undefined_(SP.nBits()));
-        BS::SValuePtr returnTarget = ops->readMemory(RegisterDescriptor(), stackPointer,
+        BS::SValue::Ptr stackPointer = ops->readRegister(SP, ops->undefined_(SP.nBits()));
+        BS::SValue::Ptr returnTarget = ops->readMemory(RegisterDescriptor(), stackPointer,
                                                      ops->undefined_(stackPointer->nBits()),
                                                      ops->boolean_(true));
         ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
@@ -253,7 +255,7 @@ ExternalFunctionUnit::simulateReturn(const BS::DispatcherPtr &cpu) {
         // Return address is in the link register, lr
         const RegisterDescriptor LR = cpu->callReturnRegister();
         ASSERT_forbid(LR.isEmpty());
-        BS::SValuePtr returnTarget = ops->readRegister(LR, ops->undefined_(LR.nBits()));
+        BS::SValue::Ptr returnTarget = ops->readRegister(LR, ops->undefined_(LR.nBits()));
         ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
 #endif
 #ifdef ROSE_ENABLE_ASM_AARCH32
@@ -261,7 +263,7 @@ ExternalFunctionUnit::simulateReturn(const BS::DispatcherPtr &cpu) {
         // Return address is in the link register, lr
         const RegisterDescriptor LR = cpu->callReturnRegister();
         ASSERT_forbid(LR.isEmpty());
-        BS::SValuePtr returnTarget = ops->readRegister(LR, ops->undefined_(LR.nBits()));
+        BS::SValue::Ptr returnTarget = ops->readRegister(LR, ops->undefined_(LR.nBits()));
         ops->writeRegister(cpu->instructionPointerRegister(), returnTarget);
 #endif
     }
@@ -269,12 +271,12 @@ ExternalFunctionUnit::simulateReturn(const BS::DispatcherPtr &cpu) {
 
 std::vector<Tag::Ptr>
 ExternalFunctionUnit::execute(const Settings::Ptr &settings, const SemanticCallbacks::Ptr &semantics,
-                              const BS::RiscOperatorsPtr &ops) {
+                              const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(settings);
     ASSERT_not_null(semantics);
     ASSERT_not_null(ops);
     std::vector<Tag::Ptr> tags;
-    BS::DispatcherPtr cpu = semantics->createDispatcher(ops);
+    BS::Dispatcher::Ptr cpu = semantics->createDispatcher(ops);
     BS::Formatter fmt;
     fmt.set_line_prefix("      ");
 

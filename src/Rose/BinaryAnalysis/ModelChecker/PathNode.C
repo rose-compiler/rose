@@ -24,7 +24,7 @@ PathNode::PathNode(const ExecutionUnit::Ptr &unit)
 }
 
 PathNode::PathNode(const Ptr &parent, const ExecutionUnit::Ptr &unit, const SymbolicExpr::Ptr &assertion,
-                   const BS::StatePtr &parentOutgoingState)
+                   const BS::State::Ptr &parentOutgoingState)
     : parent_(parent), executionUnit_(unit),  incomingState_(parentOutgoingState), assertions_{assertion},
       id_(Sawyer::fastRandomIndex(UINT64_MAX)) {
     ASSERT_not_null(unit);
@@ -42,7 +42,7 @@ PathNode::instance(const ExecutionUnit::Ptr &unit) {
 
 PathNode::Ptr
 PathNode::instance(const Ptr &parent, const ExecutionUnit::Ptr &unit, const SymbolicExpr::Ptr &assertion,
-                   const BS::StatePtr &parentOutgoingState) {
+                   const BS::State::Ptr &parentOutgoingState) {
     ASSERT_not_null(unit);
     ASSERT_not_null(parent);
     ASSERT_not_null(assertion);
@@ -102,7 +102,7 @@ PathNode::assertions() const {
 }
 
 void
-PathNode::execute(const Settings::Ptr &settings, const SemanticCallbacksPtr &semantics, const BS::RiscOperatorsPtr &ops,
+PathNode::execute(const Settings::Ptr &settings, const SemanticCallbacks::Ptr &semantics, const BS::RiscOperatorsPtr &ops,
                   const SmtSolver::Ptr &solver) {
     ASSERT_not_null(settings);
     ASSERT_not_null(semantics);
@@ -119,7 +119,7 @@ PathNode::execute(const Settings::Ptr &settings, const SemanticCallbacksPtr &sem
     }
 
     // Get the incoming state, which might require recursively executing the parent.
-    BS::StatePtr state;
+    BS::State::Ptr state;
     bool needsInitialization = false;
     if (incomingState_) {
         state = incomingState_->clone();
@@ -175,7 +175,7 @@ PathNode::execute(const Settings::Ptr &settings, const SemanticCallbacksPtr &sem
     }
 
     // We no longer need the incoming state
-    incomingState_ = BS::StatePtr();
+    incomingState_ = BS::State::Ptr();
 
     // ops->currentState is reset to null on scope exit
 }
@@ -186,10 +186,10 @@ PathNode::executionFailed() const {
     return executionFailed_;
 }
 
-BS::StatePtr
+BS::State::Ptr
 PathNode::copyOutgoingState() const {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    return outgoingState_ ? outgoingState_->clone() : BS::StatePtr();
+    return outgoingState_ ? outgoingState_->clone() : BS::State::Ptr();
 }
 
 PathNode::BorrowedOutgoingState
@@ -197,18 +197,18 @@ PathNode::borrowOutgoingState() {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     ASSERT_not_null(outgoingState_);
     BorrowedOutgoingState borrowed(this, outgoingState_);
-    outgoingState_ = BS::StatePtr();
+    outgoingState_ = BS::State::Ptr();
     return borrowed;
 }
 
 void
-PathNode::restoreOutgoingState(const BS::StatePtr &state) {
+PathNode::restoreOutgoingState(const BS::State::Ptr &state) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     ASSERT_forbid2(outgoingState_, "something gave this node a state while its state was borrowed");
     outgoingState_ = state;
 }
 
-PathNode::BorrowedOutgoingState::BorrowedOutgoingState(PathNode *node, const BS::StatePtr &state)
+PathNode::BorrowedOutgoingState::BorrowedOutgoingState(PathNode *node, const BS::State::Ptr &state)
     : node(node), state(state) {
     ASSERT_not_null(node);
     ASSERT_not_null(state);
@@ -224,7 +224,7 @@ void
 PathNode::releaseOutgoingState() {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     ASSERT_require(outgoingState_);
-    outgoingState_ = BS::StatePtr();
+    outgoingState_ = BS::State::Ptr();
 }
 
 void

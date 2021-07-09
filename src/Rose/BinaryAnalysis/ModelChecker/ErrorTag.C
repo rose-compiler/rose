@@ -22,7 +22,7 @@ ErrorTag::ErrorTag(size_t nodeStep, const std::string &name, const std::string &
     : NameTag(nodeStep, name), mesg_(mesg), insn_(insn), symbolic_(value) {}
 
 ErrorTag::ErrorTag(size_t nodeStep, const std::string &name, const std::string &mesg, SgAsmInstruction *insn,
-                   const BS::SValuePtr &value)
+                   const BS::SValue::Ptr &value)
     : NameTag(nodeStep, name), mesg_(mesg), insn_(insn), svalue_(value) {}
 
 ErrorTag::~ErrorTag() {}
@@ -41,7 +41,7 @@ ErrorTag::instance(size_t nodeStep, const std::string &name, const std::string &
 
 ErrorTag::Ptr
 ErrorTag::instance(size_t nodeStep, const std::string &name, const std::string &mesg, SgAsmInstruction *insn,
-                   const BS::SValuePtr &value) {
+                   const BS::SValue::Ptr &value) {
     return Ptr(new ErrorTag(nodeStep, name, mesg, insn, value));
 }
 

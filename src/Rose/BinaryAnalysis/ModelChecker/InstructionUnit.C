@@ -83,12 +83,13 @@ InstructionUnit::address() const {
 }
 
 std::vector<Tag::Ptr>
-InstructionUnit::execute(const Settings::Ptr &settings, const SemanticCallbacks::Ptr &semantics, const BS::RiscOperatorsPtr &ops) {
+InstructionUnit::execute(const Settings::Ptr &settings, const SemanticCallbacks::Ptr &semantics,
+                         const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(settings);
     ASSERT_not_null(semantics);
     ASSERT_not_null(ops);
     std::vector<Tag::Ptr> tags;
-    BS::DispatcherPtr cpu = semantics->createDispatcher(ops);
+    BS::Dispatcher::Ptr cpu = semantics->createDispatcher(ops);
     BS::Formatter fmt;
     fmt.set_line_prefix("      ");
 

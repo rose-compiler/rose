@@ -232,7 +232,7 @@ Engine::step() {
 
     // Create a thread-local RISC operators that will be used to update semantic states
     ASSERT_not_null(semantics_);
-    BS::RiscOperatorsPtr ops = semantics_->createRiscOperators();
+    BS::RiscOperators::Ptr ops = semantics_->createRiscOperators();
     ASSERT_not_null(ops);
     ASSERT_require2(ops->initialState() == nullptr, "initial states are not supported during model checking");
     ASSERT_require2(ops->currentState() == nullptr, "please remove the current state for added safety");
@@ -259,7 +259,7 @@ Engine::worker() {
 
     // Create a thread-local RISC operators that will be used to update semantic states
     ASSERT_not_null(semantics_);
-    BS::RiscOperatorsPtr ops = semantics_->createRiscOperators();
+    BS::RiscOperators::Ptr ops = semantics_->createRiscOperators();
     ASSERT_not_null(ops);
     ASSERT_require2(ops->initialState() == nullptr, "initial states are not supported during model checking");
     ASSERT_require2(ops->currentState() == nullptr, "please remove the current state for added safety");
@@ -465,7 +465,7 @@ Engine::changeStateNS(WorkerState &cur, WorkerState next) {
 }
 
 void
-Engine::execute(const Path::Ptr &path, const BS::RiscOperatorsPtr &ops, const SmtSolver::Ptr &solver) {
+Engine::execute(const Path::Ptr &path, const BS::RiscOperators::Ptr &ops, const SmtSolver::Ptr &solver) {
     ASSERT_not_null(path);
     ASSERT_forbid(path->isEmpty());
 
@@ -500,7 +500,7 @@ Engine::nStepsExplored() const {
 }
 
 void
-Engine::extend(const Path::Ptr &path, const BS::RiscOperatorsPtr &ops, const SmtSolver::Ptr &solver) {
+Engine::extend(const Path::Ptr &path, const BS::RiscOperators::Ptr &ops, const SmtSolver::Ptr &solver) {
     ASSERT_not_null(path);
     ASSERT_not_null(ops);
     ASSERT_not_null(semantics_);
@@ -513,7 +513,7 @@ Engine::extend(const Path::Ptr &path, const BS::RiscOperatorsPtr &ops, const Smt
         // Get the list execution units that would be executed after this path
         PathNode::Ptr current = path->lastNode();
         std::vector<SemanticCallbacks::NextUnit> nextUnits;
-        BS::StatePtr parentOutgoingState;
+        BS::State::Ptr parentOutgoingState;
         {
             auto borrowed = current->borrowOutgoingState();
             parentOutgoingState = borrowed.state;
@@ -613,7 +613,7 @@ Engine::estimatedForestSize(size_t k) const {
 
 // called by managed worker threads, and indirectly by user threads.
 void
-Engine::doOneStep(const Path::Ptr &path, const BS::RiscOperatorsPtr &ops, const SmtSolver::Ptr &solver) {
+Engine::doOneStep(const Path::Ptr &path, const BS::RiscOperators::Ptr &ops, const SmtSolver::Ptr &solver) {
     ASSERT_not_null(path);
     ASSERT_forbid(path->isEmpty());
     ASSERT_not_null(ops);
