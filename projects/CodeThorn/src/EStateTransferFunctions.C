@@ -5,7 +5,6 @@
 #include "Miscellaneous2.h"
 
 #include "CodeThornException.h"
-#include "CTAnalysis.h" // dependency on analyzer->transferAssignOp 
 #include "CppStdUtilities.h"
 #include "CodeThornCommandLineOptions.h"
 #include "CodeThornLib.h"
@@ -838,7 +837,7 @@ namespace CodeThorn {
 	// here only the specific format x=f(...) can exist
 	SgAssignOp* assignOp=isSgAssignOp(AstUtility::findExprNodeInAstUpwards(V_SgAssignOp,funCall));
 	ROSE_ASSERT(assignOp);
-	return transferAssignOp(assignOp,edge,estate);
+	return evalAssignOp3(assignOp,edge.target(),estate);
       } else {
 	// all other cases, evaluate function call as expression
 	list<SingleEvalResultConstInt> res2=evaluateExpression(funCall,currentEState);
@@ -1041,31 +1040,13 @@ namespace CodeThorn {
   }
 
 
-  std::list<EState> EStateTransferFunctions::transferAssignOp(SgAssignOp* nextNodeToAnalyze2, Edge edge, const EState* estate) {
+  std::list<EState> EStateTransferFunctions::transferAssignOp(SgAssignOp* node, Edge edge, const EState* estate) {
 
     if(_analyzer->getOptionsRef().info.printTransferFunctionInfo) {
       //printTransferFunctionInfo(TransferFunctionCode::Assign,nextNodeToAnalyze2,edge,estate);
-      cout<<"subtransfer     : transferAssignOp      : "<<nextNodeToAnalyze2->unparseToString()<<endl;
+      cout<<"subtransfer     : transferAssignOp      : "<<node->unparseToString()<<endl;
     }
-    auto pList=evalAssignOpMemUpdates(nextNodeToAnalyze2, edge, estate);
-    std::list<EState> estateList;
-    for (auto p : pList) {
-      EState estate=p.first;
-      AbstractValue lhsAddress=p.second.first;
-      AbstractValue rhsValue=p.second.second;
-      Label label=estate.label();
-      PState newPState=*estate.pstate();
-      ConstraintSet cset=*estate.constraints();
-      writeToAnyMemoryLocation(label,&newPState,lhsAddress,rhsValue);
-      CallString cs=estate.callString;
-      estateList.push_back(createEState(edge.target(),cs,newPState,cset));
-    }
-    if(estateList.size()==0) {
-      // no effects recorded, create copy-state to continue
-      estateList.push_back(createEState(edge.target(),estate->callString,*estate->pstate(),*estate->constraints()));
-    }
-    SAWYER_MESG(logger[TRACE]) << "transferAssignOp: finished"<<endl;
-    return estateList;
+    return evalAssignOp3(node,edge.target(),estate);
   }
 
 
@@ -1212,8 +1193,7 @@ namespace CodeThorn {
       if(SgAssignOp* assignOp=isSgAssignOp(assignInitOperand)) {
 	SAWYER_MESG(logger[TRACE])<<"assignment in initializer: "<<decl->unparseToString()<<endl;
 	//cout<<"DEBUG: assignment in initializer: "<<decl->unparseToString()<<endl;
-	Edge dummyEdge(targetLabel,EDGE_FORWARD,targetLabel); // only target label is used in transferAssignOp
-	CodeThorn::EStateTransferFunctions::MemoryUpdateList memUpdList=evalAssignOpMemUpdates(assignOp,dummyEdge,&currentEState);
+	CodeThorn::EStateTransferFunctions::MemoryUpdateList memUpdList=evalAssignOpMemUpdates(assignOp,&currentEState);
 	std::list<EState> estateList;
 	ROSE_ASSERT(memUpdList.size()==1);
 	auto memUpd=*memUpdList.begin();
@@ -1747,7 +1727,7 @@ namespace CodeThorn {
   }
 
   CodeThorn::EStateTransferFunctions::MemoryUpdateList
-  CodeThorn::EStateTransferFunctions::evalAssignOpMemUpdates(SgAssignOp* nextNodeToAnalyze2, Edge edge, const EState* estatePtr) {
+  CodeThorn::EStateTransferFunctions::evalAssignOpMemUpdates(SgAssignOp* nextNodeToAnalyze2, const EState* estatePtr) {
     MemoryUpdateList memoryUpdateList;
     CallString cs=estatePtr->callString;
     EState currentEState=*estatePtr;
@@ -1828,7 +1808,6 @@ namespace CodeThorn {
 	EState estate=(*i).estate;
 	PState oldPState=*estate.pstate();
 	if(_analyzer->getSkipArrayAccesses()) {
-	  // estateList.push_back(createEState(edge.target(),cs,oldPState,oldcset));
 	  // nothing to do (no memory access to add to list)
 	} else {
 	  SgExpression* arrExp=isSgExpression(SgNodeHelper::getLhs(lhs));
@@ -2475,12 +2454,12 @@ namespace CodeThorn {
 	    list<SingleEvalResultConstInt> l=evaluateLExpression(lhs,estate);
 	    ROSE_ASSERT(l.size()==1);
 	    auto lhsAddress=*l.begin();
-	    resultList.splice(resultList.end(),evalAssignOp(isSgAssignOp(node),lhsResult /*ignored*/,rhsResult,estate,mode));
+	    Label fakeLabel; // ensures it is detected if not properly overwritten
+	    resultList.splice(resultList.end(),evalAssignOp(isSgAssignOp(node),lhsResult /*ignored*/,rhsResult,fakeLabel,estate,mode));
 	    break;
 	  }
 	  default:
-	    cerr << "Binary Op:"<<SgNodeHelper::nodeToString(node)<<"(nodetype:"<<node->class_name()<<")"<<endl;
-	    throw CodeThorn::Exception("Error: evaluateExpression::unknown binary operation.");
+	    fatalErrorExit(node,"EStateTransferFunctions: unknown binary operator ("+node->class_name()+")");
 	  }
 	}
       }
@@ -2880,13 +2859,11 @@ namespace CodeThorn {
   EStateTransferFunctions::evalAssignOp(SgAssignOp* node,
 					SingleEvalResultConstInt lhsResult /* ignored */,
 					SingleEvalResultConstInt rhsResult,
-					EState estate, EvalMode mode) {
+					Label targetLabel, EState estate, EvalMode mode) {
     list<SingleEvalResultConstInt> resultList;
     SingleEvalResultConstInt res;
-    Edge fakeEdge;
-    ROSE_ASSERT(_analyzer);
-    ROSE_ASSERT(_analyzer->getEStateTransferFunctions());
-    std::list<EState> estateList=transferAssignOp(node,fakeEdge,&estate);
+    //Edge fakeEdge;
+    std::list<EState> estateList=evalAssignOp3(node, targetLabel, &estate);
     ROSE_ASSERT(estateList.size()==1);
     res.result=rhsResult.result; // value result of assignment
     res.estate=*estateList.begin();
@@ -2894,6 +2871,27 @@ namespace CodeThorn {
     return resultList;
   }
 
+  std::list<EState> EStateTransferFunctions::evalAssignOp3(SgAssignOp* node, Label targetLabel, const EState* estate) {
+    auto pList=evalAssignOpMemUpdates(node, estate);
+    std::list<EState> estateList;
+    for (auto p : pList) {
+      EState estate=p.first;
+      AbstractValue lhsAddress=p.second.first;
+      AbstractValue rhsValue=p.second.second;
+      Label label=estate.label();
+      PState newPState=*estate.pstate();
+      ConstraintSet cset=*estate.constraints();
+      writeToAnyMemoryLocation(label,&newPState,lhsAddress,rhsValue);
+      CallString cs=estate.callString;
+      estateList.push_back(createEState(targetLabel,cs,newPState,cset));
+    }
+    if(estateList.size()==0) {
+      // no effects recorded, create copy-state to continue
+      estateList.push_back(createEState(targetLabel,estate->callString,*estate->pstate(),*estate->constraints()));
+    }
+    return estateList;
+  }
+ 
   list<SingleEvalResultConstInt>
   EStateTransferFunctions::evalLessOrEqualOp(SgLessOrEqualOp* node,
 					     SingleEvalResultConstInt lhsResult,

@@ -165,7 +165,7 @@ namespace CodeThorn {
     // used by transferAssignOp to seperate evaluation from memory updates (i.e. state modifications)
     typedef std::pair<AbstractValue,AbstractValue> MemoryUpdatePair;
     typedef std::list<std::pair<EState,MemoryUpdatePair> > MemoryUpdateList;
-    MemoryUpdateList  evalAssignOpMemUpdates(SgAssignOp* assignOp, Edge edge, const EState* estate);
+    MemoryUpdateList evalAssignOpMemUpdates(SgAssignOp* assignOp, const EState* estate);
 
     // functions for handling callstring contexts
     CallString transferFunctionCallContext(CallString cs, Label lab);
@@ -194,7 +194,7 @@ namespace CodeThorn {
     std::list<EState> evaluateFunctionCallArguments(Edge edge, SgFunctionCallExp* funCall, EState estate, bool useConstraints);
 
 
-    // uses ExprAnalyzer to compute the result. Limits the number of results to one result only. Does not permit state splitting.
+    // Limits the number of results to one result only. Does not permit state splitting.
     // requires normalized AST
     AbstractValue evaluateExpressionAV(SgExpression* expr,EState currentEState);
 
@@ -414,11 +414,11 @@ namespace CodeThorn {
                                                            EState estate, EvalMode mode=MODE_VALUE);
 
     std::list<SingleEvalResultConstInt> evalAssignOp(SgAssignOp* node,
-                                                SingleEvalResultConstInt lhsResult,
-                                                SingleEvalResultConstInt rhsResult,
-                                                EState estate, EvalMode mode);
-
-
+						     SingleEvalResultConstInt lhsResult,
+						     SingleEvalResultConstInt rhsResult,
+						     Label targetLabel, EState estate, EvalMode mode);
+    std::list<EState> evalAssignOp3(SgAssignOp* node, Label targetLabel, const EState* estate);
+    
     std::list<SingleEvalResultConstInt> evalArrayReferenceOp(SgPntrArrRefExp* node,
                                                         SingleEvalResultConstInt lhsResult,
                                                         SingleEvalResultConstInt rhsResult,
