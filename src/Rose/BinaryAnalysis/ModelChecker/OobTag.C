@@ -11,13 +11,13 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace ModelChecker {
 
-OobTag::OobTag(size_t nodeStep, TestMode tm, IoMode io, SgAsmInstruction *insn, const BS::SValuePtr &addr)
+OobTag::OobTag(size_t nodeStep, TestMode tm, IoMode io, SgAsmInstruction *insn, const BS::SValue::Ptr &addr)
     : Tag(nodeStep), testMode_(tm), ioMode_(io), insn_(insn), addr_(addr) {}
 
 OobTag::~OobTag() {}
 
 OobTag::Ptr
-OobTag::instance(size_t nodeStep, TestMode tm, IoMode io, SgAsmInstruction *insn, const BS::SValuePtr &addr) {
+OobTag::instance(size_t nodeStep, TestMode tm, IoMode io, SgAsmInstruction *insn, const BS::SValue::Ptr &addr) {
     ASSERT_forbid(TestMode::OFF == tm);
     ASSERT_not_null(addr);
     return Ptr(new OobTag(nodeStep, tm, io, insn, addr));

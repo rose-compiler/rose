@@ -39,7 +39,7 @@ ExecutionUnit::containsUnknownInsn() const {
 }
 
 Tag::Ptr
-ExecutionUnit::executeInstruction(const Settings::Ptr &settings, SgAsmInstruction *insn, const BS::DispatcherPtr &cpu) {
+ExecutionUnit::executeInstruction(const Settings::Ptr &settings, SgAsmInstruction *insn, const BS::Dispatcher::Ptr &cpu) {
     ASSERT_not_null(settings);
     ASSERT_not_null(insn);
     ASSERT_not_null(cpu);

@@ -13,13 +13,13 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace ModelChecker {
 
-NullDerefTag::NullDerefTag(size_t nodeStep, TestMode tm, IoMode io, SgAsmInstruction *insn, const BS::SValuePtr &addr)
+NullDerefTag::NullDerefTag(size_t nodeStep, TestMode tm, IoMode io, SgAsmInstruction *insn, const BS::SValue::Ptr &addr)
     : Tag(nodeStep), testMode_(tm), ioMode_(io), insn_(insn), addr_(addr) {}
 
 NullDerefTag::~NullDerefTag() {}
 
 NullDerefTag::Ptr
-NullDerefTag::instance(size_t nodeStep, TestMode tm, IoMode io, SgAsmInstruction *insn, const BS::SValuePtr &addr) {
+NullDerefTag::instance(size_t nodeStep, TestMode tm, IoMode io, SgAsmInstruction *insn, const BS::SValue::Ptr &addr) {
     ASSERT_forbid(TestMode::OFF == tm);
     ASSERT_not_null(addr);
     return Ptr(new NullDerefTag(nodeStep, tm, io, insn, addr));

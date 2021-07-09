@@ -163,7 +163,7 @@ commandLineSwitches(Settings &settings) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 RiscOperators::RiscOperators(const Settings &settings, const P2::Partitioner &partitioner,
-                             ModelChecker::SemanticCallbacks *semantics, const BS::SValuePtr &protoval,
+                             ModelChecker::SemanticCallbacks *semantics, const BS::SValue::Ptr &protoval,
                              const SmtSolver::Ptr &solver)
     : Super(protoval, solver), settings_(settings), partitioner_(partitioner),
       semantics_(dynamic_cast<P2Model::SemanticCallbacks*>(semantics)) {
@@ -175,23 +175,23 @@ RiscOperators::~RiscOperators() {}
 
 RiscOperators::Ptr
 RiscOperators::instance(const Settings &settings, const P2::Partitioner &partitioner, ModelChecker::SemanticCallbacks *semantics,
-                        const BS::SValuePtr &protoval, const SmtSolver::Ptr &solver) {
+                        const BS::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) {
     ASSERT_not_null(protoval);
     return Ptr(new RiscOperators(settings, partitioner, semantics, protoval, solver));
 }
 
-BS::RiscOperatorsPtr
-RiscOperators::create(const BS::SValuePtr&, const SmtSolver::Ptr&) const {
+BS::RiscOperators::Ptr
+RiscOperators::create(const BS::SValue::Ptr&, const SmtSolver::Ptr&) const {
     ASSERT_not_implemented("[Robb Matzke 2021-04-01]"); // needs to be overridden, but need not be implemented
 }
 
-BS::RiscOperatorsPtr
-RiscOperators::create(const BS::StatePtr&, const SmtSolver::Ptr&) const {
+BS::RiscOperators::Ptr
+RiscOperators::create(const BS::State::Ptr&, const SmtSolver::Ptr&) const {
     ASSERT_not_implemented("[Robb Matzke 2021-04-01]"); // needs to be overridden, but need not be implemented
 }
 
 RiscOperators::Ptr
-RiscOperators::promote(const BS::RiscOperatorsPtr &x) {
+RiscOperators::promote(const BS::RiscOperators::Ptr &x) {
     Ptr retval = boost::dynamic_pointer_cast<RiscOperators>(x);
     ASSERT_not_null(retval);
     return retval;
@@ -213,7 +213,7 @@ RiscOperators::modelCheckerSolver(const SmtSolver::Ptr &solver) {
 }
 
 void
-RiscOperators::checkNullAccess(const BS::SValuePtr &addrSVal, TestMode testMode, IoMode ioMode) {
+RiscOperators::checkNullAccess(const BS::SValue::Ptr &addrSVal, TestMode testMode, IoMode ioMode) {
     // Null-dereferences are only tested when we're actually executing an instruciton. Other incidental operations such as
     // initializing the first state are not checked.
     if (!currentInstruction())
@@ -264,13 +264,13 @@ RiscOperators::checkNullAccess(const BS::SValuePtr &addrSVal, TestMode testMode,
     }
 
     if (isNull) {
-        currentState(BS::StatePtr());                   // indicates that execution failed
+        currentState(BS::State::Ptr());                   // indicates that execution failed
         throw ThrownTag{NullDerefTag::instance(nInstructions(), testMode, ioMode, currentInstruction(), addrSVal)};
     }
 }
 
 void
-RiscOperators::checkOobAccess(const BS::SValuePtr &addrSVal, TestMode testMode, IoMode ioMode, size_t nBytes) {
+RiscOperators::checkOobAccess(const BS::SValue::Ptr &addrSVal, TestMode testMode, IoMode ioMode, size_t nBytes) {
     ASSERT_not_null(addrSVal);
 
     // Out of bounds references are only tested when we're actually executing an instruction. Other incidental operations such
@@ -312,7 +312,7 @@ RiscOperators::checkOobAccess(const BS::SValuePtr &addrSVal, TestMode testMode, 
     }
 
     if (nOutside > 1 && 0 == nInside) {
-        currentState(BS::StatePtr());                   // indicates that execution failed
+        currentState(BS::State::Ptr());                   // indicates that execution failed
         throw ThrownTag{OobTag::instance(nInstructions(), testMode, ioMode, currentInstruction(), addrSVal)};
     }
 }
@@ -332,23 +332,23 @@ RiscOperators::finishInstruction(SgAsmInstruction*) {
     ++nInstructions_;
 }
 
-BS::SValuePtr
-RiscOperators::readMemory(RegisterDescriptor segreg, const BS::SValuePtr &addr, const BS::SValuePtr &dflt_,
-                          const BS::SValuePtr &cond) {
+BS::SValue::Ptr
+RiscOperators::readMemory(RegisterDescriptor segreg, const BS::SValue::Ptr &addr, const BS::SValue::Ptr &dflt_,
+                          const BS::SValue::Ptr &cond) {
     ASSERT_not_null(addr);
     ASSERT_not_null(dflt_);
     ASSERT_not_null(cond);
 
-    BS::SValuePtr dflt = dflt_;
+    BS::SValue::Ptr dflt = dflt_;
     if (cond->isFalse())
         return dflt;
 
     // Offset the address by the value of the segment register
-    BS::SValuePtr adjustedVa;
+    BS::SValue::Ptr adjustedVa;
     if (segreg.isEmpty()) {
         adjustedVa = addr;
     } else {
-        BS::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+        BS::SValue::Ptr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
         adjustedVa = add(addr, signExtend(segregValue, addr->nBits()));
     }
 
@@ -384,22 +384,22 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BS::SValuePtr &addr, 
     }
 
     // Read from the symbolic state, and update the state with the default from real memory if known.
-    BS::SValuePtr retval = Super::readMemory(segreg, addr, dflt, cond);
+    BS::SValue::Ptr retval = Super::readMemory(segreg, addr, dflt, cond);
     return retval;
 }
 
 void
-RiscOperators::writeMemory(RegisterDescriptor segreg, const BS::SValuePtr &addr, const BS::SValuePtr &value,
-                           const BS::SValuePtr &cond) {
+RiscOperators::writeMemory(RegisterDescriptor segreg, const BS::SValue::Ptr &addr, const BS::SValue::Ptr &value,
+                           const BS::SValue::Ptr &cond) {
     if (cond->isFalse())
         return;
 
     // Offset the address by the value of the segment register
-    BS::SValuePtr adjustedVa;
+    BS::SValue::Ptr adjustedVa;
     if (segreg.isEmpty()) {
         adjustedVa = addr;
     } else {
-        BS::SValuePtr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
+        BS::SValue::Ptr segregValue = readRegister(segreg, undefined_(segreg.nBits()));
         adjustedVa = add(addr, signExtend(segregValue, addr->nBits()));
     }
 
@@ -471,14 +471,14 @@ SemanticCallbacks::partitioner() const {
     return partitioner_;
 }
 
-BS::RegisterStatePtr
+BS::RegisterState::Ptr
 SemanticCallbacks::createInitialRegisters() {
     return BS::RegisterStateGeneric::instance(protoval(), partitioner_.instructionProvider().registerDictionary());
 }
 
-BS::MemoryStatePtr
+BS::MemoryState::Ptr
 SemanticCallbacks::createInitialMemory() {
-    BS::MemoryStatePtr mem;
+    BS::MemoryState::Ptr mem;
     switch (settings_.memoryType) {
         case Settings::MemoryType::LIST:
             mem = IS::SymbolicSemantics::MemoryListState::instance(protoval(), protoval());
@@ -491,7 +491,7 @@ SemanticCallbacks::createInitialMemory() {
     return mem;
 }
 
-BS::RiscOperatorsPtr
+BS::RiscOperators::Ptr
 SemanticCallbacks::createRiscOperators() {
     auto ops = RiscOperators::instance(settings_, partitioner_, this, protoval(), SmtSolver::Ptr());
     ops->initialState(nullptr);
@@ -500,17 +500,17 @@ SemanticCallbacks::createRiscOperators() {
 }
 
 void
-SemanticCallbacks::initializeState(const BS::RiscOperatorsPtr &ops) {
+SemanticCallbacks::initializeState(const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(ops);
     const RegisterDescriptor SP = partitioner_.instructionProvider().stackPointerRegister();
     if (settings_.initialStackVa) {
-        BS::SValuePtr sp = ops->number_(SP.nBits(), *settings_.initialStackVa);
+        BS::SValue::Ptr sp = ops->number_(SP.nBits(), *settings_.initialStackVa);
         ops->writeRegister(SP, sp);
     }
 }
 
-BS::DispatcherPtr
-SemanticCallbacks::createDispatcher(const BS::RiscOperatorsPtr &ops) {
+BS::Dispatcher::Ptr
+SemanticCallbacks::createDispatcher(const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(ops);
     ASSERT_not_null2(partitioner_.instructionProvider().dispatcher(), "no semantics for this ISA");
     return partitioner_.instructionProvider().dispatcher()->create(ops);
@@ -526,13 +526,13 @@ SemanticCallbacks::createSolver() {
 }
 
 void
-SemanticCallbacks::attachModelCheckerSolver(const BS::RiscOperatorsPtr &ops, const SmtSolver::Ptr &solver) {
+SemanticCallbacks::attachModelCheckerSolver(const BS::RiscOperators::Ptr &ops, const SmtSolver::Ptr &solver) {
     ASSERT_not_null(ops);
     RiscOperators::promote(ops)->modelCheckerSolver(solver);
 }
 
 std::vector<Tag::Ptr>
-SemanticCallbacks::preExecute(const ExecutionUnit::Ptr &unit, const BS::RiscOperatorsPtr &ops) {
+SemanticCallbacks::preExecute(const ExecutionUnit::Ptr &unit, const BS::RiscOperators::Ptr &ops) {
     RiscOperators::promote(ops)->nInstructions(0);
 
     // Track which basic blocks (or instructions) were reached
@@ -556,8 +556,8 @@ SemanticCallbacks::unitsReached() const {
     return unitsReached_;
 }
 
-BS::SValuePtr
-SemanticCallbacks::instructionPointer(const BS::RiscOperatorsPtr &ops) {
+BS::SValue::Ptr
+SemanticCallbacks::instructionPointer(const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(ops);
     const RegisterDescriptor IP = partitioner_.instructionProvider().instructionPointerRegister();
     return ops->peekRegister(IP);
@@ -621,7 +621,7 @@ SemanticCallbacks::findUnit(rose_addr_t va) {
                         unit = BasicBlockUnit::instance(partitioner_, bb);
                         break;
                     }
-                    BS::SValuePtr actualIp = ops->peekRegister(IP);
+                    BS::SValue::Ptr actualIp = ops->peekRegister(IP);
                     rose_addr_t expectedIp = bb->instructions()[i+1]->get_address();
                     if (actualIp->toUnsigned().orElse(expectedIp+1) != expectedIp) {
                         SAWYER_MESG(mlog[DEBUG]) <<"    " <<bb->printableName()
@@ -645,7 +645,7 @@ SemanticCallbacks::findUnit(rose_addr_t va) {
 }
 
 std::vector<SemanticCallbacks::NextUnit>
-SemanticCallbacks::nextUnits(const Path::Ptr &path, const BS::RiscOperatorsPtr &ops, const SmtSolver::Ptr &solver) {
+SemanticCallbacks::nextUnits(const Path::Ptr &path, const BS::RiscOperators::Ptr &ops, const SmtSolver::Ptr &solver) {
     std::vector<SemanticCallbacks::NextUnit> units;
 
     // If we've seen this state before, then there's nothing new for us to do.
@@ -685,7 +685,7 @@ SemanticCallbacks::nextUnits(const Path::Ptr &path, const BS::RiscOperatorsPtr &
                     units.push_back({unit, assertion});
                 } else if (settings_.nullRead != TestMode::OFF && va <= settings_.maxNullAddress) {
                     SourceLocation sloc = partitioner_.sourceLocations().get(va);
-                    BS::SValuePtr addr = ops->number_(partitioner_.instructionProvider().wordSize(), va);
+                    BS::SValue::Ptr addr = ops->number_(partitioner_.instructionProvider().wordSize(), va);
                     auto tag = NullDerefTag::instance(0, TestMode::MUST, IoMode::READ, nullptr, addr);
                     auto fail = FailureUnit::instance(va, sloc, "invalid instruction address", tag);
                     units.push_back({fail, assertion});
@@ -710,7 +710,7 @@ SemanticCallbacks::nextUnits(const Path::Ptr &path, const BS::RiscOperatorsPtr &
 }
 
 bool
-SemanticCallbacks::filterNullDeref(const BS::SValuePtr &addr, TestMode testMode, IoMode ioMode) {
+SemanticCallbacks::filterNullDeref(const BS::SValue::Ptr &addr, TestMode testMode, IoMode ioMode) {
     return true;
 }
 

@@ -95,7 +95,7 @@ FailureUnit::address() const {
 }
 
 std::vector<Tag::Ptr>
-FailureUnit::execute(const Settings::Ptr &settings, const SemanticCallbacks::Ptr &semantics, const BS::RiscOperatorsPtr &ops) {
+FailureUnit::execute(const Settings::Ptr &settings, const SemanticCallbacks::Ptr &semantics, const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(settings);
     ASSERT_not_null(semantics);
     ASSERT_not_null(ops);
@@ -106,7 +106,7 @@ FailureUnit::execute(const Settings::Ptr &settings, const SemanticCallbacks::Ptr
     if (mlog[DEBUG] && settings->showInitialStates)
         mlog[DEBUG] <<"    initial state\n" <<(*ops->currentState() + fmt);
 
-    ops->currentState(BS::StatePtr());                  // this is how failure is indicated
+    ops->currentState(BS::State::Ptr());                // this is how failure is indicated
     if (tag_) {
         return {tag_};
     } else {

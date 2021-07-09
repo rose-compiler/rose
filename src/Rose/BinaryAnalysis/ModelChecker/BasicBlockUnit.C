@@ -133,12 +133,12 @@ BasicBlockUnit::containsUnknownInsn() const {
 }
 
 std::vector<Tag::Ptr>
-BasicBlockUnit::execute(const Settings::Ptr &settings, const SemanticCallbacks::Ptr &semantics, const BS::RiscOperatorsPtr &ops) {
+BasicBlockUnit::execute(const Settings::Ptr &settings, const SemanticCallbacks::Ptr &semantics, const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(settings);
     ASSERT_not_null(semantics);
     ASSERT_not_null(ops);
     std::vector<Tag::Ptr> tags;
-    BS::DispatcherPtr cpu = semantics->createDispatcher(ops);
+    BS::Dispatcher::Ptr cpu = semantics->createDispatcher(ops);
     BS::Formatter fmt;
     fmt.set_line_prefix("      ");
 
@@ -155,7 +155,7 @@ BasicBlockUnit::execute(const Settings::Ptr &settings, const SemanticCallbacks::
 
             if (Tag::Ptr tag = executeInstruction(settings, insn, cpu)) {
                 if (i+1 < bblock_->nInstructions())
-                    ops->currentState(BS::StatePtr());      // force a semantic failure since we didn't finish the block
+                    ops->currentState(BS::State::Ptr()); // force a semantic failure since we didn't finish the block
                 tags.push_back(tag);
             }
             if (!ops->currentState())
@@ -173,7 +173,7 @@ BasicBlockUnit::execute(const Settings::Ptr &settings, const SemanticCallbacks::
             // In order for this to be a valid basic block, the instruction pointer must have a concrete value that points
             // to the next instruction.
             if (i + 1 < bblock_->nInstructions()) {
-                BS::SValuePtr actualIp = semantics->instructionPointer(ops);
+                BS::SValue::Ptr actualIp = semantics->instructionPointer(ops);
                 rose_addr_t expectedIp = bblock_->instructions()[i+1]->get_address();
                 if (actualIp->toUnsigned().orElse(expectedIp+1) != expectedIp) {
                     std::string mesg = "next IP should be " + StringUtility::addrToString(expectedIp) + " according to CFG";

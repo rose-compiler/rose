@@ -5,6 +5,7 @@
 
 #include <Rose/BinaryAnalysis/ModelChecker/PathNode.h>
 #include <Rose/BinaryAnalysis/ModelChecker/ExecutionUnit.h>
+#include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/State.h>
 #include <rose_isnan.h>
 
@@ -29,7 +30,7 @@ Path::instance(const ExecutionUnit::Ptr &unit) {
 
 Path::Ptr
 Path::instance(const Path::Ptr &prefix, const ExecutionUnit::Ptr &unit, const SymbolicExpr::Ptr &assertion,
-               const BS::StatePtr &parentOutgoingState) {
+               const BS::State::Ptr &parentOutgoingState) {
     ASSERT_not_null(prefix);
     ASSERT_not_null(unit);
     ASSERT_not_null(assertion);
@@ -145,7 +146,7 @@ Path::printableName() const {
 }
 
 void
-Path::print(const SettingsPtr &settings, std::ostream &out, const std::string &prefix, size_t maxSteps) const {
+Path::print(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix, size_t maxSteps) const {
     if (isEmpty()) {
         out <<prefix <<"empty path\n";
     } else {
@@ -164,7 +165,7 @@ Path::print(const SettingsPtr &settings, std::ostream &out, const std::string &p
 }
 
 void
-Path::toYaml(const SettingsPtr &settings, std::ostream &out, const std::string &prefix1, size_t maxSteps) const {
+Path::toYaml(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1, size_t maxSteps) const {
     if (!isEmpty()) {
         std::vector<PathNode::Ptr> vertices = nodes();
         maxSteps = std::min(maxSteps, nSteps());
