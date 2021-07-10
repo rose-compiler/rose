@@ -214,7 +214,7 @@ namespace CodeThorn {
 
     //SingleEvalResult eval(SgNode* node,EState estate);
     //! compute abstract lvalue
-    std::list<SingleEvalResultConstInt> evaluateLExpression(SgNode* node,EState estate);
+    SingleEvalResultConstInt evaluateLExpression(SgNode* node,EState estate);
     //! Evaluates an expression using AbstractValue and returns a list
     //! of all evaluation-results.  There can be multiple results if
     //! one of the variables was bound to top and branching constructs
@@ -484,11 +484,11 @@ namespace CodeThorn {
     std::list<SingleEvalResultConstInt> evalSizeofOp(SgSizeOfOp* node,
                                                 EState estate, EvalMode mode=MODE_VALUE);
 
-    std::list<SingleEvalResultConstInt> evalLValuePntrArrRefExp(SgPntrArrRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> evalLValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> evalLValuePointerDerefExp(SgPointerDerefExp* node, EState estate);
+    SingleEvalResultConstInt evalLValuePntrArrRefExp(SgPntrArrRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
+    SingleEvalResultConstInt evalLValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
+    SingleEvalResultConstInt evalLValuePointerDerefExp(SgPointerDerefExp* node, EState estate);
     // handles DotExp and ArrowExp
-    std::list<SingleEvalResultConstInt> evalLValueDotOrArrowExp(SgNode* node, EState estate, EvalMode mode=MODE_VALUE);
+    SingleEvalResultConstInt evalLValueDotOrArrowExp(SgNode* node, EState estate, EvalMode mode=MODE_VALUE);
 
     std::list<SingleEvalResultConstInt> evalRValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
     std::list<SingleEvalResultConstInt> evalValueExp(SgValueExp* node, EState estate, EvalMode mode);
