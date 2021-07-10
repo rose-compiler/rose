@@ -2478,7 +2478,7 @@ namespace CodeThorn {
     }
     if(SgValueExp* exp=isSgValueExp(node)) {
       ROSE_ASSERT(exp!=nullptr);
-      return evalValueExp(exp,estate,mode);
+      return listify(evalValueExp(exp,estate,mode));
     }
     switch(node->variantT()) {
     case V_SgVarRefExp:
@@ -3689,12 +3689,12 @@ namespace CodeThorn {
     ROSE_ASSERT(false);
   }
 
-  list<SingleEvalResultConstInt> EStateTransferFunctions::evalValueExp(SgValueExp* node, EState estate, EvalMode mode) {
+  SingleEvalResultConstInt EStateTransferFunctions::evalValueExp(SgValueExp* node, EState estate, EvalMode mode) {
     ROSE_ASSERT(node);
     SingleEvalResultConstInt res;
     res.init(estate,AbstractValue::createBot());
     res.result=abstractValueFromSgValueExp(node,mode);
-    return listify(res);
+    return res;
   }
 
   list<SingleEvalResultConstInt> EStateTransferFunctions::evalFunctionCallArguments(SgFunctionCallExp* funCall, EState estate) {
