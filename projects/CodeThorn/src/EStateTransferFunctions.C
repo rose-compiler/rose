@@ -2482,7 +2482,7 @@ namespace CodeThorn {
     }
     switch(node->variantT()) {
     case V_SgVarRefExp:
-      return evalRValueVarRefExp(isSgVarRefExp(node),estate,mode); 
+      return listify(evalRValueVarRefExp(isSgVarRefExp(node),estate,mode));
     case V_SgFunctionCallExp: {
       return evalFunctionCall(isSgFunctionCallExp(node),estate);
     }
@@ -3622,11 +3622,11 @@ namespace CodeThorn {
       return listify(res);
     }
   }
-  list<SingleEvalResultConstInt> EStateTransferFunctions::evalRValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode) {
+  SingleEvalResultConstInt EStateTransferFunctions::evalRValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode) {
     if(mode==EStateTransferFunctions::MODE_EMPTY_STATE) {
       SingleEvalResultConstInt res;
       res.init(estate,AbstractValue::createTop());
-      return listify(res);
+      return res;
     }  
     SAWYER_MESG(logger[TRACE])<<"evalRValueVarRefExp: "<<node->unparseToString()<<" id:"<<_variableIdMapping->variableId(isSgVarRefExp(node)).toString()<<" MODE:"<<mode<<" Symbol:"<<node->get_symbol()<<endl;
     SingleEvalResultConstInt res;
@@ -3646,19 +3646,18 @@ namespace CodeThorn {
       SAWYER_MESG(logger[TRACE])<<"evalRValueVarRefExp STRUCT member: "<<_variableIdMapping->variableName(varId)<<" offset: "<<offset<<endl;
       res.result=AbstractValue(offset); // TODO BYTEMODE ?
       //cout<<"DEBUG1 STRUCT MEMBER: "<<_variableIdMapping->variableName(varId)<<" offset: "<<offset<<endl;
-      return listify(res);
+      return res;
     }
     // TODO: as rvalue it represents the entire class
     if(_variableIdMapping->isOfClassType(varId)) {
       res.result=AbstractValue::createAddressOfVariable(varId);
-      return listify(res);
+      return res;
     }
     if(pstate->varExists(varId)) {
       if(_variableIdMapping->isOfArrayType(varId)) {
 	res.result=AbstractValue::createAddressOfArray(varId);
       } else {
 	if(_variableIdMapping->isOfReferenceType(varId)) {
-	  //cout<<"DEBUG: evalRValueVarRefExp: REFERENCE: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl;
 	  if(mode==MODE_ADDRESS)
 	    res.result=readFromMemoryLocation(estate.label(),pstate,varId); // address of a reference is the value it contains
 	  else
@@ -3667,7 +3666,7 @@ namespace CodeThorn {
 	  res.result=readFromMemoryLocation(estate.label(),pstate,varId);
 	}
       }
-      return listify(res);
+      return res;
     } else {
       // special mode to represent information not stored in the state
       // i) unmodified arrays: data can be stored outside the state
@@ -3676,14 +3675,14 @@ namespace CodeThorn {
 	// variable is used on the rhs and it has array type implies it avalates to a pointer to that array
 	//res.result=AbstractValue(varId.getIdCode());
 	res.result=AbstractValue::createAddressOfArray(varId);
-	return listify(res);
+	return res;
       } else {
 	res.result=CodeThorn::Top();
 	//cerr << "WARNING: variable not in PState (var="<<_variableIdMapping->uniqueVariableName(varId)<<"). Initialized with top."<<endl;
 	Label lab=estate.label();
 	SAWYER_MESG(logger[WARN]) << "at label "<<lab<<": "<<(_analyzer->getLabeler()->getNode(lab)->unparseToString())<<": variable not in PState (RValue VarRefExp) (var="<<_variableIdMapping->uniqueVariableName(varId)<<"). Initialized with top."<<endl;
 
-	return listify(res);
+	return res;
       }
     }
     // unreachable
