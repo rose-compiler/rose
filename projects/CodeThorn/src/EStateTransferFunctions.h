@@ -19,7 +19,7 @@
 namespace CodeThorn {
   class CTAnalysis;
 
-    class SingleEvalResult {
+    class SingleBoolEvalResult {
   public:
     EState estate;
     CodeThorn::BoolLattice result;
@@ -29,7 +29,7 @@ namespace CodeThorn {
     bool isBot() {return result.isBot();}
   };
 
-  class SingleEvalResultConstInt {
+  class SingleEvalResult {
   public:
     void init(EState estate, AbstractValue result);
     EState estate;
@@ -55,7 +55,7 @@ namespace CodeThorn {
     // state after write
     virtual void writingToMemoryLocation(Label lab, const PState* pstate, AbstractValue& memLoc, AbstractValue& newValue) {}
     // evalResult.value() holds AbstractValue of boolean value
-    virtual void trueFalseEdgeEvaluation(Edge edge, SingleEvalResultConstInt evalResult , const EState* estate) {}
+    virtual void trueFalseEdgeEvaluation(Edge edge, SingleEvalResult evalResult , const EState* estate) {}
     virtual void functionCallExternal(Edge edge, const EState* estate) {}
   };
 
@@ -155,9 +155,6 @@ namespace CodeThorn {
   public:
     static std::list<EState> elistify();
     static std::list<EState> elistify(EState res);
-    //! This function turn a single result into a one-elment list with
-    //! this one result.
-    static std::list<SingleEvalResultConstInt> listify(SingleEvalResultConstInt res);
 
     // logger facility
     static Sawyer::Message::Facility logger;
@@ -214,12 +211,12 @@ namespace CodeThorn {
 
     //SingleEvalResult eval(SgNode* node,EState estate);
     //! compute abstract lvalue
-    SingleEvalResultConstInt evaluateLExpression(SgNode* node,EState estate);
+    SingleEvalResult evaluateLExpression(SgNode* node,EState estate);
     //! Evaluates an expression using AbstractValue and returns a list
     //! of all evaluation-results.  There can be multiple results if
     //! one of the variables was bound to top and branching constructs
     //! are inside the expression.
-    std::list<SingleEvalResultConstInt> evaluateExpression(SgNode* node,EState estate, EvalMode mode=MODE_VALUE);
+    SingleEvalResult evaluateExpression(SgNode* node,EState estate, EvalMode mode=MODE_VALUE);
     //! uses AbstractValue::getVariableIdMapping()
     AbstractValue evaluateExpressionWithEmptyState(SgExpression* expr);
 
@@ -271,8 +268,8 @@ namespace CodeThorn {
     //! returns true if node is a VarRefExp and sets varId=id, otherwise false and varId=0.
     bool checkIfVariableAndDetermineVarId(SgNode* node,VariableId& varId); // only used by CTAnalysis
 
-    std::list<SingleEvalResultConstInt> evalFunctionCallArguments(SgFunctionCallExp* funCall, EState estate);
-    std::list<SingleEvalResultConstInt> evalFunctionCall(SgFunctionCallExp* node, EState estate);
+    SingleEvalResult evalFunctionCallArguments(SgFunctionCallExp* funCall, EState estate);
+    SingleEvalResult evalFunctionCall(SgFunctionCallExp* node, EState estate);
     bool isLValueOp(SgNode* node);
     // requires StructureAccessLookup to be initialized.
     bool isMemberVariable(CodeThorn::VariableId varId);
@@ -330,179 +327,179 @@ namespace CodeThorn {
     ReadWriteListener* _readWriteListener=nullptr;
     
     // general evaluation function for abstract value operators
-    std::list<SingleEvalResultConstInt> evalOp(SgNode* node,
-					       SingleEvalResultConstInt lhsResult,
-					       SingleEvalResultConstInt rhsResult,
+    SingleEvalResult evalOp(SgNode* node,
+					       SingleEvalResult lhsResult,
+					       SingleEvalResult rhsResult,
 					       EState estate, EvalMode mode);
 
     // evaluation functions
-    std::list<SingleEvalResultConstInt> evalConditionalExpr(SgConditionalExp* node, EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> evaluateShortCircuitOperators(SgNode* node,EState estate, EvalMode mode=MODE_VALUE);
+    SingleEvalResult evalConditionalExpr(SgConditionalExp* node, EState estate, EvalMode mode=MODE_VALUE);
+    SingleEvalResult evaluateShortCircuitOperators(SgNode* node,EState estate, EvalMode mode=MODE_VALUE);
 
-    std::list<SingleEvalResultConstInt> evalEqualOp(SgEqualityOp* node,
-                                               SingleEvalResultConstInt lhsResult,
-                                               SingleEvalResultConstInt rhsResult,
+    SingleEvalResult evalEqualOp(SgEqualityOp* node,
+                                               SingleEvalResult lhsResult,
+                                               SingleEvalResult rhsResult,
                                                EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> evalNotEqualOp(SgNotEqualOp* node,
-                                                  SingleEvalResultConstInt lhsResult,
-                                                  SingleEvalResultConstInt rhsResult,
+    SingleEvalResult evalNotEqualOp(SgNotEqualOp* node,
+                                                  SingleEvalResult lhsResult,
+                                                  SingleEvalResult rhsResult,
                                                   EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> evalAndOp(SgAndOp* node,
-                                             SingleEvalResultConstInt lhsResult,
-                                             SingleEvalResultConstInt rhsResult,
+    SingleEvalResult evalAndOp(SgAndOp* node,
+                                             SingleEvalResult lhsResult,
+                                             SingleEvalResult rhsResult,
                                              EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> evalOrOp(SgOrOp* node,
-                                            SingleEvalResultConstInt lhsResult,
-                                            SingleEvalResultConstInt rhsResult,
+    SingleEvalResult evalOrOp(SgOrOp* node,
+                                            SingleEvalResult lhsResult,
+                                            SingleEvalResult rhsResult,
                                             EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> evalAddOp(SgAddOp* node,
-                                             SingleEvalResultConstInt lhsResult,
-                                             SingleEvalResultConstInt rhsResult,
+    SingleEvalResult evalAddOp(SgAddOp* node,
+                                             SingleEvalResult lhsResult,
+                                             SingleEvalResult rhsResult,
                                              EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> evalSubOp(SgSubtractOp* node,
-                                             SingleEvalResultConstInt lhsResult,
-                                             SingleEvalResultConstInt rhsResult,
+    SingleEvalResult evalSubOp(SgSubtractOp* node,
+                                             SingleEvalResult lhsResult,
+                                             SingleEvalResult rhsResult,
                                              EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> evalMulOp(SgMultiplyOp* node,
-                                             SingleEvalResultConstInt lhsResult,
-                                             SingleEvalResultConstInt rhsResult,
+    SingleEvalResult evalMulOp(SgMultiplyOp* node,
+                                             SingleEvalResult lhsResult,
+                                             SingleEvalResult rhsResult,
                                              EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> evalDivOp(SgDivideOp* node,
-                                             SingleEvalResultConstInt lhsResult,
-                                             SingleEvalResultConstInt rhsResult,
+    SingleEvalResult evalDivOp(SgDivideOp* node,
+                                             SingleEvalResult lhsResult,
+                                             SingleEvalResult rhsResult,
                                              EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> evalModOp(SgModOp* node,
-                                             SingleEvalResultConstInt lhsResult,
-                                             SingleEvalResultConstInt rhsResult,
+    SingleEvalResult evalModOp(SgModOp* node,
+                                             SingleEvalResult lhsResult,
+                                             SingleEvalResult rhsResult,
                                              EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> evalBitwiseAndOp(SgBitAndOp* node,
-                                                    SingleEvalResultConstInt lhsResult,
-                                                    SingleEvalResultConstInt rhsResult,
+    SingleEvalResult evalBitwiseAndOp(SgBitAndOp* node,
+                                                    SingleEvalResult lhsResult,
+                                                    SingleEvalResult rhsResult,
                                                     EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> evalBitwiseOrOp(SgBitOrOp* node,
-                                                   SingleEvalResultConstInt lhsResult,
-                                                   SingleEvalResultConstInt rhsResult,
+    SingleEvalResult evalBitwiseOrOp(SgBitOrOp* node,
+                                                   SingleEvalResult lhsResult,
+                                                   SingleEvalResult rhsResult,
                                                    EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> evalBitwiseXorOp(SgBitXorOp* node,
-                                                    SingleEvalResultConstInt lhsResult,
-                                                    SingleEvalResultConstInt rhsResult,
+    SingleEvalResult evalBitwiseXorOp(SgBitXorOp* node,
+                                                    SingleEvalResult lhsResult,
+                                                    SingleEvalResult rhsResult,
                                                     EState estate, EvalMode mode=MODE_VALUE);
 
-    std::list<SingleEvalResultConstInt> evalGreaterOrEqualOp(SgGreaterOrEqualOp* node,
-                                                        SingleEvalResultConstInt lhsResult,
-                                                        SingleEvalResultConstInt rhsResult,
+    SingleEvalResult evalGreaterOrEqualOp(SgGreaterOrEqualOp* node,
+                                                        SingleEvalResult lhsResult,
+                                                        SingleEvalResult rhsResult,
                                                         EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> evalGreaterThanOp(SgGreaterThanOp* node,
-                                                     SingleEvalResultConstInt lhsResult,
-                                                     SingleEvalResultConstInt rhsResult,
+    SingleEvalResult evalGreaterThanOp(SgGreaterThanOp* node,
+                                                     SingleEvalResult lhsResult,
+                                                     SingleEvalResult rhsResult,
                                                      EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> evalLessOrEqualOp(SgLessOrEqualOp* node,
-                                                     SingleEvalResultConstInt lhsResult,
-                                                     SingleEvalResultConstInt rhsResult,
+    SingleEvalResult evalLessOrEqualOp(SgLessOrEqualOp* node,
+                                                     SingleEvalResult lhsResult,
+                                                     SingleEvalResult rhsResult,
                                                      EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> evalLessThanOp(SgLessThanOp* node,
-                                                  SingleEvalResultConstInt lhsResult,
-                                                  SingleEvalResultConstInt rhsResult,
+    SingleEvalResult evalLessThanOp(SgLessThanOp* node,
+                                                  SingleEvalResult lhsResult,
+                                                  SingleEvalResult rhsResult,
                                                   EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> evalBitwiseShiftLeftOp(SgLshiftOp* node,
-                                                          SingleEvalResultConstInt lhsResult,
-                                                          SingleEvalResultConstInt rhsResult,
+    SingleEvalResult evalBitwiseShiftLeftOp(SgLshiftOp* node,
+                                                          SingleEvalResult lhsResult,
+                                                          SingleEvalResult rhsResult,
                                                           EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> evalBitwiseShiftRightOp(SgRshiftOp* node,
-                                                           SingleEvalResultConstInt lhsResult,
-                                                           SingleEvalResultConstInt rhsResult,
+    SingleEvalResult evalBitwiseShiftRightOp(SgRshiftOp* node,
+                                                           SingleEvalResult lhsResult,
+                                                           SingleEvalResult rhsResult,
                                                            EState estate, EvalMode mode=MODE_VALUE);
 
-    std::list<SingleEvalResultConstInt> evalAssignOp(SgAssignOp* node,
-						     SingleEvalResultConstInt lhsResult,
-						     SingleEvalResultConstInt rhsResult,
+    SingleEvalResult evalAssignOp(SgAssignOp* node,
+						     SingleEvalResult lhsResult,
+						     SingleEvalResult rhsResult,
 						     Label targetLabel, EState estate, EvalMode mode);
     std::list<EState> evalAssignOp3(SgAssignOp* node, Label targetLabel, const EState* estate);
     
-    std::list<SingleEvalResultConstInt> evalArrayReferenceOp(SgPntrArrRefExp* node,
-                                                        SingleEvalResultConstInt lhsResult,
-                                                        SingleEvalResultConstInt rhsResult,
+    SingleEvalResult evalArrayReferenceOp(SgPntrArrRefExp* node,
+                                                        SingleEvalResult lhsResult,
+                                                        SingleEvalResult rhsResult,
                                                         EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> evalCommaOp(SgCommaOpExp* node,
-                                                        SingleEvalResultConstInt lhsResult,
-                                                        SingleEvalResultConstInt rhsResult,
+    SingleEvalResult evalCommaOp(SgCommaOpExp* node,
+                                                        SingleEvalResult lhsResult,
+                                                        SingleEvalResult rhsResult,
                                                         EState estate, EvalMode mode=MODE_VALUE);
 
-    std::list<SingleEvalResultConstInt> evalNotOp(SgNotOp* node,
-                                             SingleEvalResultConstInt operandResult,
+    SingleEvalResult evalNotOp(SgNotOp* node,
+                                             SingleEvalResult operandResult,
                                              EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> evalUnaryMinusOp(SgMinusOp* node,
-                                                    SingleEvalResultConstInt operandResult,
+    SingleEvalResult evalUnaryMinusOp(SgMinusOp* node,
+                                                    SingleEvalResult operandResult,
                                                     EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> evalArrowOp(SgArrowExp* node,
-                                               SingleEvalResultConstInt lhsResult,
-                                               SingleEvalResultConstInt rhsResult,
+    SingleEvalResult evalArrowOp(SgArrowExp* node,
+                                               SingleEvalResult lhsResult,
+                                               SingleEvalResult rhsResult,
                                                EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> evalDotOp(SgDotExp* node,
-                                             SingleEvalResultConstInt lhsResult,
-                                             SingleEvalResultConstInt rhsResult,
+    SingleEvalResult evalDotOp(SgDotExp* node,
+                                             SingleEvalResult lhsResult,
+                                             SingleEvalResult rhsResult,
                                              EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> evalCastOp(SgCastExp* node,
-                                              SingleEvalResultConstInt operandResult,
+    SingleEvalResult evalCastOp(SgCastExp* node,
+                                              SingleEvalResult operandResult,
                                               EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> evalDereferenceOp(SgPointerDerefExp* node,
-                                                     SingleEvalResultConstInt operandResult,
+    SingleEvalResult evalDereferenceOp(SgPointerDerefExp* node,
+                                                     SingleEvalResult operandResult,
                                                      EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> semanticEvalDereferenceOp(SingleEvalResultConstInt operandResult,
+    SingleEvalResult semanticEvalDereferenceOp(SingleEvalResult operandResult,
                                                              EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> evalAddressOfOp(SgAddressOfOp* node,
-                                                   SingleEvalResultConstInt operandResult,
+    SingleEvalResult evalAddressOfOp(SgAddressOfOp* node,
+                                                   SingleEvalResult operandResult,
                                                    EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> evalPreComputationOp(EState estate, AbstractValue address, AbstractValue change);
-    std::list<SingleEvalResultConstInt> evalPreIncrementOp(SgPlusPlusOp* node,
-                  SingleEvalResultConstInt operandResult,
+    SingleEvalResult evalPreComputationOp(EState estate, AbstractValue address, AbstractValue change);
+    SingleEvalResult evalPreIncrementOp(SgPlusPlusOp* node,
+                  SingleEvalResult operandResult,
                   EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> evalPostIncrementOp(SgPlusPlusOp* node,
-                   SingleEvalResultConstInt operandResult,
+    SingleEvalResult evalPostIncrementOp(SgPlusPlusOp* node,
+                   SingleEvalResult operandResult,
                    EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> evalPostComputationOp(EState estate, AbstractValue address, AbstractValue change);
-    std::list<SingleEvalResultConstInt> evalPreDecrementOp(SgMinusMinusOp* node,
-                  SingleEvalResultConstInt operandResult,
+    SingleEvalResult evalPostComputationOp(EState estate, AbstractValue address, AbstractValue change);
+    SingleEvalResult evalPreDecrementOp(SgMinusMinusOp* node,
+                  SingleEvalResult operandResult,
                   EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> evalPostDecrementOp(SgMinusMinusOp* node,
-                   SingleEvalResultConstInt operandResult,
+    SingleEvalResult evalPostDecrementOp(SgMinusMinusOp* node,
+                   SingleEvalResult operandResult,
                    EState estate, EvalMode mode=MODE_VALUE);
 
     // dispatch function
-    std::list<SingleEvalResultConstInt> evalMinusMinusOp(SgMinusMinusOp* node,
-                                                    SingleEvalResultConstInt operandResult,
+    SingleEvalResult evalMinusMinusOp(SgMinusMinusOp* node,
+                                                    SingleEvalResult operandResult,
                                                     EState estate, EvalMode mode=MODE_VALUE);
     // dispatch function
-    std::list<SingleEvalResultConstInt> evalPlusPlusOp(SgPlusPlusOp* node,
-                                                  SingleEvalResultConstInt operandResult,
+    SingleEvalResult evalPlusPlusOp(SgPlusPlusOp* node,
+                                                  SingleEvalResult operandResult,
                                                   EState estate, EvalMode mode=MODE_VALUE);
-    std::list<SingleEvalResultConstInt> evalBitwiseComplementOp(SgBitComplementOp* node,
-                                                           SingleEvalResultConstInt operandResult,
+    SingleEvalResult evalBitwiseComplementOp(SgBitComplementOp* node,
+                                                           SingleEvalResult operandResult,
                                                            EState estate, EvalMode mode=MODE_VALUE);
 
     // special case of sizeof operator (operates on types and types of expressions)
-    std::list<SingleEvalResultConstInt> evalSizeofOp(SgSizeOfOp* node,
+    SingleEvalResult evalSizeofOp(SgSizeOfOp* node,
                                                 EState estate, EvalMode mode=MODE_VALUE);
 
-    SingleEvalResultConstInt evalLValuePntrArrRefExp(SgPntrArrRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
-    SingleEvalResultConstInt evalLValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
-    SingleEvalResultConstInt evalLValuePointerDerefExp(SgPointerDerefExp* node, EState estate);
+    SingleEvalResult evalLValuePntrArrRefExp(SgPntrArrRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
+    SingleEvalResult evalLValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
+    SingleEvalResult evalLValuePointerDerefExp(SgPointerDerefExp* node, EState estate);
     // handles DotExp and ArrowExp
-    SingleEvalResultConstInt evalLValueDotOrArrowExp(SgNode* node, EState estate, EvalMode mode=MODE_VALUE);
+    SingleEvalResult evalLValueDotOrArrowExp(SgNode* node, EState estate, EvalMode mode=MODE_VALUE);
 
-    SingleEvalResultConstInt evalRValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
-    SingleEvalResultConstInt evalValueExp(SgValueExp* node, EState estate, EvalMode mode);
+    SingleEvalResult evalRValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
+    SingleEvalResult evalValueExp(SgValueExp* node, EState estate, EvalMode mode);
 
-    std::list<SingleEvalResultConstInt> evalFunctionRefExp(SgFunctionRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
+    SingleEvalResult evalFunctionRefExp(SgFunctionRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
     // supported system functions
-    std::list<SingleEvalResultConstInt> evalFunctionCallMalloc(SgFunctionCallExp* funCall, EState estate);
-    std::list<SingleEvalResultConstInt> evalFunctionCallFree(SgFunctionCallExp* funCall, EState estate);
-    std::list<SingleEvalResultConstInt> evalFunctionCallMemCpy(SgFunctionCallExp* funCall, EState estate);
-    std::list<SingleEvalResultConstInt> evalFunctionCallStrLen(SgFunctionCallExp* funCall, EState estate);
+    SingleEvalResult evalFunctionCallMalloc(SgFunctionCallExp* funCall, EState estate);
+    SingleEvalResult evalFunctionCallFree(SgFunctionCallExp* funCall, EState estate);
+    SingleEvalResult evalFunctionCallMemCpy(SgFunctionCallExp* funCall, EState estate);
+    SingleEvalResult evalFunctionCallStrLen(SgFunctionCallExp* funCall, EState estate);
 
     // supported functions to be executed (interpreter mode)
-    std::list<SingleEvalResultConstInt> execFunctionCallPrintf(SgFunctionCallExp* funCall, EState estate);
-    std::list<SingleEvalResultConstInt> execFunctionCallScanf(SgFunctionCallExp* funCall, EState estate);
+    SingleEvalResult execFunctionCallPrintf(SgFunctionCallExp* funCall, EState estate);
+    SingleEvalResult execFunctionCallScanf(SgFunctionCallExp* funCall, EState estate);
     std::string sourceLocationAndNodeToString(Label lab);
   private:
     // outdated function, to be eliminated

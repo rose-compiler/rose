@@ -13,9 +13,9 @@ using namespace Sawyer::Message;
 
 namespace PredefinedSemanticFunctions {
 /* TODO: in case an error is detected the target region remains unmodified. Change to invalidating all elements of target region */
-  list<SingleEvalResultConstInt> evalFunctionCallMemCpy(EStateTransferFunctions* exprAnalyzer, SgFunctionCallExp* funCall, EState estate) {
+  SingleEvalResult evalFunctionCallMemCpy(EStateTransferFunctions* exprAnalyzer, SgFunctionCallExp* funCall, EState estate) {
   //cout<<"DETECTED: memcpy: "<<funCall->unparseToString()<<endl;
-  SingleEvalResultConstInt res;
+  SingleEvalResult res;
   // memcpy is a void function, no return value
   res.init(estate,AbstractValue(CodeThorn::Top()));
   SgExpressionPtrList& argsList=SgNodeHelper::getFunctionCallActualParameterList(funCall);
@@ -24,18 +24,13 @@ namespace PredefinedSemanticFunctions {
     int i=0;
     for(SgExpressionPtrList::iterator argIter=argsList.begin();argIter!=argsList.end();++argIter) {
       SgExpression* arg=*argIter;
-      list<SingleEvalResultConstInt> resList=exprAnalyzer->evaluateExpression(arg,estate);
-      if(resList.size()!=1) {
-        cerr<<"Error: conditional control-flow in function argument expression. Expression normalization required."<<endl;
-        exit(1);
-      }
-      SingleEvalResultConstInt sres=*resList.begin();
+      SingleEvalResult sres=exprAnalyzer->evaluateExpression(arg,estate);
       AbstractValue argVal=sres.result;
       memcpyArgs[i++]=argVal;
     }
     if(memcpyArgs[0].isTop()||memcpyArgs[1].isTop()||memcpyArgs[2].isTop()) {
       exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate.label());
-      return EStateTransferFunctions::listify(res); // returns top
+      return res; // returns top
     }
     int memRegionSizeTarget=exprAnalyzer->getMemoryRegionNumElements(memcpyArgs[0]);
     int copyRegionElementSizeTarget=exprAnalyzer->getMemoryRegionElementSize(memcpyArgs[0]);
@@ -46,11 +41,11 @@ namespace PredefinedSemanticFunctions {
     // check if size to copy is either top
     if(memcpyArgs[2].isTop()) {
       exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate.label());
-      return EStateTransferFunctions::listify(res);
+      return res;
     } else if(memRegionSizeTarget!=memRegionSizeSource) {
       // check if the element size of the two regions is different (=> conservative analysis result; will be modelled in future)
       exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate.label());
-      return EStateTransferFunctions::listify(res);
+      return res;
     } else {
       if(copyRegionElementSizeTarget!=copyRegionElementSizeSource) {
         if(copyRegionElementSizeTarget!=0)
@@ -72,7 +67,7 @@ namespace PredefinedSemanticFunctions {
     if(copyRegionElementSize==0) {
       cout<<"WARNING: memcpy: copy region element size is 0. Recording potential out of bounds access."<<endl;
       exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate.label());
-      return EStateTransferFunctions::listify(res);
+      return res;
     }
     int copyRegionNumElements=copyRegionLengthValue/copyRegionElementSize;
 
@@ -110,16 +105,16 @@ namespace PredefinedSemanticFunctions {
         sourcePtr=AbstractValue::operatorAdd(sourcePtr,one); // sourcePtr++;
       }
     }
-    return EStateTransferFunctions::listify(res);
+    return res;
   } else {
     cerr<<"Error: unknown memcpy function (number of arguments != 3)"<<funCall->unparseToString()<<endl;
     exit(1);
   }
-  return EStateTransferFunctions::listify(res);
+  return res;
   }
 
-  list<SingleEvalResultConstInt> evalFunctionCallStrLen(EStateTransferFunctions* exprAnalyzer, SgFunctionCallExp* funCall, EState estate) {
-    SingleEvalResultConstInt res;
+  SingleEvalResult evalFunctionCallStrLen(EStateTransferFunctions* exprAnalyzer, SgFunctionCallExp* funCall, EState estate) {
+    SingleEvalResult res;
     //cout<<"DEBUG:evalFunctionCallStrLen:"<<funCall->unparseToString()<<endl;
     res.init(estate,AbstractValue(CodeThorn::Top()));
     SgExpressionPtrList& argsList=SgNodeHelper::getFunctionCallActualParameterList(funCall);
@@ -128,12 +123,7 @@ namespace PredefinedSemanticFunctions {
       int i=0;
       for(SgExpressionPtrList::iterator argIter=argsList.begin();argIter!=argsList.end();++argIter) {
         SgExpression* arg=*argIter;
-        list<SingleEvalResultConstInt> resList=exprAnalyzer->evaluateExpression(arg,estate);
-        if(resList.size()!=1) {
-          cerr<<"Error: conditional control-flow in function argument expression. Expression normalization required."<<endl;
-          exit(1);
-        }
-        SingleEvalResultConstInt sres=*resList.begin();
+        SingleEvalResult sres=exprAnalyzer->evaluateExpression(arg,estate);
         AbstractValue argVal=sres.result;
         functionArgs[i++]=argVal;
       }
@@ -151,7 +141,7 @@ namespace PredefinedSemanticFunctions {
           break;
         }
 #if 0
-        // TODO: not working yet because the memory region of strings are not properly registered with size yet
+        // TODO: enable this check when strings are registered with size in all modes
         // check bounds of string's memory region
         if(!accessIsWithinArrayBounds(stringPtr.getVariableId(),pos)) {
           exprAnalyzer->recordDefinitiveOutOfBoundsAccessLocation(estate.label());
@@ -171,7 +161,7 @@ namespace PredefinedSemanticFunctions {
           // found 0
           AbstractValue finalResult=AbstractValue(pos);
           res.init(estate,finalResult);
-          return EStateTransferFunctions::listify(res);
+          return res;
         } else if(cmpResult.isFalse()) {
           pos++;
         } else {
@@ -183,7 +173,7 @@ namespace PredefinedSemanticFunctions {
     // fallthrough for top/bot
     // return top for unknown (or out-of-bounds access)
     res.init(estate,AbstractValue(CodeThorn::Top()));
-    return EStateTransferFunctions::listify(res);
+    return res;
   }
 
 } // end of namespace PredefinedSemanticFunctions

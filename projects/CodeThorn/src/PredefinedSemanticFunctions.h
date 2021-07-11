@@ -5,8 +5,8 @@
 
 namespace PredefinedSemanticFunctions {
 
-  list<SingleEvalResultConstInt> evalFunctionCallMemCpy(EStateTransferFunctions* estf, SgFunctionCallExp* funCall, EState estate);
-  list<SingleEvalResultConstInt> evalFunctionCallStrLen(EStateTransferFunctions* estf, SgFunctionCallExp* funCall, EState estate);
+  SingleEvalResult evalFunctionCallMemCpy(EStateTransferFunctions* estf, SgFunctionCallExp* funCall, EState estate);
+  SingleEvalResult evalFunctionCallStrLen(EStateTransferFunctions* estf, SgFunctionCallExp* funCall, EState estate);
 
 } // end of namespace PredefinedSemanticFunctions
 
