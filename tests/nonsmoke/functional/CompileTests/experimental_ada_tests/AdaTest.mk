@@ -167,7 +167,9 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   uppercase.adb
 
 ADA_TRANSLATOR_PENDING_TESTS :=        \
-  access_variable.adb
+  access_variable.adb                  \
+  switches.ads                         \
+  hardwarestore.adb                    
 
 # defines tests that are fully supported by ROSE
 ROSE_PASSING_ADA_TESTS :=                           \

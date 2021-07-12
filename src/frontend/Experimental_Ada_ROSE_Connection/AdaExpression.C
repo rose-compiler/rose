@@ -270,10 +270,10 @@ namespace
   SgExpression&
   getOperator(Expression_Struct& expr, AstContext ctx)
   {
-    typedef SgExpression* (*mk_wrapper_fun)();
-    typedef std::map<Operator_Kinds, std::pair<const char*, mk_wrapper_fun> > operator_maker_map_t;
+    using MkWrapperFn = std::function<SgExpression*()>;
+    using OperatorMakerMap = std::map<Operator_Kinds, std::pair<const char*, MkWrapperFn> >;
 
-    static const operator_maker_map_t maker_map =
+    static const OperatorMakerMap makerMap =
     { { An_And_Operator,                  {"An_And_Operator",                  mk2_wrapper<SgBitAndOp,         sb::buildBitAndOp> }},
       { An_Or_Operator,                   {"An_Or_Operator",                   mk2_wrapper<SgBitOrOp,          sb::buildBitOrOp> }},
       { An_Xor_Operator,                  {"An_Xor_Operator",                  mk2_wrapper<SgBitXorOp,         sb::buildBitXorOp> }},
@@ -299,9 +299,9 @@ namespace
 
     ADA_ASSERT(expr.Expression_Kind == An_Operator_Symbol);
 
-    operator_maker_map_t::const_iterator pos = maker_map.find(expr.Operator_Kind);
+    OperatorMakerMap::const_iterator pos = makerMap.find(expr.Operator_Kind);
 
-    if (pos != maker_map.end())
+    if (pos != makerMap.end())
     {
       logKind(pos->second.first);
       return SG_DEREF(pos->second.second());
