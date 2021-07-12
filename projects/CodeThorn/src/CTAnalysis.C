@@ -1207,7 +1207,7 @@ void CodeThorn::CTAnalysis::runAnalysisPhase1(SgProject* root, TimingCollector& 
 }
 
 void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(SgProject* root, TimingCollector& tc) {
-  SAWYER_MESG(logger[INFO])<<"CTAnalysis::runAnalysisPhase1Sub1 started."<<endl;
+  SAWYER_MESG(logger[TRACE])<<"CTAnalysis::runAnalysisPhase1Sub1 started."<<endl;
   ROSE_ASSERT(root);
 
   CodeThornOptions& ctOpt=getOptionsRef();

@@ -59,10 +59,10 @@ void RewriteSystem::rewriteCompoundAssignmentsInAst(SgNode* root) {
   TimeMeasurement timer;
   double buildTime=0.0, replaceTime=0.0;
   for(AssignOpListType::iterator i=assignOpList.begin();i!=assignOpList.end();++i) {
-    //cout<<"INFO: normalizing compound assign op "<<assignOpNr<<" of "<<assignOpNum<<endl;
     timer.start();
     SgExpression* newRoot=isSgExpression(buildRewriteCompoundAssignment(*i));
     buildTime+=timer.getTimeDurationAndStop().milliSeconds();
+    logger[INFO]<<"normalizing compound assign op "<<assignOpNr<<" of "<<assignOpNum<<": "<<newRoot->unparseToString()<<endl;
 
     if(newRoot) {
       timer.start();
@@ -72,9 +72,8 @@ void RewriteSystem::rewriteCompoundAssignmentsInAst(SgNode* root) {
     } else {
       logger[WARN]<<"not an expression. transformation not applied: "<<(*i)->class_name()<<":"<<(*i)->unparseToString()<<endl;
     }
-    //cout<<"Buildtime: "<<buildTime<<" Replacetime: "<<replaceTime<<endl;
   }
-  logger[INFO]<<"transforming "<<assignOpNum<<" compound assignment expressions: done."<<endl;
+  logger[INFO]<<"Compound assignment transformation: "<<assignOpNum<<" operators, build time: "<<buildTime<<", replace time: "<<replaceTime<<endl;
 }
 
 SgNode* RewriteSystem::buildRewriteCompoundAssignment(SgNode* root) {
