@@ -113,7 +113,7 @@ struct CodeThornOptions : public CodeThorn::Options {
   bool byteMode=false; // switches between byte-addresses and index-based addresses in PState
   int testSelector=0;
   bool intraProcedural=false;
-  int precisionLevel=1;
+  int precisionLevel=0; // keeps default configuration (if =0 configurePrecisionOption does not change any settings)
   bool pointerSetsEnabled=false; // used in more precise pointer analysis
   std::string csvReportModeString="generate";
 
@@ -220,6 +220,7 @@ struct CodeThornOptions : public CodeThorn::Options {
     bool printTransferFunctionInfo=false;
   } info;
 
+  void configurePrecisionOption();
   bool getInterProceduralFlag();
   bool activeOptionsRequireZ3Library();
   bool getAnalysisSelectionFlag(CodeThorn::AnalysisSelector asel);

@@ -573,7 +573,15 @@ namespace CodeThorn {
     if(funDef) {
       string functionName=SgNodeHelper::getFunctionName(node);
       string fileName=SgNodeHelper::sourceFilenameToString(node);
-      if(_analyzer->getOptionsRef().status) cout<<"Analyzing Function #"<<functionAnalyzedNr++<<": "<<fileName<<" : "<<functionName<<endl;
+      if(_analyzer->getOptionsRef().status) {
+	if(_analyzer->getOptionsRef().precisionLevel==1) {
+	  cout<<"Analyzing Function #"<<functionAnalyzedNr++<<": ";
+	} else if(_analyzer->getOptionsRef().precisionLevel>=2) {
+	  cout<<functionAnalyzedNr++<<". ";
+	  cout<<"analyzing function (callstring length="<<estate->getCallStringLength()<<"):";
+	}
+	cout<<": "<<fileName<<" : "<<functionName<<endl;
+      }
       SgInitializedNamePtrList& formalParameters=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
       SAWYER_MESG(logger[TRACE])<<"Function:"<<functionName<<" Parameters: ";
       for(auto fParam : formalParameters) {

@@ -84,6 +84,7 @@ namespace CodeThorn {
     CodeThorn::InputOutput io;
     void setCallString(CallString cs);
     CallString getCallString() const;
+    size_t getCallStringLength() const;
     CallString callString;
     
   };

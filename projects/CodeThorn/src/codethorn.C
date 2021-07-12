@@ -161,7 +161,8 @@ int main( int argc, char * argv[] ) {
     ParProOptions parProOpt; // options only available in parprothorn
     parseCommandLine(argc, argv, logger,versionString,ctOpt,ltlOpt,parProOpt);
     mfacilities.control(ctOpt.logLevel); SAWYER_MESG(logger[TRACE]) << "Log level is " << ctOpt.logLevel << endl;
-
+    ctOpt.configurePrecisionOption();
+ 
     IOAnalyzer* analyzer=CodeThornLib::createAnalyzer(ctOpt,ltlOpt); // sets ctOpt,ltlOpt in analyzer
     CodeThornLib::optionallyRunInternalChecks(ctOpt,argc,argv);
     CodeThornLib::optionallyRunExprEvalTestAndExit(ctOpt,argc,argv);
