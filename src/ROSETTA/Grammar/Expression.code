@@ -6275,6 +6275,13 @@ SgPointerDerefExp::get_type() const
                break;
              }
 
+       // PP (7/9/21): Support Ada types
+          case V_SgAdaAccessType:
+             {
+               someType = isSgAdaAccessType(someType)->get_base_type();
+               goto keepStripping;
+             }
+
           default:
              {
             // DQ (10/23/2016): Commented out message to avoid output spew.
@@ -6983,6 +6990,14 @@ SgPntrArrRefExp::get_type() const
                returnType = SgTypeChar::createType();
                break;
              }
+
+          // PP (7/9/21): Support Ada types
+          case V_SgAdaSubtype:
+             {
+               someType = isSgAdaSubtype(someType)->get_base_type();
+               goto keepStripping;
+             }
+
        // DQ (12/31/2008): This is a better fit for the new EDG/ROSE translation interface.
           default:
              {

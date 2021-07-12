@@ -991,10 +991,10 @@ overridingScope(const SgExprListExp& args, const std::vector<PrimitiveParameterD
   PrimitiveParmIterator      aa          = primitiveArgs.begin();
   PrimitiveParmIterator      zz          = primitiveArgs.end();
 
-  // check for all positional arguments
+  // check all positional arguments
   while ((aa != zz) && (aa->pos() < posArgLimit))
   {
-    const SgExpression*           arg = arglst.at(aa->pos());
+    const SgExpression* arg = arglst.at(aa->pos());
 
     if (const SgDeclarationStatement* tydcl = BaseTypeDecl::find(arg->get_type()))
       return tydcl->get_scope();
