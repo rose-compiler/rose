@@ -115,7 +115,11 @@ namespace PredefinedSemanticFunctions {
 
   SingleEvalResult evalFunctionCallStrLen(EStateTransferFunctions* exprAnalyzer, SgFunctionCallExp* funCall, EState estate) {
     SingleEvalResult res;
-    //cout<<"DEBUG:evalFunctionCallStrLen:"<<funCall->unparseToString()<<endl;
+    res.init(estate,AbstractValue(CodeThorn::Top()));
+    return res;
+
+    // DEACTIVATED (use reference implementation)
+    cout<<"DEBUG:evalFunctionCallStrLen:"<<funCall->unparseToString()<<endl;
     res.init(estate,AbstractValue(CodeThorn::Top()));
     SgExpressionPtrList& argsList=SgNodeHelper::getFunctionCallActualParameterList(funCall);
     if(argsList.size()==1) {
@@ -123,10 +127,12 @@ namespace PredefinedSemanticFunctions {
       int i=0;
       for(SgExpressionPtrList::iterator argIter=argsList.begin();argIter!=argsList.end();++argIter) {
         SgExpression* arg=*argIter;
+	cout<<"DEBUG: evalFunctionCallStrLen: arg: "<<arg->unparseToString()<<endl;
         SingleEvalResult sres=exprAnalyzer->evaluateExpression(arg,estate);
         AbstractValue argVal=sres.result;
         functionArgs[i++]=argVal;
       }
+      cout<<"DEBUG: evalFunctionCallStrLen: processing args done."<<endl;
       // the argument (string pointer) is now in functionArgs[0];
       // compute length now
       // read value and proceed on pointer until 0 is found. Also check size of memory region.
@@ -135,7 +141,7 @@ namespace PredefinedSemanticFunctions {
       while(1) {
         AbstractValue AbstractPos=AbstractValue(pos);
         AbstractValue currentPos=AbstractValue::operatorAdd(stringPtr,AbstractPos);
-        //cout<<"DEBUG: currentPos:"<<currentPos.toString()<<endl;
+        cout<<"DEBUG: evalFunctionCallStrLen: currentPos:"<<currentPos.toString()<<endl;
         if(currentPos.isTop()) {
           exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate.label());
           break;
@@ -173,6 +179,7 @@ namespace PredefinedSemanticFunctions {
     // fallthrough for top/bot
     // return top for unknown (or out-of-bounds access)
     res.init(estate,AbstractValue(CodeThorn::Top()));
+    cout<<"DEBUG:evalFunctionCallStrLen:"<<funCall->unparseToString()<<" finished."<<endl;
     return res;
   }
 

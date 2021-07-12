@@ -1005,7 +1005,7 @@ namespace CodeThorn {
   }
 
   AbstractValue EStateTransferFunctions::getMemoryRegionAbstractElementSize(AbstractValue memLoc) {
-    if(memLoc.isTop()||memLoc.isBot())
+    if(memLoc.isTop()||memLoc.isBot()||memLoc.isNullPtr())
       return AbstractValue::createTop();
     VariableId memId=memLoc.getVariableId();
     CodeThorn::TypeSize elementSize=_variableIdMapping->getElementSize(memId);
@@ -1126,6 +1126,7 @@ namespace CodeThorn {
     CallString cs=currentEState.callString;
     Label label=currentEState.label();
     ConstraintSet cset=*currentEState.constraints();
+    ROSE_ASSERT(currentEState.pstate());
     //cout<<"DEBUG: decl-init: "<<decl->unparseToString()<<":AST:"<<AstTerm::astTermWithNullValuesToString(initializer)<<endl;
     if(SgAssignInitializer* assignInit=isSgAssignInitializer(initializer)) {
       //cout<<"DEBUG: decl-init: AssignInitializer: "<<assignInit->unparseToString()<<":AST:"<<AstTerm::astTermWithNullValuesToString(assignInit)<<endl;
@@ -1255,16 +1256,18 @@ namespace CodeThorn {
 
       // build lhs-value dependent on type of declared variable
       AbstractValue lhsAbstractAddress=AbstractValue::createAddressOfVariable(initDeclVarId); // creates a pointer to initDeclVar
+      ROSE_ASSERT(currentEState.pstate());
       SingleEvalResult evalResult=evaluateExpression(rhs,currentEState);
-      SAWYER_MESG(logger[TRACE])<<"rhs eval result 1: "<<evalResult.result.toString()<<endl;
+      SAWYER_MESG(logger[TRACE])<<"rhs eval result 1: "<<rhs->unparseToString()<<" : "<<evalResult.result.toString()<<endl;
 
       EState estate=evalResult.estate;
+      ROSE_ASSERT(estate.pstate());
       PState newPState=*estate.pstate();
       initializeMemoryLocation(label,&newPState,lhsAbstractAddress,evalResult.value());
       ConstraintSet cset=*estate.constraints();
       return createEState(targetLabel,cs,newPState,cset);
     } else {
-      SAWYER_MESG(logger[WARN]) << "unsupported initializer in declaration: "<<decl->unparseToString()<<" not adding to state (assuming arbitrary value)"<<endl;
+      SAWYER_MESG(logger[WARN]) << "unsupported initializer in declaration: "<<decl->unparseToString()<<" (assuming arbitrary value)"<<endl;
       PState newPState=*currentEState.pstate();
       return createEState(targetLabel,cs,newPState,cset);
     }
@@ -1520,7 +1523,7 @@ namespace CodeThorn {
       if(assignInit==nullptr) {
 	SAWYER_MESG(logger[WARN])<<"expected assign initializer but found "<<exp->unparseToString();
 	SAWYER_MESG(logger[WARN])<<"AST: "<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
-	AbstractValue newVal=AbstractValue::createTop();
+	AbstractValue newVal=AbstractValue::createTop(); // was createBot before
 	initializeMemoryLocation(label,&newPState,arrayElemAddr,newVal);
       } else {
 	// initialize element of array initializer in state
@@ -1615,7 +1618,7 @@ namespace CodeThorn {
     EState currentEState=*estatePtr;
     SgNode* lhs=SgNodeHelper::getLhs(nextNodeToAnalyze2);
     SgNode* rhs=SgNodeHelper::getRhs(nextNodeToAnalyze2);
-    //cout<<"DEBUG: evalAssignOpMemUpdates: lhs:"<<lhs->unparseToString()<<" rhs:"<<rhs->unparseToString()<<endl;
+    SAWYER_MESG(logger[TRACE])<<"evalAssignOpMemUpdates: lhs:"<<lhs->unparseToString()<<" rhs:"<<rhs->unparseToString()<<endl;
     SingleEvalResult rhsRes=evaluateExpression(rhs,currentEState, CodeThorn::EStateTransferFunctions::MODE_VALUE);
     VariableId lhsVar;
     bool isLhsVar=checkIfVariableAndDetermineVarId(lhs,lhsVar);
@@ -1667,7 +1670,7 @@ namespace CodeThorn {
       if(_analyzer->getSkipArrayAccesses()) {
 	// nothing to do (no memory access to add to list)
       } else {
-      SgExpression* arrExp=isSgExpression(SgNodeHelper::getLhs(lhs));
+	SgExpression* arrExp=isSgExpression(SgNodeHelper::getLhs(lhs));
 	SgExpression* indexExp=isSgExpression(SgNodeHelper::getRhs(lhs));
 	if(SgVarRefExp* varRefExp=isSgVarRefExp(arrExp)) {
 	  PState pstate2=oldPState;
@@ -1704,7 +1707,6 @@ namespace CodeThorn {
 	  } else {
 	    fatalErrorExit(nextNodeToAnalyze2,"lhs array access: unknown type of array or pointer.");
 	  }
-
 	  SingleEvalResult res2=evaluateExpression(indexExp,currentEState);
 	  AbstractValue indexValue=res2.value();
 	  AbstractValue elementSize=getMemoryRegionAbstractElementSize(arrayPtrValue);
@@ -2214,6 +2216,8 @@ namespace CodeThorn {
       //cout<<"DEBUG: evalExp at: "<<AstTerm::astTermWithNullValuesToString(node)<<endl;
     }
 
+    SAWYER_MESG(logger[TRACE])<<"DEBUG: evalExp at: "<<node->unparseToString()<<endl;
+    
     if(SgStatementExpression* gnuExtensionStmtExpr=isSgStatementExpression(node)) {
       //cout<<"WARNING: ignoring GNU extension StmtExpr."<<endl;
       res.result=AbstractValue::createTop();
@@ -2319,8 +2323,12 @@ namespace CodeThorn {
       return evalValueExp(exp,estate,mode);
     }
     switch(node->variantT()) {
-    case V_SgVarRefExp:
-      return evalRValueVarRefExp(isSgVarRefExp(node),estate,mode);
+    case V_SgVarRefExp: {
+      SAWYER_MESG(logger[TRACE])<<"case V_SgVarRefExp: started"<<endl;
+      auto ret=evalRValueVarRefExp(isSgVarRefExp(node),estate,mode);
+      SAWYER_MESG(logger[TRACE])<<"case V_SgVarRefExp: done"<<endl;
+      return ret;
+    }
     case V_SgFunctionCallExp: {
       return evalFunctionCall(isSgFunctionCallExp(node),estate);
     }
@@ -2605,6 +2613,7 @@ namespace CodeThorn {
   }
 
   std::list<EState> EStateTransferFunctions::evalAssignOp3(SgAssignOp* node, Label targetLabel, const EState* estate) {
+    SAWYER_MESG(logger[TRACE])<<"evalAssignOp3:"<<node->unparseToString()<<": started"<<endl;
     auto pList=evalAssignOpMemUpdates(node, estate);
     std::list<EState> estateList;
     for (auto p : pList) {
@@ -2622,6 +2631,7 @@ namespace CodeThorn {
       // no effects recorded, create copy-state to continue
       estateList.push_back(createEState(targetLabel,estate->callString,*estate->pstate(),*estate->constraints()));
     }
+    SAWYER_MESG(logger[TRACE])<<"evalAssignOp3:"<<node->unparseToString()<<": done"<<endl;
     return estateList;
   }
  
@@ -2999,6 +3009,7 @@ namespace CodeThorn {
       return res;
     } else {
       SingleEvalResult empty;
+      empty.init(estate,CodeThorn::Bot()); // indicates unreachable, could also mark state as unreachable
       return empty;
     }
   }
@@ -3319,7 +3330,7 @@ namespace CodeThorn {
 
 
   SingleEvalResult EStateTransferFunctions::evalFunctionRefExp(SgFunctionRefExp* node, EState estate, EvalMode mode) {
-    //cout<<"DEBUG: evalFunctionRefExp:"<<node->unparseToString()<<" : "<<AstTerm::astTermWithNullValuesToString(node)<<endl;
+    SAWYER_MESG(logger[TRACE])<<"evalFunctionRefExp:"<<node->unparseToString()<<" : "<<AstTerm::astTermWithNullValuesToString(node)<<endl;
     if(mode==EStateTransferFunctions::MODE_EMPTY_STATE) {
       SingleEvalResult res;
       res.init(estate,AbstractValue::createTop());
@@ -3348,13 +3359,16 @@ namespace CodeThorn {
       // label of corresponding entry label of function of node; if function is external, then label is an invalid label.
       //cout<<"DEBUG: evalFunctionRefExp: label:"<<funLab.toString()<<endl;
       res.init(estate,AbstractValue::createAddressOfFunction(funLab));
+      SAWYER_MESG(logger[TRACE])<<"evalFunctionRefExp:"<<node->unparseToString()<<" : done1"<<endl;
       return res;
     } else {
       SAWYER_MESG(logger[WARN])<<"EStateTransferFunctions::evalFunctionRefExp: funRefExp==0 (function pointer? - creating top)"<<endl;
       res.init(estate,AbstractValue::createTop());
+      SAWYER_MESG(logger[TRACE])<<"evalFunctionRefExp:"<<node->unparseToString()<<" : done2"<<endl;
       return res;
     }
   }
+  
   SingleEvalResult EStateTransferFunctions::evalRValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode) {
     if(mode==EStateTransferFunctions::MODE_EMPTY_STATE) {
       SingleEvalResult res;
@@ -3363,20 +3377,21 @@ namespace CodeThorn {
     }  
     SAWYER_MESG(logger[TRACE])<<"evalRValueVarRefExp: "<<node->unparseToString()<<" id:"<<_variableIdMapping->variableId(isSgVarRefExp(node)).toString()<<" MODE:"<<mode<<" Symbol:"<<node->get_symbol()<<endl;
     SingleEvalResult res;
-    res.init(estate,AbstractValue::createBot());
+    res.init(estate,AbstractValue::createTop());
 
     const PState* pstate=estate.pstate();
+    ROSE_ASSERT(pstate);
     VariableId varId=_variableIdMapping->variableId(node);
     if(!varId.isValid()) {
       SAWYER_MESG(logger[ERROR])<<"Invalid varId: "<<node->unparseToString()<<" Parent: "<<node->get_parent()->unparseToString()<<" Symbol:"<<node->get_symbol()<<endl;
       ROSE_ASSERT(varId.isValid());
     }
     // check if var is a struct member. if yes return struct-offset.
-    //SAWYER_MESG(logger[TRACE])<<"VarRefExp name: "<<_variableIdMapping->variableName(varId)<<endl;
+    SAWYER_MESG(logger[TRACE])<<"VarRefExp name: "<<_variableIdMapping->variableName(varId)<<endl;
     if(isMemberVariable(varId)) {
       int offset=AbstractValue::getVariableIdMapping()->getOffset(varId);
       ROSE_ASSERT(_variableIdMapping);
-      SAWYER_MESG(logger[TRACE])<<"evalRValueVarRefExp STRUCT member: "<<_variableIdMapping->variableName(varId)<<" offset: "<<offset<<endl;
+      SAWYER_MESG(logger[TRACE])<<"evalRValueVarRefExp: evalRValueVarRefExp STRUCT member: "<<_variableIdMapping->variableName(varId)<<" offset: "<<offset<<endl;
       res.result=AbstractValue(offset); // TODO BYTEMODE ?
       //cout<<"DEBUG1 STRUCT MEMBER: "<<_variableIdMapping->variableName(varId)<<" offset: "<<offset<<endl;
       return res;
@@ -3386,21 +3401,24 @@ namespace CodeThorn {
       res.result=AbstractValue::createAddressOfVariable(varId);
       return res;
     }
+
     if(pstate->varExists(varId)) {
       if(_variableIdMapping->isOfArrayType(varId)) {
 	res.result=AbstractValue::createAddressOfArray(varId);
       } else {
 	if(_variableIdMapping->isOfReferenceType(varId)) {
-	  if(mode==MODE_ADDRESS)
+	  if(mode==MODE_ADDRESS) {
 	    res.result=readFromMemoryLocation(estate.label(),pstate,varId); // address of a reference is the value it contains
-	  else
+	  } else {
 	    res.result=readFromReferenceMemoryLocation(estate.label(),pstate,varId);
+	  }
 	} else {
 	  res.result=readFromMemoryLocation(estate.label(),pstate,varId);
 	}
       }
       return res;
     } else {
+
       // special mode to represent information not stored in the state
       // i) unmodified arrays: data can be stored outside the state
       // ii) undefined variables mapped to 'top' (abstraction by removing variables from state)
@@ -3925,10 +3943,11 @@ namespace CodeThorn {
     memLoc=conditionallyApplyArrayAbstraction(memLoc);
 
     // inspect everything here
-    SAWYER_MESG(logger[TRACE])<<"EStateTransferFunctions::writeToMemoryLocation1:"<<memLoc.toString()<<endl;
+    SAWYER_MESG(logger[TRACE])<<"EStateTransferFunctions::writeToMemoryLocation1:"<<memLoc.toString(_variableIdMapping)<<endl;
     if(memLoc.isTop()) {
       SAWYER_MESG(logger[WARN])<<"writing to arbitrary memloc: "<<lab.toString()<<":"<<memLoc.toString(_variableIdMapping)<<":="<<newValue.toString(_variableIdMapping)<<endl;
       recordPotentialOutOfBoundsAccessLocation(lab);
+      return;
     } else if(!pstate->memLocExists(memLoc)) {
       SAWYER_MESG(logger[TRACE])<<"EStateTransferFunctions::writeToMemoryLocation1: memloc does not exist"<<endl;
       if(!newValue.isUndefined()) {
@@ -3974,6 +3993,9 @@ namespace CodeThorn {
   }
   
   void EStateTransferFunctions::initializeMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue) {
+    if(memLoc.isBot()) {
+      return;
+    }
     SAWYER_MESG(logger[TRACE])<<"initializeMemoryLocation: "<<memLoc.toString()<<" := "<<newValue.toString()<<endl;
     reserveMemoryLocation(lab,pstate,memLoc);
     writeToMemoryLocation(lab,pstate,memLoc,newValue);
@@ -3981,15 +4003,24 @@ namespace CodeThorn {
   }
 
   void EStateTransferFunctions::reserveMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc) {
+    if(memLoc.isBot()) {
+      return;
+    }
     writeUndefToMemoryLocation(lab,pstate,memLoc);
   }
 
   void EStateTransferFunctions::writeUndefToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc) {
+    if(memLoc.isBot()) {
+      return;
+    }
     memLoc=conditionallyApplyArrayAbstraction(memLoc);
     pstate->writeUndefToMemoryLocation(memLoc);
   }
 
   void EStateTransferFunctions::writeUndefToMemoryLocation(PState* pstate, AbstractValue memLoc) {
+    if(memLoc.isBot()) {
+      return;
+    }
     memLoc=conditionallyApplyArrayAbstraction(memLoc);
     pstate->writeUndefToMemoryLocation(memLoc);
   }
