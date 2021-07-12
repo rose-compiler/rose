@@ -320,7 +320,7 @@ namespace CodeThorn {
     PState newPState=currentPState;
     SgInitializedNamePtrList::iterator i=formalParameters.begin();
     SgExpressionPtrList::iterator j=actualParameters.begin();
-    while(i!=formalParameters.end() || j!=actualParameters.end()) {
+    while(i!=formalParameters.end() && j!=actualParameters.end()) {
       SgInitializedName* formalParameterName=*i;
       ROSE_ASSERT(formalParameterName);
       // test formal parameter (instead of argument type) to allow for expressions in arguments
@@ -369,7 +369,11 @@ namespace CodeThorn {
       ++i;++j;
     }
     // assert must hold if #formal-params==#actual-params (TODO: default values)
-    ROSE_ASSERT(i==formalParameters.end() && j==actualParameters.end());
+    if(!(i==formalParameters.end() && j==actualParameters.end())) {
+      logger[WARN]<<"Number of function call arguments not matching formal function parameters:"<<endl;
+      logger[WARN]<<"fcall   : "<<SgNodeHelper::sourceLineColumnToString(funCall)<<endl;
+      logger[WARN]<<"fdef    : "<<SgNodeHelper::sourceLineColumnToString(funDef)<<endl;
+    }
 
     // ad 4
     CallString cs=currentEState.callString;
