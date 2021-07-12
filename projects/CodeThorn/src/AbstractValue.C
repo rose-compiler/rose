@@ -897,7 +897,7 @@ string AbstractValue::toString() const {
   }
   case PTR: {
     stringstream ss;
-    ss<<"("<<variableId.toString()<<","<<getIntValue()<<")";
+    ss<<"("<<variableId.toString()<<","<<getIntValue()<<","<<isSummary()<<")";
     return ss.str();
   }
   case FUN_PTR: {
@@ -975,7 +975,7 @@ AbstractValue AbstractValue::getIndexValue() const {
 
 int AbstractValue::getIndexIntValue() const { 
   if(valueType!=PTR) {
-    cerr << "AbstractValue: valueType="<<valueTypeToString()<<endl;
+    cerr << "AbstractValue::getIndexIntValue:  valueType="<<valueTypeToString()<<endl;
     throw CodeThorn::Exception("Error: AbstractValue::getIndexIntValue operation failed.");
   }
   else 
@@ -985,7 +985,7 @@ int AbstractValue::getIndexIntValue() const {
 int AbstractValue::getIntValue() const { 
   // TODO: PTR will be removed once all ptrs are adapted to getIndexIntValue
   if(valueType!=INTEGER && valueType!=PTR) {
-    cerr << "AbstractValue: valueType="<<valueTypeToString()<<endl;
+    cerr << "AbstractValue::getIntValue:  valueType="<<valueTypeToString()<<endl;
     throw CodeThorn::Exception("Error: AbstractValue::getIntValue operation failed.");
   }
   else 
@@ -1007,7 +1007,7 @@ long double AbstractValue::getLongDoubleValue() const {
 */
 std::string AbstractValue::getFloatValueString() const { 
    if(valueType!=FLOAT && valueType!=DOUBLE) {
-     cerr << "AbstractValue: valueType="<<valueTypeToString()<<endl;
+     cerr << "AbstractValue::getFloatValueString: valueType="<<valueTypeToString()<<endl;
      throw CodeThorn::Exception("Error: AbstractValue::getFloatValueString operation failed.");
    } else {
      stringstream ss;
@@ -1023,7 +1023,7 @@ std::string AbstractValue::getFloatValueString() const {
 
 CodeThorn::VariableId AbstractValue::getVariableId() const { 
   if(valueType!=PTR && valueType!=REF) {
-    cerr << "AbstractValue: valueType="<<valueTypeToString()<<endl;
+    cerr << "AbstractValue::getVariableId() valueType="<<valueTypeToString()<<endl;
     cerr << "AbstractValue: value:"<<toString()<<endl;
     //int *x=0;
     //*x=1; // trigger stack trace

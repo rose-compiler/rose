@@ -76,7 +76,7 @@ using namespace CodeThornLib;
 #include "ltlthorn-lib/Solver12.h"
 
 
-const std::string versionString="1.13.5";
+const std::string versionString="1.13.6";
 
 void configureRersSpecialization() {
 #ifdef RERS_SPECIALIZATION

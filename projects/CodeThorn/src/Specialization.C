@@ -168,20 +168,16 @@ int Specialization::substituteConstArrayIndexExprsWithConst(VariableIdMapping* v
        if(arrayIndexExpr) {
          // avoid substituting a constant by a constant
          if(!isSgIntVal(arrayIndexExpr)) {
-           list<SingleEvalResultConstInt> evalResultList=exprAnalyzer->evaluateExpression(arrayIndexExpr,*estate);
+           SingleEvalResult evalResult=exprAnalyzer->evaluateExpression(arrayIndexExpr,*estate);
            // only when we get exactly one result it is considered for substitution
            // there can be multiple const-results which do not allow to replace it with a single const
-           if(evalResultList.size()==1) {
-             list<SingleEvalResultConstInt>::iterator i=evalResultList.begin();
-             ROSE_ASSERT(evalResultList.size()==1);
-             AbstractValue varVal=(*i).value();
-             if(varVal.isConstInt()) {
-               int varIntValue=varVal.getIntValue();
-               //logger[TRACE]<<"INFO: replacing in AST: "<<arrayIndexExpr->unparseToString()<<" with "<<varIntValue<<endl;
-               SgNodeHelper::replaceExpression(arrayIndexExpr,SageBuilder::buildIntVal(varIntValue),false);
-               numConstExprElim++;
-             }
-           }
+	   AbstractValue varVal=evalResult.value();
+	   if(varVal.isConstInt()) {
+	     int varIntValue=varVal.getIntValue();
+	     //logger[TRACE]<<"INFO: replacing in AST: "<<arrayIndexExpr->unparseToString()<<" with "<<varIntValue<<endl;
+	     SgNodeHelper::replaceExpression(arrayIndexExpr,SageBuilder::buildIntVal(varIntValue),false);
+	     numConstExprElim++;
+	   }
          }
        }
      }

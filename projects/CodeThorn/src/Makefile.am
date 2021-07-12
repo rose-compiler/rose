@@ -878,7 +878,7 @@ check-commandline-options: ./codethorn
 	@echo ================================================================
 	@echo RUNNING COMMAND LINE OPTION TESTS
 	@echo ================================================================
-	@./codethorn --cl-args="a bbb cc" $(srcdir)/tests/commandlineoptions1.C --vis --tg1-estate-memory-subgraphs
+	@./codethorn --cl-args="a bbb cc" $(srcdir)/tests/commandlineoptions1.C --vis --tg1-memory-subgraphs
 	@dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
 check-deadcode:

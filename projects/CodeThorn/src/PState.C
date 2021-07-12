@@ -226,7 +226,8 @@ void PState::combineValueAtAllMemoryLocations(AbstractValue val) {
   for(PState::iterator i=begin();i!=end();++i) {
     AbstractValue memLoc=(*i).first;
     if(!memLoc.isRef()) {
-      combineAtMemoryLocation(memLoc,val);
+      //cout<<"DEBUG: rawcombine"<<endl;
+      rawCombineAtMemoryLocation(memLoc,val);
     }
   }
 }
@@ -459,27 +460,43 @@ void PState::conditionalApproximateRawWriteToMemoryLocation(AbstractValue memLoc
 							    AbstractValue abstractValue,
 							    bool strongUpdate) {
   bool weakUpdate=!strongUpdate;
-  if(isApproximateMemRegion(memLoc.getVariableId())||weakUpdate) {
-    combineAtMemoryLocation(memLoc,abstractValue);
+#if 1
+  if(memLoc.isSummary()||weakUpdate) {
+    rawCombineAtMemoryLocation(memLoc,abstractValue);
+    //rawWriteAtAbstractAddress(memLoc,abstractValue);
   } else {
-    rawWriteAtAbstractAddress(memLoc,abstractValue);
+    rawWriteAtMemoryLocation(memLoc,abstractValue);
   }
+#else
+  if(isApproximateMemRegion(memLoc.getVariableId())||weakUpdate) {
+    rawCombineAtMemoryLocation(memLoc,abstractValue);
+  } else {
+    rawWriteAtMemoryLocation(memLoc,abstractValue);
+  }
+#endif
 }
 
-void PState::rawWriteAtAbstractAddress(AbstractValue abstractAddress, AbstractValue abstractValue) {
+AbstractValue PState::rawReadFromMemoryLocation(AbstractValue abstractAddress) {
+  ROSE_ASSERT(!abstractAddress.isPtrSet());
+  return operator[](abstractAddress);
+}
+  
+void PState::rawWriteAtMemoryLocation(AbstractValue abstractAddress, AbstractValue abstractValue) {
   ROSE_ASSERT(!abstractAddress.isPtrSet());
   //cout<<"DEBUG: rawrite:"<<abstractAddress.toString()<<","<<abstractValue.toString()<<endl;
   operator[](abstractAddress)=abstractValue;
   //cout<<"DEBUG: rawrite: done."<<endl;
 }
 
-void PState::combineAtMemoryLocation(AbstractValue abstractMemLoc,
+void PState::rawCombineAtMemoryLocation(AbstractValue abstractMemLoc,
                                      AbstractValue abstractValue) {
   ROSE_ASSERT(abstractMemLoc.getValueType()!=AbstractValue::AV_SET);
-  AbstractValue currentValue=readFromMemoryLocation(abstractMemLoc);
+  AbstractValue currentValue=rawReadFromMemoryLocation(abstractMemLoc);
   AbstractValue newValue=AbstractValue::combine(currentValue,abstractValue);
-  if(!abstractMemLoc.isTop()&&!abstractMemLoc.isBot()) 
-    writeToMemoryLocation(abstractMemLoc,newValue);
+  //cout<<"DEBUG: rawCombine:"<<abstractMemLoc.toString()<<":="<<newValue.toString()<<endl;
+  if(!abstractMemLoc.isTop()&&!abstractMemLoc.isBot()) {
+    rawWriteAtMemoryLocation(abstractMemLoc,newValue);
+  }
 }
 
 size_t PState::stateSize() const {

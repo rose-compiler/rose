@@ -175,10 +175,10 @@ namespace CodeThorn {
     if(options.hoistBranchInitStatements) {
       hoistBranchInitStatementsInAst(root);
     }
-    printNormalizationPhase();
-    if(options.normalizeCompoundAssignments) {
-      normalizeCompoundAssignmentsInAst(root);
-    }
+    //printNormalizationPhase();
+    //if(options.normalizeCompoundAssignments) {
+    //  normalizeCompoundAssignmentsInAst(root);
+    //}
     printNormalizationPhase();
     if(options.hoistConditionExpressions) {
       hoistConditionsInAst(root,false && options.restrictToFunCallExpressions);
@@ -197,6 +197,10 @@ namespace CodeThorn {
     if(options.normalizeVariableDeclarationsWithFunctionCalls) {
       bool normalizeOnlyVariablesWithFunctionCallsFlag=true;
       normalizeAllVariableDeclarations(root,normalizeOnlyVariablesWithFunctionCallsFlag);
+    }
+    printNormalizationPhase();
+    if(options.normalizeCompoundAssignments) {
+      normalizeCompoundAssignmentsInAst(root);
     }
     printNormalizationPhase();
     // off by default

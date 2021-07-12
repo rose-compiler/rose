@@ -8,7 +8,7 @@ int main() {
   int n=4;
   arr=new int*[m];
   for(int i=0;i<m;i++) {
-    arr[i]=new int [n]; // alloc
+    arr[i]=0; //new int [n]; // alloc
   }
   for(int i=0;i<m;i++) {
     for(int j=0;j<n;j++) {
