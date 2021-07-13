@@ -64,8 +64,8 @@ struct ObjectLayoutEntry : std::tuple<size_t, ObjectLayoutElement>
   using base = std::tuple<size_t, ObjectLayoutElement>;
   using base::base;
 
-  size_t              offset()  const { return std::get<0>(*this); }
-  ObjectLayoutElement element() const { return std::get<1>(*this); }
+  size_t                     offset()  const { return std::get<0>(*this); }
+  const ObjectLayoutElement& element() const { return std::get<1>(*this); }
 };
 
 
@@ -81,8 +81,8 @@ struct ObjectLayout : private std::vector<ObjectLayoutEntry>
   using base::end;
   using base::emplace_back;
 
-  size_t object_size()    const;
-  size_t number_entries() const;
+  //~ size_t object_size()    const;
+  //~ size_t number_entries() const;
 };
 
 using ObjectLayoutContainer = std::unordered_map<ClassKeyType, ObjectLayout>;
@@ -90,16 +90,6 @@ using ObjectLayoutContainer = std::unordered_map<ClassKeyType, ObjectLayout>;
 ObjectLayoutContainer
 computeObjectLayouts(const ClassAnalysis& all, bool onlyClassesWithVTable = true);
 
-struct ObjectLayoutPrinter : std::tuple<const RoseCompatibilityBridge&, const ObjectLayoutContainer&>
-{
-  using base = std::tuple<const RoseCompatibilityBridge&, const ObjectLayoutContainer&>;
-  using base::base;
-};
-
-
-std::ostream& operator<<(std::ostream& os, const ObjectLayoutEntry&);
-std::ostream& operator<<(std::ostream& os, const ObjectLayoutContainer&);
-std::ostream& operator<<(std::ostream& os, const ObjectLayoutPrinter&);
 
 }
 

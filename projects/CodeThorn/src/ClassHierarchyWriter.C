@@ -48,9 +48,9 @@ namespace
     os << "  p" << size_t(n) << "[ label = \"" << lbl << "\" " << attr << "];" << std::endl;
   }
 
-  void dot_header(std::ostream& os, std::string s = "Acuity")
+  void dot_header(std::ostream& os, const std::string& kind, const std::string& s)
   {
-    os << "digraph " << s << " {" << std::endl;
+    os << kind << ' ' << s << " {" << std::endl;
   }
 
   void dot_footer(std::ostream& os)
@@ -254,12 +254,210 @@ namespace
 
     os << std::endl;
   }
+
+  struct ObjectLayoutElementPrinter : boost::static_visitor<void>
+  {
+      ObjectLayoutElementPrinter(std::ostream& out, ClassNameFn& classNamer, VarNameFn& varNamer)
+      : os(out), className(classNamer), varName(varNamer)
+      {}
+
+      virtual std::string escapeName(std::string s) const
+      {
+        return s;
+      }
+
+      virtual void operator()(const Subobject& subobj) const
+      {
+        out() << "subobj " << escapeName(className(subobj.ref))
+              << (subobj.isVirtual ? " (virtual)" : "");
+      }
+
+      virtual void operator()(const Field& fld) const
+      {
+        out() << "field  " << escapeName(varName(fld.id));
+      }
+
+      virtual void operator()(const VTable& vtbl) const
+      {
+        out() << "vtable " << escapeName(className(vtbl.ref))
+              << (vtbl.isPrimary ? " (primary)" : "");
+      }
+
+      virtual void printEntry(const ObjectLayoutEntry& el) const
+      {
+        boost::apply_visitor(*this, el.element());
+      }
+
+      virtual void printClassHeader(ClassKeyType key) const
+      {
+        out() << "class " << escapeName(className(key));
+      }
+
+      virtual void printClassFooter() const {}
+
+      std::ostream& out() const { return os; }
+
+    private:
+      std::ostream&            os;
+      ClassNameFn&             className;
+      VarNameFn&               varName;
+  };
+
+  struct InheritanceEdgeDot : std::tuple<const void*, const void*, bool>
+  {
+    using base = std::tuple<const void*, const void*, bool>;
+    using base::base;
+
+    const void* subobj() const { return std::get<0>(*this); }
+    const void* clazz()  const { return std::get<1>(*this); }
+    bool isVirtual()     const { return std::get<2>(*this); }
+  };
+
+
+  struct ObjectLayoutElementPrinterDot : ObjectLayoutElementPrinter
+  {
+      using base = ObjectLayoutElementPrinter;
+
+      ObjectLayoutElementPrinterDot(std::ostream& out, ClassNameFn& classNamer, VarNameFn& varNamer, ClassFilterFn incl)
+      : base(out, classNamer, varNamer), include(incl), edges(), currentClass()
+      {}
+
+      void elem_begin(const void* elem) const;
+      void elem_end() const;
+      void class_begin(const void* elem) const;
+      void class_end() const;
+
+      template <class ClassElem>
+      void elem(const ClassElem& el) const
+      {
+        elem_begin(&el);
+        base::operator()(el);
+        elem_end();
+      }
+
+      void operator()(const Field& el) const override     { elem(el); }
+      void operator()(const VTable& el) const override    { elem(el); }
+
+      void operator()(const Subobject& el) const override
+      {
+        elem(el);
+
+        if (include(el.ref))
+          edges.emplace_back(&el, el.ref, el.isVirtual);
+      }
+
+      void printClassHeader(ClassKeyType key) const override
+      {
+        currentClass = key;
+
+        class_begin(key);
+        out() << "=";
+        base::printClassHeader(key);
+        out() << "=";
+      }
+
+      void printClassFooter() const override
+      {
+        class_end();
+
+        for (const InheritanceEdgeDot& rel : edges)
+        {
+          out() << "p" << std::hex << currentClass << ":p" << std::hex << rel.subobj()
+                << " -> p" << std::hex << rel.clazz() << ":0";
+
+          if (rel.isVirtual())
+            out() << "[style=dotted]";
+
+          out() << ';' << std::endl;
+        }
+
+        edges.clear();
+        currentClass = ClassKeyType{};
+      }
+
+      std::string escapeName(std::string s) const override
+      {
+        std::string res;
+
+        res.reserve(s.size());
+        for (char c : s)
+        {
+          if ((c == '<') || (c == '>'))
+            res += '\\';
+
+          res += c;
+        }
+
+        return res;
+      }
+
+    private:
+      ClassFilterFn                           include;
+      mutable std::vector<InheritanceEdgeDot> edges;
+      mutable ClassKeyType                    currentClass;
+  };
+
+  void ObjectLayoutElementPrinterDot::elem_begin(const void* elem) const
+  {
+    out() << "|<p" << std::hex << (elem) << ">";
+  }
+
+  void ObjectLayoutElementPrinterDot::elem_end() const {}
+
+  void ObjectLayoutElementPrinterDot::class_begin(const void* elem) const
+  {
+    out() << "p" << std::hex << (elem) << "[label=\"<0>";
+  }
+
+  void ObjectLayoutElementPrinterDot::class_end() const
+  {
+    out() << "\"];" << std::endl;
+  }
+
+  struct ObjectLayoutElementPrinterTxt : ObjectLayoutElementPrinter
+  {
+      using base = ObjectLayoutElementPrinter;
+      using base::base;
+
+      void printEntry(const ObjectLayoutEntry& el) const override
+      {
+        out() << el.offset() << " ";
+
+        base::printEntry(el);
+      }
+
+      void printClassHeader(ClassKeyType key) const override
+      {
+        base::printClassHeader(key);
+        out() << std::endl;
+      }
+  };
+
+
+  void prnClassLayout( const ObjectLayoutElementPrinter& printer,
+                       ClassFilterFn include,
+                       const ObjectLayoutContainer& cont
+                     )
+  {
+    for (const ObjectLayoutContainer::value_type& entry : cont)
+    {
+      if (!include) continue;
+
+      printer.printClassHeader(entry.first);
+
+      for (const ObjectLayoutEntry& elem : entry.second)
+        printer.printEntry(elem);
+
+      printer.printClassFooter();
+    }
+  }
+
 }
 
 namespace CodeThorn
 {
 
-void writeClassDotFile( std::ostream& os,
+void classHierarchyDot( std::ostream& os,
                         ClassNameFn& nameOf,
                         ClassFilterFn include,
                         const ClassAnalysis& classes,
@@ -268,7 +466,7 @@ void writeClassDotFile( std::ostream& os,
 {
   static constexpr const char* class_color = "color=blue";
 
-  dot_header(os);
+  dot_header(os, "digraph", "\"Thorn 2 - Class Relationships and Casts\"");
 
   auto dotClasses = [&os, &nameOf, include](const ClassAnalysis::value_type& elem) -> void
                     {
@@ -285,14 +483,14 @@ void writeClassDotFile( std::ostream& os,
   dot_footer(os);
 }
 
-void writeVirtualFunctions( std::ostream& os,
-                            ClassNameFn& className,
-                            FuncNameFn& funcName,
-                            ClassFilterFn include,
-                            const ClassAnalysis& classes,
-                            const VirtualFunctionAnalysis& vfuns,
-                            bool overridden
-                          )
+void virtualFunctionsTxt( std::ostream& os,
+                          ClassNameFn& className,
+                          FuncNameFn& funcName,
+                          ClassFilterFn include,
+                          const ClassAnalysis& classes,
+                          const VirtualFunctionAnalysis& vfuns,
+                          bool overridden
+                        )
 {
   topDownTraversal( classes,
                     [&os, &className, &funcName, &vfuns, &include, overridden]
@@ -309,6 +507,34 @@ void writeVirtualFunctions( std::ostream& os,
                                            );
                     }
                   );
+}
+
+
+
+void classLayoutTxt( std::ostream& os,
+                     ClassNameFn& className,
+                     VarNameFn& varName,
+                     ClassFilterFn include,
+                     const ObjectLayoutContainer& classLayout
+                   )
+{
+  prnClassLayout(ObjectLayoutElementPrinterTxt{os, className, varName}, include, classLayout);
+}
+
+
+void classLayoutDot( std::ostream& os,
+                     ClassNameFn& className,
+                     VarNameFn& varName,
+                     ClassFilterFn include,
+                     const ObjectLayoutContainer& classLayout
+                   )
+{
+  dot_header(os, "digraph", "\"thorn2 - Class Layout\"");
+  os << "rankdir = LR;\n"
+     << "node [shape=record];\n";
+
+  prnClassLayout(ObjectLayoutElementPrinterDot{os, className, varName, include}, include, classLayout);
+  dot_footer(os);
 }
 
 
