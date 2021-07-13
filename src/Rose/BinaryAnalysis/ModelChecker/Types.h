@@ -98,6 +98,9 @@ extern Sawyer::Message::Facility mlog;
 void initDiagnostics();
 
 namespace P2Model {
+    class SValue;
+    using SValuePtr = Sawyer::SharedPointer<SValue>;
+
     class RiscOperators;
     using RiscOperatorsPtr = boost::shared_ptr<RiscOperators>;
 
