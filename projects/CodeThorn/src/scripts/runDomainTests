@@ -105,14 +105,14 @@ function runDomainTestsLevel2 {
 testNumbers=`echo {001..048}`
 numWarnExpected=7
 numFailExpected=0
-CT_MODE_OPTIONS="--normalize-level=2 --interpreter-mode=1 --in-state-string-literals"
+CT_MODE_OPTIONS="--normalize-level=2 --interpreter-mode=1 --in-state-string-literals --exploration-mode=topologic-sort"
 echo -n "Level 3 (interpreter mode): " 
 runDomainTestsLevel3
 
 testNumbers=`echo {049..050}`
 numWarnExpected=0
 numFailExpected=0
-CT_MODE_OPTIONS="--normalize-level=2 --interpreter-mode=0 --in-state-string-literals --abstraction-mode=1 --array-abstraction-index=2"
+CT_MODE_OPTIONS="--normalize-level=2 --interpreter-mode=0 --in-state-string-literals --exploration-mode=topologic-sort --abstraction-mode=1 --array-abstraction-index=2"
 echo
 echo -n "Level 2 (abstraction mode, array abstraction index=2): " 
 runDomainTestsLevel2

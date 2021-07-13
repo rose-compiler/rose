@@ -320,7 +320,7 @@ namespace CodeThorn {
     PState newPState=currentPState;
     SgInitializedNamePtrList::iterator i=formalParameters.begin();
     SgExpressionPtrList::iterator j=actualParameters.begin();
-    while(i!=formalParameters.end() || j!=actualParameters.end()) {
+    while(i!=formalParameters.end() && j!=actualParameters.end()) {
       SgInitializedName* formalParameterName=*i;
       ROSE_ASSERT(formalParameterName);
       // test formal parameter (instead of argument type) to allow for expressions in arguments
@@ -369,7 +369,11 @@ namespace CodeThorn {
       ++i;++j;
     }
     // assert must hold if #formal-params==#actual-params (TODO: default values)
-    ROSE_ASSERT(i==formalParameters.end() && j==actualParameters.end());
+    if(!(i==formalParameters.end() && j==actualParameters.end())) {
+      logger[WARN]<<"Number of function call arguments not matching formal function parameters:"<<endl;
+      logger[WARN]<<"fcall   : "<<SgNodeHelper::sourceLineColumnToString(funCall)<<endl;
+      logger[WARN]<<"fdef    : "<<SgNodeHelper::sourceLineColumnToString(funDef)<<endl;
+    }
 
     // ad 4
     CallString cs=currentEState.callString;
@@ -573,7 +577,15 @@ namespace CodeThorn {
     if(funDef) {
       string functionName=SgNodeHelper::getFunctionName(node);
       string fileName=SgNodeHelper::sourceFilenameToString(node);
-      if(_analyzer->getOptionsRef().status) cout<<"Analyzing Function #"<<functionAnalyzedNr++<<": "<<fileName<<" : "<<functionName<<endl;
+      if(_analyzer->getOptionsRef().status) {
+	if(_analyzer->getOptionsRef().precisionLevel==1) {
+	  cout<<"Analyzing Function #"<<functionAnalyzedNr++<<": ";
+	} else if(_analyzer->getOptionsRef().precisionLevel>=2) {
+	  cout<<functionAnalyzedNr++<<". ";
+	  cout<<"analyzing function (callstring length="<<estate->getCallStringLength()<<"):";
+	}
+	cout<<": "<<fileName<<" : "<<functionName<<endl;
+      }
       SgInitializedNamePtrList& formalParameters=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
       SAWYER_MESG(logger[TRACE])<<"Function:"<<functionName<<" Parameters: ";
       for(auto fParam : formalParameters) {
@@ -1141,6 +1153,9 @@ namespace CodeThorn {
 	auto memUpd=*memUpdList.begin();
 	// code is normalized, lhs must be a variable : tmpVar= var=val;
 	// store result of assignment in declaration variable
+	if(memUpdList.size()>1) {
+	  logger[WARN]<<"transferVariableDeclarationWithInitializerEState: initializer list length > 1 at "<<SgNodeHelper::sourceFilenameLineColumnToString(decl)<<endl;
+	}
 	EState estate=memUpd.first;
 	PState newPState=*estate.pstate();
 	AbstractValue initDeclVarAddr=AbstractValue::createAddressOfVariable(initDeclVarId);
@@ -1334,7 +1349,6 @@ namespace CodeThorn {
 	  if(!getVariableIdMapping()->isUnknownSizeValue(elemSize)) {
 	    AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex),AbstractValue(elemSize));
 	    // set default init value
-	    //cout<<"DEBUG: reserving at: "<<newArrayElementAddr.toString()<<endl;
 	    reserveMemoryLocation(label,&newPState,newArrayElementAddr);
 	  }
 	}
@@ -1356,14 +1370,12 @@ namespace CodeThorn {
       // implicitly bot.
       AbstractValue pointerVal=AbstractValue::createAddressOfVariable(initDeclVarId);
       SAWYER_MESG(logger[TRACE])<<"declaration of struct: "<<getVariableIdMapping()->getVariableDeclaration(initDeclVarId)->unparseToString()<<" : "<<pointerVal.toString(getVariableIdMapping())<<endl;
-      // TODO: STRUCT VARIABLE DECLARATION
-      //reserveMemoryLocation(label,&newPState,pointerVal);
       declareUninitializedStruct(label,&newPState,pointerVal,initDeclVarId);
     } else if(getVariableIdMapping()->isOfPointerType(initDeclVarId)) {
-      SAWYER_MESG(logger[TRACE])<<"PState: upd: pointer"<<endl;
+      SAWYER_MESG(logger[TRACE])<<"decl of pointer var (undef)"<<endl;
       // create pointer value and set it to top (=any value possible (uninitialized pointer variable declaration))
       AbstractValue pointerVal=AbstractValue::createAddressOfVariable(initDeclVarId);
-      writeUndefToMemoryLocation(&newPState,pointerVal);
+      writeUndefToMemoryLocation(label, &newPState,pointerVal);
     } else {
       // set it to top (=any value possible (uninitialized)) for
       // all remaining cases. It will become an error-path once
@@ -3053,16 +3065,14 @@ namespace CodeThorn {
     return res;
   }
 
+  // returns is true if execution should continue, otherwise false
   bool EStateTransferFunctions::checkAndRecordNullPointer(AbstractValue derefOperandValue, Label label) {
     if(derefOperandValue.isTop()) {
       recordPotentialNullPointerDereferenceLocation(label);
       return true;
-    } else if(derefOperandValue.isConstInt()) {
-      int ptrIntVal=derefOperandValue.getIntValue();
-      if(ptrIntVal==0) {
-	recordDefinitiveNullPointerDereferenceLocation(label);
-	return false;
-      }
+    } else if(derefOperandValue.isNullPtr()) {
+      recordDefinitiveNullPointerDereferenceLocation(label);
+      return false;
     }
     return true;
   }
@@ -3886,6 +3896,14 @@ namespace CodeThorn {
     return false;
   }
 
+  bool EStateTransferFunctions::isGlobalAddress(AbstractValue val) {
+    VariableId varId=val.getVariableId();
+    if(varId.isValid()) {
+      return getVariableIdMapping()->getVariableIdInfoPtr(varId)->variableScope==VariableIdMapping::VariableScope::VS_GLOBAL;
+    }
+    return false;
+  }
+  
   AbstractValue EStateTransferFunctions::conditionallyApplyArrayAbstraction(AbstractValue val) {
     //cout<<"DEBUG: condapply: "<<val.toString(_analyzer->getVariableIdMapping())<<endl;
     int arrayAbstractionIndex=_analyzer->getOptionsRef().arrayAbstractionIndex;
@@ -3996,6 +4014,19 @@ namespace CodeThorn {
     if(memLoc.isBot()) {
       return;
     }
+    // in case of intra-procedural analysis all global addresses are
+    // modeled as summaries (to enusure only weak updates happen and
+    // no definitive errors are reported as any function may modify
+    // those shared variables
+    //cout<<"DEBUG NP: initializing: "<<_analyzer->getOptionsRef().getIntraProceduralFlag()<<": "<<memLoc.toString(getVariableIdMapping())<<endl; 
+    if(_analyzer->getOptionsRef().getIntraProceduralFlag()) {
+      if(isGlobalAddress(memLoc)) {
+	memLoc.setSummaryFlag(true);
+	//cout<<"DEBUG NP: global (SUM): "<<memLoc.toString(getVariableIdMapping())<<endl;
+      } else {
+	//cout<<"DEBUG NP: NOT global  : "<<memLoc.toString(getVariableIdMapping())<<endl;      
+      }
+    }
     SAWYER_MESG(logger[TRACE])<<"initializeMemoryLocation: "<<memLoc.toString()<<" := "<<newValue.toString()<<endl;
     reserveMemoryLocation(lab,pstate,memLoc);
     writeToMemoryLocation(lab,pstate,memLoc,newValue);
@@ -4013,6 +4044,13 @@ namespace CodeThorn {
     if(memLoc.isBot()) {
       return;
     }
+
+    if(_analyzer->getOptionsRef().getIntraProceduralFlag()) {
+      if(isGlobalAddress(memLoc)) {
+	memLoc.setSummaryFlag(true);
+      }
+    }
+
     memLoc=conditionallyApplyArrayAbstraction(memLoc);
     pstate->writeUndefToMemoryLocation(memLoc);
   }

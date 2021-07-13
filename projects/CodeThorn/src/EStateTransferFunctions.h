@@ -180,7 +180,7 @@ namespace CodeThorn {
     // auxiliary semantic functions
     void declareUninitializedStruct(Label label,PState* pstate,AbstractValue structAddress, VariableId memVarId);
     AbstractValue createStructDataMemberAddress(AbstractValue structAddress,VariableId varId);
-
+    bool isGlobalAddress(AbstractValue memLoc); 
   public:
     // determines whether lab is a function call label of a function
     // call of the form 'x=f(...)' and returns the varible-id of the

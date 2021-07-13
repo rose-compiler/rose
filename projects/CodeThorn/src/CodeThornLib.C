@@ -128,6 +128,7 @@ AbstractValue CodeThorn::evaluateExpressionWithEmptyState(SgExpression* expr) {
   
 namespace CodeThorn {
   namespace CodeThornLib {
+
     void turnOffRoseWarnings() {
       string turnOffRoseWarnings=string("Rose(none,>=error),Rose::EditDistance(none,>=error),Rose::FixupAstDeclarationScope(none,>=error),")
 	+"Rose::FixupAstSymbolTablesToSupportAliasedSymbols(none,>=error),"

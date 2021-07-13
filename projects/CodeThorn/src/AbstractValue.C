@@ -305,12 +305,34 @@ bool AbstractValue::isConstFloat() const {return valueType==AbstractValue::FLOAT
 bool AbstractValue::isConstDouble() const {return valueType==AbstractValue::DOUBLE;}
 bool AbstractValue::isConstPtr() const {return (valueType==AbstractValue::PTR);}
 bool AbstractValue::isPtr() const {return (valueType==AbstractValue::PTR);}
-// deprecated
+// deprecated (use isAVSet instead)
 bool AbstractValue::isPtrSet() const {return (isAVSet());}
 bool AbstractValue::isAVSet() const {return (valueType==AbstractValue::AV_SET);}
 bool AbstractValue::isFunctionPtr() const {return (valueType==AbstractValue::FUN_PTR);}
 bool AbstractValue::isRef() const {return (valueType==AbstractValue::REF);}
-bool AbstractValue::isNullPtr() const {return valueType==AbstractValue::INTEGER && intValue==0;}
+bool AbstractValue::isNullPtr() const {return (valueType==AbstractValue::INTEGER && intValue==0 && !isSummary());}
+
+bool AbstractValue::isSummary() const {
+  if(isTop()||_summaryFlag)
+     return true;
+  if(isAVSet()) {
+    if(getAVSetSize() > 1) {
+      // if more than one value it is always considered to be a summary
+      return true;
+    } else if(getAVSetSize()==1) {
+      // special case of one AV element only, can be both abstract or concrete
+      AbstractValueSet* avSet=getAbstractValueSet();
+      AbstractValue av=*avSet->begin();
+      return av.isSummary();
+    }
+    // an empty AV set is not a summary
+  }
+  return false;
+}
+
+void AbstractValue::setSummaryFlag(bool flag) {
+  _summaryFlag=flag;
+}
 
 long AbstractValue::hash() const {
   if(isTop()) return LONG_MAX;
@@ -1366,28 +1388,6 @@ AbstractValue AbstractValue::combine(AbstractValue val1, AbstractValue val2) {
   return createTop();
 }
 
-bool AbstractValue::isSummary() const {
-  if(isTop()||_summaryFlag)
-     return true;
-  if(isAVSet()) {
-    if(getAVSetSize() > 1) {
-      // if more than one value it is always considered to be a summary
-      return true;
-    } else if(getAVSetSize()==1) {
-      // special case of one AV element only, can be both abstract or concrete
-      AbstractValueSet* avSet=getAbstractValueSet();
-      AbstractValue av=*avSet->begin();
-      return av.isSummary();
-    }
-    // an empty AV set is not a summary
-  }
-  return false;
-}
-
-void AbstractValue::setSummaryFlag(bool flag) {
-  _summaryFlag=flag;
-}
-  
 AbstractValue AbstractValue::createTop() {
   CodeThorn::Top top;
   return AbstractValue(top);
