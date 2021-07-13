@@ -222,6 +222,7 @@ struct CodeThornOptions : public CodeThorn::Options {
 
   void configurePrecisionOption();
   bool getInterProceduralFlag();
+  bool getIntraProceduralFlag();
   bool activeOptionsRequireZ3Library();
   bool getAnalysisSelectionFlag(CodeThorn::AnalysisSelector asel);
   std::string getAnalysisReportFileName(CodeThorn::AnalysisSelector asel);

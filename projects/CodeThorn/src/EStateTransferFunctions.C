@@ -1153,6 +1153,9 @@ namespace CodeThorn {
 	auto memUpd=*memUpdList.begin();
 	// code is normalized, lhs must be a variable : tmpVar= var=val;
 	// store result of assignment in declaration variable
+	if(memUpdList.size()>1) {
+	  logger[WARN]<<"transferVariableDeclarationWithInitializerEState: initializer list length > 1 at "<<SgNodeHelper::sourceFilenameLineColumnToString(decl)<<endl;
+	}
 	EState estate=memUpd.first;
 	PState newPState=*estate.pstate();
 	AbstractValue initDeclVarAddr=AbstractValue::createAddressOfVariable(initDeclVarId);
@@ -3898,6 +3901,14 @@ namespace CodeThorn {
     return false;
   }
 
+  bool EStateTransferFunctions::isGlobalAddress(AbstractValue val) {
+    VariableId varId=val.getVariableId();
+    if(varId.isValid()) {
+      return getVariableIdMapping()->getVariableIdInfoPtr(varId)->variableScope==VariableIdMapping::VariableScope::VS_GLOBAL;
+    }
+    return false;
+  }
+  
   AbstractValue EStateTransferFunctions::conditionallyApplyArrayAbstraction(AbstractValue val) {
     //cout<<"DEBUG: condapply: "<<val.toString(_analyzer->getVariableIdMapping())<<endl;
     int arrayAbstractionIndex=_analyzer->getOptionsRef().arrayAbstractionIndex;
@@ -3926,7 +3937,7 @@ namespace CodeThorn {
     memLoc=conditionallyApplyArrayAbstraction(memLoc);
     
     // inspect memory location here
-    if(memLoc.isNullPtr()) {
+    if(memLoc.isNullPtr()&&!memLoc.isSummary()) {
       recordDefinitiveNullPointerDereferenceLocation(lab);
       //return AbstractValue::createBot();
       return AbstractValue::createTop();
@@ -3971,7 +3982,7 @@ namespace CodeThorn {
     if(_readWriteListener) {
       _readWriteListener->writingToMemoryLocation(lab,pstate,memLoc,newValue);
     }
-    if(memLoc.isNullPtr()) {
+    if(memLoc.isNullPtr()&&!memLoc.isSummary()) {
       recordDefinitiveNullPointerDereferenceLocation(lab);
     } else {
       pstate->writeToMemoryLocation(memLoc,newValue);
@@ -4007,6 +4018,16 @@ namespace CodeThorn {
   void EStateTransferFunctions::initializeMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue) {
     if(memLoc.isBot()) {
       return;
+    }
+    // in case of intra-procedural analysis all global addresses are
+    // modeled as summaries (to enusure only weak updates happen and
+    // no definitive errors are reported as any function may modify
+    // those shared variables
+    if(_analyzer->getOptionsRef().getIntraProceduralFlag()) {
+      if(isGlobalAddress(memLoc)) {
+	memLoc.setSummaryFlag(true);
+	cout<<"DEBUG1: global marked as summary: "<<memLoc.toString(getVariableIdMapping())<<endl;
+      }
     }
     SAWYER_MESG(logger[TRACE])<<"initializeMemoryLocation: "<<memLoc.toString()<<" := "<<newValue.toString()<<endl;
     reserveMemoryLocation(lab,pstate,memLoc);

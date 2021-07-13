@@ -25,6 +25,7 @@ void CodeThornOptions::configurePrecisionOption() {
     solver=16;
     if(arrayAbstractionIndex==-1)
       arrayAbstractionIndex=1;
+    
     break;
   case 3:
     intraProcedural=false;
@@ -42,7 +43,11 @@ void CodeThornOptions::configurePrecisionOption() {
 }
 
 bool CodeThornOptions::getInterProceduralFlag() {
-  return !intraProcedural;
+  return !getIntraProceduralFlag();
+}
+
+bool CodeThornOptions::getIntraProceduralFlag() {
+  return intraProcedural;
 }
 
 bool CodeThornOptions::activeOptionsRequireZ3Library() {
