@@ -330,12 +330,14 @@ namespace
         {
           logKind("A_Formal_Private_Type_Definition");
           SgAdaFormalType* t = &mkAdaFormalType(name);
+          res.hasAbstract = typenode.Has_Abstract;
+          res.hasLimited = typenode.Has_Limited;
+          res.hasTagged = typenode.Has_Tagged;
+
           if (typenode.Has_Private) {
             t->set_is_private(true);
           }
-          if (typenode.Has_Limited) {
-            t->set_is_limited(true);
-          }
+
           res.n = t;
           break;
         }
