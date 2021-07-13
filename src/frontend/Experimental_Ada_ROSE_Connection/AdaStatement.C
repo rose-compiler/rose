@@ -2910,6 +2910,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgDeclarationStatement* nondef = findFirst(asisTypes(), id);
         SgDeclarationStatement& sgnode = sg::dispatch(MakeDeclaration(adaname.ident, scope, ty, nondef), ty.n);
 
+        setModifiers(sgnode, ty);
+
         privatize(sgnode, isPrivate);
         recordNode(asisTypes(), id, sgnode, nondef != nullptr);
         attachSourceLocation(sgnode, elem, ctx);
