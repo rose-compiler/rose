@@ -703,6 +703,8 @@ namespace CodeThorn {
 	AnalysisReporting::generateVerificationReports(ctOpt,analyzer,reportDetectedErrorLines); // also generates verification call graph
 	AnalysisReporting::generateAnalysisStatsRawData(ctOpt,analyzer);
 	AnalysisReporting::generateAnalyzedFunctionsAndFilesReports(ctOpt,analyzer);
+      } else {
+	if(ctOpt.status) cout<<"STATUS: no analysis reports generated (no analysis selected)."<<endl;
       }
     }
     void optionallyGenerateCallGraphDotFile(CodeThornOptions& ctOpt,CTAnalysis* analyzer) {

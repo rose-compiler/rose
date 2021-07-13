@@ -237,6 +237,8 @@ namespace CodeThorn {
   }
 
   void AnalysisReporting::generateAnalyzedFunctionsAndFilesReports(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer) {
+    cout<<"DEBUG: generateAnalyzedFunctionsAndFilesReports"<<endl;
+    
     if(ctOpt.analyzedFunctionsCSVFileName.size()>0) {
       string fileName=ctOpt.analyzedFunctionsCSVFileName;
       if(!ctOpt.quiet)
@@ -258,8 +260,9 @@ namespace CodeThorn {
         exit(1);
       }
     }
-
-    if(ctOpt.externalFunctionCallsCSVFileName.size()>0) {
+    /*
+    // option to be added, to differentiate it from the functioncall-mapping based report
+    if(ctOpt.analyzedExternalFunctionCallsCSVFileName.size()>0) {
       string fileName=ctOpt.externalFunctionsCSVFileName;
       if(!ctOpt.quiet)
         cout<<"Writing list of external function calls to file "<<fileName<<endl;
@@ -269,6 +272,7 @@ namespace CodeThorn {
         exit(1);
       }
     }
+    */
   }
 
   void AnalysisReporting::generateVerificationCallGraphDotFile(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report) {
