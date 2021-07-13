@@ -1349,7 +1349,6 @@ namespace CodeThorn {
 	  if(!getVariableIdMapping()->isUnknownSizeValue(elemSize)) {
 	    AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex),AbstractValue(elemSize));
 	    // set default init value
-	    //cout<<"DEBUG: reserving at: "<<newArrayElementAddr.toString()<<endl;
 	    reserveMemoryLocation(label,&newPState,newArrayElementAddr);
 	  }
 	}
@@ -1371,14 +1370,12 @@ namespace CodeThorn {
       // implicitly bot.
       AbstractValue pointerVal=AbstractValue::createAddressOfVariable(initDeclVarId);
       SAWYER_MESG(logger[TRACE])<<"declaration of struct: "<<getVariableIdMapping()->getVariableDeclaration(initDeclVarId)->unparseToString()<<" : "<<pointerVal.toString(getVariableIdMapping())<<endl;
-      // TODO: STRUCT VARIABLE DECLARATION
-      //reserveMemoryLocation(label,&newPState,pointerVal);
       declareUninitializedStruct(label,&newPState,pointerVal,initDeclVarId);
     } else if(getVariableIdMapping()->isOfPointerType(initDeclVarId)) {
-      SAWYER_MESG(logger[TRACE])<<"PState: upd: pointer"<<endl;
+      SAWYER_MESG(logger[TRACE])<<"decl of pointer var (undef)"<<endl;
       // create pointer value and set it to top (=any value possible (uninitialized pointer variable declaration))
       AbstractValue pointerVal=AbstractValue::createAddressOfVariable(initDeclVarId);
-      writeUndefToMemoryLocation(&newPState,pointerVal);
+      writeUndefToMemoryLocation(label, &newPState,pointerVal);
     } else {
       // set it to top (=any value possible (uninitialized)) for
       // all remaining cases. It will become an error-path once
@@ -3068,16 +3065,14 @@ namespace CodeThorn {
     return res;
   }
 
+  // returns is true if execution should continue, otherwise false
   bool EStateTransferFunctions::checkAndRecordNullPointer(AbstractValue derefOperandValue, Label label) {
     if(derefOperandValue.isTop()) {
       recordPotentialNullPointerDereferenceLocation(label);
       return true;
-    } else if(derefOperandValue.isConstInt()) {
-      int ptrIntVal=derefOperandValue.getIntValue();
-      if(ptrIntVal==0) {
-	recordDefinitiveNullPointerDereferenceLocation(label);
-	return false;
-      }
+    } else if(derefOperandValue.isNullPtr()) {
+      recordDefinitiveNullPointerDereferenceLocation(label);
+      return false;
     }
     return true;
   }
@@ -3937,7 +3932,7 @@ namespace CodeThorn {
     memLoc=conditionallyApplyArrayAbstraction(memLoc);
     
     // inspect memory location here
-    if(memLoc.isNullPtr()&&!memLoc.isSummary()) {
+    if(memLoc.isNullPtr()) {
       recordDefinitiveNullPointerDereferenceLocation(lab);
       //return AbstractValue::createBot();
       return AbstractValue::createTop();
@@ -3982,7 +3977,7 @@ namespace CodeThorn {
     if(_readWriteListener) {
       _readWriteListener->writingToMemoryLocation(lab,pstate,memLoc,newValue);
     }
-    if(memLoc.isNullPtr()&&!memLoc.isSummary()) {
+    if(memLoc.isNullPtr()) {
       recordDefinitiveNullPointerDereferenceLocation(lab);
     } else {
       pstate->writeToMemoryLocation(memLoc,newValue);
@@ -4023,10 +4018,13 @@ namespace CodeThorn {
     // modeled as summaries (to enusure only weak updates happen and
     // no definitive errors are reported as any function may modify
     // those shared variables
+    //cout<<"DEBUG NP: initializing: "<<_analyzer->getOptionsRef().getIntraProceduralFlag()<<": "<<memLoc.toString(getVariableIdMapping())<<endl; 
     if(_analyzer->getOptionsRef().getIntraProceduralFlag()) {
       if(isGlobalAddress(memLoc)) {
 	memLoc.setSummaryFlag(true);
-	cout<<"DEBUG1: global marked as summary: "<<memLoc.toString(getVariableIdMapping())<<endl;
+	//cout<<"DEBUG NP: global (SUM): "<<memLoc.toString(getVariableIdMapping())<<endl;
+      } else {
+	//cout<<"DEBUG NP: NOT global  : "<<memLoc.toString(getVariableIdMapping())<<endl;      
       }
     }
     SAWYER_MESG(logger[TRACE])<<"initializeMemoryLocation: "<<memLoc.toString()<<" := "<<newValue.toString()<<endl;
@@ -4046,6 +4044,13 @@ namespace CodeThorn {
     if(memLoc.isBot()) {
       return;
     }
+
+    if(_analyzer->getOptionsRef().getIntraProceduralFlag()) {
+      if(isGlobalAddress(memLoc)) {
+	memLoc.setSummaryFlag(true);
+      }
+    }
+
     memLoc=conditionallyApplyArrayAbstraction(memLoc);
     pstate->writeUndefToMemoryLocation(memLoc);
   }
