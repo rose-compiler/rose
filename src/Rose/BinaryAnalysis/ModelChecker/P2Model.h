@@ -6,6 +6,7 @@
 #include <Rose/BinaryAnalysis/ModelChecker/SemanticCallbacks.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Sawyer/CommandLine.h>
+#include <Sawyer/Stack.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
 
 namespace Rose {
@@ -43,6 +44,7 @@ struct Settings {
     Sawyer::Optional<rose_addr_t> initialStackVa;       /**< Address for initial stack pointer. */
     MemoryType memoryType = MemoryType::MAP;            /**< Type of memory state. */
     bool solverMemoization = true;                      /**< Whether the SMT solver should use memoization. */
+    bool traceSemantics = false;                        /**< Whether to trace all RISC operators. */
 };
 
 class SemanticCallbacks;
@@ -53,14 +55,228 @@ class SemanticCallbacks;
 Sawyer::CommandLine::SwitchGroup commandLineSwitches(Settings&);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Function call stack
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Describes one funtion call in the call stack. */
+class FunctionCall {
+    Partitioner2::FunctionPtr function_;
+    rose_addr_t initialStackPointer_ = 0;
+    rose_addr_t framePointerDelta_ = (rose_addr_t)(-4); // Normal frame pointer w.r.t. initial stack pointer
+    Variables::StackVariables stackVariables_;
+
+public:
+    ~FunctionCall();
+    FunctionCall(const Partitioner2::FunctionPtr&, rose_addr_t initialSp, const Variables::StackVariables&);
+
+    /** Property: The function called. */
+    Partitioner2::FunctionPtr function() const;
+
+    /** Property: Initial stack pointer.
+     *
+     *  The concrete value of the stack pointer at the start of the function. */
+    rose_addr_t initialStackPointer() const;
+
+    /** Property: Stack variables. */
+    const Variables::StackVariables& stackVariables() const;
+
+    /** Property: Frame pointer delta.
+     *
+     *  Amount to add to the initial stack pointer to get the usual frame pointer.
+     *
+     * @{ */
+    rose_addr_t framePointerDelta() const;
+    void framePointerDelta(rose_addr_t);
+    /** @} */
+};
+
+/** Function call stack.
+ *
+ *  A stack of functions that are in progress, with the most recent function call at the top of the stack. */
+using FunctionCallStack = Sawyer::Container::Stack<FunctionCall>;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Instruction semantics value
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Symbolic values with memory regions.
+ *
+ *  Values are symbolic, and some values also have memory region information. */
+class SValue: public InstructionSemantics2::SymbolicSemantics::SValue {
+public:
+    /** Base class. */
+    using Super = InstructionSemantics2::SymbolicSemantics::SValue;
+
+    /** Shared-ownership pointer. */
+    using Ptr = SValuePtr;
+
+private:
+    AddressInterval region_;
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+private:
+    friend class boost::serialization::access;
+
+    template<class S>
+    void serialize(S &s, const unsigned /*version*/) {
+        s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Super);
+        s & BOOST_SERIALIZATION_NVP(region_);
+    }
+#endif
+
+public:
+    ~SValue();
+
+protected:
+    SValue();
+
+    SValue(size_t nBits, uint64_t number);
+
+    explicit SValue(const SymbolicExpr::Ptr&);
+
+public:
+    /** Instantiate a new prototypical value.
+     *
+     *  Prototypical values are only used for their virtual constructors. */
+    static Ptr instance();
+
+    /** Instantiate a new data-flow bottom value. */
+    static Ptr instanceBottom(size_t nBits);
+
+    /** Instantiate a new undefined value. */
+    static Ptr instanceUndefined(size_t nBits);
+
+    /** Instantiate a new unspecified value. */
+    static Ptr instanceUnspecified(size_t nBits);
+
+    /** Instantiate a new concrete value. */
+    static Ptr instanceInteger(size_t nBits, uint64_t value);
+
+    /** Instantiate a new symbolic value. */
+    static Ptr instanceSymbolic(const SymbolicExpr::Ptr &value);
+
+public:
+    virtual InstructionSemantics2::BaseSemantics::SValuePtr bottom_(size_t nBits) const override {
+        return instanceBottom(nBits);
+    }
+
+    virtual InstructionSemantics2::BaseSemantics::SValuePtr undefined_(size_t nBits) const override {
+        return instanceUndefined(nBits);
+    }
+
+    virtual InstructionSemantics2::BaseSemantics::SValuePtr unspecified_(size_t nBits) const override {
+        return instanceUnspecified(nBits);
+    }
+
+    virtual InstructionSemantics2::BaseSemantics::SValuePtr number_(size_t nBits, uint64_t value) const override {
+        return instanceInteger(nBits, value);
+    }
+
+    virtual InstructionSemantics2::BaseSemantics::SValuePtr boolean_(bool value) const override {
+        return instanceInteger(1, value ? 1 : 0);
+    }
+
+    virtual InstructionSemantics2::BaseSemantics::SValuePtr copy(size_t newNBits = 0) const override;
+
+    virtual Sawyer::Optional<InstructionSemantics2::BaseSemantics::SValuePtr>
+    createOptionalMerge(const InstructionSemantics2::BaseSemantics::SValuePtr &other,
+                        const InstructionSemantics2::BaseSemantics::MergerPtr&,
+                        const SmtSolverPtr&) const override;
+
+public:
+    /** Promote a base value to a MemoryRegionSemantics value.
+     *
+     *  The value @p v must have a MemoryRegionSemantics::SValue dynamic type. */
+    static Ptr promote(const InstructionSemantics2::BaseSemantics::SValuePtr &v) { // hot
+        Ptr retval = v.dynamicCast<SValue>();
+        ASSERT_not_null(retval);
+        return retval;
+    }
+
+public:
+    /** Property: Optional memory region.
+     *
+     *  This property describes a contiguous region of memory into which this value points if this value were to be
+     *  treated as a pointer.  The region usually corresponds to a variable in the source language.
+     *
+     *  @{ */
+    AddressInterval region() const;
+    void region(const AddressInterval&);
+    /** @} */
+
+public:
+    virtual void print(std::ostream&, InstructionSemantics2::BaseSemantics::Formatter&) const override;
+    virtual void hash(Combinatorics::Hasher&) const override;
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Instruction semantics state
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Shared-ownership pointer for semantic state. */
+using StatePtr = boost::shared_ptr<class State>;
+
+/** Semantic state. */
+class State: public InstructionSemantics2::SymbolicSemantics::State {
+public:
+    /** Base type. */
+    using Super = InstructionSemantics2::SymbolicSemantics::State;
+
+    /** Shared-ownership pointer. */
+    using Ptr = StatePtr;
+
+private:
+    FunctionCallStack callStack_;
+
+protected:
+    State();
+    State(const InstructionSemantics2::BaseSemantics::RegisterStatePtr&,
+          const InstructionSemantics2::BaseSemantics::MemoryStatePtr&);
+
+    // Deep copy
+    State(const State&);
+
+public:
+    /** Allocating constructor. */
+    static Ptr instance(const InstructionSemantics2::BaseSemantics::RegisterStatePtr&,
+                        const InstructionSemantics2::BaseSemantics::MemoryStatePtr&);
+
+    /** Deep-copy allocating constructor. */
+    static Ptr instance(const StatePtr&);
+
+    /** Virtual constructor. */
+    virtual InstructionSemantics2::BaseSemantics::StatePtr
+    create(const InstructionSemantics2::BaseSemantics::RegisterStatePtr &registers,
+           const InstructionSemantics2::BaseSemantics::MemoryStatePtr &memory) const override {
+        return instance(registers, memory);
+    }
+
+    /** Virtual copy constructor. */
+    virtual InstructionSemantics2::BaseSemantics::StatePtr clone() const override;
+
+    /** Checked dynamic cast. */
+    static Ptr promote(const InstructionSemantics2::BaseSemantics::StatePtr&);
+
+public:
+    /** Function call stack.
+     *
+     *  The stack of functions whose calls are in progress. The top of the stack is the most recent function call.
+     *
+     * @{ */
+    const FunctionCallStack& callStack() const;
+    FunctionCallStack& callStack();
+    /** @} */
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Instruction semantics domain
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /** RISC operators for model checking. */
 class RiscOperators: public InstructionSemantics2::SymbolicSemantics::RiscOperators {
+public:
     using Super = InstructionSemantics2::SymbolicSemantics::RiscOperators;
 
-public:
     using Ptr = RiscOperatorsPtr;
 
 private:
@@ -70,6 +286,7 @@ private:
     size_t nInstructions_ = 0;
     SemanticCallbacks *semantics_ = nullptr;
     Variables::VariableFinder variableFinder_;          // FIXME[Robb Matzke 2021-06-25]: should be global & thread safe, not per ops
+    AddressInterval stackLimits_;                       // where the stack can exist in memory
 
 protected:
     RiscOperators(const Settings&, const Partitioner2::Partitioner&, ModelChecker::SemanticCallbacks*,
@@ -105,7 +322,6 @@ public: // Supporting functions
     void modelCheckerSolver(const SmtSolver::Ptr&);
     /** @} */
 
-
     /** Test whether the specified address is considered to be null.
      *
      *  An address need not be zero in order to be null. For instance, on Linux the entire first page of memory is generally
@@ -130,8 +346,127 @@ public: // Supporting functions
     void nInstructions(size_t);
     /** @} */
 
+    /** Push a function onto the call stack. */
+    void pushCallStack(const Partitioner2::FunctionPtr &callee, rose_addr_t initialSp);
+
+    /** Remove old call stack entries.
+     *
+     *  Look at the current stack pointer and remove those function call entries that are beyond. In effect, this cleans up
+     *  those functions that have returned.
+     *
+     *  Returns the number of items poppped from the call stack. */
+    size_t pruneCallStack();
+
+    /** Print information about the function call stack. */
+    void printCallStack(std::ostream&);
+
+    /** Saturating addition.
+     *
+     *  Add the signed value to the unsigned base, returning an unsigned result. If the result would overflow then return
+     *  either zero or the maximum unsigned value, depending on the direction of overflow. The return value is a pair that
+     *  contains the saturated result and a Boolean indicating whether saturation occured. */
+    static std::pair<uint64_t /*sum*/, bool /*saturated?*/> saturatedAdd(uint64_t base, int64_t delta);
+
+    /** Offset an interval by a signed amount.
+     *
+     *  The unsigned address interval is shifted lower or higher according to the signed @p delta value. The endpoints of the
+     *  returned interval saturate to zero or maximum address if the @p delta causes the interval to partially overflow. If the
+     *  interval completely overflows (both its least and greatest values overflow) then the empty interval is
+     *  returned. Shifting an empty address interval any amount also returns the emtpy interval. The return value is clipped
+     *  by intersecting it with the specified @p limit.
+     *
+     * @{ */
+    static AddressInterval shiftAddresses(const AddressInterval &base, int64_t delta, const AddressInterval &limit);
+    static AddressInterval shiftAddresses(uint64_t base, const Variables::OffsetInterval &delta, const AddressInterval &limit);
+    /** @} */
+
+    /** Assign a region to an expression.
+     *
+     *  The region is assigned to the first argument, which is also returned.
+     *
+     *  If the first argument already has a region, then nothing is done.
+     *
+     *  Otherwise, if additional arguments are specified and exactly one has a region, then that region is assigned to the
+     *  result.
+     *
+     *  Otherwise, we scan the function call stack (stored in the current semantic state) and look for a variable whose
+     *  addresses include the result value. If such a variable is found, then its memory region is assigned to the result
+     *  expression.
+     *
+     * @{ */
+    InstructionSemantics2::BaseSemantics::SValuePtr
+    assignRegion(const InstructionSemantics2::BaseSemantics::SValuePtr &result);
+
+    InstructionSemantics2::BaseSemantics::SValuePtr
+    assignRegion(const InstructionSemantics2::BaseSemantics::SValuePtr &result,
+                 const InstructionSemantics2::BaseSemantics::SValuePtr &a);
+
+    InstructionSemantics2::BaseSemantics::SValuePtr
+    assignRegion(const InstructionSemantics2::BaseSemantics::SValuePtr &result,
+                 const InstructionSemantics2::BaseSemantics::SValuePtr &a,
+                 const InstructionSemantics2::BaseSemantics::SValuePtr &b);
+    /** @} */
+
 public: // Override RISC operations
+    virtual void startInstruction(SgAsmInstruction*) override;
     virtual void finishInstruction(SgAsmInstruction*) override;
+
+    virtual InstructionSemantics2::BaseSemantics::SValuePtr
+    number_(size_t nBits, uint64_t value) override;
+
+    virtual InstructionSemantics2::BaseSemantics::SValuePtr
+    extract(const InstructionSemantics2::BaseSemantics::SValuePtr&, size_t begin, size_t end) override;
+
+    virtual InstructionSemantics2::BaseSemantics::SValuePtr
+    concat(const InstructionSemantics2::BaseSemantics::SValuePtr &lowBits,
+           const InstructionSemantics2::BaseSemantics::SValuePtr &highBits) override;
+
+    virtual InstructionSemantics2::BaseSemantics::SValuePtr
+    shiftLeft(const InstructionSemantics2::BaseSemantics::SValuePtr &a,
+              const InstructionSemantics2::BaseSemantics::SValuePtr &nBits) override;
+
+    virtual InstructionSemantics2::BaseSemantics::SValuePtr
+    shiftRight(const InstructionSemantics2::BaseSemantics::SValuePtr &a,
+               const InstructionSemantics2::BaseSemantics::SValuePtr &nBits) override;
+
+    virtual InstructionSemantics2::BaseSemantics::SValuePtr
+    shiftRightArithmetic(const InstructionSemantics2::BaseSemantics::SValuePtr &a,
+                         const InstructionSemantics2::BaseSemantics::SValuePtr &nBits) override;
+
+    virtual InstructionSemantics2::BaseSemantics::SValuePtr
+    unsignedExtend(const InstructionSemantics2::BaseSemantics::SValue::Ptr &a, size_t newWidth) override;
+
+    virtual InstructionSemantics2::BaseSemantics::SValuePtr
+    signExtend(const InstructionSemantics2::BaseSemantics::SValue::Ptr &a, size_t newWidth) override;
+
+    virtual InstructionSemantics2::BaseSemantics::SValuePtr
+    add(const InstructionSemantics2::BaseSemantics::SValuePtr &a,
+        const InstructionSemantics2::BaseSemantics::SValuePtr &b) override;
+
+    virtual InstructionSemantics2::BaseSemantics::SValuePtr
+    addCarry(const InstructionSemantics2::BaseSemantics::SValuePtr &a,
+             const InstructionSemantics2::BaseSemantics::SValuePtr &b,
+             InstructionSemantics2::BaseSemantics::SValuePtr &carryOut /*out*/,
+             InstructionSemantics2::BaseSemantics::SValuePtr &overflowed /*out*/) override;
+
+    virtual InstructionSemantics2::BaseSemantics::SValuePtr
+    subtract(const InstructionSemantics2::BaseSemantics::SValuePtr &a,
+             const InstructionSemantics2::BaseSemantics::SValuePtr &b) override;
+
+    virtual InstructionSemantics2::BaseSemantics::SValuePtr
+    subtractCarry(const InstructionSemantics2::BaseSemantics::SValuePtr &a,
+                  const InstructionSemantics2::BaseSemantics::SValuePtr &b,
+                  InstructionSemantics2::BaseSemantics::SValuePtr &carryOut /*out*/,
+                  InstructionSemantics2::BaseSemantics::SValuePtr &overflowed /*out*/) override;
+
+    virtual InstructionSemantics2::BaseSemantics::SValuePtr
+    addWithCarries(const InstructionSemantics2::BaseSemantics::SValuePtr &a,
+                   const InstructionSemantics2::BaseSemantics::SValuePtr &b,
+                   const InstructionSemantics2::BaseSemantics::SValuePtr &c,
+                   InstructionSemantics2::BaseSemantics::SValuePtr &carryOut /*out*/) override;
+
+    virtual InstructionSemantics2::BaseSemantics::SValuePtr
+    readRegister(RegisterDescriptor reg, const InstructionSemantics2::BaseSemantics::SValuePtr&) override;
 
     virtual InstructionSemantics2::BaseSemantics::SValuePtr
     readMemory(RegisterDescriptor segreg, const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
@@ -229,9 +564,13 @@ public:
 public:
     virtual void reset() override;
 
+    virtual InstructionSemantics2::BaseSemantics::SValuePtr protoval() override;
+
     virtual InstructionSemantics2::BaseSemantics::RegisterStatePtr createInitialRegisters() override;
 
     virtual InstructionSemantics2::BaseSemantics::MemoryStatePtr createInitialMemory() override;
+
+    virtual InstructionSemantics2::BaseSemantics::StatePtr createInitialState() override;
 
     virtual InstructionSemantics2::BaseSemantics::RiscOperatorsPtr createRiscOperators() override;
 

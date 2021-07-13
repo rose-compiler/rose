@@ -46,8 +46,8 @@ RiscOperators::~RiscOperators() {}
 
 void
 RiscOperators::hash(Combinatorics::Hasher &hasher) {
-    if (currentState_)
-        currentState_->hash(hasher, this, this);
+    if (currentState())
+        currentState()->hash(hasher, this, this);
 }
 
 SValuePtr
@@ -486,28 +486,28 @@ RiscOperators::reinterpret(const SValuePtr &a, SgAsmType *type) {
 SValuePtr
 RiscOperators::readRegister(RegisterDescriptor reg, const SValuePtr &dflt_) {
     SValuePtr dflt = dflt_;
-    ASSERT_not_null(currentState_);
+    ASSERT_not_null(currentState());
     ASSERT_not_null(dflt);
 
     // If there's an lazily-updated initial state, then get its register, updating the initial state as a side effect.
     if (initialState_)
         dflt = initialState()->readRegister(reg, dflt, this);
 
-    return currentState_->readRegister(reg, dflt, this);
+    return currentState()->readRegister(reg, dflt, this);
 }
 
 void
 RiscOperators::writeRegister(RegisterDescriptor reg, const SValuePtr &a) {
-    ASSERT_not_null(currentState_);
-    currentState_->writeRegister(reg, a, this);
+    ASSERT_not_null(currentState());
+    currentState()->writeRegister(reg, a, this);
 }
 
 SValuePtr
 RiscOperators::peekRegister(RegisterDescriptor reg, const SValuePtr &dflt_) {
     SValuePtr dflt = dflt_;
-    ASSERT_not_null(currentState_);
+    ASSERT_not_null(currentState());
     ASSERT_not_null(dflt);
-    return currentState_->peekRegister(reg, dflt, this);
+    return currentState()->peekRegister(reg, dflt, this);
 }
 
 void
@@ -519,7 +519,7 @@ RiscOperators::print(std::ostream &stream, const std::string prefix) const {
 
 void
 RiscOperators::print(std::ostream &stream, Formatter &fmt) const {
-    currentState_->print(stream, fmt);
+    currentState()->print(stream, fmt);
 }
 
 RiscOperators::WithFormatter

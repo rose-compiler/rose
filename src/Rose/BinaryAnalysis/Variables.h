@@ -221,14 +221,14 @@ public:
     friend std::ostream& operator<<(std::ostream&, const Rose::BinaryAnalysis::Variables::StackVariable&);
 };
 
-/** Collection of local variables. */
-typedef Sawyer::Container::IntervalMap<OffsetInterval, StackVariable> StackVariables;
+/** Collection of local variables organized by frame offsets. */
+using StackVariables = Sawyer::Container::IntervalMap<OffsetInterval, StackVariable>;
 
 /** Print info about multiple local variables.
  *
  *  This output includes such things as the function to which they belong and the defining instructions. The output is
  *  multi-line, intended for debugging. */
-void print(const StackVariables&,const Partitioner2::Partitioner&, std::ostream &out, const std::string &prefix = "");
+void print(const StackVariables&, const Partitioner2::Partitioner&, std::ostream &out, const std::string &prefix = "");
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Global variable descriptors
