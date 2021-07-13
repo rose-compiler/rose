@@ -237,8 +237,6 @@ namespace CodeThorn {
   }
 
   void AnalysisReporting::generateAnalyzedFunctionsAndFilesReports(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer) {
-    cout<<"DEBUG: generateAnalyzedFunctionsAndFilesReports"<<endl;
-    
     if(ctOpt.analyzedFunctionsCSVFileName.size()>0) {
       string fileName=ctOpt.analyzedFunctionsCSVFileName;
       if(!ctOpt.quiet)
