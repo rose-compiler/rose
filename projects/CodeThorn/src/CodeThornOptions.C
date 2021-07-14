@@ -14,7 +14,7 @@ void CodeThornOptions::configurePrecisionOption() {
     abstractionMode=1;
     solver=16;
     if(arrayAbstractionIndex==-1)
-      arrayAbstractionIndex=1;
+      arrayAbstractionIndex=0;
     break;
   case 2:
     intraProcedural=false;
@@ -24,7 +24,7 @@ void CodeThornOptions::configurePrecisionOption() {
     abstractionMode=1;
     solver=16;
     if(arrayAbstractionIndex==-1)
-      arrayAbstractionIndex=1;
+      arrayAbstractionIndex=0;
     
     break;
   case 3:
