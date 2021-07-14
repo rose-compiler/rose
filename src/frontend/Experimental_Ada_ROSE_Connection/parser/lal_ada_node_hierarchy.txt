@@ -14,360 +14,380 @@ Stmt          => Ada_Stmt
 
 Ada_Node
 	Abort_Node
-		Abort_Absent
-		Abort_Present
+1		Abort_Absent
+2		Abort_Present
 	Abstract_Node
-		Abstract_Absent
-		Abstract_Present
+3		Abstract_Absent
+4		Abstract_Present
 	Ada_List
-		Ada_Node_List
-			Alternatives_List
-			Constraint_List
-			Decl_List
-			Stmt_List
-		Aspect_Assoc_List
-		Base_Assoc_List
+5		Ada_Node_List
+6			Alternatives_List
+7			Constraint_List
+8			Decl_List
+9			Stmt_List
+10		Aspect_Assoc_List
+11		Base_Assoc_List
 		Basic_Assoc_List
-			Assoc_List
-		Case_Expr_Alternative_List
-		Case_Stmt_Alternative_List
-		Compilation_Unit_List
-		Contract_Case_Assoc_List
-		Defining_Name_List
-		Discriminant_Spec_List
-		Elsif_Expr_Part_List
-		Elsif_Stmt_Part_List
-		Enum_Literal_Decl_List
+12			Assoc_List
+13		Case_Expr_Alternative_List
+14		Case_Stmt_Alternative_List
+15		Compilation_Unit_List
+16		Contract_Case_Assoc_List
+17		Defining_Name_List
+18		Discriminant_Spec_List
+19		Elsif_Expr_Part_List
+20		Elsif_Stmt_Part_List
+21		Enum_Literal_Decl_List
 		Expr_List
-			Expr_Alternatives_List
+22			Expr_Alternatives_List
 		Identifier_List
-			Discriminant_Choice_List
-		Name_List
-			Parent_List
-		Param_Spec_List
-		Pragma_Node_List
-		Select_When_Part_List
-		Unconstrained_Array_Index_List
-		Variant_List
+23			Discriminant_Choice_List
+24		Name_List
+25			Parent_List
+26		Param_Spec_List
+27		Pragma_Node_List
+28		Select_When_Part_List
+29		Unconstrained_Array_Index_List
+30		Variant_List
 	Aliased_Node
-		Aliased_Absent
-		Aliased_Present
+31		Aliased_Absent
+32		Aliased_Present
 	All_Node
-		All_Absent
-		All_Present
+33		All_Absent
+34		All_Present
 	Array_Indices
-		Constrained_Array_Indices
-		Unconstrained_Array_Indices
-	Aspect_Assoc
+35		Constrained_Array_Indices
+36		Unconstrained_Array_Indices
+37	Aspect_Assoc
 	Aspect_Clause
-		At_Clause
-		Attribute_Def_Clause
-		Enum_Rep_Clause
-		Record_Rep_Clause
-	Aspect_Spec
+38		At_Clause
+39		Attribute_Def_Clause
+40		Enum_Rep_Clause
+41		Record_Rep_Clause
+	Aspect_Spec_Range
+42		Aspect_Spec
 	Base_Assoc
-		Pragma_Argument_Assoc
+43		Contract_Case_Assoc
+44		Pragma_Argument_Assoc
 	Base_Formal_Param_Holder
 		Base_Subp_Spec
-			Entry_Spec
-			Enum_Subp_Spec
-			Subp_Spec
-		Component_List
+45			Entry_Spec
+46			Enum_Subp_Spec
+47			Subp_Spec
+48		Component_List
 		Discriminant_Part
-			Known_Discriminant_Part
-			Unknown_Discriminant_Part
-		Entry_Completion_Formal_Params
-		Generic_Formal_Part
+49			Known_Discriminant_Part
+50			Unknown_Discriminant_Part
+51		Entry_Completion_Formal_Params
+52		Generic_Formal_Part
 	Base_Record_Def
-		Null_Record_Def
-		Record_Def
+53		Null_Record_Def
+54		Record_Def
 	Basic_Assoc
-		Aggregate_Assoc
-			Multi_Dim_Array_Assoc
-		Contract_Case_Assoc
-		Discriminant_Assoc
-		Param_Assoc
+55		Aggregate_Assoc
+56			Multi_Dim_Array_Assoc
+57		Discriminant_Assoc
+58		Param_Assoc
 	Basic_Decl
 		Base_Formal_Param_Decl
-			Component_Decl
-			Discriminant_Spec
+59			Component_Decl
+60			Discriminant_Spec
 			Generic_Formal
-				Generic_Formal_Obj_Decl
-				Generic_Formal_Package
-				Generic_Formal_Subp_Decl
-				Generic_Formal_Type_Decl
-			Param_Spec
+61				Generic_Formal_Obj_Decl
+62				Generic_Formal_Package
+63				Generic_Formal_Subp_Decl
+64				Generic_Formal_Type_Decl
+65			Param_Spec
 		Base_Package_Decl
-			Generic_Package_Internal
-			Package_Decl
+66			Generic_Package_Internal
+67			Package_Decl
 		Base_Type_Decl
 			Base_Subtype_Decl
-				Discrete_Base_Subtype_Decl
-				Subtype_Decl
-			Classwide_Type_Decl
-			Type_Decl
-				Anonymous_Type_Decl
-					Synth_Anonymous_Type_Decl
-			Incomplete_Type_Decl
-				Incomplete_Tagged_Type_Decl
-			Protected_Type_Decl
-			Task_Type_Decl
-				Single_Task_Type_Decl
+68				Discrete_Base_Subtype_Decl
+69				Subtype_Decl
+70			Classwide_Type_Decl
+71			Incomplete_Type_Decl
+72				Incomplete_Tagged_Type_Decl
+73			Protected_Type_Decl
+74			Task_Type_Decl
+75				Single_Task_Type_Decl
+76			Type_Decl
+77				Anonymous_Type_Decl
+78					Synth_Anonymous_Type_Decl
 		Basic_Subp_Decl
 			Classic_Subp_Decl
-				Abstract_Subp_Decl
+79				Abstract_Subp_Decl
 				Formal_Subp_Decl
-					Abstract_Formal_Subp_Decl
-					Concrete_Formal_Subp_Decl
-				Subp_Decl
-			Entry_Decl
-			Enum_Literal_Decl
-			Generic_Subp_Internal
+80					Abstract_Formal_Subp_Decl
+81					Concrete_Formal_Subp_Decl
+82				Subp_Decl
+83			Entry_Decl
+84			Enum_Literal_Decl
+85			Generic_Subp_Internal
 		Body_Node
 			Base_Subp_Body
-				Expr_Function
-				Null_Subp_Decl
-				Subp_Body
-				Subp_Renaming_Decl
+86				Expr_Function
+87				Null_Subp_Decl
+88				Subp_Body
+89				Subp_Renaming_Decl
 			Body_Stub
-				Package_Body_Stub
-				Protected_Body_Stub
-				Subp_Body_Stub
-				Task_Body_Stub
-			Entry_Body
-			Package_Body
-			Protected_Body
-			Task_Body
-		Entry_Index_Spec
-		Error_Decl
-		Exception_Decl
-		Exception_Handler
-		For_Loop_Var_Decl
+90				Package_Body_Stub
+91				Protected_Body_Stub
+92				Subp_Body_Stub
+93				Task_Body_Stub
+94			Entry_Body
+95			Package_Body
+96			Protected_Body
+97			Task_Body
+98		Entry_Index_Spec
+99		Error_Decl
+100		Exception_Decl
+101		Exception_Handler
+102		For_Loop_Var_Decl
 		Generic_Decl
-			Generic_Package_Decl
-				Generic_Subp_Decl
+103			Generic_Package_Decl
+104				Generic_Subp_Decl
 		Generic_Instantiation
-			Generic_Package_Instantiation
-			Generic_Subp_Instantiation
+105			Generic_Package_Instantiation
+106			Generic_Subp_Instantiation
 		Generic_Renaming_Decl
-			Generic_Package_Renaming_Decl
-			Generic_Subp_Renaming_Decl
-		Label_Decl
-		Named_Stmt_Decl
-		Number_Decl
-		Object_Decl
-			Anonymous_Object_Decl
-			Extended_Return_Stmt_Object_Decl
-		Package_Renaming_Decl
-		Single_Protected_Decl
-		Single_Task_Decl
-	Case_Stmt_Alternative
-	Compilation_Unit
-	Component_Clause
-	Component_Def
-	Constraint
-		Delta_Constraint
-		Digits_Constraint
-		Discriminant_Constraint
-		Index_Constraint
-		Range_Constraint
+107			Generic_Package_Renaming_Decl
+108			Generic_Subp_Renaming_Decl
+109		Label_Decl
+110		Named_Stmt_Decl
+111		Number_Decl
+112		Object_Decl
+113			Anonymous_Object_Decl
+114			Extended_Return_Stmt_Object_Decl
+115		Package_Renaming_Decl
+116		Single_Protected_Decl
+117		Single_Task_Decl
+	Case_Stmt_Alternative_Range
+118		Case_Stmt_Alternative
+	Compilation_Unit_Range
+119		Compilation_Unit
+	Component_Clause_Range
+120		Component_Clause
+	Component_Def_Range
+121		Component_Def
 	Constant_Node
-		Constant_Absent
-		Constant_Present
-	Declarative_Part
-		Private_Part
-		Public_Part
-	Elsif_Expr_Part
-	Elsif_Stmt_Part
+122		Constant_Absent
+123		Constant_Present
+	Constraint
+124		Delta_Constraint
+125		Digits_Constraint
+126		Discriminant_Constraint
+127		Index_Constraint
+128		Range_Constraint
+	Declarative_Part_Range
+129		Declarative_Part
+130		Private_Part
+131		Public_Part
+	Elsif_Expr_Part_Range
+132		Elsif_Expr_Part
+	Elsif_Stmt_Part_Range
+133		Elsif_Stmt_Part
 	Expr
-		Allocator
+134		Allocator
 		Base_Aggregate
-			Aggregate
-			Null_Record_Aggregate
-		Bin_Op
-			Relation_Op
-		Box_Expr
-		Case_Expr
-		Case_Expr_Alternative
-		Contract_Cases
+135			Aggregate
+136			Null_Record_Aggregate
+137		Bin_Op
+138			Relation_Op
+139		Box_Expr
+140		Case_Expr
+141		Case_Expr_Alternative
+142		Contract_Cases
+143		If_Expr
+144		Membership_Expr
 		Name
-			Attribute_Ref
-				Update_Attribute_Ref
-			Call_Expr
-			Defining_Name
-			Discrete_Subtype_Name
-			Dotted_Name
-			End_Name
-			Explicit_Deref
-			Qual_Expr
+145			Attribute_Ref
+146				Update_Attribute_Ref
+147			Call_Expr
+148			Defining_Name
+149			Discrete_Subtype_Name
+150			Dotted_Name
+151			End_Name
+152			Explicit_Deref
+153			Qual_Expr
 			Single_Tok_Node
 				Base_Id
-					Char_Literal
-					Identifier
+154					Char_Literal
+155					Identifier
 					Op
-						Op_Abs
-						Op_And
-						Op_And_Then
-						Op_Concat
-						Op_Div
-						Op_Double_Dot
-						Op_Eq
-						Op_Gt
-						Op_Gte
-						Op_In
-						Op_Lt
-						Op_Lte
-						Op_Minus
-						Op_Mod
-						Op_Mult
-						Op_Neq
-						Op_Not
-						Op_Not_In
-						Op_Or
-						Op_Or_Else
-						Op_Plus
-						Op_Pow
-						Op_Rem
-						Op_Xor
-					String_Literal
+156						Op_Abs
+157						Op_And
+158						Op_And_Then
+159						Op_Concat
+160						Op_Div
+161						Op_Double_Dot
+162						Op_Eq
+163						Op_Gt
+164						Op_Gte
+165						Op_In
+166						Op_Lt
+167						Op_Lte
+168						Op_Minus
+169						Op_Mod
+170						Op_Mult
+171						Op_Neq
+172						Op_Not
+173						Op_Not_In
+174						Op_Or
+175						Op_Or_Else
+176						Op_Plus
+177						Op_Pow
+178						Op_Rem
+179						Op_Xor
+180					String_Literal
+181				Null_Literal
 				Num_Literal
-					Int_Literal
-					Real_Literal
-				Null_Literal
-			Target_Name
-		If_Expr
-		Membership_Expr
-		Paren_Expr
-		Quantified_Expr
-		Raise_Expr
-		Un_Op
-	Handled_Stmts
+182					Int_Literal
+183					Real_Literal
+184			Target_Name
+185		Paren_Expr
+186		Quantified_Expr
+187		Raise_Expr
+188		Un_Op
+	Handled_Stmts_Range
+189		Handled_Stmts
 	Interface_Kind
-		Interface_Kind_Limited
-		Interface_Kind_Protected
-		Interface_Kind_Synchronized
-		Interface_Kind_Task
+190		Interface_Kind_Limited
+191		Interface_Kind_Protected
+192		Interface_Kind_Synchronized
+193		Interface_Kind_Task
 	Iter_Type
-		Iter_Type_In
-		Iter_Type_Of
-	Library_Item
+194		Iter_Type_In
+195		Iter_Type_Of
+	Library_Item_Range
+196		Library_Item
 	Limited_Node
-		Limited_Absent
-		Limited_Present
+197		Limited_Absent
+198		Limited_Present
 	Loop_Spec
-		For_Loop_Spec
-		While_Loop_Spec
+199		For_Loop_Spec
+200		While_Loop_Spec
 	Mode
-		Mode_Default
-		Mode_In
-		Mode_In_Out
-		Mode_Out
+201		Mode_Default
+202		Mode_In
+203		Mode_In_Out
+204		Mode_Out
 	Not_Null
-		Not_Null_Absent
-		Not_Null_Present
-	Null_Component_Decl
-	Others_Designator
+205		Not_Null_Absent
+206		Not_Null_Present
+	Null_Component_Decl_Range
+207		Null_Component_Decl
+	Others_Designator_Range
+208		Others_Designator
 	Overriding_Node
-		Overriding_Not_Overriding
-		Overriding_Overriding
-		Overriding_Unspecified
-	Params
-	Pragma_Node
-	Prim_Type_Accessor
+209		Overriding_Not_Overriding
+210		Overriding_Overriding
+211		Overriding_Unspecified
+	Params_Range
+212		Params
+	Pragma_Node_Range
+213		Pragma_Node
+	Prim_Type_Accessor_Range
+214		Prim_Type_Accessor
 	Private_Node
-		Private_Absent
-		Private_Present
+215		Private_Absent
+216		Private_Present
+	Protected_Def_Range
+217		Protected_Def
 	Protected_Node
-		Protected_Absent
-		Protected_Present
-	Protected_Def
+218		Protected_Absent
+219		Protected_Present
 	Quantifier
-		Quantifier_All
-		Quantifier_Some
-	Range_Spec
-	Renaming_Clause
-		Synthetic_Renaming_Clause
+220		Quantifier_All
+221		Quantifier_Some
+	Range_Spec_Range
+222		Range_Spec
+	Renaming_Clause_Range
+223		Renaming_Clause
+224			Synthetic_Renaming_Clause
 	Reverse_Node
-		Reverse_Absent
-		Reverse_Present
-	Select_When_Part
+225		Reverse_Absent
+226		Reverse_Present
+	Select_When_Part_Range
+227		Select_When_Part
 	Stmt
-		Accept_Stmt
-			Accept_Stmt_With_Stmts
 		Composite_Stmt
-			Accept_Stmt
-				Accept_Stmt_With_Stmts
+228			Accept_Stmt
+229				Accept_Stmt_With_Stmts
 			Base_Loop_Stmt
-				For_Loop_Stmt
-				Loop_Stmt
-				While_Loop_Stmt
+230				For_Loop_Stmt
+231				Loop_Stmt
+232				While_Loop_Stmt
 			Block_Stmt
-				Begin_Block
-				Decl_Block
-			Case_Stmt
-			Extended_Return_Stmt
-			If_Stmt
-			Named_Stmt
-			Select_Stmt
-		Error_Stmt
+233				Begin_Block
+234				Decl_Block
+235			Case_Stmt
+236			Extended_Return_Stmt
+237			If_Stmt
+238			Named_Stmt
+239			Select_Stmt
+240		Error_Stmt
 		Simple_Stmt
-			Abort_Stmt
-			Assign_Stmt
-			Call_Stmt
-			Delay_Stmt
-			Exit_Stmt
-			Goto_Stmt
-			Label
-			Null_Stmt
-			Raise_Stmt
-			Requeue_Stmt
-			Return_Stmt
-			Terminate_Alternative
+241			Abort_Stmt
+242			Assign_Stmt
+243			Call_Stmt
+244			Delay_Stmt
+245			Exit_Stmt
+246			Goto_Stmt
+247			Label
+248			Null_Stmt
+249			Raise_Stmt
+250			Requeue_Stmt
+251			Return_Stmt
+252			Terminate_Alternative
 	Subp_Kind
-		Subp_Kind_Function
-		Subp_Kind_Procedure
-	Subunit
+253		Subp_Kind_Function
+254		Subp_Kind_Procedure
+	Subunit_Range
+255		Subunit
 	Synchronized_Node
-		Synchronized_Absent
-		Synchronized_Present
+256		Synchronized_Absent
+257		Synchronized_Present
 	Tagged_Node
-		Tagged_Absent
-		Tagged_Present
-	Task_Def
+258		Tagged_Absent
+259		Tagged_Present
+260	Task_Def
 	Type_Def
 		Access_Def
-			Access_To_Subp_Def
+261			Access_To_Subp_Def
 			Base_Type_Access_Def
-				Type_Access_Def
-		Array_Type_Def
-		Derived_Type_Def
-		Enum_Type_Def
-		Formal_Discrete_Type_Def
-		Interface_Type_Def
-		Mod_Int_Type_Def
-		Private_Type_Def
+262				Anonymous_Type_Access_Def
+263				Type_Access_Def
+264		Array_Type_Def
+265		Derived_Type_Def
+266		Enum_Type_Def
+267		Formal_Discrete_Type_Def
+268		Interface_Type_Def
+269		Mod_Int_Type_Def
+270		Private_Type_Def
 		Real_Type_Def
-			Decimal_Fixed_Point_Def
-			Floating_Point_Def
-			Ordinary_Fixed_Point_Def
-		Record_Type_Def
-		Signed_Int_Type_Def
+271			Decimal_Fixed_Point_Def
+272			Floating_Point_Def
+273			Ordinary_Fixed_Point_Def
+274		Record_Type_Def
+275		Signed_Int_Type_Def
 	Type_Expr
-		Subtype_Indication
-			Constrained_Subtype_Indication
-			Discrete_Subtype_Indication
-		Enum_Lit_Synth_Type_Expr
-	Unconstrained_Array_Index
+276		Anonymous_Type
+277		Enum_Lit_Synth_Type_Expr
+278		Subtype_Indication_Range
+279			Constrained_Subtype_Indication
+280			Discrete_Subtype_Indication
+281	Unconstrained_Array_Index
 	Until_Node
-		Until_Absent
-		Until_Present
+282		Until_Absent
+283		Until_Present
 	Use_Clause
-		Use_Package_Clause
-		Use_Type_Clause
-	Variant
-	Variant_Part
-	With_Clause
+284		Use_Package_Clause
+285		Use_Type_Clause
+286	Variant
+287	Variant_Part
+288	With_Clause
 	With_Private
-		With_Private_Absent
-		With_Private_Present
+289		With_Private_Absent
+290		With_Private_Present
 		
