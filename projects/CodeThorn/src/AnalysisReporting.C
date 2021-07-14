@@ -276,6 +276,10 @@ namespace CodeThorn {
   void AnalysisReporting::generateVerificationCallGraphDotFile(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report) {
     string fileName1=analysisName+"-cg1.dot";
     string fileName2=analysisName+"-cg2.dot";
+    if(analysisName=="null-pointer" && ctOpt.nullPointerAnalysisFileName.size()>0) {
+      fileName1=ctOpt.nullPointerAnalysisFileName+".cg1.dot";
+      fileName2=ctOpt.nullPointerAnalysisFileName+".cg2.dot";
+    }
     //cout<<"Generating verification call graph for "<<analysisName<<" analysis."<<endl;
     Flow& flow=*analyzer->getFlow();
     LabelSet functionEntryLabels=analyzer->getCFAnalyzer()->functionEntryLabels(flow);
@@ -285,7 +289,7 @@ namespace CodeThorn {
 
     InterFlow::LabelToFunctionMap map=analyzer->getCFAnalyzer()->labelToFunctionMap(flow);
 
-    std::string cgBegin="digraph G {\n";
+    std::string cgBegin="digraph G {\n concentrate=true\n";
     std::string cgEnd="}\n";
     std::string cgEdges=analyzer->getInterFlow()->dotCallGraphEdges(map);
     // generate colored nodes
