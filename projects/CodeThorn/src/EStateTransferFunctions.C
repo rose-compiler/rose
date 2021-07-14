@@ -582,7 +582,7 @@ namespace CodeThorn {
 	  cout<<"Analyzing Function #"<<functionAnalyzedNr++<<": ";
 	} else if(_analyzer->getOptionsRef().precisionLevel>=2) {
 	  cout<<functionAnalyzedNr++<<". ";
-	  cout<<"analyzing function (callstring length="<<estate->getCallStringLength()<<"):";
+	  cout<<"analyzing function (call string length="<<estate->getCallStringLength()<<"):";
 	}
 	cout<<": "<<fileName<<" : "<<functionName<<endl;
       }

@@ -14,7 +14,7 @@ void CodeThornOptions::configurePrecisionOption() {
     abstractionMode=1;
     solver=16;
     if(arrayAbstractionIndex==-1)
-      arrayAbstractionIndex=1;
+      arrayAbstractionIndex=0;
     break;
   case 2:
     intraProcedural=false;
@@ -24,7 +24,7 @@ void CodeThornOptions::configurePrecisionOption() {
     abstractionMode=1;
     solver=16;
     if(arrayAbstractionIndex==-1)
-      arrayAbstractionIndex=1;
+      arrayAbstractionIndex=0;
     
     break;
   case 3:
@@ -42,6 +42,17 @@ void CodeThornOptions::configurePrecisionOption() {
   }
 }
 
+CodeThornOptions::CodeThornOptions() {
+  CodeThornOptions::AnalysisListType analysisList={
+    {CodeThorn::ANALYSIS_NULL_POINTER,"null-pointer"},
+    {CodeThorn::ANALYSIS_OUT_OF_BOUNDS,"out-of-bounds"},
+    {CodeThorn::ANALYSIS_UNINITIALIZED,"uninitialized"},
+    {CodeThorn::ANALYSIS_DEAD_CODE,"dead-code"},
+    {CodeThorn::ANALYSIS_OPAQUE_PREDICATE,"opaque-predicate"}
+  };
+  _analysisList=analysisList;
+}
+
 bool CodeThornOptions::getInterProceduralFlag() {
   return !getIntraProceduralFlag();
 }
@@ -54,15 +65,12 @@ bool CodeThornOptions::activeOptionsRequireZ3Library() {
   return z3BasedReachabilityAnalysis;
 }
 
+void CodeThornOptions::setAnalysisList(CodeThornOptions::AnalysisListType list) {
+  _analysisList=list;
+}
+
 CodeThornOptions::AnalysisListType CodeThornOptions::analysisList() const {
-  CodeThornOptions::AnalysisListType analysisNames={
-    {CodeThorn::ANALYSIS_NULL_POINTER,"null-pointer"},
-    {CodeThorn::ANALYSIS_OUT_OF_BOUNDS,"out-of-bounds"},
-    {CodeThorn::ANALYSIS_UNINITIALIZED,"uninitialized"},
-    {CodeThorn::ANALYSIS_DEAD_CODE,"dead-code"},
-    {CodeThorn::ANALYSIS_OPAQUE_PREDICATE,"opaque-predicate"}
-  };
-  return analysisNames;
+  return _analysisList;
 }
 
 bool CodeThornOptions::getAnalysisSelectionFlag(CodeThorn::AnalysisSelector asel) {

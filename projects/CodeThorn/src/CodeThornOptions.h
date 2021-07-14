@@ -11,7 +11,10 @@ namespace CodeThorn {
 }
 
 
-struct CodeThornOptions : public CodeThorn::Options {
+class CodeThornOptions : public CodeThorn::Options {
+public:
+  CodeThornOptions();
+  
   // hidden options
   int maxTransitionsForcedTop1=-1;
   int maxTransitionsForcedTop2=-1;
@@ -228,10 +231,12 @@ struct CodeThornOptions : public CodeThorn::Options {
   std::string getAnalysisReportFileName(CodeThorn::AnalysisSelector asel);
   typedef std::list<std::pair<CodeThorn::AnalysisSelector,std::string> > AnalysisListType;
   AnalysisListType analysisList() const;
-
+  void setAnalysisList(CodeThornOptions::AnalysisListType list);
   // default hard code init values
   int maxExactMemorySizeRepresentation=10;
   bool exprEvalTest=false;
+private:
+  CodeThornOptions::AnalysisListType _analysisList;
 };
 
 #endif
