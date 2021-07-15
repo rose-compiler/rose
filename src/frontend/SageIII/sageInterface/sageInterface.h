@@ -643,6 +643,13 @@ ROSE_DLL_API void checkSymbolTables ( SgNode* );
 ROSE_DLL_API void markSubtreeToBeUnparsed(SgNode* root, int physical_file_id);
 ROSE_DLL_API void markNodeToBeUnparsed(SgNode* node, int physical_file_id);
 
+// DQ (7/8/2021): This is a tree traversal based version of this marking of a subtree which allows special handling of cast expressions.
+// Basically, cast expression should not be marked as transformations. 
+ROSE_DLL_API void markSubtreeToBeUnparsedTreeTraversal(SgNode* root, int physical_file_id);
+
+// DQ (7/12/2021): Debugging code to locate specific node marked as a transforamtion in the AST.
+// Debugging the outliner.
+ ROSE_DLL_API bool findFirstSgCastExpMarkedAsTransformation(SgNode* n, const std::string & s);
 
 //@}
 

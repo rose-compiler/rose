@@ -635,16 +635,29 @@ createUnpackDecl (SgInitializedName* param, // the function parameter
     {   // The original variable was no statically allocated and passed as private or firstprivate
         // We need to copy every element of the array
         decl = buildVariableDeclaration( local_name, local_type, NULL, scope );
+
+     // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(decl,"testing Outliner createUnpackDecl(): 1") == false);
+
         SgStatementPtrList loop_indexes;
         SgStatement * array_init = build_array_unpacking_statement( buildVarRefExp( decl ), param_ref, 
                                                                     local_type->stripType( SgType::STRIP_TYPEDEF_TYPE ), scope, loop_indexes );
         SageInterface::prependStatement( array_init, scope );
         SageInterface::prependStatementList( loop_indexes, scope );
+
+     // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(decl,"testing Outliner createUnpackDecl(): 2") == false);
     }
     else
     {
+     // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(scope,"testing Outliner createUnpackDecl(): 3-scope") == false);
+
         decl = buildVariableDeclaration( local_name, local_type, local_val, scope );
+
+     // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(scope,"testing Outliner createUnpackDecl(): 4-scope") == false);
+     // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(decl,"testing Outliner createUnpackDecl(): 4") == false);
     }
+
+ // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(decl,"testing Outliner createUnpackDecl(): 5") == false);
+
     return decl;
 }
 
@@ -1066,6 +1079,8 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to t
 //  handlePrivateVariables(pSyms, body, private_remap);
 //  This is done before calling the outliner now, by transOmpVariables()
 
+ // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(func,"testing Outliner variableHandling(): 1") == false);
+
   // Liao, 2020/9/21
    // We now decide for a function with 0 variables to pass, we still has a dummy void** parameter
    // This is necessary to have compatible runtime library 's function prototype for the outlined function
@@ -1107,6 +1122,8 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to t
     appendArg(params,parameter1);
   }
 
+  // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(func,"testing Outliner variableHandling(): 2") == false);
+
   // --------------------------------------------------
   // for each parameters passed to the outlined function
   // They include parameters for 
@@ -1122,6 +1139,8 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to t
     string name_str = i_name->get_name ().str ();
     SgName p_sg_name (name_str);
     const SgVariableSymbol * sym = isSgVariableSymbol(*i);
+
+ // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(func,"testing Outliner variableHandling(): 2.1") == false);
 
     //SgType* i_type = i_name->get_type ();
 //    bool readOnly = false;
@@ -1170,6 +1189,8 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to t
     else // case 3: use a parameter for each variable, the default case and the classic case
        p_init_name = createOneFunctionParameter(i_name, use_orig_type , func); 
 
+ // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(func,"testing Outliner variableHandling(): 2.2") == false);
+
     // step 2. Create unpacking/unwrapping statements, also record variables to be replaced
     // ----------------------------------------
     bool isPointerDeref = false; 
@@ -1181,6 +1202,8 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to t
       if ( pdSyms.find(i_sym)!=pdSyms.end())
         isPointerDeref = true;
     }  
+
+ // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(func,"testing Outliner variableHandling(): 2.2.5") == false);
 
     if (Outliner::enable_classic) 
     // classic methods use parameters directly, no unpacking is needed
@@ -1196,23 +1219,44 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to t
         // this is enough to mimic the classic outlining work 
         recordSymRemap(*i,p_init_name, args_scope, sym_remap); 
       }
+
+   // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(func,"testing Outliner variableHandling(): 2.2.6.0") == false);
+
     } else 
     { // create unwrapping statements from parameters/ or the array parameter for pointers
       //if (SageInterface::is_Fortran_language())
       //  args_scope = NULL; // not sure about Fortran scope
-      
-       // Not true: even without parameter wrapping, we still need to transfer the function parameter to a local declaration, which is also called unpacking
-      // must be a case of using parameter wrapping
-      // ROSE_ASSERT (Outliner::useStructureWrapper || Outliner::useParameterWrapper);
-      local_var_decl  = 
-        createUnpackDecl (p_init_name, counter, isPointerDeref, i_name , struct_decl, body);
+
+   // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(func,"testing Outliner variableHandling(): 2.2.6.1.1") == false);
+   // DQ (7/14/2021): Adding test before initialization (from any previous iteration where applicable).
+   // if (local_var_decl != NULL)
+   //    {
+   //      ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(local_var_decl,"testing Outliner variableHandling(): 2.2.6.1.1a") == false);
+   //    }
+
+   // Not true: even without parameter wrapping, we still need to transfer the function parameter to a local declaration, which is also called unpacking
+   // must be a case of using parameter wrapping
+   // ROSE_ASSERT (Outliner::useStructureWrapper || Outliner::useParameterWrapper);
+      local_var_decl = createUnpackDecl (p_init_name, counter, isPointerDeref, i_name , struct_decl, body);
       ROSE_ASSERT (local_var_decl);
+
+   // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(func,"testing Outliner variableHandling(): 2.2.6.1.2") == false);
+   // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(local_var_decl,"testing Outliner variableHandling(): 2.2.6.1.2a") == false);
+   // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(body,"testing Outliner variableHandling(): 2.2.6.1.2b") == false);
+
       prependStatement (local_var_decl,body);
-      // regular and shared variables used the first local declaration
+
+   // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(func,"testing Outliner variableHandling(): 2.2.6.1.3") == false);
+
+   // regular and shared variables used the first local declaration
       recordSymRemap (*i, local_var_decl, args_scope, sym_remap);
-      // transfer the value for firstprivate variables. 
-      // TODO
+   // transfer the value for firstprivate variables. 
+   // TODO
+
+   // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(func,"testing Outliner variableHandling(): 2.2.6.1.9") == false);
     }
+
+ // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(func,"testing Outliner variableHandling(): 2.3") == false);
 
     // step 3. Create and insert companion re-pack statement in the end of the function body
     // ----------------------------------------
@@ -1273,8 +1317,11 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to t
       }
     }
     counter ++;
+
+ // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(func,"testing Outliner variableHandling(): 2.9") == false);
   } //end for
 
+// ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(func,"testing Outliner variableHandling(): 3") == false);
 
 #if 0
   //TODO: move this outside of outliner since it is OpenMP-specific. omp_lowering.cpp generateOutlinedTask()
@@ -1313,6 +1360,8 @@ variableHandling(const ASTtools::VarSymSet_t& syms, // all variables passed to t
 #endif
   // variable substitution 
   remapVarSyms (sym_remap, pdSyms, private_remap , func_body);
+
+// ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(func,"testing Outliner variableHandling(): 4") == false);
 }
 
 // same input file: two SgSourceFile nodes are created from it.
@@ -1524,9 +1573,48 @@ Outliner::generateFunction ( SgBasicBlock* s,  // block to be outlined
   ROSE_ASSERT(func_body->get_statements().empty() == true);
   SageInterface::moveStatementsBetweenBlocks (s, func_body);
 
+// ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(func,"testing Outliner::generateFunction(): 2") == false);
+
   if (Outliner::useNewFile)
   {
-    ASTtools::setSourcePositionAtRootAndAllChildrenAsTransformation(func_body);
+ // DQ (7/13/2021): This original code set the SgCastExp subtree to be a transformation, which 
+ // is a problem for implicit casts (see test_173.cpp in the codeSegregation regression tests).
+ // ASTtools::setSourcePositionAtRootAndAllChildrenAsTransformation(func_body);
+ // SageInterface::markSubtreeToBeUnparsedTreeTraversal(func_body, source_file_physical_file_id);
+#if 0
+    printf ("PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP \n");
+    printf ("PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP \n");
+#endif
+#if 1
+ // DQ (7/13/2021): Save the dynamic library file so that we can reference it elsewhere.
+    ROSE_ASSERT(saved_source_file_for_dynamic_library != NULL);
+    string filename = saved_source_file_for_dynamic_library->getFileName();
+    printf ("filename = %s \n",filename.c_str());
+
+    string output_filename = saved_source_file_for_dynamic_library->get_unparse_output_filename();
+    printf ("output_filename = %s \n",output_filename.c_str());
+
+    int source_file_physical_file_id = Sg_File_Info::getIDFromFilename(output_filename);
+    printf ("source_file_physical_file_id = %d \n",source_file_physical_file_id);
+
+    SageInterface::markSubtreeToBeUnparsedTreeTraversal(func_body, source_file_physical_file_id);
+#endif
+
+#if 0
+    printf ("PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP \n");
+    printf ("PPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP \n");
+#endif
+#if 0
+    printf ("Exiting as a test! \n");
+    ROSE_ASSERT(false);
+#endif
+
+ // int source_file_physical_file_id = saved_source_file_for_dynamic_library;
+
+ // SageInterface::markSubtreeToBeUnparsedTreeTraversal(func_body, source_file_physical_file_id);
+
+ // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(func_body,"testing Outliner::generateFunction(): 3") == false);
+ // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(func,"testing Outliner::generateFunction(): 4") == false);
 
     // after the moving, reset symbols to be the ones from the current new file's scope
      // We only do this when we have _lib file constructed from the original input file
@@ -1577,6 +1665,8 @@ Outliner::generateFunction ( SgBasicBlock* s,  // block to be outlined
   }
 
 
+  // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(func,"testing Outliner::generateFunction(): 5") == false);
+
 #if 0
   // We can't call this here because "s" is passed in as "cont".
   // DQ (2/24/2009): I think that at this point we should delete the subtree represented by "s"
@@ -1616,6 +1706,8 @@ Outliner::generateFunction ( SgBasicBlock* s,  // block to be outlined
   }
 #endif
 
+// ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(func,"testing Outliner::generateFunction(): 6") == false);
+
   //step 4: variable handling, including: 
   // -----------------------------------------
   //   create parameters of the outlined functions
@@ -1625,6 +1717,8 @@ Outliner::generateFunction ( SgBasicBlock* s,  // block to be outlined
   //variableHandling(syms, pdSyms, readOnlyVars, liveOuts, struct_decl, func);
   variableHandling(syms, pdSyms, restoreVars, struct_decl, func);
   ROSE_ASSERT (func != NULL);
+
+// ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(func,"testing Outliner::generateFunction(): 7") == false);
 
   //     std::cout << func->get_type()->unparseToString() << std::endl;
   //     std::cout << func->get_parameterList()->get_args().size() << std::endl;
@@ -1646,6 +1740,8 @@ Outliner::generateFunction ( SgBasicBlock* s,  // block to be outlined
   //
   ROSE_ASSERT(scope->lookup_function_symbol(func->get_name()));
 
+// ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(func,"testing Outliner::generateFunction(): 8") == false);
+
 #if 1
    // Eliminate problematic type casting to base class
   // Liao 2020/11/18
@@ -1661,6 +1757,8 @@ Outliner::generateFunction ( SgBasicBlock* s,  // block to be outlined
         }
    }
  
+// ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(func,"testing Outliner::generateFunction(): 9") == false);
+
    for (vector<SgCastExp*>::reverse_iterator iter=cast_nodes.rbegin(); iter!=cast_nodes.rend(); iter++ )
    {
      //     (*iter)->get_startOfConstruct()->unsetOutputInCodeGeneration();
@@ -1674,6 +1772,8 @@ Outliner::generateFunction ( SgBasicBlock* s,  // block to be outlined
 #if 0
   printf ("Leaving generateFunction(): func = %p func_name_str = %s \n",func,func_name_str.c_str());
 #endif
+
+// ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(func,"testing Outliner::generateFunction(): 10") == false);
 
   return func;
 }
