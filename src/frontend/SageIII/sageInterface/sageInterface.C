@@ -14204,6 +14204,8 @@ void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
      printf ("In SageInterface::prependStatement(): stmt = %p = %s scope = %p \n",stmt,stmt->class_name().c_str(),scope);
 #endif
 
+  // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(stmt,"testing prependStatement(): 2.2.6.1.2.1") == false);
+
      if (scope == NULL)
         {
           scope = SageBuilder::topScopeStack();
@@ -14211,6 +14213,8 @@ void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
 
      ROSE_ASSERT(scope != NULL);
   // TODO handle side effect like SageBuilder::appendStatement() does
+
+  // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(scope,"testing prependStatement(): 2.2.6.1.2.1a") == false);
 
   // Must fix it before insert it into the scope,
   // otherwise assertions in insertStatementInScope() would fail
@@ -14220,6 +14224,8 @@ void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
      printf ("In SageInterface::prependStatement(): stmt = %p = %s scope = %p = %s (resetInternalMapsForTargetStatement: stmt) \n",
           stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
 #endif
+
+  // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(stmt,"testing prependStatement(): 2.2.6.1.2.2") == false);
 
   // DQ (12/1/2015): If this is a moved statement then cause it to update internal data structures
   // to record it being moved (and thus the macroExpansions that it might be associated with having
@@ -14231,6 +14237,8 @@ void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
           stmt,stmt->class_name().c_str(),scope,scope->class_name().c_str());
 #endif
 
+  // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(stmt,"testing prependStatement(): 2.2.6.1.2.3") == false);
+
   // DQ (12/1/2015): Also look at the statements on either side of the location where this statement
   // is being inserted to make sure that they are not a part of a macro expansion. In the case of
   // prepend, we only need to look at the scope.
@@ -14240,8 +14248,13 @@ void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
      printf ("Calling insertStatementInScope() \n");
 #endif
 
+  // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(stmt,"testing prependStatement(): 2.2.6.1.2.4") == false);
+  // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(scope,"testing prependStatement(): 2.2.6.1.2.4a") == false);
+
      scope->insertStatementInScope(stmt,true);
      stmt->set_parent(scope); // needed?
+
+  // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(scope,"testing prependStatement(): 2.2.6.1.2.5") == false);
 
   // DQ (11/19/2012): If we are building the AST within the front-end then don't do this expensive
   // fixup (we already set it properly in the AST construction within the frontend so we don't need
@@ -14255,6 +14268,8 @@ void SageInterface::prependStatement(SgStatement *stmt, SgScopeStatement* scope)
         {
           updateDefiningNondefiningLinks(isSgFunctionDeclaration(stmt),scope);
         }
+
+  // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(scope,"testing prependStatement(): 2.2.6.1.2.6") == false);
 
 #if 0
      printf ("Leaving SageInterface::prependStatement() \n");
@@ -19660,6 +19675,7 @@ SageInterface::checkSymbolTables ( SgNode* astNode )
 
 void SageInterface::markNodeToBeUnparsed(SgNode* node, int physical_file_id)
    {
+#if 0
      Sg_File_Info* fileInfo=node->get_file_info();
      if (fileInfo != NULL)
         {
@@ -19673,11 +19689,18 @@ void SageInterface::markNodeToBeUnparsed(SgNode* node, int physical_file_id)
                locatedNode->setTransformation();
                locatedNode->setOutputInCodeGeneration();
 
+            // DQ (7/8/2021): Added assertion.
+               ROSE_ASSERT(locatedNode->get_file_info() != NULL);
+#if 0
+               printf ("In markNodeToBeUnparsed(): physical_file_id = %d \n",physical_file_id);
+#endif
             // DQ (10/26/2020): Set the physical_file_id, required for ueader file unparsing (is it?).
                locatedNode->get_file_info()->set_physical_file_id(physical_file_id);
 #if 0
                printf ("Note: calling node markTransformationsForOutput(): node = %p = %s \n",node,node->class_name().c_str());
 #endif
+            // DQ (7/14/2021): This is just a redundant traversal over the subtree that only appears 
+            // to call setTransformation() and setOutputInCodeGeneration().
                markTransformationsForOutput(node);
              }
             else
@@ -19693,11 +19716,37 @@ void SageInterface::markNodeToBeUnparsed(SgNode* node, int physical_file_id)
           printf ("Note: no Sg_File_Info was found: node = %p = %s \n",node,node->class_name().c_str());
 #endif
         }
+#else
+     SgLocatedNode* locatedNode = isSgLocatedNode(node);
+     if (locatedNode != NULL)
+        {
+          locatedNode->setTransformation();
+          locatedNode->setOutputInCodeGeneration();
+
+       // DQ (10/26/2020): Set the physical_file_id, required for ueader file unparsing (is it?).
+          if (locatedNode->get_file_info() != NULL)
+             {
+               locatedNode->get_file_info()->set_physical_file_id(physical_file_id);
+             }
+            else
+             {
+#if 1
+               printf ("Note: no Sg_File_Info was found: node = %p = %s \n",node,node->class_name().c_str());
+#endif
+             }
+
+       // DQ (7/14/2021): This is just a redundant traversal over the subtree that only appears 
+       // to call setTransformation() and setOutputInCodeGeneration().
+       // markTransformationsForOutput(node);
+        }
+#endif
    }
 
 
 void SageInterface::markSubtreeToBeUnparsed(SgNode* root, int physical_file_id)
    {
+     static int counter = 0;
+
      RoseAst ast(root);
      for (RoseAst::iterator i=ast.begin();i!=ast.end();++i)
         {
@@ -19709,10 +19758,118 @@ void SageInterface::markSubtreeToBeUnparsed(SgNode* root, int physical_file_id)
              }
 #endif
 #if 0
-          printf ("Calling markNodeToBeUnparsed(): *i = %p = %s physical_file_id = %d \n",*i,(*i)->class_name().c_str(),physical_file_id);
+          printf ("In markSubtreeToBeUnparsed(): Calling markNodeToBeUnparsed(): *i = %p = %s physical_file_id = %d \n",*i,(*i)->class_name().c_str(),physical_file_id);
 #endif
           markNodeToBeUnparsed(*i,physical_file_id);
        }
+
+#if 0
+     if (counter > 0)
+        {
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+        }
+#endif
+
+     counter++;
+   }
+
+
+
+void SageInterface::markSubtreeToBeUnparsedTreeTraversal(SgNode* root, int physical_file_id)
+   {
+  // DQ (7/13/2021): This function marks nodes in a subtree to be a transformation, but avoids marking subtrees of the SgCastExp.
+  // This is important because currently the marking of an implicit cast will cause it to be unparsed, even though it is marked 
+  // as implicit.  This detail of precedence of implicit flags over transformation flags needs to be fixed seperated.
+  // This function has been implemented as part of debugging this issue.
+
+     static int counter = 0;
+
+     class InheritedAttribute
+        {
+          public:
+               int physical_file_id;
+               bool isCastSubtree;
+               InheritedAttribute(int file_id): physical_file_id(file_id), isCastSubtree(false) {} 
+               InheritedAttribute(const InheritedAttribute & X)
+                  {
+                    isCastSubtree    = X.isCastSubtree; 
+                    physical_file_id = X.physical_file_id;
+                  }
+        };
+
+     class SubtreeTraversal : public SgTopDownProcessing<InheritedAttribute>
+        {
+          public:
+               InheritedAttribute evaluateInheritedAttribute ( SgNode* node, InheritedAttribute inheritedAttribute)
+                  {
+                    InheritedAttribute returnAttribute(inheritedAttribute);
+
+                    SgCastExp* castExpression = isSgCastExp(node);
+                    if (castExpression != NULL)
+                       {
+                         returnAttribute.isCastSubtree = true;
+                       }
+
+                    if (returnAttribute.isCastSubtree == true)
+                       {
+                      // Nothing to do, unless we want to fixup the physical node id.
+#if 0
+                         printf ("In markSubtreeToBeUnparsedTreeTraversal(): subtree of a SgCastExp: node = %p = %s physical_file_id = %d \n",
+                              node,node->class_name().c_str(),inheritedAttribute.physical_file_id);
+#endif
+                       }
+                      else
+                       {
+#if 0
+                         printf ("In markSubtreeToBeUnparsedTreeTraversal(): Calling markNodeToBeUnparsed(): node = %p = %s physical_file_id = %d \n",
+                              node,node->class_name().c_str(),inheritedAttribute.physical_file_id);
+#endif
+                      // This logic will cause the SgCastExp node to NOT be marked as a transformation (not just its children).
+                         markNodeToBeUnparsed(node,inheritedAttribute.physical_file_id);
+                       }
+
+                    return returnAttribute;
+                  }
+        };
+
+     InheritedAttribute inheritedAttribute(physical_file_id);
+
+  // Now buid the traveral object and call the traversal (preorder) on the AST subtree.
+     SubtreeTraversal traversal;
+
+#if 0
+     printf ("\nIn markSubtreeToBeUnparsedTreeTraversal(): calling traverse \n");
+#endif
+
+  // This should pass.
+  // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(root,"In markSubtreeToBeUnparsedTreeTraversal(): before traversal") == false);
+
+     traversal.traverse(root, inheritedAttribute);
+
+#if 0
+     printf ("Generate the dot output of the SAGE III AST: markSubtreeToBeUnparsedTreeTraversal \n");
+     SgProject* project = SageInterface::getProject();
+     generateDOTforMultipleFile ( *project, "markSubtreeToBeUnparsedTreeTraversal");
+     printf ("DONE: Generate the dot output of the SAGE III AST: markSubtreeToBeUnparsedTreeTraversal \n");
+#endif
+
+  // This should pass.
+  // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(root,"In markSubtreeToBeUnparsedTreeTraversal() after traversal") == false);
+
+#if 0
+     printf ("DONE: In markSubtreeToBeUnparsedTreeTraversal(): calling traverse \n\n");
+#endif
+
+#if 0
+     if (counter > 1)
+        {
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+        }
+#endif
+
+     counter++;
    }
 
 
@@ -27796,4 +27953,79 @@ void SageInterface::clearSharedGlobalScopes(SgProject * project) {
   ROSE_ASSERT(hmm != nullptr);
   hmm->clear();
 }
+
+bool
+SageInterface::findFirstSgCastExpMarkedAsTransformation(SgNode* n, const std::string & s)
+   {
+     class Traversal : public AstSimpleProcessing
+        {
+          public:
+               bool found;
+               Traversal() : found(false) {}
+               void visit (SgNode* node)
+                  {
+                    SgCastExp* castExpression = isSgCastExp(node);
+                    if (castExpression != NULL)
+                       {
+                      // SgNode* parent = castExpression->get_parent();
+                         SgInitializer* initializer = isSgInitializer(castExpression->get_parent());
+                         if (initializer == NULL)
+                            {
+                              ROSE_ASSERT(castExpression->get_file_info() != NULL);
+                              if (castExpression->get_file_info()->isTransformation() == true)
+                                 {
+                                   printf (" --- Found a SgCastExp marked as a transformation: castExpression = %p \n",castExpression);
+                                   found = true;
+#if 0
+                                   printf ("Exiting as a test! \n");
+                                   ROSE_ASSERT(false);
+#endif
+                                 }
+                                else
+                                 {
+#if 0
+                                   printf (" --- SgCastExp (but not marked as a transformation) node = %p = %s \n",node,node->class_name().c_str());
+#endif
+                                 }
+                            }
+                           else
+                            {
+                           // DQ (7/14/2021): This case is less interesting (not the SgCastExp that I was looking for in testing).
+#if 1
+                              printf (" --- SgCastExp (but from an initializer) node = %p = %s \n",node,node->class_name().c_str());
+#endif
+                            }
+                       }
+                      else
+                       {
+#if 0
+                         printf (" --- node = %p = %s \n",node,node->class_name().c_str());
+#endif
+                       }
+                  }
+        };
+
+#if 1
+     printf ("In findFirstSgCastExpMarkedAsTransformation(): s = %s \n",s.c_str());
+#endif
+
+  // Now buid the traveral object and call the traversal (preorder) on the AST subtree.
+     Traversal traversal;
+     traversal.traverse(n, preorder);
+
+#if 1
+     printf ("In findFirstSgCastExpMarkedAsTransformation(): s = %s traversal.found = %s \n",s.c_str(),traversal.found ? "true" : "false");
+#endif
+#if 0
+  // DQ (7/13/2021): return false so that we can test the execution of the code to generate that backend code.
+     if (traversal.found == true)
+        {
+          printf ("In findFirstSgCastExpMarkedAsTransformation(): returning false \n");
+        }
+
+     return false;
+#else
+     return traversal.found;
+#endif
+   }
 

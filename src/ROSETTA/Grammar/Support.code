@@ -15499,6 +15499,64 @@ Sg_File_Info::setTransformation()
    {
      assert(this != NULL);
      p_classificationBitField |= e_transformation;
+
+#if 0
+  // DQ (7/13/2021): Added debugging code.
+     static int counter = 0;
+
+     SgNode* parent = this->get_parent();
+     if (parent != NULL)
+        {
+          SgCastExp* castExpression = isSgCastExp(parent);
+          if (castExpression != NULL)
+             {
+               printf ("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX \n");
+               printf ("In Sg_File_Info::setTransformation(): Found SgCastExp %p counter = %d \n",castExpression,counter);
+               printf ("XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX \n");
+
+#if 0
+               if (counter > 20)
+                  {
+#if 1
+                    printf ("Exiting as a test: counter = %d \n",counter);
+                    ROSE_ASSERT(false);
+#endif
+                  }
+
+            // counter++;
+#endif
+
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+            else
+             {
+               printf ("In Sg_File_Info::setTransformation(): !SgCastExp: parent = %p = %s counter = %d \n",parent,parent->class_name().c_str(),counter);
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+        }
+       else
+        {
+          printf ("In Sg_File_Info::setTransformation(): parent == NULL: counter = %d \n",counter);
+        }
+
+#if 0
+     if (counter > 250)
+        {
+#if 0
+          printf ("Exiting as a test: counter = %d \n",counter);
+          ROSE_ASSERT(false);
+#endif
+        }
+#endif
+
+     counter++;
+#endif
    }
 
 void

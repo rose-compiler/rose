@@ -1601,7 +1601,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
      ROSE_ASSERT(file != NULL);
      string fileNameForTokenStream = file->getFileName();
 
-#if 1
+#if 0
      printf ("In Unparser::unparseFileUsingTokenStream(): fileNameForTokenStream = %s \n",fileNameForTokenStream.c_str());
 #endif
 
@@ -1620,7 +1620,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
      ASSERT_not_null(file->get_preprocessorDirectivesAndCommentsList());
      ROSEAttributesListContainerPtr filePreprocInfo = file->get_preprocessorDirectivesAndCommentsList();
 
-#if 1
+#if 0
      printf ("filePreprocInfo->getList().size() = %" PRIuPTR " \n",filePreprocInfo->getList().size());
 #endif
 
@@ -1635,7 +1635,7 @@ Unparser::unparseFileUsingTokenStream ( SgSourceFile* file )
   // This is an empty list not useful outside of the Flex file to gather the CPP directives, comments, and tokens.
      ROSE_ASSERT(mapFilenameToAttributes.empty() == true);
 
-#if 1
+#if 0
      printf ("In unparseFileUsingTokenStream(): Evaluate what files are processed in map (filePreprocInfo->getList().size() = %" PRIuPTR ") \n",filePreprocInfo->getList().size());
      std::map<std::string,ROSEAttributesList* >::iterator map_iterator = filePreprocInfo->getList().begin();
      int counter = 0;
@@ -4257,7 +4257,7 @@ void prependIncludeOptionsToCommandLine(SgProject* project, const list<string>& 
    {
      SgStringList argumentList = project -> get_originalCommandLineArgumentList();
 
-#if 1
+#if 0
   // DQ (4/4/2020): Added header file unparsing feature specific debug level.
      if (SgProject::get_unparseHeaderFilesDebug() >= 4)
         {
@@ -7087,7 +7087,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
             // DQ (9/10/2018): This appears to be an error, force this as a test and exit until we fix this.
                if (unparseSourceFileMap.find(originalFileName) == unparseSourceFileMap.end())
                   {
-#if 1
+#if 0
                     printf ("In unparseIncludedFiles(): looking in unparseSourceFileMap for originalFileName = %s \n",originalFileName.c_str());
                     map<string, SgSourceFile*>::iterator i = unparseSourceFileMap.begin();
                     while (i != unparseSourceFileMap.end())
@@ -7109,7 +7109,7 @@ void unparseIncludedFiles ( SgProject* project, UnparseFormatHelp *unparseFormat
 #if 0
                     printf ("We need to build a SgSourceFile to hold the statements that are in the header file which we have not processed yet \n");
 #endif
-#if 1
+#if 0
                     printf ("In unparseIncludedFiles(): before buildSourceFileForHeaderFile(): EDG_ROSE_Translation::edg_include_file_map.size() = %zu \n",
                          EDG_ROSE_Translation::edg_include_file_map.size());
                     printf (" --- project->get_unparse_tokens() = %s \n",project->get_unparse_tokens() ? "true" : "false");

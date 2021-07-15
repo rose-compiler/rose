@@ -6823,7 +6823,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                printf ("SgFile::compileOutput(): get_skipfinalCompileStep() == false: compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
              }
 
-#if 0
+#if 1
        // DQ (7/7/2021): This can be useful to have an output, but in general it must be supressed.
        // I need the exact command line used to compile the generate code with the backendcompiler (so that I can reuse it to test the generated code).
           printf ("SgFile::compileOutput(): compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());

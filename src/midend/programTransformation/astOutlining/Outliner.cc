@@ -49,6 +49,9 @@ namespace Outliner {
 
 // DQ (3/19/2019): Suppress the output of the #include "autotuning_lib.h" since some tools will want to define there own supporting libraries and header files.
   bool suppress_autotuning_header = false; // when generating the new file to store outlined function, suppress output of #include "autotuning_lib.h".
+
+// DQ (7/13/2021): Save the SgSourceFile used when handling dynamic libraries.
+  SgSourceFile* saved_source_file_for_dynamic_library = NULL;
 };
 
 // =====================================================================

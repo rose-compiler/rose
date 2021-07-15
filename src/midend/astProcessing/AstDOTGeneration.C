@@ -601,6 +601,10 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
         {
           string name = SgCastExp::cast_type_to_string(castExpression->cast_type()).c_str();;
           nodelabel += string("\\n cast kind = ") + name;
+
+       // DQ (7/7/2021): Adding information about implict casts.
+          string cast_classification = castExpression->get_file_info()->isImplicitCast() ? "implicit cast" : "explicit cast";
+          nodelabel += string("\\n cast_classification = ") + cast_classification;
         }
 
 #if 0

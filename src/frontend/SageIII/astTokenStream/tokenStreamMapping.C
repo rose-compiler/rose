@@ -5189,10 +5189,14 @@ TokenMappingTraversal::evaluateSynthesizedAttribute ( SgNode* n, InheritedAttrib
 #if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE
                               printf ("element->nodeVector.size() = %zu \n",element->nodeVector.size());
 #endif
+#if 0
+                           // DQ (7/7/2021): Commented out this section of code. It is visited by some applications, 
+                           // but I don't have a reproducer for this case.
                               ROSE_ASSERT(element->nodeVector.size() == 2 + (k - starting_NodeSequenceWithoutTokenMapping));
 
                               printf ("This location is never reached! \n");
                               ROSE_ABORT();
+#endif
                             }
 #if DEBUG_EVALUATE_SYNTHESIZED_ATTRIBUTE
                          printf ("******************** End of loop body for childrenWithoutTokenMappings (i = %zu) ******************** \n",i);
@@ -8296,7 +8300,7 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile, bool traverseHeaderFiles)
      printf ("ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff \n");
 #endif
 
-#if DEBUG_TOKEN_FRONTIER || 1
+#if DEBUG_TOKEN_FRONTIER || 0
   // DQ (11/20/2013): Test using support for multiple files for Java testing.
   // Output an optional graph of the AST (just the tree, when active)
   // generateDOT ( *project );
@@ -8830,7 +8834,7 @@ buildTokenStreamMapping(SgSourceFile* sourceFile, vector<stream_element*> & toke
         }
 #endif
 
-#if DEBUG_TOKEN_STREAM_MAPPING || 1
+#if DEBUG_TOKEN_STREAM_MAPPING || 0
   // DQ (12/26/2018): This is an error for badInput3.c (when using "-rose:verbose 2".
   // DQ (12/1/2013): Make the output of this graph consitional upon the verbose level.
      if ( SgProject::get_verbose() >= 0 )

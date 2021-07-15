@@ -1465,6 +1465,14 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
    ROSE_ASSERT(name.is_null() == false);
    ROSE_ASSERT(type != NULL);
 
+#if 0
+// ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(scope,"testing buildVariableDeclaration(): 1-scope") == false);
+   if (varInit != NULL)
+      {
+     // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(varInit,"testing buildVariableDeclaration(): 1-varInit") == false);
+      }
+#endif
+
   SgVariableDeclaration * varDecl = new SgVariableDeclaration(name, type, varInit);
   ROSE_ASSERT(varDecl);
 
@@ -1474,6 +1482,8 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
 
 // DQ (8/21/2011): Debugging declarations should have default settings (should not be marked as public).
 // ROSE_ASSERT(varDecl->get_declarationModifier().get_accessModifier().isPublic() == false);
+
+// ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(varDecl,"testing buildVariableDeclaration(): 1") == false);
 
   varDecl->set_firstNondefiningDeclaration(varDecl);
 
@@ -1559,6 +1569,9 @@ SageBuilder::buildVariableDeclaration (const SgName & name, SgType* type, SgInit
   // because we have added statements explicitly marked as transformations.
   // checkIsModifiedFlag(varDecl);
      unsetNodesMarkedAsModified(varDecl);
+
+// ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(varDecl,"testing buildVariableDeclaration(): 9") == false);
+// ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(scope,"testing buildVariableDeclaration(): 9-scope") == false);
 
   return varDecl;
 }
@@ -4239,8 +4252,18 @@ SageBuilder::buildNondefiningFunctionDeclaration_T (
        // (*argi)->set_declptr(NULL);
         }
 
+#if 0
+  // DQ (7/12/2021): Debugging where nodes in the outliner are being marked as transformations (SgCastExpressions should not be marked as transformations).
+     printf ("In buildNondefiningFunctionDeclaration_T(): setting the source position information (calling setTransformation()) \n");
+#endif
+
   // DQ (5/2/2012): Test this to make sure we have SgInitializedNames set properly.
      SageInterface::setSourcePosition(paralist);
+
+#if 0
+  // DQ (7/12/2021): Debugging where nodes in the outliner are being marked as transformations (SgCastExpressions should not be marked as transformations).
+     printf ("In buildNondefiningFunctionDeclaration_T(): DONE: setting the source position information (calling setTransformation()) \n");
+#endif
 
 #if BUILDER_MAKE_REDUNDANT_CALLS_TO_DETECT_TRANSFORAMTIONS
   // Liao 11/21/2012: we should assert no transformation only when the current model is NOT transformation
@@ -8557,7 +8580,19 @@ SageBuilder::buildFunctionCallExp(const SgName& name, SgType* return_type, SgExp
      SgFunctionRefExp* func_ref = buildFunctionRefExp(name,func_type,scope);
      SgFunctionCallExp * func_call_expr = new SgFunctionCallExp(func_ref,parameters,func_ref->get_type());
      parameters->set_parent(func_call_expr);
+
+#if 0
+  // DQ (7/12/2021): Debugging where nodes in the outliner are being marked as transformations (SgCastExpressions should not be marked as transformations).
+     printf ("In buildNondefiningFunctionDeclaration_T(): setting the source position information (calling setTransformation()) \n");
+#endif
+
      setOneSourcePositionForTransformation(func_call_expr);
+
+#if 0
+  // DQ (7/12/2021): Debugging where nodes in the outliner are being marked as transformations (SgCastExpressions should not be marked as transformations).
+     printf ("In buildFunctionCallExp(): DONE: setting the source position information (calling setTransformation()) \n");
+#endif
+
      ROSE_ASSERT(func_call_expr);
 
      return func_call_expr;
