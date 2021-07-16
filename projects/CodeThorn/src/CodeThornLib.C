@@ -44,9 +44,11 @@
 #include "AnalysisReporting.h"
 #include "CTAnalysis.h"
 
+#if HAVE_Z3
 // Z3-based analyser / SSA 
 #include "z3-prover-connection/SSAGenerator.h"
 #include "z3-prover-connection/ReachabilityAnalyzerZ3.h"
+#endif
 
 #if defined(__unix__) || defined(__unix) || defined(unix)
 #include <sys/resource.h>

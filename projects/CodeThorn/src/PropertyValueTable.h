@@ -6,10 +6,6 @@
 
 #include "sage3basic.h"
 #include "Miscellaneous.h"
-#include "rose_config.h"
-#ifdef HAVE_SPOT
-#include "ltlthorn-lib/SpotMiscellaneous.h"
-#endif
 
 using namespace std;
 
@@ -57,10 +53,7 @@ class PropertyValueTable {
   void printResults(string yesAnswer, string noAnswer, string propertyName = "property", bool withCounterExample = false);
   void printResultsStatistics();
   string getLtlsRersFormat(bool withResults=false, bool withAnnotations=false);
-#ifdef HAVE_SPOT
-  // 3rd parameter is a callback to not have a dependency on SpotMisc.
   string getLtlsAsPromelaCode(bool withResults, bool withAnnotations, std::string (*spinSyntaxCallBackFP)(std::string));
-#endif
   void init();
   void init(size_t size);
   int entriesWithValue(PropertyValue v);
