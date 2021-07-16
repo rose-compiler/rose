@@ -3,6 +3,9 @@
 #include "Miscellaneous2.h"
 
 #include "rose_config.h"
+#ifdef HAVE_SPOT
+#include "ltlthorn-lib/SpotMiscellaneous.h"
+#endif
 
 // basic file operations
 #include <iostream>
@@ -364,6 +367,7 @@ void PropertyValueTable::printResultsStatistics() {
 }
 
 string PropertyValueTable::getLtlsRersFormat(bool withResults, bool withAnnotations) {
+#if HAVE_SPOT
   stringstream propertiesRersFormat;
   for (map<size_t, string>::iterator i=_formulas.begin(); i!=_formulas.end(); i++) {
     propertiesRersFormat << "#"<<i->first<<": ";
@@ -388,6 +392,10 @@ string PropertyValueTable::getLtlsRersFormat(bool withResults, bool withAnnotati
     propertiesRersFormat << endl;
   }
   return propertiesRersFormat.str();
+#else
+  cerr<<"PropertyValueTable::getLtlsRersFormat requires SPOT. SPOT is not installed."<<endl;
+  exit(1);
+#endif
 }
 
 void PropertyValueTable::shuffle() {

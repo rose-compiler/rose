@@ -13,9 +13,9 @@
 #include <sstream>
 
 #include "rose_config.h"
-
 #ifdef HAVE_SPOT
 // SPOT includes
+#include "tgba/tgba.hh"
 #include "tgba/succiter.hh"
 #include "tgba/state.hh"
 #endif
@@ -814,12 +814,14 @@ struct spot_state_compare {
     }
   }
 };
+#endif
 
 /*! 
  * \author Marc Jasper
  * \date 2016.
  */
 string Visualizer::spotTgbaToDot(spot::tgba& tgba) {
+#ifdef HAVE_SPOT
   stringstream ss;
   ss << "digraph G {" << endl;
   spot::state* initState = tgba.get_init_state();
@@ -847,8 +849,11 @@ string Visualizer::spotTgbaToDot(spot::tgba& tgba) {
   }
   ss << "}" << endl;
   return ss.str();
-}
+#else
+  cerr<<"Visualizer::spotTgbaToDot: SPOT is required, but not installed."<<endl;
+  exit(1);
 #endif
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // END OF VISUALIZER

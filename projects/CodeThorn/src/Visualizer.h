@@ -1,10 +1,6 @@
 #ifndef VISUALIZER
 #define VISUALIZER
 
-/*************************************************************
- * Author   : Markus Schordan                                *
- *************************************************************/
-
 #include "Labeler.h"
 #include "CFAnalysis.h"
 #include "EState.h"
@@ -12,11 +8,11 @@
 #include "CommandLineOptions.h"
 #include "ReadWriteData.h"
 
-#include "rose_config.h"
-#ifdef HAVE_SPOT
+//#include "rose_config.h"
+//#ifdef HAVE_SPOT
 // SPOT include
-#include "tgba/tgba.hh"
-#endif
+//#include "tgba/tgba.hh"
+//#endif
 
 using CodeThorn::CTAnalysis;
 using CodeThorn::PStateSet;
@@ -43,6 +39,10 @@ class AssertionExtractor {
   vector<std::string> assertions;
 };
 
+namespace spot {
+  class tgba;
+}
+
 class Visualizer {
  public:
   Visualizer();
@@ -66,9 +66,9 @@ class Visualizer {
   std::string transitionGraphDotHtmlNode(CodeThorn::Label lab);
   std::string transitionGraphToDot();
   std::string transitionGraphWithIOToDot();
-#ifdef HAVE_SPOT
+  //#ifdef HAVE_SPOT
   std::string spotTgbaToDot(spot::tgba& tgba);
-#endif
+  //#endif
   // used for displaying abstract ("topified") transition graphs.
   std::string transitionGraphWithIOToDot(CodeThorn::EStatePtrSet displayedEStates, 
                                     bool uniteOutputFromAbstractStates, bool includeErrorStates, bool allignAbstractStates);
