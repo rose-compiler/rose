@@ -1485,7 +1485,8 @@ UnparseLanguageIndependentConstructs::redundantStatementMappingToTokenSequence(S
      printf ("Leaving redundantStatementMappingToTokenSequence(): stmt = %p = %s redundantStatement = %s \n",stmt,stmt->class_name().c_str(),redundantStatement ? "true" : "false");
 #endif
 
-#if 1
+#if 0
+  // DQ (7/16/2021): This was turned ON for previous development, but should be commented out now that this is the last bug for the codeSegregation.
   // DQ (5/30/2021): Debugging redundant token sequences... e.g. defining function declarations, function definitions, and function bodies (SgBasicBlock); but not int x,y;.
      if (redundantStatement == true)
         {
@@ -1722,7 +1723,9 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStreamForNodeCont
      bool unparseStatus = (canBeUnparsedFromTokenStream(sourceFile,stmt) == true);
 
 #if DEBUG_UNPARSE_FROM_TOKENS_NODE_CONTAIN_TRANS
+     printf ("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE \n");
      printf ("In unparseStatementFromTokenStreamForNodeContainingTransformation(): canBeUnparsedFromTokenStream(): unparseStatus = %s \n",unparseStatus ? "true" : "false");
+     printf ("EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE \n");
 #endif
 
   // if (canBeUnparsedFromTokenStream(sourceFile,stmt) == true)
@@ -1737,7 +1740,9 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStreamForNodeCont
           bool redundantStatement = redundantStatementMappingToTokenSequence(sourceFile,stmt,info);
 
 #if DEBUG_UNPARSE_FROM_TOKENS_NODE_CONTAIN_TRANS
+       // printf ("GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG \n");
           printf ("In unparseStatementFromTokenStreamForNodeContainingTransformation(): canBeUnparsedFromTokenStream(): redundantStatement = %s \n",redundantStatement ? "true" : "false");
+       // printf ("GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG \n");
 #endif
           if (redundantStatement == false)
              {
@@ -1768,7 +1773,8 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStreamForNodeCont
      printf ("Leaving unparseStatementFromTokenStreamForNodeContainingTransformation(): stmt = %p = %s returnStatus = %d \n",stmt,stmt->class_name().c_str(),returnStatus);
 #endif
 
-#if 1
+#if 0
+  // DQ (7/16/2021): This was turned ON for previous development, but should be commented out now that this is the last bug for the codeSegregation.
   // DQ (5/26/2021): Testing only: This should always be a zero value.  It indicates that the statement can be unparsed partially 
   // from the token stream (one statement at a time so that when we find a statement that represents a transformation 
   // we can unparse that statement from the AST directly.  If we didn't have access to the token stream, then I think we should 
@@ -1854,9 +1860,9 @@ UnparseLanguageIndependentConstructs::unparseStatementFromTokenStream(SgSourceFi
           bool redundantStatement = redundantStatementMappingToTokenSequence(sourceFile,stmt,info);
 #if 0
        // DQ (4/17/2021): This is the different betwen when the second forward class declaration is unparsed and when it is not unparsed.
-          printf ("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF \n");
+          printf ("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF \n");
           printf ("FFFFFFFFFFFF redundantStatement = %s FFFFFFFFFFFF \n",redundantStatement ? "true" : "false");
-          printf ("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF \n");
+          printf ("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF \n");
 #endif
        // DQ (9/24/2018): These are always going to be redundant, since these are inserted after the token stream mapping,
        // and redundantly represent the same tokens in the token stream.
