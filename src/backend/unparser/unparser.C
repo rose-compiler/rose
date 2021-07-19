@@ -1500,9 +1500,18 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
 #endif
 
 #if 0
-  // DQ (12/2/2019): Testing for predicate statements failing to be unparsed when sharing IR nodes.
+  // DQ (7/17/2021): Testing for predicate statements failing to be unparsed when sharing IR nodes.
      printf ("In unparseFile(): unparsedFile->get_output_filename() = %s \n",file->get_unparse_output_filename().c_str());
-     if (file->get_unparse_output_filename() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/BAtest_32./rose_BAtest_32_lib.cpp")
+     if (file->get_unparse_output_filename() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/sources/test_177.h")
+        {
+          printf ("Exiting as a test! \n");
+          ROSE_ABORT();
+        }
+#endif
+#if 0
+  // DQ (7/17/2021): Testing for predicate statements failing to be unparsed when sharing IR nodes.
+     printf ("In unparseFile(): unparsedFile->get_output_filename() = %s \n",file->get_unparse_output_filename().c_str());
+     if (file->getFileName() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/sources/test_177.h")
         {
           printf ("Exiting as a test! \n");
           ROSE_ABORT();
