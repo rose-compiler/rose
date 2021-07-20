@@ -569,7 +569,7 @@ namespace CodeThorn {
     // ignore AsmStmt
     return transferIdentity(edge,estate);
   }
-  long int functionAnalyzedNr=0;
+  long int functionAnalyzedNr=1;
   std::list<EState> EStateTransferFunctions::transferFunctionEntry(Edge edge, const EState* estate) {
     Label lab=estate->label();
     SgNode* node=_analyzer->getLabeler()->getNode(lab);
@@ -579,7 +579,8 @@ namespace CodeThorn {
       string fileName=SgNodeHelper::sourceFilenameToString(node);
       if(_analyzer->getOptionsRef().status) {
 	if(_analyzer->getOptionsRef().precisionLevel==1) {
-	  cout<<"Analyzing Function #"<<functionAnalyzedNr++<<": ";
+	  size_t numFunctions=_analyzer->getFlow()->getStartLabelSet().size();
+	  cout<<"Analyzing Function #"<<functionAnalyzedNr++<<" of "<<numFunctions<<": ";
 	} else if(_analyzer->getOptionsRef().precisionLevel>=2) {
 	  cout<<functionAnalyzedNr++<<". ";
 	  cout<<"analyzing function (call string length="<<estate->getCallStringLength()<<"):";
