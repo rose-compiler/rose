@@ -207,9 +207,13 @@ SimpleFrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(SgNode*
              {
                if (classDefinition->get_isModified() == true)
                   {
+#if 0
                     printf ("Detected SgClassDefinition marked as isModified == true: resetting isModified flag \n");
+#endif
                     classDefinition->set_isModified(false);
+#if 0
                     printf ("classDefinition->get_isModified() = %s \n",classDefinition->get_isModified() ? "true" : "false");
+#endif
 #if 0
                     printf ("Exiting as a test! \n");
                     ROSE_ABORT();

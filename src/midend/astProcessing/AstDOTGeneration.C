@@ -382,13 +382,37 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
           return DOTSynthesizedAttribute(NULL);
         }
 
+     string nodelabel=string("\\n")+node->class_name();
+
      string nodeoption;
+
      if(AstTests::isProblematic(node))
         {
        // cout << "problematic node found." << endl;
           nodeoption="color=\"orange\" ";
         }
-     string nodelabel=string("\\n")+node->class_name();
+
+  // DQ (7/20/2021): Added support for handle the SgSourceFile IR nodes (I want to output the physical file id).
+     if (isSgSourceFile(node) != NULL)
+        {
+          SgFile* file = dynamic_cast<SgFile*>(node);
+          ROSE_ASSERT(file != NULL);
+
+          string original_filename = file->getFileName();
+
+       // DQ (7/4/2008): Fix filenamePostfix to go before the "."
+       // string filename = string("./") + Rose::utility_stripPathFromFileName(original_filename) + "."+filenamePostfix+"dot";
+          string filename = string("./") + Rose::utility_stripPathFromFileName(original_filename) + filenamePostfix + ".dot";
+
+          int physical_file_id = Sg_File_Info::getIDFromFilename(original_filename);
+          nodelabel += string("\\n") + filename + string("\\n") + "physical_file_id = " + StringUtility::numberToString(physical_file_id);
+
+#if 0
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
+
 
   // DQ (1/24/2009): Added support for output of isForward flag in the dot graph.
      SgDeclarationStatement* genericDeclaration = isSgDeclarationStatement(node);
