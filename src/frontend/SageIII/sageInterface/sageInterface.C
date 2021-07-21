@@ -10630,50 +10630,75 @@ void SageInterface::deepDelete(SgNode* root)
 
 //! Replace a statement with another
 void SageInterface::replaceStatement(SgStatement* oldStmt, SgStatement* newStmt, bool movePreprocessingInfoValue/* = false*/)
-{
-  ROSE_ASSERT(oldStmt);
-  ROSE_ASSERT(newStmt);
-  if (oldStmt == newStmt) return;
-  SgStatement * p = isSgStatement(oldStmt->get_parent());
-  ROSE_ASSERT(p);
+   {
+     ROSE_ASSERT(oldStmt);
+     ROSE_ASSERT(newStmt);
+
+     if (oldStmt == newStmt) return;
+
+     SgStatement * p = isSgStatement(oldStmt->get_parent());
+     ROSE_ASSERT(p);
+
 #if 0
   // TODO  handle replace the body of a C/Fortran function definition with a single statement?
   // Liao 2/1/2010, in some case, we want to replace the entire body (SgBasicBlock) for some parent nodes.
   // the built-in replace_statement() (insert_child() underneath) may not defined for them.
-  if (SgFortranDo * f_do = isSgFortranDo (p))
-  {
-    ROSE_ASSERT (f_do->get_body() == oldStmt);
-    if (!isSgBasicBlock(newStmt))
-     newStmt = buildBasicBlock (newStmt);
-    f_do->set_body(isSgBasicBlock(newStmt));
-    newStmt->set_parent(f_do);
-  }
-  else
-#endif
-    p->replace_statement(oldStmt,newStmt);
-
-// Some translators have their own handling for this (e.g. the outliner)
-  if (movePreprocessingInfoValue)
-     {
-#if 0
-       printf ("In SageInterface::replaceStatement(): calling moveUpPreprocessingInfo() changed to movePreprocessingInfo() \n");
+     if (SgFortranDo * f_do = isSgFortranDo (p))
+        {
+          ROSE_ASSERT (f_do->get_body() == oldStmt);
+          if (!isSgBasicBlock(newStmt))
+               newStmt = buildBasicBlock (newStmt);
+          f_do->set_body(isSgBasicBlock(newStmt));
+          newStmt->set_parent(f_do);
+        }
+       else
+        {
+          p->replace_statement(oldStmt,newStmt);
+        }
 #endif
 
-    // DQ (12/28/2020): I think this should be movePreprocessingInfo instead of moveUpPreprocessingInfo
-    // (which has a collection of defaults that are not appropriate).
-    // moveUpPreprocessingInfo(newStmt, oldStmt);
+     p->replace_statement(oldStmt,newStmt);
+
 #if 1
-    // DQ (12/28/2020): Since this works we will leave it in place (it appears to not be required to call this with: usePrepend == true).
-       moveUpPreprocessingInfo(newStmt, oldStmt);
-#else
-    // void SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_dst, PreprocessingInfo::RelativePositionType src_position/* =PreprocessingInfo::undef */,
-    //                                            PreprocessingInfo::RelativePositionType dst_position/* =PreprocessingInfo::undef */, bool usePrepend /*= false */)
-       bool usePrepend = true;
-    // movePreprocessingInfo ( newStmt, oldStmt, PreprocessingInfo::undef, PreprocessingInfo::undef, usePrepend );
-       movePreprocessingInfo ( oldStmt, newStmt, PreprocessingInfo::undef, PreprocessingInfo::undef, usePrepend );
+  // DQ (7/20/2021): Need to make the physical_file_ids match and the parents.
+  // Acutally this may be too late in the case of a deferred transformation since 
+  // we run the AST consistancy tests as an intermediate step.
+     int physical_file_id = oldStmt->get_startOfConstruct()->get_physical_file_id();
+
+#if 0
+     printf ("In SageInterface::replaceStatement(): physical_file_id = %d \n",physical_file_id);
 #endif
-     }
-}
+
+     newStmt->get_startOfConstruct()->set_physical_file_id(physical_file_id);
+     newStmt->get_endOfConstruct  ()->set_physical_file_id(physical_file_id);
+
+  // DQ (7/20/2021): Do we need this when we set the physical_file_id?
+     newStmt->set_parent(oldStmt->get_parent());
+#endif
+
+  // Some translators have their own handling for this (e.g. the outliner)
+     if (movePreprocessingInfoValue)
+        {
+#if 0
+          printf ("In SageInterface::replaceStatement(): calling moveUpPreprocessingInfo() changed to movePreprocessingInfo() \n");
+#endif
+
+       // DQ (12/28/2020): I think this should be movePreprocessingInfo instead of moveUpPreprocessingInfo
+       // (which has a collection of defaults that are not appropriate).
+       // moveUpPreprocessingInfo(newStmt, oldStmt);
+#if 1
+       // DQ (12/28/2020): Since this works we will leave it in place (it appears to not be required to call this with: usePrepend == true).
+          moveUpPreprocessingInfo(newStmt, oldStmt);
+#else
+       // void SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_dst, PreprocessingInfo::RelativePositionType src_position/* =PreprocessingInfo::undef */,
+       //                                            PreprocessingInfo::RelativePositionType dst_position/* =PreprocessingInfo::undef */, bool usePrepend /*= false */)
+          bool usePrepend = true;
+       // movePreprocessingInfo ( newStmt, oldStmt, PreprocessingInfo::undef, PreprocessingInfo::undef, usePrepend );
+          movePreprocessingInfo ( oldStmt, newStmt, PreprocessingInfo::undef, PreprocessingInfo::undef, usePrepend );
+#endif
+        }
+   }
+
 
 void
 SageInterface::moveDeclarationToAssociatedNamespace ( SgDeclarationStatement* declarationStatement )
