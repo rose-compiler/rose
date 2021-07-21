@@ -19852,6 +19852,10 @@ void SageInterface::markSubtreeToBeUnparsedTreeTraversal(SgNode* root, int physi
                   }
         };
 
+// DQ (7/21/21): This code construction does not work with the GNU 4.9.x compilers.
+// #if !( ( (__GNUC__ == 4) && (__GNUC_MINOR__ <= 9) ) || (__GNUC__ < 4))
+#if (__GNUC__ > 4)
+
      class SubtreeTraversal : public SgTopDownProcessing<InheritedAttribute>
         {
           public:
@@ -19900,6 +19904,9 @@ void SageInterface::markSubtreeToBeUnparsedTreeTraversal(SgNode* root, int physi
   // ROSE_ASSERT(findFirstSgCastExpMarkedAsTransformation(root,"In markSubtreeToBeUnparsedTreeTraversal(): before traversal") == false);
 
      traversal.traverse(root, inheritedAttribute);
+#else
+     printf ("This function does not compile with GNU 4.9 or older compilers (part of ROSE used only with more modern compilers) \n");
+#endif
 
 #if 0
      printf ("Generate the dot output of the SAGE III AST: markSubtreeToBeUnparsedTreeTraversal \n");
