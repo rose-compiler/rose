@@ -432,7 +432,7 @@ namespace CodeThorn {
     }
 
     void optionallyGenerateExternalFunctionsFile(CodeThornOptions& ctOpt, FunctionCallMapping* funCallMapping) {
-      std::string fileName=ctOpt.externalFunctionsCSVFileName;
+      std::string fileName=ctOpt.reportFilePath+"/"+ctOpt.externalFunctionsCSVFileName;
       if(fileName.size()>0) {
 	if(!ctOpt.quiet)
 	  cout<<"Writing list of external functions to file "<<fileName<<endl;

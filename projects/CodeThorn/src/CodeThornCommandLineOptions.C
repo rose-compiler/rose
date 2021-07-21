@@ -196,8 +196,9 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("dead-code",po::value< bool >(&ctOpt.deadCodeAnalysis)->default_value(false)->implicit_value(true),"Perform uninitialized analysis and print results.")
     ("opaque-predicates",po::value< bool >(&ctOpt.constantConditionAnalysis)->default_value(false)->implicit_value(true),"Perform uninitialized analysis and print results.")
 
-    ("report-file",po::value< string >(&ctOpt.reportFileName),"Consolidated report, combines information about all analyses [arg].")
-    ("function-report-file",po::value< string >(&ctOpt.functionReportFileName),"Consolidated report, combines analysis results about all functions [arg].")
+    ("report-file-path",po::value< string >(&ctOpt.reportFilePath),"Sets file path for all reports.")
+    //("report-file",po::value< string >(&ctOpt.reportFileName),"Consolidated report, combines information about all analyses [arg].")
+    //("function-report-file",po::value< string >(&ctOpt.functionReportFileName),"Consolidated report, combines analysis results about all functions [arg].")
     ("null-pointer-file",po::value< string >(&ctOpt.nullPointerAnalysisFileName),"Perform null pointer analysis and write results to file [arg].")
     ("out-of-bounds-file",po::value< string >(&ctOpt.outOfBoundsAnalysisFileName),"Perform out-of-bounds analysis and write results to file [arg].")
     ("uninitialized-file",po::value< string >(&ctOpt.uninitializedMemoryAnalysisFileName),"Perform uninitialized analysis and write results to file [arg].")
