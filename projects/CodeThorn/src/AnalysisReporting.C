@@ -194,20 +194,18 @@ namespace CodeThorn {
     }
   }
   
-  void AnalysisReporting::generateAnalysisStatsRawData(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer) {
+  void AnalysisReporting::generateAnalysisLocationReports(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer) {
     for(auto analysisInfo : ctOpt.analysisList()) {
       AnalysisSelector analysisSel=analysisInfo.first;
       // exception: skip some analysis, because they use their own format
       if(analysisSel==ANALYSIS_OPAQUE_PREDICATE||analysisSel==ANALYSIS_DEAD_CODE)
         continue;
       string analysisName=analysisInfo.second;
-      if(ctOpt.getAnalysisReportFileName(analysisSel).size()>0) {
-        ProgramLocationsReport locations=analyzer->getEStateTransferFunctions()->getProgramLocationsReport(analysisSel);
-        string fileName=ctOpt.reportFilePath+"/"+ctOpt.getAnalysisReportFileName(analysisSel);
-        if(!ctOpt.quiet)
-          cout<<"Writing "<<analysisName<<" analysis results to file "<<fileName<<endl;
-        locations.writeResultFile(fileName,ctOpt.csvReportModeString,analyzer->getLabeler());
-      }
+      ProgramLocationsReport locations=analyzer->getEStateTransferFunctions()->getProgramLocationsReport(analysisSel);
+      string fileName=ctOpt.reportFilePath+"/"+analysisName+"-locations.csv";
+      if(!ctOpt.quiet)
+	cout<<"Writing "<<analysisName<<" analysis results to file "<<fileName<<endl;
+      locations.writeResultFile(fileName,ctOpt.csvReportModeString,analyzer->getLabeler());
     }
   }
                              
@@ -285,7 +283,7 @@ namespace CodeThorn {
 
     InterFlow::LabelToFunctionMap map=analyzer->getCFAnalyzer()->labelToFunctionMap(flow);
 
-    std::string cgBegin="digraph G {\n concentrate=true\n";
+    std::string cgBegin="digraph G {\n concentrate=true\n overlap=true\n ";
     std::string cgEnd="}\n";
     std::string cgEdges=analyzer->getInterFlow()->dotCallGraphEdges(map);
     // generate colored nodes

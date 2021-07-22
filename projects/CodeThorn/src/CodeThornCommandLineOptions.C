@@ -441,7 +441,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     } else if (currentArg == "--edg:no_warnings") {
       continue;
     } else {
-      string iPrefix = "-I/";
+      string iPrefix = "-I";
       string dPrefix = "-D"; // special case, cannot contain separating space
       if(currentArg.substr(0, iPrefix.size()) == iPrefix) {
         continue;

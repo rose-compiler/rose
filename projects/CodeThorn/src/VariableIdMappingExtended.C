@@ -791,28 +791,28 @@ namespace CodeThorn {
       }
 
     }
-    cout<<"================================================="<<endl;
-    cout<<"Variable Type Size and Scope Overview"<<endl;
-    cout<<"================================================="<<endl;
-    cout<<"Number of struct vars               : "<<structNum<<endl;
-    cout<<"Number of array vars                : "<<arrayNum<<endl;
-    cout<<"Number of built-in type vars        : "<<singleNum<<endl;
-    cout<<"Number of string literals           : "<<stringLiteralNum<<endl;
-    cout<<"Number of unknown (size) vars       : "<<unknownSizeNum<<endl;
-    cout<<"Number of unspecified size vars     : "<<unspecifiedSizeNum<<endl;
-    cout<<"-------------------------------------------------"<<endl;
-    cout<<"Number of global vars               : "<<globalVarNum<<endl;
-    cout<<"Number of local vars                : "<<localVarNum<<endl;
-    cout<<"Number of function param vars       : "<<paramVarNum<<endl;
-    cout<<"Number of struct/class member vars  : "<<memberVarNum<<endl;
-    cout<<"Number of unknown (scope) vars      : "<<unknownVarNum<<endl;
-    cout<<"-------------------------------------------------"<<endl;
-    cout<<"Maximum struct size                 : "<<maxStructTotalSize<<" bytes"<<endl;
-    cout<<"Maximum array size                  : "<<maxArrayTotalSize<<" bytes"<<endl;
-    cout<<"Maximum array element size          : "<<maxArrayElementSize<<endl;
-    cout<<"Maximum number of elements in struct: "<<maxStructElements<<endl;
-    cout<<"Maximum number of elements in array : "<<maxArrayElements<<endl;
-    cout<<"================================================="<<endl;
+    os<<"================================================="<<endl;
+    os<<"Variable Type Size and Scope Overview"<<endl;
+    os<<"================================================="<<endl;
+    os<<"Number of struct vars               : "<<structNum<<endl;
+    os<<"Number of array vars                : "<<arrayNum<<endl;
+    os<<"Number of built-in type vars        : "<<singleNum<<endl;
+    os<<"Number of string literals           : "<<stringLiteralNum<<endl;
+    os<<"Number of unknown (size) vars       : "<<unknownSizeNum<<endl;
+    os<<"Number of unspecified size vars     : "<<unspecifiedSizeNum<<endl;
+    os<<"-------------------------------------------------"<<endl;
+    os<<"Number of global vars               : "<<globalVarNum<<endl;
+    os<<"Number of local vars                : "<<localVarNum<<endl;
+    os<<"Number of function param vars       : "<<paramVarNum<<endl;
+    os<<"Number of struct/class member vars  : "<<memberVarNum<<endl;
+    os<<"Number of unknown (scope) vars      : "<<unknownVarNum<<endl;
+    os<<"-------------------------------------------------"<<endl;
+    os<<"Maximum struct size                 : "<<maxStructTotalSize<<" bytes"<<endl;
+    os<<"Maximum array size                  : "<<maxArrayTotalSize<<" bytes"<<endl;
+    os<<"Maximum array element size          : "<<maxArrayElementSize<<endl;
+    os<<"Maximum number of elements in struct: "<<maxStructElements<<endl;
+    os<<"Maximum number of elements in array : "<<maxArrayElements<<endl;
+    os<<"================================================="<<endl;
   }
 
   void VariableIdMappingExtended::toStream(ostream& os) {

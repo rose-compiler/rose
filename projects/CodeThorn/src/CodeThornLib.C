@@ -703,7 +703,7 @@ namespace CodeThorn {
       if(ctOpt.analysisList().size()>0) {
 	const bool reportDetectedErrorLines=true;
 	AnalysisReporting::generateVerificationReports(ctOpt,analyzer,reportDetectedErrorLines); // also generates verification call graph
-	AnalysisReporting::generateAnalysisStatsRawData(ctOpt,analyzer);
+	AnalysisReporting::generateAnalysisLocationReports(ctOpt,analyzer);
 	AnalysisReporting::generateAnalyzedFunctionsAndFilesReports(ctOpt,analyzer);
       } else {
 	if(ctOpt.status) cout<<"STATUS: no analysis reports generated (no analysis selected)."<<endl;
@@ -776,11 +776,47 @@ namespace CodeThorn {
       return cfAnalysis;
     }
 #endif
-  
-    void optionallyPrintRunTimeAndMemoryUsage(CodeThornOptions& ctOpt,TimingCollector& tc) {
-      if(ctOpt.status) cout<<tc.toString();
-      if(ctOpt.status) cout<<"Total memory                   : "<<CodeThorn::getPhysicalMemorySize()/(1024*1024) <<" MiB"<<endl;
+
+    string getRunTimeAndMemoryUsageReport(CodeThornOptions& ctOpt,TimingCollector& tc) {
+      stringstream ss;
+      ss<<tc.toString();
+      ss<<"Total memory                   : "<<CodeThorn::getPhysicalMemorySize()/(1024*1024) <<" MiB"<<endl;
+      return ss.str();
     }
+    
+    void optionallyPrintRunTimeAndMemoryUsageReport(CodeThornOptions& ctOpt,TimingCollector& tc) {
+      if(ctOpt.status) cout<<getRunTimeAndMemoryUsageReport(ctOpt,tc);
+    }
+
+    void generateRunTimeAndMemoryUsageReport(CodeThornOptions& ctOpt,TimingCollector& tc) {
+      string reportPathAndFile=ctOpt.reportFilePath+"/"+"runtime-memory-report.txt";
+      write_file(reportPathAndFile, getRunTimeAndMemoryUsageReport(ctOpt,tc));
+      if(ctOpt.status) cout<<"Generated runtime and memory usage report "<<reportPathAndFile<<endl;
+    }
+
+    std::string programStatsToString(ProgramInfo* progInfo, VariableIdMappingExtended* vim) {
+      stringstream ss;
+      ss<<"========================="<<endl;
+      ss<<"PROGRAM STATISTICS REPORT"<<endl;
+      ss<<"========================="<<endl;
+      ss<<progInfo->toStringDetailed();
+      vim->typeSizeOverviewtoStream(ss);
+      return ss.str();
+    }
+
+    std::string programStatsToString(ProgramInfo* progInfo1, ProgramInfo* progInfo2, VariableIdMappingExtended* vim) {
+      stringstream ss;
+      ss<<progInfo1->toStringCompared(progInfo2);
+      vim->typeSizeOverviewtoStream(ss);
+      return ss.str();
+    }
+
+    void generateProgramStats(CodeThornOptions& ctOpt, ProgramInfo* progInfo1, ProgramInfo* progInfo2, VariableIdMappingExtended* vim) {
+      string reportPathAndFile=ctOpt.reportFilePath+"/"+"program-statistics-report.txt";
+      write_file(reportPathAndFile, programStatsToString(progInfo1,progInfo2,vim));
+      if(ctOpt.status) cout<<"Generated program statistics report "<<reportPathAndFile<<endl;
+    }
+    
   } // end of namespace CodeThornLib
     
 } // end of namespace CodeThorn
