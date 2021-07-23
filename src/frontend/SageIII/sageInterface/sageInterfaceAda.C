@@ -706,11 +706,11 @@ namespace
   std::pair<T, const char*>
   parseDec(const char* buf, size_t base = 10)
   {
-    ROSE_ASSERT((*buf != 0) && char2Val(*buf, base).second);
+    ROSE_ASSERT((*buf != '\0') && char2Val(*buf, base).second);
 
     T res = 0;
 
-    while (*buf != 0)
+    while (*buf != '\0')
     {
       const auto v = char2Val(*buf, base);
 
@@ -734,12 +734,12 @@ namespace
   std::pair<T, const char*>
   parseFrac(const char* buf, size_t base = 10)
   {
-    ROSE_ASSERT((*buf != 0) && char2Val(*buf, base).second);
+    ROSE_ASSERT((*buf != '\0') && char2Val(*buf, base).second);
 
     T      res = 0;
     size_t divisor = 1*base;
 
-    while ((*buf != 0) && (!isBasedDelimiter(*buf)))
+    while ((*buf != '\0') && (!isBasedDelimiter(*buf)))
     {
       const auto v = char2Val(*buf, base);
 

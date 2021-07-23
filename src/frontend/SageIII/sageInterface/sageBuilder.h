@@ -957,7 +957,7 @@ ROSE_DLL_API SgChooseExpression * buildChooseExpression_nfi();
 /*! @name Builders for Ada nodes
  */
 
-// ! Build a range expression using start:end:stride for Ada 
+// ! Build a range expression using start:end:stride for Ada
  ROSE_DLL_API SgRangeExp* buildRangeExp(SgExpression *start, SgExpression *end, SgExpression *stride);
 
 //@}
