@@ -220,12 +220,12 @@ namespace
 
     void handle(SgPntrArrRefExp& n)
     {
-      SgExpression* lhs    = n.get_lhs_operand();
-      SgExpression* rhs    = n.get_rhs_operand();
+      SgExpression*  lhs = n.get_lhs_operand();
+      SgExprListExp* rhs = isSgExprListExp(n.get_rhs_operand());
 
       expr(lhs);
       prn("(");
-      expr(rhs);
+      exprlst(SG_DEREF(rhs));
       prn(")");
     }
 

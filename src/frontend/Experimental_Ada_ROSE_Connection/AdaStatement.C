@@ -2468,16 +2468,38 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         logKind("A_Package_Body_Declaration");
 
-        SgScopeStatement&     outer   = ctx.scope();
-        Element_ID            specID  = decl.Corresponding_Declaration;
-        SgAdaPackageSpecDecl& specdcl = lookupNodeAs<SgAdaPackageSpecDecl>(asisDecls(), specID);
-        SgAdaPackageBodyDecl& sgnode  = mkAdaPackageBodyDecl(specdcl, outer);
+        SgScopeStatement&     outer    = ctx.scope();
+        Element_ID            specID   = decl.Corresponding_Declaration;
+
+        // we need to check if the SgAdaPackageSpecDecl is directly available
+        // or if it is wrapped by an SgAdaGenericDecl node.
+        SgNode*               declnode = &lookupNode(asisDecls(), specID);
+        SgAdaPackageSpecDecl* specdcl;
+
+        if (isSgAdaPackageSpecDecl(declnode)) {
+          specdcl = isSgAdaPackageSpecDecl(declnode);
+        } else {
+          if (isSgAdaGenericDecl(declnode)) {
+            SgAdaGenericDecl* generic = isSgAdaGenericDecl(declnode);
+            if (isSgAdaPackageSpecDecl(generic->get_declaration())) {
+              specdcl = isSgAdaPackageSpecDecl(generic->get_declaration());
+            } else {
+              logWarn() << "generic package declaration contains incorrect declaration type." << std::endl;
+              ADA_ASSERT(!FAIL_ON_ERROR(ctx));
+            }
+          } else {
+            logWarn() << "package declaration resolves to neither SgAdaPackageSpecDecl or SgAdaGenericDecl." << std::endl;
+            ADA_ASSERT(!FAIL_ON_ERROR(ctx));
+          }
+        }
+
+        SgAdaPackageBodyDecl& sgnode  = mkAdaPackageBodyDecl(*specdcl, outer);
         SgAdaPackageBody&     pkgbody = SG_DEREF(sgnode.get_definition());
 
         //~ recordNode(asisDecls(), elem.ID, sgnode);
         //~ recordNode(asisDecls(), adaname.id(), sgnode);
 
-        sgnode.set_scope(specdcl.get_scope());
+        sgnode.set_scope(specdcl->get_scope());
         attachSourceLocation(pkgbody, elem, ctx);
         attachSourceLocation(sgnode, elem, ctx);
         outer.append_statement(&sgnode);
@@ -2909,6 +2931,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         Element_ID              id     = adaname.id();
         SgDeclarationStatement* nondef = findFirst(asisTypes(), id);
         SgDeclarationStatement& sgnode = sg::dispatch(MakeDeclaration(adaname.ident, scope, ty, nondef), ty.n);
+
+        setModifiers(sgnode, ty);
 
         privatize(sgnode, isPrivate);
         recordNode(asisTypes(), id, sgnode, nondef != nullptr);

@@ -313,6 +313,89 @@ namespace
       AstContext         ctx;
   };
 
+  SgAdaAccessType*
+  getAccessTypeDefinition(Access_Type_Struct& access_type, AstContext ctx)
+  {
+    auto access_type_kind = access_type.Access_Type_Kind;
+    bool isFuncAccess = false;
+    SgAdaAccessType* access_t;
+
+    switch (access_type_kind) {
+      // variable access kinds
+    case A_Pool_Specific_Access_To_Variable:
+    case An_Access_To_Variable:
+    case An_Access_To_Constant:
+      {
+        SgType& ato = getDefinitionTypeID(access_type.Access_To_Object_Definition, ctx);
+        access_t = &mkAdaAccessType(&ato);
+
+        // handle cases for ALL or CONSTANT general access modifiers
+        switch (access_type_kind) {
+        case An_Access_To_Variable:
+          access_t->set_is_general_access(true);
+          break;
+        case An_Access_To_Constant:
+          access_t->set_is_constant(true);
+          break;
+        default:
+          break;
+        }
+
+        break;
+      }
+
+      // subprogram access kinds
+    case An_Access_To_Function:
+    case An_Access_To_Protected_Function:
+    case An_Access_To_Procedure:
+    case An_Access_To_Protected_Procedure:
+      {
+        logWarn() << "subprogram access type support incomplete" << std::endl;
+
+        if (access_type_kind == An_Access_To_Function ||
+            access_type_kind == An_Access_To_Protected_Function) {
+          // these are functions, so we need to worry about return types
+          isFuncAccess = true;
+        }
+
+        if (access_type.Access_To_Subprogram_Parameter_Profile.Length > 0) {
+          logWarn() << "subprogram access types with parameter profiles not supported." << std::endl;
+          /*
+            ElemIdRange range = idRange(access_type.Access_To_Subprogram_Parameter_Profile);
+
+            SgFunctionParameterList& lst   = mkFunctionParameterList();
+            SgFunctionParameterScope& psc  = mkLocatedNode<SgFunctionParameterScope>(&mkFileInfo());
+            ParameterCompletion{range,ctx}(lst, ctx);
+
+            ((SgAdaAccessType*)res.n)->set_subprogram_profile(&lst);
+          */
+        }
+
+        access_t = &mkAdaAccessType(NULL);
+        access_t->set_is_object_type(false);
+
+        if (isFuncAccess) {
+          SgType &rettype = getDeclTypeID(access_type.Access_To_Function_Result_Profile, ctx);
+          access_t->set_return_type(&rettype);
+        }
+
+        // if protected, set the flag
+        if (access_type_kind == An_Access_To_Protected_Procedure ||
+            access_type_kind == An_Access_To_Protected_Function) {
+          access_t->set_is_protected(true);
+        }
+
+        break;
+      }
+    default:
+      logWarn() << "Unhandled access type kind." << std::endl;
+      ADA_ASSERT(false);
+      access_t = NULL;
+    }
+
+    return access_t;
+  }
+
   TypeData
   getFormalTypeFoundation(const std::string& name, Definition_Struct& def, AstContext ctx)
   {
@@ -330,22 +413,32 @@ namespace
         {
           logKind("A_Formal_Private_Type_Definition");
           SgAdaFormalType* t = &mkAdaFormalType(name);
+          res.hasAbstract = typenode.Has_Abstract;
+          res.hasLimited = typenode.Has_Limited;
+          res.hasTagged = typenode.Has_Tagged;
+
+          // NOTE: we use a private flag on the type instead of the privatize()
+          // code used elsewhere since they currently denote different types of
+          // private-ness.
           if (typenode.Has_Private) {
             t->set_is_private(true);
           }
-          if (typenode.Has_Limited) {
-            t->set_is_limited(true);
-          }
+
           res.n = t;
           break;
         }
 
       case A_Formal_Access_Type_Definition:          // 3.10(3),3.10(5)
-        // TODO: finish me
-        std::cout << "*********** getFormalTypeFoundation Formal_Access_type_Definition" << std::endl;
-        ADA_ASSERT(false);
-        logKind("A_Formal_Access_Type_Definition");
-        break;
+        {
+          logKind("A_Formal_Access_Type_Definition");
+
+          SgAdaFormalType* t = &mkAdaFormalType(name);
+          SgAdaAccessType* access_t = getAccessTypeDefinition(typenode.Access_Type, ctx);
+          t->set_formal_type(access_t);
+          res.n = t;
+
+          break;
+        }
 
         // MS: types to do later when we need them
       case A_Formal_Tagged_Private_Type_Definition:  // 12.5.1(2)   -> Trait_Kinds
@@ -543,81 +636,8 @@ namespace
       case An_Access_Type_Definition:              // 3.10(2)    -> Access_Type_Kinds
         {
           logKind("An_Access_Type_Definition");
-          Access_Type_Struct access_type = typenode.Access_Type;
-          auto access_type_kind = access_type.Access_Type_Kind;
-          bool isFuncAccess = false;
-
-          switch (access_type_kind) {
-          // variable access kinds
-          case A_Pool_Specific_Access_To_Variable:
-          case An_Access_To_Variable:
-          case An_Access_To_Constant:
-            {
-              SgType& ato = getDefinitionTypeID(access_type.Access_To_Object_Definition, ctx);
-              res.n = &mkAdaAccessType(&ato);
-              // handle cases for ALL or CONSTANT general access modifiers
-              switch (access_type_kind) {
-              case An_Access_To_Variable:
-                ((SgAdaAccessType*)res.n)->set_is_general_access(true);
-                break;
-              case An_Access_To_Constant:
-                ((SgAdaAccessType*)res.n)->set_is_constant(true);
-                break;
-              default:
-                break;
-              }
-
-              break;
-            }
-
-          // subprogram access kinds
-          case An_Access_To_Function:
-          case An_Access_To_Protected_Function:
-          case An_Access_To_Procedure:
-          case An_Access_To_Protected_Procedure:
-            {
-              logWarn() << "subprogram access type support incomplete" << std::endl;
-
-              if (access_type_kind == An_Access_To_Function ||
-                  access_type_kind == An_Access_To_Protected_Function) {
-                // these are functions, so we need to worry about return types
-                isFuncAccess = true;
-              }
-
-              if (access_type.Access_To_Subprogram_Parameter_Profile.Length > 0) {
-                logWarn() << "subprogram access types with parameter profiles not supported." << std::endl;
-                /*
-                ElemIdRange range = idRange(access_type.Access_To_Subprogram_Parameter_Profile);
-
-                SgFunctionParameterList& lst   = mkFunctionParameterList();
-                SgFunctionParameterScope& psc  = mkLocatedNode<SgFunctionParameterScope>(&mkFileInfo());
-                ParameterCompletion{range,ctx}(lst, ctx);
-
-                ((SgAdaAccessType*)res.n)->set_subprogram_profile(&lst);
-                */
-              }
-
-              res.n = &mkAdaAccessType(NULL);
-              ((SgAdaAccessType*)res.n)->set_is_object_type(false);
-
-              if (isFuncAccess) {
-                SgType &rettype = getDeclTypeID(access_type.Access_To_Function_Result_Profile, ctx);
-                ((SgAdaAccessType*)res.n)->set_return_type(&rettype);
-              }
-
-              // if protected, set the flag
-              if (access_type_kind == An_Access_To_Protected_Procedure ||
-                  access_type_kind == An_Access_To_Protected_Function) {
-                ((SgAdaAccessType*)res.n)->set_is_protected(true);
-              }
-
-              break;
-            }
-          default:
-            logWarn() << "Unhandled access type kind." << std::endl;
-            res.n = sb::buildVoidType();
-          }
-
+          SgAdaAccessType* access_t = getAccessTypeDefinition(typenode.Access_Type, ctx);
+          res.n = access_t;
           break;
         }
 

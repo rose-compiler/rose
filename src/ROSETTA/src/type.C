@@ -1136,9 +1136,6 @@ Grammar::setUpTypes ()
      AdaFormalType.setDataPrototype ("bool"         , "is_private" , "= false",
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     AdaFormalType.setDataPrototype ("bool"         , "is_limited" , "= false",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
      AdaFormalType.setDataPrototype ("SgType*"      , "formal_type", "= NULL",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
