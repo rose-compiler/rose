@@ -452,7 +452,9 @@ void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
       writeToMemoryLocation(av,abstractValue,false /*weak update*/);
     }
   } else {
-    conditionalApproximateRawWriteToMemoryLocation(abstractMemLoc,abstractValue,strongUpdate);
+    // if an abstract memloc is a summary, ensure that only a weak update is performed by setting the strongupdate flag to false
+    // in other words: a strong update is only requested if the parameter strongUpdate is true AND abstractMemLoc is NOT a summary
+    conditionalApproximateRawWriteToMemoryLocation(abstractMemLoc,abstractValue,strongUpdate&&(!abstractMemLoc.isSummary()));
   }
 }
 

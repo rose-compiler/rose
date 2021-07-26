@@ -6,8 +6,8 @@ AUTOMAKE_OPTIONS = subdir-objects
 COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counterexamples/qc.hs counterexamples/log2csv.awk
 EXTRA_DIST = Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
-# 
-bin_PROGRAMS = codethorn memthorn thorn1 ltlthorn woodpecker analyterix addressTakenAnalysis cldemo
+#
+bin_PROGRAMS = codethorn memthorn thorn1 thorn2 ltlthorn woodpecker analyterix addressTakenAnalysis cldemo
 
 # matcher_demo matcher astinfo cldemo
 noinst_PROGRAMS = addressTakenAnalysis cldemo
@@ -35,7 +35,7 @@ endif
 
 MYDATE = $(shell date +%Y_%m_%d)
 
-lib_LTLIBRARIES = libcodethorn.la libltlthorn.la libacuity.la
+lib_LTLIBRARIES = libcodethorn.la libltlthorn.la
 
 ##############################################################
 # LIBRARY: CODETHORN (CORE)
@@ -334,7 +334,7 @@ libcodethorn_la_CXXFLAGS = -fopenmp -Wall -O3
 codethornincludedir = $(pkgincludedir)/codethorn
 codethorninclude_HEADERS=\
   $(CODETHORN_SOLO_HEADER_FILES) \
-  $(CODETHORN_HEADER_FILES) 
+  $(CODETHORN_HEADER_FILES)
 
 # codethorn (core) library sources
 libcodethorn_la_SOURCES=\
@@ -421,17 +421,17 @@ libltlthorn_la_SOURCES= \
 ##############################################################
 
 # yacc flags for LTL parser
-codethorn_YFLAGS = -p ltl_ 
+codethorn_YFLAGS = -p ltl_
 
 # this line creates speparately named object files
-codethorn_CXXFLAGS = -fopenmp -Wall -O3 
+codethorn_CXXFLAGS = -fopenmp -Wall -O3
 
 # codethorn has most of its code organized in two separate libraries
 codethorn_DEPENDENCIES=libcodethorn.la libltlthorn.la
 
 if ROSE_WITH_SPOT
 #spot and bdd need to be linked last with gcc 5.4
-codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn $(Z3_LINK) -lspot -lbdd 
+codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn $(Z3_LINK) -lspot -lbdd
 codethorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
 else
 codethorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn
@@ -457,17 +457,17 @@ codethorn_SOURCES = \
 ##############################################################
 
 # yacc flags for LTL parser
-ltlthorn_YFLAGS = -p ltl_ 
+ltlthorn_YFLAGS = -p ltl_
 
 # this line creates speparately named object files
-ltlthorn_CXXFLAGS = -fopenmp -Wall -O3 
+ltlthorn_CXXFLAGS = -fopenmp -Wall -O3
 
 # ltlthorn has most of its code organized in two separate libraries
 ltlthorn_DEPENDENCIES=libcodethorn.la libltlthorn.la
 
 if ROSE_WITH_SPOT
 #spot and bdd need to be linked last with gcc 5.4
-ltlthorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn $(Z3_LINK) -lspot -lbdd 
+ltlthorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn $(Z3_LINK) -lspot -lbdd
 ltlthorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
 else
 ltlthorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn
@@ -494,17 +494,17 @@ ltlthorn_SOURCES = \
 ##############################################################
 
 # yacc flags for LTL parser
-memthorn_YFLAGS = -p ltl_ 
+memthorn_YFLAGS = -p ltl_
 
 # this line creates speparately named object files
-memthorn_CXXFLAGS = -fopenmp -Wall -O3 
+memthorn_CXXFLAGS = -fopenmp -Wall -O3
 
 # memthorn has most of its code organized in two separate libraries
 memthorn_DEPENDENCIES=libcodethorn.la libltlthorn.la
 
 if ROSE_WITH_SPOT
 #spot and bdd need to be linked last with gcc 5.4
-memthorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn $(Z3_LINK) -lspot -lbdd 
+memthorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn $(Z3_LINK) -lspot -lbdd
 memthorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
 else
 memthorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn
@@ -531,17 +531,17 @@ memthorn_SOURCES = \
 ##############################################################
 
 # yacc flags for LTL parser
-thorn1_YFLAGS = -p ltl_ 
+thorn1_YFLAGS = -p ltl_
 
 # this line creates speparately named object files
-thorn1_CXXFLAGS = -fopenmp -Wall -O3 
+thorn1_CXXFLAGS = -fopenmp -Wall -O3
 
 # thorn1 has most of its code organized in two separate libraries
 thorn1_DEPENDENCIES=libcodethorn.la libltlthorn.la
 
 if ROSE_WITH_SPOT
 #spot and bdd need to be linked last with gcc 5.4
-thorn1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn $(Z3_LINK) -lspot -lbdd 
+thorn1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn $(Z3_LINK) -lspot -lbdd
 thorn1_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
 else
 thorn1_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn
@@ -561,6 +561,21 @@ thorn1_SOURCES = \
   LTLParser.y++ \
   Thorn1CommandLineOptions.C \
   thorn1.C
+
+###################################################################
+# TOOL: THORN2 class hierarchy analysis (formerly known as Acuity)
+###################################################################
+
+# thorn2 uses libcodethorn
+thorn2_DEPENDENCIES=libcodethorn.la
+
+thorn2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn
+
+# codethorn sources in addition to libcodethorn
+thorn2_SOURCES = \
+  CodeThornCommandLineOptions.C \
+  thorn2.C
+
 
 ##############################################################
 # TOOL: WOODPECKER
@@ -619,18 +634,6 @@ roseonlytools: woodpecker analyterix
 
 check-roseonlytools: check-flow-insensitive
 
-
-##############################################################
-# TOOL: acuity
-##############################################################
-
-libacuity_la_DEPENDENCIES=libcodethorn.la
-libacuity_la_LIBADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn 
-libacuity_la_LDFLAGS = -version-info 0:0:0
-
-# library sources
-libacuity_la_SOURCES= \
-  plugins/acuity.C
 
 ##############################################################
 # TOOL: ADDRESSTAKENANALYSIS (for testing only)
@@ -709,12 +712,9 @@ check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
 
-CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-io unit-test check-omp-cfg check-commandline-options check-vis
+CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-io unit-test check-omp-cfg check-commandline-options check-vis check-thorn2
 
-CHECK_DEFAULT_FAILING_NEW=check-acuity
-# install_tree//lib/libcodethorn.so.0: undefined symbol: _ZTIN5boost15program_options13variables_mapE when loading .libs/libacuity.so
-# is not compiled with openmp enabled
-
+CHECK_DEFAULT_FAILING_NEW=
 CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 
 #CHECK_WITH_SPOT_ONLY=check-ltl check-ltl-driven check-svcomp-witness
@@ -806,7 +806,7 @@ check-omp-cfg:
 check-ltl-old: check-ltl-rers-different-versions
 
 # failing tests
-#check-failing: 
+#check-failing:
 
 # failing tests due to changes in domain
 #check-ltl-failing: check-ltl-rers-array
@@ -826,7 +826,7 @@ check-ltl-rers-different-versions:
 
 #test the parallel analysis of RERS Problem1402 (4 threads, problem features arithmetic)
 check-ltl-rers-arithmetic:
-	@$(srcdir)/scripts/runRersArithmeticProblemTest $(srcdir) $(top_builddir)/projects/CodeThorn/src 
+	@$(srcdir)/scripts/runRersArithmeticProblemTest $(srcdir) $(top_builddir)/projects/CodeThorn/src
 
 #test the analysis of RERS Problem1403 (which features arrays)
 check-ltl-rers-array:
@@ -894,15 +894,15 @@ check-vis:
 	$(srcdir)/scripts/runVisTests $(srcdir)/tests
 
 
-.PHONY: check-acuity-with-sage3
-check-acuity-with-sage3:
-	$(bindir)/rose-compiler -I$(includedir) -I$(includedir)/rose -rose:plugin_lib .libs/libacuity.so -rose:plugin_action Acuity -rose:plugin_arg_Acuity --dot=sage3.dot  -rose:plugin_arg_Acuity --layout=sage3_class_layout.txt -rose:plugin_arg_Acuity --virtual_functions=sage3_virtual_functions.txt -rose:skipfinalCompileStep -rose:skip_unparse  $(srcdir)/tests/acuity/sage3.cc
-	$(bindir)/rose-compiler -I$(includedir) -I$(includedir)/rose -rose:plugin_lib .libs/libacuity.so -rose:plugin_action Acuity -rose:plugin_arg_Acuity --dot=sage3-e.dot  -rose:plugin_arg_Acuity --layout=sage3-e_class_layout.txt -rose:plugin_arg_Acuity --virtual_functions=sage3-e_virtual_functions.txt -rose:plugin_arg_Acuity --original_name=5 -rose:skipfinalCompileStep -rose:skip_unparse $(srcdir)/tests/acuity/sage3.cc
+.PHONY: check-thorn2-with-sage3
+check-thorn2-with-sage3: thorn2
+	./thorn2 -I$(includedir) -I$(includedir)/rose --thorn:dot=sage3.dot --thorn:layout_txt=sage3_class_layout.txt --thorn:virtual_functions=sage3_virtual_functions.txt  --thorn:layout_dot=sage3_class_layout.dot $(srcdir)/tests/thorn2/sage3.cc
+	./thorn2 -I$(includedir) -I$(includedir)/rose --thorn:dot=sage3-e.dot --thorn:layout_txt=sage3-e_class_layout.txt --thorn:virtual_functions=sage3-e_virtual_functions.txt --thorn:layout_dot=sage3-e_class_layout.dot --thorn:original_name=5 $(srcdir)/tests/thorn2/sage3.cc
 
-.PHONY: check-acuity
-check-acuity: 
-	$(bindir)/rose-compiler -I$(includedir) -I$(includedir)/rose -rose:plugin_lib .libs/libacuity.so -rose:plugin_action Acuity -rose:plugin_arg_Acuity --dot=simple.dot  -rose:plugin_arg_Acuity --layout=simple_class_layout.txt -rose:plugin_arg_Acuity --virtual_functions=simple_virtual_functions.txt -rose:skipfinalCompileStep -rose:skip_unparse  $(srcdir)/tests/acuity/simple.cc
-	$(bindir)/rose-compiler -I$(includedir) -I$(includedir)/rose -rose:plugin_lib .libs/libacuity.so -rose:plugin_action Acuity -rose:plugin_arg_Acuity --dot=simple-e.dot  -rose:plugin_arg_Acuity --layout=simple-e_class_layout.txt -rose:plugin_arg_Acuity --virtual_functions=simple-e_virtual_functions.txt -rose:plugin_arg_Acuity --original_name=0 -rose:skipfinalCompileStep -rose:skip_unparse $(srcdir)/tests/acuity/simple.cc
+.PHONY: check-thorn2
+check-thorn2: thorn2
+	./thorn2 -I$(includedir) -I$(includedir)/rose --thorn:dot=simple.dot --thorn:layout_txt=simple_class_layout.txt --thorn:layout_dot=simple_class_layout.dot --thorn:virtual_functions=simple_virtual_functions.txt   $(srcdir)/tests/thorn2/simple.cc
+	./thorn2 -I$(includedir) -I$(includedir)/rose --thorn:dot=simple-e.dot --thorn:layout_txt=simple-e_class_layout.txt --thorn:layout_dot=simple-e_class_layout.dot --thorn:virtual_functions=simple-e_virtual_functions.txt --thorn:original_name=0 $(srcdir)/tests/thorn2/simple.cc
 
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))

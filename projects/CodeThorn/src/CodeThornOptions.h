@@ -11,7 +11,10 @@ namespace CodeThorn {
 }
 
 
-struct CodeThornOptions : public CodeThorn::Options {
+class CodeThornOptions : public CodeThorn::Options {
+public:
+  CodeThornOptions();
+  
   // hidden options
   int maxTransitionsForcedTop1=-1;
   int maxTransitionsForcedTop2=-1;
@@ -113,7 +116,7 @@ struct CodeThornOptions : public CodeThorn::Options {
   bool byteMode=false; // switches between byte-addresses and index-based addresses in PState
   int testSelector=0;
   bool intraProcedural=false;
-  int precisionLevel=1;
+  int precisionLevel=0; // keeps default configuration (if =0 configurePrecisionOption does not change any settings)
   bool pointerSetsEnabled=false; // used in more precise pointer analysis
   std::string csvReportModeString="generate";
 
@@ -220,16 +223,20 @@ struct CodeThornOptions : public CodeThorn::Options {
     bool printTransferFunctionInfo=false;
   } info;
 
+  void configurePrecisionOption();
   bool getInterProceduralFlag();
+  bool getIntraProceduralFlag();
   bool activeOptionsRequireZ3Library();
   bool getAnalysisSelectionFlag(CodeThorn::AnalysisSelector asel);
   std::string getAnalysisReportFileName(CodeThorn::AnalysisSelector asel);
   typedef std::list<std::pair<CodeThorn::AnalysisSelector,std::string> > AnalysisListType;
   AnalysisListType analysisList() const;
-
+  void setAnalysisList(CodeThornOptions::AnalysisListType list);
   // default hard code init values
   int maxExactMemorySizeRepresentation=10;
   bool exprEvalTest=false;
+private:
+  CodeThornOptions::AnalysisListType _analysisList;
 };
 
 #endif

@@ -938,13 +938,12 @@ namespace
     {
       prn("type ");
       prn(n.get_name());
-      prn(" is ");
+      prn(" is");
+      modifiers(n);
+
       SgAdaFormalType* ty = n.get_formal_type();
-      if (ty->get_is_limited()) {
-        prn("limited ");
-      }
       if (ty->get_is_private()) {
-        prn("private");
+        prn(" private");
       }
       prn(";\n");
     }
@@ -2112,4 +2111,3 @@ Unparse_Ada::closeScope()
   SG_DEREF(entry.unparseInfo).set_current_scope(entry.parentScope);
   scope_state.pop_back();
 }
-

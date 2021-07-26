@@ -606,6 +606,8 @@ void CodeThorn::CTAnalysis::runSolver() {
 void CodeThorn::CTAnalysis::runAnalysisPhase2(TimingCollector& tc) {
     tc.startTimer();
     this->printStatusMessageLine("==============================================================");
+    if(_ctOpt.status && _ctOpt.contextSensitive)
+      cout<<"STATUS: context sensitive anlaysis with call string length "<<_ctOpt.callStringLength<<"."<<endl;
     if(!this->getModeLTLDriven() && _ctOpt.z3BasedReachabilityAnalysis==false && _ctOpt.ssa==false) {
       switch(_ctOpt.abstractionMode) {
       case 0:

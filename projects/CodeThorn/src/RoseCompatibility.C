@@ -845,6 +845,15 @@ RoseCompatibilityBridge::functionNomenclator() const
   return [=](FunctionId id) -> std::string { return rcb->nameOf(id); };
 }
 
+VarNameFn
+RoseCompatibilityBridge::variableNomenclator() const
+{
+  const RoseCompatibilityBridge* rcb = this;
+
+  return [=](VariableId id) -> std::string { return rcb->nameOf(id); };
+}
+
+
 ClassNameFn
 RoseCompatibilityBridge::classNomenclator() const
 {

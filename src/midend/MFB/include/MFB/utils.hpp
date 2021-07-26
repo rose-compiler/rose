@@ -3,7 +3,7 @@
 #define __MFB_UTILS_HPP__
 
 
-
+class SgProject;
 class SgVariableSymbol;
 class SgType;
 class SgScopeStatement;
@@ -26,6 +26,8 @@ typedef std::vector<SgTemplateArgument*> SgTemplateArgumentPtrList;
 namespace MFB {
 
 namespace Utils {
+
+void clear_global_scope_accross_files(SgProject * project);
 
 SgVariableSymbol * getExistingSymbolOrBuildDecl(const std::string & name, SgType * type, SgScopeStatement * scope, SgInitializer * init = NULL);
 

@@ -44,9 +44,11 @@
 #include "AnalysisReporting.h"
 #include "CTAnalysis.h"
 
+#if HAVE_Z3
 // Z3-based analyser / SSA 
 #include "z3-prover-connection/SSAGenerator.h"
 #include "z3-prover-connection/ReachabilityAnalyzerZ3.h"
+#endif
 
 #if defined(__unix__) || defined(__unix) || defined(unix)
 #include <sys/resource.h>
@@ -128,6 +130,7 @@ AbstractValue CodeThorn::evaluateExpressionWithEmptyState(SgExpression* expr) {
   
 namespace CodeThorn {
   namespace CodeThornLib {
+
     void turnOffRoseWarnings() {
       string turnOffRoseWarnings=string("Rose(none,>=error),Rose::EditDistance(none,>=error),Rose::FixupAstDeclarationScope(none,>=error),")
 	+"Rose::FixupAstSymbolTablesToSupportAliasedSymbols(none,>=error),"
@@ -702,6 +705,8 @@ namespace CodeThorn {
 	AnalysisReporting::generateVerificationReports(ctOpt,analyzer,reportDetectedErrorLines); // also generates verification call graph
 	AnalysisReporting::generateAnalysisStatsRawData(ctOpt,analyzer);
 	AnalysisReporting::generateAnalyzedFunctionsAndFilesReports(ctOpt,analyzer);
+      } else {
+	if(ctOpt.status) cout<<"STATUS: no analysis reports generated (no analysis selected)."<<endl;
       }
     }
     void optionallyGenerateCallGraphDotFile(CodeThornOptions& ctOpt,CTAnalysis* analyzer) {

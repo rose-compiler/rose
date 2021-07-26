@@ -51,10 +51,6 @@
 #include "CtxCallStrings.h" // for setting call string options
 #include "AnalysisReporting.h"
 
-// Z3-based analyser / SSA 
-#include "z3-prover-connection/SSAGenerator.h"
-#include "z3-prover-connection/ReachabilityAnalyzerZ3.h"
-
 #include "ConstantConditionAnalysis.h"
 #include "CodeThornLib.h"
 #include "LTLThornLib.h"
@@ -120,31 +116,6 @@ Solver* createSolver(CodeThornOptions& ctOpt) {
   }
   }
   return solver;
-}
-
-void optionallyRunZ3AndExit(CodeThornOptions& ctOpt,CTAnalysis* analyzer) {
-#ifdef HAVE_Z3
-  if(ctOpt.z3BasedReachabilityAnalysis)
-    {
-      assert(ctOpt.z3UpperInputBound!=-1 && ctOpt.z3VerifierErrorNumber!=-1);	
-      int RERSUpperBoundForInput=ctOpt.z3UpperInputBound;
-      int RERSVerifierErrorNumber=ctOpt.z3VerifierErrorNumber;
-      cout << "generateSSAForm()" << endl;
-      ReachabilityAnalyzerZ3* reachAnalyzer = new ReachabilityAnalyzerZ3(RERSUpperBoundForInput, RERSVerifierErrorNumber, analyzer, &logger);	
-      cout << "checkReachability()" << endl;
-      reachAnalyzer->checkReachability();
-
-      exit(0);
-    }
-#endif	
-}
-
-void optionallyRunSSAGeneratorAndExit(CodeThornOptions& ctOpt, CTAnalysis* analyzer) {
-  if(ctOpt.ssa) {
-    SSAGenerator* ssaGen = new SSAGenerator(analyzer, &logger);
-    ssaGen->generateSSAForm();
-    exit(0);
-  }
 }
 
 int main( int argc, char * argv[] ) {

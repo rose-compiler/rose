@@ -7,18 +7,17 @@
 
 // Mandatory include headers
 #include "rose.h"
-#include "plugin.h"
-
 #include "Rose/CommandLine.h"
 #include "Sawyer/CommandLine.h"
-
-// Programmatic headers
-//~ #include "ClassHierarchyGraph.h"
-#include "CodeThornLib.h"
-#include "VariableIdMapping.h"
-#include "FunctionIdMapping.h"
 #include "sageGeneric.h"
 
+// Programmatic codethorn headers
+#include "CodeThornLib.h"
+#include "CodeThornCommandLineOptions.h"
+#include "TimeMeasurement.h"
+#include "FunctionIdMapping.h"
+
+// Class hierarchy analysis
 #include "ClassHierarchyAnalysis.h"
 #include "ObjectLayoutAnalysis.h"
 #include "ClassHierarchyWriter.h"
@@ -26,6 +25,8 @@
 namespace ct  = CodeThorn;
 namespace si  = SageInterface;
 namespace scl = Sawyer::CommandLine;
+
+const std::string thorn2version = "0.9.6";
 
 namespace
 {
@@ -161,13 +162,18 @@ std::string encodedKey(ClassKeyType key, ClassNameFn* fn, const char* prefix, si
   return encodedName((*fn)(key), prefix, maxlen);
 }
 
+std::string encodedVar(VariableId key, VarNameFn* fn, const char* prefix, size_t maxlen)
+{
+  return encodedName((*fn)(key), prefix, maxlen);
+}
+
+///
+template <class GeneratorFunction>
+struct NameGenerator;
 
 /// For classes the memoization is applied to class key type
 /// \details
 ///    different classes get different names
-template <class GeneratorFunction>
-struct NameGenerator {};
-
 template <>
 struct NameGenerator<ClassNameFn>
 {
@@ -185,6 +191,30 @@ struct NameGenerator<ClassNameFn>
 
     Memoizer<EncoderFn> memo;
     ClassNameFn         nameGen;
+    const char* const   prefix;
+    const size_t        maxlen;
+};
+
+/// For variables the memoization is applied to class key type
+/// \details
+///    different classes get different names
+template <>
+struct NameGenerator<VarNameFn>
+{
+    NameGenerator(VarNameFn gen, const char* nameprefix, size_t numCharsOfOriginalName)
+    : memo(&encodedVar), nameGen(gen), prefix(nameprefix), maxlen(numCharsOfOriginalName)
+    {}
+
+    std::string operator()(VariableId key)
+    {
+      return memo(key, &nameGen, prefix, maxlen);
+    }
+
+  private:
+    using EncoderFn = decltype(&encodedVar);
+
+    Memoizer<EncoderFn> memo;
+    VarNameFn           nameGen;
     const char* const   prefix;
     const size_t        maxlen;
 };
@@ -284,12 +314,14 @@ struct Parameters
 {
   std::string dotfile_output         = opt_none;
   std::string txtfile_layout         = opt_none;
+  std::string dotfile_layout         = opt_none;
   std::string txtfile_vfun           = opt_none;
   int         numCharsOfOriginalName = -1;
   bool        withOverridden         = false;
 
   static const std::string dot_output;
   static const std::string txt_layout;
+  static const std::string dot_layout;
   static const std::string txt_vfun;
   static const std::string name_encoding;
   static const std::string vfun_overridden;
@@ -298,7 +330,8 @@ struct Parameters
 };
 
 const std::string Parameters::dot_output("dot");
-const std::string Parameters::txt_layout("layout");
+const std::string Parameters::txt_layout("layout_txt");
+const std::string Parameters::dot_layout("layout_dot");
 const std::string Parameters::txt_vfun("virtual_functions");
 const std::string Parameters::name_encoding("original_name");
 const std::string Parameters::vfun_overridden("with_overriden");
@@ -308,28 +341,31 @@ const std::string Parameters::opt_none("");
 } // anonymous namespace
 
 
-struct Acuity : Rose::PluginAction
+struct Acuity
 {
-    typedef Rose::PluginAction base;
-
-    // passed as -rose:plugin_arg_NAME
-    //   e.g., -rose:plugin_arg_o output file
-    bool ParseArgs(const std::vector<std::string>& args) ROSE_OVERRIDE
+    /// sets the Acuity settings using the command line arguments
+    /// \returns a list of unparsed arguments
+    std::vector<std::string>
+    parseArgs(std::vector<std::string> args)
     {
       scl::Parser p = Rose::CommandLine::createEmptyParserStage("", "");
 
-      //~ p.errorStream(mlog[Sawyer::Message::FATAL]);               // print messages and exit rather than throwing exceptions
-      p.with(Rose::CommandLine::genericSwitches());   // things like --help, --version, --log, --threads, etc.
+      // things like --help, --version, --log, --threads, etc.
+      p.with(Rose::CommandLine::genericSwitches());
       //~ p.doc("Synopsis", "@prop{programName} [@v{switches}] @v{file_names}..."); // customized synopsis
 
      // Create a group of switches specific to this tool
       scl::SwitchGroup acuity("Acuity - specific switches");
 
-      acuity.name("acuity");  // the optional switch prefix
+      acuity.name("thorn");  // the optional switch prefix
 
       acuity.insert(scl::Switch(Parameters::dot_output)
             .argument("filename", scl::anyParser(params.dotfile_output))
             .doc("filename for printing class hierarchy"));
+
+      acuity.insert(scl::Switch(Parameters::dot_layout)
+            .argument("filename", scl::anyParser(params.dotfile_layout))
+            .doc("filename for printing object layout tables as dot graph"));
 
       acuity.insert(scl::Switch(Parameters::txt_layout)
             .argument("filename", scl::anyParser(params.txtfile_layout))
@@ -348,9 +384,9 @@ struct Acuity : Rose::PluginAction
             .intrinsicValue(true, params.withOverridden)
             .doc("lists all overriding functions in derived classes."));
 
-      p.with(acuity).parse(args).apply();
+      scl::ParserResult cmdline = p.with(acuity).parse(args).apply();
 
-      return base::ParseArgs(args);
+      return cmdline.unparsedArgs();
     }
 
     void
@@ -361,10 +397,11 @@ struct Acuity : Rose::PluginAction
                            );
 
     void
-    writeObjLayoutIfRequested( const ct::RoseCompatibilityBridge& compatLayer,
+    writeLayoutIfRequested( const ct::RoseCompatibilityBridge& compatLayer,
                                const Parameters& params,
                                ct::ClassNameFn& classNameFn,
-                               ct::FuncNameFn& funcNameFn,
+                               ct::VarNameFn& varNameFn,
+                               ct::ClassFilterFn include,
                                const ct::AnalysesTuple& analyses
                              );
 
@@ -378,40 +415,28 @@ struct Acuity : Rose::PluginAction
                             );
 
 
-    void process(SgProject* n) ROSE_OVERRIDE
+    void process(SgProject& project, ct::VariableIdMapping& vmap, const ct::FunctionIdMapping& fmap)
     {
       using CompatibilityBridge = ct::RoseCompatibilityBridge;
 
-      static constexpr size_t MAX_ERROR_MSG = 99;
-
-      ROSE_ASSERT(n);
-
-      ct::initDiagnostics();
-
-      logInfo() << "Acuity: "
+      logInfo() << "Thorn 2 (aka Acuity): "
                 << params.dotfile_output
                 << " - " << params.txtfile_layout
                 << std::endl;
 
-      ct::VariableIdMapping vmap;
-      ct::FunctionIdMapping fmap;
-
-      logInfo() << "initializing data structures.. " << std::endl;
-      vmap.computeVariableSymbolMapping(n, MAX_ERROR_MSG);
-      fmap.computeFunctionSymbolMapping(n);
-
       logInfo() << "getting all classes.. " << std::endl;
-      CompatibilityBridge   compatLayer{vmap, fmap};
-      ct::AnalysesTuple     analyses = ct::analyzeClassesAndCasts(compatLayer, n);
+      CompatibilityBridge compatLayer{vmap, fmap};
+      ct::AnalysesTuple   analyses = ct::analyzeClassesAndCasts(compatLayer, &project);
       logInfo() << "getting all classes done. " << std::endl;
 
-      IncludeInOutputSet    outset = buildOutputSet(std::get<0>(analyses));
-      const int             maxlen = params.numCharsOfOriginalName;
-      ct::ClassNameFn       clsNameGen = createNameGenerator(compatLayer.classNomenclator(), "Cl", maxlen);
-      ct::FuncNameFn        funNameGen = createNameGenerator(compatLayer.functionNomenclator(), "fn", maxlen);
+      IncludeInOutputSet  outset = buildOutputSet(std::get<0>(analyses));
+      const int           maxlen = params.numCharsOfOriginalName;
+      ct::ClassNameFn     clsNameGen = createNameGenerator(compatLayer.classNomenclator(), "Cl", maxlen);
+      ct::FuncNameFn      funNameGen = createNameGenerator(compatLayer.functionNomenclator(), "fn", maxlen);
+      ct::VarNameFn       varNameGen = createNameGenerator(compatLayer.variableNomenclator(), "var", maxlen);
 
       writeDotFileIfRequested  (params, clsNameGen, outset, analyses);
-      writeObjLayoutIfRequested(compatLayer, params, clsNameGen, funNameGen, analyses);
+      writeLayoutIfRequested(compatLayer, params, clsNameGen, varNameGen, outset, analyses);
       writeVFunInfoIfRequested (compatLayer, params, clsNameGen, funNameGen, outset, analyses);
     }
 
@@ -423,14 +448,21 @@ struct Acuity : Rose::PluginAction
 
 
 void
-Acuity::writeObjLayoutIfRequested( const ct::RoseCompatibilityBridge& compatLayer,
-                                   const Parameters& params,
-                                   ct::ClassNameFn& classNameFn,
-                                   ct::FuncNameFn& funcNameFn,
-                                   const ct::AnalysesTuple& analyses
-                                 )
+Acuity::writeLayoutIfRequested( const ct::RoseCompatibilityBridge& compatLayer,
+                                const Parameters& params,
+                                ct::ClassNameFn& classNameFn,
+                                ct::VarNameFn& varNameFn,
+                                ct::ClassFilterFn include,
+                                const ct::AnalysesTuple& analyses
+                              )
 {
-  if (params.txtfile_layout == Parameters::opt_none)
+  using OutputGenFn = decltype(&classLayoutDot);
+
+  const bool printLayout = (  params.txtfile_layout != Parameters::opt_none
+                           || params.dotfile_layout != Parameters::opt_none
+                           );
+
+  if (!printLayout)
     return;
 
   logInfo() << "computing class layout"
@@ -438,15 +470,26 @@ Acuity::writeObjLayoutIfRequested( const ct::RoseCompatibilityBridge& compatLaye
 
   ct::ObjectLayoutContainer layouts = ct::computeObjectLayouts(analyses.classAnalysis());
 
-  logInfo() << "writing class layout file " << params.txtfile_layout << ".."
-            << std::endl;
+  auto outputGen =
+    [&](const std::string& filename, const std::string& filekind, OutputGenFn outfn) -> void
+    {
+      if (filename == Parameters::opt_none) return;
 
-  std::ofstream             outfile{params.txtfile_layout};
+      logInfo() << "writing class layout file (" << filekind << "):" << filename << ".."
+                << std::endl;
 
-  outfile << ct::ObjectLayoutPrinter{compatLayer, layouts} << std::endl;
+      std::ofstream outfile{filename};
 
-  logInfo() << "writing layout file done" << std::endl;
+      outfn(outfile, classNameFn, varNameFn, include, layouts);
+
+      logInfo() << "done writing layout." << std::endl;
+    };
+
+  outputGen(params.txtfile_layout, "txt", classLayoutTxt);
+  outputGen(params.dotfile_layout, "dot", classLayoutDot);
 }
+
+
 
 
 void
@@ -471,14 +514,14 @@ Acuity::writeVFunInfoIfRequested( const ct::RoseCompatibilityBridge& compatLayer
 
   std::ofstream outfile{params.txtfile_vfun};
 
-  writeVirtualFunctions( outfile,
-                         classNameFn,
-                         funcNameFn,
-                         include,
-                         analyses.classAnalysis(),
-                         vfa,
-                         params.withOverridden
-                       );
+  virtualFunctionsTxt( outfile,
+                       classNameFn,
+                       funcNameFn,
+                       include,
+                       analyses.classAnalysis(),
+                       vfa,
+                       params.withOverridden
+                     );
 
   logInfo() << "writing virtual function information done" << std::endl;
 }
@@ -499,7 +542,7 @@ Acuity::writeDotFileIfRequested( const Parameters& params,
 
   std::ofstream outfile{params.dotfile_output};
 
-  writeClassDotFile( outfile,
+  classHierarchyDot( outfile,
                      classNameFn,
                      include,
                      analyses.classAnalysis(),
@@ -509,8 +552,110 @@ Acuity::writeDotFileIfRequested( const Parameters& params,
   logInfo() << "writing dot file done" << std::endl;
 }
 
-//Step 2: Declare a plugin entry with a unique name
-//        Register it under a unique action name plus some description
-static Rose::PluginRegistry::Add<Acuity> vcallName("Acuity", "Class Hierarchy Analysis Tool.");
 
+namespace
+{
+  struct CStringVector : private std::vector<char*>
+  {
+      using base = std::vector<char*>;
+
+      CStringVector()
+      : base()
+      {}
+
+      explicit
+      CStringVector(const std::vector<std::string>& args)
+      : base()
+      {
+        base::reserve(args.size());
+
+        for (const std::string& s : args)
+        {
+          const size_t sz         = s.size()+1;
+          char*        cstr       = new char[sz];
+          const char*  char_begin = s.c_str();
+
+          std::copy(char_begin, char_begin+sz, cstr);
+          base::push_back(cstr);
+        }
+      }
+
+      ~CStringVector()
+      {
+        for (char* elem : *this)
+          delete elem;
+      }
+
+      using base::size;
+
+      char** firstCArg() { return &front(); }
+  };
+}
+
+int main( int argc, char * argv[] )
+{
+  using Sawyer::Message::mfacilities;
+
+  //~ using GuardedVariableIdMapping = std::unique_ptr<ct::VariableIdMappingExtended>;
+
+  try
+  {
+    ROSE_INITIALIZE;
+    ct::CodeThornLib::configureRose();
+
+    std::vector<std::string> cmdLineArgs{argv+0, argv+argc};
+    Acuity                   acuity;
+    CStringVector            unparsedArgsCStyle(acuity.parseArgs(std::move(cmdLineArgs)));
+    size_t                   thornArgc = unparsedArgsCStyle.size();
+    char**                   thornArgv = unparsedArgsCStyle.firstCArg();
+
+    ct::TimingCollector      tc;
+
+    tc.startTimer();
+    CodeThornOptions         ctOpt;
+    LTLOptions               ltlOpt;    // to be moved into separate tool
+    ParProOptions            parProOpt; // options only available in parprothorn
+    parseCommandLine(thornArgc, thornArgv, logger, thorn2version, ctOpt, ltlOpt, parProOpt);
+    //~ parseCommandLine(argc, argv, logger, thorn2version, ctOpt, ltlOpt, parProOpt);
+
+    mfacilities.control(ctOpt.logLevel);
+    logTrace() << "Log level is " << ctOpt.logLevel << endl;
+    tc.stopTimer();
+
+    SgProject* project = ct::CodeThornLib::runRoseFrontEnd(thornArgc,thornArgv,ctOpt,tc);
+    ROSE_ASSERT(project);
+
+    if(ctOpt.status) cout << "STATUS: Parsing and creating AST finished."<<endl;
+
+    //~ GuardedVariableIdMapping  varMap{ct::CodeThornLib::createVariableIdMapping(ctOpt,project)};
+    //~ ROSE_ASSERT(varMap);
+
+    ct::FunctionIdMapping     funMap;
+    ct::VariableIdMapping     varMap;
+
+    funMap.computeFunctionSymbolMapping(project);
+    varMap.computeVariableSymbolMapping(project);
+    acuity.process(*project, varMap, funMap);
+
+    // main function try-catch
+  } catch(const std::exception& e) {
+    logError() << "Error: " << e.what() << endl;
+    mfacilities.shutdown();
+    return 1;
+  } catch(char const* str) {
+    logError() << "Error: " << str << endl;
+    mfacilities.shutdown();
+    return 1;
+  } catch(const std::string& str) {
+    logError() << "Error: " << str << endl;
+    mfacilities.shutdown();
+    return 1;
+  } catch(...) {
+    logError() << "Error: Unknown exception raised." << endl;
+    mfacilities.shutdown();
+    return 1;
+  }
+  mfacilities.shutdown();
+  return 0;
+}
 

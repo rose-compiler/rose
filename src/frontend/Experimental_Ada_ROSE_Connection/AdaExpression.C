@@ -868,8 +868,7 @@ namespace
           SgExpression&              prefix = getExprID(expr.Prefix, ctx);
           ElemIdRange                idxrange = idRange(expr.Index_Expressions);
           std::vector<SgExpression*> idxexpr = traverseIDs(idxrange, elemMap(), ExprSeqCreator{ctx});
-          SgExpression&              indices = SG_DEREF(idxexpr.size() < 2 ? idxexpr.at(0)
-                                                                           : &mkExprListExp(idxexpr));
+          SgExpression&              indices = mkExprListExp(idxexpr);
 
           res = sb::buildPntrArrRefExp(&prefix, &indices);
           ADA_ASSERT(indices.get_parent());
@@ -884,11 +883,12 @@ namespace
         {
           logKind("A_Slice");
 
-          SgExpression&              prefix = getExprID(expr.Prefix, ctx);
-          SgExpression&              range  = getDiscreteRangeID(expr.Slice_Range, ctx);
+          SgExpression&  prefix = getExprID(expr.Prefix, ctx);
+          SgExpression&  range  = getDiscreteRangeID(expr.Slice_Range, ctx);
+          SgExprListExp& index  = mkExprListExp({&range});
 
           // \todo consider introducing a ROSE IR node for array slices
-          res = sb::buildPntrArrRefExp(&prefix, &range);
+          res = sb::buildPntrArrRefExp(&prefix, &index);
           /* unused fields
           */
           break;

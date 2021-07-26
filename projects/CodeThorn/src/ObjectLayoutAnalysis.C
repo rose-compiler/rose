@@ -23,47 +23,59 @@ namespace
     using Vec = std::vector<ct::InheritanceDesc>;
 
     ct::ObjectLayout          res;
-    bool                      primary = true;
+    auto                      aPrimarySubobj = [&all](const Vec::value_type& cand) -> bool
+                                               {
+                                                 return (  (!cand.isVirtual())
+                                                        && cand.isDirect()
+                                                        && all.at(cand.getClass()).hasVirtualTable()
+                                                        );
+                                               };
     const Vec&                parents = clazz.second.ancestors();
-    const Vec::const_iterator zz = parents.end();
+    const Vec::const_iterator aa      = parents.begin();
+    const Vec::const_iterator zz      = parents.end();
+    const Vec::const_iterator primary = std::find_if(aa, zz, aPrimarySubobj);
 
-    if (clazz.second.hasVirtualTable())
+    // 1) add primary subobject or own vtable
+    if (primary != zz)
     {
+      // if the class has a primary subobject it is ordered first
+      res.emplace_back(0, ct::Subobject{primary->getClass(), false});
+    }
+    else if (clazz.second.hasVirtualTable())
+    {
+      // otherwise add a vtable, if the class requires one
       res.emplace_back(0, ct::VTable{clazz.first, true});
     }
 
-    // compute entries for direct, non-virtual ancestors
-    for (Vec::const_iterator aa = parents.begin(); aa != zz; ++aa)
+    // 2) Add all direct, non-virtual parent classes without vtable
+    for (Vec::const_iterator it = aa; it != zz; ++it)
     {
-      if (aa->isVirtual() || !aa->isDirect())
+      if (it->isVirtual() || (!it->isDirect()) || all.at(it->getClass()).hasVirtualTable())
         continue;
 
-      if (!primary && all.at(aa->getClass()).hasVirtualTable())
-      {
-        res.emplace_back(0, ct::VTable{aa->getClass(), false});
-      }
-
-      res.emplace_back(0, ct::Subobject{aa->getClass(), false});
-
-      if (primary)
-      {
-        primary = false;
-        addDataMembers(res, clazz);
-      }
+      res.emplace_back(0, ct::Subobject{it->getClass(), false});
     }
 
-    if (primary)
-    {
-      addDataMembers(res, clazz);
-    }
+    // 3) Add the class' own data members
+    addDataMembers(res, clazz);
 
-    // compute entries for all virtual ancestors
-    for (Vec::const_iterator aa = parents.begin(); aa != zz; ++aa)
+    // 4) Add all non-primary, non-virtual parent classes with vtable
+    //    \note if primary exists, the loop starts with the element after primary
+    for (Vec::const_iterator it = (primary == zz ? zz : primary+1); it != zz; ++it)
     {
-      if (!aa->isVirtual())
+      if (!aPrimarySubobj(*it))
         continue;
 
-      res.emplace_back(0, ct::Subobject{aa->getClass(), true});
+      res.emplace_back(0, ct::Subobject{it->getClass(), false});
+    }
+
+    // 5) Add all virtual ancestors
+    for (Vec::const_iterator it = aa; it != zz; ++it)
+    {
+      if (!it->isVirtual())
+        continue;
+
+      res.emplace_back(0, ct::Subobject{it->getClass(), true});
     }
 
     return res;
@@ -92,86 +104,5 @@ computeObjectLayouts(const ClassAnalysis& all, bool onlyClassesWithVTable)
   return res;
 }
 
-struct ObjectLayoutElementPrinter : boost::static_visitor<void>
-{
-    explicit
-    ObjectLayoutElementPrinter(const ObjectLayoutElement& el, const RoseCompatibilityBridge* ctx = nullptr)
-    : entry(el), rcb(ctx), os(nullptr)
-    {}
-
-    void operator()(const Subobject& subobj) const
-    {
-      (*os) << "subobj " << typeNameOf(subobj.ref)
-            << (subobj.isVirtual ? " [virtual]" : "");
-    }
-
-    void operator()(const Field& fld) const
-    {
-      (*os) << "field  "
-            << (rcb ? rcb->nameOf(fld.id) : std::string{})
-            << " " << fld.id.toString();
-    }
-
-    void operator()(const VTable& vtbl) const
-    {
-      (*os) << "vtable " << typeNameOf(vtbl.ref)
-            << (vtbl.isPrimary ? " [primary]" : "");
-    }
-
-    void stream(std::ostream& out) const { os = &out; }
-
-    const ObjectLayoutElement& obj() const { return entry; }
-
-  private:
-    const ObjectLayoutElement&     entry;
-    const RoseCompatibilityBridge* rcb;
-    mutable std::ostream*          os;
-};
-
-std::ostream& operator<<(std::ostream& os, const ObjectLayoutElementPrinter& prn)
-{
-  prn.stream(os);
-
-  boost::apply_visitor(prn, prn.obj());
-  return os;
-}
-
-std::ostream& operator<<(std::ostream& os, const ObjectLayoutEntry& entry)
-{
-  return os << std::get<0>(entry) << " " << ObjectLayoutElementPrinter{std::get<1>(entry)};
-}
-
-std::ostream& operator<<(std::ostream& os, const ObjectLayoutContainer& cont)
-{
-  for (const ObjectLayoutContainer::value_type& entry : cont)
-  {
-    os << '\n' << typeNameOf(entry.first) << std::endl;
-
-    for (const ObjectLayoutEntry& elem : entry.second)
-    {
-      os << elem << std::endl;
-    }
-  }
-
-  return os;
-}
-
-std::ostream& operator<<(std::ostream& os, const ObjectLayoutPrinter& prn)
-{
-  const ObjectLayoutContainer& cont = std::get<1>(prn);
-
-  for (const ObjectLayoutContainer::value_type& entry : cont)
-  {
-    os << '\n' << typeNameOf(entry.first) << std::endl;
-
-    for (const ObjectLayoutEntry& elem : entry.second)
-    {
-      os << std::get<0>(elem) << " " << ObjectLayoutElementPrinter{std::get<1>(elem), &std::get<0>(prn)}
-         << std::endl;
-    }
-  }
-
-  return os;
-}
 
 }

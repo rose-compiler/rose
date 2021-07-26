@@ -50,8 +50,10 @@
 #include "AnalysisReporting.h"
 
 // Z3-based analyser / SSA 
+#if HAVE_Z3
 #include "z3-prover-connection/SSAGenerator.h"
 #include "z3-prover-connection/ReachabilityAnalyzerZ3.h"
+#endif
 
 #include "ConstantConditionAnalysis.h"
 #include "CodeThornLib.h"
@@ -76,7 +78,7 @@ using namespace CodeThornLib;
 #include "ltlthorn-lib/Solver12.h"
 
 
-const std::string versionString="1.13.6";
+const std::string versionString="1.13.8";
 
 void configureRersSpecialization() {
 #ifdef RERS_SPECIALIZATION
@@ -135,15 +137,23 @@ void optionallyRunZ3AndExit(CodeThornOptions& ctOpt,CTAnalysis* analyzer) {
 
       exit(0);
     }
+#else
+  cerr<<"optionallyRunZ3AndExit: Z3 not installed."<<endl;
+  exit(1);
 #endif	
 }
 
 void optionallyRunSSAGeneratorAndExit(CodeThornOptions& ctOpt, CTAnalysis* analyzer) {
+#ifdef HAVE_Z3
   if(ctOpt.ssa) {
     SSAGenerator* ssaGen = new SSAGenerator(analyzer, &logger);
     ssaGen->generateSSAForm();
     exit(0);
   }
+#else
+  cerr<<"optionallyRunSSAGeneratorAndExit: Z3 not installed."<<endl;
+  exit(1);
+#endif
 }
 
 int main( int argc, char * argv[] ) {
@@ -161,7 +171,8 @@ int main( int argc, char * argv[] ) {
     ParProOptions parProOpt; // options only available in parprothorn
     parseCommandLine(argc, argv, logger,versionString,ctOpt,ltlOpt,parProOpt);
     mfacilities.control(ctOpt.logLevel); SAWYER_MESG(logger[TRACE]) << "Log level is " << ctOpt.logLevel << endl;
-
+    ctOpt.configurePrecisionOption();
+ 
     IOAnalyzer* analyzer=CodeThornLib::createAnalyzer(ctOpt,ltlOpt); // sets ctOpt,ltlOpt in analyzer
     CodeThornLib::optionallyRunInternalChecks(ctOpt,argc,argv);
     CodeThornLib::optionallyRunExprEvalTestAndExit(ctOpt,argc,argv);
@@ -248,8 +259,10 @@ int main( int argc, char * argv[] ) {
     analyzer->printStatusMessageLine("==============================================================");
     optionallyWriteSVCompWitnessFile(ctOpt, analyzer);
     optionallyAnalyzeAssertions(ctOpt, ltlOpt, analyzer, tc);
-    optionallyRunZ3AndExit(ctOpt,analyzer);
 
+#if HAVE_Z3
+    optionallyRunZ3AndExit(ctOpt,analyzer);
+#endif
     tc.startTimer();
     optionallyGenerateVerificationReports(ctOpt,analyzer);
     tc.stopTimer(TimingCollector::reportGeneration);

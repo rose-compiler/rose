@@ -448,3 +448,7 @@ CallString EState::getCallString() const {
   return callString;
 }
 
+size_t EState::getCallStringLength() const {
+  return callString.getLength();
+}
+
