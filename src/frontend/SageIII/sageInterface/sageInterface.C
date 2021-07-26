@@ -25026,11 +25026,17 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   if (SgTemplateInstantiationMemberFunctionDecl* cnode= isSgTemplateInstantiationMemberFunctionDecl(node) )
     out<<" template member func decl@"<< cnode->get_templateDeclaration();
 
+
+  // base type of several types of nodes:
   if (SgTypedefDeclaration * v= isSgTypedefDeclaration(node))
   {
     out<<" base_type@"<< v->get_base_type();
 //    type_set.insert (v->get_base_type());
   }
+
+  if (SgArrayType* v= isSgArrayType(node))
+    out<<" base_type@"<< v->get_base_type();
+
 
   if (SgDeclarationStatement* v= isSgDeclarationStatement(node))
   {
