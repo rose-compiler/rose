@@ -2748,7 +2748,18 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         ADA_ASSERT(adaname.fullName == adaname.ident);
         SgDeclarationStatement* ndef    = findFirst(asisDecls(), decl.Corresponding_Declaration);
+
+        // MS: 7/26/2021 This point may be reached for both regular and
+        // generic subprograms.  If it is a generic subprogram that was
+        // declared, then we'll need to get the declaration out of the
+        // SgAdaGenericDecl node.
         SgFunctionDeclaration*  nondef  = isSgFunctionDeclaration(ndef);
+        if (!nondef) {
+          if (SgAdaGenericDecl* generic = isSgAdaGenericDecl(ndef)) {
+            nondef = isSgFunctionDeclaration(generic->get_declaration());
+          }
+        }
+
         ADA_ASSERT(nondef || !ndef);
 
         SgFunctionDeclaration&  sgnode  = createFunDef(nondef, adaname.ident, outer, rettype, ParameterCompletion{params, ctx});
