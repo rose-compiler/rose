@@ -706,11 +706,11 @@ namespace
   std::pair<T, const char*>
   parseDec(const char* buf, size_t base = 10)
   {
-    ROSE_ASSERT((*buf != 0) && char2Val(*buf, base).second);
+    ROSE_ASSERT((*buf != '\0') && char2Val(*buf, base).second);
 
     T res = 0;
 
-    while (*buf != 0)
+    while (*buf != '\0')
     {
       const auto v = char2Val(*buf, base);
 
@@ -734,12 +734,12 @@ namespace
   std::pair<T, const char*>
   parseFrac(const char* buf, size_t base = 10)
   {
-    ROSE_ASSERT((*buf != 0) && char2Val(*buf, base).second);
+    ROSE_ASSERT((*buf != '\0') && char2Val(*buf, base).second);
 
     T      res = 0;
     size_t divisor = 1*base;
 
-    while ((*buf != 0) && (!isBasedDelimiter(*buf)))
+    while ((*buf != '\0') && (!isBasedDelimiter(*buf)))
     {
       const auto v = char2Val(*buf, base);
 
@@ -991,10 +991,10 @@ overridingScope(const SgExprListExp& args, const std::vector<PrimitiveParameterD
   PrimitiveParmIterator      aa          = primitiveArgs.begin();
   PrimitiveParmIterator      zz          = primitiveArgs.end();
 
-  // check for all positional arguments
+  // check all positional arguments
   while ((aa != zz) && (aa->pos() < posArgLimit))
   {
-    const SgExpression*           arg = arglst.at(aa->pos());
+    const SgExpression* arg = arglst.at(aa->pos());
 
     if (const SgDeclarationStatement* tydcl = BaseTypeDecl::find(arg->get_type()))
       return tydcl->get_scope();
@@ -1041,6 +1041,19 @@ overridingScope(const SgExprListExp* args, const std::vector<PrimitiveParameterD
   return overridingScope(*args, primitiveArgs);
 }
 
+bool
+explicitNullProcedure(const SgFunctionDefinition& fndef)
+{
+  const SgBasicBlock& body = SG_DEREF(fndef.get_body());
+
+  return body.get_statements().empty();
+}
+
+bool
+explicitNullRecord(const SgClassDefinition& recdef)
+{
+  return recdef.get_members().empty() && recdef.get_inheritances().empty();
+}
 
 
 } // ada

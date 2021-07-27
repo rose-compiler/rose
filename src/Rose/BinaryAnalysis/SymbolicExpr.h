@@ -862,17 +862,6 @@ public:
 
 protected:
     void printFlags(std::ostream &o, unsigned flags, char &bracket) const;
-
-public:
-    // Deprecated [Robb Matzke 2019-09-27]
-    bool isNumber() const ROSE_DEPRECATED("use isIntegerConstant instead") {
-        return isIntegerConstant();
-    }
-
-    // Deprecated [Robb Matzke 2019-09-27]
-    uint64_t toInt() ROSE_DEPRECATED("use toUnsigned() instead") {
-        return toUnsigned().get();
-    }
 };
 
 /** Operator-specific simplification methods. */
@@ -1221,24 +1210,6 @@ protected:
     /** Adjust user-defined bit flags. This must only be called from constructors.  Flags are the union of the operand flags
      *  subject to simplification rules, unioned with the specified flags. */
     void adjustBitFlags(unsigned extraFlags);
-
-    //--------------------------------------------------------
-    // Deprecated [Robb Matzke 2019-10-01]
-    //--------------------------------------------------------
-public:
-    static Ptr create(size_t nbits, Operator op, const Ptr &a,
-                      const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0)
-        ROSE_DEPRECATED("use instance instead");
-    static Ptr create(size_t nbits, Operator op, const Ptr &a, const Ptr &b,
-                      const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0)
-        ROSE_DEPRECATED("use instance instead");
-    static Ptr create(size_t nbits, Operator op, const Ptr &a, const Ptr &b, const Ptr &c,
-                      const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0)
-        ROSE_DEPRECATED("use instance instead");
-    static Ptr create(size_t nbits, Operator op, const Nodes &children,
-                      const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0)
-        ROSE_DEPRECATED("use instance instead");
-
 };
 
 
@@ -1371,57 +1342,6 @@ public:
 private:
     // Obtain or register a name ID
     static uint64_t nextNameCounter(uint64_t useThis = (uint64_t)(-1));
-
-    // Deprecated functions
-public:
-    // Deprecated [Robb Matzke 2019-09-27]
-    static LeafPtr createVariable(size_t nBits, const std::string &comment="", unsigned flags=0)
-        ROSE_DEPRECATED("use createVariable with type or makeIntegerVariable, etc.") {
-        return createVariable(Type::integer(nBits), comment, flags);
-    }
-
-    // Deprecated [Robb Matzke 2019-09-27]
-    static LeafPtr createExistingVariable(size_t nBits, uint64_t id, const std::string &comment="", unsigned flags=0)
-        ROSE_DEPRECATED("use createVariable or makeIntegerVariable, etc.") {
-        return createVariable(Type::integer(nBits), id, comment, flags);
-    }
-
-    // Deprecated [Robb Matzke 2019-09-27]
-    static LeafPtr createInteger(size_t nBits, uint64_t value, const std::string &comment="", unsigned flags=0)
-        ROSE_DEPRECATED("use createConstant or makeIntegerConstant, etc.");
-
-    // Deprecated [Robb Matzke 2019-09-27]
-    static LeafPtr createConstant(const Sawyer::Container::BitVector &bits, const std::string &comment="", unsigned flags=0)
-        ROSE_DEPRECATED("use createConstant with type or makeIntegerConstant, etc.") {
-        return createConstant(Type::integer(bits.size()), bits, comment, flags);
-    }
-
-    // Deprecated [Robb Matzke 2019-09-27]
-    static LeafPtr createBoolean(bool b, const std::string &comment="", unsigned flags=0)
-        ROSE_DEPRECATED("use createConstant or makeBooleanConstant");
-
-    // Deprecated [Robb Matzke 2019-09-27]
-    static LeafPtr createMemory(size_t addressWidth, size_t valueWidth, const std::string &comment="", unsigned flags=0)
-        ROSE_DEPRECATED("use createVariable with type or makeMemoryVariable") {
-        return createVariable(Type::memory(addressWidth, valueWidth), comment, flags);
-    }
-
-    // Deprecated [Robb Matzke 2019-09-27]
-    static LeafPtr createExistingMemory(size_t addressWidth, size_t valueWidth, uint64_t id, const std::string &comment="",
-                                        unsigned flags=0)
-        ROSE_DEPRECATED("use createVariable with type or makeMemoryVariable") {
-        return createVariable(Type::memory(addressWidth, valueWidth), id, comment, flags);
-    }
-
-    // Deprecated [Robb Matzke 2019-09-27]. The definition will eventually change to isVariable2()
-    bool isVariable() const ROSE_DEPRECATED("use isIntegerVariable or isVariable2 instead") {
-        return isIntegerVariable();
-    }
-
-    // Deprecated [Robb Matzke 2019-09-27]
-    virtual bool isMemory() ROSE_DEPRECATED("use isMemoryVariable or isMemoryExpr instead") {
-        return isMemoryVariable();
-    }
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1450,22 +1370,6 @@ LeafPtr makeFloatingPointConstant(double, const std::string &comment="", unsigne
 LeafPtr makeFloatingPointNan(size_t eb, size_t sb, const std::string &comment="", unsigned flags=0);
 /** @} */
 
-// Deprecated [Robb Matzke 2019-09-27]
-Ptr makeVariable(size_t nbits, const std::string &comment="", unsigned flags=0)
-    ROSE_DEPRECATED("use makeIntegerVariable instead");
-Ptr makeExistingVariable(size_t nbits, uint64_t id, const std::string &comment="", unsigned flags=0)
-    ROSE_DEPRECATED("use makeIntegerVariable instead");
-Ptr makeInteger(size_t nbits, uint64_t n, const std::string &comment="", unsigned flags=0)
-    ROSE_DEPRECATED("use makeIntegerConstant instead");
-Ptr makeConstant(const Sawyer::Container::BitVector&, const std::string &comment="", unsigned flags=0)
-    ROSE_DEPRECATED("use makeIntegerConstant instead");
-Ptr makeBoolean(bool, const std::string &comment="", unsigned flags=0)
-    ROSE_DEPRECATED("use makeBooleanConstant instead");
-Ptr makeMemory(size_t addressWidth, size_t valueWidth, const std::string &comment="", unsigned flags=0)
-    ROSE_DEPRECATED("use makeMemoryVariable instead");
-Ptr makeExistingMemory(size_t addressWidth, size_t valueWidth, uint64_t id, const std::string &comment="", unsigned flags=0)
-    ROSE_DEPRECATED("use makeMemoryVariable instead");
-
 /** Interior node constructor.
  *
  *  Constructs an interior node. This is a wrapper around one of the "create" factory methods in @ref Interior. It
@@ -1474,9 +1378,6 @@ Ptr makeExistingMemory(size_t addressWidth, size_t valueWidth, uint64_t id, cons
  * @{ */
 Ptr makeAdd(const Ptr&a, const Ptr &b,
             const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
-Ptr makeBooleanAnd(const Ptr &a, const Ptr &b,
-                   const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0)
-                   ROSE_DEPRECATED("use makeAnd instead"); // [Robb Matzke 2017-11-21]: deprecated
 Ptr makeAsr(const Ptr &sa, const Ptr &a,
             const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeAnd(const Ptr &a, const Ptr &b,
@@ -1525,9 +1426,6 @@ Ptr makeNe(const Ptr &a, const Ptr &b,
            const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeNegate(const Ptr &a,
                const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
-Ptr makeBooleanOr(const Ptr &a, const Ptr &b,
-                  const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0)
-                  ROSE_DEPRECATED("use makeOr instead"); // [Robb Matzke 2017-11-21]: deprecated
 Ptr makeRead(const Ptr &mem, const Ptr &addr,
              const SmtSolverPtr &solver = SmtSolverPtr(), const std::string &comment="", unsigned flags=0);
 Ptr makeReinterpret(const Ptr &a, const Type &b,

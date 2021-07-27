@@ -26,7 +26,6 @@ librose_partial_la_SOURCES =			\
     DisassemblerNull.C				\
     DisassemblerPowerpc.C			\
     DisassemblerX86.C				\
-    Dominance.C					\
     FeasiblePath.C				\
     FunctionCall.C				\
     FunctionSimilarity.C			\

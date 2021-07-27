@@ -2,6 +2,7 @@
 libMFB_sage_includedir=$(prefix)/include/MFB/Sage
 libMFB_sage_include_HEADERS= \
   api.hpp \
+  api.tpp \
   driver.hpp \
   function-declaration.hpp \
   member-function-declaration.hpp \

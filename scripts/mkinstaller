@@ -27,11 +27,11 @@ $foundInDir  = "";
 
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "6";
-$mkinstaller_ver_build = "10";
-$mkinstaller_ver_patch = "3";
-$mkinstaller_ver_name  = "2.6.10.3";
-$mkinstaller_ver_time  = "21Jun2021,18:00:23z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.10.3 - 21Jun2021,18:00:23z";
+$mkinstaller_ver_build = "11";
+$mkinstaller_ver_patch = "";
+$mkinstaller_ver_name  = "2.6.11";
+$mkinstaller_ver_time  = "13Jul2021,22:20:37z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.11 - 13Jul2021,22:20:37z";
 
 # MyUniqueFileId: d34be5e4-1cfc-49b6-d988-25ab878c795f
 
@@ -20780,7 +20780,7 @@ sub pKit_getTotebagId {
    #
    #---------------------------------------
 
-   my $TBG_uniqueId = "f41edd3f1665c0e0daeab6b4b5d53e15db73c767ae38aedb95132d10170d826f";
+   my $TBG_uniqueId = "4d4bfc2805736fdabf6d6e0402322f63b34c54d68259801d8325cd297adedb25";
 
    #}--------------------------------------
 

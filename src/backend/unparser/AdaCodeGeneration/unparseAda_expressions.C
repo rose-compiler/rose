@@ -27,36 +27,54 @@ namespace si = SageInterface;
 
 namespace
 {
+  inline
   SgVariableSymbol& symOf(const SgVarRefExp& n)
   {
     return SG_DEREF(n.get_symbol());
   }
 
+  inline
   SgFunctionSymbol& symOf(const SgFunctionRefExp& n)
   {
     return SG_DEREF(n.get_symbol());
   }
 
-  SgName nameOf(const SgSymbol& sy)
-  {
-    return sy.get_name();
-  }
-
-  SgName nameOf(const SgVarRefExp& n)
-  {
-    return nameOf(symOf(n));
-  }
-
-  SgName nameOf(const SgFunctionRefExp& n)
-  {
-    return nameOf(symOf(n));
-  }
-
+  inline
   SgInitializedName& declOf(const SgVarRefExp& n)
   {
     SgVariableSymbol& sy = symOf(n);
 
     return SG_DEREF(sy.get_declaration());
+  }
+
+  inline
+  SgAdaPackageSpecDecl& declOf(const SgAdaUnitRefExp& n)
+  {
+    return SG_DEREF(isSgAdaPackageSpecDecl(n.get_decl()));
+  }
+
+  inline
+  SgName nameOf(const SgSymbol& sy)
+  {
+    return sy.get_name();
+  }
+
+  inline
+  SgName nameOf(const SgVarRefExp& n)
+  {
+    return nameOf(symOf(n));
+  }
+
+  inline
+  SgName nameOf(const SgFunctionRefExp& n)
+  {
+    return nameOf(symOf(n));
+  }
+
+  inline
+  SgName nameOf(const SgAdaUnitRefExp& n)
+  {
+    return declOf(n).get_name();
   }
 
   const SgExprListExp* callArguments(const SgFunctionRefExp& n)
@@ -155,6 +173,8 @@ namespace
 
   struct AdaExprUnparser
   {
+    static constexpr bool SUPPRESS_SCOPE_QUAL = false; // no scope qual on selectors
+
     AdaExprUnparser(Unparse_Ada& unp, SgUnparse_Info& inf, std::ostream& outp, bool requiresScopeQual)
     : unparser(unp), info(inf), os(outp), ctxRequiresScopeQualification(requiresScopeQual)
     {}
@@ -200,12 +220,12 @@ namespace
 
     void handle(SgPntrArrRefExp& n)
     {
-      SgExpression* lhs    = n.get_lhs_operand();
-      SgExpression* rhs    = n.get_rhs_operand();
+      SgExpression*  lhs = n.get_lhs_operand();
+      SgExprListExp* rhs = isSgExprListExp(n.get_rhs_operand());
 
       expr(lhs);
       prn("(");
-      expr(rhs);
+      exprlst(SG_DEREF(rhs));
       prn(")");
     }
 
@@ -216,7 +236,7 @@ namespace
 
       expr(lhs);
       prn(".");
-      expr(rhs, false /* no need to scope qual right hand side */);
+      expr(rhs, SUPPRESS_SCOPE_QUAL /* no need to scope qual right hand side */);
     }
 
     void handle(SgCommaOpExp& n)
@@ -348,7 +368,8 @@ namespace
 
     void handle(SgDesignatedInitializer& n)
     {
-      exprlst(SG_DEREF(n.get_designatorList()), "| ");
+      // suppress scope qual on selectors
+      exprlst(SG_DEREF(n.get_designatorList()), "| ", SUPPRESS_SCOPE_QUAL);
       prn(" => ");
       expr(n.get_memberInit());
     }
@@ -374,25 +395,32 @@ namespace
       prn("<null>");
     }
 
+    // Ada's derived types "inherit" the primitive functions of their base type.
+    // Asis does not create new declaration for these functions, but instead links
+    // to the original operation functions. However, the scope qualification needs to
+    // be generated as if the functions were located in the scope of the derived type.
+    // \returns the assumed scope of a function declaration if scope qualification is needed
+    //          nullptr if no scope qualification is required
+    SgScopeStatement*
+    assumedDeclarativeScope(const SgFunctionRefExp& n)
+    {
+      if (!ctxRequiresScopeQualification)
+        return nullptr;
+
+      const SgExprListExp*   args = callArguments(n);
+      if (!args)
+        return nullptr;
+
+      SgFunctionDeclaration& fundcl = SG_DEREF(n.getAssociatedFunctionDeclaration());
+      auto                   primitiveArgs = si::ada::primitiveParameterPositions(fundcl);
+      SgScopeStatement*      overridingScope = si::ada::overridingScope(args, primitiveArgs);
+
+      return overridingScope ? overridingScope : fundcl.get_scope();
+    }
+
     void handle(SgFunctionRefExp& n)
     {
-      SgFunctionDeclaration& fundcl   = SG_DEREF(n.getAssociatedFunctionDeclaration());
-      SgScopeStatement*      dclscope = fundcl.get_scope();
-      const SgExprListExp*   args     = ctxRequiresScopeQualification ? callArguments(n) : nullptr;
-
-      // if args is not null: check if the scope is implied with a derived type
-      if (args)
-      {
-        auto              primitiveArgs   = si::ada::primitiveParameterPositions(fundcl);
-        SgScopeStatement* overridingScope = si::ada::overridingScope(*args, primitiveArgs);
-
-        if (overridingScope)
-        {
-          dclscope = overridingScope;
-        }
-      }
-
-      if (ctxRequiresScopeQualification)
+      if (SgScopeStatement* dclscope = assumedDeclarativeScope(n))
         prn(scopeQual(dclscope));
 
       prn(nameOf(n));
@@ -406,6 +434,12 @@ namespace
       prn(tskdcl.get_name());
     }
 
+    void handle(SgAdaUnitRefExp& n)
+    {
+      // really needed?
+      prn(nameOf(n));
+    }
+
     void handle(SgNewExp& n)
     {
       SgConstructorInitializer* init = n.get_constructor_args();
@@ -417,7 +451,7 @@ namespace
     }
 
     void expr(SgExpression* exp, bool requiresScopeQual = true);
-    void exprlst(SgExprListExp& exp, std::string sep = ", ");
+    void exprlst(SgExprListExp& exp, std::string sep = ", ", bool requiresScopeQual = true);
     void arglst_opt(SgExprListExp& args);
 
     void operator()(SgExpression* exp)
@@ -444,7 +478,6 @@ namespace
   void AdaExprUnparser::handle(SgExpression& n)
   {
     // if not handled here, have the language independent parser handle it..
-    //~ std::cerr << "XXXXXXX " << typeid(n).name() << std::endl;
     unparser.UnparseLanguageIndependentConstructs::unparseExpression(&n, info);
   }
 
@@ -502,18 +535,18 @@ namespace
     if (callsyntax) prn(")");
   }
 
-  void AdaExprUnparser::exprlst(SgExprListExp& exp, std::string sep)
+  void AdaExprUnparser::exprlst(SgExprListExp& exp, std::string sep, bool reqScopeQual)
   {
     SgExpressionPtrList& lst = exp.get_expressions();
 
     if (lst.empty()) return;
 
-    expr(lst[0]);
+    expr(lst[0], reqScopeQual);
 
     for (size_t i = 1; i < lst.size(); ++i)
     {
       prn(sep);
-      expr(lst[i]);
+      expr(lst[i], reqScopeQual);
     }
   }
 

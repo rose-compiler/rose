@@ -681,50 +681,6 @@ Interior::instance(const Type &type, Operator op, const Nodes &arguments,
     return retval->simplifyTop(solver);
 }
 
-// deprecated [Robb Matzke 2019-10-01]
-Ptr
-Interior::create(size_t nbits, Operator op, const Ptr &a,
-                 const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    if (nbits == 0) {
-        return instance(op, a, solver, comment, flags);
-    } else {
-        return instance(Type::integer(nbits), op, a, solver, comment, flags);
-    }
-}
-
-// deprecated [Robb Matzke 2019-10-01]
-Ptr
-Interior::create(size_t nbits, Operator op, const Ptr &a, const Ptr &b,
-                 const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    if (nbits == 0) {
-        return instance(op, a, b, solver, comment, flags);
-    } else {
-        return instance(Type::integer(nbits), op, a, b, solver, comment, flags);
-    }
-}
-
-// deprecated [Robb Matzke 2019-10-01]
-Ptr
-Interior::create(size_t nbits, Operator op, const Ptr &a, const Ptr &b, const Ptr &c,
-                 const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    if (nbits == 0) {
-        return instance(op, a, b, c, solver, comment, flags);
-    } else {
-        return instance(Type::integer(nbits), op, a, b, c, solver, comment, flags);
-    }
-}
-
-// deprecated [Robb Matzke 2019-10-02]
-Ptr
-Interior::create(size_t nbits, Operator op, const Nodes &arguments,
-                 const SmtSolverPtr &solver, const std::string &comment, unsigned flags) {
-    if (nbits == 0) {
-        return instance(op, arguments, solver, comment, flags);
-    } else {
-        return instance(Type::integer(nbits), op, arguments, solver, comment, flags);
-    }
-}
-
 void
 Interior::addChild(const Ptr &child)
 {
@@ -3048,18 +3004,6 @@ Leaf::createConstant(const Type &type, const Sawyer::Container::BitVector &bits,
     node->type_ = type;
     node->bits_ = bits;
     return LeafPtr(node);
-}
-
-// deprecated [Robb Matzke 2019-09-30]
-LeafPtr
-Leaf::createInteger(size_t nBits, uint64_t value, const std::string &comment, unsigned flags) {
-    return makeIntegerConstant(nBits, value, comment, flags)->isLeafNode();
-}
-
-// deprecated [Robb Matzke 2019-09-30]
-LeafPtr
-Leaf::createBoolean(bool b, const std::string &comment, unsigned flags) {
-    return makeBooleanConstant(b, comment, flags);
 }
 
 // class method

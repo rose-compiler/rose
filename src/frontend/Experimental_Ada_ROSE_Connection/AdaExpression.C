@@ -270,10 +270,10 @@ namespace
   SgExpression&
   getOperator(Expression_Struct& expr, AstContext ctx)
   {
-    typedef SgExpression* (*mk_wrapper_fun)();
-    typedef std::map<Operator_Kinds, std::pair<const char*, mk_wrapper_fun> > operator_maker_map_t;
+    using MkWrapperFn = std::function<SgExpression*()>;
+    using OperatorMakerMap = std::map<Operator_Kinds, std::pair<const char*, MkWrapperFn> >;
 
-    static const operator_maker_map_t maker_map =
+    static const OperatorMakerMap makerMap =
     { { An_And_Operator,                  {"An_And_Operator",                  mk2_wrapper<SgBitAndOp,         sb::buildBitAndOp> }},
       { An_Or_Operator,                   {"An_Or_Operator",                   mk2_wrapper<SgBitOrOp,          sb::buildBitOrOp> }},
       { An_Xor_Operator,                  {"An_Xor_Operator",                  mk2_wrapper<SgBitXorOp,         sb::buildBitXorOp> }},
@@ -299,9 +299,9 @@ namespace
 
     ADA_ASSERT(expr.Expression_Kind == An_Operator_Symbol);
 
-    operator_maker_map_t::const_iterator pos = maker_map.find(expr.Operator_Kind);
+    OperatorMakerMap::const_iterator pos = makerMap.find(expr.Operator_Kind);
 
-    if (pos != maker_map.end())
+    if (pos != makerMap.end())
     {
       logKind(pos->second.first);
       return SG_DEREF(pos->second.second());
@@ -362,11 +362,14 @@ namespace
   /// defines ROSE AST types for which we do not generate scope qualification
   struct RoseRequiresScopeQual : sg::DispatchHandler<bool>
   {
-    void handle(SgNode& n)               { SG_UNEXPECTED_NODE(n); }
+    void handle(const SgNode& n)               { SG_UNEXPECTED_NODE(n); }
 
-    void handle(SgDeclarationStatement&) { res = true; }
-    void handle(SgAdaTaskSpecDecl&)      { res = false; }
-    void handle(SgAdaPackageSpecDecl&)   { res = false; }
+    void handle(const SgDeclarationStatement&) { res = true; }
+    void handle(const SgAdaTaskSpecDecl&)      { res = false; }
+    void handle(const SgAdaPackageSpecDecl&)   { res = false; }
+    void handle(const SgImportStatement&)      { res = false; }
+    //~ void handle(const SgFunctionDeclaration&)  { res = false; }
+    void handle(const SgAdaRenamingDecl&)      { res = false; }
   };
 
 
@@ -381,25 +384,24 @@ namespace
 
     if (expr.Expression_Kind == An_Identifier)
     {
-    /// \todo dcl == nullptr should be an error (as soon as the Asis AST
-    ///       is generated completely.
-    SgDeclarationStatement* dcl = getDecl_opt(expr, ctx);
+      const SgDeclarationStatement* dcl = getDecl_opt(expr, ctx);
 
+      // \note getDecl_opt does not retrieve variable declarations
+      //       => assuming a is a variable of record: a.x (the dcl for a would be nullptr)
       return dcl == nullptr || sg::dispatch(RoseRequiresScopeQual(), dcl);
+      //~ return dcl != nullptr && sg::dispatch(RoseRequiresScopeQual(), dcl);
     }
 
     if (expr.Expression_Kind == A_Selected_Component)
     {
-      /// \todo dcl == nullptr should be an error (as soon as the Asis AST
-      ///       is generated completely.
       return    roseRequiresPrefixID(expr.Prefix, ctx)
              || roseRequiresPrefixID(expr.Selector, ctx);
     }
 
-    ADA_ASSERT(!FAIL_ON_ERROR(ctx) && "untested expression-kind");
     logWarn() << "roseRequiresPrefixID: untested expression-kind: "
               << expr.Expression_Kind
               << std::endl;
+    ADA_ASSERT(!FAIL_ON_ERROR(ctx) && "untested expression-kind");
     return true;
   }
 
@@ -427,6 +429,7 @@ namespace
       void handle(SgFunctionDeclaration& n) { res = sb::buildFunctionRefExp(&n); }
       void handle(SgAdaRenamingDecl& n)     { res = &mkAdaRenamingRefExp(n); }
       void handle(SgAdaTaskSpecDecl& n)     { res = &mkAdaTaskRefExp(n); }
+      void handle(SgAdaPackageSpecDecl& n)  { res = &mkAdaUnitRefExp(n); }
 
     private:
       AstContext ctx;
@@ -458,6 +461,7 @@ namespace
       void handle(SgClassDeclaration& n)   { set(n.get_type()); }
       void handle(SgTypedefDeclaration& n) { set(n.get_type()); }
       void handle(SgEnumDeclaration& n)    { set(n.get_type()); }
+      void handle(SgAdaFormalTypeDecl& n)  { set(n.get_formal_type()); }
 
     private:
       AstContext ctx;
@@ -864,8 +868,7 @@ namespace
           SgExpression&              prefix = getExprID(expr.Prefix, ctx);
           ElemIdRange                idxrange = idRange(expr.Index_Expressions);
           std::vector<SgExpression*> idxexpr = traverseIDs(idxrange, elemMap(), ExprSeqCreator{ctx});
-          SgExpression&              indices = SG_DEREF(idxexpr.size() < 2 ? idxexpr.at(0)
-                                                                           : &mkExprListExp(idxexpr));
+          SgExpression&              indices = mkExprListExp(idxexpr);
 
           res = sb::buildPntrArrRefExp(&prefix, &indices);
           ADA_ASSERT(indices.get_parent());
@@ -880,11 +883,12 @@ namespace
         {
           logKind("A_Slice");
 
-          SgExpression&              prefix = getExprID(expr.Prefix, ctx);
-          SgExpression&              range  = getDiscreteRangeID(expr.Slice_Range, ctx);
+          SgExpression&  prefix = getExprID(expr.Prefix, ctx);
+          SgExpression&  range  = getDiscreteRangeID(expr.Slice_Range, ctx);
+          SgExprListExp& index  = mkExprListExp({&range});
 
           // \todo consider introducing a ROSE IR node for array slices
-          res = sb::buildPntrArrRefExp(&prefix, &range);
+          res = sb::buildPntrArrRefExp(&prefix, &index);
           /* unused fields
           */
           break;

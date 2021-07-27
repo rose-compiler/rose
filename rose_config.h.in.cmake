@@ -82,6 +82,12 @@
 /* Define if Dlib is available. */
 #cmakedefine ROSE_HAVE_DLIB
 
+/* Define if Capstone is available. */
+#cmakedefine ROSE_HAVE_CAPSTONE
+
+/* Define if libreadline is available. */
+#cmakedefine ROSE_HAVE_LIBREADLINE
+
 /* Define to 1 if you have the <byteswap.h> header file. */
 #cmakedefine HAVE_BYTESWAP_H 1
 

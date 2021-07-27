@@ -508,7 +508,7 @@ if(NOT have_EDG_source)
   if(enable-c)
     set(BINARY_EDG 1)
     if(NOT WIN32)
-      message(STATUS "EDG - downloaindg EDG-${EDG_VERSION} binary tar file")
+      message(STATUS "EDG - downloading EDG-${EDG_VERSION} binary tar file")
       if(EXISTS "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG.tar.gz")
         execute_process(COMMAND "tar" "-zxvf" "-C" "${PROJECT_BINARY_DIR}/src/frontend/CxxFrontend/EDG")
       else()
@@ -672,6 +672,10 @@ find_yamlcpp()
 include(FindDlib)
 find_dlib()
 
+# To use Capstone, set CAPSTONE_ROOT to the Capstone installation prefix. To avoid Capstone set CAPSTONE_ROOT=no
+include(FindCapstone)
+find_capstone()
+
 # To use GCrypt, set GCRYPT_ROOT to the GCrypt installation prefix. To avoid GCrypt set GCRYPT_ROOT=no
 include(FindGcrypt)
 find_gcrypt()
@@ -690,20 +694,24 @@ include(FindPqxx)
 find_pqxx()
 
 # To use Qt, set QT_ROOT to the Qt installation prefix. To avoid Qt set QT_ROOT=no
-include(FindQt)
-find_qt()
+if(with-roseQt)
+  include(FindQt)
+  find_qt()
+endif()
 
 # To use libreadline, set READLINE_ROOT to the readline installation prefix. To avoid readline set READLINE_ROOT=no
 include(FindReadline)
 find_readline()
 
 # To use libspot, set SPOT_ROOT to the spot installation prefix. To avoid spot set SPOT_ROOT=no
-include(FindSpot)
-find_spot()
+if(enable-c)
+  include(FindSpot)
+  find_spot()
+endif()
 
 # To use Wt, set WT_ROOT to the Wt installation prefix. To avoid Wt set WT_ROOT=no
-include(FindWt)
-find_wt()
+#include(FindWt)
+#find_wt()
 
 # To use Yices, set YICES_ROOT to the Yices installation prefix. To avoid Yices set YICES_ROOT=no
 include(FindYices)

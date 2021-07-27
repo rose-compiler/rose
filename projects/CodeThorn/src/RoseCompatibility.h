@@ -19,11 +19,14 @@ using TypeKeyType  = const SgType*;
 using CastKeyType  = const SgCastExp*;
 using ASTRootType  = SgProject*;
 
-/// returns the name for a class key
+/// type of a class naming function
 using ClassNameFn   = std::function<std::string(ClassKeyType)>;
 
-/// returns the name for a class key
+/// type of a function naming function
 using FuncNameFn    = std::function<std::string(FunctionId)>;
+
+/// type of a variable naming function
+using VarNameFn     = std::function<std::string(VariableId)>;
 
 
 struct ClassAnalysis;
@@ -105,6 +108,9 @@ struct RoseCompatibilityBridge
 
     /// returns a function that maps a ClassKeyType to std::string
     ClassNameFn classNomenclator() const;
+
+    /// returns a function that maps a VariableId to std::string
+    VarNameFn variableNomenclator() const;
 
   private:
     RoseCompatibilityBridge()                                          = delete;
