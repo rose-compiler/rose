@@ -51,6 +51,7 @@ CodeThornOptions::CodeThornOptions() {
     {CodeThorn::ANALYSIS_OPAQUE_PREDICATE,"opaque-predicate"}
   };
   _analysisList=analysisList;
+  reportFilePath="./";
 }
 
 bool CodeThornOptions::getInterProceduralFlag() {
