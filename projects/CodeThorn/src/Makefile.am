@@ -571,6 +571,9 @@ thorn2_DEPENDENCIES=libcodethorn.la
 
 thorn2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn
 
+# this line creates speparately named object files, fopenmp to silence warnings about openmp directives
+thorn2_CXXFLAGS = -fopenmp -Wall -O3
+
 # codethorn sources in addition to libcodethorn
 thorn2_SOURCES = \
   CodeThornCommandLineOptions.C \
@@ -712,9 +715,11 @@ check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
 
-CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-io unit-test check-omp-cfg check-commandline-options check-vis check-thorn2
+CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-io unit-test check-commandline-options check-vis check-thorn2
 
-CHECK_DEFAULT_FAILING_NEW=
+# this check (only) fails when run in parallel with -j10 or higher
+CHECK_DEFAULT_FAILING_NEW=check-omp-cfg
+
 CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 
 #CHECK_WITH_SPOT_ONLY=check-ltl check-ltl-driven check-svcomp-witness
@@ -808,11 +813,11 @@ check-ltl-old: check-ltl-rers-different-versions
 # failing tests
 #check-failing:
 
-# failing tests due to changes in domain
-#check-ltl-failing: check-ltl-rers-array
+# failing tests due to changes in domain, rers-timeout hangs sometimes
+#check-ltl-failing: check-ltl-rers-array 
 
 # current tests all passing
-check-ltl: check-ltl-start check-ltl-rers-timeout check-ltl-rers-arithmetic check-ltl-rers-loop-aware-sync check-ltl-rers-topify check-ltl-cegpra check-ltl-rers-array
+check-ltl: check-ltl-start check-ltl-rers-arithmetic check-ltl-rers-loop-aware-sync check-ltl-rers-topify check-ltl-cegpra check-ltl-rers-array check-ltl-rers-timeout
 
 check-ltl-start:
 	@echo ================================================================
@@ -843,7 +848,7 @@ check-ltl-rers-memory-bound:
 
 #test the analysis of RERS Problem1402 and terminate after 5 seconds (4 threads)
 check-ltl-rers-timeout:
-	@$(srcdir)/scripts/runRersTimeoutTest $(srcdir) $(top_builddir)/projects/CodeThorn/src
+	@$(srcdir)/scripts/runRersTimeoutTest $(srcdir) $(top_builddir)/projects/CodeThorn/src 3
 
 #one test for the loop-aware-sync analysis (solver 12, ISoLA'16 paper)
 check-ltl-rers-loop-aware-sync:

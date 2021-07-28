@@ -432,22 +432,24 @@ namespace CodeThorn {
     }
 
     void optionallyGenerateExternalFunctionsFile(CodeThornOptions& ctOpt, FunctionCallMapping* funCallMapping) {
-      std::string fileName=ctOpt.reportFilePath+"/"+ctOpt.externalFunctionsCSVFileName;
-      if(fileName.size()>0) {
-	if(!ctOpt.quiet)
-	  cout<<"Writing list of external functions to file "<<fileName<<endl;
-	FunctionCallMapping::ExternalFunctionNameContainerType fnList=funCallMapping->getExternalFunctionNames();
-	std::list<string> sList;
-	for(auto fn : fnList)
-	  sList.push_back(fn);
-	sList.sort(CppStdUtilities::compareCaseInsensitively);
-	stringstream csvList;
-	for(auto fn : sList) {
-	  csvList<<fn<<endl;
-	}
-	if(!CppStdUtilities::writeFile(fileName, csvList.str())) {
-	  cerr<<"Error: cannot write list of external functions to CSV file "<<fileName<<endl;
-	  exit(1);
+      if(ctOpt.generateReports) {
+	std::string fileName=ctOpt.reportFilePath+"/"+ctOpt.externalFunctionsCSVFileName;
+	if(fileName.size()>0) {
+	  if(!ctOpt.quiet)
+	    cout<<"Writing list of external functions to file "<<fileName<<endl;
+	  FunctionCallMapping::ExternalFunctionNameContainerType fnList=funCallMapping->getExternalFunctionNames();
+	  std::list<string> sList;
+	  for(auto fn : fnList)
+	    sList.push_back(fn);
+	  sList.sort(CppStdUtilities::compareCaseInsensitively);
+	  stringstream csvList;
+	  for(auto fn : sList) {
+	    csvList<<fn<<endl;
+	  }
+	  if(!CppStdUtilities::writeFile(fileName, csvList.str())) {
+	    cerr<<"Error: cannot write list of external functions to CSV file "<<fileName<<endl;
+	    exit(1);
+	  }
 	}
       }
     }
@@ -700,15 +702,18 @@ namespace CodeThorn {
     }
 
     void optionallyGenerateVerificationReports(CodeThornOptions& ctOpt,CTAnalysis* analyzer) {
-      if(ctOpt.analysisList().size()>0) {
-	const bool reportDetectedErrorLines=true;
-	AnalysisReporting::generateVerificationReports(ctOpt,analyzer,reportDetectedErrorLines); // also generates verification call graph
-	AnalysisReporting::generateAnalysisLocationReports(ctOpt,analyzer);
-	AnalysisReporting::generateAnalyzedFunctionsAndFilesReports(ctOpt,analyzer);
-      } else {
-	if(ctOpt.status) cout<<"STATUS: no analysis reports generated (no analysis selected)."<<endl;
+      if(ctOpt.generateReports) {
+	if(ctOpt.analysisList().size()>0) {
+	  const bool reportDetectedErrorLines=true;
+	  AnalysisReporting::generateVerificationReports(ctOpt,analyzer,reportDetectedErrorLines); // also generates verification call graph
+	  AnalysisReporting::generateAnalysisLocationReports(ctOpt,analyzer);
+	  AnalysisReporting::generateAnalyzedFunctionsAndFilesReports(ctOpt,analyzer);
+	} else {
+	  if(ctOpt.status) cout<<"STATUS: no analysis reports generated (no analysis selected)."<<endl;
+	}
       }
     }
+    
     void optionallyGenerateCallGraphDotFile(CodeThornOptions& ctOpt,CTAnalysis* analyzer) {
       std::string fileName=ctOpt.visualization.callGraphFileName;
       if(fileName.size()>0) {
@@ -789,11 +794,13 @@ namespace CodeThorn {
     }
 
     void generateRunTimeAndMemoryUsageReport(CodeThornOptions& ctOpt,TimingCollector& tc) {
-      string reportPathAndFile=ctOpt.reportFilePath+"/"+"runtime-memory-report.txt";
-      write_file(reportPathAndFile, getRunTimeAndMemoryUsageReport(ctOpt,tc));
-      if(ctOpt.status) cout<<"Generated runtime and memory usage report "<<reportPathAndFile<<endl;
+      if(ctOpt.generateReports) {
+	string reportPathAndFile=ctOpt.reportFilePath+"/"+"runtime-memory-report.txt";
+	write_file(reportPathAndFile, getRunTimeAndMemoryUsageReport(ctOpt,tc));
+	if(ctOpt.status) cout<<"Generated runtime and memory usage report "<<reportPathAndFile<<endl;
+      }
     }
-
+    
     std::string programStatsToString(ProgramInfo* progInfo, VariableIdMappingExtended* vim) {
       stringstream ss;
       ss<<"========================="<<endl;
@@ -812,9 +819,11 @@ namespace CodeThorn {
     }
 
     void generateProgramStats(CodeThornOptions& ctOpt, ProgramInfo* progInfo1, ProgramInfo* progInfo2, VariableIdMappingExtended* vim) {
-      string reportPathAndFile=ctOpt.reportFilePath+"/"+"program-statistics-report.txt";
-      write_file(reportPathAndFile, programStatsToString(progInfo1,progInfo2,vim));
-      if(ctOpt.status) cout<<"Generated program statistics report "<<reportPathAndFile<<endl;
+      if(ctOpt.generateReports) {
+	string reportPathAndFile=ctOpt.reportFilePath+"/"+"program-statistics-report.txt";
+	write_file(reportPathAndFile, programStatsToString(progInfo1,progInfo2,vim));
+	if(ctOpt.status) cout<<"Generated program statistics report "<<reportPathAndFile<<endl;
+      }
     }
     
   } // end of namespace CodeThornLib

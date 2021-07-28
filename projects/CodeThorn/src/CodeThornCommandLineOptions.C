@@ -197,6 +197,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("opaque-predicates",po::value< bool >(&ctOpt.constantConditionAnalysis)->default_value(false)->implicit_value(true),"Perform uninitialized analysis and print results.")
 
     ("report-file-path",po::value< string >(&ctOpt.reportFilePath),"Sets file path for all reports.")
+    ("generate-reports",po::value< bool >(&ctOpt.generateReports)->implicit_value(true),"Enable generation of analysis report files.")
     //("report-file",po::value< string >(&ctOpt.reportFileName),"Consolidated report, combines information about all analyses [arg].")
     //("function-report-file",po::value< string >(&ctOpt.functionReportFileName),"Consolidated report, combines analysis results about all functions [arg].")
     ("null-pointer-file",po::value< string >(&ctOpt.nullPointerAnalysisFileName),"Perform null pointer analysis and write results to file [arg].")
