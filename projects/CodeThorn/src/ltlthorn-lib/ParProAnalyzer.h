@@ -16,7 +16,7 @@
 
 // BOOST includes
 #include "boost/lexical_cast.hpp"
-#include "boost/unordered_set.hpp"
+#include <unordered_set>
 #include "boost/regex.hpp"
 #include "boost/algorithm/string.hpp"
 #include "boost/algorithm/string/trim.hpp"

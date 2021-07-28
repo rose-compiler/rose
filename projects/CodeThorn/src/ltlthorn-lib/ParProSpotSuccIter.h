@@ -15,9 +15,6 @@
 #include "ParProSpotState.h"
 #include "ParProEState.h"
 
-// BOOST includes
-#include "boost/unordered_set.hpp"
-
 //SPOT includes
 #include "tgba/succiter.hh"
 #include "bdd.h"

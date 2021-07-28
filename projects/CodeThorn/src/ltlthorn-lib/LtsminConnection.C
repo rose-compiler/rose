@@ -7,12 +7,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-//#include "boost/unordered_set.hpp"
-
 using namespace CodeThorn;
 using namespace CodeThorn;
 using namespace std;
-
 
 void LtsminConnection::init(string ltlFormulasFile) {
   //open text file that contains the properties
@@ -23,7 +20,6 @@ void LtsminConnection::init(string ltlFormulasFile) {
     loadFormulae(ltl_input);  //load the formulae into class member "_ltlResults"
   }
 }
-
 
 string LtsminConnection::ltlFormula2LtsminSyntax(string formula) {
   // Transform property string using 'sed'

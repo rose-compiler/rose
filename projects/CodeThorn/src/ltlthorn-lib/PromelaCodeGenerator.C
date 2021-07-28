@@ -9,8 +9,11 @@ string PromelaCodeGenerator::generateCode(CfgsAndAnnotationMap& parallelComponen
   string result;
   list<Flow> cfgs = parallelComponents.first;
   EdgeAnnotationMap annotationMap = parallelComponents.second;
-  boost::unordered_set<string> automataReceivingEnvInput;
-  boost::unordered_set<pair<string, string> > automataPairsWithCommunication;
+  std::unordered_set<std::string> automataReceivingEnvInput;
+
+  // MS 2021: to use std::unordered_set with std::pair the boost::hash function is necessary
+  typedef std::pair<std::string, std::string> Pair;
+  std::unordered_set<Pair,boost::hash<Pair> > automataPairsWithCommunication;
 
 bool useTransitionIds = false;
   string messageType = "mtype";
@@ -55,7 +58,7 @@ bool useTransitionIds = false;
 	} else {
 	  envProcess << "  :: p"<<automatonId<<" ! "<<"nop" << endl;
 	}
-        boost::unordered_set<string>::iterator previousEntry = automataReceivingEnvInput.find(automatonId);
+        std::unordered_set<string>::iterator previousEntry = automataReceivingEnvInput.find(automatonId);
         if (previousEntry == automataReceivingEnvInput.end()) {
           envProcessChannels << "chan p"<<automatonId<<" = [0] of {"<<messageType<<"};" << endl;
 	  automataReceivingEnvInput.insert(automatonId);
@@ -78,7 +81,7 @@ bool useTransitionIds = false;
 	} else {
 	  envProcess << "  :: p"<<automatonId<<" ! "<<i->first << endl;
 	}
-	boost::unordered_set<string>::iterator previousEntry = automataReceivingEnvInput.find(automatonId);
+	std::unordered_set<string>::iterator previousEntry = automataReceivingEnvInput.find(automatonId);
 	if (previousEntry == automataReceivingEnvInput.end()) {
 	  envProcessChannels << "chan p"<<automatonId<<" = [0] of {"<<messageType<<"};" << endl;
 	  automataReceivingEnvInput.insert(automatonId);
@@ -94,7 +97,7 @@ bool useTransitionIds = false;
 	    communicatingAutomata.second = boost::lexical_cast<string>(k->first);
 	  }
 	}
-	boost::unordered_set<pair<string, string> >::iterator previousEntry =  automataPairsWithCommunication.find(communicatingAutomata);
+	std::unordered_set<pair<string, string> >::iterator previousEntry =  automataPairsWithCommunication.find(communicatingAutomata);
 	if (previousEntry ==  automataPairsWithCommunication.end()) {
 	  interProcessChannels << "chan p"<<communicatingAutomata.first<<"_"<<communicatingAutomata.second;
 	  interProcessChannels << " = [0] of {"<<messageType<<"};" << endl;

@@ -11,11 +11,10 @@
 #include "DotGraphCfgFrontend.h"
 #include "Flow.h"
 
-// CodeThorn includes
+#include <unordered_set>
 
 // BOOST includes
 #include "boost/lexical_cast.hpp"
-#include "boost/unordered_set.hpp"
 #include "boost/regex.hpp"
 #include "boost/algorithm/string.hpp"
 #include "boost/algorithm/string/trim.hpp"
