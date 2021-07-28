@@ -97,7 +97,7 @@ bool useTransitionIds = false;
 	    communicatingAutomata.second = boost::lexical_cast<string>(k->first);
 	  }
 	}
-	std::unordered_set<pair<string, string> >::iterator previousEntry =  automataPairsWithCommunication.find(communicatingAutomata);
+	std::unordered_set<pair<string, string>,boost::hash<std::pair<string,string>> >::iterator previousEntry =  automataPairsWithCommunication.find(communicatingAutomata);
 	if (previousEntry ==  automataPairsWithCommunication.end()) {
 	  interProcessChannels << "chan p"<<communicatingAutomata.first<<"_"<<communicatingAutomata.second;
 	  interProcessChannels << " = [0] of {"<<messageType<<"};" << endl;
