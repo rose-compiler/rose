@@ -940,6 +940,7 @@ clean-local:
 	rm -Rf make_check_log_*
 	rm -f *-LTLParser.c++
 	rm -f *.csv
+	rm -f *.txt
 
 distclean-local: clean
 	rm -f *.tgz

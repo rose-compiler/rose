@@ -16,7 +16,7 @@
 
 #include <omp.h>
 
-#include <boost/unordered_set.hpp>
+#include <unordered_set>
 #include <boost/unordered_map.hpp>
 #include <unordered_map>
 

@@ -15,7 +15,7 @@
 
 //BOOST includes
 #include "boost/lexical_cast.hpp"
-#include "boost/unordered_set.hpp"
+#include <unordered_set>
 #include "boost/regex.hpp"
 
 namespace CodeThorn {
@@ -25,7 +25,7 @@ namespace CodeThorn {
 
   typedef std::pair<int, IoType> CeIoVal;
   typedef std::pair<list<CeIoVal> , std::list<CeIoVal> > PrefixAndCycle;
-  typedef std::list<boost::unordered_set<const EState*> > StateSets;
+  typedef std::list<std::unordered_set<const EState*> > StateSets;
   typedef boost::unordered_map<const EState*, list<int> > InputsAtEState;
 
   /*! 

@@ -4,7 +4,7 @@
 /*************************************************************
  * Author   : Markus Schordan                                *
  *************************************************************/
-#include <boost/unordered_set.hpp>
+#include <unordered_set>
 
 //#define HSET_MAINTAINER_DEBUG_MODE
 
@@ -14,7 +14,7 @@
  */
 template<typename KeyType,typename HashFun, typename EqualToPred>
 class HSetMaintainer 
-  : public boost::unordered_set<KeyType*,HashFun,EqualToPred>
+  : public std::unordered_set<KeyType*,HashFun,EqualToPred>
   {
 public:
   typedef std::pair<bool,const KeyType*> ProcessingResult;
@@ -49,12 +49,12 @@ public:
   }
 
   size_t id(const KeyType& s) {
-    typename boost::unordered_set<KeyType*,HashFun,EqualToPred>::const_iterator i;
+    typename std::unordered_set<KeyType*,HashFun,EqualToPred>::const_iterator i;
     i=HSetMaintainer<KeyType,HashFun,EqualToPred>::find(s);
     if(i!=HSetMaintainer<KeyType,HashFun,EqualToPred>::end()) {
       // in lack of operator '-' we compute the distance
       size_t pos=0;
-      typename boost::unordered_set<KeyType*,HashFun,EqualToPred>::const_iterator b;
+      typename std::unordered_set<KeyType*,HashFun,EqualToPred>::const_iterator b;
       b=HSetMaintainer<KeyType,HashFun,EqualToPred>::begin();
       while(b!=i) {
         pos++;

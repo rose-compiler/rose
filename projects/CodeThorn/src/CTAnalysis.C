@@ -1150,7 +1150,7 @@ std::string CodeThorn::CTAnalysis::analyzedFunctionsToString() {
 }
 
 std::string CodeThorn::CTAnalysis::analyzedFilesToString() {
-  unordered_set<string> fileNameSet;
+  std::unordered_set<string> fileNameSet;
   LabelSet reachableFunLabels=reachableFunctionEntryLabels();
   for (auto funLab : reachableFunLabels)  {
     SgFunctionDefinition* funDef=getFunctionDefinitionOfEntryLabel(funLab);
@@ -1614,7 +1614,7 @@ void CodeThorn::CTAnalysis::reduceStgToInOutAssertErrStates() {
  */
 void CodeThorn::CTAnalysis::reduceStgToInOutAssertWorklistStates() {
   // copy elements from worklist into hashset (faster access within the predicate)
-  unordered_set<const EState*> worklistSet(estateWorkListCurrent->begin(), estateWorkListCurrent->end());
+  std::unordered_set<const EState*> worklistSet(estateWorkListCurrent->begin(), estateWorkListCurrent->end());
   function<bool(const EState*)> predicate = [&worklistSet](const EState* s) {
     return s->io.isStdInIO() || s->io.isStdOutIO()
     || s->io.isFailedAssertIO() || (worklistSet.find(s) != worklistSet.end());

@@ -63,7 +63,7 @@ CEAnalysisResult CounterexampleAnalyzer::analyzeCounterexample(string counterexa
     // (1) initialize one hashset per index in the cyclic part of the CE (bookkeeping)
     StateSets* statesPerCycleIndex = new StateSets(); 
     for (unsigned int i = 0; i < ceCycle.size(); i++) {
-      boost::unordered_set<const EState*> newSet;
+      std::unordered_set<const EState*> newSet;
       statesPerCycleIndex->push_back(newSet);
     }
     //(2) while (unknown whether or not CE is spurious)
@@ -167,7 +167,7 @@ CEAnalysisStep CounterexampleAnalyzer::getSpuriousTransition(list<CeIoVal> partO
         matchingState = true;
         if (statesPerCycleIndex) {
           //check if the real state has already been seen
-          pair<boost::unordered_set<const EState*>::iterator, bool> notYetSeen = cycleIndexStates->insert(currentState);
+          pair<std::unordered_set<const EState*>::iterator, bool> notYetSeen = cycleIndexStates->insert(currentState);
           if (notYetSeen.second == false) {
             //state encountered twice at the some counterexample index. cycle found --> real counterexample
             result.analysisResult = CE_TYPE_REAL;
@@ -652,8 +652,8 @@ void CounterexampleAnalyzer::setInputSequence(list<CeIoVal> sourceOfInputs) {
 }
 
 Label CounterexampleAnalyzer::getFirstObservableSpuriousLabel(TransitionGraph* analyzedModel, PrefixAndCycle counterexample, int numberOfSteps) {
-  boost::unordered_set<const EState*>* currentDepth = new boost::unordered_set<const EState*>();
-  boost::unordered_set<const EState*>* nextDepth = new boost::unordered_set<const EState*>();
+  std::unordered_set<const EState*>* currentDepth = new std::unordered_set<const EState*>();
+  std::unordered_set<const EState*>* nextDepth = new std::unordered_set<const EState*>();
   currentDepth->insert(analyzedModel->getStartEState());
   list<CeIoVal> prefix = counterexample.first;
   list<CeIoVal> cycle = counterexample.second;
@@ -665,7 +665,7 @@ Label CounterexampleAnalyzer::getFirstObservableSpuriousLabel(TransitionGraph* a
   // traverse all paths in the analyzed model that match with the counterexample's behavior
   for (int i = 0; i < numberOfSteps; i++) {
     //traverse one more level
-    for (boost::unordered_set<const EState*>::iterator k = currentDepth->begin(); k != currentDepth->end(); k++) {
+    for (std::unordered_set<const EState*>::iterator k = currentDepth->begin(); k != currentDepth->end(); k++) {
       EStatePtrSet successors = analyzedModel->succ(*k);
       // add those successor states to "nextDepth" that match the desired behavior
       for (EStatePtrSet::iterator m = successors.begin(); m != successors.end(); m++) {
@@ -675,7 +675,7 @@ Label CounterexampleAnalyzer::getFirstObservableSpuriousLabel(TransitionGraph* a
       }
     } 
     // swap currentDepth and nextDepth, then clear nextDepth
-    boost::unordered_set<const EState*>* swapTemp = currentDepth;  
+    std::unordered_set<const EState*>* swapTemp = currentDepth;  
     currentDepth = nextDepth;
     nextDepth = swapTemp;
     nextDepth->clear();
