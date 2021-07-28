@@ -76,7 +76,7 @@ T* CounterexampleGenerator::reverseTraceBreadthFirst(const EState* source, const
   list<const EState*> worklist;
   worklist.push_back(source);
   std::unordered_map <const EState*, const EState*> predecessor;
-  boost::unordered_set<const EState*> visited;
+  std::unordered_set<const EState*> visited;
   // 2.) while (elem in worklist) {s <-- pop wl; if (s not yet visited) {update predecessor map;
   //                                check if s==target: yes --> break, no --> add all pred to wl }}
   bool targetFound = false;
