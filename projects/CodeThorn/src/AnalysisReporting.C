@@ -293,7 +293,7 @@ namespace CodeThorn {
 
     InterFlow::LabelToFunctionMap map=analyzer->getCFAnalyzer()->labelToFunctionMap(flow);
 
-    std::string cgBegin="digraph G {\n concentrate=true\n overlap=true\n ";
+    std::string cgBegin="digraph G {\n concentrate=true\n overlap=false\n ";
     std::string cgEnd="}\n";
     std::string cgEdges=analyzer->getInterFlow()->dotCallGraphEdges(map);
     // generate colored nodes
