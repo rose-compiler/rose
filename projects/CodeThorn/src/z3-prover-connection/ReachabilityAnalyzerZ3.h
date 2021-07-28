@@ -31,7 +31,7 @@ class ReachabilityAnalyzerZ3
 	Sawyer::Message::Facility logger;
 	CTAnalysis* analyzer;
 	Flow* flow;
-	CTIOLabeler* labeler;
+	Labeler* labeler;
 
 	SSAGenerator* ssaGen;
 	int RERSUpperBoundForInput; //RERS specific: All inputs are assumed to be from {1, ..., RERSUpperBoundForInput}
