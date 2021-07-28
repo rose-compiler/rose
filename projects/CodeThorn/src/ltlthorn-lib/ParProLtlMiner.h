@@ -113,7 +113,7 @@ namespace CodeThorn {
     typedef HSetMaintainer<ParProEState,ParProEStateHashFun,ParProEStateEqualToPred>::ProcessingResult PSProcessingResult;
   };
 
-  typedef boost::unordered_map<const ParallelSystem*, std::list<const ParallelSystem*> > ParallelSystemDag;
+  typedef std::unordered_map<const ParallelSystem*, std::list<const ParallelSystem*> > ParallelSystemDag;
 
   /*! 
    * \brief Mines randomly generated valid and violated LTL properties on parallel process graphs.

@@ -34,13 +34,13 @@ namespace CodeThorn {
 
   private:
     std::string generateCode(Flow& automaton, int id, EdgeAnnotationMap edgeAnnotationMap, 
-			     bool useTransitionIds, boost::unordered_map<std::string, int>& transitionIdMap);
+			     bool useTransitionIds, std::unordered_map<std::string, int>& transitionIdMap);
     std::string communicationDetails(std::string edgeAnnotation, int currentAutomaton, EdgeAnnotationMap edgeAnnotationMap,
-				     bool useTransitionIds, boost::unordered_map<std::string, int>& transitionIdMap);
+				     bool useTransitionIds, std::unordered_map<std::string, int>& transitionIdMap);
     std::string generateActionListener(std::string messageType,
-				       bool useTransitionIds, boost::unordered_map<std::string, int>& transitionIdMap);
+				       bool useTransitionIds, std::unordered_map<std::string, int>& transitionIdMap);
     std::string ltlAtomicPropositions(EdgeAnnotationMap& annotationMap,
-				      bool useTransitionIds, boost::unordered_map<std::string, int>& transitionIdMap);
+				      bool useTransitionIds, std::unordered_map<std::string, int>& transitionIdMap);
   };
 
 } // end of namespace CodeThorn

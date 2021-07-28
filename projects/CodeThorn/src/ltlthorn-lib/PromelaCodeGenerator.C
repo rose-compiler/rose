@@ -17,7 +17,7 @@ string PromelaCodeGenerator::generateCode(CfgsAndAnnotationMap& parallelComponen
 
 bool useTransitionIds = false;
   string messageType = "mtype";
-  boost::unordered_map<string, int> transitionIdMap;
+  std::unordered_map<string, int> transitionIdMap;
   if (annotationMap.size() > 256) {
     useTransitionIds = true;  // Promela's mtype cannot be larger than a byte
     messageType = "int";
@@ -51,7 +51,7 @@ bool useTransitionIds = false;
 
   for (EdgeAnnotationMap::iterator i=annotationMap.begin(); i!=annotationMap.end(); i++) {
     if (i->first == "") { //special treatment of the implicit no-operation (nop) 
-      for (boost::unordered_map<int, std::list<Edge> >::iterator k=i->second.begin(); k!= i->second.end(); k++) {
+      for (std::unordered_map<int, std::list<Edge> >::iterator k=i->second.begin(); k!= i->second.end(); k++) {
         string automatonId = boost::lexical_cast<string>(k->first);
 	if (useTransitionIds) {
 	  envProcess << "  :: p"<<automatonId<<" ! "<<transitionIdMap[""] << endl;
@@ -74,7 +74,7 @@ bool useTransitionIds = false;
 	ROSE_ASSERT(0);
       }
       if (i->second.size() == 1) {
-	boost::unordered_map<int, list<Edge> >::iterator automatonContainingEdge = i->second.begin();
+	std::unordered_map<int, list<Edge> >::iterator automatonContainingEdge = i->second.begin();
 	string automatonId = boost::lexical_cast<string>(automatonContainingEdge->first);
 	if (useTransitionIds) {
 	  envProcess << "  :: p"<<automatonId<<" ! "<<transitionIdMap[i->first] << endl;
@@ -89,7 +89,7 @@ bool useTransitionIds = false;
       } else if (i->second.size() == 2) {
 	bool firstAutomaton = true;
 	pair<string, string> communicatingAutomata;
-	for (boost::unordered_map<int, std::list<Edge> >::iterator k=i->second.begin(); k!= i->second.end(); k++) {
+	for (std::unordered_map<int, std::list<Edge> >::iterator k=i->second.begin(); k!= i->second.end(); k++) {
 	  if (firstAutomaton) {
 	    communicatingAutomata.first = boost::lexical_cast<string>(k->first);
 	    firstAutomaton = false;
@@ -131,7 +131,7 @@ bool useTransitionIds = false;
   return result;
 };
 
-string PromelaCodeGenerator::ltlAtomicPropositions(EdgeAnnotationMap& annotationMap, bool useTransitionIds, boost::unordered_map<string, int>& transitionIdMap) {
+string PromelaCodeGenerator::ltlAtomicPropositions(EdgeAnnotationMap& annotationMap, bool useTransitionIds, std::unordered_map<string, int>& transitionIdMap) {
   stringstream ltlAtomicPropositions;
   for (EdgeAnnotationMap::iterator i=annotationMap.begin(); i!=annotationMap.end(); i++) {
     if (i->first != "") { //special treatment of the implicit no-operation (nop) 
@@ -146,7 +146,7 @@ string PromelaCodeGenerator::ltlAtomicPropositions(EdgeAnnotationMap& annotation
 }
 
 string PromelaCodeGenerator::generateActionListener(string messageType, bool useTransitionIds, 
-						    boost::unordered_map<string, int>& transitionIdMap) {
+						    std::unordered_map<string, int>& transitionIdMap) {
   stringstream actionChannelAndListener;
   actionChannelAndListener << "/* Action channel */" << endl;
   actionChannelAndListener << "chan act = [0] of {"<<messageType<<"};" << endl;
@@ -172,7 +172,7 @@ string PromelaCodeGenerator::generateActionListener(string messageType, bool use
 }
 
 string PromelaCodeGenerator::generateCode(Flow& automaton, int id, EdgeAnnotationMap edgeAnnotationMap, 
-					  bool useTransitionIds, boost::unordered_map<string, int>& transitionIdMap) {
+					  bool useTransitionIds, std::unordered_map<string, int>& transitionIdMap) {
   stringstream ss;
   ss << "/* Process "<<id<<" */" << endl;
   ss << "active proctype Proc"<<id<<"()" << endl;
@@ -212,7 +212,7 @@ string PromelaCodeGenerator::generateCode(Flow& automaton, int id, EdgeAnnotatio
 
 string PromelaCodeGenerator::communicationDetails(string edgeAnnotation, int currentAutomaton, 
 						  EdgeAnnotationMap edgeAnnotationMap, bool useTransitionIds, 
-						  boost::unordered_map<string, int>& transitionIdMap) {
+						  std::unordered_map<string, int>& transitionIdMap) {
   stringstream ss;
   EdgeAnnotationMap::iterator iter = edgeAnnotationMap.find(edgeAnnotation);
   if (iter == edgeAnnotationMap.end()) {
@@ -240,7 +240,7 @@ string PromelaCodeGenerator::communicationDetails(string edgeAnnotation, int cur
     string sendOrReceive;
     pair<string, string> senderAndReceiver;
     bool firstAutomaton = true;
-    for (boost::unordered_map<int, std::list<Edge> >::iterator k=iter->second.begin(); k!= iter->second.end(); k++) {
+    for (std::unordered_map<int, std::list<Edge> >::iterator k=iter->second.begin(); k!= iter->second.end(); k++) {
       if (firstAutomaton) { // the first entry is always chosen to be the sender of the message
 	senderAndReceiver.first = boost::lexical_cast<string>(k->first);
 	firstAutomaton = false;

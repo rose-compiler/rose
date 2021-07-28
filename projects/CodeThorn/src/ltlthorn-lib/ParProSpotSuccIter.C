@@ -8,7 +8,7 @@ using namespace CodeThorn;
 using namespace std;
 
 ParProSpotSuccIter::ParProSpotSuccIter(ParProTransitionGraph& tg, const ParProEState& state, 
-				       const boost::unordered_map<string, int>& p2d) 
+				       const std::unordered_map<string, int>& p2d) 
                                       : _source(state), stg(tg), propName2DictNum(p2d) {
   _outEdges = stg.succ(&state);
   if (stg.isComplete() && !stg.isPrecise()) {

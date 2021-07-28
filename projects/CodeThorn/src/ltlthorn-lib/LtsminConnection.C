@@ -219,9 +219,9 @@ map<int, Flow*> LtsminConnection::componentAbstraction(map<int, Flow*> processes
     e.setAnnotation("");
     abstraction->insert(e);
     for (EdgeAnnotationMap::iterator i=_annotationMap.begin(); i!=_annotationMap.end(); ++i) {
-      boost::unordered_map<int, std::list<Edge> > occurrences = (*i).second;
+      std::unordered_map<int, std::list<Edge> > occurrences = (*i).second;
       bool abstractedAway = false;
-      for (boost::unordered_map<int, list<Edge> >::iterator p=occurrences.begin(); p!=occurrences.end();++p) {
+      for (std::unordered_map<int, list<Edge> >::iterator p=occurrences.begin(); p!=occurrences.end();++p) {
 	if (processes.find((*p).first) == processes.end()) {
 	  abstractedAway = true;
 	  break;
@@ -298,8 +298,8 @@ map<int, Flow*> LtsminConnection::componentAbstraction(map<int, Flow*> processes
       for (set<string>::iterator i=previousAnnotations.begin(); i!=previousAnnotations.end(); ++i) {
 	if (remainingAnnotations.find(*i) == remainingAnnotations.end()) {
 	  newMayOnlyCommunication.insert(*i);
-	  boost::unordered_map<int, list<Edge> > occurrences = _annotationMap[*i];
-	  for (boost::unordered_map<int, list<Edge> >::iterator p=occurrences.begin(); p!=occurrences.end();++p) {
+	  std::unordered_map<int, list<Edge> > occurrences = _annotationMap[*i];
+	  for (std::unordered_map<int, list<Edge> >::iterator p=occurrences.begin(); p!=occurrences.end();++p) {
 	    int idOtherProcess = (*p).first;
 	    if ( (result.find(idOtherProcess) != result.end()) 
 		 && (idOtherProcess != processId) ) {
@@ -321,8 +321,8 @@ map<int, Flow*> LtsminConnection::componentAbstraction(map<int, Flow*> processes
 
 bool LtsminConnection::isMustTransition(Edge e, map<int, Flow*>& processes) {
   bool must = true;
-  boost::unordered_map<int, list<Edge> > occurrences = _annotationMap[e.getAnnotation()];
-  for (boost::unordered_map<int, list<Edge> >::iterator p=occurrences.begin(); p!=occurrences.end();++p) {
+  std::unordered_map<int, list<Edge> > occurrences = _annotationMap[e.getAnnotation()];
+  for (std::unordered_map<int, list<Edge> >::iterator p=occurrences.begin(); p!=occurrences.end();++p) {
     if (processes.find((*p).first) == processes.end()) {
       must = false;
       break;

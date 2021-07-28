@@ -312,7 +312,7 @@ void ParProExplorer::computeStgApprox(ParallelSystem& system, ComponentApproxima
     ROSE_ASSERT(!system.hasStg());
   }
   vector<Flow*> cfas(system.size());
-  boost::unordered_map<int, int> cfaIdMap;
+  std::unordered_map<int, int> cfaIdMap;
   int index = 0;
   map<int, Flow*> components = system.components();
   for (map<int, Flow*>::iterator i=components.begin(); i!=components.end(); ++i) {

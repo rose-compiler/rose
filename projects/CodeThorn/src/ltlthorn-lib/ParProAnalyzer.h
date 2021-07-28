@@ -40,9 +40,9 @@ namespace CodeThorn {
   public:
     ParProAnalyzer();
     ParProAnalyzer(std::vector<Flow*> cfas);
-    ParProAnalyzer(std::vector<Flow*> cfas, boost::unordered_map<int, int>& cfgIdToStateIndex);
+    ParProAnalyzer(std::vector<Flow*> cfas, std::unordered_map<int, int>& cfgIdToStateIndex);
     void init(std::vector<Flow*> cfas);
-    void init(std::vector<Flow*> cfas, boost::unordered_map<int, int>& cfgIdToStateIndex);
+    void init(std::vector<Flow*> cfas, std::unordered_map<int, int>& cfgIdToStateIndex);
     void initializeSolver();
     // run the state space exploration
     void runSolver();
@@ -68,7 +68,7 @@ namespace CodeThorn {
     bool all_false(std::vector<bool>& v);
 
     std::vector<Flow*> _cfas;
-    boost::unordered_map<int, int> _cfgIdToStateIndex;
+    std::unordered_map<int, int> _cfgIdToStateIndex;
     std::string _startTransitionAnnotation;
     ParProTransitionGraph* _transitionGraph;
     ParProEStateSet _eStateSet;

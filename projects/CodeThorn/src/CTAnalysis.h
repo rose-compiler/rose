@@ -17,7 +17,6 @@
 #include <omp.h>
 
 #include <unordered_set>
-#include <boost/unordered_map.hpp>
 #include <unordered_map>
 
 #include "TimeMeasurement.h"
@@ -264,8 +263,8 @@ namespace CodeThorn {
     // TODO: move to flow analyzer (reports label,init,final sets)
     static std::string astNodeInfoAttributeAndNodeToString(SgNode* node);
     PropertyValueTable reachabilityResults;
-    boost::unordered_map <std::string,int*> mapGlobalVarAddress;
-    boost::unordered_map <int*,std::string> mapAddressGlobalVar;
+    std::unordered_map <std::string,int*> mapGlobalVarAddress;
+    std::unordered_map <int*,std::string> mapAddressGlobalVar;
 
     // only used temporarily for binary-binding prototype
     std::vector<bool> binaryBindingAssert;

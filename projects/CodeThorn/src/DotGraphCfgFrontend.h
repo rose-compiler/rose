@@ -15,6 +15,7 @@
 // BOOST includes
 #include "boost/lexical_cast.hpp"
 #include <unordered_set>
+#include <unordered_map>
 #include "boost/regex.hpp"
 #include "boost/algorithm/string.hpp"
 #include "boost/algorithm/string/trim.hpp"
@@ -22,7 +23,7 @@
 
 namespace CodeThorn {
 
-  typedef boost::unordered_map<std::string, boost::unordered_map<int, std::list<Edge> > > EdgeAnnotationMap;
+  typedef std::unordered_map<std::string, std::unordered_map<int, std::list<Edge> > > EdgeAnnotationMap;
   typedef std::pair<std::list<Flow>, EdgeAnnotationMap> CfgsAndAnnotationMap;
 
   /*! 

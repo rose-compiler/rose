@@ -491,7 +491,7 @@ vector<bool> CounterexampleAnalyzer::hasFollowingInputStates(vector<bool> v, con
 
 vector<bool> CounterexampleAnalyzer::setErrorBranches(vector<bool> v, const EState* eState) {
   // do not (re-)connect in a way as to pretend the existence of a path where erroneous behavior was previously discovered
-  boost::unordered_map<const EState*, list<int> >::iterator errorStateEntry = _erroneousBranches.find(eState);
+  std::unordered_map<const EState*, list<int> >::iterator errorStateEntry = _erroneousBranches.find(eState);
   if (errorStateEntry != _erroneousBranches.end()) {
     list<int> dontFollowTheseInputs = errorStateEntry->second;
     for (list<int>::iterator k=dontFollowTheseInputs.begin(); k!=dontFollowTheseInputs.end(); ++k) {

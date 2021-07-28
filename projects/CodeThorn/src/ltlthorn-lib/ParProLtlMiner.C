@@ -88,10 +88,10 @@ EdgeAnnotationMap ParallelSystem::edgeAnnotationMap() {
     for (Flow::iterator k=component->begin(); k!= component->end(); ++k) {
       string annotation = (*k).getAnnotation();
       if (result.find(annotation) == result.end()) {
-	boost::unordered_map<int, list<Edge> > newMap;
+	std::unordered_map<int, list<Edge> > newMap;
 	result[annotation] = newMap;
       }
-      boost::unordered_map<int, list<Edge> > occurrences = result[annotation];
+      std::unordered_map<int, list<Edge> > occurrences = result[annotation];
       if (occurrences.find((*i).first) == occurrences.end()) {
 	list<Edge> newList;
 	occurrences[(*i).first] = newList;

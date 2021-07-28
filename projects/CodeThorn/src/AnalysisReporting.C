@@ -203,6 +203,16 @@ namespace CodeThorn {
       string analysisName=analysisInfo.second;
       ProgramLocationsReport locations=analyzer->getEStateTransferFunctions()->getProgramLocationsReport(analysisSel);
       string fileName=ctOpt.reportFilePath+"/"+analysisName+"-locations.csv";
+
+      // override with user-provided name 
+      if(analysisSel==ANALYSIS_NULL_POINTER && ctOpt.nullPointerAnalysisFileName.size()>0 && ctOpt.nullPointerAnalysisFileName!="null-pointer.csv") {
+	fileName=ctOpt.nullPointerAnalysisFileName;
+      } else if(analysisSel==ANALYSIS_OUT_OF_BOUNDS && ctOpt.outOfBoundsAnalysisFileName.size()>0 && ctOpt.outOfBoundsAnalysisFileName!="out-of-bounds.csv") {
+	fileName=ctOpt.outOfBoundsAnalysisFileName;
+      } else if(analysisSel==ANALYSIS_UNINITIALIZED && ctOpt.uninitializedMemoryAnalysisFileName.size()>0 && ctOpt.uninitializedMemoryAnalysisFileName!="uninitialized.csv") {
+	fileName=ctOpt.uninitializedMemoryAnalysisFileName;
+      }
+
       if(!ctOpt.quiet)
 	cout<<"Writing "<<analysisName<<" analysis results to file "<<fileName<<endl;
       locations.writeResultFile(fileName,ctOpt.csvReportModeString,analyzer->getLabeler());

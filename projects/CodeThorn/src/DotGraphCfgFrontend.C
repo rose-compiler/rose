@@ -119,7 +119,7 @@ CfgsAndAnnotationMap DotGraphCfgFrontend::parseDotCfgs(string filename) {
 	EdgeAnnotationMap::iterator res = edgesByAnnotation.find(edge.getAnnotation());
 	if (res == edgesByAnnotation.end()) {
 	  // no edge with that annoation so far, create a new entry in the map
-	  boost::unordered_map<int, list<Edge> > edgesInThisCfg;
+	  std::unordered_map<int, list<Edge> > edgesInThisCfg;
           list<Edge> newEdgeList;
 	  newEdgeList.push_back(edge);
 	  edgesInThisCfg[mostRecentCfgId] = newEdgeList; 
@@ -127,7 +127,7 @@ CfgsAndAnnotationMap DotGraphCfgFrontend::parseDotCfgs(string filename) {
 	  // edgesByAnnotation[edge.getAnnotation()] = edgesWithThisAnnotation;
 	  edgesByAnnotation[edge.getAnnotation()] = edgesInThisCfg;
 	} else {
-	  boost::unordered_map<int, std::list<Edge> >::iterator cfgRes = res->second.find(mostRecentCfgId);
+	  std::unordered_map<int, std::list<Edge> >::iterator cfgRes = res->second.find(mostRecentCfgId);
 	  if (cfgRes == res->second.end()) {
 	    // already found other edges with this annotation, but not in this CFG. Add an entry for this CFG
 	    list<Edge> newEdgeList;

@@ -2,6 +2,7 @@
 
 #include "ParProAutomataGenerator.h"
 #include "Miscellaneous2.h"
+#include <unordered_map>
 
 using namespace CodeThorn;
 using namespace std;
@@ -111,7 +112,7 @@ void ParProAutomataGenerator::randomlySynchronizeAutomata(vector<Flow*> automata
     cerr <<totalNumberOfEdges<<" edges exist in total." << endl;
     ROSE_ASSERT(0);
   }
-  boost::unordered_map<string, pair<string, string> > synchronized;
+  std::unordered_map<string, pair<string, string> > synchronized;
   for (int i = 0; i < numSynchronizations; ++i) {
     // select two different automata for synchronization
     int automataIndexOne;

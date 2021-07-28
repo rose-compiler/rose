@@ -40,7 +40,7 @@ namespace CodeThorn {
   bool operator<(const ParProTransition& t1, const ParProTransition& t2);
 
   typedef std::set<ParProTransition> ParProTransitions; // multiple identical edges are not desired in the STG
-  typedef boost::unordered_map<const ParProEState*, ParProTransitions> EStateTransitionMap;
+  typedef std::unordered_map<const ParProEState*, ParProTransitions> EStateTransitionMap;
 
   /*! 
    * \brief State transition graph consisting of ParProEStates.

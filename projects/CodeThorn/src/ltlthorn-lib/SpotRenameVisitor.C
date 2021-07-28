@@ -5,7 +5,7 @@
 
 using namespace spot::ltl;
 
-SpotRenameVisitor::SpotRenameVisitor(boost::unordered_map<std::string, std::string> nameMap) : 
+SpotRenameVisitor::SpotRenameVisitor(std::unordered_map<std::string, std::string> nameMap) : 
   _newAtomicPropNames(nameMap) {
 }
 

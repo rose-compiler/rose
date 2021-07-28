@@ -22,7 +22,7 @@ _approximation(COMPONENTS_NO_APPROX) {
   init(cfas);
 }
 
-ParProAnalyzer::ParProAnalyzer(std::vector<Flow*> cfas, boost::unordered_map<int, int>& cfgIdToStateIndex): 
+ParProAnalyzer::ParProAnalyzer(std::vector<Flow*> cfas, std::unordered_map<int, int>& cfgIdToStateIndex): 
 _startTransitionAnnotation(""),
 _transitionGraph(new ParProTransitionGraph()),
 _eStateSet(ParProEStateSet(true)),
@@ -44,7 +44,7 @@ void ParProAnalyzer::init(std::vector<Flow*> cfas) {
   }
 }
 
-void ParProAnalyzer::init(std::vector<Flow*> cfas, boost::unordered_map<int, int>& cfgIdToStateIndex) {
+void ParProAnalyzer::init(std::vector<Flow*> cfas, std::unordered_map<int, int>& cfgIdToStateIndex) {
   init(cfas);
   _cfgIdToStateIndex = cfgIdToStateIndex;
 }
@@ -181,8 +181,8 @@ bool ParProAnalyzer::isPreciseTransition(Edge e, const ParProEState* eState) {
   ParProLabel sourceLabel = eState->getLabel();
   EdgeAnnotationMap::iterator iter = _annotationToEdges.find(e.getAnnotation());
   ROSE_ASSERT(iter != _annotationToEdges.end()); // every annotation has to come from at least one CFG
-  boost::unordered_map<int, std::list<Edge> > edgesByCfgId = iter->second;
-  for (boost::unordered_map<int, std::list<Edge> >::iterator i=edgesByCfgId.begin(); i!=edgesByCfgId.end(); i++) {
+  std::unordered_map<int, std::list<Edge> > edgesByCfgId = iter->second;
+  for (std::unordered_map<int, std::list<Edge> >::iterator i=edgesByCfgId.begin(); i!=edgesByCfgId.end(); i++) {
     if (_cfgIdToStateIndex.find(i->first) == _cfgIdToStateIndex.end()) {
       return false;
     }
@@ -197,8 +197,8 @@ bool ParProAnalyzer::feasibleAccordingToGlobalState(Edge e, const ParProEState* 
   ParProLabel sourceLabel = eState->getLabel();
   EdgeAnnotationMap::iterator iter = _annotationToEdges.find(e.getAnnotation());
   ROSE_ASSERT(iter != _annotationToEdges.end()); // every annotation has to come from at least one CFG
-  boost::unordered_map<int, std::list<Edge> > edgesByCfgId = iter->second;
-  for (boost::unordered_map<int, std::list<Edge> >::iterator i=edgesByCfgId.begin(); i!=edgesByCfgId.end(); ++i) {
+  std::unordered_map<int, std::list<Edge> > edgesByCfgId = iter->second;
+  for (std::unordered_map<int, std::list<Edge> >::iterator i=edgesByCfgId.begin(); i!=edgesByCfgId.end(); ++i) {
     bool foundAnEdgeInCfg = false;
     for (list<Edge>::iterator k=i->second.begin(); k!=i->second.end(); k++) {
       if (sourceLabel[_cfgIdToStateIndex[i->first]] == k->source()) {
@@ -217,8 +217,8 @@ ParProEState ParProAnalyzer::transfer(const ParProEState* eState, Edge e) {
   ParProLabel targetLabel = eState->getLabel();
   EdgeAnnotationMap::iterator iter = _annotationToEdges.find(e.getAnnotation());
   ROSE_ASSERT(iter != _annotationToEdges.end()); // every annotation has to come from at least one CFG
-  boost::unordered_map<int, std::list<Edge> > edgesByCfgId = iter->second;
-  for (boost::unordered_map<int, std::list<Edge> >::iterator i=edgesByCfgId.begin(); i!=edgesByCfgId.end(); ++i) {
+  std::unordered_map<int, std::list<Edge> > edgesByCfgId = iter->second;
+  for (std::unordered_map<int, std::list<Edge> >::iterator i=edgesByCfgId.begin(); i!=edgesByCfgId.end(); ++i) {
     // only follow transitions in those automata for which the state is actually stored (and therefore not abstracted)
     // (a synchronized transition might involve several automata, some of which may be ignored (abstraction))
     if (_cfgIdToStateIndex.find(i->first) != _cfgIdToStateIndex.end()) {
