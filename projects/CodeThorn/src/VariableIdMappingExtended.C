@@ -1007,11 +1007,42 @@ namespace CodeThorn {
     return classMembers[type];
   }
 
-  // OLD METHODS (VIM2)
+  void VariableIdMappingExtended::MemPoolTraversal::visit(SgNode* node) {
+    if(SgClassType* ctype=isSgClassType(node)) {
+      classTypes.insert(ctype);
+    } else if(SgArrayType* atype=isSgArrayType(node)) {
+      arrayTypes.insert(atype);
+    } else if(SgType* btype=isSgType(node)) {
+      builtInTypes.insert(btype);
+    } else if(SgClassDefinition* cdef=isSgClassDefinition(node)) {
+      classDefinitions.insert(cdef);
+    }
+  }
 
+  void VariableIdMappingExtended::MemPoolTraversal::dumpClassTypes() {
+    int i=0;
+    for(auto t:classTypes) {
+      auto mList=VariableIdMappingExtended::memberVariableDeclarationsList(t);
+      std::cout<<i++<<": class Type (";
+      if(mList.first)
+	std::cout<<mList.second.size();
+      else
+	std::cout<<"unknown";
+      std::cout<<") :"<<t->unparseToString()<<std::endl;
+    }
+  }
+
+  void VariableIdMappingExtended::MemPoolTraversal::dumpArrayTypes() {
+    int i=0;
+    for(auto t:arrayTypes) {
+      std::cout<<"Array Type "<<i++<<":"<<t->unparseToString()<<std::endl;
+    }
+  }
+
+  // OLD METHODS (VIM2)
   std::string VariableIdMappingExtended::typeSizeMappingToString() {
     return typeSizeMapping.toString();
   }
-
+  
 }
 

@@ -715,15 +715,15 @@ check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
 
-CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-io unit-test check-commandline-options check-vis check-thorn2
+CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-io unit-test check-omp-cfg check-commandline-options check-vis check-thorn2
 
 # this check (only) fails when run in parallel with -j10 or higher
-CHECK_DEFAULT_FAILING_NEW=check-omp-cfg
+CHECK_DEFAULT_FAILING_NEW=
 
-CHECK_DEFAULT_FAILING=check-data-races check-deadcode
+CHECK_DEFAULT_FAILING=check-data-races check-deadcode check-reachability-par
 
 #CHECK_WITH_SPOT_ONLY=check-ltl check-ltl-driven check-svcomp-witness
-CHECK_WITH_SPOT_ONLY_PASSING=check-ltl check-ltl-driven-reset-analyzer check-reachability
+CHECK_WITH_SPOT_ONLY_PASSING=check-ltl check-ltl-driven-reset-analyzer check-reachability-seq
 
 CHECK_WITH_SPOT_PASSING=$(CHECK_DEFAULT_PASSING) $(CHECK_WITH_SPOT_ONLY_PASSING)
 
@@ -731,6 +731,7 @@ check-default: $(CHECK_DEFAULT_PASSING)
 
 if ROSE_WITH_SPOT
 check-local: $(CHECK_WITH_SPOT_PASSING)
+check-extended: $(CHECK_WITH_SPOT_PASSING) check-reachability-par
 else
 check-local: $(CHECK_DEFAULT_PASSING)
 endif
@@ -876,7 +877,10 @@ check-ltl-driven-reset-analyzer:
 check-svcomp-witness:
 	./codethorn $(srcdir)/tests/svcomp/eca-rers2012/Problem01_label15_false-unreach-call.c --svcomp-mode --input-values="{1,2,3,4,5,6}" --witness-file=toBeImplemented.witness --with-counterexamples
 
-check-reachability:
+check-reachability-seq:
+	./codethorn $(srcdir)/tests/rers/Problem1911_opt.c --input-values="{1,2,3,4,5,6,7,8,9,10}" --status --threads=1 --with-counterexamples
+
+check-reachability-par:
 	./codethorn $(srcdir)/tests/rers/Problem1911_opt.c --input-values="{1,2,3,4,5,6,7,8,9,10}" --status --threads=6 --with-counterexamples
 
 check-commandline-options: ./codethorn

@@ -103,40 +103,13 @@ namespace CodeThorn {
     
     class MemPoolTraversal : public ROSE_VisitTraversal {
     public:
-      void visit(SgNode* node) {
-	if(SgClassType* ctype=isSgClassType(node)) {
-	  classTypes.insert(ctype);
-	} else if(SgArrayType* ctype=isSgArrayType(node)) {
-	  arrayTypes.insert(ctype);
-	} else if(SgType* type=isSgType(node)) {
-	  builtInTypes.insert(ctype);
-	} else if(SgClassDefinition* cdef=isSgClassDefinition(node)) {
-	  classDefinitions.insert(cdef);
-	}
-      }
+      void visit(SgNode* node);
+      void dumpClassTypes();
+      void dumpArrayTypes();
       std::unordered_set<SgClassType*> classTypes; // class, struct, union
       std::unordered_set<SgArrayType*> arrayTypes; // any dimension
       std::unordered_set<SgType*> builtInTypes; // all other types
       std::unordered_set<SgClassDefinition*> classDefinitions; // all other pointers
-
-      void dumpClassTypes() {
-	int i=0;
-	for(auto t:classTypes) {
-	  auto mList=VariableIdMappingExtended::memberVariableDeclarationsList(t);
-	  std::cout<<i++<<": class Type (";
-	  if(mList.first)
-	    std::cout<<mList.second.size();
-	  else
-	    std::cout<<"unknown";
-	  std::cout<<") :"<<t->unparseToString()<<std::endl;
-	}
-      }
-      void dumpArrayTypes() {
-	int i=0;
-	for(auto t:arrayTypes) {
-	  std::cout<<"Array Type "<<i++<<":"<<t->unparseToString()<<std::endl;
-	}
-      }
     };
     
     void createTypeLists();
