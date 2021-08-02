@@ -25037,6 +25037,8 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   if (SgArrayType* v= isSgArrayType(node))
     out<<" base_type@"<< v->get_base_type();
 
+  if (SgTypeExpression* v= isSgTypeExpression(node))
+    out<<" type@"<< v->get_type();
 
   if (SgDeclarationStatement* v= isSgDeclarationStatement(node))
   {
