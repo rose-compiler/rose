@@ -412,6 +412,16 @@ RiscOperators::modelCheckerSolver(const SmtSolver::Ptr &solver) {
     modelCheckerSolver_ = solver;
 }
 
+bool
+RiscOperators::computeMemoryRegions() const {
+    return computeMemoryRegions_;
+}
+
+void
+RiscOperators::computeMemoryRegions(bool b) {
+    computeMemoryRegions_ = b;
+}
+
 void
 RiscOperators::checkNullAccess(const BS::SValue::Ptr &addrSVal, TestMode testMode, IoMode ioMode) {
     // Null-dereferences are only tested when we're actually executing an instruciton. Other incidental operations such as
@@ -471,63 +481,27 @@ RiscOperators::checkNullAccess(const BS::SValue::Ptr &addrSVal, TestMode testMod
 
 void
 RiscOperators::checkOobAccess(const BS::SValue::Ptr &addrSVal_, TestMode testMode, IoMode ioMode, size_t nBytes) {
-    auto addrSVal = SValue::promote(addrSVal_);
+    if (computeMemoryRegions_) {
+        auto addrSVal = SValue::promote(addrSVal_);
 
-    // Out of bounds references are only tested when we're actually executing an instruction. Other incidental operations such
-    // as initializing the first state are not checked.
-    if (!currentInstruction())
-        return;
-    if (TestMode::OFF == testMode)
-        return;
+        // Out of bounds references are only tested when we're actually executing an instruction. Other incidental operations such
+        // as initializing the first state are not checked.
+        if (!currentInstruction())
+            return;
+        if (TestMode::OFF == testMode)
+            return;
 
-    // If the address is concrete and refers to a region of memory but is outside that region, then we have an OOB access.
-    if (auto va = addrSVal->toUnsigned()) {
-        if (AddressInterval referencedRegion = addrSVal->region()) {
-            AddressInterval accessedRegion = AddressInterval::baseSizeSat(*va, nBytes);
-            if (!referencedRegion.isContaining(accessedRegion)) {
-                currentState(BS::State::Ptr());         // indicates that execution failed
-                throw ThrownTag{OobTag::instance(nInstructions(), testMode, ioMode, currentInstruction(), addrSVal)};
+        // If the address is concrete and refers to a region of memory but is outside that region, then we have an OOB access.
+        if (auto va = addrSVal->toUnsigned()) {
+            if (AddressInterval referencedRegion = addrSVal->region()) {
+                AddressInterval accessedRegion = AddressInterval::baseSizeSat(*va, nBytes);
+                if (!referencedRegion.isContaining(accessedRegion)) {
+                    currentState(BS::State::Ptr());         // indicates that execution failed
+                    throw ThrownTag{OobTag::instance(nInstructions(), testMode, ioMode, currentInstruction(), addrSVal)};
+                }
             }
         }
     }
-
-#if 0 // [Robb Matzke 2021-07-13]
-    // Get the list of local variables for this function.
-    P2::Function::Ptr function = variableFinder_.functionForInstruction(partitioner_, currentInstruction());
-    ASSERT_not_null(function);
-    bool firstTime = !variableFinder_.isCached(function);
-    Variables::StackVariables lvars = variableFinder_.findStackVariables(partitioner_, function);
-    if (firstTime && mlog[DEBUG]) {
-        mlog[DEBUG] <<"local variables for " <<function->printableName() <<":\n";
-        Variables::print(lvars, partitioner_, mlog[DEBUG], "  ");
-    }
-
-    // What's being accessed?
-    SymbolicExpr::Ptr addrExpr = IS::SymbolicSemantics::SValue::promote(addrSVal)->get_expression();
-    ASSERT_not_null(addrExpr);
-    Variables::OffsetInterval accessInterval =
-        variableFinder_.referencedFrameArea(partitioner_, shared_from_this(), addrExpr, nBytes);
-    if (accessInterval.isEmpty())
-        return;
-
-    // Of the variables associated with the current instruction, how many are we accessing and how many are we not accessing.
-    size_t nOutside = 0;                                // access is outside a variable
-    size_t nInside = 0;                                 // access is inside a variable
-    for (const Variables::StackVariable &lvar: lvars.values()) {
-        if (lvar.definingInstructionVas().exists(currentInstruction()->get_address())) {
-            if (lvar.interval().isContaining(accessInterval)) {
-                ++nInside;
-            } else {
-                ++nOutside;
-            }
-        }
-    }
-
-    if (nOutside > 1 && 0 == nInside) {
-        currentState(BS::State::Ptr());                   // indicates that execution failed
-        throw ThrownTag{OobTag::instance(nInstructions(), testMode, ioMode, currentInstruction(), addrSVal)};
-    }
-#endif
 }
 
 size_t
@@ -542,49 +516,55 @@ RiscOperators::nInstructions(size_t n) {
 
 size_t
 RiscOperators::pruneCallStack() {
-    const RegisterDescriptor SP = partitioner_.instructionProvider().stackPointerRegister();
-    const BS::SValue::Ptr spSValue = peekRegister(SP, undefined_(SP.nBits()));
-    const rose_addr_t sp = spSValue->toUnsigned().get(); // must be concrete
-    FunctionCallStack &callStack = State::promote(currentState())->callStack();
     size_t nPopped = 0;
+    if (computeMemoryRegions_) {
+        const RegisterDescriptor SP = partitioner_.instructionProvider().stackPointerRegister();
+        const BS::SValue::Ptr spSValue = peekRegister(SP, undefined_(SP.nBits()));
+        const rose_addr_t sp = spSValue->toUnsigned().get(); // must be concrete
+        FunctionCallStack &callStack = State::promote(currentState())->callStack();
 
-    while (!callStack.isEmpty() && callStack.top().initialStackPointer() < sp) {
-        SAWYER_MESG(mlog[DEBUG]) <<"      returned from " <<callStack.top().function()->printableName() <<"\n";
-        callStack.pop();
-        ++nPopped;
+        while (!callStack.isEmpty() && callStack.top().initialStackPointer() < sp) {
+            SAWYER_MESG(mlog[DEBUG]) <<"      returned from " <<callStack.top().function()->printableName() <<"\n";
+            callStack.pop();
+            ++nPopped;
+        }
     }
     return nPopped;
 }
 
 void
 RiscOperators::pushCallStack(const P2::Function::Ptr &callee, rose_addr_t initialSp) {
-    FunctionCallStack &callStack = State::promote(currentState())->callStack();
+    if (computeMemoryRegions_) {
+        FunctionCallStack &callStack = State::promote(currentState())->callStack();
 
-    SAWYER_MESG(mlog[DEBUG]) <<"      called " <<callee->printableName() <<"\n";
-    SAWYER_MESG(mlog[DEBUG]) <<"        initial stack pointer = " <<StringUtility::addrToString(initialSp) <<"\n";
+        SAWYER_MESG(mlog[DEBUG]) <<"      called " <<callee->printableName() <<"\n";
+        SAWYER_MESG(mlog[DEBUG]) <<"        initial stack pointer = " <<StringUtility::addrToString(initialSp) <<"\n";
 
-    Variables::StackVariables lvars = variableFinder_.findStackVariables(partitioner_, callee);
-    callStack.push(FunctionCall(callee, initialSp, lvars));
+        Variables::StackVariables lvars = variableFinder_.findStackVariables(partitioner_, callee);
+        callStack.push(FunctionCall(callee, initialSp, lvars));
 
-    if (mlog[DEBUG])
-        printCallStack(mlog[DEBUG]);
+        if (mlog[DEBUG])
+            printCallStack(mlog[DEBUG]);
+    }
 }
 
 void
 RiscOperators::printCallStack(std::ostream &out) {
-    FunctionCallStack &callStack = State::promote(currentState())->callStack();
-    out <<"      function call stack:\n";
-    if (callStack.isEmpty()) {
-        out <<"        empty\n";
-    } else {
-        for (size_t i = callStack.size(); i > 0; --i) {
-            const FunctionCall &fcall = callStack[i-1];
-            out <<"        " <<fcall.function()->printableName()
-                <<" initSp=" <<StringUtility::addrToString(fcall.initialStackPointer()) <<"\n";
-            for (const Variables::StackVariable &var: fcall.stackVariables().values()) {
-                AddressInterval where = shiftAddresses(fcall.initialStackPointer() + fcall.framePointerDelta(),
-                                                       var.interval(), stackLimits_);
-                out <<"          " <<var <<" at " <<StringUtility::addrToString(where) <<"\n";
+    if (computeMemoryRegions_) {
+        FunctionCallStack &callStack = State::promote(currentState())->callStack();
+        out <<"      function call stack:\n";
+        if (callStack.isEmpty()) {
+            out <<"        empty\n";
+        } else {
+            for (size_t i = callStack.size(); i > 0; --i) {
+                const FunctionCall &fcall = callStack[i-1];
+                out <<"        " <<fcall.function()->printableName()
+                    <<" initSp=" <<StringUtility::addrToString(fcall.initialStackPointer()) <<"\n";
+                for (const Variables::StackVariable &var: fcall.stackVariables().values()) {
+                    AddressInterval where = shiftAddresses(fcall.initialStackPointer() + fcall.framePointerDelta(),
+                                                           var.interval(), stackLimits_);
+                    out <<"          " <<var <<" at " <<StringUtility::addrToString(where) <<"\n";
+                }
             }
         }
     }
@@ -646,25 +626,27 @@ RiscOperators::shiftAddresses(uint64_t base, const Variables::OffsetInterval &de
 
 BS::SValue::Ptr
 RiscOperators::assignRegion(const BS::SValue::Ptr &result_) {
-    auto result = SValue::promote(result_);
-    if (!result->region()) {
-        if (auto va = result->toUnsigned()) {
-            FunctionCallStack &callStack = State::promote(currentState())->callStack();
-            AddressInterval found;
-            for (size_t i = 0; i < callStack.size(); ++i) {
-                const FunctionCall &fcall = callStack[i];
-                for (const Variables::StackVariable &var: fcall.stackVariables().values()) {
-                    if (AddressInterval varAddrs = shiftAddresses(fcall.initialStackPointer() + fcall.framePointerDelta(),
-                                                                  var.interval(), stackLimits_)) {
-                        if (varAddrs.isContaining(*va)) {
-                            if (!found || varAddrs.size() < found.size())
-                                found = varAddrs;
+    if (computeMemoryRegions_) {
+        auto result = SValue::promote(result_);
+        if (!result->region()) {
+            if (auto va = result->toUnsigned()) {
+                FunctionCallStack &callStack = State::promote(currentState())->callStack();
+                AddressInterval found;
+                for (size_t i = 0; i < callStack.size(); ++i) {
+                    const FunctionCall &fcall = callStack[i];
+                    for (const Variables::StackVariable &var: fcall.stackVariables().values()) {
+                        if (AddressInterval varAddrs = shiftAddresses(fcall.initialStackPointer() + fcall.framePointerDelta(),
+                                                                      var.interval(), stackLimits_)) {
+                            if (varAddrs.isContaining(*va)) {
+                                if (!found || varAddrs.size() < found.size())
+                                    found = varAddrs;
+                            }
                         }
                     }
                 }
+                if (found)
+                    result->region(found);
             }
-            if (found)
-                result->region(found);
         }
     }
     return result_;
@@ -672,25 +654,29 @@ RiscOperators::assignRegion(const BS::SValue::Ptr &result_) {
 
 BS::SValue::Ptr
 RiscOperators::assignRegion(const BS::SValue::Ptr &result, const BS::SValue::Ptr &a) {
-    AddressInterval ar = SValue::promote(a)->region();
-    if (ar) {
-        SValue::promote(result)->region(ar);
-    } else {
-        assignRegion(result);
+    if (computeMemoryRegions_) {
+        AddressInterval ar = SValue::promote(a)->region();
+        if (ar) {
+            SValue::promote(result)->region(ar);
+        } else {
+            assignRegion(result);
+        }
     }
     return result;
 }
 
 BS::SValue::Ptr
 RiscOperators::assignRegion(const BS::SValue::Ptr &result, const BS::SValue::Ptr &a, const BS::SValue::Ptr &b) {
-    AddressInterval ar = SValue::promote(a)->region();
-    AddressInterval br = SValue::promote(b)->region();
-    if (ar && !br) {
-        SValue::promote(result)->region(ar);
-    } else if (!ar && br) {
-        SValue::promote(result)->region(br);
-    } else {
-        assignRegion(result);
+    if (computeMemoryRegions_) {
+        AddressInterval ar = SValue::promote(a)->region();
+        AddressInterval br = SValue::promote(b)->region();
+        if (ar && !br) {
+            SValue::promote(result)->region(ar);
+        } else if (!ar && br) {
+            SValue::promote(result)->region(br);
+        } else {
+            assignRegion(result);
+        }
     }
     return result;
 }
@@ -704,25 +690,27 @@ RiscOperators::startInstruction(SgAsmInstruction *insn) {
         printCallStack(mlog[DEBUG]);
 
     // If the call stack is empty, then push a record for the current function.
-    const rose_addr_t va = insn->get_address();
-    FunctionCallStack &callStack = State::promote(currentState())->callStack();
-    if (callStack.isEmpty()) {
-        std::vector<P2::Function::Ptr> functions = partitioner_.functionsSpanning(va);
-        P2::Function::Ptr function;
-        if (functions.empty()) {
-            mlog[WARN] <<"no function containing instruction at " <<StringUtility::addrToString(va) <<"\n";
-        } else if (functions.size() == 1) {
-            function = functions[0];
-        } else {
-            mlog[WARN] <<"multiple functions containing instruction at " <<StringUtility::addrToString(va) <<"\n";
-            function = functions[0];                    // arbitrary
-        }
+    if (computeMemoryRegions_) {
+        const rose_addr_t va = insn->get_address();
+        FunctionCallStack &callStack = State::promote(currentState())->callStack();
+        if (callStack.isEmpty()) {
+            std::vector<P2::Function::Ptr> functions = partitioner_.functionsSpanning(va);
+            P2::Function::Ptr function;
+            if (functions.empty()) {
+                mlog[WARN] <<"no function containing instruction at " <<StringUtility::addrToString(va) <<"\n";
+            } else if (functions.size() == 1) {
+                function = functions[0];
+            } else {
+                mlog[WARN] <<"multiple functions containing instruction at " <<StringUtility::addrToString(va) <<"\n";
+                function = functions[0];                    // arbitrary
+            }
 
-        if (function) {
-            const RegisterDescriptor SP = partitioner_.instructionProvider().stackPointerRegister();
-            const BS::SValue::Ptr spSValue = peekRegister(SP, undefined_(SP.nBits()));
-            const rose_addr_t sp = spSValue->toUnsigned().get();      // must be concrete
-            pushCallStack(function, sp);
+            if (function) {
+                const RegisterDescriptor SP = partitioner_.instructionProvider().stackPointerRegister();
+                const BS::SValue::Ptr spSValue = peekRegister(SP, undefined_(SP.nBits()));
+                const rose_addr_t sp = spSValue->toUnsigned().get();      // must be concrete
+                pushCallStack(function, sp);
+            }
         }
     }
 }
@@ -734,22 +722,24 @@ RiscOperators::finishInstruction(SgAsmInstruction *insn) {
 
     // If this was a function call, then push a new entry onto the call stack and insert the memory regions for local variables
     // and function stack arguments.
-    bool isFunctionCall = false;
-    if (P2::BasicBlock::Ptr bb = partitioner_.basicBlockContainingInstruction(insn->get_address())) {
-        isFunctionCall = partitioner_.basicBlockIsFunctionCall(bb);
-    } else {
-        isFunctionCall = insn->isFunctionCallFast(std::vector<SgAsmInstruction*>{insn}, nullptr, nullptr);
-    }
-    if (isFunctionCall) {
-        const RegisterDescriptor IP = partitioner_.instructionProvider().instructionPointerRegister();
-        BS::SValue::Ptr ipSValue = peekRegister(IP, undefined_(IP.nBits()));
-        if (auto ip = ipSValue->toUnsigned()) {
-            if (P2::Function::Ptr callee = partitioner_.functionExists(*ip)) {
-                // We are calling a function, so push a record onto the call stack.
-                const RegisterDescriptor SP = partitioner_.instructionProvider().stackPointerRegister();
-                const BS::SValue::Ptr spSValue = peekRegister(SP, undefined_(SP.nBits()));
-                const rose_addr_t sp = spSValue->toUnsigned().get();      // must be concrete
-                pushCallStack(callee, sp);
+    if (computeMemoryRegions_) {
+        bool isFunctionCall = false;
+        if (P2::BasicBlock::Ptr bb = partitioner_.basicBlockContainingInstruction(insn->get_address())) {
+            isFunctionCall = partitioner_.basicBlockIsFunctionCall(bb);
+        } else {
+            isFunctionCall = insn->isFunctionCallFast(std::vector<SgAsmInstruction*>{insn}, nullptr, nullptr);
+        }
+        if (isFunctionCall) {
+            const RegisterDescriptor IP = partitioner_.instructionProvider().instructionPointerRegister();
+            BS::SValue::Ptr ipSValue = peekRegister(IP, undefined_(IP.nBits()));
+            if (auto ip = ipSValue->toUnsigned()) {
+                if (P2::Function::Ptr callee = partitioner_.functionExists(*ip)) {
+                    // We are calling a function, so push a record onto the call stack.
+                    const RegisterDescriptor SP = partitioner_.instructionProvider().stackPointerRegister();
+                    const BS::SValue::Ptr spSValue = peekRegister(SP, undefined_(SP.nBits()));
+                    const rose_addr_t sp = spSValue->toUnsigned().get();      // must be concrete
+                    pushCallStack(callee, sp);
+                }
             }
         }
     }
@@ -769,15 +759,19 @@ RiscOperators::extract(const BS::SValue::Ptr &a, size_t begin, size_t end) {
 
 BS::SValue::Ptr
 RiscOperators::concat(const BS::SValue::Ptr &lowBits, const BS::SValue::Ptr &highBits) {
-    auto result = SValue::promote(Super::concat(lowBits, highBits));
-    auto a = SValue::promote(lowBits);
-    auto b = SValue::promote(highBits);
-    if (a->region() && a->region() == b->region()) {
-        result->region(a->region());
+    if (computeMemoryRegions_) {
+        auto result = SValue::promote(Super::concat(lowBits, highBits));
+        auto a = SValue::promote(lowBits);
+        auto b = SValue::promote(highBits);
+        if (a->region() && a->region() == b->region()) {
+            result->region(a->region());
+        } else {
+            assignRegion(result, a, b);
+        }
+        return result;
     } else {
-        assignRegion(result, a, b);
+        return Super::concat(lowBits, highBits);
     }
-    return result;
 }
 
 BS::SValue::Ptr
@@ -835,16 +829,19 @@ RiscOperators::addWithCarries(const BS::SValue::Ptr &a, const BS::SValue::Ptr &b
 
 BS::SValue::Ptr
 RiscOperators::readRegister(RegisterDescriptor reg, const BS::SValue::Ptr &dflt) {
-    auto retval = SValue::promote(Super::readRegister(reg, dflt));
+    if (computeMemoryRegions_) {
+        auto retval = SValue::promote(Super::readRegister(reg, dflt));
 
-    // The stack pointer and frame pointers are typically used by adding or subtracting something from them to access a
-    // *different* local variable than they point to directly. The whole point of adding and subtracting is to access a
-    // different variable rather than being an out-of-bounds access for the directly pointed variable.
-    if (partitioner_.instructionProvider().stackPointerRegister() == reg ||
-        partitioner_.instructionProvider().stackFrameRegister() == reg)
-        retval->region(AddressInterval());
-
-    return retval;
+        // The stack pointer and frame pointers are typically used by adding or subtracting something from them to access a
+        // *different* local variable than they point to directly. The whole point of adding and subtracting is to access a
+        // different variable rather than being an out-of-bounds access for the directly pointed variable.
+        if (partitioner_.instructionProvider().stackPointerRegister() == reg ||
+            partitioner_.instructionProvider().stackFrameRegister() == reg)
+            retval->region(AddressInterval());
+        return retval;
+    } else {
+        return Super::readRegister(reg, dflt);
+    }
 }
 
 BS::SValue::Ptr
@@ -1019,18 +1016,19 @@ SemanticCallbacks::createInitialState() {
 
 BS::RiscOperators::Ptr
 SemanticCallbacks::createRiscOperators() {
-    BS::RiscOperators::Ptr ops = RiscOperators::instance(settings_, partitioner_, this, protoval(), SmtSolver::Ptr());
+    auto ops = RiscOperators::instance(settings_, partitioner_, this, protoval(), SmtSolver::Ptr());
     ops->initialState(nullptr);
     ops->currentState(nullptr);
+    ops->computeMemoryRegions(settings_.oobRead != TestMode::OFF || settings_.oobWrite != TestMode::OFF);
 
     if (settings_.traceSemantics) {
         auto trace = IS::TraceSemantics::RiscOperators::instance(ops);
         trace->stream(mlog[DEBUG]);
         trace->indentation("        ");
-        ops = trace;
+        return trace;
+    } else {
+        return ops;
     }
-
-    return ops;
 }
 
 void

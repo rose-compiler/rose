@@ -287,6 +287,7 @@ private:
     SemanticCallbacks *semantics_ = nullptr;
     Variables::VariableFinder variableFinder_;          // FIXME[Robb Matzke 2021-06-25]: should be global & thread safe, not per ops
     AddressInterval stackLimits_;                       // where the stack can exist in memory
+    bool computeMemoryRegions_ = false;                 // compute memory regions. This is needed for OOB analysis.
 
 protected:
     RiscOperators(const Settings&, const Partitioner2::Partitioner&, ModelChecker::SemanticCallbacks*,
@@ -320,6 +321,15 @@ public: // Supporting functions
      * @{ */
     SmtSolver::Ptr modelCheckerSolver() const;
     void modelCheckerSolver(const SmtSolver::Ptr&);
+    /** @} */
+
+    /** Property: Compute memory regions for variables.
+     *
+     *  If true, then memory regions are computed and used. Otherwise the SValue memory regions are always empty.
+     *
+     * @{ */
+    bool computeMemoryRegions() const;
+    void computeMemoryRegions(bool);
     /** @} */
 
     /** Test whether the specified address is considered to be null.
