@@ -717,13 +717,13 @@ check-matcher:
 
 CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-io unit-test check-omp-cfg check-commandline-options check-vis check-thorn2
 
-# this check (only) fails when run in parallel with -j10 or higher
-CHECK_DEFAULT_FAILING_NEW=
+# this check (only) fails when run in parallel with high number of processes (-j10)
+CHECK_DEFAULT_FAILING_NEW=check-reachability-par
 
 CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 
 #CHECK_WITH_SPOT_ONLY=check-ltl check-ltl-driven check-svcomp-witness
-CHECK_WITH_SPOT_ONLY_PASSING=check-ltl check-ltl-driven-reset-analyzer check-reachability
+CHECK_WITH_SPOT_ONLY_PASSING=check-ltl check-ltl-driven-reset-analyzer check-reachability-seq
 
 CHECK_WITH_SPOT_PASSING=$(CHECK_DEFAULT_PASSING) $(CHECK_WITH_SPOT_ONLY_PASSING)
 
@@ -813,9 +813,6 @@ check-ltl-old: check-ltl-rers-different-versions
 # failing tests
 #check-failing:
 
-# failing tests due to changes in domain, rers-timeout hangs sometimes
-#check-ltl-failing: check-ltl-rers-array 
-
 # current tests all passing
 check-ltl: check-ltl-start check-ltl-rers-arithmetic check-ltl-rers-loop-aware-sync check-ltl-rers-topify check-ltl-cegpra check-ltl-rers-array check-ltl-rers-timeout
 
@@ -875,8 +872,6 @@ check-ltl-driven-reset-analyzer:
 
 check-svcomp-witness:
 	./codethorn $(srcdir)/tests/svcomp/eca-rers2012/Problem01_label15_false-unreach-call.c --svcomp-mode --input-values="{1,2,3,4,5,6}" --witness-file=toBeImplemented.witness --with-counterexamples
-
-check-reachability: check-reachability-seq check-reachability-par
 
 check-reachability-seq:
 	./codethorn $(srcdir)/tests/rers/Problem1911_opt.c --input-values="{1,2,3,4,5,6,7,8,9,10}" --status --threads=1 --with-counterexamples
