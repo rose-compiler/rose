@@ -324,19 +324,19 @@ if WITH_GOMP_OPENMP_LIB
 PASSING_C_TEST_Executables = ${C_TEST_OBJECT_REQUIRED_TO_RUN:.o=.out}
 PASSING_CXX_TEST_Executables = ${CXX_TEST_OBJECT_REQUIRED_TO_RUN:.o=.out}
 # TODO this might have problem with CXX objects!!
-MY_FINAL_LINK = -L$(top_builddir)/src/midend -lxomp $(GOMP_PATH)/libgomp.a -lpthread -lm
+MY_FINAL_LINK = -L$(top_builddir)/src/midend -lxomp $(GOMP_PATH)/libgomp.a -lpthread -lm -ldl
 
 # build executables using nvcc
 $(PASSING_OMP_ACC_TEST_EXE_Files): %.out: rose_%.cu
 	@$(RTH_RUN) \
 		TITLE="$(NVCCBIN)/nvcc $(notdir $<) [$@.passed]" \
-		CMD="$(NVCCBIN)/nvcc $< $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp.c $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@ $(GOMP_PATH)/libgomp.a -lpthread -lm" \
+		CMD="$(NVCCBIN)/nvcc $< $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp.c $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@ $(GOMP_PATH)/libgomp.a -lpthread -lm -ldl" \
 		$(TEST_EXIT_STATUS) $@.passed
 
 $(PASSING_OMP_ACC_TEST_CXX_EXE_Files): %.out: rose_%.cu
 	@$(RTH_RUN) \
 		TITLE="$(NVCCBIN)/nvcc $(notdir $<) [$@.passed]" \
-		CMD="$(NVCCBIN)/nvcc $< $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp.c $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@ $(GOMP_PATH)/libgomp.a -lpthread -lm" \
+		CMD="$(NVCCBIN)/nvcc $< $(TEST_INCLUDES) $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp.c $(top_srcdir)/src/midend/programTransformation/ompLowering/xomp_cuda_lib.cu -o $@ $(GOMP_PATH)/libgomp.a -lpthread -lm -ldl" \
 		$(TEST_EXIT_STATUS) $@.passed
 
 
@@ -395,8 +395,8 @@ if ROSE_USE_OMNI_OPENMP
 PASSING_C_TEST_Executables = ${C_TEST_OBJECT_REQUIRED_TO_RUN:.o=.out}
 PASSING_CXX_TEST_Executables = ${CXX_TEST_OBJECT_REQUIRED_TO_RUN:.o=.out}
 # TODO this might have problem with CXX objects!!
-MY_FINAL_LINK = -L$(top_builddir)/src/midend -lxomp $(OMNI_PATH)/libompc.a -lpthread -lm
-#MY_FINAL_LINK = $(top_builddir)/src/midend/programTransformation/ompLowering/libxomp.a $(OMNI_PATH)/libtlog.a  $(OMNI_PATH)/libompc.a -lpthread -lm
+MY_FINAL_LINK = -L$(top_builddir)/src/midend -lxomp $(OMNI_PATH)/libompc.a -lpthread -lm -ldl
+#MY_FINAL_LINK = $(top_builddir)/src/midend/programTransformation/ompLowering/libxomp.a $(OMNI_PATH)/libtlog.a  $(OMNI_PATH)/libompc.a -lpthread -lm -ldl
 
 $(PASSING_C_TEST_Executables): %.out: %.o
 	$(LIBTOOL) --mode=link $(CC) $< -o $@ $(MY_FINAL_LINK)
