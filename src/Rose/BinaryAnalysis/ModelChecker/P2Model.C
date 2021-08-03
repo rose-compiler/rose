@@ -357,7 +357,7 @@ RiscOperators::RiscOperators(const Settings &settings, const P2::Partitioner &pa
             stackLimits_ = stackLimits_ & AddressInterval::hull(*prev + 1, stackLimits_.greatest());
 
         // The stack should extend up to the bottom of the next higher mapped address.
-        if (auto next = partitioner.memoryMap()->atOrBefore(*settings_.initialStackVa).next())
+        if (auto next = partitioner.memoryMap()->atOrAfter(*settings_.initialStackVa).next())
             stackLimits_ = stackLimits_ & AddressInterval::hull(stackLimits_.least(), *next - 1);
 
         // The stack should extend only a few bytes above it's initial location.
