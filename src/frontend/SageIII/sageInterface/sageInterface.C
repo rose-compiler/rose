@@ -25040,6 +25040,9 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   if (SgTypeExpression* v= isSgTypeExpression(node))
     out<<" type@"<< v->get_type();
 
+  if (SgAdaAttributeExp* v= isSgAdaAttributeExp(node))
+    out<<" attribute@"<< v->get_attribute();
+
   if (SgDeclarationStatement* v= isSgDeclarationStatement(node))
   {
     out<<" first nondefining decl@"<< v->get_firstNondefiningDeclaration();
