@@ -433,11 +433,14 @@ private:
 // VariableFinder
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
 VariableFinder::VariableFinder(const Settings &settings)
     : settings_(settings) {
     initNamespace();
+}
+
+VariableFinder::Ptr
+VariableFinder::instance(const Settings &settings) {
+    return Ptr(new VariableFinder(settings));
 }
 
 Sawyer::Optional<uint64_t>

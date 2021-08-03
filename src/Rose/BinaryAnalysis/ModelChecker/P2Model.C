@@ -338,10 +338,11 @@ State::callStack() {
 
 RiscOperators::RiscOperators(const Settings &settings, const P2::Partitioner &partitioner,
                              ModelChecker::SemanticCallbacks *semantics, const BS::SValue::Ptr &protoval,
-                             const SmtSolver::Ptr &solver)
+                             const SmtSolver::Ptr &solver, const Variables::VariableFinder::Ptr &varFinder)
     : Super(protoval, solver), settings_(settings), partitioner_(partitioner),
-      semantics_(dynamic_cast<P2Model::SemanticCallbacks*>(semantics)) {
+      semantics_(dynamic_cast<P2Model::SemanticCallbacks*>(semantics)), variableFinder_unsync(varFinder) {
     ASSERT_not_null(semantics_);
+    ASSERT_not_null(variableFinder_unsync);
     (void)SValue::promote(protoval);
     name("P2Model");
 
@@ -370,9 +371,10 @@ RiscOperators::~RiscOperators() {}
 
 RiscOperators::Ptr
 RiscOperators::instance(const Settings &settings, const P2::Partitioner &partitioner, ModelChecker::SemanticCallbacks *semantics,
-                        const BS::SValue::Ptr &protoval, const SmtSolver::Ptr &solver) {
+                        const BS::SValue::Ptr &protoval, const SmtSolver::Ptr &solver,
+                        const Variables::VariableFinder::Ptr &varFinder) {
     ASSERT_not_null(protoval);
-    return Ptr(new RiscOperators(settings, partitioner, semantics, protoval, solver));
+    return Ptr(new RiscOperators(settings, partitioner, semantics, protoval, solver, varFinder));
 }
 
 BS::RiscOperators::Ptr
@@ -540,7 +542,12 @@ RiscOperators::pushCallStack(const P2::Function::Ptr &callee, rose_addr_t initia
         SAWYER_MESG(mlog[DEBUG]) <<"      called " <<callee->printableName() <<"\n";
         SAWYER_MESG(mlog[DEBUG]) <<"        initial stack pointer = " <<StringUtility::addrToString(initialSp) <<"\n";
 
-        Variables::StackVariables lvars = variableFinder_.findStackVariables(partitioner_, callee);
+        // VariableFinder API is not thread safe, so we need to protect it
+        Variables::StackVariables lvars;
+        {
+            SAWYER_THREAD_TRAITS::LockGuard lock(variableFinderMutex_);
+            lvars = variableFinder_unsync->findStackVariables(partitioner_, callee);
+        }
         callStack.push(FunctionCall(callee, initialSp, lvars));
 
         if (mlog[DEBUG])
@@ -928,6 +935,9 @@ RiscOperators::writeMemory(RegisterDescriptor segreg, const BS::SValue::Ptr &add
 SemanticCallbacks::SemanticCallbacks(const ModelChecker::Settings::Ptr &mcSettings, const Settings &settings,
                                      const P2::Partitioner &partitioner)
     : ModelChecker::SemanticCallbacks(mcSettings), settings_(settings), partitioner_(partitioner) {
+
+    variableFinder_ = Variables::VariableFinder::instance();
+
     if (!settings_.initialStackVa) {
         // Choose an initial stack pointer that's unlikely to interfere with instructions or data.
         static const size_t RESERVE_BELOW  = 15*1024*1024;          // memory to reserve below the initial stack inter
@@ -1016,7 +1026,7 @@ SemanticCallbacks::createInitialState() {
 
 BS::RiscOperators::Ptr
 SemanticCallbacks::createRiscOperators() {
-    auto ops = RiscOperators::instance(settings_, partitioner_, this, protoval(), SmtSolver::Ptr());
+    auto ops = RiscOperators::instance(settings_, partitioner_, this, protoval(), SmtSolver::Ptr(), variableFinder_);
     ops->initialState(nullptr);
     ops->currentState(nullptr);
     ops->computeMemoryRegions(settings_.oobRead != TestMode::OFF || settings_.oobWrite != TestMode::OFF);

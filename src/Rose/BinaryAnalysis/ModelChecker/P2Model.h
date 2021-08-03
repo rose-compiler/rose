@@ -285,19 +285,23 @@ private:
     SmtSolver::Ptr modelCheckerSolver_;
     size_t nInstructions_ = 0;
     SemanticCallbacks *semantics_ = nullptr;
-    Variables::VariableFinder variableFinder_;          // FIXME[Robb Matzke 2021-06-25]: should be global & thread safe, not per ops
     AddressInterval stackLimits_;                       // where the stack can exist in memory
     bool computeMemoryRegions_ = false;                 // compute memory regions. This is needed for OOB analysis.
 
+    mutable SAWYER_THREAD_TRAITS::Mutex variableFinderMutex_; // protects the following data m
+    Variables::VariableFinderPtr variableFinder_unsync;       // shared by all RiscOperator objects
+
 protected:
     RiscOperators(const Settings&, const Partitioner2::Partitioner&, ModelChecker::SemanticCallbacks*,
-                  const InstructionSemantics2::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr&);
+                  const InstructionSemantics2::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr&,
+                  const Variables::VariableFinderPtr&);
 
 public: // Standard public construction-like functions
     ~RiscOperators();
 
     static Ptr instance(const Settings&, const Partitioner2::Partitioner&, ModelChecker::SemanticCallbacks*,
-                        const InstructionSemantics2::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr&);
+                        const InstructionSemantics2::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr&,
+                        const Variables::VariableFinderPtr&);
 
     virtual InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
     create(const InstructionSemantics2::BaseSemantics::SValuePtr&, const SmtSolverPtr&) const override;
@@ -511,6 +515,7 @@ private:
     size_t nDuplicateStates_ = 0;                       // number of times a previous state is seen again
     size_t nSolverFailures_ = 0;                        // number of times the SMT solver failed
     UnitCounts unitsReached_;                           // number of times basic blocks were reached
+    Variables::VariableFinderPtr variableFinder_;       // also shared by all RiscOperator objects
 
 protected:
     SemanticCallbacks(const ModelChecker::SettingsPtr&, const Settings&, const Partitioner2::Partitioner&);
