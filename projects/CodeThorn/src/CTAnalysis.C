@@ -1353,7 +1353,7 @@ void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(SgProject* root, TimingCollect
       // intra-procedural analysis initial states
       LabelSet startLabels=getFlow()->getStartLabelSet();
       size_t numStartLabels=startLabels.size();
-      if(_ctOpt.status) cout<<"STATUS: intra-procedural analysis with "<<numStartLabels<<" start functions."<<endl;
+      printStatusMessage("STATUS: intra-procedural analysis with "+std::to_string(numStartLabels)+" start functions.",true);
       long int fCnt=1;
       for(auto slab : startLabels) {
 	// initialize intra-procedural analysis with all function entry points
@@ -1361,7 +1361,10 @@ void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(SgProject* root, TimingCollect
 	  SgNode* node=getLabeler()->getNode(slab);
 	  string functionName=SgNodeHelper::getFunctionName(node);
 	  string fileName=SgNodeHelper::sourceFilenameToString(node);
-	  logger[INFO]<<"Intra-procedural analysis: initializing function "<<fCnt++<<" of "<<numStartLabels<<": "<<fileName<<":"<<functionName<<endl;
+#pragma omp critical (STATUS_MESSAGES)
+	  {
+	    SAWYER_MESG(logger[INFO])<<"Intra-procedural analysis: initializing function "<<fCnt++<<" of "<<numStartLabels<<": "<<fileName<<":"<<functionName<<endl;
+	  }
 	}
 	estate.setLabel(slab);
 	const EState* initialEState=processNew(estate);

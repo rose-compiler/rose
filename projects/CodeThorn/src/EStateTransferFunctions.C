@@ -236,7 +236,7 @@ namespace CodeThorn {
             EState _eState=createEState(edge.target(),estate->callString,_pstate,_cset,newio);
             return getAnalyzer()->elistify(_eState);
           }
-          cout <<"PState:"<< _pstate<<endl;
+          SAWYER_MESG(logger[ERROR]) <<"PState:"<< _pstate<<endl;
           SAWYER_MESG(logger[ERROR]) <<"RERS-MODE: call of unknown function."<<endl;
           exit(1);
           // _pstate now contains the current state obtained from the binary
@@ -569,7 +569,25 @@ namespace CodeThorn {
     // ignore AsmStmt
     return transferIdentity(edge,estate);
   }
+
   long int functionAnalyzedNr=1;
+
+  void EStateTransferFunctions::transferFunctionEntryPrintStatus(Edge edge, const EState* estate, std::string fileName, std::string functionName) {
+    if(_analyzer->getOptionsRef().status) {
+      if(_analyzer->getOptionsRef().precisionLevel==1) {
+	size_t numFunctions=_analyzer->getFlow()->getStartLabelSet().size();
+	_analyzer->printStatusMessage("Analyzing function #"+std::to_string(functionAnalyzedNr)+" of "+std::to_string(numFunctions)+": ");
+	functionAnalyzedNr++;
+      } else if(_analyzer->getOptionsRef().precisionLevel>=2) {
+	_analyzer->printStatusMessage(std::to_string(functionAnalyzedNr)+". ");
+	functionAnalyzedNr++;
+	_analyzer->printStatusMessage("Analyzing function (call string length="+std::to_string(estate->getCallStringLength())+"):");
+      }
+      if(_analyzer->getOptionsRef().precisionLevel>0)
+	_analyzer->printStatusMessageLine(": "+fileName+" : "+functionName);
+    }
+  }
+  
   std::list<EState> EStateTransferFunctions::transferFunctionEntry(Edge edge, const EState* estate) {
     Label lab=estate->label();
     SgNode* node=_analyzer->getLabeler()->getNode(lab);
@@ -577,16 +595,7 @@ namespace CodeThorn {
     if(funDef) {
       string functionName=SgNodeHelper::getFunctionName(node);
       string fileName=SgNodeHelper::sourceFilenameToString(node);
-      if(_analyzer->getOptionsRef().status) {
-	if(_analyzer->getOptionsRef().precisionLevel==1) {
-	  size_t numFunctions=_analyzer->getFlow()->getStartLabelSet().size();
-	  cout<<"Analyzing Function #"<<functionAnalyzedNr++<<" of "<<numFunctions<<": ";
-	} else if(_analyzer->getOptionsRef().precisionLevel>=2) {
-	  cout<<functionAnalyzedNr++<<". ";
-	  cout<<"analyzing function (call string length="<<estate->getCallStringLength()<<"):";
-	}
-	cout<<": "<<fileName<<" : "<<functionName<<endl;
-      }
+      transferFunctionEntryPrintStatus(edge,estate,functionName,fileName);
       SgInitializedNamePtrList& formalParameters=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
       SAWYER_MESG(logger[TRACE])<<"Function:"<<functionName<<" Parameters: ";
       for(auto fParam : formalParameters) {
@@ -1007,7 +1016,7 @@ namespace CodeThorn {
 
     if(_analyzer->getOptionsRef().info.printTransferFunctionInfo) {
       //printTransferFunctionInfo(TransferFunctionCode::Assign,nextNodeToAnalyze2,edge,estate);
-      cout<<"subtransfer     : transferAssignOp      : "<<node->unparseToString()<<endl;
+      _analyzer->printStatusMessageLine("subtransfer     : transferAssignOp      : "+node->unparseToString());
     }
     return evalAssignOp3(node,edge.target(),estate);
   }
@@ -1503,10 +1512,10 @@ namespace CodeThorn {
       if(getAnalyzer()->getOptionsRef().status) {
 	//uint32_t numFilteredVars=setOfGlobalVars.size()-setOfUsedGlobalVars.size();
 	//cout<< "STATUS: Number of unused variables filtered in initial state: "<<numFilteredVars<<endl;
-	cout<< "STATUS: Number of global variables declared in initial state: "<<declaredInGlobalState<<endl;
+	_analyzer->printStatusMessageLine("STATUS: Number of global variables declared in initial state: "+std::to_string(declaredInGlobalState));
       }
     } else {
-      cout<< "STATUS: no global scope. Global state remains without entries.";
+      _analyzer->printStatusMessageLine("STATUS: no global scope. Global state remains without entries.");
     }
   }
   
@@ -1702,12 +1711,12 @@ namespace CodeThorn {
 	      // convert integer to VariableId
 	      if(arrayPtrValue.isTop()||arrayPtrValue.isBot()) {
 		if(getOptionOutputWarnings())
-		  cout<<"Warning: "<<nextNodeToAnalyze2->unparseToString()<<arrayPtrValue.toString(getVariableIdMapping())<<" array index is top or bot. Not supported yet."<<endl;
+		  _analyzer->printStatusMessageLine("Warning: "+nextNodeToAnalyze2->unparseToString()+arrayPtrValue.toString(getVariableIdMapping())+" array index is top or bot. Not supported yet.");
 	      }
 	      // logger[DEBUG]<<"defering pointer-to-array: ptr:"<<getVariableIdMapping()->variableName(arrayVarId);
 	    } else {
 	      if(getOptionOutputWarnings())
-		cout<<"Warning: lhs array access: pointer variable does not exis2t in PState:"<<ptr.toString()<<endl;
+		 _analyzer->printStatusMessageLine("Warning: lhs array access: pointer variable does not exis2t in PState:"+ptr.toString());
 	      arrayPtrValue=AbstractValue::createTop();
 	    }
 	  } else if(getVariableIdMapping()->isOfReferenceType(arrayVarId)) {
@@ -1840,17 +1849,20 @@ namespace CodeThorn {
   }
 
   void EStateTransferFunctions::printTransferFunctionInfo(TransferFunctionCode tfCode, SgNode* node, Edge edge, const EState* estate) {
-    cout<<"transfer: "<<std::setw(6)<<"L"+estate->label().toString()<<": "<<std::setw(22)<<std::left<<transerFunctionCodeToString(tfCode)<<": ";
+    stringstream ss;
+    ss<<"transfer: "<<std::setw(6)<<"L"+estate->label().toString()<<": "<<std::setw(22)<<std::left<<transerFunctionCodeToString(tfCode)<<": ";
     if(getLabeler()->isFunctionEntryLabel(edge.source())||getLabeler()->isFunctionExitLabel(edge.source())) {
-      cout<<SgNodeHelper::getFunctionName(node);
+      ss<<SgNodeHelper::getFunctionName(node);
     } else {
-      cout<<node->unparseToString();
+      ss<<node->unparseToString();
     }
-    cout<<endl;
+    _analyzer->printStatusMessageLine(ss.str());
   }
 
   void EStateTransferFunctions::printEvaluateExpressionInfo(SgNode* node,EState& estate, EvalMode mode) {
-    cout<<"          "<<std::setw(6+2)<<" "<<"evaluateExpression    : "<<node->unparseToString()<<" [evalmode"<<mode<<": "<<AstTerm::astTermWithNullValuesToString(node)<<"]"<<endl;
+    stringstream ss;
+    ss<<"          "<<std::setw(6+2)<<" "<<"evaluateExpression    : "<<node->unparseToString()<<" [evalmode"<<mode<<": "<<AstTerm::astTermWithNullValuesToString(node)<<"]";
+    _analyzer->printStatusMessageLine(ss.str());
   }
 
   list<EState> EStateTransferFunctions::transferEdgeEStateDispatch(TransferFunctionCode tfCode, SgNode* node, Edge edge, const EState* estate) {
@@ -3585,14 +3597,13 @@ namespace CodeThorn {
 	  exit(1);
 	}
       } else {
-	cout<<concAVString;
+	cout<<concAVString; // interpreter mode output
       }
     } else {
       // first argument is not a string, must be some constant
       // since it is only printed, it is not modifying the state
       // TODO: it could be recorded as output state
-    
-      cout<<"WARNING: unsupported printf argument: "<<(arg)->class_name()<<" : "<<(arg)->unparseToString()<<endl;
+      SAWYER_MESG(logger[WARN])<<"unsupported printf argument: "<<(arg)->class_name()<<" : "<<(arg)->unparseToString()<<endl;
     }
     return res;
   }

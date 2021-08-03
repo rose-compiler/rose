@@ -121,6 +121,8 @@ namespace CodeThorn {
 
   protected:
     void fatalErrorExit(SgNode* node, std::string errorMessage);
+    void transferFunctionEntryPrintStatus(Edge edge, const EState* estate, std::string fileName, std::string functionName);
+    
     std::list<EState> transferFunctionCallLocalEdge(Edge edge, const EState* estate);
     std::list<EState> transferFunctionCall(Edge edge, const EState* estate);
     std::list<EState> transferFunctionCallExternal(Edge edge, const EState* estate);

@@ -69,7 +69,7 @@ namespace CodeThorn {
         case ANALYSIS_NULL_POINTER:
         case ANALYSIS_OUT_OF_BOUNDS:
         case ANALYSIS_UNINITIALIZED:
-          report.writeLocationsVerificationReport(cout,analyzer->getLabeler());
+          report.writeLocationsVerificationReport(ctOpt,cout,analyzer->getLabeler());
           printSeparationLine();
           // generate verification call graph
           AnalysisReporting::generateVerificationFunctionsCsvFile(ctOpt,analyzer,analysisName,report,true);
@@ -215,7 +215,7 @@ namespace CodeThorn {
 
       if(!ctOpt.quiet)
 	cout<<"Writing "<<analysisName<<" analysis results to file "<<fileName<<endl;
-      locations.writeResultFile(fileName,ctOpt.csvReportModeString,analyzer->getLabeler());
+      locations.writeResultFile(ctOpt,fileName,analyzer->getLabeler());
     }
   }
                              

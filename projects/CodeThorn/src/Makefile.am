@@ -717,13 +717,15 @@ check-matcher:
 
 CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-io unit-test check-omp-cfg check-commandline-options check-vis check-thorn2
 
-# this check (only) fails when run in parallel with -j10 or higher
-CHECK_DEFAULT_FAILING_NEW=
+# this check (only) fails when run in parallel with high number of processes (-j10)
+CHECK_DEFAULT_FAILING_PAR=check-reachability-par
 
-CHECK_DEFAULT_FAILING=check-data-races check-deadcode check-reachability-par
+CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 
-#CHECK_WITH_SPOT_ONLY=check-ltl check-ltl-driven check-svcomp-witness
-CHECK_WITH_SPOT_ONLY_PASSING=check-ltl check-ltl-driven-reset-analyzer check-reachability-seq
+CHECK_WITH_SPOT_ONLY_PASSING=check-ltl check-reachability-seq
+
+#CHECK_WITH_SPOT_FAILING=check-ltl-driven check-svcomp-witness'
+CHECK_WITH_SPOT_PARALLEL=check-ltl-rers-timeout check-ltl-rers-arithmetic check-ltl-rers-loop-aware-sync check-reachability-par check-ltl-driven-reset-analyzer
 
 CHECK_WITH_SPOT_PASSING=$(CHECK_DEFAULT_PASSING) $(CHECK_WITH_SPOT_ONLY_PASSING)
 
@@ -731,7 +733,7 @@ check-default: $(CHECK_DEFAULT_PASSING)
 
 if ROSE_WITH_SPOT
 check-local: $(CHECK_WITH_SPOT_PASSING)
-check-extended: $(CHECK_WITH_SPOT_PASSING) check-reachability-par
+check-extended: $(CHECK_WITH_SPOT_PASSING) $(CHECK_WITH_SPOT_PARALLEL)
 else
 check-local: $(CHECK_DEFAULT_PASSING)
 endif
@@ -814,11 +816,8 @@ check-ltl-old: check-ltl-rers-different-versions
 # failing tests
 #check-failing:
 
-# failing tests due to changes in domain, rers-timeout hangs sometimes
-#check-ltl-failing: check-ltl-rers-array 
-
 # current tests all passing
-check-ltl: check-ltl-start check-ltl-rers-arithmetic check-ltl-rers-loop-aware-sync check-ltl-rers-topify check-ltl-cegpra check-ltl-rers-array check-ltl-rers-timeout
+check-ltl: check-ltl-start check-ltl-rers-topify check-ltl-cegpra check-ltl-rers-array
 
 check-ltl-start:
 	@echo ================================================================

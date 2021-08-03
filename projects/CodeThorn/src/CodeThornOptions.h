@@ -84,20 +84,19 @@ public:
   bool constantConditionAnalysis=false;
 
   std::string reportFilePath;
-
-  std::string reportFileName; // not used yet
-  std::string functionReportFileName; // not used yet
   std::string nullPointerAnalysisFileName="null-pointer.csv";
   std::string outOfBoundsAnalysisFileName="out-of-bounds.csv";
   std::string uninitializedMemoryAnalysisFileName="uninitialized.csv";
   std::string deadCodeAnalysisFileName="dead-code.csv";
   std::string constantConditionAnalysisFileName="opaque-predicate.csv";
-
+  std::string filePathPrefixToRemove;
+  bool reportSourceColumn=false;
   bool generateReports=false;
   
   bool programStatsOnly=false;
   bool programStats=false;
   std::string programStatsFileName;
+
   bool inStateStringLiterals=false;
   bool stdFunctions=false;
   bool ignoreFunctionPointers=false;

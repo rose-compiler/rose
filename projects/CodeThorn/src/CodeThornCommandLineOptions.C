@@ -198,8 +198,9 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
 
     ("report-file-path",po::value< string >(&ctOpt.reportFilePath),"Sets file path for all reports.")
     ("generate-reports",po::value< bool >(&ctOpt.generateReports)->implicit_value(true),"Enable generation of analysis report files.")
-    //("report-file",po::value< string >(&ctOpt.reportFileName),"Consolidated report, combines information about all analyses [arg].")
-    //("function-report-file",po::value< string >(&ctOpt.functionReportFileName),"Consolidated report, combines analysis results about all functions [arg].")
+    ("file-path-prefix-to-remove", po::value< string >(&ctOpt.filePathPrefixToRemove))
+    ("report-source-column", po::value< bool >(&ctOpt.reportSourceColumn))
+
     ("null-pointer-file",po::value< string >(&ctOpt.nullPointerAnalysisFileName),"Perform null pointer analysis and write results to file [arg].")
     ("out-of-bounds-file",po::value< string >(&ctOpt.outOfBoundsAnalysisFileName),"Perform out-of-bounds analysis and write results to file [arg].")
     ("uninitialized-file",po::value< string >(&ctOpt.uninitializedMemoryAnalysisFileName),"Perform uninitialized analysis and write results to file [arg].")
@@ -215,7 +216,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("ignore-undefined-dereference",po::value< bool >(&ctOpt.ignoreUndefinedDereference)->default_value(false)->implicit_value(true), "Ignore pointer dereference of uninitalized value (assume data exists).")
     ("ignore-unknown-functions",po::value< bool >(&ctOpt.ignoreUnknownFunctions)->default_value(true)->implicit_value(true), "Ignore function pointers (functions are not called).")
     ("function-resolution-mode",po::value< int >(&ctOpt.functionResolutionMode)->default_value(4),"1:Translation unit only, 2:slow lookup, 3: -, 4: complete resolution (including function pointers)")
-    ("context-sensitive",po::value< bool >(&ctOpt.contextSensitive)->default_value(true)->implicit_value(true),"Perform context sensitive analysis. Uses call strings with arbitrary length, recursion is not supported yet.")
+    ("context-sensitive",po::value< bool >(&ctOpt.contextSensitive)->default_value(false)->implicit_value(true),"Perform context sensitive analysis. Uses call strings with arbitrary length, recursion is not supported yet.")
     ("abstraction-mode",po::value< int >(&ctOpt.abstractionMode)->default_value(0),"Select abstraction mode (0: equality merge (explicit model checking), 1: approximating merge (abstract model checking), 2: approximating merge (separate solver)")
     ("interpreter-mode",po::value< int >(&ctOpt.interpreterMode)->default_value(0),"Select interpretation mode. 0: default, 1: execute stdout functions.")
     ("interpreter-mode-file",po::value< string >(&ctOpt.interpreterModeOuputFileName)->default_value(""),"Select interpretation mode output file (otherwise stdout is used).")
@@ -223,7 +224,6 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("global-vars-abstraction-level", po::value< int > (&ctOpt.initialStateGlobalVarsAbstractionLevel),"Override abstraction level for global variables in initial state.")
     ("print-warnings",po::value< bool >(&ctOpt.printWarnings)->default_value(false)->implicit_value(true),"Print warnings on stdout during analysis (this can slow down the analysis significantly)")
     //("print-violations",po::value< bool >(&ctOpt.printViolations)->default_value(false)->implicit_value(true),"Print detected violations on stdout during analysis (this can slow down the analysis significantly)")
-    //("options-set",po::value< int >(&ctOpt.optionsSet)->default_value(0)->implicit_value(0),"Use a predefined set of default options (0:default|1..3:abstract)|11:concrete)).")
     ("call-string-length",po::value< int >(&ctOpt.callStringLength)->default_value(10),"Set the length of the callstring for context-sensitive analysis. Default value is 10.")
     ("unit-test-expr-analyzer", po::value< bool >(&ctOpt.exprEvalTest)->default_value(false)->implicit_value(true), "Run expr eval test (with input program).")
     ("byte-mode", po::value< bool >(&ctOpt.byteMode)->default_value(false)->implicit_value(true),"switches from index-based addresses to byte-based addresses in state representation.")
