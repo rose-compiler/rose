@@ -539,6 +539,11 @@ RiscOperators::pushCallStack(const P2::Function::Ptr &callee, rose_addr_t initia
     if (computeMemoryRegions_) {
         FunctionCallStack &callStack = State::promote(currentState())->callStack();
 
+        while (!callStack.isEmpty() && callStack.top().initialStackPointer() >= initialSp) {
+            SAWYER_MESG(mlog[DEBUG]) <<"      returned from " <<callStack.top().function()->printableName() <<"\n";
+            callStack.pop();
+        }
+
         SAWYER_MESG(mlog[DEBUG]) <<"      called " <<callee->printableName() <<"\n";
         SAWYER_MESG(mlog[DEBUG]) <<"        initial stack pointer = " <<StringUtility::addrToString(initialSp) <<"\n";
 
