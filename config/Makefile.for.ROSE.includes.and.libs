@@ -308,8 +308,8 @@ if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
 # ROSE_INCLUDES =
 #    $(ROSE_BOOST_PREINCLUDE_PATH)
 ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
-     $(ROSE_ELF_INCLUDES) \
      $(ROSE_DWARF_INCLUDES) \
+     $(ROSE_ELF_INCLUDES) \
      -I$(top_builddir)/src/roseSupport \
      -I$(top_builddir)/src/frontend/SageIII \
      -I$(top_srcdir)/src \
@@ -363,8 +363,8 @@ else
 # ROSE_INCLUDES =
 #     $(ROSE_BOOST_PREINCLUDE_PATH)
 ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
-     $(ROSE_ELF_INCLUDES) \
      $(ROSE_DWARF_INCLUDES) \
+     $(ROSE_ELF_INCLUDES) \
      -I$(top_builddir)/src/roseSupport \
      -I$(top_builddir)/src/frontend/SageIII \
      -I$(top_srcdir)/src \
