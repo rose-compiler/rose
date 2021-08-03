@@ -101,10 +101,10 @@ main(int argc, char *argv[]) {
         mlog[WARN] <<"no matching functions found\n";
 
     // Find and print the local variables
-    Variables::VariableFinder variableFinder;
+    auto variableFinder = Variables::VariableFinder::instance();
     for (const P2::Function::Ptr &function: selectedFunctions) {
         std::cout <<"local variables for " <<function->printableName() <<":\n";
-        Variables::StackVariables lvars = variableFinder.findStackVariables(partitioner, function);
+        Variables::StackVariables lvars = variableFinder->findStackVariables(partitioner, function);
         Variables::print(lvars, partitioner, std::cout, "  ");
     }
 }

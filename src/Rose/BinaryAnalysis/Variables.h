@@ -317,18 +317,27 @@ void print(const GlobalVariables&,const Partitioner2::Partitioner&, std::ostream
 // Analyzer
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+/** Shared ownership pointer for @ref VariableFinder. */
+using VariableFinderPtr = Sawyer::SharedPointer<class VariableFinder>;
+
 /** Analysis to find variable locations. */
-class VariableFinder {
+class VariableFinder: public Sawyer::SharedObject {
 public:
     /** Settings that control this analysis. */
     struct Settings {};
 
+    /** Shared ownership pointer for @ref VariableFinder. */
+    using Ptr = VariableFinderPtr;
+
 private:
     Settings settings_;
 
+protected:
+    explicit VariableFinder(const Settings&);
+
 public:
-    /** Construct a new analyzer. */
-    explicit VariableFinder(const Settings &settings = Settings());
+    /** Allocating constructor. */
+    static Ptr instance(const Settings &settings = Settings());
 
     /** Settings for this analysis.
      *
