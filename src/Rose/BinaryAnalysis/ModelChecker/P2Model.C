@@ -539,7 +539,7 @@ RiscOperators::pushCallStack(const P2::Function::Ptr &callee, rose_addr_t initia
     if (computeMemoryRegions_) {
         FunctionCallStack &callStack = State::promote(currentState())->callStack();
 
-        while (!callStack.isEmpty() && callStack.top().initialStackPointer() >= initialSp) {
+        while (!callStack.isEmpty() && callStack.top().initialStackPointer() <= initialSp) {
             SAWYER_MESG(mlog[DEBUG]) <<"      returned from " <<callStack.top().function()->printableName() <<"\n";
             callStack.pop();
         }
@@ -854,6 +854,26 @@ RiscOperators::readRegister(RegisterDescriptor reg, const BS::SValue::Ptr &dflt)
     } else {
         return Super::readRegister(reg, dflt);
     }
+}
+
+void
+RiscOperators::writeRegister(RegisterDescriptor reg, const BS::SValue::Ptr &value) {
+    if (computeMemoryRegions_) {
+        // If we're writing to the frame pointer register, then update the top function of the call stack to indicate how the
+        // frame pointer is related to the initial stack pointer.
+        const RegisterDescriptor FP = partitioner_.instructionProvider().stackFrameRegister();
+        FunctionCallStack &callStack = State::promote(currentState())->callStack();
+        if (FP == reg && !callStack.isEmpty()) {
+            if (auto fp = value->toUnsigned()) {
+                rose_addr_t delta = *fp - callStack.top().initialStackPointer();
+                callStack.top().framePointerDelta(delta);
+                SAWYER_MESG(mlog[DEBUG]) <<"    adjusted frame pointer within " <<callStack.top().function()->printableName()
+                                         <<" delta = " <<StringUtility::signedToHex2(delta, FP.nBits()) <<"\n";
+            }
+        }
+    }
+
+    Super::writeRegister(reg, value);
 }
 
 BS::SValue::Ptr

@@ -480,14 +480,17 @@ public: // Override RISC operations
                    InstructionSemantics2::BaseSemantics::SValuePtr &carryOut /*out*/) override;
 
     virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    readRegister(RegisterDescriptor reg, const InstructionSemantics2::BaseSemantics::SValuePtr&) override;
+    readRegister(RegisterDescriptor, const InstructionSemantics2::BaseSemantics::SValuePtr&) override;
+
+    virtual void
+    writeRegister(RegisterDescriptor, const InstructionSemantics2::BaseSemantics::SValuePtr&) override;
 
     virtual InstructionSemantics2::BaseSemantics::SValuePtr
     readMemory(RegisterDescriptor segreg, const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
                const InstructionSemantics2::BaseSemantics::SValuePtr &dflt,
                const InstructionSemantics2::BaseSemantics::SValuePtr &cond) override;
 
-    void
+    virtual void
     writeMemory(RegisterDescriptor segreg, const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
                 const InstructionSemantics2::BaseSemantics::SValuePtr &value,
                 const InstructionSemantics2::BaseSemantics::SValuePtr &cond) override;
