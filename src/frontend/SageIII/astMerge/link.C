@@ -67,6 +67,13 @@ static void registerSymbolsForSubstitution(
       r->set_definingDeclaration(self_defn_decl ? self_defn_decl : refdesc.defn_decl);
     }
   }
+
+  for (auto r: descmap.find(refsym)->second.decls) {
+    r->set_firstNondefiningDeclaration(refdesc.first_nondef_decl);
+    // Deal with multiple definition: if not selected then it still see itself as the defining one
+    typename LinkT::decl_t * self_defn_decl = (typename LinkT::decl_t *)(r->get_definingDeclaration());
+    r->set_definingDeclaration(self_defn_decl ? self_defn_decl : refdesc.defn_decl);
+  }
 }
 
 void createSymbolAlias(
@@ -186,6 +193,9 @@ class LinkAcrossFiles {
       if (syms_defns.size() > 1) {
         while (syms_defns.size() > 0) {
           sym_t * refsym = syms_defns.back();
+#if DEBUG_LinkAcrossFiles
+          std::cerr << "refsym = " << std::hex << refsym << std::endl;
+#endif
           syms_defns.pop_back();
 
           auto const & refdesc = descmap.find(refsym)->second;
@@ -195,6 +205,9 @@ class LinkAcrossFiles {
           auto curr = syms_defns.begin();
           while (curr != syms_defns.end()) {
             sym_t * currsym = *curr;
+#if DEBUG_LinkAcrossFiles
+            std::cerr << "currsym = " << std::hex << currsym << std::endl;
+#endif
             auto const & currdesc = descmap.find(currsym)->second;
 
             if (refdesc.equivalent(currdesc)) {
