@@ -25,6 +25,8 @@ using EnginePtr = std::shared_ptr<Engine>;
 class ErrorTag;
 using ErrorTagPtr = std::shared_ptr<ErrorTag>;
 
+class Exception;
+
 class ExecutionUnit;
 using ExecutionUnitPtr = std::shared_ptr<ExecutionUnit>;
 
@@ -54,6 +56,8 @@ using NullDerefTagPtr = std::shared_ptr<NullDerefTag>;
 
 class OobTag;
 using OobTagPtr = std::shared_ptr<OobTag>;
+
+class ParseError;
 
 class Path;
 using PathPtr = std::shared_ptr<Path>;

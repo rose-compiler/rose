@@ -7,6 +7,7 @@
 #include <Rose/BinaryAnalysis/ModelChecker/BasicBlockUnit.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Engine.h>
 #include <Rose/BinaryAnalysis/ModelChecker/ErrorTag.h>
+#include <Rose/BinaryAnalysis/ModelChecker/Exception.h>
 #include <Rose/BinaryAnalysis/ModelChecker/ExecutionUnit.h>
 #include <Rose/BinaryAnalysis/ModelChecker/ExternalFunctionUnit.h>
 #include <Rose/BinaryAnalysis/ModelChecker/FailureUnit.h>

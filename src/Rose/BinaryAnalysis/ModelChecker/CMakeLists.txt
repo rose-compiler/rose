@@ -26,6 +26,7 @@ install(FILES
   BasicBlockUnit.h
   Engine.h
   ErrorTag.h
+  Exception.h
   ExecutionUnit.h
   ExternalFunctionUnit.h
   FailureUnit.h
