@@ -545,8 +545,9 @@ Engine::extend(const Path::Ptr &path, const BS::RiscOperators::Ptr &ops, const S
 
 void
 Engine::updateFanout(size_t nChildren, size_t totalSteps, size_t lastSteps) {
-    ASSERT_require(lastSteps > 0);
     ASSERT_require(totalSteps >= lastSteps);
+    if (0 == lastSteps)
+        return;
 
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
 
