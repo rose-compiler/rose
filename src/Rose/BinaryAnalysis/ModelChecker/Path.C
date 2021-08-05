@@ -3,10 +3,11 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Path.h>
 
-#include <Rose/BinaryAnalysis/ModelChecker/PathNode.h>
-#include <Rose/BinaryAnalysis/ModelChecker/ExecutionUnit.h>
-#include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/State.h>
+#include <Rose/BinaryAnalysis/ModelChecker/ExecutionUnit.h>
+#include <Rose/BinaryAnalysis/ModelChecker/PathNode.h>
+#include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
+
 #include <rose_isnan.h>
 
 namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
@@ -173,10 +174,9 @@ Path::toYaml(const Settings::Ptr &settings, std::ostream &out, const std::string
         std::string prefix(prefix1.size(), ' ');
         size_t step = 0;
         for (size_t i = 0; i < vertices.size() && maxSteps > 0; ++i) {
-            ExecutionUnit::Ptr unit = vertices[i]->executionUnit();
-            out <<prefix <<"  - vertex: " <<StringUtility::yamlEscape(vertices[i]->printableName()) <<"\n";
-            unit->toYaml(settings, out, prefix+"    ", step, maxSteps);
-            step += unit->nSteps();
+            vertices[i]->toYamlHeader(settings, out, "    - ");
+            vertices[i]->toYamlSteps(settings, out, "      ", step, maxSteps);
+            step += vertices[i]->nSteps();
             maxSteps -= std::min(maxSteps, vertices[i]->nSteps());
         }
     }

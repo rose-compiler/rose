@@ -267,6 +267,15 @@ public:
      *  Thread safety: This method is thread safe. */
     std::string printableName() const;
 
+    /** Output path node header as YAML.
+     *
+     *  The output does not include the individual steps for the node. */
+    void toYamlHeader(const SettingsPtr&, std::ostream&, const std::string &prefix) const;
+
+    /** Output the steps as YAML. */
+    void toYamlSteps(const SettingsPtr&, std::ostream&, const std::string &prefix,
+                     size_t stepOrigin, size_t maxSteps) const;
+
 private:
     void restoreOutgoingState(const InstructionSemantics2::BaseSemantics::StatePtr&);
 };

@@ -79,8 +79,17 @@ BasicBlockUnit::printSteps(const Settings::Ptr &settings, std::ostream &out, con
 }
 
 void
-BasicBlockUnit::toYaml(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1,
-                           size_t stepOrigin, size_t maxSteps) const {
+BasicBlockUnit::toYamlHeader(const Settings::Ptr&, std::ostream &out, const std::string &prefix1) const {
+    out <<prefix1 <<"vertex-type: basic-block\n";
+    if (auto va = address()) {
+        std::string prefix(prefix1.size(), ' ');
+        out <<prefix <<"vertex-address: " <<StringUtility::addrToString(*va) <<"\n";
+    }
+}
+
+void
+BasicBlockUnit::toYamlSteps(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1,
+                            size_t stepOrigin, size_t maxSteps) const {
     // No lock necessary since the basic block pointer cannot be changed after construction. However, the BasicBlock API itself
     // might not be thread safe.
     ASSERT_not_null(bblock_);

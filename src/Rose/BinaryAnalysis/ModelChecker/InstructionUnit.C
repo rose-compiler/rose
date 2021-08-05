@@ -55,8 +55,17 @@ InstructionUnit::printSteps(const Settings::Ptr &settings, std::ostream &out, co
 }
 
 void
-InstructionUnit::toYaml(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1,
-                        size_t stepOrigin, size_t maxSteps) const {
+InstructionUnit::toYamlHeader(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1) const {
+    out <<prefix1 <<"vertex-type: instruction\n";
+    if (auto va = address()) {
+        std::string prefix(prefix1.size(), ' ');
+        out <<prefix <<"vertex-address: " <<StringUtility::addrToString(*va) <<"\n";
+    }
+}
+
+void
+InstructionUnit::toYamlSteps(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1,
+                             size_t stepOrigin, size_t maxSteps) const {
     if (maxSteps > 0) {
         out <<prefix1 <<"instruction: " <<StringUtility::yamlEscape(insn_->toString()) <<"\n";
 
