@@ -8,6 +8,10 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Types.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 
+#ifdef ROSE_HAVE_LIBYAML
+#include <yaml-cpp/yaml.h>
+#endif
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace ModelChecker {
@@ -232,6 +236,24 @@ public:
      *  current state to which the RISC operators points will have been copied by this thread. */
     virtual std::vector<NextUnit>
     nextUnits(const PathPtr&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&, const SmtSolver::Ptr&) = 0;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Path creation functions.
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#ifdef ROSE_HAVE_LIBYAML
+    /** Construct a path from a YAML document.
+     *
+     *  The specified (subtree) root is a YAML sequence whose elements represent the nodes of the path. Each node has a type
+     *  and most nodes also have an address or other identifying information. The path must be valid for the configured
+     *  model checker -- it must make sense for the current specimen.
+     *
+     *  Parse errors are reported by throwing a @ref ParseError exception. The @p sourceName is typically the name of the file
+     *  from which the YAML was originally parsed, or an empty string to signify that the name of the source is unknown. */
+    virtual std::list<ExecutionUnitPtr>
+    parsePath(const YAML::Node&, const std::string &sourceName) = 0;
+#endif
+
 };
 
 } // namespace

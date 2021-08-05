@@ -569,7 +569,6 @@ public:
      *  Thread safety: This property accessor is thread safe. */
     UnitCounts unitsReached() const;
 
-
     /** Filter null dereferences.
      *
      *  Returns true to accept the nullptr dereference, or false to say that it's not really a nullptr dereference.
@@ -611,6 +610,11 @@ public:
 
     virtual std::vector<NextUnit>
     nextUnits(const PathPtr&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&, const SmtSolver::Ptr&) override;
+
+#ifdef ROSE_HAVE_LIBYAML
+    virtual std::list<ExecutionUnitPtr>
+    parsePath(const YAML::Node&, const std::string &sourceName) override;
+#endif
 
 private:
     // Records the state hash and returns true if we've seen it before.
