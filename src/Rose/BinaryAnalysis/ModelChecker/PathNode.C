@@ -131,9 +131,9 @@ PathNode::execute(const Settings::Ptr &settings, const SemanticCallbacks::Ptr &s
         needsInitialization = true;
     }
 
-    // Prepare the RISC operators and maybe initial the path initial state
+    // Prepare the RISC operators and maybe initialize the path initial state
     ASSERT_forbid(ops->currentState());                 // safety net
-    ops->currentState(state);                       // ops is thread local, references state
+    ops->currentState(state);                           // ops is thread local, references state
     BOOST_SCOPE_EXIT(&ops) {
         ops->currentState(nullptr);
     } BOOST_SCOPE_EXIT_END;
@@ -284,6 +284,18 @@ std::string
 PathNode::printableName() const {
     ASSERT_not_null(executionUnit_);
     return executionUnit_->printableName();
+}
+
+void
+PathNode::toYamlHeader(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1) const {
+    ASSERT_not_null(executionUnit_);
+    executionUnit_->toYamlHeader(settings, out, prefix1);
+}
+
+void
+PathNode::toYamlSteps(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1,
+                      size_t stepOrigin, size_t maxSteps) const {
+    executionUnit()->toYamlSteps(settings, out, prefix1, stepOrigin, maxSteps);
 }
 
 } // namespace

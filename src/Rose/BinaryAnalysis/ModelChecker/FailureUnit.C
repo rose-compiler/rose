@@ -68,8 +68,17 @@ FailureUnit::printSteps(const Settings::Ptr &settings, std::ostream &out, const 
 }
 
 void
-FailureUnit::toYaml(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1,
-                    size_t stepOrigin, size_t maxSteps) const {
+FailureUnit::toYamlHeader(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1) const {
+    out <<prefix1 <<"vertex-type: failure\n";
+    if (auto va = address()) {
+        std::string prefix(prefix1, ' ');
+        out <<prefix <<"vertex-address: " <<StringUtility::addrToString(*va) <<"\n";
+    }
+}
+
+void
+FailureUnit::toYamlSteps(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1,
+                         size_t stepOrigin, size_t maxSteps) const {
     if (maxSteps > 0) {
         out <<prefix1 <<"definition: automatic-failure\n";
 
