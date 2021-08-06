@@ -26,6 +26,11 @@ NullDerefTag::instance(size_t nodeStep, TestMode tm, IoMode io, SgAsmInstruction
 }
 
 std::string
+NullDerefTag::name() const {
+    return "null pointer dereference";
+}
+
+std::string
 NullDerefTag::printableName() const {
     // No lock necessary because ioMode and testMode are read-only properties initialized in the constructor.
     std::string retval;
@@ -55,7 +60,7 @@ NullDerefTag::printableName() const {
 void
 NullDerefTag::print(std::ostream &out, const std::string &prefix) const {
     // No locks necessary since all the data members are read-only.
-    out <<prefix <<"null pointer dereference\n";
+    out <<prefix <<name() <<"\n";
 
     std::string io = IoMode::READ == ioMode_ ? "read" : "write";
     std::string toFrom = IoMode::READ == ioMode_ ? "read from" : "write to";
@@ -82,7 +87,7 @@ NullDerefTag::print(std::ostream &out, const std::string &prefix) const {
 void
 NullDerefTag::toYaml(std::ostream &out, const std::string &prefix1) const {
     // No locks necessary since all the data members are read-only.
-    out <<prefix1 <<"weakness: null pointer dereference\n";
+    out <<prefix1 <<"weakness: " <<name() <<"\n";
     std::string prefix(prefix1.size(), ' ');
 
     switch (ioMode_) {

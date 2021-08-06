@@ -24,6 +24,11 @@ OobTag::instance(size_t nodeStep, TestMode tm, IoMode io, SgAsmInstruction *insn
 }
 
 std::string
+OobTag::name() const {
+    return "out-of-bounds access";
+}
+
+std::string
 OobTag::printableName() const {
     // No lock necessary because ioMode and testMode are read-only properties initialized in the constructor.
     std::string retval;
@@ -52,7 +57,7 @@ OobTag::printableName() const {
 void
 OobTag::print(std::ostream &out, const std::string &prefix) const {
     // No locks necessary since all the data members are read-only.
-    out <<prefix <<"out-of-bounds access\n";
+    out <<prefix <<name() <<"\n";
 
     std::string io = IoMode::READ == ioMode_ ? "read" : "write";
     std::string toFrom = IoMode::READ == ioMode_ ? "read from" : "write to";
@@ -79,7 +84,7 @@ OobTag::print(std::ostream &out, const std::string &prefix) const {
 void
 OobTag::toYaml(std::ostream &out, const std::string &prefix1) const {
     // No locks necessary since all the data members are read-only.
-    out <<prefix1 <<"weakness: out-of-bounds access\n";
+    out <<prefix1 <<"weakness: " <<name() <<"\n";
     std::string prefix(prefix1.size(), ' ');
 
     switch (ioMode_) {
