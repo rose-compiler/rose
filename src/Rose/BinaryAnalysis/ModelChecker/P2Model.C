@@ -1269,7 +1269,7 @@ SemanticCallbacks::nextCodeAddresses(const BS::RiscOperators::Ptr &ops) {
     if (nextUnit) {
         CodeAddresses retval;
         rose_addr_t va = *onePath_.front()->address();
-        retval.ip = ops->number_(partitioner().instructionProvider().instructionPointerRegister().nBits(), va);
+        retval.ip = instructionPointer(ops);
         retval.addresses.insert(va);
         retval.isComplete = true;
         return retval;
