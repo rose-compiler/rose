@@ -24,16 +24,20 @@ Settings::commandLineSwitches() {
     SwitchGroup sg("Model checker settings");
 
     Rose::CommandLine::insertBooleanSwitch(sg, "debug-initial-states", showInitialStates,
-                                           "Show initial semantic states for each execution unit when debug diagnostics are "
-                                           "enabled.");
+                                           "Show initial semantic states for each execution unit when "
+                                           "Rose::BinaryAnalysis::ModelChecker(debug) diagnostics are enabled.");
 
     Rose::CommandLine::insertBooleanSwitch(sg, "debug-final-states", showFinalStates,
-                                           "Show final semantic states for each execution unit when debug diagnostics are "
-                                           "enabled.");
+                                           "Show final semantic states for each execution unit when "
+                                           "Rose::BinaryAnalysis::ModelChecker(debug) diagnostics are enabled.");
 
     Rose::CommandLine::insertBooleanSwitch(sg, "debug-intermediate-states", showIntermediateStates,
-                                           "Show intermediate semantic states when debug diagnostics are enabled for execution "
-                                           "units that have more than one step.");
+                                           "Show intermediate semantic states within execution units when "
+                                           "Rose::BinaryAnalysis::ModelChecker(debug) diagnostics are enabled.");
+
+    Rose::CommandLine::insertBooleanSwitch(sg, "debug-assertions", showAssertions,
+                                           "Show SMT assertions at the beginning of each execution unit when "
+                                           "Rose::BinaryAnalysis::ModelChecker(debug) diagnostics are enabled.");
 
     Rose::CommandLine::insertBooleanSwitch(sg, "ignore-semantic-failures", ignoreSemanticFailures,
                                            "Ignore all semantic failures when executing an instruction, and use whatever "
