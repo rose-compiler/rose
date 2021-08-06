@@ -110,21 +110,40 @@ std::string SgNodeHelper::sourceFilenameLineColumnToString(SgNode* node) {
   return ss.str();
 }
 
-std::string SgNodeHelper::sourceLocationAndNodeToString(SgNode* node) {
-  size_t maxLen=40;
-  string sourceLine=node->unparseToString();
-  stringstream ss;
-  if(sourceLine.size()>maxLen) {
-    ss<<sourceLine.substr(0,maxLen)+"... ("<<sourceLine.size()<<" chars)";
-    sourceLine=ss.str();
+std::string SgNodeHelper::locationToString(SgNode* node, size_t maxFileNameLength) {
+  string fileName=SgNodeHelper::sourceFilenameToString(node);
+  // truncate fileName
+  size_t fileNameLength=fileName.size();
+  if(fileNameLength>maxFileNameLength) {
+    fileName="... "+fileName.substr(fileNameLength-maxFileNameLength,maxFileNameLength);
   }
-  return SgNodeHelper::sourceFilenameLineColumnToString(node)+" : "+sourceLine;
-}
-  
-std::string SgNodeHelper::lineColumnNodeToString(SgNode* node) {
-  return SgNodeHelper::sourceLineColumnToString(node)+": "+SgNodeHelper::nodeToString(node);
+  string lineCol=SgNodeHelper::sourceLineColumnToString(node);
+  return fileName+":"+lineCol;
 }
 
+std::string SgNodeHelper::locationAndSourceCodeToString(SgNode* node, size_t maxFileNameLength, size_t maxSourceLength) {
+  string location=SgNodeHelper::locationToString(node,maxFileNameLength);
+  // truncate unparsed source
+  string sourceLine=node->unparseToString();
+  if(sourceLine.size()>maxSourceLength) {
+    sourceLine=sourceLine.substr(0,maxSourceLength)+"... ("+std::to_string(sourceLine.size())+" chars)";
+  }
+  return location+": "+sourceLine;
+}
+
+// deprecated
+std::string SgNodeHelper::sourceLocationAndNodeToString(SgNode* node) {
+  return SgNodeHelper::locationAndSourceCodeToString(node); // uses default values for maxFileLength and maxSourceLength
+}
+
+// deprecated
+std::string SgNodeHelper::lineColumnNodeToString(SgNode* node) {
+  return SgNodeHelper::lineColumnAndSourceCodeToString(node);
+}
+
+std::string SgNodeHelper::lineColumnAndSourceCodeToString(SgNode* node) {
+  return SgNodeHelper::sourceLineColumnToString(node)+": "+SgNodeHelper::nodeToString(node);  
+}
 
 vector<SgVarRefExp*> SgNodeHelper::determineVariablesInSubtree(SgNode* node) {
   vector<SgVarRefExp*> varVec;
