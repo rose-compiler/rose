@@ -551,6 +551,8 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (AdaRenamingDecl,       "AdaRenamingDecl", "ADA_RENAMING_DECL_STMT" );
      NEW_TERMINAL_MACRO (AdaGenericDecl,        "AdaGenericDecl", "ADA_GENERIC_DECL" );
      NEW_TERMINAL_MACRO (AdaFormalTypeDecl,     "AdaFormalTypeDecl", "ADA_FORMAL_TYPE_DECL_STMT" );
+  // PP (07/14/20): Adding Ada discriminated type declarations
+     NEW_TERMINAL_MACRO (AdaDiscriminatedTypeDecl, "AdaDiscriminatedTypeDecl", "ADA_DISCRIMINATED_TYPE_DECL" );
 
      NEW_NONTERMINAL_MACRO (DeclarationStatement,
           FunctionParameterList                   | VariableDeclaration       | VariableDefinition           |
@@ -571,8 +573,8 @@ Grammar::setUpStatements ()
           AdaPackageBodyDecl                      | AdaPackageSpecDecl        | AdaRenamingDecl              |
           AdaTaskSpecDecl                         | AdaTaskBodyDecl           | AdaTaskTypeDecl              |
           AdaRecordRepresentationClause           | AdaComponentClause        | AdaLengthClause              |
-          AdaEnumRepresentationClause             | AdaGenericDecl            | AdaFormalTypeDecl
-          /*| ClassPropertyList |*/,
+          AdaEnumRepresentationClause             | AdaGenericDecl            | AdaFormalTypeDecl            |
+          AdaDiscriminatedTypeDecl              /*| ClassPropertyList |*/,
           "DeclarationStatement", "DECL_STMT", false);
 
 
@@ -1021,6 +1023,7 @@ Grammar::setUpStatements ()
                                   NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (7/17/2017): Added to support concept of scope in nondefining declarations (required for more sophisticated level of template useage).
+  // PP (8/03/20): Note, DeclarationScope is also used by the AdaDiscriminatedTypeDecl decorator
      DeclarationScope.setFunctionPrototype ( "HEADER_DECLARATION_SCOPE", "../Grammar/Statement.code" );
 
 
@@ -3133,14 +3136,36 @@ Grammar::setUpStatements ()
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AdaTaskBodyDecl.setDataPrototype ( "SgAdaTaskBody*", "definition", "= NULL",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
      AdaRenamingDecl.setFunctionPrototype  ( "HEADER_ADA_RENAMING_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaRenamingDecl.setDataPrototype ( "SgName", "name", "= \"\"",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AdaRenamingDecl.setDataPrototype ( "SgSymbol*", "renamed", "= NULL",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     //~ PP switch from SgDeclaration* renamed to SgSymbol* renamed makes renamedIndex obsolete
-     //~ AdaRenamingDecl.setDataPrototype ( "size_t", "renamedIndex", "= 0",
-                                           //~ CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     AdaDiscriminatedTypeDecl.setFunctionPrototype  ( "HEADER_ADA_DISCRIMINATED_TYPE_DECL_STATEMENT", "../Grammar/Statement.code" );
+
+     AdaDiscriminatedTypeDecl.editSubstitute   ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
+     AdaDiscriminatedTypeDecl.editSubstitute   ( "LIST_DATA_TYPE", "SgInitializedNamePtrList" );
+     AdaDiscriminatedTypeDecl.editSubstitute   ( "LIST_NAME", "discriminants" );
+     AdaDiscriminatedTypeDecl.editSubstitute   ( "LIST_FUNCTION_RETURN_TYPE", "SgInitializedNamePtrList::iterator" );
+     AdaDiscriminatedTypeDecl.editSubstitute   ( "LIST_FUNCTION_NAME", "discriminant" );
+     AdaDiscriminatedTypeDecl.editSubstitute   ( "LIST_ELEMENT_DATA_TYPE", "SgInitializedName*" );
+
+     AdaDiscriminatedTypeDecl.setDataPrototype ( "SgInitializedNamePtrList", "discriminants", "",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaDiscriminatedTypeDecl.setDataPrototype ( "SgDeclarationScope*", "discriminantScope", "= NULL",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaDiscriminatedTypeDecl.setDataPrototype ( "SgDeclarationStatement*", "discriminatedDecl", "= NULL",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+#if 0 /* NO_NAME */
+     // the name is computed from the child
+     AdaDiscriminatedTypeDecl.setDataPrototype ( "SgName", "name", "= \"\"",
+                                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+#endif /* NO_NAME */
+
+
 
      AdaRecordRepresentationClause.setFunctionPrototype("HEADER_ADA_RECORD_REPRESENTATION_CLAUSE", "../Grammar/Statement.code" );
      AdaRecordRepresentationClause.setDataPrototype ( "SgType*", "recordType", "= NULL",
@@ -4315,6 +4340,7 @@ Grammar::setUpStatements ()
      AdaTaskTypeDecl.setFunctionSource   ( "SOURCE_ADA_TASK_TYPE_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaTaskBodyDecl.setFunctionSource   ( "SOURCE_ADA_TASK_BODY_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaRenamingDecl.setFunctionSource   ( "SOURCE_ADA_RENAMING_DECL_STATEMENT", "../Grammar/Statement.code" );
+     AdaDiscriminatedTypeDecl.setFunctionSource   ( "SOURCE_ADA_DISCRIMINATED_TYPE_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaRecordRepresentationClause.setFunctionSource ( "SOURCE_ADA_RECORD_REPRESENTATION_CLAUSE", "../Grammar/Statement.code" );
      AdaEnumRepresentationClause.setFunctionSource ( "SOURCE_ADA_ENUM_REPRESENTATION_CLAUSE", "../Grammar/Statement.code" );
      AdaComponentClause.setFunctionSource ( "SOURCE_ADA_COMPONENT_CLAUSE", "../Grammar/Statement.code");

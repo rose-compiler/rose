@@ -3592,6 +3592,19 @@ SgSymbol* get_symbol_from_symbol_table() const ROSE_OVERRIDE;
 SgName get_mangled_name() const ROSE_OVERRIDE;
 HEADER_ADA_RENAMING_DECL_STATEMENT_END
 
+HEADER_ADA_DISCRIMINATED_TYPE_DECL_STATEMENT_START
+
+HEADER_LIST_DECLARATIONS
+
+// SgInitializedNamePtrList& get_discriminants() ;
+// const SgInitializedNamePtrList & get_discriminants() const;
+//void append_discriminant(SgInitializedName*) ;
+//void prepend_discriminant(SgInitializedName*) ;
+
+SgSymbol* get_symbol_from_symbol_table() const ROSE_OVERRIDE;
+SgName get_mangled_name() const ROSE_OVERRIDE;
+HEADER_ADA_DISCRIMINATED_TYPE_DECL_STATEMENT_END
+
 HEADER_ADA_RECORD_REPRESENTATION_CLAUSE_START
 
 // HEADER_LIST_DECLARATIONS
@@ -20766,6 +20779,53 @@ SgAdaRenamingDecl::get_mangled_name() const
   return name;
 }
 SOURCE_ADA_RENAMING_DECL_STATEMENT_END
+
+SOURCE_ADA_DISCRIMINATED_TYPE_DECL_STATEMENT_START
+void SgAdaDiscriminatedTypeDecl::post_construction_initialization() {}
+
+SgSymbol*
+SgAdaDiscriminatedTypeDecl::get_symbol_from_symbol_table() const
+{
+  // SgScopeStatement* scope = get_scope();
+  // ROSE_ASSERT(scope);
+  // return scope->find_symbol_from_declaration(this);
+
+  // or:
+  // return nullptr;
+
+  SgDeclarationStatement* child = get_discriminatedDecl();
+  ROSE_ASSERT(child);
+
+  return child->get_symbol_from_symbol_table();
+}
+
+SgName
+SgAdaDiscriminatedTypeDecl::get_mangled_name() const
+{
+  static const std::string name = "ada$disc$";
+
+  SgDeclarationStatement* child = get_discriminatedDecl();
+  ROSE_ASSERT(child);
+
+  return name + child->get_mangled_name();
+}
+
+#if 1
+void
+SgAdaDiscriminatedTypeDecl::append_discriminant(SgInitializedName* what)
+{
+  get_discriminants().push_back(what);
+}
+
+void
+SgAdaDiscriminatedTypeDecl::prepend_discriminant(SgInitializedName* what)
+{
+  get_discriminants().insert(get_discriminants().begin(), what);
+}
+#endif
+
+SOURCE_ADA_DISCRIMINATED_TYPE_DECL_STATEMENT_END
+
 
 HEADER_ADA_RECORD_REPRESENTATION_CLAUSE_START
 
