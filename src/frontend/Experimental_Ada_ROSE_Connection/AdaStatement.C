@@ -189,7 +189,7 @@ namespace
     typedef NameCreator::result_container name_container;
 
     ElemIdRange    range  = idRange(adastmt.Label_Names);
-    name_container names  = traverseIDs(range, elemMap(), NameCreator{ctx});
+    name_container names  = allNames(range, ctx);
     SgStatement*   sgnode = std::accumulate( names.rbegin(), names.rend(),
                                              &stmt,
                                              [&](SgStatement* labeled, const NameData& el) -> SgStatement*
@@ -385,6 +385,7 @@ namespace
                || decl.Declaration_Kind == A_Real_Number_Declaration
                || decl.Declaration_Kind == An_Integer_Number_Declaration
                || decl.Declaration_Kind == A_Component_Declaration
+               || decl.Declaration_Kind == A_Discriminant_Specification
                );
 
     //~ logWarn() << "decl.Initialization_Expression = " << decl.Initialization_Expression << std::endl;
@@ -438,7 +439,7 @@ namespace
 
     // SgType&                   dcltype = tyModifier(getVarType(decl, ctx));
     ElemIdRange              range    = idRange(asisDecl.Names);
-    name_container           names    = traverseIDs(range, elemMap(), NameCreator{ctx});
+    name_container           names    = allNames(range, ctx);
     SgType&                  basety   = getDeclTypeID(asisDecl.Object_Declaration_View, ctx);
     SgType&                  parmtype = asisDecl.Has_Aliased ? mkAliasedType(basety) : basety;
     SgInitializedNamePtrList dclnames = constructInitializedNamePtrList( ctx, asisVars(), names,
@@ -488,6 +489,65 @@ namespace
       AstContext               ctx;
   };
 
+  /// converts an Asis parameter declaration to a ROSE paramter (i.e., variable)
+  ///   declaration.
+  SgVariableDeclaration&
+  getDiscriminant(Element_Struct& elem, AstContext ctx)
+  {
+    typedef NameCreator::result_container name_container;
+
+    ADA_ASSERT(elem.Element_Kind == A_Declaration);
+
+    Declaration_Struct&      asisDecl = elem.The_Union.Declaration;
+    ADA_ASSERT(asisDecl.Declaration_Kind == A_Discriminant_Specification);
+
+    // SgType&                   dcltype = tyModifier(getVarType(decl, ctx));
+    ElemIdRange              range    = idRange(asisDecl.Names);
+    name_container           names    = allNames(range, ctx);
+    SgType&                  basety   = getDeclTypeID(asisDecl.Object_Declaration_View, ctx);
+    SgInitializedNamePtrList dclnames = constructInitializedNamePtrList( ctx, asisVars(), names,
+                                                                         basety, getVarInit(asisDecl, &basety, ctx)
+                                                                       );
+    SgVariableDeclaration&   sgnode   = mkVarDecl(dclnames, ctx.scope());
+
+    attachSourceLocation(sgnode, elem, ctx);
+    /* unused fields:
+         bool                           Has_Null_Exclusion;
+    */
+    return sgnode;
+  }
+
+
+  struct DiscriminantCreator
+  {
+      DiscriminantCreator(SgAdaDiscriminatedTypeDecl& discrNode, AstContext astctx)
+      : sgnode(discrNode), ctx(astctx)
+      {}
+
+      void operator()(Element_Struct& elem)
+      {
+        SgVariableDeclaration&    decl = getDiscriminant(elem, ctx);
+
+        // SgDeclarationScope does not hold a list of declarations..
+        // ctx.scope().append_statement(&decl);
+        // alternative: store them with the discriminated decl node
+
+        SgInitializedNamePtrList& args = sgnode.get_discriminants();
+
+        // in Ada multiple parameters can be declared
+        //   within a single declaration.
+        for (SgInitializedName* discriminant : decl.get_variables())
+        {
+          args.push_back(discriminant);
+        }
+      }
+
+    private:
+      SgAdaDiscriminatedTypeDecl& sgnode;
+      AstContext                  ctx;
+
+      DiscriminantCreator() = delete;
+  };
 
   SgClassDeclaration&
   createRecordDecl( const std::string& name,
@@ -545,7 +605,11 @@ namespace
   {
       typedef sg::DispatchHandler<SgDeclarationStatement*> base;
 
-      MakeDeclaration(const std::string& name, SgScopeStatement& scope, TypeData basis, SgDeclarationStatement* incompl)
+      MakeDeclaration( const std::string& name,
+                       SgScopeStatement& scope,
+                       TypeData basis,
+                       SgDeclarationStatement* incompl
+                     )
       : base(), dclname(name), dclscope(scope), foundation(basis), incomplDecl(incompl)
       {}
 
@@ -637,7 +701,7 @@ namespace
     typedef NameCreator::result_container name_container;
 
     ElemIdRange              range    = idRange(decl.Names);
-    name_container           names    = traverseIDs(range, elemMap(), NameCreator{ctx});
+    name_container           names    = allNames(range, ctx);
     SgScopeStatement&        scope    = ctx.scope();
     SgInitializedNamePtrList dclnames = constructInitializedNamePtrList( ctx, asisVars(), names,
                                                                          dclType, getVarInit(decl, expectedType, ctx)
@@ -722,11 +786,12 @@ namespace
   SgAdaTaskSpec&
   getTaskSpec(Element_Struct& elem, AstContext ctx)
   {
-    ADA_ASSERT(elem.Element_Kind == A_Definition);
-
     SgAdaTaskSpec&          sgnode = mkAdaTaskSpec();
 
     sgnode.set_hasMembers(true);
+
+    ADA_ASSERT(elem.Element_Kind == A_Definition);
+    logKind("A_Definition");
 
     Definition_Struct&      def = elem.The_Union.Definition;
     ADA_ASSERT(def.Definition_Kind == A_Task_Definition);
@@ -1742,7 +1807,7 @@ namespace
     // SgType&                   dcltype = tyModifier(getVarType(decl, ctx));
     ElemIdRange              range    = idRange(asisDecl.Names);
 
-    return traverseIDs(range, elemMap(), NameCreator{ctx});
+    return allNames(range, ctx);
   }
 
   void handleExceptionHandler(Element_Struct& elem, SgTryStmt& tryStmt, AstContext ctx)
@@ -1828,7 +1893,7 @@ namespace
         }
 
         std::vector<SgExpression*> elems{res};
-        SgImportStatement&         sgnode = mkWithClause(elems);
+        SgImportStatement&         sgnode = mkWithClause(std::move(elems));
 
         recordNode(asisDecls(), el.ID, sgnode);
         attachSourceLocation(sgnode, el, ctx);
@@ -1994,6 +2059,7 @@ namespace
     NameData            declname  = singleName(complDecl, ctx);
 
     ADA_ASSERT(complDecl.Declaration_Kind == An_Ordinary_Type_Declaration);
+    logKind("An_Ordinary_Type_Declaration");
 
     Element_Struct&     typeElem = retrieveAs<Element_Struct>(elemMap(), complDecl.Type_Declaration_View);
     ADA_ASSERT(typeElem.Element_Kind == A_Definition);
@@ -2147,6 +2213,61 @@ namespace
                   : mkProcedureDef(name,    scope, rettype, std::move(complete));
   }
 
+    void completeDiscriminatedDecl( SgAdaDiscriminatedTypeDecl& sgnode,
+                                  SgDeclarationStatement* nondef,
+                                  Element_ID id,
+                                  SgDeclarationStatement& child,
+                                  Element_Struct& elem,
+                                  bool isPrivate,
+                                  AstContext ctx
+                                )
+  {
+    privatize(sgnode, isPrivate);
+    recordNode(asisTypes(), id, child, true /* replace */);
+    attachSourceLocation(sgnode, elem, ctx);
+
+    ADA_ASSERT(sgnode.get_parent() == &ctx.scope());
+  }
+
+  SgAdaDiscriminatedTypeDecl&
+  createDiscriminatedDeclID(Element_Struct& elem, AstContext ctx)
+  {
+    ADA_ASSERT(elem.Element_Kind == A_Definition);
+    logKind("A_Definition");
+
+    // many definitions are handled else where
+    // here we want to convert the rest that can appear in declarative context
+
+    SgAdaDiscriminatedTypeDecl& sgnode = mkAdaDiscriminatedTypeDecl(ctx.scope());
+    Definition_Struct&          def = elem.The_Union.Definition;
+
+    if (def.Definition_Kind == A_Known_Discriminant_Part)
+    {
+      logKind("A_Known_Discriminant_Part");
+
+      ElemIdRange       discriminants = idRange(def.The_Union.The_Known_Discriminant_Part.Discriminants);
+      SgScopeStatement& scope         = SG_DEREF(sgnode.get_discriminantScope());
+
+      traverseIDs(discriminants, elemMap(), DiscriminantCreator{sgnode, ctx.scope(scope)});
+    }
+    else
+    {
+      ADA_ASSERT(def.Definition_Kind == An_Unknown_Discriminant_Part);
+
+      logKind("An_Unknown_Discriminant_Part");
+    }
+
+    return sgnode;
+  }
+
+  SgAdaDiscriminatedTypeDecl*
+  createDiscriminatedDeclID_opt(Element_ID id, AstContext ctx)
+  {
+    if (id == 0) return nullptr;
+
+    return &createDiscriminatedDeclID(retrieveAs<Element_Struct>(elemMap(), id), ctx);
+  }
+
 
   // handles incomplete (but completed) and private types
   void handleOpaqueTypes( Element_Struct& elem,
@@ -2167,16 +2288,36 @@ namespace
     NameData                adaname = singleName(decl, ctx);
     ADA_ASSERT(adaname.fullName == adaname.ident);
 
-    Element_ID              id     = adaname.id();
-    SgScopeStatement&       scope  = ctx.scope();
-    SgDeclarationStatement& sgnode = createOpaqueDecl(adaname, decl, defdata.second, ctx);
+    SgScopeStatement*       parentScope = &ctx.scope();
+    SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt(decl.Discriminant_Part, ctx);
 
-    attachSourceLocation(sgnode, elem, ctx);
-    scope.append_statement(&sgnode);
-    privatize(sgnode, isPrivate);
-    recordNode(asisTypes(), id, sgnode);
-    recordNode(asisTypes(), defdata.first, sgnode); // rec @ def
-    ADA_ASSERT(sgnode.get_parent() == &scope);
+    if (discr)
+    {
+      parentScope->append_statement(discr);
+      ROSE_ASSERT(discr->get_parent());
+
+      parentScope = discr->get_discriminantScope();
+    }
+
+    Element_ID              id     = adaname.id();
+    SgScopeStatement&       scope  = SG_DEREF(parentScope);
+    SgDeclarationStatement& sgdecl = createOpaqueDecl(adaname, decl, defdata.second, ctx.scope(scope));
+
+    attachSourceLocation(sgdecl, elem, ctx);
+    privatize(sgdecl, isPrivate);
+    recordNode(asisTypes(), id, sgdecl);
+    recordNode(asisTypes(), defdata.first, sgdecl); // rec @ def
+
+    if (!discr)
+    {
+      scope.append_statement(&sgdecl);
+      ADA_ASSERT(sgdecl.get_parent() == &scope);
+    }
+    else
+    {
+      sg::linkParentChild(*discr, sgdecl, &SgAdaDiscriminatedTypeDecl::set_discriminatedDecl);
+      completeDiscriminatedDecl(*discr, nullptr /* no nondef dcl */, id, sgdecl, elem, isPrivate, ctx);
+    }
   }
 } // anonymous
 
@@ -2383,9 +2524,13 @@ void handleDefinition(Element_Struct& elem, AstContext ctx)
       // handled in getTaskSpec
       ROSE_ABORT();
 
-    case A_Discrete_Subtype_Definition:    // 3.6(6)      -> Discrete_Range_Kinds
     case An_Unknown_Discriminant_Part:     // 3.7(3)
+      ROSE_ABORT();
+
     case A_Known_Discriminant_Part:        // 3.7(2)
+      ROSE_ABORT();
+
+    case A_Discrete_Subtype_Definition:    // 3.6(6)      -> Discrete_Range_Kinds
     case Not_A_Definition:                 // An unexpected element
     case A_Variant_Part:                   // 3.8.1(2)
     case A_Variant:                        // 3.8.1(3)
@@ -2899,27 +3044,42 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         NameData                adaname = singleName(decl, ctx);
         ADA_ASSERT(adaname.fullName == adaname.ident);
 
-        TypeData                ty   = getTypeFoundation(adaname.ident, decl, ctx);
-        SgScopeStatement&       scope = ctx.scope();
-        //~ ADA_ASSERT(scope.get_parent());
+        SgScopeStatement*       parentScope = &ctx.scope();
+        SgAdaDiscriminatedTypeDecl* discr = createDiscriminatedDeclID_opt(decl.Discriminant_Part, ctx);
 
+        if (discr)
+        {
+          parentScope->append_statement(discr);
+          ROSE_ASSERT(discr->get_parent());
+
+          parentScope = discr->get_discriminantScope();
+        }
+
+        SgScopeStatement&       scope = SG_DEREF(parentScope);
+        TypeData                ty   = getTypeFoundation(adaname.ident, decl, ctx.scope(scope));
         Element_ID              id   = adaname.id();
         SgDeclarationStatement* nondef = findFirst(asisTypes(), id);
-        SgDeclarationStatement& sgnode = sg::dispatch(MakeDeclaration(adaname.ident, scope, ty, nondef), ty.n);
+        SgDeclarationStatement& sgdecl = sg::dispatch(MakeDeclaration(adaname.ident, scope, ty, nondef), ty.n);
 
-        privatize(sgnode, isPrivate);
-        recordNode(asisTypes(), id, sgnode, nondef != nullptr);
-        attachSourceLocation(sgnode, elem, ctx);
-        scope.append_statement(&sgnode);
-        ADA_ASSERT(sgnode.get_parent() == &scope);
+        privatize(sgdecl, isPrivate);
+        recordNode(asisTypes(), id, sgdecl, nondef != nullptr);
+        attachSourceLocation(sgdecl, elem, ctx);
 
-        // \todo double check that recorded types are consistent with ROSE representation
+        if (!discr)
+        {
+          scope.append_statement(&sgdecl);
+          ADA_ASSERT(sgdecl.get_parent() == &scope);
+        }
+        else
+        {
+          sg::linkParentChild(*discr, sgdecl, &SgAdaDiscriminatedTypeDecl::set_discriminatedDecl);
+          completeDiscriminatedDecl(*discr, nondef, id, sgdecl, elem, isPrivate, ctx);
+        }
 
 
         /* unused fields
             bool                           Has_Abstract;
             bool                           Has_Limited;
-            Definition_ID                  Discriminant_Part;
             Declaration_ID                 Corresponding_Type_Declaration;
             Declaration_ID                 Corresponding_Type_Partial_View;
             Declaration_ID                 Corresponding_First_Subtype;
@@ -3201,7 +3361,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         typedef NameCreator::result_container name_container;
 
         ElemIdRange              range    = idRange(decl.Names);
-        name_container           names    = traverseIDs(range, elemMap(), NameCreator{ctx});
+        name_container           names    = allNames(range, ctx);
         SgScopeStatement&        scope    = ctx.scope();
         SgType&                  excty    = lookupNode(adaTypes(), AdaIdentifier{"Exception"});
         SgInitializedNamePtrList dclnames = constructInitializedNamePtrList(ctx, asisExcps(), names, excty, nullptr);
@@ -3427,6 +3587,12 @@ singleName(Declaration_Struct& decl, AstContext ctx)
   ADA_ASSERT(range.size() == 1);
 
   return getNameID(*range.first, ctx);
+}
+
+std::vector<NameData>
+allNames(ElemIdRange range, AstContext ctx)
+{
+  return traverseIDs(range, elemMap(), NameCreator{ctx});
 }
 
 

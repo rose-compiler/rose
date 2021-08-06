@@ -1299,6 +1299,7 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
           (nodeName == "AdaTaskSpecDecl"            && variableNameString == "name")  ||
           (nodeName == "AdaTaskTypeDecl"            && variableNameString == "name")  ||
           (nodeName == "AdaRenamingDecl"            && variableNameString == "name")  ||
+          (nodeName == "AdaDiscriminatedTypeDecl"   && variableNameString == "name")  ||
           (nodeName == "AsmFunction"                && variableNameString == "name")  ||
           (nodeName == "AsmSynthesizedFieldDeclaration" && variableNameString == "name")  ||
           (nodeName == "AsmGenericFile"             && variableNameString == "name")  ||
@@ -1436,6 +1437,7 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
           (nodeName == "AdaTaskSpecDecl"            && variableNameString == "name")  ||
           (nodeName == "AdaTaskTypeDecl"            && variableNameString == "name")  ||
           (nodeName == "AdaRenamingDecl"            && variableNameString == "name")  ||
+          (nodeName == "AdaDiscriminatedTypeDecl"   && variableNameString == "name")  ||
           (nodeName == "AsmFunction"                && variableNameString == "name")  ||
           (nodeName == "AsmSynthesizedFieldDeclaration" && variableNameString == "name")  ||
           (nodeName == "AsmGenericFile"             && variableNameString == "name")  ||

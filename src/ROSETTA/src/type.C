@@ -125,6 +125,7 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( AdaSubtype          , "AdaSubtype",           "T_ADA_SUBTYPE" );
      NEW_TERMINAL_MACRO ( AdaDerivedType      , "AdaDerivedType",       "T_ADA_DERIVEDTYPE" );
      NEW_TERMINAL_MACRO ( AdaModularType      , "AdaModularType",       "T_ADA_MODULAR_TYPE" );
+     NEW_TERMINAL_MACRO ( AdaDiscriminatedType, "AdaDiscriminatedType", "T_ADA_DISCRIMINATED_TYPE" );
      NEW_TERMINAL_MACRO ( AdaFloatType        , "AdaFloatType",         "T_ADA_FLOAT" );
      NEW_TERMINAL_MACRO ( AdaFormalType       , "AdaFormalType",        "T_ADA_FORMAL_TYPE" );
 
@@ -190,7 +191,7 @@ Grammar::setUpTypes ()
      NEW_NONTERMINAL_MACRO (NamedType,
                             ClassType             | EnumType          | TypedefType      | NonrealType |
                             JavaParameterizedType | JavaQualifiedType | JavaWildcardType | AdaTaskType |
-                            AdaFormalType,
+                            AdaFormalType         | AdaDiscriminatedType,
                             "NamedType","T_NAME", false);
 #endif
 
@@ -402,30 +403,6 @@ Grammar::setUpTypes ()
      ArrayType.excludeFunctionSource        ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
 
 
-  // PP (5/7/20): Adding ADA types
-     AdaTaskType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
-     AdaTaskType.setFunctionSource        ( "SOURCE_ADA_TASK_TYPE", "../Grammar/Type.code");
-
-  // MS (5/1/21): Ada formal types
-     AdaFormalType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code" );
-     AdaFormalType.setFunctionSource        ( "SOURCE_ADA_FORMAL_TYPE", "../Grammar/Type.code");
-
-  // PP (3/24/20): Adding ADA types
-     AdaAccessType.excludeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     AdaAccessType.excludeFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-
-     AdaSubtype.excludeFunctionPrototype    ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     AdaSubtype.excludeFunctionSource       ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-
-     AdaDerivedType.excludeFunctionPrototype    ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     AdaDerivedType.excludeFunctionSource       ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-
-     AdaModularType.excludeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     AdaModularType.excludeFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-
-     AdaFloatType.excludeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-     AdaFloatType.excludeFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
-
      JovialBitType.excludeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      JovialBitType.excludeFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
 
@@ -475,6 +452,23 @@ Grammar::setUpTypes ()
      TypeString.excludeFunctionPrototype ( "HEADER_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
      TypeString.excludeFunctionSource    ( "SOURCE_BUILTIN_TYPE_SUPPORT", "../Grammar/Type.code" );
 #endif
+
+#if 1
+  // The code was commented out
+
+  // PP (5/7/20): Adding ADA types
+     //~ AdaTaskType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+     AdaTaskType.setFunctionSource        ( "SOURCE_ADA_TASK_TYPE", "../Grammar/Type.code");
+
+  // PP (8/5/21): Adding ADA types
+     //~ AdaDiscriminatedType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
+     AdaDiscriminatedType.setFunctionSource        ( "SOURCE_ADA_DISCRIMINATED_TYPE", "../Grammar/Type.code");
+
+  // MS (5/1/21): Ada formal types
+     //~ AdaFormalType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code" );
+     AdaFormalType.setFunctionSource        ( "SOURCE_ADA_FORMAL_TYPE", "../Grammar/Type.code");
+#endif /* 1 */
+
 
 #if 1
      TypeComplex.excludeFunctionPrototype       ( "HEADER_COMMON_CREATE_TYPE", "../Grammar/Type.code" );
@@ -698,6 +692,10 @@ Grammar::setUpTypes ()
      CUSTOM_CREATE_TYPE_MACRO(AdaTaskType,
             "SOURCE_CREATE_TYPE_FOR_ADA_TASK_TYPE",
             "SgDeclarationStatement* decl = NULL");
+
+     CUSTOM_CREATE_TYPE_MACRO(AdaDiscriminatedType,
+            "SOURCE_CREATE_TYPE_FOR_ADA_DISCRIMINATED_TYPE",
+            "SgAdaDiscriminatedTypeDecl* decl = NULL");
             //~ "SgAdaTaskTypeDecl* decl = NULL");
 
      CUSTOM_CREATE_TYPE_MACRO(AdaFormalType,
@@ -1124,9 +1122,15 @@ Grammar::setUpTypes ()
      AdaTaskType.setFunctionPrototype ("HEADER_ADA_TASK_TYPE", "../Grammar/Type.code" );
 
      AdaTaskType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
+     // maybe: AdaTaskType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
 
-     AdaTaskType.setDataPrototype ("SgAdaTaskTypeDecl*", "decl", "= NULL",
-                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     //~ AdaTaskType.setDataPrototype ("SgAdaTaskTypeDecl*", "decl", "= NULL",
+                                     //~ CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // PP (8/5/21): Adding ADA types
+     AdaDiscriminatedType.setFunctionPrototype ("HEADER_ADA_DISCRIMINATED_TYPE", "../Grammar/Type.code" );
+     AdaDiscriminatedType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
+     AdaDiscriminatedType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
 
   // MS (5/1/21): Adding Ada generics
      AdaFormalType.setFunctionPrototype ("HEADER_ADA_FORMAL_TYPE", "../Grammar/Type.code" );
