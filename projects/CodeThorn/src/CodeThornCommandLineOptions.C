@@ -326,7 +326,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("ast-traversal-csv-mode",po::value< int >(&ctOpt.info.astTraversalCSVMode)->default_value(1),"Select mode to generate csv file (1..2) [arg].")
     ("type-size-mapping-print",po::value< bool >(&ctOpt.info.printTypeSizeMapping)->default_value(false)->implicit_value(true),"Print type-size mapping on stdout.")
     ("type-size-mapping-csv",po::value<std::string>(&ctOpt.info.typeSizeMappingCSVFileName),"Write type-size mapping to CSV file [arg].")
-    ("tf-info",po::value< bool >(&ctOpt.info.printTransferFunctionInfo)->default_value(false)->implicit_value(true),"Print info about invoked transfer functions.")
+    ("tf-trace",po::value< bool >(&ctOpt.info.printTransferFunctionInfo)->default_value(false)->implicit_value(true),"Print info about invoked transfer functions.")
     ;
 
   po::options_description all("All supported options");

@@ -1454,7 +1454,7 @@ namespace CodeThorn {
   }
 
   void EStateTransferFunctions::fatalErrorExit(SgNode* node, string errorMessage) {
-    logger[ERROR]<<errorMessage<<": "<<SgNodeHelper::sourceLocationAndNodeToString(node)<<endl;
+    logger[ERROR]<<errorMessage<<": "<<SgNodeHelper::locationAndSourceCodeToString(node)<<endl;
     exit(1);
   }
 
@@ -1500,7 +1500,7 @@ namespace CodeThorn {
 	  size_t sizeAfter=estate.pstate()->stateSize();
 	  size_t numNewEntries=sizeAfter-sizeBefore;
 	  //if(getAnalyzer()->getOptionsRef().status)
-	  //  cout<<"STATUS: init global decl: "<<SgNodeHelper::sourceLocationAndNodeToString(decl)<<": entries: "<<numNewEntries<<endl;
+	  //  cout<<"STATUS: init global decl: "<<SgNodeHelper::locationAndSourceCodeToString(decl)<<": entries: "<<numNewEntries<<endl;
 	  declaredInGlobalState++;
 	  // this data is only used by globalVarIdByName to determine rers 'output' variable name in binary mode
 	  globalVarName2VarIdMapping[getVariableIdMapping()->variableName(getVariableIdMapping()->variableId(decl))]=getVariableIdMapping()->variableId(decl);
@@ -1852,11 +1852,12 @@ namespace CodeThorn {
     stringstream ss;
     ss<<"transfer: "<<std::setw(6)<<"L"+estate->label().toString()<<": "<<std::setw(22)<<std::left<<transerFunctionCodeToString(tfCode)<<": ";
     if(getLabeler()->isFunctionEntryLabel(edge.source())||getLabeler()->isFunctionExitLabel(edge.source())) {
-      ss<<SgNodeHelper::getFunctionName(node);
+      ss<<SgNodeHelper::locationToString(node)<<": "<<SgNodeHelper::getFunctionName(node);
     } else {
-      ss<<node->unparseToString();
+      ss<<SgNodeHelper::locationAndSourceCodeToString(node);
     }
-    _analyzer->printStatusMessageLine(ss.str());
+    #pragma omp critical (STATUS_MESSAGES)
+    cout << ss.str()<<endl;
   }
 
   void EStateTransferFunctions::printEvaluateExpressionInfo(SgNode* node,EState& estate, EvalMode mode) {
@@ -3824,7 +3825,7 @@ namespace CodeThorn {
 
   std::string EStateTransferFunctions::sourceLocationAndNodeToString(Label lab) {
     SgNode* node=_analyzer->getLabeler()->getNode(lab);
-    return SgNodeHelper::sourceLocationAndNodeToString(node);
+    return SgNodeHelper::locationAndSourceCodeToString(node);
   }
 
   void EStateTransferFunctions::recordDefinitiveViolatingLocation(enum AnalysisSelector analysisSelector, Label label) {
