@@ -993,6 +993,27 @@ SemanticCallbacks::instance(const ModelChecker::Settings::Ptr &mcSettings, const
 }
 
 void
+SemanticCallbacks::followOnePath(const std::list<ExecutionUnitPtr> &units) {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    onePath_ = units;
+    followingOnePath_ = true;
+}
+
+bool
+SemanticCallbacks::followingOnePath() const {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    return followingOnePath_;
+}
+
+void
+SemanticCallbacks::followingOnePath(bool b) {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    if (!b)
+        onePath_.clear();
+    followingOnePath_ = b;
+}
+
+void
 SemanticCallbacks::reset() {
     seenStates_.clear();
     nDuplicateStates_ = 0;
@@ -1154,14 +1175,37 @@ SemanticCallbacks::seenState(const BS::RiscOperators::Ptr &ops) {
 
 ExecutionUnit::Ptr
 SemanticCallbacks::findUnit(rose_addr_t va) {
+    ExecutionUnit::Ptr unit;
+
+    // If we're following one path, then the execution unit is always the next one on the path.
+    {
+        SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+        if (followingOnePath_) {
+            if (!onePath_.empty()) {
+                unit = onePath_.front();
+                onePath_.pop_front();
+            }
+        }
+    }
+
     // We use a separate mutex for the unit_ cache so that only one thread computes this at a time without blocking
     // threads trying to make progress on other things.  An alternative would be to lock the main mutex, but only when
     // accessing the cache, and allow the computations to be duplicated with only the first thread saving the result.
     SAWYER_THREAD_TRAITS::LockGuard lock(unitsMutex_);
 
-    ExecutionUnit::Ptr unit;
-    if ((unit = units_.getOrDefault(va))) {
+    if (unit) {
+        // We took it from the one path we're following (see above)
+        if (*unit->address() != va) {
+            SAWYER_MESG(mlog[DEBUG]) <<"next follow-one-path execution unit address mismatch:"
+                                     <<" expected " <<StringUtility::addrToString(va)
+                                     <<" but has " <<StringUtility::addrToString(*unit->address()) <<"\n";
+            return ExecutionUnit::Ptr();
+        }
+        return unit;
+
+    } else if ((unit = units_.getOrDefault(va))) {
         // preexisting
+
     } else {
         P2::Function::Ptr func = partitioner_.functionExists(va);
         if (func && boost::ends_with(func->name(), "@plt")) {
@@ -1211,6 +1255,28 @@ SemanticCallbacks::findUnit(rose_addr_t va) {
     if (unit)
         units_.insert(va, unit);
     return unit;
+}
+
+SemanticCallbacks::CodeAddresses
+SemanticCallbacks::nextCodeAddresses(const BS::RiscOperators::Ptr &ops) {
+    ExecutionUnit::Ptr nextUnit;
+    {
+        SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+        if (followingOnePath_)
+            nextUnit = onePath_.front();
+    }
+
+    if (nextUnit) {
+        CodeAddresses retval;
+        rose_addr_t va = *onePath_.front()->address();
+        retval.ip = ops->number_(partitioner().instructionProvider().instructionPointerRegister().nBits(), va);
+        retval.addresses.insert(va);
+        retval.isComplete = true;
+        return retval;
+
+    } else {
+        return ModelChecker::SemanticCallbacks::nextCodeAddresses(ops); // delegate to parent class
+    }
 }
 
 std::vector<SemanticCallbacks::NextUnit>

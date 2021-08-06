@@ -520,6 +520,15 @@ private:
     UnitCounts unitsReached_;                           // number of times basic blocks were reached
     Variables::VariableFinderPtr variableFinder_;       // also shared by all RiscOperator objects
 
+    // This model is able to follow a single path specified by the user. In order to do that, the user should call
+    // followOnePath to provide the ordered list of execution units. The nextCodeAddresses function is overridden to
+    // return only the address of the next execution unit in this list, or none when the list is empty. The findUnit
+    // function is enhanced to return the next execution unit and remove it from the list.
+    //
+    // These are also protected by mutex_
+    bool followingOnePath_ = false;
+    std::list<ExecutionUnitPtr> onePath_;               // execution units yet to be consumed by findUnit
+
 protected:
     SemanticCallbacks(const ModelChecker::SettingsPtr&, const Settings&, const Partitioner2::Partitioner&);
 public:
@@ -533,6 +542,38 @@ public:
     const Partitioner2::Partitioner& partitioner() const;
 
 public:
+    /** Cause this model to follow only one path through the specimen.
+     *
+     *  The path is provided as an ordered list of execution units. The initial execution unit will not appear in this list
+     *  since it should have been added to the model checker work list already, and it must be the only work on that list. In
+     *  this mode of operation, the model checker is single threaded and will follow only this specified path until it reaches
+     *  the end or some other condition causes the model checker to abandon the path earlier.
+     *
+     *  When the model checker runs, the @ref nextCodeAddress method is overridden to return only the address of the next
+     *  execution unit on this list, and the internal @ref findUnit function returns the next unit, removing it from the
+     *  list. When the list becomes empty, then no more code addresses or units are returned.
+     *
+     *  If this function is called when the model checker is already in @ref followingOnePath mode, the behavior is as if
+     *  @ref followingOnePath was cleared first.
+     *
+     *  Thread safety: This function is thread safe. */
+    void followOnePath(const std::list<ExecutionUnitPtr>&);
+
+    /** Property: Whether we are in follow-one-path mode.
+     *
+     *  This property can be queried or modified at any time. The @ref followOnePath function sets the property, which must
+     *  then be cleared manually if you want to continue to use the model checker in its normal mode. Clearing this property
+     *  will also discard any execution units that remain for the one path mode. Setting the property manually has no effect
+     *  if the property was already set, but if it was clear then the model checker behaves as if it reached the end of the
+     *  one path: it will stop exploring.
+     *
+     *  Thread safety: This property accessor is thread safe.
+     *
+     * @{ */
+    bool followingOnePath() const;
+    void followingOnePath(bool);
+    /** @} */
+
     /** Property: Number of duplicate states.
      *
      *  This read-only property returns the number of times that a semantic state was encountered that had been encountered
@@ -601,6 +642,9 @@ public:
 
     virtual void attachModelCheckerSolver(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
                                           const SmtSolver::Ptr&) override;
+
+    virtual CodeAddresses
+    nextCodeAddresses(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&) override;
 
     virtual std::vector<TagPtr>
     preExecute(const ExecutionUnitPtr&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&) override;
