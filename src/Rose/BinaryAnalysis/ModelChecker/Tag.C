@@ -36,6 +36,12 @@ NameTag::instance(size_t nodeStep, const std::string &name) {
 }
 
 std::string
+NameTag::name() const {
+    // No lock necessary since the name is never modified after construction.
+    return name_;
+}
+
+std::string
 NameTag::printableName() const {
     ASSERT_forbid(name_.empty());
     return "tag " + name_;

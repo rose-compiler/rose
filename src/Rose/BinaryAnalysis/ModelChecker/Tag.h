@@ -40,6 +40,14 @@ public:
      *  Thread safety: This property accessor is thread safe. */
     size_t nodeStep() const;
 
+    /** Property: Generic name of tag.
+     *
+     *  For instance, the name of a null pointer dereference tag might be the words "null pointer dereference" (see @ref
+     *  NullDerefTag for the actual value).
+     *
+     *  Thread safety: The implementation must be thread safe. */
+    virtual std::string name() const = 0;
+
     /** String to identify this tag.
      *
      *  Returns a single line string (no line feed) that is suitable for printing on a terminal (no special characters).
@@ -99,6 +107,7 @@ public:
     static Ptr instance(size_t nodeStep, const std::string &name);
 
 public:
+    virtual std::string name() const override;
     virtual std::string printableName() const override;
     virtual void print(std::ostream&, const std::string &prefix) const override;
     virtual void toYaml(std::ostream&, const std::string &prefix) const override;
