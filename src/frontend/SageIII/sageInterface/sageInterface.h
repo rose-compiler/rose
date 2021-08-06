@@ -1889,8 +1889,8 @@ struct DeferredTransformation
      FuncDeclList_t targetFriends;
 
   // DQ (2/28/2021): Adding support for outlining where it involves building up pre-transformations.
-  // For example, in the code segregation, we build a conditiona around the interval of statements 
-  // that we are outlining. This conditional is used to overwrite the first statement in the interval 
+  // For example, in the code segregation, we build a conditiona around the interval of statements
+  // that we are outlining. This conditional is used to overwrite the first statement in the interval
   // list.  Because we don't want to transform the AST until after the outlining, we need so save the
   // whole interval so that we, after the outlining, remove the statements in the interval after that
   // first statement.
@@ -2111,7 +2111,8 @@ void setParameterList(actualFunction *func,SgFunctionParameterList *paralist) {
 
      if (SageInterface::is_Ada_language())
      {
-       // Ada stores variable declarations in the function parameter scope
+       // Ada stores variable declarations in the function parameter scope (for functions)
+       //   and in a discriminantScope (for discriminated declarations).
        //   ==> just make sure that these are set.
       SgInitializedNamePtrList& args = paralist->get_args();
        for (SgInitializedNamePtrList::iterator i = args.begin(); i != args.end(); ++i)

@@ -6,6 +6,8 @@
 #include "AdaType.h"
 
 #include "sageGeneric.h"
+#include "sageInterfaceAda.h"
+
 #include "Ada_to_ROSE.h"
 #include "AdaExpression.h"
 #include "AdaStatement.h"
@@ -18,6 +20,7 @@
 
 
 namespace sb = SageBuilder;
+namespace si = SageInterface;
 
 
 namespace Ada_ROSE_Translation
@@ -33,20 +36,33 @@ namespace
       : base(), el(elem), ctx(astctx)
       {}
 
-      void set(SgType* ty)                       { ADA_ASSERT(ty); res = ty; }
+      // checks whether this is a discriminated declaration and generates the type accordingly
+      void decl(SgDeclarationStatement& n, std::function<SgType*()> nonDiscriminatedTypeGen)
+      {
+        SgType* ty = nullptr;
 
-      void handle(SgNode& n)                     { SG_UNEXPECTED_NODE(n); }
+        if (SgAdaDiscriminatedTypeDecl* discrDcl = si::ada::getAdaDiscriminatedTypeDecl(n))
+          ty = &mkAdaDiscriminatedType(*discrDcl);
+        else
+          ty = nonDiscriminatedTypeGen();
 
-      void handle(SgAdaFormalTypeDecl& n)        { set(n.get_formal_type()); }
-      void handle(SgType& n)                     { set(&n); }
-      void handle(SgClassDeclaration& n)         { set(&mkRecordType(n)); }
-      void handle(SgAdaTaskTypeDecl& n)          { set(&mkAdaTaskType(n)); }
-      void handle(SgEnumDeclaration& n)          { set(n.get_type()); }
-      void handle(SgTypedefDeclaration& n)       { set(n.get_type()); }
+        set(ty);
+      }
+
+      void set(SgType* ty)                 { ADA_ASSERT(ty); res = ty; }
+
+      void handle(SgNode& n)               { SG_UNEXPECTED_NODE(n); }
+
+      void handle(SgType& n)               { set(&n); }
+      void handle(SgAdaFormalTypeDecl& n)  { decl(n, [&]() -> SgType* { return n.get_formal_type(); } ); }
+      void handle(SgClassDeclaration& n)   { decl(n, [&]() -> SgType* { return &mkRecordType(n);    } ); }
+      void handle(SgAdaTaskTypeDecl& n)    { decl(n, [&]() -> SgType* { return &mkAdaTaskType(n);   } ); }
+      void handle(SgEnumDeclaration& n)    { decl(n, [&]() -> SgType* { return n.get_type();        } ); }
+      void handle(SgTypedefDeclaration& n) { decl(n, [&]() -> SgType* { return n.get_type();        } ); }
 
       void handle(SgAdaAttributeExp& n)
       {
-        attachSourceLocation(n, el, ctx);
+        attachSourceLocation(n, el, ctx); // \todo why is this not set where the node is made?
         set(&mkAttributeType(n));
       }
 
@@ -779,6 +795,75 @@ namespace
     markCompilerGenerated(sgnode);
     return sgnode;
   }
+
+  struct DiscriminantCreator
+  {
+      explicit
+      DiscriminantCreator(AstContext astctx)
+      : ctx(astctx), elems()
+      {}
+
+      DiscriminantCreator(DiscriminantCreator&&)                 = default;
+      DiscriminantCreator& operator=(DiscriminantCreator&&)      = default;
+
+      // \todo the following copying functions should be deleted post C++17
+      // @{
+      DiscriminantCreator(const DiscriminantCreator&)            = default;
+      DiscriminantCreator& operator=(const DiscriminantCreator&) = default;
+      // @}
+
+      void operator()(Element_Struct& el);
+
+      /// result read-out
+      operator SgExpressionPtrList () &&
+      {
+        return std::move(elems);
+      }
+
+    private:
+      AstContext          ctx;
+      SgExpressionPtrList elems;
+
+      DiscriminantCreator() = delete;
+  };
+
+  void DiscriminantCreator::operator()(Element_Struct& el)
+  {
+    using name_container = std::vector<NameData>;
+
+    ADA_ASSERT(el.Element_Kind == An_Association);
+
+    Association_Struct&        assoc = el.The_Union.Association;
+    ADA_ASSERT(assoc.Association_Kind == A_Discriminant_Association);
+    logKind("A_Discriminant_Association");
+
+    ElemIdRange                nameRange = idRange(assoc.Discriminant_Selector_Names);
+    name_container             names     = allNames(nameRange, ctx);
+    SgExpression&              sgnode    = getExprID(assoc.Discriminant_Expression, ctx);
+
+    attachSourceLocation(sgnode, el, ctx);
+
+    if (names.empty())
+    {
+      elems.push_back(&sgnode);
+    }
+    else
+    {
+      NameData name = names.front();
+
+      // \todo SgActualArgumentExpression only supports 1:1 mapping from name to an expression
+      //       but not n:1.
+      //       => create an entry for each name, and duplicate the expression
+      elems.push_back(sb::buildActualArgumentExpression(name.ident, &sgnode));
+
+      std::for_each( std::next(names.begin()), names.end(),
+                     [&](NameData discrName) -> void
+                     {
+                       elems.push_back(sb::buildActualArgumentExpression(discrName.ident, si::deepCopy(&sgnode)));
+                     }
+                   );
+    }
+  }
 } // anonymous
 
 std::pair<SgInitializedName*, SgAdaRenamingDecl*>
@@ -871,17 +956,27 @@ getConstraintID(Element_ID el, AstContext ctx)
       {
         logKind("An_Index_Constraint");
 
-        ElemIdRange         idxranges = idRange(constraint.Discrete_Ranges);
-        SgExpressionPtrList ranges = traverseIDs(idxranges, elemMap(), RangeListCreator{ctx});
+        ElemIdRange         idxRanges = idRange(constraint.Discrete_Ranges);
+        SgExpressionPtrList ranges = traverseIDs(idxRanges, elemMap(), RangeListCreator{ctx});
 
         res = &mkAdaIndexConstraint(std::move(ranges));
+        break;
+      }
+
+    case A_Discriminant_Constraint:             // 3.2.2
+      {
+        logKind("A_Discriminant_Constraint");
+
+        ElemIdRange         discrRange  = idRange(constraint.Discriminant_Associations);
+        SgExpressionPtrList constraints = traverseIDs(discrRange, elemMap(), DiscriminantCreator{ctx});
+
+        res = &mkAdaDiscriminantConstraint(std::move(constraints));
         break;
       }
 
     case Not_A_Constraint: /* break; */         // An unexpected element
     case A_Digits_Constraint:                   // 3.2.2: 3.5.9
     case A_Delta_Constraint:                    // 3.2.2: J.3
-    case A_Discriminant_Constraint:             // 3.2.2
     default:
       logWarn() << "Unhandled constraint: " << constraint.Constraint_Kind << std::endl;
       ADA_ASSERT(!FAIL_ON_ERROR(ctx));
@@ -1041,14 +1136,14 @@ void ExHandlerTypeCreator::operator()(Element_Struct& elem)
   lst.push_back(&mkExceptionType(SG_DEREF(exceptExpr)));
 }
 
-ExHandlerTypeCreator::operator SgType&() const
+ExHandlerTypeCreator::operator SgType&() &&
 {
   ADA_ASSERT(lst.size() > 0);
 
   if (lst.size() == 1)
     return SG_DEREF(lst[0]);
 
-  return mkTypeUnion(lst);
+  return mkTypeUnion(std::move(lst));
 }
 
 }

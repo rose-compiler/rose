@@ -83,9 +83,13 @@ namespace Ada_ROSE_Translation
 
   /// builds an index constraint from \ref ranges
   /// \param ranges a sequence of ranges.
-  ///        the content of the sequence container \ref ranges will be chnage.
   SgAdaIndexConstraint&
-  mkAdaIndexConstraint(SgExpressionPtrList&& ranges);
+  mkAdaIndexConstraint(SgExpressionPtrList ranges);
+
+  /// builds a discriminant constraint from \ref discriminants
+  /// \param discriminants a sequence of discriminants.
+  SgAdaDiscriminantConstraint&
+  mkAdaDiscriminantConstraint(SgExpressionPtrList discriminants);
 
   /// builds a subtype constraint by \ref constr
   SgAdaSubtype&
@@ -125,7 +129,7 @@ namespace Ada_ROSE_Translation
   /// \note
   ///   this is used to represent a sequence of exceptions
   SgTypeTuple&
-  mkTypeUnion(const std::vector<SgType*>& elemtypes);
+  mkTypeUnion(SgTypePtrList elemtypes);
 
   /// creates a type that references a record declaration \ref dcl.
   SgClassType&
@@ -142,6 +146,10 @@ namespace Ada_ROSE_Translation
   /// creates a task type that references a task type declaration \ref dcl.
   SgAdaTaskType&
   mkAdaTaskType(SgAdaTaskTypeDecl& dcl);
+
+  /// creates a Discriminated type that references a Discriminated type declaration \ref dcl.
+  SgAdaDiscriminatedType&
+  mkAdaDiscriminatedType(SgAdaDiscriminatedTypeDecl& dcl);
 
   /// creates an entry type from a function parameter list
   // \todo the representation is incomplete and should be replaced
@@ -209,7 +217,7 @@ namespace Ada_ROSE_Translation
   // \todo revisit the ASIS frontend representation and revise how
   //       imports are represented in the AST.
   SgImportStatement&
-  mkWithClause(const std::vector<SgExpression*>& imported);
+  mkWithClause(SgExpressionPtrList imported);
 
   /// creates a use declaration for "use packagename" declarations
   /// \todo revisit representation in ROSE (use package seems more similar to using dircetive)
@@ -288,6 +296,11 @@ namespace Ada_ROSE_Translation
   ///   in parent scope \ref scope.
   SgTypedefDeclaration&
   mkTypeDecl(const std::string& name, SgType& ty, SgScopeStatement& scope);
+
+  // creates a discriminated type decl with parent scope \ref scope.
+  // The child discriminatedDecl remains undefined (i.e., null).
+  SgAdaDiscriminatedTypeDecl&
+  mkAdaDiscriminatedTypeDecl(SgScopeStatement& scope);
 
   /// creates a defining record declaration with name \ref name for record \ref def
   ///   in scope \ref scope.
@@ -458,7 +471,7 @@ namespace Ada_ROSE_Translation
   /// \param scope     the scope of the parameter list
   /// \pre the types of all initialized names must be the same
   SgVariableDeclaration&
-  mkParameter( const std::vector<SgInitializedName*>& parms,
+  mkParameter( const SgInitializedNamePtrList& parms,
                SgTypeModifier parmmode,
                SgScopeStatement& scope
              );
@@ -467,7 +480,7 @@ namespace Ada_ROSE_Translation
   /// combines a list of initialized names into a single declaration
   /// \pre the types of the initialized names must be the same
   SgVariableDeclaration&
-  mkVarDecl(const std::vector<SgInitializedName*>& vars, SgScopeStatement& scope);
+  mkVarDecl(const SgInitializedNamePtrList& vars, SgScopeStatement& scope);
 
   /// creates a variable declaration with a single initialized name
   SgVariableDeclaration&
@@ -478,7 +491,7 @@ namespace Ada_ROSE_Translation
   ///       as a variable of type Exception.
   ///       (*) https://learn.adacore.com/courses/intro-to-ada/chapters/exceptions.html#exception-declaration
   SgVariableDeclaration&
-  mkExceptionDecl(const std::vector<SgInitializedName*>& vars, SgScopeStatement& scope);
+  mkExceptionDecl(const SgInitializedNamePtrList& vars, SgScopeStatement& scope);
 
   /// creates a SgBaseClass object for an Ada record's parent
   /// \todo currently only direct base classes are represented in the Ast
@@ -572,7 +585,7 @@ namespace Ada_ROSE_Translation
   /// \return if multiple choices: a tree of expressions combined using SgCommaOpExp
   ///         otherwise (exactly one choice): the expression in \ref choices
   SgExpression&
-  mkChoiceExpIfNeeded(std::vector<SgExpression*>&& choices);
+  mkChoiceExpIfNeeded(const SgExpressionPtrList& choices);
 
   /// creates a type conversion of expression \ref expr to type \ref ty.
   SgCastExp&
@@ -605,7 +618,7 @@ namespace Ada_ROSE_Translation
 
   /// creates an  expression list from \ref exprs
   SgExprListExp&
-  mkExprListExp(const std::vector<SgExpression*>& exprs = {});
+  mkExprListExp(const SgExpressionPtrList& exprs = {});
 
   /// creates an SgNullExpression
   SgNullExpression&

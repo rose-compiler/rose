@@ -89,6 +89,21 @@ namespace ada
   bool isFunctionTryBlock(const SgTryStmt* n);
   /// @}
 
+
+  /// returns true iff \ref n has an unknown discriminant part
+  /// @{
+  bool hasUnknownDiscriminants(const SgAdaDiscriminatedTypeDecl& n);
+  bool hasUnknownDiscriminants(const SgAdaDiscriminatedTypeDecl* n);
+  /// @}
+
+  /// returns the SgAdaDiscriminatedTypeDecl iff \ref n is discriminated
+  ///         null otherwise
+  /// @{
+  SgAdaDiscriminatedTypeDecl* getAdaDiscriminatedTypeDecl(const SgDeclarationStatement& n);
+  SgAdaDiscriminatedTypeDecl* getAdaDiscriminatedTypeDecl(const SgDeclarationStatement* n);
+  /// @}
+
+
   struct PrimitiveParameterDesc : std::tuple<size_t, const SgInitializedName*>
   {
     using base = std::tuple<size_t, const SgInitializedName*>;

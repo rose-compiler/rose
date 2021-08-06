@@ -546,13 +546,38 @@ namespace ada
 
   bool isFunctionTryBlock(const SgTryStmt* n)
   {
-    return isFunctionTryBlock(SG_DEREF(n));
+    return n && isFunctionTryBlock(*n);
   }
 
 
+  bool hasUnknownDiscriminants(const SgAdaDiscriminatedTypeDecl& n)
+  {
+    return n.get_discriminants().size() == 0;
+  }
 
-  //
+  bool hasUnknownDiscriminants(const SgAdaDiscriminatedTypeDecl* n)
+  {
+    return n && hasUnknownDiscriminants(*n);
+  }
+
+  SgAdaDiscriminatedTypeDecl*
+  getAdaDiscriminatedTypeDecl(const SgDeclarationStatement& n)
+  {
+    //~ SgDeclarationScope* scope = isSgDeclarationScope(n.get_parent());
+
+    return isSgAdaDiscriminatedTypeDecl(n.get_parent());
+  }
+
+  SgAdaDiscriminatedTypeDecl*
+  getAdaDiscriminatedTypeDecl(const SgDeclarationStatement* n)
+  {
+    return n ? getAdaDiscriminatedTypeDecl(*n) : nullptr;
+  }
+
+
+  // ******
   // \todo move code below to Ada to C++ translator
+  // ******
 
 
   struct ConversionTraversal : AstSimpleProcessing

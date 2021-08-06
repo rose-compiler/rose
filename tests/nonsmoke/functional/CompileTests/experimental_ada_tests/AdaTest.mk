@@ -168,7 +168,11 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
 
 ADA_TRANSLATOR_PENDING_TESTS :=        \
   access_variable.adb                  \
+  discriminant.adb                                  \
+  discriminant_constraint.ads                       \
+  discriminant_specification.ads                    \
   switches.ads                         \
+  unknown_discriminant.ads                          \
   hardwarestore.adb                    
 
 # defines tests that are fully supported by ROSE
@@ -188,9 +192,6 @@ ROSE_FAILING_ADA_TESTS :=                           \
   all_modes.ads                                     \
   complex.adb                                       \
   delay_until.adb                                   \
-  discriminant.adb                                  \
-  discriminant_constraint.ads                       \
-  discriminant_specification.ads                    \
   entry_body_declaration.adb                        \
   extension_aggregate.adb                           \
   function_body_stub.adb                            \
@@ -214,7 +215,6 @@ ROSE_FAILING_ADA_TESTS :=                           \
   single_protected_declaration.ads                  \
   test.adb                                          \
   test_unit.adb                                     \
-  unknown_discriminant.ads                          \
   unit_2.adb                                        \
   unit_2.ads                                        \
   variable_variant_record.adb                       \

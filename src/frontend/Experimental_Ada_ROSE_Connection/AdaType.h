@@ -38,7 +38,7 @@ struct ExHandlerTypeCreator
     void operator()(Element_Struct& elem);
 
     /// conversion to return (and generate) the type
-    operator SgType&() const;
+    operator SgType&() &&;
 
   private:
     AstContext           ctx;

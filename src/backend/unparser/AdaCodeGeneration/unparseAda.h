@@ -53,9 +53,8 @@ struct Unparse_Ada : UnparseLanguageIndependentConstructs
           void unparseAdaFile(SgSourceFile *file, SgUnparse_Info &info);
           void unparseStatement(SgStatement* stmt, SgUnparse_Info& info) ROSE_OVERRIDE;
           void unparseLanguageSpecificStatement  (SgStatement* stmt,  SgUnparse_Info& info) ROSE_OVERRIDE;
-          std::string computeScopeQual(SgScopeStatement& local, SgScopeStatement& remote);
+          std::string computeScopeQual(const SgScopeStatement& local, const SgScopeStatement& remote);
           void setInitialScope(SgUnparse_Info& info, SgExpression*);
-          // std::string computeScopeQualStmts(SgStatement& local, SgStatement& remote);
 
           //
           // in unparseAda_expressions.C
