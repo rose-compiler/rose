@@ -198,7 +198,6 @@ int main( int argc, char * argv[] ) {
     optionallyGenerateTraversalInfoAndExit(ctOpt, project);
     if(ctOpt.status) cout<<"STATUS: analysis started."<<endl;
 
-    optionallyPrintProgramInfos(ctOpt, analyzer);
     optionallyRunRoseAstChecksAndExit(ctOpt, project);
 
     VariableIdMappingExtended* vimOrig=CodeThorn::CodeThornLib::createVariableIdMapping(ctOpt,project); // only used for program statistics of original non-normalized program
@@ -219,6 +218,7 @@ int main( int argc, char * argv[] ) {
     }
 
     analyzer->runAnalysisPhase1(project,tc);
+    optionallyPrintProgramInfos(ctOpt, analyzer);
 
     if(ctOpt.programStats) {
       ProgramInfo normalizedProgramInfo(project,analyzer->getVariableIdMapping());

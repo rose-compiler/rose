@@ -841,7 +841,7 @@ namespace CodeThorn {
   }
 
   std::list<EState> EStateTransferFunctions::transferDefaultOptionStmt(SgDefaultOptionStmt* defaultStmt,Edge edge, const EState* estate) {
-    SAWYER_MESG(logger[TRACE])<<"DEBUG: DEFAULTSTMT: "<<defaultStmt->unparseToString()<<endl;
+    SAWYER_MESG(logger[TRACE])<<"SWITCH CASE DEFAULT: "<<defaultStmt->unparseToString()<<endl;
 
     Label targetLabel=edge.target();
     CallString cs=estate->callString;
@@ -1820,7 +1820,7 @@ namespace CodeThorn {
     return cs.getLength()==0||cs.isLastLabel(lab);
   }
 
-  std::string EStateTransferFunctions::transerFunctionCodeToString(TransferFunctionCode tfCode) {
+  std::string EStateTransferFunctions::transferFunctionCodeToString(TransferFunctionCode tfCode) {
     static std::map<TransferFunctionCode,string> tfCodeInfo=
       {
        {TransferFunctionCode::Unknown,"unknown"},
@@ -1850,7 +1850,7 @@ namespace CodeThorn {
 
   void EStateTransferFunctions::printTransferFunctionInfo(TransferFunctionCode tfCode, SgNode* node, Edge edge, const EState* estate) {
     stringstream ss;
-    ss<<"transfer: "<<std::setw(6)<<"L"+estate->label().toString()<<": "<<std::setw(22)<<std::left<<transerFunctionCodeToString(tfCode)<<": ";
+    ss<<"transfer: "<<std::setw(6)<<"L"+estate->label().toString()<<": "<<std::setw(22)<<std::left<<transferFunctionCodeToString(tfCode)<<": ";
     if(getLabeler()->isFunctionEntryLabel(edge.source())||getLabeler()->isFunctionExitLabel(edge.source())) {
       ss<<SgNodeHelper::locationToString(node)<<": "<<SgNodeHelper::getFunctionName(node);
     } else {
@@ -1863,7 +1863,8 @@ namespace CodeThorn {
   void EStateTransferFunctions::printEvaluateExpressionInfo(SgNode* node,EState& estate, EvalMode mode) {
     stringstream ss;
     ss<<"          "<<std::setw(6+2)<<" "<<"evaluateExpression    : "<<node->unparseToString()<<" [evalmode"<<mode<<": "<<AstTerm::astTermWithNullValuesToString(node)<<"]";
-    _analyzer->printStatusMessageLine(ss.str());
+    #pragma omp critical (STATUS_MESSAGES)
+    cout<<ss.str()<<endl;
   }
 
   list<EState> EStateTransferFunctions::transferEdgeEStateDispatch(TransferFunctionCode tfCode, SgNode* node, Edge edge, const EState* estate) {
@@ -2224,6 +2225,7 @@ namespace CodeThorn {
   
   SingleEvalResult EStateTransferFunctions::evaluateExpression(SgNode* node,EState estate, EvalMode mode) {
     ROSE_ASSERT(estate.pstate()); // ensure state exists
+
     if(_analyzer->getOptionsRef().info.printTransferFunctionInfo) {
       printEvaluateExpressionInfo(node,estate,mode);
     }
@@ -2935,13 +2937,15 @@ namespace CodeThorn {
 
   SingleEvalResult EStateTransferFunctions::evalSizeofOp(SgSizeOfOp* node,
 								       EState estate, EvalMode mode) {
+    // two cases: (1) operand is a type, operand is a an expression
     SAWYER_MESG(logger[TRACE])<<"evalSizeofOp(started):"<<node->unparseToString()<<endl;
     SgType* operandType=node->get_operand_type();
-    CodeThorn::TypeSize typeSize=0; // remains zero if no size can be determined
+    CodeThorn::TypeSize typeSize=-1; // remains -1 if no size can be determined
     AbstractValue sizeValue=AbstractValue::createTop();
 
     if(operandType) {
       typeSize=_variableIdMapping->getTypeSize(operandType);
+      SAWYER_MESG(logger[TRACE])<<"typesize: "<<typeSize<<":"<<operandType->unparseToString()<<endl;
     } else if(SgExpression* exp=node->get_operand_expr()) {
       if(SgVarRefExp* varRefExp=isSgVarRefExp(exp)) {
 	typeSize=_variableIdMapping->getTypeSize(_variableIdMapping->variableId(varRefExp));
@@ -2953,10 +2957,9 @@ namespace CodeThorn {
     } else {
       SAWYER_MESG(logger[WARN]) <<"sizeof: could not determine any type of sizeof argument and no expression found either: "<<SgNodeHelper::sourceLineColumnToString(exp)<<": "<<exp->unparseToString()<<endl;
     }
-    logger[TRACE]<<"evalSizeofOp(6):"<<node->unparseToString()<<endl;
 
     // determines sizeValue based on typesize
-    if(typeSize==0) {
+    if(typeSize==-1) {
       SAWYER_MESG(logger[WARN])<<"sizeof: could not determine size (= zero) of argument, assuming top "<<SgNodeHelper::sourceLineColumnToString(node)<<": "<<node->unparseToString()<<endl;
       sizeValue=AbstractValue::createTop();
     } else {

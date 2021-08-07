@@ -103,7 +103,7 @@ function runDomainTestsLevel2 {
 }
 
 testNumbers=`echo {001..048}`
-numWarnExpected=8
+numWarnExpected=7
 numFailExpected=0
 CT_MODE_OPTIONS="--context-sensitive=yes --normalize-level=2 --interpreter-mode=1 --in-state-string-literals --exploration-mode=topologic-sort"
 echo -n "Level 3 (interpreter mode): " 

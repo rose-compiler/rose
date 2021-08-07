@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "VariableIdMappingExtended.h"
 #include "CodeThornLib.h"
+#include "AstTerm.h"
 
 using namespace Sawyer::Message;
 using namespace std;
@@ -16,8 +17,9 @@ namespace CodeThorn {
       _typeSize[type]=unknownSizeValue();
     for(auto type:_memPoolTraversal.arrayTypes)
       _typeSize[type]=unknownSizeValue();
-    for(auto type:_memPoolTraversal.builtInTypes)
-      _typeSize[type]=unknownSizeValue();
+    for(auto type:_memPoolTraversal.builtInTypes) {
+      //_typeSize[type]=unknownSizeValue();
+    }
   }
 
   void VariableIdMappingExtended::computeTypeSizes() {
@@ -328,13 +330,22 @@ namespace CodeThorn {
 
   void VariableIdMappingExtended::setTypeSize(SgType* type, CodeThorn::TypeSize newTypeSize) {
     auto typeIter=_typeSize.find(type);
-    if(typeIter!=_typeSize.end()) {
-      if((*typeIter).second!=newTypeSize) {
-	stringstream ss;
-	ss<<"type size mismatch: "<<type->unparseToString()<<": "<<_typeSize[type]<<" != "<<newTypeSize;
-	recordWarning(ss.str());
-      } else {
+    //cout<<"DEBUG: VariableIdMappingExtended::setTypeSize:"<<type->unparseToString()<<":"<<newTypeSize<<":"<<AstTerm::astTermWithNullValuesToString(type)<<endl;
+    if(typeIter==_typeSize.end()) {
+      // new entry
+      _typeSize[type]=newTypeSize;
+    } else {
+      if((*typeIter).second==unknownSizeValue()) {
+	// entry with exists with UnknownTypeSize, set new type size
 	_typeSize[type]=newTypeSize;
+      } else {
+	if((*typeIter).second==newTypeSize) {
+	  // nothing to do, same value different to UnknownSize already exists
+	} else {
+	  stringstream ss;
+	  ss<<"type size mismatch: "<<type->unparseToString()<<": "<<_typeSize[type]<<" != "<<newTypeSize;
+	  recordWarning(ss.str());
+	}
       }
     }
   }
@@ -343,6 +354,7 @@ namespace CodeThorn {
     return unknownSizeValue();
   }
 
+  // not used
   CodeThorn::TypeSize VariableIdMappingExtended::getTypeSizeNew(SgType* type) {
     auto typeIter=_typeSize.find(type);
     if(typeIter!=_typeSize.end()) {
@@ -353,15 +365,22 @@ namespace CodeThorn {
   }
 
   CodeThorn::TypeSize VariableIdMappingExtended::getTypeSize(SgType* type) {
+    //cout<<"DEBUG: VIME:getTypeSize:"<<type->class_name()<<endl;
     auto typeIter=_typeSize.find(type);
     if(typeIter!=_typeSize.end()) {
+      //cout<<"DEBUG: known type with size: "<<(*typeIter).first->unparseToString()<<":"<<(*typeIter).second<<endl;
+      
       return (*typeIter).second;
     } else {
       BuiltInType biTypeId=TypeSizeMapping::determineBuiltInTypeId(type);
-      if(biTypeId!=BITYPE_UNKNOWN)
+      //cout<<"DEBUG: builtin-case: "<<biTypeId<<endl;
+      if(biTypeId!=BITYPE_UNKNOWN) {
+	//cout<<"DEBUBG: unknown size:"<<getBuiltInTypeSize(biTypeId)<<endl;
 	return getBuiltInTypeSize(biTypeId);
-      else
+      } else {
+	//cout<<"DEBUBG: unknown size"<<endl;
 	return unknownSizeValue();
+      }
     }
   }
 
@@ -1039,10 +1058,13 @@ namespace CodeThorn {
     }
   }
 
-  // OLD METHODS (VIM2)
   std::string VariableIdMappingExtended::typeSizeMappingToString() {
-    return typeSizeMapping.toString();
+    stringstream ss;
+    for(auto p: _typeSize) {
+      ss<<p.first->unparseToString()<<": "<<AstTerm::astTermWithNullValuesToString(p.first)<<": "<<p.second<<endl;
+    }
+    return ss.str();
   }
-  
+ 
 }
 
