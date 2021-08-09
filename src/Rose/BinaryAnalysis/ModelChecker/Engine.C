@@ -687,7 +687,6 @@ Engine::showStatistics(std::ostream &out, const std::string &prefix) const {
         out <<prefix <<"paths terminated for duplicate state:   " <<s->nDuplicateStates() <<"\n";
         out <<prefix <<"paths terminated for solver failure:    " <<s->nSolverFailures() <<" (including timeouts)\n";
     }
-    out <<prefix <<"paths waiting to be explored:           " <<nPathsPending() <<"\n";
 
     nPathsStats_ = nPathsExplored;
 }
