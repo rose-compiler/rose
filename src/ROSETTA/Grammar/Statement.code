@@ -3530,6 +3530,13 @@ SgName get_qualified_name() const;
 bool hasExplicitScope() const $ROSE_OVERRIDE;
 HEADER_ADA_GENERIC_DECL_END
 
+HEADER_ADA_GENERIC_INSTANCE_DECL_START
+SgSymbol* get_symbol_from_symbol_table() const ROSE_OVERRIDE;
+SgName get_mangled_name() const ROSE_OVERRIDE;
+SgName get_qualified_name() const;
+bool hasExplicitScope() const $ROSE_OVERRIDE;
+HEADER_ADA_GENERIC_INSTANCE_DECL_END
+
 HEADER_ADA_FORMAL_TYPE_DECL_STATEMENT_START
 SgSymbol* get_symbol_from_symbol_table() const ROSE_OVERRIDE;
 SgName get_mangled_name() const ROSE_OVERRIDE;
@@ -6468,6 +6475,7 @@ SgScopeStatement::containsOnlyDeclarations() const
           case V_SgAdaAcceptStmt:
           case V_SgAdaTaskBody:
           case V_SgAdaGenericDecl:
+          case V_SgAdaGenericInstanceDecl:
                returnValue = false;
                break;
 
@@ -20584,18 +20592,40 @@ SgAdaGenericDecl::get_mangled_name() const
 SgName
 SgAdaGenericDecl::get_qualified_name() const
 {
-/*
-  SgAdaGenericDecl* decl = isSgAdaGenericDecl(get_parent());
-
-  ROSE_ASSERT(decl);
-  return decl->get_qualified_name();
-*/
   // TODO: this is a placeholder
   return "ada$generic$decl";
 }
 
 bool SgAdaGenericDecl::hasExplicitScope() const { return true; }
 SOURCE_ADA_GENERIC_DECL_END
+
+SOURCE_ADA_GENERIC_INSTANCE_DECL_START
+void SgAdaGenericInstanceDecl::post_construction_initialization() {}
+
+SgSymbol*
+SgAdaGenericInstanceDecl::get_symbol_from_symbol_table() const
+{
+  SgScopeStatement* scope = get_scope();
+
+  ROSE_ASSERT(scope);
+  return scope->find_symbol_from_declaration(this);
+}
+
+SgName
+SgAdaGenericInstanceDecl::get_mangled_name() const
+{
+  return "ada$genericinstance$decl";
+}
+
+SgName
+SgAdaGenericInstanceDecl::get_qualified_name() const
+{
+  // TODO: this is a placeholder
+  return "ada$genericinstance$decl";
+}
+
+bool SgAdaGenericInstanceDecl::hasExplicitScope() const { return true; }
+SOURCE_ADA_GENERIC_INSTANCE_DECL_END
 
 SOURCE_ADA_FORMAL_TYPE_DECL_STATEMENT_START
 void SgAdaFormalTypeDecl::post_construction_initialization() {}

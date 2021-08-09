@@ -38,11 +38,22 @@ namespace
     Association_Struct& assoc      = elem.The_Union.Association;
     ADA_ASSERT(  assoc.Association_Kind == A_Parameter_Association
                || assoc.Association_Kind == A_Pragma_Argument_Association
+               || assoc.Association_Kind == A_Generic_Association
                );
-    logKind( assoc.Association_Kind == A_Parameter_Association
-                   ? "A_Parameter_Association"
-                   : "A_Pragma_Argument_Association"
-           );
+
+    switch (assoc.Association_Kind) {
+    case A_Parameter_Association:
+      logKind("A_Parameter_Association");
+      break;
+    case A_Pragma_Argument_Association:
+      logKind("A_Pragma_Argument_Association");
+      break;
+    case A_Generic_Association:
+      logKind("A_Generic_Association");
+      break;
+    default:
+      ROSE_ABORT();
+    }
 
     SgExpression&       arg        = getExprID(assoc.Actual_Parameter, ctx);
     Element_Struct*     formalParm = retrieveAsOpt<Element_Struct>(elemMap(), assoc.Formal_Parameter);

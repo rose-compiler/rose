@@ -549,7 +549,9 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (AdaComponentClause,            "AdaComponentClause",            "ADA_COMPONENT_CLAUSE" );
   // PP (07/14/20): Adding Ada renaming declarations
      NEW_TERMINAL_MACRO (AdaRenamingDecl,       "AdaRenamingDecl", "ADA_RENAMING_DECL_STMT" );
+  // MS (08/01/21): Adding Ada generics
      NEW_TERMINAL_MACRO (AdaGenericDecl,        "AdaGenericDecl", "ADA_GENERIC_DECL" );
+     NEW_TERMINAL_MACRO (AdaGenericInstanceDecl,"AdaGenericInstanceDecl", "ADA_GENERIC_INSTANCE_DECL" );
      NEW_TERMINAL_MACRO (AdaFormalTypeDecl,     "AdaFormalTypeDecl", "ADA_FORMAL_TYPE_DECL_STMT" );
   // PP (07/14/20): Adding Ada discriminated type declarations
      NEW_TERMINAL_MACRO (AdaDiscriminatedTypeDecl, "AdaDiscriminatedTypeDecl", "ADA_DISCRIMINATED_TYPE_DECL" );
@@ -574,7 +576,7 @@ Grammar::setUpStatements ()
           AdaTaskSpecDecl                         | AdaTaskBodyDecl           | AdaTaskTypeDecl              |
           AdaRecordRepresentationClause           | AdaComponentClause        | AdaLengthClause              |
           AdaEnumRepresentationClause             | AdaGenericDecl            | AdaFormalTypeDecl            |
-          AdaDiscriminatedTypeDecl              /*| ClassPropertyList |*/,
+          AdaDiscriminatedTypeDecl                | AdaGenericInstanceDecl  /*| ClassPropertyList |*/,
           "DeclarationStatement", "DECL_STMT", false);
 
 
@@ -3118,6 +3120,16 @@ Grammar::setUpStatements ()
      AdaFormalTypeDecl.setDataPrototype ( "SgAdaFormalType*", "formal_type", "= NULL",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+     AdaGenericInstanceDecl.setFunctionPrototype ( "HEADER_ADA_GENERIC_INSTANCE_DECL", "../Grammar/Statement.code" );
+     AdaGenericInstanceDecl.setDataPrototype ( "SgName", "name", "=\"\"",
+                                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaGenericInstanceDecl.setDataPrototype ( "SgAdaGenericDecl*", "declaration", "= NULL",
+                                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaGenericInstanceDecl.setDataPrototype ( "SgType*", "return_type", "= NULL",
+                                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaGenericInstanceDecl.setDataPrototype ( "SgExprListExp*", "actual_parameters", "= NULL",
+                                               NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      // tasks
      AdaTaskSpecDecl.setFunctionPrototype  ( "HEADER_ADA_TASK_SPEC_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaTaskSpecDecl.setDataPrototype ( "SgName", "name", "= \"\"",
@@ -4347,6 +4359,7 @@ Grammar::setUpStatements ()
      AdaLengthClause.setFunctionSource ( "SOURCE_ADA_LENGTH_CLAUSE", "../Grammar/Statement.code" );
      AdaGenericDecl.setFunctionSource ( "SOURCE_ADA_GENERIC_DECL", "../Grammar/Statement.code" );
      AdaGenericDefn.setFunctionSource ( "SOURCE_ADA_GENERIC_DEFN", "../Grammar/Statement.code" );
+     AdaGenericInstanceDecl.setFunctionSource ( "SOURCE_ADA_GENERIC_INSTANCE_DECL", "../Grammar/Statement.code" );
      AdaFormalTypeDecl.setFunctionSource ( "SOURCE_ADA_FORMAL_TYPE_DECL_STATEMENT", "../Grammar/Statement.code" );
 
   // DQ (3/22/2019): Adding EmptyDeclaration to support addition of comments and CPP directives that will permit

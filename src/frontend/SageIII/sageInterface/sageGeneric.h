@@ -186,6 +186,7 @@ namespace sg
     GEN_VISIT(SgAdaFormalTypeDecl)
     GEN_VISIT(SgAdaFunctionRenamingDecl)
     GEN_VISIT(SgAdaGenericDecl)
+    GEN_VISIT(SgAdaGenericInstanceDecl)
     GEN_VISIT(SgAdaGenericDefn)
     GEN_VISIT(SgAdaIndexConstraint)
     GEN_VISIT(SgAdaLengthClause)
