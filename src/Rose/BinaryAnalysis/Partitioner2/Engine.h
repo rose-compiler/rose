@@ -1626,13 +1626,15 @@ public:
     virtual void namingConstants(bool b) { settings_.partitioner.namingConstants = b; }
     /** @} */
 
-    /** Property: Give names to string literal addresses.
+    /** Property: Addresses where strings might start.
      *
-     *  If this property is set, then the partitioner calls @ref Modules::nameStrings as part of its final steps.
+     *  Within instruction operands, any constants that fall within this set of addresses are checked to see if they point into
+     *  an ASCII C-style NUL-terminated string. If so, and if the constant doesn't already have a comment, then a comment is
+     *  attached describing the string.  Setting this to empty disables assigning string literal comments to integer values.
      *
      * @{ */
-    bool namingStrings() const /*final*/ { return settings_.partitioner.namingStrings; }
-    virtual void namingStrings(bool b) { settings_.partitioner.namingStrings = b; }
+    const AddressInterval& namingStrings() const /*final*/ { return settings_.partitioner.namingStrings; }
+    void namingStrings(const AddressInterval &where) { settings_.partitioner.namingStrings = where; }
     /** @} */
 
     /** Property: Give names to system calls.

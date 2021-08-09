@@ -601,13 +601,15 @@ labelSymbolAddresses(Partitioner &partitioner, SgAsmGenericHeader *fileHeader) {
 }
 
 void
-nameStrings(const Partitioner &partitioner) {
+nameStrings(const Partitioner &partitioner, const AddressInterval &where) {
     struct T1: AstSimpleProcessing {
         Sawyer::Container::Map<rose_addr_t, std::string> seen;
         const Partitioner &partitioner;
         Strings::StringFinder stringFinder;
+        const AddressInterval &where;
 
-        T1(const Partitioner &partitioner): partitioner(partitioner) {
+        T1(const Partitioner &partitioner, const AddressInterval &where)
+            : partitioner(partitioner), where(where) {
             stringFinder.settings().minLength = 1;
             stringFinder.settings().maxLength = 65536;
             stringFinder.settings().keepingOnlyLongest = true;
@@ -617,13 +619,24 @@ nameStrings(const Partitioner &partitioner) {
             stringFinder.insertCommonEncoders(sex);
         }
         void visit(SgNode *node) {
-            if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node)) {
-                if (ival->get_comment().empty()) {
-                    rose_addr_t va = ival->get_absoluteValue();
-                    std::string label;
-                    if (seen.getOptional(va).assignTo(label)) {
-                        ival->set_comment(label);
-                    } else if (partitioner.instructionsOverlapping(va).empty()) {
+            SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node);
+            if (ival && ival->get_comment().empty()) {
+                rose_addr_t va = ival->get_absoluteValue();
+                std::string label;
+                if (seen.getOptional(va).assignTo(label)) {
+                    // We cached it earlier, even if the label might be empty.
+                    ival->set_comment(label);
+
+                } else {
+                    // Try to find a label and cache it.
+                    if (!where.isContaining(va)) {
+                        // Constant is outside the area that might be the start of a string.
+
+                    } else if (!partitioner.instructionsOverlapping(va).empty()) {
+                        // Constant is inside a known instruction, so it's not the start of a string.
+
+                    } else {
+                        // Constant is possibly the start of a string, so look for a string.
                         stringFinder.reset();
                         stringFinder.find(partitioner.memoryMap()->at(va));
                         if (!stringFinder.strings().empty()) {
@@ -641,12 +654,14 @@ nameStrings(const Partitioner &partitioner) {
                                 label += "+" + StringUtility::numberToString(nTruncated) + " more";
                             ival->set_comment(label);
                         }
-                        seen.insert(va, label); // even if label is empty, so we don't spend time re-searching strings
                     }
+
+                    // Cache the label for this constant even if there is no label.
+                    seen.insert(va, label);
                 }
             }
         }
-    } t1(partitioner);
+    } t1(partitioner, where);
     BOOST_FOREACH (SgAsmInstruction *insn, partitioner.instructionsOverlapping(AddressInterval::whole()))
         t1.traverse(insn, preorder);
 }
