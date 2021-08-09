@@ -1123,11 +1123,13 @@ namespace
                  );
   }
 
-  template <class FwdIterator>
-  SgVariableDeclaration&
-  mkVarExceptionDeclInternal(FwdIterator aa, FwdIterator zz, SgScopeStatement& scope)
+  template <class SageVariableDeclaration, class FwdIterator, class... Args>
+  SageVariableDeclaration&
+  mkVarExceptionDeclInternal(FwdIterator aa, FwdIterator zz, SgScopeStatement& scope, Args&&... args)
   {
-    SgVariableDeclaration& vardcl = mkLocatedNode<SgVariableDeclaration>(&mkFileInfo());
+    using SageNode = SageVariableDeclaration;
+
+    SageNode& vardcl = mkLocatedNode<SageNode>(&mkFileInfo(), std::forward<Args>(args)...);
 
     setInitializedNamesInDecl(aa, zz, vardcl);
     si::fixVariableDeclaration(&vardcl, &scope);
@@ -1136,11 +1138,13 @@ namespace
     return vardcl;
   }
 
-  template <class FwdIterator>
-  SgVariableDeclaration&
-  mkVarDeclInternal(FwdIterator aa, FwdIterator zz, SgScopeStatement& scope)
+  template <class SageVariableDeclaration, class FwdIterator, class... Args>
+  SageVariableDeclaration&
+  mkVarDeclInternal(FwdIterator aa, FwdIterator zz, SgScopeStatement& scope, Args&&... args)
   {
-    SgVariableDeclaration&    vardcl = mkVarExceptionDeclInternal(aa, zz, scope);
+    using SageNode = SageVariableDeclaration;
+
+    SageNode& vardcl = mkVarExceptionDeclInternal<SageNode>(aa, zz, scope, std::forward<Args>(args)...);
 
     ADA_ASSERT(vardcl.get_definingDeclaration() == nullptr);
     ADA_ASSERT(vardcl.get_firstNondefiningDeclaration() == nullptr);
@@ -1177,8 +1181,16 @@ mkParameter( const SgInitializedNamePtrList& parms,
 SgVariableDeclaration&
 mkVarDecl(const SgInitializedNamePtrList& vars, SgScopeStatement& scope)
 {
-  return mkVarDeclInternal(vars.begin(), vars.end(), scope);
+  return mkVarDeclInternal<SgVariableDeclaration>(vars.begin(), vars.end(), scope);
 }
+
+/// creates a variant field with (i.e., a variable with conditions)
+SgAdaVariantFieldDecl&
+mkAdaVariantFieldDecl(const SgInitializedNamePtrList& vars, SgExprListExp& choices, SgScopeStatement& scope)
+{
+  return mkVarDeclInternal<SgAdaVariantFieldDecl>(vars.begin(), vars.end(), scope, &choices);
+}
+
 
 SgVariableDeclaration&
 mkVarDecl(SgInitializedName& var, SgScopeStatement& scope)
@@ -1186,14 +1198,13 @@ mkVarDecl(SgInitializedName& var, SgScopeStatement& scope)
   SgInitializedName*  alias = &var;
   SgInitializedName** aa    = &alias;
 
-  return mkVarDeclInternal(aa, aa+1, scope);
+  return mkVarDeclInternal<SgVariableDeclaration>(aa, aa+1, scope);
 }
 
 SgVariableDeclaration&
 mkExceptionDecl(const SgInitializedNamePtrList& vars, SgScopeStatement& scope)
 {
-  // \todo revise exception declarations
-  return mkVarExceptionDeclInternal(vars.begin(), vars.end(), scope);
+  return mkVarExceptionDeclInternal<SgVariableDeclaration>(vars.begin(), vars.end(), scope);
 }
 
 SgAdaComponentClause&

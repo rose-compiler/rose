@@ -490,6 +490,10 @@ namespace Ada_ROSE_Translation
   SgVariableDeclaration&
   mkVarDecl(SgInitializedName& var, SgScopeStatement& scope);
 
+  /// creates a variant field with (i.e., a variable with conditions)
+  SgAdaVariantFieldDecl&
+  mkAdaVariantFieldDecl(const SgInitializedNamePtrList& vars, SgExprListExp& choices, SgScopeStatement& scope);
+
   /// creates an exception declaration
   /// \note exceptions in Ada are objects (*), in ROSE each exception is represented
   ///       as a variable of type Exception.

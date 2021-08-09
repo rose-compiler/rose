@@ -549,6 +549,34 @@ namespace
       DiscriminantCreator() = delete;
   };
 
+  struct VariantCreator
+  {
+      VariantCreator(AstContext astctx)
+      : ctx(astctx)
+      {}
+
+      void operator()(Element_Struct& elem)
+      {
+        ADA_ASSERT(elem.Element_Kind == A_Definition);
+        Definition_Struct& def = elem.The_Union.Definition;
+
+        ADA_ASSERT(def.Definition_Kind == A_Variant);
+        Variant_Struct&    variant = def.The_Union.The_Variant;
+        ElemIdRange        range = idRange(variant.Record_Components);
+
+        traverseIDs(range, elemMap(), ElemCreator{ ctx.variantChoice(variant.Variant_Choices) });
+
+        /* unused fields:
+           Record_Component_List Implicit_Components
+        */
+      }
+
+    private:
+      AstContext ctx;
+
+      VariantCreator() = delete;
+  };
+
   SgClassDeclaration&
   createRecordDecl( const std::string& name,
                     SgClassDefinition& def,
@@ -695,8 +723,23 @@ namespace
   //
   // helper function for combined handling of variables and constant declarations
 
+  using VarMakerFn = std::function<SgVariableDeclaration&(const SgInitializedNamePtrList&, SgScopeStatement&)>;
+
+  SgVariableDeclaration&
+  varMaker_default(const SgInitializedNamePtrList& vars, SgScopeStatement& scope)
+  {
+    return mkVarDecl(vars, scope);
+  }
+
   void
-  handleNumVarCstDecl(Element_Struct& elem, Declaration_Struct& decl, AstContext ctx, bool isPrivate, SgType& dclType, SgType* expectedType = nullptr)
+  handleNumVarCstDecl( Element_Struct& elem,
+                       Declaration_Struct& decl,
+                       AstContext ctx,
+                       bool isPrivate,
+                       SgType& dclType,
+                       SgType* expectedType = nullptr,
+                       VarMakerFn varMaker = varMaker_default
+                     )
   {
     typedef NameCreator::result_container name_container;
 
@@ -706,7 +749,7 @@ namespace
     SgInitializedNamePtrList dclnames = constructInitializedNamePtrList( ctx, asisVars(), names,
                                                                          dclType, getVarInit(decl, expectedType, ctx)
                                                                        );
-    SgVariableDeclaration&   vardcl   = mkVarDecl(dclnames, scope);
+    SgVariableDeclaration&   vardcl   = varMaker(dclnames, scope);
 
     attachSourceLocation(vardcl, elem, ctx);
     privatize(vardcl, isPrivate);
@@ -728,13 +771,14 @@ namespace
                     Declaration_Struct& dcl,
                     AstContext ctx,
                     bool isPrivate,
-                    TypeModifierFn constMaker
+                    TypeModifierFn constMaker,
+                    VarMakerFn varMaker = varMaker_default
                   )
   {
     SgType& basety = constMaker(getVarType(dcl, ctx));
     SgType& varty  = dcl.Has_Aliased ? mkAliasedType(basety) : basety;
 
-    handleNumVarCstDecl(elem, dcl, ctx, isPrivate, varty);
+    handleNumVarCstDecl(elem, dcl, ctx, isPrivate, varty, nullptr, varMaker);
   }
 
   SgDeclarationStatement&
@@ -2319,6 +2363,37 @@ namespace
       completeDiscriminatedDecl(*discr, nullptr /* no nondef dcl */, id, sgdecl, elem, isPrivate, ctx);
     }
   }
+
+  SgExprListExp* createVariantChoice_opt(AstContext ctx)
+  {
+    using NameIterator   = std::vector<Name>::const_iterator;
+    using ChoiceIterator = std::vector<Element_ID_List>::const_iterator;
+
+    const std::vector<Name>&            variantNames = ctx.variantNames();
+
+    if (variantNames.size() == 0) return nullptr;
+
+    const std::vector<Element_ID_List>& variantChoices = ctx.variantChoices();
+    SgExpressionPtrList                 reslst;
+
+    ADA_ASSERT(variantNames.size() == variantChoices.size());
+
+    std::transform( variantNames.begin(), variantNames.end(),
+                    variantChoices.begin(),
+                    std::back_inserter(reslst),
+                    [=](Name n, Element_ID_List els) -> SgExpression*
+                    {
+                      SgExpression&       nameexpr  = getExprID(n, ctx);
+                      ElemIdRange         range     = idRange(els);
+                      SgExpressionPtrList exprlst   = traverseIDs(range, elemMap(), ExprSeqCreator{ctx});
+                      SgExprListExp&      choicelst = mkExprListExp(exprlst);
+
+                      return sb::buildIsOp(&nameexpr, &choicelst);
+                    }
+                  );
+
+    return &mkExprListExp(reslst);
+  }
 } // anonymous
 
 
@@ -2461,6 +2536,15 @@ void handleClause(Element_Struct& elem, AstContext ctx)
   }
 }
 
+void handleVariant(Element_Struct& elem, Variant_Part_Struct& variant, AstContext ctx)
+{
+  ElemIdRange range = idRange(variant.Variants);
+
+  traverseIDs(range, elemMap(), VariantCreator{ctx.variantName(variant.Discriminant_Direct_Name)});
+
+  /* unused fields:
+  */
+}
 
 void handleDefinition(Element_Struct& elem, AstContext ctx)
 {
@@ -2484,56 +2568,44 @@ void handleDefinition(Element_Struct& elem, AstContext ctx)
         break;
       }
 
+    case A_Variant_Part:                   // 3.8.1(2)
+      {
+        handleVariant(elem, def.The_Union.The_Variant_Part, ctx);
+        break;
+      }
+
     case A_Type_Definition:                // 3.2.1(4)    -> Type_Kinds
       // handled in getTypeFoundation
-      ROSE_ABORT();
-
     case A_Subtype_Indication:             // 3.2.2(3)
       // handled in getDefinitionType
-      ROSE_ABORT();
-
     case A_Constraint:                     // 3.2.2(5)    -> Constraint_Kinds
       // handled in getRangeConstraint
-      ROSE_ABORT();
-
     case A_Component_Definition:           // 3.6(7)      -> Trait_Kinds
       // handled in getDefinitionType
-      ROSE_ABORT();
-
     case A_Discrete_Range:                 // 3.6.1(3)    -> Discrete_Range_Kinds
       // handled in getDefinitionExpr
-      ROSE_ABORT();
-
     case A_Record_Definition:              // 3.8(3)
       // handled in getRecordBodyID
-      ROSE_ABORT();
-
     case A_Null_Record_Definition:         // 3.8(3)
       // handled in getRecordBodyID
-      ROSE_ABORT();
-
     case An_Others_Choice:                 // 3.8.1(5): 4.3.1(5): 4.3.3(5): 11.2(5)
       // handled in case creation (and getDefinitionExpr (obsolete?))
-      ROSE_ABORT();
-
     case An_Access_Definition:             // 3.10(6/2)   -> Access_Definition_Kinds, A2005 start
       // handled in getAccessType
-      ROSE_ABORT();
-
     case A_Task_Definition:                // 9.1(4)
       // handled in getTaskSpec
-      ROSE_ABORT();
-
     case An_Unknown_Discriminant_Part:     // 3.7(3)
-      ROSE_ABORT();
-
+      //
     case A_Known_Discriminant_Part:        // 3.7(2)
-      ROSE_ABORT();
+      //
+    case A_Variant:                        // 3.8.1(3)
+      //
 
     case A_Discrete_Subtype_Definition:    // 3.6(6)      -> Discrete_Range_Kinds
+      //
+      ROSE_ABORT();
+
     case Not_A_Definition:                 // An unexpected element
-    case A_Variant_Part:                   // 3.8.1(2)
-    case A_Variant:                        // 3.8.1(3)
     case A_Private_Type_Definition:        // 7.3(2)      -> Trait_Kinds
     case A_Tagged_Private_Type_Definition: // 7.3(2)      -> Trait_Kinds
     case A_Private_Extension_Definition:   // 7.3(3)      -> Trait_Kinds
@@ -3378,7 +3450,20 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         logKind("A_Component_Declaration");
 
-        handleVarCstDecl(elem, decl, ctx, isPrivate, tyIdentity);
+        ADA_ASSERT(ctx.variantChoices().size() == ctx.variantNames().size());
+
+        SgExprListExp* variant_choice = createVariantChoice_opt(ctx);
+
+        auto compMaker =
+            [&variant_choice](const SgInitializedNamePtrList& names, SgScopeStatement& scope) -> SgVariableDeclaration&
+            {
+              if (variant_choice == nullptr)
+                return mkVarDecl(names, scope);
+
+              return mkAdaVariantFieldDecl(names, *variant_choice, scope);
+            };
+
+        handleVarCstDecl(elem, decl, ctx, isPrivate, tyIdentity, compMaker);
         /* unused clause:
               Pragma_Element_ID_List         Corresponding_Pragmas;
               Element_ID_List                Aspect_Specifications;
