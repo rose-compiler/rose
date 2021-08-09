@@ -1262,8 +1262,11 @@ SemanticCallbacks::nextCodeAddresses(const BS::RiscOperators::Ptr &ops) {
     ExecutionUnit::Ptr nextUnit;
     {
         SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-        if (followingOnePath_)
+        if (followingOnePath_) {
+            if (onePath_.empty())
+                return CodeAddresses();
             nextUnit = onePath_.front();
+        }
     }
 
     if (nextUnit) {
