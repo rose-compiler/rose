@@ -106,9 +106,10 @@ std::string
 AddressIntervalParser::docString() {
     return ("An address interval can be specified as a single address, or a first and inclusive last address separated by a "
             "comma, or a begin and exclusive end address separated by a hyphen, or a begin address and size in bytes "
-            "separated by a plus sign, or the word \"all\" for all addresses, or an empty string to indicate an empty interval. "
-            "The upper address must always be greater than or equal to the lower address. Addresses and sizes can be specified "
-            "in decimal, hexadecimal (leading \"0x\"), octal (leading \"0\"), or binary (leading \"0b\").");
+            "separated by a plus sign, or the word \"all\" for all addresses, or an empty string or the word \"empty\" to "
+            "indicate an empty interval. The upper address must always be greater than or equal to the lower address. "
+            "Addresses and sizes can be specified in decimal, hexadecimal (leading \"0x\"), octal (leading \"0\"), or "
+            "binary (leading \"0b\"). The maximum address can also be the word \"max\" when appearing after a comma.");
 }
 
 Sawyer::CommandLine::ParsedValue
@@ -130,6 +131,11 @@ AddressIntervalParser::parse(const char *input, const char **rest) {
         return AddressInterval::whole();
     }
 
+    if (!strcmp(s, "empty")) {
+        *rest += 5;
+        return AddressInterval();
+    }
+
     // Minimum
     errno = 0;
     rose_addr_t least = rose_strtoull(s, &r, 0);
@@ -144,13 +150,18 @@ AddressIntervalParser::parse(const char *input, const char **rest) {
     while (isspace(*s)) ++s;
     if (','==*s) {                                  // ',' means a max value is specified
         ++s;
-        errno = 0;
-        greatest = rose_strtoull(s, &r, 0);
-        if (r==s)
-            throw std::runtime_error("unsigned integer expected for interval maximum");
-        if (ERANGE==errno)
-            hadRangeError = true;
-        s = r;
+        if (strncmp(s, "max", 3)) {
+            greatest = AddressInterval::whole().greatest();
+            s += 3;
+        } else {
+            errno = 0;
+            greatest = rose_strtoull(s, &r, 0);
+            if (r==s)
+                throw std::runtime_error("unsigned integer expected for interval maximum");
+            if (ERANGE==errno)
+                hadRangeError = true;
+            s = r;
+        }
     } else if ('-'==*s) {                           // '-' means an exclusive end address is specified (think "-" 1)
         ++s;
         errno = 0;
