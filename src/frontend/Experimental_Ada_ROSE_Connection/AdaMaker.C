@@ -628,6 +628,16 @@ mkAdaDiscriminatedTypeDecl(SgScopeStatement& scope)
   return sgnode;
 }
 
+SgAdaGenericInstanceDecl&
+mkAdaGenericInstanceDecl(const std::string& name, SgAdaGenericDecl& decl, SgScopeStatement& scope)
+{
+  SgAdaGenericInstanceDecl& sgnode = mkLocatedNode<SgAdaGenericInstanceDecl>(name,&decl,(SgType*)NULL);
+
+  sgnode.set_parent(&scope);
+  sgnode.set_firstNondefiningDeclaration(&sgnode);
+
+  return sgnode;
+}
 
 SgAdaGenericDecl&
 mkAdaGenericDecl(SgScopeStatement& scope)

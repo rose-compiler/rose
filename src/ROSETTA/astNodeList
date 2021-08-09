@@ -994,3 +994,4 @@ SgAdaUnitRefExp
 SgAdaDiscriminatedTypeDecl
 SgAdaDiscriminatedType
 SgAdaDiscriminantConstraint
+SgAdaGenericInstanceDecl

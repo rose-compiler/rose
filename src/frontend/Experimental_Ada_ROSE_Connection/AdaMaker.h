@@ -326,6 +326,10 @@ namespace Ada_ROSE_Translation
   SgAdaPackageSpecDecl&
   mkAdaPackageSpecDecl(const std::string& name, SgScopeStatement& scope);
 
+  /// creates an Ada generic instantiation
+  SgAdaGenericInstanceDecl&
+  mkAdaGenericInstanceDecl(const std::string& name, SgAdaGenericDecl& decl, SgScopeStatement& scope);
+
   /// creates an Ada generic declaration
   SgAdaGenericDecl&
   mkAdaGenericDecl(SgScopeStatement& scope);
