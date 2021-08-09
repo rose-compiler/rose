@@ -204,7 +204,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
   // DQ (4/6/2020): We need a way to know when we want to trigger unparsing of all header files.
      bool unparseAllHeaderFiles = (projectNode->get_usingDeferredTransformations() == false);
 
-#if 1
+#if 0
      printf ("In figureOutWhichFilesToUnparse(): unparseAllHeaderFiles = %s \n",unparseAllHeaderFiles ? "true" : "false");
 #endif
 
@@ -225,7 +225,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
        // DQ (4/14/2020): Commented out (valid for test6 but not test0.
        // ROSE_ASSERT(modifiedFiles.empty() == true);
 
-#if 1
+#if 0
           printf ("In figureOutWhichFilesToUnparse(): before first while loop: EDG_ROSE_Translation::edg_include_file_map.size() = %zu \n",EDG_ROSE_Translation::edg_include_file_map.size());
 #endif
 
@@ -233,12 +233,12 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
           set<string>::iterator i = allFiles.begin();
           while (i != allFiles.end())
              {
-#if 1
+#if 0
                printf ("   --- allFiles = %s \n",(*i).c_str());
                printf ("unparseSourceFileMap.size() = %zu \n",unparseSourceFileMap.size());
 #endif
                string filename = *i;
-#if 1
+#if 0
                printf ("filename = %s \n",filename.c_str());
 #endif
                if (unparseSourceFileMap.find(filename) == unparseSourceFileMap.end())
@@ -250,7 +250,7 @@ IncludedFilesUnparser::figureOutWhichFilesToUnparse()
                          printf ("Adding filename = %s to modifiedFiles (IS a header file) \n",filename.c_str());
                        }
                  // #endif
-#if 1
+#if 0
                     printf ("unparseSourceFileMap.find(filename) == unparseSourceFileMap.end(): adding to modifiedFiles: filename = %s \n",filename.c_str());
 #endif
                     modifiedFiles.insert(filename);

@@ -5142,10 +5142,11 @@ Unparse_ExprStmt::unparseForStmt(SgStatement* stmt, SgUnparse_Info& info)
        // SgStatement* loopBody = for_stmt->get_loop_body();
        // unparseStatementFromTokenStream (test_stmt, loopBody, e_trailing_whitespace_end, e_leading_whitespace_start);
 
+#if 0
        // DQ (1/24/2015): Supress the output of the increment expression when it is a SgNullExpression (which does not have an associated token sequence).
        // unparseStatementFromTokenStream (test_stmt, increment_expr, e_trailing_whitespace_end, e_trailing_whitespace_end);
           SgExpression *increment_expr = for_stmt->get_increment();
-#if 0
+
        // DQ (6/6/2021): Original code.
           if (isSgNullExpression(increment_expr) == NULL)
              {

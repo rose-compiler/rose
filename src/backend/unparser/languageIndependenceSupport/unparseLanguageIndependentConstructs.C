@@ -4020,10 +4020,23 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 #if DEBUG_USING_CURPRINT
                     curprint("\n/* In unparseStatement(): calling unparseAttachedPreprocessingInfoUsingTokenStream test 2 */");
 #endif
+                 // DQ (8/5/2021): Force all transitions to unparst from the AST to start on a new line.
                  // DQ (1/15/2015): Check for comments or CPP directives associated with the statement.
                  // DQ (11/13/2014): Add a new line (CR) to address when we may have unparsed the previous statement from the token stream.
                  // bool unparseExtraNewLine = unparseAttachedPreprocessingInfoUsingTokenStream(stmt,info,PreprocessingInfo::before);
-                    bool unparseExtraNewLine = (stmt->getAttachedPreprocessingInfo() != NULL);
+                 // bool unparseExtraNewLine = (stmt->getAttachedPreprocessingInfo() != NULL);
+                    bool unparseExtraNewLine = false;
+#if 0
+                    printf ("global_previous_unparsed_as: %s \n",unparsed_as_kind(global_previous_unparsed_as).c_str());
+#endif
+                    if (global_previous_unparsed_as == e_unparsed_as_token_stream || global_previous_unparsed_as == e_unparsed_as_partial_token_sequence)
+                       {
+#if 0
+                         printf ("(global_previous_unparsed_as == e_unparsed_as_token_stream || global_previous_unparsed_as == e_unparsed_as_partial_token_sequence) == true \n");
+                         printf ("Adding extra new line \n");
+#endif
+                         unparseExtraNewLine = true;
+                       }
 
 #if DEBUG_USING_CURPRINT || 0
                     curprint(string("\n/* In unparseStatement(): unparseExtraNewLine = ") + (unparseExtraNewLine ? "true" : "false") + " */ \n");
@@ -6069,6 +6082,10 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
        // DQ (12/10/2014): This is used to support the token-based unparsing.
        // SgStatement* last_statement = NULL;
 
+#if 0
+          printf ("Starting second while loop over the statements in global scope \n");
+#endif
+
        // Setup an iterator to go through all the statements in the top scope of the file.
           SgDeclarationStatementPtrList & globalStatementList = globalScope->get_declarations();
           SgDeclarationStatementPtrList::iterator statementIterator = globalStatementList.begin();
@@ -6165,8 +6182,8 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
             // DQ (12/26/2014): Handle case where last_statement == NULL.
             // ASSERT_not_null(last_statement);
 #if 0
-               if (last_statement != NULL)
-                    printf ("In UnparseLanguageIndependentConstructs::unparseGlobalStmt(): last_statement = %p = %s \n",last_statement,last_statement->class_name().c_str());
+            // if (last_statement != NULL)
+            //      printf ("In UnparseLanguageIndependentConstructs::unparseGlobalStmt(): last_statement = %p = %s \n",last_statement,last_statement->class_name().c_str());
             // printf ("global_previous_unparsed_as: %s \n",unparsed_as_kind(global_previous_unparsed_as).c_str());
                printf ("global_unparsed_as:          %s \n",unparsed_as_kind(global_unparsed_as).c_str());
 #endif
@@ -6201,6 +6218,18 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
                  // Unparse the last token as well.
                     unparseStatementFromTokenStream (globalScope, UnparseLanguageIndependentConstructs::e_token_subsequence_end, UnparseLanguageIndependentConstructs::e_token_subsequence_end);
 #error "DEAD CODE!"
+                  }
+#else
+            // DQ (7/23/2021): To follow the POSIX standard, we must end the file with a "\n" (newline).
+            // This is an issue because the token stream unparsing may not end the file with the trailing 
+            // newline of the last statement was transformed.  So we need to detect if the last token output 
+            // was a newline, and if not, then output a newline (as part of the transforamtion of the last 
+            // statment output).
+            // For a test output a newline directly, but then figure out how to test if the last token output was a newline.
+               if (globalScope->get_containsTransformation() == true)
+                  {
+                    unp->cur.insert_newline(1);
+                 // unparseStatementFromTokenStream (globalScope, UnparseLanguageIndependentConstructs::e_token_subsequence_end, UnparseLanguageIndependentConstructs::e_token_subsequence_end);
                   }
 #endif
              }
