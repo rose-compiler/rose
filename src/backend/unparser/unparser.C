@@ -1518,6 +1518,28 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
         }
 #endif
 
+#if 0
+  // DQ (7/17/2021): Testing for predicate statements failing to be unparsed when sharing IR nodes.
+     printf ("In unparseFile(): unparsedFile->getFileName() = %s \n",file->getFileName().c_str());
+     if (file->getFileName() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/multifile_tests/sources/test_01/test_01.h")
+        {
+          printf ("Exiting as a test! \n");
+          ROSE_ABORT();
+        }
+#endif
+
+#if 0
+  // DQ (7/22/2021): Testing for predicate statements failing to be unparsed when sharing IR nodes.
+     printf ("In unparseFile(): unparsedFile->getFileName()         = %s \n",file->getFileName().c_str());
+     printf ("In unparseFile(): unparsedFile->get_output_filename() = %s \n",file->get_unparse_output_filename().c_str());
+  // if (file->getFileName() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/multifile_tests/test_01a/test_01/test_01a.cpp")
+     if (file->get_unparse_output_filename() == "/home/quinlan1/ROSE/ROSE_GARDEN/codeSegregation/tests/multifile_tests/test_01a/test_01/test_01a.cpp")
+        {
+          printf ("Exiting as a test! \n");
+          ROSE_ABORT();
+        }
+#endif
+
   // Turn OFF the error checking which triggers an if the default SgUnparse_Info constructor is called
      SgUnparse_Info::set_forceDefaultConstructorToTriggerError(false);
    }
