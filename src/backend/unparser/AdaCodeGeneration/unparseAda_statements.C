@@ -1489,7 +1489,24 @@ namespace
     {
       ScopeUpdateGuard scopeGuard{unparser, info, n}; // \todo required?
 
-      list(n.get_members());
+      int lastVariantLevels = 0;
+      auto pos = n.get_members().begin();
+      auto zz  = n.get_members().end();
+
+      while (pos != zz)
+      {
+        auto vr = si::ada::find(aa, zz);
+
+        if (requiresHeader(lastVariantLevels, vr))
+          printVariantHeader();
+
+        list(pos, vr);
+      }
+
+
+      while (aa != vr)
+      auto vr = si::ada::find(aa, zz);
+
     }
 
     void handle(SgTryStmt& n)

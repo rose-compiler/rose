@@ -190,6 +190,18 @@ struct AstContext
     /// \note the passed object needs to survive the lifetime of the return AstContext
     AstContext sourceFileName(std::string& file) const;
 
+    /// adds a variant name to the context
+    AstContext variantName(Name) const;
+
+    /// gets all variant names in the context
+    const std::vector<Name>& variantNames() const;
+
+    /// adds a variant choice list in the context
+    AstContext variantChoice(Element_ID_List) const;
+
+    /// gets all variant choice lists in the context
+    const std::vector<Element_ID_List>& variantChoices() const;
+
 /**
     /// returns a new context with the element
     AstContext element(Element_struct& el) const;
@@ -199,10 +211,13 @@ struct AstContext
 **/
 
   private:
-    SgScopeStatement*    the_scope;
-    LabelAndLoopManager* all_labels_loops;
-    const std::string*   unit_file_name;
-    Element_Struct*      elem;
+    SgScopeStatement*            the_scope               = nullptr;
+    LabelAndLoopManager*         all_labels_loops        = nullptr;
+    const std::string*           unit_file_name          = nullptr;
+    std::vector<Name>            active_variant_names;
+    std::vector<Element_ID_List> active_variant_choices;
+
+    //~ Element_Struct*      elem;
 };
 
 /// returns true if an assertion failure should be triggered,

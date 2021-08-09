@@ -4049,6 +4049,7 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(AstNodeClass* grammarnode) 
           nodeName == "SgVariableDeclaration"
      // DQ (12/21/2011): Added exception for SgTemplateVariableDeclaration derived from SgVariableDeclaration.
         ||nodeName == "SgTemplateVariableDeclaration"
+        ||nodeName == "SgAdaVariantFieldDecl"
         ||nodeName == "SgOmpClauseBodyStatement"
         ||nodeName == "SgOmpParallelStatement"
         ||nodeName == "SgOmpSectionsStatement"
@@ -4269,7 +4270,9 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
                     outputFile << successorContainerName << ".push_back(compute_baseTypeDefiningDeclaration());\n";
                   }
             // else if (nodeName == "SgVariableDeclaration" && memberVariableName == "baseTypeDefiningDeclaration")
-               else if ((nodeName == "SgVariableDeclaration" || nodeName == "SgTemplateVariableDeclaration") && memberVariableName == "baseTypeDefiningDeclaration")
+               else if ( (nodeName == "SgVariableDeclaration" || nodeName == "SgTemplateVariableDeclaration" || nodeName == "SgAdaVariantFieldDecl") 
+                       && memberVariableName == "baseTypeDefiningDeclaration"
+                       )
                   {
                     outputFile << successorContainerName << ".push_back(compute_baseTypeDefiningDeclaration());\n";
                   }
@@ -4343,7 +4346,10 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
             // Exceptional case first: SgVariableDeclaration, which has a fixed member (that we compute using a special
             // function) followed by a container.
             // if (string(node.getName()) == "SgVariableDeclaration")
-               if (string(node.getName()) == "SgVariableDeclaration" || string(node.getName()) == "SgTemplateVariableDeclaration")
+               if (  string(node.getName()) == "SgVariableDeclaration" 
+                  || string(node.getName()) == "SgTemplateVariableDeclaration"
+                  || string(node.getName()) == "SgAdaVariantFieldDecl"
+                  )
                   {
                     outputFile << "if (idx == 0) return compute_baseTypeDefiningDeclaration();\n"
                                << "else return p_variables[idx-1];\n";
@@ -4449,7 +4455,10 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
             // Exceptional case first: SgVariableDeclaration, which has a fixed member (that we compute using a special
             // function) followed by a container.
             // if (string(node.getName()) == "SgVariableDeclaration")
-               if (string(node.getName()) == "SgVariableDeclaration" || string(node.getName()) == "SgTemplateVariableDeclaration")
+               if (  string(node.getName()) == "SgVariableDeclaration" 
+                  || string(node.getName()) == "SgTemplateVariableDeclaration"
+                  || string(node.getName()) == "SgAdaVariantFieldDecl"
+                  )
                   {
                     outputFile << "if (child == compute_baseTypeDefiningDeclaration()) return 0;\n"
                                << "else {\n"

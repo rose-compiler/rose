@@ -995,3 +995,4 @@ SgAdaDiscriminatedTypeDecl
 SgAdaDiscriminatedType
 SgAdaDiscriminantConstraint
 SgAdaGenericInstanceDecl
+SgAdaVariantFieldDecl

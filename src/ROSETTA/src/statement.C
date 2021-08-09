@@ -161,8 +161,22 @@ Grammar::setUpStatements ()
   // representation of the template declaration.  In this case a template function declaration is more like a function declaration than a template declaration.
      NEW_TERMINAL_MACRO (TemplateDeclaration, "TemplateDeclaration", "TEMPLATE_DECL_STMT");
 
+  // PP (8/6/21): Adding support for Ada variant records
+  //   type Point2D (ty : FieldType) is record
+  //     case (ty)
+  //       when IntField  => xi, yi : Integer;
+  //       when RealField => xf, yf : Real;
+  //     end case;
+  //   end record;
+  //   xi, yi, xf, and xf are conditional fields. Since records are modeled as structs,
+  //   they cannot contain case statements (= SgSwitchStatement)
+  //   => solution: add the conditions to VariableDeclaration and call it AdaVariantFieldDecl
+     NEW_TERMINAL_MACRO (AdaVariantFieldDecl, "AdaVariantFieldDecl", "ADA_VARIANT_FIELD_DECL");
+
+
   // DQ (12/21/2011): Newer version of code.
-     NEW_NONTERMINAL_MACRO (VariableDeclaration, TemplateVariableDeclaration,      "VariableDeclaration",       "VAR_DECL_STMT", true );
+     NEW_NONTERMINAL_MACRO (VariableDeclaration, TemplateVariableDeclaration | AdaVariantFieldDecl,
+           "VariableDeclaration",       "VAR_DECL_STMT", true );
 
   // DQ (9/12/2004): Adding new IR node to support instantiation directives (C++ template language construct)
   // NEW_TERMINAL_MACRO (TemplateInstantiationDirective,    "TemplateInstantiationDirective",    "TEMPLATE_INST_DIRECTIVE_STMT" );
@@ -1995,6 +2009,19 @@ Grammar::setUpStatements ()
                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, DEF_DELETE);
 
   // *******************************************************************************
+
+
+  // *******************************************************************************
+  // PP (6/8/21): Adding support for Ada variant records
+  // *******************************************************************************
+
+     AdaVariantFieldDecl.setFunctionPrototype ( "HEADER_ADA_VARIANT_FIELD_DECL", "../Grammar/Statement.code" );
+
+     AdaVariantFieldDecl.setDataPrototype ( "SgExprListExp*", "variants", "= NULL",
+                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // *******************************************************************************
+
 
 
   // DQ (10/14/2014): Adding template typedef for C++11 support.
@@ -4335,6 +4362,9 @@ Grammar::setUpStatements ()
 
   // DQ (12/6/2011): Adding support for template variables (e.g. static template data members).
      TemplateVariableDeclaration.setFunctionSource       ( "SOURCE_TEMPLATE_VARIABLE_DECLARATION_STATEMENT", "../Grammar/Statement.code" );
+
+  // PP (06/08/21): Ada
+     AdaVariantFieldDecl.setFunctionSource       ( "SOURCE_ADA_VARIANT_FIELD_DECL", "../Grammar/Statement.code" );
 
   // DQ (10/14/2014): Adding template typedef for C++11 support.
      TemplateTypedefDeclaration.setFunctionSource       ( "SOURCE_TEMPLATE_TYPEDEF_DECLARATION_STATEMENT", "../Grammar/Statement.code" );

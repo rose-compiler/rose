@@ -146,6 +146,35 @@ AstContext AstContext::sourceFileName(std::string& file) const
   return tmp;
 }
 
+AstContext AstContext::variantName(Name name) const
+{
+  AstContext tmp{*this};
+
+  tmp.active_variant_names.push_back(name);
+  return tmp;
+}
+
+AstContext AstContext::variantChoice(Element_ID_List choice) const
+{
+  AstContext tmp{*this};
+
+  tmp.active_variant_choices.push_back(choice);
+  return tmp;
+}
+
+const std::vector<Name>& AstContext::variantNames() const
+{
+  return active_variant_names;
+}
+
+
+const std::vector<Element_ID_List>& AstContext::variantChoices() const
+{
+  return active_variant_choices;
+}
+
+
+
 void updFileInfo(Sg_File_Info* n, const Sg_File_Info* orig)
 {
   ADA_ASSERT(n && orig);
