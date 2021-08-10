@@ -845,6 +845,80 @@ namespace
       }
     }
 
+    // MS: modeled on enumInit()
+    void associationEntry(SgExpression* n)
+    {
+      if (SgActualArgumentExpression* e = isSgActualArgumentExpression(n))
+        {
+          SgName name = e->get_argument_name();
+          SgExpression *exp = e->get_expression();
+          prn(name.getString());
+          prn("=>");
+          expr(exp);
+        }
+      else if (SgExpression* e = isSgExpression(n))
+        {
+          expr(e);
+        }
+      else
+        {
+          // should not reach this
+        }
+    }
+
+    // MS: modeled on enuminiList()
+    void associationList(SgExpressionPtrList& lst)
+    {
+      if (lst.empty()) return;
+
+      prn("(");
+      associationEntry(lst[0]);
+
+      for (size_t i = 1; i < lst.size(); ++i)
+        {
+          prn(", ");
+          associationEntry(lst[i]);
+        }
+
+      prn(")");
+    }
+
+    void handle(SgAdaGenericInstanceDecl& n)
+    {
+      // determine which kind of generic instance this is
+      SgAdaGenericDecl*       dcl     = n.get_declaration();
+      SgName                  name    = n.get_name();
+      SgExprListExp*          args    = n.get_actual_parameters();
+      SgDeclarationStatement* thedecl = dcl->get_declaration();
+
+      if (isSgAdaPackageSpecDecl(thedecl)) {
+        // package
+        SgAdaPackageSpecDecl* pkg     = isSgAdaPackageSpecDecl(thedecl);
+        SgName                genname = pkg->get_name();
+
+        prn("package ");
+        prn(name.getString());
+        prn(" is new ");
+        prn(genname.getString());
+      } else {
+        // function/procedure
+        SgFunctionDeclaration* fn      = isSgFunctionDeclaration(thedecl);
+        SgName                 genname = fn->get_name();
+
+        if (n.get_return_type() == NULL) {
+          prn("procedure ");
+        } else {
+          prn("function ");
+        }
+        prn(name.getString());
+        prn(" is new ");
+        prn(genname.getString());
+      }
+
+      associationList(args->get_expressions());
+      prn(STMT_SEP);
+    }
+
     void handle(SgAdaRenamingDecl& n)
     {
       SgSymbol*            orig     = n.get_renamed();

@@ -3520,6 +3520,59 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         break;
       }
 
+    case A_Package_Instantiation:                  // 12.3(2)
+    case A_Procedure_Instantiation:                // 12.3(2)
+    case A_Function_Instantiation:                 // 12.3(2)
+      {
+        // generic instantiation
+        if (decl.Declaration_Kind == A_Function_Instantiation)
+          logKind("A_Function_Instantiation");
+        else if (decl.Declaration_Kind == A_Procedure_Instantiation)
+          logKind("A_Procedure_Instantiation");
+        else
+          logKind("A_Package_Instantiation");
+
+        SgScopeStatement&         outer   = ctx.scope();
+        NameData                  adaname = singleName(decl, ctx);
+
+        // need to look up the Generic_Unit_Name to find the ID for the generic
+        // declaration.  The Corresponding_Declaration ID doesn't seem to point at
+        // an entity that was traversed during the AST creation.  Instead we need
+        // to dig up the Corresponding_Name_Declaration from the Expression
+        // associated with Generic_Unit_Name. (MS: 8/1/21)
+        auto gunitname = retrieveAs<Element_Struct>(elemMap(), decl.Generic_Unit_Name);
+        auto gunitexpr = gunitname.The_Union.Expression;
+
+        SgDeclarationStatement*   gendecl = NULL;
+
+        // MS: 8/10/21 - in some cases (likely with the standard library) we may
+        // encounter an instantiation with no corresponding declaration.  In that case
+        // the name will be -1.  When that occurs set the declaration statement pointer
+        // to null.  Otherwise, lookup the corresponding declaration.
+        if (gunitexpr.Corresponding_Name_Declaration > 0) {
+           gendecl = &lookupNode(asisDecls(), gunitexpr.Corresponding_Name_Declaration);
+        }
+
+        SgAdaGenericInstanceDecl& sgnode  = mkAdaGenericInstanceDecl(adaname.ident, *isSgAdaGenericDecl(gendecl), outer);
+
+        {
+          // generic actual part
+          ElemIdRange range = idRange(decl.Generic_Actual_Part);
+
+          SgExprListExp& args = traverseIDs(range, elemMap(), ArgListCreator{ctx});
+          sgnode.set_actual_parameters(&args);
+        }
+
+        recordNode(asisDecls(), elem.ID, sgnode);
+        recordNode(asisDecls(), adaname.id(), sgnode);
+
+        attachSourceLocation(sgnode, elem, ctx);
+        privatize(sgnode, isPrivate);
+        outer.append_statement(&sgnode);
+        ADA_ASSERT(sgnode.get_parent() == &outer);
+
+        break;
+      }
 
     case A_Choice_Parameter_Specification:         // 11.2(4)
       {
@@ -3553,9 +3606,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case A_Package_Body_Stub:                      // 10.1.3(4)
     case A_Task_Body_Stub:                         // 10.1.3(5)
     case A_Protected_Body_Stub:                    // 10.1.3(6)
-    case A_Package_Instantiation:                  // 12.3(2)
-    case A_Procedure_Instantiation:                // 12.3(2)
-    case A_Function_Instantiation:                 // 12.3(2)
     case A_Formal_Object_Declaration:              // 12.4(2)  -> Mode_Kinds
     case A_Formal_Incomplete_Type_Declaration:
     case A_Formal_Procedure_Declaration:           // 12.6(2)
