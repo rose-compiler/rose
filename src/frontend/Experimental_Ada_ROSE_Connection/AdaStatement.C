@@ -3542,7 +3542,17 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         // associated with Generic_Unit_Name. (MS: 8/1/21)
         auto gunitname = retrieveAs<Element_Struct>(elemMap(), decl.Generic_Unit_Name);
         auto gunitexpr = gunitname.The_Union.Expression;
-        SgDeclarationStatement*   gendecl = &lookupNode(asisDecls(), gunitexpr.Corresponding_Name_Declaration);
+
+        SgDeclarationStatement*   gendecl = NULL;
+
+        // MS: 8/10/21 - in some cases (likely with the standard library) we may
+        // encounter an instantiation with no corresponding declaration.  In that case
+        // the name will be -1.  When that occurs set the declaration statement pointer
+        // to null.  Otherwise, lookup the corresponding declaration.
+        if (gunitexpr.Corresponding_Name_Declaration > 0) {
+           gendecl = &lookupNode(asisDecls(), gunitexpr.Corresponding_Name_Declaration);
+        }
+
         SgAdaGenericInstanceDecl& sgnode  = mkAdaGenericInstanceDecl(adaname.ident, *isSgAdaGenericDecl(gendecl), outer);
 
         {
