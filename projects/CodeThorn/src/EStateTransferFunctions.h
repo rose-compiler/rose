@@ -106,7 +106,7 @@ namespace CodeThorn {
 
     bool isApproximatedBy(const EState* es1, const EState* es2);
     EState combine(const EState* es1, const EState* es2);
-    std::string transerFunctionCodeToString(TransferFunctionCode tfCode);
+    std::string transferFunctionCodeToString(TransferFunctionCode tfCode);
     
     /* determines transfer function code from CFG and AST-matching and calls transferEdgeEStateDispatch
        ultimately this function can be used to operate on its own IR */

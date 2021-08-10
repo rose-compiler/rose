@@ -136,7 +136,7 @@ void CodeThorn::CTAnalysis::setWorkLists(ExplorationMode explorationMode) {
     ROSE_ASSERT(getLabeler());
     auto sLabelSetSize=getFlow()->getStartLabelSet().size();
     if(sLabelSetSize>0) {
-      if(_ctOpt.status) cout<<"STATUS: creating toplogic sort of "<<getFlow()->size()<<" labels ... "<<flush;
+      if(_ctOpt.status) cout<<"STATUS: creating topologic sort of "<<getFlow()->size()<<" labels ... "<<flush;
       TopologicalSort topSort(*getLabeler(),*getFlow());
       std::list<Label> labelList=topSort.topologicallySortedLabelList();
 #if 0
@@ -1218,15 +1218,13 @@ void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(SgProject* root, TimingCollect
 
   CodeThornOptions& ctOpt=getOptionsRef();
 
-  tc.startTimer();
-  tc.stopTimer(TimingCollector::init);
-  
   Pass::normalization(ctOpt,root,tc);
-  _variableIdMapping=Pass::createVariableIdMapping(ctOpt, root, tc);
-  _labeler=Pass::createLabeler(ctOpt, root, tc, _variableIdMapping);
-  _classHierarchy=Pass::createClassHierarchy(ctOpt, root, tc);
-  _cfAnalysis=Pass::createForwardIcfg(ctOpt,root,tc,_labeler,_classHierarchy);
+  _variableIdMapping=Pass::createVariableIdMapping(ctOpt, root, tc); // normalization timer
+  _labeler=Pass::createLabeler(ctOpt, root, tc, _variableIdMapping); // labeler timer
+  _classHierarchy=Pass::createClassHierarchy(ctOpt, root, tc); // class hierarchy timer
+  _cfAnalysis=Pass::createForwardIcfg(ctOpt,root,tc,_labeler,_classHierarchy); // icfg constructino timer
   
+  tc.startTimer(); // initialization timer (stopped at end of function)
   resetInputSequenceIterator();
   RoseAst completeast(root);
 
@@ -1340,6 +1338,7 @@ void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(SgProject* root, TimingCollect
   initializeSummaryStates(initialPStateStored,emptycsetstored);
   estate.io.recordNone(); // ensure that extremal value is different to bot
 
+  // initialization of solver
   if(_ctOpt.runSolver) {
     if(_ctOpt.getInterProceduralFlag()) {
       // inter-procedural analysis initial state
@@ -1385,6 +1384,8 @@ void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(SgProject* root, TimingCollect
     if(_ctOpt.status) cout<<"STATUS: skipping solver run."<<endl;
   }
   if(_ctOpt.status) cout<<"STATUS: analysis phase 1 finished."<<endl;
+  tc.stopTimer(TimingCollector::init);
+
 }
 
 void CodeThorn::CTAnalysis::initAstNodeInfo(SgNode* node) {
