@@ -136,7 +136,7 @@ void CodeThorn::CTAnalysis::setWorkLists(ExplorationMode explorationMode) {
     ROSE_ASSERT(getLabeler());
     auto sLabelSetSize=getFlow()->getStartLabelSet().size();
     if(sLabelSetSize>0) {
-      if(_ctOpt.status) cout<<"STATUS: creating toplogic sort of "<<getFlow()->size()<<" labels ... "<<flush;
+      if(_ctOpt.status) cout<<"STATUS: creating topologic sort of "<<getFlow()->size()<<" labels ... "<<flush;
       TopologicalSort topSort(*getLabeler(),*getFlow());
       std::list<Label> labelList=topSort.topologicallySortedLabelList();
 #if 0
