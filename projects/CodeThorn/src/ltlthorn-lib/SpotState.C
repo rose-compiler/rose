@@ -33,10 +33,7 @@ void SpotState::destroy() const {
 }
 
 std::string SpotState::toString() const {
-  std::string result;
-  Labeler labeler;
-  result = labeler.labelToString(estate.label());
-  return result;
+  return Labeler::labelToString(estate.label());
 }
 
 const EState& SpotState::getEState() const {

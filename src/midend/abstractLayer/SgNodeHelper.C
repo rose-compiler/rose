@@ -142,7 +142,7 @@ std::string SgNodeHelper::lineColumnNodeToString(SgNode* node) {
 }
 
 std::string SgNodeHelper::lineColumnAndSourceCodeToString(SgNode* node) {
-  return SgNodeHelper::sourceLineColumnToString(node)+": "+SgNodeHelper::nodeToString(node);  
+  return SgNodeHelper::sourceLineColumnToString(node)+": "+SgNodeHelper::nodeToString(node);
 }
 
 vector<SgVarRefExp*> SgNodeHelper::determineVariablesInSubtree(SgNode* node) {
@@ -1688,97 +1688,97 @@ bool nodeCanBeChanged(SgLocatedNode * lnode) {
 }
 #endif
 
-namespace // anonymous 
-{ 
+namespace // anonymous
+{
   struct FunctionPointer : sg::DispatchHandler<SgExpression*>
   {
     void handle(SgNode& n)       { SG_UNEXPECTED_NODE(n); }
-    
+
     void handle(SgCommaOpExp& n) { res = eval(n.get_rhs_operand()); }
     void handle(SgCastExp& n)    { res = eval(n.get_operand()); } // needed?
-    
+
     template <class SageType>
     bool testType(SgExpression& n, SageType* (*tester)(SgNode*))
     {
       SgType* ty = n.get_type();
-      
+
       ROSE_ASSERT(ty);
-      ty = ty->stripType( SgType::STRIP_MODIFIER_TYPE 
-                        | SgType::STRIP_REFERENCE_TYPE 
-                        | SgType::STRIP_RVALUE_REFERENCE_TYPE 
+      ty = ty->stripType( SgType::STRIP_MODIFIER_TYPE
+                        | SgType::STRIP_REFERENCE_TYPE
+                        | SgType::STRIP_RVALUE_REFERENCE_TYPE
                         | SgType::STRIP_TYPEDEF_TYPE
                         );
-                            
-      return tester(ty);
-    }  
 
-    void handle(SgExpression& n) 
-    { 
-      if (testType(n, isSgPointerType)) 
+      return tester(ty);
+    }
+
+    void handle(SgExpression& n)
+    {
+      if (testType(n, isSgPointerType))
         res = &n;
     }
-     
+
     void handle(SgPointerDerefExp& n)
     {
       if (testType(n, isSgFunctionType))
         res = &n;
     }
-    
+
     static
     SgExpression* eval(SgExpression* ex);
   };
-  
+
   SgExpression* FunctionPointer::eval(SgExpression* ex)
   {
-    return sg::dispatch(FunctionPointer(), ex); 
+    return sg::dispatch(FunctionPointer(), ex);
   }
 }
 
-SgLocatedNode* SgNodeHelper::ExtendedCallInfo::representativeNode() const    
-{ 
-  return rep; 
+SgLocatedNode* SgNodeHelper::ExtendedCallInfo::representativeNode() const
+{
+  return rep;
 }
 
-SgFunctionCallExp* SgNodeHelper::ExtendedCallInfo::callExpression() const              
-{ 
-  return isSgFunctionCallExp(rep); 
+SgFunctionCallExp* SgNodeHelper::ExtendedCallInfo::callExpression() const
+{
+  return isSgFunctionCallExp(rep);
 }
 
-SgConstructorInitializer* SgNodeHelper::ExtendedCallInfo::ctorInitializer() const              
-{ 
-  return isSgConstructorInitializer(rep); 
+SgConstructorInitializer* SgNodeHelper::ExtendedCallInfo::ctorInitializer() const
+{
+  return isSgConstructorInitializer(rep);
 }
 
-SgExpression* 
-SgNodeHelper::ExtendedCallInfo::functionPointer() const 
-{ 
-  if (SgCallExpression* call = isSgCallExpression(rep)) 
+SgExpression*
+SgNodeHelper::ExtendedCallInfo::functionPointer() const
+{
+  if (SgCallExpression* call = isSgCallExpression(rep))
     return FunctionPointer::eval(call->get_function());
-  
+
   return NULL;
 }
 
-      
+
 namespace
-{     
+{
   SgInitializedName&
   onlyDecl(const SgVariableDeclaration& n)
   {
-    const SgInitializedNamePtrList& vars = n.get_variables();   
-    
+    const SgInitializedNamePtrList& vars = n.get_variables();
+
     ROSE_ASSERT(vars.size() == 1);
     return SG_DEREF(vars[0]);
   }
-  
+
   struct ExtendedCallMatcherInner : sg::DispatchHandler<SgNodeHelper::ExtendedCallInfo>
   {
     void handle(SgNode& n)                   { SG_UNEXPECTED_NODE(n); }
-    
+
     // matches
     void handle(SgCallExpression& n)         { res = ReturnType(n); }
     void handle(SgConstructorInitializer& n) { res = ReturnType(n); }
     void handle(SgNewExp& n)                 { handle(SG_DEREF(n.get_constructor_args())); }
-    
+
     // no matches (root and children)
     void handle(SgExpression&)               { /* no match */ }
     void handle(SgStatement&)                { /* no match */ }
@@ -1787,42 +1787,42 @@ namespace
     void handle(SgFileList&)                 { /* no match */ }
     void handle(SgInitializedName&)          { /* no match */ }
     void handle(SgPragma&)                   { /* no match */ }
-    
+
     // intermediate (pass through) nodes
     void handle(SgCastExp& n)                { res = eval(n.get_operand()); }
     void handle(SgAssignOp& n)               { res = eval(n.get_rhs_operand()); }
     void handle(SgAssignInitializer& n)      { res = eval(n.get_operand()); }
-        
+
     // root nodes (get to the bottom of them)
     void handle(SgExprStatement& n)          { res = eval(n.get_expression()); }
-    
-    void handle(SgReturnStmt& n)             { res = eval_nullcheck(n.get_expression()); } 
-    
-    void handle(SgVariableDeclaration& n)    
-    { 
+
+    void handle(SgReturnStmt& n)             { res = eval_nullcheck(n.get_expression()); }
+
+    void handle(SgVariableDeclaration& n)
+    {
       SgInitializedName& var = onlyDecl(n);
       SgInitializer*     ini = var.get_initializer();
-      
-      if (ini) res = eval(ini); 
-      
+
+      if (ini) res = eval(ini);
+
       // \todo test for implicit call constructor
     }
-    
+
     // convenience functions
-    
+
     static
     ReturnType eval(SgNode* n);
 
     static
     ReturnType eval_nullcheck(SgNode* n);
   };
-  
+
   ExtendedCallMatcherInner::ReturnType
   ExtendedCallMatcherInner::eval(SgNode* n)
   {
     return sg::dispatch(ExtendedCallMatcherInner(), n);
   }
-  
+
   ExtendedCallMatcherInner::ReturnType
   ExtendedCallMatcherInner::eval_nullcheck(SgNode* n)
   {
@@ -1830,11 +1830,11 @@ namespace
   }
 
 
-  
+
   struct ExtendedCallMatcherOuter : sg::DispatchHandler<SgNodeHelper::ExtendedCallInfo>
   {
     void handle(SgNode& n)                   { SG_UNEXPECTED_NODE(n); }
-    
+
     // no matches (root and children)
     void handle(SgExpression&)               { /* no match */ }
     void handle(SgStatement&)                { /* no match */ }
@@ -1843,62 +1843,62 @@ namespace
     void handle(SgFileList&)                 { /* no match */ }
     void handle(SgInitializedName&)          { /* no match */ }
     void handle(SgPragma&)                   { /* no match */ }
-    
+
     // root nodes (get to the bottom of them)
     void handle(SgExprStatement& n)          { res = eval(n.get_expression()); }
-    
-    void handle(SgReturnStmt& n)             { res = eval_nullcheck(n.get_expression()); } 
-    
-    void handle(SgVariableDeclaration& n)    
-    { 
+
+    void handle(SgReturnStmt& n)             { res = eval_nullcheck(n.get_expression()); }
+
+    void handle(SgVariableDeclaration& n)
+    {
       SgInitializedName& var = onlyDecl(n);
       SgInitializer*     ini = var.get_initializer();
-      
-      if (ini) res = eval(ini); 
-      
+
+      if (ini) res = eval(ini);
+
       // \todo test for implicit call constructor
     }
-    
+
     // convenience functions
-    
+
     static
     ReturnType eval(SgExpression* n);
 
     static
     ReturnType eval_nullcheck(SgExpression* n);
   };
-  
-  
+
+
   ExtendedCallMatcherOuter::ReturnType
   ExtendedCallMatcherOuter::eval(SgExpression* n)
   {
     return sg::dispatch(ExtendedCallMatcherInner(), n);
   }
-  
+
   ExtendedCallMatcherOuter::ReturnType
   ExtendedCallMatcherOuter::eval_nullcheck(SgExpression* n)
   {
     return n ? eval(n) : ReturnType();
   }
-}     
-      
+}
+
 
 SgNodeHelper::ExtendedCallInfo
 SgNodeHelper::matchExtendedNormalizedCall(SgNode* n, bool matchExtended)
 {
-  static const bool TEST_EXTENDED_NORMALIZED_CALL = true;
-  if(matchExtended) {    
-    SgNodeHelper::ExtendedCallInfo res = sg::dispatch(ExtendedCallMatcherOuter(), n);
-    
-    // for every match of matchFunctionCall, res should also match.  
-    ROSE_ASSERT(  !TEST_EXTENDED_NORMALIZED_CALL 
-                  || !SgNodeHelper::Pattern::matchFunctionCall(n) 
-                  || res
-                  );
-    return res;
-  } else {
-    return SgNodeHelper::ExtendedCallInfo();
-  }
+  static constexpr bool TEST_EXTENDED_NORMALIZED_CALL = true;
+
+  if (!matchExtended) return SgNodeHelper::ExtendedCallInfo{};
+
+
+  SgNodeHelper::ExtendedCallInfo res = sg::dispatch(ExtendedCallMatcherOuter(), n);
+
+  // for every match of matchFunctionCall, res should also match.
+  ROSE_ASSERT(  !TEST_EXTENDED_NORMALIZED_CALL
+             || !SgNodeHelper::Pattern::matchFunctionCall(n)
+             || res
+             );
+  return res;
 }
 
 std::list<SgVariableDeclaration*> SgNodeHelper::memberVariableDeclarationsList(SgClassType* sgType) {
@@ -1907,7 +1907,7 @@ std::list<SgVariableDeclaration*> SgNodeHelper::memberVariableDeclarationsList(S
   DataMemberPointers dataMemPtrs=isSgClassType(sgType)->returnDataMemberPointers();
   // returnDataMemberPointers includes all declarations (methods need to be filtered)
   for(DataMemberPointers::iterator i=dataMemPtrs.begin();i!=dataMemPtrs.end();++i) {
-    SgNode* node=(*i).first; 
+    SgNode* node=(*i).first;
     if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(node)) {
       declVarList.push_back(varDecl);
     }

@@ -85,6 +85,7 @@ CODETHORN_HEADER_FILES=\
   CounterexampleGenerator.h \
   CPAstAttribute.h \
   CppExprEvaluator.h \
+  CppLabeler.h \
   CppStdUtilities.h \
   CTIOLabeler.h \
   CtxCallStrings.h \
@@ -220,6 +221,7 @@ CODETHORN_SOURCE_FILES=\
   CounterexampleGenerator.C \
   CPAstAttribute.C \
   CppExprEvaluator.C \
+  CppLabeler.C \
   CppStdUtilities.C \
   CTIOLabeler.C \
   CtxCallStrings.C \
