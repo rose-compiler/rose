@@ -1,0 +1,9 @@
+C++ 98 Tests
+============
+
+ROSE tests for the C++ 98 object model.
+
+The corresponding test script is under:
+CODETHORN_HOME/scrips/runCpp98Tests
+
+
