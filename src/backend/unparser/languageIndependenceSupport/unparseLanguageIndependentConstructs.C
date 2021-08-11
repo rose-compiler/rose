@@ -5186,14 +5186,23 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 #if DEBUG_USING_CURPRINT || 0
                curprint("/* PreprocessingInfo::after: skipOutputOfPreprocessingInfo == false (unparse attached comment or directive) */\n");
 #endif
+#if 0
+            // DQ (8/9/2021): I think this is a problem for the Fortran support (see test2007_151.f).
                bool unparseExtraNewLine = (stmt->getAttachedPreprocessingInfo() != NULL);
-               if (unparseExtraNewLine == true)
+
+            // DQ (8/9/2021): We want to suppress the output of the extra CR in the case of Fortran.
+            // if (unparseExtraNewLine == true)
+               if (unparseExtraNewLine == true && SageInterface::is_Fortran_language() == false)
                   {
 #if DEBUG_USING_CURPRINT || 0
                     curprint("\n /* skipOutputOfPreprocessingInfo == false: PreprocessingInfo::after added CR */\n");
 #endif
                     curprint("\n ");
                   }
+#else
+            // DQ (8/9/2021): Debugging code.
+            // printf("Skipping output of CR before unparseAttachedPreprocessingInfo() function \n");
+#endif
 
                unparseAttachedPreprocessingInfo(stmt, info, PreprocessingInfo::after);
              }
