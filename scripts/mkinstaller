@@ -28,10 +28,10 @@ $foundInDir  = "";
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "6";
 $mkinstaller_ver_build = "11";
-$mkinstaller_ver_patch = "";
-$mkinstaller_ver_name  = "2.6.11";
-$mkinstaller_ver_time  = "13Jul2021,22:20:37z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.11 - 13Jul2021,22:20:37z";
+$mkinstaller_ver_patch = "1";
+$mkinstaller_ver_name  = "2.6.11.1";
+$mkinstaller_ver_time  = "11Aug2021,14:28:15z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.11.1 - 11Aug2021,14:28:15z";
 
 # MyUniqueFileId: d34be5e4-1cfc-49b6-d988-25ab878c795f
 
