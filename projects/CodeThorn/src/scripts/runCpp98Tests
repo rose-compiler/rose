@@ -145,5 +145,3 @@ numWarnExpected=1
 numFailExpected=0
 runCxxTests $COMPILER $TESTDIR $TESTPREFIX $numWarnExpected $numFailExpected $languageExtension
 
-
-
