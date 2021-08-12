@@ -103,30 +103,28 @@ private:
     BaseSemantics::RiscOperatorsPtr subdomain_;         // Domain to which all our RISC operators chain
     Sawyer::Message::Stream stream_;                    // stream to which output is emitted
     std::string indentation_;                           // string to print at start of each line
-    bool showingSubdomain_;                             // show subdomain name and address on each line of output?
-    bool showingInstructionVa_;                         // show instruction VA on each line of output?
+    bool showingSubdomain_ = true;                      // show subdomain name and address on each line of output?
+    bool showingInstructionVa_ = true;                  // show instruction VA on each line of output?
+    bool onlyInstructions_ = true;                      // trace only operations associated with an instruction.
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors.
 protected:
     // use the version that takes a subdomain instead of this c'tor
     explicit RiscOperators(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr())
-        : BaseSemantics::RiscOperators(protoval, solver), stream_(mlog[Diagnostics::INFO]), showingSubdomain_(true),
-          showingInstructionVa_(true) {
+        : BaseSemantics::RiscOperators(protoval, solver), stream_(mlog[Diagnostics::INFO]) {
         name("Trace");
     }
 
     // use the version that takes a subdomain instead of this c'tor.
     explicit RiscOperators(const BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr())
-        : BaseSemantics::RiscOperators(state, solver), stream_(mlog[Diagnostics::INFO]), showingSubdomain_(true),
-          showingInstructionVa_(true) {
+        : BaseSemantics::RiscOperators(state, solver), stream_(mlog[Diagnostics::INFO]) {
         name("Trace");
     }
 
     explicit RiscOperators(const BaseSemantics::RiscOperatorsPtr &subdomain)
         : BaseSemantics::RiscOperators(subdomain->currentState(), subdomain->solver()),
-          subdomain_(subdomain), stream_(mlog[Diagnostics::INFO]), showingSubdomain_(true),
-          showingInstructionVa_(true) {
+          subdomain_(subdomain), stream_(mlog[Diagnostics::INFO]) {
         name("Trace");
     }
 
@@ -247,6 +245,18 @@ public:
     void showingInstructionVa(bool b) { showingInstructionVa_ = b; }
     /** @} */
 
+    /** Property: Show only operations for instructions.
+     *
+     *  Operators are usually called to interpret an instruction, but they can also be called directly by analysis, such as
+     *  when an analysis needs to read a register from a semantic state. If the @ref onlyInstructions property is set, then
+     *  the output will show only operations that are associated with an instruction and will suppress operations that are
+     *  invoked without a current instruction.
+     *
+     * @{ */
+    bool onlyInstructions() const { return onlyInstructions_; }
+    void onlyInstructions(bool b) { onlyInstructions_ = b; }
+    /** @} */
+
 protected:
     void linePrefix();
     std::string toString(const BaseSemantics::SValuePtr&);
@@ -255,6 +265,9 @@ protected:
     const BaseSemantics::SValuePtr &check_width(const BaseSemantics::SValuePtr &a, size_t nbits,
                                                 const std::string &what="result");
     std::string register_name(RegisterDescriptor);
+
+    bool shouldPrint() const;
+    bool shouldPrint(SgAsmInstruction*) const;
 
     void before(const std::string&);
     void before(const std::string&, RegisterDescriptor);
@@ -279,11 +292,14 @@ protected:
     void before(const std::string&, const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&, SgAsmFloatType*);
 
     void after();
+    void after(SgAsmInstruction*);
     const BaseSemantics::SValuePtr& after(const BaseSemantics::SValuePtr&);
     const BaseSemantics::SValuePtr& after(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&);
     void after(const BaseSemantics::Exception&);
+    void after(const BaseSemantics::Exception&, SgAsmInstruction*);
     void after_exception();
-    
+    void after_exception(SgAsmInstruction*);
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods we override from our super class
 public:
