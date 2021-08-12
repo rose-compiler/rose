@@ -10,10 +10,20 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace TraceSemantics {
 
+bool
+RiscOperators::shouldPrint() const {
+    return shouldPrint(currentInstruction());
+}
+
+bool
+RiscOperators::shouldPrint(SgAsmInstruction *insn) const {
+    return stream_ && (!onlyInstructions_ || insn);
+}
+
 void
 RiscOperators::linePrefix() {
+    const char *sep = "";
     if (stream_) {
-        const char *sep = "";
         stream_ <<indentation_;
 
         if (showingSubdomain_ && subdomain_) {
@@ -32,8 +42,7 @@ RiscOperators::linePrefix() {
 }
 
 std::string
-RiscOperators::toString(const BaseSemantics::SValuePtr &a)
-{
+RiscOperators::toString(const BaseSemantics::SValuePtr &a) {
     // FIXME: if there's a way to determine if "a" is not a subclass of the subdomain's protoval class then we could also spit
     // out a warning. [Robb P. Matzke 2013-09-13]
     std::ostringstream ss;
@@ -60,24 +69,25 @@ RiscOperators::toString(SgAsmFloatType *type) {
 }
 
 void
-RiscOperators::check_equal_widths(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b)
-{
-    if (a!=NULL && b!=NULL && a->nBits()!=b->nBits())
-        stream_ <<"value width violation; see documentation for this RISC operator!\n";
+RiscOperators::check_equal_widths(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+    if (shouldPrint()) {
+        if (a!=NULL && b!=NULL && a->nBits()!=b->nBits())
+            stream_ <<"value width violation; see documentation for this RISC operator!\n";
+    }
 }
 
 const BaseSemantics::SValuePtr &
-RiscOperators::check_width(const BaseSemantics::SValuePtr &a, size_t nbits, const std::string &what)
-{
-    if (a==NULL || a->nBits()!=nbits)
-        stream_ <<"expected " <<(what.empty()?std::string("result"):what)
-                <<" to be " <<nbits <<" bits wide; see documentation for this RISC operator!\n";
+RiscOperators::check_width(const BaseSemantics::SValuePtr &a, size_t nbits, const std::string &what) {
+    if (shouldPrint()) {
+        if (a==NULL || a->nBits()!=nbits)
+            stream_ <<"expected " <<(what.empty()?std::string("result"):what)
+                    <<" to be " <<nbits <<" bits wide; see documentation for this RISC operator!\n";
+    }
     return a;
 }
 
 std::string
-RiscOperators::register_name(RegisterDescriptor a) 
-{
+RiscOperators::register_name(RegisterDescriptor a) {
     BaseSemantics::StatePtr state = subdomain_->currentState();
     BaseSemantics::RegisterStatePtr regstate;
     if (state!=NULL)
@@ -87,189 +97,230 @@ RiscOperators::register_name(RegisterDescriptor a)
 }
 
 void
-RiscOperators::before(const std::string &operator_name)
-{
-    linePrefix();
-    stream_ <<operator_name <<"()";
-    checkSubdomain();
-}
-
-void
-RiscOperators::before(const std::string &operator_name, RegisterDescriptor a)
-{
-    checkSubdomain();
-    linePrefix();
-    SAWYER_MESG(stream_) <<operator_name <<"(" <<register_name(a) <<")";
-}
-
-void
-RiscOperators::before(const std::string &operator_name, RegisterDescriptor a, const BaseSemantics::SValuePtr &b)
-{
-    checkSubdomain();
-    linePrefix();
-    SAWYER_MESG(stream_) <<operator_name <<"(" <<register_name(a) <<", " <<toString(b) <<")";
-}
-
-void
-RiscOperators::before(const std::string &operator_name, RegisterDescriptor a, const BaseSemantics::SValuePtr &b,
-                      const BaseSemantics::SValuePtr &c)
-{
-    checkSubdomain();
-    linePrefix();
-    SAWYER_MESG(stream_) <<operator_name <<"(" <<register_name(a) <<", " <<toString(b) <<", " <<toString(c) <<")";
-}
-
-void
-RiscOperators::before(const std::string &operator_name, RegisterDescriptor a, const BaseSemantics::SValuePtr &b,
-                      const BaseSemantics::SValuePtr &c, size_t d)
-{
-    checkSubdomain();
-    linePrefix();
-    SAWYER_MESG(stream_) <<operator_name <<"(" <<register_name(a) <<", " <<toString(b) <<", " <<toString(c) <<", " <<d <<")";
-}
-
-void
-RiscOperators::before(const std::string &operator_name, RegisterDescriptor a, const BaseSemantics::SValuePtr &b,
-                      const BaseSemantics::SValuePtr &c, const BaseSemantics::SValuePtr &d)
-{
-    checkSubdomain();
-    linePrefix();
-    SAWYER_MESG(stream_) <<operator_name <<"(" <<register_name(a) <<", " <<toString(b) <<", " <<toString(c) <<", "
-                         <<toString(d) <<")";
-}
-
-void
-RiscOperators::before(const std::string &operator_name, SgAsmInstruction *insn, bool showAddress)
-{
-    linePrefix();
-    if (showAddress) {
-        SAWYER_MESG(stream_) <<operator_name <<"(" <<insn->toString() <<")";
-    } else {
-        SAWYER_MESG(stream_) <<operator_name <<"(" <<StringUtility::trim(unparseInstruction(insn)) <<")";
+RiscOperators::before(const std::string &operator_name) {
+    if (shouldPrint()) {
+        linePrefix();
+        stream_ <<operator_name <<"()";
     }
     checkSubdomain();
 }
 
 void
-RiscOperators::before(const std::string &operator_name, size_t a)
-{
-    linePrefix();
-    SAWYER_MESG(stream_) <<operator_name <<"(" <<a <<")";
+RiscOperators::before(const std::string &operator_name, RegisterDescriptor a) {
+    checkSubdomain();
+    if (shouldPrint()) {
+        linePrefix();
+        SAWYER_MESG(stream_) <<operator_name <<"(" <<register_name(a) <<")";
+    }
+}
+
+void
+RiscOperators::before(const std::string &operator_name, RegisterDescriptor a, const BaseSemantics::SValuePtr &b) {
+    checkSubdomain();
+    if (shouldPrint()) {
+        linePrefix();
+        SAWYER_MESG(stream_) <<operator_name <<"(" <<register_name(a) <<", " <<toString(b) <<")";
+    }
+}
+
+void
+RiscOperators::before(const std::string &operator_name, RegisterDescriptor a, const BaseSemantics::SValuePtr &b,
+                      const BaseSemantics::SValuePtr &c) {
+    checkSubdomain();
+    if (shouldPrint()) {
+        linePrefix();
+        SAWYER_MESG(stream_) <<operator_name <<"(" <<register_name(a) <<", " <<toString(b) <<", " <<toString(c) <<")";
+    }
+}
+
+void
+RiscOperators::before(const std::string &operator_name, RegisterDescriptor a, const BaseSemantics::SValuePtr &b,
+                      const BaseSemantics::SValuePtr &c, size_t d) {
+    checkSubdomain();
+    if (shouldPrint()) {
+        linePrefix();
+        SAWYER_MESG(stream_) <<operator_name <<"(" <<register_name(a) <<", " <<toString(b) <<", " <<toString(c) <<", " <<d <<")";
+    }
+}
+
+void
+RiscOperators::before(const std::string &operator_name, RegisterDescriptor a, const BaseSemantics::SValuePtr &b,
+                      const BaseSemantics::SValuePtr &c, const BaseSemantics::SValuePtr &d) {
+    checkSubdomain();
+    if (shouldPrint()) {
+        linePrefix();
+        SAWYER_MESG(stream_) <<operator_name <<"(" <<register_name(a) <<", " <<toString(b) <<", " <<toString(c) <<", "
+                             <<toString(d) <<")";
+    }
+}
+
+void
+RiscOperators::before(const std::string &operator_name, SgAsmInstruction *insn, bool showAddress) {
+    if (shouldPrint(insn)) {
+        linePrefix();
+        if (showAddress) {
+            SAWYER_MESG(stream_) <<operator_name <<"(" <<insn->toString() <<")";
+        } else {
+            SAWYER_MESG(stream_) <<operator_name <<"(" <<StringUtility::trim(unparseInstruction(insn)) <<")";
+        }
+    }
     checkSubdomain();
 }
 
 void
-RiscOperators::before(const std::string &operator_name, size_t a, uint64_t b)
-{
-    linePrefix();
-    SAWYER_MESG(stream_) <<operator_name <<"(" <<a <<", " <<b <<")";
+RiscOperators::before(const std::string &operator_name, size_t a) {
+    if (shouldPrint()) {
+        linePrefix();
+        SAWYER_MESG(stream_) <<operator_name <<"(" <<a <<")";
+    }
     checkSubdomain();
 }
 
 void
-RiscOperators::before(const std::string &operator_name, const BaseSemantics::SValuePtr &a)
-{
-    linePrefix();
-    SAWYER_MESG(stream_) <<operator_name <<"(" <<toString(a) <<")";
+RiscOperators::before(const std::string &operator_name, size_t a, uint64_t b) {
+    if (shouldPrint()) {
+        linePrefix();
+        SAWYER_MESG(stream_) <<operator_name <<"(" <<a <<", " <<b <<")";
+    }
     checkSubdomain();
 }
 
 void
-RiscOperators::before(const std::string &operator_name, const BaseSemantics::SValuePtr &a, size_t b)
-{
-    linePrefix();
-    SAWYER_MESG(stream_) <<operator_name <<"(" <<toString(a) <<", " <<b <<")";
+RiscOperators::before(const std::string &operator_name, const BaseSemantics::SValuePtr &a) {
+    if (shouldPrint()) {
+        linePrefix();
+        SAWYER_MESG(stream_) <<operator_name <<"(" <<toString(a) <<")";
+    }
     checkSubdomain();
 }
 
 void
-RiscOperators::before(const std::string &operator_name, const BaseSemantics::SValuePtr &a, size_t b, size_t c)
-{
-    linePrefix();
-    SAWYER_MESG(stream_) <<operator_name <<"(" <<toString(a) <<", " <<b <<", " <<c <<")";
+RiscOperators::before(const std::string &operator_name, const BaseSemantics::SValuePtr &a, size_t b) {
+    if (shouldPrint()) {
+        linePrefix();
+        SAWYER_MESG(stream_) <<operator_name <<"(" <<toString(a) <<", " <<b <<")";
+    }
     checkSubdomain();
 }
 
 void
-RiscOperators::before(const std::string &operator_name, const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b)
-{
-    linePrefix();
-    SAWYER_MESG(stream_) <<operator_name <<"(" <<toString(a) <<", " <<toString(b) <<")";
+RiscOperators::before(const std::string &operator_name, const BaseSemantics::SValuePtr &a, size_t b, size_t c) {
+    if (shouldPrint()) {
+        linePrefix();
+        SAWYER_MESG(stream_) <<operator_name <<"(" <<toString(a) <<", " <<b <<", " <<c <<")";
+    }
+    checkSubdomain();
+}
+
+void
+RiscOperators::before(const std::string &operator_name, const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
+    if (shouldPrint()) {
+        linePrefix();
+        SAWYER_MESG(stream_) <<operator_name <<"(" <<toString(a) <<", " <<toString(b) <<")";
+    }
     checkSubdomain();
 }
 
 void
 RiscOperators::before(const std::string &operator_name, const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
-                      const BaseSemantics::SValuePtr &c)
-{
-    linePrefix();
-    SAWYER_MESG(stream_) <<operator_name <<"(" <<toString(a) <<", " <<toString(b) <<", " <<toString(c) <<")";
+                      const BaseSemantics::SValuePtr &c) {
+    if (shouldPrint()) {
+        linePrefix();
+        SAWYER_MESG(stream_) <<operator_name <<"(" <<toString(a) <<", " <<toString(b) <<", " <<toString(c) <<")";
+    }
     checkSubdomain();
 }
 
 void
 RiscOperators::before(const std::string &operator_name, const BaseSemantics::SValuePtr &a, SgAsmFloatType *at) {
-    linePrefix();
-    SAWYER_MESG(stream_) <<operator_name <<"(" <<toString(a) <<", " <<toString(at) <<")";
+    if (shouldPrint()) {
+        linePrefix();
+        SAWYER_MESG(stream_) <<operator_name <<"(" <<toString(a) <<", " <<toString(at) <<")";
+    }
     checkSubdomain();
 }
 
 void
 RiscOperators::before(const std::string &operator_name, const BaseSemantics::SValuePtr &a, SgAsmFloatType *at,
                       const BaseSemantics::SValuePtr &b) {
-    linePrefix();
-    SAWYER_MESG(stream_) <<operator_name <<"(" <<toString(a) <<", " <<toString(at) <<", " <<toString(b) <<")";
+    if (shouldPrint()) {
+        linePrefix();
+        SAWYER_MESG(stream_) <<operator_name <<"(" <<toString(a) <<", " <<toString(at) <<", " <<toString(b) <<")";
+    }
     checkSubdomain();
 }
 
 void
 RiscOperators::before(const std::string &operator_name, const BaseSemantics::SValuePtr &a, SgAsmFloatType *at,
                       SgAsmFloatType *bt) {
-    linePrefix();
-    SAWYER_MESG(stream_) <<operator_name <<"(" <<toString(a) <<", " <<toString(at) <<", " <<toString(bt) <<")";
+    if (shouldPrint()) {
+        linePrefix();
+        SAWYER_MESG(stream_) <<operator_name <<"(" <<toString(a) <<", " <<toString(at) <<", " <<toString(bt) <<")";
+    }
     checkSubdomain();
 }
 
 void
 RiscOperators::before(const std::string &operator_name, const BaseSemantics::SValuePtr &a,
                       const BaseSemantics::SValuePtr &b, SgAsmFloatType *abt) {
-    linePrefix();
-    SAWYER_MESG(stream_) <<operator_name <<"(" <<toString(a) <<", " <<toString(b) <<", " <<toString(abt) <<")";
+    if (shouldPrint()) {
+        linePrefix();
+        SAWYER_MESG(stream_) <<operator_name <<"(" <<toString(a) <<", " <<toString(b) <<", " <<toString(abt) <<")";
+    }
     checkSubdomain();
 }
 
 void
-RiscOperators::after()
-{
-    stream_ <<"\n";
+RiscOperators::after() {
+    if (shouldPrint())
+        stream_ <<"\n";
+}
+
+void
+RiscOperators::after(SgAsmInstruction *insn) {
+    if (shouldPrint(insn))
+        stream_ <<"\n";
 }
 
 const BaseSemantics::SValuePtr &
-RiscOperators::after(const BaseSemantics::SValuePtr &retval)
-{
-    SAWYER_MESG(stream_) <<" = " <<toString(retval) <<"\n";
+RiscOperators::after(const BaseSemantics::SValuePtr &retval) {
+    if (shouldPrint())
+        SAWYER_MESG(stream_) <<" = " <<toString(retval) <<"\n";
     return retval;
 }
 
 const BaseSemantics::SValuePtr &
-RiscOperators::after(const BaseSemantics::SValuePtr &retval, const BaseSemantics::SValuePtr &ret2)
-{
-    SAWYER_MESG(stream_) <<" = " <<toString(retval) <<"\n";
-    linePrefix();
-    SAWYER_MESG(stream_) <<"also returns: " <<toString(ret2) <<"\n";
+RiscOperators::after(const BaseSemantics::SValuePtr &retval, const BaseSemantics::SValuePtr &ret2) {
+    if (shouldPrint()) {
+        SAWYER_MESG(stream_) <<" = " <<toString(retval) <<"\n";
+        linePrefix();
+        SAWYER_MESG(stream_) <<"also returns: " <<toString(ret2) <<"\n";
+    }
     return retval;
 }
 
 void
-RiscOperators::after(const BaseSemantics::Exception &e)
-{
-    SAWYER_MESG(stream_) <<" = Exception(" <<e.what() <<")\n";
+RiscOperators::after(const BaseSemantics::Exception &e) {
+    if (shouldPrint())
+        SAWYER_MESG(stream_) <<" = Exception(" <<e.what() <<")\n";
 }
 
 void
-RiscOperators::after_exception()
-{
-    stream_ <<" = <Exception>\n";
+RiscOperators::after(const BaseSemantics::Exception &e, SgAsmInstruction *insn) {
+    if (shouldPrint(insn))
+        SAWYER_MESG(stream_) <<" = Exception(" <<e.what() <<")\n";
+}
+
+void
+RiscOperators::after_exception() {
+    if (shouldPrint())
+        stream_ <<" = <Exception>\n";
+}
+
+void
+RiscOperators::after_exception(SgAsmInstruction *insn) {
+    if (shouldPrint(insn))
+        stream_ <<" = <Exception>\n";
 }
 
 BaseSemantics::SValuePtr
@@ -280,8 +331,7 @@ RiscOperators::protoval() const
 }
 
 void
-RiscOperators::solver(const SmtSolverPtr &s)
-{
+RiscOperators::solver(const SmtSolverPtr &s) {
     checkSubdomain();
     subdomain_->solver(s);
 }
@@ -301,8 +351,7 @@ RiscOperators::currentState() const
 }
 
 void
-RiscOperators::currentState(const BaseSemantics::StatePtr &state)
-{
+RiscOperators::currentState(const BaseSemantics::StatePtr &state) {
     checkSubdomain();
     subdomain_->currentState(state);
 }
@@ -322,8 +371,7 @@ RiscOperators::nInsns() const
 }
 
 void
-RiscOperators::nInsns(size_t n)
-{
+RiscOperators::nInsns(size_t n) {
     checkSubdomain();
     subdomain_->nInsns(n);
 }
@@ -336,42 +384,39 @@ RiscOperators::currentInstruction() const
 }
 
 void
-RiscOperators::startInstruction(SgAsmInstruction *insn)
-{
+RiscOperators::startInstruction(SgAsmInstruction *insn) {
     BaseSemantics::RiscOperators::startInstruction(insn);
     before("startInstruction", insn, true /*show address*/);
     try {
         subdomain_->startInstruction(insn);
-        after();
+        after(insn);
     } catch (const BaseSemantics::Exception &e) {
-        after(e);
+        after(e, insn);
         throw;
     } catch (...) {
-        after_exception();
+        after_exception(insn);
         throw;
     }
 }
 
 void
-RiscOperators::finishInstruction(SgAsmInstruction *insn)
-{
+RiscOperators::finishInstruction(SgAsmInstruction *insn) {
     before("finishInstruction", insn, false /*hide address*/); // address is part of prefix
     try {
         subdomain_->finishInstruction(insn);
-        after();
+        after(insn);
     } catch (const BaseSemantics::Exception &e) {
-        after(e);
+        after(e, insn);
         throw;
     } catch (...) {
-        after_exception();
+        after_exception(insn);
         throw;
     }
     BaseSemantics::RiscOperators::finishInstruction(insn);
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::undefined_(size_t nbits)
-{
+RiscOperators::undefined_(size_t nbits) {
     before("undefined_", nbits);
     try {
         return check_width(after(subdomain_->undefined_(nbits)), nbits);
@@ -385,8 +430,7 @@ RiscOperators::undefined_(size_t nbits)
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::unspecified_(size_t nbits)
-{
+RiscOperators::unspecified_(size_t nbits) {
     before("unspecified_", nbits);
     try {
         return check_width(after(subdomain_->unspecified_(nbits)), nbits);
@@ -400,8 +444,7 @@ RiscOperators::unspecified_(size_t nbits)
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::number_(size_t nbits, uint64_t value)
-{
+RiscOperators::number_(size_t nbits, uint64_t value) {
     before("number_", nbits, value);
     try {
         return check_width(after(subdomain_->number_(nbits, value)), nbits);
@@ -415,8 +458,7 @@ RiscOperators::number_(size_t nbits, uint64_t value)
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::boolean_(bool value)
-{
+RiscOperators::boolean_(bool value) {
     before("boolean_", value);
     try {
         return check_width(after(subdomain_->boolean_(value)), 1);
@@ -430,8 +472,7 @@ RiscOperators::boolean_(bool value)
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::bottom_(size_t nbits)
-{
+RiscOperators::bottom_(size_t nbits) {
     before("bottom_", nbits);
     try {
         return check_width(after(subdomain_->bottom_(nbits)), nbits);
@@ -445,8 +486,7 @@ RiscOperators::bottom_(size_t nbits)
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::filterCallTarget(const BaseSemantics::SValuePtr &a)
-{
+RiscOperators::filterCallTarget(const BaseSemantics::SValuePtr &a) {
     before("filterCallTarget", a);
     try {
         return check_width(after(subdomain_->filterCallTarget(a)), a->nBits());
@@ -460,8 +500,7 @@ RiscOperators::filterCallTarget(const BaseSemantics::SValuePtr &a)
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::filterReturnTarget(const BaseSemantics::SValuePtr &a)
-{
+RiscOperators::filterReturnTarget(const BaseSemantics::SValuePtr &a) {
     before("filterReturnTarget", a);
     try {
         return check_width(after(subdomain_->filterReturnTarget(a)), a->nBits());
@@ -475,8 +514,7 @@ RiscOperators::filterReturnTarget(const BaseSemantics::SValuePtr &a)
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::filterIndirectJumpTarget(const BaseSemantics::SValuePtr &a)
-{
+RiscOperators::filterIndirectJumpTarget(const BaseSemantics::SValuePtr &a) {
     before("filterIndirectJumpTarget", a);
     try {
         return check_width(after(subdomain_->filterIndirectJumpTarget(a)), a->nBits());
@@ -490,8 +528,7 @@ RiscOperators::filterIndirectJumpTarget(const BaseSemantics::SValuePtr &a)
 }
 
 void
-RiscOperators::hlt()
-{
+RiscOperators::hlt() {
     before("hlt");
     try {
         subdomain_->hlt();
@@ -506,8 +543,7 @@ RiscOperators::hlt()
 }
 
 void
-RiscOperators::cpuid()
-{
+RiscOperators::cpuid() {
     before("cpuid");
     try {
         subdomain_->cpuid();
@@ -522,8 +558,7 @@ RiscOperators::cpuid()
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::rdtsc()
-{
+RiscOperators::rdtsc() {
     before("rdtsc");
     try {
         return check_width(after(subdomain_->rdtsc()), 64);
@@ -537,8 +572,7 @@ RiscOperators::rdtsc()
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::and_(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b)
-{
+RiscOperators::and_(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
     before("and_", a, b);
     try {
         check_equal_widths(a, b);
@@ -553,8 +587,7 @@ RiscOperators::and_(const BaseSemantics::SValuePtr &a, const BaseSemantics::SVal
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::or_(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b)
-{
+RiscOperators::or_(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
     before("or_", a, b);
     try {
         check_equal_widths(a, b);
@@ -569,8 +602,7 @@ RiscOperators::or_(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValu
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::xor_(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b)
-{
+RiscOperators::xor_(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
     before("xor_", a, b);
     try {
         check_equal_widths(a, b);
@@ -585,8 +617,7 @@ RiscOperators::xor_(const BaseSemantics::SValuePtr &a, const BaseSemantics::SVal
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::invert(const BaseSemantics::SValuePtr &a)
-{
+RiscOperators::invert(const BaseSemantics::SValuePtr &a) {
     before("invert", a);
     try {
         return check_width(after(subdomain_->invert(a)), a->nBits());
@@ -600,8 +631,7 @@ RiscOperators::invert(const BaseSemantics::SValuePtr &a)
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::extract(const BaseSemantics::SValuePtr &a, size_t b, size_t c)
-{
+RiscOperators::extract(const BaseSemantics::SValuePtr &a, size_t b, size_t c) {
     before("extract", a, b, c);
     try {
         return check_width(after(subdomain_->extract(a, b, c)), c-b);
@@ -615,8 +645,7 @@ RiscOperators::extract(const BaseSemantics::SValuePtr &a, size_t b, size_t c)
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::concat(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b)
-{
+RiscOperators::concat(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
     before("concat", a, b);
     try {
         return check_width(after(subdomain_->concat(a, b)), a->nBits()+b->nBits());
@@ -630,8 +659,7 @@ RiscOperators::concat(const BaseSemantics::SValuePtr &a, const BaseSemantics::SV
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::leastSignificantSetBit(const BaseSemantics::SValuePtr &a)
-{
+RiscOperators::leastSignificantSetBit(const BaseSemantics::SValuePtr &a) {
     before("leastSignificantSetBit", a);
     try {
         return check_width(after(subdomain_->leastSignificantSetBit(a)), a->nBits());
@@ -645,8 +673,7 @@ RiscOperators::leastSignificantSetBit(const BaseSemantics::SValuePtr &a)
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::mostSignificantSetBit(const BaseSemantics::SValuePtr &a)
-{
+RiscOperators::mostSignificantSetBit(const BaseSemantics::SValuePtr &a) {
     before("mostSignificantSetBit", a);
     try {
         return check_width(after(subdomain_->mostSignificantSetBit(a)), a->nBits());
@@ -660,8 +687,7 @@ RiscOperators::mostSignificantSetBit(const BaseSemantics::SValuePtr &a)
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::rotateLeft(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b)
-{
+RiscOperators::rotateLeft(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
     before("rotateLeft", a, b);
     try {
         return check_width(after(subdomain_->rotateLeft(a, b)), a->nBits());
@@ -675,8 +701,7 @@ RiscOperators::rotateLeft(const BaseSemantics::SValuePtr &a, const BaseSemantics
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::rotateRight(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b)
-{
+RiscOperators::rotateRight(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
     before("rotateRight", a, b);
     try {
         return check_width(after(subdomain_->rotateRight(a, b)), a->nBits());
@@ -690,8 +715,7 @@ RiscOperators::rotateRight(const BaseSemantics::SValuePtr &a, const BaseSemantic
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::shiftLeft(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b)
-{
+RiscOperators::shiftLeft(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
     before("shiftLeft", a, b);
     try {
         return check_width(after(subdomain_->shiftLeft(a, b)), a->nBits());
@@ -705,8 +729,7 @@ RiscOperators::shiftLeft(const BaseSemantics::SValuePtr &a, const BaseSemantics:
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::shiftRight(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b)
-{
+RiscOperators::shiftRight(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
     before("shiftRight", a, b);
     try {
         return check_width(after(subdomain_->shiftRight(a, b)), a->nBits());
@@ -720,8 +743,7 @@ RiscOperators::shiftRight(const BaseSemantics::SValuePtr &a, const BaseSemantics
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::shiftRightArithmetic(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b)
-{
+RiscOperators::shiftRightArithmetic(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
     before("shiftRightArithmetic", a, b);
     try {
         return check_width(after(subdomain_->shiftRightArithmetic(a, b)), a->nBits());
@@ -735,8 +757,7 @@ RiscOperators::shiftRightArithmetic(const BaseSemantics::SValuePtr &a, const Bas
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::equalToZero(const BaseSemantics::SValuePtr &a)
-{
+RiscOperators::equalToZero(const BaseSemantics::SValuePtr &a) {
     before("equalToZero", a);
     try {
         return check_width(after(subdomain_->equalToZero(a)), 1);
@@ -750,8 +771,7 @@ RiscOperators::equalToZero(const BaseSemantics::SValuePtr &a)
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::ite(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b, const BaseSemantics::SValuePtr &c)
-{
+RiscOperators::ite(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b, const BaseSemantics::SValuePtr &c) {
     before("ite", a, b, c);
     try {
         check_equal_widths(b, c);
@@ -766,8 +786,7 @@ RiscOperators::ite(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValu
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::unsignedExtend(const BaseSemantics::SValuePtr &a, size_t b)
-{
+RiscOperators::unsignedExtend(const BaseSemantics::SValuePtr &a, size_t b) {
     before("unsignedExtend", a, b);
     try {
         return check_width(after(subdomain_->unsignedExtend(a, b)), b);
@@ -781,8 +800,7 @@ RiscOperators::unsignedExtend(const BaseSemantics::SValuePtr &a, size_t b)
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::signExtend(const BaseSemantics::SValuePtr &a, size_t b)
-{
+RiscOperators::signExtend(const BaseSemantics::SValuePtr &a, size_t b) {
     before("signExtend", a, b);
     try {
         return check_width(after(subdomain_->signExtend(a, b)), b);
@@ -796,8 +814,7 @@ RiscOperators::signExtend(const BaseSemantics::SValuePtr &a, size_t b)
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::add(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b)
-{
+RiscOperators::add(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
     before("add", a, b);
     try {
         check_equal_widths(a, b);
@@ -813,8 +830,7 @@ RiscOperators::add(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValu
 
 BaseSemantics::SValuePtr
 RiscOperators::addWithCarries(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b,
-                              const BaseSemantics::SValuePtr &c, BaseSemantics::SValuePtr &d/*out*/)
-{
+                              const BaseSemantics::SValuePtr &c, BaseSemantics::SValuePtr &d/*out*/) {
     before("addWithCarries", a, b, c);
     try {
         check_equal_widths(a, b);
@@ -834,8 +850,7 @@ RiscOperators::addWithCarries(const BaseSemantics::SValuePtr &a, const BaseSeman
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::negate(const BaseSemantics::SValuePtr &a)
-{
+RiscOperators::negate(const BaseSemantics::SValuePtr &a) {
     before("negate", a);
     try {
         return check_width(after(subdomain_->negate(a)), a->nBits());
@@ -849,8 +864,7 @@ RiscOperators::negate(const BaseSemantics::SValuePtr &a)
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b)
-{
+RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
     before("signedDivide", a, b);
     try {
         return check_width(after(subdomain_->signedDivide(a, b)), a->nBits());
@@ -864,8 +878,7 @@ RiscOperators::signedDivide(const BaseSemantics::SValuePtr &a, const BaseSemanti
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::signedModulo(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b)
-{
+RiscOperators::signedModulo(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
     before("signedModulo", a, b);
     try {
         return check_width(after(subdomain_->signedModulo(a, b)), b->nBits());
@@ -879,8 +892,7 @@ RiscOperators::signedModulo(const BaseSemantics::SValuePtr &a, const BaseSemanti
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b)
-{
+RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
     before("signedMultiply", a, b);
     try {
         return check_width(after(subdomain_->signedMultiply(a, b)), a->nBits()+b->nBits());
@@ -894,8 +906,7 @@ RiscOperators::signedMultiply(const BaseSemantics::SValuePtr &a, const BaseSeman
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b)
-{
+RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
     before("unsignedDivide", a, b);
     try {
         return check_width(after(subdomain_->unsignedDivide(a, b)), a->nBits());
@@ -909,8 +920,7 @@ RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a, const BaseSeman
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b)
-{
+RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
     before("unsignedModulo", a, b);
     try {
         return check_width(after(subdomain_->unsignedModulo(a, b)), b->nBits());
@@ -924,8 +934,7 @@ RiscOperators::unsignedModulo(const BaseSemantics::SValuePtr &a, const BaseSeman
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b)
-{
+RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a, const BaseSemantics::SValuePtr &b) {
     before("unsignedMultiply", a, b);
     try {
         return check_width(after(subdomain_->unsignedMultiply(a, b)), a->nBits()+b->nBits());
@@ -939,8 +948,7 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a, const BaseSem
 }
 
 void
-RiscOperators::interrupt(int a, int b)
-{
+RiscOperators::interrupt(int a, int b) {
     before("interrupt", a, b);
     try {
         subdomain_->interrupt(a, b);
@@ -1165,8 +1173,7 @@ RiscOperators::fpRoundTowardZero(const BaseSemantics::SValuePtr &a, SgAsmFloatTy
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::readRegister(RegisterDescriptor a, const BaseSemantics::SValuePtr &b)
-{
+RiscOperators::readRegister(RegisterDescriptor a, const BaseSemantics::SValuePtr &b) {
     before("readRegister", a, b);
     try {
         return check_width(after(subdomain_->readRegister(a, b)), a.nBits());
@@ -1180,8 +1187,7 @@ RiscOperators::readRegister(RegisterDescriptor a, const BaseSemantics::SValuePtr
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::peekRegister(RegisterDescriptor a, const BaseSemantics::SValuePtr &b)
-{
+RiscOperators::peekRegister(RegisterDescriptor a, const BaseSemantics::SValuePtr &b) {
     before("peekRegister", a, b);
     try {
         return check_width(after(subdomain_->peekRegister(a, b)), a.nBits());
@@ -1195,8 +1201,7 @@ RiscOperators::peekRegister(RegisterDescriptor a, const BaseSemantics::SValuePtr
 }
 
 void
-RiscOperators::writeRegister(RegisterDescriptor a, const BaseSemantics::SValuePtr &b)
-{
+RiscOperators::writeRegister(RegisterDescriptor a, const BaseSemantics::SValuePtr &b) {
     before("writeRegister", a, b);
     try {
         subdomain_->writeRegister(a, b);
@@ -1212,8 +1217,7 @@ RiscOperators::writeRegister(RegisterDescriptor a, const BaseSemantics::SValuePt
 
 BaseSemantics::SValuePtr
 RiscOperators::readMemory(RegisterDescriptor a, const BaseSemantics::SValuePtr &b, const BaseSemantics::SValuePtr &c,
-                          const BaseSemantics::SValuePtr &d)
-{
+                          const BaseSemantics::SValuePtr &d) {
     before("readMemory", a, b, c, d);
     try {
         return check_width(after(subdomain_->readMemory(a, b, c, d)), c->nBits());
@@ -1227,8 +1231,7 @@ RiscOperators::readMemory(RegisterDescriptor a, const BaseSemantics::SValuePtr &
 }
 
 BaseSemantics::SValuePtr
-RiscOperators::peekMemory(RegisterDescriptor a, const BaseSemantics::SValuePtr &b, const BaseSemantics::SValuePtr &c)
-{
+RiscOperators::peekMemory(RegisterDescriptor a, const BaseSemantics::SValuePtr &b, const BaseSemantics::SValuePtr &c) {
     before("peekMemory", a, b, c);
     try {
         return check_width(after(subdomain_->peekMemory(a, b, c)), c->nBits());
@@ -1243,8 +1246,7 @@ RiscOperators::peekMemory(RegisterDescriptor a, const BaseSemantics::SValuePtr &
 
 void
 RiscOperators::writeMemory(RegisterDescriptor a, const BaseSemantics::SValuePtr &b, const BaseSemantics::SValuePtr &c,
-                           const BaseSemantics::SValuePtr &d)
-{
+                           const BaseSemantics::SValuePtr &d) {
     before("writeMemory", a, b, c, d);
     try {
         subdomain_->writeMemory(a, b, c, d);

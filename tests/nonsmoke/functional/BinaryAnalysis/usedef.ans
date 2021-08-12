@@ -1,10 +1,6 @@
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080480a0: je 0x080480a3<case1>
 Symbolic: startInstruction(0x080480a0: je 0x080480a3<case1>)
@@ -33,10 +29,6 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080480a2: hlt 
 Symbolic: startInstruction(0x080480a2: hlt)
@@ -60,10 +52,6 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080480a3: mov eax, ebx
 Symbolic: startInstruction(0x080480a3: mov eax, ebx)
@@ -133,10 +121,6 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080480a9: add eax, eax
 Symbolic: startInstruction(0x080480a9: add eax, eax)
@@ -355,10 +339,6 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080480b1: mov eax, 0x00000001
 Symbolic: startInstruction(0x080480b1: mov eax, 0x00000001)
@@ -407,10 +387,6 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080480b8: mov eax, 0x00000003
 Symbolic: startInstruction(0x080480b8: mov eax, 0x00000003)
@@ -613,10 +589,6 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080480c8: mov eax, ebx
 Symbolic: startInstruction(0x080480c8: mov eax, ebx)
@@ -760,10 +732,6 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080480d5: mov dword ds:[eax], ebx
 Symbolic: startInstruction(0x080480d5: mov dword ds:[eax], ebx)
@@ -822,10 +790,6 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080480d9: mov eax, dword ds:[ebx]
 Symbolic: startInstruction(0x080480d9: mov eax, dword ds:[ebx])
@@ -886,10 +850,6 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080480dd: shr eax, 0x0a
 Symbolic: startInstruction(0x080480dd: shr eax, 0x0a)
@@ -1315,10 +1275,6 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080480ed: mov eax, 0x00000001
 Symbolic: startInstruction(0x080480ed: mov eax, 0x00000001)
@@ -1491,10 +1447,6 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x080480f8: push 0x00000003
 Symbolic: startInstruction(0x080480f8: push 0x00000003)
@@ -1621,10 +1573,6 @@ Symbolic: operators destroyed
 =====================================================================================
 === Starting a new basic block ===
 =====================================================================================
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
-Symbolic: number_(16, 0) = 0x0000[u16]
 
 0x08048105: hlt 
 Symbolic: startInstruction(0x08048105: hlt)
