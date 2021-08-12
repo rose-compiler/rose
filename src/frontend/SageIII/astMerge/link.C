@@ -580,13 +580,15 @@ struct VariableLinker {
         // We only concatenate the chain of inames associated with this symbol if the
         // symbol's basis is actually the first item of that chain. Other cases are due
         // to multiple extern declaration being seen from headers (which are read in
-        // various orders) and eliminated by sharing. The result is a single chain with
+        // various orders) and eliminated by sharing. The result should be a single chain with
         // symbols pointing to various point of that chain.
+        // Potential for 'last' to point to some iname which creates cycles: setting prev_decl_item to nulltptr
         SgInitializedName * base_iname = isSgInitializedName(oldsym->get_symbol_basis());
         ROSE_ASSERT(base_iname != NULL);
         if (base_iname == olddesc.first && base_iname->get_prev_decl_item() == NULL) {
           olddesc.first->set_prev_decl_item(last);
           last = olddesc.last;
+          last->set_prev_decl_item(nullptr);
         }
       }
     }
