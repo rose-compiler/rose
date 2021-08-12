@@ -6171,20 +6171,25 @@ SgSymbol * SgScopeStatement::find_symbol_from_declaration(const T* node) const {
 
   const SgNamespaceDefinitionStatement * namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
   if (symbol == NULL && namespaceDefinitionStatement != NULL) {
-    ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
     const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
-
+    ROSE_ASSERT(globalNamespaceDefinitionStatement != nullptr);
     symbol = globalNamespaceDefinitionStatement->get_symbol_table()->find(node);
-    if (symbol != NULL) {
-      SgAliasSymbol * alias = isSgAliasSymbol(symbol);
-      ROSE_ASSERT(alias != NULL);
+  }
 
-      // return aliased symbol
-      symbol = alias->get_alias();
-
-      // This should not be an alias (chains of alias symbol are not allowed by design).
-      ROSE_ASSERT(!isSgAliasSymbol(symbol));
+  const SgGlobal * global_scope = isSgGlobal(this);
+  if (symbol == NULL && global_scope != NULL) {
+    SgProject * project = SageInterface::getProject(global_scope);
+    if (project != NULL) {
+      SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+      assert(globalScopeAcrossFiles != NULL);
+      symbol = globalScopeAcrossFiles->get_symbol_table()->find(node);
     }
+  }
+
+  SgAliasSymbol * alias = isSgAliasSymbol(symbol);
+  if (alias != NULL) {
+    symbol = alias->get_alias();
+    ROSE_ASSERT(!isSgAliasSymbol(symbol));
   }
 
   return symbol;
