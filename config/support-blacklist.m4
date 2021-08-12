@@ -31,6 +31,18 @@ AC_DEFUN([ROSE_SUPPORT_BLACKLIST],[
             break
         fi
 
+        # Boost-1.60.0 serialization cannot be compiled with GCC-6.1.0 because of ambiguous destructors. Also, when
+        # optimizations are disabled and assertions are enabled, the assembler ("as") takes about an hour to compile
+        # src/Rose/BinaryAnalysis/SerialIo.C on a fast machine (this is true of boost-1.61 with GCC-6.1.0 as well).
+        if test "$support_binaries_frontend" = yes -a \
+                "$rose_boost_version" = 106000 -a \
+                "$FRONTEND_CXX_COMPILER_VENDOR" = gnu -a \
+                "$FRONTEND_CXX_VERSION_MAJOR" = 6 -a \
+                "$FRONTEND_CXX_VERSION_MINOR" = 1; then
+            prohibited="binary analysis enabled with boost 1.60.x and GCC 6.1.x"
+            break
+        fi
+
         # Boost-1.61 through 1.63 serialization cause link errors when compiled by Intel compilers. Binary analysis
         # is the only thing that uses serialization at this time.
         if test "$rose_boost_version" -ge 106100 -a "$rose_boost_version" -le 106300 -a \
