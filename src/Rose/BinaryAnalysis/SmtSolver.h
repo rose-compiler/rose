@@ -475,6 +475,9 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
 
+    /** Evidence of satisfiability. */
+    using Evidence = Sawyer::Container::Map<std::string /*variable name*/, SymbolicExpr::Ptr /*value*/>;
+
     /** Names of items for which satisfiability evidence exists.
      *
      *  Returns a vector of strings (variable names or memory addresses) that can be passed to @ref evidenceForName.  Not all
@@ -494,6 +497,11 @@ public:
     virtual SymbolicExpr::Ptr evidenceForName(const std::string&) {
         return SymbolicExpr::Ptr();
     }
+
+    /** All evidence of satisfiability.
+     *
+     *  This is the same as calling @ref evidenceNames and then calling @ref evidenceForName for each of those names. */
+    Evidence evidence();
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

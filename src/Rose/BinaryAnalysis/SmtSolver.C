@@ -99,6 +99,14 @@ SmtSolver::reset() {
     // stats not cleared
 }
 
+SmtSolver::Evidence
+SmtSolver::evidence() {
+    Evidence retval;
+    for (const std::string &name: evidenceNames())
+        retval.insert(name, evidenceForName(name));
+    return retval;
+}
+
 void
 SmtSolver::clearEvidence() {
     outputText_ = "";
