@@ -531,7 +531,7 @@ Engine::extend(const Path::Ptr &path, const BS::RiscOperators::Ptr &ops, const S
         // For each execution unit, extend the current path by that one unit and add it as new work.
         ASSERT_not_null(parentOutgoingState);
         for (const SemanticCallbacks::NextUnit &next: nextUnits) {
-            auto newPath = Path::instance(path, next.unit, next.assertion, parentOutgoingState);
+            auto newPath = Path::instance(path, next.unit, next.assertion, next.evidence, parentOutgoingState);
             if (insertWork(newPath))
                 ++nChildren;
         }
