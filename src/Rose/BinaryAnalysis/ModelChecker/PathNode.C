@@ -24,9 +24,9 @@ PathNode::PathNode(const ExecutionUnit::Ptr &unit)
 }
 
 PathNode::PathNode(const Ptr &parent, const ExecutionUnit::Ptr &unit, const SymbolicExpr::Ptr &assertion,
-                   const BS::State::Ptr &parentOutgoingState)
+                   const SmtSolver::Evidence &evidence, const BS::State::Ptr &parentOutgoingState)
     : parent_(parent), executionUnit_(unit),  incomingState_(parentOutgoingState), assertions_{assertion},
-      id_(Sawyer::fastRandomIndex(UINT64_MAX)) {
+      evidence_(evidence), id_(Sawyer::fastRandomIndex(UINT64_MAX)) {
     ASSERT_not_null(unit);
     ASSERT_not_null(parent);
     ASSERT_not_null(assertion);
@@ -42,11 +42,11 @@ PathNode::instance(const ExecutionUnit::Ptr &unit) {
 
 PathNode::Ptr
 PathNode::instance(const Ptr &parent, const ExecutionUnit::Ptr &unit, const SymbolicExpr::Ptr &assertion,
-                   const BS::State::Ptr &parentOutgoingState) {
+                   const SmtSolver::Evidence &evidence, const BS::State::Ptr &parentOutgoingState) {
     ASSERT_not_null(unit);
     ASSERT_not_null(parent);
     ASSERT_not_null(assertion);
-    return Ptr(new PathNode(parent, unit, assertion, parentOutgoingState));
+    return Ptr(new PathNode(parent, unit, assertion, evidence, parentOutgoingState));
 }
 
 uint64_t
@@ -98,6 +98,12 @@ std::vector<SymbolicExpr::Ptr>
 PathNode::assertions() const {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     return assertions_;                                 // must be a copy for thread safety
+}
+
+SmtSolver::Evidence
+PathNode::evidence() const {
+    // this member is read-only, initialized in the constructor, so no need to lock.
+    return evidence_;
 }
 
 void
@@ -296,6 +302,21 @@ void
 PathNode::toYamlHeader(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1) const {
     ASSERT_not_null(executionUnit_);
     executionUnit_->toYamlHeader(settings, out, prefix1);
+    std::string prefix(prefix1.size(), ' ');
+
+#if 0 // [Robb Matzke 2021-08-13]: I'm not sure it really makes sense to output this information yet
+      // since we're not showing the states. The evidence variable names don't mean too much if you can't
+      // look them up in the states to see where they came from. Even worse, the states for the non-final
+      // nodes have probably been deleted by now to save memory.
+    SmtSolver::Evidence e = evidence();
+    if (!e.isEmpty()) {
+        out <<prefix <<"evidence:\n";
+        for (const SmtSolver::Evidence::Node &node: e.nodes()) {
+            out <<prefix <<"  - name: " <<node.key() <<"\n";
+            out <<prefix <<"    value: " <<*node.value() <<"\n";
+        }
+    }
+#endif
 }
 
 void

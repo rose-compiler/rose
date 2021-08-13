@@ -23,6 +23,7 @@ namespace ModelChecker {
  * required. */
 class PathNode {
 public:
+    /** Shared-ownership pointer. */
     using Ptr = PathNodePtr;
 
 private:
@@ -45,6 +46,7 @@ private:
 
     bool executionFailed_ = false;                                 // true iff execution failed (and outgoingState_ therefore null)
     std::vector<SymbolicExpr::Ptr> assertions_;                    // assertions for the model checker for this node of the path
+    SmtSolver::Evidence evidence_;                                 // SMT evidence that path to and including this node is feasible
     std::vector<TagPtr> tags_;                                     // tags associated with this node of the path
     uint64_t id_ = 0;                                              // a random path ID number
     double processingTime_ = NAN;                                  // time required to execute and extend this node
@@ -62,7 +64,7 @@ protected:
      *
      *  Create a non-initial path node. This node is a continuation of the path ending at parent. See @ref instance. */
     PathNode(const Ptr &parent, const ExecutionUnitPtr&, const SymbolicExpr::Ptr &assertion,
-             const InstructionSemantics2::BaseSemantics::StatePtr &parentOutgoingState);
+             const SmtSolver::Evidence&, const InstructionSemantics2::BaseSemantics::StatePtr &parentOutgoingState);
 
 public:
     ~PathNode();
@@ -83,7 +85,7 @@ public:
      *
      *  Thread safety: This constructor is thread safe. */
     static Ptr instance(const Ptr &parent, const ExecutionUnitPtr&, const SymbolicExpr::Ptr &assertion,
-                        const InstructionSemantics2::BaseSemantics::StatePtr &parentOutgoingState);
+                        const SmtSolver::Evidence&, const InstructionSemantics2::BaseSemantics::StatePtr &parentOutgoingState);
 
     /** Property: Identifier.
      *
@@ -146,6 +148,13 @@ public:
      *
      *  Thread safety: This method is thread safe. */
     std::vector<SymbolicExpr::Ptr> assertions() const;
+
+    /** Returns the SMT solver evidence for path feasibility.
+     *
+     *  Returns that evidence that shows that the path ending at this node is feasible.
+     *
+     *  Thread safety: This method is thread safe. */
+    SmtSolver::Evidence evidence() const;
 
     /** Execute this node.
      *

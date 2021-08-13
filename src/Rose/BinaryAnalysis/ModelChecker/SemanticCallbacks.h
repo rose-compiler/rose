@@ -23,6 +23,7 @@ namespace ModelChecker {
  *  pure virtual. */
 class SemanticCallbacks {
 public:
+    /** Shared-ownership pointer. */
     using Ptr = SemanticCallbacksPtr;
 
 private:
@@ -217,6 +218,7 @@ public:
     struct NextUnit {
         ExecutionUnitPtr unit;                          /**< Unit to be executed. */
         SymbolicExpr::Ptr assertion;                    /**< Path assertion for this unit. */
+        SmtSolver::Evidence evidence;                   /**< SMT solver evidence that this is a feasible path. */
     };
 
     /** Discover next execution units.

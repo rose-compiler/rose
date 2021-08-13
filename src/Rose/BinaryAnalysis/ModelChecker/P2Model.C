@@ -1320,17 +1320,18 @@ SemanticCallbacks::nextUnits(const Path::Ptr &path, const BS::RiscOperators::Ptr
             case SmtSolver::SAT_YES:
                 // Create the next execution unit
                 if (ExecutionUnit::Ptr unit = findUnit(va)) {
-                    units.push_back({unit, assertion});
+                    units.push_back({unit, assertion, solver->evidence()});
                 } else if (settings_.nullRead != TestMode::OFF && va <= settings_.maxNullAddress) {
                     SourceLocation sloc = partitioner_.sourceLocations().get(va);
                     BS::SValue::Ptr addr = ops->number_(partitioner_.instructionProvider().wordSize(), va);
                     auto tag = NullDerefTag::instance(0, TestMode::MUST, IoMode::READ, nullptr, addr);
                     auto fail = FailureUnit::instance(va, sloc, "invalid instruction address", tag);
-                    units.push_back({fail, assertion});
+                    units.push_back({fail, assertion, SmtSolver::Evidence()});
                 } else {
                     SourceLocation sloc = partitioner_.sourceLocations().get(va);
                     auto tag = ErrorTag::instance(0, "invalid instruction pointer", "no instruction at address", nullptr, va);
-                    units.push_back({FailureUnit::instance(va, sloc, "invalid instruction address", tag), assertion});
+                    units.push_back({FailureUnit::instance(va, sloc, "invalid instruction address", tag), assertion,
+                                     SmtSolver::Evidence()});
                 }
                 break;
             case SmtSolver::SAT_NO:

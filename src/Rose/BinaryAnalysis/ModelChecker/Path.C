@@ -31,12 +31,12 @@ Path::instance(const ExecutionUnit::Ptr &unit) {
 
 Path::Ptr
 Path::instance(const Path::Ptr &prefix, const ExecutionUnit::Ptr &unit, const SymbolicExpr::Ptr &assertion,
-               const BS::State::Ptr &parentOutgoingState) {
+               const SmtSolver::Evidence &evidence, const BS::State::Ptr &parentOutgoingState) {
     ASSERT_not_null(prefix);
     ASSERT_not_null(unit);
     ASSERT_not_null(assertion);
     ASSERT_forbid(prefix->isEmpty());
-    auto node = PathNode::instance(prefix->lastNode(), unit, assertion, parentOutgoingState);
+    auto node = PathNode::instance(prefix->lastNode(), unit, assertion, evidence, parentOutgoingState);
     return Ptr(new Path(node));
 }
 
