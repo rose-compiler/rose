@@ -1,5 +1,5 @@
-#ifndef ANALYSISABSTRACTIONLAYER_H
-#define ANALYSISABSTRACTIONLAYER_H
+#ifndef AST_UTILITY_H
+#define AST_UTILITY_H
 
 // Author: Markus Schordan, 2013.
 
