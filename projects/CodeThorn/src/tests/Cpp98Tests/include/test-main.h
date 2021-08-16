@@ -2,7 +2,7 @@
 #pragma once
 
 #include <cstdio>
-#include <string>
+// #include <string>
 
 #if __cplusplus < 201103L
 #define OVERRIDE
@@ -35,6 +35,7 @@ void expected_output()
 
 void process_args(int argv, char** argc)
 {
+#if 0
   static const std::string help          = "-h";
   static const std::string help_long     = "--help";
   static const std::string expected      = "-e";
@@ -51,6 +52,7 @@ void process_args(int argv, char** argc)
     else
       printf("unknown argument: %s\n", arg);
   }
+#endif
 }
 
 int main(int argv, char** argc)

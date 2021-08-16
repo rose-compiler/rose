@@ -1872,7 +1872,7 @@ namespace
   ExtendedCallMatcherOuter::ReturnType
   ExtendedCallMatcherOuter::eval(SgExpression* n)
   {
-    return sg::dispatch(ExtendedCallMatcherInner(), n);
+    return sg::dispatch(ExtendedCallMatcherInner{}, n);
   }
 
   ExtendedCallMatcherOuter::ReturnType
@@ -1884,12 +1884,9 @@ namespace
 
 
 SgNodeHelper::ExtendedCallInfo
-SgNodeHelper::matchExtendedNormalizedCall(SgNode* n, bool matchExtended)
+SgNodeHelper::matchExtendedNormalizedCall(SgNode* n)
 {
   static constexpr bool TEST_EXTENDED_NORMALIZED_CALL = true;
-
-  if (!matchExtended) return SgNodeHelper::ExtendedCallInfo{};
-
 
   SgNodeHelper::ExtendedCallInfo res = sg::dispatch(ExtendedCallMatcherOuter(), n);
 

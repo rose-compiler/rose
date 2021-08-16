@@ -10,11 +10,10 @@ namespace CodeThorn
 
 struct CppLabeler : CLabeler
 {
-    using base = CLabeler;
-    using base::base;
+  CppLabeler();
+  explicit CppLabeler(SgNode*);
 
-  protected:
-    bool isFunctionCallNode(SgNode*) const ROSE_OVERRIDE;
+  // was: isFunctionCallNode(SgNode* n) const ROSE_OVERRIDE;
 };
 
 } // CodeThorn

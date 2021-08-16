@@ -54,10 +54,10 @@ namespace CodeThorn {
 
     void optionallyGenerateVerificationReports(CodeThornOptions& ctOpt,CTAnalysis* analyzer);
     void optionallyGenerateCallGraphDotFile(CodeThornOptions& ctOpt,CTAnalysis* analyzer);
-  
+
     SgProject* runRoseFrontEnd(int argc, char * argv[], CodeThornOptions& ctOpt, TimingCollector& timingCollector);
     void normalizationPass(CodeThornOptions& ctOpt, SgProject* sageProject);
-    Labeler* createLabeler(SgProject* sageProject, VariableIdMappingExtended* variableIdMapping);
+    Labeler* createLabeler(SgProject* sageProject, VariableIdMappingExtended* variableIdMapping, bool withCplusplus = false);
     VariableIdMappingExtended* createVariableIdMapping(CodeThornOptions& ctOpt, SgProject* sageProject);
 
     void optionallyPrintRunTimeAndMemoryUsageReport(CodeThornOptions& ctOpt,TimingCollector& tc);
@@ -72,7 +72,7 @@ namespace CodeThorn {
     void generateProgramStats(CodeThornOptions& ctOpt, ProgramInfo* progInfo1, ProgramInfo* progInfo2, VariableIdMappingExtended* vim);
 
   } // end of namespace CodeThornLib
-    
+
 } // end of namespace CodeThorn
 
 #endif

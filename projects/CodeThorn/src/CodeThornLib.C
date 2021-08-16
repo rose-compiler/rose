@@ -1,4 +1,5 @@
 #include "sage3basic.h"
+#include "SgNodeHelper.h"
 #include "CTAnalysis.h"
 #include "RewriteSystem.h"
 #include "Specialization.h"
@@ -188,6 +189,7 @@ namespace CodeThorn {
 	if(ctOpt.quiet==false) {
 	  cout<<"STATUS: normalizing program."<<endl;
 	}
+        // normalization.options.normalizeCplusplus=ctOpt.extendedNormalizedCppFunctionCalls; // PP(8/13/21)
 	normalization.normalizeAst(sageProject,ctOpt.normalizeLevel);
       }
       RoseAst ast(sageProject);
@@ -631,6 +633,7 @@ namespace CodeThorn {
       timingCollector.startTimer();
       Normalization normalization;
       normalization.options.printPhaseInfo=ctOpt.normalizePhaseInfo;
+      normalization.options.normalizeCplusplus=ctOpt.extendedNormalizedCppFunctionCalls; // PP(8/13/21)
       if(ctOpt.normalizeLevel>0) {
 	if(ctOpt.quiet==false) {
 	  cout<<"STATUS: normalizing program (level "<<ctOpt.normalizeLevel<<")"<<endl;
@@ -753,6 +756,7 @@ namespace CodeThorn {
       CodeThorn::Normalization normalization;
       normalization.options.printPhaseInfo=ctOpt.normalizePhaseInfo;
       normalization.setInliningOption(ctOpt.inlineFunctions);
+      normalization.options.normalizeCplusplus=ctOpt.extendedNormalizedCppFunctionCalls; // PP(8/13/21)
       normalization.normalizeAst(project,ctOpt.normalizeLevel);
     }
 
@@ -764,8 +768,21 @@ namespace CodeThorn {
       return variableIdMapping;
     }
 
-    Labeler* createLabeler(SgProject* project, VariableIdMappingExtended* variableIdMapping) {
-      return new CTIOLabeler(project,variableIdMapping);
+    namespace
+    {
+      bool matchCxxCall(SgNode* n)
+      {
+        return SgNodeHelper::matchExtendedNormalizedCall(n);
+      }
+    };
+
+
+    Labeler* createLabeler(SgProject* project, VariableIdMappingExtended* variableIdMapping, bool withCplusplus) {
+      CTIOLabeler* res = new CTIOLabeler(project,variableIdMapping);
+
+      if (withCplusplus) res->setIsFunctionCallFn(matchCxxCall);
+
+      return res;
     }
 
 #if 0
@@ -825,7 +842,7 @@ namespace CodeThorn {
 	if(ctOpt.status) cout<<"Generated program statistics report "<<reportPathAndFile<<endl;
       }
     }
-
+    
     void optionallyGenerateLineColumnCsv(CodeThornOptions& ctOpt, SgProject* node) {
       string fileName=ctOpt.info.astTraversalLineColumnCSVFileName;
       if(fileName.size()>0) {

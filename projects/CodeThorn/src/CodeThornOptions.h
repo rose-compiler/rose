@@ -14,7 +14,7 @@ namespace CodeThorn {
 class CodeThornOptions : public CodeThorn::Options {
 public:
   CodeThornOptions();
-  
+
   // hidden options
   int maxTransitionsForcedTop1=-1;
   int maxTransitionsForcedTop2=-1;
@@ -30,7 +30,7 @@ public:
   std::string roseAstReadFileName;
   bool roseAstWrite=false;
   bool roseAstMerge=false;
-  
+
   // visualization
   struct Visualization {
     bool rwClusters=false;
@@ -53,18 +53,18 @@ public:
     std::string icfgFileName;
     std::string callGraphFileName;
   } visualization;
-  
+
   // experimental options
   bool ompAst=false;
   int normalizeLevel=0;
   bool normalizePhaseInfo=false;
-  bool extendedNormalizedCppFunctionCalls=false; // support for CPP method calls (virtual etc.)
+  bool extendedNormalizedCppFunctionCalls=false; // support for CPP method calls (virtual, constructors etc.)
   bool traceMode=false; // trace mode in solver 16
   std::string stgTraceFileName;
   bool arraysNotInState=false;
   bool strictChecking=false; // only used for testing when a certain level of precision is enforced, does not impact correctness
   int32_t arrayAbstractionIndex=-1; // all elements at and beyond this index are summarized in one summary object. -1 indicates no abstraction
-  
+
   bool inlineFunctions=false;
   int inlineFunctionsDepth=10;
   bool annotateTerms=false; // unparsing
@@ -92,7 +92,7 @@ public:
   std::string filePathPrefixToRemove;
   bool reportSourceColumn=false;
   bool generateReports=false;
-  
+
   bool programStatsOnly=false;
   bool programStats=false;
   std::string programStatsFileName;
@@ -110,7 +110,7 @@ public:
 
   bool initialStateFilterUnusedVariables=true;
   int initialStateGlobalVarsAbstractionLevel=1;
-  
+
   std::string interpreterModeOuputFileName;
   bool printWarnings=false;
   //bool printViolations=false;
@@ -125,7 +125,7 @@ public:
 
   bool forkFunctionEnabled=false;
   std::string forkFunctionName="";
-  
+
   // RERS C-subset program options
   struct Rers {
     std::string assertResultsOutputFileName;
