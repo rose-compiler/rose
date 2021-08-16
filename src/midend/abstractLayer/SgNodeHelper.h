@@ -45,7 +45,7 @@ class SgPragmaDeclaration;
 class SgOmpClauseBodyStatement;
 
 namespace SgNodeHelper {
-  
+
 /*! \brief Functions for simplifying access to SgNode information
 
   * \author Markus Schordan
@@ -59,7 +59,7 @@ namespace SgNodeHelper {
 
  */
   typedef std::pair<int,int> LineColPair;
-  
+
   //! returns true if the declaration has an assign initializer (e.g. char[2]="";)
   bool hasAssignInitializer(SgVariableDeclaration* decl);
 
@@ -98,7 +98,7 @@ namespace SgNodeHelper {
   //! returns location (consisting of filename, line, column)
   //! Abbreviates fileName if too long
   std::string locationToString(SgNode* node, size_t maxFileNameLength=30);
-  
+
   //! returns location (consisting of filename, line, column) and source code of unparsed node in one string.
   //! Abbreviates fileName and unparsed source if too long (defaults are 30,20)
   std::string locationAndSourceCodeToString(SgNode* node, size_t maxFileNameLength=30, size_t maxSourceLength=20);
@@ -378,7 +378,7 @@ namespace SgNodeHelper {
   */
   std::list<SgFunctionDefinition*> listOfGlobalFunctionDefinitions(SgGlobal* global);
 
-  /*! 
+  /*!
     Determines if a variable is declared in global name space
    */
   bool isGlobalVariableDeclarationSymbol(SgSymbol* varDecl);
@@ -487,7 +487,7 @@ namespace SgNodeHelper {
     pointers to methods
    */
   std::list<SgVariableDeclaration*> memberVariableDeclarationsList(SgClassType* sgType);
-  
+
 #if __cplusplus > 199711L
   //! Checks if an OpenMP construct is marked with a nowait clause
   bool hasOmpNoWait(SgOmpClauseBodyStatement *ompNode);
@@ -547,7 +547,7 @@ namespace SgNodeHelper {
 
   //! \deprecated use locationAndSourceCodeToString instead
   std::string sourceLocationAndNodeToString(SgNode* node);
-  
+
 #if __cplusplus > 199711L
   // Can a given node be changed? (aka transformed)
   bool nodeCanBeChanged(SgLocatedNode * lnode);
@@ -562,39 +562,39 @@ namespace SgNodeHelper {
       /// no-match constructor
       ExtendedCallInfo()
       : rep(NULL)
-      {}   
-    
+      {}
+
       /// node @ref callnode contanins some function call
       ExtendedCallInfo(SgLocatedNode& callnode)
       : rep(&callnode)
-      {}   
-   
-      /// the call or a parent node (e.g., new expression) 
+      {}
+
+      /// the call or a parent node (e.g., new expression)
       SgLocatedNode*            representativeNode() const;
 
       /// returns the call expression if this represents a "normal" call
       /// or nullptr otherwise.
-      SgFunctionCallExp*        callExpression()     const;     
+      SgFunctionCallExp*        callExpression()     const;
 
       /// returns the constructor initialization node
       /// of nullptr.
-      SgConstructorInitializer* ctorInitializer()    const;              
+      SgConstructorInitializer* ctorInitializer()    const;
 
       /// returns the function pointer expression representing the target
       ///  (if this is a function pointer call)
       //  or the nullptr otherise.
-      SgExpression*             functionPointer()    const; 
-     
-      /// true iff this structure represents a match 
+      SgExpression*             functionPointer()    const;
+
+      /// true iff this structure represents a match
       operator bool() const { return rep != NULL; }
-      
+
     private:
       SgLocatedNode* rep;
   };
- 
-  /// matches C and C++ function calls (also ctor and dtor) 
+
+  /// matches C and C++ function calls (also ctor and dtor)
   ExtendedCallInfo
-  matchExtendedNormalizedCall(SgNode*, bool matchExtended=false);
+  matchExtendedNormalizedCall(SgNode*);
 } // end of namespace SgNodeHelper
 
 #endif

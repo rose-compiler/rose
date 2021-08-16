@@ -241,18 +241,17 @@ class Labeler {
 
   virtual iterator begin() = 0;
   virtual iterator end() = 0;
- protected:
-  virtual void computeNodeToLabelMapping() = 0;
-  virtual void registerLabel(LabelProperty) = 0;
-  virtual void ensureValidNodeToLabelMapping() = 0;
-  virtual bool isFunctionCallNode(SgNode*) const = 0;
+ //~ protected:
+  //~ virtual void computeNodeToLabelMapping() = 0;
+  //~ virtual void registerLabel(LabelProperty) = 0;
+  //~ virtual void ensureValidNodeToLabelMapping() = 0;
 };
 
 class CLabeler : public Labeler {
  public:
-  CLabeler() = default;
-  ~CLabeler() = default;
+  CLabeler();
   explicit CLabeler(SgNode*);
+  ~CLabeler() = default;
 
   int numberOfAssociatedLabels(SgNode* node) ROSE_OVERRIDE;
   void createLabels(SgNode* node) ROSE_OVERRIDE;
@@ -319,17 +318,21 @@ class CLabeler : public Labeler {
 
   Labeler::iterator begin() ROSE_OVERRIDE;
   Labeler::iterator end() ROSE_OVERRIDE;
+  void setIsFunctionCallFn(std::function<bool(SgNode*)>); // non-virtual setter
  protected:
-  void computeNodeToLabelMapping() ROSE_OVERRIDE;
-  void registerLabel(LabelProperty) ROSE_OVERRIDE;
-  void ensureValidNodeToLabelMapping() ROSE_OVERRIDE;
-  bool isFunctionCallNode(SgNode*) const ROSE_OVERRIDE;
+  virtual void computeNodeToLabelMapping();
+  virtual void registerLabel(LabelProperty);
+  virtual void ensureValidNodeToLabelMapping();
+
+  // bool isFunctionCallNode(SgNode*) const ROSE_OVERRIDE; repl. with function pointer
 
   bool _isValidMappingNodeToLabel = false;
   typedef std::vector<LabelProperty> LabelToLabelPropertyMapping;
   LabelToLabelPropertyMapping mappingLabelToLabelProperty;
   typedef std::map<SgNode*,Label> NodeToLabelMapping;
   NodeToLabelMapping mappingNodeToLabel;
+
+  std::function<bool(SgNode*)> isFunctionCallNode;
 };
 
 

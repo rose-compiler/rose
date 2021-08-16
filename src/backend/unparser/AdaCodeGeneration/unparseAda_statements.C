@@ -1409,7 +1409,7 @@ namespace
 
       const SgAdaDiscriminatedTypeDecl& dcl = *pendingDiscriminants;
 
-      // consume discriminants (actually, not be necessary)
+      // consume discriminants (actually, not necessary)
       pendingDiscriminants = nullptr;
 
       if (si::ada::hasUnknownDiscriminants(dcl))

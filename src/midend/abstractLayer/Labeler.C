@@ -216,8 +216,12 @@ bool LabelProperty::isIOLabel() { assert(_isValid); return isStdOutLabel()||isSt
 VariableId LabelProperty::getIOVarId() { assert(_ioType!=LABELIO_NONE); return _variableId; }
 int LabelProperty::getIOConst() { assert(_ioType!=LABELIO_NONE); return _ioValue; }
 
+CLabeler::CLabeler()
+: Labeler(), isFunctionCallNode(SgNodeHelper::Pattern::matchFunctionCall)
+{}
+
 CLabeler::CLabeler(SgNode* start)
-: Labeler()
+: CLabeler()
 {
   createLabels(start);
   computeNodeToLabelMapping();
@@ -518,8 +522,16 @@ long CLabeler::numberOfLabels() {
   return mappingLabelToLabelProperty.size();
 }
 
+/*
+ * replaced with variable isFunctionCallNode
 bool CLabeler::isFunctionCallNode(SgNode* node) const {
   return SgNodeHelper::Pattern::matchFunctionCall(node);
+}
+*/
+
+void CLabeler::setIsFunctionCallFn(std::function<bool(SgNode*)> fn)
+{
+  isFunctionCallNode = std::move(fn);
 }
 
 Label CLabeler::functionCallLabel(SgNode* node) {
