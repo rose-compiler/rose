@@ -114,6 +114,13 @@ bat_trace_LDFLAGS = $(ROSE_RPATHS)
 bat_trace_LDADD = libbatSupport.a $(ROSE_LIBS)
 tests += bat-trace.passed
 
+bin_PROGRAMS += bat-var
+bat_var_SOURCES = bat-var.C
+bat_var_CPPFLAGS = $(ROSE_INCLUDES)
+bat_var_LDFLAGS = $(ROSE_RPATHS)
+bat_var_LDADD = libbatSupport.a $(ROSE_LIBS)
+tests += bat-var.passed
+
 $(tests): %.passed: %
 	@$(RTH_RUN)							\
 		TITLE="testing $* [$@]"					\

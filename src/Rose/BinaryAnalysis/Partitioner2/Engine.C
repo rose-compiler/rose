@@ -643,13 +643,16 @@ Engine::partitionerSwitches(PartitionerSettings &settings) {
               .hidden(true));
 
     sg.insert(Switch("name-strings")
-              .intrinsicValue(true, settings.namingStrings)
+              .argument("addresses", addressIntervalParser(settings.namingStrings), "all")
               .doc("Scans the instructions and gives labels to constants that refer to the beginning of string literals. "
-                   "The label is usually the first few characters of the string.  The @s{no-name-strings} turns this "
-                   "feature off. The default is to " + std::string(settings.namingStrings?"":"not ") + "do this step."));
+                   "The label is usually the first few characters of the string. The argument for this switch is the "
+                   "range of integer values that should be tested as string pointers, defaulting to all addresses. The "
+                   "@s{no-name-strings} switch turns this feature off. The default is to " +
+                   (settings.namingStrings.isEmpty() ? "not perform this labeling." :
+                    ("try to label constants within " + StringUtility::addrToString(settings.namingStrings) + "."))));
     sg.insert(Switch("no-name-strings")
               .key("name-strings")
-              .intrinsicValue(false, settings.namingStrings)
+              .intrinsicValue(AddressInterval(), settings.namingStrings)
               .hidden(true));
 
     sg.insert(Switch("name-syscalls")
@@ -1792,9 +1795,9 @@ Engine::runPartitionerFinal(Partitioner &partitioner) {
         SAWYER_MESG(where) <<"naming constants\n";
         Modules::nameConstants(partitioner);
     }
-    if (settings_.partitioner.namingStrings) {
+    if (!settings_.partitioner.namingStrings.isEmpty()) {
         SAWYER_MESG(where) <<"naming strings\n";
-        Modules::nameStrings(partitioner);
+        Modules::nameStrings(partitioner, settings_.partitioner.namingStrings);
     }
     if (settings_.partitioner.namingSyscalls) {
         SAWYER_MESG(where) <<"naming system calls\n";

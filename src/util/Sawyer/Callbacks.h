@@ -80,22 +80,36 @@ public:
     }
 
     template<class CB, class Args>
-    bool applyCallback(CB *callback, bool chained, const Args &args) const {
+    bool applyCallback(CB *callback, bool chained, Args &args) const {
         return (*callback)(chained, args);
     }
 
     template<class CB, class Args>
-    bool applyCallback(const SharedPointer<CB> &callback, bool chained, const Args &args) const {
+    bool applyCallback(const SharedPointer<CB> &callback, bool chained, Args &args) const {
         return (*callback)(chained, args);
     }
 
+#if __cplusplus >= 201103ul
     template<class CB, class Args>
-    bool applyCallback(CB &callback, bool chained, const Args &args) const {
+    bool applyCallback(const std::shared_ptr<CB> &callback, bool chained, Args &args) const {
+        return (*callback)(chained, args);
+    }
+#endif
+
+    template<class CB, class Args>
+    bool applyCallback(CB &callback, bool chained, Args &args) const {
         return callback(chained, args);
     }
 
     template<class Arguments>
     bool apply(bool chained, const Arguments &arguments) const {
+        for (typename CbList::const_iterator iter=callbacks_.begin(); iter!=callbacks_.end(); ++iter)
+            chained = applyCallback(*iter, chained, arguments);
+        return chained;
+    }
+
+    template<class Arguments>
+    bool apply(bool chained, Arguments &arguments) const {
         for (typename CbList::const_iterator iter=callbacks_.begin(); iter!=callbacks_.end(); ++iter)
             chained = applyCallback(*iter, chained, arguments);
         return chained;

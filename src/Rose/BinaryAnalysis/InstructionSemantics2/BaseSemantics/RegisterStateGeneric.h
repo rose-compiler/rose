@@ -42,6 +42,12 @@ class RegisterStateGeneric: public RegisterState {
     //                                  Basic Types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Base type. */
+    using Super = RegisterState;
+
+    /** Shared-ownership pointer. */
+    using Ptr = RegisterStateGenericPtr;
+
     /** Exception when register storage is not present.
      *
      *  If the @ref accessCreatesLocations property is clear and a caller attempts to access a register (or part) that is not

@@ -69,6 +69,13 @@ typedef Sawyer::SharedPointer<class SValue> SValuePtr;
  *  a base name (unique ID number), offset, and sign. */
 class SValue: public BaseSemantics::SValue {
 public:
+    /** Base type. */
+    using Super = BaseSemantics::SValue;
+
+    /** Shared-ownership pointer. */
+    using Ptr = SValuePtr;
+
+public:
     uint64_t name;              /**< Zero for constants; non-zero ID number for everything else. */
     uint64_t offset;            /**< The constant (if name==0) or an offset w.r.t. an unknown (named) base value. */
     bool negate;                /**< Switch between name+offset and (-name)+offset; should be false for constants. */
@@ -246,6 +253,12 @@ typedef boost::shared_ptr<class State> StatePtr;
 /** Represents the entire state of the machine. This state expects to use a subclass of BaseSemantics::MemoryCellList as
  *  its memory state, and does not expect that MemoryCellList to be byte-restricted. */
 class State: public BaseSemantics::State {
+public:
+    /** Base type. */
+    using Super = BaseSemantics::State;
+
+    /** Shared-ownership pointer. */
+    using Ptr = StatePtr;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
@@ -328,6 +341,13 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 /** Defines RISC operators for this semantic domain. */
 class RiscOperators: public BaseSemantics::RiscOperators {
+public:
+    /** Base type. */
+    using Super = BaseSemantics::RiscOperators;
+
+    /** Shared-ownership pointer. */
+    using Ptr = RiscOperatorsPtr;
+
 protected:
     MemoryMap::Ptr map;
 

@@ -563,8 +563,19 @@ public:
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Low-level API used in subclasses.
+    // Low-level API used in subclasses and sometimes for debugging
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
+    /** Generates an input file for for the solver.
+     *
+     *  Usually the input file will be SMT-LIB format, but subclasses might override this to generate some other kind of
+     *  input. Throws Excecption if the solver does not support an operation that is necessary to determine the
+     *  satisfiability.
+     *
+     *  This function is also useful for debugging because it will convert ROSE's symbolic expressions to whatever format
+     *  is used by the SMT solver. */
+    virtual void generateFile(std::ostream&, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*) = 0;
+
 protected:
     /** Check satisfiability using text files and an executable. */
     virtual Satisfiable checkExe();
@@ -587,11 +598,6 @@ protected:
      *  A null pointer is printed as "nil" and an empty list is printed as "()" in order to distinguish the two cases. There
      *  should be no null pointers though in well-formed S-Exprs. */
     static void printSExpression(std::ostream&, const SExpr::Ptr&);
-
-    /** Generates an input file for for the solver. Usually the input file will be SMT-LIB format, but subclasses might
-     *  override this to generate some other kind of input. Throws Excecption if the solver does not support an operation that
-     *  is necessary to determine the satisfiability. */
-    virtual void generateFile(std::ostream&, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*) = 0;
 
     /** Given the name of a configuration file, return the command that is needed to run the solver. The first line
      *  of stdout emitted by the solver should be the word "sat" or "unsat". */

@@ -26,7 +26,11 @@ typedef boost::shared_ptr<class DispatcherPowerpc> DispatcherPowerpcPtr;
 
 class DispatcherPowerpc: public BaseSemantics::Dispatcher {
 public:
-    typedef BaseSemantics::Dispatcher Super;
+    /** Base type. */
+    using Super = BaseSemantics::Dispatcher;
+
+    /** Shared-ownership pointer. */
+    using Ptr = DispatcherPowerpcPtr;
 
     /** Cached register.
      *

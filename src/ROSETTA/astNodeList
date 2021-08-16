@@ -991,3 +991,7 @@ SgAdaFormalType
 SgAdaGenericSymbol
 SgAdaFormalTypeDecl
 SgAdaUnitRefExp
+SgAdaDiscriminatedTypeDecl
+SgAdaDiscriminatedType
+SgAdaDiscriminantConstraint
+SgAdaGenericInstanceDecl

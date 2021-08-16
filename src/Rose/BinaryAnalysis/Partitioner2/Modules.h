@@ -437,10 +437,11 @@ void labelSymbolAddresses(Partitioner&, SgAsmInterpretation*);
 
 /** Give labels to string constants.
  *
- *  Finds integer constants that are the address if a C-style NUL-terminated ASCII string and adds a comment to the constant
- *  (if it had none previously) to describe the string. All instructions that are attached to the CFG/AUM are processed. The
- *  instructions are modified by attaching the comment, but the comments are not added to the partitioners address name map. */
-void nameStrings(const Partitioner&);
+ *  Finds integer constants that are within the specified range of values and are the address if a C-style NUL-terminated ASCII
+ *  string and adds a comment to the constant (if it had none previously) to describe the string. All instructions that are
+ *  attached to the CFG/AUM are processed. The instructions are modified by attaching the comment, but the comments are not
+ *  added to the partitioners address name map. */
+void nameStrings(const Partitioner&, const AddressInterval&);
 
 /** Finds functions for which symbols exist.
  *

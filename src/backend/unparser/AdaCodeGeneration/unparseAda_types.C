@@ -25,9 +25,9 @@ namespace
       //~ os << s;
     }
 
-    std::string scopeQual(SgDeclarationStatement& remote);
+    std::string scopeQual(const SgDeclarationStatement& remote);
 
-    std::string scopeQual(SgDeclarationStatement* remote)
+    std::string scopeQual(const SgDeclarationStatement* remote)
     {
       return scopeQual(SG_DEREF(remote));
     }
@@ -46,7 +46,14 @@ namespace
     void handle(SgAdaIndexConstraint& n)
     {
       prn(" (");
-      rangeList(n.get_indexRanges());
+      exprSequence(n.get_indexRanges());
+      prn(")");
+    }
+
+    void handle(SgAdaDiscriminantConstraint& n)
+    {
+      prn(" (");
+      exprSequence(n.get_discriminants());
       prn(")");
     }
 
@@ -158,9 +165,11 @@ namespace
     void handle(SgAdaTaskType& n)
     {
       // \todo fix in AST and override get_name and get_declaration in AdaTaskType
+      SgAdaTaskTypeDecl&      tyDcl  = SG_DEREF( isSgAdaTaskTypeDecl(n.get_declaration()) );
+
       prn(" ");
-      prn(scopeQual(n.get_decl()));
-      prn(SG_DEREF(n.get_decl()).get_name());
+      prn(scopeQual(tyDcl));
+      prn(tyDcl.get_name());
     }
 
     void handle(SgAdaFloatType& n)
@@ -242,28 +251,30 @@ namespace
       }
     }
 
-    void rangeList(SgExpressionPtrList& lst) // \todo remove
-    {
-      if (lst.empty()) return;
-
-      expr(lst[0]);
-
-      for (size_t i = 1; i < lst.size(); ++i)
-      {
-        prn(", ");
-        expr(lst[i]);
-      }
-    }
+    void exprSequence(const SgExpressionPtrList& lst);
 
     Unparse_Ada&      unparser;
     SgUnparse_Info&   info;
     std::ostream&     os;
   };
 
-  std::string
-  AdaTypeUnparser::scopeQual(SgDeclarationStatement& remote)
+  void AdaTypeUnparser::exprSequence(const SgExpressionPtrList& lst)
   {
-    SgScopeStatement* current = info.get_current_scope();
+    if (lst.empty()) return;
+
+    expr(lst[0]);
+
+    for (size_t i = 1; i < lst.size(); ++i)
+    {
+      prn(", ");
+      expr(lst[i]);
+    }
+  }
+
+  std::string
+  AdaTypeUnparser::scopeQual(const SgDeclarationStatement& remote)
+  {
+    const SgScopeStatement* current = info.get_current_scope();
 
     return current ? unparser.computeScopeQual(*current, SG_DEREF(remote.get_scope()))
                    : std::string{"<missing-scope>"};

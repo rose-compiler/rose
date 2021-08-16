@@ -63,7 +63,7 @@ initNamespace() {
 
 std::string
 offsetStr(int64_t n) {
-    std::string sign;
+    std::string sign = "+";
     if ((uint64_t)n == IntegerOps::shl1<uint64_t>(63)) {
         return "-0x8000000000000000<-9223372036854775808>";
     } else if (n < 0) {
@@ -77,7 +77,7 @@ offsetStr(int64_t n) {
         std::string h = StringUtility::addrToString(n).substr(2);
         boost::trim_left_if(h, boost::is_any_of("0_"));
         ASSERT_forbid(h.empty());
-        return "0x" + h + "<" + sign + boost::lexical_cast<std::string>(n) + ">";
+        return sign + "0x" + h + "<" + sign + boost::lexical_cast<std::string>(n) + ">";
     }
 }
 
@@ -173,7 +173,8 @@ StackVariable::setDefaultName() {
         }
     }
 
-    if (frameOffset() < 0)
+    // Negative frame offsets are more common, so add "y" to the uncommon cases.
+    if (frameOffset() >= 0)
         s += "y";
 
     name(s);
@@ -223,7 +224,7 @@ StackVariable::print(std::ostream &out) const {
     out <<"local-variable";
     if (!name().empty())
         out <<" \"" <<StringUtility::cEscape(name()) <<"\"";
-    out <<" @" <<offsetStr(frameOffset()) <<"+" <<sizeStr(maxSizeBytes());
+    out <<" (loc=fp" <<offsetStr(frameOffset()) <<", size=" <<sizeStr(maxSizeBytes()) <<")";
 }
 
 std::string
@@ -275,7 +276,7 @@ GlobalVariable::print(std::ostream &out) const {
     out <<"global-variable";
     if (!name().empty())
         out <<" \"" <<StringUtility::cEscape(name()) <<"\"";
-    out <<"@" <<StringUtility::addrToString(address()) <<"+" <<sizeStr(maxSizeBytes());
+    out <<"(va=" <<StringUtility::addrToString(address()) <<", size=" <<sizeStr(maxSizeBytes()) <<")";
 }
 
 std::string
@@ -432,11 +433,14 @@ private:
 // VariableFinder
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-
-
 VariableFinder::VariableFinder(const Settings &settings)
     : settings_(settings) {
     initNamespace();
+}
+
+VariableFinder::Ptr
+VariableFinder::instance(const Settings &settings) {
+    return Ptr(new VariableFinder(settings));
 }
 
 Sawyer::Optional<uint64_t>
@@ -608,6 +612,11 @@ VariableFinder::findStackVariables(const P2::Partitioner &partitioner, const P2:
             cpu->processInstruction(insn);
     }
 
+    // Minimum and maximum possible frame pointer offsets.
+    const size_t nBits = partitioner.instructionProvider().stackPointerRegister().nBits();
+    const OffsetInterval offsetLimits = OffsetInterval::hull((int64_t)BitOps::highMask<uint64_t>(64-nBits+1),
+                                                             (int64_t)BitOps::lowMask<uint64_t>(nBits-1));
+
     // Build the local variable objects to be returned
     StackVariables lvars;
     for (OffsetToAddresses::const_iterator iter = stackOffsets.begin(); iter != stackOffsets.end(); ++iter) {
@@ -617,7 +626,7 @@ VariableFinder::findStackVariables(const P2::Partitioner &partitioner, const P2:
 
         // This variable cannot overlap with the next variable or cross into the caller's stack frame
         OffsetToAddresses::const_iterator next = iter; ++next;
-        int64_t lastOffset = next == stackOffsets.end() ? IntegerOps::genMask<int64_t>(63) : next->first - 1;
+        int64_t lastOffset = next == stackOffsets.end() ? (int64_t)BitOps::lowMask<uint64_t>(nBits-1) : next->first - 1;
         if (frameSize)
             lastOffset = std::min(maxFrameOffset, lastOffset);
 
@@ -626,11 +635,12 @@ VariableFinder::findStackVariables(const P2::Partitioner &partitioner, const P2:
         if (iter->first < 0 && lastOffset >= 0)
             lastOffset = -1;
 
-        OffsetInterval where = OffsetInterval::hull(iter->first, lastOffset);
-        StackVariable lvar(function, iter->first, (lastOffset - iter->first)+1, iter->second);
-        if (lvar.maxSizeBytes() > 0) {
-            lvar.setDefaultName();
-            lvars.insert(where, lvar);
+        if (OffsetInterval where = OffsetInterval::hull(iter->first, lastOffset) & offsetLimits) {
+            StackVariable lvar(function, iter->first, (lastOffset - iter->first)+1, iter->second);
+            if (lvar.maxSizeBytes() > 0) {
+                lvar.setDefaultName();
+                lvars.insert(where, lvar);
+            }
         }
     }
 

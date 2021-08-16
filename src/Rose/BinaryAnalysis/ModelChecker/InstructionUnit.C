@@ -55,8 +55,17 @@ InstructionUnit::printSteps(const Settings::Ptr &settings, std::ostream &out, co
 }
 
 void
-InstructionUnit::toYaml(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1,
-                        size_t stepOrigin, size_t maxSteps) const {
+InstructionUnit::toYamlHeader(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1) const {
+    out <<prefix1 <<"vertex-type: instruction\n";
+    if (auto va = address()) {
+        std::string prefix(prefix1.size(), ' ');
+        out <<prefix <<"vertex-address: " <<StringUtility::addrToString(*va) <<"\n";
+    }
+}
+
+void
+InstructionUnit::toYamlSteps(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1,
+                             size_t stepOrigin, size_t maxSteps) const {
     if (maxSteps > 0) {
         out <<prefix1 <<"instruction: " <<StringUtility::yamlEscape(insn_->toString()) <<"\n";
 
@@ -83,12 +92,13 @@ InstructionUnit::address() const {
 }
 
 std::vector<Tag::Ptr>
-InstructionUnit::execute(const Settings::Ptr &settings, const SemanticCallbacks::Ptr &semantics, const BS::RiscOperatorsPtr &ops) {
+InstructionUnit::execute(const Settings::Ptr &settings, const SemanticCallbacks::Ptr &semantics,
+                         const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(settings);
     ASSERT_not_null(semantics);
     ASSERT_not_null(ops);
     std::vector<Tag::Ptr> tags;
-    BS::DispatcherPtr cpu = semantics->createDispatcher(ops);
+    BS::Dispatcher::Ptr cpu = semantics->createDispatcher(ops);
     BS::Formatter fmt;
     fmt.set_line_prefix("      ");
 

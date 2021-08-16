@@ -9,8 +9,7 @@
 #define Sawyer_Stack_H
 
 #include <Sawyer/Assert.h>
-#include <Sawyer/Sawyer.h>
-#include <vector>
+#include <Sawyer/IndexedList.h>
 
 namespace Sawyer {
 namespace Container {
@@ -24,7 +23,7 @@ class Stack {
 public:
     typedef T Value;
 private:
-    std::vector<T> vector_;
+    IndexedList<T> items_;
 public:
     /** Construct an empty stack. */
     Stack() {}
@@ -32,22 +31,22 @@ public:
     /** Construct a stack from an iterator range. */
     template<class Iterator>
     Stack(const boost::iterator_range<Iterator> &range) {
-        for (Iterator iter=range.begin(); iter!=range.end(); ++iter)
-            vector_.push_back(*iter);
+        for (Iterator iter = range.begin(); iter != range.end(); ++iter)
+            items_.pushBack(*iter);
     }
 
     // FIXME[Robb P. Matzke 2014-08-06]: we need iterators, values(), begin(), end(), etc.
 
     /** Returns the number of items on the stack. */
     size_t size() const {
-        return vector_.size();
+        return items_.size();
     }
 
     /** Determines if the stack is empty.
      *
      *  Returns true if the stack is empty, false if not empty. */
     bool isEmpty() const {
-        return vector_.empty();
+        return items_.isEmpty();
     }
 
     /** Returns the top item.
@@ -57,11 +56,11 @@ public:
      *  @{ */
     Value& top() {
         ASSERT_forbid(isEmpty());
-        return vector_.back();
+        return items_.backValue();
     }
     const Value& top() const {
         ASSERT_forbid(isEmpty());
-        return vector_.back();
+        return items_.backValue();
     }
     /** @} */
 
@@ -73,11 +72,11 @@ public:
      *  @{ */
     Value& get(size_t idx) {
         ASSERT_require(idx < size());
-        return vector_[vector_.size() - (idx+1)];
+        return items_[items_.size() - (idx+1)];
     }
     const Value& get(size_t idx) const {
         ASSERT_require(idx < size());
-        return vector_[vector_.size() - (idx+1)];
+        return items_[items_.size() - (idx+1)];
     }
     Value& operator[](size_t idx) { return get(idx); }
     const Value& operator[](size_t idx) const { return get(idx); }
@@ -88,7 +87,7 @@ public:
      *  Copies the specified item onto the top of the stack, making the stack one element larger.  The stack itself is returned
      *  so that this method can be chained. */
     Stack& push(const Value &value) {
-        vector_.push_back(value);
+        items_.pushBack(value);
         return *this;
     }
 
@@ -98,7 +97,7 @@ public:
      *  not be empty at the time this method is called. */
     Value pop() {
         Value v = top();
-        vector_.pop_back();
+        items_.erase(items_.size()-1);
         return v;
     }
 };

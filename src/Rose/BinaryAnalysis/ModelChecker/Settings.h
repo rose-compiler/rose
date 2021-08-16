@@ -21,6 +21,7 @@ public:
     bool showInitialStates = false;                     /**< Show initial execution unit states when debugging. */
     bool showIntermediateStates = false;                /**< Show intermediate execution unit states when debugging. */
     bool showFinalStates = false;                       /**< Show final execution unit states when debugging. */
+    bool showAssertions = false;                        /**< Show SMT assertions at the beginning of each execution unit. */
     bool ignoreSemanticFailures = false;                /**< Treat failed instructions as if they completed. */
     size_t k = 1000;                                    /**< Maximum path length in steps. */
     double maxTime = NAN;                               /**< Maximum path time in seconds. */

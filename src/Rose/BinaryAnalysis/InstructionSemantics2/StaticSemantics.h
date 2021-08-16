@@ -72,6 +72,13 @@ typedef Sawyer::SharedPointer<class SValue> SValuePtr;
  *  work correctly for ASTs pointed to by an SValue. But never fear, the SValue's AST will be fixed when it's actually attached
  *  to an instruction node. */
 class SValue: public BaseSemantics::SValue {
+public:
+    /** Base type. */
+    using Super = BaseSemantics::SValue;
+
+    /** Shared-ownership pointer. */
+    using Ptr = SValuePtr;
+
 protected:
     SgAsmExpression *ast_;
 
@@ -249,6 +256,13 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
  *  improperly formed ROSE AST from an SValue and fixes it so it has proper parent pointers and does not share nodes with other
  *  subtrees. */
 class RiscOperators: public BaseSemantics::RiscOperators {
+public:
+    /** Base type. */
+    using Super = BaseSemantics::RiscOperators;
+
+    /** Shared-ownership pointer. */
+    using Ptr = RiscOperatorsPtr;
+
 protected:
     RiscOperators(const BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver)
         : BaseSemantics::RiscOperators(protoval, solver) {

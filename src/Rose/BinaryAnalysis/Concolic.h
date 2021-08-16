@@ -16,6 +16,7 @@
 #include <Rose/BinaryAnalysis/Concolic/LinuxI386.h>
 #include <Rose/BinaryAnalysis/Concolic/LinuxTraceExecutor.h>
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
+#include <Rose/BinaryAnalysis/Concolic/SystemCall.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 #include <Rose/BinaryAnalysis/Concolic/TestSuite.h>
 

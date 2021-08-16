@@ -66,6 +66,13 @@ typedef Sawyer::SharedPointer<class SValue> SValuePtr;
  *  node sharing, but the AST was not designed for this. Do not expect AST traversals and analysis to work correctly for ASTs
  *  pointed to by an SValue. But never fear, the SValue's AST will be fixed by the time whole function ASTs are generated. */
 class SValue: public BaseSemantics::SValue {
+public:
+    /** Base type. */
+    using Super = BaseSemantics::SValue;
+
+    /** Shared-ownership pointer. */
+    using Ptr = SValuePtr;
+
 protected:
     static size_t nVariables_;
     std::string ctext_;
@@ -221,7 +228,12 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
  *  The semantic state is split between the @ref State object normally attached to semantic domains, and the side effect list
  *  stored in this RiscOperators object.  Neither is complete by itself. */
 class RiscOperators: public BaseSemantics::RiscOperators {
-    typedef BaseSemantics::RiscOperators Super;
+public:
+    /** Base type. */
+    using Super = BaseSemantics::RiscOperators;
+
+    /** Shared-ownership pointer. */
+    using Ptr = RiscOperatorsPtr;
 
 public:
     /** Side effect. */

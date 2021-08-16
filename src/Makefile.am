@@ -315,6 +315,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Concolic/LinuxI386.h					\
 	Rose/BinaryAnalysis/Concolic/LinuxTraceExecutor.h				\
 	Rose/BinaryAnalysis/Concolic/Specimen.h						\
+	Rose/BinaryAnalysis/Concolic/SystemCall.h					\
 	Rose/BinaryAnalysis/Concolic/TestCase.h						\
 	Rose/BinaryAnalysis/Concolic/TestSuite.h					\
 	Rose/BinaryAnalysis/Concolic/io-utility.h					\
@@ -401,11 +402,13 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/ModelChecker/BasicBlockUnit.h				\
 	Rose/BinaryAnalysis/ModelChecker/Engine.h					\
 	Rose/BinaryAnalysis/ModelChecker/ErrorTag.h					\
+	Rose/BinaryAnalysis/ModelChecker/Exception.h					\
 	Rose/BinaryAnalysis/ModelChecker/ExecutionUnit.h				\
 	Rose/BinaryAnalysis/ModelChecker/ExternalFunctionUnit.h				\
 	Rose/BinaryAnalysis/ModelChecker/FailureUnit.h					\
 	Rose/BinaryAnalysis/ModelChecker/InstructionUnit.h				\
 	Rose/BinaryAnalysis/ModelChecker/NullDerefTag.h					\
+	Rose/BinaryAnalysis/ModelChecker/OobTag.h					\
 	Rose/BinaryAnalysis/ModelChecker/P2Model.h					\
 	Rose/BinaryAnalysis/ModelChecker/Path.h						\
 	Rose/BinaryAnalysis/ModelChecker/PathNode.h					\

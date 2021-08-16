@@ -68,8 +68,17 @@ FailureUnit::printSteps(const Settings::Ptr &settings, std::ostream &out, const 
 }
 
 void
-FailureUnit::toYaml(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1,
-                    size_t stepOrigin, size_t maxSteps) const {
+FailureUnit::toYamlHeader(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1) const {
+    out <<prefix1 <<"vertex-type: failure\n";
+    if (auto va = address()) {
+        std::string prefix(prefix1, ' ');
+        out <<prefix <<"vertex-address: " <<StringUtility::addrToString(*va) <<"\n";
+    }
+}
+
+void
+FailureUnit::toYamlSteps(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1,
+                         size_t stepOrigin, size_t maxSteps) const {
     if (maxSteps > 0) {
         out <<prefix1 <<"definition: automatic-failure\n";
 
@@ -95,7 +104,7 @@ FailureUnit::address() const {
 }
 
 std::vector<Tag::Ptr>
-FailureUnit::execute(const Settings::Ptr &settings, const SemanticCallbacks::Ptr &semantics, const BS::RiscOperatorsPtr &ops) {
+FailureUnit::execute(const Settings::Ptr &settings, const SemanticCallbacks::Ptr &semantics, const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(settings);
     ASSERT_not_null(semantics);
     ASSERT_not_null(ops);
@@ -106,7 +115,7 @@ FailureUnit::execute(const Settings::Ptr &settings, const SemanticCallbacks::Ptr
     if (mlog[DEBUG] && settings->showInitialStates)
         mlog[DEBUG] <<"    initial state\n" <<(*ops->currentState() + fmt);
 
-    ops->currentState(BS::StatePtr());                  // this is how failure is indicated
+    ops->currentState(BS::State::Ptr());                // this is how failure is indicated
     if (tag_) {
         return {tag_};
     } else {

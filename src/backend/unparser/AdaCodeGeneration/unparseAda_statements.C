@@ -575,7 +575,7 @@ namespace
   struct AdaStatementUnparser : AdaDetailsUnparser
   {
     AdaStatementUnparser(Unparse_Ada& unp, SgUnparse_Info& inf, std::ostream& outp)
-    : AdaDetailsUnparser(unp, inf, outp), publicMode(true)
+    : AdaDetailsUnparser(unp, inf, outp), publicMode(true), pendingDiscriminants(nullptr)
     {}
 
     template <class SageStmtList>
@@ -597,7 +597,7 @@ namespace
 
     void handleFunctionEntryDecl(SgFunctionDeclaration&, std::string keyword, bool hasReturn = false);
 
-    void handleParameterList(SgInitializedNamePtrList& params);
+    void handleParameterList(const SgInitializedNamePtrList& params);
 
     static
     std::pair<std::string, std::string>
@@ -611,6 +611,10 @@ namespace
 
     void modifiers(SgDeclarationStatement& n);
     bool hasModifiers(SgDeclarationStatement& n);
+
+    // clones the unparser and sets the discriminant link
+    AdaStatementUnparser
+    unparserWith(SgAdaDiscriminatedTypeDecl* n);
 
     //
     // handlers
@@ -752,6 +756,13 @@ namespace
       prn(STMT_SEP);
     }
 
+    void handle(SgAdaDiscriminatedTypeDecl& n)
+    {
+      // unparses the discriminated declaration, which is responsible for
+      //   printing the discriminants
+      stmt(n.get_discriminatedDecl(), &n);
+    }
+
     void handle(SgAdaTaskSpec& n)
     {
       ScopeUpdateGuard scopeGuard{unparser, info, n};
@@ -834,6 +845,80 @@ namespace
       }
     }
 
+    // MS: modeled on enumInit()
+    void associationEntry(SgExpression* n)
+    {
+      if (SgActualArgumentExpression* e = isSgActualArgumentExpression(n))
+        {
+          SgName name = e->get_argument_name();
+          SgExpression *exp = e->get_expression();
+          prn(name.getString());
+          prn("=>");
+          expr(exp);
+        }
+      else if (SgExpression* e = isSgExpression(n))
+        {
+          expr(e);
+        }
+      else
+        {
+          // should not reach this
+        }
+    }
+
+    // MS: modeled on enuminiList()
+    void associationList(SgExpressionPtrList& lst)
+    {
+      if (lst.empty()) return;
+
+      prn("(");
+      associationEntry(lst[0]);
+
+      for (size_t i = 1; i < lst.size(); ++i)
+        {
+          prn(", ");
+          associationEntry(lst[i]);
+        }
+
+      prn(")");
+    }
+
+    void handle(SgAdaGenericInstanceDecl& n)
+    {
+      // determine which kind of generic instance this is
+      SgAdaGenericDecl*       dcl     = n.get_declaration();
+      SgName                  name    = n.get_name();
+      SgExprListExp*          args    = n.get_actual_parameters();
+      SgDeclarationStatement* thedecl = dcl->get_declaration();
+
+      if (isSgAdaPackageSpecDecl(thedecl)) {
+        // package
+        SgAdaPackageSpecDecl* pkg     = isSgAdaPackageSpecDecl(thedecl);
+        SgName                genname = pkg->get_name();
+
+        prn("package ");
+        prn(name.getString());
+        prn(" is new ");
+        prn(genname.getString());
+      } else {
+        // function/procedure
+        SgFunctionDeclaration* fn      = isSgFunctionDeclaration(thedecl);
+        SgName                 genname = fn->get_name();
+
+        if (n.get_return_type() == NULL) {
+          prn("procedure ");
+        } else {
+          prn("function ");
+        }
+        prn(name.getString());
+        prn(" is new ");
+        prn(genname.getString());
+      }
+
+      associationList(args->get_expressions());
+      prn(STMT_SEP);
+    }
+
     void handle(SgAdaRenamingDecl& n)
     {
       SgSymbol*            orig     = n.get_renamed();
@@ -873,6 +958,8 @@ namespace
       prn(declwords.first);
       prn(" ");
       prn(n.get_name());
+
+      printPendingDiscriminants();
 
       const bool isDefinition    = &n == n.get_definingDeclaration();
       const bool requiresPrivate = (!isDefinition) && si::ada::withPrivateDefinition(&n);
@@ -1316,10 +1403,30 @@ namespace
         parentRecord(SG_DEREF(parents.at(0)));
     }
 
+    void printPendingDiscriminants()
+    {
+      if (!pendingDiscriminants) return;
+
+      const SgAdaDiscriminatedTypeDecl& dcl = *pendingDiscriminants;
+
+      // consume discriminants (actually, not be necessary)
+      pendingDiscriminants = nullptr;
+
+      if (si::ada::hasUnknownDiscriminants(dcl))
+      {
+        prn("(<>)");
+        return;
+      }
+
+      handleParameterList(dcl.get_discriminants());
+    }
+
     void handle(SgClassDeclaration& n)
     {
       prn("type ");
       prn(n.get_name());
+
+      printPendingDiscriminants();
 
       if (SgClassDefinition* def = n.get_definition())
       {
@@ -1426,11 +1533,15 @@ namespace
     }
 
 
-    void handle(SgFunctionParameterList& n)
+    void handle(SgFunctionParameterList&)
     {
       // handled by the SgFunctionDeclaration and friends
     }
 
+    void handle(SgDeclarationScope&)
+    {
+      // handled by the discriminant unparser
+    }
 
     void handle(SgFunctionDeclaration& n)
     {
@@ -1449,7 +1560,7 @@ namespace
       handleFunctionEntryDecl(n, "entry");
     }
 
-    void stmt(SgStatement* s);
+    void stmt(SgStatement* s, SgAdaDiscriminatedTypeDecl* d = nullptr);
 
     void expr(SgExpression* e)
     {
@@ -1480,7 +1591,8 @@ namespace
       handle(SG_DEREF(compclause));
     }
 
-    bool            publicMode;
+    bool                              publicMode;
+    const SgAdaDiscriminatedTypeDecl* pendingDiscriminants;
   };
 
   void AdaStatementUnparser::handle(SgStatement& n)
@@ -1567,7 +1679,7 @@ namespace
   }
 
   void
-  AdaStatementUnparser::handleParameterList(SgInitializedNamePtrList& params)
+  AdaStatementUnparser::handleParameterList(const SgInitializedNamePtrList& params)
   {
     typedef std::vector<SgVariableDeclaration*> parameter_decl_t;
 
@@ -1804,13 +1916,22 @@ namespace
     publicMode = false;
   }
 
-  void AdaStatementUnparser::stmt(SgStatement* s)
+  AdaStatementUnparser
+  AdaStatementUnparser::unparserWith(SgAdaDiscriminatedTypeDecl* n)
+  {
+    AdaStatementUnparser tmp{*this};
+
+    tmp.pendingDiscriminants = n;
+    return tmp;
+  }
+
+  void AdaStatementUnparser::stmt(SgStatement* s, SgAdaDiscriminatedTypeDecl* n)
   {
     startPrivateIfNeeded(isSgDeclarationStatement(s));
 
     unparser.unparseAttachedPreprocessingInfo(s, info, PreprocessingInfo::before);
     unparser.unparseAttachedPreprocessingInfo(s, info, PreprocessingInfo::inside);
-    sg::dispatch(*this, s);
+    sg::dispatch(unparserWith(n), s);
     unparser.unparseAttachedPreprocessingInfo(s, info, PreprocessingInfo::after);
   }
 
@@ -2013,7 +2134,7 @@ AdaStatementUnparser::scopeQual(SgScopeStatement& remote)
 }
 
 std::string
-Unparse_Ada::computeScopeQual(SgScopeStatement& local, SgScopeStatement& remote)
+Unparse_Ada::computeScopeQual(const SgScopeStatement& local, const SgScopeStatement& remote)
 {
   using PathIterator = ScopePath::const_reverse_iterator;
 

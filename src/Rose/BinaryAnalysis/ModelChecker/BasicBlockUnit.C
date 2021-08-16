@@ -79,8 +79,17 @@ BasicBlockUnit::printSteps(const Settings::Ptr &settings, std::ostream &out, con
 }
 
 void
-BasicBlockUnit::toYaml(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1,
-                           size_t stepOrigin, size_t maxSteps) const {
+BasicBlockUnit::toYamlHeader(const Settings::Ptr&, std::ostream &out, const std::string &prefix1) const {
+    out <<prefix1 <<"vertex-type: basic-block\n";
+    if (auto va = address()) {
+        std::string prefix(prefix1.size(), ' ');
+        out <<prefix <<"vertex-address: " <<StringUtility::addrToString(*va) <<"\n";
+    }
+}
+
+void
+BasicBlockUnit::toYamlSteps(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1,
+                            size_t stepOrigin, size_t maxSteps) const {
     // No lock necessary since the basic block pointer cannot be changed after construction. However, the BasicBlock API itself
     // might not be thread safe.
     ASSERT_not_null(bblock_);
@@ -133,12 +142,12 @@ BasicBlockUnit::containsUnknownInsn() const {
 }
 
 std::vector<Tag::Ptr>
-BasicBlockUnit::execute(const Settings::Ptr &settings, const SemanticCallbacks::Ptr &semantics, const BS::RiscOperatorsPtr &ops) {
+BasicBlockUnit::execute(const Settings::Ptr &settings, const SemanticCallbacks::Ptr &semantics, const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(settings);
     ASSERT_not_null(semantics);
     ASSERT_not_null(ops);
     std::vector<Tag::Ptr> tags;
-    BS::DispatcherPtr cpu = semantics->createDispatcher(ops);
+    BS::Dispatcher::Ptr cpu = semantics->createDispatcher(ops);
     BS::Formatter fmt;
     fmt.set_line_prefix("      ");
 
@@ -155,7 +164,7 @@ BasicBlockUnit::execute(const Settings::Ptr &settings, const SemanticCallbacks::
 
             if (Tag::Ptr tag = executeInstruction(settings, insn, cpu)) {
                 if (i+1 < bblock_->nInstructions())
-                    ops->currentState(BS::StatePtr());      // force a semantic failure since we didn't finish the block
+                    ops->currentState(BS::State::Ptr()); // force a semantic failure since we didn't finish the block
                 tags.push_back(tag);
             }
             if (!ops->currentState())
@@ -173,7 +182,7 @@ BasicBlockUnit::execute(const Settings::Ptr &settings, const SemanticCallbacks::
             // In order for this to be a valid basic block, the instruction pointer must have a concrete value that points
             // to the next instruction.
             if (i + 1 < bblock_->nInstructions()) {
-                BS::SValuePtr actualIp = semantics->instructionPointer(ops);
+                BS::SValue::Ptr actualIp = semantics->instructionPointer(ops);
                 rose_addr_t expectedIp = bblock_->instructions()[i+1]->get_address();
                 if (actualIp->toUnsigned().orElse(expectedIp+1) != expectedIp) {
                     std::string mesg = "next IP should be " + StringUtility::addrToString(expectedIp) + " according to CFG";

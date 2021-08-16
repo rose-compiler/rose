@@ -4,11 +4,13 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis/ModelChecker \
     BasicBlockUnit.h \
     Engine.h \
     ErrorTag.h \
+    Exception.h \
     ExecutionUnit.h \
     ExternalFunctionUnit.h \
     FailureUnit.h \
     InstructionUnit.h \
     NullDerefTag.h \
+    OobTag.h \
     P2Model.h \
     Path.h \
     PathNode.h \
@@ -31,6 +33,7 @@ run $(librose_compile) \
     FailureUnit.C \
     InstructionUnit.C \
     NullDerefTag.C \
+    OobTag.C \
     P2Model.C \
     Path.C \
     PathNode.C \

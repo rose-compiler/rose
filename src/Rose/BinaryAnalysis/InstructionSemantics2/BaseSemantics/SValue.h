@@ -44,6 +44,10 @@ Sawyer::SharedPointer<To> dynamic_pointer_cast(const Sawyer::SharedPointer<From>
  *  that defines the interface.  See the Rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts
  *  fit together.*/
 class SValue: public Sawyer::SharedObject, public Sawyer::SharedFromThis<SValue>, public Sawyer::SmallObject {
+public:
+    /** Shared-ownership pointer for an @ref SValue object. See @ref heap_object_shared_ownership. */
+    using Ptr = SValuePtr;
+
 protected:
     size_t width;                               /** Width of the value in bits. Typically (not always) a power of two. */
 
@@ -65,10 +69,6 @@ protected:
     SValue(): width(0) {}                               // needed for serialization
     explicit SValue(size_t nbits): width(nbits) {}      // hot
     SValue(const SValue &other): Sawyer::SharedObject(other), width(other.width) {}
-
-public:
-    /** Shared-ownership pointer for an @ref SValue object. See @ref heap_object_shared_ownership. */
-    typedef SValuePtr Ptr;
 
 public:
     virtual ~SValue() {}

@@ -139,16 +139,32 @@ mkAdaRangeConstraint(SgExpression& range)
   return sgnode;
 }
 
+namespace
+{
+  void incorporateConstraintExpressions(SgNode& parent, SgExpressionPtrList& constraints, SgExpressionPtrList&& exprs)
+  {
+    constraints.swap(exprs);
+
+    for (SgExpression* expr : constraints)
+      SG_DEREF(expr).set_parent(&parent);
+  }
+}
+
 SgAdaIndexConstraint&
-mkAdaIndexConstraint(SgExpressionPtrList&& ranges)
+mkAdaIndexConstraint(SgExpressionPtrList ranges)
 {
   SgAdaIndexConstraint& sgnode = mkLocatedNode<SgAdaIndexConstraint>();
 
-  sgnode.get_indexRanges().swap(ranges);
+  incorporateConstraintExpressions(sgnode, sgnode.get_indexRanges(), std::move(ranges));
+  return sgnode;
+}
 
-  for (SgExpression* expr : sgnode.get_indexRanges())
-    SG_DEREF(expr).set_parent(&sgnode);
+SgAdaDiscriminantConstraint&
+mkAdaDiscriminantConstraint(SgExpressionPtrList discriminants)
+{
+  SgAdaDiscriminantConstraint& sgnode = mkLocatedNode<SgAdaDiscriminantConstraint>();
 
+  incorporateConstraintExpressions(sgnode, sgnode.get_discriminants(), std::move(discriminants));
   return sgnode;
 }
 
@@ -217,12 +233,11 @@ mkOpaqueType()
 }
 
 SgTypeTuple&
-mkTypeUnion(const std::vector<SgType*>& elemtypes)
+mkTypeUnion(SgTypePtrList elemtypes)
 {
   SgTypeTuple&   sgnode = mkNonSharedTypeNode<SgTypeTuple>();
-  SgTypePtrList& lst    = sgnode.get_types();
 
-  lst.insert(lst.end(), elemtypes.begin(), elemtypes.end());
+  sgnode.get_types().swap(elemtypes);
   return sgnode;
 }
 
@@ -250,9 +265,17 @@ mkAdaTaskType(SgAdaTaskTypeDecl& dcl)
 {
   SgAdaTaskType& sgnode = mkTypeNode<SgAdaTaskType>(&dcl);
 
-  sgnode.set_decl(&dcl);
   return sgnode;
 }
+
+SgAdaDiscriminatedType&
+mkAdaDiscriminatedType(SgAdaDiscriminatedTypeDecl& dcl)
+{
+  SgAdaDiscriminatedType& sgnode = mkTypeNode<SgAdaDiscriminatedType>(&dcl);
+
+  return sgnode;
+}
+
 
 SgFunctionType& mkAdaEntryType(SgFunctionParameterList& lst)
 {
@@ -387,12 +410,11 @@ mkIfStmt(SgExpression& cond, SgStatement& thenBranch, SgStatement* elseBranch_op
 
 
 SgImportStatement&
-mkWithClause(const std::vector<SgExpression*>& imported)
+mkWithClause(SgExpressionPtrList imported)
 {
-  SgImportStatement&   sgnode = mkBareNode<SgImportStatement>(&mkFileInfo());
-  SgExpressionPtrList& lst    = sgnode.get_import_list();
+  SgImportStatement& sgnode = mkBareNode<SgImportStatement>(&mkFileInfo());
 
-  lst.insert(lst.end(), imported.begin(), imported.end());
+  sgnode.get_import_list().swap(imported);
   markCompilerGenerated(sgnode);
   return sgnode;
 }
@@ -581,6 +603,39 @@ mkAdaPackageSpecDecl(const std::string& name, SgScopeStatement& scope)
 
   // add the symbol to the table
   scope.insert_symbol(name, &mkBareNode<SgAdaPackageSymbol>(&sgnode));
+  return sgnode;
+}
+
+namespace
+{
+  SgDeclarationScope&
+  mkDeclarationScope(SgScopeStatement& /* not use */)
+  {
+    SgDeclarationScope& sgnode = mkScopeStmt<SgDeclarationScope>();
+
+    //~ sgnode.set_scope(&outer);
+    return sgnode;
+  }
+}
+
+SgAdaDiscriminatedTypeDecl&
+mkAdaDiscriminatedTypeDecl(SgScopeStatement& scope)
+{
+  SgDeclarationScope&         dclscope = mkDeclarationScope(scope);
+  SgAdaDiscriminatedTypeDecl& sgnode   = mkLocatedNode<SgAdaDiscriminatedTypeDecl>(&dclscope);
+
+  dclscope.set_parent(&sgnode);
+  return sgnode;
+}
+
+SgAdaGenericInstanceDecl&
+mkAdaGenericInstanceDecl(const std::string& name, SgAdaGenericDecl& decl, SgScopeStatement& scope)
+{
+  SgAdaGenericInstanceDecl& sgnode = mkLocatedNode<SgAdaGenericInstanceDecl>(name,&decl,(SgType*)NULL);
+
+  sgnode.set_parent(&scope);
+  sgnode.set_firstNondefiningDeclaration(&sgnode);
+
   return sgnode;
 }
 
@@ -1049,51 +1104,32 @@ mkInitializedName(const std::string& varname, SgType& vartype, SgExpression* val
   return sgnode;
 }
 
-SgVariableDeclaration&
-mkParameter( const std::vector<SgInitializedName*>& parms,
-             SgTypeModifier parmmode,
-             SgScopeStatement& scope
-           )
-{
-  SgVariableDeclaration&    parmDecl = mkLocatedNode<SgVariableDeclaration>(&mkFileInfo());
-  SgInitializedNamePtrList& names    = parmDecl.get_variables();
-  SgDeclarationModifier&    declMods = parmDecl.get_declarationModifier();
-
-  // insert initialized names and set the proper declaration node
-  for (SgInitializedName* prm : parms)
-  {
-    // \note set_definition is the same as set_declptr
-    ADA_ASSERT(prm);
-    prm->set_definition(&parmDecl);
-    names.push_back(prm);
-  }
-
-  declMods.get_typeModifier() = parmmode;
-
-  si::fixVariableDeclaration(&parmDecl, &scope);
-  parmDecl.set_parent(&scope);
-
-  ADA_ASSERT(parmDecl.get_definingDeclaration() == nullptr);
-  ADA_ASSERT(parmDecl.get_firstNondefiningDeclaration() == nullptr);
-
-  parmDecl.set_firstNondefiningDeclaration(&parmDecl);
-  return parmDecl;
-}
-
 namespace
 {
+  /// adds initialized names to a variable declarations and sets declptr and parent nodes
+  template <class FwdIterator>
+  void setInitializedNamesInDecl(FwdIterator aa, FwdIterator zz, SgVariableDeclaration& dcl)
+  {
+    SgInitializedNamePtrList& names = dcl.get_variables();
+
+    std::for_each( aa, zz,
+                   [&](SgInitializedName* ini) -> void
+                   {
+                     ADA_ASSERT(ini);
+                     ini->set_declptr(&dcl);
+                     ini->set_parent(&dcl);
+                     names.push_back(ini);
+                   }
+                 );
+  }
+
   template <class FwdIterator>
   SgVariableDeclaration&
   mkVarExceptionDeclInternal(FwdIterator aa, FwdIterator zz, SgScopeStatement& scope)
   {
-    SgVariableDeclaration&    vardcl = mkLocatedNode<SgVariableDeclaration>(&mkFileInfo());
-    SgInitializedNamePtrList& names  = vardcl.get_variables();
+    SgVariableDeclaration& vardcl = mkLocatedNode<SgVariableDeclaration>(&mkFileInfo());
 
-    names.insert(names.end(), aa, zz);
-    std::for_each( aa, zz,
-                   [&](SgInitializedName* var) -> void { var->set_parent(&vardcl); }
-                 );
-
+    setInitializedNamesInDecl(aa, zz, vardcl);
     si::fixVariableDeclaration(&vardcl, &scope);
     vardcl.set_parent(&scope);
 
@@ -1115,7 +1151,31 @@ namespace
 } // anonymous namespace
 
 SgVariableDeclaration&
-mkVarDecl(const std::vector<SgInitializedName*>& vars, SgScopeStatement& scope)
+mkParameter( const SgInitializedNamePtrList& parms,
+             SgTypeModifier parmmode,
+             SgScopeStatement& scope
+           )
+{
+  SgVariableDeclaration&    parmDecl = mkLocatedNode<SgVariableDeclaration>(&mkFileInfo());
+
+  setInitializedNamesInDecl(parms.begin(), parms.end(), parmDecl);
+
+  SgDeclarationModifier&    declMods = parmDecl.get_declarationModifier();
+
+  declMods.get_typeModifier() = parmmode;
+
+  si::fixVariableDeclaration(&parmDecl, &scope);
+  parmDecl.set_parent(&scope);
+
+  ADA_ASSERT(parmDecl.get_definingDeclaration() == nullptr);
+  ADA_ASSERT(parmDecl.get_firstNondefiningDeclaration() == nullptr);
+
+  parmDecl.set_firstNondefiningDeclaration(&parmDecl);
+  return parmDecl;
+}
+
+SgVariableDeclaration&
+mkVarDecl(const SgInitializedNamePtrList& vars, SgScopeStatement& scope)
 {
   return mkVarDeclInternal(vars.begin(), vars.end(), scope);
 }
@@ -1130,7 +1190,7 @@ mkVarDecl(SgInitializedName& var, SgScopeStatement& scope)
 }
 
 SgVariableDeclaration&
-mkExceptionDecl(const std::vector<SgInitializedName*>& vars, SgScopeStatement& scope)
+mkExceptionDecl(const SgInitializedNamePtrList& vars, SgScopeStatement& scope)
 {
   // \todo revise exception declarations
   return mkVarExceptionDeclInternal(vars.begin(), vars.end(), scope);
@@ -1341,7 +1401,7 @@ namespace
   }
 }
 
-SgExpression& mkChoiceExpIfNeeded(std::vector<SgExpression*>&& choices)
+SgExpression& mkChoiceExpIfNeeded(const SgExpressionPtrList& choices)
 {
   ADA_ASSERT(choices.size() > 0);
 

@@ -80,6 +80,14 @@ using LinuxI386Ptr = Sawyer::SharedPointer<LinuxI386>;
 class Specimen;
 using SpecimenPtr = Sawyer::SharedPointer<Specimen>;
 
+class SyscallCallback;
+using SyscallCallbackPtr = std::shared_ptr<SyscallCallback>;
+
+class SyscallContext;
+
+class SystemCall;
+using SystemCallPtr = Sawyer::SharedPointer<SystemCall>;
+
 class TestCase;
 using TestCasePtr = Sawyer::SharedPointer<TestCase>;
 
