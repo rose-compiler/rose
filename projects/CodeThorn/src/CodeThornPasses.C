@@ -21,8 +21,9 @@ namespace CodeThorn {
   CodeThorn::VariableIdMappingExtended* Pass::createVariableIdMapping(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc) {
     tc.startTimer();
     if(ctOpt.status) cout<<"Phase: variable-id mapping"<<endl;
+    CodeThorn::VariableIdMappingExtended* vim=CodeThorn::CodeThornLib::createVariableIdMapping(ctOpt,root);
     tc.stopTimer(TimingCollector::variableIdMapping);
-    return CodeThorn::CodeThornLib::createVariableIdMapping(ctOpt,root);
+    return vim;
   }
 
   CodeThorn::Labeler* Pass::createLabeler(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, VariableIdMappingExtended* variableIdMapping) {
@@ -65,8 +66,6 @@ namespace CodeThorn {
       if(ctOpt.status) cout<<"Phase: C++ ICFG construction"<<endl;
       cfanalyzer->createCppICFG(root);
     }
-    tc.stopTimer(TimingCollector::icfgConstruction);
-    
     if(ctOpt.status) {
       cout<<"Phase: ICFG construction"<<endl;
       size_t icfgSize=cfanalyzer->getIcfgFlow()->size();
@@ -76,7 +75,7 @@ namespace CodeThorn {
       cout<<"    inter-procedural edges: " << interSize <<endl;
       cout<<"    ICFG total       edges: " << icfgSize <<endl;
     }
-    
+    tc.stopTimer(TimingCollector::icfgConstruction);
     return cfanalyzer;
   }
   

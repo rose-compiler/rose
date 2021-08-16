@@ -19,7 +19,11 @@ typedef boost::shared_ptr<class DispatcherM68k> DispatcherM68kPtr;
 
 class DispatcherM68k: public BaseSemantics::Dispatcher {
 public:
-    typedef BaseSemantics::Dispatcher Super;
+    /** Base type. */
+    using Super = BaseSemantics::Dispatcher;
+
+    /** Shared-ownership pointer. */
+    using Ptr = DispatcherM68kPtr;
 
 public:
     /** Cached register.

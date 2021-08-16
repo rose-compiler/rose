@@ -11,9 +11,6 @@
 #include "ParProSpotSuccIter.h"
 #include "ParProEState.h"
 
-// BOOST includes
-#include "boost/unordered_set.hpp"
-
 //SPOT includes
 #include "tgba/tgba.hh"
 #include "tgba/succiter.hh"
@@ -67,7 +64,7 @@ namespace CodeThorn {
     spot::bdd_dict& dict;
     //map atomic propositions as used in the LTL formulae to their 
     // corresponding slots in the bdd_dict dictionary table. 
-    boost::unordered_map<std::string, int> propName2DictNum;
+    std::unordered_map<std::string, int> propName2DictNum;
   };
 }  //end of namespace CodeThorn
 

@@ -595,8 +595,9 @@ namespace
 int main( int argc, char * argv[] )
 {
   using Sawyer::Message::mfacilities;
+  using GuardedVariableIdMapping = std::unique_ptr<ct::VariableIdMappingExtended>;
 
-  //~ using GuardedVariableIdMapping = std::unique_ptr<ct::VariableIdMappingExtended>;
+  int errorCode = 1;
 
   try
   {
@@ -625,37 +626,32 @@ int main( int argc, char * argv[] )
     SgProject* project = ct::CodeThornLib::runRoseFrontEnd(thornArgc,thornArgv,ctOpt,tc);
     ROSE_ASSERT(project);
 
-    if(ctOpt.status) cout << "STATUS: Parsing and creating AST finished."<<endl;
+    logTrace() << "Parsing and creating AST finished."<<endl;
+
+    ct::FunctionIdMapping     funMap;
+
+    funMap.computeFunctionSymbolMapping(project);
 
     //~ GuardedVariableIdMapping  varMap{ct::CodeThornLib::createVariableIdMapping(ctOpt,project)};
     //~ ROSE_ASSERT(varMap);
+    //~ acuity.process(*project, *varMap, funMap);
 
-    ct::FunctionIdMapping     funMap;
     ct::VariableIdMapping     varMap;
-
-    funMap.computeFunctionSymbolMapping(project);
     varMap.computeVariableSymbolMapping(project);
     acuity.process(*project, varMap, funMap);
 
-    // main function try-catch
+    errorCode = 0;
   } catch(const std::exception& e) {
     logError() << "Error: " << e.what() << endl;
-    mfacilities.shutdown();
-    return 1;
   } catch(char const* str) {
     logError() << "Error: " << str << endl;
-    mfacilities.shutdown();
-    return 1;
   } catch(const std::string& str) {
     logError() << "Error: " << str << endl;
-    mfacilities.shutdown();
-    return 1;
   } catch(...) {
     logError() << "Error: Unknown exception raised." << endl;
-    mfacilities.shutdown();
-    return 1;
   }
+
   mfacilities.shutdown();
-  return 0;
+  return errorCode;
 }
 

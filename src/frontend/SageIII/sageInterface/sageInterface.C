@@ -146,7 +146,7 @@ using namespace Rose;
 using namespace SageBuilder;
 
 // Used by serialize() to collect all types visited
-//std::set<SgType*> type_set; 
+//std::set<SgType*> type_set;
 // DQ (1/18/2015): Define this container locally in this file only.
 namespace SageInterface
    {
@@ -1912,10 +1912,26 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
               }
 
               // something malformed in the tree if we get here
-              ROSE_ASSERT(false);
+              ROSE_ABORT();
               break;
             }
 
+            case V_SgAdaDiscriminatedTypeDecl:
+            {
+              const SgAdaDiscriminatedTypeDecl* dcl = isSgAdaDiscriminatedTypeDecl(declaration);
+              ROSE_ASSERT(dcl);
+
+              if (const SgDeclarationStatement* discrDcl = dcl->get_discriminatedDecl())
+              {
+                name = get_name(discrDcl);
+              }
+              else
+              {
+                name = "_ada_discriminated_typedecl_";
+              }
+
+              break;
+            }
 
        // Note that the case for SgVariableDeclaration is not implemented
           default:
@@ -12260,11 +12276,11 @@ SgInitializedName* SageInterface::getLoopIndexVariable(SgNode* loop)
   }
   else
   {
-    
+
     mlog[Sawyer::Message::Common::WARN] <<"Warning: SageInterface::getLoopIndexVariable(). Unhandled init_stmt type of SgForStatement"<<endl;
     mlog[Sawyer::Message::Common::WARN] <<"Init statement is :"<<init1->class_name() <<" " <<init1->unparseToString()<<endl;
     init1->get_file_info()->display("Debug");
-    
+
     return NULL;
     //ROSE_ASSERT (false);
   }
@@ -21846,7 +21862,7 @@ bool
 SageInterface::collectReadWriteRefs(SgStatement* stmt, std::vector<SgNode*>& readRefs, std::vector<SgNode*>& writeRefs, bool useCachedDefUse)
 {   // The type cannot be SgExpression since variable declarations have SgInitializedName as the reference, not SgVarRefExp.
   bool retVal = true;
-  
+
   ROSE_ASSERT(stmt !=NULL);
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -25053,16 +25069,16 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   out<<endl;
 
   std::vector<SgNode* > children = node->get_traversalSuccessorContainer();
-  int total_count = children.size(); 
+  int total_count = children.size();
   int current_index=0;
 
   // some Sg??PtrList are not AST nodes, not part of children , we need to handle them separatedly
   // we sum all children into single total_count to tell if there is remaining children.
-  if (isSgTemplateInstantiationDecl (node)) 
+  if (isSgTemplateInstantiationDecl (node))
     total_count += 1; // sn->get_templateArguments().size();
 
    // handling SgTemplateArgumentPtrList first
-  if (SgTemplateInstantiationDecl* sn = isSgTemplateInstantiationDecl (node)) 
+  if (SgTemplateInstantiationDecl* sn = isSgTemplateInstantiationDecl (node))
   {
     SgTemplateArgumentPtrList& plist = sn->get_templateArguments();
      bool n_hasRemaining=false;
@@ -25116,18 +25132,18 @@ void SageInterface::printAST2TextFile(SgNode* node, const char* filename)
   // append type information also
   textfile<<"Types encountered ...."<<endl;
   ostringstream oss2;
-#if 0  
-  set<SgType*>::iterator iter;  
+#if 0
+  set<SgType*>::iterator iter;
   for (iter = type_set.begin(); iter!= type_set.end(); iter++)
     serialize (*iter, prefix, false, oss2);
 #else
   VariantVector vv(V_SgType);
   Rose_STL_Container<SgNode*> tnodes= NodeQuery::queryMemoryPool(vv);
-  for (Rose_STL_Container<SgNode*>::const_iterator i = tnodes.begin(); i != tnodes.end(); ++i) 
+  for (Rose_STL_Container<SgNode*>::const_iterator i = tnodes.begin(); i != tnodes.end(); ++i)
   {
     serialize (*i, prefix, false, oss2);
   }
-#endif  
+#endif
   textfile<<oss2.str();
   textfile.close();
 }
@@ -26527,9 +26543,8 @@ SageInterface::buildFunctionPrototype ( SgFunctionDeclaration* functionDeclarati
                printf ("In case V_SgTemplateInstantiationMemberFunctionDecl: using name = %s \n",name.str());
 #endif
             // DQ (10/29/2020): Change this to include the functionality to build the member function support without fall-through.
-
-            // Case fall through...
              }
+             // fall through
           case V_SgMemberFunctionDeclaration:
              {
 #if 0

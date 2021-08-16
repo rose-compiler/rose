@@ -24,11 +24,15 @@ public:
     /** Reference counting pointer. */
     using Ptr = ArchitecturePtr;
 
+    /** Information about system calls. */
+    using SystemCallMap = Sawyer::Container::Map<int /*syscall*/, SystemCallPtr>;
+
 private:
     DatabasePtr db_;
     TestCaseId testCaseId_;
     TestCasePtr testCase_;
     ExecutionLocation curLocation_;
+    SystemCallMap systemCalls_;
 
 protected:
     // See "instance" methods in subclasses
@@ -73,10 +77,30 @@ public:
     void currentLocation(const ExecutionLocation&);
     /** @} */
 
+    /** Property: Information about system calls.
+     *
+     *  This is a map indexed by system call number (e.g., SYS_getpid). The values of the map contains two types of information:
+     *
+     *  @li Information about how a system call should behave. For instance, SYS_getpid should return the same value each time
+     *  it's called.
+     *
+     *  @li Information to make the declaraed behavior possible. For instance, the concrete and symbolic values returned the
+     *  first time SYS_getpid was called so that we can make it return these same values in the future.
+     *
+     * @{ */
+    const SystemCallMap& systemCalls() const;
+    SystemCallMap& systemCalls();
+    /** @} */
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions that can be called before execution starts.
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
+    /** Configures system call behavior.
+     *
+     *  This function declares how system calls are handled and is called from the @c instance methods (construction). */
+    virtual void configureSystemCalls() = 0;
+
     /** Prepares to execute the specimen concretely.
      *
      *  This should be called before calling any other functions that query or modify the execution state, such as those that read

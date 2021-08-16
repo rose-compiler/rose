@@ -18,13 +18,14 @@
 //CodeThorn includes
 #include "Flow.h"
 
+#include <unordered_map>
+
 //BOOST includes
 #include "boost/algorithm/string.hpp"
 #include "boost/algorithm/string/trim.hpp"
 #include "boost/algorithm/string/regex.hpp"
 #include "boost/regex.hpp"
 #include "boost/lexical_cast.hpp"
-#include "boost/unordered_map.hpp"
 
 using namespace CodeThorn;
 using namespace std;
@@ -71,7 +72,7 @@ namespace CodeThorn {
       EdgeAnnotationMap _annotationMap;
       string _startTransitionAnnotation;
       PropertyValueTable* _ltlResults;
-      boost::unordered_map<std::set<int> , pair<std::string, std::string> > _generatedDotFiles;
+    std::unordered_map<std::set<int> , pair<std::string, std::string>, boost::hash<std::set<int>> > _generatedDotFiles;
   };
 };
 #endif

@@ -77,6 +77,14 @@ void API<CRT>::build_command_line(std::vector<std::string> & cmdline) const {
 }
 
 template <typename CRT>
+void API<CRT>::add_nodes_for_namequal(Driver<Sage> & driver, SgSourceFile * srcfile) const {
+  auto & extra_nodes_for_namequal_init = srcfile->get_extra_nodes_for_namequal_init();
+  for (auto fid: file_ids) {
+    extra_nodes_for_namequal_init.push_back(driver.getGlobalScope(fid));
+  }
+}
+
+template <typename CRT>
 void API<CRT>::load_headers(Driver<Sage> & driver) {
 //  std::cerr << "ENTER: API<CRT>::load_headers" << std::endl;
 
@@ -102,7 +110,7 @@ void API<CRT>::load_headers(Driver<Sage> & driver) {
         auto fp = path + "/" + file;
 //        std::cerr << "  * checking: " << fp << std::endl;
         if (boost::filesystem::exists(fp)) {
-          driver.add(fp);
+          file_ids.insert(driver.add(fp));
 //          std::cerr << "  * Found!" << std::endl;
           found = true;
           break;

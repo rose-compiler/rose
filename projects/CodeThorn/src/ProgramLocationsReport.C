@@ -139,7 +139,8 @@ size_t ProgramLocationsReport::numTotalRecordedLocations() {
   return (potentialLocations+definitiveLocations).size();
 }
 
-void CodeThorn::ProgramLocationsReport::writeResultFile(string fileName, string writeMode, CodeThorn::Labeler* labeler) {
+void CodeThorn::ProgramLocationsReport::writeResultFile(CodeThornOptions& ctOpt, string fileName, CodeThorn::Labeler* labeler) {
+  string writeMode=ctOpt.csvReportModeString;
   std::ofstream myfile;
   if(writeMode=="generate") {
     myfile.open(fileName.c_str(),std::ios::out);
@@ -166,16 +167,16 @@ void CodeThorn::ProgramLocationsReport::writeResultFile(string fileName, string 
   }
 }
 
-void CodeThorn::ProgramLocationsReport::writeResultToStream(std::ostream& stream, CodeThorn::Labeler* labeler) {
-  writeAllDefinitiveLocationsToStream(stream,labeler,true,true,true);
-  writeAllPotentialLocationsToStream(stream,labeler,true,true,true);
+void CodeThorn::ProgramLocationsReport::writeResultToStream(CodeThornOptions& ctOpt, std::ostream& stream, CodeThorn::Labeler* labeler) {
+  writeAllDefinitiveLocationsToStream(stream,labeler,true,true,ctOpt.reportSourceColumn);
+  writeAllPotentialLocationsToStream(stream,labeler,true,true,ctOpt.reportSourceColumn);
 }
 
 void CodeThorn::ProgramLocationsReport::writeAllDefinitiveLocationsToStream(std::ostream& stream, CodeThorn::Labeler* labeler, bool qualifier, bool programLocation, bool sourceCode) {
-  writeLocationsToStream(stream,labeler,definitiveLocations,"definitive",true,true);
+  writeLocationsToStream(stream,labeler,definitiveLocations,"definitive",true,sourceCode);
 }
 void CodeThorn::ProgramLocationsReport::writeAllPotentialLocationsToStream(std::ostream& stream, CodeThorn::Labeler* labeler, bool qualifier, bool programLocation, bool sourceCode) {
-  writeLocationsToStream(stream,labeler,definitiveLocations,"definitive",true,true);
+  writeLocationsToStream(stream,labeler,definitiveLocations,"definitive",true,sourceCode);
 }
 
 void CodeThorn::ProgramLocationsReport::writeLocationsToStream(std::ostream& stream, CodeThorn::Labeler* labeler, LabelSet& set, string qualifier, bool programLocation, bool sourceCode) {
@@ -194,7 +195,7 @@ void CodeThorn::ProgramLocationsReport::writeLocationsToStream(std::ostream& str
   }
 }
 
-void ProgramLocationsReport::writeLocationsVerificationReport(std::ostream& os, Labeler* labeler) {
+void ProgramLocationsReport::writeLocationsVerificationReport(CodeThornOptions& ctOpt, std::ostream& os, Labeler* labeler) {
   int int_n=reachableLocations.size();
   double n=(double)int_n;
   LabelSet verified=verifiedLocations();
@@ -225,7 +226,7 @@ void ProgramLocationsReport::writeLocationsVerificationReport(std::ostream& os, 
 #endif
 }
 
-void ProgramLocationsReport::writeFunctionsVerificationReport(std::ostream& os, Labeler* labeler) {
+void ProgramLocationsReport::writeFunctionsVerificationReport(CodeThornOptions& ctOpt, std::ostream& os, Labeler* labeler) {
   cerr<<"Error: writeFunctionsVerificationReport not implemented yet."<<endl;
   exit(1);
 }

@@ -1,0 +1,147 @@
+#!/bin/bash
+
+# printStats numPass numWarn numWarnExpected numFail numFailExpected
+function printStats {
+    echo "PASS: $1, WARN: $2 (expected: $3), FAIL: $4 (expected: $5)"
+    if [ $2 -gt $3 ]; then
+      echo "${red}Error: more warnings than expected${end}"
+      exit 1
+    fi
+    if [ $4 -gt $5 ]; then
+      echo "${red}Error: more failing runs than expected${end}"
+      exit 1
+    fi
+}
+
+# runCxxTests compiler testdir testprefix numWarnExpected numFailExpected list-of-test-numbers
+function runCxxTests {
+    if [ $# -lt 6 ]; then
+      echo "error: insufficient arguments to runCxxTests $# < 6"
+      exit 1
+    fi
+
+    CXX=$1
+    shift
+    testDir=$1
+    shift
+    testPrefix=$1
+    shift
+    numWarn=0
+    numWarnExpected=$1
+    shift
+    numFail=0
+    numFailExpected=$1
+    shift
+
+    while (( "$#" )); do
+        benchmarkprefix="$testDir/src/$testPrefix$1"
+        shift
+
+        for benchmark in ${benchmarkprefix}*.cc; do
+            benchmarkname=$(basename $benchmark)
+            printf "Testing %-38s: " $benchmarkname
+            CT_OUTPUT_FILE=$benchmarkname.imout
+
+            #~ ./codethorn $benchmark $CT_MODE_OPTIONS --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR > /dev/null
+          #~ if [ ! $? -eq 0 ]
+          #~ then
+          #~ echo $COLORED_FAIL
+                #~ ((numFail++))
+            #~ else
+                #~ echo -n "$COLORED_PASS "
+
+            EXEFILE=${benchmarkname}.exe
+            $CXX -std=c++03 -Wall -Wextra -pedantic -I $TESTDIR/include $benchmark -o$EXEFILE
+            OUTPUT_FILE_OBSERVED="${CT_OUTPUT_FILE}.observed"
+            OUTPUT_FILE_EXPECTED="${CT_OUTPUT_FILE}.expected"
+            ./$EXEFILE > $OUTPUT_FILE_OBSERVED
+            ./$EXEFILE -e > $OUTPUT_FILE_EXPECTED
+
+          #~ fi
+            DIFF=$(diff $OUTPUT_FILE_OBSERVED $OUTPUT_FILE_EXPECTED)
+            if [ "$DIFF" != "" ]
+            then
+                echo $COLORED_WARN
+                ((numWarn++))
+            else
+                echo $COLORED_PASS
+                ((numPass++))
+            fi
+            rm -f $EXEFILE $OUTPUT_FILE_OBSERVED OUTPUT_FILE_EXPECTED
+        done
+    done
+    printStats $numPass $numWarn $numWarnExpected $numFail $numFailExpected
+}
+
+#~ function runDomainTestsLevel2 {
+    #~ echo "Scheduled tests: $testNumbers"
+    #~ numPass=0
+    #~ numWarn=0
+    #~ numFail=0
+    #~ for testNumber in $testNumbers; do
+        #~ benchmarkprefix=$TESTDIR/DOM${testNumber};
+        #~ for benchmark in ${benchmarkprefix}*.[Cc]; do
+            #~ benchmarkname=$(basename $benchmark)
+            #~ printf "Testing %-38s: " $benchmarkname
+            #~ CT_OUTPUT_FILE=$benchmarkname.imout
+            #~ ./codethorn $benchmark $CT_MODE_OPTIONS --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR > /dev/null
+            #~ if [ ! $? -eq 0 ]
+            #~ then
+          #~ echo $COLORED_FAIL
+                #~ ((numFail++))
+            #~ else
+                #~ echo "$COLORED_PASS"
+    #~ ((numPass++))
+            #~ fi
+        #~ done
+    #~ done
+    #~ printStats
+#~ }
+
+#########
+## main
+#########
+
+# exit immediately with ctrl-c
+trap "exit" INT
+
+red=$'\e[1;31m'
+grn=$'\e[1;32m'
+yel=$'\e[1;33m'
+blu=$'\e[1;34m'
+mag=$'\e[1;35m'
+cyn=$'\e[1;36m'
+end=$'\e[0m'
+
+COLORED_FAIL=${red}FAIL${end}
+COLORED_WARN=${yel}WARN${end}
+COLORED_PASS=${grn}PASS${end}
+
+
+echo "------------------------------------------------"
+echo "running Cxx TESTS"
+echo "------------------------------------------------"
+
+TESTDIR=$1
+TESTPREFIX="Cxx"
+COMPILER="g++"
+CT_MODE_OPTIONS="--context-sensitive=yes --normalize-level=2 --interpreter-mode=1 --in-state-string-literals --exploration-mode=topologic-sort"
+
+echo "Valid C++98 Tests: "
+passingTests=`echo {001..016} {018..034} {036..051}`
+numWarnExpected=0
+numFailExpected=0
+runCxxTests $COMPILER $TESTDIR $TESTPREFIX $numWarnExpected $numFailExpected $passingTests
+
+echo "Undefined Behavior Tests: "
+undefinedBehavior=`echo {017..017}`
+numWarnExpected=1
+numFailExpected=0
+runCxxTests $COMPILER $TESTDIR $TESTPREFIX $numWarnExpected $numFailExpected $undefinedBehavior
+
+echo "Language Extension Tests: "
+languageExtension=`echo {035..035}`
+numWarnExpected=1
+numFailExpected=0
+runCxxTests $COMPILER $TESTDIR $TESTPREFIX $numWarnExpected $numFailExpected $languageExtension
+

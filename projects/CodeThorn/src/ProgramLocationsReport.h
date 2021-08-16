@@ -5,8 +5,7 @@
 #include "Labeler.h"
 #include <iostream>
 #include "CFAnalysis.h"
-
-// Author: Markus Schordan, 2020.
+#include "CodeThornOptions.h"
 
 namespace CodeThorn {
   class ProgramLocationsReport {
@@ -35,14 +34,14 @@ namespace CodeThorn {
     static bool hasSourceLocation(SgStatement* stmt);
     LabelSet filterFunctionEntryLabels(Labeler* labeler, LabelSet labSet);
 
-    void writeResultFile(std::string fileName, std::string writeMode, CodeThorn::Labeler* labeler);
-    void writeResultToStream(std::ostream& stream, CodeThorn::Labeler* labeler);
+    void writeLocationsVerificationReport(CodeThornOptions& ctOpt, std::ostream& os, CodeThorn::Labeler* labeler);
+    void writeFunctionsVerificationReport(CodeThornOptions& ctOpt, std::ostream& os, CodeThorn::Labeler* labeler);
+    void writeResultFile(CodeThornOptions& ctOpt, std::string fileName, CodeThorn::Labeler* labeler);
+    void writeResultToStream(CodeThornOptions& ctOpt, std::ostream& stream, CodeThorn::Labeler* labeler);
     void writeAllDefinitiveLocationsToStream(std::ostream& stream, CodeThorn::Labeler* labeler, bool qualifier, bool programLocation, bool sourceCode);
     void writeAllPotentialLocationsToStream(std::ostream& stream, CodeThorn::Labeler* labeler, bool qualifier, bool programLocation, bool sourceCode);
     void writeLocationsToStream(std::ostream& stream, CodeThorn::Labeler* labeler, LabelSet& set, std::string qualifier, bool programLocation, bool sourceCode);
 
-    void writeLocationsVerificationReport(std::ostream& os, CodeThorn::Labeler* labeler);
-    void writeFunctionsVerificationReport(std::ostream& os, CodeThorn::Labeler* labeler);
     static std::string programLocation(CodeThorn::Labeler* labeler, CodeThorn::Label lab);
     static std::string sourceCodeAtProgramLocation(CodeThorn::Labeler* labeler, CodeThorn::Label lab);
   private:

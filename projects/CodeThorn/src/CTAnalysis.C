@@ -134,7 +134,9 @@ void CodeThorn::CTAnalysis::setWorkLists(ExplorationMode explorationMode) {
     break;
   case EXPL_TOPOLOGIC_SORT: {
     ROSE_ASSERT(getLabeler());
-    if(getFlow()->getStartLabelSet().size()>0) {
+    auto sLabelSetSize=getFlow()->getStartLabelSet().size();
+    if(sLabelSetSize>0) {
+      if(_ctOpt.status) cout<<"STATUS: creating topologic sort of "<<getFlow()->size()<<" labels ... "<<flush;
       TopologicalSort topSort(*getLabeler(),*getFlow());
       std::list<Label> labelList=topSort.topologicallySortedLabelList();
 #if 0
@@ -145,6 +147,8 @@ void CodeThorn::CTAnalysis::setWorkLists(ExplorationMode explorationMode) {
       cout<<endl;
 #endif
       TopologicalSort::LabelToPriorityMap map=topSort.labelToPriorityMap();
+      if(_ctOpt.status) cout<<"done."<<endl;
+
       ROSE_ASSERT(map.size()>0);
       estateWorkListCurrent = new EStatePriorityWorkList(map);
       estateWorkListNext = new EStatePriorityWorkList(map); // only used in loop aware mode
@@ -155,7 +159,7 @@ void CodeThorn::CTAnalysis::setWorkLists(ExplorationMode explorationMode) {
       TopologicalSort::LabelToPriorityMap map;
       estateWorkListCurrent = new EStatePriorityWorkList(map);
       estateWorkListNext = new EStatePriorityWorkList(map); // only used in loop aware mode
-      SAWYER_MESG(logger[INFO])<<"STATUS: using empty topologic worklist (because of empty control flow graph)."<<endl;
+      if(_ctOpt.status) cout<<"STATUS: using empty topologic worklist (because of empty control flow graph)."<<endl;
     }
   }
   } // end switch
@@ -1146,7 +1150,7 @@ std::string CodeThorn::CTAnalysis::analyzedFunctionsToString() {
 }
 
 std::string CodeThorn::CTAnalysis::analyzedFilesToString() {
-  unordered_set<string> fileNameSet;
+  std::unordered_set<string> fileNameSet;
   LabelSet reachableFunLabels=reachableFunctionEntryLabels();
   for (auto funLab : reachableFunLabels)  {
     SgFunctionDefinition* funDef=getFunctionDefinitionOfEntryLabel(funLab);
@@ -1214,15 +1218,13 @@ void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(SgProject* root, TimingCollect
 
   CodeThornOptions& ctOpt=getOptionsRef();
 
-  tc.startTimer();
-  tc.stopTimer(TimingCollector::init);
-  
   Pass::normalization(ctOpt,root,tc);
-  _variableIdMapping=Pass::createVariableIdMapping(ctOpt, root, tc);
-  _labeler=Pass::createLabeler(ctOpt, root, tc, _variableIdMapping);
-  _classHierarchy=Pass::createClassHierarchy(ctOpt, root, tc);
-  _cfAnalysis=Pass::createForwardIcfg(ctOpt,root,tc,_labeler,_classHierarchy);
+  _variableIdMapping=Pass::createVariableIdMapping(ctOpt, root, tc); // normalization timer
+  _labeler=Pass::createLabeler(ctOpt, root, tc, _variableIdMapping); // labeler timer
+  _classHierarchy=Pass::createClassHierarchy(ctOpt, root, tc); // class hierarchy timer
+  _cfAnalysis=Pass::createForwardIcfg(ctOpt,root,tc,_labeler,_classHierarchy); // icfg constructino timer
   
+  tc.startTimer(); // initialization timer (stopped at end of function)
   resetInputSequenceIterator();
   RoseAst completeast(root);
 
@@ -1251,10 +1253,9 @@ void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(SgProject* root, TimingCollect
     }
     ROSE_ASSERT((_ctOpt.getInterProceduralFlag() && _startFunRoot) || (!_ctOpt.getInterProceduralFlag()));
   }
-  
+
   SAWYER_MESG(logger[TRACE])<< "Initializing AST node info."<<endl;
   initAstNodeInfo(root);
-
   getCFAnalyzer()->setInterProcedural(_ctOpt.getInterProceduralFlag());
 
   if(CTIOLabeler* ctioLabeler=dynamic_cast<CTIOLabeler*>(getLabeler())) {
@@ -1314,7 +1315,6 @@ void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(SgProject* root, TimingCollect
     }
   }
 
-  // START_INIT 5
   const PState* initialPStateStored=processNew(initialPState);
   ROSE_ASSERT(initialPStateStored);
   SAWYER_MESG(logger[TRACE])<< "INIT: initial pstate(stored): "<<initialPStateStored->toString(getVariableIdMapping())<<endl;
@@ -1327,36 +1327,49 @@ void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(SgProject* root, TimingCollect
 
   EState estate(slab,initialPStateStored,emptycsetstored);
 
-  //initializeGlobalVariablesOld(root, estate);
   ROSE_ASSERT(_estateTransferFunctions);
   _estateTransferFunctions->initializeGlobalVariables(root, estate);
   SAWYER_MESG(logger[INFO]) <<"Initial state: number of entries:"<<estate.pstate()->stateSize()<<endl;
-  
+
+  if(_ctOpt.status) cout<<"STATUS: creating worklist."<<endl;
   setWorkLists(_explorationMode);
-  
+
   // initialize summary states map for abstract model checking mode
   initializeSummaryStates(initialPStateStored,emptycsetstored);
   estate.io.recordNone(); // ensure that extremal value is different to bot
 
+  // initialization of solver
   if(_ctOpt.runSolver) {
     if(_ctOpt.getInterProceduralFlag()) {
-      const EState* initialEState=processNew(estate); // START_INIT 6
+      // inter-procedural analysis initial state
+      const EState* initialEState=processNew(estate);
       ROSE_ASSERT(initialEState);
       variableValueMonitor.init(initialEState);
       addToWorkList(initialEState);
       SAWYER_MESG(logger[INFO]) << "INIT: start state inter-procedural (extremal value size): "<<initialEState->pstate()->stateSize()<<" variables."<<endl;
       SAWYER_MESG(logger[TRACE]) << "INIT: start state inter-procedural (extremal value): "<<initialEState->toString(getVariableIdMapping())<<endl;
     } else {
+      // intra-procedural analysis initial states
       LabelSet startLabels=getFlow()->getStartLabelSet();
-      if(_ctOpt.status) cout<<"STATUS: intra-procedural analysis with "<<startLabels.size()<<" start functions."<<endl;
+      size_t numStartLabels=startLabels.size();
+      printStatusMessage("STATUS: intra-procedural analysis with "+std::to_string(numStartLabels)+" start functions.",true);
+      long int fCnt=1;
       for(auto slab : startLabels) {
 	// initialize intra-procedural analysis with all function entry points
+	if(_ctOpt.status) {
+	  SgNode* node=getLabeler()->getNode(slab);
+	  string functionName=SgNodeHelper::getFunctionName(node);
+	  string fileName=SgNodeHelper::sourceFilenameToString(node);
+#pragma omp critical (STATUS_MESSAGES)
+	  {
+	    SAWYER_MESG(logger[INFO])<<"Intra-procedural analysis: initializing function "<<fCnt++<<" of "<<numStartLabels<<": "<<fileName<<":"<<functionName<<endl;
+	  }
+	}
 	estate.setLabel(slab);
 	const EState* initialEState=processNew(estate);
 	ROSE_ASSERT(initialEState);
 	variableValueMonitor.init(initialEState);
 	addToWorkList(initialEState);
-	SAWYER_MESG(logger[TRACE]) << "INIT: start state intra-procedural (extremal value): "<<initialEState->toString(getVariableIdMapping())<<endl;
       }
     }
 
@@ -1370,6 +1383,9 @@ void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(SgProject* root, TimingCollect
   } else {
     if(_ctOpt.status) cout<<"STATUS: skipping solver run."<<endl;
   }
+  if(_ctOpt.status) cout<<"STATUS: analysis phase 1 finished."<<endl;
+  tc.stopTimer(TimingCollector::init);
+
 }
 
 void CodeThorn::CTAnalysis::initAstNodeInfo(SgNode* node) {
@@ -1602,7 +1618,7 @@ void CodeThorn::CTAnalysis::reduceStgToInOutAssertErrStates() {
  */
 void CodeThorn::CTAnalysis::reduceStgToInOutAssertWorklistStates() {
   // copy elements from worklist into hashset (faster access within the predicate)
-  unordered_set<const EState*> worklistSet(estateWorkListCurrent->begin(), estateWorkListCurrent->end());
+  std::unordered_set<const EState*> worklistSet(estateWorkListCurrent->begin(), estateWorkListCurrent->end());
   function<bool(const EState*)> predicate = [&worklistSet](const EState* s) {
     return s->io.isStdInIO() || s->io.isStdOutIO()
     || s->io.isFailedAssertIO() || (worklistSet.find(s) != worklistSet.end());

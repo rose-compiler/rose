@@ -1,6 +1,7 @@
 #include "sage3basic.h"
 #include "VariableIdMappingExtended.h"
 #include "CodeThornLib.h"
+#include "AstTerm.h"
 
 using namespace Sawyer::Message;
 using namespace std;
@@ -16,8 +17,9 @@ namespace CodeThorn {
       _typeSize[type]=unknownSizeValue();
     for(auto type:_memPoolTraversal.arrayTypes)
       _typeSize[type]=unknownSizeValue();
-    for(auto type:_memPoolTraversal.builtInTypes)
-      _typeSize[type]=unknownSizeValue();
+    for(auto type:_memPoolTraversal.builtInTypes) {
+      //_typeSize[type]=unknownSizeValue();
+    }
   }
 
   void VariableIdMappingExtended::computeTypeSizes() {
@@ -328,13 +330,22 @@ namespace CodeThorn {
 
   void VariableIdMappingExtended::setTypeSize(SgType* type, CodeThorn::TypeSize newTypeSize) {
     auto typeIter=_typeSize.find(type);
-    if(typeIter!=_typeSize.end()) {
-      if((*typeIter).second!=newTypeSize) {
-	stringstream ss;
-	ss<<"type size mismatch: "<<type->unparseToString()<<": "<<_typeSize[type]<<" != "<<newTypeSize;
-	recordWarning(ss.str());
-      } else {
+    //cout<<"DEBUG: VariableIdMappingExtended::setTypeSize:"<<type->unparseToString()<<":"<<newTypeSize<<":"<<AstTerm::astTermWithNullValuesToString(type)<<endl;
+    if(typeIter==_typeSize.end()) {
+      // new entry
+      _typeSize[type]=newTypeSize;
+    } else {
+      if((*typeIter).second==unknownSizeValue()) {
+	// entry with exists with UnknownTypeSize, set new type size
 	_typeSize[type]=newTypeSize;
+      } else {
+	if((*typeIter).second==newTypeSize) {
+	  // nothing to do, same value different to UnknownSize already exists
+	} else {
+	  stringstream ss;
+	  ss<<"type size mismatch: "<<type->unparseToString()<<": "<<_typeSize[type]<<" != "<<newTypeSize;
+	  recordWarning(ss.str());
+	}
       }
     }
   }
@@ -343,6 +354,7 @@ namespace CodeThorn {
     return unknownSizeValue();
   }
 
+  // not used
   CodeThorn::TypeSize VariableIdMappingExtended::getTypeSizeNew(SgType* type) {
     auto typeIter=_typeSize.find(type);
     if(typeIter!=_typeSize.end()) {
@@ -353,15 +365,22 @@ namespace CodeThorn {
   }
 
   CodeThorn::TypeSize VariableIdMappingExtended::getTypeSize(SgType* type) {
+    //cout<<"DEBUG: VIME:getTypeSize:"<<type->class_name()<<endl;
     auto typeIter=_typeSize.find(type);
     if(typeIter!=_typeSize.end()) {
+      //cout<<"DEBUG: known type with size: "<<(*typeIter).first->unparseToString()<<":"<<(*typeIter).second<<endl;
+      
       return (*typeIter).second;
     } else {
       BuiltInType biTypeId=TypeSizeMapping::determineBuiltInTypeId(type);
-      if(biTypeId!=BITYPE_UNKNOWN)
+      //cout<<"DEBUG: builtin-case: "<<biTypeId<<endl;
+      if(biTypeId!=BITYPE_UNKNOWN) {
+	//cout<<"DEBUBG: unknown size:"<<getBuiltInTypeSize(biTypeId)<<endl;
 	return getBuiltInTypeSize(biTypeId);
-      else
+      } else {
+	//cout<<"DEBUBG: unknown size"<<endl;
 	return unknownSizeValue();
+      }
     }
   }
 
@@ -791,28 +810,28 @@ namespace CodeThorn {
       }
 
     }
-    cout<<"================================================="<<endl;
-    cout<<"Variable Type Size and Scope Overview"<<endl;
-    cout<<"================================================="<<endl;
-    cout<<"Number of struct vars               : "<<structNum<<endl;
-    cout<<"Number of array vars                : "<<arrayNum<<endl;
-    cout<<"Number of built-in type vars        : "<<singleNum<<endl;
-    cout<<"Number of string literals           : "<<stringLiteralNum<<endl;
-    cout<<"Number of unknown (size) vars       : "<<unknownSizeNum<<endl;
-    cout<<"Number of unspecified size vars     : "<<unspecifiedSizeNum<<endl;
-    cout<<"-------------------------------------------------"<<endl;
-    cout<<"Number of global vars               : "<<globalVarNum<<endl;
-    cout<<"Number of local vars                : "<<localVarNum<<endl;
-    cout<<"Number of function param vars       : "<<paramVarNum<<endl;
-    cout<<"Number of struct/class member vars  : "<<memberVarNum<<endl;
-    cout<<"Number of unknown (scope) vars      : "<<unknownVarNum<<endl;
-    cout<<"-------------------------------------------------"<<endl;
-    cout<<"Maximum struct size                 : "<<maxStructTotalSize<<" bytes"<<endl;
-    cout<<"Maximum array size                  : "<<maxArrayTotalSize<<" bytes"<<endl;
-    cout<<"Maximum array element size          : "<<maxArrayElementSize<<endl;
-    cout<<"Maximum number of elements in struct: "<<maxStructElements<<endl;
-    cout<<"Maximum number of elements in array : "<<maxArrayElements<<endl;
-    cout<<"================================================="<<endl;
+    os<<"================================================="<<endl;
+    os<<"Variable Type Size and Scope Overview"<<endl;
+    os<<"================================================="<<endl;
+    os<<"Number of struct vars               : "<<structNum<<endl;
+    os<<"Number of array vars                : "<<arrayNum<<endl;
+    os<<"Number of built-in type vars        : "<<singleNum<<endl;
+    os<<"Number of string literals           : "<<stringLiteralNum<<endl;
+    os<<"Number of unknown (size) vars       : "<<unknownSizeNum<<endl;
+    os<<"Number of unspecified size vars     : "<<unspecifiedSizeNum<<endl;
+    os<<"-------------------------------------------------"<<endl;
+    os<<"Number of global vars               : "<<globalVarNum<<endl;
+    os<<"Number of local vars                : "<<localVarNum<<endl;
+    os<<"Number of function param vars       : "<<paramVarNum<<endl;
+    os<<"Number of struct/class member vars  : "<<memberVarNum<<endl;
+    os<<"Number of unknown (scope) vars      : "<<unknownVarNum<<endl;
+    os<<"-------------------------------------------------"<<endl;
+    os<<"Maximum struct size                 : "<<maxStructTotalSize<<" bytes"<<endl;
+    os<<"Maximum array size                  : "<<maxArrayTotalSize<<" bytes"<<endl;
+    os<<"Maximum array element size          : "<<maxArrayElementSize<<endl;
+    os<<"Maximum number of elements in struct: "<<maxStructElements<<endl;
+    os<<"Maximum number of elements in array : "<<maxArrayElements<<endl;
+    os<<"================================================="<<endl;
   }
 
   void VariableIdMappingExtended::toStream(ostream& os) {
@@ -1007,11 +1026,45 @@ namespace CodeThorn {
     return classMembers[type];
   }
 
-  // OLD METHODS (VIM2)
-
-  std::string VariableIdMappingExtended::typeSizeMappingToString() {
-    return typeSizeMapping.toString();
+  void VariableIdMappingExtended::MemPoolTraversal::visit(SgNode* node) {
+    if(SgClassType* ctype=isSgClassType(node)) {
+      classTypes.insert(ctype);
+    } else if(SgArrayType* atype=isSgArrayType(node)) {
+      arrayTypes.insert(atype);
+    } else if(SgType* btype=isSgType(node)) {
+      builtInTypes.insert(btype);
+    } else if(SgClassDefinition* cdef=isSgClassDefinition(node)) {
+      classDefinitions.insert(cdef);
+    }
   }
 
+  void VariableIdMappingExtended::MemPoolTraversal::dumpClassTypes() {
+    int i=0;
+    for(auto t:classTypes) {
+      auto mList=VariableIdMappingExtended::memberVariableDeclarationsList(t);
+      std::cout<<i++<<": class Type (";
+      if(mList.first)
+	std::cout<<mList.second.size();
+      else
+	std::cout<<"unknown";
+      std::cout<<") :"<<t->unparseToString()<<std::endl;
+    }
+  }
+
+  void VariableIdMappingExtended::MemPoolTraversal::dumpArrayTypes() {
+    int i=0;
+    for(auto t:arrayTypes) {
+      std::cout<<"Array Type "<<i++<<":"<<t->unparseToString()<<std::endl;
+    }
+  }
+
+  std::string VariableIdMappingExtended::typeSizeMappingToString() {
+    stringstream ss;
+    for(auto p: _typeSize) {
+      ss<<p.first->unparseToString()<<": "<<AstTerm::astTermWithNullValuesToString(p.first)<<": "<<p.second<<endl;
+    }
+    return ss.str();
+  }
+ 
 }
 

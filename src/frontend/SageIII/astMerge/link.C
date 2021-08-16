@@ -67,6 +67,13 @@ static void registerSymbolsForSubstitution(
       r->set_definingDeclaration(self_defn_decl ? self_defn_decl : refdesc.defn_decl);
     }
   }
+
+  for (auto r: descmap.find(refsym)->second.decls) {
+    r->set_firstNondefiningDeclaration(refdesc.first_nondef_decl);
+    // Deal with multiple definition: if not selected then it still see itself as the defining one
+    typename LinkT::decl_t * self_defn_decl = (typename LinkT::decl_t *)(r->get_definingDeclaration());
+    r->set_definingDeclaration(self_defn_decl ? self_defn_decl : refdesc.defn_decl);
+  }
 }
 
 void createSymbolAlias(
@@ -186,6 +193,9 @@ class LinkAcrossFiles {
       if (syms_defns.size() > 1) {
         while (syms_defns.size() > 0) {
           sym_t * refsym = syms_defns.back();
+#if DEBUG_LinkAcrossFiles
+          std::cerr << "refsym = " << std::hex << refsym << std::endl;
+#endif
           syms_defns.pop_back();
 
           auto const & refdesc = descmap.find(refsym)->second;
@@ -195,6 +205,9 @@ class LinkAcrossFiles {
           auto curr = syms_defns.begin();
           while (curr != syms_defns.end()) {
             sym_t * currsym = *curr;
+#if DEBUG_LinkAcrossFiles
+            std::cerr << "currsym = " << std::hex << currsym << std::endl;
+#endif
             auto const & currdesc = descmap.find(currsym)->second;
 
             if (refdesc.equivalent(currdesc)) {
@@ -567,13 +580,15 @@ struct VariableLinker {
         // We only concatenate the chain of inames associated with this symbol if the
         // symbol's basis is actually the first item of that chain. Other cases are due
         // to multiple extern declaration being seen from headers (which are read in
-        // various orders) and eliminated by sharing. The result is a single chain with
+        // various orders) and eliminated by sharing. The result should be a single chain with
         // symbols pointing to various point of that chain.
+        // Potential for 'last' to point to some iname which creates cycles: setting prev_decl_item to nulltptr
         SgInitializedName * base_iname = isSgInitializedName(oldsym->get_symbol_basis());
         ROSE_ASSERT(base_iname != NULL);
         if (base_iname == olddesc.first && base_iname->get_prev_decl_item() == NULL) {
           olddesc.first->set_prev_decl_item(last);
           last = olddesc.last;
+          last->set_prev_decl_item(nullptr);
         }
       }
     }

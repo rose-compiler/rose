@@ -42,6 +42,11 @@ public:
  *  that defines the interface.  See the Rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts
  *  fit together. */
 class Dispatcher: public boost::enable_shared_from_this<Dispatcher> {
+public:
+    /** Shared-ownership pointer for a @ref Dispatcher object. See @ref heap_object_shared_ownership. */
+    using Ptr = DispatcherPtr;
+
+private:
     RiscOperatorsPtr operators_;
 
 protected:
@@ -83,10 +88,6 @@ protected:
         ASSERT_not_null(operators_);
         ASSERT_not_null(regs);
     }
-
-public:
-    /** Shared-ownership pointer for a @ref Dispatcher object. See @ref heap_object_shared_ownership. */
-    typedef DispatcherPtr Ptr;
 
 public:
     virtual ~Dispatcher() {

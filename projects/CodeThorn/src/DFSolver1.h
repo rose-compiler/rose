@@ -17,23 +17,23 @@ namespace CodeThorn {
 class DFSolver1 : public DFAbstractSolver {
  public:
   DFSolver1(WorkListSeq<Edge>& workList,
-	   std::vector<Lattice*>& analyzerDataPreInfo,
-	   std::vector<Lattice*>& analyzerDataPostInfo,
-	   PropertyStateFactory& initialElementFactory,
-	   Flow& flow,
-	   DFTransferFunctions& transferFunctions
-	   );
-  
+           std::vector<Lattice*>& analyzerDataPreInfo,
+           std::vector<Lattice*>& analyzerDataPostInfo,
+           PropertyStateFactory& initialElementFactory,
+           Flow& flow,
+           DFTransferFunctions& transferFunctions
+           );
+
   void runSolver() ROSE_OVERRIDE;
   void computeCombinedPreInfo(Label lab,Lattice& inInfo) ROSE_OVERRIDE;
-  
+
   void setLabeler(Labeler& labeler) { l = &labeler; }
-  Labeler getLabeler() 
-  { 
+  Labeler* getLabeler()
+  {
     ROSE_ASSERT(l);
-    return *l; 
+    return l;
   }
-  
+
   void computePostInfo(Label lab,Lattice& inInfo);
 
  protected:

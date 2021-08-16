@@ -6,6 +6,7 @@
 #include "IOAnalyzer.h"
 #include "TimingCollector.h"
 #include "AbstractValue.h"
+#include "ProgramInfo.h"
 
 namespace CodeThorn {
   extern Sawyer::Message::Facility logger;
@@ -57,7 +58,17 @@ namespace CodeThorn {
     void normalizationPass(CodeThornOptions& ctOpt, SgProject* sageProject);
     Labeler* createLabeler(SgProject* sageProject, VariableIdMappingExtended* variableIdMapping);
     VariableIdMappingExtended* createVariableIdMapping(CodeThornOptions& ctOpt, SgProject* sageProject);
-    void optionallyPrintRunTimeAndMemoryUsage(CodeThornOptions& ctOpt,TimingCollector& tc);
+
+    void optionallyPrintRunTimeAndMemoryUsageReport(CodeThornOptions& ctOpt,TimingCollector& tc);
+    void generateRunTimeAndMemoryUsageReport(CodeThornOptions& ctOpt,TimingCollector& tc);
+    std::string getRunTimeAndMemoryUsageReport(CodeThornOptions& ctOpt,TimingCollector& tc);
+
+    // program statistics + type infos
+    std::string programStatsToString(ProgramInfo* progInfo, VariableIdMappingExtended* vim);
+    // compares to program statistics and prints type infos
+    std::string programStatsToString(ProgramInfo* progInfo1, ProgramInfo* progInfo2, VariableIdMappingExtended* vim);
+    // generates file 'program-statistics-report.txt' in ctOpt.reportFilePath
+    void generateProgramStats(CodeThornOptions& ctOpt, ProgramInfo* progInfo1, ProgramInfo* progInfo2, VariableIdMappingExtended* vim);
 
   } // end of namespace CodeThornLib
     

@@ -15,7 +15,7 @@ namespace CodeThorn {
     static void generateAstNodeStats(CodeThornOptions& ctOpt, SgProject* sageProject);
     static void generateNullPointerAnalysisStats(CodeThorn::CTAnalysis* analyzer);
     static void generateConstantConditionVerificationReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, AnalysisSelector);
-    static void generateAnalysisStatsRawData(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer);
+    static void generateAnalysisLocationReports(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer);
     static void generateAnalyzedFunctionsAndFilesReports(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer);
     static void generateVerificationCallGraphDotFile(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report);
     static void generateVerificationFunctionsCsvFile(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report, bool violationReporting);

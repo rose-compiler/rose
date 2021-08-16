@@ -16,7 +16,7 @@ namespace CodeThorn {
     classHierarchyAnalysis,
     variableIdMapping,
     labeler,
-    functionCallMapping,
+    //functionCallMapping,
     icfgConstruction,
     reverseIcfgConstruction,
     transitionSystemAnalysis,

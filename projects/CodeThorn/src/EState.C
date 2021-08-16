@@ -125,7 +125,7 @@ long EState::memorySize() const {
 EStateId EStateSet::estateId(const EState estate) const {
   EStateId id=0;
   // MS: TODO: we may want to use the new function id(estate) here
-  for(EStateSet::iterator i=begin();i!=end();++i) {
+  for(EStateSet::const_iterator i=begin();i!=end();++i) {
     if(estate==**i)
       return id;
     id++;
@@ -203,7 +203,7 @@ CodeThorn::AbstractValue EState::determineUniqueIOValue() const {
  */
 int EStateSet::numberOfIoTypeEStates(InputOutput::OpType op) const {
   int counter=0;
-  for(EStateSet::iterator i=begin();i!=end();++i) {
+  for(EStateSet::const_iterator i=begin();i!=end();++i) {
     if((*i)->io.op==op)
       counter++;
   }
@@ -216,7 +216,7 @@ int EStateSet::numberOfIoTypeEStates(InputOutput::OpType op) const {
  */
 int EStateSet::numberOfConstEStates(VariableIdMapping* vid) const {
   int counter=0;
-  for(EStateSet::iterator i=begin();i!=end();++i) {
+  for(EStateSet::const_iterator i=begin();i!=end();++i) {
     if((*i)->isConst(vid))
       counter++;
   }
@@ -354,7 +354,7 @@ string EStateList::toString() {
 string EStateSet::toString(VariableIdMapping* variableIdMapping) const {
   stringstream ss;
   ss<<"EStateSet={";
-  for(EStateSet::iterator i=begin();
+  for(EStateSet::const_iterator i=begin();
       i!=end();
       ++i) {
     if(variableIdMapping)

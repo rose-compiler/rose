@@ -19,7 +19,11 @@ using DispatcherAarch32Ptr = boost::shared_ptr<class DispatcherAarch32>;
 
 class DispatcherAarch32: public BaseSemantics::Dispatcher {
 public:
+    /** Base type. */
     using Super = BaseSemantics::Dispatcher;
+
+    /** Shared-ownership pointer. */
+    using Ptr = DispatcherAarch32Ptr;
 
 public:
     /** Cached register.

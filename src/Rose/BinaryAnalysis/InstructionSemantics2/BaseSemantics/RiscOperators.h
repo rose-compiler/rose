@@ -46,6 +46,11 @@ namespace BaseSemantics {
  *  that defines the interface.  See the Rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts
  *  fit together. */
 class RiscOperators: public boost::enable_shared_from_this<RiscOperators> {
+public:
+    /** Shared-ownership pointer for a @ref RiscOperators object. See @ref heap_object_shared_ownership. */
+    using Ptr = RiscOperatorsPtr;
+
+private:
     SValuePtr protoval_;                                // Prototypical value used for its virtual constructors
     StatePtr currentState_;                             // State upon which RISC operators operate
     StatePtr initialState_;                             // Lazily updated initial state; see readMemory
@@ -83,10 +88,6 @@ protected:
 
     explicit RiscOperators(const SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr());
     explicit RiscOperators(const StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr());
-
-public:
-    /** Shared-ownership pointer for a @ref RiscOperators object. See @ref heap_object_shared_ownership. */
-    typedef RiscOperatorsPtr Ptr;
 
 public:
     virtual ~RiscOperators();

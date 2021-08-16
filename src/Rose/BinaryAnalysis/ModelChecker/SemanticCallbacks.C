@@ -31,33 +31,33 @@ SemanticCallbacks::mcSettings() const {
     return mcSettings_;
 }
 
-BS::SValuePtr
+BS::SValue::Ptr
 SemanticCallbacks::protoval() {
     return IS::SymbolicSemantics::SValue::instance();
 }
 
-BS::StatePtr
+BS::State::Ptr
 SemanticCallbacks::createInitialState() {
-    BS::RegisterStatePtr registers = createInitialRegisters();
-    BS::MemoryStatePtr memory = createInitialMemory();
+    BS::RegisterState::Ptr registers = createInitialRegisters();
+    BS::MemoryState::Ptr memory = createInitialMemory();
     return BS::State::instance(registers, memory);
 }
 
 void
-SemanticCallbacks::initializeState(const BS::RiscOperatorsPtr&) {}
+SemanticCallbacks::initializeState(const BS::RiscOperators::Ptr&) {}
 
 std::vector<Tag::Ptr>
-SemanticCallbacks::preExecute(const ExecutionUnit::Ptr&, const BS::RiscOperatorsPtr&) {
+SemanticCallbacks::preExecute(const ExecutionUnit::Ptr&, const BS::RiscOperators::Ptr&) {
     return {};
 }
 
 std::vector<Tag::Ptr>
-SemanticCallbacks::postExecute(const ExecutionUnit::Ptr&, const BS::RiscOperatorsPtr&) {
+SemanticCallbacks::postExecute(const ExecutionUnit::Ptr&, const BS::RiscOperators::Ptr&) {
     return {};
 }
 
 SemanticCallbacks::CodeAddresses
-SemanticCallbacks::nextCodeAddresses(const BS::RiscOperatorsPtr &ops) {
+SemanticCallbacks::nextCodeAddresses(const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(ops);
     CodeAddresses retval;
     retval.ip = instructionPointer(ops);
@@ -66,7 +66,7 @@ SemanticCallbacks::nextCodeAddresses(const BS::RiscOperatorsPtr &ops) {
 
     if (auto va = retval.ip->toUnsigned()) {
         retval.addresses.insert(*va);
-    } else if (IS::SymbolicSemantics::SValuePtr ipSymbolic = retval.ip.dynamicCast<IS::SymbolicSemantics::SValue>()) {
+    } else if (IS::SymbolicSemantics::SValue::Ptr ipSymbolic = retval.ip.dynamicCast<IS::SymbolicSemantics::SValue>()) {
         SymbolicExpr::Ptr expr = ipSymbolic->get_expression();
         if (SymbolicExpr::OP_ITE == expr->getOperator()) {
             if (auto va = expr->child(1)->toUnsigned()) {

@@ -52,4 +52,7 @@ if(enable-binary-analysis)
   add_executable(bat-trace bat-trace.C)
   target_link_libraries(bat-trace bat ROSE_DLL)
 
+  add_executable(bat-var bat-var.C)
+  target_link_libraries(bat-var bat ROSE_DLL)
+
 endif()

@@ -81,6 +81,13 @@ typedef Sawyer::SharedPointer<class SValue> SValuePtr;
  * Individual sub-domain values can be queried from a multi-domain value with get_subvalue() using the ID returned by
  * add_subdomain() when the sub-domain's RiscOperators were added to the multi-domain's RiscOperators. */
 class SValue: public BaseSemantics::SValue {
+public:
+    /** Base type. */
+    using Super = BaseSemantics::SValue;
+
+    /** Shared-ownership pointer. */
+    using Ptr = SValuePtr;
+
 protected:
     typedef std::vector<BaseSemantics::SValuePtr> Subvalues;
     Subvalues subvalues;
@@ -249,6 +256,13 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
  *  Invoking a RISC operation in the MultiSemantics domain causes the same operation to be invoked for each of its subdomains
  *  provided all arguments are valid in those subdomains (i.e., SValue::is_valid() returns true). */
 class RiscOperators: public BaseSemantics::RiscOperators {
+public:
+    /** Base type. */
+    using Super = BaseSemantics::RiscOperators;
+
+    /** Shared-ownership pointer. */
+    using Ptr = RiscOperatorsPtr;
+
 protected:
     typedef std::vector<BaseSemantics::RiscOperatorsPtr> Subdomains;
     Subdomains subdomains;

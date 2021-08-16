@@ -23,6 +23,11 @@ namespace BaseSemantics {
  *  BaseSemantics::MemoryState is an abstract class that defines the interface.  See the
  *  Rose::BinaryAnalysis::InstructionSemantics2 namespace for an overview of how the parts fit together.*/
 class MemoryState: public boost::enable_shared_from_this<MemoryState> {
+public:
+    /** Shared-ownership pointer for a @ref MemoryState. See @ref heap_object_shared_ownership. */
+    typedef MemoryStatePtr Ptr;
+
+private:
     SValuePtr addrProtoval_;                            /**< Prototypical value for addresses. */
     SValuePtr valProtoval_;                             /**< Prototypical value for values. */
     ByteOrder::Endianness byteOrder_;                   /**< Memory byte order. */
@@ -52,10 +57,6 @@ protected:
     MemoryState();                                      // for serialization
     MemoryState(const SValuePtr &addrProtoval, const SValuePtr &valProtoval);
     MemoryState(const MemoryStatePtr &other);
-
-public:
-    /** Shared-ownership pointer for a @ref MemoryState. See @ref heap_object_shared_ownership. */
-    typedef MemoryStatePtr Ptr;
 
 public:
     virtual ~MemoryState();

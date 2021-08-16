@@ -2331,7 +2331,7 @@ Partitioner::functionDataFlowConstants(const Function::Ptr &function) const {
             }
 
             BaseSemantics::MemoryCellStatePtr mem = BaseSemantics::MemoryCellState::promote(state->memoryState());
-            std::set<rose_addr_t> vas = Variables::VariableFinder().findAddressConstants(mem);
+            std::set<rose_addr_t> vas = Variables::VariableFinder::instance()->findAddressConstants(mem);
             retval.insert(vas.begin(), vas.end());
         }
     }

@@ -15,9 +15,6 @@
 #include "ParProSpotState.h"
 #include "ParProEState.h"
 
-// BOOST includes
-#include "boost/unordered_set.hpp"
-
 //SPOT includes
 #include "tgba/succiter.hh"
 #include "bdd.h"
@@ -28,7 +25,7 @@ using namespace std;
 
 namespace CodeThorn {
 
-typedef boost::unordered_map<string, int> String2Int;
+typedef std::unordered_map<string, int> String2Int;
 
   /*! 
    * \brief SPOT-specific iterator over the successor states of a ParProEState (see SpotConnection).

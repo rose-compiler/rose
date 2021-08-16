@@ -59,8 +59,8 @@ CfgsAndAnnotationMap DotGraphCfgFrontend::parseDotCfgs(string filename) {
   int mostRecentCfgId = 0;
   Flow mostRecentCfg;
   // data structures to determine a start state
-  boost::unordered_set<size_t> mostRecentSourceNodes;
-  boost::unordered_set<size_t> mostRecentTargetNodes;
+  std::unordered_set<size_t> mostRecentSourceNodes;
+  std::unordered_set<size_t> mostRecentTargetNodes;
   bool firstCfg = true;
 
   ifstream dot_graph(filename.c_str());
@@ -83,8 +83,8 @@ CfgsAndAnnotationMap DotGraphCfgFrontend::parseDotCfgs(string filename) {
 	}
 	firstCfg = false;
 	mostRecentCfg = Flow();
-        mostRecentSourceNodes =  boost::unordered_set<size_t>();
-        mostRecentTargetNodes =  boost::unordered_set<size_t>();
+        mostRecentSourceNodes =  std::unordered_set<size_t>();
+        mostRecentTargetNodes =  std::unordered_set<size_t>();
       } else if (boost::regex_match(line, transition_expr)) {
         pair<size_t, size_t> node_labels;
 	boost::smatch what;
@@ -119,7 +119,7 @@ CfgsAndAnnotationMap DotGraphCfgFrontend::parseDotCfgs(string filename) {
 	EdgeAnnotationMap::iterator res = edgesByAnnotation.find(edge.getAnnotation());
 	if (res == edgesByAnnotation.end()) {
 	  // no edge with that annoation so far, create a new entry in the map
-	  boost::unordered_map<int, list<Edge> > edgesInThisCfg;
+	  std::unordered_map<int, list<Edge> > edgesInThisCfg;
           list<Edge> newEdgeList;
 	  newEdgeList.push_back(edge);
 	  edgesInThisCfg[mostRecentCfgId] = newEdgeList; 
@@ -127,7 +127,7 @@ CfgsAndAnnotationMap DotGraphCfgFrontend::parseDotCfgs(string filename) {
 	  // edgesByAnnotation[edge.getAnnotation()] = edgesWithThisAnnotation;
 	  edgesByAnnotation[edge.getAnnotation()] = edgesInThisCfg;
 	} else {
-	  boost::unordered_map<int, std::list<Edge> >::iterator cfgRes = res->second.find(mostRecentCfgId);
+	  std::unordered_map<int, std::list<Edge> >::iterator cfgRes = res->second.find(mostRecentCfgId);
 	  if (cfgRes == res->second.end()) {
 	    // already found other edges with this annotation, but not in this CFG. Add an entry for this CFG
 	    list<Edge> newEdgeList;
@@ -152,11 +152,11 @@ CfgsAndAnnotationMap DotGraphCfgFrontend::parseDotCfgs(string filename) {
   return CfgsAndAnnotationMap(cfgs, edgesByAnnotation);
 }
 
-size_t DotGraphCfgFrontend::determineStartNode(boost::unordered_set<size_t>& mostRecentSourceNodes, 
-					       boost::unordered_set<size_t>& mostRecentTargetNodes) {
+size_t DotGraphCfgFrontend::determineStartNode(std::unordered_set<size_t>& mostRecentSourceNodes, 
+					       std::unordered_set<size_t>& mostRecentTargetNodes) {
   list<size_t> labelsWithNoPredecessor;
-  for (boost::unordered_set<size_t>::iterator i=mostRecentSourceNodes.begin(); i!=mostRecentSourceNodes.end(); i++) {
-    boost::unordered_set<size_t>::iterator sameAsSource = mostRecentTargetNodes.find(*i);
+  for (std::unordered_set<size_t>::iterator i=mostRecentSourceNodes.begin(); i!=mostRecentSourceNodes.end(); i++) {
+    std::unordered_set<size_t>::iterator sameAsSource = mostRecentTargetNodes.find(*i);
     if (sameAsSource == mostRecentTargetNodes.end()) { // *i has no incoming transitions
       labelsWithNoPredecessor.push_back(*i);
     }

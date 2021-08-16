@@ -93,11 +93,15 @@ namespace SgNodeHelper {
   std::string sourceLineColumnToString(SgNode* node, std::string separator);
 
   //! returns line, column, and unparsed node in one string.
-  std::string lineColumnNodeToString(SgNode* node);
+  std::string lineColumnAndSourceCodeToString(SgNode* node);
 
-  //! returns filename, line, column, and unparsed node in one string.
-  //! Abbreviates unparsed source if too long
-  std::string sourceLocationAndNodeToString(SgNode* node);
+  //! returns location (consisting of filename, line, column)
+  //! Abbreviates fileName if too long
+  std::string locationToString(SgNode* node, size_t maxFileNameLength=30);
+  
+  //! returns location (consisting of filename, line, column) and source code of unparsed node in one string.
+  //! Abbreviates fileName and unparsed source if too long (defaults are 30,20)
+  std::string locationAndSourceCodeToString(SgNode* node, size_t maxFileNameLength=30, size_t maxSourceLength=20);
 
   //! determines all VarRefExp in the subtree of 'node'. The order in the vector corresponds to the traversal order on the AST.
   std::vector<SgVarRefExp*> determineVariablesInSubtree(SgNode* node);
@@ -538,6 +542,12 @@ namespace SgNodeHelper {
 
   } // end of namespace Pattern
 
+  //! \deprecated use lineColumnAndSourceCodeToString instead
+  std::string lineColumnNodeToString(SgNode* node);
+
+  //! \deprecated use locationAndSourceCodeToString instead
+  std::string sourceLocationAndNodeToString(SgNode* node);
+  
 #if __cplusplus > 199711L
   // Can a given node be changed? (aka transformed)
   bool nodeCanBeChanged(SgLocatedNode * lnode);

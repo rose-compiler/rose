@@ -40,6 +40,13 @@ typedef BaseSemantics::Formatter Formatter;             // we might extend this 
  *  not capable of storing an undefined value, and any attempt to create an undefined value will create a value with all bits
  *  cleared instead. */
 class SValue: public BaseSemantics::SValue {
+public:
+    /** Base type. */
+    using Super = BaseSemantics::SValue;
+
+    /** Shared-ownership pointer. */
+    using Ptr = SValuePtr;
+
 protected:
     Sawyer::Container::BitVector bits_;
 
@@ -178,6 +185,14 @@ typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
  *  This class represents an entire state of memory via MemoryMap, allocating new memory in units of pages (the size of a page
  *  is configurable. */
 class MemoryState: public BaseSemantics::MemoryState {
+public:
+    /** Base type. */
+    using Super = BaseSemantics::MemoryState;
+
+    /** Shared-ownership pointer. */
+    using Ptr = MemoryStatePtr;
+
+private:
     MemoryMap::Ptr map_;
     rose_addr_t pageSize_;
 
@@ -346,6 +361,13 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
  * @endcode
  */
 class RiscOperators: public BaseSemantics::RiscOperators {
+public:
+    /** Base type. */
+    using Super = BaseSemantics::RiscOperators;
+
+    /** Shared-ownership pointer. */
+    using Ptr = RiscOperatorsPtr;
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Real constructors
 protected:

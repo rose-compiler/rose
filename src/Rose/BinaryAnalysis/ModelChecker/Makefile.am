@@ -12,6 +12,7 @@ librose_partial_la_SOURCES =			\
         FailureUnit.C				\
         InstructionUnit.C			\
         NullDerefTag.C				\
+	OobTag.C				\
         P2Model.C				\
         Path.C					\
         PathNode.C				\

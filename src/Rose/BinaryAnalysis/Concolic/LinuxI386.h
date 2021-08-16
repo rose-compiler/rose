@@ -5,31 +5,42 @@
 
 #include <Rose/BinaryAnalysis/Concolic/Architecture.h>
 #include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
+#include <Rose/BinaryAnalysis/Concolic/SystemCall.h>
 #include <Rose/BinaryAnalysis/Debugger.h>
+
 #include <boost/filesystem.hpp>
+#include <Sawyer/Callbacks.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
 
 /** Features specific to native Linux ELF i386 specimens. */
-class LinuxI386: public Architecture {
+class LinuxI386: public Architecture, public Sawyer::SharedFromThis<LinuxI386> {
     using Super = Architecture;
 
 public:
     /** Reference counting pointer. */
     using Ptr = LinuxI386Ptr;
 
+    /** Context for system call callbacks. */
+    class SyscallContext: public Concolic::SyscallContext {
+    public:
+        const Partitioner2::Partitioner &partitioner;   /**< Information about the specimen. */
+        DebuggerPtr debugger;                           /**< Subordinate Linux process for concrete semantics. */
+
+        /** Constructor. */
+        SyscallContext(const LinuxI386::Ptr &architecture, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
+                       const Partitioner2::Partitioner&);
+
+        ~SyscallContext();
+    };
+
 private:
     DebuggerPtr debugger_;
     rose_addr_t scratchVa_ = 0;                         // subordinate address for scratch page
     bool markingArgvAsInput_ = true;
     bool markingEnvpAsInput_ = false;
-
-    // Some system calls always return the same value within a single process no matter how often they're called. For
-    // example, SYS_getpid always returns the process ID. This map, indexed by system call function number (e.g., SYS_getpid)
-    // stores the input variable we used the first time this system call returned a value.
-    Sawyer::Container::Map<uint64_t, InstructionSemantics2::BaseSemantics::SValuePtr> syscallFirstReturns_;
 
     // In order to give system calls unique names, we number them sequentially per function.
     std::map<uint64_t, size_t> syscallSequenceNumbers_;
@@ -55,7 +66,20 @@ public:
     /** @} */
 
 public:
+    /** Create event for system call return.
+     *
+     *  Apply a concrete system call return value to the symbolic state and create the corresponding execution event to be
+     *  replayed later in a child test case. If you modify the event further, be sure to save it in the database. */
+    ExecutionEventPtr applySystemCallReturn(const Partitioner2::Partitioner&,
+                                            const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
+                                            const std::string &syscallName, rose_addr_t syscallVa);
+
+    /** The register where system call return values are stored. */
+    RegisterDescriptor systemCallReturnRegister();
+
+public:
     // These are documented in the base class.
+    virtual void configureSystemCalls() override;
     virtual void load(const boost::filesystem::path&) override;
     virtual bool isTerminated() override;
     virtual ByteOrder::Endianness memoryByteOrder() override;
@@ -101,9 +125,6 @@ private:
     systemCallArgument(const Partitioner2::Partitioner&,
                        const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&, size_t argNumber);
 
-    // The register where system call return values are stored.
-    RegisterDescriptor systemCallReturnRegister(const Partitioner2::Partitioner&);
-
     // Returns the system call return value.
     InstructionSemantics2::BaseSemantics::SValuePtr
     systemCallReturnValue(const Partitioner2::Partitioner&,
@@ -115,11 +136,6 @@ private:
                           const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
                           const InstructionSemantics2::BaseSemantics::SValuePtr&);
 
-    // Apply a concrete system call return value to the symbolic state and create the corresponding execution event to be
-    // replayed later in a child test case.
-    ExecutionEventPtr applySystemCallReturn(const Partitioner2::Partitioner&,
-                                            const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
-                                            const std::string &syscallName, rose_addr_t syscallVa);
 };
 
 } // namespace

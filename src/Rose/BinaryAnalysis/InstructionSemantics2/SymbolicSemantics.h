@@ -193,7 +193,11 @@ public:
  */
 class SValue: public BaseSemantics::SValue {
 public:
-    typedef BaseSemantics::SValue Super;
+    /** Base type. */
+    using Super = BaseSemantics::SValue;
+
+    /** Shared-ownership pointer. */
+    using Ptr = SValuePtr;
 
 protected:
     /** The symbolic expression for this value.  Symbolic expressions are reference counted. */
@@ -467,7 +471,11 @@ typedef boost::shared_ptr<class MemoryListState> MemoryListStatePtr;
  *  @sa MemoryMapState */
 class MemoryListState: public BaseSemantics::MemoryCellList {
 public:
-    typedef BaseSemantics::MemoryCellList Super;
+    /** Base type. */
+    using Super = BaseSemantics::MemoryCellList;
+
+    /** Shared-ownership pointer. */
+    using Ptr = MemoryListStatePtr;
 
     /** Functor for handling a memory read that found more than one cell that might alias the requested address. */
     struct CellCompressor {
@@ -665,7 +673,11 @@ typedef boost::shared_ptr<class MemoryMapState> MemoryMapStatePtr;
  *  @sa MemoryListState */
 class MemoryMapState: public BaseSemantics::MemoryCellMap {
 public:
-    typedef BaseSemantics::MemoryCellMap Super;
+    /** Base type. */
+    using Super = BaseSemantics::MemoryCellMap;
+
+    /** Shared-ownership pointer. */
+    using Ptr = MemoryMapStatePtr;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization
@@ -809,7 +821,11 @@ typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
  */
 class RiscOperators: public BaseSemantics::RiscOperators {
 public:
-    typedef BaseSemantics::RiscOperators Super;
+    /** Base type. */
+    using Super = BaseSemantics::RiscOperators;
+
+    /** Shared-ownership pointer. */
+    using Ptr = RiscOperatorsPtr;
 
 protected:
     bool omit_cur_insn;                                 // if true, do not include cur_insn as a definer

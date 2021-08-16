@@ -136,11 +136,11 @@ string Edge::typeToString(EdgeType et) {
 }
 
 string Edge::color() const {
-  if(isType(EDGE_BACKWARD)) 
+  if(isType(EDGE_BACKWARD))
     return "blue";
-  else if(isType(EDGE_TRUE)) 
+  else if(isType(EDGE_TRUE))
     return "green";
-  else if(isType(EDGE_FALSE)) 
+  else if(isType(EDGE_FALSE))
     return "red";
   return "black";
 }
@@ -174,9 +174,9 @@ string Edge::toDotAnnotationOnly() const {
 }
 
 string Edge::dotEdgeStyle() const {
-  if(isType(EDGE_EXTERNAL)) 
+  if(isType(EDGE_EXTERNAL))
     return "dotted";
-  else if(isType(EDGE_CALL) || isType(EDGE_CALLRETURN)) 
+  else if(isType(EDGE_CALL) || isType(EDGE_CALLRETURN))
     return "dashed";
   return "solid";
 }
@@ -219,7 +219,7 @@ std::string InterFlow::dotCallGraph(LabelToFunctionMap& map) const {
 }
 
 bool CodeThorn::operator<(const InterEdge& e1, const InterEdge& e2) {
-  if(e1.call!=e2.call) 
+  if(e1.call!=e2.call)
     return e1.call<e2.call;
   if(e1.entry!=e2.entry)
     return e1.entry<e2.entry;
@@ -275,7 +275,7 @@ long Edge::hash() const {
 }
 
 Flow::Flow() {
-  resetDotOptions(); 
+  resetDotOptions();
 }
 
 Label Flow::getStartLabel() {
@@ -360,7 +360,7 @@ Flow::iterator Flow::find(Edge e) {
     }
   }
   return Flow::iterator(_sawyerFlowGraph.edges().end());
-#else 
+#else
   return _edgeSet.find(e);
 #endif
 }
@@ -486,7 +486,7 @@ Flow Flow::operator+(Flow& s2) {
     result.insert(*i2);
   return result;
 }
- 
+
 Flow& Flow::operator+=(Flow& s2) {
   for(Flow::iterator i2=s2.begin();i2!=s2.end();++i2)
     insert(*i2);
@@ -638,7 +638,7 @@ size_t Flow::deleteEdges(EdgeType edgeType) {
   return numDeleted;
 }
 
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2013.
  */

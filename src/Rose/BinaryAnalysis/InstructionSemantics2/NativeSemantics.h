@@ -40,6 +40,14 @@ typedef boost::shared_ptr<class RegisterState> RegisterStatePtr;
  *
  *  Since the running specimen is the machine state, @ref RegisterState objects in this semantic domain are not copyable. */
 class RegisterState: public BaseSemantics::RegisterState, boost::noncopyable {
+public:
+    /** Base type. */
+    using Super = BaseSemantics::RegisterState;
+
+    /** Shared-ownership pointer. */
+    using Ptr = RegisterStatePtr;
+
+private:
     Debugger::Ptr process_;
 
     //----------------------------------------
@@ -142,6 +150,14 @@ typedef boost::shared_ptr<class MemoryState> MemoryStatePtr;
  *
  *  Since the running specimen is the machine state, @ref MemoryState objects in this semantic domain are not copyable. */
 class MemoryState: public BaseSemantics::MemoryState, boost::noncopyable {
+public:
+    /** Base type. */
+    using Super = BaseSemantics::MemoryState;
+
+    /** Shared-ownership pointer. */
+    using Ptr = MemoryStatePtr;
+
+private:
     Debugger::Ptr process_;
 
     //----------------------------------------
@@ -251,6 +267,13 @@ typedef boost::shared_ptr<class State> StatePtr;
  *  Since the subordinate process contains all the state and there's no way to copy a process, state objects are not
  *  copyable. */
 class State: public ConcreteSemantics::State, boost::noncopyable {
+public:
+    /** Base type. */
+    using Super = ConcreteSemantics::State;
+
+    /** Shared-ownership pointer. */
+    using Ptr = StatePtr;
+
     //----------------------------------------
     // Real constructors
     //----------------------------------------
@@ -278,6 +301,13 @@ public:
 typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr;
 
 class RiscOperators: public ConcreteSemantics::RiscOperators {
+public:
+    /** Base type. */
+    using Super = ConcreteSemantics::RiscOperators;
+
+    /** Shared-ownership pointer. */
+    using Ptr = RiscOperatorsPtr;
+
     //----------------------------------------
     // Real constructors
     //----------------------------------------
@@ -353,6 +383,14 @@ public:
 typedef boost::shared_ptr<class Dispatcher> DispatcherPtr;
 
 class Dispatcher: public BaseSemantics::Dispatcher {
+public:
+    /** Base type. */
+    using Super = BaseSemantics::Dispatcher;
+
+    /** Shared-ownership pointer. */
+    using Ptr = DispatcherPtr;
+
+private:
     Debugger::Ptr process_;
 
     //----------------------------------------

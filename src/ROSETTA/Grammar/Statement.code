@@ -3530,6 +3530,13 @@ SgName get_qualified_name() const;
 bool hasExplicitScope() const $ROSE_OVERRIDE;
 HEADER_ADA_GENERIC_DECL_END
 
+HEADER_ADA_GENERIC_INSTANCE_DECL_START
+SgSymbol* get_symbol_from_symbol_table() const ROSE_OVERRIDE;
+SgName get_mangled_name() const ROSE_OVERRIDE;
+SgName get_qualified_name() const;
+bool hasExplicitScope() const $ROSE_OVERRIDE;
+HEADER_ADA_GENERIC_INSTANCE_DECL_END
+
 HEADER_ADA_FORMAL_TYPE_DECL_STATEMENT_START
 SgSymbol* get_symbol_from_symbol_table() const ROSE_OVERRIDE;
 SgName get_mangled_name() const ROSE_OVERRIDE;
@@ -3591,6 +3598,19 @@ HEADER_ADA_RENAMING_DECL_STATEMENT_START
 SgSymbol* get_symbol_from_symbol_table() const ROSE_OVERRIDE;
 SgName get_mangled_name() const ROSE_OVERRIDE;
 HEADER_ADA_RENAMING_DECL_STATEMENT_END
+
+HEADER_ADA_DISCRIMINATED_TYPE_DECL_STATEMENT_START
+
+HEADER_LIST_DECLARATIONS
+
+// SgInitializedNamePtrList& get_discriminants() ;
+// const SgInitializedNamePtrList & get_discriminants() const;
+//void append_discriminant(SgInitializedName*) ;
+//void prepend_discriminant(SgInitializedName*) ;
+
+SgSymbol* get_symbol_from_symbol_table() const ROSE_OVERRIDE;
+SgName get_mangled_name() const ROSE_OVERRIDE;
+HEADER_ADA_DISCRIMINATED_TYPE_DECL_STATEMENT_END
 
 HEADER_ADA_RECORD_REPRESENTATION_CLAUSE_START
 
@@ -6151,20 +6171,25 @@ SgSymbol * SgScopeStatement::find_symbol_from_declaration(const T* node) const {
 
   const SgNamespaceDefinitionStatement * namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(this);
   if (symbol == NULL && namespaceDefinitionStatement != NULL) {
-    ROSE_ASSERT(namespaceDefinitionStatement->get_global_definition() != NULL);
     const SgNamespaceDefinitionStatement* globalNamespaceDefinitionStatement = namespaceDefinitionStatement->get_global_definition();
-
+    ROSE_ASSERT(globalNamespaceDefinitionStatement != nullptr);
     symbol = globalNamespaceDefinitionStatement->get_symbol_table()->find(node);
-    if (symbol != NULL) {
-      SgAliasSymbol * alias = isSgAliasSymbol(symbol);
-      ROSE_ASSERT(alias != NULL);
+  }
 
-      // return aliased symbol
-      symbol = alias->get_alias();
-
-      // This should not be an alias (chains of alias symbol are not allowed by design).
-      ROSE_ASSERT(!isSgAliasSymbol(symbol));
+  const SgGlobal * global_scope = isSgGlobal(this);
+  if (symbol == NULL && global_scope != NULL) {
+    SgProject * project = SageInterface::getProject(global_scope);
+    if (project != NULL) {
+      SgGlobal * globalScopeAcrossFiles = project->get_globalScopeAcrossFiles();
+      assert(globalScopeAcrossFiles != NULL);
+      symbol = globalScopeAcrossFiles->get_symbol_table()->find(node);
     }
+  }
+
+  SgAliasSymbol * alias = isSgAliasSymbol(symbol);
+  if (alias != NULL) {
+    symbol = alias->get_alias();
+    ROSE_ASSERT(!isSgAliasSymbol(symbol));
   }
 
   return symbol;
@@ -6455,6 +6480,7 @@ SgScopeStatement::containsOnlyDeclarations() const
           case V_SgAdaAcceptStmt:
           case V_SgAdaTaskBody:
           case V_SgAdaGenericDecl:
+          case V_SgAdaGenericInstanceDecl:
                returnValue = false;
                break;
 
@@ -20571,18 +20597,40 @@ SgAdaGenericDecl::get_mangled_name() const
 SgName
 SgAdaGenericDecl::get_qualified_name() const
 {
-/*
-  SgAdaGenericDecl* decl = isSgAdaGenericDecl(get_parent());
-
-  ROSE_ASSERT(decl);
-  return decl->get_qualified_name();
-*/
   // TODO: this is a placeholder
   return "ada$generic$decl";
 }
 
 bool SgAdaGenericDecl::hasExplicitScope() const { return true; }
 SOURCE_ADA_GENERIC_DECL_END
+
+SOURCE_ADA_GENERIC_INSTANCE_DECL_START
+void SgAdaGenericInstanceDecl::post_construction_initialization() {}
+
+SgSymbol*
+SgAdaGenericInstanceDecl::get_symbol_from_symbol_table() const
+{
+  SgScopeStatement* scope = get_scope();
+
+  ROSE_ASSERT(scope);
+  return scope->find_symbol_from_declaration(this);
+}
+
+SgName
+SgAdaGenericInstanceDecl::get_mangled_name() const
+{
+  return "ada$genericinstance$decl";
+}
+
+SgName
+SgAdaGenericInstanceDecl::get_qualified_name() const
+{
+  // TODO: this is a placeholder
+  return "ada$genericinstance$decl";
+}
+
+bool SgAdaGenericInstanceDecl::hasExplicitScope() const { return true; }
+SOURCE_ADA_GENERIC_INSTANCE_DECL_END
 
 SOURCE_ADA_FORMAL_TYPE_DECL_STATEMENT_START
 void SgAdaFormalTypeDecl::post_construction_initialization() {}
@@ -20766,6 +20814,53 @@ SgAdaRenamingDecl::get_mangled_name() const
   return name;
 }
 SOURCE_ADA_RENAMING_DECL_STATEMENT_END
+
+SOURCE_ADA_DISCRIMINATED_TYPE_DECL_STATEMENT_START
+void SgAdaDiscriminatedTypeDecl::post_construction_initialization() {}
+
+SgSymbol*
+SgAdaDiscriminatedTypeDecl::get_symbol_from_symbol_table() const
+{
+  // SgScopeStatement* scope = get_scope();
+  // ROSE_ASSERT(scope);
+  // return scope->find_symbol_from_declaration(this);
+
+  // or:
+  // return nullptr;
+
+  SgDeclarationStatement* child = get_discriminatedDecl();
+  ROSE_ASSERT(child);
+
+  return child->get_symbol_from_symbol_table();
+}
+
+SgName
+SgAdaDiscriminatedTypeDecl::get_mangled_name() const
+{
+  static const std::string name = "ada$disc$";
+
+  SgDeclarationStatement* child = get_discriminatedDecl();
+  ROSE_ASSERT(child);
+
+  return name + child->get_mangled_name();
+}
+
+#if 1
+void
+SgAdaDiscriminatedTypeDecl::append_discriminant(SgInitializedName* what)
+{
+  get_discriminants().push_back(what);
+}
+
+void
+SgAdaDiscriminatedTypeDecl::prepend_discriminant(SgInitializedName* what)
+{
+  get_discriminants().insert(get_discriminants().begin(), what);
+}
+#endif
+
+SOURCE_ADA_DISCRIMINATED_TYPE_DECL_STATEMENT_END
+
 
 HEADER_ADA_RECORD_REPRESENTATION_CLAUSE_START
 

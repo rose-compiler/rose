@@ -29,6 +29,12 @@ typedef boost::shared_ptr<class MemoryCellMap> MemoryCellMapPtr;
  *  pure virtual. */
 class MemoryCellMap: public MemoryCellState {
 public:
+    /** Base type. */
+    using Super = MemoryCellState;
+
+    /** Shared-ownership pointer. */
+    using Ptr = MemoryCellMapPtr;
+
     /** Key used to look up memory cells.
      *
      *  The key is generated from the cell's virtual address either by using the address directly or by hashing it. For
@@ -70,10 +76,6 @@ protected:
 
 private:
     MemoryCellMap& operator=(MemoryCellMap&) /*delete*/;
-
-public:
-    /** Shared-ownership pointer for a memory cell map object. */
-    typedef MemoryCellMap Ptr;
 
 public:
     /** Promote a base memory state pointer to a MemoryCellMap pointer. The memory state, @p x, must have a MemoryCellMap

@@ -1307,13 +1307,12 @@ RiscOperators::readOrPeekMemory(RegisterDescriptor segreg,
     return filterResult(retval);
 }
 
-
 BaseSemantics::SValuePtr
 RiscOperators::readMemory(RegisterDescriptor segreg,
                           const BaseSemantics::SValuePtr &address,
                           const BaseSemantics::SValuePtr &dflt,
                           const BaseSemantics::SValuePtr &condition) {
-    ASSERT_require(1==condition->nBits()); // FIXME: condition is not used
+    ASSERT_require(1 == condition->nBits());
     if (condition->isFalse())
         return filterResult(dflt);
     return readOrPeekMemory(segreg, address, dflt, AllowSideEffects::YES);
@@ -1331,7 +1330,7 @@ RiscOperators::writeMemory(RegisterDescriptor segreg,
                            const BaseSemantics::SValuePtr &address,
                            const BaseSemantics::SValuePtr &value_,
                            const BaseSemantics::SValuePtr &condition) {
-    ASSERT_require(1==condition->nBits()); // FIXME: condition is not used
+    ASSERT_require(1 == condition->nBits());
     if (condition->isFalse())
         return;
 

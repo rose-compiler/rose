@@ -26,6 +26,9 @@ namespace BaseSemantics {
  *  new cell; however, the result of a dataflow merge operation might produce cells that have multiple writers. */
 class MemoryCell: public boost::enable_shared_from_this<MemoryCell> {
 public:
+    /** Shared-ownership pointer. */
+    using Ptr = MemoryCellPtr;
+
     /** Visitor for traversing a cells. */
     class Visitor {
     public:

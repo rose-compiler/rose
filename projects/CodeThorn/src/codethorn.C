@@ -78,7 +78,7 @@ using namespace CodeThornLib;
 #include "ltlthorn-lib/Solver12.h"
 
 
-const std::string versionString="1.13.8";
+const std::string versionString="1.13.12";
 
 void configureRersSpecialization() {
 #ifdef RERS_SPECIALIZATION
@@ -198,7 +198,6 @@ int main( int argc, char * argv[] ) {
     optionallyGenerateTraversalInfoAndExit(ctOpt, project);
     if(ctOpt.status) cout<<"STATUS: analysis started."<<endl;
 
-    optionallyPrintProgramInfos(ctOpt, analyzer);
     optionallyRunRoseAstChecksAndExit(ctOpt, project);
 
     VariableIdMappingExtended* vimOrig=CodeThorn::CodeThornLib::createVariableIdMapping(ctOpt,project); // only used for program statistics of original non-normalized program
@@ -214,20 +213,21 @@ int main( int argc, char * argv[] ) {
       cout<<"=================================="<<endl;
       cout<<"Language Feature Usage Overview"<<endl;
       cout<<"=================================="<<endl;
-      originalProgramInfo.printDetailed();
-      cout<<endl;
-      vimOrig->typeSizeOverviewtoStream(cout);
+      cout<<CodeThornLib::programStatsToString(&originalProgramInfo,vimOrig);
       exit(0);
     }
 
     analyzer->runAnalysisPhase1(project,tc);
+    optionallyPrintProgramInfos(ctOpt, analyzer);
 
     if(ctOpt.programStats) {
-      analyzer->printStatusMessageLine("==============================================================");
       ProgramInfo normalizedProgramInfo(project,analyzer->getVariableIdMapping());
       normalizedProgramInfo.compute();
+      analyzer->printStatusMessageLine("==============================================================");
       originalProgramInfo.printCompared(&normalizedProgramInfo);
       analyzer->getVariableIdMapping()->typeSizeOverviewtoStream(cout);
+      cout<<CodeThornLib::programStatsToString(&originalProgramInfo,&normalizedProgramInfo, vimOrig);
+      CodeThornLib::generateProgramStats(ctOpt,&originalProgramInfo,&normalizedProgramInfo, vimOrig);
     }
 
     optionallyGenerateExternalFunctionsFile(ctOpt, analyzer->getFunctionCallMapping());
@@ -281,7 +281,8 @@ int main( int argc, char * argv[] ) {
     optionallyRunIOSequenceGenerator(ctOpt, analyzer);
     optionallyAnnotateTermsAndUnparse(ctOpt, project, analyzer);
 
-    optionallyPrintRunTimeAndMemoryUsage(ctOpt,tc);
+    optionallyPrintRunTimeAndMemoryUsageReport(ctOpt,tc);
+    generateRunTimeAndMemoryUsageReport(ctOpt,tc);
     if(ctOpt.status) cout<<color("normal")<<"done."<<endl;
 
     delete analyzer;

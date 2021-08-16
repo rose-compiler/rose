@@ -71,9 +71,12 @@ class API {
     using a_function  = SgFunctionSymbol *;
 
     void load(Driver<Sage> & driver);
+
+    void add_nodes_for_namequal(Driver<Sage> & driver, SgSourceFile * srcfile) const;
+
     void display(std::ostream & out) const;
 
-  private:
+  private: // Static fields provided by user code
     static std::string const name;
 
     // Static fields used to locate and open the header files
@@ -87,6 +90,9 @@ class API {
     static std::map<std::string, a_type      CRT::* > const types;
     static std::map<std::string, a_variable  CRT::* > const variables;
     static std::map<std::string, a_function  CRT::* > const functions;
+
+  private:
+    std::set<MFB::file_id_t> file_ids;
 
     void build_command_line(std::vector<std::string> & cmdline) const;
     void load_headers(Driver<Sage> & driver);

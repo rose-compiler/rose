@@ -85,6 +85,7 @@ CODETHORN_HEADER_FILES=\
   CounterexampleGenerator.h \
   CPAstAttribute.h \
   CppExprEvaluator.h \
+  CppLabeler.h \
   CppStdUtilities.h \
   CTIOLabeler.h \
   CtxCallStrings.h \
@@ -220,6 +221,7 @@ CODETHORN_SOURCE_FILES=\
   CounterexampleGenerator.C \
   CPAstAttribute.C \
   CppExprEvaluator.C \
+  CppLabeler.C \
   CppStdUtilities.C \
   CTIOLabeler.C \
   CtxCallStrings.C \
@@ -571,6 +573,9 @@ thorn2_DEPENDENCIES=libcodethorn.la
 
 thorn2_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn
 
+# this line creates speparately named object files, fopenmp to silence warnings about openmp directives
+thorn2_CXXFLAGS = -fopenmp -Wall -O3
+
 # codethorn sources in addition to libcodethorn
 thorn2_SOURCES = \
   CodeThornCommandLineOptions.C \
@@ -714,11 +719,15 @@ check-matcher:
 
 CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-io unit-test check-omp-cfg check-commandline-options check-vis check-thorn2
 
-CHECK_DEFAULT_FAILING_NEW=
+# this check (only) fails when run in parallel with high number of processes (-j10)
+CHECK_DEFAULT_FAILING_PAR=check-reachability-par
+
 CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 
-#CHECK_WITH_SPOT_ONLY=check-ltl check-ltl-driven check-svcomp-witness
-CHECK_WITH_SPOT_ONLY_PASSING=check-ltl check-ltl-driven-reset-analyzer check-reachability
+CHECK_WITH_SPOT_ONLY_PASSING=check-ltl check-reachability-seq
+
+#CHECK_WITH_SPOT_FAILING=check-ltl-driven check-svcomp-witness'
+CHECK_WITH_SPOT_PARALLEL=check-ltl-rers-timeout check-ltl-rers-arithmetic check-ltl-rers-loop-aware-sync check-reachability-par check-ltl-driven-reset-analyzer
 
 CHECK_WITH_SPOT_PASSING=$(CHECK_DEFAULT_PASSING) $(CHECK_WITH_SPOT_ONLY_PASSING)
 
@@ -726,6 +735,7 @@ check-default: $(CHECK_DEFAULT_PASSING)
 
 if ROSE_WITH_SPOT
 check-local: $(CHECK_WITH_SPOT_PASSING)
+check-extended: $(CHECK_WITH_SPOT_PASSING) $(CHECK_WITH_SPOT_PARALLEL)
 else
 check-local: $(CHECK_DEFAULT_PASSING)
 endif
@@ -808,11 +818,8 @@ check-ltl-old: check-ltl-rers-different-versions
 # failing tests
 #check-failing:
 
-# failing tests due to changes in domain
-#check-ltl-failing: check-ltl-rers-array
-
 # current tests all passing
-check-ltl: check-ltl-start check-ltl-rers-timeout check-ltl-rers-arithmetic check-ltl-rers-loop-aware-sync check-ltl-rers-topify check-ltl-cegpra check-ltl-rers-array
+check-ltl: check-ltl-start check-ltl-rers-topify check-ltl-cegpra check-ltl-rers-array
 
 check-ltl-start:
 	@echo ================================================================
@@ -843,7 +850,7 @@ check-ltl-rers-memory-bound:
 
 #test the analysis of RERS Problem1402 and terminate after 5 seconds (4 threads)
 check-ltl-rers-timeout:
-	@$(srcdir)/scripts/runRersTimeoutTest $(srcdir) $(top_builddir)/projects/CodeThorn/src
+	@$(srcdir)/scripts/runRersTimeoutTest $(srcdir) $(top_builddir)/projects/CodeThorn/src 3
 
 #one test for the loop-aware-sync analysis (solver 12, ISoLA'16 paper)
 check-ltl-rers-loop-aware-sync:
@@ -871,7 +878,10 @@ check-ltl-driven-reset-analyzer:
 check-svcomp-witness:
 	./codethorn $(srcdir)/tests/svcomp/eca-rers2012/Problem01_label15_false-unreach-call.c --svcomp-mode --input-values="{1,2,3,4,5,6}" --witness-file=toBeImplemented.witness --with-counterexamples
 
-check-reachability:
+check-reachability-seq:
+	./codethorn $(srcdir)/tests/rers/Problem1911_opt.c --input-values="{1,2,3,4,5,6,7,8,9,10}" --status --threads=1 --with-counterexamples
+
+check-reachability-par:
 	./codethorn $(srcdir)/tests/rers/Problem1911_opt.c --input-values="{1,2,3,4,5,6,7,8,9,10}" --status --threads=6 --with-counterexamples
 
 check-commandline-options: ./codethorn
@@ -935,6 +945,7 @@ clean-local:
 	rm -Rf make_check_log_*
 	rm -f *-LTLParser.c++
 	rm -f *.csv
+	rm -f *.txt
 
 distclean-local: clean
 	rm -f *.tgz

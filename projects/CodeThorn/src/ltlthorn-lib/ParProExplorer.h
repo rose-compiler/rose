@@ -18,7 +18,6 @@
 
 // BOOST includes
 #include "boost/lexical_cast.hpp"
-#include "boost/unordered_set.hpp"
 #include "boost/regex.hpp"
 #include "boost/algorithm/string.hpp"
 #include "boost/algorithm/string/trim.hpp"
@@ -29,7 +28,7 @@ using namespace CodeThorn;
 
 namespace CodeThorn {
 
-  typedef std::pair<std::vector<Flow*>, boost::unordered_map<int, int> > SelectedCfgsAndIdMap;
+  typedef std::pair<std::vector<Flow*>, std::unordered_map<int, int> > SelectedCfgsAndIdMap;
 
   enum ComponentSelection { PAR_PRO_COMPONENTS_ALL, PAR_PRO_COMPONENTS_SUBSET_FIXED, PAR_PRO_COMPONENTS_SUBSET_RANDOM };
   enum RandomSubsetMode { PAR_PRO_NUM_SUBSETS_NONE, PAR_PRO_NUM_SUBSETS_FINITE, PAR_PRO_NUM_SUBSETS_INFINITE };

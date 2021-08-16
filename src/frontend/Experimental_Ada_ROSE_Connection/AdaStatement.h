@@ -99,6 +99,10 @@ namespace Ada_ROSE_Translation
   NameData
   singleName(Declaration_Struct& decl, AstContext ctx);
 
+  /// creates the representation for all names in the range \ref range
+  std::vector<NameData>
+  allNames(ElemIdRange range, AstContext ctx);
+
   /// extracts NameData from \ref elem
   /// \pre elem is An_Expression
   NameData

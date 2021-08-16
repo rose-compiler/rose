@@ -14,7 +14,8 @@
 
 // BOOST includes
 #include "boost/lexical_cast.hpp"
-#include "boost/unordered_set.hpp"
+#include <unordered_set>
+#include <unordered_map>
 #include "boost/regex.hpp"
 #include "boost/algorithm/string.hpp"
 #include "boost/algorithm/string/trim.hpp"
@@ -22,7 +23,7 @@
 
 namespace CodeThorn {
 
-  typedef boost::unordered_map<std::string, boost::unordered_map<int, std::list<Edge> > > EdgeAnnotationMap;
+  typedef std::unordered_map<std::string, std::unordered_map<int, std::list<Edge> > > EdgeAnnotationMap;
   typedef std::pair<std::list<Flow>, EdgeAnnotationMap> CfgsAndAnnotationMap;
 
   /*! 
@@ -40,8 +41,8 @@ namespace CodeThorn {
     CfgsAndAnnotationMap parseDotCfgs(std::string filename);
 
   private:
-    size_t determineStartNode(boost::unordered_set<size_t>& mostRecentSourceNodes, 
-			      boost::unordered_set<size_t>& mostRecentTargetNodes);
+    size_t determineStartNode(std::unordered_set<size_t>& mostRecentSourceNodes, 
+			      std::unordered_set<size_t>& mostRecentTargetNodes);
   };
 
 } // end of namespace CodeThorn

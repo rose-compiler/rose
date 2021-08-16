@@ -87,7 +87,7 @@ int main(int argc, char* argv[]) {
   CodeThorn::initDiagnostics();
   cout<<"Woodpecker diagnostics initialized."<<endl;
   CodeThorn::CodeThornLib::turnOffRoseWarnings();
-  
+
   Rose::Diagnostics::mprefix->showProgramName(false);
   Rose::Diagnostics::mprefix->showThreadId(false);
   Rose::Diagnostics::mprefix->showElapsedTime(false);
@@ -207,7 +207,7 @@ int main(int argc, char* argv[]) {
     CodeThorn::Normalization lowering;
     lowering.normalizeAst(root,2);
     logger[TRACE] <<"STATUS: Normalization level 2 finished."<<endl;
-  } 
+  }
 
   if(args.getBool("lowering")) {
     logger[TRACE] <<"STATUS: Lowering started."<<endl;
@@ -316,7 +316,7 @@ int main(int argc, char* argv[]) {
 
   if(csvAssertFileName) {
     cout<<"STATUS: performing flow-insensensitive condition-const analysis."<<endl;
-    Labeler labeler(root);
+    CLabeler labeler(root);
     FIConstAnalysis fiConstAnalysis(&variableIdMapping);
     fiConstAnalysis.setOptionMultiConstAnalysis(global_option_multiconstanalysis);
     fiConstAnalysis.runAnalysis(root, mainFunctionRoot); // is this required for conditionConstAnalysis?

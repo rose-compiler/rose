@@ -13,16 +13,21 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace ModelChecker {
 
-NullDerefTag::NullDerefTag(size_t nodeStep, TestMode tm, IoMode io, SgAsmInstruction *insn, const BS::SValuePtr &addr)
+NullDerefTag::NullDerefTag(size_t nodeStep, TestMode tm, IoMode io, SgAsmInstruction *insn, const BS::SValue::Ptr &addr)
     : Tag(nodeStep), testMode_(tm), ioMode_(io), insn_(insn), addr_(addr) {}
 
 NullDerefTag::~NullDerefTag() {}
 
 NullDerefTag::Ptr
-NullDerefTag::instance(size_t nodeStep, TestMode tm, IoMode io, SgAsmInstruction *insn, const BS::SValuePtr &addr) {
+NullDerefTag::instance(size_t nodeStep, TestMode tm, IoMode io, SgAsmInstruction *insn, const BS::SValue::Ptr &addr) {
     ASSERT_forbid(TestMode::OFF == tm);
     ASSERT_not_null(addr);
     return Ptr(new NullDerefTag(nodeStep, tm, io, insn, addr));
+}
+
+std::string
+NullDerefTag::name() const {
+    return "null pointer dereference";
 }
 
 std::string
@@ -55,7 +60,7 @@ NullDerefTag::printableName() const {
 void
 NullDerefTag::print(std::ostream &out, const std::string &prefix) const {
     // No locks necessary since all the data members are read-only.
-    out <<prefix <<"null pointer dereference\n";
+    out <<prefix <<name() <<"\n";
 
     std::string io = IoMode::READ == ioMode_ ? "read" : "write";
     std::string toFrom = IoMode::READ == ioMode_ ? "read from" : "write to";
@@ -73,7 +78,7 @@ NullDerefTag::print(std::ostream &out, const std::string &prefix) const {
             break;
     }
     if (insn_)
-        out <<prefix <<" at instruction " <<insn_->toString();
+        out <<" at instruction " <<insn_->toString();
     out <<"\n";
 
     out <<prefix <<"  attempted " <<toFrom <<" address " <<*addr_ <<"\n";
@@ -82,7 +87,7 @@ NullDerefTag::print(std::ostream &out, const std::string &prefix) const {
 void
 NullDerefTag::toYaml(std::ostream &out, const std::string &prefix1) const {
     // No locks necessary since all the data members are read-only.
-    out <<prefix1 <<"weakness: null pointer dereference\n";
+    out <<prefix1 <<"weakness: " <<name() <<"\n";
     std::string prefix(prefix1.size(), ' ');
 
     switch (ioMode_) {
