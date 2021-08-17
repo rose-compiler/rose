@@ -15,8 +15,6 @@
 #pragma GCC diagnostic warning "-Wall"
 #pragma GCC diagnostic warning "-Wextra"
 
-static constexpr bool NEW_PARTIAL_TYPE_HANDLING = true; // \todo rm after refactoring
-
 namespace sb = SageBuilder;
 namespace si = SageInterface;
 
@@ -2366,9 +2364,6 @@ namespace
 
   SgExprListExp* createVariantChoice_opt(AstContext ctx)
   {
-    using NameIterator   = std::vector<Name>::const_iterator;
-    using ChoiceIterator = std::vector<Element_ID_List>::const_iterator;
-
     const std::vector<Name>&            variantNames = ctx.variantNames();
 
     if (variantNames.size() == 0) return nullptr;

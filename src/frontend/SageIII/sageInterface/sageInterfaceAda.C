@@ -574,11 +574,263 @@ namespace ada
     return n ? getAdaDiscriminatedTypeDecl(*n) : nullptr;
   }
 
+  //
+  // for variants
+
+  VariantInfo
+  variantInfo(const SgAdaVariantFieldDecl* n)
+  {
+    if (!n) return std::make_tuple(nullptr, 0);
+
+    SgExprListExp* cond = n->get_variantConditions();
+
+    return std::make_tuple(cond, cond->get_expressions().size());
+  }
+
+  namespace
+  {
+    VariantEntry getVariant_internal(const SgExpression& n)
+    {
+      //~ std::cerr << typeid(n).name() << std::endl;
+
+      const SgIsOp& isop = SG_DEREF(isSgIsOp(&n));
+
+      return VariantEntry{ isSgVarRefExp(isop.get_lhs_operand()),
+                           isSgExprListExp(isop.get_rhs_operand())
+                         };
+    }
+
+    const SgExprListExp& getCondition(const SgExpression& n)
+    {
+      const SgIsOp& isop = SG_DEREF(isSgIsOp(&n));
+
+      return SG_DEREF(isSgExprListExp(isop.get_rhs_operand()));
+    }
+
+    const SgVarRefExp& getControl(const SgExpression& n)
+    {
+      const SgIsOp& isop = SG_DEREF(isSgIsOp(&n));
+
+      return SG_DEREF(isSgVarRefExp(isop.get_lhs_operand()));
+    }
+
+    bool equalVariantExpr(const SgVarRefExp& lhs, const SgVarRefExp& rhs)
+    {
+      return lhs.get_symbol() == rhs.get_symbol();
+    }
+
+    bool equalVariantExpr(const SgVarRefExp* lhs, const SgVarRefExp* rhs)
+    {
+      return equalVariantExpr(SG_DEREF(lhs), SG_DEREF(rhs));
+    }
+
+    bool haveSameControl(const SgExpression* lhs, const SgExpression* rhs)
+    {
+      return equalVariantExpr(getControl(SG_DEREF(lhs)), getControl(SG_DEREF(rhs)));
+    }
+  };
+
+  VariantEntry getVariant(const VariantInfo& info, int i)
+  {
+    const SgExpressionPtrList& allvariants = SG_DEREF(info.variants()).get_expressions();
+
+    return getVariant_internal(SG_DEREF(allvariants.at(i)));
+  }
+
+  int getSharedControlDepth(const VariantInfo& prev, const VariantInfo& next)
+  {
+    using Iterator = SgExpressionPtrList::const_iterator;
+
+    if (prev.depth() == 0) return 0;
+    if (next.depth() == 0) return 0;
+
+    const SgExpressionPtrList& pe = SG_DEREF(prev.variants()).get_expressions();
+    const SgExpressionPtrList& ne = SG_DEREF(next.variants()).get_expressions();
+    const size_t               minlen = std::min(pe.size(), ne.size());
+    Iterator                   peaa = pe.begin();
+    Iterator                   pezz = peaa + minlen;
+    Iterator                   pepos = std::mismatch(peaa, pezz, ne.begin(), haveSameControl).first;
+
+    return std::distance(peaa, pepos);
+  }
+
+  namespace
+  {
+    bool equalVariantElement(const SgExpression* lhs, const SgExpression* rhs);
+
+    struct VariantConditionAreEqual : sg::DispatchHandler<bool>
+    {
+        using base = sg::DispatchHandler<bool>;
+
+        explicit
+        VariantConditionAreEqual(const SgExpression& expr)
+        : n2(expr)
+        {}
+
+        template <class SageExpression>
+        bool equalRef(const SageExpression& lhs, const SgExpression& rhs)
+        {
+          ROSE_ASSERT(lhs.variantT() == rhs.variantT());
+
+          return equalVariantExpr(lhs, static_cast<const SageExpression&>(rhs));
+        }
+
+        template <class SageExpression>
+        bool equalVal(const SageExpression& lhs, const SgExpression& rhs)
+        {
+          ROSE_ASSERT(lhs.variantT() == rhs.variantT());
+
+          return lhs.get_value() == static_cast<const SageExpression&>(rhs).get_value();
+        }
+
+        template <class SageExpression>
+        bool equalName(const SageExpression& lhs, const SgExpression& rhs)
+        {
+          ROSE_ASSERT(lhs.variantT() == rhs.variantT());
+
+          return lhs.get_name() == static_cast<const SageExpression&>(rhs).get_name();
+        }
+
+        template <class SageExpression>
+        bool equalChild( const SageExpression& lhs,
+                         const SgExpression& rhs,
+                         SgExpression* (SageExpression::*getter)() const
+                       )
+        {
+          ROSE_ASSERT(lhs.variantT() == rhs.variantT());
+
+          const SgExpression* lhs_child = (lhs.*getter)();
+          const SgExpression* rhs_child = (static_cast<const SageExpression&>(rhs).*getter)();
+
+          return equalVariantElement(lhs_child, rhs_child);
+        }
+
+        void handle(const SgNode& n)         { SG_UNEXPECTED_NODE(n); }
+        void handle(const SgAdaOthersExp& n) { res = true; }
+        void handle(const SgBoolValExp& n)   { res = equalVal(n, n2); }
+        void handle(const SgIntVal& n)       { res = equalVal(n, n2); }
+        void handle(const SgCharVal& n)      { res = equalVal(n, n2); }
+        void handle(const SgEnumVal& n)      { res = equalName(n, n2); }
+        void handle(const SgVarRefExp& n)    { res = equalRef(n, n2); }
+
+        void handle(const SgRangeExp& n)
+        {
+          res = (  equalChild(n, n2, &SgRangeExp::get_start)
+                && equalChild(n, n2, &SgRangeExp::get_end)
+                && equalChild(n, n2, &SgRangeExp::get_stride) // not used in Ada
+                );
+        }
+
+      private:
+        const SgExpression& n2;
+    };
+
+    bool equalVariantElement(const SgExpression* lhs, const SgExpression* rhs)
+    {
+      if (lhs == nullptr)
+        return rhs == nullptr;
+
+      if (rhs == nullptr)
+        return false;
+
+      if (lhs->variantT() != rhs->variantT())
+        return false;
+
+      return sg::dispatch(VariantConditionAreEqual{SG_DEREF(lhs)}, rhs);
+    }
+
+    bool equalVariantExpr(const SgExprListExp& lhs, const SgExprListExp& rhs)
+    {
+      const SgExpressionPtrList& lhslst = lhs.get_expressions();
+      const SgExpressionPtrList& rhslst = rhs.get_expressions();
+
+      return (  ( lhslst.size() == rhslst.size() )
+             && ( lhslst.end() == std::mismatch( lhslst.begin(), lhslst.end(),
+                                                 rhslst.begin(),
+                                                 equalVariantElement
+                                               ).first
+                )
+             );
+    }
+
+    bool equalVariantExpr(const SgExprListExp* lhs, const SgExprListExp* rhs)
+    {
+      return equalVariantExpr(SG_DEREF(lhs), SG_DEREF(rhs));
+    }
+
+    bool variantsHaveSameCondition(const SgExpression& lhs, const SgExpression& rhs)
+    {
+      return equalVariantExpr(getCondition(lhs), getCondition(rhs));
+    }
+  }
+
+  /// test if \ref prev and \rev next have the same variant condition at position \ref i
+  bool haveSameConditionAt(const VariantInfo& prev, const VariantInfo& next, int i)
+  {
+    ROSE_ASSERT((i < prev.depth()) && (i < next.depth()));
+
+    const SgExpressionPtrList& pe = SG_DEREF(prev.variants()).get_expressions();
+    const SgExpressionPtrList& ne = SG_DEREF(next.variants()).get_expressions();
+
+    return variantsHaveSameCondition(SG_DEREF(pe.at(i)), SG_DEREF(ne.at(i)));
+  }
+
+  namespace
+  {
+    bool haveSameVariants(const SgExpression* lhs, const SgExpression* rhs)
+    {
+      VariantEntry lhsVariant = getVariant_internal(SG_DEREF(lhs));
+      VariantEntry rhsVariant = getVariant_internal(SG_DEREF(rhs));
+
+      return (  equalVariantExpr(lhsVariant.control(), rhsVariant.control())
+             && equalVariantExpr(lhsVariant.conditions(), rhsVariant.conditions())
+             );
+    }
+
+
+    struct ConditionChange
+    {
+      bool operator()(SgStatement* dcl) const
+      {
+        using Iterator = SgExpressionPtrList::const_iterator;
+
+        const SgAdaVariantFieldDecl* nextVariant = isSgAdaVariantFieldDecl(dcl);
+        VariantInfo                  next = variantInfo(nextVariant);
+
+        if (next.depth() != prev.depth())
+          return true;
+
+        if (next.depth() == 0)
+          return false; // neither statement has a variant condition
+
+        const SgExpressionPtrList& pe = SG_DEREF(prev.variants()).get_expressions();
+        const SgExpressionPtrList& ne = SG_DEREF(next.variants()).get_expressions();
+        const Iterator             peaa = pe.begin();
+
+        ROSE_ASSERT(pe.size() == ne.size());
+
+        return peaa == std::mismatch(peaa, pe.end(), ne.begin(), haveSameVariants).first;
+      }
+
+      VariantInfo prev;
+    };
+
+  }
+
+  SgDeclarationStatementPtrList::const_iterator
+  findVariantConditionChange( SgDeclarationStatementPtrList::const_iterator begin,
+                              SgDeclarationStatementPtrList::const_iterator end,
+                              const SgAdaVariantFieldDecl* prevVariant
+                            )
+  {
+    return std::find_if(begin, end, ConditionChange{variantInfo(prevVariant)});
+  }
+
+
 
   // ******
   // \todo move code below to Ada to C++ translator
   // ******
-
 
   struct ConversionTraversal : AstSimpleProcessing
   {
