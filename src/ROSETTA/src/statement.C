@@ -2017,7 +2017,7 @@ Grammar::setUpStatements ()
 
      AdaVariantFieldDecl.setFunctionPrototype ( "HEADER_ADA_VARIANT_FIELD_DECL", "../Grammar/Statement.code" );
 
-     AdaVariantFieldDecl.setDataPrototype ( "SgExprListExp*", "variants", "= NULL",
+     AdaVariantFieldDecl.setDataPrototype ( "SgExprListExp*", "variantConditions", "= NULL",
                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // *******************************************************************************
