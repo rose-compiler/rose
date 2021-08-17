@@ -56,8 +56,9 @@ hashMemoryRegion(Combinatorics::Hasher &hasher, const MemoryMap::Ptr &map, Addre
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 LinuxI386::SyscallContext::SyscallContext(const LinuxI386::Ptr &architecture, const BS::RiscOperatorsPtr &ops,
-                                          const P2::Partitioner &partitioner)
-    : partitioner(partitioner) {
+                                          const P2::Partitioner &partitioner, const Debugger::Ptr &debugger)
+    : partitioner(partitioner), debugger(debugger) {
+    ASSERT_not_null(debugger);
     ASSERT_not_null(architecture);
     this->architecture = architecture;
     ASSERT_not_null(ops);
@@ -947,7 +948,7 @@ LinuxI386::systemCall(const P2::Partitioner &partitioner, const BS::RiscOperator
     // to adjust the instruction pointer), and the concrete execution has stepped into the system call but has not yet executed
     // it (i.e., the subordinate process is in the syscall-enter-stop state).
 
-    SyscallContext ctx(sharedFromThis(), ops_, partitioner);
+    SyscallContext ctx(sharedFromThis(), ops_, partitioner, debugger_);
 
     //-------------------------------------
     // Create system call execution event.

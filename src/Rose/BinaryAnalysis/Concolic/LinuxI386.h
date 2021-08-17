@@ -31,7 +31,7 @@ public:
 
         /** Constructor. */
         SyscallContext(const LinuxI386::Ptr &architecture, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
-                       const Partitioner2::Partitioner&);
+                       const Partitioner2::Partitioner&, const DebuggerPtr&);
 
         ~SyscallContext();
     };
