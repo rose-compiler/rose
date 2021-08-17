@@ -761,6 +761,9 @@ check-codethorn-internal:
 check-domain:
 	$(srcdir)/scripts/runDomainTests $(srcdir)/tests
 
+check-lc:
+	$(srcdir)/scripts/runLineColTests $(srcdir)/tests
+
 check-io: check-ioc
 
 check-ioc:

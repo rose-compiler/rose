@@ -327,6 +327,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("type-size-mapping-print",po::value< bool >(&ctOpt.info.printTypeSizeMapping)->default_value(false)->implicit_value(true),"Print type-size mapping on stdout.")
     ("type-size-mapping-csv",po::value<std::string>(&ctOpt.info.typeSizeMappingCSVFileName),"Write type-size mapping to CSV file [arg].")
     ("tf-trace",po::value< bool >(&ctOpt.info.printTransferFunctionInfo)->default_value(false)->implicit_value(true),"Print info about invoked transfer functions.")
+    ("line-col-csv",po::value< string >(&ctOpt.info.astTraversalLineColumnCSVFileName),"Write ast node traversal (sequence of line column pairs) to file [arg].")
     ;
 
   po::options_description all("All supported options");

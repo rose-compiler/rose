@@ -16,6 +16,7 @@ class SgSwitchStatement;
 #include "NormalizationInliner.h"
 
 namespace CodeThorn {
+  
   class Normalization {
     // Not supported yet: 
     // 1. condition hoisting in do-while (into the block, not before the loop)

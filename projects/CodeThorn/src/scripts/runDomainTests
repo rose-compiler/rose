@@ -134,6 +134,6 @@ testNumbers=`echo {001..050}`
 numWarnExpected=0
 numFailExpected=24
 CT_MODE_OPTIONS="--context-sensitive=yes --normalize-level=2 --interpreter-mode=0 --in-state-string-literals --exploration-mode=topologic-sort --abstraction-mode=1 --array-abstraction-index=0 --pointer-sets=on"
-echo
-echo -n "Level 2 (abstraction mode, array abstraction index=0, av-sets): " 
-runDomainTestsLevel2
+#echo
+#echo -n "Level 2 (abstraction mode, array abstraction index=0, av-sets): " 
+#runDomainTestsLevel2

@@ -117,7 +117,7 @@ namespace CodeThorn {
         SgNode* node=analyzer->getLabeler()->getNode(lab);
         if(node) {
           //cout<<lab.toString()<<","<<value<<endl;
-          locationsCSVFileData<<ProgramLocationsReport::programLocation(analyzer->getLabeler(),lab);
+          locationsCSVFileData<<ProgramLocationsReport::findOriginalProgramLocationOfLabel(analyzer->getLabeler(),lab);
           // CONTINUE
         } else {
           locationsCSVFileData<<"unknown-location"<<endl;
@@ -169,7 +169,7 @@ namespace CodeThorn {
         }
         if(node) {
           //cout<<lab.toString()<<","<<value<<endl;
-          locationsCSVFileData<<ProgramLocationsReport::programLocation(analyzer->getLabeler(),lab);
+          locationsCSVFileData<<ProgramLocationsReport::findOriginalProgramLocationOfLabel(analyzer->getLabeler(),lab);
         } else {
           locationsCSVFileData<<"unknown-location"<<endl;
         }
@@ -284,7 +284,7 @@ namespace CodeThorn {
   void AnalysisReporting::generateVerificationCallGraphDotFile(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report) {
     string fileName1=ctOpt.reportFilePath+"/"+analysisName+"-cg1.dot";
     string fileName2=ctOpt.reportFilePath+"/"+analysisName+"-cg2.dot";
-    //cout<<"Generating verification call graph for "<<analysisName<<" analysis."<<endl;
+    //if(ctOpt.status) cout<<"Generating verification call graph for "<<analysisName<<" analysis."<<endl;
     Flow& flow=*analyzer->getFlow();
     LabelSet functionEntryLabels=analyzer->getCFAnalyzer()->functionEntryLabels(flow);
     std::map<Label,VerificationResult> fMap;

@@ -53,19 +53,28 @@ LabelSet CodeThorn::ProgramLocationsReport::filterFunctionEntryLabels(Labeler* l
   return functionEntryLabels;
 }
 
-bool CodeThorn::ProgramLocationsReport::hasSourceLocation(SgStatement* stmt) {
+bool CodeThorn::ProgramLocationsReport::hasSourceLocation(SgNode* stmt) {
   ROSE_ASSERT(stmt);
   Sg_File_Info* fi=stmt->get_file_info();
-  return fi->get_line()>0;
+  if(fi)
+    return fi->get_line()>0;
+  return false;
 }
 
-string CodeThorn::ProgramLocationsReport::programLocation(Labeler* labeler, Label lab) {
+string CodeThorn::ProgramLocationsReport::findOriginalProgramLocationOfLabel(Labeler* labeler, Label lab) {
   SgNode* node=labeler->getNode(lab);
+  return findOriginalProgramLocationOfNode(node);
+}
+
+string CodeThorn::ProgramLocationsReport::findOriginalProgramLocationOfNode(SgNode* node) {
   ROSE_ASSERT(node);
   // find non-transformation file info
   SgNode* parent=node->get_parent();
   // if node is inside expression, search for statement node
   while(!isSgStatement(node)) {
+    if(hasSourceLocation(node)) {
+      return CodeThorn::ProgramLocationsReport::fileInfoAsFormattedProgramLocation(node);
+    }
     node=node->get_parent();
     if(node==nullptr)
       return "[unresolved source location]";
@@ -80,10 +89,14 @@ string CodeThorn::ProgramLocationsReport::programLocation(Labeler* labeler, Labe
   node=stmt;
   ROSE_ASSERT(stmt);
   // return fileinfo as formatted string
-  return SgNodeHelper::sourceFilenameToString(node)+","+SgNodeHelper::sourceLineColumnToString(node);
+  return CodeThorn::ProgramLocationsReport::fileInfoAsFormattedProgramLocation(node);
 }
 
-string CodeThorn::ProgramLocationsReport::sourceCodeAtProgramLocation(Labeler* labeler, Label lab) {
+string CodeThorn::ProgramLocationsReport::fileInfoAsFormattedProgramLocation(SgNode* node) {
+  return SgNodeHelper::sourceFilenameToString(node)+","+SgNodeHelper::sourceLineColumnToString(node);
+}
+  
+string CodeThorn::ProgramLocationsReport::sourceCodeAtLabel(Labeler* labeler, Label lab) {
   SgNode* node=labeler->getNode(lab);
   ROSE_ASSERT(node);
   return SgNodeHelper::doubleQuotedEscapedString(node->unparseToString());
@@ -152,13 +165,13 @@ void CodeThorn::ProgramLocationsReport::writeResultFile(CodeThornOptions& ctOpt,
   }
   if(myfile.good()) {
     for(auto lab : definitiveLocations) {
-      myfile<<"definitive,"<<programLocation(labeler,lab);
-      myfile<<","<<sourceCodeAtProgramLocation(labeler,lab);
+      myfile<<"definitive,"<<findOriginalProgramLocationOfLabel(labeler,lab);
+      myfile<<","<<sourceCodeAtLabel(labeler,lab);
       myfile<<endl;
     }
     for(auto lab : potentialLocations) {
-      myfile<<"potential,"<<programLocation(labeler,lab);
-      myfile<<","<<sourceCodeAtProgramLocation(labeler,lab);
+      myfile<<"potential,"<<findOriginalProgramLocationOfLabel(labeler,lab);
+      myfile<<","<<sourceCodeAtLabel(labeler,lab);
       myfile<<endl;
     }
     myfile.close();
@@ -186,11 +199,11 @@ void CodeThorn::ProgramLocationsReport::writeLocationsToStream(std::ostream& str
     if(qualifier.size()>0&&(programLocation||sourceCode))
       stream<<": ";
     if(programLocation)
-      stream<<this->programLocation(labeler,lab);
+      stream<<this->findOriginalProgramLocationOfLabel(labeler,lab);
     if(programLocation&&sourceCode)
       stream<<": ";
     if(sourceCode)
-      stream<<sourceCodeAtProgramLocation(labeler,lab);
+      stream<<sourceCodeAtLabel(labeler,lab);
     stream<<endl;
   }
 }
@@ -220,7 +233,7 @@ void ProgramLocationsReport::writeLocationsVerificationReport(CodeThornOptions& 
     cout<<"None."<<endl;
   } else {
     for(auto lab:definitiveLocations) {
-      os<<sourceCodeAtProgramLocation(labeler,lab)<<endl;
+      os<<sourceCodeAtLabel(labeler,lab)<<endl;
     }
   }
 #endif

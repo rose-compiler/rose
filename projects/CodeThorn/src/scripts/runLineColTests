@@ -1,0 +1,82 @@
+#!/bin/bash
+
+# exit immediately with ctrl-c
+trap "exit" INT
+
+red=$'\e[1;31m'
+grn=$'\e[1;32m'
+yel=$'\e[1;33m'
+blu=$'\e[1;34m'
+mag=$'\e[1;35m'
+cyn=$'\e[1;36m'
+end=$'\e[0m'
+
+COLORED_FAIL=${red}FAIL${end}
+COLORED_WARN=${yel}WARN${end}
+COLORED_PASS=${grn}PASS${end}
+
+TESTDIR=$1
+echo "------------------------------------------------"
+echo "running LINE COLUMN NORMALIZATION TESTS"
+echo "------------------------------------------------"
+
+
+function printStats {
+    echo "PASS: $numPass, WARN: $numWarn (expected: $numWarnExpected), FAIL: $numFail (expected: $numFailExpected)"
+    if [ $numWarn -gt $numWarnExpected ]; then
+	echo "${red}Error: more warnings than expected${end}"
+	exit 1
+    fi
+    if [ $numFail -gt $numFailExpected ]; then
+	echo "${red}Error: more failing runs than expected${end}"
+	exit 1
+    fi
+}
+
+function runLineColTests {
+    echo "scheduled tests: $testNumbers"
+    numPass=0
+    numWarn=0
+    numFail=0
+    for testNumber in $testNumbers; do
+        benchmarkprefix=$TESTDIR/DOM${testNumber};
+        for benchmark in ${benchmarkprefix}*.[Cc]; do
+            benchmarkname=$(basename $benchmark)
+            printf "Testing %-38s: " $benchmarkname
+            CT_OUTPUT_FILE1=${benchmarkname}_1.lcout
+	    CT_OUTPUT_FILE2=${benchmarkname}_2.lcout
+            ./codethorn $benchmark --line-col-csv=$CT_OUTPUT_FILE1 -I $TESTDIR --normalize-level=0 --run-solver=no > /dev/null
+            if [ ! $? -eq 0 ]
+            then
+	        echo $COLORED_FAIL
+                ((numFail++))
+	    fi
+	    ./codethorn $benchmark --line-col-csv=$CT_OUTPUT_FILE2 -I $TESTDIR --normalize-level=2 --run-solver=no > /dev/null
+            if [ ! $? -eq 0 ]
+            then
+	        echo $COLORED_FAIL
+                ((numFail++))
+            else
+                echo -n "$COLORED_PASS "
+                DIFF=$(diff $CT_OUTPUT_FILE1 $CT_OUTPUT_FILE2)
+		numDiffLines=`echo "$DIFF" | wc -l`
+                if [ "$DIFF" != "" ] 
+                then
+                    echo $COLORED_WARN $numDiffLines
+		    ((numWarn++))
+                else
+                    echo $COLORED_PASS
+		    ((numPass++))
+                fi
+		rm -f $$CT_OUTPUT_FILE1 $CT_OUTPUT_FILE2
+	    fi
+	done
+    done
+    printStats
+}
+
+testNumbers=`echo {001..048}`
+numWarnExpected=48
+numFailExpected=0
+echo -n "Line-Column normalization tests: " 
+runLineColTests
