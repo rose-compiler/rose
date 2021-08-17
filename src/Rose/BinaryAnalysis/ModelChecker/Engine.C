@@ -154,6 +154,7 @@ Engine::reset() {
     // Reset priority queues
     frontier_.reset();
     interesting_.reset();
+    inProgress_.clear();
 }
 
 void
@@ -241,6 +242,9 @@ Engine::step() {
 
     // Do one step of work if work is immediately available
     if (Path::Ptr path = takeNextWorkItemNow(state)) {  // returns immediately, not waiting for new work
+        BOOST_SCOPE_EXIT(this_, &path) {
+            this_->finishPath(path);
+        } BOOST_SCOPE_EXIT_END;
         doOneStep(path, ops, solver);
         return true;
     } else {
@@ -268,6 +272,9 @@ Engine::worker() {
 
     changeState(state, WorkerState::WAITING);
     while (Path::Ptr path = takeNextWorkItem(state)) {
+        BOOST_SCOPE_EXIT(this_, &path) {
+            this_->finishPath(path);
+        } BOOST_SCOPE_EXIT_END;
         doOneStep(path, ops, solver);
         changeState(state, WorkerState::WAITING);
     }
@@ -301,6 +308,12 @@ const PathQueue&
 Engine::pendingPaths() const {
     // No lock necessary since frontier_'s address doesn't ever change.
     return frontier_;
+}
+
+PathSet
+Engine::inProgress() const {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    return inProgress_;
 }
 
 const PathQueue&
@@ -353,8 +366,10 @@ Engine::takeNextWorkItemNow(WorkerState &state) {
     if (stopping_)
         return Path::Ptr();
     Path::Ptr retval = frontier_.takeNext();
-    if (retval)
+    if (retval) {
         changeStateNS(state, WorkerState::WORKING);
+        inProgress_.insert(retval);
+    }
     return retval;
 }
 
@@ -366,12 +381,19 @@ Engine::takeNextWorkItem(WorkerState &state) {
             return Path::Ptr();
         if (Path::Ptr retval = frontier_.takeNext()) {
             changeStateNS(state, WorkerState::WORKING);
+            inProgress_.insert(retval);
             return retval;
         }
         if (0 == nWorking_)
             return Path::Ptr();
         newWork_.wait(lock);
     }
+}
+
+void
+Engine::finishPath(const Path::Ptr &path) {
+    ASSERT_not_null(path);
+    inProgress_.erase(path);
 }
 
 Path::Ptr
@@ -676,18 +698,28 @@ Engine::showStatistics(std::ostream &out, const std::string &prefix) const {
     const size_t nPathsExplored = this->nPathsExplored();
     const double age = timeSinceStats_.restart();       // zero if no previous report
 
+    PathStatsAccumulator currentStats;
+    for (const Path::Ptr &path: inProgress())
+        currentStats(path);
+
     PathStatsAccumulator pendingStats;
     pendingPaths().traverse(pendingStats);
 
     ////////////////---------1---------2---------3---------4
     out <<prefix <<"total elapsed time:                     " <<elapsedTime() <<"\n";
     out <<prefix <<"threads:                                " <<nWorking() <<" working of " <<workCapacity() <<" total\n";
-    out <<prefix <<"paths explored:                         " <<nPathsExplored <<"\n";
+    if (currentStats.nPaths > 0) {
+        //std::cerr <<"ROBB: current.nPaths = " <<currentStats.nPaths <<"\n";
+        out <<prefix <<"  shortest in-progress path length:     " <<StringUtility::plural(*currentStats.minSteps, "steps") <<"\n";
+        out <<prefix <<"  longest in-progress path length:      " <<StringUtility::plural(*currentStats.maxSteps, "steps") <<"\n";
+    }
+
     out <<prefix <<"paths waiting to be explored:           " <<pendingStats.nPaths <<"\n";
     if (pendingStats.nPaths > 0) {
         out <<prefix <<"  shortest pending path length:         " <<StringUtility::plural(*pendingStats.minSteps, "steps") <<"\n";
         out <<prefix <<"  longest pending path length:          " <<StringUtility::plural(*pendingStats.maxSteps, "steps") <<"\n";
     }
+    out <<prefix <<"paths explored:                         " <<nPathsExplored <<"\n";
 
     const size_t nNewPaths = nPathsExplored - nPathsStats_;
     if (age >= 60.0) {
