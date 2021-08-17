@@ -74,6 +74,9 @@ using PathPrioritizerPtr = std::shared_ptr<PathPrioritizer>;
 class PathQueue;
 using PathQueuePtr = std::shared_ptr<PathQueue>;
 
+/** Set of paths. */
+using PathSet = std::set<PathPtr>;
+
 class Periodic;
 using PeriodicPtr = std::shared_ptr<Periodic>;
 

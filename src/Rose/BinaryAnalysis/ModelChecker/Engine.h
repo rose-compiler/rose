@@ -48,6 +48,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
     PathQueue frontier_;                                // paths with work remaining
+    PathSet inProgress_;                                // paths that are being worked on
     PathQueue interesting_;                             // paths that are interesting, placed here by workers
     SemanticCallbacksPtr semantics_;                    // various configurable semantic operations
 
@@ -338,11 +339,28 @@ public:
      *  blocks until something is placed on the queue or until all work has completed. If all work has completed without
      *  anything being placed on the queue, this function returns a null pointer.
      *
+     *  If a non-null path is returned, then that path is also atomically inserted into the @ref inProgress set.
+     *
      *  Do not call this in a single-threaded application or it may deadlock since there are no other threads creating
      *  interesting results. Instead, use @c interesting()->takeNext() which does not block.
      *
      *  Thread safety: This method is thread safe. */
     PathPtr takeNextInteresting();
+
+    /** Indicates that a path has been finished.
+     *
+     *  This should be called whenever work on a path finishes, regardless of whether the work was successful or not.
+     *  It removes the indicated path from the @ref inProgress list.
+     *
+     *  Thread safety: This method is thread safe. */
+    void finishPath(const PathPtr&);
+
+    /** Paths that are currently in progress.
+     *
+     *  Returns a copy of the paths that are in progress at the time this function is called.
+     *
+     *  Thread safety: This method is thread safe. */
+    PathSet inProgress() const;
 
     /** Potentially insert a path into the interesting queue.
      *
