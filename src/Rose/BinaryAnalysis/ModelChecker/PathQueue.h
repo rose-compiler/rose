@@ -14,6 +14,20 @@ namespace ModelChecker {
  *  A queue of execution tree vertices ordered by some user-defined metric. The metric is defined by the @ref
  *  PathPrioritizer supplied as a constructor argument. */
 class PathQueue final {
+public:
+    /** Visitor for traversing a queue. */
+    class Visitor {
+    public:
+        virtual ~Visitor() {}
+
+        /** Callback.
+         *
+         *  This callback is invoked for each path of the queue in no particular order. If any call to the callback
+         *  returns false, then the traversal is terminated. The queue is locked for the duration of the traversal. */
+        virtual bool operator()(const PathPtr&) = 0;
+    };
+
+private:
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;     // protects all following data members
     PathPrioritizerPtr prioritizer_;
     std::vector<PathPtr> paths_;
@@ -79,6 +93,14 @@ public:
      *
      *  Thread safety: This method is thread safe. */
     PathPtr takeNext();
+
+    /** Visit each path in the queue.
+     *
+     *  The visitor functor is called for each path in the queue in no particular order until either all paths are visited or
+     *  one of the visitor calls returns false.
+     *
+     *  Thread safety: This method is thread safe. The queue is locked for the duration of the traversal. */
+    void traverse(Visitor&) const;
 };
 
 } // namespace

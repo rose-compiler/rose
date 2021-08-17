@@ -308,6 +308,16 @@ public:
      *  Thread safety: This method is thread safe. */
     size_t nStepsExplored() const;
 
+    /** Property: Paths waiting to be explored.
+     *
+     *  Returns the (read-only) queue of paths that are waiting to be explored. From this, one can count the number of pending
+     *  paths, and measure various properties of those paths.
+     *
+     *  Thread safety: This method is thread safe. The returned object is a reference valid while this model checker @ref
+     *  Engine object exists. The referenced returned object may be changing by other threads, so only thread-safe methods
+     *  should be called. */
+    const PathQueue& pendingPaths() const;
+
     /** Property: The interesting results queue.
      *
      *  As workers discover interesting things, they will insert those paths into the "interesting" queue. The queue can be
