@@ -71,7 +71,7 @@ void
 FailureUnit::toYamlHeader(const Settings::Ptr &settings, std::ostream &out, const std::string &prefix1) const {
     out <<prefix1 <<"vertex-type: failure\n";
     if (auto va = address()) {
-        std::string prefix(prefix1, ' ');
+        std::string prefix(prefix1.size(), ' ');
         out <<prefix <<"vertex-address: " <<StringUtility::addrToString(*va) <<"\n";
     }
 }
