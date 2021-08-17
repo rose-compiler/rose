@@ -76,6 +76,15 @@ PathQueue::takeNext() {
     return retval;
 }
 
+void
+PathQueue::traverse(Visitor &visitor) const {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    for (const Path::Ptr &path: paths_) {
+        if (!visitor(path))
+            return;
+    }
+}
+
 } // namespace
 } // namespace
 } // namespace

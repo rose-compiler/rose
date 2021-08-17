@@ -293,19 +293,25 @@ Engine::nWorking() const {
 
 size_t
 Engine::nPathsPending() const {
-    // No lock necessary
+    // No lock necessary (it happens inside frontier_ instead).
     return frontier_.size();
 }
 
 const PathQueue&
+Engine::pendingPaths() const {
+    // No lock necessary since frontier_'s address doesn't ever change.
+    return frontier_;
+}
+
+const PathQueue&
 Engine::interesting() const {
-    // No lock necessary
+    // No lock necessary since interesting_'s address is constant.
     return interesting_;
 }
 
 PathQueue&
 Engine::interesting() {
-    // No lock necessary
+    // No lock necessary since interesting_'s address is constant.
     return interesting_;
 }
 
@@ -645,6 +651,21 @@ Engine::elapsedTime() const {
     return elapsedTime_;
 }
 
+class PathStatsAccumulator: public PathQueue::Visitor {
+public:
+    size_t nPaths = 0;                                  // number of paths
+    Sawyer::Optional<size_t> minSteps;                  // number of steps in shortest path
+    Sawyer::Optional<size_t> maxSteps;                  // number of steps in longest path
+
+    virtual bool operator()(const Path::Ptr &path) {
+        ++nPaths;
+        size_t nSteps = path->nSteps();
+        minSteps = std::min(minSteps.orElse(nSteps), nSteps);
+        maxSteps = std::max(maxSteps.orElse(nSteps), nSteps);
+        return true;
+    }
+};
+
 void
 Engine::showStatistics(std::ostream &out, const std::string &prefix) const {
     // Gather information
@@ -655,11 +676,19 @@ Engine::showStatistics(std::ostream &out, const std::string &prefix) const {
     const size_t nPathsExplored = this->nPathsExplored();
     const double age = timeSinceStats_.restart();       // zero if no previous report
 
+    PathStatsAccumulator pendingStats;
+    pendingPaths().traverse(pendingStats);
+
     ////////////////---------1---------2---------3---------4
     out <<prefix <<"total elapsed time:                     " <<elapsedTime() <<"\n";
     out <<prefix <<"threads:                                " <<nWorking() <<" working of " <<workCapacity() <<" total\n";
     out <<prefix <<"paths explored:                         " <<nPathsExplored <<"\n";
-    out <<prefix <<"paths waiting to be explored:           " <<nPathsPending() <<"\n";
+    out <<prefix <<"paths waiting to be explored:           " <<pendingStats.nPaths <<"\n";
+    if (pendingStats.nPaths > 0) {
+        out <<prefix <<"  shortest pending path length:         " <<StringUtility::plural(*pendingStats.minSteps, "steps") <<"\n";
+        out <<prefix <<"  longest pending path length:          " <<StringUtility::plural(*pendingStats.maxSteps, "steps") <<"\n";
+    }
+
     const size_t nNewPaths = nPathsExplored - nPathsStats_;
     if (age >= 60.0) {
         double rate = 60.0 * nNewPaths / age;           // paths per minute
