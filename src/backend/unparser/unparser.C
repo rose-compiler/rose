@@ -17,6 +17,7 @@
 // Interestingly it must be at the top of the list of include files.
 #include "rose_config.h"
 
+
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
    #include "AsmUnparser_compat.h"
 #endif
