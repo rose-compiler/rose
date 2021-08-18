@@ -36,10 +36,10 @@ SageInterface::declarationPositionString( const SgDeclarationStatement* declarat
 
      string returnString = "_F" + fileIdString + "_L" + StringUtility::numberToString(line_number) + "_C" +  StringUtility::numberToString(column_number);
      //string returnString = "_F" + StringUtility::numberToString(file_id) + "_L" + StringUtility::numberToString(line_number) + "_C" +  StringUtility::numberToString(column_number);
-     
+
      // Liao, 11/9/2009
      // the returned string should not have '-', which will break the rule for identifier in C/C++
-     size_t pos1 = returnString.find("-"); 
+     size_t pos1 = returnString.find("-");
      ROSE_ASSERT (pos1 == string::npos);
 
      return returnString;
@@ -49,16 +49,16 @@ SageInterface::declarationPositionString( const SgDeclarationStatement* declarat
 string
 SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBetweenDefiningAndNondefiningDeclarations )
    {
-  // This function handles details in the differences between 
+  // This function handles details in the differences between
   // the unique names that we require for declarations and where the
   // mangled name mechanism would map them to be the same.
   // Examples include:
-  //    1) Function declarations (e.g. forward declarations and the defining declaration) 
+  //    1) Function declarations (e.g. forward declarations and the defining declaration)
   //       with and without default parameters specified all have the same mangled name.
-  //    2) Forward function declarations and the defining function declaration all have 
+  //    2) Forward function declarations and the defining function declaration all have
   //       the same mangled name.
-  //    3) Namespace declarations all mangle to the same namespace name but there can be 
-  //       many of them (since they are re-entrant) so these need a more precise definition 
+  //    3) Namespace declarations all mangle to the same namespace name but there can be
+  //       many of them (since they are re-entrant) so these need a more precise definition
   //       of uniqueness.
 
      ROSE_ASSERT(node != NULL);
@@ -80,11 +80,12 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                case V_SgEnumType:
                case V_SgTypedefType:
                case V_SgNamedType:
+               case V_SgAdaDiscriminatedType:
                   {
                  // Handle case of named types which should be shared within the merged AST.
-                 // These are multiply represented within the generated AST from EDG.  
+                 // These are multiply represented within the generated AST from EDG.
                  // Note that a fixup pass on the AST (fixupTypes.[hC]) forces the same declaration
-                 // (defining or nondefining) to be used for all SgNamedType objects referencing 
+                 // (defining or nondefining) to be used for all SgNamedType objects referencing
                  // the same declaration.
                     const SgNamedType* namedType = isSgNamedType(node);
                     ROSE_ASSERT(namedType != NULL);
@@ -93,7 +94,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     key = generateUniqueName(declaration,true);
                     additionalSuffix = "__namedType";
 #if 0
-                 // If we can make all SgClassTypes for an associated definition equivalent then 
+                 // If we can make all SgClassTypes for an associated definition equivalent then
                  // we can merge them using the AST merge mechanism.
 
                  // For now keep track of just the number of typedefs, later we will do better.
@@ -127,8 +128,8 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     break;
                   }
 
-            // DQ (12/5/2012): This is a fix for mergeTest_06.C where it appears to only fail for the 
-            // GNU 4.4 compiler.  Likely specific to header compiler specific header files used for 
+            // DQ (12/5/2012): This is a fix for mergeTest_06.C where it appears to only fail for the
+            // GNU 4.4 compiler.  Likely specific to header compiler specific header files used for
             // only that (and likely later) version of the compiler.
                case V_SgModifierType:
                   {
@@ -166,8 +167,8 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
        // DQ (6/25/2010): This should be less important now that we normalize the SgTypedefSeq IR nodes to have the same lists.
 #if 0
-       // DQ (7/1/2010): Note that this causes about 7 test codes to fail because if name qualification issues of 
-       // global scoping operator. Not clear why, but this code is what restores thos test codes (in Cxx_tests) to 
+       // DQ (7/1/2010): Note that this causes about 7 test codes to fail because if name qualification issues of
+       // global scoping operator. Not clear why, but this code is what restores thos test codes (in Cxx_tests) to
        // working order.
 
        // Append a list of pointers to the types in the typedef sequence.
@@ -368,7 +369,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                          ROSE_ASSERT( functionDeclaration == functionDeclaration->get_definingDeclaration() );
 #endif
                       // To avoid "int foo();" having the smae name as "int foo() {}" we need to fixup the unique names.
-                      // This may be the technique used to handle function prototypes with defalt valued parameters and 
+                      // This may be the technique used to handle function prototypes with defalt valued parameters and
                       // namespaces as well.
                          additionalSuffix = "__function_declaration_with_definition";
                        }
@@ -415,8 +416,8 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 #if 0
                     if (key.empty() == true)
                        {
-                      // If the enum declaration is unnamed then give it a name in terms of its parent 
-                      // (e.g. "typedef enum {} _G_fpos64_t;" could get a name that reflected it as an 
+                      // If the enum declaration is unnamed then give it a name in terms of its parent
+                      // (e.g. "typedef enum {} _G_fpos64_t;" could get a name that reflected it as an
                       // enum_declaration (additionalSuffix) in a typedef specific to _G_fpos64_t).
                          SgNode* parentNode = functionParameterList->get_parent();
                          ROSE_ASSERT(parentNode != NULL);
@@ -463,7 +464,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
                  // DQ (6/1/2006): Mangled names are unique to a scope if the scope is named
 
-                 // DQ (6/1/2006): Add the variables to the declaration (including types) to avoid 
+                 // DQ (6/1/2006): Add the variables to the declaration (including types) to avoid
                  // variable declarations from different unnamed scopes from clashing.
                     string variableNames;
                     SgInitializedNamePtrList::const_iterator p = variableDeclaration->get_variables().begin();
@@ -473,7 +474,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                          variableNames += "_variable_name_" + (*p)->get_mangled_name();
 #if 1
                       // This causes problems when the initialize name objects are orphaned.  It seems we either over share or we oprhan IR nodes.
-                      // DQ (2/17/2007): Initializers can make that initializedName different and difficult to 
+                      // DQ (2/17/2007): Initializers can make that initializedName different and difficult to
                       // share since we can't generate unique names fro expressions.
                          if ( (*p)->get_initptr() != NULL )
                             {
@@ -562,7 +563,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
                  // DQ (7/10/2010): Found a case where this fails, need more information about it.
 #if 1
-                 // DQ (7/23/2010): We need to generate some sort of name to support generation 
+                 // DQ (7/23/2010): We need to generate some sort of name to support generation
                  // of mangled names for types to be put into the new type table.
                     if (key.empty() == true)
                        {
@@ -571,7 +572,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 #else
                     if (key.empty() == true)
                        {
-                      // DQ (7/11/2010): This is not an error since we handle this case explicitly 
+                      // DQ (7/11/2010): This is not an error since we handle this case explicitly
                       // by addating the pointer value to make it non-sharable.
                          printf ("WARNING: detected case of empty key constructed \n");
                          if (enumDeclaration->get_file_info() != NULL)
@@ -579,8 +580,8 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                               enumDeclaration->get_file_info()->display("WARNING: detected case of empty key constructed");
                             }
 
-                      // If the enum declaration is unnamed then give it a name in terms of its parent 
-                      // (e.g. "typedef enum {} _G_fpos64_t;" could get a name that reflected it as an 
+                      // If the enum declaration is unnamed then give it a name in terms of its parent
+                      // (e.g. "typedef enum {} _G_fpos64_t;" could get a name that reflected it as an
                       // enum_declaration (additionalSuffix) in a typedef specific to _G_fpos64_t).
                          SgNode* parentNode = enumDeclaration->get_parent();
                          ROSE_ASSERT(parentNode != NULL);
@@ -618,7 +619,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
             // DQ (3/28/2012): Added support for new template IR nodes.
                case V_SgTemplateClassDeclaration:
                   {
-                 // This used to share an implementation with the case V_SgTemplateDeclaration, but that is 
+                 // This used to share an implementation with the case V_SgTemplateDeclaration, but that is
                  // not appropriate with the newer IR design for template support in the EDG 4.x interface.
 
                  // DQ (3/28/2012): I think that we can assert this here! No, key.empty() == true at least sometimes.
@@ -637,7 +638,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     break;
                   }
 #endif
-            // DQ (3/28/2012): We have a new design for the EDG 4.x support and the IR design no longer 
+            // DQ (3/28/2012): We have a new design for the EDG 4.x support and the IR design no longer
             // derives a SgTemplateClassDeclaration from a SgTemplateDeclaration, so this code does not work.
             // DQ (6/11/2011): Added support for new template IR nodes.
             // case V_SgTemplateClassDeclaration:
@@ -648,10 +649,10 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                  // DQ (3/28/2012): Added assertion test.
                     ROSE_ASSERT(declaration != NULL);
 
-                 // DQ (2/18/2007): Note that for template declarations built for member functions of a templated 
-                 // class (EDG kind: templk_member_function) the declaration only has the template name (or the member 
-                 // function and not its mangled name so we can't distinguish multiple overloaded functions of a 
-                 // templated class.  This causes a bug for the AST merge (since the symbols are different, and all 
+                 // DQ (2/18/2007): Note that for template declarations built for member functions of a templated
+                 // class (EDG kind: templk_member_function) the declaration only has the template name (or the member
+                 // function and not its mangled name so we can't distinguish multiple overloaded functions of a
+                 // templated class.  This causes a bug for the AST merge (since the symbols are different, and all
                  // but the first is orphaned).  The only way through this, that I can think of, is to number the
                  // functions in the template delcarations and permit the mangled names to reflect this!
                  // for now we will only add this feature to the "generateUniqueName()" function.
@@ -680,7 +681,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                                    SgTemplateInstantiationMemberFunctionDecl* memberFunctionDeclaration = isSgTemplateInstantiationMemberFunctionDecl(*i);
                                    if (memberFunctionDeclaration != NULL)
                                       {
-                                     // See if the current SgTemplateDeclaration is the SgTemplateDeclaration 
+                                     // See if the current SgTemplateDeclaration is the SgTemplateDeclaration
                                      // associated with this SgTemplateInstantiationMemberFunctionDecl.
                                      // if (memberFunctionDeclaration->get_templateDeclaration() == declaration)
 #if 0
@@ -768,20 +769,20 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                             }
                        }
 
-                 // DQ (2/4/2007): To distinguish between template forward declaration and a template definition 
-                 // I think we need the string to be appended.  Else we have to find something in EDG that will 
+                 // DQ (2/4/2007): To distinguish between template forward declaration and a template definition
+                 // I think we need the string to be appended.  Else we have to find something in EDG that will
                  // help us identify this more explicitly.
 
-                 // DQ (2/24/2007): To force overloaded non-defining declarations of templates to be distinct we 
-                 // add the template string and have modified the IR so that even non-defining declaration carry 
+                 // DQ (2/24/2007): To force overloaded non-defining declarations of templates to be distinct we
+                 // add the template string and have modified the IR so that even non-defining declaration carry
                  // the template string of the defining declaration.
                  // printf ("declaration = %p declaration->get_string() = %s \n",declaration,declaration->get_string().str());
                     if (declaration->get_template_kind() == SgTemplateDeclaration::e_template_m_function)
                        {
-                      // DQ (2/24/2007): If this is a member function of a templated class then we don't have the 
-                      // template string and we have a counter based approach implemented above (best I could do 
+                      // DQ (2/24/2007): If this is a member function of a templated class then we don't have the
+                      // template string and we have a counter based approach implemented above (best I could do
                       // under the circumstances).  However, if the template declaration is outside of the class
-                      // then the string is available (precisely the case that might not be handled well by the 
+                      // then the string is available (precisely the case that might not be handled well by the
                       // mechanism that counts the location in the template scope, but likely redundant.
                       // In this case we can (and to be uniform should) include the template string.
 #if 0
@@ -862,7 +863,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                             }
                        }
 
-                 // DQ (2/9/2007): Need to make sure the SgTemplateInstantiationDecl is different from SgClassDeclaration 
+                 // DQ (2/9/2007): Need to make sure the SgTemplateInstantiationDecl is different from SgClassDeclaration
                  // to avoid sharing within AST merge.
                     const SgTemplateInstantiationDecl* templateInstantiationDeclaration = isSgTemplateInstantiationDecl(statement);
                     if (templateInstantiationDeclaration != NULL)
@@ -874,7 +875,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                  // table the names will change which is a disaster for the AST merge algorithm!  So use this technique
                  // to generate the name that is stored in the declaration directly rather than generated dynamically.
 
-                 // This code allows us to add a position counter to the un-named class which prevents it from 
+                 // This code allows us to add a position counter to the un-named class which prevents it from
                  // being merged with something else in the same scoep which has a different symbol!
                  // if (classDeclaration->get_name().is_null() == true)
                     if (classDeclaration->get_name().getString().find_first_of("__generatedName_") != string::npos)
@@ -922,14 +923,14 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                  // DQ (7/23/2010): This is required again since I need it to generate names for keys in the new type table.
                     if (key.empty() == true)
                        {
-                      // If the class declaration is unnamed then give it a name in terms of its parent 
+                      // If the class declaration is unnamed then give it a name in terms of its parent
                       // (e.g. "typedef struct {int __pos; int __state;} _G_fpos64_t;" could get a name
-                      // that reflected it as a class_declaration (additionalSuffix) in a typedef specific 
+                      // that reflected it as a class_declaration (additionalSuffix) in a typedef specific
                       // to _G_fpos64_t).
                          SgNode* parentNode = classDeclaration->get_parent();
                          ROSE_ASSERT(parentNode != NULL);
 
-                      // DQ (2/9/2007):  Make sure that un-named classes can't be confused with there parent classes 
+                      // DQ (2/9/2007):  Make sure that un-named classes can't be confused with there parent classes
                       // so add this to distinguish the parent from the current IR node in what name is generated.
                          additionalSuffix += "__unnamed_";
 
@@ -947,7 +948,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                                    break;
                                  }
 #if 1
-                           // I don't know why this is required in stdio.h (for 
+                           // I don't know why this is required in stdio.h (for
                            // "typedef struct _IO_FILE __FILE; extern int fsetpos (FILE *__stream, __const fpos_t *__pos);")
                               case V_SgFunctionParameterList:
                                  {
@@ -1107,25 +1108,25 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                string accessString;
                switch (accessPermisions)
                   {
-                    case SgAccessModifier::e_unknown: 
+                    case SgAccessModifier::e_unknown:
                        {
                          accessString = "__unknown_access_";
                          break;
                        }
 
-                    case SgAccessModifier::e_private: 
+                    case SgAccessModifier::e_private:
                        {
                          accessString = "__private_access_";
                          break;
                        }
 
-                    case SgAccessModifier::e_protected: 
+                    case SgAccessModifier::e_protected:
                        {
                          accessString = "__protected_access_";
                          break;
                        }
 
-                    case SgAccessModifier::e_public: 
+                    case SgAccessModifier::e_public:
                        {
                          accessString = "__public_access_";
                          break;
@@ -1133,7 +1134,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
                  // DQ (8/17/2020): Uncommented this code, now that e_default != e_public.
                  // This case is equal to SgAccessModifier::e_public (so it is redundant to list it here)
-                    case SgAccessModifier::e_default: 
+                    case SgAccessModifier::e_default:
                        {
                          accessString = "__default_access_";
                          break;
@@ -1389,7 +1390,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
 
      //-------------------------------SgInitializedName-----------------------------------
      // Liao 11/4/2010, moved from SgSupport to SgLocatedNodeSupport
-    const SgInitializedName * i_name = isSgInitializedName(node); 
+    const SgInitializedName * i_name = isSgInitializedName(node);
     if (i_name)
      {
             const SgInitializedName* initializedName = isSgInitializedName(node);
@@ -1414,9 +1415,9 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                  additionalSuffix += "__extern_initialized_name";
                }
 #if 1
-         // DQ (2/17/2007): This causes problems and does not avoid orphaned initializers, 
+         // DQ (2/17/2007): This causes problems and does not avoid orphaned initializers,
          // however without it SgInitializedName objects would be over shared!
-         // DQ (2/17/2007): Initializers can make that initializedName different and difficult to 
+         // DQ (2/17/2007): Initializers can make that initializedName different and difficult to
          // share since we can't generate unique names fro expressions.
             if (initializedName->get_initptr() != NULL)
                {
@@ -1430,10 +1431,10 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
             printf (" Possible over sharing of SgInitializedName objects because we don't account for initializer expressions \n");
 #endif
 
-         // DQ (3/3/2007): If this is part of a function parameter list then we want to record if it is a defining or 
-         // non-defining function (symbols for parameters of non-defining functions are not placed into the symbol table 
-         // and parameters of defining functions are placed into the defining function's function scope's symbol table.  
-         // The unique name we genetate can effect the symbols so we want to avoid having symbols moved inappropriately 
+         // DQ (3/3/2007): If this is part of a function parameter list then we want to record if it is a defining or
+         // non-defining function (symbols for parameters of non-defining functions are not placed into the symbol table
+         // and parameters of defining functions are placed into the defining function's function scope's symbol table.
+         // The unique name we genetate can effect the symbols so we want to avoid having symbols moved inappropriately
          // due to over sharing from parameter names that are not sufficiently unique!
             SgFunctionParameterList* functionParameterList = isSgFunctionParameterList(node->get_parent());
             if (functionParameterList != NULL)
@@ -1442,7 +1443,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                  SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(functionParameterList->get_parent());
                  ROSE_ASSERT(functionDeclaration != NULL);
                  if (functionDeclaration == functionDeclaration->get_definingDeclaration())
-                    { 
+                    {
                       key = key + "_parameter_of_defining_declaration";
                     }
                    else
@@ -1452,7 +1453,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                }
 
          // DQ (3/7/2007): This could be a static variable in a class which will make two appearences in the source code.
-         // The first will be in the class as a declaration and the second will be outside the class (as a declaration 
+         // The first will be in the class as a declaration and the second will be outside the class (as a declaration
          // from the point of view of ROSE, but as a means of allocating space from teh pointof view of C++).
             SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(node->get_parent());
             if (variableDeclaration != NULL)
@@ -1460,7 +1461,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
               // To make this unique, append the mangled name of the scope of the variableDeclaration
                  key += "_in_scope_" + variableDeclaration->get_scope()->get_mangled_name();
                }
-     } 
+     }
 
      //-------------------------------SgSupport-----------------------------------
      const SgSupport* support = isSgSupport(node);
@@ -1518,9 +1519,9 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                          additionalSuffix += "__extern_initialized_name";
                        }
 #if 1
-                 // DQ (2/17/2007): This causes problems and does not avoid orphaned initializers, 
+                 // DQ (2/17/2007): This causes problems and does not avoid orphaned initializers,
                  // however without it SgInitializedName objects would be over shared!
-                 // DQ (2/17/2007): Initializers can make that initializedName different and difficult to 
+                 // DQ (2/17/2007): Initializers can make that initializedName different and difficult to
                  // share since we can't generate unique names fro expressions.
                     if (initializedName->get_initptr() != NULL)
                        {
@@ -1534,10 +1535,10 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                     printf (" Possible over sharing of SgInitializedName objects because we don't account for initializer expressions \n");
 #endif
 
-                 // DQ (3/3/2007): If this is part of a function parameter list then we want to record if it is a defining or 
-                 // non-defining function (symbols for parameters of non-defining functions are not placed into the symbol table 
-                 // and parameters of defining functions are placed into the defining function's function scope's symbol table.  
-                 // The unique name we genetate can effect the symbols so we want to avoid having symbols moved inappropriately 
+                 // DQ (3/3/2007): If this is part of a function parameter list then we want to record if it is a defining or
+                 // non-defining function (symbols for parameters of non-defining functions are not placed into the symbol table
+                 // and parameters of defining functions are placed into the defining function's function scope's symbol table.
+                 // The unique name we genetate can effect the symbols so we want to avoid having symbols moved inappropriately
                  // due to over sharing from parameter names that are not sufficiently unique!
                     SgFunctionParameterList* functionParameterList = isSgFunctionParameterList(node->get_parent());
                     if (functionParameterList != NULL)
@@ -1556,7 +1557,7 @@ SageInterface::generateUniqueName ( const SgNode* node, bool ignoreDifferenceBet
                        }
 
                  // DQ (3/7/2007): This could be a static variable in a class which will make two appearences in the source code.
-                 // The first will be in the class as a declaration and the second will be outside the class (as a declaration 
+                 // The first will be in the class as a declaration and the second will be outside the class (as a declaration
                  // from the point of view of ROSE, but as a means of allocating space from teh pointof view of C++).
                     SgVariableDeclaration* variableDeclaration = isSgVariableDeclaration(node->get_parent());
                     if (variableDeclaration != NULL)

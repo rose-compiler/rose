@@ -409,6 +409,11 @@ namespace
              || roseRequiresPrefixID(expr.Selector, ctx);
     }
 
+    if (expr.Expression_Kind == An_Indexed_Component)
+    {
+      return roseRequiresPrefixID(expr.Prefix, ctx);
+    }
+
     logWarn() << "roseRequiresPrefixID: untested expression-kind: "
               << expr.Expression_Kind
               << std::endl;
@@ -440,6 +445,8 @@ namespace
       void handle(SgFunctionDeclaration& n) { res = sb::buildFunctionRefExp(&n); }
       void handle(SgAdaRenamingDecl& n)     { res = &mkAdaRenamingRefExp(n); }
       void handle(SgAdaTaskSpecDecl& n)     { res = &mkAdaTaskRefExp(n); }
+      //~ void handle(SgAdaTaskTypeDecl& n) { res = &mkAdaTaskRefExp(n); }
+      //~ void handle(SgAdaGenericDecl& n)  { res = &mkAdaTaskRefExp(n); }
       void handle(SgAdaPackageSpecDecl& n)  { res = &mkAdaUnitRefExp(n); }
 
     private:

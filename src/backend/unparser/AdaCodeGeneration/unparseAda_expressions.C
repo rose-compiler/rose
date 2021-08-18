@@ -602,6 +602,15 @@ void Unparse_Ada::unparseExpression(SgExpression* n, SgUnparse_Info& info)
   exprUnparser.expr(n, withScopeQual);
 }
 
+void Unparse_Ada::unparseExprListExp(SgExprListExp* n, SgUnparse_Info& info, std::string sep)
+{
+  const bool withScopeQual = info.get_current_scope() != nullptr;
+
+  AdaExprUnparser exprUnparser{*this, info, std::cerr, false /* scope qual, will be passed to expr(...) */};
+
+  exprUnparser.exprlst(SG_DEREF(n), sep, withScopeQual);
+}
+
 
 void Unparse_Ada::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
 {
