@@ -697,7 +697,7 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
     // check if valid file info already exists, if yes, do not change
     Sg_File_Info* fi=node->get_file_info();
     if(fi) {
-      if(fi->get_col()>0 && fi->get_line()>0)
+      if(fi->get_col()>0 || fi->get_line()>0)
 	return;
     }
     node->set_file_info(info);
@@ -784,12 +784,12 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
           addToTmpVarMapping((*j).tmpVarNr,tmpVarDeclaration);
 
           ROSE_ASSERT(tmpVarDeclaration);
-          //tmpVarDeclaration->set_parent(scope);
+          /////tmpVarDeclaration->set_parent(scope);
           tmpVarDeclaration->set_parent(stmt->get_parent());
-	  setFileInfo(tmpVarDeclaration,originalFileInfo);
           SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: tmpVarDeclaration:"<<tmpVarDeclaration->unparseToString()<<endl;
           auto tmpVarReference=buildVarRefExpForVariableDeclaration(tmpVarDeclaration);
           ROSE_ASSERT(tmpVarReference);
+	  //setFileInfo(tmpVarDeclaration,originalFileInfo); // this breaks NORM015 but makes 6 DOMs pass
 	  setFileInfo(tmpVarReference,originalFileInfo);
 	  
           // ii) insert tmp-var initializer
@@ -893,7 +893,7 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
             SgVarRefExp* varRefExp=SageBuilder::buildVarRefExp(decl);
 
 	    // set line col file-info
-	    setFileInfo(decl,originalFileInfo);
+	    //setFileInfo(decl,originalFileInfo); this breaks NORM34_condop
 	    setFileInfo(varRefExp,originalFileInfo);
 
             SAWYER_MESG(logger[TRACE])<<"GEN_LOG_OP: REPLACING "<<expr->unparseToString()<<" with tmp var:"<<varRefExp->unparseToString()<<endl;

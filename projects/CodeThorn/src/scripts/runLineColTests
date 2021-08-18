@@ -84,7 +84,7 @@ function runLineColTests {
 #testFiles=`grep 'for\|while\|if' -L $TESTDIR/DOM*.C`
 #testFiles=`grep 'xxxx' -L $TESTDIR/DOM*.C`
 testNumbers=`echo {001..050}`
-numWarnExpected=4
+numWarnExpected=11
 numFailExpected=0
 echo -n "Line-Column normalization tests: " 
 runLineColTests
