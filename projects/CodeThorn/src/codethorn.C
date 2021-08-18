@@ -78,7 +78,7 @@ using namespace CodeThornLib;
 #include "ltlthorn-lib/Solver12.h"
 
 
-const std::string versionString="1.13.12";
+const std::string versionString="1.13.13";
 
 void configureRersSpecialization() {
 #ifdef RERS_SPECIALIZATION
@@ -232,6 +232,8 @@ int main( int argc, char * argv[] ) {
 
     optionallyGenerateExternalFunctionsFile(ctOpt, analyzer->getFunctionCallMapping());
     optionallyGenerateSourceProgramAndExit(ctOpt, project);
+    optionallyGenerateLineColumnCsv(ctOpt,project);
+
     tc.startTimer();tc.stopTimer();
 
     setAssertConditionVariablesInAnalyzer(project,analyzer);

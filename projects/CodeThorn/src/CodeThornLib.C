@@ -825,7 +825,40 @@ namespace CodeThorn {
 	if(ctOpt.status) cout<<"Generated program statistics report "<<reportPathAndFile<<endl;
       }
     }
-    
+
+    void optionallyGenerateLineColumnCsv(CodeThornOptions& ctOpt, SgProject* node) {
+      string fileName=ctOpt.info.astTraversalLineColumnCSVFileName;
+      if(fileName.size()>0) {
+	stringstream lineColSeq;
+	std::list<SgFunctionDefinition*> fdList=SgNodeHelper::listOfFunctionDefinitions(node);
+	for(auto fd : fdList) {
+	  RoseAst ast(fd);
+	  list<string> lcList;
+	  for(auto n : ast) {
+	    if(isSgExpression(n)) {
+	      string lc=CodeThorn::ProgramLocationsReport::findOriginalProgramLocationOfNode(n);
+
+	      // strip off column "...:xxxx"
+	      size_t pos = lc.rfind(":");
+	      if(pos != std::string::npos) {
+		lc.erase(pos,lc.size()-pos);
+	      }
+
+	      // print source
+	      //lc+=(":"+SgNodeHelper::nodeToString(n));
+
+	      // add to result
+	      lcList.push_back(lc);
+	    }
+	  }
+	  lcList.unique(); // remove duplicates (e.g.  1,3,3,4,3,3,5 -> 1,3,4,3,5)
+	  for(auto lc : lcList)
+	    lineColSeq<<lc<<endl;
+	}
+	write_file(fileName,lineColSeq.str());
+	if(ctOpt.status) cout<<"Generated line-column CSV file "<<fileName<<endl;
+      }
+    }
   } // end of namespace CodeThornLib
     
 } // end of namespace CodeThorn

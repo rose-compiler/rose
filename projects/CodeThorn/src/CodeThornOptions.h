@@ -224,6 +224,7 @@ public:
     bool printTypeSizeMapping=false;
     std::string typeSizeMappingCSVFileName;
     bool printTransferFunctionInfo=false;
+    std::string astTraversalLineColumnCSVFileName;
   } info;
 
   void configurePrecisionOption();

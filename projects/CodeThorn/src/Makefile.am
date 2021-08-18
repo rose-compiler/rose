@@ -717,7 +717,7 @@ check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
 
-CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-io unit-test check-omp-cfg check-commandline-options check-vis check-thorn2
+CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-lc check-io unit-test check-omp-cfg check-commandline-options check-vis check-thorn2
 
 # this check (only) fails when run in parallel with high number of processes (-j10)
 CHECK_DEFAULT_FAILING_PAR=check-reachability-par
@@ -762,6 +762,9 @@ check-codethorn-internal:
 
 check-domain:
 	$(srcdir)/scripts/runDomainTests $(srcdir)/tests
+
+check-lc:
+	$(srcdir)/scripts/runLineColTests $(srcdir)/tests
 
 check-io: check-ioc
 

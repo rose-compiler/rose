@@ -1596,7 +1596,7 @@ namespace CodeThorn {
       SAWYER_MESG(logger[WARN])<<"PSTATE: "<<estate->pstate()->toString(getVariableIdMapping())<<endl;
       SAWYER_MESG(logger[WARN])<<"CONDITION EVALUATES TO BOT : "<<nextNodeToAnalyze2->unparseToString()<<endl;
       SAWYER_MESG(logger[WARN])<<"CONDITION EVALUATES TO BOT at: "
-			       <<ProgramLocationsReport::programLocation(getLabeler(),estate->label())
+			       <<ProgramLocationsReport::findOriginalProgramLocationOfLabel(getLabeler(),estate->label())
 			       <<endl;
       newLabel=edge.target();
       newPState=*evalResult.estate.pstate();

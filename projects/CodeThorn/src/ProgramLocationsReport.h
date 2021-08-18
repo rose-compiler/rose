@@ -31,7 +31,7 @@ namespace CodeThorn {
     LabelSet falsifiedFunctions(Labeler* labeler);
     LabelSet unverifiedFunctions(Labeler* labeler);
 
-    static bool hasSourceLocation(SgStatement* stmt);
+    static bool hasSourceLocation(SgNode* stmt);
     LabelSet filterFunctionEntryLabels(Labeler* labeler, LabelSet labSet);
 
     void writeLocationsVerificationReport(CodeThornOptions& ctOpt, std::ostream& os, CodeThorn::Labeler* labeler);
@@ -42,8 +42,10 @@ namespace CodeThorn {
     void writeAllPotentialLocationsToStream(std::ostream& stream, CodeThorn::Labeler* labeler, bool qualifier, bool programLocation, bool sourceCode);
     void writeLocationsToStream(std::ostream& stream, CodeThorn::Labeler* labeler, LabelSet& set, std::string qualifier, bool programLocation, bool sourceCode);
 
-    static std::string programLocation(CodeThorn::Labeler* labeler, CodeThorn::Label lab);
-    static std::string sourceCodeAtProgramLocation(CodeThorn::Labeler* labeler, CodeThorn::Label lab);
+    static std::string findOriginalProgramLocationOfLabel(CodeThorn::Labeler* labeler, CodeThorn::Label lab);
+    static std::string findOriginalProgramLocationOfNode(SgNode* node);
+    static std::string sourceCodeAtLabel(CodeThorn::Labeler* labeler, CodeThorn::Label lab);
+    static std::string fileInfoAsFormattedProgramLocation(SgNode* node);
   private:
 
     // provide set of all locations (unused function)

@@ -16,6 +16,7 @@ class SgSwitchStatement;
 #include "NormalizationInliner.h"
 
 namespace CodeThorn {
+  
   class Normalization {
     // Not supported yet: 
     // 1. condition hoisting in do-while (into the block, not before the loop)
@@ -321,7 +322,8 @@ namespace CodeThorn {
     
     SgVariableDeclaration* buildVariableDeclarationForExpression(SgExpression* expression, SgScopeStatement* scope, bool initWithExpression, bool shareExpression);
     void printNormalizationPhase();
-    
+    void setFileInfo(SgLocatedNode* node, Sg_File_Info* info); // only sets non-null info
+
     // counter for generating new variable names
     Normalization::TmpVarNrType getTmpVarNr();
     void incTmpVarNr();
