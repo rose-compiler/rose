@@ -63,6 +63,10 @@ namespace
     static constexpr const char* normal_color  = "color=green";
     static constexpr const char* virtual_color = "color=red";
 
+    // set common edge properties
+    //   *1) to get the graph layout top-down, the edges are reversed
+    os << "edge[dir=back arrowtail=empty]" << std::endl;
+
     for (const ct::ClassAnalysis::value_type& elem : all)
     {
       if (!include(elem.first)) continue;
@@ -71,15 +75,17 @@ namespace
       {
         const bool virt   = child.isVirtual();
         const bool direct = child.isDirect();
-        const bool includeInheritance = virt || direct;
+        //~ const bool includeInheritance = virt || direct;
 
-        if (includeInheritance && include(child.getClass()))
+        //~ if (includeInheritance && include(child.getClass()))
+        if (direct && include(child.getClass()))
         {
           std::string linestyle = virt ? virtual_color : normal_color;
 
           if (!direct) linestyle += " style=dotted";
 
-          edge(os, child.getClass(), elem.first, "", linestyle);
+          // reversed edges (see *1 above)
+          edge(os, elem.first, child.getClass(), "", linestyle);
         }
       }
     }
@@ -91,11 +97,15 @@ namespace
     using ClassTypePair     = std::pair<ct::ClassKeyType, ct::TypeKeyType>;
     using ClassCastAnalysis = std::unordered_map<ct::ClassCastDesc, std::vector<ct::CastKeyType> >;
 
-    static constexpr const char* downcast_color  = "color=indigo";
+    static constexpr const char* downcast_color  = "color=purple";
     static constexpr const char* crosscast_color = "color=gold";
-    static constexpr const char* cast_style      = "arrowhead=vee, style=dashed";
 
     ClassCastAnalysis classcasts;
+
+    // common edge properties
+    //   dir=back, edges are reversed
+    //   constraint=false, these edges do not influence the layout
+    os << "edge[dir=back arrowtail=vee style=dashed constraint=false]" << std::endl;
 
     for (const ct::CastAnalysis::value_type& elem : casts)
     {
@@ -140,31 +150,15 @@ namespace
         continue;
       }
 
-      std::string style = cast_style;
+      std::string style;
       std::string num;
 
-      style += " ";
       style += isDownCast ? downcast_color : crosscast_color;
 
       //~ if (isDownCast > 1) num = boost::lexical_cast<std::string>(isDownCast);
 
-      edge(os, src, tgt, num, style);
-
-      if (0)
-      {
-        logTrace() << '\n'
-                   << ct::typeNameOf(src) << " -> " << ct::typeNameOf(tgt)
-                   << (isUpCast    ? "  up"    : "")
-                   << (isDownCast  ? "  down"  : "")
-                   << (isCrossCast ? "  cross" : "")
-                   << std::endl;
-
-        for (ct::CastKeyType cast : elem.second)
-        {
-          logTrace() << ct::CastWriterDbg{cast}
-                     << std::endl;
-        }
-      }
+      // reversed edges
+      edge(os, tgt, src, num, style);
     }
   }
 
@@ -303,14 +297,15 @@ namespace
       VarNameFn&               varName;
   };
 
-  struct InheritanceEdgeDot : std::tuple<const void*, const void*, bool>
+  struct InheritanceEdgeDot : std::tuple<const void*, const void*, bool, bool>
   {
-    using base = std::tuple<const void*, const void*, bool>;
+    using base = std::tuple<const void*, const void*, bool, bool>;
     using base::base;
 
     const void* subobj() const { return std::get<0>(*this); }
     const void* clazz()  const { return std::get<1>(*this); }
     bool isVirtual()     const { return std::get<2>(*this); }
+    bool isDirect()      const { return std::get<3>(*this); }
   };
 
 
@@ -343,7 +338,7 @@ namespace
         elem(el);
 
         if (include(el.ref))
-          edges.emplace_back(&el, el.ref, el.isVirtual);
+          edges.emplace_back(&el, el.ref, el.isVirtual, el.isDirect);
       }
 
       void printClassHeader(ClassKeyType key) const override
@@ -363,12 +358,12 @@ namespace
         for (const InheritanceEdgeDot& rel : edges)
         {
           out() << "p" << std::hex << currentClass << ":p" << std::hex << rel.subobj()
-                << " -> p" << std::hex << rel.clazz() << ":0";
-
-          if (rel.isVirtual())
-            out() << "[style=dotted]";
-
-          out() << ';' << std::endl;
+                << " -> p" << std::hex << rel.clazz() << ":0"
+                << "[color="
+                << (rel.isVirtual() ? "red" : "green")
+                << (rel.isDirect()  ? "" : " style=dotted")
+                << "]"
+                << ';' << std::endl;
         }
 
         edges.clear();

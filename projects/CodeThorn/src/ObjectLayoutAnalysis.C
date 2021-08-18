@@ -22,6 +22,9 @@ namespace
   {
     using Vec = std::vector<ct::InheritanceDesc>;
 
+    static constexpr bool virtually = true;
+    static constexpr bool directly  = true;
+
     ct::ObjectLayout          res;
     auto                      aPrimarySubobj = [&all](const Vec::value_type& cand) -> bool
                                                {
@@ -39,7 +42,7 @@ namespace
     if (primary != zz)
     {
       // if the class has a primary subobject it is ordered first
-      res.emplace_back(0, ct::Subobject{primary->getClass(), false});
+      res.emplace_back(0, ct::Subobject{primary->getClass(), !virtually, directly});
     }
     else if (clazz.second.hasVirtualTable())
     {
@@ -53,7 +56,7 @@ namespace
       if (it->isVirtual() || (!it->isDirect()) || all.at(it->getClass()).hasVirtualTable())
         continue;
 
-      res.emplace_back(0, ct::Subobject{it->getClass(), false});
+      res.emplace_back(0, ct::Subobject{it->getClass(), !virtually, directly});
     }
 
     // 3) Add the class' own data members
@@ -66,7 +69,7 @@ namespace
       if (!aPrimarySubobj(*it))
         continue;
 
-      res.emplace_back(0, ct::Subobject{it->getClass(), false});
+      res.emplace_back(0, ct::Subobject{it->getClass(), !virtually, directly});
     }
 
     // 5) Add all virtual ancestors
@@ -75,7 +78,7 @@ namespace
       if (!it->isVirtual())
         continue;
 
-      res.emplace_back(0, ct::Subobject{it->getClass(), true});
+      res.emplace_back(0, ct::Subobject{it->getClass(), virtually, it->isDirect()});
     }
 
     return res;

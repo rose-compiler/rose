@@ -16,6 +16,7 @@ struct Subobject
 {
   ClassKeyType ref;
   bool         isVirtual;
+  bool         isDirect;
 };
 
 struct Field
