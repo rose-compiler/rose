@@ -835,12 +835,23 @@ namespace CodeThorn {
 	  RoseAst ast(fd);
 	  list<string> lcList;
 	  for(auto n : ast) {
-	    string lc=CodeThorn::ProgramLocationsReport::findOriginalProgramLocationOfNode(n);
-	    lc+=(":"+SgNodeHelper::nodeToString(n));
-	    lcList.push_back(lc); // remove duplicates
-	    //string lc=n->class_name();
+	    if(isSgExpression(n)) {
+	      string lc=CodeThorn::ProgramLocationsReport::findOriginalProgramLocationOfNode(n);
+
+	      // strip off column "...:xxxx"
+	      size_t pos = lc.rfind(":");
+	      if(pos != std::string::npos) {
+		lc.erase(pos,lc.size()-pos);
+	      }
+
+	      // print source
+	      //lc+=(":"+SgNodeHelper::nodeToString(n));
+
+	      // add to result
+	      lcList.push_back(lc);
+	    }
 	  }
-	  lcList.unique();
+	  lcList.unique(); // remove duplicates (e.g.  1,3,3,4,3,3,5 -> 1,3,4,3,5)
 	  for(auto lc : lcList)
 	    lineColSeq<<lc<<endl;
 	}

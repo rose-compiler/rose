@@ -17,7 +17,7 @@ COLORED_PASS=${grn}PASS${end}
 
 TESTDIR=$1
 echo "------------------------------------------------"
-echo "running LINE COLUMN NORMALIZATION TESTS"
+echo "running NORMALIZATION + LINE (COLUMN) REPORTING TESTS"
 echo "------------------------------------------------"
 
 
@@ -34,17 +34,18 @@ function printStats {
 }
 
 function runLineColTests {
-    echo "scheduled tests: $testNumbers"
+    echo "scheduled tests: $testFiles"
     numPass=0
     numWarn=0
     numFail=0
     for testNumber in $testNumbers; do
         benchmarkprefix=$TESTDIR/DOM${testNumber};
         for benchmark in ${benchmarkprefix}*.[Cc]; do
-            benchmarkname=$(basename $benchmark)
-            printf "Testing %-38s: " $benchmarkname
-            CT_OUTPUT_FILE1=${benchmarkname}_1.lcout
-	    CT_OUTPUT_FILE2=${benchmarkname}_2.lcout
+    #for benchmark in $testFiles; do
+	benchmarkname=$(basename $benchmark)
+        printf "Testing %-38s: " $benchmarkname
+            CT_OUTPUT_FILE1=${benchmarkname}_1.lcout.csv
+	    CT_OUTPUT_FILE2=${benchmarkname}_2.lcout.csv
             ./codethorn $benchmark --line-col-csv=$CT_OUTPUT_FILE1 -I $TESTDIR --normalize-level=0 --run-solver=no > /dev/null
             if [ ! $? -eq 0 ]
             then
@@ -58,9 +59,13 @@ function runLineColTests {
                 ((numFail++))
             else
                 echo -n "$COLORED_PASS "
-                DIFF=$(diff $CT_OUTPUT_FILE1 $CT_OUTPUT_FILE2)
-		numDiffLines=`echo "$DIFF" | wc -l`
-                if [ "$DIFF" != "" ] 
+
+		# count those lines that are present in normalized output FILE2, but not in original output FILE1
+		LINES=$(grep -vf $CT_OUTPUT_FILE1 $CT_OUTPUT_FILE2) # make sure no line is lost (e.g. casts in 005 are lost)
+                #LINES=$(diff $CT_OUTPUT_FILE1 $CT_OUTPUT_FILE2) # sequence is not necessarily the same because of moved code
+		numDiffLines=`echo "$LINES" | wc -l`
+		# there is always one line counted, therefor check for >1
+                if [ $numDiffLines -gt 1 ] 
                 then
                     echo $COLORED_WARN $numDiffLines
 		    ((numWarn++))
@@ -68,15 +73,18 @@ function runLineColTests {
                     echo $COLORED_PASS
 		    ((numPass++))
                 fi
-		rm -f $$CT_OUTPUT_FILE1 $CT_OUTPUT_FILE2
 	    fi
 	done
     done
     printStats
+    #rm -f DOM*.lcout.csv
 }
 
-testNumbers=`echo {001..048}`
-numWarnExpected=48
+# select those tests with no control constructs (because they change the order of line-col info)
+#testFiles=`grep 'for\|while\|if' -L $TESTDIR/DOM*.C`
+#testFiles=`grep 'xxxx' -L $TESTDIR/DOM*.C`
+testNumbers=`echo {001..050}`
+numWarnExpected=4
 numFailExpected=0
 echo -n "Line-Column normalization tests: " 
 runLineColTests

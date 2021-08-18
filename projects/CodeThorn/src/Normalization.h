@@ -322,7 +322,8 @@ namespace CodeThorn {
     
     SgVariableDeclaration* buildVariableDeclarationForExpression(SgExpression* expression, SgScopeStatement* scope, bool initWithExpression, bool shareExpression);
     void printNormalizationPhase();
-    
+    void setFileInfo(SgLocatedNode* node, Sg_File_Info* info); // only sets non-null info
+
     // counter for generating new variable names
     Normalization::TmpVarNrType getTmpVarNr();
     void incTmpVarNr();
