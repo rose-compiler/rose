@@ -63,6 +63,8 @@ struct Unparse_Ada : UnparseLanguageIndependentConstructs
           void unparseLanguageSpecificExpression (SgExpression* expr, SgUnparse_Info& info) ROSE_OVERRIDE;
           void unparseStringVal(SgExpression* expr, SgUnparse_Info& info) ROSE_OVERRIDE;
 
+          void unparseExprListExp(SgExprListExp* n, SgUnparse_Info& info, std::string sep = ", ");
+
           /// uses the flag saved by the Asis to ROSE converter
           bool requiresParentheses(SgExpression* expr, SgUnparse_Info& info) ROSE_OVERRIDE;
 

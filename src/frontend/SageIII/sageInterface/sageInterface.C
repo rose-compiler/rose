@@ -1927,7 +1927,7 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
               }
               else
               {
-                name = "_ada_discriminated_typedecl_";
+                name = "_incomplete_Ada_discriminated_type_";
               }
 
               break;

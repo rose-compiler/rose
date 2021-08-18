@@ -684,17 +684,15 @@ namespace ada
         }
 
         template <class SageExpression>
-        bool equalName(const SageExpression& lhs, const SgExpression& rhs)
+        bool equalName(const SageExpression& lhs, const SageExpression& rhs)
         {
-          ROSE_ASSERT(lhs.variantT() == rhs.variantT());
-
-          return lhs.get_name() == static_cast<const SageExpression&>(rhs).get_name();
+          return lhs.get_name() == rhs.get_name();
         }
 
-        template <class SageExpression>
+        template <class SageExpression, class FnResult_SageExpression>
         bool equalChild( const SageExpression& lhs,
                          const SgExpression& rhs,
-                         SgExpression* (SageExpression::*getter)() const
+                         FnResult_SageExpression* (SageExpression::*getter)() const
                        )
         {
           ROSE_ASSERT(lhs.variantT() == rhs.variantT());
@@ -705,20 +703,104 @@ namespace ada
           return equalVariantElement(lhs_child, rhs_child);
         }
 
-        void handle(const SgNode& n)         { SG_UNEXPECTED_NODE(n); }
-        void handle(const SgAdaOthersExp& n) { res = true; }
-        void handle(const SgBoolValExp& n)   { res = equalVal(n, n2); }
-        void handle(const SgIntVal& n)       { res = equalVal(n, n2); }
-        void handle(const SgCharVal& n)      { res = equalVal(n, n2); }
-        void handle(const SgEnumVal& n)      { res = equalName(n, n2); }
-        void handle(const SgVarRefExp& n)    { res = equalRef(n, n2); }
+        [[noreturn]]
+        void err(const SgNode& n) { SG_UNEXPECTED_NODE(n); }
 
-        void handle(const SgRangeExp& n)
+        [[noreturn]]
+        bool eval(const SgNode& n, const SgNode&, const SgNode&)
         {
-          res = (  equalChild(n, n2, &SgRangeExp::get_start)
-                && equalChild(n, n2, &SgRangeExp::get_end)
-                && equalChild(n, n2, &SgRangeExp::get_stride) // not used in Ada
-                );
+          err(n);
+          //~ return true;
+        }
+
+        bool eval(const SgAdaOthersExp&, const SgAdaOthersExp&, const SgAdaOthersExp&)
+        {
+          return true;
+        }
+
+        //
+        // SgValueExp
+
+        bool eval(const SgEnumVal& l, const SgEnumVal& r, const SgEnumVal&)
+        {
+          return equalName(l, r);
+        }
+
+        [[noreturn]]
+        bool eval(const SgValueExp& l, const SgValueExp&, const SgValueExp&) { err(l); }
+
+        [[noreturn]]
+        bool eval(const SgJovialBitVal& l, const SgJovialBitVal&, const SgJovialBitVal&) { err(l); }
+
+        [[noreturn]]
+        bool eval(const SgTemplateParameterVal& l, const SgTemplateParameterVal&, const SgTemplateParameterVal&) { err(l); }
+
+        bool eval(const SgVoidVal&, const SgVoidVal&, const SgVoidVal&)                   { return true; }
+        bool eval(const SgNullptrValExp&, const SgNullptrValExp&, const SgNullptrValExp&) { return true; }
+
+        bool eval(const SgComplexVal& l, const SgComplexVal& r, const SgComplexVal&)
+        {
+          return (  equalChild(l, r, &SgComplexVal::get_real_value)
+                 && equalChild(l, r, &SgComplexVal::get_imaginary_value)
+                 );
+        }
+
+        bool eval(const SgAdaFloatVal& l, const SgAdaFloatVal& r, const SgAdaFloatVal&)
+        {
+          return l.get_valueString() == r.get_valueString();
+        }
+
+        template <class SageValueExp>
+        bool eval(const SageValueExp& l, const SageValueExp& r, const SgValueExp&)
+        {
+          return l.get_value() == r.get_value();
+        }
+
+        //
+        // unary
+
+        bool eval(const SgUnaryOp& l, const SgUnaryOp& r, const SgUnaryOp&)
+        {
+          return equalChild(l, r, &SgUnaryOp::get_operand);
+        }
+
+        //
+        // binary
+
+        bool eval(const SgBinaryOp& l, const SgBinaryOp& r, const SgBinaryOp&)
+        {
+          return (  equalChild(l, r, &SgBinaryOp::get_lhs_operand)
+                 && equalChild(l, r, &SgBinaryOp::get_rhs_operand)
+                 );
+        }
+
+        bool eval(const SgVarRefExp& l, const SgVarRefExp& r, const SgVarRefExp&)
+        {
+          return equalRef(l, r);
+        }
+
+        bool eval(const SgRangeExp& l, const SgRangeExp& r, const SgRangeExp&)
+        {
+          return (  equalChild(l, r, &SgRangeExp::get_start)
+                 && equalChild(l, r, &SgRangeExp::get_end)
+                 && equalChild(l, r, &SgRangeExp::get_stride) // not used in Ada
+                 );
+        }
+
+        void handle(const SgNode& n, const SgNode&) {}
+
+        template <class SageExpression>
+        void handle(const SageExpression& n, const SgExpression&)
+        {
+          ROSE_ASSERT(n.variantT() == n2.variantT());
+
+          res = eval(n, static_cast<const SageExpression&>(n2), n);
+        }
+
+        template <class SageNode>
+        void handle(const SageNode& n)
+        {
+          handle(n, n);
         }
 
       private:

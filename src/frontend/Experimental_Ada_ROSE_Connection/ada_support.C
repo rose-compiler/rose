@@ -1,35 +1,24 @@
 // C++ code calling an Ada function.
 
-// #include <rose_paths.h>
-// #include <rose.h>
-
-// DQ (11/13/2017): This is a violation, sage3basic.h must be the first file included.
-// #include "rose_config.h"
-
 #include "sage3basic.h"
 #include "rose_config.h"
 
 #include "cmdline.h"
 #include "Rose/CommandLine.h"
 #include "Sawyer/CommandLine.h"
-
+#include "processSupport.h"
 
 #include <boost/filesystem.hpp>
 
 #include "ada_support.h"
 
-// using namespace std;
-
-// #include <stdio.h>
 #include "a_nodes.h"
 #include "adapter_wrapper.h"
 #include "FileUtility.h"
 
-// extern "C" void asis_adapterinit (void);
-// extern "C" void asis_adapterfinal (void);
-
 namespace boostfs = boost::filesystem;
 namespace scl     = Sawyer::CommandLine;
+namespace sas     = Sawyer::Assert;
 
 
 // minimal declarations from Ada_to_ROSE.h
@@ -113,9 +102,9 @@ int main(int argc, char** argv)
            .intrinsicValue(true, settings.logInfo)
            .doc("Enables info messages"));
 
-     Sawyer::CommandLine::ParserResult cmdline = p.with(ada2Rose).parse(args).apply();
+     scl::ParserResult cmdline = p.with(ada2Rose).parse(args).apply();
 
-     // the unparsed commands is likely to be passed into ASIS 
+     // the unparsed commands is likely to be passed into ASIS
      std::vector<std::string> unparsedArgs = cmdline.unparsedArgs();
      std::string ASISIncludeArgs;
 
@@ -167,6 +156,12 @@ int main(int argc, char** argv)
 
        return 1;
      }
+
+     // set ROSE assertion behavior to throw, which seems more robust in the context of
+     //   the Asis frontend.
+     sas::AssertFailureHandler roseFailureHandler = Rose::failedAssertionBehavior();
+
+     Rose::failedAssertionBehavior(Rose::throwOnFailedAssertion);
 
      mprintf ("BEGIN.\n");
 
@@ -233,17 +228,6 @@ int main(int argc, char** argv)
 
      mprintf ("END.\n");
 
-/*
-     auto h = Rose::failedAssertionBehavior();
-
-     if (h == Rose::abortOnFailedAssertion)
-       std::cerr << "abort" << std::endl;
-     if (h == Rose::exitOnFailedAssertion)
-       std::cerr << "exit" << std::endl;
-     if (h == Rose::throwOnFailedAssertion)
-       std::cerr << "throw" << std::endl;
-*/
-
      try
      {
        Ada_ROSE_Translation::initialize(settings);
@@ -256,6 +240,9 @@ int main(int argc, char** argv)
      }
 
      asis_adapterfinal();
+
+     // restore ROSE assertion behavior
+     Rose::failedAssertionBehavior(roseFailureHandler);
      mprintf ("Leaving ada_main(): status = %d \n", status);
      return status;
    }

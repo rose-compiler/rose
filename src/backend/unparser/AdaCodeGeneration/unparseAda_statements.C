@@ -1588,6 +1588,11 @@ namespace
       unparser.unparseExpression(e, info);
     }
 
+    void choicelst(SgExprListExp* e)
+    {
+      unparser.unparseExprListExp(e, info, "| ");
+    }
+
     void expr_opt(SgExpression* e, std::string prefix_opt = std::string(), std::string postfix_opt = std::string())
     {
       if (!e || isSgNullExpression(e)) return;
@@ -1972,10 +1977,10 @@ namespace
 
       prn("case ");
       expr(variantEntry.control());
-      prn("is\n");
+      prn(" is\n");
       prn("when ");
-      expr(variantEntry.conditions());
-      prn("=>\n");
+      choicelst(variantEntry.conditions());
+      prn(" =>\n");
     }
 
     // print new variant condition (if needed)
@@ -1987,8 +1992,8 @@ namespace
       si::ada::VariantEntry variantEntry = si::ada::getVariant(nextinfo, sharedControlDepth-1);
 
       prn("when ");
-      expr(variantEntry.conditions());
-      prn("=>\n");
+      choicelst(variantEntry.conditions());
+      prn(" =>\n");
     }
   }
 

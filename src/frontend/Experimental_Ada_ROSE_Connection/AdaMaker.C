@@ -271,7 +271,8 @@ mkAdaTaskType(SgAdaTaskTypeDecl& dcl)
 SgAdaDiscriminatedType&
 mkAdaDiscriminatedType(SgAdaDiscriminatedTypeDecl& dcl)
 {
-  SgAdaDiscriminatedType& sgnode = mkTypeNode<SgAdaDiscriminatedType>(&dcl);
+  //~ SgAdaDiscriminatedType& sgnode = mkTypeNode<SgAdaDiscriminatedType>(&dcl);
+  SgAdaDiscriminatedType& sgnode = mkNonSharedTypeNode<SgAdaDiscriminatedType>(&dcl);
 
   return sgnode;
 }

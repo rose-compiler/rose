@@ -84,6 +84,7 @@ namespace
     void handle(SgNode& n)               { SG_UNEXPECTED_NODE(n); }
     void handle(SgAdaPackageSpecDecl& n) { def(n); }
     void handle(SgAdaPackageBodyDecl& n) { def(n); }
+    void handle(SgAdaGenericDecl& n)     { def(n); }
     // \todo add handlers as needed
   };
 
