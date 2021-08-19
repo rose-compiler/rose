@@ -52,22 +52,28 @@ function runCxxTests {
 
             EXEFILE=${benchmarkname}.exe
             $CXX -std=c++03 -Wall -Wextra -pedantic -I $TESTDIR/include $benchmark -o$EXEFILE
-            OUTPUT_FILE_OBSERVED="${CT_OUTPUT_FILE}.observed"
-            OUTPUT_FILE_EXPECTED="${CT_OUTPUT_FILE}.expected"
-            ./$EXEFILE > $OUTPUT_FILE_OBSERVED
-            ./$EXEFILE -e > $OUTPUT_FILE_EXPECTED
+            RESULT=$?
 
-          #~ fi
-            DIFF=$(diff $OUTPUT_FILE_OBSERVED $OUTPUT_FILE_EXPECTED)
-            if [ "$DIFF" != "" ]
-            then
-                echo $COLORED_WARN
-                ((numWarn++))
+            if [ $RESULT == 0 ]; then
+              OUTPUT_FILE_OBSERVED="${CT_OUTPUT_FILE}.observed"
+              OUTPUT_FILE_EXPECTED="${CT_OUTPUT_FILE}.expected"
+              ./$EXEFILE > $OUTPUT_FILE_OBSERVED
+              ./$EXEFILE -e > $OUTPUT_FILE_EXPECTED
+
+            #~ fi
+              DIFF=$(diff $OUTPUT_FILE_OBSERVED $OUTPUT_FILE_EXPECTED)
+              if [ "$DIFF" != "" ]
+              then
+                  echo $COLORED_WARN
+                  ((numWarn++))
+              else
+                  echo $COLORED_PASS
+                  ((numPass++))
+              fi
+              rm -f $EXEFILE $OUTPUT_FILE_OBSERVED OUTPUT_FILE_EXPECTED
             else
-                echo $COLORED_PASS
-                ((numPass++))
+              ((numFail++))
             fi
-            rm -f $EXEFILE $OUTPUT_FILE_OBSERVED OUTPUT_FILE_EXPECTED
         done
     done
     printStats $numPass $numWarn $numWarnExpected $numFail $numFailExpected
@@ -122,26 +128,51 @@ echo "------------------------------------------------"
 echo "running Cxx TESTS"
 echo "------------------------------------------------"
 
-TESTDIR=$1
+
+# default values
 TESTPREFIX="Cxx"
 COMPILER="g++"
+
+# command line argument processing
+
+while [[ $# -gt 0 ]]; do
+  key="$1"
+
+  case $key in
+    -c|--compiler)
+      COMPILER="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    -p|--prefix)
+      TESTPREFIX="$2"
+      shift # past argument
+      shift # past value
+      ;;
+    *)    # unknown option
+      TESTDIR="$1" # overwrite test directory
+      shift # past argument
+      ;;
+  esac
+done
+
 CT_MODE_OPTIONS="--context-sensitive=yes --normalize-level=2 --interpreter-mode=1 --in-state-string-literals --exploration-mode=topologic-sort"
 
 echo "Valid C++98 Tests: "
-passingTests=`echo {001..016} {018..034} {036..051}`
+passingTests=`echo {001..016} {018..034} {036..051} {053..056}`
 numWarnExpected=0
 numFailExpected=0
 runCxxTests $COMPILER $TESTDIR $TESTPREFIX $numWarnExpected $numFailExpected $passingTests
 
 echo "Undefined Behavior Tests: "
-undefinedBehavior=`echo {017..017}`
+undefinedBehavior=`echo 017`
 numWarnExpected=1
 numFailExpected=0
 runCxxTests $COMPILER $TESTDIR $TESTPREFIX $numWarnExpected $numFailExpected $undefinedBehavior
 
 echo "Language Extension Tests: "
-languageExtension=`echo {035..035}`
+languageExtension=`echo 035 052`
 numWarnExpected=1
-numFailExpected=0
+numFailExpected=2
 runCxxTests $COMPILER $TESTDIR $TESTPREFIX $numWarnExpected $numFailExpected $languageExtension
 

@@ -3,7 +3,7 @@
 #include "test-main.h"
 
 const char* description = "Tests default arguments for ctors";
-const char* expectedout = "{0}";
+const char* expectedout = "{gXg}";
 
 // see also https://stackoverflow.com/questions/29765961/default-value-and-zero-initialization-mess
 

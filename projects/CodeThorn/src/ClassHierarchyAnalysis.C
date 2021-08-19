@@ -102,11 +102,7 @@ ClassAnalysis::addInheritanceEdge(value_type& descendantEntry, ClassKeyType ance
   ClassData&   ancestor = this->at(ancestorKey);
 
   descendant.ancestors().emplace_back(ancestorKey,   virtualEdge, directEdge);
-  ancestor.descendants().emplace_back(descendantKey, virtualEdge, directEdge);
-
-  //~ std::cerr << nameOfClass(descendantKey) << " from " << typeNameOf(ancestorKey)
-            //~ << " [" << (directEdge ? "d":"") << (virtualEdge ? "v":"") << "]"
-            //~ << std::endl;
+  ancestor.descendants(). emplace_back(descendantKey, virtualEdge, directEdge);
 }
 
 void
