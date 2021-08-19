@@ -761,7 +761,7 @@ check-codethorn-internal:
 	@./codethorn --internal-checks
 
 check-domain:
-	$(srcdir)/scripts/runDomainTests $(srcdir)/tests
+	$(srcdir)/scripts/runDomainTests --testdir $(srcdir)/tests --all
 
 check-lc:
 	$(srcdir)/scripts/runLineColTests $(srcdir)/tests
