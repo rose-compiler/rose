@@ -7,6 +7,7 @@
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
 #include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
 #include <Rose/BinaryAnalysis/Concolic/InputVariables.h>
+#include <Rose/BinaryAnalysis/Concolic/SharedMemory.h>
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
 #include <Rose/BinaryAnalysis/Concolic/SystemCall.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
@@ -68,6 +69,22 @@ LinuxI386::SyscallContext::SyscallContext(const LinuxI386::Ptr &architecture, co
 LinuxI386::SyscallContext::~SyscallContext() {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// LinuxI386::SharedMemoryContext
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+LinuxI386::SharedMemoryContext::SharedMemoryContext(const LinuxI386::Ptr &architecture, const BS::RiscOperatorsPtr &ops,
+                                                    const P2::Partitioner &partitioner, const Debugger::Ptr &debugger)
+    : partitioner(partitioner), debugger(debugger) {
+    ASSERT_not_null(debugger);
+    ASSERT_not_null(architecture);
+    this->architecture = architecture;
+    ASSERT_not_null(ops);
+    this->ops = ops;
+}
+
+LinuxI386::SharedMemoryContext::~SharedMemoryContext() {}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // System call behaviors
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -120,7 +137,7 @@ public:
 
                 // Make the syscall return the same concrete value as before.
                 if (*prevRetConcrete != retConcrete) {
-                    SAWYER_MESG(debug) <<"  replacing return value with " <<StringUtility::toHex2(*prevRetConcrete, SYS_RET.nBits()) <<"\n";
+                    SAWYER_MESG(debug) <<"    replacing return value with " <<StringUtility::toHex2(*prevRetConcrete, SYS_RET.nBits()) <<"\n";
                     ctx.retEvent->words(std::vector<uint64_t>{*prevRetConcrete});
                     ctx.debugger->writeRegister(SYS_RET, *prevRetConcrete);
                 }
@@ -169,7 +186,7 @@ public:
 
                 // Make the syscall return a concrete value that's not less than the previous concrete return value.
                 if (retConcrete < *prevRetConcrete) {
-                    SAWYER_MESG(debug) <<"  replacing return value with " <<StringUtility::toHex2(*prevRetConcrete, SYS_RET.nBits()) <<"\n";
+                    SAWYER_MESG(debug) <<"    replacing return value with " <<StringUtility::toHex2(*prevRetConcrete, SYS_RET.nBits()) <<"\n";
                     ctx.retEvent->words(std::vector<uint64_t>{*prevRetConcrete});
                     ctx.debugger->writeRegister(SYS_RET, *prevRetConcrete);
                 }
@@ -240,6 +257,86 @@ LinuxI386::configureSystemCalls() {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Shared memory behaviors
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Any access to this memory exits the program.
+class NullDeref: public SharedMemoryCallback {
+public:
+    static Ptr instance() {
+        return Ptr(new NullDeref);
+    }
+
+    bool operator()(bool handled, SharedMemoryContext &ctx) const override {
+        if (!handled) {
+            auto ops = Emulation::RiscOperators::promote(ctx.ops);
+            ops->doExit(255);
+            handled = true;
+        }
+        return handled;
+    }
+};
+
+// This is used for debugging and testing
+class TestSharedMemory: public SharedMemoryCallback {
+public:
+    static Ptr instance() {
+        return Ptr(new TestSharedMemory);
+    }
+
+    bool operator()(bool handled, SharedMemoryContext &ctx) const override {
+        if (!handled) {
+            SAWYER_MESG(mlog[WHERE]) <<"called LinuxI386 TestSharedMemory"
+                                     <<" at instruction " <<StringUtility::addrToString(ctx.ip)
+                                     <<", address " <<StringUtility::addrToString(ctx.memoryVa)
+                                     <<" for " <<StringUtility::plural(ctx.nBytes, "bytes") <<"\n";
+            auto ops = Emulation::RiscOperators::promote(ctx.ops);
+            Architecture::Ptr arch = ops->process();
+
+            ctx.result = ops->undefined_(8 * ctx.nBytes);
+            SymbolicExpr::Ptr variable = Emulation::SValue::promote(ctx.result)->get_expression();
+
+            // Create an event that when running concretely later will cause the concolic testing system to realize that
+            // there's been a shared memory read. Since we're not guaranteed to be able to pre-write the desired value to
+            // memory and read it back (shmem doesn't always have those semantics), and since the memory might not be writable
+            // anyway, we need to track the side effects of where the data that was read eventually went.  We do that by
+            // creating a shared-memory-read event to mark the start of these events, followed by additional events that fix
+            // things up after the instruction has completed. On RISC architectures, the side effect is usually just writing
+            // the value that was read into a register, but CISC architectures could have more complex side effects.
+            //
+            // All we need to do here is create the initial shared-memory-read marker and optionally give it an input
+            // variable. The side-effect fixup events will be generated as the rest of the current instruction executes.
+            ctx.event = ExecutionEvent::instanceSharedMemoryRead(arch->testCase(),
+                                                                 arch->nextEventLocation(When::PRE),
+                                                                 ctx.ip, ctx.memoryVa, ctx.nBytes);
+            ctx.event->name("shm-read-" + StringUtility::addrToString(ctx.memoryVa).substr(2));
+            ops->inputVariables().insertSharedMemoryRead(ctx.event, variable);
+            SAWYER_MESG(mlog[DEBUG]) <<"  created input variable " <<*variable
+                                     <<" for " <<ctx.event->printableName(arch->database()) <<"\n";
+        }
+        return true;
+    }
+};
+
+void
+LinuxI386::configureSharedMemory() {
+    // These are the generally useful configurations. Feel free to override these to accomplish whatever kind of testing you
+    // need.
+
+    SharedMemory::Ptr sm;
+
+    // Null dereferences
+    sm = SharedMemory::instance();
+    sm->callbacks().append(NullDeref::instance());
+    sharedMemory().insert(AddressInterval::baseSize(0, 4096), sm);
+
+    // Testing
+    sm = SharedMemory::instance();
+    sm->callbacks().append(TestSharedMemory::instance());
+    sharedMemory().insert(0x804c00c, sm);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // LinuxI386
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -254,6 +351,7 @@ LinuxI386::instance(const Database::Ptr &db, TestCaseId tcid) {
     ASSERT_require(tcid);
     auto retval = Ptr(new LinuxI386(db, tcid));
     retval->configureSystemCalls();
+    retval->configureSharedMemory();
     return retval;
 }
 
@@ -265,6 +363,7 @@ LinuxI386::instance(const Database::Ptr &db, const TestCase::Ptr &tc) {
     ASSERT_require(tcid);
     auto retval = Ptr(new LinuxI386(db, tcid));
     retval->configureSystemCalls();
+    retval->configureSharedMemory();
     return retval;
 }
 
@@ -419,9 +518,9 @@ LinuxI386::playEvent(const ExecutionEvent::Ptr &event) {
             // additional events are fairly generic, so we need to keep track of some state to know they're associated with a
             // prior system call event.
             uint64_t functionNumber = event->scalar();
-            playingSyscall_ = std::make_pair(functionNumber, event->location().primary);
+            playingSyscall_ = std::make_pair(functionNumber, event->location().primary());
             ++syscallSequenceNumbers_[functionNumber];
-            playingSyscall_ = {functionNumber, event->location().primary};
+            playingSyscall_ = {functionNumber, event->location().primary()};
             return true;
         }
 
@@ -429,7 +528,7 @@ LinuxI386::playEvent(const ExecutionEvent::Ptr &event) {
             // The writing-to-register already happened in Super::playEvent, but if this event represents a system call return
             // value we should save it. This is important for system calls that always return the same value, like getpid.
             ASSERT_require(handled);
-            if (playingSyscall_.second == event->location().primary) {
+            if (playingSyscall_.second == event->location().primary()) {
                 uint64_t functionNumber = playingSyscall_.first;
                 if (SystemCallPtr systemCall = systemCalls().getOrDefault(functionNumber)) {
                     if (RegisterDescriptor::fromRaw(event->scalar()) == systemCallReturnRegister()) {
@@ -509,9 +608,15 @@ LinuxI386::readRegister(RegisterDescriptor reg) {
 }
 
 void
-LinuxI386::executeInstruction() {
+LinuxI386::executeInstruction(const P2::Partitioner &partitioner) {
+    if (mlog[DEBUG]) {
+        rose_addr_t va = debugger_->executionAddress();
+        SgAsmInstruction *insn = partitioner.instructionProvider()[va];
+        mlog[DEBUG] <<"concretely executing insn #" <<currentLocation().primary()
+                    <<" " <<partitioner.unparse(insn) <<"\n";
+    }
+
     debugger_->singleStep();
-    incrementPathLength();
 }
 
 void
@@ -545,7 +650,6 @@ LinuxI386::executeInstruction(const BS::RiscOperatorsPtr &ops_, SgAsmInstruction
     } else {
         debugger_->singleStep();
     }
-    incrementPathLength();
 }
 
 void
@@ -646,7 +750,8 @@ LinuxI386::createInputVariables(InputVariables &inputVariables, const P2::Partit
     BS::SValuePtr argcSValue = ops->undefined_(SP.nBits());
     SymbolicExpr::Ptr argcSymbolic = IS::SymbolicSemantics::SValue::promote(argcSValue)->get_expression();
 
-    auto argcEvent = ExecutionEvent::instanceWriteMemory(testCase(), nextLocation(), ip(), argcVa, argc);
+    auto argcEvent = ExecutionEvent::instanceWriteMemory(testCase(), nextEventLocation(When::PRE),
+                                                         ip(), argcVa, argc);
     inputVariables.insertProgramArgumentCount(argcEvent, argcSymbolic);
     argcSValue->comment(argcEvent->name());
     ops->writeMemory(RegisterDescriptor(), ops->number_(SP.nBits(), argcVa), argcSValue, ops->boolean_(true));
@@ -689,7 +794,8 @@ LinuxI386::createInputVariables(InputVariables &inputVariables, const P2::Partit
 
                 BS::SValuePtr charSValue = ops->undefined_(8);
                 SymbolicExpr::Ptr charSymbolic = IS::SymbolicSemantics::SValue::promote(charSValue)->get_expression();
-                auto charEvent = ExecutionEvent::instanceWriteMemory(testCase(), nextLocation(), ip(), charVa, charVal);
+                auto charEvent = ExecutionEvent::instanceWriteMemory(testCase(), nextEventLocation(When::PRE),
+                                                                     ip(), charVa, charVal);
                 inputVariables.insertProgramArgument(charEvent, i, j, charSymbolic);
                 charSValue->comment(charEvent->name());
                 ops->writeMemory(RegisterDescriptor(), ops->number_(SP.nBits(), charVa), charSValue, ops->boolean_(true));
@@ -768,7 +874,8 @@ LinuxI386::createInputVariables(InputVariables &inputVariables, const P2::Partit
 
                 BS::SValuePtr charSValue = ops->undefined_(8);
                 SymbolicExpr::Ptr charSymbolic = IS::SymbolicSemantics::SValue::promote(charSValue)->get_expression();
-                auto charEvent = ExecutionEvent::instanceWriteMemory(testCase(), nextLocation(), ip(), charVa, charVal);
+                auto charEvent = ExecutionEvent::instanceWriteMemory(testCase(), nextEventLocation(When::PRE),
+                                                                     ip(), charVa, charVal);
                 inputVariables.insertEnvironmentVariable(charEvent, i, j, charSymbolic);
                 charSValue->comment(charEvent->name());
                 ops->writeMemory(RegisterDescriptor(), ops->number_(SP.nBits(), charVa), charSValue, ops->boolean_(true));
@@ -849,7 +956,8 @@ LinuxI386::applySystemCallReturn(const P2::Partitioner &partitioner, const BS::R
     ops->writeRegister(SYS_RET, retSValue);
 
     // Create an execution event for the system call return value that we can replay later in a different process.
-    auto event = ExecutionEvent::instanceWriteRegister(testCase(), nextLocation(), syscallVa, SYS_RET, retConcrete);
+    auto event = ExecutionEvent::instanceWriteRegister(testCase(), nextEventLocation(When::POST),
+                                                       syscallVa, SYS_RET, retConcrete);
     event->name(syscallName + "-return");
     return event;
 }
@@ -968,20 +1076,20 @@ LinuxI386::systemCall(const P2::Partitioner &partitioner, const BS::RiscOperator
         }
     }
     if (debug) {
-        debug <<"syscall-" <<functionNumber <<", args = (";
+        debug <<"  syscall-" <<functionNumber <<", potential args:\n";
         for (uint64_t arg: ctx.argsConcrete)
-            debug <<" " <<StringUtility::toHex(arg);
-        debug <<" )\n";
+            debug <<"    " <<StringUtility::toHex(arg) <<"\n";
     }
 
     // The execution event records the system call number and arguments, but not any side effects (because side effects haven't
     // happened yet). Since the side effect events (created shortly) are general things like "write this value to this
     // register", the fact that they're preceded by this syscall event is what marks them as being side effects of this system
     // call.
-    ctx.syscallEvent = ExecutionEvent::instanceSyscall(testCase(), nextLocation(), ctx.callSite, functionNumber, ctx.argsConcrete);
+    ctx.syscallEvent = ExecutionEvent::instanceSyscall(testCase(), nextEventLocation(When::PRE),
+                                                       ctx.callSite, functionNumber, ctx.argsConcrete);
     ctx.syscallEvent->name((boost::format("syscall-%d.%d") % functionNumber % syscallSequenceNumbers_[functionNumber]++).str());
-    ExecutionEventId syscallEventId = database()->id(ctx.syscallEvent);
-    SAWYER_MESG(debug) <<"  created execution event " <<*syscallEventId <<" for " <<ctx.syscallEvent->name() <<"\n";
+    database()->save(ctx.syscallEvent);
+    SAWYER_MESG(debug) <<"  created " <<ctx.syscallEvent->printableName(database()) <<"\n";
 
     // Process the system call by invoking callbacks that the user can override.
     if ((ctx.systemCall = systemCalls().getOrDefault(functionNumber))) {
@@ -1014,10 +1122,45 @@ LinuxI386::systemCall(const P2::Partitioner &partitioner, const BS::RiscOperator
     }
 
     if (ctx.retEvent) {
-        ExecutionEventId retEventId = database()->id(ctx.retEvent);
-        SAWYER_MESG(debug) <<"  created execution event " <<*retEventId
-                           <<" for " <<ctx.retEvent->name() <<"\n";
+        database()->save(ctx.retEvent);
+        SAWYER_MESG(debug) <<"  created " <<ctx.retEvent->printableName(database()) <<"\n";
     }
+}
+
+BS::SValue::Ptr
+LinuxI386::sharedMemoryRead(const P2::Partitioner &partitioner, const BS::RiscOperators::Ptr &ops_,
+                            const Concolic::SharedMemory::Ptr &sharedMemory, rose_addr_t addr, size_t nBytes) {
+    auto ops = Emulation::RiscOperators::promote(ops_);
+    ASSERT_not_null(ops);
+    ASSERT_not_null(sharedMemory);
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+
+    SharedMemoryContext ctx(sharedFromThis(), ops_, partitioner, debugger_);
+    ctx.ip = ops->currentInstruction()->get_address();
+    ctx.memoryVa = addr;
+    ctx.nBytes = nBytes;
+
+    SAWYER_MESG(debug) <<"  shared memory read at instruction " <<StringUtility::addrToString(ctx.ip)
+                       <<" from memory address " <<StringUtility::addrToString(ctx.memoryVa)
+                       <<" for " <<StringUtility::plural(nBytes, "bytes") <<"\n";
+
+    bool handled = sharedMemory->callbacks().apply(false, ctx);
+    if (!handled) {
+        mlog[ERROR] <<"    shared memory read not handled by any callbacks; treating it as normal memory\n";
+        return IS::BaseSemantics::SValuePtr();
+    } else if (!ctx.result) {
+        SAWYER_MESG(debug) <<"    shared memory read did not return a special value; doing a normal read\n";
+    } else {
+        SAWYER_MESG(debug) <<"    shared memory read returns " <<*ctx.result <<"\n";
+        ASSERT_require(ctx.result->nBits() == 8 * nBytes);
+    }
+
+    if (ctx.event) {
+        database()->save(ctx.event);
+        SAWYER_MESG(debug) <<"    created " <<ctx.event->printableName(database()) <<"\n";
+    }
+
+    return ctx.result;
 }
 
 } // namespace

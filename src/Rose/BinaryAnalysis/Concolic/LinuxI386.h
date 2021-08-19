@@ -5,6 +5,7 @@
 
 #include <Rose/BinaryAnalysis/Concolic/Architecture.h>
 #include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
+#include <Rose/BinaryAnalysis/Concolic/SharedMemory.h>
 #include <Rose/BinaryAnalysis/Concolic/SystemCall.h>
 #include <Rose/BinaryAnalysis/Debugger.h>
 
@@ -34,6 +35,19 @@ public:
                        const Partitioner2::Partitioner&, const DebuggerPtr&);
 
         ~SyscallContext();
+    };
+
+    /** Context for shared memory access callbacks. */
+    class SharedMemoryContext: public Concolic::SharedMemoryContext {
+    public:
+        const Partitioner2::Partitioner &partitioner;   /**< Information about the specimen. */
+        DebuggerPtr debugger;                           /**< Subordinate Linux process for concrete semantics. */
+
+        /** Constructor. */
+        SharedMemoryContext(const LinuxI386::Ptr &architecture, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
+                            const Partitioner2::Partitioner&, const DebuggerPtr&);
+
+        ~SharedMemoryContext();
     };
 
 private:
@@ -80,6 +94,7 @@ public:
 public:
     // These are documented in the base class.
     virtual void configureSystemCalls() override;
+    virtual void configureSharedMemory() override;
     virtual void load(const boost::filesystem::path&) override;
     virtual bool isTerminated() override;
     virtual ByteOrder::Endianness memoryByteOrder() override;
@@ -97,13 +112,17 @@ public:
     virtual void writeRegister(RegisterDescriptor, uint64_t) override;
     virtual void writeRegister(RegisterDescriptor, const Sawyer::Container::BitVector&) override;
     virtual Sawyer::Container::BitVector readRegister(RegisterDescriptor) override;
-    virtual void executeInstruction() override;
+    virtual void executeInstruction(const Partitioner2::Partitioner&) override;
     virtual void executeInstruction(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&, SgAsmInstruction*) override;
     virtual void createInputVariables(InputVariables&, const Partitioner2::Partitioner&,
                                       const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
                                       const SmtSolver::Ptr &solver) override;
     virtual void systemCall(const Partitioner2::Partitioner&,
                             const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&) override;
+
+    virtual InstructionSemantics2::BaseSemantics::SValuePtr
+    sharedMemoryRead(const Partitioner2::Partitioner&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
+                     const Concolic::SharedMemoryPtr&, rose_addr_t memVa, size_t nBytes) override;
 
 private:
     // Maps a scratch page for internal use and updates scratchVa_ with the address of the page.

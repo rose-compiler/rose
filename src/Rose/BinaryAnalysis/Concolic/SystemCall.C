@@ -24,7 +24,7 @@ SystemCall::SystemCall() {}
 
 SystemCall::~SystemCall() {}
 
-SystemCallPtr
+SystemCall::Ptr
 SystemCall::instance() {
     return Ptr(new SystemCall);
 }

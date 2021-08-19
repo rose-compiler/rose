@@ -80,6 +80,24 @@ InputVariables::insertSystemCallReturn(const ExecutionEventPtr &event, const Sym
 }
 
 void
+InputVariables::insertSharedMemoryRead(const ExecutionEventPtr &event, const SymbolicExpr::Ptr &variable) {
+    ASSERT_not_null(event);
+    ASSERT_require(event->inputType() == InputType::NONE);
+    ASSERT_not_null(variable);
+    ASSERT_require(variable->isVariable2());
+
+    event->inputType(InputType::SHARED_MEMORY_READ);
+    event->inputVariable(variable);
+    if (variable->comment().empty()) {
+        variable->comment(event->name());
+    } else if (event->name().empty()) {
+        event->name(variable->comment());
+    }
+
+    variables_.insert(*variable->variableId(), event);
+}
+
+void
 InputVariables::insertEvent(const ExecutionEventPtr &event) {
     ASSERT_not_null(event);
     ASSERT_forbid(event->inputType() == InputType::NONE);

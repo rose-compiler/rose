@@ -5,6 +5,7 @@
 
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
+#include <Rose/BinaryAnalysis/Concolic/ExecutionLocation.h>
 #include <Rose/BinaryAnalysis/Debugger.h>
 #include <Combinatorics.h>                              // rose
 
@@ -44,6 +45,13 @@ public:
         // System calls. The scalar value is the system call number and the bytes hold the system call concrete
         // arguments. Additional events may follow in order to reproduce the effects of the system call.
         OS_SYSCALL,
+
+        // Shared memory reads. The scalar value is the memory address, and additional events may follow in order
+        // to reproduce the effect of the read. This is because we can't affect the read by first writing to the address
+        // since (1) execution events are replayed after the instruction is executed concretely, and (2) the shared
+        // memory at that address might not follow typical memory semantics--a read might not return the value just
+        // written, and (3) the memory might not be writable.
+        OS_SHM_READ,
     };
 
 private:
@@ -66,6 +74,7 @@ private:
     AddressInterval memoryLocation_;                    // memory locations affected by the action, if any
     uint64_t scalar_ = 0;                               // scalar value
     std::vector<uint8_t> bytes_;                        // byte data needed by action, if any
+    SymbolicExpr::Ptr symbolic_;                        // symbolic expression for action, if any
     //     !!!!!!! DONT FORGET TO UPDATE ExecutionEvent::copy !!!!!!!!!
 
 protected:
@@ -159,11 +168,18 @@ public:
      *  Create an event at a particular location that will set the specified register to the specified value when replayed.
      *  If the test case and location are unspecified then the returned event is unbound.
      *
+     *  The value should normally be concrete, but may be symbolic if this event follows a shared memory read event for
+     *  the same instruction.
+     *
      * @{ */
     static Ptr instanceWriteRegister(const TestCasePtr&, const ExecutionLocation&, rose_addr_t ip,
                                      RegisterDescriptor, uint64_t value);
     static Ptr instanceWriteRegister(rose_addr_t ip,
                                      RegisterDescriptor, uint64_t value);
+    static Ptr instanceWriteRegister(const TestCasePtr&, const ExecutionLocation&, rose_addr_t ip,
+                                     RegisterDescriptor, const SymbolicExpr::Ptr &value);
+    static Ptr instanceWriteRegister(rose_addr_t ip,
+                                     RegisterDescriptor, const SymbolicExpr::Ptr &value);
     /** @} */
 
     /** Allocating constructor describing all registers.
@@ -190,6 +206,20 @@ public:
                                uint64_t functionNumber, const std::vector<uint64_t> &arguments);
     static Ptr instanceSyscall(rose_addr_t ip,
                                uint64_t functionNumber, const std::vector<uint64_t> &arguments);
+    /** @} */
+
+    /** Allocating constructor for marking a shared memory read.
+     *
+     *  A shared memory read event is a marker indicating that a read is occurring from a shared memory location. Usually the
+     *  action only affects the simulated operating system and will be followed by zero or more additional events to take care
+     *  of the side effects of the read operation. On RISC architectures, these side effects are typically just to move the
+     *  read value into a register, but on CISC machines it might be more. If the test case and location are unspecified then
+     *  the returned event is unbound.
+     *
+     * @{ */
+    static Ptr instanceSharedMemoryRead(const TestCasePtr&, const ExecutionLocation&, rose_addr_t ip,
+                                        rose_addr_t memoryAddress, size_t nBytes);
+    static Ptr instanceSharedMemoryRead(rose_addr_t ip, rose_addr_t memoryAddress, size_t nBytes);
     /** @} */
 
     /** Make a copy of this event. */
@@ -267,6 +297,7 @@ public:
     void inputVariable(const SymbolicExpr::Ptr &v) {
         inputVariable_ = v;
     }
+    void inputVariable(const InstructionSemantics2::BaseSemantics::SValuePtr &variable);
     /** @} */
 
     /** Property: Input variable integer field one.
@@ -323,6 +354,12 @@ public:
     void bytes(const std::vector<uint8_t>&);
     /** @} */
 
+    /** Property: Bytes returned as a symbolic value.
+     *
+     *  The return value is a symbolic expression of type integer, whose width is eight times the number of bytes
+     *  stored for the event. The bytes are assumed to be little endian. */
+    SymbolicExpr::Ptr bytesAsSymbolic() const;
+
     /** Property: Words for action.
      *
      *  This property interprets the @ref bytes as 64-bit little endian words.
@@ -342,6 +379,16 @@ public:
      * @{ */
     uint64_t scalar() const;
     void scalar(uint64_t);
+    /** @} */
+
+    /** Property: Symbolic value.
+     *
+     *  Some events store a symbolic expression. Usually these expressions are symbolic because they refer to an
+     *  input variable(s) and will become concrete once concrete values are provided for that variable(s).
+     *
+     * @{ */
+    SymbolicExpr::Ptr symbolic() const;
+    void symbolic(const SymbolicExpr::Ptr&);
     /** @} */
 
     /** Print as YAML node. */

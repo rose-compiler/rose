@@ -151,7 +151,9 @@ public:
      *  test suite, otherwise all execution events are returned. */
     std::vector<ExecutionEventId> executionEvents();
 
-    /** All execution events for a particular test case. */
+    /** All execution events for a particular test case.
+     *
+     *  The events are sorted according to @ref ExecutionLocation::isSorted. */
     std::vector<ExecutionEventId> executionEvents(TestCaseId);
 
     /** Number of execution events for a particular test case. */
@@ -160,10 +162,12 @@ public:
     /** Execution events at a specific location.
      *
      *  Returns the execution events for a specific location. All events for the primary key of the location are returned,
-     *  sorted by the secondary key. */
+     *  sorted according to @ref ExecutionLocation::isSorted. */
     std::vector<ExecutionEventId> executionEvents(TestCaseId, uint64_t primaryKey);
 
-    /** Execution events from the specified event onward. */
+    /** Execution events from the specified event onward.
+     *
+     *  The returned events are sorted according to @ref ExecutionLocation::isSorted. */
     std::vector<ExecutionEventId> executionEventsSince(TestCaseId, ExecutionEventId startingAt);
 
     /** Primary keys for the location events.
