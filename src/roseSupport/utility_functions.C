@@ -1,8 +1,8 @@
-
 // tps (01/14/2010) : Switching from rose.h to sage3.
 #include "sage3basic.h"
 
 #include "checkIsModifiedFlag.h"
+#include <Rose/CommandLine.h>
 
 #if ROSE_WITH_LIBHARU
 #include "AstPDFGeneration.h"
@@ -31,6 +31,24 @@
 #ifdef ROSE_HAVE_LIBYICES
 #   include <yices_c.h>
 #endif
+#ifdef ROSE_HAVE_Z3_VERSION_H
+#   include <z3_version.h>
+#endif
+#ifdef ROSE_HAVE_CAPSTONE
+#   include <capstone/capstone.h>
+#endif
+#ifdef ROSE_HAVE_DLIB
+#   include <dlib/revision.h>
+#endif
+#ifdef ROSE_HAVE_LIBGCRYPT
+#   include <gcrypt.h>
+#endif
+#ifdef ROSE_HAVE_LIBPQXX
+#   include <pqxx/version.hxx>
+#endif
+#ifdef ROSE_HAVE_SQLITE3
+#   include <sqlite3.h>
+#endif
 
 // DQ (10/11/2007): This is commented out to avoid use of this mechanism.
 // #include <copy_unparser.h>
@@ -53,7 +71,8 @@ using namespace std;
 using namespace Rose;
 using namespace Rose::Diagnostics;
 
-// global variable for turning on and off internal debugging
+// global variable for turning on and off internal debugging.
+// Consider using Rose::Diagnostics instead [Robb Matzke 2021-08-18]
 int ROSE_DEBUG = 0;
 
 #if 1
@@ -268,9 +287,9 @@ std::string ofpVersionString()
      return ofp_version;
    }
 
+#ifdef ROSE_HAVE_LIBREADLINE
 static std::string
 readlineVersionString() {
-#ifdef ROSE_HAVE_LIBREADLINE
     #if !defined(RL_VERSION_MAJOR) || !defined(RL_VERSION_MINOR)
         // It appears as though RL_READLINE_VERSION is a 16-bit number whose low 8 bits are the minor version and whose high 8
         // bits are the major version.
@@ -278,43 +297,8 @@ readlineVersionString() {
         #define RL_VERSION_MINOR (RL_READLINE_VERSION & 0xff)
     #endif
     return StringUtility::numberToString(RL_VERSION_MAJOR) + "." + StringUtility::numberToString(RL_VERSION_MINOR);
-#else
-    return "unknown (readline is disabled)";
-#endif
 }
-
-static std::string
-libmagicVersionString() {
-#ifdef ROSE_HAVE_LIBMAGIC
-#ifdef MAGIC_VERSION
-    return StringUtility::numberToString(MAGIC_VERSION);
-#else
-    return "unknown (but enabled)";
 #endif
-#else
-    return "unknown (libmagic is disabled)";
-#endif
-}
-
-static std::string
-yamlcppVersionString() {
-#ifdef ROSE_HAVE_LIBYAML
-    return "unknown (but enabled)";                     // not sure how to get a version number for this library
-#else
-    return "unknown (yaml-cpp is disabled)";
-#endif
-}
-
-static std::string
-yicesVersionString() {
-#ifdef ROSE_HAVE_LIBYICES
-    if (const char *s = yices_version())
-        return s;
-    return "unknown (but enabled)";
-#else
-    return "unknown (libyices is disabled)";
-#endif
-}
 
 // similar to rose_boost_version_id but intended for human consumption (i.e., "1.50.0" rather than 105000).
 static std::string
@@ -325,86 +309,284 @@ boostVersionString() {
 }
 
 // DQ (11/1/2009): replaced "version()" with separate "version_number()" and "version_message()" functions.
-std::string version_message()
-   {
-     extern string edgVersionString();
-     extern string ofpVersionString();
+std::string version_message() {
+    std::ostringstream ss;
 
-  // DQ (7/3/2013): Added output of pre-defined macros.  This output should actually be limited to use 
-  // with -h and --version, similar to GNU compilers, as I recall.
-  // outputPredefinedMacros();
+    // NOTE: In the output below,
+    //
+    //   * a feature defined within ROSE, such as an analysis capability, is either "enabled" or "disabled".
+    //
+    //   * a library used by ROSE is either "used" (in which case we show the version number) or "unused".
 
-#if 0
-  // DQ (12/13/2016): Adding backend compiler and version info.
-     printf ("Using backend C++ compiler (without path): %s version: %d.%d \n",BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH,BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER,BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER);
-     printf ("Using backend C/C++ compiler (with path):  %s \n",BACKEND_CXX_COMPILER_NAME_WITH_PATH);
-     printf ("Using backend  C  compiler (with path):    %s version: %d.%d \n",BACKEND_C_COMPILER_NAME_WITH_PATH,BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER,BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER);
+    // Use the same version string as outut by the --version switch. This string is usually "ROSE 0.x.y.z" but can be changed
+    // at runtime. Tools often change this to be a tool version number followed by the ROSE version number.
+    ss <<Rose::CommandLine::versionString <<" (configured " <<ROSE_CONFIGURE_DATE <<")\n";
 
-     printf ("ROSE_COMPILE_TREE_PATH = %s \n",ROSE_COMPILE_TREE_PATH);
-     printf ("ROSE_INSTALLATION_PATH = %s \n",ROSE_INSTALLATION_PATH);
+    //-----------------------------------------------------------------------
+    // GLobal information regardless of what languages ROSE is configured to analyze
+    //-----------------------------------------------------------------------
+
+    // Show some indication of how optimized the ROSE library is. There's no portable way to determine what compiler
+    // optimization flags are being used to compile ROSE or even if that set constitutes "full" optimization, whatever
+    // that might mean.  But we do know that assertions can prevent certain types of optimization, not to mention that
+    // there are enough assertions in ROSE that simply checking them at runtime takes measurably significant time.
+#ifdef NDEBUG
+    ss <<"  --- logic assertions:           disabled\n";
+    // full optimizations *might* be enabled; we just don't know for sure
+#else
+    ss <<"  --- logic assertions:           enabled\n";
+    ss <<"  --- full optimization:          disabled\n";
 #endif
 
-     string backend_Cxx_compiler_without_path = BACKEND_CXX_COMPILER_NAME_WITHOUT_PATH;
-     string backend_Cxx_compiler_with_path    = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
-     string backend_C_compiler_without_path   = BACKEND_C_COMPILER_NAME_WITH_PATH;
-     string backend_C_compiler_with_path      = BACKEND_C_COMPILER_NAME_WITH_PATH;
-     string backend_Cxx_compiler_version      = StringUtility::numberToString(BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER);
-#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-     string backend_Fortran_compiler_with_path= BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH;
-     string backend_Fortran_compiler_version  = StringUtility::numberToString(BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER) + "." + StringUtility::numberToString(BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER);
-     string backend_Fortran_compiler_without_path = BACKEND_FORTRAN_COMPILER_NAME_WITHOUT_PATH;
+    ss <<"  --- boost library:              " <<boostVersionString() <<" (" <<rose_boost_version_path() <<")\n";
+#ifdef ROSE_HAVE_LIBREADLINE
+    ss <<"  --- readline library:           " <<readlineVersionString() <<"\n";
+#else
+    ss <<"  --- readline library:           unused\n";
 #endif
 
+    //-----------------------------------------------------------------------
+    // Information related to any source language analysis (not binary analysis).
+    //-----------------------------------------------------------------------
+
+#ifdef ROSE_ENABLE_SOURCE_ANALYSIS
 #ifdef USE_CMAKE
-     string build_tree_path                   = "CMake does not set: ROSE_COMPILE_TREE_PATH";
-     string install_path                      = "CMake does not set: ROSE_INSTALLATION_PATH";
+    string build_tree_path                   = "not available";
+    string install_path                      = "not available";
 #else
-     string build_tree_path                   = ROSE_COMPILE_TREE_PATH;
-     string install_path                      = ROSE_INSTALLATION_PATH;
+    string build_tree_path                   = ROSE_COMPILE_TREE_PATH;
+    string install_path                      = ROSE_INSTALLATION_PATH;
+#endif
+    ss <<"  --- library build path:         " <<build_tree_path <<"\n";
+    ss <<"  --- original installation path: " <<install_path <<"\n";
 #endif
 
-     return
-       // "ROSE (pre-release beta version: " + version_number() + ")" +
-         "ROSE (version: " + version_number() + ")" +
-         "\n  --- using EDG C/C++ front-end version: " + edgVersionString() +
-         "\n  --- using OFP Fortran parser version: " + ofpVersionString() +
-         "\n  --- using Boost version: " + boostVersionString() + " (" + rose_boost_version_path() + ")" +
-         "\n  --- using backend C compiler: " + backend_C_compiler_without_path + " version: " + backend_Cxx_compiler_version +
-         "\n  --- using backend C compiler path (as specified at configure time): " + backend_C_compiler_with_path +
-         "\n  --- using backend C++ compiler: " + backend_Cxx_compiler_without_path + " version: " + backend_Cxx_compiler_version +
-         "\n  --- using backend C++ compiler path (as specified at configure time): " + backend_Cxx_compiler_with_path +
+    //-----------------------------------------------------------------------
+    // Information related to C/C++ analysis.
+    //-----------------------------------------------------------------------
+
+#if defined(ROSE_BUILD_CPP_LANGUAGE_SUPPORT) || defined(ROSE_BUILD_C_LANGUAGE_SUPPORT)
+    ss <<"  --- C/C++ analysis:             enabled\n";
+    extern string edgVersionString();
+    ss <<"  ---   C/C++ front-end:          " <<edgVersionString() <<"\n";
+
+    // This prints (originally and still now) the version of the C++ compiler instead of the C compiler. This is fine for the
+    // normal case where both compilers come from the same compiler collection, but would be wrong, for instance, if the user
+    // configured ROSE to use a C compiler from GCC and a C++ compiler from LLVM. [Robb Matzke 2021-08-18]
+    ss <<"  ---   C back-end:               "
+       <<BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER <<"." <<BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER
+       <<" (" <<BACKEND_C_COMPILER_NAME_WITH_PATH <<")\n";
+
+#if 0 // [Robb Matzke 2021-08-18] This line printed the same info as above originally, so now disabled.
+    ss <<"  ---   backend C compiler path (as specified at configure time): " <<BACKEND_C_COMPILER_NAME_WITH_PATH <<"\n";
+#endif
+
+    ss <<"  ---   C++ back-end:             "
+       <<BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER <<"." <<BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER
+       <<" (" <<BACKEND_CXX_COMPILER_NAME_WITH_PATH <<")\n";
+
+#if 0 // [Robb Matzke 2021-08-18]: No longer necessary since we print the full path above (used to print just the base name above).
+    ss <<"  ---   backend C++ compiler path (as specified at configure time): " <<BACKEND_CXX_COMPILER_NAME_WITH_PATH <<"\n";
+#endif
+#else
+    ss <<"  --- C/C++ analysis:             disabled\n";
+#endif
+
+    //-----------------------------------------------------------------------
+    // Information related to Fortran analysis.
+    //-----------------------------------------------------------------------
+
 #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-         "\n  --- using backend Fortran compiler: " + backend_Fortran_compiler_without_path + " version: " + backend_Fortran_compiler_version +
-         "\n  --- using backend Fortran compiler path (as specified at configure time): " + backend_Fortran_compiler_with_path +
+    ss <<"  --- Fortran analysis:           enabled\n";
+
+    // How is this different than ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION below?
+    extern string ofpVersionString();
+    ss <<"  ---   OFP Fortran parser:       " <<ofpVersionString() <<"\n";
+
+    ss <<"  ---   Fortran back-end:         "
+       <<BACKEND_FORTRAN_COMPILER_MAJOR_VERSION_NUMBER <<"." <<BACKEND_FORTRAN_COMPILER_MINOR_VERSION_NUMBER
+       <<" (" <<BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH <<")\n";
+
+#if 0 // [Robb Matzke 2021-08-18]: No longer necessary since we print the full path above (used to print just the base name above).
+    ss <<"  ---   backend Fortran compiler path (as specified at configure time): " <<BACKEND_FORTRAN_COMPILER_NAME_WITH_PATH <<"\n";
 #endif
-         "\n  --- using original build tree path: " + build_tree_path +
-         "\n  --- using instalation path: " + install_path +
-         "\n  --- using GNU readline version: " + readlineVersionString() +
-         "\n  --- using libmagic version: " + libmagicVersionString() +
-         "\n  --- using yaml-cpp version: " + yamlcppVersionString() +
-         "\n  --- using lib-yices version: " + yicesVersionString() +
+#else
+    ss <<"  --- Fortran analysis:           disabled\n";
+#endif
+
+    //-----------------------------------------------------------------------
+    // Information related to binary analysis.
+    //-----------------------------------------------------------------------
+
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
-         "\n  --- binary analysis is enabled"
-#ifdef ROSE_ENABLE_ASM_AARCH64
-         "\n  ---   ARM AArch64 is enabled"
+    ss <<"  --- binary analysis:            enabled\n";
+
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    ss <<"  ---   object serialization:     enabled\n";
 #else
-         "\n  ---   ARM AArch64 is disabled"
+    ss <<"  ---   object serialization:     disabled\n";
 #endif
+
 #ifdef ROSE_ENABLE_ASM_AARCH32
-         "\n  ---   ARM AArch32 is enabled"
+    ss <<"  ---   ARM AArch32 (A32/T32):    enabled\n";
 #else
-         "\n  ---   ARM AArch32 is disasbled"
+    ss <<"  ---   ARM AArch32 (A32/T32):    disabled\n";
 #endif
+
+#ifdef ROSE_ENABLE_ASM_AARCH64
+    ss <<"  ---   ARM AArch64 (A64):        enabled\n";
+#else
+    ss <<"  ---   ARM AArch64 (A64):        disabled\n";
+#endif
+
+    ss <<"  ---   MIPS (be and le):         enabled\n";
+    ss <<"  ---   Motorola m68k (coldfire): enabled\n";
+    ss <<"  ---   PowerPC (be and le):      enabled\n";
+    ss <<"  ---   Intel x86 (i386):         enabled\n";
+    ss <<"  ---   Intel x86-64 (amd64):     enabled\n";
+
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
-         "\n  ---   concolic testing is enabled"
+    ss <<"  ---   concolic testing:         enabled\n";
 #else
-         "\n  ---   concolic testing is disabled"
+    ss <<"  ---   concolic testing:         disabled\n";
 #endif
+
+#ifdef ROSE_HAVE_CAPSTONE
+    ss <<"  ---   capstone library:         " <<CS_VERSION_MAJOR <<"." <<CS_VERSION_MINOR <<"." <<CS_VERSION_EXTRA <<"\n";
 #else
-         "\n  --- binary analysis is disabled"
+    ss <<"  ---   capstone library:         unused\n";
 #endif
-         ;
-  }
+
+#ifdef ROSE_HAVE_DLIB
+    ss <<"  ---   dlib library:             " <<DLIB_MAJOR_VERSION <<"." <<DLIB_MINOR_VERSION <<"." <<DLIB_PATCH_VERSION <<"\n";
+#else
+    ss <<"  ---   dlib library:             unused\n";
+#endif
+
+#ifdef ROSE_HAVE_LIBGCRYPT
+    ss <<"  ---   gcrypt library:           " <<GCRYPT_VERSION <<"\n";
+#else
+    ss <<"  ---   gcrypt library:           unused\n";
+#endif
+
+#ifdef ROSE_HAVE_LIBMAGIC
+    ss <<"  ---   magic numbers library:    " <<MAGIC_VERSION <<"\n";
+#else
+    ss <<"  ---   magic numbers library:    unused\n";
+#endif
+
+#ifdef ROSE_HAVE_LIBPQXX
+    ss <<"  ---   pqxx library:             " <<PQXX_VERSION <<"\n";
+#else
+    ss <<"  ---   pqxx library:             unused\n";
+#endif
+
+#ifdef ROSE_HAVE_SQLITE3
+    ss <<"  ---   sqilte library:           " <<SQLITE_VERSION <<"\n";
+#else
+    ss <<"  ---   sqilte library:           unused\n";
+#endif
+
+#ifdef ROSE_HAVE_LIBYAML
+    ss <<"  ---   yaml library:             unknown version\n"; // not provided by the library or headers
+#else
+    ss <<"  ---   yaml library:             unused\n";
+#endif
+
+#ifdef ROSE_HAVE_LIBYICES
+    ss <<"  ---   yices library:            " <<yices_version() <<"\n";
+#else
+    ss <<"  ---   yices library:            unused\n";
+#endif
+
+#ifdef Z3_FULL_VERSION
+    ss <<"  ---   z3 library:               " <<Z3_FULL_VERSION <<" (" <<ROSE_Z3 <<")\n";
+#elif defined(ROSE_HAVE_Z3)
+    ss <<"  ---   z3 library:               unknown version (" <<ROSE_Z3 <<")\n";
+#else
+    ss <<"  ---   z3 library:               unused\n";
+#endif
+
+#else
+    ss <<"  --- binary analysis:            disabled\n";
+#endif
+
+    //-----------------------------------------------------------------------
+    // Information related to other language analysis, alphabetically. These
+    // CPP symbols with weird and inconsistent names come from ROSE's Autotools
+    // configuration system. If you remove them from this list because they're
+    // not supported anymore, then kindly also remove them from the rest of the
+    // ROSE library source code and tests!
+    //-----------------------------------------------------------------------
+
+#ifdef ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+    ss <<"  --- Ada analysis:               enabled\n";
+#else
+    ss <<"  --- Ada analysis:               disabled\n";
+#endif
+
+#ifdef ROSE_EXPERIMENTAL_CSHARP_ROSE_CONNECTION
+    ss <<"  --- C# analysis:                enabled\n";
+#else
+    ss <<"  --- C# analysis:                disabled\n";
+#endif
+
+#ifdef ROSE_EXPERIMENTAL_COBAL_ROSE_CONNECTION
+    ss <<"  --- COBOL analysis:             enabled\n";
+#else
+    ss <<"  --- COBOL analysis:             disabled\n";
+#endif
+
+#ifdef ROSE_BUILD_CUDA_LANGUAGE_SUPPORT
+    ss <<"  --- CUDA analysis:              enabled\n";
+#else
+    ss <<"  --- CUDA analysis:              disabled\n";
+#endif
+
+#ifdef ROSE_BUID_JAVA_LANGUAGE_SUPPORT
+    ss <<"  --- Java analysis:              enabled\n";
+#else
+    ss <<"  --- Java analysis:              disabled\n";
+#endif
+
+#ifdef ROSE_EXPERIMENTAL_JOVIAL_ROSE_CONNECTION
+    ss <<"  --- Jovial analysis:            enabled\n";
+#else
+    ss <<"  --- Jovial analysis:            disabled\n";
+#endif
+
+#ifdef ROSE_EXPERIMENTAL_MATLAB_ROSE_CONNECTION
+    ss <<"  --- Matlab analysis:            enabled\n";
+#else
+    ss <<"  --- Matlab analysis:            disabled\n";
+#endif
+
+#ifdef ROSE_EXPERIMENTAL_OFP_ROSE_CONNECTION
+    ss <<"  --- OFP analysis:               enabled\n";
+#else
+    ss <<"  --- OFP analysis:               disabled\n";
+#endif
+
+#ifdef ROSE_BUILD_OPENCL_LANGUAGE_SUPPORT
+    ss <<"  --- OpenCL analysis:            enabled\n";
+#else
+    ss <<"  --- OpenCL analysis:            disabled\n";
+#endif
+
+#ifdef ROSE_BUILD_PHP_LANGUAGE_SUPPORT
+    ss <<"  --- PHP analysis:               enabled\n";
+#else
+    ss <<"  --- PHP analysis:               disabled\n";
+#endif
+
+#ifdef ROSE_BUILD_PYTHON_LANGUAGE_SUPPORT
+    ss <<"  --- Python analysis:            enabled\n";
+#else
+    ss <<"  --- Python analysis:            disabled\n";
+#endif
+
+    return ss.str();
+}
 
 // DQ (11/1/2009): replaced "version()" with separate "version_number()" and "version_message()" functions.
 std::string version_number()
