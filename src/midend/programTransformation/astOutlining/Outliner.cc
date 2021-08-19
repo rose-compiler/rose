@@ -78,8 +78,13 @@ Outliner::generateFuncName (const SgStatement* stmt)
 {
   // Generate a prefix.
   stringstream s;
-  if (use_dlopen)  
-    s<< g_outlined_func_names2.next();
+  if (use_dlopen) 
+  {
+    // We may outline basic blocks from header files. A .cpp file may include multiple header files.
+    // In order to have consistent function name, we now use per file name (.cpp or .h) counters.
+    string file_name= stmt->get_startOfConstruct()->get_raw_filename(); 
+    s<< g_outlined_func_names2.next(file_name);
+  }
   else
     s << g_outlined_func_names.next ();
 
@@ -112,13 +117,17 @@ Outliner::generateFuncArgName (const SgStatement* stmt)
 {
   // Generate a prefix.
   stringstream s;
-  s << g_outlined_arg_names.next ();
+
 
   // Use the statement's raw filename to come up with a file-specific
   // tag.
   const Sg_File_Info* info = stmt->get_startOfConstruct ();
   ROSE_ASSERT (info);
-  s << hashStringToULong (info->get_raw_filename ()) << "__";
+
+  string filename= info->get_raw_filename ();
+  s << g_outlined_arg_names.next (filename);
+
+  s << hashStringToULong (filename) << "__";
 
   return s.str ();
 }
