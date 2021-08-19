@@ -24,20 +24,23 @@ private:
 
 public:
     /** Insert a record describing the number of program arguments. */
-    void insertProgramArgumentCount(const ExecutionEventPtr&, const SymbolicExpr::Ptr&);
+    void insertProgramArgumentCount(const ExecutionEventPtr&, const SymbolicExpr::Ptr &variable);
 
     /** Insert a record for a program argument.
      *
      *  The @p i and @p j are the indexes for the <code>char *argv[]</code> argument of a C or C++ program's "main" function. */
-    void insertProgramArgument(const ExecutionEventPtr&, size_t i, size_t j, const SymbolicExpr::Ptr&);
+    void insertProgramArgument(const ExecutionEventPtr&, size_t i, size_t j, const SymbolicExpr::Ptr &variable);
 
     /** Insert a record for an environment variable.
      *
      *  The @p i and @p j are the indexes for the <code>char *envp[]</code> argument of a C or C++ program's "main" function. */
-    void insertEnvironmentVariable(const ExecutionEventPtr&, size_t i, size_t j, const SymbolicExpr::Ptr&);
+    void insertEnvironmentVariable(const ExecutionEventPtr&, size_t i, size_t j, const SymbolicExpr::Ptr &variable);
 
     /** Insert a record for a system call return. */
-    void insertSystemCallReturn(const ExecutionEventPtr&, const SymbolicExpr::Ptr&);
+    void insertSystemCallReturn(const ExecutionEventPtr&, const SymbolicExpr::Ptr &variable);
+
+    /** Insert a record for a shared memory read. */
+    void insertSharedMemoryRead(const ExecutionEventPtr&, const SymbolicExpr::Ptr &variable);
 
     /** Re-establish a connection between a variable and an event. */
     void insertEvent(const ExecutionEventPtr&);

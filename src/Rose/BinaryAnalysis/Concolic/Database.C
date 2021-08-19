@@ -120,8 +120,9 @@ initSchema(Sawyer::Database::Connection db) {
 
            // Identification
            " test_case integer not null,"               // test case to which this event belongs
-           " location_primary integer not null,"        // event location.primary field
-           " location_secondary integer not null,"      // events location.secondary field
+           " location_primary integer not null,"        // event location.primary property
+           " location_secondary integer not null,"      // events location.secondary property
+           " location_when integer not null,"           // events location.when property
            " instruction_pointer integer not null,"     // value of the instruction pointer register at this event
            " name varchar(32) not null,"                // arbitrary name for debugging
 
@@ -136,6 +137,7 @@ initSchema(Sawyer::Database::Connection db) {
            " start_va integer,"                         // starting address for actions that need one
            " scalar integer,"                           // scalar value for those actions that need one
            " bytes bytea,"                              // vector value for those actions that need one
+           " symbolic bytea,"                           // serialized SymbolicExpr for actions that need one
 
            "constraint fk_test_suite foreign key (test_suite) references test_suites (id),"
            "constraint fk_test_case foreign key (test_case) references test_cases (id))");
@@ -422,8 +424,8 @@ updateObject(const Database::Ptr &db, ExecutionEventId id, const ExecutionEvent:
     auto iter = db->connection().stmt("select created_ts, test_case, location_primary, location_secondary, instruction_pointer,"
                                       // 5           6         7       8      9     10          11
                                       " action_type, start_va, scalar, bytes, name, input_type, input_variable,"
-                                      // 12       13
-                                      " input_i1, input_i2"
+                                      // 12       13        14        15
+                                      " input_i1, input_i2, symbolic, location_when"
                                       " from execution_events"
                                       " where id = ?id"
                                       " order by created_ts")
@@ -438,7 +440,15 @@ updateObject(const Database::Ptr &db, ExecutionEventId id, const ExecutionEvent:
 
     obj->timestamp(*iter->get<std::string>(0));
     obj->testCase(testcase);
-    obj->location(ExecutionLocation(*iter->get<uint64_t>(2), *iter->get<size_t>(3)));
+    When when;
+    if (*iter->get<int>(15) == 0) {
+        when = When::PRE;
+    } else if (*iter->get<int>(15) == 1) {
+        when = When::POST;
+    } else {
+        ASSERT_not_reachable("invalid 'when' field: " + boost::lexical_cast<std::string>(*iter->get<std::string>(15)));
+    }
+    obj->location(ExecutionLocation(*iter->get<uint64_t>(2), *iter->get<size_t>(3), when));
     obj->instructionPointer(*iter->get<rose_addr_t>(4));
     obj->name(*iter->get<std::string>(9));
 
@@ -453,6 +463,8 @@ updateObject(const Database::Ptr &db, ExecutionEventId id, const ExecutionEvent:
         obj->inputType(InputType::ENVIRONMENT);
     } else if ("syscall-ret" == inputType) {
         obj->inputType(InputType::SYSTEM_CALL_RETVAL);
+    } else if ("shared-memory-read" == inputType) {
+        obj->inputType(InputType::SHARED_MEMORY_READ);
     } else {
         ASSERT_not_reachable("invalid input type \"" + StringUtility::cEscape(inputType) + "\"");
     }
@@ -466,6 +478,17 @@ updateObject(const Database::Ptr &db, ExecutionEventId id, const ExecutionEvent:
         obj->inputVariable(var);
     } else {
         obj->inputVariable(SymbolicExpr::Ptr());
+    }
+
+    if (auto serializedSymbolic = iter->get<std::string>(14)) {
+        std::istringstream ss(*serializedSymbolic);
+        boost::archive::binary_iarchive archive(ss);
+        SymbolicExpr::Ptr symbolic;
+        archive >>symbolic;
+        ASSERT_not_null(symbolic);
+        obj->symbolic(symbolic);
+    } else {
+        obj->symbolic(SymbolicExpr::Ptr());
     }
 
     obj->inputI1(iter->get<size_t>(12).orElse(0));
@@ -509,8 +532,11 @@ updateObject(const Database::Ptr &db, ExecutionEventId id, const ExecutionEvent:
         obj->actionType(ExecutionEvent::Action::WRITE_REGISTER);
         ASSERT_require(scalar);
         obj->scalar(*scalar);
-        ASSERT_require(bytes);
-        obj->bytes(*bytes);
+        if (bytes) {
+            obj->bytes(*bytes);
+        } else {
+            ASSERT_not_null(obj->symbolic());
+        }
     } else if ("restore_registers" == action) {
         obj->actionType(ExecutionEvent::Action::RESTORE_REGISTERS);
         ASSERT_require(bytes);
@@ -521,6 +547,13 @@ updateObject(const Database::Ptr &db, ExecutionEventId id, const ExecutionEvent:
         obj->scalar(*scalar);
         ASSERT_require(bytes);
         obj->bytes(*bytes);
+    } else if ("os_shm_read" == action) {
+        obj->actionType(ExecutionEvent::Action::OS_SHM_READ);
+        ASSERT_require(startVa);
+        ASSERT_require(scalar);
+        obj->memoryLocation(AddressInterval::baseSize(*startVa, *scalar));
+        if (bytes)
+            obj->bytes(*bytes);
     } else {
         throw Exception("unrecognized execution action \"" + action + "\" where id=" + boost::lexical_cast<std::string>(*id));
     }
@@ -547,7 +580,9 @@ updateDb(const Database::Ptr &db, ExecutionEventId id, const ExecutionEvent::Ptr
                                      "  action_type = ?action_type,"
                                      "  start_va = ?start_va,"
                                      "  scalar = ?scalar,"
-                                     "  bytes = ?bytes"
+                                     "  bytes = ?bytes,"
+                                     "  symbolic = ?symbolic,"
+                                     "  location_when = ?location_when"
                                      " where id = ?id");
     } else {
         std::string ts = obj->timestamp().empty() ? timestamp() : obj->timestamp();
@@ -556,22 +591,34 @@ updateDb(const Database::Ptr &db, ExecutionEventId id, const ExecutionEvent::Ptr
                                      " id, created_ts, test_suite,"
                                      " test_case, location_primary, location_secondary, instruction_pointer, name,"
                                      " input_type, input_variable, input_i1, input_i2,"
-                                     " action_type, start_va, scalar, bytes"
+                                     " action_type, start_va, scalar, bytes, symbolic, location_when"
                                      ") values ("
                                      " ?id, ?created_ts, ?test_suite,"
                                      " ?test_case, ?location_primary, ?location_secondary, ?instruction_pointer, ?name,"
                                      " ?input_type, ?input_variable, ?input_i1, ?input_i2,"
-                                     " ?action_type, ?start_va, ?scalar, ?bytes"
+                                     " ?action_type, ?start_va, ?scalar, ?bytes, ?symbolic, ?location_when"
                                      ")")
                .bind("created_ts", ts)
                .bind("test_suite", *db->id(db->testSuite()));
     }
 
+    int when = -1;
+    switch (obj->location().when()) {
+        case When::PRE:
+            when = 0;
+            break;
+        case When::POST:
+            when = 1;
+            break;
+    }
+    ASSERT_forbid(-1 == when);
+
     stmt
         .bind("id", *id)
         .bind("test_case", *db->id(obj->testCase(), Update::YES))
-        .bind("location_primary", obj->location().primary)
-        .bind("location_secondary", obj->location().secondary)
+        .bind("location_primary", obj->location().primary())
+        .bind("location_secondary", obj->location().secondary())
+        .bind("location_when", when)
         .bind("instruction_pointer", obj->instructionPointer())
         .bind("name", obj->name())
         .bind("input_i1", obj->inputI1())
@@ -593,6 +640,9 @@ updateDb(const Database::Ptr &db, ExecutionEventId id, const ExecutionEvent::Ptr
         case InputType::SYSTEM_CALL_RETVAL:
             stmt.bind("input_type", "syscall-ret");
             break;
+        case InputType::SHARED_MEMORY_READ:
+            stmt.bind("input_type", "shared-memory-read");
+            break;
     }
 
     if (SymbolicExpr::Ptr var = obj->inputVariable()) {
@@ -604,6 +654,17 @@ updateDb(const Database::Ptr &db, ExecutionEventId id, const ExecutionEvent::Ptr
         stmt.bind("input_variable", ss.str());
     } else {
         stmt.bind("input_variable", Sawyer::Nothing());
+    }
+
+    if (SymbolicExpr::Ptr symbolic = obj->symbolic()) {
+        std::ostringstream ss;
+        {
+            boost::archive::binary_oarchive archive(ss);
+            archive <<symbolic;
+        }
+        stmt.bind("symbolic", ss.str());
+    } else {
+        stmt.bind("symbolic", Sawyer::Nothing());
     }
 
     switch (obj->actionType()) {
@@ -655,6 +716,13 @@ updateDb(const Database::Ptr &db, ExecutionEventId id, const ExecutionEvent::Ptr
             stmt.bind("start_va", Sawyer::Nothing());
             stmt.bind("scalar", obj->scalar());
             stmt.bind("bytes", obj->bytes());
+            break;
+        case ExecutionEvent::Action::OS_SHM_READ:
+            stmt.bind("action_type", "os_shm_read");
+            stmt.bind("start_va", obj->memoryLocation().least());
+            stmt.bind("scalar", obj->memoryLocation().size());
+            stmt.bind("bytes", obj->bytes());
+            break;
     }
 
     stmt.run();
@@ -902,7 +970,8 @@ Database::executionEvents() {
     std::vector<ExecutionEventId> retval;
     Sawyer::Database::Statement stmt;
     if (testSuiteId_) {
-        stmt = connection_.stmt("select id from execution_events where test_suite = ?tsid order by created_ts")
+        stmt = connection_.stmt("select id from execution_events where test_suite = ?tsid order by created_ts"
+                                " order by location_primary, location_when, location_secondary")
                .bind("tsid", *testSuiteId_);
     } else {
         stmt = connection_.stmt("select id from execution_units order by created_ts");
@@ -917,7 +986,7 @@ Database::executionEvents(TestCaseId tcid) {
     ASSERT_require(tcid);
     Sawyer::Database::Statement stmt;
     stmt = connection_.stmt("select id from execution_events where test_case = ?tcid"
-                            " order by location_primary, location_secondary")
+                            " order by location_primary, location_when, location_secondary")
            .bind("tcid", *tcid);
     std::vector<ExecutionEventId> retval;
     for (auto row: stmt)
@@ -931,13 +1000,27 @@ Database::executionEventsSince(TestCaseId tcid, ExecutionEventId startingAtId) {
     ASSERT_require(startingAtId);
     ExecutionEvent::Ptr startingAt = object(startingAtId, Update::NO);
 
+    int when = -1;
+    switch (startingAt->location().when()) {
+        case When::PRE:
+            when = 0;
+            break;
+        case When::POST:
+            when = 1;
+            break;
+    }
+    ASSERT_forbid(-1 == when);
+
     Sawyer::Database::Statement stmt;
     stmt = connection_.stmt("select id from execution_events"
-                            " where (location_primary = ?location_primary and location_secondary >= ?location_secondary)"
-                            " or (location_primary > ?location_primary)"
-                            " order by location_primary, location_secondary")
-           .bind("location_primary", startingAt->location().primary)
-           .bind("location_secondary", startingAt->location().secondary);
+                            " where (location_primary > ?location_primary)"
+                            " or (location_primary = ?location_primary and location_when > ?location_when)"
+                            " or (location_primary = ?location_primary and location_when = ?location_when and"
+                            "     location_secondary > ?location_secondary)"
+                            " order by location_primary, location_when, location_secondary")
+           .bind("location_primary", startingAt->location().primary())
+           .bind("location_secondary", startingAt->location().secondary())
+           .bind("location_when", when);
     std::vector<ExecutionEventId> retval;
     for (auto row: stmt)
         retval.push_back(ExecutionEventId(row.get<size_t>(0)));
@@ -959,7 +1042,7 @@ Database::executionEvents(TestCaseId tcid, uint64_t primaryKey) {
     Sawyer::Database::Statement stmt;
     stmt = connection_.stmt("select id from execution_events"
                             " where test_case = ?tcid and location_primary = ?location_primary"
-                            " order by location_secondary")
+                            " order by location_primary, location_when, location_secondary")
            .bind("tcid", *tcid)
            .bind("location_primary", primaryKey);
     std::vector<ExecutionEventId> retval;
@@ -974,7 +1057,7 @@ Database::executionEventKeyFrames(TestCaseId tcid) {
     Sawyer::Database::Statement stmt;
     stmt = connection_.stmt("select distinct location_primary from execution_events"
                             " where test_case = ?tcid"
-                            " order by location_primary, location_secondary")
+                            " order by location_primary, location_when, location_secondary")
            .bind("tcid", *tcid);
     std::vector<uint64_t> retval;
     for (auto row: stmt)

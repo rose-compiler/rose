@@ -4,6 +4,7 @@
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
+#include <Rose/BinaryAnalysis/Concolic/ExecutionLocation.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Types.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Rose/BinaryAnalysis/RegisterDescriptor.h>
@@ -27,12 +28,17 @@ public:
     /** Information about system calls. */
     using SystemCallMap = Sawyer::Container::Map<int /*syscall*/, SystemCallPtr>;
 
+    /** Information about shared memory. */
+    using SharedMemoryMap = Sawyer::Container::IntervalMap<AddressInterval, SharedMemoryPtr>;
+
 private:
     DatabasePtr db_;
     TestCaseId testCaseId_;
     TestCasePtr testCase_;
-    ExecutionLocation curLocation_;
+    ExecutionLocation currentLocation_;                 // incremented when the instruction begins execution
     SystemCallMap systemCalls_;
+    SharedMemoryMap sharedMemory_;
+    SymbolicExpr::ExprExprHashMap variableValues_;      // used for substitutions
 
 protected:
     // See "instance" methods in subclasses
@@ -64,13 +70,14 @@ public:
 
     /** Property: Current execution location.
      *
-     *  The execution location has two parts: a primary and a secondary. The primary is the execution path length, and the
-     *  secondary is a serial number that starts at zero for each primary value. Execution locations correspond to the
-     *  locations stored in execution events, therefore when an event is created in a parent test case and copied to a child
-     *  test case and then the child test case's events are replayed, the execution locations as the child is replayed must
-     *  match the execution locations that existed in the parent when the execution events were created.
+     *  The execution location has three parts: a primary and a secondary, and whether it occurs before or after the
+     *  corresponding instruction. The primary is the execution path length, and the secondary is a serial number that starts
+     *  at zero for each primary value. Execution locations correspond to the locations stored in execution events, therefore
+     *  when an event is created in a parent test case and copied to a child test case and then the child test case's events
+     *  are replayed, the execution locations as the child is replayed must match the execution locations that existed in the
+     *  parent when the execution events were created.
      *
-     *  See also, @ref incrementPathLength and @ref nextLocation.
+     *  See also, @ref nextInstructionLocation and @ref nextEventLocation.
      *
      * @{ */
     ExecutionLocation currentLocation() const;
@@ -79,7 +86,7 @@ public:
 
     /** Property: Information about system calls.
      *
-     *  This is a map indexed by system call number (e.g., SYS_getpid). The values of the map contains two types of information:
+     *  This is a map indexed by system call number (e.g., SYS_getpid). The values of the map contain two types of information:
      *
      *  @li Information about how a system call should behave. For instance, SYS_getpid should return the same value each time
      *  it's called.
@@ -92,6 +99,24 @@ public:
     SystemCallMap& systemCalls();
     /** @} */
 
+    /** Property: Information about shared memory.
+     *
+     *  This is a map indexed by concrete address. The values of the contain two types of information:
+     *
+     *  @li Information about how the shared memory region should behave. For instance, a reads from shared memory that's
+     *  attached to a timer would probably return monotonically increasing values.
+     *
+     *  @li Information to make the declared behavior possible. For instance, the concrete and symbolic values returned
+     *  last time the timer's memory was read so that the new return value can be constrained to be greater than or equal
+     *  to the previously returned value.
+     *
+     *  Each concrete address can have only one @ref SharedMemory object, although each object can have a list of callbacks.
+     *
+     * @{ */
+    const SharedMemoryMap& sharedMemory() const;
+    SharedMemoryMap& sharedMemory();
+    /** @} */
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions that can be called before execution starts.
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -100,6 +125,12 @@ public:
      *
      *  This function declares how system calls are handled and is called from the @c instance methods (construction). */
     virtual void configureSystemCalls() = 0;
+
+    /** Configures shared memory behavior.
+     *
+     *  This function declares how shared memory regions are handled and is called from the @c instance methods
+     *  (constructors). */
+    virtual void configureSharedMemory() = 0;
 
     /** Prepares to execute the specimen concretely.
      *
@@ -142,9 +173,9 @@ public:
 
     /** Saves a list of events.
      *
-     *  Each event's test case is set to this object's test case, and the event locations set by calling @ref nextLocation for
-     *  each event. The events are written to the database. */
-    void saveEvents(const std::vector<ExecutionEventPtr>&);
+     *  Each event's test case is set to this object's test case, and the event locations set by calling @ref
+     *  nextLocationLocation for each event. The events are written to the database. */
+    void saveEvents(const std::vector<ExecutionEventPtr>&, When);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // High-level functions controlling concrete execution.
@@ -155,7 +186,7 @@ public:
      *  This is normally called immediately after @ref load. It processes all the events recorded in the database for this
      *  test case, causing the concrete execution to return to the state it was in after the last event.  Returns the number
      *  of events processed. */
-    size_t playAllEvents();
+    size_t playAllEvents(const Partitioner2::Partitioner&);
 
     /** Replay an execution event.
      *
@@ -167,8 +198,8 @@ public:
 
     /** Run to the specified event.
      *
-     *  Execution is advanced until it reaches the specified event. */
-    virtual void runToEvent(const ExecutionEventPtr&);
+     *  While the current instruction is less than the specified event location, execute the instruction. */
+    virtual void runToEvent(const ExecutionEventPtr&, const Partitioner2::Partitioner&);
 
     /** Read memory bytes as an unsigned integer.
      *
@@ -238,20 +269,34 @@ public:
      *  Executes the instruction and increments the length of the execution path.
      *
      * @{ */
-    virtual void executeInstruction() = 0;
+    virtual void executeInstruction(const Partitioner2::Partitioner&) = 0;
     virtual void executeInstruction(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&, SgAsmInstruction*) = 0;
     /** @} */
 
     /** Increment the primary part of the current location.
      *
-     *  The primary field of the @ref currentLocation property is incremented, and the secondary field is set to zero. Returns
-     *  the new location. */
-    const ExecutionLocation& incrementPathLength();
+     *  The @c primary field of the @ref currentLocation property is incremented, the @c secondary field is set to zero, and
+     *  the @c when field is set to @c AFTER. Returns the new location. */
+    const ExecutionLocation& nextInstructionLocation();
 
     /** Increment the secondary part of the current location.
      *
-     *  Increments the serial number for the @ref currentLocation property and returns the new location. */
-    const ExecutionLocation& nextLocation();
+     *  Increments the serial number for the @ref currentLocation property and returns the new location with its @c when
+     *  property set to either @c PRE or @c POST.
+     *
+     * @{ */
+    const ExecutionLocation& nextEventLocation(When);
+    /** @} */
+
+    /** Variables and values for substitutions.
+     *
+     *  Some events, such as shared-memory-read, have no action but are able to define variables and give them values.
+     *  This property holds those variable = value assignments.
+     *
+     * @{ */
+    const SymbolicExpr::ExprExprHashMap& variableValues() const;
+    SymbolicExpr::ExprExprHashMap& variableValues();
+    /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions related to symbolic states.
@@ -298,6 +343,14 @@ public:
      *  This function is called after a system call instruction has been executed symbolically and the system call has been
      *  entered concretely. */
     virtual void systemCall(const Partitioner2::Partitioner&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&) {}
+
+    /** Called when shared memory is read.
+     *
+     *  This function is called as soon as shared memory is read. It should either perform the read operation and return
+     *  the result, or return null in which case the caller will do the usual read operation. */
+    virtual InstructionSemantics2::BaseSemantics::SValuePtr
+    sharedMemoryRead(const Partitioner2::Partitioner&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
+                     const SharedMemoryPtr&, rose_addr_t memVa, size_t nBytes);
 };
 
 } // namespace

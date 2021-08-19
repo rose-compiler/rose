@@ -6,10 +6,13 @@
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
 #include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
 #include <Rose/BinaryAnalysis/Concolic/InputVariables.h>
+#include <Rose/BinaryAnalysis/Concolic/SharedMemory.h>
 #include <Rose/BinaryAnalysis/Concolic/SystemCall.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 
 using namespace Sawyer::Message::Common;
+namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
+namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -42,6 +45,16 @@ Architecture::testCase() const {
     return testCase_;
 }
 
+ExecutionLocation
+Architecture::currentLocation() const {
+    return currentLocation_;
+}
+
+void
+Architecture::currentLocation(const ExecutionLocation &loc) {
+    currentLocation_ = loc;
+}
+
 const Architecture::SystemCallMap&
 Architecture::systemCalls() const {
     return systemCalls_;
@@ -52,24 +65,34 @@ Architecture::systemCalls() {
     return systemCalls_;
 }
 
+const Architecture::SharedMemoryMap&
+Architecture::sharedMemory() const {
+    return sharedMemory_;
+}
+
+Architecture::SharedMemoryMap&
+Architecture::sharedMemory() {
+    return sharedMemory_;
+}
+
 void
-Architecture::saveEvents(const std::vector<ExecutionEvent::Ptr> &events) {
+Architecture::saveEvents(const std::vector<ExecutionEvent::Ptr> &events, When when) {
     for (const ExecutionEvent::Ptr &event: events) {
         ASSERT_not_null(event);
         event->testCase(testCase_);
-        event->location(nextLocation());
+        event->location(nextEventLocation(when));
         database()->save(event);
     }
 }
 
 size_t
-Architecture::playAllEvents() {
+Architecture::playAllEvents(const P2::Partitioner &partitioner) {
     size_t retval = 0;
     std::vector<ExecutionEventId> eventIds = db_->executionEvents(testCaseId_);
     for (ExecutionEventId eventId: eventIds) {
         ExecutionEvent::Ptr event = db_->object(eventId, Update::NO);
         ASSERT_not_null(event);
-        runToEvent(event);
+        runToEvent(event, partitioner);
         bool handled = playEvent(event);
         ASSERT_always_require(handled);
         ++retval;
@@ -80,21 +103,22 @@ Architecture::playAllEvents() {
 bool
 Architecture::playEvent(const ExecutionEvent::Ptr &event) {
     ASSERT_not_null(event);
-    SAWYER_MESG(mlog[DEBUG]) <<"processing " <<event->printableName(database())
-                             <<" at " <<event->location().primary <<":" <<event->location().secondary
-                             <<" ip=" <<StringUtility::addrToString(event->instructionPointer()) <<"\n";
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+
+    SAWYER_MESG(debug) <<"processing " <<event->printableName(database())
+                       <<" ip=" <<StringUtility::addrToString(event->instructionPointer()) <<"\n";
     switch (event->actionType()) {
         case ExecutionEvent::Action::NONE:
-            SAWYER_MESG(mlog[DEBUG]) <<"  no action necessary\n";
+            SAWYER_MESG(debug) <<"  no action necessary\n";
             return true;
 
         case ExecutionEvent::Action::MAP_MEMORY: {
             AddressInterval where = event->memoryLocation();
             ASSERT_forbid(where.isEmpty());
-            SAWYER_MESG(mlog[DEBUG]) <<"  map " <<where.size() <<" bytes at " <<StringUtility::addrToString(where) <<", prot=";
+            SAWYER_MESG(debug) <<"  map " <<where.size() <<" bytes at " <<StringUtility::addrToString(where) <<", prot=";
             unsigned prot = 0;
             for (char letter: event->bytes()) {
-                SAWYER_MESG(mlog[DEBUG]) <<letter;
+                SAWYER_MESG(debug) <<letter;
                 switch (letter) {
                     case 'r':
                         prot |= MemoryMap::READABLE;
@@ -123,8 +147,8 @@ Architecture::playEvent(const ExecutionEvent::Ptr &event) {
 
         case ExecutionEvent::Action::WRITE_MEMORY: {
             AddressInterval where = event->memoryLocation();
-            SAWYER_MESG(mlog[DEBUG]) <<"  write memory " <<StringUtility::plural(where.size(), "bytes")
-                                     <<" at " <<StringUtility::addrToString(where) <<"\n";
+            SAWYER_MESG(debug) <<"  write memory " <<StringUtility::plural(where.size(), "bytes")
+                               <<" at " <<StringUtility::addrToString(where) <<"\n";
             ASSERT_forbid(where.isEmpty());
             ASSERT_require(where.size() == event->bytes().size());
             size_t nWritten = writeMemory(where.least(), event->bytes());
@@ -135,8 +159,8 @@ Architecture::playEvent(const ExecutionEvent::Ptr &event) {
 
         case ExecutionEvent::Action::HASH_MEMORY: {
             AddressInterval where = event->memoryLocation();
-            SAWYER_MESG(mlog[DEBUG]) <<"  hash memory " <<StringUtility::plural(where.size(), "bytes")
-                                     <<" at " <<StringUtility::addrToString(where) <<"\n";
+            SAWYER_MESG(debug) <<"  hash memory " <<StringUtility::plural(where.size(), "bytes")
+                               <<" at " <<StringUtility::addrToString(where) <<"\n";
             ASSERT_forbid(where.isEmpty());
             std::vector<uint8_t> buf = readMemory(where.least(), where.size());
             if (buf.size() != where.size()) {
@@ -155,9 +179,34 @@ Architecture::playEvent(const ExecutionEvent::Ptr &event) {
 
         case ExecutionEvent::Action::WRITE_REGISTER: {
             const RegisterDescriptor reg = RegisterDescriptor::fromRaw(event->scalar());
-            const uint64_t value = event->words()[0];
-            SAWYER_MESG(mlog[DEBUG]) <<"  write register " <<reg <<" = " <<StringUtility::toHex2(value, reg.nBits()) <<"\n";
-            writeRegister(reg, value);
+            if (SymbolicExpr::Ptr symbolicValue = event->symbolic()) {
+                if (debug) {
+                    debug <<"  write register " <<reg <<" = " <<*symbolicValue <<"\n";
+                    for (auto varVal: variableValues_)
+                        debug <<"    where " <<*varVal.first <<" = " <<*varVal.second <<"\n";
+                }
+                SymbolicExpr::Ptr substValue = symbolicValue->substituteMultiple(variableValues_);
+                SAWYER_MESG(debug) <<"    substitution result: " <<*substValue <<"\n";
+                ASSERT_require(substValue->isIntegerConstant());
+                ASSERT_require(substValue->nBits() == reg.nBits());
+                ASSERT_require(substValue->nBits() <= 64);
+                writeRegister(reg, *substValue->toUnsigned());
+            } else {
+                const uint64_t concreteValue = event->words()[0];
+                SAWYER_MESG(debug) <<"  write register "
+                                   <<reg <<" = " <<StringUtility::toHex2(concreteValue, reg.nBits()) <<"\n";
+                writeRegister(reg, concreteValue);
+            }
+            return true;
+        }
+
+        case ExecutionEvent::Action::OS_SHM_READ: {
+            SymbolicExpr::Ptr variable = event->inputVariable();
+            ASSERT_not_null(variable);
+            SymbolicExpr::Ptr value = event->bytesAsSymbolic();
+            ASSERT_not_null(value);
+            variableValues_.insert(std::make_pair(variable, value));
+            SAWYER_MESG(debug) <<"  shared memory read " <<*variable <<" = " <<*value <<"\n";
             return true;
         }
 
@@ -167,12 +216,32 @@ Architecture::playEvent(const ExecutionEvent::Ptr &event) {
     }
 }
 
+const SymbolicExpr::ExprExprHashMap&
+Architecture::variableValues() const {
+    return variableValues_;
+}
+
+SymbolicExpr::ExprExprHashMap&
+Architecture::variableValues() {
+    return variableValues_;
+}
+
 void
-Architecture::runToEvent(const ExecutionEvent::Ptr &event) {
+Architecture::runToEvent(const ExecutionEvent::Ptr &event, const P2::Partitioner &partitioner) {
     ASSERT_not_null(event);
-    while (curLocation_.primary < event->location().primary)
-        executeInstruction();
-    ASSERT_require(curLocation_.primary == event->location().primary);
+
+    if (event->location().when() == When::PRE) {
+        while (currentLocation().primary() < event->location().primary()) {
+            executeInstruction(partitioner);
+            nextInstructionLocation();
+        }
+    } else {
+        ASSERT_require(event->location().when() == When::POST);
+        while (currentLocation().primary() <= event->location().primary()) {
+            executeInstruction(partitioner);
+            nextInstructionLocation();
+        }
+    }
 }
 
 uint64_t
@@ -209,16 +278,15 @@ Architecture::readCString(rose_addr_t va, size_t maxBytes) {
 }
 
 const ExecutionLocation&
-Architecture::incrementPathLength() {
-    ++curLocation_.primary;
-    curLocation_.secondary = 0;
-    return curLocation_;
+Architecture::nextInstructionLocation() {
+    currentLocation_ = currentLocation_.nextPrimary();
+    return currentLocation_;
 }
 
 const ExecutionLocation&
-Architecture::nextLocation() {
-    ++curLocation_.secondary;
-    return curLocation_;
+Architecture::nextEventLocation(When when) {
+    currentLocation_ = currentLocation_.nextSecondary(when);
+    return currentLocation_;
 }
 
 void
@@ -229,6 +297,12 @@ Architecture::restoreInputVariables(InputVariables &inputVariables, const Partit
         if (event->inputVariable())
             inputVariables.insertEvent(event);
     }
+}
+
+BS::SValue::Ptr
+Architecture::sharedMemoryRead(const P2::Partitioner&, const BS::RiscOperators::Ptr&, const SharedMemory::Ptr&,
+                               rose_addr_t /*memoryVa*/, size_t /*nBytes*/) {
+    return BS::SValue::Ptr();
 }
 
 } // namespace

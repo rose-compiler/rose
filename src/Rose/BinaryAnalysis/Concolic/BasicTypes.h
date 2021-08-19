@@ -22,11 +22,26 @@ enum class ShowAssertions { NO, YES };
 
 /** The different kinds of program inputs. */
 enum class InputType {
-    NONE,                                       /**< Not an input type. */
-    PROGRAM_ARGUMENT_COUNT,                     /**< Number of program arguments. */
-    PROGRAM_ARGUMENT,                           /**< Variable is (part of) a program argument. */
-    ENVIRONMENT,                                /**< Variable is (part of) a program environment. */
-    SYSTEM_CALL_RETVAL                          /**< Variable is return value of system call. */
+    NONE,                                               /**< Not an input type. */
+    PROGRAM_ARGUMENT_COUNT,                             /**< Number of program arguments. */
+    PROGRAM_ARGUMENT,                                   /**< Variable is (part of) a program argument. */
+    ENVIRONMENT,                                        /**< Variable is (part of) a program environment. */
+    SYSTEM_CALL_RETVAL,                                 /**< Variable is return value of system call. */
+    SHARED_MEMORY_READ                                  /**< Variable is the result of reading shared memory. */
+};
+
+/** Direction of access. */
+enum class IoDirection {
+    READ,                                               /**< Data is being read from memory. */
+    WRITE                                               /**< Data is being written to memory. */
+};
+
+/** When something happens.
+ *
+ *  This is usually used to describe when an execution event happens relative to a particular instruction. */
+enum class When {
+    PRE,                                                /**< Event is replayed before the corresponding instruction. */
+    POST                                                /**< Event is replayed after the corresponding instruction. */
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -66,6 +81,8 @@ using DatabasePtr = Sawyer::SharedPointer<Database>;
 class ExecutionEvent;
 using ExecutionEventPtr = Sawyer::SharedPointer<ExecutionEvent>;
 
+class ExecutionLocation;
+
 class ExecutionManager;
 using ExecutionManagerPtr = Sawyer::SharedPointer<ExecutionManager>;
 
@@ -76,6 +93,12 @@ using LinuxExecutorPtr = Sawyer::SharedPointer<LinuxExecutor>;
 
 class LinuxI386;
 using LinuxI386Ptr = Sawyer::SharedPointer<LinuxI386>;
+
+class SharedMemory;
+using SharedMemoryPtr = Sawyer::SharedPointer<SharedMemory>;
+
+class SharedMemoryCallback;
+using SharedMemoryCallbackPtr = Sawyer::SharedPointer<SharedMemoryCallback>;
 
 class Specimen;
 using SpecimenPtr = Sawyer::SharedPointer<Specimen>;
@@ -96,26 +119,6 @@ using TestSuitePtr = Sawyer::SharedPointer<TestSuite>;
 
 class LinuxExitStatus;
 using LinuxExitStatusPtr = Sawyer::SharedPointer<LinuxExitStatus>;
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Simple structs.
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/** Location of event.
- *
- *  An event location consists of a primary value and a secondary value, both of which are unsigned integers. Depending on the
- *  architecture, the primary value might be the number of instructions executed (i.e, the length of the current execution
- *  path). The secondary value is usually just a sequence number for ordering events that all occur at the same primary
- *  value. */
-struct ExecutionLocation {
-    uint64_t primary;                               /**< Primary location value. */
-    uint64_t secondary;                             /**< Secondary location value. */
-
-    ExecutionLocation()
-        : primary(0), secondary(0) {}
-    ExecutionLocation(uint64_t primary, uint64_t secondary)
-        : primary(primary), secondary(secondary) {}
-};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Database

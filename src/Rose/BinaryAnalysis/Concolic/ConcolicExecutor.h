@@ -69,7 +69,8 @@ private:
     const Partitioner2::Partitioner &partitioner_;      // ROSE disassembly info about the specimen
     ArchitecturePtr process_;                           // subordinate process, concrete state
     InputVariables &inputVariables_;                    // where did symbolic variables come from?
-    bool hadSystemCall_;                                // true if we need to call process_->systemCall
+    bool hadSystemCall_;                                // true if we need to call process_->systemCall, cleared each insn
+    bool hadSharedMemoryRead_;                          // set when shared memory is read, cleared each instruction
 
 protected:
     /** Allocating constructor. */
@@ -79,7 +80,7 @@ protected:
                   const SmtSolverPtr &solver)
         : Super(state, solver), REG_PATH(state->registerState()->registerDictionary()->findOrThrow("path")),
           settings_(settings), db_(db), testCase_(testCase), partitioner_(partitioner), process_(process),
-          inputVariables_(inputVariables), hadSystemCall_(false) {
+          inputVariables_(inputVariables), hadSystemCall_(false), hadSharedMemoryRead_(false) {
         ASSERT_not_null(db);
         ASSERT_not_null(testCase);
         ASSERT_not_null(process);
@@ -150,9 +151,9 @@ public:
 
     /** Property: Had system call.
      *
-     *  Set when processing an instruction symbolically that is a system call. This allows the system call handling to be
-     *  delayed until after the concrete half of the execution is performed, namely stepping into the system call but not yet
-     *  performing it.
+     *  Cleared at the beginning of each instruction, and set when processing an instruction symbolically that is a system
+     *  call. This allows the system call handling to be delayed until after the concrete half of the execution is performed,
+     *  namely stepping into the system call but not yet performing it.
      *
      * @{ */
     bool hadSystemCall() const {
@@ -160,6 +161,20 @@ public:
     }
     void hadSystemCall(bool b) {
         hadSystemCall_ = b;
+    }
+    /** @} */
+
+    /** Property: Had a shared memory read.
+     *
+     *  Cleared at the beginning of each instruction, and set when processing an instruction symbolically that reads from known
+     *  shared memory.
+     *
+     * @{ */
+    bool hadSharedMemoryRead() const {
+        return hadSharedMemoryRead_;
+    }
+    void hadSharedMemoryRead(bool b) {
+        hadSharedMemoryRead_ = b;
     }
     /** @} */
 
@@ -194,6 +209,9 @@ public:
 
 public:
     // Base class overrides -- the acutal RISC operations
+
+    virtual void startInstruction(SgAsmInstruction*) override;
+
     virtual void interrupt(int majr, int minr) ROSE_OVERRIDE;
 
     virtual InstructionSemantics2::BaseSemantics::SValuePtr
@@ -206,6 +224,9 @@ public:
 
     virtual InstructionSemantics2::BaseSemantics::SValuePtr
     peekRegister(RegisterDescriptor reg, const InstructionSemantics2::BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
+
+    virtual void
+    writeRegister(RegisterDescriptor, const InstructionSemantics2::BaseSemantics::SValuePtr&) override;
 
     virtual InstructionSemantics2::BaseSemantics::SValuePtr
     readMemory(RegisterDescriptor segreg, const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
@@ -351,7 +372,8 @@ private:
     Partitioner2::Partitioner partition(const DatabasePtr&, const SpecimenPtr&);
 
     // Create the process for the concrete execution.
-    ArchitecturePtr makeProcess(const DatabasePtr&, const TestCaseId&, const boost::filesystem::path &tempDir);
+    ArchitecturePtr makeProcess(const DatabasePtr&, const TestCaseId&, const boost::filesystem::path &tempDir,
+                                const Partitioner2::Partitioner&);
 
     // Create the dispatcher, operators, and memory and register state for the symbolic execution.
     Emulation::DispatcherPtr makeDispatcher(const ArchitecturePtr&, const Partitioner2::Partitioner&, const SmtSolver::Ptr&);
