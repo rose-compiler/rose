@@ -94,6 +94,12 @@ namespace Outliner
 
   const std::string DEFAULT_OUTPUT_PATH="/tmp";
 
+  // If this variable has non empty value, we use it as the name for a single .so file 
+  // including all outlined functions from multiple files
+  // An example value of this variable can be "master_shared_library.so" 
+  // output_path specifies the path to this file.
+  ROSE_DLL_API extern std::string MASTER_SHARED_LIB_NAME;
+
  // DQ (7/13/2021): Save the SgSourceFile used when handling dynamic libraries.
     ROSE_DLL_API extern SgSourceFile* saved_source_file_for_dynamic_library;
 

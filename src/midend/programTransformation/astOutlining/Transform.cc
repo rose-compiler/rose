@@ -479,7 +479,14 @@ Outliner::outlineBlock (SgBasicBlock* s, const string& func_name_str)
     if (Outliner::copy_origFile)
     {
       string lib_file_base_name = StringUtility::stripFileSuffixFromFileName(StringUtility::stripPathFromFileName(generateLibSourceFileName (s))); 
-      lib_name = output_path+"/"+ lib_file_base_name +".so"; 
+      lib_name = output_path+"/"+ lib_file_base_name +".so";
+      if (MASTER_SHARED_LIB_NAME.size()==0)
+      {
+        string lib_file_base_name = StringUtility::stripFileSuffixFromFileName(StringUtility::stripPathFromFileName(generateLibSourceFileName (s))); 
+        lib_name = output_path+"/"+ lib_file_base_name +".so"; 
+      }
+      else
+        lib_name = output_path+"/"+ MASTER_SHARED_LIB_NAME;
     }
     else 
       lib_name = output_path+"/"+func_name_str+".so"; 
