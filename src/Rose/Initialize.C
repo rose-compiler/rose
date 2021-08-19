@@ -51,9 +51,9 @@ public:
         Diagnostics::initialize();
 
 #if defined(ROSE_PACKAGE_VERSION)
-        Rose::CommandLine::versionString = "ROSE-" ROSE_PACKAGE_VERSION;
+        Rose::CommandLine::versionString = "ROSE " ROSE_PACKAGE_VERSION;
 #elif defined(PACKAGE_VERSION)
-        Rose::CommandLine::versionString = "ROSE-" PACKAGE_VERSION;
+        Rose::CommandLine::versionString = "ROSE " PACKAGE_VERSION;
 #endif
 
         isInitialized_ = true;
