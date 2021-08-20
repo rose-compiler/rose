@@ -548,14 +548,15 @@ namespace
       res = ReturnType{"type ", s, &dcl};
     }
 
-    void handle(const SgNode& n)                { SG_UNEXPECTED_NODE(n); }
-    void handle(const SgAdaPackageSpecDecl& n)  { usepkg(n.get_name(), n); }
-    void handle(const SgAdaPackageBodyDecl& n)  { usepkg(n.get_name(), n); }
-    void handle(const SgAdaRenamingDecl& n)     { usepkg(n.get_name(), n); }
-    void handle(const SgTypedefDeclaration& n)  { usetype(n.get_name(), n); }
-    void handle(const SgAdaTaskTypeDecl& n)     { usetype(n.get_name(), n); }
-    void handle(const SgClassDeclaration& n)    { usetype(n.get_name(), n); }
-    void handle(const SgEnumDeclaration& n)     { usetype(n.get_name(), n); }
+    void handle(const SgNode& n)                   { SG_UNEXPECTED_NODE(n); }
+    void handle(const SgAdaPackageSpecDecl& n)     { usepkg(n.get_name(), n); }
+    void handle(const SgAdaPackageBodyDecl& n)     { usepkg(n.get_name(), n); }
+    void handle(const SgAdaRenamingDecl& n)        { usepkg(n.get_name(), n); }
+    void handle(const SgAdaGenericInstanceDecl& n) { usepkg(n.get_name(), n); }
+    void handle(const SgTypedefDeclaration& n)     { usetype(n.get_name(), n); }
+    void handle(const SgAdaTaskTypeDecl& n)        { usetype(n.get_name(), n); }
+    void handle(const SgClassDeclaration& n)       { usetype(n.get_name(), n); }
+    void handle(const SgEnumDeclaration& n)        { usetype(n.get_name(), n); }
 
     void handle(const SgImportStatement& n)
     {

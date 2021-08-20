@@ -56,7 +56,7 @@ namespace
     }
 
     SgExpression&       arg        = getExprID(assoc.Actual_Parameter, ctx);
-    Element_Struct*     formalParm = retrieveAsOpt<Element_Struct>(elemMap(), assoc.Formal_Parameter);
+    Element_Struct*     formalParm = retrieveAsOpt(elemMap(), assoc.Formal_Parameter);
 
     /* unused fields (A_Parameter_Association)
        bool                   Is_Normalized
@@ -388,7 +388,7 @@ namespace
   ///   (e.g., true for objects, false for scope-qualification)
   bool roseRequiresPrefixID(Element_ID el, AstContext ctx)
   {
-    Element_Struct&    elem = retrieveAs<Element_Struct>(elemMap(), el);
+    Element_Struct&    elem = retrieveAs(elemMap(), el);
     ADA_ASSERT(elem.Element_Kind == An_Expression);
 
     Expression_Struct& expr = elem.The_Union.Expression;
@@ -447,6 +447,7 @@ namespace
       void handle(SgAdaTaskSpecDecl& n)     { res = &mkAdaTaskRefExp(n); }
       //~ void handle(SgAdaTaskTypeDecl& n) { res = &mkAdaTaskRefExp(n); }
       //~ void handle(SgAdaGenericDecl& n)  { res = &mkAdaTaskRefExp(n); }
+      //~ void handle(SgAdaGenericINstanceDecl& n)  { res = &mkAdaTaskRefExp(n); }
       void handle(SgAdaPackageSpecDecl& n)  { res = &mkAdaUnitRefExp(n); }
 
     private:
@@ -702,7 +703,7 @@ getAttributeExpr(Expression_Struct& expr, AstContext ctx)
 SgAdaAttributeExp&
 getAttributeExprID(Element_ID el, AstContext ctx)
 {
-  Element_Struct& elem = retrieveAs<Element_Struct>(elemMap(), el);
+  Element_Struct& elem = retrieveAs(elemMap(), el);
 
   ADA_ASSERT(elem.Element_Kind == An_Expression);
   SgAdaAttributeExp& sgnode = getAttributeExpr(elem.The_Union.Expression, ctx);
@@ -1069,7 +1070,7 @@ namespace
         {
           logKind("An_Allocation_From_Qualified_Expression");
 
-          Element_Struct&    allocElem = retrieveAs<Element_Struct>(elemMap(), expr.Allocator_Qualified_Expression);
+          Element_Struct&    allocElem = retrieveAs(elemMap(), expr.Allocator_Qualified_Expression);
           ADA_ASSERT(allocElem.Element_Kind == An_Expression);
 
           Expression_Struct& allocExpr = allocElem.The_Union.Expression;
@@ -1081,7 +1082,7 @@ namespace
           SgExprListExp&     inilst = createExprListExpIfNeeded(arg);
 
   /*
-          Element_Struct&    initElem = retrieveAs<Element_Struct>(elemMap(), allocExpr.Converted_Or_Qualified_Expression);
+          Element_Struct&    initElem = retrieveAs(elemMap(), allocExpr.Converted_Or_Qualified_Expression);
           ADA_ASSERT(initElem.Element_Kind == An_Expression);
           Expression_Struct& initExpr = initElem.The_Union.Expression;
 
@@ -1122,7 +1123,7 @@ namespace
   SgExpression&
   getExprID_undecorated(Element_ID el, AstContext ctx)
   {
-    return getExpr_undecorated(retrieveAs<Element_Struct>(elemMap(), el), ctx);
+    return getExpr_undecorated(retrieveAs(elemMap(), el), ctx);
   }
 }
 
@@ -1156,7 +1157,7 @@ getExpr(Element_Struct& elem, AstContext ctx)
 SgExpression&
 getExprID(Element_ID el, AstContext ctx)
 {
-  return getExpr(retrieveAs<Element_Struct>(elemMap(), el), ctx);
+  return getExpr(retrieveAs(elemMap(), el), ctx);
 }
 
 SgExpression&
@@ -1351,13 +1352,13 @@ getDefinitionExpr(Element_Struct& el, AstContext ctx)
 SgExpression&
 getDiscreteRangeID(Element_ID id, AstContext ctx)
 {
-  return getDiscreteRange(retrieveAs<Element_Struct>(elemMap(), id), ctx);
+  return getDiscreteRange(retrieveAs(elemMap(), id), ctx);
 }
 
 SgExpression&
 getDefinitionExprID(Element_ID id, AstContext ctx)
 {
-  return getDefinitionExpr(retrieveAs<Element_Struct>(elemMap(), id), ctx);
+  return getDefinitionExpr(retrieveAs(elemMap(), id), ctx);
 }
 
 } // namespace Ada_ROSE_Translation
