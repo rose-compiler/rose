@@ -97,12 +97,14 @@ Outliner::generateFuncName (const SgStatement* stmt)
   {
     const string file_name = info->get_raw_filename ();
     const string file_name2 = StringUtility::stripPathFromFileName(file_name);
-    string base_name = StringUtility::stripFileSuffixFromFileName(file_name2);
+    // We now keep suffix to differentiate header and source files
+    //string base_name = StringUtility::stripFileSuffixFromFileName(file_name2);
+    string base_name = file_name2;
     // base name may contain '-', replace it with '_' to get legal identifier
     for (size_t i=0; i<base_name.size(); i++) 
     {
       //cout<<"file base name:"<<base_name[i]<<endl;
-      if (base_name[i]=='-')
+      if (base_name[i]=='-' || base_name[i]=='.')
         base_name[i]='_';
     }
 
