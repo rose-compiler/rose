@@ -487,27 +487,22 @@ namespace
 
   /// retrieves data from the big Asis map
   /// returns a nullptr if the element is not in the map.
-  template <class ElemT>
   inline
-  ElemT*
+  Element_Struct*
   retrieveAsOpt(std::map<int, Element_Struct*>& map, int key)
   {
     //~ logInfo() << "key: " << key << std::endl;
     std::map<int, Element_Struct*>::iterator pos = map.find(key);
 
-    if (pos != map.end())
-      return reinterpret_cast<ElemT*>((*pos).second);
-
-    return nullptr;
+    return pos != map.end() ? (*pos).second : nullptr;
   }
 
   /// retrieves data from the big Asis map
-  template <class ElemT>
   inline
-  ElemT&
+  Element_Struct&
   retrieveAs(std::map<int, Element_Struct*>& map, int key)
   {
-    return SG_DEREF(retrieveAsOpt<ElemT>(map, key));
+    return SG_DEREF(retrieveAsOpt(map, key));
   }
 
   /// Type mapping for range element types
@@ -548,7 +543,7 @@ namespace
 
   /// traverses a list of pointers to Elements (or Units) in the range [\ref first, \ref limit),
   ///   looks up the associated Asis struct, and passes it as argument to \ref func.
-  ///   e.g., func(*retrieveAs<Element_struct>(map, *first))
+  ///   e.g., func(*retrieveAs(map, *first))
   /// \tparam ElemT    the type of the element (Unit or Element)
   /// \tparam PtrT     pointer to elements
   /// \tparam AsisMapT the map type
@@ -563,7 +558,7 @@ namespace
   {
     while (first != limit)
     {
-      ElemT* el = retrieveAsOpt<ElemT>(map, *first);
+      ElemT* el = retrieveAsOpt(map, *first);
 
       if (el)
       {
@@ -576,7 +571,6 @@ namespace
                   << std::endl;
       }
 
-      //~ func(retrieveAs<ElemT>(map, *first));
       ++first;
     }
 

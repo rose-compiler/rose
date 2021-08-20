@@ -352,7 +352,7 @@ namespace
 
   void handleElementID(Element_ID id, AstContext ctx)
   {
-    handleElement(retrieveAs<Element_Struct>(elemMap(), id), ctx);
+    handleElement(retrieveAs(elemMap(), id), ctx);
   }
 
   //

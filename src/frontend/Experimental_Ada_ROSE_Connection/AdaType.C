@@ -113,21 +113,21 @@ namespace
             res = sb::buildVoidType();
           }
 
-          break /* counted in getExpr */;
+          break;
         }
 
       case A_Selected_Component:
         {
           logKind("A_Selected_Component");
           res = &getExprTypeID(typeEx.Selector, ctx);
-          break /* counted in getExpr */;
+          break;
         }
 
       case An_Attribute_Reference:
         {
           logKind("An_Attribute_Reference");
           res = &getAttributeExpr(typeEx, ctx);
-          break ;
+          break;
         }
 
       default:
@@ -142,7 +142,7 @@ namespace
   SgNode&
   getExprTypeID(Element_ID tyid, AstContext ctx)
   {
-    Element_Struct& elem = retrieveAs<Element_Struct>(elemMap(), tyid);
+    Element_Struct& elem = retrieveAs(elemMap(), tyid);
     ADA_ASSERT(elem.Element_Kind == An_Expression);
 
     return getExprType(elem.The_Union.Expression, ctx);
@@ -245,7 +245,7 @@ namespace
   SgClassDefinition&
   getRecordBodyID(Element_ID recid, AstContext ctx)
   {
-    Element_Struct&           elem = retrieveAs<Element_Struct>(elemMap(), recid);
+    Element_Struct&           elem = retrieveAs(elemMap(), recid);
     ADA_ASSERT(elem.Element_Kind == A_Definition);
 
     Definition_Struct&        def = elem.The_Union.Definition;
@@ -275,7 +275,7 @@ namespace
     Subtype_Indication_Struct& subtype = def.The_Union.The_Subtype_Indication;
     ADA_ASSERT (subtype.Subtype_Constraint == 0);
 
-    Element_Struct&            subelem = retrieveAs<Element_Struct>(elemMap(), subtype.Subtype_Mark);
+    Element_Struct&            subelem = retrieveAs(elemMap(), subtype.Subtype_Mark);
     ADA_ASSERT(subelem.Element_Kind == An_Expression);
 
     SgNode*                    basenode = &getExprType(subelem.The_Union.Expression, ctx);
@@ -897,8 +897,8 @@ getExceptionBase(Element_Struct& el, AstContext ctx)
     return std::make_pair(ini, nullptr);
 
   // last resort: create a new initialized name representing the exception
-  ADA_ASSERT(!FAIL_ON_ERROR(ctx));
   logError() << "Unknown exception: " << ex.Name_Image << std::endl;
+  ADA_ASSERT(!FAIL_ON_ERROR(ctx));
 
   // \todo create an SgInitializedName if the exception was not found
   SgInitializedName& init = mkInitializedName(ex.Name_Image, lookupNode(adaTypes(), AdaIdentifier{"Exception"}), nullptr);
@@ -918,7 +918,7 @@ getConstraintID(Element_ID el, AstContext ctx)
   }
 
   SgAdaTypeConstraint*  res = nullptr;
-  Element_Struct&       elem = retrieveAs<Element_Struct>(elemMap(), el);
+  Element_Struct&       elem = retrieveAs(elemMap(), el);
   ADA_ASSERT(elem.Element_Kind == A_Definition);
 
   Definition_Struct&    def = elem.The_Union.Definition;
@@ -991,7 +991,7 @@ getConstraintID(Element_ID el, AstContext ctx)
 SgType&
 getDeclTypeID(Element_ID id, AstContext ctx)
 {
-  return getDeclType(retrieveAs<Element_Struct>(elemMap(), id), ctx);
+  return getDeclType(retrieveAs(elemMap(), id), ctx);
 }
 
 
@@ -1004,7 +1004,7 @@ getDefinitionTypeID(Element_ID defid, AstContext ctx)
     return SG_DEREF(sb::buildVoidType());
   }
 
-  Element_Struct&     elem = retrieveAs<Element_Struct>(elemMap(), defid);
+  Element_Struct&     elem = retrieveAs(elemMap(), defid);
   ADA_ASSERT(elem.Element_Kind == A_Definition);
 
   return getDefinitionType(elem.The_Union.Definition, ctx);
@@ -1013,7 +1013,7 @@ getDefinitionTypeID(Element_ID defid, AstContext ctx)
 SgClassDeclaration&
 getParentRecordDeclID(Element_ID defid, AstContext ctx)
 {
-  Element_Struct&     elem = retrieveAs<Element_Struct>(elemMap(), defid);
+  Element_Struct&     elem = retrieveAs(elemMap(), defid);
   ADA_ASSERT(elem.Element_Kind == A_Definition);
 
   return getParentRecordDecl(elem.The_Union.Definition, ctx);
@@ -1023,7 +1023,7 @@ TypeData
 getFormalTypeFoundation(const std::string& name, Declaration_Struct& decl, AstContext ctx)
 {
   ADA_ASSERT( decl.Declaration_Kind == A_Formal_Type_Declaration );
-  Element_Struct&         elem = retrieveAs<Element_Struct>(elemMap(), decl.Type_Declaration_View);
+  Element_Struct&         elem = retrieveAs(elemMap(), decl.Type_Declaration_View);
   ADA_ASSERT(elem.Element_Kind == A_Definition);
   Definition_Struct&      def = elem.The_Union.Definition;
   ADA_ASSERT(def.Definition_Kind == A_Formal_Type_Definition);
@@ -1035,7 +1035,7 @@ getTypeFoundation(const std::string& name, Declaration_Struct& decl, AstContext 
 {
   ADA_ASSERT( decl.Declaration_Kind == An_Ordinary_Type_Declaration );
 
-  Element_Struct&         elem = retrieveAs<Element_Struct>(elemMap(), decl.Type_Declaration_View);
+  Element_Struct&         elem = retrieveAs(elemMap(), decl.Type_Declaration_View);
   ADA_ASSERT(elem.Element_Kind == A_Definition);
 
   Definition_Struct&      def = elem.The_Union.Definition;
