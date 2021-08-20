@@ -571,11 +571,12 @@ namespace
 
         for (const std::string& s : args)
         {
-          const size_t sz         = s.size()+1;
-          char*        cstr       = new char[sz];
+          const size_t sz         = s.size();
+          char*        cstr       = new char[sz+1];
           const char*  char_begin = s.c_str();
 
           std::copy(char_begin, char_begin+sz, cstr);
+          cstr[sz] = '\0';
           base::push_back(cstr);
         }
       }
@@ -595,7 +596,7 @@ namespace
 int main( int argc, char * argv[] )
 {
   using Sawyer::Message::mfacilities;
-  using GuardedVariableIdMapping = std::unique_ptr<ct::VariableIdMappingExtended>;
+  //~ using GuardedVariableIdMapping = std::unique_ptr<ct::VariableIdMappingExtended>;
 
   int errorCode = 1;
 
@@ -607,8 +608,11 @@ int main( int argc, char * argv[] )
     std::vector<std::string> cmdLineArgs{argv+0, argv+argc};
     Acuity                   acuity;
     CStringVector            unparsedArgsCStyle(acuity.parseArgs(std::move(cmdLineArgs)));
-    size_t                   thornArgc = unparsedArgsCStyle.size();
+    int                      thornArgc = unparsedArgsCStyle.size();
     char**                   thornArgv = unparsedArgsCStyle.firstCArg();
+
+    //~ for (int i = 0; i < thornArgc; ++i)
+      //~ std::cerr << thornArgv[i] << std::endl;
 
     ct::TimingCollector      tc;
 
@@ -616,7 +620,9 @@ int main( int argc, char * argv[] )
     CodeThornOptions         ctOpt;
     LTLOptions               ltlOpt;    // to be moved into separate tool
     ParProOptions            parProOpt; // options only available in parprothorn
-    parseCommandLine(thornArgc, thornArgv, logger, thorn2version, ctOpt, ltlOpt, parProOpt);
+
+    //~ parseCommandLine(thornArgc, thornArgv, logger, thorn2version, ctOpt, ltlOpt, parProOpt);
+
     //~ parseCommandLine(argc, argv, logger, thorn2version, ctOpt, ltlOpt, parProOpt);
 
     mfacilities.control(ctOpt.logLevel);
