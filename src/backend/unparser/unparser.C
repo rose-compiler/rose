@@ -6452,29 +6452,34 @@ void buildFirstAndLastStatementsForScopes ( SgProject* project )
      for (size_t i = 0; i < fileList.size(); i++)
         {
           SgSourceFile* sourceFile = isSgSourceFile(fileList[i]);
-          ROSE_ASSERT(sourceFile != NULL);
+
+       // DQ (8/23/2021): If this is a binary file then sourceFile == NULL (see tests in 
+       // tests/nonsmoke/functional/CompilerOptionsTests/testGenerateSourceFileNames)
+       // ROSE_ASSERT(sourceFile != NULL);
+          if (sourceFile != NULL)
+             {
+#if DEBUG_FIRST_LAST_STMTS_SCOPES
+               printf ("\nFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF \n");
+               printf ("Testing for isDynamicLibrary before calling traversal for filename = %s \n",sourceFile->getFileName().c_str());
+#endif
+#if DEBUG_FIRST_LAST_STMTS_SCOPES
+               printf ("sourceFile->get_isDynamicLibrary() = %s \n",sourceFile->get_isDynamicLibrary() ? "true" : "false");
+#endif
+            // DQ (5/24/2021): Since we have to unparse all the files, we need to compute first and last on all of the files.
+            // What is less clear is what to do with the information about shared header files. I think that at worst it is 
+            // redundant information.
+#if DEBUG_FIRST_LAST_STMTS_SCOPES
+               printf ("Calling traversal for filename = %s \n",sourceFile->getFileName().c_str());
+#endif
+               traversal.traverse(sourceFile,preorder);
+
+            // Copy the information of first and last statement per scope for each file to store it in the source file.
+            // Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile[sourceFile] = traversal.firstAndLastStatementsToUnparseInScopeMap;
 
 #if DEBUG_FIRST_LAST_STMTS_SCOPES
-          printf ("\nFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF \n");
-          printf ("Testing for isDynamicLibrary before calling traversal for filename = %s \n",sourceFile->getFileName().c_str());
+               printf ("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF \n\n");
 #endif
-#if DEBUG_FIRST_LAST_STMTS_SCOPES
-          printf ("sourceFile->get_isDynamicLibrary() = %s \n",sourceFile->get_isDynamicLibrary() ? "true" : "false");
-#endif
-       // DQ (5/24/2021): Since we have to unparse all the files, we need to compute first and last on all of the files.
-       // What is less clear is what to do with the information about shared header files. I think that at worst it is 
-       // redundant information.
-#if DEBUG_FIRST_LAST_STMTS_SCOPES
-          printf ("Calling traversal for filename = %s \n",sourceFile->getFileName().c_str());
-#endif
-          traversal.traverse(sourceFile,preorder);
-
-       // Copy the information of first and last statement per scope for each file to store it in the source file.
-       // Rose::firstAndLastStatementsToUnparseInScopeMapBySourceFile[sourceFile] = traversal.firstAndLastStatementsToUnparseInScopeMap;
-
-#if DEBUG_FIRST_LAST_STMTS_SCOPES
-          printf ("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF \n\n");
-#endif
+             }
         }
 
 #if DEBUG_FIRST_LAST_STMTS_SCOPES
