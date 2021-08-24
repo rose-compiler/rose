@@ -48,11 +48,11 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
     PathQueue frontier_;                                // paths with work remaining
-    PathSet inProgress_;                                // paths that are being worked on
     PathQueue interesting_;                             // paths that are interesting, placed here by workers
     SemanticCallbacksPtr semantics_;                    // various configurable semantic operations
 
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;         // protects all following data members
+    PathSet inProgress_;                                // paths that are being worked on
     SAWYER_THREAD_TRAITS::ConditionVariable newWork_;   // signaled when work arrives or thread finishes
     SAWYER_THREAD_TRAITS::ConditionVariable newInteresting_; // signaled when interesting paths arrive or threads finish
     PathPredicatePtr frontierPredicate_;                // predicate for inserting paths into the "frontier" queue
