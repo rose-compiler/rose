@@ -393,6 +393,7 @@ Engine::takeNextWorkItem(WorkerState &state) {
 void
 Engine::finishPath(const Path::Ptr &path) {
     ASSERT_not_null(path);
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     inProgress_.erase(path);
 }
 
