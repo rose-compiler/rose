@@ -17,7 +17,8 @@ namespace Rose {
  *      ROSE header files but the ROSE library was compiled with a different version this can result in runtime errors that are
  *      very difficult to track down.  The same is true for any other C++ library that has functions whose ABI includes passing
  *      copies of or references to objects.  Therefore, this initializer takes an argument which is a compile-time token from
- *      header files used by the user and compares it with the token compiled into the library.
+ *      header files used by the user and compares it with the token compiled into the library. This checking can be disabled
+ *      by passing @c nullptr as the argument.
  *
  *  This function should be called before any other ROSE library functions, although it is called implicitly by some common
  *  functions like @ref frontend.  It can be called more than once--subsequent calls do nothing.  If called concurrently by
