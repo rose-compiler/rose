@@ -102,12 +102,14 @@ namespace CodeThorn {
     
     void initAstNodeInfo(SgNode* node);
 
+    // overridden in IOAnalyzer
     virtual void runAnalysisPhase1(SgProject* root, TimingCollector& tc);
     virtual void runAnalysisPhase2(TimingCollector& tc);
-
   protected:
-    // overridden in IOAnalyzer
+    EState createInitialEState(SgProject* root, Label slab);
+    void initializeSolverWithInitialEState(SgProject* root);
     void runAnalysisPhase1Sub1(SgProject* root, TimingCollector& tc);
+    void runAnalysisPhase2Sub1(TimingCollector& tc);
   public:
     virtual void runSolver();
   
@@ -137,6 +139,7 @@ namespace CodeThorn {
     void printStatusMessage(string s);
     void printStatusMessageLine(string s);
 
+    // adds attributes for dot generation of AST with labels
     void generateAstNodeInfo(SgNode* node);
 
     void writeWitnessToFile(std::string filename);
@@ -246,7 +249,6 @@ namespace CodeThorn {
     bool svCompFunctionSemantics();
     bool getStdFunctionSemantics();
     void setStdFunctionSemantics(bool flag);
-    void run(CodeThornOptions& ctOpt, SgProject* root, Labeler* labeler, VariableIdMappingExtended* vim, CFAnalysis* icfg);
 
     /* command line options provided to analyzed application
        if set they are used to initialize the initial state with argv and argc domain abstractions
@@ -257,7 +259,10 @@ namespace CodeThorn {
   protected:
     void setFunctionResolutionModeInCFAnalysis(CodeThornOptions& ctOpt);
     void deleteWorkLists();
+
+    // creates topologically order list and initializes work lists
     void setWorkLists(ExplorationMode explorationMode);
+
     SgNode* _startFunRoot;
   public:
     // TODO: move to flow analyzer (reports label,init,final sets)
@@ -467,6 +472,7 @@ namespace CodeThorn {
     typedef std::unordered_set<SgFunctionCallExp*> ExternalFunctionsContainerType;
     ExternalFunctionsContainerType externalFunctions;
 
+    SgProject* _root=0; // AST root node, set by phase 1, also used in phase 2.
   private:
 
     //std::unordered_map<int,const EState*> _summaryStateMap;

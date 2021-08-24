@@ -651,22 +651,27 @@ namespace CodeThorn {
 
   void VariableIdMappingExtended::addVariableDeclaration(SgVariableDeclaration* varDecl) {
     SgSymbol* sym=SgNodeHelper::getSymbolOfVariableDeclaration(varDecl);
-    //cout<<"DEBUG: computeVariableSymbolMapping2: addVariableDeclaration: "<<varDecl->unparseToString()<<": sym="<<sym<<endl;
-    if(sym->get_symbol_basis()!=0) {
-      VariableIdInfo* vidInfo=0;
-      if(symbolExists(sym)) {
-        vidInfo=getVariableIdInfoPtr(variableId(sym));
-        //cout<<"DEBUG: VID: found symbol again: "<<sym->unparseToString();
+    if(sym) {
+      //cout<<"DEBUG: computeVariableSymbolMapping2: addVariableDeclaration: "<<varDecl->unparseToString()<<": sym="<<sym<<endl;
+      if(sym->get_symbol_basis()!=0) {
+	VariableIdInfo* vidInfo=0;
+	if(symbolExists(sym)) {
+	  vidInfo=getVariableIdInfoPtr(variableId(sym));
+	  //cout<<"DEBUG: VID: found symbol again: "<<sym->unparseToString();
+	} else {
+	  registerNewSymbol(sym);
+	  vidInfo=getVariableIdInfoPtr(variableId(sym));
+	}
+	ROSE_ASSERT(vidInfo);
+	vidInfo->addVariableDeclaration(varDecl); // record all variable declarations that map to the same symbol
       } else {
-        registerNewSymbol(sym);
-        vidInfo=getVariableIdInfoPtr(variableId(sym));
+	stringstream ss;
+	ss<<sym;
+	recordWarning("no symbol basis for sym:"+ss.str());
       }
-      ROSE_ASSERT(vidInfo);
-      vidInfo->addVariableDeclaration(varDecl); // record all variable declarations that map to the same symbol
     } else {
-      stringstream ss;
-      ss<<sym;
-      recordWarning("no symbol basis for sym:"+ss.str());
+      cerr<<"Warning: VariableIdMappingExtended: variable declaration without symbol:";
+      cerr<<varDecl->unparseToString()<<endl;
     }
   }
 

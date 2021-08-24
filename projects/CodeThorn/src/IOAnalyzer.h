@@ -28,6 +28,7 @@ namespace CodeThorn {
                CodeThornOptions& ctOpt, LTLOptions& ltlOpt, ParProOptions& parProOpt);
     // overwritten or extended analyzer functions
     virtual void runAnalysisPhase1(SgProject* root, TimingCollector& tc)  override;
+    virtual void runAnalysisPhase2(TimingCollector& tc)  override;
     void resetAnalysis();
     void printAnalyzerStatistics(double totalRunTime, string title = "state transition system computed");
 
