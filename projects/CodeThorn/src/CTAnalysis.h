@@ -109,6 +109,7 @@ namespace CodeThorn {
     EState createInitialEState(SgProject* root, Label slab);
     void initializeSolverWithInitialEState(SgProject* root);
     void runAnalysisPhase1Sub1(SgProject* root, TimingCollector& tc);
+    void runAnalysisPhase2Sub1(TimingCollector& tc);
   public:
     virtual void runSolver();
   
@@ -248,7 +249,6 @@ namespace CodeThorn {
     bool svCompFunctionSemantics();
     bool getStdFunctionSemantics();
     void setStdFunctionSemantics(bool flag);
-    void run(CodeThornOptions& ctOpt, SgProject* root, Labeler* labeler, VariableIdMappingExtended* vim, CFAnalysis* icfg);
 
     /* command line options provided to analyzed application
        if set they are used to initialize the initial state with argv and argc domain abstractions
@@ -472,6 +472,7 @@ namespace CodeThorn {
     typedef std::unordered_set<SgFunctionCallExp*> ExternalFunctionsContainerType;
     ExternalFunctionsContainerType externalFunctions;
 
+    SgProject* _root=0; // AST root node, set by phase 1, also used in phase 2.
   private:
 
     //std::unordered_map<int,const EState*> _summaryStateMap;

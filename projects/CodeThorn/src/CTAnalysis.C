@@ -607,33 +607,48 @@ void CodeThorn::CTAnalysis::runSolver() {
   stopAnalysisTimer();
 }
 
+void CodeThorn::CTAnalysis::runAnalysisPhase1(SgProject* root, TimingCollector& tc) {
+  SAWYER_MESG(logger[INFO])<< "Ininitializing solver "<<this->getSolver()->getId()<<" started"<<endl;
+  this->runAnalysisPhase1Sub1(root,tc);
+  SAWYER_MESG(logger[INFO])<< "Initializing solver "<<this->getSolver()->getId()<<" finished"<<endl;
+}
+
 void CodeThorn::CTAnalysis::runAnalysisPhase2(TimingCollector& tc) {
-    tc.startTimer();
-    this->printStatusMessageLine("==============================================================");
-    if(_ctOpt.getInterProceduralFlag()) {
-      if(_ctOpt.status && _ctOpt.contextSensitive)
-	cout<<"STATUS: context sensitive anlaysis with call string length "<<_ctOpt.callStringLength<<"."<<endl;
-      if(!this->getModeLTLDriven() && _ctOpt.z3BasedReachabilityAnalysis==false && _ctOpt.ssa==false) {
-	switch(_ctOpt.abstractionMode) {
-	case 0:
-	case 1:
-	  this->runSolver();
-	  break;
-	default:
-	  cout<<"Error: unknown abstraction mode "<<_ctOpt.abstractionMode<<endl;
-	  exit(1);
-	}
+  tc.startTimer();
+  initializeSolverWithInitialEState(this->_root);
+  runAnalysisPhase2Sub1(tc);
+  tc.stopTimer(TimingCollector::transitionSystemAnalysis);
+}
+
+void CodeThorn::CTAnalysis::runAnalysisPhase2Sub1(TimingCollector& tc) {
+  this->printStatusMessageLine("==============================================================");
+  if(_ctOpt.status) cout<<"Initializing initial state(s) ... ";
+  //ROSE_ASSERT(this->_root);
+  //initializeSolverWithInitialEState(this->_root);
+  if(_ctOpt.status) cout<<"done."<<endl;
+  if(_ctOpt.getInterProceduralFlag()) {
+    if(_ctOpt.status && _ctOpt.contextSensitive)
+      cout<<"STATUS: context sensitive anlaysis with call string length "<<_ctOpt.callStringLength<<"."<<endl;
+    if(!this->getModeLTLDriven() && _ctOpt.z3BasedReachabilityAnalysis==false && _ctOpt.ssa==false) {
+      switch(_ctOpt.abstractionMode) {
+      case 0:
+      case 1:
+	this->runSolver();
+	break;
+      default:
+	cout<<"Error: unknown abstraction mode "<<_ctOpt.abstractionMode<<endl;
+	exit(1);
       }
-    } else {
-      // intra-procedural analysis
-      LabelSet entryLabels=getCFAnalyzer()->functionEntryLabels(*getFlow());
-      cout<<"DEBUG: intra-proc: entryLabels: "<<entryLabels.size()<<endl;
-      ROSE_ASSERT(estateWorkListCurrent);
-      cout<<"DEBUG: work list length       : "<<estateWorkListCurrent->size()<<endl;
-      this->runSolver();
     }
-    tc.stopTimer(TimingCollector::transitionSystemAnalysis);
+  } else {
+    // intra-procedural analysis
+    LabelSet entryLabels=getCFAnalyzer()->functionEntryLabels(*getFlow());
+    ROSE_ASSERT(estateWorkListCurrent);
+    if(_ctOpt.status) cout<<"STATUS: intra-procedural analysis: entryLabels: "<<entryLabels.size()
+			  <<" initial work list length: "<<estateWorkListCurrent->size()<<endl;
+    this->runSolver();
   }
+}
 
 VariableIdMappingExtended* CodeThorn::CTAnalysis::getVariableIdMapping() {
   return _variableIdMapping;
@@ -1210,17 +1225,6 @@ SgNode* CodeThorn::CTAnalysis::getStartFunRoot() {
   return _startFunRoot;
 }
 
-void CodeThorn::CTAnalysis::run(CodeThornOptions& ctOpt, SgProject* root, Labeler* labeler, VariableIdMappingExtended* vim, CFAnalysis* icfg) {
-  // TODO
-  ROSE_ASSERT(false);
-}
-
-void CodeThorn::CTAnalysis::runAnalysisPhase1(SgProject* root, TimingCollector& tc) {
-  SAWYER_MESG(logger[INFO])<< "Ininitializing solver "<<this->getSolver()->getId()<<" started"<<endl;
-  this->runAnalysisPhase1Sub1(root,tc);
-  SAWYER_MESG(logger[INFO])<< "Initializing solver "<<this->getSolver()->getId()<<" finished"<<endl;
-}
-
 EState CodeThorn::CTAnalysis::createInitialEState(SgProject* root, Label slab) {
   // create initial state
   PState initialPState;
@@ -1319,9 +1323,9 @@ void CodeThorn::CTAnalysis::initializeSolverWithInitialEState(SgProject* root) {
 void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(SgProject* root, TimingCollector& tc) {
   SAWYER_MESG(logger[TRACE])<<"CTAnalysis::runAnalysisPhase1Sub1 started."<<endl;
   ROSE_ASSERT(root);
+  this->_root=root;
 
-  CodeThornOptions& ctOpt=getOptionsRef()
-;
+  CodeThornOptions& ctOpt=getOptionsRef();
   Pass::normalization(ctOpt,root,tc);
   _variableIdMapping=Pass::createVariableIdMapping(ctOpt, root, tc); // normalization timer
   _labeler=Pass::createLabeler(ctOpt, root, tc, _variableIdMapping); // labeler timer
@@ -1419,8 +1423,8 @@ void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(SgProject* root, TimingCollect
   if(_ctOpt.status) cout<<"STATUS: creating empty worklist."<<endl;
   setWorkLists(_explorationMode);
 
-  initializeSolverWithInitialEState(root); // TODO: move to phase 2
-
+  //initializeSolverWithInitialEState(this->_root);
+  
   if(_ctOpt.status) cout<<"STATUS: analysis phase 1 finished."<<endl;
   tc.stopTimer(TimingCollector::init);
 
@@ -1534,6 +1538,7 @@ Label CodeThorn::CTAnalysis::getFunctionEntryLabel(SgFunctionRefExp* funRefExp) 
  */
 // MS 05/31/2020: this function is not used anywhere
 void CodeThorn::CTAnalysis::resetAnalysis() {
+  if(_ctOpt.status) cout<<"STATUS: resetting analysis."<<endl;
   // reset miscellaneous state variables
   _topifyModeActive = false;
   _iterations = 0;

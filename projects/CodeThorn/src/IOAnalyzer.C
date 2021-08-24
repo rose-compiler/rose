@@ -32,8 +32,14 @@ IOAnalyzer::IOAnalyzer():CTAnalysis() {
   initDiagnostics();
 }
 
+// overrides
 void IOAnalyzer::runAnalysisPhase1(SgProject* root, TimingCollector& tc) {
   runAnalysisPhase1Sub1(root, tc);
+}
+
+// overrides
+void IOAnalyzer::runAnalysisPhase2(TimingCollector& tc) {
+  initializeSolverWithInitialEState(this->_root);
   if(_ctOpt.runSolver) {
     const EState* currentEState=estateWorkListCurrent->front();
     ROSE_ASSERT(currentEState);
@@ -41,6 +47,7 @@ void IOAnalyzer::runAnalysisPhase1(SgProject* root, TimingCollector& tc) {
       setLTLDrivenStartEState(currentEState);
     }
   }
+  runAnalysisPhase2Sub1(tc);
 }
 
 void IOAnalyzer::setLTLDrivenStartEState(const EState* estate) {
