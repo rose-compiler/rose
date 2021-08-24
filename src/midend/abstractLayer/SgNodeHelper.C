@@ -288,16 +288,10 @@ SgExpression* SgNodeHelper::getInitializerExpressionOfVariableDeclaration(SgVari
 }
 
 SgInitializedName* SgNodeHelper::getInitializedNameOfVariableDeclaration(SgVariableDeclaration* decl) {
-  SgNode* initName0=decl->get_traversalSuccessorByIndex(1); // get-InitializedName
-  if(initName0) {
-    if(SgInitializedName* initName=isSgInitializedName(initName0)) {
-      return initName;
-    } else {
-      throw CodeThorn::Exception("Error: AST structure failure: no variable found (@initializedName).");
-    }
-  } else {
-    throw CodeThorn::Exception("Error: AST structure failure: no variable found.");
-  }
+  ROSE_ASSERT(decl);
+  auto vars=decl->get_variables();
+  ROSE_ASSERT(vars.size()==1);
+  return vars[0];
 }
 
 string SgNodeHelper::symbolToString(SgSymbol* symbol) {
