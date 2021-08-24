@@ -678,12 +678,16 @@ public:
     size_t nPaths = 0;                                  // number of paths
     Sawyer::Optional<size_t> minSteps;                  // number of steps in shortest path
     Sawyer::Optional<size_t> maxSteps;                  // number of steps in longest path
+    bool saveSizes = false;
+    std::vector<size_t> sizes;                          // size of each path
 
     virtual bool operator()(const Path::Ptr &path) {
         ++nPaths;
-        size_t nSteps = path->nSteps();
-        minSteps = std::min(minSteps.orElse(nSteps), nSteps);
-        maxSteps = std::max(maxSteps.orElse(nSteps), nSteps);
+        sizes.push_back(path->nSteps());
+        minSteps = std::min(minSteps.orElse(sizes.back()), sizes.back());
+        maxSteps = std::max(maxSteps.orElse(sizes.back()), sizes.back());
+        if (!saveSizes)
+            sizes.pop_back();
         return true;
     }
 };
@@ -699,6 +703,9 @@ Engine::showStatistics(std::ostream &out, const std::string &prefix) const {
     const double age = timeSinceStats_.restart();       // zero if no previous report
 
     PathStatsAccumulator currentStats;
+#if 0 // [Robb Matzke 2021-08-24]: include this code if you want a list of sizes in the statistics
+    currentStats.saveSizes = true;
+#endif
     for (const Path::Ptr &path: inProgress())
         currentStats(path);
 
@@ -709,9 +716,15 @@ Engine::showStatistics(std::ostream &out, const std::string &prefix) const {
     out <<prefix <<"total elapsed time:                     " <<elapsedTime() <<"\n";
     out <<prefix <<"threads:                                " <<nWorking() <<" working of " <<workCapacity() <<" total\n";
     if (currentStats.nPaths > 0) {
-        //std::cerr <<"ROBB: current.nPaths = " <<currentStats.nPaths <<"\n";
         out <<prefix <<"  shortest in-progress path length:     " <<StringUtility::plural(*currentStats.minSteps, "steps") <<"\n";
         out <<prefix <<"  longest in-progress path length:      " <<StringUtility::plural(*currentStats.maxSteps, "steps") <<"\n";
+        if (!currentStats.sizes.empty()) {
+            std::sort(currentStats.sizes.begin(), currentStats.sizes.end());
+            out <<prefix <<"  lengths:";
+            for (size_t size: currentStats.sizes)
+                out <<" " <<size;
+            out <<"\n";
+        }
     }
 
     out <<prefix <<"paths waiting to be explored:           " <<pendingStats.nPaths <<"\n";
