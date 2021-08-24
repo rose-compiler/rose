@@ -1474,11 +1474,11 @@ namespace CodeThorn {
 	setOfUsedGlobalVars.insert(var);
       }
     }
-    if(getAnalyzer()->getOptionsRef().status) {
-      cout<< "STATUS: Number of global variables     : "<<setOfGlobalVars.size()<<endl;
-      cout<< "STATUS: Number of used variables       : "<<setOfUsedVars.size()<<endl;
-      cout<< "STATUS: Number of string literals      : "<<numStringLiterals<<endl;
-      cout<< "STATUS: Number of used global variables: "<<numUsedVars<<endl;
+    if(false && getAnalyzer()->getOptionsRef().status) {
+      SAWYER_MESG(logger[INFO])<< "STATUS: Number of global variables     : "<<setOfGlobalVars.size()<<endl;
+      SAWYER_MESG(logger[INFO])<< "STATUS: Number of used variables       : "<<setOfUsedVars.size()<<endl;
+      SAWYER_MESG(logger[INFO])<< "STATUS: Number of string literals      : "<<numStringLiterals<<endl;
+      SAWYER_MESG(logger[INFO])<< "STATUS: Number of used global variables: "<<numUsedVars<<endl;
     }
     return setOfUsedGlobalVars;
   }
@@ -1512,7 +1512,7 @@ namespace CodeThorn {
       if(getAnalyzer()->getOptionsRef().status) {
 	//uint32_t numFilteredVars=setOfGlobalVars.size()-setOfUsedGlobalVars.size();
 	//cout<< "STATUS: Number of unused variables filtered in initial state: "<<numFilteredVars<<endl;
-	_analyzer->printStatusMessageLine("STATUS: Number of global variables declared in initial state: "+std::to_string(declaredInGlobalState));
+	SAWYER_MESG(logger[INFO])<<"Number of global variables declared in initial state: "+std::to_string(declaredInGlobalState);
       }
     } else {
       _analyzer->printStatusMessageLine("STATUS: no global scope. Global state remains without entries.");
@@ -4139,7 +4139,7 @@ namespace CodeThorn {
   void EStateTransferFunctions::initializeStringLiteralsInState(Label lab, PState& initialPState) {
     ROSE_ASSERT(getVariableIdMapping());
     std::map<SgStringVal*,VariableId>* map=getVariableIdMapping()->getStringLiteralsToVariableIdMapping();
-    logger[INFO]<<"Creating "<<map->size()<<" string literals in state."<<endl;
+    SAWYER_MESG(logger[INFO])<<"Creating "<<map->size()<<" string literals in state."<<endl;
     for(auto iter=map->begin();iter!=map->end();++iter) {
       auto dataPair=*iter;
       SgStringVal* stringValNode=dataPair.first;

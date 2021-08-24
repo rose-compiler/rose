@@ -718,24 +718,16 @@ check-matcher:
 
 
 CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-lc check-io unit-test check-omp-cfg check-commandline-options check-vis check-thorn2
-
-# this check (only) fails when run in parallel with high number of processes (-j10)
-CHECK_DEFAULT_FAILING_PAR=check-reachability-par
-
 CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 
-CHECK_WITH_SPOT_ONLY_PASSING=check-ltl check-reachability-seq
-
-#CHECK_WITH_SPOT_FAILING=check-ltl-driven check-svcomp-witness'
-CHECK_WITH_SPOT_PARALLEL=check-ltl-rers-timeout check-ltl-rers-arithmetic check-ltl-rers-loop-aware-sync check-reachability-par check-ltl-driven-reset-analyzer
-
-CHECK_WITH_SPOT_PASSING=$(CHECK_DEFAULT_PASSING) $(CHECK_WITH_SPOT_ONLY_PASSING)
+CHECK_WITH_SPOT_PASSING=$(CHECK_DEFAULT_PASSING) check-ltl-seq check-reachability-seq
+CHECK_WITH_SPOT_FAILING=check-ltl-driven check-svcomp-witness'
 
 check-default: $(CHECK_DEFAULT_PASSING)
 
 if ROSE_WITH_SPOT
 check-local: $(CHECK_WITH_SPOT_PASSING)
-check-extended: $(CHECK_WITH_SPOT_PASSING) $(CHECK_WITH_SPOT_PARALLEL)
+check-extended: $(CHECK_WITH_SPOT_PASSING) check-ltl-par
 else
 check-local: $(CHECK_DEFAULT_PASSING)
 endif
@@ -763,6 +755,9 @@ check-codethorn-internal:
 check-domain:
 	$(srcdir)/scripts/runDomainTests --testdir $(srcdir)/tests --all
 
+check-domain-avset:
+	$(srcdir)/scripts/runDomainTests --testdir $(srcdir)/tests --show-errors --l2avset
+
 check-lc:
 	$(srcdir)/scripts/runLineColTests $(srcdir)/tests
 
@@ -773,18 +768,6 @@ check-ioc:
 
 unit-test:
 	$(srcdir)/scripts/runUnitTests $(srcdir)/tests
-
-check-domain-old:
-	@echo ================================================================
-	@echo DOMAIN TESTS
-	@echo ================================================================
-	@echo
-	@./codethorn --edg:no_warnings $(srcdir)/tests/domaintest1.C
-	@./codethorn --edg:no_warnings $(srcdir)/tests/domaintest2.C
-	@./codethorn --edg:no_warnings $(srcdir)/tests/struct1.C
-	@./codethorn --edg:no_warnings $(srcdir)/tests/struct2.C
-	@./codethorn --edg:no_warnings --stg-trace-file=trace.txt $(srcdir)/tests/struct3.C
-	@./codethorn $(srcdir)/tests/intertest14.C --vis && dot -Tpdf transitiongraph1.dot -otransitiongraph1.pdf
 
 check-data-races:
 	@echo ================================================================
@@ -822,7 +805,9 @@ check-ltl-old: check-ltl-rers-different-versions
 #check-failing:
 
 # current tests all passing
-check-ltl: check-ltl-start check-ltl-rers-topify check-ltl-cegpra check-ltl-rers-array
+check-ltl-seq: check-ltl-start check-ltl-rers-topify-seq check-ltl-cegpra-seq check-ltl-rers-array check-ltl-rers-arithmetic-seq check-ltl-rers-timeout-seq
+
+check-ltl-par: check-ltl-rers-timeout-par check-ltl-rers-arithmetic-par check-reachability-par check-ltl-rers-loop-aware-sync check-ltl-driven-reset-analyzer
 
 check-ltl-start:
 	@echo ================================================================
@@ -835,15 +820,19 @@ check-ltl-rers-different-versions:
 	@$(srcdir)/scripts/runRersTestsDifferentVersion $(srcdir) $(top_builddir)/projects/CodeThorn/src
 
 #test the parallel analysis of RERS Problem1402 (4 threads, problem features arithmetic)
-check-ltl-rers-arithmetic:
-	@$(srcdir)/scripts/runRersArithmeticProblemTest $(srcdir) $(top_builddir)/projects/CodeThorn/src
+check-ltl-rers-arithmetic-seq:
+	@$(srcdir)/scripts/runRersArithmeticProblemTest $(srcdir) $(top_builddir)/projects/CodeThorn/src 1
+
+#test the parallel analysis of RERS Problem1402 (4 threads, problem features arithmetic)
+check-ltl-rers-arithmetic-par:
+	@$(srcdir)/scripts/runRersArithmeticProblemTest $(srcdir) $(top_builddir)/projects/CodeThorn/src 4
 
 #test the analysis of RERS Problem1403 (which features arrays)
 check-ltl-rers-array:
 	@$(srcdir)/scripts/runRersArrayProblemTest $(srcdir) $(top_builddir)/projects/CodeThorn/src
 
 #test the analysis of RERS Problem1403, abstracting from global variables after 10,000 transitions
-check-ltl-rers-topify:
+check-ltl-rers-topify-seq:
 	@$(srcdir)/scripts/runRersTopifyTest $(srcdir) $(top_builddir)/projects/CodeThorn/src
 
 # SKIPPED
@@ -851,16 +840,20 @@ check-ltl-rers-topify:
 check-ltl-rers-memory-bound:
 	@$(srcdir)/scripts/runRersMemoryBoundTest $(srcdir) $(top_builddir)/projects/CodeThorn/src
 
-#test the analysis of RERS Problem1402 and terminate after 5 seconds (4 threads)
-check-ltl-rers-timeout:
-	@$(srcdir)/scripts/runRersTimeoutTest $(srcdir) $(top_builddir)/projects/CodeThorn/src 3
+#test the analysis of RERS Problem1402 and terminate after 10 seconds, 1 threads
+check-ltl-rers-timeout-seq:
+	@$(srcdir)/scripts/runRersTimeoutTest $(srcdir) $(top_builddir)/projects/CodeThorn/src 10 1
+
+#test the analysis of RERS Problem1402 and terminate after 3 seconds, 4 threads
+check-ltl-rers-timeout-par:
+	@$(srcdir)/scripts/runRersTimeoutTest $(srcdir) $(top_builddir)/projects/CodeThorn/src 3 4
 
 #one test for the loop-aware-sync analysis (solver 12, ISoLA'16 paper)
 check-ltl-rers-loop-aware-sync:
 	@$(srcdir)/scripts/runRersLoopAwareSyncTest $(srcdir) $(top_builddir)/projects/CodeThorn/src
 
 #run CEGPRA tests
-check-ltl-cegpra:
+check-ltl-cegpra-seq:
 	@$(srcdir)/scripts/runCegpraTest $(srcdir) $(top_builddir)/projects/CodeThorn/src
 
 # not used

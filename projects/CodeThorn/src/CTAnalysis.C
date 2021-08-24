@@ -610,18 +610,27 @@ void CodeThorn::CTAnalysis::runSolver() {
 void CodeThorn::CTAnalysis::runAnalysisPhase2(TimingCollector& tc) {
     tc.startTimer();
     this->printStatusMessageLine("==============================================================");
-    if(_ctOpt.status && _ctOpt.contextSensitive)
-      cout<<"STATUS: context sensitive anlaysis with call string length "<<_ctOpt.callStringLength<<"."<<endl;
-    if(!this->getModeLTLDriven() && _ctOpt.z3BasedReachabilityAnalysis==false && _ctOpt.ssa==false) {
-      switch(_ctOpt.abstractionMode) {
-      case 0:
-      case 1:
-	this->runSolver();
-	break;
-      default:
-	cout<<"Error: unknown abstraction mode "<<_ctOpt.abstractionMode<<endl;
-	exit(1);
+    if(_ctOpt.getInterProceduralFlag()) {
+      if(_ctOpt.status && _ctOpt.contextSensitive)
+	cout<<"STATUS: context sensitive anlaysis with call string length "<<_ctOpt.callStringLength<<"."<<endl;
+      if(!this->getModeLTLDriven() && _ctOpt.z3BasedReachabilityAnalysis==false && _ctOpt.ssa==false) {
+	switch(_ctOpt.abstractionMode) {
+	case 0:
+	case 1:
+	  this->runSolver();
+	  break;
+	default:
+	  cout<<"Error: unknown abstraction mode "<<_ctOpt.abstractionMode<<endl;
+	  exit(1);
+	}
       }
+    } else {
+      // intra-procedural analysis
+      LabelSet entryLabels=getCFAnalyzer()->functionEntryLabels(*getFlow());
+      cout<<"DEBUG: intra-proc: entryLabels: "<<entryLabels.size()<<endl;
+      ROSE_ASSERT(estateWorkListCurrent);
+      cout<<"DEBUG: work list length       : "<<estateWorkListCurrent->size()<<endl;
+      this->runSolver();
     }
     tc.stopTimer(TimingCollector::transitionSystemAnalysis);
   }
@@ -778,7 +787,7 @@ void CodeThorn::CTAnalysis::addToWorkList(const EState* estate) {
 #pragma omp critical(ESTATEWL)
   {
     if(!estate) {
-      SAWYER_MESG(logger[ERROR])<<"INTERNAL: null pointer added to work list."<<endl;
+      SAWYER_MESG(logger[ERROR])<<"(internal): null pointer added to work list."<<endl;
       exit(1);
     }
     switch(_explorationMode) {
@@ -788,7 +797,7 @@ void CodeThorn::CTAnalysis::addToWorkList(const EState* estate) {
     case EXPL_DEPTH_FIRST: estateWorkListCurrent->push_front(estate);break;
     case EXPL_BREADTH_FIRST: estateWorkListCurrent->push_back(estate);break;
     case EXPL_RANDOM_MODE1: {
-      int perc=4; // 25%-chance depth-first
+      int perc=4; // perc-chance depth-first
       int num=rand();
       int sel=num%perc;
       if(sel==0) {
@@ -1212,12 +1221,107 @@ void CodeThorn::CTAnalysis::runAnalysisPhase1(SgProject* root, TimingCollector& 
   SAWYER_MESG(logger[INFO])<< "Initializing solver "<<this->getSolver()->getId()<<" finished"<<endl;
 }
 
+EState CodeThorn::CTAnalysis::createInitialEState(SgProject* root, Label slab) {
+  // create initial state
+  PState initialPState;
+  ROSE_ASSERT(slab.isValid());
+  _estateTransferFunctions->initializeCommandLineArgumentsInState(slab,initialPState);
+  if(_ctOpt.inStateStringLiterals) {
+    ROSE_ASSERT(_estateTransferFunctions);
+    _estateTransferFunctions->initializeStringLiteralsInState(slab,initialPState);
+    if(_ctOpt.status) {
+      cout<<"STATUS: created "<<getVariableIdMapping()->numberOfRegisteredStringLiterals()<<" string literals in initial state."<<endl;
+    }
+  }
+
+  const PState* initialPStateStored=processNewOrExisting(initialPState); // might reuse another pstate when initializing in level 1
+  ROSE_ASSERT(initialPStateStored);
+  SAWYER_MESG(logger[TRACE])<< "INIT: initial pstate(stored): "<<initialPStateStored->toString(getVariableIdMapping())<<endl;
+  //ROSE_ASSERT(cfanalyzer);
+  ConstraintSet cset;
+  const ConstraintSet* emptycsetstored=constraintSetMaintainer.processNewOrExisting(cset);
+
+  transitionGraph.setStartLabel(slab);
+  transitionGraph.setAnalyzer(this);
+
+  EState estate(slab,initialPStateStored,emptycsetstored);
+
+  ROSE_ASSERT(_estateTransferFunctions);
+  _estateTransferFunctions->initializeGlobalVariables(root, estate);
+  SAWYER_MESG(logger[INFO]) <<"Initial state: number of entries:"<<estate.pstate()->stateSize()<<endl;
+
+  // initialize summary states map for abstract model checking mode
+  initializeSummaryStates(initialPStateStored,emptycsetstored);
+  estate.io.recordNone(); // ensure that extremal value is different to bot
+
+  return estate;
+}
+
+void CodeThorn::CTAnalysis::initializeSolverWithInitialEState(SgProject* root) {
+  // initialization of solver
+  cout<<"DEBUG: initializeSolverWithInitialEState:"<<_ctOpt.runSolver<<":"<<_ctOpt.getInterProceduralFlag()<<endl;
+  if(_ctOpt.runSolver) {
+    if(_ctOpt.getInterProceduralFlag()) {
+      // inter-procedural analysis initial state
+      Label slab=getFlow()->getStartLabel();
+      EState initialEStateObj=createInitialEState(root, slab);
+      const EState* initialEState=processNew(initialEStateObj);
+      ROSE_ASSERT(initialEState);
+      variableValueMonitor.init(initialEState);
+      addToWorkList(initialEState);
+      SAWYER_MESG(logger[INFO]) << "INIT: start state inter-procedural (extremal value size): "<<initialEState->pstate()->stateSize()<<" variables."<<endl;
+      SAWYER_MESG(logger[TRACE]) << "INIT: start state inter-procedural (extremal value): "<<initialEState->toString(getVariableIdMapping())<<endl;
+    } else {
+      // intra-procedural analysis initial states
+      //LabelSet entryLabels=getCFAnalyzer()->functionEntryLabels(*getFlow());
+      //getFlow()->setStartLabelSet(entryLabels);
+      //LabelSet startLabels=getFlow()->getStartLabelSet();
+      LabelSet startLabels=getCFAnalyzer()->functionEntryLabels(*getFlow());
+      getFlow()->setStartLabelSet(startLabels);
+      
+      size_t numStartLabels=startLabels.size();
+      printStatusMessage("STATUS: intra-procedural analysis with "+std::to_string(numStartLabels)+" start functions.",true);
+      long int fCnt=1;
+      for(auto slab : startLabels) {
+	// initialize intra-procedural analysis with all function entry points
+	if(_ctOpt.status) {
+	  SgNode* node=getLabeler()->getNode(slab);
+	  string functionName=SgNodeHelper::getFunctionName(node);
+	  string fileName=SgNodeHelper::sourceFilenameToString(node);
+#pragma omp critical (STATUS_MESSAGES)
+	  {
+	    SAWYER_MESG(logger[INFO])<<"Intra-procedural analysis: initializing function "<<fCnt++<<" of "<<numStartLabels<<": "<<fileName<<":"<<functionName<<endl;
+	  }
+	}
+	EState initialEStateObj=createInitialEState(root,slab);
+	initialEStateObj.setLabel(slab);
+	//cout<<"DEBUG: initalEStateObj:"<<initialEStateObj.toString()<<endl;
+	//cout<<"DEBUG: create estate label:"<<slab.toString()<<endl;
+	const EState* initialEState=processNewOrExisting(initialEStateObj);
+	ROSE_ASSERT(initialEState);
+	variableValueMonitor.init(initialEState);
+	addToWorkList(initialEState);
+      }
+    }
+
+    if(_ctOpt.rers.rersBinary) {
+      //initialize the global variable arrays in the linked binary version of the RERS problem
+      SAWYER_MESG(logger[DEBUG])<< "init of globals with arrays for "<< _ctOpt.threads << " threads. " << endl;
+      RERS_Problem::rersGlobalVarsArrayInitFP(_ctOpt.threads);
+      RERS_Problem::createGlobalVarAddressMapsFP(this);
+    }
+    SAWYER_MESG(logger[INFO])<<"Initializing solver finished."<<endl;
+  } else {
+    if(_ctOpt.status) cout<<"STATUS: skipping solver run."<<endl;
+  }
+}
+
 void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(SgProject* root, TimingCollector& tc) {
   SAWYER_MESG(logger[TRACE])<<"CTAnalysis::runAnalysisPhase1Sub1 started."<<endl;
   ROSE_ASSERT(root);
 
-  CodeThornOptions& ctOpt=getOptionsRef();
-
+  CodeThornOptions& ctOpt=getOptionsRef()
+;
   Pass::normalization(ctOpt,root,tc);
   _variableIdMapping=Pass::createVariableIdMapping(ctOpt, root, tc); // normalization timer
   _labeler=Pass::createLabeler(ctOpt, root, tc, _variableIdMapping); // labeler timer
@@ -1273,19 +1377,29 @@ void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(SgProject* root, TimingCollect
   _estateTransferFunctions->addParameterPassingVariables(); // DFTransferFunctions: adds pre-defined var-ids to VID for parameter passing
   
   if(_ctOpt.getInterProceduralFlag()) {
+    // inter-procedural analysis: one start label
     Label slab2=getLabeler()->getLabel(_startFunRoot);
     ROSE_ASSERT(slab2.isValid());
     ROSE_ASSERT(getLabeler()->isFunctionEntryLabel(slab2));
     ROSE_ASSERT(getFlow());
     getFlow()->addStartLabel(slab2);
   } else {
+    // intra-procedural analysis: multiple start labels
     LabelSet entryLabels=getCFAnalyzer()->functionEntryLabels(*getFlow());
     if(entryLabels.size()==0) {
       cout<<"Exit: No functions in program, nothing to analyze."<<endl;
       exit(0);
     }
     ROSE_ASSERT(getFlow());
-    getFlow()->setStartLabelSet(entryLabels);
+    /* TODO TODAY: 
+       1) store start label set in CTAnalysis: move initialization of start state into phase 2 (otherwise intra-proce cannot operate on each label)
+       2) modify runAnalysisPhase2 to iterate over each entrylabel and add it as startlabel
+       3) set timeout for solver16
+       4) function analyssis report: record in runAnalysisPhase2 which function finished, and which one did not (-> set all labels to unknown)
+    */
+    //getFlow()->setStartLabelSet(entryLabels);
+    // set one label as start label (intra-proc loop will continue with 2nd label)
+    getFlow()->setStartLabel(*entryLabels.begin());
   }
   SAWYER_MESG(logger[TRACE])<<"CTAnalysis::initializeSolver3i."<<endl;
 
@@ -1302,87 +1416,11 @@ void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(SgProject* root, TimingCollect
   SAWYER_MESG(logger[TRACE])<< "Intra-Flow OK. (size: " << getFlow()->size() << " edges)"<<endl;
   ROSE_ASSERT(getCFAnalyzer());
 
-  // create empty state
-  PState initialPState;
-  Label slab=getFlow()->getStartLabel();
-  ROSE_ASSERT(slab.isValid());
-  _estateTransferFunctions->initializeCommandLineArgumentsInState(slab,initialPState);
-  if(_ctOpt.inStateStringLiterals) {
-    ROSE_ASSERT(_estateTransferFunctions);
-    _estateTransferFunctions->initializeStringLiteralsInState(slab,initialPState);
-    if(_ctOpt.status) {
-      cout<<"STATUS: created "<<getVariableIdMapping()->numberOfRegisteredStringLiterals()<<" string literals in initial state."<<endl;
-    }
-  }
-
-  const PState* initialPStateStored=processNew(initialPState);
-  ROSE_ASSERT(initialPStateStored);
-  SAWYER_MESG(logger[TRACE])<< "INIT: initial pstate(stored): "<<initialPStateStored->toString(getVariableIdMapping())<<endl;
-  //ROSE_ASSERT(cfanalyzer);
-  ConstraintSet cset;
-  const ConstraintSet* emptycsetstored=constraintSetMaintainer.processNewOrExisting(cset);
-
-  transitionGraph.setStartLabel(slab);
-  transitionGraph.setAnalyzer(this);
-
-  EState estate(slab,initialPStateStored,emptycsetstored);
-
-  ROSE_ASSERT(_estateTransferFunctions);
-  _estateTransferFunctions->initializeGlobalVariables(root, estate);
-  SAWYER_MESG(logger[INFO]) <<"Initial state: number of entries:"<<estate.pstate()->stateSize()<<endl;
-
-  if(_ctOpt.status) cout<<"STATUS: creating worklist."<<endl;
+  if(_ctOpt.status) cout<<"STATUS: creating empty worklist."<<endl;
   setWorkLists(_explorationMode);
 
-  // initialize summary states map for abstract model checking mode
-  initializeSummaryStates(initialPStateStored,emptycsetstored);
-  estate.io.recordNone(); // ensure that extremal value is different to bot
+  initializeSolverWithInitialEState(root); // TODO: move to phase 2
 
-  // initialization of solver
-  if(_ctOpt.runSolver) {
-    if(_ctOpt.getInterProceduralFlag()) {
-      // inter-procedural analysis initial state
-      const EState* initialEState=processNew(estate);
-      ROSE_ASSERT(initialEState);
-      variableValueMonitor.init(initialEState);
-      addToWorkList(initialEState);
-      SAWYER_MESG(logger[INFO]) << "INIT: start state inter-procedural (extremal value size): "<<initialEState->pstate()->stateSize()<<" variables."<<endl;
-      SAWYER_MESG(logger[TRACE]) << "INIT: start state inter-procedural (extremal value): "<<initialEState->toString(getVariableIdMapping())<<endl;
-    } else {
-      // intra-procedural analysis initial states
-      LabelSet startLabels=getFlow()->getStartLabelSet();
-      size_t numStartLabels=startLabels.size();
-      printStatusMessage("STATUS: intra-procedural analysis with "+std::to_string(numStartLabels)+" start functions.",true);
-      long int fCnt=1;
-      for(auto slab : startLabels) {
-	// initialize intra-procedural analysis with all function entry points
-	if(_ctOpt.status) {
-	  SgNode* node=getLabeler()->getNode(slab);
-	  string functionName=SgNodeHelper::getFunctionName(node);
-	  string fileName=SgNodeHelper::sourceFilenameToString(node);
-#pragma omp critical (STATUS_MESSAGES)
-	  {
-	    SAWYER_MESG(logger[INFO])<<"Intra-procedural analysis: initializing function "<<fCnt++<<" of "<<numStartLabels<<": "<<fileName<<":"<<functionName<<endl;
-	  }
-	}
-	estate.setLabel(slab);
-	const EState* initialEState=processNew(estate);
-	ROSE_ASSERT(initialEState);
-	variableValueMonitor.init(initialEState);
-	addToWorkList(initialEState);
-      }
-    }
-
-    if(_ctOpt.rers.rersBinary) {
-      //initialize the global variable arrays in the linked binary version of the RERS problem
-      SAWYER_MESG(logger[DEBUG])<< "init of globals with arrays for "<< _ctOpt.threads << " threads. " << endl;
-      RERS_Problem::rersGlobalVarsArrayInitFP(_ctOpt.threads);
-      RERS_Problem::createGlobalVarAddressMapsFP(this);
-    }
-    SAWYER_MESG(logger[INFO])<<"Initializing solver finished."<<endl;
-  } else {
-    if(_ctOpt.status) cout<<"STATUS: skipping solver run."<<endl;
-  }
   if(_ctOpt.status) cout<<"STATUS: analysis phase 1 finished."<<endl;
   tc.stopTimer(TimingCollector::init);
 
