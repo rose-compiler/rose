@@ -38,6 +38,13 @@ initDiagnostics() {
     }
 }
 
+Engine::InProgress::InProgress() {}
+
+Engine::InProgress::InProgress(const Path::Ptr &path)
+    : path(path), threadId(boost::this_thread::get_id()) {}
+
+Engine::InProgress::~InProgress() {}
+
 Engine::Engine(const Settings::Ptr &settings)
     : frontier_(LongestPathFirst::instance()), interesting_(ShortestPathFirst::instance()),
       frontierPredicate_(WorkPredicate::instance()), interestingPredicate_(HasFinalTags::instance()),
@@ -243,7 +250,7 @@ Engine::step() {
     // Do one step of work if work is immediately available
     if (Path::Ptr path = takeNextWorkItemNow(state)) {  // returns immediately, not waiting for new work
         BOOST_SCOPE_EXIT(this_, &path) {
-            this_->finishPath(path);
+            this_->finishPath();
         } BOOST_SCOPE_EXIT_END;
         doOneStep(path, ops, solver);
         return true;
@@ -273,7 +280,7 @@ Engine::worker() {
     changeState(state, WorkerState::WAITING);
     while (Path::Ptr path = takeNextWorkItem(state)) {
         BOOST_SCOPE_EXIT(this_, &path) {
-            this_->finishPath(path);
+            this_->finishPath();
         } BOOST_SCOPE_EXIT_END;
         doOneStep(path, ops, solver);
         changeState(state, WorkerState::WAITING);
@@ -310,10 +317,14 @@ Engine::pendingPaths() const {
     return frontier_;
 }
 
-PathSet
+std::vector<Engine::InProgress>
 Engine::inProgress() const {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    return inProgress_;
+    std::vector<Engine::InProgress> retval;
+    retval.reserve(inProgress_.size());
+    for (const InProgress &record: inProgress_.values())
+        retval.push_back(record);
+    return retval;
 }
 
 const PathQueue&
@@ -368,7 +379,7 @@ Engine::takeNextWorkItemNow(WorkerState &state) {
     Path::Ptr retval = frontier_.takeNext();
     if (retval) {
         changeStateNS(state, WorkerState::WORKING);
-        inProgress_.insert(retval);
+        inProgress_.insert(boost::this_thread::get_id(), InProgress(retval));
     }
     return retval;
 }
@@ -381,7 +392,7 @@ Engine::takeNextWorkItem(WorkerState &state) {
             return Path::Ptr();
         if (Path::Ptr retval = frontier_.takeNext()) {
             changeStateNS(state, WorkerState::WORKING);
-            inProgress_.insert(retval);
+            inProgress_.insert(boost::this_thread::get_id(), InProgress(retval));
             return retval;
         }
         if (0 == nWorking_)
@@ -391,10 +402,9 @@ Engine::takeNextWorkItem(WorkerState &state) {
 }
 
 void
-Engine::finishPath(const Path::Ptr &path) {
-    ASSERT_not_null(path);
+Engine::finishPath() {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    inProgress_.erase(path);
+    inProgress_.erase(boost::this_thread::get_id());
 }
 
 Path::Ptr
@@ -679,16 +689,12 @@ public:
     size_t nPaths = 0;                                  // number of paths
     Sawyer::Optional<size_t> minSteps;                  // number of steps in shortest path
     Sawyer::Optional<size_t> maxSteps;                  // number of steps in longest path
-    bool saveSizes = false;
-    std::vector<size_t> sizes;                          // size of each path
 
     virtual bool operator()(const Path::Ptr &path) {
         ++nPaths;
-        sizes.push_back(path->nSteps());
-        minSteps = std::min(minSteps.orElse(sizes.back()), sizes.back());
-        maxSteps = std::max(maxSteps.orElse(sizes.back()), sizes.back());
-        if (!saveSizes)
-            sizes.pop_back();
+        size_t nSteps = path->nSteps();
+        minSteps = std::min(minSteps.orElse(nSteps), nSteps);
+        maxSteps = std::max(maxSteps.orElse(nSteps), nSteps);
         return true;
     }
 };
@@ -703,12 +709,10 @@ Engine::showStatistics(std::ostream &out, const std::string &prefix) const {
     const size_t nPathsExplored = this->nPathsExplored();
     const double age = timeSinceStats_.restart();       // zero if no previous report
 
+    std::vector<InProgress> currentWork = inProgress();
     PathStatsAccumulator currentStats;
-#if 0 // [Robb Matzke 2021-08-24]: include this code if you want a list of sizes in the statistics
-    currentStats.saveSizes = true;
-#endif
-    for (const Path::Ptr &path: inProgress())
-        currentStats(path);
+    for (const InProgress &work: currentWork)
+        currentStats(work.path);
 
     PathStatsAccumulator pendingStats;
     pendingPaths().traverse(pendingStats);
@@ -719,12 +723,11 @@ Engine::showStatistics(std::ostream &out, const std::string &prefix) const {
     if (currentStats.nPaths > 0) {
         out <<prefix <<"  shortest in-progress path length:     " <<StringUtility::plural(*currentStats.minSteps, "steps") <<"\n";
         out <<prefix <<"  longest in-progress path length:      " <<StringUtility::plural(*currentStats.maxSteps, "steps") <<"\n";
-        if (!currentStats.sizes.empty()) {
-            std::sort(currentStats.sizes.begin(), currentStats.sizes.end());
-            out <<prefix <<"  lengths:";
-            for (size_t size: currentStats.sizes)
-                out <<" " <<size;
-            out <<"\n";
+        for (const InProgress &work: currentWork) {
+            out <<prefix <<"  worker " <<work.threadId
+                <<": " <<work.path->printableName()
+                <<" having " <<StringUtility::plural(work.path->nSteps(), "steps")
+                <<"; " <<work.elapsed <<" elapsed\n";
         }
     }
 
