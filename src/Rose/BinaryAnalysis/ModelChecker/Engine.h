@@ -43,6 +43,17 @@ public:
     /** Reference counting pointer. */
     using Ptr = EnginePtr;
 
+    /** Information about a path that is in progress. */
+    struct InProgress {
+        InProgress();
+        explicit InProgress(const PathPtr&);
+        ~InProgress();
+
+        PathPtr path;                                   /**< The path being worked on. */
+        Sawyer::Stopwatch elapsed;                      /**< Wall clock time elapsed for this work. */
+        boost::thread::id threadId;                     /**< Identifier for thread doing the work. */
+    };
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -52,7 +63,7 @@ private:
     SemanticCallbacksPtr semantics_;                    // various configurable semantic operations
 
     mutable SAWYER_THREAD_TRAITS::Mutex mutex_;         // protects all following data members
-    PathSet inProgress_;                                // paths that are being worked on
+    Sawyer::Container::Map<boost::thread::id, InProgress> inProgress_;// work that is in progress
     SAWYER_THREAD_TRAITS::ConditionVariable newWork_;   // signaled when work arrives or thread finishes
     SAWYER_THREAD_TRAITS::ConditionVariable newInteresting_; // signaled when interesting paths arrive or threads finish
     PathPredicatePtr frontierPredicate_;                // predicate for inserting paths into the "frontier" queue
@@ -349,18 +360,18 @@ public:
 
     /** Indicates that a path has been finished.
      *
-     *  This should be called whenever work on a path finishes, regardless of whether the work was successful or not.
-     *  It removes the indicated path from the @ref inProgress list.
+     *  This should be called by a worker thread whenever its work on a path finishes, regardless of whether the work was
+     *  successful or not.  It removes the path from the @ref inProgress list.
      *
      *  Thread safety: This method is thread safe. */
-    void finishPath(const PathPtr&);
+    void finishPath();
 
     /** Paths that are currently in progress.
      *
-     *  Returns a copy of the paths that are in progress at the time this function is called.
+     *  Returns a copy of the information about paths that are in progress at the time this function is called.
      *
      *  Thread safety: This method is thread safe. */
-    PathSet inProgress() const;
+    std::vector<InProgress> inProgress() const;
 
     /** Potentially insert a path into the interesting queue.
      *
