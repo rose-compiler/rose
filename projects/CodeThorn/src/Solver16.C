@@ -137,15 +137,11 @@ void Solver16::run() {
       const EState* currentEStatePtr0=_analyzer->popWorkList();
       // difference to Solver5: always obtain abstract state
       const EState* currentEStatePtr=_analyzer->getSummaryState(currentEStatePtr0->label(),currentEStatePtr0->callString);
-      if(currentEStatePtr0!=currentEStatePtr) {
-        //cout<<"DEBUG: deleting obsolete state "<<currentEStatePtr0<<endl;
-        //delete currentEStatePtr0; // can be deleted because it is no longer used, instead the summary state is used
-      }
-      // if we want to terminate early, we ensure to stop all threads and empty the worklist (e.g. verification error found).
+      // terminate early, ensure to stop all threads and empty the worklist (e.g. verification error found).
       if(terminateEarly)
         continue;
       if(!currentEStatePtr) {
-        //cerr<<"Thread "<<threadNum<<" found empty worklist. Continue without work. "<<endl;
+        // empty worklist. Continue without work.
         ROSE_ASSERT(threadNum>=0 && threadNum<=_analyzer->getOptionsRef().threads);
       } else {
         ROSE_ASSERT(currentEStatePtr);
@@ -203,18 +199,6 @@ void Solver16::run() {
                       HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState2);
                       const EState* newEStatePtr2=pres.second;
 
-                      // DEBUG
-#if 0
-                      int checkId=220;
-                      int id=newEStatePtr2->label().getId();
-                      if(id==checkId) {
-                        cout<<"--------------------------------------------------"<<endl;
-                        cout<<"@"<<id<<": APPROX-BY-1:"<<newEStatePtr->toString()<<endl;
-                        cout<<"@"<<id<<": APPROX-BY-2:"<<summaryEState->toString()<<endl;
-                        cout<<"@"<<id<<": MERGED     :"<<newEStatePtr2->toString()<<endl;
-                      }
-#endif
-                      
                       if(pres.first==true) {
                         newEStatePtr=newEStatePtr2;
                       } else {
@@ -222,12 +206,6 @@ void Solver16::run() {
                       }
                       ROSE_ASSERT(newEStatePtr);
                       _analyzer->setSummaryState(newEStatePtr->label(),newEStatePtr->callString,newEStatePtr);
-#if 0
-                      if(id==checkId) {
-                        cout<<"@"<<id<<": MERGED SUM :"<<_analyzer->getSummaryState(newEStatePtr->label(),newEStatePtr->callString)->toString()<<endl;
-                        cout<<"--------------------------------------------------"<<endl;
-                      }
-#endif
                     }
                   }
                   _analyzer->addToWorkList(newEStatePtr);  
