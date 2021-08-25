@@ -108,6 +108,7 @@ namespace CodeThorn {
   protected:
     EState createInitialEState(SgProject* root, Label slab);
     void initializeSolverWithInitialEState(SgProject* root);
+    virtual void postInitializeSolver();
     void runAnalysisPhase1Sub1(SgProject* root, TimingCollector& tc);
     void runAnalysisPhase2Sub1(TimingCollector& tc);
   public:
@@ -335,6 +336,7 @@ namespace CodeThorn {
     const EState* popWorkList();
     const EState* topWorkList();
     void swapWorkLists();
+    void eraseWorkList();
 
     std::pair<CallString,const EState*> popWorkListCS();
     std::pair<CallString,const EState*> topWorkListCS();

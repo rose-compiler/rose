@@ -608,9 +608,9 @@ void CodeThorn::CTAnalysis::runSolver() {
 }
 
 void CodeThorn::CTAnalysis::runAnalysisPhase1(SgProject* root, TimingCollector& tc) {
-  SAWYER_MESG(logger[INFO])<< "Ininitializing solver "<<this->getSolver()->getId()<<" started"<<endl;
+  SAWYER_MESG(logger[INFO])<< "Ininitializing CT analysis solver "<<this->getSolver()->getId()<<" started"<<endl;
   this->runAnalysisPhase1Sub1(root,tc);
-  SAWYER_MESG(logger[INFO])<< "Initializing solver "<<this->getSolver()->getId()<<" finished"<<endl;
+  SAWYER_MESG(logger[INFO])<< "Initializing CT analysis solver "<<this->getSolver()->getId()<<" finished"<<endl;
 }
 
 void CodeThorn::CTAnalysis::runAnalysisPhase2(TimingCollector& tc) {
@@ -642,11 +642,44 @@ void CodeThorn::CTAnalysis::runAnalysisPhase2Sub1(TimingCollector& tc) {
     }
   } else {
     // intra-procedural analysis
+    // for intra-procedural analysis extract all start states from work list and run in a loop
     LabelSet entryLabels=getCFAnalyzer()->functionEntryLabels(*getFlow());
     ROSE_ASSERT(estateWorkListCurrent);
-    if(_ctOpt.status) cout<<"STATUS: intra-procedural analysis: entryLabels: "<<entryLabels.size()
-			  <<" initial work list length: "<<estateWorkListCurrent->size()<<endl;
-    this->runSolver();
+    //if(_ctOpt.status) cout<<"STATUS: intra-procedural analysis: entryLabels: "<<entryLabels.size()
+    //			  <<" initial work list length: "<<estateWorkListCurrent->size()<<endl;
+    // intra-procedural analysis initial states
+    //LabelSet entryLabels=getCFAnalyzer()->functionEntryLabels(*getFlow());
+    //getFlow()->setStartLabelSet(entryLabels);
+    //LabelSet startLabels=getFlow()->getStartLabelSet();
+    ROSE_ASSERT(!getModeLTLDriven());
+    eraseWorkList();
+    LabelSet startLabels=getCFAnalyzer()->functionEntryLabels(*getFlow());
+      
+    size_t numStartLabels=startLabels.size();
+    printStatusMessage("STATUS: intra-procedural analysis with "+std::to_string(numStartLabels)+" start functions.",true);
+    long int fCnt=1;
+    for(auto slab : startLabels) {
+      getFlow()->setStartLabel(slab);
+      // initialize intra-procedural analysis with all function entry points
+      if(_ctOpt.status) {
+	SgNode* node=getLabeler()->getNode(slab);
+	string functionName=SgNodeHelper::getFunctionName(node);
+	string fileName=SgNodeHelper::sourceFilenameToString(node);
+#pragma omp critical (STATUS_MESSAGES)
+	{
+	  SAWYER_MESG(logger[INFO])<<"Intra-procedural analysis: initializing function "<<fCnt++<<" of "<<numStartLabels<<": "<<fileName<<":"<<functionName<<endl;
+	}
+      }
+      EState initialEStateObj=createInitialEState(this->_root,slab);
+      initialEStateObj.setLabel(slab);
+      //cout<<"DEBUG: initalEStateObj:"<<initialEStateObj.toString()<<endl;
+      //cout<<"DEBUG: create estate label:"<<slab.toString()<<endl;
+      const EState* initialEState=processNewOrExisting(initialEStateObj);
+      ROSE_ASSERT(initialEState);
+      variableValueMonitor.init(initialEState);
+      addToWorkList(initialEState);
+      this->runSolver();
+    }
   }
 }
 
@@ -986,6 +1019,12 @@ const EState* CodeThorn::CTAnalysis::topWorkList() {
   }
   return estate;
 }
+
+void CodeThorn::CTAnalysis::eraseWorkList() {
+  while(!isEmptyWorkList())
+    popWorkList();
+}
+
 const EState* CodeThorn::CTAnalysis::popWorkList() {
   const EState* estate=0;
 #pragma omp critical(ESTATEWL)
@@ -1260,11 +1299,14 @@ EState CodeThorn::CTAnalysis::createInitialEState(SgProject* root, Label slab) {
 
   return estate;
 }
+void CodeThorn::CTAnalysis::postInitializeSolver() {
+  // empty in base class
+}
 
 void CodeThorn::CTAnalysis::initializeSolverWithInitialEState(SgProject* root) {
   // initialization of solver
-  cout<<"DEBUG: initializeSolverWithInitialEState:"<<_ctOpt.runSolver<<":"<<_ctOpt.getInterProceduralFlag()<<endl;
   if(_ctOpt.runSolver) {
+    if(_ctOpt.status) cout<<"STATS: initializeSolverWithInitialEState: inter-proc: "<<_ctOpt.getInterProceduralFlag()<<endl;
     if(_ctOpt.getInterProceduralFlag()) {
       // inter-procedural analysis initial state
       Label slab=getFlow()->getStartLabel();
@@ -1275,11 +1317,13 @@ void CodeThorn::CTAnalysis::initializeSolverWithInitialEState(SgProject* root) {
       addToWorkList(initialEState);
       SAWYER_MESG(logger[INFO]) << "INIT: start state inter-procedural (extremal value size): "<<initialEState->pstate()->stateSize()<<" variables."<<endl;
       SAWYER_MESG(logger[TRACE]) << "INIT: start state inter-procedural (extremal value): "<<initialEState->toString(getVariableIdMapping())<<endl;
+      postInitializeSolver(); // empty in this class, only overridden by IOAnalyzer for ltldriven analysis
     } else {
       // intra-procedural analysis initial states
       //LabelSet entryLabels=getCFAnalyzer()->functionEntryLabels(*getFlow());
       //getFlow()->setStartLabelSet(entryLabels);
       //LabelSet startLabels=getFlow()->getStartLabelSet();
+      ROSE_ASSERT(!getModeLTLDriven());
       LabelSet startLabels=getCFAnalyzer()->functionEntryLabels(*getFlow());
       getFlow()->setStartLabelSet(startLabels);
       

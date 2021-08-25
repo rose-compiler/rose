@@ -34,26 +34,35 @@ IOAnalyzer::IOAnalyzer():CTAnalysis() {
 
 // overrides
 void IOAnalyzer::runAnalysisPhase1(SgProject* root, TimingCollector& tc) {
+  SAWYER_MESG(logger[INFO])<< "Ininitializing IO analysis solver "<<this->getSolver()->getId()<<" started"<<endl;
   runAnalysisPhase1Sub1(root, tc);
+  SAWYER_MESG(logger[INFO])<< "Initializing IO analysis solver "<<this->getSolver()->getId()<<" finished"<<endl;
 }
 
 // overrides
 void IOAnalyzer::runAnalysisPhase2(TimingCollector& tc) {
+  tc.startTimer();
   initializeSolverWithInitialEState(this->_root);
-  if(_ctOpt.runSolver) {
-    const EState* currentEState=estateWorkListCurrent->front();
-    ROSE_ASSERT(currentEState);
-    if(getModeLTLDriven()) {
-      setLTLDrivenStartEState(currentEState);
-    }
-  }
   runAnalysisPhase2Sub1(tc);
+  tc.stopTimer(TimingCollector::transitionSystemAnalysis);
 }
 
 void IOAnalyzer::setLTLDrivenStartEState(const EState* estate) {
   // this function is only used in ltl-driven mode (otherwise it is not necessary)
   ROSE_ASSERT(getModeLTLDriven());
   transitionGraph.setStartEState(estate);
+  
+}
+
+void IOAnalyzer::postInitializeSolver() {
+    if(_ctOpt.runSolver) {
+    const EState* currentEState=estateWorkListCurrent->front();
+    ROSE_ASSERT(currentEState);
+    if(getModeLTLDriven()) {
+      setLTLDrivenStartEState(currentEState);
+    }
+  }
+
 }
 
 /*! 

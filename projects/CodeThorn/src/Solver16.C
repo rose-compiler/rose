@@ -3,6 +3,7 @@
 #include "CTAnalysis.h"
 #include "CodeThornCommandLineOptions.h"
 #include "EStateTransferFunctions.h"
+#include <limits>
 
 using namespace std;
 using namespace CodeThorn;
@@ -71,8 +72,13 @@ void Solver16::run() {
     _analyzer->reachabilityResults.init(_analyzer->getNumberOfErrorLabels()); // set all reachability results to unknown
   }
   logger[INFO]<<"number of error labels: "<<_analyzer->reachabilityResults.size()<<endl;
+
   size_t prevStateSetSize=0; // force immediate report at start
-  int threadNum;
+  if(_analyzer->getOptionsRef().getInterProceduralFlag()==false) {
+    prevStateSetSize+=_analyzer->getOptionsRef().displayDiff; // skip report at start
+  }
+
+  int threadNum=0;
   int workers=_analyzer->getOptionsRef().threads;
   vector<bool> workVector(workers);
   _analyzer->set_finished(workVector,true);
