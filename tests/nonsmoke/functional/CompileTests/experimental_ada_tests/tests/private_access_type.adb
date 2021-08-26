@@ -1,0 +1,14 @@
+PROCEDURE Private_Access_Type IS
+          PACKAGE P IS
+               TYPE INT_ARRAY IS ARRAY (INTEGER RANGE <>) OF INTEGER;
+               TYPE UNCONSTR_ARRAY_ACCESS IS ACCESS INT_ARRAY;
+               TYPE CONSTR_ARRAY_ACCESS IS PRIVATE;
+          PRIVATE
+               TYPE CONSTR_ARRAY_ACCESS IS ACCESS UNCONSTR_ARRAY_ACCESS(1..3);
+          END P;
+
+          PACKAGE BODY P IS
+          END P;
+BEGIN
+  NULL;
+END Private_Access_Type;

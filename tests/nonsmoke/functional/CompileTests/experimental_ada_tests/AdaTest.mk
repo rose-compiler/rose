@@ -173,7 +173,10 @@ ADA_TRANSLATOR_PENDING_TESTS :=        \
   discriminant_constraint.ads                       \
   discriminant_specification.ads                    \
   switches.ads                         \
+  private_access_type.adb               \
   unknown_discriminant.ads                          \
+  very_large_value.adb \
+  discriminated_record.adb \
   hardwarestore.adb                    
 
 # defines tests that are fully supported by ROSE
