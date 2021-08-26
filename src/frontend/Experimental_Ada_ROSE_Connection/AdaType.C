@@ -478,9 +478,9 @@ namespace
         // NOTE: temporarily create an AdaFormalType with the given name,
         //       but set no fields.  This is sufficient to pass some test cases but
         //       is not correct.
+        ADA_ASSERT(!FAIL_ON_ERROR(ctx));
         SgAdaFormalType* t = &mkAdaFormalType(name);
         res.n = t;
-        //ADA_ASSERT(!FAIL_ON_ERROR);
       }
 
     return res;

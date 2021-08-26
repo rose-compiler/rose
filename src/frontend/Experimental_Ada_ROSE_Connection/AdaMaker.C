@@ -506,12 +506,9 @@ mkNullStatement()
 }
 
 SgEmptyDeclaration&
-mkNullDecl(SgScopeStatement& encl)
+mkNullDecl()
 {
-  SgEmptyDeclaration& sgnode = SG_DEREF(sb::buildEmptyDeclaration());
-
-  sg::linkParentChild(encl, as<SgStatement>(sgnode), &SgScopeStatement::append_statement);
-  return sgnode;
+  return SG_DEREF(sb::buildEmptyDeclaration());
 }
 
 SgTryStmt&
@@ -1131,11 +1128,15 @@ namespace
     using SageNode = SageVariableDeclaration;
 
     SageNode& vardcl = mkLocatedNode<SageNode>(&mkFileInfo(), std::forward<Args>(args)...);
+    bool      isNullDecl = std::distance(aa, zz) == 0;
 
-    setInitializedNamesInDecl(aa, zz, vardcl);
-    si::fixVariableDeclaration(&vardcl, &scope);
+    if (!isNullDecl)
+    {
+      setInitializedNamesInDecl(aa, zz, vardcl);
+      si::fixVariableDeclaration(&vardcl, &scope);
+    }
+
     vardcl.set_parent(&scope);
-
     return vardcl;
   }
 
@@ -1190,6 +1191,14 @@ SgAdaVariantFieldDecl&
 mkAdaVariantFieldDecl(const SgInitializedNamePtrList& vars, SgExprListExp& choices, SgScopeStatement& scope)
 {
   return mkVarDeclInternal<SgAdaVariantFieldDecl>(vars.begin(), vars.end(), scope, &choices);
+}
+
+SgAdaVariantFieldDecl&
+mkAdaVariantFieldDecl(SgExprListExp& choices, SgScopeStatement& scope)
+{
+  SgInitializedNamePtrList empty;
+
+  return mkAdaVariantFieldDecl(empty, choices, scope);
 }
 
 
@@ -1370,19 +1379,19 @@ mkSelectedComponent(SgExpression& prefix, SgExpression& selector)
 SgAdaTaskRefExp&
 mkAdaTaskRefExp(SgAdaTaskSpecDecl& task)
 {
-  return mkBareNode<SgAdaTaskRefExp>(&task);
+  return mkLocatedNode<SgAdaTaskRefExp>(&task);
 }
 
 SgAdaUnitRefExp&
-mkAdaUnitRefExp(SgAdaPackageSpecDecl& unit)
+mkAdaUnitRefExp(SgDeclarationStatement& unit)
 {
-  return mkBareNode<SgAdaUnitRefExp>(&unit);
+  return mkLocatedNode<SgAdaUnitRefExp>(&unit);
 }
 
 SgAdaRenamingRefExp&
 mkAdaRenamingRefExp(SgAdaRenamingDecl& decl)
 {
-  return mkBareNode<SgAdaRenamingRefExp>(&decl);
+  return mkLocatedNode<SgAdaRenamingRefExp>(&decl);
 }
 
 

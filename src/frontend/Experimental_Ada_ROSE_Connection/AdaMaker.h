@@ -278,7 +278,7 @@ namespace Ada_ROSE_Translation
 
   /// creates an Ada NULL declaration (represented in code)
   SgEmptyDeclaration&
-  mkNullDecl(SgScopeStatement& scope);
+  mkNullDecl();
 
   /// creates an Ada Try block
   /// \note in Rose this is represented by a try statement that contains a block
@@ -494,6 +494,10 @@ namespace Ada_ROSE_Translation
   SgAdaVariantFieldDecl&
   mkAdaVariantFieldDecl(const SgInitializedNamePtrList& vars, SgExprListExp& choices, SgScopeStatement& scope);
 
+  /// creates a null field with (i.e., an empty SgAdaVariantFieldDecl)
+  SgAdaVariantFieldDecl&
+  mkAdaVariantFieldDecl(SgExprListExp& choices, SgScopeStatement& scope);
+
   /// creates an exception declaration
   /// \note exceptions in Ada are objects (*), in ROSE each exception is represented
   ///       as a variable of type Exception.
@@ -578,7 +582,7 @@ namespace Ada_ROSE_Translation
 
   /// Creates a reference to a package \ref unit
   SgAdaUnitRefExp&
-  mkAdaUnitRefExp(SgAdaPackageSpecDecl& unit);
+  mkAdaUnitRefExp(SgDeclarationStatement& unit);
 
   /// Creates a reference to an Ada renaming declaration \ref decl
   SgAdaRenamingRefExp&

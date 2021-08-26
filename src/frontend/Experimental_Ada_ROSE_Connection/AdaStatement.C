@@ -2185,6 +2185,9 @@ namespace
       case A_Floating_Point_Definition:
       case An_Ordinary_Fixed_Point_Definition:
       case A_Decimal_Fixed_Point_Definition:
+      case An_Access_Type_Definition:
+      case An_Enumeration_Type_Definition: // \todo untested
+      case A_Constrained_Array_Definition: // \todo untested
         {
           res = &mkTypeDecl(adaname.ident, mkOpaqueType(), scope);
           break;
@@ -2221,10 +2224,6 @@ namespace
   */
 
       default:
-        // \todo
-        //   An_Enumeration_Type_Definition
-        //   A_Constrained_Array_Definition
-        //   An_Access_Type_Definition
         logWarn() << "unhandled opaque type declaration: " << tyKind
                   << std::endl;
         ADA_ASSERT(!FAIL_ON_ERROR(ctx));
@@ -2556,10 +2555,14 @@ void handleDefinition(Element_Struct& elem, AstContext ctx)
   {
     case A_Null_Component:                 // 3.8(4)
       {
-        SgScopeStatement&   scope = ctx.scope();
-        SgEmptyDeclaration& sgnode = mkNullDecl(scope);
+        SgScopeStatement&       scope = ctx.scope();
+        SgExprListExp*          variant_choice = createVariantChoice_opt(ctx);
+        SgDeclarationStatement& sgnode = variant_choice
+                                            ? mkAdaVariantFieldDecl(*variant_choice, scope)
+                                            : static_cast<SgDeclarationStatement&>(mkNullDecl());
 
         attachSourceLocation(sgnode, elem, ctx);
+        scope.append_statement(&sgnode);
         ADA_ASSERT(sgnode.get_parent() == &scope);
         break;
       }
@@ -3828,7 +3831,7 @@ getQualName(Element_Struct& elem, AstContext ctx)
   {
     logKind("An_Identifier");
 
-    std::string        ident{idex.Name_Image};
+    std::string ident{idex.Name_Image};
 
     return NameData{ ident, ident, ctx.scope(), elem };
   }
