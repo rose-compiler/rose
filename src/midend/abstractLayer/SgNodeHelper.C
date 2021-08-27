@@ -1846,10 +1846,12 @@ namespace
     void handle(SgVariableDeclaration& n)
     {
       SgInitializedName& var = onlyDecl(n);
-      SgInitializer*     ini = var.get_initializer();
 
-      if (ini) res = eval(ini);
+      res = eval_nullcheck(var.get_initializer());
 
+      //~ if (res && (var.unparseToString() == "a"))
+        //~ std::cerr << "[PP! c?] " << var.unparseToString() << (res ? "T" : "F")
+                  //~ << std::endl;
       // \todo test for implicit call constructor
     }
 

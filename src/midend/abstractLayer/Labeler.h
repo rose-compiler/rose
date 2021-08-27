@@ -157,6 +157,8 @@ class Labeler {
   Labeler() = default; // \todo do we need this constructor
   virtual ~Labeler() = default;
 
+  /// call after object has been constructed to build the map w/ labels
+  virtual void initialize(SgNode* node) = 0;
   virtual int numberOfAssociatedLabels(SgNode* node) = 0;
   virtual void createLabels(SgNode* node) = 0;
 
@@ -250,11 +252,12 @@ class Labeler {
 class CLabeler : public Labeler {
  public:
   CLabeler();
-  explicit CLabeler(SgNode*);
+  //~ explicit CLabeler(SgNode*);
   ~CLabeler() = default;
 
   int numberOfAssociatedLabels(SgNode* node) ROSE_OVERRIDE;
   void createLabels(SgNode* node) ROSE_OVERRIDE;
+  void initialize(SgNode* node) ROSE_OVERRIDE;
 
   /** Labels are numbered 0..n-1 where n is the number of labels
       associated with AST nodes (not all nodes are labeled, and some
@@ -338,7 +341,8 @@ class CLabeler : public Labeler {
 
 class IOLabeler : public CLabeler {
  public:
-  IOLabeler(SgNode* start, VariableIdMapping* variableIdMapping);
+  //~ IOLabeler(SgNode* start, VariableIdMapping* variableIdMapping);
+  explicit IOLabeler(VariableIdMapping* variableIdMapping);
   virtual bool isStdIOLabel(Label label);
   virtual bool isStdInLabel(Label label, VariableId* id=0);
   virtual bool isStdOutLabel(Label label);
@@ -346,6 +350,8 @@ class IOLabeler : public CLabeler {
   virtual bool isStdOutConstLabel(Label label, int* constvalue=0);
   virtual bool isStdErrLabel(Label label, VariableId* id=0);
   virtual  ~IOLabeler();
+
+  void initialize(SgNode* n) ROSE_OVERRIDE;
 
  protected:
   VariableIdMapping* _variableIdMapping;

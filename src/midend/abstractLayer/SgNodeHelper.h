@@ -577,7 +577,7 @@ namespace SgNodeHelper {
       SgFunctionCallExp*        callExpression()     const;
 
       /// returns the constructor initialization node
-      /// of nullptr.
+      /// or nullptr.
       SgConstructorInitializer* ctorInitializer()    const;
 
       /// returns the function pointer expression representing the target
