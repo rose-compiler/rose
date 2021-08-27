@@ -8,7 +8,7 @@ namespace CodeThorn {
 
   // set to true for matching C++ ctor calls
   bool Pass::WITH_EXTENDED_NORMALIZED_CALL = false;
-  
+
   void Pass::normalization(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc) {
     tc.startTimer();
     if(ctOpt.status) cout<<"Phase: normalization";
@@ -29,7 +29,9 @@ namespace CodeThorn {
   CodeThorn::Labeler* Pass::createLabeler(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, VariableIdMappingExtended* variableIdMapping) {
     tc.startTimer();
     if(ctOpt.status) cout<<"Phase: program location labeling"<<endl;
-    Labeler* labeler=CodeThorn::CodeThornLib::createLabeler(root,variableIdMapping);
+
+    const bool withCplusplus = ctOpt.extendedNormalizedCppFunctionCalls;
+    Labeler* labeler=CodeThorn::CodeThornLib::createLabeler(root,variableIdMapping,withCplusplus);
     tc.stopTimer(TimingCollector::labeler);
     return labeler;
   }
@@ -44,14 +46,14 @@ namespace CodeThorn {
   }
 
   CFAnalysis* Pass::createForwardIcfg(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, Labeler* labeler, ClassHierarchyWrapper* classHierarchy) {
-    bool isForardIcfg=true;
+    // bool isForardIcfg=true;
     return Pass::createIcfg(ctOpt,root,tc,labeler,classHierarchy,ICFG_forward);
   }
-    
+
   CFAnalysis* Pass::createBackwardIcfg(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, Labeler* labeler, ClassHierarchyWrapper* classHierarchy) {
     return Pass::createIcfg(ctOpt,root,tc,labeler,classHierarchy,ICFG_backward);
   }
-  
+
   CFAnalysis* Pass::createIcfg(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, Labeler* labeler, ClassHierarchyWrapper* classHierarchy, ICFGDirection icfgDirection) {
     tc.startTimer();
 
@@ -78,5 +80,5 @@ namespace CodeThorn {
     tc.stopTimer(TimingCollector::icfgConstruction);
     return cfanalyzer;
   }
-  
+
 } // namespace CodeThorn

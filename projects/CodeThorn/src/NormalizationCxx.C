@@ -1713,4 +1713,14 @@ namespace
       tf.execute();
   }
 
+  bool cppCreatesTemporaryObject(const SgExpression* n)
+  {
+    const SgConstructorInitializer* init = isSgConstructorInitializer(n);
+
+    if (!init) return false;
+
+    // exclude variable declarations
+    return isSgInitializedName(init->get_parent()) == nullptr;
+  }
+
 } // CodeThorn namespace

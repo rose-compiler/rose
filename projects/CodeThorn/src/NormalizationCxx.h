@@ -7,7 +7,7 @@ struct SgNode;
 namespace CodeThorn
 {
   struct Normalization;
-  
+
   /// normalizes some C++ concepts by updating the Ast
   /// - generates constructors and destructors if needed
   /// - moves member construction and initialization into ctor body
@@ -16,12 +16,15 @@ namespace CodeThorn
   /// \param node the root node of all subtrees to be normalized
   /// \note the result is no longer "true" C++
   void normalizeCxx(Normalization& norm, SgNode* node);
-  
+
   /// inserts ctor and dtor calls at the end of scopes
   void insertCtorDtorCalls(Normalization& norm, SgNode* node);
-  
+
   /// tests if @ref n requires compiler generation
   bool needsCompilerGeneration(SgMemberFunctionDeclaration& n);
+
+  /// tests if this is constructor creates a temporary
+  bool cppCreatesTemporaryObject(const SgExpression* n);
 }
 
 #endif /* NORMALIZATION_CXX_H */

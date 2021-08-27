@@ -614,23 +614,20 @@ int main( int argc, char * argv[] )
     //~ for (int i = 0; i < thornArgc; ++i)
       //~ std::cerr << thornArgv[i] << std::endl;
 
+
+    CodeThornOptions         ctOpt;
+    //~ LTLOptions               ltlOpt;    // to be moved into separate tool
+    //~ ParProOptions            parProOpt; // options only available in parprothorn
+
+    //~ parseCommandLine(thornArgc, thornArgv, logger, thorn2version, ctOpt, ltlOpt, parProOpt);
+    mfacilities.control(ctOpt.logLevel);
+    logTrace() << "Log level is " << ctOpt.logLevel << endl;
     ct::TimingCollector      tc;
 
     tc.startTimer();
-    CodeThornOptions         ctOpt;
-    LTLOptions               ltlOpt;    // to be moved into separate tool
-    ParProOptions            parProOpt; // options only available in parprothorn
-
-    //~ parseCommandLine(thornArgc, thornArgv, logger, thorn2version, ctOpt, ltlOpt, parProOpt);
-
-    //~ parseCommandLine(argc, argv, logger, thorn2version, ctOpt, ltlOpt, parProOpt);
-
-    mfacilities.control(ctOpt.logLevel);
-    logTrace() << "Log level is " << ctOpt.logLevel << endl;
-    tc.stopTimer();
-
     SgProject* project = ct::CodeThornLib::runRoseFrontEnd(thornArgc,thornArgv,ctOpt,tc);
     ROSE_ASSERT(project);
+    tc.stopTimer();
 
     logTrace() << "Parsing and creating AST finished."<<endl;
 

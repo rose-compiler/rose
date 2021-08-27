@@ -5,7 +5,7 @@ const char* expectedout = "{fA;~A}";
 
 struct A
 {
-  A()         { printf("A"); }
+  A()         { printf("A");  }
   ~A()        { printf("~A"); }
 };
 

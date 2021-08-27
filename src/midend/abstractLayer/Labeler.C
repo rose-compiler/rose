@@ -220,12 +220,22 @@ CLabeler::CLabeler()
 : Labeler(), isFunctionCallNode(SgNodeHelper::Pattern::matchFunctionCall)
 {}
 
-CLabeler::CLabeler(SgNode* start)
-: CLabeler()
+void CLabeler::initialize(SgNode* start)
 {
   createLabels(start);
   computeNodeToLabelMapping();
 }
+
+/*
+CLabeler::CLabeler(SgNode* start)
+: CLabeler()
+{
+  // PP 08/26/21
+  // ==> moved to initialize to make work with virtual functions
+  createLabels(start);
+  computeNodeToLabelMapping();
+}
+*/
 
 
 #if OBSOLETE_CODE
@@ -835,6 +845,7 @@ void LabelProperty::setExternalFunctionCallLabel() {
   IO Labeler Implementation
 */
 
+/*
 IOLabeler::IOLabeler(SgNode* start, VariableIdMapping* variableIdMapping):CLabeler(start) {
   _variableIdMapping=variableIdMapping;
   // add IO info to each label property
@@ -842,8 +853,30 @@ IOLabeler::IOLabeler(SgNode* start, VariableIdMapping* variableIdMapping):CLabel
     (*i).initializeIO(variableIdMapping);
   }
 }
+*/
+
+IOLabeler::IOLabeler(VariableIdMapping* variableIdMapping)
+: CLabeler(), _variableIdMapping(variableIdMapping)
+{
+/*
+  // add IO info to each label property
+  for(LabelToLabelPropertyMapping::iterator i=mappingLabelToLabelProperty.begin();i!=mappingLabelToLabelProperty.end();++i) {
+    (*i).initializeIO(variableIdMapping);
+  }
+*/
+}
 
 IOLabeler::~IOLabeler() {
+}
+
+void IOLabeler::initialize(SgNode* n)
+{
+  ROSE_ASSERT(_variableIdMapping);
+
+  CLabeler::initialize(n);
+  for(LabelToLabelPropertyMapping::iterator i=mappingLabelToLabelProperty.begin();i!=mappingLabelToLabelProperty.end();++i) {
+    (*i).initializeIO(_variableIdMapping);
+  }
 }
 
 bool IOLabeler::isStdIOLabel(Label label) {
