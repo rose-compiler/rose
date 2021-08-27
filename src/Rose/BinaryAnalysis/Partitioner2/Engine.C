@@ -897,7 +897,7 @@ Engine::specimenNameDocumentation() {
             "adjusts a memory map by reading the process' memory. " + MemoryMap::insertProcessDocumentation() + "}"
 
             "@bullet{If the name begins with the string \"run:\" then it is first treated like a normal file by ROSE's "
-            "\"fontend\" function, and then during a second pass it will be loaded natively under a debugger, run until "
+            "\"frontend\" function, and then during a second pass it will be loaded natively under a debugger, run until "
             "a mapped executable address is reached, and then its memory is copied into ROSE's memory map possibly "
             "overwriting existing parts of the map.  This can be useful when the user wants accurate information about "
             "how that native loader links in shared objects since ROSE's linker doesn't always have identical behavior. "
