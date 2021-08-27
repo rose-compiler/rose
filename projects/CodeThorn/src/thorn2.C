@@ -624,10 +624,10 @@ int main( int argc, char * argv[] )
     logTrace() << "Log level is " << ctOpt.logLevel << endl;
     ct::TimingCollector      tc;
 
-    tc.startTimer();
+    //~ tc.startTimer();
     SgProject* project = ct::CodeThornLib::runRoseFrontEnd(thornArgc,thornArgv,ctOpt,tc);
     ROSE_ASSERT(project);
-    tc.stopTimer();
+    //~ tc.stopTimer();
 
     logTrace() << "Parsing and creating AST finished."<<endl;
 

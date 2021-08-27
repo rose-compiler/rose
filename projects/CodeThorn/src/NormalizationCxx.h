@@ -24,7 +24,7 @@ namespace CodeThorn
   bool needsCompilerGeneration(SgMemberFunctionDeclaration& n);
 
   /// tests if this is constructor creates a temporary
-  bool cppCreatesTemporaryObject(const SgExpression* n);
+  bool cppCreatesTemporaryObject(const SgExpression* n, bool withCplusplus);
 }
 
 #endif /* NORMALIZATION_CXX_H */

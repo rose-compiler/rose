@@ -20,6 +20,7 @@ function runCxxTests {
       exit 1
     fi
 
+    numPass=0
     CXX=$1
     shift
     testDir=$1
@@ -34,22 +35,33 @@ function runCxxTests {
     shift
 
     while (( "$#" )); do
-        benchmarkprefix="$testDir/src/$testPrefix$1"
+        benchmarkprefix="$testDir/src/$testPrefix$1*.cc"
         shift
 
-        for benchmark in ${benchmarkprefix}*.cc; do
+        for benchmark in ${benchmarkprefix}; do
             benchmarkname=$(basename $benchmark)
             printf "Testing %-38s: " $benchmarkname
             CT_OUTPUT_FILE=$benchmarkname.imout
 
-            #~ ./codethorn $benchmark $CT_MODE_OPTIONS --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR > /dev/null
+            # ./codethorn $CT_MODE_OPTIONS --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR/include $benchmark > /dev/null
+            ./codethorn $CT_MODE_OPTIONS -I $TESTDIR/include $benchmark > /dev/null
+            RESULT=$?
+            
+            if [ $RESULT == 0 ]; then
+              echo $COLORED_PASS
+              ((numPass++))
+            else
+              echo $COLORED_FAIL
+              ((numFail++))
+            fi
+            
           #~ if [ ! $? -eq 0 ]
           #~ then
           #~ echo $COLORED_FAIL
                 #~ ((numFail++))
             #~ else
                 #~ echo -n "$COLORED_PASS "
-
+: <<'EndOfComment'
             EXEFILE=${benchmarkname}.exe
             $CXX -std=c++03 -Wall -Wextra -pedantic -I $TESTDIR/include $benchmark -o$EXEFILE
             RESULT=$?
@@ -74,6 +86,7 @@ function runCxxTests {
             else
               ((numFail++))
             fi
+EndOfComment
         done
     done
     printStats $numPass $numWarn $numWarnExpected $numFail $numFailExpected
@@ -141,33 +154,34 @@ while [[ $# -gt 0 ]]; do
   case $key in
     -c|--compiler)
       COMPILER="$2"
-      shift # past argument
-      shift # past value
+      shift # consume argument
+      shift # consume value
       ;;
     -p|--prefix)
       TESTPREFIX="$2"
-      shift # past argument
-      shift # past value
+      shift # consume argument
+      shift # consume value
       ;;
     *)    # unknown option
       TESTDIR="$1" # overwrite test directory
-      shift # past argument
+      shift # consume argument
       ;;
   esac
 done
 
-CT_MODE_OPTIONS="--context-sensitive=yes --normalize-level=2 --interpreter-mode=1 --in-state-string-literals --exploration-mode=topologic-sort"
+#CT_MODE_OPTIONS="--context-sensitive=yes --normalize-level=2 --interpreter-mode=1 --in-state-string-literals --exploration-mode=topologic-sort"
+CT_MODE_OPTIONS="--run-solver=0 --vis=1 --normalize-level=2 --normalize-extended"
 
 echo "Valid C++98 Tests: "
 passingTests=`echo {001..016} {018..034} {036..051} {053..056}`
 numWarnExpected=0
-numFailExpected=0
+numFailExpected=34
 runCxxTests $COMPILER $TESTDIR $TESTPREFIX $numWarnExpected $numFailExpected $passingTests
 
 echo "Undefined Behavior Tests: "
 undefinedBehavior=`echo 017`
 numWarnExpected=1
-numFailExpected=0
+numFailExpected=1
 runCxxTests $COMPILER $TESTDIR $TESTPREFIX $numWarnExpected $numFailExpected $undefinedBehavior
 
 echo "Language Extension Tests: "

@@ -1169,10 +1169,8 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
       Normalization::TmpVarNrType unaryResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getUnaryOpChild(expr)),subExprTransformationList,insideExprToBeEliminated);
       mostRecentTmpVarNr=registerTmpVarInitialization(stmt,expr,unaryResultTmpVarNr,subExprTransformationList);
     } else if(options.normalizeCplusplus && isSgNewExp(expr)) {
-      // \todo PP normalize new arguments?
       mostRecentTmpVarNr=registerTmpVarInitialization(stmt,expr,subExprTransformationList);
-    } else if(options.normalizeCplusplus && cppCreatesTemporaryObject(expr)) {
-      // \todo PP normalize new arguments?
+    } else if(cppCreatesTemporaryObject(expr, options.normalizeCplusplus)) {
       mostRecentTmpVarNr=registerTmpVarInitialization(stmt,expr,subExprTransformationList);
     } else {
       // leave node.
@@ -1545,17 +1543,40 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
   Normalization::buildVariableDeclarationWithInitializerForExpression(SgExpression* expression, SgScopeStatement* scope, bool shareExpression) {
     return buildVariableDeclarationForExpression(expression,scope,true,shareExpression);
   }
+
+  namespace
+  {
+    SgInitializer* buildInitializerIfNeeded(SgExpression* expr, bool withCplusplus = false)
+    {
+      if (!withCplusplus)
+        return SageBuilder::buildAssignInitializer(expr);
+
+      SgInitializer* res = isSgInitializer(expr);
+
+      if (!res) res = SageBuilder::buildAssignInitializer(expr);
+
+      ROSE_ASSERT(res);
+      return res;
+    }
+  }
+
   SgVariableDeclaration*
   Normalization::buildVariableDeclarationForExpression(SgExpression* expression, SgScopeStatement* scope, bool initWithExpression, bool shareExpression) {
     SgType* expressionType = expression->get_type();
     SgType* variableType = expressionType;
 
     //MS 10/24/2018: If variable has referece type, use a value type for the temporary variable (otherwise reference would be duplicated into 2 memory locations)
-    if (SgReferenceType* referenceType=isSgReferenceType(expressionType))
+    if (!options.normalizeCplusplus)
     {
-      if(SgReferenceType* strippedReferenceType = isSgReferenceType(referenceType->stripType(SgType::STRIP_TYPEDEF_TYPE))) {
-        SgType* strippedReferenceBaseType = strippedReferenceType->get_base_type();
-        variableType = strippedReferenceBaseType;
+      // PP (08/27/21): Stripping references in C++ introduces temporaries and could have
+      //                side effects.
+
+      if (SgReferenceType* referenceType=isSgReferenceType(expressionType))
+      {
+        if(SgReferenceType* strippedReferenceType = isSgReferenceType(referenceType->stripType(SgType::STRIP_TYPEDEF_TYPE))) {
+          SgType* strippedReferenceBaseType = strippedReferenceType->get_base_type();
+          variableType = strippedReferenceBaseType;
+        }
       }
     }
 
@@ -1594,15 +1615,16 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
     string name = generateUniqueVariableName(scope,_tmpVarBaseName);
 
     //initialize the variable in its declaration
-    SgAssignInitializer* initializer=nullptr;
+    SgInitializer* initializer=nullptr;
     if(initWithExpression) {
       SgExpression* initExpression = shareExpression?expression:SageInterface::copyExpression(expression);
-      initializer = SageBuilder::buildAssignInitializer(initExpression);
+
+      initializer = buildInitializerIfNeeded(initExpression, options.normalizeCplusplus);
     }
 
     /* special case: check if expression is a struct/class/union copied by value. If yes introduce a reference type for the tmp var (to avoid
      copy semantics which would make assignments to the members of the struct not having any effect on the original data */
-    if(isSgClassType(variableType) && !isSgReferenceType(variableType)) {
+    if(isSgClassType(variableType) && !isSgReferenceType(variableType) && !cppCreatesTemporaryObject(expression, options.normalizeCplusplus)) {
       variableType = SageBuilder::buildReferenceType(variableType);
     }
 
