@@ -721,13 +721,14 @@ CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization 
 CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 
 CHECK_WITH_SPOT_PASSING=$(CHECK_DEFAULT_PASSING) check-ltl-seq check-reachability-seq
-CHECK_WITH_SPOT_FAILING=check-svcomp-witness'
+CHECK_WITH_SPOT_FAILING=check-svcomp-witness check-ltl-rers-loop-aware-sync
 
 check-default: $(CHECK_DEFAULT_PASSING)
 
 if ROSE_WITH_SPOT
 check-local: $(CHECK_WITH_SPOT_PASSING)
-check-extended: $(CHECK_WITH_SPOT_PASSING) check-ltl-par check-ltl-driven-reset-analyzer-seq
+check-extended: $(CHECK_WITH_SPOT_PASSING) check-additional
+check-additional: check-ltl-par check-ltl-driven-reset-analyzer-seq
 else
 check-local: $(CHECK_DEFAULT_PASSING)
 endif
@@ -807,7 +808,7 @@ check-ltl-old: check-ltl-rers-different-versions
 # current tests all passing
 check-ltl-seq: check-ltl-start check-ltl-rers-topify-seq check-ltl-cegpra-seq check-ltl-rers-array check-ltl-rers-arithmetic-seq check-ltl-rers-timeout-seq check-ltl-driven-seq
 
-check-ltl-par: check-ltl-rers-timeout-par check-ltl-rers-arithmetic-par check-reachability-par check-ltl-rers-loop-aware-sync check-ltl-driven-par check-ltl-driven-reset-analyzer-par
+check-ltl-par: check-ltl-rers-timeout-par check-ltl-rers-arithmetic-par check-reachability-par check-ltl-driven-par check-ltl-driven-reset-analyzer-par
 
 check-ltl-start:
 	@echo ================================================================

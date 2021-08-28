@@ -88,7 +88,7 @@ void Solver12::run() {
 	}
       }
       // switch to topify mode or terminate analysis if resource limits are exceeded
-      if (_analyzer->_maxBytes != -1 || _analyzer->_maxBytesForcedTop != -1 || _analyzer->_maxSeconds != -1 || _analyzer->_maxSecondsForcedTop != -1
+      if (_analyzer->getOptionsRef().maxMemory != -1 || _analyzer->_maxBytesForcedTop != -1 || _analyzer->getOptionsRef().maxTime != -1 || _analyzer->_maxSecondsForcedTop != -1
 	  || _analyzer->_maxTransitions != -1 || _analyzer->_maxTransitionsForcedTop != -1 || _analyzer->_maxIterations != -1 || _analyzer->_maxIterationsForcedTop != -1) {
 #pragma omp critical(HASHSET)
 	{

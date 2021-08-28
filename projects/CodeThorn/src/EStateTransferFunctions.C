@@ -1607,6 +1607,7 @@ namespace CodeThorn {
       newLabel=edge.target();
       newPState=*evalResult.estate.pstate();
       if(ReadWriteListener* readWriteListener=getReadWriteListener()) {
+#pragma omp critical(VIOLATIONRECORDING)
 	readWriteListener->trueFalseEdgeEvaluation(edge,evalResult,estate);
       }
       // use new empty cset instead of computed cset
@@ -1622,6 +1623,7 @@ namespace CodeThorn {
       newLabel=edge.target();
       newPState=*evalResult.estate.pstate();
       if(ReadWriteListener* readWriteListener=getReadWriteListener()) {
+#pragma omp critical(VIOLATIONRECORDING)
 	readWriteListener->trueFalseEdgeEvaluation(edge,evalResult,estate);
       }
       // use new empty cset instead of computed cset
@@ -1924,6 +1926,7 @@ namespace CodeThorn {
     } else if(edge.isType(EDGE_EXTERNAL) && SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze)) {
       // \todo the && condition excludes constructor calls
       if(ReadWriteListener* listener=getReadWriteListener()) {
+#pragma omp critical(VIOLATIONRECORDING)
 	listener->functionCallExternal(edge,estate);
       }
       tfCode=TransferFunctionCode::FunctionCallExternal;
@@ -3967,6 +3970,7 @@ namespace CodeThorn {
       recordPotentialUninitializedAccessLocation(lab);
     }
     if(_readWriteListener) {
+#pragma omp critical(VIOLATIONRECORDING)
       _readWriteListener->readingFromMemoryLocation(lab,pstate,memLoc,val);
     }
 
@@ -3991,6 +3995,7 @@ namespace CodeThorn {
     }
     SAWYER_MESG(logger[TRACE])<<"EStateTransferFunctions::writeToMemoryLocation1: before write"<<endl;
     if(_readWriteListener) {
+#pragma omp critical(VIOLATIONRECORDING)
       _readWriteListener->writingToMemoryLocation(lab,pstate,memLoc,newValue);
     }
     if(memLoc.isNullPtr()) {
@@ -4089,6 +4094,7 @@ namespace CodeThorn {
   }
 
   void EStateTransferFunctions::setReadWriteListener(ReadWriteListener* rwl) {
+#pragma omp critical(VIOLATIONRECORDING)
     _readWriteListener=rwl;
   }
 
