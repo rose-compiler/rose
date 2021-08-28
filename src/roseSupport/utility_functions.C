@@ -457,10 +457,14 @@ std::string version_message() {
     ss <<"  ---   capstone library:         unused\n";
 #endif
 
-#ifdef ROSE_HAVE_DLIB
-    ss <<"  ---   dlib library:             " <<DLIB_MAJOR_VERSION <<"." <<DLIB_MINOR_VERSION <<"." <<DLIB_PATCH_VERSION <<"\n";
-#else
+#if !defined(ROSE_HAVE_DLIB)
     ss <<"  ---   dlib library:             unused\n";
+#elif defined(DLIB_PATCH_VERSION)
+    ss <<"  ---   dlib library:             " <<DLIB_MAJOR_VERSION <<"." <<DLIB_MINOR_VERSION <<"." <<DLIB_PATCH_VERSION <<"\n";
+#elif defined(DLIB_MINOR_VERSION)
+    ss <<"  ---   dlib library:             " <<DLIB_MAJOR_VERSION <<"." <<DLIB_MINOR_VERSION <<"\n";
+#else
+    ss <<"  ---   dlib library:             unknown version\n";
 #endif
 
 #ifdef ROSE_HAVE_LIBGCRYPT
