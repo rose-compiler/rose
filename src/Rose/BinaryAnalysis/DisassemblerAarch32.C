@@ -148,6 +148,12 @@ DisassemblerAarch32::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, A
             return isSgAsmAarch32Instruction(makeUnknownInstruction(Exception("unable to decode instruction", va,
                                                                               SgUnsignedCharList(bytes+0, bytes+nRead), 0)));
         }
+    } else if ((arm_insn)r.csi->id == ARM_INS_STMDB) {
+        if (r.csi->detail->arm.op_count < 2) {
+            // When M=1 and register_list=0 capstone returns only one argument. This is always a two-argument instruction.
+            return isSgAsmAarch32Instruction(makeUnknownInstruction(Exception("unable to decode instruction", va,
+                                                                              SgUnsignedCharList(bytes+0, bytes+nRead), 0)));
+        }
     }
 
     //--------------------------------------------------------------------------------

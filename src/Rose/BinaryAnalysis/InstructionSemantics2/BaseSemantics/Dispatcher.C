@@ -368,7 +368,7 @@ Dispatcher::write(SgAsmExpression *e, const SValuePtr &value, size_t addr_nbits/
         ASSERT_require(0==addrWidth_ || addr->nBits()==addrWidth_);
         operators()->writeMemory(segmentRegister(mre), addr, value, operators()->boolean_(true));
     } else {
-        ASSERT_not_implemented("[Robb P. Matzke 2014-10-07]");
+        ASSERT_not_implemented(e->class_name());
     }
 }
 
