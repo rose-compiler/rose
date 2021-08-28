@@ -193,7 +193,7 @@ CodeThorn::CTAnalysis::SubSolverResultType CodeThorn::CTAnalysis::subSolver(cons
     }
   }
   // switch to topify mode or terminate analysis if resource limits are exceeded
-  if (_maxBytes != -1 || _maxBytesForcedTop != -1 || _maxSeconds != -1 || _maxSecondsForcedTop != -1
+  if (_ctOpt.maxMemory != -1 || _maxBytesForcedTop != -1 || _ctOpt.maxTime != -1 || _maxSecondsForcedTop != -1
       || _maxTransitions != -1 || _maxTransitionsForcedTop != -1 || _maxIterations != -1 || _maxIterationsForcedTop != -1) {
 #pragma omp critical(HASHSET)
     {
@@ -572,15 +572,15 @@ bool CodeThorn::CTAnalysis::isPrecise() {
 
 // only relevant for maximum values (independent of topify mode)
 bool CodeThorn::CTAnalysis::isIncompleteSTGReady() {
-  if(_maxTransitions==-1 && _maxIterations==-1 && _maxBytes==-1 && _maxSeconds==-1)
+  if(_ctOpt.maxTransitions==-1 && _ctOpt.maxIterations==-1 && _ctOpt.maxMemory==-1 && _ctOpt.maxTime==-1)
     return false;
-  if ((_maxTransitions!=-1) && ((long int) transitionGraph.size()>=_maxTransitions))
+  if ((_ctOpt.maxTransitions!=-1) && ((long int) transitionGraph.size()>=_ctOpt.maxTransitions))
     return true;
-  if ((_maxIterations!=-1) && ((long int) getIterations() > _maxIterations))
+  if ((_ctOpt.maxIterations!=-1) && ((long int) getIterations() > _ctOpt.maxIterations))
     return true;
-  if ((_maxBytes!=-1) && ((long int) getPhysicalMemorySize() > _maxBytes))
+  if ((_ctOpt.maxMemory!=-1) && ((long int) getPhysicalMemorySize() > _ctOpt.maxMemory))
     return true;
-  if ((_maxSeconds!=-1) && ((long int) analysisRunTimeInSeconds() > _maxSeconds)) {
+  if ((_ctOpt.maxTime!=-1) && ((long int) analysisRunTimeInSeconds() > _ctOpt.maxTime)) {
     return true;
   }
   // at least one maximum mode is active, but the corresponding limit has not yet been reached
@@ -792,8 +792,8 @@ void CodeThorn::CTAnalysis::printStatusMessage(bool forceDisplay) {
        <<color("white")<<"/"
        <<estateWorkListCurrentSize
        <<"/"<<getIterations()<<"-"<<getApproximatedIterations()
-       <<"/"<<analysisRunTimeInSeconds()<<"s<"<<(_maxSeconds!=-1?std::to_string(_maxSeconds)+"s"     :"inf")
-       <<"/"<<getPhysicalMemorySize()/(1024*1024) <<" MiB <"<<(_maxBytes  !=-1?std::to_string(_maxBytes/(1024*1024))  +" MiB":"inf MiB")
+       <<"/"<<analysisRunTimeInSeconds()<<"s<"<<(_ctOpt.maxTime!=-1?std::to_string(_ctOpt.maxTime)+"s"     :"inf")
+       <<"/"<<getPhysicalMemorySize()/(1024*1024) <<" MiB <"<<(_ctOpt.maxMemory  !=-1?std::to_string(_ctOpt.maxMemory/(1024*1024))  +" MiB":"inf MiB")
        <<color("normal") //<<"/"<<analyzerStateToString()
        <<endl
     ;
@@ -1306,7 +1306,6 @@ void CodeThorn::CTAnalysis::postInitializeSolver() {
 void CodeThorn::CTAnalysis::initializeSolverWithInitialEState(SgProject* root) {
   // initialization of solver
   if(_ctOpt.runSolver) {
-    if(_ctOpt.status) cout<<"STATS: initializeSolverWithInitialEState: inter-proc: "<<_ctOpt.getInterProceduralFlag()<<endl;
     if(_ctOpt.getInterProceduralFlag()) {
       // inter-procedural analysis initial state
       Label slab=getFlow()->getStartLabel();

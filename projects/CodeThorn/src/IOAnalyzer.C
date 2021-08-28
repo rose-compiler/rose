@@ -390,8 +390,8 @@ void IOAnalyzer::setup(CTAnalysis* analyzer, Sawyer::Message::Facility logger,
   }
 
   analyzer->setAbstractionMode(ctOpt.abstractionMode);
-  analyzer->setMaxTransitions(ctOpt.maxTransitions);
-  analyzer->setMaxIterations(ctOpt.maxIterations);
+  //analyzer->setMaxTransitions(ctOpt.maxTransitions);
+  //analyzer->setMaxIterations(ctOpt.maxIterations);
 
   if(ctOpt.maxIterationsForcedTop!=-1) {
     analyzer->setMaxIterationsForcedTop(ctOpt.maxIterationsForcedTop);
@@ -420,12 +420,6 @@ void IOAnalyzer::setup(CTAnalysis* analyzer, Sawyer::Message::Facility logger,
   }
 
   int gigaByteMultiply=1; //1024*1024*1024;
-  if (ctOpt.maxMemory!=1) {
-    analyzer->setMaxBytes(ctOpt.maxMemory*gigaByteMultiply);
-  }
-  if (ctOpt.maxTime!=1) {
-    analyzer->setMaxSeconds(ctOpt.maxTime);
-  }
   if (ctOpt.maxMemoryForcedTop!=-1) {
     analyzer->setMaxBytesForcedTop(ctOpt.maxMemoryForcedTop*gigaByteMultiply);
   }
