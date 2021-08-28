@@ -43,8 +43,6 @@ CodeThorn::CTAnalysis::CTAnalysis():
   _analyzerMode(AM_ALL_STATES),
   _maxTransitions(-1),
   _maxIterations(-1),
-  _maxBytes(-1),
-  _maxSeconds(-1),
   _maxTransitionsForcedTop(-1),
   _maxIterationsForcedTop(-1),
   _maxBytesForcedTop(-1),

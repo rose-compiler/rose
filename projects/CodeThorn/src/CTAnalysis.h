@@ -219,9 +219,7 @@ namespace CodeThorn {
     void setMaxIterations(size_t maxIterations) { _maxIterations=maxIterations; }
     void setMaxTransitionsForcedTop(size_t maxTransitions) { _maxTransitionsForcedTop=maxTransitions; }
     void setMaxIterationsForcedTop(size_t maxIterations) { _maxIterationsForcedTop=maxIterations; }
-    void setMaxBytes(long int maxBytes) { _maxBytes=maxBytes; }
     void setMaxBytesForcedTop(long int maxBytesForcedTop) { _maxBytesForcedTop=maxBytesForcedTop; }
-    void setMaxSeconds(long int maxSeconds) { _maxSeconds=maxSeconds; }
     void setMaxSecondsForcedTop(long int maxSecondsForcedTop) { _maxSecondsForcedTop=maxSecondsForcedTop; }
     void setResourceLimitDiff(int diff) { _resourceLimitDiff=diff; }
     void setDisplayDiff(int diff) { _displayDiff=diff; }
@@ -424,8 +422,6 @@ namespace CodeThorn {
     AnalyzerMode _analyzerMode;
     long int _maxTransitions;
     long int _maxIterations;
-    long int _maxBytes;
-    long int _maxSeconds;
     long int _maxTransitionsForcedTop;
     long int _maxIterationsForcedTop;
     long int _maxBytesForcedTop;
