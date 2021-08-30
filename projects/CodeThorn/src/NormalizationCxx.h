@@ -18,7 +18,7 @@ namespace CodeThorn
   void normalizeCxx(Normalization& norm, SgNode* node);
 
   /// inserts ctor and dtor calls at the end of scopes
-  void insertCtorDtorCalls(Normalization& norm, SgNode* node);
+  void normalizeObjectDestruction(Normalization& norm, SgNode* node);
 
   /// tests if @ref n requires compiler generation
   bool needsCompilerGeneration(SgMemberFunctionDeclaration& n);
