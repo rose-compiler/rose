@@ -1407,6 +1407,8 @@ namespace
     {
       logError() << "virtual base class normalization in constructor NOT YET IMPLEMENTED: " << fun.get_name()
                  << std::endl;
+
+      throw std::logic_error("virtual base class normalization in constructor NOT YET IMPLEMENTED");
     }
 
     // the initializer list is emptied.
@@ -1711,6 +1713,16 @@ namespace
   {
     for (AnyTransform& tf : computeNormalizations(root))
       tf.execute();
+  }
+
+  bool cppCreatesTemporaryObject(const SgExpression* n, bool withCplusplus)
+  {
+    const SgConstructorInitializer* init = isSgConstructorInitializer(n);
+
+    if (!init) return false;
+
+    // exclude variable declarations
+    return isSgInitializedName(init->get_parent()) == nullptr;
   }
 
 } // CodeThorn namespace

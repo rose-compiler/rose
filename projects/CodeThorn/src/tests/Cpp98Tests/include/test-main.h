@@ -2,7 +2,7 @@
 #pragma once
 
 #include <cstdio>
-// #include <string>
+#include <cstring>
 
 #if __cplusplus < 201103L
 #define OVERRIDE
@@ -35,24 +35,22 @@ void expected_output()
 
 void process_args(int argv, char** argc)
 {
-#if 0
-  static const std::string help          = "-h";
-  static const std::string help_long     = "--help";
-  static const std::string expected      = "-e";
-  static const std::string expected_long = "--expected";
+  static const char* help          = "-h";
+  static const char* help_long     = "--help";
+  static const char* expected      = "-e";
+  static const char* expected_long = "--expected";
 
   for (int i = 1; i < argv; ++i)
   {
     const char* arg = argc[i];
 
-    if (help == arg || help_long == arg)
+    if ((strcmp(help, arg) == 0) || (strcmp(help_long, arg) == 0))
       program_description();
-    else if (expected == arg || expected_long == arg)
+    else if ((strcmp(expected, arg) == 0) || (strcmp(expected_long, arg) == 0))
       expected_output();
     else
       printf("unknown argument: %s\n", arg);
   }
-#endif
 }
 
 int main(int argv, char** argc)

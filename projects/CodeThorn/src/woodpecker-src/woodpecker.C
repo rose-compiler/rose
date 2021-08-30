@@ -316,7 +316,10 @@ int main(int argc, char* argv[]) {
 
   if(csvAssertFileName) {
     cout<<"STATUS: performing flow-insensensitive condition-const analysis."<<endl;
-    CLabeler labeler(root);
+    CLabeler labeler;
+
+    labeler.initialize(root);
+
     FIConstAnalysis fiConstAnalysis(&variableIdMapping);
     fiConstAnalysis.setOptionMultiConstAnalysis(global_option_multiconstanalysis);
     fiConstAnalysis.runAnalysis(root, mainFunctionRoot); // is this required for conditionConstAnalysis?

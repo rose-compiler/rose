@@ -11,7 +11,7 @@ namespace CodeThorn
 struct CppLabeler : CLabeler
 {
   CppLabeler();
-  explicit CppLabeler(SgNode*);
+  //~ explicit CppLabeler(SgNode*);
 
   // was: isFunctionCallNode(SgNode* n) const ROSE_OVERRIDE;
 };

@@ -7,7 +7,8 @@
 namespace CodeThorn {
   class CTIOLabeler : public CodeThorn::IOLabeler {
   public:
-    CTIOLabeler(SgNode* start, CodeThorn::VariableIdMapping* variableIdMapping);
+    //~ CTIOLabeler(SgNode* start, CodeThorn::VariableIdMapping* variableIdMapping);
+    explicit CTIOLabeler(CodeThorn::VariableIdMapping* variableIdMapping);
     virtual bool isStdIOLabel(CodeThorn::Label label);
     virtual bool isStdInLabel(CodeThorn::Label label, CodeThorn::VariableId* id);
     bool isNonDetIntFunctionCall(CodeThorn::Label lab,CodeThorn::VariableId* varIdPtr);
