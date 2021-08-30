@@ -246,7 +246,7 @@ splitThunkFunctions(Partitioner &partitioner, const ThunkPredicates::Ptr &thunkP
         if (thunkIsPrefix) {
             SAWYER_MESG(debug) <<"    splitting entry " <<origEntryBlock->printableName() <<"\n";
             targetVertex = partitioner.truncateBasicBlock(entryVertex, entryBlock->instructions()[found.nInsns]);
-            ASSERT_forbid(targetVertex != partitioner.cfg().vertices().end());
+            ASSERT_require(targetVertex != partitioner.cfg().vertices().end());
             entryBlock = entryVertex->value().bblock();
             SAWYER_MESG(debug) <<"    new entry is " <<entryBlock->printableName() <<"\n";
             ASSERT_require(entryBlock != origEntryBlock); // we need the original block for its analysis results below
