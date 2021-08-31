@@ -128,7 +128,7 @@ namespace
   SgScopeStatement&
   getScopeID(Element_ID& el, AstContext ctx)
   {
-    return getScope(retrieveAs<Element_Struct>(elemMap(), el), ctx);
+    return getScope(retrieveAs(elemMap(), el), ctx);
   }
 
 
@@ -149,7 +149,7 @@ namespace
 
     SgNode&           parent  = SG_DEREF(stmt.get_parent());
     SgLabelStatement& sgn     = mkLabelStmt(lblname, stmt, ctx.scope());
-    Element_Struct&   lblelem = retrieveAs<Element_Struct>(elemMap(), lblid);
+    Element_Struct&   lblelem = retrieveAs(elemMap(), lblid);
 
     //~ copyFileInfo(stmt, sgn);
     attachSourceLocation(sgn, lblelem, ctx);
@@ -321,7 +321,7 @@ namespace
       Element_ID         id   = obj.id();
       SgInitializedName& dcl  = mkInitializedName(name, dcltype, cloneIfNeeded(initexpr, initexpr && (i != 0)));
 
-      attachSourceLocation(dcl, retrieveAs<Element_Struct>(elemMap(), id), ctx);
+      attachSourceLocation(dcl, retrieveAs(elemMap(), id), ctx);
 
       lst.push_back(&dcl);
       recordNonUniqueNode(m, id, dcl, true /* overwrite existing entries if needed */);
@@ -413,7 +413,7 @@ namespace
 
   Element_ID getLabelRef(Element_ID id, AstContext ctx)
   {
-    Element_Struct&    labelref = retrieveAs<Element_Struct>(elemMap(), id);
+    Element_Struct&    labelref = retrieveAs(elemMap(), id);
     ADA_ASSERT(labelref.Element_Kind == An_Expression);
 
     Expression_Struct& labelexp = labelref.The_Union.Expression;
@@ -800,7 +800,7 @@ namespace
   SgDeclarationStatement&
   getAliasedID(Element_ID declid, AstContext ctx)
   {
-    Element_Struct& elem = retrieveAs<Element_Struct>(elemMap(), declid);
+    Element_Struct& elem = retrieveAs(elemMap(), declid);
     ADA_ASSERT(elem.Element_Kind == An_Expression);
 
     return getAliased(elem.The_Union.Expression, ctx);
@@ -867,7 +867,7 @@ namespace
   SgAdaTaskSpec&
   getTaskSpecID(Element_ID id, AstContext ctx)
   {
-    return getTaskSpec(retrieveAs<Element_Struct>(elemMap(), id), ctx);
+    return getTaskSpec(retrieveAs(elemMap(), id), ctx);
   }
 
   SgAdaTaskSpec&
@@ -905,7 +905,7 @@ namespace
 
         if (choices.size() > 1) return false;
 
-        Element_Struct& el = retrieveAs<Element_Struct>(elemMap(), *choices.first);
+        Element_Struct& el = retrieveAs(elemMap(), *choices.first);
 
         return (  el.Element_Kind == A_Definition
                && el.The_Union.Definition.Definition_Kind == An_Others_Choice
@@ -1548,7 +1548,7 @@ namespace
 
           SgBasicBlock&          block  = mkBasicBlock();
           SgForStatement&        sgnode = mkForStatement(block);
-          Element_Struct&        forvar = retrieveAs<Element_Struct>(elemMap(), stmt.For_Loop_Parameter_Specification);
+          Element_Struct&        forvar = retrieveAs(elemMap(), stmt.For_Loop_Parameter_Specification);
           SgForInitStatement&    forini = SG_DEREF( sb::buildForInitStatement(sgnode.getStatementList()) );
 
           attachSourceLocation(forini, forvar, ctx);
@@ -1683,7 +1683,7 @@ namespace
       case A_Return_Statement:                  // 6.5
         {
           logKind("A_Return_Statement");
-          Element_Struct* exprel = retrieveAsOpt<Element_Struct>(elemMap(), stmt.Return_Expression);
+          Element_Struct* exprel = retrieveAsOpt(elemMap(), stmt.Return_Expression);
           SgExpression*   retval = exprel ? &getExpr(*exprel, ctx) : NULL;
           SgStatement&    sgnode = SG_DEREF( sb::buildReturnStmt(retval) );
 
@@ -1839,7 +1839,7 @@ namespace
   {
     if (id == 0) return NameCreator::result_container();
 
-    Element_Struct& elem = retrieveAs<Element_Struct>(elemMap(), id);
+    Element_Struct& elem = retrieveAs(elemMap(), id);
 
     ADA_ASSERT(elem.Element_Kind == A_Declaration);
     Declaration_Struct&      asisDecl = elem.The_Union.Declaration;
@@ -2094,7 +2094,7 @@ namespace
   std::pair<Element_ID, Type_Kinds>
   queryDefinitionData(Element_ID completeElementId, AstContext ctx)
   {
-    Element_Struct&     complElem = retrieveAs<Element_Struct>(elemMap(), completeElementId);
+    Element_Struct&     complElem = retrieveAs(elemMap(), completeElementId);
 
     ADA_ASSERT(complElem.Element_Kind == A_Declaration);
 
@@ -2104,7 +2104,7 @@ namespace
     ADA_ASSERT(complDecl.Declaration_Kind == An_Ordinary_Type_Declaration);
     logKind("An_Ordinary_Type_Declaration");
 
-    Element_Struct&     typeElem = retrieveAs<Element_Struct>(elemMap(), complDecl.Type_Declaration_View);
+    Element_Struct&     typeElem = retrieveAs(elemMap(), complDecl.Type_Declaration_View);
     ADA_ASSERT(typeElem.Element_Kind == A_Definition);
 
     Definition_Struct&  typeDefn = typeElem.The_Union.Definition;
@@ -2173,7 +2173,7 @@ namespace
 
     if (!isInvalidId(decl.Type_Declaration_View))
     {
-      typeview = &retrieveAs<Element_Struct>(elemMap(), decl.Type_Declaration_View);
+      typeview = &retrieveAs(elemMap(), decl.Type_Declaration_View);
       ADA_ASSERT(typeview->Element_Kind == A_Definition);
     }
 
@@ -2308,7 +2308,7 @@ namespace
   {
     if (id == 0) return nullptr;
 
-    return &createDiscriminatedDeclID(retrieveAs<Element_Struct>(elemMap(), id), ctx);
+    return &createDiscriminatedDeclID(retrieveAs(elemMap(), id), ctx);
   }
 
 
@@ -2450,7 +2450,7 @@ void handleRepresentationClause(Element_Struct& elem, AstContext ctx)
     case An_Enumeration_Representation_Clause:     // 13.4
       {
         SgType&                 enumty   = getDeclTypeID(repclause.Representation_Clause_Name, ctx);
-        Element_Struct&         inielem  = retrieveAs<Element_Struct>(elemMap(), repclause.Representation_Clause_Expression);
+        Element_Struct&         inielem  = retrieveAs(elemMap(), repclause.Representation_Clause_Expression);
         ADA_ASSERT(inielem.Element_Kind == An_Expression);
 
         Expression_Struct&      inilist  = inielem.The_Union.Expression;
@@ -3544,7 +3544,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         recordNode(asisDecls(), adaname.id(), sgnode);
 
         // find declaration for the thing being renamed
-        auto re = retrieveAs<Element_Struct>(elemMap(), decl.Renamed_Entity);
+        auto re = retrieveAs(elemMap(), decl.Renamed_Entity);
         auto renamed_entity = re.The_Union.Expression;
         SgFunctionDeclaration* renamedDecl = isSgFunctionDeclaration(getDecl_opt(renamed_entity, ctx));
 
@@ -3581,7 +3581,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
           return;
         }
 
-        Element_Struct&    renamed_entity_elem = retrieveAs<Element_Struct>(elemMap(), decl.Renamed_Entity);
+        Element_Struct&    renamed_entity_elem = retrieveAs(elemMap(), decl.Renamed_Entity);
         ExBasePair         expair = getExceptionBase(renamed_entity_elem, ctx);
         ADA_ASSERT(expair.first || expair.second);
 
@@ -3621,7 +3621,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         // an entity that was traversed during the AST creation.  Instead we need
         // to dig up the Corresponding_Name_Declaration from the Expression
         // associated with Generic_Unit_Name. (MS: 8/1/21)
-        auto gunitname = retrieveAs<Element_Struct>(elemMap(), decl.Generic_Unit_Name);
+        auto gunitname = retrieveAs(elemMap(), decl.Generic_Unit_Name);
         auto gunitexpr = gunitname.The_Union.Expression;
 
         SgDeclarationStatement*   gendecl = NULL;
@@ -3849,7 +3849,7 @@ getQualName(Element_Struct& elem, AstContext ctx)
 NameData
 getNameID(Element_ID el, AstContext ctx)
 {
-  return getName(retrieveAs<Element_Struct>(elemMap(), el), ctx);
+  return getName(retrieveAs(elemMap(), el), ctx);
 }
 
 

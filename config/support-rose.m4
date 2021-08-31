@@ -4,6 +4,10 @@ AC_DEFUN([ROSE_SUPPORT_ROSE_PART_1],
 [
 # Begin macro ROSE_SUPPORT_ROSE_PART_1.
 
+
+# Used by Rose::initialize. See the top-level CMakeLists.txt for more details.
+ROSE_CONFIG_TOKEN="rose-$(cat $srcdir/ROSE_VERSION)"
+
 # *********************************************************************
 # This macro encapsulates the complexity of the tests required for ROSE
 # to understnd the machine environment and the configure command line.

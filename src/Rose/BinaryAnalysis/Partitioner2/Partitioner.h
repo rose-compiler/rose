@@ -1150,10 +1150,9 @@ public:
      *  instruction, a new placeholder vertex is created with the address of the specified instruction, and an edge is created
      *  from the truncated block to the new placeholder.  All other outgoing edges of the truncated block are erased.
      *
-     *  The specified block must exist and must have the specified instruction as a member.  The instruction must not be the
-     *  first instruction of the block.
-     *
-     *  The return value is the vertex for the new placeholder.
+     *  The specified block must exist and the instruction must not be the first instruction of the basic block. If the basic
+     *  block contains the specified instruction then the block is split and a pointer to the new block returned. Otherwise
+     *  a CFG vertex end iterator is returned.
      *
      *  Thread safety: Not thread safe. */
     ControlFlowGraph::VertexIterator truncateBasicBlock(const ControlFlowGraph::ConstVertexIterator &basicBlock,
