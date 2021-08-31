@@ -80,7 +80,10 @@ namespace CodeThorn {
 	for(auto callEdge:callFlow) {
 	  callLabels.push_back(lab);
 	  semanticRevPostOrderTraversal(callEdge.target());
-	  callLabels.pop_back();
+	  if(callLabels.back()==lab)
+	    callLabels.pop_back();
+	  Label callReturnLabel=labeler.getFunctionCallReturnLabelFromCallLabel(lab);
+	  semanticRevPostOrderTraversal(callReturnLabel);
 	}
       }
       if(callFlow.size()>1) {
@@ -106,18 +109,12 @@ namespace CodeThorn {
         Label callLabel=callLabels.back(); // read only
         // make sure the traversal returns to the call site. Note, a
         // function is visited at most once.
+	callLabels.pop_back();
         Label callReturnLabel=labeler.getFunctionCallReturnLabelFromCallLabel(callLabel);
         LabelSet succ=flow.succ(lab);
         if(callReturnLabel.isValid()) {
+	  // only continue for callreturn label, all others will be visited from other calls
           semanticRevPostOrderTraversal(callReturnLabel);
-          // remove the one call label that is already traversed
-          succ.erase(callReturnLabel);
-          //cout<<"DEBUG: @exit: "<<callLabel.toString()<<","<<callReturnLabel.toString()<<endl;
-        }
-        //ROSE_ASSERT(succ.find(callReturnLabel)!=succ.end());
-        // traverse all other outgoing edges of exit node
-        for(auto slab : succ) {
-          semanticRevPostOrderTraversal(slab);
         }
       } else {
         // in case the call context has length zero

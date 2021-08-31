@@ -1462,7 +1462,9 @@ void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(SgProject* root, TimingCollect
 
   if(_ctOpt.reduceCfg) {
     int cnt=getCFAnalyzer()->optimizeFlow(*getFlow());
-    SAWYER_MESG(logger[TRACE])<< "CFG reduction OK. (eliminated "<<cnt<<" nodes)"<<endl;
+    if(_ctOpt.status) cout<< "CFG optimization OK. (eliminated "<<cnt<<" nodes)"<<endl;
+  } else {
+    if(_ctOpt.status) cout<< "CFG optimziation OFF."<<endl;
   }
   SAWYER_MESG(logger[TRACE])<< "Intra-Flow OK. (size: " << getFlow()->size() << " edges)"<<endl;
   ROSE_ASSERT(getCFAnalyzer());
