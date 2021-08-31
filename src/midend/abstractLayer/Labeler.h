@@ -1,57 +1,13 @@
 #ifndef LABELER_H
 #define LABELER_H
 
-/*************************************************************
- * Author   : Markus Schordan                                *
- *************************************************************/
-
 #include <limits>
 #include <set>
 #include "RoseAst.h"
 #include "VariableIdMapping.h"
-
-#define NO_STATE -3
-#define NO_ESTATE -4
-#define NO_LABEL_ID std::numeric_limits<size_t>::max()
+#include "Label.h"
 
 namespace CodeThorn {
-
-/*!
-  * \author Markus Schordan
-  * \date 2012, 2014.
- */
-class Label {
- public:
-  Label();
-  Label(size_t labelId);
-  //Copy constructor
-  Label(const Label& other);
-  //Copy assignment operator
-  Label& operator=(const Label& other);
-  bool operator<(const Label& other) const;
-  bool operator==(const Label& other) const;
-  bool operator!=(const Label& other) const;
-  bool operator>(const Label& other) const;
-  bool operator>=(const Label& other) const;
-  Label& operator+(int num);
-  // prefix inc operator
-  Label& operator++();
-  // postfix inc operator
-  Label operator++(int);
-  size_t getId() const;
-  std::string toString() const;
-  friend std::ostream& operator<<(std::ostream& os, const Label& label);
-  bool isValid() const;
- protected:
-  size_t _labelId;
-};
-
-std::ostream& operator<<(std::ostream& os, const Label& label);
-
-/*!
-  * \author Markus Schordan
-  * \date 2012.
- */
 
 // internal data structure (not used in Labeler's interface)
 class LabelProperty {
@@ -144,10 +100,6 @@ class LabelSet : public std::set<Label> {
 
 typedef std::set<LabelSet> LabelSetSet;
 
-/*!
-  * \author Markus Schordan
-  * \date 2012, 2013.
- */
 class Labeler {
  public:
   static Label NO_LABEL; // default initialized label (used to check for non-existing labels)
