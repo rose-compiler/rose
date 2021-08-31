@@ -198,11 +198,11 @@ ConcolicExecutor::execute(const Database::Ptr &db, const TestCase::Ptr &testCase
     // Extend the test case execution path in order to create new test cases.
     try {
         run(db, testCase, cpu);
-        testCase->concolicResult(1);
-        db->save(testCase);
     } catch (const Emulation::Exit &e) {
         SAWYER_MESG_OR(mlog[TRACE], mlog[DEBUG]) <<"subordinate has exited with status " <<e.status() <<"\n";
     }
+    testCase->concolicResult(1);
+    db->save(testCase);
 
     // FIXME[Robb Matzke 2020-01-16]
     std::vector<TestCase::Ptr> newCases;

@@ -19,13 +19,14 @@ CppLabeler::CppLabeler()
   setIsFunctionCallFn(matchCxxCall);
 }
 
+
+#if 0
 CppLabeler::CppLabeler(SgNode* n)
 : CLabeler(n)
 {
   setIsFunctionCallFn(matchCxxCall);
 }
 
-#if 0
 bool CppLabeler::isFunctionCallNode(SgNode* n) const
 {
   return matchCxxCall(n);

@@ -143,14 +143,14 @@ namespace CodeThorn {
     normPhaseNr=1;
     normPhaseNrLast=13;
     printNormalizationPhase();
+    if(options.normalizeSingleStatements) {
+      normalizeSingleStatementsToBlocks(root);
+    }
+    printNormalizationPhase();
     if (options.normalizeCplusplus) {
       // \todo reconsider when to run C++ normalization
       // expects basic blocks and lifted declaration statement
       normalizeCxx(*this, root);
-    }
-    printNormalizationPhase();
-    if(options.normalizeSingleStatements) {
-      normalizeSingleStatementsToBlocks(root);
     }
     printNormalizationPhase();
     if(options.normalizeLabels) {
@@ -201,6 +201,11 @@ namespace CodeThorn {
     printNormalizationPhase();
     if(options.normalizeCompoundAssignments) {
       normalizeCompoundAssignmentsInAst(root);
+    }
+    printNormalizationPhase();
+    if (options.normalizeCplusplus) {
+      // pass runs after all temporary variables have been introduced
+      normalizeObjectDestruction(*this, root);
     }
     printNormalizationPhase();
     // off by default
@@ -698,7 +703,7 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
     Sg_File_Info* fi=node->get_file_info();
     if(fi) {
       if(fi->get_col()>0 || fi->get_line()>0)
-	return;
+  return;
     }
     node->set_file_info(info);
   }
@@ -760,9 +765,9 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
       for(SubExprTransformationList::iterator j=subExprTransformationList.begin();j!=subExprTransformationList.end();++j) {
         SgStatement* stmt=(*j).stmt;
         SgExpression* expr=(*j).expr;
-	Sg_File_Info* originalFileInfo=0;
-	if(expr) 
-	  originalFileInfo=expr->get_file_info();
+  Sg_File_Info* originalFileInfo=0;
+  if(expr)
+    originalFileInfo=expr->get_file_info();
         SAWYER_MESG(logger[TRACE])<<"TRANSFORMATION "<<(*j).transformation<<" at "<<expr<<endl;
         switch((*j).transformation) {
         case Normalization::GEN_STMT_REMOVAL: {
@@ -789,15 +794,15 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
           SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: tmpVarDeclaration:"<<tmpVarDeclaration->unparseToString()<<endl;
           auto tmpVarReference=buildVarRefExpForVariableDeclaration(tmpVarDeclaration);
           ROSE_ASSERT(tmpVarReference);
-	  //setFileInfo(tmpVarDeclaration,originalFileInfo); // this breaks NORM015 but makes 6 DOMs pass
-	  setFileInfo(tmpVarReference,originalFileInfo);
-	  
+    //setFileInfo(tmpVarDeclaration,originalFileInfo); // this breaks NORM015 but makes 6 DOMs pass
+    setFileInfo(tmpVarReference,originalFileInfo);
+
           // ii) insert tmp-var initializer
           insertNormalizedSubExpressionFragment(tmpVarDeclaration,stmt);
           // ii) replace use of expr with tmp-var and set file info of original AST
           bool deleteReplacedExpression=false;
           SgNodeHelper::replaceExpression(expr,tmpVarReference,deleteReplacedExpression);
-	  setFileInfo(tmpVarReference,originalFileInfo);
+    setFileInfo(tmpVarReference,originalFileInfo);
           //SAWYER_MESG(logger[TRACE])<<"inserted: "<<tmpVarDeclaration->unparseToString()<<endl;
           break;
         }
@@ -817,7 +822,7 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
           SgVariableDeclaration* tmpVarDeclaration=generateVarDecl((*j).tmpVarDeclType,scope);
           ROSE_ASSERT(tmpVarDeclaration);
           tmpVarDeclaration->set_parent(stmt->get_parent());
-	  setFileInfo(tmpVarDeclaration,originalFileInfo);
+    setFileInfo(tmpVarDeclaration,originalFileInfo);
           SAWYER_MESG(logger[TRACE])<<"GENERATING TMP VAR DECL:tmpVarDeclaration:"<<tmpVarDeclaration->unparseToString()<<endl;
           // using declVarNr instead of tmpVarNr for control-flow operator transformations
           SAWYER_MESG(logger[TRACE])<<"add:"<<(*j).tmpVarNr<<endl;
@@ -831,7 +836,7 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
             SgScopeStatement* scope=stmt->get_scope();
             SgVariableDeclaration* tmpVarDeclaration=generateFalseBoolVarDecl(scope);
             tmpVarDeclaration->set_parent(stmt->get_parent());
-	    setFileInfo(tmpVarDeclaration,originalFileInfo);
+      setFileInfo(tmpVarDeclaration,originalFileInfo);
             ROSE_ASSERT(tmpVarDeclaration);
             // using declVarNr instead of tmpVarNr for control-flow operator transformations
             addToTmpVarMapping((*j).declVarNr,tmpVarDeclaration);
@@ -848,8 +853,8 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
           SgStatement* false_body=(*j).falseBody;
           SgIfStmt* ifStmt=Normalization::generateIfElseStmt(cond,true_body,false_body);
 
-	  // set line col file-info
-	  setFileInfo(cond,originalFileInfo);
+    // set line col file-info
+    setFileInfo(cond,originalFileInfo);
 
           insertNormalizedSubExpressionFragment(ifStmt,stmt);
           break;
@@ -865,8 +870,8 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
           SgStatement* false_body=(*j).falseBody;
           SgIfStmt* ifStmt=Normalization::generateBoolVarIfElseStmt(cond,varRefExp,true_body,false_body,scope);
 
-	  // set line col file-info
-	  setFileInfo(cond,originalFileInfo);
+    // set line col file-info
+    setFileInfo(cond,originalFileInfo);
 
           insertNormalizedSubExpressionFragment(ifStmt,stmt);
           break;
@@ -880,10 +885,10 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
           SgStatement* true_body=(*j).trueBody;
           SgIfStmt* ifStmt=Normalization::generateBoolVarIfElseStmt(cond,varRefExp,true_body,0,scope);
 
-	  // set line col file-info
-	  setFileInfo(cond,originalFileInfo);
+    // set line col file-info
+    setFileInfo(cond,originalFileInfo);
 
-	  insertNormalizedSubExpressionFragment(ifStmt,stmt);
+    insertNormalizedSubExpressionFragment(ifStmt,stmt);
           break;
         }
         case Normalization::GEN_LOG_OP_REPLACEMENT: {
@@ -892,9 +897,9 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
             SgVariableDeclaration* decl=getVarDecl((*j).declVarNr);
             SgVarRefExp* varRefExp=SageBuilder::buildVarRefExp(decl);
 
-	    // set line col file-info
-	    //setFileInfo(decl,originalFileInfo); this breaks NORM34_condop
-	    setFileInfo(varRefExp,originalFileInfo);
+      // set line col file-info
+      //setFileInfo(decl,originalFileInfo); this breaks NORM34_condop
+      setFileInfo(varRefExp,originalFileInfo);
 
             SAWYER_MESG(logger[TRACE])<<"GEN_LOG_OP: REPLACING "<<expr->unparseToString()<<" with tmp var:"<<varRefExp->unparseToString()<<endl;
             SageInterface::replaceExpression(expr,varRefExp);
@@ -908,7 +913,7 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
           SgStatement* true_body=(*j).trueBody;
           SgStatement* false_body=(*j).falseBody;
           SgIfStmt* ifStmt=Normalization::generateIfElseStmt(cond,true_body,false_body);
-	  setFileInfo(cond,originalFileInfo);
+    setFileInfo(cond,originalFileInfo);
           insertNormalizedSubExpressionFragment(ifStmt,stmt);
           break;
         }
@@ -916,14 +921,14 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
           SAWYER_MESG(logger[TRACE])<<"GENERATING TMP VAR ASSIGNMENT:"<<endl;
           SAWYER_MESG(logger[TRACE])<<"TMP VAR:"<<(*j).lhsTmpVarNr<<":"<<(*j).rhsTmpVarNr<<endl;
           SgExprStatement* tmpVarAssignment=generateTmpVarAssignment((*j).lhsTmpVarNr,(*j).rhsTmpVarNr);
-	  setFileInfo(tmpVarAssignment,originalFileInfo);
+    setFileInfo(tmpVarAssignment,originalFileInfo);
           insertNormalizedSubExpressionFragment(tmpVarAssignment,stmt);
           break;
         }
         case Normalization::GEN_TMP_VAR_ASSIGN_WITH_EXPR: {
           SAWYER_MESG(logger[TRACE])<<"GENERATING TMP VAR ASSIGNMENT WITH EXPR:"<<endl;
           SgExprStatement* tmpVarAssignment=generateTmpVarAssignmentWithExpr((*j).tmpVarNr,expr);
-	  setFileInfo(tmpVarAssignment,originalFileInfo);
+    setFileInfo(tmpVarAssignment,originalFileInfo);
           insertNormalizedSubExpressionFragment(tmpVarAssignment,stmt);
           break;
         }
@@ -1036,6 +1041,7 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
     } else if(SgFunctionCallExp* funCallExp=isSgFunctionCallExp(expr)) {
       // special case: function call with normalization of arguments
       // and void return type (no temp var generation)
+
       SgExpressionPtrList& expList=SgNodeHelper::getFunctionCallActualParameterList(expr);
       for(SgExpressionPtrList::iterator i=expList.begin();i!=expList.end();++i) {
         mostRecentTmpVarNr=registerSubExpressionTempVars(stmt,*i,subExprTransformationList,insideExprToBeEliminated);
@@ -1168,7 +1174,8 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
       Normalization::TmpVarNrType unaryResultTmpVarNr=registerSubExpressionTempVars(stmt,isSgExpression(SgNodeHelper::getUnaryOpChild(expr)),subExprTransformationList,insideExprToBeEliminated);
       mostRecentTmpVarNr=registerTmpVarInitialization(stmt,expr,unaryResultTmpVarNr,subExprTransformationList);
     } else if(options.normalizeCplusplus && isSgNewExp(expr)) {
-      // \todo PP normalize new arguments?
+      mostRecentTmpVarNr=registerTmpVarInitialization(stmt,expr,subExprTransformationList);
+    } else if(cppCreatesTemporaryObject(expr, options.normalizeCplusplus)) {
       mostRecentTmpVarNr=registerTmpVarInitialization(stmt,expr,subExprTransformationList);
     } else {
       // leave node.
@@ -1541,17 +1548,40 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
   Normalization::buildVariableDeclarationWithInitializerForExpression(SgExpression* expression, SgScopeStatement* scope, bool shareExpression) {
     return buildVariableDeclarationForExpression(expression,scope,true,shareExpression);
   }
+
+  namespace
+  {
+    SgInitializer* buildInitializerIfNeeded(SgExpression* expr, bool withCplusplus = false)
+    {
+      if (!withCplusplus)
+        return SageBuilder::buildAssignInitializer(expr);
+
+      SgInitializer* res = isSgInitializer(expr);
+
+      if (!res) res = SageBuilder::buildAssignInitializer(expr);
+
+      ROSE_ASSERT(res);
+      return res;
+    }
+  }
+
   SgVariableDeclaration*
   Normalization::buildVariableDeclarationForExpression(SgExpression* expression, SgScopeStatement* scope, bool initWithExpression, bool shareExpression) {
     SgType* expressionType = expression->get_type();
     SgType* variableType = expressionType;
 
     //MS 10/24/2018: If variable has referece type, use a value type for the temporary variable (otherwise reference would be duplicated into 2 memory locations)
-    if (SgReferenceType* referenceType=isSgReferenceType(expressionType))
+    if (!options.normalizeCplusplus)
     {
-      if(SgReferenceType* strippedReferenceType = isSgReferenceType(referenceType->stripType(SgType::STRIP_TYPEDEF_TYPE))) {
-        SgType* strippedReferenceBaseType = strippedReferenceType->get_base_type();
-        variableType = strippedReferenceBaseType;
+      // PP (08/27/21): Stripping references in C++ introduces temporaries and could have
+      //                side effects.
+
+      if (SgReferenceType* referenceType=isSgReferenceType(expressionType))
+      {
+        if(SgReferenceType* strippedReferenceType = isSgReferenceType(referenceType->stripType(SgType::STRIP_TYPEDEF_TYPE))) {
+          SgType* strippedReferenceBaseType = strippedReferenceType->get_base_type();
+          variableType = strippedReferenceBaseType;
+        }
       }
     }
 
@@ -1590,15 +1620,16 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
     string name = generateUniqueVariableName(scope,_tmpVarBaseName);
 
     //initialize the variable in its declaration
-    SgAssignInitializer* initializer=nullptr;
+    SgInitializer* initializer=nullptr;
     if(initWithExpression) {
       SgExpression* initExpression = shareExpression?expression:SageInterface::copyExpression(expression);
-      initializer = SageBuilder::buildAssignInitializer(initExpression);
+
+      initializer = buildInitializerIfNeeded(initExpression, options.normalizeCplusplus);
     }
 
     /* special case: check if expression is a struct/class/union copied by value. If yes introduce a reference type for the tmp var (to avoid
      copy semantics which would make assignments to the members of the struct not having any effect on the original data */
-    if(isSgClassType(variableType) && !isSgReferenceType(variableType)) {
+    if(isSgClassType(variableType) && !isSgReferenceType(variableType) && !cppCreatesTemporaryObject(expression, options.normalizeCplusplus)) {
       variableType = SageBuilder::buildReferenceType(variableType);
     }
 

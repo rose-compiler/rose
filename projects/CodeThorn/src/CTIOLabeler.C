@@ -3,9 +3,13 @@
 
 using namespace std;
 using namespace CodeThorn;
-using namespace CodeThorn;
 
+/*
 CTIOLabeler::CTIOLabeler(SgNode* start, VariableIdMapping* variableIdMapping): CodeThorn::IOLabeler(start, variableIdMapping) {
+}
+*/
+
+CTIOLabeler::CTIOLabeler(VariableIdMapping* variableIdMapping): CodeThorn::IOLabeler(variableIdMapping) {
 }
 
 bool CTIOLabeler::isStdIOLabel(Label label) {
@@ -48,10 +52,10 @@ bool CTIOLabeler::isFunctionCallWithName(Label lab,VariableId* varIdPtr,string n
     if(p.first) {
       string funName=SgNodeHelper::getFunctionName(p.second);
       if(funName!=name) {
-	return false;
+  return false;
       }
       if(varIdPtr) {
-	*varIdPtr=_variableIdMapping->variableId(p.first);
+  *varIdPtr=_variableIdMapping->variableId(p.first);
       }
       return true;
     }

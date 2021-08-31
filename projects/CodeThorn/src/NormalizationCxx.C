@@ -85,6 +85,19 @@ namespace
   }
 
   //
+  // convenience functions
+
+  /// returns the only SgInitializedName object of a variable declaration
+  SgInitializedName& onlyName(SgVariableDeclaration& n)
+  {
+    SgInitializedNamePtrList& lst = n.get_variables();
+
+    ROSE_ASSERT(lst.size() == 1 && lst[0]);
+    return *lst[0];
+  }
+
+
+  //
   // transformation wrappers
 
   // borrowed from XPlacer
@@ -429,16 +442,8 @@ namespace
     {
       if (si::isStatic(&n)) return;
 
-      auto endseq     = n.get_variables().end();
-      bool nottrivial = endseq != std::find_if( n.get_variables().begin(), endseq,
-                                             [](SgInitializedName* x) -> bool
-                                             {
-                                               ROSE_ASSERT(x);
-                                               return !TriviallyDestructible::check(x->get_type());
-                                             }
-                                           );
-
-      if (nottrivial) nontrivial();
+      if (!TriviallyDestructible::check(onlyName(n).get_type()))
+        nontrivial();
     }
 
     static
@@ -1088,6 +1093,12 @@ namespace
     SgExpression& elem;
   };
 
+  /// compares two
+  bool sameObject(const SgNode* lhs, const SgNode* rhs)
+  {
+    return dynamic_cast<const void*>(lhs) == dynamic_cast<const void*>(rhs);
+  }
+
   struct VarDtorInserter
   {
       VarDtorInserter(SgBasicBlock& where, SgStatement& pos, SgInitializedName& what)
@@ -1096,18 +1107,18 @@ namespace
 
       void execute()
       {
-        logWarn() << "in " << var.get_name() << std::endl;
-
         SgExpression& destructed = SG_DEREF( sb::buildVarRefExp(&var, nullptr) );
         SgStatement*  dtorcall   = sg::dispatch(DtorCallCreator(destructed), var.get_type());
         ROSE_ASSERT(dtorcall);
 
-        //~ logInfo() << "destructing " << var.get_name()
-                  //~ << " // " << SrcLoc(var)
-                  //~ << std::endl;
+        logInfo() << "[PP:] destructing " << var.get_name()
+                  << " // " << SrcLoc(var)
+                  << std::endl;
 
-        if (&stmt == &blk)
-          si::prependStatement(dtorcall, &blk);
+        if (sameObject(&stmt, &blk))
+        {
+          si::appendStatement(dtorcall, &blk);
+        }
         else
           si::insertStatementBefore(&stmt, dtorcall);
       }
@@ -1180,9 +1191,9 @@ namespace
 
       void execute()
       {
-        logInfo() << "create dtor: " << nameCtorDtor(cls, false)
-                  << " // " << SrcLoc(cls)
-                  << std::endl;
+        logTrace() << "create dtor: " << nameCtorDtor(cls, false)
+                   << " // " << SrcLoc(cls)
+                   << std::endl;
 
         SgMemberFunctionDeclaration& dtor = createCtorDtor(cls, false /* dtor */);
 
@@ -1194,29 +1205,50 @@ namespace
       SgClassDefinition& cls;
   };
 
+  /// extracts the declared variables in a scope
+  /// \details
+  ///   the variables extracted for a function definition are the parameters
+  /// \{
+  SgInitializedNamePtrList variableList(SgFunctionDefinition& n)
+  {
+    return SG_DEREF(n.get_declaration()).get_args();
+  }
+
+  SgInitializedNamePtrList variableList(SgScopeStatement& n)
+  {
+    if (SgFunctionDefinition* func = isSgFunctionDefinition(&n))
+      return variableList(*func);
+
+    SgStatementPtrList       stmts = n.generateStatementList();
+    SgInitializedNamePtrList res;
+
+    for (SgStatement* stmt : stmts)
+    {
+      if (SgVariableDeclaration* var = isSgVariableDeclaration(stmt))
+        res.push_back(&onlyName(*var));
+    }
+
+    return res;
+  }
+  /// \}
+
 
   void recordScopedDestructors(SgScopeStatement& n, SgBasicBlock& blk, SgStatement& pos, std::vector<AnyTransform>& transf)
   {
-    std::vector<SgStatement*> stmts = n.generateStatementList();
+    SgInitializedNamePtrList vars = variableList(n);
 
-    for (SgStatement* stmt : adapt::reverse(stmts))
+    for (SgInitializedName* var : adapt::reverse(vars))
     {
-      SgVariableDeclaration* vardcl = isSgVariableDeclaration(stmt);
+      ROSE_ASSERT(var);
 
-      if (!vardcl) continue;
-
-      for (SgInitializedName* var : vardcl->get_variables())
+      if (!TriviallyDestructible::check(var->get_type()))
       {
-        ROSE_ASSERT(var);
-
-        SgType* varty = var->get_type();
-
-        if (!TriviallyDestructible::check(varty))
-        {
-          //~ logInfo() << "nontrivial: " << var->get_name() << " " << varty->get_mangled()
-                    //~ << std::endl;
-          transf.emplace_back(VarDtorInserter(blk, pos, *var));
-        }
+        //~ logInfo() << "nontrivial: " << var->get_name() << " " << varty->get_mangled()
+                  //~ << std::endl;
+        transf.emplace_back(VarDtorInserter(blk, pos, *var));
+        logTrace() << "gen dtor-sequence for: " << typeid(n).name()
+                   << " / " << var->get_name()
+                   << std::endl;
       }
     }
   }
@@ -1230,15 +1262,18 @@ namespace
 
       void execute()
       {
-        logInfo() << "create block dtor: "
-                  << " // " << SrcLoc(*blk)
-                  << std::endl;
+        logTrace() << "create block dtor: " << typeid(blk).name()
+                   << " to: " << typeid(limit).name()
+                   << " // " << SrcLoc(*blk)
+                   << std::endl;
 
         std::vector<AnyTransform> transf;
 
         for (SgScopeStatement* curr = blk; curr != limit; curr = si::getEnclosingScope(curr))
         {
           ROSE_ASSERT(curr);
+
+          logTrace() << "  -- " << typeid(*curr).name() << std::endl;
 
           recordScopedDestructors(*curr, *blk, *pos, transf);
         }
@@ -1294,10 +1329,7 @@ namespace
 
       if (dcl && !si::isStatic(dcl))
       {
-        SgInitializedNamePtrList& lst = dcl->get_variables();
-
-        ROSE_ASSERT(lst.size() == 1 && lst[0]);
-        res.push_back(lst[0]);
+        res.push_back(&onlyName(*dcl));
       }
     }
 
@@ -1407,6 +1439,8 @@ namespace
     {
       logError() << "virtual base class normalization in constructor NOT YET IMPLEMENTED: " << fun.get_name()
                  << std::endl;
+
+      throw std::logic_error("virtual base class normalization in constructor NOT YET IMPLEMENTED");
     }
 
     // the initializer list is emptied.
@@ -1422,7 +1456,7 @@ namespace
     SgBasicBlock&      blk = getCtorBody(fun);
     SgClassDefinition& cls = getClassDef(fun);
 
-    recordScopedDestructors(blk, blk, blk, cont);
+    // recordScopedDestructors(blk, blk, blk, cont);
 
     // explicitly destruct all member variables of class type;
     //   execute the transformations in reverse order
@@ -1458,8 +1492,8 @@ namespace
     if (isDtor(n))
     {
       limit = si::getEnclosingScope(&n);
-      ROSE_ASSERT(limit);
-  }
+      ROSE_ASSERT(isSgClassDefinition(limit));
+    }
 
     return *limit;
   }
@@ -1472,6 +1506,14 @@ namespace
     // if n is a function definition, compute limit for function destruction,
     //   otherwise return existing limit.
     return fundef ? destructionLimit(*fundef) : n;
+  }
+
+  SgScopeStatement&
+  enclosingScope(SgScopeStatement* n)
+  {
+    ROSE_ASSERT(n);
+
+    return SG_DEREF(si::getEnclosingScope(n));
   }
 
   struct CxxTransformer : ExcludeTemplates
@@ -1488,17 +1530,12 @@ namespace
       CxxTransformer(const CxxTransformer&)            = default;
       CxxTransformer& operator=(const CxxTransformer&) = default;
 
-
+      // for recursive traversal
       void descend(SgNode& n);
-      void loop(SgScopeStatement& n);
-      SgScopeStatement& enclosingScope(SgScopeStatement*);
-
-      void handle(SgNode& n)
-      {
-        descend(n);
-      }
 
       using ExcludeTemplates::handle;
+
+      void handle(SgNode& n) { descend(n); }
 
       void handle(SgConstructorInitializer& n)
       {
@@ -1530,17 +1567,18 @@ namespace
         {
           normalizeCtorDef(n, *cont);
         }
-        else if (isDtor(n))
-        {
-          normalizeDtorDef(n, *cont);
-        }
+        // dtors are normalized when all destructors are inserted
+        //~ else if (isDtor(n))
+        //~ {
+          //~ normalizeDtorDef(n, *cont);
+        //~ }
 
         descend(n);
       }
 
       void handle(SgClassDefinition& n)
       {
-        typedef std::pair<bool, SgMemberFunctionDeclaration*> trivial_result_t;
+        using trivial_result_t = std::pair<bool, SgMemberFunctionDeclaration*>;
 
         trivial_result_t res = TriviallyDestructible::check(&n);
 
@@ -1562,74 +1600,11 @@ namespace
         descend(n);
       }
 
-      void handle(SgWhileStmt& n)   { loop(n); }
-      void handle(SgDoWhileStmt& n) { loop(n); }
-      void handle(SgForStatement& n) { loop(n); }
-
-      void handle(SgSwitchStatement& n)
-      {
-        breakScope = &n;
-
-        descend(n);
-      }
-
-      void handle(SgFunctionDefinition& n)
-      {
-        functionScope = &n;
-
-        descend(n);
-      }
-
-      void handle(SgBreakStmt& n)
-      {
-        descend(n);
-
-        if (EXTEND_DTOR_NORMALIZATION)
-          cont->emplace_back(ScopeDestructorGenerator(n, SG_DEREF(currBlk), enclosingScope(breakScope)));
-      }
-
-      void handle(SgContinueStmt& n)
-      {
-        descend(n);
-
-        if (EXTEND_DTOR_NORMALIZATION)
-          cont->emplace_back(ScopeDestructorGenerator(n, SG_DEREF(currBlk), enclosingScope(continueScope)));
-      }
-
-      void handle(SgReturnStmt& n)
-      {
-        ROSE_ASSERT(functionScope);
-
-        descend(n);
-
-        if (EXTEND_DTOR_NORMALIZATION)
-          cont->emplace_back(ScopeDestructorGenerator(n, SG_DEREF(currBlk), destructionLimit(*functionScope)));
-      }
-
-      void handle(SgBasicBlock& n)
-      {
-        currBlk = &n;
-
-        // descend first, to make sure that any destructors defined
-        //   in this scope are ready when needed for scope destruction
-        descend(n);
-
-        if (EXTEND_DTOR_NORMALIZATION)
-          cont->emplace_back(ScopeDestructorGenerator(n, SG_DEREF(currBlk), destructionLimit(enclosingScope(&n))));
-      }
-
-      container& transformations() { return *cont; }
-
     private:
       CxxTransformer()                    = delete;
 
       container*            cont          = nullptr;
       nodes*                knownNodes    = nullptr;
-
-      SgBasicBlock*         currBlk       = nullptr;
-      SgScopeStatement*     breakScope    = nullptr;
-      SgScopeStatement*     continueScope = nullptr;
-      SgFunctionDefinition* functionScope = nullptr;
   };
 
   template <class SetT, class ElemT>
@@ -1647,20 +1622,6 @@ namespace
     *this = sg::traverseChildren(std::move(*this), n);
   }
 
-  SgScopeStatement&
-  CxxTransformer::enclosingScope(SgScopeStatement* n)
-  {
-    ROSE_ASSERT(n);
-
-    return SG_DEREF(si::getEnclosingScope(n));
-  }
-
-  void CxxTransformer::loop(SgScopeStatement& n)
-  {
-    continueScope = breakScope = &n;
-
-    descend(n);
-  }
 
   CxxTransformer::container
   computeNormalizations(SgNode* root)
@@ -1669,6 +1630,151 @@ namespace
     CxxTransformer::nodes     nodes;
 
     sg::dispatch(CxxTransformer{transformations, nodes}, root);
+
+    return transformations;
+  }
+
+  /// passes over scopes and control flow interrupting statements
+  ///   => inserts destructor calls to into the AST
+  struct CxxObjectDestructionTransformer : ExcludeTemplates
+  {
+      using container = CxxTransformer::container;
+      using nodes     = std::unordered_set<SgNode*>;
+
+      CxxObjectDestructionTransformer(container& transf, nodes& visited)
+      : cont(&transf), knownNodes(&visited)
+      {}
+
+      CxxObjectDestructionTransformer(CxxObjectDestructionTransformer&&)                 = default;
+      CxxObjectDestructionTransformer& operator=(CxxObjectDestructionTransformer&&)      = default;
+      CxxObjectDestructionTransformer(const CxxObjectDestructionTransformer&)            = default;
+      CxxObjectDestructionTransformer& operator=(const CxxObjectDestructionTransformer&) = default;
+
+      // canonical handling of loop statements
+      void loop(SgScopeStatement& n);
+
+      // records a scope sequence for destructor generation
+      void recordScopeDestructors(SgStatement& n, SgBasicBlock& start, SgScopeStatement& limit);
+
+      // recursive tree traversal
+      void descend(SgNode& n);
+
+      using ExcludeTemplates::handle;
+
+      void handle(SgNode& n)         { descend(n); }
+
+      void handle(SgWhileStmt& n)    { loop(n); }
+      void handle(SgDoWhileStmt& n)  { loop(n); }
+      void handle(SgForStatement& n) { loop(n); }
+
+      void handle(SgSwitchStatement& n)
+      {
+        breakScope = &n;
+
+        descend(n);
+      }
+
+      void handle(SgFunctionDefinition& n)
+      {
+        functionScope = &n;
+
+        descend(n);
+
+        if (SgMemberFunctionDeclaration* dtor = isDtor(SG_DEREF(n.get_parent())))
+          normalizeDtorDef(*dtor, *cont);
+      }
+
+      void handle(SgBreakStmt& n)
+      {
+        ROSE_ASSERT(breakScope && currBlk);
+
+        descend(n);
+
+        recordScopeDestructors(n, *currBlk, enclosingScope(breakScope));
+      }
+
+      void handle(SgContinueStmt& n)
+      {
+        ROSE_ASSERT(continueScope && currBlk);
+
+        descend(n);
+
+        recordScopeDestructors(n, *currBlk, enclosingScope(continueScope));
+      }
+
+      void handle(SgReturnStmt& n)
+      {
+        ROSE_ASSERT(functionScope && currBlk);
+
+        descend(n);
+
+        recordScopeDestructors(n, *currBlk, destructionLimit(*functionScope));
+      }
+
+      void handle(SgGotoStatement& n)
+      {
+        ROSE_ASSERT(currBlk);
+
+        descend(n);
+
+        SgLabelStatement& tgt = SG_DEREF(n.get_label());
+
+        recordScopeDestructors(n, *currBlk, enclosingScope(tgt.get_scope()));
+      }
+
+      void handle(SgBasicBlock& n)
+      {
+        currBlk = &n;
+
+        descend(n);
+
+        recordScopeDestructors(n, *currBlk, destructionLimit(enclosingScope(&n)));
+      }
+
+    private:
+      CxxObjectDestructionTransformer()   = delete;
+
+      container*            cont          = nullptr;
+      nodes*                knownNodes    = nullptr;
+
+      SgBasicBlock*         currBlk       = nullptr;
+      SgScopeStatement*     breakScope    = nullptr;
+      SgScopeStatement*     continueScope = nullptr;
+      SgFunctionDefinition* functionScope = nullptr;
+  };
+
+  void
+  CxxObjectDestructionTransformer::recordScopeDestructors( SgStatement& n,
+                                                           SgBasicBlock& start,
+                                                           SgScopeStatement& limit
+                                                         )
+  {
+    logTrace() << "pre-dtor call gen: " << typeid(n).name() << std::endl;
+    cont->emplace_back(ScopeDestructorGenerator{n, start, limit});
+  }
+
+  void CxxObjectDestructionTransformer::descend(SgNode& n)
+  {
+    if (alreadyProcessed(*knownNodes, &n))
+      return;
+
+    sg::traverseChildren(CxxObjectDestructionTransformer{*this}, n);
+  }
+
+  void CxxObjectDestructionTransformer::loop(SgScopeStatement& n)
+  {
+    continueScope = breakScope = &n;
+
+    descend(n);
+  }
+
+  CxxTransformer::container
+  computeObjectDestruction(SgNode* root)
+  {
+    CxxTransformer::container transformations;
+    CxxTransformer::nodes     nodes;
+
+    sg::dispatch(CxxObjectDestructionTransformer{transformations, nodes}, root);
 
     return transformations;
   }
@@ -1702,7 +1808,6 @@ namespace
     for (AnyTransform& tf : transf)
       tf.execute();
 
-    clearMemoized();
     logInfo() << "Finished C++ normalization." << std::endl;
   }
 
@@ -1713,4 +1818,29 @@ namespace
       tf.execute();
   }
 
+  bool cppCreatesTemporaryObject(const SgExpression* n, bool withCplusplus)
+  {
+    const SgConstructorInitializer* init = isSgConstructorInitializer(n);
+
+    if (!init) return false;
+
+    // exclude variable declarations
+    return isSgInitializedName(init->get_parent()) == nullptr;
+  }
+
+  void normalizeObjectDestruction(Normalization& norm, SgNode* root)
+  {
+    logInfo() << "Starting C++ object destruction normalization." << std::endl;
+    logTrace() << "Not normalizing templates.." << std::endl;
+
+    CxxTransformer::container transf = computeObjectDestruction(root);
+
+    logInfo() << "Inserting " << transf.size() << " crucial object destructions..." << std::endl;
+
+    for (AnyTransform& tf : transf)
+      tf.execute();
+
+    clearMemoized();
+    logInfo() << "Finished C++ object destruction normalization." << std::endl;
+  }
 } // CodeThorn namespace

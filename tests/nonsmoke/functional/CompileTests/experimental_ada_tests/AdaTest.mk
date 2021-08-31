@@ -164,6 +164,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   test.ads                             \
   test_unit.ads                        \
   type_in_local_pkg.adb                \
+  usegenericinstance.adb               \ 
   uppercase.adb
 
 ADA_TRANSLATOR_PENDING_TESTS :=        \

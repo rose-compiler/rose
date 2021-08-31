@@ -717,7 +717,8 @@ check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
 
-CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-lc check-io unit-test check-omp-cfg check-commandline-options check-vis check-thorn2
+CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-lc check-io unit-test check-omp-cfg check-commandline-options check-vis \
+                      check-thorn2 check-cpp98tests
 CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 
 CHECK_WITH_SPOT_PASSING=$(CHECK_DEFAULT_PASSING) check-ltl-seq check-reachability-seq
@@ -856,6 +857,10 @@ check-ltl-rers-loop-aware-sync:
 #run CEGPRA tests
 check-ltl-cegpra-seq:
 	@$(srcdir)/scripts/runCegpraTest $(srcdir) $(top_builddir)/projects/CodeThorn/src
+
+#run Cpp98Tests
+check-cpp98tests: ./codethorn
+	$(srcdir)/scripts/runCpp98Tests -p Cxx $(srcdir)/tests/Cpp98Tests 
 
 # not used
 check-arrays:

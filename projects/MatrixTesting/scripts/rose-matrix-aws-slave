@@ -51,12 +51,12 @@ matrix-update-system-software() {
 	echo
 	sleep 5
 
-	# FIXME: python is needed to install libpqxx, but should probably be installed by RMC/Spock.
 	sudo apt-get -y update || continue
 	sudo apt-get -y install git wget build-essential g++ gfortran libtool automake flex bison \
 	     graphviz-dev cmake libpqxx-dev ghostscript perl-doc groff libgcrypt20-dev \
-	     libfcgi-dev libfuse-dev patchelf gcc-multilib g++-multilib gfortran-multilib \
-	     fuse bsdmainutils locales language-pack-en-base jq rsync python screen figlet || continue
+	     libfcgi-dev libfuse3-dev gcc-multilib g++-multilib gfortran-multilib \
+	     fuse3 bsdmainutils libxapian-dev p7zip-full rsync time \
+	     locales language-pack-en-base jq screen figlet libpcre3-dev || continue
 
 	# Install Docker
 	if ! docker --version >/dev/null 2>&1; then
@@ -224,7 +224,7 @@ matrix-install-matrix-tools() {
 	    git clean -dfxq
 	    mkdir _build
 	    cd _build
-	    BUILD=tup OPTIMIZE=yes BOOST=1.69 PQXX=6.4.3 TUP=0.7.8 WT=none rmc init --batch --project=matrix ..
+	    BUILD=tup OPTIMIZE=yes BOOST=1.69 PQXX=6.4.3 WT=none rmc init --batch --project=matrix ..
 	    rmc --install=yes build
 	    rmc config
 	    rmc make

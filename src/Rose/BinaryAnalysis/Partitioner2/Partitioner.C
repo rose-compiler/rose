@@ -816,12 +816,12 @@ Partitioner::truncateBasicBlock(const ControlFlowGraph::ConstVertexIterator &pla
     if (insn==bblock->instructions().front())
         throw BasicBlockError(bblock, basicBlockName(bblock) + " cannot be truncated at its initial instruction");
     if (!bblock->instructionExists(insn)) {
-        throw BasicBlockError(bblock, basicBlockName(bblock) +
-                              " does not contain instruction \"" + insn->toString() + "\""
-                              " for truncation");
+        mlog[WARN] <<basicBlockName(bblock) <<" does not contain instruction \"" <<insn->toString() + "\""
+                   <<" for truncation\n";
+        return cfg_.vertices().end();
     }
 
-    // For now we do a niave approach; this could be faster [Robb P. Matzke 2014-08-02]
+    // For now we do a naive approach; this could be faster [Robb P. Matzke 2014-08-02]
     detachBasicBlock(placeholder);                      // throw away the original block
     ControlFlowGraph::VertexIterator newPlaceholder = insertPlaceholder(insn->get_address());
     BasicBlock::Ptr newBlock = discoverBasicBlock(placeholder); // rediscover original block, but terminate at newPlaceholder
@@ -837,8 +837,11 @@ Partitioner::insertPlaceholder(rose_addr_t startVa) {
             // This placeholder is in the middle of some other basic block(s), so we must truncate them.
             BOOST_FOREACH (const BasicBlock::Ptr &existingBlock, addressUser.basicBlocks()) {
                 ControlFlowGraph::VertexIterator conflictBlock = findPlaceholder(existingBlock->address());
-                placeholder = truncateBasicBlock(conflictBlock, addressUser.insn());
-                ASSERT_require(placeholder->value().address() == startVa);
+                ControlFlowGraph::VertexIterator maybeCreated = truncateBasicBlock(conflictBlock, addressUser.insn());
+                if (maybeCreated != cfg_.vertices().end()) {
+                    placeholder = maybeCreated;
+                    ASSERT_require(placeholder->value().address() == startVa);
+                }
             }
         } else {
             placeholder = cfg_.insertVertex(CfgVertex(startVa));
@@ -847,6 +850,7 @@ Partitioner::insertPlaceholder(rose_addr_t startVa) {
             bblockAttached(placeholder);
         }
     }
+    ASSERT_forbid(placeholder == cfg_.vertices().end());
     return placeholder;
 }
 
