@@ -371,8 +371,8 @@ namespace CodeThorn {
 	string cfgFileName=ctOpt.visualization.icfgFileName;
 	DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
 	ddvis.setDotGraphName("CFG");
-	ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),cfgFileName,false);
-	cout << "generated "<<cfgFileName<<endl;
+	ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),cfgFileName,analyzer->getTopologicalSort(),false);
+	cout << "generated "<<cfgFileName<<" (top sort: "<<(analyzer->getTopologicalSort()!=0)<<")"<<endl;
       }
       if(ctOpt.visualization.vis) {
 	cout << "generating graphvis files:"<<endl;
@@ -400,9 +400,9 @@ namespace CodeThorn {
 	cout << "generated ast.dot."<<endl;
 
 	SAWYER_MESG(logger[TRACE]) << "Option VIS: generating cfg dot file ..."<<endl;
-	write_file("cfg_non_clustered.dot", analyzer->getFlow()->toDot(analyzer->getCFAnalyzer()->getLabeler()));
+	write_file("cfg_non_clustered.dot", analyzer->getFlow()->toDot(analyzer->getCFAnalyzer()->getLabeler(),analyzer->getTopologicalSort()));
 	DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
-	ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),"cfg.dot",false);
+	ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),"cfg.dot",analyzer->getTopologicalSort(),false);
 	cout << "generated cfg.dot, cfg_non_clustered.dot"<<endl;
 	cout << "=============================================================="<<endl;
       }

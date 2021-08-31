@@ -63,7 +63,7 @@ namespace CodeThorn {
         cfg.setDotOptionDisplayStmt(false);
         cfg.setDotOptionEdgeAnnotationsOnly(true);
         string outputFilename = "parallelComponentCfg_" + boost::lexical_cast<string>(counter) + ".dot";
-        write_file(outputFilename, cfg.toDot(NULL));
+        write_file(outputFilename, cfg.toDot(NULL,0));
         cout << "generated " << outputFilename <<"."<<endl;
         counter++;
       }

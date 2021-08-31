@@ -676,13 +676,13 @@ void runAnalyses(SgProject* root, Labeler* labeler, VariableIdMapping* variableI
         DataDependenceVisualizer ddvis2(rdAnalysis->getLabeler(),
                                         rdAnalysis->getVariableIdMapping(),
                                         "ud-analysis");
-        ddvis2.generateDotFunctionClusters(root,rdAnalysis->getCFAnalyzer(),"icfgdatadependencegraph_clustered.dot",true);
+        ddvis2.generateDotFunctionClusters(root,rdAnalysis->getCFAnalyzer(),"icfgdatadependencegraph_clustered.dot",0,true);
         
         cout << "generating icfg_clustered.dot."<<endl;
         DataDependenceVisualizer ddvis3(rdAnalysis->getLabeler(),
                                         rdAnalysis->getVariableIdMapping(),
                                         "ud-analysis");
-        ddvis3.generateDotFunctionClusters(root,rdAnalysis->getCFAnalyzer(),"icfg_clustered.dot",false);
+        ddvis3.generateDotFunctionClusters(root,rdAnalysis->getCFAnalyzer(),"icfg_clustered.dot",0, false);
         
       }
     }
@@ -940,7 +940,7 @@ int main(int argc, char* argv[]) {
 
     cout << "generating icfg-clustered.dot."<<endl;
     DataDependenceVisualizer ddvis(programAbstractionLayer->getLabeler(),programAbstractionLayer->getVariableIdMapping(),"none");
-    ddvis.generateDotFunctionClusters(root,cfAnalysis,"icfg-clustered.dot",false);
+    ddvis.generateDotFunctionClusters(root,cfAnalysis,"icfg-clustered.dot",0,false);
 
     delete cfAnalysis;
     exit(0);

@@ -1,36 +1,40 @@
 #ifndef TOPOLOGICAL_SORT
 #define TOPOLOGICAL_SORT
 
-#include "Labeler.h"
-#include "Flow.h"
 #include <list>
 #include <map>
+#include "Label.h"
 
 namespace CodeThorn {
 
-// use as:
-// TopologicalSort topSort(labeler,flow);
-// std::list<Label> list=topSort.topologicallySortedLabelList();
+  class Labeler;
+  class Flow;
+  class Label;
+  
+  // Author: Markus Schordan, 2020.
+  class TopologicalSort {
+  public:
+    typedef std::map<Label,uint32_t> LabelToPriorityMap;
+    TopologicalSort(Labeler& labeler0, Flow& flow0);
+    void computeLabelToPriorityMap();
+    uint32_t getLabelPosition(Label lab) const;
 
-// Author: Markus Schordan, 2020.
-class TopologicalSort {
- public:
-  typedef std::map<Label,int> LabelToPriorityMap;
-  TopologicalSort(Labeler& labeler0, Flow& flow0);
-  std::list<Label> topologicallySortedLabelList();
-  LabelToPriorityMap labelToPriorityMap();
- private:
-  // computes reverse post-order of labels in revPostOrderList
-  void semanticRevPostOrderTraversal(Label lab);
-  void createTopologicallySortedLabelList();
+    std::list<Label> topologicallySortedLabelList();
+    LabelToPriorityMap labelToPriorityMap();
 
- private:
-  Labeler& labeler;
-  Flow& flow;
-  std::map<Label,bool> visited;
-  std::list<Label> callLabels;
-  std::list<Label> revPostOrderList;
-};
+  private:
+
+    // computes reverse post-order of labels in revPostOrderList
+    void semanticRevPostOrderTraversal(Label lab);
+    void createTopologicallySortedLabelList();
+
+    Labeler& labeler;
+    Flow& flow;
+    std::map<Label,bool> visited;
+    std::list<Label> callLabels;
+    std::list<Label> revPostOrderList;
+    LabelToPriorityMap _map;
+  };
 
 } // end of namespace CodeThorn
 

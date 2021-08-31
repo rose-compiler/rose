@@ -99,7 +99,7 @@ void CodeThorn::DataDependenceVisualizer::generateUseDefDotGraph(SgNode* root, s
   * \author Markus Schordan
   * \date 2013.
  */
-void CodeThorn::DataDependenceVisualizer::generateDotFunctionClusters(SgNode* root, CFAnalysis* cfanalyzer, string fileName, bool withDataDependencies) {
+void CodeThorn::DataDependenceVisualizer::generateDotFunctionClusters(SgNode* root, CFAnalysis* cfanalyzer, string fileName, TopologicalSort* topSort, bool withDataDependencies) {
   /*
     generates a new cfg and a dot-cluster for each function and
     computes the inter-procedural edges with interFlow and adds them
@@ -126,7 +126,7 @@ void CodeThorn::DataDependenceVisualizer::generateDotFunctionClusters(SgNode* ro
       <<"\"color=blue; \n";
     Flow flow=cfanalyzer->flow(fdefNode);
     flow.setDotOptionHeaderFooter(false);
-    ss<<flow.toDot(_labeler);
+    ss<<flow.toDot(_labeler,topSort);
     myfile<<ss.str();
     if(withDataDependencies) {
       Label entryLabel=*i;
@@ -249,7 +249,7 @@ void CodeThorn::DataDependenceVisualizer::generateDot(SgNode* root, string fileN
     //_flow->setDotOptionDisplayLabel(true);
     //_flow->setDotOptionDisplayStmt(true);
     //_flow->setDotOptionFixedColor(true);
-    myfile<<_flow->toDot(_labeler);
+    myfile<<_flow->toDot(_labeler,0);
   }
   myfile<<"}"<<endl;
   myfile.close();

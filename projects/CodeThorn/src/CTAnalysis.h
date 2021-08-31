@@ -39,6 +39,7 @@
 #include "VariableIdMapping.h"
 #include "VariableIdMappingExtended.h"
 #include "FunctionCallMapping.h"
+#include "TopologicalSort.h"
 
 // we use INT_MIN, INT_MAX
 #include "limits.h"
@@ -164,7 +165,8 @@ namespace CodeThorn {
     VariableIdMappingExtended* getVariableIdMapping();
     void setVariableIdMapping(VariableIdMappingExtended* vid);
     CFAnalysis* getCFAnalyzer(); 
-
+    TopologicalSort* getTopologicalSort();
+    
     CodeThorn::PStateSet* getPStateSet();
     EStateSet* getEStateSet();
     TransitionGraph* getTransitionGraph();
@@ -485,6 +487,7 @@ namespace CodeThorn {
     ClassHierarchyWrapper* _classHierarchy=nullptr;
     CFAnalysis* _cfAnalysis=nullptr;
     Solver* _solver;
+    TopologicalSort* _topologicalSort=nullptr;
     
     const CodeThorn::PState* _initialPStateStored=nullptr;
     const CodeThorn::ConstraintSet* _emptycsetstored=nullptr;

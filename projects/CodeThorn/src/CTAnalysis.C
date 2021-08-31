@@ -91,6 +91,10 @@ void CodeThorn::CTAnalysis::run() {
   runSolver();
 }
 
+TopologicalSort* CodeThorn::CTAnalysis::getTopologicalSort() {
+  return _topologicalSort;
+}
+
 void CodeThorn::CTAnalysis::insertInputVarValue(int i) {
   _inputVarValues.insert(i);
 }
@@ -135,16 +139,18 @@ void CodeThorn::CTAnalysis::setWorkLists(ExplorationMode explorationMode) {
     auto sLabelSetSize=getFlow()->getStartLabelSet().size();
     if(sLabelSetSize>0) {
       if(_ctOpt.status) cout<<"STATUS: creating topologic sort of "<<getFlow()->size()<<" labels ... "<<flush;
-      TopologicalSort topSort(*getLabeler(),*getFlow());
-      std::list<Label> labelList=topSort.topologicallySortedLabelList();
+      _topologicalSort=new TopologicalSort(*getLabeler(),*getFlow());
+      _topologicalSort->computeLabelToPriorityMap();
 #if 0
+      std::list<Label> labelList=_topologicalSort.topologicallySortedLabelList();
       cout<<"Topologic Sort:";
       for(auto label : labelList) {
         cout<<label.toString()<<" ";
       }
       cout<<endl;
 #endif
-      TopologicalSort::LabelToPriorityMap map=topSort.labelToPriorityMap();
+      ROSE_ASSERT(_topologicalSort);
+      TopologicalSort::LabelToPriorityMap map=_topologicalSort->labelToPriorityMap();
       if(_ctOpt.status) cout<<"done."<<endl;
 
       ROSE_ASSERT(map.size()>0);

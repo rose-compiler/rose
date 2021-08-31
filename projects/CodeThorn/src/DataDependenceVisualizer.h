@@ -13,6 +13,7 @@
 #include "AstUtility.h"
 #include "CFAnalysis.h"
 #include "UDAstAttribute.h"
+#include "TopologicalSort.h"
 
 namespace CodeThorn {
 /*! 
@@ -31,7 +32,7 @@ class DataDependenceVisualizer {
   //! requires UDAstAttribute
   void generateUseDefDotGraph(SgNode* root, std::string fileName);
   void includeFlowGraphEdges(Flow* flow) { _flow=flow; }
-  void generateDotFunctionClusters(SgNode* root, CFAnalysis* cfanalyzer, std::string fileName, bool withDataDependencies);
+  void generateDotFunctionClusters(SgNode* root, CFAnalysis* cfanalyzer, std::string fileName, TopologicalSort* topSort, bool withDataDependencies);
   std::string nodeSourceCode(Label lab);
   bool _showSourceCode;
   void setFunctionLabelSetSets(LabelSetSet);

@@ -5,6 +5,7 @@
 
 #include "SgNodeHelper.h"
 #include "Labeler.h"
+#include "TopologicalSort.h"
 
 #include "Sawyer/Graph.h"
 #include <map>
@@ -172,7 +173,7 @@ namespace CodeThorn {
     void setDotFixedColor(std::string color);
     void setDotFixedNodeColor(std::string color);
     void setDotOptionHeaderFooter(bool opt);
-    std::string toDot(Labeler *labeler);
+    std::string toDot(Labeler *labeler, TopologicalSort* topSort=0);
     void setTextOptionPrintType(bool opt);
     void resetDotOptions();
     std::string toString();

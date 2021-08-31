@@ -1,5 +1,7 @@
 #include "sage3basic.h"
 #include "TopologicalSort.h"
+#include "Labeler.h"
+#include "Flow.h"
 
 using namespace std;
 
@@ -19,34 +21,53 @@ namespace CodeThorn {
       }
     }
   }
+
+  uint32_t TopologicalSort::getLabelPosition(Label lab) const {
+    auto iter=_map.find(lab);
+    if(iter==_map.end())
+      return 0;
+    else {
+      return (*iter).second;
+    }
+  }
   
   std::list<Label> TopologicalSort::topologicallySortedLabelList() {
-    createTopologicallySortedLabelList();
+    if(revPostOrderList.size()==0)
+      createTopologicallySortedLabelList();
     return revPostOrderList;
   }
 
-  TopologicalSort::LabelToPriorityMap TopologicalSort::labelToPriorityMap() {
-    TopologicalSort::LabelToPriorityMap map;
+  void TopologicalSort::computeLabelToPriorityMap() {
     createTopologicallySortedLabelList();
     int i=1;
     for(auto lab : revPostOrderList) {
-      map[lab]=i;
+      _map[lab]=i;
       i++;
+    }
+  }
+  TopologicalSort::LabelToPriorityMap TopologicalSort::labelToPriorityMap() {
+    LabelToPriorityMap map;
+    if(_map.size()==0)
+      computeLabelToPriorityMap();
+    for(auto e : _map) {
+      map[e.first]=map[e.second];
     }
     return map;
   }
-
+    
   // computes reverse post-order of labels in revPostOrderList
   void TopologicalSort::semanticRevPostOrderTraversal(Label lab) {
+
     // this is used to allow for invalid edges (whoes target is an invalid labell)
     if(!lab.isValid())
       return;
+
     if(visited[lab]) {
       return;
     } else {
       visited[lab]=true;
     }
-#if 1
+
     if(labeler.isLoopConditionLabel(lab)) {
       // true edge leads to loop body, sort it first
       semanticRevPostOrderTraversal(flow.outEdgeOfType(lab,EDGE_TRUE).target());
@@ -55,11 +76,21 @@ namespace CodeThorn {
     } else if(labeler.isFunctionCallLabel(lab)) {
       // call edge leads to function, sort it first
       Flow callFlow=flow.outEdgesOfType(lab,EDGE_CALL);
-      for(auto callEdge:callFlow) {
-        callLabels.push_back(lab);
-        semanticRevPostOrderTraversal(callEdge.target());
-        callLabels.pop_back();
+      if(callFlow.size()==1) {
+	for(auto callEdge:callFlow) {
+	  callLabels.push_back(lab);
+	  semanticRevPostOrderTraversal(callEdge.target());
+	  callLabels.pop_back();
+	}
       }
+      if(callFlow.size()>1) {
+	// handle callreturn node for multi-target nodes (which are skipped)
+	Label callReturnLabel=labeler.getFunctionCallReturnLabelFromCallLabel(lab);
+	if(callReturnLabel.isValid()) {
+	  semanticRevPostOrderTraversal(callReturnLabel);
+	}
+      }
+      // TODO: what about callReturn labels of multi-calls?
       Label callReturnLabel=flow.outEdgeOfType(lab,EDGE_EXTERNAL).target();
       if(callReturnLabel.isValid()) {
         semanticRevPostOrderTraversal(callReturnLabel);
@@ -101,11 +132,5 @@ namespace CodeThorn {
       }
     }
     revPostOrderList.push_front(lab);
-#else
-  for(auto slab : flow.succ(lab)) {
-    semanticRevPostOrderTraversal(slab);
-  }
-  revPostOrderList.push_front(lab);
-#endif  
   }
 } // end of namespace

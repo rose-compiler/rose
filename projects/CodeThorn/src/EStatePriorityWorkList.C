@@ -36,7 +36,7 @@ void CodeThorn::EStatePriorityWorkList::push_front(const EState* el) {
   //priority++;
   ROSE_ASSERT(_labelToPriorityMap.size()>0);
   int priority=_labelToPriorityMap[el->label()];
-  if(priority==0) {
+  if(false && priority==0) {
     std::cerr<<"Error: push_front: priority=0 for estate lab:"<<el->label().toString()<<std::endl;
     exit(1);
   }
@@ -52,7 +52,7 @@ const CodeThorn::EState* CodeThorn::EStatePriorityWorkList::front() {
     auto el=_list.top();
     int priority=el.priority;
     //std::cout<<"DEBUG: EPWL: front(): pri:"<<el.priority<<" data:"<<el.data<<std::endl;
-    if(priority==0) {
+    if(false && priority==0) {
       std::cerr<<"Error: push_front: priority=0 for estate lab:"<<el.data->label().toString()<<std::endl;
       
       exit(1);

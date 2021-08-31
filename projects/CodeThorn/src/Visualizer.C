@@ -193,7 +193,7 @@ string Visualizer::cfasToDotSubgraphs(vector<Flow*> cfas) {
     cfa->setDotOptionEdgeAnnotationsOnly(true);
     cfa->setDotFixedNodeColor(colors[(i % numColors)]);
     ss << "  subgraph component" << i << " {" << endl;
-    ss << cfa->toDot(NULL);
+    ss << cfa->toDot(NULL,0);
     ss << "  }" << endl;
   }
   ss << "}" << endl;

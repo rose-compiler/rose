@@ -525,7 +525,7 @@ void Flow::setTextOptionPrintType(bool opt) {
   _stringNoType=!opt;
 }
 
-string Flow::toDot(Labeler* labeler) {
+string Flow::toDot(Labeler* labeler, TopologicalSort* topSort) {
   stringstream ss;
   if(_dotOptionHeaderFooter)
     ss<<"digraph G {\n";
@@ -536,6 +536,9 @@ string Flow::toDot(Labeler* labeler) {
       ss << *i;
       ss << " [label=\"";
       ss << Labeler::labelToString(*i);
+      if(topSort) {
+	ss<<"["<<topSort->getLabelPosition(*i)<<"]";
+      }
       if(_dotOptionDisplayStmt)
         ss << ": ";
     }

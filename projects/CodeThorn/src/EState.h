@@ -1,9 +1,7 @@
 #ifndef ESTATE_H
 #define ESTATE_H
 
-/*************************************************************
- * Author   : Markus Schordan                                *
- *************************************************************/
+#define NO_ESTATE -4
 
 #include <string>
 #include <set>

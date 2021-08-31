@@ -9,6 +9,7 @@
 #include "Miscellaneous.h"
 #include "Miscellaneous2.h"
 #include "CodeThornException.h"
+#include "EState.h"
 
 using namespace CodeThorn;
 using namespace std;

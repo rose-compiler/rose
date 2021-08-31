@@ -11,6 +11,8 @@
 #include "ConstraintRepresentation.h"
 #include "Lattice.h"
 
+#define NO_STATE -3
+
 typedef int PStateId;
 
 #include "HashFun.h"
