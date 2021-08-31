@@ -4,6 +4,7 @@ add_library(abstractLayer OBJECT
   CodeThornException.C
   CPAstAttributeInterface.C
   DFAstAttribute.C
+  Label.C
   Labeler.C
   RDAstAttributeInterface.C
   SgNodeHelper.C
@@ -17,6 +18,7 @@ install(FILES
   CodeThornException.h
   CPAstAttributeInterface.h
   DFAstAttribute.h
+  Label.h
   Labeler.h
   RDAstAttributeInterface.h
   SgNodeHelper.h

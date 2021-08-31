@@ -5,6 +5,7 @@ mAbstractLayer_includeHeaders=\
 	$(mAbstractLayerPath)/AstAnnotator.h \
 	$(mAbstractLayerPath)/CPAstAttributeInterface.h \
 	$(mAbstractLayerPath)/DFAstAttribute.h \
+	$(mAbstractLayerPath)/Label.h \
 	$(mAbstractLayerPath)/Labeler.h \
 	$(mAbstractLayerPath)/RDAstAttributeInterface.h \
 	$(mAbstractLayerPath)/SgNodeHelper.h \
@@ -15,6 +16,7 @@ mAbstractLayer_la_sources=\
 	$(mAbstractLayerPath)/AstAnnotator.C \
 	$(mAbstractLayerPath)/CPAstAttributeInterface.C \
 	$(mAbstractLayerPath)/DFAstAttribute.C \
+	$(mAbstractLayerPath)/Label.C \
 	$(mAbstractLayerPath)/Labeler.C \
 	$(mAbstractLayerPath)/RDAstAttributeInterface.C \
 	$(mAbstractLayerPath)/SgNodeHelper.C \
