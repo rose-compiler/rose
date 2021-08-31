@@ -25043,6 +25043,11 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   if (SgTemplateInstantiationMemberFunctionDecl* cnode= isSgTemplateInstantiationMemberFunctionDecl(node) )
     out<<" template member func decl@"<< cnode->get_templateDeclaration();
 
+  if (SgFunctionRefExp* func_ref= isSgFunctionRefExp(node) )
+  {
+    SgFunctionSymbol* sym= func_ref->get_symbol_i();
+    out<<" func decl@"<< sym->get_declaration() << " func sym name="<<sym->get_name();
+  }
 
   // base type of several types of nodes:
   if (SgTypedefDeclaration * v= isSgTypedefDeclaration(node))
