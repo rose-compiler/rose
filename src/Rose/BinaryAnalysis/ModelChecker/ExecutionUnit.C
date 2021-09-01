@@ -3,9 +3,9 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/ExecutionUnit.h>
 
+#include <Rose/BinaryAnalysis/ModelChecker/ErrorTag.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 #include <Rose/BinaryAnalysis/ModelChecker/SourceLister.h>
-#include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Dispatcher.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Exception.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/RiscOperators.h>
@@ -55,8 +55,20 @@ ExecutionUnit::executeInstruction(const Settings::Ptr &settings, SgAsmInstructio
     } catch (const BS::Exception &e) {
         if (settings->ignoreSemanticFailures) {
             SAWYER_MESG(mlog[DEBUG]) <<"      semantics failed; continuing as if it were okay\n";
+
+            // Update the instrucition pointer if the exception occurred before that could happen. Assume that we would just
+            // execute instruction that follows the failed instruction in memory.
+            const RegisterDescriptor IP = cpu->instructionPointerRegister();
+            const rose_addr_t curVa = insn->get_address();
+            if (cpu->operators()->peekRegister(IP)->toUnsigned().orElse(curVa) == curVa) {
+                BS::SValuePtr nextVa = cpu->operators()->number_(IP.nBits(), curVa + insn->get_size());
+                cpu->operators()->writeRegister(cpu->instructionPointerRegister(), nextVa);
+            }
+
         } else {
             SAWYER_MESG(mlog[DEBUG]) <<"      semantics exception: " <<e.what() <<"\n";
+            retval = ErrorTag::instance(911, "semantic-failure", e.what(), insn);
+            cpu->operators()->currentState(BS::StatePtr()); // to indicate that execution was interrupted
         }
     } catch (const Rose::Exception &e) {
         SAWYER_MESG(mlog[DEBUG]) <<"      Rose::Exception: " <<e.what() <<"\n";
