@@ -28,6 +28,11 @@ ErrorTag::ErrorTag(size_t nodeStep, const std::string &name, const std::string &
 ErrorTag::~ErrorTag() {}
 
 ErrorTag::Ptr
+ErrorTag::instance(size_t nodeStep, const std::string &name, const std::string &mesg, SgAsmInstruction *insn) {
+    return Ptr(new ErrorTag(nodeStep, name, mesg, insn, Sawyer::Nothing()));
+}
+
+ErrorTag::Ptr
 ErrorTag::instance(size_t nodeStep, const std::string &name, const std::string &mesg, SgAsmInstruction *insn,
                    uint64_t value) {
     return Ptr(new ErrorTag(nodeStep, name, mesg, insn, value));
