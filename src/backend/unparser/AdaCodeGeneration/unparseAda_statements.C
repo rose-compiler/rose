@@ -1471,7 +1471,7 @@ namespace
         const bool explicitNullrec = si::ada::explicitNullRecord(*def);
 
         prn(" is");
-        if (!explicitNullrec) parentRecord_opt(*def);
+        parentRecord_opt(*def);
         modifiers(n);
         if (explicitNullrec) prn(" null");
         prn(" record");
