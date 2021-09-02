@@ -39,7 +39,7 @@ ExecutionUnit::containsUnknownInsn() const {
 }
 
 Tag::Ptr
-ExecutionUnit::executeInstruction(const Settings::Ptr &settings, SgAsmInstruction *insn, const BS::Dispatcher::Ptr &cpu) {
+ExecutionUnit::executeInstruction(const Settings::Ptr &settings, SgAsmInstruction *insn, const BS::Dispatcher::Ptr &cpu, size_t nodeStep) {
     ASSERT_not_null(settings);
     ASSERT_not_null(insn);
     ASSERT_not_null(cpu);
@@ -67,7 +67,7 @@ ExecutionUnit::executeInstruction(const Settings::Ptr &settings, SgAsmInstructio
 
         } else {
             SAWYER_MESG(mlog[DEBUG]) <<"      semantics exception: " <<e.what() <<"\n";
-            retval = ErrorTag::instance(911, "semantic-failure", e.what(), insn);
+            retval = ErrorTag::instance(nodeStep, "semantic-failure", e.what(), insn);
             cpu->operators()->currentState(BS::StatePtr()); // to indicate that execution was interrupted
         }
     } catch (const Rose::Exception &e) {
