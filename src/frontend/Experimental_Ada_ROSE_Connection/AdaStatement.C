@@ -2186,8 +2186,9 @@ namespace
       case An_Ordinary_Fixed_Point_Definition:
       case A_Decimal_Fixed_Point_Definition:
       case An_Access_Type_Definition:
-      case An_Enumeration_Type_Definition: // \todo untested
-      case A_Constrained_Array_Definition: // \todo untested
+      case An_Enumeration_Type_Definition:    // \todo untested
+      case An_Unconstrained_Array_Definition: // \todo untested
+      case A_Constrained_Array_Definition:    // \todo untested
         {
           res = &mkTypeDecl(adaname.ident, mkOpaqueType(), scope);
           break;
