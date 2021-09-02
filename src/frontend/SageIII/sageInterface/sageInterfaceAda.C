@@ -1439,7 +1439,7 @@ explicitNullProcedure(const SgFunctionDefinition& fndef)
 bool
 explicitNullRecord(const SgClassDefinition& recdef)
 {
-  return recdef.get_members().empty() && recdef.get_inheritances().empty();
+  return recdef.get_members().empty();
 }
 
 
