@@ -106,7 +106,7 @@ InstructionUnit::execute(const Settings::Ptr &settings, const SemanticCallbacks:
     if (mlog[DEBUG] && settings->showInitialStates)
         mlog[DEBUG] <<"    initial state\n" <<(*ops->currentState() + fmt);
 
-    if (Tag::Ptr tag = executeInstruction(settings, insn_, cpu))
+    if (Tag::Ptr tag = executeInstruction(settings, insn_, cpu, 0))
         tags.push_back(tag);
     if (!ops->currentState())
         return tags;                                    // execution failed
