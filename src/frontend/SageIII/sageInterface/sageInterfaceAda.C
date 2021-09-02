@@ -750,6 +750,15 @@ namespace ada
           return l.get_valueString() == r.get_valueString();
         }
 
+        bool eval(const SgAdaAttributeExp& l, const SgAdaAttributeExp& r, const SgAdaAttributeExp&)
+        {
+          return (  (l.get_attribute() == r.get_attribute())
+                 && equalChild(l, r, &SgAdaAttributeExp::get_object)
+                 && equalChild(l, r, &SgAdaAttributeExp::get_args)
+                 );
+        }
+
+
         template <class SageValueExp>
         bool eval(const SageValueExp& l, const SageValueExp& r, const SgValueExp&)
         {
@@ -785,6 +794,25 @@ namespace ada
                  && equalChild(l, r, &SgRangeExp::get_end)
                  && equalChild(l, r, &SgRangeExp::get_stride) // not used in Ada
                  );
+        }
+
+        bool eval(const SgTypeExpression& l, const SgTypeExpression& r, const SgTypeExpression&)
+        {
+          // \todo this is true if the nodes are unified, not sure if this works pervasively
+          return l.get_type() == r.get_type();
+        }
+
+        bool eval(const SgExprListExp& l, const SgExprListExp& r, const SgExprListExp&)
+        {
+          const SgExpressionPtrList& llst = l.get_expressions();
+          const SgExpressionPtrList& rlst = r.get_expressions();
+
+          if (llst.size() != rlst.size())
+            return false;
+
+          SgExpressionPtrList::const_iterator eol = llst.end();
+
+          return eol == std::mismatch(llst.begin(), eol, rlst.begin(), equalVariantElement).first;
         }
 
         void handle(const SgNode& n, const SgNode&) {}
