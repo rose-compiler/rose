@@ -2,6 +2,7 @@
 #include "VariableIdMappingExtended.h"
 #include "CodeThornLib.h"
 #include "AstTerm.h"
+#include "CppStdUtilities.h"
 
 using namespace Sawyer::Message;
 using namespace std;
@@ -69,7 +70,7 @@ namespace CodeThorn {
     return varRefExpList;
   }
 
-  list<SgVarRefExp*> VariableIdMappingExtended::variableAccessesInsideFunctions(SgProject* project) {
+  std::list<SgVarRefExp*> VariableIdMappingExtended::variableAccessesInsideFunctions(SgProject* project) {
     list<SgVarRefExp*> varRefExpList;
     list<SgFunctionDefinition*> funDefList=SgNodeHelper::listOfFunctionDefinitions(project);
     for(list<SgFunctionDefinition*>::iterator i=funDefList.begin();i!=funDefList.end();++i) {
@@ -85,6 +86,31 @@ namespace CodeThorn {
     return varRefExpList;
   }
 
+  SgStatement* VariableIdMappingExtended::correspondingStmtOfExpression(SgExpression* exp) {
+    // traverse upwards until a stmt node is found
+    SgNode* node=exp;
+    while(!isSgStatement(node)) {
+      node=node->get_parent();
+      if(node==nullptr)
+	return 0;
+    }
+    return isSgStatement(node);
+  }
+  
+  std::list<std::pair<SgStatement*,SgVarRefExp*>> VariableIdMappingExtended::computeCorrespondingStmtsOfBrokenExpressions(list<SgVarRefExp*>& accesses) {
+    std::list<std::pair<SgStatement*,SgVarRefExp*>> list;
+    for(auto v:accesses) {
+      VariableId varId=variableId(v);
+      if(!varId.isValid()) {
+	SgStatement* stmt=correspondingStmtOfExpression(v);
+	// node can be 0, this indicates that the AST has broken parent pointers
+	list.push_back(make_pair(stmt,v));
+      }
+    }
+    return list;
+  }
+  
+#if 0
   // workaround function, no longer necessary
   int32_t VariableIdMappingExtended::repairVarRefExpAccessList(list<SgVarRefExp*>& accesses, string accessName) {
     int32_t numErrors=0;
@@ -123,7 +149,8 @@ namespace CodeThorn {
     }
     return numErrors;
   }
-
+#endif
+  
   int32_t VariableIdMappingExtended::checkVarRefExpAccessList(list<SgVarRefExp*>& accesses, string accessName) {
     int32_t numErrors=0;
     // check if all symbols of VarRefExp in structure accesses are represented in gathered class data members' symbols
@@ -343,8 +370,8 @@ namespace CodeThorn {
           // nothing to do, same value different to UnknownSize already exists
         } else {
           stringstream ss;
-          ss<<"type size mismatch: "<<type->unparseToString()<<": "<<_typeSize[type]<<" != "<<newTypeSize;
-          recordWarning(ss.str());
+          ss<<"type size mismatch: "<<type->unparseToString()<<": known size: "<<_typeSize[type]<<", new size: "<<newTypeSize<<" (ignored)";
+          appendErrorReportLine(ss.str());
         }
       }
     }
@@ -388,24 +415,34 @@ namespace CodeThorn {
     return typeSizeMapping.getBuiltInTypeSize(biType);
   }
 
-  void VariableIdMappingExtended::recordWarning(std::string warningText) {
-    _warnings.push_back(warningText);
-  }
-
   void VariableIdMappingExtended::computeVariableSymbolMapping(SgProject* project, int maxWarningsCount) {
     computeVariableSymbolMapping2(project,maxWarningsCount);
 
     if(getAstConsistencySymbolCheckFlag()) {
       //cout<<"INFO: running AST symbol check."<<endl;
       bool checkOk=consistencyCheck(project);
-      if(!checkOk)
+      if(!checkOk) {
+	cerr<<"Error: AST symbol check failed."<<endl;
         exit(1);
+      }
     } else {
       // use temporary workaround (would make check pass, but creates more than one entry per data member of same struct)
       // repair struct access symbols if necessary
       list<SgVarRefExp*> structAccesses=structAccessesInsideFunctions(project);
-      int32_t numStructErrorsDetected=repairVarRefExpAccessList(structAccesses,"struct access");
+      BrokenExprStmtList list=computeCorrespondingStmtsOfBrokenExpressions(structAccesses);
+      if(list.size()>0) {
+	appendErrorReportLine("Structure accesses with invalid varid: "+std::to_string(list.size()));
+	uint32_t saErrNr=1;
+	for (auto p : list) {
+	  if(p.first) {
+	    appendErrorReportLine("struct access error #"+std::to_string(saErrNr)+": "+SgNodeHelper::locationToString(p.first));
+	  } else {
+	    appendErrorReportLine("struct access error #"+std::to_string(saErrNr)+": "+"unknown stmt location");
+	  }
+	}
+      }
     }
+    generateErrorReport();
     if(getArrayAbstractionIndex()>=0) {
       computeMemOffsetRemap();
     }
@@ -571,6 +608,32 @@ namespace CodeThorn {
     }
   }
 
+  void VariableIdMappingExtended::setErrorReportFileName(std::string name) {
+    errorReportFileName=name;
+  }
+  void VariableIdMappingExtended::generateErrorReport() {
+    stringstream ss;
+    if(errorReport.size()==0) {
+      ss<<"RESULT: PASS"<<endl;
+    } else {
+      ss<<"RESULT: FAIL"<<endl;
+      uint32_t errorNr=1;
+      for(auto s : errorReport) {
+	ss<<"Error "<<std::to_string(errorNr)<<": "<<s<<endl;
+	errorNr++;
+      }
+      ss<<"Total errors: "<<errorReport.size()<<endl;
+    }
+    if(errorReportFileName.size()>0) {
+      if(!CppStdUtilities::writeFile(errorReportFileName, ss.str())) {
+	cerr<<"Error: could not generate ast check report file:"<<errorReportFileName<<endl;
+      }
+    }
+  }
+
+  void VariableIdMappingExtended::appendErrorReportLine(string s) {
+    errorReport.push_back(s);
+  }
   // SgInitializedName: SgName get_qualified_name(); SgSymbol* search_for_symbol_from_symbol_table();
   // SgSymbol: SgName get_mangled_name(); SgDeclarationStatement* get_declaration();
   // SgDeclarationStatement->SgVariableDeclaration: SgInitializedName * get_decl_item();
@@ -586,7 +649,15 @@ namespace CodeThorn {
     int ct=0;
     for(auto classDef:_memPoolTraversal.classDefinitions) {
       SgClassDeclaration* classDecl=classDef->get_declaration();
+      if(classDecl==nullptr) {
+	appendErrorReportLine(SgNodeHelper::locationToString(classDef)+": class definition in memory pool: get_declaration() == 0.");
+	continue;
+      }
       SgClassType* classType=classDecl->get_type();
+      if(classType==nullptr) {
+	appendErrorReportLine(SgNodeHelper::locationToString(classDecl)+": class declaration (from definition) in memory pool: get_type() == 0.");
+	continue;
+      }
       registerClassMembers(classType, 0);
       ct++;
     }
@@ -604,22 +675,27 @@ namespace CodeThorn {
         if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
           if(isMemberVariableDeclaration(varDecl))
             continue;
-          if(varDecl->unparseToString() == "... ;") // there are invalid symbols
+          if(varDecl->unparseToString() == "... ;") {
+	    // there are invalid symbols
+	    appendErrorReportLine(SgNodeHelper::locationToString(varDecl)+": there are invalid symbols.");
             continue;
-          //~ std::cerr << varDecl->unparseToString() << std::flush;
+	  }
           addVariableDeclaration(varDecl);
-          //~ std::cerr << '!' << std::endl;
           //cout<<"DEBUG: registering var decl: "<<numVarDecls++<<":"<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<":"<<varDecl->unparseToString()<<endl;
         }
 
         if(SgFunctionDefinition* funDef=isSgFunctionDefinition(*i)) {
           //cout<<"DEBUG: fun def : "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<":"<<funDef->unparseToString()<<endl;
           std::vector<SgInitializedName *> & funFormalParams=SgNodeHelper::getFunctionDefinitionFormalParameterList(*i);
+	  int paramNr=0;
           for(auto initName : funFormalParams) {
+	    paramNr++;
             //cout<<"DEBUG: registering param: "<<initName->unparseToString()<<endl;
             SgSymbol* sym=SgNodeHelper::getSymbolOfInitializedName(initName);
             if(symbolExists(sym)) {
-              cout<<"WARNING: found formal parameter with same symbol again: "<<sym->unparseToString()<<" (skipping)."<<endl;
+	      stringstream ss;
+	      ss<<sym;
+              appendErrorReportLine(SgNodeHelper::locationToString(funDef)+": found formal parameter with same symbol (in SgInitializedName) again: "+ss.str()+" (skipping).");
               numSymbolExists++;
               continue;
             }
@@ -630,7 +706,7 @@ namespace CodeThorn {
               setVarIdInfoFromType(varId);
               numFunctionParams++;
             } else {
-              cout<<"Warning: no symbol basis found for function parameter: "<<initName->unparseToString()<<endl;
+              appendErrorReportLine(SgNodeHelper::locationToString(funDef)+": no symbol basis found for function parameter nr "+std::to_string(paramNr)+" (starting at 1)");
             }
           }
         }
@@ -667,11 +743,10 @@ namespace CodeThorn {
       } else {
 	stringstream ss;
 	ss<<sym;
-	recordWarning("no symbol basis for sym:"+ss.str());
+	appendErrorReportLine(SgNodeHelper::locationToString(varDecl)+": no symbol basis for symbol:"+ss.str());
       }
     } else {
-      cerr<<"Warning: VariableIdMappingExtended: variable declaration without symbol:";
-      cerr<<varDecl->unparseToString()<<endl;
+      appendErrorReportLine(SgNodeHelper::locationToString(varDecl)+": variable declaration with no symbol");
     }
   }
 

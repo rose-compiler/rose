@@ -122,7 +122,7 @@ namespace CodeThorn {
     void registerClassMembersNew();
     std::list<SgVarRefExp*> structAccessesInsideFunctions(SgProject* project);
     std::list<SgVarRefExp*> variableAccessesInsideFunctions(SgProject* project);
-    std::int32_t repairVarRefExpAccessList(std::list<SgVarRefExp*>& l, std::string accessName); // workaround
+    //std::int32_t repairVarRefExpAccessList(std::list<SgVarRefExp*>& l, std::string accessName); // workaround
     std::int32_t checkVarRefExpAccessList(std::list<SgVarRefExp*>& l, std::string accessName);
       
     CodeThorn::TypeSizeMapping typeSizeMapping;
@@ -138,17 +138,20 @@ namespace CodeThorn {
     std::vector<VariableId> getClassMembers(VariableId);
     std::map<SgType*,std::vector<VariableId> > classMembers;
     
+    void setErrorReportFileName(std::string name);
 
   private:
+    typedef std::list<std::pair<SgStatement*,SgVarRefExp*>> BrokenExprStmtList;
+    
+    SgStatement* correspondingStmtOfExpression(SgExpression* exp);
+    BrokenExprStmtList computeCorrespondingStmtsOfBrokenExpressions(std::list<SgVarRefExp*>& accesses);
+    
     bool isMemberVariableDeclaration(SgVariableDeclaration*);
     // determines all size information obtainable from SgType and sets values in varidinfo
     // 3rd param can be a nullptr, in which case no decl is determined and no aggregate initializer is checked for size (this is the case for formal function parameters)
     void setVarIdInfoFromType(VariableId varId);
     std::string varIdInfoToString(VariableId varId);
   
-    void recordWarning(std::string);
-    std::list<std::string> _warnings;
-
     bool isRegisteredType(SgType* type);
     void registerType(SgType* type);
     
@@ -162,6 +165,10 @@ namespace CodeThorn {
     typedef std::unordered_map<CodeThorn::VariableId, TypeSizeOffsetAbstractionMapType, VariableIdHash> VariableIdTypeSizeMappingType;
     VariableIdTypeSizeMappingType _offsetAbstractionMapping;
 
+    void generateErrorReport();
+    std::string errorReportFileName;
+    void appendErrorReportLine(std::string s);
+    std::list<std::string> errorReport;
   };
 }
 

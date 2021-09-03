@@ -214,7 +214,8 @@ public:
 
   // consistency checking options
   bool astSymbolCheckFlag=false; // performed by VariableIdMapping
-
+  std::string astSymbolCheckFileName="ast-symbol-check-report.txt";
+  
   struct Info {
     bool printVariableIdMapping=false;
     bool printAstNodeStats=false;
