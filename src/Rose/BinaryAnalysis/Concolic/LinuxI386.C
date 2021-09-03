@@ -277,47 +277,6 @@ public:
     }
 };
 
-// This is used for debugging and testing
-class TestSharedMemory: public SharedMemoryCallback {
-public:
-    static Ptr instance() {
-        return Ptr(new TestSharedMemory);
-    }
-
-    bool operator()(bool handled, SharedMemoryContext &ctx) const override {
-        if (!handled) {
-            SAWYER_MESG(mlog[WHERE]) <<"called LinuxI386 TestSharedMemory"
-                                     <<" at instruction " <<StringUtility::addrToString(ctx.ip)
-                                     <<", address " <<StringUtility::addrToString(ctx.memoryVa)
-                                     <<" for " <<StringUtility::plural(ctx.nBytes, "bytes") <<"\n";
-            auto ops = Emulation::RiscOperators::promote(ctx.ops);
-            Architecture::Ptr arch = ops->process();
-
-            ctx.result = ops->undefined_(8 * ctx.nBytes);
-            SymbolicExpr::Ptr variable = Emulation::SValue::promote(ctx.result)->get_expression();
-
-            // Create an event that when running concretely later will cause the concolic testing system to realize that
-            // there's been a shared memory read. Since we're not guaranteed to be able to pre-write the desired value to
-            // memory and read it back (shmem doesn't always have those semantics), and since the memory might not be writable
-            // anyway, we need to track the side effects of where the data that was read eventually went.  We do that by
-            // creating a shared-memory-read event to mark the start of these events, followed by additional events that fix
-            // things up after the instruction has completed. On RISC architectures, the side effect is usually just writing
-            // the value that was read into a register, but CISC architectures could have more complex side effects.
-            //
-            // All we need to do here is create the initial shared-memory-read marker and optionally give it an input
-            // variable. The side-effect fixup events will be generated as the rest of the current instruction executes.
-            ctx.event = ExecutionEvent::instanceSharedMemoryRead(arch->testCase(),
-                                                                 arch->nextEventLocation(When::PRE),
-                                                                 ctx.ip, ctx.memoryVa, ctx.nBytes);
-            ctx.event->name("shm-read-" + StringUtility::addrToString(ctx.memoryVa).substr(2));
-            ops->inputVariables().insertSharedMemoryRead(ctx.event, variable);
-            SAWYER_MESG(mlog[DEBUG]) <<"  created input variable " <<*variable
-                                     <<" for " <<ctx.event->printableName(arch->database()) <<"\n";
-        }
-        return true;
-    }
-};
-
 void
 LinuxI386::configureSharedMemory() {
     // These are the generally useful configurations. Feel free to override these to accomplish whatever kind of testing you
@@ -329,11 +288,6 @@ LinuxI386::configureSharedMemory() {
     sm = SharedMemory::instance();
     sm->callbacks().append(NullDeref::instance());
     sharedMemory().insert(AddressInterval::baseSize(0, 4096), sm);
-
-    // Testing
-    sm = SharedMemory::instance();
-    sm->callbacks().append(TestSharedMemory::instance());
-    sharedMemory().insert(0x804c00c, sm);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
