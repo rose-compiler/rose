@@ -718,7 +718,7 @@ check-matcher:
 
 
 CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-lc check-io unit-test check-omp-cfg check-commandline-options check-vis \
-                      check-thorn2 check-cpp98tests
+                      check-thorn2
 CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 
 CHECK_WITH_SPOT_PASSING=$(CHECK_DEFAULT_PASSING) check-ltl-seq check-reachability-seq
@@ -727,7 +727,7 @@ CHECK_WITH_SPOT_FAILING=check-svcomp-witness check-ltl-rers-loop-aware-sync
 check-default: $(CHECK_DEFAULT_PASSING)
 
 if ROSE_WITH_SPOT
-check-local: $(CHECK_WITH_SPOT_PASSING)
+check-local: $(CHECK_WITH_SPOT_PASSING) check-additional
 check-extended: $(CHECK_WITH_SPOT_PASSING) check-additional
 check-additional: check-ltl-par check-ltl-driven-reset-analyzer-seq
 else
