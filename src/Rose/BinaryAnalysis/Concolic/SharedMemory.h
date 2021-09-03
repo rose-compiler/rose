@@ -81,6 +81,12 @@ public:
      *  The @p handled argument indicates whether any previous callback has already handled this system call, and if so, this
      *  callback should possibly be a no-op. Returns true if this or any prior callback has handled the system call. */
     virtual bool operator()(bool handled, SharedMemoryContext&) const = 0;
+
+    /** Prints callback name and memory information. */
+    void hello(const std::string &myName, const SharedMemoryContext&) const;
+
+    /** Create the event that represents the shared memory read and add it to the context. */
+    void createReadEvent(SharedMemoryContext&) const;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
