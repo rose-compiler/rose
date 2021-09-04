@@ -27,22 +27,25 @@ SharedMemoryContext::~SharedMemoryContext() {}
 
 void
 SharedMemoryCallback::hello(const std::string &myName, const SharedMemoryContext &ctx) const {
-    SAWYER_MESG(mlog[WHERE]) <<"called " <<myName
+    SAWYER_MESG(mlog[WHERE]) <<(ctx.replaying ? "replaying " : "called ") <<myName
                              <<" at instruction " <<StringUtility::addrToString(ctx.ip)
                              <<", address " <<StringUtility::addrToString(ctx.memoryVa)
                              <<" for " <<StringUtility::plural(ctx.nBytes, "bytes") <<"\n";
+    if (ctx.replaying) {
+        ASSERT_not_null(ctx.event);
+        SAWYER_MESG(mlog[DEBUG]) <<"  value = " <<*ctx.event->bytesAsSymbolic() <<"\n";
+    }
 }
 
 ExecutionEvent::Ptr
-SharedMemoryCallback::createReadEvent(SharedMemoryContext &ctx) const {
+SharedMemoryCallback::createReadEvent(SharedMemoryContext &ctx, size_t serialNumber) const {
     ASSERT_require(!ctx.event);
 
     auto ops = Emulation::RiscOperators::promote(ctx.ops);
     Architecture::Ptr arch = ops->process();
 
     // Create a variable for the value read.
-    ctx.result = ops->undefined_(8 * ctx.nBytes);
-    SymbolicExpr::Ptr variable = Emulation::SValue::promote(ctx.result)->get_expression();
+    ctx.result = SymbolicExpr::makeIntegerVariable(8 * ctx.nBytes);
 
     // Create an event that when running concretely later will cause the concolic testing system to realize that there's been a
     // shared memory read. Since we're not guaranteed to be able to pre-write the desired value to memory and read it back
@@ -57,9 +60,10 @@ SharedMemoryCallback::createReadEvent(SharedMemoryContext &ctx) const {
     ctx.event = ExecutionEvent::instanceSharedMemoryRead(arch->testCase(),
                                                          arch->nextEventLocation(When::PRE),
                                                          ctx.ip, ctx.memoryVa, ctx.nBytes);
-    ctx.event->name("shm-read-" + StringUtility::addrToString(ctx.memoryVa).substr(2));
-    ops->inputVariables().insertSharedMemoryRead(ctx.event, variable);
-    SAWYER_MESG(mlog[DEBUG]) <<"  created input variable " <<*variable
+    ctx.event->name("shm_read_" + StringUtility::addrToString(ctx.memoryVa).substr(2) +
+                    "_" + boost::lexical_cast<std::string>(serialNumber));
+    ops->inputVariables().insertSharedMemoryRead(ctx.event, ctx.result);
+    SAWYER_MESG(mlog[DEBUG]) <<"  created input variable " <<*ctx.result
                              <<" for " <<ctx.event->printableName(arch->database()) <<"\n";
     return ctx.event;
 }
@@ -77,6 +81,7 @@ SharedMemory::instance() {
     return Ptr(new SharedMemory);
 }
 
+#if 0 // [Robb Matzke 2021-09-03]
 Sawyer::Optional<uint8_t>
 SharedMemory::previousReadConcreteAtOffset(size_t offset) const {
     return offset < prevReadConcrete_.size() ? prevReadConcrete_[offset] : Sawyer::Nothing();
@@ -100,6 +105,7 @@ SharedMemory::previousReadSymbolicAtOffset(size_t offset, const SymbolicExpr::Pt
         prevReadSymbolic_.resize(offset + 1);
     prevReadSymbolic_[offset] = byte;
 }
+#endif
 
 const SharedMemory::Callbacks&
 SharedMemory::callbacks() const {

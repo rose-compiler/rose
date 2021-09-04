@@ -113,47 +113,36 @@ ConcolicExecutor::partition(const Specimen::Ptr &specimen) {
     return boost::move(partitioner);
 }
 
-Architecture::Ptr
-ConcolicExecutor::makeProcess() {
+void
+ConcolicExecutor::startProcess() {
     ASSERT_require(testCase());
+    ASSERT_require(process());
 
-    // Create the a new process from the executable.
-    //
-    // FIXME[Robb Matzke 2021-05-25]: This will need to eventually change so that the architecture type (Linux i386 in this
-    // case) is not hard coded.
-    Architecture::Ptr process = LinuxI386::instance(database(), testCase());
-    process->load(tmpDir_.name());
+    process()->load(tmpDir_.name());
 
     if (testCase()->parent()) {
         // This test case was created by cloning another test case, which usually happens when the parent test case encounters
         // a conditional branch that depends on some input. Therefore, we need to fast forward this process so that it appears
         // to have just executed that branch.
-        process->playAllEvents(partitioner());
+        process()->playAllEvents(partitioner());
 
     } else {
         // This test case was not cloned from another test case; it was probably created by the user as an initial test case.
         // Therefore delete all existing execution events (left over from a prior concolic execution) and create the events that
         // would initialize memory and registers to their current (initial) state.
-        process->saveEvents(process->createMemoryRestoreEvents(), When::PRE);
-        process->saveEvents(process->createRegisterRestoreEvents(), When::PRE);
+        process()->saveEvents(process()->createMemoryRestoreEvents(), When::PRE);
+        process()->saveEvents(process()->createRegisterRestoreEvents(), When::PRE);
     }
-
-    return process;
 }
 
 Emulation::DispatcherPtr
 ConcolicExecutor::makeDispatcher(const Architecture::Ptr &process) {
     ASSERT_not_null(process);
     ASSERT_not_null(solver());
-    Database::Ptr db = process->database();
-    ASSERT_not_null(db);
-    TestCase::Ptr testCase = process->testCase();
-    ASSERT_not_null(testCase);
-    TestCaseId testCaseId = db->id(testCase, Update::NO);
 
     Emulation::RiscOperatorsPtr ops =
-        Emulation::RiscOperators::instance(settings_.emulationSettings, db, testCase, partitioner(), process, inputVariables_,
-                                           Emulation::SValue::instance(), solver());
+        Emulation::RiscOperators::instance(settings_.emulationSettings, database(), testCase(), partitioner(), process,
+                                           inputVariables_, Emulation::SValue::instance(), solver());
 
     Emulation::DispatcherPtr cpu;
     if (settings_.traceSemantics) {
@@ -163,18 +152,25 @@ ConcolicExecutor::makeDispatcher(const Architecture::Ptr &process) {
         cpu = Emulation::Dispatcher::instance(ops);
     }
 
-    if (testCase->parent()) {
-        ASSERT_require(db->symbolicStateExists(testCaseId));
-        BS::StatePtr state = db->extractSymbolicState(testCaseId);
+    return cpu;
+}
+
+void
+ConcolicExecutor::startDispatcher() {
+    ASSERT_require(cpu());
+    ASSERT_require(testCase());
+    auto ops = Emulation::RiscOperators::promote(cpu()->operators());
+
+    if (testCase()->parent()) {
+        ASSERT_require(database()->symbolicStateExists(testCaseId()));
+        BS::StatePtr state = database()->extractSymbolicState(testCaseId());
         ASSERT_not_null(state);
         ops->currentState(state);
-        solver()->insert(testCase->assertions());
+        solver()->insert(testCase()->assertions());
         ops->restoreInputVariables(solver());
     } else {
         ops->createInputVariables(solver());
     }
-
-    return cpu;
 }
 
 void
@@ -201,7 +197,12 @@ ConcolicExecutor::configureExecution(const Database::Ptr &db, const TestCase::Pt
 
         partitioner_ = partition(testCase->specimen()); // must live for duration of cpu
 
-        process_ = makeProcess();
+        // Create the a new process from the executable.
+        //
+        // FIXME[Robb Matzke 2021-05-25]: This will need to eventually change so that the architecture type (Linux i386 in this
+        // case) is not hard coded.
+        process_ = LinuxI386::instance(db, testCase);
+
         cpu_ = makeDispatcher(process_);
     }
 }
@@ -256,6 +257,8 @@ ConcolicExecutor::execute() {
     ASSERT_not_null(cpu_);
 
     SAWYER_MESG(mlog[DEBUG]) <<"concolically executing test case " <<*testCaseId() <<"\n";
+    startProcess();
+    startDispatcher();
 
     // Extend the test case execution path in order to create new test cases.
     try {
@@ -960,9 +963,9 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BS::SValuePtr &addr,
 
         // Handle shared memory at concrete addresses
         if (SharedMemory::Ptr shm = process()->sharedMemory().getOrDefault(*va)) {
-            if (BS::SValuePtr result = process()->sharedMemoryRead(partitioner(), shared_from_this(), shm, *va, nBytes)) {
+            if (SymbolicExpr::Ptr result = process()->sharedMemoryRead(partitioner(), shared_from_this(), shm, *va, nBytes)) {
                 hadSharedMemoryRead_ = true;
-                return result;
+                return svalueExpr(result);
             }
         }
 

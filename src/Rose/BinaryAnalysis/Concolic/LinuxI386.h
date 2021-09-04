@@ -17,7 +17,7 @@ namespace BinaryAnalysis {
 namespace Concolic {
 
 /** Features specific to native Linux ELF i386 specimens. */
-class LinuxI386: public Architecture, public Sawyer::SharedFromThis<LinuxI386> {
+class LinuxI386: public Architecture {
     using Super = Architecture;
 
 public:
@@ -44,7 +44,7 @@ public:
         DebuggerPtr debugger;                           /**< Subordinate Linux process for concrete semantics. */
 
         /** Constructor. */
-        SharedMemoryContext(const LinuxI386::Ptr &architecture, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
+        SharedMemoryContext(const Architecture::Ptr &architecture, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
                             const Partitioner2::Partitioner&, const DebuggerPtr&);
 
         ~SharedMemoryContext();
@@ -119,10 +119,9 @@ public:
                                       const SmtSolver::Ptr &solver) override;
     virtual void systemCall(const Partitioner2::Partitioner&,
                             const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&) override;
-
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    sharedMemoryRead(const Partitioner2::Partitioner&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
-                     const Concolic::SharedMemoryPtr&, rose_addr_t memVa, size_t nBytes) override;
+    virtual SymbolicExprPtr sharedMemoryRead(const Partitioner2::Partitioner&,
+                                             const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
+                                             const Concolic::SharedMemoryPtr&, rose_addr_t memVa, size_t nBytes) override;
 
 private:
     // Maps a scratch page for internal use and updates scratchVa_ with the address of the page.

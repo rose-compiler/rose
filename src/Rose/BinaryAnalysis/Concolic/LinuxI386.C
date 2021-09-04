@@ -72,7 +72,7 @@ LinuxI386::SyscallContext::~SyscallContext() {}
 // LinuxI386::SharedMemoryContext
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-LinuxI386::SharedMemoryContext::SharedMemoryContext(const LinuxI386::Ptr &architecture, const BS::RiscOperatorsPtr &ops,
+LinuxI386::SharedMemoryContext::SharedMemoryContext(const Architecture::Ptr &architecture, const BS::RiscOperatorsPtr &ops,
                                                     const P2::Partitioner &partitioner, const Debugger::Ptr &debugger)
     : partitioner(partitioner), debugger(debugger) {
     ASSERT_not_null(debugger);
@@ -269,11 +269,11 @@ public:
 
     bool operator()(bool handled, SharedMemoryContext &ctx) override {
         if (!handled) {
+            ASSERT_forbid(ctx.replaying);
             auto ops = Emulation::RiscOperators::promote(ctx.ops);
             ops->doExit(255);
-            handled = true;
         }
-        return handled;
+        return true;
     }
 };
 
@@ -1010,7 +1010,7 @@ LinuxI386::systemCall(const P2::Partitioner &partitioner, const BS::RiscOperator
     // to adjust the instruction pointer), and the concrete execution has stepped into the system call but has not yet executed
     // it (i.e., the subordinate process is in the syscall-enter-stop state).
 
-    SyscallContext ctx(sharedFromThis(), ops_, partitioner, debugger_);
+    SyscallContext ctx(sharedFromThis().dynamicCast<LinuxI386>(), ops_, partitioner, debugger_);
 
     //-------------------------------------
     // Create system call execution event.
@@ -1081,7 +1081,7 @@ LinuxI386::systemCall(const P2::Partitioner &partitioner, const BS::RiscOperator
     }
 }
 
-BS::SValue::Ptr
+SymbolicExpr::Ptr
 LinuxI386::sharedMemoryRead(const P2::Partitioner &partitioner, const BS::RiscOperators::Ptr &ops_,
                             const Concolic::SharedMemory::Ptr &sharedMemory, rose_addr_t addr, size_t nBytes) {
     auto ops = Emulation::RiscOperators::promote(ops_);
@@ -1101,7 +1101,7 @@ LinuxI386::sharedMemoryRead(const P2::Partitioner &partitioner, const BS::RiscOp
     bool handled = sharedMemory->callbacks().apply(false, ctx);
     if (!handled) {
         mlog[ERROR] <<"    shared memory read not handled by any callbacks; treating it as normal memory\n";
-        return IS::BaseSemantics::SValuePtr();
+        return SymbolicExpr::Ptr();
     } else if (!ctx.result) {
         SAWYER_MESG(debug) <<"    shared memory read did not return a special value; doing a normal read\n";
     } else {

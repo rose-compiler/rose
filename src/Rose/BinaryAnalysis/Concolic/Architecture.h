@@ -20,7 +20,7 @@ namespace BinaryAnalysis {
 namespace Concolic {
 
 /** Base class for architecture-specific operations. */
-class Architecture: public Sawyer::SharedObject {
+class Architecture: public Sawyer::SharedObject, public Sawyer::SharedFromThis<Architecture> {
 public:
     /** Reference counting pointer. */
     using Ptr = ArchitecturePtr;
@@ -348,7 +348,7 @@ public:
      *
      *  This function is called as soon as shared memory is read. It should either perform the read operation and return
      *  the result, or return null in which case the caller will do the usual read operation. */
-    virtual InstructionSemantics2::BaseSemantics::SValuePtr
+    virtual SymbolicExprPtr
     sharedMemoryRead(const Partitioner2::Partitioner&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
                      const SharedMemoryPtr&, rose_addr_t memVa, size_t nBytes);
 };

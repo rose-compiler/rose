@@ -29,6 +29,14 @@ public:
      * Inputs to the callback
      *------------------------------------------------------------------------------------------------------------*/
 
+    /** If true, then this is a playback event.
+     *
+     *  When starting a test case that was created from some other test case, we replay the instruction sequence
+     *  and events in order to bring the concrete and symbolic states up to the same point they were when this test
+     *  case was created, modulo the differences caused by using other input values.  During this phase, this data
+     *  member is set. This allows the callback to initialize its state. */
+    bool replaying = false;
+
     /** Architecture on which shared memory access occurs. */
     ArchitecturePtr architecture;
 
@@ -38,27 +46,32 @@ public:
     InstructionSemantics2::BaseSemantics::RiscOperatorsPtr ops;
 
     /** Address of instruction accessing the shared memory. */
-    rose_addr_t ip;
+    rose_addr_t ip = 0;
 
     /** Address of memory being accessed. */
-    rose_addr_t memoryVa;
+    rose_addr_t memoryVa = 0;
 
     /** Number of bytes being accessed. */
-    size_t nBytes;
+    size_t nBytes = 0;
 
     /** Direction of access. */
-    IoDirection direction;
+    IoDirection direction = IoDirection::READ;
 
     /*------------------------------------------------------------------------------------------------------------
-     * Outputs from the callback
+     * Outputs from the callback during concolic execution, or inputs during execution event playback.
      *------------------------------------------------------------------------------------------------------------*/
 
-    /** Optional byte read.
+    /** Optional value read.
      *
-     *  If a read operation needs to return a special value, then this is the value returned. */
-    InstructionSemantics2::BaseSemantics::SValuePtr result;
+     *  If a read operation needs to return a special value, then this is the value returned.
+     *
+     *  During execution event playback, this is the result read from memory, which is always a concrete value. */
+    SymbolicExpr::Ptr result;
 
     /** Optional execution event.
+     *
+     *  This is the event that marks this as a shared memory read. It is created by the callback when doing concolic execution,
+     *  or comes from the event when playing back execution events.
      *
      *  This is to adjust the concrete execution. */
     ExecutionEventPtr event;
@@ -86,7 +99,7 @@ public:
     void hello(const std::string &myName, const SharedMemoryContext&) const;
 
     /** Create the event that represents the shared memory read and add it to the context. */
-    ExecutionEventPtr createReadEvent(SharedMemoryContext&) const;
+    ExecutionEventPtr createReadEvent(SharedMemoryContext&, size_t serialNumber) const;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -106,8 +119,6 @@ public:
     using Callbacks = Sawyer::Callbacks<SharedMemoryCallbackPtr>;
 
 private:
-    std::vector<Sawyer::Optional<uint8_t>> prevReadConcrete_; // previous concrete bytes read
-    std::vector<SymbolicExpr::Ptr> prevReadSymbolic_;   // previous symbolic bytes read
     Callbacks callbacks_;                               // list of user functions to handle this memory access
 
 protected:
@@ -120,24 +131,6 @@ public:
     ~SharedMemory();
 
 public:
-    /** Property: Previous concrete byte read.
-     *
-     *  Holds the optional concrete byte at the specified offset from the beginning of the shared memory region.
-     *
-     * @{ */
-    Sawyer::Optional<uint8_t> previousReadConcreteAtOffset(size_t offset) const;
-    void previousReadConcreteAtOffset(size_t offset, const Sawyer::Optional<uint8_t> &byte);
-    /** @} */
-
-    /** Property: Previous symbolic byte read.
-     *
-     *  Holds the optional symbolic byte at the specified offset from the beginning of the shared memory region.
-     *
-     * @{ */
-    SymbolicExpr::Ptr previousReadSymbolicAtOffset(size_t offset) const;
-    void previousReadSymbolicAtOffset(size_t offset, const SymbolicExpr::Ptr &byte);
-    /** @} */
-
     /** Property: Callbacks.
      *
      *  List of user-defined functions that could potentially handle this shared memory access.
