@@ -267,7 +267,7 @@ public:
         return Ptr(new NullDeref);
     }
 
-    bool operator()(bool handled, SharedMemoryContext &ctx) const override {
+    bool operator()(bool handled, SharedMemoryContext &ctx) override {
         if (!handled) {
             auto ops = Emulation::RiscOperators::promote(ctx.ops);
             ops->doExit(255);

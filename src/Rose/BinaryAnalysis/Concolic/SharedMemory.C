@@ -33,7 +33,7 @@ SharedMemoryCallback::hello(const std::string &myName, const SharedMemoryContext
                              <<" for " <<StringUtility::plural(ctx.nBytes, "bytes") <<"\n";
 }
 
-void
+ExecutionEvent::Ptr
 SharedMemoryCallback::createReadEvent(SharedMemoryContext &ctx) const {
     ASSERT_require(!ctx.event);
 
@@ -61,6 +61,7 @@ SharedMemoryCallback::createReadEvent(SharedMemoryContext &ctx) const {
     ops->inputVariables().insertSharedMemoryRead(ctx.event, variable);
     SAWYER_MESG(mlog[DEBUG]) <<"  created input variable " <<*variable
                              <<" for " <<ctx.event->printableName(arch->database()) <<"\n";
+    return ctx.event;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
