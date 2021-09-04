@@ -277,7 +277,7 @@ ConcolicExecutor::execute(const Database::Ptr &db, const TestCase::Ptr &testCase
     ASSERT_not_null(testCase);
 
     configureExecution(db, testCase);
-    execute();
+    return execute();
 }
 
 bool
