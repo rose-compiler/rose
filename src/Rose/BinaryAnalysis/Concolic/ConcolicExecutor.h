@@ -443,11 +443,14 @@ private:
     // then reconstitute the analysis results from the database.
     Partitioner2::Partitioner partition(const SpecimenPtr&);
 
-    // Create the process for the concrete execution.
-    ArchitecturePtr makeProcess();
-
     // Create the dispatcher, operators, and memory and register state for the symbolic execution.
     Emulation::DispatcherPtr makeDispatcher(const ArchitecturePtr&);
+
+    // Create the underlying process and possibly fast forward it to the state at which it was when the test case was created.
+    void startProcess();
+
+    // Start up the symbolic part of the testing. This must happen after startProcess.
+    void startDispatcher();
 
     // Run the execution
     void run();

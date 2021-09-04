@@ -207,6 +207,20 @@ Architecture::playEvent(const ExecutionEvent::Ptr &event) {
             ASSERT_not_null(value);
             variableValues_.insert(std::make_pair(variable, value));
             SAWYER_MESG(debug) <<"  shared memory read " <<*variable <<" = " <<*value <<"\n";
+
+            // Invoke the shared memory read callbacks in playback mode so they can initialize their states.
+            if (SharedMemory::Ptr shm = sharedMemory().getOrDefault(event->memoryLocation().least())) {
+                SharedMemoryContext ctx;
+                ctx.replaying = true;
+                ctx.architecture = sharedFromThis();
+                ctx.ip = event->instructionPointer();
+                ctx.memoryVa = event->memoryLocation().least();
+                ctx.nBytes = event->memoryLocation().size();
+                ctx.direction = IoDirection::READ;
+                ctx.result = event->bytesAsSymbolic();
+                ctx.event = event;
+                shm->callbacks().apply(false, ctx);
+            }
             return true;
         }
 
@@ -299,10 +313,10 @@ Architecture::restoreInputVariables(InputVariables &inputVariables, const Partit
     }
 }
 
-BS::SValue::Ptr
+SymbolicExpr::Ptr
 Architecture::sharedMemoryRead(const P2::Partitioner&, const BS::RiscOperators::Ptr&, const SharedMemory::Ptr&,
                                rose_addr_t /*memoryVa*/, size_t /*nBytes*/) {
-    return BS::SValue::Ptr();
+    return SymbolicExpr::Ptr();
 }
 
 } // namespace
