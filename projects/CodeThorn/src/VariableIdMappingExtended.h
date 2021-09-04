@@ -48,7 +48,7 @@ namespace CodeThorn {
     CodeThorn::TypeSize getBuiltInTypeSize(enum CodeThorn::BuiltInType);
 
     // true if consistency check passed
-    bool consistencyCheck(SgProject* project);
+    bool astSymbolCheck(SgProject* project);
     std::string typeSizeMappingToString();
     size_t getNumVarIds();
     virtual void toStream(std::ostream& os) override;
@@ -71,8 +71,8 @@ namespace CodeThorn {
     std::list<SgVariableDeclaration*> getVariableDeclarationsOfVariableIdSet(VariableIdSet&);
 
     void addVariableDeclaration(SgVariableDeclaration* decl);
-    CodeThorn::TypeSize registerClassMembers(SgClassType* classType, CodeThorn::TypeSize offset, bool repairMode=false);
-    CodeThorn::TypeSize registerClassMembers(SgClassType* classType, std::list<SgVariableDeclaration*>& memberList, CodeThorn::TypeSize offset, bool repairMode=false);
+    CodeThorn::TypeSize registerClassMembers(SgClassType* classType, CodeThorn::TypeSize offset, bool replaceClassDataMembers=false);
+    CodeThorn::TypeSize registerClassMembers(SgClassType* classType, std::list<SgVariableDeclaration*>& memberList, CodeThorn::TypeSize offset, bool replaceClassDataMembers=false);
     void classMemberOffsetsToStream(std::ostream& os, SgType* type, std::int32_t level);
 
     // support for offset remapping abstraction
@@ -96,10 +96,10 @@ namespace CodeThorn {
     static bool isDataMemberAccess(SgVarRefExp* varRefExp);
     static bool isGlobalOrLocalVariableAccess(SgVarRefExp* varRefExp);
     void setAstSymbolCheckFlag(bool flag);
-    bool getAstConsistencySymbolCheckFlag();
+    bool getAstSymbolCheckFlag();
     
   private:
-    bool _astConsistencySymbolCheckFlag=true;
+    bool _astSymbolCheckFlag=false;
     
     class MemPoolTraversal : public ROSE_VisitTraversal {
     public:
@@ -122,7 +122,6 @@ namespace CodeThorn {
     void registerClassMembersNew();
     std::list<SgVarRefExp*> structAccessesInsideFunctions(SgProject* project);
     std::list<SgVarRefExp*> variableAccessesInsideFunctions(SgProject* project);
-    //std::int32_t repairVarRefExpAccessList(std::list<SgVarRefExp*>& l, std::string accessName); // workaround
     std::int32_t checkVarRefExpAccessList(std::list<SgVarRefExp*>& l, std::string accessName);
       
     CodeThorn::TypeSizeMapping typeSizeMapping;
@@ -165,7 +164,7 @@ namespace CodeThorn {
     typedef std::unordered_map<CodeThorn::VariableId, TypeSizeOffsetAbstractionMapType, VariableIdHash> VariableIdTypeSizeMappingType;
     VariableIdTypeSizeMappingType _offsetAbstractionMapping;
 
-    void generateErrorReport();
+    void generateErrorReport(bool astSymbolCheckResult);
     std::string errorReportFileName;
     void appendErrorReportLine(std::string s);
     std::list<std::string> errorReport;
