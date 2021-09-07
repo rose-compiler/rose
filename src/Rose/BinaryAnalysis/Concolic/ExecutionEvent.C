@@ -189,14 +189,7 @@ ExecutionEvent::instanceSyscall(rose_addr_t ip,
     Ptr retval = instance(ip);
     retval->actionType(Action::OS_SYSCALL);
     retval->scalar(functionNumber);
-
-    std::vector<uint8_t> bytes;
-    bytes.reserve(8 * arguments.size());
-    for (uint64_t argument: arguments) {
-        for (size_t i = 0; i < sizeof argument; ++i)
-            bytes.push_back((uint8_t)BitOps::bits(argument, i*8, i*8+7));
-    }
-    retval->bytes(bytes);
+    retval->words(arguments);
     return retval;
 }
 

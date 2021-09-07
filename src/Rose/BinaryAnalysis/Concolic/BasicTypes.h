@@ -44,6 +44,13 @@ enum class When {
     POST                                                /**< Event is replayed after the corresponding instruction. */
 };
 
+/** Concolic execution phase. */
+enum class ConcolicPhase {
+    REPLAY,                                             /**< Concrete execution to initialize concolic state. */
+    EMULATION,                                          /**< Concolic execution of an instruction. */
+    POST_EMULATION                                      /**< Actions that occur after concolic execution of an instruction. */
+};
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Exceptions, errors, etc.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -78,6 +85,11 @@ class ConcreteExecutorResult;
 class Database;
 using DatabasePtr = Sawyer::SharedPointer<Database>;
 
+namespace Emulation {
+    class RiscOperators;
+    using RiscOperatorsPtr = boost::shared_ptr<class RiscOperators>;
+}
+
 class ExecutionEvent;
 using ExecutionEventPtr = Sawyer::SharedPointer<ExecutionEvent>;
 
@@ -94,11 +106,12 @@ using LinuxExecutorPtr = Sawyer::SharedPointer<LinuxExecutor>;
 class LinuxI386;
 using LinuxI386Ptr = Sawyer::SharedPointer<LinuxI386>;
 
-class SharedMemory;
-using SharedMemoryPtr = Sawyer::SharedPointer<SharedMemory>;
-
 class SharedMemoryCallback;
 using SharedMemoryCallbackPtr = Sawyer::SharedPointer<SharedMemoryCallback>;
+
+using SharedMemoryCallbacks = Sawyer::Callbacks<SharedMemoryCallbackPtr>;
+
+class SharedMemoryContext;
 
 class Specimen;
 using SpecimenPtr = Sawyer::SharedPointer<Specimen>;
@@ -106,10 +119,9 @@ using SpecimenPtr = Sawyer::SharedPointer<Specimen>;
 class SyscallCallback;
 using SyscallCallbackPtr = std::shared_ptr<SyscallCallback>;
 
-class SyscallContext;
+using SyscallCallbacks = Sawyer::Callbacks<SyscallCallbackPtr>;
 
-class SystemCall;
-using SystemCallPtr = Sawyer::SharedPointer<SystemCall>;
+class SyscallContext;
 
 class TestCase;
 using TestCasePtr = Sawyer::SharedPointer<TestCase>;

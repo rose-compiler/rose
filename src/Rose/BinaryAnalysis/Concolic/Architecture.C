@@ -18,8 +18,8 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
 
-Architecture::Architecture(const Database::Ptr &db, TestCaseId testCaseId)
-    : db_(db), testCaseId_(testCaseId) {
+Architecture::Architecture(const Database::Ptr &db, TestCaseId testCaseId, const P2::Partitioner &partitioner)
+    : db_(db), testCaseId_(testCaseId), partitioner_(partitioner) {
     ASSERT_not_null(db);
     testCase_ = db->object(testCaseId, Update::NO);
     ASSERT_not_null(testCase_);
@@ -45,6 +45,11 @@ Architecture::testCase() const {
     return testCase_;
 }
 
+const P2::Partitioner&
+Architecture::partitioner() const {
+    return partitioner_;
+}
+
 ExecutionLocation
 Architecture::currentLocation() const {
     return currentLocation_;
@@ -65,6 +70,13 @@ Architecture::systemCalls() {
     return systemCalls_;
 }
 
+void
+Architecture::systemCalls(size_t syscallId, const SyscallCallback::Ptr &callback) {
+    ASSERT_not_null(callback);
+    SyscallCallbacks &callbacks = systemCalls_.insertMaybeDefault(syscallId);
+    callbacks.append(callback);
+}
+
 const Architecture::SharedMemoryMap&
 Architecture::sharedMemory() const {
     return sharedMemory_;
@@ -73,6 +85,32 @@ Architecture::sharedMemory() const {
 Architecture::SharedMemoryMap&
 Architecture::sharedMemory() {
     return sharedMemory_;
+}
+
+void
+Architecture::sharedMemory(const AddressInterval &where, const SharedMemoryCallback::Ptr &callback) {
+    ASSERT_not_null(callback);
+    AddressInterval remaining = where;
+    while (!remaining.isEmpty()) {
+        SharedMemoryCallbacks callbacks;
+        auto iter = sharedMemory_.findFirstOverlap(remaining);
+        AddressInterval whereToInsert;
+        if (iter == sharedMemory_.nodes().end()) {
+            whereToInsert = remaining;
+        } else if (remaining.least() < iter->key().least()) {
+            whereToInsert = AddressInterval::hull(remaining.least(), iter->key().least() - 1);
+        } else {
+            whereToInsert = remaining & iter->key();
+            callbacks = sharedMemory_.get(whereToInsert.least());
+        }
+
+        callbacks.append(callback);
+        sharedMemory_.insert(whereToInsert, callbacks);
+
+        if (whereToInsert == remaining)
+            break;
+        remaining = AddressInterval::hull(whereToInsert.greatest() + 1, remaining.greatest());
+    }
 }
 
 void
@@ -98,6 +136,29 @@ Architecture::playAllEvents(const P2::Partitioner &partitioner) {
         ++retval;
     }
     return retval;
+}
+
+std::vector<ExecutionEvent::Ptr>
+Architecture::getRelatedEvents(const ExecutionEvent::Ptr &parent) const {
+    ASSERT_not_null(parent);
+    TestCaseId testCaseId = database()->id(parent->testCase());
+    std::vector<ExecutionEventId> eventIds = database()->executionEvents(testCaseId, parent->location().primary());
+    std::vector<ExecutionEvent::Ptr> events;
+
+    // Process from last event toward first event because it results in fewer database reads.
+    std::reverse(eventIds.begin(), eventIds.end());
+    for (ExecutionEventId eventId: eventIds) {
+        ExecutionEvent::Ptr event = database()->object(eventId);
+        if (parent->location() < event->location()) {
+            events.push_back(event);
+        } else {
+            break;
+        }
+    }
+
+    // We processed the events backward, but need to return them forward.
+    std::reverse(events.begin(), events.end());
+    return events;
 }
 
 bool
@@ -200,7 +261,18 @@ Architecture::playEvent(const ExecutionEvent::Ptr &event) {
             return true;
         }
 
+        case ExecutionEvent::Action::OS_SYSCALL: {
+            // This is only the start of a system call. Additional following events for the same instruction will describe the
+            // effects of the system call.
+            const uint64_t functionNumber = event->scalar();
+            SyscallCallbacks callbacks = systemCalls().getOrDefault(functionNumber);
+            SyscallContext ctx(sharedFromThis(), event, getRelatedEvents(event));
+            return callbacks.apply(false, ctx);
+        }
+
         case ExecutionEvent::Action::OS_SHM_READ: {
+            // This is only the start of a shared memory read. Additional following events for the same instruction will
+            // describe the effects of the read.
             SymbolicExpr::Ptr variable = event->inputVariable();
             ASSERT_not_null(variable);
             SymbolicExpr::Ptr value = event->bytesAsSymbolic();
@@ -209,17 +281,10 @@ Architecture::playEvent(const ExecutionEvent::Ptr &event) {
             SAWYER_MESG(debug) <<"  shared memory read " <<*variable <<" = " <<*value <<"\n";
 
             // Invoke the shared memory read callbacks in playback mode so they can initialize their states.
-            if (SharedMemory::Ptr shm = sharedMemory().getOrDefault(event->memoryLocation().least())) {
-                SharedMemoryContext ctx;
-                ctx.replaying = true;
-                ctx.architecture = sharedFromThis();
-                ctx.ip = event->instructionPointer();
-                ctx.memoryVa = event->memoryLocation().least();
-                ctx.nBytes = event->memoryLocation().size();
-                ctx.direction = IoDirection::READ;
-                ctx.result = event->bytesAsSymbolic();
-                ctx.event = event;
-                shm->callbacks().apply(false, ctx);
+            SharedMemoryCallbacks callbacks = sharedMemory().getOrDefault(event->memoryLocation().least());
+            if (!callbacks.isEmpty()) {
+                SharedMemoryContext ctx(sharedFromThis(), event);
+                callbacks.apply(false, ctx);
             }
             return true;
         }
@@ -313,10 +378,10 @@ Architecture::restoreInputVariables(InputVariables &inputVariables, const Partit
     }
 }
 
-SymbolicExpr::Ptr
-Architecture::sharedMemoryRead(const P2::Partitioner&, const BS::RiscOperators::Ptr&, const SharedMemory::Ptr&,
+std::pair<ExecutionEvent::Ptr, SymbolicExpr::Ptr>
+Architecture::sharedMemoryRead(const SharedMemoryCallbacks&, const P2::Partitioner&, const BS::RiscOperators::Ptr&,
                                rose_addr_t /*memoryVa*/, size_t /*nBytes*/) {
-    return SymbolicExpr::Ptr();
+    return {ExecutionEvent::Ptr(), SymbolicExpr::Ptr()};
 }
 
 } // namespace

@@ -35,6 +35,8 @@ namespace Concolic {
 // ConcolicExecutor
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+ConcolicExecutor::ConcolicExecutor() {}
+
 ConcolicExecutor::~ConcolicExecutor() {
     // Delete things that depend on partitioner_ before we delete the partitioner.
     process_ = Architecture::Ptr();
@@ -201,7 +203,7 @@ ConcolicExecutor::configureExecution(const Database::Ptr &db, const TestCase::Pt
         //
         // FIXME[Robb Matzke 2021-05-25]: This will need to eventually change so that the architecture type (Linux i386 in this
         // case) is not hard coded.
-        process_ = LinuxI386::instance(db, testCase);
+        process_ = LinuxI386::instance(db, testCase, partitioner_);
 
         cpu_ = makeDispatcher(process_);
     }
@@ -353,7 +355,6 @@ ConcolicExecutor::printCallStack(std::ostream &out) {
 void
 ConcolicExecutor::handleBranch(SgAsmInstruction *insn) {
     ASSERT_not_null(insn);
-
     ASSERT_not_null(solver());
 
     Sawyer::Message::Stream debug(mlog[DEBUG]);
@@ -484,6 +485,14 @@ ConcolicExecutor::run() {
 
         if (ops->hadSystemCall()) {
             ops->process()->systemCall(partitioner(), ops);
+        }
+
+        if (ExecutionEvent::Ptr sharedMemoryEvent = ops->hadSharedMemoryAccess()) {
+            rose_addr_t memoryVa = sharedMemoryEvent->memoryLocation().least();
+            SharedMemoryCallbacks callbacks = process()->sharedMemory().getOrDefault(memoryVa);
+            SharedMemoryContext ctx(ops->process(), ops, sharedMemoryEvent);
+            ctx.phase = ConcolicPhase::POST_EMULATION;
+            callbacks.apply(false, ctx);
         }
 
         if (settings_.showingStates.exists(executionVa))
@@ -825,7 +834,7 @@ RiscOperators::RiscOperators(const Settings &settings, const DatabasePtr &db, co
                              const SmtSolverPtr &solver)
     : Super(state, solver), REG_PATH(state->registerState()->registerDictionary()->findOrThrow("path")),
       settings_(settings), db_(db), testCase_(testCase), partitioner_(partitioner), process_(process),
-      inputVariables_(inputVariables), hadSystemCall_(false), hadSharedMemoryRead_(false) {
+      inputVariables_(inputVariables), hadSystemCall_(false) {
     ASSERT_not_null(db);
     ASSERT_not_null(testCase);
     ASSERT_not_null(process);
@@ -887,7 +896,7 @@ RiscOperators::registerDictionary() const {
 void
 RiscOperators::startInstruction(SgAsmInstruction *insn) {
     hadSystemCall_ = false;
-    hadSharedMemoryRead_ = false;
+    hadSharedMemoryAccess_ = ExecutionEvent::Ptr();
     Super::startInstruction(insn);
 }
 
@@ -928,7 +937,7 @@ RiscOperators::peekRegister(RegisterDescriptor reg, const BS::SValuePtr &dfltUnu
 
 void
 RiscOperators::writeRegister(RegisterDescriptor reg, const BS::SValue::Ptr &value) {
-    if (hadSharedMemoryRead()) {
+    if (hadSharedMemoryAccess()) {
         Sawyer::Message::Stream debug(mlog[DEBUG]);
 
         // This probably writing a previously-read value from shared memory into a register. It's common on RISC
@@ -962,9 +971,15 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BS::SValuePtr &addr,
                                                                        process_->readMemoryUnsigned(*va, nBytes));
 
         // Handle shared memory at concrete addresses
-        if (SharedMemory::Ptr shm = process()->sharedMemory().getOrDefault(*va)) {
-            if (SymbolicExpr::Ptr result = process()->sharedMemoryRead(partitioner(), shared_from_this(), shm, *va, nBytes)) {
-                hadSharedMemoryRead_ = true;
+        SharedMemoryCallbacks callbacks = process()->sharedMemory().getOrDefault(*va);
+        if (!callbacks.isEmpty()) {
+            // FIXME[Robb Matzke 2021-09-09]: use structured bindings when ROSE requires C++17 or later
+            auto x = process()->sharedMemoryRead(callbacks, partitioner(), shared_from_this(), *va, nBytes);
+            ExecutionEvent::Ptr sharedMemoryEvent = x.first;
+            SymbolicExpr::Ptr result = x.second;
+
+            if (result) {
+                hadSharedMemoryAccess(sharedMemoryEvent);
                 return svalueExpr(result);
             }
         }
