@@ -26,6 +26,11 @@ public:
         return callbacks_.empty();
     }
 
+    bool operator==(const Callbacks &other) {
+        return callbacks_.size() == other.callbacks_.size() &&
+            std::equal(callbacks_.begin(), callbacks_.end(), other.callbacks_.begin());
+    }
+
     Callbacks& append(const Callback &callback) {
         callbacks_.push_back(callback);
         return *this;
