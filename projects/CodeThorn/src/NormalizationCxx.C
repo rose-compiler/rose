@@ -1099,6 +1099,39 @@ namespace
     return dynamic_cast<const void*>(lhs) == dynamic_cast<const void*>(rhs);
   }
 
+  bool isNormalizedSageNode(const SgLocatedNode& n)
+  {
+    static const std::string TRANSFORM = "transformation" ;
+
+    ROSE_ASSERT(n.get_file_info());
+
+    //~ std::cerr << n.unparseToString() << " @" << n.get_file_info()->get_filenameString()
+              //~ << std::endl;
+
+    return TRANSFORM == n.get_file_info()->get_filenameString();
+  }
+
+  bool isTemporary(const SgInitializedName& n)
+  {
+    return isNormalizedSageNode(n);
+  }
+
+  bool needsLifetimeExtension(const SgInitializedName& n)
+  {
+    return false;
+  }
+
+  SgStatement& dtorCallLocation(SgStatement& stmt, SgInitializedName& var)
+  {
+    SgVariableDeclaration& decl = sg::ancestor<SgVariableDeclaration>(var);
+    SgStatement*           next = si::getNextStatement(&decl);
+
+    while (isNormalizedSageNode(SG_DEREF(next)))
+      next = si::getNextStatement(next);
+
+    return SG_DEREF(next);
+  }
+
   struct VarDtorInserter
   {
       VarDtorInserter(SgBasicBlock& where, SgStatement& pos, SgInitializedName& what)
@@ -1115,12 +1148,20 @@ namespace
                   << " // " << SrcLoc(var)
                   << std::endl;
 
-        if (sameObject(&stmt, &blk))
+        if (isTemporary(var) && !needsLifetimeExtension(var))
+        {
+          SgStatement& inspos = dtorCallLocation(stmt, var);
+
+          si::insertStatement(&inspos, dtorcall, false /* after */);
+        }
+        else if (sameObject(&stmt, &blk))
         {
           si::appendStatement(dtorcall, &blk);
         }
         else
-          si::insertStatementBefore(&stmt, dtorcall);
+        {
+          si::insertStatement(&stmt, dtorcall, true /* before */);
+        }
       }
 
     private:
@@ -1672,8 +1713,8 @@ namespace
   }
 
 
-  /// passes over scopes and control flow interrupting statements
-  ///   => inserts destructor calls to into the AST
+  /// passes over object initialization
+  ///   => breaks up an object declaration into allocation and initialization
   struct CxxAllocInitsplitTransformer : BaseTransformer
   {
     using BaseTransformer::BaseTransformer;
@@ -1877,7 +1918,6 @@ namespace
   {
     logInfo() << "Starting C++ normalization. (Phase 2/2)" << std::endl;
     logTrace() << "Not normalizing templates.." << std::endl;
-
 
     normalize<CxxAllocInitsplitTransformer>   (root, " beneficial C++ alloc/init splits...");
     normalize<CxxObjectDestructionTransformer>(root, " crucial C++ object destruction insertion...");
