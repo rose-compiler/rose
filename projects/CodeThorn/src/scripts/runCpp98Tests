@@ -42,19 +42,39 @@ function runCxxTests {
             benchmarkname=$(basename $benchmark)
             printf "Testing %-38s: " $benchmarkname
             CT_OUTPUT_FILE=$benchmarkname.imout
+            OUTPUT_FILE_OBSERVED="${CT_OUTPUT_FILE}.observed"
+            OUTPUT_FILE_EXPECTED="${CT_OUTPUT_FILE}.expected"
 
             # ./codethorn $CT_MODE_OPTIONS --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR/include $benchmark > /dev/null
-            ./codethorn $CT_MODE_OPTIONS -I $TESTDIR/include $benchmark > /dev/null
-            RESULT=$?
-            
-            if [ $RESULT == 0 ]; then
-              echo $COLORED_PASS
-              ((numPass++))
+            ./codethorn $CT_MODE_OPTIONS --interpreter-mode-file="${OUTPUT_FILE_OBSERVED}" -I $TESTDIR/include $benchmark > /dev/null
+            CT_RESULT=$?
+
+            EXEFILE=${benchmarkname}.exe
+            $CXX -std=c++03 -Wall -Wextra -pedantic -I $TESTDIR/include $benchmark -o$EXEFILE
+            EXE_RESULT=$?
+
+            ./$EXEFILE -e > $OUTPUT_FILE_EXPECTED
+
+            DIFF=$(diff $OUTPUT_FILE_OBSERVED $OUTPUT_FILE_EXPECTED)
+            if [ "$DIFF" != "" ]
+            then
+                echo $COLORED_FAIL
+                ((numFail++))
             else
-              echo $COLORED_FAIL
-              ((numFail++))
+                echo $COLORED_PASS
+                ((numPass++))
             fi
-            
+            rm -f $EXEFILE $OUTPUT_FILE_OBSERVED OUTPUT_FILE_EXPECTED
+
+
+            #~ if [ $RESULT == 0 ]; then
+              #~ echo $COLORED_PASS
+              #~ ((numPass++))
+            #~ else
+              #~ echo $COLORED_FAIL
+              #~ ((numFail++))
+            #~ fi
+
           #~ if [ ! $? -eq 0 ]
           #~ then
           #~ echo $COLORED_FAIL
@@ -170,12 +190,12 @@ while [[ $# -gt 0 ]]; do
 done
 
 #CT_MODE_OPTIONS="--context-sensitive=yes --normalize-level=2 --interpreter-mode=1 --in-state-string-literals --exploration-mode=topologic-sort"
-CT_MODE_OPTIONS="--run-solver=0 --vis=1 --normalize-level=2 --normalize-extended"
+CT_MODE_OPTIONS="--vis=1 --normalize-level=2 --normalize-extended --interpreter-mode=1"
 
 echo "Valid C++98 Tests: "
 passingTests=`echo {001..016} {018..034} {036..051} {053..056}`
 numWarnExpected=0
-numFailExpected=34
+numFailExpected=52
 runCxxTests $COMPILER $TESTDIR $TESTPREFIX $numWarnExpected $numFailExpected $passingTests
 
 echo "Undefined Behavior Tests: "
