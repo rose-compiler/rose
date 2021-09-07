@@ -957,6 +957,7 @@ clean-local:
 	rm -f *-LTLParser.c++
 	rm -f *.csv
 	rm -f *.txt
+	rm -f *.ti
 
 distclean-local: clean
 	rm -f *.tgz
