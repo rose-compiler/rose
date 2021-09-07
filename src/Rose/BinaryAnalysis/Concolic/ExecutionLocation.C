@@ -36,16 +36,15 @@ ExecutionLocation::isSorted(const ExecutionLocation &a, const ExecutionLocation 
 
 void
 ExecutionLocation::print(std::ostream &out) const {
-    out <<primary_;
     switch (when_) {
         case When::PRE:
-            out <<".pre";
+            out <<"pre";
             break;
         case When::POST:
-            out <<".post";
+            out <<"post";
             break;
     }
-    out <<"." <<secondary_;
+    out <<"." <<primary_ <<"." <<secondary_;
 }
 
 std::string

@@ -23,19 +23,28 @@ namespace Concolic {
  *  This contains information about access to shared memory and is passed to the shared memory callbacks. */
 class SharedMemoryContext {
 public:
+    SharedMemoryContext() = delete;
+
+    /** Constructor for shared memory event replay. */
+    SharedMemoryContext(const ArchitecturePtr&, const ExecutionEventPtr &sharedMemoryEvent);
+
+    /** Constructor when a new shared memory event is encountered. */
+    SharedMemoryContext(const ArchitecturePtr&, const Emulation::RiscOperatorsPtr&,
+                        const ExecutionEventPtr &sharedMemoryEvent);
+
     virtual ~SharedMemoryContext();
 
     /*------------------------------------------------------------------------------------------------------------
      * Inputs to the callback
      *------------------------------------------------------------------------------------------------------------*/
 
-    /** If true, then this is a playback event.
+    /** Phase of execution.
      *
-     *  When starting a test case that was created from some other test case, we replay the instruction sequence
-     *  and events in order to bring the concrete and symbolic states up to the same point they were when this test
-     *  case was created, modulo the differences caused by using other input values.  During this phase, this data
-     *  member is set. This allows the callback to initialize its state. */
-    bool replaying = false;
+     *  During the @c REPLAY phase, the callback's @ref SharedMemoryCallback::replay "replay" method is called,
+     *  during the @c EMULATION phase, the callback's @ref SharedMemoryCallback::handlePreSharedMemory method is
+     *  called, and during the @c POST_EMULATION phase, the callback's @ref SharedMemoryCallback::handlePostSharedMemory
+     *  method is called. */
+    ConcolicPhase phase = ConcolicPhase::EMULATION;
 
     /** Architecture on which shared memory access occurs. */
     ArchitecturePtr architecture;
@@ -43,7 +52,7 @@ public:
     /** Instruction semantics operators.
      *
      *  This also includes the current state and the SMT solver. */
-    InstructionSemantics2::BaseSemantics::RiscOperatorsPtr ops;
+    Emulation::RiscOperatorsPtr ops;
 
     /** Address of instruction accessing the shared memory. */
     rose_addr_t ip = 0;
@@ -57,24 +66,17 @@ public:
     /** Direction of access. */
     IoDirection direction = IoDirection::READ;
 
-    /*------------------------------------------------------------------------------------------------------------
-     * Outputs from the callback during concolic execution, or inputs during execution event playback.
-     *------------------------------------------------------------------------------------------------------------*/
+    /** Execution event.
+     *
+     *  This is the introductory event that marks this as a shared memory read. */
+    ExecutionEventPtr sharedMemoryEvent;
 
     /** Optional value read.
      *
      *  If a read operation needs to return a special value, then this is the value returned.
      *
      *  During execution event playback, this is the result read from memory, which is always a concrete value. */
-    SymbolicExpr::Ptr result;
-
-    /** Optional execution event.
-     *
-     *  This is the event that marks this as a shared memory read. It is created by the callback when doing concolic execution,
-     *  or comes from the event when playing back execution events.
-     *
-     *  This is to adjust the concrete execution. */
-    ExecutionEventPtr event;
+    SymbolicExpr::Ptr valueRead;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -89,56 +91,41 @@ public:
 
     virtual ~SharedMemoryCallback() {}
 
-    /** Callback.
+    /** Prints callback name and memory information.
      *
-     *  The @p handled argument indicates whether any previous callback has already handled this system call, and if so, this
-     *  callback should possibly be a no-op. Returns true if this or any prior callback has handled the system call. */
-    virtual bool operator()(bool handled, SharedMemoryContext&) = 0;
-
-    /** Prints callback name and memory information. */
+     *  If @p myName is empty, then use the name from the shared memory event in the provided context. */
     void hello(const std::string &myName, const SharedMemoryContext&) const;
 
-    /** Create the event that represents the shared memory read and add it to the context. */
-    ExecutionEventPtr createReadEvent(SharedMemoryContext&, size_t serialNumber) const;
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Shared memory declarations and inter-access data.
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/** Description of shared memory region.
- *
- *  This class describes various things about how a shared memory region behaves. For instance, shared memory representing a
- *  timer is maybe required to be monotonically increasing when read. */
-class SharedMemory: public Sawyer::SharedObject {
-public:
-    /** Reference counting ointer. */
-    using Ptr = SharedMemoryPtr;
-
-    /** Callbacks for handling shared memory access. */
-    using Callbacks = Sawyer::Callbacks<SharedMemoryCallbackPtr>;
-
-private:
-    Callbacks callbacks_;                               // list of user functions to handle this memory access
-
-protected:
-    SharedMemory();
-
-public:
-    /** Default allocating constructor. */
-    static SharedMemoryPtr instance();
-
-    ~SharedMemory();
-
-public:
-    /** Property: Callbacks.
+    /** Callback for shared memory playback.
      *
-     *  List of user-defined functions that could potentially handle this shared memory access.
+     *  This method, which must be implemented in subclasses, is invoked when a shared memory operation event is replayed.
+     *  This occurs during the startup phase of concolic testing in order to bring the newly created concrete state up to the
+     *  point it should be when the combined concrete plus symbolic phase takes over. Subclasses must define this function. */
+    virtual void playback(SharedMemoryContext&) = 0;
+
+    /** Callback for new shared memory events.
+     *
+     *  These two methods, @ref handlePreSharedMemory and @ref handlePostSharedMemory, are invoked after the startup phase
+     *  (handled by @ref playback) each time a new shared memory operation is encountered. By time these are called, a shared
+     *  memory @ref ExecutionEvent has already been created and represents the fact that the current instruction operates on
+     *  shared memory.
+     *
+     *  The @ref handlePreSharedMemory is invoked during symbolic instruction emulation before the concrete execution
+     *  occurs. It's invoked as soon as the concolic testing semantics realize that a shared memory operation is occuring. The
+     *  @ref handlePreSharedMemory methods for all callbacks registered for the specified memory address are invoked before
+     *  continuing. Subclasses must define this function, and it should return (via context argument) the value that is read
+     *  from memory.
+     *
+     *  The @ref handlePostSharedMemory is invoked after both symbolic and concrete emulation of the instruction has completed.
+     *  The @ref handlePostSharedMemory methods for all callbacks registered for the specified memory address are invoked before
+     *  continuing. The default implementation for this method does nothing and is not often needed by subclasses.
      *
      * @{ */
-    const Callbacks& callbacks() const;
-    Callbacks& callbacks();
+    virtual void handlePreSharedMemory(SharedMemoryContext&) = 0;
+    virtual void handlePostSharedMemory(SharedMemoryContext&) {}
     /** @} */
+
+    virtual bool operator()(bool handled, SharedMemoryContext&) final;
 };
 
 } // namespace

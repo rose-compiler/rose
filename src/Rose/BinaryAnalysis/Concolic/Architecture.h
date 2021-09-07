@@ -26,23 +26,24 @@ public:
     using Ptr = ArchitecturePtr;
 
     /** Information about system calls. */
-    using SystemCallMap = Sawyer::Container::Map<int /*syscall*/, SystemCallPtr>;
+    using SystemCallMap = Sawyer::Container::Map<int /*syscall*/, SyscallCallbacks>;
 
     /** Information about shared memory. */
-    using SharedMemoryMap = Sawyer::Container::IntervalMap<AddressInterval, SharedMemoryPtr>;
+    using SharedMemoryMap = Sawyer::Container::IntervalMap<AddressInterval, SharedMemoryCallbacks>;
 
 private:
     DatabasePtr db_;
     TestCaseId testCaseId_;
     TestCasePtr testCase_;
+    const Partitioner2::Partitioner &partitioner_;
     ExecutionLocation currentLocation_;                 // incremented when the instruction begins execution
-    SystemCallMap systemCalls_;
-    SharedMemoryMap sharedMemory_;
+    SystemCallMap systemCalls_;                         // callbacks for syscalls
+    SharedMemoryMap sharedMemory_;                      // callbacks for shared memory
     SymbolicExpr::ExprExprHashMap variableValues_;      // used for substitutions
 
 protected:
     // See "instance" methods in subclasses
-    Architecture(const DatabasePtr&, TestCaseId);
+    Architecture(const DatabasePtr&, TestCaseId, const Partitioner2::Partitioner&);
 public:
     virtual ~Architecture();
 
@@ -67,6 +68,11 @@ public:
      *  Returns the test case being executed. This property is read-only, set by the constructor. The return value is always
      *  non-null. */
     TestCasePtr testCase() const;
+
+    /** Property: Partitioner.
+     *
+     *  This holds information about the disassembly of the specimen, such as functions, basic blocks, and instructions. */
+    const Partitioner2::Partitioner& partitioner() const;
 
     /** Property: Current execution location.
      *
@@ -131,6 +137,12 @@ public:
      *  This function declares how shared memory regions are handled and is called from the @c instance methods
      *  (constructors). */
     virtual void configureSharedMemory() = 0;
+
+    /** Add a shared memory callback for a range of addresses. */
+    void sharedMemory(const AddressInterval&, const SharedMemoryCallbackPtr&);
+
+    /** Add a callback for a system call number. */
+    void systemCalls(size_t syscallId, const SyscallCallbackPtr&);
 
     /** Prepares to execute the specimen concretely.
      *
@@ -298,6 +310,12 @@ public:
     SymbolicExpr::ExprExprHashMap& variableValues();
     /** @} */
 
+    /** Returns similar events.
+     *
+     *  Returns events that are for the same instruction as the specified event, but occur after it. The events are returned
+     *  in the order they occur. */
+    std::vector<ExecutionEventPtr> getRelatedEvents(const ExecutionEventPtr&) const;
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Functions related to symbolic states.
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -348,9 +366,9 @@ public:
      *
      *  This function is called as soon as shared memory is read. It should either perform the read operation and return
      *  the result, or return null in which case the caller will do the usual read operation. */
-    virtual SymbolicExprPtr
-    sharedMemoryRead(const Partitioner2::Partitioner&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
-                     const SharedMemoryPtr&, rose_addr_t memVa, size_t nBytes);
+    virtual std::pair<ExecutionEventPtr, SymbolicExprPtr>
+    sharedMemoryRead(const SharedMemoryCallbacks&, const Partitioner2::Partitioner&,
+                     const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&, rose_addr_t memVa, size_t nBytes);
 };
 
 } // namespace

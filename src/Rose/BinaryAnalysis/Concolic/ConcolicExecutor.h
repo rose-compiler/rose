@@ -32,7 +32,6 @@ typedef InstructionSemantics2::SymbolicSemantics::MemoryStatePtr MemoryStatePtr;
 typedef InstructionSemantics2::SymbolicSemantics::MemoryState MemoryState; /**< Type of semantic memory space. */
 typedef InstructionSemantics2::SymbolicSemantics::StatePtr StatePtr; /**< Pointer to semantic machine state. */
 typedef InstructionSemantics2::SymbolicSemantics::State State; /**< Semantic machine state. */
-typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr; /**< Pointer to semantic operations. */
 
 /** Values thrown when subordinate exits. */
 class Exit: public Exception {
@@ -53,6 +52,9 @@ public:
 /** Semantic operations. */
 class RiscOperators: public InstructionSemantics2::SymbolicSemantics::RiscOperators {
 public:
+    /** Shared ownership pointer. */
+    using Ptr = RiscOperatorsPtr;
+
     /** Base class. */
     typedef InstructionSemantics2::SymbolicSemantics::RiscOperators Super;
 
@@ -70,8 +72,8 @@ private:
     const Partitioner2::Partitioner &partitioner_;      // ROSE disassembly info about the specimen
     ArchitecturePtr process_;                           // subordinate process, concrete state
     InputVariables &inputVariables_;                    // where did symbolic variables come from?
-    bool hadSystemCall_;                                // true if we need to call process_->systemCall, cleared each insn
-    bool hadSharedMemoryRead_;                          // set when shared memory is read, cleared each instruction
+    bool hadSystemCall_ = false;                        // true if we need to call process_->systemCall, cleared each insn
+    ExecutionEventPtr hadSharedMemoryAccess_;           // set when shared memory is read, cleared each instruction
 
 protected:
     /** Allocating constructor. */
@@ -153,17 +155,17 @@ public:
     }
     /** @} */
 
-    /** Property: Had a shared memory read.
+    /** Property: Had a shared memory access.
      *
-     *  Cleared at the beginning of each instruction, and set when processing an instruction symbolically that reads from known
+     *  Cleared at the beginning of each instruction, and set when processing an instruction symbolically that accesses known
      *  shared memory.
      *
      * @{ */
-    bool hadSharedMemoryRead() const {
-        return hadSharedMemoryRead_;
+    ExecutionEventPtr hadSharedMemoryAccess() const {
+        return hadSharedMemoryAccess_;
     }
-    void hadSharedMemoryRead(bool b) {
-        hadSharedMemoryRead_ = b;
+    void hadSharedMemoryAccess(const ExecutionEventPtr &e) {
+        hadSharedMemoryAccess_ = e;
     }
     /** @} */
 
@@ -338,7 +340,8 @@ private:
     Emulation::DispatcherPtr cpu_;                      // the symbolic half of the execution
 
 protected:
-    ConcolicExecutor() {}
+    ConcolicExecutor();
+
 public:
     ~ConcolicExecutor();
 
