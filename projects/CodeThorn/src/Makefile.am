@@ -758,6 +758,9 @@ check-domain:
 	$(srcdir)/scripts/runDomainTests --testdir $(srcdir)/tests --all
 
 check-domain-avset:
+	$(srcdir)/scripts/runDomainTests --testdir $(srcdir)/tests --l2avset
+
+check-domain-avset-err:
 	$(srcdir)/scripts/runDomainTests --testdir $(srcdir)/tests --show-errors --l2avset
 
 check-lc:

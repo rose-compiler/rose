@@ -47,7 +47,16 @@ namespace CodeThorn {
   }
 
   bool VariableIdMappingExtended::isDataMemberAccess(SgVarRefExp* varRefExp) {
-    return (varRefExp!=nullptr) && (isSgDotExp(varRefExp->get_parent())||isSgArrowExp(varRefExp->get_parent())) && (isSgBinaryOp(varRefExp->get_parent())->get_rhs_operand()==varRefExp);
+    if(varRefExp==nullptr) {
+      this->appendErrorReportLine(string("isDataMemberAccess::varRefExp == 0"));
+      return false;
+    }
+    if(SgNode* p=varRefExp->get_parent()) {
+      return (isSgDotExp(p)||isSgArrowExp(p)) && (isSgBinaryOp(p)->get_rhs_operand()==varRefExp);
+    } else {
+      appendErrorReportLine(SgNodeHelper::locationToString(varRefExp)+" varRefExp->get_parent() == 0 (isDataMemberAccess)");      
+      return false;
+    }
   }
 
   bool VariableIdMappingExtended::isGlobalOrLocalVariableAccess(SgVarRefExp* varRefExp) {
@@ -119,14 +128,25 @@ namespace CodeThorn {
         // report error, and record error
         numErrors++;
         SgVariableSymbol* varSym=v->get_symbol();
+	if(varSym==0) {
+	  appendErrorReportLine("Ast symbol check error#"+std::to_string(numErrors)+": VarRefExp:get_symbol() == 0."+SgNodeHelper::locationToString(varSym));
+	  continue;
+	}
 	stringstream ss;
         ss<<"Ast symbol check error #"<<numErrors<<": "<<accessName<<" with unregistered symbol:"<<varSym<<": "<<varSym->get_name();
         // print expression
         SgExpression* eroot=v;
-        while(SgExpression* p=isSgExpression(eroot->get_parent()))
+	ROSE_ASSERT(eroot);
+        while(SgExpression* p=isSgExpression(eroot->get_parent())) {
           eroot=p;
-        ss<<":"<<SgNodeHelper::sourceFilenameLineColumnToString(eroot)<<":"<<eroot->unparseToString();
+	}
+	ROSE_ASSERT(eroot);
+        ss<<":"<<SgNodeHelper::locationToString(eroot)<<":"<<eroot->unparseToString();
         SgInitializedName* initName=varSym->get_declaration();
+	if(initName==0) {
+	  appendErrorReportLine(ss.str()+" initName=varSym->get_declaration()==0");	  
+	  continue;
+	}
         SgVariableDeclaration* decl=isSgVariableDeclaration(initName->get_declaration());
         if(decl && isMemberVariableDeclaration(decl)) {
           if(SgClassDefinition* cdef=isSgClassDefinition(decl->get_parent())) {
@@ -1099,7 +1119,7 @@ namespace CodeThorn {
   void VariableIdMappingExtended::MemPoolTraversal::dumpClassTypes() {
     int i=0;
     for(auto t:classTypes) {
-      auto mList=VariableIdMappingExtended::memberVariableDeclarationsList(t);
+      auto mList=memberVariableDeclarationsList(t);
       std::cout<<i++<<": class Type (";
       if(mList.first)
         std::cout<<mList.second.size();

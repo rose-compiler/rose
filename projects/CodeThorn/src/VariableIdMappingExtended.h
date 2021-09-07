@@ -91,10 +91,10 @@ namespace CodeThorn {
     SgType* strippedType2(SgType* type);
     SgExprListExp* getAggregateInitExprListExp(SgVariableDeclaration* varDecl);
     static SgClassDeclaration* getClassDeclarationOfClassType(SgClassType* type);
-    static bool isUnion(SgClassType* type);
+    bool isUnion(SgClassType* type);
     static std::pair<bool,std::list<SgVariableDeclaration*> > memberVariableDeclarationsList(SgClassType* classType);
-    static bool isDataMemberAccess(SgVarRefExp* varRefExp);
-    static bool isGlobalOrLocalVariableAccess(SgVarRefExp* varRefExp);
+    bool isDataMemberAccess(SgVarRefExp* varRefExp);
+    bool isGlobalOrLocalVariableAccess(SgVarRefExp* varRefExp);
     void setAstSymbolCheckFlag(bool flag);
     bool getAstSymbolCheckFlag();
     
