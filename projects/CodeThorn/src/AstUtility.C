@@ -42,13 +42,15 @@ AstUtility::usedVariablesInGlobalVariableInitializers(SgProject* project, Variab
 
 CodeThorn::VariableIdSet 
 AstUtility::usedVariablesInsideFunctions(SgProject* project, VariableIdMapping* variableIdMapping) {
+  VariableIdMappingExtended* vimExtended=dynamic_cast<VariableIdMappingExtended*>(variableIdMapping);
+  ROSE_ASSERT(vimExtended);
   list<SgVarRefExp*> varRefExpList=SgNodeHelper::listOfUsedVarsInFunctions(project);
   //cout<<"DEBUG: varRefExpList-size:"<<varRefExpList.size()<<endl;
   CodeThorn::VariableIdSet setOfUsedVars;
   for(list<SgVarRefExp*>::iterator i=varRefExpList.begin();i!=varRefExpList.end();++i) {
     //cout<<"DEBUG: determining varid for variable "<<(*i)->unparseToString()<<endl;
     // this test properly excludes data member accesses, only global and local variables are detected
-    if(VariableIdMappingExtended::isGlobalOrLocalVariableAccess(*i)) {
+    if(vimExtended->isGlobalOrLocalVariableAccess(*i)) {
       VariableId id = variableIdMapping->variableId(*i);
       if(!id.isValid()) {
 	//cout<<" : invalid."<<endl;

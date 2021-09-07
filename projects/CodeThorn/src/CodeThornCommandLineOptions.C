@@ -169,7 +169,8 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ;
 
   experimentalOptions.add_options()
-    ("ast-symbol-check",po::value< bool >(&ctOpt.astSymbolCheckFlag)->default_value(true),"Allows to turn off the AST consistency symbol check (by default the check is enabled).")
+    ("ast-symbol-check",po::value< bool >(&ctOpt.astSymbolCheckFlag)->default_value(true),"Allows to make the tool exit immediately if the AST symbol check reports any error.")
+    ("vim-report-file",po::value< string >(&ctOpt.vimReportFileName),"Generates a report of variable id mapping (always includes ast symbol check results).")
     ("array-abstraction-index",po::value< int > (&ctOpt.arrayAbstractionIndex)->default_value(-1),"Set array abstraction index, starting at which an array summary is computed.")
     ("run-solver", po::value< bool >(&ctOpt.runSolver)->default_value(true),"If turned off all fix-point algorithms are skipped.")
     ("omp-ast", po::value< bool >(&ctOpt.ompAst)->default_value(false)->implicit_value(true),"Flag for using the OpenMP AST - useful when visualizing the ICFG.")

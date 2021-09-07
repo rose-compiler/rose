@@ -214,7 +214,8 @@ public:
 
   // consistency checking options
   bool astSymbolCheckFlag=false; // performed by VariableIdMapping
-
+  std::string vimReportFileName="vim-report.txt";
+  
   struct Info {
     bool printVariableIdMapping=false;
     bool printAstNodeStats=false;
