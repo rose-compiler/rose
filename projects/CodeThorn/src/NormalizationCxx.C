@@ -12,15 +12,26 @@
 
 namespace sb = SageBuilder;
 namespace si = SageInterface;
+namespace ct = CodeThorn;
 namespace adapt = boost::adaptors;
 
 namespace CodeThorn
 {
-  // internal use (does not exclude templates)
-  void normalizeCxx(SgNode* root);
-
 namespace
 {
+  struct CxxTransformStats
+  {
+    int cnt = 0;
+  };
+
+  std::ostream& operator<<(std::ostream& os, const CxxTransformStats& stat)
+  {
+    return os << stat.cnt;
+  }
+
+  // internal use
+  void normalizeCtorDtor(SgNode* root, CxxTransformStats& stats);
+
   constexpr bool ERROR_TOLERANT = true;
   constexpr bool EXTEND_DTOR_NORMALIZATION = false;
 
@@ -106,7 +117,7 @@ namespace
       virtual ~BaseTransform() = default;
       BaseTransform()          = default;
 
-      virtual void execute() = 0;
+      virtual void execute(CxxTransformStats& stat) = 0;
 
     private:
       BaseTransform(const BaseTransform&)            = delete;
@@ -120,18 +131,13 @@ namespace
   struct PolyTransform : BaseTransform
   {
       explicit
-      PolyTransform(const ConcreteTransform& concreteTf)
-      : tf(concreteTf)
-      {}
-
-      explicit
       PolyTransform(ConcreteTransform&& concreteTf)
       : tf(std::move(concreteTf))
       {}
 
-      void execute() ROSE_OVERRIDE
+      void execute(CxxTransformStats& stat) ROSE_OVERRIDE
       {
-        tf.execute();
+        tf.execute(stat);
       }
 
     private:
@@ -147,12 +153,6 @@ namespace
   /// Generic walue wrapper around polymorphic actions.
   struct AnyTransform
   {
-      // wrapping value ctors
-      template <class ConcreteTransform>
-      AnyTransform(const ConcreteTransform& a)
-      : tf(new PolyTransform<ConcreteTransform>(a))
-      {}
-
       template <class ConcreteTransform>
       AnyTransform(ConcreteTransform&& a)
       : tf(new PolyTransform<ConcreteTransform>(std::move(a)))
@@ -162,7 +162,7 @@ namespace
       AnyTransform& operator=(AnyTransform&& other) = default;
       ~AnyTransform()                               = default;
 
-      void execute() { tf->execute(); }
+      void execute(CxxTransformStats& stat) { tf->execute(stat); }
 
     private:
       std::unique_ptr<BaseTransform> tf;
@@ -640,7 +640,7 @@ namespace
                                               );
       }
 
-      void execute()
+      void execute(CxxTransformStats&)
       {
         ini = ini ? si::deepCopy(ini) : mkDefaultInitializer();
 
@@ -963,7 +963,7 @@ namespace
                                               );
       }
 
-      void execute()
+      void execute(CxxTransformStats&)
       {
         ini = ini ? si::deepCopy(ini) : mkDefaultInitializer();
 
@@ -1001,7 +1001,7 @@ namespace
         return sb::buildExprStatement(&call);
       }
 
-      void execute() { blk.append_statement(mkDtorCall()); }
+      void execute(CxxTransformStats&) { blk.append_statement(mkDtorCall()); }
 
     private:
       SgBasicBlock& blk;
@@ -1105,7 +1105,7 @@ namespace
       : blk(where), stmt(pos), var(what)
       {}
 
-      void execute()
+      void execute(CxxTransformStats&)
       {
         SgExpression& destructed = SG_DEREF( sb::buildVarRefExp(&var, nullptr) );
         SgStatement*  dtorcall   = sg::dispatch(DtorCallCreator(destructed), var.get_type());
@@ -1137,7 +1137,7 @@ namespace
       : ctorlst(n)
       {}
 
-      void execute()
+      void execute(CxxTransformStats&)
       {
         // \todo delete elements before removing them from the list
         ctorlst.get_ctors().clear();
@@ -1155,7 +1155,7 @@ namespace
       : ctor(nondefiningCtor)
       {}
 
-      void execute()
+      void execute(CxxTransformStats& stat)
       {
         // is it already done?
         if (ctor.get_definingDeclaration()) return;
@@ -1175,7 +1175,7 @@ namespace
         clsdef.prepend_member(&ctordef);
 
         // initialize members
-        normalizeCxx(&ctordef);
+        normalizeCtorDtor(&ctordef, stat);
       }
 
     private:
@@ -1189,7 +1189,7 @@ namespace
       : cls(clsdef)
       {}
 
-      void execute()
+      void execute(CxxTransformStats& stat)
       {
         logTrace() << "create dtor: " << nameCtorDtor(cls, false)
                    << " // " << SrcLoc(cls)
@@ -1198,7 +1198,7 @@ namespace
         SgMemberFunctionDeclaration& dtor = createCtorDtor(cls, false /* dtor */);
 
         // destruct member variables that have class type
-        normalizeCxx(&dtor);
+        normalizeCtorDtor(&dtor, stat);
       }
 
     private:
@@ -1245,7 +1245,7 @@ namespace
       {
         //~ logInfo() << "nontrivial: " << var->get_name() << " " << varty->get_mangled()
                   //~ << std::endl;
-        transf.emplace_back(VarDtorInserter(blk, pos, *var));
+        transf.emplace_back(VarDtorInserter{blk, pos, *var});
         logTrace() << "gen dtor-sequence for: " << typeid(n).name()
                    << " / " << var->get_name()
                    << std::endl;
@@ -1260,7 +1260,7 @@ namespace
       : pos(&stmt), blk(&block), limit(&outerLimit)
       {}
 
-      void execute()
+      void execute(CxxTransformStats& stat)
       {
         logTrace() << "create block dtor: " << typeid(blk).name()
                    << " to: " << typeid(limit).name()
@@ -1278,10 +1278,9 @@ namespace
           recordScopedDestructors(*curr, *blk, *pos, transf);
         }
 
+        stat.cnt += transf.size();
         for (AnyTransform& tf : transf)
-        {
-          tf.execute();
-        }
+          tf.execute(stat);
       }
 
     private:
@@ -1313,6 +1312,37 @@ namespace
            && isGenerateableCtor(n)
            );
   }
+
+
+  struct InitsplitGenerator
+  {
+      InitsplitGenerator(SgInitializedName& vardcl, SgConstructorInitializer& varini)
+      : var(vardcl), ini(varini)
+      {}
+
+      void execute(CxxTransformStats&)
+      {
+        logTrace() << "split object allocation and initialization"
+                   << std::endl;
+
+        // A a = A(); -> A a; a.A();
+        var.set_initializer(nullptr);
+
+        SgStatement&      decl  = sg::ancestor<SgStatement>(var);
+        SgScopeStatement& scope = sg::ancestor<SgScopeStatement>(var);
+
+        SgVarRefExp&      vref  = SG_DEREF(sb::buildVarRefExp(&var, &scope));
+        SgExpression&     expr  = SG_DEREF(sb::buildDotExp(&vref, &ini));
+        SgExprStatement&  stmt  = SG_DEREF(sb::buildExprStatement(&expr));
+
+        si::insertStatement(&decl, &stmt, false /* insert after */);
+      }
+
+    private:
+      SgInitializedName&        var;
+      SgConstructorInitializer& ini;
+  };
+
 
   //
   // memoized functors
@@ -1403,7 +1433,7 @@ namespace
     {
       SgInitializer* ini = getMemberInitializer(*var, lst);
 
-      cont.emplace_back(VarCtorInserter(blk, *var, ini));
+      cont.emplace_back(VarCtorInserter{blk, *var, ini});
     }
 
     // explicitly construct all direct non-virtual bases;
@@ -1415,7 +1445,7 @@ namespace
       {
         SgInitializer* ini = getBaseInitializer(*base, lst);
 
-        cont.emplace_back(BaseCtorInserter(blk, *base, ini));
+        cont.emplace_back(BaseCtorInserter{blk, *base, ini});
       }
       catch (const ConstructorInitializerListError& err)
       {
@@ -1446,7 +1476,7 @@ namespace
     // the initializer list is emptied.
     //   while it is not part of the ICFG, its nodes would be seen by
     //   the normalization.
-    cont.emplace_back(CtorInitListClearer(lst));
+    cont.emplace_back(CtorInitListClearer{lst});
   }
 
   void normalizeDtorDef(SgMemberFunctionDeclaration& fun, transformation_container& cont)
@@ -1469,7 +1499,7 @@ namespace
         //~ logInfo() << "nontrivial: " << var->get_name() << " " << varty->get_mangled()
                   //~ << std::endl;
 
-        cont.emplace_back(VarDtorInserter(blk, blk, *var));
+        cont.emplace_back(VarDtorInserter{blk, blk, *var});
       }
     }
 
@@ -1477,7 +1507,7 @@ namespace
     //   execute the transformations in reverse order
     for (SgBaseClass* base : adapt::reverse(getDirectNonVirtualBases(&cls)))
     {
-      cont.emplace_back(BaseDtorInserter(blk, *base));
+      cont.emplace_back(BaseDtorInserter{blk, *base});
     }
   }
 
@@ -1516,26 +1546,62 @@ namespace
     return SG_DEREF(si::getEnclosingScope(n));
   }
 
-  struct CxxTransformer : ExcludeTemplates
+  struct BaseTransformer : ExcludeTemplates
   {
-      typedef transformation_container    container;
-      typedef std::unordered_set<SgNode*> nodes;
+      using container = transformation_container;
+      using node_set  = std::unordered_set<SgNode*>;
 
-      CxxTransformer(container& transf, nodes& visited)
+      BaseTransformer(container& transf, node_set& visited)
       : cont(&transf), knownNodes(&visited)
       {}
 
-      CxxTransformer(CxxTransformer&&)                 = default;
-      CxxTransformer& operator=(CxxTransformer&&)      = default;
-      CxxTransformer(const CxxTransformer&)            = default;
-      CxxTransformer& operator=(const CxxTransformer&) = default;
+      BaseTransformer(BaseTransformer&&)                 = default;
+      BaseTransformer& operator=(BaseTransformer&&)      = default;
+      BaseTransformer(const BaseTransformer&)            = default;
+      BaseTransformer& operator=(const BaseTransformer&) = default;
 
-      // for recursive traversal
-      void descend(SgNode& n);
+      node_set& visitedNodes() { return *knownNodes; }
+
+      template <class Transformation>
+      void record(Transformation tf)
+      {
+        cont->emplace_back(std::move(tf));
+      }
 
       using ExcludeTemplates::handle;
 
-      void handle(SgNode& n) { descend(n); }
+    protected:
+      container*            cont       = nullptr;
+      node_set*             knownNodes = nullptr;
+
+    private:
+      BaseTransformer() = delete;
+  };
+
+
+  template <class SetT, class ElemT>
+  inline
+  bool alreadyProcessed(SetT& s, const ElemT& e)
+  {
+    return !s.insert(e).second;
+  }
+
+  template <class Transformer>
+  void descend(Transformer tf, SgNode& n)
+  {
+    if (alreadyProcessed(tf.visitedNodes(), &n))
+      return;
+
+    sg::traverseChildren(std::move(tf), n);
+  }
+
+
+  struct CxxCtorDtorTransformer : BaseTransformer
+  {
+      using BaseTransformer::BaseTransformer;
+      using BaseTransformer::handle;
+
+      void handle(SgNode& n);
 
       void handle(SgConstructorInitializer& n)
       {
@@ -1555,25 +1621,24 @@ namespace
         }
         else
         {
-          cont->emplace_back(ConstructorGenerator(*ctor));
+          record(ConstructorGenerator{*ctor});
         }
 
-        descend(n);
+        descend(*this, n);
       }
 
       void handle(SgMemberFunctionDeclaration& n)
       {
         if (n.get_specialFunctionModifier().isConstructor())
-        {
           normalizeCtorDef(n, *cont);
-        }
+
         // dtors are normalized when all destructors are inserted
         //~ else if (isDtor(n))
         //~ {
           //~ normalizeDtorDef(n, *cont);
         //~ }
 
-        descend(n);
+        descend(*this, n);
       }
 
       void handle(SgClassDefinition& n)
@@ -1594,61 +1659,49 @@ namespace
                       << std::endl;
           }
 
-          cont->emplace_back(DestructorGenerator(n));
+          record(DestructorGenerator{n});
         }
 
-        descend(n);
+        descend(*this, n);
       }
-
-    private:
-      CxxTransformer()                    = delete;
-
-      container*            cont          = nullptr;
-      nodes*                knownNodes    = nullptr;
   };
 
-  template <class SetT, class ElemT>
-  inline
-  bool alreadyProcessed(SetT& s, const ElemT& e)
+  void CxxCtorDtorTransformer::handle(SgNode& n)
   {
-    return !s.insert(e).second;
+    descend(*this, n);
   }
 
-  void CxxTransformer::descend(SgNode& n)
-  {
-    if (alreadyProcessed(*knownNodes, &n))
-      return;
-
-    *this = sg::traverseChildren(std::move(*this), n);
-  }
-
-
-  CxxTransformer::container
-  computeNormalizations(SgNode* root)
-  {
-    CxxTransformer::container transformations;
-    CxxTransformer::nodes     nodes;
-
-    sg::dispatch(CxxTransformer{transformations, nodes}, root);
-
-    return transformations;
-  }
 
   /// passes over scopes and control flow interrupting statements
   ///   => inserts destructor calls to into the AST
-  struct CxxObjectDestructionTransformer : ExcludeTemplates
+  struct CxxAllocInitsplitTransformer : BaseTransformer
   {
-      using container = CxxTransformer::container;
-      using nodes     = std::unordered_set<SgNode*>;
+    using BaseTransformer::BaseTransformer;
+    using BaseTransformer::handle;
 
-      CxxObjectDestructionTransformer(container& transf, nodes& visited)
-      : cont(&transf), knownNodes(&visited)
-      {}
+    void descend(SgNode& n);
 
-      CxxObjectDestructionTransformer(CxxObjectDestructionTransformer&&)                 = default;
-      CxxObjectDestructionTransformer& operator=(CxxObjectDestructionTransformer&&)      = default;
-      CxxObjectDestructionTransformer(const CxxObjectDestructionTransformer&)            = default;
-      CxxObjectDestructionTransformer& operator=(const CxxObjectDestructionTransformer&) = default;
+    void handle(SgNode& n) { descend(n); }
+
+    void handle(SgInitializedName& n)
+    {
+      if (SgConstructorInitializer* init = isSgConstructorInitializer(n.get_initializer()))
+        record(InitsplitGenerator{n, *init});
+    }
+  };
+
+  void CxxAllocInitsplitTransformer::descend(SgNode& n)
+  {
+    ::ct::descend(*this, n);
+  }
+
+
+  /// passes over scopes and control flow interrupting statements
+  ///   => inserts destructor calls to into the AST
+  struct CxxObjectDestructionTransformer : BaseTransformer
+  {
+      using BaseTransformer::BaseTransformer;
+      using BaseTransformer::handle;
 
       // canonical handling of loop statements
       void loop(SgScopeStatement& n);
@@ -1658,8 +1711,6 @@ namespace
 
       // recursive tree traversal
       void descend(SgNode& n);
-
-      using ExcludeTemplates::handle;
 
       void handle(SgNode& n)         { descend(n); }
 
@@ -1732,11 +1783,6 @@ namespace
       }
 
     private:
-      CxxObjectDestructionTransformer()   = delete;
-
-      container*            cont          = nullptr;
-      nodes*                knownNodes    = nullptr;
-
       SgBasicBlock*         currBlk       = nullptr;
       SgScopeStatement*     breakScope    = nullptr;
       SgScopeStatement*     continueScope = nullptr;
@@ -1750,15 +1796,12 @@ namespace
                                                          )
   {
     logTrace() << "pre-dtor call gen: " << typeid(n).name() << std::endl;
-    cont->emplace_back(ScopeDestructorGenerator{n, start, limit});
+    record(ScopeDestructorGenerator{n, start, limit});
   }
 
   void CxxObjectDestructionTransformer::descend(SgNode& n)
   {
-    if (alreadyProcessed(*knownNodes, &n))
-      return;
-
-    sg::traverseChildren(CxxObjectDestructionTransformer{*this}, n);
+    ::ct::descend(*this, n);
   }
 
   void CxxObjectDestructionTransformer::loop(SgScopeStatement& n)
@@ -1768,54 +1811,56 @@ namespace
     descend(n);
   }
 
-  CxxTransformer::container
-  computeObjectDestruction(SgNode* root)
+  template <class Transformer>
+  BaseTransformer::container
+  computeTransform(SgNode* root, CxxTransformStats& stats)
   {
-    CxxTransformer::container transformations;
-    CxxTransformer::nodes     nodes;
+    BaseTransformer::container transformations;
+    BaseTransformer::node_set  nodes;
 
-    sg::dispatch(CxxObjectDestructionTransformer{transformations, nodes}, root);
+    sg::dispatch(Transformer{transformations, nodes}, root);
 
+    stats.cnt += transformations.size();
     return transformations;
+  }
+
+
+  using CxxTransformGenerator = std::function<std::vector<AnyTransform>(SgNode*, CxxTransformStats&)>;
+
+  void normalize(CxxTransformGenerator gen, SgNode* root, CxxTransformStats& stats)
+  {
+    for (AnyTransform& tf : gen(root, stats))
+      tf.execute(stats);
+  }
+
+  template <class Transformer>
+  void normalize(SgNode* root, std::string msg)
+  {
+    CxxTransformStats stats;
+
+    normalize(computeTransform<Transformer>, root, stats);
+    logInfo() << "Completed " << stats << msg << std::endl;
+  }
+
+
+  // conveniance
+  void normalizeCtorDtor(SgNode* root, CxxTransformStats& stats)
+  {
+    normalize(computeTransform<CxxCtorDtorTransformer>, root, stats);
   }
 } // anonymous namespace
 
+
+
   // externally visible function
-  void normalizeCxx(Normalization& norm, SgNode* root)
+  void normalizeCxx1(Normalization& norm, SgNode* root)
   {
-    logInfo() << "Starting C++ normalization." << std::endl;
+    logInfo() << "Starting C++ normalization. (Phase 1/2)" << std::endl;
     logTrace() << "Not normalizing templates.." << std::endl;
-/*
-    RoseAst                   ast(root);
 
-    //~ ast.setWithTemplates(false);
-    for (auto i=ast.begin(); i!=ast.end(); ++i)
-    {
-      // only traverse nodes one and if they are not templated
-      if (Normalization::isTemplateNode(*i) || alreadyProcessed(knownNodes, *i))
-      {
-        i.skipChildrenOnForward();
-        continue;
-      }
+    normalize<CxxCtorDtorTransformer>(root, " terrific C++ ctor/dtor normalizations...");
 
-      // never seen and not a template
-    }
-*/
-    CxxTransformer::container transf = computeNormalizations(root);
-
-    logInfo() << "Found " << transf.size() << " terrific top-level transformations..." << std::endl;
-
-    for (AnyTransform& tf : transf)
-      tf.execute();
-
-    logInfo() << "Finished C++ normalization." << std::endl;
-  }
-
-  // for secondary transformations
-  void normalizeCxx(SgNode* root)
-  {
-    for (AnyTransform& tf : computeNormalizations(root))
-      tf.execute();
+    logInfo() << "Finished C++ normalization. (Phase 1/2)" << std::endl;
   }
 
   bool cppCreatesTemporaryObject(const SgExpression* n, bool withCplusplus)
@@ -1828,19 +1873,16 @@ namespace
     return isSgInitializedName(init->get_parent()) == nullptr;
   }
 
-  void normalizeObjectDestruction(Normalization& norm, SgNode* root)
+  void normalizeCxx2(Normalization& norm, SgNode* root)
   {
-    logInfo() << "Starting C++ object destruction normalization." << std::endl;
+    logInfo() << "Starting C++ normalization. (Phase 2/2)" << std::endl;
     logTrace() << "Not normalizing templates.." << std::endl;
 
-    CxxTransformer::container transf = computeObjectDestruction(root);
 
-    logInfo() << "Inserting " << transf.size() << " crucial object destructions..." << std::endl;
-
-    for (AnyTransform& tf : transf)
-      tf.execute();
+    normalize<CxxAllocInitsplitTransformer>   (root, " beneficial C++ alloc/init splits...");
+    normalize<CxxObjectDestructionTransformer>(root, " crucial C++ object destruction insertion...");
 
     clearMemoized();
-    logInfo() << "Finished C++ object destruction normalization." << std::endl;
+    logInfo() << "Finished C++ normalization. (Phase 2/2)" << std::endl;
   }
 } // CodeThorn namespace

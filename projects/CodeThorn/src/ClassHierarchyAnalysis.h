@@ -140,8 +140,9 @@ struct VirtualFunctionDesc : std::tuple<ClassKeyType, bool, OverrideContainer, O
 };
 
 /// holds data a class in a program
-struct ClassData
+class ClassData
 {
+  public:
     using VirtualFunctionContainer = std::vector<FunctionId>;
     using DataMemberContainer      = std::vector<VariableId>;
     using AncestorContainer        = std::vector<InheritanceDesc>;
@@ -211,42 +212,43 @@ struct ClassData
 };
 
 /// holds data about all classes in a program
-struct ClassAnalysis : private std::unordered_map<ClassKeyType, ClassData>
+class ClassAnalysis : std::unordered_map<ClassKeyType, ClassData>
 {
-  using base = std::unordered_map<ClassKeyType, ClassData>;
-  using base::base;
+  public:
+    using base = std::unordered_map<ClassKeyType, ClassData>;
+    using base::base;
 
-  using base::value_type;
-  using base::key_type;
-  using base::begin;
-  using base::end;
-  using base::iterator;
-  using base::const_iterator;
-  using base::operator[];
-  using base::at;
-  using base::emplace;
-  using base::find;
-  using base::size;
+    using base::value_type;
+    using base::key_type;
+    using base::begin;
+    using base::end;
+    using base::iterator;
+    using base::const_iterator;
+    using base::operator[];
+    using base::at;
+    using base::emplace;
+    using base::find;
+    using base::size;
 
-  /// adds an inheritance edge to both classes \ref descendant and \ref ancestorKey
-  /// \param descendant the entry for the descendant class
-  /// \param ancestorKey the key of the ancestor class
-  /// \param isVirtual indicates if the inheritance is virtual
-  /// \param isDirect indicates if \ref descendant and \ref ancestorKey are child and parent
-  void
-  addInheritanceEdge(value_type& descendant, ClassKeyType ancestorKey, bool isVirtual, bool isDirect);
+    /// adds an inheritance edge to both classes \ref descendant and \ref ancestorKey
+    /// \param descendant the entry for the descendant class
+    /// \param ancestorKey the key of the ancestor class
+    /// \param isVirtual indicates if the inheritance is virtual
+    /// \param isDirect indicates if \ref descendant and \ref ancestorKey are child and parent
+    void
+    addInheritanceEdge(value_type& descendant, ClassKeyType ancestorKey, bool isVirtual, bool isDirect);
 
-  /// adds an inheritance edge to both classes \ref descendant and \ref ancestorKey
-  ///   based on the information in \ref ancestor.
-  void
-  addInheritanceEdge(value_type& descendant, const InheritanceDesc& ancestor);
+    /// adds an inheritance edge to both classes \ref descendant and \ref ancestorKey
+    ///   based on the information in \ref ancestor.
+    void
+    addInheritanceEdge(value_type& descendant, const InheritanceDesc& ancestor);
 
-  /// returns true, iff \ref ancestorKey is a (direct or indirect) base class
-  /// of \ref descendantKey.
-  /// \details
-  ///   returns false when ancestorKey == descendantKey
-  bool
-  areBaseDerived(ClassKeyType ancestorKey, ClassKeyType descendantKey) const;
+    /// returns true, iff \ref ancestorKey is a (direct or indirect) base class
+    /// of \ref descendantKey.
+    /// \details
+    ///   returns false when ancestorKey == descendantKey
+    bool
+    areBaseDerived(ClassKeyType ancestorKey, ClassKeyType descendantKey) const;
 };
 
 
@@ -277,42 +279,44 @@ namespace CodeThorn
 {
 
 /// collects casts and program locations where they occur
-struct CastAnalysis : private std::unordered_map<CastDesc, std::vector<CastKeyType> >
+class CastAnalysis : std::unordered_map<CastDesc, std::vector<CastKeyType> >
 {
-  using base = std::unordered_map<CastDesc, std::vector<CastKeyType> >;
-  using base::base;
+  public:
+    using base = std::unordered_map<CastDesc, std::vector<CastKeyType> >;
+    using base::base;
 
-  using base::value_type;
-  using base::key_type;
-  using base::iterator;
-  using base::const_iterator;
-  using base::begin;
-  using base::end;
-  using base::operator[];
-  using base::at;
-  using base::find;
-  using base::emplace;
-  using base::size;
+    using base::value_type;
+    using base::key_type;
+    using base::iterator;
+    using base::const_iterator;
+    using base::begin;
+    using base::end;
+    using base::operator[];
+    using base::at;
+    using base::find;
+    using base::emplace;
+    using base::size;
 };
 
 
 /// stores the results of virtual function analysis by Id
-struct VirtualFunctionAnalysis : private std::unordered_map<FunctionId, VirtualFunctionDesc, FunctionIdHashFunction>
+class VirtualFunctionAnalysis : std::unordered_map<FunctionId, VirtualFunctionDesc, FunctionIdHashFunction>
 {
-  using base = std::unordered_map<FunctionId, VirtualFunctionDesc, FunctionIdHashFunction>;
-  using base::base;
+  public:
+    using base = std::unordered_map<FunctionId, VirtualFunctionDesc, FunctionIdHashFunction>;
+    using base::base;
 
-  using base::value_type;
-  using base::key_type;
-  using base::iterator;
-  using base::const_iterator;
-  using base::begin;
-  using base::end;
-  using base::operator[];
-  using base::at;
-  using base::find;
-  using base::emplace;
-  using base::size;
+    using base::value_type;
+    using base::key_type;
+    using base::iterator;
+    using base::const_iterator;
+    using base::begin;
+    using base::end;
+    using base::operator[];
+    using base::at;
+    using base::find;
+    using base::emplace;
+    using base::size;
 };
 
 

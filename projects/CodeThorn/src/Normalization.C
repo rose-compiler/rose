@@ -150,7 +150,7 @@ namespace CodeThorn {
     if (options.normalizeCplusplus) {
       // \todo reconsider when to run C++ normalization
       // expects basic blocks and lifted declaration statement
-      normalizeCxx(*this, root);
+      normalizeCxx1(*this, root);
     }
     printNormalizationPhase();
     if(options.normalizeLabels) {
@@ -205,7 +205,7 @@ namespace CodeThorn {
     printNormalizationPhase();
     if (options.normalizeCplusplus) {
       // pass runs after all temporary variables have been introduced
-      normalizeObjectDestruction(*this, root);
+      normalizeCxx2(*this, root);
     }
     printNormalizationPhase();
     // off by default
