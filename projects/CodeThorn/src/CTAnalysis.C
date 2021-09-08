@@ -652,9 +652,6 @@ void CodeThorn::CTAnalysis::runAnalysisPhase2Sub1(TimingCollector& tc) {
     //if(_ctOpt.status) cout<<"STATUS: intra-procedural analysis: entryLabels: "<<entryLabels.size()
     //			  <<" initial work list length: "<<estateWorkListCurrent->size()<<endl;
     // intra-procedural analysis initial states
-    //LabelSet entryLabels=getCFAnalyzer()->functionEntryLabels(*getFlow());
-    //getFlow()->setStartLabelSet(entryLabels);
-    //LabelSet startLabels=getFlow()->getStartLabelSet();
     ROSE_ASSERT(!getModeLTLDriven());
     eraseWorkList();
     LabelSet startLabels=getCFAnalyzer()->functionEntryLabels(*getFlow());
@@ -676,8 +673,6 @@ void CodeThorn::CTAnalysis::runAnalysisPhase2Sub1(TimingCollector& tc) {
       }
       EState initialEStateObj=createInitialEState(this->_root,slab);
       initialEStateObj.setLabel(slab);
-      //cout<<"DEBUG: initalEStateObj:"<<initialEStateObj.toString()<<endl;
-      //cout<<"DEBUG: create estate label:"<<slab.toString()<<endl;
       const EState* initialEState=processNewOrExisting(initialEStateObj);
       ROSE_ASSERT(initialEState);
       variableValueMonitor.init(initialEState);
@@ -1328,11 +1323,10 @@ void CodeThorn::CTAnalysis::initializeSolverWithInitialEState(SgProject* root) {
       SAWYER_MESG(logger[TRACE]) << "INIT: start state inter-procedural (extremal value): "<<initialEState->toString(getVariableIdMapping())<<endl;
       postInitializeSolver(); // empty in this class, only overridden by IOAnalyzer for ltldriven analysis
     } else {
-      // intra-procedural analysis initial states
-      //LabelSet entryLabels=getCFAnalyzer()->functionEntryLabels(*getFlow());
-      //getFlow()->setStartLabelSet(entryLabels);
-      //LabelSet startLabels=getFlow()->getStartLabelSet();
       ROSE_ASSERT(!getModeLTLDriven());
+
+      // deactivated initialization here, initialization is done in phase 2 for each function separately
+#if 0
       LabelSet startLabels=getCFAnalyzer()->functionEntryLabels(*getFlow());
       getFlow()->setStartLabelSet(startLabels);
       
@@ -1352,15 +1346,15 @@ void CodeThorn::CTAnalysis::initializeSolverWithInitialEState(SgProject* root) {
 	}
 	EState initialEStateObj=createInitialEState(root,slab);
 	initialEStateObj.setLabel(slab);
-	//cout<<"DEBUG: initalEStateObj:"<<initialEStateObj.toString()<<endl;
-	//cout<<"DEBUG: create estate label:"<<slab.toString()<<endl;
 	const EState* initialEState=processNewOrExisting(initialEStateObj);
 	ROSE_ASSERT(initialEState);
 	variableValueMonitor.init(initialEState);
 	addToWorkList(initialEState);
       }
-    }
+#endif
 
+    } // end of if
+    
     if(_ctOpt.rers.rersBinary) {
       //initialize the global variable arrays in the linked binary version of the RERS problem
       SAWYER_MESG(logger[DEBUG])<< "init of globals with arrays for "<< _ctOpt.threads << " threads. " << endl;
@@ -1917,7 +1911,7 @@ std::string CodeThorn::CTAnalysis::internalAnalysisReportToString() {
     uint32_t totalIntraFunctions=_statsIntraFinishedFunctions+_statsIntraUnfinishedFunctions;
     ss<<"Intra-procedural analysis"<<endl;
     ss<<"Number of finished functions  : "<<_statsIntraFinishedFunctions<<endl;
-    ss<<"Number of canceled functions: "<<_statsIntraUnfinishedFunctions<<" (max time: "<<_ctOpt.maxTime<<" seconds)"<<endl;
+    ss<<"Number of canceled functions  : "<<_statsIntraUnfinishedFunctions<<" (max time: "<<_ctOpt.maxTime<<" seconds)"<<endl;
     ss<<"Total number of functions     : "<<totalIntraFunctions<<endl;
   } else {
     ss<<"Inter-procedural analysis"<<endl;    
