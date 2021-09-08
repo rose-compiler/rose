@@ -99,11 +99,23 @@ void TimeMeasurement::resume() {
 } 
 
 TimeDuration TimeMeasurement::getTimeDuration() {
-  if(state==TIME_RUNNING) {
-    throw std::runtime_error("Time Measurement: error 3: : getTimeDuration: TimeMeasurement not stopped (state: RUNNING).");
+  //if(state==TIME_RUNNING) {
+  //throw std::runtime_error("Time Measurement: error 3: : getTimeDuration: TimeMeasurement not stopped (state: RUNNING).");
+    //}
+  switch(state) {
+  case TIME_RUNNING: {
+    stop();
+    TimeDuration td=TimeDuration((endCount.tv_sec-startCount.tv_sec)*1000000.0+(endCount.tv_usec-startCount.tv_usec));
+    resume();
+    return td;
   }
-  TimeDuration td=TimeDuration((endCount.tv_sec-startCount.tv_sec)*1000000.0+(endCount.tv_usec-startCount.tv_usec));
-  return td;
+  case TIME_STOPPED: {
+    TimeDuration td=TimeDuration((endCount.tv_sec-startCount.tv_sec)*1000000.0+(endCount.tv_usec-startCount.tv_usec));
+    return td;
+  }
+  default:
+    throw std::runtime_error("Time Measurement: error 5: : unknown state (not RUNNING, not STOPPED).");
+  }
 }
 
 TimeDuration TimeMeasurement::getTimeDurationAndKeepRunning() {

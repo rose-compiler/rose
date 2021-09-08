@@ -404,6 +404,10 @@ namespace CodeThorn {
     std::list<int>::iterator _inputSequenceIterator;
     size_t getEStateSetSize();
     size_t getTransitionGraphSize();
+
+    // returns an overview of computed statistics in readable format
+    std::string internalAnalysisReportToString();
+
   protected:
 
     // EStateWorkLists: Current and Next should point to One and Two (or swapped)
@@ -473,8 +477,11 @@ namespace CodeThorn {
     ExternalFunctionsContainerType externalFunctions;
 
     SgProject* _root=0; // AST root node, set by phase 1, also used in phase 2.
-  private:
+    uint32_t _statsIntraFinishedFunctions=0;
+    uint32_t _statsIntraUnfinishedFunctions=0;
 
+  private:
+    
     //std::unordered_map<int,const EState*> _summaryStateMap;
     //std::unordered_map< pair<int, CallString> ,const EState*, hash_pair> _summaryCSStateMap;
     typedef std::unordered_map <CallString ,const EState*> SummaryCSStateMap;
