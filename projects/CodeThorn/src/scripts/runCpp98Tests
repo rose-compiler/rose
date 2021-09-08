@@ -49,64 +49,28 @@ function runCxxTests {
             ./codethorn $CT_MODE_OPTIONS --interpreter-mode-file="${OUTPUT_FILE_OBSERVED}" -I $TESTDIR/include $benchmark > /dev/null
             CT_RESULT=$?
 
-            EXEFILE=${benchmarkname}.exe
-            $CXX -std=c++03 -Wall -Wextra -pedantic -I $TESTDIR/include $benchmark -o$EXEFILE
-            EXE_RESULT=$?
+            if [ $CT_RESULT == 0 ]; then
+              EXEFILE=${benchmarkname}.exe
+              $CXX -std=c++03 -Wall -Wextra -pedantic -I $TESTDIR/include $benchmark -o$EXEFILE
+              EXE_RESULT=$?
 
-            ./$EXEFILE -e > $OUTPUT_FILE_EXPECTED
-
-            DIFF=$(diff $OUTPUT_FILE_OBSERVED $OUTPUT_FILE_EXPECTED)
-            if [ "$DIFF" != "" ]
-            then
-                echo $COLORED_FAIL
-                ((numFail++))
-            else
-                echo $COLORED_PASS
-                ((numPass++))
-            fi
-            rm -f $EXEFILE $OUTPUT_FILE_OBSERVED OUTPUT_FILE_EXPECTED
-
-
-            #~ if [ $RESULT == 0 ]; then
-              #~ echo $COLORED_PASS
-              #~ ((numPass++))
-            #~ else
-              #~ echo $COLORED_FAIL
-              #~ ((numFail++))
-            #~ fi
-
-          #~ if [ ! $? -eq 0 ]
-          #~ then
-          #~ echo $COLORED_FAIL
-                #~ ((numFail++))
-            #~ else
-                #~ echo -n "$COLORED_PASS "
-: <<'EndOfComment'
-            EXEFILE=${benchmarkname}.exe
-            $CXX -std=c++03 -Wall -Wextra -pedantic -I $TESTDIR/include $benchmark -o$EXEFILE
-            RESULT=$?
-
-            if [ $RESULT == 0 ]; then
-              OUTPUT_FILE_OBSERVED="${CT_OUTPUT_FILE}.observed"
-              OUTPUT_FILE_EXPECTED="${CT_OUTPUT_FILE}.expected"
-              ./$EXEFILE > $OUTPUT_FILE_OBSERVED
               ./$EXEFILE -e > $OUTPUT_FILE_EXPECTED
 
-            #~ fi
               DIFF=$(diff $OUTPUT_FILE_OBSERVED $OUTPUT_FILE_EXPECTED)
               if [ "$DIFF" != "" ]
               then
-                  echo $COLORED_WARN
-                  ((numWarn++))
+                  echo $COLORED_FAIL
+                  ((numFail++))
               else
                   echo $COLORED_PASS
                   ((numPass++))
               fi
-              rm -f $EXEFILE $OUTPUT_FILE_OBSERVED OUTPUT_FILE_EXPECTED
             else
+              echo $COLORED_FAIL
               ((numFail++))
             fi
-EndOfComment
+
+            rm -f $EXEFILE $OUTPUT_FILE_OBSERVED $OUTPUT_FILE_EXPECTED
         done
     done
     printStats $numPass $numWarn $numWarnExpected $numFail $numFailExpected

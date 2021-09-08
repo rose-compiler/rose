@@ -144,7 +144,7 @@ CodeThorn::AbstractValue EState::determineUniqueIOValue() const {
       return varVal;
     }
     cerr<<"Error: determineUniqueIOValue:: could not determine constant value."<<endl;
-    exit(1);
+      exit(1);
   }
   if(io.op==InputOutput::STDOUT_CONST||io.op==InputOutput::STDERR_CONST) {
     value=io.val;

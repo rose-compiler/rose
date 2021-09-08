@@ -19,7 +19,7 @@ namespace
 {
   //~ constexpr bool EXTENSIVE_ASSERTION_CHECKING = true;
   constexpr bool EXTENSIVE_ASSERTION_CHECKING = false;
-  
+
   template <class P>
   inline
   std::string type_name(P* p)
@@ -47,7 +47,7 @@ namespace
   /// \tparam _Iterator1 an iterator of an ordered associative container
   /// \tparam _Iterator2 an iterator of an ordered associative container
   /// \tparam BinaryOperator a merge object that provides three operator()
-  ///         functions. 
+  ///         functions.
   ///         - void operator()(_Iterator1::value_type, unavailable_t);
   ///           called when an element is in sequence 1 but not in sequence 2.
   ///         - void operator()(unavailable_t, _Iterator2::value_type);
@@ -59,10 +59,10 @@ namespace
   //          and (_Iterator2::key_type, _Iterator1::key_type).
   template <class _Iterator1, class _Iterator2, class BinaryOperator, class Comparator>
   BinaryOperator
-  merge_keys( _Iterator1 aa1, _Iterator1 zz1, 
-              _Iterator2 aa2, _Iterator2 zz2, 
-              BinaryOperator binop, 
-              Comparator comp 
+  merge_keys( _Iterator1 aa1, _Iterator1 zz1,
+              _Iterator2 aa2, _Iterator2 zz2,
+              BinaryOperator binop,
+              Comparator comp
             )
   {
     static constexpr unavailable_t unavail;
@@ -120,8 +120,9 @@ namespace
 
 
   template <class Map>
-  struct LatticeCombiner
+  class LatticeCombiner
   {
+    public:
       typedef typename Map::value_type entry_t;
 
       explicit
@@ -161,8 +162,9 @@ namespace
 
   /// functor that determines whether an element exists in some map.
   template <class M>
-  struct CtxLatticeNotIn
+  class CtxLatticeNotIn
   {
+    public:
       typedef typename M::value_type entry_t;
 
       explicit
@@ -175,7 +177,7 @@ namespace
       bool operator()(const entry_t& lhslattice)
       {
         typename M::const_iterator rhspos = rhslattice.find(lhslattice.first);
-        
+
         return rhspos == rhslattice.end()
                || !lhslattice.second->approximatedBy(sg::deref(rhspos->second));
       }
@@ -210,8 +212,9 @@ namespace
     std::for_each(aa, zz, LatticeDeleter());
   }
 
-  struct CtxLatticeStreamer
+  class CtxLatticeStreamer
   {
+    public:
       CtxLatticeStreamer(std::ostream& stream, VariableIdMapping* vmap)
       : os(stream), vm(vmap)
       {}
@@ -234,8 +237,10 @@ namespace
 /// Each lattice element (aka call context) has a component lattice
 /// that stores the information of some specific analysis.
 template <class CallContext>
-struct CtxLattice : Lattice, private std::map<CallContext, Lattice*, typename CallContext::comparator>
+class CtxLattice : public Lattice,
+                   private std::map<CallContext, Lattice*, typename CallContext::comparator>
 {
+  public:
     typedef Lattice                                                         base;
     typedef CallContext                                                     context_t;
     typedef std::map<context_t, Lattice*, typename CallContext::comparator> context_map;
@@ -272,7 +277,7 @@ struct CtxLattice : Lattice, private std::map<CallContext, Lattice*, typename Ca
 
     bool isBot() const ROSE_OVERRIDE { return context_map::size() == 0; }
 /*
-    bool isBot() 
+    bool isBot()
     {
       const CtxLattice<context_t>& self = *this;
 
@@ -291,24 +296,24 @@ struct CtxLattice : Lattice, private std::map<CallContext, Lattice*, typename Ca
     void combine(Lattice& other) ROSE_OVERRIDE
     {
       const CtxLattice<context_t>& that = dynamic_cast<CtxLattice<context_t>& >(other);
-      
+
       //~ const size_t presize = size();
 
-      merge_keys( begin(), end(), 
-                  that.begin(), that.end(), 
-                  latticeCombiner(*this), 
+      merge_keys( begin(), end(),
+                  that.begin(), that.end(),
+                  latticeCombiner(*this),
                   context_map::key_comp()
                 );
 
       //~ const size_t postsize = size();
-      
-      //~ if (presize != 0 || postsize != presize) 
+
+      //~ if (presize != 0 || postsize != presize)
       //~ {
         //~ std::cerr << "pre/post = " << presize << '+' << that.size() << '=' << postsize << std::endl;
-        //~ std::cerr << "that: "; toStream(std::cerr, nullptr); 
+        //~ std::cerr << "that: "; toStream(std::cerr, nullptr);
         //~ std::cerr << std::endl;
-      //~ }  
-        
+      //~ }
+
       ROSE_ASSERT(this->size() >= that.size());
       ROSE_ASSERT(!EXTENSIVE_ASSERTION_CHECKING || other.approximatedBy(*this));
     }
@@ -326,43 +331,43 @@ struct CtxLattice : Lattice, private std::map<CallContext, Lattice*, typename Ca
       std::for_each(begin(), end(), CtxLatticeStreamer(os, vm));
       os << "}";
     }
-        
+
     bool callLosesPrecision(const_iterator pos) const
     {
       return equalPostfixB(pos, std::prev(pos)) || equalPostfixE(pos, std::next(pos));
     }
-    
-    Lattice* combineAll() const 
+
+    Lattice* combineAll() const
     {
       Lattice* res = componentFactory().create();
-      
+
       for (const value_type& elem : *this)
         res->combine(const_cast<Lattice&>(SG_DEREF(elem.second)));
-      
+
       ROSE_ASSERT(!isBot() || isBot());
       return res;
     }
 
   private:
-    bool equalPostfix(const_iterator lhs, const_iterator rhs) const 
+    bool equalPostfix(const_iterator lhs, const_iterator rhs) const
     {
       return lhs->first.mergedAfterCall(rhs->first);
     }
-    
-    bool equalPostfixB(const_iterator lhs, const_iterator rhs) const 
+
+    bool equalPostfixB(const_iterator lhs, const_iterator rhs) const
     {
       if (lhs == begin()) return false;
-      
+
       return equalPostfix(lhs, rhs);
     }
-    
+
     bool equalPostfixE(const_iterator lhs, const_iterator rhs) const
     {
       if (rhs == end()) return false;
-      
+
       return equalPostfix(lhs, rhs);
-    }  
-  
+    }
+
     PropertyStateFactory& compPropertyFactory;
 
     // CtxLattice(const CtxLattice&) = delete;
@@ -373,19 +378,19 @@ template <class OutputStream, class CallContext>
 void dbgPrintCtx(OutputStream& logger, Labeler& labeler, CtxLattice<CallContext>& lat)
 {
   typedef CallContext call_string_t;
-  
+
   for (auto el : lat)
   {
     call_string_t ctx = el.first;
-    
+
     for (auto lbl : ctx)
     {
-      std::string code = lbl != Label() ? SG_DEREF(labeler.getNode(lbl)).unparseToString() 
+      std::string code = lbl != Label() ? SG_DEREF(labeler.getNode(lbl)).unparseToString()
                                         : std::string();
-      
+
       logger << lbl << " : " << code << std::endl;
     }
-    
+
     logger << "***\n";
   }
 }

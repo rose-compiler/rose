@@ -741,9 +741,11 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
         expr=SgNodeHelper::getInitializerExpressionOfVariableDeclaration(varDecl);
       }
       if(SgReturnStmt* returnStmt=isSgReturnStmt(*i)) {
-        SAWYER_MESG(logger[TRACE])<<"Found SgReturnStmt: "<<(*i)->unparseToString()<<endl;
-        stmt=returnStmt;
-        expr=returnStmt->get_expression();
+        if (!cppReturnValueOptimization(returnStmt, options.normalizeCplusplus)) {
+          SAWYER_MESG(logger[TRACE])<<"Found SgReturnStmt: "<<(*i)->unparseToString()<<endl;
+          stmt=returnStmt;
+          expr=returnStmt->get_expression();
+        }
         i.skipChildrenOnForward();
       }
       if(stmt&&expr) {

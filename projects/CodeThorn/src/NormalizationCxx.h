@@ -29,6 +29,9 @@ namespace CodeThorn
 
   /// tests if this is constructor creates a temporary
   bool cppCreatesTemporaryObject(const SgExpression* n, bool withCplusplus);
+
+  /// tests if \ref n returns a copy
+  bool cppReturnValueOptimization(const SgReturnStmt* n, bool withCplusplus);
 }
 
 #endif /* NORMALIZATION_CXX_H */

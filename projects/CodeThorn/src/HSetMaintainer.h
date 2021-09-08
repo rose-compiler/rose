@@ -8,30 +8,30 @@
 
 //#define HSET_MAINTAINER_DEBUG_MODE
 
-/*! 
+/*!
   * \author Markus Schordan
   * \date 2012.
  */
 template<typename KeyType,typename HashFun, typename EqualToPred>
-class HSetMaintainer 
+class HSetMaintainer
   : public std::unordered_set<KeyType*,HashFun,EqualToPred>
   {
 public:
   typedef std::pair<bool,const KeyType*> ProcessingResult;
 
-  /*! 
+  /*!
    * \author Marc Jasper
    * \date 2016.
    */
   HSetMaintainer() { _keepStatesDuringDeconstruction = false; }
 
-  /*! 
+  /*!
    * \author Marc Jasper
    * \date 2016.
    */
   HSetMaintainer(bool keepStates) { _keepStatesDuringDeconstruction = keepStates; }
 
-  /*! 
+  /*!
    * \author Marc Jasper
    * \date 2016.
    */
@@ -39,12 +39,12 @@ public:
     if (!_keepStatesDuringDeconstruction){
       typename HSetMaintainer::iterator i;
       for (i=this->begin(); i!=this->end(); ++i) {
-	delete (*i);
-      } 
+  delete (*i);
+      }
     }
   }
 
-  bool exists(KeyType& s) { 
+  bool exists(KeyType& s) {
     return determine(s)!=0;
   }
 
@@ -68,7 +68,7 @@ public:
 
   typename HSetMaintainer<KeyType,HashFun,EqualToPred>::iterator i;
 
-  KeyType* determine(KeyType& s) { 
+  KeyType* determine(KeyType& s) {
     KeyType* ret=0;
     typename HSetMaintainer<KeyType,HashFun,EqualToPred>::iterator i;
 #pragma omp critical(HASHSET)
@@ -83,7 +83,7 @@ public:
     return ret;
   }
 
-  const KeyType* determine(const KeyType& s) { 
+  const KeyType* determine(const KeyType& s) {
     const KeyType* ret=0;
     typename HSetMaintainer<KeyType,HashFun,EqualToPred>::iterator i;
 #pragma omp critical(HASHSET)
@@ -139,13 +139,13 @@ public:
       *keyPtr=key;
       res=this->insert(keyPtr);
       if (!res.second) {
-	// this case should never occur, condition "iter!=this->end()" above would have been satisfied and 
-	// this else branch would have therefore been ignored
-	std::cerr << "ERROR: HSetMaintainer: Element was not inserted even though it could not be found in the set." << std::endl;
-	ROSE_ASSERT(0);
-	delete keyPtr;
-	keyPtr = NULL; 
-      } 
+  // this case should never occur, condition "iter!=this->end()" above would have been satisfied and
+  // this else branch would have therefore been ignored
+  std::cerr << "ERROR: HSetMaintainer: Element was not inserted even though it could not be found in the set." << std::endl;
+  ROSE_ASSERT(0);
+  delete keyPtr;
+  keyPtr = NULL;
+      }
     }
 #ifdef HSET_MAINTAINER_DEBUG_MODE
     std::pair<typename HSetMaintainer::iterator, bool> res1;
