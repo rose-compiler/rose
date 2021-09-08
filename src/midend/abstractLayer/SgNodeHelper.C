@@ -1788,6 +1788,7 @@ namespace
 
     // intermediate (pass through) nodes
     void handle(SgDotExp& n)                 { res = eval(n.get_rhs_operand()); }
+    void handle(SgArrowExp& n)               { res = eval(n.get_rhs_operand()); }
     void handle(SgAssignOp& n)               { res = eval(n.get_rhs_operand()); }
     void handle(SgCastExp& n)                { res = eval(n.get_operand()); }
     void handle(SgAssignInitializer& n)      { res = eval(n.get_operand()); }
