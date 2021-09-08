@@ -711,12 +711,19 @@ namespace CodeThorn {
           AnalysisReporting::generateVerificationReports(ctOpt,analyzer,reportDetectedErrorLines); // also generates verification call graph
           AnalysisReporting::generateAnalysisLocationReports(ctOpt,analyzer);
           AnalysisReporting::generateAnalyzedFunctionsAndFilesReports(ctOpt,analyzer);
+	  AnalysisReporting::generateInternalAnalysisReport(ctOpt,analyzer);
         } else {
           if(ctOpt.status) cout<<"STATUS: no analysis reports generated (no analysis selected)."<<endl;
         }
       }
     }
 
+    void generateInternalAnalysisReport(CodeThornOptions& ctOpt,CTAnalysis* analyzer) {
+      if(ctOpt.generateReports) {
+	
+      }
+    }
+    
     void optionallyGenerateCallGraphDotFile(CodeThornOptions& ctOpt,CTAnalysis* analyzer) {
       std::string fileName=ctOpt.visualization.callGraphFileName;
       if(fileName.size()>0) {
@@ -766,6 +773,7 @@ namespace CodeThorn {
       variableIdMapping->setArrayAbstractionIndex(ctOpt.arrayAbstractionIndex);
       if(ctOpt.vimReportFileName.size()>0)
 	variableIdMapping->setErrorReportFileName(ctOpt.reportFilePath+"/"+ctOpt.vimReportFileName);
+      variableIdMapping->setStatusFlag(ctOpt.status);
       variableIdMapping->computeVariableSymbolMapping(project);
       return variableIdMapping;
     }

@@ -683,6 +683,12 @@ void CodeThorn::CTAnalysis::runAnalysisPhase2Sub1(TimingCollector& tc) {
       variableValueMonitor.init(initialEState);
       addToWorkList(initialEState);
       this->runSolver();
+      if(this->isIncompleteSTGReady()) {
+	_statsIntraUnfinishedFunctions++;
+      } else {
+	_statsIntraFinishedFunctions++;
+      }
+
     }
   }
 }
@@ -1800,7 +1806,7 @@ long CodeThorn::CTAnalysis::analysisRunTimeInSeconds() {
   long result;
 #pragma omp critical(TIMER)
   {
-    result = (long) (_analysisTimer.getTimeDurationAndKeepRunning().seconds());
+    result = (long) (_analysisTimer.getTimeDuration().seconds());
   }
   return result;
 }
@@ -1903,4 +1909,19 @@ VariableId CodeThorn::CTAnalysis::globalVarIdByName(std::string varName) {
 
 CodeThorn::EStateTransferFunctions* CodeThorn::CTAnalysis::getEStateTransferFunctions() {
   return _estateTransferFunctions;
+}
+
+std::string CodeThorn::CTAnalysis::internalAnalysisReportToString() {
+  stringstream ss;
+  if(_ctOpt.getIntraProceduralFlag()) {
+    uint32_t totalIntraFunctions=_statsIntraFinishedFunctions+_statsIntraUnfinishedFunctions;
+    ss<<"Intra-procedural analysis"<<endl;
+    ss<<"Number of finished functions  : "<<_statsIntraFinishedFunctions<<endl;
+    ss<<"Number of canceled functions: "<<_statsIntraUnfinishedFunctions<<" (max time: "<<_ctOpt.maxTime<<" seconds)"<<endl;
+    ss<<"Total number of functions     : "<<totalIntraFunctions<<endl;
+  } else {
+    ss<<"Inter-procedural analysis"<<endl;    
+    ss<<"Call string length: "<<_ctOpt.callStringLength<<endl;
+  }
+  return ss.str();
 }
