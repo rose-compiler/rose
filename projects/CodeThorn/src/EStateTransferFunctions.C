@@ -575,7 +575,7 @@ namespace CodeThorn {
   void EStateTransferFunctions::transferFunctionEntryPrintStatus(Edge edge, const EState* estate, std::string fileName, std::string functionName) {
     if(_analyzer->getOptionsRef().status) {
       if(_analyzer->getOptionsRef().precisionLevel==1) {
-	size_t numFunctions=_analyzer->getFlow()->getStartLabelSet().size();
+	size_t numFunctions=_analyzer->getTotalNumberOfFunctions();
 	_analyzer->printStatusMessage("Analyzing function #"+std::to_string(functionAnalyzedNr)+" of "+std::to_string(numFunctions)+": ");
 	functionAnalyzedNr++;
       } else if(_analyzer->getOptionsRef().precisionLevel>=2) {
