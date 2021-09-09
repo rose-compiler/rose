@@ -955,7 +955,6 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // New methods for constructing values, so we don't have to write so many SValue::promote calls in the RiscOperators
     // implementations.
-protected:
     SValuePtr svalueExpr(const ExprPtr &expr, const InsnSet &defs=InsnSet()) {
         SValuePtr newval = SValue::promote(protoval()->undefined_(expr->nBits()));
         newval->set_expression(expr);
@@ -963,6 +962,7 @@ protected:
         return newval;
     }
 
+protected:
     SValuePtr svalueUndefined(size_t nbits) {
         return SValue::promote(undefined_(nbits));
     }

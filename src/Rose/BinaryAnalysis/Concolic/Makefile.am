@@ -9,12 +9,14 @@ librose_partial_la_SOURCES =			\
     ConcreteExecutor.C				\
     Database.C					\
     ExecutionEvent.C				\
+    ExecutionLocation.C				\
     ExecutionManager.C				\
     InputVariables.C				\
     LinuxExecutor.C				\
     LinuxExitStatus.C				\
     LinuxI386.C					\
     LinuxTraceExecutor.C			\
+    SharedMemory.C				\
     Specimen.C					\
     SystemCall.C				\
     TestCase.C					\
