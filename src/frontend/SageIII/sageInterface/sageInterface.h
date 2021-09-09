@@ -2355,7 +2355,7 @@ ROSE_DLL_API void removeJumpsToNextStatement(SgNode*);
 ROSE_DLL_API void removeUnusedLabels(SgNode* top, bool keepChild =false);
 
 //! Find unused labels which are not targets of any goto statements
-ROSE_DLL_API SgLabelStatementPtrSet findUnusedLabels (SgNode* top);
+ROSE_DLL_API std::set<SgLabelStatement*> findUnusedLabels (SgNode* top);
 
 //! Remove consecutive labels
 ROSE_DLL_API void removeConsecutiveLabels(SgNode* top);
