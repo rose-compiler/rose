@@ -11282,7 +11282,7 @@ void SageInterface::myRemoveStatement(SgStatement* stmt) {
 
 
 #ifndef USE_ROSE
-SgLabelStatementPtrSet SageInterface::findUnusedLabels (SgNode* top)
+std::set<SgLabelStatement*> SageInterface::findUnusedLabels (SgNode* top)
 {
   class FindUsedAndAllLabelsVisitor: public AstSimpleProcessing {
     SgLabelStatementPtrSet& used;
@@ -11330,7 +11330,7 @@ void SageInterface::removeUnusedLabels(SgNode* top, bool keepChild/* =false */) 
     if (keepChild)
     {
         SgStatement* child= l_stmt->get_statement();
-        l_stmt->set_parent(NULL);
+//        l_stmt->set_parent(NULL);
         l_stmt->set_statement(NULL);
         replaceStatement (l_stmt, child);
     }
