@@ -96,7 +96,8 @@ public:
   bool programStatsOnly=false;
   bool programStats=false;
   std::string programStatsFileName;
-
+  std::string internalAnalysisReportFileName="internal-analysis-report.txt";
+  
   bool inStateStringLiterals=false;
   bool stdFunctions=false;
   bool ignoreFunctionPointers=false;

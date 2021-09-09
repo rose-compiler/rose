@@ -138,7 +138,8 @@ namespace CodeThorn {
     std::map<SgType*,std::vector<VariableId> > classMembers;
     
     void setErrorReportFileName(std::string name);
-
+    void setStatusFlag(bool flag);
+    
   private:
     typedef std::list<std::pair<SgStatement*,SgVarRefExp*>> BrokenExprStmtList;
     
@@ -168,6 +169,7 @@ namespace CodeThorn {
     std::string errorReportFileName;
     void appendErrorReportLine(std::string s);
     std::list<std::string> errorReport;
+    bool _status=false;
   };
 }
 

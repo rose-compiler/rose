@@ -422,7 +422,7 @@ namespace CodeThorn {
 
     if(getAstSymbolCheckFlag()) {
       if(symbolCheckOk) {
-	cout<<"INFO: Ast symbol check passed."<<endl;
+	if(_status) cout<<"STATUS: Ast symbol check passed."<<endl;
       } else {
 	cerr<<"Error: Ast symbol check failed (see file "<<errorReportFileName<<")"<<endl;
         exit(1);
@@ -618,9 +618,9 @@ namespace CodeThorn {
     }
     if(errorReportFileName.size()>0) {
       if(!CppStdUtilities::writeFile(errorReportFileName, ss.str())) {
-	cerr<<"Error: could not generate ast check report file:"<<errorReportFileName<<endl;
+	cerr<<"Error: could not generate variable-id-mapping report file: "<<errorReportFileName<<endl;
       } else {
-	cout<<"Generated variable-id-mapping report in file: "<<errorReportFileName<<endl;
+	if(_status) cout<<"STATUS: generated variable-id-mapping report file: "<<errorReportFileName<<endl;
       }
     }
   }
@@ -1142,6 +1142,9 @@ namespace CodeThorn {
       ss<<p.first->unparseToString()<<": "<<AstTerm::astTermWithNullValuesToString(p.first)<<": "<<p.second<<endl;
     }
     return ss.str();
+  }
+  void VariableIdMappingExtended::setStatusFlag(bool flag) {
+    _status=flag;
   }
 
 }
