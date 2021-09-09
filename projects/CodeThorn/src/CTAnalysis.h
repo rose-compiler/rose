@@ -408,6 +408,9 @@ namespace CodeThorn {
     // returns an overview of computed statistics in readable format
     std::string internalAnalysisReportToString();
 
+    uint32_t getTotalNumberOfFunctions();
+    void setTotalNumberOfFunctions(uint32_t num);
+    
   protected:
 
     // EStateWorkLists: Current and Next should point to One and Two (or swapped)
@@ -479,7 +482,8 @@ namespace CodeThorn {
     SgProject* _root=0; // AST root node, set by phase 1, also used in phase 2.
     uint32_t _statsIntraFinishedFunctions=0;
     uint32_t _statsIntraUnfinishedFunctions=0;
-
+    uint32_t _totalNumberOfFunctions=0; // for status reporting only
+    
   private:
     
     //std::unordered_map<int,const EState*> _summaryStateMap;

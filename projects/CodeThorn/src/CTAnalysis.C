@@ -645,9 +645,9 @@ void CodeThorn::CTAnalysis::runAnalysisPhase2Sub1(TimingCollector& tc) {
       }
     }
   } else {
-    // intra-procedural analysis
-    // for intra-procedural analysis extract all start states from work list and run in a loop
+    // intra-procedural analysis, each function is analyzed separately
     LabelSet entryLabels=getCFAnalyzer()->functionEntryLabels(*getFlow());
+    setTotalNumberOfFunctions(entryLabels.size());
     ROSE_ASSERT(estateWorkListCurrent);
     //if(_ctOpt.status) cout<<"STATUS: intra-procedural analysis: entryLabels: "<<entryLabels.size()
     //			  <<" initial work list length: "<<estateWorkListCurrent->size()<<endl;
@@ -657,7 +657,7 @@ void CodeThorn::CTAnalysis::runAnalysisPhase2Sub1(TimingCollector& tc) {
     LabelSet startLabels=getCFAnalyzer()->functionEntryLabels(*getFlow());
       
     size_t numStartLabels=startLabels.size();
-    printStatusMessage("STATUS: intra-procedural analysis with "+std::to_string(numStartLabels)+" start functions.",true);
+    printStatusMessage("STATUS: intra-procedural analysis with "+std::to_string(getTotalNumberOfFunctions())+" functions.",true);
     long int fCnt=1;
     for(auto slab : startLabels) {
       getFlow()->setStartLabel(slab);
@@ -1912,10 +1912,18 @@ std::string CodeThorn::CTAnalysis::internalAnalysisReportToString() {
     ss<<"Intra-procedural analysis"<<endl;
     ss<<"Number of finished functions  : "<<_statsIntraFinishedFunctions<<endl;
     ss<<"Number of canceled functions  : "<<_statsIntraUnfinishedFunctions<<" (max time: "<<_ctOpt.maxTime<<" seconds)"<<endl;
-    ss<<"Total number of functions     : "<<totalIntraFunctions<<endl;
+    ss<<"Total number of functions     : "<<totalIntraFunctions<<" ("<<getTotalNumberOfFunctions()<<")"<<endl;
   } else {
     ss<<"Inter-procedural analysis"<<endl;    
     ss<<"Call string length: "<<_ctOpt.callStringLength<<endl;
   }
   return ss.str();
+}
+
+uint32_t CodeThorn::CTAnalysis::getTotalNumberOfFunctions() {
+  return _totalNumberOfFunctions;
+}
+
+void CodeThorn::CTAnalysis::setTotalNumberOfFunctions(uint32_t num) {
+  _totalNumberOfFunctions=num;
 }
