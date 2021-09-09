@@ -11282,41 +11282,60 @@ void SageInterface::myRemoveStatement(SgStatement* stmt) {
 
 
 #ifndef USE_ROSE
-// Remove all unused labels in a section of code.
-void SageInterface::removeUnusedLabels(SgNode* top) {
+SgLabelStatementPtrSet SageInterface::findUnusedLabels (SgNode* top)
+{
+  class FindUsedAndAllLabelsVisitor: public AstSimpleProcessing {
+    SgLabelStatementPtrSet& used;
+    SgLabelStatementPtrSet& all;
 
-class FindUsedAndAllLabelsVisitor: public AstSimpleProcessing {
-  SgLabelStatementPtrSet& used;
-  SgLabelStatementPtrSet& all;
+    public:
+    FindUsedAndAllLabelsVisitor(SgLabelStatementPtrSet& used,
+        SgLabelStatementPtrSet& all):
+      used(used), all(all) {}
 
-  public:
-  FindUsedAndAllLabelsVisitor(SgLabelStatementPtrSet& used,
-                              SgLabelStatementPtrSet& all):
-    used(used), all(all) {}
-
-  virtual void visit(SgNode* n) {
-    if (isSgGotoStatement(n)) {
-      used.insert(isSgGotoStatement(n)->get_label());
+    virtual void visit(SgNode* n) {
+      if (isSgGotoStatement(n)) {
+        used.insert(isSgGotoStatement(n)->get_label());
+      }
+      if (isSgLabelStatement(n)) {
+        all.insert(isSgLabelStatement(n));
+      }
     }
-    if (isSgLabelStatement(n)) {
-      all.insert(isSgLabelStatement(n));
-    }
-  }
-};
+  };
 
   SgLabelStatementPtrSet used;
   SgLabelStatementPtrSet unused;
   FindUsedAndAllLabelsVisitor(used, unused).traverse(top, preorder);
+
   for (SgLabelStatementPtrSet::iterator i = used.begin();
-       i != used.end(); ++i) {
+      i != used.end(); ++i) {
     assert (unused.find(*i) != unused.end());
     // std::cout << "Keeping used label " << (*i)->get_label().str() << std::endl;
     unused.erase(*i);
   }
+  
+  return unused;
+}
+
+// Remove all unused labels in a section of code.
+void SageInterface::removeUnusedLabels(SgNode* top, bool keepChild/* =false */) {
+
+  SgLabelStatementPtrSet unused = findUnusedLabels(top);
+
   for (SgLabelStatementPtrSet::iterator i = unused.begin();
-       i != unused.end(); ++i) {
+      i != unused.end(); ++i) {
+
+    SgLabelStatement* l_stmt = *i;
     // std::cout << "Removing unused label " << (*i)->get_label().str() << std::endl;
-    myRemoveStatement(*i);
+    if (keepChild)
+    {
+        SgStatement* child= l_stmt->get_statement();
+        l_stmt->set_parent(NULL);
+        l_stmt->set_statement(NULL);
+        replaceStatement (l_stmt, child);
+    }
+    else
+      myRemoveStatement(*i);
   }
 }
 #endif
