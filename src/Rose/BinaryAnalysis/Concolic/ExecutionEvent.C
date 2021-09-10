@@ -335,12 +335,15 @@ ExecutionEvent::bytes(const std::vector<uint8_t> &v) {
 
 SymbolicExpr::Ptr
 ExecutionEvent::bytesAsSymbolic() const {
-    uint64_t concreteValue = 0;
-    const size_t nBytes = bytes_.size();
-    ASSERT_require(nBytes <= sizeof concreteValue);     // we can fix this if it's a problem
-    for (size_t i = 0; i < nBytes; ++i)
-        concreteValue |= (uint64_t)bytes_[i] << (8*i);
-    return SymbolicExpr::makeIntegerConstant(8 * nBytes, concreteValue);
+    if (const size_t nBytes = bytes_.size()) {
+        uint64_t concreteValue = 0;
+        ASSERT_require(nBytes <= sizeof concreteValue); // we can fix this if it's a problem
+        for (size_t i = 0; i < nBytes; ++i)
+            concreteValue |= (uint64_t)bytes_[i] << (8*i);
+        return SymbolicExpr::makeIntegerConstant(8 * nBytes, concreteValue);
+    } else {
+        return SymbolicExpr::Ptr();
+    }
 }
 
 std::vector<uint64_t>

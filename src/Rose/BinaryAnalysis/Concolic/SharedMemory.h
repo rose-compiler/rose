@@ -75,7 +75,9 @@ public:
      *
      *  If a read operation needs to return a special value, then this is the value returned.
      *
-     *  During execution event playback, this is the result read from memory, which is always a concrete value. */
+     *  During the playback phase, is the concrete value (as a symbolic expression) to be substituted as the result of the
+     *  shared memory read. However, if the read was originally treated as non-shared (implying also that there is no input
+     *  variable) then this data member is a null pointer. */
     SymbolicExpr::Ptr valueRead;
 };
 
@@ -122,8 +124,29 @@ public:
      *
      * @{ */
     virtual void handlePreSharedMemory(SharedMemoryContext&) = 0;
-    virtual void handlePostSharedMemory(SharedMemoryContext&) {}
+    virtual void handlePostSharedMemory(const SharedMemoryContext&) {}
     /** @} */
+
+    /** Treat a shared memory read as normal memory.
+     *
+     *  This cancels any special value returned by the shared memory read. The context @ref SharedMemoryContext::valueRead
+     *  "valueRead" member is set to null and the input variable is discarded and cleared from the shared memory read event.
+     *  This can only be called from the @ref handlePreSharedMemory function. */
+    void normalRead(SharedMemoryContext&) const;
+
+    /** Do not treat this read as test case input.
+     *
+     *  Calling this method marks this memory read as not being a configurable input for future test cases. However, it is still
+     *  possible to treat this read as shared memory returning a value that does not follow normal memory semantics. */
+    void notAnInput(SharedMemoryContext&) const;
+
+    /** Input variable for future test cases.
+     *
+     *  Returns the input variable used to adjust future test cases. This is probably the variable you want to constrain in
+     *  various ways according to the semantics of the shared memory.  Returns null if this read is not being treated as adjustable
+     *  input in future test cases (see @ref notAnInput). */
+    SymbolicExprPtr inputVariable(const SharedMemoryContext&) const;
+
 
     virtual bool operator()(bool handled, SharedMemoryContext&) final;
 };
