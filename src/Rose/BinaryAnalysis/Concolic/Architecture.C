@@ -273,12 +273,26 @@ Architecture::playEvent(const ExecutionEvent::Ptr &event) {
         case ExecutionEvent::Action::OS_SHM_READ: {
             // This is only the start of a shared memory read. Additional following events for the same instruction will
             // describe the effects of the read.
-            SymbolicExpr::Ptr variable = event->inputVariable();
-            ASSERT_not_null(variable);
-            SymbolicExpr::Ptr value = event->bytesAsSymbolic();
-            ASSERT_not_null(value);
-            variableValues_.insert(std::make_pair(variable, value));
-            SAWYER_MESG(debug) <<"  shared memory read " <<*variable <<" = " <<*value <<"\n";
+            SAWYER_MESG(debug) <<"  shared memory read: ";
+
+            // The shared memory read will lack a value if it's being treated as a non-shared memory read with normal memory
+            // semantics.  This can happen if the user has registered this address as a shared memory read, but then cancels
+            // the special read properties (which must necessarily also cancel the input variable).  We cant simply remove this
+            // event from the database because the user-defined callback might need to be invoked during playback in order to
+            // initialize its state even if it's treating the memory as non-shared.
+            if (SymbolicExpr::Ptr value = event->bytesAsSymbolic()) {
+                if (SymbolicExpr::Ptr variable = event->inputVariable()) {
+                    // Shared memory read is treated as a test case input
+                    variableValues_.insert(std::make_pair(variable, value));
+                    SAWYER_MESG(debug) <<*variable <<" = " <<*value <<"\n";
+                } else {
+                    // Shared memory read behaves specially, but is not a test case input
+                    SAWYER_MESG(debug) <<"concrete = " <<*value <<" (not test case input)\n";
+                }
+            } else {
+                // Shared memory read is being treated as normal memory, but we must still invoke callbacks.
+                SAWYER_MESG(debug) <<" treated as normal memory\n";
+            }
 
             // Invoke the shared memory read callbacks in playback mode so they can initialize their states.
             SharedMemoryCallbacks callbacks = sharedMemory().getOrDefault(event->memoryLocation().least());

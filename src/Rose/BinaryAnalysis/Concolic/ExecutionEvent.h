@@ -357,7 +357,9 @@ public:
     /** Property: Bytes returned as a symbolic value.
      *
      *  The return value is a symbolic expression of type integer, whose width is eight times the number of bytes
-     *  stored for the event. The bytes are assumed to be little endian. */
+     *  stored for the event. The bytes are assumed to be little endian.
+     *
+     *  If there are no bytes, then a null pointer is returned. */
     SymbolicExpr::Ptr bytesAsSymbolic() const;
 
     /** Property: Words for action.

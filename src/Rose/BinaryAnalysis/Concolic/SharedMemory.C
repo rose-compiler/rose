@@ -26,7 +26,6 @@ SharedMemoryContext::SharedMemoryContext(const Architecture::Ptr &architecture, 
     ASSERT_not_null(architecture);
     ASSERT_not_null(sharedMemoryEvent);
     ASSERT_require(sharedMemoryEvent->actionType() == ExecutionEvent::Action::OS_SHM_READ);
-    ASSERT_not_null(valueRead);
 }
 
 SharedMemoryContext::SharedMemoryContext(const Architecture::Ptr &architecture, const Emulation::RiscOperators::Ptr &ops,
@@ -64,11 +63,33 @@ SharedMemoryCallback::hello(const std::string &myName, const SharedMemoryContext
             <<" at instruction " <<StringUtility::addrToString(ctx.ip)
             <<", address " <<StringUtility::addrToString(ctx.memoryVa)
             <<" for " <<StringUtility::plural(ctx.nBytes, "bytes") <<"\n";
-        if (ConcolicPhase::REPLAY == ctx.phase) {
+        if (mlog[DEBUG] && ConcolicPhase::REPLAY == ctx.phase) {
             ASSERT_not_null(ctx.sharedMemoryEvent);
-            SAWYER_MESG(mlog[DEBUG]) <<"  value = " <<*ctx.sharedMemoryEvent->bytesAsSymbolic() <<"\n";
+            if (SymbolicExpr::Ptr value = ctx.sharedMemoryEvent->bytesAsSymbolic()) {
+                SAWYER_MESG(mlog[DEBUG]) <<"  value = " <<*value <<"\n";
+            } else {
+                SAWYER_MESG(mlog[DEBUG]) <<"  no concrete value (treated as non-shared memory)\n";
+            }
         }
     }
+}
+
+void
+SharedMemoryCallback::normalRead(SharedMemoryContext &ctx) const {
+    mlog[DEBUG] <<"    canceled: this read will be treated as non-shared memory\n";
+    ctx.valueRead = SymbolicExpr::Ptr();
+    ctx.sharedMemoryEvent->inputVariable(SymbolicExpr::Ptr());
+}
+
+void
+SharedMemoryCallback::notAnInput(SharedMemoryContext &ctx) const {
+    mlog[DEBUG] <<"    this shared memory read will not be treated as a test case input\n";
+    ctx.sharedMemoryEvent->inputVariable(SymbolicExpr::Ptr());
+}
+
+SymbolicExpr::Ptr
+SharedMemoryCallback::inputVariable(const SharedMemoryContext &ctx) const {
+    return ctx.sharedMemoryEvent->inputVariable();
 }
 
 bool
