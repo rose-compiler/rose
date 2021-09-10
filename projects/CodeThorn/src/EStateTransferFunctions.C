@@ -1877,10 +1877,9 @@ namespace CodeThorn {
     } else if(SgNodeHelper::Pattern::matchAssertExpr(nextNodeToAnalyze)) {
       // handle assert(0)
       tfCode=TransferFunctionCode::FailedAssert;
-    } else if(edge.isType(EDGE_CALL) && SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze)) {
+    } else if(edge.isType(EDGE_CALL)) {
       tfCode=TransferFunctionCode::FunctionCall;
-    } else if(edge.isType(EDGE_EXTERNAL) && SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze)) {
-      // \todo the && condition excludes constructor calls
+    } else if(edge.isType(EDGE_EXTERNAL)) {
       if(ReadWriteListener* listener=getReadWriteListener()) {
 #pragma omp critical(VIOLATIONRECORDING)
 	listener->functionCallExternal(edge,estate);

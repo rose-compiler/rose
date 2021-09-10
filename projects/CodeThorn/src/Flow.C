@@ -386,10 +386,10 @@ pair<Flow::iterator, bool> Flow::insert(Edge e) {
     return pair<Flow::iterator, bool>(previousEdge, false);
   } else {
     Flow::iterator iter = Flow::iterator(_sawyerFlowGraph.insertEdgeWithVertices(e.source(), e.target(), edgeData));
-    if ((e.source().getId() == 4124) && (e.target().getId() == 4125))
-    {
-      std::cerr << "PP: edge " << e.toString() << std::endl;
-    }
+    //~ if ((e.source().getId() == 4124) && (e.target().getId() == 4125))
+    //~ {
+      //~ std::cerr << "PP: edge " << e.toString() << std::endl;
+    //~ }
     return pair<Flow::iterator, bool>(iter, true);
   }
 #else
