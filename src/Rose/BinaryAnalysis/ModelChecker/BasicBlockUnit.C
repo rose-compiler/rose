@@ -162,7 +162,7 @@ BasicBlockUnit::execute(const Settings::Ptr &settings, const SemanticCallbacks::
             SgAsmInstruction *insn = bblock_->instructions()[i];
             SAWYER_MESG(mlog[DEBUG]) <<"    executing " <<insn->toString() <<"\n";
 
-            if (Tag::Ptr tag = executeInstruction(settings, insn, cpu)) {
+            if (Tag::Ptr tag = executeInstruction(settings, insn, cpu, i)) {
                 if (i+1 < bblock_->nInstructions())
                     ops->currentState(BS::State::Ptr()); // force a semantic failure since we didn't finish the block
                 tags.push_back(tag);

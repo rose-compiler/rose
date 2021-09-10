@@ -149,7 +149,8 @@ public:
      *  semantic state.
      *
      *  Thread safety: This method is NOT thread safe. */
-    TagPtr executeInstruction(const SettingsPtr&, SgAsmInstruction*, const InstructionSemantics2::BaseSemantics::DispatcherPtr&);
+    TagPtr executeInstruction(const SettingsPtr&, SgAsmInstruction*, const InstructionSemantics2::BaseSemantics::DispatcherPtr&,
+                              size_t nodeStep);
 };
 
 } // namespace

@@ -351,6 +351,13 @@ struct IP_cps: P {
     }
 };
 
+// Data synchronization barrier
+struct IP_dsb: P {
+    void p(D d, Ops ops, I insn, A args, V enabled) {
+        assert_args(insn, args, 0);
+    }
+};
+
 // Exclusive OR
 struct IP_eor: P {
     void p(D d, Ops ops, I insn, A args, V enabled) {
@@ -2936,6 +2943,7 @@ DispatcherAarch32::initializeInsnDispatchTable() {
     iprocSet(ARM_INS_CMN,      new Aarch32::IP_cmn);
     iprocSet(ARM_INS_CMP,      new Aarch32::IP_cmp);
     iprocSet(ARM_INS_CPS,      new Aarch32::IP_cps);
+    iprocSet(ARM_INS_DSB,      new Aarch32::IP_dsb);
     iprocSet(ARM_INS_EOR,      new Aarch32::IP_eor);
     iprocSet(ARM_INS_HVC,      new Aarch32::IP_hvc);
     iprocSet(ARM_INS_LDC,      new Aarch32::IP_ldc);

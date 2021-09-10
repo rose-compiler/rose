@@ -143,11 +143,10 @@ namespace
 
 
   inline
-  SgAdaPackageSpecDecl& declOf(const SgAdaUnitRefExp& n)
+  SgDeclarationStatement& declOf(const SgAdaUnitRefExp& n)
   {
-    return SG_DEREF(isSgAdaPackageSpecDecl(n.get_decl()));
+    return SG_DEREF(n.get_decl());
   }
-
 
   inline
   SgName nameOf(const SgSymbol& sy)
@@ -159,12 +158,6 @@ namespace
   SgName nameOf(const SgVarRefExp& n)
   {
     return nameOf(symOf(n));
-  }
-
-  inline
-  SgName nameOf(const SgAdaUnitRefExp& n)
-  {
-    return declOf(n).get_name();
   }
 
   inline
@@ -185,6 +178,25 @@ namespace
     return nameOf(declOf(n));
   }
 
+  SgName unitRefName(const SgDeclarationStatement& n)
+  {
+    if (const SgAdaPackageSpecDecl* pkgdcl = isSgAdaPackageSpecDecl(&n))
+      return pkgdcl->get_name();
+
+    if (const SgAdaGenericInstanceDecl* instdcl = isSgAdaGenericInstanceDecl(&n))
+      return instdcl->get_name();
+
+    if (const SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(&n))
+      return unitRefName(SG_DEREF(gendcl->get_declaration()));
+
+    ROSE_ABORT();
+  }
+
+  inline
+  SgName nameOf(const SgAdaUnitRefExp& n)
+  {
+    return unitRefName(declOf(n));
+  }
 
 
 /*
@@ -426,11 +438,16 @@ namespace
 
                                 return fileInfo.get_filenameString() == mainFile;
                               };
+    auto notDeclaredInMainFile = [&declaredInMainFile](const SgDeclarationStatement* dcl)
+                              {
+                                return !declaredInMainFile(dcl);
+                              };
 
     SgDeclarationStatementPtrList::iterator zz    = lst.end();
     SgDeclarationStatementPtrList::iterator first = std::find_if(lst.begin(), zz, declaredInMainFile);
+    SgDeclarationStatementPtrList::iterator limit = std::find_if(first, zz, notDeclaredInMainFile);
 
-    return std::make_pair(first, zz);
+    return std::make_pair(first, limit);
   }
 
   struct ImportedUnitResult : std::tuple<std::string, const SgDeclarationStatement*, const SgAdaRenamingDecl*>
@@ -493,6 +510,8 @@ namespace
     return importedUnit(lst.back(), n);
   }
 
+  const SgScopeStatement*
+  unitDefinition(const SgDeclarationStatement& n);
 
   struct UnitDefinition : sg::DispatchHandler<const SgScopeStatement*>
   {
@@ -511,6 +530,11 @@ namespace
         res = n.get_definition();
       }
 
+      void handle(const SgAdaGenericDecl& n)
+      {
+        res = unitDefinition(SG_DEREF(n.get_declaration()));
+      }
+
       void handle(const SgImportStatement&)
       {
         // should not happen with a full Ada implemention
@@ -524,7 +548,6 @@ namespace
   {
     return sg::dispatch(UnitDefinition{}, &n);
   }
-
 
   struct UseClauseSyntaxResult : std::tuple<std::string, std::string, const SgDeclarationStatement*>
   {
@@ -1009,6 +1032,20 @@ namespace
       prn(STMT_SEP);
     }
 
+    void handle(SgAdaVariantFieldDecl& n)
+    {
+      const bool isNullDecl = n.get_variables().size() == 0;
+
+      if (isNullDecl)
+      {
+        prn("NULL");
+        prn(STMT_SEP);
+        return;
+      }
+
+      handle(static_cast<SgVariableDeclaration&>(n));
+    }
+
     void handle(SgFunctionDefinition& n)
     {
       ScopeUpdateGuard scopeGuard{unparser, info, n};
@@ -1434,7 +1471,7 @@ namespace
         const bool explicitNullrec = si::ada::explicitNullRecord(*def);
 
         prn(" is");
-        if (!explicitNullrec) parentRecord_opt(*def);
+        parentRecord_opt(*def);
         modifiers(n);
         if (explicitNullrec) prn(" null");
         prn(" record");

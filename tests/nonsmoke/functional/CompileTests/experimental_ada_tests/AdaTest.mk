@@ -24,6 +24,7 @@ ADA_TRANSLATOR_PASSING_TESTS :=        \
   delay_relative.adb                   \
   derived_record.ads                   \
   empty_package.ads                    \
+  empty_private.ads                    \
   enum_colors.ads                      \
   exit_statement.adb                   \
   fib.adb                              \
@@ -43,8 +44,10 @@ ADA_TRANSLATOR_PASSING_TESTS :=        \
   loop_statement.adb                   \
   minimal.adb                          \
   named.ads                            \
+  named_block.adb                      \
   ordinary_type_declaration.ads        \
   operator.adb                         \
+  ordinary_type_declaration_range_constraint.ads    \
   overload.ads                         \
   overload.adb                         \
   package_with_body.ads                \
@@ -52,24 +55,24 @@ ADA_TRANSLATOR_PASSING_TESTS :=        \
   procedure_body_stub.ads              \
   procedure_declaration.adb            \
   procedure_declaration.ads            \
+  ranges.adb                           \
   recursive_call.adb                   \
   selected_component.ads               \
   sender.ads                           \
   short_circuit.adb                    \
   short_circuit_v2.adb                 \
-  simpleada-io.ads                     \
+  signed_integer_type_definition.ads   \
   simpleada.ads                        \
-  simple_hello_world.adb               \
-  simple_hello_world_with_use.adb      \
   standard_subtypes.ads                \
+  switches.ads                         \
   unit_1.adb                           \
   unit_3.ads                           \
   variable_declaration.ads             \
   while_loop_statement.adb
 
 ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
+  async_transfer_select.adb            \
   case_function.adb                    \
-  constrained_array_definition.ads     \
   defining_character_literal.adb       \
   defining_enumeration_literal.adb     \
   defining_operator_symbol.ads         \
@@ -83,21 +86,27 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   package_pragma.ads                   \
   parent.ads                           \
   parent-child.ads                     \
+  parenthesis_matters.adb              \
   pragmas.adb                          \
   private_extension_declaration.ads    \
   private_type_definition.ads          \
   procedure_call.adb                   \
   procedure_pragma.adb                 \
   raise_statement.adb                  \
+  simpleada-io.ads                     \
   simple_array_expressions.adb         \
   some_modes.ads                       \
   subtypes.ads                         \
   tagged_definition.ads                \
   type_conversion.adb                  \
-  unconstrained_array_definition.ads   \
+  default_function_argument.adb        \
+  qualified_expression.adb             \
+  type_in_local_pkg.adb                \
+  very_large_value.adb                 \
   week_string_literal.ads
 
 ADA_TRANSLATOR_FAILING_TESTS :=        \
+  access_variable.adb                  \
   allocators.adb                       \
   accept_statement.adb                 \
   accept_statement_task_decl.adb       \
@@ -107,13 +116,15 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   array_expressions.adb                \
   array_pointer_type.ads               \
   asm_machine_code.adb                 \
-  async_transfer_select.adb            \
   based_numbers.ads                    \
   choice_parameter_specification.adb   \
   complex.ads                          \
-  default_function_argument.adb        \
+  constrained_array_definition.ads     \
+  discriminant.adb                     \
+  discriminant_constraint.ads          \
+  discriminated_record.adb             \
+  discriminant_specification.ads       \
   dynamic_array.adb                    \
-  empty_private.ads                    \
   entry_call.adb                       \
   entry_declaration.ads                \
   enumeration_with_text_io.adb         \
@@ -122,6 +133,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   explicit_deref.adb                   \
   floating_point_definition.ads        \
   goto_loop_v2.adb                     \
+  hardwarestore.adb                    \
   hello_world.adb                      \
   inherited_primitive_operation.adb    \
   io.ads                               \
@@ -131,18 +143,14 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   modular_type_definition.ads          \
   multidimensional_array.adb           \
   multidimensional_array.ads           \
-  named_block.adb                      \
   nested_package.ads                   \
   nullptr.adb                          \
   opaque.ads                           \
-  ordinary_type_declaration_range_constraint.ads    \
   package_renaming_declaration.ads     \
   package_with_body.adb                \
-  parenthesis_matters.adb              \ 
   pkgrename.ads                        \
+  private_access_type.adb              \
   procedure_renaming.adb               \
-  qualified_expression.adb             \
-  ranges.adb                           \
   real_typedecl.ads                    \
   representation_clause.ads            \
   representation_clause_2.ads          \
@@ -152,8 +160,9 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   simple_select_accept.adb             \
   simple_select_accept_guarded.adb     \
   simple_use_type.ads                  \
-  signed_integer_type_definition.ads   \
+  simple_hello_world.adb               \
   simple_hello_world_with_renamed.adb  \
+  simple_hello_world_with_use.adb      \
   std_ascii_user.adb                   \
   sub_derived_types.ads                \
   task_type_declaration.ads            \
@@ -163,18 +172,12 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   task_with_body.ads                   \
   test.ads                             \
   test_unit.ads                        \
-  type_in_local_pkg.adb                \
-  usegenericinstance.adb               \ 
+  usegenericinstance.adb               \
+  unconstrained_array_definition.ads   \
+  unknown_discriminant.ads             \
   uppercase.adb
 
-ADA_TRANSLATOR_PENDING_TESTS :=        \
-  access_variable.adb                  \
-  discriminant.adb                                  \
-  discriminant_constraint.ads                       \
-  discriminant_specification.ads                    \
-  switches.ads                         \
-  unknown_discriminant.ads                          \
-  hardwarestore.adb                    
+ADA_TRANSLATOR_PENDING_TESTS :=        
 
 # defines tests that are fully supported by ROSE
 ROSE_PASSING_ADA_TESTS :=                           \

@@ -171,6 +171,23 @@ namespace
     return pos->second;
   }
 
+  std::string nameOfUnitRef(const SgDeclarationStatement* n);
+
+  struct NameOfUnitRef : sg::DispatchHandler<std::string>
+  {
+    void handle(const SgNode& n)                   { SG_UNEXPECTED_NODE(n); }
+    void handle(const SgAdaPackageSpecDecl& n)     { res = n.get_name(); }
+    void handle(const SgAdaGenericInstanceDecl& n) { res = n.get_name(); }
+    void handle(const SgFunctionDeclaration& n)    { res = n.get_name(); }
+
+    void handle(const SgAdaGenericDecl& n)         { res = nameOfUnitRef(n.get_declaration()); }
+  };
+
+  std::string nameOfUnitRef(const SgDeclarationStatement* n)
+  {
+    return sg::dispatch(NameOfUnitRef{}, n);
+  };
+
   struct AdaExprUnparser
   {
     static constexpr bool SUPPRESS_SCOPE_QUAL = false; // no scope qual on selectors
@@ -437,7 +454,7 @@ namespace
     void handle(SgAdaUnitRefExp& n)
     {
       // really needed?
-      prn(nameOf(n));
+      prn(nameOfUnitRef(n.get_decl()));
     }
 
     void handle(SgNewExp& n)
@@ -448,6 +465,18 @@ namespace
       type(n.get_specified_type());
 
       if (init) { prn("'"); expr(init); }
+    }
+
+    // handled here, b/c language independent support converts large values
+    //   into __builtin functions.
+    void handle(SgLongDoubleVal& n)
+    {
+      std::string val = n.get_valueString();
+
+      if (val.size() == 0)
+        val = boost::lexical_cast<std::string>(n.get_value());
+
+      prn(val);
     }
 
     void expr(SgExpression* exp, bool requiresScopeQual = true);

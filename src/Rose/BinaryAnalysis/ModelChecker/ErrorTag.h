@@ -40,6 +40,7 @@ public:
      *  Thread safety: This constructor is thread safe.
      *
      * @{ */
+    static Ptr instance(size_t nodeStep, const std::string &name, const std::string &mesg, SgAsmInstruction*);
     static Ptr instance(size_t nodeStep, const std::string &name, const std::string &mesg, SgAsmInstruction*,
                         uint64_t);
     static Ptr instance(size_t nodeStep, const std::string &name, const std::string &mesg, SgAsmInstruction*,
