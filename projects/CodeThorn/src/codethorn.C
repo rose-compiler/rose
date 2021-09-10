@@ -78,8 +78,6 @@ using namespace CodeThornLib;
 #include "ltlthorn-lib/Solver12.h"
 
 
-const std::string versionString="1.13.16"; 
-
 void configureRersSpecialization() {
 #ifdef RERS_SPECIALIZATION
   // only included in hybrid RERS analyzers.
@@ -169,7 +167,7 @@ int main( int argc, char * argv[] ) {
     CodeThornOptions ctOpt;
     LTLOptions ltlOpt; // to be moved into separate tool
     ParProOptions parProOpt; // options only available in parprothorn
-    parseCommandLine(argc, argv, logger,versionString,ctOpt,ltlOpt,parProOpt);
+    parseCommandLine(argc, argv, logger,CodeThorn::CodeThornLib::getCodeThornLibraryVersionNumber(),ctOpt,ltlOpt,parProOpt);
     mfacilities.control(ctOpt.logLevel); SAWYER_MESG(logger[TRACE]) << "Log level is " << ctOpt.logLevel << endl;
     ctOpt.configurePrecisionOption();
  

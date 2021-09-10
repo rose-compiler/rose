@@ -22,6 +22,14 @@ namespace CodeThorn {
   void check(std::string checkIdentifier, bool checkResult, bool check=true);
   std::string readableruntime(double timeInMilliSeconds);
   long getPhysicalMemorySize();
+
+  // obtains CodeThorn library version number and checks with function checkVersionNumber
+  bool checkCodeThornLibraryVersionNumber(const std::string &need);
+  // obtains ROSE version number from ROSE_PACKAGE_VERSION and checks with function checkVersionNumber
+  bool checkRoseVersionNumber(const std::string &need);
+    // returns true if need<=have; supported format: num(.num)*
+  bool checkVersionNumber(const std::string &need, const std::string &have);
+
 } // end of namespace CodeThorn
 
 #endif
