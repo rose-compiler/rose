@@ -161,3 +161,26 @@ long CodeThorn::getPhysicalMemorySize() {
   return physicalMemoryUsedUnix;
 }
 
+bool CodeThorn::checkRoseVersionNumber(const std::string &need) {
+  string have=string(ROSE_PACKAGE_VERSION);
+  return CodeThorn::checkVersionNumber(need,have);
+}
+
+bool CodeThorn::checkCodeThornLibraryVersionNumber(const std::string &need) {
+  string have = CodeThorn::CodeThornLib::getCodeThornLibraryVersionNumber();
+  return CodeThorn::checkVersionNumber(need,have);
+}
+
+bool CodeThorn::checkVersionNumber(const std::string &need, const std::string &have) {
+  std::vector<std::string> needParts = Rose::StringUtility::split('.', need);
+  std::vector<std::string> haveParts = Rose::StringUtility::split('.', have);
+  for (size_t i=0; i < needParts.size() && i < haveParts.size(); ++i) {
+    int needPartInt=std::stoi(needParts[i]);
+    int havePartInt=std::stoi(haveParts[i]);
+    if (needPartInt != havePartInt)
+      return needPartInt < havePartInt;
+  }
+  
+  // E.g., need = "1.2" and have = "1.2.x", or vice versa
+  return true;
+} 

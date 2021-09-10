@@ -70,6 +70,7 @@ namespace CodeThorn {
     std::string programStatsToString(ProgramInfo* progInfo1, ProgramInfo* progInfo2, VariableIdMappingExtended* vim);
     // generates file 'program-statistics-report.txt' in ctOpt.reportFilePath
     void generateProgramStats(CodeThornOptions& ctOpt, ProgramInfo* progInfo1, ProgramInfo* progInfo2, VariableIdMappingExtended* vim);
+    std::string getCodeThornLibraryVersionNumber();
 
   } // end of namespace CodeThornLib
 

@@ -92,6 +92,8 @@ using namespace Sawyer::Message;
 
 using namespace Sawyer::Message;
 
+static std::string CodeThornLibraryVersion="1.13.18";
+
 // handler for generating backtrace
 void codethornBackTraceHandler(int sig) {
   void *array[10];
@@ -888,6 +890,11 @@ namespace CodeThorn {
         if(ctOpt.status) cout<<"Generated line-column CSV file "<<fileName<<endl;
       }
     }
+
+    string getCodeThornLibraryVersionNumber() {
+      return CodeThornLibraryVersion;
+    }
+
   } // end of namespace CodeThornLib
 
 } // end of namespace CodeThorn
