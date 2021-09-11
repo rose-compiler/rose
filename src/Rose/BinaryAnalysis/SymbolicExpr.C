@@ -1161,6 +1161,8 @@ Interior::compareStructure(const Ptr &other_) {
 bool
 Interior::isEquivalentTo(const Ptr &other_) {
     bool retval = false;
+    if (!other_)
+        return false;
     InteriorPtr other = other_->isInteriorNode();
     if (this == getRawPointer(other)) {
         retval = true;
