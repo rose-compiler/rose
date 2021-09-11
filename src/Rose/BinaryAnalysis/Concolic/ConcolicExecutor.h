@@ -4,7 +4,6 @@
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 
-#include <Rose/BinaryAnalysis/Concolic/InputVariables.h>
 #include <Rose/BinaryAnalysis/Concolic/LinuxI386.h>
 #include <Rose/BinaryAnalysis/Debugger.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h>
@@ -71,21 +70,19 @@ private:
     TestCasePtr testCase_;                              // test case whose instructions are being processed
     const Partitioner2::Partitioner &partitioner_;      // ROSE disassembly info about the specimen
     ArchitecturePtr process_;                           // subordinate process, concrete state
-    InputVariables &inputVariables_;                    // where did symbolic variables come from?
     bool hadSystemCall_ = false;                        // true if we need to call process_->systemCall, cleared each insn
     ExecutionEventPtr hadSharedMemoryAccess_;           // set when shared memory is read, cleared each instruction
 
 protected:
     /** Allocating constructor. */
     RiscOperators(const Settings&, const DatabasePtr&, const TestCasePtr&, const Partitioner2::Partitioner&,
-                  const ArchitecturePtr&, InputVariables&, const InstructionSemantics2::BaseSemantics::StatePtr&,
-                  const SmtSolverPtr&);
+                  const ArchitecturePtr&, const InstructionSemantics2::BaseSemantics::StatePtr&, const SmtSolverPtr&);
 
 public:
     /** Allocating constructor. */
     static RiscOperatorsPtr instance(const Settings &settings, const DatabasePtr&, const TestCasePtr&,
                                      const Partitioner2::Partitioner&, const ArchitecturePtr &process,
-                                     InputVariables&, const InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
+                                     const InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
                                      const SmtSolverPtr &solver = SmtSolverPtr());
 
     /** Dynamic pointer downcast. */
@@ -132,12 +129,7 @@ public:
      *  This is a mapping from symbolic variables to execution events.
      *
      * @{ */
-    const InputVariables& inputVariables() const {
-        return inputVariables_;
-    }
-    InputVariables& inputVariables() {
-        return inputVariables_;
-    }
+    InputVariablesPtr inputVariables() const;
     /** @} */
 
     /** Property: Had system call.
@@ -324,7 +316,6 @@ public:
 
 private:
     Settings settings_;
-    InputVariables inputVariables_;
     std::vector<FunctionCall> functionCallStack_;
     Sawyer::FileSystem::TemporaryDirectory tmpDir_;
 

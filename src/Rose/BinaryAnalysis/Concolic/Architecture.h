@@ -39,7 +39,7 @@ private:
     ExecutionLocation currentLocation_;                 // incremented when the instruction begins execution
     SystemCallMap systemCalls_;                         // callbacks for syscalls
     SharedMemoryMap sharedMemory_;                      // callbacks for shared memory
-    SymbolicExpr::ExprExprHashMap variableValues_;      // used for substitutions
+    InputVariablesPtr inputVariables_;                  // info about variables for events and inputs
 
 protected:
     // See "instance" methods in subclasses
@@ -121,6 +121,16 @@ public:
      * @{ */
     const SharedMemoryMap& sharedMemory() const;
     SharedMemoryMap& sharedMemory();
+    /** @} */
+
+    /** Properties: Input variables.
+     *
+     *  Keeps track of input variables and the bindings between variables (input or not) and their values as supplied by the
+     *  execution events that have been encountered.
+     *
+     * @{ */
+    InputVariablesPtr inputVariables() const;
+    void inputVariables(const InputVariablesPtr&);
     /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -300,16 +310,6 @@ public:
     const ExecutionLocation& nextEventLocation(When);
     /** @} */
 
-    /** Variables and values for substitutions.
-     *
-     *  Some events, such as shared-memory-read, have no action but are able to define variables and give them values.
-     *  This property holds those variable = value assignments.
-     *
-     * @{ */
-    const SymbolicExpr::ExprExprHashMap& variableValues() const;
-    SymbolicExpr::ExprExprHashMap& variableValues();
-    /** @} */
-
     /** Returns similar events.
      *
      *  Returns events that are for the same instruction as the specified event, but occur after it. The events are returned
@@ -324,18 +324,17 @@ public:
      *
      *  Reads the initial concrete state in order to create symbolic variables for initial input values such as the program
      *  arguments, number of program arguments, environment variables, auxilliary vector, etc. The new variables are added
-     *  to the @p inputVariables argument.
+     *  to the @ref inputVariables property.
      *
      *  Any interedependencies or other constraints on input variables should be added to the supplied SMT solver. */
-    virtual void createInputVariables(InputVariables &inputVariables /*in,out*/, const Partitioner2::Partitioner&,
-                                      const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
+    virtual void createInputVariables(const Partitioner2::Partitioner&, const Emulation::RiscOperatorsPtr&,
                                       const SmtSolver::Ptr&) = 0;
 
     /** Restore initial input variables.
      *
      *  This function is called when instantiating a test case that was created from a parent test case. It should read the
      *  database and recreate input variables that had been present in the parent test case, such as initial program arguments,
-     *  environment variables, system call side effects, etc. The new variables are added to the @p inputVariables argument.
+     *  environment variables, system call side effects, etc.
      *
      *  The following actions have already occured by time this function is called:
      *
@@ -348,8 +347,7 @@ public:
      *  @li The SMT solver's assertions have been initialized to be the same as when the parent test case created this test
      *  case. In particular, the solver contains the assertions for the current execution path in terms of input variables, as
      *  well as all the assertions for input variables from the parent test case. */
-    virtual void restoreInputVariables(InputVariables &inputVariables /*in,out*/, const Partitioner2::Partitioner&,
-                                       const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
+    virtual void restoreInputVariables(const Partitioner2::Partitioner&, const Emulation::RiscOperatorsPtr&,
                                        const SmtSolver::Ptr&);
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

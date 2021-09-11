@@ -23,11 +23,11 @@ enum class ShowAssertions { NO, YES };
 /** The different kinds of program inputs. */
 enum class InputType {
     NONE,                                               /**< Not an input type. */
-    PROGRAM_ARGUMENT_COUNT,                             /**< Number of program arguments. */
-    PROGRAM_ARGUMENT,                                   /**< Variable is (part of) a program argument. */
-    ENVIRONMENT,                                        /**< Variable is (part of) a program environment. */
-    SYSTEM_CALL_RETVAL,                                 /**< Variable is return value of system call. */
-    SHARED_MEMORY_READ                                  /**< Variable is the result of reading shared memory. */
+    ARGC,                                               /**< Number of program arguments. */
+    ARGV,                                               /**< Variable is (part of) a program argument. */
+    ENVP,                                               /**< Variable is (part of) a program environment. */
+    SYSCALL_RET,                                        /**< Variable is return value of system call. */
+    SHMEM_READ                                          /**< Variable is the result of reading shared memory. */
 };
 
 /** Direction of access. */
@@ -99,6 +99,7 @@ class ExecutionManager;
 using ExecutionManagerPtr = Sawyer::SharedPointer<ExecutionManager>;
 
 class InputVariables;
+using InputVariablesPtr = Sawyer::SharedPointer<InputVariables>;
 
 class LinuxExecutor;
 using LinuxExecutorPtr = Sawyer::SharedPointer<LinuxExecutor>;

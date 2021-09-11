@@ -81,8 +81,7 @@ public:
     virtual Sawyer::Container::BitVector readRegister(RegisterDescriptor) override;
     virtual void executeInstruction(const Partitioner2::Partitioner&) override;
     virtual void executeInstruction(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&, SgAsmInstruction*) override;
-    virtual void createInputVariables(InputVariables&, const Partitioner2::Partitioner&,
-                                      const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
+    virtual void createInputVariables(const Partitioner2::Partitioner&, const Emulation::RiscOperatorsPtr&,
                                       const SmtSolver::Ptr &solver) override;
     virtual void systemCall(const Partitioner2::Partitioner&,
                             const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&) override;
@@ -197,7 +196,7 @@ public:
      *
      *  This prints information about the @ref latestReturnEvent and @ref penultimateReturnEvent properties. The database argument
      *  is optional; if present then additional information such as event ID numbers are shown. */
-    void showRecentReturnValues(std::ostream&, const DatabasePtr& /*null*/) const;
+    void showRecentReturnValues(std::ostream&, const SyscallContext&) const;
 
     /** Symbolic penultimate return value.
      *

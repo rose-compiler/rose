@@ -467,8 +467,8 @@ LinuxI386SyscallBase::operator()(bool /*handled*/, SyscallContext &ctx) {
         // concrete.
         if (!ctx.returnEvent) {
             for (const ExecutionEvent::Ptr &relatedEvent: ctx.relatedEvents) {
-                if (relatedEvent->actionType() == ExecutionEvent::Action::WRITE_REGISTER &&
-                    RegisterDescriptor::fromRaw(relatedEvent->scalar()) == SYS_RET) {
+                if (relatedEvent->action() == ExecutionEvent::Action::REGISTER_WRITE &&
+                    relatedEvent->registerDescriptor() == SYS_RET) {
                     ctx.returnEvent = relatedEvent;
                     break;
                 }
@@ -498,18 +498,18 @@ LinuxI386SyscallBase::operator()(bool /*handled*/, SyscallContext &ctx) {
 
             // Create the input variable and execution event for this return value.
             if (!ctx.symbolicReturn) {
-                ctx.symbolicReturn = SymbolicExpr::makeIntegerVariable(SYS_RET.nBits());
+                ctx.symbolicReturn = SymbolicExpr::makeIntegerVariable(SYS_RET.nBits(), ctx.syscallEvent->name() + "_return");
                 SAWYER_MESG(debug) <<"  created input variable " <<*ctx.symbolicReturn <<"\n";
             } else {
                 SAWYER_MESG(debug) <<"  using existing variable " <<*ctx.symbolicReturn <<"\n";
                 ASSERT_require(ctx.symbolicReturn->nBits() == SYS_RET.nBits());
             }
             uint64_t retConcrete = i386->debugger()->readRegister(SYS_RET).toInteger();
-            ctx.returnEvent = ExecutionEvent::instanceWriteRegister(i386->testCase(), i386->nextEventLocation(When::POST),
-                                                                    ctx.syscallEvent->instructionPointer(), SYS_RET,
-                                                                    retConcrete);
-            ctx.returnEvent->name(ctx.syscallEvent->name() + "_return");
-            ctx.ops->inputVariables().insertSystemCallReturn(ctx.returnEvent, ctx.symbolicReturn);
+            SymbolicExpr::Ptr retValue = SymbolicExpr::makeIntegerConstant(SYS_RET.nBits(), retConcrete);
+            ctx.returnEvent = ExecutionEvent::registerWrite(i386->testCase(), i386->nextEventLocation(When::POST),
+                                                            ctx.syscallEvent->instructionPointer(), SYS_RET,
+                                                            ctx.symbolicReturn, retValue, ctx.symbolicReturn);
+            ctx.ops->inputVariables()->activate(ctx.returnEvent, InputType::SYSCALL_RET);
             SAWYER_MESG(debug) <<"  created " <<ctx.returnEvent->printableName(i386->database()) <<"\n";
 
             // Update the symbolic state
@@ -529,7 +529,7 @@ LinuxI386SyscallBase::hello(const std::string &name, const SyscallContext &ctx) 
     if (name.empty()) {
         SyscallCallback::hello("", ctx);
     } else {
-        SyscallCallback::hello(name + " for " + syscallName(ctx.syscallEvent->scalar()) + " system call", ctx);
+        SyscallCallback::hello(name + " for " + syscallName(ctx.syscallEvent->syscallFunction()) + " system call", ctx);
     }
 }
 
@@ -551,33 +551,31 @@ LinuxI386SyscallBase::penultimateSymbolicReturn() const {
     } else if (SymbolicExpr::Ptr variable = penultimateReturnEvent_->inputVariable()) {
         return variable;
     } else {
-        ASSERT_require(penultimateReturnEvent_->actionType() == ExecutionEvent::Action::WRITE_REGISTER);
-        ASSERT_require(penultimateReturnEvent_->words().size() == 1);
-        const RegisterDescriptor SYS_RET = RegisterDescriptor::fromRaw(penultimateReturnEvent_->scalar());
-        return SymbolicExpr::makeIntegerConstant(SYS_RET.nBits(), penultimateReturnEvent_->words()[0]);
+        ASSERT_require(penultimateReturnEvent_->action() == ExecutionEvent::Action::REGISTER_WRITE);
+        return penultimateReturnEvent_->value();
     }
 }
 
 void
-LinuxI386SyscallBase::showRecentReturnValues(std::ostream &out, const Database::Ptr &database) const {
+LinuxI386SyscallBase::showRecentReturnValues(std::ostream &out, const SyscallContext &ctx) const {
+    Database::Ptr db = ctx.architecture->database();
+
     if (!latestReturnEvent_) {
         out <<"  this system call has not yet returned\n";
     } else {
-        const RegisterDescriptor SYS_RET = RegisterDescriptor::fromRaw(latestReturnEvent_->scalar());
-        out <<"  latest return event: " <<latestReturnEvent_->printableName(database) <<"\n";
+        out <<"  latest return event: " <<latestReturnEvent_->printableName(db) <<"\n";
         out <<"  latest return concrete: "
-            <<StringUtility::toHex2(latestReturnEvent_->words()[0], SYS_RET.nBits()) <<"\n";
+            <<*latestReturnEvent_->calculateResult(ctx.ops->inputVariables()->bindings()) <<"\n";
     }
 
     if (!penultimateReturnEvent_) {
         out <<"  this is the first occurrence of this system call\n";
     } else {
-        const RegisterDescriptor SYS_RET = RegisterDescriptor::fromRaw(latestReturnEvent_->scalar());
-        out <<"  penultimate return event: " <<penultimateReturnEvent_->printableName(database) <<"\n";
-        if (penultimateReturnEvent_->inputVariable())
-            out <<"  penultimate return variable: " <<*penultimateReturnEvent_->inputVariable() <<"\n";
+        out <<"  penultimate return event: " <<penultimateReturnEvent_->printableName(db) <<"\n";
+        if (penultimateReturnEvent_->variable())
+            out <<"  penultimate return variable: " <<*penultimateReturnEvent_->variable() <<"\n";
         out <<"  penultimate return concrete: "
-                    <<StringUtility::toHex2(penultimateReturnEvent_->words()[0], SYS_RET.nBits()) <<"\n";
+            <<*penultimateReturnEvent_->calculateResult(ctx.ops->inputVariables()->bindings()) <<"\n";
     }
 }
 
@@ -597,13 +595,13 @@ LinuxI386SyscallUnimplemented::instance() {
 void
 LinuxI386SyscallUnimplemented::playback(SyscallContext &ctx) {
     hello("not-implemented", ctx);
-    mlog[ERROR] <<"  " <<syscallName(ctx.syscallEvent->scalar()) <<" system call is not implemented\n";
+    mlog[ERROR] <<"  " <<syscallName(ctx.syscallEvent->syscallFunction()) <<" system call is not implemented\n";
 }
 
 void
 LinuxI386SyscallUnimplemented::handlePostSyscall(SyscallContext &ctx) {
     hello("not-implemented", ctx);
-    mlog[ERROR] <<"  " <<syscallName(ctx.syscallEvent->scalar()) <<" system call is not implemented\n";
+    mlog[ERROR] <<"  " <<syscallName(ctx.syscallEvent->syscallFunction()) <<" system call is not implemented\n";
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -647,7 +645,7 @@ LinuxI386SyscallReturn::handlePostSyscall(SyscallContext &ctx) {
     auto i386 = ctx.architecture.dynamicCast<LinuxI386>();
     ASSERT_not_null(i386);
     const RegisterDescriptor SYS_RET = i386->systemCallReturnRegister();
-    showRecentReturnValues(debug, i386->database());
+    showRecentReturnValues(debug, ctx);
 
     // If this is the first invocation of this syscall, then there's nothing we need to do.
     if (!penultimateReturnEvent())
@@ -703,7 +701,7 @@ LinuxI386SyscallConstant::makeReturnConstraint(SyscallContext &ctx) {
             constraint = SymbolicExpr::makeEq(curRet, prevRet);
         }
 
-        concreteReturn = penultimateReturnEvent()->words()[0];
+        concreteReturn = penultimateReturnEvent()->calculateResult(ctx.ops->inputVariables()->bindings())->toUnsigned();
     }
 
     return {constraint, concreteReturn};
@@ -738,7 +736,7 @@ LinuxI386SyscallNondecreasing::makeReturnConstraint(SyscallContext &ctx) {
             constraint = SymbolicExpr::makeGe(curRet, prevRet);
         }
 
-        concreteReturn = penultimateReturnEvent()->words()[0];
+        concreteReturn = penultimateReturnEvent()->calculateResult(ctx.ops->inputVariables()->bindings())->toUnsigned();
     }
 
     return {constraint, concreteReturn};
@@ -928,22 +926,26 @@ LinuxI386::createMemoryRestoreEvents() {
         if (where.least() != scratchVa_) {
             SAWYER_MESG(mlog[DEBUG]) <<"  memory at " <<StringUtility::addrToString(where)
                                      <<", " <<StringUtility::plural(where.size(), "bytes");
-            std::string protStr;
-            if ((segment.accessibility() & MemoryMap::READABLE) != 0)
-                protStr += "r";
-            if ((segment.accessibility() & MemoryMap::WRITABLE) != 0)
-                protStr += "w";
-            if ((segment.accessibility() & MemoryMap::EXECUTABLE) != 0)
-                protStr += "x";
-            SAWYER_MESG(mlog[DEBUG]) <<", perm=" <<(protStr.empty() ? "none" : protStr) <<"\n";
-            auto eeMap = ExecutionEvent::instanceMapMemory(ip(), where, protStr);
+            if (mlog[DEBUG]) {
+                std::string protStr;
+                if ((segment.accessibility() & MemoryMap::READABLE) != 0)
+                    protStr += "r";
+                if ((segment.accessibility() & MemoryMap::WRITABLE) != 0)
+                    protStr += "w";
+                if ((segment.accessibility() & MemoryMap::EXECUTABLE) != 0)
+                    protStr += "x";
+                SAWYER_MESG(mlog[DEBUG]) <<", perm=" <<(protStr.empty() ? "none" : protStr) <<"\n";
+            }
+
+            auto eeMap = ExecutionEvent::bulkMemoryMap(TestCase::Ptr(), ExecutionLocation(), ip(), where,
+                                                       segment.accessibility());
             eeMap->name("map " + segment.name());
             events.push_back(eeMap);
 
             std::vector<uint8_t> buf(where.size());
             size_t nRead = map->at(where).read(buf).size();
             ASSERT_always_require(nRead == where.size());
-            auto eeWrite = ExecutionEvent::instanceWriteMemory(ip(), where.least(), buf);
+            auto eeWrite = ExecutionEvent::bulkMemoryWrite(TestCase::Ptr(), ExecutionLocation(), ip(), where, buf);
             eeWrite->name("init " + segment.name());
             events.push_back(eeWrite);
         }
@@ -964,7 +966,7 @@ LinuxI386::createMemoryHashEvents() {
         Combinatorics::HasherSha256Builtin hasher;
         hashMemoryRegion(hasher, map, node.key());
         SAWYER_MESG(mlog[DEBUG]) <<"    hash = " <<hasher.toString() <<"\n";
-        auto eeHash = ExecutionEvent::instanceHashMemory(ip(), node.key(), hasher.digest());
+        auto eeHash = ExecutionEvent::bulkMemoryHash(TestCase::Ptr(), ExecutionLocation(), ip(), node.key(), hasher.digest());
         events.push_back(eeHash);
     }
     return events;
@@ -974,7 +976,7 @@ std::vector<ExecutionEvent::Ptr>
 LinuxI386::createRegisterRestoreEvents() {
     SAWYER_MESG(mlog[DEBUG]) <<"saving all registers\n";
     Debugger::AllRegisters allRegisters = debugger_->readAllRegisters();
-    auto event = ExecutionEvent::instanceRestoreRegisters(ip(), allRegisters);
+    auto event = ExecutionEvent::bulkRegisterWrite(TestCase::Ptr(), ExecutionLocation(), ip(), allRegisters);
     return {event};
 }
 
@@ -983,10 +985,10 @@ LinuxI386::playEvent(const ExecutionEvent::Ptr &event) {
     ASSERT_not_null(event);
     bool handled = Super::playEvent(event);
 
-    switch (event->actionType()) {
-        case ExecutionEvent::Action::RESTORE_REGISTERS: {
+    switch (event->action()) {
+        case ExecutionEvent::Action::BULK_REGISTER_WRITE: {
             SAWYER_MESG(mlog[DEBUG]) <<"  restore registers\n";
-            Debugger::AllRegisters allRegisters = event->allRegisters();
+            Debugger::AllRegisters allRegisters = event->registerValues();
             debugger_->writeAllRegisters(allRegisters);
             return true;
         }
@@ -994,7 +996,7 @@ LinuxI386::playEvent(const ExecutionEvent::Ptr &event) {
         case ExecutionEvent::Action::OS_SYSCALL:
             if (!handled) {
                 // If it wasn't handled by Super, then it must be because there are no callbacks.
-                const uint64_t functionNumber = event->scalar();
+                const uint64_t functionNumber = event->syscallFunction();
                 SyscallCallbacks callbacks = systemCalls().getOrDefault(functionNumber);
                 ASSERT_require(callbacks.isEmpty());
                 callbacks.append(LinuxI386SyscallUnimplemented::instance());
@@ -1174,8 +1176,8 @@ LinuxI386::unmapAllMemory() {
 }
 
 void
-LinuxI386::createInputVariables(InputVariables &inputVariables, const P2::Partitioner &partitioner,
-                                const BS::RiscOperatorsPtr &ops, const SmtSolver::Ptr &solver) {
+LinuxI386::createInputVariables(const P2::Partitioner &partitioner, const Emulation::RiscOperatorsPtr &ops,
+                                const SmtSolver::Ptr &solver) {
     ASSERT_not_null(ops);
     ASSERT_not_null(solver);
 
@@ -1199,8 +1201,8 @@ LinuxI386::createInputVariables(InputVariables &inputVariables, const P2::Partit
     SAWYER_MESG(debug) <<"creating program arguments\n";
     const RegisterDescriptor SP = partitioner.instructionProvider().stackPointerRegister();
     size_t wordSizeBytes = SP.nBits() / 8;
-    IS::SymbolicSemantics::Formatter fmt;
-    fmt.expr_formatter.show_comments = SymbolicExpr::Formatter::CMT_AFTER;
+    SymbolicExpr::Formatter fmt;
+    fmt.show_comments = SymbolicExpr::Formatter::CMT_AFTER;
 
     //---------------------------------------------------------------------------------------------------------------------------
     // argc
@@ -1208,31 +1210,31 @@ LinuxI386::createInputVariables(InputVariables &inputVariables, const P2::Partit
     ASSERT_require(SP.nBits() == 32);                   // we only handle 32-bit for now
     ASSERT_require(ops->currentState()->memoryState()->get_byteOrder() == memoryByteOrder());
     rose_addr_t argcVa = readRegister(SP).toInteger();
-    uint32_t argc = readMemoryUnsigned(argcVa, wordSizeBytes);
+    size_t argc = readMemoryUnsigned(argcVa, wordSizeBytes);
 
-    BS::SValuePtr argcSValue = ops->undefined_(SP.nBits());
-    SymbolicExpr::Ptr argcSymbolic = IS::SymbolicSemantics::SValue::promote(argcSValue)->get_expression();
+    // Event and input variable
+    SymbolicExpr::Ptr argcVariable = SymbolicExpr::makeIntegerVariable(SP.nBits(), "argc");
+    SymbolicExpr::Ptr argcValue = SymbolicExpr::makeIntegerConstant(SP.nBits(), argc);
+    auto argcEvent = ExecutionEvent::memoryWrite(testCase(), nextEventLocation(When::PRE), ip(),
+                                                 AddressInterval::baseSize(argcVa, SP.nBits()/8),
+                                                 argcVariable, argcValue, argcVariable);
+    inputVariables()->activate(argcEvent, InputType::ARGC);
 
-    auto argcEvent = ExecutionEvent::instanceWriteMemory(testCase(), nextEventLocation(When::PRE),
-                                                         ip(), argcVa, argc);
-    inputVariables.insertProgramArgumentCount(argcEvent, argcSymbolic);
-    argcSValue->comment(argcEvent->name());
-    ops->writeMemory(RegisterDescriptor(), ops->number_(SP.nBits(), argcVa), argcSValue, ops->boolean_(true));
+    // Adjust symbolic state
+    ops->writeMemory(RegisterDescriptor(), ops->number_(SP.nBits(), argcVa), ops->svalueExpr(argcVariable), ops->boolean_(true));
     ExecutionEventId argcEventId = database()->id(argcEvent);
-
     SAWYER_MESG(debug) <<"  argc @" <<StringUtility::addrToString(argcVa) <<" = " <<argc
-                       <<"; symbolic = " <<(*argcSValue + fmt)
+                       <<"; symbolic = " <<(*argcVariable + fmt)
                        <<"; event = " <<*argcEventId <<"\n";
 
     // The argc value cannot be less than 1 since it always points to at least the program name.
-    SymbolicExpr::Ptr argcMinConstraint = SymbolicExpr::makeSignedGt(argcSymbolic,
+    SymbolicExpr::Ptr argcMinConstraint = SymbolicExpr::makeSignedGt(argcVariable,
                                                                      SymbolicExpr::makeIntegerConstant(SP.nBits(), 0));
     solver->insert(argcMinConstraint);
 
     // The argc value cannot be greater than its current concrete value since making it greater would mean that the address
     // of the environment variable list would need to change, potentially affecting many other things in the program.
-    SymbolicExpr::Ptr argcMaxConstraint = SymbolicExpr::makeSignedLe(argcSymbolic,
-                                                                     SymbolicExpr::makeIntegerConstant(SP.nBits(), argc));
+    SymbolicExpr::Ptr argcMaxConstraint = SymbolicExpr::makeSignedLe(argcVariable, argcValue);
     solver->insert(argcMaxConstraint);
 
     //---------------------------------------------------------------------------------------------------------------------------
@@ -1253,22 +1255,24 @@ LinuxI386::createInputVariables(InputVariables &inputVariables, const P2::Partit
             SymbolicExpr::Ptr anyPreviousCharIsNul;     // is any previous char of this argument an ASCII NUL character?
             for (size_t j = 0; j <= s.size(); ++j) {
                 rose_addr_t charVa = strVa + j;
-                uint8_t charVal = s[j];
 
-                BS::SValuePtr charSValue = ops->undefined_(8);
-                SymbolicExpr::Ptr charSymbolic = IS::SymbolicSemantics::SValue::promote(charSValue)->get_expression();
-                auto charEvent = ExecutionEvent::instanceWriteMemory(testCase(), nextEventLocation(When::PRE),
-                                                                     ip(), charVa, charVal);
-                inputVariables.insertProgramArgument(charEvent, i, j, charSymbolic);
-                charSValue->comment(charEvent->name());
-                ops->writeMemory(RegisterDescriptor(), ops->number_(SP.nBits(), charVa), charSValue, ops->boolean_(true));
+                // Event and input variable
+                std::string name = (boost::format("argv_%d_%d") % i % j).str();
+                SymbolicExpr::Ptr charValue = SymbolicExpr::makeIntegerConstant(8, s[j]);
+                SymbolicExpr::Ptr charVariable = SymbolicExpr::makeIntegerVariable(8, name);
+                auto charEvent = ExecutionEvent::memoryWrite(testCase(), nextEventLocation(When::PRE), ip(),
+                                                             charVa, charVariable, charValue, charVariable);
+                inputVariables()->activate(charEvent, InputType::ARGV, i, j);
+
+                // Adjust symbolic state
+                ops->writeMemory(RegisterDescriptor(), ops->number_(SP.nBits(), charVa), ops->svalueExpr(charVariable),
+                                 ops->boolean_(true));
                 ExecutionEventId charEventId = database()->id(charEvent);
-
                 SAWYER_MESG(debug) <<"      byte " <<j <<" @" <<StringUtility::addrToString(charVa)
-                                   <<"; symbolic = " <<(*charSValue + fmt)
+                                   <<"; symbolic = " <<(*charVariable + fmt)
                                    <<"; event = " <<*charEventId <<"\n";
 
-                SymbolicExpr::Ptr currentCharIsNul = SymbolicExpr::makeEq(charSymbolic, SymbolicExpr::makeIntegerConstant(8, 0));
+                SymbolicExpr::Ptr currentCharIsNul = SymbolicExpr::makeEq(charVariable, SymbolicExpr::makeIntegerConstant(8, 0));
                 if (s.size() == j) {
                     // Final byte of the argument's buffer must always be NUL
                     solver->insert(currentCharIsNul);
@@ -1288,7 +1292,7 @@ LinuxI386::createInputVariables(InputVariables &inputVariables, const P2::Partit
                     solver->insert(assertion);
                 } else {
                     // argv[i] must be empty (i.e., first byte is NUL character) if argc <= i
-                    auto argcGreaterThanI = SymbolicExpr::makeGt(argcSymbolic, SymbolicExpr::makeIntegerConstant(SP.nBits(), i));
+                    auto argcGreaterThanI = SymbolicExpr::makeGt(argcVariable, SymbolicExpr::makeIntegerConstant(SP.nBits(), i));
                     auto assertion = SymbolicExpr::makeOr(argcGreaterThanI, currentCharIsNul);
                     solver->insert(assertion);
                 }
@@ -1333,53 +1337,55 @@ LinuxI386::createInputVariables(InputVariables &inputVariables, const P2::Partit
             SymbolicExpr::Ptr anyPreviousCharIsNul;     // is any previous char of this env an ASCII NUL character?
             for (size_t j = 0; j <= s.size(); ++j) {
                 rose_addr_t charVa = strVa + j;
-                uint8_t charVal = s[j];
 
-                BS::SValuePtr charSValue = ops->undefined_(8);
-                SymbolicExpr::Ptr charSymbolic = IS::SymbolicSemantics::SValue::promote(charSValue)->get_expression();
-                auto charEvent = ExecutionEvent::instanceWriteMemory(testCase(), nextEventLocation(When::PRE),
-                                                                     ip(), charVa, charVal);
-                inputVariables.insertEnvironmentVariable(charEvent, i, j, charSymbolic);
-                charSValue->comment(charEvent->name());
-                ops->writeMemory(RegisterDescriptor(), ops->number_(SP.nBits(), charVa), charSValue, ops->boolean_(true));
+                // Event and input variable
+                std::string name = (boost::format("envp_%d_%d") % i % j).str();
+                SymbolicExpr::Ptr charValue = SymbolicExpr::makeIntegerConstant(8, s[j]);
+                SymbolicExpr::Ptr charVariable = SymbolicExpr::makeIntegerVariable(8, name);
+                auto charEvent = ExecutionEvent::memoryWrite(testCase(), nextEventLocation(When::PRE), ip(),
+                                                             charVa, charVariable, charValue, charVariable);
+                inputVariables()->activate(charEvent, InputType::ENVP, i, j);
+
+                // Adjust symbolic state
+                ops->writeMemory(RegisterDescriptor(), ops->number_(SP.nBits(), charVa), ops->svalueExpr(charVariable),
+                                 ops->boolean_(true));
                 ExecutionEventId charEventId = database()->id(charEvent);
-
                 SAWYER_MESG(debug) <<"      byte " <<j <<" @" <<StringUtility::addrToString(charVa)
-                                   <<"; symbolic = " <<(*charSValue + fmt)
+                                   <<"; symbolic = " <<(*charVariable + fmt)
                                    <<"; event = " <<charEventId <<"\n";
 
-            SymbolicExpr::Ptr currentCharIsNul = SymbolicExpr::makeEq(charSymbolic, SymbolicExpr::makeIntegerConstant(8, 0));
-            if (s.size() == j) {
-                // Final byte of the argument's buffer must always be NUL
-                solver->insert(currentCharIsNul);
+                SymbolicExpr::Ptr currentCharIsNul = SymbolicExpr::makeEq(charVariable, SymbolicExpr::makeIntegerConstant(8, 0));
+                if (s.size() == j) {
+                    // Final byte of the argument's buffer must always be NUL
+                    solver->insert(currentCharIsNul);
 
-            } else if (j > 0) {
-                // Linux doesn't allow NUL characters to appear inside environment variables. A NUL terminates the
-                // environment variable and the next environment variable starts immediately thereafter. For concolic
-                // testing, if an environment variable is shortened (by making one of it's non-ending bytes NUL) we don't
-                // want to have to adjust the addresses of all following environment variables and the auxv vector because
-                // that would end up being a lot of changes to the the program. Instead, we reserve some amount of space
-                // for each environment variable (based on the root test case) and write NULs into the interior of
-                // environment variables to shorten them.  In order to prevent some impossible inputs (environment
-                // variables with interior NUL characters) we add solver constraints so that any character of an
-                // environment variable after a NUL is also a NUL.
-                ASSERT_not_null(anyPreviousCharIsNul);
-                auto bothNul = SymbolicExpr::makeAnd(anyPreviousCharIsNul, currentCharIsNul);
-                auto assertion = SymbolicExpr::makeOr(SymbolicExpr::makeInvert(anyPreviousCharIsNul), bothNul);
-                solver->insert(assertion);
-            } else {
-                // envp[i] must be empty (i.e., first byte is NUL character) if envc <= i
-                auto argcGreaterThanI = SymbolicExpr::makeGt(argcSymbolic, SymbolicExpr::makeIntegerConstant(SP.nBits(), i));
-                auto assertion = SymbolicExpr::makeOr(argcGreaterThanI, currentCharIsNul);
-                solver->insert(assertion);
-            }
+                } else if (j > 0) {
+                    // Linux doesn't allow NUL characters to appear inside environment variables. A NUL terminates the
+                    // environment variable and the next environment variable starts immediately thereafter. For concolic
+                    // testing, if an environment variable is shortened (by making one of it's non-ending bytes NUL) we don't
+                    // want to have to adjust the addresses of all following environment variables and the auxv vector because
+                    // that would end up being a lot of changes to the the program. Instead, we reserve some amount of space
+                    // for each environment variable (based on the root test case) and write NULs into the interior of
+                    // environment variables to shorten them.  In order to prevent some impossible inputs (environment
+                    // variables with interior NUL characters) we add solver constraints so that any character of an
+                    // environment variable after a NUL is also a NUL.
+                    ASSERT_not_null(anyPreviousCharIsNul);
+                    auto bothNul = SymbolicExpr::makeAnd(anyPreviousCharIsNul, currentCharIsNul);
+                    auto assertion = SymbolicExpr::makeOr(SymbolicExpr::makeInvert(anyPreviousCharIsNul), bothNul);
+                    solver->insert(assertion);
+                } else {
+                    // envp[i] must be empty (i.e., first byte is NUL character) if envc <= i
+                    auto argcGreaterThanI = SymbolicExpr::makeGt(argcVariable, SymbolicExpr::makeIntegerConstant(SP.nBits(), i));
+                    auto assertion = SymbolicExpr::makeOr(argcGreaterThanI, currentCharIsNul);
+                    solver->insert(assertion);
+                }
 
-            // Extend or create the expression for any previous character being NUL
-            if (anyPreviousCharIsNul) {
-                anyPreviousCharIsNul = SymbolicExpr::makeOr(anyPreviousCharIsNul, currentCharIsNul);
-            } else {
-                anyPreviousCharIsNul = currentCharIsNul;
-            }
+                // Extend or create the expression for any previous character being NUL
+                if (anyPreviousCharIsNul) {
+                    anyPreviousCharIsNul = SymbolicExpr::makeOr(anyPreviousCharIsNul, currentCharIsNul);
+                } else {
+                    anyPreviousCharIsNul = currentCharIsNul;
+                }
 
             }
         }
@@ -1508,8 +1514,7 @@ LinuxI386::systemCall(const P2::Partitioner &partitioner, const BS::RiscOperator
     // happened yet). Since the side effect events (created shortly) are general things like "write this value to this
     // register", the fact that they're preceded by this syscall event is what marks them as being side effects of this system
     // call.
-    auto syscallEvent = ExecutionEvent::instanceSyscall(testCase(), nextEventLocation(When::PRE),
-                                                        ip, functionNumber, argsConcrete);
+    auto syscallEvent = ExecutionEvent::osSyscall(testCase(), nextEventLocation(When::PRE), ip, functionNumber, argsConcrete);
     syscallEvent->name(syscallName(functionNumber) + "_" + boost::lexical_cast<std::string>(syscallEvent->location().primary()));
     database()->save(syscallEvent);
     SAWYER_MESG(debug) <<"  created " <<syscallEvent->printableName(database()) <<"\n";
@@ -1561,11 +1566,14 @@ LinuxI386::sharedMemoryRead(const SharedMemoryCallbacks &callbacks, const P2::Pa
 
     // Create an input variable for the value read from shared memory, and bind it to a new event that indicates that this
     // instruction is reading from shared memory.
-    auto valueRead = SymbolicExpr::makeIntegerVariable(8 * nBytes);
-    auto sharedMemoryEvent = ExecutionEvent::instanceSharedMemoryRead(testCase(), nextEventLocation(When::PRE), ip, addr, nBytes);
-    sharedMemoryEvent->name("shm_read_" + StringUtility::addrToString(addr).substr(2) +
-                            "_" + boost::lexical_cast<std::string>(sharedMemoryEvent->location().primary()));
-    ops->inputVariables().insertSharedMemoryRead(sharedMemoryEvent, valueRead);
+    ExecutionLocation loc = nextEventLocation(When::PRE);
+    std::string name = (boost::format("shm_read_%s_%d") % StringUtility::addrToString(addr).substr(2) % loc.primary()).str();
+    auto valueRead = SymbolicExpr::makeIntegerVariable(8 * nBytes, name);
+    auto sharedMemoryEvent = ExecutionEvent::osSharedMemory(testCase(), loc, ip,
+                                                            AddressInterval::baseSize(addr, nBytes), valueRead,
+                                                            SymbolicExpr::Ptr(), /*concrete value not known yet*/
+                                                            valueRead);
+    inputVariables()->activate(sharedMemoryEvent, InputType::SHMEM_READ);
     database()->save(sharedMemoryEvent);
     SAWYER_MESG(debug) <<"    created input variable " <<*valueRead
                        <<" for " <<sharedMemoryEvent->printableName(database()) <<"\n";

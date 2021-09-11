@@ -47,6 +47,24 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
 
+// The only purpose of this class is to access private friend functions in other classes.
+class DatabaseAccess {
+public:
+    static void executionEventRecreateTable(Sawyer::Database::Connection db) {
+        ExecutionEvent::recreateTable(db);
+    }
+
+    static void toDatabase(const Database::Ptr &db, const ExecutionEvent::Ptr &obj, ExecutionEventId id) {
+        obj->toDatabase(db, id);
+    }
+
+    static void fromDatabase(const Database::Ptr &db, const ExecutionEvent::Ptr &obj, ExecutionEventId id) {
+        obj->fromDatabase(db, id);
+    }
+};
+
+
+
 // Register the derived types that we might be serializing through base pointers. Archive is one of the boost::archive classes.
 template<class Archive>
 static void
@@ -112,35 +130,7 @@ initSchema(Sawyer::Database::Connection db) {
            " constraint fk_specimen foreign key (specimen) references specimens (id),"
            " constraint fk_test_suite foreign key (test_suite) references test_suites (id))");
 
-    db.run("drop table if exists execution_events");
-    db.run("create table execution_events ("
-           " created_ts varchar(32) not null,"
-           " id integer primary key,"
-           " test_suite integer not null,"
-
-           // Identification
-           " test_case integer not null,"               // test case to which this event belongs
-           " location_primary integer not null,"        // event location.primary property
-           " location_secondary integer not null,"      // events location.secondary property
-           " location_when integer not null,"           // events location.when property
-           " instruction_pointer integer not null,"     // value of the instruction pointer register at this event
-           " name varchar(32) not null,"                // arbitrary name for debugging
-
-           // Associated optional test case input variable
-           " input_type string not null,"               // one of the InputType constants
-           " input_variable string,"                    // name of associated symbolic variable
-           " input_i1 integer,"                         // first integer field
-           " input_i2 integer,"                         // second integer field
-
-           // Actions. The interpretation of these fields depends on the action type.
-           " action_type varchar(32) not null,"         // action to be performed
-           " start_va integer,"                         // starting address for actions that need one
-           " scalar integer,"                           // scalar value for those actions that need one
-           " bytes bytea,"                              // vector value for those actions that need one
-           " symbolic bytea,"                           // serialized SymbolicExpr for actions that need one
-
-           "constraint fk_test_suite foreign key (test_suite) references test_suites (id),"
-           "constraint fk_test_case foreign key (test_case) references test_cases (id))");
+    DatabaseAccess::executionEventRecreateTable(db);
 }
 
 static void
@@ -152,16 +142,6 @@ initTestSuite(const Database::Ptr &db) {
         auto ts = TestSuite::instance();
         db->testSuite(ts);
     }
-}
-
-static std::string
-timestamp() {
-    time_t now = time(NULL);
-    struct tm tm;
-    gmtime_r(&now, &tm);
-    return (boost::format("%04d-%02d-%02d %02d:%02d:%02d")
-            % (tm.tm_year+1900) % (tm.tm_mon+1) % tm.tm_mday
-            % tm.tm_hour % tm.tm_min % tm.tm_sec).str();
 }
 
 static size_t
@@ -196,7 +176,7 @@ updateDb(const Database::Ptr &db, TestSuiteId id, const TestSuite::Ptr &obj) {
     if (*db->connection().stmt("select count(*) from test_suites where id = ?id").bind("id", *id).get<size_t>()) {
         stmt = db->connection().stmt("update test_suites set name = ?name where id = ?id");
     } else {
-        std::string ts = obj->timestamp().empty() ? timestamp() : obj->timestamp();
+        std::string ts = obj->timestamp().empty() ? Database::timestamp() : obj->timestamp();
         obj->timestamp(ts);
         stmt = db->connection().stmt("insert into test_suites (id, created_ts, name) values (?id, ?ts, ?name)")
                .bind("ts", ts);
@@ -253,7 +233,7 @@ updateDb(const Database::Ptr &db, SpecimenId id, const Specimen::Ptr &obj) {
     if (*db->connection().stmt("select count(*) from specimens where id = ?id").bind("id", *id).get<size_t>()) {
         stmt = db->connection().stmt("update specimens set name = ?name, content = ?content where id = ?id");
     } else {
-        std::string ts = obj->timestamp().empty() ? timestamp() : obj->timestamp();
+        std::string ts = obj->timestamp().empty() ? Database::timestamp() : obj->timestamp();
         obj->timestamp(ts);
         stmt = db->connection().stmt("insert into specimens (id, created_ts, name, content, test_suite)"
                                      " values (?id, ?ts, ?name, ?content, ?test_suite)")
@@ -348,7 +328,7 @@ updateDb(const Database::Ptr &db, TestCaseId id, const TestCase::Ptr &obj) {
                                      " concolic_result = ?concolic_result"
                                      " where id = ?id");
     } else {
-        std::string ts = obj->timestamp().empty() ? timestamp() : obj->timestamp();
+        std::string ts = obj->timestamp().empty() ? Database::timestamp() : obj->timestamp();
         obj->timestamp(ts);
         stmt = db->connection().stmt("insert into test_cases ("
                                      "  id, parent, created_ts, name, executor, specimen, argv, envp,"
@@ -419,144 +399,7 @@ updateObject(const Database::Ptr &db, ExecutionEventId id, const ExecutionEvent:
     ASSERT_not_null(db);
     ASSERT_require(id);
     ASSERT_not_null(obj);
-
-    //                                        0           1          2                 3                   4
-    auto iter = db->connection().stmt("select created_ts, test_case, location_primary, location_secondary, instruction_pointer,"
-                                      // 5           6         7       8      9     10          11
-                                      " action_type, start_va, scalar, bytes, name, input_type, input_variable,"
-                                      // 12       13        14        15
-                                      " input_i1, input_i2, symbolic, location_when"
-                                      " from execution_events"
-                                      " where id = ?id"
-                                      " order by created_ts")
-                .bind("id", *id)
-                .begin();
-    if (!iter)
-        throw Exception("no such executon event in database where id=" + boost::lexical_cast<std::string>(*id));
-
-    TestCaseId tcid(*iter->get<size_t>(1));
-    TestCase::Ptr testcase = db->object(tcid);
-    ASSERT_not_null(testcase);
-
-    obj->timestamp(*iter->get<std::string>(0));
-    obj->testCase(testcase);
-    When when;
-    if (*iter->get<int>(15) == 0) {
-        when = When::PRE;
-    } else if (*iter->get<int>(15) == 1) {
-        when = When::POST;
-    } else {
-        ASSERT_not_reachable("invalid 'when' field: " + boost::lexical_cast<std::string>(*iter->get<std::string>(15)));
-    }
-    obj->location(ExecutionLocation(*iter->get<uint64_t>(2), *iter->get<size_t>(3), when));
-    obj->instructionPointer(*iter->get<rose_addr_t>(4));
-    obj->name(*iter->get<std::string>(9));
-
-    std::string inputType = iter->get<std::string>(10).orElse("none");
-    if ("none" == inputType) {
-        obj->inputType(InputType::NONE);
-    } else if ("argc" == inputType) {
-        obj->inputType(InputType::PROGRAM_ARGUMENT_COUNT);
-    } else if ("argv" == inputType) {
-        obj->inputType(InputType::PROGRAM_ARGUMENT);
-    } else if ("envp" == inputType) {
-        obj->inputType(InputType::ENVIRONMENT);
-    } else if ("syscall-ret" == inputType) {
-        obj->inputType(InputType::SYSTEM_CALL_RETVAL);
-    } else if ("shared-memory-read" == inputType) {
-        obj->inputType(InputType::SHARED_MEMORY_READ);
-    } else {
-        ASSERT_not_reachable("invalid input type \"" + StringUtility::cEscape(inputType) + "\"");
-    }
-
-    if (auto serializedVar = iter->get<std::string>(11)) {
-        std::istringstream ss(*serializedVar);
-        boost::archive::binary_iarchive archive(ss);
-        SymbolicExpr::Ptr var;
-        archive >>var;
-        ASSERT_not_null(var);
-        obj->inputVariable(var);
-    } else {
-        obj->inputVariable(SymbolicExpr::Ptr());
-    }
-
-    if (auto serializedSymbolic = iter->get<std::string>(14)) {
-        std::istringstream ss(*serializedSymbolic);
-        boost::archive::binary_iarchive archive(ss);
-        SymbolicExpr::Ptr symbolic;
-        archive >>symbolic;
-        ASSERT_not_null(symbolic);
-        obj->symbolic(symbolic);
-    } else {
-        obj->symbolic(SymbolicExpr::Ptr());
-    }
-
-    obj->inputI1(iter->get<size_t>(12).orElse(0));
-    obj->inputI2(iter->get<size_t>(13).orElse(0));
-
-    std::string action = *iter->get<std::string>(5);
-    auto startVa = iter->get<rose_addr_t>(6);
-    auto scalar = iter->get<size_t>(7);
-    auto bytes = iter->get<std::vector<uint8_t>>(8);
-
-    if ("none" == action) {
-        obj->actionType(ExecutionEvent::Action::NONE);
-    } else if ("map_memory" == action) {
-        obj->actionType(ExecutionEvent::Action::MAP_MEMORY);
-        ASSERT_require(startVa);
-        ASSERT_require(scalar);
-        obj->memoryLocation(AddressInterval::baseSize(*startVa, *scalar));
-        ASSERT_require(bytes);
-        obj->bytes(*bytes);
-    } else if ("unmap_memory" == action) {
-        obj->actionType(ExecutionEvent::Action::UNMAP_MEMORY);
-        ASSERT_require(startVa);
-        ASSERT_require(scalar);
-        obj->memoryLocation(AddressInterval::baseSize(*startVa, *scalar));
-    } else if ("write_memory" == action) {
-        obj->actionType(ExecutionEvent::Action::WRITE_MEMORY);
-        ASSERT_require(startVa);
-        ASSERT_require(scalar);
-        obj->memoryLocation(AddressInterval::baseSize(*startVa, *scalar));
-        ASSERT_require(bytes);
-        ASSERT_require(bytes->size() == *scalar);
-        obj->bytes(*bytes);
-    } else if ("hash_memory" == action) {
-        obj->actionType(ExecutionEvent::Action::HASH_MEMORY);
-        ASSERT_require(startVa);
-        ASSERT_require(scalar);
-        obj->memoryLocation(AddressInterval::baseSize(*startVa, *scalar));
-        ASSERT_require(bytes);
-        obj->bytes(*bytes);
-    } else if ("write_register" == action) {
-        obj->actionType(ExecutionEvent::Action::WRITE_REGISTER);
-        ASSERT_require(scalar);
-        obj->scalar(*scalar);
-        if (bytes) {
-            obj->bytes(*bytes);
-        } else {
-            ASSERT_not_null(obj->symbolic());
-        }
-    } else if ("restore_registers" == action) {
-        obj->actionType(ExecutionEvent::Action::RESTORE_REGISTERS);
-        ASSERT_require(bytes);
-        obj->bytes(*bytes);
-    } else if ("os_syscall" == action) {
-        obj->actionType(ExecutionEvent::Action::OS_SYSCALL);
-        ASSERT_require(scalar);
-        obj->scalar(*scalar);
-        ASSERT_require(bytes);
-        obj->bytes(*bytes);
-    } else if ("os_shm_read" == action) {
-        obj->actionType(ExecutionEvent::Action::OS_SHM_READ);
-        ASSERT_require(startVa);
-        ASSERT_require(scalar);
-        obj->memoryLocation(AddressInterval::baseSize(*startVa, *scalar));
-        if (bytes)
-            obj->bytes(*bytes);
-    } else {
-        throw Exception("unrecognized execution action \"" + action + "\" where id=" + boost::lexical_cast<std::string>(*id));
-    }
+    DatabaseAccess::fromDatabase(db, obj, id);
 }
 
 static void
@@ -564,168 +407,7 @@ updateDb(const Database::Ptr &db, ExecutionEventId id, const ExecutionEvent::Ptr
     ASSERT_not_null(db);
     ASSERT_require(id);
     ASSERT_not_null(obj);
-
-    Sawyer::Database::Statement stmt;
-    if (*db->connection().stmt("select count(*) from execution_events where id = ?id").bind("id", *id).get<size_t>()) {
-        stmt = db->connection().stmt("update execution_events set"
-                                     "  test_case = ?test_case, "
-                                     "  location_primary = ?location_primary,"
-                                     "  location_secondary = ?location_secondary,"
-                                     "  instruction_pointer = ?instruction_pointer,"
-                                     "  name = ?name,"
-                                     "  input_type = ?input_type,"
-                                     "  input_variable = ?input_variable,"
-                                     "  input_i1 = ?input_i1,"
-                                     "  input_i2 = ?input_i2,"
-                                     "  action_type = ?action_type,"
-                                     "  start_va = ?start_va,"
-                                     "  scalar = ?scalar,"
-                                     "  bytes = ?bytes,"
-                                     "  symbolic = ?symbolic,"
-                                     "  location_when = ?location_when"
-                                     " where id = ?id");
-    } else {
-        std::string ts = obj->timestamp().empty() ? timestamp() : obj->timestamp();
-        obj->timestamp(ts);
-        stmt = db->connection().stmt("insert into execution_events ("
-                                     " id, created_ts, test_suite,"
-                                     " test_case, location_primary, location_secondary, instruction_pointer, name,"
-                                     " input_type, input_variable, input_i1, input_i2,"
-                                     " action_type, start_va, scalar, bytes, symbolic, location_when"
-                                     ") values ("
-                                     " ?id, ?created_ts, ?test_suite,"
-                                     " ?test_case, ?location_primary, ?location_secondary, ?instruction_pointer, ?name,"
-                                     " ?input_type, ?input_variable, ?input_i1, ?input_i2,"
-                                     " ?action_type, ?start_va, ?scalar, ?bytes, ?symbolic, ?location_when"
-                                     ")")
-               .bind("created_ts", ts)
-               .bind("test_suite", *db->id(db->testSuite()));
-    }
-
-    int when = -1;
-    switch (obj->location().when()) {
-        case When::PRE:
-            when = 0;
-            break;
-        case When::POST:
-            when = 1;
-            break;
-    }
-    ASSERT_forbid(-1 == when);
-
-    stmt
-        .bind("id", *id)
-        .bind("test_case", *db->id(obj->testCase(), Update::YES))
-        .bind("location_primary", obj->location().primary())
-        .bind("location_secondary", obj->location().secondary())
-        .bind("location_when", when)
-        .bind("instruction_pointer", obj->instructionPointer())
-        .bind("name", obj->name())
-        .bind("input_i1", obj->inputI1())
-        .bind("input_i2", obj->inputI2());
-
-    switch (obj->inputType()) {
-        case InputType::NONE:
-            stmt.bind("input_type", "none");
-            break;
-        case InputType::PROGRAM_ARGUMENT_COUNT:
-            stmt.bind("input_type", "argc");
-            break;
-        case InputType::PROGRAM_ARGUMENT:
-            stmt.bind("input_type", "argv");
-            break;
-        case InputType::ENVIRONMENT:
-            stmt.bind("input_type", "environment");
-            break;
-        case InputType::SYSTEM_CALL_RETVAL:
-            stmt.bind("input_type", "syscall-ret");
-            break;
-        case InputType::SHARED_MEMORY_READ:
-            stmt.bind("input_type", "shared-memory-read");
-            break;
-    }
-
-    if (SymbolicExpr::Ptr var = obj->inputVariable()) {
-        std::ostringstream ss;
-        {
-            boost::archive::binary_oarchive archive(ss);
-            archive <<var;
-        }
-        stmt.bind("input_variable", ss.str());
-    } else {
-        stmt.bind("input_variable", Sawyer::Nothing());
-    }
-
-    if (SymbolicExpr::Ptr symbolic = obj->symbolic()) {
-        std::ostringstream ss;
-        {
-            boost::archive::binary_oarchive archive(ss);
-            archive <<symbolic;
-        }
-        stmt.bind("symbolic", ss.str());
-    } else {
-        stmt.bind("symbolic", Sawyer::Nothing());
-    }
-
-    switch (obj->actionType()) {
-        case ExecutionEvent::Action::NONE:
-            stmt.bind("action_type", "none");
-            stmt.bind("start_va", Sawyer::Nothing());
-            stmt.bind("scalar", Sawyer::Nothing());
-            stmt.bind("bytes", Sawyer::Nothing());
-            break;
-        case ExecutionEvent::Action::MAP_MEMORY:
-            stmt.bind("action_type", "map_memory");
-            stmt.bind("start_va", obj->memoryLocation().least());
-            stmt.bind("scalar", obj->memoryLocation().size());
-            stmt.bind("bytes", obj->bytes());
-            break;
-        case ExecutionEvent::Action::UNMAP_MEMORY:
-            stmt.bind("action_type", "unmap_memory");
-            stmt.bind("start_va", obj->memoryLocation().least());
-            stmt.bind("scalar", obj->memoryLocation().size());
-            stmt.bind("bytes", Sawyer::Nothing());
-            break;
-        case ExecutionEvent::Action::WRITE_MEMORY:
-            stmt.bind("action_type", "write_memory");
-            stmt.bind("start_va", obj->memoryLocation().least());
-            stmt.bind("scalar", obj->memoryLocation().size());
-            ASSERT_require(obj->bytes().size() == obj->memoryLocation().size());
-            stmt.bind("bytes", obj->bytes());
-            break;
-        case ExecutionEvent::Action::HASH_MEMORY:
-            stmt.bind("action_type", "hash_memory");
-            stmt.bind("start_va", obj->memoryLocation().least());
-            stmt.bind("scalar", obj->memoryLocation().size());
-            stmt.bind("bytes", obj->bytes());
-            break;
-        case ExecutionEvent::Action::WRITE_REGISTER:
-            stmt.bind("action_type", "write_register");
-            stmt.bind("start_va", Sawyer::Nothing());
-            stmt.bind("scalar", obj->scalar());
-            stmt.bind("bytes", obj->bytes());
-            break;
-        case ExecutionEvent::Action::RESTORE_REGISTERS:
-            stmt.bind("action_type", "restore_registers");
-            stmt.bind("start_va", Sawyer::Nothing());
-            stmt.bind("scalar", Sawyer::Nothing());
-            stmt.bind("bytes", obj->bytes());
-            break;
-        case ExecutionEvent::Action::OS_SYSCALL:
-            stmt.bind("action_type", "os_syscall");
-            stmt.bind("start_va", Sawyer::Nothing());
-            stmt.bind("scalar", obj->scalar());
-            stmt.bind("bytes", obj->bytes());
-            break;
-        case ExecutionEvent::Action::OS_SHM_READ:
-            stmt.bind("action_type", "os_shm_read");
-            stmt.bind("start_va", obj->memoryLocation().least());
-            stmt.bind("scalar", obj->memoryLocation().size());
-            stmt.bind("bytes", obj->bytes());
-            break;
-    }
-
-    stmt.run();
+    DatabaseAccess::toDatabase(db, obj, id);
 }
 
 static void
@@ -874,6 +556,17 @@ Database::create(const std::string &url) {
 Database::Ptr
 Database::create(const std::string &url, const std::string &testSuiteName) {
     return create(url, Sawyer::Optional<std::string>(testSuiteName));
+}
+
+// class method
+std::string
+Database::timestamp() {
+    time_t now = time(NULL);
+    struct tm tm;
+    gmtime_r(&now, &tm);
+    return (boost::format("%04d-%02d-%02d %02d:%02d:%02d")
+            % (tm.tm_year+1900) % (tm.tm_mon+1) % tm.tm_mday
+            % tm.tm_hour % tm.tm_min % tm.tm_sec).str();
 }
 
 std::vector<TestSuiteId>

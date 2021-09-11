@@ -427,6 +427,9 @@ public:
     */
    bool hasUntested();
 
+    /** Time stamp string. */
+    static std::string timestamp();
+
 private:
     static Ptr create(const std::string &url, const Sawyer::Optional<std::string> &testSuiteName);
 };

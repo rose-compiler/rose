@@ -5,6 +5,7 @@
 
 #include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
+#include <Rose/BinaryAnalysis/Concolic/InputVariables.h>
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
@@ -144,7 +145,7 @@ ConcolicExecutor::makeDispatcher(const Architecture::Ptr &process) {
 
     Emulation::RiscOperatorsPtr ops =
         Emulation::RiscOperators::instance(settings_.emulationSettings, database(), testCase(), partitioner(), process,
-                                           inputVariables_, Emulation::SValue::instance(), solver());
+                                           Emulation::SValue::instance(), solver());
 
     Emulation::DispatcherPtr cpu;
     if (settings_.traceSemantics) {
@@ -401,7 +402,7 @@ ConcolicExecutor::handleBranch(SgAsmInstruction *insn) {
                 if (debug) {
                     debug <<"conditions are satisfied when:\n";
                     BOOST_FOREACH (const std::string &varName, solver()->evidenceNames()) {
-                        ExecutionEvent::Ptr inputEvent = inputVariables_.get(varName);
+                        ExecutionEvent::Ptr inputEvent = ops->inputVariables()->event(varName);
                         ASSERT_not_null(inputEvent);
                         debug <<"  " <<inputEvent->name() <<" (" <<varName <<") = ";
                         if (SymbolicExpr::Ptr val = solver()->evidenceForName(varName)) {
@@ -518,7 +519,6 @@ ConcolicExecutor::generateTestCase(const BS::RiscOperatorsPtr &ops_, const Symbo
     ASSERT_require(oldTestCaseId);
     ASSERT_not_null(solver());                          // assertions must have been checked and satisfiable
 
-
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     Sawyer::Message::Stream error(mlog[ERROR]);
     SAWYER_MESG(debug) <<"generating new test case...\n";
@@ -558,7 +558,7 @@ ConcolicExecutor::generateTestCase(const BS::RiscOperatorsPtr &ops_, const Symbo
     std::vector<std::string> argv = oldTestCase->args();
     for (std::string &arg: argv)
         arg += '\0';
-    size_t argc = argv.size();
+    SymbolicExpr::Ptr argc = SymbolicExpr::makeIntegerConstant(32, argv.size());
     std::vector<std::string> env;
     for (const EnvValue &pair: oldTestCase->env())
         env.push_back(pair.first + "=" + pair.second);
@@ -569,15 +569,15 @@ ConcolicExecutor::generateTestCase(const BS::RiscOperatorsPtr &ops_, const Symbo
     std::vector<ExecutionEvent::Ptr> modifiedEvents;
     bool hadError = false;
     for (const std::string &solverVar: solver()->evidenceNames()) {
-        SymbolicExpr::Ptr solverValue = solver()->evidenceForName(solverVar);
-        ASSERT_not_null(solverValue);
-        ExecutionEvent::Ptr parentEvent = inputVariables_.get(solverVar);
+        SymbolicExpr::Ptr newValue = solver()->evidenceForName(solverVar);
+        ASSERT_not_null(newValue);
+        ExecutionEvent::Ptr parentEvent = ops->inputVariables()->event(solverVar);
         if (!parentEvent) {
             error <<"solver variable \"" <<solverVar <<"\" doesn't correspond to any input event\n";
             hadError = true;
             continue;
         }
-        if (!solverValue->isIntegerConstant()) {
+        if (!newValue->isIntegerConstant()) {
             error <<"solver variable \"" <<solverVar <<"\" corresponding to \"" <<parentEvent->name() <<"\" is not an integer\n";
             hadError = true;
             continue;
@@ -591,18 +591,14 @@ ConcolicExecutor::generateTestCase(const BS::RiscOperatorsPtr &ops_, const Symbo
             case InputType::NONE:
                 ASSERT_not_reachable("handled above");
 
-            case InputType::PROGRAM_ARGUMENT_COUNT: {
-                ASSERT_require(32 == solverValue->nBits());
+            case InputType::ARGC: {
+                ASSERT_require(32 == newValue->nBits());
                 ASSERT_require(ops->currentState()->memoryState()->get_byteOrder() == ByteOrder::ORDER_LSB);
-                ASSERT_require(childEvent->actionType() == ExecutionEvent::Action::WRITE_MEMORY);
-                uint32_t newValue = solverValue->toUnsigned().get();
-                if (argc != newValue) {
-                    std::vector<uint8_t> bytes;
-                    for (size_t i = 0; i < 4; ++i)
-                        bytes.push_back(BitOps::bits(newValue, i*8, i*8+7));
-                    childEvent->bytes(bytes);
+                ASSERT_require(childEvent->action() == ExecutionEvent::Action::MEMORY_WRITE);
+                childEvent->value(newValue);
+                if (!newValue->toUnsigned().isEqual(parentEvent->value()->toUnsigned())) {
                     modifiedEvents.push_back(childEvent);
-                    SAWYER_MESG(debug) <<"  adjusting " <<childEvent->name() <<" from " <<argc <<" to " <<newValue <<"\n";
+                    SAWYER_MESG(debug) <<"  adjusting " <<childEvent->name() <<" from " <<*argc <<" to " <<*newValue <<"\n";
                     argc = newValue;
                 } else {
                     SAWYER_MESG(debug) <<"  no adjustment necessary for " <<childEvent->name() <<"\n";
@@ -610,86 +606,70 @@ ConcolicExecutor::generateTestCase(const BS::RiscOperatorsPtr &ops_, const Symbo
                 break;
             }
 
-            case InputType::PROGRAM_ARGUMENT: {
-                ASSERT_require(8 == solverValue->nBits());
-                ASSERT_require(childEvent->actionType() == ExecutionEvent::Action::WRITE_MEMORY);
-                uint8_t newValue = solverValue->toUnsigned().get();
-                size_t i = childEvent->inputI1();
-                size_t j = childEvent->inputI2();
-                ASSERT_require(i < argv.size());
-                ASSERT_require(j < argv[i].size());
-                if (argv[i][j] != newValue) {
-                    std::vector<uint8_t> bytes{newValue};
-                    childEvent->bytes(bytes);
+            case InputType::ARGV: {
+                ASSERT_require(8 == newValue->nBits());
+                ASSERT_require(childEvent->action() == ExecutionEvent::Action::MEMORY_WRITE);
+                uint8_t byte = newValue->toUnsigned().get();
+                const std::pair<size_t, size_t> indices = childEvent->inputIndices();
+                ASSERT_require(indices.first < argv.size());
+                ASSERT_require(indices.second < argv[indices.first].size());
+                if (argv[indices.first][indices.second] != byte) {
+                    childEvent->value(newValue);
                     modifiedEvents.push_back(childEvent);
-                    SAWYER_MESG(debug) <<"  adjusting " <<childEvent->name() <<" from '" <<StringUtility::cEscape(argv[i][j]) <<"'"
-                                       <<" to '" <<StringUtility::cEscape(newValue) <<"'\n";
-                    argv[i][j] = newValue;
+                    SAWYER_MESG(debug) <<"  adjusting " <<childEvent->name() <<" from '"
+                                       <<StringUtility::cEscape(argv[indices.first][indices.second]) <<"'"
+                                       <<" to '" <<StringUtility::cEscape(byte) <<"'\n";
+                    argv[indices.first][indices.second] = byte;
                 } else {
                     SAWYER_MESG(debug) <<"  no adjustment necessary for " <<childEvent->name() <<"\n";
                 }
                 break;
             }
 
-            case InputType::ENVIRONMENT: {
-                ASSERT_require(8 == solverValue->nBits());
-                ASSERT_require(childEvent->actionType() == ExecutionEvent::Action::WRITE_MEMORY);
-                uint8_t newValue = solverValue->toUnsigned().get();
-                size_t i = childEvent->inputI1();
-                size_t j = childEvent->inputI2();
-                ASSERT_require(i < env.size());
-                ASSERT_require(j < env[i].size());
-                if (env[i][j] != newValue) {
-                    std::vector<uint8_t> bytes{newValue};
-                    childEvent->bytes(bytes);
+            case InputType::ENVP: {
+                ASSERT_require(8 == newValue->nBits());
+                ASSERT_require(childEvent->action() == ExecutionEvent::Action::MEMORY_WRITE);
+                uint8_t byte = newValue->toUnsigned().get();
+                const std::pair<size_t, size_t> indices = childEvent->inputIndices();
+                ASSERT_require(indices.first < env.size());
+                ASSERT_require(indices.second < env[indices.first].size());
+                if (env[indices.first][indices.second] != byte) {
+                    childEvent->value(newValue);
                     modifiedEvents.push_back(childEvent);
-                    SAWYER_MESG(debug) <<"  adjusting " <<childEvent->name() <<" from '" <<StringUtility::cEscape(env[i][j]) <<"'"
-                                       <<" to '" <<StringUtility::cEscape(newValue) <<"'\n";
-                    env[i][j] = newValue;
+                    SAWYER_MESG(debug) <<"  adjusting " <<childEvent->name() <<" from '"
+                                       <<StringUtility::cEscape(env[indices.first][indices.second]) <<"'"
+                                       <<" to '" <<StringUtility::cEscape(byte) <<"'\n";
+                    env[indices.first][indices.second] = byte;
                 } else {
                     SAWYER_MESG(debug) <<"  no adjustment necessary for " <<childEvent->name() <<"\n";
                 }
                 break;
             }
 
-            case InputType::SYSTEM_CALL_RETVAL: {
-                ASSERT_require(childEvent->actionType() == ExecutionEvent::Action::WRITE_REGISTER);
-                uint64_t oldValue = childEvent->words()[0];
-                uint64_t newValue = solverValue->toUnsigned().get();
-                if (oldValue != newValue) {
-                    childEvent->words(std::vector<uint64_t>{newValue});
+            case InputType::SYSCALL_RET: {
+                ASSERT_require(childEvent->action() == ExecutionEvent::Action::REGISTER_WRITE);
+                SymbolicExpr::Ptr oldValue = childEvent->value();
+                if (!newValue->isEquivalentTo(oldValue)) {
+                    childEvent->value(newValue);
                     modifiedEvents.push_back(childEvent);
-                    SAWYER_MESG(debug) <<"  adjusting " <<childEvent->name() <<" from " <<oldValue <<" to " <<newValue <<"\n";
+                    SAWYER_MESG(debug) <<"  adjusting " <<childEvent->name() <<" from " <<*oldValue <<" to " <<*newValue <<"\n";
                 } else {
                     SAWYER_MESG(debug) <<"  no adjustment necessary for " <<childEvent->name() <<"\n";
                 }
                 break;
             }
 
-            case InputType::SHARED_MEMORY_READ: {
-                ASSERT_require(childEvent->actionType() == ExecutionEvent::Action::OS_SHM_READ);
-                uint64_t newValue = solverValue->toUnsigned().get();
-                std::vector<uint8_t> oldBytes = childEvent->bytes();
-                std::vector<uint8_t> newBytes;
-                for (size_t i = 0; i < solverValue->nBits()/8; ++i)
-                    newBytes.push_back((newValue >> (8*i)) & 0xff);
-                if (newBytes.size() != oldBytes.size() || !std::equal(newBytes.begin(), newBytes.end(), oldBytes.begin())) {
-                    childEvent->bytes(newBytes);
+            case InputType::SHMEM_READ: {
+                ASSERT_require(childEvent->action() == ExecutionEvent::Action::OS_SHARED_MEMORY);
+                SymbolicExpr::Ptr oldValue = childEvent->value();
+                if (!oldValue) {
+                    childEvent->value(newValue);
                     modifiedEvents.push_back(childEvent);
-
-                    if (debug) {
-                        std::string oldStr = "{";
-                        for (uint8_t byte: oldBytes)
-                            oldStr += (boost::format(" %02x") % (unsigned)byte).str();
-                        oldStr += " }";
-
-                        std::string newStr = "{";
-                        for (uint8_t byte: newBytes)
-                            newStr += (boost::format(" %02x") % (unsigned)byte).str();
-                        newStr += " }";
-
-                        debug <<"  adjusting " <<childEvent->name() <<" from " <<oldStr <<" to " <<newStr <<"\n";
-                    }
+                    SAWYER_MESG(debug) <<"  adjusting " <<childEvent->name() << " from nothing to " <<*newValue <<"\n";
+                } else if (!newValue->isEquivalentTo(oldValue)) {
+                    childEvent->value(newValue);
+                    modifiedEvents.push_back(childEvent);
+                    SAWYER_MESG(debug) <<"  adjusting " <<childEvent->name() << " from " <<*oldValue <<" to " <<*newValue <<"\n";
                 } else {
                     SAWYER_MESG(debug) <<"  no adjustment necessary for " <<childEvent->name() <<"\n";
                 }
@@ -699,11 +679,11 @@ ConcolicExecutor::generateTestCase(const BS::RiscOperatorsPtr &ops_, const Symbo
     }
 
     // Check that program arguments are reasonable. These should never fail if we've set up the SMT solver constraints correctly.
-    if (argc < argv.size()) {
-        ASSERT_require(argc >= 0);
-        argv.resize(argc);
-    } else if (argc > argv.size()) {
-        argv.resize(argc);
+    if (argc->toUnsigned().get() < argv.size()) {
+        ASSERT_require(argc->toUnsigned().get() >= 0);
+        argv.resize(argc->toUnsigned().get());
+    } else if (argc->toUnsigned().get() > argv.size()) {
+        argv.resize(argc->toUnsigned().get());
     }
     for (size_t i = 0; i < argv.size(); ++i) {
         // Remove trailing NULs.
@@ -759,7 +739,7 @@ ConcolicExecutor::generateTestCase(const BS::RiscOperatorsPtr &ops_, const Symbo
 
         saveSymbolicState(ops, newTestCaseId);
 
-        auto currentIpEvent = ExecutionEvent::instance(newTestCase,
+        auto currentIpEvent = ExecutionEvent::noAction(newTestCase,
                                                        ops->process()->nextEventLocation(When::POST),
                                                        childIp->toUnsigned().get());
         currentIpEvent->name("start of test case " + boost::lexical_cast<std::string>(*newTestCaseId));
@@ -830,11 +810,10 @@ namespace Emulation {
 
 RiscOperators::RiscOperators(const Settings &settings, const DatabasePtr &db, const TestCasePtr &testCase,
                              const Partitioner2::Partitioner &partitioner, const ArchitecturePtr &process,
-                             InputVariables &inputVariables, const InstructionSemantics2::BaseSemantics::StatePtr &state,
-                             const SmtSolverPtr &solver)
+                             const InstructionSemantics2::BaseSemantics::StatePtr &state, const SmtSolverPtr &solver)
     : Super(state, solver), REG_PATH(state->registerState()->registerDictionary()->findOrThrow("path")),
       settings_(settings), db_(db), testCase_(testCase), partitioner_(partitioner), process_(process),
-      inputVariables_(inputVariables), hadSystemCall_(false) {
+      hadSystemCall_(false) {
     ASSERT_not_null(db);
     ASSERT_not_null(testCase);
     ASSERT_not_null(process);
@@ -847,8 +826,7 @@ RiscOperators::RiscOperators(const Settings &settings, const DatabasePtr &db, co
 RiscOperatorsPtr
 RiscOperators::instance(const Settings &settings, const Database::Ptr &db, const TestCase::Ptr &testCase,
                         const P2::Partitioner &partitioner, const Architecture::Ptr &process,
-                        InputVariables &inputVariables, const BS::SValuePtr &protoval,
-                        const SmtSolver::Ptr &solver) {
+                        const BS::SValuePtr &protoval, const SmtSolver::Ptr &solver) {
     // Extend the register set with an additional Boolean register named "path"
     RegisterDictionary *regdict = new RegisterDictionary("Rose::BinaryAnalysis::Concolic");
     regdict->insert(partitioner.instructionProvider().registerDictionary());
@@ -860,7 +838,7 @@ RiscOperators::instance(const Settings &settings, const Database::Ptr &db, const
     MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
     memory->set_byteOrder(ByteOrder::ORDER_LSB);
     StatePtr state = State::instance(registers, memory);
-    RiscOperatorsPtr ops(new RiscOperators(settings, db, testCase, partitioner, process, inputVariables, state, solver));
+    RiscOperatorsPtr ops(new RiscOperators(settings, db, testCase, partitioner, process, state, solver));
     ASSERT_require(ops->REG_PATH == path);
     ops->writeRegister(path, ops->boolean_(true));
     return ops;
@@ -886,6 +864,12 @@ RiscOperators::testCase() const {
 Database::Ptr
 RiscOperators::database() const {
     return db_;
+}
+
+InputVariables::Ptr
+RiscOperators::inputVariables() const {
+    ASSERT_not_null(process_);
+    return process_->inputVariables();
 }
 
 const RegisterDictionary*
@@ -950,10 +934,10 @@ RiscOperators::writeRegister(RegisterDescriptor reg, const BS::SValue::Ptr &valu
         // adjust all the side effects of the instruction that read the byte from memory.
         SymbolicExpr::Ptr valueExpr = Emulation::SValue::promote(value)->get_expression();
         SAWYER_MESG(debug) <<"  register update for shared memory read: value = " <<*valueExpr <<"\n";
-        auto event = ExecutionEvent::instanceWriteRegister(process()->testCase(),
-                                                           process()->nextEventLocation(When::POST),
-                                                           currentInstruction()->get_address(), reg, valueExpr);
-        event->name("shm-to-reg");
+        auto event = ExecutionEvent::registerWrite(process()->testCase(), process()->nextEventLocation(When::POST),
+                                                   currentInstruction()->get_address(), reg, SymbolicExpr::Ptr(),
+                                                   SymbolicExpr::Ptr(), valueExpr);
+        event->name(hadSharedMemoryAccess()->name() + "_toreg");
         database()->save(event);
         SAWYER_MESG(debug) <<"    created " <<event->printableName(database()) <<"\n";
     }
@@ -1011,18 +995,18 @@ RiscOperators::peekMemory(RegisterDescriptor segreg, const BS::SValuePtr &addr,
 
 void
 RiscOperators::createInputVariables(const SmtSolver::Ptr &solver) {
-    process_->createInputVariables(inputVariables_, partitioner(), shared_from_this(), solver);
+    process_->createInputVariables(partitioner(), RiscOperators::promote(shared_from_this()), solver);
 }
 
 void
 RiscOperators::restoreInputVariables(const SmtSolver::Ptr &solver) {
-    process_->restoreInputVariables(inputVariables_, partitioner(), shared_from_this(), solver);
+    process_->restoreInputVariables(partitioner(), RiscOperators::promote(shared_from_this()), solver);
 }
 
 void
 RiscOperators::printInputVariables(std::ostream &out) const {
     out <<"input variables:\n";
-    inputVariables_.print(out, "  ");
+    process_->inputVariables()->print(out, "  ");
 }
 
 void

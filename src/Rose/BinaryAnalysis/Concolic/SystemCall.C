@@ -20,7 +20,7 @@ namespace Concolic {
 SyscallContext::SyscallContext(const Architecture::Ptr &architecture, const ExecutionEvent::Ptr &syscallEvent,
                                const std::vector<ExecutionEvent::Ptr> &relatedEvents)
     : phase(ConcolicPhase::REPLAY), architecture(architecture), ip(syscallEvent->instructionPointer()),
-      argsConcrete(syscallEvent->words()), syscallEvent(syscallEvent), relatedEvents(relatedEvents) {
+      argsConcrete(syscallEvent->syscallArguments()), syscallEvent(syscallEvent), relatedEvents(relatedEvents) {
     ASSERT_not_null(architecture);
     ASSERT_not_null(syscallEvent);
 }
@@ -28,7 +28,7 @@ SyscallContext::SyscallContext(const Architecture::Ptr &architecture, const Exec
 SyscallContext::SyscallContext(const Architecture::Ptr &architecture, const Emulation::RiscOperators::Ptr &ops,
                                const ExecutionEvent::Ptr &syscallEvent)
     : phase(ConcolicPhase::EMULATION), architecture(architecture), ops(ops), ip(syscallEvent->instructionPointer()),
-      argsConcrete(syscallEvent->words()), syscallEvent(syscallEvent) {
+      argsConcrete(syscallEvent->syscallArguments()), syscallEvent(syscallEvent) {
     ASSERT_not_null(architecture);
     ASSERT_not_null(ops);
     ASSERT_not_null(syscallEvent);
