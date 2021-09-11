@@ -1071,12 +1071,17 @@ namespace CodeThorn {
     return elistify(createEState(edge.target(),cs,newPState,cset));
   }
 
+
+  EState EStateTransferFunctions::cloneEState(const EState* estate) {
+    return *estate;
+  }
+  
   // used for top-level evaluation
   list<EState> EStateTransferFunctions::transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate) {
     if(_analyzer->getOptionsRef().info.printTransferFunctionInfo) {
       printTransferFunctionInfo(TransferFunctionCode::IncDec,nextNodeToAnalyze2,edge,estate);
     }
-    EState currentEState=*estate;
+    EState currentEState=cloneEState(estate);
     CallString cs=estate->callString;
     SgNode* nextNodeToAnalyze3=SgNodeHelper::getUnaryOpChild(nextNodeToAnalyze2);
     VariableId var;
@@ -1104,8 +1109,6 @@ namespace CodeThorn {
 	logger[ERROR] <<"programmatic error in handling of inc/dec operators."<<endl;
 	exit(1);
       }
-      //newPState[var]=varVal;
-      // TODOREF
       writeToAnyMemoryLocation(estate.label(),&newPState,AbstractValue::createAddressOfVariable(var),newVarVal);
 
       list<EState> estateList;
