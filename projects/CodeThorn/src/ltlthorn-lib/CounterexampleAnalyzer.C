@@ -516,7 +516,7 @@ EStatePtrSet CounterexampleAnalyzer::addAllPrefixOutputStates(EStatePtrSet& star
 
 bool CounterexampleAnalyzer::isPrefixState(const EState* state) {
   boost::regex re("a(.)*");
-  const PState* pstate = state->pstate();
+  CodeThorn::PStatePtr pstate = state->pstate();
   AbstractValueSet varSet=pstate->getVariableIds();
   for (AbstractValueSet::iterator l=varSet.begin();l!=varSet.end();++l) {
     string varName=(*l).toLhsString(_analyzer->getVariableIdMapping());

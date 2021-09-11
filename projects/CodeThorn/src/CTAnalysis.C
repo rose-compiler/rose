@@ -1137,9 +1137,9 @@ list<pair<SgLabelStatement*,SgNode*> > CodeThorn::CTAnalysis::listOfLabeledAsser
 }
 
 const EState* CodeThorn::CTAnalysis::processCompleteNewOrExisting(const EState* es) {
-  const PState* ps=es->pstate();
+  PStatePtr ps=es->pstate();
   const ConstraintSet* cset=es->constraints();
-  const PState* ps2=pstateSet.processNewOrExisting(ps);
+  PStatePtr ps2=pstateSet.processNewOrExisting(ps);
   // TODO: ps2 check as below
   const ConstraintSet* cset2=constraintSetMaintainer.processNewOrExisting(cset);
   // TODO: cset2 check as below
@@ -1153,10 +1153,10 @@ const EState* CodeThorn::CTAnalysis::processCompleteNewOrExisting(const EState* 
   return es3;
 }
 
-const PState* CodeThorn::CTAnalysis::processNew(PState& s) {
+PStatePtr CodeThorn::CTAnalysis::processNew(PState& s) {
   return pstateSet.processNew(s);
 }
-const PState* CodeThorn::CTAnalysis::processNewOrExisting(PState& s) {
+PStatePtr CodeThorn::CTAnalysis::processNewOrExisting(PState& s) {
   return pstateSet.processNewOrExisting(s);
 }
 
@@ -1282,7 +1282,7 @@ EState CodeThorn::CTAnalysis::createInitialEState(SgProject* root, Label slab) {
     }
   }
 
-  const PState* initialPStateStored=processNewOrExisting(initialPState); // might reuse another pstate when initializing in level 1
+  PStatePtr initialPStateStored=processNewOrExisting(initialPState); // might reuse another pstate when initializing in level 1
   ROSE_ASSERT(initialPStateStored);
   SAWYER_MESG(logger[TRACE])<< "INIT: initial pstate(stored): "<<initialPStateStored->toString(getVariableIdMapping())<<endl;
   //ROSE_ASSERT(cfanalyzer);
@@ -1606,7 +1606,7 @@ void CodeThorn::CTAnalysis::resetAnalysis() {
   pstateSet = newPStateSet;
   estateSet.max_load_factor(0.7);
   pstateSet.max_load_factor(0.7);
-  const PState* processedPState=processNew(startPState);
+  PStatePtr processedPState=processNew(startPState);
   ROSE_ASSERT(processedPState);
   startEState.setPState(processedPState);
   const EState* processedEState=processNew(startEState);

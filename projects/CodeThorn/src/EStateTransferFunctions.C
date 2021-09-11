@@ -120,7 +120,7 @@ namespace CodeThorn {
       ConstraintSet cset0;
       cset=cset0;
     }
-    const PState* newPStatePtr=_analyzer->processNewOrExisting(pstate);
+    PStatePtr newPStatePtr=_analyzer->processNewOrExisting(pstate);
     const ConstraintSet* newConstraintSetPtr=_analyzer->processNewOrExisting(cset);
     EState estate=EState(label,newPStatePtr,newConstraintSetPtr);
     estate.io.recordNone();
@@ -2742,7 +2742,7 @@ namespace CodeThorn {
     } else {
       if(SgVarRefExp* varRefExp=isSgVarRefExp(arrayExpr)) {
 	AbstractValue arrayPtrValue=arrayExprResult.result;
-	const PState* const_pstate=estate.pstate();
+	PStatePtr const_pstate=estate.pstate();
 	PState pstate2=*const_pstate; // also removes constness
 	VariableId arrayVarId=_variableIdMapping->variableId(varRefExp);
 	// two cases
@@ -3307,7 +3307,7 @@ namespace CodeThorn {
     SAWYER_MESG(logger[TRACE])<<"evalLValueVarRefExp: "<<node->unparseToString()<<" label:"<<estate.label().toString()<<endl;
     SingleEvalResult res;
     res.init(estate,AbstractValue::createBot());
-    const PState* pstate=estate.pstate();
+    PStatePtr pstate=estate.pstate();
     VariableId varId=_variableIdMapping->variableId(node);
     ROSE_ASSERT(varId.isValid());
     if(isMemberVariable(varId)) {
@@ -3412,7 +3412,7 @@ namespace CodeThorn {
     SingleEvalResult res;
     res.init(estate,AbstractValue::createTop());
 
-    const PState* pstate=estate.pstate();
+    PStatePtr pstate=estate.pstate();
     ROSE_ASSERT(pstate);
     VariableId varId=_variableIdMapping->variableId(node);
     if(!varId.isValid()) {
@@ -3950,7 +3950,7 @@ namespace CodeThorn {
     return val;
   }
 
-  AbstractValue EStateTransferFunctions::readFromMemoryLocation(Label lab, const PState* pstate, AbstractValue memLoc) {
+  AbstractValue EStateTransferFunctions::readFromMemoryLocation(Label lab, PStatePtr pstate, AbstractValue memLoc) {
     memLoc=conditionallyApplyArrayAbstraction(memLoc);
     
     // inspect memory location here
@@ -4009,7 +4009,7 @@ namespace CodeThorn {
     SAWYER_MESG(logger[TRACE])<<"EStateTransferFunctions::writeToMemoryLocation1:done"<<endl;
   }
 
-  AbstractValue EStateTransferFunctions::readFromReferenceMemoryLocation(Label lab, const PState* pstate, AbstractValue memLoc) {
+  AbstractValue EStateTransferFunctions::readFromReferenceMemoryLocation(Label lab, PStatePtr pstate, AbstractValue memLoc) {
     AbstractValue referedMemLoc=readFromMemoryLocation(lab,pstate,memLoc);
     return readFromMemoryLocation(lab,pstate,referedMemLoc);
   }
@@ -4019,7 +4019,7 @@ namespace CodeThorn {
     writeToMemoryLocation(lab,pstate,referedMemLoc,newValue);
   }
 
-  AbstractValue EStateTransferFunctions::readFromAnyMemoryLocation(Label lab, const PState* pstate, AbstractValue memLoc) {
+  AbstractValue EStateTransferFunctions::readFromAnyMemoryLocation(Label lab, PStatePtr pstate, AbstractValue memLoc) {
     SAWYER_MESG(logger[TRACE])<<"readFromAnyMemoryLocation: "<<memLoc.toString()<<"=>"<<memLoc.isReferenceVariableAddress()<<endl;
     if(memLoc.isReferenceVariableAddress())
       return readFromReferenceMemoryLocation(lab,pstate,memLoc);

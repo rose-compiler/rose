@@ -290,7 +290,7 @@ namespace CodeThorn {
     virtual void setPreInfo(Label lab, CallString context, Lattice*);
     virtual void setPostInfo(Label lab, CallString context, Lattice*);
 
-    void initializeSummaryStates(const PState* initialPStateStored, const ConstraintSet* emptycsetstored);
+    void initializeSummaryStates(PStatePtr initialPStateStored, const ConstraintSet* emptycsetstored);
     const CodeThorn::EState* getSummaryState(CodeThorn::Label lab, CallString cs);
     void setSummaryState(CodeThorn::Label lab, CallString cs, CodeThorn::EState const* estate);
     std::string programPositionInfo(CodeThorn::Label);
@@ -345,8 +345,8 @@ namespace CodeThorn {
     /*! if state exists in stateSet, a pointer to the existing state is returned otherwise
       a new state is entered into stateSet and a pointer to it is returned.
     */
-    const PState* processNew(PState& s);
-    const PState* processNewOrExisting(PState& s);
+    PStatePtr processNew(PState& s);
+    PStatePtr processNewOrExisting(PState& s);
     const EState* processNew(EState& s);
     const EState* processNewOrExisting(EState& s);
     const EState* processCompleteNewOrExisting(const EState* es);

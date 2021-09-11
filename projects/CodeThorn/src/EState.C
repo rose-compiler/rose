@@ -21,7 +21,7 @@ using namespace CodeThorn;
 string EState::predicateToString(VariableIdMapping* variableIdMapping) const {
   string separator=",";
   string pred;
-  const PState* ps=pstate();
+  PStatePtr ps=pstate();
   const ConstraintSet* cset=constraints(); 
   AbstractValueSet varIdSet=ps->getVariableIds();
   string s;
@@ -158,7 +158,7 @@ ConstraintSet EState::allInfoAsConstraints() const {
      if a variable is state(var)=const then it cannot have a constraint
      hence, we only need to add state(var)=const as var==const to the existing constraint set
   */
-  const PState* pstate=this->pstate();
+  PStatePtr pstate=this->pstate();
   for(PState::const_iterator j=pstate->begin();j!=pstate->end();++j) {
     AbstractValue varId=(*j).first;
     AbstractValue val=pstate->varValue(varId);
@@ -295,7 +295,7 @@ string EState::toHTML() const {
 }
 
 bool EState::isConst(VariableIdMapping* vim) const {
-  const PState* ps=pstate();
+  PStatePtr ps=pstate();
   const ConstraintSet* cs=constraints();
   ROSE_ASSERT(ps);
   ROSE_ASSERT(cs);
@@ -314,7 +314,7 @@ bool EState::isConst(VariableIdMapping* vim) const {
 // TODO: remove this function
 bool EState::isRersTopified(VariableIdMapping* vim) const {
   boost::regex re("a(.)*");
-  const PState* pstate = this->pstate();
+  PStatePtr pstate = this->pstate();
   AbstractValueSet varSet=pstate->getVariableIds();
   for (AbstractValueSet::iterator l=varSet.begin();l!=varSet.end();++l) {
     string varName=(*l).toLhsString(vim);

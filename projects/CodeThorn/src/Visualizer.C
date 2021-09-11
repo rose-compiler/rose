@@ -53,7 +53,7 @@ void AssertionExtractor::setEStateSet(EStateSet* x) { estateSet=x; }
 void AssertionExtractor::computeLabelVectorOfEStates() {
   for(EStateSet::iterator i=estateSet->begin();i!=estateSet->end();++i) {
     Label lab=(*i)->label();
-    const PState* p=(*i)->pstate();
+    PStatePtr p=(*i)->pstate();
     if(assertions[lab.getId()]!="")
       assertions[lab.getId()]+="||";
     assertions[lab.getId()]+="(";
@@ -200,7 +200,7 @@ string Visualizer::cfasToDotSubgraphs(vector<Flow*> cfas) {
   return ss.str();
 }
 
-string Visualizer::pstateToString(const PState* pstate) {
+string Visualizer::pstateToString(PStatePtr pstate) {
   stringstream ss;
   bool pstateAddressSeparator=false;
   if((tg1&&args.getBool("tg1-pstate-address"))||(tg2&&args.getBool("tg2-pstate-address"))) {
@@ -245,7 +245,7 @@ string Visualizer::estateToString(const EState* estate) {
   return ss.str();
 }
 
-string Visualizer::pstateToDotString(const PState* pstate) {
+string Visualizer::pstateToDotString(PStatePtr pstate) {
   return string("\""+SgNodeHelper::doubleQuotedEscapedString(pstateToString(pstate))+"\"");
 }
 
