@@ -64,8 +64,6 @@ bool CodeThorn::operator<(const EState& e1, const EState& e2) {
     return (e1.label()<e2.label());
   if(e1.pstate()!=e2.pstate())
     return (e1.pstate()<e2.pstate());
-  //if(e1.constraints()!=e2.constraints())
-  //  return (e1.constraints()<e2.constraints());
   if(e1.io!=e2.io) {
     return e1.io<e2.io;
   }
@@ -77,8 +75,6 @@ bool CodeThorn::operator<(const EState& e1, const EState& e2) {
     return (e1.label()<e2.label());
   if(e1.pstate()!=e2.pstate())
     return (e1.pstate()<e2.pstate());
-  //if(e1.constraints()!=e2.constraints())
-  //  return (e1.constraints()<e2.constraints());
   return e1.io<e2.io;
 }
 #endif
@@ -86,7 +82,6 @@ bool CodeThorn::operator<(const EState& e1, const EState& e2) {
 bool CodeThorn::operator==(const EState& c1, const EState& c2) {
   return (c1.label()==c2.label())
     && (c1.pstate()==c2.pstate())
-    //&& (c1.constraints()==c2.constraints())
     && (c1.io==c2.io)
     //#ifdef USE_CALLSTRINGS
     && (c1.callString==c2.callString)
@@ -148,13 +143,8 @@ CodeThorn::AbstractValue EState::determineUniqueIOValue() const {
       AbstractValue varVal=pstate2.readFromMemoryLocation(varId);
       return varVal;
     }
-    // case 2: check constraint if var is top
-    //if(_pstate->varIsTop(varId)) {
-    //  return constraints()->varAbstractValue(varId);
-    //} else {
-      cerr<<"Error: determineUniqueIOValue:: could not determine constant value."<<endl;
-      exit(1);
-      //}
+    cerr<<"Error: determineUniqueIOValue:: could not determine constant value."<<endl;
+    exit(1);
   }
   if(io.op==InputOutput::STDOUT_CONST||io.op==InputOutput::STDERR_CONST) {
     value=io.val;
@@ -204,11 +194,6 @@ string EState::toString() const {
     ss <<pstate()->toString();
   else
     ss <<"NULL";
-  //if(constraints()) {
-  //  ss <<", constraints="<<constraints()->toString();
-  //} else {
-  //  ss <<", NULL";
-  //}
   ss <<", io="<<io.toString();
   ss<<")";
   return ss.str();
@@ -227,11 +212,6 @@ string EState::toString(VariableIdMapping* vim) const {
     ss <<pstate()->toString(vim);
   else
     ss <<"NULL";
-  //if(constraints()) {
-  //  ss <<", constraints="<<constraints()->toString(vim);
-  //} else {
-  //  ss <<", NULL";
-  //}
   ss <<", io="<<io.toString(); // TODO
   ss<<")";
   return ss.str();
@@ -250,11 +230,6 @@ string EState::toHTML() const {
     ss <<pstate()->toString();
   else
     ss <<"NULL";
-  //if(constraints()) {
-  //  ss <<","<<nl<<" constraints="<<constraints()->toString();
-  //} else {
-  //  ss <<","<<nl<<" NULL";
-  //}
   ss <<","<<nl<<" io="<<io.toString();
   ss<<")"<<nl;
   return ss.str();
@@ -262,7 +237,6 @@ string EState::toHTML() const {
 
 bool EState::isConst(VariableIdMapping* vim) const {
   PStatePtr ps=pstate();
-  //const ConstraintSet* cs=constraints();
   ROSE_ASSERT(ps);
   //ROSE_ASSERT(cs);
   for(PState::const_iterator i=ps->begin();i!=ps->end();++i) {
@@ -339,7 +313,6 @@ std::string EState::labelString() const {
 
 bool EState::isApproximatedBy(const EState* other) const {
   ROSE_ASSERT(label()==other->label()); // ensure same location
-  //ROSE_ASSERT(constraints()==other->constraints()); // pointer equality
   if(callString!=other->callString) {
     return false;
   }
@@ -373,7 +346,6 @@ void EState::combine(PropertyState& other0) {
   }
 
   ROSE_ASSERT(label()==other.label());
-  //ROSE_ASSERT(constraints()==other.constraints()); // pointer equality
   if(callString!=other.callString) {
     cerr<<"combining estates with different callstrings at label:"<<this->label().toString()<<endl;
     cerr<<"cs1: "<<this->callString.toString()<<endl;

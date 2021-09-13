@@ -1158,10 +1158,6 @@ const EState* CodeThorn::CTAnalysis::processNewOrExisting(EState& estate) {
   return estateSet.processNewOrExisting(estate);
 }
 
-const ConstraintSet* CodeThorn::CTAnalysis::processNewOrExisting(ConstraintSet& cset) {
-  return constraintSetMaintainer.processNewOrExisting(cset);
-}
-
 EStateSet::ProcessingResult CodeThorn::CTAnalysis::process(EState& estate) {
   return estateSet.process(estate);
 }
@@ -1818,7 +1814,6 @@ CodeThorn::InterFlow* CodeThorn::CTAnalysis::getInterFlow() {
 CodeThorn::EStateSet* CodeThorn::CTAnalysis::getEStateSet() { return &estateSet; }
 CodeThorn::PStateSet* CodeThorn::CTAnalysis::getPStateSet() { return &pstateSet; }
 TransitionGraph* CodeThorn::CTAnalysis::getTransitionGraph() { return &transitionGraph; }
-ConstraintSetMaintainer* CodeThorn::CTAnalysis::getConstraintSetMaintainer() { return &constraintSetMaintainer; }
 std::list<CodeThorn::FailedAssertion> CodeThorn::CTAnalysis::getFirstAssertionOccurences(){return _firstAssertionOccurences;}
 
 void CodeThorn::CTAnalysis::setCommandLineOptions(vector<string> clOptions) {

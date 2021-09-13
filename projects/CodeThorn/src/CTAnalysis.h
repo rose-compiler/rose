@@ -170,7 +170,6 @@ namespace CodeThorn {
     CodeThorn::PStateSet* getPStateSet();
     EStateSet* getEStateSet();
     TransitionGraph* getTransitionGraph();
-    ConstraintSetMaintainer* getConstraintSetMaintainer();
     std::list<FailedAssertion> getFirstAssertionOccurences();
 
     void setSkipUnknownFunctionCalls(bool defer);
@@ -353,7 +352,6 @@ namespace CodeThorn {
     void topifyVariable(PState& pstate, AbstractValue varId);
     bool isTopified(EState& s);
     EStateSet::ProcessingResult process(EState& s);
-    const ConstraintSet* processNewOrExisting(ConstraintSet& cset);
 
     void recordTransition(const EState* sourceEState, Edge e, const EState* targetEState);
 
@@ -419,7 +417,6 @@ namespace CodeThorn {
 
     EStateSet estateSet;
     PStateSet pstateSet;
-    ConstraintSetMaintainer constraintSetMaintainer;
     TransitionGraph transitionGraph;
     TransitionGraph backupTransitionGraph;
     TransitionGraphReducer _stgReducer;
@@ -501,7 +498,6 @@ namespace CodeThorn {
     TopologicalSort* _topologicalSort=nullptr;
     
     const CodeThorn::PState* _initialPStateStored=nullptr;
-    const CodeThorn::ConstraintSet* _emptycsetstored=nullptr;
     CodeThorn::EStateTransferFunctions* _estateTransferFunctions=nullptr;
 
   }; // end of class CTAnalysis

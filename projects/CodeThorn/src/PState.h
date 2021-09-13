@@ -8,7 +8,6 @@
 #include "Labeler.h"
 #include "AbstractValue.h"
 #include "VariableIdMapping.h"
-#include "ConstraintRepresentation.h"
 #include "Lattice.h"
 
 #define NO_STATE -3
@@ -18,11 +17,7 @@ typedef int PStateId;
 #include "HashFun.h"
 #include "HSetMaintainer.h"
 
-using CodeThorn::ConstraintSet;
-using CodeThorn::ConstraintSetMaintainer;
 using CodeThorn::Edge;
-
-//using namespace CodeThorn;
 
 namespace CodeThorn {
 
