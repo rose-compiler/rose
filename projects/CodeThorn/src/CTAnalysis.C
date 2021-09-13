@@ -64,7 +64,7 @@ CodeThorn::CTAnalysis::CTAnalysis():
   }
   estateSet.max_load_factor(0.7);
   pstateSet.max_load_factor(0.7);
-  constraintSetMaintainer.max_load_factor(0.7);
+  //constraintSetMaintainer.max_load_factor(0.7);
   resetInputSequenceIterator();
   ROSE_ASSERT(_estateTransferFunctions==nullptr);
   _estateTransferFunctions=new EStateTransferFunctions();
@@ -793,7 +793,7 @@ void CodeThorn::CTAnalysis::printStatusMessage(bool forceDisplay) {
        <<color("white")<<"/"
        <<color("blue")<<transitionGraphSize
        <<color("white")<<"/"
-       <<color("yellow")<<constraintSetMaintainerSize
+       <<color("yellow")<<constraintSetMaintainerSize<<":"<<constraintSetMaintainer.toString()
        <<color("white")<<"/"
        <<estateWorkListCurrentSize
        <<"/"<<getIterations()<<"-"<<getApproximatedIterations()
