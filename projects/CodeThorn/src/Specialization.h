@@ -65,13 +65,13 @@ class ConstReporter {
 
 class PStateConstReporter : public ConstReporter {
 public:
-  PStateConstReporter(const PState* pstate, VariableIdMapping* variableIdMapping);
+  PStateConstReporter(PStatePtr pstate, VariableIdMapping* variableIdMapping);
   bool isConst(SgNode* node);
   int getConstInt();
   VariableId getVariableId();
   SgVarRefExp* getVarRefExp();
 private:
-  const PState* _pstate;
+  PStatePtr _pstate;
   VariableIdMapping* _variableIdMapping;
   SgVarRefExp* _varRefExp;
 };
@@ -120,7 +120,7 @@ class Specialization {
   VariableId determineVariableIdToSpecialize(SgFunctionDefinition* funDef, int param, VariableIdMapping* variableIdMapping);
 
   // replaces each use of SgVarRefExp if the corresponding variableId in pstate is constant (with this constant)
-  int substituteVariablesWithConst(VariableIdMapping* variableIdMapping, const PState* pstate, SgNode *node);
+  int substituteVariablesWithConst(VariableIdMapping* variableIdMapping, PStatePtr pstate, SgNode *node);
 
   // replaces each use of a SgVarRefExp of variableId with constInt.
   int substituteVariablesWithConst(SgNode* node, VariableIdMapping* variableIdMapping, VariableId variableId, int constInt);

@@ -297,7 +297,7 @@ void DataRaceDetection::populateReadWriteDataIndex(LoopInfo& li, IndexToReadWrit
   for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
     const EState* estate=(*i).first;
     if (li.isInAssociatedLoop(estate)) {
-      const PState* pstate=estate->pstate();
+      PStatePtr pstate=estate->pstate();
       SgExpression* exp=(*i).second;
       IndexVector index = extractIndexVector(li, pstate);
       // check index and report unknown if negative (TODO: recompute negative indices)
@@ -314,7 +314,7 @@ void DataRaceDetection::populateReadWriteDataIndex(LoopInfo& li, IndexToReadWrit
 }
 
 
-IndexVector DataRaceDetection::extractIndexVector(LoopInfo& li, const PState* pstate) {
+IndexVector DataRaceDetection::extractIndexVector(LoopInfo& li, PStatePtr pstate) {
   IndexVector index;
   VariableId parVariable=li.iterationVarId;
   // use all vars for indexing or only outer+par loop variables

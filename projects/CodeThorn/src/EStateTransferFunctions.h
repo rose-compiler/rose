@@ -49,11 +49,11 @@ namespace CodeThorn {
   class ReadWriteListener {
   public:
     // result is value after reading from memLoc in pstate at label lab
-    virtual void readingFromMemoryLocation(Label lab, const PState* pstate, AbstractValue& memLoc, AbstractValue& result) {}
+    virtual void readingFromMemoryLocation(Label lab, PStatePtr pstate, AbstractValue& memLoc, AbstractValue& result) {}
     // pstate is state at label lab before writing newValue to
     // memLoc. (*pstate).writeToMemoryLocation(memloc,result) gives
     // state after write
-    virtual void writingToMemoryLocation(Label lab, const PState* pstate, AbstractValue& memLoc, AbstractValue& newValue) {}
+    virtual void writingToMemoryLocation(Label lab, PStatePtr pstate, AbstractValue& memLoc, AbstractValue& newValue) {}
     // evalResult.value() holds AbstractValue of boolean value
     virtual void trueFalseEdgeEvaluation(Edge edge, SingleEvalResult evalResult , const EState* estate) {}
     virtual void functionCallExternal(Edge edge, const EState* estate) {}
@@ -100,9 +100,9 @@ namespace CodeThorn {
 
     enum EvalMode { MODE_ADDRESS, MODE_VALUE, MODE_EMPTY_STATE };
 
-    EState createEState(Label label, CallString cs, PState pstate, ConstraintSet cset);
-    EState createEState(Label label, CallString cs, PState pstate, ConstraintSet cset, InputOutput io);
-    EState createEStateInternal(Label label, PState pstate, ConstraintSet cset);
+    EState createEState(Label label, CallString cs, PState pstate);
+    EState createEState(Label label, CallString cs, PState pstate, InputOutput io);
+    EState createEStateInternal(Label label, PState pstate);
 
     bool isApproximatedBy(const EState* es1, const EState* es2);
     EState combine(const EState* es1, const EState* es2);
@@ -160,6 +160,9 @@ namespace CodeThorn {
 
     // logger facility
     static Sawyer::Message::Facility logger;
+
+    // used to  create a new estate (shallow copy, PState copied as pointer)
+    EState cloneEState(const EState* estate);
 
     // used by transferAssignOp to seperate evaluation from memory updates (i.e. state modifications)
     typedef std::pair<AbstractValue,AbstractValue> MemoryUpdatePair;
@@ -292,11 +295,11 @@ namespace CodeThorn {
     // reserves and initializes memory location at address memLoc with newValue
     void initializeMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue);
     // handles addresses only
-    AbstractValue readFromMemoryLocation(Label lab, const PState* pstate, AbstractValue memLoc);
+    AbstractValue readFromMemoryLocation(Label lab, PStatePtr pstate, AbstractValue memLoc);
     // handles only references (models indirection)
-    AbstractValue readFromReferenceMemoryLocation(Label lab, const PState* pstate, AbstractValue memLoc);
+    AbstractValue readFromReferenceMemoryLocation(Label lab, PStatePtr pstate, AbstractValue memLoc);
     // handles both addresses and references
-    AbstractValue readFromAnyMemoryLocation(Label lab, const PState* pstate, AbstractValue memLoc);
+    AbstractValue readFromAnyMemoryLocation(Label lab, PStatePtr pstate, AbstractValue memLoc);
     // handles addresses only
     void writeToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue);
     // handles only references (models indirection)

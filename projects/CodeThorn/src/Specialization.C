@@ -51,7 +51,7 @@ int SpecializationConstReporter::getConstInt() {
 }
 
 
-PStateConstReporter::PStateConstReporter(const PState* pstate, VariableIdMapping* variableIdMapping) {
+PStateConstReporter::PStateConstReporter(PStatePtr pstate, VariableIdMapping* variableIdMapping) {
     _pstate=pstate;
     _variableIdMapping=variableIdMapping;
   }
@@ -185,7 +185,7 @@ int Specialization::substituteConstArrayIndexExprsWithConst(VariableIdMapping* v
    return numConstExprElim;
  }
 
-int Specialization::substituteVariablesWithConst(VariableIdMapping* variableIdMapping, const PState* pstate, SgNode *node) {
+int Specialization::substituteVariablesWithConst(VariableIdMapping* variableIdMapping, PStatePtr pstate, SgNode *node) {
   ConstReporter* constReporter=new PStateConstReporter(pstate,variableIdMapping);
   int numOfSubstitutions=substituteVariablesWithConst(node, constReporter);
   delete constReporter;
@@ -296,7 +296,7 @@ void Specialization::extractArrayUpdateOperations(CTAnalysis* ana,
    //  #pragma omp parallel for
    for(int i=0;i<N;++i) {
      const EState* p_estate=stgArrayUpdateSequence[i].first;
-     const PState* p_pstate=p_estate->pstate();
+     PStatePtr p_pstate=p_estate->pstate();
      SgExpression* p_exp=stgArrayUpdateSequence[i].second;
      SgNode* p_expCopy;
      p_expCopy=SageInterface::copyExpression(p_exp);
@@ -582,7 +582,7 @@ void Specialization::printUpdateInfos(ArrayUpdatesSequence& arrayUpdates, Variab
   int cnt=0;
   for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
     const EState* estate=(*i).first;
-    const PState* pstate=estate->pstate();
+    PStatePtr pstate=estate->pstate();
     SgExpression* exp=(*i).second;
     cout<<"UPD"<<cnt<<":"<<pstate->toString(variableIdMapping)<<" : "<<exp->unparseToString()<<endl;
     ++cnt;

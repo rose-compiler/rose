@@ -5,6 +5,8 @@
 using namespace std;
 using namespace CodeThorn;
 
+
+
 namespace CodeThorn {
 
 VariableValueMonitor::VariableValueMonitor(){
@@ -20,11 +22,11 @@ VariableValueMonitor::VariableMode VariableValueMonitor::getVariableMode(Abstrac
 
 // the init function only uses the variableIds of a given estate (not its values) for initialization
 void VariableValueMonitor::init(const EState* estate) {
-  const PState* pstate=estate->pstate();
+  CodeThorn::PStatePtr pstate=estate->pstate();
   init(pstate);
 }
 
-void VariableValueMonitor::init(const PState* pstate) {
+void VariableValueMonitor::init(PStatePtr pstate) {
   AbstractValueSet varIdSet=pstate->getVariableIds();
   for(AbstractValueSet::iterator i=varIdSet.begin(); i!=varIdSet.end(); ++i) {
     // to also allow reinit

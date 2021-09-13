@@ -21,13 +21,9 @@ using namespace CodeThorn;
 string EState::predicateToString(VariableIdMapping* variableIdMapping) const {
   string separator=",";
   string pred;
-  const PState* ps=pstate();
-  const ConstraintSet* cset=constraints(); 
+  PStatePtr ps=pstate();
   AbstractValueSet varIdSet=ps->getVariableIds();
   string s;
-  if(cset->disequalityExists()) {
-    return "false";
-  }
   bool firstPred=true;
   for(AbstractValueSet::iterator i=varIdSet.begin();i!=varIdSet.end();++i) {
     AbstractValue varId=*i;
@@ -41,18 +37,6 @@ string EState::predicateToString(VariableIdMapping* variableIdMapping) const {
         s+=separator;
       s+=variableName+"=="+ps->varValueToString(varId);
       firstPred=false;
-    } else {
-      ConstraintSet vcset=cset->constraintsOfVariable(varId);
-      stringstream ss;
-      if(vcset.size()>=0) {
-        if(!firstPred)
-          s+=separator;
-        if(vcset.size()==0)
-          s+="true"; // TODO: make this optional to not have explicit true
-        else
-          s+=vcset.toStringWithoutBraces(variableIdMapping);
-        firstPred=false;
-      }
     }
   }
   return s;
@@ -80,8 +64,6 @@ bool CodeThorn::operator<(const EState& e1, const EState& e2) {
     return (e1.label()<e2.label());
   if(e1.pstate()!=e2.pstate())
     return (e1.pstate()<e2.pstate());
-  if(e1.constraints()!=e2.constraints())
-    return (e1.constraints()<e2.constraints());
   if(e1.io!=e2.io) {
     return e1.io<e2.io;
   }
@@ -93,8 +75,6 @@ bool CodeThorn::operator<(const EState& e1, const EState& e2) {
     return (e1.label()<e2.label());
   if(e1.pstate()!=e2.pstate())
     return (e1.pstate()<e2.pstate());
-  if(e1.constraints()!=e2.constraints())
-    return (e1.constraints()<e2.constraints());
   return e1.io<e2.io;
 }
 #endif
@@ -102,7 +82,6 @@ bool CodeThorn::operator<(const EState& e1, const EState& e2) {
 bool CodeThorn::operator==(const EState& c1, const EState& c2) {
   return (c1.label()==c2.label())
     && (c1.pstate()==c2.pstate())
-    && (c1.constraints()==c2.constraints())
     && (c1.io==c2.io)
     //#ifdef USE_CALLSTRINGS
     && (c1.callString==c2.callString)
@@ -151,24 +130,6 @@ CodeThorn::InputOutput::OpType EState::ioOp() const {
   return io.op;
 }
 
-ConstraintSet EState::allInfoAsConstraints() const {
-  ConstraintSet cset=*constraints();
-  /* we use the property that state is always consistant with constraintSet
-     if a variable is state(var)=top then it may have a constraint
-     if a variable is state(var)=const then it cannot have a constraint
-     hence, we only need to add state(var)=const as var==const to the existing constraint set
-  */
-  const PState* pstate=this->pstate();
-  for(PState::const_iterator j=pstate->begin();j!=pstate->end();++j) {
-    AbstractValue varId=(*j).first;
-    AbstractValue val=pstate->varValue(varId);
-    if(!val.isTop()&&!val.isBot()) {
-      cset.insert(Constraint(Constraint::EQ_VAR_CONST,varId,val));
-    }
-  }
-  return cset;
-}
-
 CodeThorn::AbstractValue EState::determineUniqueIOValue() const {
   // this returns 1 (TODO: investigate)
   CodeThorn::AbstractValue value;
@@ -182,13 +143,8 @@ CodeThorn::AbstractValue EState::determineUniqueIOValue() const {
       AbstractValue varVal=pstate2.readFromMemoryLocation(varId);
       return varVal;
     }
-    // case 2: check constraint if var is top
-    if(_pstate->varIsTop(varId)) {
-      return constraints()->varAbstractValue(varId);
-    } else {
-      cerr<<"Error: could not determine constant value from constraints."<<endl;
-      exit(1);
-    }
+    cerr<<"Error: determineUniqueIOValue:: could not determine constant value."<<endl;
+    exit(1);
   }
   if(io.op==InputOutput::STDOUT_CONST||io.op==InputOutput::STDERR_CONST) {
     value=io.val;
@@ -238,11 +194,6 @@ string EState::toString() const {
     ss <<pstate()->toString();
   else
     ss <<"NULL";
-  if(constraints()) {
-    ss <<", constraints="<<constraints()->toString();
-  } else {
-    ss <<", NULL";
-  }
   ss <<", io="<<io.toString();
   ss<<")";
   return ss.str();
@@ -261,11 +212,6 @@ string EState::toString(VariableIdMapping* vim) const {
     ss <<pstate()->toString(vim);
   else
     ss <<"NULL";
-  if(constraints()) {
-    ss <<", constraints="<<constraints()->toString(vim);
-  } else {
-    ss <<", NULL";
-  }
   ss <<", io="<<io.toString(); // TODO
   ss<<")";
   return ss.str();
@@ -284,21 +230,15 @@ string EState::toHTML() const {
     ss <<pstate()->toString();
   else
     ss <<"NULL";
-  if(constraints()) {
-    ss <<","<<nl<<" constraints="<<constraints()->toString();
-  } else {
-    ss <<","<<nl<<" NULL";
-  }
   ss <<","<<nl<<" io="<<io.toString();
   ss<<")"<<nl;
   return ss.str();
 }
 
 bool EState::isConst(VariableIdMapping* vim) const {
-  const PState* ps=pstate();
-  const ConstraintSet* cs=constraints();
+  PStatePtr ps=pstate();
   ROSE_ASSERT(ps);
-  ROSE_ASSERT(cs);
+  //ROSE_ASSERT(cs);
   for(PState::const_iterator i=ps->begin();i!=ps->end();++i) {
     AbstractValue varId=(*i).first;
     // the following two variables are special variables that are not considered to contribute to const-ness in an EState
@@ -314,7 +254,7 @@ bool EState::isConst(VariableIdMapping* vim) const {
 // TODO: remove this function
 bool EState::isRersTopified(VariableIdMapping* vim) const {
   boost::regex re("a(.)*");
-  const PState* pstate = this->pstate();
+  PStatePtr pstate = this->pstate();
   AbstractValueSet varSet=pstate->getVariableIds();
   for (AbstractValueSet::iterator l=varSet.begin();l!=varSet.end();++l) {
     string varName=(*l).toLhsString(vim);
@@ -373,7 +313,6 @@ std::string EState::labelString() const {
 
 bool EState::isApproximatedBy(const EState* other) const {
   ROSE_ASSERT(label()==other->label()); // ensure same location
-  ROSE_ASSERT(constraints()==other->constraints()); // pointer equality
   if(callString!=other->callString) {
     return false;
   }
@@ -407,7 +346,6 @@ void EState::combine(PropertyState& other0) {
   }
 
   ROSE_ASSERT(label()==other.label());
-  ROSE_ASSERT(constraints()==other.constraints()); // pointer equality
   if(callString!=other.callString) {
     cerr<<"combining estates with different callstrings at label:"<<this->label().toString()<<endl;
     cerr<<"cs1: "<<this->callString.toString()<<endl;

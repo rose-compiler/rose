@@ -297,12 +297,15 @@ void checkTypes() {
       check("!(cs1==cs2)",!(cs1==cs2));
       check("!(cs1<cs2)",!(cs1<cs2));
       check("cs1>cs2",(cs2<cs1));
+#if 0
+      // removed csets from estates
       EStateSet es;
       EState es1=EState(1,&s,&cs1);
       es.processNewOrExisting(es1);
       EState es2=EState(1,&s,&cs2);
       es.processNewOrExisting(es2);
       check("es.size()==2",es.size()==2);
+#endif
       {
       Constraint c5(Constraint::EQ_VAR_CONST,var_y,10);
       cs1.addConstraint(c5);
@@ -378,12 +381,12 @@ void checkTypes() {
     pstateSet.process(s2);
     check("s2 inserted => size of pstateSet == 3",pstateSet.size()==3);
 
-    const PState* pstateptr0=pstateSet.processNewOrExisting(s0); // version 1
+    PStatePtr pstateptr0=pstateSet.processNewOrExisting(s0); // version 1
     check("obtain pointer to s0 from pstateSet and check !=0",pstateptr0!=0);
     check("check pointer refers indeed to s0 (operator==)",(*pstateptr0)==s0);
-    const PState* pstateptr1=pstateSet.processNewOrExisting(s1); // version 1
+    PStatePtr pstateptr1=pstateSet.processNewOrExisting(s1); // version 1
     check("obtain pointer to s1 from pstateSet and check !=0",pstateptr1!=0);
-    const PState* pstateptr2=pstateSet.processNewOrExisting(s2); // version 1
+    PStatePtr pstateptr2=pstateSet.processNewOrExisting(s2); // version 1
     check("obtain pointer to s2 from pstateSet and check !=0",pstateptr2!=0);
     check("check pstate.exists(s0)",pstateSet.exists(s0));
     check("check pstate.exists(s1)",pstateSet.exists(s1));
@@ -396,10 +399,11 @@ void checkTypes() {
     check("created s4; inserted x=top; s4.readFromMemoryLocation(x).isTop",s4.readFromMemoryLocation(x).isTop());    
     pstateSet.processNewOrExisting(s4);
     check("inserted s4 => size of pstateSet == 4",pstateSet.size()==4);    
-    const PState* pstateptr4=pstateSet.processNewOrExisting(s4); // version 1
+    PStatePtr pstateptr4=pstateSet.processNewOrExisting(s4); // version 1
     check("obtain pointer to s4 from pstateSet and check !=0",pstateptr4!=0);
 
-#if 1
+    // deactivate cset tests
+#if 0
     EStateSet eStateSet;
     EState es3;
     ConstraintSetMaintainer csm;
