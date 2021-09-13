@@ -3,6 +3,7 @@
 
 #include "VariableIdMapping.h"
 #include "AbstractValue.h"
+#include "PState.h"
 
 namespace CodeThorn {
 
@@ -16,9 +17,7 @@ namespace CodeThorn {
     VariableValueMonitor();
     // the init function only uses the variableIds of a given estate (not its values) for initialization
     void init(const EState* estate);
-    void init(const PState* pstate);
-    //AbstractValueSet getHotVariables(CTAnalysis* analyzer, const EState* estate);
-    //AbstractValueSet getHotVariables(CTAnalysis* analyzer, const PState* pstate);
+    void init(PStatePtr pstate);
     AbstractValueSet getVariables();
     void setVariableMode(VariableMode,CodeThorn::AbstractValue);
     VariableMode getVariableMode(CodeThorn::AbstractValue);

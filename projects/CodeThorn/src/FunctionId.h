@@ -14,7 +14,6 @@ class FunctionIdMapping;
  */
 class FunctionId {
   friend class FunctionIdMapping;
-  friend class ConstraintSetHashFun;
   friend bool operator<(FunctionId id1, FunctionId id2);
  public:
   FunctionId();

@@ -69,7 +69,7 @@ string RersCounterexample::toRersIOString(LtlRersMapping& ltlRersMapping, bool w
       if (!firstSymbol) {
         result << ";";
       }
-      const PState* pstate = (*i)->pstate();
+      PStatePtr pstate = (*i)->pstate();
       int inOutVal = pstate->readFromMemoryLocation((*i)->io.var).getIntValue();
 
       // for ASCII mapping only

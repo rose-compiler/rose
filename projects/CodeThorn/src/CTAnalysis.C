@@ -64,7 +64,7 @@ CodeThorn::CTAnalysis::CTAnalysis():
   }
   estateSet.max_load_factor(0.7);
   pstateSet.max_load_factor(0.7);
-  constraintSetMaintainer.max_load_factor(0.7);
+  //constraintSetMaintainer.max_load_factor(0.7);
   resetInputSequenceIterator();
   ROSE_ASSERT(_estateTransferFunctions==nullptr);
   _estateTransferFunctions=new EStateTransferFunctions();
@@ -245,7 +245,7 @@ CodeThorn::CTAnalysis::SubSolverResultType CodeThorn::CTAnalysis::subSolver(cons
           EState newEState=*nesListIter;
           ROSE_ASSERT(newEState.label()!=Labeler::NO_LABEL);
 
-          if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState)&&!isVerificationErrorEState(&newEState))) {
+          if((!isFailedAssertEState(&newEState)&&!isVerificationErrorEState(&newEState))) {
             HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
             const EState* newEStatePtr=pres.second;
             ROSE_ASSERT(newEStatePtr);
@@ -270,7 +270,7 @@ CodeThorn::CTAnalysis::SubSolverResultType CodeThorn::CTAnalysis::subSolver(cons
               recordTransition(currentEStatePtr,e,newEStatePtr);
             }
           }
-          if((!newEState.constraints()->disequalityExists()) && ((isFailedAssertEState(&newEState))||isVerificationErrorEState(&newEState))) {
+          if(((isFailedAssertEState(&newEState))||isVerificationErrorEState(&newEState))) {
             // failed-assert end-state: do not add to work list but do add it to the transition graph
             const EState* newEStatePtr;
             newEStatePtr=processNewOrExisting(newEState);
@@ -311,7 +311,7 @@ CodeThorn::CTAnalysis::SubSolverResultType CodeThorn::CTAnalysis::subSolver(cons
                 }	    // record failed assert
               }
             } // end of failed assert handling
-          } // end of if (no disequality (= no infeasable path))
+          } // end of if
         } // end of loop on transfer function return-estates
       } // edge set iterator
     }
@@ -408,23 +408,20 @@ const EState* CodeThorn::CTAnalysis::getBottomSummaryState(Label lab, CallString
   InputOutput io;
   io.recordBot();
   ROSE_ASSERT(_initialPStateStored);
-  ROSE_ASSERT(_emptycsetstored);
-  EState estate(lab,cs,_initialPStateStored,_emptycsetstored,io);
+  EState estate(lab,cs,_initialPStateStored,io);
   const EState* bottomElement=processNewOrExisting(estate);
   return bottomElement;
 }
 
-void CodeThorn::CTAnalysis::initializeSummaryStates(const CodeThorn::PState* initialPStateStored,
-                                                    const CodeThorn::ConstraintSet* emptycsetstored) {
+void CodeThorn::CTAnalysis::initializeSummaryStates(const CodeThorn::PState* initialPStateStored) {
   _initialPStateStored=initialPStateStored;
-  _emptycsetstored=emptycsetstored;
 #if 0
   for(auto label:*getLabeler()) {
     // create bottom elements for each label
     InputOutput io;
     io.recordBot();
     CallString cs; // empty callstring
-    EState estate(label,cs,initialPStateStored,emptycsetstored,io); // implicitly empty cs
+    EState estate(label,cs,initialPStateStored,io); // implicitly empty cs
     const EState* bottomElement=processNewOrExisting(getBottomSummaryState());
     setSummaryState(label,estate.callString,bottomElement);
   }
@@ -773,14 +770,12 @@ void CodeThorn::CTAnalysis::printStatusMessage(bool forceDisplay) {
     long pstateSetSize;
     long estateSetSize;
     long transitionGraphSize;
-    long constraintSetMaintainerSize;
     long estateWorkListCurrentSize;
 #pragma omp critical(HASHSET)
     {
       pstateSetSize = pstateSet.size();
       estateSetSize = estateSet.size();
       transitionGraphSize = getTransitionGraph()->size();
-      constraintSetMaintainerSize = constraintSetMaintainer.size();
     }
 #pragma omp critical(ESTATEWL)
     {
@@ -792,8 +787,6 @@ void CodeThorn::CTAnalysis::printStatusMessage(bool forceDisplay) {
        <<color("cyan")<<estateSetSize
        <<color("white")<<"/"
        <<color("blue")<<transitionGraphSize
-       <<color("white")<<"/"
-       <<color("yellow")<<constraintSetMaintainerSize
        <<color("white")<<"/"
        <<estateWorkListCurrentSize
        <<"/"<<getIterations()<<"-"<<getApproximatedIterations()
@@ -996,7 +989,7 @@ void CodeThorn::CTAnalysis::eventGlobalTopifyTurnedOn() {
   }
 }
 
-void CodeThorn::CTAnalysis::topifyVariable(PState& pstate, ConstraintSet& cset, AbstractValue varId) {
+void CodeThorn::CTAnalysis::topifyVariable(PState& pstate, AbstractValue varId) {
   pstate.writeTopToMemoryLocation(varId);
 }
 
@@ -1137,13 +1130,10 @@ list<pair<SgLabelStatement*,SgNode*> > CodeThorn::CTAnalysis::listOfLabeledAsser
 }
 
 const EState* CodeThorn::CTAnalysis::processCompleteNewOrExisting(const EState* es) {
-  const PState* ps=es->pstate();
-  const ConstraintSet* cset=es->constraints();
-  const PState* ps2=pstateSet.processNewOrExisting(ps);
+  PStatePtr ps=es->pstate();
+  PStatePtr ps2=pstateSet.processNewOrExisting(ps);
   // TODO: ps2 check as below
-  const ConstraintSet* cset2=constraintSetMaintainer.processNewOrExisting(cset);
-  // TODO: cset2 check as below
-  const EState* es2=new EState(es->label(),ps2,cset2, es->io);
+  const EState* es2=new EState(es->label(),ps2, es->io);
   const EState* es3=estateSet.processNewOrExisting(es2);
   // equivalent object (but with different address) already exists
   // discard superfluous new object and use existing object pointer.
@@ -1153,10 +1143,10 @@ const EState* CodeThorn::CTAnalysis::processCompleteNewOrExisting(const EState* 
   return es3;
 }
 
-const PState* CodeThorn::CTAnalysis::processNew(PState& s) {
+PStatePtr CodeThorn::CTAnalysis::processNew(PState& s) {
   return pstateSet.processNew(s);
 }
-const PState* CodeThorn::CTAnalysis::processNewOrExisting(PState& s) {
+PStatePtr CodeThorn::CTAnalysis::processNewOrExisting(PState& s) {
   return pstateSet.processNewOrExisting(s);
 }
 
@@ -1166,10 +1156,6 @@ const EState* CodeThorn::CTAnalysis::processNew(EState& s) {
 
 const EState* CodeThorn::CTAnalysis::processNewOrExisting(EState& estate) {
   return estateSet.processNewOrExisting(estate);
-}
-
-const ConstraintSet* CodeThorn::CTAnalysis::processNewOrExisting(ConstraintSet& cset) {
-  return constraintSetMaintainer.processNewOrExisting(cset);
 }
 
 EStateSet::ProcessingResult CodeThorn::CTAnalysis::process(EState& estate) {
@@ -1282,24 +1268,24 @@ EState CodeThorn::CTAnalysis::createInitialEState(SgProject* root, Label slab) {
     }
   }
 
-  const PState* initialPStateStored=processNewOrExisting(initialPState); // might reuse another pstate when initializing in level 1
+  PStatePtr initialPStateStored=processNewOrExisting(initialPState); // might reuse another pstate when initializing in level 1
   ROSE_ASSERT(initialPStateStored);
   SAWYER_MESG(logger[TRACE])<< "INIT: initial pstate(stored): "<<initialPStateStored->toString(getVariableIdMapping())<<endl;
   //ROSE_ASSERT(cfanalyzer);
-  ConstraintSet cset;
-  const ConstraintSet* emptycsetstored=constraintSetMaintainer.processNewOrExisting(cset);
+  //ConstraintSet cset;
+  //const ConstraintSet* emptycsetstored=constraintSetMaintainer.processNewOrExisting(cset);
 
   transitionGraph.setStartLabel(slab);
   transitionGraph.setAnalyzer(this);
 
-  EState estate(slab,initialPStateStored,emptycsetstored);
+  EState estate(slab,initialPStateStored);
 
   ROSE_ASSERT(_estateTransferFunctions);
   _estateTransferFunctions->initializeGlobalVariables(root, estate);
   SAWYER_MESG(logger[INFO]) <<"Initial state: number of entries:"<<estate.pstate()->stateSize()<<endl;
 
   // initialize summary states map for abstract model checking mode
-  initializeSummaryStates(initialPStateStored,emptycsetstored);
+  initializeSummaryStates(initialPStateStored);
   estate.io.recordNone(); // ensure that extremal value is different to bot
 
   return estate;
@@ -1606,7 +1592,7 @@ void CodeThorn::CTAnalysis::resetAnalysis() {
   pstateSet = newPStateSet;
   estateSet.max_load_factor(0.7);
   pstateSet.max_load_factor(0.7);
-  const PState* processedPState=processNew(startPState);
+  PStatePtr processedPState=processNew(startPState);
   ROSE_ASSERT(processedPState);
   startEState.setPState(processedPState);
   const EState* processedEState=processNew(startEState);
@@ -1828,7 +1814,6 @@ CodeThorn::InterFlow* CodeThorn::CTAnalysis::getInterFlow() {
 CodeThorn::EStateSet* CodeThorn::CTAnalysis::getEStateSet() { return &estateSet; }
 CodeThorn::PStateSet* CodeThorn::CTAnalysis::getPStateSet() { return &pstateSet; }
 TransitionGraph* CodeThorn::CTAnalysis::getTransitionGraph() { return &transitionGraph; }
-ConstraintSetMaintainer* CodeThorn::CTAnalysis::getConstraintSetMaintainer() { return &constraintSetMaintainer; }
 std::list<CodeThorn::FailedAssertion> CodeThorn::CTAnalysis::getFirstAssertionOccurences(){return _firstAssertionOccurences;}
 
 void CodeThorn::CTAnalysis::setCommandLineOptions(vector<string> clOptions) {

@@ -153,7 +153,7 @@ void Solver12::run() {
             // newEstate is passed by value (not created yet)
             EState newEState=*nesListIter;
             ROSE_ASSERT(newEState.label()!=Labeler::NO_LABEL);
-            if(_analyzer->getOptionsRef().stgTraceFileName.size()>0 && !newEState.constraints()->disequalityExists()) {
+            if(_analyzer->getOptionsRef().stgTraceFileName.size()>0) {
               std::ofstream fout;
               // _csv_stg_trace_filename is the member-variable of analyzer
 #pragma omp critical
@@ -170,14 +170,14 @@ void Solver12::run() {
                 // logger[DEBUG]<<"generate STG-edge:"<<"ICFG-EDGE:"<<e.toString()<<endl;
               }
             }
-            if((!newEState.constraints()->disequalityExists()) &&(!_analyzer->isFailedAssertEState(&newEState)&&!_analyzer->isVerificationErrorEState(&newEState))) {
+            if((!_analyzer->isFailedAssertEState(&newEState)&&!_analyzer->isVerificationErrorEState(&newEState))) {
               HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState);
               const EState* newEStatePtr=pres.second;
               if(pres.first==true)
                 _analyzer->addToWorkList(newEStatePtr);
 	      _analyzer->recordTransition(currentEStatePtr,e,newEStatePtr);
             }
-            if((!newEState.constraints()->disequalityExists()) && ((_analyzer->isFailedAssertEState(&newEState))||_analyzer->isVerificationErrorEState(&newEState))) {
+            if(((_analyzer->isFailedAssertEState(&newEState))||_analyzer->isVerificationErrorEState(&newEState))) {
               // failed-assert end-state: do not add to work list but do add it to the transition graph
               const EState* newEStatePtr;
               newEStatePtr=_analyzer->processNewOrExisting(newEState);
@@ -218,7 +218,7 @@ void Solver12::run() {
                   }
                 }
               } // end of failed assert handling
-            } // end of if (no disequality (= no infeasable path))
+            } // end of if
           } // end of loop on transfer function return-estates
         } // edge set iterator
       } // conditional: test if work is available
