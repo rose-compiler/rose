@@ -71,14 +71,6 @@ void AssertionExtractor::computeLabelVectorOfEStates() {
           assertions[lab.getId()]+=varId.toString(variableIdMapping)+"=="+p->varValueToString(varId);
         }
       }
-      const ConstraintSet* cset=(*i)->constraints();
-      string constraintstring=cset->toAssertionString(variableIdMapping);
-      if(!isFirst && constraintstring!="") {
-        assertions[lab.getId()]+=" && ";
-      } else {
-        isFirst=false;
-      }
-      assertions[lab.getId()]+=constraintstring;
       assertions[lab.getId()]+=")";
     }
   }
@@ -234,14 +226,6 @@ string Visualizer::estateToString(const EState* estate) {
   if((tg1&&args.getBool("tg1-estate-properties"))||(tg2&&args.getBool("tg2-estate-properties"))) {
     ss<<estate->toString(variableIdMapping);
   } 
-  if((tg1&&args.getBool("tg1-estate-predicate"))||(tg2&&args.getBool("tg2-estate-predicate"))) {
-    string s=estate->predicateToString(variableIdMapping);
-    // replace ASCII with HTML characters
-    s=CodeThorn::replace_string(s,",","&and;");
-    s=CodeThorn::replace_string(s,"!=","&ne;");
-    s=CodeThorn::replace_string(s,"==","=");
-    ss<<s;
-  }
   return ss.str();
 }
 
@@ -516,8 +500,7 @@ string Visualizer::transitionGraphWithIOToDot(EStatePtrSet displayedEStates,
         newedges<<"n"<<(*j)->target;
       }
       if(number.isTop()) {
-        newedges<<" [label=\"";
-        newedges<<(*j)->target->constraints()->toString()<<"\"";
+        newedges<<" [label=\""<<"top"<<"\"";
       if((*j)->source==(*j)->target)
         newedges<<" color=black "; // self-edge-color
         newedges<<"];"<<endl;
@@ -596,8 +579,7 @@ string Visualizer::transitionGraphWithIOToDot() {
     ++j) {
       newedges<<"n"<<(*j)->source<<"->"<<"n"<<(*j)->target;
       if(number.isTop()) {
-    newedges<<" [label=\"";
-    newedges<<(*j)->target->constraints()->toString()<<"\"";
+	newedges<<" [label=\""<<"top"<<"\"";
     if((*j)->source==(*j)->target)
       newedges<<" color=black "; // self-edge-color
     newedges<<"];"<<endl;

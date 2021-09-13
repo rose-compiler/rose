@@ -22,12 +22,8 @@ string EState::predicateToString(VariableIdMapping* variableIdMapping) const {
   string separator=",";
   string pred;
   PStatePtr ps=pstate();
-  const ConstraintSet* cset=constraints(); 
   AbstractValueSet varIdSet=ps->getVariableIds();
   string s;
-  if(cset->disequalityExists()) {
-    return "false";
-  }
   bool firstPred=true;
   for(AbstractValueSet::iterator i=varIdSet.begin();i!=varIdSet.end();++i) {
     AbstractValue varId=*i;
@@ -41,18 +37,6 @@ string EState::predicateToString(VariableIdMapping* variableIdMapping) const {
         s+=separator;
       s+=variableName+"=="+ps->varValueToString(varId);
       firstPred=false;
-    } else {
-      ConstraintSet vcset=cset->constraintsOfVariable(varId);
-      stringstream ss;
-      if(vcset.size()>=0) {
-        if(!firstPred)
-          s+=separator;
-        if(vcset.size()==0)
-          s+="true"; // TODO: make this optional to not have explicit true
-        else
-          s+=vcset.toStringWithoutBraces(variableIdMapping);
-        firstPred=false;
-      }
     }
   }
   return s;
@@ -149,24 +133,6 @@ string EStateSet::estateIdString(const EState* estate) const {
  */
 CodeThorn::InputOutput::OpType EState::ioOp() const {
   return io.op;
-}
-
-ConstraintSet EState::allInfoAsConstraints() const {
-  ConstraintSet cset=*constraints();
-  /* we use the property that state is always consistant with constraintSet
-     if a variable is state(var)=top then it may have a constraint
-     if a variable is state(var)=const then it cannot have a constraint
-     hence, we only need to add state(var)=const as var==const to the existing constraint set
-  */
-  PStatePtr pstate=this->pstate();
-  for(PState::const_iterator j=pstate->begin();j!=pstate->end();++j) {
-    AbstractValue varId=(*j).first;
-    AbstractValue val=pstate->varValue(varId);
-    if(!val.isTop()&&!val.isBot()) {
-      cset.insert(Constraint(Constraint::EQ_VAR_CONST,varId,val));
-    }
-  }
-  return cset;
 }
 
 CodeThorn::AbstractValue EState::determineUniqueIOValue() const {

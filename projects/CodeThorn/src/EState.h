@@ -56,7 +56,6 @@ namespace CodeThorn {
     //void setIO(CodeThorn::InputOutput io) { io=io;} TODO: investigate
     PStatePtr pstate() const { return _pstate; }
     const CodeThorn::ConstraintSet* constraints() const { return _constraints; }
-    CodeThorn::ConstraintSet allInfoAsConstraints() const;
     CodeThorn::InputOutput::OpType ioOp() const;
     // isBot():no value, isTop(): any value (not unique), isConstInt():one concrete integer (int getIntValue())
     AbstractValue determineUniqueIOValue() const;
