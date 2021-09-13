@@ -61,7 +61,7 @@ void Solver8::run() {
         // newEstate is passed by value (not created yet)
         EState newEState=*nesListIter;
         ROSE_ASSERT(newEState.label()!=Labeler::NO_LABEL);
-        if((!newEState.constraints()->disequalityExists()) &&(!_analyzer->isFailedAssertEState(&newEState))) {
+        if((!_analyzer->isFailedAssertEState(&newEState))) {
           HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState);
           const EState* newEStatePtr=pres.second;
           // maintain the most recent output state. It can be connected with _estateBeforeMissingInput to facilitate
@@ -73,7 +73,7 @@ void Solver8::run() {
             _analyzer->addToWorkList(newEStatePtr);
           _analyzer->recordTransition(currentEStatePtr,e,newEStatePtr);
         }
-        if((!newEState.constraints()->disequalityExists()) && (_analyzer->isFailedAssertEState(&newEState))) {
+        if((_analyzer->isFailedAssertEState(&newEState))) {
           // failed-assert end-state: do not add to work list but do add it to the transition graph
           const EState* newEStatePtr;
           newEStatePtr=_analyzer->processNewOrExisting(newEState);

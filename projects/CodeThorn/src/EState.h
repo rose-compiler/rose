@@ -108,8 +108,9 @@ class EStateHashFun {
   EStateHashFun() {}
   long operator()(EState* s) const {
     unsigned int hash=1;
-      hash=(long)s->label().getId()*(((long)s->pstate())+1)*(((long)s->constraints())+1);
-      return long(hash);
+    //hash=(long)s->label().getId()*(((long)s->pstate())+1)*(((long)s->constraints())+1);
+    hash=(long)s->label().getId()*(((long)s->pstate())+1);
+    return long(hash);
   }
  private:
 };

@@ -245,7 +245,7 @@ CodeThorn::CTAnalysis::SubSolverResultType CodeThorn::CTAnalysis::subSolver(cons
           EState newEState=*nesListIter;
           ROSE_ASSERT(newEState.label()!=Labeler::NO_LABEL);
 
-          if((!newEState.constraints()->disequalityExists()) &&(!isFailedAssertEState(&newEState)&&!isVerificationErrorEState(&newEState))) {
+          if((!isFailedAssertEState(&newEState)&&!isVerificationErrorEState(&newEState))) {
             HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
             const EState* newEStatePtr=pres.second;
             ROSE_ASSERT(newEStatePtr);
@@ -270,7 +270,7 @@ CodeThorn::CTAnalysis::SubSolverResultType CodeThorn::CTAnalysis::subSolver(cons
               recordTransition(currentEStatePtr,e,newEStatePtr);
             }
           }
-          if((!newEState.constraints()->disequalityExists()) && ((isFailedAssertEState(&newEState))||isVerificationErrorEState(&newEState))) {
+          if(((isFailedAssertEState(&newEState))||isVerificationErrorEState(&newEState))) {
             // failed-assert end-state: do not add to work list but do add it to the transition graph
             const EState* newEStatePtr;
             newEStatePtr=processNewOrExisting(newEState);
@@ -311,7 +311,7 @@ CodeThorn::CTAnalysis::SubSolverResultType CodeThorn::CTAnalysis::subSolver(cons
                 }	    // record failed assert
               }
             } // end of failed assert handling
-          } // end of if (no disequality (= no infeasable path))
+          } // end of if
         } // end of loop on transfer function return-estates
       } // edge set iterator
     }

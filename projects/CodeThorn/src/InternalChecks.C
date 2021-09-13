@@ -297,12 +297,15 @@ void checkTypes() {
       check("!(cs1==cs2)",!(cs1==cs2));
       check("!(cs1<cs2)",!(cs1<cs2));
       check("cs1>cs2",(cs2<cs1));
+#if 0
+      // removed csets from estates
       EStateSet es;
       EState es1=EState(1,&s,&cs1);
       es.processNewOrExisting(es1);
       EState es2=EState(1,&s,&cs2);
       es.processNewOrExisting(es2);
       check("es.size()==2",es.size()==2);
+#endif
       {
       Constraint c5(Constraint::EQ_VAR_CONST,var_y,10);
       cs1.addConstraint(c5);
@@ -399,7 +402,8 @@ void checkTypes() {
     PStatePtr pstateptr4=pstateSet.processNewOrExisting(s4); // version 1
     check("obtain pointer to s4 from pstateSet and check !=0",pstateptr4!=0);
 
-#if 1
+    // deactivate cset tests
+#if 0
     EStateSet eStateSet;
     EState es3;
     ConstraintSetMaintainer csm;
