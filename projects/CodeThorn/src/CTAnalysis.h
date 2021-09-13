@@ -290,7 +290,7 @@ namespace CodeThorn {
     virtual void setPreInfo(Label lab, CallString context, Lattice*);
     virtual void setPostInfo(Label lab, CallString context, Lattice*);
 
-    void initializeSummaryStates(PStatePtr initialPStateStored, const ConstraintSet* emptycsetstored);
+    void initializeSummaryStates(PStatePtr initialPStateStored);
     const CodeThorn::EState* getSummaryState(CodeThorn::Label lab, CallString cs);
     void setSummaryState(CodeThorn::Label lab, CallString cs, CodeThorn::EState const* estate);
     std::string programPositionInfo(CodeThorn::Label);
@@ -350,7 +350,7 @@ namespace CodeThorn {
     const EState* processNew(EState& s);
     const EState* processNewOrExisting(EState& s);
     const EState* processCompleteNewOrExisting(const EState* es);
-    void topifyVariable(PState& pstate, ConstraintSet& cset, AbstractValue varId);
+    void topifyVariable(PState& pstate, AbstractValue varId);
     bool isTopified(EState& s);
     EStateSet::ProcessingResult process(EState& s);
     const ConstraintSet* processNewOrExisting(ConstraintSet& cset);

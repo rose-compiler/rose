@@ -100,9 +100,9 @@ namespace CodeThorn {
 
     enum EvalMode { MODE_ADDRESS, MODE_VALUE, MODE_EMPTY_STATE };
 
-    EState createEState(Label label, CallString cs, PState pstate, ConstraintSet cset);
-    EState createEState(Label label, CallString cs, PState pstate, ConstraintSet cset, InputOutput io);
-    EState createEStateInternal(Label label, PState pstate, ConstraintSet cset);
+    EState createEState(Label label, CallString cs, PState pstate);
+    EState createEState(Label label, CallString cs, PState pstate, InputOutput io);
+    EState createEStateInternal(Label label, PState pstate);
 
     bool isApproximatedBy(const EState* es1, const EState* es2);
     EState combine(const EState* es1, const EState* es2);

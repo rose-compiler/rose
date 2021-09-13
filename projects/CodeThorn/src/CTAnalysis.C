@@ -408,23 +408,20 @@ const EState* CodeThorn::CTAnalysis::getBottomSummaryState(Label lab, CallString
   InputOutput io;
   io.recordBot();
   ROSE_ASSERT(_initialPStateStored);
-  ROSE_ASSERT(_emptycsetstored);
-  EState estate(lab,cs,_initialPStateStored,_emptycsetstored,io);
+  EState estate(lab,cs,_initialPStateStored,io);
   const EState* bottomElement=processNewOrExisting(estate);
   return bottomElement;
 }
 
-void CodeThorn::CTAnalysis::initializeSummaryStates(const CodeThorn::PState* initialPStateStored,
-                                                    const CodeThorn::ConstraintSet* emptycsetstored) {
+void CodeThorn::CTAnalysis::initializeSummaryStates(const CodeThorn::PState* initialPStateStored) {
   _initialPStateStored=initialPStateStored;
-  _emptycsetstored=emptycsetstored;
 #if 0
   for(auto label:*getLabeler()) {
     // create bottom elements for each label
     InputOutput io;
     io.recordBot();
     CallString cs; // empty callstring
-    EState estate(label,cs,initialPStateStored,emptycsetstored,io); // implicitly empty cs
+    EState estate(label,cs,initialPStateStored,io); // implicitly empty cs
     const EState* bottomElement=processNewOrExisting(getBottomSummaryState());
     setSummaryState(label,estate.callString,bottomElement);
   }
@@ -773,14 +770,12 @@ void CodeThorn::CTAnalysis::printStatusMessage(bool forceDisplay) {
     long pstateSetSize;
     long estateSetSize;
     long transitionGraphSize;
-    long constraintSetMaintainerSize;
     long estateWorkListCurrentSize;
 #pragma omp critical(HASHSET)
     {
       pstateSetSize = pstateSet.size();
       estateSetSize = estateSet.size();
       transitionGraphSize = getTransitionGraph()->size();
-      constraintSetMaintainerSize = constraintSetMaintainer.size();
     }
 #pragma omp critical(ESTATEWL)
     {
@@ -792,8 +787,6 @@ void CodeThorn::CTAnalysis::printStatusMessage(bool forceDisplay) {
        <<color("cyan")<<estateSetSize
        <<color("white")<<"/"
        <<color("blue")<<transitionGraphSize
-       <<color("white")<<"/"
-       <<color("yellow")<<constraintSetMaintainerSize<<":"<<constraintSetMaintainer.toString()
        <<color("white")<<"/"
        <<estateWorkListCurrentSize
        <<"/"<<getIterations()<<"-"<<getApproximatedIterations()
@@ -996,7 +989,7 @@ void CodeThorn::CTAnalysis::eventGlobalTopifyTurnedOn() {
   }
 }
 
-void CodeThorn::CTAnalysis::topifyVariable(PState& pstate, ConstraintSet& cset, AbstractValue varId) {
+void CodeThorn::CTAnalysis::topifyVariable(PState& pstate, AbstractValue varId) {
   pstate.writeTopToMemoryLocation(varId);
 }
 
@@ -1138,12 +1131,9 @@ list<pair<SgLabelStatement*,SgNode*> > CodeThorn::CTAnalysis::listOfLabeledAsser
 
 const EState* CodeThorn::CTAnalysis::processCompleteNewOrExisting(const EState* es) {
   PStatePtr ps=es->pstate();
-  const ConstraintSet* cset=es->constraints();
   PStatePtr ps2=pstateSet.processNewOrExisting(ps);
   // TODO: ps2 check as below
-  const ConstraintSet* cset2=constraintSetMaintainer.processNewOrExisting(cset);
-  // TODO: cset2 check as below
-  const EState* es2=new EState(es->label(),ps2,cset2, es->io);
+  const EState* es2=new EState(es->label(),ps2, es->io);
   const EState* es3=estateSet.processNewOrExisting(es2);
   // equivalent object (but with different address) already exists
   // discard superfluous new object and use existing object pointer.
@@ -1286,20 +1276,20 @@ EState CodeThorn::CTAnalysis::createInitialEState(SgProject* root, Label slab) {
   ROSE_ASSERT(initialPStateStored);
   SAWYER_MESG(logger[TRACE])<< "INIT: initial pstate(stored): "<<initialPStateStored->toString(getVariableIdMapping())<<endl;
   //ROSE_ASSERT(cfanalyzer);
-  ConstraintSet cset;
-  const ConstraintSet* emptycsetstored=constraintSetMaintainer.processNewOrExisting(cset);
+  //ConstraintSet cset;
+  //const ConstraintSet* emptycsetstored=constraintSetMaintainer.processNewOrExisting(cset);
 
   transitionGraph.setStartLabel(slab);
   transitionGraph.setAnalyzer(this);
 
-  EState estate(slab,initialPStateStored,emptycsetstored);
+  EState estate(slab,initialPStateStored);
 
   ROSE_ASSERT(_estateTransferFunctions);
   _estateTransferFunctions->initializeGlobalVariables(root, estate);
   SAWYER_MESG(logger[INFO]) <<"Initial state: number of entries:"<<estate.pstate()->stateSize()<<endl;
 
   // initialize summary states map for abstract model checking mode
-  initializeSummaryStates(initialPStateStored,emptycsetstored);
+  initializeSummaryStates(initialPStateStored);
   estate.io.recordNone(); // ensure that extremal value is different to bot
 
   return estate;

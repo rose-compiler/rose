@@ -39,11 +39,10 @@ namespace CodeThorn {
 
   class EState : public Lattice {
   public:
-    EState():_label(Label()),_pstate(0),_constraints(0){}
-    EState(Label label, PStatePtr pstate):_label(label),_pstate(pstate),_constraints(0){}
-    EState(Label label, PStatePtr pstate, const CodeThorn::ConstraintSet* cset):_label(label),_pstate(pstate),_constraints(cset){}
-    EState(Label label, PStatePtr pstate, const CodeThorn::ConstraintSet* cset, CodeThorn::InputOutput io):_label(label),_pstate(pstate),_constraints(cset),io(io){}
-  EState(Label label, CallString cs, PStatePtr pstate, const CodeThorn::ConstraintSet* cset, CodeThorn::InputOutput io):_label(label),_pstate(pstate),_constraints(cset),io(io),callString(cs) {}
+    EState():_label(Label()),_pstate(0) {}
+    EState(Label label, PStatePtr pstate):_label(label),_pstate(pstate) {}
+    EState(Label label, PStatePtr pstate, CodeThorn::InputOutput io):_label(label),_pstate(pstate),io(io){}
+  EState(Label label, CallString cs, PStatePtr pstate, CodeThorn::InputOutput io):_label(label),_pstate(pstate),io(io),callString(cs) {}
     std::string toString() const;
     std::string toString(CodeThorn::VariableIdMapping* variableIdMapping) const;
     std::string toHTML() const; /// multi-line version for dot output
