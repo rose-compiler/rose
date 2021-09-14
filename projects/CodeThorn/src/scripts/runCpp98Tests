@@ -159,7 +159,7 @@ CT_MODE_OPTIONS="--vis=1 --context-sensitive=yes --exploration-mode=topologic-so
 echo "Valid C++98 Tests: "
 passingTests=`echo {001..016} {018..034} {036..051} {053..056}`
 numWarnExpected=0
-numFailExpected=47
+numFailExpected=46
 runCxxTests $COMPILER $TESTDIR $TESTPREFIX $numWarnExpected $numFailExpected $passingTests
 
 echo "Undefined Behavior Tests: "

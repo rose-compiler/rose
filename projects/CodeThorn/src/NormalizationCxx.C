@@ -1307,7 +1307,7 @@ namespace
     if (!SgNodeHelper::isReferenceType(usevar.get_type())) return false;
 
     const SgAssignInitializer* init = isSgAssignInitializer(usevar.get_initializer());
-    if (init) return false;
+    if (!init) return false;
 
     const SgVarRefExp*         varref = isSgVarRefExp(init->get_operand());
 
