@@ -1,11 +1,7 @@
-#include <setjmp.h>
-
-#include "test-new.h"
 #include "test-main.h"
 
 const char* description = "Compares various subobjects of a class";
 const char* expectedout = "{Ex1ExATWSswtTWSExAExA~ExA~Ex}";
-
 
 struct Ex
 {
