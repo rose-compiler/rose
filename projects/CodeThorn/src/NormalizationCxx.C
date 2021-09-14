@@ -12,17 +12,29 @@
 
 namespace sb = SageBuilder;
 namespace si = SageInterface;
+namespace ct = CodeThorn;
 namespace adapt = boost::adaptors;
 
 namespace CodeThorn
 {
-  // internal use (does not exclude templates)
-  void normalizeCxx(SgNode* root);
-
 namespace
 {
+  constexpr unsigned char STRIP_MODIFIER_ALIAS = SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_TYPEDEF_TYPE;
+
+  struct CxxTransformStats
+  {
+    int cnt = 0;
+  };
+
+  std::ostream& operator<<(std::ostream& os, const CxxTransformStats& stat)
+  {
+    return os << stat.cnt;
+  }
+
+  // internal use
+  void normalizeCtorDtor(SgNode* root, CxxTransformStats& stats);
+
   constexpr bool ERROR_TOLERANT = true;
-  constexpr bool EXTEND_DTOR_NORMALIZATION = false;
 
   // auxiliary wrapper for printing Sg_File_Info objects
   struct SrcLoc
@@ -40,6 +52,17 @@ namespace
     return os << el.info->get_filenameString()
               << "@" << el.info->get_line() << ":" << el.info->get_col();
   }
+
+  SgExpression* elemAt(SgExprListExp& lst, int pos)
+  {
+    return lst.get_expressions().at(pos);
+  }
+
+  SgExpression* elemAt(SgExprListExp* lst, int pos)
+  {
+    return elemAt(SG_DEREF(lst), pos);
+  }
+
 
   // \brief handlers to skip template processing
   struct ExcludeTemplates
@@ -88,9 +111,9 @@ namespace
   // convenience functions
 
   /// returns the only SgInitializedName object of a variable declaration
-  SgInitializedName& onlyName(SgVariableDeclaration& n)
+  SgInitializedName& onlyName(const SgVariableDeclaration& n)
   {
-    SgInitializedNamePtrList& lst = n.get_variables();
+    const SgInitializedNamePtrList& lst = n.get_variables();
 
     ROSE_ASSERT(lst.size() == 1 && lst[0]);
     return *lst[0];
@@ -106,7 +129,7 @@ namespace
       virtual ~BaseTransform() = default;
       BaseTransform()          = default;
 
-      virtual void execute() = 0;
+      virtual void execute(CxxTransformStats& stat) = 0;
 
     private:
       BaseTransform(const BaseTransform&)            = delete;
@@ -120,18 +143,13 @@ namespace
   struct PolyTransform : BaseTransform
   {
       explicit
-      PolyTransform(const ConcreteTransform& concreteTf)
-      : tf(concreteTf)
-      {}
-
-      explicit
       PolyTransform(ConcreteTransform&& concreteTf)
       : tf(std::move(concreteTf))
       {}
 
-      void execute() ROSE_OVERRIDE
+      void execute(CxxTransformStats& stat) ROSE_OVERRIDE
       {
-        tf.execute();
+        tf.execute(stat);
       }
 
     private:
@@ -147,12 +165,6 @@ namespace
   /// Generic walue wrapper around polymorphic actions.
   struct AnyTransform
   {
-      // wrapping value ctors
-      template <class ConcreteTransform>
-      AnyTransform(const ConcreteTransform& a)
-      : tf(new PolyTransform<ConcreteTransform>(a))
-      {}
-
       template <class ConcreteTransform>
       AnyTransform(ConcreteTransform&& a)
       : tf(new PolyTransform<ConcreteTransform>(std::move(a)))
@@ -162,7 +174,7 @@ namespace
       AnyTransform& operator=(AnyTransform&& other) = default;
       ~AnyTransform()                               = default;
 
-      void execute() { tf->execute(); }
+      void execute(CxxTransformStats& stat) { tf->execute(stat); }
 
     private:
       std::unique_ptr<BaseTransform> tf;
@@ -346,11 +358,7 @@ namespace
     }
 
     // types that need to be skipped
-    void handle(SgArrayType& n)
-    {
-      res = check(n.get_base_type());
-    }
-
+    void handle(SgArrayType& n)    { res = check(n.get_base_type()); }
     void handle(SgTypedefType& n)  { res = check(n.get_base_type()); }
     void handle(SgModifierType& n) { res = check(n.get_base_type()); }
 
@@ -367,6 +375,8 @@ namespace
   {
     return sg::dispatch(TriviallyDestructible(), ty);
   }
+
+
 
   SgMemberFunctionDeclaration*
   isDtor(SgMemberFunctionDeclaration& n)
@@ -597,6 +607,199 @@ namespace
     return (pos != lst.end()) ? (*pos)->get_initializer() : nullptr;
   }
 
+
+  SgArrayType* isArrayType(SgType* t)
+  {
+    if (SgArrayType* arrty = isSgArrayType(t))
+      return arrty;
+
+    if (SgTypedefType* tdty = isSgTypedefType(t))
+      return isArrayType(tdty->get_base_type());
+
+    if (SgModifierType* modty = isSgModifierType(t))
+      return isArrayType(modty->get_base_type());
+
+    return nullptr;
+  }
+
+
+  //
+  // Creator functions
+
+  SgStatement&
+  createMemberCall( SgExpression& obj,
+                    SgMemberFunctionDeclaration& fnDcl,
+                    SgExprListExp& args,
+                    bool virtualCall = false
+                  );
+
+  Sg_File_Info* dummyFileInfo()
+  {
+    return Sg_File_Info::generateDefaultFileInfoForTransformationNode();
+  }
+
+  SgForStatement&
+  createArrayElementOperation( SgArrayType& arrty,
+                               SgExpression& elem,
+                               SgMemberFunctionDeclaration& fnDcl,
+                               SgExprListExp& args,
+                               bool virtualCall = false
+                             )
+  {
+    // loop skeleton
+    SgForStatement&        sgnode  = SG_DEREF( new SgForStatement(dummyFileInfo()) );
+    SgExpression&          start   = SG_DEREF( sb::buildIntVal(0) );
+    std::string            varname = si::generateUniqueVariableName(&sgnode, "dtorloop");
+    SgInitializer&         varini  = SG_DEREF( sb::buildAssignInitializer(&start, start.get_type()) );
+    SgVariableDeclaration& var     = SG_DEREF( sb::buildVariableDeclaration(varname, sb::buildIntType(), &varini, &sgnode) );
+
+    ROSE_ASSERT(sgnode.get_for_init_stmt() != nullptr);
+    sgnode.append_init_stmt(&var);
+
+    // test
+    SgExpression&          limit   = SG_DEREF( si::deepCopy(arrty.get_index()) );
+    SgExpression&          vartst  = SG_DEREF( sb::buildVarRefExp(&var) );
+    SgExpression&          lt      = SG_DEREF( sb::buildLessThanOp(&vartst, &limit) );
+    SgStatement&           ltstmt  = SG_DEREF( sb::buildExprStatement(&lt) );
+
+    sg::linkParentChild(sgnode, ltstmt, &SgForStatement::set_test);
+
+    // increment
+    SgExpression&          varinc  = SG_DEREF( sb::buildVarRefExp(&var) );
+    SgExpression&          inc     = SG_DEREF( sb::buildPlusPlusOp(&varinc) );
+
+    sg::linkParentChild(sgnode, inc, &SgForStatement::set_increment);
+
+    // index expression + body recursion
+    SgExpression&          varidx  = SG_DEREF( sb::buildVarRefExp(&var) );
+    SgExpression&          indexed = SG_DEREF( sb::buildPntrArrRefExp(&elem, &varidx) );
+
+    ROSE_ASSERT(arrty.get_base_type() == indexed.get_type());
+    SgStatement&           bdy     = createMemberCall(indexed, fnDcl, args, virtualCall);
+    //~ was: bdy = sg::dispatch(Creator{indexed}, arrty.get_base_type());
+
+    sg::linkParentChild(sgnode, bdy, &SgForStatement::set_loop_body);
+
+    // done
+    return sgnode;
+  }
+
+
+  SgExpression&
+  createMemberSelection(SgExpression& expr, SgMemberFunctionRefExp& fn)
+  {
+    if (si::isPointerType(expr.get_type()))
+      return SG_DEREF(sb::buildArrowExp(&expr, &fn));
+
+    return SG_DEREF(sb::buildDotExp(&expr, &fn));
+  }
+
+  SgStatement&
+  createMemberCall( SgExpression& obj,
+                    SgMemberFunctionDeclaration& fnDcl,
+                    SgExprListExp& args,
+                    bool virtualCall
+                  )
+  {
+    if (SgArrayType* arrTy = isArrayType(obj.get_type()))
+      return createArrayElementOperation(*arrTy, obj, fnDcl, args, virtualCall);
+
+    SgSymbol*               sym    = fnDcl.search_for_symbol_from_symbol_table();
+    SgMemberFunctionSymbol& fnSym  = SG_DEREF(isSgMemberFunctionSymbol(sym));
+    SgMemberFunctionRefExp& fnRef  = SG_DEREF(sb::buildMemberFunctionRefExp( &fnSym,
+                                                                             virtualCall,
+                                                                             false /* no qualifier */
+                                                                           ));
+
+    SgExpression&           target = createMemberSelection(obj, fnRef);
+    SgExpression&           call   = SG_DEREF(sb::buildFunctionCallExp(&target, &args));
+
+    return SG_DEREF(sb::buildExprStatement(&call));
+  }
+
+
+  SgStatement&
+  createMemberCall( SgInitializedName& var,
+                    SgMemberFunctionDeclaration& fnDcl,
+                    SgExprListExp& args,
+                    bool virtualCall = false
+                  )
+  {
+    SgScopeStatement&       scope  = SG_DEREF(si::getEnclosingScope(&var));
+    SgVarRefExp&            varRef = SG_DEREF(sb::buildVarRefExp(&var, &scope));
+
+    return createMemberCall(varRef, fnDcl, args, virtualCall);
+  }
+
+  SgStatement&
+  createMemberCallFromConstructorInitializer(SgInitializedName& var, SgConstructorInitializer& ini)
+  {
+    SgMemberFunctionDeclaration& ctorDecl = SG_DEREF(ini.get_declaration());
+    SgExprListExp&               ctorArgs = SG_DEREF(si::deepCopy(ini.get_args()));
+
+    return createMemberCall(var, ctorDecl, ctorArgs);
+  }
+
+
+  SgConstructorInitializer*
+  constructorInitializer(SgConstructorInitializer& ini);
+
+  SgConstructorInitializer*
+  constructorInitializer(SgAggregateInitializer& ini)
+  {
+    SgConstructorInitializer* sub = isSgConstructorInitializer(elemAt(ini.get_initializers(), 0));
+
+    return sub ? constructorInitializer(*sub) : nullptr;
+  }
+
+  SgConstructorInitializer*
+  constructorInitializer(SgConstructorInitializer& ini)
+  {
+    if (ini.get_declaration())
+      return &ini;
+
+    // maybe it is a nested array constructor?
+    SgAggregateInitializer* agg = isSgAggregateInitializer(elemAt(ini.get_args(), 0));
+
+    return agg ? constructorInitializer(*agg) : nullptr;
+  }
+
+  SgConstructorInitializer*
+  constructorInitializer(SgInitializer* ini)
+  {
+    if (SgConstructorInitializer* init = isSgConstructorInitializer(ini))
+      return constructorInitializer(*init);
+
+    if (SgAggregateInitializer* init = isSgAggregateInitializer(ini))
+      return constructorInitializer(*init);
+
+    return nullptr;
+  }
+
+
+  SgStatement&
+  createMemberCallFromConstructorInitializer(SgExpression& obj, SgConstructorInitializer& ini)
+  {
+    SgConstructorInitializer&    ctorInit = SG_DEREF(constructorInitializer(ini));
+    SgMemberFunctionDeclaration& ctorDecl = SG_DEREF(ctorInit.get_declaration());
+    SgExprListExp&               ctorArgs = SG_DEREF(si::deepCopy(ini.get_args()));
+
+    return createMemberCall(obj, ctorDecl, ctorArgs);
+  }
+
+
+  SgExprStatement&
+  createAssignFromAssignInitializer(SgInitializedName& var, SgAssignInitializer& ini)
+  {
+    SgScopeStatement& scope   = SG_DEREF(si::getEnclosingScope(&var));
+    SgVarRefExp&      lhs     = SG_DEREF(sb::buildVarRefExp(&var, &scope));
+    SgExpression&     rhs     = SG_DEREF(si::deepCopy(ini.get_operand()));
+    SgExpression&     expr    = SG_DEREF(sb::buildAssignOp(&lhs, &rhs));
+
+    return SG_DEREF(sb::buildExprStatement(&expr));
+  }
+
+
   //
   // C++ normalizing transformers
 
@@ -606,55 +809,58 @@ namespace
   /// inserts the initialization of a member variable into a block (i.e., ctor body).
   /// \note
   ///   the ast representation deviates from standard C++
-  ///   e.g., for struct S { S() {}; std::string s; };
-  ///     varrefexp(s) = initializer-expr
-  ///   is inserted into the block
-  struct VarCtorInserter
+  ///   struct S { S() {}; std::string s; };
+  ///   => struct S { S() { s.S(); }; std::string s; };
+  struct MemberVariableCtorTransformer
   {
-      VarCtorInserter(SgBasicBlock& where, SgInitializedName& what, SgInitializer* how)
+      MemberVariableCtorTransformer(SgBasicBlock& where, SgInitializedName& what, SgInitializer* how)
       : blk(where), var(what), ini(how)
       {}
 
-      SgInitializer* mkDefaultInitializer()
+      SgStatement* createDefaultInitializerIfNeeded()
       {
         SgType&                      varty = SG_DEREF(var.get_type());
         SgMemberFunctionDeclaration* ctor  = obtainDefaultCtorIfAvail(varty);
 
         if (ctor == nullptr)
-        {
-          // return an empty assign initializer, if the type does not have a ctor
-          return sb::buildAssignInitializer(sb::buildNullExpression(), &varty);
-        }
+          return nullptr;
+        // alternative: initialize with NullExpression
 
-        SgClassDefinition&           clsdef = getClassDef(*ctor);
-        SgClassDeclaration*          clazz  = isSgClassDeclaration(clsdef.get_parent());
+        SgExprListExp&               args  = SG_DEREF(sb::buildExprListExp());
 
-        ROSE_ASSERT(clazz);
-        return sb::buildConstructorInitializer( ctor,
-                                                sb::buildExprListExp(),
-                                                SgClassType::createType(clazz),
-                                                false /* need name */,
-                                                false /* need qualifier */,
-                                                false /* need parenthesis after name */,
-                                                false /* associated class unknown */
-                                              );
+        return &createMemberCall(var, *ctor, args);
       }
 
-      void execute()
+      SgStatement* fromInitializer()
       {
-        ini = ini ? si::deepCopy(ini) : mkDefaultInitializer();
+        if (ini == nullptr)
+          return nullptr;
 
-        SgVariableSymbol* varsym = SG_ASSERT_TYPE(SgVariableSymbol, var.search_for_symbol_from_symbol_table());
-        SgVarRefExp*      varref = sb::buildVarRefExp(varsym);
-        SgAssignOp*       assign = sb::buildAssignOp(varref, ini);
+        if (SgConstructorInitializer* ctorInit = isSgConstructorInitializer(ini))
+          return &createMemberCallFromConstructorInitializer(var, *ctorInit);
 
-        blk.prepend_statement(sb::buildExprStatement(assign));
+        if (SgAssignInitializer* assignInit = isSgAssignInitializer(ini))
+          return &createAssignFromAssignInitializer(var, *assignInit);
+
+        logError() << "Unknown initializer type: "
+                   << typeid(*ini).name()
+                   << std::endl;
+        ROSE_ASSERT(false);
+      }
+
+      void execute(CxxTransformStats&)
+      {
+        // if a newStmt is generated then append it
+        if ((newStmt = fromInitializer()) || (newStmt = createDefaultInitializerIfNeeded()))
+          blk.prepend_statement(newStmt);
       }
 
     private:
       SgBasicBlock&      blk;
       SgInitializedName& var;
       SgInitializer*     ini;
+
+      SgStatement*       newStmt = nullptr;
   };
 
 
@@ -664,7 +870,8 @@ namespace
     return true;
   }
 
-  bool parametersHaveDefaultValues(SgMemberFunctionDeclaration* fn, SgInitializedNamePtrList& parms, size_t from)
+  bool
+  paramsHaveDefaultValues(SgMemberFunctionDeclaration* fn, SgInitializedNamePtrList& parms, size_t from)
   {
     const size_t eoparams = parms.size();
 
@@ -674,9 +881,9 @@ namespace
 
       if (!parm.get_initializer())
       {
-        logError() << "Did not find parameter default value in declaration of " << fn->get_name()
-                   << ". Incomplete checking for sibling declarations."
-                   << std::endl;
+        logWarn() << "Did not find parameter default value in declaration of " << fn->get_name()
+                  << ". Incomplete checking for sibling (forward) declarations."
+                  << std::endl;
 
         return false;
       }
@@ -727,7 +934,7 @@ namespace
             return false;
         }
 
-        return parametersHaveDefaultValues(mem, parms, exprs.size());
+        return paramsHaveDefaultValues(mem, parms, exprs.size());
       }
 
       static
@@ -737,7 +944,7 @@ namespace
         SgDeclarationStatementPtrList&          lst = clsdef.get_members();
         SgDeclarationStatementPtrList::iterator zzz = lst.end();
 
-        return result(std::find_if(lst.begin(), zzz, FindFunction(n, args)), zzz);
+        return result(std::find_if(lst.begin(), zzz, FindFunction{n, args}), zzz);
       }
 
       static
@@ -764,11 +971,6 @@ namespace
       const std::string funname;
       SgExprListExp*    args; // optional
   };
-
-  Sg_File_Info* dummyFileInfo()
-  {
-    return Sg_File_Info::generateDefaultFileInfoForTransformationNode();
-  }
 
   void markCompilerGenerated(SgLocatedNode& n)
   {
@@ -923,7 +1125,6 @@ namespace
   {
     using ExprListGuard = std::unique_ptr<SgExprListExp>;
     // \todo also skip usingg declarations (aka SgTemplateTypedefs)
-    constexpr unsigned char STRIP_MODIFIER_ALIAS = SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_TYPEDEF_TYPE;
 
     SgType*            elemty = ty.stripType(STRIP_MODIFIER_ALIAS);
     SgClassType*       clsty  = isSgClassType(elemty);
@@ -941,39 +1142,55 @@ namespace
   }
 
 
-  struct BaseCtorInserter
+  struct BaseCtorCallTransformer
   {
-      BaseCtorInserter(SgBasicBlock& where, SgBaseClass& what, SgInitializer* how)
-      : blk(where), baseclass(what), ini(how)
-      {}
-
-      SgInitializer* mkDefaultInitializer() const
+      BaseCtorCallTransformer(SgBasicBlock& where, SgBaseClass& what, SgInitializer* how)
+      : blk(where), baseclass(what), ini(isSgConstructorInitializer(how))
       {
-        SgExprListExp&               args  = SG_DEREF( sb::buildExprListExp() );
-        SgClassDeclaration&          clazz = SG_DEREF( baseclass.get_base_class() );
-        SgMemberFunctionDeclaration& ctor  = obtainGeneratableCtor(getClassDef(clazz), args);
-
-        return sb::buildConstructorInitializer( &ctor,
-                                                &args,
-                                                SgClassType::createType(&clazz),
-                                                false /* need name */,
-                                                false /* need qualifier */,
-                                                false /* need parenthesis after name */,
-                                                false /* associated class unknown */
-                                              );
+        // if how != nullptr then ini != nullptr
+        ROSE_ASSERT((!how) || ini);
       }
 
-      void execute()
+      SgThisExp& mkThisExp(SgClassDeclaration& cls) const
       {
-        ini = ini ? si::deepCopy(ini) : mkDefaultInitializer();
+        SgSymbol& sym = SG_DEREF( cls.search_for_symbol_from_symbol_table() );
 
-        blk.prepend_statement(sb::buildExprStatement(ini));
+        return SG_DEREF( sb::buildThisExp(&sym) );
+      }
+
+      SgStatement& mkDefaultInitializer(SgClassDeclaration& clazz) const
+      {
+        SgExprListExp&               args  = SG_DEREF( sb::buildExprListExp() );
+        SgMemberFunctionDeclaration& ctor  = obtainGeneratableCtor(getClassDef(clazz), args);
+        SgExpression&                self  = mkThisExp(clazz);
+
+        return createMemberCall(self, ctor, args, false /* non-virtual call */);
+      }
+
+      SgStatement& mkCtorCall() const
+      {
+        SgClassDeclaration& clazz = SG_DEREF( baseclass.get_base_class() );
+
+        if (!ini) return mkDefaultInitializer(clazz);
+
+        SgExpression&       self  = mkThisExp(clazz);
+
+        return createMemberCallFromConstructorInitializer(self, *ini);
+      }
+
+      void execute(CxxTransformStats&)
+      {
+        newStmt = &mkCtorCall();
+
+        blk.prepend_statement(newStmt);
       }
 
     private:
-      SgBasicBlock&  blk;
-      SgBaseClass&   baseclass;
-      SgInitializer* ini;
+      SgBasicBlock&             blk;
+      SgBaseClass&              baseclass;
+      SgConstructorInitializer* ini;
+
+      SgStatement*              newStmt = nullptr;
   };
 
   SgFunctionSymbol&
@@ -984,13 +1201,13 @@ namespace
     return SG_ASSERT_TYPE(SgFunctionSymbol, symbl);
   }
 
-  struct BaseDtorInserter
+  struct BaseDtorCallTransformer
   {
-      BaseDtorInserter(SgBasicBlock& where, SgBaseClass& what)
+      BaseDtorCallTransformer(SgBasicBlock& where, SgBaseClass& what)
       : blk(where), baseclass(what)
       {}
 
-      SgStatement* mkDtorCall() const
+      SgExprStatement& mkDtorCall() const
       {
         SgExprListExp&               args  = SG_DEREF( sb::buildExprListExp() );
         SgClassDeclaration&          clazz = SG_DEREF( baseclass.get_base_class() );
@@ -998,100 +1215,66 @@ namespace
         SgFunctionSymbol&            symbl = get_symbol(dtor);
         SgFunctionCallExp&           call  = SG_DEREF( sb::buildFunctionCallExp(&symbl, &args) );
 
-        return sb::buildExprStatement(&call);
+        return SG_DEREF( sb::buildExprStatement(&call) );
       }
 
-      void execute() { blk.append_statement(mkDtorCall()); }
+      void execute(CxxTransformStats&)
+      {
+        newStmt = &mkDtorCall();
+
+        blk.append_statement(newStmt);
+      }
 
     private:
-      SgBasicBlock& blk;
-      SgBaseClass&  baseclass;
+      SgBasicBlock&    blk;
+      SgBaseClass&     baseclass;
+
+      SgExprStatement* newStmt = nullptr;
   };
 
-  template <class SageNode, class SageChild>
-  void set_child(SageNode& parent, void (SageNode::*setter) (SageChild*), SageChild& child)
-  {
-    (parent.*setter)(&child);
-    child.set_parent(&parent);
-  }
-
-
+#if 0
   struct DtorCallCreator : sg::DispatchHandler<SgStatement*>
   {
-    typedef sg::DispatchHandler<SgStatement*> base;
+      using base = sg::DispatchHandler<SgStatement*>;
 
-    DtorCallCreator(SgExpression& expr)
-    : base(), elem(expr)
-    {}
+      explicit
+      DtorCallCreator(SgExpression& expr)
+      : base(), elem(expr)
+      {}
 
-    void descend(SgNode* n) { res = sg::dispatch(*this, n); }
+      void descend(SgNode* n) { res = sg::dispatch(*this, n); }
 
-    SgForStatement&
-    createLoopOverArray(SgArrayType& arrty)
-    {
-      // loop skeleton
-      SgForStatement&        sgnode  = SG_DEREF( new SgForStatement(dummyFileInfo()) );
-      SgExpression&          start   = SG_DEREF( sb::buildIntVal(0) );
-      std::string            varname = si::generateUniqueVariableName(&sgnode, "dtorloop");
-      SgInitializer&         varini  = SG_DEREF( sb::buildAssignInitializer(&start, start.get_type()) );
-      SgVariableDeclaration& var     = SG_DEREF( sb::buildVariableDeclaration(varname, sb::buildIntType(), &varini, &sgnode) );
+      SgForStatement&
+      createLoopOverArray(SgArrayType& arrty)
+      {
+        return ::createLoopOverArray<DtorCallCreator>(arrty);
+      }
 
-      ROSE_ASSERT(sgnode.get_for_init_stmt() != nullptr);
-      sgnode.append_init_stmt(&var);
+      void handle(SgNode& n)         { SG_UNEXPECTED_NODE(n); }
 
-      // test
-      SgExpression&          limit   = SG_DEREF( si::deepCopy(arrty.get_index()) );
-      SgExpression&          vartst  = SG_DEREF( sb::buildVarRefExp(&var) );
-      SgExpression&          lt      = SG_DEREF( sb::buildLessThanOp(&vartst, &limit) );
-      SgStatement&           ltstmt  = SG_DEREF( sb::buildExprStatement(&lt) );
+      void handle(SgModifierType& n) { descend(n.get_base_type()); }
+      void handle(SgTypedefType& n)  { descend(n.get_base_type()); }
+      void handle(SgPointerType& n)  { descend(n.get_base_type()); }
 
-      set_child(sgnode, &SgForStatement::set_test, ltstmt);
+      void handle(SgClassType& n)
+      {
+        SgClassDefinition&           clsdef   = SG_DEREF( getClassDefOpt(n) );
+        SgExprListExp&               args     = SG_DEREF( sb::buildExprListExp() );
+        SgMemberFunctionDeclaration& dtorDcl  = obtainGeneratableDtor(clsdef, args);
 
-      // increment
-      SgExpression&          varinc  = SG_DEREF( sb::buildVarRefExp(&var) );
-      SgExpression&          inc     = SG_DEREF( sb::buildPlusPlusOp(&varinc) );
+        res = &createMemberCall(elem, dtorDcl, args, false /* non-virtual call (full type is known) */);
+      }
 
-      set_child(sgnode, &SgForStatement::set_increment, inc);
+      void handle(SgArrayType& n)
+      {
+        res = &createLoopOverArray(n);
+      }
 
-      // index expression + body recursion
-      SgExpression&          varidx  = SG_DEREF( sb::buildVarRefExp(&var) );
-      SgExpression&          indexed = SG_DEREF( sb::buildPntrArrRefExp(&elem, &varidx) );
-      SgStatement*           bdy     = sg::dispatch(DtorCallCreator(indexed), arrty.get_base_type());
-
-      set_child(sgnode, &SgForStatement::set_loop_body, SG_DEREF(bdy));
-
-      // done
-      return sgnode;
-    }
-
-    void handle(SgNode& n)         { SG_UNEXPECTED_NODE(n); }
-
-    void handle(SgModifierType& n) { descend(n.get_base_type()); }
-    void handle(SgTypedefType& n)  { descend(n.get_base_type()); }
-
-    void handle(SgClassType& n)
-    {
-      SgClassDefinition&           clsdef   = SG_DEREF( getClassDefOpt(n) );
-      SgExprListExp&               args     = SG_DEREF( sb::buildExprListExp() );
-      SgMemberFunctionDeclaration& dtordcl  = obtainGeneratableDtor(clsdef, args);
-      SgMemberFunctionSymbol*      mfunsym  = SG_ASSERT_TYPE(SgMemberFunctionSymbol, dtordcl.search_for_symbol_from_symbol_table());
-      SgMemberFunctionRefExp&      mfunref  = SG_DEREF( sb::buildMemberFunctionRefExp( mfunsym,
-                                                                                       false /* a destructed variable has full type -> no virtual call */,
-                                                                                       false /* need qualifier */
-                                                                                     ));
-      SgDotExp&                    callee   = SG_DEREF( sb::buildDotExp(&elem, &mfunref) );
-      SgFunctionCallExp&           callexp  = SG_DEREF( sb::buildFunctionCallExp(&callee, &args) );
-
-      res = sb::buildExprStatement(&callexp);
-    }
-
-    void handle(SgArrayType& n)
-    {
-      res = &createLoopOverArray(n);
-    }
-
-    SgExpression& elem;
+    private:
+      SgExpression& elem;
   };
+#endif
+
 
   /// compares two
   bool sameObject(const SgNode* lhs, const SgNode* rhs)
@@ -1099,45 +1282,125 @@ namespace
     return dynamic_cast<const void*>(lhs) == dynamic_cast<const void*>(rhs);
   }
 
-  struct VarDtorInserter
+  bool isNormalizedSageNode(const SgLocatedNode& n)
   {
-      VarDtorInserter(SgBasicBlock& where, SgStatement& pos, SgInitializedName& what)
+    static const std::string TRANSFORM = "transformation" ;
+
+    ROSE_ASSERT(n.get_file_info());
+
+    //~ std::cerr << n.unparseToString() << " @" << n.get_file_info()->get_filenameString()
+              //~ << std::endl;
+
+    return TRANSFORM == n.get_file_info()->get_filenameString();
+  }
+
+  bool isTemporary(const SgInitializedName& n)
+  {
+    return isNormalizedSageNode(n);
+  }
+
+  bool useRequiresLifetimeExtension(const SgInitializedName& n, const SgVariableDeclaration* use)
+  {
+    if (!use) return false;
+
+    const SgInitializedName&   usevar = onlyName(*use);
+    if (!SgNodeHelper::isReferenceType(usevar.get_type())) return false;
+
+    const SgAssignInitializer* init = isSgAssignInitializer(usevar.get_initializer());
+    if (!init) return false;
+
+    const SgVarRefExp*         varref = isSgVarRefExp(init->get_operand());
+
+    return (  varref
+           && sameObject(n.get_symbol_from_symbol_table(), varref->get_symbol())
+           );
+  }
+
+
+
+  bool needsLifetimeExtension(SgInitializedName& n)
+  {
+    bool                   res  = false;
+    SgVariableDeclaration& decl = sg::ancestor<SgVariableDeclaration>(n);
+    SgStatement*           next = si::getNextStatement(&decl);
+
+    while (!res && next)
+    {
+      res = useRequiresLifetimeExtension(n, isSgVariableDeclaration(next));
+      next = si::getNextStatement(next);
+    }
+
+    return res;
+  }
+
+  SgStatement& dtorCallLocation(SgStatement& stmt, SgInitializedName& var)
+  {
+    SgVariableDeclaration& decl = sg::ancestor<SgVariableDeclaration>(var);
+    SgStatement*           next = si::getNextStatement(&decl);
+
+    while (isNormalizedSageNode(SG_DEREF(next)))
+      next = si::getNextStatement(next);
+
+    return SG_DEREF(next);
+  }
+
+  struct VarInsertDtorTransformer
+  {
+      VarInsertDtorTransformer(SgBasicBlock& where, SgStatement& pos, SgInitializedName& what)
       : blk(where), stmt(pos), var(what)
       {}
 
-      void execute()
+      void execute(CxxTransformStats&)
       {
-        SgExpression& destructed = SG_DEREF( sb::buildVarRefExp(&var, nullptr) );
-        SgStatement*  dtorcall   = sg::dispatch(DtorCallCreator(destructed), var.get_type());
-        ROSE_ASSERT(dtorcall);
+        static constexpr unsigned char STRIP_TO_CLASSTYPE = STRIP_MODIFIER_ALIAS | SgType::STRIP_ARRAY_TYPE;
 
-        logInfo() << "[PP:] destructing " << var.get_name()
-                  << " // " << SrcLoc(var)
-                  << std::endl;
+        SgType&                      varTy      = SG_DEREF(var.get_type());
+        SgType*                      varTyBase  = varTy.stripType(STRIP_TO_CLASSTYPE);
+        SgClassType&                 clsTy      = SG_DEREF(isSgClassType(varTyBase));
+        SgClassDefinition&           clsDef     = SG_DEREF(getClassDefOpt(clsTy));
 
-        if (sameObject(&stmt, &blk))
+        // build new statement
+        SgScopeStatement*            scope      = si::getEnclosingScope(&var);
+        SgExpression&                destructed = SG_DEREF(sb::buildVarRefExp(&var, scope));
+        SgExprListExp&               args       = SG_DEREF(sb::buildExprListExp());
+        SgMemberFunctionDeclaration& dtorDcl    = obtainGeneratableDtor(clsDef, args);
+
+        // we know the full type, thus we can use a non-virtual call
+        dtorCall = &createMemberCall(destructed, dtorDcl, args, false /* non-virtual call */);
+
+        if (isTemporary(var) && !needsLifetimeExtension(var))
         {
-          si::appendStatement(dtorcall, &blk);
+          SgStatement& inspos = dtorCallLocation(stmt, var);
+
+          si::insertStatement(&inspos, dtorCall, false /* after */);
+        }
+        else if (sameObject(&stmt, &blk))
+        {
+          si::appendStatement(dtorCall, &blk);
         }
         else
-          si::insertStatementBefore(&stmt, dtorcall);
+        {
+          si::insertStatement(&stmt, dtorCall, true /* before */);
+        }
       }
 
     private:
       SgBasicBlock&      blk;
       SgStatement&       stmt;
       SgInitializedName& var;
+
+      SgStatement*       dtorCall = nullptr;
   };
 
 
-  struct CtorInitListClearer
+  struct CtorInitListTransformer
   {
       explicit
-      CtorInitListClearer(SgCtorInitializerList& n)
+      CtorInitListTransformer(SgCtorInitializerList& n)
       : ctorlst(n)
       {}
 
-      void execute()
+      void execute(CxxTransformStats&)
       {
         // \todo delete elements before removing them from the list
         ctorlst.get_ctors().clear();
@@ -1148,14 +1411,14 @@ namespace
   };
 
 
-  struct ConstructorGenerator
+  struct ConstructorTransformer
   {
       explicit
-      ConstructorGenerator(SgMemberFunctionDeclaration& nondefiningCtor)
+      ConstructorTransformer(SgMemberFunctionDeclaration& nondefiningCtor)
       : ctor(nondefiningCtor)
       {}
 
-      void execute()
+      void execute(CxxTransformStats& stat)
       {
         // is it already done?
         if (ctor.get_definingDeclaration()) return;
@@ -1175,21 +1438,21 @@ namespace
         clsdef.prepend_member(&ctordef);
 
         // initialize members
-        normalizeCxx(&ctordef);
+        normalizeCtorDtor(&ctordef, stat);
       }
 
     private:
       SgMemberFunctionDeclaration& ctor;
   };
 
-  struct DestructorGenerator
+  struct DestructorTransformer
   {
       explicit
-      DestructorGenerator(SgClassDefinition& clsdef)
+      DestructorTransformer(SgClassDefinition& clsdef)
       : cls(clsdef)
       {}
 
-      void execute()
+      void execute(CxxTransformStats& stat)
       {
         logTrace() << "create dtor: " << nameCtorDtor(cls, false)
                    << " // " << SrcLoc(cls)
@@ -1198,7 +1461,7 @@ namespace
         SgMemberFunctionDeclaration& dtor = createCtorDtor(cls, false /* dtor */);
 
         // destruct member variables that have class type
-        normalizeCxx(&dtor);
+        normalizeCtorDtor(&dtor, stat);
       }
 
     private:
@@ -1209,20 +1472,36 @@ namespace
   /// \details
   ///   the variables extracted for a function definition are the parameters
   /// \{
-  SgInitializedNamePtrList variableList(SgFunctionDefinition& n)
+  SgInitializedNamePtrList variableList(const SgFunctionDefinition& n)
   {
     return SG_DEREF(n.get_declaration()).get_args();
   }
 
-  SgInitializedNamePtrList variableList(SgScopeStatement& n)
+  SgInitializedNamePtrList variableList(const SgBasicBlock& n, const SgStatement& stmt)
   {
-    if (SgFunctionDefinition* func = isSgFunctionDefinition(&n))
-      return variableList(*func);
+    using Iterator = SgStatementPtrList::const_iterator;
 
-    SgStatementPtrList       stmts = n.generateStatementList();
+    SgInitializedNamePtrList  res;
+    const SgStatementPtrList& lst   = n.get_statements();
+    Iterator                  pos   = lst.begin();
+    Iterator                  limit = lst.end();
+
+    while (pos != limit && (!sameObject(*pos, &stmt)))
+    {
+      if (const SgVariableDeclaration* var = isSgVariableDeclaration(*pos))
+        res.push_back(&onlyName(*var));
+
+      ++pos;
+    }
+
+    return res;
+  }
+
+  SgInitializedNamePtrList variableList(const SgScopeStatement& n)
+  {
     SgInitializedNamePtrList res;
 
-    for (SgStatement* stmt : stmts)
+    for (SgStatement* stmt : n.generateStatementList())
     {
       if (SgVariableDeclaration* var = isSgVariableDeclaration(stmt))
         res.push_back(&onlyName(*var));
@@ -1230,12 +1509,40 @@ namespace
 
     return res;
   }
+
+  SgInitializedNamePtrList variableList(const SgScopeStatement& n, const SgStatement& pos)
+  {
+    if (const SgBasicBlock* block = isSgBasicBlock(&n))
+      return variableList(*block, pos);
+
+    if (const SgFunctionDefinition* func = isSgFunctionDefinition(&n))
+      return variableList(*func);
+
+    return variableList(n);
+  }
   /// \}
 
 
-  void recordScopedDestructors(SgScopeStatement& n, SgBasicBlock& blk, SgStatement& pos, std::vector<AnyTransform>& transf)
+  /// records all variables from scope \ref n that needs to be destructed
+  ///   at point \ref pos.
+  /// \param n          the scope whose variables need to be destructed
+  /// \param posInScope scope's child, and ancestor of \ref pos
+  ///                   e.g., pos -> block -> block -> n
+  ///                                         ^^^ posInScope
+  ///                   if \ref n is a SgBasicBlock, posInScope is needed to
+  ///                   destruct variables that have been allocated before posInScope.
+  /// \param blk        the block where the destructors need to be inserted
+  /// \param pos        insert position in blk
+  /// \param transf     any new destruction will be added to the sequence of
+  ///                   transformations.
+  void recordScopedDestructors( SgScopeStatement& n,
+                                SgStatement& posInScope,
+                                SgBasicBlock& blk,
+                                SgStatement& pos,
+                                std::vector<AnyTransform>& transf
+                              )
   {
-    SgInitializedNamePtrList vars = variableList(n);
+    SgInitializedNamePtrList vars = variableList(n, posInScope);
 
     for (SgInitializedName* var : adapt::reverse(vars))
     {
@@ -1245,7 +1552,7 @@ namespace
       {
         //~ logInfo() << "nontrivial: " << var->get_name() << " " << varty->get_mangled()
                   //~ << std::endl;
-        transf.emplace_back(VarDtorInserter(blk, pos, *var));
+        transf.emplace_back(VarInsertDtorTransformer{blk, pos, *var});
         logTrace() << "gen dtor-sequence for: " << typeid(n).name()
                    << " / " << var->get_name()
                    << std::endl;
@@ -1253,14 +1560,14 @@ namespace
     }
   }
 
-  struct ScopeDestructorGenerator
+  struct ScopeDestructorTransformer
   {
       explicit
-      ScopeDestructorGenerator(SgStatement& stmt, SgBasicBlock& block, SgScopeStatement& outerLimit)
-      : pos(&stmt), blk(&block), limit(&outerLimit)
+      ScopeDestructorTransformer(SgStatement& where, SgBasicBlock& block, SgScopeStatement& outerLimit)
+      : pos(&where), blk(&block), limit(&outerLimit)
       {}
 
-      void execute()
+      void execute(CxxTransformStats& stat)
       {
         logTrace() << "create block dtor: " << typeid(blk).name()
                    << " to: " << typeid(limit).name()
@@ -1269,23 +1576,21 @@ namespace
 
         std::vector<AnyTransform> transf;
 
+        SgStatement* prev = pos;
         for (SgScopeStatement* curr = blk; curr != limit; curr = si::getEnclosingScope(curr))
         {
-          ROSE_ASSERT(curr);
+          recordScopedDestructors(SG_DEREF(curr), *prev, *blk, *pos, transf);
 
-          logTrace() << "  -- " << typeid(*curr).name() << std::endl;
-
-          recordScopedDestructors(*curr, *blk, *pos, transf);
+          prev = curr;
         }
 
+        stat.cnt += transf.size();
         for (AnyTransform& tf : transf)
-        {
-          tf.execute();
-        }
+          tf.execute(stat);
       }
 
     private:
-      ScopeDestructorGenerator() = delete;
+      ScopeDestructorTransformer() = delete;
 
       SgStatement* const      pos;
       SgBasicBlock* const     blk;
@@ -1313,6 +1618,298 @@ namespace
            && isGenerateableCtor(n)
            );
   }
+
+  struct InitSplitTransformer
+  {
+      InitSplitTransformer(SgInitializedName& vardcl, SgConstructorInitializer& varini)
+      : var(vardcl), ini(varini)
+      {}
+
+      void execute(CxxTransformStats&)
+      {
+        logTrace() << "split object allocation and initialization"
+                   << std::endl;
+
+        // A a = A(); -> A a; a.A();
+        newstmt = &createMemberCallFromConstructorInitializer(var, ini);
+
+        SgStatement& decl = sg::ancestor<SgStatement>(var);
+
+        si::insertStatement(&decl, newstmt, false /* insert after */);
+        var.set_initializer(nullptr);
+        // delete &ini;
+      }
+
+    private:
+      SgInitializedName&        var;
+      SgConstructorInitializer& ini;
+      SgStatement*              newstmt = nullptr;
+  };
+
+
+  struct NewSplitTransformer
+  {
+      NewSplitTransformer(SgNewExp& newop, SgVariableSymbol* sy)
+      : newexp(newop), varsym(sy)
+      {}
+
+      void createVariableIfNeeded()
+      {
+        if (varsym) return;
+
+        // create new temporary variable
+        SgScopeStatement&      scope  = SG_DEREF(si::getEnclosingScope(&newexp));
+        std::string            nm     = si::generateUniqueVariableName(&scope, "tmpnew");
+        SgType&                ty     = SG_DEREF(newexp.get_type());
+        SgInitializer*         ini    = nullptr; // set later
+        SgVariableDeclaration& vardcl = SG_DEREF(sb::buildVariableDeclaration(nm, &ty, ini, &scope));
+
+        // set varsym
+        newAllocStmt = &vardcl;
+        varsym       = isSgVariableSymbol(onlyName(vardcl).search_for_symbol_from_symbol_table());
+        ROSE_ASSERT(varsym);
+      }
+
+      bool isPlacementNew() const
+      {
+        SgExprListExp*       exp = newexp.get_placement_args();
+
+        if (!exp) return false;
+
+        SgExpressionPtrList& lst = exp->get_expressions();
+
+        return (lst.size() == 1) && si::isPointerType(lst[0]->get_type());
+      }
+
+      void normalizePlacementNew()
+      {
+        SgExpression&  place     = SG_DEREF(elemAt(newexp.get_placement_args(), 0));
+        SgExpression&  place_cpy = SG_DEREF(si::deepCopy(&place));
+
+        if (newAllocStmt)
+        {
+          SgInitializedName& var = onlyName(*newAllocStmt);
+
+          var.set_initializer(sb::buildAssignInitializer_nfi(&place_cpy, place.get_type()));
+        }
+        else
+          newNewExpr = &place_cpy;
+      }
+
+      void normalizeAllocatingNew()
+      {
+        if (!newAllocStmt) return;
+
+        SgExpression&      newexp_cpy = SG_DEREF(si::deepCopy(&newexp));
+        SgInitializedName& var = onlyName(*newAllocStmt);
+
+        var.set_initializer(sb::buildAssignInitializer_nfi(&newexp_cpy, newexp_cpy.get_type()));
+      }
+
+      void normalizeNew()
+      {
+        if (isPlacementNew())
+          normalizePlacementNew();
+        else
+          normalizeAllocatingNew();
+      }
+
+      void execute(CxxTransformStats&)
+      {
+        logTrace() << "split new allocation and initialization"
+                   << std::endl;
+
+        // if the new expr is not part of an assignment or variable
+        //   declaration, create a new variable
+        createVariableIfNeeded();
+
+        // normalize the new expression
+        normalizeNew();
+
+        // create the initialization call
+        SgConstructorInitializer& ini     = SG_DEREF(newexp.get_constructor_args());
+        SgVarRefExp&              varref  = SG_DEREF(sb::buildVarRefExp(varsym));
+
+        newCtorStmt = &createMemberCallFromConstructorInitializer(varref, ini);
+
+        SgStatement*              currentNewStmt = &sg::ancestor<SgStatement>(newexp);
+
+        // execute transformation
+        if (newAllocStmt)
+        {
+          ROSE_ASSERT(newNewExpr == nullptr);
+          si::replaceStatement(currentNewStmt, newAllocStmt, true /* move preproc info */);
+
+          currentNewStmt = newAllocStmt;
+        }
+        else if (newNewExpr)
+        {
+          // replace new expression with a simplified placement new
+          si::replaceExpression(&newexp, newNewExpr, true /* no delete */);
+        }
+
+        // insert the initialization (constructor calls)
+        si::insertStatement(currentNewStmt, newCtorStmt, false /* insert after */);
+
+        // deallocation
+        // if (newAllocStmt) delete &currentNewStmt;
+        // if (newNewExpr)   delete &newexp;
+      }
+
+    private:
+      SgNewExp&              newexp;
+      SgVariableSymbol*      varsym;
+
+      SgVariableDeclaration* newAllocStmt = nullptr;
+      SgExpression*          newNewExpr   = nullptr;
+      SgStatement*           newCtorStmt  = nullptr;
+  };
+
+  struct DeleteSplitTransformer
+  {
+      DeleteSplitTransformer(SgDeleteExp& delop, SgMemberFunctionDeclaration& dtorDcl)
+      : delexp(delop), dtor(dtorDcl)
+      {}
+
+      void execute(CxxTransformStats&)
+      {
+        logTrace() << "split new allocation and initialization"
+                   << std::endl;
+
+        SgVarRefExp&   varRef    = SG_DEREF(isSgVarRefExp(delexp.get_variable()));
+
+        // build new stmt
+        SgExprListExp& args      = SG_DEREF( sb::buildExprListExp() );
+        SgVarRefExp&   newVarRef = SG_DEREF(si::deepCopy(&varRef));
+
+        // \todo check if dtor is a virtual function
+        newDtorStmt = &createMemberCall(newVarRef, dtor, args, true /* virtual */);
+
+        // insert statement
+        SgStatement&   stmt      = sg::ancestor<SgStatement>(delexp);
+
+        si::insertStatement(&stmt, newDtorStmt, true /* insert before */);
+
+        // deallocation - nothing to deallocate
+      }
+
+    private:
+      SgDeleteExp&                 delexp;
+      SgMemberFunctionDeclaration& dtor;
+
+      SgStatement*                 newDtorStmt  = nullptr;
+  };
+
+
+
+  SgInitializedName& returnParameter(SgFunctionDeclaration& fn)
+  {
+    SgFunctionParameterList&  plst = SG_DEREF(fn.get_parameterList());
+    SgInitializedNamePtrList& parms = plst.get_args();
+
+    ROSE_ASSERT(parms.size());
+    return SG_DEREF(parms.back());
+  }
+
+  struct RVOReturnStmtTransformer
+  {
+      static constexpr const char* returnParameterName = "_tmprvo";
+
+      RVOReturnStmtTransformer(SgReturnStmt& retstmt, SgFunctionDeclaration& fundcl)
+      : ret(retstmt), fun(fundcl)
+      {}
+
+      void execute(CxxTransformStats&)
+      {
+        logTrace() << "return object optimization"
+                   << std::endl;
+
+        SgInitializedName&        parm = returnParameter(fun);
+        ROSE_ASSERT(  SgNodeHelper::isPointerType(parm.get_type())
+                   && (parm.get_name() == returnParameterName)
+                   );
+
+        SgExpression*             expr = ret.get_expression();
+        SgConstructorInitializer& ini  = SG_DEREF(isSgConstructorInitializer(expr));
+        SgStatement&              stmt = createMemberCallFromConstructorInitializer(parm, ini);
+
+        ret.set_expression(sb::buildNullExpression());
+        si::insertStatement(&ret, &stmt, true /* before */);
+      }
+
+    private:
+      SgReturnStmt&          ret;
+      SgFunctionDeclaration& fun;
+  };
+
+  struct RVOInitializationTransformer
+  {
+      RVOInitializationTransformer(SgInitializedName& vardcl, SgAssignInitializer& varini)
+      : var(vardcl), ini(varini)
+      {}
+
+      void execute(CxxTransformStats&)
+      {
+        logTrace() << "return value optimization"
+                   << std::endl;
+
+        SgCallExpression& call = SG_DEREF(isSgCallExpression(ini.get_operand()));
+        SgExprListExp&    args = SG_DEREF(call.get_args());
+
+        SgScopeStatement& scope = sg::ancestor<SgScopeStatement>(var);
+        SgVarRefExp&      vref  = SG_DEREF(sb::buildVarRefExp(&var, &scope));
+        SgExpression&     vptr  = SG_DEREF(sb::buildAddressOfOp(&vref));
+
+        si::appendExpression(&args, &vptr);
+
+        SgExprStatement&  stmt  = SG_DEREF(sb::buildExprStatement(&call));
+        SgStatement&      prev  = sg::ancestor<SgStatement>(var);
+
+        si::insertStatement(&prev, &stmt, false /* after */);
+
+        var.set_initializer(nullptr);
+        ini.set_operand(nullptr);
+        //~ delete &ini;
+      }
+
+    private:
+      SgInitializedName&   var;
+      SgAssignInitializer& ini;
+  };
+
+
+  struct RVOParameterTransformer
+  {
+      RVOParameterTransformer(SgFunctionDeclaration& func, SgType& retTy)
+      : fn(func), ty(retTy)
+      {}
+
+      void execute(CxxTransformStats&)
+      {
+        logTrace() << "gen return parameter for " << fn.get_name()
+                   << std::endl << fn.unparseToString()
+                   << std::endl;
+
+        SgFunctionType& fnty  = SG_DEREF(fn.get_type());
+
+        SgInitializedName* parm =
+           sb::buildInitializedName( RVOReturnStmtTransformer::returnParameterName,
+                                     sb::buildPointerType(&ty),
+                                     nullptr
+                                   );
+
+        ROSE_ASSERT(parm);
+        /*SgVariableSymbol* sym =*/ si::appendArg(fn.get_parameterList(), parm);
+
+        fnty.set_return_type(sb::buildVoidType());
+      }
+
+    private:
+      SgFunctionDeclaration& fn;
+      SgType&                ty;
+  };
+
+
 
   //
   // memoized functors
@@ -1403,7 +2000,7 @@ namespace
     {
       SgInitializer* ini = getMemberInitializer(*var, lst);
 
-      cont.emplace_back(VarCtorInserter(blk, *var, ini));
+      cont.emplace_back(MemberVariableCtorTransformer{blk, *var, ini});
     }
 
     // explicitly construct all direct non-virtual bases;
@@ -1415,7 +2012,7 @@ namespace
       {
         SgInitializer* ini = getBaseInitializer(*base, lst);
 
-        cont.emplace_back(BaseCtorInserter(blk, *base, ini));
+        cont.emplace_back(BaseCtorCallTransformer{blk, *base, ini});
       }
       catch (const ConstructorInitializerListError& err)
       {
@@ -1446,7 +2043,7 @@ namespace
     // the initializer list is emptied.
     //   while it is not part of the ICFG, its nodes would be seen by
     //   the normalization.
-    cont.emplace_back(CtorInitListClearer(lst));
+    cont.emplace_back(CtorInitListTransformer{lst});
   }
 
   void normalizeDtorDef(SgMemberFunctionDeclaration& fun, transformation_container& cont)
@@ -1469,7 +2066,7 @@ namespace
         //~ logInfo() << "nontrivial: " << var->get_name() << " " << varty->get_mangled()
                   //~ << std::endl;
 
-        cont.emplace_back(VarDtorInserter(blk, blk, *var));
+        cont.emplace_back(VarInsertDtorTransformer{blk, blk, *var});
       }
     }
 
@@ -1477,7 +2074,7 @@ namespace
     //   execute the transformations in reverse order
     for (SgBaseClass* base : adapt::reverse(getDirectNonVirtualBases(&cls)))
     {
-      cont.emplace_back(BaseDtorInserter(blk, *base));
+      cont.emplace_back(BaseDtorCallTransformer{blk, *base});
     }
   }
 
@@ -1516,26 +2113,69 @@ namespace
     return SG_DEREF(si::getEnclosingScope(n));
   }
 
-  struct CxxTransformer : ExcludeTemplates
+  struct GeneratorBase : ExcludeTemplates
   {
-      typedef transformation_container    container;
-      typedef std::unordered_set<SgNode*> nodes;
+      using container = transformation_container;
+      using node_set  = std::unordered_set<SgNode*>;
 
-      CxxTransformer(container& transf, nodes& visited)
+      GeneratorBase(container& transf, node_set& visited)
       : cont(&transf), knownNodes(&visited)
       {}
 
-      CxxTransformer(CxxTransformer&&)                 = default;
-      CxxTransformer& operator=(CxxTransformer&&)      = default;
-      CxxTransformer(const CxxTransformer&)            = default;
-      CxxTransformer& operator=(const CxxTransformer&) = default;
+      GeneratorBase(GeneratorBase&&)                 = default;
+      GeneratorBase& operator=(GeneratorBase&&)      = default;
+      GeneratorBase(const GeneratorBase&)            = default;
+      GeneratorBase& operator=(const GeneratorBase&) = default;
 
-      // for recursive traversal
-      void descend(SgNode& n);
+      node_set& visitedNodes() { return *knownNodes; }
+
+      template <class Transformation>
+      void record(Transformation tf)
+      {
+        cont->emplace_back(std::move(tf));
+      }
 
       using ExcludeTemplates::handle;
 
-      void handle(SgNode& n) { descend(n); }
+    protected:
+      container*            cont       = nullptr;
+      node_set*             knownNodes = nullptr;
+
+    private:
+      GeneratorBase() = delete;
+  };
+
+
+  template <class SetT, class ElemT>
+  inline
+  bool alreadyProcessed(SetT& s, const ElemT& e)
+  {
+    return !s.insert(e).second;
+  }
+/*
+  template <class SetT, class ElemT>
+  inline
+  bool containsElement(const SetT& s, const ElemT& e)
+  {
+    return s.find(e) != s.end();
+  }
+*/
+  template <class Transformer>
+  void descend(Transformer tf, SgNode& n)
+  {
+    if (alreadyProcessed(tf.visitedNodes(), &n))
+      return;
+
+    sg::traverseChildren(std::move(tf), n);
+  }
+
+  /// adds constructors and destructors as needed and normalizes these functions
+  struct CxxCtorDtorGenerator : GeneratorBase
+  {
+      using GeneratorBase::GeneratorBase;
+      using GeneratorBase::handle;
+
+      void handle(SgNode& n);
 
       void handle(SgConstructorInitializer& n)
       {
@@ -1555,25 +2195,24 @@ namespace
         }
         else
         {
-          cont->emplace_back(ConstructorGenerator(*ctor));
+          record(ConstructorTransformer{*ctor});
         }
 
-        descend(n);
+        descend(*this, n);
       }
 
       void handle(SgMemberFunctionDeclaration& n)
       {
         if (n.get_specialFunctionModifier().isConstructor())
-        {
           normalizeCtorDef(n, *cont);
-        }
+
         // dtors are normalized when all destructors are inserted
         //~ else if (isDtor(n))
         //~ {
           //~ normalizeDtorDef(n, *cont);
         //~ }
 
-        descend(n);
+        descend(*this, n);
       }
 
       void handle(SgClassDefinition& n)
@@ -1594,61 +2233,187 @@ namespace
                       << std::endl;
           }
 
-          cont->emplace_back(DestructorGenerator(n));
+          record(DestructorTransformer{n});
         }
+
+        descend(*this, n);
+      }
+  };
+
+  void CxxCtorDtorGenerator::handle(SgNode& n)
+  {
+    descend(*this, n);
+  }
+
+
+  /// passes over object initialization
+  ///   breaks up an object declaration into allocation and initialization
+  ///   transformations if A is a non-trivial user defined type:
+  ///     A a = A(x, y, z); => A a; a->A(x, y, z);
+  ///     A* a = new A(1);  => A* a = new A; a->A(1);
+  ///     a = new A(1);     => a = new A; a->A(1);
+  ///     a = new (p) A(1); => a = p; a->A(1);
+  ///     delete a;         => a->~A(); delete a;
+  ///     \todo array versions
+  struct CxxAllocInitSplitGenerator : GeneratorBase
+  {
+      using GeneratorBase::GeneratorBase;
+      using GeneratorBase::handle;
+
+      void descend(SgNode& n);
+
+      void handle(SgNode& n) { descend(n); }
+
+      void handle(SgInitializedName& n)
+      {
+        if (SgConstructorInitializer* init = constructorInitializer(n.get_initializer()))
+          record(InitSplitTransformer{n, *init});
+
+        varsym = isSgVariableSymbol(n.search_for_symbol_from_symbol_table());
+        // \note varsym can be null in case this is a forward function declaration
 
         descend(n);
       }
 
-    private:
-      CxxTransformer()                    = delete;
+      void handle(SgAssignOp& n)
+      {
+        if (SgVarRefExp* lhs = isSgVarRefExp(n.get_lhs_operand()))
+          varsym = lhs->get_symbol();
 
-      container*            cont          = nullptr;
-      nodes*                knownNodes    = nullptr;
+        descend(n);
+      }
+
+      void handle(SgNewExp& n)
+      {
+        record(NewSplitTransformer{n, varsym});
+      }
+
+      void handle(SgDeleteExp& n)
+      {
+        using trivial_check_result = std::pair<bool, SgMemberFunctionDeclaration*>;
+
+        SgVarRefExp&   varRef     = SG_DEREF(isSgVarRefExp(n.get_variable()));
+        SgType*        varType    = varRef.get_type();
+        SgPointerType& varPtrType = SG_DEREF(isSgPointerType(varType->stripType(STRIP_MODIFIER_ALIAS)));
+        SgType*        ty         = varPtrType.get_base_type();
+        SgClassType&   clsTy      = SG_DEREF(isSgClassType(ty->stripType(STRIP_MODIFIER_ALIAS)));
+
+        trivial_check_result triv = TriviallyDestructible::check(getClassDefOpt(clsTy));
+
+        if (!triv.first)
+        {
+          record(DeleteSplitTransformer{n, SG_DEREF(triv.second)});
+        }
+      }
+
+    private:
+      SgVariableSymbol* varsym = nullptr;
   };
 
-  template <class SetT, class ElemT>
-  inline
-  bool alreadyProcessed(SetT& s, const ElemT& e)
+  void CxxAllocInitSplitGenerator::descend(SgNode& n)
   {
-    return !s.insert(e).second;
+    ::ct::descend(*this, n);
   }
 
-  void CxxTransformer::descend(SgNode& n)
+  SgType* optimizedReturnType(SgType& ty)
   {
-    if (alreadyProcessed(*knownNodes, &n))
-      return;
+    SgClassType* clsTy = isSgClassType(ty.stripType(STRIP_MODIFIER_ALIAS));
 
-    *this = sg::traverseChildren(std::move(*this), n);
+    return (clsTy && !si::IsTrivial(clsTy)) ? &ty : nullptr;
   }
 
-
-  CxxTransformer::container
-  computeNormalizations(SgNode* root)
+  SgType* optimizedFunctionReturnType(SgFunctionType& ty)
   {
-    CxxTransformer::container transformations;
-    CxxTransformer::nodes     nodes;
-
-    sg::dispatch(CxxTransformer{transformations, nodes}, root);
-
-    return transformations;
+    return optimizedReturnType(SG_DEREF(ty.get_return_type()));
   }
+
+  /// applies return value optimization to function calls that return objects.
+  ///   transformations if A is a non-trivial user defined type:
+  ///      A a = f(); => A a; f(&a);
+  ///      A f();     => void f(A* res);
+  ///      return a;  => res->A(a);
+  struct CxxRVOGenerator : GeneratorBase
+  {
+      using GeneratorBase::GeneratorBase;
+      using GeneratorBase::handle;
+
+      void explore(SgFunctionDeclaration* n); ///< processes \ref n
+      void descend(SgNode& n);                ///< processes \ref n's children
+
+      void descendWith(SgNode& n, SgFunctionDeclaration* ctx)
+      {
+        CxxRVOGenerator cpy(*this);
+
+        cpy.rvoFunc = ctx;
+
+        ::ct::descend(cpy, n);
+      }
+
+      void handle(SgNode& n) { descend(n); }
+
+      void handle(SgReturnStmt& n)
+      {
+        if (rvoFunc && !isSgNullExpression(n.get_expression()))
+        {
+          //~ if (!isSgConstructorInitializer(n.get_expression()))
+            //~ std::cerr << ">> " << n.unparseToString()
+                      //~ << "\n@" << sg::ancestor<SgFunctionDeclaration>(n).unparseToString()
+                      //~ << std::endl;
+
+          ROSE_ASSERT(isSgConstructorInitializer(n.get_expression()));
+          record(RVOReturnStmtTransformer{n, *rvoFunc});
+        }
+      }
+
+      void handle(SgFunctionDeclaration& n)
+      {
+        SgFunctionDeclaration* rvoFn = nullptr;
+
+        if (SgType* retTy = optimizedFunctionReturnType(SG_DEREF(n.get_type())))
+        {
+          explore(isSgFunctionDeclaration(n.get_firstNondefiningDeclaration()));
+          record(RVOParameterTransformer{n, *retTy});
+          rvoFn = &n; // set rvoFunc BEFORE descending into the body (only if RVO is active)
+        }
+
+        descendWith(n, rvoFn);
+      }
+
+      void handle(SgInitializedName& n)
+      {
+        SgAssignInitializer* init = isSgAssignInitializer(n.get_initializer());
+
+        if (  init
+           && optimizedReturnType(SG_DEREF(n.get_type()))
+           && isSgCallExpression(init->get_operand())
+           )
+          record(RVOInitializationTransformer{n, *init});
+      }
+
+    private:
+      SgFunctionDeclaration* rvoFunc = nullptr;
+  };
+
+  void CxxRVOGenerator::descend(SgNode& n)
+  {
+    ::ct::descend(*this, n);
+  }
+
+  void CxxRVOGenerator::explore(SgFunctionDeclaration* n)
+  {
+    if (!n || alreadyProcessed(*knownNodes, n)) return;
+
+    sg::dispatch(CxxRVOGenerator{*this}, n);
+  }
+
 
   /// passes over scopes and control flow interrupting statements
-  ///   => inserts destructor calls to into the AST
-  struct CxxObjectDestructionTransformer : ExcludeTemplates
+  ///   transformations: inserts destructor calls into the AST for non-trivial destructors
+  ///     e.g., { A a; } => { A a; a.~A(); }
+  struct CxxObjectDestructionGenerator : GeneratorBase
   {
-      using container = CxxTransformer::container;
-      using nodes     = std::unordered_set<SgNode*>;
-
-      CxxObjectDestructionTransformer(container& transf, nodes& visited)
-      : cont(&transf), knownNodes(&visited)
-      {}
-
-      CxxObjectDestructionTransformer(CxxObjectDestructionTransformer&&)                 = default;
-      CxxObjectDestructionTransformer& operator=(CxxObjectDestructionTransformer&&)      = default;
-      CxxObjectDestructionTransformer(const CxxObjectDestructionTransformer&)            = default;
-      CxxObjectDestructionTransformer& operator=(const CxxObjectDestructionTransformer&) = default;
+      using GeneratorBase::GeneratorBase;
+      using GeneratorBase::handle;
 
       // canonical handling of loop statements
       void loop(SgScopeStatement& n);
@@ -1658,8 +2423,6 @@ namespace
 
       // recursive tree traversal
       void descend(SgNode& n);
-
-      using ExcludeTemplates::handle;
 
       void handle(SgNode& n)         { descend(n); }
 
@@ -1732,11 +2495,6 @@ namespace
       }
 
     private:
-      CxxObjectDestructionTransformer()   = delete;
-
-      container*            cont          = nullptr;
-      nodes*                knownNodes    = nullptr;
-
       SgBasicBlock*         currBlk       = nullptr;
       SgScopeStatement*     breakScope    = nullptr;
       SgScopeStatement*     continueScope = nullptr;
@@ -1744,103 +2502,150 @@ namespace
   };
 
   void
-  CxxObjectDestructionTransformer::recordScopeDestructors( SgStatement& n,
-                                                           SgBasicBlock& start,
-                                                           SgScopeStatement& limit
-                                                         )
+  CxxObjectDestructionGenerator::recordScopeDestructors( SgStatement& n,
+                                                         SgBasicBlock& start,
+                                                         SgScopeStatement& limit
+                                                       )
   {
     logTrace() << "pre-dtor call gen: " << typeid(n).name() << std::endl;
-    cont->emplace_back(ScopeDestructorGenerator{n, start, limit});
+    record(ScopeDestructorTransformer{n, start, limit});
   }
 
-  void CxxObjectDestructionTransformer::descend(SgNode& n)
+  void CxxObjectDestructionGenerator::descend(SgNode& n)
   {
-    if (alreadyProcessed(*knownNodes, &n))
-      return;
-
-    sg::traverseChildren(CxxObjectDestructionTransformer{*this}, n);
+    ::ct::descend(*this, n);
   }
 
-  void CxxObjectDestructionTransformer::loop(SgScopeStatement& n)
+  void CxxObjectDestructionGenerator::loop(SgScopeStatement& n)
   {
     continueScope = breakScope = &n;
 
     descend(n);
   }
 
-  CxxTransformer::container
-  computeObjectDestruction(SgNode* root)
+  struct CxxNormalizationCheck : GeneratorBase
   {
-    CxxTransformer::container transformations;
-    CxxTransformer::nodes     nodes;
+      using GeneratorBase::GeneratorBase;
+      using GeneratorBase::handle;
 
-    sg::dispatch(CxxObjectDestructionTransformer{transformations, nodes}, root);
+      // recursive tree traversal
+      void descend(SgNode& n);
 
+      void reportNode(SgStatement& n, SgLocatedNode& offender);
+
+      void report(SgExpression& n)             { reportNode(sg::ancestor<SgStatement>(n), n); }
+
+      void handle(SgNode& n)                   { descend(n); }
+
+      void handle(SgConstructorInitializer& n) { report(n); }
+      void handle(SgNewExp& n)                 { /* do not descend */ }
+  };
+
+  void CxxNormalizationCheck::descend(SgNode& n)
+  {
+    ::ct::descend(*this, n);
+  }
+
+  void CxxNormalizationCheck::reportNode(SgStatement& n, SgLocatedNode& offender)
+  {
+    std::cerr << "wanted: " << n.unparseToString()
+              << " <" << typeid(offender).name() << ">"
+              << " parent = " << typeid(*n.get_parent()).name()
+              << "\n@" << SrcLoc(offender) << " / " << SrcLoc(*isSgLocatedNode(n.get_parent()))
+              << std::endl;
+  }
+
+  template <class Transformer>
+  GeneratorBase::container
+  computeTransform(SgNode* root, CxxTransformStats& stats)
+  {
+    GeneratorBase::container transformations;
+    GeneratorBase::node_set  nodes;
+
+    sg::dispatch(Transformer{transformations, nodes}, root);
+
+    stats.cnt += transformations.size();
     return transformations;
+  }
+
+
+  using CxxTransformGenerator = std::function<std::vector<AnyTransform>(SgNode*, CxxTransformStats&)>;
+
+  void normalize(CxxTransformGenerator gen, SgNode* root, CxxTransformStats& stats)
+  {
+    for (AnyTransform& tf : gen(root, stats))
+      tf.execute(stats);
+  }
+
+  template <class Transformer>
+  void normalize(SgNode* root, std::string msg)
+  {
+    CxxTransformStats stats;
+
+    normalize(computeTransform<Transformer>, root, stats);
+    logInfo() << "Completed " << stats << ' ' << msg
+              << std::endl;
+  }
+
+
+  // conveniance
+  void normalizeCtorDtor(SgNode* root, CxxTransformStats& stats)
+  {
+    normalize(computeTransform<CxxCtorDtorGenerator>, root, stats);
   }
 } // anonymous namespace
 
+
+  //
   // externally visible function
-  void normalizeCxx(Normalization& norm, SgNode* root)
+
+  void normalizeCxx1(Normalization& norm, SgNode* root)
   {
-    logInfo() << "Starting C++ normalization." << std::endl;
+    logInfo() << "Starting C++ normalization. (Phase 1/2)" << std::endl;
     logTrace() << "Not normalizing templates.." << std::endl;
-/*
-    RoseAst                   ast(root);
 
-    //~ ast.setWithTemplates(false);
-    for (auto i=ast.begin(); i!=ast.end(); ++i)
-    {
-      // only traverse nodes one and if they are not templated
-      if (Normalization::isTemplateNode(*i) || alreadyProcessed(knownNodes, *i))
-      {
-        i.skipChildrenOnForward();
-        continue;
-      }
+    //~ normalize<CxxCtorDtorGenerator>(root, "terrific C++ ctor/dtor normalizations...");
 
-      // never seen and not a template
-    }
-*/
-    CxxTransformer::container transf = computeNormalizations(root);
-
-    logInfo() << "Found " << transf.size() << " terrific top-level transformations..." << std::endl;
-
-    for (AnyTransform& tf : transf)
-      tf.execute();
-
-    logInfo() << "Finished C++ normalization." << std::endl;
+    logInfo() << "Finished C++ normalization. (Phase 1/2)" << std::endl;
   }
 
-  // for secondary transformations
-  void normalizeCxx(SgNode* root)
+  void normalizeCxx2(Normalization& norm, SgNode* root)
   {
-    for (AnyTransform& tf : computeNormalizations(root))
-      tf.execute();
+    logInfo() << "Starting C++ normalization. (Phase 2/2)" << std::endl;
+    logTrace() << "Not normalizing templates.." << std::endl;
+
+    normalize<CxxCtorDtorGenerator>         (root, "awesome C++ ctor/dtor normalizations...");
+    normalize<CxxAllocInitSplitGenerator>   (root, "brilliant C++ alloc/init splits...");
+    normalize<CxxRVOGenerator>              (root, "crucial C++ return value optimizations...");
+    normalize<CxxObjectDestructionGenerator>(root, "delightful C++ object destruction insertion...");
+    normalize<CxxNormalizationCheck>        (root, "checking AST for unwanted nodes...");
+
+    clearMemoized();
+    logInfo() << "Finished C++ normalization. (Phase 2/2)" << std::endl;
   }
 
   bool cppCreatesTemporaryObject(const SgExpression* n, bool withCplusplus)
   {
+    if (!withCplusplus) return false;
+
+    ASSERT_not_null(n);
+
+    const SgClassType* ty = isSgClassType(n->get_type());
+
+    return ty && !si::IsTrivial(ty);
+
+/*
     const SgConstructorInitializer* init = isSgConstructorInitializer(n);
 
     if (!init) return false;
 
     // exclude variable declarations
     return isSgInitializedName(init->get_parent()) == nullptr;
+*/
   }
 
-  void normalizeObjectDestruction(Normalization& norm, SgNode* root)
+  bool cppReturnValueOptimization(const SgReturnStmt* n, bool withCplusplus)
   {
-    logInfo() << "Starting C++ object destruction normalization." << std::endl;
-    logTrace() << "Not normalizing templates.." << std::endl;
-
-    CxxTransformer::container transf = computeObjectDestruction(root);
-
-    logInfo() << "Inserting " << transf.size() << " crucial object destructions..." << std::endl;
-
-    for (AnyTransform& tf : transf)
-      tf.execute();
-
-    clearMemoized();
-    logInfo() << "Finished C++ object destruction normalization." << std::endl;
+    return withCplusplus && n && isSgConstructorInitializer(n->get_expression());
   }
 } // CodeThorn namespace

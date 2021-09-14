@@ -33,8 +33,9 @@ struct CtxLabelComparator
 
 
 template <class ContextString>
-struct CtxLabeler : CLabeler
+class CtxLabeler : public CLabeler
 {
+  public:
     typedef ContextString                                                   context_t;
     typedef std::pair<Label, context_t>                                     ContextedLabel;
     typedef CtxLabelComparator<typename context_t::comparator>              RelabelComparator;

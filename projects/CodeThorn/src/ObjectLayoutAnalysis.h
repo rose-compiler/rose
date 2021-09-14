@@ -70,18 +70,18 @@ struct ObjectLayoutEntry : std::tuple<size_t, ObjectLayoutElement>
 };
 
 
-struct ObjectLayout : private std::vector<ObjectLayoutEntry>
+class ObjectLayout : std::vector<ObjectLayoutEntry>
 {
-  using base = std::vector<ObjectLayoutEntry>;
-  using base::base;
+  public:
+    using base = std::vector<ObjectLayoutEntry>;
+    using base::base;
 
-  using base::value_type;
-  using base::iterator;
-  using base::const_iterator;
-  using base::begin;
-  using base::end;
-  using base::emplace_back;
-
+    using base::value_type;
+    using base::iterator;
+    using base::const_iterator;
+    using base::begin;
+    using base::end;
+    using base::emplace_back;
   //~ size_t object_size()    const;
   //~ size_t number_entries() const;
 };

@@ -1234,9 +1234,21 @@ Flow CFAnalysis::flow(SgNode* n) {
   }
 
   if(CodeThorn::Pass::WITH_EXTENDED_NORMALIZED_CALL && SgNodeHelper::matchExtendedNormalizedCall(node)) {
+#ifdef ALTERNATIVE_LOCAL_EDGE_HANDLING
+    // local edge for function call: call -> callReturn is added
     Label callLabel=labeler->functionCallLabel(node);
     Label callReturnLabel=labeler->functionCallReturnLabel(node);
-    edgeSet.insert(Edge(callLabel,EDGE_FORWARD,callReturnLabel));
+    edgeSet.insert(Edge(callLabel,EDGE_LOCAL,callReturnLabel));
+#else
+    // 'local' edge is added when intraInter flow is computed
+#endif
+    // add special case edge for callReturn to returnNode SgReturnStmt(SgFunctionCallExp)
+    // edge: SgFunctionCallExp.callReturn->init(SgReturnStmt)
+    if(SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(node)) {
+      Label callReturnLabel=labeler->functionCallReturnLabel(node);
+      Label returnStmtLabel=labeler->functionCallReturnLabel(node)+1;
+      edgeSet.insert(Edge(callReturnLabel,EDGE_FORWARD,returnStmtLabel));
+    }
     return edgeSet;
   }
 

@@ -1,4 +1,3 @@
-#include "test-new.h"
 #include "test-main.h"
 
 const char* description = "Tests subobject pointer shifts with covariant return types";

@@ -1,4 +1,3 @@
-#include "test-new.h"
 #include "test-main.h"
 
 const char* description = "Tests Basic Exception handling";

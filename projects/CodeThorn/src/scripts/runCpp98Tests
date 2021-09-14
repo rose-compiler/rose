@@ -42,51 +42,35 @@ function runCxxTests {
             benchmarkname=$(basename $benchmark)
             printf "Testing %-38s: " $benchmarkname
             CT_OUTPUT_FILE=$benchmarkname.imout
+            OUTPUT_FILE_OBSERVED="${CT_OUTPUT_FILE}.observed"
+            OUTPUT_FILE_EXPECTED="${CT_OUTPUT_FILE}.expected"
 
             # ./codethorn $CT_MODE_OPTIONS --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR/include $benchmark > /dev/null
-            ./codethorn $CT_MODE_OPTIONS -I $TESTDIR/include $benchmark > /dev/null
-            RESULT=$?
-            
-            if [ $RESULT == 0 ]; then
-              echo $COLORED_PASS
-              ((numPass++))
-            else
-              echo $COLORED_FAIL
-              ((numFail++))
-            fi
-            
-          #~ if [ ! $? -eq 0 ]
-          #~ then
-          #~ echo $COLORED_FAIL
-                #~ ((numFail++))
-            #~ else
-                #~ echo -n "$COLORED_PASS "
-: <<'EndOfComment'
-            EXEFILE=${benchmarkname}.exe
-            $CXX -std=c++03 -Wall -Wextra -pedantic -I $TESTDIR/include $benchmark -o$EXEFILE
-            RESULT=$?
+            ./codethorn $CT_MODE_OPTIONS --interpreter-mode-file="${OUTPUT_FILE_OBSERVED}" -I $TESTDIR/include $benchmark > /dev/null
+            CT_RESULT=$?
 
-            if [ $RESULT == 0 ]; then
-              OUTPUT_FILE_OBSERVED="${CT_OUTPUT_FILE}.observed"
-              OUTPUT_FILE_EXPECTED="${CT_OUTPUT_FILE}.expected"
-              ./$EXEFILE > $OUTPUT_FILE_OBSERVED
+            if [ $CT_RESULT == 0 ]; then
+              EXEFILE=${benchmarkname}.exe
+              $CXX -std=c++03 -Wall -Wextra -pedantic -I $TESTDIR/include $benchmark -o$EXEFILE
+              EXE_RESULT=$?
+
               ./$EXEFILE -e > $OUTPUT_FILE_EXPECTED
 
-            #~ fi
               DIFF=$(diff $OUTPUT_FILE_OBSERVED $OUTPUT_FILE_EXPECTED)
               if [ "$DIFF" != "" ]
               then
-                  echo $COLORED_WARN
-                  ((numWarn++))
+                  echo $COLORED_FAIL
+                  ((numFail++))
               else
                   echo $COLORED_PASS
                   ((numPass++))
               fi
-              rm -f $EXEFILE $OUTPUT_FILE_OBSERVED OUTPUT_FILE_EXPECTED
             else
+              echo $COLORED_FAIL
               ((numFail++))
             fi
-EndOfComment
+
+            rm -f $EXEFILE $OUTPUT_FILE_OBSERVED $OUTPUT_FILE_EXPECTED
         done
     done
     printStats $numPass $numWarn $numWarnExpected $numFail $numFailExpected
@@ -170,12 +154,12 @@ while [[ $# -gt 0 ]]; do
 done
 
 #CT_MODE_OPTIONS="--context-sensitive=yes --normalize-level=2 --interpreter-mode=1 --in-state-string-literals --exploration-mode=topologic-sort"
-CT_MODE_OPTIONS="--run-solver=0 --vis=1 --normalize-level=2 --normalize-extended"
+CT_MODE_OPTIONS="--vis=1 --context-sensitive=yes --exploration-mode=topologic-sort --normalize-level=2 --normalize-extended --interpreter-mode=1"
 
 echo "Valid C++98 Tests: "
 passingTests=`echo {001..016} {018..034} {036..051} {053..056}`
 numWarnExpected=0
-numFailExpected=34
+numFailExpected=46
 runCxxTests $COMPILER $TESTDIR $TESTPREFIX $numWarnExpected $numFailExpected $passingTests
 
 echo "Undefined Behavior Tests: "

@@ -29,13 +29,14 @@ using FuncNameFn    = std::function<std::string(FunctionId)>;
 using VarNameFn     = std::function<std::string(VariableId)>;
 
 
-struct ClassAnalysis;
-struct CastAnalysis;
+class ClassAnalysis;
+class CastAnalysis;
 
 /// a compatibility layer that abstracts functions and queries of
 ///   the AST and implements those capabilities for ROSE.
-struct RoseCompatibilityBridge
+class RoseCompatibilityBridge
 {
+  public:
     enum ReturnTypeRelation : int
     {
       unrelated = 0,
@@ -126,11 +127,11 @@ struct RoseCompatibilityBridge
 /// wrapper class to produce informative debug output about casts
 struct CastWriterDbg
 {
-  CastWriterDbg(CastKeyType n)
-  : node(n)
-  {}
+    CastWriterDbg(CastKeyType n)
+    : node(n)
+    {}
 
-  CastKeyType node;
+    CastKeyType node;
 };
 
 std::ostream& operator<<(std::ostream& os, const CastWriterDbg&);

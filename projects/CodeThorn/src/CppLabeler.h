@@ -8,7 +8,8 @@
 namespace CodeThorn
 {
 
-struct CppLabeler : CLabeler
+// \deprecated currently not used
+class CppLabeler : CLabeler
 {
   CppLabeler();
   //~ explicit CppLabeler(SgNode*);

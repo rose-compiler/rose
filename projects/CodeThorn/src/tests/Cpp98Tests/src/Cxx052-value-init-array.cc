@@ -1,4 +1,3 @@
-#include <cassert>
 #include "test-new.h"
 #include "test-main.h"
 
