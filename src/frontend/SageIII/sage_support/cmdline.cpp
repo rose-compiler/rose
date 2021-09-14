@@ -870,9 +870,17 @@ SgProject::processCommandLine(const vector<string>& input_argv)
                        }
                       else
                        {
-                         printf ("Error: -x <option> implementation in ROSE only permits specification of \"c\" or \"c++\" or \"none\" as supported languages \n");
-                         ROSE_ABORT();
+                         if (tempLanguageSpecificationName == "ada" || tempLanguageSpecificationName == "Ada")
+                            {
+                              set_Ada_only(true);
+                            }
+                           else
+                            {
+                              printf ("Error: -x <option> implementation in ROSE only permits specification of \"c\" or \"c++\" or \"ada\" or \"none\" as supported languages \n");
+                              ROSE_ABORT();
+                            }
                        }
+                  
                   }
              }
 
