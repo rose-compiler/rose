@@ -139,8 +139,12 @@ namespace CodeThorn {
     
     void setErrorReportFileName(std::string name);
     void setStatusFlag(bool flag);
+    std::string unusedVariablesCsvReport();
     
   private:
+    // will set the isUsed flag in VIM for all variables (invoked by computeSymbolMapping)
+    void determineVarUsage(SgProject* project);
+
     typedef std::list<std::pair<SgStatement*,SgVarRefExp*>> BrokenExprStmtList;
     
     SgStatement* correspondingStmtOfExpression(SgExpression* exp);
@@ -170,6 +174,7 @@ namespace CodeThorn {
     void appendErrorReportLine(std::string s);
     std::list<std::string> errorReport;
     bool _status=false;
+
   };
 }
 

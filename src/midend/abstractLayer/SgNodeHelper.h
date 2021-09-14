@@ -96,8 +96,11 @@ namespace SgNodeHelper {
   std::string lineColumnAndSourceCodeToString(SgNode* node);
 
   //! returns location (consisting of filename, line, column)
-  //! Abbreviates fileName if too long
-  std::string locationToString(SgNode* node, size_t maxFileNameLength=30);
+  std::string locationToString(SgNode* node);
+
+  //! returns location (consisting of filename, line, column)
+  //! Abbreviates fileName if too long, max file name length can be set
+  std::string abbreviatedLocationToString(SgNode* node, size_t maxFileNameLength=30);
 
   //! returns location (consisting of filename, line, column) and source code of unparsed node in one string.
   //! Abbreviates fileName and unparsed source if too long (defaults are 30,20)
