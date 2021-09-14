@@ -1180,8 +1180,8 @@ namespace CodeThorn {
 	  // if varId is a function parameter, there is no declaration (there is only a SgInitializedName)
 	  ss<<varInfo->variableScopeToString()<<","
 	    <<varInfo->aggregateTypeToString()<<","
-	    <<variableName(varId)<<","
-	    <<SgNodeHelper::locationToString(varDecl)
+	    <<SgNodeHelper::locationToString(varDecl)<<","
+	    <<variableName(varId)
 	    <<endl;
 	}
       }
