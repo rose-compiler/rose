@@ -170,7 +170,6 @@ namespace CodeThorn {
     CodeThorn::PStateSet* getPStateSet();
     EStateSet* getEStateSet();
     TransitionGraph* getTransitionGraph();
-    ConstraintSetMaintainer* getConstraintSetMaintainer();
     std::list<FailedAssertion> getFirstAssertionOccurences();
 
     void setSkipUnknownFunctionCalls(bool defer);
@@ -290,7 +289,7 @@ namespace CodeThorn {
     virtual void setPreInfo(Label lab, CallString context, Lattice*);
     virtual void setPostInfo(Label lab, CallString context, Lattice*);
 
-    void initializeSummaryStates(const PState* initialPStateStored, const ConstraintSet* emptycsetstored);
+    void initializeSummaryStates(PStatePtr initialPStateStored);
     const CodeThorn::EState* getSummaryState(CodeThorn::Label lab, CallString cs);
     void setSummaryState(CodeThorn::Label lab, CallString cs, CodeThorn::EState const* estate);
     std::string programPositionInfo(CodeThorn::Label);
@@ -345,15 +344,14 @@ namespace CodeThorn {
     /*! if state exists in stateSet, a pointer to the existing state is returned otherwise
       a new state is entered into stateSet and a pointer to it is returned.
     */
-    const PState* processNew(PState& s);
-    const PState* processNewOrExisting(PState& s);
+    PStatePtr processNew(PState& s);
+    PStatePtr processNewOrExisting(PState& s);
     const EState* processNew(EState& s);
     const EState* processNewOrExisting(EState& s);
     const EState* processCompleteNewOrExisting(const EState* es);
-    void topifyVariable(PState& pstate, ConstraintSet& cset, AbstractValue varId);
+    void topifyVariable(PState& pstate, AbstractValue varId);
     bool isTopified(EState& s);
     EStateSet::ProcessingResult process(EState& s);
-    const ConstraintSet* processNewOrExisting(ConstraintSet& cset);
 
     void recordTransition(const EState* sourceEState, Edge e, const EState* targetEState);
 
@@ -404,6 +402,13 @@ namespace CodeThorn {
     std::list<int>::iterator _inputSequenceIterator;
     size_t getEStateSetSize();
     size_t getTransitionGraphSize();
+
+    // returns an overview of computed statistics in readable format
+    std::string internalAnalysisReportToString();
+
+    uint32_t getTotalNumberOfFunctions();
+    void setTotalNumberOfFunctions(uint32_t num);
+    
   protected:
 
     // EStateWorkLists: Current and Next should point to One and Two (or swapped)
@@ -412,7 +417,6 @@ namespace CodeThorn {
 
     EStateSet estateSet;
     PStateSet pstateSet;
-    ConstraintSetMaintainer constraintSetMaintainer;
     TransitionGraph transitionGraph;
     TransitionGraph backupTransitionGraph;
     TransitionGraphReducer _stgReducer;
@@ -473,8 +477,12 @@ namespace CodeThorn {
     ExternalFunctionsContainerType externalFunctions;
 
     SgProject* _root=0; // AST root node, set by phase 1, also used in phase 2.
+    uint32_t _statsIntraFinishedFunctions=0;
+    uint32_t _statsIntraUnfinishedFunctions=0;
+    uint32_t _totalNumberOfFunctions=0; // for status reporting only
+    
   private:
-
+    
     //std::unordered_map<int,const EState*> _summaryStateMap;
     //std::unordered_map< pair<int, CallString> ,const EState*, hash_pair> _summaryCSStateMap;
     typedef std::unordered_map <CallString ,const EState*> SummaryCSStateMap;
@@ -490,7 +498,6 @@ namespace CodeThorn {
     TopologicalSort* _topologicalSort=nullptr;
     
     const CodeThorn::PState* _initialPStateStored=nullptr;
-    const CodeThorn::ConstraintSet* _emptycsetstored=nullptr;
     CodeThorn::EStateTransferFunctions* _estateTransferFunctions=nullptr;
 
   }; // end of class CTAnalysis

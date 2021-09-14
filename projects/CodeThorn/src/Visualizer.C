@@ -53,7 +53,7 @@ void AssertionExtractor::setEStateSet(EStateSet* x) { estateSet=x; }
 void AssertionExtractor::computeLabelVectorOfEStates() {
   for(EStateSet::iterator i=estateSet->begin();i!=estateSet->end();++i) {
     Label lab=(*i)->label();
-    const PState* p=(*i)->pstate();
+    PStatePtr p=(*i)->pstate();
     if(assertions[lab.getId()]!="")
       assertions[lab.getId()]+="||";
     assertions[lab.getId()]+="(";
@@ -71,14 +71,6 @@ void AssertionExtractor::computeLabelVectorOfEStates() {
           assertions[lab.getId()]+=varId.toString(variableIdMapping)+"=="+p->varValueToString(varId);
         }
       }
-      const ConstraintSet* cset=(*i)->constraints();
-      string constraintstring=cset->toAssertionString(variableIdMapping);
-      if(!isFirst && constraintstring!="") {
-        assertions[lab.getId()]+=" && ";
-      } else {
-        isFirst=false;
-      }
-      assertions[lab.getId()]+=constraintstring;
       assertions[lab.getId()]+=")";
     }
   }
@@ -200,7 +192,7 @@ string Visualizer::cfasToDotSubgraphs(vector<Flow*> cfas) {
   return ss.str();
 }
 
-string Visualizer::pstateToString(const PState* pstate) {
+string Visualizer::pstateToString(PStatePtr pstate) {
   stringstream ss;
   bool pstateAddressSeparator=false;
   if((tg1&&args.getBool("tg1-pstate-address"))||(tg2&&args.getBool("tg2-pstate-address"))) {
@@ -234,18 +226,10 @@ string Visualizer::estateToString(const EState* estate) {
   if((tg1&&args.getBool("tg1-estate-properties"))||(tg2&&args.getBool("tg2-estate-properties"))) {
     ss<<estate->toString(variableIdMapping);
   } 
-  if((tg1&&args.getBool("tg1-estate-predicate"))||(tg2&&args.getBool("tg2-estate-predicate"))) {
-    string s=estate->predicateToString(variableIdMapping);
-    // replace ASCII with HTML characters
-    s=CodeThorn::replace_string(s,",","&and;");
-    s=CodeThorn::replace_string(s,"!=","&ne;");
-    s=CodeThorn::replace_string(s,"==","=");
-    ss<<s;
-  }
   return ss.str();
 }
 
-string Visualizer::pstateToDotString(const PState* pstate) {
+string Visualizer::pstateToDotString(PStatePtr pstate) {
   return string("\""+SgNodeHelper::doubleQuotedEscapedString(pstateToString(pstate))+"\"");
 }
 
@@ -331,8 +315,12 @@ string Visualizer::transitionGraphToDot() {
 
     // // FAILEDASSERTVIS: the next check allows to turn off edges of failing assert to target node (text=red, background=black)
     if((*j)->target->io.op==InputOutput::FAILED_ASSERT) continue;
-    
-    ss <<dotEStateAddressString((*j)->source)<<"_"<<numInvisibleLayoutEdges<< "->"<<dotEStateAddressString((*j)->target); // inter-cluster edge
+
+    if(getOptionMemorySubGraphs()) {
+      ss <<dotEStateAddressString((*j)->source)<<"_"<<numInvisibleLayoutEdges<< "->"<<dotEStateAddressString((*j)->target); // inter-cluster edge
+    } else {
+      ss <<dotEStateAddressString((*j)->source)<<"->"<<dotEStateAddressString((*j)->target); // inter-cluster edge
+    }
     ss <<" [label=\""<<SgNodeHelper::nodeToString(labeler->getNode((*j)->edge.source()));
     ss <<"["<<(*j)->edge.typesToString()<<"]";
     ss <<"\" ";
@@ -512,8 +500,7 @@ string Visualizer::transitionGraphWithIOToDot(EStatePtrSet displayedEStates,
         newedges<<"n"<<(*j)->target;
       }
       if(number.isTop()) {
-        newedges<<" [label=\"";
-        newedges<<(*j)->target->constraints()->toString()<<"\"";
+        newedges<<" [label=\""<<"top"<<"\"";
       if((*j)->source==(*j)->target)
         newedges<<" color=black "; // self-edge-color
         newedges<<"];"<<endl;
@@ -592,8 +579,7 @@ string Visualizer::transitionGraphWithIOToDot() {
     ++j) {
       newedges<<"n"<<(*j)->source<<"->"<<"n"<<(*j)->target;
       if(number.isTop()) {
-    newedges<<" [label=\"";
-    newedges<<(*j)->target->constraints()->toString()<<"\"";
+	newedges<<" [label=\""<<"top"<<"\"";
     if((*j)->source==(*j)->target)
       newedges<<" color=black "; // self-edge-color
     newedges<<"];"<<endl;

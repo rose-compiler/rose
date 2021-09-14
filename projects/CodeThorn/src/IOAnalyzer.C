@@ -223,7 +223,6 @@ void IOAnalyzer::setAnalyzerToSolver8(EState* startEState, bool resetAnalyzerDat
     resetInputSequenceIterator();
     estateSet.max_load_factor(0.7);
     pstateSet.max_load_factor(0.7);
-    constraintSetMaintainer.max_load_factor(0.7);
   }
   // initialize worklist
   const EState* currentEState=processNewOrExisting(*startEState);
@@ -268,10 +267,6 @@ void IOAnalyzer::printAnalyzerStatistics(double totalRunTime, string title) {
   double eStateSetLoadFactor=getEStateSet()->loadFactor();
   long transitionGraphSize=getTransitionGraph()->size();
   long transitionGraphBytes=transitionGraphSize*sizeof(Transition);
-  long numOfconstraintSets=getConstraintSetMaintainer()->numberOf();
-  long constraintSetsBytes=getConstraintSetMaintainer()->memorySize();
-  long constraintSetsMaxCollisions=getConstraintSetMaintainer()->maxCollisions();
-  double constraintSetsLoadFactor=getConstraintSetMaintainer()->loadFactor();
 
   long numOfStdinEStates=(getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR));
   long numOfStdoutVarEStates=(getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR));
@@ -281,7 +276,7 @@ void IOAnalyzer::printAnalyzerStatistics(double totalRunTime, string title) {
   long numOfConstEStates=(getEStateSet()->numberOfConstEStates(getVariableIdMapping()));
   //long numOfStdoutEStates=numOfStdoutVarEStates+numOfStdoutConstEStates;
 
-  long totalMemory=pstateSetBytes+eStateSetBytes+transitionGraphBytes+constraintSetsBytes;
+  long totalMemory=pstateSetBytes+eStateSetBytes+transitionGraphBytes;
 
   stringstream ss;
   ss <<color("white");
@@ -298,7 +293,6 @@ void IOAnalyzer::printAnalyzerStatistics(double totalRunTime, string title) {
   ss << "Number of pstates              : "<<color("magenta")<<pstateSetSize<<color("white")<<" (memory: "<<color("magenta")<<pstateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<pstateSetLoadFactor<<  "/"<<pstateSetMaxCollisions<<")"<<endl;
   ss << "Number of estates              : "<<color("cyan")<<eStateSetSize<<color("white")<<" (memory: "<<color("cyan")<<eStateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<eStateSetLoadFactor<<  "/"<<eStateSetMaxCollisions<<")"<<endl;
   ss << "Number of transitions          : "<<color("blue")<<transitionGraphSize<<color("white")<<" (memory: "<<color("blue")<<transitionGraphBytes<<color("white")<<" bytes)"<<endl;
-  ss << "Number of constraint sets      : "<<color("yellow")<<numOfconstraintSets<<color("white")<<" (memory: "<<color("yellow")<<constraintSetsBytes<<color("white")<<" bytes)"<<" ("<<""<<constraintSetsLoadFactor<<  "/"<<constraintSetsMaxCollisions<<")"<<endl;
   if(getNumberOfThreadsToUse()==1 && getSolver()->getId()==5 && getExplorationMode()==EXPL_LOOP_AWARE) {
     ss << "Number of iterations           : "<<getIterations()<<"-"<<getApproximatedIterations()<<endl;
   }

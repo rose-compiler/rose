@@ -23,26 +23,42 @@ namespace Concolic {
  *  This contains information about the system call and is passed to the system call callbacks. */
 class SyscallContext {
 public:
+    SyscallContext() = delete;
+
+    /** Constructor for a syscall event to be replayed. */
+    SyscallContext(const ArchitecturePtr&, const ExecutionEventPtr &syscallEvent,
+                   const std::vector<ExecutionEventPtr> &relatedEvents);
+
+    /** Constructor for first-time system call. */
+    SyscallContext(const ArchitecturePtr&, const Emulation::RiscOperatorsPtr&,
+                   const ExecutionEventPtr &syscallEvent);
+
     virtual ~SyscallContext();
+
+    /*------------------------------------------------------------------------------------------------------------
+     * Inputs to the callback
+     *------------------------------------------------------------------------------------------------------------*/
+
+    /** Phase of execution.
+     *
+     *
+     *  During the @c REPLAY phase, the callback's @ref SyscallCallback::replay "replay" method is called, and during the @c
+     *  EMULATION phase, the callback's @ref SyscallCallback::handlePreSyscall "handlePreSyscall" and @ref
+     *  SyscallCallback::handlePostSyscall "handlePostSyscall" methods are called. */
+    ConcolicPhase phase = ConcolicPhase::EMULATION;
 
     /** Architecture on which system call occurs. */
     ArchitecturePtr architecture;
 
-    /** System call declaration and saved state.
-     *
-     *  This is the pointer to the object to which this callback is attached. It contains information about the
-     *  the system call declaration as well as any state that needs to be saved across calls to this system call. */
-    SystemCallPtr systemCall;
-
     /** Instruction semantics operators.
      *
      *  This also includes the current state and the SMT solver. */
-    InstructionSemantics2::BaseSemantics::RiscOperatorsPtr ops;
+    Emulation::RiscOperatorsPtr ops;
 
     /** Address of system call.
      *
      *  Virtual address where the system call occurs. */
-    rose_addr_t callSite;
+    rose_addr_t ip = 0;
 
     /** Concrete arguments.
      *
@@ -58,18 +74,42 @@ public:
      *  value are described by subsequent events. */
     ExecutionEventPtr syscallEvent;
 
-    /** Optional return value event.
+    /*------------------------------------------------------------------------------------------------------------
+     * Inputs and outputs
+     *------------------------------------------------------------------------------------------------------------*/
+
+    /** Related events.
      *
-     *  If a system call returns, then one of the callbacks should create an execution event that describes the return
-     *  value, and assign it to this data member. */
-    ExecutionEventPtr retEvent;
+     *  During playback (i.e., concrete execution), this is the list of following events for the same instruction. For
+     *  instance, there's usually a write-register event that adjusts the system call return value according to an input
+     *  variable. These events are also replayed individually, but are provided in the system call context because they might
+     *  be needed by the system call callback.
+     *
+     *  During non-playback (i.e., concolic execution) this list is initially empty. As callbacks are called which might create
+     *  additional events, those events should be added to this list. This accomplishes two things: it makes the events easily
+     *  obtainable by subsequent callbacks (for use and/or modification), and it ensures that the final state of those events
+     *  gets written to the database. */
+    std::vector<ExecutionEventPtr> relatedEvents;
+
+    /** System call return event.
+     *
+     *  During playback (i.e., concrete execution) this property is initially null, although all related events to this
+     *  callback are in the @p relatedEvents property and can be searched. If a callback searches @p relatedEvents in order
+     *  locate the system call return side effect, it may (at its discretion) set this @p returnEvent property to point
+     *  to the correct event.
+     *
+     *  During non-playback (i.e., concolic execution) this property is initially null because the concrete system call has not
+     *  yet been executed. Once it has been executed, the callback that performed the concrete execute step *must* set this to
+     *  a non-null value and should also push that event onto the @p relatedEvents list. The easiest way to do this is by calling
+     *  @ref SyscallCallback::createReturnEvent. */
+    ExecutionEventPtr returnEvent;
 
     /** Optional return input variable.
      *
      *  If the system call return value should be a program input, then a variable should be created to represent that input. The
      *  variable should be saved in this data member.  Any constraints for this variable should be added to the SMT solver
-     *  that can be found from the @c ops data member of this object. */
-    InstructionSemantics2::BaseSemantics::SValuePtr retSValue;
+     *  that can be found from the @c ops data member of this context object. */
+    SymbolicExpr::Ptr symbolicReturn;
 };
 
 
@@ -82,69 +122,19 @@ class SyscallCallback: public Sawyer::SharedObject {
 public:
     using Ptr = SyscallCallbackPtr;
 
+public:
     virtual ~SyscallCallback() {}
 
     /** Callback.
      *
      *  The @p handled argument indicates whether any previous callback has already handled this system call, and if so, this
      *  callback should possibly be a no-op.  Returns true if this or any prior callback has handled the system call. */
-    virtual bool operator()(bool handled, SyscallContext&) const = 0;
-};
+    virtual bool operator()(bool handled, SyscallContext&) = 0;
 
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// System call declarations and inter-call data.
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-/** Description of system calls.
- *
- *  This class describes various things about system calls. For instance, a system call like SYS_getpid should return the same
- *  value every time it's called since a process ID is constant for the life of the process. */
-class SystemCall: public Sawyer::SharedObject {
-public:
-    /** Reference counting pointer. */
-    using Ptr = SystemCallPtr;
-
-    /** Callbacks for handling system call. */
-    using Callbacks = Sawyer::Callbacks<SyscallCallbackPtr>;
-
-private:
-    Sawyer::Optional<uint64_t> prevReturnConcrete_;     // Previous concrete return value, or nothing
-    SymbolicExpr::Ptr prevReturnSymbolic_;              // Previous symbolic return value, or null
-    Callbacks callbacks_;                               // List of user functions to handle this syscall
-
-protected:
-    SystemCall();
-
-public:
-    /** Default allocating constructor. */
-    static SystemCallPtr instance();
-
-    ~SystemCall();
-
-public:
-    /** Property: Previous concrete return value.
+    /** Prints callback name and information.
      *
-     * @{ */
-    const Sawyer::Optional<uint64_t>& previousReturnConcrete() const;
-    void previousReturnConcrete(uint64_t);
-    /** @} */
-
-    /** Property: Previous symbolic return value.
-     *
-     * @{ */
-    SymbolicExpr::Ptr previousReturnSymbolic() const;
-    void previousReturnSymbolic(const SymbolicExpr::Ptr&);
-    /** @} */
-
-    /** Property: Callbacks.
-     *
-     *  List of user-defined functions that could potentially handle this system call.
-     *
-     * @{ */
-    const Callbacks& callbacks() const;
-    Callbacks& callbacks();
-    /** @} */
+     *  If @p myName is empty, then use the name from the system call event in the provided context. */
+    void hello(const std::string &myName, const SyscallContext&) const;
 };
 
 } // namespace

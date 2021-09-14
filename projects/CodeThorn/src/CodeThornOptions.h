@@ -96,7 +96,9 @@ public:
   bool programStatsOnly=false;
   bool programStats=false;
   std::string programStatsFileName;
-
+  std::string internalAnalysisReportFileName="internal-analysis-report.txt";
+  std::string unusedVariablesReportFileName="unused-variables-report.csv";
+  
   bool inStateStringLiterals=false;
   bool stdFunctions=false;
   bool ignoreFunctionPointers=false;
@@ -214,7 +216,8 @@ public:
 
   // consistency checking options
   bool astSymbolCheckFlag=false; // performed by VariableIdMapping
-
+  std::string vimReportFileName="vim-report.txt";
+  
   struct Info {
     bool printVariableIdMapping=false;
     bool printAstNodeStats=false;

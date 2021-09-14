@@ -125,11 +125,12 @@ namespace CodeThorn {
         locationsCSVFileData<<endl;
       }
       string s=locationsCSVFileData.str();
-      if(!CppStdUtilities::writeFile(ctOpt.csvReportModeString,ctOpt.reportFilePath+"/"+ctOpt.deadCodeAnalysisFileName, s)) {
-        cerr<<"Error: cannot write file "<<ctOpt.deadCodeAnalysisFileName<<endl;
+      string fileName=ctOpt.reportFilePath+"/"+ctOpt.deadCodeAnalysisFileName;
+      if(!CppStdUtilities::writeFile(ctOpt.csvReportModeString, fileName, s)) {
+        cerr<<"Error: cannot write file "<<fileName<<endl;
       } else {
         if(!ctOpt.quiet)
-          cout<<"Generated analysis results in file "<<ctOpt.deadCodeAnalysisFileName<<endl;
+          cout<<"Generated analysis results in file "<<fileName<<endl;
       }
     }
   }
@@ -452,6 +453,30 @@ namespace CodeThorn {
       cout<<"Generated function verification file "<<fileName1<<endl;
     }
 
+  }
+
+  void AnalysisReporting::generateInternalAnalysisReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer) {
+    string report=analyzer->internalAnalysisReportToString();
+    string fileName=ctOpt.reportFilePath+"/"+ctOpt.internalAnalysisReportFileName;
+    if(!CppStdUtilities::writeFile(ctOpt.csvReportModeString, fileName, report)) {
+      cerr<<"Error: cannot write file "<<fileName<<endl;
+    } else {
+      if(!ctOpt.quiet)
+	cout<<"Generated analysis results in file "<<fileName<<endl;
+    }
+  }
+
+  void AnalysisReporting::generateUnusedVariablesReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer) {
+    string fileName=ctOpt.reportFilePath+"/"+ctOpt.unusedVariablesReportFileName;
+    VariableIdMappingExtended* vim=analyzer->getVariableIdMapping();
+    ROSE_ASSERT(vim);
+    string report=vim->unusedVariablesCsvReport();
+    if(!CppStdUtilities::writeFile(ctOpt.csvReportModeString, fileName, report)) {
+      cerr<<"Error: cannot write file "<<fileName<<endl;
+    } else {
+      if(!ctOpt.quiet)
+	cout<<"Generated unused-variables report in file "<<fileName<<endl;
+    }
   }
   
 } // end of namespace CodeThorn

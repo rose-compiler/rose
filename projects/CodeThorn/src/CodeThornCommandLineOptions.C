@@ -169,7 +169,8 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ;
 
   experimentalOptions.add_options()
-    ("ast-symbol-check",po::value< bool >(&ctOpt.astSymbolCheckFlag)->default_value(true),"Allows to turn off the AST consistency symbol check (by default the check is enabled).")
+    ("ast-symbol-check",po::value< bool >(&ctOpt.astSymbolCheckFlag)->default_value(true),"Allows to make the tool exit immediately if the AST symbol check reports any error.")
+    ("vim-report-file",po::value< string >(&ctOpt.vimReportFileName),"Generates a report of variable id mapping (always includes ast symbol check results).")
     ("array-abstraction-index",po::value< int > (&ctOpt.arrayAbstractionIndex)->default_value(-1),"Set array abstraction index, starting at which an array summary is computed.")
     ("run-solver", po::value< bool >(&ctOpt.runSolver)->default_value(true),"If turned off all fix-point algorithms are skipped.")
     ("omp-ast", po::value< bool >(&ctOpt.ompAst)->default_value(false)->implicit_value(true),"Flag for using the OpenMP AST - useful when visualizing the ICFG.")
@@ -272,7 +273,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("config", po::value< string >(&ctOpt.configFileName), "Use the configuration specified in file <arg>.")
     ("colors", po::value< bool >(&ctOpt.colors)->default_value(true)->implicit_value(true),"Use colors in output.")
     ("csv-stats",po::value< string >(&ctOpt.csvStatsFileName),"Output statistics into a CSV file <arg>.")
-    ("display-diff",po::value< int >(&ctOpt.displayDiff)->default_value(-1),"Print statistics every <arg> computed estates.")
+    ("display-diff",po::value< int >(&ctOpt.displayDiff),"Print statistics every <arg> computed estates.")
     ("exploration-mode",po::value< string >(&ctOpt.explorationMode), "Set mode in which state space is explored. ([breadth-first]|depth-first|loop-aware|loop-aware-sync|topologic-sort)")
     ("quiet", po::value< bool >(&ctOpt.quiet)->default_value(false)->implicit_value(true), "Produce no output on screen.")
     ("help,h", "Produce this help message.")

@@ -875,6 +875,7 @@ VariableIdMapping::VariableIdInfo::VariableIdInfo():
   isVolatileFlag(false),
   relinked(false),
   unspecifiedSize(false),
+  isUsed(true),
   _initializer(0),
   _varType(0),
   _varDecl(0)

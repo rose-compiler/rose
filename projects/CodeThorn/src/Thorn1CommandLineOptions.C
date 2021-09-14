@@ -62,6 +62,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("function-resolution-mode",po::value< int >(&ctOpt.functionResolutionMode)->default_value(4),"1:Translation unit only, 2:slow lookup, 3: -, 4: complete resolution (including function pointers)")
     //("test-selector",po::value< int >(&ctOpt.testSelector)->default_value(0)->implicit_value(0),"Option for selecting dev tests.")
     ("ast-symbol-check",po::value< bool >(&ctOpt.astSymbolCheckFlag),"Allows to turn off the AST consistency symbol check (by default the check is enabled).")
+    ("vim-report-file",po::value< string >(&ctOpt.vimReportFileName),"Generates a report of ast symbol check and some additional ast checks.")
     ;
 
   visibleOptions.add_options()            
@@ -78,6 +79,9 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     //("program-stats",po::value< bool >(&ctOpt.programStats)->default_value(false)->implicit_value(true),"print some basic program statistics about used language constructs.")
     ("status", po::value< bool >(&ctOpt.status)->default_value(false)->implicit_value(true), "Show status messages.")
     ("internal-checks", po::value< bool >(&ctOpt.internalChecks)->default_value(false)->implicit_value(true), "Run internal consistency checks (without input program).")
+    ("report-file-path",po::value< string >(&ctOpt.reportFilePath),"Sets file path for all reports.")
+    ("file-path-prefix-to-remove", po::value< string >(&ctOpt.filePathPrefixToRemove))
+    ("report-source-column", po::value< bool >(&ctOpt.reportSourceColumn))
     ("log-level",po::value< string >(&ctOpt.logLevel)->default_value("none,>=error"),"Set the log level (\"x,>=y\" with x,y in: (none|info|warn|trace|error|fatal|debug)).")
     ("version,v",po::value< bool >(&ctOpt.displayVersion)->default_value(false)->implicit_value(true), "Display the program version.")
     ;

@@ -7,6 +7,7 @@
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
 #include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
 #include <Rose/BinaryAnalysis/Concolic/InputVariables.h>
+#include <Rose/BinaryAnalysis/Concolic/SharedMemory.h>
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
 #include <Rose/BinaryAnalysis/Concolic/SystemCall.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
@@ -51,221 +52,796 @@ hashMemoryRegion(Combinatorics::Hasher &hasher, const MemoryMap::Ptr &map, Addre
     }
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// LinuxI386::SyscallContext
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+static std::string
+syscallName(int n) {
+    switch (n) {
+        case 1: return "exit";
+        case 2: return "fork";
+        case 3: return "read";
+        case 4: return "write";
+        case 5: return "open";
+        case 6: return "close";
+        case 7: return "waitpid";
+        case 8: return "creat";
+        case 9: return "link";
+        case 10: return "unlink";
+        case 11: return "execve";
+        case 12: return "chdir";
+        case 13: return "time";
+        case 14: return "mknod";
+        case 15: return "chmod";
+        case 16: return "lchown";
+        case 17: return "break";
+        case 18: return "oldstat";
+        case 19: return "lseek";
+        case 20: return "getpid";
+        case 21: return "mount";
+        case 22: return "umount";
+        case 23: return "setuid";
+        case 24: return "getuid";
+        case 25: return "stime";
+        case 26: return "ptrace";
+        case 27: return "alarm";
+        case 28: return "oldfstat";
+        case 29: return "pause";
+        case 30: return "utime";
+        case 31: return "stty";
+        case 32: return "gtty";
+        case 33: return "access";
+        case 34: return "nice";
+        case 35: return "ftime";
+        case 36: return "sync";
+        case 37: return "kill";
+        case 38: return "rename";
+        case 39: return "mkdir";
+        case 40: return "rmdir";
+        case 41: return "dup";
+        case 42: return "pipe";
+        case 43: return "times";
+        case 44: return "prof";
+        case 45: return "brk";
+        case 46: return "setgid";
+        case 47: return "getgid";
+        case 48: return "signal";
+        case 49: return "geteuid";
+        case 50: return "getegid";
+        case 51: return "acct";
+        case 52: return "umount2";
+        case 53: return "lock";
+        case 54: return "ioctl";
+        case 55: return "fcntl";
+        case 56: return "mpx";
+        case 57: return "setpgid";
+        case 58: return "ulimit";
+        case 59: return "oldolduname";
+        case 60: return "umask";
+        case 61: return "chroot";
+        case 62: return "ustat";
+        case 63: return "dup2";
+        case 64: return "getppid";
+        case 65: return "getpgrp";
+        case 66: return "setsid";
+        case 67: return "sigaction";
+        case 68: return "sgetmask";
+        case 69: return "ssetmask";
+        case 70: return "setreuid";
+        case 71: return "setregid";
+        case 72: return "sigsuspend";
+        case 73: return "sigpending";
+        case 74: return "sethostname";
+        case 75: return "setrlimit";
+        case 76: return "getrlimit";
+        case 77: return "getrusage";
+        case 78: return "gettimeofday";
+        case 79: return "settimeofday";
+        case 80: return "getgroups";
+        case 81: return "setgroups";
+        case 82: return "select";
+        case 83: return "symlink";
+        case 84: return "oldlstat";
+        case 85: return "readlink";
+        case 86: return "uselib";
+        case 87: return "swapon";
+        case 88: return "reboot";
+        case 89: return "readdir";
+        case 90: return "mmap";
+        case 91: return "munmap";
+        case 92: return "truncate";
+        case 93: return "ftruncate";
+        case 94: return "fchmod";
+        case 95: return "fchown";
+        case 96: return "getpriority";
+        case 97: return "setpriority";
+        case 98: return "profil";
+        case 99: return "statfs";
+        case 100: return "fstatfs";
+        case 101: return "ioperm";
+        case 102: return "socketcall";
+        case 103: return "syslog";
+        case 104: return "setitimer";
+        case 105: return "getitimer";
+        case 106: return "stat";
+        case 107: return "lstat";
+        case 108: return "fstat";
+        case 109: return "olduname";
+        case 110: return "iopl";
+        case 111: return "vhangup";
+        case 112: return "idle";
+        case 113: return "vm86old";
+        case 114: return "wait4";
+        case 115: return "swapoff";
+        case 116: return "sysinfo";
+        case 117: return "ipc";
+        case 118: return "fsync";
+        case 119: return "sigreturn";
+        case 120: return "clone";
+        case 121: return "setdomainname";
+        case 122: return "uname";
+        case 123: return "modify_ldt";
+        case 124: return "adjtimex";
+        case 125: return "mprotect";
+        case 126: return "sigprocmask";
+        case 127: return "create_module";
+        case 128: return "init_module";
+        case 129: return "delete_module";
+        case 130: return "get_kernel_syms";
+        case 131: return "quotactl";
+        case 132: return "getpgid";
+        case 133: return "fchdir";
+        case 134: return "bdflush";
+        case 135: return "sysfs";
+        case 136: return "personality";
+        case 137: return "afs_syscall";
+        case 138: return "setfsuid";
+        case 139: return "setfsgid";
+        case 140: return "_llseek";
+        case 141: return "getdents";
+        case 142: return "_newselect";
+        case 143: return "flock";
+        case 144: return "msync";
+        case 145: return "readv";
+        case 146: return "writev";
+        case 147: return "getsid";
+        case 148: return "fdatasync";
+        case 149: return "_sysctl";
+        case 150: return "mlock";
+        case 151: return "munlock";
+        case 152: return "mlockall";
+        case 153: return "munlockall";
+        case 154: return "sched_setparam";
+        case 155: return "sched_getparam";
+        case 156: return "sched_setscheduler";
+        case 157: return "sched_getscheduler";
+        case 158: return "sched_yield";
+        case 159: return "sched_get_priority_max";
+        case 160: return "sched_get_priority_min";
+        case 161: return "sched_rr_get_interval";
+        case 162: return "nanosleep";
+        case 163: return "mremap";
+        case 164: return "setresuid";
+        case 165: return "getresuid";
+        case 166: return "vm86";
+        case 167: return "query_module";
+        case 168: return "poll";
+        case 169: return "nfsservctl";
+        case 170: return "setresgid";
+        case 171: return "getresgid";
+        case 172: return "prctl";
+        case 173: return "rt_sigreturn";
+        case 174: return "rt_sigaction";
+        case 175: return "rt_sigprocmask";
+        case 176: return "rt_sigpending";
+        case 177: return "rt_sigtimedwait";
+        case 178: return "rt_sigqueueinfo";
+        case 179: return "rt_sigsuspend";
+        case 180: return "pread64";
+        case 181: return "pwrite64";
+        case 182: return "chown";
+        case 183: return "getcwd";
+        case 184: return "capget";
+        case 185: return "capset";
+        case 186: return "sigaltstack";
+        case 187: return "sendfile";
+        case 188: return "getpmsg";
+        case 189: return "putpmsg";
+        case 190: return "vfork";
+        case 191: return "ugetrlimit";
+        case 192: return "mmap2";
+        case 193: return "truncate64";
+        case 194: return "ftruncate64";
+        case 195: return "stat64";
+        case 196: return "lstat64";
+        case 197: return "fstat64";
+        case 198: return "lchown32";
+        case 199: return "getuid32";
+        case 200: return "getgid32";
+        case 201: return "geteuid32";
+        case 202: return "getegid32";
+        case 203: return "setreuid32";
+        case 204: return "setregid32";
+        case 205: return "getgroups32";
+        case 206: return "setgroups32";
+        case 207: return "fchown32";
+        case 208: return "setresuid32";
+        case 209: return "getresuid32";
+        case 210: return "setresgid32";
+        case 211: return "getresgid32";
+        case 212: return "chown32";
+        case 213: return "setuid32";
+        case 214: return "setgid32";
+        case 215: return "setfsuid32";
+        case 216: return "setfsgid32";
+        case 217: return "pivot_root";
+        case 218: return "mincore";
+        case 219: return "madvise";
+        case 220: return "getdents64";
+        case 221: return "fcntl64";
+        case 224: return "gettid";
+        case 225: return "readahead";
+        case 226: return "setxattr";
+        case 227: return "lsetxattr";
+        case 228: return "fsetxattr";
+        case 229: return "getxattr";
+        case 230: return "lgetxattr";
+        case 231: return "fgetxattr";
+        case 232: return "listxattr";
+        case 233: return "llistxattr";
+        case 234: return "flistxattr";
+        case 235: return "removexattr";
+        case 236: return "lremovexattr";
+        case 237: return "fremovexattr";
+        case 238: return "tkill";
+        case 239: return "sendfile64";
+        case 240: return "futex";
+        case 241: return "sched_setaffinity";
+        case 242: return "sched_getaffinity";
+        case 243: return "set_thread_area";
+        case 244: return "get_thread_area";
+        case 245: return "io_setup";
+        case 246: return "io_destroy";
+        case 247: return "io_getevents";
+        case 248: return "io_submit";
+        case 249: return "io_cancel";
+        case 250: return "fadvise64";
+        case 252: return "exit_group";
+        case 253: return "lookup_dcookie";
+        case 254: return "epoll_create";
+        case 255: return "epoll_ctl";
+        case 256: return "epoll_wait";
+        case 257: return "remap_file_pages";
+        case 258: return "set_tid_address";
+        case 259: return "timer_create";
+        case 260: return "timer_settime";
+        case 261: return "timer_gettime";
+        case 262: return "timer_getoverrun";
+        case 263: return "timer_delete";
+        case 264: return "clock_settime";
+        case 265: return "clock_gettime";
+        case 266: return "clock_getres";
+        case 267: return "clock_nanosleep";
+        case 268: return "statfs64";
+        case 269: return "fstatfs64";
+        case 270: return "tgkill";
+        case 271: return "utimes";
+        case 272: return "fadvise64_64";
+        case 273: return "vserver";
+        case 274: return "mbind";
+        case 275: return "get_mempolicy";
+        case 276: return "set_mempolicy";
+        case 277: return "mq_open";
+        case 278: return "mq_unlink";
+        case 279: return "mq_timedsend";
+        case 280: return "mq_timedreceive";
+        case 281: return "mq_notify";
+        case 282: return "mq_getsetattr";
+        case 283: return "kexec_load";
+        case 284: return "waitid";
+        case 286: return "add_key";
+        case 287: return "request_key";
+        case 288: return "keyctl";
+        case 289: return "ioprio_set";
+        case 290: return "ioprio_get";
+        case 291: return "inotify_init";
+        case 292: return "inotify_add_watch";
+        case 293: return "inotify_rm_watch";
+        case 294: return "migrate_pages";
+        case 295: return "openat";
+        case 296: return "mkdirat";
+        case 297: return "mknodat";
+        case 298: return "fchownat";
+        case 299: return "futimesat";
+        case 300: return "fstatat64";
+        case 301: return "unlinkat";
+        case 302: return "renameat";
+        case 303: return "linkat";
+        case 304: return "symlinkat";
+        case 305: return "readlinkat";
+        case 306: return "fchmodat";
+        case 307: return "faccessat";
+        case 308: return "pselect6";
+        case 309: return "ppoll";
+        case 310: return "unshare";
+        case 311: return "set_robust_list";
+        case 312: return "get_robust_list";
+        case 313: return "splice";
+        case 314: return "sync_file_range";
+        case 315: return "tee";
+        case 316: return "vmsplice";
+        case 317: return "move_pages";
+        case 318: return "getcpu";
+        case 319: return "epoll_pwait";
+        case 320: return "utimensat";
+        case 321: return "signalfd";
+        case 322: return "timerfd_create";
+        case 323: return "eventfd";
+        case 324: return "fallocate";
+        case 325: return "timerfd_settime";
+        case 326: return "timerfd_gettime";
+        case 327: return "signalfd4";
+        case 328: return "eventfd2";
+        case 329: return "epoll_create1";
+        case 330: return "dup3";
+        case 331: return "pipe2";
+        case 332: return "inotify_init1";
+        case 333: return "preadv";
+        case 334: return "pwritev";
+        case 335: return "rt_tgsigqueueinfo";
+        case 336: return "perf_event_open";
+        case 337: return "recvmmsg";
+        case 338: return "fanotify_init";
+        case 339: return "fanotify_mark";
+        case 340: return "prlimit64";
+        case 341: return "name_to_handle_at";
+        case 342: return "open_by_handle_at";
+        case 343: return "clock_adjtime";
+        case 344: return "syncfs";
+        case 345: return "sendmmsg";
+        case 346: return "setns";
+        case 347: return "process_vm_readv";
+        case 348: return "process_vm_writev";
+        case 349: return "kcmp";
+        case 350: return "finit_module";
+        case 351: return "sched_setattr";
+        case 352: return "sched_getattr";
+        case 353: return "renameat2";
+        case 354: return "seccomp";
+        case 355: return "getrandom";
+        case 356: return "memfd_create";
+        case 357: return "bpf";
+        case 358: return "execveat";
+        case 359: return "socket";
+        case 360: return "socketpair";
+        case 361: return "bind";
+        case 362: return "connect";
+        case 363: return "listen";
+        case 364: return "accept4";
+        case 365: return "getsockopt";
+        case 366: return "setsockopt";
+        case 367: return "getsockname";
+        case 368: return "getpeername";
+        case 369: return "sendto";
+        case 370: return "sendmsg";
+        case 371: return "recvfrom";
+        case 372: return "recvmsg";
+        case 373: return "shutdown";
+        case 374: return "userfaultfd";
+        case 375: return "membarrier";
+        case 376: return "mlock2";
+        case 377: return "copy_file_range";
+        case 378: return "preadv2";
+        case 379: return "pwritev2";
+        case 380: return "pkey_mprotect";
+        case 381: return "pkey_alloc";
+        case 382: return "pkey_free";
+        case 383: return "statx";
+        case 384: return "arch_prctl";
+    }
 
-LinuxI386::SyscallContext::SyscallContext(const LinuxI386::Ptr &architecture, const BS::RiscOperatorsPtr &ops,
-                                          const P2::Partitioner &partitioner, const Debugger::Ptr &debugger)
-    : partitioner(partitioner), debugger(debugger) {
-    ASSERT_not_null(debugger);
-    ASSERT_not_null(architecture);
-    this->architecture = architecture;
-    ASSERT_not_null(ops);
-    this->ops = ops;
+    return "sys" + boost::lexical_cast<std::string>(n);
 }
 
-LinuxI386::SyscallContext::~SyscallContext() {}
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// System call behaviors
+// Syscall callback base class
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class SyscallExitsProcess: public SyscallCallback {
-public:
-    static Ptr instance() {
-        return Ptr(new SyscallExitsProcess);
-    }
+LinuxI386SyscallBase::LinuxI386SyscallBase() {}
 
-    bool operator()(bool handled, SyscallContext &ctx) const override {
-        if (!handled) {
-            auto ops = Emulation::RiscOperators::promote(ctx.ops);
-            ops->doExit(ctx.argsConcrete[0]);
-            handled = true;
-        }
-        return handled;
-    }
-};
+LinuxI386SyscallBase::~LinuxI386SyscallBase() {}
 
-class SyscallReturnsConstant: public SyscallCallback {
-public:
-    static Ptr instance() {
-        return Ptr(new SyscallReturnsConstant);
-    }
+bool
+LinuxI386SyscallBase::operator()(bool /*handled*/, SyscallContext &ctx) {
+    // Since a system call might have multiple callbacks, and since all of them inherit from this class, they will all end up
+    // calling this code. Some things (such as creating new events and single stepping the concrete process) should only be
+    // done once, so be careful!
+    hello("linux i386 base class", ctx);
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    auto i386 = ctx.architecture.dynamicCast<LinuxI386>();
+    ASSERT_not_null(i386);
+    const RegisterDescriptor SYS_RET = i386->systemCallReturnRegister();
+    penultimateReturnEvent_ = latestReturnEvent_;
+    latestReturnEvent_ = ExecutionEvent::Ptr();
 
-    bool operator()(bool handled, SyscallContext &ctx_) const override {
-        LinuxI386::SyscallContext &ctx = dynamic_cast<LinuxI386::SyscallContext&>(ctx_);
-
-        if (!handled) {
-            Sawyer::Message::Stream debug(mlog[DEBUG]);
-            LinuxI386::Ptr architecture = ctx.architecture.dynamicCast<LinuxI386>();
-            ASSERT_not_null(architecture);
-
-            ctx.debugger->stepIntoSyscall();                // after this, we're in the syscall-exit-stop state
-            ctx.retEvent = architecture->applySystemCallReturn(ctx.partitioner, ctx.ops, ctx.syscallEvent->name(), ctx.callSite);
-
-            const RegisterDescriptor SYS_RET = architecture->systemCallReturnRegister();
-            ctx.retSValue = ctx.ops->undefined_(SYS_RET.nBits());
-            SymbolicExpr::Ptr retSymbolic = IS::SymbolicSemantics::SValue::promote(ctx.retSValue)->get_expression();
-            uint64_t retConcrete = ctx.retEvent->words()[0];
-
-            if (Sawyer::Optional<uint64_t> prevRetConcrete = ctx.systemCall->previousReturnConcrete()) {
-                // Make the syscall return the same symbolic value as before. We do this by adding a solver constraint to say that
-                // the current return value is the same as the past return value.
-                SymbolicExpr::Ptr prevRetSymbolic = ctx.systemCall->previousReturnSymbolic();
-                ASSERT_not_null(prevRetSymbolic);
-                SAWYER_MESG(debug) <<"  symbolic return must equal previous symbolic return\n";
-                SymbolicExpr::Ptr retvalsAreEqual = SymbolicExpr::makeEq(prevRetSymbolic, retSymbolic);
-                ctx.ops->solver()->insert(retvalsAreEqual);
-
-                // Make the syscall return the same concrete value as before.
-                if (*prevRetConcrete != retConcrete) {
-                    SAWYER_MESG(debug) <<"  replacing return value with " <<StringUtility::toHex2(*prevRetConcrete, SYS_RET.nBits()) <<"\n";
-                    ctx.retEvent->words(std::vector<uint64_t>{*prevRetConcrete});
-                    ctx.debugger->writeRegister(SYS_RET, *prevRetConcrete);
+    if (ConcolicPhase::REPLAY == ctx.phase) {
+        // Pick out the return value and save it for later. The return value will have been created as an event that describes
+        // the side effect of writing the return value to the return register. When replaying, the return value will be
+        // concrete.
+        if (!ctx.returnEvent) {
+            for (const ExecutionEvent::Ptr &relatedEvent: ctx.relatedEvents) {
+                if (relatedEvent->action() == ExecutionEvent::Action::REGISTER_WRITE &&
+                    relatedEvent->registerDescriptor() == SYS_RET) {
+                    ctx.returnEvent = relatedEvent;
+                    break;
                 }
             }
-
-            // Save the concrete and symbolic return values so we can make subsequent calls return the same.
-            ctx.systemCall->previousReturnConcrete(retConcrete);
-            ctx.systemCall->previousReturnSymbolic(retSymbolic);
-            ctx.ops->writeRegister(SYS_RET, ctx.retSValue);
-
-            handled = true;
         }
-        return handled;
-    }
-};
+        ASSERT_not_null(ctx.returnEvent);
+        latestReturnEvent_ = ctx.returnEvent;
 
-class SyscallReturnsIncreasing: public SyscallCallback {
-public:
-    static Ptr instance() {
-        return Ptr(new SyscallReturnsIncreasing);
-    }
+        // Allow the child class to do its thing.
+        playback(ctx);
 
-    bool operator()(bool handled, SyscallContext &ctx_) const override {
-        LinuxI386::SyscallContext &ctx = dynamic_cast<LinuxI386::SyscallContext&>(ctx_);
+    } else {
+        // For non-replay (i.e., concolic execution) we should make sure that there's a return event if no other callback has
+        // already created one. If we create one here, then also give it an input variable to affect the behavior of future
+        // test cases for this same specimen (subsequent callbacks can remove this variable if desired).
+        if (!ctx.returnEvent) {
+            handlePreSyscall(ctx);
+            i386->debugger()->stepIntoSyscall();        // after this, we're in the syscall-exit-stop state
 
-        if (!handled) {
-            Sawyer::Message::Stream debug(mlog[DEBUG]);
-            LinuxI386::Ptr architecture = ctx.architecture.dynamicCast<LinuxI386>();
-            ASSERT_not_null(architecture);
-
-            ctx.debugger->stepIntoSyscall();                // after this, we're in the syscall-exit-stop state
-            ctx.retEvent = architecture->applySystemCallReturn(ctx.partitioner, ctx.ops, ctx.syscallEvent->name(), ctx.callSite);
-
-            const RegisterDescriptor SYS_RET = architecture->systemCallReturnRegister();
-            ctx.retSValue = ctx.ops->undefined_(SYS_RET.nBits());
-            SymbolicExpr::Ptr retSymbolic = IS::SymbolicSemantics::SValue::promote(ctx.retSValue)->get_expression();
-            uint64_t retConcrete = ctx.retEvent->words()[0];
-
-            if (Sawyer::Optional<uint64_t> prevRetConcrete = ctx.systemCall->previousReturnConcrete()) {
-                // Make the syscall return a symbolic value that's not less than the previous return value.
-                SymbolicExpr::Ptr prevRetSymbolic = ctx.systemCall->previousReturnSymbolic();
-                ASSERT_not_null(prevRetSymbolic);
-                SAWYER_MESG(debug) <<"  symbolic return must be >= previous symbolic return\n";
-                SymbolicExpr::Ptr retvalsAreIncreasing = SymbolicExpr::makeGe(retSymbolic, prevRetSymbolic);
-                ctx.ops->solver()->insert(retvalsAreIncreasing);
-
-                // Make the syscall return a concrete value that's not less than the previous concrete return value.
-                if (retConcrete < *prevRetConcrete) {
-                    SAWYER_MESG(debug) <<"  replacing return value with " <<StringUtility::toHex2(*prevRetConcrete, SYS_RET.nBits()) <<"\n";
-                    ctx.retEvent->words(std::vector<uint64_t>{*prevRetConcrete});
-                    ctx.debugger->writeRegister(SYS_RET, *prevRetConcrete);
-                }
+            // If the syscall terminated the program, we should still allow the subclass to handle things even though we're
+            // not creating a return event or input variable for the return.
+            if (i386->debugger()->isTerminated()) {
+                ASSERT_require(ctx.returnEvent == nullptr);
+                handlePostSyscall(ctx);
+                ASSERT_not_reachable("unexpected concrete termination in system call");
             }
 
-            // Save the concrete and symbolic return values for comparisons in the next call.
-            ctx.systemCall->previousReturnConcrete(retConcrete);
-            ctx.systemCall->previousReturnSymbolic(retSymbolic);
-            ctx.ops->writeRegister(SYS_RET, ctx.retSValue);
+            // Create the input variable and execution event for this return value.
+            if (!ctx.symbolicReturn) {
+                ctx.symbolicReturn = SymbolicExpr::makeIntegerVariable(SYS_RET.nBits(), ctx.syscallEvent->name() + "_return");
+                SAWYER_MESG(debug) <<"  created input variable " <<*ctx.symbolicReturn <<"\n";
+            } else {
+                SAWYER_MESG(debug) <<"  using existing variable " <<*ctx.symbolicReturn <<"\n";
+                ASSERT_require(ctx.symbolicReturn->nBits() == SYS_RET.nBits());
+            }
+            uint64_t retConcrete = i386->debugger()->readRegister(SYS_RET).toInteger();
+            SymbolicExpr::Ptr retValue = SymbolicExpr::makeIntegerConstant(SYS_RET.nBits(), retConcrete);
+            ctx.returnEvent = ExecutionEvent::registerWrite(i386->testCase(), i386->nextEventLocation(When::POST),
+                                                            ctx.syscallEvent->instructionPointer(), SYS_RET,
+                                                            ctx.symbolicReturn, retValue, ctx.symbolicReturn);
+            ctx.ops->inputVariables()->activate(ctx.returnEvent, InputType::SYSCALL_RET);
+            SAWYER_MESG(debug) <<"  created " <<ctx.returnEvent->printableName(i386->database()) <<"\n";
 
-            handled = true;
+            // Update the symbolic state
+            BS::SValuePtr retSValue = ctx.ops->svalueExpr(ctx.symbolicReturn);
+            ctx.ops->writeRegister(SYS_RET, retSValue);
+            SAWYER_MESG(debug) <<"  return value saved in symbolic state: " <<*retSValue <<"\n";
         }
-        return handled;
+
+        latestReturnEvent_ = ctx.returnEvent;
+        handlePostSyscall(ctx);
     }
-};
+    return true;                                        // handled
+}
+
+void
+LinuxI386SyscallBase::hello(const std::string &name, const SyscallContext &ctx) const {
+    if (name.empty()) {
+        SyscallCallback::hello("", ctx);
+    } else {
+        SyscallCallback::hello(name + " for " + syscallName(ctx.syscallEvent->syscallFunction()) + " system call", ctx);
+    }
+}
+
+ExecutionEvent::Ptr
+LinuxI386SyscallBase::latestReturnEvent() const {
+    return latestReturnEvent_;
+}
+
+ExecutionEvent::Ptr
+LinuxI386SyscallBase::penultimateReturnEvent() const {
+    return penultimateReturnEvent_;
+}
+
+
+SymbolicExpr::Ptr
+LinuxI386SyscallBase::penultimateSymbolicReturn() const {
+    if (!penultimateReturnEvent_) {
+        return SymbolicExpr::Ptr();
+    } else if (SymbolicExpr::Ptr variable = penultimateReturnEvent_->inputVariable()) {
+        return variable;
+    } else {
+        ASSERT_require(penultimateReturnEvent_->action() == ExecutionEvent::Action::REGISTER_WRITE);
+        return penultimateReturnEvent_->value();
+    }
+}
+
+void
+LinuxI386SyscallBase::showRecentReturnValues(std::ostream &out, const SyscallContext &ctx) const {
+    Database::Ptr db = ctx.architecture->database();
+
+    if (!latestReturnEvent_) {
+        out <<"  this system call has not yet returned\n";
+    } else {
+        out <<"  latest return event: " <<latestReturnEvent_->printableName(db) <<"\n";
+        out <<"  latest return concrete: "
+            <<*latestReturnEvent_->calculateResult(ctx.ops->inputVariables()->bindings()) <<"\n";
+    }
+
+    if (!penultimateReturnEvent_) {
+        out <<"  this is the first occurrence of this system call\n";
+    } else {
+        out <<"  penultimate return event: " <<penultimateReturnEvent_->printableName(db) <<"\n";
+        if (penultimateReturnEvent_->variable())
+            out <<"  penultimate return variable: " <<*penultimateReturnEvent_->variable() <<"\n";
+        out <<"  penultimate return concrete: "
+            <<*penultimateReturnEvent_->calculateResult(ctx.ops->inputVariables()->bindings()) <<"\n";
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// System calls that are unimplemented
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+LinuxI386SyscallUnimplemented::LinuxI386SyscallUnimplemented() {}
+
+LinuxI386SyscallUnimplemented::~LinuxI386SyscallUnimplemented() {}
+
+SyscallCallback::Ptr
+LinuxI386SyscallUnimplemented::instance() {
+    return Ptr(new LinuxI386SyscallUnimplemented);
+}
+
+void
+LinuxI386SyscallUnimplemented::playback(SyscallContext &ctx) {
+    hello("not-implemented", ctx);
+    mlog[ERROR] <<"  " <<syscallName(ctx.syscallEvent->syscallFunction()) <<" system call is not implemented\n";
+}
+
+void
+LinuxI386SyscallUnimplemented::handlePostSyscall(SyscallContext &ctx) {
+    hello("not-implemented", ctx);
+    mlog[ERROR] <<"  " <<syscallName(ctx.syscallEvent->syscallFunction()) <<" system call is not implemented\n";
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// System calls that terminate
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+LinuxI386SyscallTerminates::LinuxI386SyscallTerminates() {}
+
+LinuxI386SyscallTerminates::~LinuxI386SyscallTerminates() {}
+
+SyscallCallback::Ptr
+LinuxI386SyscallTerminates::instance() {
+    return Ptr(new LinuxI386SyscallTerminates);
+}
+
+void
+LinuxI386SyscallTerminates::playback(SyscallContext &ctx) {
+    hello("syscall-exits-process", ctx);
+    ASSERT_not_reachable("cannot occur during startup phase");
+}
+
+void
+LinuxI386SyscallTerminates::handlePostSyscall(SyscallContext &ctx) {
+    hello("syscall-exits-process", ctx);
+    auto ops = Emulation::RiscOperators::promote(ctx.ops);
+    ops->doExit(ctx.argsConcrete[0]);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// System call return constraints.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+LinuxI386SyscallReturn::LinuxI386SyscallReturn() {}
+
+LinuxI386SyscallReturn::~LinuxI386SyscallReturn() {}
+
+void
+LinuxI386SyscallReturn::handlePostSyscall(SyscallContext &ctx) {
+    hello("syscall-return-constraint", ctx);
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    auto i386 = ctx.architecture.dynamicCast<LinuxI386>();
+    ASSERT_not_null(i386);
+    const RegisterDescriptor SYS_RET = i386->systemCallReturnRegister();
+    showRecentReturnValues(debug, ctx);
+
+    // If this is the first invocation of this syscall, then there's nothing we need to do.
+    if (!penultimateReturnEvent())
+        return;
+
+    // Build the SMT solver constraint that the current return value must be equal to the previous return value.
+    std::pair<SymbolicExpr::Ptr, Sawyer::Optional<uint64_t>> x = makeReturnConstraint(ctx);
+    SymbolicExpr::Ptr constraint = x.first;
+    Sawyer::Optional<uint64_t> concreteReturn = x.second;
+
+    if (constraint) {
+        SAWYER_MESG(mlog[DEBUG]) <<"  return value constraint: " <<*constraint <<"\n";
+        ctx.ops->solver()->insert(constraint);
+    } else {
+        SAWYER_MESG(mlog[DEBUG]) <<"  return value constraint: none\n";
+    }
+
+    if (concreteReturn) {
+        SAWYER_MESG(mlog[DEBUG]) <<"  modifying concrete state to have returned "
+                                 <<StringUtility::toHex2(*concreteReturn, SYS_RET.nBits()) <<"\n";
+        i386->debugger()->writeRegister(SYS_RET, *concreteReturn);
+    } else {
+        SAWYER_MESG(mlog[DEBUG]) <<"  not modifying concrete return value\n";
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// System calls that are constant, always returning the same value.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+LinuxI386SyscallConstant::LinuxI386SyscallConstant() {}
+
+LinuxI386SyscallConstant::~LinuxI386SyscallConstant() {}
+
+SyscallCallback::Ptr
+LinuxI386SyscallConstant::instance() {
+    return Ptr(new LinuxI386SyscallConstant);
+}
+
+void
+LinuxI386SyscallConstant::playback(SyscallContext &ctx) {}
+
+std::pair<SymbolicExpr::Ptr, Sawyer::Optional<uint64_t>>
+LinuxI386SyscallConstant::makeReturnConstraint(SyscallContext &ctx) {
+    SymbolicExpr::Ptr constraint;
+    Sawyer::Optional<uint64_t> concreteReturn;
+
+    if (penultimateReturnEvent()) {
+        if (latestReturnEvent()->inputVariable()) {
+            SymbolicExpr::Ptr curRet = latestReturnEvent()->inputVariable();
+            SymbolicExpr::Ptr prevRet = penultimateSymbolicReturn();
+            ASSERT_not_null(prevRet);
+            constraint = SymbolicExpr::makeEq(curRet, prevRet);
+        }
+
+        concreteReturn = penultimateReturnEvent()->calculateResult(ctx.ops->inputVariables()->bindings())->toUnsigned();
+    }
+
+    return {constraint, concreteReturn};
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// System calls that return non-decreasing values, such as time
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+LinuxI386SyscallNondecreasing::LinuxI386SyscallNondecreasing() {}
+
+LinuxI386SyscallNondecreasing::~LinuxI386SyscallNondecreasing() {}
+
+SyscallCallback::Ptr
+LinuxI386SyscallNondecreasing::instance() {
+    return Ptr(new LinuxI386SyscallNondecreasing);
+}
+
+void
+LinuxI386SyscallNondecreasing::playback(SyscallContext &ctx) {}
+
+std::pair<SymbolicExpr::Ptr, Sawyer::Optional<uint64_t>>
+LinuxI386SyscallNondecreasing::makeReturnConstraint(SyscallContext &ctx) {
+    SymbolicExpr::Ptr constraint;
+    Sawyer::Optional<uint64_t> concreteReturn;
+
+    if (penultimateReturnEvent()) {
+        if (latestReturnEvent()->inputVariable()) {
+            SymbolicExpr::Ptr curRet = latestReturnEvent()->inputVariable();
+            SymbolicExpr::Ptr prevRet = penultimateSymbolicReturn();
+            ASSERT_not_null(prevRet);
+            constraint = SymbolicExpr::makeGe(curRet, prevRet);
+        }
+
+        concreteReturn = penultimateReturnEvent()->calculateResult(ctx.ops->inputVariables()->bindings())->toUnsigned();
+    }
+
+    return {constraint, concreteReturn};
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// System call definitions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void
 LinuxI386::configureSystemCalls() {
     // These are the generally useful configurations. Feel free to override these to accomplish whatever kind of testing you
     // need.
 
-    SystemCall::Ptr sc;
-
     // SYS_exit
-    sc = SystemCall::instance();
-    sc->callbacks().append(SyscallExitsProcess::instance());
-    systemCalls().insert(1, sc);
+    systemCalls(1, LinuxI386SyscallTerminates::instance());
 
     // SYS_time
-    sc = SystemCall::instance();
-    sc->callbacks().append(SyscallReturnsIncreasing::instance());
-    systemCalls().insert(13, sc);
+    systemCalls(13, LinuxI386SyscallNondecreasing::instance());
 
     // SYS_getpid
-    sc = SystemCall::instance();
-    sc->callbacks().append(SyscallReturnsConstant::instance());
-    systemCalls().insert(20, sc);
+    systemCalls(20, LinuxI386SyscallConstant::instance());
 
     // SYS_getuid: assumes SYS_setuid is never successfully called
-    sc = SystemCall::instance();
-    sc->callbacks().append(SyscallReturnsConstant::instance());
-    systemCalls().insert(24, sc);
+    systemCalls(24, LinuxI386SyscallConstant::instance());
 
     // SYS_getgid: assumes SYS_setgid is never successfully called
-    sc = SystemCall::instance();
-    sc->callbacks().append(SyscallReturnsConstant::instance());
-    systemCalls().insert(47, sc);
+    systemCalls(47, LinuxI386SyscallConstant::instance());
 
     // SYS_geteuid: assumes SYS_setuid is never successfully called
-    sc = SystemCall::instance();
-    sc->callbacks().append(SyscallReturnsConstant::instance());
-    systemCalls().insert(50, sc);
+    systemCalls(50, LinuxI386SyscallConstant::instance());
 
     // SYS_getppid
-    sc = SystemCall::instance();
-    sc->callbacks().append(SyscallReturnsConstant::instance());
-    systemCalls().insert(64, sc);
+    systemCalls(64, LinuxI386SyscallConstant::instance());
 
     // SYS_getpgrp
-    sc = SystemCall::instance();
-    sc->callbacks().append(SyscallReturnsConstant::instance());
-    systemCalls().insert(65, sc);
+    systemCalls(65, LinuxI386SyscallConstant::instance());
 
     // SYS_exit_group
-    sc = SystemCall::instance();
-    sc->callbacks().append(SyscallExitsProcess::instance());
-    systemCalls().insert(252, sc);
+    systemCalls(252, LinuxI386SyscallTerminates::instance());
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Shared memory behaviors
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Any access to this memory exits the program.
+class NullDeref: public SharedMemoryCallback {
+public:
+    static Ptr instance() {
+        return Ptr(new NullDeref);
+    }
+
+    void playback(SharedMemoryContext&) override {}
+
+    void handlePreSharedMemory(SharedMemoryContext &ctx) override {
+        hello("null-deref-handler", ctx);
+        auto ops = Emulation::RiscOperators::promote(ctx.ops);
+        ops->doExit(255); // FIXME[Robb Matzke 2021-09-08]: perhaps a way to simulate a segfault instead
+    }
+};
+
+void
+LinuxI386::configureSharedMemory() {
+    // These are the generally useful configurations. Feel free to override these to accomplish whatever kind of testing you
+    // need.
+
+    // Null dereferences
+    sharedMemory(AddressInterval::baseSize(0, 4096), NullDeref::instance());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // LinuxI386
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-LinuxI386::LinuxI386(const Database::Ptr &db, TestCaseId tcid)
-    : Architecture(db, tcid) {}
+LinuxI386::LinuxI386(const Database::Ptr &db, TestCaseId tcid, const P2::Partitioner &partitioner)
+    : Architecture(db, tcid, partitioner) {}
 
 LinuxI386::~LinuxI386() {}
 
 LinuxI386::Ptr
-LinuxI386::instance(const Database::Ptr &db, TestCaseId tcid) {
+LinuxI386::instance(const Database::Ptr &db, TestCaseId tcid, const P2::Partitioner &partitioner) {
     ASSERT_not_null(db);
     ASSERT_require(tcid);
-    auto retval = Ptr(new LinuxI386(db, tcid));
+    auto retval = Ptr(new LinuxI386(db, tcid, partitioner));
     retval->configureSystemCalls();
+    retval->configureSharedMemory();
     return retval;
 }
 
 LinuxI386::Ptr
-LinuxI386::instance(const Database::Ptr &db, const TestCase::Ptr &tc) {
+LinuxI386::instance(const Database::Ptr &db, const TestCase::Ptr &tc, const P2::Partitioner &partitioner) {
     ASSERT_not_null(db);
     ASSERT_not_null(tc);
     TestCaseId tcid = db->id(tc);
     ASSERT_require(tcid);
-    auto retval = Ptr(new LinuxI386(db, tcid));
+    auto retval = Ptr(new LinuxI386(db, tcid, partitioner));
     retval->configureSystemCalls();
+    retval->configureSharedMemory();
     return retval;
+}
+
+Debugger::Ptr
+LinuxI386::debugger() const {
+    return debugger_;
 }
 
 void
@@ -350,22 +926,26 @@ LinuxI386::createMemoryRestoreEvents() {
         if (where.least() != scratchVa_) {
             SAWYER_MESG(mlog[DEBUG]) <<"  memory at " <<StringUtility::addrToString(where)
                                      <<", " <<StringUtility::plural(where.size(), "bytes");
-            std::string protStr;
-            if ((segment.accessibility() & MemoryMap::READABLE) != 0)
-                protStr += "r";
-            if ((segment.accessibility() & MemoryMap::WRITABLE) != 0)
-                protStr += "w";
-            if ((segment.accessibility() & MemoryMap::EXECUTABLE) != 0)
-                protStr += "x";
-            SAWYER_MESG(mlog[DEBUG]) <<", perm=" <<(protStr.empty() ? "none" : protStr) <<"\n";
-            auto eeMap = ExecutionEvent::instanceMapMemory(ip(), where, protStr);
+            if (mlog[DEBUG]) {
+                std::string protStr;
+                if ((segment.accessibility() & MemoryMap::READABLE) != 0)
+                    protStr += "r";
+                if ((segment.accessibility() & MemoryMap::WRITABLE) != 0)
+                    protStr += "w";
+                if ((segment.accessibility() & MemoryMap::EXECUTABLE) != 0)
+                    protStr += "x";
+                SAWYER_MESG(mlog[DEBUG]) <<", perm=" <<(protStr.empty() ? "none" : protStr) <<"\n";
+            }
+
+            auto eeMap = ExecutionEvent::bulkMemoryMap(TestCase::Ptr(), ExecutionLocation(), ip(), where,
+                                                       segment.accessibility());
             eeMap->name("map " + segment.name());
             events.push_back(eeMap);
 
             std::vector<uint8_t> buf(where.size());
             size_t nRead = map->at(where).read(buf).size();
             ASSERT_always_require(nRead == where.size());
-            auto eeWrite = ExecutionEvent::instanceWriteMemory(ip(), where.least(), buf);
+            auto eeWrite = ExecutionEvent::bulkMemoryWrite(TestCase::Ptr(), ExecutionLocation(), ip(), where, buf);
             eeWrite->name("init " + segment.name());
             events.push_back(eeWrite);
         }
@@ -386,7 +966,7 @@ LinuxI386::createMemoryHashEvents() {
         Combinatorics::HasherSha256Builtin hasher;
         hashMemoryRegion(hasher, map, node.key());
         SAWYER_MESG(mlog[DEBUG]) <<"    hash = " <<hasher.toString() <<"\n";
-        auto eeHash = ExecutionEvent::instanceHashMemory(ip(), node.key(), hasher.digest());
+        auto eeHash = ExecutionEvent::bulkMemoryHash(TestCase::Ptr(), ExecutionLocation(), ip(), node.key(), hasher.digest());
         events.push_back(eeHash);
     }
     return events;
@@ -396,7 +976,7 @@ std::vector<ExecutionEvent::Ptr>
 LinuxI386::createRegisterRestoreEvents() {
     SAWYER_MESG(mlog[DEBUG]) <<"saving all registers\n";
     Debugger::AllRegisters allRegisters = debugger_->readAllRegisters();
-    auto event = ExecutionEvent::instanceRestoreRegisters(ip(), allRegisters);
+    auto event = ExecutionEvent::bulkRegisterWrite(TestCase::Ptr(), ExecutionLocation(), ip(), allRegisters);
     return {event};
 }
 
@@ -405,41 +985,25 @@ LinuxI386::playEvent(const ExecutionEvent::Ptr &event) {
     ASSERT_not_null(event);
     bool handled = Super::playEvent(event);
 
-    switch (event->actionType()) {
-        case ExecutionEvent::Action::RESTORE_REGISTERS: {
+    switch (event->action()) {
+        case ExecutionEvent::Action::BULK_REGISTER_WRITE: {
             SAWYER_MESG(mlog[DEBUG]) <<"  restore registers\n";
-            Debugger::AllRegisters allRegisters = event->allRegisters();
+            Debugger::AllRegisters allRegisters = event->registerValues();
             debugger_->writeAllRegisters(allRegisters);
             return true;
         }
 
-        case ExecutionEvent::Action::OS_SYSCALL: {
-            // System call events adjust the simulated operating system but not the process. If the process needs to be
-            // adjusted then the syscall event will be followed by additional events to adjust the memory and registers.  These
-            // additional events are fairly generic, so we need to keep track of some state to know they're associated with a
-            // prior system call event.
-            uint64_t functionNumber = event->scalar();
-            playingSyscall_ = std::make_pair(functionNumber, event->location().primary);
-            ++syscallSequenceNumbers_[functionNumber];
-            playingSyscall_ = {functionNumber, event->location().primary};
-            return true;
-        }
-
-        case ExecutionEvent::Action::WRITE_REGISTER: {
-            // The writing-to-register already happened in Super::playEvent, but if this event represents a system call return
-            // value we should save it. This is important for system calls that always return the same value, like getpid.
-            ASSERT_require(handled);
-            if (playingSyscall_.second == event->location().primary) {
-                uint64_t functionNumber = playingSyscall_.first;
-                if (SystemCallPtr systemCall = systemCalls().getOrDefault(functionNumber)) {
-                    if (RegisterDescriptor::fromRaw(event->scalar()) == systemCallReturnRegister()) {
-                        systemCall->previousReturnSymbolic(event->inputVariable());
-                        systemCall->previousReturnConcrete(event->words()[0]);
-                    }
-                }
+        case ExecutionEvent::Action::OS_SYSCALL:
+            if (!handled) {
+                // If it wasn't handled by Super, then it must be because there are no callbacks.
+                const uint64_t functionNumber = event->syscallFunction();
+                SyscallCallbacks callbacks = systemCalls().getOrDefault(functionNumber);
+                ASSERT_require(callbacks.isEmpty());
+                callbacks.append(LinuxI386SyscallUnimplemented::instance());
+                SyscallContext ctx(sharedFromThis(), event, getRelatedEvents(event));
+                return callbacks.apply(false, ctx);
             }
             return true;
-        }
 
         default:
             return handled;
@@ -509,9 +1073,15 @@ LinuxI386::readRegister(RegisterDescriptor reg) {
 }
 
 void
-LinuxI386::executeInstruction() {
+LinuxI386::executeInstruction(const P2::Partitioner &partitioner) {
+    if (mlog[DEBUG]) {
+        rose_addr_t va = debugger_->executionAddress();
+        SgAsmInstruction *insn = partitioner.instructionProvider()[va];
+        mlog[DEBUG] <<"concretely executing insn #" <<currentLocation().primary()
+                    <<" " <<partitioner.unparse(insn) <<"\n";
+    }
+
     debugger_->singleStep();
-    incrementPathLength();
 }
 
 void
@@ -545,7 +1115,6 @@ LinuxI386::executeInstruction(const BS::RiscOperatorsPtr &ops_, SgAsmInstruction
     } else {
         debugger_->singleStep();
     }
-    incrementPathLength();
 }
 
 void
@@ -607,8 +1176,8 @@ LinuxI386::unmapAllMemory() {
 }
 
 void
-LinuxI386::createInputVariables(InputVariables &inputVariables, const P2::Partitioner &partitioner,
-                                const BS::RiscOperatorsPtr &ops, const SmtSolver::Ptr &solver) {
+LinuxI386::createInputVariables(const P2::Partitioner &partitioner, const Emulation::RiscOperatorsPtr &ops,
+                                const SmtSolver::Ptr &solver) {
     ASSERT_not_null(ops);
     ASSERT_not_null(solver);
 
@@ -632,8 +1201,8 @@ LinuxI386::createInputVariables(InputVariables &inputVariables, const P2::Partit
     SAWYER_MESG(debug) <<"creating program arguments\n";
     const RegisterDescriptor SP = partitioner.instructionProvider().stackPointerRegister();
     size_t wordSizeBytes = SP.nBits() / 8;
-    IS::SymbolicSemantics::Formatter fmt;
-    fmt.expr_formatter.show_comments = SymbolicExpr::Formatter::CMT_AFTER;
+    SymbolicExpr::Formatter fmt;
+    fmt.show_comments = SymbolicExpr::Formatter::CMT_AFTER;
 
     //---------------------------------------------------------------------------------------------------------------------------
     // argc
@@ -641,30 +1210,31 @@ LinuxI386::createInputVariables(InputVariables &inputVariables, const P2::Partit
     ASSERT_require(SP.nBits() == 32);                   // we only handle 32-bit for now
     ASSERT_require(ops->currentState()->memoryState()->get_byteOrder() == memoryByteOrder());
     rose_addr_t argcVa = readRegister(SP).toInteger();
-    uint32_t argc = readMemoryUnsigned(argcVa, wordSizeBytes);
+    size_t argc = readMemoryUnsigned(argcVa, wordSizeBytes);
 
-    BS::SValuePtr argcSValue = ops->undefined_(SP.nBits());
-    SymbolicExpr::Ptr argcSymbolic = IS::SymbolicSemantics::SValue::promote(argcSValue)->get_expression();
+    // Event and input variable
+    SymbolicExpr::Ptr argcVariable = SymbolicExpr::makeIntegerVariable(SP.nBits(), "argc");
+    SymbolicExpr::Ptr argcValue = SymbolicExpr::makeIntegerConstant(SP.nBits(), argc);
+    auto argcEvent = ExecutionEvent::memoryWrite(testCase(), nextEventLocation(When::PRE), ip(),
+                                                 AddressInterval::baseSize(argcVa, SP.nBits()/8),
+                                                 argcVariable, argcValue, argcVariable);
+    inputVariables()->activate(argcEvent, InputType::ARGC);
 
-    auto argcEvent = ExecutionEvent::instanceWriteMemory(testCase(), nextLocation(), ip(), argcVa, argc);
-    inputVariables.insertProgramArgumentCount(argcEvent, argcSymbolic);
-    argcSValue->comment(argcEvent->name());
-    ops->writeMemory(RegisterDescriptor(), ops->number_(SP.nBits(), argcVa), argcSValue, ops->boolean_(true));
+    // Adjust symbolic state
+    ops->writeMemory(RegisterDescriptor(), ops->number_(SP.nBits(), argcVa), ops->svalueExpr(argcVariable), ops->boolean_(true));
     ExecutionEventId argcEventId = database()->id(argcEvent);
-
     SAWYER_MESG(debug) <<"  argc @" <<StringUtility::addrToString(argcVa) <<" = " <<argc
-                       <<"; symbolic = " <<(*argcSValue + fmt)
+                       <<"; symbolic = " <<(*argcVariable + fmt)
                        <<"; event = " <<*argcEventId <<"\n";
 
     // The argc value cannot be less than 1 since it always points to at least the program name.
-    SymbolicExpr::Ptr argcMinConstraint = SymbolicExpr::makeSignedGt(argcSymbolic,
+    SymbolicExpr::Ptr argcMinConstraint = SymbolicExpr::makeSignedGt(argcVariable,
                                                                      SymbolicExpr::makeIntegerConstant(SP.nBits(), 0));
     solver->insert(argcMinConstraint);
 
     // The argc value cannot be greater than its current concrete value since making it greater would mean that the address
     // of the environment variable list would need to change, potentially affecting many other things in the program.
-    SymbolicExpr::Ptr argcMaxConstraint = SymbolicExpr::makeSignedLe(argcSymbolic,
-                                                                     SymbolicExpr::makeIntegerConstant(SP.nBits(), argc));
+    SymbolicExpr::Ptr argcMaxConstraint = SymbolicExpr::makeSignedLe(argcVariable, argcValue);
     solver->insert(argcMaxConstraint);
 
     //---------------------------------------------------------------------------------------------------------------------------
@@ -685,21 +1255,24 @@ LinuxI386::createInputVariables(InputVariables &inputVariables, const P2::Partit
             SymbolicExpr::Ptr anyPreviousCharIsNul;     // is any previous char of this argument an ASCII NUL character?
             for (size_t j = 0; j <= s.size(); ++j) {
                 rose_addr_t charVa = strVa + j;
-                uint8_t charVal = s[j];
 
-                BS::SValuePtr charSValue = ops->undefined_(8);
-                SymbolicExpr::Ptr charSymbolic = IS::SymbolicSemantics::SValue::promote(charSValue)->get_expression();
-                auto charEvent = ExecutionEvent::instanceWriteMemory(testCase(), nextLocation(), ip(), charVa, charVal);
-                inputVariables.insertProgramArgument(charEvent, i, j, charSymbolic);
-                charSValue->comment(charEvent->name());
-                ops->writeMemory(RegisterDescriptor(), ops->number_(SP.nBits(), charVa), charSValue, ops->boolean_(true));
+                // Event and input variable
+                std::string name = (boost::format("argv_%d_%d") % i % j).str();
+                SymbolicExpr::Ptr charValue = SymbolicExpr::makeIntegerConstant(8, s[j]);
+                SymbolicExpr::Ptr charVariable = SymbolicExpr::makeIntegerVariable(8, name);
+                auto charEvent = ExecutionEvent::memoryWrite(testCase(), nextEventLocation(When::PRE), ip(),
+                                                             charVa, charVariable, charValue, charVariable);
+                inputVariables()->activate(charEvent, InputType::ARGV, i, j);
+
+                // Adjust symbolic state
+                ops->writeMemory(RegisterDescriptor(), ops->number_(SP.nBits(), charVa), ops->svalueExpr(charVariable),
+                                 ops->boolean_(true));
                 ExecutionEventId charEventId = database()->id(charEvent);
-
                 SAWYER_MESG(debug) <<"      byte " <<j <<" @" <<StringUtility::addrToString(charVa)
-                                   <<"; symbolic = " <<(*charSValue + fmt)
+                                   <<"; symbolic = " <<(*charVariable + fmt)
                                    <<"; event = " <<*charEventId <<"\n";
 
-                SymbolicExpr::Ptr currentCharIsNul = SymbolicExpr::makeEq(charSymbolic, SymbolicExpr::makeIntegerConstant(8, 0));
+                SymbolicExpr::Ptr currentCharIsNul = SymbolicExpr::makeEq(charVariable, SymbolicExpr::makeIntegerConstant(8, 0));
                 if (s.size() == j) {
                     // Final byte of the argument's buffer must always be NUL
                     solver->insert(currentCharIsNul);
@@ -719,7 +1292,7 @@ LinuxI386::createInputVariables(InputVariables &inputVariables, const P2::Partit
                     solver->insert(assertion);
                 } else {
                     // argv[i] must be empty (i.e., first byte is NUL character) if argc <= i
-                    auto argcGreaterThanI = SymbolicExpr::makeGt(argcSymbolic, SymbolicExpr::makeIntegerConstant(SP.nBits(), i));
+                    auto argcGreaterThanI = SymbolicExpr::makeGt(argcVariable, SymbolicExpr::makeIntegerConstant(SP.nBits(), i));
                     auto assertion = SymbolicExpr::makeOr(argcGreaterThanI, currentCharIsNul);
                     solver->insert(assertion);
                 }
@@ -764,52 +1337,55 @@ LinuxI386::createInputVariables(InputVariables &inputVariables, const P2::Partit
             SymbolicExpr::Ptr anyPreviousCharIsNul;     // is any previous char of this env an ASCII NUL character?
             for (size_t j = 0; j <= s.size(); ++j) {
                 rose_addr_t charVa = strVa + j;
-                uint8_t charVal = s[j];
 
-                BS::SValuePtr charSValue = ops->undefined_(8);
-                SymbolicExpr::Ptr charSymbolic = IS::SymbolicSemantics::SValue::promote(charSValue)->get_expression();
-                auto charEvent = ExecutionEvent::instanceWriteMemory(testCase(), nextLocation(), ip(), charVa, charVal);
-                inputVariables.insertEnvironmentVariable(charEvent, i, j, charSymbolic);
-                charSValue->comment(charEvent->name());
-                ops->writeMemory(RegisterDescriptor(), ops->number_(SP.nBits(), charVa), charSValue, ops->boolean_(true));
+                // Event and input variable
+                std::string name = (boost::format("envp_%d_%d") % i % j).str();
+                SymbolicExpr::Ptr charValue = SymbolicExpr::makeIntegerConstant(8, s[j]);
+                SymbolicExpr::Ptr charVariable = SymbolicExpr::makeIntegerVariable(8, name);
+                auto charEvent = ExecutionEvent::memoryWrite(testCase(), nextEventLocation(When::PRE), ip(),
+                                                             charVa, charVariable, charValue, charVariable);
+                inputVariables()->activate(charEvent, InputType::ENVP, i, j);
+
+                // Adjust symbolic state
+                ops->writeMemory(RegisterDescriptor(), ops->number_(SP.nBits(), charVa), ops->svalueExpr(charVariable),
+                                 ops->boolean_(true));
                 ExecutionEventId charEventId = database()->id(charEvent);
-
                 SAWYER_MESG(debug) <<"      byte " <<j <<" @" <<StringUtility::addrToString(charVa)
-                                   <<"; symbolic = " <<(*charSValue + fmt)
+                                   <<"; symbolic = " <<(*charVariable + fmt)
                                    <<"; event = " <<charEventId <<"\n";
 
-            SymbolicExpr::Ptr currentCharIsNul = SymbolicExpr::makeEq(charSymbolic, SymbolicExpr::makeIntegerConstant(8, 0));
-            if (s.size() == j) {
-                // Final byte of the argument's buffer must always be NUL
-                solver->insert(currentCharIsNul);
+                SymbolicExpr::Ptr currentCharIsNul = SymbolicExpr::makeEq(charVariable, SymbolicExpr::makeIntegerConstant(8, 0));
+                if (s.size() == j) {
+                    // Final byte of the argument's buffer must always be NUL
+                    solver->insert(currentCharIsNul);
 
-            } else if (j > 0) {
-                // Linux doesn't allow NUL characters to appear inside environment variables. A NUL terminates the
-                // environment variable and the next environment variable starts immediately thereafter. For concolic
-                // testing, if an environment variable is shortened (by making one of it's non-ending bytes NUL) we don't
-                // want to have to adjust the addresses of all following environment variables and the auxv vector because
-                // that would end up being a lot of changes to the the program. Instead, we reserve some amount of space
-                // for each environment variable (based on the root test case) and write NULs into the interior of
-                // environment variables to shorten them.  In order to prevent some impossible inputs (environment
-                // variables with interior NUL characters) we add solver constraints so that any character of an
-                // environment variable after a NUL is also a NUL.
-                ASSERT_not_null(anyPreviousCharIsNul);
-                auto bothNul = SymbolicExpr::makeAnd(anyPreviousCharIsNul, currentCharIsNul);
-                auto assertion = SymbolicExpr::makeOr(SymbolicExpr::makeInvert(anyPreviousCharIsNul), bothNul);
-                solver->insert(assertion);
-            } else {
-                // envp[i] must be empty (i.e., first byte is NUL character) if envc <= i
-                auto argcGreaterThanI = SymbolicExpr::makeGt(argcSymbolic, SymbolicExpr::makeIntegerConstant(SP.nBits(), i));
-                auto assertion = SymbolicExpr::makeOr(argcGreaterThanI, currentCharIsNul);
-                solver->insert(assertion);
-            }
+                } else if (j > 0) {
+                    // Linux doesn't allow NUL characters to appear inside environment variables. A NUL terminates the
+                    // environment variable and the next environment variable starts immediately thereafter. For concolic
+                    // testing, if an environment variable is shortened (by making one of it's non-ending bytes NUL) we don't
+                    // want to have to adjust the addresses of all following environment variables and the auxv vector because
+                    // that would end up being a lot of changes to the the program. Instead, we reserve some amount of space
+                    // for each environment variable (based on the root test case) and write NULs into the interior of
+                    // environment variables to shorten them.  In order to prevent some impossible inputs (environment
+                    // variables with interior NUL characters) we add solver constraints so that any character of an
+                    // environment variable after a NUL is also a NUL.
+                    ASSERT_not_null(anyPreviousCharIsNul);
+                    auto bothNul = SymbolicExpr::makeAnd(anyPreviousCharIsNul, currentCharIsNul);
+                    auto assertion = SymbolicExpr::makeOr(SymbolicExpr::makeInvert(anyPreviousCharIsNul), bothNul);
+                    solver->insert(assertion);
+                } else {
+                    // envp[i] must be empty (i.e., first byte is NUL character) if envc <= i
+                    auto argcGreaterThanI = SymbolicExpr::makeGt(argcVariable, SymbolicExpr::makeIntegerConstant(SP.nBits(), i));
+                    auto assertion = SymbolicExpr::makeOr(argcGreaterThanI, currentCharIsNul);
+                    solver->insert(assertion);
+                }
 
-            // Extend or create the expression for any previous character being NUL
-            if (anyPreviousCharIsNul) {
-                anyPreviousCharIsNul = SymbolicExpr::makeOr(anyPreviousCharIsNul, currentCharIsNul);
-            } else {
-                anyPreviousCharIsNul = currentCharIsNul;
-            }
+                // Extend or create the expression for any previous character being NUL
+                if (anyPreviousCharIsNul) {
+                    anyPreviousCharIsNul = SymbolicExpr::makeOr(anyPreviousCharIsNul, currentCharIsNul);
+                } else {
+                    anyPreviousCharIsNul = currentCharIsNul;
+                }
 
             }
         }
@@ -835,44 +1411,6 @@ LinuxI386::createInputVariables(InputVariables &inputVariables, const P2::Partit
     }
     SAWYER_MESG(debug) <<"  ]\n";
 }
-
-ExecutionEvent::Ptr
-LinuxI386::applySystemCallReturn(const P2::Partitioner &partitioner, const BS::RiscOperatorsPtr &ops,
-                                 const std::string &syscallName, rose_addr_t syscallVa) {
-    ASSERT_not_null(ops);
-    const RegisterDescriptor SYS_RET = systemCallReturnRegister();
-
-    // Get the concrete return value from the system call, and write it to the symbolic state.
-    uint64_t retConcrete = debugger_->readRegister(SYS_RET).toInteger();
-    SAWYER_MESG(mlog[DEBUG]) <<"  " <<syscallName <<" returned " <<StringUtility::toHex2(retConcrete, SYS_RET.nBits()) <<"\n";
-    BS::SValuePtr retSValue = ops->number_(SYS_RET.nBits(), retConcrete);
-    ops->writeRegister(SYS_RET, retSValue);
-
-    // Create an execution event for the system call return value that we can replay later in a different process.
-    auto event = ExecutionEvent::instanceWriteRegister(testCase(), nextLocation(), syscallVa, SYS_RET, retConcrete);
-    event->name(syscallName + "-return");
-    return event;
-}
-
-#if 0 // [Robb Matzke 2021-05-27]
-BS::SValuePtr
-LinuxI386::createSystemCallReturnInput(const P2::Partitioner &partitioner, const BS::RiscOperatorsPtr &ops_,
-                                       const std::string &syscallName, const ExecutionEvent::Ptr &retEvent) {
-    auto ops = Emulation::RiscOperators::promote(ops_);
-    ASSERT_not_null(ops);
-    const RegisterDescriptor SYS_RET = systemCallReturnRegister();
-
-    // Create a symolic variable to represent that there was a system call return value that's being treated as a program
-    // input that could change in subsequent runs, and link this variable to the execution event.
-    BS::SValuePtr variableSValue = ops->undefined_(SYS_RET.nBits());
-    SymbolicExpr::Ptr variableSymbolic = IS::SymbolicSemantics::SValue::promote(variableSValue)->get_expression();
-    variableSValue->comment(retEvent->name());
-    ops->writeRegister(SYS_RET, variableSValue);
-    ops->inputVariables().insertSystemCallReturn(retEvent, variableSymbolic);
-    retEvent->name(syscallName + "-return");
-    return variableSValue;
-}
-#endif
 
 uint64_t
 LinuxI386::systemCallFunctionNumber(const P2::Partitioner &partitioner, const BS::RiscOperatorsPtr &ops) {
@@ -940,15 +1478,14 @@ LinuxI386::systemCallReturnValue(const P2::Partitioner &partitioner, const BS::R
 
 void
 LinuxI386::systemCall(const P2::Partitioner &partitioner, const BS::RiscOperatorsPtr &ops_) {
-    auto ops = Emulation::RiscOperators::promote(ops_);
-    ASSERT_not_null(ops);
-    Sawyer::Message::Stream debug(mlog[DEBUG]);
-
     // A system call has been encountered. The INT instruction has been processed symbolically (basically a no-op other than
     // to adjust the instruction pointer), and the concrete execution has stepped into the system call but has not yet executed
     // it (i.e., the subordinate process is in the syscall-enter-stop state).
 
-    SyscallContext ctx(sharedFromThis(), ops_, partitioner, debugger_);
+    auto ops = Emulation::RiscOperators::promote(ops_);
+    ASSERT_not_null(ops);
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    const rose_addr_t ip = debugger_->executionAddress();
 
     //-------------------------------------
     // Create system call execution event.
@@ -957,67 +1494,106 @@ LinuxI386::systemCall(const P2::Partitioner &partitioner, const BS::RiscOperator
     // Gather info about the system call such as its arguments. On Linux, system calls have up to six arguments stored
     // in registers, so we just grab all six for now since we don't want to maintain a big switch statement to say how
     // many arguments each system call actually uses.
-    ctx.callSite = debugger_->executionAddress();
+    std::vector<uint64_t> argsConcrete;
     uint64_t functionNumber = systemCallFunctionNumber(partitioner, ops);
     for (size_t i = 0; i < 6; ++i) {
         BS::SValuePtr argSymbolic = systemCallArgument(partitioner, ops, i);
         if (auto argConcrete = argSymbolic->toUnsigned()) {
-            ctx.argsConcrete.push_back(*argConcrete);
+            argsConcrete.push_back(*argConcrete);
         } else {
             ASSERT_not_implemented("non-concrete system call argument");
         }
     }
     if (debug) {
-        debug <<"syscall-" <<functionNumber <<", args = (";
-        for (uint64_t arg: ctx.argsConcrete)
-            debug <<" " <<StringUtility::toHex(arg);
-        debug <<" )\n";
+        debug <<"  " <<syscallName(functionNumber) <<" system call (sys" <<functionNumber <<"), potential args:\n";
+        for (uint64_t arg: argsConcrete)
+            debug <<"    " <<StringUtility::toHex(arg) <<"\n";
     }
 
     // The execution event records the system call number and arguments, but not any side effects (because side effects haven't
     // happened yet). Since the side effect events (created shortly) are general things like "write this value to this
     // register", the fact that they're preceded by this syscall event is what marks them as being side effects of this system
     // call.
-    ctx.syscallEvent = ExecutionEvent::instanceSyscall(testCase(), nextLocation(), ctx.callSite, functionNumber, ctx.argsConcrete);
-    ctx.syscallEvent->name((boost::format("syscall-%d.%d") % functionNumber % syscallSequenceNumbers_[functionNumber]++).str());
-    ExecutionEventId syscallEventId = database()->id(ctx.syscallEvent);
-    SAWYER_MESG(debug) <<"  created execution event " <<*syscallEventId <<" for " <<ctx.syscallEvent->name() <<"\n";
+    auto syscallEvent = ExecutionEvent::osSyscall(testCase(), nextEventLocation(When::PRE), ip, functionNumber, argsConcrete);
+    syscallEvent->name(syscallName(functionNumber) + "_" + boost::lexical_cast<std::string>(syscallEvent->location().primary()));
+    database()->save(syscallEvent);
+    SAWYER_MESG(debug) <<"  created " <<syscallEvent->printableName(database()) <<"\n";
+
+    //-------------------------------------
+    // Process the system call
+    //-------------------------------------
 
     // Process the system call by invoking callbacks that the user can override.
-    if ((ctx.systemCall = systemCalls().getOrDefault(functionNumber))) {
-        bool handled = ctx.systemCall->callbacks().apply(false, ctx);
-        if (!handled) {
-            mlog[ERROR] <<"syscall-" <<functionNumber <<" was not handled by any callback\n";
-            debugger_->stepIntoSyscall();                   // after this, we're in the syscall-exit-stop state
-
-            // Create an event and input variable for the system call return value.
-            ctx.retEvent = applySystemCallReturn(partitioner, ops, ctx.syscallEvent->name(), ctx.callSite);
-            const RegisterDescriptor SYS_RET = systemCallReturnRegister();
-            ctx.retSValue = ops->undefined_(SYS_RET.nBits());
-            ops->writeRegister(SYS_RET, ctx.retSValue);
-        }
-    } else {
-        mlog[ERROR] <<"syscall-" <<functionNumber <<" has no declaration\n";
-        debugger_->stepIntoSyscall();                   // after this, we're in the syscall-exit-stop state
+    SyscallContext ctx(sharedFromThis(), ops, syscallEvent);
+    SyscallCallbacks callbacks = systemCalls().getOrDefault(functionNumber);
+    bool handled = callbacks.apply(false, ctx);
+    if (!handled) {
+        callbacks.append(LinuxI386SyscallUnimplemented::instance());
+        callbacks.apply(false, ctx);
     }
+    ASSERT_not_null(ctx.returnEvent);                   // if the syscall didn't exit, then it must have returned
 
     //------------------------------------
     // Record any additional side effects
     //------------------------------------
 
-    if (ctx.retSValue) {
-        ASSERT_not_null(ctx.retEvent);
-        SymbolicExpr::Ptr retSymbolic = IS::SymbolicSemantics::SValue::promote(ctx.retSValue)->get_expression();
-        ops->inputVariables().insertSystemCallReturn(ctx.retEvent, retSymbolic);
-        SAWYER_MESG(debug) <<"  created input variable " <<*ctx.retSValue
-                           <<" for " <<ctx.retEvent->printableName(database()) <<"\n";
+    // If there's a symbolic return value, then it must be the input variable for the return.
+    if (ctx.symbolicReturn) {
+        ASSERT_not_null(ctx.returnEvent);
+        ASSERT_require(ctx.symbolicReturn == ctx.returnEvent->inputVariable());
+    } else {
+        ASSERT_require(ctx.returnEvent->inputVariable() == nullptr);
     }
 
-    if (ctx.retEvent) {
-        ExecutionEventId retEventId = database()->id(ctx.retEvent);
-        SAWYER_MESG(debug) <<"  created execution event " <<*retEventId
-                           <<" for " <<ctx.retEvent->name() <<"\n";
+    // Make sure all events have been written to the database.
+    database()->save(ctx.syscallEvent);
+    database()->save(ctx.returnEvent);                  // should be in relatedEvents, but just in case...
+    for (const ExecutionEvent::Ptr &event: ctx.relatedEvents)
+        database()->save(event);
+}
+
+std::pair<ExecutionEvent::Ptr, SymbolicExpr::Ptr>
+LinuxI386::sharedMemoryRead(const SharedMemoryCallbacks &callbacks, const P2::Partitioner &partitioner,
+                            const BS::RiscOperators::Ptr &ops_, rose_addr_t addr, size_t nBytes) {
+    auto ops = Emulation::RiscOperators::promote(ops_);
+    ASSERT_not_null(ops);
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+
+    const rose_addr_t ip = ops->currentInstruction()->get_address();
+    SAWYER_MESG(debug) <<"  shared memory read at instruction " <<StringUtility::addrToString(ip)
+                       <<" from memory address " <<StringUtility::addrToString(addr)
+                       <<" for " <<StringUtility::plural(nBytes, "bytes") <<"\n";
+
+    // Create an input variable for the value read from shared memory, and bind it to a new event that indicates that this
+    // instruction is reading from shared memory.
+    ExecutionLocation loc = nextEventLocation(When::PRE);
+    std::string name = (boost::format("shm_read_%s_%d") % StringUtility::addrToString(addr).substr(2) % loc.primary()).str();
+    auto valueRead = SymbolicExpr::makeIntegerVariable(8 * nBytes, name);
+    auto sharedMemoryEvent = ExecutionEvent::osSharedMemory(testCase(), loc, ip,
+                                                            AddressInterval::baseSize(addr, nBytes), valueRead,
+                                                            SymbolicExpr::Ptr(), /*concrete value not known yet*/
+                                                            valueRead);
+    inputVariables()->activate(sharedMemoryEvent, InputType::SHMEM_READ);
+    database()->save(sharedMemoryEvent);
+    SAWYER_MESG(debug) <<"    created input variable " <<*valueRead
+                       <<" for " <<sharedMemoryEvent->printableName(database()) <<"\n";
+
+    // Invoke the callbacks
+    SharedMemoryContext ctx(sharedFromThis(), ops, sharedMemoryEvent);
+    bool handled = callbacks.apply(false, ctx);
+    if (!handled) {
+        mlog[ERROR] <<"    shared memory read not handled by any callbacks; treating it as normal memory\n";
+        return {ExecutionEvent::Ptr(), SymbolicExpr::Ptr()};
+    } else if (!ctx.valueRead) {
+        SAWYER_MESG(debug) <<"    shared memory read did not return a special value; doing a normal read\n";
+    } else {
+        SAWYER_MESG(debug) <<"    shared memory read returns " <<*ctx.valueRead <<"\n";
+        ASSERT_require(ctx.valueRead->nBits() == 8 * nBytes);
     }
+
+    // Post-callback actions
+    database()->save(sharedMemoryEvent);            // just in case the user modified it.
+    return {ctx.sharedMemoryEvent, ctx.valueRead};
 }
 
 } // namespace

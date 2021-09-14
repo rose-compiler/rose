@@ -43,7 +43,7 @@ class DataRaceDetection {
   // data race detection
   void populateReadWriteDataIndex(LoopInfo& li, IndexToReadWriteDataMap& indexToReadWriteDataMap, ArrayUpdatesSequence& arrayUpdates,
 				  VariableIdMapping* variableIdMapping);
-  IndexVector extractIndexVector(LoopInfo& li, const PState* pstate);
+  IndexVector extractIndexVector(LoopInfo& li, PStatePtr pstate);
   void addAccessesFromExpressionToIndex(SgExpression* exp, IndexVector& index, IndexToReadWriteDataMap& indexToReadWriteDataMap,
 					VariableIdMapping* variableIdMapping);
   void displayReadWriteDataIndex(IndexToReadWriteDataMap& indexToReadWriteDataMap, VariableIdMapping* variableIdMapping);

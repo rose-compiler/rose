@@ -4,7 +4,10 @@
 #include <Rose/BinaryAnalysis/Concolic/SystemCall.h>
 
 #include <Rose/BinaryAnalysis/Concolic/Architecture.h>
+#include <Rose/BinaryAnalysis/Concolic/ConcolicExecutor.h>
 #include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
+
+using namespace Sawyer::Message::Common;
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -14,49 +17,46 @@ namespace Concolic {
 // SyscallContext
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+SyscallContext::SyscallContext(const Architecture::Ptr &architecture, const ExecutionEvent::Ptr &syscallEvent,
+                               const std::vector<ExecutionEvent::Ptr> &relatedEvents)
+    : phase(ConcolicPhase::REPLAY), architecture(architecture), ip(syscallEvent->instructionPointer()),
+      argsConcrete(syscallEvent->syscallArguments()), syscallEvent(syscallEvent), relatedEvents(relatedEvents) {
+    ASSERT_not_null(architecture);
+    ASSERT_not_null(syscallEvent);
+}
+
+SyscallContext::SyscallContext(const Architecture::Ptr &architecture, const Emulation::RiscOperators::Ptr &ops,
+                               const ExecutionEvent::Ptr &syscallEvent)
+    : phase(ConcolicPhase::EMULATION), architecture(architecture), ops(ops), ip(syscallEvent->instructionPointer()),
+      argsConcrete(syscallEvent->syscallArguments()), syscallEvent(syscallEvent) {
+    ASSERT_not_null(architecture);
+    ASSERT_not_null(ops);
+    ASSERT_not_null(syscallEvent);
+}
+
 SyscallContext::~SyscallContext() {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// SystemCall
+// SyscallCallback
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-SystemCall::SystemCall() {}
-
-SystemCall::~SystemCall() {}
-
-SystemCallPtr
-SystemCall::instance() {
-    return Ptr(new SystemCall);
-}
-
-const Sawyer::Optional<uint64_t>&
-SystemCall::previousReturnConcrete() const {
-    return prevReturnConcrete_;
-}
-
 void
-SystemCall::previousReturnConcrete(uint64_t value) {
-    prevReturnConcrete_ = value;
-}
-
-SymbolicExpr::Ptr
-SystemCall::previousReturnSymbolic() const {
-    return prevReturnSymbolic_;
-}
-
-void
-SystemCall::previousReturnSymbolic(const SymbolicExpr::Ptr &value) {
-    prevReturnSymbolic_ = value;
-}
-
-const SystemCall::Callbacks&
-SystemCall::callbacks() const {
-    return callbacks_;
-}
-
-SystemCall::Callbacks&
-SystemCall::callbacks() {
-    return callbacks_;
+SyscallCallback::hello(const std::string &myName, const SyscallContext &ctx) const {
+    Sawyer::Message::Stream out = mlog[WHERE] ? mlog[WHERE] : mlog[DEBUG];
+    if (out) {
+        switch (ctx.phase) {
+            case ConcolicPhase::REPLAY:
+                out <<"replay ";
+                break;
+            case ConcolicPhase::EMULATION:
+                out <<"called ";
+                break;
+            case ConcolicPhase::POST_EMULATION:
+                ASSERT_not_implemented("should be called here");
+        }
+        out <<(myName.empty() ? ctx.syscallEvent->name() + " system call" : myName)
+            <<" at instruction " <<StringUtility::addrToString(ctx.ip) <<"\n";
+    }
 }
 
 } // namespace

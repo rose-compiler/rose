@@ -68,10 +68,6 @@ void runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* anal
   double eStateSetLoadFactor=analyzer->getEStateSet()->loadFactor();
   long transitionGraphSize=analyzer->getTransitionGraph()->size();
   long transitionGraphBytes=transitionGraphSize*sizeof(Transition);
-  long numOfconstraintSets=analyzer->getConstraintSetMaintainer()->numberOf();
-  long constraintSetsBytes=analyzer->getConstraintSetMaintainer()->memorySize();
-  long constraintSetsMaxCollisions=analyzer->getConstraintSetMaintainer()->maxCollisions();
-  double constraintSetsLoadFactor=analyzer->getConstraintSetMaintainer()->loadFactor();
   long numOfStdinEStates=(analyzer->getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR));
   long numOfStdoutVarEStates=(analyzer->getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR));
   long numOfStdoutConstEStates=(analyzer->getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_CONST));
@@ -87,7 +83,7 @@ void runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* anal
   getrusage(RUSAGE_SELF, &resourceUsage);
   long totalMemory=resourceUsage.ru_maxrss * 1024;
 #else
-  long totalMemory=pstateSetBytes+eStateSetBytes+transitionGraphBytes+constraintSetsBytes;
+  long totalMemory=pstateSetBytes+eStateSetBytes+transitionGraphBytes;
 #endif
 
   //double totalRunTime=tc.frontEndRunTime+tc.initRunTime+tc.analysisRunTime;
@@ -270,7 +266,6 @@ void runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* anal
     text<<"Sizes,"<<pstateSetSize<<", "
         <<eStateSetSize<<", "
         <<transitionGraphSize<<", "
-        <<numOfconstraintSets<<", "
         << numOfStdinEStates<<", "
         << numOfStdoutEStates<<", "
         << numOfStderrEStates<<", "
@@ -279,16 +274,13 @@ void runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* anal
     text<<"Memory,"<<pstateSetBytes<<", "
         <<eStateSetBytes<<", "
         <<transitionGraphBytes<<", "
-        <<constraintSetsBytes<<", "
         <<totalMemory<<endl;
     text<<"hashset-collisions,"
         <<pstateSetMaxCollisions<<", "
-        <<eStateSetMaxCollisions<<", "
-        <<constraintSetsMaxCollisions<<endl;
+        <<eStateSetMaxCollisions<<endl;
     text<<"hashset-loadfactors,"
         <<pstateSetLoadFactor<<", "
-        <<eStateSetLoadFactor<<", "
-        <<constraintSetsLoadFactor<<endl;
+        <<eStateSetLoadFactor<<endl;
     text<<"threads,"<<analyzer->getNumberOfThreadsToUse()<<endl;
     //    text<<"abstract-and-const-states,"
     //    <<"";
@@ -319,7 +311,6 @@ void runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* anal
         <<eStateSetSizeInf<<", "
         <<transitionGraphSizeInf<<", "
         <<eStateSetSizeStgInf<<endl;
-    //<<numOfconstraintSetsInf<<", "
     //<< numOfStdinEStatesInf<<", "
     //<< numOfStdoutEStatesInf<<", "
     //<< numOfStderrEStatesInf<<", "

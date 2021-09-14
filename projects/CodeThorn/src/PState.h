@@ -8,7 +8,6 @@
 #include "Labeler.h"
 #include "AbstractValue.h"
 #include "VariableIdMapping.h"
-#include "ConstraintRepresentation.h"
 #include "Lattice.h"
 
 #define NO_STATE -3
@@ -18,16 +17,16 @@ typedef int PStateId;
 #include "HashFun.h"
 #include "HSetMaintainer.h"
 
-using CodeThorn::ConstraintSet;
-using CodeThorn::ConstraintSetMaintainer;
 using CodeThorn::Edge;
-
-//using namespace CodeThorn;
 
 namespace CodeThorn {
 
   class VariableValueMonitor;
   class CTAnalysis;
+
+  class PState;
+  typedef const PState* PStatePtr;
+
   /*! 
    * \author Markus Schordan
    * \date 2012.
@@ -110,7 +109,7 @@ namespace CodeThorn {
   };
   
   std::ostream& operator<<(std::ostream& os, const PState& value);
-  typedef std::set<const PState*> PStatePtrSet;
+  typedef std::set<PStatePtr> PStatePtrSet;
   
 class PStateHashFun {
    public:
@@ -151,9 +150,9 @@ class PStateEqualToPred {
  public:
   typedef HSetMaintainer<PState,PStateHashFun,PStateEqualToPred>::ProcessingResult ProcessingResult;
   string toString();
-  PStateId pstateId(const PState* pstate);
+  PStateId pstateId(PStatePtr pstate);
   PStateId pstateId(const PState pstate);
-  string pstateIdString(const PState* pstate);
+  string pstateIdString(PStatePtr pstate);
  private:
 };
 

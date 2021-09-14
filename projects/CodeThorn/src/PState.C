@@ -270,7 +270,7 @@ AbstractValueSet PState::getVariableIds() const {
   * \author Markus Schordan
   * \date 2012.
  */
-PStateId PStateSet::pstateId(const PState* pstate) {
+PStateId PStateSet::pstateId(PStatePtr pstate) {
   return pstateId(*pstate);
 }
 
@@ -293,7 +293,7 @@ PStateId PStateSet::pstateId(const PState pstate) {
 /*! 
   * \author Markus Schordan
   * \date 2012.
- */string PStateSet::pstateIdString(const PState* pstate) {
+ */string PStateSet::pstateIdString(PStatePtr pstate) {
   stringstream ss;
   ss<<pstateId(pstate);
   return ss.str();

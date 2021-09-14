@@ -17,6 +17,7 @@ COLORED_PASS=${grn}PASS${end}
 
 TESTDIR=""
 SHOW_OUTPUT="no"
+KEEP_RESULTS="no"
 
 function printHeader {
     echo "------------------------------------------------"
@@ -72,8 +73,10 @@ function runDomainTestsLevel3 {
                     echo $COLORED_PASS
 		    ((numPass++))
                 fi
-		rm -f $GCC_OUTPUT_FILE
-		rm -f $EXEFILE
+		if [[ "$KEEP_RESULTS" == "no" ]];then
+		    rm -f $GCC_OUTPUT_FILE
+		    rm -f $EXEFILE
+		fi
             fi
         done
     done
@@ -138,9 +141,10 @@ function level2BasicCombineTest {
 function level2AvSetCombineTest {
     # av-sets abstraction test
     testNumbers=`echo {001..050}`
+    testNumbers="008"
     numWarnExpected=0
     numFailExpected=24
-    CT_MODE_OPTIONS="--context-sensitive=yes --normalize-level=2 --interpreter-mode=0 --in-state-string-literals --exploration-mode=topologic-sort --abstraction-mode=1 --array-abstraction-index=0 --pointer-sets=on"
+    CT_MODE_OPTIONS="--context-sensitive=yes --normalize-level=2 --interpreter-mode=0 --in-state-string-literals=0 --exploration-mode=topologic-sort --abstraction-mode=1 --array-abstraction-index=0 --pointer-sets=on --vis --tg1-memory-subgraphs"
     echo
     echo -n "Level 2 (abstraction mode, array abstraction index=0, av-sets): " 
     runDomainTestsLevel2
@@ -188,6 +192,10 @@ while [[ $# -gt 0 ]]; do
 	;;
     --show-errors)
 	SHOW_OUTPUT="yes"
+	shift
+	;;
+    --keep-results)
+	KEEP_RESULTS=yes
 	shift
 	;;
     --help)
