@@ -359,7 +359,6 @@ ConcolicExecutor::handleBranch(SgAsmInstruction *insn) {
     ASSERT_not_null(solver());
 
     Sawyer::Message::Stream debug(mlog[DEBUG]);
-    Sawyer::Message::Stream trace(mlog[TRACE]);
     Sawyer::Message::Stream error(mlog[ERROR]);
 
     Emulation::RiscOperatorsPtr ops = cpu()->emulationOperators();
@@ -398,22 +397,33 @@ ConcolicExecutor::handleBranch(SgAsmInstruction *insn) {
             SAWYER_MESG(debug) <<"condition for other path is " <<*otherCond <<"\n";
             SmtSolver::Transaction transaction(solver()); // because we'll need to cancel in order to follow the correct branch
             solver()->insert(otherCond);
-            if (SmtSolver::SAT_YES == solver()->check()) {
-                if (debug) {
-                    debug <<"conditions are satisfied when:\n";
-                    BOOST_FOREACH (const std::string &varName, solver()->evidenceNames()) {
-                        ExecutionEvent::Ptr inputEvent = ops->inputVariables()->event(varName);
-                        ASSERT_not_null(inputEvent);
-                        debug <<"  " <<inputEvent->name() <<" (" <<varName <<") = ";
-                        if (SymbolicExpr::Ptr val = solver()->evidenceForName(varName)) {
-                            debug <<*val <<"\n";
-                        } else {
-                            debug <<" = ???\n";
+            switch (solver()->check()) {
+                case SmtSolver::SAT_YES:
+                    if (debug) {
+                        debug <<"conditions are satisfied when:\n";
+                        BOOST_FOREACH (const std::string &varName, solver()->evidenceNames()) {
+                            ExecutionEvent::Ptr inputEvent = ops->inputVariables()->event(varName);
+                            if (inputEvent) {
+                                debug <<"  " <<inputEvent->name() <<" (" <<varName <<") = ";
+                            } else {
+                                debug <<"  " <<varName <<" (no input event) = ";
+                            }
+                            if (SymbolicExpr::Ptr val = solver()->evidenceForName(varName)) {
+                                debug <<*val <<"\n";
+                            } else {
+                                debug <<" = ???\n";
+                            }
                         }
                     }
-                }
+                    generateTestCase(ops, notFollowedTarget);
+                    break;
 
-                generateTestCase(ops, notFollowedTarget);
+                case SmtSolver::SAT_UNKNOWN:
+                    SAWYER_MESG(debug) <<"satisfiability is unknown (possible time out); assuming unsat\n";
+                    // fall through
+                case SmtSolver::SAT_NO:
+                    SAWYER_MESG(debug) <<"conditions cannot be satisified; path is not feasible\n";
+                    break;
             }
         }
 
@@ -484,17 +494,11 @@ ConcolicExecutor::run() {
             break;
         }
 
-        if (ops->hadSystemCall()) {
+        if (ops->hadSystemCall())
             ops->process()->systemCall(partitioner(), ops);
-        }
 
-        if (ExecutionEvent::Ptr sharedMemoryEvent = ops->hadSharedMemoryAccess()) {
-            rose_addr_t memoryVa = sharedMemoryEvent->memoryLocation().least();
-            SharedMemoryCallbacks callbacks = process()->sharedMemory().getOrDefault(memoryVa);
-            SharedMemoryContext ctx(ops->process(), ops, sharedMemoryEvent);
-            ctx.phase = ConcolicPhase::POST_EMULATION;
-            callbacks.apply(false, ctx);
-        }
+        if (ops->hadSharedMemoryAccess())
+            ops->process()->sharedMemoryAccessPost(partitioner(), ops);
 
         if (settings_.showingStates.exists(executionVa))
             SAWYER_MESG(debug) <<"state after instruction:\n" <<(*ops->currentState()+"  ");
@@ -921,7 +925,7 @@ RiscOperators::peekRegister(RegisterDescriptor reg, const BS::SValuePtr &dfltUnu
 
 void
 RiscOperators::writeRegister(RegisterDescriptor reg, const BS::SValue::Ptr &value) {
-    if (hadSharedMemoryAccess()) {
+    if (currentInstruction() && hadSharedMemoryAccess()) {
         Sawyer::Message::Stream debug(mlog[DEBUG]);
 
         // This probably writing a previously-read value from shared memory into a register. It's common on RISC
@@ -958,7 +962,8 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BS::SValuePtr &addr,
         SharedMemoryCallbacks callbacks = process()->sharedMemory().getOrDefault(*va);
         if (!callbacks.isEmpty()) {
             // FIXME[Robb Matzke 2021-09-09]: use structured bindings when ROSE requires C++17 or later
-            auto x = process()->sharedMemoryRead(callbacks, partitioner(), shared_from_this(), *va, nBytes);
+            auto x = process()->sharedMemoryAccess(callbacks, partitioner(), RiscOperators::promote(shared_from_this()),
+                                                   *va, nBytes);
             ExecutionEvent::Ptr sharedMemoryEvent = x.first;
             SymbolicExpr::Ptr result = x.second;
 

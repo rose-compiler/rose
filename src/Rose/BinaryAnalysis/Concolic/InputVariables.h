@@ -105,6 +105,9 @@ public:
      *  event. */
     void unplayback(const ExecutionEventPtr&);
 
+    /** Add variable bindings to an SMT solver. */
+    void addBindingsToSolver(const SmtSolverPtr&) const;
+
     /** Print all defined variables. */
     void print(std::ostream&, const std::string &prefix = "") const;
 

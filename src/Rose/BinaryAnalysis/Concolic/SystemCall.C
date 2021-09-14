@@ -46,10 +46,10 @@ SyscallCallback::hello(const std::string &myName, const SyscallContext &ctx) con
     if (out) {
         switch (ctx.phase) {
             case ConcolicPhase::REPLAY:
-                out <<"replay ";
+                out <<"replaying ";
                 break;
             case ConcolicPhase::EMULATION:
-                out <<"called ";
+                out <<"calling ";
                 break;
             case ConcolicPhase::POST_EMULATION:
                 ASSERT_not_implemented("should be called here");

@@ -51,13 +51,13 @@ SharedMemoryCallback::hello(const std::string &myName, const SharedMemoryContext
     if (out) {
         switch (ctx.phase) {
             case ConcolicPhase::REPLAY:
-                out <<"replay ";
+                out <<"replaying ";
                 break;
             case ConcolicPhase::EMULATION:
-                out <<"called ";
+                out <<"calling ";
                 break;
             case ConcolicPhase::POST_EMULATION:
-                out <<"post ";
+                out <<"finishing ";
                 break;
         }
         out <<(myName.empty() ? ctx.sharedMemoryEvent->name() : myName)
@@ -86,8 +86,7 @@ SharedMemoryCallback::normalRead(SharedMemoryContext &ctx) const {
 void
 SharedMemoryCallback::notAnInput(SharedMemoryContext &ctx) const {
     mlog[DEBUG] <<"    this shared memory read will not be treated as a test case input\n";
-    // Deactivate the input variable, but make sure the variable+value binding stays
-    ctx.ops->inputVariables()->undefine(ctx.sharedMemoryEvent);
+    ctx.ops->inputVariables()->deactivate(ctx.sharedMemoryEvent);
 }
 
 SymbolicExpr::Ptr

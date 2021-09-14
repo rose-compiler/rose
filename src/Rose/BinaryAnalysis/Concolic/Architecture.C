@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/Concolic/Architecture.h>
 
+#include <Rose/BinaryAnalysis/Concolic/ConcolicExecutor.h>
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
 #include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
 #include <Rose/BinaryAnalysis/Concolic/InputVariables.h>
@@ -159,7 +160,7 @@ Architecture::getRelatedEvents(const ExecutionEvent::Ptr &parent) const {
     // Process from last event toward first event because it results in fewer database reads.
     std::reverse(eventIds.begin(), eventIds.end());
     for (ExecutionEventId eventId: eventIds) {
-        ExecutionEvent::Ptr event = database()->object(eventId);
+        ExecutionEvent::Ptr event = database()->object(eventId, Update::NO);
         if (parent->location() < event->location()) {
             events.push_back(event);
         } else {
@@ -359,9 +360,173 @@ Architecture::restoreInputVariables(const Partitioner2::Partitioner&, const Emul
 }
 
 std::pair<ExecutionEvent::Ptr, SymbolicExpr::Ptr>
-Architecture::sharedMemoryRead(const SharedMemoryCallbacks&, const P2::Partitioner&, const BS::RiscOperators::Ptr&,
-                               rose_addr_t /*memoryVa*/, size_t /*nBytes*/) {
-    return {ExecutionEvent::Ptr(), SymbolicExpr::Ptr()};
+Architecture::sharedMemoryAccess(const SharedMemoryCallbacks &callbacks, const P2::Partitioner &partitioner,
+                                 const Emulation::RiscOperators::Ptr &ops, rose_addr_t addr, size_t nBytes) {
+    // A shared memory read has just been encountered, and we're in the middle of executing the instruction that caused it.
+    ASSERT_not_null(ops);
+    ASSERT_not_null2(ops->currentInstruction(), "must be called during instruction execution");
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+
+    const rose_addr_t ip = ops->currentInstruction()->get_address();
+    SAWYER_MESG(debug) <<"  shared memory read at instruction " <<StringUtility::addrToString(ip)
+                       <<" from memory address " <<StringUtility::addrToString(addr)
+                       <<" for " <<StringUtility::plural(nBytes, "bytes") <<"\n";
+
+    // Create an input variable for the value read from shared memory, and bind it to a new event that indicates that this
+    // instruction is reading from shared memory.
+    ExecutionLocation loc = nextEventLocation(When::PRE);
+    std::string name = (boost::format("shm_read_%s_%d") % StringUtility::addrToString(addr).substr(2) % loc.primary()).str();
+    auto valueRead = SymbolicExpr::makeIntegerVariable(8 * nBytes, name);
+    auto sharedMemoryEvent = ExecutionEvent::osSharedMemory(testCase(), loc, ip,
+                                                            AddressInterval::baseSize(addr, nBytes), valueRead,
+                                                            SymbolicExpr::Ptr(), /*concrete value not known yet*/
+                                                            valueRead);
+    inputVariables()->activate(sharedMemoryEvent, InputType::SHMEM_READ);
+    database()->save(sharedMemoryEvent);
+    SAWYER_MESG(debug) <<"    created input variable " <<*valueRead <<" (v" <<*valueRead->variableId() <<")"
+                       <<" for " <<sharedMemoryEvent->printableName(database()) <<"\n";
+
+    // Invoke the callbacks
+    SharedMemoryContext ctx(sharedFromThis(), ops, sharedMemoryEvent);
+    bool handled = callbacks.apply(false, ctx);
+    ASSERT_require(ctx.sharedMemoryEvent == sharedMemoryEvent);
+
+    if (!handled) {
+        mlog[ERROR] <<"    shared memory read not handled by any callbacks; treating it as normal memory\n";
+        return {ExecutionEvent::Ptr(), SymbolicExpr::Ptr()};
+    } else if (!ctx.valueRead) {
+        SAWYER_MESG(debug) <<"    shared memory read did not return a special value; doing a normal read\n";
+    } else {
+        SAWYER_MESG(debug) <<"    shared memory read returns " <<*ctx.valueRead <<"\n";
+        ASSERT_require(ctx.valueRead->nBits() == 8 * nBytes);
+    }
+
+    // Post-callback actions
+    database()->save(sharedMemoryEvent);            // just in case the user modified it.
+    return {ctx.sharedMemoryEvent, ctx.valueRead};
+}
+
+void
+Architecture::runSharedMemoryPostCallbacks(const ExecutionEvent::Ptr &sharedMemoryEvent, const Emulation::RiscOperators::Ptr &ops) {
+    ASSERT_not_null(sharedMemoryEvent);
+    ASSERT_not_null(ops);
+
+    rose_addr_t memoryVa = sharedMemoryEvent->memoryLocation().least();
+    SharedMemoryCallbacks callbacks = sharedMemory().getOrDefault(memoryVa);
+    SharedMemoryContext ctx(sharedFromThis(), ops, sharedMemoryEvent);
+    ctx.phase = ConcolicPhase::POST_EMULATION;
+    callbacks.apply(false, ctx);
+}
+
+void
+Architecture::fixupSharedMemoryEvents(const ExecutionEvent::Ptr &sharedMemoryEvent, const Emulation::RiscOperators::Ptr &ops) {
+    ASSERT_not_null(sharedMemoryEvent);
+    ASSERT_not_null(ops);
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    SAWYER_MESG(debug) <<"  solving to find value read from memory...\n";
+
+    SmtSolver::Transaction tx(ops->solver());
+    std::vector<ExecutionEvent::Ptr> relatedEvents = getRelatedEvents(sharedMemoryEvent);
+    for (const ExecutionEvent::Ptr &relatedEvent: relatedEvents) {
+        if (relatedEvent->action() == ExecutionEvent::Action::REGISTER_WRITE) {
+            // The register write for a shared-memory read instruction has a symbolic value that depends on the shared memory
+            // variable. Therefore, we can set the expression equal to the concrete value stored in this register and solve to
+            // get the value that was read from memory represented by the sharedMemoryEvent.
+            ASSERT_not_null(relatedEvent->expression());
+            ASSERT_require(relatedEvent->value() == nullptr);
+            const RegisterDescriptor REG = relatedEvent->registerDescriptor();
+            relatedEvent->value(SymbolicExpr::makeIntegerConstant(readRegister(REG)));
+            SymbolicExpr::Ptr eq = SymbolicExpr::makeEq(relatedEvent->expression(), relatedEvent->value());
+            ops->solver()->insert(eq);
+            SAWYER_MESG(debug) <<"    asserting: " <<*eq <<"\n";
+        }
+    }
+    switch (ops->solver()->check()) {
+        case SmtSolver::SAT_NO:
+            SAWYER_MESG(debug) <<"    not satisfiable\n";
+            ASSERT_not_implemented("how to recover?");  // [Robb Matzke 2021-09-14]
+        case SmtSolver::SAT_UNKNOWN:
+            SAWYER_MESG(debug) <<"    unknown satisfiability (timed out?)\n";
+            ASSERT_not_implemented("how to recover?");  // [Robb Matzke 2021-09-14]
+        case SmtSolver::SAT_YES: {
+            std::string varName = "v" + boost::lexical_cast<std::string>(*sharedMemoryEvent->variable()->variableId());
+            SymbolicExpr::Ptr concreteRead = ops->solver()->evidenceForName(varName);
+            ASSERT_not_null(concreteRead);
+            SAWYER_MESG(debug) <<"    concrete value read from memory: " <<*concreteRead <<"\n";
+            ASSERT_require(concreteRead->isScalarConstant());
+            sharedMemoryEvent->value(concreteRead);
+        }
+    }
+
+    // If the shared memory event is not a test case input variable, then make the subsequent register updates constant.
+    if (!sharedMemoryEvent->inputVariable()) {
+        for (const ExecutionEvent::Ptr &relatedEvent: relatedEvents) {
+            if (relatedEvent->action() == ExecutionEvent::Action::REGISTER_WRITE) {
+                relatedEvent->expression(relatedEvent->value());
+                ops->writeRegister(relatedEvent->registerDescriptor(), ops->svalueExpr(relatedEvent->value()));
+            }
+        }
+    }
+
+    if (sharedMemoryEvent->variable())
+        inputVariables()->bindVariableValue(sharedMemoryEvent->variable(), sharedMemoryEvent->value());
+}
+
+void
+Architecture::printSharedMemoryEvents(const ExecutionEvent::Ptr &sharedMemoryEvent, const Emulation::RiscOperators::Ptr &ops) {
+    ASSERT_not_null(sharedMemoryEvent);
+    ASSERT_not_null(ops);
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+    SAWYER_MESG(debug) <<"  shared memory final results:\n";
+
+    SAWYER_MESG(debug) <<"    shared memory " <<sharedMemoryEvent->printableName(ops->database()) <<"\n";
+    if (sharedMemoryEvent->variable()) {
+        if (InputType::NONE == sharedMemoryEvent->inputType()) {
+            SAWYER_MESG(debug) <<"      non-input variable: " <<*sharedMemoryEvent->variable() <<"\n";
+        } else {
+            SAWYER_MESG(debug) <<"      input variable: " <<*sharedMemoryEvent->variable() <<"\n";
+        }
+    } else {
+        SAWYER_MESG(debug) <<"      variable: none\n";
+    }
+    ASSERT_not_null(sharedMemoryEvent->value());
+    SAWYER_MESG(debug) <<"      concrete value: " <<*sharedMemoryEvent->value() <<"\n";
+    ASSERT_require(sharedMemoryEvent->value()->isScalarConstant());
+    ASSERT_not_null(sharedMemoryEvent->expression());
+    SAWYER_MESG(debug) <<"      expression: " <<*sharedMemoryEvent->expression() <<"\n";
+
+    for (const ExecutionEvent::Ptr &related: getRelatedEvents(sharedMemoryEvent)) {
+        SAWYER_MESG(debug) <<"  related " <<related->printableName(ops->database()) <<"\n";
+        ASSERT_forbid(related->inputVariable());
+        if (related->variable()) {
+            SAWYER_MESG(debug) <<"      non-input variable: " <<*related->variable() <<"\n";
+        } else {
+            SAWYER_MESG(debug) <<"      variable: none\n";
+        }
+        ASSERT_not_null(related->value());
+        SAWYER_MESG(debug) <<"      concrete value: " <<*related->value() <<"\n";
+        ASSERT_require(related->value()->isScalarConstant());
+        ASSERT_not_null(related->expression());
+        SAWYER_MESG(debug) <<"      expression: " <<*related->expression() <<"\n";
+    }
+}
+
+void
+Architecture::sharedMemoryAccessPost(const P2::Partitioner &partitioner, const Emulation::RiscOperators::Ptr &ops) {
+    // Called after a shared memory accessing instruction has completed.
+    ASSERT_not_null(ops);
+    ASSERT_require2(ops->currentInstruction() == nullptr, "must be called after instruction execution");
+
+    ExecutionEvent::Ptr sharedMemoryEvent = ops->hadSharedMemoryAccess();
+    ASSERT_not_null(sharedMemoryEvent);
+    runSharedMemoryPostCallbacks(sharedMemoryEvent, ops);
+    fixupSharedMemoryEvents(sharedMemoryEvent, ops);
+    printSharedMemoryEvents(sharedMemoryEvent, ops);
+
+    // Update the database since events may have changed since they were created.
+    database()->save(sharedMemoryEvent);
+    for (const ExecutionEvent::Ptr &relatedEvent: getRelatedEvents(sharedMemoryEvent))
+        database()->save(relatedEvent);
 }
 
 } // namespace
