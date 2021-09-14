@@ -216,7 +216,7 @@ public:
      *
      * @code
      *  std::cout <<"Register state:\n" <<*(obj + "    ");
-     * @code
+     * @endcode
      * @{ */
     WithFormatter with_format(Formatter &fmt) { return WithFormatter(shared_from_this(), fmt); }
     WithFormatter operator+(Formatter &fmt) { return with_format(fmt); }

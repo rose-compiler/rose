@@ -155,9 +155,9 @@ SgAsmNEFileHeader::ctor(SgAsmGenericFile *f, rose_addr_t offset)
 //    entry_rva = e_entrypoint_rva; /*FIXME*/
 }
 
-/** Return true if the file looks like it might be an NE file according to the magic number.  The file must contain what
- *  appears to be a DOS File Header at address zero, and what appears to be an NE File Header at a file offset specified in
- *  part of the DOS File Header (actually, in the bytes that follow the DOS File Header). */
+/* Return true if the file looks like it might be an NE file according to the magic number.  The file must contain what
+ * appears to be a DOS File Header at address zero, and what appears to be an NE File Header at a file offset specified in
+ * part of the DOS File Header (actually, in the bytes that follow the DOS File Header). */
 bool
 SgAsmNEFileHeader::is_NE(SgAsmGenericFile *file)
 {

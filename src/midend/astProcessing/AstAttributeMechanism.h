@@ -98,7 +98,7 @@ public:
      *   SgDirectedGraphEdge *edge = ...;
      *   delete edge->getAttribute("info");
      *   delete edge; // INVALID ACCESS TO EDGE ATTRIBUTE HERE
-     *  @code */
+     *  @endcode */
     virtual OwnershipPolicy getOwnershipPolicy() const;
 
     /** Support for attibutes to specify edges in the dot graphs. */

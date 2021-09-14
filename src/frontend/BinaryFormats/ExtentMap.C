@@ -1,3 +1,5 @@
+// Use AddressInterval or similar for all new code. I plan to eventually remove ExtentMap one. [Robb Matzke 2021-09-14]
+
 /* The ExtentMap class. This class is similar std::map<rose_addr_t,rose_addr_t> where the two addresses are the starting
  * offset and size.  The main difference is that if two adjacent extents are added to the map they will be condensed into a
  * single extent.  This class is used to keep track of what parts of a binary file have been parsed, and is also used to
@@ -51,8 +53,8 @@ std::ostream& operator<<(std::ostream &out, const AddressIntervalSet &x) {
     return out;
 }
 
-/** Class method comparing two extents. The return value is one of the following letters, depending on how extent A is related
- *  to extent B:
+/* Class method comparing two extents. The return value is one of the following letters, depending on how extent A is related
+ * to extent B:
  *     C (congruent):  A and B are congruent
  *     L (left):       A is left of B
  *     R (right):      A is right of B
@@ -78,7 +80,7 @@ ExtentMap::category(const Extent &a, const Extent &b)
     return 'E';
 }
 
-/** Allocate an extent of the specified size (best fit first) from the extent map, removing the returned extent from the map. */
+/* Allocate an extent of the specified size (best fit first) from the extent map, removing the returned extent from the map. */
 Extent
 ExtentMap::allocate_best_fit(rose_addr_t size)
 {
@@ -90,7 +92,7 @@ ExtentMap::allocate_best_fit(rose_addr_t size)
     return retval;
 }
 
-/** Allocate an extent of the specified size (first fit) from the extent map, removing the returned extent from the map. */
+/* Allocate an extent of the specified size (first fit) from the extent map, removing the returned extent from the map. */
 Extent
 ExtentMap::allocate_first_fit(rose_addr_t size)
 {
@@ -102,80 +104,13 @@ ExtentMap::allocate_first_fit(rose_addr_t size)
     return retval;
 }
 
-/** Allocate the specified extent, which must be in the free list. */
+/* Allocate the specified extent, which must be in the free list. */
 void
 ExtentMap::allocate_at(const Extent &request)
 {
     ROSE_ASSERT(subtract_from(request).size()==0); /*entire request should be on free list*/
     erase(request);
 }
-
-#if 0 /* NOT NEEDED BY ANYTHING? [RPM 2011-10-18] */
-/** Precipitates individual extents into larger extents by combining individual extents that are separated by an amount less
- *  than or equal to some specified @p reagent value.  Individual elements that would have been adjacent have already
- *  been combined by the other modifying methods (insert, erase, etc). */
-void
-ExtentMap::precipitate(rose_addr_t reagent)
-{
-    abort(); // NOT IMPLEMENTED
-    ExtentMap result;
-    for (iterator i=begin(); i!=end(); /*void*/) {
-        ExtentPair left = *i++;
-        for (/*void*/; i!=end() && left.first+left.second+reagent >= i->first; i++)
-            left.second = (i->first + i->second) - left.first;
-        result.insert(left);
-    }
-    *this = result;
-}
-#endif
-
-#if 0 /* NOT NEEDED BY ANYTHING? [RPM 2011-10-18] */
-/** Find the extent pair that contains the specified address. Throw std::bad_alloc() if the address is not found. */
-ExtentPair
-ExtentMap::find_address(rose_addr_t addr) const
-{
-    const_iterator i = upper_bound(addr);
-    RangeMapType::const_iterator i2 = ranges.find(addr);
-    if (i==begin()) {
-        assert(i2==ranges.end());
-        throw std::bad_alloc();
-    }
-    --i;
-    if (i->first+i->second <= addr) {
-        assert(i2==ranges.end());
-        throw std::bad_alloc();
-    }
-
-    assert(i->first==i2->first.begin);
-    assert(i->second==i2->first.size);
-    return *i;
-}
-#endif
-
-#if 0 /* NOT NEEDED BY ANYTHING? [RPM 2011-10-18] */
-/** Determines if specified bytes are in the extent map.  If every byte of the specified extent is defined by the extent map,
- *  then this function returns true, otherwise false. */
-bool
-ExtentMap::exists_all(ExtentPair what) const
-{
-    while (what.second>0) {
-        try {
-            ExtentPair found = find_address(what.first);
-            assert(found.second > 0);
-            assert(found.first <= what.first);
-            assert(what.first <= found.first + found.second);
-            rose_addr_t nfound = std::min(what.second, found.second-(what.first-found.first));
-            what.first = found.first + found.second;
-            what.second -= nfound;
-        } catch (const std::bad_alloc&) { // thrown by find_address()
-            assert(!ranges.contains(RangeType(what.first, what.second)));
-            return false;
-        }
-    }
-    assert(ranges.contains(RangeType(what.first, what.second)));
-    return true;
-}
-#endif
 
 void
 ExtentMap::dump_extents(std::ostream &o, const std::string &prefix, const std::string &label) const
@@ -191,7 +126,7 @@ ExtentMap::dump_extents(std::ostream &o, const std::string &prefix, const std::s
 }
     
 
-/** Print info about an extent map. This is a little different format than the ostream "<<" operator. */
+/* Print info about an extent map. This is a little different format than the ostream "<<" operator. */
 void
 ExtentMap::dump_extents(FILE *f, const char *prefix, const char *label, bool pad) const
 {

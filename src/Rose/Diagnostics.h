@@ -29,7 +29,7 @@ namespace Rose {
  *  Rose::Diagnostics::mfacilities, so they can be controlled collectively or individually from the ROSE command-line (e.g.,
  *  the @c frontend call).
  *
- * @section usage Command-line usage
+ * @section diagnostics_cmdline_usage Command-line usage
  *
  *  ROSE looks for the command-line switch (e.g., "-rose:log" for source analysis tools or "--log" for binary analysis tools)
  *  that takes one argument: @em what.  If @em what is the word "help" then usage information is displayed; if
@@ -37,7 +37,7 @@ namespace Rose {
  *  pass to the @ref Rose::Diagnostics::mfacilities.control function.  See the output from any tool that supports "--log help"
  *  for details about the syntax.
  *
- * @section library_diagnostics Adding a facility to ROSE
+ * @section diagnostics_in_rose Adding a facility to ROSE
  *
  *  Note: this section is about adding a new logging facility to the ROSE library proper. Adding a facility to a tool that uses
  *  ROSE is simpler and is described in a later section.
@@ -108,7 +108,7 @@ namespace Rose {
  *  Diagnostics::initialize. This function is defined in "src/roseSupport/Diagnostics.C". You probably don't need to include
  *  your entire header file in Diagnostics.C; a declarations should be sufficient and faster to compile.
  *
- * @section tool_diagnostics Adding a facility to a tool
+ * @section diagnostics_in_tools Adding a facility to a tool
  *
  *  Tools that are built on top of the ROSE library can use the same Sawyer messaging support, and the tool's Facility objects
  *  can be registered with ROSE and thus controlled along with the library's facilities.  Doing so is even easier than using
@@ -153,7 +153,7 @@ namespace Rose {
  * @endcode
  *
  *
- * @section usage Using a facility in the ROSE library or tools
+ * @section diagnostics_facility_usage Using a facility in the ROSE library or tools
  *
  *  When using a message facility within the ROSE library source code, it is generally desirable to have a "using namespace
  *  Rose::Diagnostics" in effect.  Not only does this alleviate the need to qualify the important levels (e.g.,
@@ -239,7 +239,7 @@ namespace Rose {
  *  }
  * @endcode
  *
- * @section partial Partial messages
+ * @section diagnostics_partial Partial messages
  *
  *  A partial message is any message for which the linefeed, "\n", hasn't been inserted.  If a message stream is unbuffered and
  *  another message is emitted to a different stream and ends up going to the same ultimate destination (e.g., standard error),
