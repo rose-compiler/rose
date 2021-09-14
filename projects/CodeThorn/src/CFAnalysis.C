@@ -174,7 +174,7 @@ definingDecl(SageNode* decl)
 }
 
 InterFlow CFAnalysis::interFlow(Flow& flow) {
-  if (CodeThorn::Pass::WITH_EXTENDED_NORMALIZED_CALL)
+  if (_withCplusplus)
     return interFlow2(flow);
 
   // 1) for each call use AST information to find its corresponding called function
@@ -286,7 +286,7 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
 }
 
 InterFlow CFAnalysis::interFlow2(Flow& flow) {
-  ROSE_ASSERT(CodeThorn::Pass::WITH_EXTENDED_NORMALIZED_CALL);
+  ROSE_ASSERT(_withCplusplus);
   ROSE_ASSERT(functionResolutionMode == FRM_FUNCTION_CALL_MAPPING);
   // 1) for each call use AST information to find its corresponding called function
   // 2) create a set of <call,entry,exit,callreturn> edges
@@ -395,9 +395,9 @@ SgStatement* CFAnalysis::getLastStmtInBlock(SgBasicBlock* block) {
 
 namespace
 {
-  bool isFunctionCallNode(SgNode* n)
+  bool isFunctionCallNode(SgNode* n, bool withCplusplus)
   {
-    if (CodeThorn::Pass::WITH_EXTENDED_NORMALIZED_CALL)
+    if (withCplusplus)
       return SgNodeHelper::matchExtendedNormalizedCall(n);
 
     return SgNodeHelper::Pattern::matchFunctionCall(n);
@@ -412,7 +412,7 @@ Label CFAnalysis::initialLabel(SgNode* node) {
     return labeler->getLabel(node);
 
   // special case of function call
-  if(isFunctionCallNode(node))
+  if(isFunctionCallNode(node, _withCplusplus))
     return labeler->getLabel(node);
 
   if(!labeler->numberOfAssociatedLabels(node)) {
@@ -554,7 +554,7 @@ LabelSet CFAnalysis::finalLabels(SgNode* node) {
     return finalSet;
   }
 
-  if (CodeThorn::Pass::WITH_EXTENDED_NORMALIZED_CALL && SgNodeHelper::matchExtendedNormalizedCall(node))
+  if (_withCplusplus && SgNodeHelper::matchExtendedNormalizedCall(node))
   {
     finalSet.insert(labeler->functionCallReturnLabel(node));
     return finalSet;
@@ -1233,7 +1233,7 @@ Flow CFAnalysis::flow(SgNode* n) {
     return edgeSet;
   }
 
-  if(CodeThorn::Pass::WITH_EXTENDED_NORMALIZED_CALL && SgNodeHelper::matchExtendedNormalizedCall(node)) {
+  if(_withCplusplus && SgNodeHelper::matchExtendedNormalizedCall(node)) {
 #ifdef ALTERNATIVE_LOCAL_EDGE_HANDLING
     // local edge for function call: call -> callReturn is added
     Label callLabel=labeler->functionCallLabel(node);
@@ -1856,9 +1856,7 @@ void CFAnalysis::createCICFG(SgProject* project, FunctionCallMapping* functionCa
   intraInterFlow(_icfgFlow, _interFlow);
 }
 
-void CFAnalysis::createCppICFG(SgProject* project) {
-  // PP (02/17/20) add class hierarchy and call mapping
-  ClassHierarchyWrapper* classHierarchy=new ClassHierarchyWrapper(project);
+void CFAnalysis::createCppICFG(SgProject* project, ClassHierarchyWrapper* classHierarchy) {
   FunctionCallMapping2* functionCallMapping2=new FunctionCallMapping2();
   functionCallMapping2->setLabeler(labeler);
   functionCallMapping2->setClassHierarchy(classHierarchy);
@@ -1882,3 +1880,5 @@ Flow* CFAnalysis::getIcfgFlow() {
 InterFlow* CFAnalysis::getInterFlow() {
   return &_interFlow;
 }
+
+void CFAnalysis::useCplusplus(bool flag) { _withCplusplus = flag; }

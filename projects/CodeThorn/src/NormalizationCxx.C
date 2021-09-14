@@ -1232,49 +1232,6 @@ namespace
       SgExprStatement* newStmt = nullptr;
   };
 
-#if 0
-  struct DtorCallCreator : sg::DispatchHandler<SgStatement*>
-  {
-      using base = sg::DispatchHandler<SgStatement*>;
-
-      explicit
-      DtorCallCreator(SgExpression& expr)
-      : base(), elem(expr)
-      {}
-
-      void descend(SgNode* n) { res = sg::dispatch(*this, n); }
-
-      SgForStatement&
-      createLoopOverArray(SgArrayType& arrty)
-      {
-        return ::createLoopOverArray<DtorCallCreator>(arrty);
-      }
-
-      void handle(SgNode& n)         { SG_UNEXPECTED_NODE(n); }
-
-      void handle(SgModifierType& n) { descend(n.get_base_type()); }
-      void handle(SgTypedefType& n)  { descend(n.get_base_type()); }
-      void handle(SgPointerType& n)  { descend(n.get_base_type()); }
-
-      void handle(SgClassType& n)
-      {
-        SgClassDefinition&           clsdef   = SG_DEREF( getClassDefOpt(n) );
-        SgExprListExp&               args     = SG_DEREF( sb::buildExprListExp() );
-        SgMemberFunctionDeclaration& dtorDcl  = obtainGeneratableDtor(clsdef, args);
-
-        res = &createMemberCall(elem, dtorDcl, args, false /* non-virtual call (full type is known) */);
-      }
-
-      void handle(SgArrayType& n)
-      {
-        res = &createLoopOverArray(n);
-      }
-
-    private:
-      SgExpression& elem;
-  };
-#endif
-
 
   /// compares two
   bool sameObject(const SgNode* lhs, const SgNode* rhs)

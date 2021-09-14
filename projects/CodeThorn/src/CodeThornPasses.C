@@ -7,7 +7,7 @@ using namespace CodeThorn::CodeThornLib;
 namespace CodeThorn {
 
   // set to true for matching C++ ctor calls
-  bool Pass::WITH_EXTENDED_NORMALIZED_CALL = false;
+  //~ bool Pass::WITH_EXTENDED_NORMALIZED_CALL = false;
 
   void Pass::normalization(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc) {
     tc.startTimer();
@@ -36,11 +36,11 @@ namespace CodeThorn {
     return labeler;
   }
 
-  // not used
-  ClassHierarchyWrapper* Pass::createClassHierarchy(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc) {
+  ClassHierarchyWrapper*
+  Pass::createClassHierarchy(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc) {
     tc.startTimer();
     if(ctOpt.status) cout<<"Phase: class hierarchy analysis"<<endl;
-    auto classHierarchy=new ClassHierarchyWrapper(root);
+    ClassHierarchyWrapper* classHierarchy=new ClassHierarchyWrapper(root);
     tc.stopTimer(TimingCollector::classHierarchyAnalysis);
     return classHierarchy;
   }
@@ -57,16 +57,15 @@ namespace CodeThorn {
   CFAnalysis* Pass::createIcfg(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, Labeler* labeler, ICFGDirection icfgDirection) {
     tc.startTimer();
 
-    CodeThorn::Pass::WITH_EXTENDED_NORMALIZED_CALL=ctOpt.extendedNormalizedCppFunctionCalls; // to be used without global var
-
     CFAnalysis* cfanalyzer=new CFAnalysis(labeler);
     cfanalyzer->setInterProcedural(ctOpt.getInterProceduralFlag());
     if(!ctOpt.extendedNormalizedCppFunctionCalls) {
       if(ctOpt.status) cout<<"Phase: C ICFG construction"<<endl;
       cfanalyzer->createCICFG(root);
     } else {
+      cfanalyzer->useCplusplus(true);
       if(ctOpt.status) cout<<"Phase: C++ ICFG construction"<<endl;
-      cfanalyzer->createCppICFG(root);
+      cfanalyzer->createCppICFG(root, classHierarchy);
     }
     if(ctOpt.status) {
       cout<<"Phase: ICFG construction"<<endl;

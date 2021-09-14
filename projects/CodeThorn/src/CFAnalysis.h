@@ -28,7 +28,7 @@ namespace CodeThorn {
  *
  * [1] Nielson, F. and Nielson, H. and Hankin, C.: Principles of Program Analysis. 1999, Springer-Verlag Berlin Heidelberg. ISBN: 978-3-642-08474-4.
  *
- * Notes on some of the functions: 
+ * Notes on some of the functions:
  * intraInterFlow creates an ICFG from a set of function CFGs and call/return-edges. If the flag get/setInterProcedural is set to false, "external" edges are generated
    instead of inter-procedural call/return edges. This allows to represent multiple functions in one CFG for intra-procedural analysis.
 
@@ -146,12 +146,14 @@ class CFAnalysis {
   // these functions store the Flow and InterFlow in this object.
   //void createICFG(SgProject* project); // deprecated
   void createCICFG(SgProject* project); // deprecated
-  void createCppICFG(SgProject* project); // deprecated
+  void createCppICFG(SgProject* project, ClassHierarchyWrapper* classHierarchy); // deprecated
   void createCICFG(SgProject* project, FunctionCallMapping* functionCallMapping);
   void createCppICFG(SgProject* project, FunctionCallMapping2* functionCallMapping2);
   Flow* getIcfgFlow();
   InterFlow* getInterFlow();
-  
+
+  void useCplusplus(bool flag);
+
 protected:
   SgFunctionDefinition* determineFunctionDefinition2(SgFunctionCallExp* funCall);
   FunctionCallTargetSet determineFunctionDefinition4(SgFunctionCallExp* funCall);
@@ -160,6 +162,7 @@ protected:
   void createInterProceduralCallEdges(Flow& flow, InterFlow& interFlow);
   void createIntraProceduralCallEdges(Flow& flow, InterFlow& interFlow);
   bool _interProcedural=true;
+  bool _withCplusplus=false;
 
 private:
   SgStatement* getCaseOrDefaultBodyStmt(SgNode* node);
@@ -169,10 +172,10 @@ private:
   SgNode* correspondingLoopConstruct(SgNode* node);
   FunctionCallMapping* _functionCallMapping=nullptr;
   FunctionCallMapping2* _functionCallMapping2=nullptr;
-  
+
   Flow _icfgFlow;
   InterFlow _interFlow;
-  
+
 };
 
 } // end of namespace CodeThorn

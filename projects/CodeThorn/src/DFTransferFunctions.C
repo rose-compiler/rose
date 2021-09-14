@@ -10,12 +10,13 @@ using namespace std;
 #include "CollectionOperators.h"
 #include "DFTransferFunctions.h"
 #include "AstUtility.h"
-#include "CodeThornPasses.h" // only required because of CodeThorn::Pass::WITH_EXTENDED_NORMALIZED_CALL
+//~ #include "CodeThornPasses.h" // only required because of CodeThorn::Pass::WITH_EXTENDED_NORMALIZED_CALL
+
 using namespace CodeThorn;
 
 namespace
 {
-  std::ostream& logWarn() { return std::cerr << "[WARN] "; } 
+  std::ostream& logWarn() { return std::cerr << "[WARN] "; }
 }
 
 DFTransferFunctions::DFTransferFunctions():_programAbstractionLayer(0){}
@@ -41,27 +42,27 @@ void DFTransferFunctions::transferCondition(Edge edge, Lattice& element) {
 static inline
 VariableId withoutVariable() { return VariableId(); }
 
-static inline 
+static inline
 VariableId getVariableId(CodeThorn::VariableIdMapping* vmap, SgNode* n)
 {
   ROSE_ASSERT(vmap && n);
-  
+
   if (SgVarRefExp* ref = isSgVarRefExp(n))
     return vmap->variableId(ref);
-    
-  // \todo handle x->field expressions    
-  if(SgArrowExp* arrow = isSgArrowExp(n)) 
+
+  // \todo handle x->field expressions
+  if(SgArrowExp* arrow = isSgArrowExp(n))
     return getVariableId(vmap, arrow->get_lhs_operand());
-  
+
   // \todo handle this expression
-  if(isSgThisExp(n)) 
+  if(isSgThisExp(n))
     return withoutVariable();
-    
+
   cerr<<"Transfer: unknown lhs of function call result assignment."<<endl;
   cerr<<n->unparseToString()<<endl;
   cerr<<n->get_parent()->unparseToString()<<endl;
   exit(1);
-  
+
   //~ return withoutVariable();
 }
 
@@ -77,30 +78,42 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
     // the extremal value must be different to the bottom element.
     return;
   }
-  
+
   if(getLabeler()->isFunctionCallLabel(lab)) {
     // 1) f(x), 2) y=f(x) (but not y+=f(x))
-    SgNodeHelper::ExtendedCallInfo callinfo = SgNodeHelper::matchExtendedNormalizedCall(node);
-    
-    SgFunctionCallExp* funCall = CodeThorn::Pass::WITH_EXTENDED_NORMALIZED_CALL 
-                                       ? callinfo.callExpression()
-                                       : SgNodeHelper::Pattern::matchFunctionCall(node);
-
-    //~ if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(node)) {
-    if(funCall) {
+    if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(node)) {
       SgExpressionPtrList& arguments=SgNodeHelper::getFunctionCallActualParameterList(funCall);
-      
+
       transferFunctionCall(lab, funCall, arguments, element);
-    } else if (SgConstructorInitializer* ctorCall = callinfo.ctorInitializer()) {
-      SgExpressionPtrList& arguments=SG_DEREF(ctorCall->get_args()).get_expressions();
-      transferConstructorCall(lab, ctorCall, arguments, element);
     } else {
       cerr<<"Error: DFTransferFunctions::callexp: no function call on rhs of assignment found. Only found "
-          <<node->class_name() << " for " << node->unparseToString() 
+          <<node->class_name() << " for " << node->unparseToString()
           <<endl;
       exit(1);
     }
-    
+
+#if OBSOLETE_CODE
+    //~ SgNodeHelper::ExtendedCallInfo callinfo = SgNodeHelper::matchExtendedNormalizedCall(node);
+
+    //~ SgFunctionCallExp* funCall = CodeThorn::Pass::WITH_EXTENDED_NORMALIZED_CALL
+                                       //~ ? callinfo.callExpression()
+                                       //~ : SgNodeHelper::Pattern::matchFunctionCall(node);
+
+    //~ if(funCall) {
+      //~ SgExpressionPtrList& arguments=SgNodeHelper::getFunctionCallActualParameterList(funCall);
+
+      //~ transferFunctionCall(lab, funCall, arguments, element);
+    //~ } else if (SgConstructorInitializer* ctorCall = callinfo.ctorInitializer()) {
+      //~ SgExpressionPtrList& arguments=SG_DEREF(ctorCall->get_args()).get_expressions();
+      //~ transferConstructorCall(lab, ctorCall, arguments, element);
+    //~ } else {
+      //~ cerr<<"Error: DFTransferFunctions::callexp: no function call on rhs of assignment found. Only found "
+          //~ <<node->class_name() << " for " << node->unparseToString()
+          //~ <<endl;
+      //~ exit(1);
+    //~ }
+#endif /* OBSOLETE_CODE */
+
     return;
   }
 
@@ -159,7 +172,7 @@ void DFTransferFunctions::transfer(Label lab, Lattice& element) {
       VariableId lhsVarId=getVariableIdMapping()->variableId(varDecl);
       ROSE_ASSERT(lhsVarId.isValid());
       transferConstructorCallReturn(lab, lhsVarId, callinfo.ctorInitializer(), element);
-    } 
+    }
     else {
       if(getSkipUnknownFunctionCalls()) {
         // ignore unknown function call (requires command line option --ignore-unknown-functions)
@@ -448,25 +461,25 @@ chooseInitializer(SgVariableDeclaration* one, SgVariableDeclaration* two)
   return one;
 }
 
-namespace 
+namespace
 {
-  // auxiliary wrapper for printing Sg_File_Info objects 
+  // auxiliary wrapper for printing Sg_File_Info objects
   struct SrcLoc
   {
     explicit
     SrcLoc(SgLocatedNode& n)
     : info(n.get_file_info())
     {}
-    
+
     Sg_File_Info* info;
   };
 
-  inline  
+  inline
   std::ostream& operator<<(std::ostream& os, SrcLoc el)
   {
-    return os << el.info->get_filenameString() 
+    return os << el.info->get_filenameString()
               << "@" << el.info->get_line() << ":" << el.info->get_col();
-  } 
+  }
 }
 
 typedef std::map<VariableId, SgVariableDeclaration*> VariableInitialzationMap;
@@ -476,8 +489,8 @@ void storeIfBetter( std::map<VariableId, SgVariableDeclaration*>& initmap,
                     std::pair<VariableId, SgVariableDeclaration*> cand
                   )
 {
-  ROSE_ASSERT (cand.second != nullptr); 
-  
+  ROSE_ASSERT (cand.second != nullptr);
+
   VariableInitialzationMap::mapped_type& curr   = initmap[cand.first];
   VariableInitialzationMap::mapped_type  choice = chooseInitializer(cand.second, curr);
 
@@ -485,7 +498,7 @@ void storeIfBetter( std::map<VariableId, SgVariableDeclaration*>& initmap,
   {
     std::string currstr = curr->unparseToString();
     std::string candstr = cand.second->unparseToString();
-    
+
     // suppress the warning if the two candidates unparse to the same string
     if (currstr != candstr)
     {
@@ -525,7 +538,7 @@ Lattice* DFTransferFunctions::initializeGlobalVariables(SgProject* root) {
   for(SgVariableDeclaration* var : globalVarDecls) {
     VariableId varid = getVariableIdMapping()->variableId(var);
 
-    if (  !isSgTemplateVariableDeclaration(var) 
+    if (  !isSgTemplateVariableDeclaration(var)
        && usedGlobalVarIds.find(varid) != usedGlobalVarIds.end()
        ) {
       // cout << "DEBUG: transfer for global var @" << getLabeler()->getLabel(*i) << " : " << (*i)->unparseToString()
@@ -542,7 +555,7 @@ Lattice* DFTransferFunctions::initializeGlobalVariables(SgProject* root) {
     ROSE_ASSERT(init.second);
 
     Label lbl = getLabeler()->getLabel(init.second);
-    
+
     if (lbl == Label())
     {
       std::cerr << "no label: " << init.second->unparseToString() << std::endl;
