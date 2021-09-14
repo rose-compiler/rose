@@ -191,7 +191,7 @@ Engine::insertStartingPoint(const ExecutionUnit::Ptr &unit) {
     ASSERT_not_null(semantics_);
     auto path = Path::instance(unit);
     frontier_.insert(path);                             // intentionally not checking the insertion predicate
-    mlog[DEBUG] <<"starting at " <<unit->printableName() <<"\n";
+    SAWYER_MESG(mlog[DEBUG]) <<"starting at " <<unit->printableName() <<"\n";
     newWork_.notify_all();
 }
 
@@ -531,7 +531,7 @@ Engine::execute(const Path::Ptr &path, const BS::RiscOperators::Ptr &ops, const 
         mlog[DEBUG] <<"  current path:\n";
         auto nodes = path->nodes();
         for (size_t i = 0; i < nodes.size(); ++i)
-            mlog[DEBUG] <<boost::format("    node %-3d: %s\n") % i % nodes[i]->printableName();
+            SAWYER_MESG(mlog[DEBUG]) <<boost::format("    node %-3d: %s\n") % i % nodes[i]->printableName();
     }
 
     {
