@@ -8,6 +8,9 @@ setup: default.gpr
 	echo ${ROSE_COMPILER}
 	sed --in-place -re 's|ROSE_CC|'${ROSE_COMPILER}'|g' local.gpr
 
+.PHONY: all
+all: check-local
+
 .PHONY: clean-local
 clean-local:
 	rm -rf ./obj ./src local.gpr 
