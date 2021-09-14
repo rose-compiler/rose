@@ -92,7 +92,7 @@ using namespace Sawyer::Message;
 
 using namespace Sawyer::Message;
 
-static std::string CodeThornLibraryVersion="1.13.19";
+static std::string CodeThornLibraryVersion="1.13.20";
 
 // handler for generating backtrace
 void codethornBackTraceHandler(int sig) {
@@ -714,6 +714,7 @@ namespace CodeThorn {
           AnalysisReporting::generateAnalysisLocationReports(ctOpt,analyzer);
           AnalysisReporting::generateAnalyzedFunctionsAndFilesReports(ctOpt,analyzer);
 	  AnalysisReporting::generateInternalAnalysisReport(ctOpt,analyzer);
+	  AnalysisReporting::generateUnusedVariablesReport(ctOpt,analyzer);
         } else {
           if(ctOpt.status) cout<<"STATUS: no analysis reports generated (no analysis selected)."<<endl;
         }

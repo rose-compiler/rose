@@ -189,6 +189,7 @@ namespace CodeThorn {
       std::map<TypeSize,TypeSize> numDimensionElements; // in elements, if unknown -1 or non existent (getDimensionElements(0) returns -1)
       bool relinked; // true if link analysis relinked this entry
       bool unspecifiedSize; // true if no declaration can be found to determine type size
+      bool isUsed; // default true
       //std::string toString();
       std::string aggregateTypeToString();
       std::string variableScopeToString();
@@ -203,7 +204,7 @@ namespace CodeThorn {
       SgExpression* getInitializer();
       SgType* getType(); // this abstracts away the problem of having multiple declarations of the same variable (extern, global, etc.)
       SgVariableDeclaration* getVarDecl();
-      
+
     private:
       std::set<SgVariableDeclaration*> _varDecls;
       SgExpression* _initializer; // is maintained as cached value

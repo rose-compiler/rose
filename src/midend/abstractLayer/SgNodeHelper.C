@@ -110,7 +110,11 @@ std::string SgNodeHelper::sourceFilenameLineColumnToString(SgNode* node) {
   return ss.str();
 }
 
-std::string SgNodeHelper::locationToString(SgNode* node, size_t maxFileNameLength) {
+std::string SgNodeHelper::locationToString(SgNode* node) {
+  return abbreviatedLocationToString(node,std::numeric_limits<size_t>::max());
+}
+
+std::string SgNodeHelper::abbreviatedLocationToString(SgNode* node, size_t maxFileNameLength) {
   string fileName=SgNodeHelper::sourceFilenameToString(node);
   // truncate fileName
   size_t fileNameLength=fileName.size();
@@ -122,7 +126,7 @@ std::string SgNodeHelper::locationToString(SgNode* node, size_t maxFileNameLengt
 }
 
 std::string SgNodeHelper::locationAndSourceCodeToString(SgNode* node, size_t maxFileNameLength, size_t maxSourceLength) {
-  string location=SgNodeHelper::locationToString(node,maxFileNameLength);
+  string location=SgNodeHelper::abbreviatedLocationToString(node,maxFileNameLength);
   // truncate unparsed source
   string sourceLine=node->unparseToString();
   if(sourceLine.size()>maxSourceLength) {

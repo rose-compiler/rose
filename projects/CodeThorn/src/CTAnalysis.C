@@ -1271,9 +1271,6 @@ EState CodeThorn::CTAnalysis::createInitialEState(SgProject* root, Label slab) {
   PStatePtr initialPStateStored=processNewOrExisting(initialPState); // might reuse another pstate when initializing in level 1
   ROSE_ASSERT(initialPStateStored);
   SAWYER_MESG(logger[TRACE])<< "INIT: initial pstate(stored): "<<initialPStateStored->toString(getVariableIdMapping())<<endl;
-  //ROSE_ASSERT(cfanalyzer);
-  //ConstraintSet cset;
-  //const ConstraintSet* emptycsetstored=constraintSetMaintainer.processNewOrExisting(cset);
 
   transitionGraph.setStartLabel(slab);
   transitionGraph.setAnalyzer(this);

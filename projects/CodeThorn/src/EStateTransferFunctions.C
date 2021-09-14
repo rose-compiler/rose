@@ -1461,10 +1461,7 @@ namespace CodeThorn {
       uint32_t declaredInGlobalState=0;
       for(auto decl : relevantGlobalVariableDecls) {
 	if(decl) {
-	  size_t sizeBefore=estate.pstate()->stateSize();
 	  estate=transferVariableDeclarationEState(decl,estate,estate.label());
-	  size_t sizeAfter=estate.pstate()->stateSize();
-	  size_t numNewEntries=sizeAfter-sizeBefore;
 	  //if(getAnalyzer()->getOptionsRef().status)
 	  //  cout<<"STATUS: init global decl: "<<SgNodeHelper::locationAndSourceCodeToString(decl)<<": entries: "<<numNewEntries<<endl;
 	  declaredInGlobalState++;
@@ -1474,7 +1471,6 @@ namespace CodeThorn {
 	  //cout<<"DEBUG: init global decl: 0 !!!"<<endl;
 	}
       }
-
       if(getAnalyzer()->getOptionsRef().status) {
 	//uint32_t numFilteredVars=setOfGlobalVars.size()-setOfUsedGlobalVars.size();
 	//cout<< "STATUS: Number of unused variables filtered in initial state: "<<numFilteredVars<<endl;

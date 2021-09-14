@@ -3,6 +3,7 @@
 #include "CodeThornLib.h"
 #include "AstTerm.h"
 #include "CppStdUtilities.h"
+#include "AstUtility.h"
 
 using namespace Sawyer::Message;
 using namespace std;
@@ -43,6 +44,25 @@ namespace CodeThorn {
     cout<<"Type sizes:"<<endl;
     for(auto tPair:_typeSize) {
       cout<<tPair.first->unparseToString()<<" : "<<tPair.second<<endl;
+    }
+  }
+
+  // sets used/unused flag in VIM
+  void VariableIdMappingExtended::determineVarUsage(SgProject* project) {
+    CodeThorn::VariableIdSet usedVarsInGlobalInitializers=AstUtility::usedVariablesInGlobalVariableInitializers(project, this);
+    CodeThorn::VariableIdSet allUsedVars=usedVarsInGlobalInitializers;
+    std::list<SgVarRefExp*> usedVarsInsideFunctionsVarRefs=VariableIdMappingExtended::variableAccessesInsideFunctions(project);
+    CodeThorn::VariableIdSet usedVarsInsideFunctions;
+    for(auto varRef : usedVarsInsideFunctionsVarRefs) {
+      VariableId varId=variableId(varRef);
+      if(varId.isValid()) {
+	allUsedVars.insert(varId);
+      }
+    }
+    for(auto p : mappingSymToVarId) {
+      VariableId varId=p.second;
+      if(allUsedVars.find(varId)==allUsedVars.end())
+	getVariableIdInfoPtr(varId)->isUsed=false;
     }
   }
 
@@ -399,6 +419,7 @@ namespace CodeThorn {
 
   void VariableIdMappingExtended::computeVariableSymbolMapping(SgProject* project, int maxWarningsCount) {
     computeVariableSymbolMapping2(project,maxWarningsCount);
+    determineVarUsage(project);
 
     bool symbolCheckOk=astSymbolCheck(project);
     if(!symbolCheckOk) {
@@ -1147,4 +1168,25 @@ namespace CodeThorn {
     _status=flag;
   }
 
+  string VariableIdMappingExtended::unusedVariablesCsvReport() {
+    stringstream ss;
+    for(auto p : mappingSymToVarId) {
+      VariableId varId=p.second;
+      auto varInfo=getVariableIdInfoPtr(varId);
+      if(!varInfo->isUsed) {
+	// found unused variable, write it to the report with some info about the location and scope of variable
+	SgVariableDeclaration* varDecl=getVariableDeclaration(varId);
+	if(varDecl) {
+	  // if varId is a function parameter, there is no declaration (there is only a SgInitializedName)
+	  ss<<varInfo->variableScopeToString()<<","
+	    <<varInfo->aggregateTypeToString()<<","
+	    <<SgNodeHelper::locationToString(varDecl)<<","
+	    <<variableName(varId)
+	    <<endl;
+	}
+      }
+    }
+    return ss.str();
+  }
+  
 }
