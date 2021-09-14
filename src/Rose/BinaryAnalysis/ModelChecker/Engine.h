@@ -52,6 +52,7 @@ public:
         PathPtr path;                                   /**< The path being worked on. */
         Sawyer::Stopwatch elapsed;                      /**< Wall clock time elapsed for this work. */
         boost::thread::id threadId;                     /**< Identifier for thread doing the work. */
+        int tid = 0;                                    /**< Linux thread ID. */
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
