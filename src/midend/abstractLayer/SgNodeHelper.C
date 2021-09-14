@@ -1787,8 +1787,10 @@ namespace
     void handle(SgPragma&)                   { /* no match */ }
 
     // intermediate (pass through) nodes
-    void handle(SgCastExp& n)                { res = eval(n.get_operand()); }
+    void handle(SgDotExp& n)                 { res = eval(n.get_rhs_operand()); }
+    void handle(SgArrowExp& n)               { res = eval(n.get_rhs_operand()); }
     void handle(SgAssignOp& n)               { res = eval(n.get_rhs_operand()); }
+    void handle(SgCastExp& n)                { res = eval(n.get_operand()); }
     void handle(SgAssignInitializer& n)      { res = eval(n.get_operand()); }
 
     // root nodes (get to the bottom of them)

@@ -329,29 +329,6 @@ void CLabeler::createLabels(SgNode* root) {
       } else if(isSgOmpBarrierStatement(*i)) {
         assert(num == 1);
         registerLabel(LabelProperty(*i, LabelProperty::LABEL_BARRIER));
-#if OBSOLETE_CODE
-      } else if(SgNodeHelper::matchExtendedNormalizedCall(*i)) {
-        assert(num==2);
-        registerLabel(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONCALL));
-        registerLabel(LabelProperty(*i,LabelProperty::LABEL_FUNCTIONCALLRETURN));
-      } else if (SgCtorInitializerList* inilst = isSgCtorInitializerList(*i)) {
-        SgInitializedNamePtrList& lst = inilst->get_ctors();
-
-        for (size_t i = 0; i < lst.size(); ++i) {
-          SgInitializer* ini = lst[i]->get_initializer();
-          ROSE_ASSERT(ini);
-
-          if (isSgConstructorInitializer(ini)) {
-            registerLabel(LabelProperty(ini,LabelProperty::LABEL_FUNCTIONCALL));
-            registerLabel(LabelProperty(ini,LabelProperty::LABEL_FUNCTIONCALLRETURN));
-          } else {
-            ROSE_ASSERT(isSgAssignInitializer(ini));
-
-            registerLabel(LabelProperty(ini));
-          }
-        }
-        // std::cerr << "- " << typeid(**i).name() << ": " << num << std::endl;
-#endif /* OBSOLETE_CODE */
       } else {
         // all other cases
         for(int j=0;j<num;j++) {
