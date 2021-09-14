@@ -4,11 +4,11 @@
 #ifdef ROSE_ENABLE_CONCOLIC_TESTING
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 
-#include <Rose/BinaryAnalysis/Concolic/InputVariables.h>
 #include <Rose/BinaryAnalysis/Concolic/LinuxI386.h>
 #include <Rose/BinaryAnalysis/Debugger.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+#include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Sawyer/FileSystem.h>
 
 namespace Rose {
@@ -31,7 +31,6 @@ typedef InstructionSemantics2::SymbolicSemantics::MemoryStatePtr MemoryStatePtr;
 typedef InstructionSemantics2::SymbolicSemantics::MemoryState MemoryState; /**< Type of semantic memory space. */
 typedef InstructionSemantics2::SymbolicSemantics::StatePtr StatePtr; /**< Pointer to semantic machine state. */
 typedef InstructionSemantics2::SymbolicSemantics::State State; /**< Semantic machine state. */
-typedef boost::shared_ptr<class RiscOperators> RiscOperatorsPtr; /**< Pointer to semantic operations. */
 
 /** Values thrown when subordinate exits. */
 class Exit: public Exception {
@@ -52,6 +51,9 @@ public:
 /** Semantic operations. */
 class RiscOperators: public InstructionSemantics2::SymbolicSemantics::RiscOperators {
 public:
+    /** Shared ownership pointer. */
+    using Ptr = RiscOperatorsPtr;
+
     /** Base class. */
     typedef InstructionSemantics2::SymbolicSemantics::RiscOperators Super;
 
@@ -68,32 +70,19 @@ private:
     TestCasePtr testCase_;                              // test case whose instructions are being processed
     const Partitioner2::Partitioner &partitioner_;      // ROSE disassembly info about the specimen
     ArchitecturePtr process_;                           // subordinate process, concrete state
-    InputVariables &inputVariables_;                    // where did symbolic variables come from?
-    bool hadSystemCall_;                                // true if we need to call process_->systemCall
+    bool hadSystemCall_ = false;                        // true if we need to call process_->systemCall, cleared each insn
+    ExecutionEventPtr hadSharedMemoryAccess_;           // set when shared memory is read, cleared each instruction
 
 protected:
     /** Allocating constructor. */
-    RiscOperators(const Settings &settings, const DatabasePtr &db, const TestCasePtr &testCase,
-                  const Partitioner2::Partitioner &partitioner, const ArchitecturePtr &process,
-                  InputVariables &inputVariables, const InstructionSemantics2::BaseSemantics::StatePtr &state,
-                  const SmtSolverPtr &solver)
-        : Super(state, solver), REG_PATH(state->registerState()->registerDictionary()->findOrThrow("path")),
-          settings_(settings), db_(db), testCase_(testCase), partitioner_(partitioner), process_(process),
-          inputVariables_(inputVariables), hadSystemCall_(false) {
-        ASSERT_not_null(db);
-        ASSERT_not_null(testCase);
-        ASSERT_not_null(process);
-        ASSERT_not_null(state);
-        ASSERT_not_null(solver);
-        name("Concolic-symbolic");
-        (void) SValue::promote(state->protoval());
-    }
+    RiscOperators(const Settings&, const DatabasePtr&, const TestCasePtr&, const Partitioner2::Partitioner&,
+                  const ArchitecturePtr&, const InstructionSemantics2::BaseSemantics::StatePtr&, const SmtSolverPtr&);
 
 public:
     /** Allocating constructor. */
     static RiscOperatorsPtr instance(const Settings &settings, const DatabasePtr&, const TestCasePtr&,
                                      const Partitioner2::Partitioner&, const ArchitecturePtr &process,
-                                     InputVariables&, const InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
+                                     const InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
                                      const SmtSolverPtr &solver = SmtSolverPtr());
 
     /** Dynamic pointer downcast. */
@@ -140,19 +129,14 @@ public:
      *  This is a mapping from symbolic variables to execution events.
      *
      * @{ */
-    const InputVariables& inputVariables() const {
-        return inputVariables_;
-    }
-    InputVariables& inputVariables() {
-        return inputVariables_;
-    }
+    InputVariablesPtr inputVariables() const;
     /** @} */
 
     /** Property: Had system call.
      *
-     *  Set when processing an instruction symbolically that is a system call. This allows the system call handling to be
-     *  delayed until after the concrete half of the execution is performed, namely stepping into the system call but not yet
-     *  performing it.
+     *  Cleared at the beginning of each instruction, and set when processing an instruction symbolically that is a system
+     *  call. This allows the system call handling to be delayed until after the concrete half of the execution is performed,
+     *  namely stepping into the system call but not yet performing it.
      *
      * @{ */
     bool hadSystemCall() const {
@@ -160,6 +144,20 @@ public:
     }
     void hadSystemCall(bool b) {
         hadSystemCall_ = b;
+    }
+    /** @} */
+
+    /** Property: Had a shared memory access.
+     *
+     *  Cleared at the beginning of each instruction, and set when processing an instruction symbolically that accesses known
+     *  shared memory.
+     *
+     * @{ */
+    ExecutionEventPtr hadSharedMemoryAccess() const {
+        return hadSharedMemoryAccess_;
+    }
+    void hadSharedMemoryAccess(const ExecutionEventPtr &e) {
+        hadSharedMemoryAccess_ = e;
     }
     /** @} */
 
@@ -194,6 +192,9 @@ public:
 
 public:
     // Base class overrides -- the acutal RISC operations
+
+    virtual void startInstruction(SgAsmInstruction*) override;
+
     virtual void interrupt(int majr, int minr) ROSE_OVERRIDE;
 
     virtual InstructionSemantics2::BaseSemantics::SValuePtr
@@ -206,6 +207,9 @@ public:
 
     virtual InstructionSemantics2::BaseSemantics::SValuePtr
     peekRegister(RegisterDescriptor reg, const InstructionSemantics2::BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
+
+    virtual void
+    writeRegister(RegisterDescriptor, const InstructionSemantics2::BaseSemantics::SValuePtr&) override;
 
     virtual InstructionSemantics2::BaseSemantics::SValuePtr
     readMemory(RegisterDescriptor segreg, const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
@@ -226,6 +230,9 @@ typedef boost::shared_ptr<class Dispatcher> DispatcherPtr;
 /** CPU for concolic emulation. */
 class Dispatcher: public InstructionSemantics2::DispatcherX86 {
     typedef InstructionSemantics2::DispatcherX86 Super;
+public:
+    using Ptr = boost::shared_ptr<Dispatcher>;
+
 protected:
     /** Constructor. */
     explicit Dispatcher(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr &ops)
@@ -309,11 +316,25 @@ public:
 
 private:
     Settings settings_;
-    InputVariables inputVariables_;
     std::vector<FunctionCall> functionCallStack_;
+    Sawyer::FileSystem::TemporaryDirectory tmpDir_;
+
+    // These can be configured by the user before calling configureExecution.
+    SmtSolverPtr solver_;                               // solver used during execution
+
+    // These are initialized by configureExecution
+    TestCasePtr testCase_;                              // currently executing test case
+    TestCaseId testCaseId_;                             // database ID for currently executing test case
+    DatabasePtr db_;                                    // database for all this stuff
+    Partitioner2::Partitioner partitioner_;             // used during execution
+    ArchitecturePtr process_;                           // the concrete half of the execution
+    Emulation::DispatcherPtr cpu_;                      // the symbolic half of the execution
 
 protected:
-    ConcolicExecutor() {}
+    ConcolicExecutor();
+
+public:
+    ~ConcolicExecutor();
 
 public:
     /** Allcoating constructor. */
@@ -331,6 +352,61 @@ public:
     Settings& settings() { return settings_; }
     /** @} */
 
+    /** Property: SMT solver to use during execution.
+     *
+     *  The solver property can be initialized by the user before concolic execution starts. If the user does not set this
+     *  property, then a solver will be created when execution starts. This property should not be modified after execution
+     *  starts.
+     *
+     *  Thread safety: Not thread safe.
+     *
+     *  @{ */
+    SmtSolverPtr solver() const;
+    void solver(const SmtSolverPtr&);
+    /** @} */
+
+    /** Property: Database.
+     *
+     *  This is initialized by @ref configureExecution.
+     *
+     *  Thread safety: Not thread safe. */
+    DatabasePtr database() const;
+
+    /** Property: Test case to execute.
+     *
+     *  This property is initialized by @ref configureExecution.
+     *
+     *  Thread safety: Not thread safe. */
+    TestCasePtr testCase() const;
+
+    /** Property: Database ID for test case to execute.
+     *
+     *  This property is initialized by @ref configureExecution.
+     *
+     *  Thread safety: Not thread safe. */
+    TestCaseId testCaseId() const;
+
+    /** Property: Instruction partitioner.
+     *
+     *  This property is initialized by @ref configureExecution.
+     *
+     *  Thread safety: Not thread safe. */
+    const Partitioner2::Partitioner& partitioner() const;
+
+    /** Property: The concrete half of execution.
+     *
+     *  This property is initialized by @ref configureExecution.
+     *
+     *  Thread safety: Not thread safe. */
+    ArchitecturePtr process() const;
+
+    /** Property: The symbolic half of execution.
+     *
+     *  This property is initialized by @ref configureExecution.
+     *
+     *  Thread safety: Not thread safe. */
+    Emulation::DispatcherPtr cpu() const;
+
     /** Describe command-line switches for settings.
      *
      *  Returns a list of command-line switches, organized into groups of related switches, that can be inserted into
@@ -340,43 +416,55 @@ public:
      *  as the destination for command-line switch arguments when the command-line is parsed and applied. */
     static std::vector<Sawyer::CommandLine::SwitchGroup> commandLineSwitches(Settings &settings /*in,out*/);
 
+    /** Called before execution starts.
+     *
+     *  This can be called by the user, or is called automatically by @ref execute. Calling it separately allows the user
+     *  to make some adjustments before execution starts, such as registering various callbacks. */
+    void configureExecution(const DatabasePtr&, const TestCasePtr&);
+
     /** Execute the test case.
      *
-     *  Executes the test case to produce new test cases. */
+     *  Executes the test case to produce new test cases. If you've alreay called @ref configureExecution, then you don't
+     *  need to pass the database and test case again (if you do, they better be the same as before).
+     *
+     * @{ */
+    std::vector<TestCasePtr> execute();
     std::vector<TestCasePtr> execute(const DatabasePtr&, const TestCasePtr&);
+    /** @} */
 
 private:
     // Disassemble the specimen and cache the result in the database. If the specimen has previously been disassembled
     // then reconstitute the analysis results from the database.
-    Partitioner2::Partitioner partition(const DatabasePtr&, const SpecimenPtr&);
-
-    // Create the process for the concrete execution.
-    ArchitecturePtr makeProcess(const DatabasePtr&, const TestCaseId&, const boost::filesystem::path &tempDir);
+    Partitioner2::Partitioner partition(const SpecimenPtr&);
 
     // Create the dispatcher, operators, and memory and register state for the symbolic execution.
-    Emulation::DispatcherPtr makeDispatcher(const ArchitecturePtr&, const Partitioner2::Partitioner&, const SmtSolver::Ptr&);
+    Emulation::DispatcherPtr makeDispatcher(const ArchitecturePtr&);
+
+    // Create the underlying process and possibly fast forward it to the state at which it was when the test case was created.
+    void startProcess();
+
+    // Start up the symbolic part of the testing. This must happen after startProcess.
+    void startDispatcher();
 
     // Run the execution
-    void run(const DatabasePtr&, const TestCasePtr&, const Emulation::DispatcherPtr&);
+    void run();
 
     // Handle function calls. This is mainly for debugging so we have some idea where we are in the execution when an error
     // occurs.  Returns true if the call stack changed.
-    bool updateCallStack(const Emulation::DispatcherPtr&, SgAsmInstruction*);
+    bool updateCallStack(SgAsmInstruction*);
 
     // Print function call stack on multiple lines
     void printCallStack(std::ostream&);
 
     // Handle conditional branches
-    void handleBranch(const DatabasePtr&, const TestCasePtr&, const Emulation::DispatcherPtr&, SgAsmInstruction*,
-                      const SmtSolverPtr&);
+    void handleBranch(SgAsmInstruction*);
 
     // Generae a new test case. This must be called only after the SMT solver's assertions have been checked and found
     // to be satisfiable.
-    void generateTestCase(const DatabasePtr&, const TestCasePtr&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
-                          const SmtSolverPtr&, const SymbolicExpr::Ptr &childIp);
+    void generateTestCase(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&, const SymbolicExpr::Ptr &childIp);
 
     // Save the specified symbolic state to the specified test case.
-    void saveSymbolicState(const Emulation::RiscOperatorsPtr&, const DatabasePtr&, const TestCaseId&);
+    void saveSymbolicState(const Emulation::RiscOperatorsPtr&, const TestCaseId&);
 
     // True if the two test cases are close enough that we only need to run one of them.
     bool areSimilar(const TestCasePtr&, const TestCasePtr&) const;

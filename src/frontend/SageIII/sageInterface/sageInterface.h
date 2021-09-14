@@ -2351,8 +2351,11 @@ ROSE_DLL_API int instrumentEndOfFunction(SgFunctionDeclaration * func, SgStateme
 //! Remove jumps whose label is immediately after the jump.  Used to clean up inlined code fragments.
 ROSE_DLL_API void removeJumpsToNextStatement(SgNode*);
 
-//! Remove labels which are not targets of any goto statements
-ROSE_DLL_API void removeUnusedLabels(SgNode* top);
+//! Remove labels which are not targets of any goto statements: its child statement is also removed by default.
+ROSE_DLL_API void removeUnusedLabels(SgNode* top, bool keepChild =false);
+
+//! Find unused labels which are not targets of any goto statements
+ROSE_DLL_API std::set<SgLabelStatement*> findUnusedLabels (SgNode* top);
 
 //! Remove consecutive labels
 ROSE_DLL_API void removeConsecutiveLabels(SgNode* top);

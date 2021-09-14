@@ -214,7 +214,7 @@ public:
     /** Start multiple worker threads.
      *
      *  Model checker can be done with any combination of worker threads managed by the model checking framework, and user
-     *  threads that clal model checker functions to do their own work.
+     *  threads that call model checker functions to do their own work.
      *
      *  This function starts @p n worker threads that perform model checking, and then immediately returns. When there is no
      *  work left to be done, all worker threads exit. Thus it's important to create work first (by inserting some starting

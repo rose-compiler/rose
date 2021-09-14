@@ -5,13 +5,13 @@
 
 #include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Concolic/Database.h>
+#include <Rose/BinaryAnalysis/Concolic/InputVariables.h>
 #include <Rose/BinaryAnalysis/Concolic/Specimen.h>
 #include <Rose/BinaryAnalysis/Concolic/TestCase.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BitOps.h>
-#include <Sawyer/FileSystem.h>
 #include <SqlDatabase.h>                                // ROSE
 
 #include <boost/format.hpp>
@@ -35,6 +35,13 @@ namespace Concolic {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ConcolicExecutor
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+ConcolicExecutor::ConcolicExecutor() {}
+
+ConcolicExecutor::~ConcolicExecutor() {
+    // Delete things that depend on partitioner_ before we delete the partitioner.
+    process_ = Architecture::Ptr();
+}
 
 // class method
 ConcolicExecutor::Ptr
@@ -70,10 +77,9 @@ ConcolicExecutor::commandLineSwitches(Settings &settings /*in,out*/) {
 }
 
 P2::Partitioner
-ConcolicExecutor::partition(const Database::Ptr &db, const Specimen::Ptr &specimen) {
-    ASSERT_not_null(db);
+ConcolicExecutor::partition(const Specimen::Ptr &specimen) {
     ASSERT_not_null(specimen);
-    SpecimenId specimenId = db->id(specimen, Update::NO);
+    SpecimenId specimenId = database()->id(specimen, Update::NO);
     ASSERT_require2(specimenId, "specimen must be in the database");
 
     P2::Engine engine;
@@ -84,7 +90,7 @@ ConcolicExecutor::partition(const Database::Ptr &db, const Specimen::Ptr &specim
 
     // Build the P2::Partitioner object for the specimen
     P2::Partitioner partitioner;
-    if (!db->rbaExists(specimenId)) {
+    if (!database()->rbaExists(specimenId)) {
         // Extract the specimen into a temporary file in order to parse it
         Sawyer::FileSystem::TemporaryDirectory tempDir;
         boost::filesystem::path specimenFileName = tempDir.name() / "specimen";
@@ -100,60 +106,46 @@ ConcolicExecutor::partition(const Database::Ptr &db, const Specimen::Ptr &specim
         // Cache the results in the database.
         boost::filesystem::path rbaFileName = tempDir.name() / "specimen.rba";
         engine.savePartitioner(partitioner, rbaFileName);
-        db->saveRbaFile(rbaFileName, specimenId);
+        database()->saveRbaFile(rbaFileName, specimenId);
     } else {
         Sawyer::FileSystem::TemporaryFile rbaFile;
-        db->extractRbaFile(rbaFile.name(), specimenId);
+        database()->extractRbaFile(rbaFile.name(), specimenId);
         partitioner = engine.loadPartitioner(rbaFile.name());
     }
 
     return boost::move(partitioner);
 }
 
-Architecture::Ptr
-ConcolicExecutor::makeProcess(const Database::Ptr &db, const TestCaseId &testCaseId, const boost::filesystem::path &tmpDir) {
-    ASSERT_not_null(db);
-    ASSERT_require(testCaseId);
-    TestCase::Ptr testCase = db->object(testCaseId, Update::NO);
+void
+ConcolicExecutor::startProcess() {
+    ASSERT_require(testCase());
+    ASSERT_require(process());
 
-    // Create the a new process from the executable.
-    //
-    // FIXME[Robb Matzke 2021-05-25]: This will need to eventually change so that the architecture type (Linux i386 in this
-    // case) is not hard coded.
-    Architecture::Ptr process = LinuxI386::instance(db, testCase);
-    process->load(tmpDir);
+    process()->load(tmpDir_.name());
 
-    if (testCase->parent()) {
+    if (testCase()->parent()) {
         // This test case was created by cloning another test case, which usually happens when the parent test case encounters
         // a conditional branch that depends on some input. Therefore, we need to fast forward this process so that it appears
         // to have just executed that branch.
-        process->playAllEvents();
+        process()->playAllEvents(partitioner());
 
     } else {
         // This test case was not cloned from another test case; it was probably created by the user as an initial test case.
         // Therefore delete all existing execution events (left over from a prior concolic execution) and create the events that
         // would initialize memory and registers to their current (initial) state.
-        process->saveEvents(process->createMemoryRestoreEvents());
-        process->saveEvents(process->createRegisterRestoreEvents());
+        process()->saveEvents(process()->createMemoryRestoreEvents(), When::PRE);
+        process()->saveEvents(process()->createRegisterRestoreEvents(), When::PRE);
     }
-
-    return process;
 }
 
 Emulation::DispatcherPtr
-ConcolicExecutor::makeDispatcher(const Architecture::Ptr &process, const P2::Partitioner &partitioner,
-                                 const SmtSolver::Ptr &solver) {
+ConcolicExecutor::makeDispatcher(const Architecture::Ptr &process) {
     ASSERT_not_null(process);
-    ASSERT_not_null(solver);
-    Database::Ptr db = process->database();
-    ASSERT_not_null(db);
-    TestCase::Ptr testCase = process->testCase();
-    ASSERT_not_null(testCase);
-    TestCaseId testCaseId = db->id(testCase, Update::NO);
+    ASSERT_not_null(solver());
 
     Emulation::RiscOperatorsPtr ops =
-        Emulation::RiscOperators::instance(settings_.emulationSettings, db, testCase, partitioner, process, inputVariables_,
-                                           Emulation::SValue::instance(), solver);
+        Emulation::RiscOperators::instance(settings_.emulationSettings, database(), testCase(), partitioner(), process,
+                                           Emulation::SValue::instance(), solver());
 
     Emulation::DispatcherPtr cpu;
     if (settings_.traceSemantics) {
@@ -163,70 +155,153 @@ ConcolicExecutor::makeDispatcher(const Architecture::Ptr &process, const P2::Par
         cpu = Emulation::Dispatcher::instance(ops);
     }
 
-    if (testCase->parent()) {
-        ASSERT_require(db->symbolicStateExists(testCaseId));
-        BS::StatePtr state = db->extractSymbolicState(testCaseId);
-        ASSERT_not_null(state);
-        ops->currentState(state);
-        solver->insert(testCase->assertions());
-        ops->restoreInputVariables(solver);
-    } else {
-        ops->createInputVariables(solver);
-    }
-
     return cpu;
 }
 
-std::vector<TestCase::Ptr>
-ConcolicExecutor::execute(const Database::Ptr &db, const TestCase::Ptr &testCase) {
+void
+ConcolicExecutor::startDispatcher() {
+    ASSERT_require(cpu());
+    ASSERT_require(testCase());
+    auto ops = Emulation::RiscOperators::promote(cpu()->operators());
+
+    if (testCase()->parent()) {
+        ASSERT_require(database()->symbolicStateExists(testCaseId()));
+        BS::StatePtr state = database()->extractSymbolicState(testCaseId());
+        ASSERT_not_null(state);
+        ops->currentState(state);
+        solver()->insert(testCase()->assertions());
+        ops->restoreInputVariables(solver());
+    } else {
+        ops->createInputVariables(solver());
+    }
+}
+
+void
+ConcolicExecutor::configureExecution(const Database::Ptr &db, const TestCase::Ptr &testCase) {
     ASSERT_not_null(db);
     ASSERT_not_null(testCase);
-    Sawyer::FileSystem::TemporaryDirectory tmpDir;
-    TestCaseId testCaseId = db->id(testCase, Update::NO);
-    SAWYER_MESG(mlog[DEBUG]) <<"concolically executing test case " <<*testCaseId <<"\n";
 
-    // Mark the test case as having NOT been run concolically, and clear any data saved as part of a previous concolic run.
-    testCase->concolicResult(0);
+    if (testCase == testCase_) {
+        ASSERT_require(db == db_);
+        return;                                         // already configured
+    } else {
+        ASSERT_forbid2(testCase_, "concolic executor is already set up for another test case");
+        ASSERT_forbid(testCaseId_);
+        db_ = db;
+        testCase_ = testCase;
+        testCaseId_ = db->id(testCase, Update::NO);
 
-    // Create the semantics layers. The symbolic semantics uses a Partitioner, and the concrete semantics uses a subordinate
-    // process which is created from the specimen.
-    SmtSolver::Ptr solver = SmtSolver::instance("best");
-    Architecture::Ptr process = makeProcess(db, testCaseId, tmpDir.name());
-    P2::Partitioner partitioner = partition(db, testCase->specimen()); // must live for duration of cpu
-    Emulation::DispatcherPtr cpu = makeDispatcher(process, partitioner, solver);
+        // Mark the test case as having NOT been run concolically, and clear any data saved as part of a previous concolic run.
+        testCase->concolicResult(0);
+
+        // Allow the user to configure a solver
+        if (!solver_)
+            solver_ = SmtSolver::instance("best");
+
+        partitioner_ = partition(testCase->specimen()); // must live for duration of cpu
+
+        // Create the a new process from the executable.
+        //
+        // FIXME[Robb Matzke 2021-05-25]: This will need to eventually change so that the architecture type (Linux i386 in this
+        // case) is not hard coded.
+        process_ = LinuxI386::instance(db, testCase, partitioner_);
+
+        cpu_ = makeDispatcher(process_);
+    }
+}
+
+SmtSolver::Ptr
+ConcolicExecutor::solver() const {
+    return solver_;
+}
+
+void
+ConcolicExecutor::solver(const SmtSolver::Ptr &s) {
+    ASSERT_forbid2(testCase(), "solver cannot be changed after execution starts");
+    solver_ = s;
+}
+
+Database::Ptr
+ConcolicExecutor::database() const {
+    return db_;
+}
+
+TestCase::Ptr
+ConcolicExecutor::testCase() const {
+    return testCase_;
+}
+
+TestCaseId
+ConcolicExecutor::testCaseId() const {
+    return testCaseId_;
+}
+
+const P2::Partitioner&
+ConcolicExecutor::partitioner() const {
+    return partitioner_;
+}
+
+Architecture::Ptr
+ConcolicExecutor::process() const {
+    return process_;
+}
+
+Emulation::Dispatcher::Ptr
+ConcolicExecutor::cpu() const {
+    return cpu_;
+}
+
+std::vector<TestCase::Ptr>
+ConcolicExecutor::execute() {
+    ASSERT_not_null(db_);
+    ASSERT_not_null(testCase_);
+    ASSERT_require(testCaseId_);
+    ASSERT_not_null(process_);
+    ASSERT_not_null(cpu_);
+
+    SAWYER_MESG(mlog[DEBUG]) <<"concolically executing test case " <<*testCaseId() <<"\n";
+    startProcess();
+    startDispatcher();
 
     // Extend the test case execution path in order to create new test cases.
     try {
-        run(db, testCase, cpu);
+        run();
     } catch (const Emulation::Exit &e) {
         SAWYER_MESG_OR(mlog[TRACE], mlog[DEBUG]) <<"subordinate has exited with status " <<e.status() <<"\n";
     }
-    testCase->concolicResult(1);
-    db->save(testCase);
+    testCase()->concolicResult(1);
+    database()->save(testCase());
 
     // FIXME[Robb Matzke 2020-01-16]
     std::vector<TestCase::Ptr> newCases;
     return newCases;
 }
 
+std::vector<TestCase::Ptr>
+ConcolicExecutor::execute(const Database::Ptr &db, const TestCase::Ptr &testCase) {
+    ASSERT_not_null(db);
+    ASSERT_not_null(testCase);
+
+    configureExecution(db, testCase);
+    return execute();
+}
+
 bool
-ConcolicExecutor::updateCallStack(const Emulation::DispatcherPtr &cpu, SgAsmInstruction *insn) {
-    ASSERT_not_null(cpu);
+ConcolicExecutor::updateCallStack(SgAsmInstruction *insn) {
     ASSERT_not_null(insn);                              // the instruction that was just executed
 
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     bool wasChanged = false;
 
-    Emulation::RiscOperatorsPtr ops = cpu->emulationOperators();
-    const P2::Partitioner &partitioner = ops->partitioner();
-    P2::BasicBlock::Ptr bb = partitioner.basicBlockContainingInstruction(insn->get_address());
+    Emulation::RiscOperatorsPtr ops = cpu()->emulationOperators();
+    P2::BasicBlock::Ptr bb = partitioner().basicBlockContainingInstruction(insn->get_address());
     if (!bb || bb->nInstructions() == 0) {
         SAWYER_MESG(debug) <<"no basic block at " <<StringUtility::addrToString(insn->get_address()) <<"\n";
         return wasChanged;                              // we're executing something that ROSE didn't disassemble
     }
 
     // Get the current stack pointer.
-    const RegisterDescriptor SP = partitioner.instructionProvider().stackPointerRegister();
+    const RegisterDescriptor SP = partitioner().instructionProvider().stackPointerRegister();
     if (SP.isEmpty())
         return wasChanged;                              // no stack pointer for this architecture?!
     SymbolicExpr::Ptr sp = Emulation::SValue::promote(ops->peekRegister(SP, ops->undefined_(SP.nBits())))->get_expression();
@@ -246,14 +321,14 @@ ConcolicExecutor::updateCallStack(const Emulation::DispatcherPtr &cpu, SgAsmInst
     }
 
     // If the last instruction we just executed looks like a function call then push a new record onto our function call stack.
-    if (partitioner.basicBlockIsFunctionCall(bb) && insn->get_address() == bb->instructions().back()->get_address()) {
+    if (partitioner().basicBlockIsFunctionCall(bb) && insn->get_address() == bb->instructions().back()->get_address()) {
         // Get a name for the function we just called, if possible.
-        const RegisterDescriptor IP = partitioner.instructionProvider().instructionPointerRegister();
+        const RegisterDescriptor IP = partitioner().instructionProvider().instructionPointerRegister();
         SymbolicExpr::Ptr ip = Emulation::SValue::promote(ops->peekRegister(IP, ops->undefined_(IP.nBits())))->get_expression();
         Sawyer::Optional<uint64_t> calleeVa = ip->toUnsigned();
         std::string calleeName;
         if (calleeVa) {
-            if (P2::Function::Ptr callee = partitioner.functionExists(*calleeVa)) {
+            if (P2::Function::Ptr callee = partitioner().functionExists(*calleeVa)) {
                 calleeName = callee->printableName();
             } else {
                 calleeName = "function " + StringUtility::addrToString(*calleeVa);
@@ -279,21 +354,16 @@ ConcolicExecutor::printCallStack(std::ostream &out) {
 }
 
 void
-ConcolicExecutor::handleBranch(const Database::Ptr &db, const TestCase::Ptr &testCase, const Emulation::DispatcherPtr &cpu,
-                               SgAsmInstruction *insn, const SmtSolver::Ptr &solver) {
-    ASSERT_not_null(db);
-    ASSERT_not_null(testCase);
-    ASSERT_not_null(cpu);
+ConcolicExecutor::handleBranch(SgAsmInstruction *insn) {
     ASSERT_not_null(insn);
-    ASSERT_not_null(solver);
+    ASSERT_not_null(solver());
 
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     Sawyer::Message::Stream trace(mlog[TRACE]);
     Sawyer::Message::Stream error(mlog[ERROR]);
 
-    Emulation::RiscOperatorsPtr ops = cpu->emulationOperators();
-    const P2::Partitioner &partitioner = ops->partitioner();
-    const RegisterDescriptor IP = partitioner.instructionProvider().instructionPointerRegister();
+    Emulation::RiscOperatorsPtr ops = cpu()->emulationOperators();
+    const RegisterDescriptor IP = partitioner().instructionProvider().instructionPointerRegister();
 
     // If we processed a branch instruction whose condition depended on input variables, then the instruction pointer register
     // in the symbolic state will be non-constant. It should be an if-then-else expression that evaluates to two constants, the
@@ -301,15 +371,15 @@ ConcolicExecutor::handleBranch(const Database::Ptr &db, const TestCase::Ptr &tes
     SymbolicExpr::Ptr ip = Emulation::SValue::promote(ops->peekRegister(IP, ops->undefined_(IP.nBits())))->get_expression();
     SymbolicExpr::InteriorPtr inode = ip->isInteriorNode();
     if (inode && inode->getOperator() == SymbolicExpr::OP_ITE) {
-        SymbolicExpr::Ptr actualTarget = SymbolicExpr::makeIntegerConstant(IP.nBits(), cpu->concreteInstructionPointer());
+        SymbolicExpr::Ptr actualTarget = SymbolicExpr::makeIntegerConstant(IP.nBits(), cpu()->concreteInstructionPointer());
         SymbolicExpr::Ptr trueTarget = inode->child(1);  // true branch next va
         SymbolicExpr::Ptr falseTarget = inode->child(2); // false branch next va
         SymbolicExpr::Ptr followedCond;                  // condition for the branch that is followed
         SymbolicExpr::Ptr notFollowedTarget;             // address that wasn't branched to
         if (!trueTarget->isIntegerConstant()) {
-            error <<"expected constant value for true branch target at " <<partitioner.unparse(insn) <<"\n";
+            error <<"expected constant value for true branch target at " <<partitioner().unparse(insn) <<"\n";
         } else if (!falseTarget->isIntegerConstant()) {
-            error <<"expected constant value for false branch target at " <<partitioner.unparse(insn) <<"\n";
+            error <<"expected constant value for false branch target at " <<partitioner().unparse(insn) <<"\n";
         } else if (actualTarget->mustEqual(trueTarget)) {
             followedCond = inode->child(0);             // taking the true branch
             notFollowedTarget = inode->child(2);        // the false target address
@@ -317,7 +387,7 @@ ConcolicExecutor::handleBranch(const Database::Ptr &db, const TestCase::Ptr &tes
             followedCond = SymbolicExpr::makeInvert(inode->child(0)); // taking false branch
             notFollowedTarget = inode->child(1);        // the true target address
         } else {
-            error <<"unrecognized symbolic execution address after " <<partitioner.unparse(insn) <<"\n"
+            error <<"unrecognized symbolic execution address after " <<partitioner().unparse(insn) <<"\n"
                   <<"  concrete = " <<*actualTarget <<"\n"
                   <<"  symbolic = " <<*ip <<"\n";
         }
@@ -326,16 +396,16 @@ ConcolicExecutor::handleBranch(const Database::Ptr &db, const TestCase::Ptr &tes
         // Solve for branch not taken in terms of input values.
         if (otherCond) {
             SAWYER_MESG(debug) <<"condition for other path is " <<*otherCond <<"\n";
-            SmtSolver::Transaction transaction(solver); // because we'll need to cancel in order to follow the correct branch
-            solver->insert(otherCond);
-            if (SmtSolver::SAT_YES == solver->check()) {
+            SmtSolver::Transaction transaction(solver()); // because we'll need to cancel in order to follow the correct branch
+            solver()->insert(otherCond);
+            if (SmtSolver::SAT_YES == solver()->check()) {
                 if (debug) {
-                    debug <<"conditions are satisfiable when:\n";
-                    BOOST_FOREACH (const std::string &varName, solver->evidenceNames()) {
-                        ExecutionEvent::Ptr inputEvent = inputVariables_.get(varName);
+                    debug <<"conditions are satisfied when:\n";
+                    BOOST_FOREACH (const std::string &varName, solver()->evidenceNames()) {
+                        ExecutionEvent::Ptr inputEvent = ops->inputVariables()->event(varName);
                         ASSERT_not_null(inputEvent);
                         debug <<"  " <<inputEvent->name() <<" (" <<varName <<") = ";
-                        if (SymbolicExpr::Ptr val = solver->evidenceForName(varName)) {
+                        if (SymbolicExpr::Ptr val = solver()->evidenceForName(varName)) {
                             debug <<*val <<"\n";
                         } else {
                             debug <<" = ???\n";
@@ -343,30 +413,25 @@ ConcolicExecutor::handleBranch(const Database::Ptr &db, const TestCase::Ptr &tes
                     }
                 }
 
-                generateTestCase(db, testCase, ops, solver, notFollowedTarget);
+                generateTestCase(ops, notFollowedTarget);
             }
         }
 
         // Add the branch taken condition to the solver since all future assertions will also depend on having taken this branch.
-        solver->insert(followedCond);
+        solver()->insert(followedCond);
     } else if (inode) {
         SAWYER_MESG(mlog[ERROR]) <<"instruction pointer expression no handled (not a constant or ITE): " <<*inode <<"\n";
     }
 }
 
 void
-ConcolicExecutor::run(const Database::Ptr &db, const TestCase::Ptr &testCase, const Emulation::DispatcherPtr &cpu) {
-    ASSERT_not_null(db);
-    ASSERT_not_null(testCase);
-    ASSERT_not_null(cpu);
-
+ConcolicExecutor::run() {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     Sawyer::Message::Stream trace(mlog[TRACE]);
     Sawyer::Message::Stream where(mlog[WHERE]);
     Sawyer::Message::Stream error(mlog[ERROR]);
 
-    Emulation::RiscOperatorsPtr ops = cpu->emulationOperators();
-    SmtSolver::Ptr solver = ops->solver();
+    Emulation::RiscOperatorsPtr ops = cpu()->emulationOperators();
     ops->printInputVariables(debug);
     ops->printAssertions(debug);
     if (debug) {
@@ -374,25 +439,27 @@ ConcolicExecutor::run(const Database::Ptr &db, const TestCase::Ptr &testCase, co
         fmt.set_line_prefix("  ");
         debug <<"initial state:\n" <<(*ops->currentState() + fmt);
     }
-    const P2::Partitioner &partitioner = ops->partitioner();
 
     // Process instructions in execution order
-    rose_addr_t executionVa = cpu->concreteInstructionPointer();
-    while (!cpu->isTerminated()) {
-        SgAsmInstruction *insn = partitioner.instructionProvider()[executionVa];
+    rose_addr_t executionVa = cpu()->concreteInstructionPointer();
+    while (!cpu()->isTerminated()) {
+        BOOST_SCOPE_EXIT(ops) {
+            ops->process()->nextInstructionLocation();
+        } BOOST_SCOPE_EXIT_END;
+
+        SgAsmInstruction *insn = partitioner().instructionProvider()[executionVa];
+
         // FIXME[Robb Matzke 2020-07-13]: I'm not sure how this ends up happening yet. Perhaps one way is because we don't
         // handle certain system calls like mmap, brk, etc.
         ASSERT_not_null(insn);
-        SAWYER_MESG_OR(trace, debug) <<"executing " <<partitioner.unparse(insn) <<"\n";
 
         try {
-            ops->hadSystemCall(false);
-            cpu->processInstruction(insn);
+            cpu()->processInstruction(insn);
         } catch (const BS::Exception &e) {
             if (error) {
                 error <<e.what() <<", occurred at:\n";
                 printCallStack(error);
-                error <<"  insn " <<partitioner.unparse(insn) <<"\n";
+                error <<"  insn " <<partitioner().unparse(insn) <<"\n";
                 error <<"machine state at time of error:\n" <<(*ops->currentState()+"  ");
             }
 // TEMPORARILY COMMENTED OUT FOR DEBUGGING [Robb Matzke 2020-07-13]. This exception is thrown when we get an address wrong,
@@ -402,7 +469,7 @@ ConcolicExecutor::run(const Database::Ptr &db, const TestCase::Ptr &testCase, co
 //            if (error) {
 //                error <<e.what() <<", occurred at:\n";
 //                printCallStack(error);
-//                error <<"  insn " <<partitioner.unparse(insn) <<"\n";
+//                error <<"  insn " <<partitioner().unparse(insn) <<"\n";
 //                error <<"machine state at time of error:\n" <<(*ops->currentState()+"  ");
 //            }
         }
@@ -412,38 +479,45 @@ ConcolicExecutor::run(const Database::Ptr &db, const TestCase::Ptr &testCase, co
             debug.enable();
         SAWYER_MESG(debug) <<"state:\n" <<*ops->currentState();
 #endif
-        if (cpu->isTerminated()) {
+        if (cpu()->isTerminated()) {
             SAWYER_MESG_OR(trace, debug) <<"subordinate has terminated\n";
             break;
         }
 
         if (ops->hadSystemCall()) {
-            ops->hadSystemCall(false);
-            ops->process()->systemCall(partitioner, ops);
+            ops->process()->systemCall(partitioner(), ops);
+        }
+
+        if (ExecutionEvent::Ptr sharedMemoryEvent = ops->hadSharedMemoryAccess()) {
+            rose_addr_t memoryVa = sharedMemoryEvent->memoryLocation().least();
+            SharedMemoryCallbacks callbacks = process()->sharedMemory().getOrDefault(memoryVa);
+            SharedMemoryContext ctx(ops->process(), ops, sharedMemoryEvent);
+            ctx.phase = ConcolicPhase::POST_EMULATION;
+            callbacks.apply(false, ctx);
         }
 
         if (settings_.showingStates.exists(executionVa))
             SAWYER_MESG(debug) <<"state after instruction:\n" <<(*ops->currentState()+"  ");
 
-        executionVa = cpu->concreteInstructionPointer();
-        if (updateCallStack(cpu, insn) && where) {
+        executionVa = cpu()->concreteInstructionPointer();
+        if (updateCallStack(insn) && where) {
             where <<"function call stack:\n";
             printCallStack(where);
         }
 
-        handleBranch(db, testCase, cpu, insn, solver);
+        handleBranch(insn);
     }
 }
 
 void
-ConcolicExecutor::generateTestCase(const Database::Ptr &db, const TestCase::Ptr &oldTestCase,
-                                   const BS::RiscOperatorsPtr &ops_, const SmtSolver::Ptr &solver,
-                                   const SymbolicExpr::Ptr &childIp) {
-    ASSERT_not_null(db);
-    ASSERT_not_null(oldTestCase);
-    TestCaseId oldTestCaseId = db->id(oldTestCase, Update::NO);
+ConcolicExecutor::generateTestCase(const BS::RiscOperatorsPtr &ops_, const SymbolicExpr::Ptr &childIp) {
     ASSERT_not_null(ops_);
-    ASSERT_not_null(solver);                            // assertions must have been checked and satisfiable
+
+    TestCase::Ptr oldTestCase = testCase();
+    TestCaseId oldTestCaseId = testCaseId();
+    ASSERT_not_null(oldTestCase);
+    ASSERT_require(oldTestCaseId);
+    ASSERT_not_null(solver());                          // assertions must have been checked and satisfiable
 
     Sawyer::Message::Stream debug(mlog[DEBUG]);
     Sawyer::Message::Stream error(mlog[ERROR]);
@@ -462,15 +536,15 @@ ConcolicExecutor::generateTestCase(const Database::Ptr &db, const TestCase::Ptr 
     // The instruction pointer in the child is the childIp, which must be concrete, not the (probably) symbolic value
     // resulting from a conditional branch in the oldTestCase.
     ASSERT_require(childIp->isIntegerConstant());
-    const RegisterDescriptor IP = ops->partitioner().instructionProvider().instructionPointerRegister();
+    const RegisterDescriptor IP = partitioner().instructionProvider().instructionPointerRegister();
     ops->writeRegister(IP, Emulation::SValue::instance_symbolic(childIp));
 
     // Create execution events for the child test case based on the execution events from the parent test case, but do not
     // commit the child events to the database yet because we don't know for sure that we're going to create the child test
     // case.  We'll abandon all these child execution events if we decide not to create the child test case.
     Sawyer::Container::Map<size_t, ExecutionEvent::Ptr> eventMap;
-    for (ExecutionEventId parentEventId: db->executionEvents(oldTestCaseId)) {
-        ExecutionEvent::Ptr parentEvent = db->object(parentEventId);
+    for (ExecutionEventId parentEventId: database()->executionEvents(oldTestCaseId)) {
+        ExecutionEvent::Ptr parentEvent = database()->object(parentEventId);
         ExecutionEvent::Ptr childEvent = parentEvent->copy();
         eventMap.insert(*parentEventId, childEvent);
     }
@@ -484,7 +558,7 @@ ConcolicExecutor::generateTestCase(const Database::Ptr &db, const TestCase::Ptr 
     std::vector<std::string> argv = oldTestCase->args();
     for (std::string &arg: argv)
         arg += '\0';
-    size_t argc = argv.size();
+    SymbolicExpr::Ptr argc = SymbolicExpr::makeIntegerConstant(32, argv.size());
     std::vector<std::string> env;
     for (const EnvValue &pair: oldTestCase->env())
         env.push_back(pair.first + "=" + pair.second);
@@ -494,22 +568,22 @@ ConcolicExecutor::generateTestCase(const Database::Ptr &db, const TestCase::Ptr 
     // correspond to a known symbolic input, which in turn corresponds to a concrete execution event.
     std::vector<ExecutionEvent::Ptr> modifiedEvents;
     bool hadError = false;
-    for (const std::string &solverVar: solver->evidenceNames()) {
-        SymbolicExpr::Ptr solverValue = solver->evidenceForName(solverVar);
-        ASSERT_not_null(solverValue);
-        ExecutionEvent::Ptr parentEvent = inputVariables_.get(solverVar);
+    for (const std::string &solverVar: solver()->evidenceNames()) {
+        SymbolicExpr::Ptr newValue = solver()->evidenceForName(solverVar);
+        ASSERT_not_null(newValue);
+        ExecutionEvent::Ptr parentEvent = ops->inputVariables()->event(solverVar);
         if (!parentEvent) {
             error <<"solver variable \"" <<solverVar <<"\" doesn't correspond to any input event\n";
             hadError = true;
             continue;
         }
-        if (!solverValue->isIntegerConstant()) {
+        if (!newValue->isIntegerConstant()) {
             error <<"solver variable \"" <<solverVar <<"\" corresponding to \"" <<parentEvent->name() <<"\" is not an integer\n";
             hadError = true;
             continue;
         }
 
-        ExecutionEventId parentEventId = db->id(parentEvent, Update::NO);
+        ExecutionEventId parentEventId = database()->id(parentEvent, Update::NO);
         ASSERT_require(parentEventId);
         ExecutionEvent::Ptr childEvent = eventMap[*parentEventId];
 
@@ -517,18 +591,14 @@ ConcolicExecutor::generateTestCase(const Database::Ptr &db, const TestCase::Ptr 
             case InputType::NONE:
                 ASSERT_not_reachable("handled above");
 
-            case InputType::PROGRAM_ARGUMENT_COUNT: {
-                ASSERT_require(32 == solverValue->nBits());
+            case InputType::ARGC: {
+                ASSERT_require(32 == newValue->nBits());
                 ASSERT_require(ops->currentState()->memoryState()->get_byteOrder() == ByteOrder::ORDER_LSB);
-                ASSERT_require(childEvent->actionType() == ExecutionEvent::Action::WRITE_MEMORY);
-                uint32_t newValue = solverValue->toUnsigned().get();
-                if (argc != newValue) {
-                    std::vector<uint8_t> bytes;
-                    for (size_t i = 0; i < 4; ++i)
-                        bytes.push_back(BitOps::bits(newValue, i*8, i*8+7));
-                    childEvent->bytes(bytes);
+                ASSERT_require(childEvent->action() == ExecutionEvent::Action::MEMORY_WRITE);
+                childEvent->value(newValue);
+                if (!newValue->toUnsigned().isEqual(parentEvent->value()->toUnsigned())) {
                     modifiedEvents.push_back(childEvent);
-                    SAWYER_MESG(debug) <<"  adjusting " <<childEvent->name() <<" from " <<argc <<" to " <<newValue <<"\n";
+                    SAWYER_MESG(debug) <<"  adjusting " <<childEvent->name() <<" from " <<*argc <<" to " <<*newValue <<"\n";
                     argc = newValue;
                 } else {
                     SAWYER_MESG(debug) <<"  no adjustment necessary for " <<childEvent->name() <<"\n";
@@ -536,56 +606,70 @@ ConcolicExecutor::generateTestCase(const Database::Ptr &db, const TestCase::Ptr 
                 break;
             }
 
-            case InputType::PROGRAM_ARGUMENT: {
-                ASSERT_require(8 == solverValue->nBits());
-                ASSERT_require(childEvent->actionType() == ExecutionEvent::Action::WRITE_MEMORY);
-                uint8_t newValue = solverValue->toUnsigned().get();
-                size_t i = childEvent->inputI1();
-                size_t j = childEvent->inputI2();
-                ASSERT_require(i < argv.size());
-                ASSERT_require(j < argv[i].size());
-                if (argv[i][j] != newValue) {
-                    std::vector<uint8_t> bytes{newValue};
-                    childEvent->bytes(bytes);
+            case InputType::ARGV: {
+                ASSERT_require(8 == newValue->nBits());
+                ASSERT_require(childEvent->action() == ExecutionEvent::Action::MEMORY_WRITE);
+                uint8_t byte = newValue->toUnsigned().get();
+                const std::pair<size_t, size_t> indices = childEvent->inputIndices();
+                ASSERT_require(indices.first < argv.size());
+                ASSERT_require(indices.second < argv[indices.first].size());
+                if (argv[indices.first][indices.second] != byte) {
+                    childEvent->value(newValue);
                     modifiedEvents.push_back(childEvent);
-                    SAWYER_MESG(debug) <<"  adjusting " <<childEvent->name() <<" from '" <<StringUtility::cEscape(argv[i][j]) <<"'"
-                                       <<" to '" <<StringUtility::cEscape(newValue) <<"'\n";
-                    argv[i][j] = newValue;
+                    SAWYER_MESG(debug) <<"  adjusting " <<childEvent->name() <<" from '"
+                                       <<StringUtility::cEscape(argv[indices.first][indices.second]) <<"'"
+                                       <<" to '" <<StringUtility::cEscape(byte) <<"'\n";
+                    argv[indices.first][indices.second] = byte;
                 } else {
                     SAWYER_MESG(debug) <<"  no adjustment necessary for " <<childEvent->name() <<"\n";
                 }
                 break;
             }
 
-            case InputType::ENVIRONMENT: {
-                ASSERT_require(8 == solverValue->nBits());
-                ASSERT_require(childEvent->actionType() == ExecutionEvent::Action::WRITE_MEMORY);
-                uint8_t newValue = solverValue->toUnsigned().get();
-                size_t i = childEvent->inputI1();
-                size_t j = childEvent->inputI2();
-                ASSERT_require(i < env.size());
-                ASSERT_require(j < env[i].size());
-                if (env[i][j] != newValue) {
-                    std::vector<uint8_t> bytes{newValue};
-                    childEvent->bytes(bytes);
+            case InputType::ENVP: {
+                ASSERT_require(8 == newValue->nBits());
+                ASSERT_require(childEvent->action() == ExecutionEvent::Action::MEMORY_WRITE);
+                uint8_t byte = newValue->toUnsigned().get();
+                const std::pair<size_t, size_t> indices = childEvent->inputIndices();
+                ASSERT_require(indices.first < env.size());
+                ASSERT_require(indices.second < env[indices.first].size());
+                if (env[indices.first][indices.second] != byte) {
+                    childEvent->value(newValue);
                     modifiedEvents.push_back(childEvent);
-                    SAWYER_MESG(debug) <<"  adjusting " <<childEvent->name() <<" from '" <<StringUtility::cEscape(env[i][j]) <<"'"
-                                       <<" to '" <<StringUtility::cEscape(newValue) <<"'\n";
-                    env[i][j] = newValue;
+                    SAWYER_MESG(debug) <<"  adjusting " <<childEvent->name() <<" from '"
+                                       <<StringUtility::cEscape(env[indices.first][indices.second]) <<"'"
+                                       <<" to '" <<StringUtility::cEscape(byte) <<"'\n";
+                    env[indices.first][indices.second] = byte;
                 } else {
                     SAWYER_MESG(debug) <<"  no adjustment necessary for " <<childEvent->name() <<"\n";
                 }
                 break;
             }
 
-            case InputType::SYSTEM_CALL_RETVAL: {
-                ASSERT_require(childEvent->actionType() == ExecutionEvent::Action::WRITE_REGISTER);
-                uint64_t oldValue = childEvent->words()[0];
-                uint64_t newValue = solverValue->toUnsigned().get();
-                if (oldValue != newValue) {
-                    childEvent->words(std::vector<uint64_t>{newValue});
+            case InputType::SYSCALL_RET: {
+                ASSERT_require(childEvent->action() == ExecutionEvent::Action::REGISTER_WRITE);
+                SymbolicExpr::Ptr oldValue = childEvent->value();
+                if (!newValue->isEquivalentTo(oldValue)) {
+                    childEvent->value(newValue);
                     modifiedEvents.push_back(childEvent);
-                    SAWYER_MESG(debug) <<"  adjusting " <<childEvent->name() <<" from " <<oldValue <<" to " <<newValue <<"\n";
+                    SAWYER_MESG(debug) <<"  adjusting " <<childEvent->name() <<" from " <<*oldValue <<" to " <<*newValue <<"\n";
+                } else {
+                    SAWYER_MESG(debug) <<"  no adjustment necessary for " <<childEvent->name() <<"\n";
+                }
+                break;
+            }
+
+            case InputType::SHMEM_READ: {
+                ASSERT_require(childEvent->action() == ExecutionEvent::Action::OS_SHARED_MEMORY);
+                SymbolicExpr::Ptr oldValue = childEvent->value();
+                if (!oldValue) {
+                    childEvent->value(newValue);
+                    modifiedEvents.push_back(childEvent);
+                    SAWYER_MESG(debug) <<"  adjusting " <<childEvent->name() << " from nothing to " <<*newValue <<"\n";
+                } else if (!newValue->isEquivalentTo(oldValue)) {
+                    childEvent->value(newValue);
+                    modifiedEvents.push_back(childEvent);
+                    SAWYER_MESG(debug) <<"  adjusting " <<childEvent->name() << " from " <<*oldValue <<" to " <<*newValue <<"\n";
                 } else {
                     SAWYER_MESG(debug) <<"  no adjustment necessary for " <<childEvent->name() <<"\n";
                 }
@@ -595,11 +679,11 @@ ConcolicExecutor::generateTestCase(const Database::Ptr &db, const TestCase::Ptr 
     }
 
     // Check that program arguments are reasonable. These should never fail if we've set up the SMT solver constraints correctly.
-    if (argc < argv.size()) {
-        ASSERT_require(argc >= 0);
-        argv.resize(argc);
-    } else if (argc > argv.size()) {
-        argv.resize(argc);
+    if (argc->toUnsigned().get() < argv.size()) {
+        ASSERT_require(argc->toUnsigned().get() >= 0);
+        argv.resize(argc->toUnsigned().get());
+    } else if (argc->toUnsigned().get() > argv.size()) {
+        argv.resize(argc->toUnsigned().get());
     }
     for (size_t i = 0; i < argv.size(); ++i) {
         // Remove trailing NULs.
@@ -635,7 +719,7 @@ ConcolicExecutor::generateTestCase(const Database::Ptr &db, const TestCase::Ptr 
     } else {
         newTestCase = TestCase::instance(oldTestCase->specimen());
         newTestCase->parent(oldTestCaseId);
-        newTestCase->assertions(solver->assertions());
+        newTestCase->assertions(solver()->assertions());
         ASSERT_forbid(argv.empty());
         newTestCase->args(argv);
 
@@ -647,20 +731,22 @@ ConcolicExecutor::generateTestCase(const Database::Ptr &db, const TestCase::Ptr 
         }
         newTestCase->env(envVars);
 
-        TestCaseId newTestCaseId = db->id(newTestCase);
+        TestCaseId newTestCaseId = database()->id(newTestCase);
         for (ExecutionEvent::Ptr childEvent: eventMap.values()) {
             childEvent->testCase(newTestCase);
-            db->save(childEvent);
+            database()->save(childEvent);
         }
 
-        saveSymbolicState(ops, db, newTestCaseId);
+        saveSymbolicState(ops, newTestCaseId);
 
-        auto currentIpEvent = ExecutionEvent::instance(newTestCase, ops->process()->nextLocation(), childIp->toUnsigned().get());
+        auto currentIpEvent = ExecutionEvent::noAction(newTestCase,
+                                                       ops->process()->nextEventLocation(When::POST),
+                                                       childIp->toUnsigned().get());
         currentIpEvent->name("start of test case " + boost::lexical_cast<std::string>(*newTestCaseId));
-        db->save(currentIpEvent);
+        database()->save(currentIpEvent);
 
         if (debug) {
-            debug <<"created new " <<newTestCase->printableName(db) <<"\n";
+            debug <<"created new " <<newTestCase->printableName(database()) <<"\n";
             debug <<"  command-line:\n";
             for (const std::string &arg: argv)
                 debug <<"    - " <<StringUtility::yamlEscape(arg) <<"\n";
@@ -669,20 +755,19 @@ ConcolicExecutor::generateTestCase(const Database::Ptr &db, const TestCase::Ptr 
                 debug <<"    - " <<StringUtility::yamlEscape(s) <<"\n";
             debug <<"  execution-events:  # Showing only those that differ from the parent test case\n";
             for (const ExecutionEvent::Ptr &event: modifiedEvents)
-                event->toYaml(debug, db, "    - ");
+                event->toYaml(debug, database(), "    - ");
         }
     }
 }
 
 void
-ConcolicExecutor::saveSymbolicState(const Emulation::RiscOperatorsPtr &ops, const Database::Ptr &db, const TestCaseId &dstId) {
-    ASSERT_not_null(db);
+ConcolicExecutor::saveSymbolicState(const Emulation::RiscOperatorsPtr &ops, const TestCaseId &dstId) {
     ASSERT_require(dstId);
 
-    db->saveSymbolicState(dstId, ops->currentState());
+    database()->saveSymbolicState(dstId, ops->currentState());
 
-    TestCase::Ptr dst = db->object(dstId, Update::NO);
-    db->save(dst);
+    TestCase::Ptr dst = database()->object(dstId, Update::NO);
+    database()->save(dst);
 }
 
 bool
@@ -723,11 +808,25 @@ ConcolicExecutor::areSimilar(const TestCase::Ptr &a, const TestCase::Ptr &b) con
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 namespace Emulation {
 
+RiscOperators::RiscOperators(const Settings &settings, const DatabasePtr &db, const TestCasePtr &testCase,
+                             const Partitioner2::Partitioner &partitioner, const ArchitecturePtr &process,
+                             const InstructionSemantics2::BaseSemantics::StatePtr &state, const SmtSolverPtr &solver)
+    : Super(state, solver), REG_PATH(state->registerState()->registerDictionary()->findOrThrow("path")),
+      settings_(settings), db_(db), testCase_(testCase), partitioner_(partitioner), process_(process),
+      hadSystemCall_(false) {
+    ASSERT_not_null(db);
+    ASSERT_not_null(testCase);
+    ASSERT_not_null(process);
+    ASSERT_not_null(state);
+    ASSERT_not_null(solver);
+    name("Concolic-symbolic");
+    (void) SValue::promote(state->protoval());
+}
+
 RiscOperatorsPtr
 RiscOperators::instance(const Settings &settings, const Database::Ptr &db, const TestCase::Ptr &testCase,
                         const P2::Partitioner &partitioner, const Architecture::Ptr &process,
-                        InputVariables &inputVariables, const BS::SValuePtr &protoval,
-                        const SmtSolver::Ptr &solver) {
+                        const BS::SValuePtr &protoval, const SmtSolver::Ptr &solver) {
     // Extend the register set with an additional Boolean register named "path"
     RegisterDictionary *regdict = new RegisterDictionary("Rose::BinaryAnalysis::Concolic");
     regdict->insert(partitioner.instructionProvider().registerDictionary());
@@ -739,7 +838,7 @@ RiscOperators::instance(const Settings &settings, const Database::Ptr &db, const
     MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
     memory->set_byteOrder(ByteOrder::ORDER_LSB);
     StatePtr state = State::instance(registers, memory);
-    RiscOperatorsPtr ops(new RiscOperators(settings, db, testCase, partitioner, process, inputVariables, state, solver));
+    RiscOperatorsPtr ops(new RiscOperators(settings, db, testCase, partitioner, process, state, solver));
     ASSERT_require(ops->REG_PATH == path);
     ops->writeRegister(path, ops->boolean_(true));
     return ops;
@@ -767,9 +866,22 @@ RiscOperators::database() const {
     return db_;
 }
 
+InputVariables::Ptr
+RiscOperators::inputVariables() const {
+    ASSERT_not_null(process_);
+    return process_->inputVariables();
+}
+
 const RegisterDictionary*
 RiscOperators::registerDictionary() const {
     return partitioner_.instructionProvider().registerDictionary();
+}
+
+void
+RiscOperators::startInstruction(SgAsmInstruction *insn) {
+    hadSystemCall_ = false;
+    hadSharedMemoryAccess_ = ExecutionEvent::Ptr();
+    Super::startInstruction(insn);
 }
 
 void
@@ -807,6 +919,31 @@ RiscOperators::peekRegister(RegisterDescriptor reg, const BS::SValuePtr &dfltUnu
     return Super::peekRegister(reg, dflt);
 }
 
+void
+RiscOperators::writeRegister(RegisterDescriptor reg, const BS::SValue::Ptr &value) {
+    if (hadSharedMemoryAccess()) {
+        Sawyer::Message::Stream debug(mlog[DEBUG]);
+
+        // This probably writing a previously-read value from shared memory into a register. It's common on RISC
+        // architectures to have an instruction that copies a value from memory into a register, in which case the value
+        // being written here is just the variable we're using to represent what was read from shared memory. On CISC
+        // architectures the value being written might be a more complex function of the value that was read.
+        //
+        // In cany case, since we can't directly adjust the byte read from concrete memory (not even by pre-writing to that
+        // address since it might be read-only or it might not follow normal memory semantics), we do the next best thing: we
+        // adjust all the side effects of the instruction that read the byte from memory.
+        SymbolicExpr::Ptr valueExpr = Emulation::SValue::promote(value)->get_expression();
+        SAWYER_MESG(debug) <<"  register update for shared memory read: value = " <<*valueExpr <<"\n";
+        auto event = ExecutionEvent::registerWrite(process()->testCase(), process()->nextEventLocation(When::POST),
+                                                   currentInstruction()->get_address(), reg, SymbolicExpr::Ptr(),
+                                                   SymbolicExpr::Ptr(), valueExpr);
+        event->name(hadSharedMemoryAccess()->name() + "_toreg");
+        database()->save(event);
+        SAWYER_MESG(debug) <<"    created " <<event->printableName(database()) <<"\n";
+    }
+    Super::writeRegister(reg, value);
+}
+
 BS::SValuePtr
 RiscOperators::readMemory(RegisterDescriptor segreg, const BS::SValuePtr &addr,
                           const BS::SValuePtr &dfltUnused, const BS::SValuePtr &cond) {
@@ -816,6 +953,21 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BS::SValuePtr &addr,
         size_t nBytes = dfltUnused->nBits() / 8;
         SymbolicExpr::Ptr concrete = SymbolicExpr::makeIntegerConstant(dfltUnused->nBits(),
                                                                        process_->readMemoryUnsigned(*va, nBytes));
+
+        // Handle shared memory at concrete addresses
+        SharedMemoryCallbacks callbacks = process()->sharedMemory().getOrDefault(*va);
+        if (!callbacks.isEmpty()) {
+            // FIXME[Robb Matzke 2021-09-09]: use structured bindings when ROSE requires C++17 or later
+            auto x = process()->sharedMemoryRead(callbacks, partitioner(), shared_from_this(), *va, nBytes);
+            ExecutionEvent::Ptr sharedMemoryEvent = x.first;
+            SymbolicExpr::Ptr result = x.second;
+
+            if (result) {
+                hadSharedMemoryAccess(sharedMemoryEvent);
+                return svalueExpr(result);
+            }
+        }
+
         SValuePtr dflt = SValue::promote(undefined_(dfltUnused->nBits()));
         dflt->set_expression(concrete);
         return Super::readMemory(segreg, addr, dflt, cond);
@@ -843,18 +995,18 @@ RiscOperators::peekMemory(RegisterDescriptor segreg, const BS::SValuePtr &addr,
 
 void
 RiscOperators::createInputVariables(const SmtSolver::Ptr &solver) {
-    process_->createInputVariables(inputVariables_, partitioner_, shared_from_this(), solver);
+    process_->createInputVariables(partitioner(), RiscOperators::promote(shared_from_this()), solver);
 }
 
 void
 RiscOperators::restoreInputVariables(const SmtSolver::Ptr &solver) {
-    process_->restoreInputVariables(inputVariables_, partitioner_, shared_from_this(), solver);
+    process_->restoreInputVariables(partitioner(), RiscOperators::promote(shared_from_this()), solver);
 }
 
 void
 RiscOperators::printInputVariables(std::ostream &out) const {
     out <<"input variables:\n";
-    inputVariables_.print(out, "  ");
+    process_->inputVariables()->print(out, "  ");
 }
 
 void
@@ -903,6 +1055,9 @@ Dispatcher::processInstruction(SgAsmInstruction *insn) {
     } BOOST_SCOPE_EXIT_END;
 
     // Symbolic execution happens before the concrete execution (code above), but may throw an exception.
+    Emulation::RiscOperatorsPtr ops = emulationOperators();
+    SAWYER_MESG_OR(mlog[TRACE], mlog[DEBUG]) <<"executing insn #" <<ops->process()->currentLocation().primary()
+                                             <<" " <<ops->partitioner().unparse(insn) <<"\n";
     Super::processInstruction(insn);
 }
 

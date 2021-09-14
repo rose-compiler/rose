@@ -4,6 +4,7 @@
 #include <Rose/BinaryAnalysis/Concolic/InputVariables.h>
 
 #include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
+#include <boost/lexical_cast.hpp>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -13,99 +14,128 @@ namespace Concolic {
 // Input Variables
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void
-InputVariables::insertProgramArgumentCount(const ExecutionEvent::Ptr &event, const SymbolicExpr::Ptr &variable) {
-    ASSERT_not_null(event);
-    ASSERT_require(event->inputType() == InputType::NONE);
-    ASSERT_not_null(variable);
-    ASSERT_require(variable->isVariable2());
+InputVariables::InputVariables() {}
 
-    event->inputType(InputType::PROGRAM_ARGUMENT_COUNT);
-    event->inputVariable(variable);
-    event->name("argc");
+InputVariables::~InputVariables() {}
 
-    variables_.insert(*variable->variableId(), event);
+InputVariables::Ptr
+InputVariables::instance() {
+    return Ptr(new InputVariables);
+}
+
+const SymbolicExpr::ExprExprHashMap&
+InputVariables::bindings() const {
+    return bindings_;
 }
 
 void
-InputVariables::insertProgramArgument(const ExecutionEvent::Ptr &event, size_t i, size_t j,
-                                      const SymbolicExpr::Ptr &variable) {
+InputVariables::activate(const ExecutionEvent::Ptr &event, InputType inputType, size_t idx1, size_t idx2) {
     ASSERT_not_null(event);
-    ASSERT_require(event->inputType() == InputType::NONE);
-    ASSERT_not_null(variable);
-    ASSERT_require(variable->isVariable2());
+    ASSERT_require(event->variable());
+    ASSERT_forbid(InputType::NONE == inputType);
 
-    event->inputType(InputType::PROGRAM_ARGUMENT);
-    event->inputVariable(variable);
-    event->inputI1(i);
-    event->inputI2(j);
-    event->name((boost::format("argv.%d.%d") %i %j).str()); // because "." is easier to read (not escaped like []
-
-    variables_.insert(*variable->variableId(), event);
+    deactivate(event);
+    define(event, inputType, idx1, idx2);
+    if (event->value())
+        bindVariableValue(event->variable(), event->value());
 }
 
 void
-InputVariables::insertEnvironmentVariable(const ExecutionEvent::Ptr &event, size_t i, size_t j,
-                                          const SymbolicExpr::Ptr &variable) {
-    ASSERT_not_null(event);
-    ASSERT_require(event->inputType() == InputType::NONE);
-    ASSERT_not_null(variable);
-    ASSERT_require(variable->isVariable2());
-
-    event->inputType(InputType::ENVIRONMENT);
-    event->inputVariable(variable);
-    event->inputI1(i);
-    event->inputI2(j);
-    event->name((boost::format("envp.%d.%d") %i %j).str()); // because "." is easier to read (not escaped like []
-
-    variables_.insert(*variable->variableId(), event);
+InputVariables::deactivate(const ExecutionEvent::Ptr &event) {
+    if (event && event->variable())
+        unbindVariableValue(event->variable());
+    undefine(event);
 }
 
 void
-InputVariables::insertSystemCallReturn(const ExecutionEventPtr &event, const SymbolicExpr::Ptr &variable) {
-    ASSERT_not_null(event);
-    ASSERT_require(event->inputType() == InputType::NONE);
-    ASSERT_not_null(variable);
-    ASSERT_require(variable->isVariable2());
-
-    event->inputType(InputType::SYSTEM_CALL_RETVAL);
-    event->inputVariable(variable);
-    if (variable->comment().empty()) {
-        variable->comment(event->name());
-    } else if (event->name().empty()) {
-        event->name(variable->comment());
+InputVariables::playback(const ExecutionEvent::Ptr &event) {
+    if (event && event->variable()) {
+        if (event->value())
+            bindVariableValue(event->variable(), event->value());
+        if (InputType::NONE != event->inputType())
+            variables_.insert(event->variable()->variableId().get(), event);
     }
-
-    variables_.insert(*variable->variableId(), event);
 }
 
 void
-InputVariables::insertEvent(const ExecutionEventPtr &event) {
-    ASSERT_not_null(event);
-    ASSERT_forbid(event->inputType() == InputType::NONE);
-    SymbolicExpr::Ptr variable = event->inputVariable();
-    ASSERT_not_null(variable);
-    ASSERT_require(variable->isVariable2());
-    ASSERT_forbid(event->name().empty());
-
-    variables_.insert(*variable->variableId(), event);
-}
-
-ExecutionEvent::Ptr
-InputVariables::get(const std::string &symbolicVariableName) const {
-    ASSERT_require(symbolicVariableName.size() >= 2);
-    ASSERT_require(symbolicVariableName[0] == 'v');
-    uint64_t varId = rose_strtoull(symbolicVariableName.c_str()+1, NULL, 10);
-    return variables_.getOrDefault(varId);
+InputVariables::unplayback(const ExecutionEvent::Ptr &event) {
+    if (event && event->variable()) {
+        unbindVariableValue(event->variable());
+        variables_.erase(*event->variable()->variableId());
+    }
 }
 
 void
 InputVariables::print(std::ostream &out, const std::string &prefix) const {
-    BOOST_FOREACH (const Variables::Node &node, variables_.nodes()) {
+    for (const Variables::Node &node: variables_.nodes()) {
         uint64_t variableNumber = node.key();
         ExecutionEvent::Ptr event = node.value();
         out <<prefix <<event->name() <<" = v" <<variableNumber <<"\n";
     }
+}
+
+void
+InputVariables::define(const ExecutionEvent::Ptr &event, InputType inputType, size_t idx1, size_t idx2) {
+    ASSERT_not_null(event);
+    ASSERT_not_null(event->variable());
+    ASSERT_require2(InputType::NONE == event->inputType(), "already defined");
+    ASSERT_forbid(InputType::NONE == inputType);
+    ASSERT_require(INVALID_INDEX == idx2 || INVALID_INDEX != idx1);
+
+    undefine(event);
+    event->inputType(inputType, idx1, idx2);
+    variables_.insert(event->variable()->variableId().get(), event);
+}
+
+void
+InputVariables::undefine(const ExecutionEvent::Ptr &event) {
+    if (event) {
+        if (event->variable())
+            variables_.erase(event->variable()->variableId().get());
+        event->inputType(InputType::NONE, INVALID_INDEX, INVALID_INDEX);
+    }
+}
+
+void
+InputVariables::bind(const ExecutionEvent::Ptr &event) {
+    ASSERT_not_null(event);
+    if (event->variable() && event->value())
+        bindVariableValue(event->variable(), event->value());
+}
+
+void
+InputVariables::unbind(const ExecutionEvent::Ptr &event) {
+    ASSERT_not_null(event);
+    unbindVariableValue(event->variable());
+}
+
+void
+InputVariables::bindVariableValue(const SymbolicExpr::Ptr &variable, const SymbolicExpr::Ptr &value) {
+    ASSERT_not_null(variable);
+    ASSERT_not_null(value);
+    bindings_.insert(std::make_pair(variable, value));
+}
+
+void
+InputVariables::unbindVariableValue(const SymbolicExpr::Ptr &variable) {
+    if (variable)
+        bindings_.erase(variable);
+}
+
+ExecutionEvent::Ptr
+InputVariables::event(const std::string &variableName) const {
+    ASSERT_require(variableName.size() >= 2);
+    ASSERT_require(variableName[0] == 'v');
+    uint64_t varId = boost::lexical_cast<uint64_t>(variableName.substr(1));
+    return variables_.getOrDefault(varId);
+}
+
+ExecutionEvent::Ptr
+InputVariables::event(const SymbolicExpr::Ptr &variable) const {
+    ASSERT_not_null(variable);
+    ASSERT_require(variable->isScalarVariable());
+    uint64_t varId = *variable->variableId();
+    return variables_.getOrDefault(varId);
 }
 
 } // namespace
