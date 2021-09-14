@@ -73,7 +73,7 @@ using namespace Sawyer::Message;
 #include "ltlthorn-lib/Solver12.h"
 
 
-const std::string versionString="0.9.6";
+const std::string versionString="0.9.7";
 
 void configureRersSpecialization() {
 #ifdef RERS_SPECIALIZATION
@@ -191,7 +191,10 @@ int main( int argc, char * argv[] ) {
       analyzer->getVariableIdMapping()->typeSizeOverviewtoStream(cout);
     }
     
+    ctOpt.generateReports=true;
     CodeThorn::CodeThornLib::optionallyGenerateExternalFunctionsFile(ctOpt, analyzer->getFunctionCallMapping());
+    AnalysisReporting::generateUnusedVariablesReport(ctOpt,analyzer);
+
     tc.startTimer();tc.stopTimer();
 
     if(ctOpt.status) cout<<color("normal")<<"done."<<endl;
