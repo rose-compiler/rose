@@ -710,11 +710,11 @@ RiscOperators::startInstruction(SgAsmInstruction *insn) {
             std::vector<P2::Function::Ptr> functions = partitioner_.functionsSpanning(va);
             P2::Function::Ptr function;
             if (functions.empty()) {
-                mlog[WARN] <<"no function containing instruction at " <<StringUtility::addrToString(va) <<"\n";
+                SAWYER_MESG(mlog[WARN]) <<"no function containing instruction at " <<StringUtility::addrToString(va) <<"\n";
             } else if (functions.size() == 1) {
                 function = functions[0];
             } else {
-                mlog[WARN] <<"multiple functions containing instruction at " <<StringUtility::addrToString(va) <<"\n";
+                SAWYER_MESG(mlog[WARN]) <<"multiple functions containing instruction at " <<StringUtility::addrToString(va) <<"\n";
                 function = functions[0];                    // arbitrary
             }
 

@@ -62,7 +62,7 @@ SemanticCallbacks::nextCodeAddresses(const BS::RiscOperators::Ptr &ops) {
     CodeAddresses retval;
     retval.ip = instructionPointer(ops);
     retval.isComplete = true;
-    mlog[DEBUG] <<"    finding next code addresses from ip = " <<*retval.ip <<"\n";
+    SAWYER_MESG(mlog[DEBUG]) <<"    finding next code addresses from ip = " <<*retval.ip <<"\n";
 
     if (auto va = retval.ip->toUnsigned()) {
         retval.addresses.insert(*va);
