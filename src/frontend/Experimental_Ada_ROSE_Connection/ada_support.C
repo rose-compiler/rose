@@ -107,6 +107,8 @@ int main(int argc, char** argv)
      // the unparsed commands is likely to be passed into ASIS
      std::vector<std::string> unparsedArgs = cmdline.unparsedArgs();
      std::string ASISIncludeArgs;
+     std::string GNATArgs;
+     std::string ASISArgs;
 
 
      vector<string> includePaths;
@@ -120,14 +122,25 @@ int main(int argc, char** argv)
                includeDirectorySpecifier = Rose::StringUtility::getAbsolutePathFromRelativePath(includeDirectorySpecifier );
                includePaths.push_back(includeDirectorySpecifier);
              }
+          else if (unparsedArgs[i].find("-gnat") != string::npos)
+             {
+                GNATArgs.append(unparsedArgs[i] + " "); 
+             }
         }
 
      for (vector<string>::const_iterator i = includePaths.begin(); i != includePaths.end(); ++i)
         {
           ASISIncludeArgs.append("-I" + *i + " ");
         }
-     if (includePaths.size() != 0)
-        ASISIncludeArgs = ASISIncludeArgs.substr(0, ASISIncludeArgs.length()-1);
+//     if (includePaths.size() != 0)
+//        ASISIncludeArgs = ASISIncludeArgs.substr(0, ASISIncludeArgs.length()-1);
+
+     ASISArgs = GNATArgs + ASISIncludeArgs;
+ 
+    if(ASISArgs.at(ASISArgs.length()-1) == ' ')
+        ASISArgs = ASISArgs.substr(0, ASISArgs.length()-1);
+
+
 
      if (!eq(settings, settingscpy))
        mprintf("--asis: options HAVE BEEN DEPRECATED and have been replaced by -rose:ada: options!\n");
@@ -195,7 +208,7 @@ int main(int argc, char** argv)
        boostfs::current_path(gnatOutputDir);
 
        char* cstring_SrcFile = const_cast<char*>(srcFile.c_str());
-       char* cstring_Args = const_cast<char*>(ASISIncludeArgs.c_str());
+       char* cstring_Args = const_cast<char*>(ASISArgs.c_str());
        char* cstring_GnatOutputDir = const_cast<char*>(gnatOutputDir.c_str());
 
     // DQ (31/8/2017): Definitions of these functions still need to be provided to via libraries to be able to link ROSE.
