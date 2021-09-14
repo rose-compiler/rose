@@ -4,7 +4,8 @@ SUBDIRS = \
 	dot_asis_tests \
   compile_tests \
   sageInterfaceAda_tests \
-  literalParser_tests
+  literalParser_tests \
+  ROSEGprIntegration_tests
 
 # DQ (8/23/2017): Use command line option to alternatively test the experimental fortran frontend.
 # ROSE_FLAGS = -rose:verbose 0 -I$(srcdir)

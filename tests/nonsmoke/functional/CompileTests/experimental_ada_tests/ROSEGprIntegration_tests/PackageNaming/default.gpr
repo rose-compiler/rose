@@ -1,0 +1,22 @@
+project default is
+
+   for Languages use ("Ada");
+   for Object_Dir use "./obj";
+   for Source_Dirs use ("src");
+   package Naming is
+        for Casing use "lowercase";
+        for Dot_Replacement use ".";
+        for Spec_Suffix ("Ada") use ".1.ada";
+        for Body_Suffix ("Ada") use ".2.ada";
+        for Separate_Suffix use ".ada";
+   end Naming;
+ 
+
+--   for Excluded_Source_Dirs use (default'Object_Dir);
+
+  package Compiler is
+    for Driver ("Ada") use "ROSE_CC";
+  end Compiler;
+
+end default;
+
