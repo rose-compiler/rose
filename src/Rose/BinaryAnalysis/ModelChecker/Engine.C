@@ -18,6 +18,13 @@
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 
+#ifdef __linux
+#include <sys/syscall.h>                                // SYS_* constants
+#include <sys/types.h>                                  // pid_t
+#include <unistd.h>                                     // syscall
+#endif
+
+
 using namespace Sawyer::Message::Common;
 namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
@@ -38,10 +45,22 @@ initDiagnostics() {
     }
 }
 
-Engine::InProgress::InProgress() {}
+static int
+rose_gettid() {
+#ifdef __linux
+    // Newer versions of glibc define gettid, but we might as well just use syscall since we still (2021) need to support
+    // RedHat 6 and 7 where gettid is not available.
+    return syscall(SYS_gettid);
+#else
+    return 0;
+#endif
+}
+
+Engine::InProgress::InProgress()
+    : tid(rose_gettid()) {}
 
 Engine::InProgress::InProgress(const Path::Ptr &path)
-    : path(path), threadId(boost::this_thread::get_id()) {}
+    : path(path), threadId(boost::this_thread::get_id()), tid(rose_gettid()) {}
 
 Engine::InProgress::~InProgress() {}
 
@@ -724,8 +743,10 @@ Engine::showStatistics(std::ostream &out, const std::string &prefix) const {
         out <<prefix <<"  shortest in-progress path length:     " <<StringUtility::plural(*currentStats.minSteps, "steps") <<"\n";
         out <<prefix <<"  longest in-progress path length:      " <<StringUtility::plural(*currentStats.maxSteps, "steps") <<"\n";
         for (const InProgress &work: currentWork) {
-            out <<prefix <<"  worker " <<work.threadId
-                <<": " <<work.path->printableName()
+            out <<prefix <<"  thread " <<work.threadId;
+            if (work.tid > 0)
+                out <<" (LWP " <<work.tid <<")";
+            out <<": " <<work.path->printableName()
                 <<" having " <<StringUtility::plural(work.path->nSteps(), "steps")
                 <<"; " <<work.elapsed <<" elapsed\n";
         }
