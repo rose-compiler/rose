@@ -663,10 +663,6 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories
 # with spaces.
 
-# NOTE: Robb places doxygen comments for Sg* class methods in the Sg*.C files
-#       rather than the docs/testDoxygen/*.docs files. This keeps the documentation
-#       near the function it documents.
-
 # NOTE: If your file isn't being picked up by doxygen, then perhaps it's listed
 #       in the EXCLUDE variable below.
 
@@ -692,7 +688,7 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
                          @top_srcdir@/src/Rose/BinaryAnalysis/InstructionSemantics2 \
                          @top_srcdir@/src/Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics \
 			 @top_srcdir@/src/Rose/BinaryAnalysis/ModelChecker \
-			 @top_srcdir@/src/Rose/BinaryAnalysis/Partitoner2 \
+			 @top_srcdir@/src/Rose/BinaryAnalysis/Partitioner2 \
 			 @top_srcdir@/src/Rose/BinaryAnalysis/Unparser \
 			 @top_srcdir@/src/Rose/Color \
 			 @top_srcdir@/src/Rose/CommandLine \
@@ -701,10 +697,6 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
 			 @top_srcdir@/src/Rose/StringUtility \
                          @top_srcdir@/src/ROSETTA/src/binaryInstruction.C \
                          @top_srcdir@/src/frontend/Disassemblers \
-                         @top_srcdir@/src/frontend/BinaryFormats/ExecLE.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/ExecNE.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/ExtentMap.C \
-                         @top_srcdir@/src/frontend/BinaryFormats/PeSymbolTable.C \
                          @top_srcdir@/src/frontend/BinaryFormats/Rva.C \
                          @top_srcdir@/src/frontend/SageIII/ \
                          @top_srcdir@/src/frontend/SageIII/docs \
@@ -717,7 +709,6 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
                          @top_srcdir@/src/midend/abstractHandle \
 			 @top_srcdir@/src/midend/astMatching \
                          @top_srcdir@/src/midend/BinaryAnalysis \
-                         @top_srcdir@/src/midend/BinaryAnalysis/dataflowanalyses \
                          @top_srcdir@/src/midend/BinaryAnalysis/libraryIdentification \
                          @top_srcdir@/src/midend/programTransformation/ompLowering \
                          @top_srcdir@/src/midend/midend.docs \
@@ -742,9 +733,6 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
                          @top_srcdir@/src/midend/astQuery/QueryLib.docs \
                          @top_srcdir@/src/backend/backend.docs \
                          @top_srcdir@/src/backend/asmUnparser \
-                         @top_srcdir@/src/backend/asmUnparser/unparseX86Asm.C \
-                         @top_srcdir@/src/backend/asmUnparser/unparseArmAsm.C \
-                         @top_srcdir@/src/backend/asmUnparser/unparsePowerpcAsm.C \
                          @top_srcdir@/src/backend/unparser/unparser.docs \
                          @top_srcdir@/src/backend/unparser/languageIndependenceSupport/documentation.docs \
                          @top_srcdir@/src/backend/unparser/CxxCodeGeneration/documentation.docs \
@@ -757,11 +745,9 @@ INPUT                  = @top_srcdir@/docs/Rose/MainPage.dox \
                          @top_srcdir@/src/util/stringSupport/ \
                          @top_srcdir@/src/util/commandlineProcessing \
                          @top_srcdir@/src/roseSupport \
-                         @top_srcdir@/src/roseSupport/stringify.C \
                          @top_srcdir@/src/3rdPartyLibraries/3rdPartyLibraries.docs \
                          @top_srcdir@/src/3rdPartyLibraries/MSTL/MSTL.docs \
-                         @top_srcdir@/src/extra.docs \
-                         @top_srcdir@/projects/projects.docs
+                         @top_srcdir@/src/extra.docs
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding, which is
@@ -844,8 +830,7 @@ EXCLUDE_SYMBOLS        =
 
 EXAMPLE_PATH           = @top_srcdir@ \
 			 @top_srcdir@/tutorial \
-                         @top_srcdir@/src/util/Sawyer/docs/examples \
-			 @top_srcdir@/tests/nonsmoke/functional/roseTests/binaryTests
+                         @top_srcdir@/src/util/Sawyer/docs/examples
 
 # If the value of the EXAMPLE_PATH tag contains directories, you can use the
 # EXAMPLE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp

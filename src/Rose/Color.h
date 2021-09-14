@@ -65,7 +65,7 @@ protected:
         : Sawyer::CommandLine::ValueParser(valueSaver) {}
 
 public:
-    /** Shared ownership pointer to a @ref OutputParser. See @ref heap_object_shared_ownership. */
+    /** Shared ownership pointer to a @ref ColorizationParser. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<ColorizationParser> Ptr;
 
     /** Allocating constructor. */

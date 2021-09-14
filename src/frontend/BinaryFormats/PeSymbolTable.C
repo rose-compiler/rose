@@ -405,7 +405,7 @@ SgAsmCoffSymbolTable::parse()
     return this;
 }
 
-/** Returns the number of COFF Symbol Table slots occupied by the symbol table. The number of slots can be larger than the
+/* Returns the number of COFF Symbol Table slots occupied by the symbol table. The number of slots can be larger than the
  *  number of symbols since some symbols might have auxiliary entries. */
 size_t
 SgAsmCoffSymbolTable::get_nslots() const
