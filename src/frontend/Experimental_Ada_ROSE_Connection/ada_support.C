@@ -137,7 +137,7 @@ int main(int argc, char** argv)
 
      ASISArgs = GNATArgs + ASISIncludeArgs;
  
-    if(ASISArgs.at(ASISArgs.length()-1) == ' ')
+    if(!ASISArgs.empty() && ASISArgs.at(ASISArgs.length()-1) == ' ')
         ASISArgs = ASISArgs.substr(0, ASISArgs.length()-1);
 
 
