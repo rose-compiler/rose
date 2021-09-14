@@ -1552,50 +1552,6 @@ LinuxI386::systemCall(const P2::Partitioner &partitioner, const BS::RiscOperator
         database()->save(event);
 }
 
-std::pair<ExecutionEvent::Ptr, SymbolicExpr::Ptr>
-LinuxI386::sharedMemoryRead(const SharedMemoryCallbacks &callbacks, const P2::Partitioner &partitioner,
-                            const BS::RiscOperators::Ptr &ops_, rose_addr_t addr, size_t nBytes) {
-    auto ops = Emulation::RiscOperators::promote(ops_);
-    ASSERT_not_null(ops);
-    Sawyer::Message::Stream debug(mlog[DEBUG]);
-
-    const rose_addr_t ip = ops->currentInstruction()->get_address();
-    SAWYER_MESG(debug) <<"  shared memory read at instruction " <<StringUtility::addrToString(ip)
-                       <<" from memory address " <<StringUtility::addrToString(addr)
-                       <<" for " <<StringUtility::plural(nBytes, "bytes") <<"\n";
-
-    // Create an input variable for the value read from shared memory, and bind it to a new event that indicates that this
-    // instruction is reading from shared memory.
-    ExecutionLocation loc = nextEventLocation(When::PRE);
-    std::string name = (boost::format("shm_read_%s_%d") % StringUtility::addrToString(addr).substr(2) % loc.primary()).str();
-    auto valueRead = SymbolicExpr::makeIntegerVariable(8 * nBytes, name);
-    auto sharedMemoryEvent = ExecutionEvent::osSharedMemory(testCase(), loc, ip,
-                                                            AddressInterval::baseSize(addr, nBytes), valueRead,
-                                                            SymbolicExpr::Ptr(), /*concrete value not known yet*/
-                                                            valueRead);
-    inputVariables()->activate(sharedMemoryEvent, InputType::SHMEM_READ);
-    database()->save(sharedMemoryEvent);
-    SAWYER_MESG(debug) <<"    created input variable " <<*valueRead
-                       <<" for " <<sharedMemoryEvent->printableName(database()) <<"\n";
-
-    // Invoke the callbacks
-    SharedMemoryContext ctx(sharedFromThis(), ops, sharedMemoryEvent);
-    bool handled = callbacks.apply(false, ctx);
-    if (!handled) {
-        mlog[ERROR] <<"    shared memory read not handled by any callbacks; treating it as normal memory\n";
-        return {ExecutionEvent::Ptr(), SymbolicExpr::Ptr()};
-    } else if (!ctx.valueRead) {
-        SAWYER_MESG(debug) <<"    shared memory read did not return a special value; doing a normal read\n";
-    } else {
-        SAWYER_MESG(debug) <<"    shared memory read returns " <<*ctx.valueRead <<"\n";
-        ASSERT_require(ctx.valueRead->nBits() == 8 * nBytes);
-    }
-
-    // Post-callback actions
-    database()->save(sharedMemoryEvent);            // just in case the user modified it.
-    return {ctx.sharedMemoryEvent, ctx.valueRead};
-}
-
 } // namespace
 } // namespace
 } // namespace

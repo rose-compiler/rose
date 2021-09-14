@@ -435,7 +435,7 @@ objectHelper(const Database::Ptr &db, const typename IdObjMap::Source &id, Updat
         obj = IdObjMap::Target::Pointee::instance();
         updateObject(db, id, obj);
         objMap.insert(id, obj);
-    } else {
+    } else if (Update::YES == update) {
         updateObject(db, id, obj);
     }
     ASSERT_not_null(obj);

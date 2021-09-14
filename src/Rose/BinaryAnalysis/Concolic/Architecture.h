@@ -360,13 +360,55 @@ public:
      *  entered concretely. */
     virtual void systemCall(const Partitioner2::Partitioner&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&) {}
 
-    /** Called when shared memory is read.
+    /** Called immediately when shared memory is accessed.
      *
-     *  This function is called as soon as shared memory is read. It should either perform the read operation and return
-     *  the result, or return null in which case the caller will do the usual read operation. */
+     *  This function is called as soon as shared memory is accessed, right during the middle of an instruction from within the
+     *  RiscOperators::readMemory operation. For memory reads, it should either perform the operation and return the result, or
+     *  return null in which case the caller will do the usual operation. */
     virtual std::pair<ExecutionEventPtr, SymbolicExprPtr>
-    sharedMemoryRead(const SharedMemoryCallbacks&, const Partitioner2::Partitioner&,
-                     const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&, rose_addr_t memVa, size_t nBytes);
+    sharedMemoryAccess(const SharedMemoryCallbacks&, const Partitioner2::Partitioner&, const Emulation::RiscOperatorsPtr&,
+                       rose_addr_t memVa, size_t nBytes);
+
+    /** Run after-instruction shared memory callbacks.
+     *
+     *  Runs the @ref SharedMemoryCallback::handlePostSharedMemory "handlePostSharedMemory" callbacks for shared memory. This
+     *  happens after the instruction that accessed shared memory has finished being emulated. */
+    virtual void runSharedMemoryPostCallbacks(const ExecutionEventPtr &sharedMemoryEvent, const Emulation::RiscOperatorsPtr&);
+
+    /** Fix up events related to shared memory.
+     *
+     *  This runs after the instruction accessing shared memory has been emulated, and after all shared memory callbacks for that
+     *  instruction have returned. Its primary purpose is to figure out what value was read from memory even though that value
+     *  might not appear directly anywhere in the concrete state. Consider an instruction like:
+     *
+     * @code
+     *     r0 := u32_t [address] + 1
+     * @endcode
+     *
+     *  Since this executes as a single instruction, there's no opportunity for us to query the conrete machine to get obtain
+     *  the value that was read from memory, and we can't re-read that memory address because shared memory doesn't follow normal
+     *  memory semantics (reading the address might have side effects of which we aren't aware).
+     *
+     *  This instruction will have generated at least two events:
+     *
+     *  @li An pre-instruction event that says that a shared memory read is about to occur, and a variable that represents the
+     *  value read from memory. Call this variable "vr" for "value read".
+     *
+     *  @li A post-instruction register write event to fix up the register with the correct value. This event will have the
+     *  @ref ExecutionEvent::expression @c vr+1. It will have no @ref ExecutionEvent::value because the event was created in the
+     *  middle of emulating the instruction and a concrete value would not have been available at that time.
+     *
+     *  Now that the instruciton emulation is completed, we can ask the concrete state for the value of the register, a
+     *  concrete value, and we assign this to the register read's @ref ExecutionEvent::value property. If we set the register
+     *  write expression equal to this value and solve, we will get the value read from memory and we can populate the shared
+     *  memory execution event with this value. */
+    void fixupSharedMemoryEvents(const ExecutionEventPtr &sharedMemoryEvent, const Emulation::RiscOperatorsPtr&);
+
+    /** Print information about shared memory events. */
+    void printSharedMemoryEvents(const ExecutionEventPtr &sharedMemoryEvent, const Emulation::RiscOperatorsPtr&);
+
+    /** Called after an instruction accesses shared memory. */
+    virtual void sharedMemoryAccessPost(const Partitioner2::Partitioner&, const Emulation::RiscOperatorsPtr&);
 };
 
 } // namespace

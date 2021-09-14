@@ -138,6 +138,15 @@ InputVariables::event(const SymbolicExpr::Ptr &variable) const {
     return variables_.getOrDefault(varId);
 }
 
+void
+InputVariables::addBindingsToSolver(const SmtSolver::Ptr &solver) const {
+    ASSERT_not_null(solver);
+    for (const auto &node: bindings_) {
+        SymbolicExpr::Ptr eq = SymbolicExpr::makeEq(node.first, node.second);
+        solver->insert(eq);
+    }
+}
+
 } // namespace
 } // namespace
 } // namespace

@@ -86,11 +86,6 @@ public:
     virtual void systemCall(const Partitioner2::Partitioner&,
                             const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&) override;
 
-    virtual std::pair<ExecutionEventPtr, SymbolicExprPtr>
-    sharedMemoryRead(const SharedMemoryCallbacks&, const Partitioner2::Partitioner&,
-                     const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
-                     rose_addr_t memVa, size_t nBytes) override;
-
 private:
     // Maps a scratch page for internal use and updates scratchVa_ with the address of the page.
     void mapScratchPage();
