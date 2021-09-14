@@ -97,6 +97,7 @@ public:
   bool programStats=false;
   std::string programStatsFileName;
   std::string internalAnalysisReportFileName="internal-analysis-report.txt";
+  std::string unusedVariablesReportFileName="unused-variables-report.csv";
   
   bool inStateStringLiterals=false;
   bool stdFunctions=false;

@@ -22,6 +22,7 @@ namespace CodeThorn {
     static void generateInternalAnalysisReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer);
     static CodeThorn::LabelSet functionLabels(CodeThorn::CTAnalysis* analyzer);
     static void generateDeadCodeLocationsVerificationReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, LabelSet& unreachable);
+    static void generateUnusedVariablesReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer);
   private:
     static bool isSystemHeaderLabel(CodeThorn::CTAnalysis* analyzer, Label lab);
     static void printSeparationLine();

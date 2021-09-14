@@ -714,6 +714,7 @@ namespace CodeThorn {
           AnalysisReporting::generateAnalysisLocationReports(ctOpt,analyzer);
           AnalysisReporting::generateAnalyzedFunctionsAndFilesReports(ctOpt,analyzer);
 	  AnalysisReporting::generateInternalAnalysisReport(ctOpt,analyzer);
+	  AnalysisReporting::generateUnusedVariablesReport(ctOpt,analyzer);
         } else {
           if(ctOpt.status) cout<<"STATUS: no analysis reports generated (no analysis selected)."<<endl;
         }
