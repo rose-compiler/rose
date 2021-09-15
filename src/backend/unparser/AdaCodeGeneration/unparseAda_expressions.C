@@ -1,10 +1,9 @@
-/* unparseAda_expressions.C
- *
- *
+/*
+ * unparseAda_expressions.C
  */
+
 #include "sage3basic.h"
 #include "unparser.h"
-//~ #include "Utf8.h"
 #include "sageGeneric.h"
 #include "sageInterfaceAda.h"
 
@@ -12,21 +11,10 @@ namespace si = SageInterface;
 
 //~ using namespace std;
 
-//~ #define OUTPUT_DEBUGGING_FUNCTION_BOUNDARIES 0
-//~ #define OUTPUT_HIDDEN_LIST_DATA 0
-//~ #define OUTPUT_DEBUGGING_INFORMATION 0
-
-//~ #ifdef _MSC_VER
-//~ #include "Cxx_Grammar.h"
-//~ #endif
-
-// DQ (10/14/2010):  This should only be included by source files that require it.
-// This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
-// Interestingly it must be at the top of the list of include files.
-//~ #include "rose_config.h"
-
 namespace
 {
+  constexpr bool USE_COMPUTED_NAME_QUALIFICATION_EXPR = true;
+
   inline
   SgVariableSymbol& symOf(const SgVarRefExp& n)
   {
@@ -211,6 +199,18 @@ namespace
       //~ os << s;
     }
 
+    void prnNameQual(const SgNode& n)
+    {
+      using NodeQualMap = std::map<SgNode*, std::string>;
+      using Iterator = NodeQualMap::const_iterator;
+
+      const NodeQualMap& nameQualMap = unparser.nameQualificationMap();
+      const Iterator     pos = nameQualMap.find(const_cast<SgNode*>(&n));
+
+      if (pos != nameQualMap.end())
+        prn(pos->second);
+    }
+
     void handle(SgNode& n)      { SG_UNEXPECTED_NODE(n); }
 
     void handle(SgExpression& n);
@@ -309,7 +309,7 @@ namespace
       SgExpression& operand  = SG_DEREF(n.get_operand());
       const bool    hasparen = operand.get_need_paren() || isSgAggregateInitializer(&operand);
 
-      type(n.get_type());
+      type(n, n.get_type());
       if (qualexpr) prn("'");
 
       // requires paren even if the expr has not set them
@@ -320,7 +320,7 @@ namespace
 
     void handle(SgTypeExpression& n)
     {
-      type(n.get_type());
+      type(n, n.get_type());
     }
 
     void handle(SgStringVal& n)
@@ -358,7 +358,9 @@ namespace
 
     void handle(SgVarRefExp& n)
     {
-      if (ctxRequiresScopeQualification)
+      if (USE_COMPUTED_NAME_QUALIFICATION_EXPR)
+        prnNameQual(n);
+      else if (ctxRequiresScopeQualification)
       {
         SgInitializedName& init = declOf(n);
 
@@ -372,7 +374,11 @@ namespace
     {
       SgAdaRenamingDecl& dcl = SG_DEREF(n.get_decl());
 
-      prn(scopeQual(dcl.get_scope()));
+      if (USE_COMPUTED_NAME_QUALIFICATION_EXPR)
+        prnNameQual(n);
+      else
+        prn(scopeQual(dcl.get_scope()));
+
       prn(dcl.get_name());
     }
 
@@ -437,7 +443,9 @@ namespace
 
     void handle(SgFunctionRefExp& n)
     {
-      if (SgScopeStatement* dclscope = assumedDeclarativeScope(n))
+      if (USE_COMPUTED_NAME_QUALIFICATION_EXPR)
+        prnNameQual(n);
+      else if (SgScopeStatement* dclscope = assumedDeclarativeScope(n))
         prn(scopeQual(dclscope));
 
       prn(nameOf(n));
@@ -447,7 +455,11 @@ namespace
     {
       SgAdaTaskSpecDecl& tskdcl = SG_DEREF(n.get_decl());
 
-      prn(scopeQual(tskdcl.get_scope()));
+      if (USE_COMPUTED_NAME_QUALIFICATION_EXPR)
+        prnNameQual(n);
+      else
+        prn(scopeQual(tskdcl.get_scope()));
+
       prn(tskdcl.get_name());
     }
 
@@ -462,7 +474,7 @@ namespace
       SgConstructorInitializer* init = n.get_constructor_args();
 
       prn("new");
-      type(n.get_specified_type());
+      type(n, n.get_specified_type());
 
       if (init) { prn("'"); expr(init); }
     }
@@ -488,9 +500,9 @@ namespace
       expr(exp);
     }
 
-    void type(SgType* t)
+    void type(const SgExpression& ref, SgType* t)
     {
-      unparser.unparseType(t, info);
+      unparser.unparseType(ref, t, info);
     }
 
     Unparse_Ada&    unparser;
@@ -624,11 +636,19 @@ void Unparse_Ada::unparseLanguageSpecificExpression(SgExpression* expr, SgUnpars
 
 void Unparse_Ada::unparseExpression(SgExpression* n, SgUnparse_Info& info)
 {
-  const bool withScopeQual = info.get_current_scope() != nullptr;
+  const bool    withScopeQual = info.get_current_scope() != nullptr;
+  SgNode* const currentReferenceNode = info.get_reference_node_for_qualification();
+
+  // set the reference node, unless the unparser is already in type mode
+  if (&nameQualificationMap() == &SgNode::get_globalQualifiedNameMapForNames())
+    info.set_reference_node_for_qualification(n);
 
   AdaExprUnparser exprUnparser{*this, info, std::cerr, false /* scope qual, will be passed to expr(...) */};
 
   exprUnparser.expr(n, withScopeQual);
+
+  // restore reference node
+  info.set_reference_node_for_qualification(currentReferenceNode);
 }
 
 void Unparse_Ada::unparseExprListExp(SgExprListExp* n, SgUnparse_Info& info, std::string sep)

@@ -1559,5 +1559,25 @@ namespace sg
     (parent.*setter)(&child);
     child.set_parent(&parent);
   }
+
+  /// returns the same node \ref n upcasted to its base type
+  /// \note useful for calling an overloaded function
+  /// \{
+  template <class SageNode>
+  typename SageNode::base_node_type&
+  asBaseType(SageNode& n) { return n; }
+
+  template <class SageNode>
+  const typename SageNode::base_node_type&
+  asBaseType(const SageNode& n) { return n; }
+
+  template <class SageNode>
+  typename SageNode::base_node_type*
+  asBaseType(SageNode* n) { return n; }
+
+  template <class SageNode>
+  const typename SageNode::base_node_type*
+  asBaseType(const SageNode* n) { return n; }
+  /// \}
 }
 #endif /* _SAGEGENERIC_H */

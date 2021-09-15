@@ -29,7 +29,8 @@ Unparse_Ada::Unparse_Ada(Unparser* unp, std::string fname)
   visible_scopes(),
   use_scopes(),
   renamed_scopes(),
-  scope_state(1, ScopeStackEntry{})
+  scope_state(1, ScopeStackEntry{}),
+  currentNameQualificationMap(&SgNode::get_globalQualifiedNameMapForNames())
 {
   // Nothing to do here!
 }
@@ -47,6 +48,8 @@ Unparse_Ada::unparseAdaFile(SgSourceFile* sourcefile, SgUnparse_Info& info)
 
 namespace
 {
+  constexpr bool USE_COMPUTED_NAME_QUALIFICATION_STMT = true;
+
   inline
   auto logTrace() -> decltype(Rose::Diagnostics::mlog[Sawyer::Message::TRACE])
   {
@@ -99,6 +102,14 @@ namespace
       //~ SgScopeStatement* oldScope;
   };
 
+  SgInitializedName& onlyVariable(SgVariableDeclaration& n)
+  {
+    SgInitializedNamePtrList& lst = n.get_variables();
+
+    ROSE_ASSERT(lst.size() == 1);
+    return SG_DEREF(lst[0]);
+  }
+
   SgVariableSymbol& symOf(const SgVarRefExp& n)
   {
     return SG_DEREF(n.get_symbol());
@@ -121,6 +132,7 @@ namespace
     return declOf(symOf(n));
   }
 
+/*
   inline
   SgVariableDeclaration& declOf(const SgVariableSymbol& n)
   {
@@ -134,6 +146,7 @@ namespace
   {
     return declOf(symOf(n));
   }
+*/
 
   inline
   SgAdaRenamingDecl& declOf(const SgAdaRenamingRefExp& n)
@@ -189,7 +202,7 @@ namespace
     if (const SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(&n))
       return unitRefName(SG_DEREF(gendcl->get_declaration()));
 
-    ROSE_ABORT();
+    SG_UNEXPECTED_NODE(n);
   }
 
   inline
@@ -214,11 +227,6 @@ namespace
   const std::string COMMA_SEP = ", ";
   const std::string STMT_SEP = ";\n";
   const std::string PARAM_SEP = "; ";
-
-  bool isAdaFunction(SgFunctionType& ty)
-  {
-    return isSgTypeVoid(ty.get_return_type()) == nullptr;
-  }
 
   SgExpression* underlyingExpr(SgStatement* s)
   {
@@ -298,7 +306,7 @@ namespace
       prn(": ");
       unparseModifiers(*this, n);
 
-      unparser.unparseType(primary.get_type(), info);
+      unparser.unparseType(primary, primary.get_type(), info);
 
       if (SgInitializer* init = primary.get_initializer())
       {
@@ -375,7 +383,7 @@ namespace
 
   struct LabelSyntax : sg::DispatchHandler<std::pair<std::string, std::string> >
   {
-    typedef sg::DispatchHandler<std::pair<std::string, std::string> > base;
+    using base = sg::DispatchHandler<std::pair<std::string, std::string> >;
 
     explicit
     LabelSyntax(const std::string& labelname)
@@ -496,18 +504,18 @@ namespace
   };
 
   ImportedUnitResult
-  importedUnit(const SgExpression* n, const SgImportStatement& impdcl)
+  importedUnit(const SgExpression& n, const SgImportStatement& impdcl)
   {
-    return sg::dispatch(ImportedUnit{ impdcl }, n);
+    return sg::dispatch(ImportedUnit{ impdcl }, &n);
   }
 
-  ImportedUnitResult
-  importedUnit(const SgImportStatement& n)
+  const SgExpression&
+  importedElement(const SgImportStatement& n)
   {
     const SgExpressionPtrList& lst = n.get_import_list();
     ROSE_ASSERT(lst.size() == 1);
 
-    return importedUnit(lst.back(), n);
+    return SG_DEREF(lst.back());
   }
 
   const SgScopeStatement*
@@ -583,7 +591,7 @@ namespace
 
     void handle(const SgImportStatement& n)
     {
-      ImportedUnitResult imported = importedUnit(n);
+      ImportedUnitResult imported = importedUnit(importedElement(n), n);
 
       usepkg(imported.name(), imported.decl());
     }
@@ -608,9 +616,14 @@ namespace
     template <class ForwardIterator>
     void list(ForwardIterator aa, ForwardIterator zz, bool hasPrivateSection = false);
 
-    std::string qual(const std::string& scopeprefix, std::string name);
-
     void handleBasicBlock(SgBasicBlock& n, bool functionbody = false);
+
+    // \todo use const std::string& as return type as soon as the old name qualification
+    //       has been phased out.
+    std::string getQualification(const SgNode& n, SgScopeStatement* scope);
+
+    // prints name qualification
+    void prnNameQual(const SgNode& n, SgScopeStatement* scope);
 
     void handleBasicBlock(SgBasicBlock* n, bool functionbody = false)
     {
@@ -812,7 +825,7 @@ namespace
 
     void handle(SgAdaPackageSpecDecl& n)
     {
-      const std::string pkgqual = scopeQual(n.get_scope());
+      const std::string& pkgqual = getQualification(n, n.get_scope());
 
       prn("package ");
       prn(pkgqual);
@@ -948,13 +961,13 @@ namespace
       SgSymbol*            orig     = n.get_renamed();
       RenamingSyntaxResult renamed  = renamingSyntax(orig);
       std::string          newName  = n.get_name();
-      std::string          origName = qual(scopeQual(orig->get_scope()), renamed.renamedName());
 
       prn(renamed.prefixSyntax());
       prn(newName);
       prn(renamed.infixSyntax());
       prn(" renames ");
-      prn(origName);
+      prnNameQual(n, orig->get_scope());
+      prn(renamed.renamedName());
       prn(STMT_SEP);
 
       if (renamed.body())
@@ -965,14 +978,12 @@ namespace
     {
       UseClauseSyntaxResult useSyntax = useClauseSyntax(n.get_declaration());
       SgScopeStatement*     origScope = useSyntax.decl().get_scope();
-      std::string           useName   = qual(scopeQual(origScope), useSyntax.name());
 
       prn("use ");
       prn(useSyntax.keyword());
-      prn(useName);
+      prnNameQual(n, origScope);
+      prn(useSyntax.name());
       prn(STMT_SEP);
-
-      //~ unparser.addUsedScope(bodyOf(useSyntax));
     }
 
     void handle(SgTypedefDeclaration& n)
@@ -999,7 +1010,7 @@ namespace
       modifiers(n);
       prn(declwords.second);
       prn(" ");
-      type(n.get_base_type());
+      type(n, n.get_base_type());
 
       if (requiresPrivate)
         prn(" private");
@@ -1027,7 +1038,8 @@ namespace
       prn(": ");
       unparseModifiers(*this, n);
 
-      type(primary.get_type());
+      type(primary, primary.get_type());
+
       expr_opt(primary.get_initializer(), " := ");
       prn(STMT_SEP);
     }
@@ -1128,10 +1140,8 @@ namespace
       SgStatementPtrList&    stmts = n.get_init_stmt();
       ROSE_ASSERT(stmts.size() == 1);
 
-      SgVariableDeclaration& dcl = SG_ASSERT_TYPE(SgVariableDeclaration, SG_DEREF(stmts[0]));
-      ROSE_ASSERT(dcl.get_variables().size() == 1);
-
-      SgInitializedName&     ini = SG_DEREF(dcl.get_variables()[0]);
+      SgVariableDeclaration& dcl = SG_DEREF(isSgVariableDeclaration(stmts[0]));
+      SgInitializedName&     ini = onlyVariable(dcl);
 
       prn(ini.get_name());
       prn(" in ");
@@ -1230,12 +1240,13 @@ namespace
 
     void handle(SgImportStatement& n)
     {
-      ImportedUnitResult imported = importedUnit(n);
-      SgScopeStatement*  scope    = imported.decl().get_scope();
-      std::string        fullName = qual(scopeQual(scope), imported.name());
+      const SgExpression& elem     = importedElement(n);
+      ImportedUnitResult  imported = importedUnit(elem, n);
+      SgScopeStatement*   scope    = imported.decl().get_scope();
 
       prn("with ");
-      prn(fullName);
+      prnNameQual(elem, scope);
+      prn(imported.name());
       prn(STMT_SEP);
 
       if (const SgAdaRenamingDecl* rendcl = imported.renamingDecl())
@@ -1328,7 +1339,7 @@ namespace
       SgBasicBlock& blk = SG_DEREF(n.get_components());
 
       prn("for ");
-      type(n.get_recordType());
+      type(n, n.get_recordType());
       prn(" use record\n");
       expr_opt(n.get_alignment(), "at mod ", STMT_SEP);
 
@@ -1371,7 +1382,7 @@ namespace
       SgExprListExp& components = SG_DEREF(n.get_components());
 
       prn("for ");
-      type(n.get_enumType());
+      type(n, n.get_enumType());
       prn(" use (");
       enuminiList(components.get_expressions());
       prn(")");
@@ -1406,11 +1417,6 @@ namespace
       prn(STMT_SEP);
     }
 
-
-
-    //~ ScopePath pathToGlobal(SgStatement& n);
-    //~ std::string recoverScopeName(SgLocatedNode& n);
-
     std::string scopeQual(SgScopeStatement& remote);
 
     std::string scopeQual(SgScopeStatement* remote)
@@ -1423,7 +1429,7 @@ namespace
       SgClassDeclaration& decl   = SG_DEREF(parentType.get_base_class());
 
       prn(" new ");
-      prn(scopeQual(decl.get_scope()));
+      prnNameQual(parentType, decl.get_scope());
       prn(decl.get_name());
       prn(" with");
     }
@@ -1571,13 +1577,11 @@ namespace
 
     void handle(SgCatchOptionStmt& n)
     {
-      prn("when ");
-
       SgVariableDeclaration&    dcl   = SG_DEREF(n.get_condition());
-      SgInitializedNamePtrList& vars  = dcl.get_variables();
-      ROSE_ASSERT(vars.size() == 1);
-      SgInitializedName&        exvar = SG_DEREF(vars[0]);
+      SgInitializedName&        exvar = onlyVariable(dcl);
       std::string               name  = exvar.get_name();
+
+      prn("when ");
 
       if (name.size())
       {
@@ -1585,7 +1589,7 @@ namespace
         prn(": ");
       }
 
-      type(exvar.get_type());
+      type(exvar, exvar.get_type());
       prn(" =>\n");
 
       stmt(n.get_body());
@@ -1604,8 +1608,7 @@ namespace
 
     void handle(SgFunctionDeclaration& n)
     {
-      SgFunctionType& ty      = SG_DEREF(n.get_type());
-      const bool      isFunc  = isAdaFunction(ty);
+      const bool      isFunc  = si::ada::isFunction(n.get_type());
       std::string     keyword = isFunc ? "function" : "procedure";
 
       if (n.get_declarationModifier().isOverride())
@@ -1640,9 +1643,9 @@ namespace
       prn(postfix_opt);
     }
 
-    void type(SgType* t)
+    void type(const SgLocatedNode& ref, SgType* t)
     {
-      unparser.unparseType(t, info);
+      unparser.unparseType(ref, t, info);
     }
 
     void operator()(SgStatement* s)
@@ -1658,6 +1661,31 @@ namespace
     bool                              publicMode;
     const SgAdaDiscriminatedTypeDecl* pendingDiscriminants;
   };
+
+  std::string
+  AdaStatementUnparser::getQualification(const SgNode& n, SgScopeStatement* scope)
+  {
+    static const std::string NOQUAL;
+
+    if (USE_COMPUTED_NAME_QUALIFICATION_STMT)
+    {
+      using NodeQualMap = std::map<SgNode*, std::string>;
+      using Iterator    = NodeQualMap::const_iterator;
+
+      const NodeQualMap& nameQualMap = unparser.nameQualificationMap();
+      const Iterator     pos = nameQualMap.find(const_cast<SgNode*>(&n));
+
+      return (pos != nameQualMap.end()) ? pos->second : NOQUAL;
+    }
+
+    return scopeQual(scope);
+  }
+
+  void AdaStatementUnparser::prnNameQual(const SgNode& n, SgScopeStatement* scope)
+  {
+    prn(getQualification(n, scope));
+  }
+
 
   void AdaStatementUnparser::handle(SgStatement& n)
   {
@@ -1766,7 +1794,7 @@ namespace
     if (aa != zz)
     {
       prn("(");
-      std::for_each(aa, zz, AdaParamUnparser(unparser, info, os));
+      std::for_each(aa, zz, AdaParamUnparser{unparser, info, os});
       prn(")");
     }
   }
@@ -1821,7 +1849,7 @@ namespace
     if (hasReturn)
     {
       prn(" return");
-      type(n.get_orig_return_type());
+      type(n, n.get_orig_return_type());
     }
 
     // MS 12/22/20 : if this is actually a function renaming declaration,
@@ -1911,14 +1939,6 @@ namespace
     }
   };
 
-  std::string
-  AdaStatementUnparser::qual(const std::string& scopeName, std::string name)
-  {
-    if (scopeName.size())
-      name.insert(0, scopeName);
-
-    return name;
-  }
 
   std::pair<std::string, std::string>
   AdaStatementUnparser::typedeclSyntax(SgType* n)
@@ -2272,10 +2292,31 @@ Unparse_Ada::computeScopeQual(const SgScopeStatement& local, const SgScopeStatem
 void
 Unparse_Ada::unparseStatement(SgStatement* stmt, SgUnparse_Info& info)
 {
+  SgNode* const currentReferenceNode = info.get_reference_node_for_qualification();
+
+  // set the reference node, unless the unparser is already in type mode
+  if (&nameQualificationMap() == &SgNode::get_globalQualifiedNameMapForNames())
+    info.set_reference_node_for_qualification(stmt);
+
   AdaStatementUnparser adaUnparser{*this, info, std::cerr};
 
   adaUnparser.stmt(stmt);
+
+  // restore reference node
+  info.set_reference_node_for_qualification(currentReferenceNode);
 }
+
+const Unparse_Ada::NameQualMap&
+Unparse_Ada::nameQualificationMap() const
+{
+  return SG_DEREF(currentNameQualificationMap);
+}
+
+void Unparse_Ada::withNameQualificationMap(const NameQualMap& m)
+{
+  currentNameQualificationMap = &m;
+}
+
 
 void
 Unparse_Ada::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info& info)

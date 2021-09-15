@@ -103,6 +103,20 @@ namespace ada
   SgAdaDiscriminatedTypeDecl* getAdaDiscriminatedTypeDecl(const SgDeclarationStatement* n);
   /// @}
 
+  /// returns a package symbol if the declaration \ref n renames a package
+  /// returns nullptr otherwise
+  /// @{
+  SgAdaPackageSymbol* renamedPackageSymbol(const SgAdaRenamingDecl& n);
+  SgAdaPackageSymbol* renamedPackageSymbol(const SgAdaRenamingDecl* n);
+  /// @}
+
+
+  /// returns true iff \ref ty refers to a function type (as opposed to procedure)
+  /// @{
+  bool isFunction(const SgFunctionType& ty);
+  bool isFunction(const SgFunctionType* ty);
+  /// @}
+
   //
   // Ada Variant processing
 
