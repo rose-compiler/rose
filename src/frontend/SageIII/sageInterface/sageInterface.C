@@ -1527,6 +1527,8 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
           case V_SgMemberFunctionDeclaration:
           case V_SgTemplateInstantiationFunctionDecl:
           case V_SgTemplateInstantiationMemberFunctionDecl:
+          case V_SgAdaFunctionRenamingDecl:
+          case V_SgAdaEntryDecl:
                name = isSgFunctionDeclaration(declaration)->get_name().str();
                break;
 
@@ -1539,9 +1541,17 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
              {
             // Parents should be set prior to calling these functions (if not we might have to implement that case)
                ROSE_ASSERT(declaration->get_parent() != NULL);
-               SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(declaration->get_parent());
-               ROSE_ASSERT(functionDeclaration != NULL);
-               name = get_name(functionDeclaration);
+
+               if (SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(declaration->get_parent()))
+               {
+                 name = get_name(functionDeclaration);
+               }
+               else if (SgScopeStatement* scopeStmt = isSgScopeStatement(declaration->get_parent()))
+               {
+                 name = get_name(scopeStmt);
+               }
+               else ROSE_ABORT();
+
                name += "_parameter_list_";
                break;
              }
@@ -1886,12 +1896,6 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
               break;
             }
 
-          case V_SgAdaComponentClause:
-            {
-              name = "_ada_component_clause_";
-              break;
-            }
-
           case V_SgAdaFormalTypeDecl:
              {
               name = "_ada_formal_type_decl_" + genericGetName(isSgAdaFormalTypeDecl(declaration));
@@ -1930,6 +1934,73 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
                 name = "_incomplete_Ada_discriminated_type_";
               }
 
+              break;
+            }
+
+            case V_SgAdaLengthClause:
+            {
+              name = "_ada_length_clause_";
+              break;
+            }
+
+            case V_SgAdaRecordRepresentationClause:
+            {
+              name = "_ada_record_representation_clause_";
+              break;
+            }
+
+            case V_SgAdaEnumRepresentationClause:
+            {
+              name = "_ada_enum_representation_clause_";
+              break;
+            }
+
+            case V_SgAdaComponentClause:
+            {
+              name = "_ada_component_clause_";
+              break;
+            }
+
+            case V_SgAdaTaskTypeDecl:
+            {
+              name = genericGetName(isSgAdaTaskTypeDecl(declaration));
+              break;
+            }
+
+            case V_SgAdaTaskBodyDecl:
+            {
+              name = genericGetName(isSgAdaTaskBodyDecl(declaration));
+              break;
+            }
+
+            case V_SgAdaRenamingDecl:
+            {
+              name = genericGetName(isSgAdaRenamingDecl(declaration));
+              break;
+            }
+
+            case V_SgAdaTaskSpecDecl:
+            {
+              name = genericGetName(isSgAdaTaskSpecDecl(declaration));
+              break;
+            }
+
+            case V_SgAdaGenericInstanceDecl:
+            {
+              name = genericGetName(isSgAdaGenericInstanceDecl(declaration));
+              break;
+            }
+
+            case V_SgAdaVariantFieldDecl:
+            {
+              const SgAdaVariantFieldDecl* variantDecl = isSgAdaVariantFieldDecl(declaration);
+              ROSE_ASSERT(variantDecl);
+
+              const SgInitializedNamePtrList& lst = variantDecl->get_variables();
+
+              ROSE_ASSERT(lst.size() < 2);
+
+              name = (lst.size() ? std::string{lst[0]->get_name()} : std::string{"_ada_null_variant"});
               break;
             }
 
@@ -1989,6 +2060,9 @@ SageInterface::get_name ( const SgScopeStatement* scope )
 
           case V_SgAdaPackageSpec:
           case V_SgAdaPackageBody:
+          case V_SgAdaTaskSpec:
+          case V_SgAdaTaskBody:
+          case V_SgAdaGenericDefn:
           case V_SgAdaAcceptStmt:
           case V_SgJovialForThenStatement: //Rasmussen: Jovial for statement
           case V_SgMatlabForStatement: //SK: Matlab for statement
@@ -11313,7 +11387,7 @@ std::set<SgLabelStatement*> SageInterface::findUnusedLabels (SgNode* top)
     // std::cout << "Keeping used label " << (*i)->get_label().str() << std::endl;
     unused.erase(*i);
   }
-  
+
   return unused;
 }
 

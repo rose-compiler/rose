@@ -844,6 +844,20 @@ namespace
 
   struct AstSanityCheck : AstSimpleProcessing
   {
+    void checkDecl(SgDeclarationStatement* dcl)
+    {
+      if (!dcl) return;
+
+      std::string s = si::get_name(dcl);
+    }
+
+    void checkScope(SgScopeStatement* scope)
+    {
+      if (!scope) return;
+
+      std::string s = si::get_name(scope);
+    }
+
     void visit(SgNode* sageNode) ROSE_OVERRIDE
     {
       SgLocatedNode* n = isSgLocatedNode(sageNode);
@@ -887,6 +901,8 @@ namespace
       //~ checkType(isSgExpression(n));
       //~ checkType(isSgInitializedName(n));
       //~ checkExpr(isSgAdaAttributeExp(n));
+      checkDecl(isSgDeclarationStatement(n));
+      checkScope(isSgScopeStatement(n));
     }
   };
 
