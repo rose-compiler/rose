@@ -6,8 +6,12 @@ static const char *description =
 
 #include <Rose/CommandLine.h>
 #include <SqlDatabase.h>                                // rose
+#include <rose_getline.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Message.h>
+#include <cstdio>
+#include <boost/algorithm/string/trim.hpp>
+#include <boost/regex.hpp>
 
 #ifdef __linux__
 #include <sys/statvfs.h>
@@ -109,6 +113,19 @@ slaveName() {
             std::string domainName = buf;
             if (!domainName.empty() && domainName != "(none)")
                 hostName += "." + std::string(buf);
+        }
+    }
+
+    // If we're on an AWS machine, the host name is the internal IP address. In order to connect to the machine
+    // we need its public IP instead
+    boost::regex awsHostnameRe("ip(-[1-9][0-9]*){4}");
+    if (boost::regex_match(hostName, awsHostnameRe)) {
+        if (FILE *f = popen("curl http://169.254.169.254/latest/meta-data/public-ipv4", "r")) {
+            std::string line = rose_getline(f);
+            pclose(f);
+            boost::trim(line);
+            if (!line.empty())
+                hostName = line;
         }
     }
 
