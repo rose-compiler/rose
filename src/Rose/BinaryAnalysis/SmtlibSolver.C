@@ -1256,10 +1256,26 @@ SmtlibSolver::parseEvidence() {
         }
     }
 
-    // Parse the evidence
+    // Parse the evidence.
+    //   z3 4.8.7 returns (model F1 F2 ...)
+    //   z3 4.8.12 returns (F1 F2 ...)
+    // where Fi are of the form:
+    //   (define-fun V () (_ BitVec N) #xXXX)
+    // where V is the ROSE variable name, e.g., "v100")
+    // and N is the size in bits
+    // and X are hexadecimal characters (lower-case x is a literal "x")
     BOOST_FOREACH (const SExpr::Ptr &sexpr, parsedOutput_) {
-        if (sexpr->children().size() > 0 && sexpr->children()[0]->name() == "model") {
-            for (size_t i = 1; i < sexpr->children().size(); ++i) {
+        Sawyer::Optional<size_t> foundEvidenceStartingAt;
+        if (sexpr->children().size() > 0) {
+            if (sexpr->children()[0]->name() == "model") {
+                foundEvidenceStartingAt = 1;
+            } else {
+                foundEvidenceStartingAt = 0;
+            }
+        }
+
+        if (foundEvidenceStartingAt) {
+            for (size_t i = *foundEvidenceStartingAt; i < sexpr->children().size(); ++i) {
                 const SExpr::Ptr &elmt = sexpr->children()[i];
 
                 // e.g., (define-fun v7 () (_ BitVec 32) #xdeadbeef)
