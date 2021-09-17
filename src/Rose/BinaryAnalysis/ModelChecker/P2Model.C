@@ -1107,7 +1107,10 @@ SemanticCallbacks::createDispatcher(const BS::RiscOperators::Ptr &ops) {
 
 SmtSolver::Ptr
 SemanticCallbacks::createSolver() {
-    auto solver = SmtSolver::instance("best");
+    std::string solverName = Rose::CommandLine::genericSwitchArgs.smtSolver;
+    if (solverName.empty() || "none" == solverName)
+        solverName = "best";
+    auto solver = SmtSolver::instance(solverName);
     solver->memoization(settings_.solverMemoization);
     if (!rose_isnan(mcSettings()->solverTimeout))
         solver->timeout(boost::chrono::duration<double>(mcSettings()->solverTimeout));
