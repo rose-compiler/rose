@@ -1234,6 +1234,7 @@ SmtlibSolver::parseEvidence() {
     requireLinkage(LM_EXECUTABLE);
     Sawyer::Stopwatch evidenceTimer;
     boost::regex varNameRe("v\\d+");
+    boost::regex cseNameRe("cse_\\d+");
 
     // If memoization is being used and we have a previous result, then use the previous result. However, we need to undo the
     // variable renaming. That is, the memoized result is in terms of renumbered variables, so we need to use the
@@ -1293,8 +1294,12 @@ SmtlibSolver::parseEvidence() {
                     // Variable
                     std::string varName = elmt->children()[1]->name();
                     if (!boost::regex_match(varName, varNameRe)) {
-                        mlog[ERROR] <<"malformed variable name \"" <<StringUtility::cEscape(varName) <<"\" in evidence: ";
-                        printSExpression(mlog[ERROR], elmt);
+                        if (!boost::regex_match(varName, cseNameRe)) {
+                            if (mlog[WARN]) {
+                                mlog[WARN] <<"malformed variable name \"" <<StringUtility::cEscape(varName) <<"\" in evidence: ";
+                                printSExpression(mlog[WARN], elmt);
+                            }
+                        }
                         continue;
                     }
                     size_t varId = boost::lexical_cast<size_t>(varName.substr(1));
