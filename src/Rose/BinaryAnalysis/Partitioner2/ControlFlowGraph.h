@@ -108,11 +108,11 @@ public:
     /** Property: basic block.
      *
      *  Pointer to a basic block.  This property is available for @ref V_BASIC_BLOCK or @ref V_USER_DEFINED vertices. A @ref
-     *  V_BASIC_BLOCK vertex with a null @ref bblock property is called a "placeholder".
+     *  V_BASIC_BLOCK vertex with a null @ref bblock property is called a "placeholder". Other types of vertices are not
+     *  allowed to set a basic block, and will always return a null pointer.
      *
      * @{ */
     const BasicBlock::Ptr& bblock() const {
-        ASSERT_require(V_BASIC_BLOCK==type_ || V_USER_DEFINED==type_);
         return bblock_;
     }
     void bblock(const BasicBlock::Ptr &bb) {
