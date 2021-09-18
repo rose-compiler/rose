@@ -28,6 +28,7 @@ namespace CodeThorn {
 
   bool AnalysisReporting::isSystemHeaderLabel(CodeThorn::CTAnalysis* analyzer, Label lab) {
     ROSE_ASSERT(analyzer->getLabeler());
+    ROSE_ASSERT(lab.isValid());
     SgNode* node=analyzer->getLabeler()->getNode(lab);
     if(SgLocatedNode* locNode=isSgLocatedNode(node)) {
       return SageInterface::insideSystemHeader(locNode);
@@ -114,6 +115,7 @@ namespace CodeThorn {
       stringstream locationsCSVFileData;
       for(auto lab : unreachable) {
         ROSE_ASSERT(analyzer->getLabeler());
+	ROSE_ASSERT(lab.isValid());
         SgNode* node=analyzer->getLabeler()->getNode(lab);
         if(node) {
           //cout<<lab.toString()<<","<<value<<endl;
@@ -152,6 +154,7 @@ namespace CodeThorn {
           continue;
         }
         ROSE_ASSERT(analyzer->getLabeler());
+	ROSE_ASSERT(lab.isValid());
         SgNode* node=analyzer->getLabeler()->getNode(lab);
         SgNode* parent=node->get_parent();
         if(isSgWhileStmt(parent))
@@ -311,6 +314,7 @@ namespace CodeThorn {
       case INCONSISTENT: nodeColor="orchid1";break;
       case UNREACHABLE: nodeColor="gray";break;
       }
+      ROSE_ASSERT(entryLabel.isValid());
       std::string functionName=SgNodeHelper::getFunctionName(analyzer->getLabeler()->getNode(entryLabel));
       std::string dotFunctionName="label=\""+entryLabel.toString()+":"+functionName+"\"";
       //if(nodeColor!="gray")
@@ -415,6 +419,7 @@ namespace CodeThorn {
       case INCONSISTENT: csvEntryType="inconsistent";numInconsistentFunctions++;break;
       case UNREACHABLE: csvEntryType="dead";numUnreachableFunctions++;break;
       }
+      ROSE_ASSERT(entryLabel.isValid());
       SgNode* node=analyzer->getLabeler()->getNode(entryLabel);
       string fileName=SgNodeHelper::sourceFilenameToString(node);
       std::string functionName=SgNodeHelper::getFunctionName(node);
