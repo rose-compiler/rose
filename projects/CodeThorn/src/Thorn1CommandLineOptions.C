@@ -78,6 +78,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     //    ("external-function-calls-csv",po::value< string >(&ctOpt.externalFunctionCallsCSVFileName), "write a list of all function calls to external functions encountered during the program analysis to a CSV file.")
     //("program-stats",po::value< bool >(&ctOpt.programStats)->default_value(false)->implicit_value(true),"print some basic program statistics about used language constructs.")
     ("status", po::value< bool >(&ctOpt.status)->default_value(false)->implicit_value(true), "Show status messages.")
+    ("run-rose-tests",po::value< bool >(&ctOpt.runRoseAstChecks)->default_value(false)->implicit_value(true), "Run ROSE AST tests.")
     ("internal-checks", po::value< bool >(&ctOpt.internalChecks)->default_value(false)->implicit_value(true), "Run internal consistency checks (without input program).")
     ("report-file-path",po::value< string >(&ctOpt.reportFilePath),"Sets file path for all reports.")
     ("file-path-prefix-to-remove", po::value< string >(&ctOpt.filePathPrefixToRemove))
