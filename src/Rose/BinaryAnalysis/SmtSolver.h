@@ -88,24 +88,21 @@ public:
      *  Solver statistics get accumulted into the class statistics only when the solver is destroyed or the solver's @ref
      *  resetStatistics method is invoked. */
     struct Stats {
-        size_t ncalls;                                  /**< Number of times satisfiable() was called. */
-        size_t input_size;                              /**< Bytes of input generated for satisfiable(). */
-        size_t output_size;                             /**< Amount of output produced by the SMT solver. */
-        size_t memoizationHits;                         /**< Number of times memoization supplied a result. */
-        size_t nSolversCreated;                         /**< Number of solvers created. Only for class statistics. */
-        size_t nSolversDestroyed;                       /**< Number of solvers destroyed. Only for class statistics. */
-        double prepareTime;                             /**< Time spent creating assertions before solving. */
-        double solveTime;                               /**< Seconds spent in solver's solve function. */
-        double evidenceTime;                            /**< Seconds to retrieve evidence of satisfiability. */
-        size_t nSatisfied;                              /**< Number of times the solver returned "satisified". */
-        size_t nUnsatisfied;                            /**< Number of times the solver returned "unsatisfied". */
-        size_t nUnknown;                                /**< Number of times the solver returned "unknown". */
-        // Remember to add all data members to resetStatistics()
+        size_t ncalls = 0;                              /**< Number of times satisfiable() was called. */
+        size_t input_size = 0;                          /**< Bytes of input generated for satisfiable(). */
+        size_t output_size = 0;                         /**< Amount of output produced by the SMT solver. */
+        size_t memoizationHits = 0;                     /**< Number of times memoization supplied a result. */
+        size_t nSolversCreated = 0;                     /**< Number of solvers created. Only for class statistics. */
+        size_t nSolversDestroyed = 0;                   /**< Number of solvers destroyed. Only for class statistics. */
+        double prepareTime = 0.0;                       /**< Time spent creating assertions before solving. */
+        double solveTime = 0.0;                         /**< Seconds spent in solver's solve function. */
+        double evidenceTime = 0.0;                      /**< Seconds to retrieve evidence of satisfiability. */
+        size_t nSatisfied = 0;                          /**< Number of times the solver returned "satisified". */
+        size_t nUnsatisfied = 0;                        /**< Number of times the solver returned "unsatisfied". */
+        size_t nUnknown = 0;                            /**< Number of times the solver returned "unknown". */
+        // Remember to add all data members to SmtSolver::resetStatistics() and SmtSolver::Stats::print()
 
-        Stats()
-            : ncalls(0), input_size(0), output_size(0), memoizationHits(0), nSolversCreated(0), nSolversDestroyed(0),
-              prepareTime(0.0), solveTime(0.0), evidenceTime(0.0), nSatisfied(0), nUnsatisfied(0), nUnknown(0) {
-        }
+        void print(std::ostream&, const std::string &prefix = "") const;
     };
 
     /** RAII guard for solver stack.
