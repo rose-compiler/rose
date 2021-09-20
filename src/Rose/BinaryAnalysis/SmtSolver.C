@@ -66,6 +66,20 @@ SmtSolver::Stats SmtSolver::classStats;
 boost::mutex SmtSolver::classStatsMutex;
 
 void
+SmtSolver::Stats::print(std::ostream &out, const std::string &prefix) const {
+    out <<prefix <<"number of calls to solver:              " <<ncalls <<"\n";
+    out <<prefix <<"  satisfiable checks:                   " <<nSatisfied <<"\n";
+    out <<prefix <<"  unsatisfiable checks:                 " <<nUnsatisfied <<"\n";
+    out <<prefix <<"  unknown and timeout checks:           " <<nUnknown <<"\n";
+    out <<prefix <<"number of memoized results:             " <<memoizationHits <<"\n";
+    out <<prefix <<"number of solvers created:              " <<nSolversCreated <<"\n";
+    out <<prefix <<"number of solvers not counted:          " <<(nSolversCreated - nSolversDestroyed) <<"\n";
+    out <<prefix <<"time preparing to call the solver:      " <<prepareTime <<" seconds\n";
+    out <<prefix <<"time spent in the solver:               " <<solveTime <<" seconds\n";
+    out <<prefix <<"time recovering evidence:               " <<evidenceTime <<" seconds\n";
+}
+
+void
 SmtSolver::init(unsigned linkages) {
     linkage_ = bestLinkage(linkages);
     stack_.push_back(std::vector<SymbolicExpr::Ptr>());

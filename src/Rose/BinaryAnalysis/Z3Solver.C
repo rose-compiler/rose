@@ -1163,7 +1163,7 @@ Z3Solver::parseEvidence() {
                 continue;
 
             // There's got to be a better way to get information about a z3::expr, but I haven't found it yet.  For bit vectors, we
-            // need to know the number of bits and the value, even if the value is wider than 64 bits. Threfore, we obtain the list
+            // need to know the number of bits and the value, even if the value is wider than 64 bits. Therefore, we obtain the list
             // of all variables from above (regardless of transaction level) and try to match of the z3 variable name with the ROSE
             // variable name and obtain the type information from the ROSE variable.
             SymbolicExpr::LeafPtr var;
