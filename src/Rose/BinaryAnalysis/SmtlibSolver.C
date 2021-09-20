@@ -1281,7 +1281,7 @@ SmtlibSolver::parseEvidence() {
 
                 if (elmt->children().size() == 5 &&
                     elmt->children()[0]->name() == "define-fun" &&
-                    elmt->children()[1]->name() != "" &&
+                    boost::regex_match(elmt->children()[1]->name(), varNameRe) &&
                     elmt->children()[2]->name() == "" && elmt->children()[2]->children().size() == 0 &&
                     elmt->children()[3]->children().size() == 3 &&
                     elmt->children()[3]->children()[0]->name() == "_" &&
@@ -1293,15 +1293,6 @@ SmtlibSolver::parseEvidence() {
 
                     // Variable
                     std::string varName = elmt->children()[1]->name();
-                    if (!boost::regex_match(varName, varNameRe)) {
-                        if (!boost::regex_match(varName, cseNameRe)) {
-                            if (mlog[WARN]) {
-                                mlog[WARN] <<"malformed variable name \"" <<StringUtility::cEscape(varName) <<"\" in evidence: ";
-                                printSExpression(mlog[WARN], elmt);
-                            }
-                        }
-                        continue;
-                    }
                     size_t varId = boost::lexical_cast<size_t>(varName.substr(1));
                     SymbolicExpr::Ptr var = SymbolicExpr::makeIntegerVariable(nBits, varId);
 
@@ -1328,10 +1319,12 @@ SmtlibSolver::parseEvidence() {
 
                     // Ignored
 
+#if 0 // [Robb Matzke 2021-09-20]: we get lots of these from apparently internal Z3 variables and functions, so silently igore
                 } else if (mlog[WARN]) {
                     mlog[WARN] <<"malformed model element ignored: ";
                     printSExpression(mlog[WARN], elmt);
                     mlog[WARN] <<"\n";
+#endif
                 }
             }
         }
