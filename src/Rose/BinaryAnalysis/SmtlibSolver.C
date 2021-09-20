@@ -1279,7 +1279,6 @@ SmtlibSolver::parseEvidence() {
             for (size_t i = *foundEvidenceStartingAt; i < sexpr->children().size(); ++i) {
                 const SExpr::Ptr &elmt = sexpr->children()[i];
 
-                // e.g., (define-fun v7 () (_ BitVec 32) #xdeadbeef)
                 if (elmt->children().size() == 5 &&
                     elmt->children()[0]->name() == "define-fun" &&
                     elmt->children()[1]->name() != "" &&
@@ -1288,6 +1287,7 @@ SmtlibSolver::parseEvidence() {
                     elmt->children()[3]->children()[0]->name() == "_" &&
                     elmt->children()[3]->children()[1]->name() == "BitVec" &&
                     elmt->children()[4]->name().substr(0, 1) == "#") {
+                    // e.g., (define-fun v7 () (_ BitVec 32) #xdeadbeef)
 
                     size_t nBits = boost::lexical_cast<size_t>(elmt->children()[3]->children()[2]->name());
 
@@ -1320,6 +1320,13 @@ SmtlibSolver::parseEvidence() {
 
                     SAWYER_MESG(mlog[DEBUG]) <<"evidence: " <<*var <<" == " <<*val <<"\n";
                     evidence.insert(var, val);
+
+                } else if (elmt->children().size() == 5 &&
+                           elmt->children()[0]->name() == "define-fun" &&
+                           boost::regex_match(elmt->children()[1]->name(), cseNameRe)) {
+                    // e.g., (define-fun cse_123 () (_ BitVec 32) (bvadd v57829 #x00002b4f))
+
+                    // Ignored
 
                 } else if (mlog[WARN]) {
                     mlog[WARN] <<"malformed model element ignored: ";
