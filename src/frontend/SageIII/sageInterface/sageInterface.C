@@ -21533,6 +21533,7 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
       case V_SgJovialDefineDeclaration:
       case V_SgJovialDirectiveStatement:
       case V_SgPragmaDeclaration:
+      case V_SgAdaLengthClause:
         break;
       default:
         {
