@@ -28,6 +28,7 @@ public:
     bool rejectUnknownInsns = true;                     /**< Reject "unknown" instructions even if semantic failure is allowed. */
     double solverTimeout = NAN;                         /**< Timeout per SMT solver call in seconds. NAN means no timeout. */
     SourceListerPtr sourceLister;                       /**< Object responsible for listing lines of a source code file. */
+    uint64_t maxSymbolicSize = 0;                       /**< If nonzero, maximum size of symbolic expressions. */
 
 public:
     Settings();
