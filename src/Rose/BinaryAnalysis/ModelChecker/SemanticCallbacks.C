@@ -115,13 +115,6 @@ SemanticCallbacks::nextCodeAddresses(const BS::RiscOperators::Ptr &ops) {
     return retval;
 }
 
-
-
-
-            
-
-
-
 } // namespace
 } // namespace
 } // namespace

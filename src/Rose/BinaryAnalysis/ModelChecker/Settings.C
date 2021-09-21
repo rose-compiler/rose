@@ -66,6 +66,12 @@ Settings::commandLineSwitches() {
                                (1.0 == maxTime ? "1 second." :
                                 (boost::format("%g seconds.") % maxTime).str()))));
 
+    sg.insert(Switch("replace-symbolic")
+              .argument("nnodes", nonNegativeIntegerParser(maxSymbolicSize))
+              .doc("Maximum size of symbolic expressions before they're replaced by a new variable. A value of zero means do "
+                   "not ever replace symbolic expressions with variables. Setting this to non-zero may make the analysis faster "
+                   "at the cost of less precision. The default is " + boost::lexical_cast<std::string>(maxSymbolicSize) + "."));
+
     sg.insert(Switch("solver-timeout")
               .argument("seconds", realNumberParser(solverTimeout))
               .doc("Specifies the maximum amount of elapsed time in seconds for each call to the SMT solver. If this time "
