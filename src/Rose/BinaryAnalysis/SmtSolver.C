@@ -67,16 +67,25 @@ boost::mutex SmtSolver::classStatsMutex;
 
 void
 SmtSolver::Stats::print(std::ostream &out, const std::string &prefix) const {
-    out <<prefix <<"number of calls to solver:              " <<ncalls <<"\n";
-    out <<prefix <<"  satisfiable checks:                   " <<nSatisfied <<"\n";
-    out <<prefix <<"  unsatisfiable checks:                 " <<nUnsatisfied <<"\n";
-    out <<prefix <<"  unknown and timeout checks:           " <<nUnknown <<"\n";
-    out <<prefix <<"number of memoized results:             " <<memoizationHits <<"\n";
-    out <<prefix <<"number of solvers created:              " <<nSolversCreated <<"\n";
-    out <<prefix <<"number of solvers not counted:          " <<(nSolversCreated - nSolversDestroyed) <<"\n";
-    out <<prefix <<"time preparing to call the solver:      " <<prepareTime <<" seconds\n";
-    out <<prefix <<"time spent in the solver:               " <<solveTime <<" seconds\n";
-    out <<prefix <<"time recovering evidence:               " <<evidenceTime <<" seconds\n";
+    auto nameValue = boost::format("%-40s %s\n");
+    auto nameTimes = boost::format("%-40s total %s, maximum %s\n");
+
+    out <<prefix <<(nameValue % "number of calls to solver:" % ncalls);
+    out <<prefix <<(nameValue % "  satisfiable checks:" % nSatisfied);
+    out <<prefix <<(nameValue % "  unsatisfiable checks:" % nUnsatisfied);
+    out <<prefix <<(nameValue % "  unknown and timeout checks:" % nUnknown);
+    out <<prefix <<(nameValue % "number of memoized results:" % memoizationHits);
+    out <<prefix <<(nameValue % "number of solvers created:" % nSolversCreated);
+    out <<prefix <<(nameValue % "number of solvers not counted:" % (nSolversCreated - nSolversDestroyed));
+    out <<prefix <<(nameTimes % "time preparing to call the solver:"
+                    % Sawyer::Stopwatch::toString(prepareTime)
+                    % Sawyer::Stopwatch::toString(longestPrepareTime));
+    out <<prefix <<(nameTimes % "time spent in the solver:"
+                    % Sawyer::Stopwatch::toString(solveTime)
+                    % Sawyer::Stopwatch::toString(longestSolveTime));
+    out <<prefix <<(nameTimes % "time recovering evidence:"
+                    % Sawyer::Stopwatch::toString(evidenceTime)
+                    % Sawyer::Stopwatch::toString(longestEvidenceTime));
 }
 
 void
@@ -230,8 +239,11 @@ SmtSolver::resetStatistics() {
     classStats.output_size += stats.output_size;
     classStats.memoizationHits += stats.memoizationHits;
     classStats.prepareTime += stats.prepareTime;
+    classStats.longestPrepareTime = std::max(classStats.longestPrepareTime, stats.longestPrepareTime);
     classStats.solveTime += stats.solveTime;
+    classStats.longestSolveTime = std::max(classStats.longestSolveTime, stats.longestSolveTime);
     classStats.evidenceTime += stats.evidenceTime;
+    classStats.longestEvidenceTime = std::max(classStats.longestEvidenceTime, stats.longestEvidenceTime);
     classStats.nSatisfied += stats.nSatisfied;
     classStats.nUnsatisfied += stats.nUnsatisfied;
     classStats.nUnknown += stats.nUnknown;
@@ -487,6 +499,7 @@ SmtSolver::checkExe() {
     ASSERT_require(status>=0);
     stats.input_size += sb.st_size;
     stats.prepareTime += prepareTimer.stop();
+    stats.longestPrepareTime = std::max(stats.longestPrepareTime, prepareTimer.report());
 
     /* Show solver input */
     if (mlog[DEBUG]) {
@@ -517,6 +530,7 @@ SmtSolver::checkExe() {
     status = pclose(r.output); r.output = NULL;
     stats.output_size += nread;
     stats.solveTime += solveTimer.stop();
+    stats.longestSolveTime = std::max(stats.longestSolveTime, solveTimer.report());
     mlog[DEBUG] <<"solver took " <<solveTimer <<"\n";
     mlog[DEBUG] <<"solver exit status = " <<status <<"\n";
     parsedOutput_ = parseSExpressions(outputText_);

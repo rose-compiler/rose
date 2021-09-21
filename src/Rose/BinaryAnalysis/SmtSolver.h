@@ -94,9 +94,12 @@ public:
         size_t memoizationHits = 0;                     /**< Number of times memoization supplied a result. */
         size_t nSolversCreated = 0;                     /**< Number of solvers created. Only for class statistics. */
         size_t nSolversDestroyed = 0;                   /**< Number of solvers destroyed. Only for class statistics. */
-        double prepareTime = 0.0;                       /**< Time spent creating assertions before solving. */
-        double solveTime = 0.0;                         /**< Seconds spent in solver's solve function. */
-        double evidenceTime = 0.0;                      /**< Seconds to retrieve evidence of satisfiability. */
+        double prepareTime = 0.0;                       /**< Total time in seconds spent creating assertions before solving. */
+        double longestPrepareTime = 0.0;                /**< Longest of times added to prepareTime. */
+        double solveTime = 0.0;                         /**< Total time in seconds spent in solver's solve function. */
+        double longestSolveTime = 0.0;                  /**< Longest of times added to the solveTime total. */
+        double evidenceTime = 0.0;                      /**< Total time in seconds to retrieve evidence of satisfiability. */
+        double longestEvidenceTime = 0.0;               /**< Longest of times added to evidenceTime. */
         size_t nSatisfied = 0;                          /**< Number of times the solver returned "satisified". */
         size_t nUnsatisfied = 0;                        /**< Number of times the solver returned "unsatisfied". */
         size_t nUnknown = 0;                            /**< Number of times the solver returned "unknown". */
