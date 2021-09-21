@@ -47,9 +47,19 @@ void
 SmtlibSolver::generateFile(std::ostream &o, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*) {
     requireLinkage(LM_EXECUTABLE);
 
+    o <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n"
+      <<"; Statistics\n"
+      <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n"
+      <<"\n"
+      <<"; number of expressions: " <<exprs.size() <<"\n"
+      <<"; size of each expression: actual / effective:\n";
+    for (const SymbolicExpr::Ptr &e: exprs)
+        o <<(boost::format(";   %9d / %-9d\n") % e->nNodesUnique() % e->nNodes());
+    o <<"\n";
+
     if (timeout_) {
         // It's not well documented. Experimentally determined to be milliseconds using Z3.
-        o <<"(set-option :timeout " <<(unsigned)::round(timeout_->count()*1000) <<")\n";
+        o <<"(set-option :timeout " <<(unsigned)::round(timeout_->count()*1000) <<")\n\n";
     }
 
     // Find all variables
@@ -1253,6 +1263,7 @@ SmtlibSolver::parseEvidence() {
                 SAWYER_MESG(mlog[DEBUG]) <<"evidence: " <<*var <<" == " <<*val <<"\n";
             }
             stats.evidenceTime += evidenceTimer.stop();
+            stats.longestEvidenceTime = std::max(stats.longestEvidenceTime, evidenceTimer.report());
             return;
         }
     }
@@ -1340,6 +1351,7 @@ SmtlibSolver::parseEvidence() {
     }
 
     stats.evidenceTime += evidenceTimer.stop();
+    stats.longestEvidenceTime = std::max(stats.longestEvidenceTime, evidenceTimer.report());
 }
 
 SymbolicExpr::Ptr

@@ -27,6 +27,37 @@ Z3Solver::availableLinkages() {
     return retval;
 }
 
+#ifdef ROSE_HAVE_Z3
+static void
+setTimeout(z3::context *ctx, const Sawyer::Optional<boost::chrono::duration<double>> &timeout) {
+    if (timeout) {
+        const unsigned nsec = ::round(timeout->count());
+
+        // Original ROSE code that worked at one time.
+        ctx->set("timeout", boost::lexical_cast<std::string>(nsec * 1000).c_str());
+
+#if 0 // [Robb Matzke 2021-09-20]: no member named `set_param` in `z3::context`
+        // stack overflow 38674049: "using `set_param("smt.timeout",1000)` works on my system for timing out during `opt.check()`
+        ctx->set_param("smt.timeout", nsec * 1000);
+#endif
+
+        // stack overflow 38674049: "I know this is an old question, but if anyone's still looking for an answer, you need
+        // `Z3_global_param_set("timeout", timeout)` and your timeout should be given as a C string.
+        Z3_global_param_set("timeout", boost::lexical_cast<std::string>(nsec * 1000).c_str());
+
+#if 0 // [Robb Matzke 2021-09-20]: no member named `set_param` in `z3::context`
+        // Github.com Z3Prover issue 2345: "I changed our code to use `z3.set_param("timeout", ...)` rather than
+        // `z3.set_param("smt.timeout", ...)` and it now seems to work!
+        z3.set_param("timeout", nsec * 1000);
+#endif
+
+        // Stack overflow 13943794: the example used ":timeout" as the name.
+        const int signedMillis = boost::numeric_cast<int>(nsec * 1000);
+        ctx->set(":timeout", signedMillis);
+    }
+}
+#endif
+
 void
 Z3Solver::reset() {
     SmtlibSolver::reset();
@@ -38,10 +69,7 @@ Z3Solver::reset() {
         delete ctx_;
         ctx_ = new z3::context;
         solver_ = new z3::solver(*ctx_);
-        if (timeout_) {
-            // It's not well documented. Experimentally determined to be milliseconds.
-            ctx_->set("timeout", boost::lexical_cast<std::string>((unsigned)::round(timeout_->count()*1000)).c_str());
-        }
+        setTimeout(ctx_, timeout_);
     }
 #endif
 }
@@ -52,8 +80,7 @@ Z3Solver::timeout(boost::chrono::duration<double> seconds) {
     timeout_ = seconds;
     if (linkage() == LM_LIBRARY) {
         ASSERT_not_null(ctx_);
-        // It's not well documented. Experimentally determined to be milliseconds.
-        ctx_->set("timeout", boost::lexical_cast<std::string>((unsigned)::round(seconds.count()*1000)).c_str());
+        setTimeout(ctx_, boost::chrono::duration<double>(seconds));
     }
 #endif
 }
@@ -124,6 +151,7 @@ Z3Solver::z3Update() {
 #endif
 
         stats.prepareTime += prepareTimer.stop();
+        stats.longestPrepareTime = std::max(stats.longestPrepareTime, prepareTimer.report());
     }
 #endif
 }
@@ -138,6 +166,7 @@ Z3Solver::checkLib() {
     Sawyer::Stopwatch timer;
     z3::check_result result = solver_->check();
     stats.solveTime += timer.stop();
+    stats.longestSolveTime = std::max(stats.longestSolveTime, timer.report());
 
     switch (result) {
         case z3::unsat:
@@ -1135,6 +1164,7 @@ Z3Solver::parseEvidence() {
                     evidence.insert(node.key()->substituteMultiple(undo),
                                     node.value()->substituteMultiple(undo));
                 stats.evidenceTime += evidenceTimer.stop();
+                stats.longestEvidenceTime = std::max(stats.longestEvidenceTime, evidenceTimer.report());
                 return;
             }
         }
@@ -1219,6 +1249,7 @@ Z3Solver::parseEvidence() {
         }
 
         stats.evidenceTime += evidenceTimer.stop();
+        stats.longestEvidenceTime = std::max(stats.longestEvidenceTime, evidenceTimer.report());
     } catch (const z3::exception &e) {
         throw Exception("Z3 failure: " + std::string(e.msg()));
     }
