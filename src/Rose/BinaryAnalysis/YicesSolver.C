@@ -30,6 +30,13 @@ YicesSolver::~YicesSolver()
 #endif
 }
 
+YicesSolver::Ptr
+YicesSolver::create() const {
+    auto newSolver = new YicesSolver(linkage());
+    newSolver->memoization_ = memoization_;
+    return Ptr(newSolver);
+}
+
 void
 YicesSolver::reset() {
     SmtSolver::reset();

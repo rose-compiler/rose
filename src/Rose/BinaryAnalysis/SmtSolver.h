@@ -207,7 +207,7 @@ protected:
     std::string outputText_;                            /**< Additional output obtained by satisfiable(). */
     std::vector<SExpr::Ptr> parsedOutput_;              // the evidence output
     TermNames termNames_;                               // maps ROSE exprs to SMT exprs and their basic type
-    Memoization memoization_;                           // cached of previously computed results
+    Memoization memoization_;                           // cache of previously computed results
     bool doMemoization_;                                // use the memoization_ table?
     Sawyer::Optional<SymbolicExpr::Hash> latestMemoizationId_; // key for last found or inserted memoization, or nothing
     SymbolicExpr::ExprExprHashMap latestMemoizationRewrite_; // variables rewritten, need to be undone when parsing evidence
@@ -260,7 +260,9 @@ protected:
     }
     
 public:
-    /** Virtual constructor. */
+    /** Virtual constructor.
+     *
+     *  The new solver will have the same settings as the source solver. */
     virtual Ptr create() const = 0;
 
     // Solvers are reference counted and should not be explicitly deleted.
