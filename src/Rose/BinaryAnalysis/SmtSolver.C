@@ -70,20 +70,31 @@ SmtSolver::Stats::print(std::ostream &out, const std::string &prefix) const {
     auto nameValue = boost::format("%-40s %s\n");
     auto nameTimes = boost::format("%-40s total %s, maximum %s\n");
 
+    if (nSolversCreated > 0) {
+        out <<prefix <<             "number of solvers:\n";
+        out <<prefix <<(nameValue % "  created:" % nSolversCreated);
+        out <<prefix <<(nameValue % "  counted below:" % nSolversDestroyed);
+        out <<prefix <<(nameValue % "  still live (not counted):" % (nSolversCreated - nSolversDestroyed));
+    }
     out <<prefix <<(nameValue % "number of calls to solver:" % ncalls);
-    out <<prefix <<(nameValue % "  satisfiable checks:" % nSatisfied);
-    out <<prefix <<(nameValue % "  unsatisfiable checks:" % nUnsatisfied);
-    out <<prefix <<(nameValue % "  unknown and timeout checks:" % nUnknown);
-    out <<prefix <<(nameValue % "number of memoized results:" % memoizationHits);
-    out <<prefix <<(nameValue % "number of solvers created:" % nSolversCreated);
-    out <<prefix <<(nameValue % "number of solvers not counted:" % (nSolversCreated - nSolversDestroyed));
-    out <<prefix <<(nameTimes % "time preparing to call the solver:"
+    out <<prefix <<(nameValue % "  returning satisfiable:" % nSatisfied);
+    out <<prefix <<(nameValue % "  returning unsatisfiable:" % nUnsatisfied);
+    out <<prefix <<(nameValue % "  returning unknown or timeout:" % nUnknown);
+
+    out <<prefix <<             "memoization results:\n";
+    out <<prefix <<(nameValue % "  hits:" % memoizationHits);
+    out <<prefix <<(nameValue % "  misses:" % (ncalls - memoizationHits));
+    if (ncalls > 0)
+        out <<prefix <<(boost::format("%-40s %1.4f%%\n") % "  hit rate:" % (100.0 * memoizationHits / ncalls));
+
+    out <<prefix <<             "time spent solving:\n";
+    out <<prefix <<(nameTimes % "  time preparing:"
                     % Sawyer::Stopwatch::toString(prepareTime)
                     % Sawyer::Stopwatch::toString(longestPrepareTime));
-    out <<prefix <<(nameTimes % "time spent in the solver:"
+    out <<prefix <<(nameTimes % "  time in solver:"
                     % Sawyer::Stopwatch::toString(solveTime)
                     % Sawyer::Stopwatch::toString(longestSolveTime));
-    out <<prefix <<(nameTimes % "time recovering evidence:"
+    out <<prefix <<(nameTimes % "  time recovering evidence:"
                     % Sawyer::Stopwatch::toString(evidenceTime)
                     % Sawyer::Stopwatch::toString(longestEvidenceTime));
 }
