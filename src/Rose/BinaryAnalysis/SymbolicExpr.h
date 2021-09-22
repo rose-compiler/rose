@@ -204,18 +204,27 @@ enum VisitAction {
  *  expression contains a large number of common subexpressions. */
 extern const uint64_t MAX_NNODES;       // defined in .C so we don't pollute user namespace with limit macros
 
-/** Base class for visiting nodes during expression traversal.  The preVisit method is called before children are visited, and
- *  the postVisit method is called after children are visited.  If preVisit returns TRUNCATE, then the children are not
- *  visited, but the postVisit method is still called.  If either method returns TERMINATE then the traversal is immediately
- *  terminated. */
+/** Base class for visiting nodes during expression traversal.
+ *
+ *  The @c preVisit method is called before children are visited, and the @c postVisit method is called after children are
+ *  visited.  If @c preVisit returns TRUNCATE, then the children are not visited, but the @c postVisit method is still called.
+ *  If either method returns TERMINATE then the traversal is immediately terminated.
+ *
+ *  Subclasses can override either the versions that take raw pointers or the versions that take shared pointers, but need
+ *  not override both. The default implementations of the raw pointer versions simply obtain a shared pointer and delegate to the
+ *  shared pointer version. The default implementations of the shared pointer versions return @c VisitAction::CONTINUE. For optimal
+ *  performance, subclasses should use the raw pointer version. If the user intends that the visitor's @c preVisit or @c
+ *  postVisit should do nothing, then the raw version should be overridden to return directly. */
 class Visitor {
 public:
     virtual ~Visitor() {}
-    virtual VisitAction preVisit(const Ptr&) = 0;
-    virtual VisitAction postVisit(const Ptr&) = 0;
+
+    virtual VisitAction preVisit(const Ptr&);
+    virtual VisitAction postVisit(const Ptr&);
+
+    virtual VisitAction preVisit(const Node*);
+    virtual VisitAction postVisit(const Node*);
 };
-
-
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Expression type information
@@ -464,7 +473,7 @@ protected:
     Type type_;
     unsigned flags_;                  /**< Bit flags. Meaning of flags is up to the user. Low-order 16 bits are reserved. */
     std::string comment_;             /**< Optional comment. Only for debugging; not significant for any calculation. */
-    Hash hashval_;                    /**< Optional hash used as a quick way to indicate that two expressions are different. */
+    mutable Hash hashval_;            /**< Optional hash used as a quick way to indicate that two expressions are different. */
     boost::any userData_;             /**< Additional user-specified data. This is not part of the hash. */
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -799,7 +808,7 @@ public:
     Hash hash() const;
 
     // used internally to set the hash value
-    void hash(Hash);
+    void hash(Hash) const;
 
     /** A node with formatter. See the with_format() method. */
     class WithFormatter {
@@ -1543,8 +1552,9 @@ nNodesUnique(InputIterator begin, InputIterator end)
 
         T1(): nUnique(0) {}
 
-        VisitAction preVisit(const Ptr &node) {
-            if (seen.insert(getRawPointer(node)).second) {
+        VisitAction preVisit(const Node *node) override {
+            ASSERT_not_null(node);
+            if (seen.insert(node).second) {
                 ++nUnique;
                 return CONTINUE;                        // this node has not been seen before; traverse into children
             } else {
@@ -1552,7 +1562,7 @@ nNodesUnique(InputIterator begin, InputIterator end)
             }
         }
 
-        VisitAction postVisit(const Ptr &node) {
+        VisitAction postVisit(const Node*) override {
             return CONTINUE;
         }
     } visitor;
@@ -1574,19 +1584,20 @@ std::vector<Ptr> findCommonSubexpressions(const std::vector<Ptr>&);
 template<typename InputIterator>
 std::vector<Ptr>
 findCommonSubexpressions(InputIterator begin, InputIterator end) {
-    typedef Sawyer::Container::Map<Ptr, size_t> NodeCounts;
+    typedef Sawyer::Container::Map<const Node*, size_t> NodeCounts;
     struct T1: Visitor {
         NodeCounts nodeCounts;
         std::vector<Ptr> result;
 
-        VisitAction preVisit(const Ptr &node) ROSE_OVERRIDE {
+        VisitAction preVisit(const Node *node) override {
+            ASSERT_not_null(node);
             size_t &nSeen = nodeCounts.insertMaybe(node, 0);
             if (2 == ++nSeen)
-                result.push_back(node);
+                result.push_back(Ptr(const_cast<Node*>(node)));
             return nSeen>1 ? TRUNCATE : CONTINUE;
         }
 
-        VisitAction postVisit(const Ptr&) ROSE_OVERRIDE {
+        VisitAction postVisit(const Node*) override {
             return CONTINUE;
         }
     } visitor;
