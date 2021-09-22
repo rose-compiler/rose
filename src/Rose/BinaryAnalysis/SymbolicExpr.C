@@ -311,6 +311,32 @@ struct MultiSubstituter {
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Visitor base class
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+VisitAction
+Visitor::preVisit(const Ptr&) {
+    return VisitAction::CONTINUE;
+}
+
+VisitAction
+Visitor::postVisit(const Ptr&) {
+    return VisitAction::CONTINUE;
+}
+
+VisitAction
+Visitor::preVisit(const Node *node) {
+    ASSERT_not_null(node);
+    return preVisit(Ptr(const_cast<Node*>(node)));
+}
+
+VisitAction
+Visitor::postVisit(const Node *node) {
+    ASSERT_not_null(node);
+    return postVisit(Ptr(const_cast<Node*>(node)));
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //                                      Types
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -413,15 +439,17 @@ Node::getVariables() const {
         std::set<LeafPtr> vars;
         std::set<const Node*> seen;
 
-        VisitAction preVisit(const Ptr &node) {
-            if (seen.insert(getRawPointer(node)).second) {
+        VisitAction preVisit(const Node *node) override {
+            ASSERT_not_null(node);
+            if (seen.insert(node).second) {
                 return CONTINUE;
             } else {
                 return TRUNCATE;
             }
         }
 
-        VisitAction postVisit(const Ptr &node) {
+        VisitAction postVisit(const Node *node) override {
+            ASSERT_not_null(node);
             LeafPtr l_node = node->isLeafNode();
             if (l_node && l_node->isVariable2())
                 vars.insert(l_node);
@@ -445,11 +473,13 @@ Node::substituteMultiple(const ExprExprHashMap &substitutions, const SmtSolverPt
 }
 
 struct Hasher: Visitor {
-    virtual VisitAction preVisit(const Ptr &node) ROSE_OVERRIDE {
+    virtual VisitAction preVisit(const Node *node) override {
+        ASSERT_not_null(node);
         return 0 == node->isHashed() ? CONTINUE : TRUNCATE;
     }
 
-    virtual VisitAction postVisit(const Ptr &node) ROSE_OVERRIDE {
+    virtual VisitAction postVisit(const Node *node) override {
+        ASSERT_not_null(node);
         if (!node->isHashed()) {                        // probably true, but some other thread may have beaten us here.
             Hash h = hash(hash(node->isMemoryExpr() ? node->domainWidth() : 0, node->nBits()), node->flags());
             if (LeafPtr leaf = node->isLeafNode()) {
@@ -506,7 +536,7 @@ Node::hash() const {
 }
 
 void
-Node::hash(Hash h) {
+Node::hash(Hash h) const {
     boost::unique_lock<boost::mutex> lock(symbolicExprMutex);
     hashval_ = h;
 }
@@ -516,13 +546,15 @@ Node::assertAcyclic() const {
 #ifndef NDEBUG
     struct T1: Visitor {
         std::vector<const Node*> ancestors;
-        VisitAction preVisit(const Ptr &node) {
-            ASSERT_require(std::find(ancestors.begin(), ancestors.end(), getRawPointer(node))==ancestors.end());
-            ancestors.push_back(getRawPointer(node));
+        VisitAction preVisit(const Node *node) override {
+            ASSERT_not_null(node);
+            ASSERT_require(std::find(ancestors.begin(), ancestors.end(), node) == ancestors.end());
+            ancestors.push_back(node);
             return CONTINUE;
         }
-        VisitAction postVisit(const Ptr &node) {
-            ASSERT_require(!ancestors.empty() && ancestors.back()==getRawPointer(node));
+        VisitAction postVisit(const Node *node) override {
+            ASSERT_not_null(node);
+            ASSERT_require(!ancestors.empty() && ancestors.back() == node);
             ancestors.pop_back();
             return CONTINUE;
         }
@@ -1209,8 +1241,7 @@ Interior::substitute(const Ptr &from, const Ptr &to, const SmtSolverPtr &solver)
 
 VisitAction
 Interior::depthFirstTraversal(Visitor &v) const {
-    InteriorPtr self(const_cast<Interior*>(this));
-    VisitAction action = v.preVisit(self);
+    VisitAction action = v.preVisit(this);
     if (CONTINUE==action) {
         for (std::vector<Ptr>::const_iterator ci=children_.begin(); ci!=children_.end(); ++ci) {
             action = (*ci)->depthFirstTraversal(v);
@@ -1219,7 +1250,7 @@ Interior::depthFirstTraversal(Visitor &v) const {
         }
     }
     if (TERMINATE!=action)
-        action = v.postVisit(self);
+        action = v.postVisit(this);
     return action;
 }
 
@@ -3329,10 +3360,9 @@ Leaf::substitute(const Ptr &from, const Ptr &to, const SmtSolverPtr &solver) {
 
 VisitAction
 Leaf::depthFirstTraversal(Visitor &v) const {
-    LeafPtr self(const_cast<Leaf*>(this));
-    VisitAction retval = v.preVisit(self);
-    if (TERMINATE!=retval)
-        retval = v.postVisit(self);
+    VisitAction retval = v.preVisit(this);
+    if (TERMINATE != retval)
+        retval = v.postVisit(this);
     return retval;
 }
 
