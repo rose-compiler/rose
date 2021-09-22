@@ -41,9 +41,11 @@ setTimeout(z3::context *ctx, const Sawyer::Optional<boost::chrono::duration<doub
         ctx->set_param("smt.timeout", nsec * 1000);
 #endif
 
+#if 0 // [Robb Matzke 2021-09-22]: we don't really want to set it globally, but rather per solver context
         // stack overflow 38674049: "I know this is an old question, but if anyone's still looking for an answer, you need
         // `Z3_global_param_set("timeout", timeout)` and your timeout should be given as a C string.
         Z3_global_param_set("timeout", boost::lexical_cast<std::string>(nsec * 1000).c_str());
+#endif
 
 #if 0 // [Robb Matzke 2021-09-20]: no member named `set_param` in `z3::context`
         // Github.com Z3Prover issue 2345: "I changed our code to use `z3.set_param("timeout", ...)` rather than
