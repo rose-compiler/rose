@@ -29,6 +29,7 @@ public:
     double solverTimeout = NAN;                         /**< Timeout per SMT solver call in seconds. NAN means no timeout. */
     SourceListerPtr sourceLister;                       /**< Object responsible for listing lines of a source code file. */
     uint64_t maxSymbolicSize = 0;                       /**< If nonzero, maximum size of symbolic expressions. */
+    bool exploreDuplicateStates = true;                 /**< Look for duplicate states and suppress them? */
 
 public:
     Settings();

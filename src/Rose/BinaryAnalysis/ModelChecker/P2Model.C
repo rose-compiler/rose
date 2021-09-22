@@ -1161,21 +1161,25 @@ bool
 SemanticCallbacks::seenState(const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(ops);
     ASSERT_not_null(ops->currentState());
-    Combinatorics::HasherSha256Builtin hasher;          // we could use a faster one as long as we don't get false matches
-    ops->hash(hasher);
+    if (mcSettings()->exploreDuplicateStates) {
+        return false;
+    } else {
+        Combinatorics::HasherSha256Builtin hasher;      // we could use a faster one as long as we don't get false matches
+        ops->hash(hasher);
 
-    // Some hashers (including SHA256) have digests that are wider than 64 bits, but we don't really want to throw anything
-    // away. So we'll just fold all the bits into the 64 bit value with XOR.
-    uint64_t hash = 0;
-    for (uint8_t byte: hasher.digest())
-        hash = BitOps::rotateLeft(hash, 8) ^ uint64_t{byte};
-    SAWYER_MESG(mlog[DEBUG]) <<"  state hash = " <<StringUtility::addrToString(hash) <<"\n";
+        // Some hashers (including SHA256) have digests that are wider than 64 bits, but we don't really want to throw anything
+        // away. So we'll just fold all the bits into the 64 bit value with XOR.
+        uint64_t hash = 0;
+        for (uint8_t byte: hasher.digest())
+            hash = BitOps::rotateLeft(hash, 8) ^ uint64_t{byte};
+        SAWYER_MESG(mlog[DEBUG]) <<"  state hash = " <<StringUtility::addrToString(hash) <<"\n";
 
-    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    bool seen = !seenStates_.insert(hash).second;
-    if (seen)
-        ++nDuplicateStates_;
-    return seen;
+        SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+        bool seen = !seenStates_.insert(hash).second;
+        if (seen)
+            ++nDuplicateStates_;
+        return seen;
+    }
 }
 
 ExecutionUnit::Ptr

@@ -52,6 +52,20 @@ Settings::commandLineSwitches() {
                                            "instruction. This often happens when the system is trying to execute data areas of "
                                            "the memory, or if it's assuming an incorrect instruction set architecture.");
 
+    Rose::CommandLine::insertBooleanSwitch(sg, "explore-duplicate-states", exploreDuplicateStates,
+                                           "If a machine state recurs, then all paths leading out of the second occurrence must "
+                                           "necessarily be the same as the paths leading out of the first occurrenace even if "
+                                           "the prefixes for those paths (up to the state in question) differ. However, due to "
+                                           "various exploration limits, the sets of explored paths might differ. For instance, "
+                                           "if the state occurred late in a path, then the @s{k} limit results less subsequent "
+                                           "exploration than what would be explored if the state occured early in a path.\n\n"
+
+                                           "A trivial example of duplicate machine states is the C source code to implement "
+                                           "a busy wait, such as \"while (1);\".\n\n"
+
+                                           "Turning off exploration of duplicate states may result in faster exploration, but "
+                                           "the trade off is that a hash must be computed and stored.");
+
     sg.insert(Switch("max-path-length", 'k')
               .argument("nsteps", positiveIntegerParser(k))
               .doc("Maximum path length in steps before abandoning any further exploration. A step generally corresponds to "
