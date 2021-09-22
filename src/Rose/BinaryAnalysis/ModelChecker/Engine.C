@@ -244,6 +244,7 @@ Engine::stop() {
     for (std::thread &t: workers_)
         t.join();
     workers_.clear();
+    inProgress_.clear();
     stopping_ = false;
 }
 

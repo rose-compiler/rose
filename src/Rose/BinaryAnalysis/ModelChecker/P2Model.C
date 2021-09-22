@@ -1077,6 +1077,7 @@ SemanticCallbacks::createRiscOperators() {
     ops->trimThreshold(mcSettings()->maxSymbolicSize);      // zero means no limit
     ops->initialState(nullptr);
     ops->currentState(nullptr);
+    ops->solver(SmtSolver::Ptr());
     ops->computeMemoryRegions(settings_.oobRead != TestMode::OFF || settings_.oobWrite != TestMode::OFF);
 
     if (settings_.traceSemantics) {
@@ -1227,6 +1228,7 @@ SemanticCallbacks::findUnit(rose_addr_t va) {
             // once per basic block, not each time a path reaches this block.
             if (bb->nInstructions() > 0) {
                 auto ops = partitioner_.newOperators(P2::MAP_BASED_MEMORY);
+                ops->solver(createSolver());
                 IS::SymbolicSemantics::RiscOperators::promote(ops)->trimThreshold(mcSettings()->maxSymbolicSize);
                 auto cpu = partitioner_.newDispatcher(ops);
                 const RegisterDescriptor IP = partitioner_.instructionProvider().instructionPointerRegister();
