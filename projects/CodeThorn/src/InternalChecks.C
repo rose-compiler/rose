@@ -333,8 +333,6 @@ void checkTypes() {
     cout << "------------------------------------------"<<endl;
     cout << "RUNNING CHECKS FOR PSTATE AND PSTATESET:"<<endl;
     VariableIdMapping variableIdMapping;
-    EState es1;
-    EState es2;
     PState s0;
     PState s1;
     PState s2;

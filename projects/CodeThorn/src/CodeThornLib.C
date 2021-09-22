@@ -368,7 +368,7 @@ namespace CodeThorn {
     }
 
     void optionallyRunVisualizer(CodeThornOptions& ctOpt, CTAnalysis* analyzer, SgNode* root) {
-      Visualizer visualizer(analyzer->getLabeler(),analyzer->getVariableIdMapping(),analyzer->getFlow(),analyzer->getPStateSet(),analyzer->getEStateSet(),analyzer->getTransitionGraph());
+      Visualizer visualizer(analyzer->getLabeler(),analyzer->getVariableIdMapping(),analyzer->getFlow(),analyzer->getEStateSet(),analyzer->getTransitionGraph());
       if (ctOpt.visualization.icfgFileName.size()>0) {
 	string cfgFileName=ctOpt.visualization.icfgFileName;
 	DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
