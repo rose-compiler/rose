@@ -45,8 +45,10 @@ namespace CodeThorn {
     void optionallyEliminateRersArraysAndExit(CodeThornOptions& ctOpt, SgProject* sageProject, CTAnalysis* analyzer);
     void optionallyWriteSVCompWitnessFile(CodeThornOptions& ctOpt, CTAnalysis* analyzer);
     void optionallyAnalyzeAssertions(CodeThornOptions& ctOpt, LTLOptions& ltlOpt, IOAnalyzer* analyzer, TimingCollector& tc);
-    void optionallyGenerateLineColumnCsv(CodeThornOptions& ctOpt, SgProject* node);
+    void optionallyGenerateLineColumnCsv(CodeThornOptions& ctOpt, SgProject* project);
     void exprEvalTest(int argc, char* argv[],CodeThornOptions& ctOpt);
+
+    bool astSymbolPointerCheck(CodeThornOptions& ctOpt, SgProject* project);
 
     IOAnalyzer* createAnalyzer(CodeThornOptions& ctOpt, LTLOptions& ltlOpt);
     IOAnalyzer* createEStateAnalyzer(CodeThornOptions& ctOpt, LTLOptions& ltlOpt, Labeler* labeler, VariableIdMappingExtended* vid, CFAnalysis* cfAnalysis, Solver* solver);

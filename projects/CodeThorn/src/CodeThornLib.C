@@ -108,8 +108,6 @@ void codethornBackTraceHandler(int sig) {
   exit(1);
 }
 
-
-
 void CodeThorn::initDiagnostics() {
   Rose::Diagnostics::initialize();
   // general logger for CodeThorn library functions
@@ -165,6 +163,8 @@ namespace CodeThorn {
       signal(SIGSEGV, codethornBackTraceHandler);   // install handler for backtrace
     }
 
+    
+    
     AbstractValue evaluateExpressionWithEmptyState(SgExpression* expr) {
       CTAnalysis* analyzer=new CTAnalysis();
       EStateTransferFunctions* exprAnalyzer=new EStateTransferFunctions();
@@ -440,7 +440,7 @@ namespace CodeThorn {
         std::string fileName=ctOpt.reportFilePath+"/"+ctOpt.externalFunctionsCSVFileName;
         if(fileName.size()>0) {
           if(!ctOpt.quiet)
-            cout<<"Writing list of external functions to file "<<fileName<<endl;
+            cout<<"Generated list of external functions in file "<<fileName<<endl;
           FunctionCallMapping::ExternalFunctionNameContainerType fnList=funCallMapping->getExternalFunctionNames();
           std::list<string> sList;
           for(auto fn : fnList)
@@ -858,6 +858,47 @@ namespace CodeThorn {
       }
     }
 
+    bool astSymbolPointerCheck(CodeThornOptions& ctOpt, SgProject* node) {
+      stringstream report;
+      string fileName=ctOpt.reportFilePath+"/"+ctOpt.info.astSymbolPointerCheckReportFileName;
+      uint8_t memoryPoolFillByte=0xdd;
+      uint32_t memoryPoolFillPrefixToCheck=memoryPoolFillByte<<24|memoryPoolFillByte<<16|memoryPoolFillByte<<8|memoryPoolFillByte;
+      uint32_t numSymZero=0;
+      uint32_t numDeleted=0;
+      uint32_t numChecked=0;
+      if(fileName.size()>0) {
+        stringstream lineColSeq;
+        std::list<SgFunctionDefinition*> fdList=SgNodeHelper::listOfFunctionDefinitions(node);
+        for(auto fd : fdList) {
+          RoseAst ast(fd);
+          list<string> lcList;
+          for(auto n : ast) {
+            if(SgVarRefExp* varRefExp=isSgVarRefExp(n)) {
+	      // check symbol
+	      SgSymbol* sym=varRefExp->get_symbol();
+	      numChecked++;
+	      if(sym==0) {
+		report<<"symbol_is_zero: "<<SgNodeHelper::locationToString(varRefExp)<<endl;
+		numSymZero++;
+	      } else {
+		if((uint32_t)(((uint64_t)sym)>>32) == memoryPoolFillPrefixToCheck) {
+		  report<<"symbol_in_deleted_SgVarRefExp: "<<SgNodeHelper::locationToString(varRefExp)<<endl;
+		  numDeleted++;
+		}
+	      }
+	    }
+	  }
+	}
+	report<<"Number of symbols in VarRefExp == 0: "<<numSymZero<<endl;
+	report<<"Number of deleted VarRefExp        : "<<numDeleted<<endl;
+	report<<"Number of checked VarRefExp        : "<<numChecked<<endl;
+	if(ctOpt.status) cout<<"Generated ast symbol pointer report in file "<<fileName<<endl;
+	write_file(fileName,report.str());
+      }
+      return numSymZero==0 && numDeleted==0;
+    }
+
+    
     void optionallyGenerateLineColumnCsv(CodeThornOptions& ctOpt, SgProject* node) {
       string fileName=ctOpt.info.astTraversalLineColumnCSVFileName;
       if(fileName.size()>0) {
@@ -888,7 +929,7 @@ namespace CodeThorn {
             lineColSeq<<lc<<endl;
         }
         write_file(fileName,lineColSeq.str());
-        if(ctOpt.status) cout<<"Generated line-column CSV file "<<fileName<<endl;
+        if(ctOpt.status) cout<<"Generated line-column CSV info in file "<<fileName<<endl;
       }
     }
 

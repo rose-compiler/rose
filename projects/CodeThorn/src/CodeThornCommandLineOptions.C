@@ -169,7 +169,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ;
 
   experimentalOptions.add_options()
-    ("ast-symbol-check",po::value< bool >(&ctOpt.astSymbolCheckFlag)->default_value(true),"Allows to make the tool exit immediately if the AST symbol check reports any error.")
+    ("ast-symbol-check",po::value< bool >(&ctOpt.astSymbolCheckFlag)->default_value(true),"Runs AST symbol check and exits on error.")
     ("vim-report-file",po::value< string >(&ctOpt.vimReportFileName),"Generates a report of variable id mapping (always includes ast symbol check results).")
     ("array-abstraction-index",po::value< int > (&ctOpt.arrayAbstractionIndex)->default_value(-1),"Set array abstraction index, starting at which an array summary is computed.")
     ("run-solver", po::value< bool >(&ctOpt.runSolver)->default_value(true),"If turned off all fix-point algorithms are skipped.")
@@ -329,6 +329,8 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("type-size-mapping-csv",po::value<std::string>(&ctOpt.info.typeSizeMappingCSVFileName),"Write type-size mapping to CSV file [arg].")
     ("tf-trace",po::value< bool >(&ctOpt.info.printTransferFunctionInfo)->default_value(false)->implicit_value(true),"Print info about invoked transfer functions.")
     ("line-col-csv",po::value< string >(&ctOpt.info.astTraversalLineColumnCSVFileName),"Write ast node traversal (sequence of line column pairs) to file [arg].")
+    ("ast-symbol-pointer-check",po::value< bool >(&ctOpt.info.astSymbolPointerCheckReport)->implicit_value(true),"Run ast symbol pointer check. Writes report to ast-symbol-pointer-check-report.txt.")
+
     ;
 
   po::options_description all("All supported options");
