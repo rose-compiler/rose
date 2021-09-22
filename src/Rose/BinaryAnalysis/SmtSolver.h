@@ -461,7 +461,7 @@ public:
     /** Check satisfiability of current stack.
      *
      *  Checks whether all assertions in the entire stack of assertion sets are satisfiable.  A set of no assertions is
-     *  trivially satisfiable. */
+     *  trivially satisfiable. Errors are emitted on @ref mlog once per error message and returned as @c SAT_UNKNOWN. */
     virtual Satisfiable check();
 
     /** Check whether the stack of assertions is trivially satisfiable.

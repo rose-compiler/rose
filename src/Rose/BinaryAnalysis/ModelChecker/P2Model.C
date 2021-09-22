@@ -1320,14 +1320,7 @@ SemanticCallbacks::nextUnits(const Path::Ptr &path, const BS::RiscOperators::Ptr
         auto assertion = SymbolicExpr::makeEq(ip, SymbolicExpr::makeIntegerConstant(ip->nBits(), va));
         solver->insert(assertion);
 
-        SmtSolver::Satisfiable satisfied = SmtSolver::SAT_UNKNOWN;
-        try {
-            satisfied = solver->check();
-        } catch (const SmtSolver::Exception &e) {
-            satisfied = SmtSolver::SAT_UNKNOWN;
-        }
-
-        switch (satisfied) {
+        switch (solver->check()) {
             case SmtSolver::SAT_YES:
                 // Create the next execution unit
                 if (ExecutionUnit::Ptr unit = findUnit(va)) {

@@ -428,17 +428,26 @@ SmtSolver::check() {
     
     // Do the real work
     if (!wasTrivial && !wasMemoized) {
-        switch (linkage_) {
-            case LM_EXECUTABLE:
-                retval = checkExe();
-                break;
-            case LM_LIBRARY:
-                retval = checkLib();
-                break;
-            case LM_NONE:
-                throw Exception("no linkage for " + name_ + " solver");
-            default:
-                ASSERT_not_reachable("invalid solver linkage: " + boost::lexical_cast<std::string>(linkage_));
+        try {
+            switch (linkage_) {
+                case LM_EXECUTABLE:
+                    retval = checkExe();
+                    break;
+                case LM_LIBRARY:
+                    retval = checkLib();
+                    break;
+                case LM_NONE:
+                    throw Exception("no linkage for " + name_ + " solver");
+                default:
+                    ASSERT_not_reachable("invalid solver linkage: " + boost::lexical_cast<std::string>(linkage_));
+            }
+        } catch (const Exception &e) {
+            static std::set<uint64_t> seen;
+            Rose::Combinatorics::HasherFnv hasher;
+            hasher.insert(e.what());
+            if (seen.insert(hasher.partial()).second)
+                mlog[ERROR] <<"SMT solver error: " <<e.what() <<"\n";
+            retval = SAT_UNKNOWN;
         }
     }
     
