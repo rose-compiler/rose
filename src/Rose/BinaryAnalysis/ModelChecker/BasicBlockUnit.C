@@ -156,7 +156,10 @@ BasicBlockUnit::execute(const Settings::Ptr &settings, const SemanticCallbacks::
         mlog[DEBUG] <<"    initial state\n" <<(*ops->currentState() + fmt);
 
     if (bblock_->nInstructions() == 0) {
-        tags.push_back(ErrorTag::instance(0, "empty basic block", "basic block has no instructions", nullptr, bblock_->address()));
+        auto tag = ErrorTag::instance(0, "empty basic block", "basic block has no instructions", nullptr, bblock_->address());
+        tag->importance(WARN);
+        tags.push_back(tag);
+
     } else {
         for (size_t i = 0; i < bblock_->nInstructions(); ++i) {
             SgAsmInstruction *insn = bblock_->instructions()[i];

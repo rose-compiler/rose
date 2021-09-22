@@ -56,6 +56,16 @@ ErrorTag::message() const {
     return mesg_;
 }
 
+Sawyer::Message::Importance
+ErrorTag::importance() const {
+    return importance_;
+}
+
+void
+ErrorTag::importance(Sawyer::Message::Importance imp) {
+    importance_ = imp;
+}
+
 void
 ErrorTag::print(std::ostream &out, const std::string &prefix) const {
     // No lock necessary because name_ and mesg_ are read-only properties initialized in the constructor.

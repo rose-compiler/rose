@@ -1308,6 +1308,7 @@ SemanticCallbacks::nextUnits(const Path::Ptr &path, const BS::RiscOperators::Ptr
     auto ip = IS::SymbolicSemantics::SValue::promote(next.ip)->get_expression();
     if (!next.isComplete) {
         auto tag = ErrorTag::instance(0, "abstract jump", "symbolic address not handled yet", nullptr, ip);
+        tag->importance(WARN);
         auto fail = FailureUnit::instance(Sawyer::Nothing(), SourceLocation(), "no concrete instruction pointer", tag);
         units.push_back({fail, SymbolicExpr::makeBooleanConstant(true)});
         return units;
