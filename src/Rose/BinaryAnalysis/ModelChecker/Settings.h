@@ -24,9 +24,9 @@ public:
     bool showAssertions = false;                        /**< Show SMT assertions at the beginning of each execution unit. */
     bool ignoreSemanticFailures = false;                /**< Treat failed instructions as if they completed. */
     size_t k = 1000;                                    /**< Maximum path length in steps. */
-    double maxTime = NAN;                               /**< Maximum path time in seconds. */
+    Sawyer::Optional<uint64_t> maxTime;                 /**< Maximum path time in seconds. */
     bool rejectUnknownInsns = true;                     /**< Reject "unknown" instructions even if semantic failure is allowed. */
-    double solverTimeout = NAN;                         /**< Timeout per SMT solver call in seconds. NAN means no timeout. */
+    Sawyer::Optional<uint64_t> solverTimeout;           /**< Timeout per SMT solver call in seconds. */
     SourceListerPtr sourceLister;                       /**< Object responsible for listing lines of a source code file. */
     uint64_t maxSymbolicSize = 0;                       /**< If nonzero, maximum size of symbolic expressions. */
     bool exploreDuplicateStates = true;                 /**< Look for duplicate states and suppress them? */
