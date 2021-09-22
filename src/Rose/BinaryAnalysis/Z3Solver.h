@@ -97,9 +97,7 @@ public:
     /** Virtual constructor.
      *
      *  Create a new solver just like this one. */
-    virtual Ptr create() const ROSE_OVERRIDE {
-        return Ptr(instance(linkage()));
-    }
+    virtual Ptr create() const override;
 
     /** Construct Z3 solver using a specified executable.
      *

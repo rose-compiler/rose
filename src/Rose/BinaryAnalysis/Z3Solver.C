@@ -58,6 +58,14 @@ setTimeout(z3::context *ctx, const Sawyer::Optional<boost::chrono::duration<doub
 }
 #endif
 
+Z3Solver::Ptr
+Z3Solver::create() const {
+    auto newSolver = new Z3Solver(linkage());
+    newSolver->doMemoization_ = doMemoization_;
+    newSolver->timeout_ = timeout_;
+    return Ptr(newSolver);
+}
+
 void
 Z3Solver::reset() {
     SmtlibSolver::reset();

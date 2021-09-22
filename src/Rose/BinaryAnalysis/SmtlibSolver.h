@@ -46,13 +46,8 @@ public:
         return Ptr(new SmtlibSolver(name, executable, shellArgs, linkages));
     }
 
-    /** Virtual constructor.
-     *
-     *  Creates a new solver like this one. */
-    virtual Ptr create() const ROSE_OVERRIDE {
-        return instance(name(), executable_, shellArgs_, linkage());
-    }
-    
+    virtual Ptr create() const override;
+
 public:
     virtual void reset() ROSE_OVERRIDE;
     virtual void generateFile(std::ostream&, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*) ROSE_OVERRIDE;

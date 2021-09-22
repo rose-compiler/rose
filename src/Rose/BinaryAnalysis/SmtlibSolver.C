@@ -14,6 +14,14 @@ using namespace Sawyer::Message::Common;
 namespace Rose {
 namespace BinaryAnalysis {
 
+SmtlibSolver::Ptr
+SmtlibSolver::create() const {
+    auto newSolver = new SmtlibSolver(name(), executable_, shellArgs_, linkage());
+    newSolver->doMemoization_ = doMemoization_;
+    newSolver->timeout_ = timeout_;
+    return Ptr(newSolver);
+}
+
 void
 SmtlibSolver::reset() {
     SmtSolver::reset();
