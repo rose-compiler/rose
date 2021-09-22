@@ -73,12 +73,10 @@ Settings::commandLineSwitches() {
                    StringUtility::plural(k, "steps") + "."));
 
     sg.insert(Switch("max-path-time", 't')
-              .argument("seconds", realNumberParser(maxTime))
-              .doc("Maximum time in seconds to spend exploring any given path. If a path takes longer than the specified time, "
-                   "then no paths with that prefix are explored. The default is " +
-                   std::string(rose_isnan(maxTime) ? "to not limit the time." :
-                               (1.0 == maxTime ? "1 second." :
-                                (boost::format("%g seconds.") % maxTime).str()))));
+              .argument("duration", Rose::CommandLine::durationParser(maxTime))
+              .doc("Maximum time to spend exploring any given path. If a path takes longer than the specified time, "
+                   "then no paths with that prefix are explored. " + Rose::CommandLine::DurationParser::docString() +
+                   " The default is " + Rose::CommandLine::DurationParser::toString(maxTime) + "."));
 
     sg.insert(Switch("replace-symbolic")
               .argument("nnodes", nonNegativeIntegerParser(maxSymbolicSize))
@@ -87,11 +85,10 @@ Settings::commandLineSwitches() {
                    "at the cost of less precision. The default is " + boost::lexical_cast<std::string>(maxSymbolicSize) + "."));
 
     sg.insert(Switch("solver-timeout")
-              .argument("seconds", realNumberParser(solverTimeout))
-              .doc("Specifies the maximum amount of elapsed time in seconds for each call to the SMT solver. If this time "
-                   "limit expires, the solver returns an answer of \"unknown\". The default is " +
-                   (rose_isnan(solverTimeout) ? std::string("unlimited") : (boost::format("%1.3f seconds") % solverTimeout).str()) +
-                   "."));
+              .argument("duration", Rose::CommandLine::durationParser(solverTimeout))
+              .doc("Specifies the maximum amount of elapsed time for each call to the SMT solver. If this time limit expires, the "
+                   "solver returns an answer of \"unknown\". " + Rose::CommandLine::DurationParser::docString() +
+                   " The default is " + Rose::CommandLine::DurationParser::toString(solverTimeout) + "."));
 
     return sg;
 }

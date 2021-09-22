@@ -68,7 +68,7 @@ WorkPredicate::operator()(const Settings::Ptr &settings, const Path::Ptr &path) 
     const size_t nSteps = path->nSteps();
     const size_t maxSteps = settings->k;
     const double timeUsed = path->processingTime();
-    const double maxTime = settings->maxTime;
+    const double maxTime = settings->maxTime.orElse(NAN);
 
     if (nSteps >= maxSteps) {
         SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
