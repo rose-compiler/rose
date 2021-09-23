@@ -1998,9 +1998,16 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
 
               const SgInitializedNamePtrList& lst = variantDecl->get_variables();
 
-              ROSE_ASSERT(lst.size() < 2);
+              name = "_ada_variant_field_";
 
-              name = (lst.size() ? std::string{lst[0]->get_name()} : std::string{"_ada_null_variant"});
+              if (lst.empty()) name += "null_";
+
+              for (const SgInitializedName* el : lst)
+              {
+                name += el->get_name();
+                name += "_";
+              }
+
               break;
             }
 

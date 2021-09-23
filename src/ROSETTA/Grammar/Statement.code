@@ -3521,11 +3521,9 @@ HEADER_ADA_PACKAGE_SPEC_STATEMENT_END
 HEADER_ADA_PACKAGE_BODY_STATEMENT_START
   SgName get_mangled_name() const ROSE_OVERRIDE;
   SgName get_qualified_name() const ROSE_OVERRIDE;
-/*
 protected:
   bool insert_child(SgStatement*, SgStatement*, bool inFront = true, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
   bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false) $ROSE_OVERRIDE;
-*/
 HEADER_ADA_PACKAGE_BODY_STATEMENT_END
 
 HEADER_ADA_GENERIC_DECL_START
@@ -20570,19 +20568,19 @@ SgAdaPackageBody::get_qualified_name() const
   return decl->get_qualified_name();
 }
 
-/*
+
 bool
 SgAdaPackageBody::insert_child(SgStatement* target, SgStatement* newstmt, bool inFront, bool extractBasicBlock)
 {
-  return StatementListInsertChild(this, get_declarations(), target, newstmt, inFront, extractBasicBlock, false);
+  return StatementListInsertChild(this, p_statements, target, newstmt, inFront, extractBasicBlock, false);
 }
 
 bool
 SgAdaPackageBody::replace_child(SgStatement *target ,SgStatement * newstmt, bool extractBasicBlock)
 {
-  return StatementListInsertChild(this, get_declarations(), target, newstmt, true, extractBasicBlock, true);
+  return StatementListInsertChild(this, p_statements, target, newstmt, true, extractBasicBlock, true);
 }
-*/
+
 SOURCE_ADA_PACKAGE_BODY_STATEMENT_END
 
 SOURCE_ADA_GENERIC_DECL_START
