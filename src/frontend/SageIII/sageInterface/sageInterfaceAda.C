@@ -574,6 +574,31 @@ namespace ada
     return n ? getAdaDiscriminatedTypeDecl(*n) : nullptr;
   }
 
+  SgAdaPackageSymbol* renamedPackageSymbol(const SgAdaRenamingDecl& n)
+  {
+    SgSymbol* sym = n.get_renamed();
+
+    if (SgAdaRenamingSymbol* rensym = isSgAdaRenamingSymbol(sym))
+      return renamedPackageSymbol(rensym->get_declaration());
+
+    return isSgAdaPackageSymbol(sym);
+  }
+
+  SgAdaPackageSymbol* renamedPackageSymbol(const SgAdaRenamingDecl* n)
+  {
+    return n ? renamedPackageSymbol(*n) : nullptr;
+  }
+
+  bool isFunction(const SgFunctionType& ty)
+  {
+    return isSgTypeVoid(ty.get_return_type()) == nullptr;
+  }
+
+  bool isFunction(const SgFunctionType* ty)
+  {
+    return ty ? isFunction(*ty) : false;
+  }
+
   //
   // for variants
 
