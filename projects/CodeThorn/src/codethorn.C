@@ -182,6 +182,7 @@ int main( int argc, char * argv[] ) {
 
     SgProject* project=runRoseFrontEnd(argc,argv,ctOpt,tc);
     if(ctOpt.status) cout << "STATUS: Parsing and creating AST finished."<<endl;
+    optionallyRunRoseAstChecks(ctOpt, project);
 
     if(ctOpt.info.printVariableIdMapping) {
       cout<<"VariableIdMapping:"<<endl;
@@ -195,8 +196,6 @@ int main( int argc, char * argv[] ) {
     optionallyGenerateAstStatistics(ctOpt, project);
     optionallyGenerateTraversalInfoAndExit(ctOpt, project);
     if(ctOpt.status) cout<<"STATUS: analysis started."<<endl;
-
-    optionallyRunRoseAstChecksAndExit(ctOpt, project);
 
     VariableIdMappingExtended* vimOrig=CodeThorn::CodeThornLib::createVariableIdMapping(ctOpt,project); // only used for program statistics of original non-normalized program
     //AbstractValue::setVariableIdMapping(vim);
@@ -228,8 +227,8 @@ int main( int argc, char * argv[] ) {
       CodeThornLib::generateProgramStats(ctOpt,&originalProgramInfo,&normalizedProgramInfo, vimOrig);
     }
 
-    optionallyGenerateExternalFunctionsFile(ctOpt, analyzer->getFunctionCallMapping());
     optionallyGenerateSourceProgramAndExit(ctOpt, project);
+    optionallyGenerateExternalFunctionsFile(ctOpt, analyzer->getFunctionCallMapping());
     optionallyGenerateLineColumnCsv(ctOpt,project);
 
     tc.startTimer();tc.stopTimer();

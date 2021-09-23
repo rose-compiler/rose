@@ -309,7 +309,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("max-time-forced-top",po::value< long int >(&ctOpt.maxTimeForcedTop)->default_value(-1),"Performs approximation after an analysis time of approximately <arg> seconds has been reached.")
     ("resource-limit-diff",po::value< int >(&ctOpt. resourceLimitDiff)->default_value(-1),"Check if the resource limit is reached every <arg> computed estates.")
     ("rewrite",po::value< bool >(&ctOpt.rewrite)->default_value(false)->implicit_value(true),"Rewrite AST applying all rewrite system rules.")
-    ("run-rose-tests",po::value< bool >(&ctOpt.runRoseAstChecks)->default_value(false)->implicit_value(true), "Run ROSE AST tests.")
+    ("run-rose-tests",po::value< bool >(&ctOpt.runRoseAstChecks)->default_value(true)->implicit_value(true), "Run ROSE AST tests.")
     ("analyzed-functions-csv",po::value<std::string>(&ctOpt.analyzedFunctionsCSVFileName),"Write list of analyzed functions to CSV file [arg].")
     ("analyzed-files-csv",po::value<std::string>(&ctOpt.analyzedFilesCSVFileName),"Write list of analyzed files (with analyzed functions) to CSV file [arg].")
     ("external-functions-csv",po::value<std::string>(&ctOpt.externalFunctionsCSVFileName),"Write list of external functions (functions for which no implementation is provided) to CSV file [arg].")

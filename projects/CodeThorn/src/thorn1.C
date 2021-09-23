@@ -139,17 +139,19 @@ int main( int argc, char * argv[] ) {
 
     SgProject* project=CodeThorn::CodeThornLib::runRoseFrontEnd(argc,argv,ctOpt,tc);
     if(ctOpt.status) cout << "STATUS: Parsing and creating AST finished."<<endl;
+    CodeThorn::CodeThornLib::runRoseAstChecks(project); // if this check fails, the program exits
 
+    bool allChecksPassed=true; // if any check fails, this variable goes to false
+    
     if(ctOpt.info.astSymbolPointerCheckReport) {
       bool checkOK=CodeThornLib::astSymbolPointerCheck(ctOpt,project);
       if(!checkOK) {
-	cerr<<"AST symbol pointer check: FAIL"<<endl;
-	cerr<<"see file ast-symbol-pointer-check.txt for details."<<endl;
-	exit(1);
+	cout<<"AST symbol pointer check: FAIL"<<endl;
+	cout<<"see file ast-symbol-pointer-check.txt for details."<<endl;
       } else {
 	cout<<"AST symbol pointer check: PASS"<<endl;
-	exit(0);
       }
+      allChecksPassed=allChecksPassed&&checkOK;
     } else {
       cout<<"AST symbol pointer check: OFF"<<endl;
     }
@@ -167,7 +169,7 @@ int main( int argc, char * argv[] ) {
     CodeThorn::CodeThornLib::optionallyGenerateAstStatistics(ctOpt, project);
 
     CodeThorn::CodeThornLib::optionallyPrintProgramInfos(ctOpt, analyzer);
-    CodeThorn::CodeThornLib::optionallyRunRoseAstChecksAndExit(ctOpt, project);
+    
 
     VariableIdMappingExtended* vimOrig=CodeThorn::CodeThornLib::createVariableIdMapping(ctOpt,project); // only used for program statistics of original non-normalized program
     //AbstractValue::setVariableIdMapping(vim);
@@ -195,9 +197,15 @@ int main( int argc, char * argv[] ) {
       exit(0);
     }
 
-    if(ctOpt.status) cout<<"STATUS: analysis started."<<endl;
+    if(ctOpt.status) cout<<"STATUS: analysis phase 1 started."<<endl;
     analyzer->runAnalysisPhase1(project,tc);
 
+    if(!allChecksPassed) {
+      cerr<<"Some consistency checks failed. Bailing out."<<endl;
+      mfacilities.shutdown();
+      exit(1);
+    }
+    
     if(ctOpt.programStats) {
       analyzer->printStatusMessageLine("==============================================================");
       ProgramInfo normalizedProgramInfo(project,analyzer->getVariableIdMapping());

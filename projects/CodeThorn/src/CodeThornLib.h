@@ -35,6 +35,8 @@ namespace CodeThorn {
     void optionallyGenerateAstStatistics(CodeThornOptions& ctOpt, SgProject* sageProject);
     void optionallyGenerateSourceProgramAndExit(CodeThornOptions& ctOpt, SgProject* sageProject);
     void optionallyGenerateTraversalInfoAndExit(CodeThornOptions& ctOpt, SgProject* sageProject);
+    void runRoseAstChecks(SgProject* sageProject);
+    void optionallyRunRoseAstChecks(CodeThornOptions& ctOpt, SgProject* sageProject);
     void optionallyRunRoseAstChecksAndExit(CodeThornOptions& ctOpt, SgProject* sageProject);
     void optionallyRunIOSequenceGenerator(CodeThornOptions& ctOpt, IOAnalyzer* analyzer);
     void optionallyAnnotateTermsAndUnparse(CodeThornOptions& ctOpt, SgProject* sageProject, CTAnalysis* analyzer);

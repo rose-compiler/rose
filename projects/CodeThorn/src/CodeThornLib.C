@@ -481,6 +481,7 @@ namespace CodeThorn {
     void optionallyGenerateSourceProgramAndExit(CodeThornOptions& ctOpt, SgProject* sageProject) {
       if(ctOpt.unparse) {
         sageProject->unparse(0,0);
+	if(ctOpt.status) cout<<"STATUS: Unparsing source code and exiting."<<endl;
         exit(0);
       }
     }
@@ -502,15 +503,20 @@ namespace CodeThorn {
       }
     }
 
-    void optionallyRunRoseAstChecksAndExit(CodeThornOptions& ctOpt, SgProject* sageProject) {
-      if(ctOpt.runRoseAstChecks) {
-        cout << "ROSE tests started."<<endl;
-        // Run internal consistency tests on AST
-        AstTests::runAllTests(sageProject);
+    void runRoseAstChecks(SgProject* sageProject) {
+      // Run internal consistency tests on AST
+      AstTests::runAllTests(sageProject);
+    }
 
+    void optionallyRunRoseAstChecks(CodeThornOptions& ctOpt, SgProject* sageProject) {
+      if(ctOpt.runRoseAstChecks) {
+	if(ctOpt.status) cout<< "STATUS: ROSE AST checks started."<<endl;
+	runRoseAstChecks(sageProject);
+	if(ctOpt.status) cout << "STATUS: ROSE AST checks finished."<<endl;
+	      
         // test: constant expressions
         {
-          SAWYER_MESG(logger[TRACE]) <<"STATUS: testing constant expressions."<<endl;
+          if(ctOpt.status) cout <<"STATUS: testing constant expressions started."<<endl;
           CppConstExprEvaluator* evaluator=new CppConstExprEvaluator();
           list<SgExpression*> exprList=AstUtility::exprRootList(sageProject);
           logger[INFO] <<"found "<<exprList.size()<<" expressions."<<endl;
@@ -521,9 +527,15 @@ namespace CodeThorn {
             }
           }
           delete evaluator;
+	  if(ctOpt.status) cout << "STATUS: testing constant expressions finished."<<endl;
         }
-        cout << "ROSE tests finished."<<endl;
-        mfacilities.shutdown();
+      }
+    }
+    
+    void optionallyRunRoseAstChecksAndExit(CodeThornOptions& ctOpt, SgProject* sageProject) {
+      optionallyRunRoseAstChecks(ctOpt,sageProject);
+      if(ctOpt.runRoseAstChecks) {
+	mfacilities.shutdown();
         exit(0);
       }
     }
