@@ -67,7 +67,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                      "means that the alignment should be the same as the symbol size. The default is " +
                      StringUtility::plural(settings.alignment, "bytes") + "."));
 
-    tool.insert(Switch("where")
+    tool.insert(Switch("where", 'a')
                 .argument("interval", P2::addressIntervalParser(settings.where))
                 .doc("Specifies the range of addresses that should be analyzed.  Only windows that exist entirely "
                      "within this range are analyzed. The default is the entire address space. " +

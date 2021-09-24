@@ -536,7 +536,7 @@ checkRoseVersionNumber(const std::string &need, Sawyer::Message::Stream &fatal) 
 
 Sawyer::CommandLine::Switch
 stateFileFormatSwitch(SerialIo::Format &fmt) {
-    return Sawyer::CommandLine::Switch("state-format", 'f')
+    return Sawyer::CommandLine::Switch("state-format")
         .argument("fmt", Sawyer::CommandLine::enumParser<SerialIo::Format>(fmt)
                   ->with("binary", SerialIo::BINARY)
                   ->with("text", SerialIo::TEXT)
