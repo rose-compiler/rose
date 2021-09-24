@@ -68,13 +68,12 @@ WorkPredicate::operator()(const Settings::Ptr &settings, const Path::Ptr &path) 
     const size_t nSteps = path->nSteps();
     const size_t maxSteps = settings->k;
     const double timeUsed = path->processingTime();
-    const double maxTime = settings->maxTime.orElse(NAN);
 
     if (nSteps >= maxSteps) {
         SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
         ++kLimitReached_;
         return {false, "K bound"};
-    } else if (!rose_isnan(maxTime) && !rose_isnan(timeUsed) && timeUsed >= maxTime) {
+    } else if (settings->maxTime && !rose_isnan(timeUsed) && timeUsed >= settings->maxTime.get()) {
         SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
         ++timeLimitReached_;
         return {false, "time limit"};
