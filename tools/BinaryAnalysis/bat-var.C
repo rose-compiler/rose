@@ -42,7 +42,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     SwitchGroup sel("Selection switches");
     sel.name("sel");
 
-    sel.insert(Switch("function")
+    sel.insert(Switch("function", 'f')
                .argument("name_or_address", listParser(anyParser(settings.functionNames), ","))
                .explosiveLists(true)
                .whichValue(SAVE_ALL)
@@ -52,7 +52,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                     "treated as an address. This switch may occur multiple times and multiple comma-separated values may "
                     "be specified per occurrence."));
 
-    sel.insert(Switch("containing")
+    sel.insert(Switch("containing", 'a')
                .argument("addresses", listParser(nonNegativeIntegerParser(settings.addresses), ","))
                .explosiveLists(true)
                .whichValue(SAVE_ALL)
