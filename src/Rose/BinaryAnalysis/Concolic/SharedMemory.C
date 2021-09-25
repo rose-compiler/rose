@@ -12,6 +12,9 @@
 
 using namespace Sawyer::Message::Common;
 
+namespace IS = Rose::BinaryAnalysis::InstructionSemantics2;
+namespace BS = IS::BaseSemantics;
+
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Concolic {
@@ -22,8 +25,8 @@ namespace Concolic {
 
 SharedMemoryContext::SharedMemoryContext(const Architecture::Ptr &architecture, const ExecutionEvent::Ptr &sharedMemoryEvent)
     : phase(ConcolicPhase::REPLAY), architecture(architecture), ip(sharedMemoryEvent->instructionPointer()),
-      memoryVa(sharedMemoryEvent->memoryLocation().least()), nBytes(sharedMemoryEvent->memoryLocation().size()),
-      direction(IoDirection::READ), sharedMemoryEvent(sharedMemoryEvent), valueRead(sharedMemoryEvent->value()) {
+      accessedVas(sharedMemoryEvent->memoryLocation()), direction(IoDirection::READ), sharedMemoryEvent(sharedMemoryEvent),
+      valueRead(sharedMemoryEvent->value()) {
     ASSERT_not_null(architecture);
     ASSERT_not_null(sharedMemoryEvent);
     ASSERT_require(sharedMemoryEvent->action() == ExecutionEvent::Action::OS_SHARED_MEMORY);
@@ -32,8 +35,8 @@ SharedMemoryContext::SharedMemoryContext(const Architecture::Ptr &architecture, 
 SharedMemoryContext::SharedMemoryContext(const Architecture::Ptr &architecture, const Emulation::RiscOperators::Ptr &ops,
                                          const ExecutionEvent::Ptr &sharedMemoryEvent)
     : phase(ConcolicPhase::EMULATION), architecture(architecture), ops(ops), ip(sharedMemoryEvent->instructionPointer()),
-      memoryVa(sharedMemoryEvent->memoryLocation().least()), nBytes(sharedMemoryEvent->memoryLocation().size()),
-      direction(IoDirection::READ), sharedMemoryEvent(sharedMemoryEvent), valueRead(sharedMemoryEvent->inputVariable()) {
+      accessedVas(sharedMemoryEvent->memoryLocation()), direction(IoDirection::READ), sharedMemoryEvent(sharedMemoryEvent),
+      valueRead(sharedMemoryEvent->inputVariable()) {
     ASSERT_not_null(architecture);
     ASSERT_not_null(ops);
     ASSERT_not_null(sharedMemoryEvent);
@@ -44,6 +47,16 @@ SharedMemoryContext::~SharedMemoryContext() {}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // SharedMemoryCallback
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+const AddressInterval&
+SharedMemoryCallback::registeredVas() const {
+    return registeredVas_;
+}
+
+void
+SharedMemoryCallback::registeredVas(const AddressInterval &i) {
+    registeredVas_ = i;
+}
 
 void
 SharedMemoryCallback::hello(const std::string &myName, const SharedMemoryContext &ctx) const {
@@ -62,8 +75,8 @@ SharedMemoryCallback::hello(const std::string &myName, const SharedMemoryContext
         }
         out <<(myName.empty() ? ctx.sharedMemoryEvent->name() : myName)
             <<" at instruction " <<StringUtility::addrToString(ctx.ip)
-            <<", address " <<StringUtility::addrToString(ctx.memoryVa)
-            <<" for " <<StringUtility::plural(ctx.nBytes, "bytes") <<"\n";
+            <<", addresses " <<StringUtility::addrToString(ctx.accessedVas)
+            <<" (" <<StringUtility::plural(ctx.accessedVas.size(), "bytes") <<")\n";
         if (mlog[DEBUG] && ConcolicPhase::REPLAY == ctx.phase) {
             ASSERT_not_null(ctx.sharedMemoryEvent);
             if (SymbolicExpr::Ptr value = ctx.sharedMemoryEvent->value()) {
@@ -87,6 +100,26 @@ void
 SharedMemoryCallback::notAnInput(SharedMemoryContext &ctx) const {
     mlog[DEBUG] <<"    this shared memory read will not be treated as a test case input\n";
     ctx.ops->inputVariables()->deactivate(ctx.sharedMemoryEvent);
+}
+
+void
+SharedMemoryCallback::returns(SharedMemoryContext &ctx, const SymbolicExpr::Ptr &value) const {
+    ASSERT_not_null(value);
+    mlog[DEBUG] <<"    returning " <<*value <<"\n";
+    if (value->isConstant()) {
+        ctx.ops->inputVariables()->deactivate(ctx.sharedMemoryEvent);
+        ctx.sharedMemoryEvent->variable(SymbolicExpr::Ptr());
+        ctx.valueRead = value;
+        mlog[DEBUG] <<"    this shared memory read will not be treated as a test case input\n";
+    } else {
+        ctx.valueRead = value;
+    }
+}
+
+void
+SharedMemoryCallback::returns(SharedMemoryContext &ctx, const BS::SValue::Ptr &value) const {
+    SymbolicExpr::Ptr expr = IS::SymbolicSemantics::SValue::promote(value)->get_expression();
+    returns(ctx, expr);
 }
 
 SymbolicExpr::Ptr

@@ -77,11 +77,6 @@ Architecture::systemCalls() const {
     return systemCalls_;
 }
 
-Architecture::SystemCallMap&
-Architecture::systemCalls() {
-    return systemCalls_;
-}
-
 void
 Architecture::systemCalls(size_t syscallId, const SyscallCallback::Ptr &callback) {
     ASSERT_not_null(callback);
@@ -94,14 +89,13 @@ Architecture::sharedMemory() const {
     return sharedMemory_;
 }
 
-Architecture::SharedMemoryMap&
-Architecture::sharedMemory() {
-    return sharedMemory_;
-}
-
 void
 Architecture::sharedMemory(const AddressInterval &where, const SharedMemoryCallback::Ptr &callback) {
+    ASSERT_forbid(where.isEmpty());
     ASSERT_not_null(callback);
+    if (callback->registeredVas().isEmpty())
+        callback->registeredVas(where);
+
     AddressInterval remaining = where;
     while (!remaining.isEmpty()) {
         SharedMemoryCallbacks callbacks;
@@ -399,6 +393,8 @@ Architecture::sharedMemoryAccess(const SharedMemoryCallbacks &callbacks, const P
     } else {
         SAWYER_MESG(debug) <<"    shared memory read returns " <<*ctx.valueRead <<"\n";
         ASSERT_require(ctx.valueRead->nBits() == 8 * nBytes);
+        if (ctx.valueRead->isScalarConstant())
+            sharedMemoryEvent->value(ctx.valueRead);
     }
 
     // Post-callback actions
@@ -423,38 +419,95 @@ Architecture::fixupSharedMemoryEvents(const ExecutionEvent::Ptr &sharedMemoryEve
     ASSERT_not_null(sharedMemoryEvent);
     ASSERT_not_null(ops);
     Sawyer::Message::Stream debug(mlog[DEBUG]);
-    SAWYER_MESG(debug) <<"  solving to find value read from memory...\n";
+    SAWYER_MESG(debug) <<"  fixup shared memory events...\n";
 
+    // Update the related events, and at the same time create assertions that can be used to solve for the memory read event's
+    // value.  The register write for a shared-memory read instruction has a symbolic value that depends on the shared memory
+    // variable. Therefore, we can set the expression equal to the concrete value stored in this register and solve to get the
+    // value that was read from memory represented by the sharedMemoryEvent.
     SmtSolver::Transaction tx(ops->solver());
+    std::vector<SymbolicExpr::Ptr> newAssertions;
     std::vector<ExecutionEvent::Ptr> relatedEvents = getRelatedEvents(sharedMemoryEvent);
     for (const ExecutionEvent::Ptr &relatedEvent: relatedEvents) {
         if (relatedEvent->action() == ExecutionEvent::Action::REGISTER_WRITE) {
-            // The register write for a shared-memory read instruction has a symbolic value that depends on the shared memory
-            // variable. Therefore, we can set the expression equal to the concrete value stored in this register and solve to
-            // get the value that was read from memory represented by the sharedMemoryEvent.
             ASSERT_not_null(relatedEvent->expression());
             ASSERT_require(relatedEvent->value() == nullptr);
+
             const RegisterDescriptor REG = relatedEvent->registerDescriptor();
             relatedEvent->value(SymbolicExpr::makeIntegerConstant(readRegister(REG)));
-            SymbolicExpr::Ptr eq = SymbolicExpr::makeEq(relatedEvent->expression(), relatedEvent->value());
-            ops->solver()->insert(eq);
-            SAWYER_MESG(debug) <<"    asserting: " <<*eq <<"\n";
+
+            if (!sharedMemoryEvent->value()) {
+                SymbolicExpr::Ptr eq = SymbolicExpr::makeEq(relatedEvent->expression(), relatedEvent->value());
+                SAWYER_MESG(debug) <<"    from " <<relatedEvent->printableName(database()) <<":\n";
+                SAWYER_MESG(debug) <<"      asserting:  (eq[u1] " <<*relatedEvent->expression()
+                                                        <<" " <<*relatedEvent->value() <<")\n";
+                if (debug && eq->getOperator() != SymbolicExpr::OP_EQ)
+                    debug <<"      simplified: " <<*eq <<"\n";
+                newAssertions.push_back(eq);
+            }
         }
     }
-    switch (ops->solver()->check()) {
-        case SmtSolver::SAT_NO:
-            SAWYER_MESG(debug) <<"    not satisfiable\n";
-            ASSERT_not_implemented("how to recover?");  // [Robb Matzke 2021-09-14]
-        case SmtSolver::SAT_UNKNOWN:
-            SAWYER_MESG(debug) <<"    unknown satisfiability (timed out?)\n";
-            ASSERT_not_implemented("how to recover?");  // [Robb Matzke 2021-09-14]
-        case SmtSolver::SAT_YES: {
-            std::string varName = "v" + boost::lexical_cast<std::string>(*sharedMemoryEvent->variable()->variableId());
-            SymbolicExpr::Ptr concreteRead = ops->solver()->evidenceForName(varName);
-            ASSERT_not_null(concreteRead);
-            SAWYER_MESG(debug) <<"    concrete value read from memory: " <<*concreteRead <<"\n";
-            ASSERT_require(concreteRead->isScalarConstant());
-            sharedMemoryEvent->value(concreteRead);
+    ops->solver()->insert(newAssertions);
+
+    // Figure out a concrete value for the shared memory read event based on the assertions we added above.
+    if (!sharedMemoryEvent->value()) {
+        std::string varName = "v" + boost::lexical_cast<std::string>(*sharedMemoryEvent->variable()->variableId());
+        SymbolicExpr::Ptr concreteRead;                 // value read concretely
+
+        // First, we try to figure out the value that was concretely read from memory, but we do this in the context of all the
+        // previous assertions also, so it might fail. For instance, if we're reading shared memory that represents a timer,
+        // then there's probably an assertion that says the value is monotonically increasing. But if we've already replayed
+        // events for this memory, then the replayed value might be higher than the one we just read concretely, causing the
+        // assertions to be unsatisfiable.
+        if (debug) {
+            debug <<"    all assertions:\n";
+            for (const SymbolicExpr::Ptr &assertion: ops->solver()->assertions())
+                debug <<"      asserting:  " <<*assertion <<"\n";
+        }
+        SmtSolver::Satisfiable isSatisfied = ops->solver()->check();
+
+        // If we couldn't figure out a value with all the assertions, then try again with only the assertion for the memory
+        // read instruction: the shared memory event and any register writes.
+        if (SmtSolver::SAT_YES == isSatisfied) {
+            concreteRead = ops->solver()->evidenceForName(varName);
+        } else {
+            SAWYER_MESG(debug) <<"    not satisified; trying again with assertions for just this instruction\n";
+            SmtSolver::Ptr extraSolver = ops->solver()->create();
+            extraSolver->insert(newAssertions);
+            isSatisfied = extraSolver->check();
+            if (SmtSolver::SAT_YES == isSatisfied)
+                concreteRead = extraSolver->evidenceForName(varName);
+        }
+
+        switch (isSatisfied) {
+            case SmtSolver::SAT_NO:
+                SAWYER_MESG(debug) <<"    not satisfiable\n";
+                ASSERT_not_implemented("how to recover?");  // [Robb Matzke 2021-09-14]
+            case SmtSolver::SAT_UNKNOWN:
+                SAWYER_MESG(debug) <<"    unknown satisfiability (timed out?)\n";
+                ASSERT_not_implemented("how to recover?");  // [Robb Matzke 2021-09-14]
+            case SmtSolver::SAT_YES: {
+                ASSERT_not_null2(concreteRead, "no evidence for " + varName);
+                SAWYER_MESG(debug) <<"    presumptive concrete value read from memory: " <<*concreteRead <<"\n";
+                ASSERT_require(concreteRead->isScalarConstant());
+                sharedMemoryEvent->value(concreteRead);
+            }
+        }
+    }
+    ASSERT_not_null(sharedMemoryEvent->value());
+    if (sharedMemoryEvent->variable())
+        inputVariables()->bindVariableValue(sharedMemoryEvent->variable(), sharedMemoryEvent->value());
+
+
+    // Make sure the concrete register state is what we think it should be
+    SAWYER_MESG(debug) <<"  fixing up concrete state\n";
+    for (const ExecutionEvent::Ptr &relatedEvent: relatedEvents) {
+        if (relatedEvent->action() == ExecutionEvent::Action::REGISTER_WRITE) {
+            SymbolicExpr::Ptr registerValue = relatedEvent->calculateResult(inputVariables()->bindings());
+            ASSERT_require(registerValue->isScalarConstant());
+            SAWYER_MESG(debug) <<"    for " <<relatedEvent->printableName(database()) <<"\n"
+                               <<"      writing " <<*registerValue <<"to register " <<relatedEvent->registerDescriptor() <<"\n";
+            writeRegister(relatedEvent->registerDescriptor(), registerValue->isLeafNode()->bits());
         }
     }
 
@@ -462,14 +515,17 @@ Architecture::fixupSharedMemoryEvents(const ExecutionEvent::Ptr &sharedMemoryEve
     if (!sharedMemoryEvent->inputVariable()) {
         for (const ExecutionEvent::Ptr &relatedEvent: relatedEvents) {
             if (relatedEvent->action() == ExecutionEvent::Action::REGISTER_WRITE) {
-                relatedEvent->expression(relatedEvent->value());
-                ops->writeRegister(relatedEvent->registerDescriptor(), ops->svalueExpr(relatedEvent->value()));
+                if (relatedEvent->expression()->isConstant()) {
+                    std::cerr <<"ROBB: relatedEvent->expression() = " <<*relatedEvent->expression() <<"\n";
+                } else {
+                    relatedEvent->expression(relatedEvent->value());
+                    ops->writeRegister(relatedEvent->registerDescriptor(), ops->svalueExpr(relatedEvent->value()));
+                }
+                SAWYER_MESG(debug) <<"    " <<relatedEvent->printableName(database()) <<" is constant; "
+                                   <<"value = "<<*relatedEvent->value() <<"\n";
             }
         }
     }
-
-    if (sharedMemoryEvent->variable())
-        inputVariables()->bindVariableValue(sharedMemoryEvent->variable(), sharedMemoryEvent->value());
 }
 
 void
@@ -496,7 +552,7 @@ Architecture::printSharedMemoryEvents(const ExecutionEvent::Ptr &sharedMemoryEve
     SAWYER_MESG(debug) <<"      expression: " <<*sharedMemoryEvent->expression() <<"\n";
 
     for (const ExecutionEvent::Ptr &related: getRelatedEvents(sharedMemoryEvent)) {
-        SAWYER_MESG(debug) <<"  related " <<related->printableName(ops->database()) <<"\n";
+        SAWYER_MESG(debug) <<"    related " <<related->printableName(ops->database()) <<"\n";
         ASSERT_forbid(related->inputVariable());
         if (related->variable()) {
             SAWYER_MESG(debug) <<"      non-input variable: " <<*related->variable() <<"\n";
