@@ -79,11 +79,11 @@ CodeThorn::CTAnalysis::~CTAnalysis() {
 }
 
 void CodeThorn::CTAnalysis::deleteAllStates() {
-  logger[INFO]<<"INFO::deleting estates."<<endl;
+  if(_ctOpt.status) cout<<"STATUS: deleting "<<estateSet.size()<<" estates, ";
   estateSet.clear();
-  logger[INFO]<<"INFO::deleting pstates."<<endl;
+  if(_ctOpt.status) cout<<pstateSet.size()<<" pstates, ";
   pstateSet.clear();
-  logger[INFO]<<"INFO::deleting transition system."<<endl;
+  if(_ctOpt.status) cout<<transitionGraph.size()<<" transitions in TS."<<endl;
   transitionGraph.clear();
 }
 

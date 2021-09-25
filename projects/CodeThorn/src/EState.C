@@ -21,14 +21,14 @@ using namespace CodeThorn;
 bool EState::sharedPStates=true;
 
 EState::~EState() {
-  /*
+#if 0
   if(EState::sharedPStates==false) {
     if(_pstate!=nullptr) {
       delete _pstate;
       _pstate=nullptr;
     }
   }
-  */
+#endif
 }
 
 
