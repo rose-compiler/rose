@@ -333,6 +333,8 @@ namespace CodeThorn {
       IOAnalyzer* analyzer = new IOAnalyzer();
       analyzer->setOptions(ctOpt);
       analyzer->setLtlOptions(ltlOpt);
+      EState::sharedPStates=ctOpt.sharedPStates;
+      EState::sharedPStates=false;
       return analyzer;
     }
 

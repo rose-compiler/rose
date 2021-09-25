@@ -18,7 +18,19 @@
 using namespace std;
 using namespace CodeThorn;
 
-bool EState::sharedPStates=false;
+bool EState::sharedPStates=true;
+
+EState::~EState() {
+  /*
+  if(EState::sharedPStates==false) {
+    if(_pstate!=nullptr) {
+      delete _pstate;
+      _pstate=nullptr;
+    }
+  }
+  */
+}
+
 
 string EState::predicateToString(VariableIdMapping* variableIdMapping) const {
   string separator=",";
@@ -59,27 +71,29 @@ std::string EState::programPosToString(Labeler* labeler) const {
   * \date 2012.
  */
 // define order for EState elements (necessary for EStateSet)
-#define USE_CALLSTRINGS
-#ifdef USE_CALLSTRINGS
+// only used in SpotState
 bool CodeThorn::operator<(const EState& e1, const EState& e2) {
-  if(e1.label()!=e2.label())
-    return (e1.label()<e2.label());
-  if(e1.pstate()!=e2.pstate())
-    return (e1.pstate()<e2.pstate());
-  if(e1.io!=e2.io) {
-    return e1.io<e2.io;
+  if(EState::sharedPStates) {
+    if(e1.label()!=e2.label())
+      return (e1.label()<e2.label());
+    if(e1.pstate()!=e2.pstate())
+      return (e1.pstate()<e2.pstate());
+    if(e1.io!=e2.io) {
+      return e1.io<e2.io;
+    }
+    return e1.callString<e2.callString;
+  } else {
+    if(e1.label()!=e2.label())
+      return (e1.label()<e2.label());
+    if(*e1.pstate()!=*e2.pstate())
+      return (e1.pstate()<e2.pstate());
+    if(e1.io!=e2.io) {
+      return e1.io<e2.io;
+    }
+    return e1.callString<e2.callString;
   }
-  return e1.callString<e2.callString;
+
 }
-#else
-bool CodeThorn::operator<(const EState& e1, const EState& e2) {
-  if(e1.label()!=e2.label())
-    return (e1.label()<e2.label());
-  if(e1.pstate()!=e2.pstate())
-    return (e1.pstate()<e2.pstate());
-  return e1.io<e2.io;
-}
-#endif
 
 bool CodeThorn::operator==(const EState& c1, const EState& c2) {
   if(EState::sharedPStates) {

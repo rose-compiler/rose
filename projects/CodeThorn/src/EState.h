@@ -42,6 +42,8 @@ namespace CodeThorn {
     EState(Label label, PStatePtr pstate):_label(label),_pstate(pstate) {}
     EState(Label label, PStatePtr pstate, CodeThorn::InputOutput io):_label(label),_pstate(pstate),io(io){}
     EState(Label label, CallString cs, PStatePtr pstate, CodeThorn::InputOutput io):_label(label),_pstate(pstate),io(io),callString(cs) {}
+    ~EState();
+    
     std::string toString() const;
     std::string toString(CodeThorn::VariableIdMapping* variableIdMapping) const;
     std::string toHTML() const; /// multi-line version for dot output
@@ -86,15 +88,17 @@ namespace CodeThorn {
   };
 
   // define order for EState elements (necessary for EStateSet)
-  bool operator<(const EState& c1, const EState& c2);
   bool operator==(const EState& c1, const EState& c2);
   bool operator!=(const EState& c1, const EState& c2);
-  
+
+#if 1
+  bool operator<(const EState& c1, const EState& c2);
   struct EStateLessComp {
     bool operator()(const EState& c1, const EState& c2) {
       return c1<c2;
     }
   };
+#endif
   
   /*! 
    * \author Markus Schordan
@@ -105,7 +109,15 @@ class EStateHashFun {
   EStateHashFun() {}
   long operator()(EState* s) const {
     unsigned int hash=1;
-    hash=(long)s->label().getId()*(((long)s->pstate())+1);
+    if(EState::sharedPStates) {
+      hash=(long)s->label().getId()*(((long)s->pstate())+1);
+    } else {
+      PStatePtr pstateptr=s->pstate(); // const
+      PState* pstate=const_cast<PState*>(pstateptr); // non-const
+      PStateHashFun pstateHashFun;
+      long pstateHash=pstateHashFun(pstate);
+      hash=(long)s->label().getId()*(pstateHash+1);
+    }
     return long(hash);
   }
  private:

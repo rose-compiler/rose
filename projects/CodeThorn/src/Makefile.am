@@ -721,15 +721,14 @@ CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization 
                       check-thorn2
 CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 
-CHECK_WITH_SPOT_PASSING=$(CHECK_DEFAULT_PASSING) check-ltl-seq check-reachability-seq
+CHECK_WITH_SPOT_PASSING=check-reachability-seq check-ltl-seq check-ltl-par
 CHECK_WITH_SPOT_FAILING=check-svcomp-witness check-ltl-rers-loop-aware-sync
 
 check-default: $(CHECK_DEFAULT_PASSING)
 
 if ROSE_WITH_SPOT
-check-local: $(CHECK_WITH_SPOT_PASSING) check-additional
-check-extended: $(CHECK_WITH_SPOT_PASSING) check-additional
-check-additional: check-ltl-par check-ltl-driven-reset-analyzer-seq
+check-local: $(CHECK_DEFAULT_PASSING) $(CHECK_WITH_SPOT_PASSING)
+check-extended: check-ltl-driven-reset-analyzer
 else
 check-local: $(CHECK_DEFAULT_PASSING)
 endif
@@ -812,7 +811,7 @@ check-ltl-old: check-ltl-rers-different-versions
 # current tests all passing
 check-ltl-seq: check-ltl-start check-ltl-rers-topify-seq check-ltl-cegpra-seq check-ltl-rers-array check-ltl-rers-arithmetic-seq check-ltl-rers-timeout-seq check-ltl-driven-seq
 
-check-ltl-par: check-ltl-rers-timeout-par check-ltl-rers-arithmetic-par check-reachability-par check-ltl-driven-par check-ltl-driven-reset-analyzer-par
+check-ltl-par: check-ltl-rers-timeout-par check-ltl-rers-arithmetic-par check-reachability-par check-ltl-driven-par
 
 check-ltl-start:
 	@echo ================================================================
@@ -873,17 +872,14 @@ check-arrays:
 check-array-bounds: ./codethorn
 	./codethorn --explicit-arrays=yes $(srcdir)/tests/arraybounds1.C
 
-# seg-faults with --reset-analyzer=no. Works with --reset-analyzer=yes (see below)
 check-ltl-driven-seq:
 	./codethorn $(srcdir)/tests/rers/Problem1401_opt.c --rersmode=yes --with-counterexamples=yes --counterexamples-with-output=yes --ltl-in-alphabet="{1,2,3,4,5}" --ltl-out-alphabet="{18,19,20,21,22,23,24,25,26}" --check-ltl=$(srcdir)/tests/rers/constraints-RERS14-5.txt  --display-diff=100000 --ltl-driven --reset-analyzer=no --status
 
 check-ltl-driven-par:
 	./codethorn $(srcdir)/tests/rers/Problem1401_opt.c --rersmode=yes --with-counterexamples=yes --counterexamples-with-output=yes --ltl-in-alphabet="{1,2,3,4,5}" --ltl-out-alphabet="{18,19,20,21,22,23,24,25,26}" --check-ltl=$(srcdir)/tests/rers/constraints-RERS14-5.txt  --display-diff=100000 --ltl-driven --reset-analyzer=no --status --threads=4
 
-check-ltl-driven-reset-analyzer-seq:
-	./codethorn $(srcdir)/tests/rers/Problem1401_opt.c --rersmode=yes --with-counterexamples=yes --counterexamples-with-output=yes --ltl-in-alphabet="{1,2,3,4,5}" --ltl-out-alphabet="{18,19,20,21,22,23,24,25,26}" --check-ltl=$(srcdir)/tests/rers/constraints-RERS14-5.txt  --display-diff=100000 --ltl-driven --reset-analyzer=yes
-
-check-ltl-driven-reset-analyzer-par:
+check-ltl-driven-reset-analyzer:
+	./codethorn $(srcdir)/tests/rers/Problem1401_opt.c --rersmode=yes --with-counterexamples=yes --counterexamples-with-output=yes --ltl-in-alphabet="{1,2,3,4,5}" --ltl-out-alphabet="{18,19,20,21,22,23,24,25,26}" --check-ltl=$(srcdir)/tests/rers/constraints-RERS14-5.txt  --display-diff=100000 --ltl-driven --reset-analyzer=yes --status
 	./codethorn $(srcdir)/tests/rers/Problem1401_opt.c --rersmode=yes --with-counterexamples=yes --counterexamples-with-output=yes --ltl-in-alphabet="{1,2,3,4,5}" --ltl-out-alphabet="{18,19,20,21,22,23,24,25,26}" --check-ltl=$(srcdir)/tests/rers/constraints-RERS14-5.txt  --display-diff=100000 --ltl-driven --reset-analyzer=yes --threads=4
 
 check-svcomp-witness:

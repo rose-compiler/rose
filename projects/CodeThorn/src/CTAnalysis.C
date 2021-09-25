@@ -781,7 +781,7 @@ void CodeThorn::CTAnalysis::printStatusMessage(bool forceDisplay) {
     {
       estateWorkListCurrentSize = estateWorkListCurrent->size();
     }
-    ss <<color("white")<<"Number of pstates/estates/trans/c/wl/iter/time/mem: ";
+    ss <<color("white")<<"Number of pstates/estates/trans/wl/iter/time/mem: ";
     ss <<color("magenta")<<pstateSetSize
        <<color("white")<<"/"
        <<color("cyan")<<estateSetSize
@@ -1128,22 +1128,6 @@ list<pair<SgLabelStatement*,SgNode*> > CodeThorn::CTAnalysis::listOfLabeledAsser
   }
   return assertNodes;
 }
-
-#if 0
-const EState* CodeThorn::CTAnalysis::processCompleteNewOrExisting(const EState* es) {
-  PStatePtr ps=es->pstate();
-  PStatePtr ps2=pstateSet.processNewOrExisting(ps);
-  // TODO: ps2 check as below
-  const EState* es2=new EState(es->label(),ps2, es->io);
-  const EState* es3=estateSet.processNewOrExisting(es2);
-  // equivalent object (but with different address) already exists
-  // discard superfluous new object and use existing object pointer.
-  if(es2!=es3) {
-    delete es2;
-  }
-  return es3;
-}
-#endif
 
 PStatePtr CodeThorn::CTAnalysis::processNew(PState& s) {
   if(EState::sharedPStates) {
@@ -1626,7 +1610,9 @@ void CodeThorn::CTAnalysis::resetAnalysis() {
   addToWorkList(processedEState);
   // check if the reset yields the expected sizes of corresponding data structures
   ROSE_ASSERT(estateSet.size() == 1);
-  ROSE_ASSERT(pstateSet.size() == 1);
+  if(EState::sharedPStates) {
+    ROSE_ASSERT(pstateSet.size() == 1);
+  }
   ROSE_ASSERT(transitionGraph.size() == 0);
   ROSE_ASSERT(estateWorkListCurrent->size() == 1);
   ROSE_ASSERT(estateWorkListNext->size() == 0);

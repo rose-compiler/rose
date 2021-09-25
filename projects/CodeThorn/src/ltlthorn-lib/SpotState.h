@@ -32,9 +32,11 @@ namespace CodeThorn {
   class SpotState : public spot::state {
   public:
     SpotState(const EState& estate);
+
     //returns a negative value if "this" is smaller than "other", 0 if they are the same and
     // a value greater zero if "this" is comparably greater than "other"
     int compare(const spot::state* other) const;
+
     //returns a hash value for this state
     size_t hash() const;
     spot::state* clone() const;
