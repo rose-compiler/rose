@@ -18,6 +18,8 @@
 using namespace std;
 using namespace CodeThorn;
 
+bool EState::sharedPStates=false;
+
 string EState::predicateToString(VariableIdMapping* variableIdMapping) const {
   string separator=",";
   string pred;
@@ -80,13 +82,19 @@ bool CodeThorn::operator<(const EState& e1, const EState& e2) {
 #endif
 
 bool CodeThorn::operator==(const EState& c1, const EState& c2) {
-  return (c1.label()==c2.label())
-    && (c1.pstate()==c2.pstate())
-    && (c1.io==c2.io)
-    //#ifdef USE_CALLSTRINGS
-    && (c1.callString==c2.callString)
-    //#endif
+  if(EState::sharedPStates) {
+    return (c1.label()==c2.label())
+      && (c1.pstate()==c2.pstate())
+      && (c1.io==c2.io)
+      && (c1.callString==c2.callString)
     ;
+  } else {
+    return (c1.label()==c2.label())
+      && (*c1.pstate()==*c2.pstate())
+      && (c1.io==c2.io)
+      && (c1.callString==c2.callString)
+    ;
+  }
 }
 
 bool CodeThorn::operator!=(const EState& c1, const EState& c2) {

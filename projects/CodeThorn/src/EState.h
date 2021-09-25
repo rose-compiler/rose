@@ -41,7 +41,7 @@ namespace CodeThorn {
     EState():_label(Label()),_pstate(0) {}
     EState(Label label, PStatePtr pstate):_label(label),_pstate(pstate) {}
     EState(Label label, PStatePtr pstate, CodeThorn::InputOutput io):_label(label),_pstate(pstate),io(io){}
-  EState(Label label, CallString cs, PStatePtr pstate, CodeThorn::InputOutput io):_label(label),_pstate(pstate),io(io),callString(cs) {}
+    EState(Label label, CallString cs, PStatePtr pstate, CodeThorn::InputOutput io):_label(label),_pstate(pstate),io(io),callString(cs) {}
     std::string toString() const;
     std::string toString(CodeThorn::VariableIdMapping* variableIdMapping) const;
     std::string toHTML() const; /// multi-line version for dot output
@@ -76,6 +76,7 @@ namespace CodeThorn {
     Label _label;
     PStatePtr _pstate;
   public:
+    static bool sharedPStates;
     CodeThorn::InputOutput io;
     void setCallString(CallString cs);
     CallString getCallString() const;

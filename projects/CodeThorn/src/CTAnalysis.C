@@ -1129,6 +1129,7 @@ list<pair<SgLabelStatement*,SgNode*> > CodeThorn::CTAnalysis::listOfLabeledAsser
   return assertNodes;
 }
 
+#if 0
 const EState* CodeThorn::CTAnalysis::processCompleteNewOrExisting(const EState* es) {
   PStatePtr ps=es->pstate();
   PStatePtr ps2=pstateSet.processNewOrExisting(ps);
@@ -1142,12 +1143,24 @@ const EState* CodeThorn::CTAnalysis::processCompleteNewOrExisting(const EState* 
   }
   return es3;
 }
+#endif
 
 PStatePtr CodeThorn::CTAnalysis::processNew(PState& s) {
-  return pstateSet.processNew(s);
+  if(EState::sharedPStates) {
+    return pstateSet.processNew(s);
+  } else {
+    PState* newPState=new PState();
+    *newPState=s;
+    return const_cast<PStatePtr>(newPState);
+  }
 }
+
 PStatePtr CodeThorn::CTAnalysis::processNewOrExisting(PState& s) {
-  return pstateSet.processNewOrExisting(s);
+  if(EState::sharedPStates) {
+    return pstateSet.processNewOrExisting(s);
+  } else {
+    return processNew(s);
+  }
 }
 
 const EState* CodeThorn::CTAnalysis::processNew(EState& s) {
