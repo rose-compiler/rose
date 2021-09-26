@@ -233,7 +233,7 @@ void FunctionCallMapping::dumpFunctionCallTargetInfo() {
 }
 
 void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
-  logger[INFO]<<"Computing FunctionCallMapping1"<<endl;
+  SAWYER_MESG(logger[INFO])<<"Computing FunctionCallMapping1"<<endl;
   collectRelevantNodes(root);
   SAWYER_MESG(logger[INFO])<< "Number of "<<" function call sites :" <<funCallList.size()<<endl;
   SAWYER_MESG(logger[INFO])<< "Number of "<<" function definitions:" <<funDefList.size()<<endl;
@@ -282,7 +282,7 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
           bool matching2=(fcInfo.getFunctionName()==fcTarget.getFunctionName());
           matching=matching1||matching2;
           // problematic handles special case of unspecified function pointers in C
-          //logger[INFO]<<"XXX: "<<fcInfo.getFunctionName()<<" : "<<funCallTypeName<<"<=>"<<fcTargetTypeName<<":::"<<matching<<endl;
+          //SAWYER_MESG(logger[INFO])<<"XXX: "<<fcInfo.getFunctionName()<<" : "<<funCallTypeName<<"<=>"<<fcTargetTypeName<<":::"<<matching<<endl;
           break;
           }
         default:

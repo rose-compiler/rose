@@ -407,10 +407,21 @@ void CodeThorn::CTAnalysis::setSummaryState(CodeThorn::Label lab, CodeThorn::Cal
 const EState* CodeThorn::CTAnalysis::getBottomSummaryState(Label lab, CallString cs) {
   InputOutput io;
   io.recordBot();
-  ROSE_ASSERT(_initialPStateStored);
-  EState estate(lab,cs,_initialPStateStored,io);
-  const EState* bottomElement=processNewOrExisting(estate);
-  return bottomElement;
+  if(EState::sharedPStates) {
+    ROSE_ASSERT(_initialPStateStored);
+    EState estate(lab,cs,_initialPStateStored,io);
+    const EState* bottomElement=processNewOrExisting(estate);
+    return bottomElement;
+  } else {
+    ROSE_ASSERT(_initialPStateStored);
+    //const PState* newInitialPState=new PState(*_initialPStateStored);xxx
+    const PState* newInitialPState=new PState();
+    EState estate(lab,cs,newInitialPState,io);
+    ROSE_ASSERT(estate.pstate());
+    const EState* bottomElement=processNew(estate);
+    ROSE_ASSERT(bottomElement->pstate());
+    return bottomElement;
+  }
 }
 
 void CodeThorn::CTAnalysis::initializeSummaryStates(const CodeThorn::PState* initialPStateStored) {
@@ -1042,6 +1053,7 @@ const EState* CodeThorn::CTAnalysis::popWorkList() {
       }
     }
   }
+  ROSE_ASSERT(estate->pstate());
   return estate;
 }
 
@@ -1119,7 +1131,7 @@ list<pair<SgLabelStatement*,SgNode*> > CodeThorn::CTAnalysis::listOfLabeledAsser
           SgLabelStatement* labStmt=isSgLabelStatement(*prev);
           //string name=labStmt->get_label().getString();
           // TODO check prefix error_
-          //logger[INFO] <<"Found label "<<assertNodes.size()<<": "<<name<<endl;
+          //SAWYER_MESG(logger[INFO]) <<"Found label "<<assertNodes.size()<<": "<<name<<endl;
           assertNodes.push_back(make_pair(labStmt,*j));
         }
       }
@@ -1133,8 +1145,7 @@ PStatePtr CodeThorn::CTAnalysis::processNew(PState& s) {
   if(EState::sharedPStates) {
     return pstateSet.processNew(s);
   } else {
-    PState* newPState=new PState();
-    *newPState=s;
+    PState* newPState=new PState(s);
     return const_cast<PStatePtr>(newPState);
   }
 }
@@ -1257,6 +1268,7 @@ EState CodeThorn::CTAnalysis::createInitialEState(SgProject* root, Label slab) {
   PState initialPState;
   ROSE_ASSERT(slab.isValid());
   _estateTransferFunctions->initializeCommandLineArgumentsInState(slab,initialPState);
+
   if(_ctOpt.inStateStringLiterals) {
     ROSE_ASSERT(_estateTransferFunctions);
     _estateTransferFunctions->initializeStringLiteralsInState(slab,initialPState);
@@ -1266,14 +1278,17 @@ EState CodeThorn::CTAnalysis::createInitialEState(SgProject* root, Label slab) {
   }
 
   PStatePtr initialPStateStored=processNewOrExisting(initialPState); // might reuse another pstate when initializing in level 1
+
   ROSE_ASSERT(initialPStateStored);
-  SAWYER_MESG(logger[TRACE])<< "INIT: initial pstate(stored): "<<initialPStateStored->toString(getVariableIdMapping())<<endl;
+  //SAWYER_MESG(logger[TRACE])<< "INIT: initial pstate(stored): "<<initialPStateStored->toString(getVariableIdMapping())<<endl;
 
   transitionGraph.setStartLabel(slab);
   transitionGraph.setAnalyzer(this);
 
-  EState estate(slab,initialPStateStored);
-
+  // in case of non-shared PStates, a new PState must be created to ensure it remains valid even when the initial estate is deleted
+  const PState* initialPStatePtr=(EState::sharedPStates?initialPStateStored:new PState(*initialPStateStored));
+  EState estate(slab,initialPStatePtr);
+  
   ROSE_ASSERT(_estateTransferFunctions);
   _estateTransferFunctions->initializeGlobalVariables(root, estate);
   SAWYER_MESG(logger[INFO]) <<"Initial state: number of entries:"<<estate.pstate()->stateSize()<<endl;
@@ -1284,6 +1299,7 @@ EState CodeThorn::CTAnalysis::createInitialEState(SgProject* root, Label slab) {
 
   return estate;
 }
+
 void CodeThorn::CTAnalysis::postInitializeSolver() {
   // empty in base class
 }
@@ -1295,11 +1311,18 @@ void CodeThorn::CTAnalysis::initializeSolverWithInitialEState(SgProject* root) {
       // inter-procedural analysis initial state
       Label slab=getFlow()->getStartLabel();
       EState initialEStateObj=createInitialEState(root, slab);
+      ROSE_ASSERT(initialEStateObj.pstate());
+
+      SAWYER_MESG(logger[INFO]) << "INIT: start state inter-procedural (extremal value size) (1): "<<initialEStateObj.pstate()->stateSize()<<" variables."<<endl;
+
       const EState* initialEState=processNew(initialEStateObj);
       ROSE_ASSERT(initialEState);
+      ROSE_ASSERT(initialEState->pstate());
+
       variableValueMonitor.init(initialEState);
+      ROSE_ASSERT(initialEState->pstate());
       addToWorkList(initialEState);
-      SAWYER_MESG(logger[INFO]) << "INIT: start state inter-procedural (extremal value size): "<<initialEState->pstate()->stateSize()<<" variables."<<endl;
+      SAWYER_MESG(logger[INFO]) << "INIT: start state inter-procedural (extremal value size) (2): "<<initialEState->pstate()->stateSize()<<" variables."<<endl;
       SAWYER_MESG(logger[TRACE]) << "INIT: start state inter-procedural (extremal value): "<<initialEState->toString(getVariableIdMapping())<<endl;
       postInitializeSolver(); // empty in this class, only overridden by IOAnalyzer for ltldriven analysis
     } else {

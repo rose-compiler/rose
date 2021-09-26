@@ -727,8 +727,10 @@ CHECK_WITH_SPOT_FAILING=check-svcomp-witness check-ltl-rers-loop-aware-sync
 check-default: $(CHECK_DEFAULT_PASSING)
 
 if ROSE_WITH_SPOT
+# notes: ltl-driven and cegpra tests require significatnly more memory without shared pstates, therefore they are run separately.
 check-local: $(CHECK_DEFAULT_PASSING) $(CHECK_WITH_SPOT_PASSING)
 check-extended: check-ltl-driven-reset-analyzer
+check-extended2: check-ltl-cegpra-seq
 else
 check-local: $(CHECK_DEFAULT_PASSING)
 endif
@@ -809,7 +811,7 @@ check-ltl-old: check-ltl-rers-different-versions
 #check-failing:
 
 # current tests all passing
-check-ltl-seq: check-ltl-start check-ltl-rers-topify-seq check-ltl-cegpra-seq check-ltl-rers-array check-ltl-rers-arithmetic-seq check-ltl-rers-timeout-seq check-ltl-driven-seq
+check-ltl-seq: check-ltl-start check-ltl-rers-topify-seq check-ltl-rers-array check-ltl-rers-arithmetic-seq check-ltl-rers-timeout-seq check-ltl-driven-seq
 
 check-ltl-par: check-ltl-rers-timeout-par check-ltl-rers-arithmetic-par check-reachability-par check-ltl-driven-par
 

@@ -108,8 +108,8 @@ bool DataRaceDetection::run(CTAnalysis& analyzer) {
       if (options.visualizeReadWriteSets) {
         setVisualizeReadWriteAccesses(true);
       }
-      logger[TRACE]<<"STATUS: performing array analysis on STG."<<endl;
-      logger[TRACE]<<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
+      SAWYER_MESG(logger[TRACE])<<"STATUS: performing array analysis on STG."<<endl;
+      SAWYER_MESG(logger[TRACE])<<"STATUS: identifying array-update operations in STG and transforming them."<<endl;
       
       speci.setMaxNumberOfExtractedUpdates(options.maxNumberOfExtractedUpdates);
       speci.dataRaceDetection=true;
@@ -124,7 +124,7 @@ bool DataRaceDetection::run(CTAnalysis& analyzer) {
       SgNode* root=analyzer.getStartFunRoot();
       VariableId parallelIterationVar;
       LoopInfoSet loopInfoSet=DataRaceDetection::determineLoopInfoSet(root,analyzer.getVariableIdMapping(), analyzer.getLabeler());
-      logger[TRACE]<<"INFO: number of iteration vars: "<<loopInfoSet.size()<<endl;
+      SAWYER_MESG(logger[TRACE])<<"INFO: number of iteration vars: "<<loopInfoSet.size()<<endl;
       verifyUpdateSequenceRaceConditionsTotalLoopNum=loopInfoSet.size();
       verifyUpdateSequenceRaceConditionsParLoopNum=DataRaceDetection::numParLoops(loopInfoSet, analyzer.getVariableIdMapping());
       verifyUpdateSequenceRaceConditionsResult=checkDataRaces(loopInfoSet,arrayUpdates,analyzer.getVariableIdMapping());
@@ -134,7 +134,7 @@ bool DataRaceDetection::run(CTAnalysis& analyzer) {
       }
 
       if(verifyUpdateSequenceRaceConditionsResult==false && analyzer.isIncompleteSTGReady()) {
-        logger[TRACE]<<"DEBUG: INCOMPLETE AST AND NO DATA RACE WAS FOUND => UNKNOWN"<<endl;
+        SAWYER_MESG(logger[TRACE])<<"DEBUG: INCOMPLETE AST AND NO DATA RACE WAS FOUND => UNKNOWN"<<endl;
         verifyUpdateSequenceRaceConditionsResult=-2;
       }
       // cannot handle programs without parallel loop yet
@@ -145,7 +145,7 @@ bool DataRaceDetection::run(CTAnalysis& analyzer) {
                    verifyUpdateSequenceRaceConditionsParLoopNum,
                    verifyUpdateSequenceRaceConditionsTotalLoopNum);
     } catch(const CodeThorn::Exception& e) {
-      logger[TRACE] << "CodeThorn::Exception raised & catched inside data race detection (generating 'unknown'): " << e.what() << endl;
+      SAWYER_MESG(logger[TRACE])<<"CodeThorn::Exception raised & catched inside data race detection (generating 'unknown'): " << e.what() << endl;
       reportResult(-2,0,0);
       return 1;
     }
@@ -235,7 +235,7 @@ LoopInfoSet DataRaceDetection::determineLoopInfoSet(SgNode* root, VariableIdMapp
     }
     loopInfoSet.push_back(loopInfo);
   }
-  logger[TRACE]<<"INFO: found "<<DataRaceDetection::numParLoops(loopInfoSet,variableIdMapping)<<" parallel loops."<<endl;
+  SAWYER_MESG(logger[TRACE])<<"INFO: found "<<DataRaceDetection::numParLoops(loopInfoSet,variableIdMapping)<<" parallel loops."<<endl;
   return loopInfoSet;
 }
 
@@ -260,8 +260,8 @@ int DataRaceDetection::checkDataRaces(LoopInfoSet& loopInfoSet,
                                       ArrayUpdatesSequence& arrayUpdates, 
                                       VariableIdMapping* variableIdMapping) {
   int errorCount=0;
-  logger[TRACE]<<"checking race conditions."<<endl;
-  logger[INFO]<<"number of parallel loops: "<<numParLoops(loopInfoSet,variableIdMapping)<<endl;
+  SAWYER_MESG(logger[TRACE])<<"checking race conditions."<<endl;
+  SAWYER_MESG(logger[INFO])<<"number of parallel loops: "<<numParLoops(loopInfoSet,variableIdMapping)<<endl;
   
   // only used when USE_ALL_ITER_VARS is defined. See also "_checkAllLoops".
   VariableIdSet allIterVars;
@@ -274,9 +274,9 @@ int DataRaceDetection::checkDataRaces(LoopInfoSet& loopInfoSet,
       VariableId parVariable;
       parVariable=(*lis).iterationVarId;
       if(_checkAllLoops) {
-        logger[INFO]<<"checking loop: "<<variableIdMapping->variableName(parVariable)<<endl;
+        SAWYER_MESG(logger[INFO])<<"checking loop: "<<variableIdMapping->variableName(parVariable)<<endl;
       } else {
-        logger[INFO]<<"checking parallel loop: "<<variableIdMapping->variableName(parVariable)<<endl;
+        SAWYER_MESG(logger[INFO])<<"checking parallel loop: "<<variableIdMapping->variableName(parVariable)<<endl;
       }
       IndexToReadWriteDataMap indexToReadWriteDataMap;
       populateReadWriteDataIndex(*lis, indexToReadWriteDataMap, arrayUpdates, variableIdMapping);
@@ -500,7 +500,7 @@ int DataRaceDetection::numberOfRacyThreadPairs(IndexToReadWriteDataMap& indexToR
                                                             _ctOpt.visualization.rwClusters,
                                                             _ctOpt.visualization.rwHighlightRaces);
     write_file(filename, dotGraph);
-    logger[TRACE] << "STATUS: written graph that illustrates read and write accesses to file: " << filename << endl;
+    SAWYER_MESG(logger[TRACE]) << "STATUS: written graph that illustrates read and write accesses to file: " << filename << endl;
   }
   return errorCount;
 }

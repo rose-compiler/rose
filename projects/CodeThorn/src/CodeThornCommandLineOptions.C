@@ -89,7 +89,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("with-assert-counterexamples", po::value< bool >(&ltlOpt.withAssertCounterExamples)->default_value(false)->implicit_value(true), "Report counterexamples leading to failing assertion states.")
     ("with-ltl-counterexamples", po::value< bool >(&ltlOpt.withLTLCounterExamples)->default_value(false)->implicit_value(true), "Report counterexamples that violate LTL properties.")
     ("report-file-path",po::value< string >(&ctOpt.reportFilePath),"Sets file path for all reports.")
-    ("shared-pstates",po::value< bool >(&ctOpt.sharedPStates)->implicit_value(true), "Allows to disable shared pstates in estates.")
+    ("shared-pstates",po::value< bool >(&ctOpt.sharedPStates)->default_value(true)->implicit_value(true), "Allows to disable shared pstates in estates.")
     ;
 
   hiddenOptions.add_options()

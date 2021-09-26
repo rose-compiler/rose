@@ -18,8 +18,8 @@ namespace CodeThorn {
     void run();
     int getId();
 
+    static void initDiagnostics();
   private:
-    void initDiagnostics();
     static Sawyer::Message::Facility logger;
     static bool _diagnosticsInitialized;
   };

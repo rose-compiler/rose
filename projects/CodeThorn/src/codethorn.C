@@ -157,9 +157,11 @@ void optionallyRunSSAGeneratorAndExit(CodeThornOptions& ctOpt, CTAnalysis* analy
 int main( int argc, char * argv[] ) {
   try {
     ROSE_INITIALIZE;
+    CodeThorn::initDiagnostics();
+    CodeThorn::initDiagnosticsLTL();
     CodeThorn::CodeThornLib::configureRose();
     configureRersSpecialization();
-    CodeThorn::initDiagnosticsLTL();
+
 
     TimingCollector tc;
 

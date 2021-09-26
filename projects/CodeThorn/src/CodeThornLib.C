@@ -27,6 +27,7 @@
 #include "ReachabilityAnalysis.h"
 #include "Solver5.h"
 #include "Solver8.h"
+#include "Solver16.h"
 #include "ltlthorn-lib/Solver10.h"
 #include "ltlthorn-lib/Solver11.h"
 #include "ltlthorn-lib/Solver12.h"
@@ -334,7 +335,6 @@ namespace CodeThorn {
       analyzer->setOptions(ctOpt);
       analyzer->setLtlOptions(ltlOpt);
       EState::sharedPStates=ctOpt.sharedPStates;
-      EState::sharedPStates=false;
       return analyzer;
     }
 
@@ -521,7 +521,7 @@ namespace CodeThorn {
           if(ctOpt.status) cout <<"STATUS: testing constant expressions started."<<endl;
           CppConstExprEvaluator* evaluator=new CppConstExprEvaluator();
           list<SgExpression*> exprList=AstUtility::exprRootList(sageProject);
-          logger[INFO] <<"found "<<exprList.size()<<" expressions."<<endl;
+          SAWYER_MESG(logger[INFO]) <<"found "<<exprList.size()<<" expressions."<<endl;
           for(list<SgExpression*>::iterator i=exprList.begin();i!=exprList.end();++i) {
             EvalResult r=evaluator->traverse(*i);
             if(r.isConst()) {
@@ -574,14 +574,14 @@ namespace CodeThorn {
     void optionallyAnnotateTermsAndUnparse(CodeThornOptions& ctOpt, SgProject* sageProject, CTAnalysis* analyzer) {
       if (ctOpt.annotateTerms) {
         // TODO: it might be useful to be able to select certain analysis results to be annotated only
-        logger[INFO] << "Annotating term representations."<<endl;
+        SAWYER_MESG(logger[INFO]) << "Annotating term representations."<<endl;
         AstTermRepresentationAttribute::attachAstTermRepresentationAttributes(sageProject);
         AstAnnotator ara(analyzer->getLabeler());
         ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"codethorn-term-representation");
       }
 
       if (ctOpt.annotateTerms||ctOpt.generateAssertions) {
-        logger[INFO] << "Generating annotated program."<<endl;
+        SAWYER_MESG(logger[INFO]) << "Generating annotated program."<<endl;
         //backend(sageProject);
         sageProject->unparse(0,0);
       }

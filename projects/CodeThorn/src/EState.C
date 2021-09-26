@@ -18,19 +18,81 @@
 using namespace std;
 using namespace CodeThorn;
 
-bool EState::sharedPStates=true;
+bool EState::sharedPStates=false;
+
+EState::EState():_label(Label()) {
+  if(EState::sharedPStates) {
+    _pstate=0;
+  } else {
+    _pstate=new PState();
+  }
+}
 
 EState::~EState() {
-#if 0
   if(EState::sharedPStates==false) {
+    //cerr<<"DEBUG: Deleting estate: "<<this<<" with pstate: "<<_pstate<<endl;
     if(_pstate!=nullptr) {
       delete _pstate;
       _pstate=nullptr;
     }
   }
-#endif
 }
 
+// copy constructor
+EState::EState(const EState &other) {
+  this->_label=other._label;
+  this->io=other.io;
+  this->callString=other.callString;
+  if(sharedPStates) {
+    // copy pstate pointer, objects are managed and shared. Identical pointers guarantee equivalence
+    _pstate=other._pstate;
+  } else {
+    // copy entire pstate
+    //_pstate=new PState(*other._pstate);
+    if(other.pstate()==nullptr) {
+      _pstate=nullptr;
+      //cout<<"DEBUG: ESTATE COPY: "<<&other<<"=>"<<this<<": pstate: nullptr"<<" ==> nullptr"<<endl;
+    } else {
+      PState* newPState=new PState();
+      for(auto iter=other._pstate->begin(); iter!=other._pstate->end();++iter) {
+	auto address=(*iter).first;
+	auto value=(*iter).second;
+	newPState->writeToMemoryLocation(address,value);
+      }
+      //cout<<"DEBUG: ESTATE COPY: "<<&other<<"=>"<<this<<": pstate:"<<other.pstate()<<" ==> "<<newPState<<endl;
+      _pstate=newPState;
+    }
+  }
+}
+
+// assignment operator
+EState& EState::operator=(const EState &other) {
+  this->_label=other._label;
+  this->io=other.io;
+  this->callString=other.callString;
+  if(sharedPStates) {
+    // copy pstate pointer, objects are managed and shared. Non-Identical pointers guarantee inequivalence
+    _pstate=other._pstate;
+  } else {
+    // copy entire pstate
+    if(other.pstate()==nullptr) {
+      _pstate=nullptr;
+      //cout<<"DEBUG: ESTATE ASSIGNMENT: "<<&other<<"=>"<<this<<": pstate: nullptr"<<" ==> nullptr"<<endl;
+    } else {
+      PState* newPState=new PState();
+      //_pstate=new PState(*other._pstate);
+      for(auto iter=other._pstate->begin(); iter!=other._pstate->end();++iter) {
+	auto address=(*iter).first;
+	auto value=(*iter).second;
+	newPState->writeToMemoryLocation(address,value);
+      }
+      //cout<<"DEBUG: ESTATE ASSIGNMENT: "<<&other<<"=>"<<this<<": pstate:"<<other.pstate()<<" ==> "<<newPState<<endl;
+      _pstate=newPState;
+    }
+  }
+  //cout<<"DEBUG: ASSIGNMENT EXIT: "<<this<<": pstate:"<<this->_pstate<<endl;
+  return *this;
+}
 
 string EState::predicateToString(VariableIdMapping* variableIdMapping) const {
   string separator=",";
