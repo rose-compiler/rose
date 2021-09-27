@@ -756,7 +756,6 @@ ConstantFoldingTraversal::evaluateSynthesizedAttribute (
                }
                else if (isSgAssignInitializer(expr))
                {
-
                  SgAssignInitializer* assignInit = isSgAssignInitializer(expr);
                  ROSE_ASSERT (assignInit != NULL);
                  ROSE_ASSERT(synthesizedAttributeList.size() == 1);
@@ -797,7 +796,29 @@ ConstantFoldingTraversal::evaluateSynthesizedAttribute (
 
                  // step 2. calculate the current node's synthesized attribute value
                  returnAttribute.newValueExp = evaluateConditionalExp(cond_exp);
+               }
+               else if (SgRangeExp* r_exp = isSgRangeExp(expr))
+               {
+                  ROSE_ASSERT(synthesizedAttributeList.size() == 3);
 
+                 // step 1. replace children with their synthesized values
+                 // buildtree/src/frontend/SageIII/Cxx_GrammarTreeTraversalAccessEnums.h defines the traversal enum
+                 SgExpression* start_exp_value = synthesizedAttributeList[SgRangeExp_start].newValueExp; 
+                 SgExpression* end_exp_value   = synthesizedAttributeList[SgRangeExp_end].newValueExp; 
+                 SgExpression* stride_exp_value= synthesizedAttributeList[SgRangeExp_stride].newValueExp; 
+
+                 if (start_exp_value!= NULL)
+                   r_exp->set_start(start_exp_value);
+
+                 if (end_exp_value!= NULL)
+                   r_exp->set_end(end_exp_value);
+
+                 if (stride_exp_value!= NULL)
+                   r_exp->set_stride(stride_exp_value);
+
+                 // step 2. calculate the current node's synthesized attribute value
+                 // SgRangeExp cannot be evaluated further
+                 // returnAttribute.newValueExp = evaluateRangeExp(r_exp);
                }
                //TODO SgSizeOfOp () 
                //return constant 1 for operand of type char, unsigned char, signed char
