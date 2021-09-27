@@ -390,9 +390,17 @@ T calculate_t (SgBinaryOp* binaryOperator, T lhsValue, T rhsValue)
         foldedValue = (lhsValue < rhsValue);
         break;
       }
+    case V_SgExponentiationOp:
+      {
+        // TODO: 2^64 can be a problem!! too large
+        // A workaroud is that another separated phase is called before calling constant folding to do the translation
+        foldedValue = (T)pow(lhsValue, rhsValue);
+        break;
+      }
+
    default:
       {
-        std::cerr<<"warning: calculuate - unhandled operator type:"<<binaryOperator->class_name()<<std::endl;
+        std::cerr<<"warning: calculuate - unhandled binary operator type:"<<binaryOperator->class_name()<<std::endl;
         //ROSE_ASSERT(false); // not every binary operation type can be evaluated
       }
   }
@@ -414,7 +422,7 @@ T calculate_u_t (SgUnaryOp* unaryOperator, T theValue)
       }
    default:
       {
-        std::cerr<<"warning: calculuate - unhandled operator type:"<<unaryOperator->class_name()<<std::endl;
+        std::cerr<<"warning: calculuate - unhandled unary operator type:"<<unaryOperator->class_name()<<std::endl;
       }
   }
   return foldedValue;
