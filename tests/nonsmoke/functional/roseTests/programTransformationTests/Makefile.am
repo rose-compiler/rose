@@ -36,7 +36,6 @@ $(pre_TEST_TARGETS): pre_%.passed: $(srcdir)/pass%.C $(srcdir)/rose_pass%.C.save
 check-preTest: $(pre_TEST_TARGETS)
 
 
-
 #-------------------------------------------------------------------------------------------------------------------------------
 # patternRewriteTest
 
@@ -117,7 +116,14 @@ constantFoldingTest2_SOURCES = constantFoldingTest2.C
 constantFoldingTest2_LDADD = $(LDADD)
 
 cf_TEST_NAMES = cf_1 cf_2 cf_3
+
+
 cf_TEST_TARGETS = $(addsuffix .passed, $(cf_TEST_NAMES))
+
+if ROSE_EXPERIMENTAL_ADA_ROSE_CONNECTION
+cf_TEST_TARGETS += rose-ada-output/rangev2.adb ada_diff
+endif
+
 TEST_TARGETS += $(cf_TEST_TARGETS)
 EXTRA_DIST += inputCode_constantFoldingTransformation.C inputCode_constantFoldingTransformation2.C
 
@@ -132,6 +138,11 @@ cf_2.passed: $(srcdir)/inputCode_constantFoldingTransformation.C $(TEST_EXIT_STA
 
 cf_3.passed: $(srcdir)/inputCode_constantFoldingTransformation2.C $(TEST_EXIT_STATUS) constantFoldingTest2
 	@$(RTH_RUN) CMD="./constantFoldingTest2 -c $<" $(TEST_EXIT_STATUS) $@
+
+ada_diff:rose-ada-output/rangev2.adb
+	diff $< $(srcdir)/referenceOutput/rangev2.adb > $@
+rose-ada-output/rangev2.adb: $(srcdir)/rangev2.adb constantFoldingTest2
+	./constantFoldingTest2 -c $< 
 
 .PHONY: check-constantFoldingTests
 check-constantFoldingTests: $(cf_TEST_TARGETS)
