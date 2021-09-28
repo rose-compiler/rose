@@ -348,7 +348,7 @@ namespace CodeThorn {
     PStatePtr processNewOrExisting(PState& s);
     const EState* processNew(EState& s);
     const EState* processNewOrExisting(EState& s);
-    const EState* processCompleteNewOrExisting(const EState* es);
+    //const EState* processCompleteNewOrExisting(const EState* es);
     void topifyVariable(PState& pstate, AbstractValue varId);
     bool isTopified(EState& s);
     EStateSet::ProcessingResult process(EState& s);

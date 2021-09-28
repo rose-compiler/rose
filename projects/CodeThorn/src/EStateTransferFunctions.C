@@ -58,7 +58,7 @@ namespace CodeThorn {
     static bool initialized = false;
     if (!initialized) {
       initialized = true;
-      logger = Sawyer::Message::Facility("CodeThorn::EStateTransferFunctions", Rose::Diagnostics::destination);
+      EStateTransferFunctions::logger = Sawyer::Message::Facility("CodeThorn::EStateTransferFunctions", Rose::Diagnostics::destination);
       Rose::Diagnostics::mfacilities.insertAndAdjust(logger);
     }
   }
@@ -1268,6 +1268,7 @@ namespace CodeThorn {
   EState EStateTransferFunctions::transferVariableDeclarationWithoutInitializerEState(SgVariableDeclaration* decl, SgInitializedName* initName, VariableId initDeclVarId, EState& currentEState, Label targetLabel) {
     CallString cs=currentEState.callString;
     Label label=currentEState.label();
+    ROSE_ASSERT(currentEState.pstate());
     
     SgArrayType* arrayType=isSgArrayType(initName->get_type());
     if(arrayType) {
@@ -1284,6 +1285,7 @@ namespace CodeThorn {
 	    SAWYER_MESG(logger[WARN])<<"multi-dimensional arrays not supported yet. Only linear arrays are supported. Not added to state (assuming arbitrary value)."<<endl;
 	  }
 	  // not adding it to state. Will be used as unknown.
+	  ROSE_ASSERT(currentEState.pstate());
 	  PState newPState=*currentEState.pstate();
 	  return createEState(targetLabel,cs,newPState);
 	}
@@ -1313,6 +1315,7 @@ namespace CodeThorn {
     }
 
     SAWYER_MESG(logger[TRACE])<<"Creating new PState"<<endl;
+    ROSE_ASSERT(currentEState.pstate());
     PState newPState=*currentEState.pstate();
     if(getVariableIdMapping()->isOfArrayType(initDeclVarId)) {
       SAWYER_MESG(logger[TRACE])<<"PState: upd: array"<<endl;
@@ -1474,7 +1477,7 @@ namespace CodeThorn {
       if(getAnalyzer()->getOptionsRef().status) {
 	//uint32_t numFilteredVars=setOfGlobalVars.size()-setOfUsedGlobalVars.size();
 	//cout<< "STATUS: Number of unused variables filtered in initial state: "<<numFilteredVars<<endl;
-	SAWYER_MESG(logger[INFO])<<"Number of global variables declared in initial state: "+std::to_string(declaredInGlobalState);
+	_analyzer->printStatusMessageLine("STATUS: Number of global variables declared in initial state: "+std::to_string(declaredInGlobalState));
       }
     } else {
       _analyzer->printStatusMessageLine("STATUS: no global scope. Global state remains without entries.");
@@ -1827,6 +1830,7 @@ namespace CodeThorn {
   }
 
   list<EState> EStateTransferFunctions::transferEdgeEStateDispatch(TransferFunctionCode tfCode, SgNode* node, Edge edge, const EState* estate) {
+    ROSE_ASSERT(estate->pstate());
     if(_analyzer->getOptionsRef().info.printTransferFunctionInfo) {
       printTransferFunctionInfo(tfCode,node,edge,estate);
     }
@@ -1865,7 +1869,9 @@ namespace CodeThorn {
 
   std::pair<EStateTransferFunctions::TransferFunctionCode,SgNode*> EStateTransferFunctions::determineTransferFunctionCode(Edge edge, const EState* estate) {
     ROSE_ASSERT(edge.source()==estate->label());
+    ROSE_ASSERT(estate->pstate());
     EState currentEState=*estate;
+    ROSE_ASSERT(currentEState.pstate());
     PState currentPState=*currentEState.pstate();
     // handle the edge as outgoing edge
     ROSE_ASSERT(_analyzer->getCFAnalyzer());
@@ -2162,12 +2168,19 @@ namespace CodeThorn {
   AbstractValue EStateTransferFunctions::evaluateExpressionWithEmptyState(SgExpression* expr) {
     SAWYER_MESG(logger[TRACE])<<"evaluateExpressionWithEmptyState(1):"<<expr->unparseToString()<<endl;
     ROSE_ASSERT(AbstractValue::getVariableIdMapping());
-    EState emptyEState;
-    PState emptyPState;
-    emptyEState.setPState(&emptyPState);
-    EStateTransferFunctions::EvalMode evalMode=EStateTransferFunctions::MODE_EMPTY_STATE;
-    SingleEvalResult res=evaluateExpression(expr,emptyEState,evalMode);
-    return res.value();
+    if(EState::sharedPStates) {
+      EState emptyEState;
+      PState emptyPState;
+      emptyEState.setPState(&emptyPState);
+      EStateTransferFunctions::EvalMode evalMode=EStateTransferFunctions::MODE_EMPTY_STATE;
+      SingleEvalResult res=evaluateExpression(expr,emptyEState,evalMode);
+      return res.value();
+    } else {
+      EState emptyEState; // in non-shared pstate mode an empty pstate is allocated by the estate
+      EStateTransferFunctions::EvalMode evalMode=EStateTransferFunctions::MODE_EMPTY_STATE;
+      SingleEvalResult res=evaluateExpression(expr,emptyEState,evalMode);
+      return res.value();
+    }
   }
   
   SingleEvalResult EStateTransferFunctions::evalOp(SgNode* node,
@@ -2310,9 +2323,9 @@ namespace CodeThorn {
     }
     switch(node->variantT()) {
     case V_SgVarRefExp: {
-      SAWYER_MESG(logger[TRACE])<<"case V_SgVarRefExp: started"<<endl;
+      //SAWYER_MESG(logger[TRACE])<<"case V_SgVarRefExp: started"<<endl;
       auto ret=evalRValueVarRefExp(isSgVarRefExp(node),estate,mode);
-      SAWYER_MESG(logger[TRACE])<<"case V_SgVarRefExp: done"<<endl;
+      //SAWYER_MESG(logger[TRACE])<<"case V_SgVarRefExp: done"<<endl;
       return ret;
     }
     case V_SgFunctionCallExp: {
@@ -3661,7 +3674,7 @@ namespace CodeThorn {
       // create 2nd memory state for null pointer (requires extended domain, not active)
       VariableId memLocVarId=_variableIdMapping->createAndRegisterNewMemoryRegion(ss.str(),memoryRegionSize);
       AbstractValue allocatedMemoryPtr=AbstractValue::createAddressOfArray(memLocVarId);
-      logger[TRACE]<<"function call malloc: allocated at: "<<allocatedMemoryPtr.toString()<<endl;
+      SAWYER_MESG(logger[TRACE])<<"function call malloc: allocated at: "<<allocatedMemoryPtr.toString()<<endl;
       res.init(estate,allocatedMemoryPtr);
       //cout<<"DEBUG: evaluating function call malloc:"<<funCall->unparseToString()<<endl;
       ROSE_ASSERT(allocatedMemoryPtr.isPtr());
@@ -3888,7 +3901,7 @@ namespace CodeThorn {
 	    int offset=val.getIndexIntValue();
 	    auto remappingEntry=_analyzer->getVariableIdMapping()->getOffsetAbstractionMappingEntry(memLocId,offset);
 	    if(remappingEntry.getIndexRemappingType()==VariableIdMappingExtended::IndexRemappingEnum::IDX_REMAPPED) {
-	      logger[TRACE]<<"remapping index "<<offset<<" -> "<<remappingEntry.getRemappedOffset()<<endl;
+	      SAWYER_MESG(logger[TRACE])<<"remapping index "<<offset<<" -> "<<remappingEntry.getRemappedOffset()<<endl;
 	      val.setValue(remappingEntry.getRemappedOffset());
 	      val.setSummaryFlag(true);
 	    }
@@ -4082,7 +4095,7 @@ namespace CodeThorn {
   }
 
   void EStateTransferFunctions::initializeStringLiteralInState(Label lab, PState& initialPState,SgStringVal* stringValNode, VariableId stringVarId) {
-    logger[TRACE]<<"initializeStringLiteralInState: "<<stringValNode->unparseToString()<<endl;
+    SAWYER_MESG(logger[TRACE])<<"initializeStringLiteralInState: "<<stringValNode->unparseToString()<<endl;
     string theString=stringValNode->get_value();
     int pos;
     for(pos=0;pos<(int)theString.size();pos++) {

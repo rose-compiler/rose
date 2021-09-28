@@ -35,6 +35,8 @@ namespace CodeThorn {
     void optionallyGenerateAstStatistics(CodeThornOptions& ctOpt, SgProject* sageProject);
     void optionallyGenerateSourceProgramAndExit(CodeThornOptions& ctOpt, SgProject* sageProject);
     void optionallyGenerateTraversalInfoAndExit(CodeThornOptions& ctOpt, SgProject* sageProject);
+    void runRoseAstChecks(SgProject* sageProject);
+    void optionallyRunRoseAstChecks(CodeThornOptions& ctOpt, SgProject* sageProject);
     void optionallyRunRoseAstChecksAndExit(CodeThornOptions& ctOpt, SgProject* sageProject);
     void optionallyRunIOSequenceGenerator(CodeThornOptions& ctOpt, IOAnalyzer* analyzer);
     void optionallyAnnotateTermsAndUnparse(CodeThornOptions& ctOpt, SgProject* sageProject, CTAnalysis* analyzer);
@@ -45,8 +47,10 @@ namespace CodeThorn {
     void optionallyEliminateRersArraysAndExit(CodeThornOptions& ctOpt, SgProject* sageProject, CTAnalysis* analyzer);
     void optionallyWriteSVCompWitnessFile(CodeThornOptions& ctOpt, CTAnalysis* analyzer);
     void optionallyAnalyzeAssertions(CodeThornOptions& ctOpt, LTLOptions& ltlOpt, IOAnalyzer* analyzer, TimingCollector& tc);
-    void optionallyGenerateLineColumnCsv(CodeThornOptions& ctOpt, SgProject* node);
+    void optionallyGenerateLineColumnCsv(CodeThornOptions& ctOpt, SgProject* project);
     void exprEvalTest(int argc, char* argv[],CodeThornOptions& ctOpt);
+
+    bool astSymbolPointerCheck(CodeThornOptions& ctOpt, SgProject* project);
 
     IOAnalyzer* createAnalyzer(CodeThornOptions& ctOpt, LTLOptions& ltlOpt);
     IOAnalyzer* createEStateAnalyzer(CodeThornOptions& ctOpt, LTLOptions& ltlOpt, Labeler* labeler, VariableIdMappingExtended* vid, CFAnalysis* cfAnalysis, Solver* solver);
