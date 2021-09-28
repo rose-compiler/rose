@@ -1,5 +1,5 @@
 #include "rose.h"
-#include <CommandLine.h> // Commandline support in librose
+#include <Rose/CommandLine.h> // Commandline support in librose
 #include <Sawyer/CommandLine.h>
 using namespace std;
 using namespace Sawyer::Message::Common; // if you want unqualified DEBUG, WARN, ERROR, FATAL, etc.
@@ -45,16 +45,18 @@ class nodeTraversal : public AstSimpleProcessing
 {
   private:
       string sourcefilename;
-      vector<int> outputVetor;
+      vector<std::size_t> outputVetor;
       vector<string> debugVector;
   public:
       virtual void visit(SgNode* n);
 
       void setSourceFile(string);
 
-      const vector<int> & getVector() const;
+      const vector<std::size_t> & getVector() const;
 
       const vector<string> & getDebugVector() const;
+
+      void getNamedTypeInfo(SgNamedType* namedType);
 };
 
 void nodeTraversal::setSourceFile(string filename)
@@ -62,7 +64,7 @@ void nodeTraversal::setSourceFile(string filename)
    this->sourcefilename = filename;;
 }
 
-const vector<int> & nodeTraversal::getVector() const
+const vector<std::size_t> & nodeTraversal::getVector() const
 {
     return outputVetor;
 }
@@ -70,6 +72,60 @@ const vector<int> & nodeTraversal::getVector() const
 const vector<string> & nodeTraversal::getDebugVector() const
 {
     return debugVector;
+}
+
+void nodeTraversal::getNamedTypeInfo(SgNamedType* namedType)
+{
+   //cout << "have a named type" << endl;
+   SgTemplateInstantiationDecl* templateInstDecl = isSgTemplateInstantiationDecl(namedType->get_declaration()); 
+   if(templateInstDecl)
+   {
+     SgTemplateArgumentPtrList argPtrList = templateInstDecl->get_templateArguments();
+     //cout << "have a class decl:" << argPtrList.size() << endl;
+     for(SgTemplateArgumentPtrList::iterator tempArgId = argPtrList.begin(); tempArgId != argPtrList.end(); ++tempArgId)
+     {
+       SgTemplateArgument* tempArg = *tempArgId;
+       //cout << "template argument type: " << tempArg->get_argumentType() << " Mangled name: " << tempArg->get_mangled_name() << endl;
+       if(tempArg->get_argumentType() == SgTemplateArgument::type_argument)
+       {
+         SgType* tempArgType = tempArg->get_type();
+         outputVetor.push_back(tempArgType->variantT());
+         //if(enable_verbose || enable_debug)
+         {
+           std::ostringstream o;
+           o <<  tempArgType->variantT() <<":" << tempArgType->class_name();
+           if(enable_verbose)
+               cout << o.str() << endl; 
+           //cout << "## " << n->variantT() <<":" << n->class_name() << " " << locatedNode->getFilenameString()  << endl;
+           debugVector.push_back(o.str());
+         }
+         tempArgType = (isSgTypedefType(tempArgType) != nullptr) ? isSgTypedefType(tempArgType)->get_base_type() : tempArgType;
+         SgNamedType* newNamedType = isSgNamedType(tempArgType);
+         if(newNamedType != nullptr)
+         {
+           //cout << "have another named type" << endl;
+           getNamedTypeInfo(newNamedType);
+         }
+       }
+       else
+       {
+         SgName mangledName = tempArg->get_mangled_name();
+         string mangledNameString = mangledName.getString();
+         std::size_t hashStringVal = std::hash<std::string>{}(mangledNameString);
+         outputVetor.push_back(hashStringVal);
+         //if(enable_verbose || enable_debug)
+         {
+           std::ostringstream o;
+           o  <<"template argument mangled name:" << hashStringVal << ":" << mangledNameString;;
+           if(enable_verbose)
+               cout << o.str() << endl; 
+           //cout << "## " << n->variantT() <<":" << n->class_name() << " " << locatedNode->getFilenameString()  << endl;
+           debugVector.push_back(o.str());
+         }
+       }
+     }
+     
+   }
 }
 
 void nodeTraversal::visit(SgNode* n)
@@ -80,7 +136,7 @@ void nodeTraversal::visit(SgNode* n)
     if(sourcefilename.compare( locatedNode->getFilenameString()) == 0)
     {
       outputVetor.push_back(n->variantT());
-      if(enable_verbose || enable_debug)
+      //if(enable_verbose || enable_debug)
       {
         std::ostringstream o;
         o <<  n->variantT() <<":" << n->class_name();
@@ -88,6 +144,54 @@ void nodeTraversal::visit(SgNode* n)
             cout << o.str() << endl; 
         //cout << "## " << n->variantT() <<":" << n->class_name() << " " << locatedNode->getFilenameString()  << endl;
         debugVector.push_back(o.str());
+      }
+      // get type info from SgVariableDeclaration
+      SgVariableDeclaration* varDecl = isSgVariableDeclaration(n);
+      if(varDecl) {
+        SgInitializedNamePtrList nameList = varDecl->get_variables();
+        //cout << "have decl:" << nameList.size() << endl;
+        for(SgInitializedNamePtrList::iterator nameId = nameList.begin(); nameId != nameList.end(); ++nameId)
+        {
+          SgInitializedName* initNameId = *nameId;
+          //cout << "have Initializedname" << endl;
+          SgType* varType = initNameId->get_type()->findBaseType();
+          outputVetor.push_back(varType->variantT());
+          //if(enable_verbose || enable_debug)
+          {
+            std::ostringstream o;
+            o <<  varType->variantT() <<":" << varType->class_name();
+            if(enable_verbose)
+                cout << o.str() << endl; 
+            //cout << "## " << n->variantT() <<":" << n->class_name() << " " << locatedNode->getFilenameString()  << endl;
+            debugVector.push_back(o.str());
+          }
+          // get int class type declaration
+          SgNamedType* namedType = isSgNamedType(varType);
+          if(namedType) {
+            getNamedTypeInfo(namedType); 
+          }
+        }
+      }
+      // get type info from SgTypedefDeclaration
+      SgTypedefDeclaration* typedefDecl = isSgTypedefDeclaration(n);
+      if(typedefDecl) {
+         //cout << "have typedecl" << endl;
+         SgType* basetype = typedefDecl->get_type()->findBaseType();
+         outputVetor.push_back(basetype->variantT());
+         //if(enable_verbose || enable_debug)
+         {
+           std::ostringstream o;
+           o <<  basetype->variantT() <<":" << basetype->class_name();
+           if(enable_verbose)
+               cout << o.str() << endl; 
+           //cout << "## " << n->variantT() <<":" << n->class_name() << " " << locatedNode->getFilenameString()  << endl;
+           debugVector.push_back(o.str());
+         }
+         // get int class type declaration
+         SgNamedType* namedType = isSgNamedType(basetype);
+         if(namedType) {
+           getNamedTypeInfo(namedType); 
+         }
       }
     }
 }
@@ -113,16 +217,21 @@ int main( int argc, char * argv[] ){
   travese.setSourceFile(inputfilename);
   travese.traverseInputFiles(project,preorder);
   std::string outfilename = SageInterface::generateProjectName(project)+".FV.txt";
-  const vector<int>& featureVector = travese.getVector();
+  ofstream output_file(outfilename);
 
+/* Use the debug mode as default
+  const vector<std::size_t>& featureVector = travese.getVector();
 //  for(int i=0; i < featureVector.size(); i++)
 //    cout << featureVector[i] << endl; 
-
-  ofstream output_file(outfilename);
-  ostream_iterator<int> output_iterator(output_file, ",");
+  ostream_iterator<std::size_t> output_iterator(output_file, ",");
   copy(featureVector.begin(), featureVector.end(), output_iterator);
+*/
+
+  const vector<string>& debugFeatureVector = travese.getDebugVector();
+  ostream_iterator<string> debug_iterator(output_file, "\n");
+  copy(debugFeatureVector.begin(), debugFeatureVector.end(), debug_iterator);
   output_file.close();
- 
+/* 
   if(enable_debug)
   {
     std::string debugfilename = SageInterface::generateProjectName(project)+".FVDebug.txt";
@@ -133,6 +242,6 @@ int main( int argc, char * argv[] ){
     copy(debugFeatureVector.begin(), debugFeatureVector.end(), debug_iterator);
     debug_file.close();
   }
- 
+*/
   return 0;
 }
