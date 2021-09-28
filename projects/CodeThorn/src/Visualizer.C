@@ -39,7 +39,6 @@ AssertionExtractor::AssertionExtractor(CTAnalysis* analyzer)
 {
   setLabeler(analyzer->getLabeler());
   setVariableIdMapping(analyzer->getVariableIdMapping());
-  setPStateSet(analyzer->getPStateSet());
   setEStateSet(analyzer->getEStateSet());
   long num=labeler->numberOfLabels();
   assertions.resize(num);
@@ -47,7 +46,6 @@ AssertionExtractor::AssertionExtractor(CTAnalysis* analyzer)
 
 void AssertionExtractor::setLabeler(Labeler* x) { labeler=x; }
 void AssertionExtractor::setVariableIdMapping(VariableIdMapping* x) { variableIdMapping=x; }
-void AssertionExtractor::setPStateSet(PStateSet* x) { pstateSet=x; }
 void AssertionExtractor::setEStateSet(EStateSet* x) { estateSet=x; }
 
 void AssertionExtractor::computeLabelVectorOfEStates() {
@@ -101,7 +99,6 @@ Visualizer::Visualizer():
   labeler(0),
   variableIdMapping(0),
   flow(0),
-  pstateSet(0),
   estateSet(0),
   transitionGraph(0),
   tg1(false),
@@ -118,17 +115,15 @@ Visualizer::Visualizer(CTAnalysis* analyzer):
   setLabeler(analyzer->getLabeler());
   setVariableIdMapping(analyzer->getVariableIdMapping());
   setFlow(analyzer->getFlow());
-  setPStateSet(analyzer->getPStateSet());
   setEStateSet(analyzer->getEStateSet());
   setTransitionGraph(analyzer->getTransitionGraph());
 }
 
   //! For providing specific information. For some visualizations not all information is required. The respective set-function can be used as well to set specific program information (this allows to also visualize computed subsets of information (such as post-processed transition graphs etc.).
-Visualizer::Visualizer(Labeler* l, VariableIdMapping* vim, Flow* f, PStateSet* ss, EStateSet* ess, TransitionGraph* tg):
+Visualizer::Visualizer(Labeler* l, VariableIdMapping* vim, Flow* f, EStateSet* ess, TransitionGraph* tg):
   labeler(l),
   variableIdMapping(vim),
   flow(f),
-  pstateSet(ss),
   estateSet(ess),
   transitionGraph(tg),
   tg1(false),
@@ -140,7 +135,6 @@ void Visualizer::setOptionTransitionGraphDotHtmlNode(bool x) {optionTransitionGr
 void Visualizer::setLabeler(Labeler* x) { labeler=x; }
 void Visualizer::setVariableIdMapping(VariableIdMapping* x) { variableIdMapping=x; }
 void Visualizer::setFlow(Flow* x) { flow=x; }
-void Visualizer::setPStateSet(PStateSet* x) { pstateSet=x; }
 void Visualizer::setEStateSet(EStateSet* x) { estateSet=x; }
 void Visualizer::setTransitionGraph(TransitionGraph* x) { transitionGraph=x; }
 
@@ -192,24 +186,6 @@ string Visualizer::cfasToDotSubgraphs(vector<Flow*> cfas) {
   return ss.str();
 }
 
-string Visualizer::pstateToString(PStatePtr pstate) {
-  stringstream ss;
-  bool pstateAddressSeparator=false;
-  if((tg1&&args.getBool("tg1-pstate-address"))||(tg2&&args.getBool("tg2-pstate-address"))) {
-    ss<<"@"<<pstate;
-    pstateAddressSeparator=true;
-  }    
-  if((tg1&&args.getBool("tg1-pstate-id"))||(tg2&&args.getBool("tg2-pstate-id"))) {
-    if(pstateAddressSeparator)
-      ss<<":";
-    ss<<"S"<<pstateSet->pstateId(pstate);
-  }
-  if((tg1&&args.getBool("tg1-pstate-properties"))||(tg2&&args.getBool("tg2-pstate-properties"))) {
-    ss<<pstate->toString(variableIdMapping);
-  } 
-  return ss.str();
-}
-
 string Visualizer::estateToString(const EState* estate) {
   stringstream ss;
   bool pstateAddressSeparator=false;
@@ -229,9 +205,6 @@ string Visualizer::estateToString(const EState* estate) {
   return ss.str();
 }
 
-string Visualizer::pstateToDotString(PStatePtr pstate) {
-  return string("\""+SgNodeHelper::doubleQuotedEscapedString(pstateToString(pstate))+"\"");
-}
 
 string Visualizer::estateToDotString(const EState* estate) {
   return string("\""+SgNodeHelper::doubleQuotedEscapedString(estateToString(estate))+"\"");

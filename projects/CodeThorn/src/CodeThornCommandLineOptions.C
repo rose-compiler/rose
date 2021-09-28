@@ -88,6 +88,8 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("with-counterexamples", po::value< bool >(&ltlOpt.withCounterExamples)->default_value(false)->implicit_value(true), "Add counterexample I/O traces to the analysis results. Applies to reachable assertions and falsified LTL properties (uses RERS-specific alphabet).")
     ("with-assert-counterexamples", po::value< bool >(&ltlOpt.withAssertCounterExamples)->default_value(false)->implicit_value(true), "Report counterexamples leading to failing assertion states.")
     ("with-ltl-counterexamples", po::value< bool >(&ltlOpt.withLTLCounterExamples)->default_value(false)->implicit_value(true), "Report counterexamples that violate LTL properties.")
+    ("report-file-path",po::value< string >(&ctOpt.reportFilePath),"Sets file path for all reports.")
+    ("shared-pstates",po::value< bool >(&ctOpt.sharedPStates)->default_value(true)->implicit_value(true), "Allows to disable shared pstates in estates.")
     ;
 
   hiddenOptions.add_options()
@@ -169,7 +171,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ;
 
   experimentalOptions.add_options()
-    ("ast-symbol-check",po::value< bool >(&ctOpt.astSymbolCheckFlag)->default_value(true),"Allows to make the tool exit immediately if the AST symbol check reports any error.")
+    ("ast-symbol-check",po::value< bool >(&ctOpt.astSymbolCheckFlag)->default_value(true),"Runs AST symbol check and exits on error.")
     ("vim-report-file",po::value< string >(&ctOpt.vimReportFileName),"Generates a report of variable id mapping (always includes ast symbol check results).")
     ("array-abstraction-index",po::value< int > (&ctOpt.arrayAbstractionIndex)->default_value(-1),"Set array abstraction index, starting at which an array summary is computed.")
     ("run-solver", po::value< bool >(&ctOpt.runSolver)->default_value(true),"If turned off all fix-point algorithms are skipped.")
@@ -197,7 +199,6 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("dead-code",po::value< bool >(&ctOpt.deadCodeAnalysis)->default_value(false)->implicit_value(true),"Perform uninitialized analysis and print results.")
     ("opaque-predicates",po::value< bool >(&ctOpt.constantConditionAnalysis)->default_value(false)->implicit_value(true),"Perform uninitialized analysis and print results.")
 
-    ("report-file-path",po::value< string >(&ctOpt.reportFilePath),"Sets file path for all reports.")
     ("generate-reports",po::value< bool >(&ctOpt.generateReports)->implicit_value(true),"Enable generation of analysis report files.")
     ("file-path-prefix-to-remove", po::value< string >(&ctOpt.filePathPrefixToRemove))
     ("report-source-column", po::value< bool >(&ctOpt.reportSourceColumn))
@@ -309,7 +310,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("max-time-forced-top",po::value< long int >(&ctOpt.maxTimeForcedTop)->default_value(-1),"Performs approximation after an analysis time of approximately <arg> seconds has been reached.")
     ("resource-limit-diff",po::value< int >(&ctOpt. resourceLimitDiff)->default_value(-1),"Check if the resource limit is reached every <arg> computed estates.")
     ("rewrite",po::value< bool >(&ctOpt.rewrite)->default_value(false)->implicit_value(true),"Rewrite AST applying all rewrite system rules.")
-    ("run-rose-tests",po::value< bool >(&ctOpt.runRoseAstChecks)->default_value(false)->implicit_value(true), "Run ROSE AST tests.")
+    ("run-rose-tests",po::value< bool >(&ctOpt.runRoseAstChecks)->default_value(true)->implicit_value(true), "Run ROSE AST tests.")
     ("analyzed-functions-csv",po::value<std::string>(&ctOpt.analyzedFunctionsCSVFileName),"Write list of analyzed functions to CSV file [arg].")
     ("analyzed-files-csv",po::value<std::string>(&ctOpt.analyzedFilesCSVFileName),"Write list of analyzed files (with analyzed functions) to CSV file [arg].")
     ("external-functions-csv",po::value<std::string>(&ctOpt.externalFunctionsCSVFileName),"Write list of external functions (functions for which no implementation is provided) to CSV file [arg].")
@@ -329,6 +330,8 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("type-size-mapping-csv",po::value<std::string>(&ctOpt.info.typeSizeMappingCSVFileName),"Write type-size mapping to CSV file [arg].")
     ("tf-trace",po::value< bool >(&ctOpt.info.printTransferFunctionInfo)->default_value(false)->implicit_value(true),"Print info about invoked transfer functions.")
     ("line-col-csv",po::value< string >(&ctOpt.info.astTraversalLineColumnCSVFileName),"Write ast node traversal (sequence of line column pairs) to file [arg].")
+    ("ast-symbol-pointer-check",po::value< bool >(&ctOpt.info.astSymbolPointerCheckReport)->implicit_value(true),"Run ast symbol pointer check. Writes report to ast-symbol-pointer-check-report.txt.")
+
     ;
 
   po::options_description all("All supported options");

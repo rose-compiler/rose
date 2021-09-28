@@ -116,7 +116,7 @@ namespace CodeThorn {
   CodeThorn::TypeSize TypeSizeMapping::determineTypeSize(SgType* sgType) {
     ROSE_ASSERT(_mapping.size()!=0);
     ROSE_ASSERT(sgType);
-    CodeThorn::logger[TRACE]<<"DEBUG: determineTypeSize: "<<sgType->unparseToString()<<endl;
+    //SAWYER_MESG(CodeThorn::logger[TRACE])<<"DEBUG: determineTypeSize: "<<sgType->unparseToString()<<endl;
     // cache every type's computed size
     if(_typeToSizeMapping.find(sgType)!=_typeToSizeMapping.end()) {
       return _typeToSizeMapping[sgType];
@@ -126,7 +126,7 @@ namespace CodeThorn {
     switch (sgType->variantT()) {
 
     case V_SgArrayType: {
-      CodeThorn::logger[TRACE]<<"DEBUG: ARRAYTYPE: "<<sgType->unparseToString()<<endl;
+      //SAWYER_MESG(CodeThorn::logger[TRACE])<<"DEBUG: ARRAYTYPE: "<<sgType->unparseToString()<<endl;
       SgArrayType* arrayType=isSgArrayType(sgType);
       CodeThorn::TypeSize elementTypeSize=determineElementTypeSize(arrayType);
       if(elementTypeSize>10000) {
@@ -149,7 +149,7 @@ namespace CodeThorn {
     }
       /*
     case V_SgClassType: {
-      CodeThorn::logger[TRACE]<<"CLASSTYPE: "<<sgType->unparseToString()<<endl;
+      SAWYER_MESG(CodeThorn::logger[TRACE])<<"CLASSTYPE: "<<sgType->unparseToString()<<endl;
       CodeThorn::TypeSize sum=0;
       std::list<SgVariableDeclaration*> varDeclList=SgNodeHelper::memberVariableDeclarationsList(isSgClassType(sgType));
       for(auto varDecl : varDeclList) {

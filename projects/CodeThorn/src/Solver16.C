@@ -54,7 +54,7 @@ void Solver16::initializeSummaryStatesFromWorkList() {
   * \date 2012.
  */
 void Solver16::run() {
-  logger[INFO]<<"Running solver "<<getId()<<endl;
+  SAWYER_MESG(logger[INFO])<<"Running solver "<<getId()<<endl;
   if(_analyzer->getOptionsRef().abstractionMode==0) {
     cerr<<"Error: abstraction mode is 0, but >= 1 required."<<endl;
     exit(1);
@@ -71,7 +71,7 @@ void Solver16::run() {
   } else {
     _analyzer->reachabilityResults.init(_analyzer->getNumberOfErrorLabels()); // set all reachability results to unknown
   }
-  logger[INFO]<<"number of error labels: "<<_analyzer->reachabilityResults.size()<<endl;
+  SAWYER_MESG(logger[INFO])<<"number of error labels: "<<_analyzer->reachabilityResults.size()<<endl;
 
   size_t prevStateSetSize=0; // force immediate report at start
   if(_analyzer->getOptionsRef().getInterProceduralFlag()==false) {
@@ -100,7 +100,7 @@ void Solver16::run() {
   {
     threadNum=omp_get_thread_num();
     while(!_analyzer->all_false(workVector)) {
-      // logger[DEBUG]<<"running : WL:"<<estateWorkListCurrent->size()<<endl;
+      // SAWYER_MESG(logger[DEBUG])<<"running : WL:"<<estateWorkListCurrent->size()<<endl;
       if(threadNum==0 && _analyzer->getOptionsRef().displayDiff && (_analyzer->getEStateSetSize()>(prevStateSetSize+_analyzer->getOptionsRef().displayDiff))) {
         _analyzer->printStatusMessage(true);
         prevStateSetSize=_analyzer->getEStateSetSize();
@@ -287,6 +287,6 @@ void Solver16::run() {
 void Solver16::initDiagnostics() {
   if (!_diagnosticsInitialized) {
     _diagnosticsInitialized = true;
-    Solver::initDiagnostics(logger, getId());
+    Solver::initDiagnostics(logger, 16);
   }
 }

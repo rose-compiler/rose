@@ -43,7 +43,7 @@ void optionallyInitializePatternSearchSolver(CodeThornOptions& ctOpt,IOAnalyzer*
     // pattern search: requires that exploration mode is set,
     // otherwise no pattern search is performed
     if(ctOpt.patSearch.explorationMode.size()>0) {
-      logger[INFO] << "Pattern search exploration mode was set. Choosing solver 10." << endl;
+      SAWYER_MESG(logger[INFO]) << "Pattern search exploration mode was set. Choosing solver 10." << endl;
       analyzer->setSolver(new Solver10());
       analyzer->setStartPState(*analyzer->popWorkList()->pstate());
     }
@@ -131,7 +131,7 @@ void runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* anal
   stringstream statisticsCegpra;
 
   if (ltlOpt.ltlFormulaeFile.size()>0) {
-    logger[INFO] <<"STG size: "<<analyzer->getTransitionGraph()->size()<<endl;
+    SAWYER_MESG(logger[INFO]) <<"STG size: "<<analyzer->getTransitionGraph()->size()<<endl;
     string ltl_filename = ltlOpt.ltlFormulaeFile;
     if(ctOpt.rers.rersMode) {  //reduce the graph accordingly, if not already done
       if (!ltlOpt.inifinitePathsOnly

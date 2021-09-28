@@ -128,6 +128,7 @@ public:
   bool forkFunctionEnabled=false;
   std::string forkFunctionName="";
 
+  bool sharedPStates=true;
   // RERS C-subset program options
   struct Rers {
     std::string assertResultsOutputFileName;
@@ -215,7 +216,7 @@ public:
   bool runSolver=true;
 
   // consistency checking options
-  bool astSymbolCheckFlag=false; // performed by VariableIdMapping
+  bool astSymbolCheckFlag=false; // performed by VariableIdMapping, checks consistency of symbol pointers and memory pool
   std::string vimReportFileName="vim-report.txt";
   
   struct Info {
@@ -228,6 +229,8 @@ public:
     std::string typeSizeMappingCSVFileName;
     bool printTransferFunctionInfo=false;
     std::string astTraversalLineColumnCSVFileName;
+    bool astSymbolPointerCheckReport=false; // checks if symbol pointers are non-zero or contain memory pool delete fill byte
+    std::string astSymbolPointerCheckReportFileName="ast-symbol-pointer-check-report.txt";
   } info;
 
   void configurePrecisionOption();

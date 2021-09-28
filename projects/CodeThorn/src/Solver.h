@@ -24,7 +24,7 @@ namespace CodeThorn {
 
     virtual void setAnalyzer(CTAnalysis* analyzer);
   protected:
-    void initDiagnostics(Sawyer::Message::Facility& logger, int solverId);
+    static void initDiagnostics(Sawyer::Message::Facility& logger, int solverId);
 
     CTAnalysis* _analyzer = nullptr;
   };

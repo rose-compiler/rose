@@ -18,6 +18,82 @@
 using namespace std;
 using namespace CodeThorn;
 
+bool EState::sharedPStates=false;
+
+EState::EState():_label(Label()) {
+  if(EState::sharedPStates) {
+    _pstate=0;
+  } else {
+    _pstate=new PState();
+  }
+}
+
+EState::~EState() {
+  if(EState::sharedPStates==false) {
+    //cerr<<"DEBUG: Deleting estate: "<<this<<" with pstate: "<<_pstate<<endl;
+    if(_pstate!=nullptr) {
+      delete _pstate;
+      _pstate=nullptr;
+    }
+  }
+}
+
+// copy constructor
+EState::EState(const EState &other) {
+  this->_label=other._label;
+  this->io=other.io;
+  this->callString=other.callString;
+  if(sharedPStates) {
+    // copy pstate pointer, objects are managed and shared. Identical pointers guarantee equivalence
+    _pstate=other._pstate;
+  } else {
+    // copy entire pstate
+    //_pstate=new PState(*other._pstate);
+    if(other.pstate()==nullptr) {
+      _pstate=nullptr;
+      //cout<<"DEBUG: ESTATE COPY: "<<&other<<"=>"<<this<<": pstate: nullptr"<<" ==> nullptr"<<endl;
+    } else {
+      PState* newPState=new PState();
+      for(auto iter=other._pstate->begin(); iter!=other._pstate->end();++iter) {
+	auto address=(*iter).first;
+	auto value=(*iter).second;
+	newPState->writeToMemoryLocation(address,value);
+      }
+      //cout<<"DEBUG: ESTATE COPY: "<<&other<<"=>"<<this<<": pstate:"<<other.pstate()<<" ==> "<<newPState<<endl;
+      _pstate=newPState;
+    }
+  }
+}
+
+// assignment operator
+EState& EState::operator=(const EState &other) {
+  this->_label=other._label;
+  this->io=other.io;
+  this->callString=other.callString;
+  if(sharedPStates) {
+    // copy pstate pointer, objects are managed and shared. Non-Identical pointers guarantee inequivalence
+    _pstate=other._pstate;
+  } else {
+    // copy entire pstate
+    if(other.pstate()==nullptr) {
+      _pstate=nullptr;
+      //cout<<"DEBUG: ESTATE ASSIGNMENT: "<<&other<<"=>"<<this<<": pstate: nullptr"<<" ==> nullptr"<<endl;
+    } else {
+      PState* newPState=new PState();
+      //_pstate=new PState(*other._pstate);
+      for(auto iter=other._pstate->begin(); iter!=other._pstate->end();++iter) {
+	auto address=(*iter).first;
+	auto value=(*iter).second;
+	newPState->writeToMemoryLocation(address,value);
+      }
+      //cout<<"DEBUG: ESTATE ASSIGNMENT: "<<&other<<"=>"<<this<<": pstate:"<<other.pstate()<<" ==> "<<newPState<<endl;
+      _pstate=newPState;
+    }
+  }
+  //cout<<"DEBUG: ASSIGNMENT EXIT: "<<this<<": pstate:"<<this->_pstate<<endl;
+  return *this;
+}
+
 string EState::predicateToString(VariableIdMapping* variableIdMapping) const {
   string separator=",";
   string pred;
@@ -57,36 +133,44 @@ std::string EState::programPosToString(Labeler* labeler) const {
   * \date 2012.
  */
 // define order for EState elements (necessary for EStateSet)
-#define USE_CALLSTRINGS
-#ifdef USE_CALLSTRINGS
+// only used in SpotState
 bool CodeThorn::operator<(const EState& e1, const EState& e2) {
-  if(e1.label()!=e2.label())
-    return (e1.label()<e2.label());
-  if(e1.pstate()!=e2.pstate())
-    return (e1.pstate()<e2.pstate());
-  if(e1.io!=e2.io) {
-    return e1.io<e2.io;
+  if(EState::sharedPStates) {
+    if(e1.label()!=e2.label())
+      return (e1.label()<e2.label());
+    if(e1.pstate()!=e2.pstate())
+      return (e1.pstate()<e2.pstate());
+    if(e1.io!=e2.io) {
+      return e1.io<e2.io;
+    }
+    return e1.callString<e2.callString;
+  } else {
+    if(e1.label()!=e2.label())
+      return (e1.label()<e2.label());
+    if(*e1.pstate()!=*e2.pstate())
+      return (e1.pstate()<e2.pstate());
+    if(e1.io!=e2.io) {
+      return e1.io<e2.io;
+    }
+    return e1.callString<e2.callString;
   }
-  return e1.callString<e2.callString;
+
 }
-#else
-bool CodeThorn::operator<(const EState& e1, const EState& e2) {
-  if(e1.label()!=e2.label())
-    return (e1.label()<e2.label());
-  if(e1.pstate()!=e2.pstate())
-    return (e1.pstate()<e2.pstate());
-  return e1.io<e2.io;
-}
-#endif
 
 bool CodeThorn::operator==(const EState& c1, const EState& c2) {
-  return (c1.label()==c2.label())
-    && (c1.pstate()==c2.pstate())
-    && (c1.io==c2.io)
-    //#ifdef USE_CALLSTRINGS
-    && (c1.callString==c2.callString)
-    //#endif
+  if(EState::sharedPStates) {
+    return (c1.label()==c2.label())
+      && (c1.pstate()==c2.pstate())
+      && (c1.io==c2.io)
+      && (c1.callString==c2.callString)
     ;
+  } else {
+    return (c1.label()==c2.label())
+      && (*c1.pstate()==*c2.pstate())
+      && (c1.io==c2.io)
+      && (c1.callString==c2.callString)
+    ;
+  }
 }
 
 bool CodeThorn::operator!=(const EState& c1, const EState& c2) {

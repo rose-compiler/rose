@@ -47,7 +47,7 @@ namespace CodeThorn {
     void setTypeSize(VariableId varId,  CodeThorn::TypeSize newTypeSize);
     CodeThorn::TypeSize getBuiltInTypeSize(enum CodeThorn::BuiltInType);
 
-    // true if consistency check passed
+    // true if consistency check passes
     bool astSymbolCheck(SgProject* project);
     std::string typeSizeMappingToString();
     size_t getNumVarIds();
