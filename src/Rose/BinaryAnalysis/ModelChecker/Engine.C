@@ -244,6 +244,7 @@ Engine::stop() {
     for (std::thread &t: workers_)
         t.join();
     workers_.clear();
+    inProgress_.clear();
     stopping_ = false;
 }
 
@@ -783,7 +784,7 @@ Engine::showStatistics(std::ostream &out, const std::string &prefix) const {
         out <<prefix <<"paths terminated due to time limit:     " <<p->timeLimitReached() <<"\n";
     }
     if (auto s = std::dynamic_pointer_cast<P2Model::SemanticCallbacks>(semantics())) {
-        out <<prefix <<"paths terminated for duplicate state:   " <<s->nDuplicateStates() <<"\n";
+        out <<prefix <<"paths terminated at duplicate states:   " <<s->nDuplicateStates() <<"\n";
         out <<prefix <<"paths terminated for solver failure:    " <<s->nSolverFailures() <<" (including timeouts)\n";
     }
 

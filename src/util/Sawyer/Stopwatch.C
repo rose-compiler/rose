@@ -103,7 +103,11 @@ Stopwatch::clear(double value) {
 
 SAWYER_EXPORT std::string
 Stopwatch::toString() const {
-    double seconds = report();
+    return toString(report());
+}
+
+SAWYER_EXPORT std::string
+Stopwatch::toString(double seconds) {
     if (seconds < 0.0) {
         return "negative-duration";
     } else if (seconds < 59.9999995) {

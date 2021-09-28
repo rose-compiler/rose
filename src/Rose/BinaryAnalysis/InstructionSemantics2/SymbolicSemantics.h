@@ -832,7 +832,7 @@ protected:
     DefinersMode computingDefiners_;                    // whether to track definers (instruction VAs) of SValues
     WritersMode computingMemoryWriters_;                // whether to track writers (instruction VAs) to memory.
     WritersMode computingRegisterWriters_;              // whether to track writers (instruction VAs) to registers.
-    size_t trimThreshold_;                              // max size of expressions (zero means no maximimum)
+    uint64_t trimThreshold_;                            // max size of expressions (zero means no maximimum)
     bool reinterpretMemoryReads_;                       // cast data to unsigned integer when reading from memory
     bool reinterpretRegisterReads_;                     // cast data to unsigned integer when reading from registers
 
@@ -1094,8 +1094,8 @@ public:
      *  before it's substituted with a new variable.  The default, zero, means to never limit the size of expressions.
      *
      * @{ */
-    void trimThreshold(size_t n) { trimThreshold_ = n; }
-    size_t trimThreshold() const { return trimThreshold_; }
+    void trimThreshold(uint64_t n) { trimThreshold_ = n; }
+    uint64_t trimThreshold() const { return trimThreshold_; }
     /** @} */
 
     /** Property: Reinterpret data as unsigned integers when reading from memory or registers.

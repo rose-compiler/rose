@@ -103,6 +103,9 @@ public:
 
     /** Convert a stopwatch to a human-readalbe string. */
     std::string toString() const;
+
+    /** Format time in human readable manner. */
+    static std::string toString(double seconds);
 };
 
 

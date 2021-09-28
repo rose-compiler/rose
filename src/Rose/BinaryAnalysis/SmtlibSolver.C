@@ -14,6 +14,14 @@ using namespace Sawyer::Message::Common;
 namespace Rose {
 namespace BinaryAnalysis {
 
+SmtlibSolver::Ptr
+SmtlibSolver::create() const {
+    auto newSolver = new SmtlibSolver(name(), executable_, shellArgs_, linkage());
+    newSolver->doMemoization_ = doMemoization_;
+    newSolver->timeout_ = timeout_;
+    return Ptr(newSolver);
+}
+
 void
 SmtlibSolver::reset() {
     SmtSolver::reset();
@@ -47,9 +55,19 @@ void
 SmtlibSolver::generateFile(std::ostream &o, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*) {
     requireLinkage(LM_EXECUTABLE);
 
+    o <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n"
+      <<"; Statistics\n"
+      <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n"
+      <<"\n"
+      <<"; number of expressions: " <<exprs.size() <<"\n"
+      <<"; size of each expression: actual / effective:\n";
+    for (const SymbolicExpr::Ptr &e: exprs)
+        o <<(boost::format(";   %9d / %-9d\n") % e->nNodesUnique() % e->nNodes());
+    o <<"\n";
+
     if (timeout_) {
         // It's not well documented. Experimentally determined to be milliseconds using Z3.
-        o <<"(set-option :timeout " <<(unsigned)::round(timeout_->count()*1000) <<")\n";
+        o <<"(set-option :timeout " <<(unsigned)::round(timeout_->count()*1000) <<")\n\n";
     }
 
     // Find all variables
@@ -1253,6 +1271,7 @@ SmtlibSolver::parseEvidence() {
                 SAWYER_MESG(mlog[DEBUG]) <<"evidence: " <<*var <<" == " <<*val <<"\n";
             }
             stats.evidenceTime += evidenceTimer.stop();
+            stats.longestEvidenceTime = std::max(stats.longestEvidenceTime, evidenceTimer.report());
             return;
         }
     }
@@ -1279,29 +1298,20 @@ SmtlibSolver::parseEvidence() {
             for (size_t i = *foundEvidenceStartingAt; i < sexpr->children().size(); ++i) {
                 const SExpr::Ptr &elmt = sexpr->children()[i];
 
-                // e.g., (define-fun v7 () (_ BitVec 32) #xdeadbeef)
                 if (elmt->children().size() == 5 &&
                     elmt->children()[0]->name() == "define-fun" &&
-                    elmt->children()[1]->name() != "" &&
+                    boost::regex_match(elmt->children()[1]->name(), varNameRe) &&
                     elmt->children()[2]->name() == "" && elmt->children()[2]->children().size() == 0 &&
                     elmt->children()[3]->children().size() == 3 &&
                     elmt->children()[3]->children()[0]->name() == "_" &&
                     elmt->children()[3]->children()[1]->name() == "BitVec" &&
                     elmt->children()[4]->name().substr(0, 1) == "#") {
+                    // e.g., (define-fun v7 () (_ BitVec 32) #xdeadbeef)
 
                     size_t nBits = boost::lexical_cast<size_t>(elmt->children()[3]->children()[2]->name());
 
                     // Variable
                     std::string varName = elmt->children()[1]->name();
-                    if (!boost::regex_match(varName, varNameRe)) {
-                        if (!boost::regex_match(varName, cseNameRe)) {
-                            if (mlog[WARN]) {
-                                mlog[WARN] <<"malformed variable name \"" <<StringUtility::cEscape(varName) <<"\" in evidence: ";
-                                printSExpression(mlog[WARN], elmt);
-                            }
-                        }
-                        continue;
-                    }
                     size_t varId = boost::lexical_cast<size_t>(varName.substr(1));
                     SymbolicExpr::Ptr var = SymbolicExpr::makeIntegerVariable(nBits, varId);
 
@@ -1321,10 +1331,19 @@ SmtlibSolver::parseEvidence() {
                     SAWYER_MESG(mlog[DEBUG]) <<"evidence: " <<*var <<" == " <<*val <<"\n";
                     evidence.insert(var, val);
 
+                } else if (elmt->children().size() == 5 &&
+                           elmt->children()[0]->name() == "define-fun" &&
+                           boost::regex_match(elmt->children()[1]->name(), cseNameRe)) {
+                    // e.g., (define-fun cse_123 () (_ BitVec 32) (bvadd v57829 #x00002b4f))
+
+                    // Ignored
+
+#if 0 // [Robb Matzke 2021-09-20]: we get lots of these from apparently internal Z3 variables and functions, so silently igore
                 } else if (mlog[WARN]) {
                     mlog[WARN] <<"malformed model element ignored: ";
                     printSExpression(mlog[WARN], elmt);
                     mlog[WARN] <<"\n";
+#endif
                 }
             }
         }
@@ -1340,6 +1359,7 @@ SmtlibSolver::parseEvidence() {
     }
 
     stats.evidenceTime += evidenceTimer.stop();
+    stats.longestEvidenceTime = std::max(stats.longestEvidenceTime, evidenceTimer.report());
 }
 
 SymbolicExpr::Ptr
