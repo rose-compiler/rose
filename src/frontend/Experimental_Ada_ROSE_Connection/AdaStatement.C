@@ -2861,7 +2861,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgType&                rettype = isFunc ? getDeclTypeID(decl.Result_Profile, ctx)
                                                 : SG_DEREF(sb::buildVoidType());
 
-        SgFunctionDeclaration&  fundec     = mkProcedure(adaname.fullName, gen_defn, rettype, ParameterCompletion{params, ctx});
+        SgFunctionDeclaration&  fundec = mkProcedure(adaname.fullName, gen_defn, rettype, ParameterCompletion{params, ctx});
 
         sgnode.set_declaration(&fundec);
 
