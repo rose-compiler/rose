@@ -42,8 +42,7 @@ struct Unparse_Ada : UnparseLanguageIndependentConstructs
           using VisibleScopeContainer  = std::set<const SgScopeStatement*>;
           using UsePkgContainer        = std::set<const SgScopeStatement*>;
           using ScopeRenamingContainer = std::map<const SgScopeStatement*, const SgDeclarationStatement*>;
-          using AdaRenamedNames        = ScopeRenamingContainer::value_type;
-          using ScopeSnapshot          = std::tuple<size_t, size_t, size_t>;
+          using NameQualMap            = std::map<SgNode*, std::string>;
 
           //
           // in unparseAda_statements.C
@@ -68,9 +67,9 @@ struct Unparse_Ada : UnparseLanguageIndependentConstructs
           /// uses the flag saved by the Asis to ROSE converter
           bool requiresParentheses(SgExpression* expr, SgUnparse_Info& info) ROSE_OVERRIDE;
 
-          //
-          // in unparseAda_types.C
-          void unparseType(SgType* type, SgUnparse_Info& info);
+          /// unparses \ref type and uses \ref ref as the anchor node for scope qualification
+          /// \note implemented in unparseAda_types.C
+          void unparseType(const SgLocatedNode& ref, SgType* type, SgUnparse_Info& info);
 
           // DQ (9/12/2017): Mark the derived class to support debugging.
           // virtual std::string languageName() const;
@@ -92,6 +91,9 @@ struct Unparse_Ada : UnparseLanguageIndependentConstructs
           void openScope(SgUnparse_Info& info, SgScopeStatement& scope);
           void closeScope();
 
+          const NameQualMap& nameQualificationMap() const;
+          void withNameQualificationMap(const NameQualMap&);
+
      private:
           /// fully-qualified names of visible scopes
           VisibleScopeContainer  visible_scopes;
@@ -104,6 +106,9 @@ struct Unparse_Ada : UnparseLanguageIndependentConstructs
 
           /// stores info about scope state
           std::vector<ScopeStackEntry> scope_state;
+
+          ///
+          const NameQualMap* currentNameQualificationMap;
    };
 
 #endif
