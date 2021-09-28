@@ -162,7 +162,7 @@ std::string encodedKey(ClassKeyType key, ClassNameFn* fn, const char* prefix, si
   return encodedName((*fn)(key), prefix, maxlen);
 }
 
-std::string encodedVar(VariableId key, VarNameFn* fn, const char* prefix, size_t maxlen)
+std::string encodedVar(VariableKeyType key, VarNameFn* fn, const char* prefix, size_t maxlen)
 {
   return encodedName((*fn)(key), prefix, maxlen);
 }
@@ -205,7 +205,7 @@ struct NameGenerator<VarNameFn>
     : memo(&encodedVar), nameGen(gen), prefix(nameprefix), maxlen(numCharsOfOriginalName)
     {}
 
-    std::string operator()(VariableId key)
+    std::string operator()(VariableKeyType key)
     {
       return memo(key, &nameGen, prefix, maxlen);
     }
@@ -229,7 +229,7 @@ struct NameGenerator<FuncNameFn>
     : memo(&encodedName), nameGen(gen), prefix(nameprefix), maxlen(numCharsOfOriginalName)
     {}
 
-    std::string operator()(FunctionId id)
+    std::string operator()(FunctionKeyType id)
     {
       return memo(nameGen(id), prefix, maxlen);
     }
@@ -312,17 +312,19 @@ buildOutputSet(const ct::ClassAnalysis& classes)
 
 struct Parameters
 {
-  std::string dotfile_output         = opt_none;
-  std::string txtfile_layout         = opt_none;
-  std::string dotfile_layout         = opt_none;
-  std::string txtfile_vfun           = opt_none;
-  int         numCharsOfOriginalName = -1;
-  bool        withOverridden         = false;
+  std::string dotfile_output          = opt_none;
+  std::string txtfile_layout          = opt_none;
+  std::string dotfile_layout          = opt_none;
+  std::string txtfile_vfun            = opt_none;
+  std::string txtfile_vbaseclass      = opt_none;
+  int         numCharsOfOriginalName  = -1;
+  bool        withOverridden          = false;
 
   static const std::string dot_output;
   static const std::string txt_layout;
   static const std::string dot_layout;
   static const std::string txt_vfun;
+  static const std::string txt_vbaseclass;
   static const std::string name_encoding;
   static const std::string vfun_overridden;
 
@@ -333,6 +335,7 @@ const std::string Parameters::dot_output("dot");
 const std::string Parameters::txt_layout("layout_txt");
 const std::string Parameters::dot_layout("layout_dot");
 const std::string Parameters::txt_vfun("virtual_functions");
+const std::string Parameters::txt_vbaseclass("virtual_bases_txt");
 const std::string Parameters::name_encoding("original_name");
 const std::string Parameters::vfun_overridden("with_overriden");
 const std::string Parameters::opt_none("");
@@ -375,6 +378,10 @@ struct Acuity
             .argument("filename", scl::anyParser(params.txtfile_vfun))
             .doc("filename for printing virtual function information"));
 
+      acuity.insert(scl::Switch(Parameters::txt_vbaseclass)
+            .argument("filename", scl::anyParser(params.txtfile_vbaseclass))
+            .doc("filename for printing virtual class construction order"));
+
       acuity.insert(scl::Switch(Parameters::name_encoding)
             //~ .intrinsicValue(true, params.nameEncoding)
             .argument("int", scl::anyParser(params.numCharsOfOriginalName))
@@ -414,18 +421,23 @@ struct Acuity
                               const ct::AnalysesTuple& analyses
                             );
 
+    void
+    writeVBaseInfoIfRequested( const ct::RoseCompatibilityBridge& compatLayer,
+                               const Parameters& params,
+                               ct::ClassNameFn& classNameFn,
+                               ct::ClassFilterFn include,
+                               const ct::AnalysesTuple& analyses
+                             );
 
-    void process(SgProject& project, ct::VariableIdMapping& vmap, const ct::FunctionIdMapping& fmap)
+    void process(SgProject& project, ct::VariableIdMapping&, const ct::FunctionIdMapping& fmap)
     {
-      using CompatibilityBridge = ct::RoseCompatibilityBridge;
-
-      logInfo() << "Thorn 2 (aka Acuity): "
+      logInfo() << "Thorn 2: "
                 << params.dotfile_output
                 << " - " << params.txtfile_layout
                 << std::endl;
 
       logInfo() << "getting all classes.. " << std::endl;
-      CompatibilityBridge compatLayer{vmap, fmap};
+      ct::RoseCompatibilityBridge compatLayer;
       ct::AnalysesTuple   analyses = ct::analyzeClassesAndCasts(compatLayer, &project);
       logInfo() << "getting all classes done. " << std::endl;
 
@@ -438,6 +450,7 @@ struct Acuity
       writeDotFileIfRequested  (params, clsNameGen, outset, analyses);
       writeLayoutIfRequested(compatLayer, params, clsNameGen, varNameGen, outset, analyses);
       writeVFunInfoIfRequested (compatLayer, params, clsNameGen, funNameGen, outset, analyses);
+      writeVBaseInfoIfRequested(compatLayer, params, clsNameGen, outset, analyses);
     }
 
   private:
@@ -507,7 +520,7 @@ Acuity::writeVFunInfoIfRequested( const ct::RoseCompatibilityBridge& compatLayer
   logInfo() << "computing virtual function information"
             << std::endl;
 
-  ct::VirtualFunctionAnalysis vfa = virtualFunctionAnalysis(compatLayer, analyses.classAnalysis());
+  ct::VirtualFunctionAnalysis vfa = analyzeVirtualFunctions(compatLayer, analyses.classAnalysis());
 
   logInfo() << "writing virtual function information file " << params.txtfile_vfun << ".."
             << std::endl;
@@ -524,6 +537,31 @@ Acuity::writeVFunInfoIfRequested( const ct::RoseCompatibilityBridge& compatLayer
                      );
 
   logInfo() << "writing virtual function information done" << std::endl;
+}
+
+void
+Acuity::writeVBaseInfoIfRequested( const ct::RoseCompatibilityBridge& compatLayer,
+                                   const Parameters& params,
+                                   ct::ClassNameFn& classNameFn,
+                                   ct::ClassFilterFn include,
+                                   const ct::AnalysesTuple& analyses
+                                 )
+{
+  if (params.txtfile_vbaseclass == Parameters::opt_none)
+    return;
+
+  logInfo() << "writing virtual base class initialization order file " << params.txtfile_vbaseclass << ".."
+            << std::endl;
+
+  std::ofstream outfile{params.txtfile_vbaseclass};
+
+  virtualBaseClassInitOrderTxt( outfile,
+                                classNameFn,
+                                include,
+                                analyses.classAnalysis()
+                              );
+
+  logInfo() << "writing virtual base class initialization order file done" << std::endl;
 }
 
 
@@ -613,7 +651,6 @@ int main( int argc, char * argv[] )
 
     //~ for (int i = 0; i < thornArgc; ++i)
       //~ std::cerr << thornArgv[i] << std::endl;
-
 
     CodeThornOptions         ctOpt;
     //~ LTLOptions               ltlOpt;    // to be moved into separate tool

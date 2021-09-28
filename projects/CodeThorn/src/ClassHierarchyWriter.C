@@ -179,12 +179,12 @@ namespace
 
     for (const ct::OverrideDesc& fn: functions)
     {
-      const ct::FunctionId           funid = fn.functionId();
+      const ct::FunctionKeyType      funid = fn.functionId();
       const ct::VirtualFunctionDesc& other = vfuns.at(funid);
 
       os << className(other.classId())
          << "::" << funcName(funid)
-         << " #" << funid.getIdCode()
+         << " #" << funid
          << (fn.covariantReturn() ? " (covariant)" : "")
          << ", ";
     }
@@ -228,7 +228,7 @@ namespace
     os << "Class " << className(clazz.first) << "\n"
        << std::endl;
 
-    for (ct::FunctionId vfnId : clazz.second.virtualFunctions())
+    for (ct::FunctionKeyType vfnId : clazz.second.virtualFunctions())
     {
       const ct::VirtualFunctionDesc& vfn = vfuns.at(vfnId);
 
@@ -236,7 +236,7 @@ namespace
         continue;
 
       os << "  Function " << funcName(vfnId)
-         << " #" << vfnId.getIdCode()
+         << " #" << vfnId
          << (vfn.isPureVirtual() ? " (pure virtual)" : "")
          << std::endl;
 
@@ -249,9 +249,29 @@ namespace
     os << std::endl;
   }
 
+  void writeVirtualBaseOrder( std::ostream& os,
+                              ct::ClassNameFn& className,
+                              const ct::ClassAnalysis::value_type& clazz
+                            )
+  {
+    const ct::ClassData::VirtualBaseOrderContainer& vbases = clazz.second.virtualBaseClassOrder();
+
+    if (vbases.empty())
+      return;
+
+    os << "Class " << className(clazz.first) << "\n    "
+       << std::flush;
+
+    for (ct::ClassKeyType basecls : vbases)
+      os << className(basecls) << ", ";
+
+    os << '\n' << std::endl;
+  }
+
+
   struct ObjectLayoutElementPrinter : boost::static_visitor<void>
   {
-      ObjectLayoutElementPrinter(std::ostream& out, ClassNameFn& classNamer, VarNameFn& varNamer)
+      ObjectLayoutElementPrinter(std::ostream& out, ct::ClassNameFn& classNamer, ct::VarNameFn& varNamer)
       : os(out), className(classNamer), varName(varNamer)
       {}
 
@@ -260,29 +280,29 @@ namespace
         return s;
       }
 
-      virtual void operator()(const Subobject& subobj) const
+      virtual void operator()(const ct::Subobject& subobj) const
       {
         out() << "subobj " << escapeName(className(subobj.ref))
               << (subobj.isVirtual ? " (virtual)" : "");
       }
 
-      virtual void operator()(const Field& fld) const
+      virtual void operator()(const ct::Field& fld) const
       {
         out() << "field  " << escapeName(varName(fld.id));
       }
 
-      virtual void operator()(const VTable& vtbl) const
+      virtual void operator()(const ct::VTable& vtbl) const
       {
         out() << "vtable " << escapeName(className(vtbl.ref))
               << (vtbl.isPrimary ? " (primary)" : "");
       }
 
-      virtual void printEntry(const ObjectLayoutEntry& el) const
+      virtual void printEntry(const ct::ObjectLayoutEntry& el) const
       {
         boost::apply_visitor(*this, el.element());
       }
 
-      virtual void printClassHeader(ClassKeyType key) const
+      virtual void printClassHeader(ct::ClassKeyType key) const
       {
         out() << "class " << escapeName(className(key));
       }
@@ -292,9 +312,9 @@ namespace
       std::ostream& out() const { return os; }
 
     private:
-      std::ostream&            os;
-      ClassNameFn&             className;
-      VarNameFn&               varName;
+      std::ostream&    os;
+      ct::ClassNameFn& className;
+      ct::VarNameFn&   varName;
   };
 
   struct InheritanceEdgeDot : std::tuple<const void*, const void*, bool, bool>
@@ -313,7 +333,11 @@ namespace
   {
       using base = ObjectLayoutElementPrinter;
 
-      ObjectLayoutElementPrinterDot(std::ostream& out, ClassNameFn& classNamer, VarNameFn& varNamer, ClassFilterFn incl)
+      ObjectLayoutElementPrinterDot( std::ostream& out,
+                                     ct::ClassNameFn& classNamer,
+                                     ct::VarNameFn& varNamer,
+                                     ct::ClassFilterFn incl
+                                   )
       : base(out, classNamer, varNamer), include(incl), edges(), currentClass()
       {}
 
@@ -330,10 +354,10 @@ namespace
         elem_end();
       }
 
-      void operator()(const Field& el) const override     { elem(el); }
-      void operator()(const VTable& el) const override    { elem(el); }
+      void operator()(const ct::Field& el) const override     { elem(el); }
+      void operator()(const ct::VTable& el) const override    { elem(el); }
 
-      void operator()(const Subobject& el) const override
+      void operator()(const ct::Subobject& el) const override
       {
         elem(el);
 
@@ -341,7 +365,7 @@ namespace
           edges.emplace_back(&el, el.ref, el.isVirtual, el.isDirect);
       }
 
-      void printClassHeader(ClassKeyType key) const override
+      void printClassHeader(ct::ClassKeyType key) const override
       {
         currentClass = key;
 
@@ -367,7 +391,7 @@ namespace
         }
 
         edges.clear();
-        currentClass = ClassKeyType{};
+        currentClass = ct::ClassKeyType{};
       }
 
       std::string escapeName(std::string s) const override
@@ -387,9 +411,9 @@ namespace
       }
 
     private:
-      ClassFilterFn                           include;
+      ct::ClassFilterFn                       include;
       mutable std::vector<InheritanceEdgeDot> edges;
-      mutable ClassKeyType                    currentClass;
+      mutable ct::ClassKeyType                currentClass;
   };
 
   void ObjectLayoutElementPrinterDot::elem_begin(const void* elem) const
@@ -414,14 +438,14 @@ namespace
       using base = ObjectLayoutElementPrinter;
       using base::base;
 
-      void printEntry(const ObjectLayoutEntry& el) const override
+      void printEntry(const ct::ObjectLayoutEntry& el) const override
       {
         out() << el.offset() << " ";
 
         base::printEntry(el);
       }
 
-      void printClassHeader(ClassKeyType key) const override
+      void printClassHeader(ct::ClassKeyType key) const override
       {
         base::printClassHeader(key);
         out() << std::endl;
@@ -430,17 +454,17 @@ namespace
 
 
   void prnClassLayout( const ObjectLayoutElementPrinter& printer,
-                       ClassFilterFn include,
-                       const ObjectLayoutContainer& cont
+                       ct::ClassFilterFn include,
+                       const ct::ObjectLayoutContainer& cont
                      )
   {
-    for (const ObjectLayoutContainer::value_type& entry : cont)
+    for (const ct::ObjectLayoutContainer::value_type& entry : cont)
     {
       if (!include) continue;
 
       printer.printClassHeader(entry.first);
 
-      for (const ObjectLayoutEntry& elem : entry.second)
+      for (const ct::ObjectLayoutEntry& elem : entry.second)
         printer.printEntry(elem);
 
       printer.printClassFooter();
@@ -499,6 +523,27 @@ void virtualFunctionsTxt( std::ostream& os,
                                              vfuns,
                                              elem,
                                              overridden
+                                           );
+                    }
+                  );
+}
+
+
+void virtualBaseClassInitOrderTxt( std::ostream& os,
+                                   ClassNameFn& className,
+                                   ClassFilterFn include,
+                                   const ClassAnalysis& classes
+                                 )
+{
+  topDownTraversal( classes,
+                    [&os, &className, &include]
+                    (const ClassAnalysis::value_type& elem) -> void
+                    {
+                      if (!include(elem.first)) return;
+
+                      writeVirtualBaseOrder( os,
+                                             className,
+                                             elem
                                            );
                     }
                   );

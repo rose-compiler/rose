@@ -14,11 +14,6 @@ using namespace std;
 
 using namespace CodeThorn;
 
-namespace
-{
-  std::ostream& logWarn() { return std::cerr << "[WARN] "; }
-}
-
 DFTransferFunctions::DFTransferFunctions():_programAbstractionLayer(0){}
 
 void DFTransferFunctions::transfer(Edge edge, Lattice& element) {

@@ -119,6 +119,29 @@ namespace
     return *lst[0];
   }
 
+  SgBasicBlock&
+  getBody(const SgFunctionDeclaration& n)
+  {
+    return SG_DEREF(SG_DEREF(n.get_definition()).get_body());
+  }
+
+  SgType&
+  getReturnType(const SgFunctionDeclaration& n)
+  {
+    return SG_DEREF(SG_DEREF(n.get_type()).get_return_type());
+  }
+
+  void copyElements(const SgBasicBlock& src, SgBasicBlock& tgt)
+  {
+    for (const SgStatement* orig : src.get_statements())
+    {
+      SgStatement* copy = si::deepCopy(orig);
+
+      tgt.append_statement(copy);
+    }
+  }
+
+
 
   //
   // transformation wrappers
@@ -300,27 +323,27 @@ namespace
   //
   // convenience functions + functors
 
-  SgBasicBlock& getCtorBody(SgMemberFunctionDeclaration& n)
+  SgBasicBlock& getCtorBody(const SgMemberFunctionDeclaration& n)
   {
     SgFunctionDefinition& def = SG_DEREF(n.get_definition());
 
     return SG_DEREF(def.get_body());
   }
 
-  SgClassDefinition& getClassDef(SgDeclarationStatement& n)
+  SgClassDefinition& getClassDef(const SgDeclarationStatement& n)
   {
-    SgDeclarationStatement& defdcl = SG_DEREF(n.get_definingDeclaration());
-    SgClassDeclaration&     clsdef = SG_ASSERT_TYPE(SgClassDeclaration, defdcl);
+    SgDeclarationStatement* defdcl = n.get_definingDeclaration();
+    SgClassDeclaration&     clsdef = SG_DEREF(isSgClassDeclaration(defdcl));
 
     return SG_DEREF(clsdef.get_definition());
   }
 
-  SgClassDefinition& getClassDef(SgMemberFunctionDeclaration& n)
+  SgClassDefinition& getClassDef(const SgMemberFunctionDeclaration& n)
   {
     return getClassDef(SG_DEREF(n.get_associatedClassDeclaration()));
   }
 
-  SgClassDefinition* getClassDefOpt(SgClassType& n)
+  SgClassDefinition* getClassDefOpt(const SgClassType& n)
   {
     SgDeclarationStatement& dcl    = SG_DEREF( n.get_declaration() );
     SgDeclarationStatement* defdcl = dcl.get_definingDeclaration();
@@ -382,6 +405,21 @@ namespace
   isDtor(SgMemberFunctionDeclaration& n)
   {
     return n.get_specialFunctionModifier().isDestructor()? &n : nullptr;
+  }
+
+  SgMemberFunctionDeclaration*
+  isCtor(SgMemberFunctionDeclaration& n)
+  {
+    return n.get_specialFunctionModifier().isConstructor()? &n : nullptr;
+  }
+
+  SgMemberFunctionDeclaration*
+  isCtorDtor(SgMemberFunctionDeclaration& n)
+  {
+    SgMemberFunctionDeclaration* res = nullptr;
+
+    (res = isCtor(n)) || (res = isDtor(n));
+    return res;
   }
 
   SgMemberFunctionDeclaration*
@@ -570,8 +608,8 @@ namespace
   struct SameClassDef
   {
     explicit
-    SameClassDef(SgBaseClass& base)
-    : classdef(getClassDef(SG_DEREF(base.get_base_class())))
+      SameClassDef(const SgClassDefinition& base)
+      : classdef(base)
     {}
 
     bool operator()(SgInitializedName* cand)
@@ -595,17 +633,36 @@ namespace
       return &getClassDef(mfn) == &classdef;
     }
 
-    SgClassDefinition& classdef;
+    private:
+      const SgClassDefinition& classdef;
   };
 
-  SgInitializer*
-  getBaseInitializer(SgBaseClass& base, SgCtorInitializerList& ctorini)
+
+
+  // finds the initializer for a specific base class in the constructor initializer list
+  // returns nullptr if the class is default initialized.
+  // \{
+  SgConstructorInitializer*
+  getBaseInitializer(const SgClassDefinition& clsdef, SgCtorInitializerList& ctorini)
   {
     SgInitializedNamePtrList&                lst = ctorini.get_ctors();
-    SgInitializedNamePtrList::const_iterator pos = std::find_if(lst.begin(), lst.end(), SameClassDef(base));
+    SgInitializedNamePtrList::const_iterator pos = std::find_if(lst.begin(), lst.end(), SameClassDef{clsdef});
 
-    return (pos != lst.end()) ? (*pos)->get_initializer() : nullptr;
+    return (pos != lst.end()) ? isSgConstructorInitializer((*pos)->get_initializer()) : nullptr;
   }
+
+  SgConstructorInitializer*
+  getBaseInitializer(const SgClassDeclaration& clsdcl, SgCtorInitializerList& ctorini)
+  {
+    return getBaseInitializer(getClassDef(clsdcl), ctorini);
+  }
+
+  SgConstructorInitializer*
+  getBaseInitializer(const SgBaseClass& base, SgCtorInitializerList& ctorini)
+  {
+    return getBaseInitializer(SG_DEREF(base.get_base_class()), ctorini);
+  }
+  // \}
 
 
   SgArrayType* isArrayType(SgType* t)
@@ -1045,7 +1102,7 @@ namespace
     ROSE_ASSERT(nondef.get_definingDeclaration() == nullptr);
 
     SgName                       nm   = nondef.get_name();
-    SgType&                      ty   = SG_DEREF(nondef.get_orig_return_type());
+    SgType&                      ty   = getReturnType(nondef);
     SgFunctionParameterList&     lst  = SG_DEREF(sb::buildFunctionParameterList());
     TemplateMemberFunction*      tmpl = isSgTemplateInstantiationMemberFunctionDecl(&nondef);
     SgMemberFunctionDeclaration* pdcl = sb::buildDefiningMemberFunctionDeclaration( nm,
@@ -1141,54 +1198,76 @@ namespace
     return &obtainGeneratableCtor( clsdef, *emptyargs );
   }
 
-
-  struct BaseCtorCallTransformer
+/*
+  concept EmptyTransformer
   {
-      BaseCtorCallTransformer(SgBasicBlock& where, SgBaseClass& what, SgInitializer* how)
-      : blk(where), baseclass(what), ini(isSgConstructorInitializer(how))
-      {
-        // if how != nullptr then ini != nullptr
-        ROSE_ASSERT((!how) || ini);
-      }
+    EmptyTransformer(EmptyTransformer&&) = default;
+    EmptyTransformer& operator=(EmptyTransformer&&) = default;
 
-      SgThisExp& mkThisExp(SgClassDeclaration& cls) const
-      {
-        SgSymbol& sym = SG_DEREF( cls.search_for_symbol_from_symbol_table() );
+    EmptyTransformer() = delete;
+    EmptyTransformer(const EmptyTransformer&) = delete;
+    EmptyTransformer& operator=(const EmptyTransformer&&) = delete;
 
-        return SG_DEREF( sb::buildThisExp(&sym) );
+    void execute(CxxTransformStats&);
+  };
+*/
+
+  struct CtorCallCreator
+  {
+      CtorCallCreator(SgClassDefinition& clz, SgClassDeclaration& basecls, SgConstructorInitializer* how)
+      : cls(clz), bsedcl(basecls), ini(how)
+      {}
+
+      /// returns static_cast<Base*>(this)
+      SgExpression& mkThisExpForBase(SgClassDeclaration& base) const
+      {
+        SgClassDeclaration& clsdcl = SG_DEREF(cls.get_declaration());
+        SgSymbol&           clssym = SG_DEREF(clsdcl.search_for_symbol_from_symbol_table());
+        SgThisExp&          thisop = SG_DEREF(sb::buildThisExp(&clssym));
+        SgType&             bseptr = SG_DEREF(sb::buildPointerType(base.get_type()));
+
+        return SG_DEREF(sb::buildCastExp(&thisop, &bseptr, SgCastExp::e_static_cast));
       }
 
       SgStatement& mkDefaultInitializer(SgClassDeclaration& clazz) const
       {
         SgExprListExp&               args  = SG_DEREF( sb::buildExprListExp() );
         SgMemberFunctionDeclaration& ctor  = obtainGeneratableCtor(getClassDef(clazz), args);
-        SgExpression&                self  = mkThisExp(clazz);
+        SgExpression&                self  = mkThisExpForBase(clazz);
 
         return createMemberCall(self, ctor, args, false /* non-virtual call */);
       }
 
       SgStatement& mkCtorCall() const
       {
-        SgClassDeclaration& clazz = SG_DEREF( baseclass.get_base_class() );
-
-        if (!ini) return mkDefaultInitializer(clazz);
-
-        SgExpression&       self  = mkThisExp(clazz);
-
-        return createMemberCallFromConstructorInitializer(self, *ini);
+        return ini ? createMemberCallFromConstructorInitializer(mkThisExpForBase(bsedcl), *ini)
+                   : mkDefaultInitializer(bsedcl);
       }
+
+    private:
+      SgClassDefinition&        cls;
+      SgClassDeclaration&       bsedcl;
+      SgConstructorInitializer* ini;
+  };
+
+
+  struct BaseCtorCallTransformer : CtorCallCreator
+  {
+      using base = CtorCallCreator;
+
+      BaseCtorCallTransformer(SgClassDefinition& clz, SgBasicBlock& where, SgBaseClass& baseclass, SgConstructorInitializer* how)
+      : base(clz, SG_DEREF(baseclass.get_base_class()), how), blk(where)
+      {}
 
       void execute(CxxTransformStats&)
       {
-        newStmt = &mkCtorCall();
+        newStmt = &base::mkCtorCall();
 
         blk.prepend_statement(newStmt);
       }
 
     private:
       SgBasicBlock&             blk;
-      SgBaseClass&              baseclass;
-      SgConstructorInitializer* ini;
 
       SgStatement*              newStmt = nullptr;
   };
@@ -1496,7 +1575,7 @@ namespace
                                 SgStatement& posInScope,
                                 SgBasicBlock& blk,
                                 SgStatement& pos,
-                                std::vector<AnyTransform>& transf
+                                transformation_container& transf
                               )
   {
     SgInitializedNamePtrList vars = variableList(n, posInScope);
@@ -1531,7 +1610,7 @@ namespace
                    << " // " << SrcLoc(*blk)
                    << std::endl;
 
-        std::vector<AnyTransform> transf;
+        transformation_container transf;
 
         SgStatement* prev = pos;
         for (SgScopeStatement* curr = blk; curr != limit; curr = si::getEnclosingScope(curr))
@@ -1867,6 +1946,118 @@ namespace
   };
 
 
+  struct FullCtorDtorTransformer
+  {
+      using VirtualBaseContainer = ClassData::VirtualBaseOrderContainer;
+
+      FullCtorDtorTransformer(SgMemberFunctionDeclaration& n, const VirtualBaseContainer& vbases)
+      : ctordtor(n), virtualBases(vbases)
+      {}
+
+      FullCtorDtorTransformer(FullCtorDtorTransformer&& orig) = default;
+      ~FullCtorDtorTransformer() = default;
+
+      FullCtorDtorTransformer& operator=(FullCtorDtorTransformer&&) = delete;
+      FullCtorDtorTransformer(const FullCtorDtorTransformer&) = delete;
+      FullCtorDtorTransformer& operator=(const FullCtorDtorTransformer&) = delete;
+
+      void execute(CxxTransformStats&)
+      {
+        using StmtInserter = void (SgBasicBlock::*)(SgStatement*);
+
+        std::string                  fullName = ctordtor.get_name();
+        fullName += 'v';
+
+        SgClassDefinition&           clsdef  = getClassDef(ctordtor);
+        SgMemberFunctionDeclaration* fulldclNondef = sb::buildNondefiningMemberFunctionDeclaration(
+                                                                 fullName,
+                                                                 &getReturnType(ctordtor),
+                                                                 si::deepCopy(ctordtor.get_parameterList()),
+                                                                 &clsdef,
+                                                                 nullptr /*decoratorList*/,
+                                                                 0 /*functionConstVolatileFlags*/,
+                                                                 false /*buildTemplateInstantiation*/,
+                                                                 nullptr /*templateArgumentsList*/
+                                                               );
+
+        ROSE_ASSERT(fulldclNondef);
+        clsdef.append_member(fulldclNondef);
+
+        // create full ctor/dtor
+        SgMemberFunctionDeclaration& fulldcl = mkCtorDtorDef(clsdef, *fulldclNondef, !isDtor(ctordtor));
+
+        // rename dtor/ctor
+
+        fulldcl.set_name(fullName);
+
+        SgBasicBlock&                funbdy = getBody(fulldcl);
+
+        // copy the body
+        copyElements(getBody(fulldcl), funbdy);
+
+        SgCtorInitializerList&       ctorlst  = SG_DEREF(ctordtor.get_CtorInitializerList());
+        StmtInserter                 inserter = isCtor(ctordtor) ? &SgBasicBlock::append_statement
+                                                                 : &SgBasicBlock::prepend_statement;
+
+        // add virtual base class constructor calls to constructor body
+        //~ for (const SgClassDefinition* bsecls : adapt::reverse(virtualBases))
+        for (int i = virtualBases.size(); i != 0; --i)
+        {
+          const SgClassDefinition*  bsecls = virtualBases.at(i-1);
+          ROSE_ASSERT(bsecls);
+
+          // create: static_cast<Base*>(this)->Base(args as needed);
+          SgConstructorInitializer* ini = getBaseInitializer(*bsecls, ctorlst);
+          CtorCallCreator           callCreator{clsdef, SG_DEREF(bsecls->get_declaration()), ini};
+          SgStatement&              call   = callCreator.mkCtorCall();
+
+          (funbdy.*inserter)(&call);
+        }
+
+        // add new constructor to class
+        newDtorCtor = &fulldcl;
+        clsdef.append_member(newDtorCtor);
+      }
+
+    private:
+      SgMemberFunctionDeclaration&   ctordtor;
+      const VirtualBaseContainer&    virtualBases;
+
+      SgMemberFunctionDeclaration*   newDtorCtor = nullptr;
+  };
+
+
+  struct FullCtorDtorCallTransformer
+  {
+      explicit
+      FullCtorDtorCallTransformer(SgMemberFunctionRefExp& n)
+      : ctorDtorRef(n)
+      {}
+
+      SgMemberFunctionDeclaration&
+      findFullCtorDtor(SgMemberFunctionDeclaration& ctorDtor)
+      {
+        return ctorDtor; // \todo
+      }
+
+      void execute(CxxTransformStats&)
+      {
+        // find newly generated full constructor
+        SgMemberFunctionDeclaration& ctorDtor = SG_DEREF(ctorDtorRef.getAssociatedMemberFunctionDeclaration());
+        SgMemberFunctionDeclaration& fullCtorDtor = findFullCtorDtor(ctorDtor);
+        SgSymbol*                    fullSym = fullCtorDtor.search_for_symbol_from_symbol_table();
+
+        newCtorDtorRef = sb::buildMemberFunctionRefExp(isSgMemberFunctionSymbol(fullSym), false /*nonvirtual*/, false /*w/o qualifier*/);
+
+        si::replaceExpression(&ctorDtorRef, newCtorDtorRef, true /* no delete */);
+      }
+
+    private:
+      SgMemberFunctionRefExp& ctorDtorRef;
+      SgMemberFunctionRefExp* newCtorDtorRef = nullptr;
+  };
+
+
 
   //
   // memoized functors
@@ -1926,6 +2117,36 @@ namespace
                      }
                    );
 
+  struct GlobalClassAnalysis
+  {
+      static
+      const ClassAnalysis& get()
+      {
+        return SG_DEREF(globalClassAnalysis);
+      }
+
+      static
+      void init(SgProject* prj)
+      {
+        if (globalClassAnalysis)
+          return;
+
+        globalClassAnalysis = new ClassAnalysis(ct::analyzeClasses(prj));
+      }
+
+      static
+      void clear()
+      {
+        delete globalClassAnalysis;
+      }
+
+    private:
+      static ClassAnalysis* globalClassAnalysis;
+  };
+
+  ClassAnalysis* GlobalClassAnalysis::globalClassAnalysis = nullptr;
+
+
   void clearMemoized()
   {
     logInfo() << getDirectNonVirtualBases << " getDirectNonVirtualBases - cache\n"
@@ -1936,6 +2157,8 @@ namespace
     getDirectNonVirtualBases.clear();
     getAllVirtualBases.clear();
     getMemberVars.clear();
+
+    GlobalClassAnalysis::clear();
   }
 
   // end memoized functors
@@ -1967,9 +2190,9 @@ namespace
     {
       try
       {
-        SgInitializer* ini = getBaseInitializer(*base, lst);
+        SgConstructorInitializer* ini = getBaseInitializer(*base, lst);
 
-        cont.emplace_back(BaseCtorCallTransformer{blk, *base, ini});
+        cont.emplace_back(BaseCtorCallTransformer{cls, blk, *base, ini});
       }
       catch (const ConstructorInitializerListError& err)
       {
@@ -1989,18 +2212,7 @@ namespace
     }
 
     // log errors for unhandled virtual base classes
-    if (getAllVirtualBases(&cls).size())
-    {
-      logError() << "virtual base class normalization in constructor NOT YET IMPLEMENTED: " << fun.get_name()
-                 << std::endl;
-
-      throw std::logic_error("virtual base class normalization in constructor NOT YET IMPLEMENTED");
-    }
-
-    // the initializer list is emptied.
-    //   while it is not part of the ICFG, its nodes would be seen by
-    //   the normalization.
-    cont.emplace_back(CtorInitListTransformer{lst});
+    // virtual base class initialization is normalized elsewhere
   }
 
   void normalizeDtorDef(SgMemberFunctionDeclaration& fun, transformation_container& cont)
@@ -2134,6 +2346,8 @@ namespace
 
       void handle(SgNode& n);
 
+      void handle(SgCtorInitializerList&) { /* skip */ }
+
       void handle(SgConstructorInitializer& n)
       {
         SgMemberFunctionDeclaration* ctor = n.get_declaration();
@@ -2206,7 +2420,7 @@ namespace
   /// passes over object initialization
   ///   breaks up an object declaration into allocation and initialization
   ///   transformations if A is a non-trivial user defined type:
-  ///     A a = A(x, y, z); => A a; a->A(x, y, z);
+  ///     A a = A(x, y, z); => A a; a.A(x, y, z);
   ///     A* a = new A(1);  => A* a = new A; a->A(1);
   ///     a = new A(1);     => a = new A; a->A(1);
   ///     a = new (p) A(1); => a = p; a->A(1);
@@ -2220,6 +2434,8 @@ namespace
       void descend(SgNode& n);
 
       void handle(SgNode& n) { descend(n); }
+
+      void handle(SgCtorInitializerList&) { /* skip */ }
 
       void handle(SgInitializedName& n)
       {
@@ -2272,6 +2488,76 @@ namespace
     ::ct::descend(*this, n);
   }
 
+
+
+  /// finds all allocation and deallocations (static and dynamic)
+  ///   and replaces the constructors with constructors that also initialize
+  ///   virtual base classes.
+  /// e.g.,
+  ///   struct A : virtual B { A() {} }; A a; a.A();
+  ///     =>
+  ///   struct A : virtual B { A() {} Av() { this->B(); } }; A a; a.Av();
+  /// \details
+  ///   Av is the full constructor that initializes both virtual and non-virtual base classes. It needs
+  ///   to be called whenever an element of A is allocated. Similarly, ~Av is the full destructor.
+  ///   The "normal" constructors A and destructor ~A are only called from a derived type of A.
+  struct CxxVirtualBaseCtorDtorGenerator : GeneratorBase
+  {
+      using NewCtorDtorList = std::unordered_set<const SgMemberFunctionDeclaration*>;
+
+      CxxVirtualBaseCtorDtorGenerator( GeneratorBase::container& transf,
+                                       GeneratorBase::node_set& visited
+                                     )
+      : GeneratorBase(transf, visited), classes(&GlobalClassAnalysis::get()), newCtorDtorList()
+      {}
+
+      using GeneratorBase::handle;
+
+      void descend(SgNode& n);
+
+      void handle(SgNode& n) { descend(n); }
+
+      void handle(SgCtorInitializerList&) { /* skip */ }
+
+      void handle(SgMemberFunctionRefExp& n)
+      {
+        using VirtualBaseContainer = ClassData::VirtualBaseOrderContainer;
+
+        SgMemberFunctionDeclaration& memdcl   = SG_DEREF(n.getAssociatedMemberFunctionDeclaration());
+        SgMemberFunctionDeclaration* ctordtor = isCtorDtor(memdcl);
+
+        if (!ctordtor) return;
+
+        ClassKeyType                classkey     = &getClassDef(memdcl);
+        const ClassData&            classdesc    = classes->at(classkey);
+        const VirtualBaseContainer& virtualBases = classdesc.virtualBaseClassOrder();
+
+        // no transformation if there is no virtual base class
+        if (virtualBases.empty()) return;
+
+        // generate the new ctor dtor impl.
+        if (!alreadyProcessed(newCtorDtorList, ctordtor))
+        {
+          record(FullCtorDtorTransformer{memdcl, virtualBases});
+        }
+
+        // replace the reference to the ctor with a reference to the full ctor.
+        //   unless this is a base class construction/destruction
+        record(FullCtorDtorCallTransformer{n});
+      }
+
+    private:
+      const ClassAnalysis* classes;
+      NewCtorDtorList      newCtorDtorList;
+  };
+
+
+  void CxxVirtualBaseCtorDtorGenerator::descend(SgNode& n)
+  {
+    ::ct::descend(*this, n);
+  }
+
+
   SgType* optimizedReturnType(SgType& ty)
   {
     SgClassType* clsTy = isSgClassType(ty.stripType(STRIP_MODIFIER_ALIAS));
@@ -2307,6 +2593,8 @@ namespace
       }
 
       void handle(SgNode& n) { descend(n); }
+
+      void handle(SgCtorInitializerList&) { /* skip */ }
 
       void handle(SgReturnStmt& n)
       {
@@ -2382,6 +2670,8 @@ namespace
       void descend(SgNode& n);
 
       void handle(SgNode& n)         { descend(n); }
+
+      void handle(SgCtorInitializerList&) { /* skip */ }
 
       void handle(SgWhileStmt& n)    { loop(n); }
       void handle(SgDoWhileStmt& n)  { loop(n); }
@@ -2512,6 +2802,31 @@ namespace
               << std::endl;
   }
 
+  struct CxxCleanCtorInitlistGenerator : GeneratorBase
+  {
+      using GeneratorBase::GeneratorBase;
+      using GeneratorBase::handle;
+
+      // recursive tree traversal
+      void descend(SgNode& n);
+
+      void handle(SgNode& n)              { descend(n); }
+
+      void handle(SgCtorInitializerList&) { /* skip */ }
+
+      void handle(SgMemberFunctionDeclaration& n)
+      {
+        if (SgCtorInitializerList* lst = n.get_CtorInitializerList())
+          record(CtorInitListTransformer{*lst});
+  }
+  };
+
+  void CxxCleanCtorInitlistGenerator::descend(SgNode& n)
+  {
+    ::ct::descend(*this, n);
+  }
+
+
   template <class Transformer>
   GeneratorBase::container
   computeTransform(SgNode* root, CxxTransformStats& stats)
@@ -2526,7 +2841,7 @@ namespace
   }
 
 
-  using CxxTransformGenerator = std::function<std::vector<AnyTransform>(SgNode*, CxxTransformStats&)>;
+  using CxxTransformGenerator = std::function<transformation_container(SgNode*, CxxTransformStats&)>;
 
   void normalize(CxxTransformGenerator gen, SgNode* root, CxxTransformStats& stats)
   {
@@ -2561,6 +2876,8 @@ namespace
     logInfo() << "Starting C++ normalization. (Phase 1/2)" << std::endl;
     logTrace() << "Not normalizing templates.." << std::endl;
 
+    GlobalClassAnalysis::init(isSgProject(root));
+
     //~ normalize<CxxCtorDtorGenerator>(root, "terrific C++ ctor/dtor normalizations...");
 
     logInfo() << "Finished C++ normalization. (Phase 1/2)" << std::endl;
@@ -2571,11 +2888,29 @@ namespace
     logInfo() << "Starting C++ normalization. (Phase 2/2)" << std::endl;
     logTrace() << "Not normalizing templates.." << std::endl;
 
-    normalize<CxxCtorDtorGenerator>         (root, "awesome C++ ctor/dtor normalizations...");
-    normalize<CxxAllocInitSplitGenerator>   (root, "brilliant C++ alloc/init splits...");
-    normalize<CxxRVOGenerator>              (root, "crucial C++ return value optimizations...");
-    normalize<CxxObjectDestructionGenerator>(root, "delightful C++ object destruction insertion...");
-    normalize<CxxNormalizationCheck>        (root, "checking AST for unwanted nodes...");
+    // create ctor/dtor if needed and not available
+    normalize<CxxCtorDtorGenerator>           (root, "awesome C++ ctor/dtor normalizations...");
+
+    // splits allocation and initialization
+    normalize<CxxAllocInitSplitGenerator>     (root, "brilliant C++ alloc/init splits...");
+
+    // return value optimization
+    normalize<CxxRVOGenerator>                (root, "crucial C++ return value optimizations...");
+
+    // inserts object destruction into blocks
+    normalize<CxxObjectDestructionGenerator>  (root, "delightful C++ object destruction insertion...");
+
+    // inserts calls to virtual base class constructor and destructor
+    //   generates full constructors (those that initialize the virtual bases) and destructors if needed
+    //   replaces references to constructors
+    normalize<CxxVirtualBaseCtorDtorGenerator>(root, "extraordinary C++ ctor/dtor w/ virtual base class normalizations...");
+
+    // last pass that removes AST nodes from the initializer list. They have been moved into the appropriate
+    // destructors, and now they are removed so that any subsequent traversal will not see them.
+    normalize<CxxCleanCtorInitlistGenerator>  (root, "fantastic C++ ctor initializer list normalizations...");
+
+    // check if any unwanted nodes remain in the AST
+    normalize<CxxNormalizationCheck>          (root, "checking AST for unwanted nodes...");
 
     clearMemoized();
     logInfo() << "Finished C++ normalization. (Phase 2/2)" << std::endl;

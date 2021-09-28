@@ -100,7 +100,7 @@ namespace CodeThorn {
     virtual void run();
 
   public:
-    
+
     void initAstNodeInfo(SgNode* node);
 
     // overridden in IOAnalyzer
@@ -114,12 +114,12 @@ namespace CodeThorn {
     void runAnalysisPhase2Sub1(TimingCollector& tc);
   public:
     virtual void runSolver();
-  
+
     void initLabeledAssertNodes(SgProject* root);
-    
+
     void setExplorationMode(ExplorationMode em);
     ExplorationMode getExplorationMode();
-    
+
     void setSolver(Solver* solver);
     Solver* getSolver();
 
@@ -164,9 +164,9 @@ namespace CodeThorn {
     InterFlow* getInterFlow();
     VariableIdMappingExtended* getVariableIdMapping();
     void setVariableIdMapping(VariableIdMappingExtended* vid);
-    CFAnalysis* getCFAnalyzer(); 
+    CFAnalysis* getCFAnalyzer();
     TopologicalSort* getTopologicalSort();
-    
+
     CodeThorn::PStateSet* getPStateSet();
     EStateSet* getEStateSet();
     TransitionGraph* getTransitionGraph();
@@ -330,7 +330,7 @@ namespace CodeThorn {
 
     std::string analyzerStateToString();
 
-    void addToWorkList(const EState* estate); 
+    void addToWorkList(const EState* estate);
     bool isEmptyWorkList();
     const EState* popWorkList();
     const EState* topWorkList();
@@ -381,7 +381,7 @@ namespace CodeThorn {
     size_t getNumberOfErrorLabels();
     std::string labelNameOfAssertLabel(Label lab);
     bool isCppLabeledAssertLabel(Label lab);
-    
+
     std::list<FailedAssertion> _firstAssertionOccurences;
 
     // specific to the loop-aware exploration modes
@@ -408,7 +408,7 @@ namespace CodeThorn {
 
     uint32_t getTotalNumberOfFunctions();
     void setTotalNumberOfFunctions(uint32_t num);
-    
+
   protected:
 
     // EStateWorkLists: Current and Next should point to One and Two (or swapped)
@@ -480,9 +480,9 @@ namespace CodeThorn {
     uint32_t _statsIntraFinishedFunctions=0;
     uint32_t _statsIntraUnfinishedFunctions=0;
     uint32_t _totalNumberOfFunctions=0; // for status reporting only
-    
+
   private:
-    
+
     //std::unordered_map<int,const EState*> _summaryStateMap;
     //std::unordered_map< pair<int, CallString> ,const EState*, hash_pair> _summaryCSStateMap;
     typedef std::unordered_map <CallString ,const EState*> SummaryCSStateMap;
@@ -492,11 +492,13 @@ namespace CodeThorn {
     VariableIdMappingExtended* _variableIdMapping=nullptr;
     FunctionCallMapping* _functionCallMapping=nullptr;
     FunctionCallMapping2* _functionCallMapping2=nullptr;
-    ClassHierarchyWrapper* _classHierarchy=nullptr;
+    //~ ClassHierarchyWrapper* _classHierarchy=nullptr;
+    ClassAnalysis* _classHierarchy=nullptr;
+    VirtualFunctionAnalysis* _virtualFunctions=nullptr;
     CFAnalysis* _cfAnalysis=nullptr;
     Solver* _solver;
     TopologicalSort* _topologicalSort=nullptr;
-    
+
     const CodeThorn::PState* _initialPStateStored=nullptr;
     CodeThorn::EStateTransferFunctions* _estateTransferFunctions=nullptr;
 

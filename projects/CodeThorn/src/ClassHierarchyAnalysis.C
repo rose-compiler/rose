@@ -25,7 +25,7 @@ namespace
     return std::get<0>(keydata);
   }
 
-  auto key(ct::FunctionId keydata) -> ct::FunctionId
+  auto key(ct::FunctionKeyType keydata) -> ct::FunctionKeyType
   {
     return keydata;
   }
@@ -102,7 +102,7 @@ ClassAnalysis::addInheritanceEdge(value_type& descendantEntry, ClassKeyType ance
   ClassData&   ancestor = this->at(ancestorKey);
 
   descendant.ancestors().emplace_back(ancestorKey,   virtualEdge, directEdge);
-  ancestor.descendants(). emplace_back(descendantKey, virtualEdge, directEdge);
+  ancestor.descendants().emplace_back(descendantKey, virtualEdge, directEdge);
 }
 
 void
@@ -126,6 +126,7 @@ ClassAnalysis::areBaseDerived(ClassKeyType ancestorKey, ClassKeyType descendantK
                              }
                            );
 }
+
 
 namespace
 {
@@ -235,6 +236,8 @@ bool ClassData::hasVirtualTable() const
 }
 
 
+
+
 namespace
 {
   bool inheritsVirtualFunctions(const ClassAnalysis& classes, const ClassAnalysis::value_type& entry)
@@ -254,7 +257,7 @@ namespace
   {
     std::vector<InheritanceDesc>  tmp;
 
-    // collect addition ancestors
+    // collect additional ancestors
     for (InheritanceDesc& parent : entry.second.ancestors())
       for (InheritanceDesc ancestor : classes.at(parent.getClass()).ancestors())
       {
@@ -336,6 +339,29 @@ namespace
                  );
   }
 
+  void computeVirtualBaseInitializationOrder(ClassAnalysis& classes, ClassAnalysis::value_type& entry)
+  {
+    std::set<ClassKeyType>     alreadySeen;
+    std::vector<ClassKeyType>& initorder = entry.second.virtualBaseClassOrder();
+
+    // traverse direct ancestors and collect their initialization orders
+    for (InheritanceDesc& parentDesc : entry.second.ancestors())
+    {
+      if (!parentDesc.isDirect()) continue;
+
+      ClassKeyType                     parent = parentDesc.getClass();
+      const std::vector<ClassKeyType>& parentInit = classes.at(parent).virtualBaseClassOrder();
+
+      // add the virtual bases that had not been seen before
+      for (ClassKeyType vbase : parentInit)
+        if (alreadySeen.insert(vbase).second)
+          initorder.push_back(vbase);
+
+      if (parentDesc.isVirtual() && alreadySeen.insert(parent).second)
+        initorder.push_back(parent);
+    }
+  }
+
   void analyzeClassRelationships(ClassAnalysis& all)
   {
     logTrace() << all.size() << std::endl;
@@ -346,6 +372,13 @@ namespace
              copyVirtualInhertanceToDerived(all, rep);
            };
     topDownTraversal(all, propagateVirtualInheritance);
+
+    auto computeVirtualBaseClassInitializationOrder =
+           [&all](ClassAnalysis::value_type& rep) -> void
+           {
+             computeVirtualBaseInitializationOrder(all, rep);
+           };
+    topDownTraversal(all, computeVirtualBaseClassInitializationOrder);
 
     auto flattenInheritance =
            [&all](ClassAnalysis::value_type& rep) -> void
@@ -381,7 +414,7 @@ namespace
   // returns true iff lhs < rhs
   struct VFNameTypeOrder
   {
-    bool operator()(FunctionId lhs, FunctionId rhs) const
+    bool operator()(FunctionKeyType lhs, FunctionKeyType rhs) const
     {
       static constexpr bool firstDecisiveComparison = false;
 
@@ -395,8 +428,8 @@ namespace
       return res < 0;
     }
 
-    template <class TupleWithFunctionId>
-    bool operator()(const TupleWithFunctionId& lhs, const TupleWithFunctionId& rhs) const
+    template <class TupleWithFunctionKeyType>
+    bool operator()(const TupleWithFunctionKeyType& lhs, const TupleWithFunctionKeyType& rhs) const
     {
       return (*this)(std::get<0>(lhs), std::get<0>(rhs));
     }
@@ -427,7 +460,7 @@ namespace
 
 struct ComputeVFunctionRelation
 {
-  void operator()(FunctionId drv, FunctionId bas) const
+  void operator()(FunctionKeyType drv, FunctionKeyType bas) const
   {
     using ReturnTypeRelation = RoseCompatibilityBridge::ReturnTypeRelation;
 
@@ -448,9 +481,9 @@ struct ComputeVFunctionRelation
     vfunAnalysis.at(bas).overriders().emplace_back(drv, covariant);
   }
 
-  void operator()(FunctionId, unavailable_t) const {}
+  void operator()(FunctionKeyType, unavailable_t) const {}
 
-  void operator()(unavailable_t, FunctionId) const {}
+  void operator()(unavailable_t, FunctionKeyType) const {}
 
   // data members
   const RoseCompatibilityBridge& rcb;
@@ -480,7 +513,7 @@ void computeOverriders( const RoseCompatibilityBridge& rcb,
   std::sort(vfunSorted.begin(), vfunSorted.end(), VFNameTypeOrder{ rcb });
 
   std::for_each( vfunSorted.begin(), vfunSorted.end(),
-                 [&vfunAnalysis, &entry, &rcb](FunctionId id) -> void
+                 [&vfunAnalysis, &entry, &rcb](FunctionKeyType id) -> void
                  {
                    vfunAnalysis.emplace(id, VirtualFunctionDesc{entry.first, rcb.isPureVirtual(id)});
                  }
@@ -499,7 +532,7 @@ void computeOverriders( const RoseCompatibilityBridge& rcb,
 }
 
 VirtualFunctionAnalysis
-virtualFunctionAnalysis(const RoseCompatibilityBridge& rcb, const ClassAnalysis& all)
+analyzeVirtualFunctions(const RoseCompatibilityBridge& rcb, const ClassAnalysis& all)
 {
   VirtualFunctionAnalysis      res;
   SortedVirtualMemberFunctions tmpSorted;
@@ -514,6 +547,13 @@ virtualFunctionAnalysis(const RoseCompatibilityBridge& rcb, const ClassAnalysis&
 
   return res;
 }
+
+VirtualFunctionAnalysis
+analyzeVirtualFunctions(const ClassAnalysis& all)
+{
+  return analyzeVirtualFunctions(RoseCompatibilityBridge{}, all);
+}
+
 
 AnalysesTuple
 analyzeClassesAndCasts(const RoseCompatibilityBridge& rcb, ASTRootType n)
@@ -532,6 +572,12 @@ ClassAnalysis
 analyzeClasses(const RoseCompatibilityBridge& rcb, ASTRootType n)
 {
   return std::move(analyzeClassesAndCasts(rcb, n).classAnalysis());
+}
+
+ClassAnalysis
+analyzeClasses(ASTRootType n)
+{
+  return analyzeClasses(RoseCompatibilityBridge{}, n);
 }
 
 }

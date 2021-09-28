@@ -5,8 +5,7 @@
 
 #include <sage3basic.h>
 
-#include <VariableIdMapping.h>
-#include <FunctionId.h>
+//~ #include <VariableIdMapping.h>
 
 #include <string>
 #include <functional>
@@ -14,19 +13,21 @@
 namespace CodeThorn
 {
 
-using ClassKeyType = const SgClassDefinition*;
-using TypeKeyType  = const SgType*;
-using CastKeyType  = const SgCastExp*;
-using ASTRootType  = SgProject*;
+using ClassKeyType    = const SgClassDefinition*;
+using TypeKeyType     = const SgType*;
+using CastKeyType     = const SgCastExp*;
+using VariableKeyType = const SgInitializedName*;
+using FunctionKeyType = const SgMemberFunctionDeclaration*;
+using ASTRootType     = SgProject*;
 
 /// type of a class naming function
 using ClassNameFn   = std::function<std::string(ClassKeyType)>;
 
 /// type of a function naming function
-using FuncNameFn    = std::function<std::string(FunctionId)>;
+using FuncNameFn    = std::function<std::string(FunctionKeyType)>;
 
 /// type of a variable naming function
-using VarNameFn     = std::function<std::string(VariableId)>;
+using VarNameFn     = std::function<std::string(VariableKeyType)>;
 
 
 class ClassAnalysis;
@@ -44,35 +45,31 @@ class RoseCompatibilityBridge
       covariant = 2
     };
 
-    explicit
-    RoseCompatibilityBridge(VariableIdMapping& varIdMap, const FunctionIdMapping& funIdMap)
-    : varMap(varIdMap), funMap(funIdMap)
-    {}
-
+    RoseCompatibilityBridge()  = default;
     ~RoseCompatibilityBridge() = default;
 
     /// returns the variable-id for a variable or parameter \ref var
     /// \{
-    VariableId variableId(SgInitializedName* var) const;
-    VariableId variableId(SgVariableDeclaration* var) const;
+    VariableKeyType variableId(SgInitializedName* var) const;
+    VariableKeyType variableId(SgVariableDeclaration* var) const;
     /// \}
 
     /// returns the function-id for a (member) function \ref fun
-    FunctionId functionId(const SgFunctionDeclaration* fun) const;
+    FunctionKeyType functionId(const SgMemberFunctionDeclaration* fun) const;
 
     /// returns a string representation for \ref vid
-    std::string nameOf(VariableId vid) const;
+    std::string nameOf(VariableKeyType vid) const;
 
     /// returns a string representation for \ref vid
-    std::string nameOf(FunctionId fid) const;
+    std::string nameOf(FunctionKeyType fid) const;
 
-    /// compares the name of \ref lhs and \ref rhs
+    /// compares the name of functions \ref lhs and \ref rhs
     /// \param lhs some function
     /// \param rhs some function
     /// \returns 0 iff lhs and rhs have the same name (wrt virtual function overriding)
     ///          1 iff lhs > rhs
     ///          -1 iff lhs < rhs
-    int compareNames(FunctionId lhs, FunctionId rhs) const;
+    int compareNames(FunctionKeyType lhs, FunctionKeyType rhs) const;
 
     /// compares the types of \ref lhs and \ref rhs
     /// \param lhs some function
@@ -86,7 +83,7 @@ class RoseCompatibilityBridge
     ///          -1 iff lhs < rhs
     /// \details
     ///    The comparison skips over typedef aliases and handles array to pointer decay.
-    int compareTypes(FunctionId lhs, FunctionId rhs, bool exclReturnType = true) const;
+    int compareTypes(FunctionKeyType lhs, FunctionKeyType rhs, bool exclReturnType = true) const;
 
     /// tests if \ref drvId has the same or covariant return type with respect to \ref basId
     /// \param classes the extracted class analysis
@@ -96,15 +93,15 @@ class RoseCompatibilityBridge
     ///    The function only checks the return type, and does not check whether the classes in which
     ///    the functions \ref drvId and \ref basId are defined are in a inheritance relationship.
     ReturnTypeRelation
-    haveSameOrCovariantReturn(const ClassAnalysis&, FunctionId basId, FunctionId drvId) const;
+    haveSameOrCovariantReturn(const ClassAnalysis&, FunctionKeyType basId, FunctionKeyType drvId) const;
 
     /// extracts class and cast information under the root
     void extractFromProject(ClassAnalysis&, CastAnalysis&, ASTRootType) const;
 
     /// returns iff \ref id is a pure virtual member function
-    bool isPureVirtual(FunctionId id) const;
+    bool isPureVirtual(FunctionKeyType id) const;
 
-    /// returns a function that maps a FunctionId to std::string
+    /// returns a function that maps a FunctionKeyType to std::string
     FuncNameFn functionNomenclator() const;
 
     /// returns a function that maps a ClassKeyType to std::string
@@ -114,14 +111,11 @@ class RoseCompatibilityBridge
     VarNameFn variableNomenclator() const;
 
   private:
-    RoseCompatibilityBridge()                                          = delete;
+    //~ RoseCompatibilityBridge()                                          = delete;
     RoseCompatibilityBridge(RoseCompatibilityBridge&&)                 = delete;
     RoseCompatibilityBridge& operator=(RoseCompatibilityBridge&&)      = delete;
     RoseCompatibilityBridge(const RoseCompatibilityBridge&)            = delete;
     RoseCompatibilityBridge& operator=(const RoseCompatibilityBridge&) = delete;
-
-    VariableIdMapping& varMap;
-    const FunctionIdMapping& funMap;
 };
 
 /// wrapper class to produce informative debug output about casts

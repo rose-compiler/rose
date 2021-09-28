@@ -21,7 +21,7 @@ struct Subobject
 
 struct Field
 {
-  CodeThorn::VariableId id;
+  CodeThorn::VariableKeyType id;
 };
 
 struct VTable
@@ -30,31 +30,6 @@ struct VTable
   bool         isPrimary;
 };
 
-/*
-struct FlatMemberList : std::vector<Field>
-{
-    using base = std::vector<Field>;
-    using base::base;
-
-    iterator beginVirtualMembers()
-    {
-      return begin() + firstVirtualEntry;
-    }
-
-    const_iterator beginVirtualMembers() const
-    {
-      return begin() + firstVirtualEntry;
-    }
-
-    void firstVirtual(size_t firstVirtualMember) { firstVirtualEntry = firstVirtualMember; }
-
-  private:
-    size_t firstVirtualEntry;
-};
-
-std::map<ClassTypeKey, FlatMemberList >
-flatMemberList(codethorn::VariableIdMapping& vmap, const ClassAnalysis& all);
-*/
 
 // in C++17 use STL
 // using ObjectLayoutElement = std::variant<Subobject, Field>;

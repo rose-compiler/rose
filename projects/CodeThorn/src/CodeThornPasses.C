@@ -36,6 +36,7 @@ namespace CodeThorn {
     return labeler;
   }
 
+#if 0
   ClassHierarchyWrapper*
   Pass::createClassHierarchy(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc) {
     tc.startTimer();
@@ -44,17 +45,51 @@ namespace CodeThorn {
     tc.stopTimer(TimingCollector::classHierarchyAnalysis);
     return classHierarchy;
   }
+#endif
 
-  CFAnalysis* Pass::createForwardIcfg(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, Labeler* labeler) {
+
+  ClassAnalysis*
+  Pass::createClassAnalysis(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc) {
+    if (!ctOpt.extendedNormalizedCppFunctionCalls)
+      return nullptr;
+
+    ASSERT_not_null(root);
+    tc.startTimer();
+    if(ctOpt.status) cout<<"Phase: class hierarchy analysis"<<endl;
+
+    ClassAnalysis* res=new ClassAnalysis(std::move(analyzeClasses(root)));
+
+    tc.stopTimer(TimingCollector::classHierarchyAnalysis);
+    return res;
+  }
+
+  VirtualFunctionAnalysis*
+  Pass::createVirtualFunctionAnalysis(CodeThornOptions& ctOpt, ClassAnalysis* classes, TimingCollector& tc) {
+    if (!ctOpt.extendedNormalizedCppFunctionCalls)
+      return nullptr;
+
+    ASSERT_not_null(classes);
+
+    tc.startTimer();
+    if(ctOpt.status) cout<<"Phase: virtual function analysis"<<endl;
+
+    VirtualFunctionAnalysis* res=new VirtualFunctionAnalysis(std::move(analyzeVirtualFunctions(*classes)));
+
+    tc.stopTimer(TimingCollector::virtualFunctionAnalysis);
+    return res;
+  }
+
+
+  CFAnalysis* Pass::createForwardIcfg(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, Labeler* labeler, ClassAnalysis* classAnalysis, VirtualFunctionAnalysis* virtualFunctions) {
     // bool isForardIcfg=true;
-    return Pass::createIcfg(ctOpt,root,tc,labeler,ICFG_forward);
+    return Pass::createIcfg(ctOpt,root,tc,labeler,classAnalysis,virtualFunctions,ICFG_forward);
   }
 
-  CFAnalysis* Pass::createBackwardIcfg(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, Labeler* labeler) {
-    return Pass::createIcfg(ctOpt,root,tc,labeler,ICFG_backward);
+  CFAnalysis* Pass::createBackwardIcfg(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, Labeler* labeler, ClassAnalysis* classAnalysis, VirtualFunctionAnalysis* virtualFunctions) {
+    return Pass::createIcfg(ctOpt,root,tc,labeler,classAnalysis,virtualFunctions,ICFG_backward);
   }
 
-  CFAnalysis* Pass::createIcfg(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, Labeler* labeler, ICFGDirection icfgDirection) {
+  CFAnalysis* Pass::createIcfg(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, Labeler* labeler, ClassAnalysis* classAnalysis, VirtualFunctionAnalysis* virtualFunctions, ICFGDirection icfgDirection) {
     tc.startTimer();
 
     CFAnalysis* cfanalyzer=new CFAnalysis(labeler);
@@ -65,7 +100,11 @@ namespace CodeThorn {
     } else {
       cfanalyzer->useCplusplus(true);
       if(ctOpt.status) cout<<"Phase: C++ ICFG construction"<<endl;
-      cfanalyzer->createCppICFG(root, classHierarchy);
+      FunctionCallMapping2* funMap2 = new FunctionCallMapping2(labeler, classAnalysis, virtualFunctions);
+      ASSERT_not_null(funMap2);
+
+      funMap2->computeFunctionCallMapping(root);
+      cfanalyzer->createCppICFG(root, funMap2);
     }
     if(ctOpt.status) {
       cout<<"Phase: ICFG construction"<<endl;

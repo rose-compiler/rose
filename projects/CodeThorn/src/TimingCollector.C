@@ -28,7 +28,7 @@ namespace CodeThorn {
   void TimingCollector::stopTimer(TimeDurationName n) {
     t[n]=timer.getTimeDurationAndStop();
   }
-  
+
   string TimingCollector::toString() {
     stringstream ss;
     ss<<"Front end                      : "<<runtime(t[frontEnd])<<endl;
@@ -37,6 +37,7 @@ namespace CodeThorn {
     ss<<"VariableIdMapping              : "<<runtime(t[variableIdMapping])<<endl;
     //ss<<"FunctionCallMapping            : "<<runtime(t[functionCallMapping])<<endl;
     ss<<"Class hierarchy analysis       : "<<runtime(t[classHierarchyAnalysis])<<endl;
+    ss<<"Virtual function analysis      : "<<runtime(t[virtualFunctionAnalysis])<<endl;
     ss<<"ICFG construction              : "<<runtime(t[icfgConstruction])<<endl;
     ss<<"RevICFG construction           : "<<runtime(t[reverseIcfgConstruction])<<endl;
     ss<<"Solver initialization time     : "<<runtime(t[init])<<endl;

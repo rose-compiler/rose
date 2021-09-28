@@ -33,8 +33,8 @@ namespace CodeThorn {
     bool getInliningOption();
     Flow* getFlow(bool backwardflow = false);
     InterFlow* getInterFlow();
-    CFAnalysis* getCFAnalyzer(); 
-    
+    CFAnalysis* getCFAnalyzer();
+
     // PP (08/25/20) added to support working with unfolded ICFG
     void setForwardFlow(const Flow& fwdflow);
     void setLabeler(Labeler* labeler);
@@ -44,7 +44,9 @@ namespace CodeThorn {
     VariableIdMappingExtended* _variableIdMapping=nullptr;
     FunctionCallMapping* _functionCallMapping=nullptr;
     FunctionCallMapping2* _functionCallMapping2=nullptr;
-    ClassHierarchyWrapper* _classHierarchy=nullptr;
+    //~ ClassHierarchyWrapper* _classHierarchy=nullptr;
+    ClassAnalysis* _classAnalysis=nullptr;
+    VirtualFunctionAnalysis* _virtualFunctions=nullptr;
 
     unsigned int _normalizationLevel=2;
     bool _inliningOption=false;

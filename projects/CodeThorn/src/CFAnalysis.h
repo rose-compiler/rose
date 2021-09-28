@@ -146,7 +146,7 @@ class CFAnalysis {
   // these functions store the Flow and InterFlow in this object.
   //void createICFG(SgProject* project); // deprecated
   void createCICFG(SgProject* project); // deprecated
-  void createCppICFG(SgProject* project, ClassHierarchyWrapper* classHierarchy); // deprecated
+  // void createCppICFG(SgProject* project, ClassHierarchyWrapper* classHierarchy); // deprecated
   void createCICFG(SgProject* project, FunctionCallMapping* functionCallMapping);
   void createCppICFG(SgProject* project, FunctionCallMapping2* functionCallMapping2);
   Flow* getIcfgFlow();

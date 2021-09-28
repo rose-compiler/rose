@@ -1843,6 +1843,17 @@ bool CFAnalysis::forkJoinConsistencyChecks(Flow &flow) const {
   return forksEqualJoins;
 }
 
+#if 0
+// deprecated
+void CFAnalysis::createICFG(SgProject* project) {
+  ClassHierarchyWrapper* classHierarchy=new ClassHierarchyWrapper(project);
+  FunctionCallMapping2* functionCallMapping2=new FunctionCallMapping2();
+  functionCallMapping2->setClassHierarchy(classHierarchy);
+  functionCallMapping2->computeFunctionCallMapping(project);
+  createCppICFG(project,functionCallMapping2);
+}
+#endif
+
 void CFAnalysis::createCICFG(SgProject* project) {
   FunctionCallMapping* functionCallMapping = new FunctionCallMapping();
   functionCallMapping->computeFunctionCallMapping(project);
@@ -1856,17 +1867,21 @@ void CFAnalysis::createCICFG(SgProject* project, FunctionCallMapping* functionCa
   intraInterFlow(_icfgFlow, _interFlow);
 }
 
+#if 0
+// deprecated
 void CFAnalysis::createCppICFG(SgProject* project, ClassHierarchyWrapper* classHierarchy) {
-  FunctionCallMapping2* functionCallMapping2=new FunctionCallMapping2();
+  FunctionCallMapping2* functionCallMapping2=new FunctionCallMapping2;
   functionCallMapping2->setLabeler(labeler);
-  functionCallMapping2->setClassHierarchy(classHierarchy);
+  functionCallMapping2->setClassHierarchy(nullptr /*classHierarchy*/);
   functionCallMapping2->computeFunctionCallMapping(project);
   createCppICFG(project,functionCallMapping2);
 }
+#endif
 
 void CFAnalysis::createCppICFG(SgProject* project, FunctionCallMapping2* functionCallMapping2) {
-  ROSE_ASSERT(functionCallMapping2->getClassHierarchy());
   ROSE_ASSERT(functionCallMapping2->getLabeler());
+  ROSE_ASSERT(functionCallMapping2->getClassAnalysis());
+  ROSE_ASSERT(functionCallMapping2->getVirtualFunctions());
   setFunctionCallMapping2(functionCallMapping2);
   _icfgFlow=flow(project);
   _interFlow=interFlow(_icfgFlow);

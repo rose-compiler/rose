@@ -35,7 +35,9 @@ void CodeThorn::ProgramAbstractionLayer::initialize(CodeThornOptions& ctOpt, SgP
   setNormalizationLevel(ctOpt.normalizeLevel); // only for get function
   _variableIdMapping=Pass::createVariableIdMapping(ctOpt, root, tc);
   _labeler=Pass::createLabeler(ctOpt, root, tc, _variableIdMapping);
-  _cfanalyzer=Pass::createForwardIcfg(ctOpt,root,tc,_labeler);
+  _classAnalysis=Pass::createClassAnalysis(ctOpt, root, tc);
+  _virtualFunctions=Pass::createVirtualFunctionAnalysis(ctOpt, _classAnalysis, tc);
+  _cfanalyzer=Pass::createForwardIcfg(ctOpt,root,tc,_labeler,_classAnalysis,_virtualFunctions);
   _fwFlow=*_cfanalyzer->getIcfgFlow();
   _bwFlow=_fwFlow.reverseFlow();
   _interFlow=*_cfanalyzer->getInterFlow();
