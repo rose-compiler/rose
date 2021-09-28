@@ -88,24 +88,24 @@ public:
      *  Solver statistics get accumulted into the class statistics only when the solver is destroyed or the solver's @ref
      *  resetStatistics method is invoked. */
     struct Stats {
-        size_t ncalls;                                  /**< Number of times satisfiable() was called. */
-        size_t input_size;                              /**< Bytes of input generated for satisfiable(). */
-        size_t output_size;                             /**< Amount of output produced by the SMT solver. */
-        size_t memoizationHits;                         /**< Number of times memoization supplied a result. */
-        size_t nSolversCreated;                         /**< Number of solvers created. Only for class statistics. */
-        size_t nSolversDestroyed;                       /**< Number of solvers destroyed. Only for class statistics. */
-        double prepareTime;                             /**< Time spent creating assertions before solving. */
-        double solveTime;                               /**< Seconds spent in solver's solve function. */
-        double evidenceTime;                            /**< Seconds to retrieve evidence of satisfiability. */
-        size_t nSatisfied;                              /**< Number of times the solver returned "satisified". */
-        size_t nUnsatisfied;                            /**< Number of times the solver returned "unsatisfied". */
-        size_t nUnknown;                                /**< Number of times the solver returned "unknown". */
-        // Remember to add all data members to resetStatistics()
+        size_t ncalls = 0;                              /**< Number of times satisfiable() was called. */
+        size_t input_size = 0;                          /**< Bytes of input generated for satisfiable(). */
+        size_t output_size = 0;                         /**< Amount of output produced by the SMT solver. */
+        size_t memoizationHits = 0;                     /**< Number of times memoization supplied a result. */
+        size_t nSolversCreated = 0;                     /**< Number of solvers created. Only for class statistics. */
+        size_t nSolversDestroyed = 0;                   /**< Number of solvers destroyed. Only for class statistics. */
+        double prepareTime = 0.0;                       /**< Total time in seconds spent creating assertions before solving. */
+        double longestPrepareTime = 0.0;                /**< Longest of times added to prepareTime. */
+        double solveTime = 0.0;                         /**< Total time in seconds spent in solver's solve function. */
+        double longestSolveTime = 0.0;                  /**< Longest of times added to the solveTime total. */
+        double evidenceTime = 0.0;                      /**< Total time in seconds to retrieve evidence of satisfiability. */
+        double longestEvidenceTime = 0.0;               /**< Longest of times added to evidenceTime. */
+        size_t nSatisfied = 0;                          /**< Number of times the solver returned "satisified". */
+        size_t nUnsatisfied = 0;                        /**< Number of times the solver returned "unsatisfied". */
+        size_t nUnknown = 0;                            /**< Number of times the solver returned "unknown". */
+        // Remember to add all data members to SmtSolver::resetStatistics() and SmtSolver::Stats::print()
 
-        Stats()
-            : ncalls(0), input_size(0), output_size(0), memoizationHits(0), nSolversCreated(0), nSolversDestroyed(0),
-              prepareTime(0.0), solveTime(0.0), evidenceTime(0.0), nSatisfied(0), nUnsatisfied(0), nUnknown(0) {
-        }
+        void print(std::ostream&, const std::string &prefix = "") const;
     };
 
     /** RAII guard for solver stack.
@@ -207,7 +207,7 @@ protected:
     std::string outputText_;                            /**< Additional output obtained by satisfiable(). */
     std::vector<SExpr::Ptr> parsedOutput_;              // the evidence output
     TermNames termNames_;                               // maps ROSE exprs to SMT exprs and their basic type
-    Memoization memoization_;                           // cached of previously computed results
+    Memoization memoization_;                           // cache of previously computed results
     bool doMemoization_;                                // use the memoization_ table?
     Sawyer::Optional<SymbolicExpr::Hash> latestMemoizationId_; // key for last found or inserted memoization, or nothing
     SymbolicExpr::ExprExprHashMap latestMemoizationRewrite_; // variables rewritten, need to be undone when parsing evidence
@@ -260,7 +260,9 @@ protected:
     }
     
 public:
-    /** Virtual constructor. */
+    /** Virtual constructor.
+     *
+     *  The new solver will have the same settings as the source solver. */
     virtual Ptr create() const = 0;
 
     // Solvers are reference counted and should not be explicitly deleted.
@@ -459,7 +461,7 @@ public:
     /** Check satisfiability of current stack.
      *
      *  Checks whether all assertions in the entire stack of assertion sets are satisfiable.  A set of no assertions is
-     *  trivially satisfiable. */
+     *  trivially satisfiable. Errors are emitted on @ref mlog once per error message and returned as @c SAT_UNKNOWN. */
     virtual Satisfiable check();
 
     /** Check whether the stack of assertions is trivially satisfiable.

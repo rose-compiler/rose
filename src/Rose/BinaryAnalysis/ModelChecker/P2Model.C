@@ -1074,8 +1074,10 @@ SemanticCallbacks::createInitialState() {
 BS::RiscOperators::Ptr
 SemanticCallbacks::createRiscOperators() {
     auto ops = RiscOperators::instance(settings_, partitioner_, this, protoval(), SmtSolver::Ptr(), variableFinder_);
+    ops->trimThreshold(mcSettings()->maxSymbolicSize);      // zero means no limit
     ops->initialState(nullptr);
     ops->currentState(nullptr);
+    ops->solver(SmtSolver::Ptr());
     ops->computeMemoryRegions(settings_.oobRead != TestMode::OFF || settings_.oobWrite != TestMode::OFF);
 
     if (settings_.traceSemantics) {
@@ -1112,8 +1114,8 @@ SemanticCallbacks::createSolver() {
         solverName = "best";
     auto solver = SmtSolver::instance(solverName);
     solver->memoization(settings_.solverMemoization);
-    if (!rose_isnan(mcSettings()->solverTimeout))
-        solver->timeout(boost::chrono::duration<double>(mcSettings()->solverTimeout));
+    if (mcSettings()->solverTimeout)
+        solver->timeout(boost::chrono::seconds(*mcSettings()->solverTimeout));
     return solver;
 }
 
@@ -1159,21 +1161,25 @@ bool
 SemanticCallbacks::seenState(const BS::RiscOperators::Ptr &ops) {
     ASSERT_not_null(ops);
     ASSERT_not_null(ops->currentState());
-    Combinatorics::HasherSha256Builtin hasher;          // we could use a faster one as long as we don't get false matches
-    ops->hash(hasher);
+    if (mcSettings()->exploreDuplicateStates) {
+        return false;
+    } else {
+        Combinatorics::HasherSha256Builtin hasher;      // we could use a faster one as long as we don't get false matches
+        ops->hash(hasher);
 
-    // Some hashers (including SHA256) have digests that are wider than 64 bits, but we don't really want to throw anything
-    // away. So we'll just fold all the bits into the 64 bit value with XOR.
-    uint64_t hash = 0;
-    for (uint8_t byte: hasher.digest())
-        hash = BitOps::rotateLeft(hash, 8) ^ uint64_t{byte};
-    SAWYER_MESG(mlog[DEBUG]) <<"  state hash = " <<StringUtility::addrToString(hash) <<"\n";
+        // Some hashers (including SHA256) have digests that are wider than 64 bits, but we don't really want to throw anything
+        // away. So we'll just fold all the bits into the 64 bit value with XOR.
+        uint64_t hash = 0;
+        for (uint8_t byte: hasher.digest())
+            hash = BitOps::rotateLeft(hash, 8) ^ uint64_t{byte};
+        SAWYER_MESG(mlog[DEBUG]) <<"  state hash = " <<StringUtility::addrToString(hash) <<"\n";
 
-    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    bool seen = !seenStates_.insert(hash).second;
-    if (seen)
-        ++nDuplicateStates_;
-    return seen;
+        SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+        bool seen = !seenStates_.insert(hash).second;
+        if (seen)
+            ++nDuplicateStates_;
+        return seen;
+    }
 }
 
 ExecutionUnit::Ptr
@@ -1226,6 +1232,8 @@ SemanticCallbacks::findUnit(rose_addr_t va) {
             // once per basic block, not each time a path reaches this block.
             if (bb->nInstructions() > 0) {
                 auto ops = partitioner_.newOperators(P2::MAP_BASED_MEMORY);
+                ops->solver(createSolver());
+                IS::SymbolicSemantics::RiscOperators::promote(ops)->trimThreshold(mcSettings()->maxSymbolicSize);
                 auto cpu = partitioner_.newDispatcher(ops);
                 const RegisterDescriptor IP = partitioner_.instructionProvider().instructionPointerRegister();
                 for (size_t i = 0; i < bb->nInstructions() - 1; ++i) {
@@ -1300,6 +1308,7 @@ SemanticCallbacks::nextUnits(const Path::Ptr &path, const BS::RiscOperators::Ptr
     auto ip = IS::SymbolicSemantics::SValue::promote(next.ip)->get_expression();
     if (!next.isComplete) {
         auto tag = ErrorTag::instance(0, "abstract jump", "symbolic address not handled yet", nullptr, ip);
+        tag->importance(WARN);
         auto fail = FailureUnit::instance(Sawyer::Nothing(), SourceLocation(), "no concrete instruction pointer", tag);
         units.push_back({fail, SymbolicExpr::makeBooleanConstant(true)});
         return units;
@@ -1312,14 +1321,7 @@ SemanticCallbacks::nextUnits(const Path::Ptr &path, const BS::RiscOperators::Ptr
         auto assertion = SymbolicExpr::makeEq(ip, SymbolicExpr::makeIntegerConstant(ip->nBits(), va));
         solver->insert(assertion);
 
-        SmtSolver::Satisfiable satisfied = SmtSolver::SAT_UNKNOWN;
-        try {
-            satisfied = solver->check();
-        } catch (const SmtSolver::Exception &e) {
-            satisfied = SmtSolver::SAT_UNKNOWN;
-        }
-
-        switch (satisfied) {
+        switch (solver->check()) {
             case SmtSolver::SAT_YES:
                 // Create the next execution unit
                 if (ExecutionUnit::Ptr unit = findUnit(va)) {

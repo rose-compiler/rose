@@ -30,6 +30,13 @@ YicesSolver::~YicesSolver()
 #endif
 }
 
+YicesSolver::Ptr
+YicesSolver::create() const {
+    auto newSolver = new YicesSolver(linkage());
+    newSolver->memoization_ = memoization_;
+    return Ptr(newSolver);
+}
+
 void
 YicesSolver::reset() {
     SmtSolver::reset();
@@ -83,17 +90,21 @@ YicesSolver::checkLib() {
     for (std::vector<SymbolicExpr::Ptr>::const_iterator ei=exprs.begin(); ei!=exprs.end(); ++ei)
         ctx_assert(*ei);
     stats.prepareTime += prepareTimer.stop();
+    stats.longestPrepareTime = std::max(stats.longestPrepareTime, prepareTimer.report());
 
     Sawyer::Stopwatch timer;
     switch (yices_check(context)) {
         case l_false:
             stats.solveTime += timer.stop();
+            stats.longestSolveTime = std::max(stats.longestSolveTime, timer.report());
             return SAT_NO;
         case l_true:
             stats.solveTime += timer.stop();
+            stats.longestSolveTime = std::max(stats.longestSolveTime, timer.report());
             return SAT_YES;
         case l_undef:
             stats.solveTime += timer.stop();
+            stats.longestSolveTime = std::max(stats.longestSolveTime, timer.report());
             return SAT_UNKNOWN;
     }
     ASSERT_not_reachable("switch statement is incomplete");
@@ -201,6 +212,7 @@ YicesSolver::parseEvidence() {
         }
     }
     stats.evidenceTime += evidenceTimer.stop();
+    stats.longestEvidenceTime = std::max(stats.longestEvidenceTime, evidenceTimer.report());
 }
 
 std::vector<std::string>

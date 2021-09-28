@@ -124,7 +124,7 @@ int main(int argc, char** argv)
              }
           else if (unparsedArgs[i].find("-gnat") != string::npos)
              {
-                GNATArgs.append(unparsedArgs[i] + " "); 
+                GNATArgs.append(unparsedArgs[i] + " ");
              }
         }
 
@@ -136,7 +136,7 @@ int main(int argc, char** argv)
 //        ASISIncludeArgs = ASISIncludeArgs.substr(0, ASISIncludeArgs.length()-1);
 
      ASISArgs = GNATArgs + ASISIncludeArgs;
- 
+
     if(!ASISArgs.empty() && ASISArgs.at(ASISArgs.length()-1) == ' ')
         ASISArgs = ASISArgs.substr(0, ASISArgs.length()-1);
 
@@ -246,11 +246,17 @@ int main(int argc, char** argv)
        Ada_ROSE_Translation::initialize(settings);
        Ada_ROSE_Translation::ada_to_ROSE_translation(head_nodes, file);
      }
+     //~ catch (const std::exception& e)
      catch (const std::runtime_error& e)
      {
        mprintf ("%s\n", e.what());
        status = 1;
      }
+     //~ catch (...)
+     //~ {
+       //~ mprintf("Unknown exception terminated the ASIS to ROSE converter\n");
+       //~ status = 1;
+     //~ }
 
      asis_adapterfinal();
 

@@ -66,6 +66,40 @@ SmtSolver::Stats SmtSolver::classStats;
 boost::mutex SmtSolver::classStatsMutex;
 
 void
+SmtSolver::Stats::print(std::ostream &out, const std::string &prefix) const {
+    auto nameValue = boost::format("%-40s %s\n");
+    auto nameTimes = boost::format("%-40s total %s, maximum %s\n");
+
+    if (nSolversCreated > 0) {
+        out <<prefix <<             "number of solvers:\n";
+        out <<prefix <<(nameValue % "  created:" % nSolversCreated);
+        out <<prefix <<(nameValue % "  counted below:" % nSolversDestroyed);
+        out <<prefix <<(nameValue % "  still live (not counted):" % (nSolversCreated - nSolversDestroyed));
+    }
+    out <<prefix <<(nameValue % "number of calls to solver:" % ncalls);
+    out <<prefix <<(nameValue % "  returning satisfiable:" % nSatisfied);
+    out <<prefix <<(nameValue % "  returning unsatisfiable:" % nUnsatisfied);
+    out <<prefix <<(nameValue % "  returning unknown or timeout:" % nUnknown);
+
+    out <<prefix <<             "memoization results:\n";
+    out <<prefix <<(nameValue % "  hits:" % memoizationHits);
+    out <<prefix <<(nameValue % "  misses:" % (ncalls - memoizationHits));
+    if (ncalls > 0)
+        out <<prefix <<(boost::format("%-40s %1.4f%%\n") % "  hit rate:" % (100.0 * memoizationHits / ncalls));
+
+    out <<prefix <<             "time spent solving:\n";
+    out <<prefix <<(nameTimes % "  time preparing:"
+                    % Sawyer::Stopwatch::toString(prepareTime)
+                    % Sawyer::Stopwatch::toString(longestPrepareTime));
+    out <<prefix <<(nameTimes % "  time in solver:"
+                    % Sawyer::Stopwatch::toString(solveTime)
+                    % Sawyer::Stopwatch::toString(longestSolveTime));
+    out <<prefix <<(nameTimes % "  time recovering evidence:"
+                    % Sawyer::Stopwatch::toString(evidenceTime)
+                    % Sawyer::Stopwatch::toString(longestEvidenceTime));
+}
+
+void
 SmtSolver::init(unsigned linkages) {
     linkage_ = bestLinkage(linkages);
     stack_.push_back(std::vector<SymbolicExpr::Ptr>());
@@ -216,8 +250,11 @@ SmtSolver::resetStatistics() {
     classStats.output_size += stats.output_size;
     classStats.memoizationHits += stats.memoizationHits;
     classStats.prepareTime += stats.prepareTime;
+    classStats.longestPrepareTime = std::max(classStats.longestPrepareTime, stats.longestPrepareTime);
     classStats.solveTime += stats.solveTime;
+    classStats.longestSolveTime = std::max(classStats.longestSolveTime, stats.longestSolveTime);
     classStats.evidenceTime += stats.evidenceTime;
+    classStats.longestEvidenceTime = std::max(classStats.longestEvidenceTime, stats.longestEvidenceTime);
     classStats.nSatisfied += stats.nSatisfied;
     classStats.nUnsatisfied += stats.nUnsatisfied;
     classStats.nUnknown += stats.nUnknown;
@@ -391,17 +428,26 @@ SmtSolver::check() {
     
     // Do the real work
     if (!wasTrivial && !wasMemoized) {
-        switch (linkage_) {
-            case LM_EXECUTABLE:
-                retval = checkExe();
-                break;
-            case LM_LIBRARY:
-                retval = checkLib();
-                break;
-            case LM_NONE:
-                throw Exception("no linkage for " + name_ + " solver");
-            default:
-                ASSERT_not_reachable("invalid solver linkage: " + boost::lexical_cast<std::string>(linkage_));
+        try {
+            switch (linkage_) {
+                case LM_EXECUTABLE:
+                    retval = checkExe();
+                    break;
+                case LM_LIBRARY:
+                    retval = checkLib();
+                    break;
+                case LM_NONE:
+                    throw Exception("no linkage for " + name_ + " solver");
+                default:
+                    ASSERT_not_reachable("invalid solver linkage: " + boost::lexical_cast<std::string>(linkage_));
+            }
+        } catch (const Exception &e) {
+            static std::set<uint64_t> seen;
+            Rose::Combinatorics::HasherFnv hasher;
+            hasher.insert(e.what());
+            if (seen.insert(hasher.partial()).second)
+                mlog[ERROR] <<"SMT solver error: " <<e.what() <<"\n";
+            retval = SAT_UNKNOWN;
         }
     }
     
@@ -473,6 +519,7 @@ SmtSolver::checkExe() {
     ASSERT_require(status>=0);
     stats.input_size += sb.st_size;
     stats.prepareTime += prepareTimer.stop();
+    stats.longestPrepareTime = std::max(stats.longestPrepareTime, prepareTimer.report());
 
     /* Show solver input */
     if (mlog[DEBUG]) {
@@ -503,6 +550,7 @@ SmtSolver::checkExe() {
     status = pclose(r.output); r.output = NULL;
     stats.output_size += nread;
     stats.solveTime += solveTimer.stop();
+    stats.longestSolveTime = std::max(stats.longestSolveTime, solveTimer.report());
     mlog[DEBUG] <<"solver took " <<solveTimer <<"\n";
     mlog[DEBUG] <<"solver exit status = " <<status <<"\n";
     parsedOutput_ = parseSExpressions(outputText_);

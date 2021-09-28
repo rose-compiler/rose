@@ -13,11 +13,41 @@ namespace si = SageInterface;
 
 namespace
 {
+  constexpr bool USE_COMPUTED_NAME_QUALIFICATION_TYPE = true;
+
+  /// returns m[key] iff \ref key is in \ref m
+  ///                otherwise \ref defaultVal
+  template <class Map>
+  const typename Map::mapped_type&
+  getQualMapping( const Map& m,
+                  const typename Map::key_type& key,
+                  const typename Map::mapped_type& defaultVal
+                )
+  {
+    auto pos = m.find(key);
+
+    return (pos == m.end()) ? defaultVal : pos->second;
+  }
+
   struct AdaTypeUnparser
   {
     AdaTypeUnparser(Unparse_Ada& unp, SgUnparse_Info& inf, std::ostream& outp)
     : unparser(unp), info(inf), os(outp)
     {}
+
+    void prnNameQual(const SgNode& n)
+    {
+      using NodeQualMap = std::map<SgNode*, std::string>;
+      using Iterator = NodeQualMap::const_iterator;
+
+      const NodeQualMap& nameQualMap = unparser.nameQualificationMap();
+      const Iterator     pos = nameQualMap.find(const_cast<SgNode*>(&n));
+
+      //~ std::cerr << "retr " << &n << " from " << &nameQualMap << std::endl;
+
+      if (pos != nameQualMap.end())
+        prn(pos->second);
+    }
 
     void prn(const std::string& s)
     {
@@ -129,7 +159,17 @@ namespace
     void handle(SgNamedType& n)
     {
       prn(" ");
-      prn(scopeQual(n.get_declaration()));
+
+      if (USE_COMPUTED_NAME_QUALIFICATION_TYPE)
+      {
+        //~ std::cerr << "unp named type: " << n.get_declaration()
+                  //~ << " / " << &unparser.nameQualificationMap()
+                  //~ << std::endl;
+        prnNameQual(SG_DEREF(n.get_declaration()));
+      }
+      else
+        prn(scopeQual(n.get_declaration()));
+
       prn(n.get_name());
     }
 
@@ -168,7 +208,12 @@ namespace
       SgAdaTaskTypeDecl&      tyDcl  = SG_DEREF( isSgAdaTaskTypeDecl(n.get_declaration()) );
 
       prn(" ");
-      prn(scopeQual(tyDcl));
+
+      if (USE_COMPUTED_NAME_QUALIFICATION_TYPE)
+        prnNameQual(tyDcl);
+      else
+        prn(scopeQual(tyDcl));
+
       prn(tyDcl.get_name());
     }
 
@@ -289,9 +334,27 @@ namespace
 //  to the appropriate function to unparse each Ada type.
 //-----------------------------------------------------------------------------------
 void
-Unparse_Ada::unparseType(SgType* type, SgUnparse_Info& info)
+Unparse_Ada::unparseType(const SgLocatedNode& ref, SgType* ty, SgUnparse_Info& info)
 {
-  ASSERT_not_null(type);
+  using TypeQualMap = std::map<SgNode*,std::map<SgNode*,std::string> >;
 
-  sg::dispatch(AdaTypeUnparser(*this, info, std::cerr), type);
+  ASSERT_not_null(ty);
+
+  SgNode* const currentReferenceNode = info.get_reference_node_for_qualification();
+
+  // set the reference node, unless the unparser is already in type mode
+  if (&nameQualificationMap() == &SgNode::get_globalQualifiedNameMapForNames())
+    info.set_reference_node_for_qualification(const_cast<SgLocatedNode*>(&ref));
+
+  SgNode*            refNode = info.get_reference_node_for_qualification();
+  const NameQualMap& currentNameQualMap = nameQualificationMap();
+  const TypeQualMap& typeQualMap = SgNode::get_globalQualifiedNameMapForMapsOfTypes();
+  const NameQualMap& nameQualMapForTypeSubtree = getQualMapping(typeQualMap, refNode, SgNode::get_globalQualifiedNameMapForTypes());
+
+  withNameQualificationMap(nameQualMapForTypeSubtree);
+  sg::dispatch(AdaTypeUnparser{*this, info, std::cerr}, ty);
+  withNameQualificationMap(currentNameQualMap);
+
+  // restore reference node
+  info.set_reference_node_for_qualification(currentReferenceNode);
 }

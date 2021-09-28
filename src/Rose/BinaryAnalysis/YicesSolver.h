@@ -74,10 +74,8 @@ public:
     /** Virtual constructor.
      *
      *  Create a new solver just like this one. */
-    virtual Ptr create() const ROSE_OVERRIDE {
-        return instance(linkage());
-    }
-    
+    virtual Ptr create() const override;
+
     /** Returns a bit vector of linkage capabilities.
      *
      *  Returns a vector of @ref LinkMode bits that say what possible modes of communicating with the Yices SMT solver are

@@ -356,7 +356,7 @@ Unparser::computeNameQualification(SgSourceFile* file)
   // expensive (in this implementation).
   // DQ (8/6/2007): Only compute the hidden lists if working with C++ code!
   // if (isCxxFile == true)
-     if (isCxxFile == true)
+     if ((isCxxFile == true) || SageInterface::is_Ada_language())
         {
        // DQ (5/15/2011): Test clearing the mangled name map.
        // printf ("Calling SgNode::clearGlobalMangledNameMap() \n");
@@ -422,6 +422,7 @@ Unparser::computeNameQualification(SgSourceFile* file)
              }
 
         }
+
 
 #if 0
   // DQ (10/23/2018): Output report of AST nodes marked as modified!
@@ -4409,16 +4410,15 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
   // DQ (11/22/2019): We don't want to overwrite the global scope in the include_sourceFile (note it is a valid global scope).
      SgGlobal* headerFileGlobal = include_sourceFile->get_globalScope();
 
-     SgSourceFile* sourceFileFromHeaderFile = isSgSourceFile(headerFileGlobal->get_parent());
-
 #if DEBUG_BUILD_SOURCE_FILE_FOR_HEADER_FILE
+     SgSourceFile* sourceFileFromHeaderFile = isSgSourceFile(headerFileGlobal->get_parent());
      printf ("sourceFileFromHeaderFile = %p \n",sourceFileFromHeaderFile);
 #endif
 
+#if DEBUG_BUILD_SOURCE_FILE_FOR_HEADER_FILE
      SgGlobal* globalScope_from_include_sourceFile       = include_sourceFile->get_globalScope();
      SgGlobal* globalScope_from_sourceFileFromHeaderFile = include_sourceFile->get_globalScope();
 
-#if DEBUG_BUILD_SOURCE_FILE_FOR_HEADER_FILE
      printf ("globalScope_from_include_sourceFile       = %p \n",globalScope_from_include_sourceFile);
      printf ("globalScope_from_sourceFileFromHeaderFile = %p \n",globalScope_from_sourceFileFromHeaderFile);
 

@@ -167,14 +167,17 @@ public:
     /** Shared-ownership pointer to an @ref AddressIntervalParser. See @ref heap_object_shared_ownership. */
     typedef Sawyer::SharedPointer<AddressIntervalParser> Ptr;
 
+    /** Default allocating constructor. */
     static Ptr instance() {
         return Ptr(new AddressIntervalParser);
     }
 
+    /** Allocating constructor. */
     static Ptr instance(const Sawyer::CommandLine::ValueSaver::Ptr &valueSaver) {
         return Ptr(new AddressIntervalParser(valueSaver));
     }
 
+    /** Runtime documentation. */
     static std::string docString();
 
     /** Parse an interval from a C string.

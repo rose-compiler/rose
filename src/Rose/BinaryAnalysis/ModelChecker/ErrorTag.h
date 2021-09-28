@@ -11,7 +11,11 @@ namespace Rose {
 namespace BinaryAnalysis {
 namespace ModelChecker {
 
-/** Tag that describes a model checker error. */
+/** Tag that describes a model checker abnormal condition.
+ *
+ *  Although these tags are always treated as non-fatal errors within the model checker in that they halt any further
+ *  exploration along that path, they have a property that indicates the severity level so they can be printed more reasonably
+ *  by tools. */
 class ErrorTag: public NameTag {
 public:
     using Ptr = ErrorTagPtr;
@@ -22,6 +26,7 @@ protected:
     Sawyer::Optional<uint64_t> concrete_;                          // optional concrete value
     const SymbolicExpr::Ptr symbolic_;                             // optional symbolic value
     const InstructionSemantics2::BaseSemantics::SValuePtr svalue_; // optional semantic value
+    Sawyer::Message::Importance importance_ = Sawyer::Message::ERROR;
 
 protected:
     ErrorTag() = delete;
@@ -53,6 +58,17 @@ public:
      *
      *  Thread safety: This property access is thread safe. */
     std::string message() const;
+
+    /** Property: Importance.
+     *
+     *  ErrorTags are always treated as errors within the model checker in that they always halt exploration along the
+     *  path to which they're associated. However, this @p importance property can be used to convey additional information
+     *  to the tool that ultimately processes these tags.
+     *
+     * @{ */
+    Sawyer::Message::Importance importance() const;
+    void importance(Sawyer::Message::Importance);
+    /** @} */
 
 public:
     void print(std::ostream &out, const std::string &prefix) const override;
