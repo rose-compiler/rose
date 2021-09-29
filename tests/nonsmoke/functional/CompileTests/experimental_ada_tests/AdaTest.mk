@@ -151,6 +151,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   pkgrename.ads                        \
   private_access_type.adb              \
   procedure_renaming.adb               \
+  procedure_instantiation.adb          \
   real_typedecl.ads                    \
   representation_clause.ads            \
   representation_clause_2.ads          \
@@ -211,7 +212,7 @@ ROSE_FAILING_ADA_TESTS :=                           \
   protected_body_declaration.adb                    \
   protected_body_declaration.ads                    \
   procedure_body_stub.adb                           \
-  package_instantiation.adb                         \
+  package_instantiation2.adb                        \
   procedure_instantiation.adb                       \
   protected_type_declaration.ads                    \
   requeue_statement_2.adb                           \
