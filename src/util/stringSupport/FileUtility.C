@@ -497,5 +497,145 @@ readFileWithPos(const std::string& fileName) {
      return result;
 }
 
+std::string
+StringWithLineNumber::toString() const {
+     std::ostringstream os;
+
+  // DQ (1/21/2010): Added support for skipping these when in makes it easer to debug ROSETTA generated files.
+#ifdef SKIP_HASH_LINE_NUMBER_DECLARATIONS_IN_GENERATED_FILES
+  // os << str << std::endl;
+     os << "/* #line " << line << " \""
+        << (filename.empty() ? "" : getAbsolutePathFromRelativePath(filename)) << "\" */\n" << str << std::endl;
+#else
+     os << "#line " << line << " \""
+        << (filename.empty() ? "" : getAbsolutePathFromRelativePath(filename)) << "\"\n" << str << std::endl;
+#endif
+
+     return os.str();
+}
+
+std::string
+toString(const FileWithLineNumbers& strings, const std::string& filename, int physicalLine /* Line number in output file */) {
+  std::string result;
+  unsigned int lastLineNumber = 1;
+  std::string lastFile = "";
+  bool inPhysicalFile = true; // Not in a specifically named file
+  bool needLineDirective = false;
+  for (unsigned int i = 0; i < strings.size(); ++i) {
+    // Determine if a #line directive is needed, if the last iteration did not
+    // force one to be added
+    bool newInPhysicalFile = (strings[i].filename == "");
+    if (inPhysicalFile != newInPhysicalFile)
+      needLineDirective = true;
+    if (!inPhysicalFile &&
+        (strings[i].filename != lastFile ||
+         strings[i].line != lastLineNumber))
+      needLineDirective = true;
+
+    if (strings[i].str == "" && i + 1 == strings.size()) { // Special case
+      needLineDirective = false;
+    }
+
+    // Print out the #line directive (if needed) and the actual line
+    if (needLineDirective) {
+#ifdef SKIP_HASH_LINE_NUMBER_DECLARATIONS_IN_GENERATED_FILES
+           /* Nothing to do here! */
+      if (strings[i].filename == "") { // Reset to actual input file
+          // The "1" is the increment because number is the line number of the NEXT line after the #line directive
+          result += "/* #line " + numberToString(physicalLine + 1) + " \"" + filename + "\" */\n";
+      } else {
+          result += "/* #line " + numberToString(strings[i].line) + " \"" + strings[i].filename + "\" */\n";
+      }
+#else
+      if (strings[i].filename == "") { // Reset to actual input file
+          // The "1" is the increment because number is the line number of the NEXT line after the #line directive
+          result += "#line " + numberToString(physicalLine + 1) + " \"" + filename + "\"\n";
+      } else {
+          result += "#line " + numberToString(strings[i].line) + " \"" + strings[i].filename + "\"\n";
+      }
+#endif
+      // These are only updated when a #line directive is actually printed,
+      // largely because of the blank line exception above (so if a blank line
+      // starts a new file, the #line directive needs to be emitted on the
+      // first non-blank line)
+      lastLineNumber = strings[i].line + 1;
+      lastFile = strings[i].filename;
+    } else {
+      ++lastLineNumber;
+    }
+    result += strings[i].str + "\n";
+
+    bool printedLineDirective = needLineDirective;
+
+    // Determine if a #line directive is needed for the next iteration
+    needLineDirective = false;
+    inPhysicalFile = newInPhysicalFile;
+    if (strings[i].str.find('\n') != std::string::npos && !inPhysicalFile) {
+      needLineDirective = true; // Ensure that the next line has a #line directive
+    }
+
+    // Update the physical line counter based on the number of lines output
+    if (printedLineDirective) ++physicalLine; // For #line directive
+    for (size_t pos = strings[i].str.find('\n');
+         pos != std::string::npos; pos = strings[i].str.find('\n', pos + 1)) {
+      ++physicalLine; // Increment for \n in string
+    }
+    ++physicalLine; // Increment for \n added at end of line
+  }
+  return result;
+}
+
+// BP : 10/25/2001, a non recursive version that allocs memory only once
+std::string
+copyEdit(const std::string& inputString, const std::string& oldToken, const std::string& newToken) {
+    std::string returnString;
+    std::string::size_type oldTokenSize = oldToken.size();
+
+    std::string::size_type position = 0;
+    std::string::size_type lastPosition = 0;
+    while (true) {
+        position = inputString.find(oldToken, position);
+        if (position == std::string::npos) {
+            returnString += inputString.substr(lastPosition);
+            break;
+        } else {
+            returnString += inputString.substr(lastPosition, position - lastPosition);
+            returnString += newToken;
+            position = lastPosition = position + oldTokenSize;
+        }
+    }
+
+    return returnString;
+}
+
+FileWithLineNumbers
+copyEdit(const FileWithLineNumbers& inputString, const std::string& oldToken, const std::string& newToken) {
+    FileWithLineNumbers result = inputString;
+    for (unsigned int i = 0; i < result.size(); ++i)
+        result[i].str = copyEdit(result[i].str, oldToken, newToken);
+    return result;
+}
+
+FileWithLineNumbers
+copyEdit(const FileWithLineNumbers& inputString, const std::string& oldToken, const FileWithLineNumbers& newToken ) {
+  FileWithLineNumbers result = inputString;
+  for (unsigned int i = 0; i < result.size(); ++i) {
+    std::string str = result[i].str;
+    std::string::size_type pos = str.find(oldToken);
+    if (pos != std::string::npos) {
+      // Split the line into the before-substitution and after-substitution regions
+      result[i].str = str.substr(0, pos);
+      result.insert(result.begin() + i + 1,
+                    StringWithLineNumber(str.substr(pos + oldToken.size()),
+                                         result[i].filename + " after subst for " + oldToken,
+                                         result[i].line));
+      // Do the insertion
+      result.insert(result.begin() + i + 1, newToken.begin(), newToken.end());
+      i += newToken.size(); // Rescan the after-substitution part of the old line, but not any of the new text
+    }
+  }
+  return result;
+}
+
 } // namespace
 } // namespace

@@ -501,7 +501,14 @@ nobase_pkginclude_HEADERS=								\
 	Rose/Progress.h									\
 	Rose/RecursionCounter.h								\
 	Rose/SourceLocation.h								\
-	Rose/StringUtility.h
+	Rose/StringUtility.h								\
+	Rose/StringUtility/Convert.h							\
+	Rose/StringUtility/Diagnostics.h						\
+	Rose/StringUtility/Escape.h							\
+	Rose/StringUtility/NumberToString.h						\
+	Rose/StringUtility/Predicate.h							\
+	Rose/StringUtility/SplitJoin.h							\
+	Rose/StringUtility/StringToNumber.h
 
 
 ########################################################################################################################
