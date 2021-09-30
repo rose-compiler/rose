@@ -15,10 +15,11 @@
 #include "ProgramLocationsReport.h"
 #include "TypeSizeMapping.h"
 #include "CodeThornOptions.h"
+#include "ReadWriteListener.h"
 
 namespace CodeThorn {
   class CTAnalysis;
-
+  
     class SingleBoolEvalResult {
   public:
     EState estate;
@@ -45,19 +46,6 @@ namespace CodeThorn {
   enum InterpreterMode { IM_DISABLED, IM_ENABLED };
   // ACCESS_ERROR is null pointer dereference is detected. ACCESS_NON_EXISTING if pointer is lattice bottom element.
   enum MemoryAccessBounds {ACCESS_ERROR,ACCESS_DEFINITELY_NP, ACCESS_DEFINITELY_INSIDE_BOUNDS, ACCESS_POTENTIALLY_OUTSIDE_BOUNDS, ACCESS_DEFINITELY_OUTSIDE_BOUNDS, ACCESS_NON_EXISTING};
-
-  class ReadWriteListener {
-  public:
-    // result is value after reading from memLoc in pstate at label lab
-    virtual void readingFromMemoryLocation(Label lab, PStatePtr pstate, AbstractValue& memLoc, AbstractValue& result) {}
-    // pstate is state at label lab before writing newValue to
-    // memLoc. (*pstate).writeToMemoryLocation(memloc,result) gives
-    // state after write
-    virtual void writingToMemoryLocation(Label lab, PStatePtr pstate, AbstractValue& memLoc, AbstractValue& newValue) {}
-    // evalResult.value() holds AbstractValue of boolean value
-    virtual void trueFalseEdgeEvaluation(Edge edge, SingleEvalResult evalResult , const EState* estate) {}
-    virtual void functionCallExternal(Edge edge, const EState* estate) {}
-  };
 
   class EStateTransferFunctions : public DFTransferFunctions {
   public:

@@ -56,6 +56,7 @@
 #endif
 
 #include "ConstantConditionAnalysis.h"
+#include "MemoryViolationAnalysis.h"
 #include "CodeThornLib.h"
 #include "LTLThornLib.h"
 #include "CppStdUtilities.h"
@@ -249,6 +250,7 @@ int main( int argc, char * argv[] ) {
 
     if(ctOpt.constantConditionAnalysisFileName.size()>0) {
       analyzer->getEStateTransferFunctions()->setReadWriteListener(new ConstantConditionAnalysis());
+      //analyzer->getEStateTransferFunctions()->setReadWriteListener(new MemoryViolationAnalysis());
     }
 
     if(ctOpt.runSolver) {
