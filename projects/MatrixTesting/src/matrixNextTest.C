@@ -56,7 +56,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
               .doc("Uniform resource locator for the database. This switch overrides the ROSE_MATRIX_DATABASE environment "
                    "variable. " + SqlDatabase::uriDocumentation()));
 
-    sg.insert(Switch("format", 'f')
+    sg.insert(Switch("format", 'F')
               .argument("style", enumParser<OutputMode>(settings.outputMode)
                         ->with("human", OUTPUT_HUMAN)
                         ->with("rmc", OUTPUT_RMC)
