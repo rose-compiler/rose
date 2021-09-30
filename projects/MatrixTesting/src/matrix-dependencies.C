@@ -6,6 +6,8 @@ static const char *gDescription =
     "according to the ROSE documentation.";
 
 #include <rose.h>
+#include "matrixTools.h"
+
 #include <Rose/CommandLine.h>
 #include <Rose/FormattedTable.h>
 #include <Sawyer/Database.h>
@@ -14,11 +16,6 @@ static const char *gDescription =
 using namespace Rose;
 using namespace Sawyer::Message::Common;
 namespace DB = Sawyer::Database;
-
-enum class Format {
-    PLAIN,
-    YAML
-};
 
 struct Settings {
     std::string databaseUri;
@@ -41,6 +38,7 @@ static std::vector<std::string>
 parseCommandLine(int argc, char *argv[], Settings &settings) {
     using namespace Sawyer::CommandLine;
     Parser parser = Rose::CommandLine::createEmptyParser(gPurpose, gDescription);
+    parser.errorStream(mlog[FATAL]);
     parser.doc("Synopsis",
                "@prop{programName} [@v{switches}] names\n\n"
                "@prop{programName} [@v{switches}] list        [@v{name} [@v{value}]]\n\n"
@@ -49,24 +47,13 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
                "@prop{programName} [@v{switches}] supported   @v{name} @v{value}\n\n"
                "@prop{programName} [@v{switches}] unsupported @v{name} @v{value}\n\n"
                "@prop{programName} [@v{switches}] comment     @v{name} @v{value} @v{comment}\n\n"
-
-               "@prop{programName} [@v{switches}] insert  @v{name} @v{value}\n\n"
-               "@prop{programName} [@v{switches}] delete  @v{name} [@v{value}\n\n");
+               "@prop{programName} [@v{switches}] insert      @v{name} @v{value}\n\n"
+               "@prop{programName} [@v{switches}] delete      @v{name} @v{value}\n\n");
 
 
     SwitchGroup sg("Tool-specific switches");
-
-    sg.insert(Switch("database", 'd')
-              .argument("uri", anyParser(settings.databaseUri))
-              .doc("URI specifying which database to use. This switch overrides the ROSE_MATRIX_DATABASE environment variable."));
-
-    sg.insert(Switch("format", 'F')
-              .argument("style", enumParser(settings.outputFormat)
-                        ->with("plain", Format::PLAIN)
-                        ->with("yaml", Format::YAML))
-              .doc("Specifies how to format the results. The choices are:"
-                   "@named{plain}{Plain text, human-readable format.}"
-                   "@named{yaml}{Structured YAML output.}"));
+    insertDatabaseSwitch(sg, settings.databaseUri);
+    insertOutputFormatSwitch(sg, settings.outputFormat);
 
     return parser
         .with(Rose::CommandLine::genericSwitches())
@@ -200,11 +187,11 @@ enable(const Settings &settings, DB::Connection db, const std::string &name, con
         .bind("name", name).bind("value", value).get<int>().orElse(0)) {
         mlog[WARN] <<"nothing affected\n";
     } else {
-        auto stmt = db.stmt("update dependencies set enabled = ?enabled where name = ?name and value = ?value")
-                    .bind("name", name)
-                    .bind("value", value)
-                    .bind("enabled", b)
-                    .run();
+        db.stmt("update dependencies set enabled = ?enabled where name = ?name and value = ?value")
+            .bind("name", name)
+            .bind("value", value)
+            .bind("enabled", b)
+            .run();
     }
 }
 
@@ -215,11 +202,11 @@ support(const Settings &settings, DB::Connection db, const std::string &name, co
         .bind("name", name).bind("value", value).get<int>().orElse(0)) {
         mlog[WARN] <<"nothing affected\n";
     } else {
-        auto stmt = db.stmt("update dependencies set supported = ?supported where name = ?name and value = ?value")
-                    .bind("name", name)
-                    .bind("value", value)
-                    .bind("supported", b)
-                    .run();
+        db.stmt("update dependencies set supported = ?supported where name = ?name and value = ?value")
+            .bind("name", name)
+            .bind("value", value)
+            .bind("supported", b)
+            .run();
     }
 }
 
@@ -231,11 +218,41 @@ comment(const Settings &settings, DB::Connection db, const std::string &name, co
         .bind("name", name).bind("value", value).get<int>().orElse(0)) {
         mlog[WARN] <<"nothing affected\n";
     } else {
-        auto stmt = db.stmt("update dependencies set comment = ?comment where name = ?name and value = ?value")
-                    .bind("name", name)
-                    .bind("value", value)
-                    .bind("comment", s)
-                    .run();
+        db.stmt("update dependencies set comment = ?comment where name = ?name and value = ?value")
+            .bind("name", name)
+            .bind("value", value)
+            .bind("comment", s)
+            .run();
+    }
+}
+
+// Insert a new dependency
+static void
+insert(const Settings &settings, DB::Connection db, const std::string &name, const std::string &value) {
+    if (0 != db.stmt("select count(*) from dependencies where name = ?name and value = ?value")
+        .bind("name", name).bind("value", value).get<int>().orElse(0)) {
+        mlog[ERROR] <<"dependency already exists\n";
+        exit(1);
+    } else {
+        db.stmt("insert into dependencies (name, value, enabled, supported, comment) "
+                " values (?name, ?value, true, true, ''")
+            .bind("name", name)
+            .bind("value", value)
+            .run();
+    }
+}
+
+// Erase a dependency
+static void
+erase(const Settings &settings, DB::Connection db, const std::string &name, const std::string &value) {
+    if (0 == db.stmt("select count(*) from dependencies where name = ?name and value = ?value")
+        .bind("name", name).bind("value", value).get<int>().orElse(0)) {
+        mlog[WARN] <<"nothing affected\n";
+    } else {
+        db.stmt("delete dependencies where = ?name and value = ?value")
+            .bind("name", name)
+            .bind("value", value)
+            .run();
     }
 }
 
@@ -245,10 +262,7 @@ main(int argc, char *argv[]) {
     Diagnostics::initAndRegister(&mlog, "tool");
 
     Settings settings;
-    if (const char *dbUri = getenv("ROSE_MATRIX_DATABASE"))
-        settings.databaseUri = dbUri;
     std::vector<std::string> args = parseCommandLine(argc, argv, settings);
-
     auto db = DB::Connection::fromUri(settings.databaseUri);
 
     if (args.empty()) {
@@ -296,6 +310,21 @@ main(int argc, char *argv[]) {
         } else {
             incorrectUsage();
         }
+
+    } else if ("insert" == args[0]) {
+        if (args.size() == 3) {
+            insert(settings, db, args[1], args[2]);
+        } else {
+            incorrectUsage();
+        }
+
+    } else if ("delete" == args[0]) {
+        if (args.size() == 3) {
+            erase(settings, db, args[1], args[2]);
+        } else {
+            incorrectUsage();
+        }
+
 
     } else {
         incorrectUsage();

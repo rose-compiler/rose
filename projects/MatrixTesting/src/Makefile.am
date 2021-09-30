@@ -17,7 +17,7 @@ rose_matrix_test_result_LDFLAGS = $(ROSE_RPATHS)
 rose_matrix_test_result_LDADD = $(ROSE_LIBS)
 
 bin_PROGRAMS += rose-matrix-query
-rose_matrix_query_SOURCES = matrixQueryTable.C
+rose_matrix_query_SOURCES = matrix-query.C
 rose_matrix_query_CPPFLAGS = $(ROSE_INCLUDES) -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE)"'
 rose_matrix_query_LDFLAGS = $(ROSE_RPATHS)
 rose_matrix_query_LDADD = $(ROSE_LIBS)
@@ -39,6 +39,18 @@ rose_matrix_delete_test_SOURCES = matrixDeleteTest.C
 rose_matrix_delete_test_CPPFLAGS = $(ROSE_INCLUDES) -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE)"'
 rose_matrix_delete_test_LDFLAGS = $(ROSE_RPATHS)
 rose_matrix_delete_test_LDADD = $(ROSE_LIBS)
+
+bin_PROGRAMS += rose-matrix-dependencies
+rose_matrix_dependencies_SOURCES = matrix-dependencies.C
+rose_matrix_dependencies_CPPFLAGS = $(ROSE_INCLUDES) -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE)"'
+rose_matrix_dependencies_LDFLAGS = $(ROSE_RPATHS)
+rose_matrix_dependencies_LDADD = $(ROSE_LIBS)
+
+bin_PROGRAMS += rose-matrix-status
+rose_matrix_status_SOURCES = matrix-status.C
+rose_matrix_status_CPPFLAGS = $(ROSE_INCLUDES) -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE)"'
+rose_matrix_status_LDFLAGS = $(ROSE_RPATHS)
+rose_matrix_status_LDADD = $(ROSE_LIBS)
 
 if ROSE_USE_WT
 
