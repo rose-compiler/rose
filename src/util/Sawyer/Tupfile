@@ -3,9 +3,9 @@ include_rules
 # Sawyer doesn't depend on ROSE, so we can compile in Phase-1 and then link the objects into librose. For convenience,
 # we also create a libsawyer.so.
 run $(support_compile_linklib) -o sawyer --objects=OBJECTS \
-    Assert.C Attribute.C Clexer.C CommandLine.C CommandLineBoost.C DocumentBaseMarkup.C DocumentMarkup.C DocumentPodMarkup.C \
-    DocumentTextMarkup.C GraphTraversal.C LineVector.C Message.C ProgressBar.C Sawyer.C SmallObject.C Stopwatch.C \
-    Synchronization.C
+    Assert.C Attribute.C Clexer.C CommandLine.C CommandLineBoost.C RoseDatabase.C DocumentBaseMarkup.C DocumentMarkup.C \
+    DocumentPodMarkup.C DocumentTextMarkup.C GraphTraversal.C LineVector.C Message.C ProgressBar.C Sawyer.C SmallObject.C \
+    Stopwatch.C Synchronization.C
 : {OBJECTS} |> !for_librose |>
 
 run $(public_header) -o include/Sawyer --license=LICENSE \

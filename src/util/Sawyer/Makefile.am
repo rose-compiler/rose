@@ -11,8 +11,9 @@ EXTRA_DIST =
 # DEFAULT_INCLUDES has a "-I." that needs to be removed. In fact, it doesn't have anything else useful so we just remove it.
 DEFAULT_INCLUDES =
 
-AM_CPPFLAGS = $(filter-out -I.,$(ROSE_INCLUDES))
-CPPFLAGS = $(filter-out -I.,$(ROSE_INCLUDES))
+# -I../../.. is needed in order to find <rosePublicConfig.h> from <featureTests.h> needed by RoseDatabase.C
+AM_CPPFLAGS = -I../../.. $(filter-out -I.,$(ROSE_INCLUDES))
+CPPFLAGS = -I../../.. $(filter-out -I.,$(ROSE_INCLUDES))
 
 # The ROSE library should not be linked into Sawyer tools since (1) it's not needed, and (2) it hasn't been built yet at
 # the point where Sawyer tools are being linked. In other words, Sawyer tools are not ROSE tools.  Sawyer tools probably
@@ -27,6 +28,7 @@ libroseSawyer_la_SOURCES =			\
 	Clexer.C				\
 	CommandLine.C				\
 	CommandLineBoost.C			\
+	RoseDatabase.C				\
 	DocumentBaseMarkup.C			\
 	DocumentMarkup.C			\
 	DocumentPodMarkup.C			\
