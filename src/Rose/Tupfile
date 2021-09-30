@@ -1,6 +1,7 @@
 include_rules
 
 run $(librose_compile)				\
+    FormattedTable.C				\
     Initialize.C				\
     Progress.C					\
     SourceLocation.C
@@ -16,6 +17,7 @@ run $(public_header) -o include/rose/Rose	\
     Exception.h					\
     FileSystem.h				\
     FormatRestorer.h				\
+    FormattedTable.h				\
     GraphUtility.h				\
     Initialize.h				\
     Progress.h					\

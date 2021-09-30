@@ -496,6 +496,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/Exception.h								\
 	Rose/FileSystem.h								\
 	Rose/FormatRestorer.h								\
+	Rose/FormattedTable.h								\
 	Rose/GraphUtility.h								\
 	Rose/Initialize.h								\
 	Rose/Progress.h									\
