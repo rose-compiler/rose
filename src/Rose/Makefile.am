@@ -18,6 +18,7 @@ SUBDIRS =					\
 AM_CPPFLAGS = $(ROSE_INCLUDES)
 noinst_LTLIBRARIES = librose_partial.la
 librose_partial_la_SOURCES =			\
+	FormattedTable.C			\
 	Initialize.C				\
 	Progress.C				\
 	SourceLocation.C
