@@ -1642,8 +1642,14 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
   }
 
   SgVarRefExp* Normalization::buildVarRefExpForVariableDeclaration(SgVariableDeclaration* decl) {
-    SAWYER_MESG(logger[TRACE])<<"buildVarRefExpForVariableDeclaration:decl:"<<decl->unparseToString()<<endl;
+    SAWYER_MESG(logger[TRACE])<<"buildVarRefExpForVariableDeclaration:decl:"<<decl->unparseToString()<<" started."<<endl;
+    Sg_File_Info* fi=decl->get_file_info();
+    SAWYER_MESG(logger[TRACE])<<"fi: "<<fi<<" line: "<<fi->get_line()<<" col: "<<fi->get_col()<<endl;
+    SgType* type=decl->get_type();
+    SAWYER_MESG(logger[TRACE])<<"decl type: "<<type<<": "<<type->unparseToString()<<endl;
+    
     return SageBuilder::buildVarRefExp(decl);
+    SAWYER_MESG(logger[TRACE])<<"buildVarRefExpForVariableDeclaration:decl:"<<decl->unparseToString()<<" finished."<<endl;
   }
 
   void Normalization::addToTmpVarMapping(TmpVarNrType tmpVarNr, SgVariableDeclaration* decl) {
