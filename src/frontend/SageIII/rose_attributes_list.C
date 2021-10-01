@@ -7,6 +7,9 @@
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
 #include "rose_config.h"
 
+// PP (10/1/21): for handling Ada case insensitivity
+#include <boost/algorithm/string/case_conv.hpp>
+
 // DQ (11/28/2009): I think this is equivalent to "USE_ROSE"
 // #if CAN_NOT_COMPILE_WITH_ROSE != true
 // #if (CAN_NOT_COMPILE_WITH_ROSE == 0)
@@ -780,7 +783,7 @@ PreprocessingInfo::getTypeOfDirective () const
      return whatSortOfDirective;
    }
 
-void 
+void
 PreprocessingInfo::setTypeOfDirective (PreprocessingInfo::DirectiveType dt)
    {
   // Access function for the type of directive
@@ -879,6 +882,9 @@ PreprocessingInfo::directiveTypeName ( const DirectiveType & directive )
              break;
           case CpreprocessorEndifDeclaration:
              returnString = "CpreprocessorEndifDeclaration";
+             break;
+          case CpreprocessorEnd_ifDeclaration:
+             returnString = "CpreprocessorEnd_ifDeclaration";
              break;
           case CpreprocessorLineDeclaration:
              returnString = "CpreprocessorLineDeclaration";
@@ -2034,6 +2040,40 @@ ROSEAttributesList::collectFixedFormatPreprocessorDirectivesAndCommentsForAST( c
 
 #define DEBUG_CPP_DIRECTIVE_COLLECTION 0
 
+namespace
+{
+  // PP: for gnatprep's Ada preprocessor
+  //     recognize "if" in "#end if"
+  void gnatprepHandling(const string& line, std::string& cppIndentifier, int& lastChar)
+  {
+    if (!SageInterface::is_Ada_language())
+      return;
+
+    boost::to_lower(cppIndentifier);
+
+    if (cppIndentifier != "end")
+      return;
+
+    const int len = line.size();
+    int       pos = lastChar+1;
+
+    // skip blanks
+    while ((pos < len) && (line[pos] == ' '))
+      ++pos;
+
+    if (  (pos < len-2)
+       && (line[pos]   == 'i' || line[pos]   == 'I')
+       && (line[pos+1] == 'f' || line[pos+1] == 'F')
+       )
+    {
+      pos += 2;
+
+      cppIndentifier.append(" if"); // note, only one blank
+      lastChar = pos-2;
+    }
+  }
+}
+
 bool
 ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::DirectiveType & cppDeclarationKind, std::string & restOfTheLine )
    {
@@ -2142,6 +2182,7 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
                i++;
              }
 
+
 #if DEBUG_CPP_DIRECTIVE_COLLECTION
           printf ("i = %" PRIuPTR " \n",i);
 #endif
@@ -2154,6 +2195,8 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
 #endif
           int cppIdentifierLength = (positionOfLastCharacterOfCppIdentifier - positionOfFirstCharacterOfCppIdentifier) + 1;
           string cppIndentifier = line.substr(positionOfFirstCharacterOfCppIdentifier,cppIdentifierLength);
+
+          gnatprepHandling(line, cppIndentifier, positionOfLastCharacterOfCppIdentifier);
 
        // Some names will convert to integer values
 #if DEBUG_CPP_DIRECTIVE_COLLECTION
@@ -2278,6 +2321,10 @@ ROSEAttributesList::isCppDirective( const string & line, PreprocessingInfo::Dire
             else if (cppIndentifier == "endif")
              {
                cppDeclarationKind = PreprocessingInfo::CpreprocessorEndifDeclaration;
+             }
+            else if (cppIndentifier == "end if")
+             {
+               cppDeclarationKind = PreprocessingInfo::CpreprocessorEnd_ifDeclaration;
              }
             else if (cppIndentifier == "line")
              {

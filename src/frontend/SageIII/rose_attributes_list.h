@@ -233,6 +233,8 @@ class PreprocessingInfo
             // a simple appoach to adding large complex functions for which it is impractical to build up an AST.
                RawText,
 
+               CpreprocessorEnd_ifDeclaration, // PP (10/1/21): Ada "end if"
+
                LastDirectiveType
              };
 
