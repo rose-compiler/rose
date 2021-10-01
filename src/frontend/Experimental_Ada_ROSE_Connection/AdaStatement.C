@@ -969,26 +969,27 @@ namespace
 
   struct IfStmtCreator
   {
-      typedef std::pair<SgExpression*, SgStatement*> branch_type;
-      typedef std::vector<branch_type>               branch_container;
-
       explicit
-      IfStmtCreator(AstContext astctx)
-      : ctx(astctx)
+      IfStmtCreator(SgIfStmt& sgnode, AstContext astctx)
+      : ifStmt(&sgnode), ctx(astctx)
       {}
 
-      void commonBranch(Path_Struct& path, SgExpression* cond = nullptr)
+      void commonBranch(Path_Struct& path, void (SgIfStmt::*branchSetter)(SgStatement*))
       {
-        SgBasicBlock& block     = mkBasicBlock();
         ElemIdRange   thenStmts = idRange(path.Sequence_Of_Statements);
+        SgBasicBlock& block     = mkBasicBlock();
 
-        traverseIDs(thenStmts, elemMap(), StmtCreator{ctx.scope_npc(block)});
-        branches.emplace_back(cond, &block);
+        sg::linkParentChild(SG_DEREF(ifStmt), static_cast<SgStatement&>(block), branchSetter);
+        traverseIDs(thenStmts, elemMap(), StmtCreator{ctx.scope(block)});
       }
 
       void conditionedBranch(Path_Struct& path)
       {
-        commonBranch(path, &getExprID(path.Condition_Expression, ctx));
+        SgExpression& condExpr = getExprID(path.Condition_Expression, ctx);
+        SgStatement&  condStmt = mkExprStatement(condExpr);
+
+        sg::linkParentChild(SG_DEREF(ifStmt), condStmt, &SgIfStmt::set_conditional);
+        commonBranch(path, &SgIfStmt::set_true_body);
       }
 
       void operator()(Element_Struct& elem)
@@ -1000,7 +1001,7 @@ namespace
           case An_If_Path:
             {
               logKind("An_If_Path");
-              ADA_ASSERT(branches.size() == 0);
+              ADA_ASSERT(ifStmt);
               conditionedBranch(path);
               break;
             }
@@ -1008,7 +1009,15 @@ namespace
           case An_Elsif_Path:
             {
               logKind("An_Elsif_Path");
-              ADA_ASSERT(branches.size() != 0);
+              ADA_ASSERT(ifStmt);
+
+              SgIfStmt& cascadingIf = mkIfStmt();
+
+              sg::linkParentChild( SG_DEREF(ifStmt),
+                                   static_cast<SgStatement&>(cascadingIf),
+                                   &SgIfStmt::set_false_body
+                                 );
+              ifStmt = &cascadingIf;
               conditionedBranch(path);
               break;
             }
@@ -1016,8 +1025,8 @@ namespace
           case An_Else_Path:
             {
               logKind("An_Else_Path");
-              ADA_ASSERT(branches.size() != 0);
-              commonBranch(path);
+              ADA_ASSERT(ifStmt);
+              commonBranch(path, &SgIfStmt::set_false_body);
               break;
             }
 
@@ -1026,32 +1035,9 @@ namespace
         }
       }
 
-      static
-      SgStatement*
-      createIfStmt(SgStatement* elsePath, branch_type thenPath)
-      {
-        ADA_ASSERT(thenPath.first && thenPath.second);
-
-        return &mkIfStmt(SG_DEREF(thenPath.first), SG_DEREF(thenPath.second), elsePath);
-        //~ return sb::buildIfStmt(thenPath.first, thenPath.second, elsePath);
-      }
-
-      operator SgStatement&()
-      {
-        SgStatement* elseStmt = nullptr;
-
-        if (!branches.back().first)
-        {
-          elseStmt = branches.back().second;
-          branches.pop_back();
-        }
-
-        return SG_DEREF( std::accumulate(branches.rbegin(), branches.rend(), elseStmt, createIfStmt) );
-      }
-
     private:
+      SgIfStmt*        ifStmt;
       AstContext       ctx;
-      branch_container branches;
 
       IfStmtCreator() = delete;
   };
@@ -1474,10 +1460,12 @@ namespace
         {
           logKind("An_If_Statement");
 
-          ElemIdRange  range  = idRange(stmt.Statement_Paths);
-          SgStatement& sgnode = traverseIDs(range, elemMap(), IfStmtCreator{ctx});
+          SgIfStmt&   sgnode = mkIfStmt();
+          ElemIdRange range  = idRange(stmt.Statement_Paths);
 
           completeStmt(sgnode, elem, ctx);
+          traverseIDs(range, elemMap(), IfStmtCreator{sgnode, ctx});
+
           /* unused fields:
           */
           break;
@@ -1490,10 +1478,12 @@ namespace
           SgExpression&      caseexpr = getExprID(stmt.Case_Expression, ctx);
           SgBasicBlock&      casebody = mkBasicBlock();
           SgSwitchStatement& sgnode   = mkAdaCaseStmt(caseexpr, casebody);
+
+          completeStmt(sgnode, elem, ctx);
+
           ElemIdRange        range    = idRange(stmt.Statement_Paths);
 
           traverseIDs(range, elemMap(), CaseStmtCreator{ctx.scope(casebody), sgnode});
-          completeStmt(sgnode, elem, ctx);
           /* unused fields:
           */
           break;

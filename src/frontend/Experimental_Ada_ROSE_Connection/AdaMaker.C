@@ -323,16 +323,13 @@ SgType& mkAliasedType(SgType& underType)
 //
 // Statements
 
-namespace
+SgExprStatement&
+mkExprStatement(SgExpression& expr)
 {
-  SgExprStatement&
-  mkExprStatement(SgExpression& expr)
-  {
-    SgExprStatement& sgnode  = SG_DEREF( sb::buildExprStatement_nfi(&expr) );
+  SgExprStatement& sgnode  = SG_DEREF( sb::buildExprStatement_nfi(&expr) );
 
-    markCompilerGenerated(sgnode);
-    return sgnode;
-  }
+  markCompilerGenerated(sgnode);
+  return sgnode;
 }
 
 SgStatement&
@@ -399,10 +396,10 @@ mkForStatement(SgBasicBlock& body)
 
 
 SgIfStmt&
-mkIfStmt(SgExpression& cond, SgStatement& thenBranch, SgStatement* elseBranch_opt)
+mkIfStmt()
+// SgExpression& cond, SgStatement& thenBranch, SgStatement* elseBranch_opt)
 {
-  SgExprStatement& condStmt = mkExprStatement(cond);
-  SgIfStmt&        sgnode = SG_DEREF( sb::buildIfStmt_nfi(&condStmt, &thenBranch, elseBranch_opt) );
+  SgIfStmt& sgnode = SG_DEREF( sb::buildIfStmt_nfi(nullptr, nullptr, nullptr) );
 
   markCompilerGenerated(sgnode);
   setSymbolTableCaseSensitivity(sgnode);

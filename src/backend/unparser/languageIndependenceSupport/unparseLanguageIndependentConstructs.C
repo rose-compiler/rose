@@ -637,8 +637,8 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
              }
 
        // DQ (4/11/2021): The case of just using the unparseHeaderFiles without the token needs to work as well.
-       // DQ (3/15/2021): When generating the token sequence, some statements will not have a token sequence 
-       // and if they are not marked as transformations, then we want to skip their output. And example of 
+       // DQ (3/15/2021): When generating the token sequence, some statements will not have a token sequence
+       // and if they are not marked as transformations, then we want to skip their output. And example of
        // if ((sourceFile != NULL) && (sourceFile->get_unparse_tokens() == true || sourceFile->get_unparseHeaderFiles() == true))
        // if ((sourceFile != NULL) && (sourceFile->get_unparse_tokens() == true))
           if ((sourceFile != NULL) && (sourceFile->get_unparse_tokens() == true || sourceFile->get_unparseHeaderFiles() == true))
@@ -753,7 +753,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                             }
                            else
                             {
-                           // DQ (4/11/2021): If we are only unparsing headers without the token unparsing, then this is true, 
+                           // DQ (4/11/2021): If we are only unparsing headers without the token unparsing, then this is true,
                            // else if we needed the token subsequences, then it is false.
                            // statementInFile = false;
                            // if (sourceFile->get_unparseHeaderFiles() == true)
@@ -763,7 +763,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
                                  }
                                 else
                                  {
-                                // DQ (4/11/2021): If we are not using the token, then we need not have found them, but we 
+                                // DQ (4/11/2021): If we are not using the token, then we need not have found them, but we
                                 // should be unparsing the header files.
                                    ROSE_ASSERT(sourceFile->get_unparseHeaderFiles() == true);
 #if DEBUG_STATEMENT_FROM_FILE
@@ -1258,7 +1258,7 @@ UnparseLanguageIndependentConstructs::redundantStatementMappingToTokenSequence(S
 
      static std::set<SgStatement*> previouslySeenStatement;
 
-  // DQ (4/18/2021): This needs to be able to support token sequences from different files, currently it does 
+  // DQ (4/18/2021): This needs to be able to support token sequences from different files, currently it does
   // not distinquish between different files and they detects previously unparsed token sequences by mistake.
   // DQ (1/13/2015): Adding another mechanism to support supression of previously unparsed token subsequences (required to support macros that map to multiple statements).
   // static std::set<TokenStreamSequenceToNodeMapping*> previouslyUnparsedTokenSubsequences;
@@ -1311,7 +1311,7 @@ UnparseLanguageIndependentConstructs::redundantStatementMappingToTokenSequence(S
           TokenStreamSequenceToNodeMapping* tokenStreamSequenceToNodeMapping = *i;
           printf(" --- --- previouslyUnparsedTokenSubsequences[%d] = %p \n",counter_j,tokenStreamSequenceToNodeMapping);
 
-       // DQ (4/17/2021): Output the token sequence so that we can unsderstand why the second forward 
+       // DQ (4/17/2021): Output the token sequence so that we can unsderstand why the second forward
        // class declaration is being considered in the previouslyUnparsedTokenSubsequences set.
 #if 1
           tokenStreamSequenceToNodeMapping->display("In redundantStatementMappingToTokenSequence(): token sequence");
@@ -3823,7 +3823,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
 #endif
 
 #if 1
-  // DQ (4/16/2021): Moved outside of true branch (below) so that it can be used after the executaion of the 
+  // DQ (4/16/2021): Moved outside of true branch (below) so that it can be used after the executaion of the
   // true and false branches (to support when to unparse and suppress the trailing whitespace of the global scope).
      SgSourceFile* sourceFile = info.get_current_source_file();
   // ROSE_ASSERT(sourceFile != NULL);
@@ -3922,7 +3922,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
        // include_file->set_last_source_sequence_number(last_seq_number);
 
 #if 0
-       // DQ (4/16/2021): Moved outside of this true branch (above) so that it can be used after the executaion of the 
+       // DQ (4/16/2021): Moved outside of this true branch (above) so that it can be used after the executaion of the
        // true and false branches (to support when to unparse and suppress the trailing whitespace of the global scope).
           SgStatement* firstStatement = NULL;
           SgStatement* lastStatement  = NULL;
@@ -5032,8 +5032,8 @@ UnparseLanguageIndependentConstructs::unparseGlobalStmt (SgStatement* stmt, SgUn
 
 #if 0
   // DQ (4/11/2021): The global scope is shared across the header files and with the source file for the translation unit.
-  // This is not an issue for the token-base unparsing since the token suquences for each file are held in a map indexed 
-  // by the SgSourceFile pointer.  Thus the global scope pointer can be safely used as a keep into the different token 
+  // This is not an issue for the token-base unparsing since the token suquences for each file are held in a map indexed
+  // by the SgSourceFile pointer.  Thus the global scope pointer can be safely used as a keep into the different token
   // subsequence maps for each file.
 
   // DQ (1/10/2014): Support new definition of the SgSourceFile via the SgUnparse_Info (verify it is the same,
@@ -5901,6 +5901,7 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                          case PreprocessingInfo::CpreprocessorElseDeclaration:
                          case PreprocessingInfo::CpreprocessorElifDeclaration:
                          case PreprocessingInfo::CpreprocessorEndifDeclaration:
+                         case PreprocessingInfo::CpreprocessorEnd_ifDeclaration: // Ada "end if"
                          case PreprocessingInfo::CpreprocessorLineDeclaration:
                       // AS(120506) Added support for skipped tokens for Wave
                          case PreprocessingInfo::CSkippedToken:
