@@ -2,7 +2,11 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 bin_PROGRAMS =
 
 DEFAULT_DATABASE       = 
-DEFAULT_DATABASE_LOCAL = 
+DEFAULT_DATABASE_LOCAL =
+
+lib_LIBRARIES = libmatrixTools.a
+libmatrixTools_a_SOURCES = matrixTools.C
+libmatrixTools_a_CPPFLAGS = $(ROSE_INCLUDES)
 
 bin_PROGRAMS += rose-matrix-next-test
 rose_matrix_next_test_SOURCES = matrixNextTest.C
@@ -20,7 +24,7 @@ bin_PROGRAMS += rose-matrix-query
 rose_matrix_query_SOURCES = matrix-query.C
 rose_matrix_query_CPPFLAGS = $(ROSE_INCLUDES) -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE)"'
 rose_matrix_query_LDFLAGS = $(ROSE_RPATHS)
-rose_matrix_query_LDADD = $(ROSE_LIBS)
+rose_matrix_query_LDADD = libmatrixTools.a $(ROSE_LIBS)
 
 bin_PROGRAMS += rose-matrix-attachments
 rose_matrix_attachments_SOURCES = matrixAttachments.C
@@ -44,13 +48,19 @@ bin_PROGRAMS += rose-matrix-dependencies
 rose_matrix_dependencies_SOURCES = matrix-dependencies.C
 rose_matrix_dependencies_CPPFLAGS = $(ROSE_INCLUDES) -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE)"'
 rose_matrix_dependencies_LDFLAGS = $(ROSE_RPATHS)
-rose_matrix_dependencies_LDADD = $(ROSE_LIBS)
+rose_matrix_dependencies_LDADD = libmatrixTools.a $(ROSE_LIBS)
 
 bin_PROGRAMS += rose-matrix-status
 rose_matrix_status_SOURCES = matrix-status.C
 rose_matrix_status_CPPFLAGS = $(ROSE_INCLUDES) -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE)"'
 rose_matrix_status_LDFLAGS = $(ROSE_RPATHS)
-rose_matrix_status_LDADD = $(ROSE_LIBS)
+rose_matrix_status_LDADD = libmatrixTools.a $(ROSE_LIBS)
+
+bin_PROGRAMS += rose-matrix-slave-config
+rose_matrix_slave_config_SOURCES = matrix-slave-config.C
+rose_matrix_slave_config_CPPFLAGS = $(ROSE_INCLUDES) -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE)"'
+rose_matrix_slave_config_LDFLAGS = $(ROSE_RPATHS)
+rose_matrix_slave_config_LDADD = libmatrixTools.a $(ROSE_LIBS)
 
 if ROSE_USE_WT
 
