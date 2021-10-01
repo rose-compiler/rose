@@ -783,21 +783,27 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
           // i) generate tmp-var initializer with expr as lhs
           SgScopeStatement* scope=stmt->get_scope();
           bool shareExpression=false;
-          //SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: stmt:"<<stmt->unparseToString()<<endl;
-          //SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: expr:"<<expr->unparseToString()<<endl;
-          //SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: scope:"<<AstTerm::astTermWithNullValuesToString(scope)<<endl;
-          //SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: scope:"<<scope->unparseToString()<<endl;
+          SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: stmt:"<<stmt->unparseToString()<<endl;
+          SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: expr:"<<expr->unparseToString()<<endl;
+          ROSE_ASSERT(expr->get_type());
+          SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: expr type:"<<expr->get_type()<<endl;
+          SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: scope:"<<AstTerm::astTermWithNullValuesToString(scope)<<endl;
+          SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: scope:"<<scope->unparseToString()<<endl;
+
           auto tmpVarDeclaration=buildVariableDeclarationWithInitializerForExpression(expr,scope,shareExpression);
-          addToTmpVarMapping((*j).tmpVarNr,tmpVarDeclaration);
 
           ROSE_ASSERT(tmpVarDeclaration);
+          //ROSE_ASSERT(tmpVarDeclaration->get_type());
+          SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: tmpVarDeclaration: "<<tmpVarDeclaration<<endl;
+          addToTmpVarMapping((*j).tmpVarNr,tmpVarDeclaration);
+
           /////tmpVarDeclaration->set_parent(scope);
           tmpVarDeclaration->set_parent(stmt->get_parent());
           SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: tmpVarDeclaration:"<<tmpVarDeclaration->unparseToString()<<endl;
           auto tmpVarReference=buildVarRefExpForVariableDeclaration(tmpVarDeclaration);
           ROSE_ASSERT(tmpVarReference);
-    //setFileInfo(tmpVarDeclaration,originalFileInfo); // this breaks NORM015 but makes 6 DOMs pass
-    setFileInfo(tmpVarReference,originalFileInfo);
+          //setFileInfo(tmpVarDeclaration,originalFileInfo); // this breaks NORM015 but makes 6 DOMs pass
+          setFileInfo(tmpVarReference,originalFileInfo);
 
           // ii) insert tmp-var initializer
           insertNormalizedSubExpressionFragment(tmpVarDeclaration,stmt);
@@ -1569,6 +1575,7 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
 
   SgVariableDeclaration*
   Normalization::buildVariableDeclarationForExpression(SgExpression* expression, SgScopeStatement* scope, bool initWithExpression, bool shareExpression) {
+    logger[TRACE]<<"buildVariableDeclarationForExpression: started"<<endl;
     SgType* expressionType = expression->get_type();
     SgType* variableType = expressionType;
 
@@ -1608,8 +1615,7 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
         ||( (isSgDotExp(expression)||isSgArrowExp(expression)||isSgPointerDerefExp(expression))
             && !isSgPointerType(expressionType)
             && !isSgReferenceType(expressionType) )
-        )
-    {
+        ) {
       if(SgType* strippedType = isSgType(expressionType->stripType(SgType::STRIP_TYPEDEF_TYPE))) {
         if(SgArrayType* arrayType = isSgArrayType(strippedType)) {
           SgType* strippedType = arrayType->get_base_type();
@@ -1638,6 +1644,7 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
     SgVariableDeclaration* newVarDeclaration = SageBuilder::buildVariableDeclaration(name, variableType, initializer, scope);
     ROSE_ASSERT(newVarDeclaration);
 
+    logger[TRACE]<<"buildVariableDeclarationForExpression: finished"<<endl;
     return newVarDeclaration;
   }
 
@@ -1645,8 +1652,8 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
     SAWYER_MESG(logger[TRACE])<<"buildVarRefExpForVariableDeclaration:decl:"<<decl->unparseToString()<<" started."<<endl;
     Sg_File_Info* fi=decl->get_file_info();
     SAWYER_MESG(logger[TRACE])<<"fi: "<<fi<<" line: "<<fi->get_line()<<" col: "<<fi->get_col()<<endl;
-    SgType* type=decl->get_type();
-    SAWYER_MESG(logger[TRACE])<<"decl type: "<<type<<": "<<type->unparseToString()<<endl;
+    //SgType* type=decl->get_type();
+    //SAWYER_MESG(logger[TRACE])<<"decl type: "<<type<<": "<<type->unparseToString()<<endl;
     
     return SageBuilder::buildVarRefExp(decl);
     SAWYER_MESG(logger[TRACE])<<"buildVarRefExpForVariableDeclaration:decl:"<<decl->unparseToString()<<" finished."<<endl;
