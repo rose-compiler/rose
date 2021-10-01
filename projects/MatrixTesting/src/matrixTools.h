@@ -17,6 +17,7 @@ struct Dependency {
     std::string comment;
     bool enabled = false;
     bool supported = false;
+    std::set<std::string> osNames;
 };
 
 using DependencyList = std::vector<Dependency>;

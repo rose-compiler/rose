@@ -1,7 +1,9 @@
 #include "matrixTools.h"
 
 #include <Rose/StringUtility/Diagnostics.h>
+#include <Rose/StringUtility/SplitJoin.h>
 #include <Sawyer/Database.h>
+#include <boost/algorithm/string/trim.hpp>
 #include <boost/format.hpp>
 #include <boost/regex.hpp>
 
@@ -98,7 +100,8 @@ approximateAge(time_t t) {
 }
 
 std::string dependencyColumns() {
-    return "name, value, comment, enabled, supported";
+    //      0     1      2        3        4          5
+    return "name, value, comment, enabled, supported, os_list";
 }
 
 // Load depencency info
@@ -112,6 +115,15 @@ loadDependencies(DB::Statement stmt) {
                     .comment = row.get<std::string>(2).orElse(""),
                     .enabled = *row.get<bool>(3),
                     .supported = *row.get<bool>(4)});
+
+        std::vector<std::string> osNames = Rose::StringUtility::split(" ", row.get<std::string>(5).orDefault());
+        for (std::string &osName: osNames) {
+            boost::trim(osName);
+            if (boost::ends_with(osName, ","))
+                osName = osName.substr(0, osName.size()-1);
+        }
+        osNames.erase(std::remove(osNames.begin(), osNames.end(), std::string()), osNames.end());
+        deps.back().osNames = std::set<std::string>(osNames.begin(), osNames.end());
     }
     return deps;
 }

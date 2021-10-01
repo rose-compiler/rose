@@ -3,7 +3,40 @@ static const char *gDescription =
     "This tool queries or adjusts the dependencies that can be chosen when running a test. Each dependency has a name, value, "
     "and optional description. The dependencies also have Boolean values to indicate whether it is enabled and/or supported. An "
     "enabled dependency is one that can be selected for a test; a supported dependency is one that is officially supported "
-    "according to the ROSE documentation.";
+    "according to the ROSE documentation.\n\n"
+
+    "The following commands are understood:\n"
+
+    "@named{@prop{programName} [@v{switches}] names}"
+    "{Lists the valid configuration names, such as \"compiler\", \"boost\", etc.}"
+
+    "@named{@prop{programName} [@v{switches}] list [@v{name} [@v{value}]]}"
+    "{Lists the dependencies for the specified name and value. If the value is omitted, then all dependencies with the "
+    "specified name are printed; and if the name is also omitted then all dependencies are printed.}"
+
+    "@named{@prop{programName} [@v{switches}] enable @v{name} @v{value} [@v{os}]}"
+    "{Enable the specified property and value. If an @v{os} is given, then that operating system as added to the list "
+    "of valid operating systems for this dependency instead of setting the dependency's \"enabled\" bit.}"
+
+    "@named{@prop{programName} [@v{switches}] disable @v{name} @v{value} [@v{os}]}"
+    "{Disabled the specified property and value. If an @v{os} is given, then that operating system is removed from the "
+    "list of valid operating systems for this dependency instead of clearing the dependency's \"enabled\" bit.}"
+
+    "@named{@prop{programName} [@v{switches}] supported @v{name} @v{value}}"
+    "{Set the property's \"supported\" bit.}"
+
+    "@named{@prop{programName} [@v{switches}] unsupported @v{name} @v{value}}"
+    "{Clear the property's \"supported\" bit.}"
+
+    "@named{@prop{programName} [@v{switches}] comment @v{name} @v{value} @v{comment}}"
+    "{Set the comment to the specified value. An empty string for the comment will clear the comment.}"
+
+    "@named{@prop{programName} [@v{switches}] insert @v{name} @v{value}}"
+    "{Create a new property.}"
+
+    "@named{@prop{programName} [@v{switches}] delete @v{name} @v{value}}"
+    "{Delete the specified dependency from the database.}";
+
 
 #include <rose.h>
 #include "matrixTools.h"
@@ -12,6 +45,7 @@ static const char *gDescription =
 #include <Rose/FormattedTable.h>
 #include <Sawyer/Database.h>
 #include <Sawyer/Message.h>
+#include <boost/algorithm/string/trim.hpp>
 
 using namespace Rose;
 using namespace Sawyer::Message::Common;
@@ -29,17 +63,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     using namespace Sawyer::CommandLine;
     Parser parser = Rose::CommandLine::createEmptyParser(gPurpose, gDescription);
     parser.errorStream(mlog[FATAL]);
-    parser.doc("Synopsis",
-               "@prop{programName} [@v{switches}] names\n\n"
-               "@prop{programName} [@v{switches}] list        [@v{name} [@v{value}]]\n\n"
-               "@prop{programName} [@v{switches}] enable      @v{name} @v{value}\n\n"
-               "@prop{programName} [@v{switches}] disable     @v{name} @v{value}\n\n"
-               "@prop{programName} [@v{switches}] supported   @v{name} @v{value}\n\n"
-               "@prop{programName} [@v{switches}] unsupported @v{name} @v{value}\n\n"
-               "@prop{programName} [@v{switches}] comment     @v{name} @v{value} @v{comment}\n\n"
-               "@prop{programName} [@v{switches}] insert      @v{name} @v{value}\n\n"
-               "@prop{programName} [@v{switches}] delete      @v{name} @v{value}\n\n");
-
+    parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{command} [@v{arguments}...]");
 
     SwitchGroup sg("Tool-specific switches");
     insertDatabaseSwitch(sg, settings.databaseUri);
@@ -74,7 +98,8 @@ print(const Settings &settings, const DependencyList &deps) {
             table.columnHeader(0, 1, "Value");
             table.columnHeader(0, 2, "Enabled");
             table.columnHeader(0, 3, "Supported");
-            table.columnHeader(0, 4, "Comment");
+            table.columnHeader(0, 4, "Operating\nSystems");
+            table.columnHeader(0, 5, "Comment");
             for (size_t i = 0; i < deps.size(); ++i) {
                 table.insert(i, 0, cEscape(deps[i].name));
                 table.insert(i, 1, cEscape(deps[i].value));
@@ -82,7 +107,8 @@ print(const Settings &settings, const DependencyList &deps) {
                 table.cellProperties(i, 2, deps[i].enabled ? propTrue : propFalse);
                 table.insert(i, 3, deps[i].supported ? "supported" : "unsupported");
                 table.cellProperties(i, 3, deps[i].supported ? propTrue : propFalse);
-                table.insert(i, 4, cEscape(deps[i].comment));
+                table.insert(i, 4, StringUtility::join(", ", deps[i].osNames));
+                table.insert(i, 5, cEscape(deps[i].comment));
             }
             std::cout <<table;
             return;
@@ -171,6 +197,49 @@ enable(const Settings &settings, DB::Connection db, const std::string &name, con
     }
 }
 
+// Add or remove an operating system from a dependency.
+static void
+enable(const Settings &settings, DB::Connection db, const std::string &name, const std::string &value, bool b,
+       const std::string os) {
+    auto stmt = db.stmt("select " + dependencyColumns() +
+                        " from dependencies"
+                        " where name = ?name and value = ?value")
+                .bind("name", name)
+                .bind("value", value);
+    DependencyList deps = loadDependencies(stmt);
+    if (deps.empty()) {
+        mlog[FATAL] <<"dependency \"" <<StringUtility::cEscape(name) <<"\" \"" <<StringUtility::cEscape(value) <<"\""
+                    <<" does not exist\n";
+        exit(1);
+    }
+    ASSERT_require(1 == deps.size());
+
+    // The user might have specified more than one os at a time.
+    std::vector<std::string> osNames = StringUtility::split(" ", os);
+    for (std::string &os: osNames) {
+        boost::trim(os);
+        if (boost::ends_with(os, ","))
+            os = os.substr(0, os.size()-1);
+    }
+    osNames.erase(std::remove(osNames.begin(), osNames.end(), std::string()), osNames.end());
+
+    // Insert or remove
+    for (const std::string &os: osNames) {
+        if (b) {
+            deps.front().osNames.insert(os);
+        } else {
+            deps.front().osNames.erase(os);
+        }
+    }
+
+    // Save the new string
+    db.stmt("update dependencies set os_list = ?os_list where name = ?name and value = ?value")
+        .bind("name", name)
+        .bind("value", value)
+        .bind("os_list", StringUtility::join(" ", deps.front().osNames))
+        .run();
+}
+
 // Mark a specific dependency as supported or unsupported
 static void
 support(const Settings &settings, DB::Connection db, const std::string &name, const std::string &value, bool b) {
@@ -211,7 +280,7 @@ insert(const Settings &settings, DB::Connection db, const std::string &name, con
         exit(1);
     } else {
         db.stmt("insert into dependencies (name, value, enabled, supported, comment) "
-                " values (?name, ?value, true, true, ''")
+                " values (?name, ?value, 0, 0, '')")
             .bind("name", name)
             .bind("value", value)
             .run();
@@ -225,7 +294,7 @@ erase(const Settings &settings, DB::Connection db, const std::string &name, cons
         .bind("name", name).bind("value", value).get<int>().orElse(0)) {
         mlog[WARN] <<"nothing affected\n";
     } else {
-        db.stmt("delete dependencies where = ?name and value = ?value")
+        db.stmt("delete from dependencies where name = ?name and value = ?value")
             .bind("name", name)
             .bind("value", value)
             .run();
@@ -267,6 +336,8 @@ main(int argc, char *argv[]) {
         const bool enabled = "enable" == args[0] || "enabled" == args[0];
         if (args.size() == 3) {
             enable(settings, db, args[1], args[2], enabled);
+        } else if (args.size() == 4) {
+            enable(settings, db, args[1], args[2], enabled, args[3]);
         } else {
             incorrectUsage();
         }
