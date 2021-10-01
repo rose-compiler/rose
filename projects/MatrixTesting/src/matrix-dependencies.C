@@ -22,16 +22,6 @@ struct Settings {
     Format outputFormat = Format::PLAIN;
 };
 
-struct Dependency {
-    std::string name;
-    std::string value;
-    std::string comment;
-    bool enabled = false;
-    bool supported = false;
-};
-
-using Dependencies = std::vector<Dependency>;
-
 static Sawyer::Message::Facility mlog;
 
 static std::vector<std::string>
@@ -70,7 +60,7 @@ incorrectUsage() {
 }
 
 static void
-print(const Settings &settings, const Dependencies &deps) {
+print(const Settings &settings, const DependencyList &deps) {
     using namespace Rose::StringUtility;
     switch (settings.outputFormat) {
         case Format::PLAIN: {
@@ -112,20 +102,6 @@ print(const Settings &settings, const Dependencies &deps) {
     ASSERT_not_reachable("invalid output format");
 }
 
-// Load depencency info
-Dependencies load(DB::Statement stmt) {
-    Dependencies deps;
-    for (auto row: stmt) {
-        deps.push_back(Dependency{
-                    .name = *row.get<std::string>(0),
-                    .value = *row.get<std::string>(1),
-                    .comment = row.get<std::string>(2).orElse(""),
-                    .enabled = *row.get<bool>(3),
-                    .supported = *row.get<bool>(4)});
-    }
-    return deps;
-}
-
 // Show only the names of dependencies
 static void
 listNames(const Settings &settings, DB::Connection db) {
@@ -153,31 +129,31 @@ listNames(const Settings &settings, DB::Connection db) {
 // List all dependencies
 static void
 list(const Settings &settings, DB::Connection db) {
-    auto stmt = db.stmt("select name, value, comment, enabled, supported from dependencies order by name, value");
-    print(settings, load(stmt));
+    auto stmt = db.stmt("select " + dependencyColumns() + " from dependencies order by name, value");
+    print(settings, loadDependencies(stmt));
 }
 
 // List dependencies having the specified name
 static void
 list(const Settings &settings, DB::Connection db, const std::string &name) {
-    auto stmt = db.stmt("select name, value, comment, enabled, supported"
+    auto stmt = db.stmt("select " + dependencyColumns() +
                         " from dependencies"
                         " where name = ?name"
                         " order by name, value")
                 .bind("name", name);
-    print(settings, load(stmt));
+    print(settings, loadDependencies(stmt));
 }
 
 // List dependencies having the specified name and value
 static void
 list(const Settings &settings, DB::Connection db, const std::string &name, const std::string &value) {
-    auto stmt = db.stmt("select name, value, comment, enabled, supported"
+    auto stmt = db.stmt("select " + dependencyColumns() +
                         " from dependencies"
                         " where name = ?name and value = ?value"
                         " order by name, value")
                 .bind("name", name)
                 .bind("value", value);
-    print(settings, load(stmt));
+    print(settings, loadDependencies(stmt));
 }
 
 // Enable or disable the dependency with the specified name and value

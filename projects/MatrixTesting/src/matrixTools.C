@@ -5,6 +5,8 @@
 #include <boost/format.hpp>
 #include <boost/regex.hpp>
 
+namespace DB = Sawyer::Database;
+
 void
 insertDatabaseSwitch(Sawyer::CommandLine::SwitchGroup &sg, std::string &uri) {
     using namespace Sawyer::CommandLine;
@@ -93,4 +95,23 @@ approximateAge(time_t t) {
 
     retval += reversed ? " in the future" : " ago";
     return retval;
+}
+
+std::string dependencyColumns() {
+    return "name, value, comment, enabled, supported";
+}
+
+// Load depencency info
+DependencyList
+loadDependencies(DB::Statement stmt) {
+    DependencyList deps;
+    for (auto row: stmt) {
+        deps.push_back(Dependency{
+                    .name = *row.get<std::string>(0),
+                    .value = *row.get<std::string>(1),
+                    .comment = row.get<std::string>(2).orElse(""),
+                    .enabled = *row.get<bool>(3),
+                    .supported = *row.get<bool>(4)});
+    }
+    return deps;
 }

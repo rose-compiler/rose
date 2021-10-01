@@ -18,9 +18,9 @@ ifeq (@(LINKAGE),shared)
     run $(tool_compile_linkexe) --install -o rose-matrix-dependencies matrix-dependencies.C libmatrixTools
     run $(tool_compile_linkexe) --install -o rose-matrix-query matrix-query.C libmatrixTools
     run $(tool_compile_linkexe) --install -o rose-matrix-slave-config matrix-slave-config.C libmatrixTools
+    run $(tool_compile_linkexe) --install -o rose-matrix-next-test matrix-next-test.C libmatrixTools
 
     # Original tools that use some features I'd like to deprecate, such as ::SqlDatabase
-    run $(tool_compile_linkexe) --install -o rose-matrix-next-test matrixNextTest.C
     run $(tool_compile_linkexe) --install -o rose-matrix-test-result matrixTestResult.C
     run $(tool_compile_linkexe) --install -o rose-matrix-attachments matrixAttachments.C
     run $(tool_compile_linkexe) --install -o rose-matrix-errors matrixErrors.C

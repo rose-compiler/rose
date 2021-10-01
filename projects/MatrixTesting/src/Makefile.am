@@ -9,10 +9,10 @@ libmatrixTools_a_SOURCES = matrixTools.C
 libmatrixTools_a_CPPFLAGS = $(ROSE_INCLUDES)
 
 bin_PROGRAMS += rose-matrix-next-test
-rose_matrix_next_test_SOURCES = matrixNextTest.C
+rose_matrix_next_test_SOURCES = matrix-next-test.C
 rose_matrix_next_test_CPPFLAGS = $(ROSE_INCLUDES) -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE)"'
 rose_matrix_next_test_LDFLAGS = $(ROSE_RPATHS)
-rose_matrix_next_test_LDADD = $(ROSE_LIBS)
+rose_matrix_next_test_LDADD = libmatrixTools.a $(ROSE_LIBS)
 
 bin_PROGRAMS += rose-matrix-test-result
 rose_matrix_test_result_SOURCES = matrixTestResult.C
