@@ -444,10 +444,16 @@ report-results() {
 	echo "$arg0: error: failed to send test results to database ********"
     elif  [ "$DRY_RUN" = "" ]; then
 	rose-matrix-attachments --database="$DATABASE" --attach --title="Commands" $testid "${rundir}/dribble"
+
 	tail -n $MAX_SAVED_LINES "${rundir}/output" |\
 	    iconv -c -f UTF8 -t ASCII |\
 	    remove-ansi-escapes >"${rundir}/output.short"
 	rose-matrix-attachments --database="$DATABASE" --attach --title="Final output" $testid "${rundir}/output.short"
+
+	if [ -r "${rundir}/rmc-config" ]; then
+	    rose-matrix-attachments --database="$DATABASE" --attach --title=".rmc-main.cfg" $testid "${rundir}/rmc-config"
+	fi
+
 	rm "${rundir}/output.short"
 	rose-matrix-errors --database="$DATABASE" update $testid
 
