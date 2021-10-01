@@ -185,6 +185,10 @@ namespace Ada_ROSE_Translation
   //
   // Statement Makers
 
+  /// wraps an \ref expr in an SgExprStatement
+  SgExprStatement&
+  mkExprStatement(SgExpression& expr);
+
   /// builds a node representing raising exception \ref raised
   SgStatement&
   mkRaiseStmt(SgExpression& raised);
@@ -651,7 +655,9 @@ namespace Ada_ROSE_Translation
 
   /// creates and if statement
   SgIfStmt&
-  mkIfStmt(SgExpression& cond, SgStatement& thenBranch, SgStatement* elseBranch_opt);
+  mkIfStmt();
+
+  // SgExpression& cond, SgStatement& thenBranch, SgStatement* elseBranch_opt);
 
   /// converts a value of type V to a value of type U via streaming
   /// \tparam  V input value type
