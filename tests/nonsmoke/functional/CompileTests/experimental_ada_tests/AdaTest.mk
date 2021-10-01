@@ -212,8 +212,8 @@ ROSE_FAILING_ADA_TESTS :=                           \
   protected_body_declaration.adb                    \
   protected_body_declaration.ads                    \
   procedure_body_stub.adb                           \
-  package_instantiation2.adb                        \
-  procedure_instantiation.adb                       \
+  package_instantiation.adb                         \
+  procedure_instantiation2.adb                      \
   protected_type_declaration.ads                    \
   requeue_statement_2.adb                           \
   requeue_statements.adb                            \
