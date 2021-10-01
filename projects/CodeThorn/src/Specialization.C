@@ -174,7 +174,7 @@ int Specialization::substituteConstArrayIndexExprsWithConst(VariableIdMapping* v
 	   AbstractValue varVal=evalResult.value();
 	   if(varVal.isConstInt()) {
 	     int varIntValue=varVal.getIntValue();
-	     //logger[TRACE]<<"INFO: replacing in AST: "<<arrayIndexExpr->unparseToString()<<" with "<<varIntValue<<endl;
+	     //SAWYER_MESG(logger[TRACE])<<"INFO: replacing in AST: "<<arrayIndexExpr->unparseToString()<<" with "<<varIntValue<<endl;
 	     SgNodeHelper::replaceExpression(arrayIndexExpr,SageBuilder::buildIntVal(varIntValue),false);
 	     numConstExprElim++;
 	   }
@@ -217,7 +217,7 @@ int Specialization::substituteVariablesWithConst(SgNode* node, ConstReporter* co
      // buildFloatType()
      // buildDoubleType()
      // SgIntVal* buildIntVal(int)
-     logger[TRACE]<<"replacing in AST: "<<((*i).first)->unparseToString()<<" with "<<(*i).second<<endl;
+     SAWYER_MESG(logger[TRACE])<<"replacing in AST: "<<((*i).first)->unparseToString()<<" with "<<(*i).second<<endl;
      SgNodeHelper::replaceExpression((*i).first,SageBuilder::buildIntVal((*i).second),false);
    }
    return (int)substitutionList.size();
@@ -326,7 +326,7 @@ void Specialization::extractArrayUpdateOperations(CTAnalysis* ana,
     numProcessedArrayUpdates++;
     if(numProcessedArrayUpdates%100==0) {
       // OUTPUT of progress in transformation of updates
-      logger[TRACE]<<"INFO: transformed arrayUpdates: "<<numProcessedArrayUpdates<<" / "<<stgArrayUpdateSequence.size() <<endl;
+      SAWYER_MESG(logger[TRACE])<<"INFO: transformed arrayUpdates: "<<numProcessedArrayUpdates<<" / "<<stgArrayUpdateSequence.size() <<endl;
     }
     rewriteSystem.getRewriteStatisticsPtr()->numArrayUpdates++;
     arrayUpdates[i]=EStateExprInfo(p_estate,p_exp,p_expCopy2);

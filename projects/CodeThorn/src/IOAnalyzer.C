@@ -73,7 +73,7 @@ void IOAnalyzer::extractRersIOAssertionTraces() {
   for (list<pair<int, const EState*> >::iterator i = _firstAssertionOccurences.begin(); 
        i != _firstAssertionOccurences.end(); 
        ++i ) {
-    logger[TRACE]<< "STATUS: extracting trace leading to failing assertion: " << i->first << endl;
+    SAWYER_MESG(logger[TRACE])<< "STATUS: extracting trace leading to failing assertion: " << i->first << endl;
     addCounterexample(i->first, i->second);
   }
 }

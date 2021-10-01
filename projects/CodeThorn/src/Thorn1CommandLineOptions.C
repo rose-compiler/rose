@@ -62,6 +62,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("function-resolution-mode",po::value< int >(&ctOpt.functionResolutionMode)->default_value(4),"1:Translation unit only, 2:slow lookup, 3: -, 4: complete resolution (including function pointers)")
     //("test-selector",po::value< int >(&ctOpt.testSelector)->default_value(0)->implicit_value(0),"Option for selecting dev tests.")
     ("ast-symbol-check",po::value< bool >(&ctOpt.astSymbolCheckFlag),"Allows to turn off the AST consistency symbol check (by default the check is enabled).")
+    ("ast-symbol-pointer-check",po::value< bool >(&ctOpt.info.astSymbolPointerCheckReport)->implicit_value(true),"Run ast symbol pointer check. Writes report to ast-symbol-pointer-check-report.txt.")
     ("vim-report-file",po::value< string >(&ctOpt.vimReportFileName),"Generates a report of ast symbol check and some additional ast checks.")
     ;
 

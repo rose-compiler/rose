@@ -15,7 +15,7 @@ Sawyer::Message::Facility Solver5::logger;
 bool Solver5::_diagnosticsInitialized = false;
 
 Solver5::Solver5() {
-  initDiagnostics();
+  //initDiagnostics();
 }
 
 int Solver5::getId() {
@@ -27,14 +27,14 @@ int Solver5::getId() {
   * \date 2012.
  */
 void Solver5::run() {
-  logger[INFO]<<"Running solver "<<getId()<<endl;
+  //SAWYER_MESG(logger[INFO])<<"Running solver "<<getId()<<endl;
   //_analyzer->_analysisTimer.start(); // is started in runSolver now
   if(_analyzer->svCompFunctionSemantics()) {
     _analyzer->reachabilityResults.init(1); // in case of svcomp mode set single program property to unknown
   } else {
     _analyzer->reachabilityResults.init(_analyzer->getNumberOfErrorLabels()); // set all reachability results to unknown
   }
-  logger[INFO]<<"number of error labels: "<<_analyzer->reachabilityResults.size()<<endl;
+  //SAWYER_MESG(logger[INFO])<<"number of error labels: "<<_analyzer->reachabilityResults.size()<<endl;
   size_t prevStateSetSize=0; // force immediate report at start
   int threadNum;
   int workers=_analyzer->_numberOfThreadsToUse;
@@ -52,13 +52,13 @@ void Solver5::run() {
     ioReductionThreshold = _analyzer->getLtlOptionsRef().ioReduction;
   }
 
-  SAWYER_MESG(logger[TRACE])<<"STATUS: Running parallel solver 5 with "<<workers<<" threads."<<endl;
+  //SAWYER_MESG(logger[TRACE])<<"STATUS: Running parallel solver 5 with "<<workers<<" threads."<<endl;
   _analyzer->printStatusMessage(true);
 # pragma omp parallel shared(workVector) private(threadNum)
   {
     threadNum=omp_get_thread_num();
     while(!_analyzer->all_false(workVector)) {
-      // logger[DEBUG]<<"running : WL:"<<estateWorkListCurrent->size()<<endl;
+      // SAWYER_MESG(logger[DEBUG])<<"running : WL:"<<estateWorkListCurrent->size()<<endl;
       if(threadNum==0 && _analyzer->_displayDiff && (_analyzer->estateSet.size()>(prevStateSetSize+_analyzer->_displayDiff))) {
         _analyzer->printStatusMessage(true);
         prevStateSetSize=_analyzer->estateSet.size();
@@ -209,7 +209,7 @@ void Solver5::run() {
               if(_analyzer->isVerificationErrorEState(&newEState)) {
 #pragma omp critical
                 {
-                  SAWYER_MESG(logger[TRACE]) <<"STATUS: detected verification error state ... terminating early"<<endl;
+                  //SAWYER_MESG(logger[TRACE]) <<"STATUS: detected verification error state ... terminating early"<<endl;
                   // set flag for terminating early
                   _analyzer->reachabilityResults.reachable(0);
 		  _analyzer->_firstAssertionOccurences.push_back(pair<int, const EState*>(0, newEStatePtr));
@@ -264,6 +264,6 @@ void Solver5::run() {
 void Solver5::initDiagnostics() {
   if (!_diagnosticsInitialized) {
     _diagnosticsInitialized = true;
-    Solver::initDiagnostics(logger, getId());
+    Solver::initDiagnostics(logger, 5);
   }
 }

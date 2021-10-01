@@ -9103,6 +9103,8 @@ SgTypeString::createType ( SgExpression* lengthExpression, SgExpression* optiona
           delete returnType;
 #endif
           returnType = NULL;
+          // TV (09/29/2021): lengthExpression was owned by returnType so it got deleted. This prevent setting the parent on deleted node below
+          lengthExpression = NULL;
 
           returnType = isSgTypeString(t);
         }

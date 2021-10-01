@@ -479,31 +479,6 @@ SgNodeHelper::getSymbolOfVariable(SgVarRefExp* varRefExp) {
       }
     }
   }
-  if(!varSym) {
-    throw CodeThorn::Exception("SgNodeHelper::getSymbolofVariable: SgVariableSymbol of varRefExp==0");
-#if 0
-    SgInitializedName* varInitName=varSym->get_declaration(); // schroder3: varSym is 0 here!
-    if(varInitName==0) {
-      //cout << "DEBUG: *only* varSym available."<<endl;
-      return varSym;
-    }
-    SgSymbol* symbol=getSymbolOfInitializedName(varInitName);
-    if(symbol==0) {
-      // MS: Fall back solution: try to find a symbol using the declaration
-      //     (that's sometimes necessary when coming from a SgVariableSymbol)
-      SgDeclarationStatement* varInitNameDecl=varInitName->get_declaration();
-      if(SgVariableDeclaration* decl=isSgVariableDeclaration(varInitNameDecl)) {
-        return SgNodeHelper::getSymbolOfVariableDeclaration(decl);
-      } else {
-        // we give up
-        cerr << "WARNING: getSymbolOfVariable: no symbol found."<<endl;
-        return 0;
-      }
-    } else {
-      return symbol;
-    }
-#endif
-  }
   return varSym;
 }
 

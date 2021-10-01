@@ -27,6 +27,7 @@
 #include "ReachabilityAnalysis.h"
 #include "Solver5.h"
 #include "Solver8.h"
+#include "Solver16.h"
 #include "ltlthorn-lib/Solver10.h"
 #include "ltlthorn-lib/Solver11.h"
 #include "ltlthorn-lib/Solver12.h"
@@ -92,7 +93,7 @@ using namespace Sawyer::Message;
 
 using namespace Sawyer::Message;
 
-static std::string CodeThornLibraryVersion="1.13.20";
+static std::string CodeThornLibraryVersion="1.13.21";
 
 // handler for generating backtrace
 void codethornBackTraceHandler(int sig) {
@@ -107,8 +108,6 @@ void codethornBackTraceHandler(int sig) {
   backtrace_symbols_fd(array, size, STDERR_FILENO);
   exit(1);
 }
-
-
 
 void CodeThorn::initDiagnostics() {
   Rose::Diagnostics::initialize();
@@ -165,6 +164,8 @@ namespace CodeThorn {
       signal(SIGSEGV, codethornBackTraceHandler);   // install handler for backtrace
     }
 
+    
+    
     AbstractValue evaluateExpressionWithEmptyState(SgExpression* expr) {
       CTAnalysis* analyzer=new CTAnalysis();
       EStateTransferFunctions* exprAnalyzer=new EStateTransferFunctions();
@@ -333,6 +334,7 @@ namespace CodeThorn {
       IOAnalyzer* analyzer = new IOAnalyzer();
       analyzer->setOptions(ctOpt);
       analyzer->setLtlOptions(ltlOpt);
+      EState::sharedPStates=ctOpt.sharedPStates;
       return analyzer;
     }
 
@@ -368,7 +370,7 @@ namespace CodeThorn {
     }
 
     void optionallyRunVisualizer(CodeThornOptions& ctOpt, CTAnalysis* analyzer, SgNode* root) {
-      Visualizer visualizer(analyzer->getLabeler(),analyzer->getVariableIdMapping(),analyzer->getFlow(),analyzer->getPStateSet(),analyzer->getEStateSet(),analyzer->getTransitionGraph());
+      Visualizer visualizer(analyzer->getLabeler(),analyzer->getVariableIdMapping(),analyzer->getFlow(),analyzer->getEStateSet(),analyzer->getTransitionGraph());
       if (ctOpt.visualization.icfgFileName.size()>0) {
 	string cfgFileName=ctOpt.visualization.icfgFileName;
 	DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
@@ -440,7 +442,7 @@ namespace CodeThorn {
         std::string fileName=ctOpt.reportFilePath+"/"+ctOpt.externalFunctionsCSVFileName;
         if(fileName.size()>0) {
           if(!ctOpt.quiet)
-            cout<<"Writing list of external functions to file "<<fileName<<endl;
+            cout<<"Generated list of external functions in file "<<fileName<<endl;
           FunctionCallMapping::ExternalFunctionNameContainerType fnList=funCallMapping->getExternalFunctionNames();
           std::list<string> sList;
           for(auto fn : fnList)
@@ -481,6 +483,7 @@ namespace CodeThorn {
     void optionallyGenerateSourceProgramAndExit(CodeThornOptions& ctOpt, SgProject* sageProject) {
       if(ctOpt.unparse) {
         sageProject->unparse(0,0);
+	if(ctOpt.status) cout<<"STATUS: Unparsing source code and exiting."<<endl;
         exit(0);
       }
     }
@@ -502,18 +505,23 @@ namespace CodeThorn {
       }
     }
 
-    void optionallyRunRoseAstChecksAndExit(CodeThornOptions& ctOpt, SgProject* sageProject) {
-      if(ctOpt.runRoseAstChecks) {
-        cout << "ROSE tests started."<<endl;
-        // Run internal consistency tests on AST
-        AstTests::runAllTests(sageProject);
+    void runRoseAstChecks(SgProject* sageProject) {
+      // Run internal consistency tests on AST
+      AstTests::runAllTests(sageProject);
+    }
 
+    void optionallyRunRoseAstChecks(CodeThornOptions& ctOpt, SgProject* sageProject) {
+      if(ctOpt.runRoseAstChecks) {
+	if(ctOpt.status) cout<< "STATUS: ROSE AST checks started."<<endl;
+	runRoseAstChecks(sageProject);
+	if(ctOpt.status) cout << "STATUS: ROSE AST checks finished."<<endl;
+	      
         // test: constant expressions
         {
-          SAWYER_MESG(logger[TRACE]) <<"STATUS: testing constant expressions."<<endl;
+          if(ctOpt.status) cout <<"STATUS: testing constant expressions started."<<endl;
           CppConstExprEvaluator* evaluator=new CppConstExprEvaluator();
           list<SgExpression*> exprList=AstUtility::exprRootList(sageProject);
-          logger[INFO] <<"found "<<exprList.size()<<" expressions."<<endl;
+          SAWYER_MESG(logger[INFO]) <<"found "<<exprList.size()<<" expressions."<<endl;
           for(list<SgExpression*>::iterator i=exprList.begin();i!=exprList.end();++i) {
             EvalResult r=evaluator->traverse(*i);
             if(r.isConst()) {
@@ -521,9 +529,15 @@ namespace CodeThorn {
             }
           }
           delete evaluator;
+	  if(ctOpt.status) cout << "STATUS: testing constant expressions finished."<<endl;
         }
-        cout << "ROSE tests finished."<<endl;
-        mfacilities.shutdown();
+      }
+    }
+    
+    void optionallyRunRoseAstChecksAndExit(CodeThornOptions& ctOpt, SgProject* sageProject) {
+      optionallyRunRoseAstChecks(ctOpt,sageProject);
+      if(ctOpt.runRoseAstChecks) {
+	mfacilities.shutdown();
         exit(0);
       }
     }
@@ -560,14 +574,14 @@ namespace CodeThorn {
     void optionallyAnnotateTermsAndUnparse(CodeThornOptions& ctOpt, SgProject* sageProject, CTAnalysis* analyzer) {
       if (ctOpt.annotateTerms) {
         // TODO: it might be useful to be able to select certain analysis results to be annotated only
-        logger[INFO] << "Annotating term representations."<<endl;
+        SAWYER_MESG(logger[INFO]) << "Annotating term representations."<<endl;
         AstTermRepresentationAttribute::attachAstTermRepresentationAttributes(sageProject);
         AstAnnotator ara(analyzer->getLabeler());
         ara.annotateAstAttributesAsCommentsBeforeStatements(sageProject,"codethorn-term-representation");
       }
 
       if (ctOpt.annotateTerms||ctOpt.generateAssertions) {
-        logger[INFO] << "Generating annotated program."<<endl;
+        SAWYER_MESG(logger[INFO]) << "Generating annotated program."<<endl;
         //backend(sageProject);
         sageProject->unparse(0,0);
       }
@@ -858,6 +872,47 @@ namespace CodeThorn {
       }
     }
 
+    bool astSymbolPointerCheck(CodeThornOptions& ctOpt, SgProject* node) {
+      stringstream report;
+      string fileName=ctOpt.reportFilePath+"/"+ctOpt.info.astSymbolPointerCheckReportFileName;
+      uint8_t memoryPoolFillByte=0xdd;
+      uint32_t memoryPoolFillPrefixToCheck=memoryPoolFillByte<<24|memoryPoolFillByte<<16|memoryPoolFillByte<<8|memoryPoolFillByte;
+      uint32_t numSymZero=0;
+      uint32_t numDeleted=0;
+      uint32_t numChecked=0;
+      if(fileName.size()>0) {
+        stringstream lineColSeq;
+        std::list<SgFunctionDefinition*> fdList=SgNodeHelper::listOfFunctionDefinitions(node);
+        for(auto fd : fdList) {
+          RoseAst ast(fd);
+          list<string> lcList;
+          for(auto n : ast) {
+            if(SgVarRefExp* varRefExp=isSgVarRefExp(n)) {
+	      // check symbol
+	      SgSymbol* sym=varRefExp->get_symbol();
+	      numChecked++;
+	      if(sym==0) {
+		report<<"symbol_is_zero: "<<SgNodeHelper::locationToString(varRefExp)<<endl;
+		numSymZero++;
+	      } else {
+		if((uint32_t)(((uint64_t)sym)>>32) == memoryPoolFillPrefixToCheck) {
+		  report<<"symbol_in_deleted_SgVarRefExp: "<<SgNodeHelper::locationToString(varRefExp)<<endl;
+		  numDeleted++;
+		}
+	      }
+	    }
+	  }
+	}
+	report<<"Number of symbols in VarRefExp == 0: "<<numSymZero<<endl;
+	report<<"Number of deleted VarRefExp        : "<<numDeleted<<endl;
+	report<<"Number of checked VarRefExp        : "<<numChecked<<endl;
+	if(ctOpt.status) cout<<"Generated ast symbol pointer report in file "<<fileName<<endl;
+	write_file(fileName,report.str());
+      }
+      return numSymZero==0 && numDeleted==0;
+    }
+
+    
     void optionallyGenerateLineColumnCsv(CodeThornOptions& ctOpt, SgProject* node) {
       string fileName=ctOpt.info.astTraversalLineColumnCSVFileName;
       if(fileName.size()>0) {
@@ -888,7 +943,7 @@ namespace CodeThorn {
             lineColSeq<<lc<<endl;
         }
         write_file(fileName,lineColSeq.str());
-        if(ctOpt.status) cout<<"Generated line-column CSV file "<<fileName<<endl;
+        if(ctOpt.status) cout<<"Generated line-column CSV info in file "<<fileName<<endl;
       }
     }
 
