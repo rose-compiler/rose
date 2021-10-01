@@ -101,7 +101,8 @@ main(int argc, char *argv[]) {
     auto db = DB::Connection::fromUri(settings.databaseUri);
 
     if (args.empty()) {
-        for (auto row: db.stmt("select name, value from slave_settings order by name"))
+        auto stmt = db.stmt("select name, value from slave_settings order by name");
+        for (auto row: stmt)
             showProperty(settings, *row.get<std::string>(0), row.get<std::string>(1).orDefault());
 
     } else {
@@ -120,7 +121,8 @@ main(int argc, char *argv[]) {
             if (std::string::npos == eq) {
                 // This is only a query
                 bool found = false;
-                for (auto row: db.stmt("select value from slave_settings where name = ?name").bind("name", name)) {
+                auto stmt = db.stmt("select value from slave_settings where name = ?name").bind("name", name);
+                for (auto row: stmt) {
                     ASSERT_forbid(found);
                     showProperty(settings, name, row.get<std::string>(0).orDefault());
                     found = true;

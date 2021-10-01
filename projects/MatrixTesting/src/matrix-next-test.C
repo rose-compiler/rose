@@ -23,6 +23,7 @@ struct Settings {
     bool listing = false;                               // show all values
     bool balanceFailures = true;                        // attempt to balance the number of failures
     std::string databaseUri;                            // e.g., postgresql://user:password@host/database
+    std::string os;                                     // restrict to deps supported by operating system
 };
 
 static Sawyer::Message::Facility mlog;
@@ -59,6 +60,12 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     Rose::CommandLine::insertBooleanSwitch(tool, "list", settings.listing,
                                            "Instead of showing single values, show a space-separated list of all values");
 
+    tool.insert(Switch("os")
+                .argument("name", anyParser(settings.os))
+                .doc("Dependencies have an optional column that lists what operating systems can support the dependency. "
+                     "Normally this column is ignored, but if this switch is used and the column is non-empty, then only "
+                     "select the dependency value if the specified operating system name appears in that column."));
+
     if (!parser.with(Rose::CommandLine::genericSwitches()).with(tool).parse(argc, argv).apply().unreachedArgs().empty()) {
         mlog[FATAL] <<"invalid usage; see --help\n";
         exit(1);
@@ -93,8 +100,10 @@ loadAllDependencies(const Settings &settings, DB::Connection db) {
     auto stmt = db.stmt("select " + dependencyColumns() + " from dependencies where enabled <> 0" +
                         std::string(settings.onlySupported ? " and supported > 0" : ""));
     DependencyMap retval;
-    for (const Dependency &dep: loadDependencies(stmt))
-        retval.insertMaybeDefault(dep.name).push_back(dep);
+    for (const Dependency &dep: loadDependencies(stmt)) {
+        if (settings.os.empty() || dep.osNames.empty() || dep.osNames.find(settings.os) != dep.osNames.end())
+            retval.insertMaybeDefault(dep.name).push_back(dep);
+    }
     return retval;
 }
 

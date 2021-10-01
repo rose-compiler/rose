@@ -3,6 +3,7 @@
 
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Database.h>
+#include <set>
 #include <time.h>
 #include <string>
 

@@ -132,7 +132,8 @@ print(const Settings &settings, const DependencyList &deps) {
 static void
 listNames(const Settings &settings, DB::Connection db) {
     std::vector<std::string> names;
-    for (auto row: db.stmt("select distinct name from dependencies order by name"))
+    auto stmt = db.stmt("select distinct name from dependencies order by name");
+    for (auto row: stmt)
         names.push_back(*row.get<std::string>(0));
     switch (settings.outputFormat) {
         case Format::PLAIN: {

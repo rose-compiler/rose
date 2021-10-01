@@ -10,6 +10,7 @@ static const char *gDescription =
 #include <Rose/FormattedTable.h>
 #include <Sawyer/Database.h>
 #include <Sawyer/Message.h>
+#include <boost/format.hpp>
 #include <boost/regex.hpp>
 
 using namespace Rose;
@@ -97,7 +98,8 @@ showNotices(const Settings &settings, DB::Connection db, const Sawyer::Container
 static void
 showSlaveConfig(const Settings &settings, DB::Connection db) {
     Sawyer::Container::Map<std::string, std::string> props;
-    for (auto row: db.stmt("select name, value from slave_settings"))
+    auto stmt = db.stmt("select name, value from slave_settings");
+    for (auto row: stmt)
         props.insert(*row.get<std::string>(0), *row.get<std::string>(1));
 
     showNotices(settings, db, props);

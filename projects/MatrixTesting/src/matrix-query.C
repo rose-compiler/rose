@@ -70,7 +70,8 @@ using DependencyNames = Sawyer::Container::Map<std::string /*key*/, std::string 
 static DependencyNames
 loadDependencyNames(DB::Connection db) {
     DependencyNames retval;
-    for (auto row: db.stmt("select distinct name from dependencies")) {
+    auto stmt = db.stmt("select distinct name from dependencies");
+    for (auto row: stmt) {
         const std::string key = *row.get<std::string>(0);
         retval.insert(key, "rmc_" + key);
     }
