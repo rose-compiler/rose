@@ -201,9 +201,11 @@ int main( int argc, char * argv[] ) {
 
     VariableIdMappingExtended* vimOrig=CodeThorn::CodeThornLib::createVariableIdMapping(ctOpt,project); // only used for program statistics of original non-normalized program
     //AbstractValue::setVariableIdMapping(vim);
-
+    logger[TRACE]<<"VIM (orig) created."<<endl;
+    
     ProgramInfo originalProgramInfo(project,vimOrig);
     originalProgramInfo.compute();
+    logger[TRACE]<<"Program info (orig) computed."<<endl;
     
     if(ctOpt.programStatsFileName.size()>0) {
       originalProgramInfo.toCsvFileDetailed(ctOpt.programStatsFileName,ctOpt.csvReportModeString);

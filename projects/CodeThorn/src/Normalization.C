@@ -217,6 +217,11 @@ namespace CodeThorn {
     if(this->options.printPhaseInfo) {
       cout<<"Normalization done."<<endl;
     }
+    if(SgProject* project=isSgProject(root)) {
+      logger[INFO]<<"INFO: Normalization: running ROSE AST checks."<<endl;
+      AstTests::runAllTests(project);
+      logger[INFO]<<"INFO: Normalization: running ROSE AST checks done."<<endl;
+    }
   }
 
   Normalization::RegisteredSubExprTransformation::RegisteredSubExprTransformation(SubExprTransformationEnum t,SgStatement* s, SgExpression* e)
@@ -698,15 +703,18 @@ void Normalization::normalizeCompoundAssignmentsInAst(SgNode* node) {
 }
 
 void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
+#if 0
   if(node && info) {
     // check if valid file info already exists, if yes, do not change
     Sg_File_Info* fi=node->get_file_info();
     if(fi) {
-      if(fi->get_col()>0 || fi->get_line()>0)
-  return;
+      fi->set_line(info->get_line());
+      fi->set_col(info->get_col());
+      fi->set_file_id(info->get_file_id());
+      fi->setTransformation();
     }
-    node->set_file_info(info);
   }
+#endif
 }
 
 /***************************************************************************
@@ -784,16 +792,16 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
           SgScopeStatement* scope=stmt->get_scope();
           bool shareExpression=false;
           SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: stmt:"<<stmt->unparseToString()<<endl;
-          SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: expr:"<<expr->unparseToString()<<endl;
+          SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: expr (SRC): "<<expr->unparseToString()<<endl;
+	  SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: expr (AST): "<<AstTerm::astTermWithNullValuesToString(expr)<<endl;
           ROSE_ASSERT(expr->get_type());
           SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: expr type:"<<expr->get_type()<<endl;
-          SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: scope:"<<AstTerm::astTermWithNullValuesToString(scope)<<endl;
-          SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: scope:"<<scope->unparseToString()<<endl;
+          //SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: scope:"<<AstTerm::astTermWithNullValuesToString(scope)<<endl;
+          //SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: scope:"<<scope->unparseToString()<<endl;
 
           auto tmpVarDeclaration=buildVariableDeclarationWithInitializerForExpression(expr,scope,shareExpression);
 
           ROSE_ASSERT(tmpVarDeclaration);
-          //ROSE_ASSERT(tmpVarDeclaration->get_type());
           SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: tmpVarDeclaration: "<<tmpVarDeclaration<<endl;
           addToTmpVarMapping((*j).tmpVarNr,tmpVarDeclaration);
 
@@ -802,15 +810,14 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
           SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: tmpVarDeclaration:"<<tmpVarDeclaration->unparseToString()<<endl;
           auto tmpVarReference=buildVarRefExpForVariableDeclaration(tmpVarDeclaration);
           ROSE_ASSERT(tmpVarReference);
-          //setFileInfo(tmpVarDeclaration,originalFileInfo); // this breaks NORM015 but makes 6 DOMs pass
-          setFileInfo(tmpVarReference,originalFileInfo);
+          //setFileInfo(tmpVarReference,originalFileInfo); // breaks some tests
 
           // ii) insert tmp-var initializer
           insertNormalizedSubExpressionFragment(tmpVarDeclaration,stmt);
           // ii) replace use of expr with tmp-var and set file info of original AST
           bool deleteReplacedExpression=false;
           SgNodeHelper::replaceExpression(expr,tmpVarReference,deleteReplacedExpression);
-    setFileInfo(tmpVarReference,originalFileInfo);
+	  setFileInfo(tmpVarReference,originalFileInfo);
           //SAWYER_MESG(logger[TRACE])<<"inserted: "<<tmpVarDeclaration->unparseToString()<<endl;
           break;
         }
@@ -830,7 +837,7 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
           SgVariableDeclaration* tmpVarDeclaration=generateVarDecl((*j).tmpVarDeclType,scope);
           ROSE_ASSERT(tmpVarDeclaration);
           tmpVarDeclaration->set_parent(stmt->get_parent());
-    setFileInfo(tmpVarDeclaration,originalFileInfo);
+	  setFileInfo(tmpVarDeclaration,originalFileInfo);
           SAWYER_MESG(logger[TRACE])<<"GENERATING TMP VAR DECL:tmpVarDeclaration:"<<tmpVarDeclaration->unparseToString()<<endl;
           // using declVarNr instead of tmpVarNr for control-flow operator transformations
           SAWYER_MESG(logger[TRACE])<<"add:"<<(*j).tmpVarNr<<endl;
@@ -844,7 +851,7 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
             SgScopeStatement* scope=stmt->get_scope();
             SgVariableDeclaration* tmpVarDeclaration=generateFalseBoolVarDecl(scope);
             tmpVarDeclaration->set_parent(stmt->get_parent());
-      setFileInfo(tmpVarDeclaration,originalFileInfo);
+	    setFileInfo(tmpVarDeclaration,originalFileInfo);
             ROSE_ASSERT(tmpVarDeclaration);
             // using declVarNr instead of tmpVarNr for control-flow operator transformations
             addToTmpVarMapping((*j).declVarNr,tmpVarDeclaration);
@@ -861,8 +868,8 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
           SgStatement* false_body=(*j).falseBody;
           SgIfStmt* ifStmt=Normalization::generateIfElseStmt(cond,true_body,false_body);
 
-    // set line col file-info
-    setFileInfo(cond,originalFileInfo);
+	  // set line col file-info
+	  setFileInfo(cond,originalFileInfo);
 
           insertNormalizedSubExpressionFragment(ifStmt,stmt);
           break;
@@ -893,10 +900,10 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
           SgStatement* true_body=(*j).trueBody;
           SgIfStmt* ifStmt=Normalization::generateBoolVarIfElseStmt(cond,varRefExp,true_body,0,scope);
 
-    // set line col file-info
-    setFileInfo(cond,originalFileInfo);
-
-    insertNormalizedSubExpressionFragment(ifStmt,stmt);
+	  // set line col file-info
+	  setFileInfo(cond,originalFileInfo);
+	  
+	  insertNormalizedSubExpressionFragment(ifStmt,stmt);
           break;
         }
         case Normalization::GEN_LOG_OP_REPLACEMENT: {
@@ -905,12 +912,11 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
             SgVariableDeclaration* decl=getVarDecl((*j).declVarNr);
             SgVarRefExp* varRefExp=SageBuilder::buildVarRefExp(decl);
 
-      // set line col file-info
-      //setFileInfo(decl,originalFileInfo); this breaks NORM34_condop
-      setFileInfo(varRefExp,originalFileInfo);
+	    // set line col file-info
+	    //setFileInfo(varRefExp,originalFileInfo); // breaks?
 
             SAWYER_MESG(logger[TRACE])<<"GEN_LOG_OP: REPLACING "<<expr->unparseToString()<<" with tmp var:"<<varRefExp->unparseToString()<<endl;
-            SageInterface::replaceExpression(expr,varRefExp);
+            SgNodeHelper::replaceExpression(expr,varRefExp);
             SAWYER_MESG(logger[TRACE])<<"GEN_LOG_OP: REPLACING: done."<<endl;
             //}
           break;
@@ -921,7 +927,7 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
           SgStatement* true_body=(*j).trueBody;
           SgStatement* false_body=(*j).falseBody;
           SgIfStmt* ifStmt=Normalization::generateIfElseStmt(cond,true_body,false_body);
-    setFileInfo(cond,originalFileInfo);
+	  setFileInfo(cond,originalFileInfo);
           insertNormalizedSubExpressionFragment(ifStmt,stmt);
           break;
         }
@@ -1652,11 +1658,8 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
     SAWYER_MESG(logger[TRACE])<<"buildVarRefExpForVariableDeclaration:decl:"<<decl->unparseToString()<<" started."<<endl;
     Sg_File_Info* fi=decl->get_file_info();
     SAWYER_MESG(logger[TRACE])<<"fi: "<<fi<<" line: "<<fi->get_line()<<" col: "<<fi->get_col()<<endl;
-    //SgType* type=decl->get_type();
-    //SAWYER_MESG(logger[TRACE])<<"decl type: "<<type<<": "<<type->unparseToString()<<endl;
-    
-    return SageBuilder::buildVarRefExp(decl);
     SAWYER_MESG(logger[TRACE])<<"buildVarRefExpForVariableDeclaration:decl:"<<decl->unparseToString()<<" finished."<<endl;
+    return SageBuilder::buildVarRefExp(decl);
   }
 
   void Normalization::addToTmpVarMapping(TmpVarNrType tmpVarNr, SgVariableDeclaration* decl) {
