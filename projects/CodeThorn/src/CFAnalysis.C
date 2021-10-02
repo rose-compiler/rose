@@ -1843,17 +1843,6 @@ bool CFAnalysis::forkJoinConsistencyChecks(Flow &flow) const {
   return forksEqualJoins;
 }
 
-#if 0
-// deprecated
-void CFAnalysis::createICFG(SgProject* project) {
-  ClassHierarchyWrapper* classHierarchy=new ClassHierarchyWrapper(project);
-  FunctionCallMapping2* functionCallMapping2=new FunctionCallMapping2();
-  functionCallMapping2->setClassHierarchy(classHierarchy);
-  functionCallMapping2->computeFunctionCallMapping(project);
-  createCppICFG(project,functionCallMapping2);
-}
-#endif
-
 void CFAnalysis::createCICFG(SgProject* project) {
   FunctionCallMapping* functionCallMapping = new FunctionCallMapping();
   functionCallMapping->computeFunctionCallMapping(project);
