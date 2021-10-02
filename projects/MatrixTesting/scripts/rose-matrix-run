@@ -321,12 +321,12 @@ constrain-rmc-config-file() {
 ########################################################################################################################
 # Generate the RMC configuration file for the next test
 generate-rmc-config-file() {
-    local rundir="$1"
+    local rundir="$1" os="$2"
 
     if [ -n "$RMC_CONFIG" ]; then
 	cp "$RMC_CONFIG" "${rundir}/rmc-config"
     else
-	rose-matrix-next-test --format=rmc --database="$DATABASE" $ONLY_SUPPORTED >"${rundir}/rmc-config"
+	rose-matrix-next-test --format=rmc --database="$DATABASE" --os="$os" $ONLY_SUPPORTED >"${rundir}/rmc-config"
     fi
     constrain-rmc-config-file "${rundir}/rmc-config"
     adjust-rmc-config-file "${rundir}/rmc-config" rmc_rosesrc /home/user/project-source-ro
@@ -609,7 +609,7 @@ run-test() {
     # Create configuration files
     echo "Obtaining test configuration for $os..."
     while true; do
-	generate-rmc-config-file "$rundir"
+	generate-rmc-config-file "$rundir" "$os"
 	check-rmc-suitability "$os" "$rundir" && break
     done
     echo "RMC configuration:"
