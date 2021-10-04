@@ -8,7 +8,7 @@
 
 class ConstantConditionAnalysis : public ReadWriteListener {
  public:
-  virtual void trueFalseEdgeEvaluation(Edge edge, SingleEvalResult evalResult , const EState* estate);
+  void trueFalseEdgeEvaluation(Edge edge, SingleEvalResult& evalResult , const EState* estate) override;
   typedef std::map <Label,BoolLattice> ConstConditionsMap;
   ConstConditionsMap* getResultMapPtr();
  private:

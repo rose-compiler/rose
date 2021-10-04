@@ -8,6 +8,7 @@
 #include "ProgramLocationsAnalysis.h"
 #include "BoolLattice.h"
 #include "ConstantConditionAnalysis.h"
+#include "MemoryViolationAnalysis.h"
 #include <climits>
 
 using namespace std;

@@ -51,6 +51,7 @@
 #include "CtxCallStrings.h" // for setting call string options
 #include "AnalysisReporting.h"
 
+#include "MemoryViolationAnalysis.h"
 #include "ConstantConditionAnalysis.h"
 #include "CodeThornLib.h"
 #include "LTLThornLib.h"
