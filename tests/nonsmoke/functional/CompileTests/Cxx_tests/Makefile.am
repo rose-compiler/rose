@@ -2009,6 +2009,7 @@ EXAMPLE_TESTCODES_REQUIRED_TO_PASS = \
    test2021_11.C \
    test2021_12.C \
    test2021_13.C \
+   unparse-typedef-ctor.C \
    test_CplusplusMacro_Cpp.C \
    test_int_lexemes.C \
    test_int_lexemes_donot_pass.C \
