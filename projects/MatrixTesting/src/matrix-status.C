@@ -75,12 +75,16 @@ showNotices(const Settings &settings, DB::Connection db, const Sawyer::Container
     FormattedTable table;
     table.indentation("    ");
 
-    boost::regex noticeRe("NOTICE-(\\d+)");
+    boost::regex noticeRe("NOTICE_(\\d+)");
     for (auto node: props.nodes()) {
         boost::smatch found;
         if (boost::regex_match(node.key(), found, noticeRe)) {
             const size_t i = table.nRows();
-            table.insert(i, 0, found.str(1));
+            std::string name = found.str(1);
+            if (8 == name.size())                       // yyyyddmm
+                name = name.substr(0, 4) + "-" + name.substr(4, 2) + "-" + name.substr(6);
+
+            table.insert(i, 0, name);
             table.insert(i, 1, node.value());
         }
     }
@@ -115,10 +119,12 @@ showSlaveConfig(const Settings &settings, DB::Connection db) {
     table.indentation("    ");
     table.columnHeader(0, 0, "Operational setting");
     table.columnHeader(0, 1, "Value");
+    table.columnHeader(0, 2, "Key");
 
     int i = 0;
     Sawyer::Optional<std::string> testRepo = props.getOptional("TEST_REPOSITORY");
     table.insert(i, 0, "ROSE repository to be tested");
+    table.insert(i, 2, "TEST_REPOSITORY");
     if (testRepo && !testRepo->empty()) {
         table.insert(i, 1, *testRepo);
     } else {
@@ -129,6 +135,7 @@ showSlaveConfig(const Settings &settings, DB::Connection db) {
 
     Sawyer::Optional<std::string> testCommittish = props.getOptional("TEST_COMMITTISH");
     table.insert(i, 0, "ROSE commit or tag to be tested");
+    table.insert(i, 2, "TEST_COMMITTISH");
     if (testCommittish && !testCommittish->empty()) {
         table.insert(i, 1, *testCommittish);
     } else {
@@ -139,22 +146,27 @@ showSlaveConfig(const Settings &settings, DB::Connection db) {
 
     table.insert(i, 0, "Testing tools repository to be used");
     table.insert(i, 1, props.getOptional("MATRIX_REPOSITORY").orElse("none"));
+    table.insert(i, 2, "MATRIX_REPOSITORY");
     ++i;
 
     table.insert(i, 0, "Testing tools commit or tag");
     table.insert(i, 1, props.getOptional("MATRIX_COMMITTISH").orElse("none"));
+    table.insert(i, 2, "MATRIX_COMMITTISH");
     ++i;
 
     table.insert(i, 0, "Testing environment version");
     table.insert(i, 1, props.getOptional("TEST_ENVIRONMENT_VERSION").orElse("none"));
+    table.insert(i, 2, "TEST_ENVIRONMENT_VERSION");
     ++i;
 
     table.insert(i, 0, "Testing operational flags");
     table.insert(i, 1, props.getOptional("TEST_FLAGS").orElse("none"));
+    table.insert(i, 2, "TEST_FLAGS");
     i += 2;
 
     table.insert(i, 0, "Operating systems to be tested");
     table.insert(i, 1, props.getOptional("TEST_OS").orElse("none"));
+    table.insert(i, 2, "TEST_OS");
 
     std::cout <<table <<"\n\n";
 }
