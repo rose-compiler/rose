@@ -343,7 +343,21 @@ check-rmc-suitability() {
 	echo "os='$os'"
 	echo "SOURCE_CODE='$SOURCE_CODE'"
 	echo
-	sed -n "s/^\([^ \t]\+\)[ \t]\+\(.*\)/\1='\2'/p" <"$rundir/rmc-config"
+	# This does not work at all because of a number of things:
+	#   (1) The rmc-config file has end-of-line comments that get sucked up into the value,
+	#       resulting in: rmc_dlib='19.19 # DLib version number (optional)'
+	#   (2) The arguments for the rmc_* commands are arbitrary shell expressions that
+	#       don't get evaluated, resulting in: rmc_warnings='$WARNINGS'
+	#   (3) Some rmc_ commands take more than one argument that can appear in any order,
+	#       resulting in: rmc_assertions='disabled abort'
+	#   (4) Some arguments are more than one word and already quoted, and the doubled up
+	#       single quotes are the same as no quote at all,
+	#       resulting in: rmc_others=''--disable-xxx --disable-yyy''
+	#
+	# Therefore, I'm commenting this out for now, which means all the *-reject.sh scripts
+	# are going to have empty values for all the rmc_* variables. We need to come up with
+	# an entirely different way of handling this.
+	#sed -n "s/^\([^ \t]\+\)[ \t]\+\(.*\)/\1='\2'/p" <"$rundir/rmc-config"
 	echo
 	cat "$LIBDIR/run-support"
 	echo
