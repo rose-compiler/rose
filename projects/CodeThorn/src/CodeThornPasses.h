@@ -17,9 +17,9 @@ namespace CodeThorn {
     CodeThorn::VariableIdMappingExtended* createVariableIdMapping(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc);
     CodeThorn::Labeler* createLabeler(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, VariableIdMappingExtended* variableIdMapping);
     ClassHierarchyWrapper* createClassHierarchy(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc);
-    CFAnalysis* createForwardIcfg(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, Labeler* labeler, ClassHierarchyWrapper* classHierarchy);
-    CFAnalysis* createBackwardIcfg(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, Labeler* labeler, ClassHierarchyWrapper* classHierarchy);
-    CFAnalysis* createIcfg(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, Labeler* labeler, ClassHierarchyWrapper* classHierarchy, ICFGDirection icfgDirection);
+    CFAnalysis* createForwardIcfg(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, Labeler* labeler);
+    CFAnalysis* createBackwardIcfg(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, Labeler* labeler);
+    CFAnalysis* createIcfg(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, Labeler* labeler, ICFGDirection icfgDirection);
   } // namespace Pass
 } // namespace CodeThorn
 

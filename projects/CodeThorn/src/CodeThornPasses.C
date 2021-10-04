@@ -45,16 +45,16 @@ namespace CodeThorn {
     return classHierarchy;
   }
 
-  CFAnalysis* Pass::createForwardIcfg(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, Labeler* labeler, ClassHierarchyWrapper* classHierarchy) {
+  CFAnalysis* Pass::createForwardIcfg(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, Labeler* labeler) {
     // bool isForardIcfg=true;
-    return Pass::createIcfg(ctOpt,root,tc,labeler,classHierarchy,ICFG_forward);
+    return Pass::createIcfg(ctOpt,root,tc,labeler,ICFG_forward);
   }
 
-  CFAnalysis* Pass::createBackwardIcfg(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, Labeler* labeler, ClassHierarchyWrapper* classHierarchy) {
-    return Pass::createIcfg(ctOpt,root,tc,labeler,classHierarchy,ICFG_backward);
+  CFAnalysis* Pass::createBackwardIcfg(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, Labeler* labeler) {
+    return Pass::createIcfg(ctOpt,root,tc,labeler,ICFG_backward);
   }
 
-  CFAnalysis* Pass::createIcfg(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, Labeler* labeler, ClassHierarchyWrapper* classHierarchy, ICFGDirection icfgDirection) {
+  CFAnalysis* Pass::createIcfg(CodeThornOptions& ctOpt, SgProject* root, TimingCollector& tc, Labeler* labeler, ICFGDirection icfgDirection) {
     tc.startTimer();
 
     CodeThorn::Pass::WITH_EXTENDED_NORMALIZED_CALL=ctOpt.extendedNormalizedCppFunctionCalls; // to be used without global var
