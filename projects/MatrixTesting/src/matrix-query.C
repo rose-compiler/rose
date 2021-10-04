@@ -360,7 +360,7 @@ main(int argc, char *argv[]) {
                     table.insert(i, j, value);
                     break;
                 case Format::YAML:
-                    std::cout <<(j?"  ":"- ") <<columnsSelected[j] <<": " <<StringUtility::yamlEscape(value) <<"\n";
+                    std::cout <<(j?"  ":"- ") <<keysSelected[j] <<": " <<StringUtility::yamlEscape(value) <<"\n";
                     break;
                 case Format::HTML:
                     ASSERT_not_reachable("HTML output not supported");

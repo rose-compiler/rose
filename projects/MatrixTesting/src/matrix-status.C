@@ -12,6 +12,7 @@ static const char *gDescription =
 #include <Sawyer/Message.h>
 #include <boost/format.hpp>
 #include <boost/regex.hpp>
+#include <time.h>
 
 using namespace Rose;
 using namespace Sawyer::Message::Common;
@@ -20,6 +21,7 @@ namespace DB = Sawyer::Database;
 struct Settings {
     std::string databaseUri;
     std::string roseVersion;                            // if non-empty, use this version instead of latest
+    Format outputFormat = Format::PLAIN;
 };
 
 static Sawyer::Message::Facility mlog;
@@ -33,6 +35,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 
     SwitchGroup sg("Tool-specific switches");
     insertDatabaseSwitch(sg, settings.databaseUri);
+    insertOutputFormatSwitch(sg, settings.outputFormat, FormatFlags().set(Format::PLAIN).set(Format::HTML));
 
     sg.insert(Switch("rose", 'b')
               .argument("committish", anyParser(settings.roseVersion))
@@ -71,9 +74,48 @@ goodCell() {
 }
 
 static void
+showSectionTitle(const Settings &settings, const std::string &title, const std::string &desc) {
+    static const size_t width = 80;
+    switch (settings.outputFormat) {
+        case Format::PLAIN:
+            std::cout <<std::string(width, '=') <<"\n"
+                      <<"=== " <<StringUtility::leftJustify(title, width-8) <<"===\n"
+                      <<std::string(width, '=') <<"\n";
+            if (!desc.empty())
+                std::cout <<desc <<"\n";
+            std::cout <<"\n";
+            break;
+
+        case Format::HTML:
+            std::cout <<"<hr/><h2>" <<title <<"</h2>\n";
+            if (!desc.empty())
+                std::cout <<"<p>" <<desc <<"</p>\n\n";
+            break;
+
+        default:
+            ASSERT_not_reachable("invalid output format");
+    }
+}
+
+static void
+showSubsectionTitle(const Settings &settings, const std::string &title) {
+    switch (settings.outputFormat) {
+        case Format::PLAIN:
+            std::cout <<title <<"\n";
+            break;
+        case Format::HTML:
+            std::cout <<"<h3>" <<title <<"</h3>\n";
+            break;
+        default:
+            ASSERT_not_reachable("invalid output format");
+    }
+}
+
+static void
 showNotices(const Settings &settings, DB::Connection db, const Sawyer::Container::Map<std::string, std::string> &props) {
     FormattedTable table;
     table.indentation("    ");
+    table.format(Format::HTML == settings.outputFormat ? FormattedTable::Format::HTML : FormattedTable::Format::PLAIN);
 
     boost::regex noticeRe("NOTICE_(\\d+)");
     for (auto node: props.nodes()) {
@@ -90,12 +132,8 @@ showNotices(const Settings &settings, DB::Connection db, const Sawyer::Container
     }
 
     if (table.nRows() > 0) {
-        std::cout <<"================================================================================\n"
-                  <<"=== Notices to ROSE developers                                               ===\n"
-                  <<"================================================================================\n"
-                  <<"\n"
-                  <<table
-                  <<"\n";
+        showSectionTitle(settings, "Notices to ROSE developers", "");
+        std::cout <<table <<"\n";
     }
 }
 
@@ -107,16 +145,13 @@ showSlaveConfig(const Settings &settings, DB::Connection db) {
         props.insert(*row.get<std::string>(0), *row.get<std::string>(1));
 
     showNotices(settings, db, props);
-
-    std::cout <<"================================================================================\n"
-              <<"=== Slave configuration                                                      ===\n"
-              <<"================================================================================\n"
-              <<"This section contains information about what the testing slaves should be\n"
-              <<"testing, and how.\n"
-              <<"\n";
+    showSectionTitle(settings, "Slave configuration",
+                     "This section contains information about what the testing slaves should be\n"
+                     "testing, and how.");
 
     FormattedTable table;
     table.indentation("    ");
+    table.format(Format::HTML == settings.outputFormat ? FormattedTable::Format::HTML : FormattedTable::Format::PLAIN);
     table.columnHeader(0, 0, "Operational setting");
     table.columnHeader(0, 1, "Value");
     table.columnHeader(0, 2, "Key");
@@ -173,12 +208,8 @@ showSlaveConfig(const Settings &settings, DB::Connection db) {
 
 static void
 showSlaveHealth(const Settings &settings, DB::Connection db) {
-    std::cout <<"================================================================================\n"
-              <<"=== Slave health                                                             ===\n"
-              <<"================================================================================\n"
-              <<"This section contains information about what testing slaves have run in the last\n"
-              <<"week.\n"
-              <<"\n";
+    showSectionTitle(settings, "Slave health",
+                     "This section contains information about what testing slaves have run in the last week.");
 
     //                          0     1          2         3           4        5
     auto stmt = db.stmt("select name, timestamp, load_ave, free_space, test_id, event"
@@ -189,6 +220,7 @@ showSlaveHealth(const Settings &settings, DB::Connection db) {
 
     FormattedTable table;
     table.indentation("    ");
+    table.format(Format::HTML == settings.outputFormat ? FormattedTable::Format::HTML : FormattedTable::Format::PLAIN);
     table.columnHeader(0, 0, "Slave Name");
     table.columnHeader(0, 1, "Latest Report from Slave");
     table.columnHeader(0, 2, "Load\nAverage");
@@ -211,11 +243,8 @@ showSlaveHealth(const Settings &settings, DB::Connection db) {
 // Show latest tested ROSE versions and return their commits, starting with the most recent
 static std::vector<std::string>
 showLatestTestedRoseVersions(const Settings &settings, DB::Connection db) {
-    std::cout <<"================================================================================\n"
-              <<"=== ROSE versions tested recently                                            ===\n"
-              <<"================================================================================\n"
-              <<"These are the ROSE versions that have test results in the last week.\n"
-              <<"\n";
+    showSectionTitle(settings, "ROSE versions tested recently",
+                     "These are the ROSE versions that have test results in the last week.");
 
     auto stmt = db.stmt("select rose, rose_date, count(*), min(reporting_time), max(reporting_time)"
                         " from test_results"
@@ -226,6 +255,7 @@ showLatestTestedRoseVersions(const Settings &settings, DB::Connection db) {
 
     FormattedTable table;
     table.indentation("    ");
+    table.format(Format::HTML == settings.outputFormat ? FormattedTable::Format::HTML : FormattedTable::Format::PLAIN);
     table.columnHeader(0, 0, "ROSE version");
     table.columnHeader(0, 1, "Commit date");
     table.columnHeader(0, 2, "Test\nCount");
@@ -273,14 +303,11 @@ showRoseVersion(const Settings &settings, DB::Connection db, const std::string &
 
 static void
 showTestPhases(const Settings &settings, DB::Connection db) {
-    std::cout <<"================================================================================\n"
-              <<"=== Test phases                                                              ===\n"
-              <<"================================================================================\n"
-              <<"These are the phases performed by each test. If a phase fails, the status for\n"
-              <<"the test is the name of the failed phase. The name \"end\" means that all\n"
-              <<"phases of the test passed. The phases are executed in order until one fails\n"
-              <<"or the end is reached.\n"
-              <<"\n";
+    showSectionTitle(settings, "Test phases",
+                     "These are the phases performed by each test. If a phase fails, the status for\n"
+                     "the test is the name of the failed phase. The name \"end\" means that all\n"
+                     "phases of the test passed. The phases are executed in order until one fails\n"
+                     "or the end is reached.");
 
     auto stmt = db.stmt("select name, purpose"
                         " from test_names"
@@ -289,6 +316,7 @@ showTestPhases(const Settings &settings, DB::Connection db) {
 
     FormattedTable table;
     table.indentation("    ");
+    table.format(Format::HTML == settings.outputFormat ? FormattedTable::Format::HTML : FormattedTable::Format::PLAIN);
     table.columnHeader(0, 0, "Status");
     table.columnHeader(0, 1, "Purpose");
     for (auto row: stmt) {
@@ -314,6 +342,7 @@ showTestResultsByField(const Settings &settings, DB::Connection db, const std::s
 
     FormattedTable table;
     table.indentation("    ");
+    table.format(Format::HTML == settings.outputFormat ? FormattedTable::Format::HTML : FormattedTable::Format::PLAIN);
     table.columnHeader(0, 0, fieldTitle);
     table.columnHeader(0, 1, "Reported\nStatus");
     table.columnHeader(0, 2, "Test\nCount");
@@ -334,22 +363,19 @@ showTestResultsByField(const Settings &settings, DB::Connection db, const std::s
 // Show test results sorted in various ways
 static void
 showTestResults(const Settings &settings, DB::Connection db, const std::string &roseVersion) {
-    std::cout <<"================================================================================\n"
-              <<"=== Test results                                                             ===\n"
-              <<"================================================================================\n"
-              <<"These are the test results for ROSE version " <<roseVersion <<"\n"
-              <<"\n";
+    showSectionTitle(settings, "Test results",
+                     "These are the test results for ROSE version " + roseVersion);
 
-    std::cout <<"Test results by analysis language:\n";
+    showSubsectionTitle(settings, "Test results by analysis language");
     showTestResultsByField(settings, db, roseVersion, "rmc_languages", "Analysis\nLanguages");
 
-    std::cout <<"Test results by operating system:\n";
+    showSubsectionTitle(settings, "Test results by operating system");
     showTestResultsByField(settings, db, roseVersion, "os", "Operating\nSystem");
 
-    std::cout <<"Test results by host compiler:\n";
+    showSubsectionTitle(settings, "Test results by host compiler");
     showTestResultsByField(settings, db, roseVersion, "rmc_compiler", "Compiler");
 
-    std::cout <<"Test results by Boost version:\n";
+    showSubsectionTitle(settings, "Test results by Boost version");
     showTestResultsByField(settings, db, roseVersion, "rmc_boost", "Boost\nVersion");
 }
 
@@ -369,6 +395,7 @@ showErrorsByField(const Settings &settings, DB::Connection db, const std::string
 
     FormattedTable table;
     table.indentation("    ");
+    table.format(Format::HTML == settings.outputFormat ? FormattedTable::Format::HTML : FormattedTable::Format::PLAIN);
     table.columnHeader(0, 0, fieldTitle);
     table.columnHeader(0, 1, "Test\nStatus");
     table.columnHeader(0, 2, "Error\nCount");
@@ -395,114 +422,38 @@ showErrorsByField(const Settings &settings, DB::Connection db, const std::string
 
 static void
 showErrors(const Settings &settings, DB::Connection db, const std::string &roseVersion) {
-    std::cout <<"================================================================================\n"
-              <<"=== Error messages                                                           ===\n"
-              <<"================================================================================\n"
-              <<"These are the heuristically determined first error messages from testing\n"
-              <<"ROSE version " <<roseVersion <<"\n"
-              <<"\n";
+    showSectionTitle(settings, "Error messages",
+                     "These are the heuristically determined first error messages from testing\n"
+                     "ROSE version " + roseVersion);
 
-    std::cout <<"Errors by analysis language:\n";
+    showSubsectionTitle(settings, "Errors by analysis language");
     showErrorsByField(settings, db, roseVersion, "rmc_languages", "Analysis\nLanguages");
 
-    std::cout <<"Errors by operating system:\n";
+    showSubsectionTitle(settings, "Errors by operating system");
     showErrorsByField(settings, db, roseVersion, "os", "Operation\nSystem");
 
-    std::cout <<"Errors by host compiler:\n";
+    showSubsectionTitle(settings, "Errors by host compiler");
     showErrorsByField(settings, db, roseVersion, "rmc_compiler", "Compiler");
 
-    std::cout <<"Errors by boost version:\n";
+    showSubsectionTitle(settings, "Errors by boost version");
     showErrorsByField(settings, db, roseVersion, "rmc_boost", "Boost\nVersion");
 }
 
 static void
 showAdditionalCommands(const Settings &settings, DB::Connection db, const std::string &roseVersion) {
-    std::cout <<"================================================================================\n"
-              <<"=== Additional information                                                   ===\n"
-              <<"================================================================================\n"
-              <<"This section lists some useful information for showing additional results.\n"
-              <<"\n";
+    showSectionTitle(settings, "Additional information",
+                     "The data above is only the tip of the iceburg.\n"
+                     "See https://lep.is/w/index.php/ROSE:Portability_testing_results\n");
+}
 
-    std::cout <<"1. Get test IDs having a certain error.\n\n"
-              <<"   To get a list of test IDs that had a certain error message, use rose-matrix-query\n"
-              <<"   and constrain the ROSE version, match (with the \"~\" operator) part of an error\n"
-              <<"   message, and display the operating system (\"os\"), test status (\"status\"), and\n"
-              <<"   test identification (\"id\").\n"
-              <<"\n"
-              <<"   $ rose-matrix-query rose=" <<abbreviatedVersion(roseVersion) <<" \\\n"
-              <<"         first_error~'undefined reference' os status id\n"
-              <<"\n"
-              <<"   Use `rose-matrix-query --help` and `rose-matrix-query list` to get information\n"
-              <<"   about how to use this tool.\n"
-              <<"\n";
-
-    std::cout <<"2. Get the output from a test.\n\n"
-              <<"   To get the final few hundred lines of output from a test, you need to know the\n"
-              <<"   test identification number, which you can get from `rose-matrix-query`, such as\n"
-              <<"   the previous example. Then run `rose-matrix-output` with that ID number. Example:\n"
-              <<"\n"
-              <<"   $ rose-matrix-output 331483 |less\n"
-              <<"\n";
-
-    std::cout <<"3. View test attachments.\n\n"
-              <<"   The `rose-matrix-output` shell script in the previous example simply runs the\n"
-              <<"   `rose-matrix-attachments` tool to print the test output attachments. There are\n"
-              <<"   often additional attachments for a test, such as a summary of each step that was\n"
-              <<"   run during the test.\n"
-              <<"\n"
-              <<"   To get the list of attachments for a test, give just a test ID, as in:\n"
-              <<"\n"
-              <<"   $ rose-matrix-attachments 331483\n"
-              <<"   [440904]    \"Commands\"\n"
-              <<"   [440905]    \"Final output\"\n"
-              <<"\n"
-              <<"   To view the attachment called \"Commands\", run:\n"
-              <<"\n"
-              <<"   $ rose-matrix-attachments 331483 440904\n"
-              <<"\n"
-              <<"   Among other things, this has the list of ROSE dependencies and versions that were\n"
-              <<"   employed by the test, the complete ROSE configure command-line, and the locations\n"
-              <<"   of the most frequent compiler warning messages from compiling the ROSE library.\n"
-              <<"\n";
-
-    std::cout <<"4. See what dependencies are configured for testing.\n\n"
-              <<"   Portability tests have two kinds of dependencies: (1) dependencies that are installed\n"
-              <<"   system-wide on the operating system in which the test runs, such as bash, grep, perl,\n"
-              <<"   the system C++ compiler, etc., and (2) dependencies that are installed per test, such as\n"
-              <<"   Boost, Z3, Python, Doxygen, and non-system C++ compilers. The latter are managed by\n"
-              <<"   RMC/Spock -- the Rose Meta-Configuration System.  The `rose-matrix-dependencies` tool\n"
-              <<"   can show you what dependencies are being tested. A dependency that's \"enabled\" is\n"
-              <<"   one for which tests are being requested. Some dependencies are marked as being\n"
-              <<"   supported, which means errors with these dependencies are of particular interest to\n"
-              <<"   the ROSE development team.\n"
-              <<"\n"
-              <<"   $ rose-matrix-dependencies names      # Show all the dependency categories\n"
-              <<"   $ rose-matrix-dependencies list boost # Show information for one category\n"
-              <<"\n";
-
-    std::cout <<"5. Reproduce a build environment for debugging.\n\n"
-              <<"   Users can easliy install RMC/Spock in their home directories in order to mostly replicate\n"
-              <<"   the environment in which a test was run. You'll still have to install any system dependencies\n"
-              <<"   manually, but any ROSE developer should already have these anyway. RMC/Spock is available\n"
-              <<"   from https://github.com/matzke1/rmc-spock. Install or upgrade it with:\n"
-              <<"\n"
-              <<"   $ git clone https://github.com/matzke1/rmc-spock\n"
-              <<"   $ (cd rmc-spock && ./scripts/bootstrap.sh)\n"
-              <<"   $ rm -rf rmc-spock\n"
-              <<"   $ export PATH=\"$HOME/.spock/bin\"\n"
-              <<"   $ rm -rf ~/.spock # If you ever want to totally remove it\n"
-              <<"\n"
-              <<"   To reproduce a build environment, create a \"_build\" subdirectory at the top of your\n"
-              <<"   ROSE source tree, then use the `rose-matrix-attachments` command mentioned earlier to\n"
-              <<"   download the \".rmc-main.cfg\" file for the test whose build environment you want to\n"
-              <<"   recreate. Then, run these commands:\n"
-              <<"\n"
-              <<"   $ cd _build\n"
-              <<"   $ rmc # this installs dependencies and puts you in a subshell\n"
-              <<"   $ rmc build # this runs ROSE's \"build\" script\n"
-              <<"   $ rmc config # run ROSE's \"configure\" script; use -n to see the command without running it\n"
-              <<"   $ rmc make # or run \"make\" or \"tup\" (depending on teh build system) manually\n"
-              <<"\n";
+static std::string
+timestamp() {
+    time_t now = time(NULL);
+    struct tm tm;
+    gmtime_r(&now, &tm);
+    return (boost::format("%04d-%02d-%02d %02d:%02d:%02d GMT")
+            % (tm.tm_year+1900) % (tm.tm_mon+1) % tm.tm_mday
+            % tm.tm_hour % tm.tm_min % tm.tm_sec).str();
 }
 
 int
@@ -520,6 +471,17 @@ main(int argc, char *argv[]) {
         exit(1);
     }
     auto db = DB::Connection::fromUri(settings.databaseUri);
+
+    if (Format::HTML == settings.outputFormat) {
+        std::cout <<"<!DOCTYPE html>\n"
+                  <<"<html>\n"
+                  <<"<head>\n"
+                  <<"  <title>ROSE Portability Testing</title>\n"
+                  <<"</head>\n"
+                  <<"<body>\n"
+                  <<"<h1>ROSE Portability Testing</h1>\n"
+                  <<"Updated " <<timestamp() <<"<br/>\n";
+    }
 
     showSlaveConfig(settings, db);
     showSlaveHealth(settings, db);
@@ -541,4 +503,7 @@ main(int argc, char *argv[]) {
     showErrors(settings, db, roseCommits.front());
 
     showAdditionalCommands(settings, db, roseCommits.front());
+
+    if (Format::HTML == settings.outputFormat)
+        std::cout <<"</body></html>\n";
 }

@@ -17,12 +17,38 @@ public:
     // Public types
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    /** Format when generating output. */
+    enum class Format {
+        PLAIN,                                          /**< Use ASCII-art to draw the table borders. */
+        HTML                                            /**< Generate HTML output. */
+    };
+
+    /** How text is aligned in a table cell. */
+    enum class Alignment {
+        LEFT,                                           /**< Text is aligned to the left edge of the cell. */
+        RIGHT,                                          /**< Text is aligned to the right edge of the cell. */
+        CENTER                                          /**< Text is centered in the cell. */
+    };
+
     /** Properties for a particular cell. */
     class CellProperties {
         Sawyer::Optional<Color::HSV> foreground_;
         Sawyer::Optional<Color::HSV> background_;
+        Sawyer::Optional<Alignment> alignment_;
 
     public:
+        /** Default constructor.
+         *
+         *  No specific properties are set. */
+        CellProperties();
+
+        /** Constructor.
+         *
+         *  Sets properties as specified. */
+        CellProperties(const Sawyer::Optional<Color::HSV> &foreground,
+                       const Sawyer::Optional<Color::HSV> &background,
+                       const Sawyer::Optional<Alignment> &alignment);
+
         /** Property: Foreground color.
          *
          * @{ */
@@ -37,6 +63,13 @@ public:
         void background(const Sawyer::Optional<Color::HSV>&);
         /** @} */
 
+        /** Property: Horizontal alignment.
+         *
+         * @{ */
+        const Sawyer::Optional<Alignment>& alignment() const;
+        void alignment(const Sawyer::Optional<Alignment>&);
+        /** @} */
+
         /** Create new properties by merging two properties.
          *
          *  The return value has values from object @p a or object @p b, whichever is set, in that order. */
@@ -47,7 +80,9 @@ private:
     std::vector<std::vector<std::string>> cells_;         // data
     std::vector<std::vector<CellProperties>> props_;      // data properties
     std::vector<std::vector<std::string>> columnHeaders_; // titles for columns
+    std::vector<std::vector<CellProperties>> columnHeaderProps_;
     std::string indentation_;                             // to be printed before each line of output
+    Format format_ = Format::PLAIN;
 
 public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -64,9 +99,19 @@ public:
     // Table-wide properties
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    /** Property: Output format.
+     *
+     *  How the table is formatted in general.
+     *
+     * @{ */
+    Format format() const;
+    void format(Format);
+    /** @} */
+
     /** Property: Indentation.
      *
-     *  This property holds a string that is printed at the beginning of every line of output.
+     *  This property holds a string that is printed at the beginning of every line of output. This used for the plain-text
+     *  format; it's ignored for HTML output.
      *
      * @{ */
     const std::string& indentation() const;
@@ -140,6 +185,16 @@ public:
     void columnHeader(size_t rowIdx, size_t columnIdx, const std::string &title);
     /** @} */
 
+    /** Properties for column headers.
+     *
+     *  These are the properties for formatting column header cells. Column header row indices are indpendent of the data
+     *  cell indices.
+     *
+     * @{ */
+    const CellProperties& columnHeaderProperties(size_t rowIdx, size_t columnIdx) const;
+    void columnHeaderProperties(size_t rowIdx, size_t columnIdx, const CellProperties&);
+    /** @} */
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Printing
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -148,11 +203,11 @@ public:
     void print(std::ostream&) const;
 
 private:
-    std::string ansiPropertiesBegin(const CellProperties&) const;
-    std::string ansiPropertiesEnd(const CellProperties&) const;
+    std::string cellPropertiesBegin(const CellProperties&) const;
+    std::string cellPropertiesEnd(const CellProperties&) const;
     void printHorizontalRule(std::ostream&, const std::vector<size_t> &widths) const;
     void printRow(std::ostream&, const std::vector<size_t> &widths, const std::vector<CellProperties> &props,
-                  const std::vector<std::string> &row, std::string(*justify)(const std::string&, size_t, char)) const;
+                  const std::vector<std::string> &row) const;
     std::vector<size_t> computeColumnWidths() const;
 
 };
