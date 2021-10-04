@@ -43,7 +43,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     SwitchGroup sg("Tool-specific switches");
 
     insertDatabaseSwitch(sg, settings.databaseUri);
-    insertOutputFormatSwitch(sg, settings.outputFormat);
+    insertOutputFormatSwitch(sg, settings.outputFormat, FormatFlags().set(Format::PLAIN).set(Format::YAML));
 
     sg.insert(Switch("localtime")
               .intrinsicValue(true, settings.usingLocalTime)
@@ -362,6 +362,8 @@ main(int argc, char *argv[]) {
                 case Format::YAML:
                     std::cout <<(j?"  ":"- ") <<columnsSelected[j] <<": " <<StringUtility::yamlEscape(value) <<"\n";
                     break;
+                case Format::HTML:
+                    ASSERT_not_reachable("HTML output not supported");
             }
         }
     }

@@ -1,6 +1,7 @@
 #ifndef matrixTools_H
 #define matrixTools_H
 
+#include <Rose/BitFlags.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Database.h>
 #include <set>
@@ -8,9 +9,12 @@
 #include <string>
 
 enum class Format {
-    PLAIN,
-    YAML
+    PLAIN       = 0x00000001,
+    YAML        = 0x00000002,
+    HTML        = 0x00000004
 };
+
+using FormatFlags = Rose::BitFlags<Format>;
 
 struct Dependency {
     std::string name;
@@ -27,7 +31,7 @@ using DependencyList = std::vector<Dependency>;
 void insertDatabaseSwitch(Sawyer::CommandLine::SwitchGroup&, std::string &uri);
 
 // Insert the --format / -F switch.
-void insertOutputFormatSwitch(Sawyer::CommandLine::SwitchGroup&, Format&);
+void insertOutputFormatSwitch(Sawyer::CommandLine::SwitchGroup&, Format&, FormatFlags);
 
 // Convert Unix epoch time to human readable time in the local timezone.
 std::string timeToLocal(time_t);
