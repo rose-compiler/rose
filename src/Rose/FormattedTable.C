@@ -10,6 +10,13 @@ namespace Rose {
 // CellProperties
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+FormattedTable::CellProperties::CellProperties() {}
+
+FormattedTable::CellProperties::CellProperties(const Sawyer::Optional<Color::HSV> &foreground,
+                                               const Sawyer::Optional<Color::HSV> &background,
+                                               const Sawyer::Optional<Alignment> &alignment)
+    : foreground_(foreground), background_(background), alignment_(alignment) {}
+
 const Sawyer::Optional<Color::HSV>&
 FormattedTable::CellProperties::foreground() const {
     return foreground_;
@@ -30,11 +37,22 @@ FormattedTable::CellProperties::background(const Sawyer::Optional<Color::HSV> &c
     background_ = color;
 }
 
+const Sawyer::Optional<FormattedTable::Alignment>&
+FormattedTable::CellProperties::alignment() const {
+    return alignment_;
+}
+
+void
+FormattedTable::CellProperties::alignment(const Sawyer::Optional<Alignment> &a) {
+    alignment_ = a;
+}
+
 FormattedTable::CellProperties
 FormattedTable::CellProperties::merge(const CellProperties &a, const CellProperties &b) {
     CellProperties retval;
     retval.foreground_ = a.foreground_.orElse(b.foreground_);
     retval.background_ = a.background_.orElse(b.background_);
+    retval.alignment_ = a.alignment_.orElse(b.alignment_);
     return retval;
 }
 
@@ -51,6 +69,16 @@ FormattedTable::FormattedTable(size_t nRows, size_t nColumns) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // FormattedTable table-wide properties
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+FormattedTable::Format
+FormattedTable::format() const {
+    return format_;
+}
+
+void
+FormattedTable::format(Format fmt) {
+    format_ = fmt;
+}
 
 const std::string&
 FormattedTable::indentation() const {
@@ -157,6 +185,25 @@ FormattedTable::columnHeader(size_t rowIdx, size_t columnIdx) const {
     }
 }
 
+const FormattedTable::CellProperties&
+FormattedTable::columnHeaderProperties(size_t rowIdx, size_t columnIdx) const {
+    if (rowIdx < columnHeaderProps_.size() && columnIdx < columnHeaderProps_[rowIdx].size()) {
+        return columnHeaderProps_[rowIdx][columnIdx];
+    } else {
+        static const CellProperties empty(Sawyer::Nothing(), Sawyer::Nothing(), Alignment::CENTER);
+        return empty;
+    }
+}
+
+void
+FormattedTable::columnHeaderProperties(size_t rowIdx, size_t columnIdx, const CellProperties &props) {
+    if (rowIdx >= columnHeaderProps_.size())
+        columnHeaderProps_.resize(rowIdx + 1);
+    if (columnIdx >= columnHeaderProps_[rowIdx].size())
+        columnHeaderProps_[rowIdx].resize(columnIdx + 1);
+    columnHeaderProps_[rowIdx][columnIdx] = props;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // FormattedTable printing
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -185,7 +232,7 @@ FormattedTable::computeColumnWidths() const {
 
 void
 FormattedTable::printHorizontalRule(std::ostream &out, const std::vector<size_t> &widths) const {
-    if (!widths.empty()) {
+    if (Format::PLAIN == format_ && !widths.empty()) {
         out <<indentation_ <<"+";
         for (size_t j = 0; j < widths.size(); ++j)
             out <<"-" <<std::string(widths[j], '-') <<"-+";
@@ -194,47 +241,105 @@ FormattedTable::printHorizontalRule(std::ostream &out, const std::vector<size_t>
 }
 
 std::string
-FormattedTable::ansiPropertiesBegin(const CellProperties &props) const {
+FormattedTable::cellPropertiesBegin(const CellProperties &props) const {
     std::string retval;
-    if (Rose::CommandLine::genericSwitchArgs.colorization.isEnabled()) {
-        if (auto hsv = props.foreground())
-            retval += hsv->toAnsi(Color::Layer::FOREGROUND);
-        if (auto hsv = props.background())
-            retval += hsv->toAnsi(Color::Layer::BACKGROUND);
+    switch (format_) {
+        case Format::PLAIN:
+            if (Rose::CommandLine::genericSwitchArgs.colorization.isEnabled()) {
+                if (auto hsv = props.foreground())
+                    retval += hsv->toAnsi(Color::Layer::FOREGROUND);
+                if (auto hsv = props.background())
+                    retval += hsv->toAnsi(Color::Layer::BACKGROUND);
+            }
+            break;
+
+        case Format::HTML:
+            retval += "<span style=\"";
+            if (auto hsv = props.foreground())
+                retval += "color: " + hsv->toHtml() + ";";
+            if (auto hsv = props.background())
+                retval += "background-color: " + hsv->toHtml() + ";";
+            retval += "\">";
+            break;
     }
     return retval;
 }
 
 std::string
-FormattedTable::ansiPropertiesEnd(const CellProperties &props) const {
-    if (Rose::CommandLine::genericSwitchArgs.colorization.isEnabled()) {
-        return "\033[0m";
-    } else {
-        return "";
+FormattedTable::cellPropertiesEnd(const CellProperties &props) const {
+    switch (format_) {
+        case Format::PLAIN:
+            if (Rose::CommandLine::genericSwitchArgs.colorization.isEnabled())
+                return "\033[0m";
+            return "";
+            break;
+
+        case Format::HTML:
+            return "</span>";
     }
 }
 
 void
 FormattedTable::printRow(std::ostream &out, const std::vector<size_t> &widths, const std::vector<CellProperties> &props,
-                         const std::vector<std::string> &row, std::string(*justify)(const std::string&, size_t, char)) const {
-    std::vector<std::vector<std::string>> columnLines;
-    size_t maxCellHeight = 0;
-    for (const std::string &cell: row) {
-        columnLines.push_back(StringUtility::split("\n", cell));
-        maxCellHeight = std::max(maxCellHeight, columnLines.back().size());
-    }
+                         const std::vector<std::string> &row) const {
+    switch (format_) {
+        case Format::PLAIN: {
+            std::vector<std::vector<std::string>> columnLines;
+            size_t maxCellHeight = 0;
+            for (const std::string &cell: row) {
+                columnLines.push_back(StringUtility::split("\n", cell));
+                maxCellHeight = std::max(maxCellHeight, columnLines.back().size());
+            }
 
-    // i == 0 means we print a line even if all columns of the row are empty
-    for (size_t i = 0; i == 0 || i < maxCellHeight; ++i) {
-        out <<indentation_ <<"|";
-        for (size_t j = 0; j < widths.size(); ++j) {
-            out <<" "
-                <<ansiPropertiesBegin(props[j])
-                <<justify(i < columnLines[j].size() ? columnLines[j][i] : "", widths[j], ' ')
-                <<ansiPropertiesEnd(props[j])
-                <<" |";
+            // i == 0 means we print a line even if all columns of the row are empty
+            for (size_t i = 0; i == 0 || i < maxCellHeight; ++i) {
+                out <<indentation_ <<"|";
+                for (size_t j = 0; j < widths.size(); ++j) {
+                    const std::string s = i < columnLines[j].size() ? columnLines[j][i] : "";
+                    out <<" " <<cellPropertiesBegin(props[j]);
+                    switch (props[j].alignment().orElse(Alignment::LEFT)) {
+                        case Alignment::LEFT:
+                            out <<StringUtility::leftJustify(s, widths[j]);
+                            break;
+                        case Alignment::RIGHT:
+                            out <<StringUtility::rightJustify(s, widths[j]);
+                            break;
+                        case Alignment::CENTER:
+                            out <<StringUtility::centerJustify(s, widths[j]);
+                            break;
+                    }
+                    out <<cellPropertiesEnd(props[j]) <<" |";
+                }
+                out <<"\n";
+            }
+            break;
         }
-        out <<"\n";
+
+        case Format::HTML: {
+            out <<"<tr>\n";
+            for (size_t j = 0; j < widths.size(); ++j) {
+                out <<"<td style=\"";
+                switch (props[j].alignment().orElse(Alignment::LEFT)) {
+                    case Alignment::LEFT:
+                        out <<"text-align: left;";
+                        break;
+                    case Alignment::RIGHT:
+                        out <<"text-align: right;";
+                        break;
+                    case Alignment::CENTER:
+                        out <<"text-align: center;";
+                        break;
+                }
+                const std::string s = row[j].empty() ? "&nbsp;" : row[j];
+                out <<"\">"
+                    <<cellPropertiesBegin(props[j])
+                    <<s
+                    <<cellPropertiesEnd(props[j])
+                    <<"</td>\n";
+            }
+            out <<"</tr>\n";
+            break;
+        }
     }
 }
 
@@ -244,17 +349,27 @@ FormattedTable::print(std::ostream &out) const {
     if (widths.empty())
         return;
 
+    if (Format::HTML == format_)
+        out <<"<table border=\"1\">\n";
+
     if (!columnHeaders_.empty()) {
         printHorizontalRule(out, widths);
-        std::vector<CellProperties> props(widths.size());
-        for (size_t i = 0; i < columnHeaders_.size(); ++i)
-            printRow(out, widths, props, columnHeaders_[i], StringUtility::centerJustify);
+        for (size_t i = 0; i < columnHeaders_.size(); ++i) {
+            std::vector<CellProperties> props;
+            props.reserve(widths.size());
+            for (size_t j = 0; j < widths.size(); ++j)
+                props.push_back(columnHeaderProperties(i, j));
+            printRow(out, widths, props, columnHeaders_[i]);
+        }
     }
 
     printHorizontalRule(out, widths);
     for (size_t i = 0; i < cells_.size(); ++i)
-        printRow(out, widths, props_[i], cells_[i], StringUtility::leftJustify);
+        printRow(out, widths, props_[i], cells_[i]);
     printHorizontalRule(out, widths);
+
+    if (Format::HTML == format_)
+        out <<"<table>\n";
 }
 
 } // namespace
