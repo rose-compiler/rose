@@ -904,6 +904,9 @@ string AbstractValue::toString(CodeThorn::VariableIdMapping* vim) const {
 }
 
 string AbstractValue::toString() const {
+  if(VariableIdMapping* vim=getVariableIdMapping()) {
+    return toString(vim);
+  }
   switch(valueType) {
   case TOP: return "top";
   case BOT: return "bot";

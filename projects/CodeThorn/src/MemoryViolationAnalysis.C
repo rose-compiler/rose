@@ -17,11 +17,11 @@ namespace CodeThorn {
   }
 
   void MemoryViolationAnalysis::readingFromMemoryLocation(Label lab, PStatePtr pstate, AbstractValue& memLoc, AbstractValue& result) {
-    cout<<"AOB ANALYSIS: @"<<lab.toString()<<": READ: @"<< memLoc.toString()<<endl;
+    cout<<"MEM CHECK: @"<<lab.toString()<<": READ: @"<< memLoc.toString()<<endl;
   }
 
   void MemoryViolationAnalysis::writingToMemoryLocation(Label lab, PStatePtr pstate, AbstractValue& memLoc, AbstractValue& newValue) {
-    cout<<"AOB ANALYSIS: @"<<lab.toString()<<": WRITE: @"<< memLoc.toString()<<" = "<<newValue<<endl;
+    cout<<"MEM CHECK: @"<<lab.toString()<<": WRITE: @"<< memLoc.toString()<<" = "<<newValue<<endl;
   }
 
 }
