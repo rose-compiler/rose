@@ -16,6 +16,7 @@
 #include "TypeSizeMapping.h"
 #include "CodeThornOptions.h"
 #include "ReadWriteListener.h"
+#include "MemoryViolationAnalysis.h"
 
 namespace CodeThorn {
   class CTAnalysis;
