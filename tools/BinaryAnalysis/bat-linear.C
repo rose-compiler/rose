@@ -51,7 +51,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                      "because invalid opcode bytes normally return \"instructions\" that occupy one byte of memory. The "
                      "default alignment is " + StringUtility::plural(settings.alignment, "bytes") + "."));
 
-    tool.insert(Switch("where")
+    tool.insert(Switch("where", 'a')
                 .argument("interval", P2::addressIntervalParser(settings.where))
                 .doc("Specifies the range of addresses that should be disassembled.  Only instructions that exist entirely "
                      "within this range are disassembled. The default is the entire address space. " +

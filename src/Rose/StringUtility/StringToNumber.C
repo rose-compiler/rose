@@ -1,0 +1,23 @@
+#include <Rose/StringUtility/StringToNumber.h>
+
+namespace Rose {
+namespace StringUtility {
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                      Number parsing
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+unsigned
+hexadecimalToInt(char ch) {
+    if (isxdigit(ch)) {
+        if (isdigit(ch))
+            return ch-'0';
+        if (isupper(ch))
+            return ch-'A'+10;
+        return ch-'a'+10;
+    }
+    return 0;
+}
+
+} // namespace
+} // namespace

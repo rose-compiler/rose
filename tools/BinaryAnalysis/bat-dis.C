@@ -50,7 +50,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     SwitchGroup sel("Selection switches");
     sel.name("sel");
 
-    sel.insert(Switch("function")
+    sel.insert(Switch("function", 'f')
                .argument("name_or_address", listParser(anyParser(settings.functionNames), ","))
                .explosiveLists(true)
                .whichValue(SAVE_ALL)
@@ -60,7 +60,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                     "treated as an address. This switch may occur multiple times and multiple comma-separated values may "
                     "be specified per occurrence."));
 
-    sel.insert(Switch("containing")
+    sel.insert(Switch("containing", 'a')
                .argument("addresses", listParser(nonNegativeIntegerParser(settings.addresses), ","))
                .explosiveLists(true)
                .whichValue(SAVE_ALL)
@@ -70,7 +70,8 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     SwitchGroup out = BinaryAnalysis::Unparser::commandLineSwitches(settings.unparser);
     Rose::CommandLine::insertBooleanSwitch(out, "discard-nops", settings.discardNops,
                                                "Omit instructions that are part of a sequence that has no effect.");
-    out.insert(Switch("prefix")
+    out.insert(Switch("output", 'o')
+               .longName("prefix")
                .argument("name", anyParser(settings.fileNamePrefix))
                .doc("Instead of sending all listings to standard output, create a separate file for each function. "
                     "The file names will be constructed from the string specified here, followed by the hexadecimal "

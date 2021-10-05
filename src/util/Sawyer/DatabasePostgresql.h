@@ -162,7 +162,11 @@ private:
 
     void bindLow(size_t idx, const std::string &value) override {
         auto tx = std::dynamic_pointer_cast<PostgresqlConnection>(connection())->transaction.get();
+#if 0 // [Robb Matzke 2021-09-29]
         pvalues_[idx] = "'" + tx->esc_raw(reinterpret_cast<const unsigned char*>(value.c_str()), value.size()) + "'";
+#else
+        pvalues_[idx] = "'" + tx->esc(value) + "'";
+#endif
     }
 
     void bindLow(size_t idx, const char *value) override {

@@ -212,6 +212,14 @@ public:
      *  The destructor calls @ref close before destroying this object. */
     ~Connection() = default;
 
+    /** Constructor from URI. */
+    static Connection fromUri(const std::string &uri);
+
+    /** Documentation for database URIs.
+     *
+     *  This documents what strings the @ref fronUri function takes. */
+    static std::string uriDocString();
+
     /** Tests whether an underlying RDBMS connection is established. */
     bool isOpen() const;
 
