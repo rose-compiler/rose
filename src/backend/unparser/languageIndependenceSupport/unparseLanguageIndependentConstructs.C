@@ -8373,6 +8373,14 @@ UnparseLanguageIndependentConstructs::unparseExprList(SgExpression* expr, SgUnpa
                SgConstructorInitializer* constructorInitializer = isSgConstructorInitializer(argument_expr);
                if (constructorInitializer != NULL)
                   {
+
+                    // TV (10/04/2021): This adds parenthesis to prevent Most Vexing Parse. It adds them more often than needed.
+                    //                  Cxx_tests/typedef-ctor-with-tpl-variadic-causes-most-vexing-parse.C
+                    SgTypedefType * tdtype = isSgTypedefType(constructorInitializer->get_type());
+                    if (tdtype != nullptr) {
+                      needParen = true;
+                    }
+
                  // bool this_constructor_initializer_is_using_Cxx11_initializer_list = Unparse_ExprStmt::isAssociatedWithCxx11_initializationList(constructorInitializer,info);
                     bool this_constructor_initializer_is_using_Cxx11_initializer_list = Unparse_ExprStmt::isAssociatedWithCxx11_initializationList(constructorInitializer,newinfo);
 #if 0
@@ -8401,11 +8409,7 @@ UnparseLanguageIndependentConstructs::unparseExprList(SgExpression* expr, SgUnpa
 
                if (needParen == true)
                   {
-#if 0
-                    printf ("Output the extra parentheses \n");
-#endif
-                 // curprint("(");
-                    curprint("/* extra parentheses */ (");
+                    curprint("(");
                   }
 
                unparseExpression(*i, newinfo);
