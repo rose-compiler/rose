@@ -2,6 +2,7 @@
 #include "sage3basic.h"
 #include "fixupTraversal.h"
 
+#define DEBUG_DeleteDisconnectedNode 0
 #define DEBUG_DeleteDisconnectedNode_ordered_delete 0
 #if DEBUG_DeleteDisconnectedNode_ordered_delete
 #  include "wholeAST_API.h"
@@ -17,11 +18,7 @@ struct DeleteDisconnectedNode : public ROSE_VisitTraversal {
   std::vector<SgNode*> deletes;
 
   void visit (SgNode* node) {
-//  if (isSgStorageModifier(node)) return; // FIXME idk why?
-    if (
-      saves.find(node) == saves.end()                                 || // part of the `saves` nodes
-      ( isSg_File_Info(node) && isSgTypeDefault(node->get_parent()) )    // or signature of a Sg_File_Info object that is used as the location in a PreprocessingInfo object
-    ) {
+    if (saves.find(node) == saves.end()) {
       deletes.push_back(node);
     }
   }
@@ -31,9 +28,21 @@ struct DeleteDisconnectedNode : public ROSE_VisitTraversal {
     // Stop on sinks and loops
     if (node == NULL || !saves.insert(node).second) return;
 
-    std::vector<std::pair<SgNode*, std::string> > data_members = node->returnDataMemberPointers();
-    for (std::vector<std::pair<SgNode*, std::string> >::iterator i = data_members.begin(); i != data_members.end(); ++i) {
-      recursive_saves(i->first);
+    auto data_members = node->returnDataMemberPointers();
+    for (auto dm: data_members) {
+      recursive_saves(dm.first);
+    }
+    SgLocatedNode * lnode = isSgLocatedNode(node);
+    if (lnode != nullptr) {
+      AttachedPreprocessingInfoType * comments = lnode->getAttachedPreprocessingInfo();
+      if (comments != NULL) {
+        for (auto comment: *comments) {
+#if DEBUG_DeleteDisconnectedNode
+          std::cout << "Comment with FI: " << std::hex << comment->get_file_info() << std::endl;
+#endif
+          recursive_saves(comment->get_file_info());
+        }
+      }
     }
   }
 
