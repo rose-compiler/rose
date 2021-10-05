@@ -1548,7 +1548,7 @@ namespace CodeThorn {
     AbstractValue val=valueResult.result;
     return val;
   }
-
+  
   list<EState> EStateTransferFunctions::transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate) {
     EState currentEState=*estate;
     CallString cs=estate->callString;
@@ -1570,10 +1570,17 @@ namespace CodeThorn {
       // pass on EState
       newLabel=edge.target();
       newPState=*evalResult.estate.pstate();
-      if(ReadWriteListener* readWriteListener=getReadWriteListener()) {
+
 #pragma omp critical(VIOLATIONRECORDING)
-	readWriteListener->trueFalseEdgeEvaluation(edge,evalResult,estate);
+      {
+	if(numberOfReadWriteListeners()>0) {
+	  for(auto p : _readWriteListenerMap) {
+	    ReadWriteListener* readWriteListener=p.second;
+	    readWriteListener->trueFalseEdgeEvaluation(edge,evalResult,estate);
+	  }
+	}
       }
+
       EState newEstate=createEState(newLabel,cs,newPState);
       newEStateList.push_back(newEstate);
     } else if((evalResult.isFalse() && edge.isType(EDGE_TRUE)) || (evalResult.isTrue() && edge.isType(EDGE_FALSE))) {
@@ -1584,10 +1591,17 @@ namespace CodeThorn {
       // pass on EState
       newLabel=edge.target();
       newPState=*evalResult.estate.pstate();
-      if(ReadWriteListener* readWriteListener=getReadWriteListener()) {
+
 #pragma omp critical(VIOLATIONRECORDING)
-	readWriteListener->trueFalseEdgeEvaluation(edge,evalResult,estate);
+      {
+	if(numberOfReadWriteListeners()>0) {
+	  for(auto p : _readWriteListenerMap) {
+	    ReadWriteListener* readWriteListener=p.second;
+	    readWriteListener->trueFalseEdgeEvaluation(edge,evalResult,estate);
+	  }
+	}
       }
+
       EState newEstate=createEState(newLabel,cs,newPState);
       newEStateList.push_back(newEstate);
     }
@@ -1886,9 +1900,14 @@ namespace CodeThorn {
     } else if(edge.isType(EDGE_CALL)) {
       tfCode=TransferFunctionCode::FunctionCall;
     } else if(edge.isType(EDGE_EXTERNAL)) {
-      if(ReadWriteListener* listener=getReadWriteListener()) {
 #pragma omp critical(VIOLATIONRECORDING)
-	listener->functionCallExternal(edge,estate);
+      {
+	if(numberOfReadWriteListeners()>0) {
+	  for(auto p : _readWriteListenerMap) {
+	    ReadWriteListener* readWriteListener=p.second;
+	    readWriteListener->functionCallExternal(edge,estate);
+	  }
+	}
       }
       tfCode=TransferFunctionCode::FunctionCallExternal;
     } else if(isSgReturnStmt(nextNodeToAnalyze) && !SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(nextNodeToAnalyze)) {
@@ -3934,9 +3953,15 @@ namespace CodeThorn {
     if(val.isUndefined()) {
       recordPotentialUninitializedAccessLocation(lab);
     }
-    if(_readWriteListener) {
+
 #pragma omp critical(VIOLATIONRECORDING)
-      _readWriteListener->readingFromMemoryLocation(lab,pstate,memLoc,val);
+    {
+      if(numberOfReadWriteListeners()>0) {
+	for(auto p : _readWriteListenerMap) {
+	  ReadWriteListener* readWriteListener=p.second;
+	  readWriteListener->readingFromMemoryLocation(lab,pstate,memLoc,val);
+	}
+      }
     }
 
     return val;
@@ -3959,10 +3984,17 @@ namespace CodeThorn {
       }
     }
     SAWYER_MESG(logger[TRACE])<<"EStateTransferFunctions::writeToMemoryLocation1: before write"<<endl;
-    if(_readWriteListener) {
+
 #pragma omp critical(VIOLATIONRECORDING)
-      _readWriteListener->writingToMemoryLocation(lab,pstate,memLoc,newValue);
+    {
+      if(numberOfReadWriteListeners()>0) {
+	for(auto p : _readWriteListenerMap) {
+	  ReadWriteListener* readWriteListener=p.second;
+	  readWriteListener->writingToMemoryLocation(lab,pstate,memLoc,newValue);
+	}
+      }
     }
+
     if(memLoc.isNullPtr()) {
       recordDefinitiveNullPointerDereferenceLocation(lab);
     } else {
@@ -4058,13 +4090,22 @@ namespace CodeThorn {
     }
   }
 
-  void EStateTransferFunctions::setReadWriteListener(ReadWriteListener* rwl) {
-#pragma omp critical(VIOLATIONRECORDING)
-    _readWriteListener=rwl;
+  size_t EStateTransferFunctions::numberOfReadWriteListeners() {
+    return _readWriteListenerMap.size();
   }
 
-  ReadWriteListener* EStateTransferFunctions::getReadWriteListener() {
-    return _readWriteListener;
+  void EStateTransferFunctions::registerReadWriteListener(ReadWriteListener* rwl, std::string name) {
+    ROSE_ASSERT(_readWriteListenerMap.find(name)==_readWriteListenerMap.end());
+    _readWriteListenerMap[name]=rwl;
+  }
+  
+  ReadWriteListener* EStateTransferFunctions::getReadWriteListener(std::string name) {
+    auto iter=_readWriteListenerMap.find(name);
+    if(iter==_readWriteListenerMap.end()) {
+      return nullptr;
+    } else {
+      return _readWriteListenerMap.at(name);
+    }
   }
 
   bool EStateTransferFunctions::isFunctionCallWithAssignment(Label lab,VariableId* varIdPtr){
