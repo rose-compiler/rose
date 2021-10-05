@@ -140,6 +140,12 @@ void nodeTraversal::visit(SgNode* n)
       {
         std::ostringstream o;
         o <<  n->variantT() <<":" << n->class_name();
+        if(isSgValueExp(n) != nullptr)
+        {
+          SgValueExp* valueExp = isSgValueExp(n);
+          o << ":" << valueExp->get_constant_folded_value_as_string();
+        }
+
         if(enable_verbose)
             cout << o.str() << endl; 
         //cout << "## " << n->variantT() <<":" << n->class_name() << " " << locatedNode->getFilenameString()  << endl;
@@ -202,7 +208,8 @@ int main( int argc, char * argv[] ){
   Rose::Diagnostics::initAndRegister(&mlog, "featureVector");
 
   Sawyer::CommandLine::ParserResult cmdline = parseCommandLine(argc, argv);
-  std::vector<std::string> positionalArgs = cmdline.unparsedArgs(true);
+  std::vector<std::string> positionalArgs = cmdline.unparsedArgs();
+  positionalArgs.insert(positionalArgs.begin(), argv[0]);
 
   SgProject* project = frontend(positionalArgs);
   Rose_STL_Container<std::string> filenames = project->getAbsolutePathFileNames();
