@@ -29,6 +29,7 @@ struct Settings {
     std::string sortField;
     Format outputFormat = Format::PLAIN;
     std::string databaseUri;                            // e.g., postgresql://user:password@host/database
+    Sawyer::Optional<size_t> limit;                     // limit number of resulting rows
 };
 
 static Sawyer::Message::Facility mlog;
@@ -56,6 +57,10 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
               .argument("field", anyParser(settings.sortField))
               .doc("Sort the output according to the specified column. The column need not be a column that's being "
                    "displayed in the output. The sort is always increasing."));
+
+    sg.insert(Switch("limit", 'n')
+              .argument("nrows", nonNegativeIntegerParser(settings.limit))
+              .doc("Limit the number of rows returned by the query."));
 
     return parser
         .with(Rose::CommandLine::genericSwitches())
@@ -314,6 +319,8 @@ main(int argc, char *argv[]) {
             exit(1);
         }
     }
+    if (settings.limit)
+        sql += " limit " + boost::lexical_cast<std::string>(*settings.limit);
     sql += ") as tbl";
 
     auto query = db.stmt(sql);
