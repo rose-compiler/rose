@@ -29,16 +29,27 @@ insertDatabaseSwitch(Sawyer::CommandLine::SwitchGroup &sg, std::string &uri) {
 }
 
 void
-insertOutputFormatSwitch(Sawyer::CommandLine::SwitchGroup &sg, Format &fmt) {
+insertOutputFormatSwitch(Sawyer::CommandLine::SwitchGroup &sg, Format &fmt, FormatFlags enabled) {
     using namespace Sawyer::CommandLine;
 
+    auto ep = enumParser(fmt);
+    std::string doc = "Specifies how to format the results. The choices are:";
+    if (enabled.isSet(Format::PLAIN)) {
+        ep->with("plain", Format::PLAIN);
+        doc += "@named{plain}{Plain text, human-readable format.}";
+    }
+    if (enabled.isSet(Format::YAML)) {
+        ep->with("yaml", Format::YAML);
+        doc += "@named{yaml}{Structured YAML output.}";
+    }
+    if (enabled.isSet(Format::HTML)) {
+        ep->with("html", Format::HTML);
+        doc += "@named{html}{HTML web page.}";
+    }
+
     sg.insert(Switch("format", 'F')
-              .argument("style", enumParser(fmt)
-                        ->with("plain", Format::PLAIN)
-                        ->with("yaml", Format::YAML))
-              .doc("Specifies how to format the results. The choices are:"
-                   "@named{plain}{Plain text, human-readable format.}"
-                   "@named{yaml}{Structured YAML output.}"));
+              .argument("style", ep)
+              .doc(doc));
 }
 
 std::string

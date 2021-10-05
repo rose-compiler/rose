@@ -106,7 +106,7 @@ main(int argc, char *argv[]) {
             showProperty(settings, *row.get<std::string>(0), row.get<std::string>(1).orDefault());
 
     } else {
-        boost::regex noticeRe("NOTICE-(\\d)+");
+        boost::regex noticeRe("NOTICE_(\\d)+");
         boost::smatch noticeFound;
 
         for (const std::string &arg: args) {
@@ -157,6 +157,7 @@ main(int argc, char *argv[]) {
                     .bind("name", name)
                     .bind("value", value)
                     .run();
+                showProperty(settings, name, value);
 
             } else {
                 mlog[ERROR] <<"property \"" <<StringUtility::cEscape(name) <<"\" is not defined\n";

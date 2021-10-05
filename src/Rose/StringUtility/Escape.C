@@ -175,17 +175,17 @@ bourneEscape(const std::string &s) {
     if (s.empty())
         return "'" + s + "'";
 
-    // The presence of non-printing characters trumps all others and requires C-style quoting
+    // The presence of non-printing characters or single quotes trumps all others and requires C-style quoting
     for (char ch: s) {
-        if (!::isprint(ch))
+        if (!::isprint(ch) || '\'' == ch)
             return "$'" + cEscape(s, '\'') + "'";
     }
 
-    // If the string contains any shell meta characters that must be quoted then single-quote the entire string and
-    // handle additional single quotes and backslashes specially.
+    // If the string contains any shell meta characters or white space that must be quoted then single-quote the entire string
+    // and escape backslashes.
     for (char ch: s) {
-        if (!::isalnum(ch) && s.find_first_of("_-+./") == std::string::npos)
-            return "'" + boost::replace_all_copy(boost::replace_all_copy(s, "\\", "\\\\"), "'", "'\"'\"'");
+        if (!::isalnum(ch) && !strchr("_-+./", ch))
+            return "'" + boost::replace_all_copy(s, "\\", "\\\\") + "'";
     }
 
     // No quoting or escaping necessary

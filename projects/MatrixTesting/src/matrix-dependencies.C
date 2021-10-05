@@ -67,7 +67,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 
     SwitchGroup sg("Tool-specific switches");
     insertDatabaseSwitch(sg, settings.databaseUri);
-    insertOutputFormatSwitch(sg, settings.outputFormat);
+    insertOutputFormatSwitch(sg, settings.outputFormat, FormatFlags().set(Format::PLAIN).set(Format::YAML));
 
     return parser
         .with(Rose::CommandLine::genericSwitches())
@@ -124,6 +124,9 @@ print(const Settings &settings, const DependencyList &deps) {
             }
             return;
         }
+
+        case Format::HTML:
+            ASSERT_not_reachable("HTML format not supported");
     }
     ASSERT_not_reachable("invalid output format");
 }
@@ -149,6 +152,9 @@ listNames(const Settings &settings, DB::Connection db) {
             for (const std::string &name: names)
                 std::cout <<"- " <<StringUtility::yamlEscape(name) <<"\n";
             return;
+
+        case Format::HTML:
+            ASSERT_not_reachable("HTML format not supported");
     }
     ASSERT_not_reachable("invalid output format");
 }
