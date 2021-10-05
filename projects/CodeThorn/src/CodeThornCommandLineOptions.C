@@ -187,6 +187,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("generate-assertions", po::value< bool >(&ctOpt.generateAssertions)->default_value(false)->implicit_value(true),"Generate assertions (pre-conditions) in program and output program (using ROSE unparser).")
     ("precision-exact-constraints", po::value< bool >(&ctOpt.precisionExactConstraints)->default_value(false)->implicit_value(true),"Use precise constraint extraction.")
     ("stg-trace-file", po::value< string >(&ctOpt.stgTraceFileName), "Generate STG computation trace and write to file <arg>.")
+    ("rw-trace",po::value< bool >(&ctOpt.readWriteTrace)->default_value(false)->implicit_value(true),"Print read-write trace.")
     ("arrays-not-in-state", po::value< bool >(&ctOpt.arraysNotInState)->default_value(false)->implicit_value(true),"Arrays are not represented in state. Only correct if all arrays are read-only (manual optimization - to be eliminated).")
     // ("z3", po::value< bool >(&ctOpt.z3BasedReachabilityAnalysis)->default_value(false)->implicit_value(true), "RERS specific reachability analysis using z3.")	
     // ("rers-upper-input-bound", po::value< int >(&ctOpt.z3UpperInputBound)->default_value(-1), "RERS specific parameter for z3.")

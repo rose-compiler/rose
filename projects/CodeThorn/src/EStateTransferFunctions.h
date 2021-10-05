@@ -16,6 +16,7 @@
 #include "TypeSizeMapping.h"
 #include "CodeThornOptions.h"
 #include "ReadWriteListener.h"
+#include "MemoryViolationAnalysis.h"
 
 namespace CodeThorn {
   class CTAnalysis;
@@ -306,9 +307,9 @@ namespace CodeThorn {
     int getMemoryRegionElementSize(CodeThorn::AbstractValue regionAddress);
 
     // if set to 0 then no listner active. By default it is 0.
-    void setReadWriteListener(ReadWriteListener* listener);
-    ReadWriteListener* getReadWriteListener();
-
+    size_t numberOfReadWriteListeners();
+    void registerReadWriteListener(ReadWriteListener* listener, std::string name="");
+    ReadWriteListener* getReadWriteListener(std::string name);
 
     // initialize command line arguments provided by option "--cl-options" in PState
     void initializeCommandLineArgumentsInState(Label lab, PState& initialPState);
@@ -317,7 +318,7 @@ namespace CodeThorn {
 
   protected:
     AbstractValue abstractValueFromSgValueExp(SgValueExp* valueExp, EvalMode mode);
-    ReadWriteListener* _readWriteListener=nullptr;
+    std::map<std::string,ReadWriteListener*> _readWriteListenerMap;
     
     // general evaluation function for abstract value operators
     SingleEvalResult evalOp(SgNode* node,

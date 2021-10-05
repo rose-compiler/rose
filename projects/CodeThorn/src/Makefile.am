@@ -174,6 +174,7 @@ CODETHORN_HEADER_FILES=\
   RDTransferFunctions.h \
   ReachabilityAnalysis.h \
   ReadWriteListener.h \
+  ReadWriteTraceAnalysis.h \
   RersSpecialization.h \
   RERS_empty_specialization.h \
   RersCounterexample.h \
@@ -309,6 +310,7 @@ CODETHORN_SOURCE_FILES=\
   RDTransferFunctions.C \
   ReachabilityAnalysis.C \
   ReadWriteListener.C \
+  ReadWriteTraceAnalysis.C \
   RERS_empty_specialization.C \
   RersCounterexample.C \
   RewriteStatistics.C \

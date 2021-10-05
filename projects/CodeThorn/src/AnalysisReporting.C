@@ -140,7 +140,7 @@ namespace CodeThorn {
 
   void AnalysisReporting::generateConstantConditionVerificationReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, AnalysisSelector analysisSel) {
     ROSE_ASSERT(analyzer->getEStateTransferFunctions());
-    if(ReadWriteListener* readWriteListener=analyzer->getEStateTransferFunctions()->getReadWriteListener()) {
+    if(ReadWriteListener* readWriteListener=analyzer->getEStateTransferFunctions()->getReadWriteListener("constant-condition")) {
       ROSE_ASSERT(readWriteListener);
       ConstantConditionAnalysis* constCondAnalysis=dynamic_cast<ConstantConditionAnalysis*>(readWriteListener);
       ROSE_ASSERT(constCondAnalysis);
