@@ -748,7 +748,8 @@ TESTCODES_REQUIRED_TO_PASS = \
    test2020_108.C \
    test2020_109.C \
    test2020_110.C \
-   test2020_116.C 
+   test2020_116.C \
+   typedef-ctor-with-tpl-variadic-causes-most-vexing-parse.C
 
 # DQ (9/18/2020): After retesting these older files, they now pass (at least with Clang 10.0).
 TESTCODES_REQUIRED_TO_PASS += \
