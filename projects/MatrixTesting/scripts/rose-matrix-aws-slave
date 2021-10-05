@@ -346,7 +346,7 @@ matrix-reclaim-disk() {
 		    gnu-*|llvm-*|intel-*) # compilers
 			continue
 			;;
-		    *-generatation)       # compiler code generators
+		    *-generation)       # compiler code generators
 			continue
 			;;
 
