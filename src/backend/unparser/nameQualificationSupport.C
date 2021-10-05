@@ -2000,6 +2000,14 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
                ASSERT_not_null(return_declaration);
                break;
              }
+          // Liao, Oct 4, 2021. We skip translation of Ada AST from some system packages. We also ignore them in the unparser.   
+          case V_SgAdaSubtype:
+          case V_SgAdaModularType:   
+          case V_SgAdaDerivedType:   
+             {
+               return_declaration = NULL;
+               break;
+             }
 
        // Catch anything that migh have been missed (and exit so it can be identified and fixed).
           default:

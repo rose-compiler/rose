@@ -2127,8 +2127,20 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
 
           default:
              {
-               printf("CxxCodeGeneration_locatedNode::unparseLanguageSpecificStatement: Error: No handler for %s (variant: %d)\n",stmt->sage_class_name(), stmt->variantT());
-               ROSE_ABORT();
+               bool expectedAdaStmt= false;
+               // Liao, Oct. 4, 2021. We skip translation of some system packages in Ada AST
+               if (SgAdaPackageSpecDecl * ada_decl=isSgAdaPackageSpecDecl(stmt))
+               {
+                 string qname= ada_decl->get_qualified_name().getString();
+                 if (qname=="::System" || qname=="::System::Unsigned_Types")
+                   expectedAdaStmt=true;
+               }
+
+               if (!expectedAdaStmt)
+               {
+                 printf("CxxCodeGeneration_locatedNode::unparseLanguageSpecificStatement: Error: No handler for %s (variant: %d)\n",stmt->sage_class_name(), stmt->variantT());
+                 ROSE_ABORT(); //try to just comment out this, what will happen?
+               }
              }
         }
 
