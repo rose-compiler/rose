@@ -496,12 +496,20 @@ nobase_pkginclude_HEADERS=								\
 	Rose/Exception.h								\
 	Rose/FileSystem.h								\
 	Rose/FormatRestorer.h								\
+	Rose/FormattedTable.h								\
 	Rose/GraphUtility.h								\
 	Rose/Initialize.h								\
 	Rose/Progress.h									\
 	Rose/RecursionCounter.h								\
 	Rose/SourceLocation.h								\
-	Rose/StringUtility.h
+	Rose/StringUtility.h								\
+	Rose/StringUtility/Convert.h							\
+	Rose/StringUtility/Diagnostics.h						\
+	Rose/StringUtility/Escape.h							\
+	Rose/StringUtility/NumberToString.h						\
+	Rose/StringUtility/Predicate.h							\
+	Rose/StringUtility/SplitJoin.h							\
+	Rose/StringUtility/StringToNumber.h
 
 
 ########################################################################################################################

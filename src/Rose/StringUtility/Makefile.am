@@ -3,6 +3,6 @@ AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 noinst_LTLIBRARIES = librose_partial.la
 librose_partial_la_SOURCES = \
-	StringUtility.C
+	Convert.C Diagnostics.C Escape.C NumberToString.C Predicate.C SplitJoin.C StringToNumber.C
 
 # Headers are installed by parent makefiles

@@ -951,16 +951,25 @@ RiscOperators::writeRegister(RegisterDescriptor reg, const BS::SValue::Ptr &valu
 BS::SValuePtr
 RiscOperators::readMemory(RegisterDescriptor segreg, const BS::SValuePtr &addr,
                           const BS::SValuePtr &dfltUnused, const BS::SValuePtr &cond) {
-    // Read the memory's value symbolically, and if we don't have a value then read it concretely and use the concrete value to
-    // update the symbolic state. However, we can only read it concretely if the address is a constant.
-    if (auto va = addr->toUnsigned()) {
+    if (isRecursive()) {
+        // Don't do anything special because we're being called from inside a user callback.
+        return Super::readMemory(segreg, addr, dfltUnused, cond);
+
+    } else if (auto va = addr->toUnsigned()) {
+        // Read the memory's value symbolically, and if we don't have a value then read it concretely and use the concrete value to
+        // update the symbolic state. However, we can only read it concretely if the address is a constant.
         size_t nBytes = dfltUnused->nBits() / 8;
         SymbolicExpr::Ptr concrete = SymbolicExpr::makeIntegerConstant(dfltUnused->nBits(),
                                                                        process_->readMemoryUnsigned(*va, nBytes));
 
-        // Handle shared memory at concrete addresses
+        // Handle shared memory by invoking user-defined callbacks
         SharedMemoryCallbacks callbacks = process()->sharedMemory().getOrDefault(*va);
         if (!callbacks.isEmpty()) {
+            isRecursive(true);
+            BOOST_SCOPE_EXIT(this_) {
+                this_->isRecursive(false);
+            } BOOST_SCOPE_EXIT_END;
+
             // FIXME[Robb Matzke 2021-09-09]: use structured bindings when ROSE requires C++17 or later
             auto x = process()->sharedMemoryAccess(callbacks, partitioner(), RiscOperators::promote(shared_from_this()),
                                                    *va, nBytes);
@@ -976,7 +985,9 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BS::SValuePtr &addr,
         SValuePtr dflt = SValue::promote(undefined_(dfltUnused->nBits()));
         dflt->set_expression(concrete);
         return Super::readMemory(segreg, addr, dflt, cond);
+
     } else {
+        // Not a concrete address, so do things symbolically
         return Super::readMemory(segreg, addr, dfltUnused, cond);
     }
 }

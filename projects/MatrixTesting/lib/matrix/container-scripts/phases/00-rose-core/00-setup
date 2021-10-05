@@ -3,7 +3,11 @@ set -e
 
 # Save some info about the ROSE version. Do this early so subsequent failures report something meaningful to the
 # database.  We can do all this in the read-only source directory.
-rose_version=$(cd project-source-ro && git rev-parse HEAD)
+if [ -r project-source-ro/ROSE_VERSION ]; then
+    rose_version=$(cat project-source-ro/ROSE_VERSION)
+else
+    rose_version=$(cd project-source-ro && git rev-parse HEAD)
+fi
 if (cd project-source-ro && git status --short |grep -q '^.M'); then
     rose_version="${rose_version}+local"
 fi

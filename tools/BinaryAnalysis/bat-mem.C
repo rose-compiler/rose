@@ -50,7 +50,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     SwitchGroup output("Output Switches");
     output.name("out");
 
-    output.insert(Switch("format")
+    output.insert(Switch("format", 'F')
                   .argument("fmt", enumParser<OutputFormat>(settings.outputFormat)
                             ->with("none", OUT_NONE)
                             ->with("hexdump", OUT_HEXDUMP)
@@ -87,13 +87,14 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
                        "@named{intel}{Intel HEX syntax." +
                        std::string(SRecord::SREC_INTEL == settings.srecordSyntax ? " This is the default." : "") + "}"));
 
-    output.insert(Switch("prefix", 'o')
+    output.insert(Switch("output", 'o')
+                  .longName("prefix")
                   .argument("name", anyParser(settings.outputPrefix))
                   .doc("When generating binary files (@s{format}=binary), the string argument for this switch is "
                        "prepended to the names of the binary output files as described by @s{format}. The default "
                        "is to use the base name of the input RBA file after also removing the \".rba\" extension."));
 
-    output.insert(Switch("where")
+    output.insert(Switch("where", 'a')
                   .argument("interval", P2::addressIntervalParser(settings.where))
                   .whichValue(SAVE_ALL)
                   .doc("Specifies the addresses that should be dumped. The default is to dump all mapped addresses. " +

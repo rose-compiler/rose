@@ -3,6 +3,7 @@
 #include "rosePublicConfig.h"
 #include "SqlDatabase.h"
 #include <Rose/StringUtility.h>
+#include <ROSE_ASSERT.h>
 
 #include <boost/foreach.hpp>
 #include <boost/regex.hpp>
