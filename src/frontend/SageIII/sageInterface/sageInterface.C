@@ -15965,6 +15965,7 @@ PreprocessingInfo* SageInterface::attachComment(
           case PreprocessingInfo::CpreprocessorIfndefDeclaration: comment = "#ifndef " + content + "\n"; break;
           case PreprocessingInfo::CpreprocessorDefineDeclaration: comment = "#define " + content + "\n"; break;
           case PreprocessingInfo::CpreprocessorEndifDeclaration:  comment = "#endif" + (content.empty() ? "\n" : (" /* " + content + " */\n")); break;
+          case PreprocessingInfo::CpreprocessorEnd_ifDeclaration:  comment = "#end if" + (content.empty() ? "\n" : (" /* " + content + " */\n")); break;
 
           default:
              {
@@ -16811,6 +16812,7 @@ SageInterface::movePreprocessingInfo (SgStatement* stmt_src,  SgStatement* stmt_
                (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorElseDeclaration )||
                (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorElifDeclaration )||
                (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorEndifDeclaration ) ||
+               (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorEnd_ifDeclaration ) ||
                (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorLineDeclaration) ||
                (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorErrorDeclaration) ||
                (info->getTypeOfDirective()==PreprocessingInfo::CpreprocessorWarningDeclaration) ||

@@ -1354,11 +1354,14 @@ void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(SgProject* root, TimingCollect
 
   CodeThornOptions& ctOpt=getOptionsRef();
   Pass::normalization(ctOpt,root,tc);
-  _variableIdMapping=Pass::createVariableIdMapping(ctOpt, root, tc); // normalization timer
-  _labeler=Pass::createLabeler(ctOpt, root, tc, _variableIdMapping); // labeler timer
-  _classHierarchy=Pass::createClassHierarchy(ctOpt, root, tc); // class hierarchy timer
-  _cfAnalysis=Pass::createForwardIcfg(ctOpt,root,tc,_labeler,_classHierarchy); // icfg constructino timer
-  
+   logger[INFO]<<"Normalization finished"<<endl;
+   _variableIdMapping=Pass::createVariableIdMapping(ctOpt, root, tc); // normalization timer
+   logger[INFO]<<"Vim finished"<<endl;
+   _labeler=Pass::createLabeler(ctOpt, root, tc, _variableIdMapping); // labeler timer
+   logger[INFO]<<"Labeler finished"<<endl;
+   _cfAnalysis=Pass::createForwardIcfg(ctOpt,root,tc,_labeler); // icfg constructino timer
+   logger[INFO]<<"forward icfg finished"<<endl;
+   
   tc.startTimer(); // initialization timer (stopped at end of function)
   resetInputSequenceIterator();
   RoseAst completeast(root);

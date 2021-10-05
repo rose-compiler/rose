@@ -156,6 +156,7 @@ CODETHORN_HEADER_FILES=\
   DFSolver1.h \
   DFSolver2.h \
   ObjectLayoutAnalysis.h \
+  MemoryViolationAnalysis.h \
   PointerAnalysisInterface.h \
   PragmaHandler.h \
   PredefinedSemanticFunctions.h \
@@ -172,6 +173,7 @@ CODETHORN_HEADER_FILES=\
   RDLattice.h \
   RDTransferFunctions.h \
   ReachabilityAnalysis.h \
+  ReadWriteListener.h \
   RersSpecialization.h \
   RERS_empty_specialization.h \
   RersCounterexample.h \
@@ -289,6 +291,7 @@ CODETHORN_SOURCE_FILES=\
   DFSolver1.C \
   DFSolver2.C \
   ObjectLayoutAnalysis.C \
+  MemoryViolationAnalysis.C \
   PointerAnalysisInterface.C \
   PragmaHandler.C \
   PredefinedSemanticFunctions.C \
@@ -305,6 +308,7 @@ CODETHORN_SOURCE_FILES=\
   RDLattice.C \
   RDTransferFunctions.C \
   ReachabilityAnalysis.C \
+  ReadWriteListener.C \
   RERS_empty_specialization.C \
   RersCounterexample.C \
   RewriteStatistics.C \

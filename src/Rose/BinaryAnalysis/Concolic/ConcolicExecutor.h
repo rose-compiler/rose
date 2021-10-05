@@ -72,6 +72,7 @@ private:
     ArchitecturePtr process_;                           // subordinate process, concrete state
     bool hadSystemCall_ = false;                        // true if we need to call process_->systemCall, cleared each insn
     ExecutionEventPtr hadSharedMemoryAccess_;           // set when shared memory is read, cleared each instruction
+    bool isRecursive_ = false;                          // if set, avoid calling user-defined functions
 
 protected:
     /** Allocating constructor. */
@@ -158,6 +159,20 @@ public:
     }
     void hadSharedMemoryAccess(const ExecutionEventPtr &e) {
         hadSharedMemoryAccess_ = e;
+    }
+    /** @} */
+
+    /** Property: Recursive calls through user code.
+     *
+     *  This is generally tested and set before invoking user-defined code such as callbacks for shared memory operations, and cleared
+     *  when the user code returns. If the test is true, then the user code is skipped.
+     *
+     * @{ */
+    bool isRecursive() const {
+        return isRecursive_;
+    }
+    void isRecursive(bool b) {
+        isRecursive_ = b;
     }
     /** @} */
 

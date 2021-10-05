@@ -78,7 +78,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
               .intrinsicValue(false, settings.inliningImports)
               .hidden(true));
 
-    cg.insert(Switch("function")
+    cg.insert(Switch("function", 'f')
               .argument("name_or_address", listParser(anyParser(settings.functionNames), ","))
               .explosiveLists(true)
               .whichValue(SAVE_ALL)

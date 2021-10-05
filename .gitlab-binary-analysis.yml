@@ -13,7 +13,7 @@
 # Instructions for build ROSE interactively in a Docker container
 # ===============================================================
 #
-# You can also use these same Docker images to compile your own versions of ROSE as well. Here's how...
+# You can also use these same Docker images to compile your own versions of ROSE. Here's how...
 #
 #   1. Choose a Docker image based on operating system. You can get the names from the "image" values below, such as
 #      "matzke/rosedev:u20.04".
@@ -23,12 +23,13 @@
 #       $ docker run --interactive --tty --rm --privileged matzke/rosedev:u20.04 /bin/bash
 #
 #      If you need to mount a Docker volume such as what normally happens with GitLab, use the -v switch (e.g., -v
-#      ouo-software:/software:ro). See
+#      ouo-software:/software:ro). Mounting volumes is not required to build a release. See
 #      https://github.com/matzke1/rose-installers/blob/master/scripts/create-software-volume for an example of creating
 #      a volume. You can also mount host directories directly into a container, which might be easier but not as
 #      flexible.
 #
-#   3. Download the ROSE source code to the container and place it in "/rose". One possibility is to do this:
+#   3. Inside the container, download the ROSE source code to the container and place it in "/rose". One possibility is
+#   to do this:
 #
 #       $ git clone --branch develop https://github.com/rose-compiler/rose /rose
 #

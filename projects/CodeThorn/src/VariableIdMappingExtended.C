@@ -420,7 +420,7 @@ namespace CodeThorn {
   void VariableIdMappingExtended::computeVariableSymbolMapping(SgProject* project, int maxWarningsCount) {
     computeVariableSymbolMapping2(project,maxWarningsCount);
     determineVarUsage(project);
-
+    
     bool symbolCheckOk=astSymbolCheck(project);
     if(!symbolCheckOk) {
 #if 0
@@ -660,7 +660,7 @@ namespace CodeThorn {
     initTypeSizes();
     computeTypeSizes(); // currently does not compute any typesizes
     registerClassMembersNew();
-
+    
     int ct=0;
     for(auto classDef:_memPoolTraversal.classDefinitions) {
       SgClassDeclaration* classDecl=classDef->get_declaration();
@@ -681,7 +681,6 @@ namespace CodeThorn {
     int numVarDecls=0;
     int numSymbolExists=0;
     int numFunctionParams=0;
-
     for(list<SgGlobal*>::iterator k=globList.begin();k!=globList.end();++k) {
       RoseAst ast(*k);
       ast.setWithTemplates(true);
@@ -690,15 +689,11 @@ namespace CodeThorn {
         if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
           if(isMemberVariableDeclaration(varDecl))
             continue;
-          if(varDecl->unparseToString() == "... ;") {
-	    // there are invalid symbols
-	    appendErrorReportLine(SgNodeHelper::locationToString(varDecl)+": there are invalid symbols.");
-            continue;
-	  }
+	  Sg_File_Info* fi=varDecl->get_file_info();
+	  logger[TRACE]<<"DEBUG: C6.2.1.2: varDecl: "<<varDecl<<" parent:"<<varDecl->get_parent()<<" file_id:"<<fi->get_file_id()<<" AST:"<<AstTerm::astTermWithNullValuesToString(varDecl)<<endl;
           addVariableDeclaration(varDecl);
-          //cout<<"DEBUG: registering var decl: "<<numVarDecls++<<":"<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<":"<<varDecl->unparseToString()<<endl;
+          logger[TRACE]<<"DEBUG: registering var decl: "<<++numVarDecls<<":"<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<":"<<varDecl->unparseToString()<<endl;
         }
-
         if(SgFunctionDefinition* funDef=isSgFunctionDefinition(*i)) {
           //cout<<"DEBUG: fun def : "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<":"<<funDef->unparseToString()<<endl;
           std::vector<SgInitializedName *> & funFormalParams=SgNodeHelper::getFunctionDefinitionFormalParameterList(*i);
@@ -726,12 +721,10 @@ namespace CodeThorn {
           }
         }
       }
-
       // 2nd pass over all variable declarations, to ensure all settings are based on the variable declaration with an initializer (if available)
       for (auto pair: mappingVarIdToInfo) {
         setVarIdInfoFromType(pair.first);
       }
-
       // creates variableid for each string literal in the entire program
       registerStringLiterals(project);
     }

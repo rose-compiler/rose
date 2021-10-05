@@ -98,12 +98,8 @@ public:
      *  it's called.
      *
      *  @li Information to make the declaraed behavior possible. For instance, the concrete and symbolic values returned the
-     *  first time SYS_getpid was called so that we can make it return these same values in the future.
-     *
-     * @{ */
+     *  first time SYS_getpid was called so that we can make it return these same values in the future. */
     const SystemCallMap& systemCalls() const;
-    SystemCallMap& systemCalls();
-    /** @} */
 
     /** Property: Information about shared memory.
      *
@@ -116,12 +112,8 @@ public:
      *  last time the timer's memory was read so that the new return value can be constrained to be greater than or equal
      *  to the previously returned value.
      *
-     *  Each concrete address can have only one @ref SharedMemory object, although each object can have a list of callbacks.
-     *
-     * @{ */
+     *  Each concrete address can have only one @ref SharedMemory object, although each object can have a list of callbacks. */
     const SharedMemoryMap& sharedMemory() const;
-    SharedMemoryMap& sharedMemory();
-    /** @} */
 
     /** Properties: Input variables.
      *

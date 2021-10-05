@@ -123,7 +123,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
                .intrinsicValue(false, settings.showingReturnEdges)
                .hidden(true));
 
-    cfg.insert(Switch("function")
+    cfg.insert(Switch("function", 'f')
                .argument("name_or_address", listParser(anyParser(settings.functionNames), ","))
                .explosiveLists(true)
                .whichValue(SAVE_ALL)

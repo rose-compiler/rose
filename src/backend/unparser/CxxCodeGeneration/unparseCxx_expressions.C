@@ -8177,6 +8177,12 @@ Unparse_ExprStmt::unparseConInit(SgExpression* expr, SgUnparse_Info& info)
                     printf ("In unparseConInit(): Need to handle new case for where both con_init->get_declaration() and con_init->get_class_decl() can be NULL \n");
                     printf ("In unparseConInit(): Get name of type = %p = %s name = %s \n",con_init->get_type(),con_init->get_type()->class_name().c_str(),"NOT EVALUATED YET");
 #endif
+                    // TV (10/04/2021): These 2 need to be unset for SgTypedefType to be unparsed
+                    newinfo.unset_isWithType();
+                    newinfo.unset_SkipBaseType();
+                    // TV (10/04/2021): I believe that should be here too (no test case just a belief)
+                    newinfo.set_reference_node_for_qualification(con_init);
+
                     unp->u_type->unparseType(con_init->get_type(),newinfo);
 
                  // ROSE_ASSERT ( nm.is_null() == false );

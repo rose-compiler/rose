@@ -69,7 +69,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     SwitchGroup sel("Selection switches");
     sel.name("sel");
 
-    sel.insert(Switch("function")
+    sel.insert(Switch("function", 'f')
                .argument("name_or_address", listParser(anyParser(settings.functionNames), ","))
                .explosiveLists(true)
                .whichValue(SAVE_ALL)

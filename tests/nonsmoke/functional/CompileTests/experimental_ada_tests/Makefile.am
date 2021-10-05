@@ -5,6 +5,7 @@ SUBDIRS = \
   compile_tests \
   sageInterfaceAda_tests \
   literalParser_tests \
+  preprocessor_tests \
   ROSEGprIntegration_tests
 
 # DQ (8/23/2017): Use command line option to alternatively test the experimental fortran frontend.
