@@ -38,12 +38,6 @@ rose_matrix_errors_CPPFLAGS = $(ROSE_INCLUDES) -DDEFAULT_DATABASE='"$(DEFAULT_DA
 rose_matrix_errors_LDFLAGS = $(ROSE_RPATHS)
 rose_matrix_errors_LDADD = $(ROSE_LIBS)
 
-bin_PROGRAMS += rose-matrix-delete-test
-rose_matrix_delete_test_SOURCES = matrixDeleteTest.C
-rose_matrix_delete_test_CPPFLAGS = $(ROSE_INCLUDES) -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE)"'
-rose_matrix_delete_test_LDFLAGS = $(ROSE_RPATHS)
-rose_matrix_delete_test_LDADD = $(ROSE_LIBS)
-
 bin_PROGRAMS += rose-matrix-dependencies
 rose_matrix_dependencies_SOURCES = matrix-dependencies.C
 rose_matrix_dependencies_CPPFLAGS = $(ROSE_INCLUDES) -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE)"'

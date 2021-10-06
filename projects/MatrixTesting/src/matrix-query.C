@@ -30,6 +30,7 @@ struct Settings {
     Format outputFormat = Format::PLAIN;
     std::string databaseUri;                            // e.g., postgresql://user:password@host/database
     Sawyer::Optional<size_t> limit;                     // limit number of resulting rows
+    bool deleteMatchingTests = false;                   // if true, delete the tests whose records match
 };
 
 static Sawyer::Message::Facility mlog;
@@ -61,6 +62,10 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     sg.insert(Switch("limit", 'n')
               .argument("nrows", nonNegativeIntegerParser(settings.limit))
               .doc("Limit the number of rows returned by the query."));
+
+    sg.insert(Switch("delete")
+              .intrinsicValue(true, settings.deleteMatchingTests)
+              .doc("Delete the tests that were matched."));
 
     return parser
         .with(Rose::CommandLine::genericSwitches())
@@ -234,7 +239,7 @@ main(int argc, char *argv[]) {
                 whereValues.insert(key, val);
             }
 
-            std::cerr <<"  " <<std::left <<std::setw(16) <<key <<" = \"" <<StringUtility::cEscape(val) <<"\"\n";
+            mlog[INFO] <<"  " <<std::left <<std::setw(16) <<key <<" = \"" <<StringUtility::cEscape(val) <<"\"\n";
             keysSeen.insert(key);
 
         } else if (arg == "list") {
@@ -262,6 +267,15 @@ main(int argc, char *argv[]) {
             keysSelected.push_back(arg);
             columnsSelected.push_back(dependencyNames[arg]);
             keysSeen.insert(arg);
+        }
+    }
+
+    // If we're deleting records, then the test ID must be one of the things we're selecting. But don't select it
+    // automatically--make the user do it so we know that they know what they're doing.
+    if (settings.deleteMatchingTests) {
+        if (std::find(keysSelected.begin(), keysSelected.end(), "id") == keysSelected.end()) {
+            mlog[FATAL] <<"the \"id\" field must be selected in order to delete tests\n";
+            exit(1);
         }
     }
 
@@ -334,8 +348,9 @@ main(int argc, char *argv[]) {
         }
     }
 
-    // Run the query and save results so we can compute column sizes.
+    // Run the query and save results in a table to be printed later.
     FormattedTable table;
+    std::vector<unsigned> idsToDelete;
     for (size_t j = 0; j < keysSelected.size(); ++j)
         table.columnHeader(0, j, keysSelected[j]);
     for (auto row: query) {
@@ -359,6 +374,8 @@ main(int argc, char *argv[]) {
                          % tm.tm_hour % tm.tm_min % tm.tm_sec
                          % tz).str();
             } else {
+                if (settings.deleteMatchingTests && "id" == keysSelected[j])
+                    idsToDelete.push_back(*row.get<unsigned>(j));
                 value = row.get<std::string>(j).orElse("null");
             }
 
@@ -375,6 +392,23 @@ main(int argc, char *argv[]) {
         }
     }
 
-    if (Format::PLAIN == settings.outputFormat)
+    if (Format::PLAIN == settings.outputFormat) {
         std::cout <<table;
+        // It might be more useful to report the number of tests instead of the number of rows in the table since each row
+        // typically matches more than one tests. Fortunately, if we're about to delete things then the "id" column must be
+        // displayed which will result in the same number of rows as tests.
+        mlog[INFO] <<StringUtility::plural(table.nRows(), "rows") <<"\n";
+    }
+
+    if (settings.deleteMatchingTests && !idsToDelete.empty()) {
+        mlog[INFO] <<"deleting " <<StringUtility::plural(idsToDelete.size(), "matching tests") <<"\n";
+        std::string inClause = "in (";
+        for (size_t i = 0; i < idsToDelete.size(); ++i)
+            inClause += (0 == i ? "" : ", ") + boost::lexical_cast<std::string>(idsToDelete[i]);
+        inClause += ")";
+
+        // Delete attachments first, then test records
+        db.stmt("delete from attachments where test_id " + inClause).run();
+        db.stmt("delete from test_results where id " + inClause).run();
+    }
 }

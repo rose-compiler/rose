@@ -25,7 +25,6 @@ ifeq (@(LINKAGE),shared)
     run $(tool_compile_linkexe) --install -o rose-matrix-test-result matrixTestResult.C
     run $(tool_compile_linkexe) --install -o rose-matrix-attachments matrixAttachments.C
     run $(tool_compile_linkexe) --install -o rose-matrix-errors matrixErrors.C
-    run $(tool_compile_linkexe) --install -o rose-matrix-delete-test matrixDeleteTest.C
 
     # The web interface. This is useful but it's showing its age. I'd like to move to just
     # command-line tools. It's also very resource intensive and thus doesn't work well on the tiny
