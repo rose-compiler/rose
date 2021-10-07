@@ -1681,7 +1681,7 @@ namespace CodeThorn {
 	  } else if(getVariableIdMapping()->isOfPointerType(arrayVarId)) {
 	    // in case it is a pointer retrieve pointer value
 	    AbstractValue ptr=AbstractValue::createAddressOfArray(arrayVarId);
-	    if(pstate2.varExists(ptr)) {
+	    if(pstate2.memLocExists(ptr)) {
 	      arrayPtrValue=readFromMemoryLocation(estate.label(),&pstate2,ptr);
 	      //cout<<"DEBUG: arrayPtrValue: "<<arrayPtrValue.toString(getVariableIdMapping())<<endl;
 	      // convert integer to VariableId
@@ -1697,7 +1697,7 @@ namespace CodeThorn {
 	    }
 	  } else if(getVariableIdMapping()->isOfReferenceType(arrayVarId)) {
 	    AbstractValue ptr=AbstractValue::createAddressOfArray(arrayVarId);
-	    if(pstate2.varExists(ptr)) {
+	    if(pstate2.memLocExists(ptr)) {
 	      arrayPtrValue=readFromReferenceMemoryLocation(estate.label(),&pstate2,ptr);
 	    } else {
 	      arrayPtrValue=AbstractValue::createTop();
@@ -2795,7 +2795,7 @@ namespace CodeThorn {
 	  res.estate.io.recordVerificationError();
 	  return res;
 	}
-	if(pstate2.varExists(arrayPtrValue)) {
+	if(pstate2.memLocExists(arrayPtrValue)) {
 	  // required for the following index computation (nothing to do here)
 	} else {
 	  if(arrayPtrValue.isTop()) {
@@ -2812,7 +2812,7 @@ namespace CodeThorn {
 	  }
 	  ROSE_ASSERT(false); // not reachable
 	}
-	if(pstate2.varExists(arrayPtrPlusIndexValue)) {
+	if(pstate2.memLocExists(arrayPtrPlusIndexValue)) {
 	  // address of denoted memory location
 	  switch(mode) {
 	  case MODE_VALUE:
@@ -3908,27 +3908,7 @@ namespace CodeThorn {
   }
   
   AbstractValue EStateTransferFunctions::conditionallyApplyArrayAbstraction(AbstractValue val) {
-    //cout<<"DEBUG: condapply: "<<val.toString(_analyzer->getVariableIdMapping())<<endl;
-    int arrayAbstractionIndex=_analyzer->getOptionsRef().arrayAbstractionIndex;
-    if(arrayAbstractionIndex>=0) {
-      //cout<<"DEBUG: array abstraction active starting at index: "<<arrayAbstractionIndex<<endl;
-      if(val.isPtr()&&!val.isNullPtr()) {
-	VariableId memLocId=val.getVariableId();
-	if(_analyzer->getVariableIdMapping()->isOfArrayType(memLocId)) {
-	  AbstractValue index=val.getIndexValue();
-	  if(!index.isTop()&&!index.isBot()) {
-	    int offset=val.getIndexIntValue();
-	    auto remappingEntry=_analyzer->getVariableIdMapping()->getOffsetAbstractionMappingEntry(memLocId,offset);
-	    if(remappingEntry.getIndexRemappingType()==VariableIdMappingExtended::IndexRemappingEnum::IDX_REMAPPED) {
-	      SAWYER_MESG(logger[TRACE])<<"remapping index "<<offset<<" -> "<<remappingEntry.getRemappedOffset()<<endl;
-	      val.setValue(remappingEntry.getRemappedOffset());
-	      val.setSummaryFlag(true);
-	    }
-	  }
-	}
-      }
-    }
-    return val;
+    return AbstractValue::conditionallyApplyArrayAbstraction(val);
   }
 
   AbstractValue EStateTransferFunctions::readFromMemoryLocation(Label lab, PStatePtr pstate, AbstractValue memLoc) {

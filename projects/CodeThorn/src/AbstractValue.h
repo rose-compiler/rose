@@ -107,7 +107,7 @@ class AbstractValue {
   size_t getAVSetSize() const;
   enum Operator { UnaryMinus, Not, BitwiseComplement, Add, Sub, Mul, Div, Mod, Or, And, Eq, NotEq, Less, LessOrEq, More, MoreOrEq, BitwiseAnd, BitwiseOr, BitwiseXor, BitwiseShiftLeft, BitwiseShiftRight};
 
-  static uint32_t arrayAbstractionIndex;
+  //static int32_t arrayAbstractionIndex;
   static AbstractValue applyOperator(AbstractValue::Operator op, AbstractValue& v1, AbstractValue& v2);
 
   static AbstractValue operatorAdd(AbstractValue& a,AbstractValue& b, AbstractValue elemSize);
@@ -221,6 +221,7 @@ class AbstractValue {
   static AbstractValue combine(AbstractValue val1, AbstractValue val2);
   static bool strictChecking; // if turned off, some error conditions are not active, but the result remains sound.
   static AbstractValue convertPtrToPtrSet(AbstractValue val); // requires val to be PTR
+  static AbstractValue conditionallyApplyArrayAbstraction(AbstractValue val);
   bool isSummary() const;
   // forces abstract value to be handled as a summary
   void setSummaryFlag(bool flag); 
