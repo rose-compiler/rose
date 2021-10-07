@@ -10,6 +10,7 @@ static const char *gDescription =
 #include <Rose/FormattedTable.h>
 #include <Sawyer/Database.h>
 #include <Sawyer/Message.h>
+#include <boost/algorithm/string/predicate.hpp>
 #include <boost/format.hpp>
 #include <boost/regex.hpp>
 #include <time.h>
@@ -74,7 +75,7 @@ goodCell() {
 }
 
 static void
-showSectionTitle(const Settings &settings, const std::string &title, const std::string &desc) {
+showSectionTitle(const Settings &settings, const std::string &title, const std::string &desc = "") {
     static const size_t width = 80;
     switch (settings.outputFormat) {
         case Format::PLAIN:
@@ -89,7 +90,7 @@ showSectionTitle(const Settings &settings, const std::string &title, const std::
         case Format::HTML:
             std::cout <<"<hr/><h2>" <<title <<"</h2>\n";
             if (!desc.empty())
-                std::cout <<"<p>" <<desc <<"</p>\n\n";
+                std::cout <<"<p>" <<desc <<"</p>\n";
             break;
 
         default:
@@ -98,13 +99,17 @@ showSectionTitle(const Settings &settings, const std::string &title, const std::
 }
 
 static void
-showSubsectionTitle(const Settings &settings, const std::string &title) {
+showSubsectionTitle(const Settings &settings, const std::string &title, const std::string &desc = "") {
     switch (settings.outputFormat) {
         case Format::PLAIN:
             std::cout <<title <<"\n";
+            if (!desc.empty())
+                std::cout <<desc <<"\n";
             break;
         case Format::HTML:
             std::cout <<"<h3>" <<title <<"</h3>\n";
+            if (!desc.empty())
+                std::cout <<"<p>" <<desc <<"</p>\n";
             break;
         default:
             ASSERT_not_reachable("invalid output format");
@@ -146,7 +151,7 @@ showSlaveConfig(const Settings &settings, DB::Connection db) {
 
     showNotices(settings, db, props);
     showSectionTitle(settings, "Slave configuration",
-                     "This section contains information about what the testing slaves should be\n"
+                     "This section contains information about what the slaves should be\n"
                      "testing, and how.");
 
     FormattedTable table;
@@ -179,22 +184,22 @@ showSlaveConfig(const Settings &settings, DB::Connection db) {
     }
     i += 2;
 
-    table.insert(i, 0, "Testing tools repository to be used");
+    table.insert(i, 0, "Tools repository to be used");
     table.insert(i, 1, props.getOptional("MATRIX_REPOSITORY").orElse("none"));
     table.insert(i, 2, "MATRIX_REPOSITORY");
     ++i;
 
-    table.insert(i, 0, "Testing tools commit or tag");
+    table.insert(i, 0, "Tools commit or tag");
     table.insert(i, 1, props.getOptional("MATRIX_COMMITTISH").orElse("none"));
     table.insert(i, 2, "MATRIX_COMMITTISH");
     ++i;
 
-    table.insert(i, 0, "Testing environment version");
+    table.insert(i, 0, "Tools environment version");
     table.insert(i, 1, props.getOptional("TEST_ENVIRONMENT_VERSION").orElse("none"));
     table.insert(i, 2, "TEST_ENVIRONMENT_VERSION");
     ++i;
 
-    table.insert(i, 0, "Testing operational flags");
+    table.insert(i, 0, "Tools operational flags");
     table.insert(i, 1, props.getOptional("TEST_FLAGS").orElse("none"));
     table.insert(i, 2, "TEST_FLAGS");
     i += 2;
@@ -209,14 +214,17 @@ showSlaveConfig(const Settings &settings, DB::Connection db) {
 static void
 showSlaveHealth(const Settings &settings, DB::Connection db) {
     showSectionTitle(settings, "Slave health",
-                     "This section contains information about what testing slaves have run in the last week.");
+                     "This section contains information about what slaves have run in the last week.\n"
+                     "Each slave typically reports many test results. See also, rose-matrix-slave-health.");
 
-    //                          0     1          2         3           4        5
-    auto stmt = db.stmt("select name, timestamp, load_ave, free_space, test_id, event"
+    const time_t since = time(NULL) - 7 * 86400;
+
+    //                          0     1          2         3           4      5
+    auto stmt = db.stmt("select name, timestamp, load_ave, free_space, event, test_id"
                         " from slave_health"
                         " where timestamp >= ?since"
                         " order by timestamp desc, name")
-                .bind("since", time(NULL) - 7*86400);
+                .bind("since", since);
 
     FormattedTable table;
     table.indentation("    ");
@@ -225,17 +233,30 @@ showSlaveHealth(const Settings &settings, DB::Connection db) {
     table.columnHeader(0, 1, "Latest Report from Slave");
     table.columnHeader(0, 2, "Load\nAverage");
     table.columnHeader(0, 3, "Free\nSpace");
-    table.columnHeader(0, 4, "Latest\nTest ID");
-    table.columnHeader(0, 5, "Latest\nEvent");
+    table.columnHeader(0, 4, "Latest\nEvent");
+    table.columnHeader(0, 5, "Latest\nTest ID");
+    table.columnHeader(0, 6, "Test\nCount");
     for (auto row: stmt) {
         const size_t i = table.nRows();
-        table.insert(i, 0, row.get<std::string>(0).orElse("none"));
+        const std::string slaveName = row.get<std::string>(0).orElse("none");
+        table.insert(i, 0, slaveName);
         time_t whenReported = row.get<time_t>(1).orElse(0);
         table.insert(i, 1, timeToLocal(whenReported) + ", " + approximateAge(whenReported));
-        table.insert(i, 2, (boost::format("%6.2f%%") % row.get<double>(2).orElse(0)).str());
-        table.insert(i, 3, (boost::format("%.0f GB") % (row.get<size_t>(3).orElse(0) / 1024.0)).str());
+        table.insert(i, 2, (boost::format("%6.2f%%") % (100.0*row.get<double>(2).orElse(0))).str());
+        table.insert(i, 3, (boost::format("%.0f GiB") % (row.get<size_t>(3).orElse(0) / 1024.0)).str());
         table.insert(i, 4, row.get<std::string>(4).orElse("none"));
         table.insert(i, 5, row.get<std::string>(5).orElse("none"));
+
+        // This might be a little slow... The number of tests completed by this slave in the same time interval as above.
+        size_t nTests = db.stmt("select count(*) from test_results where tester = ?tester and reporting_time > ?since")
+                        .bind("tester", slaveName)
+                        .bind("since", since)
+                        .get<size_t>().orElse(0);
+        if (nTests > 0) {
+            table.insert(i, 6, boost::lexical_cast<std::string>(nTests));
+        } else {
+            table.insert(i, 6, "");
+        }
     }
     std::cout <<table <<"\n\n";
 }
@@ -244,14 +265,15 @@ showSlaveHealth(const Settings &settings, DB::Connection db) {
 static std::vector<std::string>
 showLatestTestedRoseVersions(const Settings &settings, DB::Connection db) {
     showSectionTitle(settings, "ROSE versions tested recently",
-                     "These are the ROSE versions that have test results in the last week.");
+                     "These are the ROSE versions that have test results in the last month.\n");
 
+    //                          0     1          2         3                    4
     auto stmt = db.stmt("select rose, rose_date, count(*), min(reporting_time), max(reporting_time)"
                         " from test_results"
                         " where reporting_time >= ?since"
                         " group by rose, rose_date"
                         " order by rose_date desc")
-                .bind("since", time(NULL) - 7 * 86400);
+                .bind("since", time(NULL) - 30 * 86400);
 
     FormattedTable table;
     table.indentation("    ");
@@ -268,8 +290,10 @@ showLatestTestedRoseVersions(const Settings &settings, DB::Connection db) {
         table.insert(i, 0, retval.back());
         table.insert(i, 1, timeToLocal(row.get<time_t>(1).orElse(0)));
         table.insert(i, 2, row.get<std::string>(2).orElse("unknown"));
-        table.insert(i, 3, timeToLocal(row.get<time_t>(3).orElse(0)));
-        table.insert(i, 4, timeToLocal(row.get<time_t>(4).orElse(0)));
+        if (auto earliest = row.get<time_t>(3))
+            table.insert(i, 3, timeToLocal(*earliest) + ", " + approximateAge(*earliest));
+        if (auto latest = row.get<time_t>(4))
+            table.insert(i, 4, timeToLocal(*latest) + ", " + approximateAge(*latest));
     }
     std::cout <<table <<"\n\n";
     return retval;
@@ -366,16 +390,20 @@ showTestResults(const Settings &settings, DB::Connection db, const std::string &
     showSectionTitle(settings, "Test results",
                      "These are the test results for ROSE version " + roseVersion);
 
-    showSubsectionTitle(settings, "Test results by analysis language");
+    showSubsectionTitle(settings, "Test results by analysis language",
+                        "Similar to \"rose-matrix-query rose=" + roseVersion + " languages status count\"\n");
     showTestResultsByField(settings, db, roseVersion, "rmc_languages", "Analysis\nLanguages");
 
-    showSubsectionTitle(settings, "Test results by operating system");
+    showSubsectionTitle(settings, "Test results by operating system",
+                        "Similar to \"rose-matrix-query rose=" + roseVersion + " os status count\"\n");
     showTestResultsByField(settings, db, roseVersion, "os", "Operating\nSystem");
 
-    showSubsectionTitle(settings, "Test results by host compiler");
+    showSubsectionTitle(settings, "Test results by host compiler",
+                        "Similar to \"rose-matrix-query rose=" + roseVersion + " compiler status count\"\n");
     showTestResultsByField(settings, db, roseVersion, "rmc_compiler", "Compiler");
 
-    showSubsectionTitle(settings, "Test results by Boost version");
+    showSubsectionTitle(settings, "Test results by Boost version",
+                        "Similar to \"rose-matrix-query rose=" + roseVersion + " boost status count\"\n");
     showTestResultsByField(settings, db, roseVersion, "rmc_boost", "Boost\nVersion");
 }
 
@@ -426,24 +454,33 @@ showErrors(const Settings &settings, DB::Connection db, const std::string &roseV
                      "These are the heuristically determined first error messages from testing\n"
                      "ROSE version " + roseVersion);
 
-    showSubsectionTitle(settings, "Errors by analysis language");
+    showSubsectionTitle(settings, "Errors by analysis language",
+                        "Similar to \"rose-matrix-query rose=" + roseVersion + " languages status count first_error\"\n");
     showErrorsByField(settings, db, roseVersion, "rmc_languages", "Analysis\nLanguages");
 
-    showSubsectionTitle(settings, "Errors by operating system");
+    showSubsectionTitle(settings, "Errors by operating system",
+                        "Similar to \"rose-matrix-query rose=" + roseVersion + " os status count first_error\"\n");
     showErrorsByField(settings, db, roseVersion, "os", "Operation\nSystem");
 
-    showSubsectionTitle(settings, "Errors by host compiler");
+    showSubsectionTitle(settings, "Errors by host compiler",
+                        "Similar to \"rose-matrix-query rose=" + roseVersion + " compiler status count first_error\"\n");
     showErrorsByField(settings, db, roseVersion, "rmc_compiler", "Compiler");
 
-    showSubsectionTitle(settings, "Errors by boost version");
+    showSubsectionTitle(settings, "Errors by boost version",
+                        "Similar to \"rose-matrix-query rose=" + roseVersion + " boost status count first_error\"\n");
     showErrorsByField(settings, db, roseVersion, "rmc_boost", "Boost\nVersion");
 }
 
 static void
 showAdditionalCommands(const Settings &settings, DB::Connection db, const std::string &roseVersion) {
+    const std::string moreInfoUrl = "https://lep.is/w/index.php/ROSE:Portability_testing_results";
+    const std::string moreInfoLink = Format::HTML == settings.outputFormat ?
+                                     "<a href=\"" + moreInfoUrl + "\">documentation</a>" :
+                                     moreInfoUrl;
+
     showSectionTitle(settings, "Additional information",
                      "The data above is only the tip of the iceburg.\n"
-                     "See https://lep.is/w/index.php/ROSE:Portability_testing_results\n");
+                     "See " + moreInfoLink + " for the rest of the iceburg.\n");
 }
 
 static std::string
@@ -460,6 +497,8 @@ int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
     Diagnostics::initAndRegister(&mlog, "tool");
+    if (boost::starts_with(Rose::CommandLine::versionString, "ROSE "))
+        Rose::CommandLine::versionString = Rose::CommandLine::versionString.substr(5);
 
     Settings settings;
     const std::vector<std::string> args = parseCommandLine(argc, argv, settings);
@@ -480,7 +519,8 @@ main(int argc, char *argv[]) {
                   <<"</head>\n"
                   <<"<body>\n"
                   <<"<h1>ROSE Portability Testing</h1>\n"
-                  <<"Updated " <<timestamp() <<"<br/>\n";
+                  <<"Updated at " <<timestamp() <<" from the <tt>rose-matrix-status</tt> version "
+                  <<Rose::CommandLine::versionString <<".<br/>\n";
     }
 
     showSlaveConfig(settings, db);

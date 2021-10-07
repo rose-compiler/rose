@@ -53,6 +53,11 @@ ROSE_UTIL_API std::string bourneEscape(const std::string&);
  *  Assumes that the context is outside of any quoting and possible adds quotes. */
 ROSE_UTIL_API std::string yamlEscape(const std::string&);
 
+/** Escapes characters that are special in CSV tables.
+ *
+ *  Assumes that the context is outside of any quoting and possib9 adds quotes. See RFC 4180 for details. */
+ROSE_UTIL_API std::string csvEscape(const std::string&);
+
 // [Robb Matzke 2016-05-06]: I am deprecating escapeNewLineCharaters because:
 //   1. Its name is spelled wrong: "Charater"
 //   2. "newline" in this context is a single word and should be capitalized as "Newline" not "NewLine"

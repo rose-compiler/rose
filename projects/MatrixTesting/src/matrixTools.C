@@ -46,6 +46,17 @@ insertOutputFormatSwitch(Sawyer::CommandLine::SwitchGroup &sg, Format &fmt, Form
         ep->with("html", Format::HTML);
         doc += "@named{html}{HTML web page.}";
     }
+    if (enabled.isSet(Format::CSV)) {
+        ep->with("csv", Format::CSV);
+        doc += "@named{csv}{Comma separated values per RFC 4180.}";
+    }
+    if (enabled.isSet(Format::SHELL)) {
+        ep->with("shell", Format::SHELL);
+        doc += "@named{shell}{Shell-script fiendly output. One row of data per line with Unix line endings; columns are "
+               "separated from one another with a single horizontal tab character; data that contains line feed characters, "
+               "horizontal tab characters, or shell meta characters are escaped so that those characters don't appear naked "
+               "in the output; the escaping is C-like using the shell's dollar-single-quote mechanism ($'...').}";
+    }
 
     sg.insert(Switch("format", 'F')
               .argument("style", ep)
@@ -137,4 +148,21 @@ loadDependencies(DB::Statement stmt) {
         deps.back().osNames = std::set<std::string>(osNames.begin(), osNames.end());
     }
     return deps;
+}
+
+Rose::FormattedTable::Format
+tableFormat(Format fmt) {
+    switch (fmt) {
+        case Format::PLAIN:
+            return Rose::FormattedTable::Format::PLAIN;
+        case Format::HTML:
+            return Rose::FormattedTable::Format::HTML;
+        case Format::CSV:
+            return Rose::FormattedTable::Format::CSV;
+        case Format::SHELL:
+            return Rose::FormattedTable::Format::SHELL;
+        case Format::YAML:
+            ASSERT_not_reachable("YAML is not a valid table format");
+    }
+    ASSERT_not_reachable("invalid output format");
 }
