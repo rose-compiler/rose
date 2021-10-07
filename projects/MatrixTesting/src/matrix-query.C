@@ -31,6 +31,7 @@ struct Settings {
     std::string databaseUri;                            // e.g., postgresql://user:password@host/database
     Sawyer::Optional<size_t> limit;                     // limit number of resulting rows
     bool deleteMatchingTests = false;                   // if true, delete the tests whose records match
+    bool showAges = true;                               // when showing times, also say "about x days ago" or similar
 };
 
 static Sawyer::Message::Facility mlog;
@@ -66,6 +67,10 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     sg.insert(Switch("delete")
               .intrinsicValue(true, settings.deleteMatchingTests)
               .doc("Delete the tests that were matched."));
+
+    Rose::CommandLine::insertBooleanSwitch(sg, "show-age", settings.showAges,
+                                           "Causes timestamps to also incude an approximate age. For instance, the "
+                                           "age might be described as \"about 6 hours ago\".");
 
     return parser
         .with(Rose::CommandLine::genericSwitches())
@@ -373,6 +378,15 @@ main(int argc, char *argv[]) {
                          % (tm.tm_year + 1900) % (tm.tm_mon + 1) % tm.tm_mday
                          % tm.tm_hour % tm.tm_min % tm.tm_sec
                          % tz).str();
+                if (settings.showAges)
+                    value += ", " + approximateAge(t);
+            } else if ("test.duration" == columnsSelected[j]) {
+                if (auto d = row.get<uint64_t>(j)) {
+                    value = Rose::CommandLine::DurationParser::toString(*d);
+                } else {
+                    value = "none";
+                }
+
             } else {
                 if (settings.deleteMatchingTests && "id" == keysSelected[j])
                     idsToDelete.push_back(*row.get<unsigned>(j));

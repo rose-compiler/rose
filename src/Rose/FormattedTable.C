@@ -272,7 +272,6 @@ FormattedTable::cellPropertiesEnd(const CellProperties &props) const {
             if (Rose::CommandLine::genericSwitchArgs.colorization.isEnabled())
                 return "\033[0m";
             return "";
-            break;
 
         case Format::HTML:
             return "</span>";
