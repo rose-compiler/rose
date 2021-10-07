@@ -8,6 +8,7 @@ static const char *gDescription =
 #include <rose_getline.h>
 #include <Rose/CommandLine.h>
 #include <Rose/FormattedTable.h>
+#include <Rose/StringUtility/Escape.h>
 #include <Sawyer/Message.h>
 #include <boost/algorithm/string/trim.hpp>
 
@@ -23,6 +24,7 @@ struct Settings {
     uint64_t maxAge = 7*86400;                          // maximum age of report in seconds
     Sawyer::Optional<size_t> testId;                    // test ID for "test" events
     std::string databaseUri;                            // e.g., postgresql://user:password@host/database
+    Format outputFormat = Format::PLAIN;                // how to show results
 };
 
 static Sawyer::Message::Facility mlog;
@@ -41,6 +43,13 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 
     SwitchGroup tool("Tool-specific switches");
     insertDatabaseSwitch(tool, settings.databaseUri);
+    insertOutputFormatSwitch(tool, settings.outputFormat,
+                             FormatFlags()
+                                 .set(Format::PLAIN)
+                                 .set(Format::YAML)
+                                 .set(Format::HTML)
+                                 .set(Format::CSV)
+                                 .set(Format::SHELL));
 
     tool.insert(Switch("since")
                 .argument("duration", Rose::CommandLine::durationParser(settings.maxAge))
@@ -195,14 +204,30 @@ main(int argc, char *argv[]) {
         table.columnHeader(0, 6, "Operating\nSystem");
         table.columnHeader(0, 7, "Duration");
         for (auto row: stmt) {
-            const size_t i = table.nRows();
-            table.insert(i, 0, row.get<std::string>(0).orElse("none"));
-            time_t whenReported = row.get<time_t>(1).orElse(0);
-            table.insert(i, 1, timeToLocal(whenReported) + ", " + approximateAge(whenReported));
-            table.insert(i, 2, (boost::format("%6.2f%%") % (100.0*row.get<double>(2).orElse(0))).str());
-            table.insert(i, 3, (boost::format("%.0f GiB") % (row.get<size_t>(3).orElse(0) / 1024.0)).str());
-            table.insert(i, 4, row.get<std::string>(4).orElse("none"));
-            table.insert(i, 5, row.get<std::string>(5).orElse("none"));
+            using namespace Rose::StringUtility;
+            const std::string name = row.get<std::string>(0).orElse("none");
+            const time_t whenReported = row.get<time_t>(1).orElse(0);
+            const std::string loadAverage = (boost::format("%6.2f") % (100.0*row.get<double>(2).orElse(0))).str();
+            const std::string freeSpace = (boost::format("%.0f") % (row.get<size_t>(3).orElse(0) / 1024.0)).str();
+            const std::string latestEvent = row.get<std::string>(4).orElse("none");
+            const std::string latestId = row.get<std::string>(5).orElse("none");
+            if (Format::YAML == settings.outputFormat) {
+                std::cout <<"- name: " <<yamlEscape(name) <<"\n";
+                std::cout <<"  when: " <<whenReported <<" # " <<timeToLocal(whenReported)
+                          <<", " <<approximateAge(whenReported) <<"\n";
+                std::cout <<"  loadavg: " <<loadAverage <<" # percent\n";
+                std::cout <<"  free_space: " <<freeSpace <<" # GiB\n";
+                std::cout <<"  latest_event: " <<latestEvent <<"\n";
+                std::cout <<"  latest_id: " <<latestId <<"\n";
+            } else {
+                const size_t i = table.nRows();
+                table.insert(i, 0, name);
+                table.insert(i, 1, timeToLocal(whenReported) + ", " + approximateAge(whenReported));
+                table.insert(i, 2, loadAverage + "%");
+                table.insert(i, 3, freeSpace + " GiB");
+                table.insert(i, 4, latestEvent);
+                table.insert(i, 5, latestId);
+            }
 
             if (auto testId = row.get<size_t>(5)) {
                 auto test = db.stmt("select os, duration"
@@ -210,24 +235,46 @@ main(int argc, char *argv[]) {
                                     " where id = ?id")
                             .bind("id", *testId);
                 for (auto row: test) {
-                    table.insert(i, 6, row.get<std::string>(0).orElse(""));
-                    if (auto duration = row.get<uint64_t>(1))
-                        table.insert(i, 7, Rose::CommandLine::DurationParser::toString(duration));
+                    const std::string os = row.get<std::string>(0).orElse("");
+                    const auto duration = row.get<uint64_t>(1);
+                    const std::string durationStr = duration ? Rose::CommandLine::DurationParser::toString(duration) : "";
+                    if (Format::YAML == settings.outputFormat) {https://datatracker.ietf.org/doc/html/rfc4180
+                        std::cout <<"  os: " <<os <<"\n";
+                        if (duration)
+                            std::cout <<"  duration: " <<*duration <<" # " <<durationStr <<"\n";
+                    } else {
+                        table.insert(table.nRows()-1, 6, os);
+                        table.insert(table.nRows()-1, 7, durationStr);
+                    }
                     break;
                 }
             }
         }
-        std::cout <<table;
+        if (Format::YAML != settings.outputFormat) {
+            table.format(tableFormat(settings.outputFormat));
+            std::cout <<table;
+        }
 
     } else {
-        // We want only one record per slave, so first delete any old records, then insert the new one.
-        db.stmt("delete from slave_health where name = ?name")
-            .bind("name", slaveName())
-            .run();
+        // We want only one record per slave, but slaves can't delete things. Therefore either update or insert
+        DB::Statement stmt;
 
-        db.stmt("insert into slave_health"
-                "        (name,   timestamp,  load_ave,  free_space,  event,  test_id)"
-                " values (?name, ?timestamp, ?load_ave, ?free_space, ?event, ?test_id)")
+        if (db.stmt("select count(*) from slave_health where name = ?name").bind("name", slaveName()).get<size_t>().get()) {
+            stmt = db.stmt("update slave_health set"
+                           "    name = ?name,"
+                           "    timestamp = ?timestamp,"
+                           "    load_ave = ?load_ave,"
+                           "    free_space = ?free_space,"
+                           "    event = ?event,"
+                           "    test_id = ?test_id"
+                           " where name = ?name");
+        } else {
+            stmt = db.stmt("insert into slave_health"
+                           "        (name,   timestamp,  load_ave,  free_space,  event,  test_id)"
+                           " values (?name, ?timestamp, ?load_ave, ?free_space, ?event, ?test_id)");
+        }
+
+        stmt
             .bind("name", slaveName())
             .bind("timestamp", now())
             .bind("load_ave", cpuLoad())

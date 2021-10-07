@@ -2,6 +2,7 @@
 #define matrixTools_H
 
 #include <Rose/BitFlags.h>
+#include <Rose/FormattedTable.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Database.h>
 #include <set>
@@ -11,7 +12,9 @@
 enum class Format {
     PLAIN       = 0x00000001,
     YAML        = 0x00000002,
-    HTML        = 0x00000004
+    HTML        = 0x00000004,
+    CSV         = 0x00000008,
+    SHELL       = 0x00000010
 };
 
 using FormatFlags = Rose::BitFlags<Format>;
@@ -48,5 +51,8 @@ std::string dependencyColumns();
 
 // Load dependency info from database.
 DependencyList loadDependencies(Sawyer::Database::Statement);
+
+// Convert an output format to a table format.
+Rose::FormattedTable::Format tableFormat(Format);
 
 #endif

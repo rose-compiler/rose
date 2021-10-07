@@ -67,7 +67,13 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 
     SwitchGroup sg("Tool-specific switches");
     insertDatabaseSwitch(sg, settings.databaseUri);
-    insertOutputFormatSwitch(sg, settings.outputFormat, FormatFlags().set(Format::PLAIN).set(Format::YAML));
+    insertOutputFormatSwitch(sg, settings.outputFormat,
+                             FormatFlags()
+                                 .set(Format::PLAIN)
+                                 .set(Format::HTML)
+                                 .set(Format::YAML)
+                                 .set(Format::CSV)
+                                 .set(Format::SHELL));
 
     return parser
         .with(Rose::CommandLine::genericSwitches())
@@ -87,13 +93,17 @@ static void
 print(const Settings &settings, const DependencyList &deps) {
     using namespace Rose::StringUtility;
     switch (settings.outputFormat) {
-        case Format::PLAIN: {
+        case Format::PLAIN:
+        case Format::HTML:
+        case Format::CSV:
+        case Format::SHELL: {
             FormattedTable::CellProperties propTrue;
             propTrue.foreground(Color::HSV_GREEN);
             FormattedTable::CellProperties propFalse;
             propFalse.foreground(Color::HSV_RED);
 
             FormattedTable table(deps.size(), 5);
+            table.format(tableFormat(settings.outputFormat));
             table.columnHeader(0, 0, "Name");
             table.columnHeader(0, 1, "Value");
             table.columnHeader(0, 2, "Enabled");
@@ -124,9 +134,6 @@ print(const Settings &settings, const DependencyList &deps) {
             }
             return;
         }
-
-        case Format::HTML:
-            ASSERT_not_reachable("HTML format not supported");
     }
     ASSERT_not_reachable("invalid output format");
 }
@@ -134,29 +141,24 @@ print(const Settings &settings, const DependencyList &deps) {
 // Show only the names of dependencies
 static void
 listNames(const Settings &settings, DB::Connection db) {
-    std::vector<std::string> names;
     auto stmt = db.stmt("select distinct name from dependencies order by name");
-    for (auto row: stmt)
-        names.push_back(*row.get<std::string>(0));
-    switch (settings.outputFormat) {
-        case Format::PLAIN: {
-            FormattedTable table(names.size(), 1);
-            table.columnHeader(0, 0, "Name");
-            for (size_t i = 0; i < names.size(); ++i)
-                table.insert(i, 0, names[i]);
-            std::cout <<table;
-            return;
+    FormattedTable table;
+    table.columnHeader(0, 0, "Name");
+
+    for (auto row: stmt) {
+        const std::string name = *row.get<std::string>(0);
+        if (Format::YAML == settings.outputFormat) {
+            std::cout <<"- " <<StringUtility::yamlEscape(name) <<"\n";
+        } else {
+            const size_t i = table.nRows();
+            table.insert(i, 0, name);
         }
-
-        case Format::YAML:
-            for (const std::string &name: names)
-                std::cout <<"- " <<StringUtility::yamlEscape(name) <<"\n";
-            return;
-
-        case Format::HTML:
-            ASSERT_not_reachable("HTML format not supported");
     }
-    ASSERT_not_reachable("invalid output format");
+
+    if (Format::YAML != settings.outputFormat) {
+        table.format(tableFormat(settings.outputFormat));
+        std::cout <<table;
+    }
 }
 
 // List all dependencies

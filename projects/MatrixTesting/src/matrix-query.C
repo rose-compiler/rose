@@ -51,7 +51,12 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 
     insertDatabaseSwitch(sg, settings.databaseUri);
     insertOutputFormatSwitch(sg, settings.outputFormat,
-                             FormatFlags().set(Format::PLAIN).set(Format::YAML).set(Format::HTML));
+                             FormatFlags()
+                                 .set(Format::PLAIN)
+                                 .set(Format::YAML)
+                                 .set(Format::HTML)
+                                 .set(Format::CSV)
+                                 .set(Format::SHELL));
 
     sg.insert(Switch("localtime")
               .intrinsicValue(true, settings.usingLocalTime)
@@ -732,6 +737,46 @@ emitYaml(const Settings &settings, DB::Row &row, const ColumnList &cols, std::se
     return nTests;
 }
 
+static void
+emitDeclarations(const Settings &settings, const ColumnMap &columnDecls) {
+    FormattedTable table;
+    table.columnHeader(0, 0, "Key[1]");
+    table.columnHeader(0, 1, "Description");
+    table.columnHeader(0, 2, "SQL expr");
+    for (const Column &c: columnDecls.values()) {
+        if (Format::YAML == settings.outputFormat) {
+            std::cout <<"- key: " <<StringUtility::yamlEscape(c.symbol()) <<"\n";
+            std::cout <<"  sql: " <<StringUtility::yamlEscape(c.sql()) <<"\n";
+            std::cout <<"  description: " <<StringUtility::yamlEscape(c.doc()) <<"\n";
+        } else {
+            const size_t i = table.nRows();
+            table.insert(i, 0, c.symbol());
+            table.insert(i, 1, c.doc());
+            table.insert(i, 2, c.sql());
+        }
+    }
+
+    switch (settings.outputFormat) {
+        case Format::PLAIN:
+            std::cout <<table
+                      <<"Footnote [1]: The key is what you use on the command-line, and also appears in YAML output\n";
+            break;
+        case Format::HTML:
+            table.format(FormattedTable::Format::HTML);
+            std::cout <<table
+                      <<"<p>Footnote [1]: The key is what you use on the command-line, and also appears in YAML "
+                      <<"output</p>\n";
+            break;
+        case Format::YAML:
+            break;
+        case Format::CSV:
+        case Format::SHELL:
+            table.format(tableFormat(settings.outputFormat));
+            std::cout <<table;
+            break;
+    }
+}
+
 int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
@@ -770,18 +815,7 @@ main(int argc, char *argv[]) {
 
         } else if ("list" == arg) {
             // List all the column information
-            FormattedTable table;
-            table.columnHeader(0, 0, "Key[1]");
-            table.columnHeader(0, 1, "Description");
-            table.columnHeader(0, 2, "SQL expr");
-            for (const Column &c: columnDecls.values()) {
-                const size_t i = table.nRows();
-                table.insert(i, 0, c.symbol());
-                table.insert(i, 1, c.doc());
-                table.insert(i, 2, c.sql());
-            }
-            std::cout <<table
-                      <<"Footnote [1]: The key is what you use on the command-line, and also appears in YAML output\n";
+            emitDeclarations(settings, columnDecls);
             exit(0);
 
         } else if ("all" == arg) {
@@ -866,16 +900,19 @@ main(int argc, char *argv[]) {
     }
     switch (settings.outputFormat) {
         case Format::PLAIN:
+        case Format::CSV:
+        case Format::SHELL:
+            table.format(tableFormat(settings.outputFormat));
             std::cout <<table
                       <<StringUtility::plural(nTests, "matching tests") <<"\n";
-            break;
-        case Format::YAML:
-            SAWYER_MESG(mlog[INFO]) <<StringUtility::plural(nTests, "matching tests") <<"\n";
             break;
         case Format::HTML:
             table.format(FormattedTable::Format::HTML);
             std::cout <<table
-                      <<StringUtility::plural(nTests, "matching tests") <<"\n";
+                      <<"<p>" <<StringUtility::plural(nTests, "matching tests") <<"</p>\n";
+            break;
+        case Format::YAML:
+            SAWYER_MESG(mlog[INFO]) <<StringUtility::plural(nTests, "matching tests") <<"\n";
             break;
     }
 
