@@ -1694,6 +1694,15 @@ Enter(SgEnumVal* &enum_val, const std::string &name, SgEnumDeclaration* enum_dec
    SgEnumFieldSymbol* enum_field_symbol = new SgEnumFieldSymbol(init_name);
    ROSE_ASSERT(enum_field_symbol);
    scope->insert_symbol(name,enum_field_symbol);
+
+   // Add enum to containing scope for Jovial
+   if (isSgClassDefinition(scope)) {
+      if (SgJovialTableStatement* table = isSgJovialTableStatement(scope->get_parent())) {
+         if (SgScopeStatement* containing_scope = table->get_scope()) {
+            containing_scope->insert_symbol(name,enum_field_symbol);
+         }
+      }
+   }
 }
 
 void SageTreeBuilder::

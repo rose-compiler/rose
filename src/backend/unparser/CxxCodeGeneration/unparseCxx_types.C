@@ -952,6 +952,15 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
                     printf ("ERROR: SgJavaWildcardType is appearing in call to unparseType from graph generation (allow this for now) \n");
                     break;
                   }
+             // Liao (10/4/2021): Added so that we could get past this call in the Ada2Cpp translator (fix later).
+               case T_ADA_SUBTYPE:
+               case T_ADA_MODULAR_TYPE:
+               case T_ADA_DERIVEDTYPE:   
+                  {
+                   // printf ("Warning: SgAda*Type is appearing in call to unparseType from Ada2Cpp (allow this for now) \n");
+                    break;
+                  }
+
 
             // DQ (7/30/2014): Fixed spelling of T_LABEL tag.
             // DQ (4/27/2014): After some fixes to ROSE to permit the new shared memory DSL, we now get this 

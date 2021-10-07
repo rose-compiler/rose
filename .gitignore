@@ -373,8 +373,3 @@ GTAGS
 ##### Do not edit.
 .tup
 /.gitignore
-
-/*.patch
-/config/depcomp
-/config/ltargz.m4
-/configure.orig

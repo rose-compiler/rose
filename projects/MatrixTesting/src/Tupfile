@@ -14,18 +14,17 @@ ifeq (@(LINKAGE),shared)
     run $(tool_compile_linklib) --install -o libmatrixTools matrixTools.C $(ROSE)/src/librose
 
     # New tools
-    run $(tool_compile_linkexe) --install -o rose-matrix-status matrix-status.C libmatrixTools
     run $(tool_compile_linkexe) --install -o rose-matrix-dependencies matrix-dependencies.C libmatrixTools
+    run $(tool_compile_linkexe) --install -o rose-matrix-next-test matrix-next-test.C libmatrixTools
     run $(tool_compile_linkexe) --install -o rose-matrix-query matrix-query.C libmatrixTools
     run $(tool_compile_linkexe) --install -o rose-matrix-slave-config matrix-slave-config.C libmatrixTools
-    run $(tool_compile_linkexe) --install -o rose-matrix-next-test matrix-next-test.C libmatrixTools
+    run $(tool_compile_linkexe) --install -o rose-matrix-slave-health matrix-slave-health.C libmatrixTools
+    run $(tool_compile_linkexe) --install -o rose-matrix-status matrix-status.C libmatrixTools
 
     # Original tools that use some features I'd like to deprecate, such as ::SqlDatabase
     run $(tool_compile_linkexe) --install -o rose-matrix-test-result matrixTestResult.C
     run $(tool_compile_linkexe) --install -o rose-matrix-attachments matrixAttachments.C
     run $(tool_compile_linkexe) --install -o rose-matrix-errors matrixErrors.C
-    run $(tool_compile_linkexe) --install -o rose-matrix-delete-test matrixDeleteTest.C
-    run $(tool_compile_linkexe) --install -o rose-matrix-slave-health matrixSlaveHealth.C
 
     # The web interface. This is useful but it's showing its age. I'd like to move to just
     # command-line tools. It's also very resource intensive and thus doesn't work well on the tiny
