@@ -160,17 +160,18 @@ void PState::deleteVar(AbstractValue varId) {
   * \author Markus Schordan
   * \date 2012.
  */
-bool PState::varExists(AbstractValue varId) const {
-  PState::const_iterator i=find(varId);
-  return !(i==end());
+bool PState::varExists(AbstractValue av0) const {
+  // variables are represented by their address. Therefore memLocExists is equivalent.
+  return memLocExists(av0);
 }
 
 /*! 
   * \author Markus Schordan
   * \date 2012.
  */
-bool PState::memLocExists(AbstractValue memLoc) const {
-  return find(memLoc)!=end();
+bool PState::memLocExists(AbstractValue memLoc0) const {
+  AbstractValue memLoc1=AbstractValue::conditionallyApplyArrayAbstraction(memLoc0);
+  return find(memLoc1)!=end();
 }
 
 /*! 
