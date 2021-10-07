@@ -194,7 +194,7 @@ bourneEscape(const std::string &s) {
 
 std::string
 yamlEscape(const std::string &s) {
-    std::string escaped = cEscape(s);
+    const std::string escaped = cEscape(s);
     if (s.empty() || s != escaped) {
         return "\"" + escaped + "\"";
     } else if (s.find(':') != std::string::npos) {
@@ -202,6 +202,12 @@ yamlEscape(const std::string &s) {
     } else {
         return s;
     }
+}
+
+std::string
+csvEscape(const std::string &s) {
+    const std::string quote = s.find_first_of(",\r\n\"") == std::string::npos ? "" : "\"";
+    return quote + boost::replace_all_copy(s, "\"", "\"\"") + quote;
 }
 
 // [Robb P Matzke 2016-06-15]: deprecated
