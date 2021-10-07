@@ -272,25 +272,25 @@ loadColumns(DB::Connection db) {
                   .doc("Test ID number")
                   .type(ColumnType::INTEGER));
     retval.insert("reporting_user",
-                  Column().tableTitle("Reporting\nUser").symbol("reporting_user").sql("auth_identities.identity")
+                  Column().tableTitle("Reporting User").symbol("reporting_user").sql("auth_identities.identity")
                   .doc("User that reported the results")
                   .type(ColumnType::STRING));
     retval.insert("reporting_time",
-                  Column().tableTitle("Reporting\nTime").symbol("reporting_time").sql("test_results.reporting_time")
+                  Column().tableTitle("Reporting Time").symbol("reporting_time").sql("test_results.reporting_time")
                   .doc("Time at which results were reported")
                   .type(ColumnType::TIME));
     retval.insert("min_reporting_time",
-                  Column().tableTitle("Earliest\nReport").symbol("min_reporting_time").sql("min(test_results.reporting_time)")
+                  Column().tableTitle("Earliest Report").symbol("min_reporting_time").sql("min(test_results.reporting_time)")
                   .doc("Earliest time at which results were reported")
                   .type(ColumnType::TIME)
                   .isAggregate(true));
     retval.insert("max_reporting_time",
-                  Column().tableTitle("Latest\nReport").symbol("max_reporting_time").sql("max(test_results.reporting_time)")
+                  Column().tableTitle("Latest Report").symbol("max_reporting_time").sql("max(test_results.reporting_time)")
                   .doc("Latest time at which results were reported")
                   .type(ColumnType::TIME)
                   .isAggregate(true));
     retval.insert("tester",
-                  Column().tableTitle("Tester\nName").symbol("tester").sql("test_results.tester")
+                  Column().tableTitle("Tester Name").symbol("tester").sql("test_results.tester")
                   .doc("Name of testing slave")
                   .type(ColumnType::STRING));
     retval.insert("os",
@@ -312,16 +312,16 @@ loadColumns(DB::Connection db) {
                   .type(ColumnType::VERSION_OR_HASH)
                   .isAggregate(true));
     retval.insert("rose_date",
-                  Column().tableTitle("ROSE\nDate").symbol("rose_date").sql("test_results.rose_date")
+                  Column().tableTitle("ROSE Date").symbol("rose_date").sql("test_results.rose_date")
                   .doc("ROSE version or commit date")
                   .type(ColumnType::TIME));
     retval.insert("min_rose_date",
-                  Column().tableTitle("Earliest\nROSE").symbol("min_rose_date").sql("min(test_results.rose_date)")
+                  Column().tableTitle("Earliest\nROSE Date").symbol("min_rose_date").sql("min(test_results.rose_date)")
                   .doc("Earliest ROSE version or commit date")
                   .type(ColumnType::TIME)
                   .isAggregate(true));
     retval.insert("max_rose_date",
-                  Column().tableTitle("Latest\nROSE").symbol("max_rose_date").sql("max(test_results.rose_date)")
+                  Column().tableTitle("Latest\nROSE Date").symbol("max_rose_date").sql("max(test_results.rose_date)")
                   .doc("Latest ROSE version or commit date")
                   .type(ColumnType::TIME)
                   .isAggregate(true));
@@ -687,6 +687,9 @@ buildTableColumnHeaders(FormattedTable &table, const ColumnList &cols) {
 
 static std::string
 formatValue(const Settings &settings, const Column &c, const std::string &value) {
+    if (Format::SHELL == settings.outputFormat)
+        return value;
+
     switch (c.type()) {
         case ColumnType::STRING:
         case ColumnType::INTEGER:
@@ -917,6 +920,8 @@ main(int argc, char *argv[]) {
             switch (settings.outputFormat) {
                 case Format::PLAIN:
                 case Format::HTML:
+                case Format::CSV:
+                case Format::SHELL:
                     nTests += emitTable(settings, table, row, cols, testIds /*out*/);
                     break;
                 case Format::YAML:
@@ -927,11 +932,15 @@ main(int argc, char *argv[]) {
     }
     switch (settings.outputFormat) {
         case Format::PLAIN:
-        case Format::CSV:
-        case Format::SHELL:
             table.format(tableFormat(settings.outputFormat));
             std::cout <<table
                       <<StringUtility::plural(nTests, "matching tests") <<"\n";
+            break;
+        case Format::CSV:
+        case Format::SHELL:
+            table.format(tableFormat(settings.outputFormat));
+            std::cout <<table;
+            SAWYER_MESG(mlog[INFO]) <<StringUtility::plural(nTests, "matching tests") <<"\n";
             break;
         case Format::HTML:
             table.format(FormattedTable::Format::HTML);
