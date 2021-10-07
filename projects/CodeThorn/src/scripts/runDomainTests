@@ -4,11 +4,11 @@
 trap "exit" INT
 
 red=$'\e[1;31m'
-grn=$'\e[1;32m'
-yel=$'\e[1;33m'
-blu=$'\e[1;34m'
-mag=$'\e[1;35m'
-cyn=$'\e[1;36m'
+grn=$'\e[0;32m'
+yel=$'\e[0;33m'
+blu=$'\e[0;34m'
+mag=$'\e[0;35m'
+cyn=$'\e[0;36m'
 end=$'\e[0m'
 
 COLORED_FAIL=${red}FAIL${end}
@@ -67,10 +67,10 @@ function runDomainTestsLevel3 {
                 DIFF=$(diff $GCC_OUTPUT_FILE $CT_OUTPUT_FILE) 
                 if [ "$DIFF" != "" ] 
                 then
-                    echo $COLORED_WARN
+                    echo "$COLORED_WARN"
 		    ((numWarn++))
                 else
-                    echo $COLORED_PASS
+                    echo "$COLORED_PASS"
 		    ((numPass++))
                 fi
 		if [[ "$KEEP_RESULTS" == "no" ]];then
@@ -111,6 +111,7 @@ function runDomainTestsLevel2 {
 
 function level3Test {
     testNumbers=`echo {001..048}`
+    testNumbers+=" 051"
     numWarnExpected=7
     numFailExpected=0
     CT_MODE_OPTIONS="--context-sensitive=yes --normalize-level=2 --interpreter-mode=1 --in-state-string-literals --exploration-mode=topologic-sort"
@@ -140,7 +141,7 @@ function level2BasicCombineTest {
 
 function level2AvSetCombineTest {
     # av-sets abstraction test
-    testNumbers=`echo {001..050}`
+    #testNumbers=`echo {001..050}`
     testNumbers="008"
     numWarnExpected=0
     numFailExpected=24

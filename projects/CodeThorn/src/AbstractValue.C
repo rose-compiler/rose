@@ -19,7 +19,7 @@ using namespace std;
 using namespace CodeThorn;
 using namespace Sawyer::Message; // required for logger
 
-uint32_t CodeThorn::AbstractValue::arrayAbstractionIndex=std::numeric_limits<uint32_t>::max();
+//int32_t CodeThorn::AbstractValue::arrayAbstractionIndex=-1; // -1 is used for turning array abstraction off (which is different to a max value)
 
 VariableIdMappingExtended* AbstractValue::_variableIdMapping=nullptr;
 bool AbstractValue::strictChecking=false;
@@ -32,7 +32,6 @@ istream& CodeThorn::operator>>(istream& is, AbstractValue& value) {
   value.fromStream(is);
   return is;
 }
-
 
 // default constructor
 AbstractValue::AbstractValue():valueType(AbstractValue::BOT),extension(0) {}
@@ -275,6 +274,30 @@ AbstractValue AbstractValue::convertPtrToPtrSet(AbstractValue val) {
   ROSE_ASSERT(newVal.isPtrSet());
   newVal.addSetElement(val);
   return newVal;
+}
+
+AbstractValue AbstractValue::conditionallyApplyArrayAbstraction(AbstractValue val) {
+  //cout<<"DEBUG: AbstractValue::condapply: "<<val.toString(getVariableIdMapping())<<endl;
+  int arrayAbstractionIndex=getVariableIdMapping()->getArrayAbstractionIndex();
+  if(arrayAbstractionIndex>=0) {
+    cout<<"DEBUG: array abstraction active starting at index: "<<arrayAbstractionIndex<<endl;
+    if(val.isPtr()&&!val.isNullPtr()) {
+      VariableId memLocId=val.getVariableId();
+      if(getVariableIdMapping()->isOfArrayType(memLocId)) {
+        AbstractValue index=val.getIndexValue();
+        if(!index.isTop()&&!index.isBot()) {
+          int offset=val.getIndexIntValue();
+          auto remappingEntry=getVariableIdMapping()->getOffsetAbstractionMappingEntry(memLocId,offset);
+          if(remappingEntry.getIndexRemappingType()==VariableIdMappingExtended::IndexRemappingEnum::IDX_REMAPPED) {
+            SAWYER_MESG(logger[TRACE])<<"remapping index "<<offset<<" -> "<<remappingEntry.getRemappedOffset()<<endl;
+            val.setValue(remappingEntry.getRemappedOffset());
+            val.setSummaryFlag(true);
+          }
+        }
+      }
+    }
+  }
+  return val;
 }
 
 std::string AbstractValue::valueTypeToString() const {
