@@ -43,8 +43,10 @@ ADA_TRANSLATOR_PASSING_TESTS :=        \
   loop_parameter_specification.adb     \
   loop_statement.adb                   \
   minimal.adb                          \
+  myarray.ads                          \
   named.ads                            \
   named_block.adb                      \
+  nullrecord.ads                       \
   ordinary_type_declaration.ads        \
   operator.adb                         \
   ordinary_type_declaration_range_constraint.ads    \
@@ -63,14 +65,19 @@ ADA_TRANSLATOR_PASSING_TESTS :=        \
   short_circuit_v2.adb                 \
   signed_integer_type_definition.ads   \
   simpleada.ads                        \
+  some_modes.ads                       \
   standard_subtypes.ads                \
+  subtypes.ads                         \
   switches.ads                         \
+  tagged_definition.ads                \
   unit_1.adb                           \
   unit_3.ads                           \
   variable_declaration.ads             \
+  week_string_literal.ads              \
   while_loop_statement.adb
 
 ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
+  alignment_component_clause.adb       \
   async_transfer_select.adb            \
   case_function.adb                    \
   defining_character_literal.adb       \
@@ -80,9 +87,9 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   exception_declaration.ads            \
   exhandler.adb                        \
   function_renaming.adb                \
-  myarray.ads                          \
+  multidimensional_array.adb           \
+  multidimensional_array.ads           \
   myarray.adb                          \
-  nullrecord.ads                       \
   package_pragma.ads                   \
   parent.ads                           \
   parent-child.ads                     \
@@ -91,26 +98,25 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   private_extension_declaration.ads    \
   private_type_definition.ads          \
   procedure_call.adb                   \
+  procedure_instantiation.adb          \
   procedure_pragma.adb                 \
   raise_statement.adb                  \
   simpleada-io.ads                     \
   simple_array_expressions.adb         \
-  some_modes.ads                       \
-  subtypes.ads                         \
-  tagged_definition.ads                \
+  simple_expression_range.ads          \
+  sub_derived_types.ads                \
   type_conversion.adb                  \
+  unconstrained_array_definition.ads   \
   default_function_argument.adb        \
   qualified_expression.adb             \
   type_in_local_pkg.adb                \
-  very_large_value.adb                 \
-  week_string_literal.ads
+  very_large_value.adb                 
 
 ADA_TRANSLATOR_FAILING_TESTS :=        \
   access_variable.adb                  \
   allocators.adb                       \
   accept_statement.adb                 \
   accept_statement_task_decl.adb       \
-  alignment_component_clause.adb       \
   array_declare.adb                    \
   array_declare_2.ads                  \
   array_expressions.adb                \
@@ -141,8 +147,6 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   io_test2.adb                         \
   linkedlists.ads                      \
   modular_type_definition.ads          \
-  multidimensional_array.adb           \
-  multidimensional_array.ads           \
   nested_package.ads                   \
   nullptr.adb                          \
   opaque.ads                           \
@@ -151,13 +155,11 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   pkgrename.ads                        \
   private_access_type.adb              \
   procedure_renaming.adb               \
-  procedure_instantiation.adb          \
   real_typedecl.ads                    \
   representation_clause.ads            \
   representation_clause_2.ads          \
   scopequal.adb                        \
   select_accept.adb                    \
-  simple_expression_range.ads          \
   simple_select_accept.adb             \
   simple_select_accept_guarded.adb     \
   simple_use_type.ads                  \
@@ -165,7 +167,6 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   simple_hello_world_with_renamed.adb  \
   simple_hello_world_with_use.adb      \
   std_ascii_user.adb                   \
-  sub_derived_types.ads                \
   task_type_declaration.ads            \
   task_with_abort.adb                  \
   task_with_abort_v2.adb               \
@@ -174,7 +175,6 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   test.ads                             \
   test_unit.ads                        \
   usegenericinstance.adb               \
-  unconstrained_array_definition.ads   \
   unknown_discriminant.ads             \
   uppercase.adb
 
