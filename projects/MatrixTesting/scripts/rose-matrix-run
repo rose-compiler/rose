@@ -599,6 +599,26 @@ upload-artifacts() {
 }
 
 ########################################################################################################################
+# Get the name of the person doing the testing.  For most systems, it's just the user and host, but sometimes we do
+# something special.
+tester-name() {
+    local user="$(whoami)" host="$(hostname)"
+    case "$host" in
+	ip-*)
+	    # Possible AWS EC2 instance where hostname is based on an internal address which isn't too useful
+	    # for debugging from outside AWS. Therefore, replace it with the public IPv4 address.
+	    local public_ip="$(curl http://169.254.169.254/latest/meta-data/public-ipv4)"
+	    [ -n "$public_ip" ] && host="$public_ip"
+	    ;;
+    esac
+
+    [ -n "$user" ] || user=unknown
+    [ -n "$host" ] || host=unknown
+
+    echo "${user}@${host}"
+}
+
+########################################################################################################################
 # Run one test in a Docker container
 run-test() {
     # Generate the Docker image for the selected target operating system.
@@ -631,7 +651,7 @@ run-test() {
 
     # Create initial contents for some output files
     set-result "$rundir" os "$os"
-    set-result "$rundir" tester "$(whoami)@$(hostname) using $arg0"
+    set-result "$rundir" tester "$(tester-name)"
     (
 	echo "Time that test started: $(date '+%Y-%m-%d %H:%M:%S %Z')"
 	echo "Host machine: $(whoami)@$(hostname -f) $(uname -srv)"
