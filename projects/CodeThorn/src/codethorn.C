@@ -57,6 +57,7 @@
 
 #include "ConstantConditionAnalysis.h"
 #include "MemoryViolationAnalysis.h"
+#include "ReadWriteTraceAnalysis.h"
 #include "CodeThornLib.h"
 #include "LTLThornLib.h"
 #include "CppStdUtilities.h"
@@ -251,8 +252,13 @@ int main( int argc, char * argv[] ) {
     AbstractValue::pointerSetsEnabled=ctOpt.pointerSetsEnabled;
 
     if(ctOpt.constantConditionAnalysisFileName.size()>0) {
-      analyzer->getEStateTransferFunctions()->setReadWriteListener(new ConstantConditionAnalysis());
-      //analyzer->getEStateTransferFunctions()->setReadWriteListener(new MemoryViolationAnalysis());
+      analyzer->getEStateTransferFunctions()->registerReadWriteListener(new ConstantConditionAnalysis(),"constant-condition");
+    }
+    if(ctOpt.nullPointerAnalysis||ctOpt.generateReports) {
+      analyzer->getEStateTransferFunctions()->registerReadWriteListener(new MemoryViolationAnalysis(),"memory-violation");
+    }
+    if(ctOpt.readWriteTrace) {
+      analyzer->getEStateTransferFunctions()->registerReadWriteListener(new ReadWriteTraceAnalysis(),"read-write-trace");
     }
 
     if(ctOpt.runSolver) {

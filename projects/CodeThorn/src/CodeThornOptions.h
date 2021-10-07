@@ -129,6 +129,8 @@ public:
   std::string forkFunctionName="";
 
   bool sharedPStates=true;
+  bool readWriteTrace=false;
+  
   // RERS C-subset program options
   struct Rers {
     std::string assertResultsOutputFileName;
