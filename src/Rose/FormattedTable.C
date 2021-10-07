@@ -2,6 +2,7 @@
 
 #include <Rose/CommandLine.h>
 #include <Rose/StringUtility/Convert.h>
+#include <Rose/StringUtility/Escape.h>
 #include <Rose/StringUtility/SplitJoin.h>
 
 namespace Rose {
@@ -261,6 +262,10 @@ FormattedTable::cellPropertiesBegin(const CellProperties &props) const {
                 retval += "background-color: " + hsv->toHtml() + ";";
             retval += "\">";
             break;
+
+        case Format::CSV:
+        case Format::SHELL:
+            break;
     }
     return retval;
 }
@@ -275,6 +280,10 @@ FormattedTable::cellPropertiesEnd(const CellProperties &props) const {
 
         case Format::HTML:
             return "</span>";
+
+        case Format::CSV:
+        case Format::SHELL:
+            return "";
     }
 }
 
@@ -339,6 +348,30 @@ FormattedTable::printRow(std::ostream &out, const std::vector<size_t> &widths, c
             out <<"</tr>\n";
             break;
         }
+
+        case Format::CSV: {
+            // See RFC 4180 [https://datatracker.ietf.org/doc/html/rfc4180]
+            for (size_t j = 0; j < widths.size(); ++j)
+                out <<(j?",":"") <<StringUtility::csvEscape(row[j]);
+            out <<"\n";
+            break;
+        }
+
+        case Format::SHELL: {
+            // See enum for documentation
+            for (size_t j = 0; j < widths.size(); ++j) {
+                bool needQuotes = false;
+                for (char ch: row[j]) {
+                    if (!::isalnum(ch) && !strchr("_-+./", ch)) {
+                        needQuotes = true;
+                        break;
+                    }
+                }
+                out <<(j ? "\t" : "") <<(needQuotes ? "$'" + StringUtility::cEscape(row[j],'\'') + "'" : row[j]);
+            }
+            out <<"\n";
+            break;
+        }
     }
 }
 
@@ -351,7 +384,8 @@ FormattedTable::print(std::ostream &out) const {
     if (Format::HTML == format_)
         out <<"<table border=\"1\">\n";
 
-    if (!columnHeaders_.empty()) {
+    // Headers
+    if (!columnHeaders_.empty() && format_ != Format::CSV && format_ != Format::SHELL) {
         printHorizontalRule(out, widths);
         for (size_t i = 0; i < columnHeaders_.size(); ++i) {
             std::vector<CellProperties> props;
@@ -362,6 +396,7 @@ FormattedTable::print(std::ostream &out) const {
         }
     }
 
+    // Body
     printHorizontalRule(out, widths);
     for (size_t i = 0; i < cells_.size(); ++i)
         printRow(out, widths, props_[i], cells_[i]);

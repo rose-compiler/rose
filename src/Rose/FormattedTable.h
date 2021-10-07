@@ -20,7 +20,14 @@ public:
     /** Format when generating output. */
     enum class Format {
         PLAIN,                                          /**< Use ASCII-art to draw the table borders. */
-        HTML                                            /**< Generate HTML output. */
+        HTML,                                           /**< Generate HTML output. */
+        CSV,                                            /**< Comma separated values, RFC 4180. */
+        SHELL                                           /**< A format friendly for shell scripts. No header columns. Lines
+                                                         *   are separated by ASCII line feed characters (not carriage returns).
+                                                         *   Values are separated by horizontal tab characters. Line feeds and
+                                                         *   tabs are escaped in the values. Shell <code>$"</code> style
+                                                         *   escaping is used (C-like) in addition to escaped tabs and
+                                                         *   linefeeds. */
     };
 
     /** How text is aligned in a table cell. */
