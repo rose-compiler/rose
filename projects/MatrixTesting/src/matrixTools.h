@@ -39,6 +39,9 @@ void insertOutputFormatSwitch(Sawyer::CommandLine::SwitchGroup&, Format&, Format
 // Convert Unix epoch time to human readable time in the local timezone.
 std::string timeToLocal(time_t);
 
+// Convert Unix epoch time to human readable time in the GMT timezone.
+std::string timeToGmt(time_t);
+
 // if the version is a SHA1, then return an abbreviated version.
 std::string abbreviatedVersion(const std::string&);
 

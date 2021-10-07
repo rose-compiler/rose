@@ -76,6 +76,18 @@ timeToLocal(time_t t) {
 }
 
 std::string
+timeToGmt(time_t t) {
+    struct tm tm;
+    std::string tz;
+    gmtime_r(&t, &tm);
+    tz = tm.tm_zone;
+    return (boost::format("%04d-%02d-%02d %02d:%02d:%02d %s")
+            % (tm.tm_year + 1900) % (tm.tm_mon + 1) % tm.tm_mday
+            % tm.tm_hour % tm.tm_min % tm.tm_sec
+            % tz).str();
+}
+
+std::string
 abbreviatedVersion(const std::string &s) {
     boost::regex sha1("([0-9a-f]{40})(\\+local)?");
 

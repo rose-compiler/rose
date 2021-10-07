@@ -5,12 +5,14 @@ static const char *gDescription =
     "a column name, comparison operator, and value; and a display argument is column name and optional "
     "sorting direction.\n\n"
 
-    "The relational operators for constraints are:"
-    "@named{=}{The column on the left hand side is constrainted to be equal to the value on the right hand side.}"
-    "@named{~}{The column on the left hand side must contain the string on the right hand side.}\n\n"
+    "The relational operators for constraints are designed to work well with shell scripts. They are:"
+    "@named{=}{The column on the left hand side must be equal to the value on the right hand side.}"
+    "@named{/}{The column on the left hand side must be not-equal to the value on the right hand sie.}"
+    "@named{~}{The column on the left hand side must contain the string on the right hand side.}"
+    "\n\n"
 
-    "A display column can be sorted by appending \".u\" or \".d\" to its name, meaning sort so values are going "
-    "down or up, respectively. If multiple columns are sorted, their sort priority is based on their column number. "
+    "A display column can be sorted by appending \".a\" or \".d\" to its name, meaning sort so values are ascending "
+    "or descending, respectively. If multiple columns are sorted, their sort priority is based on their column number. "
     "That is, the left-most sorted column is sorted first, then the next column to the right, etc.";
 
 #include <rose.h>
@@ -247,6 +249,20 @@ loadColumns(DB::Connection db) {
         c.sql("test_results.rmc_" + key);
         c.type(ColumnType::STRING);
         c.doc("The " + key + " dependency");
+        if ("build" == key) {
+            c.tableTitle("Build\nSystem");
+            c.doc("The build system used to build ROSE");
+        } else if ("debug" == key) {
+            c.doc("Whether compiler debug flags are used");
+        } else if ("edg_compile" == key) {
+            c.tableTitle("EDG\nCompile");
+            c.doc("Whether to compile EDG or download an EDG binary");
+        } else if ("languages" == key) {
+            c.doc("Comma-separated list of analysis languages");
+        } else if ("optimize" == key) {
+            c.doc("Whether to enable compiler optimizations");
+        }
+
         retval.insert(key, c);
     }
 
@@ -451,26 +467,30 @@ constrainColumn(const Settings &settings, Column &c, const std::string &key, con
                 const std::string &value) {
     switch (c.type()) {
         case ColumnType::VERSION_OR_HASH:
-            if ("=" == comparison) {
+            if ("=" == comparison || "/" == comparison) {
                 // Special cases for comparing ROSE commit hashes to allow specifying abbreviated hashes.
                 boost::regex partialKeyRe("([0-9a-f]{1,39})(\\+local)?");
                 boost::smatch matches;
                 if (boost::regex_match(value, matches, partialKeyRe)) {
-                    c.constraintExpr(c.sqlAlias() + " like ?" + c.symbol());
+                    const std::string sqlOp = "=" == comparison ? " like " : " not like ";
+                    c.constraintExpr(c.sqlAlias() + sqlOp + "?" + c.symbol());
                     c.constraintBinding(c.symbol(), matches.str(1) + "%" + matches.str(2));
                 } else {
-                    c.constraintExpr(c.sqlAlias() + " = ?" + c.symbol());
+                    const std::string sqlOp = "=" == comparison ? " = " : " <> ";
+                    c.constraintExpr(c.sqlAlias() + sqlOp + "?" + c.symbol());
                     c.constraintBinding(c.symbol(), value);
                 }
                 break;
             }
             // fall through to string comparison
         case ColumnType::STRING:
-            if ("=" == comparison) {
-                c.constraintExpr(c.sqlAlias() + " = ?" + c.symbol());
+            if ("=" == comparison || "/" == comparison) {
+                const std::string sqlOp = "=" == comparison ? " = " : " <> ";
+                c.constraintExpr(c.sqlAlias() + sqlOp + "?" + c.symbol());
                 c.constraintBinding(c.symbol(), value);
             } else if ("~" == comparison) {
-                c.constraintExpr(c.sqlAlias() + " like ?" + c.symbol());
+                const std::string sqlOp = "=" == comparison ? " like " : " not like ";
+                c.constraintExpr(c.sqlAlias() + sqlOp + "?" + c.symbol());
                 c.constraintBinding(c.symbol(), "%" + value + "%");
             } else {
                 mlog[FATAL] <<"field \"" <<key <<"\" cannot be constrained with \"" <<comparison <<"\" operator\n";
@@ -479,8 +499,9 @@ constrainColumn(const Settings &settings, Column &c, const std::string &key, con
             break;
 
         case ColumnType::INTEGER:
-            if ("=" == comparison) {
-                c.constraintExpr(c.sqlAlias() + " " + comparison + " ?" + c.symbol());
+            if ("=" == comparison || "/" == comparison) {
+                const std::string sqlOp = "=" == comparison ? " = " : " <> ";
+                c.constraintExpr(c.sqlAlias() + " " + sqlOp + " ?" + c.symbol());
                 c.constraintBinding(c.symbol(), value);
             } else {
                 mlog[FATAL] <<"field \"" <<key <<"\" cannot be constrained with \"" <<comparison <<"\" operator\n";
@@ -490,10 +511,15 @@ constrainColumn(const Settings &settings, Column &c, const std::string &key, con
 
         case ColumnType::TIME:
             // Allow for ranges of time to be used when only a date is specified
-            if ("=" == comparison) {
+            if ("=" == comparison || "/" == comparison) {
                 if (Sawyer::Optional<std::pair<time_t, time_t>> range = parseDateTime(settings, value)) {
-                    c.constraintExpr(c.sqlAlias() + " >= ?min_" + c.symbol() + " and " +
-                                     c.sqlAlias() + " <= ?max_" + c.symbol());
+                    if ("=" == comparison) {
+                        c.constraintExpr(c.sqlAlias() + " >= ?min_" + c.symbol() + " and " +
+                                         c.sqlAlias() + " <= ?max_" + c.symbol());
+                    } else {
+                        c.constraintExpr(c.sqlAlias() + " < ?min_" + c.symbol() + " or " +
+                                         c.sqlAlias() + " > ?max_" + c.symbol());
+                    }
                     c.constraintBinding("min_" + c.symbol(), range->first);
                     c.constraintBinding("max_" + c.symbol(), range->second);
                 } else {
@@ -508,8 +534,9 @@ constrainColumn(const Settings &settings, Column &c, const std::string &key, con
             break;
 
         case ColumnType::DURATION:
-            if ("=" == comparison) {
-                c.constraintExpr(c.sqlAlias() + " = ?" + c.symbol());
+            if ("=" == comparison || "/" == comparison) {
+                const std::string sqlOp = "=" == comparison ? " = " : " <> ";
+                c.constraintExpr(c.sqlAlias() + sqlOp + "?" + c.symbol());
                 c.constraintBinding(c.symbol(), Rose::CommandLine::DurationParser::parse(value));
             } else {
                 mlog[FATAL] <<"field \"" <<key <<"\" cannot be constrained with \"" <<comparison <<"\" operator\n";
@@ -668,7 +695,7 @@ formatValue(const Settings &settings, const Column &c, const std::string &value)
 
         case ColumnType::TIME: {
             time_t when = boost::lexical_cast<time_t>(value);
-            std::string s = timeToLocal(when);
+            std::string s = settings.usingLocalTime ? timeToLocal(when) : timeToGmt(when);
             if (settings.showAges)
                 s += ", " + approximateAge(when);
             return s;
@@ -789,8 +816,8 @@ main(int argc, char *argv[]) {
 
     // Parse positional command-line positional arguments. They are either constraints or column names to display.
     boost::regex nameRe("[_a-zA-Z][_a-zA-Z0-9]*");
-    boost::regex exprRe("([_a-zA-Z][_a-zA-Z0-9]*)([=~])(.*)");
-    boost::regex nameSortRe("([_a-zA-Z][_a-zA-Z0-9]*)(\\.[ud])?");
+    boost::regex exprRe("([_a-zA-Z][_a-zA-Z0-9]*)([=/~])(.*)");
+    boost::regex nameSortRe("([_a-zA-Z][_a-zA-Z0-9]*)(\\.[ad])?");
     std::vector<Column> cols;
 
     for (const std::string &arg: args) {
@@ -837,7 +864,7 @@ main(int argc, char *argv[]) {
                 const Column &decl = columnDecls[key];
                 cols.push_back(decl);
                 cols.back().isDisplayed(true);
-                if (".u" == sorted) {
+                if (".a" == sorted) {
                     cols.back().sorted(Sorted::ASCENDING);
                 } else if (".d" == sorted) {
                     cols.back().sorted(Sorted::DESCENDING);
