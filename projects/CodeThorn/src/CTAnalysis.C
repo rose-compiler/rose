@@ -1355,13 +1355,15 @@ void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(SgProject* root, TimingCollect
   CodeThornOptions& ctOpt=getOptionsRef();
   Pass::normalization(ctOpt,root,tc);
    logger[INFO]<<"Normalization finished"<<endl;
-   _variableIdMapping=Pass::createVariableIdMapping(ctOpt, root, tc); // normalization timer
+  _variableIdMapping=Pass::createVariableIdMapping(ctOpt, root, tc); // normalization timer
    logger[INFO]<<"Vim finished"<<endl;
-   _labeler=Pass::createLabeler(ctOpt, root, tc, _variableIdMapping); // labeler timer
-   logger[INFO]<<"Labeler finished"<<endl;
-   _cfAnalysis=Pass::createForwardIcfg(ctOpt,root,tc,_labeler); // icfg constructino timer
-   logger[INFO]<<"forward icfg finished"<<endl;
-   
+  _labeler=Pass::createLabeler(ctOpt, root, tc, _variableIdMapping); // labeler timer
+    logger[INFO]<<"Labeler finished"<<endl;
+  _classHierarchy=Pass::createClassAnalysis(ctOpt, root, tc); // class hierarchy timer
+    logger[INFO]<<"Class hierarchy finished"<<endl; _virtualFunctions=Pass::createVirtualFunctionAnalysis(ctOpt, _classHierarchy, tc); // class hierarchy timer
+    logger[INFO]<<"Virtual functions finished"<<endl;
+  _cfAnalysis=Pass::createForwardIcfg(ctOpt,root,tc,_labeler,_classHierarchy,_virtualFunctions); // icfg constructino timer
+  
   tc.startTimer(); // initialization timer (stopped at end of function)
   resetInputSequenceIterator();
   RoseAst completeast(root);

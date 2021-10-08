@@ -6,9 +6,8 @@
 #include <unordered_map>
 #include "Labeler.h"
 #include "FunctionCallTarget.h"
-#include "ClassHierarchyGraph.h"
+#include "ClassHierarchyAnalysis.h"
 
-// struct ClassHierarchyWrapper;
 
 namespace CodeThorn {
 
@@ -24,7 +23,7 @@ namespace CodeThorn {
       return hashFun(lbl.getId());
     }
   };
-  
+
   /// tests if n occurs as part of a template
   // \todo consider only labeling non-template code..
   bool insideTemplatedCode(const SgNode* n);
@@ -35,6 +34,16 @@ namespace CodeThorn {
    */
   class FunctionCallMapping2 {
   public:
+    FunctionCallMapping2(Labeler* labeler, ClassAnalysis* classAnalysis, VirtualFunctionAnalysis* virtualFunctions)
+    : mapping(), _labeler(labeler), _classAnalysis(classAnalysis), _virtualFunctions(virtualFunctions)
+    {
+      ASSERT_not_null(_labeler);
+      ASSERT_not_null(_classAnalysis);
+      ASSERT_not_null(_virtualFunctions);
+    }
+
+    ~FunctionCallMapping2() = default;
+
     void computeFunctionCallMapping(SgProject*);
 
     FunctionCallTargetSet resolveFunctionCall(Label callLabel);
@@ -43,25 +52,36 @@ namespace CodeThorn {
     /** access the class hierarchy for analyzing member function calls.
      *  @{
      */
-    void setClassHierarchy(ClassHierarchyWrapper* ch) { classHierarchy = ch; }
-    ClassHierarchyWrapper* getClassHierarchy() const { return classHierarchy; }
+    ClassAnalysis* getClassAnalysis() const { return _classAnalysis; }
+    /** @} */
+
+    /** access the class hierarchy for analyzing member function calls.
+     *  @{
+     */
+    VirtualFunctionAnalysis* getVirtualFunctions() const { return _virtualFunctions; }
     /** @} */
 
     /** access the labeler.
      *  @{
      */
-    void setLabeler(Labeler* lbler) { labeler = lbler; }
-    Labeler* getLabeler() const { return labeler; }
+    Labeler* getLabeler() const { return _labeler; }
     /** @} */
 
-    static void initDiagnostics();
-    
+    // static void initDiagnostics(); \use CodeThorn diagnostics
+
   protected:
     std::unordered_map<Label, FunctionCallTargetSet, HashLabel> mapping;
-    Labeler* labeler;
+    Labeler* _labeler;
+    ClassAnalysis* _classAnalysis;
+    VirtualFunctionAnalysis* _virtualFunctions;
   private:
     unsigned int _matchMode=3; // workaround mode
-    ClassHierarchyWrapper* classHierarchy = nullptr;
+
+    FunctionCallMapping2()                                       = delete;
+    FunctionCallMapping2(const FunctionCallMapping2&)            = delete;
+    FunctionCallMapping2(FunctionCallMapping2&&)                 = delete;
+    FunctionCallMapping2& operator=(const FunctionCallMapping2&) = delete;
+    FunctionCallMapping2& operator=(FunctionCallMapping2&&)      = delete;
   };
 } // end of namespace CodeThorn
 

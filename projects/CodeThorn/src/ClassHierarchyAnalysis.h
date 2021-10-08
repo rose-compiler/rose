@@ -9,9 +9,18 @@
 #include <iostream>
 
 #include "RoseCompatibility.h"
-#include "CodeThornLib.h"
-#include "FunctionId.h"
 
+//~ #include "Label.h"
+//~ #include "CodeThornLib.h"
+
+
+//~ #include "FunctionId.h"
+
+
+namespace CodeThorn
+{
+  extern Sawyer::Message::Facility logger; // from "CodeThornLib.h"
+}
 
 /*******
   How to use the Class Hierarchy Analysis
@@ -36,10 +45,6 @@
 namespace
 {
   // auxiliary functions
-  //~ inline std::ostream& logTrace() { return std::cerr; }
-  //~ inline std::ostream& logInfo()  { return std::cerr; }
-  //~ inline std::ostream& logWarn()  { return std::cerr; }
-  //~ inline std::ostream& logError() { return std::cerr; }
 
   inline
   auto logTrace() -> decltype(CodeThorn::logger[Sawyer::Message::TRACE])
@@ -65,6 +70,11 @@ namespace
     return CodeThorn::logger[Sawyer::Message::ERROR];
   }
 
+  inline
+  auto logFatal() -> decltype(CodeThorn::logger[Sawyer::Message::FATAL])
+  {
+    return CodeThorn::logger[Sawyer::Message::FATAL];
+  }
 }
 
 
@@ -84,12 +94,12 @@ struct InheritanceDesc : std::tuple<ClassKeyType, bool, bool>
   void setDirect(bool v) { std::get<2>(*this) = v; }
 };
 
-struct OverrideDesc : std::tuple<FunctionId, bool>
+struct OverrideDesc : std::tuple<FunctionKeyType, bool>
 {
-  using base = std::tuple<FunctionId, bool>;
+  using base = std::tuple<FunctionKeyType, bool>;
   using base::base;
 
-  FunctionId functionId()      const { return std::get<0>(*this); }
+  FunctionKeyType functionId() const { return std::get<0>(*this); }
   bool       covariantReturn() const { return std::get<1>(*this); }
 };
 
@@ -143,10 +153,12 @@ struct VirtualFunctionDesc : std::tuple<ClassKeyType, bool, OverrideContainer, O
 class ClassData
 {
   public:
-    using VirtualFunctionContainer = std::vector<FunctionId>;
-    using DataMemberContainer      = std::vector<VariableId>;
-    using AncestorContainer        = std::vector<InheritanceDesc>;
-    using DescendantContainer      = std::vector<InheritanceDesc>;
+    using VirtualFunctionContainer  = std::vector<FunctionKeyType>;
+    //~ using DataMemberContainer       = std::vector<VariableId>;
+    using DataMemberContainer       = std::vector<VariableKeyType>;
+    using AncestorContainer         = std::vector<InheritanceDesc>;
+    using DescendantContainer       = std::vector<InheritanceDesc>;
+    using VirtualBaseOrderContainer = std::vector<ClassKeyType>;
 
     ClassData()                            = default;
     ClassData(const ClassData&)            = default;
@@ -171,6 +183,12 @@ class ClassData
     /// \{
     VirtualFunctionContainer&       virtualFunctions()       { return allVirtualFunctions; }
     const VirtualFunctionContainer& virtualFunctions() const { return allVirtualFunctions; }
+    /// \}
+
+    /// returns a (const) reference to virtual base class construction/destruction order
+    /// \{
+    VirtualBaseOrderContainer&       virtualBaseClassOrder()       { return virtualBaseOrder; }
+    const VirtualBaseOrderContainer& virtualBaseClassOrder() const { return virtualBaseOrder; }
     /// \}
 
     /// returns a (const) reference to all data members declared by this class
@@ -203,10 +221,11 @@ class ClassData
     bool hasVirtualFunctions() const;
 
   private:
-    AncestorContainer        allAncestors;
-    DescendantContainer      allDescendants;
-    VirtualFunctionContainer allVirtualFunctions;
-    DataMemberContainer      allDataMembers;
+    AncestorContainer         allAncestors;
+    DescendantContainer       allDescendants;
+    VirtualFunctionContainer  allVirtualFunctions;
+    DataMemberContainer       allDataMembers;
+    VirtualBaseOrderContainer virtualBaseOrder;
 
     bool                     hasInheritedVirtualMethods = false;
 };
@@ -229,6 +248,7 @@ class ClassAnalysis : std::unordered_map<ClassKeyType, ClassData>
     using base::emplace;
     using base::find;
     using base::size;
+    using base::clear;
 
     /// adds an inheritance edge to both classes \ref descendant and \ref ancestorKey
     /// \param descendant the entry for the descendant class
@@ -300,10 +320,10 @@ class CastAnalysis : std::unordered_map<CastDesc, std::vector<CastKeyType> >
 
 
 /// stores the results of virtual function analysis by Id
-class VirtualFunctionAnalysis : std::unordered_map<FunctionId, VirtualFunctionDesc, FunctionIdHashFunction>
+class VirtualFunctionAnalysis : std::unordered_map<FunctionKeyType, VirtualFunctionDesc>
 {
   public:
-    using base = std::unordered_map<FunctionId, VirtualFunctionDesc, FunctionIdHashFunction>;
+    using base = std::unordered_map<FunctionKeyType, VirtualFunctionDesc>;
     using base::base;
 
     using base::value_type;
@@ -333,11 +353,31 @@ struct AnalysesTuple : std::tuple<ClassAnalysis, CastAnalysis>
   const CastAnalysis& castAnalysis() const { return std::get<1>(*this); }
 };
 
+/// A tuple for both ClassAnalysis and CastAnalysis
+struct ClassAndVirtualFunctionAnalysis : std::tuple<ClassAnalysis, VirtualFunctionAnalysis>
+{
+  using base = std::tuple<ClassAnalysis, VirtualFunctionAnalysis>;
+  using base::base;
+
+  ClassAnalysis&       classAnalysis()       { return std::get<0>(*this); }
+  const ClassAnalysis& classAnalysis() const { return std::get<0>(*this); }
+
+  VirtualFunctionAnalysis& virtualFunctionAnalysis()             { return std::get<1>(*this); }
+  const VirtualFunctionAnalysis& virtualFunctionAnalysis() const { return std::get<1>(*this); }
+};
+
+
 /// collects the class hierarchy and all casts from a project
+/// \{
 AnalysesTuple analyzeClassesAndCasts(const RoseCompatibilityBridge& rcb, ASTRootType n);
+AnalysesTuple analyzeClassesAndCasts(ASTRootType n);
+/// \}
 
 /// collects the class hierarchy from a project
+/// \{
 ClassAnalysis analyzeClasses(const RoseCompatibilityBridge& rcb, ASTRootType n);
+ClassAnalysis analyzeClasses(ASTRootType n);
+/// \}
 
 /// functions type that are used for the class hierarchy traversals
 /// \{
@@ -347,8 +387,13 @@ using ClassAnalysisConstFn = std::function<void(const ClassAnalysis::value_type&
 
 
 /// computes function overriders for all virtual functions
+/// \{
 VirtualFunctionAnalysis
-virtualFunctionAnalysis(const RoseCompatibilityBridge& rcb, const ClassAnalysis& classes);
+analyzeVirtualFunctions(const RoseCompatibilityBridge& rcb, const ClassAnalysis& classes);
+
+VirtualFunctionAnalysis
+analyzeVirtualFunctions(const ClassAnalysis& classes);
+/// \}
 
 /// implements a top down traversal of the class hierarchy
 /// \details

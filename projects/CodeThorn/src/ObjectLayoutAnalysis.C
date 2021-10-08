@@ -8,9 +8,9 @@ namespace
 {
   void addDataMembers(ct::ObjectLayout& ol, const ct::ClassAnalysis::value_type& clazz)
   {
-    const std::vector<ct::VariableId>& members = clazz.second.dataMembers();
+    const std::vector<ct::VariableKeyType>& members = clazz.second.dataMembers();
 
-    for (ct::VariableId id : members)
+    for (ct::VariableKeyType id : members)
       ol.emplace_back(0, ct::Field{id});
   }
 
