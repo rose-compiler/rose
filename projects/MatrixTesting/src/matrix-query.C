@@ -9,6 +9,7 @@ static const char *gDescription =
     "@named{=}{The column on the left hand side must be equal to the value on the right hand side.}"
     "@named{/}{The column on the left hand side must be not-equal to the value on the right hand sie.}"
     "@named{~}{The column on the left hand side must contain the string on the right hand side.}"
+    "@named{^}{The column on the left hand side must not contain the string on the right hand side.}"
     "\n\n"
 
     "A display column can be sorted by appending \".a\" or \".d\" to its name, meaning sort so values are ascending "
@@ -41,6 +42,8 @@ struct Settings {
 
 static Sawyer::Message::Facility mlog;
 static const size_t DEFAULT_ROW_LIMIT = 100;
+
+using SqlSuffixes = Sawyer::Container::Map<std::string /*column_symbol*/, size_t /*count*/>;
 
 static std::vector<std::string>
 parseCommandLine(int argc, char *argv[], Settings &settings) {
@@ -116,6 +119,7 @@ class Column {
     // Declaration stuff
     std::string tableTitle_;                            // title to use in the table column
     std::string symbol_;                                // name to use as the value in YAML output and SQL aliases
+    size_t sqlSuffix_ = 0;                              // suffix for SQL aliases
     std::string sql_;                                   // the value as written in SQL
     std::string doc_;                                   // description
     ColumnType type_ = ColumnType::STRING;              // type of value returned by the sqlExpression
@@ -154,8 +158,12 @@ public:
         return *this;
     }
 
+    Column& sqlSuffix(size_t n) {
+        sqlSuffix_ = n;
+        return *this;
+    }
     std::string sqlAlias() const {
-        return isAggregate() ? symbol() : sql();
+        return symbol_ + boost::lexical_cast<std::string>(sqlSuffix_);
     }
 
     const std::string& doc() const {
@@ -237,30 +245,28 @@ loadColumns(DB::Connection db) {
     ColumnMap retval;
 
     // Columns that are ROSE dependencies
-    auto stmt = db.stmt("select distinct name from dependencies");
+    auto stmt = db.stmt("select name, column_name, description from dependency_attributes");
     for (auto row: stmt) {
         const std::string key = *row.get<std::string>(0);
+        const std::string columnName = *row.get<std::string>(1);
+        auto doc = row.get<std::string>(2);
+
         Column c;
 
+        // Default values
         std::string s = key;
         s[0] = toupper(s[0]);
         c.tableTitle(s);
         c.symbol(key);
-        c.sql("test_results.rmc_" + key);
+        c.sql("test_results." + columnName);
         c.type(ColumnType::STRING);
-        c.doc("The " + key + " dependency");
+        c.doc(doc.orElse("The " + key + " dependency"));
+
+        // Specific values for some columns
         if ("build" == key) {
             c.tableTitle("Build\nSystem");
-            c.doc("The build system used to build ROSE");
-        } else if ("debug" == key) {
-            c.doc("Whether compiler debug flags are used");
         } else if ("edg_compile" == key) {
             c.tableTitle("EDG\nCompile");
-            c.doc("Whether to compile EDG or download an EDG binary");
-        } else if ("languages" == key) {
-            c.doc("Comma-separated list of analysis languages");
-        } else if ("optimize" == key) {
-            c.doc("Whether to enable compiler optimizations");
         }
 
         retval.insert(key, c);
@@ -396,6 +402,10 @@ loadColumns(DB::Connection db) {
                   .type(ColumnType::INTEGER)
                   .isAggregate(true));
 
+    // The columns must be organized by symbol because there are some places where we don't pass the key.
+    for (const ColumnMap::Node &node: retval.nodes())
+        ASSERT_require(node.key() == node.value().symbol());
+
     return retval;
 }
 
@@ -473,12 +483,12 @@ constrainColumn(const Settings &settings, Column &c, const std::string &key, con
                 boost::smatch matches;
                 if (boost::regex_match(value, matches, partialKeyRe)) {
                     const std::string sqlOp = "=" == comparison ? " like " : " not like ";
-                    c.constraintExpr(c.sqlAlias() + sqlOp + "?" + c.symbol());
-                    c.constraintBinding(c.symbol(), matches.str(1) + "%" + matches.str(2));
+                    c.constraintExpr(c.sql() + sqlOp + "?" + c.sqlAlias());
+                    c.constraintBinding(c.sqlAlias(), matches.str(1) + "%" + matches.str(2));
                 } else {
                     const std::string sqlOp = "=" == comparison ? " = " : " <> ";
-                    c.constraintExpr(c.sqlAlias() + sqlOp + "?" + c.symbol());
-                    c.constraintBinding(c.symbol(), value);
+                    c.constraintExpr(c.sql() + sqlOp + "?" + c.sqlAlias());
+                    c.constraintBinding(c.sqlAlias(), value);
                 }
                 break;
             }
@@ -486,12 +496,12 @@ constrainColumn(const Settings &settings, Column &c, const std::string &key, con
         case ColumnType::STRING:
             if ("=" == comparison || "/" == comparison) {
                 const std::string sqlOp = "=" == comparison ? " = " : " <> ";
-                c.constraintExpr(c.sqlAlias() + sqlOp + "?" + c.symbol());
-                c.constraintBinding(c.symbol(), value);
-            } else if ("~" == comparison) {
-                const std::string sqlOp = "=" == comparison ? " like " : " not like ";
-                c.constraintExpr(c.sqlAlias() + sqlOp + "?" + c.symbol());
-                c.constraintBinding(c.symbol(), "%" + value + "%");
+                c.constraintExpr(c.sql() + sqlOp + "?" + c.sqlAlias());
+                c.constraintBinding(c.sqlAlias(), value);
+            } else if ("~" == comparison || "^" == comparison) {
+                const std::string sqlOp = "~" == comparison ? " like " : " not like ";
+                c.constraintExpr(c.sql() + sqlOp + "?" + c.sqlAlias());
+                c.constraintBinding(c.sqlAlias(), "%" + value + "%");
             } else {
                 mlog[FATAL] <<"field \"" <<key <<"\" cannot be constrained with \"" <<comparison <<"\" operator\n";
                 exit(1);
@@ -501,8 +511,8 @@ constrainColumn(const Settings &settings, Column &c, const std::string &key, con
         case ColumnType::INTEGER:
             if ("=" == comparison || "/" == comparison) {
                 const std::string sqlOp = "=" == comparison ? " = " : " <> ";
-                c.constraintExpr(c.sqlAlias() + " " + sqlOp + " ?" + c.symbol());
-                c.constraintBinding(c.symbol(), value);
+                c.constraintExpr(c.sql() + " " + sqlOp + " ?" + c.sqlAlias());
+                c.constraintBinding(c.sqlAlias(), value);
             } else {
                 mlog[FATAL] <<"field \"" <<key <<"\" cannot be constrained with \"" <<comparison <<"\" operator\n";
                 exit(1);
@@ -514,14 +524,14 @@ constrainColumn(const Settings &settings, Column &c, const std::string &key, con
             if ("=" == comparison || "/" == comparison) {
                 if (Sawyer::Optional<std::pair<time_t, time_t>> range = parseDateTime(settings, value)) {
                     if ("=" == comparison) {
-                        c.constraintExpr(c.sqlAlias() + " >= ?min_" + c.symbol() + " and " +
-                                         c.sqlAlias() + " <= ?max_" + c.symbol());
+                        c.constraintExpr(c.sql() + " >= ?min_" + c.sqlAlias() + " and " +
+                                         c.sql() + " <= ?max_" + c.sqlAlias());
                     } else {
-                        c.constraintExpr(c.sqlAlias() + " < ?min_" + c.symbol() + " or " +
-                                         c.sqlAlias() + " > ?max_" + c.symbol());
+                        c.constraintExpr(c.sql() + " < ?min_" + c.sqlAlias() + " or " +
+                                         c.sql() + " > ?max_" + c.sqlAlias());
                     }
-                    c.constraintBinding("min_" + c.symbol(), range->first);
-                    c.constraintBinding("max_" + c.symbol(), range->second);
+                    c.constraintBinding("min_" + c.sqlAlias(), range->first);
+                    c.constraintBinding("max_" + c.sqlAlias(), range->second);
                 } else {
                     mlog[FATAL] <<"invalid date/time value in constraint for \"" <<key <<"\": "
                                 <<"\"" <<StringUtility::cEscape(value) <<"\"\n";
@@ -536,8 +546,8 @@ constrainColumn(const Settings &settings, Column &c, const std::string &key, con
         case ColumnType::DURATION:
             if ("=" == comparison || "/" == comparison) {
                 const std::string sqlOp = "=" == comparison ? " = " : " <> ";
-                c.constraintExpr(c.sqlAlias() + sqlOp + "?" + c.symbol());
-                c.constraintBinding(c.symbol(), Rose::CommandLine::DurationParser::parse(value));
+                c.constraintExpr(c.sql() + sqlOp + "?" + c.sqlAlias());
+                c.constraintBinding(c.sqlAlias(), Rose::CommandLine::DurationParser::parse(value));
             } else {
                 mlog[FATAL] <<"field \"" <<key <<"\" cannot be constrained with \"" <<comparison <<"\" operator\n";
                 exit(1);
@@ -579,7 +589,7 @@ find(const ColumnList &cols, const std::string &key) {
 
 // Display all columns that we haven't chosen to display yet and which don't have constraints
 static void
-displayMoreColumns(ColumnList &cols, const ColumnMap &decls) {
+displayMoreColumns(ColumnList &cols, const ColumnMap &decls, SqlSuffixes &suffixes) {
     for (const Column &decl: decls.values()) {
         if (!decl.isAggregate()) {
             if (auto idx = find(cols, decl.symbol())) {
@@ -587,6 +597,7 @@ displayMoreColumns(ColumnList &cols, const ColumnMap &decls) {
                     cols[*idx].isDisplayed(true);
             } else {
                 cols.push_back(decl);
+                cols.back().sqlSuffix(++suffixes.insertMaybe(decl.symbol(), 0));
                 cols.back().isDisplayed(true);
             }
         }
@@ -819,9 +830,10 @@ main(int argc, char *argv[]) {
 
     // Parse positional command-line positional arguments. They are either constraints or column names to display.
     boost::regex nameRe("[_a-zA-Z][_a-zA-Z0-9]*");
-    boost::regex exprRe("([_a-zA-Z][_a-zA-Z0-9]*)([=/~])(.*)");
+    boost::regex exprRe("([_a-zA-Z][_a-zA-Z0-9]*)([=/~^])(.*)");
     boost::regex nameSortRe("([_a-zA-Z][_a-zA-Z0-9]*)(\\.[ad])?");
     std::vector<Column> cols;
+    SqlSuffixes sqlSuffixes;
 
     for (const std::string &arg: args) {
         boost::smatch exprParts;
@@ -840,6 +852,7 @@ main(int argc, char *argv[]) {
 
             const Column &decl = columnDecls[key];
             cols.push_back(decl);
+            cols.back().sqlSuffix(++sqlSuffixes.insertMaybe(key, 0));
             SAWYER_MESG(mlog[INFO]) <<(boost::format("  %-16s %s \"%s\"\n") % key % comparison % StringUtility::cEscape(value));
             constrainColumn(settings, cols.back(), key, comparison, value);
 
@@ -849,7 +862,7 @@ main(int argc, char *argv[]) {
             exit(0);
 
         } else if ("all" == arg) {
-            displayMoreColumns(cols, columnDecls);
+            displayMoreColumns(cols, columnDecls, sqlSuffixes);
 
         } else if (boost::regex_match(arg, exprParts, nameSortRe)) {
             // A column name all by itself (or with a sort direction) means display the column
@@ -866,6 +879,7 @@ main(int argc, char *argv[]) {
             } else {
                 const Column &decl = columnDecls[key];
                 cols.push_back(decl);
+                cols.back().sqlSuffix(++sqlSuffixes.insertMaybe(key, 0));
                 cols.back().isDisplayed(true);
                 if (".a" == sorted) {
                     cols.back().sorted(Sorted::ASCENDING);
@@ -893,7 +907,7 @@ main(int argc, char *argv[]) {
 
     // If no columns are displayed, then select lots of them
     if (nDisplayed(cols) == 0) {
-        displayMoreColumns(cols, columnDecls);
+        displayMoreColumns(cols, columnDecls, sqlSuffixes);
         ASSERT_require(nDisplayed(cols) != 0);
     }
 

@@ -14,13 +14,19 @@ static const char *gDescription =
     "{Lists the dependencies for the specified name and value. If the value is omitted, then all dependencies with the "
     "specified name are printed; and if the name is also omitted then all dependencies are printed.}"
 
-    "@named{@prop{programName} [@v{switches}] enable @v{name} @v{value} [@v{os}]}"
-    "{Enable the specified property and value. If an @v{os} is given, then that operating system as added to the list "
-    "of valid operating systems for this dependency instead of setting the dependency's \"enabled\" bit.}"
+    "@named{@prop{programName} [@v{switches}] enable @v{name} @v{value} [@v{restriction}...]}"
+    "{Enable the specified property and value. However, if one or more @v{restriction} expressions are specified, then they "
+    "are added to the restriction list for the specified dependency value instead of setting the \"enabled\" bit."
+    "Restrictions are either an operating system name and version separated by a colon (such as \"ubuntu:20.04\") or "
+    "a relational expression whose left hand side is some other property name and whose right hand side is a value. "
+    "The relational operators are the same as for the @man{rose-matrix-query}{1} command, namley: \"=\" tests for "
+    "equality, \"/\" tests for inequality, \"~\" tests for substring, and \"^\" tests for absense of substring. These "
+    "characters were chosen because they're friendly to type in command shell interactive sessions without quoting.}"
 
-    "@named{@prop{programName} [@v{switches}] disable @v{name} @v{value} [@v{os}]}"
-    "{Disabled the specified property and value. If an @v{os} is given, then that operating system is removed from the "
-    "list of valid operating systems for this dependency instead of clearing the dependency's \"enabled\" bit.}"
+    "@named{@prop{programName} [@v{switches}] disable @v{name} @v{value} [@v{restriction}...]}"
+    "{Disable the specified property and value. However, if one or more @v{restriction} expressions arespecified, then "
+    "they are removed from the restricton list for the specified dependency value instead of clearing the \"enabled\" "
+    "bit. See the \"enable\" subcommand for a description of the restriction syntax.}"
 
     "@named{@prop{programName} [@v{switches}] supported @v{name} @v{value}}"
     "{Set the property's \"supported\" bit.}"
@@ -46,6 +52,7 @@ static const char *gDescription =
 #include <Sawyer/Database.h>
 #include <Sawyer/Message.h>
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/regex.hpp>
 
 using namespace Rose;
 using namespace Sawyer::Message::Common;
@@ -109,7 +116,8 @@ print(const Settings &settings, const DependencyList &deps) {
             table.columnHeader(0, 2, "Enabled");
             table.columnHeader(0, 3, "Supported");
             table.columnHeader(0, 4, "Operating\nSystems");
-            table.columnHeader(0, 5, "Comment");
+            table.columnHeader(0, 5, "Restrictions");
+            table.columnHeader(0, 6, "Comment");
             for (size_t i = 0; i < deps.size(); ++i) {
                 table.insert(i, 0, cEscape(deps[i].name));
                 table.insert(i, 1, cEscape(deps[i].value));
@@ -118,7 +126,15 @@ print(const Settings &settings, const DependencyList &deps) {
                 table.insert(i, 3, deps[i].supported ? "supported" : "unsupported");
                 table.cellProperties(i, 3, deps[i].supported ? propTrue : propFalse);
                 table.insert(i, 4, StringUtility::join(", ", deps[i].osNames));
-                table.insert(i, 5, cEscape(deps[i].comment));
+                std::string s;
+                for (const Dependency::Constraints::Node &node: deps[i].constraints.nodes()) {
+                    if (!s.empty())
+                        s += "\n";                      // each referenced dependency list on its own line
+                    for (const Dependency::ConstraintRhs &rhs: node.value())
+                        s += (s.empty() ? "" : " ") + node.key() + rhs.comparison + rhs.value;
+                }
+                table.insert(i, 5, s);
+                table.insert(i, 6, cEscape(deps[i].comment));
             }
             std::cout <<table;
             return;
@@ -141,17 +157,30 @@ print(const Settings &settings, const DependencyList &deps) {
 // Show only the names of dependencies
 static void
 listNames(const Settings &settings, DB::Connection db) {
-    auto stmt = db.stmt("select distinct name from dependencies order by name");
+    auto stmt = db.stmt("select name, description, column_name, position from dependency_attributes order by name");
     FormattedTable table;
     table.columnHeader(0, 0, "Name");
+    table.columnHeader(0, 1, "Description");
+    table.columnHeader(0, 2, "SQL Column");
+    table.columnHeader(0, 3, "Position");
 
     for (auto row: stmt) {
         const std::string name = *row.get<std::string>(0);
+        const std::string desc = row.get<std::string>(1).orElse("");
+        const std::string col = *row.get<std::string>(2);
+        const size_t position = *row.get<size_t>(3);
+
         if (Format::YAML == settings.outputFormat) {
-            std::cout <<"- " <<StringUtility::yamlEscape(name) <<"\n";
+            std::cout <<"- name: " <<StringUtility::yamlEscape(name) <<"\n";
+            std::cout <<"  description: " <<StringUtility::yamlEscape(desc) <<"\n";
+            std::cout <<"  sql_column: " <<StringUtility::yamlEscape(col) <<"\n";
+            std::cout <<"  position: " <<position <<"\n";
         } else {
             const size_t i = table.nRows();
             table.insert(i, 0, name);
+            table.insert(i, 1, desc);
+            table.insert(i, 2, col);
+            table.insert(i, 3, position);
         }
     }
 
@@ -206,10 +235,10 @@ enable(const Settings &settings, DB::Connection db, const std::string &name, con
     }
 }
 
-// Add or remove an operating system from a dependency.
+// Add or remove restrictions from a dependency.
 static void
-enable(const Settings &settings, DB::Connection db, const std::string &name, const std::string &value, bool b,
-       const std::string os) {
+enable(const Settings &settings, DB::Connection db, const std::string &name, const std::string &value, bool insert,
+       std::vector<std::string>::const_iterator begin, std::vector<std::string>::const_iterator end) {
     auto stmt = db.stmt("select " + dependencyColumns() +
                         " from dependencies"
                         " where name = ?name and value = ?value")
@@ -222,31 +251,73 @@ enable(const Settings &settings, DB::Connection db, const std::string &name, con
         exit(1);
     }
     ASSERT_require(1 == deps.size());
+    Dependency &dep = deps[0];
 
-    // The user might have specified more than one os at a time.
-    std::vector<std::string> osNames = StringUtility::split(" ", os);
-    for (std::string &os: osNames) {
-        boost::trim(os);
-        if (boost::ends_with(os, ","))
-            os = os.substr(0, os.size()-1);
-    }
-    osNames.erase(std::remove(osNames.begin(), osNames.end(), std::string()), osNames.end());
+    boost::regex osRe("[a-zA-Z]\\w*:\\d+(\\.\\d+)*");
+    boost::regex relRe("([a-zA-Z]\\w*)([=/~^])(.*)");
+    bool changed = false;
+    for (/*void*/; begin != end; ++begin) {
+        boost::smatch found;
+        const std::string arg = boost::trim_copy(*begin);
+        if (boost::regex_match(arg, osRe)) {
+            if (insert) {
+                changed = dep.osNames.insert(arg).second || changed;
+            } else {
+                if (dep.osNames.erase(arg) > 0) {
+                    changed = true;
+                } else {
+                    mlog[WARN] <<"os constraint \"" <<arg <<"\" does not exist for " <<dep.name <<" = " <<dep.value <<"\n";
+                }
+            }
+        } else if (boost::regex_match(arg, found, relRe)) {
+            const std::string otherDepName = found.str(1);
+            if (otherDepName == dep.name) {
+                mlog[FATAL] <<"dependency " <<dep.name <<" = " <<dep.value
+                            <<" cannot be restricted in terms of itself: \"" <<StringUtility::cEscape(arg) <<"\"\n";
+                exit(1);
+            }
+            const std::string relation = found.str(2);
+            const std::string value = found.str(3);
+            const Dependency::ConstraintRhs rhs(relation, value);
+            std::vector<Dependency::ConstraintRhs> &rhSides = dep.constraints.insertMaybeDefault(otherDepName);
+            auto found = std::find(rhSides.begin(), rhSides.end(), rhs);
+            if (insert) {
+                auto otherPos = db.stmt("select position from dependency_attributes where name = ?name")
+                                .bind("name", otherDepName)
+                                .get<int>();
+                if (!otherPos) {
+                    mlog[FATAL] <<"dependency \"" <<otherDepName <<"\" does not exist\n"
+                                <<"when constraining " <<dep.name <<" = " <<dep.value <<"\n";
+                    exit(1);
+                }
+                auto depPos = db.stmt("select position from dependency_attributes where name = ?name")
+                              .bind("name", dep.name)
+                              .get<int>();
+                ASSERT_require(depPos);
+                if (*depPos <= *otherPos) {
+                    mlog[FATAL] <<"dependency " <<dep.name <<" = " <<dep.value <<" cannot be constrained by \"" <<arg <<"\"\n"
+                                <<"because dependency \"" <<otherDepName <<"\" is selected later"
+                                <<" (" <<*otherPos <<" versus " <<*depPos <<")\n";
+                    exit(1);
+                }
 
-    // Insert or remove
-    for (const std::string &os: osNames) {
-        if (b) {
-            deps.front().osNames.insert(os);
-        } else {
-            deps.front().osNames.erase(os);
+                if (found == rhSides.end()) {
+                    rhSides.push_back(rhs);
+                    changed = true;
+                }
+            } else {
+                if (found != rhSides.end()) {
+                    rhSides.erase(found);
+                    changed = true;
+                } else {
+                    mlog[WARN] <<"constraint " <<arg <<" does not exist for " <<dep.name <<" = " <<dep.value <<"\n";
+                }
+            }
         }
     }
 
-    // Save the new string
-    db.stmt("update dependencies set os_list = ?os_list where name = ?name and value = ?value")
-        .bind("name", name)
-        .bind("value", value)
-        .bind("os_list", StringUtility::join(" ", deps.front().osNames))
-        .run();
+    if (changed)
+        updateDependency(db, dep);
 }
 
 // Mark a specific dependency as supported or unsupported
@@ -345,8 +416,8 @@ main(int argc, char *argv[]) {
         const bool enabled = "enable" == args[0] || "enabled" == args[0];
         if (args.size() == 3) {
             enable(settings, db, args[1], args[2], enabled);
-        } else if (args.size() == 4) {
-            enable(settings, db, args[1], args[2], enabled, args[3]);
+        } else if (args.size() >= 4) {
+            enable(settings, db, args[1], args[2], enabled, args.begin()+3, args.end());
         } else {
             incorrectUsage();
         }

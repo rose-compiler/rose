@@ -238,7 +238,7 @@ main(int argc, char *argv[]) {
                     const std::string os = row.get<std::string>(0).orElse("");
                     const auto duration = row.get<uint64_t>(1);
                     const std::string durationStr = duration ? Rose::CommandLine::DurationParser::toString(duration) : "";
-                    if (Format::YAML == settings.outputFormat) {https://datatracker.ietf.org/doc/html/rfc4180
+                    if (Format::YAML == settings.outputFormat) {
                         std::cout <<"  os: " <<os <<"\n";
                         if (duration)
                             std::cout <<"  duration: " <<*duration <<" # " <<durationStr <<"\n";
