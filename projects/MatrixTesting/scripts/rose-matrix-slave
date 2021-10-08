@@ -532,7 +532,8 @@ matrix-get-test-source() {
 matrix-setup-cron-jobs() {
     echo
     echo "Activating cron jobs"
-    echo "@reboot screen -d -m -e^Zz -S matrix -L /bin/bash $SELF" >crontab
+    cp "$MATRIX_ROOT/rose-installed/latest/bin/rose-matrix-slave-babysit" "${SELF}-babysit"
+    echo "@reboot screen -d -m -e^Zz -S matrix -L /bin/bash ${SELF}-babysit $SELF" >crontab
     crontab crontab
 }
 
