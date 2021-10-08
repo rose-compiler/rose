@@ -38,6 +38,7 @@ EState::~EState() {
   }
 }
 
+#ifndef NO_ESTATE_PSTATE_MEM_COPY
 // copy constructor
 EState::EState(const EState &other) {
   this->_label=other._label;
@@ -64,7 +65,9 @@ EState::EState(const EState &other) {
     }
   }
 }
+#endif
 
+#ifndef NO_ESTATE_PSTATE_MEM_COPY
 // assignment operator
 EState& EState::operator=(const EState &other) {
   this->_label=other._label;
@@ -93,6 +96,7 @@ EState& EState::operator=(const EState &other) {
   //cout<<"DEBUG: ASSIGNMENT EXIT: "<<this<<": pstate:"<<this->_pstate<<endl;
   return *this;
 }
+#endif
 
 string EState::predicateToString(VariableIdMapping* variableIdMapping) const {
   string separator=",";
