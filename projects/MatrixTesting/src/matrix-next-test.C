@@ -339,7 +339,7 @@ showDependencies(const Settings &settings, const DependencyMap &dependencies) {
                 std::cout <<(boost::format("%-16s: %s\n") % d.name % d.value);
                 break;
             case OutputMode::RMC:
-                std::cout <<(boost::format("%rmc_-20s %s\n") % d.name % StringUtility::bourneEscape(d.value));
+                std::cout <<(boost::format("rmc_%-20s %s\n") % d.name % StringUtility::bourneEscape(d.value));
                 break;
             case OutputMode::SHELL:
                 std::cout <<" " <<d.name <<"=" <<StringUtility::bourneEscape(d.value);
