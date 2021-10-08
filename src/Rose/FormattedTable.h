@@ -2,6 +2,7 @@
 #define ROSE_StringUtility_FormattedTable_H
 
 #include <Rose/Color.h>
+#include <boost/lexical_cast.hpp>
 #include <string>
 #include <vector>
 
@@ -156,6 +157,12 @@ public:
      * @{ */
     void insert(size_t rowIdx, size_t columnIdx, const std::string &repr);
     void insert(size_t rowIdx, size_t columnIdx, const std::string &repr, const CellProperties&);
+    template<typename T> void insert(size_t rowIdx, size_t columnIdx, const T &value) {
+        insert(rowIdx, columnIdx, boost::lexical_cast<std::string>(value));
+    }
+    template<typename T> void insert(size_t rowIdx, size_t columnIdx, const T &value, const CellProperties &prop) {
+        insert(rowIdx, columnIdx, boost::lexical_cast<std::string>(value), prop);
+    }
     /** @} */
 
     /** Properties for a data cell.
