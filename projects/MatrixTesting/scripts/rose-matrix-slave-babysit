@@ -2,9 +2,10 @@
 set -e
 arg0="${0##*/}"
 
-# Babysits the rose-matrix-slave script and restarts it if necessary. The idea is that this babysit script is
-# small and simple (at least compared to rose-matrix-slave) and unlikely to crash. It's typically run as a
-# boot-time cron job on AWS EC2 instances that are dedicated to portability testing.
+# Babysits a command and restarts it if necessary. The idea is that this babysit
+# script is small and simple (at least compared to rose-matrix-slave-run) and
+# unlikely to crash. It's typically run as a boot-time cron job on AWS EC2
+# instances that are dedicated to portability testing.
 
 while true; do
     echo "$arg0: $(date '+%Y-%m-%d %H:%M:%S %Z') running:" "$@"

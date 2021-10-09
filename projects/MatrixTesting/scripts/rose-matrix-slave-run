@@ -417,7 +417,7 @@ matrix-update-this-script() {
     if [ -n "$THIS_SCRIPT_OUT_OF_DATE" ]; then
 	[ -x "$SELF" ] || die "error: where am I? (\$0=$0, self=$SELF, cwd=$(pwd))"
 
-	cp "$MATRIX_ROOT/rose-installed/latest/bin/rose-matrix-slave" "$SELF"
+	cp "$MATRIX_ROOT/rose-installed/latest/bin/rose-matrix-slave-run" "$SELF"
 	[ -n "$restart" ] && exec bash "$SELF"
 	exit 0
     fi
