@@ -152,7 +152,8 @@ showSlaveConfig(const Settings &settings, DB::Connection db) {
     showNotices(settings, db, props);
     showSectionTitle(settings, "Slave configuration",
                      "This section contains information about what the slaves should be\n"
-                     "testing, and how.");
+                     "testing, and how. This is also the information you need if you want\n"
+                     "to set up your own testing. See also, rose-matrix-slave-config.\n");
 
     FormattedTable table;
     table.indentation("    ");
@@ -264,8 +265,13 @@ showSlaveHealth(const Settings &settings, DB::Connection db) {
 // Subsection: versions of rose tested in the last month and return their versions
 static std::vector<std::string>
 showLatestVersions(const Settings &settings, DB::Connection db) {
+    const time_t since = time(NULL) - 30 * 86400;
+    const std::string sinceHuman = timeToGmt(since).substr(0, 10);
+
     showSubsectionTitle(settings, "ROSE version tested recently",
-                        "These are the ROSE versions that have tests results in the last month.");
+                        "These are the ROSE versions that have test results in the last month.\n"
+                        "This is similar to the command \"rose-matrix-query rose_date+" + sinceHuman +
+                        " rose.d reporting_time.min reporting_time.max\"");
 
     //                          0     1          2         3                    4
     auto stmt = db.stmt("select rose, rose_date, count(*), min(reporting_time), max(reporting_time)"
@@ -273,7 +279,7 @@ showLatestVersions(const Settings &settings, DB::Connection db) {
                         " where reporting_time >= ?since"
                         " group by rose, rose_date"
                         " order by rose_date desc")
-                .bind("since", time(NULL) - 30 * 86400);
+                .bind("since", since);
 
     FormattedTable table;
     table.indentation("    ");
@@ -301,8 +307,13 @@ showLatestVersions(const Settings &settings, DB::Connection db) {
 
 static void
 showLatestTests(const Settings &settings, DB::Connection db) {
+    const time_t since = time(NULL) - 24 * 3600;
+    const std::string sinceHuman = timeToGmt(since);
+
     showSubsectionTitle(settings, "Tests recently completed",
-                        "These are the tests that completed in the last 24 hours.");
+                        "These are the tests that completed in the last 24 hours. This is similar to the command\n"
+                        "\"rose-matrix-query reporting_time+" + StringUtility::bourneEscape(sinceHuman) + " rose reporting_time.d"
+                        " slave id os compiler languages build boost status\"");
 
     //                          0     1               2       3   4   5             6              7          8          9
     auto stmt = db.stmt("select rose, reporting_time, tester, id, os, rmc_compiler, rmc_languages, rmc_build, rmc_boost, status"
@@ -310,7 +321,7 @@ showLatestTests(const Settings &settings, DB::Connection db) {
                         " where reporting_time > ?since"
                         " order by reporting_time desc"
                         " limit 100")
-                .bind("since", time(NULL) - 24 * 3600);
+                .bind("since", since);
 
     FormattedTable table;
     table.indentation("    ");
@@ -446,19 +457,19 @@ showTestResults(const Settings &settings, DB::Connection db, const std::string &
                      "These are the test results for ROSE version " + roseVersion);
 
     showSubsectionTitle(settings, "Test results by analysis language",
-                        "Similar to \"rose-matrix-query rose=" + roseVersion + " languages status count\"\n");
+                        "Similar to \"rose-matrix-query rose=" + roseVersion + " languages.a status count\"\n");
     showTestResultsByField(settings, db, roseVersion, "rmc_languages", "Analysis\nLanguages");
 
     showSubsectionTitle(settings, "Test results by operating system",
-                        "Similar to \"rose-matrix-query rose=" + roseVersion + " os status count\"\n");
+                        "Similar to \"rose-matrix-query rose=" + roseVersion + " os.a status count\"\n");
     showTestResultsByField(settings, db, roseVersion, "os", "Operating\nSystem");
 
     showSubsectionTitle(settings, "Test results by host compiler",
-                        "Similar to \"rose-matrix-query rose=" + roseVersion + " compiler status count\"\n");
+                        "Similar to \"rose-matrix-query rose=" + roseVersion + " compiler.a status count\"\n");
     showTestResultsByField(settings, db, roseVersion, "rmc_compiler", "Compiler");
 
     showSubsectionTitle(settings, "Test results by Boost version",
-                        "Similar to \"rose-matrix-query rose=" + roseVersion + " boost status count\"\n");
+                        "Similar to \"rose-matrix-query rose=" + roseVersion + " boost.a status count\"\n");
     showTestResultsByField(settings, db, roseVersion, "rmc_boost", "Boost\nVersion");
 }
 
@@ -510,26 +521,26 @@ showErrors(const Settings &settings, DB::Connection db, const std::string &roseV
                      "ROSE version " + roseVersion);
 
     showSubsectionTitle(settings, "Errors by analysis language",
-                        "Similar to \"rose-matrix-query rose=" + roseVersion + " languages status count first_error\"\n");
+                        "Similar to \"rose-matrix-query rose=" + roseVersion + " languages.a status count first_error\"\n");
     showErrorsByField(settings, db, roseVersion, "rmc_languages", "Analysis\nLanguages");
 
     showSubsectionTitle(settings, "Errors by operating system",
-                        "Similar to \"rose-matrix-query rose=" + roseVersion + " os status count first_error\"\n");
+                        "Similar to \"rose-matrix-query rose=" + roseVersion + " os.a status count first_error\"\n");
     showErrorsByField(settings, db, roseVersion, "os", "Operation\nSystem");
 
     showSubsectionTitle(settings, "Errors by host compiler",
-                        "Similar to \"rose-matrix-query rose=" + roseVersion + " compiler status count first_error\"\n");
+                        "Similar to \"rose-matrix-query rose=" + roseVersion + " compiler.a status count first_error\"\n");
     showErrorsByField(settings, db, roseVersion, "rmc_compiler", "Compiler");
 
     showSubsectionTitle(settings, "Errors by boost version",
-                        "Similar to \"rose-matrix-query rose=" + roseVersion + " boost status count first_error\"\n");
+                        "Similar to \"rose-matrix-query rose=" + roseVersion + " boost.a status count first_error\"\n");
     showErrorsByField(settings, db, roseVersion, "rmc_boost", "Boost\nVersion");
 }
 
 static void
 showDependencies(const Settings &settings, DB::Connection db, const std::string &roseVersion) {
     showSectionTitle(settings, "Dependencies",
-                     "These are the dependencies being tested at this time. the Pass, Fail, and Grade\n"
+                     "These are the dependencies being tested at this time. The Pass, Fail, and Grade\n"
                      "columns are for ROSE " + roseVersion + ".");
 
     auto stmt = db.stmt("select name, value, restrictions, comment"
