@@ -84,7 +84,7 @@ bin_PROGRAMS += rsim-x86sim
 rsim_x86sim_SOURCES = x86sim.C
 rsim_x86sim_CPPFLAGS = $(ROSE_INCLUDES)
 rsim_x86sim_LDFLAGS = $(ROSE_RPATHS)
-rsim_x86sim_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(ROSE_LIBS)
+rsim_x86sim_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(ROSE_LIBS) -lrt
 
 # help debug the initial stack
 noinst_PROGRAMS += rsim-show-initial-stack
@@ -98,7 +98,7 @@ noinst_PROGRAMS += rsim-ports-opened
 rsim_ports_opened_SOURCES = demos/ports_opened.C
 rsim_ports_opened_CPPFLAGS = $(ROSE_INCLUDES)
 rsim_ports_opened_LDFLAGS = $(ROSE_RPATHS)
-rsim_ports_opened_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(ROSE_LIBS)
+rsim_ports_opened_LDADD = $(BOOST_LDFLAGS) libRSIM.la $(ROSE_LIBS) -lrt
 
 ###############################################################################################################################
 #  INTERNAL SIMULATOR TESTS
