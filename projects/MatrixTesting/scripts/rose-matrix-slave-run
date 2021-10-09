@@ -515,11 +515,13 @@ matrix-get-test-source() {
 	echo "Downloading from $TEST_REPOSITORY"
 	echo "================================================================================"
 	echo
-	rm -rf rose
-	git clone "$TEST_REPOSITORY" rose
+
+	# If the repository is already present, try to upgrade it instead of downloading the whole thing again.
+	[ -d rose ] || git clone "$TEST_REPOSITORY" rose
 	(
 	    cd rose
-	    git reset --hard "$TEST_COMMITTISH"
+	    git fetch "$TEST_REPOSITORY" "$TEST_COMMITTISH"
+	    git reset --hard FETCH_HEAD
 	    git submodule update
 	    ./scripts/smgit clean -dfx || git clean -dfx
 	)
