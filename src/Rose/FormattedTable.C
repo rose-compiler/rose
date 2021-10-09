@@ -270,19 +270,21 @@ FormattedTable::cellPropertiesBegin(const CellProperties &props) const {
 
 std::string
 FormattedTable::cellPropertiesEnd(const CellProperties &props) const {
+    std::string retval;
     switch (format_) {
         case Format::PLAIN:
             if (Rose::CommandLine::genericSwitchArgs.colorization.isEnabled())
-                return "\033[0m";
-            return "";
+                retval = "\033[0m";
+            break;
 
         case Format::HTML:
-            return "";
+            break;
 
         case Format::CSV:
         case Format::SHELL:
-            return "";
+            break;
     }
+    return retval;
 }
 
 void
