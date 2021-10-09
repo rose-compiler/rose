@@ -14,10 +14,8 @@
 
 typedef int PStateId;
 
-#include "HashFun.h"
+//#include "HashFun.h"
 #include "HSetMaintainer.h"
-
-using CodeThorn::Edge;
 
 namespace CodeThorn {
 

@@ -14,7 +14,7 @@
 
 typedef int MemPropertyStateId;
 
-#include "HashFun.h"
+//#include "HashFun.h"
 #include "HSetMaintainer.h"
 #include "CFAnalysis.h"
 

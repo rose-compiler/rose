@@ -29,7 +29,9 @@
 
 #include "Miscellaneous.h"
 #include "Miscellaneous2.h"
+#include "ConstraintRepresentation.h"
 #include "InternalChecks.h"
+
 
 using namespace CodeThorn;
 using CodeThorn::color;

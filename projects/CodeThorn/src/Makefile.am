@@ -54,7 +54,6 @@ CODETHORN_SOLO_HEADER_FILES=\
   EqualityMaintainer.h \
   Evaluator.h \
   ExecutionTrace.h \
-  HashFun.h \
   HSetMaintainer.h \
   ReadWriteData.h \
   SetAlgo.h \

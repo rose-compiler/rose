@@ -20,7 +20,7 @@ using namespace CodeThorn;
 
 typedef int EStateId;
 
-#include "HashFun.h"
+//#include "HashFun.h"
 #include "HSetMaintainer.h"
 #include "PropertyState.h"
 
