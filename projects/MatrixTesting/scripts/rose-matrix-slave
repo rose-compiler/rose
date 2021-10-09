@@ -3,6 +3,16 @@ set -e
 arg0="${0##*/}"
 date=$(date '+%Y%m%d')
 
+# Full name of this script because we're going to change directories later
+case "$0" in
+    /*)
+	SELF="$0"
+	;;
+    *)
+	SELF="$(pwd)/$0"
+	;;
+esac
+
 # Directory where portability tools are (or will be) installed.
 MATRIX_ROOT="$HOME/var/rose-portability-testing"
 
@@ -17,9 +27,19 @@ SETUP=
 # but requires more time to download and build.
 SMALL_FOOTPRINT=
 
+# Non empty if we're on an AWS EC2 instance.
+AWS_EC2_INSTANCE=
+
+# Whether to update system software. Empty, auto, or other.
+UPDATE_SYSTEM_SOFTWARE=auto
+
 help() {
-    echo "usage: $arg0 [SWITCHES] [setup]"
+    ######--------------------------------------------------------------------------------
+    echo "Purpose: to run portability tests as directed by the server"
     echo
+    echo "Usage: $arg0 [SWITCHES] [setup]"
+    echo
+    echo "Switches"
     echo "    --root=DIRECTORY"
     echo "        This is the directory in which this script does all its work, which"
     echo "        includes creating and removing files and subdirectories. The default is"
@@ -28,6 +48,15 @@ help() {
     echo "    --aggressive-cleanup"
     echo "        Remove reproducible things when possible so we don't use as much disk"
     echo "        space. The tradeoff is we use more CPU time."
+    echo
+    echo "    --update-system-software"
+    echo "    --no-update-system-software"
+    echo "        If --update-system-software is specified, the system's software is"
+    echo "        updated even if this requires a password to be entered interactively."
+    echo "        If --no-update-system-software is specified, then nothing is updated."
+    echo "        The default if neither switch is specified is that the system software"
+    echo "        is updated if \"sudo\" can be run without a password, as is typically"
+    echo "        the case in Docker containers and cloud instances."
     echo
     echo "  Sharing downloads"
     echo "    You can prevent the slave from re-downloading all the RMC/Spock packages it"
@@ -58,6 +87,14 @@ matrix-parse-command-line() {
 		SMALL_FOOTPRINT=yes
 		shift
 		;;
+	    --update-system-software)
+		UPDATE_SYSTEM_SOFTWARE=yes
+		shift
+		;;
+	    --no-update-system-software)
+		UPDATE_SYSTEM_SOFTWARE=
+		shift
+		;;
 	    -*)
 		die "error: unrecognized switch: $1"
 		;;
@@ -76,29 +113,162 @@ matrix-parse-command-line() {
 }
 
 #------------------------------------------------------------------------------------------------------------------------
-# Get configuration, store it in the matrix-config file, and update shell variables. If a non-empty argument
-# is given and it's not possible to get the configuration, create an empty file and reset some important shell variables.
-matrix-get-slave-configuration() {
-    local failure_okay="$1"
+# Make sure the system is up-to-date, that all system dependencies are installed, that users and user groups are set.
+# This will run according to the UPDATE_SYSTEM_SOFTWARE setting.
+matrix-update-system-software() {
+    echo
+    echo
+    echo "================================================================================"
+    echo "Updating system software"
+    echo "================================================================================"
+    echo
 
+    if [ "$UPDATE_SYSTEM_SOFTWARE" = "" ]; then
+	echo "disabled from command-line"
+	return 0
+    elif [ "$UPDATE_SYSTEM_SOFTWARE" = "auto" ]; then
+	if ! sudo -n true; then
+	    echo "update skipped because a password would be required"
+	    return 0
+	fi
+    fi
+    
+    # Ubuntu insists on updating system software willy nilly, which is confusing to matrix testing since it needs a
+    # stable system. Therefore, turn it off.
+    if [ -n "$SETUP" ]; then
+	echo "disabling automatic software updates -- we want a stable test environment"
+	(set -x; sudo sed -i~ 's/Update-Package-Lists "1"/Update-Package-Lists "0"/' /etc/apt/apt.conf.d/10periodic)
+    fi
+
+    # Install basic system software. If this is the setup script, we might be fighting with Ubuntu's automatic updates,
+    # so just keep trying until we succeed.
+    while true; do
+	sleep 5
+
+	(
+	    set -x
+	    sudo apt-get -y update || continue
+	    sudo apt-get -y install git wget build-essential g++ gfortran libtool automake flex bison \
+		 graphviz-dev cmake libpqxx-dev ghostscript perl-doc groff libgcrypt20-dev \
+		 libfcgi-dev libfuse3-dev gcc-multilib g++-multilib gfortran-multilib \
+		 fuse3 bsdmainutils libxapian-dev p7zip-full rsync time \
+		 locales language-pack-en-base jq screen figlet libpcre3-dev || continue
+	)
+
+	# Install Docker
+	if ! docker --version >/dev/null 2>&1; then
+	    (
+		set -x
+		sudo apt-get -y install apt-transport-https ca-certificates curl software-properties-common || continue
+		curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add - || continue
+		sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable" || continue
+		sudo apt-get -y update || continue
+		sudo apt-get -y install docker-ce || continue
+		sudo usermod -aG docker $(whoami)
+	    )
+	fi
+
+	break
+    done
+}
+
+#------------------------------------------------------------------------------------------------------------------------
+# Test whether docker works
+matrix-test-docker() {
+    echo
+    echo
+    echo "================================================================================"
+    echo "Testing whether docker works"
+    echo "================================================================================"
+    echo
+
+    if ! docker run hello-world; then
+	echo
+	echo "$arg0: if the error says \"permission denied while trying to connect to the"
+	echo "    Docker daemon socket\", then you probably need to add $(whoami) to"
+	echo "    the \"docker\" group and re-login."
+	echo
+	echo "    Try \"sudo usermod -a -G docker $(whoami)\""
+	echo
+	exit 1
+    fi
+}
+
+#------------------------------------------------------------------------------------------------------------------------
+# Get the initial manual configuration. This is optional, but it gives us a place to start. It's main purpose is to tell
+# us which version of the portability testing tools we should compile, because we need them in order to figure out what
+# tests we should be running and to report results back to the server. If the manual (or default) configuration doesn't
+# match what the database is advertising, then we may end up having to compile two versions of the tools before we can
+# start running tests (the guessed version, and the correct version).
+matrix-get-initial-configuration() {
+    echo
+    echo
+    echo "================================================================================"
+    echo "Obtaining initial configuration information"
+    echo "================================================================================"
+
+    # The various attempts are listed here from worst to best quality of answers, so each step can override
+    # the previous steps, or provide settings that the previous steps didn't provide.
+
+    echo
+    echo "Trying AWS EC2 User Data"
+    if wget -O matrix-config.tmp http://169.254.169.254/latest/user-data; then
+	AWS_EC2_INSTANCE=yes
+	cat -n matrix-config.tmp
+	source matrix-config.tmp
+
+	# Don't save these over the top of previously known settings that we want to look at next...
+	rm matrix-config.tmp
+    fi
+
+    echo
+    echo "Trying to reuse settings from the previous run"
+    if [ -r matrix-config ]; then
+	cat -n matrix-config
+	source matrix-config
+    fi
+
+    echo
+    echo "Trying ROSE_MATRIX_SLAVE_DATABASE"
+    if [ -n "$ROSE_MATRIX_SLAVE_DATABASE" ]; then
+	# This is sometimes set in user environments so that users don't need to have ROSE_MATRIX_DATABASE always set to
+	# a read-write role.
+	ROSE_MATRIX_DATABASE="$ROSE_MATRIX_SLAVE_DATABASE"
+	echo "using ROSE_MATRIX_DATABASE=$ROSE_MATRIX_DATABASE"
+    else
+	echo "environment variable not set"
+    fi
+
+    export ROSE_MATRIX_DATABASE
+    if [ -n "$ROSE_MATRIX_DATABASE" ]; then
+	echo
+	echo "Trying the database"
+	if rose-matrix-slave-config >matrix-config.tmp; then
+	    cat -n matrix-config.tmp
+	    source matrix-config.tmp
+	    mv matrix-config.tmp matrix-config
+	fi
+    fi
+
+    # Export the URL to be used by the various tools
+    echo
+    echo "Checking database credentials"
+    [ -n "$ROSE_MATRIX_DATABASE" ] ||
+	die "error: database credentials are missing; set ROSE_MATRIX_SLAVE_DATABASE or ROSE_MATRIX_DATABASE"
+}
+
+#------------------------------------------------------------------------------------------------------------------------
+# Get configuration, store it in the matrix-config file, and update shell variables.
+matrix-get-slave-configuration() {
     echo
     echo
     echo "================================================================================"
     echo "== Obtaining current slave configuration from database server."
-    [ -n "$failure_okay" ] && echo "== Failure is allowed this time."
     echo "================================================================================"
     echo
-    if [ -n "$failure_okay" ]; then
-	[ -r matrix-config ] && . matrix-config
-	rose-matrix-slave-config >matrix-config || true
-    else
-	rose-matrix-slave-config >matrix-config
-    fi
+    rose-matrix-slave-config >matrix-config
     cat -n matrix-config
-
     . matrix-config
-    : ${MATRIX_REPOSITORY:='https://github.com/rose-compiler/rose'}
-    : ${MATRIX_COMMITTISH:=develop}
 }
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -225,12 +395,12 @@ matrix-install-matrix-tools() {
 	# Since we upgraded the tools, we might have a new version of the script that's running. Don't actually upgrade
 	# this very script yet because we're running it and that would cause shell interpreter problems. Instead, only
 	# record that it's out of date. (Note: diff exits non-zero (fails) if the files differ).
-	if [ -x "$0" ]; then
-	    if ! diff -q "$0" "$HOME/rose-installed/latest/bin/$arg0"; then
+	if [ -x "$SELF" ]; then
+	    if ! diff -q "$SELF" "$HOME/rose-installed/latest/bin/$arg0"; then
 		THIS_SCRIPT_OUT_OF_DATE=yes
 	    fi
 	else
-	    die "error: where am I?"
+	    die "error: where am I? (\$0=$0, self=$SELF, cwd=$(pwd))"
 	fi
     else
 	echo
@@ -245,8 +415,10 @@ matrix-update-this-script() {
     local restart="$1"
 
     if [ -n "$THIS_SCRIPT_OUT_OF_DATE" ]; then
-	cp "$HOME/rose-installed/latest/bin/rose-matrix-aws-slave" "$0"
-	[ -n "$restart" ] && exec bash "$0"
+	[ -x "$SELF" ] || die "error: where am I? (\$0=$0, self=$SELF, cwd=$(pwd))"
+
+	cp "$MATRIX_ROOT/rose-installed/latest/bin/rose-matrix-slave" "$SELF"
+	[ -n "$restart" ] && exec bash "$SELF"
 	exit 0
     fi
 }
@@ -314,16 +486,16 @@ matrix-maybe-remove-os-images() {
     local desired_version="$TEST_ENVIRONMENT_VERSION"
 
     if [ "$installed_version" != "$desired_version" ]; then
-	if true; then
-	    # More precise
-	    rose-matrix-run --rebuild-images
-	else
+	if [ -n "$AWS_EC2_INSTANCE" ]; then
 	    # Nuclear option tries to remove all containers and images
 	    docker container rm $(docker container ls -a |tail +2 |cut -d' ' -f1) || true
 	    docker container rm $(docker container ls -a |tail +2 |cut -d' ' -f1) || true
 	    docker image rm $(docker image ls -a |tail +2 |tr -s ' ' '\t' |cut -f3) || true
 	    docker image rm $(docker image ls -a |tail +2 |tr -s ' ' '\t' |cut -f3) || true
 	    rm -rf $HOME/rose-installed/latest/var/matrix/spock
+	else
+	    # More precise
+	    rose-matrix-run --rebuild-images
 	fi
 	echo "$desired_version" >images-key
     fi
@@ -356,21 +528,24 @@ matrix-get-test-source() {
 }
 
 #------------------------------------------------------------------------------------------------------------------------
+# Cause the next boot of this instance to automatically reconfigure itself and start running tests.
+matrix-setup-cron-jobs() {
+    echo
+    echo "Activating cron jobs"
+    cp "$MATRIX_ROOT/rose-installed/latest/bin/rose-matrix-slave-babysit" "${SELF}-babysit"
+    echo "@reboot screen -d -m -e^Zz -S matrix -L /bin/bash ${SELF}-babysit $SELF" >crontab
+    crontab crontab
+}
+
+#------------------------------------------------------------------------------------------------------------------------
 # Clean up some things
 matrix-cleanup() {
-    rm -f matrix-config
+    : nothing to do right now
 }
 
 #------------------------------------------------------------------------------------------------------------------------
 # Main program...
 matrix-parse-command-line "$@"
-
-# Figure out the credentials for accessing the database. There is no command-line switch for this because these
-# credentials allow modifications to the database and we don't want to expose them to other users. Also, we don't use
-# any pre-existing value for ROSE_MATRIX_DATABASE because that should normally be for read-only situations.
-[ -n "$ROSE_MATRIX_SLAVE_DATABASE" ] || die "error: you must export ROSE_MATRIX_SLAVE_DATABASE credentials"
-ROSE_MATRIX_DATABASE="$ROSE_MATRIX_SLAVE_DATABASE"
-export ROSE_MATRIX_DATABASE
 
 # All work is done from the portability testing root directory. This script takes care to not create or remove files
 # anywhere else in the filesystem other than temporary files created in the usual temp directories. It will not clean
@@ -388,23 +563,21 @@ export PATH="$SPOCK_ROOT/bin:$MATRIX_ROOT/rose-installed/latest/bin:$PATH"
 # experimental.
 export TUP_ACKNOWLEDGMENT=yes
 
-# Try to get the slave's configuration. This works if the slave is already configured, but will fail if the portability
-# testing tools are not yet installed. The reason we want to do this early is that the slave's configuration tells us
-# which version of portability testing tools to use, but it requires that some version is already installed. If we wait
-# until after the RMC/Spock upgrade then the portability tools are no longer installed.
-matrix-get-slave-configuration failure-is-okay
-
 # Update software that will be needed to configure and compile the portability testing tools (and ROSE itself). If
 # RMC/Spock needs to be updated, then any existing portability tools that are installed will no longer work (because
 # their shared libraries were purged) and will be removed. Assume that since this is a ROSE developer's machine, that
 # all the system prerequisites are already installed.
+matrix-update-system-software
+matrix-test-docker
+matrix-get-initial-configuration
 matrix-install-rmc-spock
 matrix-clean-failed-dependencies
 
 # Install initial version of portability testing tools if there are none installed (or if they were removed by prior
-# steps of this script). All slaves should be running the same software as told to us by the database. If we can't
-# contact the database, then we'll first build the latest development version of the tools in order to contact the
-# database -- this is relatively foolprove. If we built the wrong version, we'll fix that in the testing loop.
+# steps of this script) or they're the wrong version. All slaves should be running the same software as told to us by
+# the database. If we can't contact the database, then we'll first build the latest development version of the tools in
+# order to contact the database -- this is relatively foolprove. If we built the wrong version, we'll fix that in the
+# testing loop.
 matrix-install-matrix-tools
 [ -n "$SETUP" ] || rose-matrix-slave-health start
 matrix-update-this-script restart
@@ -441,15 +614,26 @@ while [ "$SETUP" = "" ]; do
     echo "== Starting test, loop iteration $test_number"
     echo "================================================================================"
     echo
-    if ! rose-matrix-run $TEST_FLAGS -n1 $MATRIX_ROOT/rose; then
+    if ! rose-matrix-run --var="$MATRIX_ROOT" $TEST_FLAGS -n1 $MATRIX_ROOT/rose; then
 	# Something went majorly wrong! We could just give up, that that means the EC2 machine is just sitting
 	# around idle until someone notices. Instead, we'll wait a while and try again.
 	sleep 1800
     fi
 done
 
+# Finish setup actions
+if [ -n "$SETUP" ]; then
+    if [ -n "$AWS_EC2_INSTANCE" ]; then
+	matrix-setup-cron-jobs
+	echo
+	echo "AWS EC2 portability testing slave setup has been completed. This machine will"
+	echo "  automatically start testing next time it is rebooted. If you want to test now,"
+	echo "  run this script again but without any arguments."
+    fi
+fi
+
 # Cleanup
 matrix-cleanup
-[ -n "$SETUP" ] || rose-matrix-slave-health stop
+[ -n "$SETUP" ] || rose-matrix-slave-health stop || true
 matrix-update-this-script
 exit 0

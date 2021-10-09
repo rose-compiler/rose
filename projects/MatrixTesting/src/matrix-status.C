@@ -156,7 +156,7 @@ showSlaveConfig(const Settings &settings, DB::Connection db) {
 
     FormattedTable table;
     table.indentation("    ");
-    table.format(Format::HTML == settings.outputFormat ? FormattedTable::Format::HTML : FormattedTable::Format::PLAIN);
+    table.format(tableFormat(settings.outputFormat));
     table.columnHeader(0, 0, "Operational setting");
     table.columnHeader(0, 1, "Value");
     table.columnHeader(0, 2, "Key");
@@ -228,14 +228,14 @@ showSlaveHealth(const Settings &settings, DB::Connection db) {
 
     FormattedTable table;
     table.indentation("    ");
-    table.format(Format::HTML == settings.outputFormat ? FormattedTable::Format::HTML : FormattedTable::Format::PLAIN);
+    table.format(tableFormat(settings.outputFormat));
     table.columnHeader(0, 0, "Slave Name");
     table.columnHeader(0, 1, "Latest Report from Slave");
     table.columnHeader(0, 2, "Load\nAverage");
     table.columnHeader(0, 3, "Free\nSpace");
     table.columnHeader(0, 4, "Latest\nEvent");
     table.columnHeader(0, 5, "Latest\nTest ID");
-    table.columnHeader(0, 6, "Test\nCount");
+    table.columnHeader(0, 6, "Tests");
     for (auto row: stmt) {
         const size_t i = table.nRows();
         const std::string slaveName = row.get<std::string>(0).orElse("none");
@@ -261,11 +261,11 @@ showSlaveHealth(const Settings &settings, DB::Connection db) {
     std::cout <<table <<"\n\n";
 }
 
-// Show latest tested ROSE versions and return their commits, starting with the most recent
+// Subsection: versions of rose tested in the last month and return their versions
 static std::vector<std::string>
-showLatestTestedRoseVersions(const Settings &settings, DB::Connection db) {
-    showSectionTitle(settings, "ROSE versions tested recently",
-                     "These are the ROSE versions that have test results in the last month.\n");
+showLatestVersions(const Settings &settings, DB::Connection db) {
+    showSubsectionTitle(settings, "ROSE version tested recently",
+                        "These are the ROSE versions that have tests results in the last month.");
 
     //                          0     1          2         3                    4
     auto stmt = db.stmt("select rose, rose_date, count(*), min(reporting_time), max(reporting_time)"
@@ -277,10 +277,10 @@ showLatestTestedRoseVersions(const Settings &settings, DB::Connection db) {
 
     FormattedTable table;
     table.indentation("    ");
-    table.format(Format::HTML == settings.outputFormat ? FormattedTable::Format::HTML : FormattedTable::Format::PLAIN);
+    table.format(tableFormat(settings.outputFormat));
     table.columnHeader(0, 0, "ROSE version");
     table.columnHeader(0, 1, "Commit date");
-    table.columnHeader(0, 2, "Test\nCount");
+    table.columnHeader(0, 2, "Tests");
     table.columnHeader(0, 3, "Earliest\nTest");
     table.columnHeader(0, 4, "Latest\nTest");
     std::vector<std::string> retval;
@@ -296,6 +296,61 @@ showLatestTestedRoseVersions(const Settings &settings, DB::Connection db) {
             table.insert(i, 4, timeToLocal(*latest) + ", " + approximateAge(*latest));
     }
     std::cout <<table <<"\n\n";
+    return retval;
+}
+
+static void
+showLatestTests(const Settings &settings, DB::Connection db) {
+    showSubsectionTitle(settings, "Tests recently completed",
+                        "These are the tests that completed in the last 24 hours.");
+
+    //                          0     1               2       3   4   5             6              7          8          9
+    auto stmt = db.stmt("select rose, reporting_time, tester, id, os, rmc_compiler, rmc_languages, rmc_build, rmc_boost, status"
+                        " from test_results"
+                        " where reporting_time > ?since"
+                        " order by reporting_time desc"
+                        " limit 100")
+                .bind("since", time(NULL) - 24 * 3600);
+
+    FormattedTable table;
+    table.indentation("    ");
+    table.format(tableFormat(settings.outputFormat));
+    table.columnHeader(0, 0, "Rose\nVersion");
+    table.columnHeader(0, 1, "When Reported");
+    table.columnHeader(0, 2, "Slave Name");
+    table.columnHeader(0, 3, "Test\nID");
+    table.columnHeader(0, 4, "Operating\nSystem");
+    table.columnHeader(0, 5, "Compiler");
+    table.columnHeader(0, 6, "Analysis\nLanguages");
+    table.columnHeader(0, 7, "Build\nSystem");
+    table.columnHeader(0, 8, "Boost\nVersion");
+    table.columnHeader(0, 9, "Status");
+
+    for (auto row: stmt) {
+        const size_t i = table.nRows();
+        table.insert(i, 0, row.get<std::string>(0).orElse("unknown"));
+        const time_t reportingTime = *row.get<time_t>(1);
+        table.insert(i, 1, timeToLocal(reportingTime) + ", " + approximateAge(reportingTime));
+        table.insert(i, 2, row.get<std::string>(2).orElse("unknown"));
+        table.insert(i, 3, row.get<std::string>(3).orElse("unknown"));
+        table.insert(i, 4, row.get<std::string>(4).orElse("unknown"));
+        table.insert(i, 5, row.get<std::string>(5).orElse("unknown"));
+        table.insert(i, 6, row.get<std::string>(6).orElse("unknown"));
+        table.insert(i, 7, row.get<std::string>(7).orElse("unknown"));
+        table.insert(i, 8, row.get<std::string>(8).orElse("unknown"));
+        const std::string status = row.get<std::string>(9).orElse("unknown");
+        table.insert(i, 9, row.get<std::string>(9).orElse("unknown"));
+        table.cellProperties(i, 9, "end" == status ? goodCell() : badCell());
+    }
+    std::cout <<table <<"\n\n";
+}
+
+// Show latest tested ROSE versions and return their commits, starting with the most recent
+static std::vector<std::string>
+showLatestTestSummaries(const Settings &settings, DB::Connection db) {
+    showSectionTitle(settings, "Recent tests");
+    std::vector<std::string> retval = showLatestVersions(settings, db);
+    showLatestTests(settings, db);
     return retval;
 }
 
@@ -340,7 +395,7 @@ showTestPhases(const Settings &settings, DB::Connection db) {
 
     FormattedTable table;
     table.indentation("    ");
-    table.format(Format::HTML == settings.outputFormat ? FormattedTable::Format::HTML : FormattedTable::Format::PLAIN);
+    table.format(tableFormat(settings.outputFormat));
     table.columnHeader(0, 0, "Status");
     table.columnHeader(0, 1, "Purpose");
     for (auto row: stmt) {
@@ -366,10 +421,10 @@ showTestResultsByField(const Settings &settings, DB::Connection db, const std::s
 
     FormattedTable table;
     table.indentation("    ");
-    table.format(Format::HTML == settings.outputFormat ? FormattedTable::Format::HTML : FormattedTable::Format::PLAIN);
+    table.format(tableFormat(settings.outputFormat));
     table.columnHeader(0, 0, fieldTitle);
     table.columnHeader(0, 1, "Reported\nStatus");
-    table.columnHeader(0, 2, "Test\nCount");
+    table.columnHeader(0, 2, "Tests");
     std::string prevFieldValue;
     for (auto row: stmt) {
         const size_t i = table.nRows();
@@ -423,10 +478,10 @@ showErrorsByField(const Settings &settings, DB::Connection db, const std::string
 
     FormattedTable table;
     table.indentation("    ");
-    table.format(Format::HTML == settings.outputFormat ? FormattedTable::Format::HTML : FormattedTable::Format::PLAIN);
+    table.format(tableFormat(settings.outputFormat));
     table.columnHeader(0, 0, fieldTitle);
     table.columnHeader(0, 1, "Test\nStatus");
-    table.columnHeader(0, 2, "Error\nCount");
+    table.columnHeader(0, 2, "Tests");
     table.columnHeader(0, 3, "Error Message");
     std::string prevFieldValue, prevStatus;
     for (auto row: stmt) {
@@ -469,6 +524,75 @@ showErrors(const Settings &settings, DB::Connection db, const std::string &roseV
     showSubsectionTitle(settings, "Errors by boost version",
                         "Similar to \"rose-matrix-query rose=" + roseVersion + " boost status count first_error\"\n");
     showErrorsByField(settings, db, roseVersion, "rmc_boost", "Boost\nVersion");
+}
+
+static void
+showDependencies(const Settings &settings, DB::Connection db, const std::string &roseVersion) {
+    showSectionTitle(settings, "Dependencies",
+                     "These are the dependencies being tested at this time. the Pass, Fail, and Grade\n"
+                     "columns are for ROSE " + roseVersion + ".");
+
+    auto stmt = db.stmt("select name, value, restrictions, comment"
+                        " from dependencies"
+                        " where enabled > 0"
+                        " order by name, value");
+    FormattedTable table;
+    table.indentation("    ");
+    table.format(tableFormat(settings.outputFormat));
+    table.columnHeader(0, 0, "Dependency\nName");
+    table.columnHeader(0, 1, "Dependency\nValue");
+    table.columnHeader(0, 2, "Restrictions");
+    table.columnHeader(0, 3, "Pass");
+    table.columnHeader(0, 4, "Fail");
+    table.columnHeader(0, 5, "Grade");
+    table.columnHeader(0, 6, "Comment");
+
+    Color::Gradient pfColors;
+    pfColors.insert(0.0, lighten(Color::HSV_RED, 0.4));
+    pfColors.insert(0.7, lighten(Color::HSV_RED, 0.4));
+    pfColors.insert(1.0, Color::HSV_GREEN);
+
+    std::string prevName;
+    for (auto row: stmt) {
+        const size_t i = table.nRows();
+        const std::string name = *row.get<std::string>(0);
+        const std::string value = *row.get<std::string>(1);
+        const std::string restrictions = row.get<std::string>(2).orElse("");
+        const std::string comment = row.get<std::string>(3).orElse("");
+
+        if (name != prevName) {
+            table.insert(i, 0, name);
+            prevName = name;
+        }
+        table.insert(i, 1, value);
+        table.insert(i, 2, restrictions);
+
+        size_t passFail[2] = {0, 0};
+        auto stmt2 = db.stmt("select"
+                             "   case when status = 'end' then 0 else 1 end as passed,"
+                             "   count(*)"
+                             " from test_results"
+                             " where rose = ?rose and rmc_" + name + " = ?value"
+                             " group by passed")
+                     .bind("rose", roseVersion)
+                     .bind("value", value);
+        for (auto cr: stmt2)
+            passFail[*cr.get<size_t>(0)] = *cr.get<size_t>(1);
+        table.insert(i, 3, passFail[0]);
+        table.insert(i, 4, passFail[1]);
+        if (passFail[0] + passFail[1] > 0) {
+            double passRate = (double)passFail[0] / (passFail[0] + passFail[1]);
+            int percent = (int)::round(100.0 * passRate);
+            table.insert(i, 5, boost::lexical_cast<std::string>(percent) + "%");
+            FormattedTable::CellProperties props;
+            props.foreground(Color::HSV_BLACK);
+            props.background(pfColors(passRate));
+            table.cellProperties(i, 5, props);
+        }
+
+        table.insert(i, 6, comment);
+    }
+    std::cout <<table <<"\n";
 }
 
 static void
@@ -525,7 +649,7 @@ main(int argc, char *argv[]) {
 
     showSlaveConfig(settings, db);
     showSlaveHealth(settings, db);
-    std::vector<std::string> roseCommits = showLatestTestedRoseVersions(settings, db);
+    std::vector<std::string> roseCommits = showLatestTestSummaries(settings, db);
     showTestPhases(settings, db);
 
     if (!settings.roseVersion.empty()) {
@@ -541,6 +665,7 @@ main(int argc, char *argv[]) {
 
     showTestResults(settings, db, roseCommits.front());
     showErrors(settings, db, roseCommits.front());
+    showDependencies(settings, db, roseCommits.front());
 
     showAdditionalCommands(settings, db, roseCommits.front());
 
