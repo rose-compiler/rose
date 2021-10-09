@@ -15,7 +15,7 @@ namespace CodeThorn {
 
   class InputOutput {
   public:
-  InputOutput():op(BOT),var(CodeThorn::AbstractValue()){ val=CodeThorn::Bot();}
+    InputOutput();
     // BOT is used to indicate the bottom element of the EState
     // lattice, default is NONE. BOT is used explicitly when setting a
     // bottom element in the analysis intialization such that the

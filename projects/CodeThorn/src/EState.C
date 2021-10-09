@@ -38,7 +38,7 @@ EState::~EState() {
   }
 }
 
-#ifndef NO_ESTATE_PSTATE_MEM_COPY
+#ifdef ESTATE_PSTATE_MEM_COPY
 // copy constructor
 EState::EState(const EState &other) {
   this->_label=other._label;
@@ -67,7 +67,7 @@ EState::EState(const EState &other) {
 }
 #endif
 
-#ifndef NO_ESTATE_PSTATE_MEM_COPY
+#ifdef NO_ESTATE_PSTATE_MEM_COPY
 // assignment operator
 EState& EState::operator=(const EState &other) {
   this->_label=other._label;

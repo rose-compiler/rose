@@ -14,6 +14,7 @@ using namespace CodeThorn;
 
 namespace CodeThorn {
 
+  InputOutput::InputOutput() { recordBot(); }
   bool InputOutput::isBot() const { return op==BOT; }
   bool InputOutput::isNone() const { return op==NONE; }
   bool InputOutput::isStdInIO() const { return op==STDIN_VAR; }

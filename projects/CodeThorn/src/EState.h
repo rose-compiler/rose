@@ -36,7 +36,7 @@ namespace CodeThorn {
 
   typedef const CodeThorn::PState* PStatePtr;
 
-  //#define NO_ESTATE_PSTATE_MEM_COPY
+  //#define ESTATE_PSTATE_MEM_COPY
   
   class EState : public Lattice {
   public:
@@ -45,7 +45,7 @@ namespace CodeThorn {
     EState(Label label, PStatePtr pstate, CodeThorn::InputOutput io):_label(label),_pstate(pstate),io(io){}
     EState(Label label, CallString cs, PStatePtr pstate, CodeThorn::InputOutput io):_label(label),_pstate(pstate),io(io),callString(cs) {}
     ~EState();
-    #ifndef NO_ESTATE_PSTATE_MEM_COPY
+    #ifdef ESTATE_PSTATE_MEM_COPY
     EState(const EState &other); // copy constructor
     EState& operator=(const EState &other); // assignment operator
     #endif
