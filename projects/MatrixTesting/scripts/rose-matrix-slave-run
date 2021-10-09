@@ -614,11 +614,7 @@ while [ "$SETUP" = "" ]; do
     echo "== Starting test, loop iteration $test_number"
     echo "================================================================================"
     echo
-    if ! rose-matrix-run --var="$MATRIX_ROOT" $TEST_FLAGS -n1 $MATRIX_ROOT/rose; then
-	# Something went majorly wrong! We could just give up, that that means the EC2 machine is just sitting
-	# around idle until someone notices. Instead, we'll wait a while and try again.
-	sleep 1800
-    fi
+    rose-matrix-run --var="$MATRIX_ROOT" $TEST_FLAGS -n1 $MATRIX_ROOT/rose
 done
 
 # Finish setup actions
