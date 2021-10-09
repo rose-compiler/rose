@@ -98,7 +98,7 @@ main(int argc, char *argv[]) {
 
     Settings settings;
     std::vector<std::string> args = parseCommandLine(argc, argv, settings);
-    auto db = DB::Connection::fromUri(settings.databaseUri);
+    DB::Connection db = connectToDatabase(settings.databaseUri, mlog);
 
     if (args.empty()) {
         auto stmt = db.stmt("select name, value from slave_settings order by name");

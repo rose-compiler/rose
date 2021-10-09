@@ -933,7 +933,7 @@ main(int argc, char *argv[]) {
 
     Settings settings;
     std::vector<std::string> args = parseCommandLine(argc, argv, settings);
-    auto db = DB::Connection::fromUri(settings.databaseUri);
+    DB::Connection db = connectToDatabase(settings.databaseUri, mlog);
     const ColumnMap columnDecls = loadColumns(db);
 
     // Patterns

@@ -358,7 +358,7 @@ main(int argc, char *argv[]) {
 
     Settings settings;
     parseCommandLine(argc, argv, settings);
-    auto db = DB::Connection::fromUri(settings.databaseUri);
+    DB::Connection db = connectToDatabase(settings.databaseUri, mlog);
 
     DependencyMap dependencies = loadAllDependencies(settings, db);
 

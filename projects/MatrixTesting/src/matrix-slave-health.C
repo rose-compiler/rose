@@ -178,14 +178,7 @@ main(int argc, char *argv[]) {
 
     Settings settings;
     std::string event = parseCommandLine(argc, argv, settings);
-    if (settings.databaseUri.empty()) {
-        mlog[FATAL] <<"no database specified\n";
-        mlog[INFO] <<"You need to use the --database switch, or set your ROSE_MATRIX_DATABASE environment\n"
-                   <<"variable. See the \"Testing\" section of https://toc.rosecompiler.org for the proper\n"
-                   <<"setting.\n";
-        exit(1);
-    }
-    auto db = DB::Connection::fromUri(settings.databaseUri);
+    DB::Connection db = connectToDatabase(settings.databaseUri, mlog);
 
     if ("show" == event) {
         const time_t earliest = settings.maxAge < now() ? now() - settings.maxAge : 0;

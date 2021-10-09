@@ -5,6 +5,7 @@
 #include <Rose/FormattedTable.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Database.h>
+#include <Sawyer/Message.h>
 #include <set>
 #include <time.h>
 #include <string>
@@ -87,5 +88,8 @@ Rose::FormattedTable::Format tableFormat(Format);
 
 // Split a string into words at the whitespace, trimming all whitespace from each word and not returning any empty words.
 std::vector<std::string> splitIntoWords(const std::string&);
+
+// Open a connection to a database, or fail with some info about how to specify a database name
+Sawyer::Database::Connection connectToDatabase(const std::string &uri, Sawyer::Message::Facility&);
 
 #endif

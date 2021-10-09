@@ -9,7 +9,20 @@
 #include <boost/regex.hpp>
 
 using namespace Rose;
+using namespace Sawyer::Message::Common;
 namespace DB = Sawyer::Database;
+
+DB::Connection
+connectToDatabase(const std::string &uri, Sawyer::Message::Facility &mlog) {
+    if (uri.empty()) {
+        mlog[FATAL] <<"no database specified\n";
+        mlog[INFO] <<"You need to use the --database switch, or set your ROSE_MATRIX_DATABASE environment\n"
+                   <<"variable. See the \"Testing\" section of https://toc.rosecompiler.org for the proper\n"
+                   <<"setting.\n";
+        exit(1);
+    }
+    return DB::Connection::fromUri(uri);
+}
 
 void
 insertDatabaseSwitch(Sawyer::CommandLine::SwitchGroup &sg, std::string &uri) {
