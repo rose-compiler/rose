@@ -8,6 +8,7 @@ LIBDIR="$dir0/../lib/matrix"
 VARDIR="$dir0/../var/matrix"
 ETCDIR="$dir0/../etc/matrix"
 
+BALANCE_LANGUAGES=--balance-failures
 DATABASE="$ROSE_MATRIX_DATABASE"
 DRY_RUN=
 IGNORE_SETUP_FAILURES=
@@ -70,6 +71,13 @@ help() {
     echo "        testing started. N should be an integer followed by an optional \"d\","
     echo "        \"h\", \"m\", or \"s\" (the default) to indicate days, hours, minutes,"
     echo "        or seconds."
+    echo
+    echo "    --no-balance-languages"
+    echo "        Turn off the balancing that normally happens when choosing analysis"
+    echo "        language sets. When balancing is enabled (the default), the languages"
+    echo "        with fewer failed tests are preferered over others, with the goal"
+    echo "        being trying to find as many unique errors as possible. When disabled,"
+    echo "        all languages have equal probability of being chosen."
     echo
     echo "    --only-supported"
     echo "        If querying configurations from a database, ask the database to supply"
@@ -326,7 +334,8 @@ generate-rmc-config-file() {
     if [ -n "$RMC_CONFIG" ]; then
 	cp "$RMC_CONFIG" "${rundir}/rmc-config"
     else
-	rose-matrix-next-test --format=rmc --database="$DATABASE" --os="$os" $ONLY_SUPPORTED >"${rundir}/rmc-config"
+	rose-matrix-next-test --format=rmc --database="$DATABASE" --os="$os" $ONLY_SUPPORTED $BALANCE_LANGUAGES \
+			      >"${rundir}/rmc-config"
     fi
     constrain-rmc-config-file "${rundir}/rmc-config"
     adjust-rmc-config-file "${rundir}/rmc-config" rmc_rosesrc /home/user/project-source-ro
@@ -778,6 +787,11 @@ while [ "$#" -gt 0 ]; do
 	--os=*)
 	    TARGET_OS="${1#--os=}"
 	    shift
+	    ;;
+
+	--no-balance-languages)
+	    BALANCE_LANGUAGES=--no-balance-failures
+	    shift;
 	    ;;
 
 	--keep-containers=*)
