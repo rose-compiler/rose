@@ -396,7 +396,7 @@ matrix-install-matrix-tools() {
 	# this very script yet because we're running it and that would cause shell interpreter problems. Instead, only
 	# record that it's out of date. (Note: diff exits non-zero (fails) if the files differ).
 	if [ -x "$SELF" ]; then
-	    if ! diff -q "$SELF" "$HOME/rose-installed/latest/bin/$arg0"; then
+	    if ! diff -q "$SELF" "$MATRIX_ROOT/rose-installed/latest/bin/$arg0"; then
 		THIS_SCRIPT_OUT_OF_DATE=yes
 	    fi
 	else
@@ -492,7 +492,6 @@ matrix-maybe-remove-os-images() {
 	    docker container rm $(docker container ls -a |tail +2 |cut -d' ' -f1) || true
 	    docker image rm $(docker image ls -a |tail +2 |tr -s ' ' '\t' |cut -f3) || true
 	    docker image rm $(docker image ls -a |tail +2 |tr -s ' ' '\t' |cut -f3) || true
-	    rm -rf $HOME/rose-installed/latest/var/matrix/spock
 	else
 	    # More precise
 	    rose-matrix-run --rebuild-images
