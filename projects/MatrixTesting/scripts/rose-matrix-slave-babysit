@@ -8,7 +8,7 @@ arg0="${0##*/}"
 # instances that are dedicated to portability testing.
 
 while true; do
-    echo "$arg0: $(date '+%Y-%m-%d %H:%M:%S %Z') running:" "$@"
+    echo "$arg0: $(date '+%Y-%m-%d %H:%M:%S %Z') running:" "$@" >&2
     if "$@"; then
         error="exited with zero status"
         wait_human="5 minutes"
@@ -19,7 +19,7 @@ while true; do
         wait_seconds=$[ 30 * 60 ]
     fi
 
-    cat <<'EOF'
+    cat >&2 <<'EOF'
 
 ====================================================================================
                    ____
@@ -40,13 +40,15 @@ while true; do
 
 ====================================================================================
 EOF
-    echo "$arg0: command that failed: " "$@"
-    echo "$arg0: failure mode:         $error"
-    echo "$arg0: time of failure:      $(date '+%Y-%m-%d %H:%M:%S %Z')"
-    echo "$arg0: resuming in:          $wait_human"
-    resume=$[ $(date +%s) + wait_seconds ]
-    echo "$arg0: resuming at:          $(date --date=@$resume '+%Y-%m-%d %H:%M:%S %Z')"
-    sleep $wait_seconds
-    echo
-    echo
+    (
+	echo "$arg0: command that failed: " "$@"
+	echo "$arg0: failure mode:         $error"
+	echo "$arg0: time of failure:      $(date '+%Y-%m-%d %H:%M:%S %Z')"
+	echo "$arg0: resuming in:          $wait_human"
+	resume=$[ $(date +%s) + wait_seconds ]
+	echo "$arg0: resuming at:          $(date --date=@$resume '+%Y-%m-%d %H:%M:%S %Z')"
+	sleep $wait_seconds
+	echo
+	echo
+    ) >&2
 done
