@@ -68,6 +68,7 @@ help() {
 }
 
 die() {
+    rose-matrix-slave-health run-error "$*" || true
     echo "$arg0:" "$@" >&2
     exit 1
 }
@@ -113,6 +114,13 @@ matrix-parse-command-line() {
 }
 
 #------------------------------------------------------------------------------------------------------------------------
+# Try to report our health to the database. It's okay if this fails.
+matrix-report-health() {
+    local health="$1"
+    rose-matrix-slave-health "$health" || true
+}
+
+#------------------------------------------------------------------------------------------------------------------------
 # Make sure the system is up-to-date, that all system dependencies are installed, that users and user groups are set.
 # This will run according to the UPDATE_SYSTEM_SOFTWARE setting.
 matrix-update-system-software() {
@@ -122,6 +130,7 @@ matrix-update-system-software() {
     echo "Updating system software"
     echo "================================================================================"
     echo
+    matrix-report-health run-system;
 
     if [ "$UPDATE_SYSTEM_SOFTWARE" = "" ]; then
 	echo "disabled from command-line"
@@ -309,6 +318,7 @@ matrix-install-rmc-spock() {
 	echo
 	echo "Update is necessary..."
 	echo
+	matrix-report-health run-rmc;
 	
 	rm -rf rose-installed # since about to blow away libraries used by ROSE
 	rm -rf rmc-spock
@@ -357,6 +367,8 @@ matrix-install-matrix-tools() {
 
     # If update is needed, make sure we know where to get the source code
     if [ -n "$needs_update" ]; then
+	matrix-report-health run-tools "tools $MATRIX_COMMITTISH"
+
 	if [ "$MATRIX_REPOSITORY" = "" -o "$MATRIX_COMMITTISH" = "" ]; then
 	    die "error: no info for installing matrix tools (MATRIX_REPOSITORY, MATRIX_COMMITTISH)"
 	fi
@@ -415,6 +427,8 @@ matrix-update-this-script() {
     local restart="$1"
 
     if [ -n "$THIS_SCRIPT_OUT_OF_DATE" ]; then
+	matrix-report-health run-restart "run script updated"
+
 	[ -x "$SELF" ] || die "error: where am I? (\$0=$0, self=$SELF, cwd=$(pwd))"
 
 	cp "$MATRIX_ROOT/rose-installed/latest/bin/rose-matrix-slave-run" "$SELF"
@@ -445,7 +459,7 @@ matrix-reclaim-disk() {
 	echo "No RMC/Spock installed packages to remove"
 	return 0
     fi
-    
+
     (
 	cd $MATRIX_ROOT/rose-installed/latest/var/matrix/spock/var/installed
 	ls -tr */*.used |cat |sed 's/\.used//' |while read installed; do
@@ -514,6 +528,7 @@ matrix-get-test-source() {
 	echo "Downloading from $TEST_REPOSITORY"
 	echo "================================================================================"
 	echo
+	matrix-report-health run-download "ROSE $TEST_COMMITTISH"
 
 	# If the repository is already present, try to upgrade it instead of downloading the whole thing again.
 	[ -d rose ] || git clone "$TEST_REPOSITORY" rose
@@ -580,7 +595,6 @@ matrix-clean-failed-dependencies
 # order to contact the database -- this is relatively foolprove. If we built the wrong version, we'll fix that in the
 # testing loop.
 matrix-install-matrix-tools
-[ -n "$SETUP" ] || rose-matrix-slave-health start
 matrix-update-this-script restart
 
 # Here starts the actual testing loop.
@@ -601,9 +615,8 @@ while [ "$SETUP" = "" ]; do
     # Obtain the software which is to be tested
     if [ "$TEST_REPOSITORY" = "" -o "$TEST_COMMITTISH" = "" ]; then
 	echo "$arg0: testing is paused (no testable version specified)"
-	rose-matrix-slave-health stop
+	matrix-report-health run-paused "nothing to test"
 	sleep 300
-	rose-matrix-slave-health start
 	continue
     fi
     matrix-maybe-remove-os-images
@@ -615,6 +628,7 @@ while [ "$SETUP" = "" ]; do
     echo "== Starting test, loop iteration $test_number"
     echo "================================================================================"
     echo
+    matrix-report-health run-test "iteration $test_number"
     rose-matrix-run --var="$MATRIX_ROOT" $TEST_FLAGS -n1 $MATRIX_ROOT/rose
 done
 
@@ -631,6 +645,11 @@ fi
 
 # Cleanup
 matrix-cleanup
-[ -n "$SETUP" ] || rose-matrix-slave-health stop || true
+if [ -n "$SETUP" ]; then
+    matrix-report-health run-stop "installation completed"
+else
+    matrix-report-health run-stop "testing completed"
+fi
+
 matrix-update-this-script
 exit 0

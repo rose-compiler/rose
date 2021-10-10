@@ -23,9 +23,10 @@ FormattedTable::CellProperties::foreground() const {
     return foreground_;
 }
 
-void
+FormattedTable::CellProperties&
 FormattedTable::CellProperties::foreground(const Sawyer::Optional<Color::HSV> &color) {
     foreground_ = color;
+    return *this;
 }
 
 const Sawyer::Optional<Color::HSV>&
@@ -33,9 +34,10 @@ FormattedTable::CellProperties::background() const {
     return background_;
 }
 
-void
+FormattedTable::CellProperties&
 FormattedTable::CellProperties::background(const Sawyer::Optional<Color::HSV> &color) {
     background_ = color;
+    return *this;
 }
 
 const Sawyer::Optional<FormattedTable::Alignment>&
@@ -43,9 +45,10 @@ FormattedTable::CellProperties::alignment() const {
     return alignment_;
 }
 
-void
+FormattedTable::CellProperties&
 FormattedTable::CellProperties::alignment(const Sawyer::Optional<Alignment> &a) {
     alignment_ = a;
+    return *this;
 }
 
 FormattedTable::CellProperties

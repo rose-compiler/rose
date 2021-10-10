@@ -74,6 +74,17 @@ goodCell() {
     return p;
 }
 
+static const FormattedTable::CellProperties&
+centered() {
+    static bool called;
+    static FormattedTable::CellProperties p;
+    if (!called) {
+        p.alignment(FormattedTable::Alignment::CENTER);
+        called = true;
+    }
+    return p;
+}
+
 static void
 showSectionTitle(const Settings &settings, const std::string &title, const std::string &desc = "") {
     static const size_t width = 80;
@@ -220,8 +231,8 @@ showSlaveHealth(const Settings &settings, DB::Connection db) {
 
     const time_t since = time(NULL) - 7 * 86400;
 
-    //                          0     1          2         3           4      5
-    auto stmt = db.stmt("select name, timestamp, load_ave, free_space, event, test_id"
+    //                          0     1          2         3           4      5        6
+    auto stmt = db.stmt("select name, timestamp, load_ave, free_space, event, test_id, comment"
                         " from slave_health"
                         " where timestamp >= ?since"
                         " order by timestamp desc, name")
@@ -235,8 +246,9 @@ showSlaveHealth(const Settings &settings, DB::Connection db) {
     table.columnHeader(0, 2, "Load\nAverage");
     table.columnHeader(0, 3, "Free\nSpace");
     table.columnHeader(0, 4, "Latest\nEvent");
-    table.columnHeader(0, 5, "Latest\nTest ID");
-    table.columnHeader(0, 6, "Tests");
+    table.columnHeader(0, 5, "Event\nDetail");
+    table.columnHeader(0, 6, "Latest\nTest ID");
+    table.columnHeader(0, 7, "Total\nTests");
     for (auto row: stmt) {
         const size_t i = table.nRows();
         const std::string slaveName = row.get<std::string>(0).orElse("none");
@@ -246,7 +258,11 @@ showSlaveHealth(const Settings &settings, DB::Connection db) {
         table.insert(i, 2, (boost::format("%6.2f%%") % (100.0*row.get<double>(2).orElse(0))).str());
         table.insert(i, 3, (boost::format("%.0f GiB") % (row.get<size_t>(3).orElse(0) / 1024.0)).str());
         table.insert(i, 4, row.get<std::string>(4).orElse("none"));
-        table.insert(i, 5, row.get<std::string>(5).orElse("none"));
+        table.insert(i, 5, row.get<std::string>(6).orElse(""));
+        std::string testId = row.get<std::string>(5).orElse("");
+        if ("0" == testId)
+            testId = "";
+        table.insert(i, 6, testId);
 
         // This might be a little slow... The number of tests completed by this slave in the same time interval as above.
         size_t nTests = db.stmt("select count(*) from test_results where tester = ?tester and reporting_time > ?since")
@@ -254,9 +270,9 @@ showSlaveHealth(const Settings &settings, DB::Connection db) {
                         .bind("since", since)
                         .get<size_t>().orElse(0);
         if (nTests > 0) {
-            table.insert(i, 6, boost::lexical_cast<std::string>(nTests));
+            table.insert(i, 7, boost::lexical_cast<std::string>(nTests));
         } else {
-            table.insert(i, 6, "");
+            table.insert(i, 7, "");
         }
     }
     std::cout <<table <<"\n\n";
@@ -440,12 +456,17 @@ showTestResultsByField(const Settings &settings, DB::Connection db, const std::s
     for (auto row: stmt) {
         const size_t i = table.nRows();
         const std::string fieldValue = row.get<std::string>(0).orElse("unknown");
-        table.insert(i, 0, fieldValue == prevFieldValue ? "" : fieldValue);
+        if (fieldValue == prevFieldValue) {
+            table.insert(i, 0, "\"");
+            table.cellProperties(i, 0, centered());
+        } else {
+            table.insert(i, 0, fieldValue);
+            prevFieldValue = fieldValue;
+        }
         const std::string status = row.get<std::string>(1).orElse("unknown");
         table.insert(i, 1, status);
         table.cellProperties(i, 1, "end" == status ? goodCell() : badCell());
         table.insert(i, 2, row.get<std::string>(2).orElse("unknwon"));
-        prevFieldValue = fieldValue;
     }
     std::cout <<table <<"\n";
 }
@@ -497,16 +518,25 @@ showErrorsByField(const Settings &settings, DB::Connection db, const std::string
     std::string prevFieldValue, prevStatus;
     for (auto row: stmt) {
         const size_t i = table.nRows();
+
         const std::string fieldValue = row.get<std::string>(0).orElse("unknown");
-        table.insert(i, 0, fieldValue == prevFieldValue ? "" : fieldValue);
-        if (prevFieldValue != fieldValue) {
+        if (fieldValue == prevFieldValue) {
+            table.insert(i, 0, "\"");
+            table.cellProperties(i, 0, centered());
+        } else {
+            table.insert(i, 0, fieldValue);
             prevFieldValue = fieldValue;
             prevStatus = "";
         }
 
         const std::string status = row.get<std::string>(1).orElse("unknown");
-        table.insert(i, 1, status == prevStatus ? "" : status);
-        prevStatus = status;
+        if (status == prevStatus) {
+            table.insert(i, 1, "\"");
+            table.cellProperties(i, 1, centered());
+        } else {
+            table.insert(i, 1, status);
+            prevStatus = status;
+        }
 
         table.insert(i, 2, *row.get<std::string>(2));
         table.insert(i, 3, *row.get<std::string>(3));
@@ -571,7 +601,10 @@ showDependencies(const Settings &settings, DB::Connection db, const std::string 
         const std::string restrictions = row.get<std::string>(2).orElse("");
         const std::string comment = row.get<std::string>(3).orElse("");
 
-        if (name != prevName) {
+        if (name == prevName) {
+            table.insert(i, 0, "\"");
+            table.cellProperties(i, 0, centered());
+        } else {
             table.insert(i, 0, name);
             prevName = name;
         }
@@ -647,7 +680,7 @@ main(int argc, char *argv[]) {
                   <<"</head>\n"
                   <<"<body>\n"
                   <<"<h1>ROSE Portability Testing</h1>\n"
-                  <<"Updated at " <<timestamp() <<" from the <tt>rose-matrix-status</tt> version "
+                  <<"Updated at " <<timestamp() <<" by running <tt>rose-matrix-status</tt> version "
                   <<Rose::CommandLine::versionString <<".<br/>\n";
     }
 

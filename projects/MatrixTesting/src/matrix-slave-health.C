@@ -1,6 +1,30 @@
 static const char *gPurpose = "query or adjust slave health";
 static const char *gDescription =
-    "Queries the slave health reports for users, or sends slave health reports for slaves.";
+    "When invoked with no arguments, or just the argument \"show\", this tool shows some recent information about slave machines. "
+    "When invoked with at least one argument that isn't the word \"show\", it updates the database with new health informtion. "
+    "That information includes the specified health state (first argument) and an optional comment and/or test ID.\n\n"
+
+    "The following states are posted by the \"rose-matrix-slave-run\" script that manages resources on the machine that's "
+    "performing the tests, such as installing the test tools themselves. They all start with the word \"run\", and are reported "
+    "on a best effort basis.\n\n"
+
+    "@named{run-system}{The operating system is being updated.}"
+    "@named{run-rmc}{The RMC/Spock tools are being re-installed.}"
+    "@named{run-tools}{The portability testing tools are being re-installed.}"
+    "@named{run-restart}{The script is restarting because it has been updated.}"
+    "@named{run-download}{The ROSE version to be tested is being downloaded.}"
+    "@named{run-paused}{Testing has paused for some reason.}"
+    "@named{run-test}{A particular test has started.}"
+    "@named{run-error}{The run script has exited with an error. This isn't always possible to report.}"
+
+    "The following states are posted by the \"rose-matrix-run\" command which is typically invoked by the "
+    "\"rose-matrix-slave-run\" script. This command is reponsible for running the test, and assumes that all testing tools are "
+    "installed already. Thus, health states are reported with a high degree of reliability.\n\n"
+
+    "@named{image}{A Docker image is being constructed in which to run the test.}"
+    "@named{container}{A Docker container is being started for a test phase.}"
+    "@named{tested}{A test has completed and a new test ID is added to the health report.}"
+    "@named{error}{The script has encountered an error. This isn't always possible to report.}";
 
 #include <rose.h>
 #include "matrixTools.h"
@@ -11,6 +35,7 @@ static const char *gDescription =
 #include <Rose/StringUtility/Escape.h>
 #include <Sawyer/Message.h>
 #include <boost/algorithm/string/trim.hpp>
+#include <boost/regex.hpp>
 
 #ifdef __linux__
 #include <sys/statvfs.h>
@@ -23,13 +48,14 @@ namespace DB = Sawyer::Database;
 struct Settings {
     uint64_t maxAge = 7*86400;                          // maximum age of report in seconds
     Sawyer::Optional<size_t> testId;                    // test ID for "test" events
+    Sawyer::Optional<std::string> comment;              // comment for other events
     std::string databaseUri;                            // e.g., postgresql://user:password@host/database
     Format outputFormat = Format::PLAIN;                // how to show results
 };
 
 static Sawyer::Message::Facility mlog;
 
-// Parse command-line and return event type, "start", "stop", or "test".
+// Parse command-line and return health state (first argument or "show")
 static std::string
 parseCommandLine(int argc, char *argv[], Settings &settings) {
     using namespace Sawyer::CommandLine;
@@ -38,8 +64,8 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 
     parser.doc("Synopsis",
                "@prop{programName} [@v{switches}] [show]\n\n"
-               "@prop{programName} [@v{switches}] start|stop\n\n"
-               "@prop{programName} [@v{switches}] test TEST_ID");
+               "@prop{programName} [@v{switches}] @v{status} [@v{comment}]\n\n"
+               "@prop{programName} [@v{switches}] tested @v{test_id} [@v{comment}]\n\n");
 
     SwitchGroup tool("Tool-specific switches");
     insertDatabaseSwitch(tool, settings.databaseUri);
@@ -63,25 +89,35 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
                                     .parse(argc, argv)
                                     .apply()
                                     .unreachedArgs();
+    std::string event;
     if (args.empty()) {
-        return "show";
-    } else if (args[0] == "test") {
-        if (args.size() == 2) {
+        event = "show";
+    } else if (1 == args.size()) {
+        event = args[0];
+    } else if (2 == args.size()) {
+        event = args[0];
+        if ("test" == event)
+            event = "tested";                           // backward compatibility [Robb Matzke 2021-10-10]
+        if ("tested" == event) {
             settings.testId = boost::lexical_cast<unsigned>(args[1]);
         } else {
-            mlog[FATAL] <<"incorrect usage; see --help\n";
-            exit(1);
+            settings.comment = args[1];
         }
-        return "test";
-    } else if (args.size() != 1) {
+    } else if (3 == args.size()) {
+        event = args[0];
+        settings.testId = boost::lexical_cast<unsigned>(args[1]);
+        settings.comment = args[2];
+    } else {
         mlog[FATAL] <<"incorrect usage; see --help\n";
         exit(1);
-    } else if (args[0] == "show" || args[0] == "start" || args[0] == "stop") {
-        return args[0];
-    } else {
-        mlog[FATAL] <<"unrecognized event type \"" <<StringUtility::cEscape(args[0]) <<"\"\n";
+    }
+
+    boost::regex eventRe("([a-zA-Z]\\w*)(-[a-zA-Z]\\w*)*"); // hyphenated symbols
+    if (!boost::regex_match(event, eventRe)) {
+        mlog[FATAL] <<"invalid event name; see --help\n";
         exit(1);
     }
+    return event;
 }
 
 static std::string
@@ -181,8 +217,9 @@ main(int argc, char *argv[]) {
     DB::Connection db = connectToDatabase(settings.databaseUri, mlog);
 
     if ("show" == event) {
-        const time_t earliest = settings.maxAge < now() ? now() - settings.maxAge : 0;
-        auto stmt = db.stmt("select name, timestamp, load_ave, free_space, event, test_id"
+        const time_t earliest = settings.maxAge < (uint64_t)now() ? now() - settings.maxAge : 0;
+        //                          0     1          2         3           4      5        6
+        auto stmt = db.stmt("select name, timestamp, load_ave, free_space, event, test_id, comment"
                             " from slave_health"
                             " where timestamp >= ?ts"
                             " order by timestamp desc").bind("ts", earliest);
@@ -193,9 +230,12 @@ main(int argc, char *argv[]) {
         table.columnHeader(0, 2, "Load\nAverage");
         table.columnHeader(0, 3, "Free\nSpace");
         table.columnHeader(0, 4, "Latest\nEvent");
-        table.columnHeader(0, 5, "Latest\nTest ID");
-        table.columnHeader(0, 6, "Operating\nSystem");
-        table.columnHeader(0, 7, "Duration");
+        table.columnHeader(0, 5, "Event\nDetail");
+        table.columnHeader(0, 6, "Latest\nTest ID");
+        table.columnHeader(0, 7, "Operating\nSystem");
+        table.columnHeader(0, 8, "Test\nStatus");
+        table.columnHeader(0, 9, "Test\nDuration");
+
         for (auto row: stmt) {
             using namespace Rose::StringUtility;
             const std::string name = row.get<std::string>(0).orElse("none");
@@ -204,6 +244,8 @@ main(int argc, char *argv[]) {
             const std::string freeSpace = (boost::format("%.0f") % (row.get<size_t>(3).orElse(0) / 1024.0)).str();
             const std::string latestEvent = row.get<std::string>(4).orElse("none");
             const std::string latestId = row.get<std::string>(5).orElse("none");
+            const std::string comment = row.get<std::string>(6).orElse("");
+
             if (Format::YAML == settings.outputFormat) {
                 std::cout <<"- name: " <<yamlEscape(name) <<"\n";
                 std::cout <<"  when: " <<whenReported <<" # " <<timeToLocal(whenReported)
@@ -211,6 +253,7 @@ main(int argc, char *argv[]) {
                 std::cout <<"  loadavg: " <<loadAverage <<" # percent\n";
                 std::cout <<"  free_space: " <<freeSpace <<" # GiB\n";
                 std::cout <<"  latest_event: " <<latestEvent <<"\n";
+                std::cout <<"  comment: " <<comment <<"\n";
                 std::cout <<"  latest_id: " <<latestId <<"\n";
             } else {
                 const size_t i = table.nRows();
@@ -219,11 +262,12 @@ main(int argc, char *argv[]) {
                 table.insert(i, 2, loadAverage + "%");
                 table.insert(i, 3, freeSpace + " GiB");
                 table.insert(i, 4, latestEvent);
-                table.insert(i, 5, latestId);
+                table.insert(i, 5, comment);
+                table.insert(i, 6, latestId);
             }
 
             if (auto testId = row.get<size_t>(5)) {
-                auto test = db.stmt("select os, duration"
+                auto test = db.stmt("select os, duration, status"
                                     " from test_results"
                                     " where id = ?id")
                             .bind("id", *testId);
@@ -231,13 +275,17 @@ main(int argc, char *argv[]) {
                     const std::string os = row.get<std::string>(0).orElse("");
                     const auto duration = row.get<uint64_t>(1);
                     const std::string durationStr = duration ? Rose::CommandLine::DurationParser::toString(duration) : "";
+                    const std::string status = row.get<std::string>(2).orElse("");
                     if (Format::YAML == settings.outputFormat) {
                         std::cout <<"  os: " <<os <<"\n";
-                        if (duration)
+                        if (duration) {
                             std::cout <<"  duration: " <<*duration <<" # " <<durationStr <<"\n";
+                            std::cout <<"  status: " <<status <<"\n";
+                        }
                     } else {
-                        table.insert(table.nRows()-1, 6, os);
-                        table.insert(table.nRows()-1, 7, durationStr);
+                        table.insert(table.nRows()-1, 7, os);
+                        table.insert(table.nRows()-1, 8, status);
+                        table.insert(table.nRows()-1, 9, durationStr);
                     }
                     break;
                 }
@@ -250,21 +298,30 @@ main(int argc, char *argv[]) {
 
     } else {
         // We want only one record per slave, but slaves can't delete things. Therefore either update or insert
+        const std::string testName = settings.testId ? " test_id, " : "";
+        const std::string testSet = settings.testId ? " test_id = ?test_id, " : "";
+        const std::string testBind = settings.testId ? " ?test_id, " : "";
+
+        const std::string commentName = settings.comment ? " comment, " : "";
+        const std::string commentSet = settings.comment ? " comment = ?comment, " : "";
+        const std::string commentBind = settings.comment ? " ?comment, " : "";
+
         DB::Statement stmt;
 
         if (db.stmt("select count(*) from slave_health where name = ?name").bind("name", slaveName()).get<size_t>().get()) {
-            stmt = db.stmt("update slave_health set"
+
+            stmt = db.stmt("update slave_health set" +
+                           testSet + commentSet +
                            "    name = ?name,"
                            "    timestamp = ?timestamp,"
                            "    load_ave = ?load_ave,"
                            "    free_space = ?free_space,"
-                           "    event = ?event,"
-                           "    test_id = ?test_id"
+                           "    event = ?event"
                            " where name = ?name");
         } else {
             stmt = db.stmt("insert into slave_health"
-                           "        (name,   timestamp,  load_ave,  free_space,  event,  test_id)"
-                           " values (?name, ?timestamp, ?load_ave, ?free_space, ?event, ?test_id)");
+                           "        (" + testName + commentName + "name,   timestamp,  load_ave,  free_space,  event)"
+                           " values (" + testBind + commentBind + " ?name, ?timestamp, ?load_ave, ?free_space, ?event)");
         }
 
         stmt
@@ -272,8 +329,11 @@ main(int argc, char *argv[]) {
             .bind("timestamp", now())
             .bind("load_ave", cpuLoad())
             .bind("free_space", diskFreeSpace())
-            .bind("event", event)
-            .bind("test_id", settings.testId.orElse(0))
-            .run();
+            .bind("event", event);
+        if (settings.testId)
+            stmt.bind("test_id", *settings.testId);
+        if (settings.comment)
+            stmt.bind("comment", *settings.comment);
+        stmt.run();
     }
 }

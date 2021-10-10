@@ -127,6 +127,7 @@ help() {
 ########################################################################################################################
 # Die with an error message
 die() {
+    rose-matrix-slave-health error "$*" || true
     echo "$arg0:" "error:" "$@" >&2
     exit 1
 }
@@ -143,7 +144,7 @@ test-heading() {
 	echo "================================================================================"
 	echo
     fi
-}    
+}
 
 ########################################################################################################################
 # Run a command after echoing the command-line
@@ -288,6 +289,7 @@ select-random-argument() {
 generate-docker-image() {
     local os="$1" image_tag="$2"
     local tempdir=$(generate-temporary-name)
+    rose-matrix-slave-health image "$2"
     create-temporary-directory "$tempdir"
 
     local template="$(select-docker-template "$os")"
@@ -378,7 +380,7 @@ check-rmc-suitability() {
     rm -f "$rundir/rejected"
     return 0
 }
-	    
+
 ########################################################################################################################
 # Given an operating system name, return the Docker image name.
 generate-image-name() {
@@ -460,9 +462,9 @@ report-results() {
 	    return 0
 	fi
     fi
-    
+
     local testid=$(rose-matrix-test-result $DRY_RUN --database="$DATABASE" --log='tool(>=trace)' "${rundir}/result")
-    rose-matrix-slave-health test "$testid"
+    rose-matrix-slave-health tested "$testid"
     if [ "$testid" = "" -a -z "$DRY_RUN" ]; then
 	echo "$arg0: error: failed to send test results to database ********"
     elif  [ "$DRY_RUN" = "" ]; then
@@ -628,6 +630,24 @@ tester-name() {
 }
 
 ########################################################################################################################
+# Scans the output of docker containers to look for section headers and sends health information to the database
+scan-for-health() {
+    local line
+    while read line; do
+	case "$line" in
+	    =================-=================*)
+		# The above pattern comes from the OUTPUT_SECTION_SEPARATOR variable in the run-test script
+		local phase="$(echo "$line" |cut -d' ' -f2)"
+	        rose-matrix-slave-health start-phase "$phase"
+		;;
+	    *)
+		echo "$line"
+		;;
+	esac
+    done
+}
+
+########################################################################################################################
 # Run one test in a Docker container
 run-test() {
     # Generate the Docker image for the selected target operating system.
@@ -684,6 +704,7 @@ run-test() {
 	container_name="${container_basename}-${phase_basename}"
 	[ "$phase_basename" = "$phase_name" ] && continue # didn't start with a number
 	echo "$phase_basename" > "${rundir}/phase"
+	rose-matrix-slave-health container "$phase_basename"
 	delete-result "$rundir" status
 
 	local mount_spock_switches=
@@ -696,15 +717,16 @@ run-test() {
 	    mount_project_switches="--mount type=bind,src=$SOURCE_CODE,dst=/home/user/project-source-ro,readonly"
 	fi
 
-	if (run docker run \
-		$INTERACTIVE \
-		--privileged \
-		--hostname "$image_name" \
-		$mount_spock_switches \
-		$mount_project_switches \
-		--mount type=bind,src="${rundir}",dst="/home/user/run" \
-		--name "${container_name}" "$image_name"); then
-	    # Test finishted, so report results
+	run docker run \
+	    $INTERACTIVE \
+	    --privileged \
+	    --hostname "$image_name" \
+	    $mount_spock_switches \
+	    $mount_project_switches \
+	    --mount type=bind,src="${rundir}",dst="/home/user/run" \
+	    --name "${container_name}" "$image_name" 2>&1 | scan-for-health
+
+	if [ "${PIPESTATUS[0]}" -eq 0 ]; then
 	    echo "docker container $container_name completed: $(get-result "$rundir" status)"
 	    remove-or-keep-container "$rundir" "$image_name" "$container_name"
 	    [ "$(get-result "$rundir" status)" = end ] || break
