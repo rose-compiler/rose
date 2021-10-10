@@ -61,21 +61,21 @@ public:
          *
          * @{ */
         const Sawyer::Optional<Color::HSV>& foreground() const;
-        void foreground(const Sawyer::Optional<Color::HSV>&);
+        CellProperties& foreground(const Sawyer::Optional<Color::HSV>&);
         /** @} */
 
         /** Property: Background color.
          *
          * @{ */
         const Sawyer::Optional<Color::HSV>& background() const;
-        void background(const Sawyer::Optional<Color::HSV>&);
+        CellProperties& background(const Sawyer::Optional<Color::HSV>&);
         /** @} */
 
         /** Property: Horizontal alignment.
          *
          * @{ */
         const Sawyer::Optional<Alignment>& alignment() const;
-        void alignment(const Sawyer::Optional<Alignment>&);
+        CellProperties& alignment(const Sawyer::Optional<Alignment>&);
         /** @} */
 
         /** Create new properties by merging two properties.
