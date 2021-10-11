@@ -2,7 +2,6 @@
 
 
 #include "MemPropertyState.h"
-#include "SetAlgo.h"
 #include <iostream>
 #include "AbstractValue.h"
 #include "CollectionOperators.h"

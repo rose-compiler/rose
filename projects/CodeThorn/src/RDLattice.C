@@ -2,7 +2,6 @@
 #include "sage3basic.h"
 
 #include "RDLattice.h"
-#include "SetAlgo.h"
 
 using namespace std;
 using namespace CodeThorn;

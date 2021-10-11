@@ -2,7 +2,6 @@
 #include "sage3basic.h"
 
 #include "LVLattice.h"
-#include "SetAlgo.h"
 
 using namespace std;
 

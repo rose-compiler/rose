@@ -56,7 +56,6 @@ CODETHORN_SOLO_HEADER_FILES=\
   ExecutionTrace.h \
   HSetMaintainer.h \
   ReadWriteData.h \
-  SetAlgo.h \
   WorkListSeq.h
 
 # codethorn library header files (each with a corresponding source file)
