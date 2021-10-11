@@ -357,7 +357,7 @@ void AbstractValue::setSummaryFlag(bool flag) {
   _summaryFlag=flag;
 }
 
-long AbstractValue::hash() const {
+size_t AbstractValue::hash() const {
   if(isTop()) return LONG_MAX;
   else if(isBot()) return LONG_MIN;
   else if(isConstInt()) return getIntValue();
@@ -368,7 +368,7 @@ long AbstractValue::hash() const {
     ROSE_ASSERT(varId.isValid());
     return varId.getIdCode()+getIntValue();
   } else if(isFunctionPtr()) {
-    return (long)getLabel().getId();
+    return (size_t)getLabel().getId();
   } else {
     if(strictChecking)
       throw CodeThorn::Exception("Error: AbstractValue hash: unknown value.");

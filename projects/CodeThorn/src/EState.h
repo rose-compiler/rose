@@ -113,28 +113,28 @@ namespace CodeThorn {
 class EStateHashFun {
  public:
   EStateHashFun() {}
-  long operator()(EState* s) const {
-    unsigned int hash=1;
+  size_t operator()(EState* s) const {
+    size_t hash=1;
     if(EState::sharedPStates) {
-      hash=(long)s->label().getId()*(((long)s->pstate())+1);
+      hash=(size_t)s->label().getId()*(((size_t)s->pstate())+1);
     } else {
-      long pstateHash=1;
+      size_t pstateHash=1;
       PStatePtr pstateptr=s->pstate(); // const
       if(pstateptr!=nullptr) {
 	PState* pstate=const_cast<PState*>(pstateptr); // non-const
 	PStateHashFun pstateHashFun;
 	pstateHash=pstateHashFun(pstate);
       }
-      hash=(long)s->label().getId()*(pstateHash+1);
+      hash=(size_t)s->label().getId()*(pstateHash+1);
     }
-    return long(hash);
+    return hash;
   }
  private:
 };
  class EStateEqualToPred {
  public:
    EStateEqualToPred() {}
-   long operator()(EState* s1, EState* s2) const {
+   bool operator()(EState* s1, EState* s2) const {
      return *s1==*s2;
    }
  private:

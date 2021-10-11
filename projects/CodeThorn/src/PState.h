@@ -112,13 +112,12 @@ namespace CodeThorn {
 class PStateHashFun {
    public:
     PStateHashFun() {}
-    long operator()(PState* s) const {
-      unsigned int hash=1;
+    size_t operator()(PState* s) const {
+      size_t hash=1;
       for(PState::iterator i=s->begin();i!=s->end();++i) {
-        hash=((hash<<8)+((long)(*i).second.hash()))^hash;
+        hash=((hash<<8)+((*i).second.hash()))^hash;
       }
-      // does not include approximationinfo because in most cases it corresponds to above data (but will be taken into account in equality-check if different)
-      return long(hash);
+      return hash;
     }
    private:
 };

@@ -101,7 +101,7 @@ std::string CodeThorn::CTAnalysis::hashSetConsistencyReport() {
   
 void CodeThorn::CTAnalysis::deleteAllStates() {
   if(_ctOpt.status) {
-    cout<<hashSetConsistencyReport();
+    cout<<"STATUS: "<<hashSetConsistencyReport();
   }      
   
   if(_ctOpt.status) cout<<"STATUS: deleting "<<estateSet.size()<<" estates, ";

@@ -207,7 +207,7 @@ class AbstractValue {
   void setValue(float fval);
   void setValue(double fval);
   Label getLabel() const;
-  long hash() const;
+  size_t hash() const;
   std::string valueTypeToString() const;
 
   //CodeThorn::TypeSize getTypeSize() const;
