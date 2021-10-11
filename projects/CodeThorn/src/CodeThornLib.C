@@ -735,12 +735,6 @@ namespace CodeThorn {
       }
     }
 
-    void generateInternalAnalysisReport(CodeThornOptions& ctOpt,CTAnalysis* analyzer) {
-      if(ctOpt.generateReports) {
-	
-      }
-    }
-    
     void optionallyGenerateCallGraphDotFile(CodeThornOptions& ctOpt,CTAnalysis* analyzer) {
       std::string fileName=ctOpt.visualization.callGraphFileName;
       if(fileName.size()>0) {

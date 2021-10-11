@@ -78,7 +78,32 @@ CodeThorn::CTAnalysis::~CTAnalysis() {
   deleteAllStates();
 }
 
+std::string CodeThorn::CTAnalysis::hashSetConsistencyReport() {
+  stringstream ss;
+
+  ss<<"HashSet consistency: estateSet: ";
+  auto estateWarnings=estateSet.getWarnings();
+  if(estateWarnings>0)
+    ss<<"FAIL("<<estateWarnings<<")";
+  else
+    ss<<"PASS";
+    
+  ss<<", pstateSet: ";
+  auto pstateWarnings=pstateSet.getWarnings();
+  if(estateWarnings>0)
+    ss<<"FAIL("<<pstateWarnings<<")";
+  else
+    ss<<"PASS";
+  ss<<endl;
+
+  return ss.str();
+}
+  
 void CodeThorn::CTAnalysis::deleteAllStates() {
+  if(_ctOpt.status) {
+    cout<<hashSetConsistencyReport();
+  }      
+  
   if(_ctOpt.status) cout<<"STATUS: deleting "<<estateSet.size()<<" estates, ";
   estateSet.clear();
   if(_ctOpt.status) cout<<pstateSet.size()<<" pstates, ";
@@ -1901,6 +1926,7 @@ std::string CodeThorn::CTAnalysis::internalAnalysisReportToString() {
     ss<<"Inter-procedural analysis"<<endl;    
     ss<<"Call string length: "<<_ctOpt.callStringLength<<endl;
   }
+  ss<<hashSetConsistencyReport();
   return ss.str();
 }
 

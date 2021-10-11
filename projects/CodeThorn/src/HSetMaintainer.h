@@ -5,6 +5,7 @@
  * Author   : Markus Schordan                                *
  *************************************************************/
 #include <unordered_set>
+#include <iostream>
 
 //#define HSET_MAINTAINER_DEBUG_MODE
 
@@ -39,7 +40,7 @@ public:
     if (!_keepStatesDuringDeconstruction){
       typename HSetMaintainer::iterator i;
       for (i=this->begin(); i!=this->end(); ++i) {
-  delete (*i);
+	delete (*i);
       }
     }
   }
@@ -103,6 +104,7 @@ public:
 #pragma omp critical(HASHSET)
     {
       std::pair<typename HSetMaintainer::iterator, bool> res;
+
       typename HSetMaintainer::iterator iter=this->find(const_cast<KeyType*>(key)); // TODO: eliminate const_cast
       if(iter!=this->end()) {
         // found it!
@@ -131,20 +133,13 @@ public:
       // found it!
       res=std::make_pair(iter,false);
     } else {
-      // converting the stack allocated object to heap allocated
-      // this copies the entire object
-      // TODO: this can be avoided by providing a process function with a pointer arg
-      //       this requires a more detailed result: pointer exists, alternate pointer with equal object exists, does not exist
-      KeyType* keyPtr=new KeyType();
-      *keyPtr=key;
+      KeyType* keyPtr=new KeyType(key); // copy constructor
       res=this->insert(keyPtr);
-      if (!res.second) {
-  // this case should never occur, condition "iter!=this->end()" above would have been satisfied and
-  // this else branch would have therefore been ignored
-  std::cerr << "ERROR: HSetMaintainer: Element was not inserted even though it could not be found in the set." << std::endl;
-  ROSE_ASSERT(0);
-  delete keyPtr;
-  keyPtr = NULL;
+      if (res.second==false) {
+	// this case should never occur, condition "iter!=this->end()" above would have been satisfied and
+	// this else branch would have therefore been ignored
+	//std::cerr << "ERROR: HSetMaintainer: Element is reported to not have been inserted (=already existed), but 'find' could not find it." << std::endl;
+	_warnings++;
       }
     }
 #ifdef HSET_MAINTAINER_DEBUG_MODE
@@ -210,10 +205,12 @@ public:
     }
     return mem+sizeof(*this);
   }
-
+    uint32_t getWarnings() {
+      return _warnings;
+    }
  private:
-  //const KeyType* ptr(KeyType& s) {}
-  bool _keepStatesDuringDeconstruction;
+    bool _keepStatesDuringDeconstruction;
+    uint32_t _warnings=0;
 };
 
 #endif

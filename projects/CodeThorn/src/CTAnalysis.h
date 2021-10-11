@@ -408,6 +408,7 @@ namespace CodeThorn {
 
     uint32_t getTotalNumberOfFunctions();
     void setTotalNumberOfFunctions(uint32_t num);
+    std::string hashSetConsistencyReport();
     
   protected:
 
