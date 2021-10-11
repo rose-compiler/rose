@@ -5,12 +5,29 @@ static const char *gDescription =
     "a column name, comparison operator, and value; and a display argument is column name and optional "
     "sorting direction.\n\n"
 
-    "The relational operators for constraints are:"
-    "@named{=}{The column on the left hand side is constrainted to be equal to the value on the right hand side.}"
-    "@named{~}{The column on the left hand side must contain the string on the right hand side.}\n\n"
+    "The relational operators for constraints are designed to work well with shell scripts. They are:"
+    "@named{=}{The column on the left hand side must be equal to the value on the right hand side.}"
+    "@named{/}{The column on the left hand side must be not-equal to the value on the right hand sie.}"
+    "@named{+}{The column on the left hand size must be greater than or equal to the value on the right hand side.}"
+    "@named{-}{The column on the left hand size must be less than or equal to the value on the right hand side.}"
+    "@named{~}{The column on the left hand side must contain the string on the right hand side.}"
+    "@named{^}{The column on the left hand side must not contain string value on the right hand side.}"
+    "\n\n"
 
-    "A display column can be sorted by appending \".u\" or \".d\" to its name, meaning sort so values are going "
-    "down or up, respectively. If multiple columns are sorted, their sort priority is based on their column number. "
+    "Commit hashes can be abbreviated in equal, unequal, less, and greater constraints, even if the hash as a "
+    "\"+local\" suffix.\n\n"
+
+    "Dates can be entred as \"YYYYMMDD\" or \"YYYY-MM-DD\" and match all time points within that day. Times are "
+    "specified as a date followed by \"HHMMSS\" or \"HH:MM:SS\". The time can be separated from the date with "
+    "white space or the letter \"T\". A time (or date alone) can be followed by a timezone abbreviation or the "
+    "time standard \"UTC\". Time zones and standards can be all upper- or all lower-case and separated from the "
+    "time (or date only) by white space. If no time zone or standard is specified, then either GMT or your "
+    "local time zone is assumed, depending on whether %s{localtime} was specified. For example, today is "
+    "\"2021-10-09\", \"20211009\", or \"20211009 UTC\", and the current time is \"20211009T190424\" (ISO 8601 "
+    "format) or \"2021-10-09 15:04:24 EDT\" in a more human friendly format.\n\n"
+
+    "A display column can be sorted by appending \".a\" or \".d\" to its name, meaning sort so values are ascending "
+    "or descending, respectively. If multiple columns are sorted, their sort priority is based on their column number. "
     "That is, the left-most sorted column is sorted first, then the next column to the right, etc.";
 
 #include <rose.h>
@@ -35,6 +52,7 @@ struct Settings {
     Sawyer::Optional<size_t> limit;                     // limit number of resulting rows
     bool deleteMatchingTests = false;                   // if true, delete the tests whose records match
     bool showAges = true;                               // when showing times, also say "about x days ago" or similar
+    bool considerAll = false;                           // consider all tests instead of just the latest ROSE version
 };
 
 static Sawyer::Message::Facility mlog;
@@ -57,6 +75,11 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
                                  .set(Format::HTML)
                                  .set(Format::CSV)
                                  .set(Format::SHELL));
+
+    sg.insert(Switch("all", 'a')
+              .intrinsicValue(true, settings.considerAll)
+              .doc("Consider all tests instead of just the latest ROSE version. Constraining the  \"rose\" or \"rose_date\" "
+                   "columns also implies @s{all}."));
 
     sg.insert(Switch("localtime")
               .intrinsicValue(true, settings.usingLocalTime)
@@ -113,7 +136,9 @@ struct Binding {
 class Column {
     // Declaration stuff
     std::string tableTitle_;                            // title to use in the table column
-    std::string symbol_;                                // name to use as the value in YAML output and SQL aliases
+    std::string key_;                                   // name that appears on the command-line
+    std::string identifier_;                            // like key, but suitable as an identifier in YAML or SQL
+    size_t sqlSuffix_ = 0;                              // suffix for SQL aliases
     std::string sql_;                                   // the value as written in SQL
     std::string doc_;                                   // description
     ColumnType type_ = ColumnType::STRING;              // type of value returned by the sqlExpression
@@ -136,11 +161,19 @@ public:
         return *this;
     }
 
-    const std::string& symbol() const {
-        return symbol_;
+    const std::string& key() const {
+        return key_;
     }
-    Column& symbol(const std::string &s) {
-        symbol_ = s;
+    Column& key(const std::string &s) {
+        key_ = s;
+        return *this;
+    }
+
+    const std::string& identifier() const {
+        return identifier_;
+    }
+    Column& identifier(const std::string &s) {
+        identifier_ = s;
         return *this;
     }
 
@@ -152,8 +185,12 @@ public:
         return *this;
     }
 
+    Column& sqlSuffix(size_t n) {
+        sqlSuffix_ = n;
+        return *this;
+    }
     std::string sqlAlias() const {
-        return isAggregate() ? symbol() : sql();
+        return identifier_ + boost::lexical_cast<std::string>(sqlSuffix_);
     }
 
     const std::string& doc() const {
@@ -235,152 +272,181 @@ loadColumns(DB::Connection db) {
     ColumnMap retval;
 
     // Columns that are ROSE dependencies
-    auto stmt = db.stmt("select distinct name from dependencies");
+    auto stmt = db.stmt("select name, column_name, description from dependency_attributes");
     for (auto row: stmt) {
         const std::string key = *row.get<std::string>(0);
+        const std::string columnName = *row.get<std::string>(1);
+        auto doc = row.get<std::string>(2);
+
         Column c;
 
+        // Default values
         std::string s = key;
         s[0] = toupper(s[0]);
         c.tableTitle(s);
-        c.symbol(key);
-        c.sql("test_results.rmc_" + key);
+        c.sql("test_results." + columnName);
         c.type(ColumnType::STRING);
-        c.doc("The " + key + " dependency");
+        c.doc(doc.orElse("The " + key + " dependency"));
+
+        // Specific values for some columns
+        if ("build" == key) {
+            c.tableTitle("Build\nSystem");
+        } else if ("edg_compile" == key) {
+            c.tableTitle("EDG\nCompile");
+        }
+
         retval.insert(key, c);
     }
 
     // Other columns
-    retval.insert("id",
-                  Column().tableTitle("ID").symbol("id").sql("test_results.id")
-                  .doc("Test ID number")
-                  .type(ColumnType::INTEGER));
-    retval.insert("reporting_user",
-                  Column().tableTitle("Reporting\nUser").symbol("reporting_user").sql("auth_identities.identity")
-                  .doc("User that reported the results")
-                  .type(ColumnType::STRING));
-    retval.insert("reporting_time",
-                  Column().tableTitle("Reporting\nTime").symbol("reporting_time").sql("test_results.reporting_time")
-                  .doc("Time at which results were reported")
-                  .type(ColumnType::TIME));
-    retval.insert("min_reporting_time",
-                  Column().tableTitle("Earliest\nReport").symbol("min_reporting_time").sql("min(test_results.reporting_time)")
-                  .doc("Earliest time at which results were reported")
-                  .type(ColumnType::TIME)
-                  .isAggregate(true));
-    retval.insert("max_reporting_time",
-                  Column().tableTitle("Latest\nReport").symbol("max_reporting_time").sql("max(test_results.reporting_time)")
-                  .doc("Latest time at which results were reported")
-                  .type(ColumnType::TIME)
-                  .isAggregate(true));
-    retval.insert("tester",
-                  Column().tableTitle("Tester\nName").symbol("tester").sql("test_results.tester")
-                  .doc("Name of testing slave")
-                  .type(ColumnType::STRING));
-    retval.insert("os",
-                  Column().tableTitle("Operating\nSystem").symbol("os").sql("test_results.os")
-                  .doc("Operating system")
-                  .type(ColumnType::STRING));
-    retval.insert("rose",
-                  Column().tableTitle("ROSE\nVersion").symbol("rose").sql("test_results.rose")
-                  .doc("ROSE version number or commit hash")
-                  .type(ColumnType::VERSION_OR_HASH));
-    retval.insert("min_rose",
-                  Column().tableTitle("Min ROSE\nVersion").symbol("min_rose").sql("min(test_results.rose)")
-                  .doc("Minimum ROSE version number or commit hash")
-                  .type(ColumnType::VERSION_OR_HASH)
-                  .isAggregate(true));
-    retval.insert("max_rose",
-                  Column().tableTitle("Max ROSE\nVersion").symbol("max_rose").sql("max(test_results.rose)")
-                  .doc("Maximum ROSE version number or commit hash")
-                  .type(ColumnType::VERSION_OR_HASH)
-                  .isAggregate(true));
-    retval.insert("rose_date",
-                  Column().tableTitle("ROSE\nDate").symbol("rose_date").sql("test_results.rose_date")
-                  .doc("ROSE version or commit date")
-                  .type(ColumnType::TIME));
-    retval.insert("min_rose_date",
-                  Column().tableTitle("Earliest\nROSE").symbol("min_rose_date").sql("min(test_results.rose_date)")
-                  .doc("Earliest ROSE version or commit date")
-                  .type(ColumnType::TIME)
-                  .isAggregate(true));
-    retval.insert("max_rose_date",
-                  Column().tableTitle("Latest\nROSE").symbol("max_rose_date").sql("max(test_results.rose_date)")
-                  .doc("Latest ROSE version or commit date")
-                  .type(ColumnType::TIME)
-                  .isAggregate(true));
-    retval.insert("status",
-                  Column().tableTitle("Status").symbol("status").sql("test_results.status")
-                  .doc("Result status of test; phase at which test failed")
-                  .type(ColumnType::STRING));
-    retval.insert("duration",
-                  Column().tableTitle("Test\nDuration").symbol("duration").sql("test_results.duration")
-                  .doc("How long the test took not counting slave setup")
-                  .type(ColumnType::DURATION));
-    retval.insert("avg_duration",
-                  Column().tableTitle("Average\nDuration").symbol("avg_duration").sql("avg(test_results.duration)")
-                  .doc("Average length of time taken for the selected tests")
-                  .type(ColumnType::DURATION)
-                  .isAggregate(true));
-    retval.insert("max_duration",
-                  Column().tableTitle("Max\nDuration").symbol("max_duration").sql("max(test_results.duration)")
-                  .doc("Maximum length of time taken for any selected test")
-                  .type(ColumnType::DURATION)
-                  .isAggregate(true));
-    retval.insert("min_duration",
-                  Column().tableTitle("Min\nDuration").symbol("min_duration").sql("min(test_results.duration)")
-                  .doc("Minimum length of time taken for any selected test")
-                  .type(ColumnType::DURATION)
-                  .isAggregate(true));
-    retval.insert("output",
-                  Column().tableTitle("Lines of\nOutput").symbol("output").sql("test_results.noutput")
-                  .doc("Number of lines of output")
-                  .type(ColumnType::INTEGER));
-    retval.insert("avg_output",
-                  Column().tableTitle("Avg Lines\nof Output").symbol("avg_output").sql("avg(test_results.noutput)")
-                  .doc("Average number of lines of output for the selected tests")
-                  .type(ColumnType::INTEGER)
-                  .isAggregate(true));
-    retval.insert("max_output",
-                  Column().tableTitle("Max Lines\nof Output").symbol("max_output").sql("max(test_results.noutput)")
-                  .doc("Maximum number of lines of output for any selected test")
-                  .type(ColumnType::INTEGER)
-                  .isAggregate(true));
-    retval.insert("min_output",
-                  Column().tableTitle("Min Lines\nof Output").symbol("min_output").sql("min(test_results.noutput)")
-                  .doc("Minimum number of lines of output for any selected test")
-                  .type(ColumnType::INTEGER)
-                  .isAggregate(true));
-    retval.insert("warnings",
-                  Column().tableTitle("Number of\nWarnings").symbol("warnings").sql("test_results.nwarnings")
-                  .doc("Number of heuristically detected warning messages")
-                  .type(ColumnType::INTEGER));
-    retval.insert("avg_warnings",
-                  Column().tableTitle("Average\nWarnings").symbol("avg_warnings").sql("avg(test_results.nwarnings)")
-                  .doc("Average number of heuristically detected warning messages for the selected tests")
-                  .type(ColumnType::INTEGER)
-                  .isAggregate(true));
-    retval.insert("max_warnings",
-                  Column().tableTitle("Max\nWarnings").symbol("max_warnings").sql("max(test_results.nwarnings)")
-                  .doc("Maximum number of heuristically detected warning messages for any selected tests")
-                  .type(ColumnType::INTEGER)
-                  .isAggregate(true));
-    retval.insert("min_warnings",
-                  Column().tableTitle("Min\nWarnings").symbol("min_warnings").sql("min(test_results.nwarnings)")
-                  .doc("Minimum number of heuristically detected warning messages for any selected tests")
-                  .type(ColumnType::INTEGER)
-                  .isAggregate(true));
-    retval.insert("first_error",
-                  Column().tableTitle("First Error").symbol("first_error").sql("test_results.first_error")
-                  .doc("Heuristically detected first error message")
-                  .type(ColumnType::STRING));
     retval.insert("count",
-                  Column().tableTitle("Count").symbol("count").sql("count(*)")
+                  Column().tableTitle("Count").sql("count(*)")
                   .doc("Number of tests represented by each row of the result table")
                   .type(ColumnType::INTEGER)
                   .isAggregate(true));
+    retval.insert("duration",
+                  Column().tableTitle("Test\nDuration").sql("test_results.duration")
+                  .doc("How long the test took not counting slave setup")
+                  .type(ColumnType::DURATION));
+    retval.insert("duration.avg",
+                  Column().tableTitle("Average\nDuration").sql("avg(test_results.duration)")
+                  .doc("Average length of time taken for the selected tests")
+                  .type(ColumnType::DURATION)
+                  .isAggregate(true));
+    retval.insert("duration.max",
+                  Column().tableTitle("Max\nDuration").sql("max(test_results.duration)")
+                  .doc("Maximum length of time taken for any selected test")
+                  .type(ColumnType::DURATION)
+                  .isAggregate(true));
+    retval.insert("duration.min",
+                  Column().tableTitle("Min\nDuration").sql("min(test_results.duration)")
+                  .doc("Minimum length of time taken for any selected test")
+                  .type(ColumnType::DURATION)
+                  .isAggregate(true));
+    retval.insert("first_error",
+                  Column().tableTitle("First Error").sql("test_results.first_error")
+                  .doc("Heuristically detected first error message")
+                  .type(ColumnType::STRING));
+    retval.insert("id",
+                  Column().tableTitle("ID").sql("test_results.id")
+                  .doc("Test ID number")
+                  .type(ColumnType::INTEGER));
+    retval.insert("os",
+                  Column().tableTitle("Operating\nSystem").sql("test_results.os")
+                  .doc("Operating system")
+                  .type(ColumnType::STRING));
+    retval.insert("output",
+                  Column().tableTitle("Lines of\nOutput").sql("test_results.noutput")
+                  .doc("Number of lines of output")
+                  .type(ColumnType::INTEGER));
+    retval.insert("output.avg",
+                  Column().tableTitle("Avg Lines\nof Output").sql("avg(test_results.noutput)")
+                  .doc("Average number of lines of output for the selected tests")
+                  .type(ColumnType::INTEGER)
+                  .isAggregate(true));
+    retval.insert("output.max",
+                  Column().tableTitle("Max Lines\nof Output").sql("max(test_results.noutput)")
+                  .doc("Maximum number of lines of output for any selected test")
+                  .type(ColumnType::INTEGER)
+                  .isAggregate(true));
+    retval.insert("output.min",
+                  Column().tableTitle("Min Lines\nof Output").sql("min(test_results.noutput)")
+                  .doc("Minimum number of lines of output for any selected test")
+                  .type(ColumnType::INTEGER)
+                  .isAggregate(true));
+    retval.insert("pf",
+                  Column().tableTitle("P/F")
+                  .sql("case when status = 'end' then 'pass' else 'fail' end")
+                  .doc("The word \"pass\" if status is \"end\", otherwise the word \"fail\"")
+                  .type(ColumnType::STRING));
+    retval.insert("reporting_time",
+                  Column().tableTitle("Reporting Time").sql("test_results.reporting_time")
+                  .doc("Time at which results were reported")
+                  .type(ColumnType::TIME));
+    retval.insert("reporting_time.max",
+                  Column().tableTitle("Latest Report").sql("max(test_results.reporting_time)")
+                  .doc("Latest time at which results were reported")
+                  .type(ColumnType::TIME)
+                  .isAggregate(true));
+    retval.insert("reporting_time.min",
+                  Column().tableTitle("Earliest Report").sql("min(test_results.reporting_time)")
+                  .doc("Earliest time at which results were reported")
+                  .type(ColumnType::TIME)
+                  .isAggregate(true));
+    retval.insert("reporting_user",
+                  Column().tableTitle("Reporting User").sql("auth_identities.identity")
+                  .doc("User that reported the results")
+                  .type(ColumnType::STRING));
+    retval.insert("rose",
+                  Column().tableTitle("ROSE\nVersion").sql("test_results.rose")
+                  .doc("ROSE version number or commit hash")
+                  .type(ColumnType::VERSION_OR_HASH));
+    retval.insert("rose.max",
+                  Column().tableTitle("Max ROSE\nVersion").sql("max(test_results.rose)")
+                  .doc("Maximum ROSE version number or commit hash")
+                  .type(ColumnType::VERSION_OR_HASH)
+                  .isAggregate(true));
+    retval.insert("rose.min",
+                  Column().tableTitle("Min ROSE\nVersion").sql("min(test_results.rose)")
+                  .doc("Minimum ROSE version number or commit hash")
+                  .type(ColumnType::VERSION_OR_HASH)
+                  .isAggregate(true));
+    retval.insert("rose_date",
+                  Column().tableTitle("ROSE Date").sql("test_results.rose_date")
+                  .doc("ROSE version or commit date")
+                  .type(ColumnType::TIME));
+    retval.insert("rose_date.max",
+                  Column().tableTitle("Latest\nROSE Date").sql("max(test_results.rose_date)")
+                  .doc("Latest ROSE version or commit date")
+                  .type(ColumnType::TIME)
+                  .isAggregate(true));
+    retval.insert("rose_date.min",
+                  Column().tableTitle("Earliest\nROSE Date").sql("min(test_results.rose_date)")
+                  .doc("Earliest ROSE version or commit date")
+                  .type(ColumnType::TIME)
+                  .isAggregate(true));
+    retval.insert("slave",
+                  Column().tableTitle("Slave Name").sql("test_results.tester")
+                  .doc("Name of testing slave")
+                  .type(ColumnType::STRING));
+    retval.insert("status",
+                  Column().tableTitle("Status").sql("test_results.status")
+                  .doc("Result status of test; phase at which test failed")
+                  .type(ColumnType::STRING));
+    retval.insert("warnings",
+                  Column().tableTitle("Number of\nWarnings").sql("test_results.nwarnings")
+                  .doc("Number of heuristically detected warning messages")
+                  .type(ColumnType::INTEGER));
+    retval.insert("warnings.avg",
+                  Column().tableTitle("Average\nWarnings").sql("avg(test_results.nwarnings)")
+                  .doc("Average number of heuristically detected warning messages for the selected tests")
+                  .type(ColumnType::INTEGER)
+                  .isAggregate(true));
+    retval.insert("warnings.max",
+                  Column().tableTitle("Max\nWarnings").sql("max(test_results.nwarnings)")
+                  .doc("Maximum number of heuristically detected warning messages for any selected tests")
+                  .type(ColumnType::INTEGER)
+                  .isAggregate(true));
+    retval.insert("warnings.min",
+                  Column().tableTitle("Min\nWarnings").sql("min(test_results.nwarnings)")
+                  .doc("Minimum number of heuristically detected warning messages for any selected tests")
+                  .type(ColumnType::INTEGER)
+                  .isAggregate(true));
+
+    for (ColumnMap::Node &node: retval.nodes()) {
+        Column &c = node.value();
+        if (c.key().empty())
+            c.key(node.key());
+        if (c.identifier().empty())
+            c.identifier(boost::replace_all_copy(node.key(), ".", "_"));
+    }
 
     return retval;
+}
+
+static std::string
+findLatestRoseVersion(DB::Connection db) {
+    return db.stmt("select rose from test_results order by reporting_time desc limit 1").get<std::string>().orElse("");
 }
 
 static Sawyer::Optional<std::pair<time_t, time_t> >
@@ -421,7 +487,7 @@ parseDateTime(const Settings &settings, std::string s) {
     }
 
     bool usingLocalTime = true;
-    boost::regex utcRe("\\s*(z|Z|u|U|utc|UTC)");
+    boost::regex utcRe("\\s*(z|Z|u|U|utc|UTC|gmt|GMT)");
     if (s.empty()) {
         usingLocalTime = settings.usingLocalTime;
     } else if (boost::regex_match(s, utcRe)) {
@@ -444,34 +510,66 @@ parseDateTime(const Settings &settings, std::string s) {
     return std::make_pair(tmin, tmax);
 }
 
+static std::string
+sqlComparison(const std::string &s) {
+    if ("=" == s) {
+        return " = ";
+    } else if ("/" == s) {
+        return " <> ";
+    } else if ("~" == s) {
+        return " like ";
+    } else if ("^" == s) {
+        return " not like ";
+    } else if ("-" == s) {
+        return " <= ";
+    } else if ("+" == s) {
+        return " >= ";
+    } else {
+        ASSERT_not_reachable("unknown comparison operator \"" + s + "\"");
+    }
+}
+
 // Adjust the column so it's constrained as specified by the comparison and value. The key is the name of the column
 // from the command-line and is used in error messages.
 static void
 constrainColumn(const Settings &settings, Column &c, const std::string &key, const std::string &comparison,
                 const std::string &value) {
     switch (c.type()) {
-        case ColumnType::VERSION_OR_HASH:
-            if ("=" == comparison) {
-                // Special cases for comparing ROSE commit hashes to allow specifying abbreviated hashes.
-                boost::regex partialKeyRe("([0-9a-f]{1,39})(\\+local)?");
-                boost::smatch matches;
-                if (boost::regex_match(value, matches, partialKeyRe)) {
-                    c.constraintExpr(c.sqlAlias() + " like ?" + c.symbol());
-                    c.constraintBinding(c.symbol(), matches.str(1) + "%" + matches.str(2));
-                } else {
-                    c.constraintExpr(c.sqlAlias() + " = ?" + c.symbol());
-                    c.constraintBinding(c.symbol(), value);
+        case ColumnType::VERSION_OR_HASH: {
+            boost::regex partialKeyRe("([0-9a-f]{1,39})(\\+local)?");
+            boost::smatch found;
+            if (boost::regex_match(value, found, partialKeyRe)) {
+                // Special cases for comparing ROSE abbreviated commit hashes
+                const std::string abbrHash = found.str(1);
+                const std::string local = found.str(2);
+                if ("=" == comparison || "/" == comparison) {
+                    const std::string sqlOp = "=" == comparison ? " like " : " not like ";
+                    c.constraintExpr(c.sql() + sqlOp + "?" + c.sqlAlias());
+                    c.constraintBinding(c.sqlAlias(), abbrHash + "%" + local);
+                    break;
+                } else if ("-" == comparison) {
+                    const std::string fullHash = abbrHash + std::string(40-abbrHash.size(), 'f') + local;
+                    c.constraintExpr(c.sql() + " <= ?" + c.sqlAlias());
+                    c.constraintBinding(c.sqlAlias(), fullHash);
+                    break;
+                } else if ("+" == comparison) {
+                    const std::string fullHash = abbrHash + std::string(40-abbrHash.size(), '0') + local;
+                    c.constraintExpr(c.sql() + " >= ?" + c.sqlAlias());
+                    c.constraintBinding(c.sqlAlias(), fullHash);
+                    break;
                 }
-                break;
             }
+        }
             // fall through to string comparison
         case ColumnType::STRING:
-            if ("=" == comparison) {
-                c.constraintExpr(c.sqlAlias() + " = ?" + c.symbol());
-                c.constraintBinding(c.symbol(), value);
-            } else if ("~" == comparison) {
-                c.constraintExpr(c.sqlAlias() + " like ?" + c.symbol());
-                c.constraintBinding(c.symbol(), "%" + value + "%");
+            if ("=" == comparison || "/" == comparison || "-" == comparison || "+" == comparison) {
+                const std::string sqlOp = sqlComparison(comparison);
+                c.constraintExpr(c.sql() + sqlOp + "?" + c.sqlAlias());
+                c.constraintBinding(c.sqlAlias(), value);
+            } else if ("~" == comparison || "^" == comparison) {
+                const std::string sqlOp = sqlComparison(comparison);
+                c.constraintExpr(c.sql() + sqlOp + "?" + c.sqlAlias());
+                c.constraintBinding(c.sqlAlias(), "%" + value + "%");
             } else {
                 mlog[FATAL] <<"field \"" <<key <<"\" cannot be constrained with \"" <<comparison <<"\" operator\n";
                 exit(1);
@@ -479,9 +577,10 @@ constrainColumn(const Settings &settings, Column &c, const std::string &key, con
             break;
 
         case ColumnType::INTEGER:
-            if ("=" == comparison) {
-                c.constraintExpr(c.sqlAlias() + " " + comparison + " ?" + c.symbol());
-                c.constraintBinding(c.symbol(), value);
+            if ("=" == comparison || "/" == comparison || "-" == comparison || "+" == comparison) {
+                const std::string sqlOp = sqlComparison(comparison);
+                c.constraintExpr(c.sql() + sqlOp + "?" + c.sqlAlias());
+                c.constraintBinding(c.sqlAlias(), value);
             } else {
                 mlog[FATAL] <<"field \"" <<key <<"\" cannot be constrained with \"" <<comparison <<"\" operator\n";
                 exit(1);
@@ -490,12 +589,26 @@ constrainColumn(const Settings &settings, Column &c, const std::string &key, con
 
         case ColumnType::TIME:
             // Allow for ranges of time to be used when only a date is specified
-            if ("=" == comparison) {
+            if ("=" == comparison || "/" == comparison || "-" == comparison || "+" == comparison) {
                 if (Sawyer::Optional<std::pair<time_t, time_t>> range = parseDateTime(settings, value)) {
-                    c.constraintExpr(c.sqlAlias() + " >= ?min_" + c.symbol() + " and " +
-                                     c.sqlAlias() + " <= ?max_" + c.symbol());
-                    c.constraintBinding("min_" + c.symbol(), range->first);
-                    c.constraintBinding("max_" + c.symbol(), range->second);
+                    if ("=" == comparison) {
+                        c.constraintExpr(c.sql() + " >= ?min_" + c.sqlAlias() + " and " +
+                                         c.sql() + " <= ?max_" + c.sqlAlias());
+                        c.constraintBinding("min_" + c.sqlAlias(), range->first);
+                        c.constraintBinding("max_" + c.sqlAlias(), range->second);
+                    } else if ("/" == comparison) {
+                        c.constraintExpr(c.sql() + " < ?min_" + c.sqlAlias() + " or " +
+                                         c.sql() + " > ?max_" + c.sqlAlias());
+                        c.constraintBinding("min_" + c.sqlAlias(), range->first);
+                        c.constraintBinding("max_" + c.sqlAlias(), range->second);
+                    } else if ("-" == comparison) {
+                        c.constraintExpr(c.sql() + " <= ?" + c.sqlAlias());
+                        c.constraintBinding(c.sqlAlias(), range->second);
+                    } else {
+                        ASSERT_require("+" == comparison);
+                        c.constraintExpr(c.sql() + " >= ?" + c.sqlAlias());
+                        c.constraintBinding(c.sqlAlias(), range->first);
+                    }
                 } else {
                     mlog[FATAL] <<"invalid date/time value in constraint for \"" <<key <<"\": "
                                 <<"\"" <<StringUtility::cEscape(value) <<"\"\n";
@@ -508,9 +621,10 @@ constrainColumn(const Settings &settings, Column &c, const std::string &key, con
             break;
 
         case ColumnType::DURATION:
-            if ("=" == comparison) {
-                c.constraintExpr(c.sqlAlias() + " = ?" + c.symbol());
-                c.constraintBinding(c.symbol(), Rose::CommandLine::DurationParser::parse(value));
+            if ("=" == comparison || "/" == comparison || "-" == comparison || "+" == comparison) {
+                const std::string sqlOp = sqlComparison(comparison);
+                c.constraintExpr(c.sql() + sqlOp + "?" + c.sqlAlias());
+                c.constraintBinding(c.sqlAlias(), Rose::CommandLine::DurationParser::parse(value));
             } else {
                 mlog[FATAL] <<"field \"" <<key <<"\" cannot be constrained with \"" <<comparison <<"\" operator\n";
                 exit(1);
@@ -534,7 +648,7 @@ nDisplayed(const ColumnList &cols) {
 static bool
 isDisplayed(const ColumnList &cols, const std::string &key) {
     for (const Column &c: cols) {
-        if (c.symbol() == key && c.isDisplayed())
+        if (c.key() == key && c.isDisplayed())
             return true;
     }
     return false;
@@ -544,10 +658,43 @@ isDisplayed(const ColumnList &cols, const std::string &key) {
 static Sawyer::Optional<size_t>
 find(const ColumnList &cols, const std::string &key) {
     for (size_t i = 0; i < cols.size(); ++i) {
-        if (cols[i].symbol() == key)
+        if (cols[i].key() == key)
             return i;
     }
     return Sawyer::Nothing();
+}
+
+static Column&
+appendColumn(ColumnList &cols, const Column &col) {
+    static Sawyer::Container::Map<std::string /*column_key*/, size_t /*count*/> suffixes;
+    cols.push_back(col);
+    cols.back().sqlSuffix(++suffixes.insertMaybe(col.key(), 0));
+    return cols.back();
+}
+
+static void
+showConstraint(const std::string &name, const std::string &comparison, const std::string &value) {
+    SAWYER_MESG(mlog[INFO]) <<(boost::format("  %-16s %s \"%s\"\n") % name % comparison % StringUtility::cEscape(value));
+}
+
+// Constrain ROSE version if appropriate
+static void
+maybeConstrainRoseVersion(const Settings &settings, DB::Connection db, ColumnList &cols, const ColumnMap &decls) {
+    if (settings.considerAll)
+        return;
+
+    for (const Column &c: cols) {
+        if ((c.key() == "rose" || c.key() == "rose_date") && !c.constraintExpr().empty())
+            return;
+    }
+
+    std::string roseVersion = findLatestRoseVersion(db);
+    if (!roseVersion.empty()) {
+        Column &c = appendColumn(cols, decls["rose"]);
+        c.constraintExpr(c.sql() + " = ?" + c.sqlAlias());
+        c.constraintBinding(c.sqlAlias(), roseVersion);
+        showConstraint("rose", "=", roseVersion);
+    }
 }
 
 // Display all columns that we haven't chosen to display yet and which don't have constraints
@@ -555,12 +702,11 @@ static void
 displayMoreColumns(ColumnList &cols, const ColumnMap &decls) {
     for (const Column &decl: decls.values()) {
         if (!decl.isAggregate()) {
-            if (auto idx = find(cols, decl.symbol())) {
+            if (auto idx = find(cols, decl.key())) {
                 if (cols[*idx].constraintExpr().empty())
                     cols[*idx].isDisplayed(true);
             } else {
-                cols.push_back(decl);
-                cols.back().isDisplayed(true);
+                appendColumn(cols, decl).isDisplayed(true);
             }
         }
     }
@@ -596,8 +742,19 @@ static std::string
 buildWhereClause(const ColumnList &cols) {
     std::string s;
     for (const Column &c: cols) {
-        if (!c.constraintExpr().empty())
+        if (!c.constraintExpr().empty() && !c.isAggregate())
             s += (s.empty() ? " where " : " and ") + c.constraintExpr();
+    }
+    return s;
+}
+
+// Build an optional HAVING clause for the constrained aggregate columns
+static std::string
+buildHavingClause(const ColumnList &cols) {
+    std::string s;
+    for (const Column &c: cols) {
+        if (!c.constraintExpr().empty() && c.isAggregate())
+            s += (s.empty() ? " having " : " and ") + c.constraintExpr();
     }
     return s;
 }
@@ -634,6 +791,7 @@ buildStatement(const Settings &settings, DB::Connection db, const ColumnList &co
                       " join auth_identities on test_results.reporting_user = auth_identities.id" +
                       buildWhereClause(cols) +
                       buildGroupByClause(cols) +
+                      buildHavingClause(cols) +
                       buildOrderedByClause(cols);
     if (settings.limit) {
         sql += " limit " + boost::lexical_cast<std::string>(*settings.limit);
@@ -660,6 +818,9 @@ buildTableColumnHeaders(FormattedTable &table, const ColumnList &cols) {
 
 static std::string
 formatValue(const Settings &settings, const Column &c, const std::string &value) {
+    if (Format::SHELL == settings.outputFormat)
+        return value;
+
     switch (c.type()) {
         case ColumnType::STRING:
         case ColumnType::INTEGER:
@@ -668,7 +829,7 @@ formatValue(const Settings &settings, const Column &c, const std::string &value)
 
         case ColumnType::TIME: {
             time_t when = boost::lexical_cast<time_t>(value);
-            std::string s = timeToLocal(when);
+            std::string s = settings.usingLocalTime ? timeToLocal(when) : timeToGmt(when);
             if (settings.showAges)
                 s += ", " + approximateAge(when);
             return s;
@@ -699,9 +860,9 @@ emitTable(const Settings &settings, FormattedTable &table, DB::Row &row, const C
         }
 
         if (c.isSelected()) {
-            if (c.symbol() == "count") {
+            if (c.key() == "count") {
                 nTests += row.get<size_t>(j).orElse(0);
-            } else if (c.symbol() == "id") {
+            } else if (c.key() == "id") {
                 testIds.insert(*row.get<size_t>(j));
             }
             ++j;
@@ -718,7 +879,7 @@ emitYaml(const Settings &settings, DB::Row &row, const ColumnList &cols, std::se
         if (c.isDisplayed()) {
             if (auto value = row.get<std::string>(j)) {
                 const std::string formatted = formatValue(settings, c, *value);
-                std::cout <<(0 == j ? "- " : "  ") <<c.symbol() <<": " <<StringUtility::yamlEscape(*value);
+                std::cout <<(0 == j ? "- " : "  ") <<c.identifier() <<": " <<StringUtility::yamlEscape(*value);
                 if (*value != formatted)
                     std::cout <<" # " <<formatted;
                 std::cout <<"\n";
@@ -726,9 +887,9 @@ emitYaml(const Settings &settings, DB::Row &row, const ColumnList &cols, std::se
         }
 
         if (c.isSelected()) {
-            if (c.symbol() == "count") {
+            if (c.key() == "count") {
                 nTests += row.get<size_t>(j).orElse(0);
-            } else if (c.symbol() == "id") {
+            } else if (c.key() == "id") {
                 testIds.insert(*row.get<size_t>(j));
             }
             ++j;
@@ -740,40 +901,28 @@ emitYaml(const Settings &settings, DB::Row &row, const ColumnList &cols, std::se
 static void
 emitDeclarations(const Settings &settings, const ColumnMap &columnDecls) {
     FormattedTable table;
-    table.columnHeader(0, 0, "Key[1]");
+    table.columnHeader(0, 0, "Command Line");
     table.columnHeader(0, 1, "Description");
-    table.columnHeader(0, 2, "SQL expr");
+    table.columnHeader(0, 2, "YAML key");
+    table.columnHeader(0, 3, "SQL expr");
     for (const Column &c: columnDecls.values()) {
         if (Format::YAML == settings.outputFormat) {
-            std::cout <<"- key: " <<StringUtility::yamlEscape(c.symbol()) <<"\n";
+            std::cout <<"- key: " <<StringUtility::yamlEscape(c.key()) <<"\n";
+            std::cout <<"  yaml_key: " <<StringUtility::yamlEscape(c.identifier()) <<"\n";
             std::cout <<"  sql: " <<StringUtility::yamlEscape(c.sql()) <<"\n";
             std::cout <<"  description: " <<StringUtility::yamlEscape(c.doc()) <<"\n";
         } else {
             const size_t i = table.nRows();
-            table.insert(i, 0, c.symbol());
+            table.insert(i, 0, c.key());
             table.insert(i, 1, c.doc());
-            table.insert(i, 2, c.sql());
+            table.insert(i, 2, c.identifier());
+            table.insert(i, 3, c.sql());
         }
     }
 
-    switch (settings.outputFormat) {
-        case Format::PLAIN:
-            std::cout <<table
-                      <<"Footnote [1]: The key is what you use on the command-line, and also appears in YAML output\n";
-            break;
-        case Format::HTML:
-            table.format(FormattedTable::Format::HTML);
-            std::cout <<table
-                      <<"<p>Footnote [1]: The key is what you use on the command-line, and also appears in YAML "
-                      <<"output</p>\n";
-            break;
-        case Format::YAML:
-            break;
-        case Format::CSV:
-        case Format::SHELL:
-            table.format(tableFormat(settings.outputFormat));
-            std::cout <<table;
-            break;
+    if (Format::YAML != settings.outputFormat) {
+        table.format(tableFormat(settings.outputFormat));
+        std::cout <<table;
     }
 }
 
@@ -784,18 +933,26 @@ main(int argc, char *argv[]) {
 
     Settings settings;
     std::vector<std::string> args = parseCommandLine(argc, argv, settings);
-    auto db = DB::Connection::fromUri(settings.databaseUri);
+    DB::Connection db = connectToDatabase(settings.databaseUri, mlog);
     const ColumnMap columnDecls = loadColumns(db);
 
-    // Parse positional command-line positional arguments. They are either constraints or column names to display.
-    boost::regex nameRe("[_a-zA-Z][_a-zA-Z0-9]*");
-    boost::regex exprRe("([_a-zA-Z][_a-zA-Z0-9]*)([=~])(.*)");
-    boost::regex nameSortRe("([_a-zA-Z][_a-zA-Z0-9]*)(\\.[ud])?");
-    std::vector<Column> cols;
+    // Patterns
+    const std::string identifier = "(?:[a-zA-Z]\\w*)";
+    const std::string qualifier = "(?:\\.(?:avg|max|min))";
+    const std::string columnName = "(?:" + identifier + qualifier + "?)";
+    const std::string sort = "(?:\\.[ad])";
+    const std::string comparisonOperator = "[-+=/~^]";
+    const std::string value = ".*";
 
-    for (const std::string &arg: args) {
+    const boost::regex displayRe("(" + columnName + ")(" + sort + ")?");
+    const boost::regex expressionRe("(" + columnName + ")(" + comparisonOperator + ")(" + value + ")");
+
+
+    // Parse positional command-line positional arguments. They are either constraints or column names to display.
+    std::vector<Column> cols;
+     for (const std::string &arg: args) {
         boost::smatch exprParts;
-        if (boost::regex_match(arg, exprParts, exprRe)) {
+        if (boost::regex_match(arg, exprParts, expressionRe)) {
             // Arguments of the form <KEY><OPERATOR><VALUE> constrain the results.  This key column will be emitted above the
             // table instead of within the table (since the column within the table would have one value across all the rows.
             const std::string key = exprParts.str(1);
@@ -808,10 +965,9 @@ main(int argc, char *argv[]) {
                 exit(1);
             }
 
-            const Column &decl = columnDecls[key];
-            cols.push_back(decl);
-            SAWYER_MESG(mlog[INFO]) <<(boost::format("  %-16s %s \"%s\"\n") % key % comparison % StringUtility::cEscape(value));
-            constrainColumn(settings, cols.back(), key, comparison, value);
+            Column &c = appendColumn(cols, columnDecls[key]);
+            showConstraint(key, comparison, value);
+            constrainColumn(settings, c, key, comparison, value);
 
         } else if ("list" == arg) {
             // List all the column information
@@ -821,7 +977,7 @@ main(int argc, char *argv[]) {
         } else if ("all" == arg) {
             displayMoreColumns(cols, columnDecls);
 
-        } else if (boost::regex_match(arg, exprParts, nameSortRe)) {
+        } else if (boost::regex_match(arg, exprParts, displayRe)) {
             // A column name all by itself (or with a sort direction) means display the column
             const std::string key = exprParts.str(1);
             const std::string sorted = exprParts.str(2);
@@ -834,13 +990,12 @@ main(int argc, char *argv[]) {
             if (isDisplayed(cols, key)) {
                 mlog[WARN] <<"duplicate display request for \"" <<key <<"\" is ignored\n";
             } else {
-                const Column &decl = columnDecls[key];
-                cols.push_back(decl);
-                cols.back().isDisplayed(true);
-                if (".u" == sorted) {
-                    cols.back().sorted(Sorted::ASCENDING);
+                Column &c = appendColumn(cols, columnDecls[key]);
+                c.isDisplayed(true);
+                if (".a" == sorted) {
+                    c.sorted(Sorted::ASCENDING);
                 } else if (".d" == sorted) {
-                    cols.back().sorted(Sorted::DESCENDING);
+                    c.sorted(Sorted::DESCENDING);
                 } else {
                     ASSERT_require("" == sorted);
                 }
@@ -851,6 +1006,7 @@ main(int argc, char *argv[]) {
             exit(1);
         }
     }
+    maybeConstrainRoseVersion(settings, db, cols, columnDecls);
 
     // If we're deleting records, then the test ID must be one of the things we're selecting. But don't select it
     // automatically--make the user do it so we know that they know what they're doing.
@@ -870,7 +1026,7 @@ main(int argc, char *argv[]) {
     // Make sure counts is selected (even it not displayed) so we can report how many tests matched.
     if (auto idx = find(cols, "count")) {
     } else {
-        cols.push_back(columnDecls["count"]);
+        appendColumn(cols, columnDecls["count"]);
     }
 
     // Run the query
@@ -890,6 +1046,8 @@ main(int argc, char *argv[]) {
             switch (settings.outputFormat) {
                 case Format::PLAIN:
                 case Format::HTML:
+                case Format::CSV:
+                case Format::SHELL:
                     nTests += emitTable(settings, table, row, cols, testIds /*out*/);
                     break;
                 case Format::YAML:
@@ -900,11 +1058,15 @@ main(int argc, char *argv[]) {
     }
     switch (settings.outputFormat) {
         case Format::PLAIN:
-        case Format::CSV:
-        case Format::SHELL:
             table.format(tableFormat(settings.outputFormat));
             std::cout <<table
                       <<StringUtility::plural(nTests, "matching tests") <<"\n";
+            break;
+        case Format::CSV:
+        case Format::SHELL:
+            table.format(tableFormat(settings.outputFormat));
+            std::cout <<table;
+            SAWYER_MESG(mlog[INFO]) <<StringUtility::plural(nTests, "matching tests") <<"\n";
             break;
         case Format::HTML:
             table.format(FormattedTable::Format::HTML);

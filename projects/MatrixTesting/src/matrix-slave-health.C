@@ -90,10 +90,10 @@ slaveName() {
     char buf[64];
 
     std::string userName;
-    if (getlogin_r(buf, sizeof buf) == 0) {
-        userName = buf;
-    } else if (const char *s = getenv("USER")) {
+    if (const char *s = getenv("USER")) {
         userName = s;
+    } else if (getlogin_r(buf, sizeof buf) == 0) {
+        userName = buf;
     } else {
         userName = "unknown";
     }
@@ -178,14 +178,7 @@ main(int argc, char *argv[]) {
 
     Settings settings;
     std::string event = parseCommandLine(argc, argv, settings);
-    if (settings.databaseUri.empty()) {
-        mlog[FATAL] <<"no database specified\n";
-        mlog[INFO] <<"You need to use the --database switch, or set your ROSE_MATRIX_DATABASE environment\n"
-                   <<"variable. See the \"Testing\" section of https://toc.rosecompiler.org for the proper\n"
-                   <<"setting.\n";
-        exit(1);
-    }
-    auto db = DB::Connection::fromUri(settings.databaseUri);
+    DB::Connection db = connectToDatabase(settings.databaseUri, mlog);
 
     if ("show" == event) {
         const time_t earliest = settings.maxAge < now() ? now() - settings.maxAge : 0;
@@ -238,7 +231,7 @@ main(int argc, char *argv[]) {
                     const std::string os = row.get<std::string>(0).orElse("");
                     const auto duration = row.get<uint64_t>(1);
                     const std::string durationStr = duration ? Rose::CommandLine::DurationParser::toString(duration) : "";
-                    if (Format::YAML == settings.outputFormat) {https://datatracker.ietf.org/doc/html/rfc4180
+                    if (Format::YAML == settings.outputFormat) {
                         std::cout <<"  os: " <<os <<"\n";
                         if (duration)
                             std::cout <<"  duration: " <<*duration <<" # " <<durationStr <<"\n";

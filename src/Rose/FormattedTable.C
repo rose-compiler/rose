@@ -255,12 +255,10 @@ FormattedTable::cellPropertiesBegin(const CellProperties &props) const {
             break;
 
         case Format::HTML:
-            retval += "<span style=\"";
             if (auto hsv = props.foreground())
                 retval += "color: " + hsv->toHtml() + ";";
             if (auto hsv = props.background())
                 retval += "background-color: " + hsv->toHtml() + ";";
-            retval += "\">";
             break;
 
         case Format::CSV:
@@ -272,19 +270,21 @@ FormattedTable::cellPropertiesBegin(const CellProperties &props) const {
 
 std::string
 FormattedTable::cellPropertiesEnd(const CellProperties &props) const {
+    std::string retval;
     switch (format_) {
         case Format::PLAIN:
             if (Rose::CommandLine::genericSwitchArgs.colorization.isEnabled())
-                return "\033[0m";
-            return "";
+                retval = "\033[0m";
+            break;
 
         case Format::HTML:
-            return "</span>";
+            break;
 
         case Format::CSV:
         case Format::SHELL:
-            return "";
+            break;
     }
+    return retval;
 }
 
 void
@@ -338,12 +338,10 @@ FormattedTable::printRow(std::ostream &out, const std::vector<size_t> &widths, c
                         out <<"text-align: center;";
                         break;
                 }
+                out <<cellPropertiesBegin(props[j]);
+                out <<"\">";
                 const std::string s = row[j].empty() ? "&nbsp;" : row[j];
-                out <<"\">"
-                    <<cellPropertiesBegin(props[j])
-                    <<s
-                    <<cellPropertiesEnd(props[j])
-                    <<"</td>\n";
+                out <<s <<"</td>\n";
             }
             out <<"</tr>\n";
             break;

@@ -34,6 +34,14 @@ void virtualFunctionsTxt( std::ostream& os,
                           bool withOverridden = false
                         );
 
+/// writes out the virtual base class initialization order as text for
+///   classes that have virtual base classes.
+void virtualBaseClassInitOrderTxt( std::ostream& os,
+                                   ClassNameFn& className,
+                                   ClassFilterFn include,
+                                   const ClassAnalysis& classes
+                                 );
+
 /// writes out the class layout as text
 void classLayoutTxt( std::ostream& os,
                      ClassNameFn& className,

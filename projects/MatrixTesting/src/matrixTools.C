@@ -1,13 +1,28 @@
 #include "matrixTools.h"
 
 #include <Rose/StringUtility/Diagnostics.h>
+#include <Rose/StringUtility/Escape.h>
 #include <Rose/StringUtility/SplitJoin.h>
 #include <Sawyer/Database.h>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/format.hpp>
 #include <boost/regex.hpp>
 
+using namespace Rose;
+using namespace Sawyer::Message::Common;
 namespace DB = Sawyer::Database;
+
+DB::Connection
+connectToDatabase(const std::string &uri, Sawyer::Message::Facility &mlog) {
+    if (uri.empty()) {
+        mlog[FATAL] <<"no database specified\n";
+        mlog[INFO] <<"You need to use the --database switch, or set your ROSE_MATRIX_DATABASE environment\n"
+                   <<"variable. See the \"Testing\" section of https://toc.rosecompiler.org for the proper\n"
+                   <<"setting.\n";
+        exit(1);
+    }
+    return DB::Connection::fromUri(uri);
+}
 
 void
 insertDatabaseSwitch(Sawyer::CommandLine::SwitchGroup &sg, std::string &uri) {
@@ -76,6 +91,18 @@ timeToLocal(time_t t) {
 }
 
 std::string
+timeToGmt(time_t t) {
+    struct tm tm;
+    std::string tz;
+    gmtime_r(&t, &tm);
+    tz = tm.tm_zone;
+    return (boost::format("%04d-%02d-%02d %02d:%02d:%02d %s")
+            % (tm.tm_year + 1900) % (tm.tm_mon + 1) % tm.tm_mday
+            % tm.tm_hour % tm.tm_min % tm.tm_sec
+            % tz).str();
+}
+
+std::string
 abbreviatedVersion(const std::string &s) {
     boost::regex sha1("([0-9a-f]{40})(\\+local)?");
 
@@ -123,31 +150,100 @@ approximateAge(time_t t) {
 
 std::string dependencyColumns() {
     //      0     1      2        3        4          5
-    return "name, value, comment, enabled, supported, os_list";
+    return "name, value, comment, enabled, supported, restrictions";
+}
+
+std::vector<std::string>
+splitIntoWords(const std::string &s) {
+    std::vector<std::string> words;
+    std::string word;
+    for (char ch: s) {
+        if (::isspace(ch)) {
+            if (!word.empty()) {
+                words.push_back(word);
+                word = "";
+            }
+        } else {
+            word += ch;
+        }
+    }
+    if (!word.empty())
+        words.push_back(word);
+    return words;
 }
 
 // Load depencency info
 DependencyList
 loadDependencies(DB::Statement stmt) {
     DependencyList deps;
-    for (auto row: stmt) {
-        deps.push_back(Dependency{
-                    .name = *row.get<std::string>(0),
-                    .value = *row.get<std::string>(1),
-                    .comment = row.get<std::string>(2).orElse(""),
-                    .enabled = *row.get<bool>(3),
-                    .supported = *row.get<bool>(4)});
+    boost::regex osRe("([a-zA-Z]\\w*):(\\d+(\\.\\d+)*)");    // OS_NAME ':' VERSION_WOUT_DOTS
+    boost::regex nameOpValueRe("([a-zA-Z]\\w*)([=/~^])(.*)"); // NAME OPERATOR VALUE
 
-        std::vector<std::string> osNames = Rose::StringUtility::split(" ", row.get<std::string>(5).orDefault());
-        for (std::string &osName: osNames) {
-            boost::trim(osName);
-            if (boost::ends_with(osName, ","))
-                osName = osName.substr(0, osName.size()-1);
+    for (auto row: stmt) {
+        deps.push_back(Dependency());
+        Dependency &d = deps.back();
+
+        d.name = row.get<std::string>(0).orElse("null");
+        d.value = row.get<std::string>(1).orElse("null");
+        d.comment = row.get<std::string>(2).orElse("");
+        d.enabled = row.get<bool>(3).orElse(false);
+        d.supported = row.get<bool>(4).orElse(false);
+
+        if (auto restrictions = row.get<std::string>(5)) {
+            boost::smatch found;
+            std::vector<std::string> parts = splitIntoWords(*restrictions);
+            for (const std::string &part: parts) {
+                if (boost::regex_match(part, found, osRe)) {
+                    d.osNames.insert(part);
+                } else if (boost::regex_match(part, found, nameOpValueRe)) {
+                    const std::string otherDepName = found.str(1);
+                    const std::string relationship = found.str(2);
+                    const std::string otherValue = found.str(3);
+                    d.constraints.insertMaybeDefault(otherDepName)
+                        .push_back(Dependency::ConstraintRhs(relationship, otherValue));
+                } else {
+                    throw std::runtime_error("error in constraint \"" + StringUtility::cEscape(part) + "\"" +
+                                             " for dependency \"" + StringUtility::cEscape(d.name) + "\"" +
+                                             " value \"" + StringUtility::cEscape(d.value) + "\n");
+                }
+            }
         }
-        osNames.erase(std::remove(osNames.begin(), osNames.end(), std::string()), osNames.end());
-        deps.back().osNames = std::set<std::string>(osNames.begin(), osNames.end());
     }
     return deps;
+}
+
+// Update an existing dependency
+void
+updateDependency(DB::Connection db, const Dependency &dep) {
+#ifndef NDEBUG
+    bool exists = 1 == (db.stmt("select count(*) from dependencies where name = ?name and value = ?value")
+                        .bind("name", dep.name)
+                        .bind("value", dep.value)
+                        .get<size_t>().get());
+    ASSERT_require(exists);
+#endif
+
+    std::string r;
+    for (const std::string &os: dep.osNames)
+        r += (r.empty() ? "" : " ") + os;
+    for (const Dependency::Constraints::Node &node: dep.constraints.nodes()) {
+        for (const Dependency::ConstraintRhs &rhs: node.value())
+            r += (r.empty() ? "" : " ") + node.key() + rhs.comparison + rhs.value;
+    }
+
+    db.stmt("update dependencies"
+            " set enabled = ?enabled,"
+            "     supported = ?supported,"
+            "     comment = ?comment,"
+            "     restrictions = ?restrictions"
+            " where name = ?name and value = ?value")
+        .bind("enabled", dep.enabled ? 1 : 0)
+        .bind("supported", dep.supported ? 1 : 0)
+        .bind("comment", dep.comment)
+        .bind("restrictions", r)
+        .bind("name", dep.name)
+        .bind("value", dep.value)
+        .run();
 }
 
 Rose::FormattedTable::Format

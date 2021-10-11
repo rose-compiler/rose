@@ -14,6 +14,7 @@ namespace CodeThorn {
     normalization,
     extractAssertionTraces,
     classHierarchyAnalysis,
+    virtualFunctionAnalysis,
     variableIdMapping,
     labeler,
     //functionCallMapping,

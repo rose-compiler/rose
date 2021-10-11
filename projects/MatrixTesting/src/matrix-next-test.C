@@ -94,7 +94,7 @@ loadLanguageFailureCounts(const Settings &settings, DB::Connection db) {
 
 using DependencyMap = Sawyer::Container::Map<std::string /*name*/, DependencyList>;
 
-// Load all dependendencies from the database
+// Load all dependendencies from the database, pruning away those that don't match the operating system.
 static DependencyMap
 loadAllDependencies(const Settings &settings, DB::Connection db) {
     auto stmt = db.stmt("select " + dependencyColumns() + " from dependencies where enabled <> 0" +
@@ -140,6 +140,14 @@ listEntireSpace(const Settings &settings, const DependencyMap &dependencies) {
 // fewest errors.
 static std::string
 chooseLanguageSet(const FailuresPerLanguageSet &failuresPerLanguageSet, const DependencyList &choices) {
+    ASSERT_forbid(choices.empty());
+    if (mlog[DEBUG]) {
+        mlog[DEBUG] <<"choose language set from (";
+        for (const Dependency &choice: choices)
+            mlog[DEBUG] <<" " <<choice.value;
+        mlog[DEBUG] <<" )\n";
+    }
+
     // Find maximum number of failures for any language set
     size_t maxFailures = 0;
     for (const Dependency &choice: choices) {
@@ -159,35 +167,186 @@ chooseLanguageSet(const FailuresPerLanguageSet &failuresPerLanguageSet, const De
 
     // Choose one
     size_t idx = Sawyer::fastRandomIndex(wchoices.size());
+    SAWYER_MESG(mlog[DEBUG]) <<"  returning languages = " <<wchoices[idx] <<"\n";
     return wchoices[idx];
 }
 
+struct HasValue {
+    const std::string &value;
+    HasValue(const std::string &value)
+        : value(value) {}
+    bool operator()(const Dependency &d) const {
+        return d.value == value;
+    }
+};
+
+
+// Adjust dependencies by eliminating all language sets but the specified one.
 static void
-showRandomPoint(const Settings &settings, const DependencyMap &dependencies, const FailuresPerLanguageSet &failuresPerLanguageSet) {
-    for (const DependencyList &depList: dependencies.values()) {
-        ASSERT_forbid(depList.empty());
-        std::string chosenValue;
-        if (settings.balanceFailures && "languages" == depList[0].name) {
-            chosenValue = chooseLanguageSet(failuresPerLanguageSet, depList);
-        } else {
-            size_t idx = Sawyer::fastRandomIndex(depList.size());
-            chosenValue = depList[idx].value;
+restrictLanguages(const Settings &settings, DependencyMap &dependencies /*in,out*/, const std::string &languages) {
+    ASSERT_require(dependencies.exists("languages"));
+    DependencyList &deps = dependencies["languages"];
+    deps.erase(std::remove_if(deps.begin(), deps.end(), HasValue(languages)), deps.end());
+    ASSERT_forbid(deps.empty());
+}
+
+struct TestRestrictions {
+    const DependencyMap &dependencies;
+    TestRestrictions(const DependencyMap &dependencies)
+        : dependencies(dependencies) {}
+
+
+    bool operator()(const Dependency &d) const {
+        return !restrictionsPass(d);
+    }
+
+    bool restrictionsPass(const Dependency &d) const {
+        Sawyer::Message::Stream debug(mlog[DEBUG]);
+        // For the dependency whose values are under consideration (d) individually consider each of the dependency names to
+        // which its constraints refer. E.g., when considering the "tup" dependency, there's probably constraings that
+        // depend on the chosen value of the "languages" dependency since Tup only works for binary analysis.
+        for (auto node: d.constraints.nodes()) {
+            const std::string &otherDepName = node.key();
+            const DependencyList &otherDepValues = dependencies.getOrDefault(otherDepName);
+            if (otherDepValues.empty()) {
+                mlog[ERROR] <<"no values for dependency \"" <<StringUtility::cEscape(otherDepName) <<"\"\n"
+                            <<"when evaluating restrictions for \"" <<StringUtility::cEscape(d.name) <<"\""
+                            <<" value \"" <<StringUtility::cEscape(d.value) <<"\"\n";
+                return false;
+            } else if (otherDepValues.size() > 1) {
+                mlog[ERROR] <<"forward dependency reference from \"" <<StringUtility::cEscape(d.name) <<"\""
+                            <<" to \"" <<StringUtility::cEscape(otherDepName) <<"\"\n"
+                            <<"when evaluating restrictions for \"" <<StringUtility::cEscape(d.name) <<"\""
+                            <<" value \"" <<StringUtility::cEscape(d.value) <<"\"\n";
+                return false;
+            } else {
+                // If none of d's restrictions are satisfied for otherDepName and otherDepValue, then fail.
+                const std::string otherDepValue = otherDepValues[0].value;
+                SAWYER_MESG(debug) <<"  " <<d.name <<" = " <<d.value <<" has constraints referencing "
+                                   <<otherDepName <<" = " <<otherDepValue <<"\n";
+                bool pass = false;
+                for (const Dependency::ConstraintRhs &rhs: node.value()) {
+                    SAWYER_MESG(debug) <<"    constraint: " <<otherDepName <<rhs.comparison <<rhs.value;
+                    if ("=" == rhs.comparison) {
+                        if (otherDepValue == rhs.value) {
+                            SAWYER_MESG(debug) <<" passes\n";
+                            pass = true;
+                            break;
+                        } else {
+                            SAWYER_MESG(debug) <<" fails\n";
+                        }
+                    } else if ("/" == rhs.comparison) {
+                        if (otherDepValue != rhs.value) {
+                            SAWYER_MESG(debug) <<" passes\n";
+                            pass = true;
+                            break;
+                        } else {
+                            SAWYER_MESG(debug) <<" fails\n";
+                        }
+                    } else if ("~" == rhs.comparison) {
+                        if (boost::contains(otherDepValue, rhs.value)) {
+                            SAWYER_MESG(debug) <<" passes\n";
+                            pass = true;
+                            break;
+                        } else {
+                            SAWYER_MESG(debug) <<" fails\n";
+                        }
+                    } else if ("^" == rhs.comparison) {
+                        if (!boost::contains(otherDepValue, rhs.value)) {
+                            SAWYER_MESG(debug) <<" passes\n";
+                            pass = true;
+                            break;
+                        } else {
+                            SAWYER_MESG(debug) <<" fails\n";
+                        }
+                    } else {
+                        ASSERT_not_reachable("unknown comparison \"" + rhs.comparison + "\"");
+                    }
+                }
+                if (!pass) {
+                    SAWYER_MESG(debug) <<"  no constraints passed,"
+                                       <<" therefore " <<d.name <<" = " <<d.value <<" cannot be selected\n";
+                    return false;
+                }
+            }
+        }
+        SAWYER_MESG(debug) <<"  dependency " <<d.name <<" = " <<d.value <<" can be selected\n";
+        return true;
+    }
+};
+
+// From all available choices, choose one set of dependencies.
+static void
+chooseOneSet(const Settings &settings, DB::Connection db, DependencyMap &dependencies /*in,out*/) {
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+
+    // We need to process the dependencies in a particular order defined in the database
+    for (auto row: db.stmt("select name from dependency_attributes order by position")) {
+        const std::string name = *row.get<std::string>(0);
+        if (!dependencies.exists(name)) {
+            mlog[FATAL] <<"no possible values for " <<name <<" dependency\n";
+            exit(1);
         }
 
+        DependencyList &deps = dependencies[name];
+
+        if (debug) {
+            debug <<"choosing from " <<name <<", candidate values are:";
+            for (const Dependency &d: deps) {
+                debug <<" " <<d.value;
+                ASSERT_require(d.name == name);
+            }
+            debug <<"\n";
+        }
+
+        // First remove dependencies whose restrictions fail to select it.
+        deps.erase(std::remove_if(deps.begin(), deps.end(), TestRestrictions(dependencies)), deps.end());
+        if (deps.empty()) {
+            mlog[FATAL] <<"all restrictions failed for dependencies \"" <<StringUtility::cEscape(name) <<"\"\n";
+            mlog[FATAL] <<"values already chosen are:\n";
+            for (auto &node: dependencies.nodes()) {
+                if (node.key() == name) {
+                    break;
+                } else {
+                    mlog[FATAL] <<"  \"" <<StringUtility::cEscape(node.key()) <<"\" ="
+                                <<" \"" <<StringUtility::cEscape(node.value()[0].value) <<"\"\n";
+                    exit(1);
+                }
+            }
+        }
+
+        // Then randomly select one of the remaining values, removing the rest
+        const size_t i = Sawyer::fastRandomIndex(deps.size());
+        if (debug) {
+            debug <<"  choosing randomly from " <<name <<" = {";
+            for (const Dependency &d: deps)
+                debug <<" " <<d.value;
+            debug <<" }[" <<i <<"] = " <<deps[i].value <<"\n";
+        }
+        std::swap(deps[0], deps[i]);
+        deps.erase(deps.begin() + 1, deps.end());
+    }
+}
+
+// Show the selected dependencies. There must be exactly one value per name.
+static void
+showDependencies(const Settings &settings, const DependencyMap &dependencies) {
+    for (const DependencyList &deps: dependencies.values()) {
+        ASSERT_require(deps.size() == 1);
+        const Dependency &d = deps[0];
         switch (settings.outputMode) {
             case OutputMode::HUMAN:
-                std::cout <<std::left <<std::setw(16) <<depList[0].name <<": " <<chosenValue <<"\n";
+                std::cout <<(boost::format("%-16s: %s\n") % d.name % d.value);
                 break;
             case OutputMode::RMC:
-                std::cout <<std::left <<std::setw(20) <<("rmc_"+depList[0].name)
-                          <<" " <<StringUtility::bourneEscape(chosenValue) <<"\n";
+                std::cout <<(boost::format("rmc_%-20s %s\n") % d.name % StringUtility::bourneEscape(d.value));
                 break;
             case OutputMode::SHELL:
-                std::cout <<" " <<depList[0].name <<"=" <<StringUtility::bourneEscape(chosenValue);
+                std::cout <<" " <<d.name <<"=" <<StringUtility::bourneEscape(d.value);
                 break;
         }
     }
-    if (settings.outputMode == OutputMode::SHELL)
+    if (OutputMode::SHELL == settings.outputMode)
         std::cout <<"\n";
 }
 
@@ -199,14 +358,19 @@ main(int argc, char *argv[]) {
 
     Settings settings;
     parseCommandLine(argc, argv, settings);
-    auto db = DB::Connection::fromUri(settings.databaseUri);
+    DB::Connection db = connectToDatabase(settings.databaseUri, mlog);
 
     DependencyMap dependencies = loadAllDependencies(settings, db);
-    FailuresPerLanguageSet failuresPerLanguageSet = loadLanguageFailureCounts(settings, db);
 
     if (settings.listing) {
         listEntireSpace(settings, dependencies);
     } else {
-        showRandomPoint(settings, dependencies, failuresPerLanguageSet);
+        if (settings.balanceFailures) {
+            FailuresPerLanguageSet failuresPerLanguageSet = loadLanguageFailureCounts(settings, db);
+            std::string languageSet = chooseLanguageSet(failuresPerLanguageSet, dependencies["languages"]);
+            restrictLanguages(settings, dependencies /*in,out*/, languageSet);
+        }
+        chooseOneSet(settings, db, dependencies /*in,out*/);
+        showDependencies(settings, dependencies);
     }
 }

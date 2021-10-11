@@ -2,14 +2,15 @@
 #include <sage3basic.h>
 #include <sageInterface.h>
 #include <sageGeneric.h>
-#include <VariableIdMapping.h>
+//~ #include <VariableIdMapping.h>
 
 #include <tuple>
 #include <unordered_set>
 
 #include "CodeThornLib.h"
-#include "FunctionIdMapping.h"
+
 #include "RoseCompatibility.h"
+
 #include "ClassHierarchyAnalysis.h"
 
 
@@ -45,6 +46,26 @@ namespace
   bool isVirtual(const SgMemberFunctionDeclaration& dcl)
   {
     return dcl.get_functionModifier().isVirtual();
+  }
+
+  bool isPureVirtual(const SgMemberFunctionDeclaration& dcl)
+  {
+    return dcl.get_functionModifier().isPureVirtual();
+  }
+
+  bool isPureVirtual(FunctionKeyType fn)
+  {
+    return isPureVirtual(SG_DEREF(fn));
+  }
+
+  std::string functionName(FunctionKeyType fn)
+  {
+    return SG_DEREF(fn).get_name();
+  }
+
+  const SgFunctionType& functionType(FunctionKeyType fn)
+  {
+    return SG_DEREF(SG_DEREF(fn).get_type());
   }
 
 
@@ -565,10 +586,10 @@ std::ostream& operator<<(std::ostream& os, const CastWriterDbg& cw)
 }
 
 int
-RoseCompatibilityBridge::compareNames(FunctionId lhs, FunctionId rhs) const
+RoseCompatibilityBridge::compareNames(FunctionKeyType lhs, FunctionKeyType rhs) const
 {
-  const std::string lhsname{funMap.getFunctionNameFromFunctionId(lhs)};
-  const std::string rhsname{funMap.getFunctionNameFromFunctionId(rhs)};
+  const std::string lhsname{functionName(lhs)};
+  const std::string rhsname{functionName(rhs)};
   const bool        lhsIsDtor = lhsname.front() == '~';
   const bool        rhsIsDtor = rhsname.front() == '~';
   int               cmpres = 0;
@@ -587,38 +608,46 @@ int compareTypes(const SgType& lhs, const SgType& rhs)
 }
 
 int
-RoseCompatibilityBridge::compareTypes(FunctionId lhs, FunctionId rhs, bool exclReturn) const
+RoseCompatibilityBridge::compareTypes(FunctionKeyType lhs, FunctionKeyType rhs, bool exclReturn) const
 {
   static constexpr bool withArrayDecay = true;
 
-  const SgFunctionType& lhsty = SG_DEREF(funMap.getTypeFromFunctionId(lhs));
-  const SgFunctionType& rhsty = SG_DEREF(funMap.getTypeFromFunctionId(rhs));
+  const SgFunctionType& lhsty = functionType(lhs);
+  const SgFunctionType& rhsty = functionType(rhs);
 
   return sg::dispatch(TypeComparator{rhsty, withArrayDecay, exclReturn}, &lhsty);
 }
 
-VariableId
+VariableKeyType
 RoseCompatibilityBridge::variableId(SgInitializedName* var) const
 {
-  return varMap.variableId(var);
+  ASSERT_not_null(var);
+
+  return var;
 }
 
-VariableId
+VariableKeyType
 RoseCompatibilityBridge::variableId(SgVariableDeclaration* var) const
 {
-  return varMap.variableId(var);
+  ASSERT_not_null(var);
+
+  SgInitializedNamePtrList& lst = var->get_variables();
+  ROSE_ASSERT(lst.size() == 1);
+
+  return variableId(lst[0]);
 }
 
 std::string
-RoseCompatibilityBridge::nameOf(VariableId vid) const
+RoseCompatibilityBridge::nameOf(VariableKeyType vid) const
 {
-  return vid.toString(&varMap);
+  //~ return vid.toString(varMap);
+  return SG_DEREF(vid).get_name();
 }
 
 std::string
-RoseCompatibilityBridge::nameOf(FunctionId fid) const
+RoseCompatibilityBridge::nameOf(FunctionKeyType fun) const
 {
-  return funMap.getFunctionNameFromFunctionId(fid);
+  return functionName(fun);
 }
 
 namespace
@@ -792,12 +821,15 @@ namespace
 }
 
 RoseCompatibilityBridge::ReturnTypeRelation
-RoseCompatibilityBridge::haveSameOrCovariantReturn(const ClassAnalysis& classes, FunctionId basId, FunctionId drvId) const
+RoseCompatibilityBridge::haveSameOrCovariantReturn( const ClassAnalysis& classes,
+                                                    FunctionKeyType basId,
+                                                    FunctionKeyType drvId
+                                                  ) const
 {
   using PolymorphicRootTypes = CovariantPrefixChecker::ReturnType;
 
-  const SgFunctionType&      basTy = SG_DEREF(funMap.getTypeFromFunctionId(basId));
-  const SgFunctionType&      drvTy = SG_DEREF(funMap.getTypeFromFunctionId(drvId));
+  const SgFunctionType&      basTy = functionType(basId);
+  const SgFunctionType&      drvTy = functionType(drvId);
   const SgType&              basRet = SG_DEREF(basTy.get_return_type());
   const SgType&              drvRet = SG_DEREF(drvTy.get_return_type());
 
@@ -817,10 +849,11 @@ RoseCompatibilityBridge::haveSameOrCovariantReturn(const ClassAnalysis& classes,
 }
 
 
-FunctionId
-RoseCompatibilityBridge::functionId(const SgFunctionDeclaration* fun) const
+FunctionKeyType
+RoseCompatibilityBridge::functionId(const SgMemberFunctionDeclaration* fun) const
 {
-  return funMap.getFunctionIdFromDeclaration(fun);
+  return fun;
+  //~ return funLabeler.getFunctionEntryLabel(fun);
 }
 
 void
@@ -832,9 +865,9 @@ RoseCompatibilityBridge::extractFromProject(ClassAnalysis& classes, CastAnalysis
 }
 
 bool
-RoseCompatibilityBridge::isPureVirtual(FunctionId id) const
+RoseCompatibilityBridge::isPureVirtual(FunctionKeyType id) const
 {
-  return SG_DEREF(funMap.getFunctionDeclaration(id)).get_functionModifier().isPureVirtual();
+  return ::isPureVirtual(id);
 }
 
 FuncNameFn
@@ -842,7 +875,7 @@ RoseCompatibilityBridge::functionNomenclator() const
 {
   const RoseCompatibilityBridge* rcb = this;
 
-  return [=](FunctionId id) -> std::string { return rcb->nameOf(id); };
+  return [=](FunctionKeyType id) -> std::string { return rcb->nameOf(id); };
 }
 
 VarNameFn
@@ -850,7 +883,7 @@ RoseCompatibilityBridge::variableNomenclator() const
 {
   const RoseCompatibilityBridge* rcb = this;
 
-  return [=](VariableId id) -> std::string { return rcb->nameOf(id); };
+  return [=](VariableKeyType id) -> std::string { return rcb->nameOf(id); };
 }
 
 

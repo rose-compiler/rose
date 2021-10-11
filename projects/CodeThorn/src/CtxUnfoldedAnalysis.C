@@ -22,6 +22,8 @@ namespace
   //
 // logging
 
+#if 0
+
 inline
 auto logTrace() -> decltype(CodeThorn::logger[Sawyer::Message::TRACE])
 {
@@ -51,6 +53,8 @@ auto logFatal() -> decltype(CodeThorn::logger[Sawyer::Message::FATAL])
 {
   return CodeThorn::logger[Sawyer::Message::FATAL];
 }
+
+#endif
 
 }
 
