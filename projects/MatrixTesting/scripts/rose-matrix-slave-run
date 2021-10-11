@@ -455,13 +455,13 @@ matrix-reclaim-disk() {
     echo "================================================================================"
     echo
 
-    if [ ! -d $MATRIX_ROOT/rose-installed/latest/var/matrix/spock/var/installed ]; then
+    if [ ! -d $MATRIX_ROOT/spock/var/installed ]; then
 	echo "No RMC/Spock installed packages to remove"
 	return 0
     fi
 
     (
-	cd $MATRIX_ROOT/rose-installed/latest/var/matrix/spock/var/installed
+	cd $MATRIX_ROOT/spock/var/installed
 	ls -tr */*.used |cat |sed 's/\.used//' |while read installed; do
 	    # Check free space
 	    if [ $(matrix-free-space) -lt $min_free_space ]; then
