@@ -284,7 +284,7 @@ showLatestVersions(const Settings &settings, DB::Connection db) {
     const time_t since = time(NULL) - 30 * 86400;
     const std::string sinceHuman = timeToGmt(since).substr(0, 10);
 
-    showSubsectionTitle(settings, "ROSE version tested recently",
+    showSubsectionTitle(settings, "ROSE versions tested recently",
                         "These are the ROSE versions that have test results in the last month.\n"
                         "This is similar to the command \"rose-matrix-query rose_date+" + sinceHuman +
                         " rose.d reporting_time.min reporting_time.max\"");
@@ -676,7 +676,7 @@ main(int argc, char *argv[]) {
         std::cout <<"<!DOCTYPE html>\n"
                   <<"<html>\n"
                   <<"<head>\n"
-                  <<"  <title>ROSE Portability Testing</title>\n"
+                  <<"  <title>ROSE Portability Matrix</title>\n"
                   <<"</head>\n"
                   <<"<body>\n"
                   <<"<h1>ROSE Portability Testing</h1>\n"

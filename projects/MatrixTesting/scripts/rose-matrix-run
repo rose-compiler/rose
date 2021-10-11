@@ -634,14 +634,12 @@ tester-name() {
 scan-for-health() {
     local line
     while read line; do
+	echo "$line"
 	case "$line" in
 	    =================-=================*)
 		# The above pattern comes from the OUTPUT_SECTION_SEPARATOR variable in the run-test script
 		local phase="$(echo "$line" |cut -d' ' -f2)"
 	        rose-matrix-slave-health start-phase "$phase"
-		;;
-	    *)
-		echo "$line"
 		;;
 	esac
     done

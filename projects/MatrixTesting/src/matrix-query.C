@@ -17,12 +17,12 @@ static const char *gDescription =
     "Commit hashes can be abbreviated in equal, unequal, less, and greater constraints, even if the hash as a "
     "\"+local\" suffix.\n\n"
 
-    "Dates can be entred as \"YYYYMMDD\" or \"YYYY-MM-DD\" and match all time points within that day. Times are "
+    "Dates can be entered as \"YYYYMMDD\" or \"YYYY-MM-DD\" and match all time points within that day. Times are "
     "specified as a date followed by \"HHMMSS\" or \"HH:MM:SS\". The time can be separated from the date with "
     "white space or the letter \"T\". A time (or date alone) can be followed by a timezone abbreviation or the "
     "time standard \"UTC\". Time zones and standards can be all upper- or all lower-case and separated from the "
     "time (or date only) by white space. If no time zone or standard is specified, then either GMT or your "
-    "local time zone is assumed, depending on whether %s{localtime} was specified. For example, today is "
+    "local time zone is assumed, depending on whether @s{localtime} was specified. For example, today is "
     "\"2021-10-09\", \"20211009\", or \"20211009 UTC\", and the current time is \"20211009T190424\" (ISO 8601 "
     "format) or \"2021-10-09 15:04:24 EDT\" in a more human friendly format.\n\n"
 
