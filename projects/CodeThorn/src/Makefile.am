@@ -7,7 +7,7 @@ COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counte
 EXTRA_DIST = Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
 #
-bin_PROGRAMS = codethorn memthorn thorn1 thorn2 ltlthorn woodpecker analyterix addressTakenAnalysis cldemo
+bin_PROGRAMS = codethorn thorn1 thorn2 ltlthorn woodpecker analyterix addressTakenAnalysis cldemo
 
 # matcher_demo matcher astinfo cldemo
 noinst_PROGRAMS = addressTakenAnalysis cldemo
@@ -135,10 +135,6 @@ CODETHORN_HEADER_FILES=\
   LVAstAttributeInterface.h \
   LVLattice.h \
   LVTransferFunctions.h \
-  MemAnalysis.h \
-  MemTransferFunctions.h \
-  MemPropertyState.h \
-  MemPropertyStateFactory.h \
   Miscellaneous2.h \
   Miscellaneous.h \
   Normalization.h \
@@ -276,10 +272,6 @@ CODETHORN_SOURCE_FILES=\
   LVAstAttributeInterface.C \
   LVLattice.C \
   LVTransferFunctions.C \
-  MemAnalysis.C \
-  MemTransferFunctions.C \
-  MemPropertyState.C \
-  MemPropertyStateFactory.C \
   Miscellaneous2.C \
   Miscellaneous.C \
   Normalization.C \
@@ -493,43 +485,6 @@ ltlthorn_SOURCES = \
   LTLParser.y++ \
   LTLThornCommandLineOptions.C \
   ltlthorn.C
-
-
-##############################################################
-# TOOL: MEMTHORN
-##############################################################
-
-# yacc flags for LTL parser
-memthorn_YFLAGS = -p ltl_
-
-# this line creates speparately named object files
-memthorn_CXXFLAGS = -fopenmp -Wall -O3
-
-# memthorn has most of its code organized in two separate libraries
-memthorn_DEPENDENCIES=libcodethorn.la libltlthorn.la
-
-if ROSE_WITH_SPOT
-#spot and bdd need to be linked last with gcc 5.4
-memthorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn $(Z3_LINK) -lspot -lbdd
-memthorn_LDFLAGS = -L$(SPOT_LIBRARY_PATH) $(Z3_LIB_INCLUDES)
-else
-memthorn_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn -lltlthorn
-endif
-
-memthorndir=.
-
-# only informative
-memthorn_xHEADERS = \
-  CommandLineOptions.h \
-  MemThornCommandLineOptions.h \
-  codethorn.h \
-  LTL.h
-
-# codethorn sources in addition to libcodethorn and libltlthorn
-memthorn_SOURCES = \
-  LTLParser.y++ \
-  MemThornCommandLineOptions.C \
-  memthorn.C
 
 
 ##############################################################
