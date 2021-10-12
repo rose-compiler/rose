@@ -33,6 +33,9 @@ AWS_EC2_INSTANCE=
 # Whether to update system software. Empty, auto, or other.
 UPDATE_SYSTEM_SOFTWARE=auto
 
+# Override default slave name.
+SLAVE_NAME=
+
 help() {
     ######--------------------------------------------------------------------------------
     echo "Purpose: to run portability tests as directed by the server"
@@ -48,6 +51,9 @@ help() {
     echo "    --aggressive-cleanup"
     echo "        Remove reproducible things when possible so we don't use as much disk"
     echo "        space. The tradeoff is we use more CPU time."
+    echo
+    echo "    --slave=NAME"
+    echo "        Use the specified string as the slave name instead of \"user@host\"."
     echo
     echo "    --update-system-software"
     echo "    --no-update-system-software"
@@ -88,6 +94,10 @@ matrix-parse-command-line() {
 		SMALL_FOOTPRINT=yes
 		shift
 		;;
+	    --slave=*)
+		SLAVE_NAME="${1#--slave=}"
+		shift
+		;;
 	    --update-system-software)
 		UPDATE_SYSTEM_SOFTWARE=yes
 		shift
@@ -111,13 +121,24 @@ matrix-parse-command-line() {
     done
 
     [ "$#" -eq 0 ] || die "error: incorrect usage; see --help"
+
+    # Only update system software when we're in "setup" mode. Here's why: if this script is run by
+    # rose-matrix-slave-babysitter, then the first time it runs the user will probably notice that
+    # it's asking for a password for sudo (if it needs one). Then if this script crashes after a few
+    # hours and the babysitter re-runs it, a password might be required but there's no user around
+    # anymore to supply it and everything hangs.
+    if [ -n "$UPDATE_SYSTEM_SOFTWARE" -a "$SETUP" = "" ]; then
+	echo "$arg0: warning: forcing --no-update-system-software for non-\"setup\" runs"
+	echo "$arg0: info: if you want system softare to be updated, add the \"setup\" argument."
+	UPDATE_SYSTEM_SOFTWARE=
+    fi
 }
 
 #------------------------------------------------------------------------------------------------------------------------
 # Try to report our health to the database. It's okay if this fails.
 matrix-report-health() {
     local health="$1"
-    rose-matrix-slave-health "$health" || true
+    rose-matrix-slave-health --slave="$SLAVE_NAME" "$health" || true
 }
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -632,7 +653,7 @@ while [ "$SETUP" = "" ]; do
     echo "================================================================================"
     echo
     matrix-report-health run-test "iteration $test_number"
-    rose-matrix-run --var="$MATRIX_ROOT" $TEST_FLAGS -n1 $MATRIX_ROOT/rose
+    rose-matrix-run --var="$MATRIX_ROOT" --slave="$SLAVE_NAME" $TEST_FLAGS -n1 $MATRIX_ROOT/rose
 done
 
 # Finish setup actions

@@ -51,6 +51,7 @@ struct Settings {
     Sawyer::Optional<std::string> comment;              // comment for other events
     std::string databaseUri;                            // e.g., postgresql://user:password@host/database
     Format outputFormat = Format::PLAIN;                // how to show results
+    std::string slaveName;                              // override user@host slave name
 };
 
 static Sawyer::Message::Facility mlog;
@@ -82,6 +83,11 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
                 .doc("Show reports that happened recently, where the @v{duration} is how far back to go in time "
                      "from now. " + Rose::CommandLine::DurationParser::docString() + " The default is " +
                      Rose::CommandLine::DurationParser::toString(settings.maxAge) + "."));
+
+    tool.insert(Switch("slave")
+                .argument("name", anyParser(settings.slaveName))
+                .doc("Specify a name explicitly for this slave. If no name is given, then the slave name is "
+                     "@v{user}@@@v{host}."));
 
     std::vector<std::string> args = parser
                                     .with(Rose::CommandLine::genericSwitches())
@@ -121,7 +127,10 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 }
 
 static std::string
-slaveName() {
+slaveName(const Settings &settings) {
+    if (!settings.slaveName.empty())
+        return settings.slaveName;
+
 #ifdef __linux__
     char buf[64];
 
@@ -308,7 +317,8 @@ main(int argc, char *argv[]) {
 
         DB::Statement stmt;
 
-        if (db.stmt("select count(*) from slave_health where name = ?name").bind("name", slaveName()).get<size_t>().get()) {
+        if (db.stmt("select count(*) from slave_health where name = ?name")
+            .bind("name", slaveName(settings)).get<size_t>().get()) {
 
             stmt = db.stmt("update slave_health set" +
                            testSet + commentSet +
@@ -325,7 +335,7 @@ main(int argc, char *argv[]) {
         }
 
         stmt
-            .bind("name", slaveName())
+            .bind("name", slaveName(settings))
             .bind("timestamp", now())
             .bind("load_ave", cpuLoad())
             .bind("free_space", diskFreeSpace())
