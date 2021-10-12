@@ -969,7 +969,6 @@ namespace
 
   struct IfStmtCreator
   {
-      explicit
       IfStmtCreator(SgIfStmt& sgnode, AstContext astctx)
       : ifStmt(&sgnode), ctx(astctx)
       {}
@@ -1062,79 +1061,127 @@ namespace
     return stmt;
   }
 
-  SgAdaSelectStmt* buildAdaSelectStmt()
+  SgAdaSelectStmt& mkAdaSelectStmt(SgAdaSelectStmt::select_type_enum select_type)
   {
-    SgAdaSelectStmt *stmt = new SgAdaSelectStmt();
+    SgAdaSelectStmt *stmt = new SgAdaSelectStmt;
     ADA_ASSERT(stmt);
 
+    stmt->set_select_type(select_type);
+
     markCompilerGenerated(*stmt);
-    return stmt;
+    return *stmt;
   }
 
+  using BodyCompletion = std::function<void()>;
+
   // MS 11/17/2020 : SelectStmtCreator modeled on IfStmtCreator
+  // PP 10/12/2021 : refactored code to eliminate use of scope_npc
+  //                 a block will only be populated after the new node has been connected
+  //                 to the AST. This is achieved by returning a lambda function w/o parameters
+  //                 (BodyCompletion) that is invoked after the nodes are part of the AST.
   struct SelectStmtCreator
   {
     typedef SgAdaSelectAlternativeStmt*  alternative;
     typedef std::vector<alternative>     alternative_container;
 
-    explicit
-    SelectStmtCreator(AstContext astctx, SgAdaSelectStmt::select_type_enum sty)
-      : ctx(astctx), ty(sty)
-    {
-      abort_path = nullptr;
-      else_path = nullptr;
-      select_path = nullptr;
-    }
+    SelectStmtCreator(SgAdaSelectStmt& sgn, AstContext astctx)
+      : sgnode(&sgn), ctx(astctx)
+    {}
 
-    SgAdaSelectAlternativeStmt *commonAltStmt(Path_Struct& path) {
+    std::pair<SgAdaSelectAlternativeStmt*, BodyCompletion>
+    commonAltStmt(Path_Struct& path) {
       // create body of alternative
-      SgBasicBlock& block    = mkBasicBlock();
-      ElemIdRange   altStmts = idRange(path.Sequence_Of_Statements);
-
-      traverseIDs(altStmts, elemMap(), StmtCreator{ctx.scope_npc(block)});
+      SgBasicBlock* block = &mkBasicBlock();
 
       // create guard
       SgExpression* guard = &getExprID_opt(path.Guard, ctx);
 
       // instantiate SgAdaSelectAlternativeStmt node and return it
-      SgAdaSelectAlternativeStmt* stmt = buildAdaSelectAlternativeStmt(guard, &block);
+      SgAdaSelectAlternativeStmt* stmt = buildAdaSelectAlternativeStmt(guard, block);
+      Path_Struct* pathptr = &path;
+      AstContext   astctx{ctx};
 
-      return stmt;
+      BodyCompletion completion = [pathptr, block, astctx]() -> void
+                                  {
+                                    ElemIdRange altStmts = idRange(pathptr->Sequence_Of_Statements);
+
+                                    traverseIDs(altStmts, elemMap(), StmtCreator{astctx.scope(*block)});
+                                  };
+
+      return std::make_pair(stmt, completion);
     }
 
-    SgBasicBlock *commonMakeBlock(Path_Struct& path) {
-      SgBasicBlock& block    = mkBasicBlock();
-      ElemIdRange   altStmts = idRange(path.Sequence_Of_Statements);
-      traverseIDs(altStmts, elemMap(), StmtCreator{ctx.scope_npc(block)});
-      return &block;
+    std::pair<SgBasicBlock*, BodyCompletion>
+    commonMakeBlock(Path_Struct& path) {
+      SgBasicBlock* block   = &mkBasicBlock();
+      Path_Struct*  pathptr = &path;
+      AstContext    astctx{ctx};
+
+      BodyCompletion completion = [pathptr, block, astctx]() -> void
+                                  {
+                                    ElemIdRange altStmts = idRange(pathptr->Sequence_Of_Statements);
+
+                                    traverseIDs(altStmts, elemMap(), StmtCreator{astctx.scope(*block)});
+                                  };
+      return std::make_pair(block, completion);
     }
 
     void orAlternative(Path_Struct& path)
     {
       ADA_ASSERT(path.Path_Kind == An_Or_Path);
-      SgAdaSelectAlternativeStmt* alt = commonAltStmt(path);
-      or_paths.emplace_back(alt);
+
+      auto alt = commonAltStmt(path);
+
+      if (currOrPath == nullptr)
+      {
+        ADA_ASSERT(  (sgnode->get_select_type() == SgAdaSelectStmt::e_selective_accept)
+                  || (sgnode->get_select_type() == SgAdaSelectStmt::e_timed_entry)
+                  );
+
+        sg::linkParentChild(*sgnode, *(alt.first), &SgAdaSelectStmt::set_or_path);
+      }
+      else
+      {
+        ADA_ASSERT(sgnode->get_select_type() == SgAdaSelectStmt::e_selective_accept);
+
+        sg::linkParentChild(*currOrPath, *(alt.first), &SgAdaSelectAlternativeStmt::set_next);
+      }
+
+      currOrPath = alt.first;
+      alt.second();
     }
 
     void selectAlternative(Path_Struct& path)
     {
       ADA_ASSERT(path.Path_Kind == A_Select_Path);
-      SgAdaSelectAlternativeStmt* alt = commonAltStmt(path);
-      select_path = alt;
+      auto alt = commonAltStmt(path);
+
+      sg::linkParentChild(*sgnode, *(alt.first), &SgAdaSelectStmt::set_select_path);
+      alt.second();
     }
 
     void elseAlternative(Path_Struct& path)
     {
       ADA_ASSERT(path.Path_Kind == An_Else_Path);
-      SgBasicBlock* alt = commonMakeBlock(path);
-      else_path = alt;
+      ADA_ASSERT(  (sgnode->get_select_type() == SgAdaSelectStmt::e_selective_accept)
+                || (sgnode->get_select_type() == SgAdaSelectStmt::e_conditional_entry)
+                );
+
+      auto alt = commonMakeBlock(path);
+
+      sg::linkParentChild(*sgnode, *(alt.first), &SgAdaSelectStmt::set_else_path);
+      alt.second();
     }
 
     void abortAlternative(Path_Struct& path)
     {
       ADA_ASSERT(path.Path_Kind == A_Then_Abort_Path);
-      SgBasicBlock* alt = commonMakeBlock(path);
-      abort_path = alt;
+      ADA_ASSERT(sgnode->get_select_type() == SgAdaSelectStmt::e_asynchronous);
+
+      auto alt = commonMakeBlock(path);
+
+      sg::linkParentChild(*sgnode, *(alt.first), &SgAdaSelectStmt::set_abort_path);
+      alt.second();
     }
 
     void operator()(Element_Struct& elem)
@@ -1172,6 +1219,8 @@ namespace
         }
     }
 
+
+#if 0
     SgAdaSelectAlternativeStmt*
     chainOr()
     {
@@ -1193,67 +1242,69 @@ namespace
       return or_paths.front();
     }
 
+
     operator SgStatement&()
     {
-      SgAdaSelectStmt *stmt = buildAdaSelectStmt();
-      stmt->set_select_type(ty);
+      sgnode->set_select_type(ty);
       switch (ty)
         {
         case SgAdaSelectStmt::e_selective_accept:
           {
-            stmt->set_select_path(select_path);
-            select_path->set_parent(stmt);
+            sgnode->set_select_path(select_path);
+            select_path->set_parent(sgnode);
 
             SgAdaSelectAlternativeStmt* orRoot = chainOr();
-            stmt->set_or_path(orRoot);
-            orRoot->set_parent(stmt);
-
-            stmt->set_else_path(else_path);
+            sgnode->set_or_path(orRoot);
+            orRoot->set_parent(sgnode);
+            sgnode->set_else_path(else_path);
             if (else_path != nullptr) {
-              else_path->set_parent(stmt);
+              else_path->set_parent(sgnode);
             }
             break;
           }
 
         case SgAdaSelectStmt::e_timed_entry:
-          stmt->set_select_path(select_path);
-          select_path->set_parent(stmt);
 
+          sgnode->set_select_path(select_path);
+          select_path->set_parent(sgnode);
           // require only one or path
           ADA_ASSERT(or_paths.size() == 1);
-          stmt->set_or_path(or_paths.front());
-          or_paths.front()->set_parent(stmt);
+          sgnode->set_or_path(or_paths.front());
+          or_paths.front()->set_parent(sgnode);
           break;
 
         case SgAdaSelectStmt::e_conditional_entry:
-          stmt->set_select_path(select_path);
-          select_path->set_parent(stmt);
-
-          stmt->set_else_path(else_path);
-          else_path->set_parent(stmt);
+          sgnode->set_select_path(select_path);
+          select_path->set_parent(sgnode);
+          sgnode->set_else_path(else_path);
+          else_path->set_parent(sgnode);
           break;
 
         case SgAdaSelectStmt::e_asynchronous:
-          stmt->set_select_path(select_path);
-          select_path->set_parent(stmt);
-
-          stmt->set_abort_path(abort_path);
-          abort_path->set_parent(stmt);
+          sgnode->set_select_path(select_path);
+          select_path->set_parent(sgnode);
+          sgnode->set_abort_path(abort_path);
+          abort_path->set_parent(sgnode);
           break;
 
         default:
           ROSE_ABORT();
         }
-      return SG_DEREF( stmt );
+      return SG_DEREF( sgnode );
     }
+#endif /* 0 */
 
   private:
+    SgAdaSelectAlternativeStmt*       currOrPath    = nullptr;
+    SgAdaSelectStmt*                  sgnode        = nullptr;
     AstContext                        ctx;
+/*
     SgAdaSelectStmt::select_type_enum ty;
     alternative_container             or_paths;
-    alternative                       select_path;
-    SgBasicBlock*                     abort_path;
-    SgBasicBlock*                     else_path;
+    alternative                       select_path   = nullptr;
+    SgBasicBlock*                     abort_path    = nullptr;
+    SgBasicBlock*                     else_path     = nullptr;
+*/
 
     SelectStmtCreator() = delete;
   };
@@ -1755,34 +1806,38 @@ namespace
         }
       case A_Selective_Accept_Statement:        // 9.7.1
         {
-          ElemIdRange  range  = idRange(stmt.Statement_Paths);
-          SgStatement& sgnode = traverseIDs(range, elemMap(),
-                                            SelectStmtCreator{ctx, SgAdaSelectStmt::e_selective_accept});
+          ElemIdRange      range  = idRange(stmt.Statement_Paths);
+          SgAdaSelectStmt& sgnode = mkAdaSelectStmt(SgAdaSelectStmt::e_selective_accept);
+
           completeStmt(sgnode, elem, ctx);
+          traverseIDs(range, elemMap(), SelectStmtCreator{sgnode, ctx});
           break;
         }
       case A_Timed_Entry_Call_Statement:        // 9.7.2
         {
           ElemIdRange  range  = idRange(stmt.Statement_Paths);
-          SgStatement& sgnode = traverseIDs(range, elemMap(),
-                                            SelectStmtCreator{ctx, SgAdaSelectStmt::e_timed_entry});
+          SgAdaSelectStmt& sgnode = mkAdaSelectStmt(SgAdaSelectStmt::e_timed_entry);
+
           completeStmt(sgnode, elem, ctx);
+          traverseIDs(range, elemMap(), SelectStmtCreator{sgnode, ctx});
           break;
         }
       case A_Conditional_Entry_Call_Statement:  // 9.7.3
         {
           ElemIdRange  range  = idRange(stmt.Statement_Paths);
-          SgStatement& sgnode = traverseIDs(range, elemMap(),
-                                            SelectStmtCreator{ctx, SgAdaSelectStmt::e_conditional_entry});
+          SgAdaSelectStmt& sgnode = mkAdaSelectStmt(SgAdaSelectStmt::e_conditional_entry);
+
           completeStmt(sgnode, elem, ctx);
+          traverseIDs(range, elemMap(), SelectStmtCreator{sgnode, ctx});
           break;
         }
       case An_Asynchronous_Select_Statement:    // 9.7.4
         {
           ElemIdRange  range  = idRange(stmt.Statement_Paths);
-          SgStatement& sgnode = traverseIDs(range, elemMap(),
-                                            SelectStmtCreator{ctx, SgAdaSelectStmt::e_asynchronous});
+          SgAdaSelectStmt& sgnode = mkAdaSelectStmt(SgAdaSelectStmt::e_asynchronous);
+
           completeStmt(sgnode, elem, ctx);
+          traverseIDs(range, elemMap(), SelectStmtCreator{sgnode, ctx});
           break;
         }
       case An_Abort_Statement:                  // 9.8
