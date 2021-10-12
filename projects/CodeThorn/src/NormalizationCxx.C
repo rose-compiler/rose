@@ -122,7 +122,10 @@ namespace
   SgBasicBlock&
   getBody(const SgFunctionDeclaration& n)
   {
-    return SG_DEREF(SG_DEREF(n.get_definition()).get_body());
+    const SgFunctionDeclaration& defdecl = SG_DEREF(isSgFunctionDeclaration(n.get_definingDeclaration()));
+    const SgFunctionDefinition& fundef = SG_DEREF(defdecl.get_definition());
+
+    return SG_DEREF(fundef.get_body());
   }
 
   SgType&
@@ -131,7 +134,7 @@ namespace
     return SG_DEREF(SG_DEREF(n.get_type()).get_return_type());
   }
 
-  void copyElements(const SgBasicBlock& src, SgBasicBlock& tgt)
+  void copyStatements(const SgBasicBlock& src, SgBasicBlock& tgt)
   {
     for (const SgStatement* orig : src.get_statements())
     {
@@ -139,6 +142,12 @@ namespace
 
       tgt.append_statement(copy);
     }
+  }
+
+  void replaceExpression(SgExpression& curr, SgExpression& repl)
+  {
+    //~ repl.set_parent(curr.get_parent());
+    si::replaceExpression(&curr, &repl, true /* no delete */);
   }
 
 
@@ -745,10 +754,12 @@ namespace
   SgExpression&
   createMemberSelection(SgExpression& expr, SgMemberFunctionRefExp& fn)
   {
-    if (si::isPointerType(expr.get_type()))
-      return SG_DEREF(sb::buildArrowExp(&expr, &fn));
+    SgExpression& res = si::isPointerType(expr.get_type())
+                           ? static_cast<SgExpression&>(SG_DEREF(sb::buildArrowExp(&expr, &fn)))
+                           : SG_DEREF(sb::buildDotExp(&expr, &fn))
+                           ;
 
-    return SG_DEREF(sb::buildDotExp(&expr, &fn));
+    return res;
   }
 
   SgStatement&
@@ -1153,7 +1164,7 @@ namespace
     FindFunction::result res = FindFunction::find(clsdef, n, ctorargs);
 
     return FindFunction::found(res) ? FindFunction::declaration(res)
-                                    : createCtorDtor(clsdef, n.at(0) != '~')
+                                    : createCtorDtor(clsdef, n.at(0) != DTOR_PREFIX.at(0))
                                     ;
   }
 
@@ -1229,19 +1240,21 @@ namespace
         return SG_DEREF(sb::buildCastExp(&thisop, &bseptr, SgCastExp::e_static_cast));
       }
 
-      SgStatement& mkDefaultInitializer(SgClassDeclaration& clazz) const
+      SgStatement& mkDefaultInitializer(SgClassDeclaration& clazz, bool ctorcall) const
       {
         SgExprListExp&               args  = SG_DEREF( sb::buildExprListExp() );
-        SgMemberFunctionDeclaration& ctor  = obtainGeneratableCtor(getClassDef(clazz), args);
+        SgClassDefinition&           clsdef = getClassDef(clazz);
+        SgMemberFunctionDeclaration& ctor  = ctorcall ? obtainGeneratableCtor(clsdef, args)
+                                                      : obtainGeneratableDtor(clsdef, args);
         SgExpression&                self  = mkThisExpForBase(clazz);
 
         return createMemberCall(self, ctor, args, false /* non-virtual call */);
       }
 
-      SgStatement& mkCtorCall() const
+      SgStatement& mkCtorCall(bool ctorcall = true) const
       {
         return ini ? createMemberCallFromConstructorInitializer(mkThisExpForBase(bsedcl), *ini)
-                   : mkDefaultInitializer(bsedcl);
+                   : mkDefaultInitializer(bsedcl, ctorcall);
       }
 
     private:
@@ -1781,7 +1794,7 @@ namespace
         else if (newNewExpr)
         {
           // replace new expression with a simplified placement new
-          si::replaceExpression(&newexp, newNewExpr, true /* no delete */);
+          replaceExpression(newexp, SG_DEREF(newNewExpr));
         }
 
         // insert the initialization (constructor calls)
@@ -1945,6 +1958,12 @@ namespace
       SgType&                ty;
   };
 
+  std::string mkFullName(std::string fullName)
+  {
+    fullName += 'v';
+    return fullName;
+  }
+
 
   struct FullCtorDtorTransformer
   {
@@ -1965,10 +1984,9 @@ namespace
       {
         using StmtInserter = void (SgBasicBlock::*)(SgStatement*);
 
-        std::string                  fullName = ctordtor.get_name();
-        fullName += 'v';
-
+        std::string                  fullName = mkFullName(ctordtor.get_name());
         SgClassDefinition&           clsdef  = getClassDef(ctordtor);
+        const bool                   isConstructor = !isDtor(ctordtor);
         SgMemberFunctionDeclaration* fulldclNondef = sb::buildNondefiningMemberFunctionDeclaration(
                                                                  fullName,
                                                                  &getReturnType(ctordtor),
@@ -1985,6 +2003,9 @@ namespace
 
         // create full ctor/dtor
         SgMemberFunctionDeclaration& fulldcl = mkCtorDtorDef(clsdef, *fulldclNondef, !isDtor(ctordtor));
+        SgSymbol* sym = fulldcl.search_for_symbol_from_symbol_table();
+        ROSE_ASSERT(sym != ctordtor.search_for_symbol_from_symbol_table());
+
 
         // rename dtor/ctor
 
@@ -1993,11 +2014,11 @@ namespace
         SgBasicBlock&                funbdy = getBody(fulldcl);
 
         // copy the body
-        copyElements(getBody(fulldcl), funbdy);
+        copyStatements(getBody(ctordtor), funbdy);
 
         SgCtorInitializerList&       ctorlst  = SG_DEREF(ctordtor.get_CtorInitializerList());
-        StmtInserter                 inserter = isCtor(ctordtor) ? &SgBasicBlock::append_statement
-                                                                 : &SgBasicBlock::prepend_statement;
+        StmtInserter                 inserter = isCtor(ctordtor) ? &SgBasicBlock::prepend_statement
+                                                                 : &SgBasicBlock::append_statement;
 
         // add virtual base class constructor calls to constructor body
         //~ for (const SgClassDefinition* bsecls : adapt::reverse(virtualBases))
@@ -2009,7 +2030,7 @@ namespace
           // create: static_cast<Base*>(this)->Base(args as needed);
           SgConstructorInitializer* ini = getBaseInitializer(*bsecls, ctorlst);
           CtorCallCreator           callCreator{clsdef, SG_DEREF(bsecls->get_declaration()), ini};
-          SgStatement&              call   = callCreator.mkCtorCall();
+          SgStatement&              call   = callCreator.mkCtorCall(isConstructor);
 
           (funbdy.*inserter)(&call);
         }
@@ -2034,10 +2055,27 @@ namespace
       : ctorDtorRef(n)
       {}
 
+      static
+      bool sameParameterTypes(SgMemberFunctionDeclaration& lhs, SgMemberFunctionDeclaration& rhs)
+      {
+        // \todo
+        return true;
+      }
+
       SgMemberFunctionDeclaration&
       findFullCtorDtor(SgMemberFunctionDeclaration& ctorDtor)
       {
-        return ctorDtor; // \todo
+        std::string        fullname = mkFullName(ctorDtor.get_name());
+        SgClassDefinition& clsdef   = getClassDef(ctorDtor);
+
+        for (SgDeclarationStatement* stmt : clsdef.get_members())
+        {
+          if (SgMemberFunctionDeclaration* cand = isSgMemberFunctionDeclaration(stmt))
+            if ((cand->get_name() == fullname) && sameParameterTypes(ctorDtor, *cand))
+              return *cand;
+        }
+
+        ROSE_ABORT();
       }
 
       void execute(CxxTransformStats&)
@@ -2049,7 +2087,7 @@ namespace
 
         newCtorDtorRef = sb::buildMemberFunctionRefExp(isSgMemberFunctionSymbol(fullSym), false /*nonvirtual*/, false /*w/o qualifier*/);
 
-        si::replaceExpression(&ctorDtorRef, newCtorDtorRef, true /* no delete */);
+        replaceExpression(ctorDtorRef, SG_DEREF(newCtorDtorRef));
       }
 
     private:
