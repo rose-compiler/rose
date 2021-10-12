@@ -302,6 +302,9 @@ namespace CodeThorn {
     void writeUndefToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc);
     void writeUndefToMemoryLocation(PState* pstate, AbstractValue memLoc);
 
+    void notifyReadWriteListenersOnReading(Label lab, PStatePtr pstate, AbstractValue& memLoc);
+    void notifyReadWriteListenersOnWriting(Label lab, PState* pstate, AbstractValue& memLoc, AbstractValue& newValue);
+
     // utilify functions
     AbstractValue getMemoryRegionAbstractElementSize(CodeThorn::AbstractValue regionAddress);
     AbstractValue getMemoryRegionAbstractNumElements(CodeThorn::AbstractValue regionAddress);

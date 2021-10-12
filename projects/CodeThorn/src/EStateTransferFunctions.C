@@ -2776,6 +2776,7 @@ namespace CodeThorn {
 	}
 	if(arrayPtrValue.isNullPtr()) {
 	  recordDefinitiveViolatingLocation(ANALYSIS_NULL_POINTER,estate.label());
+          notifyReadWriteListenersOnReading(estate.label(),const_pstate,arrayPtrValue);
 	  res.result=CodeThorn::Top();
 	  res.estate.io.recordVerificationError();
 	  return res;
@@ -2785,6 +2786,7 @@ namespace CodeThorn {
 	AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexExprResultValue,elementSize);
 	//cout<<"DEBUG: array reference value + index val: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
 	if(arrayPtrPlusIndexValue.isNullPtr()) {
+          notifyReadWriteListenersOnReading(estate.label(),const_pstate,arrayPtrPlusIndexValue);
 	  recordDefinitiveViolatingLocation(ANALYSIS_NULL_POINTER,estate.label()); // NP_SOUNDNESS
 	  // there is no state following a definitive null pointer
 	  // dereference. An error-state recording this property is
@@ -2889,13 +2891,13 @@ namespace CodeThorn {
 	    return res;
 	  } else {
 	    //cout<<estate.toString(_variableIdMapping)<<endl;
-	    SAWYER_MESG(logger[TRACE])<<"Program error detected: potential out of bounds access (P1) : array: "<<arrayPtrValue.toString(_variableIdMapping)<<", access: address: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
 	    //cout<<"DEBUG: array-element: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
 	    //cerr<<"PState: "<<pstate->toString(_variableIdMapping)<<endl;
 	    //cerr<<"AST: "<<node->unparseToString()<<endl;
 	    recordPotentialViolatingLocation(ANALYSIS_NULL_POINTER,estate.label()); // NP_SOUNDNESS
 	    // continue after potential out-of-bounds access (assume any value can have been read)
 	    AbstractValue val=AbstractValue::createTop();
+            notifyReadWriteListenersOnReading(estate.label(),const_pstate,val); // this triggers NP+OB violation
 	    res.result=val;
 	    return res;
 	  }
@@ -3823,7 +3825,7 @@ namespace CodeThorn {
 #pragma omp critical(VIOLATIONRECORDING)
     {
       ROSE_ASSERT(analysisSelector<_violatingLocations.size());
-      _violatingLocations.at(analysisSelector).recordDefinitiveLocation(label);
+      //_violatingLocations.at(analysisSelector).recordDefinitiveLocation(label);
     }
   }
 
@@ -3831,7 +3833,7 @@ namespace CodeThorn {
 #pragma omp critical(VIOLATIONRECORDING)
     {
       ROSE_ASSERT(analysisSelector<_violatingLocations.size());
-      _violatingLocations.at(analysisSelector).recordPotentialLocation(label);
+      //      _violatingLocations.at(analysisSelector).recordPotentialLocation(label);
     }
   }
 
@@ -3924,6 +3926,7 @@ namespace CodeThorn {
 
   AbstractValue EStateTransferFunctions::readFromMemoryLocation(Label lab, PStatePtr pstate, AbstractValue memLoc) {
     memLoc=conditionallyApplyArrayAbstraction(memLoc);
+    notifyReadWriteListenersOnReading(lab,pstate,memLoc);
     
     // inspect memory location here
     if(memLoc.isNullPtr()) {
@@ -3944,22 +3947,13 @@ namespace CodeThorn {
     if(val.isUndefined()) {
       recordPotentialUninitializedAccessLocation(lab);
     }
-
-#pragma omp critical(VIOLATIONRECORDING)
-    {
-      if(numberOfReadWriteListeners()>0) {
-	for(auto p : _readWriteListenerMap) {
-	  ReadWriteListener* readWriteListener=p.second;
-	  readWriteListener->readingFromMemoryLocation(lab,pstate,memLoc,val);
-	}
-      }
-    }
-
+    
     return val;
   }
 
   void EStateTransferFunctions::writeToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue) {
     memLoc=conditionallyApplyArrayAbstraction(memLoc);
+    notifyReadWriteListenersOnWriting(lab,pstate,memLoc,newValue);
 
     // inspect everything here
     SAWYER_MESG(logger[TRACE])<<"EStateTransferFunctions::writeToMemoryLocation1:"<<memLoc.toString(_variableIdMapping)<<endl;
@@ -3976,6 +3970,27 @@ namespace CodeThorn {
     }
     SAWYER_MESG(logger[TRACE])<<"EStateTransferFunctions::writeToMemoryLocation1: before write"<<endl;
 
+    if(memLoc.isNullPtr()) {
+      recordDefinitiveNullPointerDereferenceLocation(lab);
+    } else {
+      pstate->writeToMemoryLocation(memLoc,newValue);
+    }
+    SAWYER_MESG(logger[TRACE])<<"EStateTransferFunctions::writeToMemoryLocation1:done"<<endl;
+  }
+
+  void EStateTransferFunctions::notifyReadWriteListenersOnReading(Label lab, PStatePtr pstate, AbstractValue& memLoc) {
+#pragma omp critical(VIOLATIONRECORDING)
+    {
+      if(numberOfReadWriteListeners()>0) {
+	for(auto p : _readWriteListenerMap) {
+	  ReadWriteListener* readWriteListener=p.second;
+	  readWriteListener->readingFromMemoryLocation(lab,pstate,memLoc);
+	}
+      }
+    }
+  }
+
+  void EStateTransferFunctions::notifyReadWriteListenersOnWriting(Label lab, PState* pstate, AbstractValue& memLoc, AbstractValue& newValue) {
 #pragma omp critical(VIOLATIONRECORDING)
     {
       if(numberOfReadWriteListeners()>0) {
@@ -3985,13 +4000,6 @@ namespace CodeThorn {
 	}
       }
     }
-
-    if(memLoc.isNullPtr()) {
-      recordDefinitiveNullPointerDereferenceLocation(lab);
-    } else {
-      pstate->writeToMemoryLocation(memLoc,newValue);
-    }
-    SAWYER_MESG(logger[TRACE])<<"EStateTransferFunctions::writeToMemoryLocation1:done"<<endl;
   }
 
   AbstractValue EStateTransferFunctions::readFromReferenceMemoryLocation(Label lab, PStatePtr pstate, AbstractValue memLoc) {

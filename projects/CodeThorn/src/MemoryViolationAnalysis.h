@@ -5,6 +5,7 @@
 #include <map>
 #include "ProgramLocationsReport.h"
 #include "ReadWriteListener.h"
+#include <list>
 
 namespace CodeThorn {
 
@@ -17,13 +18,13 @@ namespace CodeThorn {
 
   // result is value after reading from memLoc in pstate at label lab
   MemoryViolationAnalysis();
-  void readingFromMemoryLocation(Label lab, PStatePtr pstate, AbstractValue& memLoc, AbstractValue& result) override;
-  void writingToMemoryLocation(Label lab, PStatePtr pstate, AbstractValue& memLoc, AbstractValue& newValue) override;
+  void readingFromMemoryLocation(Label lab, PStatePtr pstate, AbstractValue& memLoc) override;
+  void writingToMemoryLocation(Label lab, PState* pstate, AbstractValue& memLoc, AbstractValue& newValue) override;
   virtual ~MemoryViolationAnalysis();
   void setEStateTransferFunctions(EStateTransferFunctions* tf);
  private:
-  MemoryViolationAnalysis::MemoryAccessViolationType checkMemoryAddress(AbstractValue& memLoc);
-  void recordViolation(MemoryAccessViolationType, Label lab);
+  std::list<MemoryViolationAnalysis::MemoryAccessViolationType> checkMemoryAddress(AbstractValue& memLoc);
+  void recordViolation(std::list<MemoryAccessViolationType>, Label lab);
   std::vector<ProgramLocationsReport> _violatingLocations; // not used yet
   EStateTransferFunctions* _estateTransferFunctions=nullptr; // temporary, until Reports are moved
 };

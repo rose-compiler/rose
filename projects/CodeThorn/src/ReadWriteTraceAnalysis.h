@@ -11,8 +11,8 @@ class ReadWriteTraceAnalysis : public ReadWriteListener {
  public:
   // result is value after reading from memLoc in pstate at label lab
   ReadWriteTraceAnalysis();
-  void readingFromMemoryLocation(Label lab, PStatePtr pstate, AbstractValue& memLoc, AbstractValue& result) override;
-  void writingToMemoryLocation(Label lab, PStatePtr pstate, AbstractValue& memLoc, AbstractValue& newValue) override;
+  void readingFromMemoryLocation(Label lab, PStatePtr pstate, AbstractValue& memLoc) override;
+  void writingToMemoryLocation(Label lab, PState* pstate, AbstractValue& memLoc, AbstractValue& newValue) override;
   typedef std::map <Label,BoolLattice> OutOfBoundsAccessMap;
   OutOfBoundsAccessMap* getResultMapPtr();
   virtual ~ReadWriteTraceAnalysis();
