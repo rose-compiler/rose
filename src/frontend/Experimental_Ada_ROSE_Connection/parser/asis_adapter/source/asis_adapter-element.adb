@@ -219,7 +219,7 @@ package body Asis_Adapter.Element is
         Asis.Elements.Operator_Kind (Element);
    begin
       State.Add_To_Dot_Label ("Operator_Kind", Operator_Kind'Image);
-      return anhS.To_Operator_Kinds (Operator_Kind);
+      return To_Operator_Kinds (Operator_Kind);
    end;
 
    ------------
@@ -345,7 +345,7 @@ package body Asis_Adapter.Element is
 
       procedure Add_Element_Kind is begin
          State.Add_To_Dot_Label ("Element_Kind", Element_Kind'Image);
-         Result.Element_Kind := anhS.To_Element_Kinds (Element_Kind);
+         Result.Element_Kind := To_Element_Kinds (Element_Kind);
       end;
 
       procedure Add_Source_Location is
