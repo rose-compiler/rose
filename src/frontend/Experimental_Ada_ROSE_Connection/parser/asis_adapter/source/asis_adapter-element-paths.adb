@@ -61,7 +61,7 @@ package body Asis_Adapter.Element.Paths is
       procedure Add_Common_Items is
       begin
          State.Add_To_Dot_Label ("Path_Kind", Path_Kind'Image);
-         Result.Path_Kind := anhS.To_Path_Kinds (Path_Kind);
+         Result.Path_Kind := To_Path_Kinds (Path_Kind);
          Add_Sequence_Of_Statements; -- Has Add_Not_Implemented
       end Add_Common_Items;
 

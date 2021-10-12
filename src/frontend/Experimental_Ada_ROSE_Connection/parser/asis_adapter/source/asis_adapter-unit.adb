@@ -459,7 +459,7 @@ package body Asis_Adapter.Unit is
       procedure Add_Unit_Class is
       begin
          This.Add_To_Dot_Label ("Unit_Class", Unit_Class'Image);
-         This.A_Unit.Unit_Class := anhS.To_Unit_Classes (Unit_Class);
+         This.A_Unit.Unit_Class := To_Unit_Classes (Unit_Class);
       end;
 
       procedure Add_Unit_Declaration is
@@ -492,14 +492,14 @@ package body Asis_Adapter.Unit is
       procedure Add_Unit_Kind is
       begin
          This.Add_To_Dot_Label ("Unit_Kind", Unit_Kind'Image);
-         This.A_Unit.Unit_Kind := anhS.To_Unit_Kinds (Unit_Kind);
+         This.A_Unit.Unit_Kind := To_Unit_Kinds (Unit_Kind);
       end;
 
       procedure Add_Unit_Origin is
          Unit_Origin : constant Asis.Unit_Origins := ACU.Unit_Origin (Unit);
       begin
          This.Add_To_Dot_Label ("Unit_Origin", Unit_Origin'Image);
-         This.A_Unit.Unit_Origin := anhS.To_Unit_Origins (Unit_Origin);
+         This.A_Unit.Unit_Origin := To_Unit_Origins (Unit_Origin);
       end;
 
       procedure Start_Output is
