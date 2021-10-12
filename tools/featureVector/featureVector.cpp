@@ -199,6 +199,26 @@ void nodeTraversal::visit(SgNode* n)
            getNamedTypeInfo(namedType); 
          }
       }
+      SgFunctionDeclaration* funcDecl = isSgFunctionDeclaration(n);
+      if(funcDecl) {
+        SgInitializedNamePtrList funcArgList = funcDecl->get_args();
+        for(SgInitializedNamePtrList::iterator argId = funcArgList.begin(); argId != funcArgList.end(); ++argId)
+        { 
+          SgInitializedName* initNameId = *argId;
+          //cout << "have Initializedname" << endl;
+          SgType* varType = initNameId->get_type()->findBaseType();
+          outputVetor.push_back(varType->variantT());
+          //if(enable_verbose || enable_debug)
+          {
+            std::ostringstream o;
+            o <<  varType->variantT() <<":funcArgType:" << varType->class_name();
+            if(enable_verbose)
+                cout << o.str() << endl; 
+            //cout << "## " << n->variantT() <<":" << n->class_name() << " " << locatedNode->getFilenameString()  << endl;
+            debugVector.push_back(o.str());
+          }
+        }
+      }
     }
 }
 
