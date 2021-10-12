@@ -3791,6 +3791,7 @@ namespace CodeThorn {
   ProgramLocationsReport EStateTransferFunctions::getProgramLocationsReport(enum AnalysisSelector analysisSelector) {
     ProgramLocationsReport report;
 #pragma omp critical(VIOLATIONRECORDING)
+    ROSE_ASSERT(analysisSelector<_violatingLocations.size());
     report=_violatingLocations.at(analysisSelector);
     return report;
   }
@@ -3821,22 +3822,32 @@ namespace CodeThorn {
   void EStateTransferFunctions::recordDefinitiveViolatingLocation(enum AnalysisSelector analysisSelector, Label label) {
 #pragma omp critical(VIOLATIONRECORDING)
     {
+      ROSE_ASSERT(analysisSelector<_violatingLocations.size());
       _violatingLocations.at(analysisSelector).recordDefinitiveLocation(label);
-      if(_printDetectedViolations) {
-	cout<<analysisSelectorToString(analysisSelector)
-	    <<": definitive violation at L"<<label.toString()<<":"
-	    <<sourceLocationAndNodeToString(label)
-	    <<endl;
-      }
     }
   }
 
   void EStateTransferFunctions::recordPotentialViolatingLocation(enum AnalysisSelector analysisSelector, Label label) {
 #pragma omp critical(VIOLATIONRECORDING)
     {
+      ROSE_ASSERT(analysisSelector<_violatingLocations.size());
       _violatingLocations.at(analysisSelector).recordPotentialLocation(label);
-      if(_printDetectedViolations)
-	cout<<analysisSelectorToString(analysisSelector)<<": potential violation at label "<<label.toString()<<endl;
+    }
+  }
+
+  void EStateTransferFunctions::recordDefinitiveViolatingLocation2(enum AnalysisSelector analysisSelector, Label label) {
+    #pragma omp critical(VIOLATIONRECORDING2)
+    {
+      ROSE_ASSERT(analysisSelector<_violatingLocations.size());
+      _violatingLocations.at(analysisSelector).recordDefinitiveLocation(label);
+    }
+  }
+
+  void EStateTransferFunctions::recordPotentialViolatingLocation2(enum AnalysisSelector analysisSelector, Label label) {
+    #pragma omp critical(VIOLATIONRECORDING2)
+    {
+      ROSE_ASSERT(analysisSelector<_violatingLocations.size());
+      _violatingLocations.at(analysisSelector).recordPotentialLocation(label);
     }
   }
 

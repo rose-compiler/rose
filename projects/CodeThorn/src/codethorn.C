@@ -255,7 +255,9 @@ int main( int argc, char * argv[] ) {
       analyzer->getEStateTransferFunctions()->registerReadWriteListener(new ConstantConditionAnalysis(),"constant-condition");
     }
     if(ctOpt.nullPointerAnalysis||ctOpt.generateReports) {
-      analyzer->getEStateTransferFunctions()->registerReadWriteListener(new MemoryViolationAnalysis(),"memory-violation");
+      auto memViolationAnalysis=new MemoryViolationAnalysis();
+      memViolationAnalysis->setEStateTransferFunctions(analyzer->getEStateTransferFunctions()); // temporary until reports are moved
+      analyzer->getEStateTransferFunctions()->registerReadWriteListener(memViolationAnalysis,"memory-violation");
     }
     if(ctOpt.readWriteTrace) {
       analyzer->getEStateTransferFunctions()->registerReadWriteListener(new ReadWriteTraceAnalysis(),"read-write-trace");
