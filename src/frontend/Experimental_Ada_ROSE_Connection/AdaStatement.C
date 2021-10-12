@@ -1594,8 +1594,8 @@ namespace
 
           attachSourceLocation(forini, forvar, ctx);
           sg::linkParentChild(sgnode, forini, &SgForStatement::set_for_init_stmt);
-          handleDeclaration(forvar, ctx.scope_npc(sgnode));
           completeStmt(sgnode, elem, ctx, stmt.Statement_Identifier);
+          handleDeclaration(forvar, ctx.scope(sgnode));
 
           // this swap is needed, b/c SgForInitStatement is not a scope
           // and when the loop variable declaration is created, the declaration
