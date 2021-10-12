@@ -130,7 +130,7 @@ matrix-update-system-software() {
     echo "Updating system software"
     echo "================================================================================"
     echo
-    matrix-report-health run-system;
+    matrix-report-health run-system >/dev/null 2>&1; # we don't care about errors at this early point
 
     if [ "$UPDATE_SYSTEM_SOFTWARE" = "" ]; then
 	echo "disabled from command-line"
@@ -462,7 +462,10 @@ matrix-reclaim-disk() {
 
     (
 	cd $MATRIX_ROOT/spock/var/installed
-	ls -tr */*.used |cat |sed 's/\.used//' |while read installed; do
+	ls -tr */*.used |sed 's/\.used//' |while read installed; do
+	    local rmc_host="${installed%%/*}"
+	    [ "$rmc_host" = "matrix-slave" ] && continue
+
 	    # Check free space
 	    if [ $(matrix-free-space) -lt $min_free_space ]; then
 		# Get the name of the package
@@ -472,7 +475,7 @@ matrix-reclaim-disk() {
 		    package_name="$(echo "$package_name" |tr -d "'")"
 		fi
 
-		# Avoid removing compilers and other important things
+		# Avoid removing compilers and other important things.
 		case "$package_name" in
 		    spock)                # Spock itself
 			continue
