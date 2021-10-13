@@ -37,6 +37,20 @@ either() {
 # On the other hand, the RMC (RMC_*) variables describe what the user asked for and are less specific but exist even for
 # packages that are not in use.
 scan-rmc-environment() {
+    # In Oct 2021, we change how the "rmc_assertions" command works. It now controls two environment variables:
+    #  * RMC_ASSERTIONS_ENABLED is non-empty or empty to control whether optional assertions are enabled or disabled.
+    #  * RMC_ASSERTION_BEHAVIOR is a word that says how to handle failed assertions.
+    if [ "$RMC_ASSERTIONS" = "" ]; then
+	if [ -n "$RMC_ASSERTIONS_ENABLED" ]; then
+	    RMC_ASSERTIONS=enabled
+	else
+	    RMC_ASSERTIONS=disabled
+	fi
+	if [ -n "$RMC_ASSERTION_BEHAVIOR" ]; then
+	    RMC_ASSERTIONS="${RMC_ASSERTIONS}-${RMC_ASSERTION_BEHAVIOR}"
+	fi
+    fi
+
     emit-pair assertions  "$RMC_ASSERTIONS"
     emit-pair boost       "$BOOST_VERSION"
     emit-pair build       "$RMC_BUILD"
