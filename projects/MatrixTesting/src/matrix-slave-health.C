@@ -23,6 +23,7 @@ static const char *gDescription =
 
     "@named{image}{A Docker image is being constructed in which to run the test.}"
     "@named{container}{A Docker container is being started for a test phase.}"
+    "@named{phase}{The next phase of testing has started. Each test is many phases.}"
     "@named{tested}{A test has completed and a new test ID is added to the health report.}"
     "@named{error}{The script has encountered an error. This isn't always possible to report.}";
 
@@ -100,12 +101,14 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
         event = "show";
     } else if (1 == args.size()) {
         event = args[0];
+        settings.comment = "";
     } else if (2 == args.size()) {
         event = args[0];
         if ("test" == event)
             event = "tested";                           // backward compatibility [Robb Matzke 2021-10-10]
         if ("tested" == event) {
             settings.testId = boost::lexical_cast<unsigned>(args[1]);
+            settings.comment = "";
         } else {
             settings.comment = args[1];
         }

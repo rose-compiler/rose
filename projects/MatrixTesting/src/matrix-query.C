@@ -340,7 +340,7 @@ loadColumns(DB::Connection db) {
                   .doc("Number of lines of output")
                   .type(ColumnType::INTEGER));
     retval.insert("output.avg",
-                  Column().tableTitle("Avg Lines\nof Output").sql("avg(test_results.noutput)")
+                  Column().tableTitle("Avg Lines\nof Output").sql("round(avg(test_results.noutput))")
                   .doc("Average number of lines of output for the selected tests")
                   .type(ColumnType::INTEGER)
                   .isAggregate(true));
@@ -418,7 +418,7 @@ loadColumns(DB::Connection db) {
                   .doc("Number of heuristically detected warning messages")
                   .type(ColumnType::INTEGER));
     retval.insert("warnings.avg",
-                  Column().tableTitle("Average\nWarnings").sql("avg(test_results.nwarnings)")
+                  Column().tableTitle("Average\nWarnings").sql("round(avg(test_results.nwarnings))")
                   .doc("Average number of heuristically detected warning messages for the selected tests")
                   .type(ColumnType::INTEGER)
                   .isAggregate(true));

@@ -648,7 +648,7 @@ showAdditionalCommands(const Settings &settings, DB::Connection db, const std::s
 
     showSectionTitle(settings, "Additional information",
                      "The data above is only the tip of the iceburg.\n"
-                     "See " + moreInfoLink + " for the rest of the iceburg.\n");
+                     "See " + moreInfoLink + " for more of the iceburg.\n");
 }
 
 static std::string

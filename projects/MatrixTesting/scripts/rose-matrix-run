@@ -647,7 +647,7 @@ scan-for-health() {
 	    =================-=================*)
 		# The above pattern comes from the OUTPUT_SECTION_SEPARATOR variable in the run-test script
 		local phase="$(echo "$line" |cut -d' ' -f2)"
-	        rose-matrix-slave-health --slave="$SLAVE_NAME" start-phase "$phase"
+	        rose-matrix-slave-health --slave="$SLAVE_NAME" phase "$phase"
 		;;
 	esac
     done
