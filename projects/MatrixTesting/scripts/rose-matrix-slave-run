@@ -181,7 +181,7 @@ matrix-update-system-software() {
 	    sudo apt-get -y install git wget build-essential g++ gfortran libtool automake flex bison \
 		 graphviz-dev cmake libpqxx-dev ghostscript perl-doc groff libgcrypt20-dev \
 		 libfcgi-dev libfuse3-dev gcc-multilib g++-multilib gfortran-multilib \
-		 fuse3 bsdmainutils libxapian-dev p7zip-full rsync time \
+		 fuse3 bsdmainutils libxapian-dev p7zip-full rsync time libreadline-dev \
 		 locales language-pack-en-base jq screen figlet libpcre3-dev || continue
 	)
 
