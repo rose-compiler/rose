@@ -113,6 +113,9 @@ map_t<AdaIdentifier, SgAdaPackageSpecDecl*>& adaPkgs();
 //
 // auxiliary functions and types
 
+/// a type encapsulating a lambda function that completes a body
+///   after it has been structurally connected to the AST.
+using DeferredBodyCompletion = std::function<void()>;
 
 /// \brief resolves all goto statements to labels
 ///        at the end of procedures or functions.
