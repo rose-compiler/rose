@@ -826,7 +826,7 @@ namespace
     }
   }
 
-  SgAdaTaskSpec&
+  std::pair<SgAdaTaskSpec*, DeferredBodyCompletion>
   getTaskSpec(Element_Struct& elem, AstContext ctx)
   {
     SgAdaTaskSpec&          sgnode = mkAdaTaskSpec();
@@ -841,47 +841,51 @@ namespace
 
     logKind("A_Task_Definition");
 
-    Task_Definition_Struct& tasknode = def.The_Union.The_Task_Definition;
+    Task_Definition_Struct* tasknode = &def.The_Union.The_Task_Definition;
+    SgAdaTaskSpec*          nodePtr  = &sgnode;
 
-    // visible items
-    {
-      ElemIdRange range = idRange(tasknode.Visible_Part_Items);
+    auto deferred = [ctx,nodePtr,tasknode]() -> void
+                    {
+                      // visible items
+                      {
+                        ElemIdRange range = idRange(tasknode->Visible_Part_Items);
 
-      traverseIDs(range, elemMap(), ElemCreator{ctx.scope_npc(sgnode)});
-    }
+                        traverseIDs(range, elemMap(), ElemCreator{ctx.scope(*nodePtr)});
+                      }
 
-    // private items
-    {
-      ElemIdRange range = idRange(tasknode.Private_Part_Items);
-      ADA_ASSERT((!range.empty()) == tasknode.Is_Private_Present);
+                      // private items
+                      {
+                        ElemIdRange range = idRange(tasknode->Private_Part_Items);
+                        ADA_ASSERT((!range.empty()) == tasknode->Is_Private_Present);
 
-      traverseIDs(range, elemMap(), ElemCreator{ctx.scope_npc(sgnode), true /* private items */});
-    }
+                        traverseIDs(range, elemMap(), ElemCreator{ctx.scope(*nodePtr), true /* private items */});
+                      }
+                    };
 
     /* unused fields: (Task_Definition_Struct)
          bool                  Has_Task;
     */
-    return sgnode;
+    return std::make_pair(&sgnode, deferred);
   }
 
-  SgAdaTaskSpec&
+  std::pair<SgAdaTaskSpec*, DeferredBodyCompletion>
   getTaskSpecID(Element_ID id, AstContext ctx)
   {
     return getTaskSpec(retrieveAs(elemMap(), id), ctx);
   }
 
-  SgAdaTaskSpec&
+  std::pair<SgAdaTaskSpec*, DeferredBodyCompletion>
   getTaskSpecForTaskType(Declaration_Struct& decl, AstContext ctx)
   {
     ADA_ASSERT(decl.Declaration_Kind == A_Task_Type_Declaration);
 
     if (decl.Type_Declaration_View == 0)
-      return mkAdaTaskSpec();
+      return std::make_pair(&mkAdaTaskSpec(), []()->void {}); // nothing to complete
 
     return getTaskSpecID(decl.Type_Declaration_View, ctx);
   }
 
-  SgAdaTaskSpec&
+  std::pair<SgAdaTaskSpec*, DeferredBodyCompletion>
   getTaskSpecForSingleTask(Declaration_Struct& decl, AstContext ctx)
   {
     ADA_ASSERT(decl.Declaration_Kind == A_Single_Task_Declaration);
@@ -1072,8 +1076,6 @@ namespace
     return *stmt;
   }
 
-  using BodyCompletion = std::function<void()>;
-
   // MS 11/17/2020 : SelectStmtCreator modeled on IfStmtCreator
   // PP 10/12/2021 : refactored code to eliminate use of scope_npc
   //                 a block will only be populated after the new node has been connected
@@ -1088,7 +1090,7 @@ namespace
       : sgnode(&sgn), ctx(astctx)
     {}
 
-    std::pair<SgAdaSelectAlternativeStmt*, BodyCompletion>
+    std::pair<SgAdaSelectAlternativeStmt*, DeferredBodyCompletion>
     commonAltStmt(Path_Struct& path) {
       // create body of alternative
       SgBasicBlock* block = &mkBasicBlock();
@@ -1101,28 +1103,28 @@ namespace
       Path_Struct* pathptr = &path;
       AstContext   astctx{ctx};
 
-      BodyCompletion completion = [pathptr, block, astctx]() -> void
-                                  {
-                                    ElemIdRange altStmts = idRange(pathptr->Sequence_Of_Statements);
+      auto completion = [pathptr, block, astctx]() -> void
+                        {
+                          ElemIdRange altStmts = idRange(pathptr->Sequence_Of_Statements);
 
-                                    traverseIDs(altStmts, elemMap(), StmtCreator{astctx.scope(*block)});
-                                  };
+                          traverseIDs(altStmts, elemMap(), StmtCreator{astctx.scope(*block)});
+                        };
 
       return std::make_pair(stmt, completion);
     }
 
-    std::pair<SgBasicBlock*, BodyCompletion>
+    std::pair<SgBasicBlock*, DeferredBodyCompletion>
     commonMakeBlock(Path_Struct& path) {
       SgBasicBlock* block   = &mkBasicBlock();
       Path_Struct*  pathptr = &path;
       AstContext    astctx{ctx};
 
-      BodyCompletion completion = [pathptr, block, astctx]() -> void
-                                  {
-                                    ElemIdRange altStmts = idRange(pathptr->Sequence_Of_Statements);
+      auto completion = [pathptr, block, astctx]() -> void
+                        {
+                          ElemIdRange altStmts = idRange(pathptr->Sequence_Of_Statements);
 
-                                    traverseIDs(altStmts, elemMap(), StmtCreator{astctx.scope(*block)});
-                                  };
+                          traverseIDs(altStmts, elemMap(), StmtCreator{astctx.scope(*block)});
+                        };
       return std::make_pair(block, completion);
     }
 
@@ -3337,10 +3339,10 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         logKind("A_Task_Type_Declaration");
 
-        SgAdaTaskSpec&     spec    = getTaskSpecForTaskType(decl, ctx);
+        auto               spec    = getTaskSpecForTaskType(decl, ctx);
         NameData           adaname = singleName(decl, ctx);
         ADA_ASSERT(adaname.fullName == adaname.ident);
-        SgAdaTaskTypeDecl& sgnode  = mkAdaTaskTypeDecl(adaname.fullName, spec, ctx.scope());
+        SgAdaTaskTypeDecl& sgnode  = mkAdaTaskTypeDecl(adaname.fullName, SG_DEREF(spec.first), ctx.scope());
 
         attachSourceLocation(sgnode, elem, ctx);
         privatize(sgnode, isPrivate);
@@ -3349,7 +3351,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         recordNode(asisTypes(), adaname.id(), sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
         recordNode(asisDecls(), elem.ID, sgnode);
-
+        spec.second();
         /* unused fields:
              bool                           Has_Task;
              Element_ID                     Corresponding_End_Name;
@@ -3372,10 +3374,10 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         logKind("A_Single_Task_Declaration");
 
-        SgAdaTaskSpec&     spec    = getTaskSpecForSingleTask(decl, ctx);
+        auto               spec    = getTaskSpecForSingleTask(decl, ctx);
         NameData           adaname = singleName(decl, ctx);
         ADA_ASSERT(adaname.fullName == adaname.ident);
-        SgAdaTaskSpecDecl& sgnode  = mkAdaTaskSpecDecl(adaname.fullName, spec, ctx.scope());
+        SgAdaTaskSpecDecl& sgnode  = mkAdaTaskSpecDecl(adaname.fullName, SG_DEREF(spec.first), ctx.scope());
 
         attachSourceLocation(sgnode, elem, ctx);
         privatize(sgnode, isPrivate);
@@ -3384,7 +3386,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         //~ recordNode(asisTypes(), adaname.id(), sgnode);
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
-
+        spec.second();
         /* unused fields:
              bool                           Has_Task;
              Element_ID                     Corresponding_End_Name;
