@@ -101,18 +101,27 @@ namespace CodeThorn {
       throw CodeThorn::Exception("Command line option \"" + option + "\" accessed as string value, but has different type.");
     }
   }
+
   void CommandLineOptions::parse(int argc, char * argv[], po::options_description all) {
     po::store(po::command_line_parser(argc, argv).options(all).run(), args);
-    //                                                        .allow_unregistered()
     po::notify(args);
   }
+
+  void CommandLineOptions::parseAllowSingleDash(int argc, char * argv[], po::options_description all) {
+    po::command_line_style::style_t style 
+      = po::command_line_style::style_t(po::command_line_style::unix_style |
+                                        po::command_line_style::allow_long_disguise );
+    po::store(po::parse_command_line(argc, argv,all,style), args);
+    po::notify(args);
+  }
+
   void CommandLineOptions::parseAllowUnregistered(int argc, char * argv[], po::options_description all) {
     po::store(po::command_line_parser(argc, argv).options(all).allow_unregistered().run(), args);
     po::notify(args);
   }
+
   void CommandLineOptions::parse(int argc, char * argv[], po::options_description all, po::options_description configFileOptions) {
     po::store(po::command_line_parser(argc, argv).options(all).run(), args);
-    //                                                        .allow_unregistered()
     po::notify(args);
     
     if (args.isUserProvided("config")) {
