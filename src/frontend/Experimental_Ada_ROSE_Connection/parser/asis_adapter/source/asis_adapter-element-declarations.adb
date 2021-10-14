@@ -241,7 +241,7 @@ package body Asis_Adapter.Element.Declarations is
       begin
          State.Add_To_Dot_Label ("Declaration_Kind", Value'Image);
          Result.Declaration_Kind :=
-           a_nodes_h.Support.To_Declaration_Kinds (Value);
+           To_Declaration_Kinds (Value);
       end;
 
       procedure Add_Default_Kind is
@@ -250,7 +250,7 @@ package body Asis_Adapter.Element.Declarations is
       begin
          State.Add_To_Dot_Label ("Default_Kind", Value'Image);
          Result.Default_Kind :=
-           a_nodes_h.Support.To_Subprogram_Default_Kinds (Value);
+           To_Subprogram_Default_Kinds (Value);
       end;
 
       procedure Add_Declaration_Origin is
@@ -258,7 +258,7 @@ package body Asis_Adapter.Element.Declarations is
       begin
          State.Add_To_Dot_Label ("Declaration_Origin", Value'Image);
          Result.Declaration_Origin :=
-           a_nodes_h.Support.To_Declaration_Origins (Value);
+           To_Declaration_Origins (Value);
       end;
 
       procedure Add_Discriminant_Part is
@@ -481,7 +481,7 @@ package body Asis_Adapter.Element.Declarations is
          Value : constant Asis.Mode_Kinds :=  Asis.Elements.Mode_Kind (Element);
       begin
          State.Add_To_Dot_Label ("Mode_Kind", Value'Image);
-         Result.Mode_Kind := a_nodes_h.Support.To_Mode_Kinds (Value);
+         Result.Mode_Kind := To_Mode_Kinds (Value);
       end;
 
       procedure Add_Names is begin

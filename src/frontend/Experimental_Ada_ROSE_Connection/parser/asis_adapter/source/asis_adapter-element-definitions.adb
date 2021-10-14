@@ -426,7 +426,7 @@ package body Asis_Adapter.Element.Definitions is
          procedure Add_Common_Items is
          begin
             State.Add_To_Dot_Label ("Access_Type_Kind", Access_Type_Kind'Image);
-            Result.Access_Type_Kind := anhS.To_Access_Type_Kinds (Access_Type_Kind);
+            Result.Access_Type_Kind := To_Access_Type_Kinds (Access_Type_Kind);
          end Add_Common_Items;
 
          use all type Asis.Access_Type_Kinds;
@@ -523,7 +523,7 @@ package body Asis_Adapter.Element.Definitions is
          procedure Add_Common_Items is
          begin
             State.Add_To_Dot_Label ("Discrete_Range_Kind", Discrete_Range_Kind'Image);
-            Result.Discrete_Range_Kind := anhS.To_Discrete_Range_Kinds (Discrete_Range_Kind);
+            Result.Discrete_Range_Kind := To_Discrete_Range_Kinds (Discrete_Range_Kind);
          end Add_Common_Items;
 
          use all type Asis.Discrete_Range_Kinds;
@@ -565,7 +565,7 @@ package body Asis_Adapter.Element.Definitions is
          procedure Add_Common_Items is
          begin
             State.Add_To_Dot_Label ("Discrete_Range_Kind", Discrete_Range_Kind'Image);
-            Result.Discrete_Range_Kind := anhS.To_Discrete_Range_Kinds (Discrete_Range_Kind);
+            Result.Discrete_Range_Kind := To_Discrete_Range_Kinds (Discrete_Range_Kind);
          end Add_Common_Items;
 
          use all type Asis.Discrete_Range_Kinds;
@@ -607,7 +607,7 @@ package body Asis_Adapter.Element.Definitions is
          procedure Add_Common_Items is
          begin
             State.Add_To_Dot_Label ("Constraint_Kind", Constraint_Kind'Image);
-            Result.Constraint_Kind := anhS.To_Constraint_Kinds (Constraint_Kind);
+            Result.Constraint_Kind := To_Constraint_Kinds (Constraint_Kind);
          end Add_Common_Items;
 
          use all type Asis.Constraint_Kinds;
@@ -656,7 +656,7 @@ package body Asis_Adapter.Element.Definitions is
          procedure Add_Common_Items is
          begin
             State.Add_To_Dot_Label ("Formal_Type_Kind", Formal_Type_Kind'Image);
-            Result.Formal_Type_Kind := anhS.To_Formal_Type_Kinds (Formal_Type_Kind);
+            Result.Formal_Type_Kind := To_Formal_Type_Kinds (Formal_Type_Kind);
             Result.Corresponding_Type_Operators := Add_And_Return_Corresponding_Type_Operators;
          end Add_Common_Items;
 
@@ -803,7 +803,7 @@ package body Asis_Adapter.Element.Definitions is
          procedure Add_Common_Items is
          begin
             State.Add_To_Dot_Label ("Constraint_Kind", Constraint_Kind'Image);
-            Result.Constraint_Kind := anhS.To_Constraint_Kinds (Constraint_Kind);
+            Result.Constraint_Kind := To_Constraint_Kinds (Constraint_Kind);
          end Add_Common_Items;
 
          use all type Asis.Constraint_Kinds;
@@ -921,13 +921,13 @@ package body Asis_Adapter.Element.Definitions is
          begin
             State.Add_To_Dot_Label ("Root_Type_Kind", Value'Image);
             Result.Root_Type_Kind :=
-              a_nodes_h.Support.To_Root_Type_Kinds (Value);
+              To_Root_Type_Kinds (Value);
          end;
 
          procedure Add_Common_Items is
          begin -- Add_Common_Items
             State.Add_To_Dot_Label ("Type_Kind", Type_Kind'Image);
-            Result.Type_Kind := anhS.To_Type_Kinds (Type_Kind);
+            Result.Type_Kind := To_Type_Kinds (Type_Kind);
             Result.Has_Limited := Add_And_Return_Has_Limited;
             Result.Has_Private := Add_And_Return_Has_Private;
             Result.Corresponding_Type_Operators := Add_And_Return_Corresponding_Type_Operators;
@@ -1053,7 +1053,7 @@ package body Asis_Adapter.Element.Definitions is
       procedure Add_Common_Items is
       begin
          State.Add_To_Dot_Label ("Definition_Kind", Definition_Kind'Image);
-         Result.Definition_Kind := anhS.To_Definition_Kinds (Definition_Kind);
+         Result.Definition_Kind := To_Definition_Kinds (Definition_Kind);
       end Add_Common_Items;
 
       use all type Asis.Definition_Kinds;

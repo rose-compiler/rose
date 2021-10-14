@@ -75,7 +75,7 @@ package body Asis_Adapter.Element.Expressions is
       begin
          State.Add_To_Dot_Label ("Attribute_Kind",
                                  Asis.Elements.Attribute_Kind (Element)'Image);
-         Result.Attribute_Kind := anhS.To_Attribute_Kinds (Asis.Elements.Attribute_Kind (Element));
+         Result.Attribute_Kind := To_Attribute_Kinds (Asis.Elements.Attribute_Kind (Element));
       end;
         
       
@@ -366,7 +366,7 @@ package body Asis_Adapter.Element.Expressions is
       procedure Add_Common_Items is
       begin
          State.Add_To_Dot_Label ("Expression_Kind", Expression_Kind'Image);
-         Result.Expression_Kind := anhS.To_Expression_Kinds (Expression_Kind);
+         Result.Expression_Kind := To_Expression_Kinds (Expression_Kind);
          Add_Corresponding_Expression_Type;
       end Add_Common_Items;
 

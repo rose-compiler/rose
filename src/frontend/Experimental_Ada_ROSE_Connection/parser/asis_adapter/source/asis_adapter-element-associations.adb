@@ -98,7 +98,7 @@ package body Asis_Adapter.Element.Associations is
       procedure Add_Common_Items is
       begin
          State.Add_To_Dot_Label ("Association_Kind", Association_Kind'Image);
-         Result.Association_Kind := anhS.To_Association_Kinds (Association_Kind);
+         Result.Association_Kind := To_Association_Kinds (Association_Kind);
       end Add_Common_Items;
 
       use all type Asis.Association_Kinds;

@@ -340,7 +340,7 @@ package body Asis_Adapter.Element.Statements is
       procedure Add_Common_Items is
       begin
          State.Add_To_Dot_Label ("Statement_Kind", Statement_Kind'Image);
-         Result.Statement_Kind := anhS.To_Statement_Kinds (Statement_Kind);
+         Result.Statement_Kind := To_Statement_Kinds (Statement_Kind);
          Add_Label_Names;
       end Add_Common_Items;
 
