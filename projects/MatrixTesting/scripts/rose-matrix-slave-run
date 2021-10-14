@@ -350,6 +350,8 @@ matrix-install-rmc-spock() {
 	echo
 	echo "RMC/Spock is up to date and appears to work"
     fi
+
+    spock-ls --shellvars --export
 }
 
 #------------------------------------------------------------------------------------------------------------------------

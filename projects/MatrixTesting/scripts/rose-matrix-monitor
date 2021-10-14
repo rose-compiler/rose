@@ -48,4 +48,4 @@ while [ "$#" -gt 0 ]; do
     esac
 done
 
-exec watch -c "$dir0/rose-matrix-show-latest" --var="$MATRIX_ROOT/var/matrix"
+exec watch -c "$dir0/rose-matrix-show-latest" --var="$MATRIX_ROOT"
