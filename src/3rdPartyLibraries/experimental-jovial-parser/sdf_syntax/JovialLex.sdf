@@ -20,6 +20,7 @@ exports
     PointerTypeDesc            %% 2.1.1.7
     StrucSpecT                 %% 2.1.2.2
     DefString                  %% 2.4
+    ControlLetter              %% 4.2
     MODOperator                %% 5.1
     ANDOperator                %% 5.1
     OROperator                 %% 5.1
@@ -67,6 +68,14 @@ exports
 %%%%%%%%%%
 
   [\?] (Mark | Digit | Letter | [\n\r])*  [\?]  -> DefString
+
+%%%%%%%%%%
+%% 4.0 STATEMENTS
+%%%%%%%%%%
+
+%% 4.2 LOOP STATEMENTS
+%%
+  Letter                     -> ControlLetter
 
 %%%%%%%%%%
 %% 5.1 OPERATORS
@@ -293,6 +302,8 @@ exports
 
     PointerTypeDesc   -/- [A-Za-z0-9]
     StrucSpecT        -/- [A-Za-z0-9]
+
+    ControlLetter     -/- [A-Za-z0-9]
 
     IfKeyword         -/- [A-Za-z0-9]
     ReservedWord      -/- [A-Za-z0-9]
