@@ -34,7 +34,7 @@ run yum -y install wget tar cmake java-1.8.0-openjdk-devel graphviz gcc-c++ flex
 # Static libraries (needed by some ROSE dependencies)
 run dnf -y install langpacks-en glibc-all-langpacks
 run dnf -y install 'dnf-command(config-manager)'
-run dnf config-manager --enable PowerTools
+run dnf config-manager --enable powertools
 run yum -y install glibc-static libstdc++-static
 
 # The following lines are needed for 7z if you're building binary releases of ROSE software
