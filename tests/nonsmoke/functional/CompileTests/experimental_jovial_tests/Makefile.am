@@ -345,6 +345,7 @@ COMPOOL_TESTCODES = \
  rc825.cpl                              \
  rc836.cpl                              \
  rc975.cpl                              \
+ gitlab-issue-14.cpl                    \
  beta.cpl                               \
  parttype.cpl
 
