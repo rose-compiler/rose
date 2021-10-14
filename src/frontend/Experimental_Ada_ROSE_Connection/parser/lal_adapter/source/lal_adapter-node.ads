@@ -1,6 +1,10 @@
 with a_nodes_h.Support;
 with Libadalang.Analysis;
 with Libadalang.Common;
+with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Strings.Hash;
+
+use Ada.Containers;
 
 private with Ada.Containers.Doubly_Linked_Lists;
 
@@ -74,6 +78,12 @@ private
    -- For debuggng:
    Parent_Name : constant String := Module_Name;
    Module_Name : constant String := Parent_Name & ".Node";
+
+-- This provides a map for the address of node to look up for its ID
+   package Node_ID_Map is new Indefinite_Hashed_Maps (Key_Type => String,
+                                               Element_Type => Integer,
+                                               Hash => Ada.Strings.Hash,
+                                               Equivalent_Keys => "=");
 
    package Element_ID_Lists is new
      Ada.Containers.Doubly_Linked_Lists
