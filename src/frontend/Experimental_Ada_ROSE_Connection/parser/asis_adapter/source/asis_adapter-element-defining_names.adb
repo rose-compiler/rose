@@ -74,7 +74,7 @@ package body Asis_Adapter.Element.Defining_Names is
       State.Add_To_Dot_Label
         (Name => "Defining_Name_Kind", Value => Defining_Name_Kind'Image);
       Result.Defining_Name_Kind :=
-        anhS.To_Defining_Name_Kinds (Defining_Name_Kind);
+        To_Defining_Name_Kinds (Defining_Name_Kind);
       Add_Defining_Name_Image;
    end Add_Common_Items;
 

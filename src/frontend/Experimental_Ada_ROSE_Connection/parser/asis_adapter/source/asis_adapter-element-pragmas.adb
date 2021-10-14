@@ -34,7 +34,7 @@ package body Asis_Adapter.Element.Pragmas is
       --All Pragmas seem to be identical, so there's no reason to seperate things out
 
       State.Add_To_Dot_Label ("Pragma_Kind", Pragma_Kind'Image);
-      Result.Pragma_Kind := anhS.To_Pragma_Kinds (Pragma_Kind);
+      Result.Pragma_Kind := To_Pragma_Kinds (Pragma_Kind);
 
       Add_Name_Image;
       Add_Pragma_Argument_Associations;
