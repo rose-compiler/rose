@@ -2,6 +2,7 @@ with Ada.Tags;
 with Generic_Logging;
 with Langkit_Support.Slocs;
 with Langkit_Support.Text;
+With System.Address_Image;
 
 package body Lal_Adapter.Node is
 
@@ -19,18 +20,34 @@ package body Lal_Adapter.Node is
    -- TODO: Implement by storing and hashing Nodes?
    Last_Node_ID : Natural := anhS.Empty_ID;
 
+   Node_Map : Node_ID_Map.Map := Node_ID_Map.Empty_Map; 
+
    ------------
    -- EXPORTED:
    ------------
    function Get_Element_ID
      (Node : in LAL.Ada_Node'Class)
       return Element_ID is
+-- Tried to use address for mapping but got nodes with same address.
+-- Use Image for now till we have better option for the mapping.
+     Node_Image : String :=  LAL.Image(Node);
+     C : constant Node_ID_Map.Cursor := Node_Map.Find (Node_Image);
+     use type Node_ID_Map.Cursor;
+     Node_Id : Integer := 0; 
    begin
+      -- Put_Line("Node: " & Node_Image);
       if LAL.Is_Null (Node) then
          return No_Element_ID;
       else
-         Last_Node_ID := Last_Node_ID + 1;
-         return (Node_ID => Last_Node_ID,
+         if C = Node_ID_Map.No_Element then
+            Last_Node_ID := Last_Node_ID + 1;
+            Node_Map.Insert (Node_Image, Last_Node_ID);
+            Node_Id := Last_Node_ID;
+         else
+            Node_Id := Node_ID_Map.Element (C);
+         end if; 
+
+         return (Node_ID => Node_Id,
                  Kind    => Node.Kind);
       end if;
    end Get_Element_ID;
@@ -229,7 +246,7 @@ package body Lal_Adapter.Node is
       Node    : in     LAL.Ada_Node'Class)
    is
       Parent_Name : constant String := Module_Name;
-      Module_Name : constant String := Parent_Name & ".Process_Abstract_Node";
+      Module_Name : constant String := Parent_Name & ".Process_Ada_List";
       package Logging is new Generic_Logging (Module_Name); use Logging;
       --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
 
@@ -270,7 +287,7 @@ package body Lal_Adapter.Node is
 
          when Ada_Stmt_List =>
             declare
-               Decl_List_Node : constant LAL.Decl_List := LAL.As_Decl_List (Node);
+               Stmt_List_Node : constant LAL.Stmt_List := LAL.As_Stmt_List (Node);
             begin
               NULL;
             end;
@@ -448,7 +465,7 @@ package body Lal_Adapter.Node is
       Node    : in     LAL.Ada_Node'Class)
    is
       Parent_Name : constant String := Module_Name;
-      Module_Name : constant String := Parent_Name & ".Process_Abstract_Node";
+      Module_Name : constant String := Parent_Name & ".Process_Aliased_Node";
       package Logging is new Generic_Logging (Module_Name); use Logging;
       --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
 
@@ -481,7 +498,7 @@ package body Lal_Adapter.Node is
       Node    : in     LAL.Ada_Node'Class)
    is
       Parent_Name : constant String := Module_Name;
-      Module_Name : constant String := Parent_Name & ".Process_Abstract_Node";
+      Module_Name : constant String := Parent_Name & ".Process_All_Node";
       package Logging is new Generic_Logging (Module_Name); use Logging;
       --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
 
@@ -514,7 +531,7 @@ package body Lal_Adapter.Node is
       Node    : in     LAL.Ada_Node'Class)
    is
       Parent_Name : constant String := Module_Name;
-      Module_Name : constant String := Parent_Name & ".Process_Abstract_Node";
+      Module_Name : constant String := Parent_Name & ".Process_Array_Indices";
       package Logging is new Generic_Logging (Module_Name); use Logging;
       --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
 
@@ -549,7 +566,7 @@ package body Lal_Adapter.Node is
       Node    : in     LAL.Ada_Node'Class)
    is
       Parent_Name : constant String := Module_Name;
-      Module_Name : constant String := Parent_Name & ".Process_Abstract_Node";
+      Module_Name : constant String := Parent_Name & ".Process_Aspect_Assoc_Range";
       package Logging is new Generic_Logging (Module_Name); use Logging;
       --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
 
@@ -566,7 +583,9 @@ package body Lal_Adapter.Node is
                expr : constant LAL.Expr := LAL.F_Expr (Aspect_Assoc_Node);
             begin
                Log ("name: " & name.Debug_Text);
-               Log ("expr: " & expr.Debug_Text);
+               if not expr.Is_Null then
+                 Log ("expr: " & expr.Debug_Text);
+               end if;
             end;
 
       end case;
@@ -578,7 +597,7 @@ package body Lal_Adapter.Node is
       Node    : in     LAL.Ada_Node'Class)
    is
       Parent_Name : constant String := Module_Name;
-      Module_Name : constant String := Parent_Name & ".Process_Abstract_Node";
+      Module_Name : constant String := Parent_Name & ".Process_Aspect_Clause";
       package Logging is new Generic_Logging (Module_Name); use Logging;
       --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
 
@@ -626,7 +645,9 @@ package body Lal_Adapter.Node is
                nodeList : constant LAL.Ada_Node_List := LAL.F_Components (Record_Rep_Clause_Node);
             begin
                Log ("name: " & name.Debug_Text);
-               Log ("expr: " & expr.Debug_Text);
+               if not expr.Is_Null then
+                 Log ("expr: " & expr.Debug_Text);
+               end if;
                Log ("nodeList: " & nodeList.Debug_Text);
             end;
 
@@ -639,7 +660,7 @@ package body Lal_Adapter.Node is
       Node    : in     LAL.Ada_Node'Class)
    is
       Parent_Name : constant String := Module_Name;
-      Module_Name : constant String := Parent_Name & ".Process_Abstract_Node";
+      Module_Name : constant String := Parent_Name & ".Process_Aspect_Spec_Range";
       package Logging is new Generic_Logging (Module_Name); use Logging;
       --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
 
@@ -667,7 +688,7 @@ package body Lal_Adapter.Node is
       Node    : in     LAL.Ada_Node'Class)
    is
       Parent_Name : constant String := Module_Name;
-      Module_Name : constant String := Parent_Name & ".Process_Abstract_Node";
+      Module_Name : constant String := Parent_Name & ".Process_Base_Assoc";
       package Logging is new Generic_Logging (Module_Name); use Logging;
       --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
 
@@ -693,8 +714,12 @@ package body Lal_Adapter.Node is
                id : constant LAL.Identifier := LAL.F_Id (Pragma_Argument_Assoc_Node);
                expr : constant LAL.Expr := LAL.F_Expr (Pragma_Argument_Assoc_Node);
             begin
-               Log ("id: " & id.Debug_Text);
-               Log ("expr: " & expr.Debug_Text);
+               if not id.Is_Null then
+                 Log ("id: " & id.Debug_Text);
+               end if;
+               if not expr.Is_Null then
+                 Log ("expr: " & expr.Debug_Text);
+               end if;
             end;
 
       end case;
@@ -706,7 +731,7 @@ package body Lal_Adapter.Node is
       Node    : in     LAL.Ada_Node'Class)
    is
       Parent_Name : constant String := Module_Name;
-      Module_Name : constant String := Parent_Name & ".Process_Abstract_Node";
+      Module_Name : constant String := Parent_Name & ".Process_Base_Formal_Param_Holder";
       package Logging is new Generic_Logging (Module_Name); use Logging;
       --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
 
@@ -724,8 +749,12 @@ package body Lal_Adapter.Node is
                entryParams : constant LAL.Params := LAL.F_Entry_Params (Entry_Spec_Node);
             begin
                Log ("entryName: " & entryName.Debug_Text);
-               Log ("familyType: " & familyType.Debug_Text);
-               Log ("entryParams: " & entryParams.Debug_Text);
+               if not familyType.Is_Null then
+                 Log ("familyType: " & familyType.Debug_Text);
+               end if;
+               if not entryParams.Is_Null then
+                 Log ("entryParams: " & entryParams.Debug_Text);
+               end if;
             end;
 
          when Ada_Enum_Subp_Spec =>
@@ -744,9 +773,15 @@ package body Lal_Adapter.Node is
                subpReturn : constant LAL.Type_Expr := LAL.F_Subp_Returns (Subp_Spec_Node);
             begin
                Log ("subpKind: " & subpKind.Debug_Text);
-               Log ("subpName: " & subpName.Debug_Text);
-               Log ("subpParams: " & subpParams.Debug_Text);
-               Log ("subpReturn: " & subpReturn.Debug_Text);
+               if not subpName.Is_Null then
+                 Log ("subpName: " & subpName.Debug_Text);
+               end if;
+               if not subpParams.Is_Null then
+                 Log ("subpParams: " & subpParams.Debug_Text);
+               end if;
+               if not subpReturn.Is_Null then
+                 Log ("subpReturn: " & subpReturn.Debug_Text);
+               end if;
             end;
 
          when Ada_Component_List =>
@@ -756,7 +791,9 @@ package body Lal_Adapter.Node is
                variantPart : constant LAL.Variant_Part := LAL.F_Variant_Part (Component_List_Node);
             begin
                Log ("components: " & components.Debug_Text);
-               Log ("variantPart: " & variantPart.Debug_Text);
+               if not variantPart.Is_Null then
+                 Log ("variantPart: " & variantPart.Debug_Text);
+               end if;
             end;
 
          when Ada_Known_Discriminant_Part =>
@@ -779,7 +816,9 @@ package body Lal_Adapter.Node is
                Entry_Completion_Formal_Params_Node : constant LAL.Entry_Completion_Formal_Params := LAL.As_Entry_Completion_Formal_Params (Node);
                params : constant LAL.Params := LAL.F_Params (Entry_Completion_Formal_Params_Node);
             begin
-               Log ("params: " & params.Debug_Text);
+               if not params.Is_Null then
+                 Log ("params: " & params.Debug_Text);
+               end if;
             end;
 
          when Ada_Generic_Formal_Part =>
@@ -799,7 +838,7 @@ package body Lal_Adapter.Node is
       Node    : in     LAL.Ada_Node'Class)
    is
       Parent_Name : constant String := Module_Name;
-      Module_Name : constant String := Parent_Name & ".Process_Abstract_Node";
+      Module_Name : constant String := Parent_Name & ".Process_Base_Record_Def";
       package Logging is new Generic_Logging (Module_Name); use Logging;
       --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
 
@@ -832,7 +871,7 @@ package body Lal_Adapter.Node is
       Node    : in     LAL.Ada_Node'Class)
    is
       Parent_Name : constant String := Module_Name;
-      Module_Name : constant String := Parent_Name & ".Process_Abstract_Node";
+      Module_Name : constant String := Parent_Name & ".Process_Basic_Assoc";
       package Logging is new Generic_Logging (Module_Name); use Logging;
       --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
 
@@ -875,8 +914,12 @@ package body Lal_Adapter.Node is
                designators : constant LAL.Ada_Node := LAL.F_Designator (Param_Assoc_Node);
                rExpr : constant LAL.Expr := LAL.F_R_Expr (Param_Assoc_Node);
             begin
-               Log ("designators: " & designators.Debug_Text);
-               Log ("rExpr: " & rExpr.Debug_Text);
+               if not designators.Is_Null then
+                 Log ("designators: " & designators.Debug_Text);
+               end if;
+               if not rExpr.Is_Null then
+                 Log ("rExpr: " & rExpr.Debug_Text);
+               end if;
             end;
 
       end case;
@@ -908,7 +951,9 @@ package body Lal_Adapter.Node is
             begin
                Log ("NameList: " & NameList.Debug_Text);
                Log ("Component_Def: " & Component_Def.Debug_Text);
-               Log ("Expr: " & Expr.Debug_Text);
+               if not Expr.Is_Null then
+                 Log ("Expr: " & Expr.Debug_Text);
+               end if;
             end;
 
             This.Add_Not_Implemented;
@@ -921,7 +966,9 @@ package body Lal_Adapter.Node is
             begin
                Log ("NameList: " & NameList.Debug_Text);
                Log ("TypeExpr: " & TypeExpr.Debug_Text);
-               Log ("DefaultExpr: " & DefaultExpr.Debug_Text);
+               if not DefaultExpr.Is_Null then
+                 Log ("DefaultExpr: " & DefaultExpr.Debug_Text);
+               end if;
             end;
 
             This.Add_Not_Implemented;
@@ -1024,7 +1071,9 @@ package body Lal_Adapter.Node is
                Incomplete_Type_Decl_Node : constant LAL.Incomplete_Type_Decl := LAL.As_Incomplete_Type_Decl (Node);
                Discriminants : constant LAL.Discriminant_Part := LAL.F_Discriminants (Incomplete_Type_Decl_Node);
             begin
-               Log ("Discriminants: " & Discriminants.Debug_Text);
+               if not Discriminants.Is_Null then
+                 Log ("Discriminants: " & Discriminants.Debug_Text);
+               end if;
             end;
 
             This.Add_Not_Implemented;
@@ -1043,8 +1092,12 @@ package body Lal_Adapter.Node is
                Discriminants : constant LAL.Discriminant_Part := LAL.F_Discriminants (Protected_Type_Decl_Node);
                Definition : constant LAL.Protected_Def := LAL.F_Definition (Protected_Type_Decl_Node);
             begin
-               Log ("Discriminants: " & Discriminants.Debug_Text);
-               Log ("Definition: " & Definition.Debug_Text);
+               if not Discriminants.Is_Null then
+                 Log ("Discriminants: " & Discriminants.Debug_Text);
+               end if;
+               if not Definition.Is_Null then
+                 Log ("Definition: " & Definition.Debug_Text);
+               end if;
             end;
 
             This.Add_Not_Implemented;
@@ -1054,8 +1107,12 @@ package body Lal_Adapter.Node is
                Discriminants : constant LAL.Discriminant_Part := LAL.F_Discriminants (Task_Type_Decl_Node);
                Definition : constant LAL.Task_Def := LAL.F_Definition (Task_Type_Decl_Node);
             begin
-               Log ("Discriminants: " & Discriminants.Debug_Text);
-               Log ("Definition: " & Definition.Debug_Text);
+               if not Discriminants.Is_Null then
+                 Log ("Discriminants: " & Discriminants.Debug_Text);
+               end if;
+               if not Definition.Is_Null then
+                 Log ("Definition: " & Definition.Debug_Text);
+               end if;
             end;
 
             This.Add_Not_Implemented;
@@ -1072,7 +1129,9 @@ package body Lal_Adapter.Node is
                Discriminants : constant LAL.Discriminant_Part := LAL.F_Discriminants (Type_Decl_Node);
                typeDef : constant LAL.Type_Def := LAL.F_Type_Def (Type_Decl_Node);
             begin
-               Log ("Discriminants: " & Discriminants.Debug_Text);
+               if not Discriminants.Is_Null then
+                 Log ("Discriminants: " & Discriminants.Debug_Text);
+               end if;
                Log ("typeDef: " & typeDef.Debug_Text);
             end;
 
@@ -1172,7 +1231,7 @@ package body Lal_Adapter.Node is
             This.Add_Not_Implemented;
          when Ada_Null_Subp_Decl =>
             declare
-               Expr_Function_Node : constant LAL.Expr_Function := LAL.As_Expr_Function (Node);
+               Null_Subp_Decl_Node : constant LAL.Null_Subp_Decl := LAL.As_Null_Subp_Decl (Node);
             begin
               NULL; 
             end;
@@ -1187,7 +1246,9 @@ package body Lal_Adapter.Node is
             begin
                Log ("decl: " & decl.Debug_Text);
                Log ("stmt: " & stmt.Debug_Text);
-               Log ("endname: " & endname.Debug_Text);
+               if not endname.Is_Null then
+                 Log ("endname: " & endname.Debug_Text);
+               end if;
             end;
 
             This.Add_Not_Implemented;
@@ -1253,7 +1314,9 @@ package body Lal_Adapter.Node is
                Log ("barrier: " & barrier.Debug_Text);
                Log ("decls: " & decls.Debug_Text);
                Log ("stmts: " & stmts.Debug_Text);
-               Log ("endname: " & endname.Debug_Text);
+               if not endname.Is_Null then
+                 Log ("endname: " & endname.Debug_Text);
+               end if;
             end;
 
             This.Add_Not_Implemented;
@@ -1267,8 +1330,12 @@ package body Lal_Adapter.Node is
             begin
                Log ("name: " & name.Debug_Text);
                Log ("decls: " & decls.Debug_Text);
-               Log ("stmts: " & stmts.Debug_Text);
-               Log ("endname: " & endname.Debug_Text);
+               if not stmts.Is_Null then
+                 Log ("stmts: " & stmts.Debug_Text);
+               end if;
+               if not endname.Is_Null then
+                 Log ("endname: " & endname.Debug_Text);
+               end if;
             end;
 
             This.Add_Not_Implemented;
@@ -1326,7 +1393,9 @@ package body Lal_Adapter.Node is
                rename : constant LAL.Renaming_Clause := LAL.F_Renames (Exception_Decl_Node);
             begin
                Log ("ids: " & ids.Debug_Text);
-               Log ("rename: " & rename.Debug_Text);
+               if not rename.Is_Null then
+                 Log ("rename: " & rename.Debug_Text);
+               end if;
             end;
 
             This.Add_Not_Implemented;
@@ -1337,7 +1406,9 @@ package body Lal_Adapter.Node is
                handledExceptions : constant LAL.Alternatives_List := LAL.F_Handled_Exceptions (Exception_Handler_Node);
                stmts : constant LAL.Stmt_List := LAL.F_Stmts (Exception_Handler_Node);
             begin
-               Log ("exceptionName: " & exceptionName.Debug_Text);
+               if not exceptionName.Is_Null then
+                 Log ("exceptionName: " & exceptionName.Debug_Text);
+               end if;
                Log ("handledExceptions: " & handledExceptions.Debug_Text);
                Log ("stmts: " & stmts.Debug_Text);
             end;
@@ -1350,7 +1421,9 @@ package body Lal_Adapter.Node is
                idType : constant LAL.Subtype_Indication := LAL.F_Id_Type (For_Loop_Var_Decl_Node);
             begin
                Log ("id: " & id.Debug_Text);
-               Log ("idType: " & idType.Debug_Text);
+               if not idType.Is_Null then
+                 Log ("idType: " & idType.Debug_Text);
+               end if;
             end;
 
             This.Add_Not_Implemented;
@@ -1363,7 +1436,9 @@ package body Lal_Adapter.Node is
                bodyPart : constant LAL.Package_Body := LAL.P_Body_Part (Generic_Package_Decl_Node);
             begin
                Log ("packageDecl: " & packageDecl.Debug_Text);
-               Log ("bodyPart: " & bodyPart.Debug_Text);
+               if not bodyPart.Is_Null then
+                 Log ("bodyPart: " & bodyPart.Debug_Text);
+               end if;
             end;
 
             This.Add_Not_Implemented;
@@ -1371,10 +1446,10 @@ package body Lal_Adapter.Node is
             declare
                Generic_Subp_Decl_Node : constant LAL.Generic_Subp_Decl := LAL.As_Generic_Subp_Decl (Node);
                subpDecl : constant LAL.Generic_Subp_Internal := LAL.F_Subp_Decl (Generic_Subp_Decl_Node);
-               bodyPart : constant LAL.Base_Subp_Body := LAL.P_Body_Part (Generic_Subp_Decl_Node);
+--               bodyPart : constant LAL.Base_Subp_Body := LAL.P_Body_Part (Generic_Subp_Decl_Node);
             begin
                Log ("subpDecl: " & subpDecl.Debug_Text);
-               Log ("bodyPart: " & bodyPart.Debug_Text);
+--               Log ("bodyPart: " & bodyPart.Debug_Text);
             end;
 
             This.Add_Not_Implemented;
@@ -1472,17 +1547,31 @@ package body Lal_Adapter.Node is
          when Ada_Object_Decl =>
             declare
                Object_Decl_Node : constant LAL.Object_Decl := LAL.As_Object_Decl (Node);
+               FIds         : constant LAL.Defining_Name_List := LAL.F_Ids (Object_Decl_Node);
+               Has_Aliased       : constant Boolean := LAL.F_Has_Aliased (Object_Decl_Node);
                Has_Constant       : constant Boolean := LAL.F_Has_Constant (Object_Decl_Node);
                mode         : constant LAL.Mode := LAL.F_Mode (Object_Decl_Node);
+               typeExpr         : constant LAL.Type_Expr := LAL.F_Type_Expr (Object_Decl_Node);
                defaultExpr         : constant LAL.Expr := LAL.F_Default_Expr (Object_Decl_Node);
                renamingClause         : constant LAL.Renaming_Clause := LAL.F_Renaming_Clause (Object_Decl_Node);
                publicPartDecl         : constant LAL.Basic_Decl := LAL.P_Public_Part_Decl (Object_Decl_Node);
             begin
+               Log ("FIds: " & FIds.Debug_Text);
+               Log ("Has_Aliased: " & Boolean'Image (Has_Constant));
                Log ("F_Has_Constant: " & Boolean'Image (Has_Constant));
                Log ("mode: " & mode.Debug_Text);
-               Log ("defaultExpr: " & defaultExpr.Debug_Text);
-               Log ("renamingClause: " & renamingClause.Debug_Text);
-               Log ("publicPartDecl: " & publicPartDecl.Debug_Text);
+               if not typeExpr.Is_Null then
+                 Log ("typeExpr: " & typeExpr.Debug_Text);
+               end if;
+               if not defaultExpr.Is_Null then
+                 Log ("defaultExpr: " & defaultExpr.Debug_Text);
+               end if;
+               if not renamingClause.Is_Null then
+                 Log ("renamingClause: " & renamingClause.Debug_Text);
+               end if;
+               if not publicPartDecl.Is_Null then
+                 Log ("publicPartDecl: " & publicPartDecl.Debug_Text);
+               end if;
             end;
 
             This.Add_Not_Implemented;
@@ -1548,7 +1637,7 @@ package body Lal_Adapter.Node is
       Node    : in     LAL.Ada_Node'Class)
    is
       Parent_Name : constant String := Module_Name;
-      Module_Name : constant String := Parent_Name & ".Process_Abstract_Node";
+      Module_Name : constant String := Parent_Name & ".Process_Case_Stmt_Alternative_Range";
       package Logging is new Generic_Logging (Module_Name); use Logging;
       --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
 
@@ -1577,7 +1666,7 @@ package body Lal_Adapter.Node is
       Node    : in     LAL.Ada_Node'Class)
    is
       Parent_Name : constant String := Module_Name;
-      Module_Name : constant String := Parent_Name & ".Process_Abstract_Node";
+      Module_Name : constant String := Parent_Name & ".Process_Compilation_Unit_Range";
       package Logging is new Generic_Logging (Module_Name); use Logging;
       --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
 
@@ -1612,7 +1701,7 @@ package body Lal_Adapter.Node is
       Node    : in     LAL.Ada_Node'Class)
    is
       Parent_Name : constant String := Module_Name;
-      Module_Name : constant String := Parent_Name & ".Process_Abstract_Node";
+      Module_Name : constant String := Parent_Name & ".Process_Component_Clause_Range";
       package Logging is new Generic_Logging (Module_Name); use Logging;
       --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
 
@@ -1643,7 +1732,7 @@ package body Lal_Adapter.Node is
       Node    : in     LAL.Ada_Node'Class)
    is
       Parent_Name : constant String := Module_Name;
-      Module_Name : constant String := Parent_Name & ".Process_Abstract_Node";
+      Module_Name : constant String := Parent_Name & ".Process_Component_Def_Range";
       package Logging is new Generic_Logging (Module_Name); use Logging;
       --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
 
@@ -1672,7 +1761,7 @@ package body Lal_Adapter.Node is
       Node    : in     LAL.Ada_Node'Class)
    is
       Parent_Name : constant String := Module_Name;
-      Module_Name : constant String := Parent_Name & ".Process_Abstract_Node";
+      Module_Name : constant String := Parent_Name & ".Process_Constraint";
       package Logging is new Generic_Logging (Module_Name); use Logging;
       --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
 
@@ -1735,7 +1824,7 @@ package body Lal_Adapter.Node is
       Node    : in     LAL.Ada_Node'Class)
    is
       Parent_Name : constant String := Module_Name;
-      Module_Name : constant String := Parent_Name & ".Process_Abstract_Node";
+      Module_Name : constant String := Parent_Name & ".Process_Constant_Node";
       package Logging is new Generic_Logging (Module_Name); use Logging;
       --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
 
@@ -1768,7 +1857,7 @@ package body Lal_Adapter.Node is
       Node    : in     LAL.Ada_Node'Class)
    is
       Parent_Name : constant String := Module_Name;
-      Module_Name : constant String := Parent_Name & ".Process_Abstract_Node";
+      Module_Name : constant String := Parent_Name & ".Process_Declarative_Part_Range";
       package Logging is new Generic_Logging (Module_Name); use Logging;
       --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
 
@@ -1809,7 +1898,7 @@ package body Lal_Adapter.Node is
       Node    : in     LAL.Ada_Node'Class)
    is
       Parent_Name : constant String := Module_Name;
-      Module_Name : constant String := Parent_Name & ".Process_Abstract_Node";
+      Module_Name : constant String := Parent_Name & ".Process_Elsif_Expr_Part_Range";
       package Logging is new Generic_Logging (Module_Name); use Logging;
       --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
 
@@ -1838,7 +1927,7 @@ package body Lal_Adapter.Node is
       Node    : in     LAL.Ada_Node'Class)
    is
       Parent_Name : constant String := Module_Name;
-      Module_Name : constant String := Parent_Name & ".Process_Abstract_Node";
+      Module_Name : constant String := Parent_Name & ".Process_Elsif_Stmt_Part_Range";
       package Logging is new Generic_Logging (Module_Name); use Logging;
       --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
 
@@ -1883,9 +1972,15 @@ package body Lal_Adapter.Node is
                Type_Or_Expr : constant LAL.Ada_Node := LAL.F_Type_Or_Expr (Allocator_Node);
                Get_Allocated_Type : constant LAL.Base_Type_Decl := LAL.P_Get_Allocated_Type (Allocator_Node);
             begin
-               Log ("Subpool: " & Subpool.Debug_Text);
-               Log ("Type_Or_Expr: " & Type_Or_Expr.Debug_Text);
-               Log ("Get_Allocated_Type: " & Get_Allocated_Type.Debug_Text);
+               if not Subpool.Is_Null then
+                 Log ("Subpool: " & Subpool.Debug_Text);
+               end if;
+               if not Type_Or_Expr.Is_Null then
+                 Log ("Type_Or_Expr: " & Type_Or_Expr.Debug_Text);
+               end if;
+               if not Get_Allocated_Type.Is_Null then
+                 Log ("Get_Allocated_Type: " & Get_Allocated_Type.Debug_Text);
+               end if;
             end;
 
          when Ada_Aggregate =>
@@ -1967,7 +2062,9 @@ package body Lal_Adapter.Node is
                Log ("Cond_Expr: " & Cond_Expr.Debug_Text);
                Log ("Then_Expr: " & Then_Expr.Debug_Text);
                Log ("Alternatives: " & Alternatives.Debug_Text);
-               Log ("Else_Expr: " & Else_Expr.Debug_Text);
+               if not Else_Expr.Is_Null then
+                 Log ("Else_Expr: " & Else_Expr.Debug_Text);
+               end if;
             end;
 
          when Ada_Membership_Expr =>
@@ -1991,7 +2088,9 @@ package body Lal_Adapter.Node is
             begin
                Log ("Prefix: " & Prefix.Debug_Text);
                Log ("Attribute: " & Attribute.Debug_Text);
-               Log ("Args: " & Args.Debug_Text);
+               if not Args.Is_Null then
+                 Log ("Args: " & Args.Debug_Text);
+               end if;
             end;
 
          when Ada_Update_Attribute_Ref =>
@@ -2006,11 +2105,11 @@ package body Lal_Adapter.Node is
                Call_Expr_Node : constant LAL.Call_Expr := LAL.As_Call_Expr (Node);
                Name : constant LAL.Name := LAL.F_Name (Call_Expr_Node);
                Suffix : constant LAL.Ada_Node := LAL.F_Suffix (Call_Expr_Node);
-               Is_Array_Slice : constant Boolean := LAL.P_Is_Array_Slice (Call_Expr_Node);
+--               Is_Array_Slice : constant Boolean := LAL.P_Is_Array_Slice (Call_Expr_Node);
             begin
                Log ("Name: " & Name.Debug_Text);
                Log ("Suffix: " & Suffix.Debug_Text);
-               Log ("Is_Array_Slice: " & Boolean'Image(Is_Array_Slice));
+--               Log ("Is_Array_Slice: " & Boolean'Image(Is_Array_Slice));
             end;
 
          when Ada_Defining_Name =>
@@ -2337,7 +2436,7 @@ package body Lal_Adapter.Node is
       Node    : in     LAL.Ada_Node'Class)
    is
       Parent_Name : constant String := Module_Name;
-      Module_Name : constant String := Parent_Name & ".Process_Abstract_Node";
+      Module_Name : constant String := Parent_Name & ".Process_Handled_Stmts_Range";
       package Logging is new Generic_Logging (Module_Name); use Logging;
       --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
 
@@ -2366,7 +2465,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Handled_Stmts_Range";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -2413,7 +2512,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Iter_Type";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -2424,10 +2523,18 @@ package body Lal_Adapter.Node is
       case kind is
 
          when ada_Iter_Type_In =>
-            this.add_not_implemented;
+            declare
+               Iter_Type_In_Node : constant LAL.Iter_Type_In := LAL.As_Iter_Type_In (Node);
+            begin
+               NULL;
+            end;
 
          when ada_Iter_Type_Of =>
-            this.add_not_implemented;
+            declare
+               Iter_Type_Of_Node : constant LAL.Iter_Type_Of := LAL.As_Iter_Type_Of (Node);
+            begin
+               NULL;
+            end;
 
       end case;
    end process_ada_Iter_Type;
@@ -2438,7 +2545,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Library_Item_Range";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -2449,6 +2556,14 @@ package body Lal_Adapter.Node is
       case kind is
 
          when ada_Library_Item =>
+            declare
+               Library_Item_Node : constant LAL.Library_Item := LAL.As_Library_Item (Node);
+               Has_Private       : constant Boolean := LAL.F_Has_Private (Library_Item_Node);
+               item : constant LAL.Basic_Decl := LAL.F_Item (Library_Item_Node);
+            begin
+               Log ("Has_Private: " & Boolean'Image (Has_Private));
+               Log ("item: " & item.Debug_Text);
+            end;
             this.add_not_implemented;
 
       end case;
@@ -2460,7 +2575,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Library_Item_Range";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -2471,9 +2586,19 @@ package body Lal_Adapter.Node is
       case kind is
 
          when ada_Limited_Absent =>
+            declare
+               Limited_Absent_Node : constant LAL.Limited_Absent := LAL.As_Limited_Absent (Node);
+            begin
+               NULL;
+            end;
             this.add_not_implemented;
 
          when ada_Limited_Present =>
+            declare
+               Limited_Present_Node : constant LAL.Limited_Present := LAL.As_Limited_Present (Node);
+            begin
+               NULL;
+            end;
             this.add_not_implemented;
 
       end case;
@@ -2485,7 +2610,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Loop_Spec";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -2496,9 +2621,25 @@ package body Lal_Adapter.Node is
       case kind is
 
          when ada_For_Loop_Spec =>
+            declare
+               For_Loop_Spec_Node : constant LAL.For_Loop_Spec := LAL.As_For_Loop_Spec (Node);
+               Has_Reverse       : constant Boolean := LAL.F_Has_Reverse (For_Loop_Spec_Node);
+               var_decl         : constant LAL.For_Loop_Var_Decl := LAL.F_Var_Decl (For_Loop_Spec_Node);
+               loop_type         : constant LAL.Iter_Type := LAL.F_Loop_Type (For_Loop_Spec_Node);
+            begin
+               Log ("F_Has_Reverse: " & Boolean'Image (Has_Reverse));
+               Log ("var_decl: " & var_decl.Debug_Text);
+               Log ("loop_type: " & loop_type.Debug_Text);
+            end;
             this.add_not_implemented;
 
          when ada_While_Loop_Spec =>
+            declare
+               While_Loop_Spec_Node : constant LAL.While_Loop_Spec := LAL.As_While_Loop_Spec (Node);
+               expr         : constant LAL.Expr := LAL.F_Expr (While_Loop_Spec_Node);
+            begin
+               Log ("expr: " & expr.Debug_Text);
+            end;
             this.add_not_implemented;
 
       end case;
@@ -2510,7 +2651,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Mode";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -2521,15 +2662,35 @@ package body Lal_Adapter.Node is
       case kind is
 
          when ada_Mode_Default =>
+            declare
+               Mode_Default_Node : constant LAL.Mode_Default := LAL.As_Mode_Default (Node);
+            begin
+               NULL;
+            end;
             this.add_not_implemented;
 
          when ada_Mode_In =>
+            declare
+               Mode_In_Node : constant LAL.Mode_In := LAL.As_Mode_In (Node);
+            begin
+               NULL;
+            end;
             this.add_not_implemented;
 
          when ada_Mode_In_Out =>
+            declare
+               Mode_In_Out_Node : constant LAL.Mode_In_Out := LAL.As_Mode_In_Out (Node);
+            begin
+               NULL;
+            end;
             this.add_not_implemented;
 
          when ada_Mode_Out =>
+            declare
+               Mode_Out_Node : constant LAL.Mode_Out := LAL.As_Mode_Out (Node);
+            begin
+               NULL;
+            end;
             this.add_not_implemented;
 
       end case;
@@ -2541,7 +2702,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Not_Null";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -2552,9 +2713,19 @@ package body Lal_Adapter.Node is
       case kind is
 
          when ada_Not_Null_Absent =>
+            declare
+               Not_Null_Absent_Node : constant LAL.Not_Null_Absent := LAL.As_Not_Null_Absent (Node);
+            begin
+               NULL;
+            end;
             this.add_not_implemented;
 
          when ada_Not_Null_Present =>
+            declare
+               Not_Null_Present_Node : constant LAL.Not_Null_Present := LAL.As_Not_Null_Present (Node);
+            begin
+               NULL;
+            end;
             this.add_not_implemented;
 
       end case;
@@ -2566,7 +2737,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Null_Component_Decl_Range";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -2577,6 +2748,11 @@ package body Lal_Adapter.Node is
       case kind is
 
          when ada_Null_Component_Decl =>
+            declare
+               Null_Component_Decl_Node : constant LAL.Null_Component_Decl := LAL.As_Null_Component_Decl (Node);
+            begin
+               NULL;
+            end;
             this.add_not_implemented;
 
       end case;
@@ -2588,7 +2764,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Others_Designator_Range";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -2599,6 +2775,11 @@ package body Lal_Adapter.Node is
       case kind is
 
          when ada_Others_Designator =>
+            declare
+               Others_Designator_Node : constant LAL.Others_Designator := LAL.As_Others_Designator (Node);
+            begin
+               NULL;
+            end;
             this.add_not_implemented;
 
       end case;
@@ -2610,7 +2791,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Overriding_Node";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -2621,12 +2802,27 @@ package body Lal_Adapter.Node is
       case kind is
 
          when ada_Overriding_Not_Overriding =>
+            declare
+               Overriding_Not_Overriding_Node : constant LAL.Overriding_Not_Overriding := LAL.As_Overriding_Not_Overriding (Node);
+            begin
+               NULL;
+            end;
             this.add_not_implemented;
 
          when ada_Overriding_Overriding =>
+            declare
+               Overriding_Overriding_Node : constant LAL.Overriding_Overriding := LAL.As_Overriding_Overriding (Node);
+            begin
+               NULL;
+            end;
             this.add_not_implemented;
 
          when ada_Overriding_Unspecified =>
+            declare
+               Overriding_Unspecified_Node : constant LAL.Overriding_Unspecified := LAL.As_Overriding_Unspecified (Node);
+            begin
+               NULL;
+            end;
             this.add_not_implemented;
 
       end case;
@@ -2638,7 +2834,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Params_Range";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -2649,6 +2845,12 @@ package body Lal_Adapter.Node is
       case kind is
 
          when ada_Params =>
+            declare
+               Params_Node : constant LAL.Params := LAL.As_Params (Node);
+               params : constant LAL.Param_Spec_List := LAL.F_Params (Params_Node);
+            begin
+               Log ("params: " & params.Debug_Text);
+            end;
             this.add_not_implemented;
 
       end case;
@@ -2660,7 +2862,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Pragma_Node_Range";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -2671,6 +2873,16 @@ package body Lal_Adapter.Node is
       case kind is
 
          when ada_Pragma_Node =>
+            declare
+               Pragma_Node_Node : constant LAL.Pragma_Node := LAL.As_Pragma_Node (Node);
+               id : constant LAL.Identifier := LAL.F_Id (Pragma_Node_Node);
+               args : constant LAL.Base_Assoc_List := LAL.F_Args (Pragma_Node_Node);
+--               associated_Decls : constant LAL.Basic_Decl_Array := LAL.P_Associated_Decls (Pragma_Node_Node);
+            begin
+               Log ("id: " & id.Debug_Text);
+               Log ("args: " & args.Debug_Text);
+--               Log ("associated_Decls: " & associated_Decls.Debug_Text);
+            end;
             this.add_not_implemented;
 
       end case;
@@ -2682,7 +2894,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Prim_Type_Accessor_Range";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -2693,6 +2905,11 @@ package body Lal_Adapter.Node is
       case kind is
 
          when ada_Prim_Type_Accessor =>
+            declare
+               Prim_Type_Accessor_Node : constant LAL.Prim_Type_Accessor := LAL.As_Prim_Type_Accessor (Node);
+            begin
+               NULL;
+            end;
             this.add_not_implemented;
 
       end case;
@@ -2704,7 +2921,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Private_Node";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -2715,9 +2932,19 @@ package body Lal_Adapter.Node is
       case kind is
 
          when ada_Private_Absent =>
+            declare
+               Private_Absent_Node : constant LAL.Private_Absent := LAL.As_Private_Absent (Node);
+            begin
+               NULL;
+            end;
             this.add_not_implemented;
 
          when ada_Private_Present =>
+            declare
+               Private_Present_Node : constant LAL.Private_Present := LAL.As_Private_Present (Node);
+            begin
+               NULL;
+            end;
             this.add_not_implemented;
 
       end case;
@@ -2729,7 +2956,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Protected_Node";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -2740,9 +2967,19 @@ package body Lal_Adapter.Node is
       case kind is
 
          when ada_Protected_Absent =>
+            declare
+               Protected_Absent_Node : constant LAL.Protected_Absent := LAL.As_Protected_Absent (Node);
+            begin
+               NULL;
+            end;
             this.add_not_implemented;
 
          when ada_Protected_Present =>
+            declare
+               Protected_Present_Node : constant LAL.Protected_Present := LAL.As_Protected_Present (Node);
+            begin
+               NULL;
+            end;
             this.add_not_implemented;
 
       end case;
@@ -2754,7 +2991,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Protected_Def_Range";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -2765,6 +3002,20 @@ package body Lal_Adapter.Node is
       case kind is
 
          when ada_Protected_Def =>
+            declare
+               Protected_Def_Node : constant LAL.Protected_Def := LAL.As_Protected_Def (Node);
+               public_part : constant LAL.Public_Part := LAL.F_Public_Part (Protected_Def_Node);
+               private_part : constant LAL.Private_Part := LAL.F_Private_Part (Protected_Def_Node);
+               end_name : constant LAL.End_Name := LAL.F_End_Name (Protected_Def_Node);
+            begin
+               Log ("public_part: " & public_part.Debug_Text);
+               if not private_part.Is_Null then
+                 Log ("private_part: " & private_part.Debug_Text);
+               end if;
+               if not end_name.Is_Null then
+                 Log ("end_name: " & end_name.Debug_Text);
+               end if;
+            end;
             this.add_not_implemented;
 
       end case;
@@ -2776,7 +3027,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Quantifier";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -2787,9 +3038,19 @@ package body Lal_Adapter.Node is
       case kind is
 
          when ada_Quantifier_All =>
+            declare
+               Quantifier_All_Node : constant LAL.Quantifier_All := LAL.As_Quantifier_All (Node);
+            begin
+               NULL;
+            end;
             this.add_not_implemented;
 
          when ada_Quantifier_Some =>
+            declare
+               Quantifier_Some_Node : constant LAL.Quantifier_Some := LAL.As_Quantifier_Some (Node);
+            begin
+               NULL;
+            end;
             this.add_not_implemented;
 
       end case;
@@ -2801,7 +3062,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Range_Spec_Range";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -2812,6 +3073,12 @@ package body Lal_Adapter.Node is
       case kind is
 
          when ada_Range_Spec =>
+            declare
+               Range_Spec_Node : constant LAL.Range_Spec := LAL.As_Range_Spec (Node);
+               F_Range : constant LAL.Expr := LAL.F_Range (Range_Spec_Node);
+            begin
+               Log ("F_Range: " & F_Range.Debug_Text);
+            end;
             this.add_not_implemented;
 
       end case;
@@ -2823,7 +3090,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Renaming_Clause_Range";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -2834,9 +3101,20 @@ package body Lal_Adapter.Node is
       case kind is
 
          when ada_Renaming_Clause =>
+            declare
+               Renaming_Clause_Node : constant LAL.Renaming_Clause := LAL.As_Renaming_Clause (Node);
+               renamed_object : constant LAL.Name := LAL.F_Renamed_Object (Renaming_Clause_Node);
+            begin
+               Log ("renamed_object: " & renamed_object.Debug_Text);
+            end;
             this.add_not_implemented;
 
          when ada_Synthetic_Renaming_Clause =>
+            declare
+               Synthetic_Renaming_Clause_Node : constant LAL.Synthetic_Renaming_Clause := LAL.As_Synthetic_Renaming_Clause (Node);
+            begin
+               NULL; 
+            end;
             this.add_not_implemented;
 
       end case;
@@ -2848,7 +3126,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Reverse_Node";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -2859,9 +3137,19 @@ package body Lal_Adapter.Node is
       case kind is
 
          when ada_Reverse_Absent =>
+            declare
+               Reverse_Absent_Node : constant LAL.Reverse_Absent := LAL.As_Reverse_Absent (Node);
+            begin
+               NULL;
+            end;
             this.add_not_implemented;
 
          when ada_Reverse_Present =>
+            declare
+               Reverse_Present_Node : constant LAL.Reverse_Present := LAL.As_Reverse_Present (Node);
+            begin
+               NULL;
+            end;
             this.add_not_implemented;
 
       end case;
@@ -2873,7 +3161,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Select_When_Part_Range";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -2884,6 +3172,18 @@ package body Lal_Adapter.Node is
       case kind is
 
          when ada_Select_When_Part =>
+            declare
+               Select_When_Part_Node : constant LAL.Select_When_Part := LAL.As_Select_When_Part (Node);
+               cond_expr : constant LAL.Expr := LAL.F_Cond_Expr (Select_When_Part_Node);
+               stmts : constant LAL.Stmt_List := LAL.F_Stmts (Select_When_Part_Node);
+            begin
+               if not cond_expr.Is_Null then
+                 Log ("cond_expr: " & cond_expr.Debug_Text);
+               end if;
+               if not stmts.Is_Null then
+                 Log ("stmts: " & stmts.Debug_Text);
+               end if;
+            end;
             this.add_not_implemented;
 
       end case;
@@ -2912,7 +3212,9 @@ package body Lal_Adapter.Node is
                Params : constant LAL.Entry_Completion_Formal_Params := LAL.F_Params (Accept_Stmt_Node);
             begin
                Log ("Name: " & Name.Debug_Text);
-               Log ("Entry_Index_Expr: " & Entry_Index_Expr.Debug_Text);
+               if not Entry_Index_Expr.Is_Null then
+                 Log ("Entry_Index_Expr: " & Entry_Index_Expr.Debug_Text);
+               end if;
                Log ("Params: " & Params.Debug_Text);
             end;
 
@@ -2959,7 +3261,9 @@ package body Lal_Adapter.Node is
                End_Name : constant LAL.End_Name := LAL.F_End_Name (Begin_Block_Node);
             begin
                Log ("Stmt: " & Stmt.Debug_Text);
-               Log ("End_Name: " & End_Name.Debug_Text);
+               if not End_Name.Is_Null then
+                 Log ("End_Name: " & End_Name.Debug_Text);
+               end if;
             end;
 
             This.Add_Not_Implemented;
@@ -2972,7 +3276,9 @@ package body Lal_Adapter.Node is
             begin
                Log ("Decl: " & Decl.Debug_Text);
                Log ("Stmt: " & Stmt.Debug_Text);
-               Log ("End_Name: " & End_Name.Debug_Text);
+               if not End_Name.Is_Null then
+                 Log ("End_Name: " & End_Name.Debug_Text);
+               end if;
             end;
 
             This.Add_Not_Implemented;
@@ -3093,8 +3399,12 @@ package body Lal_Adapter.Node is
                Loop_Name      : constant LAL.Identifier := LAL.F_Loop_Name (Exit_Stmt_Node);
                Cond_Expr      : constant LAL.Expr := LAL.F_Cond_Expr (Exit_Stmt_Node);
             begin
-               Log ("F_Loop_Name: " & Loop_Name.Debug_Text);
-               Log ("F_Cond_Expr: " & Cond_Expr.Debug_Text);
+               if not Loop_Name.Is_Null then
+                 Log ("F_Loop_Name: " & Loop_Name.Debug_Text);
+               end if;
+               if not Cond_Expr.Is_Null then
+                 Log ("F_Cond_Expr: " & Cond_Expr.Debug_Text);
+               end if;
             end;
 
             This.Add_Not_Implemented;
@@ -3131,7 +3441,9 @@ package body Lal_Adapter.Node is
                Error_Message  : constant LAL.Expr := LAL.F_Error_Message (Raise_Stmt_Node);
             begin
                Log ("F_Exception_Name: " & Exception_Name.Debug_Text);
-               Log ("F_Error_Message: " & Error_Message.Debug_Text);
+               if not Error_Message.Is_Null then
+                 Log ("Error_Message: " & Error_Message.Debug_Text);
+               end if;
             end;
 
             This.Add_Not_Implemented;
@@ -3180,7 +3492,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Subp_Kind";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -3213,7 +3525,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Subunit_Range";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -3244,7 +3556,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Synchronized_Node";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -3277,7 +3589,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Tagged_Node";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -3310,7 +3622,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Task_Def_Range";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -3330,7 +3642,9 @@ package body Lal_Adapter.Node is
             begin
                Log ("interfaces: " & interfaces.Debug_Text);
                Log ("public_part: " & public_part.Debug_Text);
-               Log ("private_part: " & private_part.Debug_Text);
+               if not private_part.Is_Null then
+                 Log ("private_part: " & private_part.Debug_Text);
+               end if;
                Log ("end_name: " & end_name.Debug_Text);
             end;
 
@@ -3343,7 +3657,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Def_Range";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -3398,8 +3712,12 @@ package body Lal_Adapter.Node is
                record_extension      : constant LAL.Base_Record_Def := LAL.F_Record_Extension (Derived_Type_Def_Node);
                has_with_private      : constant Boolean := LAL.F_Has_With_Private (Derived_Type_Def_Node);
             begin
-               Log ("interfaces: " & interfaces.Debug_Text);
-               Log ("record_extension: " & record_extension.Debug_Text);
+               if not interfaces.Is_Null then
+                 Log ("interfaces: " & interfaces.Debug_Text);
+               end if;
+               if not record_extension.Is_Null then
+                 Log ("record_extension: " & record_extension.Debug_Text);
+               end if;
                Log ("has_with_private: " & Boolean'Image(has_with_private));
             end;
 
@@ -3455,7 +3773,9 @@ package body Lal_Adapter.Node is
             begin
                Log ("f_delta: " & f_delta.Debug_Text);
                Log ("f_digits: " & f_digits.Debug_Text);
-               Log ("f_range: " & f_range.Debug_Text);
+               if not f_range.Is_Null then
+                 Log ("f_range: " & f_range.Debug_Text);
+               end if;
             end;
 
          when ada_Floating_Point_Def =>
@@ -3465,7 +3785,9 @@ package body Lal_Adapter.Node is
                f_range      : constant LAL.Range_Spec := LAL.F_Range (Floating_Point_Def_Node);
             begin
                Log ("num_digits: " & num_digits.Debug_Text);
-               Log ("f_range: " & f_range.Debug_Text);
+               if not f_range.Is_Null then
+                 Log ("f_range: " & f_range.Debug_Text);
+               end if;
             end;
 
          when ada_Ordinary_Fixed_Point_Def =>
@@ -3507,7 +3829,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Type_Expr";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -3541,7 +3863,9 @@ package body Lal_Adapter.Node is
             begin
                Log ("has_not_null: " & Boolean'Image(has_not_null));
                Log ("name: " & name.Debug_Text);
-               Log ("constraint: " & constraint.Debug_Text);
+               if not constraint.Is_Null then
+                 Log ("constraint: " & constraint.Debug_Text);
+               end if;
             end;
 
          when ada_Constrained_Subtype_Indication =>
@@ -3567,7 +3891,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Unconstrained_Array_Index_Range";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -3593,7 +3917,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Until_Node";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -3626,7 +3950,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Use_Clause";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -3663,7 +3987,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Variant_Range";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -3692,7 +4016,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_Variant_Part_Range";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -3721,7 +4045,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_With_Clause_Range";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -3752,7 +4076,7 @@ package body Lal_Adapter.Node is
       node    : in     lal.ada_node'class)
    is
       parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_abstract_node";
+      module_name : constant string := parent_name & ".process_With_Private";
       package logging is new generic_logging (module_name); use logging;
       --  auto : logging.auto_logger; -- logs begin and end
 
@@ -3866,6 +4190,7 @@ package body Lal_Adapter.Node is
 
          -- Get ID:
          This.Element_IDs.Prepend (Get_Element_ID (Node));
+         -- Log ( " Elem ID: " & To_String(Get_Element_ID (Node)));
          This.Dot_Node.Node_ID.ID :=
            To_Dot_ID_Type (This.Element_IDs.First_Element, Element_ID_Kind);
 
@@ -3904,6 +4229,7 @@ package body Lal_Adapter.Node is
       --     Log ("NOT a statement");
       --  end if;
       --
+    
       case Kind is
          -- 3 included kinds:
          when Ada_Abort_Node'First .. Ada_Abort_Node'Last =>
@@ -3977,7 +4303,6 @@ package body Lal_Adapter.Node is
          -- 60 included kinds:
          when Ada_Expr'First .. Ada_Expr'Last =>
             This.Process_Ada_Expr (Node);
-            This.Add_Not_Implemented;
          -- 1 included kinds:
          when Ada_Handled_Stmts_Range'First .. Ada_Handled_Stmts_Range'Last =>
             This.Process_Ada_Handled_Stmts_Range (Node);
