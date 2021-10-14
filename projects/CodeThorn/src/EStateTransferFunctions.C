@@ -4045,6 +4045,7 @@ namespace CodeThorn {
       }
     }
     SAWYER_MESG(logger[TRACE])<<"initializeMemoryLocation: "<<memLoc.toString()<<" := "<<newValue.toString()<<endl;
+    memLoc=conditionallyApplyArrayAbstraction(memLoc);
     reserveMemoryLocation(lab,pstate,memLoc);
     writeToMemoryLocation(lab,pstate,memLoc,newValue);
     SAWYER_MESG(logger[TRACE])<<"initializeMemoryLocation: done: "<<memLoc.toString()<<endl;    
@@ -4140,9 +4141,11 @@ namespace CodeThorn {
     int pos;
     for(pos=0;pos<(int)theString.size();pos++) {
       AbstractValue character(theString[pos]);
+      reserveMemoryLocation(lab, &initialPState, AbstractValue::createAddressOfArrayElement(stringVarId,pos));
       writeToMemoryLocation(lab, &initialPState, AbstractValue::createAddressOfArrayElement(stringVarId,pos),character);
     }
     // add terminating 0 to string in state
+    reserveMemoryLocation(lab, &initialPState, AbstractValue::createAddressOfArrayElement(stringVarId,pos));
     writeToMemoryLocation(lab, &initialPState, AbstractValue::createAddressOfArrayElement(stringVarId,pos),AbstractValue(0));
   }
 
