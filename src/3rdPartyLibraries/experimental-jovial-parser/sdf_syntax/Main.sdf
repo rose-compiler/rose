@@ -187,7 +187,6 @@ OptWhilePhrase
 ByOrThenPhrase
 OptContinuation
 InitialValue
-ControlLetter
 ControlVariable
 ControlClause
 ControlItem
@@ -1344,8 +1343,6 @@ context-free syntax
   ControlLetter                -> ControlItem
 
   ItemName                     -> ControlVariable
-
-  Letter                       -> ControlLetter
 
   InitialValue
     OptContinuation            -> ControlClause        {cons("ControlClause")}
