@@ -27,10 +27,10 @@ rose_matrix_query_LDFLAGS = $(ROSE_RPATHS)
 rose_matrix_query_LDADD = libmatrixTools.a $(ROSE_LIBS)
 
 bin_PROGRAMS += rose-matrix-attachments
-rose_matrix_attachments_SOURCES = matrixAttachments.C
+rose_matrix_attachments_SOURCES = matrix-attachments.C
 rose_matrix_attachments_CPPFLAGS = $(ROSE_INCLUDES) -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE)"'
 rose_matrix_attachments_LDFLAGS = $(ROSE_RPATHS)
-rose_matrix_attachments_LDADD = $(ROSE_LIBS)
+rose_matrix_attachments_LDADD = libmatrixTools.a $(ROSE_LIBS)
 
 bin_PROGRAMS += rose-matrix-errors
 rose_matrix_errors_SOURCES = matrixErrors.C
