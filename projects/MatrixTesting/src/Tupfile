@@ -24,15 +24,4 @@ ifeq (@(LINKAGE),shared)
 
     # Original tools that use some features I'd like to deprecate, such as ::SqlDatabase
     run $(tool_compile_linkexe) --install -o rose-matrix-test-result matrixTestResult.C
-
-    # The web interface. This is useful but it's showing its age. I'd like to move to just
-    # command-line tools. It's also very resource intensive and thus doesn't work well on the tiny
-    # AWS EC2.
-    ifneq (@(WITH_WT),no)
-	run $(tool_compile_linkexe) --install -o rose-matrix-web-server-http matrixWebServer.C -lwthttp
-
-	# The extra -U is to prevent compiler warnings about redefinition of DEFAULT_DATABASE
-	tool_CPPFLAGS += -UDEFAULT_DATABASE -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE_LOCAL)"' -DUSING_FASTCGI
-	run $(tool_compile_linkexe) --install -o rose-matrix-web-server-fcgi matrixWebServer.C -lwtfcgi
-    endif
 endif

@@ -55,20 +55,3 @@ rose_matrix_slave_health_SOURCES = matrix-slave-health.C
 rose_matrix_slave_health_CPPFLAGS = $(ROSE_INCLUDES) -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE)"'
 rose_matrix_slave_health_LDFLAGS = $(ROSE_RPATHS)
 rose_matrix_slave_health_LDADD = libmatrixTools.a $(ROSE_LIBS)
-
-if ROSE_USE_WT
-
-bin_PROGRAMS += rose-matrix-web-server-http
-rose_matrix_web_server_http_SOURCES = matrixWebServer.C
-rose_matrix_web_server_http_CPPFLAGS = $(ROSE_INCLUDES) -I$(WT_PREFIX)/include -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE)"'
-rose_matrix_web_server_http_LDFLAGS = $(ROSE_RPATHS) -R $(WT_PREFIX)/lib
-rose_matrix_web_server_http_LDADD = -L$(WT_PREFIX)/lib -lwt -lwthttp -lwtdbo -lwtdbopostgres $(ROSE_LIBS)
-
-bin_PROGRAMS += rose-matrix-web-server-fcgi
-rose_matrix_web_server_fcgi_SOURCES = matrixWebServer.C
-rose_matrix_web_server_fcgi_CPPFLAGS = $(ROSE_INCLUDES) -I$(WT_PREFIX)/include -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE_LOCAL)"' -DUSING_FASTCGI
-rose_matrix_web_server_fcgi_LDFLAGS = $(ROSE_RPATHS) -R $(WT_PREFIX)/lib
-rose_matrix_web_server_fcgi_LDADD = -L$(WT_PREFIX)/lib -lwt -lwtfcgi -lwtdbo -lwtdbopostgres $(ROSE_LIBS)
-
-endif
-
