@@ -165,6 +165,9 @@ public:
     }
     /** @} */
 
+    /** Get the data for a table cell. */
+    const std::string& get(size_t rowIdx, size_t colIdx) const;
+
     /** Properties for a data cell.
      *
      *  When inserting properties, the table is automatically extended.
