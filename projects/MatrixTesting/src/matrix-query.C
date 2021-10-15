@@ -1012,7 +1012,7 @@ main(int argc, char *argv[]) {
     // automatically--make the user do it so we know that they know what they're doing.
     if (settings.deleteMatchingTests) {
         if (!isDisplayed(cols, "id")) {
-            mlog[FATAL] <<"the \"id\" field must be selected in order to delete tests\n";
+            mlog[FATAL] <<"the \"id\" field must be displayed in order to delete tests\n";
             exit(1);
         }
     }

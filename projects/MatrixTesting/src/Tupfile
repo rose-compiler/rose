@@ -14,6 +14,7 @@ ifeq (@(LINKAGE),shared)
     run $(tool_compile_linklib) --install -o libmatrixTools matrixTools.C $(ROSE)/src/librose
 
     # New tools
+    run $(tool_compile_linkexe) --install -o rose-matrix-attachments matrix-attachments.C libmatrixTools
     run $(tool_compile_linkexe) --install -o rose-matrix-dependencies matrix-dependencies.C libmatrixTools
     run $(tool_compile_linkexe) --install -o rose-matrix-next-test matrix-next-test.C libmatrixTools
     run $(tool_compile_linkexe) --install -o rose-matrix-query matrix-query.C libmatrixTools
@@ -23,7 +24,6 @@ ifeq (@(LINKAGE),shared)
 
     # Original tools that use some features I'd like to deprecate, such as ::SqlDatabase
     run $(tool_compile_linkexe) --install -o rose-matrix-test-result matrixTestResult.C
-    run $(tool_compile_linkexe) --install -o rose-matrix-attachments matrixAttachments.C
     run $(tool_compile_linkexe) --install -o rose-matrix-errors matrixErrors.C
 
     # The web interface. This is useful but it's showing its age. I'd like to move to just
