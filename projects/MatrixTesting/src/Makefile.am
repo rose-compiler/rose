@@ -44,12 +44,6 @@ rose_matrix_dependencies_CPPFLAGS = $(ROSE_INCLUDES) -DDEFAULT_DATABASE='"$(DEFA
 rose_matrix_dependencies_LDFLAGS = $(ROSE_RPATHS)
 rose_matrix_dependencies_LDADD = libmatrixTools.a $(ROSE_LIBS)
 
-bin_PROGRAMS += rose-matrix-status
-rose_matrix_status_SOURCES = matrix-status.C
-rose_matrix_status_CPPFLAGS = $(ROSE_INCLUDES) -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE)"'
-rose_matrix_status_LDFLAGS = $(ROSE_RPATHS)
-rose_matrix_status_LDADD = libmatrixTools.a $(ROSE_LIBS)
-
 bin_PROGRAMS += rose-matrix-slave-config
 rose_matrix_slave_config_SOURCES = matrix-slave-config.C
 rose_matrix_slave_config_CPPFLAGS = $(ROSE_INCLUDES) -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE)"'

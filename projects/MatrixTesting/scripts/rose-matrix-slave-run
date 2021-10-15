@@ -273,7 +273,7 @@ matrix-get-initial-configuration() {
     if [ -n "$ROSE_MATRIX_DATABASE" ]; then
 	echo
 	echo "Trying the database"
-	if rose-matrix-slave-config >matrix-config.tmp; then
+	if rose-matrix-slave-config -Fshell >matrix-config.tmp; then
 	    cat -n matrix-config.tmp
 	    source matrix-config.tmp
 	    mv matrix-config.tmp matrix-config
@@ -296,7 +296,7 @@ matrix-get-slave-configuration() {
     echo "== Obtaining current slave configuration from database server."
     echo "================================================================================"
     echo
-    rose-matrix-slave-config >matrix-config
+    rose-matrix-slave-config -Fshell >matrix-config
     cat -n matrix-config
     . matrix-config
 }

@@ -173,7 +173,7 @@ std::string
 bourneEscape(const std::string &s) {
     // If the string is empty it needs to be quoted.
     if (s.empty())
-        return "'" + s + "'";
+        return "''";
 
     // The presence of non-printing characters or single quotes trumps all others and requires C-style quoting
     for (char ch: s) {

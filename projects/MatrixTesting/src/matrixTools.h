@@ -92,4 +92,13 @@ std::vector<std::string> splitIntoWords(const std::string&);
 // Open a connection to a database, or fail with some info about how to specify a database name
 Sawyer::Database::Connection connectToDatabase(const std::string &uri, Sawyer::Message::Facility&);
 
+// Table cell format with a green background
+const Rose::FormattedTable::CellProperties& goodCell();
+
+// Table cell format with a red background
+const Rose::FormattedTable::CellProperties& badCell();
+
+// Table chell format that centers the text
+const Rose::FormattedTable::CellProperties& centered();
+
 #endif

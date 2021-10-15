@@ -230,7 +230,7 @@ select-os() {
     if [ -n "$TARGET_OS" ]; then
 	echo "$TARGET_OS"
     else
-	local os="$(rose-matrix-slave-config --database="$DATABASE" --value-only --plain TEST_OS |tr ' ' '\n' |shuf -n1)"
+	local os="$(rose-matrix-slave-config --database="$DATABASE" -Fshell --value-only TEST_OS |tr ' ' '\n' |shuf -n1)"
 	[ -n "$os" ] || die "no operating systems configured (TEST_OS slave setting)"
 	echo "$os"
     fi
@@ -410,7 +410,7 @@ remove-os-images() {
 	docker image rm "$(generate-image-name "$TARGET_OS")" || true
     else
 	local os=
-	for os in $(rose-matrix-slave-config --value-only --plain TEST_OS); do
+	for os in $(rose-matrix-slave-config -Fshell --value-only TEST_OS); do
 	    docker image rm "$(generate-image-name "$os")" || true
 	done
     fi

@@ -78,9 +78,9 @@ parseIds(const std::vector<std::string> &strings, size_t startAt = 0) {
 static std::string
 sqlIdLimitation(const std::string &columnName, const std::vector<int> &testIds) {
     if (!testIds.empty()) {
-        std::string sql = columnName + " in (";
+        std::string sql;
         for (int id: testIds)
-            sql += (sql.empty() ? "" : ", ") + boost::lexical_cast<std::string>(id);
+            sql += (sql.empty() ? " " + columnName + " in (" : ", ") + boost::lexical_cast<std::string>(id);
         sql += ")";
         return sql;
     } else {

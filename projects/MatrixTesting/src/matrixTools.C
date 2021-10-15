@@ -249,6 +249,7 @@ updateDependency(DB::Connection db, const Dependency &dep) {
 Rose::FormattedTable::Format
 tableFormat(Format fmt) {
     switch (fmt) {
+        case Format::YAML:                              // yaml is not a table format, so use plain
         case Format::PLAIN:
             return Rose::FormattedTable::Format::PLAIN;
         case Format::HTML:
@@ -257,8 +258,39 @@ tableFormat(Format fmt) {
             return Rose::FormattedTable::Format::CSV;
         case Format::SHELL:
             return Rose::FormattedTable::Format::SHELL;
-        case Format::YAML:
-            ASSERT_not_reachable("YAML is not a valid table format");
     }
     ASSERT_not_reachable("invalid output format");
+}
+
+const FormattedTable::CellProperties&
+badCell() {
+    static bool called;
+    static FormattedTable::CellProperties p;
+    if (!called) {
+        p.foreground(Color::HSV_RED);
+        called = true;
+    }
+    return p;
+}
+
+const FormattedTable::CellProperties&
+goodCell() {
+    static bool called;
+    static FormattedTable::CellProperties p;
+    if (!called) {
+        p.foreground(Color::HSV_GREEN);
+        called = true;
+    }
+    return p;
+}
+
+const FormattedTable::CellProperties&
+centered() {
+    static bool called;
+    static FormattedTable::CellProperties p;
+    if (!called) {
+        p.alignment(FormattedTable::Alignment::CENTER);
+        called = true;
+    }
+    return p;
 }
