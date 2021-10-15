@@ -5,6 +5,7 @@
 #include "AbstractValue.h"
 
 using namespace std;
+using namespace Sawyer::Message;
 
 namespace CodeThorn {
 
@@ -53,15 +54,25 @@ namespace CodeThorn {
 	// this must be the only remaining case
 	if(offset.isConstInt()) {
 	  // check array bounds
-	  int memRegionSize=AbstractValue::_variableIdMapping->getNumberOfElements(memId);
+	  int memRegionSize=AbstractValue::_variableIdMapping->getTotalSize(memId);
 	  if(memRegionSize==0) {
 	    resultList.push_back(ACCESS_POTENTIALLY_OUTSIDE_BOUNDS); // will become ACCESS_DEFINITELY_OUTSIDE_BOUNDS;
           } else {
-            int accessIndex=offset.getIntValue();
-            if(!(accessIndex<0||accessIndex>=memRegionSize)) {
+            int accessOffset=offset.getIntValue();
+            if(!(accessOffset<0||accessOffset>=memRegionSize)) {
               resultList.push_back(ACCESS_DEFINITELY_INSIDE_BOUNDS);
             } else {
-              resultList.push_back(ACCESS_DEFINITELY_OUTSIDE_BOUNDS);
+              if(memRegionSize!=-1) {
+                resultList.push_back(ACCESS_DEFINITELY_OUTSIDE_BOUNDS);
+              } else {
+                SAWYER_MESG(CodeThorn::logger[WARN])<<"Memory violation check (unknown region size): "<<address.toString()<<":"
+                  <<" offset:"<<accessOffset
+                  <<" memregionsize:"<<memRegionSize
+                  <<" numelemsize:"<<AbstractValue::_variableIdMapping->getElementSize(memId)
+                  <<" numElems:"<<AbstractValue::_variableIdMapping->getNumberOfElements(memId)
+                  <<endl;
+              }
+              
             }
           }
 	} else {

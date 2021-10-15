@@ -1216,7 +1216,7 @@ namespace CodeThorn {
 	  // handle special cases of: char a[]="abc"; char a[4]="abc";
 	  // TODO: a[5]="ab";
 	  SAWYER_MESG(logger[TRACE])<<"Initalizing (array) with string: "<<stringValNode->unparseToString()<<endl;
-	  if(getVariableIdMapping()->getNumberOfElements(initDeclVarId)==0) {
+	  if(getVariableIdMapping()->getNumberOfElements(initDeclVarId)==-1) {
 	    VariableId stringLiteralId=getVariableIdMapping()->getStringLiteralVariableId(stringValNode);
 	    size_t stringLiteralMemoryRegionSize=getVariableIdMapping()->getNumberOfElements(stringLiteralId);
 	    getVariableIdMapping()->setNumberOfElements(initDeclVarId,stringLiteralMemoryRegionSize);
@@ -1229,12 +1229,12 @@ namespace CodeThorn {
 	  CodeThorn::TypeSize stringLen=stringValNode->get_value().size();
 	  CodeThorn::TypeSize memRegionNumElements=getVariableIdMapping()->getNumberOfElements(initDeclVarId);
 	  PState newPState=*currentEState.pstate();
-	  initializeStringLiteralInState(label,newPState,stringValNode,initDeclVarId);
+	  //initializeStringLiteralInState(label,newPState,stringValNode,initDeclVarId); // string literals are initialized before analysis now
 	  // handle case that string is shorter than allocated memory
 	  if(stringLen+1<memRegionNumElements) {
-	    CodeThorn::TypeSize numDefaultValuesToAdd=memRegionNumElements-stringLen+1;
+	    CodeThorn::TypeSize numDefaultValuesToAdd=memRegionNumElements-stringLen;
 	    for(CodeThorn::TypeSize  i=0;i<numDefaultValuesToAdd;i++) {
-	      AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(stringLen+i),AbstractValue(1));
+	      AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(stringLen+i),AbstractValue(1) /* elemensize */);
 	      // set default init value for past string elements of reserved array
 	      initializeMemoryLocation(label,&newPState,newArrayElementAddr,AbstractValue(0));
 	    }
@@ -2980,6 +2980,7 @@ namespace CodeThorn {
     }
     SingleEvalResult res;
     res.init(estate,operandResult.result);
+    //cout<<"evalCastOp: result: "<<operandResult.result.toString()<<endl;
     return res;
   }
 
@@ -3484,7 +3485,7 @@ namespace CodeThorn {
     SAWYER_MESG(logger[TRACE])<<"AST function call: "<<AstTerm::astTermWithNullValuesToString(funCall)<<endl;
     if(getStdFunctionSemantics()) {
       string funName=SgNodeHelper::getFunctionName(funCall);
-      if(funName=="malloc"||funName=="alloca") {
+      if(funName=="malloc"||funName=="alloca"||funName=="ct_alloca"||funName=="__builtin_alloca") {
 	return evalFunctionCallMalloc(funCall,estate);
       } else if(funName=="free") {
 	return evalFunctionCallFree(funCall,estate);
