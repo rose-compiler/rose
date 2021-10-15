@@ -3484,7 +3484,7 @@ namespace CodeThorn {
     SAWYER_MESG(logger[TRACE])<<"AST function call: "<<AstTerm::astTermWithNullValuesToString(funCall)<<endl;
     if(getStdFunctionSemantics()) {
       string funName=SgNodeHelper::getFunctionName(funCall);
-      if(funName=="malloc") {
+      if(funName=="malloc"||funName=="alloca") {
 	return evalFunctionCallMalloc(funCall,estate);
       } else if(funName=="free") {
 	return evalFunctionCallFree(funCall,estate);
@@ -3710,7 +3710,7 @@ namespace CodeThorn {
 #endif
       return res;
     } else {
-      cerr<<"WARNING: unknown malloc function "<<funCall->unparseToString()<<" (ignored)"<<endl;
+      cerr<<"WARNING: unknown malloc/alloc function "<<funCall->unparseToString()<<" (ignored)"<<endl;
     }
     return res;
   }
