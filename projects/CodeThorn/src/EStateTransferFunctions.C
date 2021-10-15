@@ -1229,7 +1229,7 @@ namespace CodeThorn {
 	  CodeThorn::TypeSize stringLen=stringValNode->get_value().size();
 	  CodeThorn::TypeSize memRegionNumElements=getVariableIdMapping()->getNumberOfElements(initDeclVarId);
 	  PState newPState=*currentEState.pstate();
-	  //initializeStringLiteralInState(label,newPState,stringValNode,initDeclVarId); // string literals are initialized before analysis now
+	  initializeStringLiteralInState(label,newPState,stringValNode,initDeclVarId); // string literals are initialized before analysis now
 	  // handle case that string is shorter than allocated memory
 	  if(stringLen+1<memRegionNumElements) {
 	    CodeThorn::TypeSize numDefaultValuesToAdd=memRegionNumElements-stringLen;
@@ -4139,11 +4139,12 @@ namespace CodeThorn {
   void EStateTransferFunctions::initializeStringLiteralInState(Label lab, PState& initialPState,SgStringVal* stringValNode, VariableId stringVarId) {
     SAWYER_MESG(logger[TRACE])<<"initializeStringLiteralInState: "<<stringValNode->unparseToString()<<endl;
     string theString=stringValNode->get_value();
-    int pos;
-    for(pos=0;pos<(int)theString.size();pos++) {
+    size_t pos;
+    for(pos=0;pos<theString.size();pos++) {
       AbstractValue character(theString[pos]);
-      reserveMemoryLocation(lab, &initialPState, AbstractValue::createAddressOfArrayElement(stringVarId,pos));
-      writeToMemoryLocation(lab, &initialPState, AbstractValue::createAddressOfArrayElement(stringVarId,pos),character);
+      AbstractValue address=AbstractValue::createAddressOfArrayElement(stringVarId,pos);
+      reserveMemoryLocation(lab, &initialPState,address);
+      writeToMemoryLocation(lab, &initialPState, address,character);
     }
     // add terminating 0 to string in state
     reserveMemoryLocation(lab, &initialPState, AbstractValue::createAddressOfArrayElement(stringVarId,pos));

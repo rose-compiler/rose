@@ -1,8 +1,22 @@
 #include "DOM.h"
 
+void print(const char *str) {
+  const char* s;
+  int i=0;
+  for (s = str; *s; ++s) {
+    //printf("i: %d s: %s %d\n",i,s,*s);
+    printf("i: %d %d\n",i,*s);
+    i++;
+  }
+  
+}
+
 size_t strlen1(const char *str) {
   const char* s;
-  for (s = str; *s; ++s);
+  int i=0;
+  for (s = str; *s; ++s) {
+    i++;
+  }
   return (s - str);
 }
 
@@ -32,16 +46,31 @@ int main() {
   data[0]= '\0';
   const char* stringPtr = "0123456789";
   char source[11] = "0123456789";
-   int i;
+  printf("source[0]:%d\n",source[0]);
+  printf("source[1]:%d\n",source[1]);
+  printf("source[2]:%d\n",source[2]);
+  printf("source[3]:%d\n",source[3]);
+  printf("source[4]:%d\n",source[4]);
+  printf("source[5]:%d\n",source[5]);
+  printf("source[6]:%d\n",source[6]);
+  printf("source[7]:%d\n",source[7]);
+  printf("source[8]:%d\n",source[8]);
+  printf("source[9]:%d\n",source[9]);
+  printf("source[10]:%d\n",source[10]);
+  int i;
   int sourceLen=10;
   for (i = 0; i < sourceLen + 1; i++)
     {
+      //printf("i:%d source:%s source[i]:%d\n",i,source,source[i]);
       data[i] = source[i];
     }
+  print(source);
+  print(data);
   int len1,len2,len3,len4,len5,len6;
   len1=strlen1(source);
   len2=strlen2(source);
   len3=strlen3(source);
+  //printf("stringPtr:%s\n",stringPtr);
   len4=strlen3(stringPtr);
   len5=strlen1(stringPtr);
   len6=strlen3(stringPtr);
