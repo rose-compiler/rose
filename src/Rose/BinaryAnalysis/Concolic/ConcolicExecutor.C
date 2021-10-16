@@ -12,7 +12,6 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BitOps.h>
-#include <SqlDatabase.h>                                // ROSE
 
 #include <boost/format.hpp>
 #include <boost/scope_exit.hpp>
