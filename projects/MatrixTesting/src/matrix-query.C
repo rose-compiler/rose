@@ -858,20 +858,22 @@ formatValue(const Settings &settings, const Column &c, const std::string &value)
 // Adjust table by replacing repeated values with ditto marks.
 void
 dittoize(FormattedTable &table, size_t beginCol, size_t endCol) {
-    ASSERT_require(beginCol < endCol);
-    ASSERT_require(endCol <= table.nColumns());
+    if (table.nRows() > 0 && table.nColumns() > 0) {
+        ASSERT_require(beginCol < endCol);
+        ASSERT_require(endCol <= table.nColumns());
 
-    std::vector<std::string> prev(endCol - beginCol);
-    for (size_t i = 0; i < table.nRows(); ++i) {
-        for (size_t j = beginCol; j < endCol; ++j) {
-            const std::string value = table.get(i, j);
-            if (!value.empty() && value == prev[j - beginCol]) {
-                table.insert(i, j, "\"");
-                table.cellProperties(i, j, centered());
-            } else {
-                for (size_t k = j; k < endCol; ++k)
-                    prev[k - beginCol] = table.get(i, k);
-                break;
+        std::vector<std::string> prev(endCol - beginCol);
+        for (size_t i = 0; i < table.nRows(); ++i) {
+            for (size_t j = beginCol; j < endCol; ++j) {
+                const std::string value = table.get(i, j);
+                if (!value.empty() && value == prev[j - beginCol]) {
+                    table.insert(i, j, "\"");
+                    table.cellProperties(i, j, centered());
+                } else {
+                    for (size_t k = j; k < endCol; ++k)
+                        prev[k - beginCol] = table.get(i, k);
+                    break;
+                }
             }
         }
     }

@@ -1,5 +1,5 @@
-static const char *purpose = "update database with test result";
-static const char *description =
+static const char *gPurpose = "update database with test result";
+static const char *gDescription =
     "Reads a file containing test results in the form of @v{key}=@v{value} lines and uses them to update "
     "the specified database. The list of valid keys can be obtained by running \"rose-matrix-query-table "
     "list\".  White space is allowed on either side of the equal sign, and white space is stripped from "
@@ -7,86 +7,56 @@ static const char *description =
     "ignored.";
 
 #include <rose.h>
+#include "matrixTools.h"
 
-#include <boost/algorithm/string/trim.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/foreach.hpp>
 #include <Rose/CommandLine.h>
-#include <cstdio>
-#include <cstring>
-#include <LinearCongruentialGenerator.h>
 #include <rose_getline.h>
-#include <Sawyer/CommandLine.h>
-#include <Sawyer/Map.h>
-#include <Sawyer/Message.h>
-#include <Sawyer/Set.h>
-#include <SqlDatabase.h>
-#include <sys/utsname.h>
-#include <unistd.h>
+#include <boost/algorithm/string/trim.hpp>
 
 using namespace Rose;
 using namespace Sawyer::Message::Common;
+namespace DB = Sawyer::Database;
 
 struct Settings {
-    bool dryRun;
     std::string databaseUri;                            // e.g., postgresql://user:password@host/database
-
-    Settings(): dryRun(false)
-#ifdef DEFAULT_DATABASE
-          , databaseUri(DEFAULT_DATABASE)
-#endif
-        {}
 };
 
-typedef Sawyer::Container::Map<std::string /*colname*/, std::string /*value*/> KeyValuePairs;
-typedef Sawyer::Container::Map<std::string /*key*/, std::string /*colname*/> DependencyNames;
+using KeyValuePairs = Sawyer::Container::Map<std::string /*colname*/, std::string /*value*/>;
+using DependencyNames = Sawyer::Container::Map<std::string /*key*/, std::string /*colname*/>;
 
 static Sawyer::Message::Facility mlog;
 
 static boost::filesystem::path
 parseCommandLine(int argc, char *argv[], Settings &settings) {
     using namespace Sawyer::CommandLine;
+    Parser parser = Rose::CommandLine::createEmptyParser(gPurpose, gDescription);
+    parser.errorStream(mlog[FATAL]);
+    parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{file}");
+    parser.doc("Output", "Emits the new test ID to standard output on success.");
 
     SwitchGroup sg("Tool-specific switches");
+    insertDatabaseSwitch(sg, settings.databaseUri);
 
-    sg.insert(Switch("database", 'd')
-              .argument("uri", anyParser(settings.databaseUri))
-              .doc("URI specifying which database to use. This switch overrides the ROSE_MATRIX_DATABASE environment variable. " +
-                   SqlDatabase::uriDocumentation()));
+    const std::vector<std::string> args = parser
+                                          .with(Rose::CommandLine::genericSwitches())
+                                          .with(sg)
+                                          .parse(argc, argv)
+                                          .apply()
+                                          .unreachedArgs();
 
-    sg.insert(Switch("dry-run")
-              .intrinsicValue(true, settings.dryRun)
-              .doc("Do everything but update the database.  When this switch is present, the database is accessed "
-                   "like normal, but the final COMMIT is skipped, causing the database to roll back to its initial "
-                   "state."));
-
-    Parser parser;
-    parser.purpose(purpose);
-    parser.errorStream(mlog[FATAL]);
-    parser.version(std::string(ROSE_SCM_VERSION_ID).substr(0, 8), ROSE_CONFIGURE_DATE);
-    parser.chapter(1, "ROSE Command-line Tools");
-    parser.doc("Synopsis", "@prop{programName} [@v{switches}] @v{file}");
-    parser.doc("Description", description);
-    parser.doc("Output",
-               "Emits the new test ID to standard output on success.");
-    parser.with(Rose::CommandLine::genericSwitches());
-    parser.with(sg);
-
-    std::vector<std::string> args = parser.parse(argc, argv).apply().unreachedArgs();
     if (args.size() != 1) {
         mlog[FATAL] <<"incorrect usage; see --help\n";
         exit(1);
     }
-
     return args[0];
 }
 
 static DependencyNames
-loadDependencyNames(const SqlDatabase::TransactionPtr &tx) {
+loadDependencyNames(DB::Connection db) {
     DependencyNames retval;
-    SqlDatabase::StatementPtr q = tx->statement("select distinct name from dependencies");
-    for (SqlDatabase::Statement::iterator row=q->begin(); row!=q->end(); ++row) {
-        std::string key = row.get<std::string>(0);
+    auto stmt = db.stmt("select distinct name from dependencies");
+    for (auto row: stmt) {
+        const std::string key = row.get<std::string>(0).get();
         retval.insert(key, "rmc_"+key);
     }
     return retval;
@@ -120,13 +90,13 @@ parseFile(const boost::filesystem::path &fileName, const DependencyNames &depnam
         if (line.empty() || '#' == line[0])
             continue;
 
-        size_t eq = line.find('=');
+        const size_t eq = line.find('=');
         if (eq == std::string::npos) {
             mlog[FATAL] <<StringUtility::cEscape(fileName.string()) <<":" <<lineNumber <<": "
                         <<"not a key=value pair: \"" <<StringUtility::cEscape(line) <<"\"\n";
             exit(1);
         }
-        std::string key = boost::trim_copy(line.substr(0, eq));
+        const std::string key = boost::trim_copy(line.substr(0, eq));
         std::string val = boost::trim_copy(line.substr(eq+1));
         if (key.empty() || val.empty()) {
             mlog[FATAL] <<StringUtility::cEscape(fileName.string()) <<":" <<lineNumber <<": "
@@ -168,23 +138,16 @@ getUserName() {
 }
 
 static int
-getUserId(const SqlDatabase::TransactionPtr &tx) {
-    if (tx == NULL)
-        return -1;
-    std::string userName = getUserName();
-    SqlDatabase::StatementPtr q = tx->statement("select id from auth_identities where identity = ?")->bind(0, userName);
-    SqlDatabase::Statement::iterator row = q->begin();
-    if (row == q->end()) {
+getUserId(DB::Connection db) {
+    const std::string userName = getUserName();
+    auto userId = db.stmt("select id from auth_identities where identity = ?user")
+                  .bind("user", userName)
+                  .get<int>();
+    if (!userId) {
         mlog[FATAL] <<"no such user: \"" <<StringUtility::cEscape(userName) <<"\"\n";
         exit(1);
     }
-    int retval = row.get<int>(0);
-    ++row;
-    if (row != q->end()) {
-        mlog[FATAL] <<"user \"" <<StringUtility::cEscape(userName) <<"\" is ambiguous\n";
-        exit(1);
-    }
-    return retval;
+    return *userId;
 }
 
 static std::string
@@ -197,20 +160,11 @@ main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
     Diagnostics::initAndRegister(&mlog, "tool");
     Settings settings;
-    if (const char *dbUri = getenv("ROSE_MATRIX_DATABASE"))
-        settings.databaseUri = dbUri;
     boost::filesystem::path fileName = parseCommandLine(argc, argv, settings);
+    DB::Connection db = connectToDatabase(settings.databaseUri, mlog);
 
     // Query the database to find valid keys
-    SqlDatabase::TransactionPtr tx;
-    try {
-        tx = SqlDatabase::Connection::create(settings.databaseUri)->transaction();
-    } catch (const SqlDatabase::Exception &e) {
-        mlog[FATAL] <<"cannot open database: " <<e.what();
-        exit(1);
-    }
-
-    DependencyNames dependencyNames = loadDependencyNames(tx);
+    DependencyNames dependencyNames = loadDependencyNames(db);
     extraDependencies(dependencyNames);
 
     // Parse and validate the key/val file
@@ -223,39 +177,25 @@ main(int argc, char *argv[]) {
     check_exists(kvpairs, "os");
 
     // Some keys can be set automatically
-    kvpairs.insertMaybe("reporting_user", StringUtility::numberToString(getUserId(tx)));
+    kvpairs.insertMaybe("reporting_user", StringUtility::numberToString(getUserId(db)));
     kvpairs.insertMaybe("reporting_time", StringUtility::numberToString(time(NULL)));
     kvpairs.insertMaybe("tester", getTester());
 
     // Debugging
     if (mlog[TRACE]) {
-        BOOST_FOREACH (const KeyValuePairs::Node &node, kvpairs.nodes())
+        for (const KeyValuePairs::Node &node: kvpairs.nodes())
             mlog[TRACE] <<node.key() <<"=" <<node.value() <<"\n";
     }
 
     // Generate SQL to insert this information.
-    int idx = 0;
-    if (tx != NULL) {
-        SqlDatabase::StatementPtr insert = tx->statement("insert into test_results (" +
-                                                         StringUtility::join(", ", kvpairs.keys()) +
-                                                         ") values (" +
-                                                         StringUtility::join(", ",
-                                                                             std::vector<std::string>(kvpairs.size(), "?")) +
-                                                         ") returning id");
-        BOOST_FOREACH (const std::string &val, kvpairs.values())
-            insert->bind(idx++, val);
-        idx = insert->execute_int();
-    }
+    auto stmt = db.stmt("insert into test_results"
+                        " (" + StringUtility::join(", ", kvpairs.keys()) +")"
+                        " values (?" + StringUtility::join("?, ", kvpairs.keys()) + ")"
+                        " returning id");
+    for (const auto &node: kvpairs.nodes())
+        stmt.bind(node.key(), node.value());
 
-    if (settings.dryRun) {
-        if (idx >= 0) {
-            mlog[WARN] <<"test record #" <<idx <<" not inserted (running with --dry-run)\n";
-        } else {
-            mlog[WARN] <<"test record not inserted (no database and/or running with --dry-run)\n";
-        }
-    } else {
-        tx->commit();
-        mlog[INFO] <<"inserted test record #" <<idx <<"\n";
-        std::cout <<idx <<"\n";
-    }
+    int testId = stmt.get<int>().get();
+    mlog[INFO] <<"inserted test record #" <<testId <<"\n";
+    std::cout <<testId <<"\n";
 }
