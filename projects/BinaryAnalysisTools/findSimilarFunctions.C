@@ -5,7 +5,7 @@
 #include <EditDistance/TreeEditDistance.h>
 #include <EditDistance/LinearEditDistance.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
-#include <SqlDatabase.h>
+#include <Rose/FormattedTable.h>
 
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
@@ -401,12 +401,6 @@ loadFunctions(const std::vector<std::string> &specimen, P2::Engine &engine) {
     return SageInterface::querySubTree<SgAsmFunction>(gblock); // return just the functions
 }
 
-struct AddressRenderer: SqlDatabase::Renderer<rose_addr_t> {
-    std::string operator()(const rose_addr_t &value, size_t width) const ROSE_OVERRIDE {
-        return addrToString(value);
-    }
-};
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int
@@ -504,38 +498,54 @@ main(int argc, char *argv[]) {
     std::cout <<"Relative cost: " <<(totalDistance / std::max(functions1.size(), functions2.size())) <<"\n";
 
     // Show the results
-    //                 0       1            2       3            4            5       6            7
-    SqlDatabase::Table<double, rose_addr_t, size_t, std::string, rose_addr_t, size_t, std::string, std::string> results;
-    results.headers("Distance", "SourceVa", "SourceSize", "SourceName", "TargetVa", "TargetSize", "TargetName", "NameClash");
-    AddressRenderer renderAddress;
-    results.renderers().r1 = &renderAddress;
-    results.renderers().r4 = &renderAddress;
+    FormattedTable results;
+    results.columnHeader(0, 0, "Distance");
+    results.columnHeader(0, 1, "SourceVa");
+    results.columnHeader(0, 2, "SourceSize");
+    results.columnHeader(0, 3, "SourceName");
+    results.columnHeader(0, 4, "TargetVa");
+    results.columnHeader(0, 5, "TargetSize");
+    results.columnHeader(0, 6, "TargetName");
+    results.columnHeader(0, 7, "NameClash");
     size_t nClashes = 0;
     for (size_t i=0; i<assignments.size(); ++i) {
         using namespace StringUtility;
         size_t j=assignments[i];
         if (i<functions1.size() && j<functions2.size()) {
             bool nameClash = functions1[i]->get_name() != functions2[j]->get_name();
-            results.insert(distance(i, j),
-                           functions1[i]->get_entry_va(), treeSize(functions1[i]), cEscape(functions1[i]->get_name()), 
-                           functions2[j]->get_entry_va(), treeSize(functions2[j]), cEscape(functions2[j]->get_name()),
-                           nameClash?"clash":"");
+            results.insert(i, 0, distance(i, j));
+            results.insert(i, 1, StringUtility::addrToString(functions1[i]->get_entry_va()));
+            results.insert(i, 2, treeSize(functions1[i]));
+            results.insert(i, 3, cEscape(functions1[i]->get_name()));
+            results.insert(i, 4, StringUtility::addrToString(functions2[j]->get_entry_va()));
+            results.insert(i, 5, treeSize(functions2[j]));
+            results.insert(i, 6, cEscape(functions2[j]->get_name()));
+            results.insert(i, 7, nameClash?"clash":"");
             if (nameClash)
                 ++nClashes;
         } else if (i<functions1.size()) {
-            results.insert(0.0,
-                           functions1[i]->get_entry_va(), treeSize(functions1[i]), cEscape(functions1[i]->get_name()), 
-                           0, 0, "",
-                           "");
+            results.insert(i, 0, 0.0);
+            results.insert(i, 1, StringUtility::addrToString(functions1[i]->get_entry_va()));
+            results.insert(i, 2, treeSize(functions1[i]));
+            results.insert(i, 3, cEscape(functions1[i]->get_name()));
+            results.insert(i, 4, 0);
+            results.insert(i, 5, 0);
+            results.insert(i, 6, "");
+            results.insert(i, 7, "");
         } else {
-            results.insert(0.0,
-                           0, 0, "",
-                           functions2[j]->get_entry_va(), treeSize(functions2[j]), cEscape(functions2[j]->get_name()),
-                           "");
+            results.insert(i, 0, 0.0);
+            results.insert(i, 1, 0);
+            results.insert(i, 2, 0);
+            results.insert(i, 3, "");
+            results.insert(i, 4, StringUtility::addrToString(functions2[j]->get_entry_va()));
+            results.insert(i, 5, treeSize(functions2[j]));
+            results.insert(i, 6, cEscape(functions2[j]->get_name()));
+            results.insert(i, 7, "");
         }
     }
     if (settings.listPairings)
-        results.print(std::cout);
+        std::cout <<results;
+
     if (nClashes>0) {
         mlog[WARN] <<nClashes <<" of " <<StringUtility::plural(assignments.size(), "parings")
                    <<" (" <<(100.0*nClashes/assignments.size()) <<" percent)"
