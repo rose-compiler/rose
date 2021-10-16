@@ -1616,7 +1616,8 @@ namespace CodeThorn {
     EState currentEState=*estatePtr;
     SgNode* lhs=SgNodeHelper::getLhs(nextNodeToAnalyze2);
     SgNode* rhs=SgNodeHelper::getRhs(nextNodeToAnalyze2);
-    SAWYER_MESG(logger[TRACE])<<"evalAssignOpMemUpdates: lhs:"<<lhs->unparseToString()<<" rhs:"<<rhs->unparseToString()<<endl;
+    SAWYER_MESG(logger[TRACE])<<"evalAssignOpMemUpdates: lhs:"<<lhs->unparseToString()<<":"<<lhs->class_name()<<" rhs:"<<rhs->unparseToString()<<endl;
+    //cout<<"DEBUG: evalAssignOpMemUpdates: lhs:"<<lhs->unparseToString()<<":"<<lhs->class_name()<<" rhs:"<<rhs->unparseToString()<<endl;
     SingleEvalResult rhsRes=evaluateExpression(rhs,currentEState, CodeThorn::EStateTransferFunctions::MODE_VALUE);
     VariableId lhsVar;
     bool isLhsVar=checkIfVariableAndDetermineVarId(lhs,lhsVar);
@@ -1663,6 +1664,7 @@ namespace CodeThorn {
       SAWYER_MESG(logger[TRACE])<<"detected arrow operator on lhs: writing to "<<lhsAddress.toString(getVariableIdMapping())<<"."<<endl;
       memoryUpdateList.push_back(make_pair(estate,make_pair(lhsAddress,rhsRes.result))); // TODO: investigate rhsRes.result
     } else if(isSgPntrArrRefExp(lhs)) {
+      //cout<<"DEBUG: SgPntrArrRefExp DETECTED!"<<endl;
       EState estate=rhsRes.estate;
       PState oldPState=*estate.pstate();
       if(_analyzer->getSkipArrayAccesses()) {
@@ -1686,13 +1688,12 @@ namespace CodeThorn {
 	      //cout<<"DEBUG: arrayPtrValue: "<<arrayPtrValue.toString(getVariableIdMapping())<<endl;
 	      // convert integer to VariableId
 	      if(arrayPtrValue.isTop()||arrayPtrValue.isBot()) {
-		if(getOptionOutputWarnings())
-		  _analyzer->printStatusMessageLine("Warning: "+nextNodeToAnalyze2->unparseToString()+arrayPtrValue.toString(getVariableIdMapping())+" array index is top or bot. Not supported yet.");
+
+                SAWYER_MESG(logger[WARN])<<"Warning: "+nextNodeToAnalyze2->unparseToString()+arrayPtrValue.toString(getVariableIdMapping())+" array index is top or bot."<<endl;
 	      }
 	      // logger[DEBUG]<<"defering pointer-to-array: ptr:"<<getVariableIdMapping()->variableName(arrayVarId);
 	    } else {
-	      if(getOptionOutputWarnings())
-		 _analyzer->printStatusMessageLine("Warning: lhs array access: pointer variable does not exis2t in PState:"+ptr.toString());
+              SAWYER_MESG(logger[WARN])<<"Warning: lhs array access: pointer variable does not exist in PState:"+ptr.toString()<<endl;;
 	      arrayPtrValue=AbstractValue::createTop();
 	    }
 	  } else if(getVariableIdMapping()->isOfReferenceType(arrayVarId)) {
@@ -1700,6 +1701,7 @@ namespace CodeThorn {
 	    if(pstate2.memLocExists(ptr)) {
 	      arrayPtrValue=readFromReferenceMemoryLocation(estate.label(),&pstate2,ptr);
 	    } else {
+              SAWYER_MESG(logger[WARN])<<"Warning: lhs array access: address of array does not exist in PState:"+ptr.toString()<<endl;;
 	      arrayPtrValue=AbstractValue::createTop();
 	    }
 	  } else {
@@ -1708,11 +1710,17 @@ namespace CodeThorn {
 	  SingleEvalResult res2=evaluateExpression(indexExp,currentEState);
 	  AbstractValue indexValue=res2.value();
 	  AbstractValue elementSize=getMemoryRegionAbstractElementSize(arrayPtrValue);
+
+          // BANDAID
+          if(elementSize.isTop())
+            elementSize=AbstractValue(1);
+
 	  AbstractValue arrayElementAddr=AbstractValue::operatorAdd(arrayPtrValue,indexValue,elementSize);
 	  if(arrayElementAddr.isBot()) {
 	    // inaccessible memory location, return empty estate list
 	    return memoryUpdateList;
 	  }
+          //cout<<"DEBUG: P10:"<<arrayPtrValue.toString()<<":"<<indexValue.toString()<<":"<<elementSize.toString()<<":"<<arrayElementAddr.toString()<<endl;
 	  memoryUpdateList.push_back(make_pair(estate,make_pair(arrayElementAddr,rhsRes.result)));
 	} else if(SgAddressOfOp* addressOfOp=isSgAddressOfOp(lhs)) {
 	  // address of op, need to compute an l-value and use as address
@@ -2622,7 +2630,6 @@ namespace CodeThorn {
 					SingleEvalResult rhsResult,
 					Label targetLabel, EState estate, EvalMode mode) {
     SingleEvalResult res;
-    //Edge fakeEdge;
     std::list<EState> estateList=evalAssignOp3(node, targetLabel, &estate);
     ROSE_ASSERT(estateList.size()==1);
     res.result=rhsResult.result; // value result of assignment
@@ -2638,9 +2645,12 @@ namespace CodeThorn {
       EState estate=p.first;
       AbstractValue lhsAddress=p.second.first;
       AbstractValue rhsValue=p.second.second;
+      //cout<<"DEBUG: ASSIGN: lhsAddress:"<<lhsAddress.toString()<<" rhsValue:"<<rhsValue.toString()<<endl;
       Label label=estate.label();
       PState newPState=*estate.pstate();
+      //cout<<"DEBUG: ASSIGN P2"<<endl;
       writeToAnyMemoryLocation(label,&newPState,lhsAddress,rhsValue);
+      //cout<<"DEBUG: ASSIGN P3"<<endl;
       CallString cs=estate.callString;
       estateList.push_back(createEState(targetLabel,cs,newPState));
     }
@@ -2701,7 +2711,7 @@ namespace CodeThorn {
 						SingleEvalResult arrayExprResult,
 						SingleEvalResult indexExprResult,
 						EState estate, EvalMode mode) {
-    SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp: "<<node->unparseToString()<<endl;
+    SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp: "<<node->unparseToString()<<"arrayExprResult:"<<arrayExprResult.result.toString()<<" indexExprResult"<<indexExprResult.result.toString()<<" mode:"<<mode<<endl;
     SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp: AST:"<<AstTerm::astTermWithNullValuesToString(node)<<endl;
     SingleEvalResult res;
     res.estate=estate;
@@ -2732,7 +2742,8 @@ namespace CodeThorn {
 	if(_variableIdMapping->isOfArrayType(arrayVarId)) {
 	  if(_variableIdMapping->isFunctionParameter(arrayVarId)) {
 	    // function parameter of array type contains a pointer value in C/C++
-	    arrayPtrValue=readFromMemoryLocation(estate.label(),&pstate2,arrayVarId); // pointer value of array function paramter
+            // BANDAID ???
+	    arrayPtrValue=AbstractValue::createAddressOfArray(arrayVarId); //readFromMemoryLocation(estate.label(),&pstate2,arrayVarId); // pointer value of array function paramter
 	    SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp:"<<" arrayPtrValue (of function parameter) read from memory, arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
 	  } else {
 	    arrayPtrValue=AbstractValue::createAddressOfArray(arrayVarId);

@@ -1,5 +1,22 @@
 #include "DOM.h"
 
+char* strcpy1(char dest[], const char source[])
+{
+  char *temp = dest;
+  int i = 0;
+  //printf("strcpy1: dest:%s source:%s\n",dest,source);
+  while (1) {
+    //printf("strcpy2: &dest[%d]:%s &source[%d]:%s\n",i,&dest[i],i,&source[i]);
+    dest[i] = source[i];
+    //printf("strcpy3: dest[%d]:%s source[%d]:%d\n",i,dest[i],i,source[i]);
+    if (dest[i] == '\0') {
+      break;
+    }
+    i++;
+  }
+  return temp;
+}
+
 void print(const char *str) {
   const char* s;
   int i=0;
@@ -80,5 +97,12 @@ int main() {
   printf("len4:%d\n",len4);
   printf("len5:%d\n",len5);
   printf("len6:%d\n",len6);
+
+  // string copy test
+  char target1[10+1];
+  char* target2=target1;
+  char* targetptr=target1;
+  //strcpy1(targetptr,data);
+  //print(target1);
   return 0;
 }
