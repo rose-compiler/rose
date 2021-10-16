@@ -55,3 +55,9 @@ rose_matrix_slave_health_SOURCES = matrix-slave-health.C
 rose_matrix_slave_health_CPPFLAGS = $(ROSE_INCLUDES) -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE)"'
 rose_matrix_slave_health_LDFLAGS = $(ROSE_RPATHS)
 rose_matrix_slave_health_LDADD = libmatrixTools.a $(ROSE_LIBS)
+
+bin_PROGRAMS += rose-matrix-phases
+rose_matrix_phases_SOURCES = matrix-phases.C
+rose_matrix_phases_CPPFLAGS = $(ROSE_INCLUDES) -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE)"'
+rose_matrix_phases_LDFLAGS = $(ROSE_RPATHS)
+rose_matrix_phases_LDADD = libmatrixTools.a $(ROSE_LIBS)

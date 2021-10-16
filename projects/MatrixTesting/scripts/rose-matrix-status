@@ -37,7 +37,7 @@ section() {
 	    echo "================================================================================"
 	    ;;
 	html)
-	    echo "<hr/><h1>$title</h1>"
+	    echo "<hr/><h2>$title</h2>"
 	    ;;
     esac
 }
@@ -188,7 +188,7 @@ phases of the test passed. The phases are executed in order until one fails
 or the end is reached.
 EOF
 echo
-echo "    Not implemented yet"
+rose-matrix-phases -F$FORMAT |indent
 
 ####################################################################################################
 echo
@@ -277,10 +277,20 @@ rose-matrix-dependencies -F$FORMAT status |indent
 echo
 echo
 section "Additional information"
-paragraph <<EOF
+case "$FORMAT" in
+    plain)
+	paragraph <<EOF
 The data above is only the tip of the iceburg.
 See https://lep.is/w/index.php/ROSE:Portability_testing_results for more of the iceburg.
 EOF
+	;;
+    html)
+	echo "<p>The data above is only the tip of the iceburg. See"
+	echo "<a href=\"https://lep.is/w/index.php/ROSE:Portability_testing_results\">"
+	echo "https://lep.is/w/index.php/ROSE:Portability_testing_results</a>"
+	echo "for more of the iceburg.</p>"
+	;;
+esac
 
 ####################################################################################################
 if [ "$FORMAT" == html ]; then

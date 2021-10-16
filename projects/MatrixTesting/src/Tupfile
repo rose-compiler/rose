@@ -18,6 +18,7 @@ ifeq (@(LINKAGE),shared)
     run $(tool_compile_linkexe) --install -o rose-matrix-dependencies matrix-dependencies.C libmatrixTools
     run $(tool_compile_linkexe) --install -o rose-matrix-errors matrix-errors.C libmatrixTools
     run $(tool_compile_linkexe) --install -o rose-matrix-next-test matrix-next-test.C libmatrixTools
+    run $(tool_compile_linkexe) --install -o rose-matrix-phases matrix-phases.C libmatrixTools
     run $(tool_compile_linkexe) --install -o rose-matrix-query matrix-query.C libmatrixTools
     run $(tool_compile_linkexe) --install -o rose-matrix-slave-config matrix-slave-config.C libmatrixTools
     run $(tool_compile_linkexe) --install -o rose-matrix-slave-health matrix-slave-health.C libmatrixTools
