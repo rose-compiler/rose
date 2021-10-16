@@ -244,9 +244,9 @@ main(int argc, char *argv[]) {
         table.columnHeader(0, 4, "Latest\nEvent");
         table.columnHeader(0, 5, "Event\nDetail");
         table.columnHeader(0, 6, "Latest\nTest ID");
-        table.columnHeader(0, 7, "Operating\nSystem");
-        table.columnHeader(0, 8, "Test\nStatus");
-        table.columnHeader(0, 9, "Test\nDuration");
+        table.columnHeader(0, 7, "Latest\nOS");
+        table.columnHeader(0, 8, "Latest\nStatus");
+        table.columnHeader(0, 9, "Latest\nDuration");
 
         for (auto row: stmt) {
             using namespace Rose::StringUtility;

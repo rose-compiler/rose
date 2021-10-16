@@ -107,7 +107,8 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
                                            "table from left to right and if the column has the same value as the previous "
                                            "row then that column is replaced with a ditto mark. If the column is different "
                                            "than the previous row, then the scanning stops and no subsequent columns of "
-                                           "the row are changed.");
+                                           "the row are changed. Only the first contiguous group of sorted columns are "
+                                           "considered.");
 
     return parser
         .with(Rose::CommandLine::genericSwitches())
@@ -265,6 +266,9 @@ public:
     Column& sorted(Sorted s) {
         sorted_ = s;
         return *this;
+    }
+    bool isSorted() const {
+        return sorted_ != Sorted::NONE;
     }
 };
 
@@ -1096,8 +1100,34 @@ main(int argc, char *argv[]) {
             }
         }
     }
-    if (settings.dittoize)
-        dittoize(table, 0, table.nColumns());
+
+    // Should we replace repeated values with ditto marks? If so, we need to find the first contiguous group of columns
+    // that are sorted, and these will be the ones to consider for dittos.
+    if (settings.dittoize) {
+        Sawyer::Optional<size_t> firstSorted;
+        size_t lastSorted = 0, tableColumn = 0;
+        for (const Column &c: cols) {
+            if (c.isSorted()) {
+                if (!firstSorted) {
+                    firstSorted = tableColumn;
+                    lastSorted = tableColumn;
+                } else {
+                    lastSorted = tableColumn;
+                }
+            } else if (firstSorted) {
+                break;
+            }
+            if (c.isDisplayed())
+                ++tableColumn;
+        }
+        if (firstSorted) {
+            ASSERT_require(*firstSorted <= lastSorted);
+            ASSERT_require(lastSorted < table.nColumns());
+            dittoize(table, *firstSorted, lastSorted+1);
+        }
+    }
+
+    // Produce output
     switch (settings.outputFormat) {
         case Format::PLAIN:
             table.format(tableFormat(settings.outputFormat));
