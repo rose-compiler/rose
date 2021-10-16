@@ -12,7 +12,7 @@ add_library(roseSupport OBJECT
   transformationSupport.C optionDeclaration.C Combinatorics.C
   sourceLocationInheritedAttribute.C rangemap.C roseTranslators.C
   utility_functions.C memoryUsage.C IncludeDirective.C
-  SqlDatabase.C stringify.C)
+  stringify.C)
 add_dependencies(roseSupport rosetta_generated generate_license_header)
 if(READLINE_FOUND)
   target_include_directories(roseSupport PRIVATE ${READLINE_INCLUDE_DIR})
@@ -30,7 +30,6 @@ install(FILES  transformationSupport.h
                IncludeDirective.h
                callbacks.h
                Diagnostics.h
-               SqlDatabase.h
                utility_functionsImpl.C
                stringify.h
 	       initialize.h

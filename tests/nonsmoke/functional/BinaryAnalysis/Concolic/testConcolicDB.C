@@ -4,7 +4,6 @@
 
 #include <Sawyer/CommandLine.h>
 #include <boost/filesystem.hpp>
-#include <SqlDatabase.h>
 
 #include "configDB.h"
 
