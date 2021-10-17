@@ -27,6 +27,14 @@ void print(const char *str) {
   }
   
 }
+void print2(const char *str, int maxlen) {
+  const char* s;
+  for (int i=0;i<maxlen;i++) {
+    //printf("i: %d s: %s %d\n",i,s,*s);
+    printf("i: %d %d\n",i,*s);
+  }
+  
+}
 
 size_t strlen1(const char *str) {
   const char* s;
@@ -83,6 +91,7 @@ int main() {
     }
   print(source);
   print(data);
+  return 0;
   int len1,len2,len3,len4,len5,len6;
   len1=strlen1(source);
   len2=strlen2(source);
@@ -100,9 +109,10 @@ int main() {
 
   // string copy test
   char target1[10+1];
-  char* target2=target1;
   char* targetptr=target1;
+  //printf("%s\n",target1);
+  //printf("%s\n",targetptr);
   //strcpy1(targetptr,data);
-  //print(target1);
+  print2(target1,11);
   return 0;
 }
