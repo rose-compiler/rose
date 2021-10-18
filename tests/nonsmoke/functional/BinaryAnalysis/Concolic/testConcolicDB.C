@@ -59,7 +59,7 @@ copyBinaryToDB( concolic::Database::Ptr db,
 
     return id;
   }
-  catch (const SqlDatabase::Exception& e)
+  catch (const Sawyer::Database::Exception& e)
   {
     std::cout << "dbtest: copying over x" << executableName
               << " failed with: " << e.what()
@@ -98,7 +98,7 @@ createTestSuite(concolic::Database::Ptr db, const std::string& n)
 
     return id;
   }
-  catch (const SqlDatabase::Exception& e)
+  catch (const Sawyer::Database::Exception& e)
   {
     std::cout << "dbtest: creating testsuite " << n
               << " failed with: " << e.what()
@@ -155,7 +155,7 @@ createTestCase( concolic::Database::Ptr db,
 
     return id;
   }
-  catch (const SqlDatabase::Exception& e)
+  catch (const Sawyer::Database::Exception& e)
   {
     std::cout << "dbtest: creating testcase "
               << " failed with: " << e.what()
@@ -218,7 +218,7 @@ void addTestToSuite( concolic::Database::Ptr db,
               << std::endl;
 
   }
-  catch (const SqlDatabase::Exception& e)
+  catch (const Sawyer::Database::Exception& e)
   {
     std::cout << "dbtest: assoc test w/ suite "
               << " failed with: " << e.what()
