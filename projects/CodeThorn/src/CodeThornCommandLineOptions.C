@@ -89,7 +89,6 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("with-assert-counterexamples", po::value< bool >(&ltlOpt.withAssertCounterExamples)->default_value(false)->implicit_value(true), "Report counterexamples leading to failing assertion states.")
     ("with-ltl-counterexamples", po::value< bool >(&ltlOpt.withLTLCounterExamples)->default_value(false)->implicit_value(true), "Report counterexamples that violate LTL properties.")
     ("report-file-path",po::value< string >(&ctOpt.reportFilePath),"Sets file path for all reports.")
-    ("shared-pstates",po::value< bool >(&ctOpt.sharedPStates)->default_value(true)->implicit_value(true), "Allows to disable shared pstates in estates.")
     ;
 
   hiddenOptions.add_options()
@@ -237,6 +236,8 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("pointer-sets", po::value< bool >(&ctOpt.pointerSetsEnabled)->default_value(false)->implicit_value(true), "Enable sets of pointers in abstract pointer analysis.")
     ("fork-function-enabled",po::value< bool >(&ctOpt.forkFunctionEnabled),"sets fork function name (also requires --set-fork-function-name)")
     ("fork-function-name",po::value< std::string >(&ctOpt.forkFunctionName),"sets fork function name (also requires --fork-function-enabled)")
+    ("shared-pstates",po::value< bool >(&ctOpt.sharedPStates)->implicit_value(true), "Allows to disable shared pstates in estates.")
+    ("fast-pointer-hashing",po::value< bool >(&ctOpt.fastPointerHashing)->implicit_value(true), "Allows to disable fast pointer hashing of pstates and estates in transition graph.")
     ;
 
   rersOptions.add_options()

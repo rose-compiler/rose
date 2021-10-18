@@ -2743,7 +2743,7 @@ namespace CodeThorn {
 	  if(_variableIdMapping->isFunctionParameter(arrayVarId)) {
 	    // function parameter of array type contains a pointer value in C/C++
             readFromMemoryLocation(estate.label(),&pstate2,arrayVarId); // pointer value of array function paramter
-	    cout<<"evalArrayReferenceOp:"<<" arrayPtrValue (of function parameter) read from memory, arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
+	    //cout<<"evalArrayReferenceOp:"<<" arrayPtrValue (of function parameter) read from memory, arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
 	    SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp:"<<" arrayPtrValue (of function parameter) read from memory, arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
 	  } else {
 	    arrayPtrValue=AbstractValue::createAddressOfArray(arrayVarId);

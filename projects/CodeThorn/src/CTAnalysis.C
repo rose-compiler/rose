@@ -1863,6 +1863,9 @@ std::string CodeThorn::CTAnalysis::typeSizeMappingToString() {
 
 void CodeThorn::CTAnalysis::setOptions(CodeThornOptions options) {
   _ctOpt=options;
+  getEStateSet()->setExitOnHashError(_ctOpt.exitOnHashError);
+  getPStateSet()->setExitOnHashError(_ctOpt.exitOnHashError);
+  getTransitionGraph()->setExitOnHashError(_ctOpt.exitOnHashError);
 }
 
 CodeThornOptions& CodeThorn::CTAnalysis::getOptionsRef() {

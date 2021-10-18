@@ -138,7 +138,10 @@ public:
       if (res.second==false) {
 	// this case should never occur, condition "iter!=this->end()" above would have been satisfied and
 	// this else branch would have therefore been ignored
-	//std::cerr << "ERROR: HSetMaintainer: Element is reported to not have been inserted (=already existed), but 'find' could not find it." << std::endl;
+        if(exitOnHashError) {
+          std::cerr << "ERROR: HSetMaintainer: Element is reported to not have been inserted, but 'find' could not find it again." << std::endl;
+          exit(1);
+        }
 	_warnings++;
       }
     }
@@ -208,9 +211,13 @@ public:
     uint32_t getWarnings() {
       return _warnings;
     }
+    void setExitOnHashError(bool flag) {
+      exitOnHashError=flag;
+    }
  private:
     bool _keepStatesDuringDeconstruction;
     uint32_t _warnings=0;
+    bool exitOnHashError=false;
 };
 
 #endif

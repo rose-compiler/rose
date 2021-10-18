@@ -31,9 +31,14 @@ TransitionHashFun::TransitionHashFun() {
 }
 
 size_t TransitionHashFun::operator()(Transition* s) const {
-  size_t hash=1;
-  hash=((((size_t)s->source)+1)<<8)+(size_t)s->target*(size_t)s->edge.hash();
-  return hash;
+  if(EState::fastPointerHashing) {
+    size_t hash=1;
+    hash=((((size_t)s->source)+1)<<8)+(size_t)s->target*(size_t)s->edge.hash();
+    return hash;
+  } else {
+    EStateHashFun estateHashFun;
+    return ((estateHashFun(const_cast<EState*>(s->source))+1)<<8)+((estateHashFun(const_cast<EState*>(s->target))+1)<<8)*(size_t)s->edge.hash();
+  }
 }
 
 TransitionEqualToPred::TransitionEqualToPred() {}
