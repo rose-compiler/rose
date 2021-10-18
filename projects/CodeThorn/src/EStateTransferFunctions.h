@@ -46,7 +46,7 @@ namespace CodeThorn {
 
   enum InterpreterMode { IM_DISABLED, IM_ENABLED };
   // ACCESS_ERROR is null pointer dereference is detected. ACCESS_NON_EXISTING if pointer is lattice bottom element.
-  enum MemoryAccessBounds {ACCESS_ERROR,ACCESS_DEFINITELY_NP, ACCESS_DEFINITELY_INSIDE_BOUNDS, ACCESS_POTENTIALLY_OUTSIDE_BOUNDS, ACCESS_DEFINITELY_OUTSIDE_BOUNDS, ACCESS_NON_EXISTING};
+  enum MemoryAccessBounds {ACCESS_ERROR,ACCESS_DEFINITELY_NP, ACCESS_POTENTIALLY_NP, ACCESS_DEFINITELY_INSIDE_BOUNDS, ACCESS_POTENTIALLY_OUTSIDE_BOUNDS, ACCESS_DEFINITELY_OUTSIDE_BOUNDS, ACCESS_NON_EXISTING};
 
   class EStateTransferFunctions : public DFTransferFunctions {
   public:
@@ -243,6 +243,8 @@ namespace CodeThorn {
     // record detected errors in programs
     void recordDefinitiveViolatingLocation(enum AnalysisSelector analysisSelector, Label lab);
     void recordPotentialViolatingLocation(enum AnalysisSelector analysisSelector, Label lab);
+    void recordDefinitiveViolatingLocation2(enum AnalysisSelector analysisSelector, Label lab); // used by violation analysis
+    void recordPotentialViolatingLocation2(enum AnalysisSelector analysisSelector, Label lab); // used by violation analysis
     std::string analysisSelectorToString(AnalysisSelector sel);
 
     // deprecated (still being used here)
@@ -299,6 +301,9 @@ namespace CodeThorn {
     // memory must already be reserved (hence, this function is redundant if reserves is used before)
     void writeUndefToMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc);
     void writeUndefToMemoryLocation(PState* pstate, AbstractValue memLoc);
+
+    void notifyReadWriteListenersOnReading(Label lab, PStatePtr pstate, AbstractValue& memLoc);
+    void notifyReadWriteListenersOnWriting(Label lab, PState* pstate, AbstractValue& memLoc, AbstractValue& newValue);
 
     // utilify functions
     AbstractValue getMemoryRegionAbstractElementSize(CodeThorn::AbstractValue regionAddress);

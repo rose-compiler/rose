@@ -14,7 +14,7 @@ using namespace Sawyer::Message;
 namespace PredefinedSemanticFunctions {
 /* TODO: in case an error is detected the target region remains unmodified. Change to invalidating all elements of target region */
   SingleEvalResult evalFunctionCallMemCpy(EStateTransferFunctions* exprAnalyzer, SgFunctionCallExp* funCall, EState estate) {
-  //cout<<"DETECTED: memcpy: "<<funCall->unparseToString()<<endl;
+  cout<<"DETECTED: memcpy: "<<funCall->unparseToString()<<endl;
   SingleEvalResult res;
   // memcpy is a void function, no return value
   res.init(estate,AbstractValue(CodeThorn::Top()));

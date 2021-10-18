@@ -85,6 +85,7 @@ namespace CodeThorn {
     PStatePtr _pstate;
   public:
     static bool sharedPStates;
+    static bool fastPointerHashing;
     CodeThorn::InputOutput io;
     void setCallString(CallString cs);
     CallString getCallString() const;
@@ -115,7 +116,7 @@ class EStateHashFun {
   EStateHashFun() {}
   size_t operator()(EState* s) const {
     size_t hash=1;
-    if(EState::sharedPStates) {
+    if(EState::sharedPStates && EState::fastPointerHashing) {
       hash=(size_t)s->label().getId()*(((size_t)s->pstate())+1);
     } else {
       size_t pstateHash=1;

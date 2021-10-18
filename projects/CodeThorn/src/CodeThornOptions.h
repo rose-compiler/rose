@@ -129,6 +129,8 @@ public:
   std::string forkFunctionName="";
 
   bool sharedPStates=true;
+  bool fastPointerHashing=true;
+  bool exitOnHashError=false;
   bool readWriteTrace=false;
   
   // RERS C-subset program options

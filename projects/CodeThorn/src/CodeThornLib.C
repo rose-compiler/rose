@@ -93,7 +93,7 @@ using namespace Sawyer::Message;
 
 using namespace Sawyer::Message;
 
-static std::string CodeThornLibraryVersion="1.13.26";
+static std::string CodeThornLibraryVersion="1.13.27";
 
 // handler for generating backtrace
 void codethornBackTraceHandler(int sig) {
@@ -335,6 +335,7 @@ namespace CodeThorn {
       analyzer->setOptions(ctOpt);
       analyzer->setLtlOptions(ltlOpt);
       EState::sharedPStates=ctOpt.sharedPStates;
+      EState::fastPointerHashing=ctOpt.fastPointerHashing;
       return analyzer;
     }
 

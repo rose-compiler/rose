@@ -18,7 +18,8 @@
 using namespace std;
 using namespace CodeThorn;
 
-bool EState::sharedPStates=false;
+bool EState::sharedPStates=true;
+bool EState::fastPointerHashing=true;
 
 EState::EState():_label(Label()) {
   if(EState::sharedPStates) {
@@ -67,7 +68,7 @@ EState::EState(const EState &other) {
 }
 #endif
 
-#ifdef NO_ESTATE_PSTATE_MEM_COPY
+#ifdef ESTATE_PSTATE_MEM_COPY
 // assignment operator
 EState& EState::operator=(const EState &other) {
   this->_label=other._label;

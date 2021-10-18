@@ -55,6 +55,8 @@ public:
   template<typename T> void setOption(std::string option, T value);
   /// parse command line, store are options in args.
   void parse(int argc, char * argv[], po::options_description all);
+  /// parse command line, store are options in args. Allows single dash options with long options (e.g.-rose:ast:merge)
+  void parseAllowSingleDash(int argc, char * argv[], po::options_description all);
   /// parse command line, store are options in args.
   void parseAllowUnregistered(int argc, char * argv[], po::options_description all);
   /// parse command line, store are options in args.
