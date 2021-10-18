@@ -617,7 +617,19 @@ public:
      *  The default implementation always returns true.
      *
      *  Thread safety: The implementation must be thread safe. */
-    virtual bool filterNullDeref(const InstructionSemantics2::BaseSemantics::SValuePtr &addr, TestMode testMode, IoMode ioMode);
+    virtual bool filterNullDeref(const InstructionSemantics2::BaseSemantics::SValuePtr &addr, SgAsmInstruction*,
+                                 TestMode testMode, IoMode ioMode);
+
+    /** Filter out of bounds access.
+     *
+     *  Returns true to accept an out of bounds access, or false to say that it's a false positive.
+     *
+     *  The default implementation always returns true.
+     *
+     *  Thread safety: The implementation must be thread safe. */
+    virtual bool filterOobAccess(const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
+                                 const AddressInterval &referencedRegion, const AddressInterval &accessedRegion,
+                                 SgAsmInstruction*, TestMode, IoMode);
 
 public:
     virtual void reset() override;

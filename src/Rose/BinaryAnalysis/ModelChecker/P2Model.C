@@ -17,6 +17,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/SymbolicExpr.h>
+#include <Rose/BitOps.h>
 #include <Rose/CommandLine.h>
 #include <Combinatorics.h>                              // ROSE
 
@@ -471,7 +472,7 @@ RiscOperators::checkNullAccess(const BS::SValue::Ptr &addrSVal, TestMode testMod
         }
     }
 
-    if (isNull && !semantics_->filterNullDeref(addrSVal, testMode, ioMode)) {
+    if (isNull && !semantics_->filterNullDeref(addrSVal, currentInstruction(), testMode, ioMode)) {
         SAWYER_MESG(mlog[DEBUG]) <<"      nullptr dereference rejected by user; this one is ignored\n";
         isNull = false;
     }
@@ -499,8 +500,13 @@ RiscOperators::checkOobAccess(const BS::SValue::Ptr &addrSVal_, TestMode testMod
             if (AddressInterval referencedRegion = addrSVal->region()) {
                 AddressInterval accessedRegion = AddressInterval::baseSizeSat(*va, nBytes);
                 if (!referencedRegion.isContaining(accessedRegion)) {
-                    currentState(BS::State::Ptr());         // indicates that execution failed
-                    throw ThrownTag{OobTag::instance(nInstructions(), testMode, ioMode, currentInstruction(), addrSVal)};
+                    if (!semantics_->filterOobAccess(addrSVal, referencedRegion, accessedRegion, currentInstruction(),
+                                                     testMode, ioMode)) {
+                        SAWYER_MESG(mlog[DEBUG]) <<"      buffer overflow rejected by user; this one is ignored\n";
+                    } else {
+                        currentState(BS::State::Ptr());         // indicates that execution failed
+                        throw ThrownTag{OobTag::instance(nInstructions(), testMode, ioMode, currentInstruction(), addrSVal)};
+                    }
                 }
             }
         }
@@ -550,11 +556,15 @@ RiscOperators::pushCallStack(const P2::Function::Ptr &callee, rose_addr_t initia
 
         // VariableFinder API is not thread safe, so we need to protect it
         Variables::StackVariables lvars;
+        Sawyer::Optional<uint64_t> frameSize;
         {
             SAWYER_THREAD_TRAITS::LockGuard lock(variableFinderMutex_);
             lvars = variableFinder_unsync->findStackVariables(partitioner_, callee);
+            frameSize = variableFinder_unsync->functionFrameSize(partitioner_, callee);
         }
         callStack.push(FunctionCall(callee, initialSp, lvars));
+        if (frameSize)
+            callStack[0].framePointerDelta(-*frameSize);
 
         if (mlog[DEBUG])
             printCallStack(mlog[DEBUG]);
@@ -1135,6 +1145,31 @@ SemanticCallbacks::preExecute(const ExecutionUnit::Ptr &unit, const BS::RiscOper
         ++unitsReached_.insertMaybe(*va, 0);
     }
 
+    // Debugging
+    if (mlog[DEBUG]) {
+        mlog[DEBUG] <<"  function call stack:\n";
+        const FunctionCallStack &callStack = State::promote(ops->currentState())->callStack();
+        const size_t nBits = partitioner_.instructionProvider().wordSize();
+        const rose_addr_t mask = BitOps::lowMask<rose_addr_t>(nBits);
+        for (size_t i = callStack.size(); i > 0; --i) { // print from earliest to most recent record, i.e., bottom up
+            const FunctionCall &call = callStack[i-1];
+            mlog[DEBUG] <<"    " <<call.function()->printableName() <<"\n";
+            mlog[DEBUG] <<"      initial stack pointer = " <<StringUtility::addrToString(call.initialStackPointer()) <<"\n";
+            mlog[DEBUG] <<"      frame pointer delta   = " <<StringUtility::toHex(call.framePointerDelta()) <<"\n";
+            const rose_addr_t framePointer = (call.initialStackPointer() + call.framePointerDelta()) & mask;
+            mlog[DEBUG] <<"      frame pointer         = " <<StringUtility::addrToString(framePointer) <<"\n";
+            for (const Variables::StackVariable &var: call.stackVariables().values()) {
+                const rose_addr_t varVa = (framePointer + (rose_addr_t)var.interval().least()) & mask;
+                ASSERT_require(var.maxSizeBytes() > 0);
+                const rose_addr_t varSize = std::min(mask-varVa, var.maxSizeBytes()-1) + 1; // careful for overflow
+                const AddressInterval varLoc = AddressInterval::baseSize(varVa, varSize);
+                mlog[DEBUG] <<"        va " <<StringUtility::addrToString(varLoc) <<" is " <<var.toString() <<"\n";
+            }
+        }
+        if (callStack.isEmpty())
+            mlog[DEBUG] <<"    empty\n";
+    }
+
     return {};
 }
 
@@ -1354,7 +1389,14 @@ SemanticCallbacks::nextUnits(const Path::Ptr &path, const BS::RiscOperators::Ptr
 }
 
 bool
-SemanticCallbacks::filterNullDeref(const BS::SValue::Ptr &addr, TestMode testMode, IoMode ioMode) {
+SemanticCallbacks::filterNullDeref(const BS::SValue::Ptr &addr, SgAsmInstruction *insn, TestMode testMode, IoMode ioMode) {
+    return true;
+}
+
+bool
+SemanticCallbacks::filterOobAccess(const BS::SValue::Ptr &addr, const AddressInterval &referencedRegion,
+                                   const AddressInterval &accessedRegion, SgAsmInstruction *insn, TestMode testMode,
+                                   IoMode ioMode) {
     return true;
 }
 
