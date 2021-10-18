@@ -27,7 +27,7 @@ namespace CodeThorn {
   class TransitionHashFun {
   public:
     TransitionHashFun();
-    long operator()(Transition* s) const;
+    size_t operator()(Transition* s) const;
   private:
   };
   

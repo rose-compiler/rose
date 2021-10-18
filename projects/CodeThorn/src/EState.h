@@ -85,6 +85,7 @@ namespace CodeThorn {
     PStatePtr _pstate;
   public:
     static bool sharedPStates;
+    static bool nonPointerHashing;
     CodeThorn::InputOutput io;
     void setCallString(CallString cs);
     CallString getCallString() const;

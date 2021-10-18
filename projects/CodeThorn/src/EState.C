@@ -19,6 +19,7 @@ using namespace std;
 using namespace CodeThorn;
 
 bool EState::sharedPStates=false;
+bool EState::nonPointerHashing=false;
 
 EState::EState():_label(Label()) {
   if(EState::sharedPStates) {
