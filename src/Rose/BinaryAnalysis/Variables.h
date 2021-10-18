@@ -403,6 +403,15 @@ public:
     /** The register typically used as local variable base address. */
     static RegisterDescriptor frameOrStackPointer(const Partitioner2::Partitioner&);
 
+    /** Initilialize offsets for function prologue.
+     *
+     *  At the start of a function, we sometimes know where certain things are on the stack and their sizes. For instance, for
+     *  powerpc after the function prologue sets up the stack frame, we know that the stack frame header contain two 4-byte
+     *  quantities: the pointer to the parent frame, and the LR save area for callees and therefore we can add the three offsets
+     *  that delimit the boundaries of these two "variables". */
+    void initializeFrameOffsets(const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&,
+                                OffsetToAddresses &offsets /*in,out*/);
+
     /** Find frame location for address.
      *
      *  Given a symbolic address and size in bytes (presumabely from a memory read or write), calculate the part of the stack
