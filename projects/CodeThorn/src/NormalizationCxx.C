@@ -2095,6 +2095,116 @@ namespace
       SgMemberFunctionRefExp* newCtorDtorRef = nullptr;
   };
 
+  using TypeModifer = std::function<SgType*(SgType*)>;
+
+  SgType* noTypeModifier(SgType* ty) { return ty; }
+
+  TypeModifer typeBuilder(SgMemberFunctionDeclaration& fn)
+  {
+    TypeModifer                    res    = noTypeModifier;
+    const SgDeclarationModifier&   dclmod = fn.get_declarationModifier();
+    const SgConstVolatileModifier& mods   = dclmod.get_typeModifier().get_constVolatileModifier();
+
+    if (mods.isConst())
+      res = mods.isVolatile() ? sb::buildConstVolatileType : sb::buildConstType;
+    else if (mods.isVolatile())
+      res = sb::buildVolatileType;
+
+    return res;
+  }
+
+  struct ThisParameterTransformer
+  {
+      explicit
+      ThisParameterTransformer(SgMemberFunctionDeclaration& memberFn)
+      : memfn(memberFn)
+      {}
+
+      SgType& getThisType()
+      {
+        SgClassDefinition&  clsdef  = getClassDef(memfn);
+        SgClassDeclaration& clsdcl  = SG_DEREF(clsdef.get_declaration());
+        SgClassType&        clsty   = SG_DEREF(clsdcl.get_type());
+        TypeModifer         modBldr = typeBuilder(memfn);
+
+        return SG_DEREF(modBldr(&clsty));
+      }
+
+      void execute(CxxTransformStats&)
+      {
+        SgType& thisType = getThisType();
+
+        newThisParam = sb::buildInitializedName_nfi("This", &thisType, nullptr);
+        memfn.prepend_arg(newThisParam);
+      }
+
+    private:
+      SgMemberFunctionDeclaration& memfn;
+      SgInitializedName*           newThisParam = nullptr;
+  };
+
+  struct ThisPointerTransformer
+  {
+      ThisPointerTransformer(SgThisExp& thisNode, SgMemberFunctionDeclaration& memberFn)
+      : self(thisNode), memfn(memberFn)
+      {}
+
+      SgInitializedName& findThisParam()
+      {
+        SgInitializedNamePtrList& lst = memfn.get_args();
+        SgInitializedName&        cand = SG_DEREF(lst.at(0)); // a member function must have at least one argument
+
+        ROSE_ASSERT(cand.get_name() == "This");
+        return cand;
+      }
+
+      void execute(CxxTransformStats&)
+      {
+        SgInitializedName& thisParam = findThisParam();
+
+        newThisExpr = sb::buildVarRefExp(&thisParam, memfn.get_definition());
+        replaceExpression(self, SG_DEREF(newThisExpr));
+      }
+
+    private:
+      SgThisExp&                   self;
+      SgMemberFunctionDeclaration& memfn;
+      SgVarRefExp*                 newThisExpr = nullptr;
+  };
+
+  struct ThisArgumentTransformer
+  {
+      using ExprModifier = std::function<SgExpression& (SgExpression&)>;
+
+      static
+      SgExpression& noop(SgExpression& exp) { return exp; }
+
+      static
+      SgExpression& refToPtr(SgExpression& exp) { return SG_DEREF(sb::buildAddressOfOp(&exp)); }
+
+      ThisArgumentTransformer(SgBinaryOp& exp, SgExprListExp& arguments, ExprModifier modifier)
+      : binexp(exp), args(arguments), argModifier(modifier)
+      {}
+
+      void execute(CxxTransformStats&)
+      {
+        newFunction = si::deepCopy(binexp.get_lhs_operand());
+        newReceiver = si::deepCopy(binexp.get_rhs_operand());
+        newReceiver = &argModifier(SG_DEREF(newReceiver));
+
+        args.prepend_expression(newReceiver);
+        replaceExpression(binexp, SG_DEREF(newFunction));
+      }
+
+    private:
+      SgBinaryOp&    binexp;
+      SgExprListExp& args;
+      ExprModifier   argModifier;
+
+      SgExpression*  newReceiver = nullptr;
+      SgExpression*  newFunction = nullptr;
+  };
+
 
 
   //
@@ -2808,6 +2918,92 @@ namespace
     descend(n);
   }
 
+
+  /// Makes this parameter explicit
+  /// \details
+  ///   Three transformations are generated:
+  ///   - Introduce "This" parameter for non-static member functions as the first parameter
+  ///     void x(); => void x(X* This); // assuming x is a member function of X
+  ///   - Replace SgThisExp with SgVarRefExp to This
+  ///     this->x => This->x
+  ///   - Move the receiver object into the argument list when a non-static member function is called
+  ///     a->f() => f(a)
+  ///     a.f()  => f(&a)
+  ///     (a.*f)() => f(&a)
+  ///     (a->*f)() => f(a)
+  struct CxxThisParameterGenerator : GeneratorBase
+  {
+      using GeneratorBase::GeneratorBase;
+      using GeneratorBase::handle;
+
+      /// records this only iff n refers to a member function, not a member variable
+      void
+      recordIfMemberFnCall(SgBinaryOp& n, SgExprListExp& args, ThisArgumentTransformer::ExprModifier mod);
+
+      // recursive tree traversal
+      void descend(SgNode& n);
+
+      void handle(SgNode& n)         { descend(n); }
+
+      void handle(SgCtorInitializerList&) { /* skip */ }
+
+      void handle(SgMemberFunctionDeclaration& n)
+      {
+        if (!si::isStatic(&n))
+        {
+          record(ThisParameterTransformer{n});
+
+          memfn = &n;
+        }
+
+        descend(n);
+      }
+
+      void handle(SgThisExp& n)
+      {
+        record(ThisPointerTransformer{n, SG_DEREF(memfn)});
+      }
+
+      void handle(SgFunctionCallExp& n);
+
+    private:
+      SgMemberFunctionDeclaration* memfn;
+  };
+
+  void CxxThisParameterGenerator::descend(SgNode& n)
+  {
+    ::ct::descend(*this, n);
+  }
+
+  void CxxThisParameterGenerator::recordIfMemberFnCall( SgBinaryOp& n,
+                                                        SgExprListExp& args,
+                                                        ThisArgumentTransformer::ExprModifier mod
+                                                      )
+  {
+    // test if this is a call through a function pointer
+    if (!isSgVarRefExp(n.get_rhs_operand()))
+      record(ThisArgumentTransformer{n, args, mod});
+  }
+
+  void CxxThisParameterGenerator::handle(SgFunctionCallExp& n)
+  {
+    SgExprListExp& args = SG_DEREF(n.get_args());
+    SgExpression*  tgt  = n.get_function();
+
+    if (SgArrowExp* arrow = isSgArrowExp(tgt))
+      recordIfMemberFnCall(*arrow, args, ThisArgumentTransformer::noop);
+    else if (SgDotExp* dot = isSgDotExp(tgt))
+      recordIfMemberFnCall(*dot, args, ThisArgumentTransformer::refToPtr);
+    else if (SgArrowStarOp* arrowStar = isSgArrowStarOp(tgt))
+      record(ThisArgumentTransformer{*arrowStar, args, ThisArgumentTransformer::noop});
+    else if (SgDotStarOp* dotStar = isSgDotStarOp(tgt))
+      record(ThisArgumentTransformer{*dotStar, args, ThisArgumentTransformer::refToPtr});
+
+    descend(n);
+  }
+
+
+
   struct CxxNormalizationCheck : GeneratorBase
   {
       using GeneratorBase::GeneratorBase;
@@ -2856,7 +3052,7 @@ namespace
       {
         if (SgCtorInitializerList* lst = n.get_CtorInitializerList())
           record(CtorInitListTransformer{*lst});
-  }
+      }
   };
 
   void CxxCleanCtorInitlistGenerator::descend(SgNode& n)
