@@ -55,6 +55,10 @@ int main() {
   return 0;
 }
 
+<<<<<<< HEAD
 // codethorn --interpreter-mode=1 --context-sensitive --in-state-string-literals --exploration-mode=topologic-sort --log-level=none --normalize-level=2 --abstraction-mode=0 --array-abstraction-index=-1 --tg1-memory-subgraphs tests/DOM900.C
 
+=======
+// codethorn --interpreter-mode=1 test.C  --context-sensitive --in-state-string-literals --exploration-mode=topologic-sort --log-level=none --normalize-level=2 --abstraction-mode=0 --array-abstraction-index=-1 --tg1-memory-subgraphs
+>>>>>>> 89a991f6ebd5df9c28fe4ee00d5ee618520081c7
 
