@@ -420,10 +420,19 @@ namespace
     // dispatch based on unit kind
     switch (adaUnit.Unit_Kind)
     {
+      case A_Generic_Procedure:
+      case A_Generic_Function:
       case A_Function:
       case A_Procedure:
         {
-          logTrace() << "A " << (adaUnit.Unit_Kind == A_Function ? "function" : "procedure")
+          std::string kindName;
+
+               if (adaUnit.Unit_Kind == A_Function)          kindName = "function";
+          else if (adaUnit.Unit_Kind == A_Procedure)         kindName = "procedure";
+          else if (adaUnit.Unit_Kind == A_Generic_Function)  kindName = "generic function";
+          else if (adaUnit.Unit_Kind == A_Generic_Procedure) kindName = "generic procedure";
+
+          logTrace() << "A " << kindName
                      << PrnUnitHeader(adaUnit)
                      << "\n " << adaUnit.Corresponding_Parent_Declaration << " (Corresponding_Parent_Declaration)"
                      << "\n " << adaUnit.Corresponding_Body << " (Corresponding_Body)"
@@ -537,9 +546,6 @@ namespace
 
       case Not_A_Unit:
       case A_Package_Instance:
-
-      case A_Generic_Procedure:
-      case A_Generic_Function:
 
       case A_Procedure_Instance:
       case A_Function_Instance:

@@ -1077,10 +1077,11 @@ namespace
   }
 
   // MS 11/17/2020 : SelectStmtCreator modeled on IfStmtCreator
-  // PP 10/12/2021 : refactored code to eliminate use of scope_npc
-  //                 a block will only be populated after the new node has been connected
+  // PP 10/12/2021 : modified code to eliminate the need for using scope_npc.
+  //                 A block will only be populated after the new node has been connected
   //                 to the AST. This is achieved by returning a lambda function w/o parameters
-  //                 (BodyCompletion) that is invoked after the nodes are part of the AST.
+  //                 (DeferredBodyCompletion) that is invoked after the node has been connected
+  //                 to the AST.
   struct SelectStmtCreator
   {
     typedef SgAdaSelectAlternativeStmt*  alternative;
