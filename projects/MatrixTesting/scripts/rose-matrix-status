@@ -2,8 +2,10 @@
 set -e
 set -o pipefail
 arg0="${0##*/}"
+dir0="${0%/*}"
 
 export ROSE_ARGS='--log=none,warn,error,fatal --color=on'
+export PATH="$dir0:$PATH"
 
 FORMAT=plain
 
@@ -239,28 +241,28 @@ paragraph <<EOF
 Errors by analysis language.
 EOF
 echo
-rose-matrix-query -F$FORMAT languages.a status count first_error/ first_error |indent
+rose-matrix-query -F$FORMAT languages.a status.a first_error{/,} count.d |indent
 
 echo
 paragraph <<EOF
 Errors by analysis language and operating system.
 EOF
 echo
-rose-matrix-query -F$FORMAT languages.a os.a status count first_error/ first_error |indent
+rose-matrix-query -F$FORMAT languages.a os.a status.a first_error{/,} count.d |indent
 
 echo
 paragraph <<EOF
 Errors by analysis language, operating system, and compiler.
 EOF
 echo
-rose-matrix-query -F$FORMAT languages.a os.a compiler.a status count first_error/ first_error |indent
+rose-matrix-query -F$FORMAT languages.a os.a compiler.a status.a first_error{/,} count.d |indent
 
 echo
 paragraph <<EOF
 Errors by analysis language and boost version.
 EOF
 echo
-rose-matrix-query -F$FORMAT languages.a boost.a status count first_error/ first_error |indent
+rose-matrix-query -F$FORMAT languages.a boost.a status.a first_error{/,} count.d |indent
 
 ####################################################################################################
 echo
