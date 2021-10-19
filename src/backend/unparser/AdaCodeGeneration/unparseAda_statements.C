@@ -199,6 +199,9 @@ namespace
     if (const SgAdaGenericInstanceDecl* instdcl = isSgAdaGenericInstanceDecl(&n))
       return instdcl->get_name();
 
+    if (const SgFunctionDeclaration* fundcl = isSgFunctionDeclaration(&n))
+      return fundcl->get_name();
+
     if (const SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(&n))
       return unitRefName(SG_DEREF(gendcl->get_declaration()));
 
@@ -1089,19 +1092,12 @@ namespace
     {
       prn("generic\n");
       stmt(n.get_definition());
-      // check which kind of generic we have:
-      if (isSgAdaPackageSpecDecl(n.get_declaration())) {
-        SgAdaPackageSpecDecl* pkgspec = isSgAdaPackageSpecDecl((SgNode*)n.get_declaration());
-        stmt(pkgspec);
-        return;
-      }
-      if (isSgFunctionDeclaration(n.get_declaration())) {
-        SgFunctionDeclaration* fundec = isSgFunctionDeclaration((SgNode*)n.get_declaration());
-        stmt(fundec);
-        return;
-      }
 
-      ROSE_ABORT();
+      SgDeclarationStatement* dcl = n.get_declaration();
+
+      // check which kind of generic we have:
+      ROSE_ASSERT(isSgAdaPackageSpecDecl(dcl) || isSgFunctionDeclaration(dcl));
+      stmt(dcl);
     }
 
     void handle(SgIfStmt& n)

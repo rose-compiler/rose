@@ -483,7 +483,10 @@ namespace
     {
       const SgAdaPackageSpecDecl& dcl = SG_DEREF(isSgAdaPackageSpecDecl(pkgspc->get_parent()));
 
-      return (dcl.get_name() != "Standard") || !isSgGlobal(dcl.get_parent());
+      //~ std::cerr << dcl.get_name() << " <name.dcl.scope> "
+                //~ << dcl.get_scope() << " " << (!isSgGlobal(dcl.get_scope()))
+                //~ << std::endl;
+      return (dcl.get_name() != "Standard") || !isSgGlobal(dcl.get_scope());
     }
 
     return true;
@@ -665,13 +668,22 @@ namespace
   }
 
   const SgDeclarationStatement&
+  importedDecl(const SgDeclarationStatement* impdcl)
+  {
+    if (const SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(impdcl))
+      impdcl = gendcl->get_declaration();
+
+    return SG_DEREF(impdcl);
+  }
+
+  const SgDeclarationStatement&
   importedDecl(const SgExpression& n, const SgImportStatement& impstm)
   {
     if (const SgFunctionRefExp* funref = isSgFunctionRefExp(&n))
       return SG_DEREF(SG_DEREF(funref->get_symbol()).get_declaration());
 
     if (const SgAdaUnitRefExp* untref = isSgAdaUnitRefExp(&n))
-      return SG_DEREF(untref->get_decl());
+      return importedDecl(untref->get_decl());
 
     if (const SgAdaRenamingRefExp* renref = isSgAdaRenamingRefExp(&n))
       return SG_DEREF(renref->get_decl());
@@ -2000,10 +2012,10 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
                ASSERT_not_null(return_declaration);
                break;
              }
-          // Liao, Oct 4, 2021. We skip translation of Ada AST from some system packages. We also ignore them in the unparser.   
+          // Liao, Oct 4, 2021. We skip translation of Ada AST from some system packages. We also ignore them in the unparser.
           case V_SgAdaSubtype:
-          case V_SgAdaModularType:   
-          case V_SgAdaDerivedType:   
+          case V_SgAdaModularType:
+          case V_SgAdaDerivedType:
              {
                return_declaration = NULL;
                break;
