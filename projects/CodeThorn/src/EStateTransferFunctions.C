@@ -1617,7 +1617,6 @@ namespace CodeThorn {
     SgNode* lhs=SgNodeHelper::getLhs(nextNodeToAnalyze2);
     SgNode* rhs=SgNodeHelper::getRhs(nextNodeToAnalyze2);
     SAWYER_MESG(logger[TRACE])<<"evalAssignOpMemUpdates: lhs:"<<lhs->unparseToString()<<":"<<lhs->class_name()<<" rhs:"<<rhs->unparseToString()<<endl;
-    //cout<<"DEBUG: evalAssignOpMemUpdates: lhs:"<<lhs->unparseToString()<<":"<<lhs->class_name()<<" rhs:"<<rhs->unparseToString()<<endl;
     SingleEvalResult rhsRes=evaluateExpression(rhs,currentEState, CodeThorn::EStateTransferFunctions::MODE_VALUE);
     VariableId lhsVar;
     bool isLhsVar=checkIfVariableAndDetermineVarId(lhs,lhsVar);
@@ -1706,12 +1705,16 @@ namespace CodeThorn {
 	  } else {
 	    fatalErrorExit(nextNodeToAnalyze2,"lhs array access: unknown type of array or pointer.");
 	  }
+
 	  SingleEvalResult res2=evaluateExpression(indexExp,currentEState);
 	  AbstractValue indexValue=res2.value();
-	  AbstractValue elementSize=getMemoryRegionAbstractElementSize(arrayPtrValue);
-
+          if(_variableIdMapping->isFunctionParameter(arrayVarId)) {
+            arrayPtrValue=readFromMemoryLocation(estate.label(),&pstate2,arrayVarId); // pointer value of array function parameter
+          }
+          AbstractValue elementSize=getMemoryRegionAbstractElementSize(arrayPtrValue);
+          
           if(elementSize.isTop()) {
-            logger[WARN]<<"evalAssignOpMemUpdates: element size is unknown (top). Array element address becomes top."<<endl;
+            logger[WARN]<<"evalAssignOpMemUpdates: element size is unknown (top). Array element address becomes top. arrayptrvalue:"<<arrayPtrValue.toString()<<endl;
           }
 
 	  AbstractValue arrayElementAddr=AbstractValue::operatorAdd(arrayPtrValue,indexValue,elementSize);
@@ -2648,9 +2651,7 @@ namespace CodeThorn {
       //cout<<"DEBUG: ASSIGN: lhsAddress:"<<lhsAddress.toString()<<" rhsValue:"<<rhsValue.toString()<<endl;
       Label label=estate.label();
       PState newPState=*estate.pstate();
-      //cout<<"DEBUG: ASSIGN P2"<<endl;
       writeToAnyMemoryLocation(label,&newPState,lhsAddress,rhsValue);
-      //cout<<"DEBUG: ASSIGN P3"<<endl;
       CallString cs=estate.callString;
       estateList.push_back(createEState(targetLabel,cs,newPState));
     }
@@ -2711,7 +2712,7 @@ namespace CodeThorn {
 						SingleEvalResult arrayExprResult,
 						SingleEvalResult indexExprResult,
 						EState estate, EvalMode mode) {
-    SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp: "<<node->unparseToString()<<"arrayExprResult:"<<arrayExprResult.result.toString()<<" indexExprResult"<<indexExprResult.result.toString()<<" mode:"<<mode<<endl;
+    SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp: "<<node->unparseToString()<<"arrayExprResult:"<<arrayExprResult.result.toString()<<" indexExprResult:"<<indexExprResult.result.toString()<<" mode:"<<mode<<endl;
     SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp: AST:"<<AstTerm::astTermWithNullValuesToString(node)<<endl;
     SingleEvalResult res;
     res.estate=estate;
@@ -2742,9 +2743,10 @@ namespace CodeThorn {
 	if(_variableIdMapping->isOfArrayType(arrayVarId)) {
 	  if(_variableIdMapping->isFunctionParameter(arrayVarId)) {
 	    // function parameter of array type contains a pointer value in C/C++
-            readFromMemoryLocation(estate.label(),&pstate2,arrayVarId); // pointer value of array function paramter
-	    //cout<<"evalArrayReferenceOp:"<<" arrayPtrValue (of function parameter) read from memory, arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
-	    SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp:"<<" arrayPtrValue (of function parameter) read from memory, arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
+	    //cout<<"evalArrayReferenceOp:"<<" arrayPtrValue (of function parameter1) read from memory, arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<": mode"<<mode<<endl;
+            arrayPtrValue=readFromMemoryLocation(estate.label(),&pstate2,arrayVarId); // pointer value of array function paramter
+	    SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp:"<<" arrayPtrValue (of function parameter) read from memory, arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<": mode"<<mode<<endl;
+            //cout<<"evalArrayReferenceOp:"<<" arrayPtrValue (of function parameter2) read from memory, arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
 	  } else {
 	    arrayPtrValue=AbstractValue::createAddressOfArray(arrayVarId);
 	    SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp: created array address (from array type): "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
@@ -3402,7 +3404,7 @@ namespace CodeThorn {
       res.init(estate,AbstractValue::createTop());
       return res;
     }  
-    SAWYER_MESG(logger[TRACE])<<"evalRValueVarRefExp: "<<node->unparseToString()<<" id:"<<_variableIdMapping->variableId(isSgVarRefExp(node)).toString()<<" MODE:"<<mode<<" Symbol:"<<node->get_symbol()<<endl;
+    //SAWYER_MESG(logger[TRACE])<<"evalRValueVarRefExp: "<<node->unparseToString()<<" id:"<<_variableIdMapping->variableId(isSgVarRefExp(node)).toString()<<" MODE:"<<mode<<" Symbol:"<<node->get_symbol()<<endl;
     SingleEvalResult res;
     res.init(estate,AbstractValue::createTop());
 
@@ -3414,7 +3416,7 @@ namespace CodeThorn {
       ROSE_ASSERT(varId.isValid());
     }
     // check if var is a struct member. if yes return struct-offset.
-    SAWYER_MESG(logger[TRACE])<<"VarRefExp name: "<<_variableIdMapping->variableName(varId)<<endl;
+    //SAWYER_MESG(logger[TRACE])<<"VarRefExp name: "<<_variableIdMapping->variableName(varId)<<endl;
     if(isMemberVariable(varId)) {
       int offset=AbstractValue::getVariableIdMapping()->getOffset(varId);
       ROSE_ASSERT(_variableIdMapping);
@@ -3979,14 +3981,11 @@ namespace CodeThorn {
 	SAWYER_MESG(logger[WARN])<<"writing defined value to memloc not in state: L"<<lab.toString()<<": "<<memLoc.toString(_variableIdMapping)<<":="<<newValue.toString(_variableIdMapping)<<endl;
       }
     }
-    SAWYER_MESG(logger[TRACE])<<"EStateTransferFunctions::writeToMemoryLocation1: before write"<<endl;
-
     if(memLoc.isNullPtr()) {
       recordDefinitiveNullPointerDereferenceLocation(lab);
     } else {
       pstate->writeToMemoryLocation(memLoc,newValue);
     }
-    SAWYER_MESG(logger[TRACE])<<"EStateTransferFunctions::writeToMemoryLocation1:done"<<endl;
   }
 
   void EStateTransferFunctions::notifyReadWriteListenersOnReading(Label lab, PStatePtr pstate, AbstractValue& memLoc) {

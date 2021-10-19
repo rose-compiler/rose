@@ -1263,14 +1263,14 @@ void CodeThorn::CTAnalysis::startAnalysisTimer() {
   if (!_timerRunning) {
     _analysisTimer.start();
     _timerRunning=true;
-    SAWYER_MESG(logger[INFO])<<"INFO: solver timer started."<<endl;
+    SAWYER_MESG(logger[DEBUG])<<"INFO: solver timer started."<<endl;
   }
 }
 
 void CodeThorn::CTAnalysis::stopAnalysisTimer() {
   _timerRunning=false;
   _analysisTimer.stop();
-  SAWYER_MESG(logger[INFO])<<"INFO: solver timer stopped."<<endl;
+  SAWYER_MESG(logger[DEBUG])<<"INFO: solver timer stopped."<<endl;
 }
 
 SgNode* CodeThorn::CTAnalysis::getStartFunRoot() {

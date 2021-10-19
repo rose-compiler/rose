@@ -151,6 +151,37 @@ function level2AvSetCombineTest {
     runDomainTestsLevel2
 }
 
+function regressionTests {
+    testNumbers=`echo {900..901}`
+    echo "Scheduled regression tests: $testNumbers"
+    numPass=0
+    numWarn=0
+    numFail=0
+    local CT_MODE_OPTIONS="--context-sensitive=yes --normalize-level=2 --interpreter-mode=1 --in-state-string-literals=1 --exploration-mode=topologic-sort --abstraction-mode=0 --array-abstraction-index=-1 --pointer-sets=off"
+    for testNumber in $testNumbers; do
+        benchmarkprefix=$TESTDIR/DOM${testNumber};
+        for benchmark in ${benchmarkprefix}*.[Cc]; do
+            benchmarkname=$(basename $benchmark)
+            printf "Testing %-38s: " $benchmarkname
+            CT_REFERENCE_FILE=${benchmark}.txt # with path
+            CT_OUTPUT_FILE=${benchmarkname}.imout # without path
+            if ( ./codethorn $benchmark $CT_MODE_OPTIONS --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR ); then
+	        if ( ! diff $CT_REFERENCE_FILE $CT_OUTPUT_FILE ); then
+	            echo "$COLORED_FAIL (output)"
+                    ((numFail++))
+	        else
+                    echo "$COLORED_PASS"
+		    ((numPass++))
+	        fi
+            else
+	        echo "$COLORED_FAIL (execution)"
+                ((numFail++))
+            fi
+        done
+    done
+    printStats
+}
+
 function printHelp {
     echo
     echo "Command line options:"
@@ -184,8 +215,12 @@ while [[ $# -gt 0 ]]; do
 	level3Test
 	level2BasicCombineTest
 	#level2AvSetCombineTest
+        regressionTests
 	shift
 	;;
+    --regression-tests)
+        regressionTests
+        ;;
     --testdir)
 	TESTDIR=$2
 	shift
