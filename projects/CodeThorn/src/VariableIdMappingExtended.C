@@ -931,7 +931,7 @@ namespace CodeThorn {
   void VariableIdMappingExtended::toStream(ostream& os) {
     for(size_t i=0;i<mappingVarIdToInfo.size();++i) {
       VariableId varId=variableIdFromCode(i);
-      if(mappingVarIdToInfo[varId].variableScope!=VS_MEMBER) {
+      if(true||mappingVarIdToInfo[varId].variableScope!=VS_MEMBER) {
         os<<std::right<<std::setw(3)<<i<<",";
         os<<varIdInfoToString(varId);
         os<<endl;

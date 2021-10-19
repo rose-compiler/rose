@@ -1,18 +1,21 @@
 #include "DOM.h"
 
+
 char* strcpy1(char dest[], const char source[])
 {
   char *temp = dest;
   int i = 0;
   //printf("strcpy1: dest:%s source:%s\n",dest,source);
   while (1) {
-    //printf("strcpy2: &dest[%d]:%s &source[%d]:%s\n",i,&dest[i],i,&source[i]);
+    //printf("strcpy2: &dest[%d]:%p &source[%d]:%p\n",i,&dest[i],i,&source[i]);
     dest[i] = source[i];
-    //printf("strcpy3: dest[%d]:%s source[%d]:%d\n",i,dest[i],i,source[i]);
+    //printf("strcpy3: dest[%d]:%d source[%d]:%d\n",i,dest[i],i,source[i]);
     if (dest[i] == '\0') {
       break;
     }
     i++;
+    if(i>12)
+      break;
   }
   return temp;
 }
@@ -24,14 +27,16 @@ void print(const char *str) {
     //printf("i: %d s: %s %d\n",i,s,*s);
     printf("i: %d %d\n",i,*s);
     i++;
+    if(i>12)
+      break;
   }
   
 }
 void print2(const char *str, int maxlen) {
-  const char* s;
   for (int i=0;i<maxlen;i++) {
-    //printf("i: %d s: %s %d\n",i,s,*s);
-    printf("i: %d %d\n",i,*s);
+    //printf("i: %d s: %p %d\n",i,str,*str);
+    //s++;
+    printf("i: %d %d\n",i,*str++); // all in one expr
   }
   
 }
@@ -91,28 +96,29 @@ int main() {
     }
   print(source);
   print(data);
-  return 0;
   int len1,len2,len3,len4,len5,len6;
   len1=strlen1(source);
+  printf("len1:%d\n",len1);
   len2=strlen2(source);
+  printf("len2:%d\n",len2);
   len3=strlen3(source);
+  printf("len3:%d\n",len3);
+
   //printf("stringPtr:%s\n",stringPtr);
   len4=strlen3(stringPtr);
-  len5=strlen1(stringPtr);
-  len6=strlen3(stringPtr);
-  printf("len1:%d\n",len1);
-  printf("len2:%d\n",len2);
-  printf("len3:%d\n",len3);
   printf("len4:%d\n",len4);
+  len5=strlen1(stringPtr);
   printf("len5:%d\n",len5);
+  len6=strlen3(stringPtr);
   printf("len6:%d\n",len6);
 
   // string copy test
-  char target1[10+1];
-  char* targetptr=target1;
-  //printf("%s\n",target1);
-  //printf("%s\n",targetptr);
-  //strcpy1(targetptr,data);
-  print2(target1,11);
+  char array2[10+1];
+  char* array2ptr=array2;
+  //printf("%s\n",array2);
+  //printf("%s\n",array2ptr);
+  strcpy1(array2ptr,data);
+  print(array2ptr); // ensure interpreter mode cannot read past end without terminating
+  print2(array2ptr,11); // ensure interpreter mode cannot read past end without terminating
   return 0;
 }

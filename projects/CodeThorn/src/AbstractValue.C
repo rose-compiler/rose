@@ -891,7 +891,7 @@ string AbstractValue::toString(CodeThorn::VariableIdMapping* vim) const {
     //    if(vim->isOfArrayType(variableId)||vim->isOfClassType(variableId)||vim->isOfReferenceType(variableId)||vim->isHeapMemoryRegionId(variableId)) {
       stringstream ss;
       ss<<"("
-        <<variableId.toUniqueString(vim)
+        <<variableId.toString(vim) // toUniqueString: problem in regression tests, because IDs can be different due to different number of globals in different OS versions.
         <<","
         <<getIntValue()
         //<<","

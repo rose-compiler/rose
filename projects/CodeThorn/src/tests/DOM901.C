@@ -7,12 +7,37 @@ int printf(const char*,int*);
 int printf(const char*,int(*)[3]);
 #endif
 
+void f1(int* q1) {
+  printf("q1:%p\n",q1);
+  q1[1]=201;
+}
+
+void f2(int* q2) {
+  printf("q2:%p\n",q2);
+  q2[1]=q2[1]+100;
+}
+
+void f3(int* q3) {
+  q3--;
+  q3--;
+  *q3=*q3+100;
+}
+
+void f4(int arr[]) {
+  printf("arr:%d\n",arr);
+  printf("&arr[1]:%d\n",&arr[1]);
+  arr[1]=500;
+}
+
 int main() {
 
   int a[3]={100,101,102};
   int* p1=a;
   
   printf("a:%p\n",a);
+  printf("a[0]:%d\n",a[0]);
+  printf("a[1]:%d\n",a[1]);
+  printf("a[2]:%d\n",a[2]);
   printf("p1:%p\n",p1);
   printf("p1==a:%d\n",p1==a);
 
@@ -30,6 +55,26 @@ int main() {
   printf("*p3:%d\n",*p3);
   printf("(p1+1)==p3:%d\n",(p1+1)==p3);  
 
+  f1(a);
+  printf("a[0]:%d\n",a[0]);
+  printf("a[1]:%d\n",a[1]);
+  printf("a[2]:%d\n",a[2]);
+
+  f2(p3); // &a[1]
+  printf("a[0]:%d\n",a[0]);
+  printf("a[1]:%d\n",a[1]);
+  printf("a[2]:%d\n",a[2]);
+
+  f3(p3+1); // &a[2]
+  printf("a[0]:%d\n",a[0]);
+  printf("a[1]:%d\n",a[1]);
+  printf("a[2]:%d\n",a[2]);
+
+  f4(&a[1]);
+  printf("a[0]:%d\n",a[0]);
+  printf("a[1]:%d\n",a[1]);
+  printf("a[2]:%d\n",a[2]);
+  
 #ifdef C99_ARRAY_POINTERS
   // C99
   int (*p4) [3];
@@ -55,5 +100,5 @@ int main() {
   return 0;
 }
 
-// codethorn --interpreter-mode=1 --context-sensitive --in-state-string-literals --exploration-mode=topologic-sort --log-level=none --normalize-level=2 --abstraction-mode=0 --array-abstraction-index=-1 --tg1-memory-subgraphs=yes tests/DOM900.C
+// codethorn --interpreter-mode=1 --context-sensitive --in-state-string-literals --exploration-mode=topologic-sort --log-level=none --normalize-level=2 --abstraction-mode=0 --array-abstraction-index=-1 --tg1-memory-subgraphs=yes tests/DOM901.C
 
