@@ -677,7 +677,7 @@ check-matcher:
 
 
 CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-lc check-io unit-test check-omp-cfg check-commandline-options check-vis \
-                      check-thorn2
+                      check-thorn2 check-stg
 CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 
 CHECK_WITH_SPOT_PASSING=check-reachability-seq check-ltl-seq check-ltl-par
@@ -871,6 +871,11 @@ check-vis0:
 check-vis:
 	$(srcdir)/scripts/runVisTests $(srcdir)/tests
 
+check-stg:
+	./codethorn $(srcdir)/tests/rers_mini13.c --vis --abstraction-mode=0 --exploration-mode=topologic-sort --solver=5
+	./codethorn $(srcdir)/tests/rers_mini13.c --vis --abstraction-mode=0 --exploration-mode=topologic-sort --solver=5 --reduce-stg
+	./codethorn $(srcdir)/tests/rers_mini13.c --vis --abstraction-mode=1 --exploration-mode=topologic-sort --solver=16
+	./codethorn $(srcdir)/tests/rers_mini13.c --vis --abstraction-mode=1 --exploration-mode=topologic-sort --solver=16 --reduce-stg
 
 .PHONY: check-thorn2-with-sage3
 check-thorn2-with-sage3: thorn2

@@ -238,6 +238,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("fork-function-name",po::value< std::string >(&ctOpt.forkFunctionName),"sets fork function name (also requires --fork-function-enabled)")
     ("shared-pstates",po::value< bool >(&ctOpt.sharedPStates)->implicit_value(true), "Allows to disable shared pstates in estates.")
     ("fast-pointer-hashing",po::value< bool >(&ctOpt.fastPointerHashing)->implicit_value(true), "Allows to disable fast pointer hashing of pstates and estates in transition graph.")
+    ("reduce-stg",po::value< bool >(&ctOpt.reduceStg)->implicit_value(true), "Reduce state transition system graph to IO states (without LTL verification).")
     ;
 
   rersOptions.add_options()
