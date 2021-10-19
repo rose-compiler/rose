@@ -127,7 +127,7 @@ package body Asis_Adapter.Element.Clauses is
          procedure Add_Common_Items is
          begin
             State.Add_To_Dot_Label("Representation_Clause_Kind", Representation_Clause_Kind'Image);
-            Result.Representation_Clause_Kind := anhS.To_Representation_Clause_Kinds (Representation_Clause_Kind);
+            Result.Representation_Clause_Kind := To_Representation_Clause_Kinds (Representation_Clause_Kind);
             Add_Representation_Clause_Name;
          end Add_Common_Items;
 
@@ -159,7 +159,7 @@ package body Asis_Adapter.Element.Clauses is
       procedure Add_Common_Items is
       begin
          State.Add_To_Dot_Label ("Clause_Kind", Clause_Kind'Image);
-         Result.Clause_Kind := anhS.To_Clause_Kinds (Clause_Kind);
+         Result.Clause_Kind := To_Clause_Kinds (Clause_Kind);
       end Add_Common_Items;
 
       use all type Asis.Clause_Kinds;

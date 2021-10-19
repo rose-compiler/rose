@@ -346,12 +346,12 @@ public:
 
 public:
     virtual S2::BaseSemantics::RiscOperatorsPtr
-    create(const S2::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
+    create(const S2::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         ASSERT_not_implemented("[Robb Matzke 2019-09-16]");
     }
 
     virtual S2::BaseSemantics::RiscOperatorsPtr
-    create(const S2::BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
+    create(const S2::BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         ASSERT_not_implemented("[Robb Matzke 2019-09-16]");
     }
 
@@ -366,14 +366,14 @@ public:
 public:
     virtual S2::BaseSemantics::SValuePtr
     readMemory(RegisterDescriptor segreg, const S2::BaseSemantics::SValuePtr &addr, const S2::BaseSemantics::SValuePtr &dflt,
-               const S2::BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
+               const S2::BaseSemantics::SValuePtr &cond) override {
         lookForVariable(addr);
         return Super::readMemory(segreg, addr, dflt, cond);
     }
 
     virtual void
     writeMemory(RegisterDescriptor segreg, const S2::BaseSemantics::SValuePtr &addr, const S2::BaseSemantics::SValuePtr &data,
-                const S2::BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
+                const S2::BaseSemantics::SValuePtr &cond) override {
         lookForVariable(addr);
         return Super::writeMemory(segreg, addr, data, cond);
     }
@@ -393,7 +393,7 @@ private:
             Finder(const SymbolicExpr::Ptr needle)
                 : needle(needle) {}
 
-            SymbolicExpr::VisitAction preVisit(const SymbolicExpr::Ptr &node) ROSE_OVERRIDE {
+            SymbolicExpr::VisitAction preVisit(const SymbolicExpr::Ptr &node) override {
                 if (seen.insert(node->hash()).second && node->isEquivalentTo(needle)) {
                     found = node;
                     return SymbolicExpr::TERMINATE;
@@ -402,7 +402,7 @@ private:
                 }
             }
 
-            SymbolicExpr::VisitAction postVisit(const SymbolicExpr::Ptr&) ROSE_OVERRIDE {
+            SymbolicExpr::VisitAction postVisit(const SymbolicExpr::Ptr&) override {
                 return SymbolicExpr::CONTINUE;
             }
         } finder(base_);
@@ -472,6 +472,38 @@ VariableFinder::functionFrameSize(const P2::Partitioner &partitioner, const P2::
     }
 
     return Sawyer::Nothing();
+}
+
+void
+VariableFinder::initializeFrameOffsets(const P2::Partitioner &partitioner, const P2::Function::Ptr &function,
+                                       OffsetToAddresses &offsets) {
+    ASSERT_not_null(function);
+    SgAsmInstruction *firstInsn = partitioner.instructionProvider()[function->address()];
+    if (isSgAsmPowerpcInstruction(firstInsn)) {
+        if (Sawyer::Optional<uint64_t> frameSize = functionFrameSize(partitioner, function)) {
+            // For powerpc, the stack is organized like this:
+            //                    :                           :
+            //                    :   (part of parent frame)  :
+            //                    :                           :
+            //                (9) | LR saved                  |  4 bytes
+            // parent_frame:  (8) | addr of grandparent frame |  4 bytes
+            //                    +---(current frame)---------+
+            //                (7) | saved FP register area    |  optional, variable size
+            //                (6) | saved GP register area    |  optional, multiple of 4 bytes
+            //                (5) | CR saved                  |  0 or 4 bytes
+            //                (4) | Local variables           |  optional, variable size
+            //                (3) | Function parameter area   |  optional, variable size for callee args not fitting in registers
+            //                (2) | Padding                   |  0 to 7, although I'm not sure when this is used
+            //                (1) | LR saved by callees       |  4 bytes
+            // current_frame: (0) | addr of parent frame      |  4 bytes
+            //                    +---------------------------+
+            //
+            // We'd like to define boundaries (offsets) above and below lines (3) and (4) in order to segregate them from each
+            // other and from the non-variables around them. However, we don't know where these boundaries are because
+            // everything is variable size. The best we can do is insert a boundary above line (1).
+            offsets[8].insert(function->address());
+        }
+    }
 }
 
 // class method
@@ -583,6 +615,9 @@ VariableFinder::findStackVariables(const P2::Partitioner &partitioner, const P2:
         SAWYER_MESG(debug) <<"  stack frame size is unknown\n";
     }
     int64_t maxFrameOffset = frameSize ? *frameSize - 1 : 0;
+
+    // Sometimes we know some stuff already about the stack frame
+    initializeFrameOffsets(partitioner, function, stackOffsets);
 
     // Look for stack offsets syntactically
     SAWYER_MESG(debug) <<"  searching for local variables syntactically...\n";

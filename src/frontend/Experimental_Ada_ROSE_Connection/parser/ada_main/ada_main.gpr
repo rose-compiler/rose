@@ -8,9 +8,7 @@ project Ada_Main is
    for Object_Dir use "./obj";
 
    for Main use
-     ("demo_dot.adb",
-      "run_parser_adapter.adb",
-      "test_gnat_command_line.adb");
+     ("run_parser_adapter.adb");
 
    package Compiler is
       for Default_Switches ("ada") use ("-gnat12", "-gnata", "-g");

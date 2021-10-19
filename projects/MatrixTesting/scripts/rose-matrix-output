@@ -1,7 +1,7 @@
 #!/bin/bash
-
 # Purpose: to show the final output from a test.
 
+set -e
 arg0="${0##*/}"
 
 die() {
@@ -9,9 +9,34 @@ die() {
     exit 1
 }
 
-[ "$#" -eq 1 ] || die "usage: $arg0 TEST_ID"
-TEST_ID="$1"
-ATTACH_ID="$(rose-matrix-attachments $TEST_ID 2>&1 |sed -n '/Final output/ s/^.\([0-9]\+\).*/\1/p')"
-[ -n "$ATTACH_ID" ] || die "no output associated with test ID $TEST_ID"
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+	--help|-h)
+	    echo "usage: $arg0 TEST_ID"
+	    exit 0
+	    ;;
+	--)
+	    shift
+	    break
+	    ;;
+	-*)
+	    die "unrecognized switch \"$1\""
+	    ;;
+	*)
+	    break
+	    ;;
+    esac
+done
 
-exec rose-matrix-attachments $TEST_ID $ATTACH_ID
+[ "$#" -eq 1 ] || die "usage: $arg0 TEST_ID"
+
+test_id="$1"
+rose-matrix-attachments -Fcsv "$test_id" |
+    while IFS=, read attachment_id attachment_name; do
+	if [ "$attachment_name" = "Final output" ]; then
+	    rose-matrix-attachments "$test_id" "$attachment_id"
+	    exit 0
+	fi
+    done
+[ "${PIPESTATUS[0]}" -eq 0 ] || exit 1
+die "no output associated with test ID $test_id"

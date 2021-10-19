@@ -1,0 +1,56 @@
+with "gnatcoll";
+with "libadalang";
+
+library project LAL_Adapter is
+
+   for Library_Name use "lal_adapter";
+   for Library_Dir  use "./lib";
+   for Library_Kind use "static";
+   
+   -- This is a "stand-alone library". See
+   -- https://docs.adacore.com/gprbuild-docs/html/gprbuild_ug/gnat_project_manager.html#library-projects
+   for Interfaces use 
+     (-- C interfaces:
+      "a_nodes.h",
+      "lal_adapter_wrapper.h",
+      -- Ada interfaces:
+      "a_nodes.ads",
+      "a_nodes_h.ads",
+      "a_nodes_h-support.ads",
+      "lal_adapter_wrapper_h.ads",
+      -- These need to be here in order for linking to work:
+      "dot.ads",
+      "indented_text.ads");
+--   for Library_Standalone use "encapsulated";
+   for Library_Auto_Init use "false";
+   
+   for Source_Dirs use
+     ("./source",
+      "./include",
+      -- Has to be another source dir instead of an imported project in order 
+      -- for "dot.ads" and "indented_text.ads" interfaces to work:
+      "../support/source",
+      -- Similar to above:
+      "../a_nodes/include",
+      "../a_nodes/source");
+     
+   for Object_Dir use "./obj";
+
+   for Languages use ("Ada", "C");
+
+   package Compiler is
+      for Default_Switches ("ada") use ("-gnat12", "-gnata", "-g");
+   end Compiler;
+
+   -- Linker switches are ignored in library projects
+   
+   package Ide is
+      for Vcs_Kind use "Git";
+   end Ide;
+
+   package Binder is
+      for Switches ("ada") use ("-E");
+   end Binder;
+
+end LAL_Adapter;
+

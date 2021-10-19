@@ -6,4 +6,5 @@ bin_SCRIPTS =					\
 	rose-matrix-run				\
 	rose-matrix-show-latest			\
 	rose-matrix-slave-run			\
-	rose-matrix-slave-babysit
+	rose-matrix-slave-babysit		\
+	rose-matrix-status

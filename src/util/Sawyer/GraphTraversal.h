@@ -531,6 +531,7 @@ public:
                 break;
         }
         ASSERT_not_reachable("invalid state");
+        return VertexIterator{}; // suppress compiler warning
     }
 
     /** Edge to which traversal is pointing.
@@ -555,6 +556,7 @@ public:
                 break;
         }
         ASSERT_not_reachable("invalid state");
+        return EdgeIterator{}; // suppress compiler warning
     }
 
     /** Returns true when traversal reaches the end.

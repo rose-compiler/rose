@@ -2,7 +2,7 @@ include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
 ADA_SRC_DIR := $(top_srcdir)/src/frontend/Experimental_Ada_ROSE_Connection
 
-AM_CPPFLAGS := $(ROSE_INCLUDES) -I$(ADA_SRC_DIR) -I$(ADA_SRC_DIR)/parser/asis_adapter/include/
+AM_CPPFLAGS := $(ROSE_INCLUDES) -I$(ADA_SRC_DIR) -I$(ADA_SRC_DIR)/parser/asis_adapter/include/ -I$(ADA_SRC_DIR)/parser/a_nodes/include/
 
 noinst_LTLIBRARIES := libexperimentalRoseAda.la
 

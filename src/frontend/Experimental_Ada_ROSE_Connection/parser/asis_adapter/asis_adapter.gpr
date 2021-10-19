@@ -16,19 +16,26 @@ library project ASIS_Adapter is
       "a_nodes.ads",
       "a_nodes_h.ads",
       "a_nodes_h-support.ads",
+      "adapter_wrapper_h.ads",
       "asis_adapter.ads",
       "asis_adapter-context.ads",
       "asis_adapter-tool.ads",
       "asis_adapter-unit.ads",
+      -- These need to be here in order for linking to work:
       "dot.ads",
-      "indented_text.ads",
-      "adapter_wrapper_h.ads");
+      "indented_text.ads");
 --   for Library_Standalone use "encapsulated";
    for Library_Auto_Init use "false";
    
    for Source_Dirs use
      ("./source",
-      "./include");
+      "./include",
+      -- Has to be another source dir instead of an imported project in order 
+      -- for "dot.ads" and "indented_text.ads" interfaces to work:
+      "../support/source",
+      -- Similar to above:
+      "../a_nodes/include",
+      "../a_nodes/source");
      
    for Object_Dir use "./obj";
 

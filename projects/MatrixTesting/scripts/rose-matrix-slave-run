@@ -33,6 +33,9 @@ AWS_EC2_INSTANCE=
 # Whether to update system software. Empty, auto, or other.
 UPDATE_SYSTEM_SOFTWARE=auto
 
+# Override default slave name.
+SLAVE_NAME=
+
 help() {
     ######--------------------------------------------------------------------------------
     echo "Purpose: to run portability tests as directed by the server"
@@ -48,6 +51,9 @@ help() {
     echo "    --aggressive-cleanup"
     echo "        Remove reproducible things when possible so we don't use as much disk"
     echo "        space. The tradeoff is we use more CPU time."
+    echo
+    echo "    --slave=NAME"
+    echo "        Use the specified string as the slave name instead of \"user@host\"."
     echo
     echo "    --update-system-software"
     echo "    --no-update-system-software"
@@ -68,6 +74,7 @@ help() {
 }
 
 die() {
+    rose-matrix-slave-health run-error "$*" || true
     echo "$arg0:" "$@" >&2
     exit 1
 }
@@ -85,6 +92,10 @@ matrix-parse-command-line() {
 		;;
 	    --aggressive-cleanup)
 		SMALL_FOOTPRINT=yes
+		shift
+		;;
+	    --slave=*)
+		SLAVE_NAME="${1#--slave=}"
 		shift
 		;;
 	    --update-system-software)
@@ -110,6 +121,24 @@ matrix-parse-command-line() {
     done
 
     [ "$#" -eq 0 ] || die "error: incorrect usage; see --help"
+
+    # Only update system software when we're in "setup" mode. Here's why: if this script is run by
+    # rose-matrix-slave-babysitter, then the first time it runs the user will probably notice that
+    # it's asking for a password for sudo (if it needs one). Then if this script crashes after a few
+    # hours and the babysitter re-runs it, a password might be required but there's no user around
+    # anymore to supply it and everything hangs.
+    if [ -n "$UPDATE_SYSTEM_SOFTWARE" -a "$SETUP" = "" ]; then
+	echo "$arg0: warning: forcing --no-update-system-software for non-\"setup\" runs"
+	echo "$arg0: info: if you want system softare to be updated, add the \"setup\" argument."
+	UPDATE_SYSTEM_SOFTWARE=
+    fi
+}
+
+#------------------------------------------------------------------------------------------------------------------------
+# Try to report our health to the database. It's okay if this fails.
+matrix-report-health() {
+    local health="$1"
+    rose-matrix-slave-health --slave="$SLAVE_NAME" "$health" || true
 }
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -122,6 +151,7 @@ matrix-update-system-software() {
     echo "Updating system software"
     echo "================================================================================"
     echo
+    matrix-report-health run-system >/dev/null 2>&1; # we don't care about errors at this early point
 
     if [ "$UPDATE_SYSTEM_SOFTWARE" = "" ]; then
 	echo "disabled from command-line"
@@ -151,7 +181,7 @@ matrix-update-system-software() {
 	    sudo apt-get -y install git wget build-essential g++ gfortran libtool automake flex bison \
 		 graphviz-dev cmake libpqxx-dev ghostscript perl-doc groff libgcrypt20-dev \
 		 libfcgi-dev libfuse3-dev gcc-multilib g++-multilib gfortran-multilib \
-		 fuse3 bsdmainutils libxapian-dev p7zip-full rsync time \
+		 fuse3 bsdmainutils libxapian-dev p7zip-full rsync time libreadline-dev \
 		 locales language-pack-en-base jq screen figlet libpcre3-dev || continue
 	)
 
@@ -243,7 +273,7 @@ matrix-get-initial-configuration() {
     if [ -n "$ROSE_MATRIX_DATABASE" ]; then
 	echo
 	echo "Trying the database"
-	if rose-matrix-slave-config >matrix-config.tmp; then
+	if rose-matrix-slave-config -Fshell >matrix-config.tmp; then
 	    cat -n matrix-config.tmp
 	    source matrix-config.tmp
 	    mv matrix-config.tmp matrix-config
@@ -266,7 +296,7 @@ matrix-get-slave-configuration() {
     echo "== Obtaining current slave configuration from database server."
     echo "================================================================================"
     echo
-    rose-matrix-slave-config >matrix-config
+    rose-matrix-slave-config -Fshell >matrix-config
     cat -n matrix-config
     . matrix-config
 }
@@ -309,6 +339,7 @@ matrix-install-rmc-spock() {
 	echo
 	echo "Update is necessary..."
 	echo
+	matrix-report-health run-rmc;
 	
 	rm -rf rose-installed # since about to blow away libraries used by ROSE
 	rm -rf rmc-spock
@@ -319,6 +350,8 @@ matrix-install-rmc-spock() {
 	echo
 	echo "RMC/Spock is up to date and appears to work"
     fi
+
+    spock-ls --shellvars --export
 }
 
 #------------------------------------------------------------------------------------------------------------------------
@@ -357,6 +390,8 @@ matrix-install-matrix-tools() {
 
     # If update is needed, make sure we know where to get the source code
     if [ -n "$needs_update" ]; then
+	matrix-report-health run-tools "tools $MATRIX_COMMITTISH"
+
 	if [ "$MATRIX_REPOSITORY" = "" -o "$MATRIX_COMMITTISH" = "" ]; then
 	    die "error: no info for installing matrix tools (MATRIX_REPOSITORY, MATRIX_COMMITTISH)"
 	fi
@@ -415,6 +450,8 @@ matrix-update-this-script() {
     local restart="$1"
 
     if [ -n "$THIS_SCRIPT_OUT_OF_DATE" ]; then
+	matrix-report-health run-restart "run script updated"
+
 	[ -x "$SELF" ] || die "error: where am I? (\$0=$0, self=$SELF, cwd=$(pwd))"
 
 	cp "$MATRIX_ROOT/rose-installed/latest/bin/rose-matrix-slave-run" "$SELF"
@@ -441,14 +478,17 @@ matrix-reclaim-disk() {
     echo "================================================================================"
     echo
 
-    if [ ! -d $MATRIX_ROOT/rose-installed/latest/var/matrix/spock/var/installed ]; then
+    if [ ! -d $MATRIX_ROOT/spock/var/installed ]; then
 	echo "No RMC/Spock installed packages to remove"
 	return 0
     fi
-    
+
     (
-	cd $MATRIX_ROOT/rose-installed/latest/var/matrix/spock/var/installed
-	ls -tr */*.used |cat |sed 's/\.used//' |while read installed; do
+	cd $MATRIX_ROOT/spock/var/installed
+	ls -tr */*.used |sed 's/\.used//' |while read installed; do
+	    local rmc_host="${installed%%/*}"
+	    [ "$rmc_host" = "matrix-slave" ] && continue
+
 	    # Check free space
 	    if [ $(matrix-free-space) -lt $min_free_space ]; then
 		# Get the name of the package
@@ -458,7 +498,7 @@ matrix-reclaim-disk() {
 		    package_name="$(echo "$package_name" |tr -d "'")"
 		fi
 
-		# Avoid removing compilers and other important things
+		# Avoid removing compilers and other important things.
 		case "$package_name" in
 		    spock)                # Spock itself
 			continue
@@ -514,6 +554,7 @@ matrix-get-test-source() {
 	echo "Downloading from $TEST_REPOSITORY"
 	echo "================================================================================"
 	echo
+	matrix-report-health run-download "ROSE $TEST_COMMITTISH"
 
 	# If the repository is already present, try to upgrade it instead of downloading the whole thing again.
 	[ -d rose ] || git clone "$TEST_REPOSITORY" rose
@@ -580,7 +621,6 @@ matrix-clean-failed-dependencies
 # order to contact the database -- this is relatively foolprove. If we built the wrong version, we'll fix that in the
 # testing loop.
 matrix-install-matrix-tools
-[ -n "$SETUP" ] || rose-matrix-slave-health start
 matrix-update-this-script restart
 
 # Here starts the actual testing loop.
@@ -601,9 +641,8 @@ while [ "$SETUP" = "" ]; do
     # Obtain the software which is to be tested
     if [ "$TEST_REPOSITORY" = "" -o "$TEST_COMMITTISH" = "" ]; then
 	echo "$arg0: testing is paused (no testable version specified)"
-	rose-matrix-slave-health stop
+	matrix-report-health run-paused "nothing to test"
 	sleep 300
-	rose-matrix-slave-health start
 	continue
     fi
     matrix-maybe-remove-os-images
@@ -615,7 +654,8 @@ while [ "$SETUP" = "" ]; do
     echo "== Starting test, loop iteration $test_number"
     echo "================================================================================"
     echo
-    rose-matrix-run --var="$MATRIX_ROOT" $TEST_FLAGS -n1 $MATRIX_ROOT/rose
+    matrix-report-health run-test "iteration $test_number"
+    rose-matrix-run --var="$MATRIX_ROOT" --slave="$SLAVE_NAME" $TEST_FLAGS -n1 $MATRIX_ROOT/rose
 done
 
 # Finish setup actions
@@ -631,6 +671,11 @@ fi
 
 # Cleanup
 matrix-cleanup
-[ -n "$SETUP" ] || rose-matrix-slave-health stop || true
+if [ -n "$SETUP" ]; then
+    matrix-report-health run-stop "installation completed"
+else
+    matrix-report-health run-stop "testing completed"
+fi
+
 matrix-update-this-script
 exit 0

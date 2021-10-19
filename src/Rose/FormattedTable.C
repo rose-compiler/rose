@@ -23,9 +23,10 @@ FormattedTable::CellProperties::foreground() const {
     return foreground_;
 }
 
-void
+FormattedTable::CellProperties&
 FormattedTable::CellProperties::foreground(const Sawyer::Optional<Color::HSV> &color) {
     foreground_ = color;
+    return *this;
 }
 
 const Sawyer::Optional<Color::HSV>&
@@ -33,9 +34,10 @@ FormattedTable::CellProperties::background() const {
     return background_;
 }
 
-void
+FormattedTable::CellProperties&
 FormattedTable::CellProperties::background(const Sawyer::Optional<Color::HSV> &color) {
     background_ = color;
+    return *this;
 }
 
 const Sawyer::Optional<FormattedTable::Alignment>&
@@ -43,9 +45,10 @@ FormattedTable::CellProperties::alignment() const {
     return alignment_;
 }
 
-void
+FormattedTable::CellProperties&
 FormattedTable::CellProperties::alignment(const Sawyer::Optional<Alignment> &a) {
     alignment_ = a;
+    return *this;
 }
 
 FormattedTable::CellProperties
@@ -133,6 +136,16 @@ void
 FormattedTable::insert(size_t rowIdx, size_t columnIdx, const std::string &repr, const CellProperties &props) {
     insert(rowIdx, columnIdx, repr);
     cellProperties(rowIdx, columnIdx, props);
+}
+
+const std::string&
+FormattedTable::get(size_t rowIdx, size_t columnIdx) const {
+    if (rowIdx < cells_.size() && columnIdx < cells_[rowIdx].size()) {
+        return cells_[rowIdx][columnIdx];
+    } else {
+        static const std::string empty;
+        return empty;
+    }
 }
 
 const FormattedTable::CellProperties&

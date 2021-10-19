@@ -1,0 +1,290 @@
+Ada_Abort_Absent
+Ada_Abort_Present
+Ada_Abort_Stmt						An_Abort_Statement
+Ada_Abstract_Absent
+Ada_Abstract_Formal_Subp_Decl
+Ada_Abstract_Present
+Ada_Abstract_Subp_Decl
+Ada_Accept_Stmt						A*_Accept_Statement
+Ada_Accept_Stmt_With_Stmts
+Ada_Access_To_Subp_Def				An_*Access_To_*
+Ada_Ada_Node_List
+Ada_Aggregate						A*_Aggregate
+Ada_Aggregate_Assoc
+Ada_Aliased_Absent
+Ada_Aliased_Present
+Ada_All_Absent
+Ada_All_Present
+Ada_Allocator						An_Allocation_From_*
+Ada_Alternatives_List
+Ada_Anonymous_Object_Decl
+Ada_Anonymous_Type
+Ada_Anonymous_Type_Access_Def		An_Annonymous_Access_To_*
+Ada_Anonymous_Type_Decl
+Ada_Array_Type_Def					A*onstrained_Array_Definition
+Ada_Aspect_Assoc
+Ada_Aspect_Assoc_List
+Ada_Aspect_Spec						An_Aspect_Specification
+Ada_Assign_Stmt						An_Assignment_Statement
+Ada_Assoc_List
+Ada_At_Clause						An_At_Clause
+Ada_Attribute_Def_Clause
+Ada_Attribute_Ref					*_Attribute
+Ada_Base_Assoc_List
+Ada_Begin_Block						A_Block_Statement
+Ada_Bin_Op
+Ada_Box_Expr						A_Box_Expression
+Ada_Call_Expr						A*_Call
+Ada_Call_Stmt						A*_Call_Statement
+Ada_Case_Expr						2012 A_Case_Expression
+Ada_Case_Expr_Alternative			2012
+Ada_Case_Expr_Alternative_List		2012
+Ada_Case_Stmt						A_Case_Statement
+Ada_Case_Stmt_Alternative
+Ada_Case_Stmt_Alternative_List
+Ada_Char_Literal					A_*Character_Literal
+Ada_Classwide_Type_Decl
+Ada_Compilation_Unit
+Ada_Compilation_Unit_List
+Ada_Component_Clause				A_Component_Clause
+Ada_Component_Decl					A_Component_Declaration
+Ada_Component_Def					A_Component_Definition
+Ada_Component_List
+Ada_Concrete_Formal_Subp_Decl
+Ada_Constant_Absent
+Ada_Constant_Present
+Ada_Constrained_Array_Indices		A_Constrained_Array_Definition
+Ada_Constrained_Subtype_Indication	A_Constrained_Array_Definition
+Ada_Constraint_List
+Ada_Contract_Case_Assoc
+Ada_Contract_Case_Assoc_List
+Ada_Contract_Cases
+Ada_Decimal_Fixed_Point_Def			A_Decimal_Fixed_Point_Definition
+Ada_Decl_Block						A_Block_Statement
+Ada_Decl_List
+Ada_Declarative_Part
+Ada_Defining_Name
+Ada_Defining_Name_List
+Ada_Delay_Stmt						A_Delay_*_Statement
+Ada_Delta_Constraint				A_Delta_Constraint
+Ada_Derived_Type_Def				A_Derived_Type_Definition
+Ada_Digits_Constraint				A_Digits_Constraint
+Ada_Discrete_Base_Subtype_Decl
+Ada_Discrete_Subtype_Indication		A_Discrete_Subtype_Indication*
+Ada_Discrete_Subtype_Name
+Ada_Discriminant_Assoc				A_Discriminant_Association
+Ada_Discriminant_Choice_List
+Ada_Discriminant_Constraint			A_Discriminant_Constraint
+Ada_Discriminant_Spec				A_Discriminant_Specification
+Ada_Discriminant_Spec_List
+Ada_Dotted_Name
+Ada_Elsif_Expr_Part
+Ada_Elsif_Expr_Part_List
+Ada_Elsif_Stmt_Part					An_Elsif_Path
+Ada_Elsif_Stmt_Part_List
+Ada_End_Name
+Ada_Entry_Body						An_Entry_Body_Declaration
+Ada_Entry_Completion_Formal_Params
+Ada_Entry_Decl						An_Entry_Declaration
+Ada_Entry_Index_Spec				An_Entry_Index_Specification
+Ada_Entry_Spec
+Ada_Enum_Lit_Synth_Type_Expr
+Ada_Enum_Literal_Decl				A*_Defining_Enumeration_Literal
+Ada_Enum_Literal_Decl_List
+Ada_Enum_Rep_Clause					An_Enumeration_Representation_Clause
+Ada_Enum_Subp_Spec
+Ada_Enum_Type_Def					An_Enumeration_Type_Definition
+Ada_Error_Decl
+Ada_Error_Stmt
+Ada_Exception_Decl					An_Exception_Declaration
+Ada_Exception_Handler				An_Exception_Handler
+Ada_Exit_Stmt						An_Exit_Statement
+Ada_Explicit_Deref					An_Explicit_Dereference
+Ada_Expr_Alternatives_List
+Ada_Expr_Function
+Ada_Extended_Return_Stmt			An_Extended_Return_Statement
+Ada_Extended_Return_Stmt_Object_Decl
+Ada_Floating_Point_Def				A_Floating_Point_Definition
+Ada_For_Loop_Spec
+Ada_For_Loop_Stmt					A_For_Loop_Statement
+Ada_For_Loop_Var_Decl
+Ada_Formal_Discrete_Type_Def		A_Formal_Discrete_Type_Definition
+Ada_Generic_Formal_Obj_Decl			A_Formal_Object_Declaration
+Ada_Generic_Formal_Package			A_Formal_Package_Declaration*
+Ada_Generic_Formal_Part
+Ada_Generic_Formal_Subp_Decl		A_Formal_*_Declaration
+Ada_Generic_Formal_Type_Decl		A_Formal_Type_Declaration
+Ada_Generic_Package_Decl			A_Generic_Package_Declaration
+Ada_Generic_Package_Instantiation	A_Package_Instantiation
+Ada_Generic_Package_Internal
+Ada_Generic_Package_Renaming_Decl	A_Generic_Package_Renaming_Declaration
+Ada_Generic_Subp_Decl				A_Generic_*_Declaration
+Ada_Generic_Subp_Instantiation		A*_Instantiation
+Ada_Generic_Subp_Internal
+Ada_Generic_Subp_Renaming_Decl		A_Generic_*_Renaming_Declaration
+Ada_Goto_Stmt						A_Goto_Statement
+Ada_Handled_Stmts
+Ada_Identifier						A*_Identifier
+Ada_If_Expr							2012
+Ada_If_Stmt							An_If_Statement
+Ada_Incomplete_Tagged_Type_Decl
+Ada_Incomplete_Type_Decl			An_Incomplete_Type_Declaration
+Ada_Index_Constraint				An_Index_Constraint
+Ada_Int_Literal						An_Integer_Literal
+Ada_Interface_Kind_Limited			A_Limited_Interface
+Ada_Interface_Kind_Protected		A_Protected_Interface
+Ada_Interface_Kind_Synchronized		A_Synchronized_Interface
+Ada_Interface_Kind_Task				A_Task_Interface
+Ada_Interface_Type_Def				An_Ordinary_Interface
+Ada_Iter_Type_In
+Ada_Iter_Type_Of
+Ada_Known_Discriminant_Part
+Ada_Label
+Ada_Label_Decl
+Ada_Library_Item
+Ada_Limited_Absent
+Ada_Limited_Present
+Ada_Loop_Stmt
+Ada_Membership_Expr					2012
+Ada_Mod_Int_Type_Def
+Ada_Mode_Default
+Ada_Mode_In
+Ada_Mode_In_Out
+Ada_Mode_Out
+Ada_Multi_Dim_Array_Assoc		An_Array_Component_Association
+Ada_Name_List
+Ada_Named_Stmt
+Ada_Named_Stmt_Decl
+Ada_Not_Null_Absent
+Ada_Not_Null_Present
+Ada_Null_Component_Decl			A_Null_Component
+Ada_Null_Literal				A_Null_Literal
+Ada_Null_Record_Aggregate
+Ada_Null_Record_Def				A_Null_Record_Definition
+Ada_Null_Stmt					A_Null_Statement
+Ada_Null_Subp_Decl				A_Null_*_Declaration
+Ada_Number_Decl					A_*_*_Definition
+Ada_Object_Decl					A_Variable_Declaration
+Ada_Op_Abs						A*_Abs_Operator
+Ada_Op_And						A*_And_Operator
+Ada_Op_And_Then					An_And_Then_Short_Circuit
+Ada_Op_Concat					A*_Concatenate_Operator
+Ada_Op_Div						A*_Divide_Operator	
+Ada_Op_Double_Dot
+Ada_Op_Eq						A*_Equal_Operator
+Ada_Op_Gt						A_*_Greater_Than_Operator
+Ada_Op_Gte						A_*_Greater_Than_Or_Equal_Operator
+Ada_Op_In
+Ada_Op_Lt						A_*_Less_Than_Operator
+Ada_Op_Lte						A_*_Less_Than_Or_Equal_Operator
+Ada_Op_Minus					A_*_*_Minus_Operator
+Ada_Op_Mod						A_*_Mod_Operator
+Ada_Op_Mult						A_*_Multiply_Operator
+Ada_Op_Neq						A_*_Not_Equal_Operator
+Ada_Op_Not						A_*_Not_Operator
+Ada_Op_Not_In
+Ada_Op_Or						A*_Or_Operator
+Ada_Op_Or_Else					An_Or_Else_Short_Circuit
+Ada_Op_Plus						A_*_*_Plus_Operator
+Ada_Op_Pow						A*_Exponentiate_Operator
+Ada_Op_Rem						A_*_Rem_Operator
+Ada_Op_Xor						A*_Xor_Operator
+Ada_Ordinary_Fixed_Point_Def	An_Ordinary_Fixed_Point_Definition
+Ada_Others_Designator				An_Others_Choice
+Ada_Overriding_Not_Overriding
+Ada_Overriding_Overriding
+Ada_Overriding_Unspecified
+Ada_Package_Body					A_Package_Body_Declaration
+Ada_Package_Body_Stub				A_Package_Body_Stub
+Ada_Package_Decl					A_Package_Declaration
+Ada_Package_Renaming_Decl			A_Package_Renaming_Declaration
+Ada_Param_Assoc						A_Parameter_Association
+Ada_Param_Spec						A_Parameter_Specification
+Ada_Param_Spec_List
+Ada_Params
+Ada_Paren_Expr						A_Parenthesized_Expression
+Ada_Parent_List
+Ada_Pragma_Argument_Assoc			A_Pragma_Argument_Association
+Ada_Pragma_Node						A_*_Pragma
+Ada_Pragma_Node_List
+Ada_Prim_Type_Accessor
+Ada_Private_Absent
+Ada_Private_Part
+Ada_Private_Present
+Ada_Private_Type_Def				A_Private_Type_Definition
+Ada_Protected_Absent
+Ada_Protected_Body					A_Protected_Body_Declaration
+Ada_Protected_Body_Stub				A_Protected_Body_Stub
+Ada_Protected_Def					A_Protected_Definition
+Ada_Protected_Present
+Ada_Protected_Type_Decl				A_Protected_Type_Declaration
+Ada_Public_Part
+Ada_Qual_Expr						A_Qualified_Expression
+Ada_Quantified_Expr					2012
+Ada_Quantifier_All					2012
+Ada_Quantifier_Some					2012
+Ada_Raise_Expr						2012
+Ada_Raise_Stmt						A_Raise_Statement
+Ada_Range_Constraint
+Ada_Range_Spec
+Ada_Real_Literal					A_Real_Literal
+Ada_Record_Def						A_Record_Definition
+Ada_Record_Rep_Clause				A_Record_Representation_Clause
+Ada_Record_Type_Def					A_Record_Type_Definition
+Ada_Relation_Op
+Ada_Renaming_Clause
+Ada_Requeue_Stmt					A_Requeue_Statement*
+Ada_Return_Stmt						A_Return_Statement
+Ada_Reverse_Absent
+Ada_Reverse_Present
+Ada_Select_Stmt						An_Asynchronous_Select_Statement
+Ada_Select_When_Part
+Ada_Select_When_Part_List
+Ada_Signed_Int_Type_Def
+Ada_Single_Protected_Decl
+Ada_Single_Task_Decl
+Ada_Single_Task_Type_Decl
+Ada_Stmt_List
+Ada_String_Literal					A_String_Literal
+Ada_Subp_Body						A*_Body_Declaration
+Ada_Subp_Body_Stub					A*_Body_Stub
+Ada_Subp_Decl						A*_Declaration
+Ada_Subp_Kind_Function
+Ada_Subp_Kind_Procedure
+Ada_Subp_Renaming_Decl				A_*_Renaming_Declaration
+Ada_Subp_Spec
+Ada_Subtype_Decl
+Ada_Subtype_Indication
+Ada_Subunit
+Ada_Synchronized_Absent
+Ada_Synchronized_Present
+Ada_Synth_Anonymous_Type_Decl
+Ada_Synthetic_Renaming_Clause
+Ada_Tagged_Absent
+Ada_Tagged_Present
+Ada_Target_Name
+Ada_Task_Body
+Ada_Task_Body_Stub					A_Task_Body_Stub
+Ada_Task_Def						A_Task_Definition
+Ada_Task_Type_Decl					A_Task_Type_Declaration
+Ada_Terminate_Alternative			A_Terminate_Alternative_Statement
+Ada_Type_Access_Def
+Ada_Type_Decl						An_Ordinary_Type_Declaration
+Ada_Un_Op
+Ada_Unconstrained_Array_Index
+Ada_Unconstrained_Array_Index_List
+Ada_Unconstrained_Array_Indices
+Ada_Unknown_Discriminant_Part
+Ada_Until_Absent
+Ada_Until_Present
+Ada_Update_Attribute_Ref
+Ada_Use_Package_Clause				A_Use_Package_Clause
+Ada_Use_Type_Clause					A_Use_Type_Clause
+Ada_Variant							A_Variant
+Ada_Variant_List
+Ada_Variant_Part					A_Variant_Part
+Ada_While_Loop_Spec
+Ada_While_Loop_Stmt					A_While_Loop_Statement
+Ada_With_Clause						A_With_Clause
+Ada_With_Private_Absent
+Ada_With_Private_Present
