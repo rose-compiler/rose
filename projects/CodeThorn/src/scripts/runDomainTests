@@ -153,6 +153,8 @@ function level2AvSetCombineTest {
 
 function regressionTests {
     testNumbers=`echo {900..901}`
+    echo
+    echo "Regression Tests"
     echo "Scheduled regression tests: $testNumbers"
     numPass=0
     numWarn=0
@@ -185,9 +187,11 @@ function regressionTests {
 function printHelp {
     echo
     echo "Command line options:"
+    echo "--testdir    : path to directory with tests"
     echo "--l3         : level3 interpreter-mode tests"
     echo "--l2basic    : level2 tests with basic combination operator"
     echo "--l2avset    : level2 tests with av-set combination operator"
+    echo "--regression-tests: run level 3 regression tests (uses diff)"
     echo "--all        : run all tests"
     echo "--show-errors: show error output produced by the tested tool (positional parameter, must precede test option"
     echo "--help       : print help message"
