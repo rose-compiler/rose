@@ -1423,7 +1423,11 @@ namespace CodeThorn {
   }
 
   void EStateTransferFunctions::fatalErrorExit(SgNode* node, string errorMessage) {
-    logger[ERROR]<<errorMessage<<": "<<SgNodeHelper::locationAndSourceCodeToString(node)<<endl;
+    SAWYER_MESG(logger[ERROR])<<errorMessage<<": "<<SgNodeHelper::locationAndSourceCodeToString(node)<<endl;
+    exit(1);
+  }
+  void EStateTransferFunctions::warning(SgNode* node, string errorMessage) {
+    SAWYER_MESG(logger[WARN])<<errorMessage<<": "<<SgNodeHelper::locationAndSourceCodeToString(node)<<endl;
     exit(1);
   }
 
@@ -2915,7 +2919,11 @@ namespace CodeThorn {
 	  }
 	}
       } else {
-	fatalErrorExit(node,"Unsupported array-access of multi-dimensional array");
+	warning(node,"Unsupported array-access of multi-dimensional array (assuming top)");
+        AbstractValue val=AbstractValue::createTop();
+        res.result=val;
+        notifyReadWriteListenersOnReading(estate.label(),estate.pstate(),val); // this triggers NP+OB violation
+        return res;
       }
     }
     ROSE_ASSERT(false); // not reachable
