@@ -894,12 +894,12 @@ emitToTable(const Settings &settings, FormattedTable &table, DB::Row &row, const
             if (auto value = row.get<std::string>(j)) {
                 table.insert(i, j, formatValue(settings, c, *value));
                 if (c.key() == "status") {
-                    if ("end" == *value) {
-                        table.cellProperties(i, j, goodCell());
-                    } else {
-                        table.cellProperties(i, j, badCell());
-                    }
+                    table.cellProperties(i, j, "end" == *value ? goodCell() : badCell());
+                } else if (c.key() == "pf") {
+                    table.cellProperties(i, j, "pass" == *value ? goodCell() : badCell());
                 }
+            } else {
+                table.insert(i, j, "");
             }
         }
 
@@ -927,6 +927,8 @@ emitYaml(const Settings &settings, DB::Row &row, const ColumnList &cols, std::se
                 if (*value != formatted)
                     std::cout <<" # " <<formatted;
                 std::cout <<"\n";
+            } else {
+                std::cout <<(0 == j ? "- " : "  ") <<c.identifier() <<": \"\"\n";
             }
         }
 
