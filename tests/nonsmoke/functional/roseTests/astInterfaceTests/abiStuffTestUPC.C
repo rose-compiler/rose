@@ -73,6 +73,7 @@ int main(int argc, char** argv) {
     SgInitializedName* in = isSgInitializedName(initNames[i]);
     SgType* t = in->get_type();
     if (isSgTypeEllipse(t)) continue;
+    if (isSgTypeDefault(t->findBaseType())) continue;
     cout << in->get_name().getString() << " has type " << t->unparseToString() << ":\n";
     cout << "For a customized UPC platform:\n";
     cout << gen_upc.layoutType(t) << "\n";

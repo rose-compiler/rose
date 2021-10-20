@@ -17,6 +17,7 @@ int main(int argc, char** argv) {
     SgInitializedName* in = isSgInitializedName(initNames[i]);
     SgType* t = in->get_type();
     if (isSgTypeEllipse(t)) continue;
+    if (isSgTypeDefault(t->findBaseType())) continue;
     cout << in->get_name().getString() << " has type " << t->unparseToString() << ":\n";
     cout << "On i386:\n";
     cout << gen_i386.layoutType(t) << "\n";
