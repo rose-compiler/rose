@@ -82,6 +82,7 @@ public:
   bool uninitializedMemoryAnalysis=false;
   bool deadCodeAnalysis=false;
   bool constantConditionAnalysis=false;
+  bool reduceStg=false; // calls analyzer->reduceStgToInOutStates();
 
   std::string reportFilePath;
   std::string nullPointerAnalysisFileName="null-pointer.csv";

@@ -20,7 +20,8 @@ namespace CodeThorn {
   std::string color(std::string name);
   void nocheck(std::string checkIdentifier, bool checkResult);
   void check(std::string checkIdentifier, bool checkResult, bool check=true);
-  std::string readableruntime(double timeInMilliSeconds);
+  std::string readableRunTimeFromSeconds(size_t timeInSeconds);
+  std::string readableRunTimeFromMilliSeconds(double timeInMilliSeconds);
   long getPhysicalMemorySize();
 
   // obtains CodeThorn library version number and checks with function checkVersionNumber
