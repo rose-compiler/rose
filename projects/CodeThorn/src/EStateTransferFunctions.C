@@ -1428,7 +1428,6 @@ namespace CodeThorn {
   }
   void EStateTransferFunctions::warning(SgNode* node, string errorMessage) {
     SAWYER_MESG(logger[WARN])<<errorMessage<<": "<<SgNodeHelper::locationAndSourceCodeToString(node)<<endl;
-    exit(1);
   }
 
   CodeThorn::VariableIdSet EStateTransferFunctions::determineUsedGlobalVars(SgProject* project, CodeThorn::VariableIdSet& setOfGlobalVars) {
@@ -2919,7 +2918,7 @@ namespace CodeThorn {
 	  }
 	}
       } else {
-	warning(node,"Unsupported array-access of multi-dimensional array (assuming top)");
+	warning(node,"Unsupported array-access of multi-dimensional array (assuming top.");
         AbstractValue val=AbstractValue::createTop();
         res.result=val;
         notifyReadWriteListenersOnReading(estate.label(),estate.pstate(),val); // this triggers NP+OB violation
@@ -3289,7 +3288,7 @@ namespace CodeThorn {
     // TODO: assignments in index computations of ignored array ref
     // see ExprAnalyzer.C: case V_SgPntrArrRefExp:
     // since nothing can change (because of being ignored) state remains the same
-    SAWYER_MESG(logger[DEBUG])<<"evalLValuePntrArrRefExp"<<endl;
+    SAWYER_MESG(logger[TRACE])<<"evalLValuePntrArrRefExp"<<endl;
     PState oldPState=*estate.pstate();
     SingleEvalResult res;
     res.init(estate,AbstractValue::createBot());
@@ -3301,7 +3300,8 @@ namespace CodeThorn {
       SgExpression* indexExp=isSgExpression(SgNodeHelper::getRhs(node));
       SingleEvalResult lhsResult=evaluateExpression(arrExp,estate,MODE_VALUE);
       SingleEvalResult rhsResult=evaluateExpression(indexExp,estate,MODE_VALUE);
-      return evalArrayReferenceOp(node,lhsResult,rhsResult,estate,MODE_ADDRESS);
+      SingleEvalResult res=evalArrayReferenceOp(node,lhsResult,rhsResult,estate,MODE_ADDRESS);
+      return res;
     }
     // unreachable
     ROSE_ASSERT(false);
