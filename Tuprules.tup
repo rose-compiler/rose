@@ -487,6 +487,7 @@ else
     endif
     # BOOST_SYSTEM_NO_DEPRECATED avoids warnings about boost::system::generic_category etc. defined but not used
     CPPFLAGS += -DBOOST_SYSTEM_NO_DEPRECATED=1
+    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_atomic
     LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_chrono
     LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_date_time
     LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_filesystem
@@ -501,6 +502,7 @@ else
     LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_wave
     LDFLAGS_STATIC += @(CXX_LIB_SWITCH)boost_wserialization
 
+    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_atomic
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_chrono
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_date_time
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)boost_filesystem
