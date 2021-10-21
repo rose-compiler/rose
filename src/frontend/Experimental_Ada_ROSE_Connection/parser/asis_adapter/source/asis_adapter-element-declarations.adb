@@ -1,8 +1,8 @@
 with Asis.Declarations;
+with Asis.Extensions;
 with Asis.Elements;
 with Asis.Expressions;
 with Asis.Set_Get;
-
 package body Asis_Adapter.Element.Declarations is
 
    procedure Do_Pre_Child_Processing
@@ -299,9 +299,18 @@ package body Asis_Adapter.Element.Declarations is
          Result.Entry_Index_Specification := ID;
       end;
 
+-- Calling Asis.Extensions.Formal_Subprogram_Default following the comment in asis-extensions.ads
+   --  This is a modified version of the query Formal_Subprogram_Default
+   --  adjusted for use in the implementation of Asis.Elements.Traverse_Element
+   --  generic procedure. Similarly to that ASIS query, it returns the name
+   --  appearing after the reserved word IS in the given generic for
+   --  A_Name_Default Element, but if its argument is of another kind from
+   --  Default_Kinds, it returns Nil_Element instead of raising
+   --  ASIS_Inappropriate_Element.
+--
       procedure Add_Formal_Subprogram_Default is
          ID : constant a_nodes_h.Element_ID :=
-           Get_Element_ID (Asis.Declarations.Formal_Subprogram_Default (Element));
+           Get_Element_ID (Asis.Extensions.Formal_Subprogram_Default (Element));
       begin
          State.Add_To_Dot_Label_And_Edge ("Formal_Subprogram_Default", ID);
          Result.Formal_Subprogram_Default := ID;
