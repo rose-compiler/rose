@@ -13221,15 +13221,19 @@ SgExprStatement* SageInterface::splitVariableDeclaration (SgVariableDeclaration*
     rt = NULL;
   else
   {
-    SgAssignInitializer * ainitor = isSgAssignInitializer (initor);
-    ROSE_ASSERT (ainitor);
+    // Liao, 2021/10/21, we have to support all sorts of initializers, including aggregate initializer    
+    SgExpression * rhs=NULL;  
+    if (SgAssignInitializer * ainitor = isSgAssignInitializer (initor))
+      rhs = ainitor->get_operand();
+    else 
+      rhs = initor;
+
     // we deep copy the rhs operand
-    rt = buildAssignStatement (buildVarRefExp(decl_var) , deepCopy(ainitor->get_operand()));
+    rt = buildAssignStatement (buildVarRefExp(decl_var) , deepCopy(rhs));
     decl_var->set_initptr(NULL);
     //TODO clean up initor
     insertStatementAfter ( decl, rt );
-   }
-
+  }
   return rt;
 }
 //! Split declarations within a scope into declarations and assignment statements, by default only top level declarations are considered.
