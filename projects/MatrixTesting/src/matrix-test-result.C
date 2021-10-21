@@ -190,7 +190,7 @@ main(int argc, char *argv[]) {
     // Generate SQL to insert this information.
     auto stmt = db.stmt("insert into test_results"
                         " (" + StringUtility::join(", ", kvpairs.keys()) +")"
-                        " values (?" + StringUtility::join("?, ", kvpairs.keys()) + ")"
+                        " values (?" + StringUtility::join(", ?", kvpairs.keys()) + ")"
                         " returning id");
     for (const auto &node: kvpairs.nodes())
         stmt.bind(node.key(), node.value());
