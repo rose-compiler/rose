@@ -26,7 +26,6 @@ BUILT_SOURCES = license.h
 libroseSupport_la_SOURCES =			\
 	Combinatorics.C				\
 	IncludeDirective.C			\
-	SqlDatabase.C				\
 	memoryUsage.C				\
 	optionDeclaration.C			\
 	rangemap.C				\
@@ -42,7 +41,6 @@ pkginclude_HEADERS =				\
 	Diagnostics.h				\
 	IncludeDirective.h			\
 	RoseException.h				\
-	SqlDatabase.h				\
 	callbacks.h				\
 	initialize.h				\
 	optionDeclaration.h			\

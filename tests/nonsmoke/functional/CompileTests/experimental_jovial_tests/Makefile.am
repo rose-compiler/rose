@@ -226,6 +226,7 @@ JOVIAL_TESTCODES = \
  rose-issue-rc-826.jov                  \
  rose-issue-rc-836.jov                  \
  rose-issue-rc-975.jov                  \
+ gitlab-issue-12.jov                    \
  gitlab-issue-13.jov                    \
  charlie.jov
 
@@ -345,6 +346,8 @@ COMPOOL_TESTCODES = \
  rc825.cpl                              \
  rc836.cpl                              \
  rc975.cpl                              \
+ gitlab-issue-12.cpl                    \
+ gitlab-issue-14.cpl                    \
  beta.cpl                               \
  parttype.cpl
 

@@ -81,20 +81,33 @@ CodeThorn::CTAnalysis::~CTAnalysis() {
 std::string CodeThorn::CTAnalysis::hashSetConsistencyReport() {
   stringstream ss;
 
-  ss<<"HashSet consistency: estateSet: ";
-  auto estateWarnings=estateSet.getWarnings();
-  if(estateWarnings>0)
-    ss<<"FAIL("<<estateWarnings<<")";
-  else
-    ss<<"PASS";
-    
-  ss<<", pstateSet: ";
-  auto pstateWarnings=pstateSet.getWarnings();
-  if(estateWarnings>0)
-    ss<<"FAIL("<<pstateWarnings<<")";
-  else
-    ss<<"PASS";
-  ss<<endl;
+  {
+    ss<<"HashSet consistency: estateSet: ";
+    auto estateWarnings=estateSet.getWarnings();
+    if(estateWarnings>0)
+      ss<<"FAIL("<<estateWarnings<<")";
+    else
+      ss<<"PASS";
+  }
+  {
+    ss<<", pstateSet: ";
+    auto pstateWarnings=pstateSet.getWarnings();
+    if(pstateWarnings>0)
+      ss<<"FAIL("<<pstateWarnings<<")";
+    else
+      ss<<"PASS";
+    ss<<endl;
+  }
+
+  {
+    ss<<", transitionGraphSet: ";
+    auto transitionGraphWarnings=transitionGraph.getWarnings();
+    if(transitionGraphWarnings>0)
+      ss<<"FAIL("<<transitionGraphWarnings<<")";
+    else
+      ss<<"PASS";
+    ss<<endl;
+  }
 
   return ss.str();
 }
@@ -653,8 +666,13 @@ void CodeThorn::CTAnalysis::runAnalysisPhase2Sub1(TimingCollector& tc) {
   //initializeSolverWithInitialEState(this->_root);
   if(_ctOpt.status) cout<<"done."<<endl;
   if(_ctOpt.getInterProceduralFlag()) {
-    if(_ctOpt.status && _ctOpt.contextSensitive)
-      cout<<"STATUS: context sensitive anlaysis with call string length "<<_ctOpt.callStringLength<<"."<<endl;
+    if(_ctOpt.status) {
+      if(_ctOpt.contextSensitive) {
+        cout<<"STATUS: context sensitive analysis with call string length "<<_ctOpt.callStringLength<<"."<<endl;
+      }
+      cout<<"STATS: max time   (threshold): "<<CodeThorn::readableRunTimeFromSeconds(_ctOpt.maxTime)<<endl;
+      cout<<"STATS: max memory (threshold): "<<_ctOpt.maxMemory<<endl;
+    }
     if(!this->getModeLTLDriven() && _ctOpt.z3BasedReachabilityAnalysis==false && _ctOpt.ssa==false) {
       switch(_ctOpt.abstractionMode) {
       case 0:
@@ -1263,14 +1281,14 @@ void CodeThorn::CTAnalysis::startAnalysisTimer() {
   if (!_timerRunning) {
     _analysisTimer.start();
     _timerRunning=true;
-    SAWYER_MESG(logger[INFO])<<"INFO: solver timer started."<<endl;
+    SAWYER_MESG(logger[DEBUG])<<"INFO: solver timer started."<<endl;
   }
 }
 
 void CodeThorn::CTAnalysis::stopAnalysisTimer() {
   _timerRunning=false;
   _analysisTimer.stop();
-  SAWYER_MESG(logger[INFO])<<"INFO: solver timer stopped."<<endl;
+  SAWYER_MESG(logger[DEBUG])<<"INFO: solver timer stopped."<<endl;
 }
 
 SgNode* CodeThorn::CTAnalysis::getStartFunRoot() {
@@ -1863,6 +1881,9 @@ std::string CodeThorn::CTAnalysis::typeSizeMappingToString() {
 
 void CodeThorn::CTAnalysis::setOptions(CodeThornOptions options) {
   _ctOpt=options;
+  getEStateSet()->setExitOnHashError(_ctOpt.exitOnHashError);
+  getPStateSet()->setExitOnHashError(_ctOpt.exitOnHashError);
+  getTransitionGraph()->setExitOnHashError(_ctOpt.exitOnHashError);
 }
 
 CodeThornOptions& CodeThorn::CTAnalysis::getOptionsRef() {

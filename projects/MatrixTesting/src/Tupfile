@@ -14,26 +14,13 @@ ifeq (@(LINKAGE),shared)
     run $(tool_compile_linklib) --install -o libmatrixTools matrixTools.C $(ROSE)/src/librose
 
     # New tools
+    run $(tool_compile_linkexe) --install -o rose-matrix-attachments matrix-attachments.C libmatrixTools
     run $(tool_compile_linkexe) --install -o rose-matrix-dependencies matrix-dependencies.C libmatrixTools
+    run $(tool_compile_linkexe) --install -o rose-matrix-errors matrix-errors.C libmatrixTools
     run $(tool_compile_linkexe) --install -o rose-matrix-next-test matrix-next-test.C libmatrixTools
+    run $(tool_compile_linkexe) --install -o rose-matrix-phases matrix-phases.C libmatrixTools
     run $(tool_compile_linkexe) --install -o rose-matrix-query matrix-query.C libmatrixTools
     run $(tool_compile_linkexe) --install -o rose-matrix-slave-config matrix-slave-config.C libmatrixTools
     run $(tool_compile_linkexe) --install -o rose-matrix-slave-health matrix-slave-health.C libmatrixTools
-    run $(tool_compile_linkexe) --install -o rose-matrix-status matrix-status.C libmatrixTools
-
-    # Original tools that use some features I'd like to deprecate, such as ::SqlDatabase
-    run $(tool_compile_linkexe) --install -o rose-matrix-test-result matrixTestResult.C
-    run $(tool_compile_linkexe) --install -o rose-matrix-attachments matrixAttachments.C
-    run $(tool_compile_linkexe) --install -o rose-matrix-errors matrixErrors.C
-
-    # The web interface. This is useful but it's showing its age. I'd like to move to just
-    # command-line tools. It's also very resource intensive and thus doesn't work well on the tiny
-    # AWS EC2.
-    ifneq (@(WITH_WT),no)
-	run $(tool_compile_linkexe) --install -o rose-matrix-web-server-http matrixWebServer.C -lwthttp
-
-	# The extra -U is to prevent compiler warnings about redefinition of DEFAULT_DATABASE
-	tool_CPPFLAGS += -UDEFAULT_DATABASE -DDEFAULT_DATABASE='"$(DEFAULT_DATABASE_LOCAL)"' -DUSING_FASTCGI
-	run $(tool_compile_linkexe) --install -o rose-matrix-web-server-fcgi matrixWebServer.C -lwtfcgi
-    endif
+    run $(tool_compile_linkexe) --install -o rose-matrix-test-result matrix-test-result.C libmatrixTools
 endif

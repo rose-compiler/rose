@@ -23,6 +23,7 @@ static const char *gDescription =
 
     "@named{image}{A Docker image is being constructed in which to run the test.}"
     "@named{container}{A Docker container is being started for a test phase.}"
+    "@named{phase}{The next phase of testing has started. Each test is many phases.}"
     "@named{tested}{A test has completed and a new test ID is added to the health report.}"
     "@named{error}{The script has encountered an error. This isn't always possible to report.}";
 
@@ -51,6 +52,7 @@ struct Settings {
     Sawyer::Optional<std::string> comment;              // comment for other events
     std::string databaseUri;                            // e.g., postgresql://user:password@host/database
     Format outputFormat = Format::PLAIN;                // how to show results
+    std::string slaveName;                              // override user@host slave name
 };
 
 static Sawyer::Message::Facility mlog;
@@ -83,6 +85,11 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
                      "from now. " + Rose::CommandLine::DurationParser::docString() + " The default is " +
                      Rose::CommandLine::DurationParser::toString(settings.maxAge) + "."));
 
+    tool.insert(Switch("slave")
+                .argument("name", anyParser(settings.slaveName))
+                .doc("Specify a name explicitly for this slave. If no name is given, then the slave name is "
+                     "@v{user}@@@v{host}."));
+
     std::vector<std::string> args = parser
                                     .with(Rose::CommandLine::genericSwitches())
                                     .with(tool)
@@ -94,12 +101,14 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
         event = "show";
     } else if (1 == args.size()) {
         event = args[0];
+        settings.comment = "";
     } else if (2 == args.size()) {
         event = args[0];
         if ("test" == event)
             event = "tested";                           // backward compatibility [Robb Matzke 2021-10-10]
         if ("tested" == event) {
             settings.testId = boost::lexical_cast<unsigned>(args[1]);
+            settings.comment = "";
         } else {
             settings.comment = args[1];
         }
@@ -121,7 +130,10 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
 }
 
 static std::string
-slaveName() {
+slaveName(const Settings &settings) {
+    if (!settings.slaveName.empty())
+        return settings.slaveName;
+
 #ifdef __linux__
     char buf[64];
 
@@ -232,9 +244,9 @@ main(int argc, char *argv[]) {
         table.columnHeader(0, 4, "Latest\nEvent");
         table.columnHeader(0, 5, "Event\nDetail");
         table.columnHeader(0, 6, "Latest\nTest ID");
-        table.columnHeader(0, 7, "Operating\nSystem");
-        table.columnHeader(0, 8, "Test\nStatus");
-        table.columnHeader(0, 9, "Test\nDuration");
+        table.columnHeader(0, 7, "Latest\nOS");
+        table.columnHeader(0, 8, "Latest\nStatus");
+        table.columnHeader(0, 9, "Latest\nDuration");
 
         for (auto row: stmt) {
             using namespace Rose::StringUtility;
@@ -308,7 +320,8 @@ main(int argc, char *argv[]) {
 
         DB::Statement stmt;
 
-        if (db.stmt("select count(*) from slave_health where name = ?name").bind("name", slaveName()).get<size_t>().get()) {
+        if (db.stmt("select count(*) from slave_health where name = ?name")
+            .bind("name", slaveName(settings)).get<size_t>().get()) {
 
             stmt = db.stmt("update slave_health set" +
                            testSet + commentSet +
@@ -325,7 +338,7 @@ main(int argc, char *argv[]) {
         }
 
         stmt
-            .bind("name", slaveName())
+            .bind("name", slaveName(settings))
             .bind("timestamp", now())
             .bind("load_ave", cpuLoad())
             .bind("free_space", diskFreeSpace())

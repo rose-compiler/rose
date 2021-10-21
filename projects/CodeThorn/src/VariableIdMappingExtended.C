@@ -395,6 +395,8 @@ namespace CodeThorn {
 
   CodeThorn::TypeSize VariableIdMappingExtended::getTypeSize(SgType* type) {
     //cout<<"DEBUG: VIME:getTypeSize:"<<type->class_name()<<endl;
+    type=strippedType(type);
+    //cout<<"DEBUG: VIME:getTypeSize(stripped):"<<type->class_name()<<endl;
     auto typeIter=_typeSize.find(type);
     if(typeIter!=_typeSize.end()) {
       //cout<<"DEBUG: known type with size: "<<(*typeIter).first->unparseToString()<<":"<<(*typeIter).second<<endl;
@@ -404,10 +406,10 @@ namespace CodeThorn {
       BuiltInType biTypeId=TypeSizeMapping::determineBuiltInTypeId(type);
       //cout<<"DEBUG: builtin-case: "<<biTypeId<<endl;
       if(biTypeId!=BITYPE_UNKNOWN) {
-        //cout<<"DEBUBG: unknown size:"<<getBuiltInTypeSize(biTypeId)<<endl;
+        //cout<<"DEBUG: known size:"<<getBuiltInTypeSize(biTypeId)<<endl;
         return getBuiltInTypeSize(biTypeId);
       } else {
-        //cout<<"DEBUBG: unknown size"<<endl;
+        //cout<<"DEBUG: unknown size"<<endl;
         return unknownSizeValue();
       }
     }
@@ -929,7 +931,7 @@ namespace CodeThorn {
   void VariableIdMappingExtended::toStream(ostream& os) {
     for(size_t i=0;i<mappingVarIdToInfo.size();++i) {
       VariableId varId=variableIdFromCode(i);
-      if(mappingVarIdToInfo[varId].variableScope!=VS_MEMBER) {
+      if(true||mappingVarIdToInfo[varId].variableScope!=VS_MEMBER) {
         os<<std::right<<std::setw(3)<<i<<",";
         os<<varIdInfoToString(varId);
         os<<endl;

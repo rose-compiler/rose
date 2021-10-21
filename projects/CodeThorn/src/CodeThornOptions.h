@@ -82,6 +82,7 @@ public:
   bool uninitializedMemoryAnalysis=false;
   bool deadCodeAnalysis=false;
   bool constantConditionAnalysis=false;
+  bool reduceStg=false; // calls analyzer->reduceStgToInOutStates();
 
   std::string reportFilePath;
   std::string nullPointerAnalysisFileName="null-pointer.csv";
@@ -129,6 +130,8 @@ public:
   std::string forkFunctionName="";
 
   bool sharedPStates=true;
+  bool fastPointerHashing=true;
+  bool exitOnHashError=false;
   bool readWriteTrace=false;
   
   // RERS C-subset program options

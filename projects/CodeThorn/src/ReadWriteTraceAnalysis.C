@@ -16,12 +16,14 @@ namespace CodeThorn {
     return &outOfBoundsAccessMap;
   }
 
-  void ReadWriteTraceAnalysis::readingFromMemoryLocation(Label lab, PStatePtr pstate, AbstractValue& memLoc, AbstractValue& result) {
-    cout<<"RW TRACE: @"<<lab.toString()<<": READ: @"<< memLoc.toString()<<endl;
+  void ReadWriteTraceAnalysis::readingFromMemoryLocation(Label lab, PStatePtr pstate, AbstractValue& memLoc) {
+    ROSE_ASSERT(AbstractValue::_variableIdMapping);
+    cout<<"RW TRACE: @"<<lab.toString()<<": READ: @"<< memLoc.toString(AbstractValue::_variableIdMapping)<<endl;
   }
 
-  void ReadWriteTraceAnalysis::writingToMemoryLocation(Label lab, PStatePtr pstate, AbstractValue& memLoc, AbstractValue& newValue) {
-    cout<<"RW TRACE: @"<<lab.toString()<<": WRITE: @"<< memLoc.toString()<<" = "<<newValue<<endl;
+  void ReadWriteTraceAnalysis::writingToMemoryLocation(Label lab, PState* pstate, AbstractValue& memLoc, AbstractValue& newValue) {
+    ROSE_ASSERT(AbstractValue::_variableIdMapping);
+    cout<<"RW TRACE: @"<<lab.toString()<<": WRITE: @"<< memLoc.toString(AbstractValue::_variableIdMapping)<<" = "<<newValue<<endl;
   }
 
 }

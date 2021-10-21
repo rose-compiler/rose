@@ -16,7 +16,6 @@ static const char *description =
 
 #include <batSupport.h>
 #include <boost/filesystem.hpp>
-#include <boost/foreach.hpp>
 #include <fstream>
 #include <iostream>
 #include <Sawyer/CommandLine.h>
@@ -69,12 +68,13 @@ main(int argc, char *argv[]) {
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv);
     P2::Partitioner partitioner = engine.loadPartitioner(inputFileName, format);
 
-    BOOST_FOREACH (const P2::ControlFlowGraph::Vertex &vertex, partitioner.cfg().vertices()) {
+    for (const P2::ControlFlowGraph::Vertex &vertex: partitioner.cfg().vertices()) {
         using namespace StringUtility;
         if (vertex.value().type() == P2::V_BASIC_BLOCK) {
             P2::BasicBlock::Ptr bb = vertex.value().bblock();
             std::cout <<addrToString(bb->address()) <<" " <<std::setw(6) <<bb->nInstructions();
-            BOOST_FOREACH (const AddressInterval &interval, partitioner.basicBlockInstructionExtent(bb).intervals())
+            AddressIntervalSet bbExtent = partitioner.basicBlockInstructionExtent(bb);
+            for (const AddressInterval &interval: bbExtent.intervals())
                 std::cout <<" " <<addrToString(interval.least()) <<" " <<addrToString(interval.greatest());
             std::cout <<"\n";
         }

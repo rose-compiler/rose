@@ -35,11 +35,7 @@ public:
     typedef Sawyer::SharedPointer<Database> Ptr;
     
 private:
-#if ROSE_CONCOLIC_DB_VERSION == 1
-    SqlDatabase::ConnectionPtr dbconn_;                 // connection to database
-#else
     Sawyer::Database::Connection connection_;
-#endif
 
     // Memoization of ID to object mappings
     Sawyer::Container::BiMap<SpecimenId, SpecimenPtr> specimens_;
@@ -64,15 +60,9 @@ public:
     static Ptr instance(const std::string &url);
 
     /** Low-level database connection. */
-#if ROSE_CONCOLIC_DB_VERSION == 1
-    SqlDatabase::ConnectionPtr connection() {
-        return dbconn_;
-    }
-#else
     Sawyer::Database::Connection connection() {
         return connection_;
     }
-#endif
 
     /** Create a new database and test suite.
      *
@@ -194,14 +184,6 @@ public:
     ExecutionEventPtr object(ExecutionEventId, Update update = Update::YES);
     /** @} */
 
-#if ROSE_CONCOLIC_DB_VERSION == 1
-    /** Reconstitute an object from a database ID as part of a subquery.
-     *
-     *  Thread safety: not thread safe (assumes that it is called from a thread-safe context)
-     */
-    SpecimenPtr object_ns(SqlDatabase::TransactionPtr tx, SpecimenId id);
-#endif
-
     /** Returns an ID number for an object, optionally writing to the database.
      *
      *  If the object exists in the database (i.e., returned as the result of some query) then its ID is returned and the
@@ -267,18 +249,6 @@ public:
             retval.push_back(id(object, update));
         return retval;
     }
-
-#if ROSE_CONCOLIC_DB_VERSION == 1
-    /** Returns an ID number for an object, optionally writing to the database.
-     *
-     * The functions are executed in the context of some other transaction.
-     *
-     *  Thread safety: not thread safe
-     */
-    TestSuiteId id_ns(SqlDatabase::TransactionPtr, const TestSuitePtr&, Update::Flag update = Update::YES);
-    TestCaseId id_ns(SqlDatabase::TransactionPtr,  const TestCasePtr&, Update::Flag update = Update::YES);
-    SpecimenId id_ns(SqlDatabase::TransactionPtr,  const SpecimenPtr&, Update::Flag update = Update::YES);
-#endif
 
     /** Finds a test suite by name or ID.
      *

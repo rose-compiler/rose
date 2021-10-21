@@ -56,6 +56,7 @@ namespace CodeThorn {
   }
 
   BuiltInType TypeSizeMapping::determineBuiltInTypeId(SgType* sgType) {
+    //cout<<"DEBUG: TypeSizeMapping::determineBuiltInTypeId: "<<sgType->class_name()<<endl;
     switch (sgType->variantT()) {
     case V_SgTypeVoid:
       return BITYPE_VOID;

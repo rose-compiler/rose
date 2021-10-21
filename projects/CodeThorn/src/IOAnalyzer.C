@@ -298,7 +298,7 @@ void IOAnalyzer::printAnalyzerStatistics(double totalRunTime, string title) {
   }
   ss << "=============================================================="<<endl;
   // ss << "Memory total                   : "<<color("green")<<totalMemory<<" bytes"<<color("white")<<endl;
-  //ss << "TimeMeasurement total          : "<<color("green")<<CodeThorn::readableruntime(totalRunTime)<<color("white")<<endl;
+  //ss << "TimeMeasurement total          : "<<color("green")<<CodeThorn::readableRunTimeFromMilliSeconds(totalRunTime)<<color("white")<<endl;
   //ss << "=============================================================="<<endl;
   ss <<color("normal");
   printStatusMessage(ss.str());

@@ -53,6 +53,7 @@ struct Settings {
     bool deleteMatchingTests = false;                   // if true, delete the tests whose records match
     bool showAges = true;                               // when showing times, also say "about x days ago" or similar
     bool considerAll = false;                           // consider all tests instead of just the latest ROSE version
+    bool dittoize = true;                               // use ditto markers (") when successive rows have same value
 };
 
 static Sawyer::Message::Facility mlog;
@@ -100,6 +101,14 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
     Rose::CommandLine::insertBooleanSwitch(sg, "show-age", settings.showAges,
                                            "Causes timestamps to also incude an approximate age. For instance, the "
                                            "age might be described as \"about 6 hours ago\".");
+
+    Rose::CommandLine::insertBooleanSwitch(sg, "ditto", settings.dittoize,
+                                           "Replace repeated values with dittos. This works by scanning each row of a "
+                                           "table from left to right and if the column has the same value as the previous "
+                                           "row then that column is replaced with a ditto mark. If the column is different "
+                                           "than the previous row, then the scanning stops and no subsequent columns of "
+                                           "the row are changed. Only the first contiguous group of sorted columns are "
+                                           "considered.");
 
     return parser
         .with(Rose::CommandLine::genericSwitches())
@@ -258,6 +267,9 @@ public:
         sorted_ = s;
         return *this;
     }
+    bool isSorted() const {
+        return sorted_ != Sorted::NONE;
+    }
 };
 
 // A mapping from command-line name (key) to database column
@@ -340,7 +352,7 @@ loadColumns(DB::Connection db) {
                   .doc("Number of lines of output")
                   .type(ColumnType::INTEGER));
     retval.insert("output.avg",
-                  Column().tableTitle("Avg Lines\nof Output").sql("avg(test_results.noutput)")
+                  Column().tableTitle("Avg Lines\nof Output").sql("round(avg(test_results.noutput))")
                   .doc("Average number of lines of output for the selected tests")
                   .type(ColumnType::INTEGER)
                   .isAggregate(true));
@@ -418,7 +430,7 @@ loadColumns(DB::Connection db) {
                   .doc("Number of heuristically detected warning messages")
                   .type(ColumnType::INTEGER));
     retval.insert("warnings.avg",
-                  Column().tableTitle("Average\nWarnings").sql("avg(test_results.nwarnings)")
+                  Column().tableTitle("Average\nWarnings").sql("round(avg(test_results.nwarnings))")
                   .doc("Average number of heuristically detected warning messages for the selected tests")
                   .type(ColumnType::INTEGER)
                   .isAggregate(true));
@@ -847,16 +859,48 @@ formatValue(const Settings &settings, const Column &c, const std::string &value)
     }
 }
 
+// Adjust table by replacing repeated values with ditto marks.
+void
+dittoize(FormattedTable &table, size_t beginCol, size_t endCol) {
+    if (table.nRows() > 0 && table.nColumns() > 0) {
+        ASSERT_require(beginCol < endCol);
+        ASSERT_require(endCol <= table.nColumns());
+
+        std::vector<std::string> prev(endCol - beginCol);
+        for (size_t i = 0; i < table.nRows(); ++i) {
+            for (size_t j = beginCol; j < endCol; ++j) {
+                const std::string value = table.get(i, j);
+                if (!value.empty() && value == prev[j - beginCol]) {
+                    table.insert(i, j, "\"");
+                    table.cellProperties(i, j, centered());
+                } else {
+                    for (size_t k = j; k < endCol; ++k)
+                        prev[k - beginCol] = table.get(i, k);
+                    break;
+                }
+            }
+        }
+    }
+}
+
 // Returns the number of tests matched by the row (zero if unavailable)
 static size_t
-emitTable(const Settings &settings, FormattedTable &table, DB::Row &row, const ColumnList &cols,
+emitToTable(const Settings &settings, FormattedTable &table, DB::Row &row, const ColumnList &cols,
           std::set<size_t> &testIds /*out*/) {
     const size_t i = table.nRows();
     size_t j = 0, nTests = 0;
     for (const Column &c: cols) {
         if (c.isDisplayed()) {
-            if (auto value = row.get<std::string>(j))
+            if (auto value = row.get<std::string>(j)) {
                 table.insert(i, j, formatValue(settings, c, *value));
+                if (c.key() == "status") {
+                    table.cellProperties(i, j, "end" == *value ? goodCell() : badCell());
+                } else if (c.key() == "pf") {
+                    table.cellProperties(i, j, "pass" == *value ? goodCell() : badCell());
+                }
+            } else {
+                table.insert(i, j, "");
+            }
         }
 
         if (c.isSelected()) {
@@ -883,6 +927,8 @@ emitYaml(const Settings &settings, DB::Row &row, const ColumnList &cols, std::se
                 if (*value != formatted)
                     std::cout <<" # " <<formatted;
                 std::cout <<"\n";
+            } else {
+                std::cout <<(0 == j ? "- " : "  ") <<c.identifier() <<": \"\"\n";
             }
         }
 
@@ -1012,7 +1058,7 @@ main(int argc, char *argv[]) {
     // automatically--make the user do it so we know that they know what they're doing.
     if (settings.deleteMatchingTests) {
         if (!isDisplayed(cols, "id")) {
-            mlog[FATAL] <<"the \"id\" field must be selected in order to delete tests\n";
+            mlog[FATAL] <<"the \"id\" field must be displayed in order to delete tests\n";
             exit(1);
         }
     }
@@ -1048,7 +1094,7 @@ main(int argc, char *argv[]) {
                 case Format::HTML:
                 case Format::CSV:
                 case Format::SHELL:
-                    nTests += emitTable(settings, table, row, cols, testIds /*out*/);
+                    nTests += emitToTable(settings, table, row, cols, testIds /*out*/);
                     break;
                 case Format::YAML:
                     nTests += emitYaml(settings, row, cols, testIds /*out*/);
@@ -1056,6 +1102,34 @@ main(int argc, char *argv[]) {
             }
         }
     }
+
+    // Should we replace repeated values with ditto marks? If so, we need to find the first contiguous group of columns
+    // that are sorted, and these will be the ones to consider for dittos.
+    if (settings.dittoize) {
+        Sawyer::Optional<size_t> firstSorted;
+        size_t lastSorted = 0, tableColumn = 0;
+        for (const Column &c: cols) {
+            if (c.isSorted()) {
+                if (!firstSorted) {
+                    firstSorted = tableColumn;
+                    lastSorted = tableColumn;
+                } else {
+                    lastSorted = tableColumn;
+                }
+            } else if (firstSorted) {
+                break;
+            }
+            if (c.isDisplayed())
+                ++tableColumn;
+        }
+        if (firstSorted) {
+            ASSERT_require(*firstSorted <= lastSorted);
+            ASSERT_require(lastSorted < table.nColumns());
+            dittoize(table, *firstSorted, lastSorted+1);
+        }
+    }
+
+    // Produce output
     switch (settings.outputFormat) {
         case Format::PLAIN:
             table.format(tableFormat(settings.outputFormat));

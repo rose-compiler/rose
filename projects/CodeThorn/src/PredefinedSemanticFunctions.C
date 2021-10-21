@@ -12,105 +12,105 @@ using namespace CodeThorn;
 using namespace Sawyer::Message;
 
 namespace PredefinedSemanticFunctions {
-/* TODO: in case an error is detected the target region remains unmodified. Change to invalidating all elements of target region */
+  /* TODO: in case an error is detected the target region remains unmodified. Change to invalidating all elements of target region */
   SingleEvalResult evalFunctionCallMemCpy(EStateTransferFunctions* exprAnalyzer, SgFunctionCallExp* funCall, EState estate) {
-  //cout<<"DETECTED: memcpy: "<<funCall->unparseToString()<<endl;
-  SingleEvalResult res;
-  // memcpy is a void function, no return value
-  res.init(estate,AbstractValue(CodeThorn::Top()));
-  SgExpressionPtrList& argsList=SgNodeHelper::getFunctionCallActualParameterList(funCall);
-  if(argsList.size()==3) {
-    AbstractValue memcpyArgs[3];
-    int i=0;
-    for(SgExpressionPtrList::iterator argIter=argsList.begin();argIter!=argsList.end();++argIter) {
-      SgExpression* arg=*argIter;
-      SingleEvalResult sres=exprAnalyzer->evaluateExpression(arg,estate);
-      AbstractValue argVal=sres.result;
-      memcpyArgs[i++]=argVal;
-    }
-    if(memcpyArgs[0].isTop()||memcpyArgs[1].isTop()||memcpyArgs[2].isTop()) {
-      exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate.label());
-      return res; // returns top
-    }
-    int memRegionSizeTarget=exprAnalyzer->getMemoryRegionNumElements(memcpyArgs[0]);
-    int copyRegionElementSizeTarget=exprAnalyzer->getMemoryRegionElementSize(memcpyArgs[0]);
-    int memRegionSizeSource=exprAnalyzer->getMemoryRegionNumElements(memcpyArgs[1]);
-    int copyRegionElementSizeSource=exprAnalyzer->getMemoryRegionElementSize(memcpyArgs[1]);
+    //cout<<"DETECTED: memcpy: "<<funCall->unparseToString()<<endl;
+    SingleEvalResult res;
+    // memcpy is a void function, no return value
+    res.init(estate,AbstractValue(CodeThorn::Top()));
+    SgExpressionPtrList& argsList=SgNodeHelper::getFunctionCallActualParameterList(funCall);
+    if(argsList.size()==3) {
+      AbstractValue memcpyArgs[3];
+      int i=0;
+      for(SgExpressionPtrList::iterator argIter=argsList.begin();argIter!=argsList.end();++argIter) {
+        SgExpression* arg=*argIter;
+        SingleEvalResult sres=exprAnalyzer->evaluateExpression(arg,estate);
+        AbstractValue argVal=sres.result;
+        memcpyArgs[i++]=argVal;
+      }
+      if(memcpyArgs[0].isTop()||memcpyArgs[1].isTop()||memcpyArgs[2].isTop()) {
+        exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate.label());
+        return res; // returns top
+      }
+      int memRegionSizeTarget=exprAnalyzer->getMemoryRegionNumElements(memcpyArgs[0]);
+      int copyRegionElementSizeTarget=exprAnalyzer->getMemoryRegionElementSize(memcpyArgs[0]);
+      int memRegionSizeSource=exprAnalyzer->getMemoryRegionNumElements(memcpyArgs[1]);
+      int copyRegionElementSizeSource=exprAnalyzer->getMemoryRegionElementSize(memcpyArgs[1]);
 
-    int copyRegionElementSize=0; // TODO: use AbstractValue for all sizes
-    // check if size to copy is either top
-    if(memcpyArgs[2].isTop()) {
-      exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate.label());
-      return res;
-    } else if(memRegionSizeTarget!=memRegionSizeSource) {
-      // check if the element size of the two regions is different (=> conservative analysis result; will be modelled in future)
-      exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate.label());
+      int copyRegionElementSize=0; // TODO: use AbstractValue for all sizes
+      // check if size to copy is either top
+      if(memcpyArgs[2].isTop()) {
+        exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate.label());
+        return res;
+      } else if(memRegionSizeTarget!=memRegionSizeSource) {
+        // check if the element size of the two regions is different (=> conservative analysis result; will be modelled in future)
+        exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate.label());
+        return res;
+      } else {
+        if(copyRegionElementSizeTarget!=copyRegionElementSizeSource) {
+          if(copyRegionElementSizeTarget!=0)
+            copyRegionElementSize=copyRegionElementSizeTarget;
+          else if(copyRegionElementSizeSource!=0)
+            copyRegionElementSize=copyRegionElementSizeSource;
+          else
+            copyRegionElementSize=std::max(copyRegionElementSizeSource,copyRegionElementSizeTarget);
+          ROSE_ASSERT(copyRegionElementSize!=0);
+        } else {
+          copyRegionElementSize=copyRegionElementSizeTarget;
+        }
+      }
+
+      bool errorDetected=false;
+      int copyRegionLengthValue=memcpyArgs[2].getIntValue();
+
+      // the copy function length argument is converted here into number of elements. This needs to be adapted if the repsentation of size is changed.
+      if(copyRegionElementSize==0) {
+        cout<<"WARNING: memcpy: copy region element size is 0. Recording potential out of bounds access."<<endl;
+        exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate.label());
+        return res;
+      }
+      int copyRegionNumElements=copyRegionLengthValue/copyRegionElementSize;
+
+      // clamp values since 0 is considered already an error
+      if(memRegionSizeSource==-1) memRegionSizeSource=0;
+      if(memRegionSizeTarget==-1) memRegionSizeTarget=0;
+
+      if(memRegionSizeSource<copyRegionNumElements) {
+        if(memRegionSizeSource==0) {
+          errorDetected=true;
+          exprAnalyzer->recordDefinitiveOutOfBoundsAccessLocation(estate.label());
+        } else {
+          errorDetected=true;
+          exprAnalyzer->recordDefinitiveOutOfBoundsAccessLocation(estate.label());
+        }
+      }
+      if(memRegionSizeTarget<copyRegionNumElements) {
+        if(memRegionSizeTarget==0) {
+          errorDetected=true;
+          exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate.label());
+        } else {
+          errorDetected=true;
+          exprAnalyzer->recordDefinitiveOutOfBoundsAccessLocation(estate.label());
+        }
+      }
+      if(!errorDetected) {
+        // no error occured. Copy region.
+        PState newPState=*estate.pstate();
+        AbstractValue targetPtr=memcpyArgs[0];
+        AbstractValue sourcePtr=memcpyArgs[1];
+        AbstractValue one=CodeThorn::AbstractValue(1);
+        for(int i=0;i<copyRegionNumElements;i++) {
+          exprAnalyzer->writeToMemoryLocation(estate.label(),&newPState,targetPtr,exprAnalyzer->readFromMemoryLocation(estate.label(),&newPState,sourcePtr));
+          targetPtr=AbstractValue::operatorAdd(targetPtr,one); // targetPtr++;
+          sourcePtr=AbstractValue::operatorAdd(sourcePtr,one); // sourcePtr++;
+        }
+      }
       return res;
     } else {
-      if(copyRegionElementSizeTarget!=copyRegionElementSizeSource) {
-        if(copyRegionElementSizeTarget!=0)
-          copyRegionElementSize=copyRegionElementSizeTarget;
-        else if(copyRegionElementSizeSource!=0)
-          copyRegionElementSize=copyRegionElementSizeSource;
-        else
-          copyRegionElementSize=std::max(copyRegionElementSizeSource,copyRegionElementSizeTarget);
-        ROSE_ASSERT(copyRegionElementSize!=0);
-      } else {
-        copyRegionElementSize=copyRegionElementSizeTarget;
-      }
-    }
-
-    bool errorDetected=false;
-    int copyRegionLengthValue=memcpyArgs[2].getIntValue();
-
-    // the copy function length argument is converted here into number of elements. This needs to be adapted if the repsentation of size is changed.
-    if(copyRegionElementSize==0) {
-      cout<<"WARNING: memcpy: copy region element size is 0. Recording potential out of bounds access."<<endl;
-      exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate.label());
-      return res;
-    }
-    int copyRegionNumElements=copyRegionLengthValue/copyRegionElementSize;
-
-    // clamp values since 0 is considered already an error
-    if(memRegionSizeSource==-1) memRegionSizeSource=0;
-    if(memRegionSizeTarget==-1) memRegionSizeTarget=0;
-
-    if(memRegionSizeSource<copyRegionNumElements) {
-      if(memRegionSizeSource==0) {
-        errorDetected=true;
-        exprAnalyzer->recordDefinitiveOutOfBoundsAccessLocation(estate.label());
-      } else {
-        errorDetected=true;
-        exprAnalyzer->recordDefinitiveOutOfBoundsAccessLocation(estate.label());
-      }
-    }
-    if(memRegionSizeTarget<copyRegionNumElements) {
-      if(memRegionSizeTarget==0) {
-        errorDetected=true;
-        exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate.label());
-      } else {
-        errorDetected=true;
-        exprAnalyzer->recordDefinitiveOutOfBoundsAccessLocation(estate.label());
-      }
-    }
-    if(!errorDetected) {
-      // no error occured. Copy region.
-      PState newPState=*estate.pstate();
-      AbstractValue targetPtr=memcpyArgs[0];
-      AbstractValue sourcePtr=memcpyArgs[1];
-      AbstractValue one=CodeThorn::AbstractValue(1);
-      for(int i=0;i<copyRegionNumElements;i++) {
-        exprAnalyzer->writeToMemoryLocation(estate.label(),&newPState,targetPtr,exprAnalyzer->readFromMemoryLocation(estate.label(),&newPState,sourcePtr));
-        targetPtr=AbstractValue::operatorAdd(targetPtr,one); // targetPtr++;
-        sourcePtr=AbstractValue::operatorAdd(sourcePtr,one); // sourcePtr++;
-      }
+      cerr<<"Error: unknown memcpy function (number of arguments != 3)"<<funCall->unparseToString()<<endl;
+      exit(1);
     }
     return res;
-  } else {
-    cerr<<"Error: unknown memcpy function (number of arguments != 3)"<<funCall->unparseToString()<<endl;
-    exit(1);
-  }
-  return res;
   }
 
   SingleEvalResult evalFunctionCallStrLen(EStateTransferFunctions* exprAnalyzer, SgFunctionCallExp* funCall, EState estate) {

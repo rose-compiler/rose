@@ -14,6 +14,9 @@ static const char *gDescription =
     "{Lists the dependencies for the specified name and value. If the value is omitted, then all dependencies with the "
     "specified name are printed; and if the name is also omitted then all dependencies are printed.}"
 
+    "@named{@prop{programName} [@v{switches}] status [@v{name} [@v{value}]]}"
+    "{This is similar to the \"list\" command, except it shows some summary information about test results as well.}"
+
     "@named{@prop{programName} [@v{switches}] enable @v{name} @v{value} [@v{restriction}...]}"
     "{Enable the specified property and value. However, if one or more @v{restriction} expressions are specified, then they "
     "are added to the restriction list for the specified dependency value instead of setting the \"enabled\" bit."
@@ -381,6 +384,101 @@ erase(const Settings &settings, DB::Connection db, const std::string &name, cons
     }
 }
 
+static void
+showStatus(const Settings &settings, DB::Connection db, const std::string &whereClause,
+           const std::vector<std::pair<std::string, std::string>> &whereBindings) {
+    // Get the current ROSE version
+    const std::string roseVersion = db.stmt("select rose from test_results order by reporting_time desc limit 1")
+                                    .get<std::string>().orDefault();
+    if (roseVersion.empty()) {
+        mlog[ERROR] <<"no test results yet\n";
+        exit(1);
+    }
+
+    // Get rows from the dependencies table
+    auto stmt = db.stmt("select name, value, restrictions, comment"
+                        " from dependencies" +
+                        whereClause +
+                        " order by name, value");
+    for (auto binding: whereBindings)
+        stmt.bind(binding.first, binding.second);
+
+    FormattedTable table;
+    table.format(tableFormat(settings.outputFormat));
+    table.columnHeader(0, 0, "Dependency\nName");
+    table.columnHeader(0, 1, "Dependency\nValue");
+    table.columnHeader(0, 2, "Restrictions");
+    table.columnHeader(0, 3, "Pass");
+    table.columnHeader(0, 4, "Fail");
+    table.columnHeader(0, 5, "Grade");
+    table.columnHeader(0, 6, "Comment");
+
+    Color::Gradient pfColors;
+    pfColors.insert(0.0, lighten(Color::HSV_RED, 0.4));
+    pfColors.insert(0.7, lighten(Color::HSV_RED, 0.4));
+    pfColors.insert(1.0, Color::HSV_GREEN);
+
+    std::string prevName;
+    for (auto row: stmt) {
+        const std::string name = *row.get<std::string>(0);
+        const std::string value = *row.get<std::string>(1);
+        const std::string restrictions = row.get<std::string>(2).orElse("");
+        const std::string comment = row.get<std::string>(3).orElse("");
+
+        // Number of passed and failed tests
+        size_t passFail[2] = {0, 0};
+        auto stmt2 = db.stmt("select"
+                             "   case when status = 'end' then 0 else 1 end as passed,"
+                             "   count(*)"
+                             " from test_results"
+                             " where rose = ?rose and rmc_" + name + " = ?value"
+                             " group by passed")
+                     .bind("rose", roseVersion)
+                     .bind("value", value);
+        for (auto cr: stmt2)
+            passFail[*cr.get<size_t>(0)] = *cr.get<size_t>(1);
+        const size_t nPassed = passFail[0];
+        const size_t nFailed = passFail[1];
+        const size_t nTests = nPassed + nFailed;
+        const size_t grade = (size_t)::round(100.0 * nPassed / nTests);
+
+        if (Format::YAML == settings.outputFormat) {
+            std::cout <<"- name: " <<StringUtility::yamlEscape(name) <<"\n"
+                      <<"  value: " <<StringUtility::yamlEscape(value) <<"\n"
+                      <<"  restrictions: " <<StringUtility::yamlEscape(restrictions) <<"\n"
+                      <<"  passed: " <<nPassed <<"\n"
+                      <<"  failed: " <<nFailed <<"\n"
+                      <<"  commit: " <<StringUtility::yamlEscape(comment) <<"\n";
+            if (nTests > 0)
+                std::cout <<"  grade: " <<grade <<"\n";
+        } else {
+            const size_t i = table.nRows();
+            if (name == prevName) {
+                table.insert(i, 0, "\"");
+                table.cellProperties(i, 0, centered());
+            } else {
+                table.insert(i, 0, name);
+                prevName = name;
+            }
+            table.insert(i, 1, value);
+            table.insert(i, 2, restrictions);
+            table.insert(i, 3, nPassed);
+            table.insert(i, 4, nFailed);
+            if (nTests > 0) {
+                table.insert(i, 5, boost::lexical_cast<std::string>(grade) + "%");
+                FormattedTable::CellProperties props;
+                props.foreground(Color::HSV_BLACK);
+                props.background(pfColors((double)nPassed / nTests));
+                table.cellProperties(i, 5, props);
+            }
+            table.insert(i, 6, comment);
+        }
+    }
+
+    if (Format::YAML != settings.outputFormat)
+        std::cout <<table;
+}
+
 int
 main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
@@ -410,6 +508,21 @@ main(int argc, char *argv[]) {
         } else {
             incorrectUsage();
         }
+
+    } else if ("status" == args[0]) {
+        std::string whereClause = " where enabled > 0";
+        std::vector<std::pair<std::string, std::string>> bindings;
+        if (args.size() >= 2) {
+            whereClause += " and name = ?name";
+            bindings.push_back(std::make_pair("name", args[1]));
+        }
+        if (args.size() >= 3) {
+            whereClause += " and value = ?value";
+            bindings.push_back(std::make_pair("value", args[2]));
+        }
+        if (args.size() >= 4)
+            incorrectUsage();
+        showStatus(settings, db, whereClause, bindings);
 
     } else if ("enable" == args[0] || "enabled" == args[0] ||
                "disable" == args[0] || "disabled" == args[0]) {

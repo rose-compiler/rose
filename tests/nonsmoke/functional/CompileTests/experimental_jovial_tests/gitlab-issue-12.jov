@@ -1,0 +1,7 @@
+START
+!COMPOOL ('missing');
+DEF PROC main;
+BEGIN
+   ITEM1 = 5;
+END
+TERM
