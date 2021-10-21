@@ -161,11 +161,59 @@ private:
     }
 
     void bindLow(size_t idx, const std::string &value) override {
+#if 0
+        // Commented out on 2021-09-29 but I didn't record the reason.
+        // The original version, or nearly so.
         auto tx = std::dynamic_pointer_cast<PostgresqlConnection>(connection())->transaction.get();
-#if 0 // [Robb Matzke 2021-09-29]
         pvalues_[idx] = "'" + tx->esc_raw(reinterpret_cast<const unsigned char*>(value.c_str()), value.size()) + "'";
-#else
+#elif 0
+        // Commented out [Robb Matzke 2021-10-14] The "esc" function in behaves strangely: the characters are sign-extended to
+        // 4 bytes before escaping them to octal, which results in octal escapes like "\37777777742", which the sql parser then
+        // treates as "\377" followed by the characters "77777742" and then throws an exception "invalid byte sequence for
+        // encoding "UTF8": 0xff".
+        auto tx = std::dynamic_pointer_cast<PostgresqlConnection>(connection())->transaction.get();
         pvalues_[idx] = "'" + tx->esc(value) + "'";
+#else
+        // [Robb Matzke 2021-10-14] Implemented from PostgreSQL 14 official documentation
+        // https://www.postgresql.org/docs/current/sql-syntax-lexical.html
+        std::string s;
+        for (size_t i = 0; i < value.size(); ++i) {
+            // Postgresql's E'...' style quoting is called "C-Style Escapes" but according to the postfix documentation, not
+            // all C escape sequences are supported. For instance "\a" is not listed in the table and thus falls under the
+            // category "any other character following a backslash is taken literally." Same for "\v". So we'll use octal escapes
+            // for them. They're not common anyway, so doing so doesn't hamper readability much.
+            switch (value[i]) {
+                case '\b':
+                    s += "\\b";
+                    break;
+                case '\f':
+                    s += "\\f";
+                    break;
+                case '\n':
+                    s += "\\n";
+                    break;
+                case '\r':
+                    s += "\\r";
+                    break;
+                case '\t':
+                    s += "\\t";
+                    break;
+                case '\'':
+                    s += "\\'";
+                    break;
+                case '\\':
+                    s += "\\\\";
+                    break;
+                default:
+                    if (::isgraph(value[i]) || ' ' == value[i]) {
+                        s += value[i];
+                    } else {
+                        s += (boost::format("\\%03o") % (unsigned)(unsigned char)value[i]).str();
+                    }
+                    break;
+            }
+        }
+        pvalues_[idx] = (s != value ? "E'" : "'") + s + "'";
 #endif
     }
 

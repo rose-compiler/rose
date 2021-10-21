@@ -144,11 +144,11 @@ if ROSE_HAVE_CAPSTONE
   ROSE_CAPSTONE_LIBS_WITH_PATH = -L@ROSE_CAPSTONE_PREFIX@/lib -lcapstone
 endif
 
-# Math algorithms from http://dlib.net. This is a headers-only library neede by some binary analyses.
+# Math algorithms from http://dlib.net.
 if ROSE_HAVE_DLIB
   ROSE_DLIB_INCLUDES = -I@DLIB_PREFIX@/include
-  ROSE_DLIB_LIBS =
-  ROSE_DLIB_LIBS_WITH_PATH =
+  ROSE_DLIB_LIBS = -ldlib
+  ROSE_DLIB_LIBS_WITH_PATH = -L@DLIB_PREFIX@/lib -ldlib
 endif
 
 # DQ (11/4/2016): Adding support for use of Address Sanitizer (for where the ROSE Test Handler (RTH) is used.

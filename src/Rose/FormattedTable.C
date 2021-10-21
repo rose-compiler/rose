@@ -138,6 +138,16 @@ FormattedTable::insert(size_t rowIdx, size_t columnIdx, const std::string &repr,
     cellProperties(rowIdx, columnIdx, props);
 }
 
+const std::string&
+FormattedTable::get(size_t rowIdx, size_t columnIdx) const {
+    if (rowIdx < cells_.size() && columnIdx < cells_[rowIdx].size()) {
+        return cells_[rowIdx][columnIdx];
+    } else {
+        static const std::string empty;
+        return empty;
+    }
+}
+
 const FormattedTable::CellProperties&
 FormattedTable::cellProperties(size_t rowIdx, size_t columnIdx) const {
     if (rowIdx < nRows() && columnIdx < nColumns()) {

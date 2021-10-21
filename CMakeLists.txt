@@ -709,10 +709,6 @@ if(enable-c)
   find_spot()
 endif()
 
-# To use Wt, set WT_ROOT to the Wt installation prefix. To avoid Wt set WT_ROOT=no
-#include(FindWt)
-#find_wt()
-
 # To use Yices, set YICES_ROOT to the Yices installation prefix. To avoid Yices set YICES_ROOT=no
 include(FindYices)
 find_yices()

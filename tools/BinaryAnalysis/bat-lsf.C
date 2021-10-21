@@ -9,7 +9,7 @@ static const char *description =
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
-#include <SqlDatabase.h>                                        // rose
+#include <Rose/FormattedTable.h>
 
 #include <batSupport.h>
 #include <boost/filesystem.hpp>
@@ -90,16 +90,14 @@ toString(size_t a, size_t b) {
 // Print a pretty table with information about functions.
 void
 printFunctions(const P2::Partitioner &p) {
-    SqlDatabase::Table<std::string,                     // 0: entry address
-                       std::string,                     // 1: lowest and highest address
-                       std::string,                     // 2: number of basic blocks and instructions
-                       std::string,                     // 3: number of data blocks and bytes
-                       size_t,                          // 4: number of largest contiguous regions
-                       std::string,                     // 5: number of callers and callees
-                       std::string> table;              // 6: name
-    table.headers("Entry VA", "Lowest/Highest VA", "BBlocks/Insns", "DBlocks/Bytes", "Contig",
-                  "Callers/Callees", "Name");
-    table.reprint_headers(50);
+    FormattedTable table;
+    table.columnHeader(0, 0, "Entry VA");
+    table.columnHeader(0, 1, "Lowest/Highest VA");
+    table.columnHeader(0, 2, "BBlocks/Insns");
+    table.columnHeader(0, 3, "DBlocks/Bytes");
+    table.columnHeader(0, 4, "Contig");
+    table.columnHeader(0, 5, "Callers/Callees");
+    table.columnHeader(0, 6, "Name");
 
     P2::FunctionCallGraph cg = p.functionCallGraph(P2::AllowParallelEdges::NO);
 
@@ -115,15 +113,17 @@ printFunctions(const P2::Partitioner &p) {
             nDBlockBytes += dblock->size();
 
         std::string name = demangle ? function->demangledName() : function->name();
-        table.insert(StringUtility::addrToString(function->address()),
-                     toString(fe.hull()),
-                     toString(function->basicBlockAddresses().size(), nInsns),
-                     toString(function->dataBlocks().size(), nDBlockBytes),
-                     fe.nIntervals(),
-                     toString(cg.nCallsIn(function), cg.nCallsOut(function)),
-                     StringUtility::cEscape(name));
+
+        const size_t i = table.nRows();
+        table.insert(i, 0, StringUtility::addrToString(function->address()));
+        table.insert(i, 1, toString(fe.hull()));
+        table.insert(i, 2, toString(function->basicBlockAddresses().size(), nInsns));
+        table.insert(i, 3, toString(function->dataBlocks().size(), nDBlockBytes));
+        table.insert(i, 4, fe.nIntervals());
+        table.insert(i, 5, toString(cg.nCallsIn(function), cg.nCallsOut(function)));
+        table.insert(i, 6, StringUtility::cEscape(name));
     }
-    table.print(std::cout);
+    std::cout <<table;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -8,11 +8,11 @@ static const char *description =
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <Rose/FormattedTable.h>
 
 #include <batSupport.h>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Stopwatch.h>
-#include <SqlDatabase.h>                        // rose
 
 using namespace ::Rose;
 using namespace ::Sawyer::Message::Common;
@@ -183,11 +183,16 @@ rankDefinitionNames(const DefNameCounts &dncs) {
 // Show a table that lists all calling convention definitions according to how often they appear.
 void
 show(const CountDefNames &cdns) {
-    SqlDatabase::Table<size_t, std::string> table;
-    table.headers("Count", "CC Name");
+    FormattedTable table;
+    table.columnHeader(0, 0, "Count");
+    table.columnHeader(0, 1, "CC Name");
+
     BOOST_REVERSE_FOREACH (const CountDefNames::Node &node, cdns.nodes()) {
-        BOOST_FOREACH (const std::string &ccname, node.value())
-            table.insert(node.key(), ccname);
+        BOOST_FOREACH (const std::string &ccname, node.value()) {
+            const size_t i = table.nRows();
+            table.insert(i, 0, node.key());
+            table.insert(i, 1, ccname);
+        }
     }
     table.print(std::cout);
 }
