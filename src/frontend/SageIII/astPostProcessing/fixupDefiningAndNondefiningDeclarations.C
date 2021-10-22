@@ -70,7 +70,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
 
 #if 0
        // FMZ (6/8/2008): caused core dump when read in a .rmod file
-          if (definingDeclaration == NULL && firstNondefiningDeclaration == NULL)  
+          if (definingDeclaration == NULL && firstNondefiningDeclaration == NULL)
              {
                mfprintf(mlog[WARN]) ("Error: declaration = %p = %s definingDeclaration         = %p \n",declaration,declaration->sage_class_name(),definingDeclaration);
                mfprintf(mlog[WARN]) ("Error: declaration = %p = %s firstNondefiningDeclaration = %p \n",declaration,declaration->sage_class_name(),firstNondefiningDeclaration);
@@ -87,7 +87,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
           mfprintf(mlog[WARN]) ("                                               nondefiningDeclaration = %p get_name() = %s \n",firstNondefiningDeclaration,(firstNondefiningDeclaration != NULL) ? SageInterface::get_name(firstNondefiningDeclaration).c_str() : "empty name");
 #endif
 
-       // DQ (10/10/2006): Also set defining declaration of declarations that 
+       // DQ (10/10/2006): Also set defining declaration of declarations that
        // have a first_nondefining declaration with a valid defining declaration!
           if (definingDeclaration == NULL)
              {
@@ -142,7 +142,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                   }
              }
 
-       // DQ (12/14/2005): Test the new flag to tell us when we should have defered the 
+       // DQ (12/14/2005): Test the new flag to tell us when we should have defered the
        // setting of the scope (to after the scope was built).
           if (definingDeclaration != NULL || firstNondefiningDeclaration != NULL)
              {
@@ -188,8 +188,8 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                   {
                     SgSymbol* symbolToMove = firstNondefiningDeclaration->get_symbol_from_symbol_table();
 
-                 // DQ (2/25/2007): Since this is resetting the non-defining declaration it effects the symbol 
-                 // generated for some declarations which reserve a non-defining declaration for use in their 
+                 // DQ (2/25/2007): Since this is resetting the non-defining declaration it effects the symbol
+                 // generated for some declarations which reserve a non-defining declaration for use in their
                  // associated symbols. We could fix this by unloading the symbol table from the previous scope
                  // and insert it into the defining scope!  This is important for the get_symbol_from_symbol_table()
                  // since it looks in the saved scope (changing it here casues causes the function to return a NULL
@@ -201,8 +201,8 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                               firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str(),definingScope);
                          mfprintf(mlog[WARN]) ("Removing symbol = %p from scope = %p \n",symbolToMove,nondefiningScope);
 #endif
-                      // DQ (4/18/2018): Modified to avoid removing the symbol if it is not present.  This might be 
-                      // related to a bug fix to support symbols in namespaces and record them in both the namespace 
+                      // DQ (4/18/2018): Modified to avoid removing the symbol if it is not present.  This might be
+                      // related to a bug fix to support symbols in namespaces and record them in both the namespace
                       // definition where they are placed plus the global copy of the namespace definition.
                          if (nondefiningScope->symbol_exists(symbolToMove) == true)
                             {
@@ -215,7 +215,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
 #endif
                             }
 
-                      // DQ (2/25/2007): There could be multiple non-defining declarations such that the symbol might 
+                      // DQ (2/25/2007): There could be multiple non-defining declarations such that the symbol might
                       // already exist in the definingScope's symbol table.  (Confirmed to be true).
                          if (definingScope->symbol_exists(symbolToMove->get_name(),symbolToMove) == false)
                             {
@@ -223,7 +223,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                               mfprintf(mlog[WARN]) ("calling insert symbolToMove = %p = %s = %s into newScope = %p \n",
                                    symbolToMove,symbolToMove->class_name().c_str(),symbolToMove->get_name().str(),definingScope);
 #endif
-                           // DQ (2/25/2007): It is OK for the name to exist (e.g. overloader functions of a struct 
+                           // DQ (2/25/2007): It is OK for the name to exist (e.g. overloader functions of a struct
                            // and a typedef with the same name).
                            // ROSE_ASSERT (definingScope->symbol_exists(symbolToMove->get_name()) == false);
                               ROSE_ASSERT (definingScope->symbol_exists(symbolToMove->get_name(),symbolToMove) == false);
@@ -300,10 +300,12 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                  // DQ (3/5/2007): We want the scope obtainted through the parent so that we can test the existance of firstNondefiningDeclaration in the child list
                     SgScopeStatement* firstNondefiningDeclarationScope = isSgScopeStatement(firstNondefiningDeclaration->get_parent());
                     if (firstNondefiningDeclarationScope == NULL) {
-                       SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(firstNondefiningDeclaration->get_parent());
 
                       // Only report this if it is not someting defined in a typedef.
-                       if (typedefDeclaration == NULL) {
+                      // PP: (21/10/21) add EXPERIMENTAL exception for SgAdaDiscriminatedTypeDecl
+                      //     alternatively, firstNondefiningDeclarationScope = isSgScopeStatement(SgAdaDiscriminatedTypeDecl::get_parent()) could be used
+                       if (  (!isSgTypedefDeclaration(firstNondefiningDeclaration->get_parent()))
+                          && (!isSgAdaDiscriminatedTypeDecl(firstNondefiningDeclaration->get_parent())) ) {
                           mfprintf(mlog[WARN]) ("Error: firstNondefiningDeclaration->get_parent() = %p \n",firstNondefiningDeclaration->get_parent());
                           mfprintf(mlog[WARN]) ("     firstNondefiningDeclaration = %p = %s \n",firstNondefiningDeclaration,firstNondefiningDeclaration->class_name().c_str());
                           SgNode* nonDefDclParent = firstNondefiningDeclaration->get_parent();
@@ -373,7 +375,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                     SgNamespaceDefinitionStatement* namespaceDefinitionStatement = isSgNamespaceDefinitionStatement(firstNondefiningDeclarationScope);
                     if (namespaceDefinitionStatement != NULL)
                        {
-                      // In the case of a namespace definition the declaration can be in the global namespace 
+                      // In the case of a namespace definition the declaration can be in the global namespace
                       // definition instead and this is especially an issue for the AST merge mechanism.
                          lookForDeclarationInAssociatedScope = false;
                        }
@@ -431,9 +433,9 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
              {
             // This should be set in the EDG/Sage III translation!
 
-            // DQ (6/26/2005): Special case of enum declarations (no forward enum declarations are allowed in the 
+            // DQ (6/26/2005): Special case of enum declarations (no forward enum declarations are allowed in the
             // C or C++ standard), support added for them because they are a common extension (except in gnu).
-            // DQ (4/22/2007): However this is a common compiler extension 
+            // DQ (4/22/2007): However this is a common compiler extension
             // for nearly all C compilers, except GNU, so we have tried to support it.
             // ROSE_ASSERT(declaration == definingDeclaration);
             // mfprintf(mlog[WARN]) ("In FixupAstDefiningAndNondefiningDeclarations::visit(): declaration = %p definingDeclaration = %p \n",declaration,definingDeclaration);
@@ -454,15 +456,15 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
           case V_SgFunctionParameterList:
           case V_SgCtorInitializerList:
 
-       // A variable definition appears with a variable declaration, but a variable declaration can be a 
-       // forward reference to the variable declaration containing the variable definitions (e.g. "extern int x;", 
+       // A variable definition appears with a variable declaration, but a variable declaration can be a
+       // forward reference to the variable declaration containing the variable definitions (e.g. "extern int x;",
        // is a forward declaration to the declaration of "x").
           case V_SgVariableDefinition:
 
        // A pragam can contain no references to it and so it's declaration is also it's definition
           case V_SgPragmaDeclaration:
 
-       // These can appear multiple times and are not really associated with definitions 
+       // These can appear multiple times and are not really associated with definitions
        // (but for consistancy they are consired to be their own defining declaration).
           case V_SgUsingDirectiveStatement:
           case V_SgUsingDeclarationStatement:
@@ -472,7 +474,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
        // Shared by all the above cases!
              {
             // DQ (6/26/2005): I think that the C++ standard does not allow forward declarations for these either!
-            // So the defining declaration should be the declaration itself (I think). Either that or we need to 
+            // So the defining declaration should be the declaration itself (I think). Either that or we need to
             // build a special non-defining declaration for these declarations.
 
 #if 0
@@ -531,7 +533,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                  // DQ (2/12/2006): Set the scope to match the firstNondefiningDeclaration
                  // required for test2006_08.C to work: friend declarations should have matching scopes.
                  // DQ (2/16/2006): Let's only call set_scope if there is an explicit scope to set!
-                 // So I added a virtual hasExplicitScope() member function so that we can know which 
+                 // So I added a virtual hasExplicitScope() member function so that we can know which
                  // IR nodes have an explicit scope data member.
                     if (declaration->hasExplicitScope() == true)
                        {
@@ -556,7 +558,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                   }
                   else
                   { //Liao,10/31/2008
-                     //dump some debugging information before assertion 
+                     //dump some debugging information before assertion
                     declaration->get_file_info()->display("fixupDefiningAndNondefiningDeclarations.C assertion:");
 
                     ROSE_ASSERT(firstNondefiningDeclaration != NULL);
@@ -569,9 +571,9 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
        // Namespaces can't appear without their definitions (or so it seems, tested)
           case V_SgNamespaceDeclarationStatement:
              {
-            // This case is special, since there can be many declarations of the same namespace and 
-            // each one can include a definition, however we don't consider each be be THE defining 
-            // declaration so we hold the pointer to the one of them (the first one) and return it 
+            // This case is special, since there can be many declarations of the same namespace and
+            // each one can include a definition, however we don't consider each be be THE defining
+            // declaration so we hold the pointer to the one of them (the first one) and return it
             // using the get_firstNondefiningDeclaration() member function).  The scope of namespace
             // is not held explicitly since forward declarations of namespaces are not possible and so
             // the concept of scope can be computed (structurally via the parent pointer).
@@ -616,7 +618,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
             // ROSE_ASSERT(firstNondefiningDeclaration != NULL);
 
             // The firstNondefiningDeclaration should be available for use by any IR node requiring
-            // a reference to the declaration (which is why it is stored explicitly).  Thus the 
+            // a reference to the declaration (which is why it is stored explicitly).  Thus the
             // firstNondefiningDeclaration should never be the same as the definingDeclaration (if they are non-null)
                if (firstNondefiningDeclaration != NULL && firstNondefiningDeclaration == definingDeclaration)
                   {
@@ -655,7 +657,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
                        }
                     ROSE_ASSERT(templateDeclaration->get_definingDeclaration() != NULL);
 #else
-                 // DQ (3/4/2007): Changed this test to avoid resetting the defiing declaration, it is OK for the defining 
+                 // DQ (3/4/2007): Changed this test to avoid resetting the defiing declaration, it is OK for the defining
                  // template declaration to not be present (since it can be nested in another outer template class declaration).
                     if (templateDeclaration->get_definingDeclaration() == NULL && templateDeclaration->get_firstNondefiningDeclaration() == NULL)
                        {
@@ -695,7 +697,7 @@ FixupAstDefiningAndNondefiningDeclarations::visit ( SgNode* node )
 
                break;
              }
-           
+
           default:
              {
             // Nothing to do here!

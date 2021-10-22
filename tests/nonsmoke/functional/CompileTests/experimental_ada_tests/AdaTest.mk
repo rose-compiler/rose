@@ -114,6 +114,7 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
 
 ADA_TRANSLATOR_FAILING_TESTS :=        \
   access_variable.adb                  \
+  ada_packages.adb                     \ 
   allocators.adb                       \
   accept_statement.adb                 \
   accept_statement_task_decl.adb       \

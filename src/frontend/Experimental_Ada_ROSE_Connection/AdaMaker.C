@@ -591,7 +591,7 @@ mkAdaPackageSpecDecl(const std::string& name, SgScopeStatement& scope)
   SgAdaPackageSpec&     pkgdef = mkScopeStmt<SgAdaPackageSpec>();
   SgAdaPackageSpecDecl& sgnode = mkLocatedNode<SgAdaPackageSpecDecl>(name, nullptr);
 
-  sgnode.set_parent(&scope);
+  sgnode.set_scope(&scope); // analogous to SgClassDeclaration::set_scope .. really needed?
   sgnode.set_firstNondefiningDeclaration(&sgnode);
 
   sg::linkParentChild(sgnode, pkgdef, &SgAdaPackageSpecDecl::set_definition);
@@ -694,13 +694,12 @@ mkAdaRenamingDecl(const std::string& name, SgInitializedName& ini, SgScopeStatem
 
 
 SgAdaPackageBodyDecl&
-mkAdaPackageBodyDecl(SgAdaPackageSpecDecl& specdcl, SgScopeStatement& scope)
+mkAdaPackageBodyDecl(SgAdaPackageSpecDecl& specdcl)
 {
   SgAdaPackageBody&     pkgbody = mkScopeStmt<SgAdaPackageBody>();
   SgAdaPackageBodyDecl& sgnode  = mkLocatedNode<SgAdaPackageBodyDecl>(specdcl.get_name(), &pkgbody);
 
   pkgbody.set_parent(&sgnode);
-  sgnode.set_parent(&scope);
   sgnode.set_firstNondefiningDeclaration(&sgnode);
 
   SgAdaPackageSpec&     pkgspec = SG_DEREF( specdcl.get_definition() );
@@ -709,9 +708,10 @@ mkAdaPackageBodyDecl(SgAdaPackageSpecDecl& specdcl, SgScopeStatement& scope)
   pkgbody.set_spec(&pkgspec);
 
   // \todo make sure assertion holds
-  // ADA_ASSERT(scope.symbol_exists(specdcl.get_name()));
-  if (!scope.symbol_exists(specdcl.get_name()))
-    scope.insert_symbol(specdcl.get_name(), &mkBareNode<SgAdaPackageSymbol>(&sgnode));
+
+  ADA_ASSERT(SG_DEREF(specdcl.get_scope()).symbol_exists(specdcl.get_name()));
+  //~ if (!scope.symbol_exists(specdcl.get_name()))
+    //~ scope.insert_symbol(specdcl.get_name(), &mkBareNode<SgAdaPackageSymbol>(&sgnode));
 
   return sgnode;
 }

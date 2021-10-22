@@ -445,10 +445,16 @@ namespace
       void handle(SgFunctionDeclaration& n)    { res = sb::buildFunctionRefExp(&n); }
       void handle(SgAdaRenamingDecl& n)        { res = &mkAdaRenamingRefExp(n); }
       void handle(SgAdaTaskSpecDecl& n)        { res = &mkAdaTaskRefExp(n); }
-      //~ void handle(SgAdaTaskTypeDecl& n) { res = &mkAdaTaskRefExp(n); }
       void handle(SgAdaGenericDecl& n)         { res = &mkAdaUnitRefExp(n); }
       void handle(SgAdaGenericInstanceDecl& n) { res = &mkAdaUnitRefExp(n); }
       void handle(SgAdaPackageSpecDecl& n)     { res = &mkAdaUnitRefExp(n); }
+
+      void handle(SgAdaTaskTypeDecl& n)
+      {
+        SgAdaTaskType& ty = mkAdaTaskType(n);
+
+        res = sb::buildTypeExpression(&ty);
+      }
 
     private:
       AstContext ctx;

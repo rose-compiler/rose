@@ -1064,6 +1064,7 @@ namespace sg
     GEN_VISIT(SgAdaDiscriminatedType)
     GEN_VISIT(SgAdaDiscriminantConstraint)
     GEN_VISIT(SgAdaVariantFieldDecl)
+    GEN_VISIT(SgAdaGenericSymbol)
 
 #if WITH_BINARY_NODES
     GEN_VISIT(SgAsmNullInstruction)
