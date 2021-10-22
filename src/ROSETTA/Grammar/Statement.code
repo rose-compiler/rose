@@ -10043,11 +10043,12 @@ SgDeclarationStatement::hasAssociatedSymbol() const
   // not associated symbol in the symbol table. SgVariableDeclaration contain a list of
   // SgInitializedName objects and those have associated symbols, the SgVariableDeclaration
   // does not have an associated symbol.
-     if (isSgFunctionParameterList(this) != NULL ||
-         isSgCtorInitializerList(this)   != NULL ||
-         isSgPragmaDeclaration(this)     != NULL ||
-         isSgVariableDeclaration(this)   != NULL ||
-         isSgVariableDefinition(this)    != NULL )
+     if (isSgFunctionParameterList(this)    != NULL ||
+         isSgCtorInitializerList(this)      != NULL ||
+         isSgAdaDiscriminatedTypeDecl(this) != NULL || /* PP: 10/21/21 experimental */
+         isSgPragmaDeclaration(this)        != NULL ||
+         isSgVariableDeclaration(this)      != NULL ||
+         isSgVariableDefinition(this)       != NULL )
         {
           returnValue = false;
         }
