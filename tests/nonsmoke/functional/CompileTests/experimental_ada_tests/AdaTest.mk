@@ -178,7 +178,8 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   unknown_discriminant.ads             \
   uppercase.adb
 
-ADA_TRANSLATOR_PENDING_TESTS :=        
+ADA_TRANSLATOR_PENDING_TESTS :=       \
+  formal_procedure_declaration.ads
 
 # defines tests that are fully supported by ROSE
 ROSE_PASSING_ADA_TESTS :=                           \
