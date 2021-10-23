@@ -12,7 +12,7 @@
 
 namespace CodeThorn {
 
-  enum EdgeType { EDGE_UNKNOWN=0, EDGE_FORWARD, EDGE_BACKWARD, EDGE_TRUE, EDGE_FALSE, EDGE_LOCAL, EDGE_CALL, EDGE_CALLRETURN, EDGE_EXTERNAL, EDGE_PATH };
+  enum EdgeType { EDGE_UNKNOWN=0, EDGE_FORWARD, EDGE_BACKWARD, EDGE_TRUE, EDGE_FALSE, EDGE_LOCAL, EDGE_CALL, EDGE_CALLRETURN, EDGE_EXTERNAL, EDGE_PATH, EDGE_TYPE_NUM };
 
   class Edge;
   typedef std::set<Edge> EdgeSet;
@@ -52,10 +52,10 @@ namespace CodeThorn {
     void addTypes(std::set<EdgeType> ets);
     void removeType(EdgeType et);
     EdgeTypeSet types() const;
-    long typesCode() const;
+    size_t typesCode() const;
     std::string color() const;
     std::string dotEdgeStyle() const;
-    long hash() const;
+    size_t hash() const;
     Label source() const { return _source; }
     Label target() const { return _target; }
     EdgeTypeSet getTypes() const { return _types; }

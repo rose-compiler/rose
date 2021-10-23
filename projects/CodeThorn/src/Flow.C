@@ -256,21 +256,16 @@ bool CodeThorn::operator<(const Edge& e1, const Edge& e2) {
   return e1.getAnnotation()<e2.getAnnotation();
 }
 
-long Edge::typesCode() const {
-  long h=1;
+size_t Edge::typesCode() const {
+  size_t h=1;
+  ROSE_ASSERT(EDGE_TYPE_NUM<sizeof(size_t)*8);
   for(set<EdgeType>::iterator i=_types.begin();i!=_types.end();++i) {
     h+=(1<<*i);
-  }
-  int m = _types.size();
-  int k = 0;
-  for (string::iterator i=getAnnotation().begin(); i!=getAnnotation().end(); ++i) {
-    h+=(static_cast<unsigned char>(*i)<<(k*8 + m));
-    k++;
   }
   return h;
 }
 
-long Edge::hash() const {
+size_t Edge::hash() const {
   return typesCode();
 }
 
