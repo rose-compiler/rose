@@ -642,6 +642,7 @@ testSymReadWrite.passed: testSymReadWrite.conf testSymReadWrite.ans testSymReadW
 		TITLE="symbolic semantic domain read/write [$@]"	\
 		DISABLED="$$(./conditionalDisable)"			\
 		INPUT=memreadwrite					\
+		FILTER="perl -p semanticsFilter"			\
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"				\
 		$< $@
 
