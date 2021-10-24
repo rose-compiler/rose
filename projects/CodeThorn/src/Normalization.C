@@ -1624,7 +1624,7 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
         ) {
       if(SgType* strippedType = isSgType(expressionType->stripType(SgType::STRIP_TYPEDEF_TYPE))) {
         if(SgArrayType* arrayType = isSgArrayType(strippedType)) {
-          strippedType = arrayType->get_base_type();
+          //strippedType = arrayType->get_base_type();
         }
         variableType = SageBuilder::buildReferenceType(strippedType);
       }
