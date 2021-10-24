@@ -96,7 +96,6 @@ std::string CodeThorn::CTAnalysis::hashSetConsistencyReport() {
       ss<<"FAIL("<<pstateWarnings<<")";
     else
       ss<<"PASS";
-    ss<<endl;
   }
 
   {
