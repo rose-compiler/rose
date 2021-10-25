@@ -245,10 +245,10 @@ void runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* anal
   }
   double totalLtlRunTime =  infPathsOnlyTime + stdIoOnlyTime + spotLtlAnalysisTime;
 
-  double arrayUpdateExtractionRunTime=0.0;
-  double arrayUpdateSsaNumberingRunTime=0.0;
-  double sortingAndIORunTime=0.0;
-  double verifyUpdateSequenceRaceConditionRunTime=0.0;
+  //double arrayUpdateExtractionRunTime=0.0;
+  //double arrayUpdateSsaNumberingRunTime=0.0;
+  //double sortingAndIORunTime=0.0;
+  //double verifyUpdateSequenceRaceConditionRunTime=0.0;
 
   int verifyUpdateSequenceRaceConditionsResult=-1;
   int verifyUpdateSequenceRaceConditionsTotalLoopNum=-1;
@@ -257,8 +257,8 @@ void runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* anal
   /* Data race detection */
   CodeThorn::CodeThornLib::optionallyRunDataRaceDetection(ctOpt,analyzer);
 
-  double overallTime=0.0; //totalRunTime + tc.totalInputTracesTime + totalLtlRunTime;
-  analyzer->printAnalyzerStatistics(overallTime, "STG generation and assertion analysis complete");
+  double overallTime=totalLtlRunTime; //totalRunTime + tc.totalInputTracesTime + totalLtlRunTime;
+  analyzer->printAnalyzerStatistics(/* not used */overallTime, "STG generation and assertion analysis complete");
 
   if(ctOpt.csvStatsFileName.size()>0) {
     string filename=ctOpt.csvStatsFileName;

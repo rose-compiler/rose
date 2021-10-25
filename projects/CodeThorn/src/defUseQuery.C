@@ -165,15 +165,15 @@ std::string DefUseVarsInfo::str(VariableIdMapping& vidm)
 void DefUseVarsInfo::addAllArrayElements(SgInitializedName* array_name, VariableIdMapping& vidm, bool def)
 {
   assert(array_name);
-  VariableId array_var_id = vidm.variableId(array_name);
+  //VariableId array_var_id = vidm.variableId(array_name);
   SgArrayType* array_type = isSgArrayType(array_name->get_type());
   if (!array_type)
     return;
   int elements = vidm.getArrayElementCount(array_type);
   if (!elements)
     elements = vidm.getArrayDimensionsFromInitializer(isSgAggregateInitializer(array_name->get_initializer()));
-  VarsInfo& info = (def ? def_vars_info : use_vars_info);
-  VariableIdTypeInfo sgn_type_info_elem = getVariableIdTypeInfo(array_var_id, vidm);
+  //VarsInfo& info = (def ? def_vars_info : use_vars_info);
+  //VariableIdTypeInfo sgn_type_info_elem = getVariableIdTypeInfo(array_var_id, vidm);
   for (int e = 0; e < elements; e++) {
     cout<<"Error: DefUseVarsInfo::addAllArrayElements: outdated use of array element ids. Needs to be updated to abstract values."<<endl;
     exit(1);
