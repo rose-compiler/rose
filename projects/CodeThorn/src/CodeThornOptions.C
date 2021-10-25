@@ -86,6 +86,18 @@ bool CodeThornOptions::getAnalysisSelectionFlag(CodeThorn::AnalysisSelector asel
   }
 }
 
+void CodeThornOptions::setAnalysisSelectionFlag(CodeThorn::AnalysisSelector asel, bool flag) {
+  switch(asel) {
+  case CodeThorn::ANALYSIS_NULL_POINTER: nullPointerAnalysis=flag;break;
+  case CodeThorn::ANALYSIS_OUT_OF_BOUNDS: outOfBoundsAnalysis=flag;break;
+  case CodeThorn::ANALYSIS_UNINITIALIZED: uninitializedMemoryAnalysis=flag;break;
+  case CodeThorn::ANALYSIS_DEAD_CODE: deadCodeAnalysis=flag;break;
+  case CodeThorn::ANALYSIS_OPAQUE_PREDICATE: constantConditionAnalysis=flag;break;
+  default:
+    throw CodeThorn::Exception("getAnalysisSelectionFlag: unknown analysis selector.");
+  }
+}
+
 std::string CodeThornOptions::getAnalysisReportFileName(CodeThorn::AnalysisSelector asel) {
   switch(asel) {
   case CodeThorn::ANALYSIS_NULL_POINTER: return nullPointerAnalysisFileName;

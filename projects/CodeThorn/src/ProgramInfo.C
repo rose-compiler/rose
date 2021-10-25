@@ -55,7 +55,7 @@ void ProgramInfo::compute() {
   ROSE_ASSERT(_variableIdMapping);
   _validData=true;
   for (auto node : ast) {
-    if(auto funDef=isSgFunctionDefinition(node)) {
+    if(isSgFunctionDefinition(node)) {
       count[numFunDefs]++;
     } else if(SgFunctionCallExp* fc=isSgFunctionCallExp(node)) {
       if(FunctionCallMapping::isAstFunctionPointerCall(fc)) {

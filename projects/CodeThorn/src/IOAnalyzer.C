@@ -256,17 +256,14 @@ void IOAnalyzer::resetAnalysis() {
   _prevStateSetSizeResource = 0;
 }
 
-void IOAnalyzer::printAnalyzerStatistics(double totalRunTime, string title) {
+void IOAnalyzer::printAnalyzerStatistics(/* not used */ double totalRunTime, string title) {
   long pstateSetSize=getPStateSet()->size();
-  long pstateSetBytes=getPStateSet()->memorySize();
   long pstateSetMaxCollisions=getPStateSet()->maxCollisions();
   long pstateSetLoadFactor=getPStateSet()->loadFactor();
   long eStateSetSize=getEStateSet()->size();
-  long eStateSetBytes=getEStateSet()->memorySize();
   long eStateSetMaxCollisions=getEStateSet()->maxCollisions();
   double eStateSetLoadFactor=getEStateSet()->loadFactor();
   long transitionGraphSize=getTransitionGraph()->size();
-  long transitionGraphBytes=transitionGraphSize*sizeof(Transition);
 
   long numOfStdinEStates=(getEStateSet()->numberOfIoTypeEStates(InputOutput::STDIN_VAR));
   long numOfStdoutVarEStates=(getEStateSet()->numberOfIoTypeEStates(InputOutput::STDOUT_VAR));
@@ -275,8 +272,6 @@ void IOAnalyzer::printAnalyzerStatistics(double totalRunTime, string title) {
   long numOfFailedAssertEStates=(getEStateSet()->numberOfIoTypeEStates(InputOutput::FAILED_ASSERT));
   long numOfConstEStates=(getEStateSet()->numberOfConstEStates(getVariableIdMapping()));
   //long numOfStdoutEStates=numOfStdoutVarEStates+numOfStdoutConstEStates;
-
-  long totalMemory=pstateSetBytes+eStateSetBytes+transitionGraphBytes;
 
   stringstream ss;
   ss <<color("white");
@@ -290,16 +285,13 @@ void IOAnalyzer::printAnalyzerStatistics(double totalRunTime, string title) {
   ss << "Number of failed-assert-estates: "<<color("cyan")<<numOfFailedAssertEStates<<color("white")<<endl;
   ss << "Number of const estates        : "<<color("cyan")<<numOfConstEStates<<color("white")<<endl;
   ss << "=============================================================="<<endl;
-  ss << "Number of pstates              : "<<color("magenta")<<pstateSetSize<<color("white")<<" (memory: "<<color("magenta")<<pstateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<pstateSetLoadFactor<<  "/"<<pstateSetMaxCollisions<<")"<<endl;
-  ss << "Number of estates              : "<<color("cyan")<<eStateSetSize<<color("white")<<" (memory: "<<color("cyan")<<eStateSetBytes<<color("white")<<" bytes)"<<" ("<<""<<eStateSetLoadFactor<<  "/"<<eStateSetMaxCollisions<<")"<<endl;
-  ss << "Number of transitions          : "<<color("blue")<<transitionGraphSize<<color("white")<<" (memory: "<<color("blue")<<transitionGraphBytes<<color("white")<<" bytes)"<<endl;
+  ss << "Number of pstates              : "<<color("magenta")<<pstateSetSize<<color("white")<<" ("<<""<<pstateSetLoadFactor<<  "/"<<pstateSetMaxCollisions<<")"<<endl;
+  ss << "Number of estates              : "<<color("cyan")<<eStateSetSize<<color("white")<<" ("<<""<<eStateSetLoadFactor<<  "/"<<eStateSetMaxCollisions<<")"<<endl;
+  ss << "Number of transitions          : "<<color("blue")<<transitionGraphSize<<color("white")<<" bytes)"<<endl;
   if(getNumberOfThreadsToUse()==1 && getSolver()->getId()==5 && getExplorationMode()==EXPL_LOOP_AWARE) {
     ss << "Number of iterations           : "<<getIterations()<<"-"<<getApproximatedIterations()<<endl;
   }
   ss << "=============================================================="<<endl;
-  // ss << "Memory total                   : "<<color("green")<<totalMemory<<" bytes"<<color("white")<<endl;
-  //ss << "TimeMeasurement total          : "<<color("green")<<CodeThorn::readableRunTimeFromMilliSeconds(totalRunTime)<<color("white")<<endl;
-  //ss << "=============================================================="<<endl;
   ss <<color("normal");
   printStatusMessage(ss.str());
 }

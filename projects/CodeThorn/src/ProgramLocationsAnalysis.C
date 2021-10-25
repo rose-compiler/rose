@@ -68,14 +68,13 @@ LabelSet CodeThorn::ProgramLocationsAnalysis::arrayAccessLocations(Labeler& labe
 
 LabelSet CodeThorn::ProgramLocationsAnalysis::readAccessLocations(Labeler& labeler) {
   LabelSet labSet;
-  std::int32_t num=0;
   for(auto lab : labeler) {
     SgNode* node=labeler.getNode(lab);
     RoseAst stmtAst(node);
     for(auto i=stmtAst.begin();i!=stmtAst.end();++i) {
       if(SgAssignOp* assignOp=isSgAssignOp(*i)) {
         SgExpression* rhs=assignOp->get_rhs_operand();
-        RoseAst rhsAst(node);
+        RoseAst rhsAst(rhs); // MS: bugfix node=>rhs (unused var)
         for(auto rhsNode : rhsAst) {
           if(isSgVarRefExp(rhsNode)) {
             labSet.insert(lab);

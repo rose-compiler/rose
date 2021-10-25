@@ -396,7 +396,6 @@ AbstractValue PState::varValue(AbstractValue memLoc) const {
     // reading from set of values, combined all and return
     AbstractValue readSummary; // defaults to bot
     AbstractValueSet& set=*memLoc.getAbstractValueSet();
-    bool moreThanOneElement=set.size()>1;
     for(auto memLoc : set) {
       AbstractValue av=readFromMemoryLocation(memLoc); // indirect recursive cal
       if(av.isPtrSet()) {

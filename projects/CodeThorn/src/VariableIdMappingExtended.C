@@ -19,9 +19,9 @@ namespace CodeThorn {
       _typeSize[type]=unknownSizeValue();
     for(auto type:_memPoolTraversal.arrayTypes)
       _typeSize[type]=unknownSizeValue();
-    for(auto type:_memPoolTraversal.builtInTypes) {
+    //for(auto type:_memPoolTraversal.builtInTypes) {
       //_typeSize[type]=unknownSizeValue();
-    }
+    //}
   }
 
   void VariableIdMappingExtended::computeTypeSizes() {
@@ -587,13 +587,14 @@ namespace CodeThorn {
       setTypeSize(type,typeSize);
       setTotalSize(varId,typeSize);
     } else {
-      //cout<<"DEBUG: register built-in type : "<<type->unparseToString()<<endl;
+      //cout<<"DEBUG: register variable with built-in type : "<<type->unparseToString()<<":"<<varIdInfo->getVarDecl()->unparseToString()<<endl;
       // built-in type
       getVariableIdInfoPtr(varId)->aggregateType=AT_SINGLE;
       BuiltInType biType=TypeSizeMapping::determineBuiltInTypeId(type);
       setElementSize(varId,typeSizeMapping.getBuiltInTypeSize(biType));
       setNumberOfElements(varId,1);
       setTotalSize(varId,getElementSize(varId));
+      //cout<<"DEBUG: total size: "<<getVariableIdInfoPtr(varId)->totalSize<<endl;
     }
   }
 
@@ -687,12 +688,11 @@ namespace CodeThorn {
       RoseAst ast(*k);
       ast.setWithTemplates(true);
       for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
-        CodeThorn::TypeSize totalSize=0;
         if(SgVariableDeclaration* varDecl=isSgVariableDeclaration(*i)) {
           if(isMemberVariableDeclaration(varDecl))
             continue;
 	  Sg_File_Info* fi=varDecl->get_file_info();
-	  logger[TRACE]<<"DEBUG: C6.2.1.2: varDecl: "<<varDecl<<" parent:"<<varDecl->get_parent()<<" file_id:"<<fi->get_file_id()<<" AST:"<<AstTerm::astTermWithNullValuesToString(varDecl)<<endl;
+	  logger[TRACE]<<"DEBUG: varDecl: "<<varDecl<<" parent:"<<varDecl->get_parent()<<" file_id:"<<fi->get_file_id()<<" AST:"<<AstTerm::astTermWithNullValuesToString(varDecl)<<endl;
           addVariableDeclaration(varDecl);
           logger[TRACE]<<"DEBUG: registering var decl: "<<++numVarDecls<<":"<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<":"<<varDecl->unparseToString()<<endl;
         }
@@ -1099,7 +1099,7 @@ namespace CodeThorn {
       ss<<","<<"<non-symbol-string-literal-id>";
     } else if(isTemporaryVariableId(varId)) {
       ss<<","<<"<non-symbol-memory-region-id>";
-    } else if(SgSymbol* sym=getSymbol(varId)) {
+    } else if(getSymbol(varId)) {
       ss<<","<<variableName(varId);
       ss<<",type:"<<getType(varId)->unparseToString();
     } else {

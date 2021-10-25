@@ -669,8 +669,8 @@ void CodeThorn::CTAnalysis::runAnalysisPhase2Sub1(TimingCollector& tc) {
       if(_ctOpt.contextSensitive) {
         cout<<"STATUS: context sensitive analysis with call string length "<<_ctOpt.callStringLength<<"."<<endl;
       }
-      cout<<"STATS: max time   (threshold): "<<CodeThorn::readableRunTimeFromSeconds(_ctOpt.maxTime)<<endl;
-      cout<<"STATS: max memory (threshold): "<<_ctOpt.maxMemory<<endl;
+      cout<<"STATS: max time   (threshold): "<<((_ctOpt.maxTime!=-1)?CodeThorn::readableRunTimeFromSeconds(_ctOpt.maxTime):string("no limit"))<<endl;
+      cout<<"STATS: max memory (threshold): "<<((_ctOpt.maxMemory!=-1)?(std::to_string(_ctOpt.maxMemory)+" bytes"):string("no limit"))<<endl;
     }
     if(!this->getModeLTLDriven() && _ctOpt.z3BasedReachabilityAnalysis==false && _ctOpt.ssa==false) {
       switch(_ctOpt.abstractionMode) {

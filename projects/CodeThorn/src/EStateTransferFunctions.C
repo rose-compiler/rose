@@ -1185,7 +1185,7 @@ namespace CodeThorn {
     }
     // has aggregate initializer
     if(SgAggregateInitializer* aggregateInitializer=isSgAggregateInitializer(initializer)) {
-      if(SgArrayType* arrayType=isSgArrayType(aggregateInitializer->get_type())) {
+      if(isSgArrayType(aggregateInitializer->get_type())) {
 	// only set size from aggregate initializer if not already determined
 	if(getVariableIdMapping()->getNumberOfElements(initDeclVarId)==getVariableIdMapping()->unknownSizeValue()) {
 	  SAWYER_MESG(logger[TRACE])<<"Obtaining number of array elements from initializer in analyze declaration."<<endl;
@@ -1244,7 +1244,7 @@ namespace CodeThorn {
       }
       // set type info for initDeclVarId
       //getVariableIdMapping()->setNumberOfElements(initDeclVarId,1); // single variable
-      SgType* variableType=initializer->get_type();
+      //SgType* variableType=initializer->get_type();
       //setElementSize(initDeclVarId,variableType);
 
       // build lhs-value dependent on type of declared variable
@@ -1272,7 +1272,7 @@ namespace CodeThorn {
     
     SgArrayType* arrayType=isSgArrayType(initName->get_type());
     if(arrayType) {
-      SgType* arrayElementType=arrayType->get_base_type();
+      //SgType* arrayElementType=arrayType->get_base_type();
       //setElementSize(initDeclVarId,arrayElementType); // DO NOT OVERRIDE
       int numElements=getVariableIdMapping()->getArrayElementCount(arrayType);
       if(numElements==0) {
@@ -1310,7 +1310,7 @@ namespace CodeThorn {
     } else {
       // set type info for initDeclVarId
       getVariableIdMapping()->setNumberOfElements(initDeclVarId,1); // single variable
-      SgType* variableType=initName->get_type();
+      //SgType* variableType=initName->get_type();
       //setElementSize(initDeclVarId,variableType); DO NOT OVERRIDE
     }
 
@@ -1456,7 +1456,7 @@ namespace CodeThorn {
   }
   
   void EStateTransferFunctions::initializeGlobalVariables(SgProject* root, EState& estate) {
-    if(SgProject* project=isSgProject(root)) {
+    if(isSgProject(root)) {
       ROSE_ASSERT(getVariableIdMapping());
       CodeThorn::VariableIdSet setOfGlobalVars=getVariableIdMapping()->getSetOfGlobalVarIds();
       std::set<VariableId> setOfUsedGlobalVars=determineUsedGlobalVars(root,setOfGlobalVars);
@@ -1641,9 +1641,8 @@ namespace CodeThorn {
       } else if(getVariableIdMapping()->isOfPointerType(lhsVar)) {
 	// assume here that only arrays (pointers to arrays) are assigned
 	memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,rhsRes.result)));
-      } else if(SgTypeString* lhsTypeTypeString=isSgTypeString(getVariableIdMapping()->getType(lhsVar))) {
+      } else if(isSgTypeString(getVariableIdMapping()->getType(lhsVar))) {
 	// assume here that only arrays (pointers to arrays) are assigned
-	SAWYER_MESG(logger[WARN])<<"LHS assignment: typestring band aid"<<endl;
 	memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,rhsRes.result)));
       } else if(getVariableIdMapping()->isOfReferenceType(lhsVar)) {
 	memoryUpdateList.push_back(make_pair(estate,make_pair(lhsVar,rhsRes.result)));
@@ -1727,7 +1726,7 @@ namespace CodeThorn {
 	  }
           //cout<<"DEBUG: P10:"<<arrayPtrValue.toString()<<":"<<indexValue.toString()<<":"<<elementSize.toString()<<":"<<arrayElementAddr.toString()<<endl;
 	  memoryUpdateList.push_back(make_pair(estate,make_pair(arrayElementAddr,rhsRes.result)));
-	} else if(SgAddressOfOp* addressOfOp=isSgAddressOfOp(lhs)) {
+	} else if(isSgAddressOfOp(lhs)) {
 	  // address of op, need to compute an l-value and use as address
 	} else {
 	  SingleEvalResult arrExpRes=evaluateExpression(arrExp,currentEState);
@@ -1750,6 +1749,7 @@ namespace CodeThorn {
       SAWYER_MESG(logger[TRACE])<<"lhsPointerValue: "<<lhsPointerValue.toString(getVariableIdMapping())<<endl;
       if(lhsPointerValue.isNullPtr()) {
 	recordDefinitiveNullPointerDereferenceLocation(estatePtr->label());
+        notifyReadWriteListenersOnReading(estatePtr->label(),estatePtr->pstate(),lhsPointerValue);
 	//return estateList;
 	if(_analyzer->getOptionsRef().nullPointerDereferenceKeepGoing) {
 	  // no state can follow, but as requested keep going without effect
@@ -1762,7 +1762,7 @@ namespace CodeThorn {
 	// specific case a pointer expr evaluates to top. Dereference operation
 	// potentially modifies any memory location in the state.
 	AbstractValue lhsAddress=lhsPointerValue;
-	memoryUpdateList.push_back(make_pair(*estatePtr,make_pair(lhsAddress,rhsRes.result))); // lhsAddress is TOP!!!
+	memoryUpdateList.push_back(make_pair(*estatePtr,make_pair(lhsAddress,rhsRes.result))); // lhsAddress is top (must NOT be notified, because entered in updateList)
       } else if(!(lhsPointerValue.isPtr())) {
 	// changed isUndefined to isTop (2/17/20)
 	if(lhsPointerValue.isTop() && _analyzer->getIgnoreUndefinedDereference()) {
@@ -2251,7 +2251,7 @@ namespace CodeThorn {
     SAWYER_MESG(logger[TRACE])<<"evalExp at: "<<node->unparseToString()<<endl;
     
     if(SgStatementExpression* gnuExtensionStmtExpr=isSgStatementExpression(node)) {
-      //cout<<"WARNING: ignoring GNU extension StmtExpr."<<endl;
+      warning(gnuExtensionStmtExpr,"ignoring GNU extension StmtExpr:");
       res.result=AbstractValue::createTop();
       return res;
     }
@@ -2822,8 +2822,8 @@ namespace CodeThorn {
 	    // TODO: PRECISION 1
 	    res.result=CodeThorn::Top();
 	    recordPotentialNullPointerDereferenceLocation(estate.label()); // NP_SOUNDNESS
-	    //if(_analyzer->getAbstractionMode()!=3) recordPotentialOutOfBoundsAccessLocation(estate.label());
 	    recordPotentialViolatingLocation(ANALYSIS_UNINITIALIZED,estate.label()); // UNINIT_SOUNDNESS
+	    notifyReadWriteListenersOnReading(estate.label(),estate.pstate(),arrayPtrValue);
 	    return res;
 	  } else {
 	    res.result=CodeThorn::Top();
@@ -3049,6 +3049,7 @@ namespace CodeThorn {
       return res;
     } else {
       SingleEvalResult empty;
+      notifyReadWriteListenersOnReading(estate.label(),estate.pstate(),referencedAddress);
       empty.init(estate,CodeThorn::Bot()); // indicates unreachable, could also mark state as unreachable
       return empty;
     }
@@ -3093,7 +3094,7 @@ namespace CodeThorn {
     return res;
   }
 
-  // returns is true if execution should continue, otherwise false
+  // returns true if execution should continue, otherwise false
   bool EStateTransferFunctions::checkAndRecordNullPointer(AbstractValue derefOperandValue, Label label) {
     if(derefOperandValue.isTop()) {
       recordPotentialNullPointerDereferenceLocation(label);
@@ -3151,6 +3152,8 @@ namespace CodeThorn {
       // the generated error state.
       // TODO: create null-pointer deref error state
       SingleEvalResult empty;
+      notifyReadWriteListenersOnReading(estate.label(),estate.pstate(),derefOperandValue);
+      empty.init(estate,CodeThorn::Bot()); // indicates unreachable, could also mark state as unreachable
       return empty;
     }
   }

@@ -11,7 +11,7 @@ using namespace CodeThorn;
   * \author Markus Schordan
   * \date 2012.
  */
-Transition::Transition() {}
+
 Transition::Transition(const EState* source,Edge edge, const EState* target)
   :source(source),edge(edge),target(target) {
 }
