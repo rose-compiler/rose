@@ -587,13 +587,14 @@ namespace CodeThorn {
       setTypeSize(type,typeSize);
       setTotalSize(varId,typeSize);
     } else {
-      //cout<<"DEBUG: register built-in type : "<<type->unparseToString()<<endl;
+      //cout<<"DEBUG: register variable with built-in type : "<<type->unparseToString()<<":"<<varIdInfo->getVarDecl()->unparseToString()<<endl;
       // built-in type
       getVariableIdInfoPtr(varId)->aggregateType=AT_SINGLE;
       BuiltInType biType=TypeSizeMapping::determineBuiltInTypeId(type);
       setElementSize(varId,typeSizeMapping.getBuiltInTypeSize(biType));
       setNumberOfElements(varId,1);
       setTotalSize(varId,getElementSize(varId));
+      //cout<<"DEBUG: total size: "<<getVariableIdInfoPtr(varId)->totalSize<<endl;
     }
   }
 

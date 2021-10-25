@@ -1749,6 +1749,7 @@ namespace CodeThorn {
       SAWYER_MESG(logger[TRACE])<<"lhsPointerValue: "<<lhsPointerValue.toString(getVariableIdMapping())<<endl;
       if(lhsPointerValue.isNullPtr()) {
 	recordDefinitiveNullPointerDereferenceLocation(estatePtr->label());
+        notifyReadWriteListenersOnReading(estatePtr->label(),estatePtr->pstate(),lhsPointerValue);
 	//return estateList;
 	if(_analyzer->getOptionsRef().nullPointerDereferenceKeepGoing) {
 	  // no state can follow, but as requested keep going without effect
@@ -1761,7 +1762,7 @@ namespace CodeThorn {
 	// specific case a pointer expr evaluates to top. Dereference operation
 	// potentially modifies any memory location in the state.
 	AbstractValue lhsAddress=lhsPointerValue;
-	memoryUpdateList.push_back(make_pair(*estatePtr,make_pair(lhsAddress,rhsRes.result))); // lhsAddress is TOP!!!
+	memoryUpdateList.push_back(make_pair(*estatePtr,make_pair(lhsAddress,rhsRes.result))); // lhsAddress is top (must NOT be notified, because entered in updateList)
       } else if(!(lhsPointerValue.isPtr())) {
 	// changed isUndefined to isTop (2/17/20)
 	if(lhsPointerValue.isTop() && _analyzer->getIgnoreUndefinedDereference()) {
@@ -2821,8 +2822,8 @@ namespace CodeThorn {
 	    // TODO: PRECISION 1
 	    res.result=CodeThorn::Top();
 	    recordPotentialNullPointerDereferenceLocation(estate.label()); // NP_SOUNDNESS
-	    //if(_analyzer->getAbstractionMode()!=3) recordPotentialOutOfBoundsAccessLocation(estate.label());
 	    recordPotentialViolatingLocation(ANALYSIS_UNINITIALIZED,estate.label()); // UNINIT_SOUNDNESS
+	    notifyReadWriteListenersOnReading(estate.label(),estate.pstate(),arrayPtrValue);
 	    return res;
 	  } else {
 	    res.result=CodeThorn::Top();
@@ -3048,6 +3049,7 @@ namespace CodeThorn {
       return res;
     } else {
       SingleEvalResult empty;
+      notifyReadWriteListenersOnReading(estate.label(),estate.pstate(),referencedAddress);
       empty.init(estate,CodeThorn::Bot()); // indicates unreachable, could also mark state as unreachable
       return empty;
     }
@@ -3092,7 +3094,7 @@ namespace CodeThorn {
     return res;
   }
 
-  // returns is true if execution should continue, otherwise false
+  // returns true if execution should continue, otherwise false
   bool EStateTransferFunctions::checkAndRecordNullPointer(AbstractValue derefOperandValue, Label label) {
     if(derefOperandValue.isTop()) {
       recordPotentialNullPointerDereferenceLocation(label);
@@ -3150,6 +3152,8 @@ namespace CodeThorn {
       // the generated error state.
       // TODO: create null-pointer deref error state
       SingleEvalResult empty;
+      notifyReadWriteListenersOnReading(estate.label(),estate.pstate(),derefOperandValue);
+      empty.init(estate,CodeThorn::Bot()); // indicates unreachable, could also mark state as unreachable
       return empty;
     }
   }
