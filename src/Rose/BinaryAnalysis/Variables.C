@@ -367,14 +367,23 @@ public:
     virtual S2::BaseSemantics::SValuePtr
     readMemory(RegisterDescriptor segreg, const S2::BaseSemantics::SValuePtr &addr, const S2::BaseSemantics::SValuePtr &dflt,
                const S2::BaseSemantics::SValuePtr &cond) override {
-        lookForVariable(addr);
+        if (SgAsmInstruction *insn = currentInstruction()) {
+            SAWYER_MESG(mlog[DEBUG]) <<"    insn " <<StringUtility::addrToString(insn->get_address())
+                                     <<" reads from address: " <<*addr <<"\n";
+
+            lookForVariable(addr);
+        }
         return Super::readMemory(segreg, addr, dflt, cond);
     }
 
     virtual void
     writeMemory(RegisterDescriptor segreg, const S2::BaseSemantics::SValuePtr &addr, const S2::BaseSemantics::SValuePtr &data,
                 const S2::BaseSemantics::SValuePtr &cond) override {
-        lookForVariable(addr);
+        if (SgAsmInstruction *insn = currentInstruction()) {
+            SAWYER_MESG(mlog[DEBUG]) <<"    insn " <<StringUtility::addrToString(insn->get_address())
+                                     <<" writes to address: " <<*addr <<"\n";
+            lookForVariable(addr);
+        }
         return Super::writeMemory(segreg, addr, data, cond);
     }
 
