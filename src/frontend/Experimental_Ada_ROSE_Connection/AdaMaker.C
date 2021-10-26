@@ -1480,6 +1480,100 @@ mkAdaAttributeExp(SgExpression& expr, const std::string& ident, SgExprListExp& a
   return sgnode;
 }
 
+
+namespace
+{
+  SgFunctionParameterTypeList&
+  mkFunctionParameterTypeList()
+  {
+    return mkBareNode<SgFunctionParameterTypeList>();
+  }
+
+  SgType&
+  convertType(SgType& actual, SgType& orig, SgTypedefType& derv)
+  {
+    return &orig == &actual ? derv : actual;
+  }
+
+  struct DeclaredType : sg::DispatchHandler<SgType*>
+  {
+    void handle(SgNode& n, SgNode&) { SG_UNEXPECTED_NODE(n); }
+
+    template <class SageDeclarationStatement>
+    void handle(SageDeclarationStatement& n, SgDeclarationStatement&)
+    {
+      res = n.get_type();
+    }
+
+    template <class SageNode>
+    void handle(SageNode& n)
+    {
+      handle(n, n);
+    }
+  };
+
+  /// replaces the original type of \ref declaredDerivedType with \ref declaredDerivedType in \ref funcTy.
+  /// returns \ref funcTy to indicate an error.
+  SgFunctionType&
+  convertToDerivedType(SgFunctionType& funcTy, SgTypedefType& declaredDerivedType)
+  {
+    SgDeclarationStatement* baseTypeDecl = si::ada::baseDeclaration(declaredDerivedType.get_base_type());
+
+    if (baseTypeDecl == nullptr)
+      return funcTy;
+
+    SgType*              origTypePtr  = sg::dispatch(DeclaredType{}, baseTypeDecl);
+    SgType&              originalType = SG_DEREF(origTypePtr);
+    SgType&              origRetTy    = SG_DEREF(funcTy.get_return_type());
+    SgType&              dervRetTy    = convertType(origRetTy, originalType, declaredDerivedType);
+    int                  numUpdTypes  = (&dervRetTy != &origRetTy);
+    std::vector<SgType*> newTypeList;
+
+    for (SgType* origArgTy : funcTy.get_arguments())
+    {
+      SgType* newArgTy = &convertType(SG_DEREF(origArgTy), originalType, declaredDerivedType);
+
+      newTypeList.push_back(newArgTy);
+      if (newArgTy != origArgTy) ++numUpdTypes;
+    }
+
+    // only create new nodes if everything worked
+    if (numUpdTypes == 0)
+      return funcTy;
+
+    SgFunctionParameterTypeList& paramTyLst  = mkFunctionParameterTypeList();
+
+    // \todo could we just swap the lists?
+    for (SgType* argTy : newTypeList)
+      paramTyLst.append_argument(argTy);
+
+    return SG_DEREF( sb::buildFunctionType(&dervRetTy, &paramTyLst) );
+  }
+}
+
+
+SgAdaInheritedFunctionSymbol&
+mkAdaInheritedFunctionSymbol(SgFunctionDeclaration& fn, SgTypedefType& declaredDerivedType, SgScopeStatement& scope)
+{
+  SgFunctionType&               functy = SG_DEREF(fn.get_type());
+  SgFunctionType&               dervty = convertToDerivedType(functy, declaredDerivedType);
+
+  if (&functy == &dervty)
+  {
+    // \todo in a first step, just report the errors in the log.
+    //       => fix this issues for all ROSE and ACATS tests.
+    logError() << "Inherited subroutine w/o type modification: " << fn.get_name()
+               << std::endl;
+  }
+
+  SgAdaInheritedFunctionSymbol& sgnode = mkBareNode<SgAdaInheritedFunctionSymbol>(&fn, &dervty);
+
+  scope.insert_symbol(fn.get_name(), &sgnode);
+  sgnode.set_parent(&scope);
+  return sgnode;
+}
+
+
 //
 // specialized templates
 

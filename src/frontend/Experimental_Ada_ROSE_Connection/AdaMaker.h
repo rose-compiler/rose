@@ -663,7 +663,17 @@ namespace Ada_ROSE_Translation
   SgIfStmt&
   mkIfStmt();
 
-  // SgExpression& cond, SgStatement& thenBranch, SgStatement* elseBranch_opt);
+  //
+  // special Ada symbols
+
+  /// creates a symbol for the inherited function \ref fn for inherited type \ref declaredDerivedType.
+  ///   adds the symbol to the scope \ref scope of the derived type.
+  SgAdaInheritedFunctionSymbol&
+  mkAdaInheritedFunctionSymbol(SgFunctionDeclaration& fn, SgTypedefType& declaredDerivedType, SgScopeStatement& scope);
+
+  //
+  // conversions
+
 
   /// converts a value of type V to a value of type U via streaming
   /// \tparam  V input value type

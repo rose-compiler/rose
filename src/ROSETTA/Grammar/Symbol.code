@@ -83,6 +83,11 @@ HEADER_LABEL_SYMBOL_START
 
 HEADER_LABEL_SYMBOL_END
 
+HEADER_ADA_INHERITED_FUNCTION_SYMBOL_START
+  //! returns the scope where the inherited function is implicitly defined.
+  SgScopeStatement* get_scope() const override;
+HEADER_ADA_INHERITED_FUNCTION_SYMBOL_END
+
 
 HEADER_JAVA_LABEL_SYMBOL_START
 // DQ (9/9/2011): Not clear yet what member functions we might require.
@@ -1491,7 +1496,7 @@ SOURCE_ADA_RENAMING_SYMBOL_START
 SgName
 SgAdaRenamingSymbol::get_name() const
 {
-  SgAdaRenamingDecl* dcl = isSgAdaRenamingDecl(get_declaration());
+  SgAdaRenamingDecl* dcl = get_declaration();
   ROSE_ASSERT(dcl);
 
   return dcl->get_name();
@@ -1503,6 +1508,40 @@ SgAdaRenamingSymbol::get_symbol_basis() const
   return get_declaration();
 }
 SOURCE_ADA_RENAMING_SYMBOL_END
+
+
+SOURCE_ADA_INHERITED_FUNCTION_SYMBOL_START
+SgName
+SgAdaInheritedFunctionSymbol::get_name() const
+{
+  SgFunctionDeclaration* dcl = get_declaration();
+  ROSE_ASSERT(dcl);
+
+  return dcl->get_name();
+}
+
+SgNode*
+SgAdaInheritedFunctionSymbol::get_symbol_basis() const
+{
+  return get_declaration();
+}
+
+SgType*
+SgAdaInheritedFunctionSymbol::get_type() const
+{
+  return get_derivedType();
+}
+
+SgScopeStatement*
+SgAdaInheritedFunctionSymbol::get_scope() const
+{
+  SgScopeStatement* res = isSgScopeStatement(get_parent());
+
+  ROSE_ASSERT(res);
+  return res;
+}
+
+SOURCE_ADA_INHERITED_FUNCTION_SYMBOL_END
 
 
 
