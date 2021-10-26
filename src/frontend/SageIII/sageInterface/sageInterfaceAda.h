@@ -203,6 +203,15 @@ namespace ada
   overridingScope(const SgExprListExp* args, const std::vector<PrimitiveParameterDesc>& primitiveArgs);
   /// @}
 
+  /// finds the type declaration of a type
+  /// \{
+  SgDeclarationStatement*
+  baseDeclaration(SgType& ty);
+
+  SgDeclarationStatement*
+  baseDeclaration(SgType* ty);
+  /// \}
+
   /// returns true, iff \ref fndef is the body of an explicit null procedure
   bool explicitNullProcedure(const SgFunctionDefinition& fndef);
 

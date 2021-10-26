@@ -109,6 +109,10 @@ map_t<AdaIdentifier, SgInitializedName*>& adaExcps();
 /// returns a mapping from string to builtin exception types
 map_t<AdaIdentifier, SgAdaPackageSpecDecl*>& adaPkgs();
 
+/// returns a map that collects inherited function symbols for
+map_t<std::pair<const SgFunctionDeclaration*, const SgTypedefType*>, SgAdaInheritedFunctionSymbol*>&
+inheritedSymbols();
+
 
 //
 // auxiliary functions and types
@@ -444,7 +448,7 @@ namespace
   {
     DclT& node = lookupNode(m, key);
 
-    return SG_ASSERT_TYPE(TgtT, node);
+    return dynamic_cast<TgtT&>(node);
   }
 
   /// retrieves a node from map \ref m with key \ref key if key exists.

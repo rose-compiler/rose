@@ -918,6 +918,7 @@ namespace
       const SgScopeStatement&
       assumedDeclarativeScope(const SgFunctionRefExp& n)
       {
+#if OLD_CODE
         const SgFunctionDeclaration& fundcl = SG_DEREF(n.getAssociatedFunctionDeclaration());
         const SgScopeStatement*      res    = fundcl.get_scope();
         const SgExprListExp*         args   = callArguments(n);
@@ -930,6 +931,10 @@ namespace
 
           if (overridingScope) res = overridingScope;
         }
+#else /* !OLD_CODE */
+        const SgFunctionSymbol& sym = SG_DEREF(n.get_symbol());
+        const SgScopeStatement* res = sym.get_scope();
+#endif /* OLD_CODE */
 
         return SG_DEREF(res);
       }

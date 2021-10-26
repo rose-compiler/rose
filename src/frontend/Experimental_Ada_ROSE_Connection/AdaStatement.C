@@ -1,4 +1,3 @@
-
 #include "sage3basic.h"
 #include "sageGeneric.h"
 
@@ -610,7 +609,7 @@ namespace
   void
   setModifiers(SgDeclarationStatement& dcl, const TypeData& info)
   {
-    setModifiers(dcl, info.hasAbstract, info.hasLimited, info.hasTagged);
+    setModifiers(dcl, info.isAbstract(), info.isLimited(), info.isTagged());
   }
 
   template <class AsisStruct>
@@ -1702,13 +1701,11 @@ namespace
         {
           logKind(stmt.Statement_Kind == An_Entry_Call_Statement ? "An_Entry_Call_Statement" : "A_Procedure_Call_Statement");
 
-          SgExpression&    funrefexp = getExprID(stmt.Called_Name, ctx);
-          ElemIdRange      range  = idRange(stmt.Call_Statement_Parameters);
-          SgExprListExp&   arglst = traverseIDs(range, elemMap(), ArgListCreator{ctx});
-          SgExprStatement& sgnode = SG_DEREF(sb::buildFunctionCallStmt(&funrefexp, &arglst));
-          SgExpression&    call   = SG_DEREF(sgnode.get_expression());
+          SgExpression&    target = getExprID(stmt.Called_Name, ctx);
+          ElemIdRange      args   = idRange(stmt.Call_Statement_Parameters);
+          SgExpression&    call   = createCall(target, args, ctx);
+          SgExprStatement& sgnode = SG_DEREF(sb::buildExprStatement(&call));
 
-          ADA_ASSERT(arglst.get_parent());
           attachSourceLocation(call, elem, ctx);
           completeStmt(sgnode, elem, ctx);
           /* unused fields:
@@ -2212,6 +2209,51 @@ namespace
     }
   }
 
+  struct InheritedSymbolCreator
+  {
+      InheritedSymbolCreator(SgTypedefType& declDervType, AstContext astctx)
+      : declaredDervivedType(declDervType), ctx(astctx)
+      {}
+
+      void operator()(Element_Struct& elem)
+      {
+        SgDeclarationStatement*       fndcl  = findFirst(asisDecls(), elem.ID);
+        SgFunctionDeclaration*        fn     = isSgFunctionDeclaration(fndcl);
+
+        if (fn == nullptr)
+        {
+          logError() << "unable to find function with Asis element ID " << elem.ID << std::endl;
+          return;
+        }
+
+        SgAdaInheritedFunctionSymbol& sgnode = mkAdaInheritedFunctionSymbol(*fn, declaredDervivedType, ctx.scope());
+        const bool inserted = inheritedSymbols().insert(std::make_pair(std::make_pair(fn, &declaredDervivedType), &sgnode)).second;
+
+        ROSE_ASSERT(inserted);
+    }
+
+    private:
+      SgTypedefType& declaredDervivedType;
+      AstContext     ctx;
+  };
+
+  void
+  processInheritedSubprogramsOfDerivedTypes(TypeData& ty, SgDeclarationStatement& dcl, AstContext ctx)
+  {
+    Type_Definition_Struct& tydef = ty.definitionStruct();
+
+    if (tydef.Type_Kind != A_Derived_Type_Definition)
+      return;
+
+    SgTypedefDeclaration&   sgdecl          = SG_DEREF(isSgTypedefDeclaration(&dcl));
+    SgTypedefType&          declDerivedType = SG_DEREF(sgdecl.get_type());
+    ElemIdRange             range           = idRange(tydef.Implicit_Inherited_Subprograms);
+
+    traverseIDs(range, elemMap(), InheritedSymbolCreator{declDerivedType, ctx});
+  }
+
+
+
   SgDeclarationStatement&
   createOpaqueDecl(NameData adaname, Declaration_Struct& decl, Type_Kinds tyKind, AstContext ctx)
   {
@@ -2254,23 +2296,6 @@ namespace
           res = &sgnode;
           break;
         }
-
-  /*
-  Not_A_Type_Definition,                 // An unexpected element
-  A_Derived_Type_Definition,             // 3.4(2)     -> Trait_Kinds
-  A_Derived_Record_Extension_Definition, // 3.4(2)     -> Trait_Kinds
-  An_Enumeration_Type_Definition,        // 3.5.1(2)
-  A_Root_Type_Definition,                // 3.5.4(14), 3.5.6(3)
-  //                                               -> Root_Type_Kinds
-  An_Unconstrained_Array_Definition,     // 3.6(2)
-  A_Constrained_Array_Definition,        // 3.6(2)
-
-  //  //|A2005 start
-  An_Interface_Type_Definition,          // 3.9.4      -> Interface_Kinds
-  //  //|A2005 end
-
-  An_Access_Type_Definition            // 3.10(2)    -> Access_Type_Kinds
-  */
 
       default:
         logWarn() << "unhandled opaque type declaration: " << tyKind
@@ -3184,7 +3209,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         TypeData                ty   = getTypeFoundation(adaname.ident, decl, ctx.scope(scope));
         Element_ID              id   = adaname.id();
         SgDeclarationStatement* nondef = findFirst(asisTypes(), id);
-        SgDeclarationStatement& sgdecl = sg::dispatch(MakeDeclaration(adaname.ident, scope, ty, nondef), ty.n);
+        SgDeclarationStatement& sgdecl = sg::dispatch(MakeDeclaration{adaname.ident, scope, ty, nondef}, &ty.sageNode());
 
         privatize(sgdecl, isPrivate);
         recordNode(asisTypes(), id, sgdecl, nondef != nullptr);
@@ -3194,6 +3219,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         {
           scope.append_statement(&sgdecl);
           ADA_ASSERT(sgdecl.get_parent() == &scope);
+
+          processInheritedSubprogramsOfDerivedTypes(ty, sgdecl, ctx.scope(scope));
         }
         else
         {
@@ -3226,7 +3253,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         Element_ID              id     = adaname.id();
         SgDeclarationStatement* nondef = findFirst(asisTypes(), id);
-        SgDeclarationStatement& sgnode = sg::dispatch(MakeDeclaration(adaname.ident, scope, ty, nondef), ty.n);
+        SgDeclarationStatement& sgnode = sg::dispatch(MakeDeclaration{adaname.ident, scope, ty, nondef}, &ty.sageNode());
 
         setModifiers(sgnode, ty);
 
@@ -3724,10 +3751,15 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ROSE_ABORT();
       }
 
+    case A_Discriminant_Specification:             // 3.7(5)   -> Trait_Kinds
+      {
+        // handled in getDiscriminant
+        ROSE_ABORT();
+      }
+
     case Not_A_Declaration: /* break; */           // An unexpected element
     case A_Protected_Type_Declaration:             // 9.4(2)
     case A_Single_Protected_Declaration:           // 3.3.1(2):9.4(2)
-    case A_Discriminant_Specification:             // 3.7(5)   -> Trait_Kinds
     case A_Generalized_Iterator_Specification:     // 5.5.2    -> Trait_Kinds
     case An_Element_Iterator_Specification:        // 5.5.2    -> Trait_Kinds
     case A_Return_Variable_Specification:          // 6.5

@@ -16,14 +16,21 @@ namespace Ada_ROSE_Translation
 void initializePkgStandard(SgGlobal& global);
 
 /// represents a (partially) converted type
-struct TypeData
+struct TypeData : std::tuple<Type_Definition_Struct*, SgNode*, bool, bool, bool>
 {
-  SgNode* n; // The partialy converted ROSE representation
+  using base = std::tuple<Type_Definition_Struct*, SgNode*, bool, bool, bool>;
+  using base::base;
 
-  // additional declaration modifiers
-  bool    hasAbstract;
-  bool    hasLimited;
-  bool    hasTagged;
+  Type_Definition_Struct& definitionStruct()  const { return SG_DEREF(std::get<0>(*this)); }
+  SgNode&                 sageNode()          const { return SG_DEREF(std::get<1>(*this)); }
+  bool                    isAbstract()        const { return std::get<2>(*this); }
+  bool                    isLimited()         const { return std::get<3>(*this); }
+  bool                    isTagged()          const { return std::get<4>(*this); }
+
+  void                    sageNode(SgNode& n)       { std::get<1>(*this) = &n; }
+  void                    setAbstract(bool b)       { std::get<2>(*this) = b; }
+  void                    setLimited(bool b)        { std::get<3>(*this) = b; }
+  void                    setTagged(bool b)         { std::get<4>(*this) = b; }
 };
 
 /// traverses over a list of types and creates a joint type (single or unioned)
