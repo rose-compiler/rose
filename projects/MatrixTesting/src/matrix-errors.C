@@ -169,6 +169,14 @@ updateDatabase(DB::Connection db, const Settings &settings, const std::vector<in
     std::string nonFileNameChar = "[^-+=_.a-zA-Z0-9]";
     SAWYER_MESG(mlog[DEBUG]) <<"normalized detected error messages...\n";
 
+    // If a test failed and there is no error message, then make up something generic
+    db.stmt("update test_results test"
+            " set first_error_staging = 'test failed without an error message'"
+            " where test.status <> 'end'"
+            "   and (test.first_error_staging is null or test.first_error_staging = '')"
+            "   and " + sqlIdLimitation("test.id", testIds))
+        .run();
+
     // Replace temporary file names with "temp-file"
     db.stmt("update test_results test"
             " set first_error_staging = regexp_replace(first_error_staging,"

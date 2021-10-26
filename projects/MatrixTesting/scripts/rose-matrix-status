@@ -187,7 +187,7 @@ echo
 section "Slave configuration" "config"
 paragraph <<EOF
 This section contains information about what the slaves should be testing, and how. This is also
-the information you need if you want to set up your own testing. See also, rose-matrix-slave-config.
+the information you need if you want to set up your own testing.
 EOF
 echo
 rose-matrix-slave-config -F$FORMAT |indent
@@ -196,7 +196,7 @@ rose-matrix-slave-config -F$FORMAT |indent
 section "Slave health" "health"
 paragraph <<EOF
 This section contains information about what slaves have run in the last week. Each slave typically
-reports many test results. See also, rose-matrix-slave-health.
+reports many test results.
 EOF
 echo
 rose-matrix-slave-health -F$FORMAT |indent
@@ -206,16 +206,16 @@ echo
 echo
 section "Recent tests" "recent"
 paragraph <<EOF
-These are the ROSE versions that have test results in the last month. See also, rose-matrix-query.
+These are the ROSE versions that have test results in the last month.
 EOF
 echo
 rose-matrix-query -F$FORMAT rose_date+$(one-month-ago) \
-		  rose reporting_time.min reporting_time.max.d count \
+		  rose rose_date reporting_time.min reporting_time.max.d count \
     |indent
 echo
 
 paragraph <<EOF
-These are the tests that completed in the last 24 hours. See also, rose-matrix-query.
+These are the tests that completed in the last 24 hours.
 EOF
 echo
 rose-matrix-query -F$FORMAT reporting_time+$(one-day-ago) \
