@@ -852,7 +852,14 @@ RoseCompatibilityBridge::haveSameOrCovariantReturn( const ClassAnalysis& classes
 FunctionKeyType
 RoseCompatibilityBridge::functionId(const SgMemberFunctionDeclaration* fun) const
 {
-  return fun;
+  if (!fun) return fun;
+
+  const SgMemberFunctionDeclaration* fKey = isSgMemberFunctionDeclaration(fun->get_firstNondefiningDeclaration());
+  const SgMemberFunctionDeclaration* res  = fKey ? fKey : fun;
+
+  ROSE_ASSERT(isVirtual(*res) == isVirtual(*fun));
+
+  return res;
   //~ return funLabeler.getFunctionEntryLabel(fun);
 }
 
@@ -892,5 +899,54 @@ RoseCompatibilityBridge::classNomenclator() const
 {
   return typeNameOf;
 }
+
+SgClassDefinition& getClassDef(const SgDeclarationStatement& n)
+{
+  SgDeclarationStatement* defdcl = n.get_definingDeclaration();
+  SgClassDeclaration&     clsdef = SG_DEREF(isSgClassDeclaration(defdcl));
+
+  return SG_DEREF(clsdef.get_definition());
+}
+
+SgClassDefinition& getClassDef(const SgMemberFunctionDeclaration& n)
+{
+  return getClassDef(SG_DEREF(n.get_associatedClassDeclaration()));
+}
+
+SgClassDefinition* getClassDefOpt(const SgClassType& n)
+{
+  SgDeclarationStatement& dcl    = SG_DEREF( n.get_declaration() );
+  SgDeclarationStatement* defdcl = dcl.get_definingDeclaration();
+
+  if (SgClassDeclaration* clsdcl = isSgClassDeclaration(defdcl))
+    return clsdcl->get_definition();
+
+  logWarn() << "class type without class declaration.." << std::endl;
+  return nullptr;
+}
+
+SgClassDefinition* getClassDefOpt(const SgExpression& n, bool skipUpCasts = false)
+{
+  static constexpr unsigned char STRIP_TO_CLASS = ( STRIP_MODIFIER_ALIAS
+                                                  | SgType::STRIP_REFERENCE_TYPE
+                                                  | SgType::STRIP_POINTER_TYPE
+                                                  | SgType::STRIP_TYPEDEF_TYPE
+                                                  );
+
+  SgType&          ty  = SG_DEREF(n.get_type());
+  SgClassType*     cls = isSgClassType(ty.stripType(STRIP_TO_CLASS));
+
+  if (cls == nullptr) return nullptr;
+  if (!skipUpCasts) return getClassDefOpt(*cls);
+
+  const SgCastExp* castexp = isSgCastExp(&n);
+
+  // \todo also work with other casts, such as const_cast or C-style cast?
+  if ((castexp == nullptr) || (castexp->cast_type() != SgCastExp::e_static_cast))
+    return getClassDefOpt(*cls);
+
+  return getClassDefOpt(SG_DEREF(castexp->get_operand()), true /* continue skipping up casts */);
+}
+
 
 }

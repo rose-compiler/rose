@@ -353,6 +353,7 @@ struct AnalysesTuple : std::tuple<ClassAnalysis, CastAnalysis>
   const CastAnalysis& castAnalysis() const { return std::get<1>(*this); }
 };
 
+#if NOT_NEEDED
 /// A tuple for both ClassAnalysis and CastAnalysis
 struct ClassAndVirtualFunctionAnalysis : std::tuple<ClassAnalysis, VirtualFunctionAnalysis>
 {
@@ -365,6 +366,7 @@ struct ClassAndVirtualFunctionAnalysis : std::tuple<ClassAnalysis, VirtualFuncti
   VirtualFunctionAnalysis& virtualFunctionAnalysis()             { return std::get<1>(*this); }
   const VirtualFunctionAnalysis& virtualFunctionAnalysis() const { return std::get<1>(*this); }
 };
+#endif /* NOT_NEEDED */
 
 
 /// collects the class hierarchy and all casts from a project
@@ -389,10 +391,10 @@ using ClassAnalysisConstFn = std::function<void(const ClassAnalysis::value_type&
 /// computes function overriders for all virtual functions
 /// \{
 VirtualFunctionAnalysis
-analyzeVirtualFunctions(const RoseCompatibilityBridge& rcb, const ClassAnalysis& classes);
+analyzeVirtualFunctions(const RoseCompatibilityBridge& rcb, const ClassAnalysis& classes, bool normalizedSignature = false);
 
 VirtualFunctionAnalysis
-analyzeVirtualFunctions(const ClassAnalysis& classes);
+analyzeVirtualFunctions(const ClassAnalysis& classes, bool normalizedSignature = false);
 /// \}
 
 /// implements a top down traversal of the class hierarchy

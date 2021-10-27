@@ -15,6 +15,8 @@
 
 #include "AstTerm.h"
 
+#include "RoseCompatibility.h"
+
 namespace CodeThorn
 {
 
@@ -68,7 +70,7 @@ namespace
     while (SgCommaOpExp* comma = isSgCommaOpExp(res))
       res = comma->get_rhs_operand();
 
-    ROSE_ASSERT(res);
+    ASSERT_not_null(res);
     return res;
   }
 
@@ -76,53 +78,158 @@ namespace
   {
       using base = sg::DispatchHandler< std::vector<SgFunctionDeclaration*> >;
 
-      CallTargetFinder(VirtualFunctionAnalysis& vfuncs, SgCallExpression& call)
-      : base(), vfa(vfuncs), callexp(call)
+      CallTargetFinder(ClassAnalysis& classAnalysis, VirtualFunctionAnalysis& vfuncs, SgCallExpression& call)
+      : base(), cha(classAnalysis), vfa(vfuncs), callexp(call)
       {}
 
-      void objectCall(const SgBinaryOp& n);
+      ReturnType
+      getCallTargets(const SgMemberFunctionRefExp& memref);
 
       void handle(const SgNode& n)       { SG_UNEXPECTED_NODE(n); }
 
+      /// fallback method for regular function calls
       void handle(const SgExpression& n) { CallTargetSet::getPropertiesForExpression(&callexp, nullptr /*classHierarchy*/, res); }
 
-      //~ void handle(const SgDotExp& n)     { objectCall(n); }
-      //~ void handle(const SgArrowExp& n)   { objectCall(n); }
+      /// catches member calls
+      void handle(const SgMemberFunctionRefExp& n)
+      {
+        res = getCallTargets(n);
+      }
+
+      /// catches pointer-to-member calls
+      // \todo ..
 
     private:
+      ClassAnalysis&           cha; // class hierarchy analysis
       VirtualFunctionAnalysis& vfa;
       SgCallExpression&        callexp;
   };
 
-
-  /*
-  // MS: unused function warning
-  void CallTargetFinder::objectCall(const SgBinaryOp& n)
+  namespace
   {
-    SgExpression& obj     = SG_DEREF(n.get_lhs_operand());
-    SgType&       objType = SG_DEREF(obj.get_type());
+    SgExpression*
+    receiverExpression(const SgCallExpression& call)
+    {
+      SgExprListExp&       args = SG_DEREF(call.get_args());
+      SgExpressionPtrList& lst  = args.get_expressions();
 
-    // \todo
+      if (lst.empty())
+      {
+        std::cerr << "PP3: " << call.unparseToString() << std::endl;
+        return nullptr;
+      }
+
+      ROSE_ASSERT(lst.size());
+
+      return lst.at(0);
+    }
+
+
+    bool requiresVirtualDispatch(const SgMemberFunctionRefExp& memref, const SgCallExpression& callexp)
+    {
+      // virtual dispatch is not required if the function is prefixed with a name qualifier
+      if (memref.get_need_qualifier())
+        return false;
+
+      // or if the receiver argument is not a polymorphic type
+      SgExpression*  receiver = receiverExpression(callexp);
+      SgAddressOfOp* adrOf    = isSgAddressOfOp(receiver);
+
+      if (adrOf == nullptr)
+        return true;
+
+      SgExpression&  objexpr = SG_DEREF(adrOf->get_operand());
+      SgType&        ty      = SG_DEREF(objexpr.get_type());
+      SgType*        underTy = ty.stripType(STRIP_MODIFIER_ALIAS);
+
+      // test if the type is polymorphic
+      return (  isSgReferenceType(underTy)
+             || isSgRvalueReferenceType(underTy)
+             // in these cases the first argument would not be an address
+             //~ || isSgPointerType(underTy)
+             //~ || isSgArrayType(underTy)
+             );
+    }
+
+
+    template <class AssociativeContainer>
+    auto lookup(AssociativeContainer& m, const typename AssociativeContainer::key_type& key) -> decltype(&m[key])
+    {
+      auto pos = m.find(key);
+
+      return pos == m.end() ? nullptr : &pos->second;
+    }
   }
-  */
+
+
+  CallTargetFinder::ReturnType
+  CallTargetFinder::getCallTargets(const SgMemberFunctionRefExp& memref)
+  {
+    SgMemberFunctionDeclaration*        mdcl = memref.getAssociatedMemberFunctionDeclaration();
+    SgMemberFunctionDeclaration*        mkey = mdcl ? isSgMemberFunctionDeclaration(mdcl->get_firstNondefiningDeclaration())
+                                                    : mdcl;
+    SgMemberFunctionDeclaration&        mfn  = SG_DEREF(mkey);
+    SgClassDefinition&                  clsdef = getClassDef(mfn);
+    std::vector<SgFunctionDeclaration*> res = { &mfn };
+
+    // return early if this is not a virtual call
+    if (!requiresVirtualDispatch(memref, callexp))
+    {
+      std::cerr << "PP3: not a virtual call " << memref.unparseToString() << std::endl;
+      return res;
+    }
+
+    for (auto& x : vfa)
+      std::cerr << "PP3 i: " << x.first->get_name() << " " << x.first
+                << " " << x.first->get_firstNondefiningDeclaration()
+                << std::endl;
+
+    const VirtualFunctionDesc* vfunc = lookup(vfa, &mfn);
+
+    // this is not a virtual function
+    if (vfunc == nullptr)
+    {
+      std::cerr << "PP3: not a virtual func " << mfn.get_name() << " " << &mfn
+                << " " << mfn.get_firstNondefiningDeclaration()
+                << " " << mfn.isCompilerGenerated()
+                << std::endl;
+      return res;
+    }
+
+    // query overriders and add them to the candidate list
+    for (const OverrideDesc& desc : vfunc->overriders())
+    {
+      const SgFunctionDeclaration*       fundcl = desc.functionId();
+      const SgMemberFunctionDeclaration& ovrdcl = SG_DEREF(isSgMemberFunctionDeclaration(fundcl));
+      const SgClassDefinition&           ovrcls = getClassDef(ovrdcl);
+
+      if (cha.areBaseDerived(&clsdef, &ovrcls))
+        res.push_back(const_cast<SgFunctionDeclaration*>(fundcl));
+    }
+
+    std::cerr << "PP3: exiting late " << memref.unparseToString() << " " << res.size()
+              << std::endl;
+    return res;
+  }
+
 
   // \note SgConstructorInitializer should not be handled through CallGraph..
   std::vector<SgFunctionDeclaration*>
-  callTargets(SgCallExpression* callexp, VirtualFunctionAnalysis* vfa)
+  callTargets(SgCallExpression* callexp, ClassAnalysis* cha, VirtualFunctionAnalysis* vfa)
   {
-    ASSERT_not_null(callexp); ASSERT_not_null(vfa);
+    ASSERT_not_null(callexp); ASSERT_not_null(cha); ASSERT_not_null(vfa);
 
     SgExpression* calltgt = getTargetExpression(callexp);
 
-    return sg::dispatch(CallTargetFinder{*vfa, *callexp}, calltgt);
+    return sg::dispatch(CallTargetFinder{*cha, *vfa, *callexp}, calltgt);
   }
 
   std::string typeRep(SgExpression& targetexp)
   {
-    ROSE_ASSERT(targetexp.get_type());
+    ASSERT_not_null(targetexp.get_type());
 
     SgFunctionType* funty = isSgFunctionType( targetexp.get_type()->findBaseType() );
-    ROSE_ASSERT(funty);
+    ASSERT_not_null(funty);
 
     return funty->get_mangled().getString();
   }
@@ -145,7 +252,7 @@ bool FunctionCallInfo::isFunctionPointerCall() {
 
 void addEntry(FunctionCallTargetSet& targetset, SgFunctionDeclaration* dcl)
 {
-  ROSE_ASSERT(dcl);
+  ASSERT_not_null(dcl);
 
   SgFunctionDeclaration* defdcl = isSgFunctionDeclaration(dcl->get_definingDeclaration());
 
@@ -158,7 +265,7 @@ void addEntry(FunctionCallTargetSet& targetset, SgFunctionDeclaration* dcl)
   }
 
   SgFunctionDefinition* def = defdcl->get_definition();
-  ROSE_ASSERT(def);
+  ASSERT_not_null(def);
 
   targetset.insert(FunctionCallTarget(def));
 }
@@ -173,7 +280,7 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
 {
   typedef std::unordered_map<Label, FunctionCallTargetSet, HashLabel>::mapped_type map_entry_t;
 
-  ROSE_ASSERT(_labeler && root);
+  ASSERT_not_null(_labeler); ASSERT_not_null(root);
 
   std::multimap<std::string, SgFunctionDeclaration*> funDecls;
 
@@ -208,6 +315,8 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
 
     if (SgExpression* targetNode = callinfo.functionPointer())
     {
+      //~ std::cerr << targetNode->get_parent()->get_parent()->unparseToString() << std::endl;
+
       // function pointer calls are handled separately in order to
       //   use the ROSE AST instead of the memory pool.
       std::string  key = typeRep(*targetNode);
@@ -236,12 +345,14 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
     else if (SgCallExpression* callexpr = callinfo.callExpression())
     {
       // handles explicit function calls (incl. virtual functions)
-      std::vector<SgFunctionDeclaration*> tgts{callTargets(callexpr, _virtualFunctions)};
-      map_entry_t&                        map_entry = mapping[lbl];
+      using function_container = std::vector<SgFunctionDeclaration*>;
+
+      function_container tgts = callTargets(callexpr, _classAnalysis, _virtualFunctions);
+      map_entry_t&       mapEntry = mapping[lbl];
 
       for (SgFunctionDeclaration* fdcl : tgts)
       {
-        addEntry(map_entry, fdcl);
+        addEntry(mapEntry, fdcl);
       }
 
       if (tgts.size() == 0)
@@ -255,15 +366,10 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
     {
       // handles constructor calls
       if (SgFunctionDeclaration* ctor = ctorinit->get_declaration())
-      {
         addEntry(mapping[lbl], ctor);
-      }
-      else
-      {
-        // print the parent, b/c ctorinit may produce an empty string
+      else // print the parent, b/c ctorinit may produce an empty string
         logWarn() << "unable to resolve target for initializing: " << ctorinit->get_parent()->unparseToString()
                   << std::endl;
-      }
     }
     else
     {
@@ -279,13 +385,13 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
 
 std::string FunctionCallMapping2::toString()
 {
-  ROSE_ASSERT(_labeler);
+  ASSERT_not_null(_labeler);
 
   std::stringstream ss;
   for(auto fcall : mapping)
   {
     SgLocatedNode* callNode = isSgLocatedNode(_labeler->getNode(fcall.first));
-    ROSE_ASSERT(callNode);
+    ASSERT_not_null(callNode);
 
     ss<<SgNodeHelper::sourceFilenameLineColumnToString(callNode)<<" : "<<callNode->unparseToString()<<" RESOLVED TO ";
     for(auto target : fcall.second) {
