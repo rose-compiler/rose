@@ -12,9 +12,9 @@ namespace PPA
   {
     protected:
       Util::nodeType
-      evaluateSynthesizedAttribute(SgNode* node, Util::nodeType inh, SynthesizedAttributesList synList) ROSE_OVERRIDE;
+      evaluateSynthesizedAttribute(SgNode* node, Util::nodeType inh, SynthesizedAttributesList synList) override;
 
-      Util::nodeType virtual evaluateInheritedAttribute(SgNode* node, Util::nodeType inh) ROSE_OVERRIDE;
+      Util::nodeType virtual evaluateInheritedAttribute(SgNode* node, Util::nodeType inh) override;
   };
 
   void pushGlobalVarInitsToMain();

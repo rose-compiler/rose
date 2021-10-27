@@ -79,6 +79,6 @@ install(FILES
   BitFlags.h BitOps.h Color.h FileSystem.h FormatRestorer.h
   setup.h processSupport.h ROSE_ABORT.h ROSE_ASSERT.h rose_paths.h
   compilationFileDatabase.h LinearCongruentialGenerator.h
-  Map.h Progress.h timing.h rose_constants.h rose_getline.h rose_override.h rose_strtoull.h
+  Map.h Progress.h timing.h rose_constants.h rose_getline.h rose_strtoull.h
   roseTraceLib.c ParallelSort.h GraphUtility.h RecursionCounter.h rose_isnan.h rose_pragma_message.h
   DESTINATION ${INCLUDE_INSTALL_DIR})

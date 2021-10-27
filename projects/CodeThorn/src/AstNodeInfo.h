@@ -11,7 +11,7 @@ namespace CodeThorn {
     AstNodeInfo();
     virtual std::string attribute_class_name() const;
     virtual AstNodeInfo* copy();
-    AstNodeInfo::OwnershipPolicy getOwnershipPolicy() const ROSE_OVERRIDE;
+    AstNodeInfo::OwnershipPolicy getOwnershipPolicy() const override;
     std::string toString();
     void setLabel(CodeThorn::Label l);
     void setInitialLabel(CodeThorn::Label l);

@@ -265,7 +265,7 @@ DisassemblerAarch32::commentIpRelative(SgAsmInstruction *insn) {
         Visitor(SgAsmInstruction *insn)
             : insn(insn) {}
 
-        void visit(SgNode *node) ROSE_OVERRIDE {
+        void visit(SgNode *node) override {
             if (SgAsmBinaryAdd *add = isSgAsmBinaryAdd(node)) {
                 SgAsmDirectRegisterExpression *reg = NULL;
                 SgAsmIntegerValueExpression *ival = NULL;

@@ -21,10 +21,10 @@ public:
     void vdsoName(const std::string &s) { vdsoName_ = s; }
 
     virtual void loadVsyscalls(RSIM_Process*) = 0;
-    virtual void loadSpecimenArch(RSIM_Process*, SgAsmInterpretation*, const std::string &interpName) ROSE_OVERRIDE;
-    virtual void updateExecutablePath() ROSE_OVERRIDE;
-    virtual void initializeStackArch(RSIM_Thread*, SgAsmGenericHeader *) ROSE_OVERRIDE;
-    virtual void initializeSimulatedOs(RSIM_Process*, SgAsmGenericHeader*) ROSE_OVERRIDE;
+    virtual void loadSpecimenArch(RSIM_Process*, SgAsmInterpretation*, const std::string &interpName) override;
+    virtual void updateExecutablePath() override;
+    virtual void initializeStackArch(RSIM_Thread*, SgAsmGenericHeader *) override;
+    virtual void initializeSimulatedOs(RSIM_Process*, SgAsmGenericHeader*) override;
 
     /** Push auxv onto the stack. */
     virtual rose_addr_t pushAuxVector(RSIM_Process*, rose_addr_t sp, rose_addr_t execfn_va, SgAsmElfFileHeader*,

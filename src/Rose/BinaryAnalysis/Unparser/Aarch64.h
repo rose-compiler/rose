@@ -31,16 +31,16 @@ public:
         return Ptr(new Aarch64(settings));
     }
 
-    Ptr copy() const ROSE_OVERRIDE {
+    Ptr copy() const override {
         return instance(settings());
     }
     
-    const Aarch64Settings& settings() const ROSE_OVERRIDE { return settings_; }
-    Aarch64Settings& settings() ROSE_OVERRIDE { return settings_; }
+    const Aarch64Settings& settings() const override { return settings_; }
+    Aarch64Settings& settings() override { return settings_; }
 
 protected:
-    void emitInstructionMnemonic(std::ostream&, SgAsmInstruction*, State&) const ROSE_OVERRIDE;
-    void emitOperandBody(std::ostream&, SgAsmExpression*, State&) const ROSE_OVERRIDE;
+    void emitInstructionMnemonic(std::ostream&, SgAsmInstruction*, State&) const override;
+    void emitOperandBody(std::ostream&, SgAsmExpression*, State&) const override;
 
 protected:
     static std::string unparseArmCondition(Aarch64InstructionCondition);

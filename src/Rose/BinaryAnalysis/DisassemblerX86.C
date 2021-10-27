@@ -134,7 +134,7 @@ DisassemblerX86::commentIpRelative(SgAsmInstruction *insn) {
         Visitor(SgAsmInstruction *insn, size_t nBits)
             : insn(insn), nBits(nBits) {}
 
-        void visit(SgNode *node) ROSE_OVERRIDE {
+        void visit(SgNode *node) override {
             if (SgAsmBinaryAdd *add = isSgAsmBinaryAdd(node)) {
                 SgAsmDirectRegisterExpression *reg = NULL;
                 SgAsmIntegerValueExpression *ival = NULL;

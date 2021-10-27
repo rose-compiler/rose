@@ -102,7 +102,7 @@ public:
     /** @} */
 
     virtual
-    ConcreteExecutorResult* execute(const TestCasePtr&) ROSE_OVERRIDE;
+    ConcreteExecutorResult* execute(const TestCasePtr&) override;
 };
 
 } // namespace

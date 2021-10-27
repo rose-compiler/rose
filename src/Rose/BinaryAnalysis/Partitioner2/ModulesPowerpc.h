@@ -19,8 +19,8 @@ protected:
     Function::Ptr function_;
 public:
     static Ptr instance() { return Ptr(new MatchStwuPrologue); } /**< Allocating constructor. */
-    virtual std::vector<Function::Ptr> functions() const ROSE_OVERRIDE;
-    virtual bool match(const Partitioner&, rose_addr_t anchor) ROSE_OVERRIDE;
+    virtual std::vector<Function::Ptr> functions() const override;
+    virtual bool match(const Partitioner&, rose_addr_t anchor) override;
 };
 
 /** Matches a PowerPC ELF dynamic function stub.

@@ -41,7 +41,7 @@ public:
      *  @ref run is called. */
     static Ptr instance(const std::string& databaseUri, const std::string &testSuiteName = "");
 
-    virtual void run() ROSE_OVERRIDE;
+    virtual void run() override;
 };
 
 } // namespace

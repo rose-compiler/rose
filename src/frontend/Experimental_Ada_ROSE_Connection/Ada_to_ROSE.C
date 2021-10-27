@@ -819,7 +819,7 @@ namespace
 
   struct InheritFileInfo : AstSimpleProcessing
   {
-    void visit(SgNode* sageNode) ROSE_OVERRIDE
+    void visit(SgNode* sageNode) override
     {
       SgLocatedNode* n = isSgLocatedNode(sageNode);
 
@@ -864,7 +864,7 @@ namespace
       std::string s = si::get_name(scope);
     }
 
-    void visit(SgNode* sageNode) ROSE_OVERRIDE
+    void visit(SgNode* sageNode) override
     {
       SgLocatedNode* n = isSgLocatedNode(sageNode);
 

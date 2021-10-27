@@ -49,7 +49,7 @@ public:
     return ss.str();
   }
   virtual AstAttribute::OwnershipPolicy
-    getOwnershipPolicy() const ROSE_OVERRIDE {
+    getOwnershipPolicy() const override {
     return CONTAINER_OWNERSHIP;
   }
 };

@@ -38,7 +38,7 @@ namespace MatlabToCpp
     typedef std::map<std::string, SgFunctionDeclaration*> result_container;
     // typedef std::set<SgFunctionDeclaration*> result_container;
 
-    void visit(SgNode* n) ROSE_OVERRIDE;
+    void visit(SgNode* n) override;
 
     result_container& computeUsers(SgProject* proj)
     {
@@ -175,7 +175,7 @@ namespace MatlabToCpp
     : narginusers(funs), calls(), decls()
     {}
 
-    void visit(SgNode*) ROSE_OVERRIDE;
+    void visit(SgNode*) override;
 
     void updateLists(SgProject* proj)
     {

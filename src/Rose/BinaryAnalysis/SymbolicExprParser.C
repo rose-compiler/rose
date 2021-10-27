@@ -650,7 +650,7 @@ public:
     }
 
     virtual SymbolicExpr::Ptr
-    immediateExpansion(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) ROSE_OVERRIDE {
+    immediateExpansion(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) override {
         if (!ops_.exists(op.lexeme()))
             return SymbolicExpr::Ptr();
         return SymbolicExpr::Interior::instance(op.exprType(), ops_[op.lexeme()], args, solver);
@@ -787,7 +787,7 @@ public:
     }
 
     virtual SymbolicExpr::Ptr
-    immediateExpansion(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) ROSE_OVERRIDE {
+    immediateExpansion(const SymbolicExprParser::Token &op, const SymbolicExpr::Nodes &args) override {
         if (!ops_.exists(op.lexeme()))
             return SymbolicExpr::Ptr();
         return SymbolicExpr::Interior::instance(op.exprType(), ops_[op.lexeme()], args, solver);

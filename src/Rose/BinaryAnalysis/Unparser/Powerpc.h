@@ -25,16 +25,16 @@ public:
         return Ptr(new Powerpc(settings));
     }
 
-    Ptr copy() const ROSE_OVERRIDE {
+    Ptr copy() const override {
         return instance(settings());
     }
     
-    const PowerpcSettings& settings() const ROSE_OVERRIDE { return settings_; }
-    PowerpcSettings& settings() ROSE_OVERRIDE { return settings_; }
+    const PowerpcSettings& settings() const override { return settings_; }
+    PowerpcSettings& settings() override { return settings_; }
 
 protected:
-    void emitInstruction(std::ostream&, SgAsmInstruction*, State&) const ROSE_OVERRIDE;
-    void emitOperandBody(std::ostream&, SgAsmExpression*, State&) const ROSE_OVERRIDE;
+    void emitInstruction(std::ostream&, SgAsmInstruction*, State&) const override;
+    void emitOperandBody(std::ostream&, SgAsmExpression*, State&) const override;
 
 private:
     void outputExpr(std::ostream&, SgAsmExpression*, State&) const;

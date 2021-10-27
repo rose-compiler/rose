@@ -1394,7 +1394,7 @@ FrontierDetectionForTokenStreamMappingAttribute::copy() const
 // and fails for C++11 mode on the GNU 4.8.5 compiler and the llvm (some version that Craig used).
 // DQ (6/11/2017): Added virtual function now required to eliminate warning at runtime.
 AstAttribute::OwnershipPolicy
-FrontierDetectionForTokenStreamMappingAttribute::getOwnershipPolicy() const // ROSE_OVERRIDE 
+FrontierDetectionForTokenStreamMappingAttribute::getOwnershipPolicy() const // override
    {
      return CONTAINER_OWNERSHIP;
    }
