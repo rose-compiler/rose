@@ -184,7 +184,7 @@ void demangleFunctionNames(const Partitioner&);
 class AddGhostSuccessors: public BasicBlockCallback {
 public:
     static Ptr instance() { return Ptr(new AddGhostSuccessors); }
-    virtual bool operator()(bool chain, const Args &args) ROSE_OVERRIDE;
+    virtual bool operator()(bool chain, const Args &args) override;
 };
 
 /** Prevent discontiguous basic blocks.
@@ -196,7 +196,7 @@ public:
 class PreventDiscontiguousBlocks: public BasicBlockCallback {
 public:
     static Ptr instance() { return Ptr(new PreventDiscontiguousBlocks); }
-    virtual bool operator()(bool chain, const Args &args) ROSE_OVERRIDE;
+    virtual bool operator()(bool chain, const Args &args) override;
 };
 
 /** Callback to limit basic block size.
@@ -230,7 +230,7 @@ public:
     void maxInstructions(size_t maxInsns) { maxInsns_ = maxInsns; }
     /** @} */
 
-    virtual bool operator()(bool chain, const Args&) ROSE_OVERRIDE;
+    virtual bool operator()(bool chain, const Args&) override;
 };
 
 /** Callback to rewrite CFG edges.
@@ -266,7 +266,7 @@ public:
     void rewrites(std::vector<AddressPair> &v) { rewrites_ = v; }
     /** @} */
 
-    virtual bool operator()(bool chain, const Args&) ROSE_OVERRIDE;
+    virtual bool operator()(bool chain, const Args&) override;
 };
 
 /** List some instructions at a certain time.
@@ -291,8 +291,8 @@ public:
     static Ptr instance(const std::vector<std::string> &args);
     static Sawyer::CommandLine::SwitchGroup switches(Settings&);
     static std::string docString();
-    virtual bool operator()(bool chain, const AttachedBasicBlock &args) ROSE_OVERRIDE;
-    virtual bool operator()(bool chain, const DetachedBasicBlock&) ROSE_OVERRIDE { return chain; }
+    virtual bool operator()(bool chain, const AttachedBasicBlock &args) override;
+    virtual bool operator()(bool chain, const DetachedBasicBlock&) override { return chain; }
 };
 
 /** Produce a GraphViz file for the CFG at a certain time.
@@ -319,8 +319,8 @@ public:
     static Ptr instance(const std::vector<std::string> &args);
     static Sawyer::CommandLine::SwitchGroup switches(Settings&);
     static std::string docString();
-    virtual bool operator()(bool chain, const AttachedBasicBlock &args) ROSE_OVERRIDE;
-    virtual bool operator()(bool chain, const DetachedBasicBlock&) ROSE_OVERRIDE { return chain; }
+    virtual bool operator()(bool chain, const AttachedBasicBlock &args) override;
+    virtual bool operator()(bool chain, const DetachedBasicBlock&) override { return chain; }
 };
 
 /** Produce a hexdump at a certain time.
@@ -346,8 +346,8 @@ public:
     static Ptr instance(const std::vector<std::string> &args);
     static Sawyer::CommandLine::SwitchGroup switches(Settings&);
     static std::string docString();
-    virtual bool operator()(bool chain, const AttachedBasicBlock &args) ROSE_OVERRIDE;
-    virtual bool operator()(bool chain, const DetachedBasicBlock&) ROSE_OVERRIDE { return chain; }
+    virtual bool operator()(bool chain, const AttachedBasicBlock &args) override;
+    virtual bool operator()(bool chain, const DetachedBasicBlock&) override { return chain; }
 };
 
 /** Convenient place to attach a debugger.
@@ -370,8 +370,8 @@ public:
     static Ptr instance(const std::vector<std::string> &args);
     static Sawyer::CommandLine::SwitchGroup switches(Settings&);
     static std::string docString();
-    virtual bool operator()(bool chain, const AttachedBasicBlock &args) ROSE_OVERRIDE;
-    virtual bool operator()(bool chain, const DetachedBasicBlock&) ROSE_OVERRIDE { return chain; }
+    virtual bool operator()(bool chain, const AttachedBasicBlock &args) override;
+    virtual bool operator()(bool chain, const DetachedBasicBlock&) override { return chain; }
     void debug(rose_addr_t, const BasicBlock::Ptr&);
 };
 
@@ -403,8 +403,8 @@ public:
     void predicates(const ThunkPredicates::Ptr &p) { predicates_ = p; }
     /** @} */
 
-    virtual std::vector<Function::Ptr> functions() const ROSE_OVERRIDE { return functions_; }
-    virtual bool match(const Partitioner&, rose_addr_t anchor) ROSE_OVERRIDE;
+    virtual std::vector<Function::Ptr> functions() const override { return functions_; }
+    virtual bool match(const Partitioner&, rose_addr_t anchor) override;
 };
 
 /** Remove execute permissions for zeros.

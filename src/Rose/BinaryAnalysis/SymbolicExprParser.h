@@ -307,7 +307,7 @@ public:
         static Ptr instance(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&);
 
         // internal
-        SymbolicExpr::Ptr immediateExpansion(const SymbolicExprParser::Token&) ROSE_OVERRIDE;
+        SymbolicExpr::Ptr immediateExpansion(const SymbolicExprParser::Token&) override;
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -354,8 +354,8 @@ public:
         /** @} */
 
         // internal
-        SymbolicExpr::Ptr immediateExpansion(const SymbolicExprParser::Token&) ROSE_OVERRIDE;
-        SymbolicExpr::Ptr delayedExpansion(const SymbolicExpr::Ptr&, const SymbolicExprParser*) ROSE_OVERRIDE;
+        SymbolicExpr::Ptr immediateExpansion(const SymbolicExprParser::Token&) override;
+        SymbolicExpr::Ptr delayedExpansion(const SymbolicExpr::Ptr&, const SymbolicExprParser*) override;
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -398,8 +398,8 @@ public:
         /** @} */
 
         // internal
-        virtual SymbolicExpr::Ptr immediateExpansion(const Token &name, const SymbolicExpr::Nodes &operands) ROSE_OVERRIDE;
-        virtual SymbolicExpr::Ptr delayedExpansion(const SymbolicExpr::Ptr&, const SymbolicExprParser*) ROSE_OVERRIDE;
+        virtual SymbolicExpr::Ptr immediateExpansion(const Token &name, const SymbolicExpr::Nodes &operands) override;
+        virtual SymbolicExpr::Ptr delayedExpansion(const SymbolicExpr::Ptr&, const SymbolicExprParser*) override;
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -430,7 +430,7 @@ public:
         const NameToVarMap& map() const { return name2var_; }
 
         // internal
-        SymbolicExpr::Ptr immediateExpansion(const SymbolicExprParser::Token&) ROSE_OVERRIDE;
+        SymbolicExpr::Ptr immediateExpansion(const SymbolicExprParser::Token&) override;
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -460,7 +460,7 @@ public:
 
     private:
         virtual Sawyer::CommandLine::ParsedValue operator()(const char *input, const char **rest,
-                                                            const Sawyer::CommandLine::Location &loc) ROSE_OVERRIDE;
+                                                            const Sawyer::CommandLine::Location &loc) override;
     };
 
     static SymbolicExprCmdlineParser::Ptr symbolicExprParser(SymbolicExpr::Ptr &storage);

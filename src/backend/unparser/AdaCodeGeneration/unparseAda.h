@@ -50,22 +50,22 @@ struct Unparse_Ada : UnparseLanguageIndependentConstructs
           Unparse_Ada(Unparser* unp, std::string fname);
 
           void unparseAdaFile(SgSourceFile *file, SgUnparse_Info &info);
-          void unparseStatement(SgStatement* stmt, SgUnparse_Info& info) ROSE_OVERRIDE;
-          void unparseLanguageSpecificStatement  (SgStatement* stmt,  SgUnparse_Info& info) ROSE_OVERRIDE;
+          void unparseStatement(SgStatement* stmt, SgUnparse_Info& info) override;
+          void unparseLanguageSpecificStatement  (SgStatement* stmt,  SgUnparse_Info& info) override;
           std::string computeScopeQual(const SgScopeStatement& local, const SgScopeStatement& remote);
           void setInitialScope(SgUnparse_Info& info, SgExpression*);
 
           //
           // in unparseAda_expressions.C
 
-          void unparseExpression(SgExpression* expr, SgUnparse_Info& info) ROSE_OVERRIDE;
-          void unparseLanguageSpecificExpression (SgExpression* expr, SgUnparse_Info& info) ROSE_OVERRIDE;
-          void unparseStringVal(SgExpression* expr, SgUnparse_Info& info) ROSE_OVERRIDE;
+          void unparseExpression(SgExpression* expr, SgUnparse_Info& info) override;
+          void unparseLanguageSpecificExpression (SgExpression* expr, SgUnparse_Info& info) override;
+          void unparseStringVal(SgExpression* expr, SgUnparse_Info& info) override;
 
           void unparseExprListExp(SgExprListExp* n, SgUnparse_Info& info, std::string sep = ", ");
 
           /// uses the flag saved by the Asis to ROSE converter
-          bool requiresParentheses(SgExpression* expr, SgUnparse_Info& info) ROSE_OVERRIDE;
+          bool requiresParentheses(SgExpression* expr, SgUnparse_Info& info) override;
 
           /// unparses \ref type and uses \ref ref as the anchor node for scope qualification
           /// \note implemented in unparseAda_types.C
@@ -73,7 +73,7 @@ struct Unparse_Ada : UnparseLanguageIndependentConstructs
 
           // DQ (9/12/2017): Mark the derived class to support debugging.
           // virtual std::string languageName() const;
-          std::string languageName() const ROSE_OVERRIDE { return "Ada Unparser"; }
+          std::string languageName() const override { return "Ada Unparser"; }
 
 
           //

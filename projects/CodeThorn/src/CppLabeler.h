@@ -14,7 +14,7 @@ class CppLabeler : CLabeler
   CppLabeler();
   //~ explicit CppLabeler(SgNode*);
 
-  // was: isFunctionCallNode(SgNode* n) const ROSE_OVERRIDE;
+  // was: isFunctionCallNode(SgNode* n) const override;
 };
 
 } // CodeThorn

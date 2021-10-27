@@ -291,8 +291,8 @@ protected:
 
 public:
     ~SerialOutput();
-    void open(const boost::filesystem::path &fileName) ROSE_OVERRIDE;
-    void close() ROSE_OVERRIDE;
+    void open(const boost::filesystem::path &fileName) override;
+    void close() override;
 
     /** Factory method to create a new instance.
      *
@@ -456,8 +456,8 @@ protected:
 
 public:
     ~SerialInput();
-    void open(const boost::filesystem::path &fileName) ROSE_OVERRIDE;
-    void close() ROSE_OVERRIDE;
+    void open(const boost::filesystem::path &fileName) override;
+    void close() override;
 
     /** Factory method to create a new instance.
      *

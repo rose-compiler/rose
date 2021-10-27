@@ -28,17 +28,17 @@ public:
         return Ptr(new X86(settings));
     }
 
-    Ptr copy() const ROSE_OVERRIDE {
+    Ptr copy() const override {
         return instance(settings());
     }
 
-    const X86Settings& settings() const ROSE_OVERRIDE { return settings_; }
-    X86Settings& settings() ROSE_OVERRIDE { return settings_; }
+    const X86Settings& settings() const override { return settings_; }
+    X86Settings& settings() override { return settings_; }
 
 protected:
-    void emitInstructionMnemonic(std::ostream&, SgAsmInstruction*, State&) const ROSE_OVERRIDE;
-    void emitOperandBody(std::ostream&, SgAsmExpression*, State&) const ROSE_OVERRIDE;
-    void emitTypeName(std::ostream&, SgAsmType*, State&) const ROSE_OVERRIDE;
+    void emitInstructionMnemonic(std::ostream&, SgAsmInstruction*, State&) const override;
+    void emitOperandBody(std::ostream&, SgAsmExpression*, State&) const override;
+    void emitTypeName(std::ostream&, SgAsmType*, State&) const override;
 
 private:
     void outputExpr(std::ostream&, SgAsmExpression*, State&) const;

@@ -922,108 +922,108 @@ typedef Sawyer::Container::Set<Ptr, ExpressionLessp> ExpressionSet;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct AddSimplifier: Simplifier {
-    virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const ROSE_OVERRIDE;
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const override;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct AndSimplifier: Simplifier {
-    virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const ROSE_OVERRIDE;
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const override;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct ConvertSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct OrSimplifier: Simplifier {
-    virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const ROSE_OVERRIDE;
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const override;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct XorSimplifier: Simplifier {
-    virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const ROSE_OVERRIDE;
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const override;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct SmulSimplifier: Simplifier {
-    virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const ROSE_OVERRIDE;
+    virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const override;
 };
 struct UmulSimplifier: Simplifier {
-    virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const ROSE_OVERRIDE;
+    virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const override;
 };
 struct ConcatSimplifier: Simplifier {
-    virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const ROSE_OVERRIDE;
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr fold(Nodes::const_iterator, Nodes::const_iterator) const override;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct ExtractSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct AsrSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct InvertSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct NegateSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct IteSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct NoopSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct ReinterpretSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct RolSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct RorSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct UextendSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct SextendSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct EqSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct SgeSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct SgtSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct SleSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct SltSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct UgeSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct UgtSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct UleSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct UltSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct ZeropSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct SdivSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct SmodSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct UdivSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct UmodSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct ShiftSimplifier: Simplifier {
     bool newbits;
@@ -1032,20 +1032,20 @@ struct ShiftSimplifier: Simplifier {
 };
 struct ShlSimplifier: ShiftSimplifier {
     ShlSimplifier(bool newbits): ShiftSimplifier(newbits) {}
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct ShrSimplifier: ShiftSimplifier {
     ShrSimplifier(bool newbits): ShiftSimplifier(newbits) {}
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct LssbSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct MssbSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 struct SetSimplifier: Simplifier {
-    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const ROSE_OVERRIDE;
+    virtual Ptr rewrite(Interior*, const SmtSolverPtr&) const override;
 };
 
 
@@ -1119,21 +1119,21 @@ public:
     // Overrides
     //--------------------------------------------------------
 public:
-    virtual bool mustEqual(const Ptr &other, const SmtSolverPtr &solver = SmtSolverPtr()) ROSE_OVERRIDE;
-    virtual bool mayEqual(const Ptr &other, const SmtSolverPtr &solver = SmtSolverPtr()) ROSE_OVERRIDE;
-    virtual bool isEquivalentTo(const Ptr &other) ROSE_OVERRIDE;
-    virtual int compareStructure(const Ptr& other) ROSE_OVERRIDE;
-    virtual Ptr substitute(const Ptr &from, const Ptr &to, const SmtSolverPtr &solver = SmtSolverPtr()) ROSE_OVERRIDE;
-    virtual VisitAction depthFirstTraversal(Visitor&) const ROSE_OVERRIDE;
-    virtual uint64_t nNodes() const ROSE_OVERRIDE { return nnodes_; }
-    virtual const Nodes& children() const ROSE_OVERRIDE { return children_; }
-    virtual Operator getOperator() const ROSE_OVERRIDE { return op_; }
-    virtual size_t nChildren() const ROSE_OVERRIDE { return children_.size(); }
-    virtual Ptr child(size_t idx) const ROSE_OVERRIDE { return idx < children_.size() ? children_[idx] : Ptr(); }
-    virtual Sawyer::Optional<uint64_t> toUnsigned() const ROSE_OVERRIDE { return Sawyer::Nothing(); }
-    virtual Sawyer::Optional<int64_t> toSigned() const ROSE_OVERRIDE { return Sawyer::Nothing(); }
-    virtual bool isConstant() const ROSE_OVERRIDE { return false; }
-    virtual bool isVariable2() const ROSE_OVERRIDE { return false; }
+    virtual bool mustEqual(const Ptr &other, const SmtSolverPtr &solver = SmtSolverPtr()) override;
+    virtual bool mayEqual(const Ptr &other, const SmtSolverPtr &solver = SmtSolverPtr()) override;
+    virtual bool isEquivalentTo(const Ptr &other) override;
+    virtual int compareStructure(const Ptr& other) override;
+    virtual Ptr substitute(const Ptr &from, const Ptr &to, const SmtSolverPtr &solver = SmtSolverPtr()) override;
+    virtual VisitAction depthFirstTraversal(Visitor&) const override;
+    virtual uint64_t nNodes() const override { return nnodes_; }
+    virtual const Nodes& children() const override { return children_; }
+    virtual Operator getOperator() const override { return op_; }
+    virtual size_t nChildren() const override { return children_.size(); }
+    virtual Ptr child(size_t idx) const override { return idx < children_.size() ? children_[idx] : Ptr(); }
+    virtual Sawyer::Optional<uint64_t> toUnsigned() const override { return Sawyer::Nothing(); }
+    virtual Sawyer::Optional<int64_t> toSigned() const override { return Sawyer::Nothing(); }
+    virtual bool isConstant() const override { return false; }
+    virtual bool isVariable2() const override { return false; }
 
     //--------------------------------------------------------
     // Simplification
@@ -1201,7 +1201,7 @@ public:
     // Functions specific to internal nodes
     //--------------------------------------------------------
 public:
-    virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
+    virtual void print(std::ostream&, Formatter&) const override;
 
 protected:
     /** Appends @p child as a new child of this node. This must only be called from constructors. */
@@ -1282,22 +1282,22 @@ public:
     // Override base class implementations
     //--------------------------------------------------------
 public:
-    virtual size_t nChildren() const ROSE_OVERRIDE { return 0; }
-    virtual Ptr child(size_t idx) const ROSE_OVERRIDE { return Ptr(); }
-    virtual const Nodes& children() const ROSE_OVERRIDE;
-    virtual Operator getOperator() const ROSE_OVERRIDE { return OP_NONE; }
-    virtual bool mustEqual(const Ptr &other, const SmtSolverPtr &solver = SmtSolverPtr()) ROSE_OVERRIDE;
-    virtual bool mayEqual(const Ptr &other, const SmtSolverPtr &solver = SmtSolverPtr()) ROSE_OVERRIDE;
-    virtual bool isEquivalentTo(const Ptr &other) ROSE_OVERRIDE;
-    virtual int compareStructure(const Ptr& other) ROSE_OVERRIDE;
-    virtual Ptr substitute(const Ptr &from, const Ptr &to, const SmtSolverPtr &solver = SmtSolverPtr()) ROSE_OVERRIDE;
-    virtual VisitAction depthFirstTraversal(Visitor&) const ROSE_OVERRIDE;
-    virtual uint64_t nNodes() const ROSE_OVERRIDE { return 1; }
-    virtual Sawyer::Optional<uint64_t> toUnsigned() const ROSE_OVERRIDE;
-    virtual Sawyer::Optional<int64_t> toSigned() const ROSE_OVERRIDE;
-    virtual bool isConstant() const ROSE_OVERRIDE { return !bits_.isEmpty(); }
-    virtual bool isVariable2() const ROSE_OVERRIDE { return !isConstant(); }
-    virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
+    virtual size_t nChildren() const override { return 0; }
+    virtual Ptr child(size_t idx) const override { return Ptr(); }
+    virtual const Nodes& children() const override;
+    virtual Operator getOperator() const override { return OP_NONE; }
+    virtual bool mustEqual(const Ptr &other, const SmtSolverPtr &solver = SmtSolverPtr()) override;
+    virtual bool mayEqual(const Ptr &other, const SmtSolverPtr &solver = SmtSolverPtr()) override;
+    virtual bool isEquivalentTo(const Ptr &other) override;
+    virtual int compareStructure(const Ptr& other) override;
+    virtual Ptr substitute(const Ptr &from, const Ptr &to, const SmtSolverPtr &solver = SmtSolverPtr()) override;
+    virtual VisitAction depthFirstTraversal(Visitor&) const override;
+    virtual uint64_t nNodes() const override { return 1; }
+    virtual Sawyer::Optional<uint64_t> toUnsigned() const override;
+    virtual Sawyer::Optional<int64_t> toSigned() const override;
+    virtual bool isConstant() const override { return !bits_.isEmpty(); }
+    virtual bool isVariable2() const override { return !isConstant(); }
+    virtual void print(std::ostream&, Formatter&) const override;
 
     //--------------------------------------------------------
     // Leaf-specific methods

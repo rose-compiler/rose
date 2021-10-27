@@ -33,10 +33,10 @@ struct FunctionReturnAttribute : AstAttribute
       node->setAttribute("RETURN_VARS", this);
     }
 
-    std::string attribute_class_name() const ROSE_OVERRIDE;
+    std::string attribute_class_name() const override;
 
     AstAttribute::OwnershipPolicy
-    getOwnershipPolicy() const ROSE_OVERRIDE;
+    getOwnershipPolicy() const override;
 
   private:
     SgExprListExp *returnList;

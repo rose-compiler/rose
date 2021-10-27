@@ -11,10 +11,10 @@ HEADER_START
        // virtual SgNode* copy ( const SgCopyHelp & help) const;
 
       /*! \brief returns a string representing the class name */
-          virtual std::string class_name() const $ROSE_OVERRIDE;
+          virtual std::string class_name() const override;
 
       /*! \brief returns new style SageIII enum values */
-          virtual VariantT variantT() const $ROSE_OVERRIDE; // MS: new variant used in tree traversal
+          virtual VariantT variantT() const override; // MS: new variant used in tree traversal
 
       /*! \brief static variant value */
        // King84 (2010.08.16): Moved this to an enum to save space, since it's only used at compiler-time anyway.
@@ -102,27 +102,27 @@ HEADER_START
        // MS: 02/12/02 container of pointers to AST successor nodes used in the traversal
        // overridden in every class by *generated* implementation
       /*! \brief container of pointers to AST successor nodes used in the traversal overridden in every class by *generated* implementation */
-          virtual std::vector<SgNode*> get_traversalSuccessorContainer() $ROSE_OVERRIDE;
+          virtual std::vector<SgNode*> get_traversalSuccessorContainer() override;
        // MS: 06/28/02 container of names of variables or container indices 
        // used used in the traversal to access AST successor nodes
        // overridden in every class by *generated* implementation
       /*! \brief container of names of variables or container indices used used in the traversal
           to access AST successor nodes overridden in every class by *generated* implementation */
-          virtual std::vector<std::string> get_traversalSuccessorNamesContainer() $ROSE_OVERRIDE;
+          virtual std::vector<std::string> get_traversalSuccessorNamesContainer() override;
 
        // GB (09/25/2007): Functions for index-based access to traversal successors; these are hopefully a lot faster
        // than all the vector copies. The implementation for these functions is generated for each class.
       /*! \brief return number of children in the traversal successor list */
-          virtual size_t get_numberOfTraversalSuccessors() $ROSE_OVERRIDE;
+          virtual size_t get_numberOfTraversalSuccessors() override;
       /*! \brief index-based access to traversal successors by index number */
-          virtual SgNode *get_traversalSuccessorByIndex(size_t idx) $ROSE_OVERRIDE;
+          virtual SgNode *get_traversalSuccessorByIndex(size_t idx) override;
       /*! \brief index-based access to traversal successors by child node */
-          virtual size_t get_childIndex(SgNode *child) $ROSE_OVERRIDE;
+          virtual size_t get_childIndex(SgNode *child) override;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
        // MS: 08/16/2002 method for generating RTI information
       /*! \brief return C++ Runtime-Time-Information */
-          virtual RTIReturnType roseRTI() $ROSE_OVERRIDE;
+          virtual RTIReturnType roseRTI() override;
 #endif
       /* */
 
@@ -136,7 +136,7 @@ HEADER_START
       /* */
 
       /*! returns a C style string (char*) representing the class name */
-          virtual const char* sage_class_name() const  $ROSE_OVERRIDE ROSE_DEPRECATED_FUNCTION;
+          virtual const char* sage_class_name() const  override ROSE_DEPRECATED_FUNCTION;
 
       // JJW (10/16/2008): Changed to a single function in Node.code, and put
       // getVariant() in #if 0 block to prevent confusing Doxygen
@@ -168,7 +168,7 @@ HEADER_START
 
       /* DXN (08/09/2010): support for the classic visitor pattern done in GoF */
       /*! \brief support for the classic visitor pattern done in GoF */
-          virtual void accept (ROSE_VisitorPattern & visitor) $ROSE_OVERRIDE;
+          virtual void accept (ROSE_VisitorPattern & visitor) override;
 
        // DQ (12/26/2005): Support for traversal based on the memory pool
       /*! \brief \b FOR \b INTERNAL \b USE Support for visitor pattern over all IR nodes by type of IR node.
@@ -207,7 +207,7 @@ HEADER_START
           to build a useful AST with IR nodes allocated on the stack or frm global scope, this test filters out such cased from
           being used with the AST File I/O mechanism.
        */
-          virtual bool isInMemoryPool() $ROSE_OVERRIDE;
+          virtual bool isInMemoryPool() override;
 
       /*! \brief \b FOR \b INTERNAL \b USE This is used in internal tests to verify that all IR nodes are allocated from the heap.
 
@@ -219,7 +219,7 @@ HEADER_START
           to build a useful AST with IR nodes allocated on the stack or frm global scope, this test filters out such cased from
           being used with the AST File I/O mechanism.
        */
-          virtual void checkDataMemberPointersIfInMemoryPool() $ROSE_OVERRIDE;
+          virtual void checkDataMemberPointersIfInMemoryPool() override;
 
       // DQ (4/30/2006): Modified to be a const function.
       /*! \brief \b FOR \b INTERNAL \b USE Returns STL vector of pairs of SgNode* and strings for use in AST tools
@@ -236,7 +236,7 @@ HEADER_START
 
           \returns STL vector of pairs of SgNode* and strings
        */
-          virtual std::vector<std::pair<SgNode*,std::string> > returnDataMemberPointers() const $ROSE_OVERRIDE;
+          virtual std::vector<std::pair<SgNode*,std::string> > returnDataMemberPointers() const override;
 
       /*! \brief \b FOR \b INTERNAL \b USE Processes pairs of references to SgNode* and strings for use in AST tools
 
@@ -247,7 +247,7 @@ HEADER_START
           \warning This function can return unexpected data members and thus the order and the number of elements is unpredicable 
                    and subject to change.
        */
-          virtual void processDataMemberReferenceToPointers(ReferenceToPointerHandler*) $ROSE_OVERRIDE;
+          virtual void processDataMemberReferenceToPointers(ReferenceToPointerHandler*) override;
 
       /*! \brief \b FOR \b INTERNAL \b USE Returns a unique index value for the childNode in the list of children at this IR node.
 
@@ -260,7 +260,7 @@ HEADER_START
 
           \returns long
        */
-          virtual long getChildIndex( SgNode* childNode ) const $ROSE_OVERRIDE;
+          virtual long getChildIndex( SgNode* childNode ) const override;
 
       // DQ (9/2/2015): Since this function is generated by ROSETTA, we can't define the 
       // comment here (changed to be a C style comment and not be a doxygen comment).
@@ -365,11 +365,11 @@ HEADER_START
           is also implemented, but it only works with tools obaying the ATerm API (note that
           unfortunately SDF tools and Stratego both fail to obay the ATerm API).
        */
-       // Rasmussen (1/7/2019): Added ROSE_OVERRIDE to kill warning messages of overridden virtual function
-          virtual ATerm generate_ATerm() $ROSE_OVERRIDE;
+       // Rasmussen (1/7/2019): Added override to kill warning messages of overridden virtual function
+          virtual ATerm generate_ATerm() override;
 
       /*! \brief Support for generation of ATerms. */
-          virtual void generate_ATerm_Annotation(ATerm & term) $ROSE_OVERRIDE;
+          virtual void generate_ATerm_Annotation(ATerm & term) override;
    #endif
    #endif // BUILD_ATERM_SUPPORT
 #endif

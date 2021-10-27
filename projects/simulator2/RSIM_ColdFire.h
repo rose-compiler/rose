@@ -9,14 +9,14 @@ public:
         init();
     }
 
-    virtual void updateExecutablePath() ROSE_OVERRIDE;
-    virtual SgAsmInterpretation* parseMainExecutable(RSIM_Process*) ROSE_OVERRIDE;
-    virtual bool isSupportedArch(SgAsmGenericHeader*) ROSE_OVERRIDE;
-    virtual PtRegs initialRegistersArch(RSIM_Process*) ROSE_OVERRIDE;
-    virtual void loadSpecimenNative(RSIM_Process*, Rose::BinaryAnalysis::Disassembler*, int existingPid=-1) ROSE_OVERRIDE;
-    virtual void loadSpecimenArch(RSIM_Process*, SgAsmInterpretation*, const std::string &interpName) ROSE_OVERRIDE;
-    virtual void initializeStackArch(RSIM_Thread*, SgAsmGenericHeader *) ROSE_OVERRIDE;
-    virtual void initializeSimulatedOs(RSIM_Process*, SgAsmGenericHeader*) ROSE_OVERRIDE;
+    virtual void updateExecutablePath() override;
+    virtual SgAsmInterpretation* parseMainExecutable(RSIM_Process*) override;
+    virtual bool isSupportedArch(SgAsmGenericHeader*) override;
+    virtual PtRegs initialRegistersArch(RSIM_Process*) override;
+    virtual void loadSpecimenNative(RSIM_Process*, Rose::BinaryAnalysis::Disassembler*, int existingPid=-1) override;
+    virtual void loadSpecimenArch(RSIM_Process*, SgAsmInterpretation*, const std::string &interpName) override;
+    virtual void initializeStackArch(RSIM_Thread*, SgAsmGenericHeader *) override;
+    virtual void initializeSimulatedOs(RSIM_Process*, SgAsmGenericHeader*) override;
 
 private:
     void init();

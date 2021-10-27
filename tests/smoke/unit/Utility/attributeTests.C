@@ -74,15 +74,15 @@ test_allocation_counter() {
 
 class Attr1: public AstAttribute {
 public:
-    virtual AstAttribute* copy() const ROSE_OVERRIDE {
+    virtual AstAttribute* copy() const override {
         return new Attr1(*this);
     }
 
-    virtual OwnershipPolicy getOwnershipPolicy() const ROSE_OVERRIDE {
+    virtual OwnershipPolicy getOwnershipPolicy() const override {
         return CONTAINER_OWNERSHIP;
     }
 
-    virtual std::string attribute_class_name() const ROSE_OVERRIDE {
+    virtual std::string attribute_class_name() const override {
         return "Attr1";
     }
 };
@@ -123,15 +123,15 @@ compile_tests(const AstAttributeMechanism &c, AstAttributeMechanism &m) {
 
 class Attr2: public AstAttribute, public AllocationCounter<Attr2> {
 public:
-    virtual AstAttribute* copy() const ROSE_OVERRIDE {
+    virtual AstAttribute* copy() const override {
         return new Attr2(*this);
     }
 
-    virtual OwnershipPolicy getOwnershipPolicy() const ROSE_OVERRIDE {
+    virtual OwnershipPolicy getOwnershipPolicy() const override {
         return CONTAINER_OWNERSHIP;
     }
 
-    virtual std::string attribute_class_name() const ROSE_OVERRIDE {
+    virtual std::string attribute_class_name() const override {
         return "Attr2";
     }
 };
@@ -220,11 +220,11 @@ class Attr3: public AstAttribute, public AllocationCounter<Attr3> {
 public:
     // no virtual copy constructor
 
-    virtual OwnershipPolicy getOwnershipPolicy() const ROSE_OVERRIDE {
+    virtual OwnershipPolicy getOwnershipPolicy() const override {
         return CONTAINER_OWNERSHIP;
     }
 
-    virtual std::string attribute_class_name() const ROSE_OVERRIDE {
+    virtual std::string attribute_class_name() const override {
         return "Attr3";
     }
 };
@@ -252,15 +252,15 @@ test_missing_copy() {
 class Attr4: public AstAttribute, public AllocationCounter<Attr4> {
 public:
     // incorrect virtual copy constructor
-    virtual AstAttribute* copy() const ROSE_OVERRIDE {
+    virtual AstAttribute* copy() const override {
         return const_cast<Attr4*>(this);
     }
 
-    virtual OwnershipPolicy getOwnershipPolicy() const ROSE_OVERRIDE {
+    virtual OwnershipPolicy getOwnershipPolicy() const override {
         return CONTAINER_OWNERSHIP;
     }
 
-    virtual std::string attribute_class_name() const ROSE_OVERRIDE {
+    virtual std::string attribute_class_name() const override {
         return "Attr4";
     }
 };
@@ -295,17 +295,17 @@ public:
     explicit Attr5(bool shouldThrow)
         : shouldThrow(shouldThrow) {}
 
-    virtual AstAttribute* copy() const ROSE_OVERRIDE {
+    virtual AstAttribute* copy() const override {
         if (shouldThrow)
             throw std::runtime_error("virtual copy constructor failed");
         return new Attr5(*this);
     }
 
-    virtual OwnershipPolicy getOwnershipPolicy() const ROSE_OVERRIDE {
+    virtual OwnershipPolicy getOwnershipPolicy() const override {
         return CONTAINER_OWNERSHIP;
     }
 
-    virtual std::string attribute_class_name() const ROSE_OVERRIDE {
+    virtual std::string attribute_class_name() const override {
         return "Attr5";
     }
 };
@@ -374,10 +374,10 @@ public:
 
 public:
     // Override virtual functions from AstAttribute
-    OwnershipPolicy getOwnershipPolicy() const ROSE_OVERRIDE { return CONTAINER_OWNERSHIP; }
-    AstAttribute* constructor() const ROSE_OVERRIDE { return new Attr6(*(new size_t(0))); } // size_t is leaked
-    AstAttribute* copy() const ROSE_OVERRIDE { return new Attr6(*this); }
-    std::string attribute_class_name() const ROSE_OVERRIDE { return "Attr6"; }
+    OwnershipPolicy getOwnershipPolicy() const override { return CONTAINER_OWNERSHIP; }
+    AstAttribute* constructor() const override { return new Attr6(*(new size_t(0))); } // size_t is leaked
+    AstAttribute* copy() const override { return new Attr6(*this); }
+    std::string attribute_class_name() const override { return "Attr6"; }
 };
 
 static void

@@ -1714,7 +1714,7 @@ public:
     }
 
     // Called by instruction semantics before each instruction is executed
-    void startInstruction(SgAsmInstruction *insn_) ROSE_OVERRIDE {
+    void startInstruction(SgAsmInstruction *insn_) override {
         if (ninsns++ >= params.timeout)
             throw FaultException(AnalysisFault::INSN_LIMIT);
         SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_);
@@ -1816,7 +1816,7 @@ public:
 
     // Called by instruction semantics after each instruction is executed. Stack frames are not updated until the next
     // call to startInstruction().
-    void finishInstruction(SgAsmInstruction *insn) ROSE_OVERRIDE {
+    void finishInstruction(SgAsmInstruction *insn) override {
         SgAsmX86Instruction *insn_x86 = isSgAsmX86Instruction(insn);
         assert(insn_x86!=NULL);
         state.output_group.set_ninsns(1+state.output_group.get_ninsns());
@@ -1906,7 +1906,7 @@ public:
 
     // Handle INT 0x80 instructions: save the system call number (from EAX) in the output group and set EAX to a random
     // value, thus consuming one input.
-    void interrupt(uint8_t inum) ROSE_OVERRIDE {
+    void interrupt(uint8_t inum) override {
         if (0x80==inum) {
             if (params.verbosity>=EFFUSIVE)
                 std::cerr <<"CloneDetection: special handling for system call (fall through and consume an input into EAX)\n";

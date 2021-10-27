@@ -159,18 +159,18 @@ protected:
 
     // Overrides
 public:
-    virtual Satisfiable checkLib() ROSE_OVERRIDE;
-    virtual void reset() ROSE_OVERRIDE;
-    virtual void clearEvidence() ROSE_OVERRIDE;
-    virtual void parseEvidence() ROSE_OVERRIDE;
-    virtual void pop() ROSE_OVERRIDE;
-    virtual void selfTest() ROSE_OVERRIDE;
-    virtual void timeout(boost::chrono::duration<double>) ROSE_OVERRIDE;
+    virtual Satisfiable checkLib() override;
+    virtual void reset() override;
+    virtual void clearEvidence() override;
+    virtual void parseEvidence() override;
+    virtual void pop() override;
+    virtual void selfTest() override;
+    virtual void timeout(boost::chrono::duration<double>) override;
 protected:
-    virtual void outputBvxorFunctions(std::ostream&, const std::vector<SymbolicExpr::Ptr>&) ROSE_OVERRIDE;
-    virtual void outputComparisonFunctions(std::ostream&, const std::vector<SymbolicExpr::Ptr>&) ROSE_OVERRIDE;
-    virtual SExprTypePair outputExpression(const SymbolicExpr::Ptr&) ROSE_OVERRIDE;
-    virtual SExprTypePair outputArithmeticShiftRight(const SymbolicExpr::InteriorPtr&) ROSE_OVERRIDE;
+    virtual void outputBvxorFunctions(std::ostream&, const std::vector<SymbolicExpr::Ptr>&) override;
+    virtual void outputComparisonFunctions(std::ostream&, const std::vector<SymbolicExpr::Ptr>&) override;
+    virtual SExprTypePair outputExpression(const SymbolicExpr::Ptr&) override;
+    virtual SExprTypePair outputArithmeticShiftRight(const SymbolicExpr::InteriorPtr&) override;
 
 #ifdef ROSE_HAVE_Z3
 protected:

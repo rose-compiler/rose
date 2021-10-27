@@ -83,7 +83,7 @@ class CtxAnalysis : public DFAnalysisBase
     CtxPropertyStateFactory<context_t>& factory()  { return ctxFactory;  }
     CtxTransfer<context_t>&             transfer() { return ctxTransfer; }
 
-    void initializeSolver() ROSE_OVERRIDE
+    void initializeSolver() override
     {
       _solver = new CtxSolver0( _workList,
                                 _analyzerDataPreInfo,
@@ -122,7 +122,7 @@ class CtxAnalysis : public DFAnalysisBase
 
   protected:
     CtxAttribute<CallContext>*
-    createDFAstAttribute(Lattice* elem) ROSE_OVERRIDE
+    createDFAstAttribute(Lattice* elem) override
     {
       context_lattice_t* lat = dynamic_cast<context_lattice_t*>(elem);
 

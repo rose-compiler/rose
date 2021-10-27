@@ -10,14 +10,14 @@ namespace CodeThorn
 class RDTransferFunctions : public DFTransferFunctions {
 public:
   RDTransferFunctions();
-  void transferExpression(Label label, SgExpression* expr, Lattice& element) ROSE_OVERRIDE;
-  void transferDeclaration(Label label, SgVariableDeclaration* decl, Lattice& element) ROSE_OVERRIDE;
-  void transferReturnStmtExpr(Label label, SgExpression* expr, Lattice& element) ROSE_OVERRIDE;
-  void transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, Lattice& element) ROSE_OVERRIDE;
-  void transferFunctionCallReturn(Label lab, VariableId lhsVarId, SgFunctionCallExp* callExp, Lattice& element) ROSE_OVERRIDE;
-  void transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element) ROSE_OVERRIDE;
-  void transferFunctionExit(Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, Lattice& element) ROSE_OVERRIDE;
-  void initializeExtremalValue(Lattice& element) ROSE_OVERRIDE;
+  void transferExpression(Label label, SgExpression* expr, Lattice& element) override;
+  void transferDeclaration(Label label, SgVariableDeclaration* decl, Lattice& element) override;
+  void transferReturnStmtExpr(Label label, SgExpression* expr, Lattice& element) override;
+  void transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments, Lattice& element) override;
+  void transferFunctionCallReturn(Label lab, VariableId lhsVarId, SgFunctionCallExp* callExp, Lattice& element) override;
+  void transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element) override;
+  void transferFunctionExit(Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, Lattice& element) override;
+  void initializeExtremalValue(Lattice& element) override;
 };
 
 }

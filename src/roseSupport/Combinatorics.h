@@ -11,7 +11,6 @@
 #include <list>
 #include <ostream>
 #include <Rose/Exception.h>
-#include <rose_override.h>
 #include <Sawyer/Assert.h>
 #include <Sawyer/Synchronization.h>
 #include <stdexcept>
@@ -395,8 +394,8 @@ class ROSE_DLL_API HasherFnv: public Hasher {
     uint64_t partial_;
 public:
     HasherFnv(): partial_(0xcbf29ce484222325ull) {}
-    const Digest& digest() ROSE_OVERRIDE;
-    void append(const uint8_t *message, size_t messageSize) ROSE_OVERRIDE;
+    const Digest& digest() override;
+    void append(const uint8_t *message, size_t messageSize) override;
     uint64_t partial() const { return partial_; }
 };
 
@@ -410,9 +409,9 @@ class ROSE_DLL_API HasherSha256Builtin: public Hasher {
     std::vector<uint8_t> leftoverBytes_;                // message bytes inserted but not yet hashed
 public:
     HasherSha256Builtin();
-    void clear() ROSE_OVERRIDE;
-    const Digest& digest() ROSE_OVERRIDE;
-    void append(const uint8_t *message, size_t messageSize) ROSE_OVERRIDE;
+    void clear() override;
+    const Digest& digest() override;
+    void append(const uint8_t *message, size_t messageSize) override;
 private:
     uint8_t messageByte(size_t index, const uint8_t *message, size_t messageSize);
     bool getNextChunk(const uint8_t* &message /*in,out*/, size_t &messageSize /*in,out*/, uint32_t words[16] /*out*/);

@@ -275,7 +275,7 @@ class CtxLattice : public Lattice,
       context_map::swap(that);
     }
 
-    bool isBot() const ROSE_OVERRIDE { return context_map::size() == 0; }
+    bool isBot() const override { return context_map::size() == 0; }
 /*
     bool isBot()
     {
@@ -284,7 +284,7 @@ class CtxLattice : public Lattice,
       return self.isBot();
     }
 */
-    bool approximatedBy(Lattice& other) const ROSE_OVERRIDE
+    bool approximatedBy(Lattice& other) const override
     {
       const CtxLattice<context_t>& that = dynamic_cast<CtxLattice<context_t>& >(other);
 
@@ -293,7 +293,7 @@ class CtxLattice : public Lattice,
       return std::find_if(begin(), end(), ctxLatticeNotIn(that)) == end();
     }
 
-    void combine(Lattice& other) ROSE_OVERRIDE
+    void combine(Lattice& other) override
     {
       const CtxLattice<context_t>& that = dynamic_cast<CtxLattice<context_t>& >(other);
 
@@ -323,7 +323,7 @@ class CtxLattice : public Lattice,
       return compPropertyFactory;
     }
 
-    void toStream(std::ostream& os, VariableIdMapping* vm) ROSE_OVERRIDE
+    void toStream(std::ostream& os, VariableIdMapping* vm) override
     {
       if (isBot()) { os << " bot "; return; }
 

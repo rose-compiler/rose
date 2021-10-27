@@ -29,7 +29,7 @@ public:
 
     virtual void p(D, Ops, I, A, V) = 0;
 
-    virtual void process(const BaseSemantics::DispatcherPtr &dispatcher_, SgAsmInstruction *insn_) ROSE_OVERRIDE {
+    virtual void process(const BaseSemantics::DispatcherPtr &dispatcher_, SgAsmInstruction *insn_) override {
         DispatcherAarch32Ptr dispatcher = DispatcherAarch32::promote(dispatcher_);
         BaseSemantics::RiscOperatorsPtr operators = dispatcher->operators();
         SgAsmAarch32Instruction *insn = isSgAsmAarch32Instruction(insn_);

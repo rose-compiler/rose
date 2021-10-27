@@ -166,12 +166,12 @@ public:
     // Virtual constructors
 public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         return instance(protoval, solver);
     }
 
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         return instance(state, solver);
     }
 
@@ -303,102 +303,102 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods we override from our super class
 public:
-    virtual BaseSemantics::SValuePtr protoval() const ROSE_OVERRIDE;
-    virtual void solver(const SmtSolverPtr&) ROSE_OVERRIDE;
-    virtual SmtSolverPtr solver() const ROSE_OVERRIDE;
-    virtual BaseSemantics::StatePtr currentState() const ROSE_OVERRIDE;
-    virtual void currentState(const BaseSemantics::StatePtr&) ROSE_OVERRIDE;
-    virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE;
-    virtual size_t nInsns() const ROSE_OVERRIDE;
-    virtual void nInsns(size_t n) ROSE_OVERRIDE;
-    virtual SgAsmInstruction* currentInstruction() const ROSE_OVERRIDE;
-    virtual void startInstruction(SgAsmInstruction*) ROSE_OVERRIDE;
-    virtual void finishInstruction(SgAsmInstruction*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr protoval() const override;
+    virtual void solver(const SmtSolverPtr&) override;
+    virtual SmtSolverPtr solver() const override;
+    virtual BaseSemantics::StatePtr currentState() const override;
+    virtual void currentState(const BaseSemantics::StatePtr&) override;
+    virtual void print(std::ostream&, BaseSemantics::Formatter&) const override;
+    virtual size_t nInsns() const override;
+    virtual void nInsns(size_t n) override;
+    virtual SgAsmInstruction* currentInstruction() const override;
+    virtual void startInstruction(SgAsmInstruction*) override;
+    virtual void finishInstruction(SgAsmInstruction*) override;
     
-    virtual BaseSemantics::SValuePtr undefined_(size_t nbits) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr boolean_(bool value) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr undefined_(size_t nbits) override;
+    virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) override;
+    virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) override;
+    virtual BaseSemantics::SValuePtr boolean_(bool value) override;
+    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) override;
 
-    virtual BaseSemantics::SValuePtr filterCallTarget(const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr filterReturnTarget(const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr filterIndirectJumpTarget(const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
-    virtual void hlt() ROSE_OVERRIDE;
-    virtual void cpuid() ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr rdtsc() ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr filterCallTarget(const BaseSemantics::SValuePtr&) override;
+    virtual BaseSemantics::SValuePtr filterReturnTarget(const BaseSemantics::SValuePtr&) override;
+    virtual BaseSemantics::SValuePtr filterIndirectJumpTarget(const BaseSemantics::SValuePtr&) override;
+    virtual void hlt() override;
+    virtual void cpuid() override;
+    virtual BaseSemantics::SValuePtr rdtsc() override;
 
     // The actual RISC operators. These are pure virtual in the base class
-    virtual BaseSemantics::SValuePtr and_(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr or_(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr xor_(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr invert(const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr extract(const BaseSemantics::SValuePtr&, size_t begin_bit, size_t end_bit) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr concat(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr leastSignificantSetBit(const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr mostSignificantSetBit(const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr rotateLeft(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr rotateRight(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr shiftLeft(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr shiftRight(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr and_(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) override;
+    virtual BaseSemantics::SValuePtr or_(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) override;
+    virtual BaseSemantics::SValuePtr xor_(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) override;
+    virtual BaseSemantics::SValuePtr invert(const BaseSemantics::SValuePtr&) override;
+    virtual BaseSemantics::SValuePtr extract(const BaseSemantics::SValuePtr&, size_t begin_bit, size_t end_bit) override;
+    virtual BaseSemantics::SValuePtr concat(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) override;
+    virtual BaseSemantics::SValuePtr leastSignificantSetBit(const BaseSemantics::SValuePtr&) override;
+    virtual BaseSemantics::SValuePtr mostSignificantSetBit(const BaseSemantics::SValuePtr&) override;
+    virtual BaseSemantics::SValuePtr rotateLeft(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) override;
+    virtual BaseSemantics::SValuePtr rotateRight(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) override;
+    virtual BaseSemantics::SValuePtr shiftLeft(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) override;
+    virtual BaseSemantics::SValuePtr shiftRight(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) override;
     virtual BaseSemantics::SValuePtr shiftRightArithmetic(const BaseSemantics::SValuePtr&,
-                                                          const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr equalToZero(const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
+                                                          const BaseSemantics::SValuePtr&) override;
+    virtual BaseSemantics::SValuePtr equalToZero(const BaseSemantics::SValuePtr&) override;
     virtual BaseSemantics::SValuePtr ite(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&,
-                                         const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr unsignedExtend(const BaseSemantics::SValuePtr&, size_t nbits) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr signExtend(const BaseSemantics::SValuePtr&, size_t nbits) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr add(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
+                                         const BaseSemantics::SValuePtr&) override;
+    virtual BaseSemantics::SValuePtr unsignedExtend(const BaseSemantics::SValuePtr&, size_t nbits) override;
+    virtual BaseSemantics::SValuePtr signExtend(const BaseSemantics::SValuePtr&, size_t nbits) override;
+    virtual BaseSemantics::SValuePtr add(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) override;
     virtual BaseSemantics::SValuePtr addWithCarries(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&,
                                                     const BaseSemantics::SValuePtr&,
-                                                    BaseSemantics::SValuePtr&/*out*/) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr negate(const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr signedDivide(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr signedModulo(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
+                                                    BaseSemantics::SValuePtr&/*out*/) override;
+    virtual BaseSemantics::SValuePtr negate(const BaseSemantics::SValuePtr&) override;
+    virtual BaseSemantics::SValuePtr signedDivide(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) override;
+    virtual BaseSemantics::SValuePtr signedModulo(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&) override;
     virtual BaseSemantics::SValuePtr signedMultiply(const BaseSemantics::SValuePtr&,
-                                                    const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
+                                                    const BaseSemantics::SValuePtr&) override;
     virtual BaseSemantics::SValuePtr unsignedDivide(const BaseSemantics::SValuePtr&,
-                                                    const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
+                                                    const BaseSemantics::SValuePtr&) override;
     virtual BaseSemantics::SValuePtr unsignedModulo(const BaseSemantics::SValuePtr&,
-                                                    const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
+                                                    const BaseSemantics::SValuePtr&) override;
     virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr&,
-                                                      const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
+                                                      const BaseSemantics::SValuePtr&) override;
 
-    virtual void interrupt(int majr, int minr) ROSE_OVERRIDE;
+    virtual void interrupt(int majr, int minr) override;
 
-    virtual BaseSemantics::SValuePtr fpFromInteger(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr fpFromInteger(const BaseSemantics::SValuePtr&, SgAsmFloatType*) override;
     virtual BaseSemantics::SValuePtr fpToInteger(const BaseSemantics::SValuePtr&, SgAsmFloatType*,
-                                                 const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr fpConvert(const BaseSemantics::SValuePtr&, SgAsmFloatType*, SgAsmFloatType*) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr fpIsNan(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr fpIsDenormalized(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr fpIsZero(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr fpIsInfinity(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr fpSign(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr fpEffectiveExponent(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
+                                                 const BaseSemantics::SValuePtr&) override;
+    virtual BaseSemantics::SValuePtr fpConvert(const BaseSemantics::SValuePtr&, SgAsmFloatType*, SgAsmFloatType*) override;
+    virtual BaseSemantics::SValuePtr fpIsNan(const BaseSemantics::SValuePtr&, SgAsmFloatType*) override;
+    virtual BaseSemantics::SValuePtr fpIsDenormalized(const BaseSemantics::SValuePtr&, SgAsmFloatType*) override;
+    virtual BaseSemantics::SValuePtr fpIsZero(const BaseSemantics::SValuePtr&, SgAsmFloatType*) override;
+    virtual BaseSemantics::SValuePtr fpIsInfinity(const BaseSemantics::SValuePtr&, SgAsmFloatType*) override;
+    virtual BaseSemantics::SValuePtr fpSign(const BaseSemantics::SValuePtr&, SgAsmFloatType*) override;
+    virtual BaseSemantics::SValuePtr fpEffectiveExponent(const BaseSemantics::SValuePtr&, SgAsmFloatType*) override;
     virtual BaseSemantics::SValuePtr fpAdd(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&,
-                                           SgAsmFloatType*) ROSE_OVERRIDE;
+                                           SgAsmFloatType*) override;
     virtual BaseSemantics::SValuePtr fpSubtract(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&,
-                                                SgAsmFloatType*) ROSE_OVERRIDE;
+                                                SgAsmFloatType*) override;
     virtual BaseSemantics::SValuePtr fpMultiply(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&,
-                                                SgAsmFloatType*) ROSE_OVERRIDE;
+                                                SgAsmFloatType*) override;
     virtual BaseSemantics::SValuePtr fpDivide(const BaseSemantics::SValuePtr&, const BaseSemantics::SValuePtr&,
-                                              SgAsmFloatType*) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr fpSquareRoot(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr fpRoundTowardZero(const BaseSemantics::SValuePtr&, SgAsmFloatType*) ROSE_OVERRIDE;
+                                              SgAsmFloatType*) override;
+    virtual BaseSemantics::SValuePtr fpSquareRoot(const BaseSemantics::SValuePtr&, SgAsmFloatType*) override;
+    virtual BaseSemantics::SValuePtr fpRoundTowardZero(const BaseSemantics::SValuePtr&, SgAsmFloatType*) override;
     
     virtual BaseSemantics::SValuePtr readRegister(RegisterDescriptor,
-                                                  const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
+                                                  const BaseSemantics::SValuePtr &dflt) override;
     virtual BaseSemantics::SValuePtr peekRegister(RegisterDescriptor,
-                                                  const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
-    virtual void writeRegister(RegisterDescriptor, const BaseSemantics::SValuePtr&) ROSE_OVERRIDE;
+                                                  const BaseSemantics::SValuePtr &dflt) override;
+    virtual void writeRegister(RegisterDescriptor, const BaseSemantics::SValuePtr&) override;
     virtual BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,
-                                                const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
+                                                const BaseSemantics::SValuePtr &cond) override;
     virtual BaseSemantics::SValuePtr peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
-                                                const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
+                                                const BaseSemantics::SValuePtr &dflt) override;
     virtual void writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
-                             const BaseSemantics::SValuePtr &data, const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
+                             const BaseSemantics::SValuePtr &data, const BaseSemantics::SValuePtr &cond) override;
 };
 
 } // namespace

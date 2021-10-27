@@ -140,7 +140,7 @@ class HexDumper: public Dumper {
     HexdumpFormat fmt_;
 public:
     virtual void formatData(std::ostream &stream, const AddressInterval &segmentInterval, const MemoryMap::Segment &segment,
-                            const AddressInterval &dataInterval, const uint8_t *data) ROSE_OVERRIDE {
+                            const AddressInterval &dataInterval, const uint8_t *data) override {
         rose_addr_t va = dataInterval.least();
         rose_addr_t nRemain = dataInterval.size();
 
@@ -173,7 +173,7 @@ public:
         : syntax_(syntax) {}
 
     virtual void formatData(std::ostream &stream, const AddressInterval &segmentInterval, const MemoryMap::Segment &segment,
-                            const AddressInterval &dataInterval, const uint8_t *data) ROSE_OVERRIDE {
+                            const AddressInterval &dataInterval, const uint8_t *data) override {
         MemoryMap::Ptr map = MemoryMap::instance();
         map->insert(dataInterval, MemoryMap::Segment::staticInstance(data, dataInterval.size(), MemoryMap::READABLE));
         std::vector<SRecord> srecs = SRecord::create(map, syntax_);
@@ -185,7 +185,7 @@ public:
 class BinaryDumper: public Dumper {
 public:
     virtual void formatData(std::ostream &stream, const AddressInterval &segmentInterval, const MemoryMap::Segment &segment,
-                            const AddressInterval &dataInterval, const uint8_t *data) ROSE_OVERRIDE {
+                            const AddressInterval &dataInterval, const uint8_t *data) override {
         stream.write((const char*)data, dataInterval.size());
         if (!stream.good()) {
             std::ostringstream mesg;
@@ -199,7 +199,7 @@ public:
 class VxcoreDumper: public Dumper {
 public:
     virtual void formatData(std::ostream &stream, const AddressInterval &segmentInterval, const MemoryMap::Segment &segment,
-                            const AddressInterval &dataInterval, const uint8_t *data) ROSE_OVERRIDE {
+                            const AddressInterval &dataInterval, const uint8_t *data) override {
         std::string perms = "=";
         if (0 != (segment.accessibility() & MemoryMap::READABLE))
             perms += "r";

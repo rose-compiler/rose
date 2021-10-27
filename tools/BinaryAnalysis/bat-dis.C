@@ -101,11 +101,11 @@ public:
     typedef Sawyer::SharedPointer<MyUnparser> Ptr;
 
     static Ptr instance(const BinaryAnalysis::Unparser::Base::Ptr &next) { return Ptr(new MyUnparser(next)); }
-    virtual BinaryAnalysis::Unparser::Base::Ptr copy() const ROSE_OVERRIDE { return Ptr(new MyUnparser(nextUnparser()->copy())); }
-    virtual const BinaryAnalysis::Unparser::Settings& settings() const ROSE_OVERRIDE { return nextUnparser()->settings(); }
-    virtual BinaryAnalysis::Unparser::Settings& settings() ROSE_OVERRIDE { return nextUnparser()->settings(); }
+    virtual BinaryAnalysis::Unparser::Base::Ptr copy() const override { return Ptr(new MyUnparser(nextUnparser()->copy())); }
+    virtual const BinaryAnalysis::Unparser::Settings& settings() const override { return nextUnparser()->settings(); }
+    virtual BinaryAnalysis::Unparser::Settings& settings() override { return nextUnparser()->settings(); }
 
-    void emitBasicBlockBody(std::ostream &out, const P2::BasicBlockPtr &bb, BinaryAnalysis::Unparser::State &state) const ROSE_OVERRIDE {
+    void emitBasicBlockBody(std::ostream &out, const P2::BasicBlockPtr &bb, BinaryAnalysis::Unparser::State &state) const override {
         ASSERT_not_null(bb);
         InstructionSemantics2::BaseSemantics::RiscOperatorsPtr ops = state.partitioner().newOperators();
         if (InstructionSemantics2::BaseSemantics::DispatcherPtr cpu = state.partitioner().newDispatcher(ops)) {
