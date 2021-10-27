@@ -107,41 +107,41 @@ protected:
 
 public:
     static Ptr instance();
-    void title(std::ostream&, const std::string&) ROSE_OVERRIDE {}
-    void pathNumber(std::ostream&, size_t) ROSE_OVERRIDE {}
-    void pathHash(std::ostream&, const std::string&) ROSE_OVERRIDE {}
-    void ioMode(std::ostream&, Rose::BinaryAnalysis::FeasiblePath::IoMode, const std::string &what) ROSE_OVERRIDE {}
-    void mayMust(std::ostream&, Rose::BinaryAnalysis::FeasiblePath::MayOrMust, const std::string &what) ROSE_OVERRIDE {}
-    void objectAddress(std::ostream&, const Rose::BinaryAnalysis::SymbolicExpr::Ptr&) ROSE_OVERRIDE {}
-    void finalInsn(std::ostream&, const Rose::BinaryAnalysis::Partitioner2::Partitioner&, SgAsmInstruction*) ROSE_OVERRIDE {}
-    void variable(std::ostream&, const Rose::BinaryAnalysis::Variables::StackVariable&) ROSE_OVERRIDE {}
-    void variable(std::ostream&, const Rose::BinaryAnalysis::Variables::GlobalVariable&) ROSE_OVERRIDE {}
-    void frameOffset(std::ostream&, const Rose::BinaryAnalysis::Variables::OffsetInterval&) ROSE_OVERRIDE {}
+    void title(std::ostream&, const std::string&) override {}
+    void pathNumber(std::ostream&, size_t) override {}
+    void pathHash(std::ostream&, const std::string&) override {}
+    void ioMode(std::ostream&, Rose::BinaryAnalysis::FeasiblePath::IoMode, const std::string &what) override {}
+    void mayMust(std::ostream&, Rose::BinaryAnalysis::FeasiblePath::MayOrMust, const std::string &what) override {}
+    void objectAddress(std::ostream&, const Rose::BinaryAnalysis::SymbolicExpr::Ptr&) override {}
+    void finalInsn(std::ostream&, const Rose::BinaryAnalysis::Partitioner2::Partitioner&, SgAsmInstruction*) override {}
+    void variable(std::ostream&, const Rose::BinaryAnalysis::Variables::StackVariable&) override {}
+    void variable(std::ostream&, const Rose::BinaryAnalysis::Variables::GlobalVariable&) override {}
+    void frameOffset(std::ostream&, const Rose::BinaryAnalysis::Variables::OffsetInterval&) override {}
     void frameRelative(std::ostream&, const Rose::BinaryAnalysis::Variables::StackVariable&,
                        const Rose::BinaryAnalysis::Variables::OffsetInterval&,
-                       Rose::BinaryAnalysis::FeasiblePath::IoMode) ROSE_OVERRIDE {}
+                       Rose::BinaryAnalysis::FeasiblePath::IoMode) override {}
     void localVarsFound(std::ostream&, const Rose::BinaryAnalysis::Variables::StackVariables&,
-                        const Rose::BinaryAnalysis::Partitioner2::Partitioner&) ROSE_OVERRIDE {}
-    void pathLength(std::ostream&, size_t nVerts, size_t nSteps) ROSE_OVERRIDE {}
-    void startFunction(std::ostream&, const std::string &name) ROSE_OVERRIDE {}
-    void endFunction(std::ostream&, const std::string &name) ROSE_OVERRIDE {}
-    void pathIntro(std::ostream&) ROSE_OVERRIDE {}
+                        const Rose::BinaryAnalysis::Partitioner2::Partitioner&) override {}
+    void pathLength(std::ostream&, size_t nVerts, size_t nSteps) override {}
+    void startFunction(std::ostream&, const std::string &name) override {}
+    void endFunction(std::ostream&, const std::string &name) override {}
+    void pathIntro(std::ostream&) override {}
     void bbVertex(std::ostream&, size_t id, const Rose::BinaryAnalysis::Partitioner2::BasicBlockPtr&,
-                  const std::string &funcName) ROSE_OVERRIDE {}
-    void bbSrcLoc(std::ostream&, const Rose::SourceLocation &loc) ROSE_OVERRIDE {}
-    void insnListIntro(std::ostream&) ROSE_OVERRIDE {}
+                  const std::string &funcName) override {}
+    void bbSrcLoc(std::ostream&, const Rose::SourceLocation &loc) override {}
+    void insnListIntro(std::ostream&) override {}
     void insnStep(std::ostream&, size_t idx, const Rose::BinaryAnalysis::Partitioner2::Partitioner&,
-                  SgAsmInstruction *insn) ROSE_OVERRIDE {}
-    void semanticFailure(std::ostream&) ROSE_OVERRIDE {}
-    void indetVertex(std::ostream&, size_t idx) ROSE_OVERRIDE {}
-    void indetStep(std::ostream&, size_t idx) ROSE_OVERRIDE {}
-    void summaryVertex(std::ostream&, size_t idx, rose_addr_t) ROSE_OVERRIDE {}
-    void summaryStep(std::ostream&, size_t idx, const std::string &name) ROSE_OVERRIDE {}
-    void edge(std::ostream&, const std::string &name) ROSE_OVERRIDE {}
+                  SgAsmInstruction *insn) override {}
+    void semanticFailure(std::ostream&) override {}
+    void indetVertex(std::ostream&, size_t idx) override {}
+    void indetStep(std::ostream&, size_t idx) override {}
+    void summaryVertex(std::ostream&, size_t idx, rose_addr_t) override {}
+    void summaryStep(std::ostream&, size_t idx, const std::string &name) override {}
+    void edge(std::ostream&, const std::string &name) override {}
     void state(std::ostream&, size_t vertexIdx, const std::string &title,
                const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr&,
-               const Rose::BinaryAnalysis::RegisterDictionary*) ROSE_OVERRIDE {}
-    void solverEvidence(std::ostream&, const Rose::BinaryAnalysis::SmtSolverPtr&) ROSE_OVERRIDE {}
+               const Rose::BinaryAnalysis::RegisterDictionary*) override {}
+    void solverEvidence(std::ostream&, const Rose::BinaryAnalysis::SmtSolverPtr&) override {}
 };
 
 /** Format results using plain text.
@@ -153,43 +153,43 @@ protected:
 
 public:
     static Ptr instance();
-    void title(std::ostream&, const std::string&) ROSE_OVERRIDE;
-    void pathNumber(std::ostream&, size_t) ROSE_OVERRIDE;
-    void pathHash(std::ostream&, const std::string&) ROSE_OVERRIDE;
+    void title(std::ostream&, const std::string&) override;
+    void pathNumber(std::ostream&, size_t) override;
+    void pathHash(std::ostream&, const std::string&) override;
     void ioMode(std::ostream&, Rose::BinaryAnalysis::FeasiblePath::IoMode,
-                const std::string &what = std::string()) ROSE_OVERRIDE;
+                const std::string &what = std::string()) override;
     void mayMust(std::ostream&, Rose::BinaryAnalysis::FeasiblePath::MayOrMust,
-                 const std::string &what = std::string()) ROSE_OVERRIDE;
-    void objectAddress(std::ostream&, const Rose::BinaryAnalysis::SymbolicExpr::Ptr&) ROSE_OVERRIDE;
-    void finalInsn(std::ostream&, const Rose::BinaryAnalysis::Partitioner2::Partitioner&, SgAsmInstruction*) ROSE_OVERRIDE;
-    void variable(std::ostream&, const Rose::BinaryAnalysis::Variables::StackVariable&) ROSE_OVERRIDE;
-    void variable(std::ostream&, const Rose::BinaryAnalysis::Variables::GlobalVariable&) ROSE_OVERRIDE;
-    void frameOffset(std::ostream&, const Rose::BinaryAnalysis::Variables::OffsetInterval&) ROSE_OVERRIDE;
+                 const std::string &what = std::string()) override;
+    void objectAddress(std::ostream&, const Rose::BinaryAnalysis::SymbolicExpr::Ptr&) override;
+    void finalInsn(std::ostream&, const Rose::BinaryAnalysis::Partitioner2::Partitioner&, SgAsmInstruction*) override;
+    void variable(std::ostream&, const Rose::BinaryAnalysis::Variables::StackVariable&) override;
+    void variable(std::ostream&, const Rose::BinaryAnalysis::Variables::GlobalVariable&) override;
+    void frameOffset(std::ostream&, const Rose::BinaryAnalysis::Variables::OffsetInterval&) override;
     void frameRelative(std::ostream&, const Rose::BinaryAnalysis::Variables::StackVariable&,
                        const Rose::BinaryAnalysis::Variables::OffsetInterval&,
-                       Rose::BinaryAnalysis::FeasiblePath::IoMode) ROSE_OVERRIDE;
+                       Rose::BinaryAnalysis::FeasiblePath::IoMode) override;
     void localVarsFound(std::ostream&, const Rose::BinaryAnalysis::Variables::StackVariables&,
-                        const Rose::BinaryAnalysis::Partitioner2::Partitioner&) ROSE_OVERRIDE;
-    void pathLength(std::ostream&, size_t nVerts, size_t nSteps) ROSE_OVERRIDE;
-    void startFunction(std::ostream&, const std::string &name) ROSE_OVERRIDE;
-    void endFunction(std::ostream&, const std::string &name) ROSE_OVERRIDE;
-    void pathIntro(std::ostream&) ROSE_OVERRIDE;
+                        const Rose::BinaryAnalysis::Partitioner2::Partitioner&) override;
+    void pathLength(std::ostream&, size_t nVerts, size_t nSteps) override;
+    void startFunction(std::ostream&, const std::string &name) override;
+    void endFunction(std::ostream&, const std::string &name) override;
+    void pathIntro(std::ostream&) override;
     void bbVertex(std::ostream&, size_t id, const Rose::BinaryAnalysis::Partitioner2::BasicBlockPtr&,
-                  const std::string &funcName) ROSE_OVERRIDE;
-    void bbSrcLoc(std::ostream&, const Rose::SourceLocation &loc) ROSE_OVERRIDE;
-    void insnListIntro(std::ostream&) ROSE_OVERRIDE;
+                  const std::string &funcName) override;
+    void bbSrcLoc(std::ostream&, const Rose::SourceLocation &loc) override;
+    void insnListIntro(std::ostream&) override;
     void insnStep(std::ostream&, size_t idx, const Rose::BinaryAnalysis::Partitioner2::Partitioner&,
-                  SgAsmInstruction *insn) ROSE_OVERRIDE;
-    void semanticFailure(std::ostream&) ROSE_OVERRIDE;
-    void indetVertex(std::ostream&, size_t idx) ROSE_OVERRIDE;
-    void indetStep(std::ostream&, size_t idx) ROSE_OVERRIDE;
-    void summaryVertex(std::ostream&, size_t idx, rose_addr_t) ROSE_OVERRIDE;
-    void summaryStep(std::ostream&, size_t idx, const std::string &name) ROSE_OVERRIDE;
-    void edge(std::ostream&, const std::string &name) ROSE_OVERRIDE;
+                  SgAsmInstruction *insn) override;
+    void semanticFailure(std::ostream&) override;
+    void indetVertex(std::ostream&, size_t idx) override;
+    void indetStep(std::ostream&, size_t idx) override;
+    void summaryVertex(std::ostream&, size_t idx, rose_addr_t) override;
+    void summaryStep(std::ostream&, size_t idx, const std::string &name) override;
+    void edge(std::ostream&, const std::string &name) override;
     void state(std::ostream&, size_t vertexIdx, const std::string &title,
                const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr&,
-               const Rose::BinaryAnalysis::RegisterDictionary*) ROSE_OVERRIDE;
-    void solverEvidence(std::ostream&, const Rose::BinaryAnalysis::SmtSolverPtr&) ROSE_OVERRIDE;
+               const Rose::BinaryAnalysis::RegisterDictionary*) override;
+    void solverEvidence(std::ostream&, const Rose::BinaryAnalysis::SmtSolverPtr&) override;
 };
 
 /**  Format output as YAML.
@@ -215,43 +215,43 @@ protected:
 
 public:
     static Ptr instance();
-    void title(std::ostream&, const std::string&) ROSE_OVERRIDE;
-    void pathNumber(std::ostream&, size_t) ROSE_OVERRIDE;
-    void pathHash(std::ostream&, const std::string&) ROSE_OVERRIDE;
+    void title(std::ostream&, const std::string&) override;
+    void pathNumber(std::ostream&, size_t) override;
+    void pathHash(std::ostream&, const std::string&) override;
     void ioMode(std::ostream&, Rose::BinaryAnalysis::FeasiblePath::IoMode,
-                const std::string &what = std::string()) ROSE_OVERRIDE;
+                const std::string &what = std::string()) override;
     void mayMust(std::ostream&, Rose::BinaryAnalysis::FeasiblePath::MayOrMust,
-                 const std::string &what = std::string()) ROSE_OVERRIDE;
-    void objectAddress(std::ostream&, const Rose::BinaryAnalysis::SymbolicExpr::Ptr&) ROSE_OVERRIDE;
-    void finalInsn(std::ostream&, const Rose::BinaryAnalysis::Partitioner2::Partitioner&, SgAsmInstruction*) ROSE_OVERRIDE;
-    void variable(std::ostream&, const Rose::BinaryAnalysis::Variables::StackVariable&) ROSE_OVERRIDE;
-    void variable(std::ostream&, const Rose::BinaryAnalysis::Variables::GlobalVariable&) ROSE_OVERRIDE;
-    void frameOffset(std::ostream&, const Rose::BinaryAnalysis::Variables::OffsetInterval&) ROSE_OVERRIDE;
+                 const std::string &what = std::string()) override;
+    void objectAddress(std::ostream&, const Rose::BinaryAnalysis::SymbolicExpr::Ptr&) override;
+    void finalInsn(std::ostream&, const Rose::BinaryAnalysis::Partitioner2::Partitioner&, SgAsmInstruction*) override;
+    void variable(std::ostream&, const Rose::BinaryAnalysis::Variables::StackVariable&) override;
+    void variable(std::ostream&, const Rose::BinaryAnalysis::Variables::GlobalVariable&) override;
+    void frameOffset(std::ostream&, const Rose::BinaryAnalysis::Variables::OffsetInterval&) override;
     void frameRelative(std::ostream&, const Rose::BinaryAnalysis::Variables::StackVariable&,
                        const Rose::BinaryAnalysis::Variables::OffsetInterval&,
-                       Rose::BinaryAnalysis::FeasiblePath::IoMode) ROSE_OVERRIDE;
+                       Rose::BinaryAnalysis::FeasiblePath::IoMode) override;
     void localVarsFound(std::ostream&, const Rose::BinaryAnalysis::Variables::StackVariables&,
-                        const Rose::BinaryAnalysis::Partitioner2::Partitioner&) ROSE_OVERRIDE;
-    void pathLength(std::ostream&, size_t nVerts, size_t nSteps) ROSE_OVERRIDE;
-    void pathIntro(std::ostream&) ROSE_OVERRIDE;
-    void startFunction(std::ostream&, const std::string &name) ROSE_OVERRIDE;
-    void endFunction(std::ostream&, const std::string &name) ROSE_OVERRIDE;
+                        const Rose::BinaryAnalysis::Partitioner2::Partitioner&) override;
+    void pathLength(std::ostream&, size_t nVerts, size_t nSteps) override;
+    void pathIntro(std::ostream&) override;
+    void startFunction(std::ostream&, const std::string &name) override;
+    void endFunction(std::ostream&, const std::string &name) override;
     void bbVertex(std::ostream&, size_t id, const Rose::BinaryAnalysis::Partitioner2::BasicBlockPtr&,
-                  const std::string &funcName) ROSE_OVERRIDE;
-    void bbSrcLoc(std::ostream&, const Rose::SourceLocation &loc) ROSE_OVERRIDE;
-    void insnListIntro(std::ostream&) ROSE_OVERRIDE;
+                  const std::string &funcName) override;
+    void bbSrcLoc(std::ostream&, const Rose::SourceLocation &loc) override;
+    void insnListIntro(std::ostream&) override;
     void insnStep(std::ostream&, size_t idx, const Rose::BinaryAnalysis::Partitioner2::Partitioner&,
-                  SgAsmInstruction *insn) ROSE_OVERRIDE;
-    void semanticFailure(std::ostream&) ROSE_OVERRIDE;
-    void indetVertex(std::ostream&, size_t idx) ROSE_OVERRIDE;
-    void indetStep(std::ostream&, size_t idx) ROSE_OVERRIDE;
-    void summaryVertex(std::ostream&, size_t idx, rose_addr_t) ROSE_OVERRIDE;
-    void summaryStep(std::ostream&, size_t idx, const std::string &name) ROSE_OVERRIDE;
-    void edge(std::ostream&, const std::string &name) ROSE_OVERRIDE;
+                  SgAsmInstruction *insn) override;
+    void semanticFailure(std::ostream&) override;
+    void indetVertex(std::ostream&, size_t idx) override;
+    void indetStep(std::ostream&, size_t idx) override;
+    void summaryVertex(std::ostream&, size_t idx, rose_addr_t) override;
+    void summaryStep(std::ostream&, size_t idx, const std::string &name) override;
+    void edge(std::ostream&, const std::string &name) override;
     void state(std::ostream&, size_t vertexIdx, const std::string &title,
                const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr&,
-               const Rose::BinaryAnalysis::RegisterDictionary*) ROSE_OVERRIDE;
-    void solverEvidence(std::ostream&, const Rose::BinaryAnalysis::SmtSolverPtr&) ROSE_OVERRIDE;
+               const Rose::BinaryAnalysis::RegisterDictionary*) override;
+    void solverEvidence(std::ostream&, const Rose::BinaryAnalysis::SmtSolverPtr&) override;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

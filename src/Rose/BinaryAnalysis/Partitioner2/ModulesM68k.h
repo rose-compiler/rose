@@ -22,8 +22,8 @@ protected:
 public:
     /** Allocating constructor. */
     static Ptr instance() { return Ptr(new MatchLink); }
-    virtual std::vector<Function::Ptr> functions() const ROSE_OVERRIDE { return std::vector<Function::Ptr>(1, function_); }
-    virtual bool match(const Partitioner&, rose_addr_t anchor) ROSE_OVERRIDE;
+    virtual std::vector<Function::Ptr> functions() const override { return std::vector<Function::Ptr>(1, function_); }
+    virtual bool match(const Partitioner&, rose_addr_t anchor) override;
 };
 
 /** Matches M68k function padding. */
@@ -31,7 +31,7 @@ class MatchFunctionPadding: public FunctionPaddingMatcher {
 public:
     /** Allocating constructor. */
     static Ptr instance() { return Ptr(new MatchFunctionPadding); }
-    virtual rose_addr_t match(const Partitioner&, rose_addr_t anchor) ROSE_OVERRIDE;
+    virtual rose_addr_t match(const Partitioner&, rose_addr_t anchor) override;
 };
 
 /** Adjusts basic block successors for M68k "switch" statements. */
@@ -39,7 +39,7 @@ class SwitchSuccessors: public BasicBlockCallback {
 public:
     /** Allocating constructor. */
     static Ptr instance() { return Ptr(new SwitchSuccessors); }
-    virtual bool operator()(bool chain, const Args&) ROSE_OVERRIDE;
+    virtual bool operator()(bool chain, const Args&) override;
 };
 
 /** Find functions for an interrupt vector.

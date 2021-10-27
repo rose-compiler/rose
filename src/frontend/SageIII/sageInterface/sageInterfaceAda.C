@@ -974,7 +974,7 @@ namespace ada
       : AstSimpleProcessing(), fn(std::move(conversionFn))
       {}
 
-      void visit(SgNode*) ROSE_OVERRIDE;
+      void visit(SgNode*) override;
 
     private:
       std::function<void(SgNode*)> fn;

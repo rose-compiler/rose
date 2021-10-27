@@ -1520,9 +1520,9 @@ Grammar::buildStringForDataAccessFunctionDeclaration ( AstNodeClass & node )
 #endif
              }
 
-       // And surviving references to $ROSE_OVERRIDE_GET and $ROSE_OVERRIDE_SET should be edited to be ROSE_OVERRIDE.
-          codeString = GrammarString::copyEdit(codeString, " $ROSE_OVERRIDE_GET", " ROSE_OVERRIDE");
-          codeString = GrammarString::copyEdit(codeString, " $ROSE_OVERRIDE_SET", " ROSE_OVERRIDE");
+       // And surviving references to $ROSE_OVERRIDE_GET and $ROSE_OVERRIDE_SET should be edited to be override.
+          codeString = GrammarString::copyEdit(codeString, " $ROSE_OVERRIDE_GET", " override");
+          codeString = GrammarString::copyEdit(codeString, " $ROSE_OVERRIDE_SET", " override");
 
        // StringUtility::FileWithLineNumbers tempString(1, StringUtility::StringWithLineNumber(data.getDataAccessFunctionPrototypeString(), "" /* "<getDataAccessFunctionPrototypeString>" */, 1));
           StringUtility::FileWithLineNumbers tempString(1, StringUtility::StringWithLineNumber(codeString, "" /* "<getDataAccessFunctionPrototypeString>" */, 1));
@@ -2230,11 +2230,7 @@ Grammar::buildHeaderFiles( AstNodeClass & node, StringUtility::FileWithLineNumbe
   // DQ (3/21/2017): Modify code generation to eliminate Clang C++11 override warning.
      if (className == "SgNode")
         {
-          editedHeaderFileString = GrammarString::copyEdit(editedHeaderFileString, " $ROSE_OVERRIDE", "");
-        }
-       else
-        {
-          editedHeaderFileString = GrammarString::copyEdit(editedHeaderFileString, " $ROSE_OVERRIDE", " ROSE_OVERRIDE");
+          editedHeaderFileString = GrammarString::copyEdit(editedHeaderFileString, " override", "");
         }
 
      editedHeaderFileString = editSubstitution (node,editedHeaderFileString);

@@ -252,12 +252,12 @@ public:
     virtual ~BinaryLoaderElf() {}
 
     /** Copy constructor. See super class. */
-    virtual BinaryLoaderPtr clone() const ROSE_OVERRIDE {
+    virtual BinaryLoaderPtr clone() const override {
         return BinaryLoaderPtr(new BinaryLoaderElf(*this));
     }
 
     /** Capability query. See super class. */
-    virtual bool canLoad(SgAsmGenericHeader*) const ROSE_OVERRIDE;
+    virtual bool canLoad(SgAsmGenericHeader*) const override;
 
     /** Sets up library search paths and preloads from the environment.  The search paths and preloads are added to the end of
      *  the lists.  If an ELF file header is provided, then the DT_RPATH and DT_RUNPATH from the ".dynamic" section are also
@@ -280,7 +280,7 @@ public:
     static void getDynamicVars(SgAsmGenericHeader*, std::string &rpath/*out*/, std::string &runpath/*out*/);
 
     // documented in superclass
-    virtual void fixup(SgAsmInterpretation *interp, FixupErrors *errors=NULL) ROSE_OVERRIDE;
+    virtual void fixup(SgAsmInterpretation *interp, FixupErrors *errors=NULL) override;
 
     /** Find the section containing the specified virtual address.  Only ELF Sections of the specified header are searched,
      *  and we search based on the preferred mapping location of the section (not the actual mapping location).  The null
@@ -291,11 +291,11 @@ protected:
     /** Returns mappable sections in a particular order.  Returns ELF Segments in the order they are defined in the segment
      *  table, followed by ELF Sections in the order they are defined in the section table but excluding those sections that
      *  were already added to the list as ELF Segments. */
-    virtual SgAsmGenericSectionPtrList getRemapSections(SgAsmGenericHeader*) ROSE_OVERRIDE;
+    virtual SgAsmGenericSectionPtrList getRemapSections(SgAsmGenericHeader*) override;
 
 public:
     /** Returns a new, temporary base address which is greater than everything that's been mapped already. */
-    virtual rose_addr_t rebase(const MemoryMap::Ptr&, SgAsmGenericHeader*, const SgAsmGenericSectionPtrList&) ROSE_OVERRIDE;
+    virtual rose_addr_t rebase(const MemoryMap::Ptr&, SgAsmGenericHeader*, const SgAsmGenericSectionPtrList&) override;
 
 protected:
     /** Linux-specific ELF Segment and Section alignment. */
@@ -304,7 +304,7 @@ protected:
                                             rose_addr_t *va, rose_addr_t *mem_size,
                                             rose_addr_t *offset, rose_addr_t *file_size, bool *map_private,
                                             rose_addr_t *va_offset, bool *anon_lo, bool *anon_hi,
-                                            ConflictResolution *resolve) ROSE_OVERRIDE;
+                                            ConflictResolution *resolve) override;
 
     /** Builds the master symbol table. This table is built just before relocations are fixed up and contains information
      *  about all the symbols that might be necessary during that process.  The symbol table describes one entire
