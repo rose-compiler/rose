@@ -993,6 +993,13 @@ parseEnum(TokenStream &tokens, Scopes &scopes) {
         scopes.push_back(Scope(name, tokens.location(tokens[0])));
         mlog[WHERE] <<where(tokens.fileName(), tokens.location(tokens[0])) <<": enum " <<scopes <<"\n";
         tokens.consume(2);
+    } else if (tokens[0].type() == TOK_WORD && tokens.matches(tokens[0], "class") &&
+               tokens[1].type() == TOK_WORD &&
+               tokens.matches(tokens[2], "{")) {
+        name = tokens.lexeme(tokens[1]);
+        scopes.push_back(Scope(name, tokens.location(tokens[1])));
+        mlog[WHERE] <<where(tokens.fileName(), tokens.location(tokens[1])) <<": enum " <<scopes <<"\n";
+        tokens.consume(3);
     } else {
         return;
     }

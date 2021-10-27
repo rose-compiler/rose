@@ -26,15 +26,15 @@ public:
         return Ptr(new Null(settings));
     }
 
-    Ptr copy() const ROSE_OVERRIDE {
+    Ptr copy() const override {
         return instance(settings());
     }
 
-    const NullSettings& settings() const ROSE_OVERRIDE { return settings_; }
-    NullSettings& settings() ROSE_OVERRIDE { return settings_; }
+    const NullSettings& settings() const override { return settings_; }
+    NullSettings& settings() override { return settings_; }
 
 protected:
-    void emitInstructionMnemonic(std::ostream&, SgAsmInstruction*, State&) const ROSE_OVERRIDE;
+    void emitInstructionMnemonic(std::ostream&, SgAsmInstruction*, State&) const override;
 };
 
 } // namespace

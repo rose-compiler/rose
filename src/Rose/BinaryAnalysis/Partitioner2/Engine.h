@@ -151,7 +151,7 @@ private:
         typedef Sawyer::Container::Map<rose_addr_t /*target*/, std::vector<rose_addr_t> /*sources*/> WorkList;
     public:
         static Ptr instance() { return Ptr(new BasicBlockFinalizer); }
-        virtual bool operator()(bool chain, const Args &args) ROSE_OVERRIDE;
+        virtual bool operator()(bool chain, const Args &args) override;
     private:
         void fixFunctionReturnEdge(const Args&);
         void fixFunctionCallEdges(const Args&);
@@ -190,8 +190,8 @@ private:
     public:
         typedef Sawyer::SharedPointer<BasicBlockWorkList> Ptr;
         static Ptr instance(Engine *engine, size_t maxSorts) { return Ptr(new BasicBlockWorkList(engine, maxSorts)); }
-        virtual bool operator()(bool chain, const AttachedBasicBlock &args) ROSE_OVERRIDE;
-        virtual bool operator()(bool chain, const DetachedBasicBlock &args) ROSE_OVERRIDE;
+        virtual bool operator()(bool chain, const AttachedBasicBlock &args) override;
+        virtual bool operator()(bool chain, const DetachedBasicBlock &args) override;
         Sawyer::Container::DistinctList<rose_addr_t>& pendingCallReturn() { return pendingCallReturn_; }
         Sawyer::Container::DistinctList<rose_addr_t>& processedCallReturn() { return processedCallReturn_; }
         Sawyer::Container::DistinctList<rose_addr_t>& finalCallReturn() { return finalCallReturn_; }
@@ -217,10 +217,10 @@ private:
         static Ptr instance() { return Ptr(new CodeConstants); }
 
         // Possibly insert more instructions into the work list when a basic block is added to the CFG
-        virtual bool operator()(bool chain, const AttachedBasicBlock &attached) ROSE_OVERRIDE;
+        virtual bool operator()(bool chain, const AttachedBasicBlock &attached) override;
 
         // Possibly remove instructions from the worklist when a basic block is removed from the CFG
-        virtual bool operator()(bool chain, const DetachedBasicBlock &detached) ROSE_OVERRIDE;
+        virtual bool operator()(bool chain, const DetachedBasicBlock &detached) override;
 
         // Return the next available constant if any.
         Sawyer::Optional<rose_addr_t> nextConstant(const Partitioner &partitioner);

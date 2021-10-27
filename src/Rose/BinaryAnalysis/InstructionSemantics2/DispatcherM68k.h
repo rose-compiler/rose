@@ -103,7 +103,7 @@ public:
 
     /** Virtual constructor. */
     virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth=0,
-                                                const RegisterDictionary *regs=NULL) const ROSE_OVERRIDE {
+                                                const RegisterDictionary *regs=NULL) const override {
         if (0==addrWidth)
             addrWidth = addressWidth();
         if (!regs)
@@ -118,20 +118,20 @@ public:
         return retval;
     }
 
-    virtual void set_register_dictionary(const RegisterDictionary *regdict) ROSE_OVERRIDE;
+    virtual void set_register_dictionary(const RegisterDictionary *regdict) override;
 
-    virtual RegisterDescriptor instructionPointerRegister() const ROSE_OVERRIDE;
-    virtual RegisterDescriptor stackPointerRegister() const ROSE_OVERRIDE;
-    virtual RegisterDescriptor stackFrameRegister() const ROSE_OVERRIDE;
-    virtual RegisterDescriptor callReturnRegister() const ROSE_OVERRIDE;
+    virtual RegisterDescriptor instructionPointerRegister() const override;
+    virtual RegisterDescriptor stackPointerRegister() const override;
+    virtual RegisterDescriptor stackFrameRegister() const override;
+    virtual RegisterDescriptor callReturnRegister() const override;
 
-    virtual int iprocKey(SgAsmInstruction *insn_) const ROSE_OVERRIDE {
+    virtual int iprocKey(SgAsmInstruction *insn_) const override {
         SgAsmM68kInstruction *insn = isSgAsmM68kInstruction(insn_);
         ASSERT_not_null(insn);
         return insn->get_kind();
     }
 
-    virtual BaseSemantics::SValuePtr read(SgAsmExpression*, size_t value_nbits, size_t addr_nbits=0) ROSE_OVERRIDE;
+    virtual BaseSemantics::SValuePtr read(SgAsmExpression*, size_t value_nbits, size_t addr_nbits=0) override;
 
     /** Set or clear FPSR EXC INAN bit. */
     void updateFpsrExcInan(const BaseSemantics::SValuePtr &a, SgAsmType *aType,

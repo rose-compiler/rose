@@ -110,12 +110,12 @@ public:
     
 public:
     virtual S2::BaseSemantics::RiscOperatorsPtr
-    create(const S2::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
+    create(const S2::BaseSemantics::SValuePtr &protoval, const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         return instance(protoval, solver);
     }
 
     virtual S2::BaseSemantics::RiscOperatorsPtr
-    create(const S2::BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
+    create(const S2::BaseSemantics::StatePtr &state, const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         return instance(state, solver);
     }
 
@@ -166,7 +166,7 @@ public:
 
 public:
     virtual S2::BaseSemantics::SValuePtr readRegister(RegisterDescriptor reg,
-                                                      const S2::BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE {
+                                                      const S2::BaseSemantics::SValuePtr &dflt) override {
         // Reading from a register that's still listed as an output means that it's definitely a used return value.
         RegisterParts found = calleeOutputRegisters_ & RegisterParts(reg);
         if (!found.isEmpty()) {
@@ -179,7 +179,7 @@ public:
         return Super::readRegister(reg, dflt);
     }
 
-    virtual void writeRegister(RegisterDescriptor reg, const S2::BaseSemantics::SValuePtr &value) ROSE_OVERRIDE {
+    virtual void writeRegister(RegisterDescriptor reg, const S2::BaseSemantics::SValuePtr &value) override {
         // Writing to a register means that the callee's return value is definitely not used.
         RegisterParts found = calleeOutputRegisters_ & RegisterParts(reg);
         if (!found.isEmpty()) {
@@ -194,13 +194,13 @@ public:
 
     virtual S2::BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg, const S2::BaseSemantics::SValuePtr &addr,
                                                     const S2::BaseSemantics::SValuePtr &dflt,
-                                                    const S2::BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
+                                                    const S2::BaseSemantics::SValuePtr &cond) override {
         // TODO
         return Super::readMemory(segreg, addr, dflt, cond);
     }
 
     virtual void writeMemory(RegisterDescriptor segreg, const S2::BaseSemantics::SValuePtr &addr,
-                             const S2::BaseSemantics::SValuePtr &value, const S2::BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
+                             const S2::BaseSemantics::SValuePtr &value, const S2::BaseSemantics::SValuePtr &cond) override {
         // TODO
         Super::writeMemory(segreg, addr, value, cond);
     }

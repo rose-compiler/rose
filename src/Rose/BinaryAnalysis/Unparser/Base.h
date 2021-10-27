@@ -394,9 +394,9 @@ public:
  *      typedef Sawyer::SharedPointer<MyUnparser> Ptr;
  *
  *      static Ptr instance(const BinaryAnalysis::Unparser::Base::Ptr &next) { return Ptr(new MyUnparser(next)); }
- *      virtual BinaryAnalysis::Unparser::Base::Ptr copy() const ROSE_OVERRIDE { return Ptr(new MyUnparser(nextUnparser()->copy())); }
- *      virtual const BinaryAnalysis::Unparser::Settings& settings() const ROSE_OVERRIDE { return nextUnparser()->settings(); }
- *      virtual BinaryAnalysis::Unparser::Settings& settings() ROSE_OVERRIDE { return nextUnparser()->settings(); }
+ *      virtual BinaryAnalysis::Unparser::Base::Ptr copy() const override { return Ptr(new MyUnparser(nextUnparser()->copy())); }
+ *      virtual const BinaryAnalysis::Unparser::Settings& settings() const override { return nextUnparser()->settings(); }
+ *      virtual BinaryAnalysis::Unparser::Settings& settings() override { return nextUnparser()->settings(); }
  *
  *      // specialized output functions here...
  *  };

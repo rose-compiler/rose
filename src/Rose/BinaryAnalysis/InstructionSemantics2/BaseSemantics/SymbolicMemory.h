@@ -48,12 +48,12 @@ public:
 
 public:
     // documented in base class
-    virtual MemoryStatePtr create(const SValuePtr &addrProtoval, const SValuePtr &valProtoval) const ROSE_OVERRIDE {
+    virtual MemoryStatePtr create(const SValuePtr &addrProtoval, const SValuePtr &valProtoval) const override {
         return instance(addrProtoval, valProtoval);
     }
 
     // documented in base class
-    virtual MemoryStatePtr clone() const ROSE_OVERRIDE {
+    virtual MemoryStatePtr clone() const override {
         return SymbolicMemoryPtr(new SymbolicMemory(*this));
     }
 
@@ -75,23 +75,23 @@ public:
     /** @} */
 
 public:
-    virtual bool merge(const MemoryStatePtr &other, RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
+    virtual bool merge(const MemoryStatePtr &other, RiscOperators *addrOps, RiscOperators *valOps) override;
 
-    virtual void clear() ROSE_OVERRIDE;
+    virtual void clear() override;
 
     virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt,
-                                 RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
+                                 RiscOperators *addrOps, RiscOperators *valOps) override;
 
     virtual void writeMemory(const SValuePtr &address, const SValuePtr &value,
-                             RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
+                             RiscOperators *addrOps, RiscOperators *valOps) override;
 
     virtual SValuePtr peekMemory(const SValuePtr &address, const SValuePtr &dflt,
-                                 RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
+                                 RiscOperators *addrOps, RiscOperators *valOps) override;
 
 public:
     virtual void hash(Combinatorics::Hasher&, RiscOperators *addrOps, RiscOperators *valOps) const override;
 
-    virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
+    virtual void print(std::ostream&, Formatter&) const override;
 };
     
 } // namespace
