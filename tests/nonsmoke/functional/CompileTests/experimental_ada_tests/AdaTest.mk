@@ -54,6 +54,8 @@ ADA_TRANSLATOR_PASSING_TESTS :=        \
   overload.adb                         \
   package_with_body.ads                \
   parameter_declaration.ads            \
+  private_extension_declaration.ads    \
+  private_type_definition.ads          \
   procedure_body_stub.ads              \
   procedure_declaration.adb            \
   procedure_declaration.ads            \
@@ -73,6 +75,7 @@ ADA_TRANSLATOR_PASSING_TESTS :=        \
   unit_1.adb                           \
   unit_3.ads                           \
   variable_declaration.ads             \
+  very_large_value.adb                 \
   week_string_literal.ads              \
   while_loop_statement.adb
 
@@ -95,8 +98,6 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   parent-child.ads                     \
   parenthesis_matters.adb              \
   pragmas.adb                          \
-  private_extension_declaration.ads    \
-  private_type_definition.ads          \
   procedure_call.adb                   \
   procedure_instantiation.adb          \
   procedure_pragma.adb                 \
@@ -109,12 +110,11 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   unconstrained_array_definition.ads   \
   default_function_argument.adb        \
   qualified_expression.adb             \
-  type_in_local_pkg.adb                \
-  very_large_value.adb                 
+  type_in_local_pkg.adb                
 
 ADA_TRANSLATOR_FAILING_TESTS :=        \
   access_variable.adb                  \
-  ada_packages.adb                     \ 
+  ada_packages.adb                     \
   allocators.adb                       \
   accept_statement.adb                 \
   accept_statement_task_decl.adb       \
@@ -139,6 +139,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   exception_renamingrenaming.adb       \
   explicit_deref.adb                   \
   floating_point_definition.ads        \
+  formal_procedure_declaration.ads     \
   goto_loop_v2.adb                     \
   hardwarestore.adb                    \
   hello_world.adb                      \
@@ -179,8 +180,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   unknown_discriminant.ads             \
   uppercase.adb
 
-ADA_TRANSLATOR_PENDING_TESTS :=       \
-  formal_procedure_declaration.ads
+ADA_TRANSLATOR_PENDING_TESTS :=       
 
 # defines tests that are fully supported by ROSE
 ROSE_PASSING_ADA_TESTS :=                           \
