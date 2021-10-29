@@ -800,6 +800,15 @@ namespace
         computeNameQualForTypeSubtree(n, n.get_base_type());
       }
 
+      void handle(const SgEnumDeclaration& n)
+      {
+        handle(sg::asBaseType(n));
+
+        if (SgType* parentType = n.get_adaParentType())
+          computeNameQualForTypeSubtree(n, parentType);
+      }
+
+
       void handle(const SgAdaPackageSpecDecl& n)
       {
         handle(sg::asBaseType(n));
