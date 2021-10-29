@@ -18,7 +18,7 @@ MATRIX_ROOT="$HOME/var/rose-portability-testing"
 
 # Minimum amount of free disk space in GiB. At the end of each test, this script deletes as many cached software
 # dependencies as necessary to reach this amount of free space.
-MIN_FREE_SPACE=35
+MIN_FREE_SPACE=40
 
 # If non-empty, prepare to run tests but do not run any tests.
 SETUP=
