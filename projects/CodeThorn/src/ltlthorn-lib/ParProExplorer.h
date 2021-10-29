@@ -74,6 +74,9 @@ namespace CodeThorn {
     void setUseLtsMin(bool useLtsMin) { _useLtsMin = useLtsMin; }
     void setParallelCompositionOnly(bool compositionOnly) { _parallelCompositionOnly = compositionOnly; }
 
+    static std::string cfasToDotSubgraphs(std::vector<Flow*> cfas);
+    static std::string spotTgbaToDot(spot::tgba& tgba);
+    
   private:
     ParallelSystem exploreOnce();
     PropertyValueTable* ltlAnalysis(ParallelSystem system);

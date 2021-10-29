@@ -1,6 +1,6 @@
 #include "sage3basic.h"
 #include "LtsminConnection.h"
-#include "Visualizer.h"
+#include "ParProExplorer.h"
 #include "Flow.h"
 #include "SpotConnection.h"
 
@@ -146,13 +146,12 @@ pair<string, string> LtsminConnection::generateDotGraphs(map<int, Flow*> process
   map<int, Flow*> maxLanguageProcesses=componentAbstraction(processes, COMPONENTS_OVER_APPROX);
 
   // write both abstractions to disk (.dot files)
-  Visualizer visualizer;
   vector<Flow*> processVector;
   for (map<int, Flow*>::iterator i=minLanguageProcesses.begin(); i!=minLanguageProcesses.end(); ++i) {
     ROSE_ASSERT((*i).second);
     processVector.push_back((*i).second);
   }
-  string dotProcessesMinLang = visualizer.cfasToDotSubgraphs(processVector);
+  string dotProcessesMinLang = ParProExplorer::cfasToDotSubgraphs(processVector);
   string fileNameMinLangDot = "processes_" + subsetIdsString + "_min_lang.dot";
   write_file(fileNameMinLangDot, dotProcessesMinLang);
   string fileNameMinLangPnml = "processes_" + subsetIdsString + "_min_lang.pnml";
@@ -172,7 +171,7 @@ pair<string, string> LtsminConnection::generateDotGraphs(map<int, Flow*> process
   for (map<int, Flow*>::iterator i=maxLanguageProcesses.begin(); i!=maxLanguageProcesses.end(); ++i) {
     processVector.push_back((*i).second);
   }
-  string dotProcessesMaxLang = visualizer.cfasToDotSubgraphs(processVector);
+  string dotProcessesMaxLang = ParProExplorer::cfasToDotSubgraphs(processVector);
   string fileNameMaxLangDot = "processes_" + subsetIdsString + "_max_lang.dot";
   write_file(fileNameMaxLangDot, dotProcessesMaxLang);
   string fileNameMaxLangPnml = "processes_" + subsetIdsString + "_max_lang.pnml";

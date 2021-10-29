@@ -41,6 +41,13 @@ namespace spot {
   class tgba;
 }
 
+// required for Visualizer::spotTgbaToDot when compiling without SPOT
+#ifndef HAVE_SPOT
+namespace spot {
+  class tgba;
+}
+#endif
+
 class Visualizer {
  public:
   Visualizer();
@@ -55,15 +62,12 @@ class Visualizer {
   void setOptionTransitionGraphDotHtmlNode(bool);
   void setOptionMemorySubGraphs(bool flag);
   bool getOptionMemorySubGraphs();
-  std::string cfasToDotSubgraphs(std::vector<Flow*> cfas);
   std::string estateToString(const CodeThorn::EState* estate);
   std::string estateToDotString(const CodeThorn::EState* estate);
   std::string transitionGraphDotHtmlNode(CodeThorn::Label lab);
   std::string transitionGraphToDot();
   std::string transitionGraphWithIOToDot();
-  //#ifdef HAVE_SPOT
-  std::string spotTgbaToDot(spot::tgba& tgba);
-  //#endif
+
   // used for displaying abstract ("topified") transition graphs.
   std::string transitionGraphWithIOToDot(CodeThorn::EStatePtrSet displayedEStates, 
                                     bool uniteOutputFromAbstractStates, bool includeErrorStates, bool allignAbstractStates);
