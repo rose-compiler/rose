@@ -1511,11 +1511,22 @@ namespace
 
       prn("type ");
       prn(n.get_name());
-      prn(" is (");
+      prn(" is");
 
-      std::for_each(lst.begin(), lst.end(), AdaEnumeratorUnparser(unparser, info, os));
+      if (SgType* parentType = n.get_adaParentType())
+      {
+        // unparse as derived type
+        prn(" new");
+        type(n, parentType);
+      }
+      else
+      {
+        // unparse as normal enum
+        prn(" (");
+        std::for_each(lst.begin(), lst.end(), AdaEnumeratorUnparser(unparser, info, os));
+        prn(")");
+      }
 
-      prn(")");
       prn(STMT_SEP);
     }
 

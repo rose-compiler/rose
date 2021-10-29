@@ -486,9 +486,9 @@ mkAbortStmt(SgExprListExp& abortList)
 
 
 SgLabelStatement&
-mkLabelStmt(const std::string& label, SgStatement& stmt, SgScopeStatement& encl)
+mkLabelStmt(const std::string& label, SgStatement& stmt, SgScopeStatement& scope)
 {
-  SgLabelStatement& sgnode = SG_DEREF( sb::buildLabelStatement(label, &stmt, &encl) );
+  SgLabelStatement& sgnode = SG_DEREF( sb::buildLabelStatement(label, &stmt, &scope) );
 
   sg::linkParentChild(sgnode, stmt, &SgLabelStatement::set_statement);
   return sgnode;
