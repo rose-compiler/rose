@@ -5137,15 +5137,16 @@ HEADER_INITIALIZED_NAME_START
 
             // DQ (1/6/2014): Added support for GNU noreturn attribute
                e_gnu_attribute__noreturn__               = 8,/*!< GNU specific attribute for (GNU extension) */
+               e_gnu_attribute__noreorder__              = 9,/*!< GNU specific attribute for (GNU extension) */
 
-               e_ms_declspec_parameter_appdomain    =  9, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_parameter_deprecated   = 10, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_parameter_dllimport    = 11, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_parameter_dllexport    = 12, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_parameter_novtable     = 13, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_parameter_process      = 14, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_parameter_property     = 15, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_parameter_restrict     = 16, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_appdomain    = 10, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_deprecated   = 11, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_dllimport    = 12, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_dllexport    = 13, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_novtable     = 14, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_process      = 15, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_property     = 16, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_restrict     = 17, /*!< Microsoft declspec() attributes */
                e_ms_declspec_parameter_selectany    = 18, /*!< Microsoft declspec() attributes */
                e_ms_declspec_parameter_thread       = 19, /*!< Microsoft declspec() attributes */
                e_ms_declspec_parameter_uuid         = 20, /*!< Microsoft declspec() attributes */
@@ -5204,6 +5205,10 @@ HEADER_INITIALIZED_NAME_START
           bool isGnuAttributeNoReturn() const;
           void setGnuAttributeNoReturn();
           void unsetGnuAttributeNoReturn();
+
+          bool isGnuAttributeNoReorder() const;
+          void setGnuAttributeNoReorder();
+          void unsetGnuAttributeNoReorder();
 
 #if 0
  // DQ (8/17/2014): Associated Microsoft attributes that are valid in a function parameter.
@@ -13159,6 +13164,10 @@ void SgInitializedName::unsetGnuAttributePacked()     { unsetBit(e_gnu_attribute
 bool SgInitializedName::isGnuAttributeNoReturn() const  { return checkBit(e_gnu_attribute__noreturn__); }
 void SgInitializedName::setGnuAttributeNoReturn()       { setBit(e_gnu_attribute__noreturn__); }
 void SgInitializedName::unsetGnuAttributeNoReturn()     { unsetBit(e_gnu_attribute__noreturn__); }
+
+bool SgInitializedName::isGnuAttributeNoReorder() const  { return checkBit(e_gnu_attribute__noreorder__); }
+void SgInitializedName::setGnuAttributeNoReorder()       { setBit(e_gnu_attribute__noreorder__); }
+void SgInitializedName::unsetGnuAttributeNoReorder()     { unsetBit(e_gnu_attribute__noreorder__); }
 
 #if 0
  // DQ (8/17/2014): Associated Microsoft attributes that are valid in a function parameter.
