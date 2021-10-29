@@ -150,6 +150,7 @@ updateDatabase(DB::Connection db, const Settings &settings, const std::vector<in
                      "|line [0-9]+:.*/\\.libs/lt-.*: Invalid argument" // intermittent libtool failure
                      "|^.*: error while loading shared libraries.*" // missing shared library
                      "|\\merror: ?\\n.*"                        // ROSE error on next line
+                     "|^.*\\magainst undefined hidden symbol.*" // error from /usr/bin/ld
 
                      //----- regular expressions end -----
                      ")')"
@@ -172,7 +173,7 @@ updateDatabase(DB::Connection db, const Settings &settings, const std::vector<in
 
     // If a test failed and there is no error message, then make up something generic
     db.stmt("update test_results test"
-            " set first_error_staging = 'test failed without an error message'"
+            " set first_error_staging = 'no error message detected'"
             " where test.status <> 'end'"
             "   and (test.first_error_staging is null or test.first_error_staging = '')"
             "   and " + sqlIdLimitation("test.id", testIds))
