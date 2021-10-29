@@ -265,8 +265,7 @@ namespace CodeThorn {
                                                                             numberOfCirclesPerAutomatonRange,
                                                                             circleLengthRange,
                                                                             numIntersectionsOtherCirclesRange);
-    Visualizer visualizer;
-    string dotCfas = visualizer.cfasToDotSubgraphs(automata);
+    string dotCfas = ParProExplorer::cfasToDotSubgraphs(automata);
     string outputFilename = parProOpt.generateAutomata;
     write_file(outputFilename, dotCfas);
     cout << "generated " << outputFilename <<"."<<endl;

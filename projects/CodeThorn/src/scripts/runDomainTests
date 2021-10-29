@@ -114,7 +114,7 @@ function level3Test {
     testNumbers+=" 051"
     numWarnExpected=7
     numFailExpected=0
-    CT_MODE_OPTIONS="--context-sensitive=yes --normalize-level=2 --interpreter-mode=1 --in-state-string-literals --exploration-mode=topologic-sort"
+    CT_MODE_OPTIONS="--context-sensitive=yes --normalize-level=2 --interpreter-mode=1 --in-state-string-literals --abstraction-mode=0 --exploration-mode=topologic-sort"
     echo -n "Level 3 (interpreter mode): " 
     runDomainTestsLevel3
 }

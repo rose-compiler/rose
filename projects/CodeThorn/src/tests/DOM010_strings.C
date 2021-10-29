@@ -24,8 +24,8 @@ void print(const char *str) {
   const char* s;
   int i=0;
   for (s = str; *s; ++s) {
-    //printf("i: %d s: %s %d\n",i,s,*s);
-    printf("i: %d %d\n",i,*s);
+    //printf("print(1): i: %d s: %s %d\n",i,s,*s);
+    printf("print(2): i: %d %d\n",i,*s);
     i++;
     if(i>12)
       break;
@@ -36,7 +36,7 @@ void print2(const char *str, int maxlen) {
   for (int i=0;i<maxlen;i++) {
     //printf("i: %d s: %p %d\n",i,str,*str);
     //s++;
-    printf("i: %d %d\n",i,*str++); // all in one expr
+    printf("print2 i: %d %d\n",i,*str++); // all in one expr
   }
   
 }
@@ -45,6 +45,7 @@ size_t strlen1(const char *str) {
   const char* s;
   int i=0;
   for (s = str; *s; ++s) {
+    //printf("strlen1: i: %d s: %p *s:%d",i,s,*s);
     i++;
   }
   return (s - str);
@@ -62,7 +63,9 @@ size_t strlen3(const char *str) {
   const char* s;
   size_t len=0;
   s = str;
+  //printf("strlen3: str:%p, s:%p\n",str,s);
   while(*s!=0) {
+    //printf("strlen3: at len: %d, val: %d\n",len,*s);
     ++s;
     len++;
   }
@@ -76,6 +79,7 @@ int main() {
   data[0]= '\0';
   const char* stringPtr = "0123456789";
   char source[11] = "0123456789";
+  source[10]=0; // terminate string
   printf("source[0]:%d\n",source[0]);
   printf("source[1]:%d\n",source[1]);
   printf("source[2]:%d\n",source[2]);
@@ -89,13 +93,15 @@ int main() {
   printf("source[10]:%d\n",source[10]);
   int i;
   int sourceLen=10;
-  for (i = 0; i < sourceLen + 1; i++)
-    {
-      //printf("i:%d source:%s source[i]:%d\n",i,source,source[i]);
-      data[i] = source[i];
-    }
+  for (i = 0; i < sourceLen + 1; i++) {
+    data[i] = source[i];
+    //printf("code loop i:%d source:%p source[i]:%d data[i]:%d\n",i,source,source[i],data[i]);
+    printf("code loop i:%d source[i]:%d data[i]:%d\n",i,source[i],data[i]);
+  }
   print(source);
   print(data);
+  //printf("data:%p\n",data);
+
   int len1,len2,len3,len4,len5,len6;
   len1=strlen1(source);
   printf("len1:%d\n",len1);
@@ -115,10 +121,11 @@ int main() {
   // string copy test
   char array2[10+1];
   char* array2ptr=array2;
-  //printf("%s\n",array2);
-  //printf("%s\n",array2ptr);
+  //printf("%p\n",array2);
+  //printf("%p\n",array2ptr);
   strcpy1(array2ptr,data);
   print(array2ptr); // ensure interpreter mode cannot read past end without terminating
   print2(array2ptr,11); // ensure interpreter mode cannot read past end without terminating
+
   return 0;
 }

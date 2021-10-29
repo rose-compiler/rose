@@ -1227,9 +1227,17 @@ namespace CodeThorn {
 	  //SgType* variableType=initializer->get_type(); // for char and wchar
 	  //setElementSize(initDeclVarId,variableType); // this must be a pointer, if it's not an array
 	  CodeThorn::TypeSize stringLen=stringValNode->get_value().size();
+          string stringVal=stringValNode->get_value();
 	  CodeThorn::TypeSize memRegionNumElements=getVariableIdMapping()->getNumberOfElements(initDeclVarId);
 	  PState newPState=*currentEState.pstate();
-	  initializeStringLiteralInState(label,newPState,stringValNode,initDeclVarId); // string literals are initialized before analysis now
+
+          // initialize array elements from string
+	  //initializeStringLiteralInState(label,newPState,stringValNode,initDeclVarId); // string literals are initialized before analysis now
+          for(CodeThorn::TypeSize  i=0;i<memRegionNumElements;i++) {
+            AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(i),AbstractValue(1) /* elemensize */);
+            // set default init value for past string elements of reserved array
+            initializeMemoryLocation(label,&newPState,newArrayElementAddr,stringVal[i]);
+          }
 	  // handle case that string is shorter than allocated memory
 	  if(stringLen+1<memRegionNumElements) {
 	    CodeThorn::TypeSize numDefaultValuesToAdd=memRegionNumElements-stringLen;
@@ -1238,6 +1246,7 @@ namespace CodeThorn {
 	      // set default init value for past string elements of reserved array
 	      initializeMemoryLocation(label,&newPState,newArrayElementAddr,AbstractValue(0));
 	    }
+
 	  }
 	  return createEState(targetLabel,cs,newPState);
 	}
