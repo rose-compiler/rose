@@ -48,9 +48,9 @@ std::string
 FailureUnit::printableName() const {
     // No lock necessary since va_ and description_ is read-only
     if (va_) {
-        return "failure at " + StringUtility::addrToString(*va_) + ": " + description_;
+        return "termination at " + StringUtility::addrToString(*va_) + ": " + description_;
     } else {
-        return "failure at unknown address: " + description_;
+        return "termination at unknown address: " + description_;
     }
 }
 
