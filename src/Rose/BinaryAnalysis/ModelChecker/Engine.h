@@ -82,6 +82,7 @@ private:
     Sawyer::Stopwatch elapsedTime_;                     // time since model checking started
     mutable Sawyer::Stopwatch timeSinceStats_;          // time since last statistics were reported
     mutable size_t nPathsStats_ = 0;                    // number of paths reported in last statistics output
+    size_t nExpressionsTrimmed_ = 0;                    // number of symbolic expressions trimmed down to a new variable
 
 protected:
     Engine() = delete;
@@ -366,7 +367,7 @@ public:
      *  successful or not.  It removes the path from the @ref inProgress list.
      *
      *  Thread safety: This method is thread safe. */
-    void finishPath();
+    void finishPath(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&);
 
     /** Paths that are currently in progress.
      *
@@ -391,6 +392,13 @@ public:
      *
      *  Thread safety: This method is thread safe. */
     double estimatedForestSize(size_t k) const;
+
+    /** Number of symbolic expressions trimmed to a new variable.
+     *
+     *  This is the number of times a large symbolic expression was replaced by a new variable.
+     *
+     *  Thread safety: This method is thread safe. */
+    size_t nExpressionsTrimmed() const;
 
     /** Print some statistics.
      *
