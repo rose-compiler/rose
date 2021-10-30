@@ -835,6 +835,7 @@ protected:
     uint64_t trimThreshold_;                            // max size of expressions (zero means no maximimum)
     bool reinterpretMemoryReads_;                       // cast data to unsigned integer when reading from memory
     bool reinterpretRegisterReads_;                     // cast data to unsigned integer when reading from registers
+    size_t nTrimmed_ = 0;                               // number of expressions trimmed down to a new variable
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1096,6 +1097,16 @@ public:
      * @{ */
     void trimThreshold(uint64_t n) { trimThreshold_ = n; }
     uint64_t trimThreshold() const { return trimThreshold_; }
+    /** @} */
+
+    /** Property: Number of symbolic expressions trimmed.
+     *
+     *  Each time the trim threshold causes an expression to be replaced by a new variable, this property is incremented. The
+     *  counter starts at zero when this object is created, but can be adjusted (usually back to zero) by the user.
+     *
+     * @{ */
+    size_t nTrimmed() const { return nTrimmed_; }
+    void nTrimmed(size_t n) { nTrimmed_ = n; }
     /** @} */
 
     /** Property: Reinterpret data as unsigned integers when reading from memory or registers.
