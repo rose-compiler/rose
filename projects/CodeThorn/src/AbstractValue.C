@@ -280,7 +280,7 @@ AbstractValue AbstractValue::conditionallyApplyArrayAbstraction(AbstractValue va
   //cout<<"DEBUG: AbstractValue::condapply: "<<val.toString(getVariableIdMapping())<<endl;
   int arrayAbstractionIndex=getVariableIdMapping()->getArrayAbstractionIndex();
   if(arrayAbstractionIndex>=0) {
-    //cout<<"DEBUG: array abstraction active starting at index: "<<arrayAbstractionIndex<<endl;
+    cout<<"DEBUG: array abstraction active starting at index: "<<arrayAbstractionIndex<<endl;
     if(val.isPtr()&&!val.isNullPtr()) {
       VariableId memLocId=val.getVariableId();
       if(getVariableIdMapping()->isOfArrayType(memLocId)) {

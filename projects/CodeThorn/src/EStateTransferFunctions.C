@@ -1121,7 +1121,7 @@ namespace CodeThorn {
     CallString cs=currentEState.callString;
     Label label=currentEState.label();
     ROSE_ASSERT(currentEState.pstate());
-    //cout<<"DEBUG: decl-init: "<<decl->unparseToString()<<":AST:"<<AstTerm::astTermWithNullValuesToString(initializer)<<endl;
+    //cout<<"DEBUG: variable decl with initializer: "<<decl->unparseToString()<<":AST:"<<AstTerm::astTermWithNullValuesToString(initializer)<<endl;
     if(SgAssignInitializer* assignInit=isSgAssignInitializer(initializer)) {
       //cout<<"DEBUG: decl-init: AssignInitializer: "<<assignInit->unparseToString()<<":AST:"<<AstTerm::astTermWithNullValuesToString(assignInit)<<endl;
       SgExpression* assignInitOperand=assignInit->get_operand_i();
@@ -1236,8 +1236,10 @@ namespace CodeThorn {
           for(CodeThorn::TypeSize  i=0;i<memRegionNumElements;i++) {
             AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(i),AbstractValue(1) /* elemensize */);
             // set default init value for past string elements of reserved array
+            //cout<<"DEBUG: stringval at pos "<<i<<":"<<stringVal[i]<<" len:"<<stringVal.size()<<" ADDR:"<<newArrayElementAddr.toString()<<endl;
             initializeMemoryLocation(label,&newPState,newArrayElementAddr,stringVal[i]);
           }
+
 	  // handle case that string is shorter than allocated memory
 	  if(stringLen+1<memRegionNumElements) {
 	    CodeThorn::TypeSize numDefaultValuesToAdd=memRegionNumElements-stringLen;
@@ -1476,7 +1478,13 @@ namespace CodeThorn {
       uint32_t declaredInGlobalState=0;
       for(auto decl : relevantGlobalVariableDecls) {
 	if(decl) {
-	  estate=transferVariableDeclarationEState(decl,estate,estate.label());
+
+          Label declLabel=getLabeler()->getLabel(decl);
+          Label originalEstateLabel=estate.label();
+          // use decl label when initializing global var to ensure errors in global var init are not associated with current estate
+	  estate=transferVariableDeclarationEState(decl,estate,declLabel);
+          estate.setLabel(originalEstateLabel); // set estate label back to original label (was set to declLabel by transfer function)
+
 	  //if(getAnalyzer()->getOptionsRef().status)
 	  //  cout<<"STATUS: init global decl: "<<SgNodeHelper::locationAndSourceCodeToString(decl)<<": entries: "<<numNewEntries<<endl;
 	  declaredInGlobalState++;
@@ -4069,9 +4077,6 @@ namespace CodeThorn {
     if(_analyzer->getOptionsRef().getIntraProceduralFlag()) {
       if(isGlobalAddress(memLoc)) {
 	memLoc.setSummaryFlag(true);
-	//cout<<"DEBUG NP: global (SUM): "<<memLoc.toString(getVariableIdMapping())<<endl;
-      } else {
-	//cout<<"DEBUG NP: NOT global  : "<<memLoc.toString(getVariableIdMapping())<<endl;      
       }
     }
     SAWYER_MESG(logger[TRACE])<<"initializeMemoryLocation: "<<memLoc.toString()<<" := "<<newValue.toString()<<endl;

@@ -1319,7 +1319,7 @@ EState CodeThorn::CTAnalysis::createInitialEState(SgProject* root, Label slab) {
   ROSE_ASSERT(_estateTransferFunctions);
   _estateTransferFunctions->initializeGlobalVariables(root, estate);
   SAWYER_MESG(logger[INFO]) <<"Initial state: number of entries:"<<estate.pstate()->stateSize()<<endl;
-
+  
   // initialize summary states map for abstract model checking mode
   initializeSummaryStates(initialPStateStored);
   estate.io.recordNone(); // ensure that extremal value is different to bot
