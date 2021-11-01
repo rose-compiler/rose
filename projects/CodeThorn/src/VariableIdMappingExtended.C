@@ -256,6 +256,14 @@ namespace CodeThorn {
     }
   }
 
+  void VariableIdMappingExtended::registerReturnVariable() {
+    _returnVarId=createUniqueTemporaryVariableId(string("$return"));
+  }
+
+  VariableId VariableIdMappingExtended::getReturnVariableId() {
+    return _returnVarId;
+  }
+
   CodeThorn::TypeSize VariableIdMappingExtended::registerClassMembers(SgClassType* classType, CodeThorn::TypeSize offset, bool replaceClassDataMembersMode) {
     ROSE_ASSERT(offset==0); // this parameter can be removed
 
@@ -663,6 +671,7 @@ namespace CodeThorn {
     initTypeSizes();
     computeTypeSizes(); // currently does not compute any typesizes
     registerClassMembersNew();
+    registerReturnVariable();
     
     int ct=0;
     for(auto classDef:_memPoolTraversal.classDefinitions) {

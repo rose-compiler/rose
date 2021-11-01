@@ -390,7 +390,7 @@ namespace CodeThorn {
       VariableId returnVarId;
 #pragma omp critical(VAR_ID_MAPPING)
       {
-	returnVarId=_analyzer->getVariableIdMapping()->createUniqueTemporaryVariableId(string("$return"));
+	returnVarId=_analyzer->getVariableIdMapping()->getReturnVariableId();
       }
 
       // MS 04/09/2020: removed all old code here and function analyzeAssignRhs. Replaced it with function call 'evaluateExpression'
@@ -443,7 +443,7 @@ namespace CodeThorn {
       newEState.setLabel(edge.target());
       return elistify(newEState);
     } else if(SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp(nextNodeToAnalyze1)) {
-      // case 2a: x=f(); bind variable x to value of $return
+      // case 2a: x=f(); bind variable x to value of returnVariableId
       if(_analyzer->getOptionsRef().rers.rersBinary) {
 	if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
 	  string funName=SgNodeHelper::getFunctionName(funCall);
@@ -460,26 +460,27 @@ namespace CodeThorn {
       bool isLhsVar=checkIfVariableAndDetermineVarId(lhs,lhsVarId);
       ROSE_ASSERT(isLhsVar); // must hold
       PState newPState=*currentEState.pstate();
-      // we only create this variable here to be able to find an existing $return variable!
+
+      // determine the temporary return variable's varid to remove it from state after the value has been copied
       VariableId returnVarId;
 #pragma omp critical(VAR_ID_MAPPING)
       {
-	returnVarId=_analyzer->getVariableIdMapping()->createUniqueTemporaryVariableId(string("$return"));
+	returnVarId=_analyzer->getVariableIdMapping()->getReturnVariableId();
       }
 
       if(newPState.varExists(returnVarId)) {
 	AbstractValue evalResult=readFromMemoryLocation(currentEState.label(),&newPState,returnVarId);
 	initializeMemoryLocation(currentEState.label(),&newPState,lhsVarId,evalResult);
-	newPState.deleteVar(returnVarId); // remove $return from state
+	newPState.deleteVar(returnVarId); // remove temporary return variable from state
 	return elistify(createEState(edge.target(),cs,newPState));
       } else {
-	// no $return variable found in state. This can be the case for an extern function.
-	// alternatively a $return variable could be added in the external function call to
+	// no return-variable found in state. This can be the case for an extern function.
+	// alternatively a return-variable could be added in the external function call to
 	// make this handling here uniform
 	return elistify(createEState(edge.target(),cs,newPState));
       }
     } else if(SgNodeHelper::Pattern::matchFunctionCallExpInVariableDeclaration(nextNodeToAnalyze1)) {
-      // case 2b: Type x=f(); bind variable x to value of $return for function call in declaration
+      // case 2b: Type x=f(); bind variable x to value of the return-variable for function call in declaration
       if(_analyzer->getOptionsRef().rers.rersBinary) {
 	if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1)) {
 	  string funName=SgNodeHelper::getFunctionName(funCall);
@@ -498,38 +499,38 @@ namespace CodeThorn {
       ROSE_ASSERT(lhsVarId.isValid());
 
       PState newPState=*currentEState.pstate();
-      // this variable is created here only to be able to find an existing $return variable in the state
+
       VariableId returnVarId;
 #pragma omp critical(VAR_ID_MAPPING)
       {
-	returnVarId=_analyzer->getVariableIdMapping()->createUniqueTemporaryVariableId(string("$return"));
+        returnVarId=_analyzer->getVariableIdMapping()->getReturnVariableId();
       }
 
       if(newPState.varExists(returnVarId)) {
 	AbstractValue evalResult=readFromMemoryLocation(currentEState.label(),&newPState,returnVarId);
 	initializeMemoryLocation(currentEState.label(),&newPState,lhsVarId,evalResult);
-	newPState.deleteVar(returnVarId); // remove $return from state
+	newPState.deleteVar(returnVarId); // remove return-variable from state
 	SAWYER_MESG(logger[TRACE])<<"transferFunctionCallReturn(initialization): LHSVAR:"<<getVariableIdMapping()->variableName(lhsVarId)<<" value: "<<evalResult.toString()<<endl;
 	return elistify(createEState(edge.target(),cs,newPState));
       } else {
-	// no $return variable found in state. This can be the case for an extern function.
-	// alternatively a $return variable could be added in the external function call to
+	// no return-variable found in state. This can be the case for an extern function.
+	// alternatively a return-variable could be added in the external function call to
 	// make this handling here uniform
 	SAWYER_MESG(logger[TRACE])<<"-------------------------------------------------"<<endl;
-	SAWYER_MESG(logger[TRACE])<<"transferFunctionCallReturn: Variable declaration with function call: no function-return variable $return found! @ "<<SgNodeHelper::sourceLineColumnToString(nextNodeToAnalyze1)<<":"<<nextNodeToAnalyze1->unparseToString()<<endl;
+	SAWYER_MESG(logger[TRACE])<<"transferFunctionCallReturn: Variable declaration with function call: no function-return variable found! @ "<<SgNodeHelper::sourceLineColumnToString(nextNodeToAnalyze1)<<":"<<nextNodeToAnalyze1->unparseToString()<<endl;
 	SAWYER_MESG(logger[TRACE])<<estate->toString(getVariableIdMapping())<<endl;
 	SAWYER_MESG(logger[TRACE])<<"-------------------------------------------------"<<endl;
 	return elistify(createEState(edge.target(),cs,newPState));
       }
     } else  if(SgNodeHelper::Pattern::matchExprStmtFunctionCallExp(nextNodeToAnalyze1)) {
-      // case 3: f(); remove $return from state (discard value)
+      // case 3: f(); remove return-variable from state (discard value)
       PState newPState=*currentEState.pstate();
       VariableId returnVarId;
 #pragma omp critical(VAR_ID_MAPPING)
       {
-	returnVarId=_analyzer->getVariableIdMapping()->createUniqueTemporaryVariableId(string("$return"));
+	returnVarId=_analyzer->getVariableIdMapping()->getReturnVariableId();
       }
-      // no effect if $return does not exist
+      // no effect if return-variable does not exist
       newPState.deleteVar(returnVarId);
       return elistify(createEState(edge.target(),cs,newPState));
     } else if (SgNodeHelper::matchExtendedNormalizedCall(nextNodeToAnalyze1)) {
@@ -799,7 +800,7 @@ namespace CodeThorn {
 	VariableId returnVarId;
 #pragma omp critical(VAR_ID_MAPPING)
 	{
-	  returnVarId=_analyzer->getVariableIdMapping()->createUniqueTemporaryVariableId(string("$return"));
+          returnVarId=_analyzer->getVariableIdMapping()->getReturnVariableId();
 	}
 	// added function call result value to state. The returnVarId does not correspond to a declaration, and therefore it ise
 	// treated as being initialized (and declared).
@@ -1942,7 +1943,7 @@ namespace CodeThorn {
       }
       tfCode=TransferFunctionCode::FunctionCallExternal;
     } else if(isSgReturnStmt(nextNodeToAnalyze) && !SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(nextNodeToAnalyze)) {
-      // "return x;": add $return=eval() [but not for "return f();"]
+      // "return x;": adds returnVar=eval() [but not for "return f();"]
       tfCode=TransferFunctionCode::ReturnStmt;
     } else if(isSgAsmStmt(nextNodeToAnalyze)) {
       tfCode=TransferFunctionCode::AsmStmt;
