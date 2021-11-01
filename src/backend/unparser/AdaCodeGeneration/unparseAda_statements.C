@@ -80,6 +80,19 @@ namespace
     return Rose::Diagnostics::mlog[Sawyer::Message::FATAL];
   }
 
+  /// returns m[key] iff \ref key is in \ref m
+  ///                otherwise \ref defaultVal
+  template <class Map>
+  const typename Map::mapped_type&
+  getQualMapping( const Map& m,
+                  const typename Map::key_type& key,
+                  const typename Map::mapped_type& defaultVal
+                )
+  {
+    auto pos = m.find(key);
+
+    return (pos == m.end()) ? defaultVal : pos->second;
+  }
 
   struct ScopeUpdateGuard
   {
@@ -613,20 +626,37 @@ namespace
     : AdaDetailsUnparser(unp, inf, outp), publicMode(true), pendingDiscriminants(nullptr)
     {}
 
+    //
+    // name qualification
+
+    /// returns the name qualification recorded for scope \ref n in map \ref qualMap
+    /// \todo use const std::string& as return type as soon as the old name qualification
+    ///       has been phased out.
+    std::string
+    getQualification(const std::map<SgNode*, std::string>& qualMap, const SgNode& n, SgScopeStatement* scope);
+
+    std::string
+    getQualification(const SgNode& n, SgScopeStatement* scope);
+
+    /// prints name qualification
+    void prnNameQual(const SgNode& n, SgScopeStatement* scope);
+
+    /// prints name qualification with an anchor point \ref ref
+    void prnNameQual(const SgLocatedNode& ref, const SgNode& n, SgScopeStatement* scope);
+
+    //
+    // sequences
+
     template <class SageStmtList>
     void list(SageStmtList& lst, bool hasPrivateSection = false);
 
     template <class ForwardIterator>
     void list(ForwardIterator aa, ForwardIterator zz, bool hasPrivateSection = false);
 
+    //
+    // SageNode handling
+
     void handleBasicBlock(SgBasicBlock& n, bool functionbody = false);
-
-    // \todo use const std::string& as return type as soon as the old name qualification
-    //       has been phased out.
-    std::string getQualification(const SgNode& n, SgScopeStatement* scope);
-
-    // prints name qualification
-    void prnNameQual(const SgNode& n, SgScopeStatement* scope);
 
     void handleBasicBlock(SgBasicBlock* n, bool functionbody = false)
     {
@@ -925,35 +955,33 @@ namespace
 
     void handle(SgAdaGenericInstanceDecl& n)
     {
-      // determine which kind of generic instance this is
-      SgAdaGenericDecl*       dcl     = n.get_declaration();
       SgName                  name    = n.get_name();
       SgExprListExp*          args    = n.get_actual_parameters();
-      SgDeclarationStatement* thedecl = dcl->get_declaration();
+      SgAdaGenericDecl&       dcl     = SG_DEREF(n.get_declaration());
+      SgDeclarationStatement* thedecl = dcl.get_declaration();
 
-      if (isSgAdaPackageSpecDecl(thedecl)) {
+      // determine which kind of generic instance this is
+      if (SgAdaPackageSpecDecl* pkg = isSgAdaPackageSpecDecl(thedecl)) {
         // package
-        SgAdaPackageSpecDecl* pkg     = isSgAdaPackageSpecDecl(thedecl);
         SgName                genname = pkg->get_name();
 
         prn("package ");
         prn(name.getString());
         prn(" is new ");
+        prnNameQual(n, *pkg, pkg->get_scope());
         prn(genname.getString());
-      } else {
+      } else if (SgFunctionDeclaration* fn = isSgFunctionDeclaration(thedecl)) {
         // function/procedure
-        SgFunctionDeclaration* fn      = isSgFunctionDeclaration(thedecl);
         SgName                 genname = fn->get_name();
 
-        if (n.get_return_type() == NULL) {
-          prn("procedure ");
-        } else {
-          prn("function ");
-        }
+        prn(si::ada::isFunction(fn->get_type()) ? "function " : "procedure ");
         prn(name.getString());
         prn(" is new ");
+        prnNameQual(n, *fn, fn->get_scope());
         prn(genname.getString());
       }
+      else
+        ROSE_ABORT();
 
       associationList(args->get_expressions());
       prn(STMT_SEP);
@@ -1659,27 +1687,44 @@ namespace
   };
 
   std::string
-  AdaStatementUnparser::getQualification(const SgNode& n, SgScopeStatement* scope)
+  AdaStatementUnparser::getQualification(const std::map<SgNode*, std::string>& qualMap, const SgNode& n, SgScopeStatement* scope)
   {
     static const std::string NOQUAL;
 
     if (USE_COMPUTED_NAME_QUALIFICATION_STMT)
     {
-      using NodeQualMap = std::map<SgNode*, std::string>;
-      using Iterator    = NodeQualMap::const_iterator;
+      using Iterator = std::map<SgNode*, std::string>::const_iterator;
 
-      const NodeQualMap& nameQualMap = unparser.nameQualificationMap();
-      const Iterator     pos = nameQualMap.find(const_cast<SgNode*>(&n));
+      const Iterator pos = qualMap.find(const_cast<SgNode*>(&n));
 
-      return (pos != nameQualMap.end()) ? pos->second : NOQUAL;
+      return (pos != qualMap.end()) ? pos->second : NOQUAL;
     }
 
     return scopeQual(scope);
   }
 
+  std::string
+  AdaStatementUnparser::getQualification(const SgNode& n, SgScopeStatement* scope)
+  {
+    return getQualification(unparser.nameQualificationMap(), n, scope);
+  }
+
+
   void AdaStatementUnparser::prnNameQual(const SgNode& n, SgScopeStatement* scope)
   {
     prn(getQualification(n, scope));
+  }
+
+  void AdaStatementUnparser::prnNameQual(const SgLocatedNode& ref, const SgNode& n, SgScopeStatement* scope)
+  {
+    using NameQualMap = Unparse_Ada::NameQualMap;
+    using MapOfNameQualMap = std::map<SgNode*, NameQualMap>;
+
+    SgLocatedNode*          key = const_cast<SgLocatedNode*>(&ref);
+    const MapOfNameQualMap& typeQualMap = SgNode::get_globalQualifiedNameMapForMapsOfTypes();
+    const NameQualMap&      nameQualMapForShared = getQualMapping(typeQualMap, key, SgNode::get_globalQualifiedNameMapForTypes());
+
+    prn(getQualification(nameQualMapForShared, n, scope));
   }
 
 
