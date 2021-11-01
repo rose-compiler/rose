@@ -113,6 +113,7 @@ namespace CodeThorn {
     void warning(SgNode* node, std::string errorMessage);
     void transferFunctionEntryPrintStatus(Edge edge, const EState* estate, std::string fileName, std::string functionName);
     
+
     std::list<EState> transferFunctionCallLocalEdge(Edge edge, const EState* estate);
     std::list<EState> transferFunctionCall(Edge edge, const EState* estate);
     std::list<EState> transferFunctionCallExternal(Edge edge, const EState* estate);
@@ -138,6 +139,10 @@ namespace CodeThorn {
     // not used yet
     std::list<EState> transferIncDecOpEvalWrapper(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
 
+    // RERS binary mode only
+    std::list<EState> transferFunctionCallLocalEdgeRersBinaryMode(Edge edge, const EState* estate);
+    SingleEvalResult evalArrayNotInState(SgNode* node, SingleEvalResult& res, VariableId arrayVarId, AbstractValue arrayPtrPlusIndexValue);
+    
     // special case, called from transferFunctionCall
     std::list<EState> transferForkFunction(Edge edge, const EState* estate, SgFunctionCallExp* funCall);
     std::list<EState> transferForkFunctionWithExternalTargetFunction(Edge edge, const EState* estate, SgFunctionCallExp* funCall);

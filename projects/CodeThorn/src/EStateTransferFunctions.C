@@ -164,78 +164,79 @@ namespace CodeThorn {
     return resList;
   }
   
-  std::list<EState> EStateTransferFunctions::transferFunctionCallLocalEdge(Edge edge, const EState* estate) {
-    Label lab=estate->label();
-    EState currentEState=*estate;
-    PState currentPState=*currentEState.pstate();
-    if(_analyzer->getOptionsRef().rers.rersBinary) {
-      SgNode* nodeToAnalyze=getLabeler()->getNode(edge.source());
-      if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nodeToAnalyze)) {
-        ROSE_ASSERT(funCall);
-        string funName=SgNodeHelper::getFunctionName(funCall);
-        if(funName==_rersHybridOutputFunctionName) {
-          // RERS global vars binary handling
-          PState _pstate=*estate->pstate();
-          RERS_Problem::rersGlobalVarsCallInitFP(getAnalyzer(),_pstate, omp_get_thread_num());
+  std::list<EState> EStateTransferFunctions::transferFunctionCallLocalEdgeRersBinaryMode(Edge edge, const EState* estate) {
+    SgNode* nodeToAnalyze=getLabeler()->getNode(edge.source());
+    if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nodeToAnalyze)) {
+      ROSE_ASSERT(funCall);
+      string funName=SgNodeHelper::getFunctionName(funCall);
+      if(funName==_rersHybridOutputFunctionName) {
+        // RERS global vars binary handling
+        PState pstate=*estate->pstate();
+        RERS_Problem::rersGlobalVarsCallInitFP(getAnalyzer(),pstate, omp_get_thread_num());
 #if 0
-          //input variable passed as a parameter (obsolete since usage of script "transform_globalinputvar")
-          int rers_result=RERS_Problem::calculate_outputFP(argument);
-          (void) RERS_Problem::calculate_outputFP(argument);
+        //input variable passed as a parameter (obsolete since usage of script "transform_globalinputvar")
+        int rers_result=RERS_Problem::calculate_outputFP(argument);
+        (void) RERS_Problem::calculate_outputFP(argument);
 #else
-          (void) RERS_Problem::calculate_outputFP( omp_get_thread_num() );
-          int rers_result=RERS_Problem::output[omp_get_thread_num()];
+        (void) RERS_Problem::calculate_outputFP( omp_get_thread_num() );
+        int rers_result=RERS_Problem::output[omp_get_thread_num()];
 #endif
-          //logger[DEBUG]<< "Called calculate_outputFP("<<argument<<")"<<" :: result="<<rers_result<<endl;
-          if(rers_result<=-100) {
-            // we found a failing assert
-            // = rers_result*(-1)-100 : rers error-number
-            // = -160 : rers globalError (2012 only)
-            int index=((rers_result+100)*(-1));
-            ROSE_ASSERT(index>=0 && index <=99);
-            getAnalyzer()->binaryBindingAssert[index]=true;
-            //reachabilityResults.reachable(index); //previous location in code
-            //logger[DEBUG]<<"found assert Error "<<index<<endl;
-            InputOutput _io;
-            _io.recordFailedAssert();
-            // error label encoded in the output value, storing it in the new failing assertion EState
-            PState newPstate  = _pstate;
-            //newPstate[globalVarIdByName("output")]=CodeThorn::AbstractValue(rers_result);
-            writeToMemoryLocation(lab,&newPstate,
-				  AbstractValue::createAddressOfVariable(globalVarIdByName("output")),
-				  CodeThorn::AbstractValue(rers_result));
-            EState _eState=createEState(edge.target(),estate->callString,newPstate,_io);
-            return getAnalyzer()->elistify(_eState);
-          }
-          RERS_Problem::rersGlobalVarsCallReturnInitFP(getAnalyzer(),_pstate, omp_get_thread_num());
-          InputOutput newio;
-          if (rers_result == -2) {
-            newio.recordVariable(InputOutput::STDERR_VAR,globalVarIdByName("input"));
-          }
-          // TODO: _pstate[VariableId(output)]=rers_result;
-          // matches special case of function call with return value, otherwise handles call without return value (function call is matched above)
-          if(SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp(nodeToAnalyze)) {
-            SgNode* lhs=SgNodeHelper::getLhs(SgNodeHelper::getExprStmtChild(nodeToAnalyze));
-            VariableId lhsVarId;
-            bool isLhsVar=checkIfVariableAndDetermineVarId(lhs,lhsVarId);
-            ROSE_ASSERT(isLhsVar); // must hold
-            // logger[DEBUG]<< "lhsvar:rers-result:"<<lhsVarId.toString()<<"="<<rers_result<<endl;
-            //_pstate[lhsVarId]=AbstractValue(rers_result);
-            writeToMemoryLocation(lab,&_pstate,AbstractValue::createAddressOfVariable(lhsVarId),AbstractValue(rers_result));
-            EState _eState=createEState(edge.target(),estate->callString,_pstate,newio);
-            return getAnalyzer()->elistify(_eState);
-          } else {
-            EState _eState=createEState(edge.target(),estate->callString,_pstate,newio);
-            return getAnalyzer()->elistify(_eState);
-          }
-          SAWYER_MESG(logger[ERROR]) <<"PState:"<< _pstate<<endl;
-          SAWYER_MESG(logger[ERROR]) <<"RERS-MODE: call of unknown function."<<endl;
-          exit(1);
-          // _pstate now contains the current state obtained from the binary
+        //logger[DEBUG]<< "Called calculate_outputFP("<<argument<<")"<<" :: result="<<rers_result<<endl;
+        Label lab=estate->label();
+        if(rers_result<=-100) {
+          // we found a failing assert
+          // = rers_result*(-1)-100 : rers error-number
+          // = -160 : rers globalError (2012 only)
+          int index=((rers_result+100)*(-1));
+          ROSE_ASSERT(index>=0 && index <=99);
+          getAnalyzer()->binaryBindingAssert[index]=true;
+          //reachabilityResults.reachable(index); //previous location in code
+          //logger[DEBUG]<<"found assert Error "<<index<<endl;
+          InputOutput _io;
+          _io.recordFailedAssert();
+          // error label encoded in the output value, storing it in the new failing assertion EState
+          PState newPstate  = pstate;
+          writeToMemoryLocation(lab,&newPstate,
+                                AbstractValue::createAddressOfVariable(globalVarIdByName("output")),
+                                CodeThorn::AbstractValue(rers_result));
+          EState _eState=createEState(edge.target(),estate->callString,newPstate,_io);
+          return getAnalyzer()->elistify(_eState);
         }
-        // logger[DEBUG]<< "@LOCAL_EDGE: function call:"<<SgNodeHelper::nodeToString(funCall)<<endl;
+        RERS_Problem::rersGlobalVarsCallReturnInitFP(getAnalyzer(),pstate, omp_get_thread_num());
+        InputOutput newio;
+        if (rers_result == -2) {
+          newio.recordVariable(InputOutput::STDERR_VAR,globalVarIdByName("input"));
+        }
+        // TODO: pstate[VariableId(output)]=rers_result;
+        // matches special case of function call with return value, otherwise handles call without return value (function call is matched above)
+        if(SgNodeHelper::Pattern::matchExprStmtAssignOpVarRefExpFunctionCallExp(nodeToAnalyze)) {
+          SgNode* lhs=SgNodeHelper::getLhs(SgNodeHelper::getExprStmtChild(nodeToAnalyze));
+          VariableId lhsVarId;
+          bool isLhsVar=checkIfVariableAndDetermineVarId(lhs,lhsVarId);
+          ROSE_ASSERT(isLhsVar); // must hold
+          writeToMemoryLocation(lab,&pstate,AbstractValue::createAddressOfVariable(lhsVarId),AbstractValue(rers_result));
+          EState _eState=createEState(edge.target(),estate->callString,pstate,newio);
+          return getAnalyzer()->elistify(_eState);
+        } else {
+          EState _eState=createEState(edge.target(),estate->callString,pstate,newio);
+          return getAnalyzer()->elistify(_eState);
+        }
+        SAWYER_MESG(logger[ERROR]) <<"PState:"<< pstate<<endl;
+        SAWYER_MESG(logger[ERROR]) <<"RERS-MODE: call of unknown function."<<endl;
+        exit(1);
+        // pstate now contains the current state obtained from the binary
       }
+      // logger[DEBUG]<< "@LOCAL_EDGE: function call:"<<SgNodeHelper::nodeToString(funCall)<<endl;
     }
-    return getAnalyzer()->elistify();
+    return getAnalyzer()->elistify(); // did not match RERS function
+  }
+
+  std::list<EState> EStateTransferFunctions::transferFunctionCallLocalEdge(Edge edge, const EState* estate) {
+    if(_analyzer->getOptionsRef().rers.rersBinary) {
+      return transferFunctionCallLocalEdgeRersBinaryMode(edge, estate);
+    }
+    // default behavior, empty list of states, no information propagated on local edge
+    return getAnalyzer()->elistify(); 
   }
   
   std::list<EState> EStateTransferFunctions::transferFunctionCall(Edge edge, const EState* estate) {
@@ -340,7 +341,6 @@ namespace CodeThorn {
 	  AbstractValue actualParameterStructMemberAddress=AbstractValue::operatorAdd(actualParamAddress,offsetAV);
 	  // read from evalResultValue+offset and write to formal-param-address+offset
 	  AbstractValue newVal=readFromAnyMemoryLocation(currentLabel,&newPState,actualParameterStructMemberAddress);
-	  // TODO: check for copying of references
 	  initializeMemoryLocation(currentLabel,&newPState,formalParameterStructMemberAddress,newVal);
 	}
       } else {
@@ -2728,6 +2728,59 @@ namespace CodeThorn {
     return res;
   }
 
+  // array variable NOT in state. Special space optimization case for constant array.
+  // option: --arrays-not-in-state=on
+  SingleEvalResult EStateTransferFunctions::evalArrayNotInState(SgNode* node, SingleEvalResult& res, VariableId arrayVarId, AbstractValue arrayPtrPlusIndexValue) {
+    if(_variableIdMapping->hasAssignInitializer(arrayVarId)) {
+      // special case of string initializer: x[2]="";
+      SAWYER_MESG(logger[WARN])<<"array assign initializer is not supported yet (assuming any value):"<<node->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(node)<<endl;
+      AbstractValue val=AbstractValue::createTop();
+      res.result=val;
+      return res;
+    }
+    if(_variableIdMapping->isAggregateWithInitializerList(arrayVarId)) {
+      SgExpressionPtrList& initList=_variableIdMapping->getInitializerListOfArrayVariable(arrayVarId);
+      int elemIndex=0;
+      // TODO: slow linear lookup (TODO: pre-compute all values and provide access function)
+      for(SgExpressionPtrList::iterator i=initList.begin();i!=initList.end();++i) {
+        SgExpression* exp=*i;
+        SgAssignInitializer* assignInit=isSgAssignInitializer(exp);
+        if(assignInit) {
+          SgExpression* initExp=assignInit->get_operand_i();
+          ROSE_ASSERT(initExp);
+          if(SgIntVal* intValNode=isSgIntVal(initExp)) {
+            int intVal=intValNode->get_value();
+            int index2=arrayPtrPlusIndexValue.getIndexIntValue();
+            if(elemIndex==index2) {
+              AbstractValue val=AbstractValue(intVal); // TODO BYTEMODE?
+              res.result=val;
+              return res;
+            }
+          } else {
+            SAWYER_MESG(logger[WARN])<<"unsupported array initializer value (assuming any value):"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
+            AbstractValue val=AbstractValue::createTop();
+            res.result=val;
+            return res;
+          }
+        } else {
+          SAWYER_MESG(logger[WARN])<<"no assign initialize:"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
+          AbstractValue val=AbstractValue::createTop();
+          res.result=val;
+          return res;
+        }
+        elemIndex++;
+      } // for loop
+      // index not within array bounds, out-of-bounds access
+      res.result=AbstractValue::createTop();
+      return res;
+    } else {
+      // no initializer, initialize with top
+      AbstractValue val=AbstractValue::createTop();
+      res.result=val;
+      return res;
+    }
+  }
+  
   SingleEvalResult
   EStateTransferFunctions::evalArrayReferenceOp(SgPntrArrRefExp* node,
 						SingleEvalResult arrayExprResult,
@@ -2864,59 +2917,20 @@ namespace CodeThorn {
 	    exit(1);
 	  }
 	} else {
-	  SAWYER_MESG(logger[WARN])<<"evalArrayReferenceOp:"<<" memory location not in state: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
+	  SAWYER_MESG(logger[WARN])<<"evalArrayReferenceOp:"<<" array memory location not in state: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
 	  if(mode==MODE_ADDRESS) {
 	    SAWYER_MESG(logger[WARN])<<"EStateTransferFunctions::evalArrayReferenceOp: address mode not possible for variables not in state."<<endl;
 	    res.result=CodeThorn::Top();
 	    return res;
 	  }
-	  // array variable NOT in state. Special space optimization case for constant array.
+
 	  if(_variableIdMapping->isOfArrayType(arrayVarId)) {
-	    if(_variableIdMapping->hasAssignInitializer(arrayVarId)) {
-	      // special case of string initializer: x[2]="";
-	      SAWYER_MESG(logger[WARN])<<"array assign initializer is not supported yet (assuming any value):"<<node->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(node)<<endl;
-	      AbstractValue val=AbstractValue::createTop();
-	      res.result=val;
+            if(_analyzer->getOptionsRef().arraysNotInState) {
+              return evalArrayNotInState(node,res,arrayVarId,arrayPtrPlusIndexValue);
+            } else {
+	      res.result=AbstractValue::createTop();
 	      return res;
-	    }
-	    if(_variableIdMapping->isAggregateWithInitializerList(arrayVarId)) {
-	      SgExpressionPtrList& initList=_variableIdMapping->getInitializerListOfArrayVariable(arrayVarId);
-	      int elemIndex=0;
-	      // TODO: slow linear lookup (TODO: pre-compute all values and provide access function)
-	      for(SgExpressionPtrList::iterator i=initList.begin();i!=initList.end();++i) {
-		SgExpression* exp=*i;
-		SgAssignInitializer* assignInit=isSgAssignInitializer(exp);
-		if(assignInit) {
-		  SgExpression* initExp=assignInit->get_operand_i();
-		  ROSE_ASSERT(initExp);
-		  if(SgIntVal* intValNode=isSgIntVal(initExp)) {
-		    int intVal=intValNode->get_value();
-		    int index2=arrayPtrPlusIndexValue.getIndexIntValue();
-		    if(elemIndex==index2) {
-		      AbstractValue val=AbstractValue(intVal); // TODO BYTEMODE (only used in RERS mode?)
-		      res.result=val;
-		      return res;
-		    }
-		  } else {
-		    SAWYER_MESG(logger[WARN])<<"unsupported array initializer value (assuming any value):"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
-		    AbstractValue val=AbstractValue::createTop();
-		    res.result=val;
-		    return res;
-		  }
-		} else {
-		  SAWYER_MESG(logger[WARN])<<"no assign initialize:"<<exp->unparseToString()<<" AST:"<<AstTerm::astTermWithNullValuesToString(exp)<<endl;
-		  AbstractValue val=AbstractValue::createTop();
-		  res.result=val;
-		  return res;
-		}
-		elemIndex++;
-	      }
-	    } else {
-	      // no initializer, initialize with top
-	      AbstractValue val=AbstractValue::createTop();
-	      res.result=val;
-	      return res;
-	    }
+            }
 	  } else if(_variableIdMapping->isStringLiteralAddress(arrayVarId)) {
 	    SAWYER_MESG(logger[WARN])<<"Error: Found string literal address, but data not present in state."<<endl;
 	    AbstractValue val=AbstractValue::createTop();
