@@ -90,16 +90,19 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   exception_declaration.ads            \
   exhandler.adb                        \
   function_renaming.adb                \
+  function_instantiation.adb           \
   multidimensional_array.adb           \
   multidimensional_array.ads           \
   myarray.adb                          \
   package_pragma.ads                   \
+  package_instantiation.adb            \
   parent.ads                           \
   parent-child.ads                     \
   parenthesis_matters.adb              \
   pragmas.adb                          \
   procedure_call.adb                   \
   procedure_instantiation.adb          \
+  procedure_instantiation2.adb         \
   procedure_pragma.adb                 \
   raise_statement.adb                  \
   simpleada-io.ads                     \
@@ -202,7 +205,6 @@ ROSE_FAILING_ADA_TESTS :=                           \
   entry_body_declaration.adb                        \
   extension_aggregate.adb                           \
   function_body_stub.adb                            \
-  function_instantiation.adb                        \
   generic_function_declaration.ads                  \
   generic_function_renaming_declaration.ads         \
   generic_package_declaration.ads                   \
@@ -214,8 +216,6 @@ ROSE_FAILING_ADA_TESTS :=                           \
   protected_body_declaration.adb                    \
   protected_body_declaration.ads                    \
   procedure_body_stub.adb                           \
-  package_instantiation.adb                         \
-  procedure_instantiation2.adb                      \
   protected_type_declaration.ads                    \
   requeue_statement_2.adb                           \
   requeue_statements.adb                            \

@@ -2312,7 +2312,6 @@ namespace
     else if (decl.Declaration_Kind == A_Tagged_Incomplete_Type_Declaration)
       setModifiers(resdcl, false /*abstract*/, false /*limited*/, true /*tagged*/);
 
-
     return resdcl;
   }
 
@@ -2329,7 +2328,7 @@ namespace
                   : mkProcedureDef(name,    scope, rettype, std::move(complete));
   }
 
-    void completeDiscriminatedDecl( SgAdaDiscriminatedTypeDecl& sgnode,
+  void completeDiscriminatedDecl( SgAdaDiscriminatedTypeDecl& sgnode,
                                   SgDeclarationStatement* nondef,
                                   Element_ID id,
                                   SgDeclarationStatement& child,
@@ -2761,13 +2760,10 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         // we need to check if the SgAdaPackageSpecDecl is directly available
         // or if it is wrapped by an SgAdaGenericDecl node.
         SgNode*               declnode = &lookupNode(asisDecls(), specID);
-        SgAdaPackageSpecDecl* specdcl;
+        SgAdaPackageSpecDecl* specdcl  = isSgAdaPackageSpecDecl(declnode);
 
-        if (isSgAdaPackageSpecDecl(declnode)) {
-          specdcl = isSgAdaPackageSpecDecl(declnode);
-        } else {
-          if (isSgAdaGenericDecl(declnode)) {
-            SgAdaGenericDecl* generic = isSgAdaGenericDecl(declnode);
+        if (!specdcl) {
+          if (SgAdaGenericDecl* generic = isSgAdaGenericDecl(declnode)) {
             if (isSgAdaPackageSpecDecl(generic->get_declaration())) {
               specdcl = isSgAdaPackageSpecDecl(generic->get_declaration());
             } else {
@@ -2780,7 +2776,10 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
           }
         }
 
-        SgAdaPackageBodyDecl& sgnode  = mkAdaPackageBodyDecl(*specdcl);
+        // unhandled package bodies
+        if (specdcl == nullptr) break;
+
+        SgAdaPackageBodyDecl& sgnode  = mkAdaPackageBodyDecl(SG_DEREF(specdcl));
         SgAdaPackageBody&     pkgbody = SG_DEREF(sgnode.get_definition());
 
         //~ recordNode(asisDecls(), elem.ID, sgnode);
@@ -3705,20 +3704,23 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         // an entity that was traversed during the AST creation.  Instead we need
         // to dig up the Corresponding_Name_Declaration from the Expression
         // associated with Generic_Unit_Name. (MS: 8/1/21)
-        auto gunitname = retrieveAs(elemMap(), decl.Generic_Unit_Name);
-        auto gunitexpr = gunitname.The_Union.Expression;
+        NameData                  basename = getNameID(decl.Generic_Unit_Name, ctx);
+        Element_Struct&           baseelem = basename.elem();
+        Expression_Struct&        baseexpr = baseelem.The_Union.Expression;
+        SgDeclarationStatement*   basedecl = findFirst(asisDecls(), baseexpr.Corresponding_Name_Declaration, baseexpr.Corresponding_Name_Definition);
+        SgAdaGenericDecl*         gendecl  = isSgAdaGenericDecl(basedecl);
 
-        SgDeclarationStatement*   gendecl = NULL;
+        if (!gendecl)
+        {
+          logError() << "Unable to generate generic instantiation: " << adaname.fullName
+                     << " base decl: " << basename.fullName << " / " << basename.id()
+                     << "\n" << basedecl
+                     << std::endl;
 
-        // MS: 8/10/21 - in some cases (likely with the standard library) we may
-        // encounter an instantiation with no corresponding declaration.  In that case
-        // the name will be -1.  When that occurs set the declaration statement pointer
-        // to null.  Otherwise, lookup the corresponding declaration.
-        if (gunitexpr.Corresponding_Name_Declaration > 0) {
-           gendecl = &lookupNode(asisDecls(), gunitexpr.Corresponding_Name_Declaration);
+          break;
         }
 
-        SgAdaGenericInstanceDecl& sgnode  = mkAdaGenericInstanceDecl(adaname.ident, *isSgAdaGenericDecl(gendecl), outer);
+        SgAdaGenericInstanceDecl& sgnode  = mkAdaGenericInstanceDecl(adaname.ident, *gendecl, outer);
 
         {
           // generic actual part

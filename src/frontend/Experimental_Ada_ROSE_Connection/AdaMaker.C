@@ -648,20 +648,20 @@ mkAdaGenericDecl(SgScopeStatement& scope)
    sg::linkParentChild(sgnode, defn, &SgAdaGenericDecl::set_definition);
 
    return sgnode;
- }
+}
 
- SgAdaFormalTypeDecl&
- mkAdaFormalTypeDecl(const std::string& name, SgAdaFormalType& ty, SgScopeStatement& scope)
- {
-   SgAdaFormalTypeDecl&  sgnode = mkLocatedNode<SgAdaFormalTypeDecl>(SgName(name),&ty);
+SgAdaFormalTypeDecl&
+mkAdaFormalTypeDecl(const std::string& name, SgAdaFormalType& ty, SgScopeStatement& scope)
+{
+  SgAdaFormalTypeDecl&  sgnode = mkLocatedNode<SgAdaFormalTypeDecl>(SgName(name),&ty);
 
-   sgnode.set_parent(&scope);
-   sgnode.set_firstNondefiningDeclaration(&sgnode);
+  sgnode.set_parent(&scope);
+  sgnode.set_firstNondefiningDeclaration(&sgnode);
 
-   scope.insert_symbol(name, new SgAdaGenericSymbol(&sgnode));
+  scope.insert_symbol(name, new SgAdaGenericSymbol(&sgnode));
 
-   return sgnode;
- }
+  return sgnode;
+}
 
 
 namespace
