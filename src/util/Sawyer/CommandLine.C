@@ -2207,7 +2207,6 @@ public:
                 }
             }
             ASSERT_not_reachable("no matching switch, although the GroupedSwitches has an entry");
-            return std::string{}; // suppress compiler warning
         }
     }
     std::string switchIssues(unsigned /*flags*/) {
