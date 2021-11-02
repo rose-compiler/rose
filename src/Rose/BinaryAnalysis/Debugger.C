@@ -333,6 +333,7 @@ Debugger::registerDictionary() const {
 void
 Debugger::init() {
     syscallVa_.reset();
+    memset(regsPage_.data(), 0, regsPage_.size() * sizeof(RegisterPage::value_type));
 
     // Initialize register information.  This is very architecture and OS-dependent. See <sys/user.h> for details, but be
     // warned that even <sys/user.h> is only a guideline!  The header defines two versions of user_regs_struct, one for 32-bit

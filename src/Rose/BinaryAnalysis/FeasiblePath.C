@@ -634,6 +634,8 @@ FeasiblePath::Expression::print(std::ostream &out) const {
     }
 }
 
+FeasiblePath::FunctionSummary::FunctionSummary() {}
+
 FeasiblePath::FunctionSummary::FunctionSummary(const P2::ControlFlowGraph::ConstVertexIterator &cfgFuncVertex,
                                                uint64_t stackDelta)
     : address(cfgFuncVertex->value().address()), stackDelta(stackDelta) {
@@ -658,6 +660,10 @@ FeasiblePath::Statistics::operator+=(const FeasiblePath::Statistics &other) {
         reachedBlockVas.insertMaybe(node.key(), 0) += node.value();
     return *this;
 }
+
+FeasiblePath::FeasiblePath() {}
+
+FeasiblePath::~FeasiblePath() {}
 
 // class method
 void

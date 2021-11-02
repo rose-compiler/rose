@@ -96,7 +96,7 @@ protected:
 
     SValue(const SValue &other): BaseSemantics::SValue(other) {
         SgTreeCopy deep;
-        SgNode *copied = ast_->copy(deep);
+        SgNode *copied = other.ast_->copy(deep);
         ASSERT_require(isSgAsmExpression(copied));
         ast_ = isSgAsmExpression(copied);
     }
