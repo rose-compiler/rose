@@ -82,6 +82,7 @@ public:
   bool uninitializedMemoryAnalysis=false;
   bool deadCodeAnalysis=false;
   bool constantConditionAnalysis=false;
+  bool reduceStg=false; // calls analyzer->reduceStgToInOutStates();
 
   std::string reportFilePath;
   std::string nullPointerAnalysisFileName="null-pointer.csv";
@@ -242,6 +243,7 @@ public:
   bool getIntraProceduralFlag();
   bool activeOptionsRequireZ3Library();
   bool getAnalysisSelectionFlag(CodeThorn::AnalysisSelector asel);
+  void setAnalysisSelectionFlag(CodeThorn::AnalysisSelector asel, bool flag);
   std::string getAnalysisReportFileName(CodeThorn::AnalysisSelector asel);
   typedef std::list<std::pair<CodeThorn::AnalysisSelector,std::string> > AnalysisListType;
   AnalysisListType analysisList() const;

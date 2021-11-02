@@ -79,10 +79,14 @@ Grammar::setUpSymbols ()
   // SgAliasSymbol IR nodes could be properly evaluated.
      NEW_TERMINAL_MACRO ( RenameSymbol,         "RenameSymbol",        "RENAME_SYMBOL");
 
+  // PP (06/03/2020) Adding Ada support for "inherited" functions of derived types
+     NEW_TERMINAL_MACRO ( AdaInheritedFunctionSymbol, "AdaInheritedFunctionSymbol", "ADA_INHERITED_FUNCTION_SYMBOL" );
+
   // DQ (12/27/2011): Added more support for template declaration details in the AST.
   // NEW_NONTERMINAL_MACRO ( FunctionSymbol,MemberFunctionSymbol | RenameSymbol,"FunctionSymbol","FUNCTION_NAME", true);
      NEW_NONTERMINAL_MACRO ( MemberFunctionSymbol,TemplateMemberFunctionSymbol,"MemberFunctionSymbol","MEMBER_FUNC_NAME", true);
-     NEW_NONTERMINAL_MACRO ( FunctionSymbol, MemberFunctionSymbol | TemplateFunctionSymbol | RenameSymbol,"FunctionSymbol","FUNCTION_NAME", true);
+     NEW_NONTERMINAL_MACRO ( FunctionSymbol, MemberFunctionSymbol | TemplateFunctionSymbol | RenameSymbol | AdaInheritedFunctionSymbol,
+                             "FunctionSymbol","FUNCTION_NAME", true);
 
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
   // DQ (5/3/2010): Added symbol table support to the binary analysis within ROSE.  Values that
@@ -112,7 +116,7 @@ Grammar::setUpSymbols ()
           TypedefSymbol    | LabelSymbol            | DefaultSymbol          | NamespaceSymbol    |
           IntrinsicSymbol  | ModuleSymbol           | InterfaceSymbol        | CommonSymbol       |
           AliasSymbol      | AsmBinaryAddressSymbol | AsmBinaryDataSymbol    | JavaLabelSymbol    |
-          AdaPackageSymbol | AdaTaskSymbol          | AdaRenamingSymbol      | AdaGenericSymbol /* | RenameSymbol */,
+          AdaPackageSymbol | AdaTaskSymbol          | AdaRenamingSymbol      | AdaGenericSymbol   /* | RenameSymbol */,
           "Symbol","SymbolTag", false);
 #else
      NEW_NONTERMINAL_MACRO (Symbol,
@@ -121,7 +125,7 @@ Grammar::setUpSymbols ()
           TypedefSymbol    | LabelSymbol            | DefaultSymbol          | NamespaceSymbol    |
           IntrinsicSymbol  | ModuleSymbol           | InterfaceSymbol        | CommonSymbol       |
           AliasSymbol      |                                                   JavaLabelSymbol    |
-          AdaPackageSymbol | AdaTaskSymbol          | AdaRenamingSymbol      | AdaGenericSymbol /* | RenameSymbol */,
+          AdaPackageSymbol | AdaTaskSymbol          | AdaRenamingSymbol      | AdaGenericSymbol  /* | RenameSymbol */,
           "Symbol","SymbolTag", false);
 #endif
 
@@ -209,6 +213,11 @@ Grammar::setUpSymbols ()
 
      AdaRenamingSymbol.setDataPrototype ( "SgAdaRenamingDecl*",   "declaration", "= NULL",
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     AdaInheritedFunctionSymbol.setFunctionPrototype     ( "HEADER_ADA_INHERITED_FUNCTION_SYMBOL", "../Grammar/Symbol.code" );
+
+     AdaInheritedFunctionSymbol.setDataPrototype ( "SgFunctionType*",   "derivedType", "= NULL",
+                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
   // DQ (2/29/2004): Header file support code for template declaration support
@@ -451,6 +460,8 @@ Grammar::setUpSymbols ()
 
      AdaRenamingSymbol.setFunctionSource    ( "SOURCE_ADA_RENAMING_SYMBOL", "../Grammar/Symbol.code" );
      AdaRenamingSymbol.setFunctionSource    ( "SOURCE_EMPTY_GET_TYPE", "../Grammar/Symbol.code" );
+
+     AdaInheritedFunctionSymbol.setFunctionSource ( "SOURCE_ADA_INHERITED_FUNCTION_SYMBOL", "../Grammar/Symbol.code" );
 
   // DQ (12/23/2005): Removed SgName object and so we now need to build the get_name() member function
      DefaultSymbol.setFunctionSource        ( "SOURCE_SHORT_DEFAULT_GET_NAME", "../Grammar/Symbol.code" );

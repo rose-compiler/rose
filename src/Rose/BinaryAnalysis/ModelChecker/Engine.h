@@ -9,6 +9,7 @@
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Sawyer/Stopwatch.h>
+#include <boost/thread/thread.hpp>
 #include <thread>
 
 namespace Rose {

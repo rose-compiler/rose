@@ -254,7 +254,7 @@ run $(test) cory009
 # Test symbolic semantics memory read-after-write
 ###############################################################################################################################
 run $(tool_compile_linkexe) testSymReadWrite.C
-run $(test) testSymReadWrite --answer=testSymReadWrite.ans \
+run $(test) testSymReadWrite --answer=testSymReadWrite.ans --filter='perl -p semanticsFilter' \
     ./testSymReadWrite $(ROSE)/tests/nonsmoke/specimens/binary/memreadwrite
 
 ###############################################################################################################################

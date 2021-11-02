@@ -89,17 +89,17 @@ public:
     // Overrides of the parent class
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    virtual void reset() ROSE_OVERRIDE;
-    virtual void clearEvidence() ROSE_OVERRIDE;
-    virtual std::vector<std::string> evidenceNames() ROSE_OVERRIDE;
-    virtual SymbolicExpr::Ptr evidenceForName(const std::string&) ROSE_OVERRIDE;
-    virtual void timeout(boost::chrono::duration<double>) ROSE_OVERRIDE;
+    virtual void reset() override;
+    virtual void clearEvidence() override;
+    virtual std::vector<std::string> evidenceNames() override;
+    virtual SymbolicExpr::Ptr evidenceForName(const std::string&) override;
+    virtual void timeout(boost::chrono::duration<double>) override;
 
 protected:
-    virtual Satisfiable checkLib() ROSE_OVERRIDE;
-    virtual void generateFile(std::ostream&, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*) ROSE_OVERRIDE;
-    virtual std::string getCommand(const std::string &config_name) ROSE_OVERRIDE;
-    virtual void parseEvidence() ROSE_OVERRIDE;
+    virtual Satisfiable checkLib() override;
+    virtual void generateFile(std::ostream&, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*) override;
+    virtual std::string getCommand(const std::string &config_name) override;
+    virtual void parseEvidence() override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Miscellaneous

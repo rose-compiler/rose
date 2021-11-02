@@ -107,12 +107,12 @@ public:
         : family(family) {
         init();
     }
-    virtual DisassemblerM68k *clone() const ROSE_OVERRIDE { return new DisassemblerM68k(*this); }
-    virtual bool canDisassemble(SgAsmGenericHeader*) const ROSE_OVERRIDE;
+    virtual DisassemblerM68k *clone() const override { return new DisassemblerM68k(*this); }
+    virtual bool canDisassemble(SgAsmGenericHeader*) const override;
     virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr&, rose_addr_t start_va,
-                                             AddressSet *successors=NULL) ROSE_OVERRIDE;
-    virtual SgAsmInstruction *makeUnknownInstruction(const Disassembler::Exception&) ROSE_OVERRIDE;
-    virtual Unparser::BasePtr unparser() const ROSE_OVERRIDE;
+                                             AddressSet *successors=NULL) override;
+    virtual SgAsmInstruction *makeUnknownInstruction(const Disassembler::Exception&) override;
+    virtual Unparser::BasePtr unparser() const override;
 
     typedef std::pair<SgAsmExpression*, SgAsmExpression*> ExpressionPair;
 

@@ -31,12 +31,10 @@ done
 [ "$#" -eq 1 ] || die "usage: $arg0 TEST_ID"
 
 test_id="$1"
-rose-matrix-attachments -Fcsv "$test_id" |
-    while IFS=, read attachment_id attachment_name; do
-	if [ "$attachment_name" = "Final output" ]; then
-	    rose-matrix-attachments "$test_id" "$attachment_id"
-	    exit 0
-	fi
-    done
-[ "${PIPESTATUS[0]}" -eq 0 ] || exit 1
+while IFS=, read attachment_id attachment_name; do
+    if [ "$attachment_name" = "Final output" ]; then
+	rose-matrix-attachments "$test_id" "$attachment_id"
+	exit 0
+    fi
+done <<< $(rose-matrix-attachments -Fcsv "$test_id")
 die "no output associated with test ID $test_id"

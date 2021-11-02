@@ -124,7 +124,7 @@ bool FunctionCallMapping::isAstFunctionPointerCall(SgFunctionCallExp* fc) {
   SgExpression*    exp=fc->get_function();
   if(SgVarRefExp* varRefExp=isSgVarRefExp(exp)) {
     SgType* type=varRefExp->get_type();
-    if(const SgPointerType* pointerType = SgNodeHelper::isPointerType(type)) {
+    if(SgNodeHelper::isPointerType(type)) {
       return true;
     }
   }

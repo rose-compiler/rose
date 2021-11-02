@@ -287,6 +287,12 @@ int main( int argc, char * argv[] ) {
     runLTLAnalysis(ctOpt,ltlOpt,analyzer,tc);
     processCtOptGenerateAssertions(ctOpt, analyzer, project);
 
+    
+    if(ctOpt.reduceStg) {
+      analyzer->reduceStgToInOutStates();
+    }
+
+
     tc.startTimer();
     optionallyRunVisualizer(ctOpt,analyzer,project);
     tc.stopTimer(TimingCollector::visualization);

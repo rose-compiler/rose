@@ -67,7 +67,6 @@ pkginclude_HEADERS =				\
 	rose_getline.h				\
 	rose_isnan.h				\
 	rose_pragma_message.h			\
-	rose_override.h				\
 	rose_paths.h				\
 	rose_strtoull.h				\
 	roseTraceLib.c				\

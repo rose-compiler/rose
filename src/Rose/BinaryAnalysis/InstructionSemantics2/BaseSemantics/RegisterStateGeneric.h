@@ -243,11 +243,11 @@ public:
     //                                  Virtual constructors
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    virtual RegisterStatePtr create(const SValuePtr &protoval, const RegisterDictionary *regdict) const ROSE_OVERRIDE {
+    virtual RegisterStatePtr create(const SValuePtr &protoval, const RegisterDictionary *regdict) const override {
         return instance(protoval, regdict);
     }
 
-    virtual RegisterStatePtr clone() const ROSE_OVERRIDE {
+    virtual RegisterStatePtr clone() const override {
         return RegisterStateGenericPtr(new RegisterStateGeneric(*this));
     }
 
@@ -336,13 +336,13 @@ public:
     //                                  Inherited non-constructors
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    virtual void clear() ROSE_OVERRIDE;
-    virtual void zero() ROSE_OVERRIDE;
-    virtual SValuePtr readRegister(RegisterDescriptor, const SValuePtr &dflt, RiscOperators*) ROSE_OVERRIDE;
-    virtual SValuePtr peekRegister(RegisterDescriptor, const SValuePtr &dflt, RiscOperators*) ROSE_OVERRIDE;
-    virtual void writeRegister(RegisterDescriptor, const SValuePtr &value, RiscOperators*) ROSE_OVERRIDE;
-    virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
-    virtual bool merge(const RegisterStatePtr &other, RiscOperators*) ROSE_OVERRIDE;
+    virtual void clear() override;
+    virtual void zero() override;
+    virtual SValuePtr readRegister(RegisterDescriptor, const SValuePtr &dflt, RiscOperators*) override;
+    virtual SValuePtr peekRegister(RegisterDescriptor, const SValuePtr &dflt, RiscOperators*) override;
+    virtual void writeRegister(RegisterDescriptor, const SValuePtr &value, RiscOperators*) override;
+    virtual void print(std::ostream&, Formatter&) const override;
+    virtual bool merge(const RegisterStatePtr &other, RiscOperators*) override;
     virtual void hash(Combinatorics::Hasher&, RiscOperators*) const override;
 
 

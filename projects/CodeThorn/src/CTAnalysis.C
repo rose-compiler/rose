@@ -81,20 +81,32 @@ CodeThorn::CTAnalysis::~CTAnalysis() {
 std::string CodeThorn::CTAnalysis::hashSetConsistencyReport() {
   stringstream ss;
 
-  ss<<"HashSet consistency: estateSet: ";
-  auto estateWarnings=estateSet.getWarnings();
-  if(estateWarnings>0)
-    ss<<"FAIL("<<estateWarnings<<")";
-  else
-    ss<<"PASS";
-    
-  ss<<", pstateSet: ";
-  auto pstateWarnings=pstateSet.getWarnings();
-  if(estateWarnings>0)
-    ss<<"FAIL("<<pstateWarnings<<")";
-  else
-    ss<<"PASS";
-  ss<<endl;
+  {
+    ss<<"HashSet consistency: estateSet: ";
+    auto estateWarnings=estateSet.getWarnings();
+    if(estateWarnings>0)
+      ss<<"FAIL("<<estateWarnings<<")";
+    else
+      ss<<"PASS";
+  }
+  {
+    ss<<", pstateSet: ";
+    auto pstateWarnings=pstateSet.getWarnings();
+    if(pstateWarnings>0)
+      ss<<"FAIL("<<pstateWarnings<<")";
+    else
+      ss<<"PASS";
+  }
+
+  {
+    ss<<", transitionGraphSet: ";
+    auto transitionGraphWarnings=transitionGraph.getWarnings();
+    if(transitionGraphWarnings>0)
+      ss<<"FAIL("<<transitionGraphWarnings<<")";
+    else
+      ss<<"PASS";
+    ss<<endl;
+  }
 
   return ss.str();
 }
@@ -653,8 +665,13 @@ void CodeThorn::CTAnalysis::runAnalysisPhase2Sub1(TimingCollector& tc) {
   //initializeSolverWithInitialEState(this->_root);
   if(_ctOpt.status) cout<<"done."<<endl;
   if(_ctOpt.getInterProceduralFlag()) {
-    if(_ctOpt.status && _ctOpt.contextSensitive)
-      cout<<"STATUS: context sensitive anlaysis with call string length "<<_ctOpt.callStringLength<<"."<<endl;
+    if(_ctOpt.status) {
+      if(_ctOpt.contextSensitive) {
+        cout<<"STATUS: context sensitive analysis with call string length "<<_ctOpt.callStringLength<<"."<<endl;
+      }
+      cout<<"STATS: max time   (threshold): "<<((_ctOpt.maxTime!=-1)?CodeThorn::readableRunTimeFromSeconds(_ctOpt.maxTime):string("no limit"))<<endl;
+      cout<<"STATS: max memory (threshold): "<<((_ctOpt.maxMemory!=-1)?(std::to_string(_ctOpt.maxMemory)+" bytes"):string("no limit"))<<endl;
+    }
     if(!this->getModeLTLDriven() && _ctOpt.z3BasedReachabilityAnalysis==false && _ctOpt.ssa==false) {
       switch(_ctOpt.abstractionMode) {
       case 0:

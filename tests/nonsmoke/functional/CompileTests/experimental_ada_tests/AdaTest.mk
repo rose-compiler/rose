@@ -54,6 +54,8 @@ ADA_TRANSLATOR_PASSING_TESTS :=        \
   overload.adb                         \
   package_with_body.ads                \
   parameter_declaration.ads            \
+  private_extension_declaration.ads    \
+  private_type_definition.ads          \
   procedure_body_stub.ads              \
   procedure_declaration.adb            \
   procedure_declaration.ads            \
@@ -73,6 +75,7 @@ ADA_TRANSLATOR_PASSING_TESTS :=        \
   unit_1.adb                           \
   unit_3.ads                           \
   variable_declaration.ads             \
+  very_large_value.adb                 \
   week_string_literal.ads              \
   while_loop_statement.adb
 
@@ -87,18 +90,19 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   exception_declaration.ads            \
   exhandler.adb                        \
   function_renaming.adb                \
+  function_instantiation.adb           \
   multidimensional_array.adb           \
   multidimensional_array.ads           \
   myarray.adb                          \
   package_pragma.ads                   \
+  package_instantiation.adb            \
   parent.ads                           \
   parent-child.ads                     \
   parenthesis_matters.adb              \
   pragmas.adb                          \
-  private_extension_declaration.ads    \
-  private_type_definition.ads          \
   procedure_call.adb                   \
   procedure_instantiation.adb          \
+  procedure_instantiation2.adb         \
   procedure_pragma.adb                 \
   raise_statement.adb                  \
   simpleada-io.ads                     \
@@ -109,11 +113,11 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   unconstrained_array_definition.ads   \
   default_function_argument.adb        \
   qualified_expression.adb             \
-  type_in_local_pkg.adb                \
-  very_large_value.adb                 
+  type_in_local_pkg.adb                
 
 ADA_TRANSLATOR_FAILING_TESTS :=        \
   access_variable.adb                  \
+  ada_packages.adb                     \
   allocators.adb                       \
   accept_statement.adb                 \
   accept_statement_task_decl.adb       \
@@ -138,6 +142,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   exception_renamingrenaming.adb       \
   explicit_deref.adb                   \
   floating_point_definition.ads        \
+  formal_procedure_declaration.ads     \
   goto_loop_v2.adb                     \
   hardwarestore.adb                    \
   hello_world.adb                      \
@@ -178,7 +183,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   unknown_discriminant.ads             \
   uppercase.adb
 
-ADA_TRANSLATOR_PENDING_TESTS :=        
+ADA_TRANSLATOR_PENDING_TESTS :=       
 
 # defines tests that are fully supported by ROSE
 ROSE_PASSING_ADA_TESTS :=                           \
@@ -200,7 +205,6 @@ ROSE_FAILING_ADA_TESTS :=                           \
   entry_body_declaration.adb                        \
   extension_aggregate.adb                           \
   function_body_stub.adb                            \
-  function_instantiation.adb                        \
   generic_function_declaration.ads                  \
   generic_function_renaming_declaration.ads         \
   generic_package_declaration.ads                   \
@@ -212,8 +216,6 @@ ROSE_FAILING_ADA_TESTS :=                           \
   protected_body_declaration.adb                    \
   protected_body_declaration.ads                    \
   procedure_body_stub.adb                           \
-  package_instantiation.adb                         \
-  procedure_instantiation2.adb                      \
   protected_type_declaration.ads                    \
   requeue_statement_2.adb                           \
   requeue_statements.adb                            \

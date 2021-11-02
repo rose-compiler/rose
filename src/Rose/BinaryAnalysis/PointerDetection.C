@@ -114,11 +114,11 @@ public:
 
 public:
     virtual BaseSemantics::StatePtr create(const BaseSemantics::RegisterStatePtr &registers,
-                                           const BaseSemantics::MemoryStatePtr &memory) const ROSE_OVERRIDE {
+                                           const BaseSemantics::MemoryStatePtr &memory) const override {
         return instance(registers, memory);
     }
 
-    virtual BaseSemantics::StatePtr clone() const ROSE_OVERRIDE {
+    virtual BaseSemantics::StatePtr clone() const override {
         return StatePtr(new State(*this));
     }
 
@@ -128,7 +128,7 @@ public:
         return retval;
     }
 
-    virtual bool merge(const BaseSemantics::StatePtr &other_, BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE {
+    virtual bool merge(const BaseSemantics::StatePtr &other_, BaseSemantics::RiscOperators *ops) override {
         bool changed = false;
         StatePtr other = State::promote(other_);
         BOOST_FOREACH (const MemoryTransfers::Node &otherNode, other->memoryReads_.nodes()) {
@@ -186,12 +186,12 @@ public:
     
 public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         return instance(protoval, solver);
     }
 
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         return instance(state, solver);
     }
 
@@ -205,7 +205,7 @@ public:
     virtual BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg,
                                                 const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,
-                                                const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
+                                                const BaseSemantics::SValuePtr &cond) override {
         // Offset the address by the value of the segment register.
         BaseSemantics::SValuePtr adjustedVa;
         if (segreg.isEmpty()) {

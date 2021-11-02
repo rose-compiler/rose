@@ -147,7 +147,7 @@ struct PowerOpPattern : sg::DispatchHandler <std::vector<SgPowerOp*> >
 
 struct PowerOpTransformer : AstSimpleProcessing
 {
-  void visit(SgNode* ) ROSE_OVERRIDE;
+  void visit(SgNode* ) override;
 };
 
 PowerOpTransformer::visit(SgNode* n)

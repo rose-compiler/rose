@@ -336,7 +336,7 @@ namespace
 void
 Unparse_Ada::unparseType(const SgLocatedNode& ref, SgType* ty, SgUnparse_Info& info)
 {
-  using TypeQualMap = std::map<SgNode*,std::map<SgNode*,std::string> >;
+  using MapOfNameQualMap = std::map<SgNode*, NameQualMap>;
 
   ASSERT_not_null(ty);
 
@@ -348,7 +348,7 @@ Unparse_Ada::unparseType(const SgLocatedNode& ref, SgType* ty, SgUnparse_Info& i
 
   SgNode*            refNode = info.get_reference_node_for_qualification();
   const NameQualMap& currentNameQualMap = nameQualificationMap();
-  const TypeQualMap& typeQualMap = SgNode::get_globalQualifiedNameMapForMapsOfTypes();
+  const MapOfNameQualMap& typeQualMap = SgNode::get_globalQualifiedNameMapForMapsOfTypes();
   const NameQualMap& nameQualMapForTypeSubtree = getQualMapping(typeQualMap, refNode, SgNode::get_globalQualifiedNameMapForTypes());
 
   withNameQualificationMap(nameQualMapForTypeSubtree);

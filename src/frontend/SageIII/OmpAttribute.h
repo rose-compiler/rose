@@ -308,12 +308,12 @@ namespace OmpSupport
       // node.  It avoids memory leaks by not allowing OmpAttributeList attributes to be copied (no virtual "copy"
       // constructor), and it never tries to replace one OmpAttributeList object with another with AstAttributeMechanism's
       // "set" or "replace" methods or the corresponding methods in SgNode. However, it leaks memory if an AST node is deleted.
-      virtual OwnershipPolicy getOwnershipPolicy() const ROSE_OVERRIDE {
+      virtual OwnershipPolicy getOwnershipPolicy() const override {
           return CUSTOM_OWNERSHIP;
       }
       // MS2018: added to fix warning
-      virtual std::string attribute_class_name() const ROSE_OVERRIDE;
-      virtual OmpAttributeList* copy() ROSE_OVERRIDE;
+      virtual std::string attribute_class_name() const override;
+      virtual OmpAttributeList* copy() override;
   };                      
 
   //! One attribute object stores all information within an OpenMP pragma (directive and clauses)

@@ -10,7 +10,6 @@ namespace CodeThorn {
    */
   class Transition {
   public:
-    Transition();
     Transition(const EState* source,Edge edge, const EState* target);
     const EState* source; // source node
     Edge edge;

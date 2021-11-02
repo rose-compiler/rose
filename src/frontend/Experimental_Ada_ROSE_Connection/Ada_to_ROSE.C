@@ -63,6 +63,8 @@ namespace
 
   /// stores a mapping from string to builtin exception nodes
   map_t<AdaIdentifier, SgAdaPackageSpecDecl*> adaPkgsMap;
+
+  map_t<std::pair<const SgFunctionDeclaration*, const SgTypedefType*>, SgAdaInheritedFunctionSymbol*> inheritedSymbolMap;
 } // anonymous namespace
 
 //~ map_t<int, SgDeclarationStatement*>&        asisUnits() { return asisUnitsMap; }
@@ -73,6 +75,12 @@ map_t<int, SgDeclarationStatement*>&         asisTypes() { return asisTypesMap; 
 map_t<AdaIdentifier, SgType*>&               adaTypes()  { return adaTypesMap;  }
 map_t<AdaIdentifier, SgInitializedName*>&    adaExcps()  { return adaExcpsMap;  }
 map_t<AdaIdentifier, SgAdaPackageSpecDecl*>& adaPkgs()   { return adaPkgsMap;   }
+
+map_t<std::pair<const SgFunctionDeclaration*, const SgTypedefType*>, SgAdaInheritedFunctionSymbol*>&
+inheritedSymbols()
+{
+  return inheritedSymbolMap;
+}
 
 ASIS_element_id_to_ASIS_MapType&     elemMap()   { return asisMap;      }
 ASIS_element_id_to_ASIS_MapType&     unitMap()   { return asisMap;      }
@@ -283,6 +291,7 @@ namespace
     adaTypes().clear();
     adaExcps().clear();
     adaPkgs().clear();
+    inheritedSymbols().clear();
   }
 
   //
@@ -420,10 +429,19 @@ namespace
     // dispatch based on unit kind
     switch (adaUnit.Unit_Kind)
     {
+      case A_Generic_Procedure:
+      case A_Generic_Function:
       case A_Function:
       case A_Procedure:
         {
-          logTrace() << "A " << (adaUnit.Unit_Kind == A_Function ? "function" : "procedure")
+          std::string kindName;
+
+               if (adaUnit.Unit_Kind == A_Function)          kindName = "function";
+          else if (adaUnit.Unit_Kind == A_Procedure)         kindName = "procedure";
+          else if (adaUnit.Unit_Kind == A_Generic_Function)  kindName = "generic function";
+          else if (adaUnit.Unit_Kind == A_Generic_Procedure) kindName = "generic procedure";
+
+          logTrace() << "A " << kindName
                      << PrnUnitHeader(adaUnit)
                      << "\n " << adaUnit.Corresponding_Parent_Declaration << " (Corresponding_Parent_Declaration)"
                      << "\n " << adaUnit.Corresponding_Body << " (Corresponding_Body)"
@@ -537,9 +555,6 @@ namespace
 
       case Not_A_Unit:
       case A_Package_Instance:
-
-      case A_Generic_Procedure:
-      case A_Generic_Function:
 
       case A_Procedure_Instance:
       case A_Function_Instance:
@@ -813,7 +828,7 @@ namespace
 
   struct InheritFileInfo : AstSimpleProcessing
   {
-    void visit(SgNode* sageNode) ROSE_OVERRIDE
+    void visit(SgNode* sageNode) override
     {
       SgLocatedNode* n = isSgLocatedNode(sageNode);
 
@@ -858,7 +873,7 @@ namespace
       std::string s = si::get_name(scope);
     }
 
-    void visit(SgNode* sageNode) ROSE_OVERRIDE
+    void visit(SgNode* sageNode) override
     {
       SgLocatedNode* n = isSgLocatedNode(sageNode);
 

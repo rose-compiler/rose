@@ -180,11 +180,11 @@ public:
     explicit ApproximationAttribute_2(Approximation a)
         : approximation(a) {}
 
-    virtual AstAttribute* copy() const ROSE_OVERRIDE {
+    virtual AstAttribute* copy() const override {
         return new ApproximationAttribute_2(*this);
     }
 
-    virtual std::string attribute_class_name() const ROSE_OVERRIDE {
+    virtual std::string attribute_class_name() const override {
         return "ApproximationAttribute_2";
     }
 };
@@ -198,11 +198,11 @@ public:
     explicit AnalysisTimeAttribute_2(const AnalysisTime &t)
         : analysisTime(t) {}
 
-    virtual AstAttribute* copy() const ROSE_OVERRIDE {
+    virtual AstAttribute* copy() const override {
         return new AnalysisTimeAttribute_2(*this);
     }
 
-    virtual std::string attribute_class_name() const ROSE_OVERRIDE {
+    virtual std::string attribute_class_name() const override {
         return "AnalysisTimeAttribute_2";
     }
 };
@@ -217,11 +217,11 @@ public:
     explicit ApproximationAttribute_3(Approximation a)
         : approximation(a) {}
 
-    virtual AstAttribute* copy() const ROSE_OVERRIDE {
+    virtual AstAttribute* copy() const override {
         return new ApproximationAttribute_3(*this);
     }
 
-    virtual std::string attribute_class_name() const ROSE_OVERRIDE {
+    virtual std::string attribute_class_name() const override {
         return "ApproximationAttribute_3";
     }
 };
@@ -235,11 +235,11 @@ public:
     explicit AnalysisTimeAttribute_3(const AnalysisTime &t)
         : analysisTime(t) {}
 
-    virtual AstAttribute* copy() const ROSE_OVERRIDE {
+    virtual AstAttribute* copy() const override {
         return new AnalysisTimeAttribute_3(*this);
     }
 
-    virtual std::string attribute_class_name() const ROSE_OVERRIDE {
+    virtual std::string attribute_class_name() const override {
         return "AllocationTimeAttribute_3";
     }
 };

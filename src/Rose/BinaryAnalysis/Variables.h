@@ -64,7 +64,7 @@ std::string sizeStr(uint64_t size);
 
 /** Describes a local or global variable. */
 class BaseVariable {
-    rose_addr_t maxSizeBytes_;                      // maximum possible size of this variable in bytes
+    rose_addr_t maxSizeBytes_ = 0;                  // maximum possible size of this variable in bytes
     AddressSet insnVas_;                            // instructions where the variable was detected that reference the variable
     InstructionSemantics2::BaseSemantics::InputOutputPropertySet ioProperties_; /**< Properties of a location. */
     std::string name_;                              // optional variable name
@@ -86,15 +86,14 @@ protected:
     /** Default constructor.
      *
      *  Constructs a descriptor for a variable whose maximum size is zero. */
-    BaseVariable()
-        : maxSizeBytes_(0) {}
+    BaseVariable();
 
     /** Construct a variable with a given maximum size. */
-    BaseVariable(size_t maxSizeBytes, const AddressSet &definingInstructionVas, const std::string &name)
-        // following arithmetic is to work around lack of SSIZE_MAX on windows. The maxSizeBytes should not be more than the
-        // maximum value of the signed type with the same conversion rank.
-        : maxSizeBytes_(std::min(maxSizeBytes, ((size_t)(1) << (8*sizeof(size_t)-1))-1)),
-          insnVas_(definingInstructionVas), name_(name) {}
+    BaseVariable(size_t maxSizeBytes, const AddressSet &definingInstructionVas, const std::string &name);
+
+public:
+    BaseVariable(const BaseVariable&);
+    ~BaseVariable();
 
 public:
     /** Property: Maximum variable size in bytes.
@@ -103,7 +102,7 @@ public:
      *  of zero.
      *
      * @{ */
-    rose_addr_t maxSizeBytes() const { return maxSizeBytes_; }
+    rose_addr_t maxSizeBytes() const;
     void maxSizeBytes(rose_addr_t size);
     /** @} */
 
@@ -113,9 +112,9 @@ public:
      *  that read or write to memory using an offset from the function's frame.
      *
      * @{ */
-    const AddressSet& definingInstructionVas() const { return insnVas_; }
-    AddressSet& definingInstructionVas() { return insnVas_; }
-    void definingInstructionVas(const AddressSet &vas) { insnVas_ = vas; }
+    const AddressSet& definingInstructionVas() const;
+    AddressSet& definingInstructionVas();
+    void definingInstructionVas(const AddressSet &vas);
     /** @} */
 
     /** Property: I/O properties.
@@ -123,9 +122,9 @@ public:
      *  This property is a set of flags that describe how the variable is accessed.
      *
      * @{ */
-    const InstructionSemantics2::BaseSemantics::InputOutputPropertySet& ioProperties() const { return ioProperties_; }
-    InstructionSemantics2::BaseSemantics::InputOutputPropertySet& ioProperties() { return ioProperties_; }
-    void ioProperties(const InstructionSemantics2::BaseSemantics::InputOutputPropertySet &set) { ioProperties_ = set; }
+    const InstructionSemantics2::BaseSemantics::InputOutputPropertySet& ioProperties() const;
+    InstructionSemantics2::BaseSemantics::InputOutputPropertySet& ioProperties();
+    void ioProperties(const InstructionSemantics2::BaseSemantics::InputOutputPropertySet &set);
     /** @} */
 
     /** Property: Optional variable name.
@@ -134,8 +133,8 @@ public:
      *  should always be printed assuming it contains special characters.
      *
      * @{ */
-    const std::string& name() const { return name_; }
-    void name(const std::string &s) { name_ = s; }
+    const std::string& name() const;
+    void name(const std::string &s);
     /** @} */
 };
 
@@ -145,18 +144,46 @@ public:
 
 /** Description of a local stack variable within a function. */
 class StackVariable: public BaseVariable {
+public:
+    /** Purpose of variable. */
+    enum class Purpose {
+        RETURN_ADDRESS,                                 /**< Possible or known return address. */
+        FRAME_POINTER,                                  /**< Pointer to previous stack frame. */
+        SPILL_AREA,                                     /**< Callee-saved registers. */
+        NORMAL,                                         /**< Normal source code level variable. */
+        UNKNOWN,                                        /**< Purpose is unknown. */
+        OTHER                                           /**< None of the above purposes. */
+    };
+
+    /** Boundary between stack variables.
+     *
+     *  This is the lowest address for a region of variables along with information about what instructions were used to define
+     *  this boundary and what purpose the addresses immediately above this boundary serve. */
+    struct Boundary {
+        int64_t frameOffset = 0;                        /**< Address of boundary with respect to frame pointer. */
+        AddressSet definingInsns;                       /**< Instructions that define this boundary. */
+        Purpose purpose = Purpose::UNKNOWN;             /**< Purpose of addresses above this boundary. */
+    };
+
+    /** List of boundaries. */
+    using Boundaries = std::vector<Boundary>;
+
+private:
     Partitioner2::FunctionPtr function_;            // function in which local variable exists
-    int64_t frameOffset_;                           // offset where variable is located in the function's stack frame
+    int64_t frameOffset_ = 0;                       // offset where variable is located in the function's stack frame
+    Purpose purpose_ = Purpose::UNKNOWN;
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
+    void serialize(S &s, const unsigned version) {
         s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(BaseVariable);
         s & BOOST_SERIALIZATION_NVP(function_);
         s & BOOST_SERIALIZATION_NVP(frameOffset_);
+        if (version >= 1)
+            s & BOOST_SERIALIZATION_NVP(purpose_);
     }
 #endif
         
@@ -167,9 +194,10 @@ public:
     StackVariable();
 
     /** Construct a variable descriptor. */
-    StackVariable(const Partitioner2::FunctionPtr&, int64_t frameOffset, rose_addr_t maxSizeBytes,
+    StackVariable(const Partitioner2::FunctionPtr&, int64_t frameOffset, rose_addr_t maxSizeBytes, Purpose,
                   const AddressSet &definingInstructionVas = AddressSet(), const std::string &name = "");
 
+    StackVariable(const StackVariable&);
     ~StackVariable();
 
     /** Property: Function owning the variable.
@@ -188,8 +216,17 @@ public:
      *  variable, thus the return value is signed.
      *
      * @{ */
-    int64_t frameOffset() const { return frameOffset_; }
-    void frameOffset(int64_t offset) { frameOffset_ = offset; }
+    int64_t frameOffset() const;
+    void frameOffset(int64_t offset);
+    /** @} */
+
+    /** Property: Purpose.
+     *
+     *  Areas of a stack frame serve different purposes. This property describes the purpose.
+     *
+     *  @{ */
+    Purpose purpose() const;
+    void purpose(Purpose p);
     /** @} */
 
     /** Give variable a defult name.
@@ -209,6 +246,11 @@ public:
 
     /** Location within the function stack frame. */
     OffsetInterval interval() const;
+
+    /** Insert a new boundary or adjust an existing boundary.
+     *
+     *  The boundaries are assumed to be unsorted, and if a new boundary is inserted it is inserted at the end of the list. */
+    static Boundary& insertBoundary(Boundaries& /*in,out*/, int64_t frameOffset, rose_addr_t insnVa);
 
     /** Printing local variable.
      *
@@ -236,7 +278,7 @@ void print(const StackVariables&, const Partitioner2::Partitioner&, std::ostream
 
 /** Description of a global variable. */
 class GlobalVariable: public BaseVariable {
-    rose_addr_t address_;                               // starting (lowest) virtual address
+    rose_addr_t address_ = 0;                           // starting (lowest) virtual address
 
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 private:
@@ -263,13 +305,15 @@ public:
     GlobalVariable(rose_addr_t startingAddress, rose_addr_t maxSizeBytes,
                    const AddressSet &definingInstructionVas = AddressSet(), const std::string &name = "");
 
+    ~GlobalVariable();
+
     /** Property: Starting address.
      *
      *  This property is the lowest address for the variable.
      *
      * @{ */
-    rose_addr_t address() const { return address_; }
-    void address(rose_addr_t va) { address_ = va; }
+    rose_addr_t address() const;
+    void address(rose_addr_t va);
     /** @} */
 
     /** Give variable a defult name.
@@ -314,6 +358,46 @@ typedef Sawyer::Container::IntervalMap<AddressInterval, GlobalVariable> GlobalVa
 void print(const GlobalVariables&,const Partitioner2::Partitioner&, std::ostream &out, const std::string &prefix = "");
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// StackFrame
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Information about a stack frame.
+ *
+ *  A stack frame is a contiguous area of the stack with one frame for each function in a call chain. As functions are called
+ *  and return, frames are pushed onto and popped from the stack. Typically, when a frame is pushed onto the stack, a pointer
+ *  is also added so that the frames form a linked list from most recent function call to the oldest function call.
+ *
+ *  Typically, a dedicated register points to the most recent frame. E.g., for x86 this is usually the bp/ebp/rbp
+ *  register. Sometimes there is no dedicated frame pointer register (such as when x86 is compiled with GCC/LLVM
+ *  -fomit-frame-pointer). In these cases, the compiler keeps track of the frame address and when needed, emits code that finds
+ *  the frame based on the current value of the stack pointer register (which can change throughout a function's execution).
+ *  The frame pointer (explicit or calculated) defines the zero offset for the frame. The frame itself extends in positive
+ *  and/or negative directions from this anchor point.
+ *
+ *  The frame pointer register can point to any position within the frame. For instance, x86 rbp register points to the top of
+ *  the frame, whereas PowerPC's r31 register points to the bottom. Likewise, the pointers forming the linked list can point to
+ *  any position within the frame. These pointer offsets into the frame are known by the compiler, which adds/subtracts the
+ *  appropriate constant to access the desired bytes in the frame.
+ *
+ *  A stack containing the frames can grow (when frames are pushed) in a positive or negative direction.
+ *
+ *  A function can access areas of the stack that are outside its own frame.  For instance, x86 function stack arguments are
+ *  stored in the caller's frame. Pointers to local variables can point into earlier frames.  The latest function can use parts
+ *  of the stack that are after the latest frame and which therefore out outside any frame. */
+struct StackFrame {
+    enum Direction {
+        GROWS_UP,                                       /**< New frames are added at higher addresses than old frames. */
+        GROWS_DOWN                                      /**< New frames are added at lower addresses than old frames. */
+    };
+
+    Direction growthDirection = GROWS_DOWN;             /**< Direction that the stack grows when pushing a new frame. */
+    RegisterDescriptor framePointerRegister;            /**< Optional descriptor for register pointing to latest frame. */
+    Sawyer::Optional<int64_t> maxOffset;                /**< Maximum frame offset w.r.t. frame pointer. */
+    Sawyer::Optional<int64_t> minOffset;                /**< Minimum frame offset w.r.t. frame pointer. */
+    Sawyer::Optional<uint64_t> size;                    /**< Size of the frame in bytes if known. */
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Analyzer
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -334,6 +418,8 @@ private:
 
 protected:
     explicit VariableFinder(const Settings&);
+public:
+    ~VariableFinder();
 
 public:
     /** Allocating constructor. */
@@ -397,11 +483,8 @@ public:
      *  cached in that function. */
     bool isCached(const Partitioner2::FunctionPtr&);
 
-    /** Figure out the amount of stack space reserved by this function for local variables. */
-    Sawyer::Optional<uint64_t> functionFrameSize(const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&);
-
-    /** The register typically used as local variable base address. */
-    static RegisterDescriptor frameOrStackPointer(const Partitioner2::Partitioner&);
+    /** Figure out attributes describing the stack frame for the specified function. */
+    StackFrame detectFrameAttributes(const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&);
 
     /** Initilialize offsets for function prologue.
      *
@@ -409,9 +492,10 @@ public:
      *  powerpc after the function prologue sets up the stack frame, we know that the stack frame header contain two 4-byte
      *  quantities: the pointer to the parent frame, and the LR save area for callees and therefore we can add the three offsets
      *  that delimit the boundaries of these two "variables". */
-    void initializeFrameOffsets(const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&,
-                                OffsetToAddresses &offsets /*in,out*/);
+    void initializeFrameBoundaries(const StackFrame&, const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&,
+                                   StackVariable::Boundaries &boundaries /*in,out*/);
 
+#if 0 // [Robb Matzke 2021-10-27]
     /** Find frame location for address.
      *
      *  Given a symbolic address and size in bytes (presumabely from a memory read or write), calculate the part of the stack
@@ -420,12 +504,13 @@ public:
     OffsetInterval referencedFrameArea(const Partitioner2::Partitioner&,
                                        const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&,
                                        const SymbolicExpr::Ptr &address, size_t nBytes);
+#endif
 
     /** Find stack variable addresses.
      *
      *  Given an instruction, look for operand subexpressions that reference memory based from a stack frame pointer, such as
      *  x86 "mov eax, [ebp - 12]". Returns the set of offsets from the frame pointer. */
-    std::set<int64_t> findStackOffsets(const Partitioner2::Partitioner&, SgAsmInstruction*);
+    std::set<int64_t> findFrameOffsets(const StackFrame&, const Partitioner2::Partitioner&, SgAsmInstruction*);
 
     /** Function that owns an instruction.
      *
@@ -488,17 +573,32 @@ public:
      *  Given an cell-based symbolic memory state, return all constants that appear in the cell addresses. */
     std::set<rose_addr_t> findAddressConstants(const InstructionSemantics2::BaseSemantics::MemoryCellStatePtr&);
 
+#if 0 // [Robb Matzke 2021-10-27]
     /** Return symbolic address of stack variable.
      *
      *  Given a stack variable, return the symbolic address where the variable is located. */
     InstructionSemantics2::BaseSemantics::SValuePtr
     symbolicAddress(const Partitioner2::Partitioner&, const StackVariable&,
                     const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&);
+#endif
+
+    /** Remove boundaries that are outside a stack frame.
+     *
+     *  If the frame's lowest address is known, then boundaries that begin before the frame are removed. Except if there is no
+     *  boundary at the beginning of the frame, then the greatest boundary before the frame is moved to the beginning of the
+     *  frame instead of being removed entirely.
+     *
+     *  If the frame's upper address is known, then any boundary above that address is removed from the list. */
+    void removeOutliers(const StackFrame&, const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&,
+                        StackVariable::Boundaries &sortedBoundaries /*in,out*/);
 };
 
 } // namespace
 } // namespace
 } // namespace
+
+// Class versions must be at global scope
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::Variables::StackVariable, 1);
 
 #endif
 #endif

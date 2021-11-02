@@ -274,18 +274,18 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         // Overrides are documented in the base class
-        virtual std::string description() const $ROSE_OVERRIDE;
-        virtual bool terminatesBasicBlock() $ROSE_OVERRIDE;
-        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) $ROSE_OVERRIDE;
-        virtual bool isUnknown() const $ROSE_OVERRIDE;
-        virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
+        virtual std::string description() const override;
+        virtual bool terminatesBasicBlock() override;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) override;
+        virtual bool isUnknown() const override;
+        virtual unsigned get_anyKind() const override;
         virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t *target,
-                                        rose_addr_t *return_va) $ROSE_OVERRIDE;
+                                        rose_addr_t *return_va) override;
         virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t *target,
-                                        rose_addr_t *return_va) $ROSE_OVERRIDE;
-        virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
-        virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
-        virtual Sawyer::Optional<rose_addr_t> branchTarget() $ROSE_OVERRIDE;
+                                        rose_addr_t *return_va) override;
+        virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) override;
+        virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) override;
+        virtual Sawyer::Optional<rose_addr_t> branchTarget() override;
 
 #endif // SgAsmAarch32Instruction_OTHERS
 #ifdef DOCUMENTATION
@@ -367,18 +367,18 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         // Overrides are documented in the base class
-        virtual std::string description() const $ROSE_OVERRIDE;
-        virtual bool terminatesBasicBlock() $ROSE_OVERRIDE;
-        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) $ROSE_OVERRIDE;
-        virtual bool isUnknown() const $ROSE_OVERRIDE;
-        virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
+        virtual std::string description() const override;
+        virtual bool terminatesBasicBlock() override;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) override;
+        virtual bool isUnknown() const override;
+        virtual unsigned get_anyKind() const override;
         virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&, rose_addr_t *target,
-                                        rose_addr_t *return_va) $ROSE_OVERRIDE;
+                                        rose_addr_t *return_va) override;
         virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&, rose_addr_t *target,
-                                        rose_addr_t *return_va) $ROSE_OVERRIDE;
-        virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
-        virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
-        virtual Sawyer::Optional<rose_addr_t> branchTarget() $ROSE_OVERRIDE;
+                                        rose_addr_t *return_va) override;
+        virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) override;
+        virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) override;
+        virtual Sawyer::Optional<rose_addr_t> branchTarget() override;
 
 #endif // SgAsmAarch64Instruction_OTHERS
 #ifdef DOCUMENTATION
@@ -558,21 +558,21 @@ void Grammar::setUpBinaryInstructions() {
         static const Rose::BinaryAnalysis::RegisterDictionary* registersForWidth(size_t);
 
         // Overrides are documented in the base class
-        virtual bool terminatesBasicBlock() $ROSE_OVERRIDE;
+        virtual bool terminatesBasicBlock() override;
         virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&,
-                                        rose_addr_t *target, rose_addr_t *ret) $ROSE_OVERRIDE;
+                                        rose_addr_t *target, rose_addr_t *ret) override;
         virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
-                                        rose_addr_t *target, rose_addr_t *ret) $ROSE_OVERRIDE;
-        virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
-        virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
-        virtual Sawyer::Optional<rose_addr_t> branchTarget() $ROSE_OVERRIDE;
-        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) $ROSE_OVERRIDE;
+                                        rose_addr_t *target, rose_addr_t *ret) override;
+        virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) override;
+        virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) override;
+        virtual Sawyer::Optional<rose_addr_t> branchTarget() override;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) override;
         virtual Rose::BinaryAnalysis::AddressSet getSuccessors(const std::vector<SgAsmInstruction*>&,
                                                                bool &complete,
                                                                const Rose::BinaryAnalysis::MemoryMap::Ptr &initial_memory =
-                                                               Rose::BinaryAnalysis::MemoryMap::Ptr()) $ROSE_OVERRIDE;
-        virtual bool isUnknown() const $ROSE_OVERRIDE;
-        virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
+                                                               Rose::BinaryAnalysis::MemoryMap::Ptr()) override;
+        virtual bool isUnknown() const override;
+        virtual unsigned get_anyKind() const override;
 #endif // SgAsmX86Instruction_OTHERS
 #ifdef DOCUMENTATION
     };
@@ -639,17 +639,17 @@ void Grammar::setUpBinaryInstructions() {
         static const Rose::BinaryAnalysis::RegisterDictionary* registersForWidth(size_t);
 
         // Overrides are documented in the base class
-        virtual std::string description() const $ROSE_OVERRIDE;
-        virtual bool terminatesBasicBlock() $ROSE_OVERRIDE;
-        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) $ROSE_OVERRIDE;
-        virtual bool isUnknown() const $ROSE_OVERRIDE;
-        virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
+        virtual std::string description() const override;
+        virtual bool terminatesBasicBlock() override;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) override;
+        virtual bool isUnknown() const override;
+        virtual unsigned get_anyKind() const override;
         virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*>&,
-                                        rose_addr_t *target, rose_addr_t *retva) $ROSE_OVERRIDE;
+                                        rose_addr_t *target, rose_addr_t *retva) override;
         virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
-                                        rose_addr_t *target, rose_addr_t *retva) $ROSE_OVERRIDE;
-        virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
-        virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) $ROSE_OVERRIDE;
+                                        rose_addr_t *target, rose_addr_t *retva) override;
+        virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*>&) override;
+        virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*>&) override;
 #endif // SgAsmPowerpcInstruction_OTHERS
 #ifdef DOCUMENTATION
     };
@@ -703,18 +703,18 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         // Overrides are documented in the base class
-        virtual std::string description() const $ROSE_OVERRIDE;
-        virtual bool terminatesBasicBlock() $ROSE_OVERRIDE;
+        virtual std::string description() const override;
+        virtual bool terminatesBasicBlock() override;
         virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns,
-                                        rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) $ROSE_OVERRIDE;
+                                        rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) override;
         virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
-                                        rose_addr_t *target, rose_addr_t *ret) $ROSE_OVERRIDE;
-        virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) $ROSE_OVERRIDE;
-        virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) $ROSE_OVERRIDE;
-        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) $ROSE_OVERRIDE;
-        virtual bool isUnknown() const $ROSE_OVERRIDE;
-        virtual Sawyer::Optional<rose_addr_t> branchTarget() $ROSE_OVERRIDE;
-        virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
+                                        rose_addr_t *target, rose_addr_t *ret) override;
+        virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) override;
+        virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) override;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) override;
+        virtual bool isUnknown() const override;
+        virtual Sawyer::Optional<rose_addr_t> branchTarget() override;
+        virtual unsigned get_anyKind() const override;
 #endif // SgAsmMipsInstruction_OTHERS
 #ifdef DOCUMENTATION
     };
@@ -766,22 +766,22 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         // Overrides are documented in the base class
-        virtual std::string description() const $ROSE_OVERRIDE;
-        virtual bool terminatesBasicBlock() $ROSE_OVERRIDE;
+        virtual std::string description() const override;
+        virtual bool terminatesBasicBlock() override;
         virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns,
-                                        rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) $ROSE_OVERRIDE;
+                                        rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) override;
         virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
-                                        rose_addr_t *target, rose_addr_t *ret) $ROSE_OVERRIDE;
-        virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) $ROSE_OVERRIDE;
-        virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) $ROSE_OVERRIDE;
-        virtual Sawyer::Optional<rose_addr_t> branchTarget() $ROSE_OVERRIDE;
-        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) $ROSE_OVERRIDE;
+                                        rose_addr_t *target, rose_addr_t *ret) override;
+        virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) override;
+        virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) override;
+        virtual Sawyer::Optional<rose_addr_t> branchTarget() override;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) override;
         virtual Rose::BinaryAnalysis::AddressSet getSuccessors(const std::vector<SgAsmInstruction*>&,
                                                                bool &complete,
                                                                const Rose::BinaryAnalysis::MemoryMap::Ptr &initial_memory =
-                                                               Rose::BinaryAnalysis::MemoryMap::Ptr()) $ROSE_OVERRIDE;
-        virtual bool isUnknown() const $ROSE_OVERRIDE;
-        virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
+                                                               Rose::BinaryAnalysis::MemoryMap::Ptr()) override;
+        virtual bool isUnknown() const override;
+        virtual unsigned get_anyKind() const override;
 #endif // SgAsmM68kInstruction_OTHERS
 #ifdef DOCUMENTATION
     };
@@ -814,21 +814,21 @@ void Grammar::setUpBinaryInstructions() {
         enum Kind { null_unknown };
 
     public: // overrides
-        virtual bool terminatesBasicBlock() $ROSE_OVERRIDE;
+        virtual bool terminatesBasicBlock() override;
         virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns,
-                                        rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) $ROSE_OVERRIDE;
+                                        rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) override;
         virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
-                                        rose_addr_t *target, rose_addr_t *ret) $ROSE_OVERRIDE;
-        virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) $ROSE_OVERRIDE;
-        virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) $ROSE_OVERRIDE;
-        virtual Sawyer::Optional<rose_addr_t> branchTarget() $ROSE_OVERRIDE;
-        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) $ROSE_OVERRIDE;
+                                        rose_addr_t *target, rose_addr_t *ret) override;
+        virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) override;
+        virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) override;
+        virtual Sawyer::Optional<rose_addr_t> branchTarget() override;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) override;
         virtual Rose::BinaryAnalysis::AddressSet getSuccessors(const std::vector<SgAsmInstruction*>&,
                                                                bool &complete,
                                                                const Rose::BinaryAnalysis::MemoryMap::Ptr &initial_memory =
-                                                               Rose::BinaryAnalysis::MemoryMap::Ptr()) $ROSE_OVERRIDE;
-        virtual bool isUnknown() const $ROSE_OVERRIDE;
-        virtual unsigned get_anyKind() const $ROSE_OVERRIDE;
+                                                               Rose::BinaryAnalysis::MemoryMap::Ptr()) override;
+        virtual bool isUnknown() const override;
+        virtual unsigned get_anyKind() const override;
 #endif // SgAsmNullInstruction_OTHERS
 #ifdef DOCUMENTATION
     };
@@ -3531,8 +3531,8 @@ void Grammar::setUpBinaryInstructions() {
         bool get_isSigned() const;
 
         // Overrides documented in base class
-        virtual void check() const $ROSE_OVERRIDE;
-        virtual std::string toString() const $ROSE_OVERRIDE;
+        virtual void check() const override;
+        virtual std::string toString() const override;
 #endif // SgAsmIntegerType_OTHERS
 
 #ifdef DOCUMENTATION
@@ -3651,8 +3651,8 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 
         // Overrides documented in base class
-        virtual void check() const $ROSE_OVERRIDE;
-        virtual std::string toString() const $ROSE_OVERRIDE;
+        virtual void check() const override;
+        virtual std::string toString() const override;
 #endif // SgAsmFloatType_OTHERS
 
 #ifdef DOCUMENTATION
@@ -3710,7 +3710,7 @@ void Grammar::setUpBinaryInstructions() {
 
     public:
         /** Property: Number of bits. */
-        virtual size_t get_nBits() const $ROSE_OVERRIDE;
+        virtual size_t get_nBits() const override;
 
         /** Property: Minor byte order. This is the usual notion of byte order. */
         ByteOrder::Endianness get_minorOrder() const;
@@ -3722,8 +3722,8 @@ void Grammar::setUpBinaryInstructions() {
         size_t get_majorNBytes() const;
 
         // Overrides documented in base class
-        virtual void check() const $ROSE_OVERRIDE;
-        virtual std::string toString() const $ROSE_OVERRIDE;
+        virtual void check() const override;
+        virtual std::string toString() const override;
 #endif // SgAsmScalarType_OTHERS
 
 #ifdef DOCUMENTATION
@@ -3774,9 +3774,9 @@ void Grammar::setUpBinaryInstructions() {
         SgAsmType* get_elmtType() const;
 
         // Overrides documented in base class
-        virtual void check() const $ROSE_OVERRIDE;
-        virtual std::string toString() const $ROSE_OVERRIDE;
-        virtual size_t get_nBits() const $ROSE_OVERRIDE;
+        virtual void check() const override;
+        virtual std::string toString() const override;
+        virtual size_t get_nBits() const override;
 #endif // SgAsmVectorType_OTHERS
 
 #ifdef DOCUMENTATION
@@ -5474,16 +5474,16 @@ void Grammar::setUpBinaryInstructions() {
          *  Initialize this header with information parsed from the file and construct and parse everything that's reachable
          *  from the header. Since the size of the ELF File Header is determined by the contents of the ELF File Header as
          *  stored in the file, the size of the ELF File Header will be adjusted upward if necessary. */
-        virtual SgAsmElfFileHeader *parse() $ROSE_OVERRIDE;
+        virtual SgAsmElfFileHeader *parse() override;
 
         /** Update prior to unparsing */
-        virtual bool reallocate() $ROSE_OVERRIDE;
+        virtual bool reallocate() override;
 
         /** Write ELF contents back to a file. */
-        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+        virtual void unparse(std::ostream&) const override;
 
         /** Print some debugging info */
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
         /** Return true if the file looks like it might be an ELF file according to the magic number. */
         static bool is_ELF(SgAsmGenericFile*);
@@ -5495,7 +5495,7 @@ void Grammar::setUpBinaryInstructions() {
         SgAsmGenericSectionPtrList get_segtab_sections();
 
         // Overrides documented in base class
-        virtual const char *format_name() const $ROSE_OVERRIDE;
+        virtual const char *format_name() const override;
 
     private:
         void ctor();                                    // called by constructors
@@ -5554,7 +5554,7 @@ void Grammar::setUpBinaryInstructions() {
          *  Parses an ELF section table and constructs and parses all sections reachable from the table. The section is
          *  extended as necessary based on the number of entries and the size of each entry. Returns a pointer to this
          *  object. */
-        virtual SgAsmElfSectionTable *parse() $ROSE_OVERRIDE;
+        virtual SgAsmElfSectionTable *parse() override;
 
         /** Attaches a previously unattached ELF Section to the section table.
          *
@@ -5574,13 +5574,13 @@ void Grammar::setUpBinaryInstructions() {
         rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 
         /** Update prior to unparsing. */
-        virtual bool reallocate() $ROSE_OVERRIDE;
+        virtual bool reallocate() override;
 
         /** Write the section table section back to disk */
-        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+        virtual void unparse(std::ostream&) const override;
 
         /** Print some debugging info */
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
     private:
         void ctor();
@@ -5954,7 +5954,7 @@ void Grammar::setUpBinaryInstructions() {
          *
          *  Parses an ELF segment table and constructs and parses all segments reachable from the table. The section is
          *  extended as necessary based on the number of entries and teh size of each entry. */
-        virtual SgAsmElfSegmentTable *parse() $ROSE_OVERRIDE;
+        virtual SgAsmElfSegmentTable *parse() override;
 
         /** Attaches new segments to the segment table.
          *
@@ -5977,13 +5977,13 @@ void Grammar::setUpBinaryInstructions() {
         rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 
         /** Pre-unparsing updates */
-        virtual bool reallocate() $ROSE_OVERRIDE;
+        virtual bool reallocate() override;
 
         /** Write the segment table to disk. */
-        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+        virtual void unparse(std::ostream&) const override;
 
         /** Print some debugging info */
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
         private:
                 void ctor();
@@ -6396,7 +6396,7 @@ void Grammar::setUpBinaryInstructions() {
         }
 
         /** Initialize by parsing a file. */
-        virtual SgAsmElfSymbolSection* parse() $ROSE_OVERRIDE;
+        virtual SgAsmElfSymbolSection* parse() override;
 
         /** Update section pointers for locally-bound symbols.
          *
@@ -6410,7 +6410,7 @@ void Grammar::setUpBinaryInstructions() {
          *  @li 0xff00-0xff1f: processor specific values
          *  @li 0xfff1: symbol has absolute value not affected by relocation
          *  @li 0xfff2: symbol is fortran common or unallocated C extern */
-        virtual void finish_parsing() $ROSE_OVERRIDE;
+        virtual void finish_parsing() override;
 
         /** Given a symbol, return its index in this symbol table. */
         size_t index_of(SgAsmElfSymbol*);
@@ -6419,18 +6419,18 @@ void Grammar::setUpBinaryInstructions() {
         /** Return sizes for various parts of the table.
          *
          *  See documentation for @ref SgAsmElfSection::calculate_sizes. */
-        virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const $ROSE_OVERRIDE;
+        virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
 
         /** Called prior to unparsing.
          *
          *  Updates symbol entries with name offsets. */
-        virtual bool reallocate() $ROSE_OVERRIDE;
+        virtual bool reallocate() override;
 
         /** Write symbol table sections back to disk. */
-        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+        virtual void unparse(std::ostream&) const override;
 
         /** Print some debugging info */
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
     private:
         void ctor(SgAsmElfStringSection*);
@@ -6662,7 +6662,7 @@ void Grammar::setUpBinaryInstructions() {
          *  The 'section' is an optional section pointer for the st_shndx member.
          *
          * @{ */
-        virtual void dump(FILE *f, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+        virtual void dump(FILE *f, const char *prefix, ssize_t idx) const override;
         void dump(FILE*, const char *prefix, ssize_t idx, SgAsmGenericSection*) const;
         /** @} */
 
@@ -6745,19 +6745,19 @@ void Grammar::setUpBinaryInstructions() {
         }
 
         /** Initializes section by parsing the file. */
-        virtual SgAsmElfSymverSection* parse() $ROSE_OVERRIDE;
+        virtual SgAsmElfSymverSection* parse() override;
 
         using SgAsmElfSection::calculate_sizes;
         /** Return sizes for various parts of the table.
          *
          *  See documentation for @ref SgAsmElfSection::calculate_sizes. */
-        virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const $ROSE_OVERRIDE;
+        virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
 
         /** Write symver table sections back to disk */
-        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+        virtual void unparse(std::ostream&) const override;
 
         /** Print some debugging info */
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
     private:
         void ctor();
 #endif // SgAsmElfSymverSection_OTHERS
@@ -6987,19 +6987,19 @@ void Grammar::setUpBinaryInstructions() {
          *  Because of this rather complex structure, the section itself (@ref SgAsmElfSymverDefinedSection) manages all of the
          *  data related to structure (vd_next,vd_aux,vd_cnt, vda_next) -- the subclasses can simply ignore all of that.  The
          *  section also takes care of creating both *Entries and *Auxes and tying them together correctly. */
-        virtual SgAsmElfSymverDefinedSection* parse() $ROSE_OVERRIDE;
+        virtual SgAsmElfSymverDefinedSection* parse() override;
 
         using SgAsmElfSection::calculate_sizes;
         /** Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
-        virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const $ROSE_OVERRIDE;
+        virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
 
         /** Write SymverDefined section back to disk.
          *
          *  For more information about encoding, see @ref parse. */
-        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+        virtual void unparse(std::ostream&) const override;
 
         /** Print some debugging info. */
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
     private:
         void ctor(SgAsmElfStringSection*);
@@ -7388,21 +7388,21 @@ void Grammar::setUpBinaryInstructions() {
          *  @li @ref SgAsmElfSymverNeededSection corresponds to SgAsmElfSymverDefinedSection.
          *  @li @ref SgAsmElfSymverNeededEntry corresponds to SgAsmElfSymverDefinedEntry.
          *  @li @ref SgAsmElfSymverNeededAux corresponds to SgAsmElfSymverDefinedAux. */
-        virtual SgAsmElfSymverNeededSection* parse() $ROSE_OVERRIDE;
+        virtual SgAsmElfSymverNeededSection* parse() override;
 
         using SgAsmElfSection::calculate_sizes;
         /** Return sizes for various parts of the table.
          *
          *  See documentation for @ref SgAsmElfSection::calculate_sizes. */
-        virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const $ROSE_OVERRIDE;
+        virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *nentries) const override;
 
         /** Write SymverNeeded section back to disk.
          *
          *  For more information about encoding, see @ref SgAsmElfSymverNeededSection::parse. */
-        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+        virtual void unparse(std::ostream&) const override;
 
         /** Print some debugging info */
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
     private:
         void ctor(SgAsmElfStringSection*);
@@ -7828,19 +7828,19 @@ void Grammar::setUpBinaryInstructions() {
 
         using SgAsmElfSection::calculate_sizes;
         /** Parse an existing ELF Rela Section */
-        virtual SgAsmElfRelocSection *parse() $ROSE_OVERRIDE;
+        virtual SgAsmElfRelocSection *parse() override;
 
         /** Return sizes for various parts of the table. See doc for SgAsmElfSection::calculate_sizes. */
-        virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const $ROSE_OVERRIDE;
+        virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const override;
 
         /** Pre-unparsing adjustments */
-        virtual bool reallocate() $ROSE_OVERRIDE;
+        virtual bool reallocate() override;
 
         /** Write section back to disk */
-        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+        virtual void unparse(std::ostream&) const override;
 
         /** Print some debugging info */
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
     private:
         void ctor(SgAsmElfSymbolSection*,SgAsmElfSection*);
@@ -8204,23 +8204,23 @@ void Grammar::setUpBinaryInstructions() {
         }
 
         /** Initialize object by parsing file. */
-        virtual SgAsmElfDynamicSection* parse() $ROSE_OVERRIDE;
+        virtual SgAsmElfDynamicSection* parse() override;
 
         /** Finish initializing the section entries. */
-        virtual void finish_parsing() $ROSE_OVERRIDE;
+        virtual void finish_parsing() override;
 
         using SgAsmElfSection::calculate_sizes;
         /** Return sizes for various parts of the table. See documentation for @ref SgAsmElfSection::calculate_sizes. */
-        virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const $ROSE_OVERRIDE;
+        virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const override;
 
         /** Called prior to unparse to make things consistent. */
-        virtual bool reallocate() $ROSE_OVERRIDE;
+        virtual bool reallocate() override;
 
         /** Write the dynamic section back to disk */
-        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+        virtual void unparse(std::ostream&) const override;
 
         /** Print some debugging info */
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
     private:
         void ctor(SgAsmElfStringSection*);
@@ -8549,16 +8549,16 @@ void Grammar::setUpBinaryInstructions() {
         }
 
         /** Initialize object by parsing binary specimen. */
-        virtual SgAsmElfStringSection *parse() $ROSE_OVERRIDE;
+        virtual SgAsmElfStringSection *parse() override;
 
         /** Dump debugging information. */
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
         /** Adjust size of table.
          *
          * Augments superclass to make sure free list and such are adjusted properly. Any time the ELF String Section size is
          * changed we adjust the free list in the ELF String Table contained in this section. */
-        virtual void set_size(rose_addr_t newsize) $ROSE_OVERRIDE;
+        virtual void set_size(rose_addr_t newsize) override;
 
         /** Reallocate space for the string section if necessary.
          *
@@ -8566,10 +8566,10 @@ void Grammar::setUpBinaryInstructions() {
          *  shrink then call SgAsmGenericStrtab::reallocate(bool) with a true value rather than calling this
          *  function. SgAsmElfStringSection::reallocate is called in response to unparsing a file and gives the string table a
          *  chance to extend its container section if it needs to allocate more space for strings. */
-        virtual bool reallocate() $ROSE_OVERRIDE;
+        virtual bool reallocate() override;
 
         /** Unparse an ElfStringSection by unparsing the ElfStrtab */
-        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+        virtual void unparse(std::ostream&) const override;
 
     private:
         void ctor();
@@ -8624,7 +8624,7 @@ void Grammar::setUpBinaryInstructions() {
         /** Parses the string table.
          *
          *  All that actually happens at this point is we look to see if the table begins with an empty string. */
-        virtual SgAsmElfStrtab *parse() $ROSE_OVERRIDE;
+        virtual SgAsmElfStrtab *parse() override;
 
         /** Write string table back to disk.
          *
@@ -8636,12 +8636,12 @@ void Grammar::setUpBinaryInstructions() {
          *  If @p shared is true then attempt to re-use a previous storage object, otherwise always create a new one. Each
          *  storage object is considered a separate string, therefore when two strings share the same storage object, changing
          *  one string changes the other. */
-        virtual SgAsmStringStorage *create_storage(rose_addr_t offset, bool shared) $ROSE_OVERRIDE;
+        virtual SgAsmStringStorage *create_storage(rose_addr_t offset, bool shared) override;
 
         /** Returns the number of bytes required to store the string in the string table.
          *
          *  This is the length of the string plus one for the NUL terminator. */
-        virtual rose_addr_t get_storage_size(const SgAsmStringStorage*) $ROSE_OVERRIDE;
+        virtual rose_addr_t get_storage_size(const SgAsmStringStorage*) override;
 
         /** Find offset for a string.
          *
@@ -8652,10 +8652,10 @@ void Grammar::setUpBinaryInstructions() {
          *  in this case) then we allocate some of that free space and use a suitable offset. In any case, upon return
          *  <code>storege->get_offset()</code> will return the allocated offset if successful, or
          *  @ref SgAsmGenericString::unallocated if we couldn't find an overlap. */
-        virtual void allocate_overlap(SgAsmStringStorage*) $ROSE_OVERRIDE;
+        virtual void allocate_overlap(SgAsmStringStorage*) override;
 
         /** Similar to create_storage() but uses a storage object that's already been allocated. */
-        virtual void rebind(SgAsmStringStorage*, rose_addr_t) $ROSE_OVERRIDE;
+        virtual void rebind(SgAsmStringStorage*, rose_addr_t) override;
 
     private:
         void ctor();
@@ -8718,16 +8718,16 @@ void Grammar::setUpBinaryInstructions() {
             : SgAsmElfSection(fhdr) {
             ctor();
         }
-        virtual SgAsmElfNoteSection *parse() $ROSE_OVERRIDE;
+        virtual SgAsmElfNoteSection *parse() override;
 
         /** Pre-unparsing adjustments */
-        virtual bool reallocate() $ROSE_OVERRIDE;
+        virtual bool reallocate() override;
 
         /** Write data to note section */
-        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+        virtual void unparse(std::ostream&) const override;
 
         /** Print some debugging information */
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
     private:
         void ctor();
@@ -8943,16 +8943,16 @@ void Grammar::setUpBinaryInstructions() {
         }
 
         /** Initialize by parsing a file. */
-        virtual SgAsmElfEHFrameSection *parse() $ROSE_OVERRIDE;
+        virtual SgAsmElfEHFrameSection *parse() override;
 
         /** Return sizes for various parts of the table.
          *
          *  See documentation for @ref SgAsmElfSection::calculate_sizes. Since EH Frame Sections are run-length encoded, we
          *  need to actually unparse the section in order to determine its size. */
-        virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const $ROSE_OVERRIDE;
+        virtual rose_addr_t calculate_sizes(size_t *total, size_t *required, size_t *optional, size_t *entcount) const override;
 
         /** Write data to .eh_frame section */
-        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+        virtual void unparse(std::ostream&) const override;
 
         /** Unparses the section into the optional output stream and returns the number of bytes written.
          *
@@ -8961,7 +8961,7 @@ void Grammar::setUpBinaryInstructions() {
         rose_addr_t unparse(std::ostream*) const;
 
         /** Print some debugging info */
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
     private:
         void ctor();
@@ -9569,10 +9569,10 @@ void Grammar::setUpBinaryInstructions() {
         virtual rose_addr_t calculate_sizes(size_t *entsize, size_t *required, size_t *optional, size_t *entcount) const;
 
         /** Called prior to unparse to make things consistent. */
-        virtual bool reallocate() $ROSE_OVERRIDE;
+        virtual bool reallocate() override;
 
         /** Print some debugging info */
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
         /** Make this section's name to be stored in the specified string table. */
         void allocate_name_to_storage(SgAsmElfStringSection*);
@@ -9917,12 +9917,12 @@ void Grammar::setUpBinaryInstructions() {
               p_e_relocs_offset(0), p_e_res1(0), p_relocs(NULL), p_rm_section(NULL) {
             ctor();
         }
-        virtual SgAsmDOSFileHeader *parse() $ROSE_OVERRIDE {return parse(true);}
+        virtual SgAsmDOSFileHeader *parse() override {return parse(true);}
         SgAsmDOSFileHeader *parse(bool define_rm_section);
-        virtual bool reallocate() $ROSE_OVERRIDE;
-        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
-        virtual const char *format_name() const $ROSE_OVERRIDE {return "DOS";}
+        virtual bool reallocate() override;
+        virtual void unparse(std::ostream&) const override;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+        virtual const char *format_name() const override {return "DOS";}
 
         /** Parses the DOS real-mode text+data section and adds it to the AST.
          *
@@ -10139,10 +10139,10 @@ void Grammar::setUpBinaryInstructions() {
               p_e_res3(0), p_e_res4(0), p_e_res5(0), p_e_res6(0), p_e_lfanew(0) {
             ctor();
         }
-        virtual SgAsmDOSExtendedHeader *parse() $ROSE_OVERRIDE;
+        virtual SgAsmDOSExtendedHeader *parse() override;
         void *encode(SgAsmDOSExtendedHeader::DOSExtendedHeader_disk*) const;
-        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+        virtual void unparse(std::ostream&) const override;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
     private:
         void ctor();
@@ -10911,7 +10911,7 @@ void Grammar::setUpBinaryInstructions() {
             ctor();
         }
 
-        virtual const char *format_name() const $ROSE_OVERRIDE {return "PE";}
+        virtual const char *format_name() const override {return "PE";}
 
         /** Return true if the file looks like it might be a PE file according to the magic number.
          *
@@ -10934,10 +10934,10 @@ void Grammar::setUpBinaryInstructions() {
 
         void add_rvasize_pairs();
 
-        virtual SgAsmPEFileHeader *parse() $ROSE_OVERRIDE;
-        virtual bool reallocate() $ROSE_OVERRIDE;
-        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+        virtual SgAsmPEFileHeader *parse() override;
+        virtual bool reallocate() override;
+        virtual void unparse(std::ostream&) const override;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
         void create_table_sections();
 
         /* Loader memory maps */
@@ -11842,10 +11842,10 @@ void Grammar::setUpBinaryInstructions() {
             : SgAsmPESection(fhdr) {
             ctor();
         }
-        virtual SgAsmPEImportSection *parse() $ROSE_OVERRIDE;
-        virtual bool reallocate() $ROSE_OVERRIDE;
-        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+        virtual SgAsmPEImportSection *parse() override;
+        virtual bool reallocate() override;
+        virtual void unparse(std::ostream&) const override;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
         /** Add an import directory to the end of the import directory list. */
         void add_import_directory(SgAsmPEImportDirectory*);
@@ -11958,8 +11958,8 @@ void Grammar::setUpBinaryInstructions() {
             : SgAsmPESection(fhdr), p_export_dir(NULL), p_exports(NULL) {
             ctor();
         }
-        virtual SgAsmPEExportSection *parse() $ROSE_OVERRIDE;
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+        virtual SgAsmPEExportSection *parse() override;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
         void add_entry(SgAsmPEExportEntry*);
 
     private:
@@ -12415,11 +12415,11 @@ void Grammar::setUpBinaryInstructions() {
             ctor();
         }
         virtual ~SgAsmPEStringSection() {}
-        virtual SgAsmPEStringSection* parse() $ROSE_OVERRIDE;
-        virtual bool reallocate() $ROSE_OVERRIDE;
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
-        virtual void set_size(rose_addr_t newsize) $ROSE_OVERRIDE;
-        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+        virtual SgAsmPEStringSection* parse() override;
+        virtual bool reallocate() override;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+        virtual void set_size(rose_addr_t newsize) override;
+        virtual void unparse(std::ostream&) const override;
 
     private:
         void ctor();
@@ -12465,16 +12465,16 @@ void Grammar::setUpBinaryInstructions() {
             : SgAsmGenericSection(fhdr->get_file(), fhdr) {
             ctor();
         }
-        virtual SgAsmPESectionTable* parse() $ROSE_OVERRIDE;
+        virtual SgAsmPESectionTable* parse() override;
 
         /** Attaches a previously unattached PE Section to the PE Section Table.
          *
          *  This method complements SgAsmPESection::init_from_section_table. This method initializes the section table from the
          *  section while init_from_section_table() initializes the section from the section table. */
         void add_section(SgAsmPESection *section);
-        virtual bool reallocate() $ROSE_OVERRIDE;
-        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+        virtual bool reallocate() override;
+        virtual void unparse(std::ostream&) const override;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
     private:
         void ctor();
@@ -12776,8 +12776,8 @@ void Grammar::setUpBinaryInstructions() {
          *  SgAsmPESectionTable::add_section(): this function initializes this section from the section table while
          *  add_section() initializes the section table from the section. */
         SgAsmPESection *init_from_section_table(SgAsmPESectionTableEntry *entry, int id);
-        virtual bool reallocate() $ROSE_OVERRIDE;
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+        virtual bool reallocate() override;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 #endif // SgAsmPESection_OTHERS
 
 #ifdef DOCUMENTATION
@@ -12847,9 +12847,9 @@ void Grammar::setUpBinaryInstructions() {
         explicit SgAsmCoffSymbolTable(SgAsmPEFileHeader *fhdr)
             : SgAsmGenericSection(fhdr->get_file(), fhdr) {ctor();}
         size_t get_nslots() const;
-        virtual SgAsmCoffSymbolTable *parse() $ROSE_OVERRIDE;
-        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+        virtual SgAsmCoffSymbolTable *parse() override;
+        virtual void unparse(std::ostream&) const override;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
     private:
         void ctor();
@@ -13050,7 +13050,7 @@ void Grammar::setUpBinaryInstructions() {
 
         SgAsmCoffSymbol(SgAsmPEFileHeader *fhdr, SgAsmGenericSection *symtab, SgAsmGenericSection *strtab, size_t idx);
         void *encode(SgAsmCoffSymbol::COFFSymbol_disk*) const;
-        virtual void dump(FILE *f, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+        virtual void dump(FILE *f, const char *prefix, ssize_t idx) const override;
 
     private:
         void ctor(SgAsmPEFileHeader*, SgAsmGenericSection *symtab, SgAsmGenericSection *strtab, size_t idx);
@@ -13091,8 +13091,8 @@ void Grammar::setUpBinaryInstructions() {
             : SgAsmGenericStrtab(containing_section) {}
         virtual ~SgAsmCoffStrtab();
         virtual void unparse(std::ostream&) const;
-        virtual SgAsmStringStorage *create_storage(rose_addr_t offset, bool shared) $ROSE_OVERRIDE;
-        virtual rose_addr_t get_storage_size(const SgAsmStringStorage*) $ROSE_OVERRIDE;
+        virtual SgAsmStringStorage *create_storage(rose_addr_t offset, bool shared) override;
+        virtual rose_addr_t get_storage_size(const SgAsmStringStorage*) override;
 #endif // SgAsmCoffStrtab_OTHERS
 
 #ifdef DOCUMENTATION
@@ -14087,10 +14087,10 @@ void Grammar::setUpBinaryInstructions() {
         /** @} */
 
         // Overrides documented in base class
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
-        virtual std::string get_string(bool escape=false) const $ROSE_OVERRIDE;
-        virtual void set_string(const std::string&) $ROSE_OVERRIDE;
-        virtual void set_string(rose_addr_t) $ROSE_OVERRIDE;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
+        virtual std::string get_string(bool escape=false) const override;
+        virtual void set_string(const std::string&) override;
+        virtual void set_string(rose_addr_t) override;
 
     private:
         void ctor();
@@ -14153,7 +14153,7 @@ void Grammar::setUpBinaryInstructions() {
         }
 
         /** Print some debugging info */
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
         /** Returns the string table that holds this string.
          *
@@ -14161,22 +14161,22 @@ void Grammar::setUpBinaryInstructions() {
         SgAsmGenericStrtab *get_strtab();
 
         /** Returns the std::string associated with the SgAsmStoredString. */
-        virtual std::string get_string(bool escape=false) const $ROSE_OVERRIDE;
+        virtual std::string get_string(bool escape=false) const override;
 
         /** Give the string a new value.
          *
          *  This also deallocates the previous value. */
-        virtual void set_string(const std::string&) $ROSE_OVERRIDE;
+        virtual void set_string(const std::string&) override;
 
         /** Give the string a new value.
          *
          *  The string is given a new value by specifying the offset of a string that already exists in the string table. */
-        virtual void set_string(rose_addr_t) $ROSE_OVERRIDE;
+        virtual void set_string(rose_addr_t) override;
 
         /** Returns the offset into the string table where the string is allocated.
          *
          *  If the string is not allocated then this call triggers an allocation. */
-        virtual rose_addr_t get_offset() const $ROSE_OVERRIDE;
+        virtual rose_addr_t get_offset() const override;
 
     private:
         void ctor(class SgAsmGenericStrtab*, rose_addr_t offset, bool shared);
@@ -14431,13 +14431,13 @@ void Grammar::setUpBinaryInstructions() {
         virtual ~SgAsmGenericHeader();
 
         /** Allow all sections to reallocate themselves */
-        virtual bool reallocate() $ROSE_OVERRIDE;
+        virtual bool reallocate() override;
 
         /** Unparse headers and all they point to */
-        virtual void unparse(std::ostream&) const $ROSE_OVERRIDE;
+        virtual void unparse(std::ostream&) const override;
 
         /** Print some debugging info. */
-        virtual void dump(FILE*, const char *prefix, ssize_t idx) const $ROSE_OVERRIDE;
+        virtual void dump(FILE*, const char *prefix, ssize_t idx) const override;
 
         /** Returns the name of the file format. */
         virtual const char *format_name() const;

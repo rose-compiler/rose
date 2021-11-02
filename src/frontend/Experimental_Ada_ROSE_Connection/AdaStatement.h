@@ -56,11 +56,11 @@ namespace Ada_ROSE_Translation
   ///   by adding parameters to the scopes (after they have been created)
   struct ParameterCompletion
   {
-  ParameterCompletion(ElemIdRange paramrange, AstContext astctx)
-    : range(paramrange), ctx(astctx)
-    {}
+      ParameterCompletion(ElemIdRange paramrange, AstContext astctx)
+      : range(paramrange), ctx(astctx)
+      {}
 
-    void operator()(SgFunctionParameterList& lst, SgScopeStatement& parmscope);
+      void operator()(SgFunctionParameterList& lst, SgScopeStatement& parmscope);
 
     private:
       ElemIdRange range;

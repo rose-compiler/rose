@@ -95,6 +95,8 @@ namespace
   };
 
 
+  /*
+  // MS: unused function warning
   void CallTargetFinder::objectCall(const SgBinaryOp& n)
   {
     SgExpression& obj     = SG_DEREF(n.get_lhs_operand());
@@ -102,7 +104,7 @@ namespace
 
     // \todo
   }
-
+  */
 
   // \note SgConstructorInitializer should not be handled through CallGraph..
   std::vector<SgFunctionDeclaration*>

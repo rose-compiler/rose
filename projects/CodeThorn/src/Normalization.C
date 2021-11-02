@@ -141,7 +141,7 @@ namespace CodeThorn {
   }
   void Normalization::normalizeAstPhaseByPhase(SgNode* root) {
     normPhaseNr=1;
-    normPhaseNrLast=13;
+    normPhaseNrLast=14;
     printNormalizationPhase();
     if(options.normalizeSingleStatements) {
       normalizeSingleStatementsToBlocks(root);
@@ -622,7 +622,7 @@ void Normalization::hoistBranchInitStatementsInAst(SgNode* node)
       SageInterface::insertStatementBefore(stmt, tmpVarDeclaration);
       } else if(SgVariableDeclaration* condVarDecl=isSgVariableDeclaration(condNode)) {
         cerr<<"Error at "<<SgNodeHelper::sourceFilenameLineColumnToString(stmt)<<endl;
-        cerr<<"Error: Normalization: Variable declaration in condition of if statement. Not supported yet."<<endl;
+        cerr<<"Error: Normalization: Variable declaration in condition of if statement. Not supported yet:"<<condVarDecl->unparseToString()<<endl;
         exit(1);
       } else {
         cerr<<"Error at "<<SgNodeHelper::sourceFilenameLineColumnToString(stmt)<<endl;
@@ -1623,8 +1623,8 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
             && !isSgReferenceType(expressionType) )
         ) {
       if(SgType* strippedType = isSgType(expressionType->stripType(SgType::STRIP_TYPEDEF_TYPE))) {
-        if(SgArrayType* arrayType = isSgArrayType(strippedType)) {
-          SgType* strippedType = arrayType->get_base_type();
+        if(/*SgArrayType* arrayType = */isSgArrayType(strippedType)) {
+          //strippedType = arrayType->get_base_type();
         }
         variableType = SageBuilder::buildReferenceType(strippedType);
       }

@@ -725,9 +725,9 @@ GrammarString::getDataPrototypeString () const
 bool
 GrammarString::generate_override_keyword( string variableNameString ) const
    {
-  // This function is required to control where the $ROSE_OVERRIDE macro is inserted into the code generatiion.
-  // Note that control in Grammar.C will control how it is translated into either empty space of the C/C++ 
-  // language macro "ROSE_OVERRIDE".
+  // This function is required to control where "override" is inserted into the code generatiion.
+  // Note that control in Grammar.C will control how it is translated into either empty space or
+  // "overrride".
 
      bool returnResult = false;
      if ( (variableNameString == "startOfConstruct")       ||

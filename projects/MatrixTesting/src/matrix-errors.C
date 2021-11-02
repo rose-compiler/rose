@@ -51,7 +51,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
                                     .apply()
                                     .unreachedArgs();
 
-    if (args.empty() || ("erase" != args[0] && "update" != args[0])) {
+    if (args.empty() || ("clear" != args[0] && "update" != args[0])) {
         mlog[FATAL] <<"incorrect usage; see --help\n";
         exit(1);
     }
@@ -92,7 +92,7 @@ sqlIdLimitation(const std::string &columnName, const std::vector<int> &testIds) 
 static void
 clearErrors(DB::Connection db, const Settings &settings, const std::vector<int> &testIds) {
     db.stmt("update test_results set first_error = null, blacklisted = null"
-            "where " + sqlIdLimitation("test_results.id", testIds))
+            " where " + sqlIdLimitation("test_results.id", testIds))
         .run();
 }
 
@@ -148,13 +148,15 @@ updateDatabase(DB::Connection db, const Settings &settings, const std::vector<in
                      "|^Error:\\n  .*"                         // Tupfile user-defined error
                      "|^run-test: (.*): Result differs from precomputed answer" // Tup testing
                      "|line [0-9]+:.*/\\.libs/lt-.*: Invalid argument" // intermittent libtool failure
+                     "|^.*: error while loading shared libraries.*" // missing shared library
+                     "|\\merror: ?\\n.*"                        // ROSE error on next line
+                     "|^.*\\magainst undefined hidden symbol.*" // error from /usr/bin/ld
 
-                     "|\\merror: ?\n.*"                        // ROSE error on next line
                      //----- regular expressions end -----
                      ")')"
                      " from attachments att" +
                      "   where test.id = att.test_id"
-                     "   and test.first_error is null"
+                     "   and (test.first_error is null or test.first_error = '')"
                      "   and test.status <> 'end'"
                      "   and att.name = 'Final output'"
                      "   and " + sqlIdLimitation("test.id", testIds))
@@ -167,7 +169,15 @@ updateDatabase(DB::Connection db, const Settings &settings, const std::vector<in
     // Replace absolute file names "/foo/bar/baz" with "/.../baz"
     std::string fileNameChar    =  "[-+=_.a-zA-Z0-9]";
     std::string nonFileNameChar = "[^-+=_.a-zA-Z0-9]";
-    SAWYER_MESG(mlog[DEBUG]) <<"normalized detected error messages...\n";
+    SAWYER_MESG(mlog[DEBUG]) <<"normalizing detected error messages...\n";
+
+    // If a test failed and there is no error message, then make up something generic
+    db.stmt("update test_results test"
+            " set first_error_staging = 'no error message detected'"
+            " where test.status <> 'end'"
+            "   and (test.first_error_staging is null or test.first_error_staging = '')"
+            "   and " + sqlIdLimitation("test.id", testIds))
+        .run();
 
     // Replace temporary file names with "temp-file"
     db.stmt("update test_results test"
@@ -254,7 +264,7 @@ updateDatabase(DB::Connection db, const Settings &settings, const std::vector<in
             "     '')"
             " from attachments as att " +
             " where test.id = att.test_id"
-            "   and test.first_error is null"
+            "   and (test.first_error is null or test.first_error = '')"
             "   and att.name = 'Final output'"
             "   and blacklisted is null"
             "   and " + sqlIdLimitation("test.id", testIds))

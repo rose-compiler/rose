@@ -18,7 +18,7 @@ MATRIX_ROOT="$HOME/var/rose-portability-testing"
 
 # Minimum amount of free disk space in GiB. At the end of each test, this script deletes as many cached software
 # dependencies as necessary to reach this amount of free space.
-MIN_FREE_SPACE=30
+MIN_FREE_SPACE=40
 
 # If non-empty, prepare to run tests but do not run any tests.
 SETUP=
@@ -517,6 +517,11 @@ matrix-reclaim-disk() {
 	    fi
 	done
     )
+
+    local have_free=$(matrix-free-space)
+    if [ $have_free -lt $min_free_space ]; then
+	die "error: not enough free disk space for running tests (have $have_free but need $min_free_space GB)"
+    fi
 }
 
 #------------------------------------------------------------------------------------------------------------------------

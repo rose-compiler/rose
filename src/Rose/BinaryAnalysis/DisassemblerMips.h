@@ -18,13 +18,13 @@ public:
      *  MIPS executables can be big- or little-endian. */
     explicit DisassemblerMips(ByteOrder::Endianness sex = ByteOrder::ORDER_MSB) { init(sex); }
 
-    virtual DisassemblerMips *clone() const ROSE_OVERRIDE { return new DisassemblerMips(*this); }
-    virtual bool canDisassemble(SgAsmGenericHeader*) const ROSE_OVERRIDE;
+    virtual DisassemblerMips *clone() const override { return new DisassemblerMips(*this); }
+    virtual bool canDisassemble(SgAsmGenericHeader*) const override;
     virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr&, rose_addr_t start_va,
-                                             AddressSet *successors=NULL) ROSE_OVERRIDE;
-    virtual SgAsmInstruction *makeUnknownInstruction(const Disassembler::Exception&) ROSE_OVERRIDE;
+                                             AddressSet *successors=NULL) override;
+    virtual SgAsmInstruction *makeUnknownInstruction(const Disassembler::Exception&) override;
     SgAsmMipsInstruction *makeUnknownInstruction(rose_addr_t insn_va, unsigned opcode) const;
-    virtual Unparser::BasePtr unparser() const ROSE_OVERRIDE;
+    virtual Unparser::BasePtr unparser() const override;
 
     /** Interface for disassembling a single instruction.  Each instruction (or in some cases groups of closely related
      *  instructions) will define a subclass whose operator() unparses a single instruction word and returns an

@@ -179,7 +179,7 @@ namespace
       : tf(std::move(concreteTf))
       {}
 
-      void execute(CxxTransformStats& stat) ROSE_OVERRIDE
+      void execute(CxxTransformStats& stat) override
       {
         tf.execute(stat);
       }

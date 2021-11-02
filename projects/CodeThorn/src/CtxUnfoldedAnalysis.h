@@ -60,7 +60,7 @@ class CtxLabeler : public CLabeler
     void expandLabels(Label orig, const CtxLattice<context_t>& lat);
     Label copyProperty(Label orig, const ContextString& ctx);
 
-    bool areCallAndReturnLabels(Label call, Label retn) ROSE_OVERRIDE
+    bool areCallAndReturnLabels(Label call, Label retn) override
     {
       typename RelabelingMap::const_iterator callIter = allLabels.at(call.getId() - startlbl);
       typename RelabelingMap::const_iterator retnIter = allLabels.at(retn.getId() - startlbl);
@@ -72,8 +72,8 @@ class CtxLabeler : public CLabeler
              );
     }
 
-    Label getFunctionCallLabelFromReturnLabel(Label retn) ROSE_OVERRIDE;
-    Label getFunctionCallReturnLabelFromCallLabel(Label retn) ROSE_OVERRIDE;
+    Label getFunctionCallLabelFromReturnLabel(Label retn) override;
+    Label getFunctionCallReturnLabelFromCallLabel(Label retn) override;
 
     const typename RelabelingMap::key_type&
     originalData(Label lbl) const

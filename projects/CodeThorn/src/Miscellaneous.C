@@ -104,7 +104,11 @@ string CodeThorn::color(string name) {
     throw CodeThorn::Exception("Error: unknown color code.");
 }
 
-string CodeThorn::readableruntime(double timeInMilliSeconds) {
+string CodeThorn::readableRunTimeFromSeconds(size_t timeInSeconds) {
+  return CodeThorn::readableRunTimeFromMilliSeconds(double(timeInSeconds)*1000);
+}
+
+string CodeThorn::readableRunTimeFromMilliSeconds(double timeInMilliSeconds) {
   stringstream s;
   double time=timeInMilliSeconds;
   s << std::fixed << std::setprecision(2); // 2 digits past decimal point.
