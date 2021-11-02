@@ -121,12 +121,12 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( PartialFunctionModifierType, "PartialFunctionModifierType", "T_PARTIAL_FUNCTION_MODIFIER" );
      NEW_TERMINAL_MACRO ( ArrayType           , "ArrayType",            "T_ARRAY" );
      NEW_TERMINAL_MACRO ( TypeEllipse         , "TypeEllipse",          "T_ELLIPSE" );
-     NEW_TERMINAL_MACRO ( AdaAccessType       , "AdaAccessType",        "T_ADA_ACCESS" );
+     NEW_TERMINAL_MACRO ( AdaAccessType       , "AdaAccessType",        "T_ADA_ACCESS_TYPE" );
      NEW_TERMINAL_MACRO ( AdaSubtype          , "AdaSubtype",           "T_ADA_SUBTYPE" );
-     NEW_TERMINAL_MACRO ( AdaDerivedType      , "AdaDerivedType",       "T_ADA_DERIVEDTYPE" );
+     NEW_TERMINAL_MACRO ( AdaDerivedType      , "AdaDerivedType",       "T_ADA_DERIVED_TYPE" );
      NEW_TERMINAL_MACRO ( AdaModularType      , "AdaModularType",       "T_ADA_MODULAR_TYPE" );
      NEW_TERMINAL_MACRO ( AdaDiscriminatedType, "AdaDiscriminatedType", "T_ADA_DISCRIMINATED_TYPE" );
-     NEW_TERMINAL_MACRO ( AdaFloatType        , "AdaFloatType",         "T_ADA_FLOAT" );
+     NEW_TERMINAL_MACRO ( AdaFloatType        , "AdaFloatType",         "T_ADA_FLOAT_TYPE" );
      NEW_TERMINAL_MACRO ( AdaFormalType       , "AdaFormalType",        "T_ADA_FORMAL_TYPE" );
 
   // Rasmussen (4/4/2020): Added SgJovialBitType for Jovial. This type participates in logical operations
