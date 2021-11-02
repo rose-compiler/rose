@@ -111,17 +111,17 @@ extractStaticArchive(const boost::filesystem::path &directory, const boost::file
  *  RVA which is added to the initial base address. */
 struct PltEntryMatcher: public InstructionMatcher {
     // These data members are generally optional, and filled in as they're matched.
-    rose_addr_t gotVa_;                                 // address of global offset table
-    rose_addr_t gotEntryVa_;                            // address through which an indirect branch branches
-    size_t gotEntryNBytes_;                             // size of the global offset table entry in bytes
-    rose_addr_t gotEntry_;                              // address read from the GOT if the address is mapped (or zero)
-    size_t nBytesMatched_;                              // number of bytes matched for PLT entry
-    rose_addr_t functionNumber_;                        // function number argument for the dynamic linker (usually a push)
-    rose_addr_t pltEntryAlignment_;                     // must PLT entries be aligned, and by how much?
+    rose_addr_t gotVa_ = 0;                             // address of global offset table
+    rose_addr_t gotEntryVa_ = 0;                        // address through which an indirect branch branches
+    size_t gotEntryNBytes_ = 0;                         // size of the global offset table entry in bytes
+    rose_addr_t gotEntry_ = 0;                          // address read from the GOT if the address is mapped (or zero)
+    size_t nBytesMatched_ = 0;                          // number of bytes matched for PLT entry
+    rose_addr_t functionNumber_ = 0;                    // function number argument for the dynamic linker (usually a push)
+    rose_addr_t pltEntryAlignment_ = 1;                 // must PLT entries be aligned, and by how much?
 
 public:
     explicit PltEntryMatcher(rose_addr_t gotVa)
-        : gotVa_(gotVa), gotEntryVa_(0), gotEntryNBytes_(0), gotEntry_(0), nBytesMatched_(0), pltEntryAlignment_(1) {}
+        : gotVa_(gotVa) {}
     static Ptr instance(rose_addr_t gotVa) {
         return Ptr(new PltEntryMatcher(gotVa));
     }
