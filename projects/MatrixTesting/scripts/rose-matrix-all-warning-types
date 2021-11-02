@@ -1,0 +1,69 @@
+#!/bin/bash
+set -e
+
+help() {
+    echo "usage: ${0##*/} [QUERY]"
+    echo
+    echo "Purpose"
+    echo "  Gathers information about compiler warnings from test output and summaries"
+    echo "  the information. Shows the number of times each (normalized) warning appears"
+    echo "  in the output for compiling the ROSE library. This information is obtained"
+    echo "  from the \"Commands\" attachment for each test."
+    echo
+    echo "QUERY"
+    echo "  By default, this script scans the last few tests that have passed for the"
+    echo "  latest version of ROSE to be tested. The maximum number of tests scanned is"
+    echo "  the same as the default limit imposed by the rose-matrix-query command, 100."
+    echo
+    echo "  Any arguments passed to this shell script are also passed to the rose-matrix-"
+    echo "  query command. However, the first column of output should always be the test"
+    echo "  ID column. For instance, if you want to limit the warnings to a certain"
+    echo "  operating system, say \"os=centos:8\"; if you want to count warnings for some"
+    echo "  other version of ROSE, say \"rose=v0.11.54.22\"."
+}
+
+# Given a line that starts with an integer, remove the integer and
+# following space and repeat the rest of the line that many times.
+repeat_lines() {
+    local n rest i
+    while read n rest; do
+	for i in $(seq 1 $n); do
+	    echo $rest
+	done
+    done
+}
+
+# List all warnings from all tests for the current version of ROSE
+# being tested, and limiting to the most recent N passing tests where
+# N is the normal output limit for rose-matrix-query. The warnings
+# have been normalized already by removing certain things such as file
+# names, variable names, etc. One line is printed per warning--if a
+# warning occurs multiple times then multiple lines are printed.
+get_all_warnings() {
+    for test_id in $(rose-matrix-query -Fcsv "$@" id.d |cut -d, -f1); do
+	att_id="$(rose-matrix-attachments -Fcsv $test_id |grep ',Commands$' |cut -d, -f1)"
+	if [ -n "$att_id" ]; then
+	    rose-matrix-attachments $test_id $att_id |
+		sed -n '/^Types of compiler warnings/,/^[^ ]/ s/^[ \t]\+//p' |
+		grep -vP '^[0-9]+[ \t]+total$' |
+		repeat_lines
+	fi
+    done
+}
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+	--help|-h)
+	    help
+	    exit 0
+	    ;;
+	--license|--self-test|--version|-V|--version-long)
+	    rose-matrix-query "$1"
+	    exit 0
+    esac
+done
+
+get_all_warnings pf=pass "$@" |
+    LC_ALL=C sort |
+    uniq -c |
+    LC_ALL=C sort -k1nr

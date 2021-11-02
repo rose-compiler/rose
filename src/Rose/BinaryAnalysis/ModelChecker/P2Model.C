@@ -207,20 +207,6 @@ saturatedAdd(uint64_t base, int64_t delta) {
 // interval completely overflows (both its least and greatest values overflow) then the empty interval is
 // returned. Shifting an empty address interval any amount also returns the emtpy interval. The return value is clipped
 // by intersecting it with the specified @p limit.
-static AddressInterval shiftAddresses(const AddressInterval &base, int64_t delta, const AddressInterval &limit) {
-    if (base.isEmpty()) {
-        return AddressInterval();
-    } else {
-        auto loSat = saturatedAdd(base.least(), delta);
-        auto hiSat = saturatedAdd(base.greatest(), delta);
-        if (loSat.second && hiSat.second) {
-            return AddressInterval();
-        } else {
-            return AddressInterval::hull(loSat.first, hiSat.first) & limit;
-        }
-    }
-}
-
 static AddressInterval shiftAddresses(uint64_t base, const Variables::OffsetInterval &delta, const AddressInterval &limit) {
     if (delta.isEmpty()) {
         return AddressInterval();
