@@ -1,6 +1,7 @@
 //const char BLANK[2] = { ' ', ' '};
 int rand();
-const char BLANK[2] = "  ";
+char BLANK[2] = "ab";
+char* p=BLANK;
 void FOO() {
   &BLANK[0];
 }
@@ -10,8 +11,12 @@ int BAR() {
 }
 
 int BAD() {
-  char badarray[2] = "  ";
-  badarray[3]=1; // definitive
+  char badarray[3] = "cde";
+  badarray[1]='a';
+  *p;
+  char* p_local=BLANK;
+  badarray[1]=*p; // correct
+  badarray[3]=1; // definitive error
   int x=rand();
-  badarray[x]=2; // error if x not in [0..1]
+  badarray[x]=2; // error if x not in [0..2]
 }
