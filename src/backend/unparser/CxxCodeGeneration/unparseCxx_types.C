@@ -953,9 +953,12 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
                     break;
                   }
              // Liao (10/4/2021): Added so that we could get past this call in the Ada2Cpp translator (fix later).
+             // The enumerate type is defined in rose/src/ROSETTA/src/type.C
                case T_ADA_SUBTYPE:
                case T_ADA_MODULAR_TYPE:
                case T_ADA_DERIVEDTYPE:   
+               case T_ADA_FLOAT:   
+               case T_ADA_ACCESS:   
                   {
                    // printf ("Warning: SgAda*Type is appearing in call to unparseType from Ada2Cpp (allow this for now) \n");
                     break;
