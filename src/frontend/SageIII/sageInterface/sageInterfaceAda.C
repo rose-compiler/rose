@@ -974,7 +974,7 @@ namespace ada
       : AstSimpleProcessing(), fn(std::move(conversionFn))
       {}
 
-      void visit(SgNode*) ROSE_OVERRIDE;
+      void visit(SgNode*) override;
 
     private:
       std::function<void(SgNode*)> fn;
@@ -1452,6 +1452,19 @@ overridingScope(const SgExprListExp* args, const std::vector<PrimitiveParameterD
 
   return overridingScope(*args, primitiveArgs);
 }
+
+SgDeclarationStatement*
+baseDeclaration(SgType& ty)
+{
+  return baseDeclaration(&ty);
+}
+
+SgDeclarationStatement*
+baseDeclaration(SgType* ty)
+{
+  return BaseTypeDecl::find(ty);
+}
+
 
 bool
 explicitNullProcedure(const SgFunctionDefinition& fndef)

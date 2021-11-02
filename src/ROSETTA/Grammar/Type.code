@@ -341,7 +341,7 @@ HEADER_GET_MANGLED_START
       //! Mangled name support for unparser support
        // SgName get_mangled ( SgUnparse_Info & info );
        // RV (1/31/2006): Removed dependence on SgUnparse_Info.
-          virtual SgName get_mangled (void) const $ROSE_OVERRIDE;
+          virtual SgName get_mangled (void) const override;
 
 HEADER_GET_MANGLED_END
 
@@ -372,7 +372,7 @@ HEADER_GET_NAME_START
           This applies to the SgClassType, SgTypedef and the
           SgEnumType (derived from SgNamedType)
        */
-          SgName get_name() const $ROSE_OVERRIDE;
+          SgName get_name() const override;
 HEADER_GET_NAME_END
 
 
@@ -767,7 +767,7 @@ HEADER_MODIFIER_TYPE_START
 #endif
 
       //! Performs final initialization of data members (called by constructors)
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 
 HEADER_MODIFIER_TYPE_END
 
@@ -795,7 +795,7 @@ HEADER_FUNCTION_TYPE_START
        // static SgFunctionType* createType(SgPartialFunctionType *);
 
       //! Performs final initialization of data members (called by constructors)
-          void post_construction_initialization () $ROSE_OVERRIDE;
+          void post_construction_initialization () override;
 
       // Get a const list of input types (types of the parameters list) to this function type (from a cost functionType object)
       //! This is a const convience access function to the STL container of types in the child IR node (SgFunctionParameterTypeList* p_argument_list).
@@ -843,7 +843,7 @@ HEADER_MEMBER_FUNCTION_TYPE_START
           SgMemberFunctionType(SgPartialFunctionType *);
 
       //! Performs final initialization of data members (called by constructors)
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 
 #if 1
       //! Enum for const and volatile function modifiers
@@ -924,7 +924,7 @@ HEADER_MEMBER_FUNCTION_TYPE_END
 
 
 HEADER_PARTIAL_FUNCTION_TYPE_START
-          void post_construction_initialization () $ROSE_OVERRIDE;
+          void post_construction_initialization () override;
 HEADER_PARTIAL_FUNCTION_TYPE_END
 
 
@@ -952,8 +952,8 @@ HEADER_TYPE_COMPLEX_TYPE_START
        // static $CLASSNAME* createType(SgType* base_type);
           static $CLASSNAME* createType(SgType* base_type, SgExpression* optional_fortran_type_kind = NULL);
        // SKW (3/1/2011): Added these explicit declarations since we no longer build them automatically
-          virtual SgExpression* get_type_kind () const $ROSE_OVERRIDE;
-          virtual void set_type_kind ( SgExpression* type_kind ) $ROSE_OVERRIDE;
+          virtual SgExpression* get_type_kind () const override;
+          virtual void set_type_kind ( SgExpression* type_kind ) override;
 HEADER_TYPE_COMPLEX_TYPE_END
 
 // SK(08/20/2015): SgTypeTuple implementation
@@ -991,7 +991,7 @@ HEADER_TYPE_STRING_TYPE_START
           static $CLASSNAME* createType(SgExpression*, SgExpression* optional_fortran_type_kind = NULL);
 
       //! Performs final initialization of data members (called by constructors)
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 HEADER_TYPE_STRING_TYPE_END
 
 HEADER_TYPE_DEFAULT_TYPE_START

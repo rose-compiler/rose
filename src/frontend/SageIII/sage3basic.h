@@ -15,11 +15,15 @@
 #ifndef SAGE3_CLASSES_BASIC__H
 #define SAGE3_CLASSES_BASIC__H
 
-// DQ (11/12/2011): This is support to reduce the size of ROSE so that I can manage development on my laptop.
-// This option defines a subset of ROSE as required to support wotk on the new EDG front-end.
-// This is defined here becasuse it is not enough to define it in the rose_config.h
-// because that can't be read early enough to effect what header files are included.
-// #define ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// This part of this header contains things that *MUST* be done very early due to designs of non-ROSE header files.
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// This is first because it quickly brings in all the configuration-related settings that are needed by #ifdef's in the rest of
+// this header.
+#include "featureTests.h"
 
 // Much of ROSE's binary support uses the intX_t and uintX_t types (where X is a bit width), so we need to have the stdc printf
 // format macros defined for portability.  We do that here because it needs to be done before <inttypes.h> is included for the
@@ -31,22 +35,10 @@
 #endif
 #include <inttypes.h>
 
-#include "rose_override.h"                              // defines ROSE_OVERRIDE, ROSE_FINAL, etc for C++11 or later
-#include "Rose/Constants.h"                             // defines things like Rose::UNLIMITED, Rose::INVALID_INDEX, etc.
-
-#include <semaphore.h>
-#include "fileoffsetbits.h"
-#include "rosedll.h"
-//tps (05/04/2010): Added compatibility
-#ifdef _MSC_VER
-# if _MSC_VER < 1900
-  #define snprintf _snprintf
-# endif
-#endif
-
 // The boost::filesystem::path class has no serialization function, and boost::serialization doesn't provide a non-intrusive
 // implementation. Therefore ROSE needs to define one. This code must occur before including any headers that serialize
-// boost::filesystem::path, and specifically before Cxx_Grammar.h.
+// boost::filesystem::path, and specifically before defining AST node types.
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
 #include <boost/filesystem.hpp>
 #include <boost/serialization/nvp.hpp>
 namespace boost {
@@ -64,6 +56,47 @@ namespace boost {
         }
     }
 }
+#endif
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// This part of the file contains things that must be done early in nearly every ROSE implementation file for nearly every ROSE
+// configuration. This section should be very small and should not include any headers that are even marginally expensive to
+// parse.
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// The rest of this file contains optional things that are not needed by every ROSE implementation file (*.C) or by every ROSE
+// configuration. Do not add more to this -- we're trying to get rid of this section. Instead, move things to other header
+// files (if necessary) and include them into only those source files that depend on them.
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#include "Rose/Constants.h"                             // defines things like Rose::UNLIMITED, Rose::INVALID_INDEX, etc.
+
+// DQ (11/12/2011): This is support to reduce the size of ROSE so that I can manage development on my laptop.
+// This option defines a subset of ROSE as required to support wotk on the new EDG front-end.
+// This is defined here becasuse it is not enough to define it in the rose_config.h
+// because that can't be read early enough to effect what header files are included.
+// #define ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+
+
+#include <semaphore.h>
+#include "fileoffsetbits.h"
+#include "rosedll.h"
+//tps (05/04/2010): Added compatibility
+#ifdef _MSC_VER
+# if _MSC_VER < 1900
+  #define snprintf _snprintf
+# endif
+#endif
 
 // George Vulov (Aug. 23, 2010): This macro is not available in OS X by default
 #ifndef TEMP_FAILURE_RETRY
@@ -369,19 +402,6 @@ namespace Exec { namespace ELF { class ElfFileHeader; }; };
 #endif
 
 // DQ (10/4/2014): Added to support USE_ROSE_ATERM_SUPPORT macro.
-// Including rose_config.h is a problem, and is caught in any files that
-// also include rose.h.  Since ROSE source files in /src should not be 
-// including rose.h I have fixed many of these, but at least one fails
-// without rose.h (/src/midend/programAnalysis/genericDataflow/cfgUtils/CFGRewrite.C)
-// so maybe we should have it be an enforced policy instead of the kind of
-// error that is is if rose_config.h is included below.  The better solution 
-// for users is to include rosePublicConfig.h below (no in place).
-// Note also that some macros from ROSE may need to be added to the generated
-// rosePublicConfig.h file (in the script scripts/publicConfiguration.pl).
-// #include "rose_config.h"
-#include "rosePublicConfig.h"
-#include "featureTests.h"
-
 // DQ (10/4/2014): Not clear if this is the best way to control use of ATerm.
 // I think we need a specific macro to be defined for when ATerms are being used.
 // Also I want to initially seperate this from Windows support.

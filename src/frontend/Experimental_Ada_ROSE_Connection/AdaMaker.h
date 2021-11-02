@@ -327,6 +327,12 @@ namespace Ada_ROSE_Translation
   mkRecordDecl(const std::string& name, SgScopeStatement& scope);
 
   /// creates an Ada package declaration
+  /// \param name   name of the package
+  /// \param scope  the scope of which this declaration is a part.
+  ///        e.g., LLNL.Rose for a package LLNL.Rose.Ada
+  /// \note
+  ///    A package LLNL.Rose.Ada can be declated in the global scope. In this case
+  ///    the scope of LLNL.Rose is still the parent scope.
   SgAdaPackageSpecDecl&
   mkAdaPackageSpecDecl(const std::string& name, SgScopeStatement& scope);
 
@@ -355,7 +361,7 @@ namespace Ada_ROSE_Translation
 
   /// creates an Ada package body declaration
   SgAdaPackageBodyDecl&
-  mkAdaPackageBodyDecl(SgAdaPackageSpecDecl& specdcl, SgScopeStatement& scope);
+  mkAdaPackageBodyDecl(SgAdaPackageSpecDecl& specdcl);
 
   /// creates an Ada task type declaration
   // \todo revisit Ada task symbol creation
@@ -657,7 +663,17 @@ namespace Ada_ROSE_Translation
   SgIfStmt&
   mkIfStmt();
 
-  // SgExpression& cond, SgStatement& thenBranch, SgStatement* elseBranch_opt);
+  //
+  // special Ada symbols
+
+  /// creates a symbol for the inherited function \ref fn for inherited type \ref declaredDerivedType.
+  ///   adds the symbol to the scope \ref scope of the derived type.
+  SgAdaInheritedFunctionSymbol&
+  mkAdaInheritedFunctionSymbol(SgFunctionDeclaration& fn, SgTypedefType& declaredDerivedType, SgScopeStatement& scope);
+
+  //
+  // conversions
+
 
   /// converts a value of type V to a value of type U via streaming
   /// \tparam  V input value type

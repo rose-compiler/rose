@@ -2927,7 +2927,7 @@ Engine::CodeConstants::nextConstant(const Partitioner &partitioner) {
 
             struct T1: AstSimpleProcessing {
                 std::set<rose_addr_t> constants;
-                virtual void visit(SgNode *node) ROSE_OVERRIDE {
+                virtual void visit(SgNode *node) override {
                     if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node)) {
                         if (ival->get_significantBits() <= 64)
                             constants.insert(ival->get_absoluteValue());

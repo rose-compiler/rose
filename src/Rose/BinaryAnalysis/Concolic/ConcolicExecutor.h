@@ -92,12 +92,12 @@ public:
     // Overrides documented in base class
     virtual InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
     create(const InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
-           const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
+           const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         ASSERT_not_implemented("[Robb Matzke 2019-09-24]");
     }
     virtual InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
     create(const InstructionSemantics2::BaseSemantics::StatePtr &state,
-           const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
+           const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         ASSERT_not_implemented("[Robb Matzke 2019-09-24]");
     }
 
@@ -210,18 +210,18 @@ public:
 
     virtual void startInstruction(SgAsmInstruction*) override;
 
-    virtual void interrupt(int majr, int minr) ROSE_OVERRIDE;
+    virtual void interrupt(int majr, int minr) override;
 
     virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    readRegister(RegisterDescriptor reg, const InstructionSemantics2::BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
+    readRegister(RegisterDescriptor reg, const InstructionSemantics2::BaseSemantics::SValuePtr &dflt) override;
 
     virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    readRegister(RegisterDescriptor reg) ROSE_OVERRIDE {
+    readRegister(RegisterDescriptor reg) override {
         return readRegister(reg, undefined_(reg.nBits()));
     }
 
     virtual InstructionSemantics2::BaseSemantics::SValuePtr
-    peekRegister(RegisterDescriptor reg, const InstructionSemantics2::BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
+    peekRegister(RegisterDescriptor reg, const InstructionSemantics2::BaseSemantics::SValuePtr &dflt) override;
 
     virtual void
     writeRegister(RegisterDescriptor, const InstructionSemantics2::BaseSemantics::SValuePtr&) override;
@@ -229,11 +229,11 @@ public:
     virtual InstructionSemantics2::BaseSemantics::SValuePtr
     readMemory(RegisterDescriptor segreg, const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
                const InstructionSemantics2::BaseSemantics::SValuePtr &dflt,
-               const InstructionSemantics2::BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
+               const InstructionSemantics2::BaseSemantics::SValuePtr &cond) override;
 
     virtual InstructionSemantics2::BaseSemantics::SValuePtr
     peekMemory(RegisterDescriptor segreg, const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
-               const InstructionSemantics2::BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
+               const InstructionSemantics2::BaseSemantics::SValuePtr &dflt) override;
 
     // Call this when the concrete simulation exits.
     void doExit(uint64_t);
@@ -283,7 +283,7 @@ public:
 
 public:
     // overrides
-    virtual void processInstruction(SgAsmInstruction*) ROSE_OVERRIDE;
+    virtual void processInstruction(SgAsmInstruction*) override;
 };
 
 } // namespace

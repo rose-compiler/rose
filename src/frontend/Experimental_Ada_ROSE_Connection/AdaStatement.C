@@ -1,4 +1,3 @@
-
 #include "sage3basic.h"
 #include "sageGeneric.h"
 
@@ -610,7 +609,7 @@ namespace
   void
   setModifiers(SgDeclarationStatement& dcl, const TypeData& info)
   {
-    setModifiers(dcl, info.hasAbstract, info.hasLimited, info.hasTagged);
+    setModifiers(dcl, info.isAbstract(), info.isLimited(), info.isTagged());
   }
 
   template <class AsisStruct>
@@ -826,7 +825,7 @@ namespace
     }
   }
 
-  SgAdaTaskSpec&
+  std::pair<SgAdaTaskSpec*, DeferredBodyCompletion>
   getTaskSpec(Element_Struct& elem, AstContext ctx)
   {
     SgAdaTaskSpec&          sgnode = mkAdaTaskSpec();
@@ -841,47 +840,51 @@ namespace
 
     logKind("A_Task_Definition");
 
-    Task_Definition_Struct& tasknode = def.The_Union.The_Task_Definition;
+    Task_Definition_Struct* tasknode = &def.The_Union.The_Task_Definition;
+    SgAdaTaskSpec*          nodePtr  = &sgnode;
 
-    // visible items
-    {
-      ElemIdRange range = idRange(tasknode.Visible_Part_Items);
+    auto deferred = [ctx,nodePtr,tasknode]() -> void
+                    {
+                      // visible items
+                      {
+                        ElemIdRange range = idRange(tasknode->Visible_Part_Items);
 
-      traverseIDs(range, elemMap(), ElemCreator{ctx.scope_npc(sgnode)});
-    }
+                        traverseIDs(range, elemMap(), ElemCreator{ctx.scope(*nodePtr)});
+                      }
 
-    // private items
-    {
-      ElemIdRange range = idRange(tasknode.Private_Part_Items);
-      ADA_ASSERT((!range.empty()) == tasknode.Is_Private_Present);
+                      // private items
+                      {
+                        ElemIdRange range = idRange(tasknode->Private_Part_Items);
+                        ADA_ASSERT((!range.empty()) == tasknode->Is_Private_Present);
 
-      traverseIDs(range, elemMap(), ElemCreator{ctx.scope_npc(sgnode), true /* private items */});
-    }
+                        traverseIDs(range, elemMap(), ElemCreator{ctx.scope(*nodePtr), true /* private items */});
+                      }
+                    };
 
     /* unused fields: (Task_Definition_Struct)
          bool                  Has_Task;
     */
-    return sgnode;
+    return std::make_pair(&sgnode, deferred);
   }
 
-  SgAdaTaskSpec&
+  std::pair<SgAdaTaskSpec*, DeferredBodyCompletion>
   getTaskSpecID(Element_ID id, AstContext ctx)
   {
     return getTaskSpec(retrieveAs(elemMap(), id), ctx);
   }
 
-  SgAdaTaskSpec&
+  std::pair<SgAdaTaskSpec*, DeferredBodyCompletion>
   getTaskSpecForTaskType(Declaration_Struct& decl, AstContext ctx)
   {
     ADA_ASSERT(decl.Declaration_Kind == A_Task_Type_Declaration);
 
     if (decl.Type_Declaration_View == 0)
-      return mkAdaTaskSpec();
+      return std::make_pair(&mkAdaTaskSpec(), []()->void {}); // nothing to complete
 
     return getTaskSpecID(decl.Type_Declaration_View, ctx);
   }
 
-  SgAdaTaskSpec&
+  std::pair<SgAdaTaskSpec*, DeferredBodyCompletion>
   getTaskSpecForSingleTask(Declaration_Struct& decl, AstContext ctx)
   {
     ADA_ASSERT(decl.Declaration_Kind == A_Single_Task_Declaration);
@@ -1072,13 +1075,12 @@ namespace
     return *stmt;
   }
 
-  using BodyCompletion = std::function<void()>;
-
   // MS 11/17/2020 : SelectStmtCreator modeled on IfStmtCreator
-  // PP 10/12/2021 : refactored code to eliminate use of scope_npc
-  //                 a block will only be populated after the new node has been connected
+  // PP 10/12/2021 : modified code to eliminate the need for using scope_npc.
+  //                 A block will only be populated after the new node has been connected
   //                 to the AST. This is achieved by returning a lambda function w/o parameters
-  //                 (BodyCompletion) that is invoked after the nodes are part of the AST.
+  //                 (DeferredBodyCompletion) that is invoked after the node has been connected
+  //                 to the AST.
   struct SelectStmtCreator
   {
     typedef SgAdaSelectAlternativeStmt*  alternative;
@@ -1088,7 +1090,7 @@ namespace
       : sgnode(&sgn), ctx(astctx)
     {}
 
-    std::pair<SgAdaSelectAlternativeStmt*, BodyCompletion>
+    std::pair<SgAdaSelectAlternativeStmt*, DeferredBodyCompletion>
     commonAltStmt(Path_Struct& path) {
       // create body of alternative
       SgBasicBlock* block = &mkBasicBlock();
@@ -1101,28 +1103,28 @@ namespace
       Path_Struct* pathptr = &path;
       AstContext   astctx{ctx};
 
-      BodyCompletion completion = [pathptr, block, astctx]() -> void
-                                  {
-                                    ElemIdRange altStmts = idRange(pathptr->Sequence_Of_Statements);
+      auto completion = [pathptr, block, astctx]() -> void
+                        {
+                          ElemIdRange altStmts = idRange(pathptr->Sequence_Of_Statements);
 
-                                    traverseIDs(altStmts, elemMap(), StmtCreator{astctx.scope(*block)});
-                                  };
+                          traverseIDs(altStmts, elemMap(), StmtCreator{astctx.scope(*block)});
+                        };
 
       return std::make_pair(stmt, completion);
     }
 
-    std::pair<SgBasicBlock*, BodyCompletion>
+    std::pair<SgBasicBlock*, DeferredBodyCompletion>
     commonMakeBlock(Path_Struct& path) {
       SgBasicBlock* block   = &mkBasicBlock();
       Path_Struct*  pathptr = &path;
       AstContext    astctx{ctx};
 
-      BodyCompletion completion = [pathptr, block, astctx]() -> void
-                                  {
-                                    ElemIdRange altStmts = idRange(pathptr->Sequence_Of_Statements);
+      auto completion = [pathptr, block, astctx]() -> void
+                        {
+                          ElemIdRange altStmts = idRange(pathptr->Sequence_Of_Statements);
 
-                                    traverseIDs(altStmts, elemMap(), StmtCreator{astctx.scope(*block)});
-                                  };
+                          traverseIDs(altStmts, elemMap(), StmtCreator{astctx.scope(*block)});
+                        };
       return std::make_pair(block, completion);
     }
 
@@ -1594,8 +1596,8 @@ namespace
 
           attachSourceLocation(forini, forvar, ctx);
           sg::linkParentChild(sgnode, forini, &SgForStatement::set_for_init_stmt);
-          handleDeclaration(forvar, ctx.scope_npc(sgnode));
           completeStmt(sgnode, elem, ctx, stmt.Statement_Identifier);
+          handleDeclaration(forvar, ctx.scope(sgnode));
 
           // this swap is needed, b/c SgForInitStatement is not a scope
           // and when the loop variable declaration is created, the declaration
@@ -1699,13 +1701,11 @@ namespace
         {
           logKind(stmt.Statement_Kind == An_Entry_Call_Statement ? "An_Entry_Call_Statement" : "A_Procedure_Call_Statement");
 
-          SgExpression&    funrefexp = getExprID(stmt.Called_Name, ctx);
-          ElemIdRange      range  = idRange(stmt.Call_Statement_Parameters);
-          SgExprListExp&   arglst = traverseIDs(range, elemMap(), ArgListCreator{ctx});
-          SgExprStatement& sgnode = SG_DEREF(sb::buildFunctionCallStmt(&funrefexp, &arglst));
-          SgExpression&    call   = SG_DEREF(sgnode.get_expression());
+          SgExpression&    target = getExprID(stmt.Called_Name, ctx);
+          ElemIdRange      args   = idRange(stmt.Call_Statement_Parameters);
+          SgExpression&    call   = createCall(target, args, ctx);
+          SgExprStatement& sgnode = SG_DEREF(sb::buildExprStatement(&call));
 
-          ADA_ASSERT(arglst.get_parent());
           attachSourceLocation(call, elem, ctx);
           completeStmt(sgnode, elem, ctx);
           /* unused fields:
@@ -2209,6 +2209,51 @@ namespace
     }
   }
 
+  struct InheritedSymbolCreator
+  {
+      InheritedSymbolCreator(SgTypedefType& declDervType, AstContext astctx)
+      : declaredDervivedType(declDervType), ctx(astctx)
+      {}
+
+      void operator()(Element_Struct& elem)
+      {
+        SgDeclarationStatement*       fndcl  = findFirst(asisDecls(), elem.ID);
+        SgFunctionDeclaration*        fn     = isSgFunctionDeclaration(fndcl);
+
+        if (fn == nullptr)
+        {
+          logError() << "unable to find function with Asis element ID " << elem.ID << std::endl;
+          return;
+        }
+
+        SgAdaInheritedFunctionSymbol& sgnode = mkAdaInheritedFunctionSymbol(*fn, declaredDervivedType, ctx.scope());
+        const bool inserted = inheritedSymbols().insert(std::make_pair(std::make_pair(fn, &declaredDervivedType), &sgnode)).second;
+
+        ROSE_ASSERT(inserted);
+    }
+
+    private:
+      SgTypedefType& declaredDervivedType;
+      AstContext     ctx;
+  };
+
+  void
+  processInheritedSubprogramsOfDerivedTypes(TypeData& ty, SgDeclarationStatement& dcl, AstContext ctx)
+  {
+    Type_Definition_Struct& tydef = ty.definitionStruct();
+
+    if (tydef.Type_Kind != A_Derived_Type_Definition)
+      return;
+
+    SgTypedefDeclaration&   sgdecl          = SG_DEREF(isSgTypedefDeclaration(&dcl));
+    SgTypedefType&          declDerivedType = SG_DEREF(sgdecl.get_type());
+    ElemIdRange             range           = idRange(tydef.Implicit_Inherited_Subprograms);
+
+    traverseIDs(range, elemMap(), InheritedSymbolCreator{declDerivedType, ctx});
+  }
+
+
+
   SgDeclarationStatement&
   createOpaqueDecl(NameData adaname, Declaration_Struct& decl, Type_Kinds tyKind, AstContext ctx)
   {
@@ -2252,23 +2297,6 @@ namespace
           break;
         }
 
-  /*
-  Not_A_Type_Definition,                 // An unexpected element
-  A_Derived_Type_Definition,             // 3.4(2)     -> Trait_Kinds
-  A_Derived_Record_Extension_Definition, // 3.4(2)     -> Trait_Kinds
-  An_Enumeration_Type_Definition,        // 3.5.1(2)
-  A_Root_Type_Definition,                // 3.5.4(14), 3.5.6(3)
-  //                                               -> Root_Type_Kinds
-  An_Unconstrained_Array_Definition,     // 3.6(2)
-  A_Constrained_Array_Definition,        // 3.6(2)
-
-  //  //|A2005 start
-  An_Interface_Type_Definition,          // 3.9.4      -> Interface_Kinds
-  //  //|A2005 end
-
-  An_Access_Type_Definition            // 3.10(2)    -> Access_Type_Kinds
-  */
-
       default:
         logWarn() << "unhandled opaque type declaration: " << tyKind
                   << std::endl;
@@ -2284,11 +2312,10 @@ namespace
     else if (decl.Declaration_Kind == A_Tagged_Incomplete_Type_Declaration)
       setModifiers(resdcl, false /*abstract*/, false /*limited*/, true /*tagged*/);
 
-
     return resdcl;
   }
 
-  /// chooses between making an additional non-defining declaration
+  /// chooses whether an additional non-defining declaration is required
   SgFunctionDeclaration&
   createFunDef( SgFunctionDeclaration* nondef,
                 const std::string& name,
@@ -2301,7 +2328,7 @@ namespace
                   : mkProcedureDef(name,    scope, rettype, std::move(complete));
   }
 
-    void completeDiscriminatedDecl( SgAdaDiscriminatedTypeDecl& sgnode,
+  void completeDiscriminatedDecl( SgAdaDiscriminatedTypeDecl& sgnode,
                                   SgDeclarationStatement* nondef,
                                   Element_ID id,
                                   SgDeclarationStatement& child,
@@ -2678,12 +2705,9 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         SgScopeStatement&     outer   = ctx.scope();
         NameData              adaname = singleName(decl, ctx);
-        //~ SgAdaPackageSpecDecl& sgnode  = mkAdaPackageSpecDecl(adaname.ident, outer);
         SgAdaPackageSpecDecl& sgnode  = mkAdaPackageSpecDecl(adaname.ident, adaname.parent_scope());
         SgAdaPackageSpec&     pkgspec = SG_DEREF(sgnode.get_definition());
 
-        sgnode.set_scope(&adaname.parent_scope());
-        //~ sgnode.set_scope(&outer);
         logTrace() << "package decl " << adaname.ident
                    << " (" <<  adaname.fullName << ")"
                    << std::endl;
@@ -2695,8 +2719,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         attachSourceLocation(pkgspec, elem, ctx);
         attachSourceLocation(sgnode, elem, ctx);
         outer.append_statement(&sgnode);
-        ADA_ASSERT(sgnode.get_parent() == &outer);
 
+        ADA_ASSERT(sgnode.get_parent() == &outer);
         ADA_ASSERT(sgnode.search_for_symbol_from_symbol_table());
 
         // visible items
@@ -2736,13 +2760,10 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         // we need to check if the SgAdaPackageSpecDecl is directly available
         // or if it is wrapped by an SgAdaGenericDecl node.
         SgNode*               declnode = &lookupNode(asisDecls(), specID);
-        SgAdaPackageSpecDecl* specdcl;
+        SgAdaPackageSpecDecl* specdcl  = isSgAdaPackageSpecDecl(declnode);
 
-        if (isSgAdaPackageSpecDecl(declnode)) {
-          specdcl = isSgAdaPackageSpecDecl(declnode);
-        } else {
-          if (isSgAdaGenericDecl(declnode)) {
-            SgAdaGenericDecl* generic = isSgAdaGenericDecl(declnode);
+        if (!specdcl) {
+          if (SgAdaGenericDecl* generic = isSgAdaGenericDecl(declnode)) {
             if (isSgAdaPackageSpecDecl(generic->get_declaration())) {
               specdcl = isSgAdaPackageSpecDecl(generic->get_declaration());
             } else {
@@ -2755,7 +2776,10 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
           }
         }
 
-        SgAdaPackageBodyDecl& sgnode  = mkAdaPackageBodyDecl(*specdcl, outer);
+        // unhandled package bodies
+        if (specdcl == nullptr) break;
+
+        SgAdaPackageBodyDecl& sgnode  = mkAdaPackageBodyDecl(SG_DEREF(specdcl));
         SgAdaPackageBody&     pkgbody = SG_DEREF(sgnode.get_definition());
 
         //~ recordNode(asisDecls(), elem.ID, sgnode);
@@ -2818,17 +2842,14 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgAdaGenericDefn&       gen_defn   = SG_DEREF(sgnode.get_definition());
 
         // create package in the scope of the generic
-        SgAdaPackageSpecDecl&   pkgnode    = mkAdaPackageSpecDecl(adaname.ident, gen_defn);
+        SgAdaPackageSpecDecl&   pkgnode    = mkAdaPackageSpecDecl(adaname.ident, adaname.parent_scope());
         SgAdaPackageSpec&       pkgspec    = SG_DEREF(pkgnode.get_definition());
 
         // set declaration component of generic decl to package decl
         sgnode.set_declaration(&pkgnode);
+        pkgnode.set_parent(&gen_defn);
 
-        // set scopes
-        //gen_defn.set_scope(&adaname.parent_scope());
-        pkgnode.set_scope(&gen_defn);
-
-        // record ID to sg node mapping
+        // record ID to sgnode mapping
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
 
@@ -2886,14 +2907,21 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                 : "A_Generic_Procedure_Declaration");
 
         const bool             isFunc  = decl.Declaration_Kind == A_Generic_Function_Declaration;
-        SgScopeStatement&      outer   = ctx.scope();
         NameData               adaname = singleName(decl, ctx);
+        SgScopeStatement&      outer   = ctx.scope();
 
-        ADA_ASSERT(adaname.fullName == adaname.ident);
-        SgAdaGenericDecl&          sgnode     = mkAdaGenericDecl(outer);
-        SgAdaGenericDefn&          gen_defn   = SG_DEREF(sgnode.get_definition());
+        // PP (20/19/21): the assertion does not hold for proc/func defined in their own unit
+        //~ ADA_ASSERT(adaname.fullName == adaname.ident);
+        SgAdaGenericDecl&      sgnode     = mkAdaGenericDecl(outer);
+        SgAdaGenericDefn&      gen_defn   = SG_DEREF(sgnode.get_definition());
+        SgScopeStatement&      logicalScope = adaname.parent_scope();
 
-        outer.insert_symbol(adaname.ident, &mkBareNode<SgAdaGenericSymbol>(&sgnode));
+        // PP (20/19/21): use the logical scope
+        //    the logical scope is the parent package in the package structure
+        //    this could be different from the physical parent, for example when
+        //    the generic proc/func forms its own subpackage.
+        //~ outer.insert_symbol(adaname.ident, &mkBareNode<SgAdaGenericSymbol>(&sgnode));
+        logicalScope.insert_symbol(adaname.ident, &mkBareNode<SgAdaGenericSymbol>(&sgnode));
 
         // generic formal part
         {
@@ -2906,9 +2934,13 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgType&                rettype = isFunc ? getDeclTypeID(decl.Result_Profile, ctx)
                                                 : SG_DEREF(sb::buildVoidType());
 
-        SgFunctionDeclaration&  fundec     = mkProcedure(adaname.fullName, gen_defn, rettype, ParameterCompletion{params, ctx});
+        // PP (10/20/21): changed scoping for packages and procedures/functions
+        //                the generic proc/func is declared in the logical parent scope
+        // was: SgFunctionDeclaration&  fundec     = mkProcedure(adaname.fullName, gen_defn, rettype, ParameterCompletion{params, ctx});
+        SgFunctionDeclaration&  fundec     = mkProcedure(adaname.ident, logicalScope, rettype, ParameterCompletion{params, ctx});
 
         sgnode.set_declaration(&fundec);
+        fundec.set_parent(&gen_defn);
 
         setOverride(fundec.get_declarationModifier(), decl.Is_Overriding_Declaration);
 
@@ -2923,7 +2955,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         outer.append_statement(&sgnode);
         ADA_ASSERT(fundec.get_parent() == &gen_defn);
         ADA_ASSERT(sgnode.get_parent() == &outer);
-
 
         /* unhandled fields
 
@@ -2958,8 +2989,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgType&                rettype = isFunc ? getDeclTypeID(decl.Result_Profile, ctx)
                                                 : SG_DEREF(sb::buildVoidType());
 
-        ADA_ASSERT(adaname.fullName == adaname.ident);
-        SgFunctionDeclaration& sgnode  = mkProcedure(adaname.fullName, outer, rettype, ParameterCompletion{params, ctx});
+        SgScopeStatement&      logicalScope = adaname.parent_scope();
+        SgFunctionDeclaration& sgnode  = mkProcedure(adaname.ident, logicalScope, rettype, ParameterCompletion{params, ctx});
 
         setOverride(sgnode.get_declarationModifier(), decl.Is_Overriding_Declaration);
         recordNode(asisDecls(), elem.ID, sgnode);
@@ -3024,7 +3055,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         ADA_ASSERT(nondef || !ndef);
 
-        SgFunctionDeclaration&  sgnode  = createFunDef(nondef, adaname.ident, outer, rettype, ParameterCompletion{params, ctx});
+        SgScopeStatement&       logicalScope = adaname.parent_scope();
+        SgFunctionDeclaration&  sgnode  = createFunDef(nondef, adaname.ident, logicalScope, rettype, ParameterCompletion{params, ctx});
         SgBasicBlock&           declblk = getFunctionBody(sgnode);
 
         recordNode(asisDecls(), elem.ID, sgnode);
@@ -3176,7 +3208,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         TypeData                ty   = getTypeFoundation(adaname.ident, decl, ctx.scope(scope));
         Element_ID              id   = adaname.id();
         SgDeclarationStatement* nondef = findFirst(asisTypes(), id);
-        SgDeclarationStatement& sgdecl = sg::dispatch(MakeDeclaration(adaname.ident, scope, ty, nondef), ty.n);
+        SgDeclarationStatement& sgdecl = sg::dispatch(MakeDeclaration{adaname.ident, scope, ty, nondef}, &ty.sageNode());
 
         privatize(sgdecl, isPrivate);
         recordNode(asisTypes(), id, sgdecl, nondef != nullptr);
@@ -3186,6 +3218,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         {
           scope.append_statement(&sgdecl);
           ADA_ASSERT(sgdecl.get_parent() == &scope);
+
+          processInheritedSubprogramsOfDerivedTypes(ty, sgdecl, ctx.scope(scope));
         }
         else
         {
@@ -3218,7 +3252,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         Element_ID              id     = adaname.id();
         SgDeclarationStatement* nondef = findFirst(asisTypes(), id);
-        SgDeclarationStatement& sgnode = sg::dispatch(MakeDeclaration(adaname.ident, scope, ty, nondef), ty.n);
+        SgDeclarationStatement& sgnode = sg::dispatch(MakeDeclaration{adaname.ident, scope, ty, nondef}, &ty.sageNode());
 
         setModifiers(sgnode, ty);
 
@@ -3337,10 +3371,10 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         logKind("A_Task_Type_Declaration");
 
-        SgAdaTaskSpec&     spec    = getTaskSpecForTaskType(decl, ctx);
+        auto               spec    = getTaskSpecForTaskType(decl, ctx);
         NameData           adaname = singleName(decl, ctx);
         ADA_ASSERT(adaname.fullName == adaname.ident);
-        SgAdaTaskTypeDecl& sgnode  = mkAdaTaskTypeDecl(adaname.fullName, spec, ctx.scope());
+        SgAdaTaskTypeDecl& sgnode  = mkAdaTaskTypeDecl(adaname.fullName, SG_DEREF(spec.first), ctx.scope());
 
         attachSourceLocation(sgnode, elem, ctx);
         privatize(sgnode, isPrivate);
@@ -3349,7 +3383,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         recordNode(asisTypes(), adaname.id(), sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
         recordNode(asisDecls(), elem.ID, sgnode);
-
+        spec.second();
         /* unused fields:
              bool                           Has_Task;
              Element_ID                     Corresponding_End_Name;
@@ -3372,10 +3406,10 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         logKind("A_Single_Task_Declaration");
 
-        SgAdaTaskSpec&     spec    = getTaskSpecForSingleTask(decl, ctx);
+        auto               spec    = getTaskSpecForSingleTask(decl, ctx);
         NameData           adaname = singleName(decl, ctx);
         ADA_ASSERT(adaname.fullName == adaname.ident);
-        SgAdaTaskSpecDecl& sgnode  = mkAdaTaskSpecDecl(adaname.fullName, spec, ctx.scope());
+        SgAdaTaskSpecDecl& sgnode  = mkAdaTaskSpecDecl(adaname.fullName, SG_DEREF(spec.first), ctx.scope());
 
         attachSourceLocation(sgnode, elem, ctx);
         privatize(sgnode, isPrivate);
@@ -3384,7 +3418,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         //~ recordNode(asisTypes(), adaname.id(), sgnode);
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
-
+        spec.second();
         /* unused fields:
              bool                           Has_Task;
              Element_ID                     Corresponding_End_Name;
@@ -3670,20 +3704,23 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         // an entity that was traversed during the AST creation.  Instead we need
         // to dig up the Corresponding_Name_Declaration from the Expression
         // associated with Generic_Unit_Name. (MS: 8/1/21)
-        auto gunitname = retrieveAs(elemMap(), decl.Generic_Unit_Name);
-        auto gunitexpr = gunitname.The_Union.Expression;
+        NameData                  basename = getNameID(decl.Generic_Unit_Name, ctx);
+        Element_Struct&           baseelem = basename.elem();
+        Expression_Struct&        baseexpr = baseelem.The_Union.Expression;
+        SgDeclarationStatement*   basedecl = findFirst(asisDecls(), baseexpr.Corresponding_Name_Declaration, baseexpr.Corresponding_Name_Definition);
+        SgAdaGenericDecl*         gendecl  = isSgAdaGenericDecl(basedecl);
 
-        SgDeclarationStatement*   gendecl = NULL;
+        if (!gendecl)
+        {
+          logError() << "Unable to generate generic instantiation: " << adaname.fullName
+                     << " base decl: " << basename.fullName << " / " << basename.id()
+                     << "\n" << basedecl
+                     << std::endl;
 
-        // MS: 8/10/21 - in some cases (likely with the standard library) we may
-        // encounter an instantiation with no corresponding declaration.  In that case
-        // the name will be -1.  When that occurs set the declaration statement pointer
-        // to null.  Otherwise, lookup the corresponding declaration.
-        if (gunitexpr.Corresponding_Name_Declaration > 0) {
-           gendecl = &lookupNode(asisDecls(), gunitexpr.Corresponding_Name_Declaration);
+          break;
         }
 
-        SgAdaGenericInstanceDecl& sgnode  = mkAdaGenericInstanceDecl(adaname.ident, *isSgAdaGenericDecl(gendecl), outer);
+        SgAdaGenericInstanceDecl& sgnode  = mkAdaGenericInstanceDecl(adaname.ident, *gendecl, outer);
 
         {
           // generic actual part
@@ -3716,10 +3753,15 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ROSE_ABORT();
       }
 
+    case A_Discriminant_Specification:             // 3.7(5)   -> Trait_Kinds
+      {
+        // handled in getDiscriminant
+        ROSE_ABORT();
+      }
+
     case Not_A_Declaration: /* break; */           // An unexpected element
     case A_Protected_Type_Declaration:             // 9.4(2)
     case A_Single_Protected_Declaration:           // 3.3.1(2):9.4(2)
-    case A_Discriminant_Specification:             // 3.7(5)   -> Trait_Kinds
     case A_Generalized_Iterator_Specification:     // 5.5.2    -> Trait_Kinds
     case An_Element_Iterator_Specification:        // 5.5.2    -> Trait_Kinds
     case A_Return_Variable_Specification:          // 6.5

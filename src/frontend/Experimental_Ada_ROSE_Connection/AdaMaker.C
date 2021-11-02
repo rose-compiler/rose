@@ -591,7 +591,7 @@ mkAdaPackageSpecDecl(const std::string& name, SgScopeStatement& scope)
   SgAdaPackageSpec&     pkgdef = mkScopeStmt<SgAdaPackageSpec>();
   SgAdaPackageSpecDecl& sgnode = mkLocatedNode<SgAdaPackageSpecDecl>(name, nullptr);
 
-  sgnode.set_parent(&scope);
+  sgnode.set_scope(&scope); // analogous to SgClassDeclaration::set_scope .. really needed?
   sgnode.set_firstNondefiningDeclaration(&sgnode);
 
   sg::linkParentChild(sgnode, pkgdef, &SgAdaPackageSpecDecl::set_definition);
@@ -648,20 +648,20 @@ mkAdaGenericDecl(SgScopeStatement& scope)
    sg::linkParentChild(sgnode, defn, &SgAdaGenericDecl::set_definition);
 
    return sgnode;
- }
+}
 
- SgAdaFormalTypeDecl&
- mkAdaFormalTypeDecl(const std::string& name, SgAdaFormalType& ty, SgScopeStatement& scope)
- {
-   SgAdaFormalTypeDecl&  sgnode = mkLocatedNode<SgAdaFormalTypeDecl>(SgName(name),&ty);
+SgAdaFormalTypeDecl&
+mkAdaFormalTypeDecl(const std::string& name, SgAdaFormalType& ty, SgScopeStatement& scope)
+{
+  SgAdaFormalTypeDecl&  sgnode = mkLocatedNode<SgAdaFormalTypeDecl>(SgName(name),&ty);
 
-   sgnode.set_parent(&scope);
-   sgnode.set_firstNondefiningDeclaration(&sgnode);
+  sgnode.set_parent(&scope);
+  sgnode.set_firstNondefiningDeclaration(&sgnode);
 
-   scope.insert_symbol(name, new SgAdaGenericSymbol(&sgnode));
+  scope.insert_symbol(name, new SgAdaGenericSymbol(&sgnode));
 
-   return sgnode;
- }
+  return sgnode;
+}
 
 
 namespace
@@ -694,13 +694,12 @@ mkAdaRenamingDecl(const std::string& name, SgInitializedName& ini, SgScopeStatem
 
 
 SgAdaPackageBodyDecl&
-mkAdaPackageBodyDecl(SgAdaPackageSpecDecl& specdcl, SgScopeStatement& scope)
+mkAdaPackageBodyDecl(SgAdaPackageSpecDecl& specdcl)
 {
   SgAdaPackageBody&     pkgbody = mkScopeStmt<SgAdaPackageBody>();
   SgAdaPackageBodyDecl& sgnode  = mkLocatedNode<SgAdaPackageBodyDecl>(specdcl.get_name(), &pkgbody);
 
   pkgbody.set_parent(&sgnode);
-  sgnode.set_parent(&scope);
   sgnode.set_firstNondefiningDeclaration(&sgnode);
 
   SgAdaPackageSpec&     pkgspec = SG_DEREF( specdcl.get_definition() );
@@ -709,9 +708,10 @@ mkAdaPackageBodyDecl(SgAdaPackageSpecDecl& specdcl, SgScopeStatement& scope)
   pkgbody.set_spec(&pkgspec);
 
   // \todo make sure assertion holds
-  // ADA_ASSERT(scope.symbol_exists(specdcl.get_name()));
-  if (!scope.symbol_exists(specdcl.get_name()))
-    scope.insert_symbol(specdcl.get_name(), &mkBareNode<SgAdaPackageSymbol>(&sgnode));
+
+  ADA_ASSERT(SG_DEREF(specdcl.get_scope()).symbol_exists(specdcl.get_name()));
+  //~ if (!scope.symbol_exists(specdcl.get_name()))
+    //~ scope.insert_symbol(specdcl.get_name(), &mkBareNode<SgAdaPackageSymbol>(&sgnode));
 
   return sgnode;
 }
@@ -1479,6 +1479,100 @@ mkAdaAttributeExp(SgExpression& expr, const std::string& ident, SgExprListExp& a
   markCompilerGenerated(sgnode);
   return sgnode;
 }
+
+
+namespace
+{
+  SgFunctionParameterTypeList&
+  mkFunctionParameterTypeList()
+  {
+    return mkBareNode<SgFunctionParameterTypeList>();
+  }
+
+  SgType&
+  convertType(SgType& actual, SgType& orig, SgTypedefType& derv)
+  {
+    return &orig == &actual ? derv : actual;
+  }
+
+  struct DeclaredType : sg::DispatchHandler<SgType*>
+  {
+    void handle(SgNode& n, SgNode&) { SG_UNEXPECTED_NODE(n); }
+
+    template <class SageDeclarationStatement>
+    void handle(SageDeclarationStatement& n, SgDeclarationStatement&)
+    {
+      res = n.get_type();
+    }
+
+    template <class SageNode>
+    void handle(SageNode& n)
+    {
+      handle(n, n);
+    }
+  };
+
+  /// replaces the original type of \ref declaredDerivedType with \ref declaredDerivedType in \ref funcTy.
+  /// returns \ref funcTy to indicate an error.
+  SgFunctionType&
+  convertToDerivedType(SgFunctionType& funcTy, SgTypedefType& declaredDerivedType)
+  {
+    SgDeclarationStatement* baseTypeDecl = si::ada::baseDeclaration(declaredDerivedType.get_base_type());
+
+    if (baseTypeDecl == nullptr)
+      return funcTy;
+
+    SgType*              origTypePtr  = sg::dispatch(DeclaredType{}, baseTypeDecl);
+    SgType&              originalType = SG_DEREF(origTypePtr);
+    SgType&              origRetTy    = SG_DEREF(funcTy.get_return_type());
+    SgType&              dervRetTy    = convertType(origRetTy, originalType, declaredDerivedType);
+    int                  numUpdTypes  = (&dervRetTy != &origRetTy);
+    std::vector<SgType*> newTypeList;
+
+    for (SgType* origArgTy : funcTy.get_arguments())
+    {
+      SgType* newArgTy = &convertType(SG_DEREF(origArgTy), originalType, declaredDerivedType);
+
+      newTypeList.push_back(newArgTy);
+      if (newArgTy != origArgTy) ++numUpdTypes;
+    }
+
+    // only create new nodes if everything worked
+    if (numUpdTypes == 0)
+      return funcTy;
+
+    SgFunctionParameterTypeList& paramTyLst  = mkFunctionParameterTypeList();
+
+    // \todo could we just swap the lists?
+    for (SgType* argTy : newTypeList)
+      paramTyLst.append_argument(argTy);
+
+    return SG_DEREF( sb::buildFunctionType(&dervRetTy, &paramTyLst) );
+  }
+}
+
+
+SgAdaInheritedFunctionSymbol&
+mkAdaInheritedFunctionSymbol(SgFunctionDeclaration& fn, SgTypedefType& declaredDerivedType, SgScopeStatement& scope)
+{
+  SgFunctionType&               functy = SG_DEREF(fn.get_type());
+  SgFunctionType&               dervty = convertToDerivedType(functy, declaredDerivedType);
+
+  if (&functy == &dervty)
+  {
+    // \todo in a first step, just report the errors in the log.
+    //       => fix this issues for all ROSE and ACATS tests.
+    logError() << "Inherited subroutine w/o type modification: " << fn.get_name()
+               << std::endl;
+  }
+
+  SgAdaInheritedFunctionSymbol& sgnode = mkBareNode<SgAdaInheritedFunctionSymbol>(&fn, &dervty);
+
+  scope.insert_symbol(fn.get_name(), &sgnode);
+  sgnode.set_parent(&scope);
+  return sgnode;
+}
+
 
 //
 // specialized templates
