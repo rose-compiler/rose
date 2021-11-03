@@ -627,13 +627,14 @@ RiscOperators::pruneCallStack() {
     if (computeMemoryRegions_) {
         const RegisterDescriptor SP = partitioner_.instructionProvider().stackPointerRegister();
         const BS::SValue::Ptr spSValue = peekRegister(SP, undefined_(SP.nBits()));
-        const rose_addr_t sp = spSValue->toUnsigned().get(); // must be concrete
-        FunctionCallStack &callStack = State::promote(currentState())->callStack();
+        if (auto sp = spSValue->toUnsigned()) {
+            FunctionCallStack &callStack = State::promote(currentState())->callStack();
 
-        while (!callStack.isEmpty() && callStack.top().initialStackPointer() < sp) {
-            SAWYER_MESG(mlog[DEBUG]) <<"      returned from " <<callStack.top().function()->printableName() <<"\n";
-            callStack.pop();
-            ++nPopped;
+            while (!callStack.isEmpty() && callStack.top().initialStackPointer() < *sp) {
+                SAWYER_MESG(mlog[DEBUG]) <<"      returned from " <<callStack.top().function()->printableName() <<"\n";
+                callStack.pop();
+                ++nPopped;
+            }
         }
     }
     return nPopped;
@@ -811,8 +812,8 @@ RiscOperators::finishInstruction(SgAsmInstruction *insn) {
                     // We are calling a function, so push a record onto the call stack.
                     const RegisterDescriptor SP = partitioner_.instructionProvider().stackPointerRegister();
                     const BS::SValue::Ptr spSValue = peekRegister(SP, undefined_(SP.nBits()));
-                    const rose_addr_t sp = spSValue->toUnsigned().get();      // must be concrete
-                    pushCallStack(callee, sp);
+                    if (auto sp = spSValue->toUnsigned())
+                        pushCallStack(callee, *sp);
                 }
             }
         }
