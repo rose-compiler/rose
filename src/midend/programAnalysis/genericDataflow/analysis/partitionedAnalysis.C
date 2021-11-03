@@ -466,6 +466,7 @@ bool PartitionedAnalysis::runAnalysis(const Function& func, NodeState* fState)
         // Create the initial partition state for analyzing the current function        
         initMaster();
         
+        ret = false; // return false if nothing else
         while(activeParts.size()>0)
         {
                 // get the next active analysis partition
