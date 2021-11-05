@@ -520,7 +520,9 @@ matrix-reclaim-disk() {
 
     local have_free=$(matrix-free-space)
     if [ $have_free -lt $min_free_space ]; then
-	die "error: not enough free disk space for running tests (have $have_free but need $min_free_space GB)"
+	local have_free_gb=$[have_free / 1024 / 1024]
+	local min_free_gb=$[min_free_space / 1024 / 1024]
+	die "error: not enough free disk space for running tests (have $have_free_gb but need $min_free_gb GB)"
     fi
 }
 
