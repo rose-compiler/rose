@@ -206,24 +206,24 @@ SmtlibSolver::findVariables(const SymbolicExpr::Ptr &expr, VariableSet &variable
 
         T1(SmtlibSolver *self, VariableSet &variables): self(self), variables(variables) {}
 
-        SymbolicExpr::VisitAction preVisit(const SymbolicExpr::Ptr &node) {
-            if (!seen.insert(getRawPointer(node)).second)
+        SymbolicExpr::VisitAction preVisit(const SymbolicExpr::Node *node) {
+            if (!seen.insert(node).second)
                 return SymbolicExpr::TRUNCATE;          // already processed this subexpression
             if (SymbolicExpr::LeafPtr leaf = node->isLeafNode()) {
                 if (leaf->isVariable2())
                     variables.insert(leaf);
-            } else if (SymbolicExpr::InteriorPtr inode = node->isInteriorNode()) {
+            } else if (auto inode = dynamic_cast<const SymbolicExpr::Interior*>(node)) {
                 if (inode->getOperator() == SymbolicExpr::OP_SET) {
                     // Sets are ultimately converted to ITEs and therefore each set needs a free variable.
                     SymbolicExpr::LeafPtr var = SymbolicExpr::makeIntegerVariable(32, "set")->isLeafNode();
                     variables.insert(var);
-                    self->varForSet(inode, var);
+                    self->varForSet(inode->sharedFromThis()->isInteriorNode(), var);
                 }
             }
             return SymbolicExpr::CONTINUE;
         }
 
-        SymbolicExpr::VisitAction postVisit(const SymbolicExpr::Ptr&) {
+        SymbolicExpr::VisitAction postVisit(const SymbolicExpr::Node*) {
             return SymbolicExpr::CONTINUE;
         }
     } t1(this, variables);
