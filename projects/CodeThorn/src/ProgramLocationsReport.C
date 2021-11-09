@@ -62,8 +62,12 @@ bool CodeThorn::ProgramLocationsReport::hasSourceLocation(SgNode* stmt) {
 }
 
 string CodeThorn::ProgramLocationsReport::findOriginalProgramLocationOfLabel(Labeler* labeler, Label lab) {
-  SgNode* node=labeler->getNode(lab);
-  return findOriginalProgramLocationOfNode(node);
+  if(lab.isValid()) {
+    SgNode* node=labeler->getNode(lab);
+    return findOriginalProgramLocationOfNode(node);
+  } else {
+    return "?:?";
+  }
 }
 
 string CodeThorn::ProgramLocationsReport::findOriginalProgramLocationOfNode(SgNode* node) {
@@ -97,9 +101,13 @@ string CodeThorn::ProgramLocationsReport::fileInfoAsFormattedProgramLocation(SgN
 }
   
 string CodeThorn::ProgramLocationsReport::sourceCodeAtLabel(Labeler* labeler, Label lab) {
-  SgNode* node=labeler->getNode(lab);
-  ROSE_ASSERT(node);
-  return SgNodeHelper::doubleQuotedEscapedString(node->unparseToString());
+  if(lab.isValid()) {
+    SgNode* node=labeler->getNode(lab);
+    ROSE_ASSERT(node);
+    return SgNodeHelper::doubleQuotedEscapedString(node->unparseToString());
+  } else {
+    return "invalid_label_error2";
+  }
 }
 
 bool CodeThorn::ProgramLocationsReport::isRecordedLocation(Label lab) {
@@ -131,13 +139,15 @@ LabelSet CodeThorn::ProgramLocationsReport::determineRecordFreeFunctions(CFAnaly
 void ProgramLocationsReport::recordDefinitiveLocation(CodeThorn::Label lab) {
 #pragma omp critical(definitiveproglocrecording)
   {
-    definitiveLocations.insert(lab);
+    if(lab.isValid())
+      definitiveLocations.insert(lab);
   }
 }
 void ProgramLocationsReport::recordPotentialLocation(CodeThorn::Label lab) {
 #pragma omp critical(potentialproglocrecording)
   {
-    potentialLocations.insert(lab);
+    if(lab.isValid())
+      potentialLocations.insert(lab);
   }
 }
  
@@ -198,12 +208,22 @@ void CodeThorn::ProgramLocationsReport::writeLocationsToStream(std::ostream& str
       stream<<qualifier;
     if(qualifier.size()>0&&(programLocation||sourceCode))
       stream<<": ";
-    if(programLocation)
-      stream<<this->findOriginalProgramLocationOfLabel(labeler,lab);
+    if(programLocation) {
+      if(lab.isValid()) {
+        stream<<this->findOriginalProgramLocationOfLabel(labeler,lab);
+      } else {
+        stream<<"?:?";
+      }
+    }
     if(programLocation&&sourceCode)
       stream<<": ";
-    if(sourceCode)
-      stream<<sourceCodeAtLabel(labeler,lab);
+    if(sourceCode) {
+      if(lab.isValid()) {
+        stream<<sourceCodeAtLabel(labeler,lab);
+      } else {
+        stream<<"invalid_label_error1";
+      }
+    }
     stream<<endl;
   }
 }
