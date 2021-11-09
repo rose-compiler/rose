@@ -729,6 +729,17 @@ Interior::addChild(const Ptr &child)
     }
 }
 
+const Ptr&
+Interior::child(size_t i) const {
+    static const Ptr none;
+    return i < children_.size() ? children_[i] : none;
+}
+
+Node*
+Interior::childRaw(size_t i) const {
+    return i < children_.size() ? children_[i].getRawPointer() : nullptr;
+}
+
 void
 Interior::adjustWidth(const Type &type) {
     if (children_.empty())
@@ -3039,6 +3050,12 @@ Leaf::createConstant(const Type &type, const Sawyer::Container::BitVector &bits,
     node->type_ = type;
     node->bits_ = bits;
     return LeafPtr(node);
+}
+
+const Ptr&
+Leaf::child(size_t) const {
+    static const Ptr none;
+    return none;
 }
 
 // class method
