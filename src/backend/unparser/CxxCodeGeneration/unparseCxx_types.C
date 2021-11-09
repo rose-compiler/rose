@@ -957,8 +957,8 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
                case T_ADA_SUBTYPE:
                case T_ADA_MODULAR_TYPE:
                case T_ADA_DERIVED_TYPE:   
-               case T_ADA_FLOAT:   
-               case T_ADA_ACCESS:   
+               case T_ADA_FLOAT_TYPE:   
+               case T_ADA_ACCESS_TYPE:   
                   {
                    // printf ("Warning: SgAda*Type is appearing in call to unparseType from Ada2Cpp (allow this for now) \n");
                     break;
