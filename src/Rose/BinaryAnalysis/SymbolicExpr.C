@@ -3041,14 +3041,76 @@ Leaf::createConstant(const Type &type, const Sawyer::Container::BitVector &bits,
 
 // class method
 uint64_t
-Leaf::nextNameCounter(uint64_t useThis) {
+Leaf::nextNameCounter(uint64_t highWaterMark) {
+#if 0
+    // Original version that uses a single mutex for all threads.
     static boost::mutex mutex;
     static uint64_t counter = 0;
     boost::lock_guard<boost::mutex> lock(mutex);
-    if (useThis == (uint64_t)(-1))
+    if (highWaterMark == (uint64_t)(-1))
         return ++counter;
-    counter = std::max(counter, useThis);
-    return useThis;
+    counter = std::max(counter, highWaterMark);
+    return highWaterMark;
+#else
+    // [Robb Matzke 2021-11-04]: New version that uses multiple mutexes to reduce contention.
+    struct IdPool {
+        SAWYER_THREAD_TRAITS::Mutex mutex;                  // protects the following data members
+        uint64_t nextId = 0;                                // next ID to hand out, if less than endId.
+        uint64_t endId = 0;                                 // one past maximum available ID
+    };
+    static const size_t nPools = 16;
+    static IdPool pools[nPools];
+
+    // If you need to lock both a pool and the globalMutex, the pool must be locked first to avoid potential deadlock.
+    static SAWYER_THREAD_TRAITS::Mutex globalMutex;     // protects globalNextId
+    static uint64_t globalNextId = 0;                   // next ID when replenishing a pool
+
+    if ((uint64_t)(-1) == highWaterMark /*[[likely]]*/) {
+        // To reduce contention on the global mutex, we have 16 disjoint pools of available IDs. Requests are handled by a
+        // random pool. We only lock the global mutex if a pool needs to aquire more IDs.
+        static const uint64_t poolSize = 10000;         // number of IDs to give to each pool when replenishing it
+        const size_t i = Sawyer::fastRandomIndex(nPools);
+        IdPool &pool = pools[i];
+        {
+            SAWYER_THREAD_TRAITS::LockGuard lock(pool.mutex);
+            if (pool.nextId >= pool.endId) {
+                // We need to replenish this pool from the global counter.
+                SAWYER_THREAD_TRAITS::LockGuard lock(globalMutex);
+                pool.nextId = globalNextId;
+                globalNextId += poolSize;
+                pool.endId = globalNextId;
+            }
+            return pool.nextId++;
+        }
+
+    } else {
+        // Specifying an high-water ID normally only happens when we're reading an RBA file and there's only one active
+        // thread. First increment the global counter, then remove from pools all IDs that are too small. Although pools
+        // could still be handing out too-small IDs during this, by time we return from this function, all pools will be
+        // handing out proper IDs. Furthermore, if two or more threads try to set high-water marks at the same time, only
+        // the highest high-water mark is used.
+        {
+            SAWYER_THREAD_TRAITS::LockGuard lock(globalMutex);
+            if (highWaterMark >= globalNextId)
+                globalNextId = highWaterMark + 1;
+        }
+
+        for (size_t i = 0; i < nPools; ++i) {
+            IdPool &pool = pools[i];
+            SAWYER_THREAD_TRAITS::LockGuard lock(pool.mutex);
+            for (size_t i = 0; i < nPools; ++i) {
+                if (pool.endId <= highWaterMark) {
+                    // All this pool's IDs are now too small. Empty the pool.
+                    pool.nextId = pool.endId = 0;
+                } else if (pool.nextId <= highWaterMark) {
+                    // Some of this pool's IDs are now too small. Discard them.
+                    pool.nextId = highWaterMark + 1;
+                }
+            }
+        }
+        return highWaterMark;
+    }
+#endif
 }
 
 Sawyer::Optional<uint64_t>
