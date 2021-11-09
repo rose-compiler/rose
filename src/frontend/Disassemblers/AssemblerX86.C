@@ -1137,9 +1137,8 @@ AssemblerX86::segment_override(SgAsmX86Instruction *insn)
         if (mre) {
             /* Find general purpose register in memory reference expression. */
             struct T1: public SgSimpleProcessing {
-                bool is_found;
-                int gpr;
-                T1(): is_found(false) {}
+                bool is_found = false;
+                int gpr = 0;
                 void visit(SgNode *node) {
                     SgAsmRegisterReferenceExpression *rre = isSgAsmRegisterReferenceExpression(node);
                     if (rre && x86_regclass_gpr==rre->get_descriptor().majorNumber() && !is_found) {

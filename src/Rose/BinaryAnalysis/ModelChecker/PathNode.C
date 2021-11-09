@@ -152,18 +152,11 @@ PathNode::execute(const Settings::Ptr &settings, const SemanticCallbacks::Ptr &s
         semantics->attachModelCheckerSolver(ops, SmtSolver::Ptr());
     } BOOST_SCOPE_EXIT_END;
 
-    // Show SMT solver assertions if requested.
-    if (mlog[DEBUG] && settings->showAssertions) {
-        mlog[DEBUG] <<"  SMT solver assertions at this node:\n";
-        for (auto assertion: assertions_)
-            mlog[DEBUG] <<"    " <<*assertion <<"\n";
-    }
-
     // Execute the current node. Note that we're still holding the lock on this node so if other threads are also needing to
     // execute this node, they'll block and when they finally make progress they'll return fast (the "already executed"
     // condition above).
     if (ops->currentState()) {                          // null if parent execution failed
-        SAWYER_MESG(mlog[DEBUG]) <<"  pre-execution semantics\n";
+        SAWYER_MESG(mlog[DEBUG]) <<"  running pre-execution steps\n";
         std::vector<Tag::Ptr> tags = semantics->preExecute(executionUnit_, ops);
         tags_.insert(tags_.end(), tags.begin(), tags.end());
     }
@@ -172,7 +165,7 @@ PathNode::execute(const Settings::Ptr &settings, const SemanticCallbacks::Ptr &s
         tags_.insert(tags_.end(), tags.begin(), tags.end());
     }
     if (ops->currentState()) {
-        SAWYER_MESG(mlog[DEBUG]) <<"  post-execution semantics\n";
+        SAWYER_MESG(mlog[DEBUG]) <<"  running post-execution steps\n";
         std::vector<Tag::Ptr> tags = semantics->postExecute(executionUnit_, ops);
         tags_.insert(tags_.end(), tags.begin(), tags.end());
     }

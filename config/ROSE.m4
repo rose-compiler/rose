@@ -201,10 +201,7 @@ dnl This should use the AC_ARG_ENABLE not AC_ARC_WITH!
 
 AC_MSG_NOTICE([setup CXX_WARNING CXX = "$CXX"])
 
-# AC_ARG_ENABLE(warnings, AS_HELP_STRING([--enable-warnings], [Support for a uniform warning level for ROSE development]),[enableval=yes],[enableval=yes])
-# AC_ARG_WITH(CXX_WARNINGS, [  --with-CXX_WARNINGS=ARG   manually set the C++ compiler warning flags to ARG (leave blank to choose automatically)])
-AC_ARG_WITH(CXX_WARNINGS, AS_HELP_STRING([--with-CXX_WARNINGS], [Support for a uniform warning level for ROSE development]),[withval=yes],[withval=yes])
-# AC_ARG_WITH(CXX_WARNINGS, AS_HELP_STRING([--with-CXX_WARNINGS], [Support for a uniform warning level for ROSE development]),[with_CXX_WARNINGS=yes],[with_CXX_WARNINGS=yes])
+AC_ARG_WITH(CXX_WARNINGS, AS_HELP_STRING([--with-CXX_WARNINGS], [Support for a uniform warning level for ROSE development]),[withval=yes],[withval=no])
 
 AC_MSG_NOTICE([with_CXX_WARNINGS = "$with_CXX_WARNINGS"])
 
@@ -222,80 +219,43 @@ fi
 
 AC_MSG_NOTICE([after initialization: with_CXX_WARNINGS = "$with_CXX_WARNINGS"])
 
-# echo "Setting with_CXX_WARNINGS to withval = $withval"
-# with_CXX_WARNINGS=$withval
-
 if test "x$with_CXX_WARNINGS" = "xyes"; then
-# DQ (12/3/2016): Add these options to what may have been specified using enable_fatal_rose_warnings.
-# CXX_WARNINGS was activated but not specified, so set it.
   AC_MSG_NOTICE([using default options for maximal warnings (true case)])
-# case $CXX in
   case $FRONTEND_CXX_COMPILER_VENDOR in
-#   g++)
     gnu)
-    # cc1plus: warning: command line option "-Wstrict-prototypes" is valid for Ada/C/ObjC but not for C++
-    # cc1plus: warning: command line option "-Wmissing-prototypes" is valid for Ada/C/ObjC but not for C++
-    # CXX_WARNINGS="-Wall -Wstrict-prototypes -Wmissing-prototypes"
-    #  CXX_WARNINGS="-Wall"
-    # DQ (4/5/2017): Ignore some warnings (GNU feature only meaningful for small codes).
-    # CXX_WARNINGS+="-Wall -Wnomisleading-indentation -Wnonnull-compare"
-    # DQ (4/5/2017): Note: specification of "-Wnomisleading-indentation" causes errors downstream in boost configuration.
-    # CXX_WARNINGS+="-Wall -Wnomisleading-indentation"
-      CXX_WARNINGS+="-Wall"
+      CXX_WARNINGS="-Wall"
       ;;
-#   icpc)
     intel)
-    # For Intel turn on 64bit migration/portability warnings
-    # CXX_WARNINGS="-w1 -Wall -Wcheck -Wp64"
-    # CXX_WARNINGS+="-w1 -Wall -Wcheck -Wp64"
-      CXX_WARNINGS+="-Wall"
+      CXX_WARNINGS="-Wall"
       ;;
     clang)
-    # For Intel turn on 64bit migration/portability warnings
-    # CXX_WARNINGS="-w1 -Wall -Wcheck -Wp64"
-    # CXX_WARNINGS+="-w1 -Wall -Wcheck -Wp64"
-      CXX_WARNINGS+="-Wall -Wno-unused-local-typedefs -Wno-attributes"
+      CXX_WARNINGS="-Wall -Wno-unused-local-typedefs -Wno-attributes"
       ;;
-#   KCC | mpKCC)
     kai)
-    # CXX_WARNINGS="--for_init_diff_warning --new_for_init -w"
-      CXX_WARNINGS+="--for_init_diff_warning --new_for_init -w"
+      CXX_WARNINGS="--for_init_diff_warning --new_for_init -w"
       ;;
-#   CC)
     sun)
       case $host_os in
         solaris*| sun4*)
-        # CXX_WARNINGS=""
-          CXX_WARNINGS+=""
+          CXX_WARNINGS=""
     esac
     ;;
   esac
 elif test "x$with_CXX_WARNINGS" = "xno"; then
-
-  CXX_WARNINGS=''
-# DQ (1/15/2007): turn on warnings by default.
   AC_MSG_NOTICE([using at least some default (minimal) options for warnings (false case)])
-# case $CXX in
   case $FRONTEND_CXX_COMPILER_VENDOR in
-#   g++)
     gnu)
-    # CXX_WARNINGS="-Wall -Wstrict-prototypes -Wmissing-prototypes"
-      CXX_WARNINGS="-Wall"
+      CXX_WARNINGS=""
       ;;
-#   icpc)
     intel)
-    # For Intel turn on 64bit migration/portability warnings
-      CXX_WARNINGS="-w1 -Wall -Wcheck -Wp64"
+      CXX_WARNINGS=""
       ;;
     clang)
-    # CXX_WARNINGS="-Wall -Wstrict-prototypes -Wmissing-prototypes"
-      CXX_WARNINGS="-Wall -Wno-unused-local-typedefs -Wno-attributes"
+      CXX_WARNINGS=""
       ;;
-#   "KCC --c" | mpKCC)
     kai)
-      CXX_WARNINGS="--for_init_diff_warning --new_for_init -w"
+      CXX_WARNINGS=""
       ;;
-#   CC)
     sun)
       case $host_os in
         solaris*| sun4*)
@@ -306,7 +266,7 @@ elif test "x$with_CXX_WARNINGS" = "xno"; then
 else
 # Settings specified explicitly by the user.
   AC_MSG_NOTICE([adding explicitly specified warnings to be used for CXX_WARNINGS])
-  CXX_WARNINGS+=$with_CXX_WARNINGS
+  CXX_WARNINGS=$with_CXX_WARNINGS
 fi
 
 AC_SUBST(CXX_WARNINGS)
@@ -487,9 +447,7 @@ dnl This should use the AC_ARG_ENABLE not AC_ARC_WITH!
 
 AC_MSG_NOTICE([setup C_WARNINGS CC = "$CC"])
 
-# AC_ARG_WITH(C_WARNINGS, [  --with-C_WARNINGS=ARG   manually set the C compiler warning flags to ARG (leave blank to choose automatically)])
-# AC_ARG_WITH(C_WARNINGS, AS_HELP_STRING([--with-C_WARNINGS], [Support for a uniform warning level for ROSE development]),[with_C_WARNINGS=yes],[with_C_WARNINGS=yes])
-AC_ARG_WITH(C_WARNINGS, AS_HELP_STRING([--with-C_WARNINGS], [Support for a uniform warning level for ROSE development]),[withval=yes],[withval=yes])
+AC_ARG_WITH(C_WARNINGS, AS_HELP_STRING([--with-C_WARNINGS], [Support for a uniform warning level for ROSE development]),[withval=yes],[withval=no])
 
 AC_MSG_NOTICE([with_C_WARNINGS = "$with_C_WARNINGS"])
 
@@ -508,64 +466,40 @@ fi
 AC_MSG_NOTICE([after initialization: with_C_WARNINGS = "$with_C_WARNINGS"])
 
 if test "x$with_C_WARNINGS" = "xyes"; then
-  # C_WARNINGS was activated but not specified, so set it.
-# DQ (3/21/2017): Base the C language warning specification on the vendor for the C++ compiler (same as vendor for C compiler).
-# case $CC in
   case $FRONTEND_CXX_COMPILER_VENDOR in
-#   gcc)
     gnu)
-    # C_WARNINGS="-Wall -Wstrict-prototypes -Wmissing-prototypes"
-      C_WARNINGS+="-Wall -Wstrict-prototypes -Wmissing-prototypes"
+      C_WARNINGS="-Wall -Wstrict-prototypes -Wmissing-prototypes"
       ;;
-#   icc)
     intel)
-    # For Intel turn on 64bit migration/portability warnings
-    # C_WARNINGS="-w -Wall -Wcheck -Wp64"
-      C_WARNINGS+="-w -Wall -Wcheck -Wp64"
+      C_WARNINGS="-w -Wall -Wcheck -Wp64"
       ;;
     clang)
-    # C_WARNINGS="-Wall -Wstrict-prototypes -Wmissing-prototypes"
-      C_WARNINGS+="-Wall -Wno-unused-local-typedefs -Wno-attributes"
+      C_WARNINGS="-Wall -Wno-unused-local-typedefs -Wno-attributes"
       ;;
-#   "KCC --c" | mpKCC)
     kai)
-    # C_WARNINGS="--for_init_diff_warning --new_for_init -w"
-      C_WARNINGS+="--for_init_diff_warning --new_for_init -w"
+      C_WARNINGS="--for_init_diff_warning --new_for_init -w"
       ;;
-#   cc)
     sun)
       case $host_os in
         solaris*| sun4*)
-        # C_WARNINGS=""
-          C_WARNINGS+=""
+          C_WARNINGS=""
     esac
     ;;
   esac
 elif test "x$with_C_WARNINGS" = "xno"; then
-# DQ (12/3/2016): Ony use default warning when enable_fatal_rose_warnings is not used.
-  C_WARNINGS=''
-# DQ (1/15/2007): turn on warnings by default.
-# case $CC in
   case $FRONTEND_CXX_COMPILER_VENDOR in
-#   gcc)
     gnu)
-    # C_WARNINGS="-Wall -Wstrict-prototypes -Wmissing-prototypes"
-      C_WARNINGS="-Wall"
+      C_WARNINGS=""
       ;;
-#   icc)
     intel)
-    # For Intel turn on 64bit migration/portability warnings
-      C_WARNINGS="-w1 -Wall -Wcheck -Wp64"
+      C_WARNINGS=""
       ;;
     clang)
-    # C_WARNINGS="-Wall -Wstrict-prototypes -Wmissing-prototypes"
-      C_WARNINGS="-Wall -Wno-unused-local-typedefs -Wno-attributes"
+      C_WARNINGS=""
       ;;
-#   "KCC --c" | mpKCC)
     kai)
-      C_WARNINGS="--for_init_diff_warning --new_for_init -w"
+      C_WARNINGS=""
       ;;
-#   cc)
     sun)
       case $host_os in
         solaris*| sun4*)
@@ -575,7 +509,7 @@ elif test "x$with_C_WARNINGS" = "xno"; then
   esac
 else
   AC_MSG_NOTICE([adding explicitly specified warnings to be used.])
-  C_WARNINGS+=$with_C_WARNINGS
+  C_WARNINGS=$with_C_WARNINGS
 fi
 
 AC_SUBST(C_WARNINGS)
