@@ -604,8 +604,12 @@ public:
     /** Argument.
      *
      *  Returns the specified argument by index. If the index is out of range, then returns null. A leaf node always returns
-     *  null since it never has children. */
-    virtual Ptr child(size_t idx) const = 0;
+     *  null since it never has children.
+     *
+     * @{ */
+    virtual const Ptr& child(size_t idx) const = 0;
+    virtual const Node* childRaw(size_t idx) const = 0;
+    /** @} */
 
     /** Arguments.
      *
@@ -1139,7 +1143,8 @@ public:
     virtual const Nodes& children() const override { return children_; }
     virtual Operator getOperator() const override { return op_; }
     virtual size_t nChildren() const override { return children_.size(); }
-    virtual Ptr child(size_t idx) const override { return idx < children_.size() ? children_[idx] : Ptr(); }
+    virtual const Ptr& child(size_t idx) const override;
+    virtual Node* childRaw(size_t idx) const override;
     virtual Sawyer::Optional<uint64_t> toUnsigned() const override { return Sawyer::Nothing(); }
     virtual Sawyer::Optional<int64_t> toSigned() const override { return Sawyer::Nothing(); }
     virtual bool isConstant() const override { return false; }
@@ -1293,7 +1298,8 @@ public:
     //--------------------------------------------------------
 public:
     virtual size_t nChildren() const override { return 0; }
-    virtual Ptr child(size_t idx) const override { return Ptr(); }
+    virtual const Ptr& child(size_t idx) const override;
+    virtual const Node* childRaw(size_t idx) const override { return nullptr; }
     virtual const Nodes& children() const override;
     virtual Operator getOperator() const override { return OP_NONE; }
     virtual bool mustEqual(const Ptr &other, const SmtSolverPtr &solver = SmtSolverPtr()) override;

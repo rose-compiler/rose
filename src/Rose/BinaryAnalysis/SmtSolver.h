@@ -29,6 +29,11 @@ public:
     bool operator()(const SymbolicExpr::LeafPtr&, const SymbolicExpr::LeafPtr&) const;
 };
 
+class CompareRawLeavesByName {
+public:
+    bool operator()(const SymbolicExpr::Leaf*, const SymbolicExpr::Leaf*) const;
+};
+
 /** Interface to Satisfiability Modulo Theory (SMT) solvers.
  *
  *  The purpose of an SMT solver is to determine if an expression is satisfiable. Solvers are reference counted objects that
@@ -456,7 +461,7 @@ public:
      *
      *  Returns the assertions associated with a particular level of the stack. Level zero is the oldest entry in the stack;
      *  all smt objects have a level zero. See also, @ref nLevels. */
-    virtual std::vector<SymbolicExpr::Ptr> assertions(size_t level) const;
+    virtual const std::vector<SymbolicExpr::Ptr>& assertions(size_t level) const;
 
     /** Check satisfiability of current stack.
      *

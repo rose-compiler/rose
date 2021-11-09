@@ -132,7 +132,7 @@ Z3Solver::z3Update() {
 
             // Push z3 expressions onto the top of the z3 stack
             size_t level = z3Stack_.size() - 1;
-            std::vector<SymbolicExpr::Ptr> exprs = assertions(level);
+            const std::vector<SymbolicExpr::Ptr> &exprs = assertions(level);
             while (z3Stack_.back().size() < exprs.size()) {
                 size_t i = z3Stack_[level].size();
                 SymbolicExpr::Ptr expr = exprs[i];
@@ -142,7 +142,7 @@ Z3Solver::z3Update() {
                 findVariables(expr, vars /*out*/);
                 ctxVariableDeclarations(vars);
                 ctxCommonSubexpressions(expr);
-                z3::expr z3expr = ctxCast(ctxExpression(expr), BOOLEAN).first;
+                z3::expr z3expr = ctxCast(ctxExpression(expr.getRawPointer()), BOOLEAN).first;
                 solver_->add(z3expr);
                 z3Stack_.back().push_back(z3expr);
             }
@@ -160,6 +160,13 @@ Z3Solver::z3Update() {
             ASSERT_require(z3Stack_[i].size() == assertions(i).size());
 #endif
 
+        // Remove all raw pointer references to ROSE sybmolic expressions that might go away when we return. Also delete the
+        // shared pointer references we were holding for those raw references.
+        ctxCses_.clear();
+        ctxVarDecls_.clear();
+        holdingExprs_.clear();
+
+        // Statistics
         stats.prepareTime += prepareTimer.stop();
         stats.longestPrepareTime = std::max(stats.longestPrepareTime, prepareTimer.report());
     }
@@ -471,7 +478,7 @@ portable_z3_bv_val(z3::context *ctx, uint64_t value, size_t nBits) {
 }
 
 Z3Solver::Z3ExprTypePair
-Z3Solver::ctxLeaf(const SymbolicExpr::LeafPtr &leaf) {
+Z3Solver::ctxLeaf(const SymbolicExpr::Leaf *leaf) {
     ASSERT_not_null(leaf);
     if (leaf->isIntegerConstant()) {
         if (leaf->nBits() <= 64) {
@@ -523,12 +530,12 @@ Z3Solver::mostType(const std::vector<Z3ExprTypePair> &ets) {
 }
 
 Z3Solver::Z3ExprTypePair
-Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
+Z3Solver::ctxExpression(SymbolicExpr::Node *expr) {
     ASSERT_not_null(expr);
     typedef std::vector<Z3ExprTypePair> Etv;
 
-    SymbolicExpr::LeafPtr leaf = expr->isLeafNode();
-    SymbolicExpr::InteriorPtr inode = expr->isInteriorNode();
+    SymbolicExpr::Leaf *leaf = dynamic_cast<SymbolicExpr::Leaf*>(expr);
+    SymbolicExpr::Interior *inode = dynamic_cast<SymbolicExpr::Interior*>(expr);
 
     ASSERT_not_null(ctx_);
     z3::expr z3expr(*ctx_);
@@ -601,7 +608,7 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
                 return ctxExtract(inode);
             case SymbolicExpr::OP_INVERT: {
                 ASSERT_require(inode->nChildren() == 1);
-                Z3ExprTypePair child = ctxExpression(inode->child(0));
+                Z3ExprTypePair child = ctxExpression(inode->childRaw(0));
                 if (BOOLEAN == child.second) {
                     z3expr = !child.first;
                 } else {
@@ -637,11 +644,11 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
             case SymbolicExpr::OP_ITE: {
                 ASSERT_require(inode->nChildren() == 3);
                 Etv alternatives;
-                alternatives.push_back(ctxExpression(inode->child(1)));
-                alternatives.push_back(ctxExpression(inode->child(2)));
+                alternatives.push_back(ctxExpression(inode->childRaw(1)));
+                alternatives.push_back(ctxExpression(inode->childRaw(2)));
                 Type type = mostType(alternatives);
                 alternatives = ctxCast(alternatives, type);
-                z3expr = z3::ite(ctxCast(ctxExpression(inode->child(0)), BOOLEAN).first,
+                z3expr = z3::ite(ctxCast(ctxExpression(inode->childRaw(0)), BOOLEAN).first,
                                  alternatives[0].first,
                                  alternatives[1].first);
                 return Z3ExprTypePair(z3expr, type);
@@ -662,12 +669,13 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
             }
             case SymbolicExpr::OP_NEGATE: {
                 ASSERT_require(inode->nChildren() == 1);
-                Z3ExprTypePair child = ctxCast(ctxExpression(inode->child(0)), BIT_VECTOR);
+                Z3ExprTypePair child = ctxCast(ctxExpression(inode->childRaw(0)), BIT_VECTOR);
                 z3expr = -child.first;
                 return Z3ExprTypePair(z3expr, BIT_VECTOR);
             }
             case SymbolicExpr::OP_NOOP:
-                return ctxExpression(SymbolicExpr::makeIntegerConstant(inode->nBits(), 0));
+                holdingExprs_.push_back(SymbolicExpr::makeIntegerConstant(inode->nBits(), 0));
+                return ctxExpression(holdingExprs_.back().getRawPointer());
             case SymbolicExpr::OP_OR: {
                 ASSERT_require(inode->nChildren() >= 2);
                 Etv children = ctxExpressions(inode->children());
@@ -701,13 +709,13 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
                 return ctxSignExtend(inode);
             case SymbolicExpr::OP_SLT:
                 ASSERT_require(inode->nChildren() == 2);
-                z3expr = (ctxCast(ctxExpression(inode->child(0)), BIT_VECTOR).first <
-                          ctxCast(ctxExpression(inode->child(1)), BIT_VECTOR).first);
+                z3expr = (ctxCast(ctxExpression(inode->childRaw(0)), BIT_VECTOR).first <
+                          ctxCast(ctxExpression(inode->childRaw(1)), BIT_VECTOR).first);
                 return Z3ExprTypePair(z3expr, BOOLEAN);
             case SymbolicExpr::OP_SLE:
                 ASSERT_require(inode->nChildren() == 2);
-                z3expr = (ctxCast(ctxExpression(inode->child(0)), BIT_VECTOR).first <=
-                          ctxCast(ctxExpression(inode->child(1)), BIT_VECTOR).first);
+                z3expr = (ctxCast(ctxExpression(inode->childRaw(0)), BIT_VECTOR).first <=
+                          ctxCast(ctxExpression(inode->childRaw(1)), BIT_VECTOR).first);
                 return Z3ExprTypePair(z3expr, BOOLEAN);
             case SymbolicExpr::OP_SHL0:
                 return ctxShiftLeft(inode);
@@ -719,13 +727,13 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
                 return ctxShiftRight(inode);
             case SymbolicExpr::OP_SGE:
                 ASSERT_require(inode->nChildren() == 2);
-                z3expr = (ctxCast(ctxExpression(inode->child(0)), BIT_VECTOR).first >=
-                          ctxCast(ctxExpression(inode->child(1)), BIT_VECTOR).first);
+                z3expr = (ctxCast(ctxExpression(inode->childRaw(0)), BIT_VECTOR).first >=
+                          ctxCast(ctxExpression(inode->childRaw(1)), BIT_VECTOR).first);
                 return Z3ExprTypePair(z3expr, BOOLEAN);
             case SymbolicExpr::OP_SGT:
                 ASSERT_require(inode->nChildren() == 2);
-                z3expr = (ctxCast(ctxExpression(inode->child(0)), BIT_VECTOR).first >
-                          ctxCast(ctxExpression(inode->child(1)), BIT_VECTOR).first);
+                z3expr = (ctxCast(ctxExpression(inode->childRaw(0)), BIT_VECTOR).first >
+                          ctxCast(ctxExpression(inode->childRaw(1)), BIT_VECTOR).first);
                 return Z3ExprTypePair(z3expr, BOOLEAN);
             case SymbolicExpr::OP_SMOD:
                 return ctxSignedModulo(inode);
@@ -737,23 +745,23 @@ Z3Solver::ctxExpression(const SymbolicExpr::Ptr &expr) {
                 return ctxUnsignedExtend(inode);
             case SymbolicExpr::OP_UGE:
                 ASSERT_require(inode->nChildren() == 2);
-                z3expr = z3::uge(ctxCast(ctxExpression(inode->child(0)), BIT_VECTOR).first,
-                                 ctxCast(ctxExpression(inode->child(1)), BIT_VECTOR).first);
+                z3expr = z3::uge(ctxCast(ctxExpression(inode->childRaw(0)), BIT_VECTOR).first,
+                                 ctxCast(ctxExpression(inode->childRaw(1)), BIT_VECTOR).first);
                 return Z3ExprTypePair(z3expr, BOOLEAN);
             case SymbolicExpr::OP_UGT:
                 ASSERT_require(inode->nChildren() == 2);
-                z3expr = z3::ugt(ctxCast(ctxExpression(inode->child(0)), BIT_VECTOR).first,
-                                 ctxCast(ctxExpression(inode->child(1)), BIT_VECTOR).first);
+                z3expr = z3::ugt(ctxCast(ctxExpression(inode->childRaw(0)), BIT_VECTOR).first,
+                                 ctxCast(ctxExpression(inode->childRaw(1)), BIT_VECTOR).first);
                 return Z3ExprTypePair(z3expr, BOOLEAN);
             case SymbolicExpr::OP_ULE:
                 ASSERT_require(inode->nChildren() == 2);
-                z3expr = z3::ule(ctxCast(ctxExpression(inode->child(0)), BIT_VECTOR).first,
-                                 ctxCast(ctxExpression(inode->child(1)), BIT_VECTOR).first);
+                z3expr = z3::ule(ctxCast(ctxExpression(inode->childRaw(0)), BIT_VECTOR).first,
+                                 ctxCast(ctxExpression(inode->childRaw(1)), BIT_VECTOR).first);
                 return Z3ExprTypePair(z3expr, BOOLEAN);
             case SymbolicExpr::OP_ULT:
                 ASSERT_require(inode->nChildren() == 2);
-                z3expr = z3::ult(ctxCast(ctxExpression(inode->child(0)), BIT_VECTOR).first,
-                                 ctxCast(ctxExpression(inode->child(1)), BIT_VECTOR).first);
+                z3expr = z3::ult(ctxCast(ctxExpression(inode->childRaw(0)), BIT_VECTOR).first,
+                                 ctxCast(ctxExpression(inode->childRaw(1)), BIT_VECTOR).first);
                 return Z3ExprTypePair(z3expr, BOOLEAN);
             case SymbolicExpr::OP_UMOD:
                 return ctxUnsignedModulo(inode);
@@ -774,7 +782,7 @@ Z3Solver::ctxExpressions(const std::vector<SymbolicExpr::Ptr> &exprs) {
     std::vector<Z3Solver::Z3ExprTypePair> retval;
     retval.reserve(exprs.size());
     BOOST_FOREACH (const SymbolicExpr::Ptr &expr, exprs)
-        retval.push_back(ctxExpression(expr));
+        retval.push_back(ctxExpression(expr.getRawPointer()));
     return retval;
 }
 #endif
@@ -826,20 +834,21 @@ void
 Z3Solver::ctxVariableDeclarations(const VariableSet &vars) {
     BOOST_FOREACH (const SymbolicExpr::LeafPtr &var, vars.values()) {
         ASSERT_not_null(var);
+        const SymbolicExpr::Leaf *varRaw = var.getRawPointer();
         ASSERT_require(var->isVariable2());
-        if (ctxVarDecls_.exists(var)) {
+        if (ctxVarDecls_.exists(varRaw)) {
             // already emitted a declaration for this variable
         } else if (var->isScalar()) {
             z3::sort range = ctx_->bv_sort(var->nBits());
             z3::func_decl decl = z3::function(var->toString().c_str(), 0, NULL, range);
-            ctxVarDecls_.insert(var, decl);
+            ctxVarDecls_.insert(varRaw, decl);
         } else {
             ASSERT_require(var->domainWidth() > 0);
             z3::sort addr = ctx_->bv_sort(var->domainWidth());
             z3::sort value = ctx_->bv_sort(var->nBits());
             z3::sort range = ctx_->array_sort(addr, value);
             z3::func_decl decl = z3::function(var->toString().c_str(), 0, NULL, range);
-            ctxVarDecls_.insert(var, decl);
+            ctxVarDecls_.insert(varRaw, decl);
         }
     }
 }
@@ -848,8 +857,9 @@ void
 Z3Solver::ctxCommonSubexpressions(const SymbolicExpr::Ptr &expr) {
     std::vector<SymbolicExpr::Ptr> cses = expr->findCommonSubexpressions();
     BOOST_FOREACH (const SymbolicExpr::Ptr &cse, cses) {
-        if (!ctxCses_.exists(cse))
-            ctxCses_.insert(cse, ctxExpression(cse));
+        SymbolicExpr::Node *cseRaw = cse.getRawPointer();
+        if (!ctxCses_.exists(cseRaw))
+            ctxCses_.insert(cseRaw, ctxExpression(cseRaw));
     }
 }
 
@@ -880,19 +890,20 @@ Z3Solver::ctxCast(const std::vector<Z3ExprTypePair> &ets, Type toType) {
 }
 
 Z3Solver::Z3ExprTypePair
-Z3Solver::ctxArithmeticShiftRight(const SymbolicExpr::InteriorPtr &inode) {
+Z3Solver::ctxArithmeticShiftRight(SymbolicExpr::Interior *inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     SymbolicExpr::Ptr sa = inode->child(0);
-    SymbolicExpr::Ptr expr = inode->child(1);
+    SymbolicExpr::Node *expr = inode->childRaw(1);
     sa = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, expr->nBits()), sa);
+    holdingExprs_.push_back(sa);
     z3::expr e = z3::ashr(ctxCast(ctxExpression(expr), BIT_VECTOR).first,
-                          ctxCast(ctxExpression(sa), BIT_VECTOR).first);
+                          ctxCast(ctxExpression(sa.getRawPointer()), BIT_VECTOR).first);
     return Z3ExprTypePair(e, BIT_VECTOR);
 }
 
 Z3Solver::Z3ExprTypePair
-Z3Solver::ctxExtract(const SymbolicExpr::InteriorPtr &inode) {
+Z3Solver::ctxExtract(SymbolicExpr::Interior *inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 3);
     ASSERT_require(inode->child(0)->isIntegerConstant());
@@ -902,131 +913,141 @@ Z3Solver::ctxExtract(const SymbolicExpr::InteriorPtr &inode) {
     ASSERT_require(end > begin);
     ASSERT_require(end <= inode->child(2)->nBits());
 
-    z3::expr e = ctxCast(ctxExpression(inode->child(2)), BIT_VECTOR).first.extract(end-1, begin);
+    z3::expr e = ctxCast(ctxExpression(inode->childRaw(2)), BIT_VECTOR).first.extract(end-1, begin);
     return Z3ExprTypePair(e, BIT_VECTOR);
 }
 
 Z3Solver::Z3ExprTypePair
-Z3Solver::ctxRead(const SymbolicExpr::InteriorPtr &inode) {
+Z3Solver::ctxRead(SymbolicExpr::Interior *inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren());
-    z3::expr e = z3::select(ctxCast(ctxExpression(inode->child(0)), MEM_STATE).first,
-                            ctxCast(ctxExpression(inode->child(1)), BIT_VECTOR).first);
+    z3::expr e = z3::select(ctxCast(ctxExpression(inode->childRaw(0)), MEM_STATE).first,
+                            ctxCast(ctxExpression(inode->childRaw(1)), BIT_VECTOR).first);
     return Z3ExprTypePair(e, BIT_VECTOR);
 }
 
 Z3Solver::Z3ExprTypePair
-Z3Solver::ctxRotateLeft(const SymbolicExpr::InteriorPtr &inode) {
+Z3Solver::ctxRotateLeft(SymbolicExpr::Interior *inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     SymbolicExpr::Ptr sa = inode->child(0);
-    SymbolicExpr::Ptr expr = inode->child(1);
+    SymbolicExpr::Node *expr = inode->childRaw(1);
     size_t w = expr->nBits();
     sa = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, 2*w), sa);
+    holdingExprs_.push_back(sa);
     z3::expr e = z3::shl(z3::concat(ctxCast(ctxExpression(expr), BIT_VECTOR).first,
                                     ctxCast(ctxExpression(expr), BIT_VECTOR).first),
-                         ctxCast(ctxExpression(sa), BIT_VECTOR).first)
+                         ctxCast(ctxExpression(sa.getRawPointer()), BIT_VECTOR).first)
                  .extract(2*w-1, w);
     return Z3ExprTypePair(e, BIT_VECTOR);
 }
 
 Z3Solver::Z3ExprTypePair
-Z3Solver::ctxRotateRight(const SymbolicExpr::InteriorPtr &inode) {
+Z3Solver::ctxRotateRight(SymbolicExpr::Interior *inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     SymbolicExpr::Ptr sa = inode->child(0);
-    SymbolicExpr::Ptr expr = inode->child(1);
+    SymbolicExpr::Node *expr = inode->childRaw(1);
     size_t w = expr->nBits();
     sa = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, 2*w), sa);
+    holdingExprs_.push_back(sa);
     z3::expr e = z3::lshr(z3::concat(ctxCast(ctxExpression(expr), BIT_VECTOR).first,
                                      ctxCast(ctxExpression(expr), BIT_VECTOR).first),
-                          ctxCast(ctxExpression(sa), BIT_VECTOR).first)
+                          ctxCast(ctxExpression(sa.getRawPointer()), BIT_VECTOR).first)
                  .extract(w-1, 0);
     return Z3ExprTypePair(e, BIT_VECTOR);
 }
 
 Z3Solver::Z3ExprTypePair
-Z3Solver::ctxSet(const SymbolicExpr::InteriorPtr &inode) {
+Z3Solver::ctxSet(SymbolicExpr::Interior *inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->getOperator() == SymbolicExpr::OP_SET);
     ASSERT_require(inode->nChildren() >= 2);
-    SymbolicExpr::LeafPtr var = varForSet(inode);
-    SymbolicExpr::Ptr ite = SymbolicExpr::setToIte(inode, SmtSolverPtr(), var);
-    return ctxExpression(ite);
+    SymbolicExpr::LeafPtr var = varForSet(SymbolicExpr::InteriorPtr(inode));
+    SymbolicExpr::Ptr ite = SymbolicExpr::setToIte(SymbolicExpr::InteriorPtr(inode), SmtSolverPtr(), var);
+    holdingExprs_.push_back(ite);
+    return ctxExpression(ite.getRawPointer());
 }
 
 Z3Solver::Z3ExprTypePair
-Z3Solver::ctxSignExtend(const SymbolicExpr::InteriorPtr &inode) {
+Z3Solver::ctxSignExtend(SymbolicExpr::Interior *inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     ASSERT_require(inode->child(0)->isIntegerConstant());
     ASSERT_require(inode->child(0)->toUnsigned().get() > inode->child(1)->nBits());
     SymbolicExpr::Ptr newSize = inode->child(0);
-    SymbolicExpr::Ptr expr = inode->child(1);
+    SymbolicExpr::Node *expr = inode->childRaw(1);
     size_t signBitIdx = expr->nBits() - 1;
     size_t growth = newSize->toUnsigned().get() - expr->nBits();
     SymbolicExpr::Ptr zeros = SymbolicExpr::makeIntegerConstant(Sawyer::Container::BitVector(growth, false));
+    holdingExprs_.push_back(zeros);
 
     z3::expr isNegative =
         ctxCast(ctxExpression(expr), BIT_VECTOR).first.extract(signBitIdx, signBitIdx) == ctx_->bv_val(1, 1);
 
     z3::expr e =
         z3::concat(z3::ite(isNegative,
-                           ~ctxCast(ctxExpression(zeros), BIT_VECTOR).first,
-                           ctxCast(ctxExpression(zeros), BIT_VECTOR).first),
+                           ~ctxCast(ctxExpression(zeros.getRawPointer()), BIT_VECTOR).first,
+                           ctxCast(ctxExpression(zeros.getRawPointer()), BIT_VECTOR).first),
                    ctxCast(ctxExpression(expr), BIT_VECTOR).first);
 
     return Z3ExprTypePair(e, BIT_VECTOR);
 }
 
 Z3Solver::Z3ExprTypePair
-Z3Solver::ctxShiftLeft(const SymbolicExpr::InteriorPtr &inode) {
+Z3Solver::ctxShiftLeft(SymbolicExpr::Interior *inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->getOperator() == SymbolicExpr::OP_SHL0 || inode->getOperator() == SymbolicExpr::OP_SHL1);
     ASSERT_require(inode->nChildren() == 2);
     SymbolicExpr::Ptr sa = inode->child(0);
-    SymbolicExpr::Ptr expr = inode->child(1);
+    SymbolicExpr::Node *expr = inode->childRaw(1);
 
     sa = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, 2*expr->nBits()), sa); // widen sa same as shifted expr
+    holdingExprs_.push_back(sa);
+
     bool newBits = inode->getOperator() == SymbolicExpr::OP_SHL1;
     SymbolicExpr::Ptr zerosOrOnes = SymbolicExpr::makeIntegerConstant(Sawyer::Container::BitVector(expr->nBits(), newBits));
+    holdingExprs_.push_back(zerosOrOnes);
 
     z3::expr e =
         z3::shl(z3::concat(ctxCast(ctxExpression(expr), BIT_VECTOR).first,
-                           ctxCast(ctxExpression(zerosOrOnes), BIT_VECTOR).first),
-                ctxCast(ctxExpression(sa), BIT_VECTOR).first)
+                           ctxCast(ctxExpression(zerosOrOnes.getRawPointer()), BIT_VECTOR).first),
+                ctxCast(ctxExpression(sa.getRawPointer()), BIT_VECTOR).first)
         .extract(2*expr->nBits()-1, expr->nBits());
 
     return Z3ExprTypePair(e, BIT_VECTOR);
 }
 
 Z3Solver::Z3ExprTypePair
-Z3Solver::ctxShiftRight(const SymbolicExpr::InteriorPtr &inode) {
+Z3Solver::ctxShiftRight(SymbolicExpr::Interior *inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->getOperator() == SymbolicExpr::OP_SHR0 || inode->getOperator() == SymbolicExpr::OP_SHR1);
     ASSERT_require(inode->nChildren() == 2);
     SymbolicExpr::Ptr sa = inode->child(0);
-    SymbolicExpr::Ptr expr = inode->child(1);
+    SymbolicExpr::Node *expr = inode->childRaw(1);
 
     sa = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, 2*expr->nBits()), sa); // widen sa same as shifted expr
+    holdingExprs_.push_back(sa);
+
     bool newBits = inode->getOperator() == SymbolicExpr::OP_SHR1;
     SymbolicExpr::Ptr zerosOrOnes = SymbolicExpr::makeIntegerConstant(Sawyer::Container::BitVector(expr->nBits(), newBits));
+    holdingExprs_.push_back(zerosOrOnes);
 
     z3::expr e =
-        z3::lshr(z3::concat(ctxCast(ctxExpression(zerosOrOnes), BIT_VECTOR).first,
+        z3::lshr(z3::concat(ctxCast(ctxExpression(zerosOrOnes.getRawPointer()), BIT_VECTOR).first,
                             ctxCast(ctxExpression(expr), BIT_VECTOR).first),
-                 ctxCast(ctxExpression(sa), BIT_VECTOR).first)
+                 ctxCast(ctxExpression(sa.getRawPointer()), BIT_VECTOR).first)
         .extract(expr->nBits()-1, 0);
 
     return Z3ExprTypePair(e, BIT_VECTOR);
 }
 
 Z3Solver::Z3ExprTypePair
-Z3Solver::ctxMultiply(const SymbolicExpr::InteriorPtr &inode) {
+Z3Solver::ctxMultiply(SymbolicExpr::Interior *inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
-    SymbolicExpr::Ptr a = inode->child(0);
-    SymbolicExpr::Ptr b = inode->child(1);
+    const SymbolicExpr::Ptr &a = inode->child(0);
+    const SymbolicExpr::Ptr &b = inode->child(1);
     SymbolicExpr::Ptr resultSize = SymbolicExpr::makeIntegerConstant(32, a->nBits() + b->nBits());
 
     SymbolicExpr::Ptr aExtended, bExtended;
@@ -1038,47 +1059,53 @@ Z3Solver::ctxMultiply(const SymbolicExpr::InteriorPtr &inode) {
         aExtended = SymbolicExpr::makeExtend(resultSize, a);
         bExtended = SymbolicExpr::makeExtend(resultSize, b);
     }
+    holdingExprs_.push_back(aExtended);
+    holdingExprs_.push_back(bExtended);
 
-    z3::expr e = ctxCast(ctxExpression(aExtended), BIT_VECTOR).first *
-                 ctxCast(ctxExpression(bExtended), BIT_VECTOR).first;
+    z3::expr e = ctxCast(ctxExpression(aExtended.getRawPointer()), BIT_VECTOR).first *
+                 ctxCast(ctxExpression(bExtended.getRawPointer()), BIT_VECTOR).first;
 
     return Z3ExprTypePair(e, BIT_VECTOR);
 }
 
 Z3Solver::Z3ExprTypePair
-Z3Solver::ctxUnsignedDivide(const SymbolicExpr::InteriorPtr &inode) {
+Z3Solver::ctxUnsignedDivide(SymbolicExpr::Interior *inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     size_t w = std::max(inode->child(0)->nBits(), inode->child(1)->nBits());
     SymbolicExpr::Ptr aExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, w), inode->child(0));
     SymbolicExpr::Ptr bExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, w), inode->child(1));
+    holdingExprs_.push_back(aExtended);
+    holdingExprs_.push_back(bExtended);
 
     z3::expr e =
-        z3::udiv(ctxCast(ctxExpression(aExtended), BIT_VECTOR).first,
-                 ctxCast(ctxExpression(bExtended), BIT_VECTOR).first)
+        z3::udiv(ctxCast(ctxExpression(aExtended.getRawPointer()), BIT_VECTOR).first,
+                 ctxCast(ctxExpression(bExtended.getRawPointer()), BIT_VECTOR).first)
         .extract(inode->child(0)->nBits()-1, 0);
 
     return Z3ExprTypePair(e, BIT_VECTOR);
 }
 
 Z3Solver::Z3ExprTypePair
-Z3Solver::ctxSignedDivide(const SymbolicExpr::InteriorPtr &inode) {
+Z3Solver::ctxSignedDivide(SymbolicExpr::Interior *inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     size_t w = std::max(inode->child(0)->nBits(), inode->child(1)->nBits());
     SymbolicExpr::Ptr aExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, w), inode->child(0));
     SymbolicExpr::Ptr bExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, w), inode->child(1));
+    holdingExprs_.push_back(aExtended);
+    holdingExprs_.push_back(bExtended);
 
     z3::expr e =
-        (ctxCast(ctxExpression(aExtended), BIT_VECTOR).first /
-         ctxCast(ctxExpression(bExtended), BIT_VECTOR).first)
+        (ctxCast(ctxExpression(aExtended.getRawPointer()), BIT_VECTOR).first /
+         ctxCast(ctxExpression(bExtended.getRawPointer()), BIT_VECTOR).first)
         .extract(inode->child(0)->nBits()-1, 0);
 
     return Z3ExprTypePair(e, BIT_VECTOR);
 }
 
 Z3Solver::Z3ExprTypePair
-Z3Solver::ctxUnsignedExtend(const SymbolicExpr::InteriorPtr &inode) {
+Z3Solver::ctxUnsignedExtend(SymbolicExpr::Interior *inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     ASSERT_require(inode->child(0)->isIntegerConstant());
@@ -1086,65 +1113,72 @@ Z3Solver::ctxUnsignedExtend(const SymbolicExpr::InteriorPtr &inode) {
     size_t newWidth = inode->child(0)->toUnsigned().get();
     size_t needBits = newWidth - inode->child(1)->nBits();
     SymbolicExpr::Ptr zeros = SymbolicExpr::makeIntegerConstant(Sawyer::Container::BitVector(needBits, false));
+    holdingExprs_.push_back(zeros);
 
-    z3::expr e = z3::concat(ctxCast(ctxExpression(zeros), BIT_VECTOR).first,
-                            ctxCast(ctxExpression(inode->child(1)), BIT_VECTOR).first);
+    z3::expr e = z3::concat(ctxCast(ctxExpression(zeros.getRawPointer()), BIT_VECTOR).first,
+                            ctxCast(ctxExpression(inode->childRaw(1)), BIT_VECTOR).first);
 
     return Z3ExprTypePair(e, BIT_VECTOR);
 }
 
 Z3Solver::Z3ExprTypePair
-Z3Solver::ctxUnsignedModulo(const SymbolicExpr::InteriorPtr &inode) {
+Z3Solver::ctxUnsignedModulo(SymbolicExpr::Interior *inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     size_t w = std::max(inode->child(0)->nBits(), inode->child(1)->nBits());
     SymbolicExpr::Ptr aExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, w), inode->child(0));
     SymbolicExpr::Ptr bExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, w), inode->child(1));
+    holdingExprs_.push_back(aExtended);
+    holdingExprs_.push_back(bExtended);
 
     z3::expr e =
-        z3::urem(ctxCast(ctxExpression(aExtended), BIT_VECTOR).first,
-                 ctxCast(ctxExpression(bExtended), BIT_VECTOR).first)
+        z3::urem(ctxCast(ctxExpression(aExtended.getRawPointer()), BIT_VECTOR).first,
+                 ctxCast(ctxExpression(bExtended.getRawPointer()), BIT_VECTOR).first)
         .extract(inode->child(1)->nBits()-1, 0);
 
     return Z3ExprTypePair(e, BIT_VECTOR);
 }
 
 Z3Solver::Z3ExprTypePair
-Z3Solver::ctxSignedModulo(const SymbolicExpr::InteriorPtr &inode) {
+Z3Solver::ctxSignedModulo(SymbolicExpr::Interior *inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 2);
     size_t w = std::max(inode->child(0)->nBits(), inode->child(1)->nBits());
     SymbolicExpr::Ptr aExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, w), inode->child(0));
     SymbolicExpr::Ptr bExtended = SymbolicExpr::makeExtend(SymbolicExpr::makeIntegerConstant(32, w), inode->child(1));
+    holdingExprs_.push_back(aExtended);
+    holdingExprs_.push_back(bExtended);
 
     z3::expr e =
-        z3::srem(ctxCast(ctxExpression(aExtended), BIT_VECTOR).first,
-                 ctxCast(ctxExpression(bExtended), BIT_VECTOR).first)
+        z3::srem(ctxCast(ctxExpression(aExtended.getRawPointer()), BIT_VECTOR).first,
+                 ctxCast(ctxExpression(bExtended.getRawPointer()), BIT_VECTOR).first)
         .extract(inode->child(1)->nBits()-1, 0);
 
     return Z3ExprTypePair(e, BIT_VECTOR);
 }
 
 Z3Solver::Z3ExprTypePair
-Z3Solver::ctxWrite(const SymbolicExpr::InteriorPtr &inode) {
+Z3Solver::ctxWrite(SymbolicExpr::Interior *inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 3);
 
-    z3::expr e =  z3::store(ctxCast(ctxExpression(inode->child(0)), MEM_STATE).first,
-                            ctxCast(ctxExpression(inode->child(1)), BIT_VECTOR).first,
-                            ctxCast(ctxExpression(inode->child(2)), BIT_VECTOR).first);
+    z3::expr e =  z3::store(ctxCast(ctxExpression(inode->childRaw(0)), MEM_STATE).first,
+                            ctxCast(ctxExpression(inode->childRaw(1)), BIT_VECTOR).first,
+                            ctxCast(ctxExpression(inode->childRaw(2)), BIT_VECTOR).first);
 
     return Z3ExprTypePair(e, MEM_STATE);
 }
 
 Z3Solver::Z3ExprTypePair
-Z3Solver::ctxZerop(const SymbolicExpr::InteriorPtr &inode) {
+Z3Solver::ctxZerop(SymbolicExpr::Interior *inode) {
     ASSERT_not_null(inode);
     ASSERT_require(inode->nChildren() == 1);
 
     SymbolicExpr::Ptr zeros = SymbolicExpr::makeIntegerConstant(inode->child(0)->nBits(), 0);
-    z3::expr e = ctxCast(ctxExpression(inode->child(0)), BIT_VECTOR).first ==
-                 ctxCast(ctxExpression(zeros), BIT_VECTOR).first;
+    holdingExprs_.push_back(zeros);
+
+    z3::expr e = ctxCast(ctxExpression(inode->childRaw(0)), BIT_VECTOR).first ==
+                 ctxCast(ctxExpression(zeros.getRawPointer()), BIT_VECTOR).first;
 
     return Z3ExprTypePair(e, BOOLEAN);
 }

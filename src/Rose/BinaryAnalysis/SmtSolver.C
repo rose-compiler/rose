@@ -40,6 +40,17 @@ CompareLeavesByName::operator()(const SymbolicExpr::LeafPtr &a, const SymbolicEx
     return a->nameId() < b->nameId();
 }
 
+bool
+CompareRawLeavesByName::operator()(const SymbolicExpr::Leaf *a, const SymbolicExpr::Leaf *b) const {
+    if (!a || !b)
+        return !a && b;                                 // null a is less than non-null b; other null combos return false
+    ASSERT_require(a->isVariable2() || a->isMemoryExpr());
+    ASSERT_require(b->isVariable2() || b->isMemoryExpr());
+    if (a->isMemoryExpr() != b->isMemoryExpr())
+        return !a->isMemoryExpr();                      // memory expressions come after other things
+    return a->nameId() < b->nameId();
+}
+
 // class method
 void
 SmtSolver::initDiagnostics() {
@@ -321,7 +332,7 @@ SmtSolver::assertions() const {
     return retval;
 }
 
-std::vector<SymbolicExpr::Ptr>
+const std::vector<SymbolicExpr::Ptr>&
 SmtSolver::assertions(size_t level) const {
     ASSERT_require(level < stack_.size());
     return stack_[level];
