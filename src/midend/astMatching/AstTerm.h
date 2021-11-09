@@ -8,6 +8,7 @@
 
 #include "RoseAst.h"
 #include <typeinfo>
+#include <unordered_set>
 
 class AstTerm {
  public:
@@ -25,6 +26,7 @@ class AstTerm {
  private:
   static std::string nodeTypeName(SgNode* node);
   static std::string dotFragmentToDot(std::string fragment);
+  static std::string astTermWithNullValuesToString(SgNode* node, bool withNumbers, bool withTypes, std::unordered_set<SgNode*>& visited);
 };
 
 #endif

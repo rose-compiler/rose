@@ -386,6 +386,7 @@ RiscOperators::filterResult(const BaseSemantics::SValuePtr &a_) {
                                                         a->get_expression()->comment(),
                                                         a->get_expression()->flags());
     a->set_expression(expr);
+    ++nTrimmed_;
     return a;
 }
 

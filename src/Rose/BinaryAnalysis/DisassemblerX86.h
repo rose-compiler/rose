@@ -52,8 +52,8 @@ class DisassemblerX86: public Disassembler {
             : ip(0), insnbufat(0), segOverride(x86_segreg_none), branchPrediction(x86_branch_prediction_none),
               branchPredictionEnabled(false), rexPresent(false), rexW(false), rexR(false), rexX(false), rexB(false),
               sizeMustBe64Bit(false), operandSizeOverride(false), addressSizeOverride(false), lock(false),
-              repeatPrefix(x86_repeat_none), modregrmByteSet(false), modregrmByte(0), modeField(0), rmField(0),
-              modrm(NULL), reg(NULL), isUnconditionalJump(false) {}
+              repeatPrefix(x86_repeat_none), modregrmByteSet(false), modregrmByte(0), modeField(0), regField(0),
+              rmField(0), modrm(NULL), reg(NULL), isUnconditionalJump(false) {}
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

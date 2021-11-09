@@ -487,7 +487,7 @@ public:
     /** @} */
 
 private:
-    void notApplicable(const std::string &what) const SAWYER_ATTR_NORETURN {
+    [[noreturn]] void notApplicable(const std::string &what) const {
         ASSERT_not_implemented(what + " is not applicable for this class");
     }
 };

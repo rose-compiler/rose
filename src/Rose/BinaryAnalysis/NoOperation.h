@@ -62,7 +62,7 @@ private:
     InstructionSemantics2::BaseSemantics::DispatcherPtr cpu_;
     StateNormalizer::Ptr normalizer_;
     Sawyer::Optional<rose_addr_t> initialSp_;
-    bool ignoreTerminalBranches_;
+    bool ignoreTerminalBranches_ = true;
 
 public:
     static Sawyer::Message::Facility mlog;              /**< Diagnostic streams. */
@@ -72,12 +72,11 @@ public:
      *
      *  Since this default constructor has no information about the virtual CPU, it will assume that all instructions have an
      *  effect. */
-    NoOperation()
-        : ignoreTerminalBranches_(true) {}
+    NoOperation();
 
     /** Construct a new analysis with specified virtual CPU. */
     explicit NoOperation(const InstructionSemantics2::BaseSemantics::DispatcherPtr &cpu)
-        : cpu_(cpu), normalizer_(StateNormalizer::instance()), ignoreTerminalBranches_(true) {}
+        : cpu_(cpu), normalizer_(StateNormalizer::instance()) {}
 
     /** Construct a new analysis for a specific disassembler.
      *

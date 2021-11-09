@@ -220,9 +220,9 @@ void initDiagnostics();
  *  sequence of octets by the @ref CharacterEncodingScheme (CES). */
 class ROSE_DLL_API CharacterEncodingForm: public Sawyer::SharedObject {
 protected:
-    State state_;
+    State state_ = INITIAL_STATE;
 public:
-    CharacterEncodingForm(): state_(INITIAL_STATE) {}
+    CharacterEncodingForm() {}
     virtual ~CharacterEncodingForm() {}
 
     /** Shared ownership pointer to a @ref CharacterEncodingForm. See @ref heap_object_shared_ownership. */
@@ -333,9 +333,9 @@ Utf16CharacterEncodingForm::Ptr utf16CharacterEncodingForm();
  *  depending on the character encoding scheme. */
 class ROSE_DLL_API CharacterEncodingScheme: public Sawyer::SharedObject {
 protected:
-    State state_;
+    State state_ = INITIAL_STATE;
 public:
-    CharacterEncodingScheme(): state_(INITIAL_STATE) {}
+    CharacterEncodingScheme() {}
     virtual ~CharacterEncodingScheme() {}
 
     /** Shared ownership pointer to a @ref CharacterEncodingScheme. See @ref heap_object_shared_ownership. */
@@ -408,9 +408,9 @@ BasicCharacterEncodingScheme::Ptr basicCharacterEncodingScheme(size_t octetsPerV
  *  code points. */
 class ROSE_DLL_API LengthEncodingScheme: public Sawyer::SharedObject {
 protected:
-    State state_;
+    State state_ = INITIAL_STATE;
 public:
-    LengthEncodingScheme(): state_(INITIAL_STATE) {}
+    LengthEncodingScheme() {}
     virtual ~LengthEncodingScheme() {}
 
     /** Shared ownership pointer to a @ref LengthEncodingScheme. See @ref heap_object_shared_ownership. */
@@ -532,15 +532,15 @@ AnyCodePoint::Ptr anyCodePoint();
  *  versa. */
 class ROSE_DLL_API StringEncodingScheme: public Sawyer::SharedObject {
 protected:
-    State state_;                                       // decoding state
+    State state_ = INITIAL_STATE;                       // decoding state
     CodePoints codePoints_;                             // unconsumed code points
-    size_t nCodePoints_;                                // number of code points decoded since reset
+    size_t nCodePoints_ = 0;                            // number of code points decoded since reset
     CharacterEncodingForm::Ptr cef_;
     CharacterEncodingScheme::Ptr ces_;
     CodePointPredicate::Ptr cpp_;
 
 protected:
-    StringEncodingScheme(): state_(INITIAL_STATE), nCodePoints_(0) {}
+    StringEncodingScheme() {}
 
     StringEncodingScheme(const CharacterEncodingForm::Ptr &cef, const CharacterEncodingScheme::Ptr &ces,
                          const CodePointPredicate::Ptr &cpp)
