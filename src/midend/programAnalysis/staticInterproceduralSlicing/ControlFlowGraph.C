@@ -59,8 +59,8 @@ void ControlFlowGraph::_buildCFG() {
 
   //Go through each CFGNodeImpl in CFGImpl to find the "entry" node
   DefaultCFGImpl::NodeIterator nodes;
-  CFGNodeImpl * entry;
-  CFGNodeImpl * exit;
+  CFGNodeImpl* entry = 0;
+  CFGNodeImpl* exit  = 0;
   for (nodes = _cfg->GetNodeIterator(); !nodes.ReachEnd(); ++nodes) {
     //    printf("\nNODE!\n\n");
     CFGNodeImpl * node = *nodes;
