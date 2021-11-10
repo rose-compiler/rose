@@ -868,6 +868,8 @@ namespace
 
       void handle(const SgAdaGenericInstanceDecl& n)
       {
+        handle(sg::asBaseType(n));
+
         SgAdaGenericDecl&       dcl     = SG_DEREF(n.get_declaration());
         SgDeclarationStatement* thedecl = dcl.get_declaration();
 
@@ -919,6 +921,15 @@ namespace
       // expressions
 
       void handle(const SgExpression&) { /* do nothing */ }
+
+      void handle(const SgExprListExp& n)
+      {
+        if (!elideNameQualification(n)) return;
+
+        // forward name qualifcation suppression to children
+        for (const SgExpression* child : n.get_expressions())
+          suppressNameQualification(child);
+      }
 
       void handle(const SgVarRefExp& n)
       {
@@ -981,10 +992,7 @@ namespace
 
       void handle(const SgDesignatedInitializer& n)
       {
-        const SgExprListExp& children = SG_DEREF(n.get_designatorList());
-
-        for (const SgExpression* child : children.get_expressions())
-          suppressNameQualification(child);
+        suppressNameQualification(n.get_designatorList());
       }
 
       void handle(const SgNewExp& n)
@@ -2067,9 +2075,9 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
              }
           // Liao, Oct 4, 2021. We skip translation of Ada AST from some system packages. We also ignore them in the unparser.
           case V_SgAdaSubtype:
-          case V_SgAdaModularType:   
-          case V_SgAdaDerivedType:   
-          case V_SgAdaFloatType:   
+          case V_SgAdaModularType:
+          case V_SgAdaDerivedType:
+          case V_SgAdaFloatType:
           case V_SgAdaAccessType:
              {
                return_declaration = NULL;
