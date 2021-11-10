@@ -802,13 +802,21 @@ public:
 
     /** Dynamic cast of this object to an interior node.
      *
-     *  Returns null if the cast is not valid. */
+     *  Returns null if the cast is not valid.
+     *
+     *  @{ */
     InteriorPtr isInteriorNode() const;
+    Interior* isInteriorNodeRaw() const;
+    /** @} */
 
     /** Dynamic cast of this object to a leaf node.
      *
-     *  Returns null if the cast is not valid. */
+     *  Returns null if the cast is not valid.
+     *
+     * @{ */
     LeafPtr isLeafNode() const;
+    Leaf* isLeafNodeRaw() const;
+    /** @} */
 
     /** Returns true if this node has a hash value computed and cached. The hash value zero is reserved to indicate that no
      *  hash has been computed; if a node happens to actually hash to zero, it will not be cached and will be recomputed for
@@ -1643,7 +1651,7 @@ Ptr substitute(const Ptr &src, Substitution &subber, const SmtSolverPtr &solver 
         return dst;
 
     // Try substituting all the subexpressions.
-    InteriorPtr inode = src->isInteriorNode();
+    const Interior *inode = src->isInteriorNodeRaw();
     if (!inode)
         return src;
     bool anyChildChanged = false;
