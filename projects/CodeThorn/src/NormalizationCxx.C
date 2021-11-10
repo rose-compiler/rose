@@ -1263,6 +1263,7 @@ namespace
       SgStatement*              newStmt = nullptr;
   };
 
+/*
   SgFunctionSymbol&
   get_symbol(SgFunctionDeclaration& fundecl)
   {
@@ -1270,11 +1271,12 @@ namespace
 
     return SG_ASSERT_TYPE(SgFunctionSymbol, symbl);
   }
+*/
 
   struct BaseDtorCallTransformer
   {
       BaseDtorCallTransformer(const SgClassDeclaration& clazz, const SgBaseClass& what, SgBasicBlock& where)
-      : clsdcl(clazz), blk(where), baseclass(what)
+      : clsdcl(clazz), baseclass(what), blk(where)
       {}
 
       SgStatement& mkDtorCall() const
@@ -2144,14 +2146,14 @@ namespace
 
         newThisExpr = sb::buildVarRefExp(&thisParam, memfn.get_definition());
 
-        std::cerr << self.get_parent()->unparseToString()
-                  << "\n   =>\n"
-                  << std::flush;
+        //~ std::cerr << self.get_parent()->unparseToString()
+                  //~ << "\n   =>\n"
+                  //~ << std::flush;
 
         replaceExpression(self, SG_DEREF(newThisExpr));
 
-        std::cerr << newThisExpr->get_parent()->unparseToString()
-                  << std::endl;
+        //~ std::cerr << newThisExpr->get_parent()->unparseToString()
+                  //~ << std::endl;
       }
 
     private:
@@ -2182,14 +2184,14 @@ namespace
 
         args.prepend_expression(newReceiver);
 
-        std::cerr << binexp.get_parent()->unparseToString()
-                  << "\n    =>\n"
-                  << std::flush;
+        //~ std::cerr << binexp.get_parent()->unparseToString()
+                  //~ << "\n    =>\n"
+                  //~ << std::flush;
 
         replaceExpression(binexp, SG_DEREF(newFunction));
 
-        std::cerr << newFunction->get_parent()->unparseToString()
-                  << std::endl;
+        //~ std::cerr << newFunction->get_parent()->unparseToString()
+                  //~ << std::endl;
       }
 
     private:
@@ -3030,11 +3032,11 @@ namespace
 
   void CxxNormalizationCheck::reportNode(SgStatement& n, SgLocatedNode& offender)
   {
-    std::cerr << "wanted: " << n.unparseToString()
-              << " <" << typeid(offender).name() << ">"
-              << " parent = " << typeid(*n.get_parent()).name()
-              << "\n@" << SrcLoc(offender) << " / " << SrcLoc(*isSgLocatedNode(n.get_parent()))
-              << std::endl;
+    logError() << "wanted: " << n.unparseToString()
+               << " <" << typeid(offender).name() << ">"
+               << " parent = " << typeid(*n.get_parent()).name()
+               << "\n@" << SrcLoc(offender) << " / " << SrcLoc(*isSgLocatedNode(n.get_parent()))
+               << std::endl;
   }
 
   struct CxxCleanCtorInitlistGenerator : GeneratorBase

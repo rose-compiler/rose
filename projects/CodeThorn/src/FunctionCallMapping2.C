@@ -22,14 +22,11 @@ namespace CodeThorn
 
 namespace
 {
-  struct Ternary
-  {
-    enum value { unknown, trueval, falseval };
-  };
+  enum class Ternary { unknown, trueval, falseval };
 
-  struct IsTemplate : sg::DispatchHandler<Ternary::value>
+  struct IsTemplate : sg::DispatchHandler<Ternary>
   {
-    typedef sg::DispatchHandler<Ternary::value> base;
+    typedef sg::DispatchHandler<Ternary> base;
 
     IsTemplate()
     : base(Ternary::unknown)
@@ -88,7 +85,13 @@ namespace
       void handle(const SgNode& n)       { SG_UNEXPECTED_NODE(n); }
 
       /// fallback method for regular function calls
-      void handle(const SgExpression& n) { CallTargetSet::getPropertiesForExpression(&callexp, nullptr /*classHierarchy*/, res); }
+      void handle(const SgExpression& n)
+      {
+        CallTargetSet::getPropertiesForExpression(&callexp, nullptr /*classHierarchy*/, res);
+
+        std::cerr << "PP4: " << n.unparseToString() << " " << res.size()
+                  << std::endl;
+      }
 
       /// catches member calls
       void handle(const SgMemberFunctionRefExp& n)
@@ -113,15 +116,8 @@ namespace
       SgExprListExp&       args = SG_DEREF(call.get_args());
       SgExpressionPtrList& lst  = args.get_expressions();
 
-      if (lst.empty())
-      {
-        std::cerr << "PP3: " << call.unparseToString() << std::endl;
-        return nullptr;
-      }
-
       ROSE_ASSERT(lst.size());
-
-      return lst.at(0);
+      return lst[0];
     }
 
 
@@ -174,27 +170,19 @@ namespace
 
     // return early if this is not a virtual call
     if (!requiresVirtualDispatch(memref, callexp))
-    {
-      std::cerr << "PP3: not a virtual call " << memref.unparseToString() << std::endl;
       return res;
-    }
 
+/*
     for (auto& x : vfa)
       std::cerr << "PP3 i: " << x.first->get_name() << " " << x.first
                 << " " << x.first->get_firstNondefiningDeclaration()
                 << std::endl;
-
+*/
     const VirtualFunctionDesc* vfunc = lookup(vfa, &mfn);
 
     // this is not a virtual function
     if (vfunc == nullptr)
-    {
-      std::cerr << "PP3: not a virtual func " << mfn.get_name() << " " << &mfn
-                << " " << mfn.get_firstNondefiningDeclaration()
-                << " " << mfn.isCompilerGenerated()
-                << std::endl;
       return res;
-    }
 
     // query overriders and add them to the candidate list
     for (const OverrideDesc& desc : vfunc->overriders())
@@ -207,8 +195,8 @@ namespace
         res.push_back(const_cast<SgFunctionDeclaration*>(fundcl));
     }
 
-    std::cerr << "PP3: exiting late " << memref.unparseToString() << " " << res.size()
-              << std::endl;
+    //~ std::cerr << "PP3: exiting late " << memref.unparseToString() << " " << res.size()
+              //~ << std::endl;
     return res;
   }
 
@@ -276,17 +264,44 @@ namespace
   float percent(int part, int whole) { return (part*100.0)/whole; }
 }
 
+
 void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
 {
-  typedef std::unordered_map<Label, FunctionCallTargetSet, HashLabel>::mapped_type map_entry_t;
+  using map_entry_t = std::unordered_map<Label, FunctionCallTargetSet, HashLabel>::mapped_type;
 
   ASSERT_not_null(_labeler); ASSERT_not_null(root);
 
   std::multimap<std::string, SgFunctionDeclaration*> funDecls;
+  FunctionCallMapping2*                              fm = this;
+
+  // lambda that computes all possible targets for function pointer calls
+  auto computeFunctionPointerCalls = [&funDecls,fm](Label lbl, SgExpression& expr, bool& added) -> void
+       {
+         // function pointer calls are handled separately in order to
+         //   use the ROSE AST instead of the memory pool.
+         std::string  key = typeRep(expr);
+         auto         aa  = funDecls.lower_bound(key);
+         decltype(aa) zz  = funDecls.end();
+         map_entry_t& map_entry = fm->mapping[lbl];
+
+         while (aa != zz && aa->first == key)
+         {
+           addEntry(map_entry, aa->second);
+
+           added = true;
+           ++aa;
+         }
+       };
+
+  // lambda that computes all possible targets for pointer-to-member calls
+  auto computeMemberFunctionPointerCalls = [](Label, SgExpression&, bool&) -> void
+       {
+       };
 
   for(auto node : RoseAst(root)) {
     if(SgFunctionDeclaration* funDecl = isSgFunctionDeclaration(node)) {
-      funDecls.emplace(funDecl->get_type()->get_mangled().getString(), funDecl);
+      if (!isSgMemberFunctionDeclaration(funDecl))
+        funDecls.emplace(funDecl->get_type()->get_mangled().getString(), funDecl);
     }
   }
 
@@ -315,25 +330,14 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
 
     if (SgExpression* targetNode = callinfo.functionPointer())
     {
-      //~ std::cerr << targetNode->get_parent()->get_parent()->unparseToString() << std::endl;
+      bool added = false;
 
-      // function pointer calls are handled separately in order to
-      //   use the ROSE AST instead of the memory pool.
-      std::string  key = typeRep(*targetNode);
-      auto         aa = funDecls.lower_bound(key);
-      decltype(aa) zz = funDecls.end();
-      bool         added = false;
-      map_entry_t& map_entry = mapping[lbl];
+      if (isSgMemberFunctionType(targetNode->get_type()))
+        computeMemberFunctionPointerCalls(lbl, *targetNode, added);
+      else
+        computeFunctionPointerCalls(lbl, *targetNode, added);
 
-      while (aa != zz && aa->first == key)
-      {
-        addEntry(map_entry, aa->second);
-
-        added = true;
-        ++aa;
-      }
-
-      if (added == 0)
+      if (!added)
       {
         mapping.erase(lbl);
         ++unresolvedFunptrCall;
@@ -415,7 +419,7 @@ FunctionCallTargetSet FunctionCallMapping2::resolveFunctionCall(Label callLabel)
 
 bool insideTemplatedCode(const SgNode* n)
 {
-  Ternary::value res = sg::dispatch(IsTemplate{}, n);
+  Ternary res = sg::dispatch(IsTemplate{}, n);
 
   if (res != Ternary::unknown) return res == Ternary::trueval;
 

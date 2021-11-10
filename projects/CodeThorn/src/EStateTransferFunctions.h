@@ -492,11 +492,6 @@ namespace CodeThorn {
     // handles DotExp and ArrowExp
     SingleEvalResult evalLValueDotOrArrowExp(SgNode* node, EState estate, EvalMode mode=MODE_VALUE);
 
-    // PP (11/08/21): added dummy implementations for C++ support
-    SingleEvalResult evalLValueAddressOfOp(SgAddressOfOp* node, EState estate, EvalMode mode=MODE_VALUE);
-    SingleEvalResult evalLValueCastExp(SgCastExp* node, EState estate, EvalMode mode=MODE_VALUE);
-
-
     SingleEvalResult evalRValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
     SingleEvalResult evalValueExp(SgValueExp* node, EState estate, EvalMode mode);
 

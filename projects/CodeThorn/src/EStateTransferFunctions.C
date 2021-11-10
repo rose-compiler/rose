@@ -2150,6 +2150,16 @@ namespace CodeThorn {
 
 #define CASE_EXPR_ANALYZER_EVAL_UNARY_OP(ROSENODENAME,EVALFUNCTIONNAME) case V_ ## ROSENODENAME: return EVALFUNCTIONNAME(is ## ROSENODENAME(node),operandResult,estate,mode);break
 
+  namespace
+  {
+    SingleEvalResult
+    notImplementedPlaceholder(EState estate) {
+      SingleEvalResult res;
+      res.init(estate,AbstractValue::createTop());
+      return res;
+    }
+  }
+
   SingleEvalResult EStateTransferFunctions::evaluateLExpression(SgNode* node,EState estate) {
     AbstractValue result;
     if(SgVarRefExp* varExp=isSgVarRefExp(node)) {
@@ -2162,10 +2172,12 @@ namespace CodeThorn {
       return evalLValueDotOrArrowExp(arrowExp,estate);
     } else if(SgPointerDerefExp* ptrDerefExp=isSgPointerDerefExp(node)) {
       return evalLValuePointerDerefExp(ptrDerefExp,estate);
-    } else if(SgAddressOfOp* addrOf=isSgAddressOfOp(node)) {
-      return evalLValueAddressOfOp(addrOf,estate);
-    } else if(SgCastExp* castExp=isSgCastExp(node)) {
-      return evalLValueCastExp(castExp,estate);
+    } else if(/*SgAddressOfOp* addrOf=*/isSgAddressOfOp(node)) {
+      return notImplementedPlaceholder(estate);
+    } else if(/* SgCastExp* castExp=*/isSgCastExp(node)) {
+      return notImplementedPlaceholder(estate);
+    } else if(/*SgMemberFunctionRefExp* memFnExp=*/isSgMemberFunctionRefExp(node)) {
+      return notImplementedPlaceholder(estate);
     } else {
       cerr<<"Error: unsupported lvalue expression2: "<<node->get_parent()->get_parent()->unparseToString()<<endl;
       cerr<<"     : "<<SgNodeHelper::sourceLineColumnToString(node)<<" : "<<AstTerm::astTermWithNullValuesToString(node)<<endl;
@@ -3344,26 +3356,6 @@ namespace CodeThorn {
     }
     // unreachable
     ROSE_ASSERT(false);
-  }
-
-  namespace
-  {
-    SingleEvalResult
-    notImplementedPlaceholder(EState estate) {
-      SingleEvalResult res;
-      res.init(estate,AbstractValue::createTop());
-      return res;
-    }
-  }
-
-  SingleEvalResult
-  EStateTransferFunctions::evalLValueAddressOfOp(SgAddressOfOp*, EState estate, EvalMode) {
-    return notImplementedPlaceholder(estate);
-  }
-
-  SingleEvalResult
-  EStateTransferFunctions::evalLValueCastExp(SgCastExp*, EState estate, EvalMode) {
-    return notImplementedPlaceholder(estate);
   }
 
 
