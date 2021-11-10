@@ -29,18 +29,6 @@ SmtlibSolver::reset() {
 }
 
 void
-SmtlibSolver::clearEvidence() {
-    SmtSolver::clearEvidence();
-    evidence.clear();
-}
-
-void
-SmtlibSolver::clearMemoization() {
-    SmtSolver::clearMemoization();
-    memoizedEvidence.clear();
-}
-
-void
 SmtlibSolver::timeout(boost::chrono::duration<double> seconds) {
     timeout_ = seconds;
 }
@@ -1254,28 +1242,6 @@ SmtlibSolver::parseEvidence() {
     boost::regex varNameRe("v\\d+");
     boost::regex cseNameRe("cse_\\d+");
 
-    // If memoization is being used and we have a previous result, then use the previous result. However, we need to undo the
-    // variable renaming. That is, the memoized result is in terms of renumbered variables, so we need to use the
-    // latestMemoizationRewrite_ to rename the memoized variables back to the variable names used in the actual query from the
-    // caller.
-    Sawyer::Optional<SymbolicExpr::Hash> memoId = latestMemoizationId();
-    if (memoId) {
-        MemoizedEvidence::iterator found = memoizedEvidence.find(*memoId);
-        if (found != memoizedEvidence.end()) {
-            SymbolicExpr::ExprExprHashMap denorm = latestMemoizationRewrite_.invert();
-            evidence.clear();
-            BOOST_FOREACH (const ExprExprMap::Node &node, found->second.nodes()) {
-                SymbolicExpr::Ptr var = node.key()->substituteMultiple(denorm);
-                SymbolicExpr::Ptr val = node.value()->substituteMultiple(denorm);
-                evidence.insert(var, val);
-                SAWYER_MESG(mlog[DEBUG]) <<"evidence: " <<*var <<" == " <<*val <<"\n";
-            }
-            stats.evidenceTime += evidenceTimer.stop();
-            stats.longestEvidenceTime = std::max(stats.longestEvidenceTime, evidenceTimer.report());
-            return;
-        }
-    }
-
     // Parse the evidence.
     //   z3 4.8.7 returns (model F1 F2 ...)
     //   z3 4.8.12 returns (F1 F2 ...)
@@ -1329,7 +1295,7 @@ SmtlibSolver::parseEvidence() {
                     SymbolicExpr::Ptr val = SymbolicExpr::makeIntegerConstant(bits);
 
                     SAWYER_MESG(mlog[DEBUG]) <<"evidence: " <<*var <<" == " <<*val <<"\n";
-                    evidence.insert(var, val);
+                    evidence_.insert(var, val);
 
                 } else if (elmt->children().size() == 5 &&
                            elmt->children()[0]->name() == "define-fun" &&
@@ -1349,42 +1315,9 @@ SmtlibSolver::parseEvidence() {
         }
     }
 
-    // Cache the evidence. We must cache using the normalized form of expressions.
-    if (memoId) {
-        ExprExprMap &me = memoizedEvidence[*memoId];
-        BOOST_FOREACH (const ExprExprMap::Node &node, evidence.nodes()) {
-            me.insert(node.key()->substituteMultiple(latestMemoizationRewrite_),
-                      node.value()->substituteMultiple(latestMemoizationRewrite_));
-        }
-    }
-
     stats.evidenceTime += evidenceTimer.stop();
     stats.longestEvidenceTime = std::max(stats.longestEvidenceTime, evidenceTimer.report());
 }
-
-SymbolicExpr::Ptr
-SmtlibSolver::evidenceForName(const std::string &varName) {
-    BOOST_FOREACH (const ExprExprMap::Node &node, evidence.nodes()) {
-        ASSERT_not_null(node.key()->isLeafNode());
-        ASSERT_require(node.key()->isLeafNode()->isVariable2());
-        if (node.key()->isLeafNode()->toString() == varName)
-            return node.value();
-    }
-    return SymbolicExpr::Ptr();
-}
-
-std::vector<std::string>
-SmtlibSolver::evidenceNames() {
-    std::vector<std::string> retval;
-    BOOST_FOREACH (const SymbolicExpr::Ptr &varExpr, evidence.keys()) {
-        SymbolicExpr::LeafPtr leaf = varExpr->isLeafNode();
-        ASSERT_not_null(leaf);
-        ASSERT_require(leaf->isVariable2());
-        retval.push_back(leaf->toString());
-    }
-    return retval;
-}
-
 
 } // namespace
 } // namespace

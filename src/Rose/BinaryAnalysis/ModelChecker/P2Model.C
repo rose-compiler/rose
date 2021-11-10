@@ -1424,7 +1424,7 @@ SemanticCallbacks::nextUnits(const Path::Ptr &path, const BS::RiscOperators::Ptr
             case SmtSolver::SAT_YES:
                 // Create the next execution unit
                 if (ExecutionUnit::Ptr unit = findUnit(va)) {
-                    units.push_back({unit, assertion, solver->evidence()});
+                    units.push_back({unit, assertion, solver->evidenceByName()});
                 } else if (settings_.nullRead != TestMode::OFF && va <= settings_.maxNullAddress) {
                     SourceLocation sloc = partitioner_.sourceLocations().get(va);
                     BS::SValue::Ptr addr = ops->number_(partitioner_.instructionProvider().wordSize(), va);

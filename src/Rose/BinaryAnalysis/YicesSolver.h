@@ -91,8 +91,8 @@ public:
 public:
     virtual void reset() override;
     virtual void clearEvidence() override;
-    virtual std::vector<std::string> evidenceNames() override;
-    virtual SymbolicExpr::Ptr evidenceForName(const std::string&) override;
+    virtual std::vector<std::string> evidenceNames() const override;
+    virtual SymbolicExpr::Ptr evidenceForName(const std::string&) const override;
     virtual void timeout(boost::chrono::duration<double>) override;
 
 protected:

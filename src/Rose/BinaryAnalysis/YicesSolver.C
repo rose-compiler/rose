@@ -216,8 +216,7 @@ YicesSolver::parseEvidence() {
 }
 
 std::vector<std::string>
-YicesSolver::evidenceNames()
-{
+YicesSolver::evidenceNames() const {
     std::vector<std::string> retval;
     for (Evidence::const_iterator ei=evidence.begin(); ei!=evidence.end(); ++ei)
         retval.push_back(ei->first);
@@ -225,8 +224,7 @@ YicesSolver::evidenceNames()
 }
 
 SymbolicExpr::Ptr
-YicesSolver::evidenceForName(const std::string &name)
-{
+YicesSolver::evidenceForName(const std::string &name) const {
     Evidence::const_iterator found = evidence.find(name);
     if (found==evidence.end())
         return SymbolicExpr::Ptr(); // null
