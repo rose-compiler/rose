@@ -867,6 +867,9 @@ public:
     void print(std::ostream &o) const { Formatter fmt; print(o, fmt); }
     /** @} */
 
+    /** Convert expression to string. */
+    std::string toString() const;
+
     /** Asserts that expressions are acyclic. This is intended only for debugging. */
     void assertAcyclic() const;
 

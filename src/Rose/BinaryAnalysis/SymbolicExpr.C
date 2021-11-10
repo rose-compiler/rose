@@ -6,6 +6,7 @@
 
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
 #include <Combinatorics.h>
@@ -648,6 +649,11 @@ Node::variableId() const {
     } else {
         return Sawyer::Nothing();
     }
+}
+
+std::string
+Node::toString() const {
+    return boost::lexical_cast<std::string>(*this);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
