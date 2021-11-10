@@ -418,10 +418,10 @@ bool SeqStructAnalysis::transfer(const Function& func, const DataflowNode& n, No
                         ssL = dynamic_cast<SeqStructLattice*>(prodLat->getVarLattice(SgExpr2Var(isSgAssignOp(n.getNode())->get_lhs_operand())));
                         // If the lhs of this assignment is live
                         if(ssL)
-			   refVar = SgExpr2Var(isSgPntrArrRefExp(n.getNode())->get_rhs_operand());
+                           refVar = SgExpr2Var(isSgPntrArrRefExp(n.getNode())->get_rhs_operand());
                         // Otherwise, we're done
                         else
-			   goto DONE;
+                           goto DONE;
                 }
                 
                 if(ssL->getLevel() == SeqStructLattice::bottom) {
