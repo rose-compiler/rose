@@ -1269,7 +1269,7 @@ Z3Solver::parseEvidence() {
                     bits.fromDecimal(bits.hull(), digits);
                     val = SymbolicExpr::makeIntegerConstant(bits);
                     ASSERT_require(val->nBits() == var->nBits());
-                    ASSERT_require(val->isLeafNode() && val->isLeafNode()->isIntegerConstant());
+                    ASSERT_require(val->isLeafNodeRaw() && val->isLeafNodeRaw()->isIntegerConstant());
                 }
             } else if (interp.is_bool()) {
                 val = SymbolicExpr::makeBooleanConstant(interp.get_numeral_uint() != 0);
@@ -1353,13 +1353,13 @@ Z3Solver::selfTest() {
     }
 
     ASSERT_always_require(enames.size() == 1);
-    ASSERT_always_require(enames[0] == a->isLeafNode()->toString());
-    Expr aEvidence = evidenceForName(a->isLeafNode()->toString());
+    ASSERT_always_require(enames[0] == a->isLeafNodeRaw()->toString());
+    Expr aEvidence = evidenceForName(a->isLeafNodeRaw()->toString());
     ASSERT_always_not_null(aEvidence);
     ASSERT_always_require(aEvidence->nBits() == a->nBits());
-    ASSERT_always_require(aEvidence->isLeafNode());
-    ASSERT_always_require(aEvidence->isLeafNode()->isIntegerConstant());
-    uint32_t aVal = aEvidence->isLeafNode()->toUnsigned().get();
+    ASSERT_always_require(aEvidence->isLeafNodeRaw());
+    ASSERT_always_require(aEvidence->isLeafNodeRaw()->isIntegerConstant());
+    uint32_t aVal = aEvidence->isLeafNodeRaw()->toUnsigned().get();
     ASSERT_always_require2(aVal == 0x00000000 || aVal == 0x11111111 || aVal == 0xaaaaaaaa || aVal == 0x55555555,
                            StringUtility::addrToString(aVal));
 
@@ -1373,11 +1373,11 @@ Z3Solver::selfTest() {
     sat = check();
     ASSERT_always_require(SAT_YES == sat);
     parseEvidence();
-    aEvidence = evidenceForName(a->isLeafNode()->toString());
+    aEvidence = evidenceForName(a->isLeafNodeRaw()->toString());
     ASSERT_always_not_null(aEvidence);
-    ASSERT_always_require(aEvidence->isLeafNode());
-    ASSERT_always_require(aEvidence->isLeafNode()->isIntegerConstant());
-    aVal = aEvidence->isLeafNode()->toUnsigned().get();
+    ASSERT_always_require(aEvidence->isLeafNodeRaw());
+    ASSERT_always_require(aEvidence->isLeafNodeRaw()->isIntegerConstant());
+    aVal = aEvidence->isLeafNodeRaw()->toUnsigned().get();
     ASSERT_always_require2(aVal == 0x55555555, StringUtility::addrToString(aVal));
 
     trace <<"; pass\n";

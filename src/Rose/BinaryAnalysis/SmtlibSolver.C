@@ -255,7 +255,7 @@ SmtlibSolver::outputComments(std::ostream &o, const std::vector<SymbolicExpr::Pt
         SymbolicExpr::VisitAction preVisit(const SymbolicExpr::Ptr &node) {
             if (!seen.insert(getRawPointer(node)).second)
                 return SymbolicExpr::TRUNCATE;          // already processed this subexpression
-            if (SymbolicExpr::LeafPtr leaf = node->isLeafNode()) {
+            if (const SymbolicExpr::Leaf *leaf = node->isLeafNodeRaw()) {
                 if (leaf->isVariable2() && !leaf->comment().empty()) {
                     if (!commented) {
                         o <<"\n"
