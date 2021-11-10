@@ -1193,26 +1193,6 @@ Z3Solver::parseEvidence() {
     try {
         Sawyer::Stopwatch evidenceTimer;
 
-        // If memoization is being used and we have a previous result, then use the previous result. However, we need to undo the
-        // variable renaming. That is, the memoized result is in terms of renumbered variables, so we need to use the
-        // latestMemoizationRewrite_ to rename the memoized variables back to the variable names used in the actual query from the
-        // caller.
-        Sawyer::Optional<SymbolicExpr::Hash> memoId = latestMemoizationId();
-        if (memoId) {
-            MemoizedEvidence::iterator found = memoizedEvidence.find(*memoId);
-            if (found != memoizedEvidence.end()) {
-                evidence.clear();
-                SymbolicExpr::ExprExprHashMap undo = latestMemoizationRewrite_.invert();
-                evidence.clear();
-                BOOST_FOREACH (const ExprExprMap::Node &node, found->second.nodes())
-                    evidence.insert(node.key()->substituteMultiple(undo),
-                                    node.value()->substituteMultiple(undo));
-                stats.evidenceTime += evidenceTimer.stop();
-                stats.longestEvidenceTime = std::max(stats.longestEvidenceTime, evidenceTimer.report());
-                return;
-            }
-        }
-
         // If there are no assertions, then there is no evidence.
         bool hasAssertions = false;
         for (size_t i=0; i<z3Stack_.size() && !hasAssertions; ++i)
@@ -1280,16 +1260,7 @@ Z3Solver::parseEvidence() {
 
             ASSERT_not_null(var);
             ASSERT_not_null(val);
-            evidence.insert(var, val);
-        }
-
-        // Cache the evidence. We need to cache the evidence in terms of the normalized variable names.
-        if (memoId) {
-            ExprExprMap &me = memoizedEvidence[*memoId];
-            BOOST_FOREACH (const ExprExprMap::Node &node, evidence.nodes()) {
-                me.insert(node.key()->substituteMultiple(latestMemoizationRewrite_),
-                          node.value()->substituteMultiple(latestMemoizationRewrite_));
-            }
+            evidence_.insert(var, val);
         }
 
         stats.evidenceTime += evidenceTimer.stop();
@@ -1343,7 +1314,6 @@ Z3Solver::selfTest() {
 
     // Get an answer
     mlog[DEBUG] <<"parsing evidence\n";
-    parseEvidence();
     std::vector<std::string> enames = evidenceNames();
     BOOST_FOREACH (const std::string &name, enames) {
         mlog[DEBUG] <<"evidence name = " <<name <<"\n";
@@ -1372,7 +1342,6 @@ Z3Solver::selfTest() {
     // Check again and get an answer
     sat = check();
     ASSERT_always_require(SAT_YES == sat);
-    parseEvidence();
     aEvidence = evidenceForName(a->isLeafNodeRaw()->toString());
     ASSERT_always_not_null(aEvidence);
     ASSERT_always_require(aEvidence->isLeafNodeRaw());

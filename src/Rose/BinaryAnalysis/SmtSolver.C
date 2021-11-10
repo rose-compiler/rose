@@ -29,6 +29,10 @@ namespace BinaryAnalysis {
 
 Sawyer::Message::Facility SmtSolver::mlog;
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Comparisons
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 bool
 CompareLeavesByName::operator()(const SymbolicExpr::LeafPtr &a, const SymbolicExpr::LeafPtr &b) const {
     if (!a || !b)
@@ -50,6 +54,107 @@ CompareRawLeavesByName::operator()(const SymbolicExpr::Leaf *a, const SymbolicEx
         return !a->isMemoryExpr();                      // memory expressions come after other things
     return a->nameId() < b->nameId();
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Memoization
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void
+SmtSolver::Memoization::clear() {
+    map_.clear();
+    clearExceptCache();
+}
+
+void
+SmtSolver::Memoization::clearExceptCache() {
+    latestFind_ = map_.end();
+    latestRewrite_.clear();
+    latestMiss_.clear();
+}
+
+Sawyer::Optional<SmtSolver::Satisfiable>
+SmtSolver::Memoization::find(const std::vector<SymbolicExpr::Ptr> &assertions) {
+    clearExceptCache();
+    ASSERT_forbid(assertions.emtpy());
+
+    // First rewrite each assertion individually to normalize the variables. This will allow us to sort them consistently.
+    std::vector<std::pair<SymbolicExpr::Ptr /*original*/, SymbolicExpr::Ptr /*rewritten*/>> sorted;
+    sorted.reserve(assertions.size());
+    for (const SymbolicExpr::Ptr &assertion: assertions) {
+        SymbolicExpr::ExprExprHashMap index;
+        size_t nextVariableId = 0;
+        sorted.push_back(std::make_pair(assertion, assertion->renameVariables(index, nextVariableId)));
+    }
+    std::sort(sorted.begin(), sorted.end(), [](const ExprExpr &a, const ExprExpr &b) {
+        return a.second->hash() < b.second->hash();
+    });
+
+    // Now rewrite the variables across all the sorted assertions at once.
+    std::vector<SymbolicExpr::Ptr> rewritten;
+    rewritten.reserve(assertions.size());
+    size_t nextVariableId = 0;
+    for (const ExprExpr &p: sorted)
+        rewritten.push_back(p.first->renameVariables(latestRewrite_, nextVariableId));
+    const SymbolicExpr::Hash h = SymbolicExpr::hash(rewritten);
+
+    // Does our map already contain this set of assertions? Hashes can be equal without the set of assertions being equal, so
+    // we need to check.
+    std::pair<Map::iterator, Map::iterator> range = map_.equal_range(h);
+    for (Map::iterator iter = range.first; iter != range.second; ++iter) {
+        const Record &record = iter->second;
+        bool areEqual = true;
+        if (rewritten.size() != record.assertions.size()) {
+            areEqual = false;
+        } else {
+            for (size_t i = 0; i < rewritten.size(); ++i) {
+                if (!rewritten[i]->isEquivalentTo(record.assertions[i])) {
+                    areEqual = false;
+                    break;
+                }
+            }
+        }
+
+        if (areEqual) {
+            latestFind_ = iter;
+            return record.satisfiable;
+        }
+    }
+
+    latestMiss_ = rewritten;
+    return {};
+}
+
+SmtSolver::ExprExprMap
+SmtSolver::Memoization::evidence() {
+    ASSERT_require(wasHit());
+    ExprExprMap retval;
+    const SymbolicExpr::ExprExprHashMap denorm = latestRewrite_.invert();
+    for (const ExprExprMap::Node &node: latestFind_->second.evidence.nodes()) {
+        const SymbolicExpr::Ptr var = node.key()->substituteMultiple(denorm);
+        const SymbolicExpr::Ptr val = node.value()->substituteMultiple(denorm);
+        retval.insert(var, val);
+    }
+    return retval;
+}
+
+void
+SmtSolver::Memoization::save(Satisfiable sat, const ExprExprMap &evidence) {
+    ASSERT_require(wasMiss());
+    ASSERT_require(normalizedEvidence.empty() || SAT_YES == sat);
+    ExprExprMap normalizedEvidence;
+    for (const ExprExprMap::Node &node: evidence.nodes()) {
+        const SymbolicExpr::Ptr var = node.key()->substituteMultiple(latestRewrite_);
+        const SymbolicExpr::Ptr val = node.value()->substituteMultiple(latestRewrite_);
+        normalizedEvidence.insert(var, val);
+    }
+    const SymbolicExpr::Hash h = SymbolicExpr::hash(latestMiss_);
+    map_.insert(std::make_pair(h, Record{latestMiss_, sat, normalizedEvidence}));
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// SmtSolver
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // class method
 void
@@ -140,16 +245,21 @@ SmtSolver::reset() {
     stack_.clear();
     push();
     clearEvidence();
-    latestMemoizationId_.reset();
+    memoization_.clearExceptCache();
     // stats not cleared
 }
 
 SmtSolver::Evidence
-SmtSolver::evidence() {
+SmtSolver::evidenceByName() const {
     Evidence retval;
     for (const std::string &name: evidenceNames())
         retval.insert(name, evidenceForName(name));
     return retval;
+}
+
+SmtSolver::ExprExprMap
+SmtSolver::evidence() const {
+    return evidence_;
 }
 
 void
@@ -157,6 +267,30 @@ SmtSolver::clearEvidence() {
     outputText_ = "";
     parsedOutput_.clear();
     termNames_.clear();
+    evidence_.clear();
+}
+
+SymbolicExpr::Ptr
+SmtSolver::evidenceForName(const std::string &varName) const {
+    for (const ExprExprMap::Node &node: evidence_.nodes()) {
+        ASSERT_not_null(node.key()->isLeafNodeRaw());
+        ASSERT_require(node.key()->isLeafNodeRaw()->isVariable2());
+        if (node.key()->isLeafNodeRaw()->toString() == varName)
+            return node.value();
+    }
+    return SymbolicExpr::Ptr();
+}
+
+std::vector<std::string>
+SmtSolver::evidenceNames() const {
+    std::vector<std::string> retval;
+    for (const SymbolicExpr::Ptr &varExpr: evidence_.keys()) {
+        SymbolicExpr::LeafPtr leaf = varExpr->isLeafNode();
+        ASSERT_not_null(leaf);
+        ASSERT_require(leaf->isVariable2());
+        retval.push_back(leaf->toString());
+    }
+    return retval;
 }
 
 // class method
@@ -408,9 +542,8 @@ SmtSolver::check() {
         BOOST_FOREACH (const SymbolicExpr::Ptr &expr, assertions())
             mlog[DEBUG] <<"  " <<*expr <<"\n";
     }
-    
-    latestMemoizationId_.reset();
-    latestMemoizationRewrite_.clear();
+
+    memoization_.clearExceptCache();
     clearEvidence();
     bool wasTrivial = false;
     Satisfiable retval = checkTrivial();
@@ -421,16 +554,11 @@ SmtSolver::check() {
     
     // Have we seen this before?
     bool wasMemoized = false;
-    SymbolicExpr::Hash h = 0;
     if (!wasTrivial && doMemoization_) {
         // Normalize the expressions by renumbering all variables. The renumbering is saved in the latestMemoizationRewrites_
         // data member so the mapping can be reversed when parsing evidence.
-        std::vector<SymbolicExpr::Ptr> rewritten = normalizeVariables(assertions(), latestMemoizationRewrite_/*out*/);
-        h = SymbolicExpr::hash(rewritten);
-        Memoization::iterator found = memoization_.find(h);
-        if (found != memoization_.end()) {
-            retval = found->second;
-            latestMemoizationId_ = h;
+        if (Sawyer::Optional<Satisfiable> found = memoization_.find(assertions())) {
+            retval = *found;
             ++stats.memoizationHits;
             mlog[DEBUG] <<"using memoized result\n";
             wasMemoized = true;
@@ -476,15 +604,22 @@ SmtSolver::check() {
             ++stats.nUnknown;
             break;
     }
-    
-    // Cache the result
-    if (doMemoization_ && !wasTrivial && !wasMemoized) {
-        memoization_[h] = retval;
-        latestMemoizationId_ = h;
+
+    // Get memoized evidence, or parse and maybe cache the evidence.
+    if (wasMemoized) {
+        evidence_ = memoization_.evidence();
+        if (mlog[DEBUG]) {
+            for (const ExprExprMap::Node &node: evidence_.nodes())
+                mlog[DEBUG] <<"evidence: " <<*node.key() <<" == " <<*node.value() <<"\n";
+        }
+
+    } else if (!wasTrivial) {
+        if (SAT_YES == retval)
+            parseEvidence();
+        if (doMemoization_)
+            memoization_.save(retval, evidence());
     }
 
-    if (SAT_YES == retval && !wasTrivial)
-        parseEvidence();
     return retval;
 }
 
@@ -784,6 +919,8 @@ SmtSolver::printSExpression(std::ostream &o, const SExpr::Ptr &sexpr) {
 void
 SmtSolver::selfTest() {
     mlog[WHERE] <<"running self-tests\n";
+    Sawyer::Message::Stream debug(mlog[DEBUG]);
+
     using namespace SymbolicExpr;
     typedef SymbolicExpr::Ptr E;
 
@@ -944,13 +1081,21 @@ SmtSolver::selfTest() {
 
     // Test that memoization works, including the ability to obtain the evidence afterward.
     if (memoization()) {
+        SAWYER_MESG(debug) <<"testing memoization\n";
+
         E var1 = makeIntegerVariable(8);
         E var2 = makeIntegerVariable(8);
         ASSERT_always_forbid(var1->isEquivalentTo(var2));
         E expr1 = makeEq(var1, makeIntegerConstant(8, 123));
         E expr2 = makeEq(var2, makeIntegerConstant(8, 123));
+        SAWYER_MESG(debug) <<"  expr1 = " <<*expr1 <<"\n";
+        SAWYER_MESG(debug) <<"  expr2 = " <<*expr2 <<"\n";
         ASSERT_always_forbid(expr1->isEquivalentTo(expr2));
 
+        // This causes the expr1 expression to be memoized, namely: (eq var1 123) is satisfied with evidence var1 == 123. Under
+        // the covers, (eq var1 123) is normalized to (eq v0 123) and the evidence is also normalized to v0 == 123 and this pair
+        // is stored in the memoization data structure.
+        SAWYER_MESG(debug) <<"== checking whether expr1 is satisfied ==\n";
         Satisfiable sat = satisfiable(expr1);
         ASSERT_always_require(SAT_YES == sat);
         std::vector<std::string> evid1names = evidenceNames();
@@ -962,11 +1107,16 @@ SmtSolver::selfTest() {
         ASSERT_always_require(evid1->isLeafNode()->isIntegerConstant());
         ASSERT_always_require(evid1->isLeafNode()->toUnsigned().get() == 123);
 
+        // The expr2 is structurally similar to expr1, and therefore we can use memoized results. Under the covers, (eq var2
+        // 123) is normalized to (eq v0 123), which matches the memoized, normalized record for expr1. The evidence is v0 ==
+        // 123, which is denormalized using the inverse mapping to var2 == 123.
+        SAWYER_MESG(debug) <<"== checking whether expr2 is satisfied ==\n";
         sat = satisfiable(expr2);
         ASSERT_always_require(SAT_YES == sat);
         std::vector<std::string> evid2names = evidenceNames();
         ASSERT_always_require(evid2names.size() == 1);
-        ASSERT_always_require(evid2names[0] == var2->isLeafNode()->toString());
+        ASSERT_always_require2(evid2names[0] == var2->isLeafNode()->toString(),
+                               "evid2names[0]=" + evid2names[0] + ", var2=" + var2->toString());
         E evid2 = evidenceForName(evid2names[0]);
         ASSERT_always_not_null(evid2);
         ASSERT_always_require(evid2->isLeafNode());
