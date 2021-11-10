@@ -307,7 +307,9 @@ testPointerDetection_SWITCHES += --function=flow05
 testPointerDetection_SWITCHES += --function=flow06
 #testPointerDetection_SWITCHES += --function=flow07   # Not currently working: finds local, but not L-values
 run $(test) testPointerDetection --answer=testPointerDetection.ans \
+    --disabled="prone to random failures due to output ordering" \
     ./testPointerDetection $(testPointerDetection_SWITCHES) $(testPointerDetection_INPUT)
+      
 
 ###############################################################################################################################
 # Test function call detection

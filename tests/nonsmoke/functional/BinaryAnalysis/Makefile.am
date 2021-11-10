@@ -712,7 +712,7 @@ TEST_TARGETS += testPointerDetection.passed
 testPointerDetection.passed: $(TEST_WITH_ANSWER) testPointerDetection testPointerDetection.ans conditionalDisable
 	@$(RTH_RUN)											\
 	    TITLE="pointer detection [$@]"								\
-	    DISABLED="$$(./conditionalDisable)"								\
+	    DISABLED="prone to random failures due to output ordering"					\
 	    CMD="./testPointerDetection $(PointerDetectionSwitches) $(PointerDetectionSpecimen)"	\
 	    ANS=$(srcdir)/testPointerDetection.ans							\
 	    $< $@
