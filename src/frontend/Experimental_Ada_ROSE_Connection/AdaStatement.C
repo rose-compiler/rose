@@ -2257,19 +2257,36 @@ namespace
 
   struct InheritedEnumeratorCreator
   {
-      InheritedEnumeratorCreator(SgEnumDeclaration& enumDcl, AstContext astctx)
-      : derivedDcl(enumDcl), ctx(astctx)
+      InheritedEnumeratorCreator(SgEnumDeclaration& enumDcl, SgEnumDeclaration& orig, AstContext astctx)
+      : derivedDcl(enumDcl), origAA(orig.get_enumerators().begin()), origZZ(orig.get_enumerators().end()), ctx(astctx)
       {}
 
-      void operator()(Element_Struct& elem)
+      // assuming that the inherited enumerators appear in the same order
+      void operator()(Element_ID id)
       {
-        logError() << "inherited element kind " << elem.Element_Kind
-                   << std::endl;
-    }
+        ROSE_ASSERT(origAA != origZZ);
+
+        SgInitializedName& origEnum = SG_DEREF(*origAA);
+        SgVarRefExp&       enumInit = SG_DEREF(sb::buildVarRefExp(&origEnum, &ctx.scope()));
+
+        enumInit.unsetTransformation();
+        enumInit.setCompilerGenerated();
+
+        SgType&            enumTy   = SG_DEREF(derivedDcl.get_type());
+        SgInitializedName& sgnode   = mkInitializedName(origEnum.get_name(), enumTy, &enumInit);
+
+        sgnode.set_scope(derivedDcl.get_scope());
+        derivedDcl.append_enumerator(&sgnode);
+        recordNode(asisVars(), id, sgnode);
+
+        ++origAA;
+      }
 
     private:
-      SgEnumDeclaration& derivedDcl;
-      AstContext         ctx;
+      SgEnumDeclaration&                             derivedDcl;
+      SgInitializedNamePtrList::const_iterator       origAA;
+      const SgInitializedNamePtrList::const_iterator origZZ;
+      AstContext                                     ctx;
   };
 
 
@@ -2296,6 +2313,34 @@ namespace
     }
   }
 
+  std::tuple<SgEnumDeclaration*, SgAdaRangeConstraint*>
+  getBaseEnum(SgType* baseTy)
+  {
+    SgAdaRangeConstraint* constraint = nullptr;
+    SgEnumDeclaration*    basedecl   = nullptr;
+
+    logError() << typeid(*baseTy).name() << std::endl;
+
+    if (SgAdaDerivedType* deriveTy = isSgAdaDerivedType(baseTy))
+    {
+      SgType* ty = deriveTy->get_base_type();
+
+      logError() << typeid(*ty).name() << std::endl;
+
+      if (SgAdaSubtype* subTy = isSgAdaSubtype(ty))
+      {
+        ty = subTy->get_base_type();
+        constraint = isSgAdaRangeConstraint(subTy->get_constraint());
+      }
+
+      if (SgEnumType* enumTy = isSgEnumType(ty))
+        basedecl = isSgEnumDeclaration(enumTy->get_declaration());
+    }
+
+    ROSE_ASSERT(basedecl);
+    return std::make_tuple(basedecl, constraint);
+  }
+
   void
   processInheritedEnumValues( Type_Definition_Struct& tydef,
                               SgEnumDeclaration& derivedTypeDcl,
@@ -2313,10 +2358,14 @@ namespace
     }
 
     {
-      ElemIdRange range = idRange(tydef.Implicit_Inherited_Declarations);
+      using BaseTuple = std::tuple<SgEnumDeclaration*, SgAdaRangeConstraint*>;
 
-      logError() << "xyz " << range.size() << std::endl;
-      traverseIDs(range, elemMap(), InheritedEnumeratorCreator{derivedTypeDcl, ctx});
+      BaseTuple          baseInfo = getBaseEnum(derivedTypeDcl.get_adaParentType());
+      SgEnumDeclaration& origDecl = SG_DEREF(std::get<0>(baseInfo));
+      ElemIdRange        range    = idRange(tydef.Implicit_Inherited_Declarations);
+
+      // just traverse the IDs, as the elements are not present
+      std::for_each(range.first, range.second, InheritedEnumeratorCreator{derivedTypeDcl, origDecl, ctx});
     }
   }
 

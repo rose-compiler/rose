@@ -820,7 +820,7 @@ namespace
         handle(sg::asBaseType(n));
 
         if (SgType* parentType = n.get_adaParentType())
-          computeNameQualForTypeSubtree(n, parentType);
+          computeNameQualForShared(n, parentType);
       }
 
 
