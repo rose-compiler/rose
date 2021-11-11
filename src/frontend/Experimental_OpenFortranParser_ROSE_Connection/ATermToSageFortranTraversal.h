@@ -4,7 +4,6 @@
 #include "ATerm/ATermTraversal.h"
 #include "general_language_translation.h"
 #include "FASTNodes.h"
-
 #include "sage-tree-builder.h"
 
 namespace rb = Rose::builder;
@@ -17,13 +16,11 @@ namespace ATermSupport {
 class ATermToSageFortranTraversal : public ATermTraversal
 {
  private:
-  // C++11
-  // rb::SageTreeBuilder sage_tree_builder{rb::SageTreeBuilder::e_language_fortran}
-  rb::SageTreeBuilder sage_tree_builder;
+  rb::SageTreeBuilder sage_tree_builder{Language::Fortran};
 
  public:
    ATermToSageFortranTraversal(SgSourceFile* source)
-     : ATermTraversal(source), sage_tree_builder(rb::SageTreeBuilder(rb::SageTreeBuilder::e_language_fortran))
+     : ATermTraversal{source}, sage_tree_builder{Language::Fortran}
      {
      }
 

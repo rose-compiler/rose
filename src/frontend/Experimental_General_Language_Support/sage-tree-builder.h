@@ -52,8 +52,6 @@ class SgUseStatement;
 class SgVarRefExp;
 class SgWhileStmt;
 
-enum language_enum{e_language_unknown, e_language_fortran, e_language_jovial};
-
 namespace Rose {
 namespace builder {
 
@@ -92,14 +90,16 @@ public:
 class SageTreeBuilder {
 public:
 
-   // C++11
-   // enum class LanguageEnum{Fortran, Jovial};
-   enum LanguageEnum{e_language_unknown, e_language_fortran, e_language_jovial};
+   enum class LanguageEnum{Fortran, Jovial};
 
-   // C++11
-   // Don't allow default constructor, ...
+   // C++11: disallow default constructor, ...
    SageTreeBuilder() = delete;
-   SageTreeBuilder(SageTreeBuilder::LanguageEnum language) : language_(language) {}
+   SageTreeBuilder(const SageTreeBuilder &) = delete;
+   SageTreeBuilder &operator=(const SageTreeBuilder &) = delete;
+   SageTreeBuilder(SageTreeBuilder &&) = delete;
+   SageTreeBuilder &operator=(SageTreeBuilder &&) = delete;
+
+   SageTreeBuilder(LanguageEnum language) : language_{language} {}
 
    // Default action for a sage tree node is to do nothing.
    template<typename T> void Enter(T* &) {}
@@ -248,8 +248,8 @@ private:
    void reset_forward_type_refs(const std::string &type_name, SgNamedType* type);
 
 public:
-   bool is_Fortran_language() {return (language_ == e_language_fortran);}
-   bool is_Jovial_language()  {return (language_ == e_language_jovial);}
+   bool is_Fortran_language() {return (language_ == LanguageEnum::Fortran);}
+   bool is_Jovial_language()  {return (language_ == LanguageEnum::Jovial);}
 
    const TraversalContext & get_context(void) {return context_;}
    void setContext(SgType* type) {context_.type = type;}
