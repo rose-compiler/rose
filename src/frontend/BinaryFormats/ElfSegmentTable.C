@@ -25,6 +25,7 @@ SgAsmElfSegmentTableEntry::SgAsmElfSegmentTableEntry(ByteOrder::Endianness sex,
 void
 SgAsmElfSegmentTableEntry::ctor(ByteOrder::Endianness sex, const struct Elf32SegmentTableEntry_disk *disk) 
 {
+    p_index     = 0;
     p_type      = (SegmentType)ByteOrder::disk_to_host(sex, disk->p_type);
     p_offset    = ByteOrder::disk_to_host(sex, disk->p_offset);
     p_vaddr     = ByteOrder::disk_to_host(sex, disk->p_vaddr);
