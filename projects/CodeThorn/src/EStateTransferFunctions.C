@@ -1225,27 +1225,28 @@ namespace CodeThorn {
 	  } else {
 	    SAWYER_MESG(logger[TRACE])<<"Determined size of array from array variable (containing string memory region) size: "<<getVariableIdMapping()->getNumberOfElements(initDeclVarId)<<endl;
 	  }
-	  //SgType* variableType=initializer->get_type(); // for char and wchar
-	  //setElementSize(initDeclVarId,variableType); // this must be a pointer, if it's not an array
+	  //setElementSize(initDeclVarId,variableType); // set when VIM is created
 	  CodeThorn::TypeSize stringLen=stringValNode->get_value().size();
           string stringVal=stringValNode->get_value();
 	  CodeThorn::TypeSize memRegionNumElements=getVariableIdMapping()->getNumberOfElements(initDeclVarId);
 	  PState newPState=*currentEState.pstate();
 
           // initialize array elements from string
-	  //initializeStringLiteralInState(label,newPState,stringValNode,initDeclVarId); // string literals are initialized before analysis now
-          for(CodeThorn::TypeSize  i=0;i<memRegionNumElements;i++) {
+          // C: stringLen <= memRegionNumElements : C++:stringLen+1 <= memRegionNumElements (checked by frontend)
+          ROSE_ASSERT((!getVariableIdMapping()->isUnknownSizeValue(memRegionNumElements)) || (stringLen<=memRegionNumElements)); // isValidTypeSize implies StringLen<memRegionElements
+          for(CodeThorn::TypeSize  i=0;i<stringLen;i++) {
             AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(i),AbstractValue(1) /* elemensize */);
             // set default init value for past string elements of reserved array
             //cout<<"DEBUG: stringval at pos "<<i<<":"<<stringVal[i]<<" len:"<<stringVal.size()<<" ADDR:"<<newArrayElementAddr.toString()<<endl;
+            ROSE_ASSERT(((size_t)i)<stringVal.size());
             initializeMemoryLocation(label,&newPState,newArrayElementAddr,stringVal[i]);
           }
 
 	  // handle case that string is shorter than allocated memory
-	  if(stringLen+1<memRegionNumElements) {
+	  if(stringLen<=memRegionNumElements) {
 	    CodeThorn::TypeSize numDefaultValuesToAdd=memRegionNumElements-stringLen;
 	    for(CodeThorn::TypeSize  i=0;i<numDefaultValuesToAdd;i++) {
-	      AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(stringLen+i),AbstractValue(1) /* elemensize */);
+	      AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(stringLen+i),AbstractValue(1) /* element size */);
 	      // set default init value for past string elements of reserved array
 	      initializeMemoryLocation(label,&newPState,newArrayElementAddr,AbstractValue(0));
 	    }
