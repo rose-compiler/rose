@@ -88,7 +88,7 @@ void ControlFlowGraph::_buildCFG() {
     //Add the node itself to the graph
     createNode(node);
   }
- 
+
   //set _entry and _exit appropriately
   if (_cfgnodemap.count(entry))
     _entry = _cfgnodemap[entry];
@@ -151,7 +151,7 @@ void ControlFlowGraph::_setupIDs(ID_dir direction) {
   int currid = 0;
   queue<SimpleDirectedGraphNode *> remaining;
   set<SimpleDirectedGraphNode *> seen;
-  
+
   _forIndex = new ControlNode*[_numNodes];
   _backIndex = new ControlNode*[_numNodes];
 
