@@ -329,7 +329,7 @@ struct FunctionLinker {
   using sym_t  = SgFunctionSymbol;
   using type_t = void;
 
-  static constexpr char * name = "function";
+  static constexpr const char * name = "function";
   
   struct desc_t {
     decl_t * first_nondef_decl;
@@ -460,7 +460,7 @@ struct VariableLinker {
   using sym_t  = SgVariableSymbol;
   using type_t = void;
 
-  static constexpr char * name = "variable";
+  static constexpr const char * name = "variable";
   
   struct desc_t { // first and last of the chain, chain is reversed: following `get_prev_decl_item` point lead to first from last
     decl_t * first;
@@ -607,7 +607,7 @@ struct ClassLinker {
   using sym_t  = SgClassSymbol;
   using type_t = SgClassType;
 
-  static constexpr char * name = "class";
+  static constexpr const char * name = "class";
   
   struct desc_t {
     decl_t * first_nondef_decl;

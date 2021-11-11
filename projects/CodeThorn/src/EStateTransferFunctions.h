@@ -20,7 +20,7 @@
 
 namespace CodeThorn {
   class CTAnalysis;
-  
+
     class SingleBoolEvalResult {
   public:
     EState estate;
@@ -57,7 +57,7 @@ namespace CodeThorn {
     CTAnalysis* getAnalyzer();
 
     AbstractValue::Operator sgNodeToAbstractValueOperator(SgNode* node);
-    
+
     // obtained from analyzer
     Labeler* getLabeler() override;
     // obtained from analyzer
@@ -96,7 +96,7 @@ namespace CodeThorn {
     bool isApproximatedBy(const EState* es1, const EState* es2);
     EState combine(const EState* es1, const EState* es2);
     std::string transferFunctionCodeToString(TransferFunctionCode tfCode);
-    
+
     /* determines transfer function code from CFG and AST-matching and calls transferEdgeEStateDispatch
        ultimately this function can be used to operate on its own IR */
     std::list<EState> transferEdgeEState(Edge edge, const EState* estate);
@@ -112,7 +112,7 @@ namespace CodeThorn {
     void fatalErrorExit(SgNode* node, std::string errorMessage);
     void warning(SgNode* node, std::string errorMessage);
     void transferFunctionEntryPrintStatus(Edge edge, const EState* estate, std::string fileName, std::string functionName);
-    
+
 
     std::list<EState> transferFunctionCallLocalEdge(Edge edge, const EState* estate);
     std::list<EState> transferFunctionCall(Edge edge, const EState* estate);
@@ -135,14 +135,14 @@ namespace CodeThorn {
     // used at stmt level and for StmtExpr
     std::list<EState> transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
     std::list<EState> transferGnuExtensionStmtExpr(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate);
-    
+
     // not used yet
     std::list<EState> transferIncDecOpEvalWrapper(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
 
     // RERS binary mode only
     std::list<EState> transferFunctionCallLocalEdgeRersBinaryMode(Edge edge, const EState* estate);
     SingleEvalResult evalArrayNotInState(SgNode* node, SingleEvalResult& res, VariableId arrayVarId, AbstractValue arrayPtrPlusIndexValue);
-    
+
     // special case, called from transferFunctionCall
     std::list<EState> transferForkFunction(Edge edge, const EState* estate, SgFunctionCallExp* funCall);
     std::list<EState> transferForkFunctionWithExternalTargetFunction(Edge edge, const EState* estate, SgFunctionCallExp* funCall);
@@ -174,13 +174,13 @@ namespace CodeThorn {
     EState transferVariableDeclarationEState(SgVariableDeclaration* decl,EState currentEState, Label targetLabel);
     EState transferVariableDeclarationWithInitializerEState(SgVariableDeclaration* decl, SgInitializedName* initName, SgInitializer* initializer, VariableId initDeclVarId, EState& currentEState, Label targetLabel);
     EState transferVariableDeclarationWithoutInitializerEState(SgVariableDeclaration* decl, SgInitializedName* initName, VariableId initDeclVarId, EState& currentEState, Label targetLabel);
-    
+
     PState analyzeSgAggregateInitializer(VariableId initDeclVarId, SgAggregateInitializer* aggregateInitializer,PState pstate, /* for evaluation only  */ EState currentEState);
   private:
     // auxiliary semantic functions
     void declareUninitializedStruct(Label label,PState* pstate,AbstractValue structAddress, VariableId memVarId);
     AbstractValue createStructDataMemberAddress(AbstractValue structAddress,VariableId varId);
-    bool isGlobalAddress(AbstractValue memLoc); 
+    bool isGlobalAddress(AbstractValue memLoc);
   public:
     // determines whether lab is a function call label of a function
     // call of the form 'x=f(...)' and returns the varible-id of the
@@ -330,12 +330,12 @@ namespace CodeThorn {
   protected:
     AbstractValue abstractValueFromSgValueExp(SgValueExp* valueExp, EvalMode mode);
     std::map<std::string,ReadWriteListener*> _readWriteListenerMap;
-    
+
     // general evaluation function for abstract value operators
     SingleEvalResult evalOp(SgNode* node,
-					       SingleEvalResult lhsResult,
-					       SingleEvalResult rhsResult,
-					       EState estate, EvalMode mode);
+                 SingleEvalResult lhsResult,
+                 SingleEvalResult rhsResult,
+                 EState estate, EvalMode mode);
 
     // evaluation functions
     SingleEvalResult evalConditionalExpr(SgConditionalExp* node, EState estate, EvalMode mode=MODE_VALUE);
@@ -416,11 +416,11 @@ namespace CodeThorn {
                                                            EState estate, EvalMode mode=MODE_VALUE);
 
     SingleEvalResult evalAssignOp(SgAssignOp* node,
-						     SingleEvalResult lhsResult,
-						     SingleEvalResult rhsResult,
-						     Label targetLabel, EState estate, EvalMode mode);
+                 SingleEvalResult lhsResult,
+                 SingleEvalResult rhsResult,
+                 Label targetLabel, EState estate, EvalMode mode);
     std::list<EState> evalAssignOp3(SgAssignOp* node, Label targetLabel, const EState* estate);
-    
+
     SingleEvalResult evalArrayReferenceOp(SgPntrArrRefExp* node,
                                                         SingleEvalResult lhsResult,
                                                         SingleEvalResult rhsResult,

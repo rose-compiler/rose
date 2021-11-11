@@ -536,6 +536,95 @@ Engine::changeStateNS(WorkerState &cur, WorkerState next) {
     cur = next;
 }
 
+// An entry in a variable index that says where a variable is constrained along a path.
+struct VarIndexEntry {
+    size_t pathNodeIndex;                               // 0 is beginning of the path
+    PathNode::Ptr pathNode;
+    size_t assertionIndex;                              // 0 is first assertion of node. "true" is not counted.
+};
+
+// An index describing each symbolic variable that appears in a constraint along the path.
+using AssertionIndex = Sawyer::Container::Map<uint64_t /*ID*/, std::vector<VarIndexEntry>>;
+
+// Create an index of all the variables in a particular expression. Used with SymbolicExpr::Node::depthFirstTraversal.
+class ExprIndexer: public SymbolicExpr::Visitor {
+public:
+    AssertionIndex index;
+
+    // Where is the assertion that we're currently scanning?
+    size_t pathNodeIndex;
+    PathNode::Ptr pathNode;
+    size_t assertionIndex = 0;
+
+    // Call this before scanning a new assertion expression.
+    void current(size_t pathNodeIndex, const PathNode::Ptr &pathNode, size_t assertionIndex) {
+        this->pathNodeIndex = pathNodeIndex;
+        this->pathNode = pathNode;
+        this->assertionIndex = assertionIndex;
+    }
+
+    virtual SymbolicExpr::VisitAction preVisit(const SymbolicExpr::Node *node) {
+        if (auto id = node->variableId()) {
+            auto &entryList = index.insertMaybeDefault(*id);
+            if (entryList.empty() || entryList.back().assertionIndex != assertionIndex)
+                entryList.push_back(VarIndexEntry{.pathNodeIndex = pathNodeIndex,
+                                                  .pathNode = pathNode,
+                                                  .assertionIndex = assertionIndex});
+        }
+        return SymbolicExpr::CONTINUE;
+    }
+
+    virtual SymbolicExpr::VisitAction postVisit(const SymbolicExpr::Node*) {
+        return SymbolicExpr::CONTINUE;
+    }
+};
+
+void
+Engine::displaySmtAssertions(const Path::Ptr &path) {
+    if (mlog[DEBUG]) {
+        Sawyer::Message::Stream debug(mlog[DEBUG]);
+        SymbolicExpr::Ptr t = SymbolicExpr::makeBooleanConstant(true);
+
+        // Create an index of all the variables for all the assertions for all the nodes of the path.
+        ExprIndexer indexer;
+        auto nodes = path->nodes();
+        for (size_t i = 0, assertionIdx = 0; i < nodes.size(); ++i) {
+            auto assertions = nodes[i]->assertions();
+            for (const SymbolicExpr::Ptr &assertion: assertions) {
+                if (!assertion->isEquivalentTo(t)) {
+                    indexer.current(i, nodes[i], assertionIdx++);
+                    assertion->depthFirstTraversal(indexer);
+                }
+            }
+        }
+
+        // Print the index
+        if (!indexer.index.isEmpty()) {
+            debug <<"  variables appearing in assertions:\n";
+            for (const auto &node: indexer.index.nodes()) {
+                debug <<"    v" <<node.key() <<":\n";
+                for (const VarIndexEntry &entry: node.value()) {
+                    debug <<"      mentioned at assertion " <<entry.assertionIndex
+                          <<" of node " <<entry.pathNodeIndex <<": " <<entry.pathNode->printableName() <<"\n";
+                }
+            }
+        }
+
+        // Print the assertions
+        debug <<"  assertions (path constraints):\n";
+        for (size_t i = 0, assertionIdx = 0; i < nodes.size(); ++i) {
+            auto assertions = nodes[i]->assertions();
+            for (const SymbolicExpr::Ptr &assertion: assertions) {
+                if (!assertion->isEquivalentTo(t)) {
+                    debug <<"    assertion " <<assertionIdx
+                          <<" at node " <<i <<" " <<nodes[i]->printableName() <<"\n";
+                    debug <<"      " <<*assertion <<"\n";
+                }
+            }
+        }
+    }
+}
+
 void
 Engine::execute(const Path::Ptr &path, const BS::RiscOperators::Ptr &ops, const SmtSolver::Ptr &solver) {
     ASSERT_not_null(path);
@@ -547,6 +636,9 @@ Engine::execute(const Path::Ptr &path, const BS::RiscOperators::Ptr &ops, const 
         for (size_t i = 0; i < nodes.size(); ++i)
             SAWYER_MESG(mlog[DEBUG]) <<boost::format("    node %-3d: %s\n") % i % nodes[i]->printableName();
     }
+
+    if (mlog[DEBUG] && settings()->showAssertions)
+        displaySmtAssertions(path);
 
     {
         size_t nsteps = path->lastNode()->nSteps();

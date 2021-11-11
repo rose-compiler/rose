@@ -204,6 +204,9 @@ namespace ada
   /// @}
 
   /// finds the type declaration of a type
+  /// \details
+  ///    Skips over intermediate derived types, subtypes, etc. until a SgNamedType is found.
+  ///    Returns the declaration of said type.
   /// \{
   SgDeclarationStatement*
   baseDeclaration(SgType& ty);

@@ -129,6 +129,8 @@ NoOperation::StateNormalizer::toString(const BaseSemantics::DispatcherPtr &cpu, 
 //                                      NoOperation
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+NoOperation::NoOperation() {}
+
 NoOperation::NoOperation(Disassembler *disassembler) {
     normalizer_ = StateNormalizer::instance();
 
