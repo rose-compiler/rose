@@ -40,6 +40,9 @@ public:
  *  are allocated with @c instance static methods or @c create virtual constructors and should not be explicitly deleted. */
 class SmtSolver: private boost::noncopyable {
 public:
+    /** Ordered list of expressions. */
+    using ExprList = std::vector<SymbolicExpr::Ptr>;
+
     /** Reference counting pointer for SMT solvers. */
     using Ptr = SmtSolverPtr;
 
@@ -218,53 +221,58 @@ private:
     // memoized evidence of satisfiability, we denormalize the previously save satisfiability expressions using the inverse of
     // the variable mapping used for the current input assertions.
     class Memoization {
-        using ExprExpr = std::pair<SymbolicExpr::Ptr, SymbolicExpr::Ptr>;
-        using Assertions = std::vector<SymbolicExpr::Ptr>;
-        struct Record {
-            Assertions assertions;
-            Satisfiable satisfiable;
-            ExprExprMap evidence;
+    public:
+        // Return value from "find"
+        struct Found {
+            Sawyer::Optional<Satisfiable> satisfiable;  // if found, whether satisfiable
+            ExprList sortedNormalized;                  // sorted and normalized assertions, regardless if found
+            SymbolicExpr::ExprExprHashMap rewriteMap;   // mapping from provided to sortedNormalized assertions
+            ExprExprMap evidence;                       // normalized evidence if found and satisfiable
+
+            explicit operator bool() const {            // true if "find" was a cache hit
+                return satisfiable;
+            }
         };
+
+    private:
+        using ExprExpr = std::pair<SymbolicExpr::Ptr, SymbolicExpr::Ptr>;
+
+        // The thing that is memoized
+        struct Record {
+            ExprList assertions;                        // "find" inputs, sorted and normalized
+            Satisfiable satisfiable;                    // main output of SMT solver
+            ExprExprMap evidence;                       // output if satisfied: sorted and normalized
+        };
+
+        // Mapping from hash of sorted-normalized assertions to the memoization record.
         using Map = std::multimap<SymbolicExpr::Hash, Record>;
 
+    private:
         Map map_;                                       // memoization records indexed by hash of sorted-normalized assertions
-        Map::iterator latestFind_ = map_.end();         // record (or lack thereof) from most recent call to "find"
-        Assertions latestMiss_;                         // sorted-normalized assertions from last "find" if it was a miss
-        SymbolicExpr::ExprExprHashMap latestRewrite_;   // mapping used for most recent call to "find"
 
     public:
         // Clear the entire cache as if it was just constructed.
         void clear();
 
-        // Clear info about the most recent call to "find" (as if it were never called), but do not clear the cache.
-        void clearExceptCache();
-
         // Search for the specified assertions in the cache. As described above, the assertions are sorted and normalized
-        // before searching for them in the cache.  Returns the satisfiability if the assertions were previously memoized, or
-        // nothing if they don't appear in the cache.
-        Sawyer::Optional<Satisfiable> find(const std::vector<SymbolicExpr::Ptr> &assertions);
+        // before searching for them in the cache.
+        Found find(const ExprList &assertions);
 
-        // The last call to "find" (if any) was a hit.
-        bool wasHit() const {
-            return latestFind_ != map_.end();
-        }
+        // Return denormalized evidence associated with a prior hit.
+        ExprExprMap evidence(const Found&) const;
 
-        // The last call to "find" (if any) was a miss.
-        bool wasMiss() {
-            return !latestMiss_.empty();
-        }
+        // Update the cache. The first argument (Found) is information returned by "find" for a cache miss. The other two
+        // arguments are the return values to be memoized for the miss. The evidence must be empty unless the assertions are
+        // satisfiable.
+        void save(const Found&, Satisfiable, const ExprExprMap &evidence);
 
-        // Return denormalized evidence associated with the previuos hit.
-        ExprExprMap evidence();
-
-        // Normalize the specified evidence (if satisfied) using the same variable mappings as the corresponding "find" and
-        // save them in the cache.
-        void save(Satisfiable sat, const ExprExprMap &evidence);
+    public:
+        Map::iterator search(SymbolicExpr::Hash, const ExprList &sortedNormalized);
     };
 
 private:
     std::string name_;
-    std::vector<std::vector<SymbolicExpr::Ptr> > stack_;
+    std::vector<ExprList> stack_;
     bool errorIfReset_;
 
 protected:
@@ -434,7 +442,7 @@ public:
      *
      *  This is a high-level abstraction that resets this object state so it contains a single assertion set on its stack, and
      *  clears evidence of satisfiability. */
-    virtual Satisfiable triviallySatisfiable(const std::vector<SymbolicExpr::Ptr> &exprs);
+    virtual Satisfiable triviallySatisfiable(const ExprList &exprs);
 
     /** Determines if the specified expressions are all satisfiable, unsatisfiable, or unknown.
      *
@@ -444,7 +452,7 @@ public:
      *
      * @{ */
     virtual Satisfiable satisfiable(const SymbolicExpr::Ptr&);
-    virtual Satisfiable satisfiable(const std::vector<SymbolicExpr::Ptr>&);
+    virtual Satisfiable satisfiable(const ExprList&);
     /** @} */
 
 
@@ -512,19 +520,19 @@ public:
      *
      * @{ */
     virtual void insert(const SymbolicExpr::Ptr&);
-    virtual void insert(const std::vector<SymbolicExpr::Ptr>&);
+    virtual void insert(const ExprList&);
     /** @} */
 
     /** All assertions.
      *
      *  Returns the list of all assertions across all backtracking points. */
-    virtual std::vector<SymbolicExpr::Ptr> assertions() const;
+    virtual ExprList assertions() const;
 
     /** Assertions for a particular level.
      *
      *  Returns the assertions associated with a particular level of the stack. Level zero is the oldest entry in the stack;
      *  all smt objects have a level zero. See also, @ref nLevels. */
-    virtual const std::vector<SymbolicExpr::Ptr>& assertions(size_t level) const;
+    virtual const ExprList& assertions(size_t level) const;
 
     /** Check satisfiability of current stack.
      *
@@ -657,7 +665,7 @@ public:
      *
      *  This function is also useful for debugging because it will convert ROSE's symbolic expressions to whatever format
      *  is used by the SMT solver. */
-    virtual void generateFile(std::ostream&, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*) = 0;
+    virtual void generateFile(std::ostream&, const ExprList &exprs, Definitions*) = 0;
 
 protected:
     /** Check satisfiability using text files and an executable. */
@@ -699,8 +707,7 @@ protected:
      *  it encounters. The variables are renumbered starting at zero.  The return value is a vector new new expressions, some
      *  of which may be the unmodified original expressions if there were no variables.  The @p index is also a return value
      *  which indicates how original variables were mapped to new variables. */
-    static std::vector<SymbolicExpr::Ptr> normalizeVariables(const std::vector<SymbolicExpr::Ptr>&,
-                                                             SymbolicExpr::ExprExprHashMap &index /*out*/);
+    static ExprList normalizeVariables(const ExprList&, SymbolicExpr::ExprExprHashMap &index /*out*/);
 
     /** Undo the normalizations that were performed earlier.
      *
@@ -709,8 +716,7 @@ protected:
      *  expressions need not be those same expressions. For each input expression, the expression is rewritten by substituting
      *  the inverse of the index. That is, a depth first search is performed on the expression and if the subexpression matches
      *  a value of the index, then it's replaced by the corresponding key. */
-    static std::vector<SymbolicExpr::Ptr> undoNormalization(const std::vector<SymbolicExpr::Ptr>&,
-                                                            const SymbolicExpr::ExprExprHashMap &index);
+    static ExprList undoNormalization(const ExprList&, const SymbolicExpr::ExprExprHashMap &index);
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
