@@ -24,11 +24,14 @@ namespace CodeThorn
   ///   - inserts ctor and dtor calls at the end of scopes
   void normalizeCxx2(Normalization& norm, SgNode* node);
 
-  /// tests if @ref n requires compiler generation
+  /// tests if \ref n requires compiler generation
   bool needsCompilerGeneration(SgMemberFunctionDeclaration& n);
 
   /// tests if this is constructor creates a temporary
   bool cppCreatesTemporaryObject(const SgExpression* n, bool withCplusplus);
+
+  /// tests if the normalized temporary requires a reference
+  bool cppNormalizedRequiresReference(const SgType* varTy, const SgExpression* exp);
 
   /// tests if \ref n returns a copy
   bool cppReturnValueOptimization(const SgReturnStmt* n, bool withCplusplus);

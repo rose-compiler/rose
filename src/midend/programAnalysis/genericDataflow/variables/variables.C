@@ -624,7 +624,6 @@ string varID::str_ptr() const
         // if this is a regular variable
         if(components.size()>0)
         {
-                int i;
                 for(vector<SgInitializedName *>::const_iterator it = components.begin();
                          it!=components.end(); )
                 {
@@ -637,7 +636,6 @@ string varID::str_ptr() const
                         it++;
                         if(it!=components.end())
                                 out+=".";
-                        i++;
                 }
         }
         // else, if this is a special variable

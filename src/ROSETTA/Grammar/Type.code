@@ -8946,7 +8946,7 @@ SOURCE_CREATE_TYPE_FOR_ADA_MODULAR_TYPE_START
 SgAdaModularType*
 SgAdaModularType::createType(SgExpression* moduloexpr, SgExpression* /*optional_fortran_type_kind*/)
 {
-  SgAdaModularType proto(moduloexpr); // \pp not sure if stack allocation works
+  SgAdaModularType proto{moduloexpr}; // \pp not sure if stack allocation works
   SgName           name = proto.get_mangled();
   SgType*          ty = get_globalTypeTable()->lookup_type(name);
 

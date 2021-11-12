@@ -2132,7 +2132,19 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
                if (SgAdaPackageSpecDecl * ada_decl=isSgAdaPackageSpecDecl(stmt))
                {
                  string qname= ada_decl->get_qualified_name().getString();
-                 if (qname=="::System" || qname=="::System::Unsigned_Types")
+                 if (qname=="::System" 
+                     || qname=="::System::Unsigned_Types"
+                     || qname=="::System::Parameters"
+                     || qname=="::System::CRTL"
+                     || qname=="::Ada"
+                     || qname=="::Ada::Streams"
+                     || qname=="::Interfaces"
+                     || qname=="::Interfaces::C_Streams"
+                     || qname=="::System::File_Control_Block"
+                     || qname=="::System::WCh_Con"
+                     || qname=="::Ada::IO_Exceptions"
+                     || qname=="::Ada::Text_IO"
+                     )
                    expectedAdaStmt=true;
                }
 

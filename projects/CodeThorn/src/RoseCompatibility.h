@@ -13,6 +13,10 @@
 namespace CodeThorn
 {
 
+constexpr
+unsigned char STRIP_MODIFIER_ALIAS = SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_TYPEDEF_TYPE;
+
+
 using ClassKeyType    = const SgClassDefinition*;
 using TypeKeyType     = const SgType*;
 using CastKeyType     = const SgCastExp*;
@@ -135,7 +139,7 @@ std::string typeNameOf(ClassKeyType key);
 
 
 /// calls the callback function \ref fn(derived, base, isvirtual)
-///   for all direct base calsses of \ref clkey
+///   for all direct base classes of \ref clkey
 void inheritanceEdges( ClassKeyType clkey,
                        std::function<void(ClassKeyType, ClassKeyType, bool)> fn
                      );
@@ -145,6 +149,24 @@ void inheritanceEdges( ClassKeyType clkey,
 ///     is returned.
 ///   - base type refers to a type after aliases, references, pointers, decltype, and modifiers.
 std::pair<ClassKeyType, TypeKeyType> getClassCastInfo(TypeKeyType tykey);
+
+//
+// ROSE utilities
+
+/// returns the class definition for \ref n.
+/// \pre isSgClassDeclaration(n.get_definingDeclaration())
+SgClassDefinition& getClassDef(const SgDeclarationStatement& n);
+
+/// returns the class definition where \ref n is defined
+SgClassDefinition& getClassDef(const SgMemberFunctionDeclaration& n);
+
+/// returns the class definition of \ref n
+/// returns nullptr if a class definition cannot be found
+SgClassDefinition& getClassDef(const SgExpression& n, bool skipUpCasts = false);
+
+/// returns the class definition of \ref n
+/// returns nullptr if a class definition cannot be found
+SgClassDefinition* getClassDefOpt(const SgClassType& n);
 
 }
 #endif /* ROSE_MAPPING */

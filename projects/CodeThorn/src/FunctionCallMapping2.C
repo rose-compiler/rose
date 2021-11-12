@@ -15,19 +15,18 @@
 
 #include "AstTerm.h"
 
+#include "RoseCompatibility.h"
+
 namespace CodeThorn
 {
 
 namespace
 {
-  struct Ternary
-  {
-    enum value { unknown, trueval, falseval };
-  };
+  enum class Ternary { unknown, trueval, falseval };
 
-  struct IsTemplate : sg::DispatchHandler<Ternary::value>
+  struct IsTemplate : sg::DispatchHandler<Ternary>
   {
-    typedef sg::DispatchHandler<Ternary::value> base;
+    typedef sg::DispatchHandler<Ternary> base;
 
     IsTemplate()
     : base(Ternary::unknown)
@@ -68,7 +67,7 @@ namespace
     while (SgCommaOpExp* comma = isSgCommaOpExp(res))
       res = comma->get_rhs_operand();
 
-    ROSE_ASSERT(res);
+    ASSERT_not_null(res);
     return res;
   }
 
@@ -76,53 +75,149 @@ namespace
   {
       using base = sg::DispatchHandler< std::vector<SgFunctionDeclaration*> >;
 
-      CallTargetFinder(VirtualFunctionAnalysis& vfuncs, SgCallExpression& call)
-      : base(), vfa(vfuncs), callexp(call)
+      CallTargetFinder(ClassAnalysis& classAnalysis, VirtualFunctionAnalysis& vfuncs, SgCallExpression& call)
+      : base(), cha(classAnalysis), vfa(vfuncs), callexp(call)
       {}
 
-      void objectCall(const SgBinaryOp& n);
+      ReturnType
+      getCallTargets(const SgMemberFunctionRefExp& memref);
 
       void handle(const SgNode& n)       { SG_UNEXPECTED_NODE(n); }
 
-      void handle(const SgExpression& n) { CallTargetSet::getPropertiesForExpression(&callexp, nullptr /*classHierarchy*/, res); }
+      /// fallback method for regular function calls
+      void handle(const SgExpression& n)
+      {
+        CallTargetSet::getPropertiesForExpression(&callexp, nullptr /*classHierarchy*/, res);
 
-      //~ void handle(const SgDotExp& n)     { objectCall(n); }
-      //~ void handle(const SgArrowExp& n)   { objectCall(n); }
+        std::cerr << "PP4: " << n.unparseToString() << " " << res.size()
+                  << std::endl;
+      }
+
+      /// catches member calls
+      void handle(const SgMemberFunctionRefExp& n)
+      {
+        res = getCallTargets(n);
+      }
+
+      /// catches pointer-to-member calls
+      // \todo ..
 
     private:
+      ClassAnalysis&           cha; // class hierarchy analysis
       VirtualFunctionAnalysis& vfa;
       SgCallExpression&        callexp;
   };
 
-
-  /*
-  // MS: unused function warning
-  void CallTargetFinder::objectCall(const SgBinaryOp& n)
+  namespace
   {
-    SgExpression& obj     = SG_DEREF(n.get_lhs_operand());
-    SgType&       objType = SG_DEREF(obj.get_type());
+    SgExpression*
+    receiverExpression(const SgCallExpression& call)
+    {
+      SgExprListExp&       args = SG_DEREF(call.get_args());
+      SgExpressionPtrList& lst  = args.get_expressions();
 
-    // \todo
+      ROSE_ASSERT(lst.size());
+      return lst[0];
+    }
+
+
+    bool requiresVirtualDispatch(const SgMemberFunctionRefExp& memref, const SgCallExpression& callexp)
+    {
+      // virtual dispatch is not required if the function is prefixed with a name qualifier
+      if (memref.get_need_qualifier())
+        return false;
+
+      // or if the receiver argument is not a polymorphic type
+      SgExpression*  receiver = receiverExpression(callexp);
+      SgAddressOfOp* adrOf    = isSgAddressOfOp(receiver);
+
+      if (adrOf == nullptr)
+        return true;
+
+      SgExpression&  objexpr = SG_DEREF(adrOf->get_operand());
+      SgType&        ty      = SG_DEREF(objexpr.get_type());
+      SgType*        underTy = ty.stripType(STRIP_MODIFIER_ALIAS);
+
+      // test if the type is polymorphic
+      return (  isSgReferenceType(underTy)
+             || isSgRvalueReferenceType(underTy)
+             // in these cases the first argument would not be an address
+             //~ || isSgPointerType(underTy)
+             //~ || isSgArrayType(underTy)
+             );
+    }
+
+
+    template <class AssociativeContainer>
+    auto lookup(AssociativeContainer& m, const typename AssociativeContainer::key_type& key) -> decltype(&m[key])
+    {
+      auto pos = m.find(key);
+
+      return pos == m.end() ? nullptr : &pos->second;
+    }
   }
-  */
+
+
+  CallTargetFinder::ReturnType
+  CallTargetFinder::getCallTargets(const SgMemberFunctionRefExp& memref)
+  {
+    SgMemberFunctionDeclaration*        mdcl = memref.getAssociatedMemberFunctionDeclaration();
+    SgMemberFunctionDeclaration*        mkey = mdcl ? isSgMemberFunctionDeclaration(mdcl->get_firstNondefiningDeclaration())
+                                                    : mdcl;
+    SgMemberFunctionDeclaration&        mfn  = SG_DEREF(mkey);
+    SgClassDefinition&                  clsdef = getClassDef(mfn);
+    std::vector<SgFunctionDeclaration*> res = { &mfn };
+
+    // return early if this is not a virtual call
+    if (!requiresVirtualDispatch(memref, callexp))
+      return res;
+
+/*
+    for (auto& x : vfa)
+      std::cerr << "PP3 i: " << x.first->get_name() << " " << x.first
+                << " " << x.first->get_firstNondefiningDeclaration()
+                << std::endl;
+*/
+    const VirtualFunctionDesc* vfunc = lookup(vfa, &mfn);
+
+    // this is not a virtual function
+    if (vfunc == nullptr)
+      return res;
+
+    // query overriders and add them to the candidate list
+    for (const OverrideDesc& desc : vfunc->overriders())
+    {
+      const SgFunctionDeclaration*       fundcl = desc.functionId();
+      const SgMemberFunctionDeclaration& ovrdcl = SG_DEREF(isSgMemberFunctionDeclaration(fundcl));
+      const SgClassDefinition&           ovrcls = getClassDef(ovrdcl);
+
+      if (cha.areBaseDerived(&clsdef, &ovrcls))
+        res.push_back(const_cast<SgFunctionDeclaration*>(fundcl));
+    }
+
+    //~ std::cerr << "PP3: exiting late " << memref.unparseToString() << " " << res.size()
+              //~ << std::endl;
+    return res;
+  }
+
 
   // \note SgConstructorInitializer should not be handled through CallGraph..
   std::vector<SgFunctionDeclaration*>
-  callTargets(SgCallExpression* callexp, VirtualFunctionAnalysis* vfa)
+  callTargets(SgCallExpression* callexp, ClassAnalysis* cha, VirtualFunctionAnalysis* vfa)
   {
-    ASSERT_not_null(callexp); ASSERT_not_null(vfa);
+    ASSERT_not_null(callexp); ASSERT_not_null(cha); ASSERT_not_null(vfa);
 
     SgExpression* calltgt = getTargetExpression(callexp);
 
-    return sg::dispatch(CallTargetFinder{*vfa, *callexp}, calltgt);
+    return sg::dispatch(CallTargetFinder{*cha, *vfa, *callexp}, calltgt);
   }
 
   std::string typeRep(SgExpression& targetexp)
   {
-    ROSE_ASSERT(targetexp.get_type());
+    ASSERT_not_null(targetexp.get_type());
 
     SgFunctionType* funty = isSgFunctionType( targetexp.get_type()->findBaseType() );
-    ROSE_ASSERT(funty);
+    ASSERT_not_null(funty);
 
     return funty->get_mangled().getString();
   }
@@ -145,7 +240,7 @@ bool FunctionCallInfo::isFunctionPointerCall() {
 
 void addEntry(FunctionCallTargetSet& targetset, SgFunctionDeclaration* dcl)
 {
-  ROSE_ASSERT(dcl);
+  ASSERT_not_null(dcl);
 
   SgFunctionDeclaration* defdcl = isSgFunctionDeclaration(dcl->get_definingDeclaration());
 
@@ -158,7 +253,7 @@ void addEntry(FunctionCallTargetSet& targetset, SgFunctionDeclaration* dcl)
   }
 
   SgFunctionDefinition* def = defdcl->get_definition();
-  ROSE_ASSERT(def);
+  ASSERT_not_null(def);
 
   targetset.insert(FunctionCallTarget(def));
 }
@@ -169,17 +264,44 @@ namespace
   float percent(int part, int whole) { return (part*100.0)/whole; }
 }
 
+
 void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
 {
-  typedef std::unordered_map<Label, FunctionCallTargetSet, HashLabel>::mapped_type map_entry_t;
+  using map_entry_t = std::unordered_map<Label, FunctionCallTargetSet, HashLabel>::mapped_type;
 
-  ROSE_ASSERT(_labeler && root);
+  ASSERT_not_null(_labeler); ASSERT_not_null(root);
 
   std::multimap<std::string, SgFunctionDeclaration*> funDecls;
+  FunctionCallMapping2*                              fm = this;
+
+  // lambda that computes all possible targets for function pointer calls
+  auto computeFunctionPointerCalls = [&funDecls,fm](Label lbl, SgExpression& expr, bool& added) -> void
+       {
+         // function pointer calls are handled separately in order to
+         //   use the ROSE AST instead of the memory pool.
+         std::string  key = typeRep(expr);
+         auto         aa  = funDecls.lower_bound(key);
+         decltype(aa) zz  = funDecls.end();
+         map_entry_t& map_entry = fm->mapping[lbl];
+
+         while (aa != zz && aa->first == key)
+         {
+           addEntry(map_entry, aa->second);
+
+           added = true;
+           ++aa;
+         }
+       };
+
+  // lambda that computes all possible targets for pointer-to-member calls
+  auto computeMemberFunctionPointerCalls = [](Label, SgExpression&, bool&) -> void
+       {
+       };
 
   for(auto node : RoseAst(root)) {
     if(SgFunctionDeclaration* funDecl = isSgFunctionDeclaration(node)) {
-      funDecls.emplace(funDecl->get_type()->get_mangled().getString(), funDecl);
+      if (!isSgMemberFunctionDeclaration(funDecl))
+        funDecls.emplace(funDecl->get_type()->get_mangled().getString(), funDecl);
     }
   }
 
@@ -208,23 +330,14 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
 
     if (SgExpression* targetNode = callinfo.functionPointer())
     {
-      // function pointer calls are handled separately in order to
-      //   use the ROSE AST instead of the memory pool.
-      std::string  key = typeRep(*targetNode);
-      auto         aa = funDecls.lower_bound(key);
-      decltype(aa) zz = funDecls.end();
-      bool         added = false;
-      map_entry_t& map_entry = mapping[lbl];
+      bool added = false;
 
-      while (aa != zz && aa->first == key)
-      {
-        addEntry(map_entry, aa->second);
+      if (isSgMemberFunctionType(targetNode->get_type()))
+        computeMemberFunctionPointerCalls(lbl, *targetNode, added);
+      else
+        computeFunctionPointerCalls(lbl, *targetNode, added);
 
-        added = true;
-        ++aa;
-      }
-
-      if (added == 0)
+      if (!added)
       {
         mapping.erase(lbl);
         ++unresolvedFunptrCall;
@@ -236,12 +349,14 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
     else if (SgCallExpression* callexpr = callinfo.callExpression())
     {
       // handles explicit function calls (incl. virtual functions)
-      std::vector<SgFunctionDeclaration*> tgts{callTargets(callexpr, _virtualFunctions)};
-      map_entry_t&                        map_entry = mapping[lbl];
+      using function_container = std::vector<SgFunctionDeclaration*>;
+
+      function_container tgts = callTargets(callexpr, _classAnalysis, _virtualFunctions);
+      map_entry_t&       mapEntry = mapping[lbl];
 
       for (SgFunctionDeclaration* fdcl : tgts)
       {
-        addEntry(map_entry, fdcl);
+        addEntry(mapEntry, fdcl);
       }
 
       if (tgts.size() == 0)
@@ -255,15 +370,10 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
     {
       // handles constructor calls
       if (SgFunctionDeclaration* ctor = ctorinit->get_declaration())
-      {
         addEntry(mapping[lbl], ctor);
-      }
-      else
-      {
-        // print the parent, b/c ctorinit may produce an empty string
+      else // print the parent, b/c ctorinit may produce an empty string
         logWarn() << "unable to resolve target for initializing: " << ctorinit->get_parent()->unparseToString()
                   << std::endl;
-      }
     }
     else
     {
@@ -279,13 +389,13 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
 
 std::string FunctionCallMapping2::toString()
 {
-  ROSE_ASSERT(_labeler);
+  ASSERT_not_null(_labeler);
 
   std::stringstream ss;
   for(auto fcall : mapping)
   {
     SgLocatedNode* callNode = isSgLocatedNode(_labeler->getNode(fcall.first));
-    ROSE_ASSERT(callNode);
+    ASSERT_not_null(callNode);
 
     ss<<SgNodeHelper::sourceFilenameLineColumnToString(callNode)<<" : "<<callNode->unparseToString()<<" RESOLVED TO ";
     for(auto target : fcall.second) {
@@ -309,7 +419,7 @@ FunctionCallTargetSet FunctionCallMapping2::resolveFunctionCall(Label callLabel)
 
 bool insideTemplatedCode(const SgNode* n)
 {
-  Ternary::value res = sg::dispatch(IsTemplate{}, n);
+  Ternary res = sg::dispatch(IsTemplate{}, n);
 
   if (res != Ternary::unknown) return res == Ternary::trueval;
 
