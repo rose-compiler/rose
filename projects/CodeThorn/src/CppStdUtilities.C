@@ -13,6 +13,13 @@ using namespace std;
 // C++11, requires at least gcc 4.9
 namespace CppStdUtilities {
 
+  string getFileAppendModeSelector() {
+    return "append";
+  }
+  string getFileGenerateModeSelector() {
+    return "generate";
+  }
+
   bool readDataFile(std::string fileName, DataFileVector& dfv) {
     string line;
     ifstream infile(fileName);
@@ -33,9 +40,9 @@ namespace CppStdUtilities {
   }
   
   bool writeFile(string mode, std::string filename, std::string data) {
-    if(mode=="generate")
+    if(mode==getFileGenerateModeSelector())
       return writeFile(filename, data);
-    else if(mode=="append")
+    else if(mode==getFileAppendModeSelector())
       return appendFile(filename, data);
     else
       return false;

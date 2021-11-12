@@ -43,6 +43,7 @@ ADA_TRANSLATOR_PASSING_TESTS :=        \
   loop_parameter_specification.adb     \
   loop_statement.adb                   \
   minimal.adb                          \
+  modular_type_definition.ads          \
   myarray.ads                          \
   named.ads                            \
   named_block.adb                      \
@@ -80,31 +81,51 @@ ADA_TRANSLATOR_PASSING_TESTS :=        \
   while_loop_statement.adb
 
 ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
+  access_variable.adb                  \
   alignment_component_clause.adb       \
+  allocators.adb                       \
+  array_expressions.adb                \
+  array_pointer_type.ads               \
   async_transfer_select.adb            \
   case_function.adb                    \
+  constrained_array_definition.ads     \
   defining_character_literal.adb       \
   defining_enumeration_literal.adb     \
   defining_operator_symbol.ads         \
   enumeration.adb                      \
+  enumeration_with_text_io.adb         \
   exception_declaration.ads            \
+  exception_renamingrenaming.adb       \
   exhandler.adb                        \
+  explicit_deref.adb                   \
+  floating_point_definition.ads        \
   function_renaming.adb                \
   function_instantiation.adb           \
+  goto_loop_v2.adb                     \
+  hardwarestore.adb                    \
+  hello_world.adb                      \
+  io_test.adb                          \
+  io_test2.adb                         \
+  linkedlists.ads                      \
   multidimensional_array.adb           \
   multidimensional_array.ads           \
   myarray.adb                          \
+  nullptr.adb                          \
   package_pragma.ads                   \
   package_instantiation.adb            \
+  package_with_body.adb                \
   parent.ads                           \
   parent-child.ads                     \
   parenthesis_matters.adb              \
   pragmas.adb                          \
+  private_access_type.adb              \
   procedure_call.adb                   \
   procedure_instantiation.adb          \
   procedure_instantiation2.adb         \
   procedure_pragma.adb                 \
   raise_statement.adb                  \
+  real_typedecl.ads                    \
+  scopequal.adb                        \
   simpleada-io.ads                     \
   simple_array_expressions.adb         \
   simple_expression_range.ads          \
@@ -116,20 +137,15 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   type_in_local_pkg.adb                
 
 ADA_TRANSLATOR_FAILING_TESTS :=        \
-  access_variable.adb                  \
   ada_packages.adb                     \
-  allocators.adb                       \
   accept_statement.adb                 \
   accept_statement_task_decl.adb       \
   array_declare.adb                    \
   array_declare_2.ads                  \
-  array_expressions.adb                \
-  array_pointer_type.ads               \
   asm_machine_code.adb                 \
   based_numbers.ads                    \
   choice_parameter_specification.adb   \
   complex.ads                          \
-  constrained_array_definition.ads     \
   discriminant.adb                     \
   discriminant_constraint.ads          \
   discriminated_record.adb             \
@@ -137,33 +153,17 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   dynamic_array.adb                    \
   entry_call.adb                       \
   entry_declaration.ads                \
-  enumeration_with_text_io.adb         \
   exception_rename.ads                 \
-  exception_renamingrenaming.adb       \
-  explicit_deref.adb                   \
-  floating_point_definition.ads        \
   formal_procedure_declaration.ads     \
-  goto_loop_v2.adb                     \
-  hardwarestore.adb                    \
-  hello_world.adb                      \
   inherited_primitive_operation.adb    \
   io.ads                               \
-  io_test.adb                          \
-  io_test2.adb                         \
-  linkedlists.ads                      \
-  modular_type_definition.ads          \
   nested_package.ads                   \
-  nullptr.adb                          \
   opaque.ads                           \
   package_renaming_declaration.ads     \
-  package_with_body.adb                \
   pkgrename.ads                        \
-  private_access_type.adb              \
   procedure_renaming.adb               \
-  real_typedecl.ads                    \
   representation_clause.ads            \
   representation_clause_2.ads          \
-  scopequal.adb                        \
   select_accept.adb                    \
   simple_select_accept.adb             \
   simple_select_accept_guarded.adb     \
