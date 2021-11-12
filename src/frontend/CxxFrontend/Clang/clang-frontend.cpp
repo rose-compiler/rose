@@ -488,7 +488,7 @@ void ClangToSageTranslator::applySourceRange(SgNode * node, clang::SourceRange s
 
                if (p_compiler_instance->getSourceManager().getFileEntryForID(file_begin) != NULL) 
                   {
-                    std::string file = p_compiler_instance->getSourceManager().getFileEntryForID(file_begin)->getName();
+                    std::string file = p_compiler_instance->getSourceManager().getFileEntryForID(file_begin)->getName().str();
 
                  // start_fi = new Sg_File_Info(file, ls, cs);
                  // end_fi   = new Sg_File_Info(file, le, ce);
@@ -688,7 +688,7 @@ void SagePreprocessorRecord::InclusionDirective(clang::SourceLocation HashLoc, c
     unsigned ls = p_source_manager->getSpellingLineNumber(HashLoc, &inv_begin_line);
     unsigned cs = p_source_manager->getSpellingColumnNumber(HashLoc, &inv_begin_col);
 
-    std::string file = p_source_manager->getFileEntryForID(p_source_manager->getFileID(HashLoc))->getName();
+    std::string file = p_source_manager->getFileEntryForID(p_source_manager->getFileID(HashLoc))->getName().str();
 
     std::cerr << "    In file  : " << file << std::endl;
     std::cerr << "    From     : " << ls << ":" << cs << std::endl;

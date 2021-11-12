@@ -1,4 +1,6 @@
 #include "sage3basic.h"
+#include "sageBuilder.h"
+#include "sageInterfaceAda.h"
 #include "sageGeneric.h"
 
 #include <numeric>
@@ -627,15 +629,15 @@ namespace
   }
 
   /// creates a ROSE declaration depending on the provided type/definition
-  struct MakeDeclaration : sg::DispatchHandler<SgDeclarationStatement*>
+  struct TypeDeclMaker : sg::DispatchHandler<SgDeclarationStatement*>
   {
       typedef sg::DispatchHandler<SgDeclarationStatement*> base;
 
-      MakeDeclaration( const std::string& name,
-                       SgScopeStatement& scope,
-                       TypeData basis,
-                       SgDeclarationStatement* incompl
-                     )
+      TypeDeclMaker( const std::string& name,
+                     SgScopeStatement& scope,
+                     TypeData basis,
+                     SgDeclarationStatement* incompl
+                   )
       : base(), dclname(name), dclscope(scope), foundation(basis), incomplDecl(incompl)
       {}
 
@@ -657,6 +659,22 @@ namespace
           res->set_definingDeclaration(res);
           incomplDecl->set_definingDeclaration(res);
         }
+      }
+
+      void handle(SgAdaDerivedType& n)
+      {
+        SgEnumDeclaration* enmdcl = isSgEnumDeclaration(si::ada::baseDeclaration(n));
+
+        if (enmdcl == nullptr)
+        {
+          handle(sg::asBaseType(n));
+          return;
+        }
+
+        SgEnumDeclaration& derivedEnum = mkEnumDecl(dclname, dclscope);
+
+        derivedEnum.set_adaParentType(&n);
+        res = &derivedEnum;
       }
 
       void handle(SgEnumDeclaration& n)
@@ -2237,19 +2255,134 @@ namespace
       AstContext     ctx;
   };
 
+  struct InheritedEnumeratorCreator
+  {
+      InheritedEnumeratorCreator(SgEnumDeclaration& enumDcl, SgEnumDeclaration& orig, AstContext astctx)
+      : derivedDcl(enumDcl), origAA(orig.get_enumerators().begin()), origZZ(orig.get_enumerators().end()), ctx(astctx)
+      {}
+
+      // assuming that the inherited enumerators appear in the same order
+      void operator()(Element_ID id)
+      {
+        ROSE_ASSERT(origAA != origZZ);
+
+        SgInitializedName& origEnum = SG_DEREF(*origAA);
+        SgVarRefExp&       enumInit = SG_DEREF(sb::buildVarRefExp(&origEnum, &ctx.scope()));
+
+        enumInit.unsetTransformation();
+        enumInit.setCompilerGenerated();
+
+        SgType&            enumTy   = SG_DEREF(derivedDcl.get_type());
+        SgInitializedName& sgnode   = mkInitializedName(origEnum.get_name(), enumTy, &enumInit);
+
+        sgnode.set_scope(derivedDcl.get_scope());
+        derivedDcl.append_enumerator(&sgnode);
+        recordNode(asisVars(), id, sgnode);
+
+        ++origAA;
+      }
+
+    private:
+      SgEnumDeclaration&                             derivedDcl;
+      SgInitializedNamePtrList::const_iterator       origAA;
+      const SgInitializedNamePtrList::const_iterator origZZ;
+      AstContext                                     ctx;
+  };
+
+
   void
-  processInheritedSubprogramsOfDerivedTypes(TypeData& ty, SgDeclarationStatement& dcl, AstContext ctx)
+  processInheritedSubroutines( Type_Definition_Struct& tydef,
+                               SgTypedefDeclaration& derivedTypeDcl,
+                               AstContext ctx
+                             )
+  {
+    {
+      SgTypedefType& ty    = SG_DEREF(derivedTypeDcl.get_type());
+      ElemIdRange    range = idRange(tydef.Implicit_Inherited_Subprograms);
+
+      traverseIDs(range, elemMap(), InheritedSymbolCreator{ty, ctx});
+    }
+
+    {
+      ElemIdRange range = idRange(tydef.Implicit_Inherited_Declarations);
+
+      if (!range.empty())
+        logError() << "A derived types implicit declaration is not empty: "
+                   << derivedTypeDcl.get_name()
+                   << std::endl;
+    }
+  }
+
+  std::tuple<SgEnumDeclaration*, SgAdaRangeConstraint*>
+  getBaseEnum(SgType* baseTy)
+  {
+    SgAdaRangeConstraint* constraint = nullptr;
+    SgEnumDeclaration*    basedecl   = nullptr;
+
+    logError() << typeid(*baseTy).name() << std::endl;
+
+    if (SgAdaDerivedType* deriveTy = isSgAdaDerivedType(baseTy))
+    {
+      SgType* ty = deriveTy->get_base_type();
+
+      logError() << typeid(*ty).name() << std::endl;
+
+      if (SgAdaSubtype* subTy = isSgAdaSubtype(ty))
+      {
+        ty = subTy->get_base_type();
+        constraint = isSgAdaRangeConstraint(subTy->get_constraint());
+      }
+
+      if (SgEnumType* enumTy = isSgEnumType(ty))
+        basedecl = isSgEnumDeclaration(enumTy->get_declaration());
+    }
+
+    ROSE_ASSERT(basedecl);
+    return std::make_tuple(basedecl, constraint);
+  }
+
+  void
+  processInheritedEnumValues( Type_Definition_Struct& tydef,
+                              SgEnumDeclaration& derivedTypeDcl,
+                              AstContext ctx
+                            )
+  {
+    {
+      ElemIdRange range = idRange(tydef.Implicit_Inherited_Subprograms);
+
+      //~ traverseIDs(range, elemMap(), InheritedSymbolCreator{declDerivedType, ctx});
+      if (!range.empty())
+        logError() << "A derived enum has implicitly inherited subprograms: "
+                   << derivedTypeDcl.get_name()
+                   << std::endl;
+    }
+
+    {
+      using BaseTuple = std::tuple<SgEnumDeclaration*, SgAdaRangeConstraint*>;
+
+      BaseTuple          baseInfo = getBaseEnum(derivedTypeDcl.get_adaParentType());
+      SgEnumDeclaration& origDecl = SG_DEREF(std::get<0>(baseInfo));
+      ElemIdRange        range    = idRange(tydef.Implicit_Inherited_Declarations);
+
+      // just traverse the IDs, as the elements are not present
+      std::for_each(range.first, range.second, InheritedEnumeratorCreator{derivedTypeDcl, origDecl, ctx});
+    }
+  }
+
+  void
+  processInheritedElementsOfDerivedTypes(TypeData& ty, SgDeclarationStatement& dcl, AstContext ctx)
   {
     Type_Definition_Struct& tydef = ty.definitionStruct();
 
     if (tydef.Type_Kind != A_Derived_Type_Definition)
       return;
 
-    SgTypedefDeclaration&   sgdecl          = SG_DEREF(isSgTypedefDeclaration(&dcl));
-    SgTypedefType&          declDerivedType = SG_DEREF(sgdecl.get_type());
-    ElemIdRange             range           = idRange(tydef.Implicit_Inherited_Subprograms);
-
-    traverseIDs(range, elemMap(), InheritedSymbolCreator{declDerivedType, ctx});
+    if (SgTypedefDeclaration* derivedTypeDcl = isSgTypedefDeclaration(&dcl))
+      processInheritedSubroutines(tydef, *derivedTypeDcl, ctx);
+    else if (SgEnumDeclaration* derivedEnumDcl = isSgEnumDeclaration(&dcl))
+      processInheritedEnumValues(tydef, *derivedEnumDcl, ctx);
+    else
+      ROSE_ABORT();
   }
 
 
@@ -3208,7 +3341,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         TypeData                ty   = getTypeFoundation(adaname.ident, decl, ctx.scope(scope));
         Element_ID              id   = adaname.id();
         SgDeclarationStatement* nondef = findFirst(asisTypes(), id);
-        SgDeclarationStatement& sgdecl = sg::dispatch(MakeDeclaration{adaname.ident, scope, ty, nondef}, &ty.sageNode());
+        SgDeclarationStatement& sgdecl = sg::dispatch(TypeDeclMaker{adaname.ident, scope, ty, nondef}, &ty.sageNode());
 
         privatize(sgdecl, isPrivate);
         recordNode(asisTypes(), id, sgdecl, nondef != nullptr);
@@ -3219,7 +3352,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
           scope.append_statement(&sgdecl);
           ADA_ASSERT(sgdecl.get_parent() == &scope);
 
-          processInheritedSubprogramsOfDerivedTypes(ty, sgdecl, ctx.scope(scope));
+          processInheritedElementsOfDerivedTypes(ty, sgdecl, ctx.scope(scope));
         }
         else
         {
@@ -3252,7 +3385,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         Element_ID              id     = adaname.id();
         SgDeclarationStatement* nondef = findFirst(asisTypes(), id);
-        SgDeclarationStatement& sgnode = sg::dispatch(MakeDeclaration{adaname.ident, scope, ty, nondef}, &ty.sageNode());
+        SgDeclarationStatement& sgnode = sg::dispatch(TypeDeclMaker{adaname.ident, scope, ty, nondef}, &ty.sageNode());
 
         setModifiers(sgnode, ty);
 

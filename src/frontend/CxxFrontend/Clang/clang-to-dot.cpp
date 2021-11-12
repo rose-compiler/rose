@@ -492,7 +492,7 @@ void ClangToDotPreprocessorRecord::InclusionDirective(clang::SourceLocation Hash
     unsigned ls = p_source_manager->getSpellingLineNumber(HashLoc, &inv_begin_line);
     unsigned cs = p_source_manager->getSpellingColumnNumber(HashLoc, &inv_begin_col);
 
-    std::string file = p_source_manager->getFileEntryForID(p_source_manager->getFileID(HashLoc))->getName();
+    std::string file = p_source_manager->getFileEntryForID(p_source_manager->getFileID(HashLoc))->getName().str();
 
     std::cerr << "    In file  : " << file << std::endl;
     std::cerr << "    From     : " << ls << ":" << cs << std::endl;

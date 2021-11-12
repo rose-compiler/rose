@@ -2300,6 +2300,13 @@ Grammar::setUpStatements ()
      EnumDeclaration.setDataPrototype ( "SgEnumType*", "type", "= NULL",
                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE, CLONE_PTR);
 
+  // PP (10/28/2021): Added link to the parent type of a derived enum. Other derived types are represented by (TypedefDeclaration -> AdaDerivedType).
+  //                  For enums this is insufficient, because the inherited enumerators (elements) get different type and different scope.
+  //                  Thus, a derived enum is represented as normal enum, but its adaParentType points to the base type of the derived type.
+  //                  \todo should this always be a SgAdaDerivedType to better indicate the relationship?
+     EnumDeclaration.setDataPrototype ( "SgType*", "adaParentType", "= NULL",
+                                        NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 #if 0
      EnumDeclaration.setDataPrototype ( "SgInitializedNamePtrList", "enumerators", "= NULL",
                                         NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
