@@ -726,7 +726,7 @@ namespace CodeThorn {
         if(ctOpt.analysisList().size()>0) {
           const bool reportDetectedErrorLines=true;
           AnalysisReporting::generateVerificationReports(ctOpt,analyzer,reportDetectedErrorLines); // also generates verification call graph
-          AnalysisReporting::generateAnalysisLocationReports(ctOpt,analyzer);
+          //AnalysisReporting::generateAnalysisLocationCSVReports(ctOpt,analyzer);
           AnalysisReporting::generateAnalyzedFunctionsAndFilesReports(ctOpt,analyzer);
 	  AnalysisReporting::generateInternalAnalysisReport(ctOpt,analyzer);
 	  AnalysisReporting::generateUnusedVariablesReport(ctOpt,analyzer);

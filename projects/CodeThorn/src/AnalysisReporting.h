@@ -15,17 +15,20 @@ namespace CodeThorn {
     static void generateAstNodeStats(CodeThornOptions& ctOpt, SgProject* sageProject);
     static void generateNullPointerAnalysisStats(CodeThorn::CTAnalysis* analyzer);
     static void generateConstantConditionVerificationReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, AnalysisSelector);
-    static void generateAnalysisLocationReports(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer);
+    static void generateAnalysisLocationCSVReports(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer);
     static void generateAnalyzedFunctionsAndFilesReports(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer);
     static void generateVerificationCallGraphDotFile(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report);
-    static void generateVerificationFunctionsCsvFile(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report, bool violationReporting);
+    static void generateVerificationFunctionsCsvFileAndOverview(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, string overviewFileName, ProgramLocationsReport& report, bool violationReporting);
     static void generateInternalAnalysisReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer);
     static CodeThorn::LabelSet functionLabels(CodeThorn::CTAnalysis* analyzer);
     static void generateDeadCodeLocationsVerificationReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, LabelSet& unreachable);
     static void generateUnusedVariablesReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer);
+
   private:
+    /* utility functions */ 
     static bool isSystemHeaderLabel(CodeThorn::CTAnalysis* analyzer, Label lab);
     static void printSeparationLine();
+    static string separationLine();
     static void calculatefMap(std::map<Label,VerificationResult>& fMap,CTAnalysis* analyzer, LabelSet& functionEntryLabels, Flow& flow, ProgramLocationsReport& report);
   };
 }

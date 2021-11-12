@@ -5,6 +5,7 @@
 #include <fstream>
 #include "CodeThornException.h"
 #include "SgNodeHelper.h"
+#include "CppStdUtilities.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -165,9 +166,9 @@ size_t ProgramLocationsReport::numTotalRecordedLocations() {
 void CodeThorn::ProgramLocationsReport::writeResultFile(CodeThornOptions& ctOpt, string fileName, CodeThorn::Labeler* labeler) {
   string writeMode=ctOpt.csvReportModeString;
   std::ofstream myfile;
-  if(writeMode=="generate") {
+  if(writeMode==CppStdUtilities::getFileGenerateModeSelector()) {
     myfile.open(fileName.c_str(),std::ios::out);
-  } else if(writeMode=="append") {
+  } else if(writeMode==CppStdUtilities::getFileAppendModeSelector()) {
     myfile.open(fileName.c_str(),std::ios::app);
   } else {
     cerr<<"Error: unknown write mode: "<<writeMode<<endl;

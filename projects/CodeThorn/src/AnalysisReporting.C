@@ -39,18 +39,23 @@ namespace CodeThorn {
   }
   
   void AnalysisReporting::printSeparationLine() {
-    cout<<"------------------------------------------------"<<endl;
+    cout<<separationLine();
+  }
+
+  string AnalysisReporting::separationLine() {
+    return "------------------------------------------------\n";
   }
 
   void AnalysisReporting::generateVerificationReports(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, bool reportDetectedErrorLines) {
+    stringstream ss;
     for(auto analysisInfo : ctOpt.analysisList()) {
       AnalysisSelector analysisSel=analysisInfo.first;
       string analysisName=analysisInfo.second;
       if(ctOpt.getAnalysisSelectionFlag(analysisSel)) {
-        cout<<endl;
-        printSeparationLine();
-        cout<<"Analysis results for "<<analysisName<<" analysis:"<<endl;
-        printSeparationLine();
+        ss<<endl;
+        ss<<separationLine();
+        ss<<"Analysis results for "<<analysisName<<" analysis:"<<endl;
+        ss<<separationLine();
         ProgramLocationsReport report=analyzer->getEStateTransferFunctions()->getProgramLocationsReport(analysisSel);
         LabelSet labelsOfInterest2=AnalysisReporting::functionLabels(analyzer);
         // compute partioning
@@ -70,36 +75,50 @@ namespace CodeThorn {
         switch(analysisSel) {
         case ANALYSIS_NULL_POINTER:
         case ANALYSIS_OUT_OF_BOUNDS:
-        case ANALYSIS_UNINITIALIZED:
-          report.writeLocationsVerificationReport(ctOpt,cout,analyzer->getLabeler());
-          printSeparationLine();
+        case ANALYSIS_UNINITIALIZED: {
+          string overviewFileName=ctOpt.reportFilePath+"/"+analysisName+"-"+ctOpt.analysisReportOverviewFileName;
+          report.writeLocationsVerificationReport(ctOpt,ss,analyzer->getLabeler()); // overview
+          ss<<separationLine();
+          AnalysisReporting::generateAnalysisLocationCSVReports(ctOpt,analyzer); // csv file
           // generate verification call graph
-          AnalysisReporting::generateVerificationFunctionsCsvFile(ctOpt,analyzer,analysisName,report,true);
           AnalysisReporting::generateVerificationCallGraphDotFile(ctOpt,analyzer,analysisName,report);
           //report->writeFunctionsVerificationReport(cout,analyzer->getLabeler());
-          printSeparationLine();
+          ss<<separationLine();
           if(reportDetectedErrorLines) {
             LabelSet violatingLabels=report.falsifiedLocations();
             if(report.numDefinitiveLocations()>0) {
-              cout<<"Proven errors in program:"<<endl;
+              ss<<"Proven errors in program:"<<endl;
               report.writeAllDefinitiveLocationsToStream(cout,analyzer->getLabeler(),false,true,true);
             } else {
               LabelSet u=report.unverifiedLocations();
               if(u.size()==0) {
-                cout<<"No violations exist - program verified."<<endl;
+                ss<<"No violations exist - program verified."<<endl;
               } else {
-                cout<<"No violations proven - violations may exist in unverified portion of program."<<endl;
+                ss<<"No violations proven - violations may exist in 'undecided' portion of program."<<endl;
               }
             }
           }
-          printSeparationLine();
+          ss<<separationLine();
+          { /* generate analysis results overview in file */
+            if(!CppStdUtilities::writeFile(ctOpt.csvReportModeString, overviewFileName, ss.str())) {
+              cerr<<"Error: cannot write file "<<overviewFileName<<endl;
+            } else {
+              if(!ctOpt.quiet)
+                cout<<"Generated analysis results overview in file "<<overviewFileName<<endl;
+            }
+            if(ctOpt.status) cout<<ss.str();
+            AnalysisReporting::generateVerificationFunctionsCsvFileAndOverview(ctOpt,analyzer,analysisName,overviewFileName,report,true); // csv + overview
+          }
           break;
-        case ANALYSIS_DEAD_CODE:
+        }
+        case ANALYSIS_DEAD_CODE: {
+          string overviewFileName=ctOpt.reportFilePath+"/"+analysisName+"-"+ctOpt.analysisReportOverviewFileName;
           AnalysisReporting::generateDeadCodeLocationsVerificationReport(ctOpt, analyzer, unreachableLabels);
-          AnalysisReporting::generateVerificationFunctionsCsvFile(ctOpt,analyzer,analysisName,report,false);
+          AnalysisReporting::generateVerificationFunctionsCsvFileAndOverview(ctOpt,analyzer,analysisName,overviewFileName,report,false);
           AnalysisReporting::generateVerificationCallGraphDotFile(ctOpt,analyzer,analysisName,report);
-          printSeparationLine();
+          ss<<separationLine();
           break;
+        }
         case ANALYSIS_OPAQUE_PREDICATE:
           generateConstantConditionVerificationReport(ctOpt, analyzer,analysisSel);
           break;
@@ -107,6 +126,7 @@ namespace CodeThorn {
           cout<<"Error: generateVerificationReports: unknown analysis: "<<analysisSel<<endl;
           exit(1);
         }
+
       }
     }
   }
@@ -119,9 +139,7 @@ namespace CodeThorn {
 	ROSE_ASSERT(lab.isValid());
         SgNode* node=analyzer->getLabeler()->getNode(lab);
         if(node) {
-          //cout<<lab.toString()<<","<<value<<endl;
           locationsCSVFileData<<ProgramLocationsReport::findOriginalProgramLocationOfLabel(analyzer->getLabeler(),lab);
-          // CONTINUE
         } else {
           locationsCSVFileData<<"unknown-location"<<endl;
         }
@@ -199,7 +217,7 @@ namespace CodeThorn {
     }
   }
   
-  void AnalysisReporting::generateAnalysisLocationReports(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer) {
+  void AnalysisReporting::generateAnalysisLocationCSVReports(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer) {
     for(auto analysisInfo : ctOpt.analysisList()) {
       AnalysisSelector analysisSel=analysisInfo.first;
       // exception: skip some analysis, because they use their own format
@@ -395,7 +413,7 @@ namespace CodeThorn {
     }
   }
   
-  void AnalysisReporting::generateVerificationFunctionsCsvFile(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report, bool violationReporting) {
+  void AnalysisReporting::generateVerificationFunctionsCsvFileAndOverview(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, string overviewFileName, ProgramLocationsReport& report, bool violationReporting) {
     string fileName1=ctOpt.reportFilePath+"/"+analysisName+"-functions.csv";
     
     Flow& flow=*analyzer->getFlow();
@@ -438,19 +456,30 @@ namespace CodeThorn {
     int numTotalReachableFunctions=numProvenFunctions+numUnverifiedFunctions+numInconsistentFunctions;
     int numTotalUnreachableFunctions=numUnreachableFunctions;
     int numTotalFunctions=numTotalReachableFunctions+numTotalUnreachableFunctions;
+    stringstream ss;
     //    cout<<"Reachable verified   functions: "<<numProvenFunctions<<" [ "<<numProvenFunctions/(double)numTotalReachableFunctions*100<<"%]"<<endl;
     if(violationReporting) {
-      cout<<"Verified  (definitely safe)    functions: "<<setw(6)<<numVerifiedFunctions<<" ["<<setw(6)<<numVerifiedFunctions/(double)numTotalReachableFunctions*100<<"%]"<<endl;
-      cout<<"Violated  (definitely unsafe)  functions: "<<setw(6)<<numFalsifiedFunctions<<" ["<<setw(6)<<numFalsifiedFunctions/(double)numTotalReachableFunctions*100<<"%]"<<endl ;
-      cout<<"Undecided (potentially unsafe) functions: "<<setw(6)<<numUnverifiedFunctions<<" ["<<setw(6)<<numUnverifiedFunctions/(double)numTotalReachableFunctions*100<<"%]"<<endl;
+      ss<<"Verified  (definitely safe)    functions: "<<setw(6)<<numVerifiedFunctions<<" ["<<setw(6)<<numVerifiedFunctions/(double)numTotalReachableFunctions*100<<"%]"<<endl;
+      ss<<"Violated  (definitely unsafe)  functions: "<<setw(6)<<numFalsifiedFunctions<<" ["<<setw(6)<<numFalsifiedFunctions/(double)numTotalReachableFunctions*100<<"%]"<<endl ;
+      ss<<"Undecided (potentially unsafe) functions: "<<setw(6)<<numUnverifiedFunctions<<" ["<<setw(6)<<numUnverifiedFunctions/(double)numTotalReachableFunctions*100<<"%]"<<endl;
     //cout<<"Total reachable      functions: "<<setw(6)<<numTotalReachableFunctions<<" ["<<setw(6)<<numTotalReachableFunctions/(double)numTotalFunctions*100<<"%]"<<endl;
     }
-    cout<<"Dead (unreachable)             functions: "<<setw(6)<<numTotalUnreachableFunctions<<" ["<<setw(6)<<numTotalUnreachableFunctions/(double)numTotalFunctions*100<<"%]"<<endl;
-    cout<<"Total                          functions: "<<setw(6)<<numTotalFunctions<<endl;
+    ss<<"Dead (unreachable)             functions: "<<setw(6)<<numTotalUnreachableFunctions<<" ["<<setw(6)<<numTotalUnreachableFunctions/(double)numTotalFunctions*100<<"%]"<<endl;
+    ss<<"Total                          functions: "<<setw(6)<<numTotalFunctions<<endl;
     if(numInconsistentFunctions>0)
-      cout<<"Inconsistent                   functions: "<<setw(6)<<numInconsistentFunctions<<" ["<<setw(6)<<numInconsistentFunctions/(double)numTotalUnreachableFunctions*100<<"%]"<<endl;
+      ss<<"Inconsistent                   functions: "<<setw(6)<<numInconsistentFunctions<<" ["<<setw(6)<<numInconsistentFunctions/(double)numTotalUnreachableFunctions*100<<"%]"<<endl;
     
-    printSeparationLine();
+    ss<<separationLine();
+    if(ctOpt.status) cout<<ss.str();
+    
+    string reportMode=CppStdUtilities::getFileAppendModeSelector(); // function overview is appended to the locations overview and therefore does not use ctOpt.csvReportModeString
+    if(!CppStdUtilities::writeFile(reportMode, overviewFileName, ss.str())) {
+      cerr<<"Error: could not generate function verification file "<<fileName1<<endl;
+      exit(1);
+    } else {
+      cout<<"Generated function verification file "<<fileName1<<endl;
+    }
+
     std::string dotFileString1=cgNodes.str();
     if(!CppStdUtilities::writeFile(ctOpt.csvReportModeString, fileName1, dotFileString1)) {
       cerr<<"Error: could not generate function verification file "<<fileName1<<endl;
@@ -458,7 +487,6 @@ namespace CodeThorn {
     } else {
       cout<<"Generated function verification file "<<fileName1<<endl;
     }
-
   }
 
   void AnalysisReporting::generateInternalAnalysisReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer) {
