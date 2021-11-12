@@ -1783,7 +1783,9 @@ FeasiblePath::createSmtSolver() {
     if (settings_.smtTimeout)
         solver->timeout(*settings_.smtTimeout);
 #if 1 // DEBUGGING [Robb Matzke 2018-11-14]
-    solver->memoization(false);
+    solver->memoizer(SmtSolver::Memoizer::Ptr());
+#else
+    solver->memoizer(...something_not_null...);
 #endif
     return solver;
 }

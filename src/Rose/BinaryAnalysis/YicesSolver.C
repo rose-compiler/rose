@@ -33,7 +33,7 @@ YicesSolver::~YicesSolver()
 YicesSolver::Ptr
 YicesSolver::create() const {
     auto newSolver = new YicesSolver(linkage());
-    newSolver->memoization_ = memoization_;
+    newSolver->memoizer(memoizer());
     return Ptr(newSolver);
 }
 

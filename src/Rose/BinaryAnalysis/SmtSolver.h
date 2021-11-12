@@ -203,33 +203,44 @@ public:
 
     using SExprTypePair = std::pair<SExpr::Ptr, Type>;
 
-private:
-    // SMT solver "check" calls are pure, therefore we can memoize the calls. The inputs for "check" are a list of assertions
-    // in any order. We normalize them by first renaming the variables in each assertion expression independently of the
-    // others.  Then we use the hash of the normalized expressions to sort the original expressions. Finally we rename the
-    // variables of the sorted original expressions collectively. These sorted-normalized expressions are what we store in this
-    // cache, one set per call to "check". In order to make lookups faster, instead of comparing the incoming set of assertions
-    // with each saved set of assertions, we index the sets using an std::multimap whose keys are the set hashes and only
-    // compare sets when their hashes match (in order to handle collisions).
-    //
-    // The normalization of the inputs allows a memoized result to be used even when the variable names don't match. For
-    // instance, if we first had the expression (eq (and v101 v102) 42) and later encountered the expression (eq (and v201
-    // v202) 42), the latter expression can use the results from the former expression.
-    //
-    // When a new (cache miss) expression is encountered that is satisfiable, we memoize the evidence of satisfiability. These
-    // expressions are normalized using the same variable mapping as when the input assertions were normalized. When returning
-    // memoized evidence of satisfiability, we denormalize the previously save satisfiability expressions using the inverse of
-    // the variable mapping used for the current input assertions.
-    class Memoization {
+    /** Memoizes calls to an SMT solver.
+     *
+     *  This class memoizes calls to the @c check function for a particular SMT solver, or across some collection of solvers. For
+     *  every non-trivial call to @c check, the memoizer caches the input set of assertions and the output satisfiability and, if
+     *  satisfiable, the output evidence of satisfiability. Moreover, it does this in such a way that assertions that only vary in
+     *  their variable names can be matched to previously cached calls.
+     *
+     *  In order to use memoization, a non-null memoizer should be passed to the @ref SmtSolver::instance factory, or a non-null
+     *  memoizer pointer should be assigned to the @c memoizer property of the @ref SmtSolver. To disable memoization, assign
+     *  a null pointer to the @c memoizer property.  Multiple @ref SmtSolver objects can share the same memoizer, but this should
+     *  generally only be done when all such solvers are guaranteed to return the same values for any given inputs, which is not
+     *  always the case due to differences in implementation.
+     *
+     *  In order to match calls whose inputs vary only in order of assertions and/or variable names, the assertions are sorted and
+     *  normalized before being stored in the cache. First, to sort the assertions each assertion is independently normalized by
+     *  renaming its variables starting at "v0" in the order they're encountered in a depth-first-search traversal. Then the input
+     *  assertions are sorted according to the hashes of their corresponding normalized versions. Finally, the variables in the
+     *  sorted assertions are collectively renamed, producing a sorted-normalized set of assertions and a renaming map.  When a new
+     *  result is added to the cache, the variables in the evidence of satisfiability are renamed according to renaming map. The
+     *  original assertions, original evidence of satisfiability, and renaming map are discarded.  When a cache hit occurs and the
+     *  evidence needs to be returned, the cached evidence is de-normalized using the inverse of the temporary renaming map for the
+     *  current input assertions.
+     *
+     *  Thread safety: All member functions are thread safe unless otherwise noted. */
+    class Memoizer: public Sawyer::SharedObject {
     public:
-        // Return value from "find"
-        struct Found {
-            Sawyer::Optional<Satisfiable> satisfiable;  // if found, whether satisfiable
-            ExprList sortedNormalized;                  // sorted and normalized assertions, regardless if found
-            SymbolicExpr::ExprExprHashMap rewriteMap;   // mapping from provided to sortedNormalized assertions
-            ExprExprMap evidence;                       // normalized evidence if found and satisfiable
+        /** Reference counting pointer. */
+        using Ptr = Sawyer::SharedPointer<Memoizer>;
 
-            explicit operator bool() const {            // true if "find" was a cache hit
+        /* Return value from @ref find function. */
+        struct Found {
+            Sawyer::Optional<Satisfiable> satisfiable;      /**< If found, whether satisfiable. */
+            ExprList sortedNormalized;                      /**< Sorted and normalized assertions, regardless if found. */
+            SymbolicExpr::ExprExprHashMap rewriteMap;       /**< Mapping from provided to sortedNormalized assertions. */
+            ExprExprMap evidence;                           /**< Normalized evidence if found and satisfiable. */
+
+            /** True if lookup was a cache hit. */
+            explicit operator bool() const {
                 return satisfiable;
             }
         };
@@ -248,26 +259,47 @@ private:
         using Map = std::multimap<SymbolicExpr::Hash, Record>;
 
     private:
+        mutable SAWYER_THREAD_TRAITS::Mutex mutex_;     // protects the following data members
         Map map_;                                       // memoization records indexed by hash of sorted-normalized assertions
 
+    protected:
+        Memoizer() {}
+
     public:
-        // Clear the entire cache as if it was just constructed.
+        /** Allocating constructor. */
+        static Ptr instance();
+
+        /** Clear the entire cache as if it was just constructed. */
         void clear();
 
-        // Search for the specified assertions in the cache. As described above, the assertions are sorted and normalized
-        // before searching for them in the cache.
+        /** Search for the specified assertions in the cache.
+         *
+         *  If this is a cache hit, then the return value evaluates to true in Boolean context and contains the satisfiability and
+         *  normalized evidence. The evidence needs to be de-normalized by the @ref evidence function before it can be used.  If
+         *  this is a cache miss, then the return value evaluates to false in Boolean context, but it contains enough information
+         *  for the SMT solver results to be inserted into the cache later by the @ref insert function.
+         *
+         *  The documentation for this class describes how the search works by sorting and normalizing the input assertions. */
         Found find(const ExprList &assertions);
 
-        // Return denormalized evidence associated with a prior hit.
+        /** Returns evidence of satisfiability.
+         *
+         *  The argument is the result from @ref find. If the argument evaluates to true in Boolean context (i.e., the @ref find
+         *  was a cache hit) then this function will de-normalize the cached evidence of satisfiability and return it. This function
+         *  should not be called if the argument evaluates to false in a Boolean context (i.e., the @ref find was a cache miss). */
         ExprExprMap evidence(const Found&) const;
 
-        // Update the cache. The first argument (Found) is information returned by "find" for a cache miss. The other two
-        // arguments are the return values to be memoized for the miss. The evidence must be empty unless the assertions are
-        // satisfiable.
-        void save(const Found&, Satisfiable, const ExprExprMap &evidence);
+        /** Insert a call record into the cache.
+         *
+         *  The first argument is the return value from @ref find which must have been a cache miss.  The remaining arguments are
+         *  the results from the SMT solver for the same assertions that were used in the @ref find call. The evidence is normalized
+         *  using the same variable mapping as was used for the input assertions during the @ref find call, and then stored in the
+         *  cache in normalized form. */
+        void insert(const Found&, Satisfiable, const ExprExprMap &evidence);
 
     public:
-        Map::iterator search(SymbolicExpr::Hash, const ExprList &sortedNormalized);
+        // Non-synchronized search for the sorted-normalized assertions which have the specified hash.
+        Map::iterator searchNS(SymbolicExpr::Hash, const ExprList &sortedNormalized);
     };
 
 private:
@@ -281,8 +313,7 @@ protected:
     std::vector<SExpr::Ptr> parsedOutput_;              // the evidence output
     ExprExprMap evidence_;                              // evidence for last check() if satisfiable
     TermNames termNames_;                               // maps ROSE exprs to SMT exprs and their basic type
-    Memoization memoization_;                           // cache of previously computed results
-    bool doMemoization_;                                // use the memoization_ table?
+    Memoizer::Ptr memoizer_;                            // cache of previously computed results
 
     // Statistics
     static boost::mutex classStatsMutex;
@@ -306,10 +337,7 @@ private:
         // outputText_               -- not serialized
         // parsedOutput_             -- not serialized
         // termNames_                -- not serialized
-        // memoization_              -- not serialized
-        // doMemoization_            -- not serialized
-        // latestMemoizationId_      -- not serialized
-        // latestMemoizationRewrite_ -- not serialized
+        // memoizer_                 -- not serialized
         // classStatsMutex           -- not serialized
         // classStats                -- not serialized
         // stats                     -- not serialized
@@ -327,7 +355,7 @@ protected:
      *  situation by reading the @p linkage property, or just wait for one of the other methods to throw an @ref
      *  SmtSolver::Exception. */
     SmtSolver(const std::string &name, unsigned linkages)
-        : name_(name), errorIfReset_(false), linkage_(LM_NONE), doMemoization_(true) {
+        : name_(name), errorIfReset_(false), linkage_(LM_NONE) {
         init(linkages);
     }
     
@@ -392,37 +420,16 @@ public:
      *  "Best" is defined as that with the best performance, which is usually direct calls to the solver's API. */
     static LinkMode bestLinkage(unsigned linkages);
 
-    /** Property: Perform memoization.
+    /** Property: Memoizer.
      *
-     *  If set, then perform memoization by caching all previous results.
+     *  The value of this property is a pointer to the object that caches the memoization for this solver. Setting it to a
+     *  non-null pointer turns on memoization (using that object) and setting it to a null pointer turns off
+     *  memoization. Memoization can be turned on or off at any time, and multiple SMT solvers can share the same memoizer.
      *
      * @{ */
-    bool memoization() const { return doMemoization_; }
-    void memoization(bool b) {
-        doMemoization_ = b;
-        if (!b)
-            clearMemoization();
-    }
+    Memoizer::Ptr memoizer() const;
+    void memoizer(const Memoizer::Ptr&);
     /** @} */
-
-#if 0 // [Robb Matzke 2021-11-10]
-    /** Id for latest memoized result, or zero. */
-    Sawyer::Optional<SymbolicExpr::Hash> latestMemoizationId() const {
-        return latestMemoizationId_;
-    }
-#endif
-    
-    /** Clear memoization table. */
-    virtual void clearMemoization() {
-        memoization_.clear();
-    }
-
-#if 0 // [Robb Matzke 2021-11-10]
-    /** Size of memoization table. */
-    virtual size_t memoizationNEntries() const {
-        return memoization_.size();
-    }
-#endif
 
     /** Set the timeout for the solver.
      *

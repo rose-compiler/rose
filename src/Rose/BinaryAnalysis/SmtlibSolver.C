@@ -17,8 +17,9 @@ namespace BinaryAnalysis {
 SmtlibSolver::Ptr
 SmtlibSolver::create() const {
     auto newSolver = new SmtlibSolver(name(), executable_, shellArgs_, linkage());
-    newSolver->doMemoization_ = doMemoization_;
-    newSolver->timeout_ = timeout_;
+    if (timeout_)
+        newSolver->timeout(*timeout_);
+    newSolver->memoizer(memoizer());
     return Ptr(newSolver);
 }
 

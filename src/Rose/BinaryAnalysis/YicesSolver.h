@@ -58,9 +58,7 @@ protected:
 #ifdef ROSE_HAVE_LIBYICES
           , context(NULL)
 #endif
-        {
-        memoization(false);                             // not supported in this solver
-    }
+        {}
 
 public:
     /** Constructs object to communicate with Yices solver.

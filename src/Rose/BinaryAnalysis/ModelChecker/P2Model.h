@@ -489,6 +489,7 @@ public:
 private:
     Settings settings_;                                 // settings are set by the constructor and not modified thereafter
     const Partitioner2::Partitioner &partitioner_;      // generally shouldn't be changed once model checking starts
+    SmtSolver::Memoizer::Ptr smtMemoizer_;              // memoizer shared among all solvers
 
     mutable SAWYER_THREAD_TRAITS::Mutex unitsMutex_;    // protects only the units_ data member
     Sawyer::Container::Map<rose_addr_t, ExecutionUnitPtr> units_; // cached execution units

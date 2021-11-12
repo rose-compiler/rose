@@ -1175,9 +1175,16 @@ SemanticCallbacks::createSolver() {
     if (solverName.empty() || "none" == solverName)
         solverName = "best";
     auto solver = SmtSolver::instance(solverName);
-    solver->memoization(settings_.solverMemoization);
+
+    if (settings_.solverMemoization) {
+        if (!smtMemoizer_)
+            smtMemoizer_ = SmtSolver::Memoizer::instance();
+        solver->memoizer(smtMemoizer_);
+    }
+
     if (mcSettings()->solverTimeout)
         solver->timeout(boost::chrono::seconds(*mcSettings()->solverTimeout));
+
     return solver;
 }
 
