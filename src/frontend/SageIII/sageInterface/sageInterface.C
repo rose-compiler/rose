@@ -21836,6 +21836,9 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current, b
   {
     return convertRefToInitializedName(isSgPointerDerefExp(current)->get_operand(), coarseGrain);
   }
+  else if(isSgUnaryOp(current)) { //Written for SgAddressOfOp, but seems generally aplicable to all Unary Ops (replace above?) -JL
+    return convertRefToInitializedName(isSgUnaryOp(current)->get_operand(), coarseGrain);
+  }
   else if (isSgCastExp(current))
   {
     return convertRefToInitializedName(isSgCastExp(current)->get_operand(), coarseGrain);
