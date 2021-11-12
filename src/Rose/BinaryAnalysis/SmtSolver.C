@@ -59,13 +59,19 @@ CompareRawLeavesByName::operator()(const SymbolicExpr::Leaf *a, const SymbolicEx
 // Memoization
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+SmtSolver::Memoizer::Ptr
+SmtSolver::Memoizer::instance() {
+    return Ptr(new Memoizer);
+}
+
 void
-SmtSolver::Memoization::clear() {
+SmtSolver::Memoizer::clear() {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     map_.clear();
 }
 
-SmtSolver::Memoization::Map::iterator
-SmtSolver::Memoization::search(SymbolicExpr::Hash h, const ExprList &sortedNormalized) {
+SmtSolver::Memoizer::Map::iterator
+SmtSolver::Memoizer::searchNS(SymbolicExpr::Hash h, const ExprList &sortedNormalized) {
     std::pair<Map::iterator, Map::iterator> range = map_.equal_range(h);
     for (Map::iterator iter = range.first; iter != range.second; ++iter) {
         const Record &record = iter->second;
@@ -87,9 +93,9 @@ SmtSolver::Memoization::search(SymbolicExpr::Hash h, const ExprList &sortedNorma
     return map_.end();
 }
 
-SmtSolver::Memoization::Found
-SmtSolver::Memoization::find(const ExprList &assertions) {
-    ASSERT_forbid(assertions.emtpy());                  // trivial solutions should be handled before this point
+SmtSolver::Memoizer::Found
+SmtSolver::Memoizer::find(const ExprList &assertions) {
+    ASSERT_forbid(assertions.empty());                  // trivial solutions should be handled before this point
     Found retval;
 
     // First rewrite each assertion individually to normalize the variables. This will allow us to sort them consistently.
@@ -113,17 +119,20 @@ SmtSolver::Memoization::find(const ExprList &assertions) {
 
     // Does our map already contain this set of assertions? Hashes can be equal without the set of assertions being equal, so
     // we need to check.
-    Map::iterator iter = search(h, retval.sortedNormalized);
-    if (iter != map_.end()) {
-        retval.satisfiable = iter->second.satisfiable;
-        retval.evidence = iter->second.evidence;
+    {
+        SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+        Map::iterator iter = searchNS(h, retval.sortedNormalized);
+        if (iter != map_.end()) {
+            retval.satisfiable = iter->second.satisfiable;
+            retval.evidence = iter->second.evidence;
+        }
     }
 
     return retval;
 }
 
 SmtSolver::ExprExprMap
-SmtSolver::Memoization::evidence(const Found &found) const {
+SmtSolver::Memoizer::evidence(const Found &found) const {
     ASSERT_require(found);
     ExprExprMap retval;
     const SymbolicExpr::ExprExprHashMap denorm = found.rewriteMap.invert();
@@ -136,9 +145,9 @@ SmtSolver::Memoization::evidence(const Found &found) const {
 }
 
 void
-SmtSolver::Memoization::save(const Found &found, Satisfiable sat, const ExprExprMap &evidence) {
+SmtSolver::Memoizer::insert(const Found &found, Satisfiable sat, const ExprExprMap &evidence) {
     ASSERT_forbid(found);                               // must have been a cache miss since we're specifying results
-    ASSERT_require(evidence.empty() || SAT_YES == sat);
+    ASSERT_require(evidence.isEmpty() || SAT_YES == sat);
 
     ExprExprMap normalizedEvidence;
     for (const ExprExprMap::Node &node: evidence.nodes()) {
@@ -148,8 +157,13 @@ SmtSolver::Memoization::save(const Found &found, Satisfiable sat, const ExprExpr
     }
 
     const SymbolicExpr::Hash h = SymbolicExpr::hash(found.sortedNormalized);
-    ASSERT_require(search(h, found.sortedNormalized) == map_.end());
-    map_.insert(std::make_pair(h, Record{found.sortedNormalized, sat, normalizedEvidence}));
+    {
+        // Some other thread may have beaten us here with the same set of assertions. In that case, we should not insert
+        // anything since it would result in duplicate records.
+        SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+        if (searchNS(h, found.sortedNormalized) == map_.end())
+            map_.insert(std::make_pair(h, Record{found.sortedNormalized, sat, normalizedEvidence}));
+    }
 }
 
 
@@ -247,6 +261,16 @@ SmtSolver::reset() {
     push();
     clearEvidence();
     // stats not cleared
+}
+
+SmtSolver::Memoizer::Ptr
+SmtSolver::memoizer() const {
+    return memoizer_;
+}
+
+void
+SmtSolver::memoizer(const Memoizer::Ptr &memoizer) {
+    memoizer_ = memoizer;
 }
 
 SmtSolver::Evidence
@@ -552,9 +576,9 @@ SmtSolver::check() {
     }
     
     // Have we seen this before?
-    Memoization::Found memoized;
-    if (!wasTrivial && doMemoization_) {
-        if ((memoized = memoization_.find(assertions()))) {
+    Memoizer::Found memoized;
+    if (!wasTrivial && memoizer_) {
+        if ((memoized = memoizer_->find(assertions()))) {
             retval = *memoized.satisfiable;
             ++stats.memoizationHits;
             mlog[DEBUG] <<"using memoized result\n";
@@ -603,7 +627,8 @@ SmtSolver::check() {
 
     // Get memoized evidence, or parse and maybe cache the evidence.
     if (memoized) {
-        evidence_ = memoization_.evidence(memoized);
+        ASSERT_not_null(memoizer_);
+        evidence_ = memoizer_->evidence(memoized);
         if (mlog[DEBUG]) {
             for (const ExprExprMap::Node &node: evidence_.nodes())
                 mlog[DEBUG] <<"evidence: " <<*node.key() <<" == " <<*node.value() <<"\n";
@@ -612,8 +637,8 @@ SmtSolver::check() {
     } else if (!wasTrivial) {
         if (SAT_YES == retval)
             parseEvidence();
-        if (doMemoization_)
-            memoization_.save(memoized, retval, evidence());
+        if (memoizer_)
+            memoizer_->insert(memoized, retval, evidence());
     }
 
     return retval;
@@ -1076,7 +1101,7 @@ SmtSolver::selfTest() {
     }
 
     // Test that memoization works, including the ability to obtain the evidence afterward.
-    if (memoization()) {
+    if (memoizer()) {
         SAWYER_MESG(debug) <<"testing memoization\n";
 
         E var1 = makeIntegerVariable(8);
