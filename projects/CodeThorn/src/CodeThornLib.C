@@ -725,11 +725,12 @@ namespace CodeThorn {
       if(ctOpt.generateReports) {
         if(ctOpt.analysisList().size()>0) {
           const bool reportDetectedErrorLines=true;
-          AnalysisReporting::generateVerificationReports(ctOpt,analyzer,reportDetectedErrorLines); // also generates verification call graph
+          AnalysisReporting anaRep;
+          anaRep.generateVerificationReports(ctOpt,analyzer,reportDetectedErrorLines); // also generates verification call graph
           //AnalysisReporting::generateAnalysisLocationCSVReports(ctOpt,analyzer);
-          AnalysisReporting::generateAnalyzedFunctionsAndFilesReports(ctOpt,analyzer);
-	  AnalysisReporting::generateInternalAnalysisReport(ctOpt,analyzer);
-	  AnalysisReporting::generateUnusedVariablesReport(ctOpt,analyzer);
+          anaRep.generateAnalyzedFunctionsAndFilesReports(ctOpt,analyzer);
+	  anaRep.generateInternalAnalysisReport(ctOpt,analyzer);
+	  anaRep.generateUnusedVariablesReport(ctOpt,analyzer);
         } else {
           if(ctOpt.status) cout<<"STATUS: no analysis reports generated (no analysis selected)."<<endl;
         }

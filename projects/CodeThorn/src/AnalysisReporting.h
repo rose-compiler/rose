@@ -11,25 +11,25 @@ namespace CodeThorn {
   class AnalysisReporting {
   public:
     // generates reports, if result files are specified in ctopt
-    static void generateVerificationReports(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer,bool reportDetectedErrorLines);
-    static void generateAstNodeStats(CodeThornOptions& ctOpt, SgProject* sageProject);
-    static void generateNullPointerAnalysisStats(CodeThorn::CTAnalysis* analyzer);
-    static void generateConstantConditionVerificationReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, AnalysisSelector);
-    static void generateAnalysisLocationCSVReports(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer);
-    static void generateAnalyzedFunctionsAndFilesReports(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer);
-    static void generateVerificationCallGraphDotFile(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report);
-    static void generateVerificationFunctionsCsvFileAndOverview(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, string overviewFileName, ProgramLocationsReport& report, bool violationReporting);
-    static void generateInternalAnalysisReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer);
-    static CodeThorn::LabelSet functionLabels(CodeThorn::CTAnalysis* analyzer);
-    static void generateDeadCodeLocationsVerificationReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, LabelSet& unreachable);
-    static void generateUnusedVariablesReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer);
+    void generateVerificationReports(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer,bool reportDetectedErrorLines);
+    void generateAstNodeStats(CodeThornOptions& ctOpt, SgProject* sageProject);
+    void generateNullPointerAnalysisStats(CodeThorn::CTAnalysis* analyzer);
+    void generateConstantConditionVerificationReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, AnalysisSelector);
+    void generateAnalysisLocationCSVReports(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer);
+    void generateAnalyzedFunctionsAndFilesReports(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer);
+    void generateVerificationCallGraphDotFile(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report);
+    void generateVerificationFunctionsCsvFileAndOverview(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, string overviewFileName, ProgramLocationsReport& report, bool violationReporting);
+    void generateInternalAnalysisReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer);
+    CodeThorn::LabelSet functionLabels(CodeThorn::CTAnalysis* analyzer);
+    void generateDeadCodeLocationsVerificationReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, LabelSet& unreachable);
+    void generateUnusedVariablesReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer);
 
   private:
     /* utility functions */ 
-    static bool isSystemHeaderLabel(CodeThorn::CTAnalysis* analyzer, Label lab);
-    static void printSeparationLine();
-    static string separationLine();
-    static void calculatefMap(std::map<Label,VerificationResult>& fMap,CTAnalysis* analyzer, LabelSet& functionEntryLabels, Flow& flow, ProgramLocationsReport& report);
+    bool isSystemHeaderLabel(CodeThorn::CTAnalysis* analyzer, Label lab);
+    void printSeparationLine();
+    string separationLine();
+    void calculatefMap(std::map<Label,VerificationResult>& fMap,CTAnalysis* analyzer, LabelSet& functionEntryLabels, Flow& flow, ProgramLocationsReport& report);
   };
 }
 #endif
