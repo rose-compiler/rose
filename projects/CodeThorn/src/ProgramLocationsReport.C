@@ -229,7 +229,7 @@ void CodeThorn::ProgramLocationsReport::writeLocationsToStream(std::ostream& str
   }
 }
 
-void ProgramLocationsReport::writeLocationsVerificationReport(CodeThornOptions& ctOpt, std::ostream& os, Labeler* labeler) {
+void ProgramLocationsReport::writeLocationsVerificationOverview(CodeThornOptions& ctOpt, std::ostream& os, Labeler* labeler) {
   int int_n=reachableLocations.size();
   double n=(double)int_n;
   LabelSet verified=verifiedLocations();
@@ -260,7 +260,3 @@ void ProgramLocationsReport::writeLocationsVerificationReport(CodeThornOptions& 
 #endif
 }
 
-void ProgramLocationsReport::writeFunctionsVerificationReport(CodeThornOptions& ctOpt, std::ostream& os, Labeler* labeler) {
-  cerr<<"Error: writeFunctionsVerificationReport not implemented yet."<<endl;
-  exit(1);
-}

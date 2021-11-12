@@ -15,10 +15,10 @@ namespace CodeThorn {
     void generateAstNodeStats(CodeThornOptions& ctOpt, SgProject* sageProject);
     void generateNullPointerAnalysisStats(CodeThorn::CTAnalysis* analyzer);
     void generateConstantConditionVerificationReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, AnalysisSelector);
-    void generateAnalysisLocationCSVReports(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer);
+    void generateAnalysisLocationCsvReports(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer);
     void generateAnalyzedFunctionsAndFilesReports(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer);
     void generateVerificationCallGraphDotFile(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report);
-    void generateVerificationFunctionsCsvFileAndOverview(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, string overviewFileName, ProgramLocationsReport& report, bool violationReporting);
+    void generateVerificationFunctionsCsvFile(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report);
     void generateInternalAnalysisReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer);
     CodeThorn::LabelSet functionLabels(CodeThorn::CTAnalysis* analyzer);
     void generateDeadCodeLocationsVerificationReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, LabelSet& unreachable);
@@ -30,6 +30,20 @@ namespace CodeThorn {
     void printSeparationLine();
     string separationLine();
     void calculatefMap(std::map<Label,VerificationResult>& fMap,CTAnalysis* analyzer, LabelSet& functionEntryLabels, Flow& flow, ProgramLocationsReport& report);
+
+    void computeFunctionReportData(CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report);
+    std::string getVerificationFunctionsOverview(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, string analysisName, ProgramLocationsReport& report);
+    // computed values
+    int numFalsifiedFunctions=0;
+    int numUnverifiedFunctions=0;
+    int numVerifiedFunctions=0;
+    int numInconsistentFunctions=0;
+    int numUnreachableFunctions=0;
+    
+    int numProvenFunctions=0;
+    int numTotalReachableFunctions=0;
+    int numTotalUnreachableFunctions=0;
+    int numTotalFunctions=0;
   };
 }
 #endif

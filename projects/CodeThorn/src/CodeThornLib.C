@@ -727,7 +727,6 @@ namespace CodeThorn {
           const bool reportDetectedErrorLines=true;
           AnalysisReporting anaRep;
           anaRep.generateVerificationReports(ctOpt,analyzer,reportDetectedErrorLines); // also generates verification call graph
-          //AnalysisReporting::generateAnalysisLocationCSVReports(ctOpt,analyzer);
           anaRep.generateAnalyzedFunctionsAndFilesReports(ctOpt,analyzer);
 	  anaRep.generateInternalAnalysisReport(ctOpt,analyzer);
 	  anaRep.generateUnusedVariablesReport(ctOpt,analyzer);
@@ -801,11 +800,9 @@ namespace CodeThorn {
 
 
     Labeler* createLabeler(SgProject* project, VariableIdMappingExtended* variableIdMapping, bool withCplusplus) {
-      //~ CTIOLabeler* res = new CTIOLabeler(project,variableIdMapping);
       CTIOLabeler* res = new CTIOLabeler(variableIdMapping);
-
-      if (withCplusplus) res->setIsFunctionCallFn(matchCxxCall);
-
+      if (withCplusplus)
+        res->setIsFunctionCallFn(matchCxxCall);
       res->initialize(project);
       return res;
     }
