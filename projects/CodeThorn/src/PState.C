@@ -492,7 +492,7 @@ void PState::rawWriteAtMemoryLocation(AbstractValue abstractAddress, AbstractVal
 
 void PState::rawCombineAtMemoryLocation(AbstractValue abstractMemLoc,
                                      AbstractValue abstractValue) {
-  ROSE_ASSERT(abstractMemLoc.getValueType()!=AbstractValue::AV_SET);
+  ROSE_ASSERT(!abstractMemLoc.isAVSet());
   AbstractValue currentValue=rawReadFromMemoryLocation(abstractMemLoc);
   AbstractValue newValue=AbstractValue::combine(currentValue,abstractValue);
   //cout<<"DEBUG: rawCombine:"<<abstractMemLoc.toString()<<":="<<newValue.toString()<<endl;

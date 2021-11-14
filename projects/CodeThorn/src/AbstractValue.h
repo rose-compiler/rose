@@ -37,13 +37,6 @@ class AbstractValue {
  public:
   friend bool strictWeakOrderingIsSmaller(const AbstractValue& c1, const AbstractValue& c2);
   friend bool strictWeakOrderingIsEqual(const AbstractValue& c1, const AbstractValue& c2);
-  /* the following are extensions that allocate more memory than a single abstract value
-     they can only be created through merging abstract value
-     - AV_SET allows to represent a set of values pointers.
-     - INTERVAL represents an interval of abstract number values // TODO
-     - INDEX_RANGE represents a range of a consecutive memory region (e.g. array) // TODO
-  */
-  enum ValueType { BOT, INTEGER, FLOAT, DOUBLE, PTR, REF, FUN_PTR, TOP, UNDEFINED, AV_SET, /*INTERVAL, INDEX_RANGE*/ };
   AbstractValue();
   AbstractValue(bool val);
   // type conversion
@@ -189,8 +182,7 @@ class AbstractValue {
   friend istream& operator>>(istream& os, AbstractValue& value);
   void fromStream(istream& is);
 
-  ValueType getValueType() const;
-  int getIntValue() const;
+    int getIntValue() const;
   long int getLongIntValue() const;
   float getFloatValue() const;
   double getDoubleValue() const;
@@ -220,12 +212,23 @@ class AbstractValue {
   static bool approximatedBy(AbstractValue val1, AbstractValue val2);
   static AbstractValue combine(AbstractValue val1, AbstractValue val2);
   static bool strictChecking; // if turned off, some error conditions are not active, but the result remains sound.
-  static AbstractValue convertPtrToPtrSet(AbstractValue val); // requires val to be PTR
+  static AbstractValue convertPtrToPtrSet(AbstractValue val); // requires val to be AV_PTR
   static AbstractValue conditionallyApplyArrayAbstraction(AbstractValue val);
   bool isSummary() const;
   // forces abstract value to be handled as a summary
   void setSummaryFlag(bool flag); 
- private:
+
+private:
+
+  /* the following are extensions that allocate more memory than a single abstract value
+     they can only be created through merging abstract value
+     - AV_SET allows to represent a set of values pointers.
+     - INTERVAL represents an interval of abstract number values // TODO
+     - INDEX_RANGE represents a range of a consecutive memory region (e.g. array) // TODO
+  */
+  enum ValueType { AV_BOT, AV_TOP, AV_UNDEFINED, AV_INTEGER, AV_FP_SINGLE_PRECISION, AV_FP_DOUBLE_PRECISION, AV_PTR, AV_REF, AV_FUN_PTR, AV_SET, /*INTERVAL, INDEX_RANGE*/ };
+  ValueType getValueType() const;
+
   // functions used for (de)allocating additional memory for some abstractions
   AbstractValueSet* abstractValueSetCopy() const;
   void copy(const AbstractValue& other);
