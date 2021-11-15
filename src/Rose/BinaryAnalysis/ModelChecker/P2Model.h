@@ -555,6 +555,17 @@ public:
     void followingOnePath(bool);
     /** @} */
 
+    /** Property: SMT solver memoizer.
+     *
+     *  This is the memoizer used each time a new SMT solver is created. An initial memoizer is created by the @c
+     *  SemanticCallbacks constructor if the @p solverMemoization field of the @ref Settings is set. If memoization is
+     *  not enabled in the settings, then a memoizer is not used even if one is set for this property.
+     *
+     * @{ */
+    SmtSolver::Memoizer::Ptr smtMemoizer() const;
+    void smtMemoizer(const SmtSolver::Memoizer::Ptr&);
+    /** @} */
+
     /** Property: Number of duplicate states.
      *
      *  This read-only property returns the number of times that a semantic state was encountered that had been encountered

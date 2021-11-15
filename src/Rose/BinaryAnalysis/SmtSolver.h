@@ -297,6 +297,9 @@ public:
          *  cache in normalized form. */
         void insert(const Found&, Satisfiable, const ExprExprMap &evidence);
 
+        /** Number of call records cached. */
+        size_t size() const;
+
     public:
         // Non-synchronized search for the sorted-normalized assertions which have the specified hash.
         Map::iterator searchNS(SymbolicExpr::Hash, const ExprList &sortedNormalized);

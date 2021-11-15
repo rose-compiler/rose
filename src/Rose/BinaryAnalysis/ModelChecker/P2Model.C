@@ -1054,6 +1054,16 @@ SemanticCallbacks::instance(const ModelChecker::Settings::Ptr &mcSettings, const
     return Ptr(new SemanticCallbacks(mcSettings, settings, partitioner));
 }
 
+SmtSolver::Memoizer::Ptr
+SemanticCallbacks::smtMemoizer() const {
+    return smtMemoizer_;
+}
+
+void
+SemanticCallbacks::smtMemoizer(const SmtSolver::Memoizer::Ptr &memoizer) {
+    smtMemoizer_ = memoizer;
+}
+
 void
 SemanticCallbacks::followOnePath(const std::list<ExecutionUnitPtr> &units) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);

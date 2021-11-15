@@ -70,6 +70,12 @@ SmtSolver::Memoizer::clear() {
     map_.clear();
 }
 
+size_t
+SmtSolver::Memoizer::size() const {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    return map_.size();
+}
+
 SmtSolver::Memoizer::Map::iterator
 SmtSolver::Memoizer::searchNS(SymbolicExpr::Hash h, const ExprList &sortedNormalized) {
     std::pair<Map::iterator, Map::iterator> range = map_.equal_range(h);
@@ -98,6 +104,7 @@ SmtSolver::Memoizer::find(const ExprList &assertions) {
     ASSERT_forbid(assertions.empty());                  // trivial solutions should be handled before this point
     Found retval;
 
+#if 1 // full matching
     // First rewrite each assertion individually to normalize the variables. This will allow us to sort them consistently.
     std::vector<std::pair<SymbolicExpr::Ptr /*original*/, SymbolicExpr::Ptr /*rewritten*/>> sorted;
     sorted.reserve(assertions.size());
@@ -116,6 +123,13 @@ SmtSolver::Memoizer::find(const ExprList &assertions) {
     for (const ExprExpr &p: sorted)
         retval.sortedNormalized.push_back(p.first->renameVariables(retval.rewriteMap, nextVariableId));
     const SymbolicExpr::Hash h = SymbolicExpr::hash(retval.sortedNormalized);
+#else // partial matching (unsorted but normalized)
+    retval.sortedNormalized.reserve(assertions.size());
+    size_t nextVariableId = 0;
+    for (const SymbolicExpr::Ptr &p: assertions)
+        retval.sortedNormalized.push_back(p->renameVariables(retval.rewriteMap, nextVariableId));
+    const SymbolicExpr::Hash h = SymbolicExpr::hash(retval.sortedNormalized);
+#endif
 
     // Does our map already contain this set of assertions? Hashes can be equal without the set of assertions being equal, so
     // we need to check.
