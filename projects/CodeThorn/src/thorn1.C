@@ -217,7 +217,8 @@ int main( int argc, char * argv[] ) {
     
     ctOpt.generateReports=true;
     CodeThorn::CodeThornLib::optionallyGenerateExternalFunctionsFile(ctOpt, analyzer->getFunctionCallMapping());
-    AnalysisReporting::generateUnusedVariablesReport(ctOpt,analyzer);
+    AnalysisReporting anaRep;
+    anaRep.generateUnusedVariablesReport(ctOpt,analyzer);
 
     tc.startTimer();tc.stopTimer();
 

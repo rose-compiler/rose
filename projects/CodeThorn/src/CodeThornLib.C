@@ -93,7 +93,7 @@ using namespace Sawyer::Message;
 
 using namespace Sawyer::Message;
 
-static std::string CodeThornLibraryVersion="1.13.34"; // c
+static std::string CodeThornLibraryVersion="1.13.37";
 
 // handler for generating backtrace
 void codethornBackTraceHandler(int sig) {
@@ -725,11 +725,11 @@ namespace CodeThorn {
       if(ctOpt.generateReports) {
         if(ctOpt.analysisList().size()>0) {
           const bool reportDetectedErrorLines=true;
-          AnalysisReporting::generateVerificationReports(ctOpt,analyzer,reportDetectedErrorLines); // also generates verification call graph
-          AnalysisReporting::generateAnalysisLocationReports(ctOpt,analyzer);
-          AnalysisReporting::generateAnalyzedFunctionsAndFilesReports(ctOpt,analyzer);
-	  AnalysisReporting::generateInternalAnalysisReport(ctOpt,analyzer);
-	  AnalysisReporting::generateUnusedVariablesReport(ctOpt,analyzer);
+          AnalysisReporting anaRep;
+          anaRep.generateVerificationReports(ctOpt,analyzer,reportDetectedErrorLines); // also generates verification call graph
+          anaRep.generateAnalyzedFunctionsAndFilesReports(ctOpt,analyzer);
+	  anaRep.generateInternalAnalysisReport(ctOpt,analyzer);
+	  anaRep.generateUnusedVariablesReport(ctOpt,analyzer);
         } else {
           if(ctOpt.status) cout<<"STATUS: no analysis reports generated (no analysis selected)."<<endl;
         }
@@ -800,11 +800,9 @@ namespace CodeThorn {
 
 
     Labeler* createLabeler(SgProject* project, VariableIdMappingExtended* variableIdMapping, bool withCplusplus) {
-      //~ CTIOLabeler* res = new CTIOLabeler(project,variableIdMapping);
       CTIOLabeler* res = new CTIOLabeler(variableIdMapping);
-
-      if (withCplusplus) res->setIsFunctionCallFn(matchCxxCall);
-
+      if (withCplusplus)
+        res->setIsFunctionCallFn(matchCxxCall);
       res->initialize(project);
       return res;
     }

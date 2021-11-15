@@ -46,6 +46,7 @@ function runDomainTestsLevel3 {
         benchmarkprefix=$TESTDIR/DOM${testNumber};
         for benchmark in ${benchmarkprefix}*.[Cc]; do
             benchmarkname=$(basename $benchmark)
+            extension="${benchmarkname##*.}"
             printf "Testing %-38s: " $benchmarkname
             CT_OUTPUT_FILE=$benchmarkname.imout
             ./codethorn $benchmark $CT_MODE_OPTIONS --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR > /dev/null
@@ -56,7 +57,23 @@ function runDomainTestsLevel3 {
             else
                 echo -n "$COLORED_PASS "
                 EXEFILE=${benchmarkname}.exe
-                g++ $benchmark -o$EXEFILE -I $TESTDIR 
+                case $extension in
+                    C)
+                        GCC=g++
+                        ;;
+                    c)
+                        GCC=gcc
+                        ;;
+                    *)
+                        echo "runDomainTests: unknown file extension: $extension (file: $benchmarkname)"
+                        exit 1
+                esac
+                    
+                $GCC $benchmark -o$EXEFILE -I $TESTDIR 
+                if [ $? -ne 0 ];then
+                    echo $COLORED_FAIL
+                    ((numFail++))
+                fi
                 GCC_OUTPUT_FILE="${CT_OUTPUT_FILE}.check"
                 if [ -f $TESTDIR/${benchmarkname}.testinput ]; then
                     # run with test input from file
@@ -111,7 +128,8 @@ function runDomainTestsLevel2 {
 
 function level3Test {
     testNumbers=`echo {001..048}`
-    testNumbers+=" 051"
+    testNumbers+=" 051 052"
+    # 053 is a C code
     numWarnExpected=7
     numFailExpected=0
     CT_MODE_OPTIONS="--context-sensitive=yes --normalize-level=2 --interpreter-mode=1 --in-state-string-literals --abstraction-mode=0 --exploration-mode=topologic-sort"
