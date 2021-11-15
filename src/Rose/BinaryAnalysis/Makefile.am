@@ -54,7 +54,6 @@ librose_partial_la_SOURCES =			\
     TaintedFlow.C				\
     ToSource.C					\
     Variables.C					\
-    YicesSolver.C				\
     Z3Solver.C
 
 # For header installation, see parent makefiles

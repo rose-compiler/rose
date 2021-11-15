@@ -6,7 +6,6 @@
 #include <AsmUnparser_compat.h>
 #include <Rose/BinaryAnalysis/SourceLocations.h>
 #include <Rose/BinaryAnalysis/SymbolicExprParser.h>
-#include <Rose/BinaryAnalysis/YicesSolver.h>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>

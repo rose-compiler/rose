@@ -67,9 +67,6 @@ ROSE_SUPPORT_LIBMAGIC
 dnl  Some of the following need to be reevaluated to see whether they're actually used. [Matzke 2015-01-21]
 
 
-# Call supporting macro to Yices Satisfiability Modulo Theories (SMT) Solver
-ROSE_SUPPORT_YICES
-
 # Is the C++ libyaml available? [https://code.google.com/p/yaml-cpp]
 ROSE_SUPPORT_YAML
 
