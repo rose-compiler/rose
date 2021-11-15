@@ -892,6 +892,10 @@ public:
 
 protected:
     void printFlags(std::ostream &o, unsigned flags, char &bracket) const;
+
+public: // only used internally
+    using EquivPairs = std::map<Node*, std::vector<std::pair<Node*, bool>>>;
+    virtual bool isEquivalentHelper(Node*, EquivPairs&) = 0;
 };
 
 /** Operator-specific simplification methods. */
@@ -1147,6 +1151,7 @@ public:
     virtual bool mustEqual(const Ptr &other, const SmtSolverPtr &solver = SmtSolverPtr()) override;
     virtual bool mayEqual(const Ptr &other, const SmtSolverPtr &solver = SmtSolverPtr()) override;
     virtual bool isEquivalentTo(const Ptr &other) override;
+    virtual bool isEquivalentHelper(Node*, EquivPairs&) override;
     virtual int compareStructure(const Ptr& other) override;
     virtual Ptr substitute(const Ptr &from, const Ptr &to, const SmtSolverPtr &solver = SmtSolverPtr()) override;
     virtual VisitAction depthFirstTraversal(Visitor&) const override;
@@ -1316,6 +1321,7 @@ public:
     virtual bool mustEqual(const Ptr &other, const SmtSolverPtr &solver = SmtSolverPtr()) override;
     virtual bool mayEqual(const Ptr &other, const SmtSolverPtr &solver = SmtSolverPtr()) override;
     virtual bool isEquivalentTo(const Ptr &other) override;
+    virtual bool isEquivalentHelper(Node*, EquivPairs&) override;
     virtual int compareStructure(const Ptr& other) override;
     virtual Ptr substitute(const Ptr &from, const Ptr &to, const SmtSolverPtr &solver = SmtSolverPtr()) override;
     virtual VisitAction depthFirstTraversal(Visitor&) const override;
