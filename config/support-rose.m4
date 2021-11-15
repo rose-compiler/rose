@@ -1931,6 +1931,9 @@ fi
 ROSE_SUPPORT_BINARY
 # ****************************************************
 
+# Was inside ROSE_SUPPORT_BINARY. It is no longer used by binary anslysis, but other parts of ROSE use it.
+ROSE_SUPPORT_YICES
+
 ROSE_SUPPORT_PYTHON_API
 
 # Added support for detection of libnuma, a NUMA aware memory allocation mechanism for many-core optimizations.

@@ -5,7 +5,6 @@
 
 #include "rose_getline.h"
 #include <Rose/BinaryAnalysis/SmtlibSolver.h>
-#include <Rose/BinaryAnalysis/YicesSolver.h>
 #include <Rose/BinaryAnalysis/Z3Solver.h>
 
 #include <boost/algorithm/string/predicate.hpp>
@@ -337,8 +336,6 @@ SmtSolver::availability() {
     SmtSolver::Availability retval;
     retval.insert(std::make_pair(std::string("z3-lib"), (Z3Solver::availableLinkages() & LM_LIBRARY) != 0));
     retval.insert(std::make_pair(std::string("z3-exe"), (Z3Solver::availableLinkages() & LM_EXECUTABLE) != 0));
-    retval.insert(std::make_pair(std::string("yices-lib"), (YicesSolver::availableLinkages() & LM_LIBRARY) != 0));
-    retval.insert(std::make_pair(std::string("yices-exe"), (YicesSolver::availableLinkages() & LM_EXECUTABLE) != 0));
     return retval;
 }
 
@@ -353,10 +350,6 @@ SmtSolver::instance(const std::string &name) {
         return Z3Solver::instance(LM_LIBRARY);
     if ("z3-exe" == name)
         return Z3Solver::instance(LM_EXECUTABLE);
-    if ("yices-lib" == name)
-        return YicesSolver::instance(LM_LIBRARY);
-    if ("yices-exe" == name)
-        return YicesSolver::instance(LM_EXECUTABLE);
     throw Exception("unrecognized SMT solver name \"" + StringUtility::cEscape(name) + "\"");
 }
 
@@ -366,14 +359,10 @@ SmtSolver::bestAvailable() {
     // Binary APIs are faster, so prefer them
     if ((Z3Solver::availableLinkages() & LM_LIBRARY) != 0)
         return Z3Solver::instance(LM_LIBRARY);
-    if ((YicesSolver::availableLinkages() & LM_LIBRARY) != 0)
-        return YicesSolver::instance(LM_LIBRARY);
 
     // Next try text-based APIs
     if ((Z3Solver::availableLinkages() & LM_EXECUTABLE) != 0)
         return Z3Solver::instance(LM_EXECUTABLE);
-    if ((YicesSolver::availableLinkages() & LM_EXECUTABLE) != 0)
-        return YicesSolver::instance(LM_EXECUTABLE);
 
     return Ptr();
 }

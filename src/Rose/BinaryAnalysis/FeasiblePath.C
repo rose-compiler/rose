@@ -6,7 +6,6 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/FeasiblePath.h>
 #include <Rose/BinaryAnalysis/SymbolicExprParser.h>
-#include <Rose/BinaryAnalysis/YicesSolver.h>
 #include <Combinatorics.h>
 #include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/DisassemblerAarch32.h>
