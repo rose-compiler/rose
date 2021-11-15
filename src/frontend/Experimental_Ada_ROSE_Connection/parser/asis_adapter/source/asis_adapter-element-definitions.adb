@@ -1130,4 +1130,61 @@ package body Asis_Adapter.Element.Definitions is
       State.A_Element.The_Union.Definition := Result;
    end Do_Pre_Child_Processing;
 
+
+   procedure Do_Post_Child_Processing
+     (Element : in Asis.Element; State : in out Class)
+   is
+      Parent_Name : constant String := Module_Name;
+      Module_Name : constant String := Parent_Name & ".Do_Post_Child_Processing";
+      Definition_Kind : constant Asis.Definition_Kinds :=
+        Asis.Elements.Definition_Kind (Element);
+      use all type Asis.Definition_Kinds;
+
+      procedure Append_Implicit_Inherited_Declarations
+      is
+         elementList : Asis.Element_List := Asis.Definitions.Implicit_Inherited_Declarations (Element);
+      begin
+         for Elm of elementList loop
+            declare
+               -- Default_Node  : Dot.Node_Stmt.Class; -- Initialized
+               Default_Label : Dot.HTML_Like_Labels.Class; -- Initialized
+               Element_ID : constant a_nodes_h.Element_ID :=
+                 Get_Element_ID (Elm);
+               Element_Kind : constant Asis.Element_Kinds :=
+               Asis.Elements.Element_Kind (Elm);
+            begin
+               state.Process_Element_Tree(
+                Element => Elm,
+                Outputs => State.Outputs );
+            end;
+         end loop;
+      end Append_Implicit_Inherited_Declarations;
+
+      -----------------------------------------------------------------------
+
+   begin -- Do_Post_Child_Processing
+     -- Currently this post-processing is only needed to complete
+     -- the dot graph and node structure to include implicit elements.
+     -- 
+     -- The following comment from ASIS document lists the implicit element support,
+     -- which should later be included in to the post processing here:
+     --
+     -- ASIS-for-GNAT supports implicit Elements for the following constructs:
+     -- Derived user-defined subprograms
+     -- Derived enumeration literals
+     -- Derived record components
+
+     If Definition_Kind = A_Type_Definition  then
+       declare
+         Type_Kind : constant Asis.Type_Kinds :=
+           Asis.Elements.Type_Kind (Element);
+         use all type Asis.Type_Kinds;
+       begin
+         If Type_Kind = A_Derived_Type_Definition then
+           Append_Implicit_Inherited_Declarations;
+         end if;
+       end;
+     end if;
+   end Do_Post_Child_Processing;
+
 end Asis_Adapter.Element.Definitions;
