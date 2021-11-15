@@ -1220,23 +1220,41 @@ Interior::compareStructure(const Ptr &other_) {
 }
 
 bool
-Interior::isEquivalentTo(const Ptr &other_) {
-    bool retval = false;
+Interior::isEquivalentTo(const Ptr &other) {
+    EquivPairs matched;
+    return isEquivalentHelper(other.getRawPointer(), matched);
+}
+
+bool
+Interior::isEquivalentHelper(Node *other_, EquivPairs &matched) {
     if (!other_)
         return false;
     const Interior *other = other_->isInteriorNodeRaw();
     if (this == other) {
-        retval = true;
-    } else if (nullptr == other || type() != other->type() || flags() != other->flags()) {
-        retval = false;
+        return true;
+    } else if (!other || type() != other->type() || flags() != other->flags()) {
+        return false;
     } else if (hashval_ != 0 && other->hashval_ != 0 && hashval_ != other->hashval_) {
         // Unequal hashvals imply non-equivalent expressions.  The converse is not necessarily true due to possible
         // collisions.
-        retval = false;
-    } else if (op_ == other->op_ && children_.size() == other->children_.size()) {
-        retval = true;
-        for (size_t i=0; i < children_.size() && retval; ++i)
-            retval = children_[i]->isEquivalentTo(other->children_[i]);
+        return false;
+    } else if (op_ != other->op_ || children_.size() != other->children_.size()) {
+        return false;
+    } else {
+        // Did we test this pair of nodes already?
+        auto node = matched.find(this);
+        if (node != matched.end()) {
+            for (const auto &pair: node->second) {
+                if (pair.first == other)
+                    return pair.second;                 // previously tested pair of node pointers
+            }
+        }
+
+        // Test equivalence
+        bool retval = true;
+        for (size_t i = 0; retval && i < children_.size(); ++i)
+            retval = children_[i]->isEquivalentHelper(other->children_[i].getRawPointer(), matched);
+
         // Cache hash values. There's no need to compute a hash value if we've determined that the two expressions are
         // equivalent because it wouldn't save us any work--two equal hash values doesn't necessarily mean that two expressions
         // are equivalent.  However, if we already know one of the hash values then we can cache that hash value in the other
@@ -1249,14 +1267,12 @@ Interior::isEquivalentTo(const Ptr &other_) {
             } else {
                 ASSERT_require(hashval_ == other->hashval_);
             }
-        } else {
-#ifdef InsnInstructionExpr_USE_HASHES
-            hashval_ = hash();
-            other->hashval_ = other->hash();
-#endif
         }
+
+        // Remember equivalence results for this pair of nodes.
+        matched.insert(std::make_pair(this, EquivPairs::value_type::second_type{{other_, retval}}));
+        return retval;
     }
-    return retval;
 }
 
 Ptr
@@ -3432,19 +3448,25 @@ Leaf::compareStructure(const Ptr &other_) {
 }
 
 bool
-Leaf::isEquivalentTo(const Ptr &other_) {
-    bool retval = false;
+Leaf::isEquivalentTo(const Ptr &other) {
+    EquivPairs matched;
+    return isEquivalentHelper(other.getRawPointer(), matched);
+}
+
+bool
+Leaf::isEquivalentHelper(Node *other_, EquivPairs &matched) {
     const Leaf *other = other_->isLeafNodeRaw();
     if (this == other) {
-        retval = true;
-    } else if (other && nBits() == other->nBits() && flags() == other->flags()) {
+        return true;
+    } else if (!other || nBits() != other->nBits() || flags() != other->flags()) {
+        return false;
+    } else {
         if (isConstant()) {
-            retval = other->isConstant() && bits().equalTo(other->bits());
+            return other->isConstant() && bits().equalTo(other->bits());
         } else {
-            retval = !other->isConstant() && name_ == other->name_;
+            return !other->isConstant() && name_ == other->name_;
         }
     }
-    return retval;
 }
 
 Ptr
