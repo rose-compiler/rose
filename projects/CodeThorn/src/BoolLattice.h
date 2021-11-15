@@ -45,7 +45,6 @@ namespace CodeThorn {
  */
 class BoolLattice {
  public:
-  enum ValueType { FALSE, TRUE, BOT, TOP};
   BoolLattice();
   BoolLattice(bool val); // type conversion
   BoolLattice(Top e); // type conversion
@@ -68,9 +67,9 @@ class BoolLattice {
   /// for sorting only!
   bool operator<(BoolLattice other) const;
   string toString() const;
-  inline ValueType val() const { return value; }
   friend ostream& operator<<(ostream& os, const BoolLattice& value);
  private:
+  enum ValueType { BL_FALSE, BL_TRUE, BL_BOT, BL_TOP};
   ValueType value;
 };
 
