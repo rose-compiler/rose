@@ -19,6 +19,8 @@
 // tool  specific
 #include "AstTerm.h"
 #include "CppStdUtilities.h"
+#include "LanguageRestrictor.h"
+#include "LanguageRestrictorCollection.h"
 
 namespace ct  = CodeThorn;
 namespace si  = SageInterface;
@@ -38,10 +40,13 @@ class Thorn3Parser
 public:
   struct Parameters
   {
-    std::string astTermFileNamePrefix   = "astterm";
-    bool        mlAstTerm               = false;
-    bool        astTerm                 = false;
-    bool        typedAstTerm            = false;
+    std::string astTermFileNamePrefix="astterm";
+    bool mlAstTerm=false;
+    bool astTerm=false;
+    bool typedAstTerm=false;
+    bool printVariants=false;
+    bool printVariantSet=false;
+    bool checkCLanguage=false;
   };
   
   /// sets the Thorn3Parser settings using the command line arguments
@@ -74,6 +79,15 @@ public:
     thorn3Parser.insert(scl::Switch("ast-term-indented")
                         .intrinsicValue(true,(params.mlAstTerm))
                         .doc("indented ast term"));
+    thorn3Parser.insert(scl::Switch("print-variants")
+                        .intrinsicValue(true,(params.printVariants))
+                        .doc("print all SgNode variants of program with variant-id."));
+    thorn3Parser.insert(scl::Switch("print-variant-set")
+                        .intrinsicValue(true,(params.printVariantSet))
+                        .doc("print all SgNode variants as variantT enum set. Can be used with language restrictor."));
+    thorn3Parser.insert(scl::Switch("check-c")
+                        .intrinsicValue(true,(params.checkCLanguage))
+                        .doc("check if input program contains only  C language constructs."));
 
     p.purpose("Generates AST Term files")
       .doc("synopsis",
@@ -147,10 +161,10 @@ int main( int argc, char * argv[] )
     Thorn3Parser thorn3Parser;
     CStringVector unparsedArgsCStyle(thorn3Parser.parseArgs(std::move(cmdLineArgs)));
     Thorn3Parser::Parameters params=thorn3Parser.getParameters();
-    if(!(params.astTerm||params.typedAstTerm||params.mlAstTerm)) {
-      cout<<"No output selected. Use at least one of --thorn3:ast-term --thorn3:ast-term-typed --thorn3:ast-term-indented"<<endl;
-      return 0;
-    }
+    //if(!(params.astTerm||params.typedAstTerm||params.mlAstTerm||params.printVariants||params.printVariantSet)) {
+    //  cout<<"No output selected. Use at least one of --thorn3:ast-term --thorn3:ast-term-typed --thorn3:ast-term-indented --print-variants --print-variant-set"<<endl;
+    //  return 0;
+    //}
       
     int thornArgc = unparsedArgsCStyle.size();
     char** thornArgv = unparsedArgsCStyle.firstCArg();
@@ -173,6 +187,23 @@ int main( int argc, char * argv[] )
     string fileNamePrefix=params.astTermFileNamePrefix;
     //cout<<"DEBUG: "<<fileNamePrefix<<":"<<params.astTerm<<params.typedAstTerm<<params.mlAstTerm<<endl;
     
+    if(params.printVariants) {
+      LanguageRestrictor lang;
+      LanguageRestrictor::VariantSet variantSet=lang.computeVariantSetOfProvidedAst(project);
+      for(auto variant : variantSet) {
+        cout<<"Variant "<<variant<<": "<<lang.variantToString(variant)<<endl;
+      }
+    }
+    if(params.printVariantSet) {
+      LanguageRestrictor lang;
+      LanguageRestrictor::VariantSet variantSet=lang.computeVariantSetOfProvidedAst(project);
+      cout<<"{"<<endl;
+      for(auto variant : variantSet) {
+        cout<<"V_"<<lang.variantToString(variant)<<","<<endl;
+      }
+      cout<<"}"<<endl;
+    }
+
     if(params.astTerm) {
       string fileName=fileNamePrefix+".txt";
       string term=AstTerm::astTermWithNullValuesToString(project);
@@ -196,6 +227,17 @@ int main( int argc, char * argv[] )
         cout<<"Generated indented ast term file "<<fileName<<endl;
       else
         cerr<<"Error: could not create file "<<fileName<<endl;
+    }
+
+    if(params.checkCLanguage) {
+      LanguageRestrictorC cLangRestrictor;
+      bool programOK=cLangRestrictor.checkProgram(project);
+      cout<<"C Program check: ";
+      if(programOK)
+        cout<<"PASS";
+      else
+        cout<<"FAIL";
+      cout<<endl;
     }
     
     errorCode = 0;

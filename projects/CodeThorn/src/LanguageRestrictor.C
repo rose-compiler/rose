@@ -107,11 +107,7 @@ void LanguageRestrictor::initialize() {
 
 bool LanguageRestrictor::checkProgram(SgNode* root) {
   initialize();
-  if(!checkIfAstIsAllowed(root)) {
-    cerr << "INIT FAILED: Input program not valid."<<endl;
-    exit(1);
-  }
-  return true;
+  return checkIfAstIsAllowed(root);
 }
 
 bool LanguageRestrictor::checkIfAstIsAllowed(SgNode* node) {
@@ -119,10 +115,6 @@ bool LanguageRestrictor::checkIfAstIsAllowed(SgNode* node) {
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(!isAllowedAstNode(*i)) {
       cerr << "Language-Restrictor: excluded language construct found: " << (*i)->sage_class_name() <<" : "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<" : "<<(*i)->unparseToString()<< endl;
-      // report first error and return
-      if((*i)->variantT()==V_SgContinueStmt) {
-        cerr << "cfg construction for continue-statement not supported yet."<<endl; break;
-      }
       return false;
     }
   }
