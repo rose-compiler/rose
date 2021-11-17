@@ -10,7 +10,7 @@ EXTRA_DIST = Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 bin_PROGRAMS = codethorn thorn1 thorn2 thorn3 ltlthorn woodpecker analyterix addressTakenAnalysis cldemo
 
 # matcher_demo matcher astinfo cldemo
-noinst_PROGRAMS = addressTakenAnalysis cldemo
+noinst_PROGRAMS = addressTakenAnalysis cldemo matcher_demo
 #noinst_PROGRAMS matcher_demo matcher astinfo cldemo
 
 CLEANFILES =
@@ -645,10 +645,10 @@ addressTakenAnalysis_SOURCES = \
 #	rm lex.yy.c y.tab.c
 
 # MS: matcher_demo
-#matcher_demo_DEPENDENCIES=libcodethorn.la
-#matcher_demo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn
-#matcher_demo__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
-#matcher_demo_SOURCES = matcher_demo.C
+matcher_demo_DEPENDENCIES=libcodethorn.la
+matcher_demo_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn
+matcher_demo__CXXFLAGS = -Wall -O3 -march=native -ftree-vectorize
+matcher_demo_SOURCES = matcher/matcher_demo.C
 #BUILT_SOURCES =
 #AM_YFLAGS =
 #AM_LFLAGS =
