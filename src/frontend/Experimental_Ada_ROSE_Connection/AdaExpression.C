@@ -432,8 +432,8 @@ namespace
 
 
   /// converts enum values to SgExpressions
-  /// \todo currently only True and False are handled
-  ///       revisit when Asis representation is complete
+  /// \note currently True and False are handled separately, because
+  ///       their definition in package Standard is not seen.
   SgExpression&
   getEnumLiteral(Expression_Struct& expr, AstContext ctx)
   {
