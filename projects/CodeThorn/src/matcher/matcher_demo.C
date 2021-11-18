@@ -11,6 +11,10 @@
 
 using namespace std;
 
+// required for some options in codethorn library (until removed)
+#include "CommandLineOptions.h"
+CodeThorn::CommandLineOptions CodeThorn::args;
+
 class TestTraversal : public AstSimpleProcessing {
 public:
   virtual void visit(SgNode* node) { /* do nothing */ };

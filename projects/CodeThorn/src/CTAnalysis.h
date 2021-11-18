@@ -500,7 +500,7 @@ namespace CodeThorn {
     Solver* _solver;
     TopologicalSort* _topologicalSort=nullptr;
 
-    const CodeThorn::PState* _initialPStateStored=nullptr;
+    PStatePtr _initialPStateStored=nullptr;
     CodeThorn::EStateTransferFunctions* _estateTransferFunctions=nullptr;
 
   }; // end of class CTAnalysis

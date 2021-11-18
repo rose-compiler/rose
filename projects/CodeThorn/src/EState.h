@@ -34,8 +34,6 @@ namespace CodeThorn {
   * \date 2012.
  */
 
-  typedef const CodeThorn::PState* PStatePtr;
-
   //#define ESTATE_PSTATE_MEM_COPY
   
   class EState : public Lattice {

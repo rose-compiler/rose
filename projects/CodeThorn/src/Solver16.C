@@ -193,7 +193,6 @@ void Solver16::run() {
                       // graph as an existing estate.
                       newEStatePtr=summaryEState; 
                     } else {
-                      stringstream condss;
                       EState newEState2=_analyzer->getEStateTransferFunctions()->combine(summaryEState,const_cast<EState*>(newEStatePtr));
                       ROSE_ASSERT(_analyzer);
                       HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState2);
