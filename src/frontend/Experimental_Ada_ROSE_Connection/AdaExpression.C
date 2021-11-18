@@ -515,6 +515,12 @@ namespace
       return roseRequiresPrefixID(expr.Prefix, ctx);
     }
 
+    if (expr.Expression_Kind == An_Explicit_Dereference)
+      return true;
+
+    if (expr.Expression_Kind == A_Function_Call)
+      return false;
+
     logWarn() << "roseRequiresPrefixID: untested expression-kind: "
               << expr.Expression_Kind
               << std::endl;
