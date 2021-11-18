@@ -20764,10 +20764,29 @@ void SgAdaTaskBodyDecl::post_construction_initialization() {}
 SgSymbol*
 SgAdaTaskBodyDecl::get_symbol_from_symbol_table() const
 {
+/*
+  PP (11/16/21)
+  Package bodies do not have their own symbol currently,
+  as a body must have seen the spec.
+  ==> Return the spec's symbol.
+  see also SgAdaPackageBodyDecl::get_symbol_from_symbol_table
+
   SgScopeStatement* scope = get_scope();
 
   ROSE_ASSERT(scope);
   return scope->find_symbol_from_declaration(this);
+*/
+
+  SgAdaTaskBody* body = get_definition();
+  ROSE_ASSERT(body);
+
+  SgAdaTaskSpec* spec = body->get_spec();
+  ROSE_ASSERT(spec);
+
+  SgDeclarationStatement* specdecl = isSgDeclarationStatement(spec->get_parent());
+  ROSE_ASSERT(specdecl);
+
+  return specdecl->search_for_symbol_from_symbol_table();
 }
 
 SgName

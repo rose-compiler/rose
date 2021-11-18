@@ -177,6 +177,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   simple_hello_world_with_renamed.adb  \
   simple_hello_world_with_use.adb      \
   std_ascii_user.adb                   \
+  taskarray.adb                        \
   task_type_declaration.ads            \
   task_with_abort.adb                  \
   task_with_abort_v2.adb               \
