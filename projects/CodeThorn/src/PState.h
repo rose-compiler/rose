@@ -14,7 +14,6 @@
 
 typedef int PStateId;
 
-//#include "HashFun.h"
 #include "HSetMaintainer.h"
 
 namespace CodeThorn {
@@ -23,7 +22,8 @@ namespace CodeThorn {
   class CTAnalysis;
 
   class PState;
-  typedef const PState* PStatePtr;
+  
+  typedef PState* PStatePtr; // allow for in-place updates, no longer const; old version: const PState* PStatePtr;
 
   /*! 
    * \author Markus Schordan

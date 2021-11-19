@@ -344,6 +344,7 @@ namespace CodeThorn {
     /*! if state exists in stateSet, a pointer to the existing state is returned otherwise
       a new state is entered into stateSet and a pointer to it is returned.
     */
+
     PStatePtr processNew(PState& s);
     PStatePtr processNewOrExisting(PState& s);
     const EState* processNew(EState& s);

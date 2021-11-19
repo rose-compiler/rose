@@ -450,7 +450,7 @@ const EState* CodeThorn::CTAnalysis::getBottomSummaryState(Label lab, CallString
   return bottomElement;
 }
 
-void CodeThorn::CTAnalysis::initializeSummaryStates(const CodeThorn::PState* initialPStateStored) {
+void CodeThorn::CTAnalysis::initializeSummaryStates(PStatePtr initialPStateStored) {
   _initialPStateStored=initialPStateStored;
 #if 0
   for(auto label:*getLabeler()) {
@@ -1171,9 +1171,10 @@ list<pair<SgLabelStatement*,SgNode*> > CodeThorn::CTAnalysis::listOfLabeledAsser
   return assertNodes;
 }
 
+#if 1
 PStatePtr CodeThorn::CTAnalysis::processNew(PState& s) {
   if(EState::sharedPStates) {
-    return pstateSet.processNew(s);
+    return const_cast<PStatePtr>(pstateSet.processNew(s));
   } else {
     PState* newPState=new PState();
     *newPState=s;
@@ -1183,11 +1184,12 @@ PStatePtr CodeThorn::CTAnalysis::processNew(PState& s) {
 
 PStatePtr CodeThorn::CTAnalysis::processNewOrExisting(PState& s) {
   if(EState::sharedPStates) {
-    return pstateSet.processNewOrExisting(s);
+    return const_cast<PStatePtr>(pstateSet.processNewOrExisting(s));
   } else {
-    return processNew(s);
+    return const_cast<PStatePtr>(processNew(s));
   }
 }
+#endif
 
 const EState* CodeThorn::CTAnalysis::processNew(EState& s) {
   return estateSet.processNew(s);
@@ -1307,7 +1309,7 @@ EState CodeThorn::CTAnalysis::createInitialEState(SgProject* root, Label slab) {
     }
   }
 
-  PStatePtr initialPStateStored=processNewOrExisting(initialPState); // might reuse another pstate when initializing in level 1
+  PStatePtr initialPStateStored=processNewOrExisting(initialPState); // might reuse another pstate when initializing in level 1   // CHANGING PSTATE-ESTATE
   ROSE_ASSERT(initialPStateStored);
   SAWYER_MESG(logger[TRACE])<< "INIT: initial pstate(stored): "<<initialPStateStored->toString(getVariableIdMapping())<<endl;
 
@@ -1633,7 +1635,7 @@ void CodeThorn::CTAnalysis::resetAnalysis() {
   pstateSet = newPStateSet;
   estateSet.max_load_factor(0.7);
   pstateSet.max_load_factor(0.7);
-  PStatePtr processedPState=processNew(startPState);
+  PStatePtr processedPState=processNew(startPState); // CHANGING PSTATE-ESTATE
   ROSE_ASSERT(processedPState);
   startEState.setPState(processedPState);
   const EState* processedEState=processNew(startEState);

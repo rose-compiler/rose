@@ -117,7 +117,7 @@ namespace CodeThorn {
       //pstate.topifyState();
 #endif
     }
-    PStatePtr newPStatePtr=_analyzer->processNewOrExisting(pstate);
+    PStatePtr newPStatePtr=_analyzer->processNewOrExisting(pstate); // CHANGING PSTATE-ESTATE
     EState estate=EState(label,newPStatePtr);
     estate.io.recordNone();
     return estate;
