@@ -93,60 +93,60 @@ namespace CodeThorn {
     EState createEState(Label label, CallString cs, PState pstate, InputOutput io);
     EState createEStateInternal(Label label, PState pstate);
 
-    bool isApproximatedBy(const EState* es1, const EState* es2);
-    EState combine(const EState* es1, const EState* es2);
+    bool isApproximatedBy(EStatePtr es1, EStatePtr es2);
+    EState combine(EStatePtr es1, EStatePtr es2);
     std::string transferFunctionCodeToString(TransferFunctionCode tfCode);
 
     /* determines transfer function code from CFG and AST-matching and calls transferEdgeEStateDispatch
        ultimately this function can be used to operate on its own IR */
-    std::list<EState> transferEdgeEState(Edge edge, const EState* estate);
+    std::list<EState> transferEdgeEState(Edge edge, EStatePtr estate);
 
     // determines transfer function code based on ICFG and AST patterns
-    std::pair<TransferFunctionCode,SgNode*> determineTransferFunctionCode(Edge edge, const EState* estate);
+    std::pair<TransferFunctionCode,SgNode*> determineTransferFunctionCode(Edge edge, EStatePtr estate);
     // calls transfer function based on TransferFunctionCode. No additional tests are performed.
-    std::list<EState> transferEdgeEStateDispatch(TransferFunctionCode tfCode, SgNode* node, Edge edge, const EState* estate);
-    void printTransferFunctionInfo(TransferFunctionCode tfCode, SgNode* node, Edge edge, const EState* estate);
+    std::list<EState> transferEdgeEStateDispatch(TransferFunctionCode tfCode, SgNode* node, Edge edge, EStatePtr estate);
+    void printTransferFunctionInfo(TransferFunctionCode tfCode, SgNode* node, Edge edge, EStatePtr estate);
     void printEvaluateExpressionInfo(SgNode* node,EState& estate, EvalMode mode);
 
   protected:
     void fatalErrorExit(SgNode* node, std::string errorMessage);
     void warning(SgNode* node, std::string errorMessage);
-    void transferFunctionEntryPrintStatus(Edge edge, const EState* estate, std::string fileName, std::string functionName);
+    void transferFunctionEntryPrintStatus(Edge edge, EStatePtr estate, std::string fileName, std::string functionName);
 
-    std::list<EState> transferFunctionCallLocalEdge(Edge edge, const EState* estate);
-    std::list<EState> transferFunctionCall(Edge edge, const EState* estate);
-    std::list<EState> transferFunctionCallExternal(Edge edge, const EState* estate);
-    std::list<EState> transferFunctionCallReturn(Edge edge, const EState* estate);
-    std::list<EState> transferFunctionEntry(Edge edge, const EState* estate);
-    std::list<EState> transferFunctionExit(Edge edge, const EState* estate);
-    std::list<EState> transferReturnStmt(Edge edge, const EState* estate);
-    std::list<EState> transferAsmStmt(Edge edge, const EState* estate);
-    std::list<EState> transferIdentity(Edge edge, const EState* estate);
-    std::list<EState> transferFailedAssert(Edge edge, const EState* estate);
+    std::list<EState> transferFunctionCallLocalEdge(Edge edge, EStatePtr estate);
+    std::list<EState> transferFunctionCall(Edge edge, EStatePtr estate);
+    std::list<EState> transferFunctionCallExternal(Edge edge, EStatePtr estate);
+    std::list<EState> transferFunctionCallReturn(Edge edge, EStatePtr estate);
+    std::list<EState> transferFunctionEntry(Edge edge, EStatePtr estate);
+    std::list<EState> transferFunctionExit(Edge edge, EStatePtr estate);
+    std::list<EState> transferReturnStmt(Edge edge, EStatePtr estate);
+    std::list<EState> transferAsmStmt(Edge edge, EStatePtr estate);
+    std::list<EState> transferIdentity(Edge edge, EStatePtr estate);
+    std::list<EState> transferFailedAssert(Edge edge, EStatePtr estate);
 
-    std::list<EState> transferCaseOptionStmt(SgCaseOptionStmt* stmt,Edge edge, const EState* estate);
-    std::list<EState> transferDefaultOptionStmt(SgDefaultOptionStmt* stmt,Edge edge, const EState* estate);
-    std::list<EState> transferVariableDeclaration(SgVariableDeclaration* decl,Edge edge, const EState* estate);
+    std::list<EState> transferCaseOptionStmt(SgCaseOptionStmt* stmt,Edge edge, EStatePtr estate);
+    std::list<EState> transferDefaultOptionStmt(SgDefaultOptionStmt* stmt,Edge edge, EStatePtr estate);
+    std::list<EState> transferVariableDeclaration(SgVariableDeclaration* decl,Edge edge, EStatePtr estate);
 
-    std::list<EState> transferExprStmt(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate);
+    std::list<EState> transferExprStmt(SgNode* nextNodeToAnalyze1, Edge edge, EStatePtr estate);
     // wrapper function for evalAssignOp
-    std::list<EState> transferAssignOp(SgAssignOp* assignOp, Edge edge, const EState* estate);
+    std::list<EState> transferAssignOp(SgAssignOp* assignOp, Edge edge, EStatePtr estate);
     // used at stmt level and for StmtExpr
-    std::list<EState> transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
-    std::list<EState> transferGnuExtensionStmtExpr(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate);
+    std::list<EState> transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, EStatePtr estate);
+    std::list<EState> transferGnuExtensionStmtExpr(SgNode* nextNodeToAnalyze1, Edge edge, EStatePtr estate);
 
     // not used yet
-    std::list<EState> transferIncDecOpEvalWrapper(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
+    std::list<EState> transferIncDecOpEvalWrapper(SgNode* nextNodeToAnalyze2, Edge edge, EStatePtr estate);
 
     // RERS binary mode only
-    std::list<EState> transferFunctionCallLocalEdgeRersBinaryMode(Edge edge, const EState* estate);
+    std::list<EState> transferFunctionCallLocalEdgeRersBinaryMode(Edge edge, EStatePtr estate);
     SingleEvalResult evalArrayNotInState(SgNode* node, SingleEvalResult& res, VariableId arrayVarId, AbstractValue arrayPtrPlusIndexValue);
 
     // special case, called from transferFunctionCall
-    std::list<EState> transferForkFunction(Edge edge, const EState* estate, SgFunctionCallExp* funCall);
-    std::list<EState> transferForkFunctionWithExternalTargetFunction(Edge edge, const EState* estate, SgFunctionCallExp* funCall);
+    std::list<EState> transferForkFunction(Edge edge, EStatePtr estate, SgFunctionCallExp* funCall);
+    std::list<EState> transferForkFunctionWithExternalTargetFunction(Edge edge, EStatePtr estate, SgFunctionCallExp* funCall);
 
-    std::list<EState> transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate);
+    std::list<EState> transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, EStatePtr estate);
 
   public:
     static std::list<EState> elistify();
@@ -156,12 +156,12 @@ namespace CodeThorn {
     static Sawyer::Message::Facility logger;
 
     // used to  create a new estate (shallow copy, PState copied as pointer)
-    EState cloneEState(const EState* estate);
+    EState cloneEState(EStatePtr estate);
 
     // used by transferAssignOp to seperate evaluation from memory updates (i.e. state modifications)
     typedef std::pair<AbstractValue,AbstractValue> MemoryUpdatePair;
     typedef std::list<std::pair<EState,MemoryUpdatePair> > MemoryUpdateList;
-    MemoryUpdateList evalAssignOpMemUpdates(SgAssignOp* assignOp, const EState* estate);
+    MemoryUpdateList evalAssignOpMemUpdates(SgAssignOp* assignOp, EStatePtr estate);
 
     // functions for handling callstring contexts
     CallString transferFunctionCallContext(CallString cs, Label lab);
@@ -418,7 +418,7 @@ namespace CodeThorn {
                  SingleEvalResult lhsResult,
                  SingleEvalResult rhsResult,
                  Label targetLabel, EState estate, EvalMode mode);
-    std::list<EState> evalAssignOp3(SgAssignOp* node, Label targetLabel, const EState* estate);
+    std::list<EState> evalAssignOp3(SgAssignOp* node, Label targetLabel, EStatePtr estate);
 
     SingleEvalResult evalArrayReferenceOp(SgPntrArrRefExp* node,
                                                         SingleEvalResult lhsResult,

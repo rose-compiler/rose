@@ -123,11 +123,11 @@ namespace CodeThorn {
     return estate;
   }
 
-  bool EStateTransferFunctions::isApproximatedBy(const EState* es1, const EState* es2) {
+  bool EStateTransferFunctions::isApproximatedBy(EStatePtr es1, EStatePtr es2) {
     return es1->isApproximatedBy(es2);
   }
 
-  EState EStateTransferFunctions::combine(const EState* es1, const EState* es2) {
+  EState EStateTransferFunctions::combine(EStatePtr es1, EStatePtr es2) {
     ROSE_ASSERT(es1->label()==es2->label());
     //ROSE_ASSERT(es1->constraints()==es2->constraints()); // pointer equality
     if(es1->callString!=es2->callString) {
@@ -164,7 +164,7 @@ namespace CodeThorn {
     return resList;
   }
 
-  std::list<EState> EStateTransferFunctions::transferFunctionCallLocalEdgeRersBinaryMode(Edge edge, const EState* estate) {
+  std::list<EState> EStateTransferFunctions::transferFunctionCallLocalEdgeRersBinaryMode(Edge edge, EStatePtr estate) {
     SgNode* nodeToAnalyze=getLabeler()->getNode(edge.source());
     if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nodeToAnalyze)) {
       ROSE_ASSERT(funCall);
@@ -231,7 +231,7 @@ namespace CodeThorn {
     return getAnalyzer()->elistify(); // did not match RERS function
   }
 
-  std::list<EState> EStateTransferFunctions::transferFunctionCallLocalEdge(Edge edge, const EState* estate) {
+  std::list<EState> EStateTransferFunctions::transferFunctionCallLocalEdge(Edge edge, EStatePtr estate) {
     if(_analyzer->getOptionsRef().rers.rersBinary) {
       return transferFunctionCallLocalEdgeRersBinaryMode(edge, estate);
     }
@@ -239,7 +239,7 @@ namespace CodeThorn {
     return getAnalyzer()->elistify();
   }
 
-  std::list<EState> EStateTransferFunctions::transferFunctionCall(Edge edge, const EState* estate) {
+  std::list<EState> EStateTransferFunctions::transferFunctionCall(Edge edge, EStatePtr estate) {
     // 1) obtain actual parameters from source
     // 2) obtain formal parameters from target
     // 3) eval each actual parameter and assign result to formal parameter in state
@@ -372,7 +372,7 @@ namespace CodeThorn {
     return elistify(newEState);
   }
 
-  std::list<EState> EStateTransferFunctions::transferReturnStmt(Edge edge, const EState* estate) {
+  std::list<EState> EStateTransferFunctions::transferReturnStmt(Edge edge, EStatePtr estate) {
     Label lab=estate->label();
     EState currentEState=*estate;
     CallString cs=currentEState.callString;
@@ -403,7 +403,7 @@ namespace CodeThorn {
     }
   }
 
-  std::list<EState> EStateTransferFunctions::transferFunctionCallReturn(Edge edge, const EState* estate) {
+  std::list<EState> EStateTransferFunctions::transferFunctionCallReturn(Edge edge, EStatePtr estate) {
     EState currentEState=*estate;
     PState currentPState=*currentEState.pstate();
 
@@ -550,14 +550,14 @@ namespace CodeThorn {
     }
   }
 
-  std::list<EState> EStateTransferFunctions::transferAsmStmt(Edge edge, const EState* estate) {
+  std::list<EState> EStateTransferFunctions::transferAsmStmt(Edge edge, EStatePtr estate) {
     // ignore AsmStmt
     return transferIdentity(edge,estate);
   }
 
   long int functionAnalyzedNr=1;
 
-  void EStateTransferFunctions::transferFunctionEntryPrintStatus(Edge edge, const EState* estate, std::string fileName, std::string functionName) {
+  void EStateTransferFunctions::transferFunctionEntryPrintStatus(Edge edge, EStatePtr estate, std::string fileName, std::string functionName) {
     if(_analyzer->getOptionsRef().status) {
       if(_analyzer->getOptionsRef().precisionLevel==1) {
         size_t numFunctions=_analyzer->getTotalNumberOfFunctions();
@@ -573,7 +573,7 @@ namespace CodeThorn {
     }
   }
 
-  std::list<EState> EStateTransferFunctions::transferFunctionEntry(Edge edge, const EState* estate) {
+  std::list<EState> EStateTransferFunctions::transferFunctionEntry(Edge edge, EStatePtr estate) {
     Label lab=estate->label();
     SgNode* node=_analyzer->getLabeler()->getNode(lab);
     SgFunctionDefinition* funDef=isSgFunctionDefinition(node);
@@ -591,7 +591,7 @@ namespace CodeThorn {
     return transferIdentity(edge,estate);
   }
 
-  std::list<EState> EStateTransferFunctions::transferFunctionExit(Edge edge, const EState* estate) {
+  std::list<EState> EStateTransferFunctions::transferFunctionExit(Edge edge, EStatePtr estate) {
     EState currentEState=*estate;
     if(SgFunctionDefinition* funDef=isSgFunctionDefinition(getLabeler()->getNode(edge.source()))) {
       // 1) determine all local variables (including formal parameters) of function
@@ -622,7 +622,7 @@ namespace CodeThorn {
   }
 
   // called from transferForkFunction
-  std::list<EState> EStateTransferFunctions::transferForkFunctionWithExternalTargetFunction(Edge edge, const EState* estate, SgFunctionCallExp* funCall) {
+  std::list<EState> EStateTransferFunctions::transferForkFunctionWithExternalTargetFunction(Edge edge, EStatePtr estate, SgFunctionCallExp* funCall) {
     //_analyzer->recordExternalFunctionCall(funCall); funcall would be forkFunction
     // arg5 is expression with functino pointer to external function
     list<EState> estateList;
@@ -633,7 +633,7 @@ namespace CodeThorn {
     return estateList;
   }
 
-  std::list<EState> EStateTransferFunctions::transferForkFunction(Edge edge, const EState* estate, SgFunctionCallExp* funCall) {
+  std::list<EState> EStateTransferFunctions::transferForkFunction(Edge edge, EStatePtr estate, SgFunctionCallExp* funCall) {
     EState currentEState=*estate;
     CallString cs=currentEState.callString;
     PState currentPState=*currentEState.pstate();
@@ -681,7 +681,7 @@ namespace CodeThorn {
     }
   }
 
-  std::list<EState> EStateTransferFunctions::transferFunctionCallExternal(Edge edge, const EState* estate) {
+  std::list<EState> EStateTransferFunctions::transferFunctionCallExternal(Edge edge, EStatePtr estate) {
     EState currentEState=*estate;
     CallString cs=currentEState.callString;
     PState currentPState=*currentEState.pstate();
@@ -816,7 +816,7 @@ namespace CodeThorn {
     return elistify(newEState);
   }
 
-  std::list<EState> EStateTransferFunctions::transferDefaultOptionStmt(SgDefaultOptionStmt* defaultStmt,Edge edge, const EState* estate) {
+  std::list<EState> EStateTransferFunctions::transferDefaultOptionStmt(SgDefaultOptionStmt* defaultStmt,Edge edge, EStatePtr estate) {
     SAWYER_MESG(logger[TRACE])<<"SWITCH CASE DEFAULT: "<<defaultStmt->unparseToString()<<endl;
 
     Label targetLabel=edge.target();
@@ -886,7 +886,7 @@ namespace CodeThorn {
     }
   }
 
-  std::list<EState> EStateTransferFunctions::transferCaseOptionStmt(SgCaseOptionStmt* caseStmt,Edge edge, const EState* estate) {
+  std::list<EState> EStateTransferFunctions::transferCaseOptionStmt(SgCaseOptionStmt* caseStmt,Edge edge, EStatePtr estate) {
     SAWYER_MESG(logger[TRACE])<<"CASESTMT: "<<caseStmt->unparseToString()<<endl;
     Label targetLabel=edge.target();
     CallString cs=estate->callString;
@@ -937,16 +937,16 @@ namespace CodeThorn {
     }
   }
 
-  std::list<EState> EStateTransferFunctions::transferVariableDeclaration(SgVariableDeclaration* decl, Edge edge, const EState* estate) {
+  std::list<EState> EStateTransferFunctions::transferVariableDeclaration(SgVariableDeclaration* decl, Edge edge, EStatePtr estate) {
     return elistify(transferVariableDeclarationEState(decl,*estate, edge.target()));
   }
 
-  std::list<EState> EStateTransferFunctions::transferGnuExtensionStmtExpr(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate) {
+  std::list<EState> EStateTransferFunctions::transferGnuExtensionStmtExpr(SgNode* nextNodeToAnalyze1, Edge edge, EStatePtr estate) {
     //cout<<"WARNING: ignoring GNU extension StmtExpr (EStateTransferFunctions::transferGnuExtensionStmtExpr)"<<endl;
     return elistify(*estate);
   }
 
-  std::list<EState> EStateTransferFunctions::transferExprStmt(SgNode* nextNodeToAnalyze1, Edge edge, const EState* estate) {
+  std::list<EState> EStateTransferFunctions::transferExprStmt(SgNode* nextNodeToAnalyze1, Edge edge, EStatePtr estate) {
     SgNode* nextNodeToAnalyze2=0;
     if(isSgExprStatement(nextNodeToAnalyze1))
       nextNodeToAnalyze2=SgNodeHelper::getExprStmtChild(nextNodeToAnalyze1);
@@ -976,7 +976,7 @@ namespace CodeThorn {
     }
   }
 
-  list<EState> EStateTransferFunctions::transferIdentity(Edge edge, const EState* estate) {
+  list<EState> EStateTransferFunctions::transferIdentity(Edge edge, EStatePtr estate) {
     // nothing to analyze, just create new estate (from same State) with target label of edge
     // can be same state if edge is a backedge to same cfg node
     EState newEState=*estate;
@@ -985,7 +985,7 @@ namespace CodeThorn {
   }
 
 
-  std::list<EState> EStateTransferFunctions::transferAssignOp(SgAssignOp* node, Edge edge, const EState* estate) {
+  std::list<EState> EStateTransferFunctions::transferAssignOp(SgAssignOp* node, Edge edge, EStatePtr estate) {
 
     if(_analyzer->getOptionsRef().info.printTransferFunctionInfo) {
       //printTransferFunctionInfo(TransferFunctionCode::Assign,nextNodeToAnalyze2,edge,estate);
@@ -995,7 +995,7 @@ namespace CodeThorn {
   }
 
 
-  list<EState> EStateTransferFunctions::transferFailedAssert(Edge edge, const EState* estate) {
+  list<EState> EStateTransferFunctions::transferFailedAssert(Edge edge, EStatePtr estate) {
     return elistify(_analyzer->createFailedAssertEState(*estate,edge.target()));
   }
 
@@ -1023,7 +1023,7 @@ namespace CodeThorn {
 
   // wrapper function for calling eval functions for inc/dec ops at top-level AST
   // THIS FUNCTION IS NOT USED YET because evaluateExpression is still using transferIncDecOp (which calls this function)
-  list<EState> EStateTransferFunctions::transferIncDecOpEvalWrapper(SgNode* node, Edge edge, const EState* estate) {
+  list<EState> EStateTransferFunctions::transferIncDecOpEvalWrapper(SgNode* node, Edge edge, EStatePtr estate) {
     SingleEvalResult res;
     switch(node->variantT()) {
     case V_SgPlusPlusOp:
@@ -1044,12 +1044,12 @@ namespace CodeThorn {
   }
 
 
-  EState EStateTransferFunctions::cloneEState(const EState* estate) {
+  EState EStateTransferFunctions::cloneEState(EStatePtr estate) {
     return *estate;
   }
 
   // used for top-level evaluation
-  list<EState> EStateTransferFunctions::transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate) {
+  list<EState> EStateTransferFunctions::transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, EStatePtr estate) {
     if(_analyzer->getOptionsRef().info.printTransferFunctionInfo) {
       printTransferFunctionInfo(TransferFunctionCode::IncDec,nextNodeToAnalyze2,edge,estate);
     }
@@ -1570,7 +1570,7 @@ namespace CodeThorn {
     return val;
   }
 
-  list<EState> EStateTransferFunctions::transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, const EState* estate) {
+  list<EState> EStateTransferFunctions::transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, EStatePtr estate) {
     EState currentEState=*estate;
     CallString cs=estate->callString;
     Label newLabel;
@@ -1630,7 +1630,7 @@ namespace CodeThorn {
   }
 
   CodeThorn::EStateTransferFunctions::MemoryUpdateList
-  CodeThorn::EStateTransferFunctions::evalAssignOpMemUpdates(SgAssignOp* nextNodeToAnalyze2, const EState* estatePtr) {
+  CodeThorn::EStateTransferFunctions::evalAssignOpMemUpdates(SgAssignOp* nextNodeToAnalyze2, EStatePtr estatePtr) {
 
     MemoryUpdateList memoryUpdateList;
     CallString cs=estatePtr->callString;
@@ -1856,7 +1856,7 @@ namespace CodeThorn {
     return tfCodeInfo[tfCode];
   }
 
-  void EStateTransferFunctions::printTransferFunctionInfo(TransferFunctionCode tfCode, SgNode* node, Edge edge, const EState* estate) {
+  void EStateTransferFunctions::printTransferFunctionInfo(TransferFunctionCode tfCode, SgNode* node, Edge edge, EStatePtr estate) {
     stringstream ss;
     ss<<"transfer: "<<std::setw(6)<<"L"+estate->label().toString()<<": "<<std::setw(22)<<std::left<<transferFunctionCodeToString(tfCode)<<": ";
     if(getLabeler()->isFunctionEntryLabel(edge.source())||getLabeler()->isFunctionExitLabel(edge.source())) {
@@ -1875,7 +1875,7 @@ namespace CodeThorn {
     cout<<ss.str()<<endl;
   }
 
-  list<EState> EStateTransferFunctions::transferEdgeEStateDispatch(TransferFunctionCode tfCode, SgNode* node, Edge edge, const EState* estate) {
+  list<EState> EStateTransferFunctions::transferEdgeEStateDispatch(TransferFunctionCode tfCode, SgNode* node, Edge edge, EStatePtr estate) {
     ROSE_ASSERT(estate->pstate());
     if(_analyzer->getOptionsRef().info.printTransferFunctionInfo) {
       printTransferFunctionInfo(tfCode,node,edge,estate);
@@ -1906,7 +1906,7 @@ namespace CodeThorn {
     //unreachable
   }
 
-  list<EState> EStateTransferFunctions::transferEdgeEState(Edge edge, const EState* estate) {
+  list<EState> EStateTransferFunctions::transferEdgeEState(Edge edge, EStatePtr estate) {
     // TODO: create EState copy and pass through
     pair<TransferFunctionCode,SgNode*> tfCodeNodePair=determineTransferFunctionCode(edge,estate);
     EStateTransferFunctions::TransferFunctionCode tfCode=tfCodeNodePair.first;
@@ -1914,7 +1914,7 @@ namespace CodeThorn {
     return transferEdgeEStateDispatch(tfCode,nextNodeToAnalyze,edge,estate);
   }
 
-  std::pair<EStateTransferFunctions::TransferFunctionCode,SgNode*> EStateTransferFunctions::determineTransferFunctionCode(Edge edge, const EState* estate) {
+  std::pair<EStateTransferFunctions::TransferFunctionCode,SgNode*> EStateTransferFunctions::determineTransferFunctionCode(Edge edge, EStatePtr estate) {
     ROSE_ASSERT(edge.source()==estate->label());
     ROSE_ASSERT(estate->pstate());
     EState currentEState=*estate;
@@ -2678,7 +2678,7 @@ namespace CodeThorn {
     return res;
   }
 
-  std::list<EState> EStateTransferFunctions::evalAssignOp3(SgAssignOp* node, Label targetLabel, const EState* estate) {
+  std::list<EState> EStateTransferFunctions::evalAssignOp3(SgAssignOp* node, Label targetLabel, EStatePtr estate) {
     SAWYER_MESG(logger[TRACE])<<"evalAssignOp3:"<<node->unparseToString()<<": started"<<endl;
     auto pList=evalAssignOpMemUpdates(node, estate);
     std::list<EState> estateList;

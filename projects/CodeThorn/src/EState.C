@@ -40,7 +40,7 @@ EState::~EState() {
 }
 
 // copy
-void EState::EState::copy(EState* target, const EState* source,bool sharedPStatesFlag) {
+void EState::EState::copy(EState* target, EStatePtr source,bool sharedPStatesFlag) {
   target->_label=source->_label;
   target->io=source->io;
   target->callString=source->callString;
@@ -175,7 +175,7 @@ bool CodeThorn::operator!=(const EState& c1, const EState& c2) {
   return !(c1==c2);
 }
 
-EStateId EStateSet::estateId(const EState* estate) const {
+EStateId EStateSet::estateId(EStatePtr estate) const {
   return estateId(*estate);
 }
 
@@ -198,7 +198,7 @@ EStateId EStateSet::estateId(const EState estate) const {
   * \author Markus Schordan
   * \date 2012.
  */
-string EStateSet::estateIdString(const EState* estate) const {
+string EStateSet::estateIdString(EStatePtr estate) const {
   stringstream ss;
   ss<<estateId(estate);
   return ss.str();
@@ -393,7 +393,7 @@ std::string EState::labelString() const {
   return "L"+label().toString();
 }
 
-bool EState::isApproximatedBy(const EState* other) const {
+bool EState::isApproximatedBy(EStatePtr other) const {
   ROSE_ASSERT(label()==other->label()); // ensure same location
   if(callString!=other->callString) {
     return false;
@@ -406,7 +406,7 @@ bool EState::isApproximatedBy(const EState* other) const {
 bool EState::approximatedBy(PropertyState& other) const {
   // This function is always read only
   // EStates are used in hash sets and therefore only const pointers exist
-  return isApproximatedBy(const_cast<const EState*>(&dynamic_cast<EState&>(other)));
+  return isApproximatedBy(const_cast<EStatePtr>(&dynamic_cast<EState&>(other)));
 }
 // required for PropertyState
 bool EState::isBot() const {

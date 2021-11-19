@@ -35,6 +35,9 @@ namespace CodeThorn {
  */
 
   #define ESTATE_PSTATE_MEM_COPY
+
+  class EState;
+  typedef const EState* EStatePtr;
   
   class EState : public Lattice {
   public:
@@ -82,7 +85,7 @@ namespace CodeThorn {
     EState* clone(); // equivalent to deepClone, if sharedPStates==false
     
   private:
-    void copy(EState* target, const EState* source,bool sharedPStatesFlag);
+    void copy(EState* target, EStatePtr source,bool sharedPStatesFlag);
     Label _label;
     PStatePtr _pstate;
   public:
@@ -152,9 +155,9 @@ class EStateHashFun {
  public:
    typedef HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult ProcessingResult;
    std::string toString(CodeThorn::VariableIdMapping* variableIdMapping=0) const;
-   EStateId estateId(const EState* estate) const;
+   EStateId estateId(EStatePtr estate) const;
    EStateId estateId(const EState estate) const;
-   std::string estateIdString(const EState* estate) const;
+   std::string estateIdString(EStatePtr estate) const;
    int numberOfIoTypeEStates(CodeThorn::InputOutput::OpType) const;
    int numberOfConstEStates(CodeThorn::VariableIdMapping* vid) const;
  private:
