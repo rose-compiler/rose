@@ -34,7 +34,7 @@ namespace CodeThorn {
   * \date 2012.
  */
 
-  //#define ESTATE_PSTATE_MEM_COPY
+  #define ESTATE_PSTATE_MEM_COPY
   
   class EState : public Lattice {
   public:
@@ -77,8 +77,12 @@ namespace CodeThorn {
     bool isBot() const; 
     bool approximatedBy(PropertyState& other) const;
     void combine(PropertyState& other);
+
+    EState* deepClone();
+    EState* clone(); // equivalent to deepClone, if sharedPStates==false
     
   private:
+    void copy(EState* target, const EState* source,bool sharedPStatesFlag);
     Label _label;
     PStatePtr _pstate;
   public:

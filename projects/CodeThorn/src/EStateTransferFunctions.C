@@ -1907,6 +1907,7 @@ namespace CodeThorn {
   }
 
   list<EState> EStateTransferFunctions::transferEdgeEState(Edge edge, const EState* estate) {
+    // TODO: create EState copy and pass through
     pair<TransferFunctionCode,SgNode*> tfCodeNodePair=determineTransferFunctionCode(edge,estate);
     EStateTransferFunctions::TransferFunctionCode tfCode=tfCodeNodePair.first;
     SgNode* nextNodeToAnalyze=tfCodeNodePair.second;

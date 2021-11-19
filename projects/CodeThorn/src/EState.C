@@ -39,62 +39,55 @@ EState::~EState() {
   }
 }
 
-#ifdef ESTATE_PSTATE_MEM_COPY
-// copy constructor
-EState::EState(const EState &other) {
-  this->_label=other._label;
-  this->io=other.io;
-  this->callString=other.callString;
-  if(sharedPStates) {
+// copy
+void EState::EState::copy(EState* target, const EState* source,bool sharedPStatesFlag) {
+  target->_label=source->_label;
+  target->io=source->io;
+  target->callString=source->callString;
+  if(sharedPStatesFlag) {
     // copy pstate pointer, objects are managed and shared. Identical pointers guarantee equivalence
-    _pstate=other._pstate;
+    target->_pstate=source->_pstate;
   } else {
     // copy entire pstate
-    //_pstate=new PState(*other._pstate);
-    if(other.pstate()==nullptr) {
-      _pstate=nullptr;
-      //cout<<"DEBUG: ESTATE COPY: "<<&other<<"=>"<<this<<": pstate: nullptr"<<" ==> nullptr"<<endl;
+    //_pstate=new PState(*source->_pstate);
+    if(source->pstate()==nullptr) {
+      target->_pstate=nullptr;
+      //cout<<"DEBUG: ESTATE COPY: "<<&source-><<"=>"<<target<<": pstate: nullptr"<<" ==> nullptr"<<endl;
     } else {
       PState* newPState=new PState();
-      for(auto iter=other._pstate->begin(); iter!=other._pstate->end();++iter) {
+      for(auto iter=source->_pstate->begin(); iter!=source->_pstate->end();++iter) {
 	auto address=(*iter).first;
 	auto value=(*iter).second;
 	newPState->writeToMemoryLocation(address,value);
       }
-      //cout<<"DEBUG: ESTATE COPY: "<<&other<<"=>"<<this<<": pstate:"<<other.pstate()<<" ==> "<<newPState<<endl;
-      _pstate=newPState;
+      //cout<<"DEBUG: ESTATE COPY: "<<&source-><<"=>"<<target<<": pstate:"<<source->pstate()<<" ==> "<<newPState<<endl;
+      target->_pstate=newPState;
     }
   }
+}
+
+EState* EState::deepClone() {
+  EState* newEState=new EState();
+  copy(newEState,this,false);
+  return newEState;
+}
+
+// equivalent to deepClone, if sharedPStates==false
+EState* EState::clone() {
+  return new EState(*this);
+}
+
+#ifdef ESTATE_PSTATE_MEM_COPY
+// copy constructor
+EState::EState(const EState &other) {
+  copy(this,&other,sharedPStates);
 }
 #endif
 
 #ifdef ESTATE_PSTATE_MEM_COPY
 // assignment operator
 EState& EState::operator=(const EState &other) {
-  this->_label=other._label;
-  this->io=other.io;
-  this->callString=other.callString;
-  if(sharedPStates) {
-    // copy pstate pointer, objects are managed and shared. Non-Identical pointers guarantee inequivalence
-    _pstate=other._pstate;
-  } else {
-    // copy entire pstate
-    if(other.pstate()==nullptr) {
-      _pstate=nullptr;
-      //cout<<"DEBUG: ESTATE ASSIGNMENT: "<<&other<<"=>"<<this<<": pstate: nullptr"<<" ==> nullptr"<<endl;
-    } else {
-      PState* newPState=new PState();
-      //_pstate=new PState(*other._pstate);
-      for(auto iter=other._pstate->begin(); iter!=other._pstate->end();++iter) {
-	auto address=(*iter).first;
-	auto value=(*iter).second;
-	newPState->writeToMemoryLocation(address,value);
-      }
-      //cout<<"DEBUG: ESTATE ASSIGNMENT: "<<&other<<"=>"<<this<<": pstate:"<<other.pstate()<<" ==> "<<newPState<<endl;
-      _pstate=newPState;
-    }
-  }
-  //cout<<"DEBUG: ASSIGNMENT EXIT: "<<this<<": pstate:"<<this->_pstate<<endl;
+  copy(this,&other,sharedPStates);
   return *this;
 }
 #endif
