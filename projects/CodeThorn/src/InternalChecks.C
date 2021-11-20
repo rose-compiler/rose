@@ -455,21 +455,21 @@ void checkTypes() {
 
     check("es1 does not exist in eStateSet",!eStateSet.exists(es2));
     eStateSet.processNewOrExisting(es1);
-    const EState* estateptr1=eStateSet.processNewOrExisting(es1);
+    EStatePtr estateptr1=eStateSet.processNewOrExisting(es1);
     check("add es1 and obtain pointer to es1 from eStateSet and check !=0",estateptr1!=0);
     check("es1 exists in eStateSet",eStateSet.exists(es1));
     check("=> eStateSet.size() == 1",eStateSet.size() == 1);
 
     check("es2 does not exist in eStateSet",!eStateSet.exists(es2));
     eStateSet.processNewOrExisting(es2);
-    const EState* estateptr2=eStateSet.processNewOrExisting(es2);
+    EStatePtr estateptr2=eStateSet.processNewOrExisting(es2);
     check("add es2 and obtain pointer to es2 from eStateSet and check !=0",estateptr2!=0);
     check("es2 exists in eStateSet",eStateSet.exists(es2));
     check("=> eStateSet.size() == 2",eStateSet.size() == 2);
 
     check("es3 does not exist in eStateSet",!eStateSet.exists(es3));
     eStateSet.processNewOrExisting(es3);
-    const EState* estateptr3=eStateSet.processNewOrExisting(es3);
+    EStatePtr estateptr3=eStateSet.processNewOrExisting(es3);
     check("add es3 and obtain pointer to es3 from eStateSet and check !=0",estateptr3!=0);
     check("es3 exists in eStateSet",eStateSet.exists(es3));
     check("=> eStateSet.size() == 3",eStateSet.size() == 3);

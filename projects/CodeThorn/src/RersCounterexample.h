@@ -19,7 +19,7 @@ namespace CodeThorn {
   class RersCounterexample : public ExecutionTrace {
 
   public:
-    RersCounterexample onlyStatesSatisfying(std::function<bool(const EState*)> predicate) const;
+    RersCounterexample onlyStatesSatisfying(std::function<bool(EStatePtr)> predicate) const;
     RersCounterexample onlyIStates() const;
     RersCounterexample onlyIOStates() const;
     std::string toRersIString(LtlRersMapping& ltlRersMapping) const;  // MS 8/6/20: changed to use mapping

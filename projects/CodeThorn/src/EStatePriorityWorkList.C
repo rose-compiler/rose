@@ -5,9 +5,9 @@
 #include <iostream>
 
 namespace CodeThorn {
-bool operator<(const PriorityElement<const EState*>& e1, const PriorityElement<const EState*>& e2) { return e1.priority<e2.priority; }
-bool operator==(const PriorityElement<const EState*>& e1, const PriorityElement<const EState*>& e2) { return e1.priority==e2.priority; }
-bool operator!=(const PriorityElement<const EState*>& c1, const PriorityElement<const EState*>& c2) { return !(c1==c2); }
+bool operator<(const PriorityElement<EStatePtr>& e1, const PriorityElement<EStatePtr>& e2) { return e1.priority<e2.priority; }
+bool operator==(const PriorityElement<EStatePtr>& e1, const PriorityElement<EStatePtr>& e2) { return e1.priority==e2.priority; }
+bool operator!=(const PriorityElement<EStatePtr>& c1, const PriorityElement<EStatePtr>& c2) { return !(c1==c2); }
 }
   
 CodeThorn::EStatePriorityWorkList::EStatePriorityWorkList(TopologicalSort::LabelToPriorityMap map) {
@@ -30,7 +30,7 @@ void CodeThorn::EStatePriorityWorkList::clear() {
   std::swap( _list, empty );
 }
 
-void CodeThorn::EStatePriorityWorkList::push_front(const EState* el) {
+void CodeThorn::EStatePriorityWorkList::push_front(EStatePtr el) {
   // there is only one push method
   //static int priority=0; // this gives a normal work list (push_back does not work)
   //priority++;
@@ -40,10 +40,10 @@ void CodeThorn::EStatePriorityWorkList::push_front(const EState* el) {
     std::cerr<<"Error: push_front: priority=0 for estate lab:"<<el->label().toString()<<std::endl;
     exit(1);
   }
-  _list.push(PriorityElement<const EState*>(priority,el));
+  _list.push(PriorityElement<EStatePtr>(priority,el));
 }
 
-void CodeThorn::EStatePriorityWorkList::push_back(const EState* el) {
+void CodeThorn::EStatePriorityWorkList::push_back(EStatePtr el) {
   // there is only one push method
   push_front(el);
 }

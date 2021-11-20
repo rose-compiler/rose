@@ -252,7 +252,7 @@ CodeThorn::CTAnalysis::SubSolverResultType CodeThorn::CTAnalysis::subSolver(cons
     }
   }
   EStateWorkList deferedWorkList;
-  std::set<const EState*> existingEStateSet;
+  std::set<EStatePtr> existingEStateSet;
   if (earlyTermination) {
     if(_ctOpt.status) {
       SAWYER_MESG(logger[INFO]) << "STATUS: Early termination within subSolver (resource limit reached)." << endl;
@@ -264,7 +264,7 @@ CodeThorn::CTAnalysis::SubSolverResultType CodeThorn::CTAnalysis::subSolver(cons
     localWorkList.push_back(currentEStatePtr);
     while(!localWorkList.empty()) {
       // logger[DEBUG]<<"local work list size: "<<localWorkList.size()<<endl;
-      const EState* currentEStatePtr=localWorkList.front();
+      EStatePtr currentEStatePtr=localWorkList.front();
       localWorkList.pop_front();
       if(isFailedAssertEState(currentEStatePtr)) {
         // ensure we do not compute any successors of a failed assert state
@@ -284,7 +284,7 @@ CodeThorn::CTAnalysis::SubSolverResultType CodeThorn::CTAnalysis::subSolver(cons
 
           if((!isFailedAssertEState(&newEState)&&!isVerificationErrorEState(&newEState))) {
             HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
-            const EState* newEStatePtr=pres.second;
+            EStatePtr newEStatePtr=pres.second;
             ROSE_ASSERT(newEStatePtr);
             if(pres.first==true) {
               if(isLTLRelevantEState(newEStatePtr)) {
@@ -309,7 +309,7 @@ CodeThorn::CTAnalysis::SubSolverResultType CodeThorn::CTAnalysis::subSolver(cons
           }
           if(((isFailedAssertEState(&newEState))||isVerificationErrorEState(&newEState))) {
             // failed-assert end-state: do not add to work list but do add it to the transition graph
-            const EState* newEStatePtr;
+            EStatePtr newEStatePtr;
             newEStatePtr=processNewOrExisting(newEState);
             // TODO: create reduced transition set at end of this function
             if(!getModeLTLDriven()) {
@@ -320,7 +320,7 @@ CodeThorn::CTAnalysis::SubSolverResultType CodeThorn::CTAnalysis::subSolver(cons
               SAWYER_MESG(logger[TRACE])<<"STATUS: detected verification error state ... terminating early"<<endl;
               // set flag for terminating early
               reachabilityResults.reachable(0);
-              _firstAssertionOccurences.push_back(pair<int, const EState*>(0, newEStatePtr));
+              _firstAssertionOccurences.push_back(pair<int, EStatePtr>(0, newEStatePtr));
               EStateWorkList emptyWorkList;
               EStatePtrSet emptyExistingStateSet;
               return make_pair(emptyWorkList,emptyExistingStateSet);
@@ -341,7 +341,7 @@ CodeThorn::CTAnalysis::SubSolverResultType CodeThorn::CTAnalysis::subSolver(cons
                   if(_ltlOpt.withCounterExamples || _ltlOpt.withAssertCounterExamples) {
                     //if this particular assertion was never reached before, compute and update counterexample
                     if (reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
-                      _firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
+                      _firstAssertionOccurences.push_back(pair<int, EStatePtr>(assertCode, newEStatePtr));
                     }
                   }
                   reachabilityResults.reachable(assertCode);
@@ -441,12 +441,12 @@ void CodeThorn::CTAnalysis::setSummaryState(CodeThorn::Label lab, CodeThorn::Cal
 }
 
 
-const EState* CodeThorn::CTAnalysis::getBottomSummaryState(Label lab, CallString cs) {
+EStatePtr CodeThorn::CTAnalysis::getBottomSummaryState(Label lab, CallString cs) {
   InputOutput io;
   io.recordBot();
   ROSE_ASSERT(_initialPStateStored);
   EState estate(lab,cs,_initialPStateStored,io);
-  const EState* bottomElement=processNewOrExisting(estate);
+  EStatePtr bottomElement=processNewOrExisting(estate);
   return bottomElement;
 }
 
@@ -459,7 +459,7 @@ void CodeThorn::CTAnalysis::initializeSummaryStates(PStatePtr initialPStateStore
     io.recordBot();
     CallString cs; // empty callstring
     EState estate(label,cs,initialPStateStored,io); // implicitly empty cs
-    const EState* bottomElement=processNewOrExisting(getBottomSummaryState());
+    EStatePtr bottomElement=processNewOrExisting(getBottomSummaryState());
     setSummaryState(label,estate.callString,bottomElement);
   }
 #endif
@@ -560,7 +560,7 @@ void CodeThorn::CTAnalysis::setStdFunctionSemantics(bool flag) { _estateTransfer
 void CodeThorn::CTAnalysis::writeWitnessToFile(string filename) {
   _counterexampleGenerator.setType(CounterexampleGenerator::TRACE_TYPE_SVCOMP_WITNESS);
   ROSE_ASSERT(_firstAssertionOccurences.size() == 1); //SV-COMP: Expecting exactly one reachability property
-  list<pair<int, const EState*> >::iterator iter = _firstAssertionOccurences.begin();
+  list<pair<int, EStatePtr> >::iterator iter = _firstAssertionOccurences.begin();
   ExecutionTrace* trace =
     _counterexampleGenerator.traceLeadingTo((*iter).second);
   if(SvcompWitness* witness = dynamic_cast<SvcompWitness*>(trace)) {
@@ -712,7 +712,7 @@ void CodeThorn::CTAnalysis::runAnalysisPhase2Sub1(TimingCollector& tc) {
       }
       EState initialEStateObj=createInitialEState(this->_root,slab);
       initialEStateObj.setLabel(slab);
-      const EState* initialEState=processNewOrExisting(initialEStateObj);
+      EStatePtr initialEState=processNewOrExisting(initialEStateObj);
       ROSE_ASSERT(initialEState);
       variableValueMonitor.init(initialEState);
       addToWorkList(initialEState);
@@ -799,7 +799,7 @@ void CodeThorn::CTAnalysis::openStgTraceFile() {
   fout.close();    // close. Will be used with append.
 }
 
-void CodeThorn::CTAnalysis::recordTransition(const EState* sourceState, Edge e, const EState* targetState) {
+void CodeThorn::CTAnalysis::recordTransition(EStatePtr sourceState, Edge e, EStatePtr targetState) {
   transitionGraph.add(Transition(sourceState,e,targetState));
 }
 
@@ -869,7 +869,7 @@ bool CodeThorn::CTAnalysis::isLoopCondLabel(Label lab) {
   return SgNodeHelper::isLoopCond(node);
 }
 
-void CodeThorn::CTAnalysis::addToWorkList(const EState* estate) {
+void CodeThorn::CTAnalysis::addToWorkList(EStatePtr estate) {
   ROSE_ASSERT(estate);
   ROSE_ASSERT(estateWorkListCurrent);
 #pragma omp critical(ESTATEWL)
@@ -1050,8 +1050,8 @@ bool CodeThorn::CTAnalysis::isEmptyWorkList() {
   }
   return res;
 }
-const EState* CodeThorn::CTAnalysis::topWorkList() {
-  const EState* estate=0;
+EStatePtr CodeThorn::CTAnalysis::topWorkList() {
+  EStatePtr estate=0;
 #pragma omp critical(ESTATEWL)
   {
     if(!estateWorkListCurrent->empty())
@@ -1065,8 +1065,8 @@ void CodeThorn::CTAnalysis::eraseWorkList() {
     popWorkList();
 }
 
-const EState* CodeThorn::CTAnalysis::popWorkList() {
-  const EState* estate=0;
+EStatePtr CodeThorn::CTAnalysis::popWorkList() {
+  EStatePtr estate=0;
 #pragma omp critical(ESTATEWL)
   {
     if(!estateWorkListCurrent->empty())
@@ -1087,17 +1087,17 @@ const EState* CodeThorn::CTAnalysis::popWorkList() {
   return estate;
 }
 
-std::pair<CallString,const EState*> CodeThorn::CTAnalysis::popWorkListCS() {
-  const EState* eState=popWorkList();
+std::pair<CallString,EStatePtr> CodeThorn::CTAnalysis::popWorkListCS() {
+  EStatePtr eState=popWorkList();
   return std::make_pair(eState->getCallString(),eState);
 }
 
-std::pair<CallString,const EState*> CodeThorn::CTAnalysis::topWorkListCS() {
-  const EState* eState=topWorkList();
+std::pair<CallString,EStatePtr> CodeThorn::CTAnalysis::topWorkListCS() {
+  EStatePtr eState=topWorkList();
   return std::make_pair(eState->getCallString(),eState);
 }
 
-void CodeThorn::CTAnalysis::pushWorkListCS(CallString cs,const EState* eState) {
+void CodeThorn::CTAnalysis::pushWorkListCS(CallString cs,EStatePtr eState) {
   //eState->setCallString(cs); (eState is const and contains cs)
   addToWorkList(eState);
 }
@@ -1111,7 +1111,7 @@ void CodeThorn::CTAnalysis::swapWorkLists() {
   incIterations();
 }
 
-bool CodeThorn::CTAnalysis::isFailedAssertEState(const EState* estate) {
+bool CodeThorn::CTAnalysis::isFailedAssertEState(EStatePtr estate) {
   if(estate->io.isFailedAssertIO())
     return true;
   if(_treatStdErrLikeFailedAssert) {
@@ -1120,7 +1120,7 @@ bool CodeThorn::CTAnalysis::isFailedAssertEState(const EState* estate) {
   return false;
 }
 
-bool CodeThorn::CTAnalysis::isVerificationErrorEState(const EState* estate) {
+bool CodeThorn::CTAnalysis::isVerificationErrorEState(EStatePtr estate) {
   if(estate->io.isVerificationError())
     return true;
   return false;
@@ -1191,11 +1191,11 @@ PStatePtr CodeThorn::CTAnalysis::processNewOrExisting(PState& s) {
 }
 #endif
 
-const EState* CodeThorn::CTAnalysis::processNew(EState& s) {
+EStatePtr CodeThorn::CTAnalysis::processNew(EState& s) {
   return estateSet.processNew(s);
 }
 
-const EState* CodeThorn::CTAnalysis::processNewOrExisting(EState& estate) {
+EStatePtr CodeThorn::CTAnalysis::processNewOrExisting(EState& estate) {
   return estateSet.processNewOrExisting(estate);
 }
 
@@ -1273,7 +1273,7 @@ void CodeThorn::CTAnalysis::recordExternalFunctionCall(SgFunctionCallExp* funCal
   }
 }
 
-list<EState> CodeThorn::CTAnalysis::transferEdgeEState(Edge edge, const EState* estate) {
+list<EState> CodeThorn::CTAnalysis::transferEdgeEState(Edge edge, EStatePtr estate) {
   ROSE_ASSERT(edge.source()==estate->label());
   return _estateTransferFunctions->transferEdgeEState(edge,estate);
 }
@@ -1339,7 +1339,7 @@ void CodeThorn::CTAnalysis::initializeSolverWithInitialEState(SgProject* root) {
       // inter-procedural analysis initial state
       Label slab=getFlow()->getStartLabel();
       EState initialEStateObj=createInitialEState(root, slab);
-      const EState* initialEState=processNew(initialEStateObj);
+      EStatePtr initialEState=processNew(initialEStateObj);
       ROSE_ASSERT(initialEState);
       variableValueMonitor.init(initialEState);
       addToWorkList(initialEState);
@@ -1370,7 +1370,7 @@ void CodeThorn::CTAnalysis::initializeSolverWithInitialEState(SgProject* root) {
 	}
 	EState initialEStateObj=createInitialEState(root,slab);
 	initialEStateObj.setLabel(slab);
-	const EState* initialEState=processNewOrExisting(initialEStateObj);
+	EStatePtr initialEState=processNewOrExisting(initialEStateObj);
 	ROSE_ASSERT(initialEState);
 	variableValueMonitor.init(initialEState);
 	addToWorkList(initialEState);
@@ -1559,7 +1559,7 @@ string CodeThorn::CTAnalysis::astNodeInfoAttributeAndNodeToString(SgNode* node) 
 
 // experimental functions
 bool CodeThorn::CTAnalysis::checkTransitionGraph() {
-  set<const EState*> ess=transitionGraph.estateSet();
+  set<EStatePtr> ess=transitionGraph.estateSet();
   bool ok=isConsistentEStatePtrSet(ess);
   ok=ok && getTransitionGraph()->checkConsistency();
   return ok;
@@ -1578,8 +1578,8 @@ bool CodeThorn::CTAnalysis::checkEStateSet() {
   return true;
 }
 
-bool CodeThorn::CTAnalysis::isConsistentEStatePtrSet(set<const EState*> estatePtrSet)  {
-  for(set<const EState*>::iterator i=estatePtrSet.begin();i!=estatePtrSet.end();++i) {
+bool CodeThorn::CTAnalysis::isConsistentEStatePtrSet(set<EStatePtr> estatePtrSet)  {
+  for(set<EStatePtr>::iterator i=estatePtrSet.begin();i!=estatePtrSet.end();++i) {
     if(estateSet.estateId(*i)==NO_ESTATE || (*i)->label()==Label()) {
       SAWYER_MESG(logger[ERROR])<< "estatePtrSet inconsistent. "<<endl;
       SAWYER_MESG(logger[ERROR])<< "  label   :"<<(*i)->label()<<endl;
@@ -1638,7 +1638,7 @@ void CodeThorn::CTAnalysis::resetAnalysis() {
   PStatePtr processedPState=processNew(startPState); // CHANGING PSTATE-ESTATE
   ROSE_ASSERT(processedPState);
   startEState.setPState(processedPState);
-  const EState* processedEState=processNew(startEState);
+  EStatePtr processedEState=processNew(startEState);
   ROSE_ASSERT(processedEState);
   // reset STG //TODO: implement "void TransitionGraph::clear()"
   TransitionGraph emptyStg;
@@ -1692,7 +1692,7 @@ void CodeThorn::CTAnalysis::swapStgWithBackup() {
  */
 
 #define FAST_GRAPH_REDUCE
-void CodeThorn::CTAnalysis::reduceStg(function<bool(const EState*)> predicate) {
+void CodeThorn::CTAnalysis::reduceStg(function<bool(EStatePtr)> predicate) {
 #ifdef FAST_GRAPH_REDUCE
   // MS 3/17/2019: new faster implementation
   transitionGraph.reduceEStates3(predicate);
@@ -1707,7 +1707,7 @@ void CodeThorn::CTAnalysis::reduceStg(function<bool(const EState*)> predicate) {
  * \date 2017.
  */
 void CodeThorn::CTAnalysis::reduceStgToInOutStates() {
-  function<bool(const EState*)> predicate = [](const EState* s) {
+  function<bool(EStatePtr)> predicate = [](EStatePtr s) {
     return s->io.isStdInIO() || s->io.isStdOutIO();
   };
   reduceStg(predicate);
@@ -1718,7 +1718,7 @@ void CodeThorn::CTAnalysis::reduceStgToInOutStates() {
  * \date 2017.
  */
 void CodeThorn::CTAnalysis::reduceStgToInOutAssertStates() {
-  function<bool(const EState*)> predicate = [](const EState* s) {
+  function<bool(EStatePtr)> predicate = [](EStatePtr s) {
     return s->io.isStdInIO() || s->io.isStdOutIO() || s->io.isFailedAssertIO();
   };
   reduceStg(predicate);
@@ -1729,7 +1729,7 @@ void CodeThorn::CTAnalysis::reduceStgToInOutAssertStates() {
  * \date 2017.
  */
 void CodeThorn::CTAnalysis::reduceStgToInOutAssertErrStates() {
-  function<bool(const EState*)> predicate = [](const EState* s) {
+  function<bool(EStatePtr)> predicate = [](EStatePtr s) {
     return s->io.isStdInIO() || s->io.isStdOutIO()  || s->io.isFailedAssertIO() || s->io.isStdErrIO();
   };
   reduceStg(predicate);
@@ -1741,15 +1741,15 @@ void CodeThorn::CTAnalysis::reduceStgToInOutAssertErrStates() {
  */
 void CodeThorn::CTAnalysis::reduceStgToInOutAssertWorklistStates() {
   // copy elements from worklist into hashset (faster access within the predicate)
-  std::unordered_set<const EState*> worklistSet(estateWorkListCurrent->begin(), estateWorkListCurrent->end());
-  function<bool(const EState*)> predicate = [&worklistSet](const EState* s) {
+  std::unordered_set<EStatePtr> worklistSet(estateWorkListCurrent->begin(), estateWorkListCurrent->end());
+  function<bool(EStatePtr)> predicate = [&worklistSet](EStatePtr s) {
     return s->io.isStdInIO() || s->io.isStdOutIO()
     || s->io.isFailedAssertIO() || (worklistSet.find(s) != worklistSet.end());
   };
   reduceStg(predicate);
 }
 
-int CodeThorn::CTAnalysis::reachabilityAssertCode(const EState* currentEStatePtr) {
+int CodeThorn::CTAnalysis::reachabilityAssertCode(EStatePtr currentEStatePtr) {
   ROSE_ASSERT(_estateTransferFunctions);
   ROSE_ASSERT(getEStateTransferFunctions());
   if(_ctOpt.rers.rersBinary) {
@@ -1868,7 +1868,7 @@ vector<string> CodeThorn::CTAnalysis::getCommandLineOptions() {
   return _commandLineOptions;
 }
 
-bool CodeThorn::CTAnalysis::isLTLRelevantEState(const EState* estate) {
+bool CodeThorn::CTAnalysis::isLTLRelevantEState(EStatePtr estate) {
   ROSE_ASSERT(estate);
   return ((estate)->io.isStdInIO()
           || (estate)->io.isStdOutIO()

@@ -16,9 +16,9 @@ namespace CodeThorn {
   void ReadWriteListener::writingToMemoryLocation(Label lab, PState* pstate, AbstractValue& memLoc, AbstractValue& newValue) {
   }
   // evalResult.value() holds AbstractValue of boolean value
-  void ReadWriteListener::trueFalseEdgeEvaluation(Edge edge, SingleEvalResult& evalResult , const EState* estate) {
+  void ReadWriteListener::trueFalseEdgeEvaluation(Edge edge, SingleEvalResult& evalResult , EStatePtr estate) {
   }
-  void ReadWriteListener::functionCallExternal(Edge edge, const EState* estate) {
+  void ReadWriteListener::functionCallExternal(Edge edge, EStatePtr estate) {
   }
 
 }

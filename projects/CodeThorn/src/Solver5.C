@@ -89,7 +89,7 @@ void Solver5::run() {
             workVector[threadNum]=true;
         }
       }
-      const EState* currentEStatePtr=_analyzer->popWorkList();
+      EStatePtr currentEStatePtr=_analyzer->popWorkList();
       // if we want to terminate early, we ensure to stop all threads and empty the worklist (e.g. verification error found).
       if(terminateEarly)
         continue;
@@ -130,7 +130,7 @@ void Solver5::run() {
             
             if((!_analyzer->isFailedAssertEState(&newEState)&&!_analyzer->isVerificationErrorEState(&newEState))) {
               HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState);
-              const EState* newEStatePtr=pres.second;
+              EStatePtr newEStatePtr=pres.second;
               if(pres.first==true) {
                 int abstractionMode=_analyzer->getAbstractionMode();
                 switch(abstractionMode) {
@@ -144,7 +144,7 @@ void Solver5::run() {
                   // performing merge
 #pragma omp critical(SUMMARY_STATES_MAP)
                   {
-                    const EState* summaryEState=_analyzer->getSummaryState(newEStatePtr->label(),newEStatePtr->callString);
+                    EStatePtr summaryEState=_analyzer->getSummaryState(newEStatePtr->label(),newEStatePtr->callString);
                     if(_analyzer->getEStateTransferFunctions()->isApproximatedBy(newEStatePtr,summaryEState)) {
                       // this is not a memory leak. newEStatePtr is
                       // stored in EStateSet and will be collected
@@ -156,7 +156,7 @@ void Solver5::run() {
                       EState newEState2=_analyzer->getEStateTransferFunctions()->combine(summaryEState,const_cast<EState*>(newEStatePtr));
                       ROSE_ASSERT(_analyzer);
                       HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState2);
-                      const EState* newEStatePtr2=pres.second;
+                      EStatePtr newEStatePtr2=pres.second;
 
                       // DEBUG
 #if 0
@@ -202,7 +202,7 @@ void Solver5::run() {
             }
             if(((_analyzer->isFailedAssertEState(&newEState))||_analyzer->isVerificationErrorEState(&newEState))) {
               // failed-assert end-state: do not add to work list but do add it to the transition graph
-              const EState* newEStatePtr;
+              EStatePtr newEStatePtr;
               newEStatePtr=_analyzer->processNewOrExisting(newEState);
               _analyzer->recordTransition(currentEStatePtr,e,newEStatePtr);
 
@@ -212,7 +212,7 @@ void Solver5::run() {
                   //SAWYER_MESG(logger[TRACE]) <<"STATUS: detected verification error state ... terminating early"<<endl;
                   // set flag for terminating early
                   _analyzer->reachabilityResults.reachable(0);
-		  _analyzer->_firstAssertionOccurences.push_back(pair<int, const EState*>(0, newEStatePtr));
+		  _analyzer->_firstAssertionOccurences.push_back(pair<int, EStatePtr>(0, newEStatePtr));
                   terminateEarly=true;
                 }
               } else if(_analyzer->isFailedAssertEState(&newEState)) {
@@ -229,7 +229,7 @@ void Solver5::run() {
                     if(_analyzer->getLtlOptionsRef().withCounterExamples || _analyzer->getLtlOptionsRef().withAssertCounterExamples) {
                       //if this particular assertion was never reached before, compute and update counterexample
                       if (_analyzer->reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
-                        _analyzer->_firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
+                        _analyzer->_firstAssertionOccurences.push_back(pair<int, EStatePtr>(assertCode, newEStatePtr));
                       }
                     }
                     _analyzer->reachabilityResults.reachable(assertCode);

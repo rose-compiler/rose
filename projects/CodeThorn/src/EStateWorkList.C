@@ -1,3 +1,4 @@
+#include "sage3basic.h"
 #include "EStateWorkList.h"
 
 CodeThorn::EStateWorkList::~EStateWorkList() {
@@ -15,7 +16,7 @@ void CodeThorn::EStateWorkList::clear() {
   return _list.clear();
 }
 
-void CodeThorn::EStateWorkList::push_front(const EState* el) {
+void CodeThorn::EStateWorkList::push_front(EStatePtr el) {
   _list.push_front(el);
 }
 
@@ -27,7 +28,7 @@ void CodeThorn::EStateWorkList::pop_front() {
   _list.pop_front();
 }
 
-void CodeThorn::EStateWorkList::push_back(const EState* el) {
+void CodeThorn::EStateWorkList::push_back(EStatePtr el) {
   _list.push_back(el);
 }
 

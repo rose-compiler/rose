@@ -4,25 +4,27 @@
 #include <list>
 #include <cstddef>
 
+#include "EState.h"
+
 namespace CodeThorn {
 
   class EState;
 
   class EStateWorkList {
   public:
-    typedef std::list<const EState*>::iterator iterator;
+    typedef std::list<EStatePtr>::iterator iterator;
     virtual bool empty();
-    virtual void push_front(const EState* el);
+    virtual void push_front(EStatePtr el);
     virtual void pop_front();
-    virtual const EState* front();
-    virtual void push_back(const EState*);
+    virtual EStatePtr front();
+    virtual void push_back(EStatePtr);
     virtual std::size_t size();
     virtual void clear();
     virtual iterator begin();
     virtual iterator end();
     virtual ~EStateWorkList();
   protected:
-    std::list<const EState*> _list;
+    std::list<EStatePtr> _list;
   };
 }
 

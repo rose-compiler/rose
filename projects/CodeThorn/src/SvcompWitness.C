@@ -11,7 +11,7 @@ using namespace Sawyer::Message;
  * \date 2017.
  */
 SvcompWitness 
-SvcompWitness::onlyStatesSatisfying(std::function<bool(const EState*)> predicate) const {
+SvcompWitness::onlyStatesSatisfying(std::function<bool(EStatePtr)> predicate) const {
   return onlyStatesSatisfyingTemplate<SvcompWitness>(predicate);
 }
 

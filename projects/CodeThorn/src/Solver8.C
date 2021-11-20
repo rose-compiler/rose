@@ -24,7 +24,7 @@ int Solver8::getId() {
  */
 void Solver8::run() {
   while(!_analyzer->isEmptyWorkList()) {
-    const EState* currentEStatePtr;
+    EStatePtr currentEStatePtr;
     //solver 8
     ROSE_ASSERT(_analyzer->estateWorkListCurrent->size() == 1);
     if (!_analyzer->isEmptyWorkList()) {
@@ -63,7 +63,7 @@ void Solver8::run() {
         ROSE_ASSERT(newEState.label()!=Labeler::NO_LABEL);
         if((!_analyzer->isFailedAssertEState(&newEState))) {
           HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState);
-          const EState* newEStatePtr=pres.second;
+          EStatePtr newEStatePtr=pres.second;
           // maintain the most recent output state. It can be connected with _estateBeforeMissingInput to facilitate
           // further tracing of an STG that is reduced to input/output/error states.
           if (newEStatePtr->io.isStdOutIO()) {
@@ -75,7 +75,7 @@ void Solver8::run() {
         }
         if((_analyzer->isFailedAssertEState(&newEState))) {
           // failed-assert end-state: do not add to work list but do add it to the transition graph
-          const EState* newEStatePtr;
+          EStatePtr newEStatePtr;
           newEStatePtr=_analyzer->processNewOrExisting(newEState);
           _analyzer->_latestErrorEState = newEStatePtr;
           _analyzer->recordTransition(currentEStatePtr,e,newEStatePtr);

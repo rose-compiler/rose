@@ -61,7 +61,7 @@ namespace CodeThorn {
 
   typedef CallString Context;
 
-  typedef std::pair<int, const EState*> FailedAssertion;
+  typedef std::pair<int, EStatePtr> FailedAssertion;
   typedef std::pair<PState,  std::list<int> > PStatePlusIOHistory;
   enum AnalyzerMode { AM_ALL_STATES, AM_LTL_STATES };
 
@@ -148,7 +148,7 @@ namespace CodeThorn {
 
     // consistency checks
     bool checkEStateSet();
-    bool isConsistentEStatePtrSet(std::set<const EState*> estatePtrSet);
+    bool isConsistentEStatePtrSet(std::set<EStatePtr> estatePtrSet);
     bool checkTransitionGraph();
 
     EStateTransferFunctions* getEStateTransferFunctions();
@@ -282,7 +282,7 @@ namespace CodeThorn {
     bool isIncompleteSTGReady();
     bool isPrecise();
 
-    void reduceStg(function<bool(const EState*)> predicate);
+    void reduceStg(function<bool(EStatePtr)> predicate);
 
     virtual Lattice* getPreInfo(Label lab, CallString context);
     virtual Lattice* getPostInfo(Label lab, CallString context);
@@ -298,8 +298,8 @@ namespace CodeThorn {
     bool getOptionOutputWarnings();
 
     // first: list of new states (worklist), second: set of found existing states
-    typedef pair<EStateWorkList,std::set<const EState*> > SubSolverResultType;
-    SubSolverResultType subSolver(const EState* currentEStatePtr);
+    typedef pair<EStateWorkList,std::set<EStatePtr> > SubSolverResultType;
+    SubSolverResultType subSolver(EStatePtr currentEStatePtr);
     std::string typeSizeMappingToString();
     void setModeLTLDriven(bool ltlDriven) { transitionGraph.setModeLTLDriven(ltlDriven); }
     bool getModeLTLDriven() { return transitionGraph.getModeLTLDriven(); }
@@ -330,16 +330,16 @@ namespace CodeThorn {
 
     std::string analyzerStateToString();
 
-    void addToWorkList(const EState* estate);
+    void addToWorkList(EStatePtr estate);
     bool isEmptyWorkList();
-    const EState* popWorkList();
-    const EState* topWorkList();
+    EStatePtr popWorkList();
+    EStatePtr topWorkList();
     void swapWorkLists();
     void eraseWorkList();
 
-    std::pair<CallString,const EState*> popWorkListCS();
-    std::pair<CallString,const EState*> topWorkListCS();
-    void pushWorkListCS(CallString,const EState*);
+    std::pair<CallString,EStatePtr> popWorkListCS();
+    std::pair<CallString,EStatePtr> topWorkListCS();
+    void pushWorkListCS(CallString,EStatePtr);
 
     /*! if state exists in stateSet, a pointer to the existing state is returned otherwise
       a new state is entered into stateSet and a pointer to it is returned.
@@ -347,19 +347,19 @@ namespace CodeThorn {
 
     PStatePtr processNew(PState& s);
     PStatePtr processNewOrExisting(PState& s);
-    const EState* processNew(EState& s);
-    const EState* processNewOrExisting(EState& s);
-    //const EState* processCompleteNewOrExisting(const EState* es);
+    EStatePtr processNew(EState& s);
+    EStatePtr processNewOrExisting(EState& s);
+    //EStatePtr processCompleteNewOrExisting(EStatePtr es);
     void topifyVariable(PState& pstate, AbstractValue varId);
     bool isTopified(EState& s);
     EStateSet::ProcessingResult process(EState& s);
 
-    void recordTransition(const EState* sourceEState, Edge e, const EState* targetEState);
+    void recordTransition(EStatePtr sourceEState, Edge e, EStatePtr targetEState);
 
     void set_finished(std::vector<bool>& v, bool val);
     bool all_false(std::vector<bool>& v);
 
-    std::list<EState> transferEdgeEState(Edge edge, const EState* estate);
+    std::list<EState> transferEdgeEState(Edge edge, EStatePtr estate);
 
     // forwarding functions for EStateTransferFunctions (backward compatibility)
     std::list<EState> elistify();
@@ -368,10 +368,10 @@ namespace CodeThorn {
     std::set<std::string> variableIdsToVariableNames(CodeThorn::VariableIdSet);
 
     bool isStartLabel(Label label);
-    int reachabilityAssertCode(const EState* currentEStatePtr);
+    int reachabilityAssertCode(EStatePtr currentEStatePtr);
 
-    bool isFailedAssertEState(const EState* estate);
-    bool isVerificationErrorEState(const EState* estate);
+    bool isFailedAssertEState(EStatePtr estate);
+    bool isVerificationErrorEState(EStatePtr estate);
     //! adds a specific code to the io-info of an estate which is checked by isFailedAsserEState and determines a failed-assert estate. Note that the actual assert (and its label) is associated with the previous estate (this information can therefore be obtained from a transition-edge in the transition graph).
     EState createFailedAssertEState(const EState estate, Label target);
     EState createVerificationErrorEState(const EState estate, Label target);
@@ -467,8 +467,8 @@ namespace CodeThorn {
     // *current* summary state (more than one may be created to allow
     // to represent multiple summary states in the transition system)
     //size_t getSummaryStateMapSize();
-    const EState* getBottomSummaryState(Label lab, CallString cs);
-    bool isLTLRelevantEState(const EState* estate);
+    EStatePtr getBottomSummaryState(Label lab, CallString cs);
+    bool isLTLRelevantEState(EStatePtr estate);
 
     size_t _prevStateSetSizeDisplay = 0;
     size_t _prevStateSetSizeResource = 0;
@@ -485,9 +485,9 @@ namespace CodeThorn {
 
   private:
 
-    //std::unordered_map<int,const EState*> _summaryStateMap;
-    //std::unordered_map< pair<int, CallString> ,const EState*, hash_pair> _summaryCSStateMap;
-    typedef std::unordered_map <CallString ,const EState*> SummaryCSStateMap;
+    //std::unordered_map<int,EStatePtr> _summaryStateMap;
+    //std::unordered_map< pair<int, CallString> ,EStatePtr, hash_pair> _summaryCSStateMap;
+    typedef std::unordered_map <CallString ,EStatePtr> SummaryCSStateMap;
     std::unordered_map< int, SummaryCSStateMap > _summaryCSStateMapMap;
 
     Labeler* _labeler=nullptr;

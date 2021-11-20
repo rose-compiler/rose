@@ -47,7 +47,7 @@ void IOAnalyzer::runAnalysisPhase2(TimingCollector& tc) {
   tc.stopTimer(TimingCollector::transitionSystemAnalysis);
 }
 
-void IOAnalyzer::setLTLDrivenStartEState(const EState* estate) {
+void IOAnalyzer::setLTLDrivenStartEState(EStatePtr estate) {
   // this function is only used in ltl-driven mode (otherwise it is not necessary)
   ROSE_ASSERT(getModeLTLDriven());
   transitionGraph.setStartEState(estate);
@@ -56,7 +56,7 @@ void IOAnalyzer::setLTLDrivenStartEState(const EState* estate) {
 
 void IOAnalyzer::postInitializeSolver() {
     if(_ctOpt.runSolver) {
-    const EState* currentEState=estateWorkListCurrent->front();
+    EStatePtr currentEState=estateWorkListCurrent->front();
     ROSE_ASSERT(currentEState);
     if(getModeLTLDriven()) {
       setLTLDrivenStartEState(currentEState);
@@ -70,7 +70,7 @@ void IOAnalyzer::postInitializeSolver() {
   * \date 2014.
  */
 void IOAnalyzer::extractRersIOAssertionTraces() {
-  for (list<pair<int, const EState*> >::iterator i = _firstAssertionOccurences.begin(); 
+  for (list<pair<int, EStatePtr> >::iterator i = _firstAssertionOccurences.begin(); 
        i != _firstAssertionOccurences.end(); 
        ++i ) {
     SAWYER_MESG(logger[TRACE])<< "STATUS: extracting trace leading to failing assertion: " << i->first << endl;
@@ -82,7 +82,7 @@ void IOAnalyzer::extractRersIOAssertionTraces() {
   * \author Marc Jasper
   * \date 2014.
  */
-void IOAnalyzer::addCounterexample(int assertCode, const EState* assertEState) {
+void IOAnalyzer::addCounterexample(int assertCode, EStatePtr assertEState) {
   _counterexampleGenerator.setType(CounterexampleGenerator::TRACE_TYPE_RERS_CE);
   ExecutionTrace* trace = 
     _counterexampleGenerator.traceLeadingTo(assertEState);
@@ -112,7 +112,7 @@ void IOAnalyzer::removeOutputOutputTransitions() {
     if ((*i)->io.isStdOutIO()) {
       TransitionPtrSet inEdges = transitionGraph.inEdges(*i);
       for(TransitionPtrSet::iterator k=inEdges.begin();k!=inEdges.end();++k) {
-        const EState* pred = (*k)->source;
+        EStatePtr pred = (*k)->source;
         if (pred->io.isStdOutIO()) {
           transitionGraph.erase(**k);
           SAWYER_MESG(logger[DEBUG])<< "erased an output -> output transition." << endl;
@@ -133,7 +133,7 @@ void IOAnalyzer::removeInputInputTransitions() {
     if ((*i)->io.isStdInIO()) {
       TransitionPtrSet outEdges = transitionGraph.outEdges(*i);
       for(TransitionPtrSet::iterator k=outEdges.begin();k!=outEdges.end();++k) {
-        const EState* succ = (*k)->target;
+        EStatePtr succ = (*k)->target;
         if (succ->io.isStdInIO()) {
           transitionGraph.erase(**k);
           SAWYER_MESG(logger[DEBUG])<< "erased an input -> input transition." << endl;
@@ -225,7 +225,7 @@ void IOAnalyzer::setAnalyzerToSolver8(EState* startEState, bool resetAnalyzerDat
     pstateSet.max_load_factor(0.7);
   }
   // initialize worklist
-  const EState* currentEState=processNewOrExisting(*startEState);
+  EStatePtr currentEState=processNewOrExisting(*startEState);
   ROSE_ASSERT(currentEState);
   variableValueMonitor.init(currentEState);
   addToWorkList(currentEState);

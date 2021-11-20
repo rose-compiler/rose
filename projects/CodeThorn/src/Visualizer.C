@@ -141,7 +141,7 @@ void Visualizer::setTransitionGraph(TransitionGraph* x) { transitionGraph=x; }
 void Visualizer::setOptionMemorySubGraphs(bool flag) { optionMemorySubGraphs=flag; }
 bool Visualizer::getOptionMemorySubGraphs() { return optionMemorySubGraphs; }
 
-string Visualizer::estateToString(const EState* estate) {
+string Visualizer::estateToString(EStatePtr estate) {
   stringstream ss;
   bool pstateAddressSeparator=false;
   if((tg1&&args.getBool("tg1-estate-address"))||(tg2&&args.getBool("tg2-estate-address"))) {
@@ -161,7 +161,7 @@ string Visualizer::estateToString(const EState* estate) {
 }
 
 
-string Visualizer::estateToDotString(const EState* estate) {
+string Visualizer::estateToDotString(EStatePtr estate) {
   return string("\""+SgNodeHelper::doubleQuotedEscapedString(estateToString(estate))+"\"");
 }
 
@@ -177,8 +177,8 @@ string Visualizer::transitionGraphDotHtmlNode(Label lab) {
   s+="</TD>\n";
 
   string sinline;
-  set<const EState*> estateSetOfLabel=transitionGraph->estateSetOfLabel(lab);
-  for(set<const EState*>::iterator j=estateSetOfLabel.begin();j!=estateSetOfLabel.end();++j) {
+  set<EStatePtr> estateSetOfLabel=transitionGraph->estateSetOfLabel(lab);
+  for(set<EStatePtr>::iterator j=estateSetOfLabel.begin();j!=estateSetOfLabel.end();++j) {
     // decide on color first
     string textcolor="black";
     string bgcolor="lightgrey";
@@ -214,18 +214,18 @@ string Visualizer::transitionGraphDotHtmlNode(Label lab) {
   return s;
 }
 
-string Visualizer::dotEStateAddressString(const EState* estate) {
+string Visualizer::dotEStateAddressString(EStatePtr estate) {
   stringstream ss;
   ss<<"s"<<estate;
   return ss.str();
 }
 
-string Visualizer::dotEStateMemoryString(const EState* estate) {
+string Visualizer::dotEStateMemoryString(EStatePtr estate) {
   string prefix=dotClusterName(estate);
   return estate->pstate()->toDotString(prefix,variableIdMapping);
 }
 
-std::string Visualizer::dotClusterName(const EState* estate) {
+std::string Visualizer::dotClusterName(EStatePtr estate) {
   return "cluster_"+this->dotEStateAddressString(estate);
 }
 
@@ -334,7 +334,7 @@ string Visualizer::transitionGraphWithIOToDot(EStatePtrSet displayedEStates,
   EStatePtrSet estatePtrSet = displayedEStates;
   set<int> outputValues;
   EStatePtrSet abstractInputStates;
-  for(set<const EState*>::iterator i=estatePtrSet.begin();i!=estatePtrSet.end();++i) {
+  for(set<EStatePtr>::iterator i=estatePtrSet.begin();i!=estatePtrSet.end();++i) {
     if ( !includeErrorStates && ((*i)->io.isStdErrIO() || (*i)->io.isFailedAssertIO()) ){
       continue;
     }
@@ -411,7 +411,7 @@ string Visualizer::transitionGraphWithIOToDot(EStatePtrSet displayedEStates,
     for(TransitionGraph::TransitionPtrSet::iterator j=outTrans.begin();
     j!=outTrans.end();
     ++j) { 
-      const EState* target = (*j)->target;
+      EStatePtr target = (*j)->target;
       if ( !includeErrorStates && (target->io.isStdErrIO() || target->io.isFailedAssertIO()) ){
         continue;
       }
@@ -464,8 +464,8 @@ string Visualizer::transitionGraphWithIOToDot() {
     }
   }
 #endif
-  set<const EState*> estatePtrSet=transitionGraph->estateSet();
-  for(set<const EState*>::iterator i=estatePtrSet.begin();i!=estatePtrSet.end();++i) {
+  set<EStatePtr> estatePtrSet=transitionGraph->estateSet();
+  for(set<EStatePtr>::iterator i=estatePtrSet.begin();i!=estatePtrSet.end();++i) {
     ss<<"n"<<*i<<" [label=";
     Label lab=(*i)->label();
     string name="\"";
@@ -536,7 +536,7 @@ string Visualizer::transitionGraphWithIOToDot() {
 }
 
 
-string Visualizer::estateIdStringWithTemporaries(const EState* estate) {
+string Visualizer::estateIdStringWithTemporaries(EStatePtr estate) {
   stringstream ss;
   EStateId estateId=estateSet->estateId(estate);
   if(estateId!=NO_ESTATE) {
@@ -689,8 +689,8 @@ string Visualizer::foldedTransitionGraphToDot() {
   // generate edges
   size_t edgeNr=0;
    for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
-    const EState* source=(*j)->source;
-    const EState* target=(*j)->target;
+    EStatePtr source=(*j)->source;
+    EStatePtr target=(*j)->target;
 
     if(gSize>reportInterval && edgeNr%reportInterval==0) {
       cout<<"INFO: generating transition "<<edgeNr<<" of "<<gSize<<endl;

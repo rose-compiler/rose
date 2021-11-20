@@ -24,9 +24,9 @@ namespace CodeThorn {
     virtual void writingToMemoryLocation(Label lab, PState* pstate, AbstractValue& memLoc, AbstractValue& newValue);
 
     // evalResult.value() holds AbstractValue of boolean value
-    virtual void trueFalseEdgeEvaluation(Edge edge, SingleEvalResult& evalResult , const EState* estate);
+    virtual void trueFalseEdgeEvaluation(Edge edge, SingleEvalResult& evalResult , EStatePtr estate);
 
-    virtual void functionCallExternal(Edge edge, const EState* estate);
+    virtual void functionCallExternal(Edge edge, EStatePtr estate);
 
   };
 }

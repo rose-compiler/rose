@@ -16,7 +16,7 @@ TransitionGraphReducer::TransitionGraphReducer(EStateSet* eStateSet, TransitionG
   _stg(stg){
 }
 
-void TransitionGraphReducer::reduceStgToStatesSatisfying(function<bool(const EState*)> predicate) {
+void TransitionGraphReducer::reduceStgToStatesSatisfying(function<bool(EStatePtr)> predicate) {
   if (_stg->size() == 0) {
     return;
   }
@@ -26,8 +26,8 @@ void TransitionGraphReducer::reduceStgToStatesSatisfying(function<bool(const ESt
   reducedStg->setIsPrecise(_stg->isPrecise());
   reducedStg->setIsComplete(_stg->isComplete());
   // init
-  list<const EState*> worklist;
-  unordered_set<const EState*> visited;
+  list<EStatePtr> worklist;
+  unordered_set<EStatePtr> visited;
   worklist.push_back(_stg->getStartEState());
   visited.insert(_stg->getStartEState());
   // traverse the entire _stg
@@ -36,14 +36,14 @@ void TransitionGraphReducer::reduceStgToStatesSatisfying(function<bool(const ESt
   int err=system("tput civis"); // turn off cursor
   ROSE_ASSERT(err!=-1);
   while (!worklist.empty()) {
-    const EState* current = *worklist.begin();
+    EStatePtr current = *worklist.begin();
     ROSE_ASSERT(current);
     worklist.pop_front();
     wl--;
     ROSE_ASSERT(predicate(current) || current == _stg->getStartEState());
     // similar to CTAnalysis's "subSolver"
-    list<const EState*> successors = successorsOfStateSatisfying(current, predicate);
-    for (list<const EState*>::iterator i=successors.begin(); i!= successors.end(); ++i) {
+    list<EStatePtr> successors = successorsOfStateSatisfying(current, predicate);
+    for (list<EStatePtr>::iterator i=successors.begin(); i!= successors.end(); ++i) {
       if (visited.find(*i) == visited.end()) {
         worklist.push_back(*i);
         visited.insert(*i);
@@ -74,19 +74,19 @@ void TransitionGraphReducer::reduceStgToStatesSatisfying(function<bool(const ESt
   }
 }
 
-list<const EState*> TransitionGraphReducer::successorsOfStateSatisfying(const EState* state, function<bool(const EState*)> predicate) {
-  list<const EState*> result;
+list<EStatePtr> TransitionGraphReducer::successorsOfStateSatisfying(EStatePtr state, function<bool(EStatePtr)> predicate) {
+  list<EStatePtr> result;
   // init
-  list<const EState*> worklist;
-  unordered_set<const EState*> visited;
+  list<EStatePtr> worklist;
+  unordered_set<EStatePtr> visited;
   worklist.push_back(state);
   visited.insert(state);
   while (!worklist.empty()) {
-    const EState* current = *worklist.begin();
+    EStatePtr current = *worklist.begin();
     worklist.pop_front();
     ROSE_ASSERT(!predicate(current) || current == state);
-    set<const EState*> successors = _stg->succ(current);
-    for (set<const EState*>::iterator i=successors.begin(); i!= successors.end(); ++i) {
+    set<EStatePtr> successors = _stg->succ(current);
+    for (set<EStatePtr>::iterator i=successors.begin(); i!= successors.end(); ++i) {
       if (visited.find(*i) == visited.end()) {
         if (predicate(*i) || *i == _stg->getStartEState()) {
           result.push_back(*i); // stop exploration when predicate is satisfied	

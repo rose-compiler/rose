@@ -23,7 +23,7 @@ int Solver16::getId() {
   return 16;
 }
     
-void Solver16::recordTransition(const EState* currentEStatePtr0,const EState* currentEStatePtr,Edge e, const EState* newEStatePtr) {
+void Solver16::recordTransition(EStatePtr currentEStatePtr0,EStatePtr currentEStatePtr,Edge e, EStatePtr newEStatePtr) {
   _analyzer->recordTransition(currentEStatePtr,e,newEStatePtr);
   if(currentEStatePtr0!=currentEStatePtr) {
     // also add transition edge for the state from
@@ -37,7 +37,7 @@ void Solver16::recordTransition(const EState* currentEStatePtr0,const EState* cu
 
 void Solver16::initializeSummaryStatesFromWorkList() {
   // pop all states from worklist (can contain more than one state)
-  list<const EState*> tmpWL;
+  list<EStatePtr> tmpWL;
   while(!_analyzer->isEmptyWorkList()) {
     tmpWL.push_back(_analyzer->popWorkList());
   }
@@ -134,9 +134,9 @@ void Solver16::run() {
       // currentEStatePtr0 is not merged, because it must already be present in a summary state. Here only the (label,callstring) is used to obtain the summary state.
       // the worklist could be reduced to (label,callstring) pairs, but since it's also used for explicit model checking, it uses pointers to estates, which include some more info.
       // note: initial summary states are set in initializeSummaryStatesFromWorkList()
-      const EState* currentEStatePtr0=_analyzer->popWorkList();
+      EStatePtr currentEStatePtr0=_analyzer->popWorkList();
       // difference to Solver5: always obtain abstract state
-      const EState* currentEStatePtr=_analyzer->getSummaryState(currentEStatePtr0->label(),currentEStatePtr0->callString);
+      EStatePtr currentEStatePtr=_analyzer->getSummaryState(currentEStatePtr0->label(),currentEStatePtr0->callString);
       // terminate early, ensure to stop all threads and empty the worklist (e.g. verification error found).
       if(terminateEarly)
         continue;
@@ -176,7 +176,7 @@ void Solver16::run() {
             
             if((!_analyzer->isFailedAssertEState(&newEState)&&!_analyzer->isVerificationErrorEState(&newEState))) {
               HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState);
-              const EState* newEStatePtr=pres.second;
+              EStatePtr newEStatePtr=pres.second;
               if(pres.first==true) {
                 int abstractionMode=_analyzer->getAbstractionMode();
                 switch(abstractionMode) {
@@ -185,7 +185,7 @@ void Solver16::run() {
                   // performing merge
 #pragma omp critical(SUMMARY_STATES_MAP)
                   {
-                    const EState* summaryEState=_analyzer->getSummaryState(newEStatePtr->label(),newEStatePtr->callString);
+                    EStatePtr summaryEState=_analyzer->getSummaryState(newEStatePtr->label(),newEStatePtr->callString);
                     if(_analyzer->getEStateTransferFunctions()->isApproximatedBy(newEStatePtr,summaryEState)) {
                       // this is not a memory leak. newEStatePtr is
                       // stored in EStateSet and will be collected
@@ -196,7 +196,7 @@ void Solver16::run() {
                       EState newEState2=_analyzer->getEStateTransferFunctions()->combine(summaryEState,const_cast<EState*>(newEStatePtr));
                       ROSE_ASSERT(_analyzer);
                       HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState2);
-                      const EState* newEStatePtr2=pres.second;
+                      EStatePtr newEStatePtr2=pres.second;
 
                       if(pres.first==true) {
                         newEStatePtr=newEStatePtr2;
@@ -224,7 +224,7 @@ void Solver16::run() {
             }
             if(((_analyzer->isFailedAssertEState(&newEState))||_analyzer->isVerificationErrorEState(&newEState))) {
               // failed-assert end-state: do not add to work list but do add it to the transition graph
-              const EState* newEStatePtr;
+              EStatePtr newEStatePtr;
               newEStatePtr=_analyzer->processNewOrExisting(newEState);
               recordTransition(currentEStatePtr0,currentEStatePtr,e,newEStatePtr);
 
@@ -234,7 +234,7 @@ void Solver16::run() {
                   SAWYER_MESG(logger[TRACE]) <<"STATUS: detected verification error state ... terminating early"<<endl;
                   // set flag for terminating early
                   _analyzer->reachabilityResults.reachable(0);
-                  _analyzer->_firstAssertionOccurences.push_back(pair<int, const EState*>(0, newEStatePtr));
+                  _analyzer->_firstAssertionOccurences.push_back(pair<int, EStatePtr>(0, newEStatePtr));
                   terminateEarly=true;
                 }
               } else if(_analyzer->isFailedAssertEState(&newEState)) {
@@ -251,7 +251,7 @@ void Solver16::run() {
                     if(_analyzer->getLtlOptionsRef().withCounterExamples || _analyzer->getLtlOptionsRef().withAssertCounterExamples) {
                       //if this particular assertion was never reached before, compute and update counterexample
                       if (_analyzer->reachabilityResults.getPropertyValue(assertCode) != PROPERTY_VALUE_YES) {
-                        _analyzer->_firstAssertionOccurences.push_back(pair<int, const EState*>(assertCode, newEStatePtr));
+                        _analyzer->_firstAssertionOccurences.push_back(pair<int, EStatePtr>(assertCode, newEStatePtr));
                       }
                     }
                     _analyzer->reachabilityResults.reachable(assertCode);

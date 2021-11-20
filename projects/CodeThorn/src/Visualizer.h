@@ -77,10 +77,10 @@ class Visualizer {
   std::string visualizeReadWriteAccesses(IndexToReadWriteDataMap& indexToReadWriteDataMap, VariableIdMapping* variableIdMapping, 
 					 ArrayElementAccessDataSet& readWriteRaces, ArrayElementAccessDataSet& writeWriteRaces, 
 					 bool arrayElementsAsPoints, bool useClusters, bool prominentRaceWarnings);
-  std::string dotEStateAddressString(const EState* estate);
-  std::string dotEStateMemoryString(const EState* estate);
+  std::string dotEStateAddressString(EStatePtr estate);
+  std::string dotEStateMemoryString(EStatePtr estate);
   void setMemorySubGraphsOption(bool flag);
-  std::string dotClusterName(const EState* estate);
+  std::string dotClusterName(EStatePtr estate);
  private:
   CodeThorn::Labeler* labeler;
   CodeThorn::VariableIdMapping* variableIdMapping;

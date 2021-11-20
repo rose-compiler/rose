@@ -8,11 +8,11 @@
 
 namespace CodeThorn {
   // predefined predicate
-  class InputPath : public std::list<const EState*> {
+  class InputPath : public std::list<EStatePtr> {
   public:
     // adds a state to the input path if it is an input state (returns 1 in this case, otherwise 0 (for counting)).
     InputPath();
-    int addState(const EState* s);
+    int addState(EStatePtr s);
     std::string toString() const;
     unsigned int numInputStates() const;
   private:
@@ -34,9 +34,9 @@ namespace CodeThorn {
   private:
     InputPathSet ipset;
     bool randomSearch;
-    const EState* chooseElement(EStatePtrSet& S0);
+    EStatePtr chooseElement(EStatePtrSet& S0);
     InputPath chooseElement(InputPathSet& S0);
-    void computeInputPathSet(InputPath p, int len, unsigned int maxlen, const EState* s, TransitionGraph& g, InputPathSet& pathSet);
+    void computeInputPathSet(InputPath p, int len, unsigned int maxlen, EStatePtr s, TransitionGraph& g, InputPathSet& pathSet);
   };
 } // namespace CodeThorn
 

@@ -12,7 +12,7 @@ using namespace Sawyer::Message;
  * \date 2017.
  */
 RersCounterexample 
-RersCounterexample::onlyStatesSatisfying(std::function<bool(const EState*)> predicate) const {
+RersCounterexample::onlyStatesSatisfying(std::function<bool(EStatePtr)> predicate) const {
   return onlyStatesSatisfyingTemplate<RersCounterexample>(predicate);
 }
 
@@ -21,7 +21,7 @@ RersCounterexample::onlyStatesSatisfying(std::function<bool(const EState*)> pred
  * \date 2017.
  */
 RersCounterexample RersCounterexample::onlyIStates() const {
-  function<bool(const EState*)> predicate = [](const EState* s) { 
+  function<bool(EStatePtr)> predicate = [](EStatePtr s) { 
     return s->io.isStdInIO();
   };
   return onlyStatesSatisfying(predicate);
@@ -32,7 +32,7 @@ RersCounterexample RersCounterexample::onlyIStates() const {
  * \date 2017.
  */
 RersCounterexample RersCounterexample::onlyIOStates() const {
-  function<bool(const EState*)> predicate = [](const EState* s) { 
+  function<bool(EStatePtr)> predicate = [](EStatePtr s) { 
     return s->io.isStdInIO() || s->io.isStdOutIO();
   };
   return onlyStatesSatisfying(predicate);
