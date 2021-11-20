@@ -410,7 +410,7 @@ AbstractValue PState::varValue(AbstractValue memLoc) const {
       // address is not reserved, return top
       return AbstractValue::createTop();
     }
-    AbstractValue val=((*(const_cast<PState*>(this)))[memLoc]);
+    AbstractValue val=((*(const_cast<PStatePtr>(this)))[memLoc]);
     return val;
   }
 }

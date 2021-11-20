@@ -151,18 +151,18 @@ void IOAnalyzer::pruneLeaves() {
   cout<<"INFO: pruning leave nodes in transition graph."<<endl;
   size_t numPrunedNodes=0;
   EStatePtrSet states=transitionGraph.estateSet();
-  unordered_set<EState*> workset;
+  unordered_set<EStatePtr> workset;
   //insert all states into the workset
   for(EStatePtrSet::iterator i=states.begin();i!=states.end();++i) {
-    workset.insert(const_cast<EState*> (*i));
+    workset.insert(const_cast<EStatePtr> (*i));
   }
   //process the workset. if extracted state is a leaf, remove it and add its predecessors to the workset
   while (workset.size() != 0) {
-    EState* current = (*workset.begin());
+    EStatePtr current = (*workset.begin());
     if (transitionGraph.succ(current).size() == 0) {
       EStatePtrSet preds = transitionGraph.pred(current);
       for (EStatePtrSet::iterator iter = preds.begin(); iter != preds.end(); ++iter)  {
-        workset.insert(const_cast<EState*> (*iter));
+        workset.insert(const_cast<EStatePtr> (*iter));
       }
       transitionGraph.reduceEState2(current);
       numPrunedNodes++;
@@ -192,7 +192,7 @@ void IOAnalyzer::reduceToObservableBehavior() {
   * \author Marc Jasper
   * \date 2014, 2015.
  */
-void IOAnalyzer::setAnalyzerToSolver8(EState* startEState, bool resetAnalyzerData) {
+void IOAnalyzer::setAnalyzerToSolver8(EStatePtr startEState, bool resetAnalyzerData) {
   ROSE_ASSERT(startEState);
   //set attributes specific to solver 8
   _numberOfThreadsToUse = 1;

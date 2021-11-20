@@ -54,7 +54,7 @@ void EState::EState::copy(EState* target, ConstEStatePtr source,bool sharedPStat
       target->_pstate=nullptr;
       //cout<<"DEBUG: ESTATE COPY: "<<&source-><<"=>"<<target<<": pstate: nullptr"<<" ==> nullptr"<<endl;
     } else {
-      PState* newPState=new PState();
+      PStatePtr newPState=new PState();
       for(auto iter=source->_pstate->begin(); iter!=source->_pstate->end();++iter) {
 	auto address=(*iter).first;
 	auto value=(*iter).second;
@@ -399,7 +399,7 @@ bool EState::isApproximatedBy(EStatePtr other) const {
     return false;
   }
   // it only remains to check the pstate
-  return pstate()->isApproximatedBy(*const_cast<PState*>(other->pstate())) && (io.isBot()||(io==other->io));
+  return pstate()->isApproximatedBy(*const_cast<PStatePtr>(other->pstate())) && (io.isBot()||(io==other->io));
 }
 
 // required for PropertyState
@@ -445,7 +445,7 @@ void EState::combine(PropertyState& other0) {
   PState ps2=*other.pstate();
   PState newPState=PState::combine(ps1,ps2);
   // allowing in-place update for framework not maintaining a state set, not compatible with use in sorted containers
-  *(const_cast<PState*>(this->pstate()))=newPState; 
+  *(this->pstate())=newPState; 
 
   // (4) update IO entry
   InputOutput newIO;

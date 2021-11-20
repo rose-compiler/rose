@@ -37,7 +37,7 @@ size_t TransitionHashFun::operator()(Transition* s) const {
     return hash;
   } else {
     EStateHashFun estateHashFun;
-    return ((estateHashFun(const_cast<EState*>(s->source))+1)<<8)+((estateHashFun(const_cast<EState*>(s->target))+1)<<8)*(size_t)s->edge.hash();
+    return ((estateHashFun(const_cast<EStatePtr>(s->source))+1)<<8)+((estateHashFun(const_cast<EStatePtr>(s->target))+1)<<8)*(size_t)s->edge.hash();
   }
 }
 

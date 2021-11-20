@@ -296,7 +296,7 @@ CodeThorn::CTAnalysis::SubSolverResultType CodeThorn::CTAnalysis::subSolver(ESta
               // we have found an existing state, but need to make also sure it's a relevent one
               if(isLTLRelevantEState(newEStatePtr)) {
                 ROSE_ASSERT(newEStatePtr!=nullptr);
-                existingEStateSet.insert(const_cast<EState*>(newEStatePtr));
+                existingEStateSet.insert(const_cast<EStatePtr>(newEStatePtr));
               } else {
                 // TODO: use a unique list
                 localWorkList.push_back(newEStatePtr);
@@ -374,7 +374,7 @@ void CodeThorn::CTAnalysis::setOptionOutputWarnings(bool flag) {
 //}
 
 Lattice* CodeThorn::CTAnalysis::getPreInfo(Label lab, CallString context) {
-  return const_cast<EState*>(getSummaryState(lab,context));
+  return const_cast<EStatePtr>(getSummaryState(lab,context));
 }
 
 Lattice* CodeThorn::CTAnalysis::getPostInfo(Label lab, CallString context) {
