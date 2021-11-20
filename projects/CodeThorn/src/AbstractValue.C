@@ -81,7 +81,7 @@ void AbstractValue::copy(const AbstractValue& other) {
   variableId = other.variableId;
   label= other.label;
   _summaryFlag=other._summaryFlag;
-  switch(valueType) {
+  switch(other.valueType) {
   case AV_BOT:
   case AV_TOP:
   case AV_UNDEFINED:

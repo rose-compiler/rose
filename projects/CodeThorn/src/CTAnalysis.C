@@ -444,10 +444,21 @@ void CodeThorn::CTAnalysis::setSummaryState(CodeThorn::Label lab, CodeThorn::Cal
 EStatePtr CodeThorn::CTAnalysis::getBottomSummaryState(Label lab, CallString cs) {
   InputOutput io;
   io.recordBot();
-  ROSE_ASSERT(_initialPStateStored);
-  EState estate(lab,cs,_initialPStateStored,io);
-  EStatePtr bottomElement=processNewOrExisting(estate);
-  return bottomElement;
+  if(EState::sharedPStates) {
+#if 0
+    EState estate(lab,cs,_initialPStateStored,io);
+#else
+    PStatePtr bottomPState=processNewOrExisting(*new PState());
+    EState estate(lab,cs,bottomPState,io);
+#endif
+    EStatePtr bottomElement=processNewOrExisting(estate);
+    return bottomElement;
+  } else {
+    PStatePtr initialEmpty=new PState();
+    EState estate(lab,cs,initialEmpty,io);
+    EStatePtr bottomElement=processNewOrExisting(estate);
+    return bottomElement;
+  }
 }
 
 void CodeThorn::CTAnalysis::initializeSummaryStates(PStatePtr initialPStateStored) {
@@ -1176,9 +1187,8 @@ PStatePtr CodeThorn::CTAnalysis::processNew(PState& s) {
   if(EState::sharedPStates) {
     return const_cast<PStatePtr>(pstateSet.processNew(s));
   } else {
-    PState* newPState=new PState();
-    *newPState=s;
-    return const_cast<PStatePtr>(newPState);
+    PState* newPState=new PState(s);
+    return newPState;
   }
 }
 
@@ -1186,7 +1196,7 @@ PStatePtr CodeThorn::CTAnalysis::processNewOrExisting(PState& s) {
   if(EState::sharedPStates) {
     return const_cast<PStatePtr>(pstateSet.processNewOrExisting(s));
   } else {
-    return const_cast<PStatePtr>(processNew(s));
+    return processNew(s);
   }
 }
 #endif
@@ -1311,8 +1321,11 @@ EState CodeThorn::CTAnalysis::createInitialEState(SgProject* root, Label slab) {
 
   PStatePtr initialPStateStored=processNewOrExisting(initialPState); // might reuse another pstate when initializing in level 1   // CHANGING PSTATE-ESTATE
   ROSE_ASSERT(initialPStateStored);
-  SAWYER_MESG(logger[TRACE])<< "INIT: initial pstate(stored): "<<initialPStateStored->toString(getVariableIdMapping())<<endl;
-
+  SAWYER_MESG(logger[INFO])<< "INIT: initial pstate(stored): "<<initialPStateStored<<":"<<initialPStateStored->toString(getVariableIdMapping())<<endl;
+  PStatePtr initialPStateStored2=processNewOrExisting(initialPState); // might reuse another pstate when initializing in level 1   // CHANGING PSTATE-ESTATE
+  ROSE_ASSERT(initialPStateStored2);
+  SAWYER_MESG(logger[INFO])<< "INIT: initial pstate2(stored): "<<initialPStateStored2<<":"<<initialPStateStored2->toString(getVariableIdMapping())<<endl;
+  
   transitionGraph.setStartLabel(slab);
   transitionGraph.setAnalyzer(this);
 

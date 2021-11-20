@@ -582,11 +582,12 @@ namespace CodeThorn {
       string fileName=SgNodeHelper::sourceFilenameToString(node);
       transferFunctionEntryPrintStatus(edge,estate,functionName,fileName);
       SgInitializedNamePtrList& formalParameters=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
-      SAWYER_MESG(logger[TRACE])<<"Function:"<<functionName<<" Parameters: ";
+      SAWYER_MESG(logger[TRACE])<<"Function:"<<functionName<<" Parameters: "<<formalParameters.size()<<endl;
       for(auto fParam : formalParameters) {
-        SAWYER_MESG(logger[TRACE])<<fParam->unparseToString()<<" sym:"<<fParam->search_for_symbol_from_symbol_table()<<endl;
+        SAWYER_MESG(logger[TRACE])<<SAWYER_MESG(logger[TRACE])<<"Function: "<<fParam->unparseToString()<<" sym:"<<fParam->search_for_symbol_from_symbol_table()<<endl;
       }
       SAWYER_MESG(logger[TRACE])<<endl;
+      SAWYER_MESG(logger[TRACE])<<"Function:"<<functionName<<" Parameters: end"<<endl;
     }
     return transferIdentity(edge,estate);
   }
