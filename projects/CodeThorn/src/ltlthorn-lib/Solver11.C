@@ -37,7 +37,7 @@ void Solver11::run() {
       _analyzer->printStatusMessage(true);
       prevStateSetSize=_analyzer->estateSet.size();
     }
-    const EState* currentEStatePtr=_analyzer->popWorkList();
+    EStatePtr currentEStatePtr=_analyzer->popWorkList();
     ROSE_ASSERT(currentEStatePtr);
 
     CTAnalysis::SubSolverResultType subSolverResult= _analyzer->subSolver(currentEStatePtr);

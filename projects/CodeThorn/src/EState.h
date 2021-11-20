@@ -37,7 +37,9 @@ namespace CodeThorn {
   #define ESTATE_PSTATE_MEM_COPY
 
   class EState;
-  typedef const EState* EStatePtr;
+  //typedef const EState* EStatePtr;
+  typedef const EState* ConstEStatePtr;
+  typedef EState* EStatePtr;
   
   class EState : public Lattice {
   public:
@@ -74,7 +76,7 @@ namespace CodeThorn {
     std::string programPosToString(Labeler* labeler) const;
 
     // uses isApproximatedBy of PState
-    bool isApproximatedBy(const CodeThorn::EState* other) const;
+    bool isApproximatedBy(EStatePtr other) const;
 
     // required for PropertyState class
     bool isBot() const; 
@@ -85,7 +87,7 @@ namespace CodeThorn {
     EState* clone(); // equivalent to deepClone, if sharedPStates==false
     
   private:
-    void copy(EState* target, EStatePtr source,bool sharedPStatesFlag);
+    void copy(EState* target, ConstEStatePtr source,bool sharedPStatesFlag);
     Label _label;
     PStatePtr _pstate;
   public:

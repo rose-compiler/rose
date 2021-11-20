@@ -21,7 +21,7 @@ struct LoopInfo {
   CodeThorn::LabelSet loopLabelSet;
   void computeOuterLoopsVarIds(CodeThorn::VariableIdMapping* variableIdMapping);
   void computeLoopLabelSet(CodeThorn::Labeler* labeler);
-  bool isInAssociatedLoop(const CodeThorn::EState* estate);
+  bool isInAssociatedLoop(EStatePtr estate);
   std::string toString();
 };
 

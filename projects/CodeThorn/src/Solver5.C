@@ -130,7 +130,7 @@ void Solver5::run() {
             
             if((!_analyzer->isFailedAssertEState(&newEState)&&!_analyzer->isVerificationErrorEState(&newEState))) {
               HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState);
-              EStatePtr newEStatePtr=pres.second;
+              EStatePtr newEStatePtr=const_cast<EStatePtr>(pres.second);
               if(pres.first==true) {
                 int abstractionMode=_analyzer->getAbstractionMode();
                 switch(abstractionMode) {
@@ -156,7 +156,7 @@ void Solver5::run() {
                       EState newEState2=_analyzer->getEStateTransferFunctions()->combine(summaryEState,const_cast<EState*>(newEStatePtr));
                       ROSE_ASSERT(_analyzer);
                       HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState2);
-                      EStatePtr newEStatePtr2=pres.second;
+                      EStatePtr newEStatePtr2=const_cast<EStatePtr>(pres.second);
 
                       // DEBUG
 #if 0

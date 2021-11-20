@@ -290,8 +290,8 @@ namespace CodeThorn {
     virtual void setPostInfo(Label lab, CallString context, Lattice*);
 
     void initializeSummaryStates(PStatePtr initialPStateStored);
-    const CodeThorn::EState* getSummaryState(CodeThorn::Label lab, CallString cs);
-    void setSummaryState(CodeThorn::Label lab, CallString cs, CodeThorn::EState const* estate);
+    EStatePtr getSummaryState(CodeThorn::Label lab, CallString cs);
+    void setSummaryState(CodeThorn::Label lab, CallString cs, EStatePtr estate);
     std::string programPositionInfo(CodeThorn::Label);
 
     void setOptionOutputWarnings(bool flag);

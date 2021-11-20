@@ -25,7 +25,7 @@ SpotTgba::~SpotTgba(){
 };
 
 spot::state* SpotTgba::get_init_state() const {
-	const EState* startState = stg.getStartEState();
+	EStatePtr startState = stg.getStartEState();
 	SpotState* init_state = new SpotState( *startState);
 	return init_state;
 }  

@@ -63,7 +63,7 @@ void Solver8::run() {
         ROSE_ASSERT(newEState.label()!=Labeler::NO_LABEL);
         if((!_analyzer->isFailedAssertEState(&newEState))) {
           HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState);
-          EStatePtr newEStatePtr=pres.second;
+          EStatePtr newEStatePtr=const_cast<EStatePtr>(pres.second);
           // maintain the most recent output state. It can be connected with _estateBeforeMissingInput to facilitate
           // further tracing of an STG that is reduced to input/output/error states.
           if (newEStatePtr->io.isStdOutIO()) {

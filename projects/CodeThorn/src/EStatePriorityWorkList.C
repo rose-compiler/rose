@@ -48,7 +48,7 @@ void CodeThorn::EStatePriorityWorkList::push_back(EStatePtr el) {
   push_front(el);
 }
 
-const CodeThorn::EState* CodeThorn::EStatePriorityWorkList::front() {
+EStatePtr CodeThorn::EStatePriorityWorkList::front() {
     auto el=_list.top();
     int priority=el.priority;
     //std::cout<<"DEBUG: EPWL: front(): pri:"<<el.priority<<" data:"<<el.data<<std::endl;

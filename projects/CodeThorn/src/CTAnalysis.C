@@ -214,7 +214,7 @@ ExplorationMode CodeThorn::CTAnalysis::getExplorationMode() {
   return _explorationMode;
 }
 
-CodeThorn::CTAnalysis::SubSolverResultType CodeThorn::CTAnalysis::subSolver(const CodeThorn::EState* currentEStatePtr) {
+CodeThorn::CTAnalysis::SubSolverResultType CodeThorn::CTAnalysis::subSolver(EStatePtr currentEStatePtr) {
   // start the timer if not yet done
   startAnalysisTimer();
 
@@ -284,7 +284,7 @@ CodeThorn::CTAnalysis::SubSolverResultType CodeThorn::CTAnalysis::subSolver(cons
 
           if((!isFailedAssertEState(&newEState)&&!isVerificationErrorEState(&newEState))) {
             HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
-            EStatePtr newEStatePtr=pres.second;
+            EStatePtr newEStatePtr=const_cast<EStatePtr>(pres.second);
             ROSE_ASSERT(newEStatePtr);
             if(pres.first==true) {
               if(isLTLRelevantEState(newEStatePtr)) {
@@ -382,7 +382,7 @@ Lattice* CodeThorn::CTAnalysis::getPostInfo(Label lab, CallString context) {
 }
 
 void CodeThorn::CTAnalysis::setPreInfo(Label lab, CallString context, Lattice* el) {
-  setSummaryState(lab,context,dynamic_cast<CodeThorn::EState const*>(el));
+  setSummaryState(lab,context,dynamic_cast<EStatePtr>(el));
 }
 
 void CodeThorn::CTAnalysis::setPostInfo(Label lab, CallString context, Lattice*) {
@@ -398,8 +398,8 @@ bool CodeThorn::CTAnalysis::isReachableLabel(Label lab) {
   return !isUnreachableLabel(lab);
 }
 
-const CodeThorn::EState* CodeThorn::CTAnalysis::getSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs) {
-  const CodeThorn::EState* res;
+EStatePtr CodeThorn::CTAnalysis::getSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs) {
+  EStatePtr res;
 #pragma omp critical(SUMMARY_STATES)
   {
     auto iter1=_summaryCSStateMapMap.find(lab.getId());
@@ -418,7 +418,7 @@ const CodeThorn::EState* CodeThorn::CTAnalysis::getSummaryState(CodeThorn::Label
   return res;
 }
 
-void CodeThorn::CTAnalysis::setSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs, CodeThorn::EState const* estate) {
+void CodeThorn::CTAnalysis::setSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs, EStatePtr estate) {
   ROSE_ASSERT(lab==estate->label());
   ROSE_ASSERT(cs==estate->callString);
   ROSE_ASSERT(estate);
@@ -1192,11 +1192,11 @@ PStatePtr CodeThorn::CTAnalysis::processNewOrExisting(PState& s) {
 #endif
 
 EStatePtr CodeThorn::CTAnalysis::processNew(EState& s) {
-  return estateSet.processNew(s);
+  return const_cast<EStatePtr>(estateSet.processNew(s));
 }
 
 EStatePtr CodeThorn::CTAnalysis::processNewOrExisting(EState& estate) {
-  return estateSet.processNewOrExisting(estate);
+  return const_cast<EStatePtr>(estateSet.processNewOrExisting(estate));
 }
 
 EStateSet::ProcessingResult CodeThorn::CTAnalysis::process(EState& estate) {

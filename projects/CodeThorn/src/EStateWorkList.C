@@ -20,7 +20,7 @@ void CodeThorn::EStateWorkList::push_front(EStatePtr el) {
   _list.push_front(el);
 }
 
-const CodeThorn::EState* CodeThorn::EStateWorkList::front() {
+EStatePtr CodeThorn::EStateWorkList::front() {
   return _list.front();
 }
 

@@ -40,7 +40,7 @@ EState::~EState() {
 }
 
 // copy
-void EState::EState::copy(EState* target, EStatePtr source,bool sharedPStatesFlag) {
+void EState::EState::copy(EState* target, ConstEStatePtr source,bool sharedPStatesFlag) {
   target->_label=source->_label;
   target->io=source->io;
   target->callString=source->callString;

@@ -62,8 +62,8 @@ class Visualizer {
   void setOptionTransitionGraphDotHtmlNode(bool);
   void setOptionMemorySubGraphs(bool flag);
   bool getOptionMemorySubGraphs();
-  std::string estateToString(const CodeThorn::EState* estate);
-  std::string estateToDotString(const CodeThorn::EState* estate);
+  std::string estateToString(EStatePtr estate);
+  std::string estateToDotString(EStatePtr estate);
   std::string transitionGraphDotHtmlNode(CodeThorn::Label lab);
   std::string transitionGraphToDot();
   std::string transitionGraphWithIOToDot();
@@ -73,7 +73,7 @@ class Visualizer {
                                     bool uniteOutputFromAbstractStates, bool includeErrorStates, bool allignAbstractStates);
   std::string abstractTransitionGraphToDot(); // groups abstract states into a cluster (currently specific to Rers).
   std::string foldedTransitionGraphToDot();
-  std::string estateIdStringWithTemporaries(const CodeThorn::EState* estate);
+  std::string estateIdStringWithTemporaries(EStatePtr estate);
   std::string visualizeReadWriteAccesses(IndexToReadWriteDataMap& indexToReadWriteDataMap, VariableIdMapping* variableIdMapping, 
 					 ArrayElementAccessDataSet& readWriteRaces, ArrayElementAccessDataSet& writeWriteRaces, 
 					 bool arrayElementsAsPoints, bool useClusters, bool prominentRaceWarnings);
