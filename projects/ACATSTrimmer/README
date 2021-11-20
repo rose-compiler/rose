@@ -1,0 +1,3 @@
+ACATSTrimmer : 
+This tool performs transformation on ACATS test codes to assist Ada2cpp for ACATS testing.
+Currently, it handles merging strings with concatenation operator "&".
