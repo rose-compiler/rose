@@ -4,6 +4,10 @@ package Asis_Adapter.Element.Definitions is
      (Element : in     Asis.Element;
       State   : in out Class);
 
+   procedure Do_Post_Child_Processing
+     (Element : in     Asis.Element;
+      State   : in out Class);
+
 private
 
    -- For debuggng:
