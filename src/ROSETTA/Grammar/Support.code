@@ -7467,7 +7467,13 @@ HEADER_UNPARSE_INFO_START
           bool usedInUparseToStringFunction() const;
           void set_usedInUparseToStringFunction();
           void unset_usedInUparseToStringFunction();
-
+#if 0
+       // DQ (11/21/2021): Adding support for types to be unparsed with the context of the correct declaration to support multi-file handling.
+          SgDeclarationStatement* get_declaration_of_context();
+          void set_declaration_of_context(SgDeclarationStatement* d);
+#endif
+       // DQ (11/21/2021): Adding support for types to be unparsed with the context of the correct declaration to support multi-file handling.
+          void unset_declaration_of_context();
 
 #if 0
    // MK: These access functions are now automatically generated!
@@ -19964,17 +19970,18 @@ SgUnparse_Info::SgUnparse_Info ( const SgUnparse_Info & X )
 
 SgUnparse_Info & SgUnparse_Info::operator= ( const SgUnparse_Info & X )
    {
-     p_unparse_attribute = X.p_unparse_attribute;
-     p_access_attribute  = X.p_access_attribute;
-     p_nested_expression = X.p_nested_expression;
-     p_operator_name     = X.p_operator_name;
-     p_var_name          = X.p_var_name;
-     p_declstatement_ptr = X.p_declstatement_ptr;
-     p_current_context   = X.p_current_context;
-     p_array_index_list  = X.p_array_index_list;
+     p_unparse_attribute      = X.p_unparse_attribute;
+     p_access_attribute       = X.p_access_attribute;
+     p_nested_expression      = X.p_nested_expression;
+     p_operator_name          = X.p_operator_name;
+     p_var_name               = X.p_var_name;
+     p_declstatement_ptr      = X.p_declstatement_ptr;
+     p_declaration_of_context = X.p_declaration_of_context;
+     p_current_context        = X.p_current_context;
+     p_array_index_list       = X.p_array_index_list;
 
   // DQ (11/6/2004): aded initialization of namespace context
-     p_current_namespace = X.p_current_namespace;
+     p_current_namespace      = X.p_current_namespace;
 
   // DQ (3/18/2006): Support for specification of output useful in debugging formatting
   // of generated code (unparsing).
@@ -20086,13 +20093,14 @@ SgUnparse_Info::post_construction_initialization()
         }
      assert (p_unparse_attribute.size() > 0);
 
-     p_access_attribute  = a_unset_access;
-     p_nested_expression = false;
-     p_operator_name     = "";
-     p_var_name          = "";
-     p_declstatement_ptr = NULL;
-     p_current_context   = NULL;
-     p_array_index_list  = "";
+     p_access_attribute       = a_unset_access;
+     p_nested_expression      = false;
+     p_operator_name          = "";
+     p_var_name               = "";
+     p_declstatement_ptr      = NULL;
+     p_declaration_of_context = NULL;
+     p_current_context        = NULL;
+     p_array_index_list       = "";
 
   // DQ (1/12/2003): If calling constructor then empty the list
   // constructors (except copy constructor) are only call in the
@@ -20821,6 +20829,24 @@ void
 SgUnparse_Info::unset_nested_expression()
    { p_nested_expression--; }
 
+
+#if 0
+// DQ (11/21/2021): Adding support for types to be unparsed with the context of the correct declaration to support multi-file handling.
+SgDeclarationStatement*
+SgUnparse_Info::get_declaration_of_context()
+   { return p_declaration_of_context; }
+
+// DQ (11/21/2021): Adding support for types to be unparsed with the context of the correct declaration to support multi-file handling.
+void
+SgUnparse_Info::set_declaration_of_context(SgDeclarationStatement* d )
+   { p_declaration_of_context = d; }
+#endif
+
+// DQ (11/21/2021): Adding support for types to be unparsed with the context of the correct declaration to support multi-file handling.
+void
+SgUnparse_Info::unset_declaration_of_context()
+   { p_declaration_of_context = NULL; }
+
 void
 SgUnparse_Info::unset_current_context()
    { p_current_context = NULL; }
@@ -21141,6 +21167,7 @@ SgUnparse_Info::display ( const std::string & label ) const
           printf ("   --- definingDeclaration         = %p \n",p_declstatement_ptr->get_definingDeclaration());
         }
 
+     printf ("p_declaration_of_context               = %p \n",p_declaration_of_context);
      printf ("p_current_context                      = %p \n",p_current_context);
      printf ("p_array_index_list                     = %s \n",(p_array_index_list.is_null() == false) ? p_array_index_list.str() : "EmPtY sTrInG");
      printf ("p_current_namespace                    = %p \n",p_current_namespace);
