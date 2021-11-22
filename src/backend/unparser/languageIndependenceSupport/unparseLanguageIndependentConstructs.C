@@ -5835,6 +5835,7 @@ UnparseLanguageIndependentConstructs::unparseAttachedPreprocessingInfo(
                          case PreprocessingInfo::AdaStyleComment:
                          case PreprocessingInfo::FortranStyleComment:
                          case PreprocessingInfo::F90StyleComment:
+                         case PreprocessingInfo::JovialStyleComment:
                          case PreprocessingInfo::C_StyleComment:
                          case PreprocessingInfo::CplusplusStyleComment:
                               if ( !info.SkipComments() )

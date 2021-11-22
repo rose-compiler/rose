@@ -15960,7 +15960,10 @@ PreprocessingInfo* SageInterface::attachComment(
           case PreprocessingInfo::FortranStyleComment:   comment = "      C " + content;    break;
           case PreprocessingInfo::F90StyleComment:       comment = "!"   + content;         break;
           case PreprocessingInfo::AdaStyleComment:       comment = "-- " + content;         break;
-          case PreprocessingInfo::JovialStyleComment:    comment = "% "  + content + " %";  break;
+          case PreprocessingInfo::JovialStyleComment:
+            // The Jovial comment content will already have the comment delimiters, '%' or '"'
+               comment = content;
+               break;
           case PreprocessingInfo::CpreprocessorLineDeclaration:
                comment = "#myline " + content;
                mytype = PreprocessingInfo::CplusplusStyleComment;

@@ -228,7 +228,8 @@ JOVIAL_TESTCODES = \
  rose-issue-rc-975.jov                  \
  gitlab-issue-12.jov                    \
  gitlab-issue-13.jov                    \
- charlie.jov
+ charlie.jov                            \
+ shadow.jov
 
 JOVIAL_PARSER_TESTCODES = \
  fixed_cast.jov                         \
