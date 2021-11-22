@@ -627,7 +627,15 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2021_07.c \
      test2021_08.c \
      test2021_09.c \
-     test2021_10.c 
+     test2021_10.c \
+     test2021_11.c \
+     test2021_12.c \
+     test2021_13.c \
+     test2021_14.c \
+     test2021_15.c \
+     test2021_16.c \
+     test2021_17.c \
+     test2021_18.c 
 
 
 TESTCODE_CURRENTLY_FAILING = \
