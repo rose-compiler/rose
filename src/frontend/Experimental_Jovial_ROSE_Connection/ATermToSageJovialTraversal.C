@@ -17,7 +17,17 @@ namespace SB = SageBuilder;
 namespace SI = SageInterface;
 namespace LT = LanguageTranslation;
 
-void ATermToSageJovialTraversal::setLocationSpecifier(SgVariableDeclaration* var_decl, const LocationSpecifier &loc_spec)
+void
+ATermToSageJovialTraversal::setSourcePosition(SgLocatedNode* node, ATerm term)
+{
+  // Set source position as normal
+  ATermTraversal::setSourcePosition(node, term);
+  // and attach comments if they exist
+  sage_tree_builder.attachComment(node, getLocation(term));
+}
+
+void
+ATermToSageJovialTraversal::setLocationSpecifier(SgVariableDeclaration* var_decl, const LocationSpecifier &loc_spec)
 {
 // The bitfield will contain both the start_bit and start_word as an expression list
    SgExprListExp* location_specifier = SageBuilder::buildExprListExp();
@@ -216,13 +226,6 @@ ATbool ATermToSageJovialTraversal::traverse_MainProgramModule(ATerm term)
 
    // Leave SageTreeBuilder for SgProgramHeaderStatement
       sage_tree_builder.Leave(program_decl);
-
-#if 0
-// Test adding a comment to a program
-   // Attach a "comment"
-      SI::attachComment(program_decl, "This is a test. This is only a test.",
-                        PreprocessingInfo::before, PreprocessingInfo::JovialStyleComment);
-#endif
 
       if (traverse_NonNestedSubroutineList(t_funcs)) {
          // MATCHED NonNestedSubroutineList
@@ -4566,6 +4569,7 @@ ATbool ATermToSageJovialTraversal::traverse_AssignmentStatement(ATerm term)
 
    // Begin SageTreeBuilder
       sage_tree_builder.Enter(assign_stmt, rhs, vars, std::string());
+      setSourcePosition(assign_stmt, term);
 
    } else return ATfalse;
    ROSE_ASSERT(assign_stmt != nullptr);
@@ -5825,7 +5829,6 @@ ATbool ATermToSageJovialTraversal::traverse_BitFormula(ATerm term, SgExpression*
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_BitFormula: %s\n", ATwriteToString(term));
 #endif
-
    ATerm t_operand;
 
    expr = nullptr;
@@ -5839,7 +5842,6 @@ ATbool ATermToSageJovialTraversal::traverse_BitFormula(ATerm term, SgExpression*
       }
       else return ATfalse;
    }
-
    else return ATfalse;
 
    ROSE_ASSERT(expr);

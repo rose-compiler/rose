@@ -9,21 +9,23 @@ namespace Rose {
   }
 }
 
+namespace rb = Rose::builder;
+
 namespace ATermSupport {
 
 class PosInfo
 {
  public:
-   PosInfo() : pStartLine(0), pStartCol(0), pEndLine(0), pEndCol(0)
+   PosInfo() : startLine_(0), startCol_(0), endLine_(0), endCol_(0)
     {
     }
 
    PosInfo(int strtLine, int strtCol, int endLine, int endCol)
      {
-        pStartLine = strtLine;
-        pStartCol  = strtCol;
-        pEndLine   = endLine;
-        pEndCol    = endCol;
+        startLine_ = strtLine;
+        startCol_  = strtCol;
+        endLine_   = endLine;
+        endCol_    = endCol;
      }
 
    PosInfo(SgLocatedNode* fromNode)
@@ -32,30 +34,31 @@ class PosInfo
         ROSE_ASSERT(fromNode->get_startOfConstruct() != NULL);
         ROSE_ASSERT(fromNode->get_endOfConstruct()   != NULL);
 
-        pStartLine = fromNode->get_startOfConstruct()->get_line();
-        pStartCol  = fromNode->get_startOfConstruct()->get_col();
-        pEndLine   = fromNode->get_endOfConstruct()->get_line();
-        pEndCol    = fromNode->get_endOfConstruct()->get_col();
+        startLine_ = fromNode->get_startOfConstruct()->get_line();
+        startCol_  = fromNode->get_startOfConstruct()->get_col();
+        endLine_   = fromNode->get_endOfConstruct()->get_line();
+        endCol_    = fromNode->get_endOfConstruct()->get_col();
      }
 
-   int  getStartLine()             { return pStartLine; }
-   int  getStartCol()              { return pStartCol;  }
-   int  getEndLine()               { return pEndLine;   }
-   int  getEndCol()                { return pEndCol;    }
+   int  getStartLine() const       { return startLine_; }
+   int  getStartCol()  const       { return startCol_;  }
+   int  getEndLine()   const       { return endLine_;   }
+   int  getEndCol()    const       { return endCol_;    }
 
-   void setStartLine ( int line )  { pStartLine = line; }
-   void setStartCol  ( int col  )  { pStartCol  = col;  }
-   void setEndLine   ( int line )  { pEndLine   = line; }
-   void setEndCol    ( int col  )  { pEndCol    = col;  }
+   void setStartLine ( int line )  { startLine_ = line; }
+   void setStartCol  ( int col  )  { startCol_  = col;  }
+   void setEndLine   ( int line )  { endLine_   = line; }
+   void setEndCol    ( int col  )  { endCol_    = col;  }
 
  protected:
-   int pStartLine, pStartCol;  // location (line,col) of first character ( 1 based)
-   int pEndLine,   pEndCol;    // location (line,col) of last  character (+1 col)
+   int startLine_, startCol_;  // location (line,col) of first character ( 1 based)
+   int endLine_,   endCol_;    // location (line,col) of last  character (+1 col)
 };
 
 class ATermTraversal
 {
  public:
+   ATermTraversal() = delete;
    ATermTraversal(SgSourceFile* source);
 
    std::string getCurrentFilename()
@@ -69,15 +72,15 @@ class ATermTraversal
    static void    fixupLocation(PosInfo & loc);
    static PosInfo getLocation(ATerm term);
 
-   void setSourcePositions(ATerm term, Rose::builder::SourcePosition &start, Rose::builder::SourcePosition &end);
+   void setSourcePositions(ATerm term, rb::SourcePosition &start, rb::SourcePosition &end);
 
-   void setSourcePosition              ( SgLocatedNode* locatedNode, ATerm term );
-   void setSourcePosition              ( SgLocatedNode* locatedNode, PosInfo & pos );
-   void setSourcePositionFrom          ( SgLocatedNode* locatedNode, SgLocatedNode* fromNode );
-   void setSourcePositionExcludingTerm ( SgLocatedNode* locatedNode, ATerm startTerm, ATerm endTerm );
-   void setSourcePositionIncludingTerm ( SgLocatedNode* locatedNode, ATerm startTerm, ATerm endTerm );
-   void setSourcePositionIncludingNode ( SgLocatedNode* locatedNode, ATerm startTerm, SgLocatedNode* endNode );
-   void setSourcePositionFromEndOnly   ( SgLocatedNode* locatedNode, SgLocatedNode* fromNode );
+   void setSourcePosition              ( SgLocatedNode* node, ATerm term );
+   void setSourcePosition              ( SgLocatedNode* node, PosInfo & pos );
+   void setSourcePositionFrom          ( SgLocatedNode* node, SgLocatedNode* fromNode );
+   void setSourcePositionExcludingTerm ( SgLocatedNode* node, ATerm startTerm, ATerm endTerm );
+   void setSourcePositionIncludingTerm ( SgLocatedNode* node, ATerm startTerm, ATerm endTerm );
+   void setSourcePositionIncludingNode ( SgLocatedNode* node, ATerm startTerm, SgLocatedNode* endNode );
+   void setSourcePositionFromEndOnly   ( SgLocatedNode* node, SgLocatedNode* fromNode );
 
 }; // class ATermTraversal
 }  // namespace ATermSupport
