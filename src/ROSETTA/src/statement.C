@@ -3200,6 +3200,9 @@ Grammar::setUpStatements ()
 
      AdaDiscriminatedTypeDecl.setDataPrototype ( "SgInitializedNamePtrList", "discriminants", "",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaDiscriminatedTypeDecl.setDataPrototype ( "SgType*", "type", "= nullptr",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      AdaDiscriminatedTypeDecl.setDataPrototype ( "SgDeclarationScope*", "discriminantScope", "= NULL",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AdaDiscriminatedTypeDecl.setDataPrototype ( "SgDeclarationStatement*", "discriminatedDecl", "= NULL",

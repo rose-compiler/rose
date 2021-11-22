@@ -147,10 +147,6 @@ namespace Ada_ROSE_Translation
   SgAdaTaskType&
   mkAdaTaskType(SgAdaTaskTypeDecl& dcl);
 
-  /// creates a Discriminated type that references a Discriminated type declaration \ref dcl.
-  SgAdaDiscriminatedType&
-  mkAdaDiscriminatedType(SgAdaDiscriminatedTypeDecl& dcl);
-
   /// creates an entry type from a function parameter list
   // \todo the representation is incomplete and should be replaced
   //       by a new IR node SgAdaEntryType

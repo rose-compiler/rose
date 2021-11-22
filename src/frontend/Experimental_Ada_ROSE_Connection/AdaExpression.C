@@ -512,14 +512,14 @@ namespace
 
     if (expr.Expression_Kind == An_Indexed_Component)
     {
+      // \todo should this always return true (like the cases below)?
       return roseRequiresPrefixID(expr.Prefix, ctx);
     }
 
-    if (expr.Expression_Kind == An_Explicit_Dereference)
+    if (  (expr.Expression_Kind == An_Explicit_Dereference)
+       || (expr.Expression_Kind == A_Function_Call)
+       )
       return true;
-
-    if (expr.Expression_Kind == A_Function_Call)
-      return false;
 
     logWarn() << "roseRequiresPrefixID: untested expression-kind: "
               << expr.Expression_Kind
