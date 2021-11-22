@@ -137,9 +137,6 @@ namespace CodeThorn {
         SAWYER_MESG(logger[WARN])<<"cs2: "<<es2->callString.toString()<<endl;
       }
     }
-    PState ps1=*es1->pstate();
-    PState ps2=*es2->pstate();
-
     InputOutput io;
     if(es1->io.isBot()) {
       io=es2->io;
@@ -150,7 +147,7 @@ namespace CodeThorn {
       io=es1->io;
     }
 
-    return createEState(es1->label(),es1->callString,PState::combine(ps1,ps2),io);
+    return createEState(es1->label(),es1->callString,PState::combine(es1->pstate(),es2->pstate()),io);
   }
 
   std::list<EState> EStateTransferFunctions::elistify() {
