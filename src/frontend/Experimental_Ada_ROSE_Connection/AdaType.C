@@ -41,7 +41,7 @@ namespace
         SgType* ty = nullptr;
 
         if (SgAdaDiscriminatedTypeDecl* discrDcl = si::ada::getAdaDiscriminatedTypeDecl(n))
-          ty = &mkAdaDiscriminatedType(*discrDcl);
+          ty = discrDcl->get_type();
         else
           ty = nonDiscriminatedTypeGen();
 
@@ -182,7 +182,7 @@ namespace
       case An_Anonymous_Access_To_Protected_Function:  // access protected function
       case Not_An_Access_Definition: /* break; */ // An unexpected element
       default:
-        logWarn() << "ak? " << access.Access_Definition_Kind << std::endl;
+        logWarn() << "adk? " << access.Access_Definition_Kind << std::endl;
         res = &mkAdaAccessType(sb::buildVoidType());
         ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
@@ -333,7 +333,7 @@ namespace
   {
     auto access_type_kind = access_type.Access_Type_Kind;
     bool isFuncAccess = false;
-    SgAdaAccessType* access_t;
+    SgAdaAccessType* access_t = nullptr;
 
     switch (access_type_kind) {
       // variable access kinds
@@ -403,11 +403,12 @@ namespace
         break;
       }
     default:
-      logWarn() << "Unhandled access type kind." << std::endl;
-      ADA_ASSERT(false);
-      access_t = NULL;
+      logWarn() << "Unhandled access type kind: " << access_type_kind << std::endl;
+      access_t = &mkAdaAccessType(sb::buildVoidType());
+      ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
 
+    ROSE_ASSERT(access_t);
     return access_t;
   }
 

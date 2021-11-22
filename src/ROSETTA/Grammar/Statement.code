@@ -20843,7 +20843,10 @@ SgAdaRenamingDecl::get_mangled_name() const
 SOURCE_ADA_RENAMING_DECL_STATEMENT_END
 
 SOURCE_ADA_DISCRIMINATED_TYPE_DECL_STATEMENT_START
-void SgAdaDiscriminatedTypeDecl::post_construction_initialization() {}
+void SgAdaDiscriminatedTypeDecl::post_construction_initialization()
+{
+  set_type(SgAdaDiscriminatedType::createType(this));
+}
 
 SgSymbol*
 SgAdaDiscriminatedTypeDecl::get_symbol_from_symbol_table() const
