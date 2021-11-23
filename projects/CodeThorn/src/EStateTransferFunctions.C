@@ -3185,11 +3185,11 @@ namespace CodeThorn {
   std::list<EStatePtr> EStateTransferFunctions::evalAssignOp3(SgAssignOp* node, Label targetLabel, EStatePtr estate) {
     auto pList=evalAssignOpMemUpdates(node, estate);
     std::list<EStatePtr> estateList;
-    Label label=estate->label();
-    PState newPState=*estate->pstate();
-    CallString cs=estate->callString;
     for (auto p : pList) {
       EState estate=p.first;
+      Label label=estate.label();
+      CallString cs=estate.callString;
+      PState newPState=*estate.pstate();
       AbstractValue lhsAddress=p.second.first;
       AbstractValue rhsValue=p.second.second;
       //cout<<"DEBUG: ASSIGN: lhsAddress:"<<lhsAddress.toString()<<" rhsValue:"<<rhsValue.toString()<<endl;
