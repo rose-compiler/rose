@@ -2938,6 +2938,25 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
              {
             // DQ (8/17/2006): Handle the case where the definition does not exist (there may still be a pointer to the type).
                SgClassDefinition* classdefn_stmt = decl->get_definition();
+
+            // DQ (11/21/2021): Substitute the declaration_of_context so that we can support multiple file 
+            // and use the correct declaration even though the types are shared.
+#if 0
+               printf ("In unparseClassType(): info.get_declaration_of_context() = %p \n",info.get_declaration_of_context());
+#endif
+            // DQ (11/21/2021): If the declaration of context is set then use that declaration instead of 
+            // the one from the shared type, this allows us to support multiple files on the command line.
+               if (info.get_declaration_of_context() != NULL)
+                  {
+                    decl = isSgClassDeclaration(info.get_declaration_of_context());
+                    ROSE_ASSERT(decl != NULL);
+                    classdefn_stmt = decl->get_definition();
+#if 0
+                    printf ("In unparseClassType(): Using alternate declaration of context: decl->get_name() = %s \n",decl->get_name().str());
+                    decl->get_file_info()->display("In unparseClassType(): debug");
+#endif
+                  }
+
 #if DEBUG_UNPARSE_CLASS_TYPE
                printf ("In unparseClassType: for decl = %p = %s we want to output the class definition = %p \n",decl,decl->class_name().c_str(),classdefn_stmt);
 #endif
@@ -3232,6 +3251,9 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
           if (SageInterface::is_C_language() == true || SageInterface::is_C99_language() == true)
              {
             // DQ (10/11/2006): I think that now that we fill in all empty name as a post-processing step, we can assert this now!
+#if 0
+               printf ("Output the name because this is C language support \n");
+#endif
                curprint ( enum_type->get_name().getString() + " ");
              }
             else
@@ -3358,8 +3380,24 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
                   }
                ASSERT_not_null(edecl->get_definingDeclaration());
 
+            // DQ (11/21/2021): If the declaration of context is set then use that declaration instead of 
+            // the one from the shared type, this allows us to support multiple files on the command line.
             // DQ (4/22/2013): We need the defining declaration.
-               edecl = isSgEnumDeclaration(edecl->get_definingDeclaration());
+            // edecl = isSgEnumDeclaration(edecl->get_definingDeclaration());
+               if (info.get_declaration_of_context() != NULL)
+                  {
+                    edecl = isSgEnumDeclaration(info.get_declaration_of_context());
+                    ROSE_ASSERT(edecl != NULL);
+#if 0
+                    printf ("In unparseClassType(): Using alternate declaration of context: edecl->get_name() = %s \n",edecl->get_name().str());
+                    edecl->get_file_info()->display("In unparseClassType(): debug");
+#endif
+                  }
+                 else
+                  {
+                 // DQ (4/22/2013): We need the defining declaration.
+                    edecl = isSgEnumDeclaration(edecl->get_definingDeclaration());
+                  }
 
             // This fails for test2007_140.C.
                ASSERT_not_null(edecl);
