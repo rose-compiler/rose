@@ -13221,11 +13221,11 @@ SgExprStatement* SageInterface::splitVariableDeclaration (SgVariableDeclaration*
     rt = NULL;
   else
   {
-    // Liao, 2021/10/21, we have to support all sorts of initializers, including aggregate initializer    
-    SgExpression * rhs=NULL;  
+    // Liao, 2021/10/21, we have to support all sorts of initializers, including aggregate initializer
+    SgExpression * rhs=NULL;
     if (SgAssignInitializer * ainitor = isSgAssignInitializer (initor))
       rhs = ainitor->get_operand();
-    else 
+    else
       rhs = initor;
 
     // we deep copy the rhs operand
@@ -27340,3 +27340,28 @@ SageInterface::checkForInitializers( SgNode* node )
        CheckInitializerTraversal traversal;
        traversal.traverse(node, preorder);
    }
+
+namespace
+{
+  struct DeclaredType : sg::DispatchHandler<SgType*>
+  {
+    void handle(SgNode& n, SgNode&) { SG_UNEXPECTED_NODE(n); }
+
+    template <class SageDeclarationStatement>
+    void handle(SageDeclarationStatement& n, SgDeclarationStatement&)
+    {
+      res = n.get_type();
+    }
+
+    template <class SageNode>
+    void handle(SageNode& n)
+    {
+      handle(n, n);
+    }
+  };
+}
+
+SgType* SageInterface::getDeclaredType(const SgDeclarationStatement* declaration)
+{
+  return sg::dispatch(DeclaredType{}, declaration);
+}

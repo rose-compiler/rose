@@ -432,8 +432,8 @@ namespace
 
 
   /// converts enum values to SgExpressions
-  /// \todo currently only True and False are handled
-  ///       revisit when Asis representation is complete
+  /// \note currently True and False are handled separately, because
+  ///       their definition in package Standard is not seen.
   SgExpression&
   getEnumLiteral(Expression_Struct& expr, AstContext ctx)
   {
@@ -512,8 +512,14 @@ namespace
 
     if (expr.Expression_Kind == An_Indexed_Component)
     {
+      // \todo should this always return true (like the cases below)?
       return roseRequiresPrefixID(expr.Prefix, ctx);
     }
+
+    if (  (expr.Expression_Kind == An_Explicit_Dereference)
+       || (expr.Expression_Kind == A_Function_Call)
+       )
+      return true;
 
     logWarn() << "roseRequiresPrefixID: untested expression-kind: "
               << expr.Expression_Kind
@@ -549,13 +555,7 @@ namespace
       void handle(SgAdaGenericDecl& n)         { res = &mkAdaUnitRefExp(n); }
       void handle(SgAdaGenericInstanceDecl& n) { res = &mkAdaUnitRefExp(n); }
       void handle(SgAdaPackageSpecDecl& n)     { res = &mkAdaUnitRefExp(n); }
-
-      void handle(SgAdaTaskTypeDecl& n)
-      {
-        SgAdaTaskType& ty = mkAdaTaskType(n);
-
-        res = sb::buildTypeExpression(&ty);
-      }
+      void handle(SgAdaTaskTypeDecl& n)        { res = sb::buildTypeExpression(n.get_type()); }
 
     private:
       AstContext ctx;

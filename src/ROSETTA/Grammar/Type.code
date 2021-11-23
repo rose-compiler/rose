@@ -2421,7 +2421,15 @@ SgType::handledUsingLocalTable(SgType* t)
      bool returnValue = false;
 
   // DQ (9/3/2012): I think this should be modified to include SgTemplateType as well.
-     if (isSgEnumType(t) != NULL || isSgClassType(t) != NULL || isSgTypedefType(t) != NULL)
+  // PP (11/22/2021): added ada types.
+  //                  Question: should this be named types (isSgNamedType) in general?
+     if (  isSgEnumType(t) != NULL
+        || isSgClassType(t) != NULL
+        || isSgTypedefType(t) != NULL
+        || isSgAdaTaskType(t) != NULL
+        || isSgAdaDiscriminatedType(t) != NULL
+        //~ || isSgAdaFormalType(t) != NULL /* todo: add to local type tables */
+        )
         {
           returnValue = true;
         }
@@ -8865,6 +8873,7 @@ SOURCE_CREATE_TYPE_FOR_ADA_TASK_TYPE_START
 SgAdaTaskType*
 SgAdaTaskType::createType (SgDeclarationStatement* decl, SgExpression* /*optional_fortran_type_kind*/)
 {
+#if 0
   SgAdaTaskType    proto(decl); // \pp not sure if stack allocation works
   SgName           name = proto.get_mangled();
   SgType*          ty   = get_globalTypeTable()->lookup_type(name);
@@ -8877,6 +8886,18 @@ SgAdaTaskType::createType (SgDeclarationStatement* decl, SgExpression* /*optiona
 
   get_globalTypeTable()->insert_type(name, res);
   return res;
+#endif
+
+  SgAdaTaskType* res = nullptr;
+
+  if (SgAdaTaskSpecDecl* tskspec = isSgAdaTaskSpecDecl(decl))
+    res = tskspec->get_type();
+  else if (SgAdaTaskTypeDecl* tsktype = isSgAdaTaskTypeDecl(decl))
+    res = tsktype->get_type();
+  else
+    ROSE_ASSERT(!"Ada task types can be created from SgAdaTaskSpecDecl or SgAdaTaskSpecDecl only!");
+
+  return res ? res : new SgAdaTaskType(decl);
 }
 
 SOURCE_CREATE_TYPE_FOR_ADA_TASK_TYPE_END
@@ -8886,6 +8907,7 @@ SOURCE_CREATE_TYPE_FOR_ADA_DISCRIMINATED_TYPE_START
 SgAdaDiscriminatedType*
 SgAdaDiscriminatedType::createType (SgAdaDiscriminatedTypeDecl* decl, SgExpression* /*optional_fortran_type_kind*/)
 {
+#if 0
   SgAdaDiscriminatedType proto(decl); // \pp not sure if stack allocation works
   SgName                 name = proto.get_mangled();
   SgType*                ty   = get_globalTypeTable()->lookup_type(name);
@@ -8897,7 +8919,13 @@ SgAdaDiscriminatedType::createType (SgAdaDiscriminatedTypeDecl* decl, SgExpressi
   SgAdaDiscriminatedType* res = new SgAdaDiscriminatedType(decl);
 
   get_globalTypeTable()->insert_type(name, res);
-  return res;
+#endif
+
+  ASSERT_not_null(decl);
+
+  SgAdaDiscriminatedType* res = decl->get_type();
+
+  return res ? res : new SgAdaDiscriminatedType(decl);
 }
 
 SOURCE_CREATE_TYPE_FOR_ADA_DISCRIMINATED_TYPE_END
@@ -8933,9 +8961,9 @@ SgAdaDerivedType::createType (SgType* base_type, SgExpression* /*optional_fortra
   // ===> do not unify them.
   ROSE_ASSERT(base_type != NULL);
   SgAdaDerivedType* res  = new SgAdaDerivedType(base_type);
-  SgName            name = res->get_mangled();
+  //~ SgName            name = res->get_mangled();
 
-  get_globalTypeTable()->insert_type(name, res);
+  // get_globalTypeTable()->insert_type(name, res);
   return res;
 }
 

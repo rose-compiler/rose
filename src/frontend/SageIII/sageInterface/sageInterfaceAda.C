@@ -563,8 +563,6 @@ namespace ada
   SgAdaDiscriminatedTypeDecl*
   getAdaDiscriminatedTypeDecl(const SgDeclarationStatement& n)
   {
-    //~ SgDeclarationScope* scope = isSgDeclarationScope(n.get_parent());
-
     return isSgAdaDiscriminatedTypeDecl(n.get_parent());
   }
 

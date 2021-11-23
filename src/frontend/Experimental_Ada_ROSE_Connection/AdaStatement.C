@@ -638,7 +638,7 @@ namespace
                      TypeData basis,
                      SgDeclarationStatement* incompl
                    )
-      : base(), dclname(name), dclscope(scope), foundation(basis), incomplDecl(incompl)
+      : base(nullptr), dclname(name), dclscope(scope), foundation(basis), incomplDecl(incompl)
       {}
 
       void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
