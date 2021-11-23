@@ -280,10 +280,11 @@ CodeThorn::CTAnalysis::SubSolverResultType CodeThorn::CTAnalysis::subSolver(ESta
             ++nesListIter) {
           // newEstate is passed by value (not created yet)
           EState newEState=*nesListIter;
-          ROSE_ASSERT(newEState.label()!=Labeler::NO_LABEL);
+          EStatePtr newEStatePtr0=new EState(newEState);
+          ROSE_ASSERT(newEStatePtr0->label()!=Labeler::NO_LABEL);
 
-          if((!isFailedAssertEState(&newEState)&&!isVerificationErrorEState(&newEState))) {
-            HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEState);
+          if((!isFailedAssertEState(newEStatePtr0)&&!isVerificationErrorEState(newEStatePtr0))) {
+            HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEStatePtr0);
             EStatePtr newEStatePtr=const_cast<EStatePtr>(pres.second);
             ROSE_ASSERT(newEStatePtr);
             if(pres.first==true) {
@@ -307,10 +308,9 @@ CodeThorn::CTAnalysis::SubSolverResultType CodeThorn::CTAnalysis::subSolver(ESta
               recordTransition(currentEStatePtr,e,newEStatePtr);
             }
           }
-          if(((isFailedAssertEState(&newEState))||isVerificationErrorEState(&newEState))) {
+          if(((isFailedAssertEState(newEStatePtr0))||isVerificationErrorEState(newEStatePtr0))) {
             // failed-assert end-state: do not add to work list but do add it to the transition graph
-            EStatePtr newEStatePtr;
-            newEStatePtr=processNewOrExisting(newEState);
+            EStatePtr newEStatePtr=processNewOrExisting(newEStatePtr0);
             // TODO: create reduced transition set at end of this function
             if(!getModeLTLDriven()) {
               recordTransition(currentEStatePtr,e,newEStatePtr);
@@ -1199,18 +1199,30 @@ PStatePtr CodeThorn::CTAnalysis::processNewOrExisting(PState& s) {
     return processNew(s);
   }
 }
+
 #endif
 
 EStatePtr CodeThorn::CTAnalysis::processNew(EState& s) {
   return const_cast<EStatePtr>(estateSet.processNew(s));
 }
 
+EStatePtr CodeThorn::CTAnalysis::processNew(EState* s) {
+  return processNew(*s);
+}
+
 EStatePtr CodeThorn::CTAnalysis::processNewOrExisting(EState& estate) {
   return const_cast<EStatePtr>(estateSet.processNewOrExisting(estate));
 }
 
+EStatePtr CodeThorn::CTAnalysis::processNewOrExisting(EState* estate) {
+  return processNewOrExisting(*estate);
+}
+
 EStateSet::ProcessingResult CodeThorn::CTAnalysis::process(EState& estate) {
   return estateSet.process(estate);
+}
+EStateSet::ProcessingResult CodeThorn::CTAnalysis::process(EState* estate) {
+  return estateSet.process(*estate);
 }
 
 LabelSet CodeThorn::CTAnalysis::functionEntryLabels() {
