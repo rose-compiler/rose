@@ -252,6 +252,8 @@ namespace ada
   std::string convertStringLiteral(const char* img);
 
   long double convertRealLiteral(const char* img);
+
+  char convertCharLiteral(const char* img);
   /// \}
 
 

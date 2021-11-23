@@ -1337,6 +1337,20 @@ long double convertRealLiteral(const char* img)
   return computeLiteral(res, base, exp);
 }
 
+char convertCharLiteral(const char* img)
+{
+  // recognized form: 'l' -> l
+  ADA_ASSERT(img);
+
+  const char delimiter = *img;
+  ADA_ASSERT(delimiter == '\'');
+
+  const char res = img[1];
+  ADA_ASSERT(res && img[2] == '\'');
+  return res;
+}
+
+
 std::vector<PrimitiveParameterDesc>
 primitiveParameterPositions(const SgFunctionDeclaration& dcl)
 {

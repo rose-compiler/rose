@@ -925,6 +925,7 @@ namespace
         {
           logKind("A_Character_Literal");
           res = &mkValue<SgCharVal>(expr.Name_Image);
+
           /* unused fields: (Expression_Struct)
                Defining_Name_ID      Corresponding_Name_Definition;
                Defining_Name_List    Corresponding_Name_Definition_List;

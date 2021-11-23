@@ -1163,7 +1163,10 @@ mkVarDecl(const SgInitializedNamePtrList& vars, SgScopeStatement& scope)
 SgAdaVariantFieldDecl&
 mkAdaVariantFieldDecl(const SgInitializedNamePtrList& vars, SgExprListExp& choices, SgScopeStatement& scope)
 {
-  return mkVarDeclInternal<SgAdaVariantFieldDecl>(vars.begin(), vars.end(), scope, &choices);
+  SgAdaVariantFieldDecl& sgnode = mkVarDeclInternal<SgAdaVariantFieldDecl>(vars.begin(), vars.end(), scope, &choices);
+
+  choices.set_parent(&sgnode);
+  return sgnode;
 }
 
 SgAdaVariantFieldDecl&
@@ -1563,6 +1566,13 @@ template <>
 long double convAdaLiteral<long double>(const char* img)
 {
   return si::ada::convertRealLiteral(img);
+}
+
+
+template <>
+char convAdaLiteral<char>(const char* img)
+{
+  return si::ada::convertCharLiteral(img);
 }
 
 
