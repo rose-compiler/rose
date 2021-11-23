@@ -40,6 +40,7 @@ namespace CodeThorn {
   //typedef const EState* EStatePtr;
   typedef const EState* ConstEStatePtr;
   typedef EState* EStatePtr;
+  typedef EState& EStateRef;
   
   class EState : public Lattice {
   public:

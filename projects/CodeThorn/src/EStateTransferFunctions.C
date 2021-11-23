@@ -137,9 +137,6 @@ namespace CodeThorn {
         SAWYER_MESG(logger[WARN])<<"cs2: "<<es2->callString.toString()<<endl;
       }
     }
-    PState ps1=*es1->pstate();
-    PState ps2=*es2->pstate();
-
     InputOutput io;
     if(es1->io.isBot()) {
       io=es2->io;
@@ -150,21 +147,21 @@ namespace CodeThorn {
       io=es1->io;
     }
 
-    return createEState(es1->label(),es1->callString,PState::combine(ps1,ps2),io);
+    return createEState(es1->label(),es1->callString,PState::combine(es1->pstate(),es2->pstate()),io);
   }
 
-  std::list<EState> EStateTransferFunctions::elistify() {
-    std::list<EState> resList;
+  std::list<EStatePtr> EStateTransferFunctions::elistify() {
+    std::list<EStatePtr> resList;
     return resList;
   }
 
-  std::list<EState> EStateTransferFunctions::elistify(EState res) {
-    std::list<EState> resList;
-    resList.push_back(res);
+  std::list<EStatePtr> EStateTransferFunctions::elistify(EState res) {
+    std::list<EStatePtr> resList;
+    resList.push_back(new EState(res));
     return resList;
   }
 
-  std::list<EState> EStateTransferFunctions::transferFunctionCallLocalEdgeRersBinaryMode(Edge edge, EStatePtr estate) {
+  std::list<EStatePtr> EStateTransferFunctions::transferFunctionCallLocalEdgeRersBinaryMode(Edge edge, EStatePtr estate) {
     SgNode* nodeToAnalyze=getLabeler()->getNode(edge.source());
     if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nodeToAnalyze)) {
       ROSE_ASSERT(funCall);
@@ -231,7 +228,7 @@ namespace CodeThorn {
     return getAnalyzer()->elistify(); // did not match RERS function
   }
 
-  std::list<EState> EStateTransferFunctions::transferFunctionCallLocalEdge(Edge edge, EStatePtr estate) {
+  std::list<EStatePtr> EStateTransferFunctions::transferFunctionCallLocalEdge(Edge edge, EStatePtr estate) {
     if(_analyzer->getOptionsRef().rers.rersBinary) {
       return transferFunctionCallLocalEdgeRersBinaryMode(edge, estate);
     }
@@ -239,7 +236,7 @@ namespace CodeThorn {
     return getAnalyzer()->elistify();
   }
 
-  std::list<EState> EStateTransferFunctions::transferFunctionCall(Edge edge, EStatePtr estate) {
+  std::list<EStatePtr> EStateTransferFunctions::transferFunctionCall(Edge edge, EStatePtr estate) {
     // 1) obtain actual parameters from source
     // 2) obtain formal parameters from target
     // 3) eval each actual parameter and assign result to formal parameter in state
@@ -372,7 +369,7 @@ namespace CodeThorn {
     return elistify(newEState);
   }
 
-  std::list<EState> EStateTransferFunctions::transferReturnStmt(Edge edge, EStatePtr estate) {
+  std::list<EStatePtr> EStateTransferFunctions::transferReturnStmt(Edge edge, EStatePtr estate) {
     Label lab=estate->label();
     EState currentEState=*estate;
     CallString cs=currentEState.callString;
@@ -403,7 +400,7 @@ namespace CodeThorn {
     }
   }
 
-  std::list<EState> EStateTransferFunctions::transferFunctionCallReturn(Edge edge, EStatePtr estate) {
+  std::list<EStatePtr> EStateTransferFunctions::transferFunctionCallReturn(Edge edge, EStatePtr estate) {
     EState currentEState=*estate;
     PState currentPState=*currentEState.pstate();
 
@@ -427,7 +424,7 @@ namespace CodeThorn {
           }
           // definitely not feasible path, do not return a state
           SAWYER_MESG(logger[TRACE])<<"definitly on non-feasable path at label (no next state)"<<functionCallLabel.toString()<<endl;
-          std::list<EState> emptyList;
+          std::list<EStatePtr> emptyList;
           return emptyList;
         }
       }
@@ -550,7 +547,7 @@ namespace CodeThorn {
     }
   }
 
-  std::list<EState> EStateTransferFunctions::transferAsmStmt(Edge edge, EStatePtr estate) {
+  std::list<EStatePtr> EStateTransferFunctions::transferAsmStmt(Edge edge, EStatePtr estate) {
     // ignore AsmStmt
     return transferIdentity(edge,estate);
   }
@@ -573,7 +570,7 @@ namespace CodeThorn {
     }
   }
 
-  std::list<EState> EStateTransferFunctions::transferFunctionEntry(Edge edge, EStatePtr estate) {
+  std::list<EStatePtr> EStateTransferFunctions::transferFunctionEntry(Edge edge, EStatePtr estate) {
     Label lab=estate->label();
     SgNode* node=_analyzer->getLabeler()->getNode(lab);
     SgFunctionDefinition* funDef=isSgFunctionDefinition(node);
@@ -592,7 +589,7 @@ namespace CodeThorn {
     return transferIdentity(edge,estate);
   }
 
-  std::list<EState> EStateTransferFunctions::transferFunctionExit(Edge edge, EStatePtr estate) {
+  std::list<EStatePtr> EStateTransferFunctions::transferFunctionExit(Edge edge, EStatePtr estate) {
     EState currentEState=*estate;
     if(SgFunctionDefinition* funDef=isSgFunctionDefinition(getLabeler()->getNode(edge.source()))) {
       // 1) determine all local variables (including formal parameters) of function
@@ -623,18 +620,18 @@ namespace CodeThorn {
   }
 
   // called from transferForkFunction
-  std::list<EState> EStateTransferFunctions::transferForkFunctionWithExternalTargetFunction(Edge edge, EStatePtr estate, SgFunctionCallExp* funCall) {
+  std::list<EStatePtr> EStateTransferFunctions::transferForkFunctionWithExternalTargetFunction(Edge edge, EStatePtr estate, SgFunctionCallExp* funCall) {
     //_analyzer->recordExternalFunctionCall(funCall); funcall would be forkFunction
     // arg5 is expression with functino pointer to external function
-    list<EState> estateList;
+    list<EStatePtr> estateList;
     EState estate1=*estate;
     estate1.setLabel(edge.target());
     // no forked state
-    estateList.push_back(estate1);
+    estateList.push_back(new EState(estate1));
     return estateList;
   }
 
-  std::list<EState> EStateTransferFunctions::transferForkFunction(Edge edge, EStatePtr estate, SgFunctionCallExp* funCall) {
+  std::list<EStatePtr> EStateTransferFunctions::transferForkFunction(Edge edge, EStatePtr estate, SgFunctionCallExp* funCall) {
     EState currentEState=*estate;
     CallString cs=currentEState.callString;
     PState currentPState=*currentEState.pstate();
@@ -664,25 +661,25 @@ namespace CodeThorn {
     // allow both formats x=f(...) and f(...)
     SgAssignOp* assignOp=isSgAssignOp(AstUtility::findExprNodeInAstUpwards(V_SgAssignOp,funCall));
     if(assignOp) {
-      list<EState> estateList1=transferAssignOp(assignOp,edge,estate); // use current estate, do not mix with forked state
+      list<EStatePtr> estateList1=transferAssignOp(assignOp,edge,estate); // use current estate, do not mix with forked state
       ROSE_ASSERT(estateList1.size()==1);
-      EState estate1=*estateList1.begin();
+      EState estate1=**estateList1.begin();
       estate1.setLabel(edge.target());
-      list<EState> estateList2;
-      estateList2.push_back(estate1);
-      estateList2.push_back(forkedEState);
+      list<EStatePtr> estateList2;
+      estateList2.push_back(new EState(estate1));
+      estateList2.push_back(new EState(forkedEState));
       return estateList2;
     } else {
-      list<EState> estateList;
+      list<EStatePtr> estateList;
       EState estate1=*estate;
       estate1.setLabel(edge.target());
-      estateList.push_back(estate1);
-      estateList.push_back(forkedEState);
+      estateList.push_back(new EState(estate1));
+      estateList.push_back(new EState(forkedEState));
       return estateList;
     }
   }
 
-  std::list<EState> EStateTransferFunctions::transferFunctionCallExternal(Edge edge, EStatePtr estate) {
+  std::list<EStatePtr> EStateTransferFunctions::transferFunctionCallExternal(Edge edge, EStatePtr estate) {
     EState currentEState=*estate;
     CallString cs=currentEState.callString;
     PState currentPState=*currentEState.pstate();
@@ -709,7 +706,7 @@ namespace CodeThorn {
     if(ctioLabeler->isStdInLabel(lab,&varId)) {
       if(_analyzer->_inputSequence.size()>0) {
         PState newPState=*currentEState.pstate();
-        list<EState> resList;
+        list<EStatePtr> resList;
         int newValue;
         if(_analyzer->_inputSequenceIterator!=_analyzer->_inputSequence.end()) {
           newValue=*_analyzer->_inputSequenceIterator;
@@ -725,12 +722,12 @@ namespace CodeThorn {
         }
         newio.recordVariable(InputOutput::STDIN_VAR,varId);
         EState newEState=createEState(edge.target(),cs,newPState,newio);
-        resList.push_back(newEState);
+        resList.push_back(new EState(newEState));
         return resList;
       } else {
         if(_analyzer->_inputVarValues.size()>0) {
           PState newPState=*currentEState.pstate();
-          list<EState> resList;
+          list<EStatePtr> resList;
           for(set<int>::iterator i=_analyzer->_inputVarValues.begin();i!=_analyzer->_inputVarValues.end();++i) {
             PState newPState=*currentEState.pstate();
             if(_analyzer->getOptionsRef().inputValuesAsConstraints) {
@@ -741,7 +738,7 @@ namespace CodeThorn {
             }
             newio.recordVariable(InputOutput::STDIN_VAR,varId);
             EState newEState=createEState(edge.target(),estate->callString,newPState,newio);
-            resList.push_back(newEState);
+            resList.push_back(new EState(newEState));
           }
           return resList;
         } else {
@@ -817,7 +814,7 @@ namespace CodeThorn {
     return elistify(newEState);
   }
 
-  std::list<EState> EStateTransferFunctions::transferDefaultOptionStmt(SgDefaultOptionStmt* defaultStmt,Edge edge, EStatePtr estate) {
+  std::list<EStatePtr> EStateTransferFunctions::transferDefaultOptionStmt(SgDefaultOptionStmt* defaultStmt,Edge edge, EStatePtr estate) {
     SAWYER_MESG(logger[TRACE])<<"SWITCH CASE DEFAULT: "<<defaultStmt->unparseToString()<<endl;
 
     Label targetLabel=edge.target();
@@ -882,12 +879,12 @@ namespace CodeThorn {
     } else {
       // detected infeasable path (default is not reachable)
       SAWYER_MESG(logger[TRACE])<<"switch-default: infeasable path."<<endl;
-      list<EState> emptyList;
+      list<EStatePtr> emptyList;
       return emptyList;
     }
   }
 
-  std::list<EState> EStateTransferFunctions::transferCaseOptionStmt(SgCaseOptionStmt* caseStmt,Edge edge, EStatePtr estate) {
+  std::list<EStatePtr> EStateTransferFunctions::transferCaseOptionStmt(SgCaseOptionStmt* caseStmt,Edge edge, EStatePtr estate) {
     SAWYER_MESG(logger[TRACE])<<"CASESTMT: "<<caseStmt->unparseToString()<<endl;
     Label targetLabel=edge.target();
     CallString cs=estate->callString;
@@ -918,7 +915,7 @@ namespace CodeThorn {
       } else {
         SAWYER_MESG(logger[TRACE])<<"switch-case GNU Range: infeasable path."<<endl;
         // infeasable path
-        list<EState> emptyList;
+        list<EStatePtr> emptyList;
         return emptyList;
       }
     }
@@ -933,21 +930,21 @@ namespace CodeThorn {
     } else {
       // infeasable path
       SAWYER_MESG(logger[TRACE])<<"switch-case: infeasable path."<<endl;
-      list<EState> emptyList;
+      list<EStatePtr> emptyList;
       return emptyList;
     }
   }
 
-  std::list<EState> EStateTransferFunctions::transferVariableDeclaration(SgVariableDeclaration* decl, Edge edge, EStatePtr estate) {
+  std::list<EStatePtr> EStateTransferFunctions::transferVariableDeclaration(SgVariableDeclaration* decl, Edge edge, EStatePtr estate) {
     return elistify(transferVariableDeclarationEState(decl,*estate, edge.target()));
   }
 
-  std::list<EState> EStateTransferFunctions::transferGnuExtensionStmtExpr(SgNode* nextNodeToAnalyze1, Edge edge, EStatePtr estate) {
+  std::list<EStatePtr> EStateTransferFunctions::transferGnuExtensionStmtExpr(SgNode* nextNodeToAnalyze1, Edge edge, EStatePtr estate) {
     //cout<<"WARNING: ignoring GNU extension StmtExpr (EStateTransferFunctions::transferGnuExtensionStmtExpr)"<<endl;
     return elistify(*estate);
   }
 
-  std::list<EState> EStateTransferFunctions::transferExprStmt(SgNode* nextNodeToAnalyze1, Edge edge, EStatePtr estate) {
+  std::list<EStatePtr> EStateTransferFunctions::transferExprStmt(SgNode* nextNodeToAnalyze1, Edge edge, EStatePtr estate) {
     SgNode* nextNodeToAnalyze2=0;
     if(isSgExprStatement(nextNodeToAnalyze1))
       nextNodeToAnalyze2=SgNodeHelper::getExprStmtChild(nextNodeToAnalyze1);
@@ -977,7 +974,7 @@ namespace CodeThorn {
     }
   }
 
-  list<EState> EStateTransferFunctions::transferIdentity(Edge edge, EStatePtr estate) {
+  list<EStatePtr> EStateTransferFunctions::transferIdentity(Edge edge, EStatePtr estate) {
     // nothing to analyze, just create new estate (from same State) with target label of edge
     // can be same state if edge is a backedge to same cfg node
     EState newEState=*estate;
@@ -986,7 +983,7 @@ namespace CodeThorn {
   }
 
 
-  std::list<EState> EStateTransferFunctions::transferAssignOp(SgAssignOp* node, Edge edge, EStatePtr estate) {
+  std::list<EStatePtr> EStateTransferFunctions::transferAssignOp(SgAssignOp* node, Edge edge, EStatePtr estate) {
 
     if(_analyzer->getOptionsRef().info.printTransferFunctionInfo) {
       //printTransferFunctionInfo(TransferFunctionCode::Assign,nextNodeToAnalyze2,edge,estate);
@@ -996,7 +993,7 @@ namespace CodeThorn {
   }
 
 
-  list<EState> EStateTransferFunctions::transferFailedAssert(Edge edge, EStatePtr estate) {
+  list<EStatePtr> EStateTransferFunctions::transferFailedAssert(Edge edge, EStatePtr estate) {
     return elistify(_analyzer->createFailedAssertEState(*estate,edge.target()));
   }
 
@@ -1024,7 +1021,7 @@ namespace CodeThorn {
 
   // wrapper function for calling eval functions for inc/dec ops at top-level AST
   // THIS FUNCTION IS NOT USED YET because evaluateExpression is still using transferIncDecOp (which calls this function)
-  list<EState> EStateTransferFunctions::transferIncDecOpEvalWrapper(SgNode* node, Edge edge, EStatePtr estate) {
+  list<EStatePtr> EStateTransferFunctions::transferIncDecOpEvalWrapper(SgNode* node, Edge edge, EStatePtr estate) {
     SingleEvalResult res;
     switch(node->variantT()) {
     case V_SgPlusPlusOp:
@@ -1050,7 +1047,7 @@ namespace CodeThorn {
   }
 
   // used for top-level evaluation
-  list<EState> EStateTransferFunctions::transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, EStatePtr estate) {
+  list<EStatePtr> EStateTransferFunctions::transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, EStatePtr estate) {
     if(_analyzer->getOptionsRef().info.printTransferFunctionInfo) {
       printTransferFunctionInfo(TransferFunctionCode::IncDec,nextNodeToAnalyze2,edge,estate);
     }
@@ -1083,9 +1080,7 @@ namespace CodeThorn {
       }
       writeToAnyMemoryLocation(estate.label(),&newPState,AbstractValue::createAddressOfVariable(var),newVarVal);
 
-      list<EState> estateList;
-      estateList.push_back(createEState(edge.target(),cs,newPState));
-      return estateList;
+      return elistify(createEState(edge.target(),cs,newPState));
     } else {
       throw CodeThorn::Exception("Error: Normalization required. Inc/dec operators are only supported for variables: "+SgNodeHelper::sourceFilenameLineColumnToString(nextNodeToAnalyze2));
     }
@@ -1119,7 +1114,7 @@ namespace CodeThorn {
     return structDataMemberAddr;
   }
 
-  EState EStateTransferFunctions::transferVariableDeclarationWithInitializerEState(SgVariableDeclaration* decl, SgInitializedName* initName, SgInitializer* initializer, VariableId initDeclVarId, EState& currentEState, Label targetLabel) {
+  EState EStateTransferFunctions::transferVariableDeclarationWithInitializerEState(SgVariableDeclaration* decl, SgInitializedName* initName, SgInitializer* initializer, VariableId initDeclVarId, EStateRef currentEState, Label targetLabel) {
     CallString cs=currentEState.callString;
     Label label=currentEState.label();
     ROSE_ASSERT(currentEState.pstate());
@@ -1132,7 +1127,7 @@ namespace CodeThorn {
         SAWYER_MESG(logger[TRACE])<<"assignment in initializer: "<<decl->unparseToString()<<endl;
         //cout<<"DEBUG: assignment in initializer: "<<decl->unparseToString()<<endl;
         CodeThorn::EStateTransferFunctions::MemoryUpdateList memUpdList=evalAssignOpMemUpdates(assignOp,&currentEState);
-        std::list<EState> estateList;
+        std::list<EStatePtr> estateList;
         ROSE_ASSERT(memUpdList.size()==1);
         auto memUpd=*memUpdList.begin();
         // code is normalized, lhs must be a variable : tmpVar= var=val;
@@ -1278,7 +1273,7 @@ namespace CodeThorn {
     }
   }
 
-  EState EStateTransferFunctions::transferVariableDeclarationWithoutInitializerEState(SgVariableDeclaration* decl, SgInitializedName* initName, VariableId initDeclVarId, EState& currentEState, Label targetLabel) {
+  EState EStateTransferFunctions::transferVariableDeclarationWithoutInitializerEState(SgVariableDeclaration* decl, SgInitializedName* initName, VariableId initDeclVarId, EStateRef currentEState, Label targetLabel) {
     CallString cs=currentEState.callString;
     Label label=currentEState.label();
     ROSE_ASSERT(currentEState.pstate());
@@ -1468,7 +1463,7 @@ namespace CodeThorn {
     return setOfUsedGlobalVars;
   }
 
-  void EStateTransferFunctions::initializeGlobalVariables(SgProject* root, EState& estate) {
+  void EStateTransferFunctions::initializeGlobalVariables(SgProject* root, EStateRef estate) {
     if(isSgProject(root)) {
       ROSE_ASSERT(getVariableIdMapping());
       CodeThorn::VariableIdSet setOfGlobalVars=getVariableIdMapping()->getSetOfGlobalVarIds();
@@ -1565,19 +1560,19 @@ namespace CodeThorn {
     return newPState;
   }
 
-  AbstractValue EStateTransferFunctions::evaluateExpressionAV(SgExpression* expr,EState currentEState) {
+  AbstractValue EStateTransferFunctions::evaluateExpressionAV(SgExpression* expr,EStateRef currentEState) {
     SingleEvalResult valueResult=evaluateExpression(expr,currentEState);
     AbstractValue val=valueResult.result;
     return val;
   }
 
-  list<EState> EStateTransferFunctions::transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, EStatePtr estate) {
+  list<EStatePtr> EStateTransferFunctions::transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, EStatePtr estate) {
     EState currentEState=*estate;
     CallString cs=estate->callString;
     Label newLabel;
     PState newPState;
     SingleEvalResult evalResult=evaluateExpression(nextNodeToAnalyze2,currentEState);
-    list<EState> newEStateList;
+    list<EStatePtr> newEStateList;
     if(evalResult.isBot()) {
       SAWYER_MESG(logger[WARN])<<"PSTATE: "<<estate->pstate()->toString(getVariableIdMapping())<<endl;
       SAWYER_MESG(logger[WARN])<<"CONDITION EVALUATES TO BOT : "<<nextNodeToAnalyze2->unparseToString()<<endl;
@@ -1587,7 +1582,7 @@ namespace CodeThorn {
       newLabel=edge.target();
       newPState=*evalResult.estate.pstate();
       EState newEstate=createEState(newLabel,cs,newPState);
-      newEStateList.push_back(newEstate);
+      newEStateList.push_back(new EState(newEstate));
     } else if((evalResult.isTrue() && edge.isType(EDGE_TRUE)) || (evalResult.isFalse() && edge.isType(EDGE_FALSE)) || evalResult.isTop()) {
       // pass on EState
       newLabel=edge.target();
@@ -1602,9 +1597,7 @@ namespace CodeThorn {
           }
         }
       }
-
-      EState newEstate=createEState(newLabel,cs,newPState);
-      newEStateList.push_back(newEstate);
+      newEStateList.push_back(new EState(createEState(newLabel,cs,newPState)));
     } else if((evalResult.isFalse() && edge.isType(EDGE_TRUE)) || (evalResult.isTrue() && edge.isType(EDGE_FALSE))) {
       // we determined not to be on an execution path, therefore do nothing (do not add any result to resultlist)
       //cout<<"DEBUG: not on feasable execution path. skipping."<<endl;
@@ -1624,15 +1617,13 @@ namespace CodeThorn {
         }
       }
 
-      EState newEstate=createEState(newLabel,cs,newPState);
-      newEStateList.push_back(newEstate);
+      newEStateList.push_back(new EState(createEState(newLabel,cs,newPState)));
     }
     return newEStateList;
   }
 
   CodeThorn::EStateTransferFunctions::MemoryUpdateList
   CodeThorn::EStateTransferFunctions::evalAssignOpMemUpdates(SgAssignOp* nextNodeToAnalyze2, EStatePtr estatePtr) {
-
     MemoryUpdateList memoryUpdateList;
     CallString cs=estatePtr->callString;
     EState currentEState=*estatePtr;
@@ -1869,14 +1860,14 @@ namespace CodeThorn {
     cout << ss.str()<<endl;
   }
 
-  void EStateTransferFunctions::printEvaluateExpressionInfo(SgNode* node,EState& estate, EvalMode mode) {
+  void EStateTransferFunctions::printEvaluateExpressionInfo(SgNode* node,EStateRef estate, EvalMode mode) {
     stringstream ss;
     ss<<"          "<<std::setw(6+2)<<" "<<"evaluateExpression    : "<<node->unparseToString()<<" [evalmode"<<mode<<": "<<AstTerm::astTermWithNullValuesToString(node)<<"]";
     #pragma omp critical (STATUS_MESSAGES)
     cout<<ss.str()<<endl;
   }
 
-  list<EState> EStateTransferFunctions::transferEdgeEStateDispatch(TransferFunctionCode tfCode, SgNode* node, Edge edge, EStatePtr estate) {
+  list<EStatePtr> EStateTransferFunctions::transferEdgeEStateDispatch(TransferFunctionCode tfCode, SgNode* node, Edge edge, EStatePtr estate) {
     ROSE_ASSERT(estate->pstate());
     if(_analyzer->getOptionsRef().info.printTransferFunctionInfo) {
       printTransferFunctionInfo(tfCode,node,edge,estate);
@@ -1907,7 +1898,7 @@ namespace CodeThorn {
     //unreachable
   }
 
-  list<EState> EStateTransferFunctions::transferEdgeEState(Edge edge, EStatePtr estate) {
+  list<EStatePtr> EStateTransferFunctions::transferEdgeEState(Edge edge, EStatePtr estate) {
     // TODO: create EState copy and pass through
     pair<TransferFunctionCode,SgNode*> tfCodeNodePair=determineTransferFunctionCode(edge,estate);
     EStateTransferFunctions::TransferFunctionCode tfCode=tfCodeNodePair.first;
@@ -2196,44 +2187,6 @@ namespace CodeThorn {
       ;
   }
 
-  SingleEvalResult EStateTransferFunctions::evaluateShortCircuitOperators(SgNode* node,EState estate, EvalMode mode) {
-    SgNode* lhs=SgNodeHelper::getLhs(node);
-    SingleEvalResult lhsResult=evaluateExpression(lhs,estate,mode);
-    switch(node->variantT()) {
-    case V_SgAndOp: {
-      // short circuit semantics
-      if(lhsResult.isTrue()||lhsResult.isTop()||lhsResult.isBot()) {
-        SgNode* rhs=SgNodeHelper::getRhs(node);
-        SingleEvalResult rhsResult=evaluateExpression(rhs,estate,mode);
-        return evalAndOp(isSgAndOp(node),lhsResult,rhsResult,estate,mode);
-      } else {
-        // rhs not executed
-        ROSE_ASSERT(lhsResult.isFalse());
-        // result must be zero (=false)
-        return lhsResult;
-      }
-      break;
-    }
-    case V_SgOrOp: {
-      if(lhsResult.isFalse()||lhsResult.isTop()||lhsResult.isBot()) {
-        SgNode* rhs=SgNodeHelper::getRhs(node);
-        SingleEvalResult rhsResult=evaluateExpression(rhs,estate,mode);
-        return evalOrOp(isSgOrOp(node),lhsResult,rhsResult,estate,mode);
-      } else {
-        // rhs not executed
-        ROSE_ASSERT(lhsResult.isTrue());
-        // bugfix MS 05/06/2020: convert any true value to true/1: (10||x)=>1
-        lhsResult.result=AbstractValue(true);
-        return lhsResult;
-      }
-      break;
-    }
-    default:
-      fatalErrorExit(node, "Unknown short circuit binary op, nodetype:"+node->class_name());
-    }
-    ROSE_ASSERT(false);
-  }
-
   AbstractValue EStateTransferFunctions::evaluateExpressionWithEmptyState(SgExpression* expr) {
     SAWYER_MESG(logger[TRACE])<<"evaluateExpressionWithEmptyState(1):"<<expr->unparseToString()<<endl;
     ROSE_ASSERT(AbstractValue::getVariableIdMapping());
@@ -2263,7 +2216,7 @@ namespace CodeThorn {
     return res;
    }
 
-  SingleEvalResult EStateTransferFunctions::evaluateExpression(SgNode* node,EState estate, EvalMode mode) {
+  SingleEvalResult EStateTransferFunctions::evaluateExpression(SgNode* node, EStateRef estate, EvalMode mode) {
     ROSE_ASSERT(estate.pstate()); // ensure state exists
 
     if(_analyzer->getOptionsRef().info.printTransferFunctionInfo) {
@@ -2460,7 +2413,7 @@ namespace CodeThorn {
   /////////////////////////////////////////////////////////////////////////////////////////////////
 
   // evaluation functions
-  SingleEvalResult EStateTransferFunctions::evalConditionalExpr(SgConditionalExp* condExp, EState estate, EvalMode mode) {
+  SingleEvalResult EStateTransferFunctions::evalConditionalExpr(SgConditionalExp* condExp, EStateRef estate, EvalMode mode) {
     SgExpression* cond=condExp->get_conditional_exp();
     SingleEvalResult condResult=evaluateExpression(cond,estate);
     SingleEvalResult singleResult=condResult;
@@ -2487,22 +2440,48 @@ namespace CodeThorn {
     ROSE_ASSERT(false);
   }
 
-  SingleEvalResult EStateTransferFunctions::evalCommaOp(SgCommaOpExp* node,
-                                                                      SingleEvalResult lhsResult,
-                                                                      SingleEvalResult rhsResult,
-                                                                      EState estate, EvalMode mode) {
-    SingleEvalResult res;
-    res.estate=estate;
-    // lhsResult is ignored in comma op
-    // result of the expression is the rhs's value
-    res.result=rhsResult.result;
-    return res;
+  SingleEvalResult EStateTransferFunctions::evaluateShortCircuitOperators(SgNode* node,EStateRef estate, EvalMode mode) {
+    SgNode* lhs=SgNodeHelper::getLhs(node);
+    SingleEvalResult lhsResult=evaluateExpression(lhs,estate,mode);
+    switch(node->variantT()) {
+    case V_SgAndOp: {
+      // short circuit semantics
+      if(lhsResult.isTrue()||lhsResult.isTop()||lhsResult.isBot()) {
+        SgNode* rhs=SgNodeHelper::getRhs(node);
+        SingleEvalResult rhsResult=evaluateExpression(rhs,estate,mode);
+        return evalAndOp(isSgAndOp(node),lhsResult,rhsResult,estate,mode);
+      } else {
+        // rhs not executed
+        ROSE_ASSERT(lhsResult.isFalse());
+        // result must be zero (=false)
+        return lhsResult;
+      }
+      break;
+    }
+    case V_SgOrOp: {
+      if(lhsResult.isFalse()||lhsResult.isTop()||lhsResult.isBot()) {
+        SgNode* rhs=SgNodeHelper::getRhs(node);
+        SingleEvalResult rhsResult=evaluateExpression(rhs,estate,mode);
+        return evalOrOp(isSgOrOp(node),lhsResult,rhsResult,estate,mode);
+      } else {
+        // rhs not executed
+        ROSE_ASSERT(lhsResult.isTrue());
+        // bugfix MS 05/06/2020: convert any true value to true/1: (10||x)=>1
+        lhsResult.result=AbstractValue(true);
+        return lhsResult;
+      }
+      break;
+    }
+    default:
+      fatalErrorExit(node, "Unknown short circuit binary op, nodetype:"+node->class_name());
+    }
+    ROSE_ASSERT(false);
   }
 
   SingleEvalResult EStateTransferFunctions::evalEqualOp(SgEqualityOp* node,
                                                                       SingleEvalResult lhsResult,
                                                                       SingleEvalResult rhsResult,
-                                                                      EState estate, EvalMode mode) {
+                                                                      EStateRef estate, EvalMode mode) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=(lhsResult.result.operatorEq(rhsResult.result));
@@ -2512,7 +2491,7 @@ namespace CodeThorn {
   SingleEvalResult EStateTransferFunctions::evalNotEqualOp(SgNotEqualOp* node,
                                                                          SingleEvalResult lhsResult,
                                                                          SingleEvalResult rhsResult,
-                                                                         EState estate, EvalMode mode) {
+                                                                         EStateRef estate, EvalMode mode) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=(lhsResult.result.operatorNotEq(rhsResult.result));
@@ -2522,7 +2501,7 @@ namespace CodeThorn {
   SingleEvalResult EStateTransferFunctions::evalAndOp(SgAndOp* node,
                                                                     SingleEvalResult lhsResult,
                                                                     SingleEvalResult rhsResult,
-                                                                    EState estate, EvalMode mode) {
+                                                                    EStateRef estate, EvalMode mode) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=(lhsResult.result.operatorAnd(rhsResult.result));
@@ -2532,7 +2511,7 @@ namespace CodeThorn {
   SingleEvalResult EStateTransferFunctions::evalOrOp(SgOrOp* node,
                                                                    SingleEvalResult lhsResult,
                                                                    SingleEvalResult rhsResult,
-                                                                   EState estate, EvalMode mode) {
+                                                                   EStateRef estate, EvalMode mode) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=lhsResult.result.operatorOr(rhsResult.result);
@@ -2547,7 +2526,7 @@ namespace CodeThorn {
   SingleEvalResult EStateTransferFunctions::evalAddOp(SgAddOp* node,
                                                                     SingleEvalResult lhsResult,
                                                                     SingleEvalResult rhsResult,
-                                                                    EState estate, EvalMode mode) {
+                                                                    EStateRef estate, EvalMode mode) {
     SingleEvalResult res;
     res.estate=estate;
     if(lhsResult.result.isPtr()) {
@@ -2565,7 +2544,7 @@ namespace CodeThorn {
   SingleEvalResult EStateTransferFunctions::evalSubOp(SgSubtractOp* node,
                                                                     SingleEvalResult lhsResult,
                                                                     SingleEvalResult rhsResult,
-                                                                    EState estate, EvalMode mode) {
+                                                                    EStateRef estate, EvalMode mode) {
     SingleEvalResult res;
     res.estate=estate;
     if(lhsResult.result.isPtr() && rhsResult.result.isPtr()) {
@@ -2587,7 +2566,7 @@ namespace CodeThorn {
   SingleEvalResult EStateTransferFunctions::evalMulOp(SgMultiplyOp* node,
                                                                     SingleEvalResult lhsResult,
                                                                     SingleEvalResult rhsResult,
-                                                                    EState estate, EvalMode mode) {
+                                                                    EStateRef estate, EvalMode mode) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=AbstractValue::operatorMul(lhsResult.result,rhsResult.result);
@@ -2597,7 +2576,7 @@ namespace CodeThorn {
   SingleEvalResult EStateTransferFunctions::evalDivOp(SgDivideOp* node,
                                                                     SingleEvalResult lhsResult,
                                                                     SingleEvalResult rhsResult,
-                                                                    EState estate, EvalMode mode) {
+                                                                    EStateRef estate, EvalMode mode) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=AbstractValue::operatorDiv(lhsResult.result,rhsResult.result);
@@ -2607,7 +2586,7 @@ namespace CodeThorn {
   SingleEvalResult EStateTransferFunctions::evalModOp(SgModOp* node,
                                                                     SingleEvalResult lhsResult,
                                                                     SingleEvalResult rhsResult,
-                                                                    EState estate, EvalMode mode) {
+                                                                    EStateRef estate, EvalMode mode) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=AbstractValue::operatorMod(lhsResult.result,rhsResult.result);
@@ -2617,7 +2596,7 @@ namespace CodeThorn {
   SingleEvalResult EStateTransferFunctions::evalBitwiseAndOp(SgBitAndOp* node,
                                                                            SingleEvalResult lhsResult,
                                                                            SingleEvalResult rhsResult,
-                                                                           EState estate, EvalMode mode) {
+                                                                           EStateRef estate, EvalMode mode) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=(lhsResult.result.operatorBitwiseAnd(rhsResult.result));
@@ -2627,7 +2606,7 @@ namespace CodeThorn {
   SingleEvalResult EStateTransferFunctions::evalBitwiseOrOp(SgBitOrOp* node,
                                                                           SingleEvalResult lhsResult,
                                                                           SingleEvalResult rhsResult,
-                                                                          EState estate, EvalMode mode) {
+                                                                          EStateRef estate, EvalMode mode) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=(lhsResult.result.operatorBitwiseOr(rhsResult.result));
@@ -2637,10 +2616,19 @@ namespace CodeThorn {
   SingleEvalResult EStateTransferFunctions::evalBitwiseXorOp(SgBitXorOp* node,
                                                                            SingleEvalResult lhsResult,
                                                                            SingleEvalResult rhsResult,
-                                                                           EState estate, EvalMode mode) {
+                                                                           EStateRef estate, EvalMode mode) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=(lhsResult.result.operatorBitwiseXor(rhsResult.result));
+    return res;
+  }
+
+  SingleEvalResult EStateTransferFunctions::evalBitwiseComplementOp(SgBitComplementOp* node,
+                                                                                  SingleEvalResult operandResult,
+                                                                                  EStateRef estate, EvalMode mode) {
+    SingleEvalResult res;
+    res.estate=estate;
+    res.result=operandResult.result.operatorBitwiseComplement();
     return res;
   }
 
@@ -2648,7 +2636,7 @@ namespace CodeThorn {
   EStateTransferFunctions::evalGreaterOrEqualOp(SgGreaterOrEqualOp* node,
                                                 SingleEvalResult lhsResult,
                                                 SingleEvalResult rhsResult,
-                                                EState estate, EvalMode mode) {
+                                                EStateRef estate, EvalMode mode) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=(lhsResult.result.operatorMoreOrEq(rhsResult.result));
@@ -2659,7 +2647,7 @@ namespace CodeThorn {
   EStateTransferFunctions::evalGreaterThanOp(SgGreaterThanOp* node,
                                              SingleEvalResult lhsResult,
                                              SingleEvalResult rhsResult,
-                                             EState estate, EvalMode mode) {
+                                             EStateRef estate, EvalMode mode) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=(lhsResult.result.operatorMore(rhsResult.result));
@@ -2667,46 +2655,10 @@ namespace CodeThorn {
   }
 
   SingleEvalResult
-  EStateTransferFunctions::evalAssignOp(SgAssignOp* node,
-                                        SingleEvalResult lhsResult /* ignored */,
-                                        SingleEvalResult rhsResult,
-                                        Label targetLabel, EState estate, EvalMode mode) {
-    SingleEvalResult res;
-    std::list<EState> estateList=evalAssignOp3(node, targetLabel, &estate);
-    ROSE_ASSERT(estateList.size()==1);
-    res.result=rhsResult.result; // value result of assignment
-    res.estate=*estateList.begin();
-    return res;
-  }
-
-  std::list<EState> EStateTransferFunctions::evalAssignOp3(SgAssignOp* node, Label targetLabel, EStatePtr estate) {
-    SAWYER_MESG(logger[TRACE])<<"evalAssignOp3:"<<node->unparseToString()<<": started"<<endl;
-    auto pList=evalAssignOpMemUpdates(node, estate);
-    std::list<EState> estateList;
-    for (auto p : pList) {
-      EState estate=p.first;
-      AbstractValue lhsAddress=p.second.first;
-      AbstractValue rhsValue=p.second.second;
-      //cout<<"DEBUG: ASSIGN: lhsAddress:"<<lhsAddress.toString()<<" rhsValue:"<<rhsValue.toString()<<endl;
-      Label label=estate.label();
-      PState newPState=*estate.pstate();
-      writeToAnyMemoryLocation(label,&newPState,lhsAddress,rhsValue);
-      CallString cs=estate.callString;
-      estateList.push_back(createEState(targetLabel,cs,newPState));
-    }
-    if(estateList.size()==0) {
-      // no effects recorded, create copy-state to continue
-      estateList.push_back(createEState(targetLabel,estate->callString,*estate->pstate()));
-    }
-    SAWYER_MESG(logger[TRACE])<<"evalAssignOp3:"<<node->unparseToString()<<": done"<<endl;
-    return estateList;
-  }
-
-  SingleEvalResult
   EStateTransferFunctions::evalLessOrEqualOp(SgLessOrEqualOp* node,
                                              SingleEvalResult lhsResult,
                                              SingleEvalResult rhsResult,
-                                             EState estate, EvalMode mode) {
+                                             EStateRef estate, EvalMode mode) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=(lhsResult.result.operatorLessOrEq(rhsResult.result));
@@ -2717,7 +2669,7 @@ namespace CodeThorn {
   EStateTransferFunctions::evalLessThanOp(SgLessThanOp* node,
                                           SingleEvalResult lhsResult,
                                           SingleEvalResult rhsResult,
-                                          EState estate, EvalMode mode) {
+                                          EStateRef estate, EvalMode mode) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=(lhsResult.result.operatorLess(rhsResult.result));
@@ -2728,7 +2680,7 @@ namespace CodeThorn {
   EStateTransferFunctions::evalBitwiseShiftLeftOp(SgLshiftOp* node,
                                                   SingleEvalResult lhsResult,
                                                   SingleEvalResult rhsResult,
-                                                  EState estate, EvalMode mode) {
+                                                  EStateRef estate, EvalMode mode) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=(lhsResult.result.operatorBitwiseShiftLeft(rhsResult.result));
@@ -2739,7 +2691,7 @@ namespace CodeThorn {
   EStateTransferFunctions::evalBitwiseShiftRightOp(SgRshiftOp* node,
                                                    SingleEvalResult lhsResult,
                                                    SingleEvalResult rhsResult,
-                                                   EState estate, EvalMode mode) {
+                                                   EStateRef estate, EvalMode mode) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=(lhsResult.result.operatorBitwiseShiftRight(rhsResult.result));
@@ -2803,7 +2755,7 @@ namespace CodeThorn {
   EStateTransferFunctions::evalArrayReferenceOp(SgPntrArrRefExp* node,
                                                 SingleEvalResult arrayExprResult,
                                                 SingleEvalResult indexExprResult,
-                                                EState estate, EvalMode mode) {
+                                                EStateRef estate, EvalMode mode) {
     SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp: "<<node->unparseToString()<<"arrayExprResult:"<<arrayExprResult.result.toString()<<" indexExprResult:"<<indexExprResult.result.toString()<<" mode:"<<mode<<endl;
     SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp: AST:"<<AstTerm::astTermWithNullValuesToString(node)<<endl;
     SingleEvalResult res;
@@ -2978,9 +2930,21 @@ namespace CodeThorn {
     ROSE_ASSERT(false); // not reachable
   }
 
+  SingleEvalResult EStateTransferFunctions::evalCommaOp(SgCommaOpExp* node,
+                                                                      SingleEvalResult lhsResult,
+                                                                      SingleEvalResult rhsResult,
+                                                                      EStateRef estate, EvalMode mode) {
+    SingleEvalResult res;
+    res.estate=estate;
+    // lhsResult is ignored in comma op
+    // result of the expression is the rhs's value
+    res.result=rhsResult.result;
+    return res;
+  }
+
   SingleEvalResult EStateTransferFunctions::evalNotOp(SgNotOp* node,
                                                                     SingleEvalResult operandResult,
-                                                                    EState estate, EvalMode mode) {
+                                                                    EStateRef estate, EvalMode mode) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=operandResult.result.operatorNot();
@@ -2988,7 +2952,7 @@ namespace CodeThorn {
   }
   SingleEvalResult EStateTransferFunctions::evalUnaryMinusOp(SgMinusOp* node,
                                                                            SingleEvalResult operandResult,
-                                                                           EState estate, EvalMode mode) {
+                                                                           EStateRef estate, EvalMode mode) {
     SingleEvalResult res;
     res.estate=estate;
     res.result=operandResult.result.operatorUnaryMinus();
@@ -2996,7 +2960,7 @@ namespace CodeThorn {
   }
 
   SingleEvalResult EStateTransferFunctions::evalSizeofOp(SgSizeOfOp* node,
-                                                                       EState estate, EvalMode mode) {
+                                                                       EStateRef estate, EvalMode mode) {
     // two cases: (1) operand is a type, operand is a an expression
     SAWYER_MESG(logger[TRACE])<<"evalSizeofOp(started):"<<node->unparseToString()<<endl;
     SgType* operandType=node->get_operand_type();
@@ -3035,7 +2999,7 @@ namespace CodeThorn {
 
   SingleEvalResult EStateTransferFunctions::evalCastOp(SgCastExp* node,
                                                                      SingleEvalResult operandResult,
-                                                                     EState estate, EvalMode mode) {
+                                                                     EStateRef estate, EvalMode mode) {
     // TODO: truncation of values
     // TODO: adapt pointer value element size
     SgType* targetType=node->get_type();
@@ -3053,19 +3017,10 @@ namespace CodeThorn {
     return res;
   }
 
-  SingleEvalResult EStateTransferFunctions::evalBitwiseComplementOp(SgBitComplementOp* node,
-                                                                                  SingleEvalResult operandResult,
-                                                                                  EState estate, EvalMode mode) {
-    SingleEvalResult res;
-    res.estate=estate;
-    res.result=operandResult.result.operatorBitwiseComplement();
-    return res;
-  }
-
   SingleEvalResult EStateTransferFunctions::evalArrowOp(SgArrowExp* node,
                                                                       SingleEvalResult lhsResult,
                                                                       SingleEvalResult rhsResult,
-                                                                      EState estate, EvalMode mode) {
+                                                                      EStateRef estate, EvalMode mode) {
     SingleEvalResult res;
     res.estate=estate;
 
@@ -3108,7 +3063,7 @@ namespace CodeThorn {
   SingleEvalResult EStateTransferFunctions::evalDotOp(SgDotExp* node,
                                                                     SingleEvalResult lhsResult,
                                                                     SingleEvalResult rhsResult,
-                                                                    EState estate, EvalMode mode) {
+                                                                    EStateRef estate, EvalMode mode) {
     SingleEvalResult res;
     res.estate=estate;
     // L.R : L evaluates to address, R evaluates to offset value (a struct member always evaluates to an offset)
@@ -3158,7 +3113,7 @@ namespace CodeThorn {
 
   SingleEvalResult EStateTransferFunctions::evalAddressOfOp(SgAddressOfOp* node,
                                                                           SingleEvalResult operandResult,
-                                                                          EState estate, EvalMode mode) {
+                                                                          EStateRef estate, EvalMode mode) {
     SingleEvalResult res;
     res.estate=estate;
     AbstractValue operand=operandResult.result;
@@ -3171,8 +3126,14 @@ namespace CodeThorn {
     return res;
   }
 
+  SingleEvalResult EStateTransferFunctions::evalDereferenceOp(SgPointerDerefExp* node,
+                                                                            SingleEvalResult operandResult,
+                                                                            EStateRef estate, EvalMode mode) {
+    return semanticEvalDereferenceOp(operandResult,estate,mode);
+  }
+
   SingleEvalResult EStateTransferFunctions::semanticEvalDereferenceOp(SingleEvalResult operandResult,
-                                                                                    EState estate, EvalMode mode) {
+                                                                                    EStateRef estate, EvalMode mode) {
     SingleEvalResult res;
     res.estate=estate;
     AbstractValue derefOperandValue=operandResult.result;
@@ -3208,10 +3169,37 @@ namespace CodeThorn {
     }
   }
 
-  SingleEvalResult EStateTransferFunctions::evalDereferenceOp(SgPointerDerefExp* node,
-                                                                            SingleEvalResult operandResult,
-                                                                            EState estate, EvalMode mode) {
-    return semanticEvalDereferenceOp(operandResult,estate,mode);
+  SingleEvalResult
+  EStateTransferFunctions::evalAssignOp(SgAssignOp* node,
+                                        SingleEvalResult lhsResult /* ignored */,
+                                        SingleEvalResult rhsResult,
+                                        Label targetLabel, EState estate, EvalMode mode) {
+    SingleEvalResult res;
+    std::list<EStatePtr> estateList=evalAssignOp3(node, targetLabel, &estate);
+    ROSE_ASSERT(estateList.size()==1);
+    res.result=rhsResult.result; // value result of assignment
+    res.estate=**estateList.begin();
+    return res;
+  }
+
+  std::list<EStatePtr> EStateTransferFunctions::evalAssignOp3(SgAssignOp* node, Label targetLabel, EStatePtr estate) {
+    auto pList=evalAssignOpMemUpdates(node, estate);
+    std::list<EStatePtr> estateList;
+    for (auto p : pList) {
+      EState estate=p.first;
+      Label label=estate.label();
+      CallString cs=estate.callString;
+      PState newPState=*estate.pstate();
+      AbstractValue lhsAddress=p.second.first;
+      AbstractValue rhsValue=p.second.second;
+      //cout<<"DEBUG: ASSIGN: lhsAddress:"<<lhsAddress.toString()<<" rhsValue:"<<rhsValue.toString()<<endl;
+      writeToAnyMemoryLocation(label,&newPState,lhsAddress,rhsValue);
+      estateList.push_back(new EState(createEState(targetLabel,cs,newPState)));
+    }
+    if(estateList.size()==0) {
+      estateList.push_back(new EState(createEState(targetLabel,estate->callString,*estate->pstate())));
+    }
+    return estateList;
   }
 
   SingleEvalResult EStateTransferFunctions::evalPreComputationOp(EState estate, AbstractValue address, AbstractValue change) {
@@ -4150,7 +4138,7 @@ namespace CodeThorn {
     pstate->writeUndefToMemoryLocation(memLoc);
   }
 
-  void EStateTransferFunctions::printLoggerWarning(EState& estate) {
+  void EStateTransferFunctions::printLoggerWarning(EStateRef estate) {
     Label lab=estate.label();
     if(_analyzer) {
       SAWYER_MESG(logger[WARN]) << "at label "<<lab<<": "<<(_analyzer->getLabeler()->getNode(lab)->unparseToString())<<": this pointer set to top."<<endl;
@@ -4196,7 +4184,7 @@ namespace CodeThorn {
   // is only relevant for external functions (when the implementation
   // does not exist in input program and the semantics are available in
   // the analyzer (e.g. malloc, strlen, etc.))
-  list<EState> EStateTransferFunctions::evaluateFunctionCallArguments(Edge edge, SgFunctionCallExp* funCall, EState currentEState, bool useConstraints) {
+  list<EStatePtr> EStateTransferFunctions::evaluateFunctionCallArguments(Edge edge, SgFunctionCallExp* funCall, EState currentEState, bool useConstraints) {
     CallString cs=currentEState.callString;
     SAWYER_MESG(logger[TRACE]) <<"evaluating arguments of function call:"<<funCall->unparseToString()<<endl;
     SingleEvalResult evalResult=evalFunctionCallArguments(funCall, currentEState);

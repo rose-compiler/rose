@@ -99,12 +99,12 @@ namespace CodeThorn {
 
     /* determines transfer function code from CFG and AST-matching and calls transferEdgeEStateDispatch
        ultimately this function can be used to operate on its own IR */
-    std::list<EState> transferEdgeEState(Edge edge, EStatePtr estate);
+    std::list<EStatePtr> transferEdgeEState(Edge edge, EStatePtr estate);
 
     // determines transfer function code based on ICFG and AST patterns
     std::pair<TransferFunctionCode,SgNode*> determineTransferFunctionCode(Edge edge, EStatePtr estate);
     // calls transfer function based on TransferFunctionCode. No additional tests are performed.
-    std::list<EState> transferEdgeEStateDispatch(TransferFunctionCode tfCode, SgNode* node, Edge edge, EStatePtr estate);
+    std::list<EStatePtr> transferEdgeEStateDispatch(TransferFunctionCode tfCode, SgNode* node, Edge edge, EStatePtr estate);
     void printTransferFunctionInfo(TransferFunctionCode tfCode, SgNode* node, Edge edge, EStatePtr estate);
     void printEvaluateExpressionInfo(SgNode* node,EState& estate, EvalMode mode);
 
@@ -113,44 +113,44 @@ namespace CodeThorn {
     void warning(SgNode* node, std::string errorMessage);
     void transferFunctionEntryPrintStatus(Edge edge, EStatePtr estate, std::string fileName, std::string functionName);
 
-    std::list<EState> transferFunctionCallLocalEdge(Edge edge, EStatePtr estate);
-    std::list<EState> transferFunctionCall(Edge edge, EStatePtr estate);
-    std::list<EState> transferFunctionCallExternal(Edge edge, EStatePtr estate);
-    std::list<EState> transferFunctionCallReturn(Edge edge, EStatePtr estate);
-    std::list<EState> transferFunctionEntry(Edge edge, EStatePtr estate);
-    std::list<EState> transferFunctionExit(Edge edge, EStatePtr estate);
-    std::list<EState> transferReturnStmt(Edge edge, EStatePtr estate);
-    std::list<EState> transferAsmStmt(Edge edge, EStatePtr estate);
-    std::list<EState> transferIdentity(Edge edge, EStatePtr estate);
-    std::list<EState> transferFailedAssert(Edge edge, EStatePtr estate);
+    std::list<EStatePtr> transferFunctionCallLocalEdge(Edge edge, EStatePtr estate);
+    std::list<EStatePtr> transferFunctionCall(Edge edge, EStatePtr estate);
+    std::list<EStatePtr> transferFunctionCallExternal(Edge edge, EStatePtr estate);
+    std::list<EStatePtr> transferFunctionCallReturn(Edge edge, EStatePtr estate);
+    std::list<EStatePtr> transferFunctionEntry(Edge edge, EStatePtr estate);
+    std::list<EStatePtr> transferFunctionExit(Edge edge, EStatePtr estate);
+    std::list<EStatePtr> transferReturnStmt(Edge edge, EStatePtr estate);
+    std::list<EStatePtr> transferAsmStmt(Edge edge, EStatePtr estate);
+    std::list<EStatePtr> transferIdentity(Edge edge, EStatePtr estate);
+    std::list<EStatePtr> transferFailedAssert(Edge edge, EStatePtr estate);
 
-    std::list<EState> transferCaseOptionStmt(SgCaseOptionStmt* stmt,Edge edge, EStatePtr estate);
-    std::list<EState> transferDefaultOptionStmt(SgDefaultOptionStmt* stmt,Edge edge, EStatePtr estate);
-    std::list<EState> transferVariableDeclaration(SgVariableDeclaration* decl,Edge edge, EStatePtr estate);
+    std::list<EStatePtr> transferCaseOptionStmt(SgCaseOptionStmt* stmt,Edge edge, EStatePtr estate);
+    std::list<EStatePtr> transferDefaultOptionStmt(SgDefaultOptionStmt* stmt,Edge edge, EStatePtr estate);
+    std::list<EStatePtr> transferVariableDeclaration(SgVariableDeclaration* decl,Edge edge, EStatePtr estate);
 
-    std::list<EState> transferExprStmt(SgNode* nextNodeToAnalyze1, Edge edge, EStatePtr estate);
+    std::list<EStatePtr> transferExprStmt(SgNode* nextNodeToAnalyze1, Edge edge, EStatePtr estate);
     // wrapper function for evalAssignOp
-    std::list<EState> transferAssignOp(SgAssignOp* assignOp, Edge edge, EStatePtr estate);
+    std::list<EStatePtr> transferAssignOp(SgAssignOp* assignOp, Edge edge, EStatePtr estate);
     // used at stmt level and for StmtExpr
-    std::list<EState> transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, EStatePtr estate);
-    std::list<EState> transferGnuExtensionStmtExpr(SgNode* nextNodeToAnalyze1, Edge edge, EStatePtr estate);
+    std::list<EStatePtr> transferIncDecOp(SgNode* nextNodeToAnalyze2, Edge edge, EStatePtr estate);
+    std::list<EStatePtr> transferGnuExtensionStmtExpr(SgNode* nextNodeToAnalyze1, Edge edge, EStatePtr estate);
 
     // not used yet
-    std::list<EState> transferIncDecOpEvalWrapper(SgNode* nextNodeToAnalyze2, Edge edge, EStatePtr estate);
+    std::list<EStatePtr> transferIncDecOpEvalWrapper(SgNode* nextNodeToAnalyze2, Edge edge, EStatePtr estate);
 
     // RERS binary mode only
-    std::list<EState> transferFunctionCallLocalEdgeRersBinaryMode(Edge edge, EStatePtr estate);
+    std::list<EStatePtr> transferFunctionCallLocalEdgeRersBinaryMode(Edge edge, EStatePtr estate);
     SingleEvalResult evalArrayNotInState(SgNode* node, SingleEvalResult& res, VariableId arrayVarId, AbstractValue arrayPtrPlusIndexValue);
 
     // special case, called from transferFunctionCall
-    std::list<EState> transferForkFunction(Edge edge, EStatePtr estate, SgFunctionCallExp* funCall);
-    std::list<EState> transferForkFunctionWithExternalTargetFunction(Edge edge, EStatePtr estate, SgFunctionCallExp* funCall);
+    std::list<EStatePtr> transferForkFunction(Edge edge, EStatePtr estate, SgFunctionCallExp* funCall);
+    std::list<EStatePtr> transferForkFunctionWithExternalTargetFunction(Edge edge, EStatePtr estate, SgFunctionCallExp* funCall);
 
-    std::list<EState> transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, EStatePtr estate);
+    std::list<EStatePtr> transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, EStatePtr estate);
 
   public:
-    static std::list<EState> elistify();
-    static std::list<EState> elistify(EState res);
+    static std::list<EStatePtr> elistify();
+    static std::list<EStatePtr> elistify(EState res);
 
     // logger facility
     static Sawyer::Message::Facility logger;
@@ -187,12 +187,12 @@ namespace CodeThorn {
     bool isFunctionCallWithAssignment(Label lab,VariableId* varId=0);
     // this function uses the respective function of ExprAnalyzer and
     // extracts the result from the ExprAnalyzer data structure.
-    std::list<EState> evaluateFunctionCallArguments(Edge edge, SgFunctionCallExp* funCall, EState estate, bool useConstraints);
+    std::list<EStatePtr> evaluateFunctionCallArguments(Edge edge, SgFunctionCallExp* funCall, EState estate, bool useConstraints);
 
 
     // Limits the number of results to one result only. Does not permit state splitting.
     // requires normalized AST
-    AbstractValue evaluateExpressionAV(SgExpression* expr,EState currentEState);
+    AbstractValue evaluateExpressionAV(SgExpression* expr,EState& currentEState);
 
     // only used in hybrid prototype binding
     VariableId globalVarIdByName(std::string varName);
@@ -215,7 +215,7 @@ namespace CodeThorn {
     //! of all evaluation-results.  There can be multiple results if
     //! one of the variables was bound to top and branching constructs
     //! are inside the expression.
-    SingleEvalResult evaluateExpression(SgNode* node,EState estate, EvalMode mode=MODE_VALUE);
+    SingleEvalResult evaluateExpression(SgNode* node,EStateRef estate, EvalMode mode=MODE_VALUE);
     //! uses AbstractValue::getVariableIdMapping()
     AbstractValue evaluateExpressionWithEmptyState(SgExpression* expr);
 
@@ -337,123 +337,131 @@ namespace CodeThorn {
                  EState estate, EvalMode mode);
 
     // evaluation functions
-    SingleEvalResult evalConditionalExpr(SgConditionalExp* node, EState estate, EvalMode mode=MODE_VALUE);
-    SingleEvalResult evaluateShortCircuitOperators(SgNode* node,EState estate, EvalMode mode=MODE_VALUE);
+    SingleEvalResult evalConditionalExpr(SgConditionalExp* node, EStateRef estate, EvalMode mode=MODE_VALUE);
+    SingleEvalResult evaluateShortCircuitOperators(SgNode* node,EStateRef estate, EvalMode mode=MODE_VALUE);
 
     SingleEvalResult evalEqualOp(SgEqualityOp* node,
                                                SingleEvalResult lhsResult,
                                                SingleEvalResult rhsResult,
-                                               EState estate, EvalMode mode=MODE_VALUE);
+                                               EStateRef estate, EvalMode mode=MODE_VALUE);
     SingleEvalResult evalNotEqualOp(SgNotEqualOp* node,
                                                   SingleEvalResult lhsResult,
                                                   SingleEvalResult rhsResult,
-                                                  EState estate, EvalMode mode=MODE_VALUE);
+                                                  EStateRef estate, EvalMode mode=MODE_VALUE);
     SingleEvalResult evalAndOp(SgAndOp* node,
                                              SingleEvalResult lhsResult,
                                              SingleEvalResult rhsResult,
-                                             EState estate, EvalMode mode=MODE_VALUE);
+                                             EStateRef estate, EvalMode mode=MODE_VALUE);
     SingleEvalResult evalOrOp(SgOrOp* node,
                                             SingleEvalResult lhsResult,
                                             SingleEvalResult rhsResult,
-                                            EState estate, EvalMode mode=MODE_VALUE);
+                                            EStateRef estate, EvalMode mode=MODE_VALUE);
     SingleEvalResult evalAddOp(SgAddOp* node,
                                              SingleEvalResult lhsResult,
                                              SingleEvalResult rhsResult,
-                                             EState estate, EvalMode mode=MODE_VALUE);
+                                             EStateRef estate, EvalMode mode=MODE_VALUE);
     SingleEvalResult evalSubOp(SgSubtractOp* node,
                                              SingleEvalResult lhsResult,
                                              SingleEvalResult rhsResult,
-                                             EState estate, EvalMode mode=MODE_VALUE);
+                                             EStateRef estate, EvalMode mode=MODE_VALUE);
     SingleEvalResult evalMulOp(SgMultiplyOp* node,
                                              SingleEvalResult lhsResult,
                                              SingleEvalResult rhsResult,
-                                             EState estate, EvalMode mode=MODE_VALUE);
+                                             EStateRef estate, EvalMode mode=MODE_VALUE);
     SingleEvalResult evalDivOp(SgDivideOp* node,
                                              SingleEvalResult lhsResult,
                                              SingleEvalResult rhsResult,
-                                             EState estate, EvalMode mode=MODE_VALUE);
+                                             EStateRef estate, EvalMode mode=MODE_VALUE);
     SingleEvalResult evalModOp(SgModOp* node,
                                              SingleEvalResult lhsResult,
                                              SingleEvalResult rhsResult,
-                                             EState estate, EvalMode mode=MODE_VALUE);
+                                             EStateRef estate, EvalMode mode=MODE_VALUE);
     SingleEvalResult evalBitwiseAndOp(SgBitAndOp* node,
                                                     SingleEvalResult lhsResult,
                                                     SingleEvalResult rhsResult,
-                                                    EState estate, EvalMode mode=MODE_VALUE);
+                                                    EStateRef estate, EvalMode mode=MODE_VALUE);
     SingleEvalResult evalBitwiseOrOp(SgBitOrOp* node,
                                                    SingleEvalResult lhsResult,
                                                    SingleEvalResult rhsResult,
-                                                   EState estate, EvalMode mode=MODE_VALUE);
+                                                   EStateRef estate, EvalMode mode=MODE_VALUE);
     SingleEvalResult evalBitwiseXorOp(SgBitXorOp* node,
                                                     SingleEvalResult lhsResult,
                                                     SingleEvalResult rhsResult,
-                                                    EState estate, EvalMode mode=MODE_VALUE);
-
+                                                    EStateRef estate, EvalMode mode=MODE_VALUE);
+    SingleEvalResult evalBitwiseComplementOp(SgBitComplementOp* node,
+                                                           SingleEvalResult operandResult,
+                                                           EStateRef estate, EvalMode mode=MODE_VALUE);
     SingleEvalResult evalGreaterOrEqualOp(SgGreaterOrEqualOp* node,
                                                         SingleEvalResult lhsResult,
                                                         SingleEvalResult rhsResult,
-                                                        EState estate, EvalMode mode=MODE_VALUE);
+                                                        EStateRef estate, EvalMode mode=MODE_VALUE);
     SingleEvalResult evalGreaterThanOp(SgGreaterThanOp* node,
                                                      SingleEvalResult lhsResult,
                                                      SingleEvalResult rhsResult,
-                                                     EState estate, EvalMode mode=MODE_VALUE);
+                                                     EStateRef estate, EvalMode mode=MODE_VALUE);
     SingleEvalResult evalLessOrEqualOp(SgLessOrEqualOp* node,
                                                      SingleEvalResult lhsResult,
                                                      SingleEvalResult rhsResult,
-                                                     EState estate, EvalMode mode=MODE_VALUE);
+                                                     EStateRef estate, EvalMode mode=MODE_VALUE);
     SingleEvalResult evalLessThanOp(SgLessThanOp* node,
                                                   SingleEvalResult lhsResult,
                                                   SingleEvalResult rhsResult,
-                                                  EState estate, EvalMode mode=MODE_VALUE);
+                                                  EStateRef estate, EvalMode mode=MODE_VALUE);
     SingleEvalResult evalBitwiseShiftLeftOp(SgLshiftOp* node,
                                                           SingleEvalResult lhsResult,
                                                           SingleEvalResult rhsResult,
-                                                          EState estate, EvalMode mode=MODE_VALUE);
+                                                          EStateRef estate, EvalMode mode=MODE_VALUE);
     SingleEvalResult evalBitwiseShiftRightOp(SgRshiftOp* node,
                                                            SingleEvalResult lhsResult,
                                                            SingleEvalResult rhsResult,
-                                                           EState estate, EvalMode mode=MODE_VALUE);
-
-    SingleEvalResult evalAssignOp(SgAssignOp* node,
-                 SingleEvalResult lhsResult,
-                 SingleEvalResult rhsResult,
-                 Label targetLabel, EState estate, EvalMode mode);
-    std::list<EState> evalAssignOp3(SgAssignOp* node, Label targetLabel, EStatePtr estate);
+                                                           EStateRef estate, EvalMode mode=MODE_VALUE);
 
     SingleEvalResult evalArrayReferenceOp(SgPntrArrRefExp* node,
                                                         SingleEvalResult lhsResult,
                                                         SingleEvalResult rhsResult,
-                                                        EState estate, EvalMode mode=MODE_VALUE);
+                                                        EStateRef estate, EvalMode mode=MODE_VALUE);
     SingleEvalResult evalCommaOp(SgCommaOpExp* node,
                                                         SingleEvalResult lhsResult,
                                                         SingleEvalResult rhsResult,
-                                                        EState estate, EvalMode mode=MODE_VALUE);
+                                                        EStateRef estate, EvalMode mode=MODE_VALUE);
 
     SingleEvalResult evalNotOp(SgNotOp* node,
                                              SingleEvalResult operandResult,
-                                             EState estate, EvalMode mode=MODE_VALUE);
+                                             EStateRef estate, EvalMode mode=MODE_VALUE);
     SingleEvalResult evalUnaryMinusOp(SgMinusOp* node,
                                                     SingleEvalResult operandResult,
-                                                    EState estate, EvalMode mode=MODE_VALUE);
+                                                    EStateRef estate, EvalMode mode=MODE_VALUE);
     SingleEvalResult evalArrowOp(SgArrowExp* node,
                                                SingleEvalResult lhsResult,
                                                SingleEvalResult rhsResult,
-                                               EState estate, EvalMode mode=MODE_VALUE);
+                                               EStateRef estate, EvalMode mode=MODE_VALUE);
     SingleEvalResult evalDotOp(SgDotExp* node,
                                              SingleEvalResult lhsResult,
                                              SingleEvalResult rhsResult,
-                                             EState estate, EvalMode mode=MODE_VALUE);
+                                             EStateRef estate, EvalMode mode=MODE_VALUE);
     SingleEvalResult evalCastOp(SgCastExp* node,
                                               SingleEvalResult operandResult,
-                                              EState estate, EvalMode mode=MODE_VALUE);
+                                              EStateRef estate, EvalMode mode=MODE_VALUE);
     SingleEvalResult evalDereferenceOp(SgPointerDerefExp* node,
                                                      SingleEvalResult operandResult,
-                                                     EState estate, EvalMode mode=MODE_VALUE);
+                                                     EStateRef estate, EvalMode mode=MODE_VALUE);
     SingleEvalResult semanticEvalDereferenceOp(SingleEvalResult operandResult,
-                                                             EState estate, EvalMode mode=MODE_VALUE);
+                                                             EStateRef estate, EvalMode mode=MODE_VALUE);
     SingleEvalResult evalAddressOfOp(SgAddressOfOp* node,
                                                    SingleEvalResult operandResult,
-                                                   EState estate, EvalMode mode=MODE_VALUE);
+                                                   EStateRef estate, EvalMode mode=MODE_VALUE);
+
+    // special case of sizeof operator (operates on types and types of expressions)
+    SingleEvalResult evalSizeofOp(SgSizeOfOp* node,
+                                                EStateRef estate, EvalMode mode=MODE_VALUE);
+
+    // state modifying operators
+    SingleEvalResult evalAssignOp(SgAssignOp* node,
+                 SingleEvalResult lhsResult,
+                 SingleEvalResult rhsResult,
+                 Label targetLabel, EState estate, EvalMode mode);
+    std::list<EStatePtr> evalAssignOp3(SgAssignOp* node, Label targetLabel, EStatePtr estate);
+
     SingleEvalResult evalPreComputationOp(EState estate, AbstractValue address, AbstractValue change);
     SingleEvalResult evalPreIncrementOp(SgPlusPlusOp* node,
                   SingleEvalResult operandResult,
@@ -477,13 +485,6 @@ namespace CodeThorn {
     SingleEvalResult evalPlusPlusOp(SgPlusPlusOp* node,
                                                   SingleEvalResult operandResult,
                                                   EState estate, EvalMode mode=MODE_VALUE);
-    SingleEvalResult evalBitwiseComplementOp(SgBitComplementOp* node,
-                                                           SingleEvalResult operandResult,
-                                                           EState estate, EvalMode mode=MODE_VALUE);
-
-    // special case of sizeof operator (operates on types and types of expressions)
-    SingleEvalResult evalSizeofOp(SgSizeOfOp* node,
-                                                EState estate, EvalMode mode=MODE_VALUE);
 
     SingleEvalResult evalLValuePntrArrRefExp(SgPntrArrRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
     SingleEvalResult evalLValueVarRefExp(SgVarRefExp* node, EState estate, EvalMode mode=MODE_VALUE);
@@ -509,7 +510,7 @@ namespace CodeThorn {
     // outdated function, to be eliminated
     int computeNumberOfElements(SgVariableDeclaration* decl);
 
-    void printLoggerWarning(EState& estate);
+    void printLoggerWarning(EStateRef estate);
     void initViolatingLocations();
     VariableIdMappingExtended* _variableIdMapping=nullptr;
     std::vector<ProgramLocationsReport> _violatingLocations;

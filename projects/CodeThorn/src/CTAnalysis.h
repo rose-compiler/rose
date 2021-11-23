@@ -347,23 +347,29 @@ namespace CodeThorn {
 
     PStatePtr processNew(PState& s);
     PStatePtr processNewOrExisting(PState& s);
-    EStatePtr processNew(EState& s);
-    EStatePtr processNewOrExisting(EState& s);
-    //EStatePtr processCompleteNewOrExisting(EStatePtr es);
+
+    EStatePtr processNew(EStateRef s);
+    EStatePtr processNewOrExisting(EStateRef s);
+    EStateSet::ProcessingResult process(EStateRef s);
+
+    EStatePtr processNew(EStatePtr s);
+    EStatePtr processNewOrExisting(EStatePtr s);
+    EStateSet::ProcessingResult process(EStatePtr s);
+
+    
     void topifyVariable(PState& pstate, AbstractValue varId);
     bool isTopified(EState& s);
-    EStateSet::ProcessingResult process(EState& s);
 
     void recordTransition(EStatePtr sourceEState, Edge e, EStatePtr targetEState);
 
     void set_finished(std::vector<bool>& v, bool val);
     bool all_false(std::vector<bool>& v);
 
-    std::list<EState> transferEdgeEState(Edge edge, EStatePtr estate);
+    std::list<EStatePtr> transferEdgeEState(Edge edge, EStatePtr estate);
 
     // forwarding functions for EStateTransferFunctions (backward compatibility)
-    std::list<EState> elistify();
-    std::list<EState> elistify(EState res);
+    std::list<EStatePtr> elistify();
+    std::list<EStatePtr> elistify(EState res);
 
     std::set<std::string> variableIdsToVariableNames(CodeThorn::VariableIdSet);
 

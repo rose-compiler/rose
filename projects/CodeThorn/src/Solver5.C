@@ -102,14 +102,14 @@ void Solver5::run() {
         //cout << "DEBUG: out-edgeSet size:"<<edgeSet.size()<<endl;
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
           Edge e=*i;
-          list<EState> newEStateList;
-          newEStateList=_analyzer->transferEdgeEState(e,currentEStatePtr);
-          for(list<EState>::iterator nesListIter=newEStateList.begin();
+          list<EStatePtr> newEStateList=_analyzer->transferEdgeEState(e,currentEStatePtr);
+          for(list<EStatePtr>::iterator nesListIter=newEStateList.begin();
               nesListIter!=newEStateList.end();
               ++nesListIter) {
             // newEstate is passed by value (not created yet)
-            EState newEState=*nesListIter;
-            ROSE_ASSERT(newEState.label()!=Labeler::NO_LABEL);
+            //EState newEState=*nesListIter;
+            EStatePtr newEStatePtr0=*nesListIter;
+            ROSE_ASSERT(newEStatePtr0->label()!=Labeler::NO_LABEL);
             if(_analyzer->getOptionsRef().stgTraceFileName.size()>0) {
               std::ofstream fout;
               // _csv_stg_trace_filename is the member-variable of analyzer
@@ -121,16 +121,20 @@ void Solver5::run() {
                 string sourceString=_analyzer->getCFAnalyzer()->getLabeler()->getNode(currentEStatePtr->label())->unparseToString().substr(0,40);
                 if(sourceString.size()==60) sourceString+="...";
                 fout<<"\n==>"<<"TRANSFER:"<<sourceString;
-                fout<<"==>\n"<<"ESTATE-OUT:"<<newEState.toString(_analyzer->getVariableIdMapping());
+                fout<<"==>\n"<<"ESTATE-OUT:"<<newEStatePtr0->toString(_analyzer->getVariableIdMapping());
                 fout<<endl;
                 fout<<endl;
                 fout.close();
               }
             }
             
-            if((!_analyzer->isFailedAssertEState(&newEState)&&!_analyzer->isVerificationErrorEState(&newEState))) {
-              HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState);
+            if((!_analyzer->isFailedAssertEState(newEStatePtr0)&&!_analyzer->isVerificationErrorEState(newEStatePtr0))) {
+              HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEStatePtr0);
               EStatePtr newEStatePtr=const_cast<EStatePtr>(pres.second);
+              if(newEStatePtr!=newEStatePtr0) {
+                //cout<<"DEBUG: deleting temporary solver 5 state."<<endl;
+                delete newEStatePtr0;
+              }
               if(pres.first==true) {
                 int abstractionMode=_analyzer->getAbstractionMode();
                 switch(abstractionMode) {
@@ -200,13 +204,12 @@ void Solver5::run() {
               }
               _analyzer->recordTransition(currentEStatePtr,e,newEStatePtr);
             }
-            if(((_analyzer->isFailedAssertEState(&newEState))||_analyzer->isVerificationErrorEState(&newEState))) {
+            if(((_analyzer->isFailedAssertEState(newEStatePtr0))||_analyzer->isVerificationErrorEState(newEStatePtr0))) {
               // failed-assert end-state: do not add to work list but do add it to the transition graph
-              EStatePtr newEStatePtr;
-              newEStatePtr=_analyzer->processNewOrExisting(newEState);
+              EStatePtr newEStatePtr=_analyzer->processNewOrExisting(newEStatePtr0);
               _analyzer->recordTransition(currentEStatePtr,e,newEStatePtr);
 
-              if(_analyzer->isVerificationErrorEState(&newEState)) {
+              if(_analyzer->isVerificationErrorEState(newEStatePtr)) {
 #pragma omp critical
                 {
                   //SAWYER_MESG(logger[TRACE]) <<"STATUS: detected verification error state ... terminating early"<<endl;
@@ -215,7 +218,7 @@ void Solver5::run() {
 		  _analyzer->_firstAssertionOccurences.push_back(pair<int, EStatePtr>(0, newEStatePtr));
                   terminateEarly=true;
                 }
-              } else if(_analyzer->isFailedAssertEState(&newEState)) {
+              } else if(_analyzer->isFailedAssertEState(newEStatePtr0)) {
                 // record failed assert
                 int assertCode;
                 if(_analyzer->getOptionsRef().rers.rersBinary) {
