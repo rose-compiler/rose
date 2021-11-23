@@ -1,5 +1,12 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 
+# noinst_PROGRAMS = multifileLocationConsitancy
+# multifileLocationConsitancy_SOURCES  = multifileLocationConsitancy.C
+# multifileLocationConsitancy_CPPFLAGS = $(ROSE_INCLUDES)
+# multifileLocationConsitancy_LDFLAGS  = $(ROSE_RPATHS)
+# multifileLocationConsitancy_LDADD    = $(ROSE_SEPARATE_LIBS)
+
+
 if ROSE_USING_ALTERNATE_BACKEND_C_COMPILER
 # TOO (2/10/11): set the correct linker and linker-flags for the alternate
 # backend C compiler.
@@ -619,7 +626,16 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2021_06.c \
      test2021_07.c \
      test2021_08.c \
-     test2021_09.c 
+     test2021_09.c \
+     test2021_10.c \
+     test2021_11.c \
+     test2021_12.c \
+     test2021_13.c \
+     test2021_14.c \
+     test2021_15.c \
+     test2021_16.c \
+     test2021_17.c \
+     test2021_18.c 
 
 
 TESTCODE_CURRENTLY_FAILING = \
@@ -1255,6 +1271,14 @@ check-pthread.passed: needs_reentrant.c $(TEST_TRANSLATOR)
 		CMD="$(TEST_TRANSLATOR) -pthread -c $(srcdir)/needs_reentrant.c"	\
 		USE_SUBDIR=no							\
 		$(top_srcdir)/scripts/test_exit_status $@
+
+# DQ (11/11/21): Added test for bug identified by Jim Leek and Markus.
+# testMultifileLocationConsitancy: multifileLocationConsitancy
+#	./multifileLocationConsitancy -DSKIP_ROSE_BUILTIN_DECLARATIONS -I$(srcdir)/anon_reproducer/base $(srcdir)/anon_reproducer/base/file12.c $(srcdir)/anon_reproducer/base/file15.c $(srcdir)/anon_reproducer/base/file20.c $(srcdir)/anon_reproducer/base/file21.c 
+##	./multifileLocationConsitancy -DSKIP_ROSE_BUILTIN_DECLARATIONS -I$(srcdir)/anon_reproducer/base $(srcdir)/anon_reproducer/base/file12.c $(srcdir)/anon_reproducer/base/file15.c
+#
+#testAnonymousClasses: multifileLocationConsitancy
+#	./multifileLocationConsitancy -DSKIP_ROSE_BUILTIN_DECLARATIONS -I$(srcdir)/anon_reproducer/base $(srcdir)/anon_reproducer/base/file12.c
 
 print:
 	@echo "Output Makefile variables:"
