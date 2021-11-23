@@ -1221,7 +1221,7 @@ EStateSet::ProcessingResult CodeThorn::CTAnalysis::process(EState& estate) {
   return estateSet.process(estate);
 }
 EStateSet::ProcessingResult CodeThorn::CTAnalysis::process(EState* estate) {
-  return estateSet.process(*estate);
+  return estateSet.process(estate);
 }
 
 LabelSet CodeThorn::CTAnalysis::functionEntryLabels() {
