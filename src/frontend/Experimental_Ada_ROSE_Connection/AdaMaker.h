@@ -695,6 +695,9 @@ namespace Ada_ROSE_Translation
 
   template <>
   long double convAdaLiteral<long double>(const char* img);
+
+  template <>
+  char convAdaLiteral<char>(const char* img);
   /// \}
 
 
