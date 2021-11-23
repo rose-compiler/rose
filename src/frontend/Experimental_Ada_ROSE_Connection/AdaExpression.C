@@ -555,13 +555,7 @@ namespace
       void handle(SgAdaGenericDecl& n)         { res = &mkAdaUnitRefExp(n); }
       void handle(SgAdaGenericInstanceDecl& n) { res = &mkAdaUnitRefExp(n); }
       void handle(SgAdaPackageSpecDecl& n)     { res = &mkAdaUnitRefExp(n); }
-
-      void handle(SgAdaTaskTypeDecl& n)
-      {
-        SgAdaTaskType& ty = mkAdaTaskType(n);
-
-        res = sb::buildTypeExpression(&ty);
-      }
+      void handle(SgAdaTaskTypeDecl& n)        { res = sb::buildTypeExpression(n.get_type()); }
 
     private:
       AstContext ctx;
