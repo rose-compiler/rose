@@ -365,11 +365,11 @@ namespace CodeThorn {
     void set_finished(std::vector<bool>& v, bool val);
     bool all_false(std::vector<bool>& v);
 
-    std::list<EState> transferEdgeEState(Edge edge, EStatePtr estate);
+    std::list<EStatePtr> transferEdgeEState(Edge edge, EStatePtr estate);
 
     // forwarding functions for EStateTransferFunctions (backward compatibility)
-    std::list<EState> elistify();
-    std::list<EState> elistify(EState res);
+    std::list<EStatePtr> elistify();
+    std::list<EStatePtr> elistify(EState res);
 
     std::set<std::string> variableIdsToVariableNames(CodeThorn::VariableIdSet);
 

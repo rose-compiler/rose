@@ -273,14 +273,13 @@ CodeThorn::CTAnalysis::SubSolverResultType CodeThorn::CTAnalysis::subSolver(ESta
       Flow edgeSet=getFlow()->outEdges(currentEStatePtr->label());
       for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
         Edge e=*i;
-        list<EState> newEStateList;
+        list<EStatePtr> newEStateList;
         newEStateList=transferEdgeEState(e,currentEStatePtr);
-        for(list<EState>::iterator nesListIter=newEStateList.begin();
+        for(list<EStatePtr>::iterator nesListIter=newEStateList.begin();
             nesListIter!=newEStateList.end();
             ++nesListIter) {
           // newEstate is passed by value (not created yet)
-          EState newEState=*nesListIter;
-          EStatePtr newEStatePtr0=new EState(newEState);
+          EStatePtr newEStatePtr0=*nesListIter;
           ROSE_ASSERT(newEStatePtr0->label()!=Labeler::NO_LABEL);
 
           if((!isFailedAssertEState(newEStatePtr0)&&!isVerificationErrorEState(newEStatePtr0))) {
@@ -316,7 +315,7 @@ CodeThorn::CTAnalysis::SubSolverResultType CodeThorn::CTAnalysis::subSolver(ESta
               recordTransition(currentEStatePtr,e,newEStatePtr);
             }
             deferedWorkList.push_back(newEStatePtr);
-            if(isVerificationErrorEState(&newEState)) {
+            if(isVerificationErrorEState(newEStatePtr)) {
               SAWYER_MESG(logger[TRACE])<<"STATUS: detected verification error state ... terminating early"<<endl;
               // set flag for terminating early
               reachabilityResults.reachable(0);
@@ -324,7 +323,7 @@ CodeThorn::CTAnalysis::SubSolverResultType CodeThorn::CTAnalysis::subSolver(ESta
               EStateWorkList emptyWorkList;
               EStatePtrSet emptyExistingStateSet;
               return make_pair(emptyWorkList,emptyExistingStateSet);
-            } else if(isFailedAssertEState(&newEState)) {
+            } else if(isFailedAssertEState(newEStatePtr)) {
               // record failed assert
               int assertCode;
               if(_ctOpt.rers.rersBinary) {
@@ -1295,7 +1294,7 @@ void CodeThorn::CTAnalysis::recordExternalFunctionCall(SgFunctionCallExp* funCal
   }
 }
 
-list<EState> CodeThorn::CTAnalysis::transferEdgeEState(Edge edge, EStatePtr estate) {
+list<EStatePtr> CodeThorn::CTAnalysis::transferEdgeEState(Edge edge, EStatePtr estate) {
   ROSE_ASSERT(edge.source()==estate->label());
   return _estateTransferFunctions->transferEdgeEState(edge,estate);
 }
@@ -1931,12 +1930,12 @@ LTLOptions& CodeThorn::CTAnalysis::getLtlOptionsRef() {
 //
 // wrapper functions to follow
 //
-std::list<EState> CodeThorn::CTAnalysis::elistify() {
+std::list<EStatePtr> CodeThorn::CTAnalysis::elistify() {
   ROSE_ASSERT(_estateTransferFunctions);
   return _estateTransferFunctions->elistify();
 }
 
-std::list<EState> CodeThorn::CTAnalysis::elistify(EState res) {
+std::list<EStatePtr> CodeThorn::CTAnalysis::elistify(EState res) {
   ROSE_ASSERT(_estateTransferFunctions);
   return _estateTransferFunctions->elistify(res);
 }

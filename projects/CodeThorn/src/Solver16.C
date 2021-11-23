@@ -149,12 +149,12 @@ void Solver16::run() {
         //cout << "DEBUG: out-edgeSet size:"<<edgeSet.size()<<endl;
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
           Edge e=*i;
-          list<EState> newEStateList=_analyzer->transferEdgeEState(e,currentEStatePtr);
-          for(list<EState>::iterator nesListIter=newEStateList.begin();
+          list<EStatePtr> newEStateList=_analyzer->transferEdgeEState(e,currentEStatePtr);
+          for(list<EStatePtr>::iterator nesListIter=newEStateList.begin();
               nesListIter!=newEStateList.end();
               ++nesListIter) {
             // newEstate is passed by value (not created yet)
-            EStatePtr newEStatePtr0=new EState(*nesListIter); // TEMPORARY PTR
+            EStatePtr newEStatePtr0=*nesListIter; // TEMPORARY PTR
             ROSE_ASSERT(newEStatePtr0->label()!=Labeler::NO_LABEL);
             if(_analyzer->getOptionsRef().stgTraceFileName.size()>0) {
               std::ofstream fout;
