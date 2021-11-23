@@ -131,10 +131,6 @@ namespace Ada_ROSE_Translation
   SgTypeTuple&
   mkTypeUnion(SgTypePtrList elemtypes);
 
-  /// creates a type that references a record declaration \ref dcl.
-  SgClassType&
-  mkRecordType(SgClassDeclaration& dcl);
-
   /// creates an enumeration with name \ref name in scope \ref scope.
   SgEnumDeclaration&
   mkEnumDecl(const std::string& name, SgScopeStatement& scope);
@@ -142,14 +138,6 @@ namespace Ada_ROSE_Translation
   /// creates an ada access type with \ref base_type as the type being referenced.
   SgAdaAccessType&
   mkAdaAccessType(SgType *base_type);
-
-  /// creates a task type that references a task type declaration \ref dcl.
-  SgAdaTaskType&
-  mkAdaTaskType(SgAdaTaskTypeDecl& dcl);
-
-  /// creates a Discriminated type that references a Discriminated type declaration \ref dcl.
-  SgAdaDiscriminatedType&
-  mkAdaDiscriminatedType(SgAdaDiscriminatedTypeDecl& dcl);
 
   /// creates an entry type from a function parameter list
   // \todo the representation is incomplete and should be replaced
