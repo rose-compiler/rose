@@ -54,8 +54,8 @@ namespace
 
       void handle(SgType& n)               { set(&n); }
       void handle(SgAdaFormalTypeDecl& n)  { decl(n, [&]() -> SgType* { return n.get_formal_type(); } ); }
-      void handle(SgClassDeclaration& n)   { decl(n, [&]() -> SgType* { return &mkRecordType(n);    } ); }
-      void handle(SgAdaTaskTypeDecl& n)    { decl(n, [&]() -> SgType* { return &mkAdaTaskType(n);   } ); }
+      void handle(SgClassDeclaration& n)   { decl(n, [&]() -> SgType* { return n.get_type();        } ); }
+      void handle(SgAdaTaskTypeDecl& n)    { decl(n, [&]() -> SgType* { return n.get_type();        } ); }
       void handle(SgEnumDeclaration& n)    { decl(n, [&]() -> SgType* { return n.get_type();        } ); }
       void handle(SgTypedefDeclaration& n) { decl(n, [&]() -> SgType* { return n.get_type();        } ); }
 

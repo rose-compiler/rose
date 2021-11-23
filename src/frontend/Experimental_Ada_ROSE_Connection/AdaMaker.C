@@ -241,12 +241,6 @@ mkTypeUnion(SgTypePtrList elemtypes)
   return sgnode;
 }
 
-SgClassType&
-mkRecordType(SgClassDeclaration& dcl)
-{
-  return mkTypeNode<SgClassType>(&dcl);
-}
-
 SgEnumDeclaration&
 mkEnumDecl(const std::string& name, SgScopeStatement& scope)
 {
@@ -259,15 +253,6 @@ mkAdaAccessType(SgType *base_type)
   SgAdaAccessType& sgnode = mkNonSharedTypeNode<SgAdaAccessType>(base_type);
   return sgnode;
 }
-
-SgAdaTaskType&
-mkAdaTaskType(SgAdaTaskTypeDecl& dcl)
-{
-  SgAdaTaskType& sgnode = mkTypeNode<SgAdaTaskType>(&dcl);
-
-  return sgnode;
-}
-
 
 SgFunctionType& mkAdaEntryType(SgFunctionParameterList& lst)
 {
@@ -1486,22 +1471,6 @@ namespace
     return &orig == &actual ? derv : actual;
   }
 
-  struct DeclaredType : sg::DispatchHandler<SgType*>
-  {
-    void handle(SgNode& n, SgNode&) { SG_UNEXPECTED_NODE(n); }
-
-    template <class SageDeclarationStatement>
-    void handle(SageDeclarationStatement& n, SgDeclarationStatement&)
-    {
-      res = n.get_type();
-    }
-
-    template <class SageNode>
-    void handle(SageNode& n)
-    {
-      handle(n, n);
-    }
-  };
 
   /// replaces the original type of \ref declaredDerivedType with \ref declaredDerivedType in \ref funcTy.
   /// returns \ref funcTy to indicate an error.
@@ -1513,7 +1482,7 @@ namespace
     if (baseTypeDecl == nullptr)
       return funcTy;
 
-    SgType*              origTypePtr  = sg::dispatch(DeclaredType{}, baseTypeDecl);
+    SgType*              origTypePtr  = si::getDeclaredType(baseTypeDecl);
     SgType&              originalType = SG_DEREF(origTypePtr);
     SgType&              origRetTy    = SG_DEREF(funcTy.get_return_type());
     SgType&              dervRetTy    = convertType(origRetTy, originalType, declaredDerivedType);
