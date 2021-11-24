@@ -264,6 +264,10 @@ namespace CodeThorn {
     return _returnVarId;
   }
 
+  bool VariableIdMappingExtended::isReturnVariableId(VariableId varId) {
+    return varId==getReturnVariableId();
+  }
+
   CodeThorn::TypeSize VariableIdMappingExtended::registerClassMembers(SgClassType* classType, CodeThorn::TypeSize offset, bool replaceClassDataMembersMode) {
     ROSE_ASSERT(offset==0); // this parameter can be removed
 

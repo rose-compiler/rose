@@ -65,16 +65,15 @@ namespace CodeThorn {
               if(memRegionSize!=-1) {
                 resultList.push_back(ACCESS_DEFINITELY_OUTSIDE_BOUNDS);
               } else {
-                //if(!_variableIdMapping->isReturnVar(memId)) {
-                SAWYER_MESG(CodeThorn::logger[WARN])<<"Memory violation check (unknown region size): "<<address.toString()<<":"
-                  <<" offset:"<<accessOffset
-                  <<" memregionsize:"<<memRegionSize
-                  <<" numelemsize:"<<AbstractValue::_variableIdMapping->getElementSize(memId)
-                  <<" numElems:"<<AbstractValue::_variableIdMapping->getNumberOfElements(memId)
-                  <<endl;
-                //}
+                if(!AbstractValue::_variableIdMapping->isReturnVariableId(memId)) {
+                  SAWYER_MESG(CodeThorn::logger[WARN])<<"Memory violation check (unknown region size): "<<address.toString()<<":"
+                                                      <<" offset:"<<accessOffset
+                                                      <<" memregionsize:"<<memRegionSize
+                                                      <<" numelemsize:"<<AbstractValue::_variableIdMapping->getElementSize(memId)
+                                                      <<" numElems:"<<AbstractValue::_variableIdMapping->getNumberOfElements(memId)
+                                                      <<endl;
+                }
               }
-              
             }
           }
 	} else {
