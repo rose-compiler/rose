@@ -983,8 +983,12 @@ namespace
           logKind("An_Explicit_Dereference");
 
           SgExpression& exp = getExprID(expr.Prefix, ctx);
-          res = sb::buildPointerDerefExp(&exp);
 
+          // prefix calls are incorrectly unparsed as infix (check if data is avail in Asis)
+          // in this case, parenthesis are missing.
+          if (isSgBinaryOp(&exp)) exp.set_need_paren(true);
+
+          res = sb::buildPointerDerefExp(&exp);
           break;
         }
 

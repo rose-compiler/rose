@@ -244,6 +244,12 @@ mkTypeUnion(SgTypePtrList elemtypes)
 SgEnumDeclaration&
 mkEnumDecl(const std::string& name, SgScopeStatement& scope)
 {
+  return SG_DEREF(sb::buildNondefiningEnumDeclaration_nfi(name, &scope));
+}
+
+SgEnumDeclaration&
+mkEnumDefn(const std::string& name, SgScopeStatement& scope)
+{
   return SG_DEREF(sb::buildEnumDeclaration_nfi(name, &scope));
 }
 
