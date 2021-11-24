@@ -17,6 +17,7 @@ namespace Rose {
 
 enum class JovialEnum {
   unknown = 0,
+  define = 98,
   comment = 99
 };
 

@@ -15,12 +15,7 @@
  */
 #include "sage3basic.h"
 #include "unparser.h"
-
-#include <boost/foreach.hpp>
-#define foreach BOOST_FOREACH
-
 #include "sage_support.h"
-
 
 Unparse_Jovial::Unparse_Jovial(Unparser* unp, std::string fname)
    : UnparseLanguageIndependentConstructs(unp,fname)
@@ -302,14 +297,14 @@ Unparse_Jovial::unparseProcDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      curprint("(");
 
      bool print_comma = false;
-     foreach (SgInitializedName* param, in_params) {
+     for (SgInitializedName* param : in_params) {
         if (print_comma) curprint(",");
         curprint(param->get_name());
         print_comma = true;
      }
 
      print_comma = false;
-     foreach (SgInitializedName* param,  out_params) {
+     for (SgInitializedName* param : out_params) {
         if (print_comma) curprint(",");
         else             curprint(":");
         curprint(param->get_name());
@@ -332,7 +327,7 @@ Unparse_Jovial::unparseProcDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
         info.dec_nestingLevel();
      }
      else {
-        foreach(SgDeclarationStatement* decl, param_scope->getDeclarationList()) {
+        for (SgDeclarationStatement* decl : param_scope->getDeclarationList()) {
            if (isSgJovialDirectiveStatement(decl)) {
               unparseStatement(decl, ninfo);
            }
@@ -342,7 +337,7 @@ Unparse_Jovial::unparseProcDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
         curprint_indented("BEGIN\n", info);
 
         info.inc_nestingLevel();
-        foreach(SgInitializedName* arg, args) {
+        for (SgInitializedName* arg : args) {
            SgVariableSymbol* var_sym = SageInterface::lookupVariableSymbolInParentScopes(arg->get_name(), param_scope);
            SgInitializedName* var_init_name = var_sym->get_declaration();
            ASSERT_not_null(var_init_name);
@@ -392,7 +387,7 @@ Unparse_Jovial::unparseNamespaceDefinitionStatement(SgStatement* stmt, SgUnparse
      const SgDeclarationStatementPtrList& declarations = namespace_defn->get_declarations();
 
      info.inc_nestingLevel();
-     foreach(SgStatement* namespace_stmt, declarations)
+     for (SgStatement* namespace_stmt : declarations)
         {
            unparseStatement(namespace_stmt, info);
         }
@@ -422,7 +417,7 @@ Unparse_Jovial::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
 
      info.inc_nestingLevel();
-     foreach(SgStatement* block_stmt, block->get_statements())
+     for (SgStatement* block_stmt : block->get_statements())
         {
            unparseStatement(block_stmt, info);
         }
@@ -857,22 +852,42 @@ Unparse_Jovial::unparseEnumBody(SgEnumDeclaration* enum_decl, SgUnparse_Info& in
    info.inc_nestingLevel();
 
    int n = def_decl->get_enumerators().size();
-   foreach(SgInitializedName* init_name, def_decl->get_enumerators())
-     {
-       std::string name = init_name->get_name().str();
-       name.replace(0, 3, "V(");
-       name.append(")");
+   for (SgInitializedName* init_name : def_decl->get_enumerators()) {
+      std::string name = init_name->get_name().str();
+      name.replace(0, 3, "V(");
+      name.append(")");
 
-       SgAssignInitializer* assign_expr = isSgAssignInitializer(init_name->get_initializer());
-       ASSERT_not_null(assign_expr);
-       SgEnumVal* enum_val = isSgEnumVal(assign_expr->get_operand());
-       ASSERT_not_null(enum_val);
+      SgAssignInitializer* assign_expr = isSgAssignInitializer(init_name->get_initializer());
+      ASSERT_not_null(assign_expr);
+      SgEnumVal* enum_val = isSgEnumVal(assign_expr->get_operand());
+      ASSERT_not_null(enum_val);
 
-       curprint_indented(tostring(enum_val->get_value()), info);
-       curprint(name);
-       if (--n > 0) curprint(",");
-       unp->cur.insert_newline(1);
-     }
+      // unparse comments preceding the expression
+      const AttachedPreprocessingInfoType* preprocInfo = enum_val->get_attachedPreprocessingInfoPtr();
+      if (preprocInfo) {
+        for (PreprocessingInfo* info : *preprocInfo) {
+          if (info->getRelativePosition()  == PreprocessingInfo::before) {
+            curprint(info->getString());
+          }
+        }
+      }
+
+      // unparse enum value name
+      curprint_indented(tostring(enum_val->get_value()), info);
+      curprint(name);
+      if (--n > 0) curprint(",");
+
+      // unparse comments succeeding the expression
+       if (preprocInfo) {
+         for (PreprocessingInfo* info : *preprocInfo) {
+          if (info->getRelativePosition()  == PreprocessingInfo::after) {
+            curprint(info->getString());
+          }
+         }
+       }
+
+      unp->cur.insert_newline(1);
+   }
    info.dec_nestingLevel();
 
    curprint_indented(")", info);
@@ -1025,7 +1040,7 @@ Unparse_Jovial::unparseTableBody(SgClassDefinition* table_def, SgUnparse_Info& i
            curprint_indented("BEGIN\n", info);
 
            info.inc_nestingLevel();
-           foreach(SgDeclarationStatement* item_decl, table_def->get_members())
+           for (SgDeclarationStatement* item_decl : table_def->get_members())
               {
                  if (isSgVariableDeclaration(item_decl))
                     {

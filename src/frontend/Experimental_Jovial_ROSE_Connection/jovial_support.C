@@ -61,11 +61,10 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
 
   // Make system call to run parser and output ATerm parse-tree file
      status = system(commandString.c_str());
-     if (status != 0)
-        {
-           fprintf(stderr, "\nFAILED: in jovial_main(), unable to parse file %s\n\n", filenameWithoutPath.c_str());
-           return status;
-        }
+     if (status != 0) {
+       std::cerr << "\nFAILED: in jovial_main(), unable to parse file " << filenameWithoutPath;
+       return status;
+     }
 
   // Step 2 - Traverse the ATerm parse tree and convert into Sage nodes
   // ------
@@ -82,11 +81,11 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
 
   // Read the ATerm file that was created by the parser
      FILE * file = fopen(aterm_filename.c_str(), "r");
-     if (file == nullptr)
-        {
-           fprintf(stderr, "\nFAILED: in jovial_main(), unable to open file %s\n\n", aterm_filename.c_str());
-           return 1;
-        }
+     if (file == nullptr) {
+       std::cerr << "\nFAILED: in jovial_main(), unable to open file " << aterm_filename;
+       std::cerr << "\n\n";
+       return 1;
+     }
 
      ATerm module_term = ATreadFromTextFile(file);
      fclose(file);
@@ -102,11 +101,11 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
      ATermSupport::ATermToSageJovialTraversal* aterm_traversal;
      aterm_traversal = new ATermSupport::ATermToSageJovialTraversal(sg_source_file);
 
-     if (aterm_traversal->traverse_Module(module_term) != ATtrue)
-        {
-           fprintf(stderr, "\nFAILED: in jovial_main(), unable to traverse ATerm file %s\n\n", aterm_filename.c_str());
-           return 1;
-        }
+     if (aterm_traversal->traverse_Module(module_term) != ATtrue) {
+       std::cerr << "\nFAILED: in jovial_main(), unable to traverse ATerm file " << aterm_filename;
+       std::cerr << "\n\n";
+       return 1;
+     }
 
 #if DEBUG_EXPERIMENTAL_JOVIAL
      std::cout << "SUCCESSFULLY traversed Jovial parse-tree" << "\n\n";
