@@ -1052,6 +1052,7 @@ ATbool ATermToSageJovialTraversal::traverse_StatusConstant(ATerm term, SgEnumDec
    // Begin SageTreeBuilder
       SgEnumVal* enum_val = nullptr;
       sage_tree_builder.Enter(enum_val, enum_name, enum_decl, value);
+      setSourcePosition(enum_val, term);
 
    // End SageTreeBuilder
       sage_tree_builder.Leave(enum_val);
