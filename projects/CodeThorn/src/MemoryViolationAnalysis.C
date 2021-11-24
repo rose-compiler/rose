@@ -31,24 +31,24 @@ namespace CodeThorn {
     recordViolation(violation,lab);
   }
 
-  std::list<MemoryViolationAnalysis::MemoryAccessViolationType> MemoryViolationAnalysis::checkMemoryAddress(AbstractValue& address) {
-    std::list<MemoryViolationAnalysis::MemoryAccessViolationType> resultList;
+  MemoryViolationAnalysis::MemoryAccessViolationSet MemoryViolationAnalysis::checkMemoryAddress(AbstractValue& address) {
+    MemoryViolationAnalysis::MemoryAccessViolationSet resultList;
     // MemoryViolationAnalysis::MemoryAccessViolationType::ACCESS_ERROR;
     // check memLoc w.r.t. AbstractValue::getVariableIdMapping()
     ROSE_ASSERT(AbstractValue::_variableIdMapping);
     if(address.isTop()) {
-      resultList.push_back(ACCESS_POTENTIALLY_NP);
-      resultList.push_back(ACCESS_POTENTIALLY_OUTSIDE_BOUNDS);
+      resultList.insert(ACCESS_POTENTIALLY_NP);
+      resultList.insert(ACCESS_POTENTIALLY_OUTSIDE_BOUNDS);
     } if(address.isBot()) {
-      resultList.push_back(ACCESS_NON_EXISTING);
+      resultList.insert(ACCESS_NON_EXISTING);
     } if(address.isNullPtr()) {
-      resultList.push_back(ACCESS_DEFINITELY_NP);
+      resultList.insert(ACCESS_DEFINITELY_NP);
     } else {
       AbstractValue offset=address.getIndexValue();
       if(offset.isTop()) {
-	resultList.push_back(ACCESS_POTENTIALLY_OUTSIDE_BOUNDS);
+	resultList.insert(ACCESS_POTENTIALLY_OUTSIDE_BOUNDS);
       } else if(offset.isBot()) {
-	resultList.push_back(ACCESS_NON_EXISTING);
+	resultList.insert(ACCESS_NON_EXISTING);
       } else {
 	VariableId memId=address.getVariableId();
 	// this must be the only remaining case
@@ -56,14 +56,14 @@ namespace CodeThorn {
 	  // check array bounds
 	  int memRegionSize=AbstractValue::_variableIdMapping->getTotalSize(memId);
 	  if(memRegionSize==0) {
-	    resultList.push_back(ACCESS_POTENTIALLY_OUTSIDE_BOUNDS); // will become ACCESS_DEFINITELY_OUTSIDE_BOUNDS;
+	    resultList.insert(ACCESS_POTENTIALLY_OUTSIDE_BOUNDS); // will become ACCESS_DEFINITELY_OUTSIDE_BOUNDS;
           } else {
             int accessOffset=offset.getIntValue();
             if(!(accessOffset<0||accessOffset>=memRegionSize)) {
-              resultList.push_back(ACCESS_DEFINITELY_INSIDE_BOUNDS);
+              resultList.insert(ACCESS_DEFINITELY_INSIDE_BOUNDS);
             } else {
               if(memRegionSize!=-1) {
-                resultList.push_back(ACCESS_DEFINITELY_OUTSIDE_BOUNDS);
+                resultList.insert(ACCESS_DEFINITELY_OUTSIDE_BOUNDS);
               } else {
                 if(!AbstractValue::_variableIdMapping->isReturnVariableId(memId)) {
                   SAWYER_MESG(CodeThorn::logger[WARN])<<"Memory violation check (unknown region size): "<<address.toString()<<":"
@@ -77,14 +77,14 @@ namespace CodeThorn {
             }
           }
 	} else {
-	  resultList.push_back(ACCESS_POTENTIALLY_OUTSIDE_BOUNDS);
+	  resultList.insert(ACCESS_POTENTIALLY_OUTSIDE_BOUNDS);
 	}
       }
     }
     return resultList;
   }    
 
-  void MemoryViolationAnalysis::recordViolation(std::list<MemoryAccessViolationType> violationList, Label label) {
+  void MemoryViolationAnalysis::recordViolation(MemoryAccessViolationSet violationList, Label label) {
     ROSE_ASSERT(_estateTransferFunctions);
     for(auto violation : violationList) {
       switch(violation) {
