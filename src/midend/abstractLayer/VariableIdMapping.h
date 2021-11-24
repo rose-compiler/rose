@@ -131,6 +131,7 @@ namespace CodeThorn {
     void registerNewArraySymbol(SgSymbol* sym, TypeSize arraySize);
 
     virtual void toStream(std::ostream& os);
+    std::string toCSVString(VariableId varId);
     void generateDot(std::string filename,SgNode* astRoot);
 
     VariableIdSet getVariableIdSet();
