@@ -544,7 +544,7 @@ namespace
 
           logKind("An_Enumeration_Type_Definition");
 
-          SgEnumDeclaration& sgnode = mkEnumDecl(name, ctx.scope());
+          SgEnumDeclaration& sgnode = mkEnumDefn(name, ctx.scope());
           ElemIdRange        enums = idRange(typenode.Enumeration_Literal_Declarations);
 
           traverseIDs(enums, elemMap(), EnumElementCreator{sgnode, ctx});

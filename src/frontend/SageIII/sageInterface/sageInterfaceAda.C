@@ -1340,13 +1340,14 @@ long double convertRealLiteral(const char* img)
 char convertCharLiteral(const char* img)
 {
   // recognized form: 'l' -> l
-  ADA_ASSERT(img);
+  ASSERT_not_null(img);
 
   const char delimiter = *img;
-  ADA_ASSERT(delimiter == '\'');
+  ROSE_ASSERT(delimiter == '\'');
 
   const char res = img[1];
-  ADA_ASSERT(res && img[2] == '\'');
+  // \todo could we have a null character in quotes?
+  ROSE_ASSERT(res && img[2] == '\'');
   return res;
 }
 

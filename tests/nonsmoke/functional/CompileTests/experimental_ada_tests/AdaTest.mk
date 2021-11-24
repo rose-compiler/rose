@@ -167,6 +167,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   package_renaming_declaration.ads     \
   pkgrename.ads                        \
   procedure_renaming.adb               \
+  private_enum.ads                     \
   representation_clause.ads            \
   representation_clause_2.ads          \
   select_accept.adb                    \
@@ -208,6 +209,7 @@ ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=                \
 
 ROSE_FAILING_ADA_TESTS :=                           \
   all_modes.ads                                     \
+  deref_test.adb                                    \
   delay_until.adb                                   \
   entry_body_declaration.adb                        \
   extension_aggregate.adb                           \

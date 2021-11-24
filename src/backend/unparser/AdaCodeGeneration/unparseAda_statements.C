@@ -1535,21 +1535,37 @@ namespace
 
     void handle(SgEnumDeclaration& n)
     {
-      SgInitializedNamePtrList& lst = n.get_enumerators();
+      const bool                isDefinition = &n == n.get_definingDeclaration();
+      SgInitializedNamePtrList& lst          = n.get_enumerators();
 
       prn("type ");
       prn(n.get_name());
-      prn(" is");
 
-      if (SgType* parentType = n.get_adaParentType())
+      if (!isDefinition)
+      {
+        // unparse as forward declaration
+        const bool requiresPrivate = si::ada::withPrivateDefinition(&n);
+        const bool requiresIs      = requiresPrivate || hasModifiers(n);
+
+        if (requiresIs)
+          prn(" is");
+
+        modifiers(n);
+
+        if (requiresPrivate)
+          prn(" private");
+      }
+      else if (SgType* parentType = n.get_adaParentType())
       {
         // unparse as derived type
+        prn(" is");
         prn(" new");
         type(n, parentType);
       }
       else
       {
         // unparse as normal enum
+        prn(" is");
         prn(" (");
         std::for_each(lst.begin(), lst.end(), AdaEnumeratorUnparser(unparser, info, os));
         prn(")");

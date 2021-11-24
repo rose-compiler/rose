@@ -131,9 +131,14 @@ namespace Ada_ROSE_Translation
   SgTypeTuple&
   mkTypeUnion(SgTypePtrList elemtypes);
 
-  /// creates an enumeration with name \ref name in scope \ref scope.
+  /// creates a forward declaration with name \ref name in scope \ref scope.
   SgEnumDeclaration&
   mkEnumDecl(const std::string& name, SgScopeStatement& scope);
+
+  /// creates an enumeration with name \ref name in scope \ref scope.
+  /// \note uses builder function which looks up the forward declaration if one exists
+  SgEnumDeclaration&
+  mkEnumDefn(const std::string& name, SgScopeStatement& scope);
 
   /// creates an ada access type with \ref base_type as the type being referenced.
   SgAdaAccessType&
