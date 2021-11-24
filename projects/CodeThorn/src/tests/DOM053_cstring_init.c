@@ -1,5 +1,5 @@
 // variants of array initialization with string literals
-//#include <stdio.h>
+#include <stdio.h>
 
 int main() {
   const char a1[]="abc";

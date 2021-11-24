@@ -405,7 +405,7 @@ string Visualizer::transitionGraphWithIOToDot(EStatePtrSet displayedEStates,
 #if 0 // debug only
     if ((*i)->io.isStdInIO() && (*i)->isRersTopified(variableIdMapping)) {
       int inputVal = (*i)->determineUniqueIOValue().getIntValue();
-      cout << "DEBUG: abstract input " << inputVal << " has "<<  outTrans.size() << " successors." << endl;
+      //cout << "DEBUG: abstract input " << inputVal << " has "<<  outTrans.size() << " successors." << endl;
     }
 #endif
     for(TransitionGraph::TransitionPtrSet::iterator j=outTrans.begin();

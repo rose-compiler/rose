@@ -131,6 +131,7 @@ function level3Test {
     testNumbers=`echo {001..048}`
     testNumbers+=" 051 052"
     # 053 is a C code
+    testNumbers+=" 053"
     numWarnExpected=7
     numFailExpected=0
     CT_MODE_OPTIONS="--context-sensitive=yes --normalize-level=2 --interpreter-mode=1 --in-state-string-literals --abstraction-mode=0 --exploration-mode=topologic-sort --shared-pstates=$SHARED_PSTATES"

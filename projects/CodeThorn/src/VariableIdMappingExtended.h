@@ -73,6 +73,7 @@ namespace CodeThorn {
     // temporary variable used for transferring return value of functions
     void registerReturnVariable();
     VariableId getReturnVariableId();
+    bool isReturnVariableId(VariableId);
     
     void addVariableDeclaration(SgVariableDeclaration* decl);
     CodeThorn::TypeSize registerClassMembers(SgClassType* classType, CodeThorn::TypeSize offset, bool replaceClassDataMembers=false);

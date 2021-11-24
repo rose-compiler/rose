@@ -184,6 +184,20 @@ int main( int argc, char * argv[] ) {
     optionallySetRersMapping(ctOpt,ltlOpt,analyzer);
     tc.stopTimer();
 
+    if(ctOpt.generateReports) {
+      // set fixed set of analyses
+      CodeThornOptions::AnalysisListType
+        analysisList={
+                      {CodeThorn::ANALYSIS_NULL_POINTER,"null-pointer"},
+                      {CodeThorn::ANALYSIS_OUT_OF_BOUNDS,"out-of-bounds"},
+                      {CodeThorn::ANALYSIS_UNINITIALIZED,"uninitialized"},
+                      //{CodeThorn::ANALYSIS_DEAD_CODE,"dead-code"},
+                      //{CodeThorn::ANALYSIS_OPAQUE_PREDICATE,"opaque-predicate"}
+      };
+      ctOpt.setAnalysisList(analysisList);
+      if(ctOpt.status) cout<<"STATUS: codethorn: Number of activated analyses: "<<ctOpt.analysisList().size()<<endl;
+    }
+    
     SgProject* project=runRoseFrontEnd(argc,argv,ctOpt,tc);
     if(ctOpt.status) cout << "STATUS: Parsing and creating AST finished."<<endl;
     optionallyRunRoseAstChecks(ctOpt, project);
@@ -254,7 +268,7 @@ int main( int argc, char * argv[] ) {
     if(ctOpt.constantConditionAnalysisFileName.size()>0) {
       analyzer->getEStateTransferFunctions()->registerReadWriteListener(new ConstantConditionAnalysis(),"constant-condition");
     }
-    if(ctOpt.nullPointerAnalysis||ctOpt.generateReports) {
+    if(ctOpt.generateReports) {
       auto memViolationAnalysis=new MemoryViolationAnalysis();
       memViolationAnalysis->setEStateTransferFunctions(analyzer->getEStateTransferFunctions()); // temporary until reports are moved
       analyzer->getEStateTransferFunctions()->registerReadWriteListener(memViolationAnalysis,"memory-violation");
