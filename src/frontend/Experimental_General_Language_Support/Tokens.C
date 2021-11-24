@@ -21,6 +21,11 @@ TokenStream::TokenStream(const std::string &filename) {
     std::getline(ifs, line);
     if (line.length() == 0) break;
     for (std::stringstream s{line}; getline(s, word, ','); ) {
+      // There may be commas in the lexeme string (last element), join them
+      if (row.size() == 6) {
+        word = row.back() + "," + word;
+        row.pop_back();
+      }
       row.emplace_back(word);
     }
     if (row.size() == 6) {
