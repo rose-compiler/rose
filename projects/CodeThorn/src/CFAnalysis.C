@@ -1692,7 +1692,7 @@ FunctionCallTargetSet CFAnalysis::determineFunctionDefinition4(SgFunctionCallExp
       SAWYER_MESG(logger[INFO])<< "RESOLVED to "<<res.size()<<" targets"<<endl;
     }
   } else {
-    SAWYER_MESG(logger[INFO]) << "NOT RESOLVED."<<endl;
+    SAWYER_MESG(logger[INFO]) << "EXTERNAL."<<endl;
   }
   return res;
 }
@@ -1710,7 +1710,7 @@ FunctionCallTargetSet CFAnalysis::determineFunctionDefinition5(Label lbl, SgLoca
       SAWYER_MESG(logger[TRACE])<< "RESOLVED to "<<res.size()<<" targets"<<endl;
     }
   } else {
-    SAWYER_MESG(logger[TRACE]) << "NOT RESOLVED."<<endl;
+    SAWYER_MESG(logger[TRACE]) << "EXTERNAL."<<endl;
   }
 #endif
   return res;

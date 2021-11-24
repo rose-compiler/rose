@@ -726,9 +726,18 @@ namespace CodeThorn {
             }
             if(sym->get_symbol_basis()!=0) {
               registerNewSymbol(sym);
+              
               VariableId varId=variableId(sym);
               getVariableIdInfoPtr(varId)->variableScope=VS_FUNPARAM; // formal parameter declaration
-              setVarIdInfoFromType(varId);
+              getVariableIdInfoPtr(varId)->setTypeFromInitializedName(initName);
+              SgType* type=getVariableIdInfoPtr(varId)->getType();
+              if(type) {
+                cout<<"DEBUG: setting function parameter type:"<<getVariableIdInfoPtr(varId)->getType()->unparseToString()<<endl;
+                setVarIdInfoFromType(varId);
+                cout<<"DEBUG: function param: "<<toCSVString(varId)<<endl;
+              } else {
+                cout<<"DEBUG: type=0"<<endl;
+              }
               numFunctionParams++;
             } else {
               appendErrorReportLine(SgNodeHelper::locationToString(funDef)+": no symbol basis found for function parameter nr "+std::to_string(paramNr)+" (starting at 1)");
