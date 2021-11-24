@@ -60,6 +60,24 @@ SageTreeBuilder::attachComment(SgLocatedNode* node, const ATermSupport::PosInfo 
       tokens_->consumeNextToken();
     }
   }
+  else if (SgEnumVal* expr = isSgEnumVal(node)) {
+    boost::optional<const Token&> token{};
+    // try only attaching comments from same line
+    while ((token = tokens_->getNextToken()) && token->getStartLine() == pos.getStartLine()) {
+      if (token->getTokenType() == JovialEnum::comment) {
+        if (token->getEndCol() < pos.getStartCol()) {
+          // attach comment before expression
+          SI::attachComment(node, token->getLexeme(),
+                            PreprocessingInfo::before, PreprocessingInfo::JovialStyleComment);
+        } else {
+          // attach comment after expression
+          SI::attachComment(node, token->getLexeme(),
+                            PreprocessingInfo::after, PreprocessingInfo::JovialStyleComment);
+        }
+      }
+      tokens_->consumeNextToken();
+    }
+  }
 }
 
 void
