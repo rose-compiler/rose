@@ -1881,11 +1881,21 @@ namespace CodeThorn {
   }
 
   list<EStatePtr> EStateTransferFunctions::transferEdgeEState(Edge edge, EStatePtr estate) {
-    //EStatePtr estate=estate->deepClone(); // prepare for in-place modification of estate
-    pair<TransferFunctionCode,SgNode*> tfCodeNodePair=determineTransferFunctionCode(edge,estate);
+    EStatePtr estateClone=estate->clone(); // prepare for in-place modification of estate
+    pair<TransferFunctionCode,SgNode*> tfCodeNodePair=determineTransferFunctionCode(edge,estateClone);
     EStateTransferFunctions::TransferFunctionCode tfCode=tfCodeNodePair.first;
     SgNode* nextNodeToAnalyze=tfCodeNodePair.second;
-    return transferEdgeEStateDispatch(tfCode,nextNodeToAnalyze,edge,estate);
+    list<EStatePtr> newEStateList=transferEdgeEStateDispatch(tfCode,nextNodeToAnalyze,edge,estateClone);
+    // delete cloned state if another state has been created and it is not used in list
+    // the list has either length 0 or 1.
+    bool reused=false;
+    for(auto es : newEStateList) {
+      if(estate == es)
+        reused=true;
+    }
+    if(!reused)
+      delete estateClone;
+    return newEStateList;
   }
 
   std::pair<EStateTransferFunctions::TransferFunctionCode,SgNode*> EStateTransferFunctions::determineTransferFunctionCode(Edge edge, EStatePtr estate) {
