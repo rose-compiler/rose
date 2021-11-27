@@ -169,6 +169,8 @@ int main( int argc, char * argv[] ) {
 
     tc.startTimer();
     CodeThornOptions ctOpt;
+    ctOpt.sharedPStates=false; // experimental
+    
     LTLOptions ltlOpt; // to be moved into separate tool
     ParProOptions parProOpt; // options only available in parprothorn
     parseCommandLine(argc, argv, logger,CodeThorn::CodeThornLib::getCodeThornLibraryVersionNumber(),ctOpt,ltlOpt,parProOpt);
