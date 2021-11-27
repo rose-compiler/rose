@@ -674,6 +674,17 @@ namespace CodeThorn {
     CallString cs=currentEState.callString;
     PState currentPState=*currentEState.pstate();
 
+    // handle special case for readwrite listener
+#pragma omp critical(VIOLATIONRECORDING)
+    {
+      if(numberOfReadWriteListeners()>0) {
+        for(auto p : _readWriteListenerMap) {
+          ReadWriteListener* readWriteListener=p.second;
+          readWriteListener->functionCallExternal(edge,estate);
+        }
+      }
+    }
+
     // handle the edge as outgoing edge
     SgNode* nextNodeToAnalyze1=_analyzer->getCFAnalyzer()->getNode(edge.source());
     ROSE_ASSERT(nextNodeToAnalyze1);
@@ -1870,7 +1881,7 @@ namespace CodeThorn {
   }
 
   list<EStatePtr> EStateTransferFunctions::transferEdgeEState(Edge edge, EStatePtr estate) {
-    // TODO: create EState copy and pass through
+    //EStatePtr estate=estate->deepClone(); // prepare for in-place modification of estate
     pair<TransferFunctionCode,SgNode*> tfCodeNodePair=determineTransferFunctionCode(edge,estate);
     EStateTransferFunctions::TransferFunctionCode tfCode=tfCodeNodePair.first;
     SgNode* nextNodeToAnalyze=tfCodeNodePair.second;
@@ -1880,9 +1891,6 @@ namespace CodeThorn {
   std::pair<EStateTransferFunctions::TransferFunctionCode,SgNode*> EStateTransferFunctions::determineTransferFunctionCode(Edge edge, EStatePtr estate) {
     ROSE_ASSERT(edge.source()==estate->label());
     ROSE_ASSERT(estate->pstate());
-    EState currentEState=*estate;
-    ROSE_ASSERT(currentEState.pstate());
-    PState currentPState=*currentEState.pstate();
     // handle the edge as outgoing edge
     ROSE_ASSERT(_analyzer->getCFAnalyzer());
     SgNode* nextNodeToAnalyze=_analyzer->getCFAnalyzer()->getNode(edge.source());
@@ -1896,15 +1904,6 @@ namespace CodeThorn {
     } else if(edge.isType(EDGE_CALL)) {
       tfCode=TransferFunctionCode::FunctionCall;
     } else if(edge.isType(EDGE_EXTERNAL)) {
-#pragma omp critical(VIOLATIONRECORDING)
-      {
-        if(numberOfReadWriteListeners()>0) {
-          for(auto p : _readWriteListenerMap) {
-            ReadWriteListener* readWriteListener=p.second;
-            readWriteListener->functionCallExternal(edge,estate);
-          }
-        }
-      }
       tfCode=TransferFunctionCode::FunctionCallExternal;
     } else if(isSgReturnStmt(nextNodeToAnalyze) && !SgNodeHelper::Pattern::matchReturnStmtFunctionCallExp(nextNodeToAnalyze)) {
       // "return x;": adds returnVar=eval() [but not for "return f();"]
@@ -1929,11 +1928,10 @@ namespace CodeThorn {
       // GNU extension
       tfCode=TransferFunctionCode::GnuExtensionStmtExpr;
     } else if(SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze)) {
-      // TODO: this case should be handled as part of transferExprStmt (or ExpressionRoot)
-      //cout<<"DEBUG: function call"<<(isCondition?" (inside condition) ":"")<<nextNodeToAnalyze->unparseToString()<<endl;
       // this case cannot happen for normalized code
       fatalErrorExit(funCall,"Function call detected not represented in ICFG. Normalization required.");
     } else {
+      // all other cases identity function
       ROSE_ASSERT(!edge.isType(EDGE_EXTERNAL));
       ROSE_ASSERT(!edge.isType(EDGE_CALLRETURN));
       tfCode=TransferFunctionCode::Identity;

@@ -95,20 +95,21 @@ namespace CodeThorn {
 
     bool isApproximatedBy(EStatePtr es1, EStatePtr es2);
     EState combine(EStatePtr es1, EStatePtr es2);
-    std::string transferFunctionCodeToString(TransferFunctionCode tfCode);
 
     /* determines transfer function code from CFG and AST-matching and calls transferEdgeEStateDispatch
        ultimately this function can be used to operate on its own IR */
     std::list<EStatePtr> transferEdgeEState(Edge edge, EStatePtr estate);
 
-    // determines transfer function code based on ICFG and AST patterns
-    std::pair<TransferFunctionCode,SgNode*> determineTransferFunctionCode(Edge edge, EStatePtr estate);
-    // calls transfer function based on TransferFunctionCode. No additional tests are performed.
-    std::list<EStatePtr> transferEdgeEStateDispatch(TransferFunctionCode tfCode, SgNode* node, Edge edge, EStatePtr estate);
     void printTransferFunctionInfo(TransferFunctionCode tfCode, SgNode* node, Edge edge, EStatePtr estate);
     void printEvaluateExpressionInfo(SgNode* node,EState& estate, EvalMode mode);
 
   protected:
+    std::string transferFunctionCodeToString(TransferFunctionCode tfCode);
+    // determines transfer function code based on ICFG and AST patterns
+    std::pair<TransferFunctionCode,SgNode*> determineTransferFunctionCode(Edge edge, EStatePtr estate);
+    // calls transfer function based on TransferFunctionCode. No additional tests are performed.
+    std::list<EStatePtr> transferEdgeEStateDispatch(TransferFunctionCode tfCode, SgNode* node, Edge edge, EStatePtr estate);
+
     void fatalErrorExit(SgNode* node, std::string errorMessage);
     void warning(SgNode* node, std::string errorMessage);
     void transferFunctionEntryPrintStatus(Edge edge, EStatePtr estate, std::string fileName, std::string functionName);
