@@ -94,6 +94,7 @@ namespace CodeThorn {
     EState createEStateInternal(Label label, PState pstate);
 
     EStatePtr reInitEState(EStatePtr estate, Label label, CallString cs, PStatePtr pstate, InputOutput io);
+    EStatePtr reInitEState(EStatePtr estate, Label label, CallString cs, PStatePtr pstate);
     
     bool isApproximatedBy(EStatePtr es1, EStatePtr es2);
     EState combine(EStatePtr es1, EStatePtr es2);
@@ -103,7 +104,7 @@ namespace CodeThorn {
     std::list<EStatePtr> transferEdgeEState(Edge edge, EStatePtr estate);
 
     void printTransferFunctionInfo(TransferFunctionCode tfCode, SgNode* node, Edge edge, EStatePtr estate);
-    void printEvaluateExpressionInfo(SgNode* node,EState& estate, EvalMode mode);
+    void printEvaluateExpressionInfo(SgNode* node,EStatePtr estate, EvalMode mode);
 
   protected:
     std::string transferFunctionCodeToString(TransferFunctionCode tfCode);
@@ -153,17 +154,15 @@ namespace CodeThorn {
 
   public:
     static std::list<EStatePtr> elistify();
-    static std::list<EStatePtr> elistify(EState res);
+    static std::list<EStatePtr> elistify(EState res); // allocates new state
+    static std::list<EStatePtr> elistify(EStatePtr res);
 
     // logger facility
     static Sawyer::Message::Facility logger;
 
-    // used to  create a new estate (shallow copy, PState copied as pointer)
-    EState cloneEState(EStatePtr estate);
-
     // used by transferAssignOp to seperate evaluation from memory updates (i.e. state modifications)
     typedef std::pair<AbstractValue,AbstractValue> MemoryUpdatePair;
-    typedef std::list<std::pair<EState,MemoryUpdatePair> > MemoryUpdateList;
+    typedef std::list<std::pair<EStatePtr,MemoryUpdatePair> > MemoryUpdateList;
     MemoryUpdateList evalAssignOpMemUpdates(SgAssignOp* assignOp, EStatePtr estate);
 
     // functions for handling callstring contexts
@@ -171,15 +170,16 @@ namespace CodeThorn {
     bool isFeasiblePathContext(CallString& cs,Label lab);
 
     CodeThorn::VariableIdSet determineUsedGlobalVars(SgProject* root, CodeThorn::VariableIdSet& setOfGlobalVars);
-    void initializeGlobalVariables(SgProject* root, EState& estate);
+    void initializeGlobalVariables(SgProject* root, EStatePtr estate);
     // modifies PState with written initializers
-    EState transferVariableDeclarationEState(SgVariableDeclaration* decl,EState currentEState, Label targetLabel);
-    EState transferVariableDeclarationWithInitializerEState(SgVariableDeclaration* decl, SgInitializedName* initName, SgInitializer* initializer, VariableId initDeclVarId, EState& currentEState, Label targetLabel);
-    EState transferVariableDeclarationWithoutInitializerEState(SgVariableDeclaration* decl, SgInitializedName* initName, VariableId initDeclVarId, EState& currentEState, Label targetLabel);
+    EStatePtr transferVariableDeclarationEState(SgVariableDeclaration* decl,EStatePtr currentEState, Label targetLabel);
+    EStatePtr transferVariableDeclarationWithInitializerEState(SgVariableDeclaration* decl, SgInitializedName* initName, SgInitializer* initializer, VariableId initDeclVarId, EStatePtr currentEState, Label targetLabel);
+    EStatePtr transferVariableDeclarationWithoutInitializerEState(SgVariableDeclaration* decl, SgInitializedName* initName, VariableId initDeclVarId, EStatePtr currentEState, Label targetLabel);
 
-    PState analyzeSgAggregateInitializer(VariableId initDeclVarId, SgAggregateInitializer* aggregateInitializer,PState pstate, /* for evaluation only  */ EState currentEState);
+    PStatePtr analyzeSgAggregateInitializer(VariableId initDeclVarId, SgAggregateInitializer* aggregateInitializer,PStatePtr pstate, /* for evaluation only  */ EStatePtr currentEState);
   private:
     // auxiliary semantic functions
+    EStatePtr reInitFailedAssertEState(EStatePtr estate, Label target);
     void declareUninitializedStruct(Label label,PState* pstate,AbstractValue structAddress, VariableId memVarId);
     AbstractValue createStructDataMemberAddress(AbstractValue structAddress,VariableId varId);
     bool isGlobalAddress(AbstractValue memLoc);
@@ -195,7 +195,7 @@ namespace CodeThorn {
 
     // Limits the number of results to one result only. Does not permit state splitting.
     // requires normalized AST
-    AbstractValue evaluateExpressionAV(SgExpression* expr,EState& currentEState);
+    AbstractValue evaluateExpressionAV(SgExpression* expr,EStatePtr currentEState);
 
     // only used in hybrid prototype binding
     VariableId globalVarIdByName(std::string varName);
@@ -290,9 +290,9 @@ namespace CodeThorn {
     // remaps index if necessary and sets summary flag
     AbstractValue conditionallyApplyArrayAbstraction(AbstractValue memLoc);
     // reserves memory location at address memLoc and sets as value 'undef'
-    void reserveMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc);
+    void reserveMemoryLocation(Label lab, PStatePtr pstate, AbstractValue memLoc);
     // reserves and initializes memory location at address memLoc with newValue
-    void initializeMemoryLocation(Label lab, PState* pstate, AbstractValue memLoc, AbstractValue newValue);
+    void initializeMemoryLocation(Label lab, PStatePtr pstate, AbstractValue memLoc, AbstractValue newValue);
     // handles addresses only
     AbstractValue readFromMemoryLocation(Label lab, PStatePtr pstate, AbstractValue memLoc);
     // handles only references (models indirection)
@@ -325,9 +325,9 @@ namespace CodeThorn {
     ReadWriteListener* getReadWriteListener(std::string name);
 
     // initialize command line arguments provided by option "--cl-options" in PState
-    void initializeCommandLineArgumentsInState(Label lab, PState& initialPState);
-    void initializeStringLiteralInState(Label lab, PState& initialPState,SgStringVal* stringValNode, VariableId stringVarId);
-    void initializeStringLiteralsInState(Label lab, PState& initialPState);
+    void initializeCommandLineArgumentsInState(Label lab, PStatePtr initialPState);
+    void initializeStringLiteralInState(Label lab, PStatePtr initialPState,SgStringVal* stringValNode, VariableId stringVarId);
+    void initializeStringLiteralsInState(Label lab, PStatePtr initialPState);
 
   protected:
     AbstractValue abstractValueFromSgValueExp(SgValueExp* valueExp, EvalMode mode);
