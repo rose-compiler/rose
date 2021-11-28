@@ -720,8 +720,8 @@ void CodeThorn::CTAnalysis::runAnalysisPhase2Sub1(TimingCollector& tc) {
 	  SAWYER_MESG(logger[INFO])<<"Intra-procedural analysis: initializing function "<<fCnt++<<" of "<<numStartLabels<<": "<<fileName<<":"<<functionName<<endl;
 	}
       }
-      EState initialEStateObj=createInitialEState(this->_root,slab);
-      initialEStateObj.setLabel(slab);
+      EStatePtr initialEStateObj=createInitialEState(this->_root,slab);
+      initialEStateObj->setLabel(slab);
       EStatePtr initialEState=processNewOrExisting(initialEStateObj);
       ROSE_ASSERT(initialEState);
       variableValueMonitor.init(initialEState);
@@ -1181,7 +1181,6 @@ list<pair<SgLabelStatement*,SgNode*> > CodeThorn::CTAnalysis::listOfLabeledAsser
   return assertNodes;
 }
 
-#if 1
 PStatePtr CodeThorn::CTAnalysis::processNew(PState& s) {
   if(EState::sharedPStates) {
     return const_cast<PStatePtr>(pstateSet.processNew(s));
@@ -1191,6 +1190,10 @@ PStatePtr CodeThorn::CTAnalysis::processNew(PState& s) {
   }
 }
 
+PStatePtr CodeThorn::CTAnalysis::processNew(PState* s) {
+  return processNew(*s);
+}
+  
 PStatePtr CodeThorn::CTAnalysis::processNewOrExisting(PState& s) {
   if(EState::sharedPStates) {
     return const_cast<PStatePtr>(pstateSet.processNewOrExisting(s));
@@ -1198,8 +1201,13 @@ PStatePtr CodeThorn::CTAnalysis::processNewOrExisting(PState& s) {
     return processNew(s);
   }
 }
-
-#endif
+PStatePtr CodeThorn::CTAnalysis::processNewOrExisting(PState* s) {
+  if(EState::sharedPStates) {
+    return processNewOrExisting(*s);
+  } else {
+    return processNew(s);
+  }
+}
 
 EStatePtr CodeThorn::CTAnalysis::processNew(EState& s) {
   return const_cast<EStatePtr>(estateSet.processNew(s));
@@ -1317,9 +1325,9 @@ SgNode* CodeThorn::CTAnalysis::getStartFunRoot() {
   return _startFunRoot;
 }
 
-EState CodeThorn::CTAnalysis::createInitialEState(SgProject* root, Label slab) {
+EStatePtr CodeThorn::CTAnalysis::createInitialEState(SgProject* root, Label slab) {
   // create initial state
-  PState initialPState;
+  PStatePtr initialPState=new PState();
   ROSE_ASSERT(slab.isValid());
   _estateTransferFunctions->initializeCommandLineArgumentsInState(slab,initialPState);
   if(_ctOpt.inStateStringLiterals) {
@@ -1330,25 +1338,22 @@ EState CodeThorn::CTAnalysis::createInitialEState(SgProject* root, Label slab) {
     }
   }
 
-  PStatePtr initialPStateStored=processNewOrExisting(initialPState); // might reuse another pstate when initializing in level 1   // CHANGING PSTATE-ESTATE
+  PStatePtr initialPStateStored=processNewOrExisting(*initialPState); // might reuse another pstate when initializing in level 1   // CHANGING PSTATE-ESTATE
   ROSE_ASSERT(initialPStateStored);
   SAWYER_MESG(logger[INFO])<< "INIT: initial pstate(stored): "<<initialPStateStored<<":"<<initialPStateStored->toString(getVariableIdMapping())<<endl;
-  PStatePtr initialPStateStored2=processNewOrExisting(initialPState); // might reuse another pstate when initializing in level 1   // CHANGING PSTATE-ESTATE
-  ROSE_ASSERT(initialPStateStored2);
-  SAWYER_MESG(logger[INFO])<< "INIT: initial pstate2(stored): "<<initialPStateStored2<<":"<<initialPStateStored2->toString(getVariableIdMapping())<<endl;
   
   transitionGraph.setStartLabel(slab);
   transitionGraph.setAnalyzer(this);
 
-  EState estate(slab,initialPStateStored);
+  EStatePtr estate=new EState(slab,initialPStateStored);
 
   ROSE_ASSERT(_estateTransferFunctions);
   _estateTransferFunctions->initializeGlobalVariables(root, estate);
-  SAWYER_MESG(logger[INFO]) <<"Initial state: number of entries:"<<estate.pstate()->stateSize()<<endl;
+  SAWYER_MESG(logger[INFO]) <<"Initial state: number of entries:"<<estate->pstate()->stateSize()<<endl;
   
   // initialize summary states map for abstract model checking mode
   initializeSummaryStates(initialPStateStored);
-  estate.io.recordNone(); // ensure that extremal value is different to bot
+  estate->io.recordNone(); // ensure that extremal value is different to bot
 
   return estate;
 }
@@ -1362,8 +1367,8 @@ void CodeThorn::CTAnalysis::initializeSolverWithInitialEState(SgProject* root) {
     if(_ctOpt.getInterProceduralFlag()) {
       // inter-procedural analysis initial state
       Label slab=getFlow()->getStartLabel();
-      EState initialEStateObj=createInitialEState(root, slab);
-      EStatePtr initialEState=processNew(initialEStateObj);
+      EStatePtr initialEState=createInitialEState(root, slab);
+      initialEState=processNewOrExisting(initialEState);
       ROSE_ASSERT(initialEState);
       variableValueMonitor.init(initialEState);
       addToWorkList(initialEState);

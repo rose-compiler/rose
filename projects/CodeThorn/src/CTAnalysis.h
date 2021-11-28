@@ -107,7 +107,7 @@ namespace CodeThorn {
     virtual void runAnalysisPhase1(SgProject* root, TimingCollector& tc);
     virtual void runAnalysisPhase2(TimingCollector& tc);
   protected:
-    EState createInitialEState(SgProject* root, Label slab);
+    EStatePtr createInitialEState(SgProject* root, Label slab);
     void initializeSolverWithInitialEState(SgProject* root);
     virtual void postInitializeSolver();
     void runAnalysisPhase1Sub1(SgProject* root, TimingCollector& tc);
@@ -347,6 +347,9 @@ namespace CodeThorn {
 
     PStatePtr processNew(PState& s);
     PStatePtr processNewOrExisting(PState& s);
+
+    PStatePtr processNew(PState* s);
+    PStatePtr processNewOrExisting(PState* s);
 
     EStatePtr processNew(EStateRef s);
     EStatePtr processNewOrExisting(EStateRef s);

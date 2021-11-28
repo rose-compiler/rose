@@ -3165,7 +3165,7 @@ namespace CodeThorn {
                                         SingleEvalResult rhsResult,
                                         Label targetLabel, EStatePtr estate, EvalMode mode) {
     SingleEvalResult res;
-    std::list<EStatePtr> estateList=evalAssignOp3(node, targetLabel, &estate);
+    std::list<EStatePtr> estateList=evalAssignOp3(node, targetLabel, estate);
     ROSE_ASSERT(estateList.size()==1);
     res.result=rhsResult.result; // value result of assignment
     res.estate=*estateList.begin();
@@ -3176,22 +3176,22 @@ namespace CodeThorn {
     auto pList=evalAssignOpMemUpdates(node, estate);
     std::list<EStatePtr> estateList;
     for (auto p : pList) {
-      EState estate=p.first;
+      EStatePtr estate=p.first;
       Label label=estate->label();
       CallString cs=estate->callString;
       PStatePtr newPState=estate->pstate();
       AbstractValue lhsAddress=p.second.first;
       AbstractValue rhsValue=p.second.second;
-      writeToAnyMemoryLocation(label,&newPState,lhsAddress,rhsValue);
-      estateList.push_back(new EState(createEState(targetLabel,cs,newPState)));
+      writeToAnyMemoryLocation(label,newPState,lhsAddress,rhsValue);
+      estateList.push_back(reInitEState(estate,targetLabel,cs,newPState));
     }
     if(estateList.size()==0) {
-      estateList.push_back(new EState(createEState(targetLabel,estate->callString,estate->pstate())));
+      estateList.push_back(reInitEState(estate,targetLabel,estate->callString,estate->pstate()));
     }
     return estateList;
   }
 
-  SingleEvalResult EStateTransferFunctions::evalPreComputationOp(EState estate, AbstractValue address, AbstractValue change) {
+  SingleEvalResult EStateTransferFunctions::evalPreComputationOp(EStatePtr estate, AbstractValue address, AbstractValue change) {
     SingleEvalResult res;
     AbstractValue oldValue=readFromAnyMemoryLocation(estate->label(),estate->pstate(),address);
     AbstractValue elementSize=(oldValue.isPtr()?getMemoryRegionAbstractElementSize(oldValue):AbstractValue(1));
@@ -3200,7 +3200,7 @@ namespace CodeThorn {
     PStatePtr newPState=estate->pstate();
     writeToAnyMemoryLocation(estate->label(),newPState,address,newValue);
     ROSE_ASSERT(_analyzer);
-    res.init(createEState(estate->label(),cs,newPState),newValue);
+    res.init(reInitEState(estate,estate->label(),cs,newPState),newValue);
     return res;
   }
 
@@ -3212,15 +3212,15 @@ namespace CodeThorn {
     AbstractValue newValue=AbstractValue::operatorAdd(oldValue,change,elementSize);
     CallString cs=estate->callString;
     PStatePtr newPState=estate->pstate();
-    writeToAnyMemoryLocation(estate->label(),&newPState,address,newValue);
+    writeToAnyMemoryLocation(estate->label(),newPState,address,newValue);
     ROSE_ASSERT(_analyzer);
-    res.init(createEState(estate->label(),cs,newPState),oldValue);
+    res.init(reInitEState(estate,estate->label(),cs,newPState),oldValue);
     return res;
   }
 
   SingleEvalResult EStateTransferFunctions::evalPreIncrementOp(SgPlusPlusOp* node,
                                                                              SingleEvalResult operandResult,
-                                                                             EState estate, EvalMode mode) {
+                                                                             EStatePtr estate, EvalMode mode) {
     AbstractValue address=operandResult.result;
     ROSE_ASSERT(address.isPtr()||address.isTop());
     AbstractValue change=1;
@@ -3229,7 +3229,7 @@ namespace CodeThorn {
 
   SingleEvalResult EStateTransferFunctions::evalPreDecrementOp(SgMinusMinusOp* node,
                                                                              SingleEvalResult operandResult,
-                                                                             EState estate, EvalMode mode) {
+                                                                             EStatePtr estate, EvalMode mode) {
     AbstractValue address=operandResult.result;
     ROSE_ASSERT(address.isPtr()||address.isTop());
     AbstractValue change=-1;
@@ -3238,7 +3238,7 @@ namespace CodeThorn {
 
   SingleEvalResult EStateTransferFunctions::evalPostIncrementOp(SgPlusPlusOp* node,
                                                                               SingleEvalResult operandResult,
-                                                                              EState estate, EvalMode mode) {
+                                                                              EStatePtr estate, EvalMode mode) {
     AbstractValue address=operandResult.result;
     ROSE_ASSERT(address.isPtr()||address.isTop());
     AbstractValue change=1;
@@ -3248,7 +3248,7 @@ namespace CodeThorn {
 
   SingleEvalResult EStateTransferFunctions::evalPostDecrementOp(SgMinusMinusOp* node,
                                                                               SingleEvalResult operandResult,
-                                                                              EState estate, EvalMode mode) {
+                                                                              EStatePtr estate, EvalMode mode) {
     AbstractValue address=operandResult.result;
     ROSE_ASSERT(address.isPtr()||address.isTop());
     AbstractValue change=-1;
@@ -3257,7 +3257,7 @@ namespace CodeThorn {
 
   SingleEvalResult EStateTransferFunctions::evalPlusPlusOp(SgPlusPlusOp* node,
                                                                          SingleEvalResult operandResult,
-                                                                         EState estate, EvalMode mode) {
+                                                                         EStatePtr estate, EvalMode mode) {
     SingleEvalResult res;
     res.estate=estate;
     if(SgNodeHelper::isPrefixIncDecOp(node)) {
@@ -3273,7 +3273,7 @@ namespace CodeThorn {
 
   SingleEvalResult EStateTransferFunctions::evalMinusMinusOp(SgMinusMinusOp* node,
                                                                            SingleEvalResult operandResult,
-                                                                           EState estate, EvalMode mode) {
+                                                                           EStatePtr estate, EvalMode mode) {
     SingleEvalResult res;
     res.estate=estate;
     if(SgNodeHelper::isPrefixIncDecOp(node)) {
@@ -3385,7 +3385,7 @@ namespace CodeThorn {
     // unreachable
   }
 
-  SingleEvalResult EStateTransferFunctions::evalLValuePointerDerefExp(SgPointerDerefExp* node, EState estate) {
+  SingleEvalResult EStateTransferFunctions::evalLValuePointerDerefExp(SgPointerDerefExp* node, EStatePtr estate) {
     SAWYER_MESG(logger[TRACE])<<"evalLValuePtrDerefExp: "<<node->unparseToString()<<" label:"<<estate->label().toString()<<endl;
     // abstract_value(*p) = abstract_eval(p) : the value of 'p' is an abstract address stored in p, which is the lvalue of *p
     SgExpression* operand=node->get_operand_i();
@@ -3707,7 +3707,7 @@ namespace CodeThorn {
           // write val into state at address argsList[j]
           if(av.isPtr()) {
             PStatePtr pstate=estate->pstate();
-            writeToMemoryLocation(estate->label(),&pstate,av,val);
+            writeToMemoryLocation(estate->label(),pstate,av,val);
             // TODO: pstate is not used yet, because estate is only read but not returned (hence this is a noop and not an update)
             cout<<"Warning: interpreter mode: scanf: memory location "<<av.toString(_variableIdMapping)<<" not updated (not implemented yet)."<<endl;
           } else {
@@ -4170,7 +4170,7 @@ namespace CodeThorn {
     SAWYER_MESG(logger[TRACE]) <<"evaluating arguments of function call:"<<funCall->unparseToString()<<endl;
     SingleEvalResult evalResult=evalFunctionCallArguments(funCall, currentEState);
     PStatePtr newPState=evalResult.estate->pstate();
-    return elistify(createEState(edge.target(),cs,newPState));
+    return elistify(reInitEState(currentEState,edge.target(),cs,newPState));
   }
 
   void EStateTransferFunctions::initializeStringLiteralInState(Label lab, PStatePtr initialPState,SgStringVal* stringValNode, VariableId stringVarId) {
