@@ -1041,6 +1041,7 @@ void CodeThorn::CTAnalysis::eventGlobalTopifyTurnedOn() {
   }
 }
 
+// obsolete, once EStateTransferFunctions::createInternalEState is removed
 void CodeThorn::CTAnalysis::topifyVariable(PState& pstate, AbstractValue varId) {
   pstate.writeTopToMemoryLocation(varId);
 }

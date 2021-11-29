@@ -113,6 +113,16 @@ namespace CodeThorn {
     estate->callString=cs;
     estate->setPState(pstate);
     estate->io.recordNone(); // create NONE not bot by default // do NOT remove IO (reInit - is an update function)
+    if(_analyzer->isActiveGlobalTopify()) {
+#if 1
+      AbstractValueSet varSet=estate->pstate()->getVariableIds();
+      for(AbstractValueSet::iterator i=varSet.begin();i!=varSet.end();++i) {
+        if(_analyzer->getVariableValueMonitor()->isHotVariable(_analyzer,*i)) {
+          estate->pstate()->writeTopToMemoryLocation(*i);
+        }
+      }
+#endif
+    }
     return estate;
   }
 
@@ -219,6 +229,7 @@ namespace CodeThorn {
                                 AbstractValue::createAddressOfVariable(globalVarIdByName("output")),
                                 CodeThorn::AbstractValue(rers_result));
           EStatePtr _eState=reInitEState(estate,edge.target(),estate->callString,newPstate,_io);
+          ROSE_ASSERT(_eState->io.isFailedAssertIO());
           return elistify(_eState);
         }
         RERS_Problem::rersGlobalVarsCallReturnInitFP(getAnalyzer(),*pstate, omp_get_thread_num());
@@ -734,33 +745,31 @@ namespace CodeThorn {
           newValue=*_analyzer->_inputSequenceIterator;
           ++_analyzer->_inputSequenceIterator;
         } else {
-          return resList; // return no state (this ends the analysis)
+          return resList; // return no state (this terminates the input sequence)
         }
-        if(_analyzer->getOptionsRef().inputValuesAsConstraints) {
-          SAWYER_MESG(logger[FATAL])<<"Option input-values-as-constraints no longer supported."<<endl;
-          exit(1);
-        } else {
-          writeToMemoryLocation(currentEState->label(),newPState,AbstractValue::createAddressOfVariable(varId),AbstractValue(newValue));
-        }
+        writeToMemoryLocation(currentEState->label(),newPState,AbstractValue::createAddressOfVariable(varId),AbstractValue(newValue));
         newio.recordVariable(InputOutput::STDIN_VAR,varId);
-        EStatePtr newEState=reInitEState(estate,edge.target(),cs,newPState,newio);
+        // a value of the input sequence can be added in-place to the state (in contrast to the input set below)
+        EStatePtr newEState=reInitEState(currentEState,edge.target(),cs,newPState,newio);
         resList.push_back(newEState);
         return resList;
       } else {
         if(_analyzer->_inputVarValues.size()>0) {
-          PStatePtr newPState=currentEState->pstate();
+          //PStatePtr newPState=currentEState->pstate();
           list<EStatePtr> resList;
+          int numState=1;
           for(set<int>::iterator i=_analyzer->_inputVarValues.begin();i!=_analyzer->_inputVarValues.end();++i) {
-            PStatePtr newPState=currentEState->pstate();
-            if(_analyzer->getOptionsRef().inputValuesAsConstraints) {
-              SAWYER_MESG(logger[FATAL])<<"Option input-values-as-constraints no longer supported."<<endl;
-              exit(1);
-            } else {
-              writeToMemoryLocation(currentEState->label(),newPState,AbstractValue::createAddressOfVariable(varId),AbstractValue(*i));
+            if(true || numState!=1) {
+              // clone state if creating more than one value (state splitting)
+              // currentEState has been stored in resList in previous iteration, can be re-assigned without creating a leak
+              currentEState=currentEState->cloneWithoutIO(); // reuse state and write next io value from set
             }
+            PStatePtr newPState=currentEState->pstate();
+            writeToMemoryLocation(currentEState->label(),newPState,AbstractValue::createAddressOfVariable(varId),AbstractValue(*i));
             newio.recordVariable(InputOutput::STDIN_VAR,varId);
-            EStatePtr newEState=reInitEState(estate,edge.target(),estate->callString,newPState,newio);
+            EStatePtr newEState=reInitEState(currentEState,edge.target(),estate->callString,newPState,newio);
             resList.push_back(newEState);
+            numState++;
           }
           return resList;
         } else {
@@ -784,10 +793,14 @@ namespace CodeThorn {
       if(ctioLabeler->isStdOutVarLabel(lab,&varId)) {
         newio.recordVariable(InputOutput::STDOUT_VAR,varId);
         ROSE_ASSERT(newio.var==varId);
-        return elistify(reInitEState(currentEState,edge.target(),cs,currentEState->pstate(), newio));
+        currentEState=reInitEState(currentEState,edge.target(),cs,currentEState->pstate(), newio);
+        ROSE_ASSERT(currentEState->io.isStdOutIO());
+        return elistify(currentEState);
       } else if(ctioLabeler->isStdOutConstLabel(lab,&constvalue)) {
         newio.recordConst(InputOutput::STDOUT_CONST,constvalue);
-        return elistify(reInitEState(currentEState,edge.target(),cs,currentEState->pstate(), newio));
+        currentEState=reInitEState(currentEState,edge.target(),cs,currentEState->pstate(), newio);
+        ROSE_ASSERT(currentEState->io.isStdOutIO());
+        return elistify(currentEState);
       } else if(ctioLabeler->isStdErrLabel(lab,&varId)) {
         newio.recordVariable(InputOutput::STDERR_VAR,varId);
         ROSE_ASSERT(newio.var==varId);
@@ -828,7 +841,7 @@ namespace CodeThorn {
         return elistify(reInitEState(currentEState,edge.target(),cs,newPState,evalResult2.estate->io)); // pstate from evalResult2
       }
     }
-    // for all other external functions we use identity as transfer function
+    // for all other external functions use identity as transfer function
     EStatePtr newEState=currentEState;
     newEState->io=newio;
     newEState->setLabel(edge.target());
