@@ -25,12 +25,6 @@
 #include "Miscellaneous2.h"
 #include "FIConstAnalysis.h"
 #include "ReachabilityAnalysis.h"
-#include "Solver5.h"
-#include "Solver8.h"
-#include "Solver16.h"
-#include "ltlthorn-lib/Solver10.h"
-#include "ltlthorn-lib/Solver11.h"
-#include "ltlthorn-lib/Solver12.h"
 #include "AnalysisParameters.h"
 #include "CodeThornException.h"
 #include "ProgramInfo.h"
@@ -66,8 +60,13 @@
 
 // required only for ROSE AST Consistency tests
 #include "AstConsistencyTests.h"
-
 #include "IOSequenceGenerator.h"
+
+// required for createSolver function
+#include "Solver5.h"
+#include "Solver16.h"
+#include "Solver17.h"
+#include "Solver8.h"
 
 using namespace std;
 
@@ -164,7 +163,29 @@ namespace CodeThorn {
       signal(SIGSEGV, codethornBackTraceHandler);   // install handler for backtrace
     }
 
-    
+    Solver* createSolver(CodeThornOptions& ctOpt) {
+      Solver* solver = nullptr;
+      // solver "factory"
+      switch(ctOpt.solver) {
+      case 5 :  {  
+        solver = new Solver5(); break;
+      }
+      case 16 :  {  
+        solver = new Solver16(); break; // variant of solver5
+      }
+      case 17 :  {  
+        solver = new Solver17(); break; // does not create a TS
+      }
+      case 8 :  {  
+        solver = new Solver8(); break;
+      }
+      default :  { 
+        logger[ERROR] <<"Unknown solver ID: "<<ctOpt.solver<<endl;
+        exit(1);
+      }
+      }
+      return solver;
+    }
     
     AbstractValue evaluateExpressionWithEmptyState(SgExpression* expr) {
       CTAnalysis* analyzer=new CTAnalysis();
