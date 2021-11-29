@@ -55,6 +55,7 @@ void Solver16::initializeSummaryStatesFromWorkList() {
  */
 void Solver16::run() {
   SAWYER_MESG(logger[INFO])<<"Running solver "<<getId()<<endl;
+  ROSE_ASSERT(_analyzer);
   if(_analyzer->getOptionsRef().abstractionMode==0) {
     cerr<<"Error: abstraction mode is 0, but >= 1 required."<<endl;
     exit(1);
@@ -197,7 +198,6 @@ void Solver16::run() {
                       newEStatePtr=summaryEState; 
                     } else {
                       EState newEState2=_analyzer->getEStateTransferFunctions()->combine(summaryEState,const_cast<EState*>(newEStatePtr));
-                      ROSE_ASSERT(_analyzer);
                       HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState2);
                       EStatePtr newEStatePtr2=const_cast<EStatePtr>(pres.second);
 
