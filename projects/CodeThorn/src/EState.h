@@ -62,7 +62,7 @@ namespace CodeThorn {
     
     void setLabel(Label lab) { _label=lab; }
     Label label() const { return _label; }
-    void setPState(PStatePtr pstate) { _pstate=pstate; }
+    void setPState(PStatePtr pstate);
     //void setIO(CodeThorn::InputOutput io) { io=io;} TODO: investigate
     PStatePtr pstate() const { return _pstate; }
     CodeThorn::InputOutput::OpType ioOp() const;
@@ -84,8 +84,9 @@ namespace CodeThorn {
     bool approximatedBy(PropertyState& other) const;
     void combine(PropertyState& other);
 
-    EState* deepClone();
-    EState* clone(); // equivalent to deepClone, if sharedPStates==false
+    EStatePtr deepClone();
+    EStatePtr clone(); // equivalent to deepClone, if sharedPStates==false
+    EStatePtr cloneWithoutIO(); // equivalent to deepClone, if sharedPStates==false
     
   private:
     void copy(EState* target, ConstEStatePtr source,bool sharedPStatesFlag);

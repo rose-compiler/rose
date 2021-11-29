@@ -334,6 +334,7 @@ namespace CodeThorn {
       IOAnalyzer* analyzer = new IOAnalyzer();
       analyzer->setOptions(ctOpt);
       analyzer->setLtlOptions(ltlOpt);
+      ROSE_ASSERT(ctOpt.sharedPStates==false);
       EState::sharedPStates=ctOpt.sharedPStates;
       EState::fastPointerHashing=ctOpt.fastPointerHashing;
       return analyzer;

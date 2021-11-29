@@ -112,7 +112,7 @@ namespace CodeThorn {
     estate->setLabel(label);
     estate->callString=cs;
     estate->setPState(pstate);
-    estate->io.recordNone(); // create NONE not bot by default
+    estate->io.recordNone(); // create NONE not bot by default // do NOT remove IO (reInit - is an update function)
     return estate;
   }
 
@@ -598,7 +598,8 @@ namespace CodeThorn {
       SAWYER_MESG(logger[TRACE])<<endl;
       SAWYER_MESG(logger[TRACE])<<"Function:"<<functionName<<" Parameters: end"<<endl;
     }
-    return transferIdentity(edge,estate);
+    auto resultList=transferIdentity(edge,estate);
+    return resultList;
   }
 
   std::list<EStatePtr> EStateTransferFunctions::transferFunctionExit(Edge edge, EStatePtr estate) {
@@ -665,7 +666,7 @@ namespace CodeThorn {
       return transferForkFunctionWithExternalTargetFunction(edge,estate,funCall);
     }
     // create state with this function label as start state
-    EStatePtr forkedEState=estate->clone();
+    EStatePtr forkedEState=estate->cloneWithoutIO();
     // set target label in new state to function pointer label
     forkedEState->setLabel(arg5Value.getLabel());
 
@@ -995,6 +996,7 @@ namespace CodeThorn {
   list<EStatePtr> EStateTransferFunctions::transferIdentity(Edge edge, EStatePtr estate) {
     // nothing to analyze, just create new estate (from same State) with target label of edge
     // can be same state if edge is a backedge to same cfg node
+    ROSE_ASSERT(estate);
     EStatePtr newEState=estate;
     newEState->setLabel(edge.target());
     return elistify(newEState);
@@ -1871,6 +1873,7 @@ namespace CodeThorn {
   }
 
   list<EStatePtr> EStateTransferFunctions::transferEdgeEStateDispatch(TransferFunctionCode tfCode, SgNode* node, Edge edge, EStatePtr estate) {
+    ROSE_ASSERT(estate);
     ROSE_ASSERT(estate->pstate());
     if(_analyzer->getOptionsRef().info.printTransferFunctionInfo) {
       printTransferFunctionInfo(tfCode,node,edge,estate);
@@ -1902,7 +1905,7 @@ namespace CodeThorn {
   }
 
   list<EStatePtr> EStateTransferFunctions::transferEdgeEState(Edge edge, EStatePtr estate) {
-    EStatePtr estateClone=estate->clone(); // prepare for in-place modification of estate
+    EStatePtr estateClone=estate->cloneWithoutIO(); // prepare for in-place modification of estate
     pair<TransferFunctionCode,SgNode*> tfCodeNodePair=determineTransferFunctionCode(edge,estateClone);
     EStateTransferFunctions::TransferFunctionCode tfCode=tfCodeNodePair.first;
     SgNode* nextNodeToAnalyze=tfCodeNodePair.second;
@@ -1911,8 +1914,9 @@ namespace CodeThorn {
     // the list has either length 0 or 1.
     bool reused=false;
     for(auto es : newEStateList) {
-      if(estate == es)
+      if(estateClone == es)
         reused=true;
+      ROSE_ASSERT(estate != es); // ensure only new states are returned
     }
     if(!reused)
       delete estateClone;
@@ -2420,13 +2424,20 @@ namespace CodeThorn {
     SingleEvalResult condResult=evaluateExpression(cond,estate);
     SingleEvalResult singleResult=condResult;
     if(singleResult.result.isTop()) {
+      EStatePtr temporaryFalseBranchEState=estate->cloneWithoutIO();
       SgExpression* trueBranch=condExp->get_true_exp();
       SingleEvalResult trueBranchResult=evaluateExpression(trueBranch,estate);
       SgExpression* falseBranch=condExp->get_false_exp();
-      SingleEvalResult falseBranchResult=evaluateExpression(falseBranch,estate);
+      // clone estate for false branch
+      SingleEvalResult falseBranchResult=evaluateExpression(falseBranch,temporaryFalseBranchEState);
       // merge falseBranchResult and trueBranchResult
       SingleEvalResult res;
+      // reuse estate for final merged result
+      //PState combinedPState=CodeThorn::PState::combine(estate->pstate(),temporaryFalseBranchEState->pstate()); // COMBINE PSTATE (IO missing), PSTATE COPY
+      //PStatePtr combinedPStatePtr=new PState(combinedPState);
+      //estate->setPState(combinedPStatePtr);
       res.init(estate,AbstractValue::combine(trueBranchResult.result,falseBranchResult.result));
+      //delete temporaryFalseBranchEState;
       return res;
     } else if(singleResult.result.isTrue()) {
       SgExpression* trueBranch=condExp->get_true_exp();

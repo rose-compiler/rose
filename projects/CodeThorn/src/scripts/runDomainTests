@@ -18,7 +18,7 @@ COLORED_PASS=${grn}PASS${end}
 TESTDIR=""
 SHOW_OUTPUT="no"
 KEEP_RESULTS="no"
-SHARED_PSTATES="yes"
+SHARED_PSTATES="no"
 
 function printHeader {
     echo "------------------------------------------------"
