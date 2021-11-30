@@ -264,12 +264,15 @@ int main( int argc, char * argv[] ) {
     }
 
     analyzer->printStatusMessageLine("==============================================================");
+    
     optionallyWriteSVCompWitnessFile(ctOpt, analyzer);
-    optionallyAnalyzeAssertions(ctOpt, ltlOpt, analyzer, tc);
+    if(ctOpt.solver!=17)
+      optionallyAnalyzeAssertions(ctOpt, ltlOpt, analyzer, tc);
 
 #if HAVE_Z3
     optionallyRunZ3AndExit(ctOpt,analyzer);
 #endif
+
     tc.startTimer();
     optionallyGenerateVerificationReports(ctOpt,analyzer);
     tc.stopTimer(TimingCollector::reportGeneration);
@@ -278,14 +281,14 @@ int main( int argc, char * argv[] ) {
     optionallyGenerateCallGraphDotFile(ctOpt,analyzer);
     tc.stopTimer(TimingCollector::callGraphDotFile);
 
-    runLTLAnalysis(ctOpt,ltlOpt,analyzer,tc);
-    processCtOptGenerateAssertions(ctOpt, analyzer, project);
-
+    if(ctOpt.solver!=17) {
+      runLTLAnalysis(ctOpt,ltlOpt,analyzer,tc);
+      processCtOptGenerateAssertions(ctOpt, analyzer, project);
     
-    if(ctOpt.reduceStg) {
-      analyzer->reduceStgToInOutStates();
+      if(ctOpt.reduceStg) {
+        analyzer->reduceStgToInOutStates();
+      }
     }
-
 
     tc.startTimer();
     optionallyRunVisualizer(ctOpt,analyzer,project);

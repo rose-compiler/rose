@@ -136,15 +136,15 @@ void Solver16::run() {
       // the worklist could be reduced to (label,callstring) pairs, but since it's also used for explicit model checking, it uses pointers to estates, which include some more info.
       // note: initial summary states are set in initializeSummaryStatesFromWorkList()
       EStatePtr currentEStatePtr0=_analyzer->popWorkList();
-      // difference to Solver5: always obtain abstract state
-      EStatePtr currentEStatePtr=_analyzer->getSummaryState(currentEStatePtr0->label(),currentEStatePtr0->callString);
       // terminate early, ensure to stop all threads and empty the worklist (e.g. verification error found).
       if(terminateEarly)
         continue;
-      if(!currentEStatePtr) {
+      if(!currentEStatePtr0) {
         // empty worklist. Continue without work.
         ROSE_ASSERT(threadNum>=0 && threadNum<=_analyzer->getOptionsRef().threads);
       } else {
+        ROSE_ASSERT(currentEStatePtr0);
+        EStatePtr currentEStatePtr=_analyzer->getSummaryState(currentEStatePtr0->label(),currentEStatePtr0->callString);
         ROSE_ASSERT(currentEStatePtr);
         Flow edgeSet=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
         //cout << "DEBUG: out-edgeSet size:"<<edgeSet.size()<<endl;
