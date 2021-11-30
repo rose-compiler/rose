@@ -823,8 +823,14 @@ namespace
           computeNameQualForShared(n, parentType);
       }
 
-
       void handle(const SgAdaPackageSpecDecl& n)
+      {
+        handle(sg::asBaseType(n));
+
+        recordNameQualIfNeeded(n, n.get_scope());
+      }
+
+      void handle(const SgAdaPackageBodyDecl& n)
       {
         handle(sg::asBaseType(n));
 

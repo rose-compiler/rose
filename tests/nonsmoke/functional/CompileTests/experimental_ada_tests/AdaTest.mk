@@ -165,6 +165,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   nested_package.ads                   \
   opaque.ads                           \
   package_renaming_declaration.ads     \
+  parent-child.adb                     \
   pkgrename.ads                        \
   procedure_renaming.adb               \
   private_enum.ads                     \

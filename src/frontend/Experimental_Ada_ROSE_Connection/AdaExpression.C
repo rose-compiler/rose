@@ -986,7 +986,7 @@ namespace
 
           // prefix calls are incorrectly unparsed as infix (check if data is avail in Asis)
           // in this case, parenthesis are missing.
-          if (isSgBinaryOp(&exp)) exp.set_need_paren(true);
+          // if (isSgBinaryOp(&exp)) exp.set_need_paren(true);
 
           res = sb::buildPointerDerefExp(&exp);
           break;

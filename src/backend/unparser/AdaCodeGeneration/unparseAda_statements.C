@@ -875,13 +875,17 @@ namespace
 
     void handle(SgAdaPackageBodyDecl& n)
     {
+      const std::string& pkgqual = getQualification(n, n.get_scope());
+
       prn("package body ");
+      prn(pkgqual);
       prn(n.get_name());
       prn(" is\n");
 
       stmt(n.get_definition());
 
       prn("end ");
+      prn(pkgqual);
       prn(n.get_name());
       prn(STMT_SEP);
     }

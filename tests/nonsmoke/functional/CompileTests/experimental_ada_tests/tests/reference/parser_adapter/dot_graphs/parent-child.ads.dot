@@ -1,5 +1,5 @@
 digraph "parent-child.adt" {
-  Unit_2 -> Element_2302112
+  Unit_2 -> Element_2312112
       [ label=Unit_Declaration ];
   Unit_2
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -17,33 +17,36 @@ digraph "parent-child.adt" {
           <TR><TD ALIGN="LEFT">Object_Name   </TD><TD> = </TD><TD ALIGN="LEFT"></TD></TR>
           <TR><TD ALIGN="LEFT">Object_Form   </TD><TD> = </TD><TD ALIGN="LEFT"></TD></TR>
           <TR><TD ALIGN="LEFT">Compilation_Command_Line_Options         </TD><TD> = </TD><TD ALIGN="LEFT">-gnatc -gnatt -gnatws -gnatyN -mtune=generic -march=x86-64</TD></TR>
-          <TR><TD ALIGN="LEFT">Unit_Declaration     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2302112</TD></TR>
+          <TR><TD ALIGN="LEFT">Unit_Declaration     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2312112</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Parent_Declaration         </TD><TD> = </TD><TD ALIGN="LEFT">Unit_3</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Body     </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Body     </TD><TD> = </TD><TD ALIGN="LEFT">Unit_5</TD></TR>
           </TABLE>> ];
-  Element_2302112 -> Element_2274081
+  Element_2312112 -> Element_2274081
       [ label="Names ( 1)" ];
-  Element_2302112 -> Element_2290087
+  Element_2312112 -> Element_2290087
       [ label="Visible_Part_Declarative_Items ( 1)" ];
-  Element_2302112 -> Element_2300082
+  Element_2312112 -> Element_2300104
+      [ label="Visible_Part_Declarative_Items ( 2)" ];
+  Element_2312112 -> Element_2310082
       [ label="Private_Part_Declarative_Items ( 1)" ];
-  Element_2302112
+  Element_2312112
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
-          <TR><TD COLSPAN="3">Element_2302112</TD></TR>
+          <TR><TD COLSPAN="3">Element_2312112</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-2137259427</TD></TR>
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
-          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Parent.Child.ads - 1:1 .. 6:17</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Parent.Child.ads - 1:1 .. 8:17</TD></TR>
           <TR><TD ALIGN="LEFT">Declaration_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_PACKAGE_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Declaration_Origin     </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPLICIT_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Names ( 1)   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2274081</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_End_Name      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2305265</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_End_Name      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2315265</TD></TR>
           <TR><TD ALIGN="LEFT">Is_Name_Repeated     </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Declaration       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2302112</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Declaration       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2312112</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Body     </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           <TR><TD ALIGN="LEFT">Visible_Part_Declarative_Items ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2290087</TD></TR>
+          <TR><TD ALIGN="LEFT">Visible_Part_Declarative_Items ( 2)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2300104</TD></TR>
           <TR><TD ALIGN="LEFT">Is_Private_Present     </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
-          <TR><TD ALIGN="LEFT">Private_Part_Declarative_Items ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2300082</TD></TR>
+          <TR><TD ALIGN="LEFT">Private_Part_Declarative_Items ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2310082</TD></TR>
           </TABLE>> ];
   Element_2274081 -> Element_2273237
       [ label=Defining_Prefix ];
@@ -54,7 +57,7 @@ digraph "parent-child.adt" {
           <TR><TD COLSPAN="3">Element_2274081</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_NAME</TD></TR>
           <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-2137760163</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2302112</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2312112</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Parent.Child.ads - 1:9 .. 1:20</TD></TR>
           <TR><TD ALIGN="LEFT">Defining_Name_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_EXPANDED_NAME</TD></TR>
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Parent.Child"</TD></TR>
@@ -71,9 +74,9 @@ digraph "parent-child.adt" {
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Parent</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2310057</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2310057</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2328112</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2320057</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2320057</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2338112</TD></TR>
           </TABLE>> ];
   Element_2275057
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -94,7 +97,7 @@ digraph "parent-child.adt" {
           <TR><TD COLSPAN="3">Element_2290087</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-1064639698</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2302112</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2312112</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Parent.Child.ads - 2:3 .. 2:32</TD></TR>
           <TR><TD ALIGN="LEFT">Declaration_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_PRIVATE_TYPE_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Declaration_Origin     </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPLICIT_DECLARATION</TD></TR>
@@ -102,8 +105,8 @@ digraph "parent-child.adt" {
           <TR><TD ALIGN="LEFT">Has_Private   </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
           <TR><TD ALIGN="LEFT">Discriminant_Part     </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           <TR><TD ALIGN="LEFT">Type_Declaration_View      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2290204</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Type_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2300082</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Type_Completion        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2300082</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Type_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2310082</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Type_Completion        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2310082</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Type_Partial_View        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_First_Subtype       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2290087</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Last_Constraint        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2290087</TD></TR>
@@ -129,74 +132,117 @@ digraph "parent-child.adt" {
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_PRIVATE_TYPE_DEFINITION</TD></TR>
           <TR><TD ALIGN="LEFT">Has_Private   </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
           </TABLE>> ];
-  Element_2300082 -> Element_2291057
+  Element_2300104 -> Element_2291057
       [ label="Names ( 1)" ];
-  Element_2300082 -> Element_2298147
-      [ label=Type_Declaration_View ];
-  Element_2300082
+  Element_2300104 -> Element_2298237
+      [ label=Result_Profile ];
+  Element_2300104
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
-          <TR><TD COLSPAN="3">Element_2300082</TD></TR>
+          <TR><TD COLSPAN="3">Element_2300104</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DECLARATION</TD></TR>
-          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-668383099</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2302112</TD></TR>
-          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Parent.Child.ads - 5:4 .. 5:37</TD></TR>
-          <TR><TD ALIGN="LEFT">Declaration_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">AN_ORDINARY_TYPE_DECLARATION</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-1337769781</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2312112</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Parent.Child.ads - 4:3 .. 4:39</TD></TR>
+          <TR><TD ALIGN="LEFT">Declaration_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_FUNCTION_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Declaration_Origin     </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPLICIT_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Names ( 1)   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2291057</TD></TR>
-          <TR><TD ALIGN="LEFT">Discriminant_Part     </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
-          <TR><TD ALIGN="LEFT">Type_Declaration_View      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2298147</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Type_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2290087</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Type_Partial_View        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2290087</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_First_Subtype       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2300082</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Last_Constraint        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2300082</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Last_Subtype       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2300082</TD></TR>
+          <TR><TD ALIGN="LEFT">Result_Profile    </TD><TD> = </TD><TD ALIGN="LEFT">Element_2298237</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Declaration       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2300104</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Body     </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Equality_Operator        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           </TABLE>> ];
   Element_2291057
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2291057</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_NAME</TD></TR>
-          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-668408539</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2300082</TD></TR>
-          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Parent.Child.ads - 5:9 .. 5:21</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-1337865461</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2300104</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Parent.Child.ads - 4:12 .. 4:17</TD></TR>
+          <TR><TD ALIGN="LEFT">Defining_Name_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_IDENTIFIER</TD></TR>
+          <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"create"</TD></TR>
+          </TABLE>> ];
+  Element_2298237
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_2298237</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPRESSION</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-1337496949</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2300104</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Parent.Child.ads - 4:26 .. 4:38</TD></TR>
+          <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
+          <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Domain_Member</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2283057</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2283057</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2290087</TD></TR>
+          </TABLE>> ];
+  Element_2310082 -> Element_2301057
+      [ label="Names ( 1)" ];
+  Element_2310082 -> Element_2308147
+      [ label=Type_Declaration_View ];
+  Element_2310082
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_2310082</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DECLARATION</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 1980650017</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2312112</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Parent.Child.ads - 7:4 .. 7:37</TD></TR>
+          <TR><TD ALIGN="LEFT">Declaration_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">AN_ORDINARY_TYPE_DECLARATION</TD></TR>
+          <TR><TD ALIGN="LEFT">Declaration_Origin     </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPLICIT_DECLARATION</TD></TR>
+          <TR><TD ALIGN="LEFT">Names ( 1)   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2301057</TD></TR>
+          <TR><TD ALIGN="LEFT">Discriminant_Part     </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
+          <TR><TD ALIGN="LEFT">Type_Declaration_View      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2308147</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Type_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2290087</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Type_Partial_View        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2290087</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_First_Subtype       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2310082</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Last_Constraint        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2310082</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Last_Subtype       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2310082</TD></TR>
+          </TABLE>> ];
+  Element_2301057
+      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
+          <TR><TD COLSPAN="3">Element_2301057</TD></TR>
+          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_NAME</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 1980643657</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2310082</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Parent.Child.ads - 7:9 .. 7:21</TD></TR>
           <TR><TD ALIGN="LEFT">Defining_Name_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Domain_Member"</TD></TR>
           </TABLE>> ];
-  Element_2298147 -> Element_2299176
+  Element_2308147 -> Element_2309176
       [ label=Parent_Subtype_Indication ];
-  Element_2298147
+  Element_2308147
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
-          <TR><TD COLSPAN="3">Element_2298147</TD></TR>
+          <TR><TD COLSPAN="3">Element_2308147</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-668316347</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2300082</TD></TR>
-          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Parent.Child.ads - 5:26 .. 5:36</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 1980666705</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2310082</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Parent.Child.ads - 7:26 .. 7:36</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_TYPE_DEFINITION</TD></TR>
           <TR><TD ALIGN="LEFT">Type_Kind   </TD><TD> = </TD><TD ALIGN="LEFT">A_DERIVED_TYPE_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Parent_Subtype_Indication       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2299176</TD></TR>
+          <TR><TD ALIGN="LEFT">Parent_Subtype_Indication       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2309176</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Parent_Subtype        </TD><TD> = </TD><TD ALIGN="LEFT">Element_917082</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Root_Type      </TD><TD> = </TD><TD ALIGN="LEFT">Element_917082</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Type_Structure        </TD><TD> = </TD><TD ALIGN="LEFT">Element_917082</TD></TR>
           </TABLE>> ];
-  Element_2299176 -> Element_2299237
+  Element_2309176 -> Element_2309237
       [ label=Subtype_Mark ];
-  Element_2299176
+  Element_2309176
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
-          <TR><TD COLSPAN="3">Element_2299176</TD></TR>
+          <TR><TD COLSPAN="3">Element_2309176</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-668286523</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2298147</TD></TR>
-          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Parent.Child.ads - 5:30 .. 5:36</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 1980674161</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2308147</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Parent.Child.ads - 7:30 .. 7:36</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_SUBTYPE_INDICATION</TD></TR>
-          <TR><TD ALIGN="LEFT">Subtype_Mark    </TD><TD> = </TD><TD ALIGN="LEFT">Element_2299237</TD></TR>
+          <TR><TD ALIGN="LEFT">Subtype_Mark    </TD><TD> = </TD><TD ALIGN="LEFT">Element_2309237</TD></TR>
           <TR><TD ALIGN="LEFT">Subtype_Constraint     </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           </TABLE>> ];
-  Element_2299237
+  Element_2309237
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
-          <TR><TD COLSPAN="3">Element_2299237</TD></TR>
+          <TR><TD COLSPAN="3">Element_2309237</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPRESSION</TD></TR>
-          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-668224059</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2299176</TD></TR>
-          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Parent.Child.ads - 5:30 .. 5:36</TD></TR>
+          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 1980689777</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2309176</TD></TR>
+          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Parent.Child.ads - 7:30 .. 7:36</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           <TR><TD ALIGN="LEFT">Name_Image   </TD><TD> = </TD><TD ALIGN="LEFT">Integer</TD></TR>
@@ -204,7 +250,7 @@ digraph "parent-child.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_37057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_917082</TD></TR>
           </TABLE>> ];
-  Unit_3 -> Element_2328112
+  Unit_3 -> Element_2338112
       [ label=Unit_Declaration ];
   Unit_3
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
@@ -222,60 +268,60 @@ digraph "parent-child.adt" {
           <TR><TD ALIGN="LEFT">Object_Name   </TD><TD> = </TD><TD ALIGN="LEFT"></TD></TR>
           <TR><TD ALIGN="LEFT">Object_Form   </TD><TD> = </TD><TD ALIGN="LEFT"></TD></TR>
           <TR><TD ALIGN="LEFT">Compilation_Command_Line_Options         </TD><TD> = </TD><TD ALIGN="LEFT"></TD></TR>
-          <TR><TD ALIGN="LEFT">Unit_Declaration     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2328112</TD></TR>
+          <TR><TD ALIGN="LEFT">Unit_Declaration     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2338112</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Children ( 1)       </TD><TD> = </TD><TD ALIGN="LEFT">Unit_2</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Parent_Declaration         </TD><TD> = </TD><TD ALIGN="LEFT">Unit_1</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Body     </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           </TABLE>> ];
-  Element_2328112 -> Element_2310057
+  Element_2338112 -> Element_2320057
       [ label="Names ( 1)" ];
-  Element_2328112 -> Element_2326132
+  Element_2338112 -> Element_2336132
       [ label="Visible_Part_Declarative_Items ( 1)" ];
-  Element_2328112
+  Element_2338112
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
-          <TR><TD COLSPAN="3">Element_2328112</TD></TR>
+          <TR><TD COLSPAN="3">Element_2338112</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-2137259356</TD></TR>
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Parent.ads - 1:1 .. 3:11</TD></TR>
           <TR><TD ALIGN="LEFT">Declaration_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_PACKAGE_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Declaration_Origin     </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPLICIT_DECLARATION</TD></TR>
-          <TR><TD ALIGN="LEFT">Names ( 1)   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2310057</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_End_Name      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2329237</TD></TR>
+          <TR><TD ALIGN="LEFT">Names ( 1)   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2320057</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_End_Name      </TD><TD> = </TD><TD ALIGN="LEFT">Element_2339237</TD></TR>
           <TR><TD ALIGN="LEFT">Is_Name_Repeated     </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Declaration       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2328112</TD></TR>
+          <TR><TD ALIGN="LEFT">Corresponding_Declaration       </TD><TD> = </TD><TD ALIGN="LEFT">Element_2338112</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Body     </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
-          <TR><TD ALIGN="LEFT">Visible_Part_Declarative_Items ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2326132</TD></TR>
+          <TR><TD ALIGN="LEFT">Visible_Part_Declarative_Items ( 1)         </TD><TD> = </TD><TD ALIGN="LEFT">Element_2336132</TD></TR>
           </TABLE>> ];
-  Element_2310057
+  Element_2320057
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
-          <TR><TD COLSPAN="3">Element_2310057</TD></TR>
+          <TR><TD COLSPAN="3">Element_2320057</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_NAME</TD></TR>
           <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT">-2138156380</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2328112</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2338112</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Parent.ads - 1:9 .. 1:14</TD></TR>
           <TR><TD ALIGN="LEFT">Defining_Name_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Parent"</TD></TR>
           </TABLE>> ];
-  Element_2326132 -> Element_2319057
+  Element_2336132 -> Element_2329057
       [ label="Names ( 1)" ];
-  Element_2326132
+  Element_2336132
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
-          <TR><TD COLSPAN="3">Element_2326132</TD></TR>
+          <TR><TD COLSPAN="3">Element_2336132</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 1083212114</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2328112</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2338112</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Parent.ads - 2:3 .. 2:26</TD></TR>
           <TR><TD ALIGN="LEFT">Declaration_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXCEPTION_DECLARATION</TD></TR>
           <TR><TD ALIGN="LEFT">Declaration_Origin     </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPLICIT_DECLARATION</TD></TR>
-          <TR><TD ALIGN="LEFT">Names ( 1)   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2319057</TD></TR>
+          <TR><TD ALIGN="LEFT">Names ( 1)   </TD><TD> = </TD><TD ALIGN="LEFT">Element_2329057</TD></TR>
           </TABLE>> ];
-  Element_2319057
+  Element_2329057
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
-          <TR><TD COLSPAN="3">Element_2319057</TD></TR>
+          <TR><TD COLSPAN="3">Element_2329057</TD></TR>
           <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_NAME</TD></TR>
           <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 1082598226</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2326132</TD></TR>
+          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2336132</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Parent.ads - 2:3 .. 2:13</TD></TR>
           <TR><TD ALIGN="LEFT">Defining_Name_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Usage_Error"</TD></TR>
