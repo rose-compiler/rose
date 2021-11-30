@@ -364,8 +364,12 @@ string Labeler::labelToString(Label lab) {
   return ss.str();
 }
 
+bool Labeler::isValidLabelIdRange(Label lab) {
+  return lab.getId()<numberOfLabels();
+}
+
 SgNode* CLabeler::getNode(Label label) {
-  if(label.getId()>=mappingLabelToLabelProperty.size()) {
+  if(!isValidLabelIdRange(label)) {
     stringstream ss;
     ss <<"[ "
        << label.getId()
@@ -427,7 +431,7 @@ Label CLabeler::getLabel(SgNode* node) {
   throw CodeThorn::Exception("Error: internal error getLabel.");
 }
 
-long CLabeler::numberOfLabels() {
+size_t CLabeler::numberOfLabels() {
   return mappingLabelToLabelProperty.size();
 }
 
@@ -616,9 +620,9 @@ Label CLabeler::getFunctionCallLabelFromReturnLabel(Label ret)
   return call;
 }
 
-LabelProperty CLabeler::getProperty(Label lbl)
+LabelProperty CLabeler::getProperty(Label lab)
 {
-  return mappingLabelToLabelProperty.at(lbl.getId());
+  return mappingLabelToLabelProperty.at(lab.getId());
 }
 
 LabelSet CLabeler::getLabelSet(set<SgNode*>& nodeSet) {
