@@ -4040,7 +4040,16 @@ namespace CodeThorn {
     if(memLoc.isNullPtr()) {
       // do not write to null pointer
     } else {
-      pstate->writeToMemoryLocation(memLoc,newValue);
+      switch(_analyzer->getOptionsRef().initialStateGlobalVarsAbstractionLevel) {
+      case 0:
+        if(!isGlobalAddress(memLoc)) {
+          // in mode 0 only write to non-global memory locations
+          pstate->writeToMemoryLocation(memLoc,newValue);
+        }
+      case 1:
+        pstate->writeToMemoryLocation(memLoc,newValue);
+        break;
+      }
     }
   }
 
