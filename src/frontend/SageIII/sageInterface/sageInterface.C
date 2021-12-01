@@ -21687,7 +21687,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
 
 //! Check if a function declaration is a C++11 lambda function
 // TODO, expose to SageInterface namespace
-bool isLambdaFunction (SgFunctionDeclaration* func)
+bool SageInterface::isLambdaFunction (SgFunctionDeclaration* func)
 {
   bool rt = false;
   ROSE_ASSERT (func != NULL);
@@ -21703,7 +21703,7 @@ bool isLambdaFunction (SgFunctionDeclaration* func)
 // SgArrowExp <SgThisExp,  SgVarRefExp>, both are compiler generated nodes
 // class symbol of ThisExp 's declaration is AutonomousDeclaration SgClassDeclaration
 // its parent is SgLambdaExp, and lambda_closure_class points back to this class declaration
-bool isLambdaCapturedVariable (SgVarRefExp* varRef)
+bool SageInterface::isLambdaCapturedVariable (SgVarRefExp* varRef)
 {
   bool rt = false;
 #ifdef  _MSC_VER
@@ -21857,18 +21857,29 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current, b
   }
   // operator->() may be called upon a class object.
   // e.g.  we need to get the function: it a SgDotExp node, (lhs is the class object, rhs is its member function)
- else if (SgFunctionCallExp * func_call = isSgFunctionCallExp(current))
- {
-    return convertRefToInitializedName(func_call->get_function(), coarseGrain);
- }
+  else if (SgFunctionCallExp * func_call = isSgFunctionCallExp(current))
+  {
+      return convertRefToInitializedName(func_call->get_function(), coarseGrain);
+  }
+  else if (isSgIntVal(current))
+  {
+      //It is very rare, but sometimes a constant is treated as a
+      //variable.  In which case we don't need an SgInitializdName
+      return NULL;
+  }
+
   else
   {
-    // side effect analysis will return rhs of  Class A a = A(); as a read ref exp. SgConstructorInitializer
-    if (!isSgConstructorInitializer(current))
-    {
-      cerr<<"In SageInterface::convertRefToInitializedName(): unhandled reference type:"<<current->class_name()<<endl;
-      ROSE_ABORT();
-    }
+      // side effect analysis will return rhs of  Class A a = A(); as a read ref exp. SgConstructorInitializer
+      if (!isSgConstructorInitializer(current))
+      {
+          mlog[Sawyer::Message::Common::WARN] <<
+              "convertRefToInitializedName: " <<
+              current->get_file_info()->get_filename() << ":" <<
+              current->get_file_info()->get_line() << "-" << current->get_file_info()->get_col()<<endl;
+          cerr<<"In SageInterface::convertRefToInitializedName(): unhandled reference type:"<<current->class_name()<<endl;
+          ROSE_ABORT();
+      }
   }
   //ROSE_ASSERT(name != NULL);
   return name;
