@@ -291,6 +291,20 @@ package body Asis_Adapter.Element.Expressions is
          Result.Expression_Parenthesized := ID;
       end;
 
+      procedure Add_Is_Prefix_Call is
+         Value : constant Boolean := Asis.Expressions.Is_Prefix_Call (Element);
+      begin
+         State.Add_To_Dot_Label ("Is_Prefix_Call", Value);
+         Result.Is_Prefix_Call := a_nodes_h.Support.To_bool (Value);
+      end;
+
+      procedure Add_Is_Prefix_Notation is
+         Value : constant Boolean := Asis.Elements.Is_Prefix_Notation (Element);
+      begin
+         State.Add_To_Dot_Label ("Is_Prefix_Notation", Value);
+         Result.Is_Prefix_Notation := a_nodes_h.Support.To_bool (Value);
+      end;
+
       procedure Add_Prefix is
          ID : constant a_nodes_h.Element_ID :=
            Get_Element_ID (Asis.Expressions.Prefix (Element));
@@ -413,6 +427,8 @@ package body Asis_Adapter.Element.Expressions is
          when An_Explicit_Dereference =>
             Add_Prefix; --
          when A_Function_Call =>
+            Add_Is_Prefix_Notation;
+            Add_Is_Prefix_Call;
             Add_Prefix;
             Add_Corresponding_Called_Function;
             Add_Function_Call_Parameters;
