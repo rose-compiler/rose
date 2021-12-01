@@ -3151,8 +3151,8 @@ Grammar::setUpStatements ()
      AdaFormalTypeDecl.setFunctionPrototype ( "HEADER_ADA_FORMAL_TYPE_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaFormalTypeDecl.setDataPrototype ( "SgName", "name", "=\"\"",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AdaFormalTypeDecl.setDataPrototype ( "SgAdaFormalType*", "formal_type", "= NULL",
-                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaFormalTypeDecl.setDataPrototype ( "SgAdaFormalType*", "type", "= NULL",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AdaGenericInstanceDecl.setFunctionPrototype ( "HEADER_ADA_GENERIC_INSTANCE_DECL", "../Grammar/Statement.code" );
      AdaGenericInstanceDecl.setDataPrototype ( "SgName", "name", "=\"\"",

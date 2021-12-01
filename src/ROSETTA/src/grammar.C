@@ -1239,6 +1239,7 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
           (nodeName == "AdaDiscriminatedTypeDecl"   && variableNameString == "type")  ||
           (nodeName == "AdaTaskTypeDecl"            && variableNameString == "type")  ||
           (nodeName == "AdaTaskSpecDecl"            && variableNameString == "type")  ||
+          (nodeName == "AdaFormalTypeDecl"          && variableNameString == "type")  ||
           (nodeName == "ClassDeclaration"           && variableNameString == "type")  ||
           (nodeName == "FunctionDeclaration"        && variableNameString == "type")  ||
           (nodeName == "AsmExpression"              && variableNameString == "type")  ||
@@ -1378,6 +1379,7 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
           (nodeName == "AdaDiscriminatedTypeDecl"   && variableNameString == "type")  ||
           (nodeName == "AdaTaskTypeDecl"            && variableNameString == "type")  ||
           (nodeName == "AdaTaskSpecDecl"            && variableNameString == "type")  ||
+          (nodeName == "AdaFormalTypeDecl"          && variableNameString == "type")  ||
           (nodeName == "ClassDeclaration"           && variableNameString == "type")  ||
           (nodeName == "FunctionDeclaration"        && variableNameString == "type")  ||
           (nodeName == "FunctionTypeSymbol"         && variableNameString == "type")  ||

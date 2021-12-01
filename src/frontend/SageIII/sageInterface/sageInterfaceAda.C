@@ -382,6 +382,11 @@ namespace
 
     return (lhs == rhs) || (BaseScope::find(lhs) == BaseScope::find(rhs));
   }
+
+  bool isPrivate(const SgDeclarationStatement& dcl)
+  {
+    return dcl.get_declarationModifier().get_accessModifier().isPrivate();
+  }
 }
 
 namespace SageInterface
@@ -390,10 +395,13 @@ namespace ada
 {
   bool withPrivateDefinition(const SgDeclarationStatement& dcl)
   {
-    // \todo check that dcl refers to a type
+    // return false if dcl is already private
+    if (isPrivate(dcl))
+      return false;
+
     const SgDeclarationStatement* def = dcl.get_definingDeclaration();
 
-    return def && def->get_declarationModifier().get_accessModifier().isPrivate();
+    return def && isPrivate(*def);
   }
 
   bool withPrivateDefinition(const SgDeclarationStatement* n)
@@ -989,6 +997,38 @@ namespace ada
     fn(n);
   }
 
+  StatementRange
+  declsInPackage(SgGlobal& globalScope, const std::string& mainFile)
+  {
+    auto declaredInMainFile = [&mainFile](const SgDeclarationStatement* dcl)
+                              {
+                                ROSE_ASSERT(dcl);
+
+                                const Sg_File_Info& fileInfo = SG_DEREF(dcl->get_startOfConstruct());
+
+                                return fileInfo.get_filenameString() == mainFile;
+                              };
+    auto notDeclaredInMainFile = [&declaredInMainFile](const SgDeclarationStatement* dcl)
+                                 {
+                                   return !declaredInMainFile(dcl);
+                                 };
+
+    SgDeclarationStatementPtrList&          lst   = globalScope.get_declarations();
+    SgDeclarationStatementPtrList::iterator zz    = lst.end();
+    SgDeclarationStatementPtrList::iterator first = std::find_if(lst.begin(), zz, declaredInMainFile);
+    SgDeclarationStatementPtrList::iterator limit = std::find_if(first, zz, notDeclaredInMainFile);
+
+    return std::make_pair(first, limit);
+  }
+
+
+  StatementRange
+  declsInPackage(SgGlobal& globalScope, const SgSourceFile& mainFile)
+  {
+    return declsInPackage(globalScope, mainFile.getFileName());
+  }
+
+
 
   /// Traversal to change the comment style from Ada to C++
   struct CommentCxxifier
@@ -1000,10 +1040,8 @@ namespace ada
         commentKind(useLineComments ? PreprocessingInfo::CplusplusStyleComment : PreprocessingInfo:: C_StyleComment)
       {}
 
-      CommentCxxifier& operator=(CommentCxxifier&&)      = default;
       CommentCxxifier(CommentCxxifier&&)                 = default;
       CommentCxxifier(const CommentCxxifier&)            = default;
-      CommentCxxifier& operator=(const CommentCxxifier&) = default;
 
       void operator()(SgNode*) const;
 
@@ -1014,6 +1052,8 @@ namespace ada
       const PreprocessingInfo::DirectiveType commentKind;
 
       CommentCxxifier()                                  = delete;
+      CommentCxxifier& operator=(const CommentCxxifier&) = delete;
+      CommentCxxifier& operator=(CommentCxxifier&&)      = delete;
   };
 
 

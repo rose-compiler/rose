@@ -205,6 +205,7 @@ mkAdaFloatType(SgExpression& digits, SgAdaRangeConstraint* range_opt)
   return sgnode;
 }
 
+/*
 SgAdaFormalType&
 mkAdaFormalType(const std::string& name)
 {
@@ -212,6 +213,7 @@ mkAdaFormalType(const std::string& name)
   ty.set_type_name(name);
   return ty;
 }
+*/
 
 SgDeclType&
 mkExceptionType(SgExpression& n)
@@ -633,9 +635,9 @@ mkAdaGenericDecl(SgScopeStatement& scope)
 }
 
 SgAdaFormalTypeDecl&
-mkAdaFormalTypeDecl(const std::string& name, SgAdaFormalType& ty, SgScopeStatement& scope)
+mkAdaFormalTypeDecl(const std::string& name, SgScopeStatement& scope)
 {
-  SgAdaFormalTypeDecl&  sgnode = mkLocatedNode<SgAdaFormalTypeDecl>(SgName(name),&ty);
+  SgAdaFormalTypeDecl&  sgnode = mkLocatedNode<SgAdaFormalTypeDecl>(SgName(name));
 
   sgnode.set_parent(&scope);
   sgnode.set_firstNondefiningDeclaration(&sgnode);

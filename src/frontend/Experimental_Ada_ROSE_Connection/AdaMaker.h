@@ -170,10 +170,13 @@ namespace Ada_ROSE_Translation
   SgType& mkAliasedType(SgType& underType);
 
   /// create a formal type
-  SgAdaFormalType& mkAdaFormalType(const std::string& name);
+  // SgAdaFormalType& mkAdaFormalType(const std::string& name);
+
+  //~ SgAdaFormalTypeDecl&
+  //~ mkAdaFormalTypeDecl(const std::string& name, SgAdaFormalType& ty, SgScopeStatement& scope);
 
   SgAdaFormalTypeDecl&
-  mkAdaFormalTypeDecl(const std::string& name, SgAdaFormalType& ty, SgScopeStatement& scope);
+  mkAdaFormalTypeDecl(const std::string& name, SgScopeStatement& scope);
 
   //
   // Statement Makers

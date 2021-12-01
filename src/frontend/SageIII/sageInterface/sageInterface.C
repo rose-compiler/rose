@@ -1886,19 +1886,19 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
 
           case V_SgAdaPackageSpecDecl:
             {
-              name = "_ada_package_spec_decl_" + genericGetName(isSgAdaPackageSpecDecl(declaration));
+              name = genericGetName(isSgAdaPackageSpecDecl(declaration));
               break;
             }
 
           case V_SgAdaPackageBodyDecl:
             {
-              name = "_ada_package_body_decl_" + genericGetName(isSgAdaPackageBodyDecl(declaration));
+              name = genericGetName(isSgAdaPackageBodyDecl(declaration));
               break;
             }
 
           case V_SgAdaFormalTypeDecl:
              {
-              name = "_ada_formal_type_decl_" + genericGetName(isSgAdaFormalTypeDecl(declaration));
+               name = genericGetName(isSgAdaFormalTypeDecl(declaration));
                break;
              }
 
