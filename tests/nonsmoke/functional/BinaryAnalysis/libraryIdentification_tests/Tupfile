@@ -1,0 +1,25 @@
+include_rules
+
+ifeq (@(ENABLE_TESTS),yes)
+ifeq (@(ENABLE_BINARY_ANALYSIS),yes)
+ifneq (@(WITH_SQLITE),no)
+
+run $(tool_compile_linkexe) libraryIdentificationTest.C
+
+run $(test) libraryIdentificationTest -o libraryIdentificationTest-test1 -x testLibraryIdentification-test1.db \
+    ./libraryIdentificationTest --database-filename=testLibraryIdentification-test1.db \
+    $(ROSE)/tests/nonsmoke/specimens/binary/i386-pivot_root
+
+# These tests are disabled on Mac OS X because that system's "ar" command cannot unpack
+# an archive file generated on a Linux machine (such as libTest-amd64.a).  And we cannot
+# use a OS X archive containing MachO files because those object files cannot be parsed
+# (yet) by ROSE.
+ifeq (0,0)
+     run $(test) libraryIdentificationTest -o libraryIdentificationTest-test2 -x testLibraryIdentification-test2.db \
+     	 ./libraryIdentificationTest --database-filename=testLibraryIdentification-test2.db \
+	 $(ROSE)/tests/nonsmoke/specimens/binary/libTest-amd64.a
+endif
+
+endif
+endif
+endif
