@@ -1945,6 +1945,13 @@ ROSE_DLL_API void moveStatementsBetweenBlocks ( SgAdaPackageBody* sourceBlock, S
 //! Move statements between C++ namespace's definitions
 ROSE_DLL_API void moveStatementsBetweenBlocks ( SgNamespaceDefinitionStatement* sourceBlock, SgNamespaceDefinitionStatement* targetBlock );
 
+//!  Check if a function declaration is a C++11 lambda function
+ROSE_DLL_API bool isLambdaFunction (SgFunctionDeclaration* func);
+
+//! check if a variable reference is this->a[i] inside of a lambda function
+ROSE_DLL_API bool isLambdaCapturedVariable (SgVarRefExp* varRef);
+
+
 //! Move a variable declaration to a new scope, handle symbol, special scopes like For loop, etc.
 ROSE_DLL_API void moveVariableDeclaration(SgVariableDeclaration* decl, SgScopeStatement* target_scope);
 //! Append a statement to the end of the current scope, handle side effect of appending statements, e.g. preprocessing info, defining/nondefining pointers etc.
