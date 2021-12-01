@@ -449,31 +449,6 @@ namespace
       std::string& renamedName() { return std::get<2>(*this); }
   };
 
-  using StatementRange = std::pair<SgDeclarationStatementPtrList::iterator, SgDeclarationStatementPtrList::iterator>;
-
-  StatementRange
-  declsInPackage(SgDeclarationStatementPtrList& lst, const std::string& mainFile)
-  {
-    auto declaredInMainFile = [&mainFile](const SgDeclarationStatement* dcl)
-                              {
-                                ROSE_ASSERT(dcl);
-
-                                const Sg_File_Info& fileInfo = SG_DEREF(dcl->get_startOfConstruct());
-
-                                return fileInfo.get_filenameString() == mainFile;
-                              };
-    auto notDeclaredInMainFile = [&declaredInMainFile](const SgDeclarationStatement* dcl)
-                              {
-                                return !declaredInMainFile(dcl);
-                              };
-
-    SgDeclarationStatementPtrList::iterator zz    = lst.end();
-    SgDeclarationStatementPtrList::iterator first = std::find_if(lst.begin(), zz, declaredInMainFile);
-    SgDeclarationStatementPtrList::iterator limit = std::find_if(first, zz, notDeclaredInMainFile);
-
-    return std::make_pair(first, limit);
-  }
-
   struct ImportedUnitResult : std::tuple<std::string, const SgDeclarationStatement*, const SgAdaRenamingDecl*>
   {
     using base = std::tuple<std::string, const SgDeclarationStatement*, const SgAdaRenamingDecl*>;
@@ -695,8 +670,8 @@ namespace
 
     void handle(SgGlobal& n)
     {
-      ScopeUpdateGuard scopeGuard{unparser, info, n};
-      StatementRange   pkgRange = declsInPackage(n.get_declarations(), unparser.getFileName());
+      ScopeUpdateGuard        scopeGuard{unparser, info, n};
+      si::ada::StatementRange pkgRange = si::ada::declsInPackage(n, unparser.getFileName());
 
       list(pkgRange.first, pkgRange.second);
     }
@@ -1110,10 +1085,17 @@ namespace
     {
       prn("type ");
       prn(n.get_name());
-      prn(" is");
+      prn(" is ");
       modifiers(n);
 
-      SgAdaFormalType* ty = n.get_formal_type();
+      SgAdaFormalType* ty = n.get_type();
+      ASSERT_not_null(ty);
+
+      // \todo what types need to be printed?
+      //       print all non-null ty->get_formal_type() ?
+      if (SgAdaAccessType* accty = isSgAdaAccessType(ty->get_formal_type()))
+        type(n, accty);
+
       if (ty->get_is_private()) {
         prn(" private");
       }

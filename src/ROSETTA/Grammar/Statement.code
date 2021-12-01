@@ -20641,7 +20641,10 @@ bool SgAdaGenericInstanceDecl::hasExplicitScope() const { return true; }
 SOURCE_ADA_GENERIC_INSTANCE_DECL_END
 
 SOURCE_ADA_FORMAL_TYPE_DECL_STATEMENT_START
-void SgAdaFormalTypeDecl::post_construction_initialization() {}
+void SgAdaFormalTypeDecl::post_construction_initialization()
+{
+  set_type(SgAdaFormalType::createType(this));
+}
 
 SgSymbol*
 SgAdaFormalTypeDecl::get_symbol_from_symbol_table() const

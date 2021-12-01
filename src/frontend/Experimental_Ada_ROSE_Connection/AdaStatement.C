@@ -643,10 +643,11 @@ namespace
 
       void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
 
-      void handle(SgAdaFormalType& n)
+      void handle(SgAdaFormalTypeDecl& n)
       {
-        res = &mkAdaFormalTypeDecl(dclname, n, dclscope);
-        n.set_declaration(res);
+        ADA_ASSERT(n.get_scope() == &dclscope);
+
+        res = &n;
       }
 
       void handle(SgType& n)
@@ -1721,7 +1722,7 @@ namespace
 
           SgExpression&    target = getExprID(stmt.Called_Name, ctx);
           ElemIdRange      args   = idRange(stmt.Call_Statement_Parameters);
-          SgExpression&    call   = createCall(target, args, ctx);
+          SgExpression&    call   = createCall(target, args, true /* call syntax */, ctx);
           SgExprStatement& sgnode = SG_DEREF(sb::buildExprStatement(&call));
 
           attachSourceLocation(call, elem, ctx);

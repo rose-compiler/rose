@@ -29,36 +29,41 @@ namespace
 {
   struct MakeTyperef : sg::DispatchHandler<SgType*>
   {
-      typedef sg::DispatchHandler<SgType*> base;
+      using base = sg::DispatchHandler<SgType*>;
 
       MakeTyperef(Element_Struct& elem, AstContext astctx)
       : base(), el(elem), ctx(astctx)
       {}
 
-      // checks whether this is a discriminated declaration and generates the type accordingly
-      void decl(SgDeclarationStatement& n, std::function<SgType*()> nonDiscriminatedTypeGen)
+      // checks whether this is a discriminated declaration and sets the type accordingly
+      void handleDiscrDecl(SgDeclarationStatement& n, SgType* declaredType)
       {
-        SgType* ty = nullptr;
-
         if (SgAdaDiscriminatedTypeDecl* discrDcl = si::ada::getAdaDiscriminatedTypeDecl(n))
-          ty = discrDcl->get_type();
-        else
-          ty = nonDiscriminatedTypeGen();
+          declaredType = discrDcl->get_type();
 
-        set(ty);
+        set(declaredType);
       }
 
       void set(SgType* ty)                 { ADA_ASSERT(ty); res = ty; }
 
+      // error handler
       void handle(SgNode& n)               { SG_UNEXPECTED_NODE(n); }
 
+      // just use the type
       void handle(SgType& n)               { set(&n); }
-      void handle(SgAdaFormalTypeDecl& n)  { decl(n, [&]() -> SgType* { return n.get_formal_type(); } ); }
-      void handle(SgClassDeclaration& n)   { decl(n, [&]() -> SgType* { return n.get_type();        } ); }
-      void handle(SgAdaTaskTypeDecl& n)    { decl(n, [&]() -> SgType* { return n.get_type();        } ); }
-      void handle(SgEnumDeclaration& n)    { decl(n, [&]() -> SgType* { return n.get_type();        } ); }
-      void handle(SgTypedefDeclaration& n) { decl(n, [&]() -> SgType* { return n.get_type();        } ); }
 
+      // undecorated declarations
+      void handle(SgAdaFormalTypeDecl& n)  { set(n.get_type()); }
+
+      // possibly decorated with an SgAdaDiscriminatedTypeDecl
+      // \{
+      void handle(SgClassDeclaration& n)   { handleDiscrDecl(n, n.get_type()); }
+      void handle(SgAdaTaskTypeDecl& n)    { handleDiscrDecl(n, n.get_type()); }
+      void handle(SgEnumDeclaration& n)    { handleDiscrDecl(n, n.get_type()); }
+      void handle(SgTypedefDeclaration& n) { handleDiscrDecl(n, n.get_type()); }
+      // \}
+
+      // others
       void handle(SgAdaAttributeExp& n)
       {
         attachSourceLocation(n, el, ctx); // \todo why is this not set where the node is made?
@@ -412,6 +417,8 @@ namespace
     return access_t;
   }
 
+
+  // PP: rewrote this code to create the SgAdaFormalTypeDecl together with the type
   TypeData
   getFormalTypeFoundation(const std::string& name, Definition_Struct& def, AstContext ctx)
   {
@@ -428,7 +435,8 @@ namespace
       case A_Formal_Private_Type_Definition:         // 12.5.1(2)   -> Trait_Kinds
         {
           logKind("A_Formal_Private_Type_Definition");
-          SgAdaFormalType& t = mkAdaFormalType(name);
+          SgAdaFormalTypeDecl& dcl =mkAdaFormalTypeDecl(name, ctx.scope());
+          SgAdaFormalType&     t = SG_DEREF(dcl.get_type());
           res.setAbstract(typenode.Has_Abstract);
           res.setLimited(typenode.Has_Limited);
           res.setTagged(typenode.Has_Tagged);
@@ -440,7 +448,7 @@ namespace
             t.set_is_private(true);
           }
 
-          res.sageNode(t);
+          res.sageNode(dcl);
           break;
         }
 
@@ -448,11 +456,11 @@ namespace
         {
           logKind("A_Formal_Access_Type_Definition");
 
-          SgAdaFormalType& t = mkAdaFormalType(name);
+          SgAdaFormalTypeDecl& dcl =mkAdaFormalTypeDecl(name, ctx.scope());
+          SgAdaFormalType&     t = SG_DEREF(dcl.get_type());
           SgAdaAccessType* access_t = getAccessTypeDefinition(typenode.Access_Type, ctx);
           t.set_formal_type(access_t);
-          res.sageNode(t);
-
+          res.sageNode(dcl);
           break;
         }
 
@@ -479,8 +487,8 @@ namespace
         //       but set no fields.  This is sufficient to pass some test cases but
         //       is not correct.
         ADA_ASSERT(!FAIL_ON_ERROR(ctx));
-        SgAdaFormalType& t = mkAdaFormalType(name);
-        res.sageNode(t);
+        SgAdaFormalTypeDecl& dcl =mkAdaFormalTypeDecl(name, ctx.scope());
+        res.sageNode(dcl);
       }
 
     return res;

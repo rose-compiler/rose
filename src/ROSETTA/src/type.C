@@ -700,7 +700,7 @@ Grammar::setUpTypes ()
 
      CUSTOM_CREATE_TYPE_MACRO(AdaFormalType,
             "SOURCE_CREATE_TYPE_FOR_ADA_FORMAL_TYPE",
-            "SgType* formal_type = NULL");
+            "SgAdaFormalTypeDecl* decl = NULL");
 
   // PP (3/24/20): Adding ADA types
      CUSTOM_CREATE_TYPE_MACRO(AdaAccessType,
@@ -1120,9 +1120,8 @@ Grammar::setUpTypes ()
 
   // PP (5/7/20): Adding ADA types
      AdaTaskType.setFunctionPrototype ("HEADER_ADA_TASK_TYPE", "../Grammar/Type.code" );
-
+     AdaTaskType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
      AdaTaskType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
-     // maybe: AdaTaskType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
 
      //~ AdaTaskType.setDataPrototype ("SgAdaTaskTypeDecl*", "decl", "= NULL",
                                      //~ CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -1135,6 +1134,7 @@ Grammar::setUpTypes ()
   // MS (5/1/21): Adding Ada generics
      AdaFormalType.setFunctionPrototype ("HEADER_ADA_FORMAL_TYPE", "../Grammar/Type.code" );
 
+     AdaFormalType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
      AdaFormalType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
 
      AdaFormalType.setDataPrototype ("bool"         , "is_private" , "= false",
@@ -1143,8 +1143,8 @@ Grammar::setUpTypes ()
      AdaFormalType.setDataPrototype ("SgType*"      , "formal_type", "= NULL",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     AdaFormalType.setDataPrototype("std::string", "type_name", "= \"\"",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     //~ AdaFormalType.setDataPrototype("std::string", "type_name", "= \"\"",
+                                     //~ NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // PP (3/24/20): Adding ADA types
      AdaAccessType.setFunctionPrototype ("HEADER_ADA_ACCESS_TYPE", "../Grammar/Type.code" );

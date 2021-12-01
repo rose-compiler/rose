@@ -815,6 +815,17 @@ namespace
         computeNameQualForShared(n, n.get_base_type());
       }
 
+      void handle(const SgAdaFormalTypeDecl& n)
+      {
+        handle(sg::asBaseType(n));
+
+        SgAdaFormalType* ty = n.get_type();
+        ASSERT_not_null(ty);
+
+        if (SgType* formalType = ty->get_formal_type())
+          computeNameQualForShared(n, ty->get_formal_type());
+      }
+
       void handle(const SgEnumDeclaration& n)
       {
         handle(sg::asBaseType(n));

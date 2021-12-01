@@ -86,7 +86,7 @@ namespace
   {
       using base = sg::DispatchHandler<SgExpression*>;
 
-      AdaCallBuilder(ElemIdRange params, AstContext astctx)
+      AdaCallBuilder(ElemIdRange params, bool useCallSyntax, AstContext astctx)
       : base(nullptr), range(params), ctx(astctx)
       {}
 
@@ -192,7 +192,6 @@ namespace
       {
         SgExprListExp& arglst = computeArguments();
 
-
         if (SgFunctionDeclaration* funDcl = n.getAssociatedFunctionDeclaration())
         {
           SgFunctionSymbol& origSym = SG_DEREF(n.get_symbol());
@@ -245,6 +244,7 @@ namespace
 
     private:
       ElemIdRange range;
+      bool        callSyntax;
       AstContext  ctx;
   };
 
@@ -587,7 +587,7 @@ namespace
       void handle(SgClassDeclaration& n)   { set(n.get_type()); }
       void handle(SgTypedefDeclaration& n) { set(n.get_type()); }
       void handle(SgEnumDeclaration& n)    { set(n.get_type()); }
-      void handle(SgAdaFormalTypeDecl& n)  { set(n.get_formal_type()); }
+      void handle(SgAdaFormalTypeDecl& n)  { set(n.get_type()); }
 
     private:
       AstContext ctx;
@@ -895,12 +895,12 @@ namespace
           ElemIdRange             range  = idRange(expr.Function_Call_Parameters);
 
           // distinguish between operators and calls
-          res = &createCall(target, range, ctx);
+          res = &createCall(target, range, expr.Is_Prefix_Call, ctx);
 
           /* unused fields:
              Expression_Struct
                Expression_ID         Prefix;
-               bool                  Is_Prefix_Call;
+               bool                  Is_Prefix_Notation;
                bool                  Is_Generalized_Reference;
                bool                  Is_Dispatching_Call;
                bool                  Is_Call_On_Dispatching_Operation;
@@ -1473,9 +1473,9 @@ getDefinitionExprID(Element_ID id, AstContext ctx)
   return getDefinitionExpr(retrieveAs(elemMap(), id), ctx);
 }
 
-SgExpression& createCall(SgExpression& target, ElemIdRange args, AstContext ctx)
+SgExpression& createCall(SgExpression& target, ElemIdRange args, bool callSyntax, AstContext ctx)
 {
-  SgExpression* res = sg::dispatch(AdaCallBuilder{args, ctx}, &target);
+  SgExpression* res = sg::dispatch(AdaCallBuilder{args, callSyntax, ctx}, &target);
 
   return SG_DEREF(res);
 }
