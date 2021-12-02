@@ -73,7 +73,15 @@ EState* EState::deepClone() {
 }
 
 // equivalent to deepClone, if sharedPStates==false
-EState* EState::clone() {
+EStatePtr EState::cloneWithoutIO() {
+  EStatePtr estate=clone();
+  if(!estate->io.isBot())
+    estate->io.recordNone(); // remove any existing IO info if not Bottom
+  return estate;
+}
+
+// equivalent to deepClone, if sharedPStates==false
+EStatePtr EState::clone() {
   return new EState(*this);
 }
 
@@ -472,3 +480,12 @@ size_t EState::getCallStringLength() const {
   return callString.getLength();
 }
 
+void EState::setPState(PStatePtr pstate) {
+  if(!EState::sharedPStates) {
+    if(_pstate!=nullptr && _pstate!=pstate)
+      delete _pstate;
+    _pstate=pstate;
+  } else {
+    _pstate=pstate;
+  }
+}

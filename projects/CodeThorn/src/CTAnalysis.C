@@ -283,7 +283,7 @@ CodeThorn::CTAnalysis::SubSolverResultType CodeThorn::CTAnalysis::subSolver(ESta
           ROSE_ASSERT(newEStatePtr0->label()!=Labeler::NO_LABEL);
 
           if((!isFailedAssertEState(newEStatePtr0)&&!isVerificationErrorEState(newEStatePtr0))) {
-            HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEStatePtr0);
+            HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=process(newEStatePtr0); // sub solver
             EStatePtr newEStatePtr=const_cast<EStatePtr>(pres.second);
             ROSE_ASSERT(newEStatePtr);
             if(pres.first==true) {
@@ -309,7 +309,7 @@ CodeThorn::CTAnalysis::SubSolverResultType CodeThorn::CTAnalysis::subSolver(ESta
           }
           if(((isFailedAssertEState(newEStatePtr0))||isVerificationErrorEState(newEStatePtr0))) {
             // failed-assert end-state: do not add to work list but do add it to the transition graph
-            EStatePtr newEStatePtr=processNewOrExisting(newEStatePtr0);
+            EStatePtr newEStatePtr=processNewOrExisting(newEStatePtr0); // sub solver
             // TODO: create reduced transition set at end of this function
             if(!getModeLTLDriven()) {
               recordTransition(currentEStatePtr,e,newEStatePtr);
@@ -444,19 +444,19 @@ EStatePtr CodeThorn::CTAnalysis::getBottomSummaryState(Label lab, CallString cs)
   InputOutput io;
   io.recordBot();
   if(EState::sharedPStates) {
-#if 0
-    EState estate(lab,cs,_initialPStateStored,io);
-#else
     PStatePtr bottomPState=processNewOrExisting(*new PState());
     EState estate(lab,cs,bottomPState,io);
-#endif
     EStatePtr bottomElement=processNewOrExisting(estate);
     return bottomElement;
   } else {
     PStatePtr initialEmpty=new PState();
     EState estate(lab,cs,initialEmpty,io);
-    EStatePtr bottomElement=processNewOrExisting(estate);
-    return bottomElement;
+    if(_ctOpt.solver!=17) {
+      EStatePtr bottomElement=processNewOrExisting(estate);
+      return bottomElement;
+    } else {
+      return new EState(estate); // solver 17 does not use the estate hash set
+    }
   }
 }
 
@@ -720,9 +720,10 @@ void CodeThorn::CTAnalysis::runAnalysisPhase2Sub1(TimingCollector& tc) {
 	  SAWYER_MESG(logger[INFO])<<"Intra-procedural analysis: initializing function "<<fCnt++<<" of "<<numStartLabels<<": "<<fileName<<":"<<functionName<<endl;
 	}
       }
-      EState initialEStateObj=createInitialEState(this->_root,slab);
-      initialEStateObj.setLabel(slab);
-      EStatePtr initialEState=processNewOrExisting(initialEStateObj);
+      EStatePtr initialEStateObj=createInitialEState(this->_root,slab);
+      initialEStateObj->setLabel(slab);
+      // do not "process" estate if solver 17 is used (does not use estate hash set)
+      EStatePtr initialEState=(_ctOpt.solver!=17)? processNewOrExisting(initialEStateObj) : initialEStateObj;
       ROSE_ASSERT(initialEState);
       variableValueMonitor.init(initialEState);
       addToWorkList(initialEState);
@@ -1041,6 +1042,7 @@ void CodeThorn::CTAnalysis::eventGlobalTopifyTurnedOn() {
   }
 }
 
+// obsolete, once EStateTransferFunctions::createInternalEState is removed
 void CodeThorn::CTAnalysis::topifyVariable(PState& pstate, AbstractValue varId) {
   pstate.writeTopToMemoryLocation(varId);
 }
@@ -1181,7 +1183,6 @@ list<pair<SgLabelStatement*,SgNode*> > CodeThorn::CTAnalysis::listOfLabeledAsser
   return assertNodes;
 }
 
-#if 1
 PStatePtr CodeThorn::CTAnalysis::processNew(PState& s) {
   if(EState::sharedPStates) {
     return const_cast<PStatePtr>(pstateSet.processNew(s));
@@ -1191,6 +1192,10 @@ PStatePtr CodeThorn::CTAnalysis::processNew(PState& s) {
   }
 }
 
+PStatePtr CodeThorn::CTAnalysis::processNew(PState* s) {
+  return processNew(*s);
+}
+  
 PStatePtr CodeThorn::CTAnalysis::processNewOrExisting(PState& s) {
   if(EState::sharedPStates) {
     return const_cast<PStatePtr>(pstateSet.processNewOrExisting(s));
@@ -1198,8 +1203,13 @@ PStatePtr CodeThorn::CTAnalysis::processNewOrExisting(PState& s) {
     return processNew(s);
   }
 }
-
-#endif
+PStatePtr CodeThorn::CTAnalysis::processNewOrExisting(PState* s) {
+  if(EState::sharedPStates) {
+    return processNewOrExisting(*s);
+  } else {
+    return processNew(s);
+  }
+}
 
 EStatePtr CodeThorn::CTAnalysis::processNew(EState& s) {
   return const_cast<EStatePtr>(estateSet.processNew(s));
@@ -1317,9 +1327,9 @@ SgNode* CodeThorn::CTAnalysis::getStartFunRoot() {
   return _startFunRoot;
 }
 
-EState CodeThorn::CTAnalysis::createInitialEState(SgProject* root, Label slab) {
+EStatePtr CodeThorn::CTAnalysis::createInitialEState(SgProject* root, Label slab) {
   // create initial state
-  PState initialPState;
+  PStatePtr initialPState=new PState();
   ROSE_ASSERT(slab.isValid());
   _estateTransferFunctions->initializeCommandLineArgumentsInState(slab,initialPState);
   if(_ctOpt.inStateStringLiterals) {
@@ -1330,25 +1340,32 @@ EState CodeThorn::CTAnalysis::createInitialEState(SgProject* root, Label slab) {
     }
   }
 
-  PStatePtr initialPStateStored=processNewOrExisting(initialPState); // might reuse another pstate when initializing in level 1   // CHANGING PSTATE-ESTATE
+  PStatePtr initialPStateStored=processNewOrExisting(*initialPState); // might reuse another pstate when initializing in level 1   // CHANGING PSTATE-ESTATE
   ROSE_ASSERT(initialPStateStored);
   SAWYER_MESG(logger[INFO])<< "INIT: initial pstate(stored): "<<initialPStateStored<<":"<<initialPStateStored->toString(getVariableIdMapping())<<endl;
-  PStatePtr initialPStateStored2=processNewOrExisting(initialPState); // might reuse another pstate when initializing in level 1   // CHANGING PSTATE-ESTATE
-  ROSE_ASSERT(initialPStateStored2);
-  SAWYER_MESG(logger[INFO])<< "INIT: initial pstate2(stored): "<<initialPStateStored2<<":"<<initialPStateStored2->toString(getVariableIdMapping())<<endl;
   
   transitionGraph.setStartLabel(slab);
   transitionGraph.setAnalyzer(this);
 
-  EState estate(slab,initialPStateStored);
+  EStatePtr estate=new EState(slab,initialPStateStored);
 
   ROSE_ASSERT(_estateTransferFunctions);
-  _estateTransferFunctions->initializeGlobalVariables(root, estate);
-  SAWYER_MESG(logger[INFO]) <<"Initial state: number of entries:"<<estate.pstate()->stateSize()<<endl;
+  switch(_ctOpt.initialStateGlobalVarsAbstractionLevel) {
+  case 0:
+    // do not add global vars to state and consider them as a single summary in read/write functions
+    break;
+  case 1: /* default */
+    _estateTransferFunctions->initializeGlobalVariables(root, estate);
+    break;
+  default:
+    cerr<<"Unknown initialStateGlobalVarsAbstractionLevel: "<<_ctOpt.initialStateGlobalVarsAbstractionLevel<<endl;
+    exit(1);
+  }
+  SAWYER_MESG(logger[INFO]) <<"Initial state: number of entries:"<<estate->pstate()->stateSize()<<endl;
   
   // initialize summary states map for abstract model checking mode
   initializeSummaryStates(initialPStateStored);
-  estate.io.recordNone(); // ensure that extremal value is different to bot
+  estate->io.recordNone(); // ensure that extremal value is different to bot
 
   return estate;
 }
@@ -1362,8 +1379,9 @@ void CodeThorn::CTAnalysis::initializeSolverWithInitialEState(SgProject* root) {
     if(_ctOpt.getInterProceduralFlag()) {
       // inter-procedural analysis initial state
       Label slab=getFlow()->getStartLabel();
-      EState initialEStateObj=createInitialEState(root, slab);
-      EStatePtr initialEState=processNew(initialEStateObj);
+      EStatePtr initialEState=createInitialEState(root, slab);
+      // solver 17 does not use a estate hash set, do not process
+      initialEState=_ctOpt.solver!=17? processNewOrExisting(initialEState): initialEState;
       ROSE_ASSERT(initialEState);
       variableValueMonitor.init(initialEState);
       addToWorkList(initialEState);

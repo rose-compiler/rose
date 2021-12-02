@@ -55,6 +55,7 @@ void Solver16::initializeSummaryStatesFromWorkList() {
  */
 void Solver16::run() {
   SAWYER_MESG(logger[INFO])<<"Running solver "<<getId()<<endl;
+  ROSE_ASSERT(_analyzer);
   if(_analyzer->getOptionsRef().abstractionMode==0) {
     cerr<<"Error: abstraction mode is 0, but >= 1 required."<<endl;
     exit(1);
@@ -135,15 +136,15 @@ void Solver16::run() {
       // the worklist could be reduced to (label,callstring) pairs, but since it's also used for explicit model checking, it uses pointers to estates, which include some more info.
       // note: initial summary states are set in initializeSummaryStatesFromWorkList()
       EStatePtr currentEStatePtr0=_analyzer->popWorkList();
-      // difference to Solver5: always obtain abstract state
-      EStatePtr currentEStatePtr=_analyzer->getSummaryState(currentEStatePtr0->label(),currentEStatePtr0->callString);
       // terminate early, ensure to stop all threads and empty the worklist (e.g. verification error found).
       if(terminateEarly)
         continue;
-      if(!currentEStatePtr) {
+      if(!currentEStatePtr0) {
         // empty worklist. Continue without work.
         ROSE_ASSERT(threadNum>=0 && threadNum<=_analyzer->getOptionsRef().threads);
       } else {
+        ROSE_ASSERT(currentEStatePtr0);
+        EStatePtr currentEStatePtr=_analyzer->getSummaryState(currentEStatePtr0->label(),currentEStatePtr0->callString);
         ROSE_ASSERT(currentEStatePtr);
         Flow edgeSet=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
         //cout << "DEBUG: out-edgeSet size:"<<edgeSet.size()<<endl;
@@ -197,7 +198,6 @@ void Solver16::run() {
                       newEStatePtr=summaryEState; 
                     } else {
                       EState newEState2=_analyzer->getEStateTransferFunctions()->combine(summaryEState,const_cast<EState*>(newEStatePtr));
-                      ROSE_ASSERT(_analyzer);
                       HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState2);
                       EStatePtr newEStatePtr2=const_cast<EStatePtr>(pres.second);
 

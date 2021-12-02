@@ -177,6 +177,7 @@ CODETHORN_HEADER_FILES=\
   RoseCompatibility.h \
   Solver5.h \
   Solver16.h \
+  Solver17.h \
   Solver8.h \
   Solver.h \
   Specialization.h \
@@ -308,6 +309,7 @@ CODETHORN_SOURCE_FILES=\
   RoseCompatibility.C \
   Solver5.C \
   Solver16.C \
+  Solver17.C \
   Solver8.C \
   Solver.C \
   Specialization.C \
@@ -827,7 +829,7 @@ check-ltl-rers-timeout-seq:
 
 #test the analysis of RERS Problem1402 and terminate after 3 seconds, 4 threads
 check-ltl-rers-timeout-par:
-	@$(srcdir)/scripts/runRersTimeoutTest $(srcdir) $(top_builddir)/projects/CodeThorn/src 3 4
+	@$(srcdir)/scripts/runRersTimeoutTest $(srcdir) $(top_builddir)/projects/CodeThorn/src 1 2
 
 #one test for the loop-aware-sync analysis (solver 12, ISoLA'16 paper)
 check-ltl-rers-loop-aware-sync:
