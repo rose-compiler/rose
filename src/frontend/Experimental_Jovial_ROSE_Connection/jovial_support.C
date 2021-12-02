@@ -6,15 +6,18 @@
 
 #include "rose_config.h"
 
+#include "jovial_support.h"
+#include "preprocess.h"
+#include "ATermToSageJovialTraversal.h"
+
 #include <assert.h>
 #include <iostream>
+#include <sstream>
 #include <string>
-
-#include "ATermToSageJovialTraversal.h"
-#include "jovial_support.h"
 
 #define ATERM_TRAVERSAL_ONLY 0
 #define DEBUG_EXPERIMENTAL_JOVIAL 0
+#define DEBUG_PREPROCESS_OUTPUT 0
 #define OUTPUT_WHOLE_GRAPH_AST 0
 #define OUTPUT_DOT_FILE_AST 0
 
@@ -94,16 +97,28 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
      std::cout << "SUCCESSFULLY read ATerm parse-tree file " << "\n";
 #endif
 
+  // Get the token stream for access to comments
+     std::ifstream in_stream{filenameWithPath};
+     std::ofstream out_stream{"/dev/null"};
+     std::ostringstream oss;
+     status = Jovial::preprocess(in_stream, out_stream, oss);
+     if (status) {
+       std::cerr << "\nFAILED: in jovial_main(), unable to read tokens for file "
+                 << filenameWithPath << "\n\n";
+       return status;
+     }
+     std::istringstream tokens{oss.str()};
+
   // Initialize the global scope and put it on the SageInterface scope stack
   // for usage by the sage tree builder during the ATerm traversal.
      Rose::builder::initialize_global_scope(sg_source_file);
 
      ATermSupport::ATermToSageJovialTraversal* aterm_traversal;
-     aterm_traversal = new ATermSupport::ATermToSageJovialTraversal(sg_source_file);
+     aterm_traversal = new ATermSupport::ATermToSageJovialTraversal(sg_source_file, tokens);
 
      if (aterm_traversal->traverse_Module(module_term) != ATtrue) {
-       std::cerr << "\nFAILED: in jovial_main(), unable to traverse ATerm file " << aterm_filename;
-       std::cerr << "\n\n";
+       std::cerr << "\nFAILED: in jovial_main(), unable to traverse ATerm file "
+                 << aterm_filename << "\n\n";
        return 1;
      }
 

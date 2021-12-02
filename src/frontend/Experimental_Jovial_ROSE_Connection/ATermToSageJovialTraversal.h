@@ -27,8 +27,8 @@ class ATermToSageJovialTraversal : public ATermTraversal
 
  public:
    ATermToSageJovialTraversal() = delete;
-   ATermToSageJovialTraversal(SgSourceFile* source)
-     : ATermTraversal{source}, sage_tree_builder{source, Language::Jovial}
+   ATermToSageJovialTraversal(SgSourceFile* source, std::istringstream &tokens)
+     : ATermTraversal{source}, sage_tree_builder{source, Language::Jovial, tokens}
      {
      }
 
