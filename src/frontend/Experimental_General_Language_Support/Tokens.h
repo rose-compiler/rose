@@ -64,7 +64,7 @@ private:
 class TokenStream {
 public:
   TokenStream() = delete;
-  TokenStream(const std::string &);
+  TokenStream(std::istringstream &);
 
   boost::optional<const Token&> const getNextToken() {
     if (next_ < tokens_.size()) {
@@ -82,6 +82,9 @@ public:
 private:
   std::vector<Token> tokens_;
   int next_;
+
+  int getTokenElement(std::istream &, std::string &);
+  int getTokenComment(std::istream &, std::string &);
 };
 
   } // namespace builder

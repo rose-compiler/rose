@@ -99,7 +99,7 @@ public:
    SageTreeBuilder(SageTreeBuilder &&) = delete;
    SageTreeBuilder &operator=(SageTreeBuilder &&) = delete;
 
-   SageTreeBuilder(SgSourceFile* source, LanguageEnum language);
+   SageTreeBuilder(SgSourceFile* source, LanguageEnum language, std::istringstream &tokens);
 
    const TokenStream& getTokens() {
      return *tokens_;

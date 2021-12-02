@@ -106,14 +106,10 @@ SageTreeBuilder::setSourcePosition(SgLocatedNode* node, const SourcePosition &st
 
 /// Constructor
 ///
-SageTreeBuilder::SageTreeBuilder(SgSourceFile* source, LanguageEnum language)
-   : language_{language}, source_{source}
+SageTreeBuilder::SageTreeBuilder(SgSourceFile* source, LanguageEnum language, std::istringstream &tokens)
+  : language_{language}, source_{source}
 {
-   if (source) {
-      const std::string &path{source->get_sourceFileNameWithPath()};
-      // Read comment stream file if it exists
-      tokens_ = new TokenStream(path + ".comments");
-   }
+  tokens_ = new TokenStream(tokens);
 }
 
 
