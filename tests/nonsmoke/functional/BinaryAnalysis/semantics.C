@@ -25,6 +25,7 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 #define YICES_LIB 1
 #define YICES_EXE 2
 
+#include <Rose/BinaryAnalysis/SymbolicExpr.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/TestSemantics.h>
 using namespace Rose::BinaryAnalysis::InstructionSemantics2;
@@ -272,6 +273,9 @@ public:
 
 int main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
+
+    // Use a single pool for allocating variable IDs. This makes the test deterministic.
+    Rose::BinaryAnalysis::SymbolicExpr::serializeVariableIds = true;
 
     std::vector<std::string> args(argv, argv+argc);
     for (size_t argno=1; argno<args.size(); ++argno) {

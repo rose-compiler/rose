@@ -46,8 +46,18 @@ using SmtSolverPtr = std::shared_ptr<SmtSolver>;
 namespace SymbolicExpr {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      Basic Types
+//                                      Basic Types and settings
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Whether to serialize variable IDs.
+ *
+ *  If set, then all threads will coordinate so that variable IDs are allocated in a monotonic fashion. This should only be set
+ *  when necessary in order to make test results more deterministic.  The default is to clear, which means variable IDs are
+ *  allocated from some number of pools in order to reduce lock contention.
+ *
+ *  Thread safety: This property is not thread safe. If reproducible results are desired, it should be set before any analysis
+ *  begins. */
+extern bool serializeVariableIds;
 
 /** Whether to use abbreviated or full output. */
 namespace TypeStyle {
