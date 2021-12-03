@@ -92,6 +92,7 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   defining_character_literal.adb       \
   defining_enumeration_literal.adb     \
   defining_operator_symbol.ads         \
+  enum_derived_type.adb                \
   enumeration.adb                      \
   enumeration_with_text_io.adb         \
   exception_declaration.ads            \
@@ -119,6 +120,7 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   parenthesis_matters.adb              \
   pragmas.adb                          \
   private_access_type.adb              \
+  private_enum.ads                     \
   procedure_call.adb                   \
   procedure_instantiation.adb          \
   procedure_instantiation2.adb         \
@@ -152,7 +154,6 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   discriminated_record.adb             \
   discriminant_specification.ads       \
   dynamic_array.adb                    \
-  enum_derived_type.adb                \
   entry_call.adb                       \
   entry_declaration.ads                \
   exception_rename.ads                 \
@@ -168,7 +169,6 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   parent-child.adb                     \
   pkgrename.ads                        \
   procedure_renaming.adb               \
-  private_enum.ads                     \
   representation_clause.ads            \
   representation_clause_2.ads          \
   select_accept.adb                    \
@@ -190,8 +190,8 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   usegenericinstance.adb               \
   unknown_discriminant.ads             \
   uppercase.adb                        \
-  variant_record.ads                   \ 
-  variable_variant_record.adb                       
+  variant_record.ads                   \
+  variable_variant_record.adb
 
 ADA_TRANSLATOR_PENDING_TESTS :=       
 

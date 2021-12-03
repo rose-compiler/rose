@@ -180,7 +180,7 @@ void nodeTraversal::visit(SgNode* n)
             case PreprocessingInfo::DirectiveType::CpreprocessorErrorDeclaration:
             case PreprocessingInfo::DirectiveType::CpreprocessorWarningDeclaration:
             case PreprocessingInfo::DirectiveType::CpreprocessorEmptyDeclaration:
-              o << n->variantT() << ":" << n->class_name() << ":" << PreprocessingInfo::directiveTypeName (directive) << ":" << (*i)->getString();
+              o << n->variantT() << ":" << n->class_name() << " (" << PreprocessingInfo::relativePositionName((*i)->getRelativePosition()) << "):" << PreprocessingInfo::directiveTypeName (directive) << ":" << (*i)->getString();
               break;
             default :
               ;
