@@ -2151,9 +2151,13 @@ traverse_SpecifiedEntrySpecifierBody(ATerm term, SgJovialTableStatement* table_d
 
    table_decl->set_words_per_entry(wpe);
    if (entry_size) {
-      table_decl->set_has_table_entry_size(true);
-      table_decl->set_table_entry_size(*entry_size);
-      (*entry_size)->set_parent(table_decl);
+     table_decl->set_has_table_entry_size(true);
+     table_decl->set_table_entry_size(*entry_size);
+     (*entry_size)->set_parent(table_decl);
+   }
+   else {
+     table_decl->set_has_table_entry_size(false);
+     table_decl->set_table_entry_size(nullptr);
    }
 
    return ATtrue;
