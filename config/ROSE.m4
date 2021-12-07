@@ -79,8 +79,10 @@ rose_no_error_warnings="-Wno-error=cpp -Wno-error=multichar -Wno-error=shift-cou
 # Evolving list of warnings that we want to fix in ROSE
 #warnings_of_interrest="uninitialized maybe-uninitialized format format-overflow format-truncation"
 warnings_of_interrest="uninitialized"
-rose_status_warnings="$(for w in $warnings_of_interrest; do echo -W$w; done)"
-rose_must_fail_warnings="$(for w in $warnings_of_interrest; do echo -Werror=$w; done)"
+warnings_causing_failure=""
+develop_warn_on="$(for w in $warnings_of_interrest; do echo -W$w; done)"
+release_fail_on="$(for w in $warnings_of_interrest; do echo -Werror=$w; done)"
+develop_fail_on="$(for w in $warnings_causing_failure; do echo -Werror=$w; done)"
 
 
 if test "$with_WARNINGS" = none; then
@@ -95,14 +97,18 @@ elif test "$with_WARNING" = all; then
   # All warnings that we could think of
   CC_WARNINGS="$rose_basic_warnings $rose_extra_warnings"
   CXX_WARNINGS="$rose_basic_warnings $rose_extra_warnings"
-elif test "$with_WARNINGS" = status; then
-  # Only warnings that we want to enforce in `develop` mode
-  CC_WARNINGS="$rose_status_warnings"
-  CXX_WARNINGS="$rose_status_warnings"
 elif test "$with_WARNINGS" = develop; then
+  # Only warnings that we want to enforce in `develop` mode
+  CC_WARNINGS="$develop_warn_on $develop_fail_on"
+  CXX_WARNINGS="$develop_warn_on $develop_fail_on"
+elif test "$with_WARNINGS" = candidate; then
   # All warnings plus failure on important warnings
-  CC_WARNINGS="$rose_basic_warnings $rose_extra_warnings $rose_must_fail_warnings"
-  CXX_WARNINGS="$rose_basic_warnings $rose_extra_warnings $rose_must_fail_warnings"
+  CC_WARNINGS="$develop_fail_on $release_fail_on"
+  CXX_WARNINGS="$develop_fail_on $release_fail_on"
+elif test "$with_WARNINGS" = release; then
+  # All warnings plus failure on important warnings
+  CC_WARNINGS="$rose_basic_warnings $rose_extra_warnings $develop_fail_on $release_fail_on"
+  CXX_WARNINGS="$rose_basic_warnings $rose_extra_warnings $develop_fail_on $release_fail_on"
 elif test "$with_WARNING" = pedantic; then
   # Fails on any warnings (of `all`) but a few special ones
   CC_WARNINGS="-Werror $rose_basic_warnings $rose_extra_warnings $rose_no_error_warnings"
