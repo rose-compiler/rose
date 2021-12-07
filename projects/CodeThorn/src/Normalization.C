@@ -141,7 +141,7 @@ namespace CodeThorn {
   }
   void Normalization::normalizeAstPhaseByPhase(SgNode* root) {
     normPhaseNr=1;
-    normPhaseNrLast=14;
+    normPhaseNrLast=15;
     printNormalizationPhase();
     if(options.normalizeSingleStatements) {
       normalizeSingleStatementsToBlocks(root);
@@ -737,6 +737,7 @@ void Normalization::normalizeSwitchWithoutDefaultInAst(SgNode* node) {
       continue;
     }
     if(SgSwitchStatement* switchStmt=isSgSwitchStatement(*i)) {
+      cout<<"DEBUG:FOUND SWITCH."<<endl;
       normalizeSwitchWithoutDefault(switchStmt);
     }
   }
