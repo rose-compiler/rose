@@ -263,6 +263,7 @@ public:
    void setInitializationContext(bool flag) {context_.is_initialization = flag;}
    bool  isInitializationContext()          {return context_.is_initialization;}
 
+   void attachComment(SgLocatedNode* locatedNode);
    void attachComment(SgLocatedNode* locatedNode, const ATermSupport::PosInfo &pos);
    void setSourcePosition(SgLocatedNode* node, const SourcePosition &start, const SourcePosition &end);
 

@@ -47,33 +47,59 @@ SgGlobal* initialize_global_scope(SgSourceFile* file)
 }
 
 void
+SageTreeBuilder::attachComment(SgLocatedNode* node)
+{
+  Sg_File_Info* start = node->get_startOfConstruct();
+  Sg_File_Info* end = node->get_endOfConstruct();
+
+  if (start && end) {
+    ATermSupport::PosInfo pos{node};
+    attachComment(node, pos);
+  }
+}
+
+void
 SageTreeBuilder::attachComment(SgLocatedNode* node, const ATermSupport::PosInfo &pos)
 {
+  PreprocessingInfo::DirectiveType commentType{PreprocessingInfo::JovialStyleComment};
+  PreprocessingInfo::RelativePositionType commentPosition{PreprocessingInfo::before};
+
   if (SgStatement* stmt = isSgStatement(node)) {
     boost::optional<const Token&> token{};
-    while ((token = tokens_->getNextToken()) && token->getStartLine() < pos.getStartLine()) {
-      // prepend comment to statement
+    while ((token = tokens_->getNextToken()) && token->getStartLine() <= pos.getStartLine()) {
+      SgLocatedNode* commentNode{stmt};
       if (token->getTokenType() == JovialEnum::comment) {
-        SI::attachComment(node, token->getLexeme(),
-                          PreprocessingInfo::before, PreprocessingInfo::JovialStyleComment);
+        commentPosition = PreprocessingInfo::before;
+        if (token->getStartLine() == pos.getStartLine()) {
+          commentPosition = PreprocessingInfo::after;
+          // check for comment following a variable initializer
+          if (SgVariableDeclaration* varDecl = isSgVariableDeclaration(stmt)) {
+            for (SgInitializedName* name : varDecl->get_variables()) {
+              if (SgInitializer* init = name->get_initializer()) {
+                ATermSupport::PosInfo initPos{init};
+                if (initPos.getEndCol() > token->getStartCol()) {
+                  // attach comment after this variable initializer
+                  commentNode = init;
+                  break;
+                }
+              }
+            }
+          }
+        }
+        SI::attachComment(commentNode, token->getLexeme(), commentPosition, commentType);
       }
       tokens_->consumeNextToken();
     }
   }
   else if (SgEnumVal* expr = isSgEnumVal(node)) {
     boost::optional<const Token&> token{};
-    // try only attaching comments from same line
+    // try only attaching comments from same line (what about multi-line comments)
     while ((token = tokens_->getNextToken()) && token->getStartLine() == pos.getStartLine()) {
       if (token->getTokenType() == JovialEnum::comment) {
-        if (token->getEndCol() < pos.getStartCol()) {
-          // attach comment before expression
-          SI::attachComment(node, token->getLexeme(),
-                            PreprocessingInfo::before, PreprocessingInfo::JovialStyleComment);
-        } else {
-          // attach comment after expression
-          SI::attachComment(node, token->getLexeme(),
-                            PreprocessingInfo::after, PreprocessingInfo::JovialStyleComment);
+        if (token->getEndCol() == pos.getStartCol()) {
+          commentPosition = PreprocessingInfo::after;
         }
+        SI::attachComment(expr, token->getLexeme(), commentPosition, commentType);
       }
       tokens_->consumeNextToken();
     }

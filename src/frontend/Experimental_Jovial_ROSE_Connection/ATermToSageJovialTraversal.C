@@ -1495,6 +1495,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
 
        init_name->set_initializer(init_expr);
        init_expr->set_parent(init_name);
+       setSourcePositionFrom(init_expr, preset);
      }
    }
 
@@ -2458,6 +2459,13 @@ ATbool ATermToSageJovialTraversal::traverse_ConstantDeclaration(ATerm term, int 
 // Begin SageTreeBuilder
    SgVariableDeclaration* var_decl;
    sage_tree_builder.Enter(var_decl, std::string(name), const_type, preset);
+   if (preset) {
+      // Set source position of initializer before var_decl for comment handling
+      ROSE_ASSERT(var_decl->get_decl_item(name));
+      SgInitializer* initializer = var_decl->get_decl_item(name)->get_initializer();
+      ROSE_ASSERT(initializer);
+      setSourcePosition(initializer, t_preset);
+   }
    setSourcePosition(var_decl, term);
 
 // Jovial block and table members are visible in parent scope so create an alias
