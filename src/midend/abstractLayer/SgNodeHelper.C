@@ -1037,6 +1037,8 @@ set<SgCaseOptionStmt*> SgNodeHelper::switchRelevantCaseStmtNodes(SgNode* node) {
   set<SgCaseOptionStmt*> caseNodes;
   RoseAst ast(node);
   RoseAst::iterator i=ast.begin();
+  if(isSgSwitchStatement(*i))
+    ++i;
   while(i!=ast.end()) {
     if(SgCaseOptionStmt* caseStmt=isSgCaseOptionStmt(*i))
       caseNodes.insert(caseStmt);
@@ -1051,9 +1053,12 @@ set<SgCaseOptionStmt*> SgNodeHelper::switchRelevantCaseStmtNodes(SgNode* node) {
 SgDefaultOptionStmt* SgNodeHelper::switchRelevantDefaultStmtNode(SgNode* node) {
   RoseAst ast(node);
   RoseAst::iterator i=ast.begin();
+  if(isSgSwitchStatement(*i))
+    ++i;
   while(i!=ast.end()) {
-    if(SgDefaultOptionStmt* defStmt=isSgDefaultOptionStmt(*i))
+    if(SgDefaultOptionStmt* defStmt=isSgDefaultOptionStmt(*i)) {
       return defStmt;
+    }
     // exclude nested switch stmts
     if(isSgSwitchStatement(*i))
       i.skipChildrenOnForward();
@@ -1490,16 +1495,9 @@ SgExpressionPtrList& SgNodeHelper::getInitializerListOfAggregateDeclaration(SgVa
       SgExpressionPtrList& exprPtrList=rhsOfArrayInit->get_expressions();
       return exprPtrList;
     } else {
-      cout<<"DEBUG:initializer->class_name:"<<initializer->class_name()<<endl;
+      //cout<<"DEBUG:initializer->class_name:"<<initializer->class_name()<<endl;
     }
   }
-  //
-  // This dereferences a nil pointer on purpose (see klocwork id midend #1837:
-  //
-  //    Null pointer 'xp' that comes from line 1841 will be dereferenced at line 1842.
-  //
-  int* xp=0;
-  *xp=1;
   throw CodeThorn::Exception("SgNodeHelper::getInitializerListOfAggregateDeclaration: getInitializerListOfArrayVariable failed.");
 }
 
