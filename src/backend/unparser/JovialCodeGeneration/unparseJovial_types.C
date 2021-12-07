@@ -1,5 +1,5 @@
-/* Unparse_Jovial.C
- * This C file contains the general function to unparse types as well as
+/* unparseJovial_types.C
+ * This C++ file contains the general function to unparse types as well as
  * functions to unparse every kind of type.
  */
 
@@ -16,13 +16,13 @@ using namespace std;
 void replaceString (std::string& str, const std::string& from, const std::string& to);
 
 //-----------------------------------------------------------------------------------
-//  void Unparse_Jovial::unparseType
+//  void UnparseJovial::unparseType
 //
 //  General function that is called when unparsing a Jovial type. Then it routes
 //  to the appropriate function to unparse each Jovial type.
 //-----------------------------------------------------------------------------------
 void
-Unparse_Jovial::unparseType(SgType* type, SgUnparse_Info& info)
+UnparseJovial::unparseType(SgType* type, SgUnparse_Info& info)
    {
      ASSERT_not_null(type);
 
@@ -50,13 +50,14 @@ Unparse_Jovial::unparseType(SgType* type, SgUnparse_Info& info)
           case V_SgTypedefType:      unparseJovialType(isSgTypedefType(type), info);     break;
 
           default:
-               cout << "Unparse_Jovial::unparseType for type " << type->class_name() << " is unimplemented." << endl;
+               cout << "UnparseJovial::unparseType for type " << type->class_name()
+                    << " is unimplemented." << endl;
                ROSE_ABORT();
         }
    }
 
 void
-Unparse_Jovial::unparseTypeDesc(SgType* type, SgUnparse_Info& info)
+UnparseJovial::unparseTypeDesc(SgType* type, SgUnparse_Info& info)
    {
      ASSERT_not_null(type);
 
@@ -71,13 +72,14 @@ Unparse_Jovial::unparseTypeDesc(SgType* type, SgUnparse_Info& info)
           case V_SgPointerType:     curprint("P");       break;
           case V_SgJovialBitType:   curprint("B");       break;
           default:
-             std::cerr << "Unparse_Jovial::unparseTypeDesc for type " << type->class_name() << " case default reached \n";
+             std::cerr << "UnparseJovial::unparseTypeDesc for type " << type->class_name()
+                       << " case default reached \n";
              ROSE_ABORT();
         }
    }
 
 void
-Unparse_Jovial::unparseTypeSize(SgType* type, SgUnparse_Info& info)
+UnparseJovial::unparseTypeSize(SgType* type, SgUnparse_Info& info)
    {
      ASSERT_not_null(type);
 
@@ -104,7 +106,7 @@ Unparse_Jovial::unparseTypeSize(SgType* type, SgUnparse_Info& info)
    }
 
 void
-Unparse_Jovial::unparseTypeSize(SgTypeFixed* fixed_type, SgUnparse_Info& info)
+UnparseJovial::unparseTypeSize(SgTypeFixed* fixed_type, SgUnparse_Info& info)
    {
       ASSERT_not_null(fixed_type);
 
@@ -123,7 +125,7 @@ Unparse_Jovial::unparseTypeSize(SgTypeFixed* fixed_type, SgUnparse_Info& info)
    }
 
 void
-Unparse_Jovial::unparseTypeSize(SgTypeString* string_type, SgUnparse_Info& info)
+UnparseJovial::unparseTypeSize(SgTypeString* string_type, SgUnparse_Info& info)
    {
       ASSERT_not_null(string_type);
 
@@ -136,7 +138,7 @@ Unparse_Jovial::unparseTypeSize(SgTypeString* string_type, SgUnparse_Info& info)
    }
 
 void
-Unparse_Jovial::unparseTypeSize(SgJovialBitType* bit_type, SgUnparse_Info& info)
+UnparseJovial::unparseTypeSize(SgJovialBitType* bit_type, SgUnparse_Info& info)
    {
       ASSERT_not_null(bit_type);
 
@@ -149,7 +151,7 @@ Unparse_Jovial::unparseTypeSize(SgJovialBitType* bit_type, SgUnparse_Info& info)
    }
 
 template <class T> void
-Unparse_Jovial::unparseJovialType(T* type, SgUnparse_Info& info)
+UnparseJovial::unparseJovialType(T* type, SgUnparse_Info& info)
    {
       ASSERT_not_null(type);
       unparseTypeDesc(type, info);
@@ -157,7 +159,7 @@ Unparse_Jovial::unparseJovialType(T* type, SgUnparse_Info& info)
    }
 
 void
-Unparse_Jovial::unparseJovialType(SgArrayType* array_type, SgUnparse_Info& info)
+UnparseJovial::unparseJovialType(SgArrayType* array_type, SgUnparse_Info& info)
   {
      ASSERT_not_null(array_type);
      curprint("(");
@@ -168,7 +170,7 @@ Unparse_Jovial::unparseJovialType(SgArrayType* array_type, SgUnparse_Info& info)
   }
 
 void
-Unparse_Jovial::unparseJovialType(SgPointerType* pointer_type, SgUnparse_Info& info)
+UnparseJovial::unparseJovialType(SgPointerType* pointer_type, SgUnparse_Info& info)
   {
      ASSERT_not_null(pointer_type);
      unparseTypeDesc(pointer_type, info);
@@ -189,7 +191,7 @@ Unparse_Jovial::unparseJovialType(SgPointerType* pointer_type, SgUnparse_Info& i
   }
 
 void
-Unparse_Jovial::unparseJovialType(SgEnumType* enum_type, SgUnparse_Info& info)
+UnparseJovial::unparseJovialType(SgEnumType* enum_type, SgUnparse_Info& info)
   {
      ASSERT_not_null(enum_type);
 
@@ -212,7 +214,7 @@ Unparse_Jovial::unparseJovialType(SgEnumType* enum_type, SgUnparse_Info& info)
   }
 
 void
-Unparse_Jovial::unparseJovialType(SgFunctionType* function_type, SgUnparse_Info& info)
+UnparseJovial::unparseJovialType(SgFunctionType* function_type, SgUnparse_Info& info)
   {
      ROSE_ASSERT(function_type);
      curprint(" ");
@@ -220,7 +222,7 @@ Unparse_Jovial::unparseJovialType(SgFunctionType* function_type, SgUnparse_Info&
   }
 
 void
-Unparse_Jovial::unparseJovialType(SgModifierType* modifier_type, SgUnparse_Info& info)
+UnparseJovial::unparseJovialType(SgModifierType* modifier_type, SgUnparse_Info& info)
   {
   // An SgModifierType is used when an ItemTypeDescription has an initializer.  The modifier type appears to
   // be inserted after the parsing phase and I assume it is because the presence of an initializer causes the
@@ -250,7 +252,7 @@ Unparse_Jovial::unparseJovialType(SgModifierType* modifier_type, SgUnparse_Info&
   }
 
 void
-Unparse_Jovial::unparseJovialType(SgJovialTableType* table_type, SgUnparse_Info& info)
+UnparseJovial::unparseJovialType(SgJovialTableType* table_type, SgUnparse_Info& info)
   {
      ASSERT_not_null(table_type);
 
@@ -297,7 +299,7 @@ Unparse_Jovial::unparseJovialType(SgJovialTableType* table_type, SgUnparse_Info&
   }
 
 void
-Unparse_Jovial::unparseJovialType(SgTypedefType* type_def, SgUnparse_Info& info)
+UnparseJovial::unparseJovialType(SgTypedefType* type_def, SgUnparse_Info& info)
   {
      ROSE_ASSERT(type_def);
      curprint(type_def->get_name());
