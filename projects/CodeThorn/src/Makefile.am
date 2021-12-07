@@ -741,6 +741,9 @@ check-domain-avset:
 check-domain-avset-err:
 	$(srcdir)/scripts/runDomainTests --testdir $(srcdir)/tests --show-errors --l2avset
 
+check-cfg:
+	$(srcdir)/scripts/runCfgTests $(srcdir)/tests
+
 check-lc:
 	$(srcdir)/scripts/runLineColTests $(srcdir)/tests
 

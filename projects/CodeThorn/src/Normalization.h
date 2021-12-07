@@ -89,6 +89,10 @@ namespace CodeThorn {
       bool normalizeVariableDeclarations=false;
       bool normalizeVariableDeclarationsWithFunctionCalls=true;
 
+      /* if a switch has no default case, add it. If switch has only a
+         single statement, add block as body. */
+      bool normalizeSwitchWithoutDefault=true;
+      
       bool normalizeCplusplus=false;
 
       // puts the sequence of normalized expressions in a block. This
@@ -183,8 +187,16 @@ namespace CodeThorn {
     static bool isTemplateInstantiationNode(SgNode* node);
     static SgClassDeclaration* isSpecialization(SgNode* node);
     static bool isTemplateNode(SgNode* node);
+    static void normalizeSwitchWithoutDefaultInAst(SgNode* node);
     static void normalizeCompoundAssignmentsInAst(SgNode* node);
   private:
+
+    /* (1) normalize the switch to always contain a block (e.g. switch(x) case 1: return 0; => switch(x) { case 1: return 0; }
+       (2) add default case if it does not exist
+    */
+    static void normalizeSwitchWithoutDefault(SgSwitchStatement* node);
+    static void addEmptyDefaultCase(SgSwitchStatement* node);
+      
     /* normalize all Expressions in AST. The original variables remain
      * in the program and are assign the last value of the sequence of
      * operations of an expression. */
