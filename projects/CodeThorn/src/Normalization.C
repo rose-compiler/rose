@@ -175,10 +175,10 @@ namespace CodeThorn {
     if(options.hoistBranchInitStatements) {
       hoistBranchInitStatementsInAst(root);
     }
-    //printNormalizationPhase();
-    //if(options.normalizeCompoundAssignments) {
-    //  normalizeCompoundAssignmentsInAst(root);
-    //}
+    printNormalizationPhase();
+    if(options.normalizeSwitchWithoutDefault) {
+      normalizeSwitchWithoutDefaultInAst(root);
+    }
     printNormalizationPhase();
     if(options.hoistConditionExpressions) {
       hoistConditionsInAst(root,false && options.restrictToFunCallExpressions);
@@ -718,6 +718,45 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
     }
   }
 #endif
+}
+
+void Normalization::addEmptyDefaultCase(SgSwitchStatement* node) {
+  SgStatement * emptyStatement=SageBuilder::buildBreakStmt(); // add a break to ensure it does not conflict with other following added cases
+  SgDefaultOptionStmt* defaultOptionStatement=SageBuilder::buildDefaultOptionStmt_nfi(emptyStatement);
+  // add it to switch
+  node->append_default(defaultOptionStatement); // TODO: need a prepend_default (otherwise the last case without break falls through)
+}
+
+void Normalization::normalizeSwitchWithoutDefaultInAst(SgNode* node) {
+  RoseAst ast(node);
+  // build list of stmts to transform
+  for (auto i=ast.begin();i!=ast.end();++i) {
+    // TEMPLATESKIP this will skip all templates that are found (mostly in header files). This could also be integrated into the iterator itself.
+    if(isTemplateNode(*i)) {
+      i.skipChildrenOnForward();
+      continue;
+    }
+    if(SgSwitchStatement* switchStmt=isSgSwitchStatement(*i)) {
+      normalizeSwitchWithoutDefault(switchStmt);
+    }
+  }
+}
+
+// normalize to always contain a block (e.g. switch(x) case 1: return 0; => switch(x) { case 1: return 0; }
+// add default case if it does not exist
+void Normalization::normalizeSwitchWithoutDefault(SgSwitchStatement* node) {
+  ROSE_ASSERT(node);
+  SgStatement* body=node->get_body();
+  ROSE_ASSERT(body);
+  if(!isSgBasicBlock(body)) {
+    // introduce basic block around existing single statement
+    SgBasicBlock* block=SageBuilder::buildBasicBlock(body);
+    node->set_body(block);
+  }
+  // add empty 'default' if 'switch' has no default case
+  if(SgNodeHelper::switchRelevantDefaultStmtNode(node)==nullptr) {
+    addEmptyDefaultCase(node);
+  }
 }
 
 /***************************************************************************
