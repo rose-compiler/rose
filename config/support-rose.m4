@@ -895,8 +895,8 @@ ROSE_CONFIG_TOKEN="$ROSE_CONFIG_TOKEN $FRONTEND_CXX_COMPILER_VENDOR-$FRONTEND_CX
 
 # DQ (9/20/20): Moving the setup of compiler flags to after the macros that define the compiler versions are computed.
 # Setup default options for C and C++ compilers compiling ROSE source code.
-# ROSE_FLAG_C_OPTIONS
-# ROSE_FLAG_CXX_OPTIONS
+ROSE_FLAG_C_OPTIONS
+ROSE_FLAG_CXX_OPTIONS
 ROSE_FLAG_OPTIONS
 
 # This must go after the setup of the headers options
