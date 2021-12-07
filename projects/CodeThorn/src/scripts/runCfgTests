@@ -1,6 +1,7 @@
 #!/bin/bash
 
-OPTIONS="--normalize-level=0 --vis=1"
+# normalize-level 2 is required because of switch normalization
+OPTIONS="--normalize-level=2 --vis=1"
 
 TESTDIR=$1
 echo "------------------------------------------------"

@@ -737,7 +737,6 @@ void Normalization::normalizeSwitchWithoutDefaultInAst(SgNode* node) {
       continue;
     }
     if(SgSwitchStatement* switchStmt=isSgSwitchStatement(*i)) {
-      cout<<"DEBUG:FOUND SWITCH."<<endl;
       normalizeSwitchWithoutDefault(switchStmt);
     }
   }
