@@ -2476,13 +2476,14 @@ HEADER_SWITCH_STATEMENT_START
 
 // HEADER_LIST_DECLARATIONS
 
-          void append_case(SgCaseOptionStmt *&);
           void prepend_case(SgCaseOptionStmt *&);
+          void append_case(SgCaseOptionStmt *&);
+          void prepend_default(SgDefaultOptionStmt *&);
           void append_default(SgDefaultOptionStmt *&);
 
         protected:
           virtual bool replace_child(SgStatement *,SgStatement *, bool extractListFromBasicBlock = false) override;
-
+          void prepend_append_normalization();
         public:
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -16306,20 +16307,35 @@ SgSwitchStatement::replace_child(SgStatement *target,SgStatement *newstmt,
 #include "sageBuilder.h"
 
 void
+SgSwitchStatement::prepend_append_normalization() {
+  if(!get_body()) {
+    SgBasicBlock* newBlock = new SgBasicBlock ( this->get_file_info() );
+    assert(newBlock != NULL);
+    set_body(newBlock);
+  }
+  if (!isSgBasicBlock(get_body())) {
+     set_body(SageBuilder::buildBasicBlock(get_body()));
+     get_body()->set_parent(this);
+  }
+}
+
+void
+SgSwitchStatement::prepend_case(SgCaseOptionStmt *& what)
+   {
+     assert(this != NULL);
+     prepend_append_normalization();
+     ROSE_ASSERT (isSgBasicBlock(get_body()));
+     SageInterface::prependStatement(what, isSgBasicBlock(get_body()));
+
+  // DQ (6/24/2006): This should be set by the lower level insert_statement member function, verify this!
+     ROSE_ASSERT(what->get_parent() != NULL);
+   }
+
+void
 SgSwitchStatement::append_case(SgCaseOptionStmt *& what)
    {
      assert(this != NULL);
-     if(!get_body())
-        {
-       // set_body(new SgBasicBlock(this->get_file_info()));
-          SgBasicBlock* newBlock = new SgBasicBlock ( this->get_file_info() );
-          assert(newBlock != NULL);
-          set_body(newBlock);
-        }
-     if (!isSgBasicBlock(get_body())) {
-       set_body(SageBuilder::buildBasicBlock(get_body()));
-       get_body()->set_parent(this);
-     }
+     prepend_append_normalization();
      ROSE_ASSERT (isSgBasicBlock(get_body()));
      SageInterface::appendStatement(what, isSgBasicBlock(get_body()));
 
@@ -16328,20 +16344,10 @@ SgSwitchStatement::append_case(SgCaseOptionStmt *& what)
    }
 
 void
-SgSwitchStatement::prepend_case(SgCaseOptionStmt *& what)
+SgSwitchStatement::prepend_default(SgDefaultOptionStmt *& what)
    {
      assert(this != NULL);
-     if(!get_body())
-        {
-       // set_body(new SgBasicBlock(this->get_file_info()));
-          SgBasicBlock* newBlock = new SgBasicBlock ( this->get_file_info() );
-          assert(newBlock != NULL);
-          set_body(newBlock);
-        }
-     if (!isSgBasicBlock(get_body())) {
-       set_body(SageBuilder::buildBasicBlock(get_body()));
-       get_body()->set_parent(this);
-     }
+     prepend_append_normalization();
      ROSE_ASSERT (isSgBasicBlock(get_body()));
      SageInterface::prependStatement(what, isSgBasicBlock(get_body()));
 
@@ -16352,19 +16358,8 @@ SgSwitchStatement::prepend_case(SgCaseOptionStmt *& what)
 void
 SgSwitchStatement::append_default(SgDefaultOptionStmt *& what)
    {
-  // if(!get_body()) set_body(new SgBasicBlock(this->get_file_info()));
      assert(this != NULL);
-     if(!get_body())
-        {
-       // set_body(new SgBasicBlock(this->get_file_info()));
-          SgBasicBlock* newBlock = new SgBasicBlock ( this->get_file_info() );
-          assert(newBlock != NULL);
-          set_body(newBlock);
-        }
-     if (!isSgBasicBlock(get_body())) {
-       set_body(SageBuilder::buildBasicBlock(get_body()));
-       get_body()->set_parent(this);
-     }
+     prepend_append_normalization();
      ROSE_ASSERT (isSgBasicBlock(get_body()));
      SageInterface::appendStatement(what, isSgBasicBlock(get_body()));
 
