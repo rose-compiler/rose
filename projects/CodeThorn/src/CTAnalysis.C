@@ -1532,8 +1532,16 @@ void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(SgProject* root, TimingCollect
   }
 
   if(_ctOpt.reduceCfg) {
+    string oldFlowSize=getFlow()->numNodesEdgesToString();
     int cnt=getCFAnalyzer()->optimizeFlow(*getFlow());
-    if(_ctOpt.status) cout<< "CFG optimization OK. (eliminated "<<cnt<<" nodes)"<<endl;
+    string newFlowSize=getFlow()->numNodesEdgesToString();
+    if(_ctOpt.status) {
+      cout<< "CFG optimization ON. Eliminated "<<cnt<<" nodes. "
+          <<"Flow"<<oldFlowSize
+          <<" => "
+          <<"Flow"<<newFlowSize
+          <<endl;
+    }
   } else {
     if(_ctOpt.status) cout<< "CFG optimziation OFF."<<endl;
   }

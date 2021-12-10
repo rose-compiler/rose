@@ -107,9 +107,9 @@ void CodeThorn::DataDependenceVisualizer::generateDotFunctionClusters(SgNode* ro
 
     temporary combersome recomputation; TODO: replace this with a proper extraction from the icfg
   */
-  Flow flow=cfanalyzer->flow(root);
+  Flow& flow=*cfanalyzer->getIcfgFlow();
   LabelSet entryLabels=cfanalyzer->functionEntryLabels(flow);
-  InterFlow iflow=cfanalyzer->interFlow(flow);
+  InterFlow& iflow=*cfanalyzer->getInterFlow();
 
   std::ofstream myfile;
   myfile.open(fileName.c_str(),std::ios::out);
@@ -125,6 +125,7 @@ void CodeThorn::DataDependenceVisualizer::generateDotFunctionClusters(SgNode* ro
       //      <<"\"style=filled; color=lightgrey; \n";
       <<"\"color=blue; \n";
     Flow flow=cfanalyzer->flow(fdefNode);
+    cfanalyzer->optimizeFlow(flow); // TODO: reuse flow in cfanalyzer->getFlow() (TODO: cfanalyzer->getFunctionCfg(...))
     flow.setDotOptionHeaderFooter(false);
     ss<<flow.toDot(_labeler,topSort);
     myfile<<ss.str();

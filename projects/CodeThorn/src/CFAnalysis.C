@@ -942,7 +942,7 @@ int CFAnalysis::reduceNode(Flow& flow, Label lab) {
 int CFAnalysis::optimizeFlow(Flow& flow) {
   int n=0;
   // TODO: reduce: SgBreakStmt, SgContinueStmt, SgLabelStatement, SgGotoStatement
-  n+=reduceBlockEndNodes(flow);
+  n+=reduceBlockBeginEndNodes(flow);
   //n+=reduceEmptyConditionNodes(flow);
   return n;
 }
