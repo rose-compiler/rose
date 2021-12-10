@@ -11061,7 +11061,22 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
        // break; //replace the first occurrence only??
       }
     }
-  } else if (isSgValueExp(parent)) {
+  } else if (SgAdaIndexConstraint* ada_idx_c = isSgAdaIndexConstraint(parent))
+  {
+    SgExpressionPtrList& explist= ada_idx_c->get_indexRanges();
+ // parent set to wrong node??
+     for (Rose_STL_Container<SgExpression*>::iterator i=explist.begin();i!=explist.end();i++) {
+      if (isSgExpression(*i)==oldExp) {
+        //SgExprListExp* parentExpListExp = isSgExprListExp(parent);
+        //parentExpListExp->replace_expression(oldExp,newExp);
+        //ada_idx_c->replace_expression(oldExp,newExp);
+        *i = newExp; 
+        newExp->set_parent(ada_idx_c);
+       // break; //replace the first occurrence only??
+      }
+     }
+  }
+  else if (isSgValueExp(parent)) {
       // For compiler generated code, this could happen.
       // We can just ignore this function call since it will not appear in the final AST.
       return;
