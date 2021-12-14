@@ -368,6 +368,7 @@ namespace CodeThorn {
     void set_finished(std::vector<bool>& v, bool val);
     bool all_false(std::vector<bool>& v);
 
+    std::list<EStatePtr> transferEdgeEStateInPlace(Edge edge, EStatePtr estate);
     std::list<EStatePtr> transferEdgeEState(Edge edge, EStatePtr estate);
 
     // forwarding functions for EStateTransferFunctions (backward compatibility)
@@ -420,6 +421,7 @@ namespace CodeThorn {
     void setTotalNumberOfFunctions(uint32_t num);
     std::string hashSetConsistencyReport();
 
+    EStateWorkList* getWorkList();
   protected:
 
     // EStateWorkLists: Current and Next should point to One and Two (or swapped)

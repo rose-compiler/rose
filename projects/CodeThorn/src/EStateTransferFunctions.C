@@ -425,7 +425,6 @@ namespace CodeThorn {
 
   std::list<EStatePtr> EStateTransferFunctions::transferFunctionCallReturn(Edge edge, EStatePtr estate) {
     EStatePtr currentEState=estate;
-    PStatePtr currentPState=currentEState->pstate();
 
     // determine functionCallLabel corresponding to functioncallReturnLabel.
     Label functionCallReturnLabel=edge.source();
@@ -657,7 +656,6 @@ namespace CodeThorn {
   std::list<EStatePtr> EStateTransferFunctions::transferForkFunction(Edge edge, EStatePtr estate, SgFunctionCallExp* funCall) {
     EStatePtr currentEState=estate;
     CallString cs=currentEState->callString;
-    PStatePtr currentPState=currentEState->pstate();
 
     SgExpressionPtrList& actualParameters=SgNodeHelper::getFunctionCallActualParameterList(funCall);
     SAWYER_MESG(logger[TRACE])<<getAnalyzer()->getOptionsRef().forkFunctionName<<" #args:"<<actualParameters.size()<<endl;
@@ -704,7 +702,6 @@ namespace CodeThorn {
   std::list<EStatePtr> EStateTransferFunctions::transferFunctionCallExternal(Edge edge, EStatePtr estate) {
     EStatePtr currentEState=estate;
     CallString cs=currentEState->callString;
-    PStatePtr currentPState=currentEState->pstate();
 
     // handle special case for readwrite listener
 #pragma omp critical(VIOLATIONRECORDING)
@@ -1917,12 +1914,14 @@ namespace CodeThorn {
     //unreachable
   }
 
+  list<EStatePtr> EStateTransferFunctions::transferEdgeEStateInPlace(Edge edge, EStatePtr estate) {
+    pair<TransferFunctionCode,SgNode*> tfCodeNodePair=determineTransferFunctionCode(edge,estate);
+    return transferEdgeEStateDispatch(tfCodeNodePair.first,tfCodeNodePair.second,edge,estate);
+  }
+
   list<EStatePtr> EStateTransferFunctions::transferEdgeEState(Edge edge, EStatePtr estate) {
     EStatePtr estateClone=estate->cloneWithoutIO(); // prepare for in-place modification of estate
-    pair<TransferFunctionCode,SgNode*> tfCodeNodePair=determineTransferFunctionCode(edge,estateClone);
-    EStateTransferFunctions::TransferFunctionCode tfCode=tfCodeNodePair.first;
-    SgNode* nextNodeToAnalyze=tfCodeNodePair.second;
-    list<EStatePtr> newEStateList=transferEdgeEStateDispatch(tfCode,nextNodeToAnalyze,edge,estateClone);
+    list<EStatePtr> newEStateList=transferEdgeEStateInPlace(edge,estateClone);
     // delete cloned state if another state has been created and it is not used in list
     // the list has either length 0 or 1.
     bool reused=false;
@@ -3313,7 +3312,6 @@ namespace CodeThorn {
 
   SingleEvalResult EStateTransferFunctions::evalLValueDotOrArrowExp(SgNode* node, EStatePtr estate, EvalMode mode) {
     ROSE_ASSERT(isSgDotExp(node)||isSgArrowExp(node));
-    PStatePtr oldPState=estate->pstate();
     SingleEvalResult res;
     res.init(estate,AbstractValue::createBot());
 
@@ -3339,7 +3337,6 @@ namespace CodeThorn {
     // see ExprAnalyzer.C: case V_SgPntrArrRefExp:
     // since nothing can change (because of being ignored) state remains the same
     SAWYER_MESG(logger[TRACE])<<"evalLValuePntrArrRefExp"<<endl;
-    PStatePtr oldPState=estate->pstate();
     SingleEvalResult res;
     res.init(estate,AbstractValue::createBot());
     if(getSkipArrayAccesses()) {

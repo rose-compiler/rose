@@ -100,7 +100,11 @@ namespace CodeThorn {
     EState combine(EStatePtr es1, EStatePtr es2);
 
     /* determines transfer function code from CFG and AST-matching and calls transferEdgeEStateDispatch
-       ultimately this function can be used to operate on its own IR */
+       ultimately this function can be used to operate on its own IR. Updates provided estate in-place. */
+    std::list<EStatePtr> transferEdgeEStateInPlace(Edge edge, EStatePtr estate);
+
+    /* determines transfer function code from CFG and AST-matching and calls transferEdgeEStateDispatch
+       ultimately this function can be used to operate on its own IR. Does not modify passed state, creates cloned estate. */
     std::list<EStatePtr> transferEdgeEState(Edge edge, EStatePtr estate);
 
     void printTransferFunctionInfo(TransferFunctionCode tfCode, SgNode* node, Edge edge, EStatePtr estate);

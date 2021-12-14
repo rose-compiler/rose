@@ -942,7 +942,7 @@ int CFAnalysis::reduceNode(Flow& flow, Label lab) {
 int CFAnalysis::optimizeFlow(Flow& flow) {
   int n=0;
   // TODO: reduce: SgBreakStmt, SgContinueStmt, SgLabelStatement, SgGotoStatement
-  n+=reduceBlockEndNodes(flow);
+  n+=reduceBlockBeginEndNodes(flow);
   //n+=reduceEmptyConditionNodes(flow);
   return n;
 }
@@ -959,7 +959,7 @@ int CFAnalysis::reduceBlockBeginNodes(Flow& flow) {
   int cnt=0;
   for(LabelSet::iterator i=labs.begin();i!=labs.end();++i) {
     if(labeler->isBlockBeginLabel(*i)) {
-      cout<<"Reducing block begin node:"<<(*i).toString()<<endl;
+      //cout<<"Reducing block begin node:"<<(*i).toString()<<endl;
       cnt+=reduceNode(flow,*i);
     }
   }
@@ -972,7 +972,7 @@ int CFAnalysis::reduceBlockEndNodes(Flow& flow) {
   for(LabelSet::iterator i=labs.begin();i!=labs.end();++i) {
     if(labeler->isBlockEndLabel(*i)) {
       cnt+=reduceNode(flow,*i);
-      cout<<"Reducing block end node:"<<(*i).toString()<<endl;
+      //cout<<"Reducing block end node:"<<(*i).toString()<<endl;
     }
   }
   return cnt;

@@ -1,5 +1,5 @@
 #include "sage3basic.h"
-#include "Solver17.h"
+#include "Solver18.h"
 #include "CTAnalysis.h"
 #include "CodeThornCommandLineOptions.h"
 #include "EStateTransferFunctions.h"
@@ -12,19 +12,25 @@ using namespace Sawyer::Message;
 
 #include "CTAnalysis.h"
 
-Sawyer::Message::Facility Solver17::logger;
-// initialize static member flag
-bool Solver17::_diagnosticsInitialized = false;
+Sawyer::Message::Facility Solver18::logger;
+bool Solver18::_diagnosticsInitialized = false;
 
-Solver17::Solver17() {
+Solver18::Solver18() {
   initDiagnostics();
 }
 
-int Solver17::getId() {
-  return 17;
+void Solver18::initDiagnostics() {
+  if (!_diagnosticsInitialized) {
+    _diagnosticsInitialized = true;
+    Solver::initDiagnostics(logger, 18);
+  }
+}
+
+int Solver18::getId() {
+  return 18;
 }
     
-void Solver17::initializeSummaryStatesFromWorkList() {
+void Solver18::initializeSummaryStatesFromWorkList() {
   // pop all states from worklist (can contain more than one state)
   list<EStatePtr> tmpWL;
   while(!_analyzer->isEmptyWorkList()) {
@@ -40,8 +46,8 @@ void Solver17::initializeSummaryStatesFromWorkList() {
   }
 }
 
-void Solver17::run() {
-  SAWYER_MESG(logger[INFO])<<"Running solver "<<getId()<<endl;
+void Solver18::run() {
+  SAWYER_MESG(logger[INFO])<<"Running solver "<<getId()<<" (sharedpstates:"<<_analyzer->getOptionsRef().sharedPStates<<")"<<endl;
   ROSE_ASSERT(_analyzer);
   if(_analyzer->getOptionsRef().abstractionMode==0) {
     cerr<<"Error: abstraction mode is 0, but >= 1 required."<<endl;
@@ -54,7 +60,7 @@ void Solver17::run() {
 
   initializeSummaryStatesFromWorkList();
 
-  size_t displayTransferCounter=0;
+  size_t displayTransferCounter=0; // force immediate report at start
   bool terminateEarly=false;
   _analyzer->printStatusMessage(true);
   while(!_analyzer->isEmptyWorkList()) {
@@ -76,7 +82,7 @@ void Solver17::run() {
       displayTransferCounter++;
       for(list<EStatePtr>::iterator nesListIter=newEStateList.begin();nesListIter!=newEStateList.end();++nesListIter) {
         // newEstate is passed by value (not created yet)
-        EStatePtr newEStatePtr0=*nesListIter;
+        EStatePtr newEStatePtr0=*nesListIter; // TEMPORARY PTR
         ROSE_ASSERT(newEStatePtr0->label()!=Labeler::NO_LABEL);
         if((!_analyzer->isFailedAssertEState(newEStatePtr0)&&!_analyzer->isVerificationErrorEState(newEStatePtr0))) {
           EStatePtr newEStatePtr=newEStatePtr0;
@@ -89,7 +95,7 @@ void Solver17::run() {
           ROSE_ASSERT(summaryEStatePtr);
           if(_analyzer->getEStateTransferFunctions()->isApproximatedBy(newEStatePtr,summaryEStatePtr)) {
             delete newEStatePtr; // new state does not contain new information, therefore it can be deleted
-            addToWorkListFlag=false;
+            addToWorkListFlag=false; // nothing to do (flag required because of OpenMP block, continue not allowed)
             newEStatePtr=nullptr;
           } else {
             EState newCombinedSummaryEState=_analyzer->getEStateTransferFunctions()->combine(summaryEStatePtr,const_cast<EStatePtr>(newEStatePtr));
@@ -138,12 +144,5 @@ void Solver17::run() {
   } else {
     _analyzer->printStatusMessage(true);
     _analyzer->printStatusMessage("STATUS: analysis finished (worklist is empty).",true);
-  }
-}
-
-void Solver17::initDiagnostics() {
-  if (!_diagnosticsInitialized) {
-    _diagnosticsInitialized = true;
-    Solver::initDiagnostics(logger, 17);
   }
 }

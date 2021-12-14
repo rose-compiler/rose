@@ -7,20 +7,15 @@ namespace CodeThorn {
 
   class CTAnalysis;
 
-/*! 
-  * \author Marc Jasper
-  * \date 2017.
-  * \brief Solver interface
- */
   class Solver : public DFSolver2 {
-
-    //friend class CTAnalysis;
 
   public:
     Solver();
     Solver(CTAnalysis* analyzer);
     virtual void run() = 0;
     virtual int getId() = 0;
+    virtual bool createsTransitionSystem(); // default false
+    virtual bool checksAssertions(); // default false
 
     virtual void setAnalyzer(CTAnalysis* analyzer);
   protected:

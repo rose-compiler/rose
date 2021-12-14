@@ -66,6 +66,7 @@
 #include "Solver5.h"
 #include "Solver16.h"
 #include "Solver17.h"
+#include "Solver18.h"
 #include "Solver8.h"
 
 using namespace std;
@@ -92,7 +93,7 @@ using namespace Sawyer::Message;
 
 using namespace Sawyer::Message;
 
-static std::string CodeThornLibraryVersion="1.13.41"; // b
+static std::string CodeThornLibraryVersion="1.13.42";
 
 // handler for generating backtrace
 void codethornBackTraceHandler(int sig) {
@@ -175,6 +176,9 @@ namespace CodeThorn {
       }
       case 17 :  {  
         solver = new Solver17(); break; // does not create a TS
+      }
+      case 18 :  {  
+        solver = new Solver18(); break; // does not create a TS
       }
       case 8 :  {  
         solver = new Solver8(); break;

@@ -292,3 +292,10 @@ void Solver16::initDiagnostics() {
     Solver::initDiagnostics(logger, 16);
   }
 }
+bool Solver16::createsTransitionSystem() {
+  return true;
+}
+
+bool Solver16::checksAssertions() {
+  return true;
+}
