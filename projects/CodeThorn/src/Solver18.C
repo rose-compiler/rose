@@ -1,5 +1,5 @@
 #include "sage3basic.h"
-#include "Solver17.h"
+#include "Solver18.h"
 #include "CTAnalysis.h"
 #include "CodeThornCommandLineOptions.h"
 #include "EStateTransferFunctions.h"
@@ -12,19 +12,25 @@ using namespace Sawyer::Message;
 
 #include "CTAnalysis.h"
 
-Sawyer::Message::Facility Solver17::logger;
-// initialize static member flag
-bool Solver17::_diagnosticsInitialized = false;
+Sawyer::Message::Facility Solver18::logger;
+bool Solver18::_diagnosticsInitialized = false;
 
-Solver17::Solver17() {
+Solver18::Solver18() {
   initDiagnostics();
 }
 
-int Solver17::getId() {
-  return 17;
+void Solver18::initDiagnostics() {
+  if (!_diagnosticsInitialized) {
+    _diagnosticsInitialized = true;
+    Solver::initDiagnostics(logger, 16);
+  }
+}
+
+int Solver18::getId() {
+  return 18;
 }
     
-void Solver17::initializeSummaryStatesFromWorkList() {
+void Solver18::initializeSummaryStatesFromWorkList() {
   // pop all states from worklist (can contain more than one state)
   list<EStatePtr> tmpWL;
   while(!_analyzer->isEmptyWorkList()) {
@@ -40,13 +46,8 @@ void Solver17::initializeSummaryStatesFromWorkList() {
   }
 }
 
-
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
-void Solver17::run() {
-  SAWYER_MESG(logger[INFO])<<"Running solver "<<getId()<<endl;
+void Solver18::run() {
+  SAWYER_MESG(logger[INFO])<<"Running solver "<<getId()<<" (sharedpstates:"<<_analyzer->getOptionsRef().sharedPStates<<")"<<endl;
   ROSE_ASSERT(_analyzer);
   if(_analyzer->getOptionsRef().abstractionMode==0) {
     cerr<<"Error: abstraction mode is 0, but >= 1 required."<<endl;
@@ -76,7 +77,7 @@ void Solver17::run() {
     Flow edgeSet=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
     for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
       Edge e=*i;
-      cout<<"Transfer:"<<e.source().toString()<<"=>"<<e.target().toString()<<endl;
+      //cout<<"Transfer:"<<e.source().toString()<<"=>"<<e.target().toString()<<endl;
       list<EStatePtr> newEStateList=_analyzer->transferEdgeEState(e,currentEStatePtr);
       displayTransferCounter++;
       for(list<EStatePtr>::iterator nesListIter=newEStateList.begin();nesListIter!=newEStateList.end();++nesListIter) {
@@ -111,7 +112,7 @@ void Solver17::run() {
           if(addToWorkListFlag) {
             ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(newEStatePtr->label()));
             _analyzer->addToWorkList(newEStatePtr);  // uses its own omp synchronization, do not mix with above
-            cout<<"WL-ADD:"<<_analyzer->getWorkList()->size()<<endl;
+            //cout<<"WL-ADD:"<<_analyzer->getWorkList()->size()<<endl;
           }
         }
         if(((_analyzer->isFailedAssertEState(newEStatePtr0))||_analyzer->isVerificationErrorEState(newEStatePtr0))) {
@@ -144,12 +145,5 @@ void Solver17::run() {
   } else {
     _analyzer->printStatusMessage(true);
     _analyzer->printStatusMessage("STATUS: analysis finished (worklist is empty).",true);
-  }
-}
-
-void Solver17::initDiagnostics() {
-  if (!_diagnosticsInitialized) {
-    _diagnosticsInitialized = true;
-    Solver::initDiagnostics(logger, 16);
   }
 }

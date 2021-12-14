@@ -420,6 +420,7 @@ namespace CodeThorn {
     void setTotalNumberOfFunctions(uint32_t num);
     std::string hashSetConsistencyReport();
 
+    EStateWorkList* getWorkList();
   protected:
 
     // EStateWorkLists: Current and Next should point to One and Two (or swapped)

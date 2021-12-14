@@ -451,7 +451,7 @@ EStatePtr CodeThorn::CTAnalysis::getBottomSummaryState(Label lab, CallString cs)
   } else {
     PStatePtr initialEmpty=new PState();
     EState estate(lab,cs,initialEmpty,io);
-    if(_ctOpt.solver!=17) {
+    if(getSolver()->createsTransitionSystem()) {
       EStatePtr bottomElement=processNewOrExisting(estate);
       return bottomElement;
     } else {
@@ -650,7 +650,7 @@ void CodeThorn::CTAnalysis::runSolver() {
   startAnalysisTimer();
   CodeThorn::Solver* ctSolver=dynamic_cast<CodeThorn::Solver*>(_solver);
   ROSE_ASSERT(ctSolver);
-  if(_ctOpt.status) cout<<"STATUS: running solver "<<ctSolver->getId()<<endl;
+  if(_ctOpt.status) cout<<"STATUS: running solver "<<ctSolver->getId()<<" (sharedpstates:"<<EState::sharedPStates<<")"<<endl;
   ctSolver->run();
   stopAnalysisTimer();
 }
@@ -723,7 +723,7 @@ void CodeThorn::CTAnalysis::runAnalysisPhase2Sub1(TimingCollector& tc) {
       EStatePtr initialEStateObj=createInitialEState(this->_root,slab);
       initialEStateObj->setLabel(slab);
       // do not "process" estate if solver 17 is used (does not use estate hash set)
-      EStatePtr initialEState=(_ctOpt.solver!=17)? processNewOrExisting(initialEStateObj) : initialEStateObj;
+      EStatePtr initialEState=(getSolver()->createsTransitionSystem())? processNewOrExisting(initialEStateObj) : initialEStateObj;
       ROSE_ASSERT(initialEState);
       variableValueMonitor.init(initialEState);
       addToWorkList(initialEState);
@@ -1381,7 +1381,7 @@ void CodeThorn::CTAnalysis::initializeSolverWithInitialEState(SgProject* root) {
       Label slab=getFlow()->getStartLabel();
       EStatePtr initialEState=createInitialEState(root, slab);
       // solver 17 does not use a estate hash set, do not process
-      initialEState=_ctOpt.solver!=17? processNewOrExisting(initialEState): initialEState;
+      initialEState=(getSolver()->createsTransitionSystem())? processNewOrExisting(initialEState): initialEState;
       ROSE_ASSERT(initialEState);
       variableValueMonitor.init(initialEState);
       addToWorkList(initialEState);
@@ -2010,4 +2010,8 @@ uint32_t CodeThorn::CTAnalysis::getTotalNumberOfFunctions() {
 
 void CodeThorn::CTAnalysis::setTotalNumberOfFunctions(uint32_t num) {
   _totalNumberOfFunctions=num;
+}
+
+EStateWorkList* CodeThorn::CTAnalysis::getWorkList() {
+  return estateWorkListCurrent;
 }

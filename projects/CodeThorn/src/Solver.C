@@ -22,3 +22,11 @@ void Solver::initDiagnostics(Sawyer::Message::Facility& logger, int solverId) {
   logger = Sawyer::Message::Facility(dynamicClassName.str(), Rose::Diagnostics::destination);
   Rose::Diagnostics::mfacilities.insertAndAdjust(logger);
 }
+
+bool Solver::createsTransitionSystem() {
+  return false;
+}
+
+bool Solver::checksAssertions() {
+  return false;
+}

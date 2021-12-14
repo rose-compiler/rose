@@ -17,7 +17,9 @@ namespace CodeThorn {
     Solver5();
     void run();
     int getId();
-
+    bool createsTransitionSystem();
+    bool checksAssertions();
+    
     static void initDiagnostics();
   private:
     static Sawyer::Message::Facility logger;

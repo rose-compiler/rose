@@ -178,6 +178,7 @@ CODETHORN_HEADER_FILES=\
   Solver5.h \
   Solver16.h \
   Solver17.h \
+  Solver18.h \
   Solver8.h \
   Solver.h \
   Specialization.h \
@@ -310,6 +311,7 @@ CODETHORN_SOURCE_FILES=\
   Solver5.C \
   Solver16.C \
   Solver17.C \
+  Solver18.C \
   Solver8.C \
   Solver.C \
   Specialization.C \

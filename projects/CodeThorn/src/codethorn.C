@@ -266,7 +266,7 @@ int main( int argc, char * argv[] ) {
     analyzer->printStatusMessageLine("==============================================================");
     
     optionallyWriteSVCompWitnessFile(ctOpt, analyzer);
-    if(ctOpt.solver!=17)
+    if(analyzer->getSolver()->checksAssertions())
       optionallyAnalyzeAssertions(ctOpt, ltlOpt, analyzer, tc);
 
 #if HAVE_Z3
@@ -281,7 +281,7 @@ int main( int argc, char * argv[] ) {
     optionallyGenerateCallGraphDotFile(ctOpt,analyzer);
     tc.stopTimer(TimingCollector::callGraphDotFile);
 
-    if(ctOpt.solver!=17) {
+    if(analyzer->getSolver()->createsTransitionSystem()) {
       runLTLAnalysis(ctOpt,ltlOpt,analyzer,tc);
       processCtOptGenerateAssertions(ctOpt, analyzer, project);
     

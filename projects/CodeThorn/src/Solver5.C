@@ -270,3 +270,11 @@ void Solver5::initDiagnostics() {
     Solver::initDiagnostics(logger, 5);
   }
 }
+
+bool Solver5::createsTransitionSystem() {
+  return true;
+}
+
+bool Solver5::checksAssertions() {
+  return true;
+}

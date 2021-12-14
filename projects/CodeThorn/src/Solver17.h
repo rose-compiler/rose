@@ -15,7 +15,7 @@ namespace CodeThorn {
     Solver17();
     void run();
     int getId();
-
+    
     static void initDiagnostics();
   private:
     void initializeSummaryStatesFromWorkList();
@@ -23,7 +23,6 @@ namespace CodeThorn {
     // if currentEStatePtr!=currentEStatePtr) then also add 
     //     (currentEStatePtr,e,NewEStatePtr)} where e'=(currentEStatePtr0,annot(e),NewStatePtr);
     // this represents the effect of merging states also in the STS (without introducing new merge states)
-    void recordTransition(EStatePtr currentEStatePtr0,EStatePtr currentEStatePtr,Edge e, EStatePtr newEStatePtr);
     static Sawyer::Message::Facility logger;
     static bool _diagnosticsInitialized;
   };
