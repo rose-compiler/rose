@@ -1304,6 +1304,11 @@ void CodeThorn::CTAnalysis::recordExternalFunctionCall(SgFunctionCallExp* funCal
   }
 }
 
+list<EStatePtr> CodeThorn::CTAnalysis::transferEdgeEStateInPlace(Edge edge, EStatePtr estate) {
+  ROSE_ASSERT(edge.source()==estate->label());
+  return _estateTransferFunctions->transferEdgeEStateInPlace(edge,estate);
+}
+
 list<EStatePtr> CodeThorn::CTAnalysis::transferEdgeEState(Edge edge, EStatePtr estate) {
   ROSE_ASSERT(edge.source()==estate->label());
   return _estateTransferFunctions->transferEdgeEState(edge,estate);

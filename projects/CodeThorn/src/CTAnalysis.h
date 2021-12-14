@@ -368,6 +368,7 @@ namespace CodeThorn {
     void set_finished(std::vector<bool>& v, bool val);
     bool all_false(std::vector<bool>& v);
 
+    std::list<EStatePtr> transferEdgeEStateInPlace(Edge edge, EStatePtr estate);
     std::list<EStatePtr> transferEdgeEState(Edge edge, EStatePtr estate);
 
     // forwarding functions for EStateTransferFunctions (backward compatibility)

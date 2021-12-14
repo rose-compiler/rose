@@ -22,7 +22,7 @@ Solver18::Solver18() {
 void Solver18::initDiagnostics() {
   if (!_diagnosticsInitialized) {
     _diagnosticsInitialized = true;
-    Solver::initDiagnostics(logger, 16);
+    Solver::initDiagnostics(logger, 18);
   }
 }
 
@@ -112,7 +112,6 @@ void Solver18::run() {
           if(addToWorkListFlag) {
             ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(newEStatePtr->label()));
             _analyzer->addToWorkList(newEStatePtr);  // uses its own omp synchronization, do not mix with above
-            //cout<<"WL-ADD:"<<_analyzer->getWorkList()->size()<<endl;
           }
         }
         if(((_analyzer->isFailedAssertEState(newEStatePtr0))||_analyzer->isVerificationErrorEState(newEStatePtr0))) {

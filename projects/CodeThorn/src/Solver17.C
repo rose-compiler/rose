@@ -40,11 +40,6 @@ void Solver17::initializeSummaryStatesFromWorkList() {
   }
 }
 
-
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 void Solver17::run() {
   SAWYER_MESG(logger[INFO])<<"Running solver "<<getId()<<endl;
   ROSE_ASSERT(_analyzer);
@@ -59,7 +54,7 @@ void Solver17::run() {
 
   initializeSummaryStatesFromWorkList();
 
-  size_t displayTransferCounter=0; // force immediate report at start
+  size_t displayTransferCounter=0;
   bool terminateEarly=false;
   _analyzer->printStatusMessage(true);
   while(!_analyzer->isEmptyWorkList()) {
@@ -76,12 +71,12 @@ void Solver17::run() {
     Flow edgeSet=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
     for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
       Edge e=*i;
-      cout<<"Transfer:"<<e.source().toString()<<"=>"<<e.target().toString()<<endl;
+      //cout<<"Transfer:"<<e.source().toString()<<"=>"<<e.target().toString()<<endl;
       list<EStatePtr> newEStateList=_analyzer->transferEdgeEState(e,currentEStatePtr);
       displayTransferCounter++;
       for(list<EStatePtr>::iterator nesListIter=newEStateList.begin();nesListIter!=newEStateList.end();++nesListIter) {
         // newEstate is passed by value (not created yet)
-        EStatePtr newEStatePtr0=*nesListIter; // TEMPORARY PTR
+        EStatePtr newEStatePtr0=*nesListIter;
         ROSE_ASSERT(newEStatePtr0->label()!=Labeler::NO_LABEL);
         if((!_analyzer->isFailedAssertEState(newEStatePtr0)&&!_analyzer->isVerificationErrorEState(newEStatePtr0))) {
           EStatePtr newEStatePtr=newEStatePtr0;
@@ -94,7 +89,7 @@ void Solver17::run() {
           ROSE_ASSERT(summaryEStatePtr);
           if(_analyzer->getEStateTransferFunctions()->isApproximatedBy(newEStatePtr,summaryEStatePtr)) {
             delete newEStatePtr; // new state does not contain new information, therefore it can be deleted
-            addToWorkListFlag=false; // nothing to do (flag required because of OpenMP block, continue not allowed)
+            addToWorkListFlag=false;
             newEStatePtr=nullptr;
           } else {
             EState newCombinedSummaryEState=_analyzer->getEStateTransferFunctions()->combine(summaryEStatePtr,const_cast<EStatePtr>(newEStatePtr));
@@ -111,7 +106,6 @@ void Solver17::run() {
           if(addToWorkListFlag) {
             ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(newEStatePtr->label()));
             _analyzer->addToWorkList(newEStatePtr);  // uses its own omp synchronization, do not mix with above
-            cout<<"WL-ADD:"<<_analyzer->getWorkList()->size()<<endl;
           }
         }
         if(((_analyzer->isFailedAssertEState(newEStatePtr0))||_analyzer->isVerificationErrorEState(newEStatePtr0))) {
@@ -150,6 +144,6 @@ void Solver17::run() {
 void Solver17::initDiagnostics() {
   if (!_diagnosticsInitialized) {
     _diagnosticsInitialized = true;
-    Solver::initDiagnostics(logger, 16);
+    Solver::initDiagnostics(logger, 17);
   }
 }
