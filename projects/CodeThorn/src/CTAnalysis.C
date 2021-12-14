@@ -2020,3 +2020,6 @@ void CodeThorn::CTAnalysis::setTotalNumberOfFunctions(uint32_t num) {
 EStateWorkList* CodeThorn::CTAnalysis::getWorkList() {
   return estateWorkListCurrent;
 }
+EStateWorkList* CodeThorn::CTAnalysis::getWorkListNext() {
+  return estateWorkListNext;
+}

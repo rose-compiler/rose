@@ -37,7 +37,7 @@ void Solver5::run() {
   //SAWYER_MESG(logger[INFO])<<"number of error labels: "<<_analyzer->reachabilityResults.size()<<endl;
   size_t prevStateSetSize=0; // force immediate report at start
   int threadNum;
-  int workers=_analyzer->_numberOfThreadsToUse;
+  int workers=_analyzer->getNumberOfThreadsToUse();
   vector<bool> workVector(workers);
   _analyzer->set_finished(workVector,true);
   bool terminateEarly=false;
@@ -59,18 +59,18 @@ void Solver5::run() {
     threadNum=omp_get_thread_num();
     while(!_analyzer->all_false(workVector)) {
       // SAWYER_MESG(logger[DEBUG])<<"running : WL:"<<estateWorkListCurrent->size()<<endl;
-      if(threadNum==0 && _analyzer->_displayDiff && (_analyzer->estateSet.size()>(prevStateSetSize+_analyzer->_displayDiff))) {
+      if(threadNum==0 && _analyzer->getDisplayDiff() && (_analyzer->getEStateSetSize()>(prevStateSetSize+_analyzer->getDisplayDiff()))) {
         _analyzer->printStatusMessage(true);
-        prevStateSetSize=_analyzer->estateSet.size();
+        prevStateSetSize=_analyzer->getEStateSetSize();
       }
       //perform reduction to I/O/worklist states only if specified threshold was reached
       if (ioReductionActive) {
 #pragma omp critical
         {
-          if (_analyzer->estateSet.size() > (estatesLastReduction + ioReductionThreshold)) {
+          if (_analyzer->getEStateSetSize() > (estatesLastReduction + ioReductionThreshold)) {
             _analyzer->reduceStgToInOutAssertWorklistStates();
-            estatesLastReduction = _analyzer->estateSet.size();
-            cout<< "STATUS: transition system reduced to I/O/worklist states. remaining transitions: " << _analyzer->transitionGraph.size() << endl;
+            estatesLastReduction = _analyzer->getEStateSetSize();
+            cout<< "STATUS: transition system reduced to I/O/worklist states. remaining transitions: " << _analyzer->getTransitionGraphSize() << endl;
           }
         }
       }
@@ -95,7 +95,7 @@ void Solver5::run() {
         continue;
       if(!currentEStatePtr) {
         //cerr<<"Thread "<<threadNum<<" found empty worklist. Continue without work. "<<endl;
-        ROSE_ASSERT(threadNum>=0 && threadNum<=_analyzer->_numberOfThreadsToUse);
+        ROSE_ASSERT(threadNum>=0 && threadNum<=_analyzer->getNumberOfThreadsToUse());
       } else {
         ROSE_ASSERT(currentEStatePtr);
         Flow edgeSet=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
@@ -253,15 +253,15 @@ void Solver5::run() {
     _analyzer->printStatusMessage(true);
     _analyzer->printStatusMessage("STATUS: analysis finished (incomplete STG due to specified resource restriction).",true);
     _analyzer->reachabilityResults.finishedReachability(_analyzer->isPrecise(),!isComplete);
-    _analyzer->transitionGraph.setIsComplete(!isComplete);
+    _analyzer->getTransitionGraph()->setIsComplete(!isComplete);
   } else {
     bool tmpcomplete=true;
     _analyzer->reachabilityResults.finishedReachability(_analyzer->isPrecise(),tmpcomplete);
     _analyzer->printStatusMessage(true);
-    _analyzer->transitionGraph.setIsComplete(tmpcomplete);
+    _analyzer->getTransitionGraph()->setIsComplete(tmpcomplete);
     _analyzer->printStatusMessage("STATUS: analysis finished (worklist is empty).",true);
   }
-  _analyzer->transitionGraph.setIsPrecise(_analyzer->isPrecise());
+  _analyzer->getTransitionGraph()->setIsPrecise(_analyzer->isPrecise());
 }
 
 void Solver5::initDiagnostics() {

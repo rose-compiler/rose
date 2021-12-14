@@ -34,7 +34,7 @@ void Solver12::run() {
   size_t prevStateSetSizeDisplay=0; 
   size_t prevStateSetSizeResource=0;
   int threadNum;
-  int workers=_analyzer->_numberOfThreadsToUse;
+  int workers=_analyzer->getNumberOfThreadsToUse();
   vector<bool> workVector(workers);
   _analyzer->set_finished(workVector,true);
   bool terminate=false;
@@ -60,12 +60,12 @@ void Solver12::run() {
 #pragma omp critical(ESTATEWL)
       {
         if (threadNum == 0 && _analyzer->all_false(workVector)) {
-          if ( (_analyzer->estateWorkListCurrent->empty() && _analyzer->estateWorkListNext->empty())) {
+          if ( (_analyzer->getWorkList()->empty() && _analyzer->getWorkListNext()->empty())) {
             terminate = true;
 	  }
-	  if ( _analyzer->estateWorkListCurrent->empty() && !(_analyzer->estateWorkListNext->empty()) ){
+	  if ( _analyzer->getWorkList()->empty() && !(_analyzer->getWorkListNext()->empty()) ){
 	    // swap worklists iff the maximum number of iterations has not been fully computed yet
-	    if (_analyzer->getIterations() == _analyzer->_maxIterations) {
+	    if (_analyzer->getIterations() == _analyzer->getMaxIterations()) {
 	      terminate = true;
 	      terminatedWithIncompleteStg = true;
 	    } else {
@@ -77,12 +77,12 @@ void Solver12::run() {
       }
       unsigned long estateSetSize;
       // print status message if required
-      if (args.getBool("status") && _analyzer->_displayDiff) {
+      if (args.getBool("status") && _analyzer->getDisplayDiff()) {
 #pragma omp critical(HASHSET)
 	{
 	  estateSetSize = _analyzer->estateSet.size();
 	}
-	if(threadNum==0 && (estateSetSize>(prevStateSetSizeDisplay+_analyzer->_displayDiff))) {
+	if(threadNum==0 && (estateSetSize>(prevStateSetSizeDisplay+_analyzer->getDisplayDiff()))) {
 	  _analyzer->printStatusMessage(true);
 	  prevStateSetSizeDisplay=estateSetSize;
 	}
@@ -138,7 +138,7 @@ void Solver12::run() {
         continue;
       if(!currentEStatePtr) {
         //cerr<<"Thread "<<threadNum<<" found empty worklist. Continue without work. "<<endl;
-        ROSE_ASSERT(threadNum>=0 && threadNum<=_analyzer->_numberOfThreadsToUse);
+        ROSE_ASSERT(threadNum>=0 && threadNum<=_analyzer->getNumberOfThreadsToUse());
       } else {
         ROSE_ASSERT(currentEStatePtr);
         Flow edgeSet=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
