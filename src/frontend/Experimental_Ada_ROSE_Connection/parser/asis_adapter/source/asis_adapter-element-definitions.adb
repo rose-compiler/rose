@@ -1,5 +1,7 @@
 with Asis.Definitions;
 with Asis.Elements;
+with A4G.A_Types; use A4G.A_Types;
+with Asis.Set_Get;
 
 package body Asis_Adapter.Element.Definitions is
 
@@ -1152,10 +1154,14 @@ package body Asis_Adapter.Element.Definitions is
                  Get_Element_ID (Elm);
                Element_Kind : constant Asis.Element_Kinds :=
                Asis.Elements.Element_Kind (Elm);
+               SpecialCase : A4G.A_Types.Special_Cases := Asis.Set_Get.Special_Case(Elm);
             begin
-               state.Process_Element_Tree(
-                Element => Elm,
-                Outputs => State.Outputs );
+               -- PUT_LINE(Special_Cases'Image (SpecialCase));
+               If SpecialCase /= Stand_Char_Literal then
+                 state.Process_Element_Tree(
+                  Element => Elm,
+                  Outputs => State.Outputs );
+               end if;
             end;
          end loop;
       end Append_Implicit_Inherited_Declarations;
@@ -1174,7 +1180,7 @@ package body Asis_Adapter.Element.Definitions is
      -- Derived enumeration literals
      -- Derived record components
 
-     If Definition_Kind = A_Type_Definition  then
+     If Definition_Kind = A_Type_Definition then
        declare
          Type_Kind : constant Asis.Type_Kinds :=
            Asis.Elements.Type_Kind (Element);

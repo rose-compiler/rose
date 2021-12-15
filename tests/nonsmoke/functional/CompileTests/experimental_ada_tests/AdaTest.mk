@@ -88,6 +88,7 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   array_pointer_type.ads               \
   async_transfer_select.adb            \
   case_function.adb                    \
+  character_type.adb                   \
   constrained_array_definition.ads     \
   defining_character_literal.adb       \
   defining_enumeration_literal.adb     \
