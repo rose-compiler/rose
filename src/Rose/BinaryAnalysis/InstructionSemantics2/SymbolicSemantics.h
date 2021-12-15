@@ -478,8 +478,15 @@ public:
     using Ptr = MemoryListStatePtr;
 
     /** Functor for handling a memory read that found more than one cell that might alias the requested address. */
-    struct CellCompressor {
+    class CellCompressor: public Sawyer::SharedObject {
+    public:
+        using Ptr = Sawyer::SharedPointer<CellCompressor>;
+    protected:
+        CellCompressor() {}
+    public:
         virtual ~CellCompressor() {}
+
+        /** Compress the cells into a single value. */
         virtual SValuePtr operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
                                      BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
                                      const MemoryCellList::CellList &cells) = 0;
@@ -498,14 +505,18 @@ public:
      *  }
      * @endcode
      */
-    struct CellCompressorMcCarthy: CellCompressor {
+    class CellCompressorMcCarthy: public CellCompressor {
+    public:
+        static Ptr instance();                          /**< Allocating constructor. */
         virtual SValuePtr operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
                                      BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
                                      const CellList &cells) override;
     };
 
     /** Functor for handling a memory read whose address matches more than one memory cell.  Simply returns the @p dflt value. */
-    struct CellCompressorSimple: CellCompressor {
+    class CellCompressorSimple: public CellCompressor {
+    public:
+        static Ptr instance();                          /**< Allocating constructor. */
         virtual SValuePtr operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
                                      BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
                                      const CellList &cells) override;
@@ -514,9 +525,13 @@ public:
     /** Functor for handling a memory read whose address matches more than one memory cell.  This is the default cell
      *  compressor and simply calls either CellCompressionMcCarthy or CellCompressionSimple depending on whether an SMT
      *  solver is being used. */
-    struct CellCompressorChoice: CellCompressor {
-        CellCompressorMcCarthy cc_mccarthy;
-        CellCompressorSimple cc_simple;
+    class CellCompressorChoice: public CellCompressor {
+        CellCompressor::Ptr mccarthy_;
+        CellCompressor::Ptr simple_;
+    protected:
+        CellCompressorChoice();
+    public:
+        static Ptr instance();                          /**< Allocating constructor. */
         virtual SValuePtr operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
                                      BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
                                      const CellList &cells) override;
@@ -525,15 +540,16 @@ public:
     /** Functor for handling a memory read whose address matches more than one memory cell.
      *
      *  The return value is the set of possibly matching values. */
-    struct CellCompressorSet: CellCompressor {
+    class CellCompressorSet: public CellCompressor {
+    public:
+        static Ptr instance();                          /**< Allocating constructor. */
         virtual SValuePtr operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
                                      BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
                                      const CellList &cells) override;
     };
 
 private:
-    CellCompressor *cellCompressor_;                    // Callback when a memory read aliases multiple memory cells.
-    static CellCompressorChoice cc_choice;              // The default cell compressor. Static because we use its address.
+    CellCompressor::Ptr cellCompressor_;                // Callback when a memory read aliases multiple memory cells.
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization
@@ -552,13 +568,13 @@ private:
     // Real constructors
 protected:
     MemoryListState()                                   // for serialization
-        : cellCompressor_(&cc_choice) {}
+        : cellCompressor_(CellCompressorChoice::instance()) {}
 
     explicit MemoryListState(const BaseSemantics::MemoryCellPtr &protocell)
-        : BaseSemantics::MemoryCellList(protocell), cellCompressor_(&cc_choice) {}
+        : BaseSemantics::MemoryCellList(protocell), cellCompressor_(CellCompressorChoice::instance()) {}
 
     MemoryListState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval)
-        : BaseSemantics::MemoryCellList(addrProtoval, valProtoval), cellCompressor_(&cc_choice) {}
+        : BaseSemantics::MemoryCellList(addrProtoval, valProtoval), cellCompressor_(CellCompressorChoice::instance()) {}
 
     MemoryListState(const MemoryListState &other)
         : BaseSemantics::MemoryCellList(other), cellCompressor_(other.cellCompressor_) {}
@@ -652,13 +668,13 @@ public:
      *  See also, cell_compression_mccarthy(), cell_compression_simple(), cell_compression_choice().
      *
      * @{ */
-    CellCompressor* cellCompressor() const;
-    void cellCompressor(CellCompressor *cc);
+    CellCompressor::Ptr cellCompressor() const;
+    void cellCompressor(const CellCompressor::Ptr&);
     /** @} */
 
     // Deprecated [Robb Matzke 2021-12-15]
-    CellCompressor* get_cell_compressor() const ROSE_DEPRECATED("use cellCompressor");
-    void set_cell_compressor(CellCompressor *cc) ROSE_DEPRECATED("use cellCompressor");
+    CellCompressor::Ptr get_cell_compressor() const ROSE_DEPRECATED("use cellCompressor");
+    void set_cell_compressor(const CellCompressor::Ptr&) ROSE_DEPRECATED("use cellCompressor");
 };
 
 

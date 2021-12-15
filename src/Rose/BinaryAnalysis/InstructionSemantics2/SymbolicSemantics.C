@@ -216,7 +216,11 @@ SValue::print(std::ostream &stream, BaseSemantics::Formatter &formatter_) const
 //                                      List-base Memory state
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-MemoryListState::CellCompressorChoice MemoryListState::cc_choice;
+// class method
+MemoryListState::CellCompressor::Ptr
+MemoryListState::CellCompressorMcCarthy::instance() {
+    return Ptr(new CellCompressorMcCarthy);
+}
 
 SValuePtr
 MemoryListState::CellCompressorMcCarthy::operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
@@ -248,6 +252,12 @@ MemoryListState::CellCompressorMcCarthy::operator()(const SValuePtr &address, co
     return retval;
 }
 
+// class method
+MemoryListState::CellCompressor::Ptr
+MemoryListState::CellCompressorSimple::instance() {
+    return Ptr(new CellCompressorSimple);
+}
+
 SValuePtr
 MemoryListState::CellCompressorSimple::operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
                                                   BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
@@ -258,14 +268,31 @@ MemoryListState::CellCompressorSimple::operator()(const SValuePtr &address, cons
     return SValue::promote(dflt);
 }
 
+MemoryListState::CellCompressorChoice::CellCompressorChoice()
+    : mccarthy_(CellCompressorMcCarthy::instance()), simple_(CellCompressorSimple::instance()) {}
+
+MemoryListState::CellCompressor::Ptr
+MemoryListState::CellCompressorChoice::instance() {
+    return Ptr(new CellCompressorChoice);
+}
+
 SValuePtr
 MemoryListState::CellCompressorChoice::operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
                                                   BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
                                                   const CellList &cells)
 {
-    if (addrOps->solver() || valOps->solver())
-        return cc_mccarthy(address, dflt, addrOps, valOps, cells);
-    return cc_simple(address, dflt, addrOps, valOps, cells);
+    if (addrOps->solver() || valOps->solver()) {
+        ASSERT_not_null(mccarthy_);
+        return (*mccarthy_)(address, dflt, addrOps, valOps, cells);
+    } else {
+        ASSERT_not_null(simple_);
+        return (*simple_)(address, dflt, addrOps, valOps, cells);
+    }
+}
+
+MemoryListState::CellCompressor::Ptr
+MemoryListState::CellCompressorSet::instance() {
+    return Ptr(new CellCompressorSet);
 }
 
 SValuePtr
@@ -315,26 +342,26 @@ MemoryListState::CellCompressorSet::operator()(const SValuePtr &address, const B
     }
 }
 
-MemoryListState::CellCompressor*
+MemoryListState::CellCompressor::Ptr
 MemoryListState::cellCompressor() const {
     return cellCompressor_;
 }
 
 void
-MemoryListState::cellCompressor(CellCompressor *cc) {
+MemoryListState::cellCompressor(const CellCompressor::Ptr &cc) {
     ASSERT_not_null(cc);
     cellCompressor_ = cc;
 }
 
 // deprecated [Robb Matzke 2021-12-15]
-MemoryListState::CellCompressor*
+MemoryListState::CellCompressor::Ptr
 MemoryListState::get_cell_compressor() const {
     return cellCompressor();
 }
 
 // deprecated [Robb Matzke 2021-12-15]
 void
-MemoryListState::set_cell_compressor(CellCompressor *cc) {
+MemoryListState::set_cell_compressor(const CellCompressor::Ptr &cc) {
     return cellCompressor(cc);
 }
 
