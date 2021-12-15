@@ -522,6 +522,15 @@ public:
                                      const CellList &cells) override;
     };
 
+    /** Functor for handling a memory read whose address matches more than one memory cell.
+     *
+     *  The return value is the set of possibly matching values. */
+    struct CellCompressorSet: CellCompressor {
+        virtual SValuePtr operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
+                                     BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
+                                     const CellList &cells) override;
+    };
+
 protected:
     CellCompressor *cell_compressor;            /**< Callback when a memory read aliases multiple memory cells. */
     static CellCompressorChoice cc_choice;      /**< The default cell compressor. Static because we use its address. */

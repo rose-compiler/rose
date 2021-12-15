@@ -268,6 +268,53 @@ MemoryListState::CellCompressorChoice::operator()(const SValuePtr &address, cons
     return cc_simple(address, dflt, addrOps, valOps, cells);
 }
 
+SValuePtr
+MemoryListState::CellCompressorSet::operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
+                                               BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
+                                               const CellList &cells) {
+    ASSERT_not_null(address);
+    ASSERT_not_null(dflt);
+    ASSERT_not_null(addrOps);
+    ASSERT_not_null(valOps);
+
+    RiscOperators *valOpsSymbolic = dynamic_cast<RiscOperators*>(valOps);
+    const DefinersMode valDefinersMode = valOpsSymbolic->computingDefiners();
+    InsnSet valDefiners;
+    SymbolicExpr::Ptr first, set;
+    std::cerr <<"ROBB: CellCompressorSet for " <<StringUtility::plural(cells.size(), "cells") <<"\n";
+    for (const BaseSemantics::MemoryCellPtr &cell: cells) {
+        SValuePtr cellValue = SValue::promote(cell->value());
+        SymbolicExpr::Ptr cur = cellValue->get_expression();
+        if (!first) {
+            first = cur;
+        } else if (!set) {
+            ASSERT_not_null(first);
+            set = SymbolicExpr::makeSet(first, cur);
+        } else {
+            set = SymbolicExpr::makeSet(set, cur);
+        }
+
+        if (valDefinersMode != TRACK_NO_DEFINERS) {
+            const InsnSet &definers = cellValue->get_defining_instructions();
+            valDefiners.insert(definers.begin(), definers.end());
+        }
+    }
+    if (first && !set)
+        set = first;
+
+    if (set) {
+        std::cerr <<"        result = " <<*set <<"\n";
+        ASSERT_require(dflt->nBits() == set->nBits());
+        SValuePtr retval = SValue::promote(valOps->undefined_(dflt->nBits()));
+        retval->set_expression(set);
+        retval->set_defining_instructions(valDefiners);
+        return retval;
+    } else {
+        std::cerr <<"        result (dflt) = " <<*dflt <<"\n";
+        return SValue::promote(dflt);
+    }
+}
+
 BaseSemantics::SValuePtr
 MemoryListState::readOrPeekMemory(const BaseSemantics::SValuePtr &address_, const BaseSemantics::SValuePtr &dflt,
                                   BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
