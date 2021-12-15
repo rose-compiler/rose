@@ -531,9 +531,9 @@ public:
                                      const CellList &cells) override;
     };
 
-protected:
-    CellCompressor *cell_compressor;            /**< Callback when a memory read aliases multiple memory cells. */
-    static CellCompressorChoice cc_choice;      /**< The default cell compressor. Static because we use its address. */
+private:
+    CellCompressor *cellCompressor_;                    // Callback when a memory read aliases multiple memory cells.
+    static CellCompressorChoice cc_choice;              // The default cell compressor. Static because we use its address.
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization
@@ -552,16 +552,16 @@ private:
     // Real constructors
 protected:
     MemoryListState()                                   // for serialization
-        : cell_compressor(&cc_choice) {}
+        : cellCompressor_(&cc_choice) {}
 
     explicit MemoryListState(const BaseSemantics::MemoryCellPtr &protocell)
-        : BaseSemantics::MemoryCellList(protocell), cell_compressor(&cc_choice) {}
+        : BaseSemantics::MemoryCellList(protocell), cellCompressor_(&cc_choice) {}
 
     MemoryListState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval)
-        : BaseSemantics::MemoryCellList(addrProtoval, valProtoval), cell_compressor(&cc_choice) {}
+        : BaseSemantics::MemoryCellList(addrProtoval, valProtoval), cellCompressor_(&cc_choice) {}
 
     MemoryListState(const MemoryListState &other)
-        : BaseSemantics::MemoryCellList(other), cell_compressor(other.cell_compressor) {}
+        : BaseSemantics::MemoryCellList(other), cellCompressor_(other.cellCompressor_) {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors

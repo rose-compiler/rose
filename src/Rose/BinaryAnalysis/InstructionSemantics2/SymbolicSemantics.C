@@ -317,13 +317,13 @@ MemoryListState::CellCompressorSet::operator()(const SValuePtr &address, const B
 
 MemoryListState::CellCompressor*
 MemoryListState::cellCompressor() const {
-    return cell_compressor;
+    return cellCompressor_;
 }
 
 void
 MemoryListState::cellCompressor(CellCompressor *cc) {
     ASSERT_not_null(cc);
-    cell_compressor = cc;
+    cellCompressor_ = cc;
 }
 
 // deprecated [Robb Matzke 2021-12-15]
