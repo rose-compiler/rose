@@ -647,12 +647,18 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first declared in this class
 public:
-    /** Callback for handling a memory read whose address matches more than one memory cell.  See also,
-     * cell_compression_mccarthy(), cell_compression_simple(), cell_compression_choice().
+    /** Callback for handling a memory read whose address matches more than one memory cell.
+     *
+     *  See also, cell_compression_mccarthy(), cell_compression_simple(), cell_compression_choice().
+     *
      * @{ */
-    CellCompressor* get_cell_compressor() const { return cell_compressor; }
-    void set_cell_compressor(CellCompressor *cc) { cell_compressor = cc; }
+    CellCompressor* cellCompressor() const;
+    void cellCompressor(CellCompressor *cc);
     /** @} */
+
+    // Deprecated [Robb Matzke 2021-12-15]
+    CellCompressor* get_cell_compressor() const ROSE_DEPRECATED("use cellCompressor");
+    void set_cell_compressor(CellCompressor *cc) ROSE_DEPRECATED("use cellCompressor");
 };
 
 
