@@ -315,6 +315,29 @@ MemoryListState::CellCompressorSet::operator()(const SValuePtr &address, const B
     }
 }
 
+MemoryListState::CellCompressor*
+MemoryListState::cellCompressor() const {
+    return cell_compressor;
+}
+
+void
+MemoryListState::cellCompressor(CellCompressor *cc) {
+    ASSERT_not_null(cc);
+    cell_compressor = cc;
+}
+
+// deprecated [Robb Matzke 2021-12-15]
+MemoryListState::CellCompressor*
+MemoryListState::get_cell_compressor() const {
+    return cellCompressor();
+}
+
+// deprecated [Robb Matzke 2021-12-15]
+void
+MemoryListState::set_cell_compressor(CellCompressor *cc) {
+    return cellCompressor(cc);
+}
+
 BaseSemantics::SValuePtr
 MemoryListState::readOrPeekMemory(const BaseSemantics::SValuePtr &address_, const BaseSemantics::SValuePtr &dflt,
                                   BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
@@ -345,7 +368,7 @@ MemoryListState::readOrPeekMemory(const BaseSemantics::SValuePtr &address_, cons
     if (AllowSideEffects::YES == allowSideEffects)
         updateReadProperties(cells);
 
-    SValuePtr retval = get_cell_compressor()->operator()(address, dflt, addrOps, valOps, cells);
+    SValuePtr retval = cellCompressor()->operator()(address, dflt, addrOps, valOps, cells);
     ASSERT_require(retval->nBits()==8);
     return retval;
 }
