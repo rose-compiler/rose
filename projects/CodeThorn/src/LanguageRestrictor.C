@@ -112,11 +112,24 @@ bool LanguageRestrictor::checkProgram(SgNode* root) {
 
 bool LanguageRestrictor::checkIfAstIsAllowed(SgNode* node) {
   RoseAst ast(node);
+  std::map<std::string,uint64_t> errorMap;
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(!isAllowedAstNode(*i)) {
-      cerr << "Language-Restrictor: excluded language construct found: " << (*i)->sage_class_name() <<" : "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<" : "<<(*i)->unparseToString()<< endl;
-      return false;
+      string nodeName=(*i)->class_name();
+      if(errorMap.find(nodeName)==errorMap.end()) {
+        errorMap[nodeName]=0;
+      }
+      errorMap[nodeName]++;
+      //cerr << "Language-Restrictor: excluded language construct found: " << (*i)->sage_class_name() <<" : "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<" : "<<(*i)->unparseToString()<< endl;
     }
+  }
+  if(errorMap.size()>0) {
+    // print violations count
+    cout<<"Incorrect input program. Number of non-C AST nodes:"<<endl;
+    for(auto entry : errorMap) {
+      cout<<entry.first<<": "<<entry.second<<endl;
+    }
+    return false;
   }
   return true;
 }

@@ -7,7 +7,7 @@ COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counte
 EXTRA_DIST = Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
 #
-bin_PROGRAMS = codethorn thorn1 thorn2 thorn3 ltlthorn woodpecker analyterix addressTakenAnalysis cldemo
+bin_PROGRAMS = codethorn thorn1 thorn2 thorn3 thorn4 ltlthorn woodpecker analyterix addressTakenAnalysis cldemo
 
 # matcher_demo matcher astinfo cldemo
 noinst_PROGRAMS = addressTakenAnalysis cldemo matcher_demo
@@ -545,7 +545,7 @@ thorn2_SOURCES = \
   thorn2.C
 
 ###################################################################
-# TOOL: THORN3 create graph visualizations of ROSE data structures
+# TOOL: THORN3 create dumps of ROSE ASTs and data structures
 ###################################################################
 
 # thorn3 uses libcodethorn
@@ -559,6 +559,23 @@ thorn3_CXXFLAGS = -fopenmp -Wall -O3
 # codethorn sources in addition to libcodethorn
 thorn3_SOURCES = \
   thorn3.C
+
+
+###################################################################
+# TOOL: THORN4 create graph visualizations of state transition systems
+###################################################################
+
+# thorn4 uses libcodethorn
+thorn4_DEPENDENCIES=libcodethorn.la
+
+thorn4_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn
+
+# this line creates speparately named object files, fopenmp is required
+thorn4_CXXFLAGS = -fopenmp -Wall -O3
+
+# codethorn sources in addition to libcodethorn
+thorn4_SOURCES = \
+  thorn4.C
 
 
 ##############################################################
