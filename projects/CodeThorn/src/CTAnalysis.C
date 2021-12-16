@@ -943,7 +943,7 @@ bool CodeThorn::CTAnalysis::isActiveGlobalTopify() {
     return true;
   // TODO: add a critical section that guards "transitionGraph.size()"
   if( (_maxTransitionsForcedTop!=-1 && (long int)transitionGraph.size()>=_maxTransitionsForcedTop)
-      || (_maxIterationsForcedTop!=-1 && getIterations() > _maxIterationsForcedTop)
+      || (_maxIterationsForcedTop!=-1 && (long int)getIterations() > _maxIterationsForcedTop)
       || (_maxBytesForcedTop!=-1 && getPhysicalMemorySize() > _maxBytesForcedTop)
       || (_maxSecondsForcedTop!=-1 && analysisRunTimeInSeconds() > _maxSecondsForcedTop) ) {
 #pragma omp critical(ACTIVATE_TOPIFY_MODE)
@@ -1099,21 +1099,6 @@ EStatePtr CodeThorn::CTAnalysis::popWorkList() {
   return estate;
 }
 
-std::pair<CallString,EStatePtr> CodeThorn::CTAnalysis::popWorkListCS() {
-  EStatePtr eState=popWorkList();
-  return std::make_pair(eState->getCallString(),eState);
-}
-
-std::pair<CallString,EStatePtr> CodeThorn::CTAnalysis::topWorkListCS() {
-  EStatePtr eState=topWorkList();
-  return std::make_pair(eState->getCallString(),eState);
-}
-
-void CodeThorn::CTAnalysis::pushWorkListCS(CallString cs,EStatePtr eState) {
-  //eState->setCallString(cs); (eState is const and contains cs)
-  addToWorkList(eState);
-}
-  
 // this function has to be protected by a critical section
 // currently called once inside a critical section
 void CodeThorn::CTAnalysis::swapWorkLists() {

@@ -60,7 +60,7 @@ void Solver18::run() {
 
   initializeSummaryStatesFromWorkList();
 
-  size_t displayTransferCounter=0; // force immediate report at start
+  size_t displayTransferCounter=0;
   bool terminateEarly=false;
   _analyzer->printStatusMessage(true);
   while(!_analyzer->isEmptyWorkList()) {
