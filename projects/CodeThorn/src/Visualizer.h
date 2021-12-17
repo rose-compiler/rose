@@ -52,7 +52,6 @@ class Visualizer {
  public:
   Visualizer();
   Visualizer(CodeThorn::CTAnalysis* analyzer);
-  Visualizer(CodeThorn::Labeler* l, CodeThorn::VariableIdMapping* vim, CodeThorn::Flow* f, CodeThorn::EStateSet* ess, CodeThorn::TransitionGraph* tg);
   void setVariableIdMapping(CodeThorn::VariableIdMapping* x);
   void setLabeler(CodeThorn::Labeler* x);
   void setFlow(CodeThorn::Flow* x);
@@ -90,13 +89,14 @@ class Visualizer {
   
   bool tg1; // is true when we are visualizing transition graph 1, otherwise false.
   bool tg2; // is true when we are visualizing transition graph 2, otherwise false.
-  bool optionPStateObjectAddress;
-  bool optionPStateId;
-  bool optionPStateProperties;
-  bool optionEStateObjectAddress;
-  bool optionEStateId;
-  bool optionEStateProperties;
+  //bool optionPStateObjectAddress;
+  //bool optionPStateId;
+  //bool optionPStateProperties;
+  //bool optionEStateObjectAddress;
+  //bool optionEStateId;
+  //bool optionEStateProperties;
   bool optionTransitionGraphDotHtmlNode;
+  CodeThornOptions _ctOpt;
   bool optionMemorySubGraphs;
 };
 

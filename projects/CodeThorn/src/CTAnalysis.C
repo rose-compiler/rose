@@ -689,7 +689,7 @@ void CodeThorn::CTAnalysis::runAnalysisPhase2Sub1(TimingCollector& tc) {
 	this->runSolver();
 	break;
       default:
-	cout<<"Error: unknown abstraction mode "<<_ctOpt.abstractionMode<<endl;
+	cout<<"Error: unknown abstraction mode "<<_ctOpt.abstractionMode<< "(analysis phase 2)"<<endl;
 	exit(1);
       }
     }
@@ -1928,6 +1928,10 @@ void CodeThorn::CTAnalysis::setOptions(CodeThornOptions options) {
 }
 
 CodeThornOptions& CodeThorn::CTAnalysis::getOptionsRef() {
+  return _ctOpt;
+}
+
+CodeThornOptions CodeThorn::CTAnalysis::getOptions() {
   return _ctOpt;
 }
 

@@ -312,6 +312,7 @@ namespace CodeThorn {
     std::string externalFunctionsToString();
     void setOptions(CodeThornOptions options);
     CodeThornOptions& getOptionsRef();
+    CodeThornOptions getOptions();
     void setLtlOptions(LTLOptions ltlOptions);
     LTLOptions& getLtlOptionsRef();
     //protected:

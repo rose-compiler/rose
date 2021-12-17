@@ -1682,17 +1682,17 @@ Flow CFAnalysis::flow(SgNode* n) {
 }
 
 FunctionCallTargetSet CFAnalysis::determineFunctionDefinition4(SgFunctionCallExp* funCall) {
-  SAWYER_MESG(logger[INFO])<<"CFAnalysis::determineFunctionDefinition4:"<<funCall->unparseToString()<<": ";
+  SAWYER_MESG(logger[TRACE])<<"CFAnalysis::determineFunctionDefinition4:"<<funCall->unparseToString()<<": ";
   ROSE_ASSERT(getFunctionCallMapping());
   FunctionCallTargetSet res=getFunctionCallMapping()->resolveFunctionCall(funCall);
   if(res.size()>0) {
     if(res.size()==1) {
-      SAWYER_MESG(logger[INFO]) << "RESOLVED to "<<(*res.begin()).getDefinition()<<endl;
+      SAWYER_MESG(logger[TRACE]) << "RESOLVED to "<<(*res.begin()).getDefinition()<<endl;
     } else {
-      SAWYER_MESG(logger[INFO])<< "RESOLVED to "<<res.size()<<" targets"<<endl;
+      SAWYER_MESG(logger[TRACE])<< "RESOLVED to "<<res.size()<<" targets"<<endl;
     }
   } else {
-    SAWYER_MESG(logger[INFO]) << "EXTERNAL."<<endl;
+    SAWYER_MESG(logger[TRACE]) << "EXTERNAL."<<endl;
   }
   return res;
 }

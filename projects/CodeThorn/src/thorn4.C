@@ -21,6 +21,7 @@
 #include "CppStdUtilities.h"
 #include "LanguageRestrictor.h"
 #include "LanguageRestrictorCollection.h"
+#include "Miscellaneous.h" // colors on/off variable
 
 namespace si  = SageInterface;
 namespace scl = Sawyer::CommandLine;
@@ -28,7 +29,7 @@ namespace scl = Sawyer::CommandLine;
 const std::string thorn4version = "0.9.0";
 
 // required for some options in codethorn library (until removed)
-CodeThorn::CommandLineOptions CodeThorn::args;
+//CodeThorn::CommandLineOptions CodeThorn::args;
 
 namespace {
   
@@ -39,9 +40,10 @@ class Thorn4Parser
 public:
   struct Parameters
   {
-    std::string graphFileNamePrefix="astterm";
+    std::string graphFileNamePrefix="";
     std::string mode="abstract";
     bool checkCLanguage=true;
+    bool status=true;
   };
   
   /// sets the Thorn4Parser settings using the command line arguments
@@ -66,6 +68,11 @@ public:
     thorn4Parser.insert(scl::Switch("mode")
                         .argument("mode", scl::anyParser(params.graphFileNamePrefix))
                         .doc("analysis mode: concrete, abstract."));
+    thorn4Parser.insert(scl::Switch("status")
+                        //.argument("selection", scl::booleanParser(params.astTerm))
+                        //.intrinsicValue("true",scl::booleanParser(params.astTerm))
+                        .intrinsicValue(true,params.status)
+                        .doc("single-line ast term"));
     p.purpose("Generates State Transition System Graph files")
       .doc("synopsis",
            "@prop{programName} [@v{switches}] @v{specimen_name}")
@@ -132,8 +139,34 @@ int main( int argc, char * argv[] )
   try
   {
     ROSE_INITIALIZE;
+    CodeThorn::initDiagnostics();
+    //CodeThorn::initDiagnosticsLTL();
     CodeThorn::CodeThornLib::configureRose();
+    //configureRersSpecialization();
 
+    CodeThornOptions ctOpt;
+    LTLOptions ltlOpt; // not used in this tool, but required for some default parameters
+    ParProOptions parProOpt; // not used in this tool, but required for some default parameters
+
+    ctOpt.solver=16; // default solver for this tool
+    ctOpt.abstractionMode=1;
+    //ctOpt.interpreterMode=0;
+    ctOpt.reduceStg=false;
+    ctOpt.callStringLength=-1; // unbounded length
+    ctOpt.normalizeLevel=2;
+    ctOpt.arrayAbstractionIndex=0;
+    ctOpt.initialStateGlobalVarsAbstractionLevel=1;
+    ctOpt.intraProcedural=false;
+    ctOpt.pointerSetsEnabled=false;
+    ctOpt.sharedPStates=false;
+    ctOpt.fastPointerHashing=true;
+    ctOpt.explorationMode="topologic-sort";
+    ctOpt.precisionLevel=2;
+    ctOpt.contextSensitive=true;
+    ctOpt.logLevel="none";
+    ctOpt.visualization.vis=true;
+
+    CodeThorn::colorsEnabled=ctOpt.colors;
     std::vector<std::string> cmdLineArgs{argv+0, argv+argc};
     Thorn4Parser thorn4Parser;
     CStringVector unparsedArgsCStyle(thorn4Parser.parseArgs(std::move(cmdLineArgs)));
@@ -141,10 +174,11 @@ int main( int argc, char * argv[] )
     int thornArgc = unparsedArgsCStyle.size();
     char** thornArgv = unparsedArgsCStyle.firstCArg();
 
+    ctOpt.status=params.status;
+    ctOpt.status=params.status;
+
     //~ for (int i = 0; i < thornArgc; ++i)
       //~ std::cerr << thornArgv[i] << std::endl;
-
-    CodeThornOptions         ctOpt;
 
     mfacilities.control(ctOpt.logLevel);
     //logTrace() << "Log level is " << ctOpt.logLevel << endl;
@@ -155,9 +189,9 @@ int main( int argc, char * argv[] )
     SgProject* project = CodeThorn::CodeThornLib::runRoseFrontEnd(thornArgc,thornArgv,ctOpt,tc);
     ROSE_ASSERT(project);
     cout << "Parsing and creating AST finished."<<endl;
+    mfacilities.control(ctOpt.logLevel);
 
     string fileNamePrefix=params.graphFileNamePrefix;
-    //cout<<"DEBUG: "<<fileNamePrefix<<":"<<params.astTerm<<params.typedAstTerm<<params.mlAstTerm<<endl;
     
     if(params.checkCLanguage) {
       LanguageRestrictorC cLangRestrictor;
@@ -172,7 +206,42 @@ int main( int argc, char * argv[] )
         exit(1);
       }
     }
-    cout<<"No graph files generated (not activated yet)."<<endl;
+
+
+    IOAnalyzer* analyzer=CodeThornLib::createAnalyzer(ctOpt,ltlOpt); // sets ctOpt,ltlOpt in analyzer
+    CodeThornLib::optionallyRunInternalChecks(ctOpt,argc,argv);
+    analyzer->configureOptions(ctOpt,ltlOpt,parProOpt);
+    Solver* solver = CodeThornLib::createSolver(ctOpt);
+    ROSE_ASSERT(solver);
+    analyzer->setSolver(solver);
+    analyzer->setOptionContextSensitiveAnalysis(ctOpt.contextSensitive);
+    //optionallySetRersMapping(ctOpt,ltlOpt,analyzer);
+    AbstractValue::pointerSetsEnabled=ctOpt.pointerSetsEnabled;
+    analyzer->runAnalysisPhase1(project,tc);
+    if(ctOpt.runSolver) {
+      analyzer->runAnalysisPhase2(tc);
+    } else {
+      cout<<"STATUS: skipping solver run."<<endl;
+    }
+    tc.startTimer();
+    CodeThornLib::optionallyGenerateCallGraphDotFile(ctOpt,analyzer);
+    tc.stopTimer(TimingCollector::callGraphDotFile);
+
+    if(analyzer->getSolver()->createsTransitionSystem()) {
+      if(ctOpt.reduceStg) {
+        analyzer->reduceStgToInOutStates();
+      }
+    }
+
+    tc.startTimer();
+    CodeThornLib::optionallyRunVisualizer(ctOpt,analyzer,project);
+    tc.stopTimer(TimingCollector::visualization);
+    CodeThornLib::optionallyPrintRunTimeAndMemoryUsageReport(ctOpt,tc);
+    CodeThornLib::generateRunTimeAndMemoryUsageReport(ctOpt,tc);
+    if(ctOpt.status) cout<<color("normal")<<"done."<<endl;
+
+    delete analyzer;
+
     errorCode = 0;
   } catch(const std::exception& e) {
     logError() << "Error: " << e.what() << endl;

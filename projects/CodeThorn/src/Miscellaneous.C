@@ -19,10 +19,11 @@
 
 using namespace std;
 
+bool CodeThorn::colorsEnabled=true;
+
 void CodeThorn::nocheck(string checkIdentifier, bool checkResult) {
   check(checkIdentifier,checkResult,false);
 }
-
 bool checkresult=true; // used by check
 
 void CodeThorn::check(string checkIdentifier, bool checkResult, bool check) {
@@ -68,7 +69,7 @@ pair<int,int> CodeThorn::parseCsvIntPair(string toParse) {
 
 string CodeThorn::color(string name) {
 #ifndef CT_IGNORE_COLORS_BOOLOPTIONS
-  if(!args.getBool("colors")) 
+  if(!CodeThorn::colorsEnabled) 
     return "";
 #endif
   string c="\33[";

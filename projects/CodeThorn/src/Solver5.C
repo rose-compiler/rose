@@ -196,7 +196,7 @@ void Solver5::run() {
                     exit(1);
                 }
                 default:
-                  cerr<<"Error: unknown abstraction mode "<<abstractionMode<<endl;
+                  cerr<<"Error: unknown abstraction mode "<<abstractionMode<<" (solver 5)"<<endl;
                   exit(1);
                 }
               } else {

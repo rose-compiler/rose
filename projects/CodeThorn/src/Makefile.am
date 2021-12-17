@@ -714,7 +714,7 @@ check-matcher:
 
 
 CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-lc check-io unit-test check-omp-cfg check-commandline-options check-vis \
-                      check-thorn2 check-stg
+                      check-thorn2 check-stg check-thorn4
 CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 
 CHECK_WITH_SPOT_PASSING=check-reachability-seq check-ltl-seq check-ltl-par
@@ -926,6 +926,10 @@ check-thorn2-with-sage3: thorn2
 check-thorn2: thorn2
 	./thorn2 -I$(includedir) -I$(includedir)/rose --thorn:dot=simple.dot --thorn:layout_txt=simple_class_layout.txt --thorn:layout_dot=simple_class_layout.dot --thorn:virtual_functions=simple_virtual_functions.txt   $(srcdir)/tests/thorn2/simple.cc
 	./thorn2 -I$(includedir) -I$(includedir)/rose --thorn:dot=simple-e.dot --thorn:layout_txt=simple-e_class_layout.txt --thorn:layout_dot=simple-e_class_layout.dot --thorn:virtual_functions=simple-e_virtual_functions.txt --thorn:original_name=0 $(srcdir)/tests/thorn2/simple.cc
+
+check-thorn4: thorn4
+	echo "thorn4 check not active yet."
+#	./thorn4 $(srcdir)/tests/rers_mini15.c
 
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))

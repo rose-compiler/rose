@@ -217,7 +217,7 @@ void Solver16::run() {
                     exit(1);
                 }
                 default:
-                  cerr<<"Error: unknown abstraction mode "<<abstractionMode<<endl;
+                  cerr<<"Error: unknown abstraction mode "<<abstractionMode<<" (solver 16)"<<endl;
                   exit(1);
                 }
               } else {

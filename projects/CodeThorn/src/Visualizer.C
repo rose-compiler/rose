@@ -117,19 +117,8 @@ Visualizer::Visualizer(CTAnalysis* analyzer):
   setFlow(analyzer->getFlow());
   setEStateSet(analyzer->getEStateSet());
   setTransitionGraph(analyzer->getTransitionGraph());
+  _ctOpt=analyzer->getOptions();
 }
-
-  //! For providing specific information. For some visualizations not all information is required. The respective set-function can be used as well to set specific program information (this allows to also visualize computed subsets of information (such as post-processed transition graphs etc.).
-Visualizer::Visualizer(Labeler* l, VariableIdMapping* vim, Flow* f, EStateSet* ess, TransitionGraph* tg):
-  labeler(l),
-  variableIdMapping(vim),
-  flow(f),
-  estateSet(ess),
-  transitionGraph(tg),
-  tg1(false),
-  tg2(false),
-  optionTransitionGraphDotHtmlNode(true)
-{}
 
 void Visualizer::setOptionTransitionGraphDotHtmlNode(bool x) {optionTransitionGraphDotHtmlNode=x;}
 void Visualizer::setLabeler(Labeler* x) { labeler=x; }
@@ -240,7 +229,6 @@ string Visualizer::transitionGraphToDot() {
   int numInvisibleLayoutEdges=2; // only used for memory subgraphs
 
   for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
-
     // // FAILEDASSERTVIS: the next check allows to turn off edges of failing assert to target node (text=red, background=black)
     if((*j)->target->io.op==InputOutput::FAILED_ASSERT) continue;
 
