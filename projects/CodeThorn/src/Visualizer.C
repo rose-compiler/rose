@@ -133,17 +133,17 @@ bool Visualizer::getOptionMemorySubGraphs() { return optionMemorySubGraphs; }
 string Visualizer::estateToString(EStatePtr estate) {
   stringstream ss;
   bool pstateAddressSeparator=false;
-  if((tg1&&args.getBool("tg1-estate-address"))||(tg2&&args.getBool("tg2-estate-address"))) {
+  if((tg1&&_ctOpt.visualization.tg1EStateAddress)||(tg2&&_ctOpt.visualization.tg2EStateAddress)) {
     ss<<"@"<<estate;
     pstateAddressSeparator=true;
   }    
-  if((tg1&&args.getBool("tg1-estate-id"))||(tg2&&args.getBool("tg2-estate-id"))) {
+  if((tg1&&_ctOpt.visualization.tg1EStateId)||(tg2&&_ctOpt.visualization.tg2EStateId)) {
     if(pstateAddressSeparator) {
       ss<<":";
     }
     ss<<estateIdStringWithTemporaries(estate);
   }
-  if((tg1&&args.getBool("tg1-estate-properties"))||(tg2&&args.getBool("tg2-estate-properties"))) {
+  if((tg1&&_ctOpt.visualization.tg1EStateProperties)||(tg2&&_ctOpt.visualization.tg2EStateProperties)) {
     ss<<estate->toString(variableIdMapping);
   } 
   return ss.str();
@@ -309,7 +309,7 @@ string Visualizer::abstractTransitionGraphToDot() {
       concreteEStates.insert(*i);
     } 
   }
-  ss << transitionGraphWithIOToDot(concreteEStates, true, args.getBool("keep-error-states"), false);
+  ss << transitionGraphWithIOToDot(concreteEStates, true, _ctOpt.keepErrorStates, false);
   ss << "subgraph cluster_abstractStates {" << endl;
   ss << transitionGraphWithIOToDot(abstractEStates, true, false, true);
   ss << "}" << endl;
@@ -349,7 +349,7 @@ string Visualizer::transitionGraphWithIOToDot(EStatePtrSet displayedEStates,
     if (displayCurrentState) {
       // generate number which is used in IO operation
       string name="\"";
-      if(args.getBool("rersmode") && !args.getBool("rers-numeric")) {
+      if(_ctOpt.rers.rersMode && !_ctOpt.rers.rersNumeric) {
         if(!number.isTop() && !number.isBot()) {
           // convert number to letter
           int num=number.getIntValue();
@@ -470,7 +470,7 @@ string Visualizer::transitionGraphWithIOToDot() {
 #endif
     // generate number which is used in IO operation
     AbstractValue number=(*i)->determineUniqueIOValue();
-    if(args.getBool("rersmode") && !args.getBool("rers-numeric")) {
+    if(_ctOpt.rers.rersMode && !_ctOpt.rers.rersNumeric) {
       if(!number.isTop() && !number.isBot()) {
         // convert number to letter
         int num=number.getIntValue();

@@ -29,7 +29,7 @@ namespace scl = Sawyer::CommandLine;
 const std::string thorn4version = "0.9.0";
 
 // required for some options in codethorn library (until removed)
-//CodeThorn::CommandLineOptions CodeThorn::args;
+CodeThorn::CommandLineOptions CodeThorn::args;
 
 namespace {
   
@@ -72,7 +72,7 @@ public:
                         //.argument("selection", scl::booleanParser(params.astTerm))
                         //.intrinsicValue("true",scl::booleanParser(params.astTerm))
                         .intrinsicValue(true,params.status)
-                        .doc("single-line ast term"));
+                        .doc("print status messages during analysis."));
     p.purpose("Generates State Transition System Graph files")
       .doc("synopsis",
            "@prop{programName} [@v{switches}] @v{specimen_name}")
@@ -174,7 +174,6 @@ int main( int argc, char * argv[] )
     int thornArgc = unparsedArgsCStyle.size();
     char** thornArgv = unparsedArgsCStyle.firstCArg();
 
-    ctOpt.status=params.status;
     ctOpt.status=params.status;
 
     //~ for (int i = 0; i < thornArgc; ++i)

@@ -100,7 +100,7 @@ void runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* anal
   if(ltlOpt.stdIOOnly) {
     SAWYER_MESG(logger[TRACE]) << "STATUS: bypassing all non standard I/O states. (P2)"<<endl;
     timer.start();
-    if (ltlOpt.keepErrorStates) {
+    if (ctOpt.keepErrorStates) {
       analyzer->reduceStgToInOutAssertStates();
     } else {
       analyzer->reduceStgToInOutStates();
@@ -111,7 +111,7 @@ void runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* anal
     stdIoOnlyTime = timer.getTimeDurationAndStop().milliSeconds();
   } else {
     if(ltlOpt.inifinitePathsOnly) {
-      assert (!ltlOpt.keepErrorStates);
+      assert (!ctOpt.keepErrorStates);
       cout << "recursively removing all leaves (1)."<<endl;
       timer.start();
       analyzer->pruneLeaves();
@@ -135,7 +135,7 @@ void runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* anal
     string ltl_filename = ltlOpt.ltlFormulaeFile;
     if(ctOpt.rers.rersMode) {  //reduce the graph accordingly, if not already done
       if (!ltlOpt.inifinitePathsOnly
-          && !ltlOpt.keepErrorStates
+          && !ctOpt.keepErrorStates
           &&!analyzer->getModeLTLDriven()) {
         cout<< "STATUS: recursively removing all leaves (due to RERS-mode (2))."<<endl;
         timer.start();
@@ -151,7 +151,7 @@ void runLTLAnalysis(CodeThornOptions& ctOpt, LTLOptions& ltlOpt,IOAnalyzer* anal
         cout << "STATUS: bypassing all non standard I/O states (due to RERS-mode) (P1)."<<endl;
         timer.start();
         analyzer->getTransitionGraph()->printStgSize("before reducing non-I/O states");
-        if (ltlOpt.keepErrorStates) {
+        if (ctOpt.keepErrorStates) {
           analyzer->reduceStgToInOutAssertStates();
         } else {
           analyzer->reduceStgToInOutStates();

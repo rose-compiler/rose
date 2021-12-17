@@ -928,8 +928,8 @@ check-thorn2: thorn2
 	./thorn2 -I$(includedir) -I$(includedir)/rose --thorn:dot=simple-e.dot --thorn:layout_txt=simple-e_class_layout.txt --thorn:layout_dot=simple-e_class_layout.dot --thorn:virtual_functions=simple-e_virtual_functions.txt --thorn:original_name=0 $(srcdir)/tests/thorn2/simple.cc
 
 check-thorn4: thorn4
-	echo "thorn4 check not active yet."
-#	./thorn4 $(srcdir)/tests/rers_mini15.c
+#	echo "thorn4 check not active yet."
+	./thorn4 $(srcdir)/tests/rers_mini1.c
 
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))
