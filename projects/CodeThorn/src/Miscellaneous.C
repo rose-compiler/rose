@@ -45,17 +45,19 @@ void CodeThorn::check(string checkIdentifier, bool checkResult, bool check) {
   cout<<color("normal")<<endl;
 }
 
-void CodeThorn::write_file(std::string filename, std::string data) {
+bool CodeThorn::write_file(std::string filename, std::string data) {
   std::ofstream myfile;
   myfile.open(filename.c_str(),std::ios::out);
+  if (myfile.fail()) {
+    return false;
+  }
   myfile << data;
   myfile.close();
+  return true;
 }
 
 string CodeThorn::int_to_string(int x) {
-  stringstream ss;
-  ss << x;
-  return ss.str();
+  return std::to_string(x);
 }
 
 pair<int,int> CodeThorn::parseCsvIntPair(string toParse) {

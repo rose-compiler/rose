@@ -16,7 +16,8 @@ namespace CodeThorn {
 
   extern bool colorsEnabled; // only accessed by color() function
 
-  void write_file(std::string filename, std::string data);
+  // if writing of file is successful, true is returned.
+  bool write_file(std::string filename, std::string data);
   std::string int_to_string(int x);
   std::pair<int,int> parseCsvIntPair(std::string toParse);
   std::string color(std::string name);

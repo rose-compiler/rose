@@ -487,6 +487,8 @@ void CodeThorn::IOAnalyzer::configureOptions(CodeThornOptions ctOpt, LTLOptions 
     setExternalErrorFunctionName(ctOpt.svcomp.detectedErrorFunctionName);
   }
 
+  CodeThorn::colorsEnabled=ctOpt.colors; // colored output in console
+
   // Build the AST used by ROSE
   if(ctOpt.status) {
     cout<< "STATUS: Parsing and creating AST started."<<endl;

@@ -929,7 +929,8 @@ check-thorn2: thorn2
 
 check-thorn4: thorn4
 #	echo "thorn4 check not active yet."
-	./thorn4 $(srcdir)/tests/rers_mini1.c
+	./thorn4 --thorn4:report-dir=thorn4-test-abstract $(srcdir)/tests/rers_mini1.c
+	./thorn4 --thorn4:report-dir=thorn4-test-concrete $(srcdir)/tests/rers_mini1.c --thorn4:input-values="{1,2,3}"
 
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))
@@ -938,7 +939,10 @@ rers: $(RERS)
 docs:
 	cd "$(srcdir)" && doxygen
 
-clean-local:
+clean-thorn4:
+	rm -rf thorn4-test-concrete thorn4-test-abstract
+
+clean-local: clean-thorn4
 	rm -f *.dot *.dat
 	rm -f *.ps
 	rm -f *.jpg

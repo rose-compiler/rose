@@ -23,6 +23,8 @@
 #include "LanguageRestrictorCollection.h"
 #include "Miscellaneous.h" // colors on/off variable
 
+#include "sys/stat.h"
+
 namespace si  = SageInterface;
 namespace scl = Sawyer::CommandLine;
 
@@ -40,10 +42,12 @@ class Thorn4Parser
 public:
   struct Parameters
   {
-    std::string graphFileNamePrefix="";
+    std::string reportDir="";
     std::string mode="abstract";
     bool checkCLanguage=true;
     bool status=true;
+    bool reduceStg=false;
+    std::string inputValues;
   };
   
   /// sets the Thorn4Parser settings using the command line arguments
@@ -62,17 +66,21 @@ public:
 
     thorn4Parser.name("thorn4");  // the optional switch prefix
 
-    thorn4Parser.insert(scl::Switch("file-prefix")
-                        .argument("filename", scl::anyParser(params.graphFileNamePrefix))
+    thorn4Parser.insert(scl::Switch("report-dir")
+                        .argument("reportDir", scl::anyParser(params.reportDir))
                         .doc("filename prefix for all variants of graph files. Provide an absolute paths if thorn4 is invoked in multiple different directories."));
     thorn4Parser.insert(scl::Switch("mode")
-                        .argument("mode", scl::anyParser(params.graphFileNamePrefix))
+                        .argument("mode", scl::anyParser(params.mode))
                         .doc("analysis mode: concrete, abstract."));
+    thorn4Parser.insert(scl::Switch("inputValues")
+                        .argument("inputValues", scl::anyParser(params.inputValues))
+                        .doc("set of values used for scanf in 'concrete' mode. e.g. \"{1,2,3}\""));
     thorn4Parser.insert(scl::Switch("status")
-                        //.argument("selection", scl::booleanParser(params.astTerm))
-                        //.intrinsicValue("true",scl::booleanParser(params.astTerm))
                         .intrinsicValue(true,params.status)
                         .doc("print status messages during analysis."));
+    thorn4Parser.insert(scl::Switch("reduce-stg")
+                        .intrinsicValue(true,params.reduceStg)
+                        .doc("reduce STS to input/output states."));
     p.purpose("Generates State Transition System Graph files")
       .doc("synopsis",
            "@prop{programName} [@v{switches}] @v{specimen_name}")
@@ -148,24 +156,6 @@ int main( int argc, char * argv[] )
     LTLOptions ltlOpt; // not used in this tool, but required for some default parameters
     ParProOptions parProOpt; // not used in this tool, but required for some default parameters
 
-    ctOpt.solver=16; // default solver for this tool
-    ctOpt.abstractionMode=1;
-    //ctOpt.interpreterMode=0;
-    ctOpt.reduceStg=false;
-    ctOpt.callStringLength=-1; // unbounded length
-    ctOpt.normalizeLevel=2;
-    ctOpt.arrayAbstractionIndex=0;
-    ctOpt.initialStateGlobalVarsAbstractionLevel=1;
-    ctOpt.intraProcedural=false;
-    ctOpt.pointerSetsEnabled=false;
-    ctOpt.sharedPStates=false;
-    ctOpt.fastPointerHashing=true;
-    ctOpt.explorationMode="topologic-sort";
-    ctOpt.precisionLevel=2;
-    ctOpt.contextSensitive=true;
-    ctOpt.logLevel="none";
-    ctOpt.visualization.vis=true;
-
     CodeThorn::colorsEnabled=ctOpt.colors;
     std::vector<std::string> cmdLineArgs{argv+0, argv+argc};
     Thorn4Parser thorn4Parser;
@@ -175,23 +165,45 @@ int main( int argc, char * argv[] )
     char** thornArgv = unparsedArgsCStyle.firstCArg();
 
     ctOpt.status=params.status;
+    ctOpt.reportFilePath=params.reportDir;
+    ctOpt.reduceStg=params.reduceStg;
 
-    //~ for (int i = 0; i < thornArgc; ++i)
-      //~ std::cerr << thornArgv[i] << std::endl;
+    ctOpt.callStringLength=-1; // unbounded length
+    ctOpt.normalizeLevel=2;
+    ctOpt.initialStateGlobalVarsAbstractionLevel=1;
+    ctOpt.intraProcedural=false; // inter-procedural
+    ctOpt.contextSensitive=true;
+    ctOpt.pointerSetsEnabled=false;
+    ctOpt.fastPointerHashing=false; // ensure stable dot layout
+    ctOpt.explorationMode="topologic-sort";
+    ctOpt.precisionLevel=2;
+    ctOpt.logLevel="none";
+    ctOpt.visualization.vis=true; // generates ast, icfg, tg1, tg2
+
+    if(params.mode=="abstract") {
+      ctOpt.solver=16; // default solver for this tool
+      ctOpt.sharedPStates=false; // required for solver 16
+      ctOpt.abstractionMode=1;
+      ctOpt.arrayAbstractionIndex=0;
+    } else if(params.mode=="concrete") {
+      ctOpt.solver=5; // default solver for this tool
+      ctOpt.sharedPStates=true; // supported by solver 5
+      ctOpt.abstractionMode=0;
+      ctOpt.arrayAbstractionIndex=-1; // no abstraction of arrays
+    } else {
+      cerr<<"Wrong mode '"<<params.mode<<"' provided on command line."<<endl;
+      exit(1);
+    }
 
     mfacilities.control(ctOpt.logLevel);
-    //logTrace() << "Log level is " << ctOpt.logLevel << endl;
+
     CodeThorn::TimingCollector      tc;
 
     cout << "Parsing and creating AST started."<<endl;
-    //~ tc.startTimer();
     SgProject* project = CodeThorn::CodeThornLib::runRoseFrontEnd(thornArgc,thornArgv,ctOpt,tc);
     ROSE_ASSERT(project);
     cout << "Parsing and creating AST finished."<<endl;
-    mfacilities.control(ctOpt.logLevel);
 
-    string fileNamePrefix=params.graphFileNamePrefix;
-    
     if(params.checkCLanguage) {
       LanguageRestrictorC cLangRestrictor;
       bool programOK=cLangRestrictor.checkProgram(project);
@@ -206,7 +218,18 @@ int main( int argc, char * argv[] )
       }
     }
 
-
+    if(ctOpt.reportFilePath!=".") {
+      // create dir for ctOpt.reportFilePath
+      int status = mkdir(ctOpt.reportFilePath.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+      if(status!=0) {
+        cerr<<"Error: could not create directory "<<ctOpt.reportFilePath<<endl;
+      } else {
+        if(ctOpt.status)
+          cout<<"STATUS: created directory "<<ctOpt.reportFilePath<<endl;
+      }
+    }
+    
+    
     IOAnalyzer* analyzer=CodeThornLib::createAnalyzer(ctOpt,ltlOpt); // sets ctOpt,ltlOpt in analyzer
     CodeThornLib::optionallyRunInternalChecks(ctOpt,argc,argv);
     analyzer->configureOptions(ctOpt,ltlOpt,parProOpt);
