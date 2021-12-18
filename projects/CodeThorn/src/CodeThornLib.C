@@ -93,7 +93,7 @@ using namespace Sawyer::Message;
 
 using namespace Sawyer::Message;
 
-static std::string CodeThornLibraryVersion="1.13.42";
+static std::string CodeThornLibraryVersion="1.13.43"; // b
 
 // handler for generating backtrace
 void codethornBackTraceHandler(int sig) {
@@ -397,7 +397,6 @@ namespace CodeThorn {
     }
 
     void optionallyRunVisualizer(CodeThornOptions& ctOpt, CTAnalysis* analyzer, SgNode* root) {
-      Visualizer visualizer(analyzer->getLabeler(),analyzer->getVariableIdMapping(),analyzer->getFlow(),analyzer->getEStateSet(),analyzer->getTransitionGraph());
       if (ctOpt.visualization.icfgFileName.size()>0) {
 	string cfgFileName=ctOpt.visualization.icfgFileName;
 	DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
@@ -405,21 +404,31 @@ namespace CodeThorn {
 	ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),cfgFileName,analyzer->getTopologicalSort(),false);
 	cout << "generated "<<cfgFileName<<" (top sort: "<<(analyzer->getTopologicalSort()!=0)<<")"<<endl;
       }
+      
+      ROSE_ASSERT(analyzer->getTransitionGraph());
+      ROSE_ASSERT(analyzer->getEStateSet());
+      Visualizer visualizer(analyzer);
       if(ctOpt.visualization.vis) {
 	cout << "generating graphvis files:"<<endl;
 	visualizer.setOptionMemorySubGraphs(ctOpt.visualization.tg1EStateMemorySubgraphs);
 	string dotFile="digraph G {\n";
 	dotFile+=visualizer.transitionGraphToDot();
 	dotFile+="}\n";
-	write_file("transitiongraph1.dot", dotFile);
-	cout << "generated transitiongraph1.dot."<<endl;
-	string dotFile3=visualizer.foldedTransitionGraphToDot();
-	write_file("transitiongraph2.dot", dotFile3);
-	cout << "generated transitiongraph2.dot."<<endl;
+        string tg1DotFileName=ctOpt.reportFilePath+"/"+"transitiongraph1.dot";
+	if(write_file(tg1DotFileName, dotFile)) {
+          cout << "generated "<<tg1DotFileName<<endl;
+        }
+	string tg2DotFileData=visualizer.foldedTransitionGraphToDot();
+        string tg2DotFileName=ctOpt.reportFilePath+"/"+"transitiongraph2.dot";
+	if(write_file(tg2DotFileName, tg2DotFileData)) {
+          cout << "generated "<<tg2DotFileName<<endl;
+        }
 
 	string datFile1=(analyzer->getTransitionGraph())->toString(analyzer->getVariableIdMapping());
-	write_file("transitiongraph1.dat", datFile1);
-	cout << "generated transitiongraph1.dat."<<endl;
+        string tg1DatFileName=ctOpt.reportFilePath+"/"+"transitiongraph1.dat";
+	if(write_file(tg1DatFileName, datFile1)) {
+          cout << "generated "<<tg1DatFileName<<endl;
+        }
 
 	//analyzer->generateAstNodeInfo(analyzer->startFunRoot);
 	//dotFile=astTermWithNullValuesToDot(analyzer->startFunRoot);
@@ -427,14 +436,21 @@ namespace CodeThorn {
 	cout << "generating AST node info ... "<<endl;
 	analyzer->generateAstNodeInfo(root);
 	dotFile=AstTerm::functionAstTermsWithNullValuesToDot(root);
-	write_file("ast.dot", dotFile);
-	cout << "generated ast.dot."<<endl;
+        string astDotFileName=ctOpt.reportFilePath+"/"+"icfg.dot";
+	if(write_file(astDotFileName, dotFile)) {
+          cout << "generated AST file "<<astDotFileName<<endl;
+        } else {
+          cerr << "Error: failed to generate AST file "<<astDotFileName<<endl;
+        }
+	SAWYER_MESG(logger[TRACE]) << "Option VIS: generating icfg dot file ..."<<endl;
 
-	SAWYER_MESG(logger[TRACE]) << "Option VIS: generating cfg dot file ..."<<endl;
-	write_file("cfg_non_clustered.dot", analyzer->getFlow()->toDot(analyzer->getCFAnalyzer()->getLabeler(),analyzer->getTopologicalSort()));
+        //string icfgNonClusteredFileName=ctOpt.reportFilePath+"/"+"icfg_non_clustered.dot";
+	//write_file(icfgNonClusteredFileName, analyzer->getFlow()->toDot(analyzer->getCFAnalyzer()->getLabeler(),analyzer->getTopologicalSort()));
+        string icfgFileName=ctOpt.reportFilePath+"/"+"icfg.dot";
 	DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
-	ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),"cfg.dot",analyzer->getTopologicalSort(),false);
-	cout << "generated cfg.dot, cfg_non_clustered.dot"<<endl;
+	ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),icfgFileName,analyzer->getTopologicalSort(),false);
+        cout<<"Generated ICFG dot file "<<icfgFileName<<endl;
+        
 	cout << "=============================================================="<<endl;
       }
       if(ctOpt.visualization.visTg2) {

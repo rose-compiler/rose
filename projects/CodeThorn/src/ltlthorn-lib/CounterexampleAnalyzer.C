@@ -254,7 +254,7 @@ PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(int proper
   //std::set<int> ltlOutAlphabet=ltlRersMapping.getOutputValueSet();
 
   // visualizer for in-depth model outputs (.dot files)
-  Visualizer visualizer(_analyzer->getLabeler(),_analyzer->getVariableIdMapping(), _analyzer->getFlow(),_analyzer->getEStateSet(),_analyzer->getTransitionGraph());
+  Visualizer visualizer(_analyzer);
   string visFilenamePrefix = "";
   if(args.isDefined("vis-cegpra-detailed")) {
     visFilenamePrefix=args.getString("vis-cegpra-detailed");

@@ -19,10 +19,11 @@
 
 using namespace std;
 
+bool CodeThorn::colorsEnabled=true;
+
 void CodeThorn::nocheck(string checkIdentifier, bool checkResult) {
   check(checkIdentifier,checkResult,false);
 }
-
 bool checkresult=true; // used by check
 
 void CodeThorn::check(string checkIdentifier, bool checkResult, bool check) {
@@ -44,17 +45,19 @@ void CodeThorn::check(string checkIdentifier, bool checkResult, bool check) {
   cout<<color("normal")<<endl;
 }
 
-void CodeThorn::write_file(std::string filename, std::string data) {
+bool CodeThorn::write_file(std::string filename, std::string data) {
   std::ofstream myfile;
   myfile.open(filename.c_str(),std::ios::out);
+  if (myfile.fail()) {
+    return false;
+  }
   myfile << data;
   myfile.close();
+  return true;
 }
 
 string CodeThorn::int_to_string(int x) {
-  stringstream ss;
-  ss << x;
-  return ss.str();
+  return std::to_string(x);
 }
 
 pair<int,int> CodeThorn::parseCsvIntPair(string toParse) {
@@ -68,7 +71,7 @@ pair<int,int> CodeThorn::parseCsvIntPair(string toParse) {
 
 string CodeThorn::color(string name) {
 #ifndef CT_IGNORE_COLORS_BOOLOPTIONS
-  if(!args.getBool("colors")) 
+  if(!CodeThorn::colorsEnabled) 
     return "";
 #endif
   string c="\33[";
