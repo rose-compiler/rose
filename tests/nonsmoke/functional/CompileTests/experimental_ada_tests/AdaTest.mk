@@ -228,6 +228,7 @@ ROSE_FAILING_ADA_TESTS :=                           \
   requeue_statement_2.adb                           \
   requeue_statements.adb                            \
   single_protected_declaration.ads                  \
+  tagged_incomplete_type_declaration.ads            \
   test.adb                                          \
   test_unit.adb                                     \
   unit_2.adb                                        \
