@@ -210,6 +210,7 @@ ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=                \
   fixed_point_definition.ads
 
 ROSE_FAILING_ADA_TESTS :=                           \
+  access_definition.ads                             \
   all_modes.ads                                     \
   deref_test.adb                                    \
   delay_until.adb                                   \
