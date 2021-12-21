@@ -212,6 +212,7 @@ ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=                \
 ROSE_FAILING_ADA_TESTS :=                           \
   access_definition.ads                             \
   all_modes.ads                                     \
+  aspect_spec.ads                                   \
   deref_test.adb                                    \
   delay_until.adb                                   \
   entry_body_declaration.adb                        \
