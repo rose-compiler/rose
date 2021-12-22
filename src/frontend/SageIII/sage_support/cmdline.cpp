@@ -5952,6 +5952,30 @@ CommandlineProcessing::generateOptionListWithDeclaredParameters (const Rose_STL_
 
 
 void
+SgFile::stripTranslationCommandLineOptions ( vector<string> & argv )
+   {
+      //! function that removes options that should be used only in frontend from a command line
+
+     if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
+        {
+          printf ("In stripTranslationCommandLineOptions (TOP): List ALL arguments: argc = %" PRIuPTR " \n",argv.size());
+          for (size_t i=0; i < argv.size(); i++)
+             printf ("     argv[%" PRIuPTR "] = %s \n",i,argv[i].c_str());
+        }
+
+     // Pei-Hung (12/20/2021) gnatec is used when processing Ada input source code.  
+     // For ada2cpp translation, this option causes conflict in c++ compilation.
+     CommandlineProcessing::removeArgsWithParameters (argv,"-gnatec=");
+
+     if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
+        {
+          printf ("In stripTranslationCommandLineOptions (BOTTOM): List ALL arguments: argc = %" PRIuPTR " \n",argv.size());
+          for (size_t i=0; i < argv.size(); i++)
+             printf ("     argv[%" PRIuPTR "] = %s \n",i,argv[i].c_str());
+        }
+}
+
+void
 SgFile::processBackendSpecificCommandLineOptions ( const vector<string>& argvOrig )
    {
   // DQ (6/21/2005): This function processes commandline options that are specific to the backend
