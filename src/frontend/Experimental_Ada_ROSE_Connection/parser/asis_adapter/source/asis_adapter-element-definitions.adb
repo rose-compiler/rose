@@ -71,6 +71,22 @@ package body Asis_Adapter.Element.Definitions is
          return ID;
       end;
 
+      function Add_And_Return_Aspect_Mark return a_nodes_h.Element_ID is
+         ID : constant a_nodes_h.Element_ID :=
+           Get_Element_ID (Asis.Definitions.Aspect_Mark (Element));
+      begin
+         State.Add_To_Dot_Label_And_Edge ("Aspect_Mark", ID);
+         return ID;
+      end;
+
+      function Add_And_Return_Aspect_Definition return a_nodes_h.Element_ID is
+         ID : constant a_nodes_h.Element_ID :=
+           Get_Element_ID (Asis.Definitions.Aspect_Definition (Element));
+      begin
+         State.Add_To_Dot_Label_And_Edge ("Aspect_Definition", ID);
+         return ID;
+      end;
+
       function Add_And_Return_Component_Definition_View return a_nodes_h.Element_ID is
          ID : constant a_nodes_h.Element_ID :=
            Get_Element_ID (Asis.Definitions.Component_Definition_View (Element));
@@ -563,6 +579,15 @@ package body Asis_Adapter.Element.Definitions is
          --           Result.Is_Not_Null_Return
          return Result;
       end Create_And_Return_Access_Type;
+
+      -- Has side effects:
+      function Create_And_Return_Aspect_Specification
+        return a_nodes_h.Aspect_Specification_Struct is
+      begin
+         return
+           (Aspect_Mark      => Add_And_Return_Aspect_Mark,
+            Aspect_Definition => Add_And_Return_Aspect_Definition);
+      end Create_And_Return_Aspect_Specification;
 
       -- Has side effects:
       function Create_And_Return_Component_Definition
@@ -1206,7 +1231,8 @@ package body Asis_Adapter.Element.Definitions is
          Result.The_Union.The_Formal_Type_Definition :=
            Create_And_Return_Formal_Type_Definition;
       when An_Aspect_Specification => -- A2012
-         State.Add_Not_Implemented (Ada_2012);
+         Result.The_Union.The_Aspect_Specification :=
+           Create_And_Return_Aspect_Specification;
       end case;
 
       State.A_Element.Element_Kind := a_nodes_h.A_Definition;
