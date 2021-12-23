@@ -514,6 +514,11 @@ public:
         return val;
     }
 
+    /** Read a byte from memory.
+     *
+     *  Reads a byte at the specified address and returns it. Returns nothing if the address is not mapped. */
+    Sawyer::Optional<uint8_t> readByte(rose_addr_t) const;
+
     /** Read quickly into a vector. */
     SgUnsignedCharList readVector(rose_addr_t startVa, size_t desired, unsigned requiredPerms=READABLE) const;
 
