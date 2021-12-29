@@ -5,6 +5,16 @@
 
 # warning: the comparison is currently hard-coded to 100 properties (100 rows in the .csv file).
 
+# check that files exist
+
+if [ ! -f "$1" ]; then
+    echo "Error: $1 does not exist."
+    exit 1
+fi
+if [ ! -f "$2" ]; then
+    echo "Error: $2 does not exist."
+    exit 1
+fi
 
 # read result and solution data
 while IFS=, read pid res rest
