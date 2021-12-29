@@ -13,13 +13,6 @@ namespace CodeThorn {
 
   class EStateWorkList : public GeneralWorkList<EStatePtr> {
   public:
-    virtual bool empty();
-    virtual void push_front(EStatePtr el);
-    virtual void pop_front();
-    virtual EStatePtr front();
-    virtual void push_back(EStatePtr);
-    virtual std::size_t size();
-    virtual void clear();
     virtual ~EStateWorkList();
   protected:
   };
