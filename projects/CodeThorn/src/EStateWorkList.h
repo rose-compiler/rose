@@ -5,14 +5,14 @@
 #include <cstddef>
 
 #include "EState.h"
+#include "GeneralWorkList.h"
 
 namespace CodeThorn {
 
   class EState;
 
-  class EStateWorkList {
+  class EStateWorkList : public GeneralWorkList<EStatePtr> {
   public:
-    typedef std::list<EStatePtr>::iterator iterator;
     virtual bool empty();
     virtual void push_front(EStatePtr el);
     virtual void pop_front();
@@ -20,11 +20,8 @@ namespace CodeThorn {
     virtual void push_back(EStatePtr);
     virtual std::size_t size();
     virtual void clear();
-    virtual iterator begin();
-    virtual iterator end();
     virtual ~EStateWorkList();
   protected:
-    std::list<EStatePtr> _list;
   };
 }
 

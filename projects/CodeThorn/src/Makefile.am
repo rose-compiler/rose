@@ -115,6 +115,7 @@ CODETHORN_HEADER_FILES=\
   FunctionCallTarget.h \
   FunctionId.h \
   FunctionIdMapping.h \
+  GeneralWorkList.h \
   InputOutput.h \
   InternalChecks.h \
   IntervalAnalysis.h \

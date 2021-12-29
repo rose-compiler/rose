@@ -84,13 +84,13 @@ void Solver18::run() {
         // newEstate is passed by value (not created yet)
         EStatePtr newEStatePtr0=*nesListIter; // TEMPORARY PTR
         ROSE_ASSERT(newEStatePtr0->label()!=Labeler::NO_LABEL);
+        Label lab=newEStatePtr0->label();
+        CallString cs=newEStatePtr0->callString;
         if((!_analyzer->isFailedAssertEState(newEStatePtr0)&&!_analyzer->isVerificationErrorEState(newEStatePtr0))) {
           EStatePtr newEStatePtr=newEStatePtr0;
           ROSE_ASSERT(newEStatePtr);
           // performing merge
           bool addToWorkListFlag=false;
-          Label lab=newEStatePtr->label();
-          CallString cs=newEStatePtr->callString;
           EStatePtr summaryEStatePtr=_analyzer->getSummaryState(lab,cs);
           ROSE_ASSERT(summaryEStatePtr);
           if(_analyzer->getEStateTransferFunctions()->isApproximatedBy(newEStatePtr,summaryEStatePtr)) {

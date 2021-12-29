@@ -32,10 +32,3 @@ void CodeThorn::EStateWorkList::push_back(EStatePtr el) {
   _list.push_back(el);
 }
 
-CodeThorn::EStateWorkList::iterator CodeThorn::EStateWorkList::begin() {
-  return _list.begin();
-}
-
-CodeThorn::EStateWorkList::iterator CodeThorn::EStateWorkList::end() {
-  return _list.end();
-}
