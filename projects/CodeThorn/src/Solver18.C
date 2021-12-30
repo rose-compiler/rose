@@ -29,7 +29,17 @@ void Solver18::initDiagnostics() {
 int Solver18::getId() {
   return 18;
 }
-    
+bool Solver18::isPassThroughLabel(Label lab) {
+  Flow inEdgeSet1=_analyzer->getFlow()->inEdges(lab);
+  Flow outEdgeSet1=_analyzer->getFlow()->outEdges(lab);
+  if(inEdgeSet1.size()==1 && outEdgeSet1.size()==1) {
+    Edge outEdge1=*outEdgeSet1.begin();
+    Flow inEdgeSet2=_analyzer->getFlow()->outEdges(outEdge1.target());
+    return inEdgeSet2.size()==1;
+  }
+  return false;
+}
+
 void Solver18::initializeSummaryStatesFromWorkList() {
   // pop all states from worklist (can contain more than one state)
   list<EStatePtr> tmpWL;
@@ -74,6 +84,21 @@ void Solver18::run() {
     EStatePtr currentEStatePtr=_analyzer->getSummaryState(currentEStatePtr0->label(),currentEStatePtr0->callString);
     ROSE_ASSERT(currentEStatePtr);
     
+    list<EStatePtr> newEStateList0;
+    while(isPassThroughLabel(currentEStatePtr->label())) {
+      //cout<<"DEBUG: pass through: "<<currentEStatePtr->label().toString()<<endl;
+      Flow edgeSet0=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
+      if(edgeSet0.size()==1) {
+        Edge e=*edgeSet0.begin();
+        list<EStatePtr> newEStateList0=_analyzer->transferEdgeEState(e,currentEStatePtr);
+        if(newEStateList0.size()==1) {
+          currentEStatePtr=*newEStateList0.begin();
+        } else {
+          break;
+        }
+      }
+    }
+
     Flow edgeSet=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
     for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
       Edge e=*i;

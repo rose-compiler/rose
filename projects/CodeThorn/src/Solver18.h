@@ -17,6 +17,9 @@ namespace CodeThorn {
     int getId();
 
     static void initDiagnostics();
+    // a pass through node has a single in-edge, a single-out edge, and
+    // the next node has also a single-in-edge.
+    bool isPassThroughLabel(Label lab);
   private:
     void initializeSummaryStatesFromWorkList();
     // add Edge {(currentEStatePtr,e,NewEStatePtr)} to STS
