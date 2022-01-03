@@ -9,12 +9,12 @@ BUILDDIR=$2
 MAKE_CHECK="_make_check"
 
 echo ".=========================================================================."
-echo "| testing topify mode (RERS 1403, arrays, swith after 10.000 transitions) |"
+echo "| testing topify mode (RERS 1403, arrays, switch after 10.000 transitions) |"
 echo "*=========================================================================*"
 
 #create a temp directory
 CURRENT_TIME=`date '+%m-%d-%y_%H:%M:%S'`
-TEMP_DIR="make_check_log_topifymode_"${CURRENT_TIME}
+TEMP_DIR="make_check_log_topifymode_${CURRENT_TIME}_$$"
 mkdir ${2}/${TEMP_DIR}
 echo "created directory for temporary files: <CodeThorn build dir>/src/${TEMP_DIR}"
 

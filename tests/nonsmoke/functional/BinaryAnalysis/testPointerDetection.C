@@ -63,6 +63,8 @@ shouldAnalyze(const Settings &settings, const P2::Function::Ptr &function) {
 
 int
 main(int argc, char *argv[]) {
+    ROSE_INITIALIZE;
+    SymbolicExpr::serializeVariableIds = true;
     Settings settings;
     P2::Engine engine;
     std::vector<std::string> specimen = parseCommandLine(argc, argv, engine, settings);

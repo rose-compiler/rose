@@ -449,31 +449,6 @@ namespace
       std::string& renamedName() { return std::get<2>(*this); }
   };
 
-  using StatementRange = std::pair<SgDeclarationStatementPtrList::iterator, SgDeclarationStatementPtrList::iterator>;
-
-  StatementRange
-  declsInPackage(SgDeclarationStatementPtrList& lst, const std::string& mainFile)
-  {
-    auto declaredInMainFile = [&mainFile](const SgDeclarationStatement* dcl)
-                              {
-                                ROSE_ASSERT(dcl);
-
-                                const Sg_File_Info& fileInfo = SG_DEREF(dcl->get_startOfConstruct());
-
-                                return fileInfo.get_filenameString() == mainFile;
-                              };
-    auto notDeclaredInMainFile = [&declaredInMainFile](const SgDeclarationStatement* dcl)
-                              {
-                                return !declaredInMainFile(dcl);
-                              };
-
-    SgDeclarationStatementPtrList::iterator zz    = lst.end();
-    SgDeclarationStatementPtrList::iterator first = std::find_if(lst.begin(), zz, declaredInMainFile);
-    SgDeclarationStatementPtrList::iterator limit = std::find_if(first, zz, notDeclaredInMainFile);
-
-    return std::make_pair(first, limit);
-  }
-
   struct ImportedUnitResult : std::tuple<std::string, const SgDeclarationStatement*, const SgAdaRenamingDecl*>
   {
     using base = std::tuple<std::string, const SgDeclarationStatement*, const SgAdaRenamingDecl*>;
@@ -695,8 +670,8 @@ namespace
 
     void handle(SgGlobal& n)
     {
-      ScopeUpdateGuard scopeGuard{unparser, info, n};
-      StatementRange   pkgRange = declsInPackage(n.get_declarations(), unparser.getFileName());
+      ScopeUpdateGuard        scopeGuard{unparser, info, n};
+      si::ada::StatementRange pkgRange = si::ada::declsInPackage(n, unparser.getFileName());
 
       list(pkgRange.first, pkgRange.second);
     }
@@ -875,13 +850,17 @@ namespace
 
     void handle(SgAdaPackageBodyDecl& n)
     {
+      const std::string& pkgqual = getQualification(n, n.get_scope());
+
       prn("package body ");
+      prn(pkgqual);
       prn(n.get_name());
       prn(" is\n");
 
       stmt(n.get_definition());
 
       prn("end ");
+      prn(pkgqual);
       prn(n.get_name());
       prn(STMT_SEP);
     }
@@ -1106,10 +1085,17 @@ namespace
     {
       prn("type ");
       prn(n.get_name());
-      prn(" is");
+      prn(" is ");
       modifiers(n);
 
-      SgAdaFormalType* ty = n.get_formal_type();
+      SgAdaFormalType* ty = n.get_type();
+      ASSERT_not_null(ty);
+
+      // \todo what types need to be printed?
+      //       print all non-null ty->get_formal_type() ?
+      if (SgAdaAccessType* accty = isSgAdaAccessType(ty->get_formal_type()))
+        type(n, accty);
+
       if (ty->get_is_private()) {
         prn(" private");
       }
@@ -1535,21 +1521,37 @@ namespace
 
     void handle(SgEnumDeclaration& n)
     {
-      SgInitializedNamePtrList& lst = n.get_enumerators();
+      const bool                isDefinition = &n == n.get_definingDeclaration();
+      SgInitializedNamePtrList& lst          = n.get_enumerators();
 
       prn("type ");
       prn(n.get_name());
-      prn(" is");
 
-      if (SgType* parentType = n.get_adaParentType())
+      if (!isDefinition)
+      {
+        // unparse as forward declaration
+        const bool requiresPrivate = si::ada::withPrivateDefinition(&n);
+        const bool requiresIs      = requiresPrivate || hasModifiers(n);
+
+        if (requiresIs)
+          prn(" is");
+
+        modifiers(n);
+
+        if (requiresPrivate)
+          prn(" private");
+      }
+      else if (SgType* parentType = n.get_adaParentType())
       {
         // unparse as derived type
+        prn(" is");
         prn(" new");
         type(n, parentType);
       }
       else
       {
         // unparse as normal enum
+        prn(" is");
         prn(" (");
         std::for_each(lst.begin(), lst.end(), AdaEnumeratorUnparser(unparser, info, os));
         prn(")");

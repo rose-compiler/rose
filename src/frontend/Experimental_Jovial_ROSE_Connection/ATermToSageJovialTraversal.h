@@ -18,15 +18,17 @@ namespace ATermSupport {
 class ATermToSageJovialTraversal : public ATermTraversal
 {
  private:
-   rb::SageTreeBuilder sage_tree_builder{Language::Jovial};
+   rb::SageTreeBuilder sage_tree_builder;
 
  protected:
    void setSourcePositions(ATerm term, Rose::builder::SourcePosition &start, Rose::builder::SourcePosition &end);
    void setDeclarationModifier(SgVariableDeclaration* var_decl, int def_or_ref);
+   void setSourcePosition(SgLocatedNode* node, ATerm term);
 
  public:
-   ATermToSageJovialTraversal(SgSourceFile* source)
-     : ATermTraversal{source}, sage_tree_builder{Language::Jovial}
+   ATermToSageJovialTraversal() = delete;
+   ATermToSageJovialTraversal(SgSourceFile* source, std::istringstream &tokens)
+     : ATermTraversal{source}, sage_tree_builder{source, Language::Jovial, tokens}
      {
      }
 

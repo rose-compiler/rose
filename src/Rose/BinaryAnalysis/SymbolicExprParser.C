@@ -465,13 +465,13 @@ protected:
         doc += "@named{lssb}"
                "{Least significant set bit.  Takes one operand and evaluates to a result having the same width. The result "
                "is the lowest index (least significant bit is zero) of a bit of the operand which is set.  Evaluates to "
-               "zero if no bits are set.}";            // odd, but same behavior as Yices.
+               "zero if no bits are set.}";
 
         ops_.insert("mssb",         SymbolicExpr::OP_MSSB);
         doc += "@named{mssb}"
                "{Most significant set bit.  Takes one operand and evaluates to a result having the same width. The result "
                "is the highest index (least significant bit is zero) of a bit of the operand which is set.  Evaluates to "
-               "zero if no bits are set.}";            // odd, but same behavior as Yices.
+               "zero if no bits are set.}";
 
         ops_.insert("ne",           SymbolicExpr::OP_NE);
         doc += "@named{ne}"

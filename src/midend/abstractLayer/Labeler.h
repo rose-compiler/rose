@@ -126,7 +126,7 @@ class Labeler {
      this can only be the case if label is erroneously higher than the number of labeled nodes or NO_LABEL.
   */
   virtual SgNode* getNode(Label label) = 0;
-  virtual long numberOfLabels() = 0;
+  virtual size_t numberOfLabels() = 0;
   virtual std::string toString() = 0;
   virtual Label functionCallLabel(SgNode* node) = 0;
   virtual Label functionCallReturnLabel(SgNode* node) = 0;
@@ -175,6 +175,9 @@ class Labeler {
   virtual bool isExternalFunctionCallLabel(Label lab) = 0;
   virtual void setExternalFunctionCallLabel(Label lab) = 0;
 
+  // checks that id range is correct
+  virtual bool isValidLabelIdRange(Label lab);
+  
   virtual
   Label getFunctionCallReturnLabelFromCallLabel(Label callLabel) = 0;
 
@@ -223,7 +226,7 @@ class CLabeler : public Labeler {
      this can only be the case if label is erroneously higher than the number of labeled nodes or NO_LABEL.
   */
   SgNode* getNode(Label label) override;
-  long numberOfLabels() override;
+  size_t numberOfLabels() override;
   std::string toString() override;
   Label functionCallLabel(SgNode* node) override;
   Label functionCallReturnLabel(SgNode* node) override;

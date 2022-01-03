@@ -55,6 +55,7 @@ void Solver16::initializeSummaryStatesFromWorkList() {
  */
 void Solver16::run() {
   SAWYER_MESG(logger[INFO])<<"Running solver "<<getId()<<endl;
+  ROSE_ASSERT(_analyzer);
   if(_analyzer->getOptionsRef().abstractionMode==0) {
     cerr<<"Error: abstraction mode is 0, but >= 1 required."<<endl;
     exit(1);
@@ -135,28 +136,27 @@ void Solver16::run() {
       // the worklist could be reduced to (label,callstring) pairs, but since it's also used for explicit model checking, it uses pointers to estates, which include some more info.
       // note: initial summary states are set in initializeSummaryStatesFromWorkList()
       EStatePtr currentEStatePtr0=_analyzer->popWorkList();
-      // difference to Solver5: always obtain abstract state
-      EStatePtr currentEStatePtr=_analyzer->getSummaryState(currentEStatePtr0->label(),currentEStatePtr0->callString);
       // terminate early, ensure to stop all threads and empty the worklist (e.g. verification error found).
       if(terminateEarly)
         continue;
-      if(!currentEStatePtr) {
+      if(!currentEStatePtr0) {
         // empty worklist. Continue without work.
         ROSE_ASSERT(threadNum>=0 && threadNum<=_analyzer->getOptionsRef().threads);
       } else {
+        ROSE_ASSERT(currentEStatePtr0);
+        EStatePtr currentEStatePtr=_analyzer->getSummaryState(currentEStatePtr0->label(),currentEStatePtr0->callString);
         ROSE_ASSERT(currentEStatePtr);
         Flow edgeSet=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
         //cout << "DEBUG: out-edgeSet size:"<<edgeSet.size()<<endl;
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
           Edge e=*i;
-          list<EState> newEStateList;
-          newEStateList=_analyzer->transferEdgeEState(e,currentEStatePtr);
-          for(list<EState>::iterator nesListIter=newEStateList.begin();
+          list<EStatePtr> newEStateList=_analyzer->transferEdgeEState(e,currentEStatePtr);
+          for(list<EStatePtr>::iterator nesListIter=newEStateList.begin();
               nesListIter!=newEStateList.end();
               ++nesListIter) {
             // newEstate is passed by value (not created yet)
-            EState newEState=*nesListIter;
-            ROSE_ASSERT(newEState.label()!=Labeler::NO_LABEL);
+            EStatePtr newEStatePtr0=*nesListIter; // TEMPORARY PTR
+            ROSE_ASSERT(newEStatePtr0->label()!=Labeler::NO_LABEL);
             if(_analyzer->getOptionsRef().stgTraceFileName.size()>0) {
               std::ofstream fout;
 #pragma omp critical
@@ -167,16 +167,20 @@ void Solver16::run() {
                 string sourceString=_analyzer->getCFAnalyzer()->getLabeler()->getNode(currentEStatePtr->label())->unparseToString().substr(0,40);
                 if(sourceString.size()==60) sourceString+="...";
                 fout<<"\n==>"<<"TRANSFER:"<<sourceString;
-                fout<<"==>\n"<<"ESTATE-OUT:"<<newEState.toString(_analyzer->getVariableIdMapping());
+                fout<<"==>\n"<<"ESTATE-OUT:"<<newEStatePtr0->toString(_analyzer->getVariableIdMapping());
                 fout<<endl;
                 fout<<endl;
                 fout.close();
               }
             }
             
-            if((!_analyzer->isFailedAssertEState(&newEState)&&!_analyzer->isVerificationErrorEState(&newEState))) {
-              HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState);
+            if((!_analyzer->isFailedAssertEState(newEStatePtr0)&&!_analyzer->isVerificationErrorEState(newEStatePtr0))) {
+              HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEStatePtr0);
               EStatePtr newEStatePtr=const_cast<EStatePtr>(pres.second);
+              if(newEStatePtr!=newEStatePtr0) {
+                //cout<<"DEBUG: deleting temporary solver 16 state."<<endl;
+                delete newEStatePtr0;
+              }
               if(pres.first==true) {
                 int abstractionMode=_analyzer->getAbstractionMode();
                 switch(abstractionMode) {
@@ -194,7 +198,6 @@ void Solver16::run() {
                       newEStatePtr=summaryEState; 
                     } else {
                       EState newEState2=_analyzer->getEStateTransferFunctions()->combine(summaryEState,const_cast<EState*>(newEStatePtr));
-                      ROSE_ASSERT(_analyzer);
                       HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState2);
                       EStatePtr newEStatePtr2=const_cast<EStatePtr>(pres.second);
 
@@ -214,7 +217,7 @@ void Solver16::run() {
                     exit(1);
                 }
                 default:
-                  cerr<<"Error: unknown abstraction mode "<<abstractionMode<<endl;
+                  cerr<<"Error: unknown abstraction mode "<<abstractionMode<<" (solver 16)"<<endl;
                   exit(1);
                 }
               } else {
@@ -222,13 +225,13 @@ void Solver16::run() {
               }
               recordTransition(currentEStatePtr0,currentEStatePtr,e,newEStatePtr);
             }
-            if(((_analyzer->isFailedAssertEState(&newEState))||_analyzer->isVerificationErrorEState(&newEState))) {
+            if(((_analyzer->isFailedAssertEState(newEStatePtr0
+                                                 ))||_analyzer->isVerificationErrorEState(newEStatePtr0))) {
               // failed-assert end-state: do not add to work list but do add it to the transition graph
-              EStatePtr newEStatePtr;
-              newEStatePtr=_analyzer->processNewOrExisting(newEState);
+              EStatePtr newEStatePtr=_analyzer->processNewOrExisting(newEStatePtr0);
               recordTransition(currentEStatePtr0,currentEStatePtr,e,newEStatePtr);
 
-              if(_analyzer->isVerificationErrorEState(&newEState)) {
+              if(_analyzer->isVerificationErrorEState(newEStatePtr)) {
 #pragma omp critical
                 {
                   SAWYER_MESG(logger[TRACE]) <<"STATUS: detected verification error state ... terminating early"<<endl;
@@ -237,7 +240,7 @@ void Solver16::run() {
                   _analyzer->_firstAssertionOccurences.push_back(pair<int, EStatePtr>(0, newEStatePtr));
                   terminateEarly=true;
                 }
-              } else if(_analyzer->isFailedAssertEState(&newEState)) {
+              } else if(_analyzer->isFailedAssertEState(newEStatePtr)) {
                 // record failed assert
                 int assertCode;
                 if(_analyzer->getOptionsRef().rers.rersBinary) {
@@ -288,4 +291,11 @@ void Solver16::initDiagnostics() {
     _diagnosticsInitialized = true;
     Solver::initDiagnostics(logger, 16);
   }
+}
+bool Solver16::createsTransitionSystem() {
+  return true;
+}
+
+bool Solver16::checksAssertions() {
+  return true;
 }

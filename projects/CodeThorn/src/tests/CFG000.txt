@@ -1,0 +1,8 @@
+CFG001: empty main
+CFG002: while, do-while, for: with continue,break, dead code. No globals.
+CFG003: for loop with only continue
+CFG004: for(;;)
+CFG005: stdio,malloc,for
+CFG006: switch with dead code, unused decls, empty default
+CFG007: switch without block
+CFG008: empty blocks in if,switch,while,do-while,for

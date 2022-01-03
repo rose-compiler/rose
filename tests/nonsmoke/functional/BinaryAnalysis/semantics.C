@@ -22,9 +22,8 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 // SMT_SOLVER values
 #define NO_SOLVER 0
-#define YICES_LIB 1
-#define YICES_EXE 2
 
+#include <Rose/BinaryAnalysis/SymbolicExpr.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherX86.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/TestSemantics.h>
 using namespace Rose::BinaryAnalysis::InstructionSemantics2;
@@ -32,16 +31,6 @@ using namespace Rose::BinaryAnalysis::InstructionSemantics2;
 #if !defined(SMT_SOLVER) || SMT_SOLVER == NO_SOLVER
     #include <Rose/BinaryAnalysis/SmtSolver.h>
     Rose::BinaryAnalysis::SmtSolverPtr make_solver() { return Rose::BinaryAnalysis::SmtSolverPtr(); }
-#elif SMT_SOLVER == YICES_LIB
-    #include <Rose/BinaryAnalysis/YicesSolver.h>
-    Rose::BinaryAnalysis::SmtSolverPtr make_solver() {
-        return Rose::BinaryAnalysis::YicesSolver::instance(Rose::BinaryAnalysis::SmtSolver::LM_LIBRARY);
-    }
-#elif SMT_SOLVER == YICES_EXE
-    #include <Rose/BinaryAnalysis/YicesSolver.h>
-    Rose::BinaryAnalysis::SmtSolverPtr make_solver() {
-        return Rose::BinaryAnalysis::YicesSolver::instance(Rose::BinaryAnalysis::SmtSolver::LM_EXECUTABLE);
-    }
 #elif SMT_SOLVER == Z3_LIB
     #include <Rose/BinaryAnalysis/Z3Solver.h>
     Rose::BinaryAnalysis::SmtSolverPtr make_solver() {
@@ -272,6 +261,9 @@ public:
 
 int main(int argc, char *argv[]) {
     ROSE_INITIALIZE;
+
+    // Use a single pool for allocating variable IDs. This makes the test deterministic.
+    Rose::BinaryAnalysis::SymbolicExpr::serializeVariableIds = true;
 
     std::vector<std::string> args(argv, argv+argc);
     for (size_t argno=1; argno<args.size(); ++argno) {

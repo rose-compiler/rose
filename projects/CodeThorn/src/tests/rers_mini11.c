@@ -12,7 +12,8 @@
             error_53: assert(0);
         } 
         if(((((((a20==1)))))&&(a21==1))){
-        } 
+        }
+        return -2;
     }
 int main()
 {

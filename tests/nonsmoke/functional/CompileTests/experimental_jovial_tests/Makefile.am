@@ -228,7 +228,8 @@ JOVIAL_TESTCODES = \
  rose-issue-rc-975.jov                  \
  gitlab-issue-12.jov                    \
  gitlab-issue-13.jov                    \
- charlie.jov
+ charlie.jov                            \
+ shadow.jov
 
 JOVIAL_PARSER_TESTCODES = \
  fixed_cast.jov                         \
@@ -348,6 +349,7 @@ COMPOOL_TESTCODES = \
  rc975.cpl                              \
  gitlab-issue-12.cpl                    \
  gitlab-issue-14.cpl                    \
+ gitlab-issue-17.cpl                    \
  beta.cpl                               \
  parttype.cpl
 

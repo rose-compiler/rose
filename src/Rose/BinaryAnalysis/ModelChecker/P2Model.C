@@ -1054,6 +1054,16 @@ SemanticCallbacks::instance(const ModelChecker::Settings::Ptr &mcSettings, const
     return Ptr(new SemanticCallbacks(mcSettings, settings, partitioner));
 }
 
+SmtSolver::Memoizer::Ptr
+SemanticCallbacks::smtMemoizer() const {
+    return smtMemoizer_;
+}
+
+void
+SemanticCallbacks::smtMemoizer(const SmtSolver::Memoizer::Ptr &memoizer) {
+    smtMemoizer_ = memoizer;
+}
+
 void
 SemanticCallbacks::followOnePath(const std::list<ExecutionUnitPtr> &units) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
@@ -1175,9 +1185,16 @@ SemanticCallbacks::createSolver() {
     if (solverName.empty() || "none" == solverName)
         solverName = "best";
     auto solver = SmtSolver::instance(solverName);
-    solver->memoization(settings_.solverMemoization);
+
+    if (settings_.solverMemoization) {
+        if (!smtMemoizer_)
+            smtMemoizer_ = SmtSolver::Memoizer::instance();
+        solver->memoizer(smtMemoizer_);
+    }
+
     if (mcSettings()->solverTimeout)
         solver->timeout(boost::chrono::seconds(*mcSettings()->solverTimeout));
+
     return solver;
 }
 
@@ -1284,11 +1301,6 @@ SemanticCallbacks::findUnit(rose_addr_t va) {
         }
     }
 
-    // We use a separate mutex for the unit_ cache so that only one thread computes this at a time without blocking
-    // threads trying to make progress on other things.  An alternative would be to lock the main mutex, but only when
-    // accessing the cache, and allow the computations to be duplicated with only the first thread saving the result.
-    SAWYER_THREAD_TRAITS::LockGuard lock(unitsMutex_);
-
     if (unit) {
         // We took it from the one path we're following (see above)
         if (*unit->address() != va) {
@@ -1298,60 +1310,73 @@ SemanticCallbacks::findUnit(rose_addr_t va) {
             return ExecutionUnit::Ptr();
         }
         return unit;
+    }
 
-    } else if ((unit = units_.getOrDefault(va))) {
-        // preexisting
 
-    } else {
-        P2::Function::Ptr func = partitioner_.functionExists(va);
-        if (func && boost::ends_with(func->name(), "@plt")) {
-            unit = ExternalFunctionUnit::instance(func, partitioner_.sourceLocations().get(va));
-        } else if (P2::BasicBlock::Ptr bb = partitioner_.basicBlockExists(va)) {
-            // Depending on partitioner settings, sometimes a basic block could have an internal loop. For instance, some x86
-            // instructions have an optional repeat prefix. Since execution units need to know how many steps they are (so we
-            // can inforce the K limit), and since the content of the execution unit needs to be immutable, and since we can't
-            // really re-compute path successors with new data (we would have already thrown away the outgoing state), we have
-            // to make a decision here and now.
-            //
-            // So we evaluate each instruction semantically on a clean state and check that the instruction pointer follows the
-            // instrucitons in the basic block.  If not, we switch to one-instruction-at-a-time mode for this basic block,
-            // which is about half as fast and takes more memory.  By caching our results, we only do this expensive calcultion
-            // once per basic block, not each time a path reaches this block.
-            if (bb->nInstructions() > 0) {
-                auto ops = partitioner_.newOperators(P2::MAP_BASED_MEMORY);
-                ops->solver(createSolver());
-                IS::SymbolicSemantics::RiscOperators::promote(ops)->trimThreshold(mcSettings()->maxSymbolicSize);
-                auto cpu = partitioner_.newDispatcher(ops);
-                const RegisterDescriptor IP = partitioner_.instructionProvider().instructionPointerRegister();
-                for (size_t i = 0; i < bb->nInstructions() - 1; ++i) {
-                    SgAsmInstruction *insn = bb->instructions()[i];
-                    try {
-                        cpu->processInstruction(insn);
-                    } catch (...) {
-                        SAWYER_MESG(mlog[DEBUG]) <<"    " <<bb->printableName() <<" at " <<insn->toString() <<"; switched to insn\n";
-                        unit = BasicBlockUnit::instance(partitioner_, bb);
-                        break;
-                    }
-                    BS::SValue::Ptr actualIp = ops->peekRegister(IP);
-                    rose_addr_t expectedIp = bb->instructions()[i+1]->get_address();
-                    if (actualIp->toUnsigned().orElse(expectedIp+1) != expectedIp) {
-                        SAWYER_MESG(mlog[DEBUG]) <<"    " <<bb->printableName()
-                                                 <<" sequence error after " <<insn->toString() <<"; switched to insn\n";
-                        unit = InstructionUnit::instance(bb->instructions()[0], partitioner_.sourceLocations().get(va));
-                        break;
-                    }
-                }
-            }
-            if (!unit)
-                unit = BasicBlockUnit::instance(partitioner_, bb);
-        } else if (SgAsmInstruction *insn = partitioner_.instructionProvider()[va]) {
-            SAWYER_MESG(mlog[DEBUG]) <<"    no basic block at " <<StringUtility::addrToString(va) <<"; switched to insn\n";
-            unit = InstructionUnit::instance(insn, partitioner_.sourceLocations().get(va));
-        }
+    {
+        // We use a separate mutex for the unit_ cache so that only one tahread computes this at a time without blocking
+        // threads trying to make progress on other things.  An alternative would be to lock the main mutex, but only when
+        // accessing the cache, and allow the computations to be duplicated with only the first thread saving the result.
+        SAWYER_THREAD_TRAITS::LockGuard lock(unitsMutex_);
+        unit = units_.getOrDefault(va);
     }
 
     if (unit)
-        units_.insert(va, unit);
+        return unit;                                    // preexisting
+
+    // Compute the next unit
+    P2::Function::Ptr func = partitioner_.functionExists(va);
+    if (func && boost::ends_with(func->name(), "@plt")) {
+        unit = ExternalFunctionUnit::instance(func, partitioner_.sourceLocations().get(va));
+    } else if (P2::BasicBlock::Ptr bb = partitioner_.basicBlockExists(va)) {
+        // Depending on partitioner settings, sometimes a basic block could have an internal loop. For instance, some x86
+        // instructions have an optional repeat prefix. Since execution units need to know how many steps they are (so we can
+        // inforce the K limit), and since the content of the execution unit needs to be immutable, and since we can't really
+        // re-compute path successors with new data (we would have already thrown away the outgoing state), we have to make a
+        // decision here and now.
+        //
+        // So we evaluate each instruction semantically on a clean state and check that the instruction pointer follows the
+        // instrucitons in the basic block.  If not, we switch to one-instruction-at-a-time mode for this basic block, which is
+        // about half as fast and takes more memory.  By caching our results, we only do this expensive calcultion once per
+        // basic block, not each time a path reaches this block.
+        if (bb->nInstructions() > 0) {
+            auto ops = partitioner_.newOperators(P2::MAP_BASED_MEMORY);
+            ops->solver(createSolver());
+            IS::SymbolicSemantics::RiscOperators::promote(ops)->trimThreshold(mcSettings()->maxSymbolicSize);
+            auto cpu = partitioner_.newDispatcher(ops);
+            const RegisterDescriptor IP = partitioner_.instructionProvider().instructionPointerRegister();
+            for (size_t i = 0; i < bb->nInstructions() - 1; ++i) {
+                SgAsmInstruction *insn = bb->instructions()[i];
+                try {
+                    cpu->processInstruction(insn);
+                } catch (...) {
+                    SAWYER_MESG(mlog[DEBUG]) <<"    " <<bb->printableName() <<" at " <<insn->toString() <<"; switched to insn\n";
+                    unit = BasicBlockUnit::instance(partitioner_, bb);
+                    break;
+                }
+                BS::SValue::Ptr actualIp = ops->peekRegister(IP);
+                rose_addr_t expectedIp = bb->instructions()[i+1]->get_address();
+                if (actualIp->toUnsigned().orElse(expectedIp+1) != expectedIp) {
+                    SAWYER_MESG(mlog[DEBUG]) <<"    " <<bb->printableName()
+                                             <<" sequence error after " <<insn->toString() <<"; switched to insn\n";
+                    unit = InstructionUnit::instance(bb->instructions()[0], partitioner_.sourceLocations().get(va));
+                    break;
+                }
+            }
+        }
+        if (!unit)
+            unit = BasicBlockUnit::instance(partitioner_, bb);
+    } else if (SgAsmInstruction *insn = partitioner_.instructionProvider()[va]) {
+        SAWYER_MESG(mlog[DEBUG]) <<"    no basic block at " <<StringUtility::addrToString(va) <<"; switched to insn\n";
+        unit = InstructionUnit::instance(insn, partitioner_.sourceLocations().get(va));
+    }
+
+    // Save the result, but if some other thread beat us to this point, use their result instead.
+    if (unit) {
+        SAWYER_THREAD_TRAITS::LockGuard lock(unitsMutex_);
+        unit = units_.insertMaybe(va, unit);
+    }
+
     return unit;
 }
 
@@ -1416,7 +1441,7 @@ SemanticCallbacks::nextUnits(const Path::Ptr &path, const BS::RiscOperators::Ptr
             case SmtSolver::SAT_YES:
                 // Create the next execution unit
                 if (ExecutionUnit::Ptr unit = findUnit(va)) {
-                    units.push_back({unit, assertion, solver->evidence()});
+                    units.push_back({unit, assertion, solver->evidenceByName()});
                 } else if (settings_.nullRead != TestMode::OFF && va <= settings_.maxNullAddress) {
                     SourceLocation sloc = partitioner_.sourceLocations().get(va);
                     BS::SValue::Ptr addr = ops->number_(partitioner_.instructionProvider().wordSize(), va);

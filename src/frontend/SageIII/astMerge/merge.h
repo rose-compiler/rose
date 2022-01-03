@@ -15,10 +15,11 @@ void merge(SgProject *);
 
 void shareRedundantNodes(SgProject *);
 void deleteIslands(SgProject *);
-void deleteAll(SgProject *);
 void link(SgProject *);
 
 void consistency(SgProject *);
+
+void deleteAll();
 
 }
 }

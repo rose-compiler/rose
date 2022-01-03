@@ -17,7 +17,17 @@ namespace SB = SageBuilder;
 namespace SI = SageInterface;
 namespace LT = LanguageTranslation;
 
-void ATermToSageJovialTraversal::setLocationSpecifier(SgVariableDeclaration* var_decl, const LocationSpecifier &loc_spec)
+void
+ATermToSageJovialTraversal::setSourcePosition(SgLocatedNode* node, ATerm term)
+{
+  // Set source position as normal
+  ATermTraversal::setSourcePosition(node, term);
+  // and attach comments if they exist
+  sage_tree_builder.attachComment(node, getLocation(term));
+}
+
+void
+ATermToSageJovialTraversal::setLocationSpecifier(SgVariableDeclaration* var_decl, const LocationSpecifier &loc_spec)
 {
 // The bitfield will contain both the start_bit and start_word as an expression list
    SgExprListExp* location_specifier = SageBuilder::buildExprListExp();
@@ -216,13 +226,6 @@ ATbool ATermToSageJovialTraversal::traverse_MainProgramModule(ATerm term)
 
    // Leave SageTreeBuilder for SgProgramHeaderStatement
       sage_tree_builder.Leave(program_decl);
-
-#if 0
-// Test adding a comment to a program
-   // Attach a "comment"
-      SI::attachComment(program_decl, "This is a test. This is only a test.",
-                        PreprocessingInfo::before, PreprocessingInfo::JovialStyleComment);
-#endif
 
       if (traverse_NonNestedSubroutineList(t_funcs)) {
          // MATCHED NonNestedSubroutineList
@@ -1049,6 +1052,7 @@ ATbool ATermToSageJovialTraversal::traverse_StatusConstant(ATerm term, SgEnumDec
    // Begin SageTreeBuilder
       SgEnumVal* enum_val = nullptr;
       sage_tree_builder.Enter(enum_val, enum_name, enum_decl, value);
+      setSourcePosition(enum_val, term);
 
    // End SageTreeBuilder
       sage_tree_builder.Leave(enum_val);
@@ -1491,6 +1495,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
 
        init_name->set_initializer(init_expr);
        init_expr->set_parent(init_name);
+       setSourcePositionFrom(init_expr, preset);
      }
    }
 
@@ -2147,9 +2152,13 @@ traverse_SpecifiedEntrySpecifierBody(ATerm term, SgJovialTableStatement* table_d
 
    table_decl->set_words_per_entry(wpe);
    if (entry_size) {
-      table_decl->set_has_table_entry_size(true);
-      table_decl->set_table_entry_size(*entry_size);
-      (*entry_size)->set_parent(table_decl);
+     table_decl->set_has_table_entry_size(true);
+     table_decl->set_table_entry_size(*entry_size);
+     (*entry_size)->set_parent(table_decl);
+   }
+   else {
+     table_decl->set_has_table_entry_size(false);
+     table_decl->set_table_entry_size(nullptr);
    }
 
    return ATtrue;
@@ -2450,6 +2459,13 @@ ATbool ATermToSageJovialTraversal::traverse_ConstantDeclaration(ATerm term, int 
 // Begin SageTreeBuilder
    SgVariableDeclaration* var_decl;
    sage_tree_builder.Enter(var_decl, std::string(name), const_type, preset);
+   if (preset) {
+      // Set source position of initializer before var_decl for comment handling
+      ROSE_ASSERT(var_decl->get_decl_item(name));
+      SgInitializer* initializer = var_decl->get_decl_item(name)->get_initializer();
+      ROSE_ASSERT(initializer);
+      setSourcePosition(initializer, t_preset);
+   }
    setSourcePosition(var_decl, term);
 
 // Jovial block and table members are visible in parent scope so create an alias
@@ -4566,6 +4582,7 @@ ATbool ATermToSageJovialTraversal::traverse_AssignmentStatement(ATerm term)
 
    // Begin SageTreeBuilder
       sage_tree_builder.Enter(assign_stmt, rhs, vars, std::string());
+      setSourcePosition(assign_stmt, term);
 
    } else return ATfalse;
    ROSE_ASSERT(assign_stmt != nullptr);
@@ -5825,7 +5842,6 @@ ATbool ATermToSageJovialTraversal::traverse_BitFormula(ATerm term, SgExpression*
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_BitFormula: %s\n", ATwriteToString(term));
 #endif
-
    ATerm t_operand;
 
    expr = nullptr;
@@ -5839,7 +5855,6 @@ ATbool ATermToSageJovialTraversal::traverse_BitFormula(ATerm term, SgExpression*
       }
       else return ATfalse;
    }
-
    else return ATfalse;
 
    ROSE_ASSERT(expr);

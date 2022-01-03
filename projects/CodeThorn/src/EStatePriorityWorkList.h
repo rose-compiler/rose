@@ -9,8 +9,6 @@
 #include "EStateWorkList.h"
 #include "TopologicalSort.h"
 
-// Author: Markus Schordan, 2020.
-
 namespace CodeThorn {
 
   class EState;
@@ -53,8 +51,6 @@ struct PriorityElement {
     void push_back(EStatePtr);
     std::size_t size();
     void clear();
-    EStateWorkList::iterator begin();
-    EStateWorkList::iterator end();
     typedef PriorityElement<EStatePtr> EStatePriElem;
     // min priority queue (smaller elements are orderered first)
     typedef std::priority_queue <EStatePriElem,std::vector<EStatePriElem>,PriorityElementGreaterOp> EStateMinPriorityQueueType;

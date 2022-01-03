@@ -84,11 +84,6 @@ namespace CodeThorn {
 
 
   class CTAnalysis {
-    friend class Solver;
-    friend class Solver5;
-    friend class Solver8;
-    friend class Solver10;
-    friend class Solver11;
     friend class Solver12;
     friend class Visualizer;
     friend class VariableValueMonitor;
@@ -107,7 +102,7 @@ namespace CodeThorn {
     virtual void runAnalysisPhase1(SgProject* root, TimingCollector& tc);
     virtual void runAnalysisPhase2(TimingCollector& tc);
   protected:
-    EState createInitialEState(SgProject* root, Label slab);
+    EStatePtr createInitialEState(SgProject* root, Label slab);
     void initializeSolverWithInitialEState(SgProject* root);
     virtual void postInitializeSolver();
     void runAnalysisPhase1Sub1(SgProject* root, TimingCollector& tc);
@@ -181,8 +176,8 @@ namespace CodeThorn {
     bool getIgnoreFunctionPointers();
 
     // specific to the loop-aware exploration modes
-    int getIterations() { return _iterations; }
-    int getApproximatedIterations() { return _approximated_iterations; }
+    size_t getIterations() { return _iterations; }
+    size_t getApproximatedIterations() { return _approximated_iterations; }
 
     // used by the hybrid analyzer (state marshalling)
     void mapGlobalVarInsert(std::string name, int* addr);
@@ -217,13 +212,16 @@ namespace CodeThorn {
     void setPrintDetectedViolations(bool flag);
 
     void setMaxTransitions(size_t maxTransitions) { _maxTransitions=maxTransitions; }
+    size_t getMaxTransitions() { return _maxTransitions; }
     void setMaxIterations(size_t maxIterations) { _maxIterations=maxIterations; }
+    size_t getMaxIterations() { return _maxIterations; }
     void setMaxTransitionsForcedTop(size_t maxTransitions) { _maxTransitionsForcedTop=maxTransitions; }
     void setMaxIterationsForcedTop(size_t maxIterations) { _maxIterationsForcedTop=maxIterations; }
     void setMaxBytesForcedTop(long int maxBytesForcedTop) { _maxBytesForcedTop=maxBytesForcedTop; }
     void setMaxSecondsForcedTop(long int maxSecondsForcedTop) { _maxSecondsForcedTop=maxSecondsForcedTop; }
     void setResourceLimitDiff(int diff) { _resourceLimitDiff=diff; }
     void setDisplayDiff(int diff) { _displayDiff=diff; }
+    int getDisplayDiff() { return _displayDiff; }
     void setNumberOfThreadsToUse(int n) { _numberOfThreadsToUse=n; }
     int getNumberOfThreadsToUse() { return _numberOfThreadsToUse; }
     void setTreatStdErrLikeFailedAssert(bool x) { _treatStdErrLikeFailedAssert=x; }
@@ -314,6 +312,7 @@ namespace CodeThorn {
     std::string externalFunctionsToString();
     void setOptions(CodeThornOptions options);
     CodeThornOptions& getOptionsRef();
+    CodeThornOptions getOptions();
     void setLtlOptions(LTLOptions ltlOptions);
     LTLOptions& getLtlOptionsRef();
     //protected:
@@ -337,33 +336,39 @@ namespace CodeThorn {
     void swapWorkLists();
     void eraseWorkList();
 
-    std::pair<CallString,EStatePtr> popWorkListCS();
-    std::pair<CallString,EStatePtr> topWorkListCS();
-    void pushWorkListCS(CallString,EStatePtr);
-
     /*! if state exists in stateSet, a pointer to the existing state is returned otherwise
       a new state is entered into stateSet and a pointer to it is returned.
     */
 
     PStatePtr processNew(PState& s);
     PStatePtr processNewOrExisting(PState& s);
-    EStatePtr processNew(EState& s);
-    EStatePtr processNewOrExisting(EState& s);
-    //EStatePtr processCompleteNewOrExisting(EStatePtr es);
+
+    PStatePtr processNew(PState* s);
+    PStatePtr processNewOrExisting(PState* s);
+
+    EStatePtr processNew(EStateRef s);
+    EStatePtr processNewOrExisting(EStateRef s);
+    EStateSet::ProcessingResult process(EStateRef s);
+
+    EStatePtr processNew(EStatePtr s);
+    EStatePtr processNewOrExisting(EStatePtr s);
+    EStateSet::ProcessingResult process(EStatePtr s);
+
+    
     void topifyVariable(PState& pstate, AbstractValue varId);
     bool isTopified(EState& s);
-    EStateSet::ProcessingResult process(EState& s);
 
     void recordTransition(EStatePtr sourceEState, Edge e, EStatePtr targetEState);
 
     void set_finished(std::vector<bool>& v, bool val);
     bool all_false(std::vector<bool>& v);
 
-    std::list<EState> transferEdgeEState(Edge edge, EStatePtr estate);
+    std::list<EStatePtr> transferEdgeEStateInPlace(Edge edge, EStatePtr estate);
+    std::list<EStatePtr> transferEdgeEState(Edge edge, EStatePtr estate);
 
     // forwarding functions for EStateTransferFunctions (backward compatibility)
-    std::list<EState> elistify();
-    std::list<EState> elistify(EState res);
+    std::list<EStatePtr> elistify();
+    std::list<EStatePtr> elistify(EState res);
 
     std::set<std::string> variableIdsToVariableNames(CodeThorn::VariableIdSet);
 
@@ -411,6 +416,8 @@ namespace CodeThorn {
     void setTotalNumberOfFunctions(uint32_t num);
     std::string hashSetConsistencyReport();
 
+    EStateWorkList* getWorkList();
+    EStateWorkList* getWorkListNext(); // only used in Solver12
   protected:
 
     // EStateWorkLists: Current and Next should point to One and Two (or swapped)
@@ -445,10 +452,10 @@ namespace CodeThorn {
     bool _topifyModeActive;
     int _abstractionMode=0; // 0=no abstraction, >=1: different abstraction modes.
 
-    int _iterations;
-    int _approximated_iterations;
-    int _curr_iteration_cnt;
-    int _next_iteration_cnt;
+    size_t _iterations;
+    size_t _approximated_iterations;
+    size_t _curr_iteration_cnt;
+    size_t _next_iteration_cnt;
 
     bool _stdFunctionSemantics=true;
 

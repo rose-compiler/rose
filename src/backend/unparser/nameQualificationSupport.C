@@ -815,6 +815,17 @@ namespace
         computeNameQualForShared(n, n.get_base_type());
       }
 
+      void handle(const SgAdaFormalTypeDecl& n)
+      {
+        handle(sg::asBaseType(n));
+
+        SgAdaFormalType* ty = n.get_type();
+        ASSERT_not_null(ty);
+
+        if (SgType* formalType = ty->get_formal_type())
+          computeNameQualForShared(n, ty->get_formal_type());
+      }
+
       void handle(const SgEnumDeclaration& n)
       {
         handle(sg::asBaseType(n));
@@ -823,8 +834,14 @@ namespace
           computeNameQualForShared(n, parentType);
       }
 
-
       void handle(const SgAdaPackageSpecDecl& n)
+      {
+        handle(sg::asBaseType(n));
+
+        recordNameQualIfNeeded(n, n.get_scope());
+      }
+
+      void handle(const SgAdaPackageBodyDecl& n)
       {
         handle(sg::asBaseType(n));
 
@@ -961,23 +978,8 @@ namespace
       const SgScopeStatement&
       assumedDeclarativeScope(const SgFunctionRefExp& n)
       {
-#if OLD_CODE
-        const SgFunctionDeclaration& fundcl = SG_DEREF(n.getAssociatedFunctionDeclaration());
-        const SgScopeStatement*      res    = fundcl.get_scope();
-        const SgExprListExp*         args   = callArguments(n);
-
-        if (args)
-        {
-          // check for "inherited" functions depending on argument types
-          auto                    primitiveArgs = si::ada::primitiveParameterPositions(fundcl);
-          const SgScopeStatement* overridingScope = si::ada::overridingScope(args, primitiveArgs);
-
-          if (overridingScope) res = overridingScope;
-        }
-#else /* !OLD_CODE */
         const SgFunctionSymbol& sym = SG_DEREF(n.get_symbol());
         const SgScopeStatement* res = sym.get_scope();
-#endif /* OLD_CODE */
 
         return SG_DEREF(res);
       }

@@ -712,7 +712,7 @@ TEST_TARGETS += testPointerDetection.passed
 testPointerDetection.passed: $(TEST_WITH_ANSWER) testPointerDetection testPointerDetection.ans conditionalDisable
 	@$(RTH_RUN)											\
 	    TITLE="pointer detection [$@]"								\
-	    DISABLED="$$(./conditionalDisable)"								\
+	    DISABLED="prone to random failures due to output ordering"					\
 	    CMD="./testPointerDetection $(PointerDetectionSwitches) $(PointerDetectionSpecimen)"	\
 	    ANS=$(srcdir)/testPointerDetection.ans							\
 	    $< $@
@@ -1060,42 +1060,6 @@ traceSymbolicSemantics2-x86.passed: semantics.conf traceSymbolicSemantics2 condi
 		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
 		ANSWER=$(srcdir)/$(@:.passed=.ans)	\
 		$< $@
-
-# Symbolic semantics, Yices executable
-noinst_PROGRAMS += yicesSemanticsExe2
-yicesSemanticsExe2_SOURCES = semantics.C
-yicesSemanticsExe2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=YICES_EXE
-yicesSemanticsExe2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-EXTRA_DIST += semantics.conf yicesSemanticsExe2-x86.ans
-if ROSE_HAVE_YICES
-TEST_TARGETS += yicesSemanticsExe2-x86.passed
-yicesSemanticsExe2-x86.passed: semantics.conf yicesSemanticsExe2 conditionalDisable
-	@$(RTH_RUN)					\
-		DISABLED="$$(./conditionalDisable)"	\
-		CMD=yicesSemanticsExe2			\
-		INPUT=i686-test1.O3.bin			\
-		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
-		ANSWER=$(srcdir)/$(@:.passed=.ans)	\
-		$< $@
-endif
-
-# Symbolic semantics, Yices library
-noinst_PROGRAMS += yicesSemanticsLib2
-yicesSemanticsLib2_SOURCES = semantics.C
-yicesSemanticsLib2_CPPFLAGS = -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=YICES_LIB
-yicesSemanticsLib2_LDADD = $(ROSE_LIBS_WITH_PATH) $(ROSE_SEPARATE_LIBS) $(RT_LIBS)
-EXTRA_DIST += semantics.conf yicesSemanticsLib2-x86.ans
-if ROSE_HAVE_LIBYICES
-TEST_TARGETS += yicesSemanticsLib2-x86.passed
-yicesSemanticsLib2-x86.passed: semantics.conf yicesSemanticsLib2 conditionalDisable
-	@$(RTH_RUN)					\
-		DISABLED="$$(./conditionalDisable)"	\
-		CMD=yicesSemanticsLib2			\
-		INPUT=i686-test1.O3.bin			\
-		SPECIMEN_DIR="$(SPECIMEN_DIR)"		\
-		ANSWER=$(srcdir)/$(@:.passed=.ans)	\
-		$< $@
-endif
 
 # Symbolic semantics, Z3 executable
 noinst_PROGRAMS += z3SemanticsExe2

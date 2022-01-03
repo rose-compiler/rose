@@ -131,25 +131,18 @@ namespace Ada_ROSE_Translation
   SgTypeTuple&
   mkTypeUnion(SgTypePtrList elemtypes);
 
-  /// creates a type that references a record declaration \ref dcl.
-  SgClassType&
-  mkRecordType(SgClassDeclaration& dcl);
-
-  /// creates an enumeration with name \ref name in scope \ref scope.
+  /// creates a forward declaration with name \ref name in scope \ref scope.
   SgEnumDeclaration&
   mkEnumDecl(const std::string& name, SgScopeStatement& scope);
+
+  /// creates an enumeration with name \ref name in scope \ref scope.
+  /// \note uses builder function which looks up the forward declaration if one exists
+  SgEnumDeclaration&
+  mkEnumDefn(const std::string& name, SgScopeStatement& scope);
 
   /// creates an ada access type with \ref base_type as the type being referenced.
   SgAdaAccessType&
   mkAdaAccessType(SgType *base_type);
-
-  /// creates a task type that references a task type declaration \ref dcl.
-  SgAdaTaskType&
-  mkAdaTaskType(SgAdaTaskTypeDecl& dcl);
-
-  /// creates a Discriminated type that references a Discriminated type declaration \ref dcl.
-  SgAdaDiscriminatedType&
-  mkAdaDiscriminatedType(SgAdaDiscriminatedTypeDecl& dcl);
 
   /// creates an entry type from a function parameter list
   // \todo the representation is incomplete and should be replaced
@@ -177,10 +170,13 @@ namespace Ada_ROSE_Translation
   SgType& mkAliasedType(SgType& underType);
 
   /// create a formal type
-  SgAdaFormalType& mkAdaFormalType(const std::string& name);
+  // SgAdaFormalType& mkAdaFormalType(const std::string& name);
+
+  //~ SgAdaFormalTypeDecl&
+  //~ mkAdaFormalTypeDecl(const std::string& name, SgAdaFormalType& ty, SgScopeStatement& scope);
 
   SgAdaFormalTypeDecl&
-  mkAdaFormalTypeDecl(const std::string& name, SgAdaFormalType& ty, SgScopeStatement& scope);
+  mkAdaFormalTypeDecl(const std::string& name, SgScopeStatement& scope);
 
   //
   // Statement Makers
@@ -707,6 +703,9 @@ namespace Ada_ROSE_Translation
 
   template <>
   long double convAdaLiteral<long double>(const char* img);
+
+  template <>
+  char convAdaLiteral<char>(const char* img);
   /// \}
 
 

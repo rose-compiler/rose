@@ -1886,19 +1886,19 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
 
           case V_SgAdaPackageSpecDecl:
             {
-              name = "_ada_package_spec_decl_" + genericGetName(isSgAdaPackageSpecDecl(declaration));
+              name = genericGetName(isSgAdaPackageSpecDecl(declaration));
               break;
             }
 
           case V_SgAdaPackageBodyDecl:
             {
-              name = "_ada_package_body_decl_" + genericGetName(isSgAdaPackageBodyDecl(declaration));
+              name = genericGetName(isSgAdaPackageBodyDecl(declaration));
               break;
             }
 
           case V_SgAdaFormalTypeDecl:
              {
-              name = "_ada_formal_type_decl_" + genericGetName(isSgAdaFormalTypeDecl(declaration));
+               name = genericGetName(isSgAdaFormalTypeDecl(declaration));
                break;
              }
 
@@ -13221,11 +13221,11 @@ SgExprStatement* SageInterface::splitVariableDeclaration (SgVariableDeclaration*
     rt = NULL;
   else
   {
-    // Liao, 2021/10/21, we have to support all sorts of initializers, including aggregate initializer    
-    SgExpression * rhs=NULL;  
+    // Liao, 2021/10/21, we have to support all sorts of initializers, including aggregate initializer
+    SgExpression * rhs=NULL;
     if (SgAssignInitializer * ainitor = isSgAssignInitializer (initor))
       rhs = ainitor->get_operand();
-    else 
+    else
       rhs = initor;
 
     // we deep copy the rhs operand
@@ -15960,7 +15960,10 @@ PreprocessingInfo* SageInterface::attachComment(
           case PreprocessingInfo::FortranStyleComment:   comment = "      C " + content;    break;
           case PreprocessingInfo::F90StyleComment:       comment = "!"   + content;         break;
           case PreprocessingInfo::AdaStyleComment:       comment = "-- " + content;         break;
-          case PreprocessingInfo::JovialStyleComment:    comment = "% "  + content + " %";  break;
+          case PreprocessingInfo::JovialStyleComment:
+            // The Jovial comment content will already have the comment delimiters, '%' or '"'
+               comment = content;
+               break;
           case PreprocessingInfo::CpreprocessorLineDeclaration:
                comment = "#myline " + content;
                mytype = PreprocessingInfo::CplusplusStyleComment;
@@ -21687,7 +21690,7 @@ SageInterface::moveStatementsBetweenBlocks ( SgBasicBlock* sourceBlock, SgBasicB
 
 //! Check if a function declaration is a C++11 lambda function
 // TODO, expose to SageInterface namespace
-bool isLambdaFunction (SgFunctionDeclaration* func)
+bool SageInterface::isLambdaFunction (SgFunctionDeclaration* func)
 {
   bool rt = false;
   ROSE_ASSERT (func != NULL);
@@ -21703,7 +21706,7 @@ bool isLambdaFunction (SgFunctionDeclaration* func)
 // SgArrowExp <SgThisExp,  SgVarRefExp>, both are compiler generated nodes
 // class symbol of ThisExp 's declaration is AutonomousDeclaration SgClassDeclaration
 // its parent is SgLambdaExp, and lambda_closure_class points back to this class declaration
-bool isLambdaCapturedVariable (SgVarRefExp* varRef)
+bool SageInterface::isLambdaCapturedVariable (SgVarRefExp* varRef)
 {
   bool rt = false;
 #ifdef  _MSC_VER
@@ -21836,6 +21839,9 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current, b
   {
     return convertRefToInitializedName(isSgPointerDerefExp(current)->get_operand(), coarseGrain);
   }
+  else if(isSgUnaryOp(current)) { //Written for SgAddressOfOp, but seems generally aplicable to all Unary Ops (replace above?) -JL
+    return convertRefToInitializedName(isSgUnaryOp(current)->get_operand(), coarseGrain);
+  }
   else if (isSgCastExp(current))
   {
     return convertRefToInitializedName(isSgCastExp(current)->get_operand(), coarseGrain);
@@ -21854,18 +21860,29 @@ SgInitializedName* SageInterface::convertRefToInitializedName(SgNode* current, b
   }
   // operator->() may be called upon a class object.
   // e.g.  we need to get the function: it a SgDotExp node, (lhs is the class object, rhs is its member function)
- else if (SgFunctionCallExp * func_call = isSgFunctionCallExp(current))
- {
-    return convertRefToInitializedName(func_call->get_function(), coarseGrain);
- }
+  else if (SgFunctionCallExp * func_call = isSgFunctionCallExp(current))
+  {
+      return convertRefToInitializedName(func_call->get_function(), coarseGrain);
+  }
+  else if (isSgIntVal(current))
+  {
+      //It is very rare, but sometimes a constant is treated as a
+      //variable.  In which case we don't need an SgInitializdName
+      return NULL;
+  }
+
   else
   {
-    // side effect analysis will return rhs of  Class A a = A(); as a read ref exp. SgConstructorInitializer
-    if (!isSgConstructorInitializer(current))
-    {
-      cerr<<"In SageInterface::convertRefToInitializedName(): unhandled reference type:"<<current->class_name()<<endl;
-      ROSE_ABORT();
-    }
+      // side effect analysis will return rhs of  Class A a = A(); as a read ref exp. SgConstructorInitializer
+      if (!isSgConstructorInitializer(current))
+      {
+          mlog[Sawyer::Message::Common::WARN] <<
+              "convertRefToInitializedName: " <<
+              current->get_file_info()->get_filename() << ":" <<
+              current->get_file_info()->get_line() << "-" << current->get_file_info()->get_col()<<endl;
+          cerr<<"In SageInterface::convertRefToInitializedName(): unhandled reference type:"<<current->class_name()<<endl;
+          ROSE_ABORT();
+      }
   }
   //ROSE_ASSERT(name != NULL);
   return name;
@@ -27337,3 +27354,28 @@ SageInterface::checkForInitializers( SgNode* node )
        CheckInitializerTraversal traversal;
        traversal.traverse(node, preorder);
    }
+
+namespace
+{
+  struct DeclaredType : sg::DispatchHandler<SgType*>
+  {
+    void handle(SgNode& n, SgNode&) { SG_UNEXPECTED_NODE(n); }
+
+    template <class SageDeclarationStatement>
+    void handle(SageDeclarationStatement& n, SgDeclarationStatement&)
+    {
+      res = n.get_type();
+    }
+
+    template <class SageNode>
+    void handle(SageNode& n)
+    {
+      handle(n, n);
+    }
+  };
+}
+
+SgType* SageInterface::getDeclaredType(const SgDeclarationStatement* declaration)
+{
+  return sg::dispatch(DeclaredType{}, declaration);
+}

@@ -451,18 +451,6 @@ ifneq (@(WITH_YAMLCPP),no)
     LDFLAGS_SHARED += @(CXX_LIB_SWITCH)yaml-cpp
 endif
 
-# Yices SMT solver
-ifneq (@(WITH_YICES),no)
-    YICES_ROOT = @(WITH_YICES)
-    ifneq (@(WITH_YICES),system)
-	CPPFLAGS += @(CPP_INCDIR_SWITCH)$(YICES_ROOT)/include
-	LDFLAGS_STATIC  += @(CXX_LIBDIR_SWITCH)$(YICES_ROOT)/lib
-	LDFLAGS_SHARED  += @(CXX_RPATH_SWITCH)$(YICES_ROOT)/lib @(CXX_LIBDIR_SWITCH)$(YICES_ROOT)/lib
-    endif
-    LDFLAGS_STATIC += @(CXX_LIB_SWITCH)yices
-    LDFLAGS_SHARED += @(CXX_LIB_SWITCH)yices
-endif
-
 # Z3 SMT solver
 ifneq (@(WITH_Z3),no)
     Z3_ROOT = @(WITH_Z3)

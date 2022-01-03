@@ -117,19 +117,8 @@ Visualizer::Visualizer(CTAnalysis* analyzer):
   setFlow(analyzer->getFlow());
   setEStateSet(analyzer->getEStateSet());
   setTransitionGraph(analyzer->getTransitionGraph());
+  _ctOpt=analyzer->getOptions();
 }
-
-  //! For providing specific information. For some visualizations not all information is required. The respective set-function can be used as well to set specific program information (this allows to also visualize computed subsets of information (such as post-processed transition graphs etc.).
-Visualizer::Visualizer(Labeler* l, VariableIdMapping* vim, Flow* f, EStateSet* ess, TransitionGraph* tg):
-  labeler(l),
-  variableIdMapping(vim),
-  flow(f),
-  estateSet(ess),
-  transitionGraph(tg),
-  tg1(false),
-  tg2(false),
-  optionTransitionGraphDotHtmlNode(true)
-{}
 
 void Visualizer::setOptionTransitionGraphDotHtmlNode(bool x) {optionTransitionGraphDotHtmlNode=x;}
 void Visualizer::setLabeler(Labeler* x) { labeler=x; }
@@ -144,17 +133,17 @@ bool Visualizer::getOptionMemorySubGraphs() { return optionMemorySubGraphs; }
 string Visualizer::estateToString(EStatePtr estate) {
   stringstream ss;
   bool pstateAddressSeparator=false;
-  if((tg1&&args.getBool("tg1-estate-address"))||(tg2&&args.getBool("tg2-estate-address"))) {
+  if((tg1&&_ctOpt.visualization.tg1EStateAddress)||(tg2&&_ctOpt.visualization.tg2EStateAddress)) {
     ss<<"@"<<estate;
     pstateAddressSeparator=true;
   }    
-  if((tg1&&args.getBool("tg1-estate-id"))||(tg2&&args.getBool("tg2-estate-id"))) {
+  if((tg1&&_ctOpt.visualization.tg1EStateId)||(tg2&&_ctOpt.visualization.tg2EStateId)) {
     if(pstateAddressSeparator) {
       ss<<":";
     }
     ss<<estateIdStringWithTemporaries(estate);
   }
-  if((tg1&&args.getBool("tg1-estate-properties"))||(tg2&&args.getBool("tg2-estate-properties"))) {
+  if((tg1&&_ctOpt.visualization.tg1EStateProperties)||(tg2&&_ctOpt.visualization.tg2EStateProperties)) {
     ss<<estate->toString(variableIdMapping);
   } 
   return ss.str();
@@ -240,7 +229,6 @@ string Visualizer::transitionGraphToDot() {
   int numInvisibleLayoutEdges=2; // only used for memory subgraphs
 
   for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
-
     // // FAILEDASSERTVIS: the next check allows to turn off edges of failing assert to target node (text=red, background=black)
     if((*j)->target->io.op==InputOutput::FAILED_ASSERT) continue;
 
@@ -321,7 +309,7 @@ string Visualizer::abstractTransitionGraphToDot() {
       concreteEStates.insert(*i);
     } 
   }
-  ss << transitionGraphWithIOToDot(concreteEStates, true, args.getBool("keep-error-states"), false);
+  ss << transitionGraphWithIOToDot(concreteEStates, true, _ctOpt.keepErrorStates, false);
   ss << "subgraph cluster_abstractStates {" << endl;
   ss << transitionGraphWithIOToDot(abstractEStates, true, false, true);
   ss << "}" << endl;
@@ -361,7 +349,7 @@ string Visualizer::transitionGraphWithIOToDot(EStatePtrSet displayedEStates,
     if (displayCurrentState) {
       // generate number which is used in IO operation
       string name="\"";
-      if(args.getBool("rersmode") && !args.getBool("rers-numeric")) {
+      if(_ctOpt.rers.rersMode && !_ctOpt.rers.rersNumeric) {
         if(!number.isTop() && !number.isBot()) {
           // convert number to letter
           int num=number.getIntValue();
@@ -405,7 +393,7 @@ string Visualizer::transitionGraphWithIOToDot(EStatePtrSet displayedEStates,
 #if 0 // debug only
     if ((*i)->io.isStdInIO() && (*i)->isRersTopified(variableIdMapping)) {
       int inputVal = (*i)->determineUniqueIOValue().getIntValue();
-      cout << "DEBUG: abstract input " << inputVal << " has "<<  outTrans.size() << " successors." << endl;
+      //cout << "DEBUG: abstract input " << inputVal << " has "<<  outTrans.size() << " successors." << endl;
     }
 #endif
     for(TransitionGraph::TransitionPtrSet::iterator j=outTrans.begin();
@@ -482,7 +470,7 @@ string Visualizer::transitionGraphWithIOToDot() {
 #endif
     // generate number which is used in IO operation
     AbstractValue number=(*i)->determineUniqueIOValue();
-    if(args.getBool("rersmode") && !args.getBool("rers-numeric")) {
+    if(_ctOpt.rers.rersMode && !_ctOpt.rers.rersNumeric) {
       if(!number.isTop() && !number.isBot()) {
         // convert number to letter
         int num=number.getIntValue();

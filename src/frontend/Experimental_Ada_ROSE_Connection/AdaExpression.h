@@ -49,7 +49,7 @@ namespace Ada_ROSE_Translation
   getAttributeExprID(Element_ID id, AstContext ctx);
 
   /// creates a call to subroutine expression \ref target, and passes params as arguments.
-  SgExpression& createCall(SgExpression& target, ElemIdRange params, AstContext ctx);
+  SgExpression& createCall(SgExpression& target, ElemIdRange params, bool callSyntax, AstContext ctx);
 
   /// creates a sequence of SgExpressions from a sequence of Asis elements
   ///   (eiter expression or definition).

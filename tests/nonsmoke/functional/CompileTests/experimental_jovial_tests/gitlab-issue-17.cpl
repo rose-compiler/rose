@@ -1,0 +1,18 @@
+START
+COMPOOL DECEMBER;
+
+% Original, without entry size %
+DEF TABLE TABLE1(1:5) T 16 W;
+BEGIN
+   ITEM ITEM1 U 16 POS(0,0); % item1 %
+   ITEM ITEM2 U 16 POS(0,0); % item2 %
+END
+
+% With entry size %
+DEF TABLE TABLE2(1:5) T 16 W 32;
+BEGIN
+   ITEM ITEM3 U 16 POS(0,0); " item3 "
+   ITEM ITEM4 U 16 POS(0,0); " item4 "
+END
+
+TERM

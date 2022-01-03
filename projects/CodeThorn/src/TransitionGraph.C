@@ -166,7 +166,7 @@ TransitionGraph::TransitionPtrSet TransitionGraph::outEdges(EStatePtr estate) {
       EStateWorkList& deferedWorkList=subSolverResult.first;
       EStatePtrSet& existingEStateSet=subSolverResult.second;
       EStatePtrSet succNodes;
-      for(EStateWorkList::iterator i=deferedWorkList.begin();i!=deferedWorkList.end();++i) {
+      for(auto i=deferedWorkList.begin();i!=deferedWorkList.end();++i) {
         succNodes.insert(*i);
       }
       for(EStatePtrSet::iterator i=existingEStateSet.begin();i!=existingEStateSet.end();++i) {

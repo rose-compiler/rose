@@ -6,7 +6,6 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/FeasiblePath.h>
 #include <Rose/BinaryAnalysis/SymbolicExprParser.h>
-#include <Rose/BinaryAnalysis/YicesSolver.h>
 #include <Combinatorics.h>
 #include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/DisassemblerAarch32.h>
@@ -1783,7 +1782,9 @@ FeasiblePath::createSmtSolver() {
     if (settings_.smtTimeout)
         solver->timeout(*settings_.smtTimeout);
 #if 1 // DEBUGGING [Robb Matzke 2018-11-14]
-    solver->memoization(false);
+    solver->memoizer(SmtSolver::Memoizer::Ptr());
+#else
+    solver->memoizer(...something_not_null...);
 #endif
     return solver;
 }

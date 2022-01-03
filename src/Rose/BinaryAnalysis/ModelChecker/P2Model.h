@@ -489,6 +489,7 @@ public:
 private:
     Settings settings_;                                 // settings are set by the constructor and not modified thereafter
     const Partitioner2::Partitioner &partitioner_;      // generally shouldn't be changed once model checking starts
+    SmtSolver::Memoizer::Ptr smtMemoizer_;              // memoizer shared among all solvers
 
     mutable SAWYER_THREAD_TRAITS::Mutex unitsMutex_;    // protects only the units_ data member
     Sawyer::Container::Map<rose_addr_t, ExecutionUnitPtr> units_; // cached execution units
@@ -552,6 +553,17 @@ public:
      * @{ */
     bool followingOnePath() const;
     void followingOnePath(bool);
+    /** @} */
+
+    /** Property: SMT solver memoizer.
+     *
+     *  This is the memoizer used each time a new SMT solver is created. An initial memoizer is created by the @c
+     *  SemanticCallbacks constructor if the @p solverMemoization field of the @ref Settings is set. If memoization is
+     *  not enabled in the settings, then a memoizer is not used even if one is set for this property.
+     *
+     * @{ */
+    SmtSolver::Memoizer::Ptr smtMemoizer() const;
+    void smtMemoizer(const SmtSolver::Memoizer::Ptr&);
     /** @} */
 
     /** Property: Number of duplicate states.

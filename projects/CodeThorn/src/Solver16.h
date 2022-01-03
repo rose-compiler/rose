@@ -15,7 +15,9 @@ namespace CodeThorn {
     Solver16();
     void run();
     int getId();
-
+    bool createsTransitionSystem();
+    bool checksAssertions();
+    
     static void initDiagnostics();
   private:
     void initializeSummaryStatesFromWorkList();
@@ -26,6 +28,8 @@ namespace CodeThorn {
     void recordTransition(EStatePtr currentEStatePtr0,EStatePtr currentEStatePtr,Edge e, EStatePtr newEStatePtr);
     static Sawyer::Message::Facility logger;
     static bool _diagnosticsInitialized;
+    
+
   };
 
 } // end of namespace CodeThorn

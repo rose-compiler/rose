@@ -51,7 +51,7 @@ namespace CodeThorn {
       stringstream ss;
       AnalysisSelector analysisSel=analysisInfo.first;
       string analysisName=analysisInfo.second;
-      if(ctOpt.getAnalysisSelectionFlag(analysisSel)) {
+      if(true||ctOpt.getAnalysisSelectionFlag(analysisSel)) {
         ss<<endl;
         ss<<separationLine();
         ss<<"Analysis results for "<<analysisName<<" analysis:"<<endl;

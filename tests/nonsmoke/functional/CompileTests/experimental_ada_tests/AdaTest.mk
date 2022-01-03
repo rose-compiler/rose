@@ -92,6 +92,7 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   defining_character_literal.adb       \
   defining_enumeration_literal.adb     \
   defining_operator_symbol.ads         \
+  enum_derived_type.adb                \
   enumeration.adb                      \
   enumeration_with_text_io.adb         \
   exception_declaration.ads            \
@@ -119,6 +120,7 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   parenthesis_matters.adb              \
   pragmas.adb                          \
   private_access_type.adb              \
+  private_enum.ads                     \
   procedure_call.adb                   \
   procedure_instantiation.adb          \
   procedure_instantiation2.adb         \
@@ -146,6 +148,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   based_numbers.ads                    \
   choice_parameter_specification.adb   \
   complex.ads                          \
+  complex.adb                          \
   discriminant.adb                     \
   discriminant_constraint.ads          \
   discriminated_record.adb             \
@@ -155,11 +158,15 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   entry_declaration.ads                \
   exception_rename.ads                 \
   formal_procedure_declaration.ads     \
+  generic_function_declaration.ads     \
+  generic_package_declaration.ads      \
   inherited_primitive_operation.adb    \
   io.ads                               \
+  iterate_range.adb                    \
   nested_package.ads                   \
   opaque.ads                           \
   package_renaming_declaration.ads     \
+  parent-child.adb                     \
   pkgrename.ads                        \
   procedure_renaming.adb               \
   representation_clause.ads            \
@@ -172,6 +179,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   simple_hello_world_with_renamed.adb  \
   simple_hello_world_with_use.adb      \
   std_ascii_user.adb                   \
+  taskarray.adb                        \
   task_type_declaration.ads            \
   task_with_abort.adb                  \
   task_with_abort_v2.adb               \
@@ -181,7 +189,9 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   test_unit.ads                        \
   usegenericinstance.adb               \
   unknown_discriminant.ads             \
-  uppercase.adb
+  uppercase.adb                        \
+  variant_record.ads                   \
+  variable_variant_record.adb
 
 ADA_TRANSLATOR_PENDING_TESTS :=       
 
@@ -200,17 +210,14 @@ ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=                \
 
 ROSE_FAILING_ADA_TESTS :=                           \
   all_modes.ads                                     \
-  complex.adb                                       \
+  deref_test.adb                                    \
   delay_until.adb                                   \
   entry_body_declaration.adb                        \
   extension_aggregate.adb                           \
   function_body_stub.adb                            \
-  generic_function_declaration.ads                  \
   generic_function_renaming_declaration.ads         \
-  generic_package_declaration.ads                   \
   generic_package_renaming_declaration.ads          \
   generic_procedure_renaming_declaration.ads        \
-  iterate_range.adb                                 \
   mpiuse.ads                                        \
   object_renaming_declaration.adb                   \
   protected_body_declaration.adb                    \
@@ -223,9 +230,7 @@ ROSE_FAILING_ADA_TESTS :=                           \
   test.adb                                          \
   test_unit.adb                                     \
   unit_2.adb                                        \
-  unit_2.ads                                        \
-  variable_variant_record.adb                       \
-  variant_record.ads
+  unit_2.ads                                        
 
 # defines tests that are supported by ASIS
 ASIS_PASSING_TESTS :=                               \
@@ -234,7 +239,6 @@ ASIS_PASSING_TESTS :=                               \
   $(ROSE_FAILING_ADA_TESTS)
 
 ASIS_FAILING_TESTS :=                               \
-  enum_derived_type.adb                             \
   entry_index_specification.adb                     \
   mpi.ads
 

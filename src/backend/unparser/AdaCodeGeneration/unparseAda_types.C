@@ -127,13 +127,13 @@ namespace
       prn("mod ");
       expr(n.get_modexpr());
     }
-
+/*
     void handle(SgAdaFormalType& n)
     {
       prn(" ");
       prn(n.get_type_name());
     }
-
+*/
     void handle(SgModifierType& n)
     {
       if (n.get_typeModifier().isAliased())
@@ -237,10 +237,10 @@ namespace
           prn(" constant");
         }
 
+        // consider: ASSERT_not_null(n.get_base_type());
         if (n.get_base_type() != NULL) {
           type(n.get_base_type());
         }
-
       } else {
         // subprogram access type
         if (n.get_is_protected()) {

@@ -638,15 +638,16 @@ namespace
                      TypeData basis,
                      SgDeclarationStatement* incompl
                    )
-      : base(), dclname(name), dclscope(scope), foundation(basis), incomplDecl(incompl)
+      : base(nullptr), dclname(name), dclscope(scope), foundation(basis), incomplDecl(incompl)
       {}
 
       void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
 
-      void handle(SgAdaFormalType& n)
+      void handle(SgAdaFormalTypeDecl& n)
       {
-        res = &mkAdaFormalTypeDecl(dclname, n, dclscope);
-        n.set_declaration(res);
+        ADA_ASSERT(n.get_scope() == &dclscope);
+
+        res = &n;
       }
 
       void handle(SgType& n)
@@ -671,7 +672,7 @@ namespace
           return;
         }
 
-        SgEnumDeclaration& derivedEnum = mkEnumDecl(dclname, dclscope);
+        SgEnumDeclaration& derivedEnum = mkEnumDefn(dclname, dclscope);
 
         derivedEnum.set_adaParentType(&n);
         res = &derivedEnum;
@@ -1721,7 +1722,7 @@ namespace
 
           SgExpression&    target = getExprID(stmt.Called_Name, ctx);
           ElemIdRange      args   = idRange(stmt.Call_Statement_Parameters);
-          SgExpression&    call   = createCall(target, args, ctx);
+          SgExpression&    call   = createCall(target, args, true /* call syntax */, ctx);
           SgExprStatement& sgnode = SG_DEREF(sb::buildExprStatement(&call));
 
           attachSourceLocation(call, elem, ctx);
@@ -2409,11 +2410,18 @@ namespace
       case An_Ordinary_Fixed_Point_Definition:
       case A_Decimal_Fixed_Point_Definition:
       case An_Access_Type_Definition:
-      case An_Enumeration_Type_Definition:    // \todo untested
       case An_Unconstrained_Array_Definition: // \todo untested
       case A_Constrained_Array_Definition:    // \todo untested
         {
           res = &mkTypeDecl(adaname.ident, mkOpaqueType(), scope);
+          break;
+        }
+
+      case An_Enumeration_Type_Definition:
+        {
+          SgEnumDeclaration& sgnode = mkEnumDecl(adaname.ident, scope);
+
+          res = &sgnode;
           break;
         }
 

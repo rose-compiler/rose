@@ -7,46 +7,45 @@
  * 2. following a specified format that I have specified with indentations of
  *    length TABINDENT (for transformations)
  * 
- * REMEMBER: For types and symbols, we still call the original unparse function 
- * defined in sage since they dont have file_info. For expressions, 
- * Unparse_Jovial::unparse is called, and for statements, 
- * Unparse_Jovial::unparseStatement is called.
+ * REMEMBER: For types and symbols, we still call the original unparse function
+ * defined in sage since they dont have file_info. For expressions,
+ * UnparseJovial::unparse is called, and for statements,
+ * UnparseJovial::unparseStatement is called.
  *
  */
 #include "sage3basic.h"
 #include "unparser.h"
-
-#include <boost/foreach.hpp>
-#define foreach BOOST_FOREACH
-
 #include "sage_support.h"
 
-
-Unparse_Jovial::Unparse_Jovial(Unparser* unp, std::string fname)
+UnparseJovial::UnparseJovial(Unparser* unp, std::string fname)
    : UnparseLanguageIndependentConstructs(unp,fname)
    {
    }
 
 
-Unparse_Jovial::~Unparse_Jovial()
+UnparseJovial::~UnparseJovial()
    {
    }
 
 
 void 
-Unparse_Jovial::unparseJovialFile(SgSourceFile *sourcefile, SgUnparse_Info& info) 
-   {
-     SgGlobal* globalScope = sourcefile->get_globalScope();
-     ASSERT_not_null(globalScope);
+UnparseJovial::unparseJovialFile(SgSourceFile *sourcefile, SgUnparse_Info& info)
+{
+  SgGlobal* globalScope = sourcefile->get_globalScope();
+  ASSERT_not_null(globalScope);
 
-     curprint("START\n");
-     unparseStatement(globalScope, info);
-     curprint("TERM\n");
-   }
+  // Comments are really important in language translation. Turn them off in the base class
+  // so that care can be used to unparse and check comments in Jovial.
+  info.set_SkipComments();
+
+  curprint("START\n");
+  unparseStatement(globalScope, info);
+  curprint("TERM\n");
+}
 
 
 void
-Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Info& info)
    {
   // This function unparses the language specific statements not handled by the base class unparseStatement() member function
 
@@ -117,7 +116,7 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
 
           default:
             {
-               cerr << "Unparse_Jovial::unparseLanguageSpecificStatement: Error: No handler for "
+               cerr << "UnparseJovial::unparseLanguageSpecificStatement: Error: No handler for "
                     <<  stmt->class_name() << ", variant: " << stmt->variantT() << endl;
                ROSE_ABORT();
                break;
@@ -127,11 +126,11 @@ Unparse_Jovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_In
 
 
 //----------------------------------------------------------------------------
-//  Unparse_Jovial::DIRECTIVES and DEFINE
+//  UnparseJovial::DIRECTIVES and DEFINE
 //----------------------------------------------------------------------------
 
 void
-Unparse_Jovial::unparseDirectiveStmt(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseDirectiveStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgJovialDirectiveStatement* directive = isSgJovialDirectiveStatement(stmt);
      ASSERT_not_null(directive);
@@ -214,13 +213,14 @@ Unparse_Jovial::unparseDirectiveStmt(SgStatement* stmt, SgUnparse_Info& info)
            }
         default:
            {
-              cout << "Warning: SgJovialDirectiveStmt directive type not handled is " << directive->get_directive_type() << endl;
+              cout << "Warning: SgJovialDirectiveStmt directive type not handled is "
+                   << directive->get_directive_type() << endl;
            }
         }
    }
 
 void
-Unparse_Jovial::unparseDefineDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseDefineDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgJovialDefineDeclaration* define = isSgJovialDefineDeclaration(stmt);
      ASSERT_not_null(define);
@@ -231,11 +231,11 @@ Unparse_Jovial::unparseDefineDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 //----------------------------------------------------------------------------
-//  Unparse_Jovial::MODULES
+//  UnparseJovial::MODULES
 //----------------------------------------------------------------------------
 
 void 
-Unparse_Jovial::unparseCompoolStmt(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseCompoolStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgJovialCompoolStatement* compool = isSgJovialCompoolStatement(stmt);
      ASSERT_not_null(compool);
@@ -246,7 +246,7 @@ Unparse_Jovial::unparseCompoolStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
-Unparse_Jovial::unparseProgHdrStmt(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseProgHdrStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgProgramHeaderStatement* prog = isSgProgramHeaderStatement(stmt);
      ASSERT_not_null(prog);
@@ -259,7 +259,7 @@ Unparse_Jovial::unparseProgHdrStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
-Unparse_Jovial::unparseProcDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseProcDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgUnparse_Info ninfo(info);
 
@@ -302,14 +302,14 @@ Unparse_Jovial::unparseProcDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
      curprint("(");
 
      bool print_comma = false;
-     foreach (SgInitializedName* param, in_params) {
+     for (SgInitializedName* param : in_params) {
         if (print_comma) curprint(",");
         curprint(param->get_name());
         print_comma = true;
      }
 
      print_comma = false;
-     foreach (SgInitializedName* param,  out_params) {
+     for (SgInitializedName* param : out_params) {
         if (print_comma) curprint(",");
         else             curprint(":");
         curprint(param->get_name());
@@ -332,7 +332,7 @@ Unparse_Jovial::unparseProcDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
         info.dec_nestingLevel();
      }
      else {
-        foreach(SgDeclarationStatement* decl, param_scope->getDeclarationList()) {
+        for (SgDeclarationStatement* decl : param_scope->getDeclarationList()) {
            if (isSgJovialDirectiveStatement(decl)) {
               unparseStatement(decl, ninfo);
            }
@@ -342,7 +342,7 @@ Unparse_Jovial::unparseProcDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
         curprint_indented("BEGIN\n", info);
 
         info.inc_nestingLevel();
-        foreach(SgInitializedName* arg, args) {
+        for (SgInitializedName* arg : args) {
            SgVariableSymbol* var_sym = SageInterface::lookupVariableSymbolInParentScopes(arg->get_name(), param_scope);
            SgInitializedName* var_init_name = var_sym->get_declaration();
            ASSERT_not_null(var_init_name);
@@ -359,7 +359,7 @@ Unparse_Jovial::unparseProcDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
-Unparse_Jovial::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgFunctionDefinition* funcdef = isSgFunctionDefinition(stmt);
      ASSERT_not_null(funcdef);
@@ -372,7 +372,7 @@ Unparse_Jovial::unparseFuncDefnStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
-Unparse_Jovial::unparseNamespaceDeclarationStatement(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseNamespaceDeclarationStatement(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgNamespaceDeclarationStatement* decl = isSgNamespaceDeclarationStatement(stmt);
      ASSERT_not_null(decl);
@@ -384,7 +384,7 @@ Unparse_Jovial::unparseNamespaceDeclarationStatement(SgStatement* stmt, SgUnpars
    }
 
 void
-Unparse_Jovial::unparseNamespaceDefinitionStatement(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseNamespaceDefinitionStatement(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgNamespaceDefinitionStatement* namespace_defn = isSgNamespaceDefinitionStatement(stmt);
      ASSERT_not_null(namespace_defn);
@@ -392,7 +392,7 @@ Unparse_Jovial::unparseNamespaceDefinitionStatement(SgStatement* stmt, SgUnparse
      const SgDeclarationStatementPtrList& declarations = namespace_defn->get_declarations();
 
      info.inc_nestingLevel();
-     foreach(SgStatement* namespace_stmt, declarations)
+     for (SgStatement* namespace_stmt : declarations)
         {
            unparseStatement(namespace_stmt, info);
         }
@@ -401,11 +401,11 @@ Unparse_Jovial::unparseNamespaceDefinitionStatement(SgStatement* stmt, SgUnparse
 
 
 //----------------------------------------------------------------------------
-//  Unparse_Jovial::<executable statements, control flow>
+//  UnparseJovial::<executable statements, control flow>
 //----------------------------------------------------------------------------
 
 void
-Unparse_Jovial::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgBasicBlock* block = isSgBasicBlock(stmt);
      ASSERT_not_null(block);
@@ -422,7 +422,7 @@ Unparse_Jovial::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
 
      info.inc_nestingLevel();
-     foreach(SgStatement* block_stmt, block->get_statements())
+     for (SgStatement* block_stmt : block->get_statements())
         {
            unparseStatement(block_stmt, info);
         }
@@ -434,7 +434,7 @@ Unparse_Jovial::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
         }
    }
 
-void Unparse_Jovial::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info)
+void UnparseJovial::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgLabelStatement* label_stmt = isSgLabelStatement(stmt);
      ASSERT_not_null(label_stmt);
@@ -450,7 +450,7 @@ void Unparse_Jovial::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
-Unparse_Jovial::unparseForStatement(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseForStatement(SgStatement* stmt, SgUnparse_Info& info)
    {
   // The SgForStatement is used for the Jovial for statements like:
   //
@@ -508,7 +508,7 @@ Unparse_Jovial::unparseForStatement(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
-Unparse_Jovial::unparseJovialForThenStmt(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseJovialForThenStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
   // The SgJovialForThenStatement is used for Jovial for statements like:
   //
@@ -643,7 +643,7 @@ Unparse_Jovial::unparseJovialForThenStmt(SgStatement* stmt, SgUnparse_Info& info
    }
 
 void
-Unparse_Jovial::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgWhileStmt* while_stmt = isSgWhileStmt(stmt);
      ASSERT_not_null(while_stmt);
@@ -667,7 +667,7 @@ Unparse_Jovial::unparseWhileStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
-Unparse_Jovial::unparseGotoStmt(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseGotoStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgGotoStatement* goto_stmt = isSgGotoStatement(stmt);
      ASSERT_not_null(goto_stmt);
@@ -679,7 +679,7 @@ Unparse_Jovial::unparseGotoStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
-Unparse_Jovial::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgIfStmt* if_stmt = isSgIfStmt(stmt);
      ASSERT_not_null(if_stmt);
@@ -707,7 +707,7 @@ Unparse_Jovial::unparseIfStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
-Unparse_Jovial::unparseSwitchStmt(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseSwitchStmt(SgStatement* stmt, SgUnparse_Info& info)
   {
  // Sage node corresponding to Jovial CaseStatement;
     SgSwitchStatement* switch_stmt = isSgSwitchStatement(stmt);
@@ -728,7 +728,7 @@ Unparse_Jovial::unparseSwitchStmt(SgStatement* stmt, SgUnparse_Info& info)
   }
 
 void
-Unparse_Jovial::unparseCaseStmt(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseCaseStmt(SgStatement* stmt, SgUnparse_Info& info)
   {
  // Sage node corresponding to Jovial CaseAlternative rule
     SgCaseOptionStmt* case_stmt = isSgCaseOptionStmt(stmt);
@@ -749,7 +749,7 @@ Unparse_Jovial::unparseCaseStmt(SgStatement* stmt, SgUnparse_Info& info)
   }
 
 void 
-Unparse_Jovial::unparseDefaultStmt(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseDefaultStmt(SgStatement* stmt, SgUnparse_Info& info)
   {
  // Sage node corresponding to Jovial DefaultOption rule
     SgDefaultOptionStmt* default_stmt = isSgDefaultOptionStmt(stmt);
@@ -768,14 +768,14 @@ Unparse_Jovial::unparseDefaultStmt(SgStatement* stmt, SgUnparse_Info& info)
   }
 
 void
-Unparse_Jovial::unparseBreakStmt(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseBreakStmt(SgStatement* stmt, SgUnparse_Info& info)
   {
  // This IR node is compiler generated for no FALLTHRU option in CaseAlternative rule.
  // It should not be unparsed, unparseCaseOptionStmt and unparseDefaultStmt will
  // unparse the FALLTHRU keyward as needed.
   }
 
-void Unparse_Jovial::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
+void UnparseJovial::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
       SgTypedefDeclaration* typedef_decl = isSgTypedefDeclaration(stmt);
       ASSERT_not_null(typedef_decl);
@@ -794,7 +794,7 @@ void Unparse_Jovial::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
-Unparse_Jovial::unparseProcessControlStmt(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseProcessControlStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgProcessControlStatement* pc_stmt = isSgProcessControlStatement(stmt);
      ASSERT_not_null(pc_stmt);
@@ -817,14 +817,14 @@ Unparse_Jovial::unparseProcessControlStmt(SgStatement* stmt, SgUnparse_Info& inf
         }
      else
         {
-          cerr << "Unparse_Jovial::unparseProcessControlStmt: unknown statement enum "
+          cerr << "UnparseJovial::unparseProcessControlStmt: unknown statement enum "
                <<  kind << endl;
           ROSE_ABORT();
         }
    }
 
 void
-Unparse_Jovial::unparseReturnStmt(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseReturnStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
       SgReturnStmt* return_stmt = isSgReturnStmt(stmt);
       ASSERT_not_null(return_stmt);
@@ -834,7 +834,7 @@ Unparse_Jovial::unparseReturnStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
-Unparse_Jovial::unparseEnumBody(SgEnumDeclaration* enum_decl, SgUnparse_Info& info)
+UnparseJovial::unparseEnumBody(SgEnumDeclaration* enum_decl, SgUnparse_Info& info)
 {
    ASSERT_not_null(enum_decl);
 
@@ -857,29 +857,49 @@ Unparse_Jovial::unparseEnumBody(SgEnumDeclaration* enum_decl, SgUnparse_Info& in
    info.inc_nestingLevel();
 
    int n = def_decl->get_enumerators().size();
-   foreach(SgInitializedName* init_name, def_decl->get_enumerators())
-     {
-       std::string name = init_name->get_name().str();
-       name.replace(0, 3, "V(");
-       name.append(")");
+   for (SgInitializedName* init_name : def_decl->get_enumerators()) {
+      std::string name = init_name->get_name().str();
+      name.replace(0, 3, "V(");
+      name.append(")");
 
-       SgAssignInitializer* assign_expr = isSgAssignInitializer(init_name->get_initializer());
-       ASSERT_not_null(assign_expr);
-       SgEnumVal* enum_val = isSgEnumVal(assign_expr->get_operand());
-       ASSERT_not_null(enum_val);
+      SgAssignInitializer* assign_expr = isSgAssignInitializer(init_name->get_initializer());
+      ASSERT_not_null(assign_expr);
+      SgEnumVal* enum_val = isSgEnumVal(assign_expr->get_operand());
+      ASSERT_not_null(enum_val);
 
-       curprint_indented(tostring(enum_val->get_value()), info);
-       curprint(name);
-       if (--n > 0) curprint(",");
-       unp->cur.insert_newline(1);
-     }
+      // unparse comments preceding the expression
+      const AttachedPreprocessingInfoType* preprocInfo = enum_val->get_attachedPreprocessingInfoPtr();
+      if (preprocInfo) {
+        for (PreprocessingInfo* info : *preprocInfo) {
+          if (info->getRelativePosition() == PreprocessingInfo::before) {
+            curprint(info->getString());
+          }
+        }
+      }
+
+      // unparse enum value name
+      curprint_indented(tostring(enum_val->get_value()), info);
+      curprint(name);
+      if (--n > 0) curprint(",");
+
+      // unparse comments succeeding the expression
+       if (preprocInfo) {
+         for (PreprocessingInfo* info : *preprocInfo) {
+          if (info->getRelativePosition() == PreprocessingInfo::after) {
+            curprint(info->getString());
+          }
+         }
+       }
+
+      unp->cur.insert_newline(1);
+   }
    info.dec_nestingLevel();
 
    curprint_indented(")", info);
 }
 
 void
-Unparse_Jovial::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgEnumDeclaration* enum_decl = isSgEnumDeclaration(stmt);
      ASSERT_not_null(enum_decl);
@@ -895,7 +915,7 @@ Unparse_Jovial::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
-Unparse_Jovial::unparseOverlayDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseOverlayDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
       SgJovialOverlayDeclaration* overlay_decl = isSgJovialOverlayDeclaration(stmt);
       ASSERT_not_null(overlay_decl);
@@ -917,7 +937,7 @@ Unparse_Jovial::unparseOverlayDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
-Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
   // This unparses a table type declaration not a table variable declaration
   //
@@ -1014,7 +1034,7 @@ Unparse_Jovial::unparseTableDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
-Unparse_Jovial::unparseTableBody(SgClassDefinition* table_def, SgUnparse_Info& info)
+UnparseJovial::unparseTableBody(SgClassDefinition* table_def, SgUnparse_Info& info)
    {
      ASSERT_not_null(table_def);
 
@@ -1025,7 +1045,7 @@ Unparse_Jovial::unparseTableBody(SgClassDefinition* table_def, SgUnparse_Info& i
            curprint_indented("BEGIN\n", info);
 
            info.inc_nestingLevel();
-           foreach(SgDeclarationStatement* item_decl, table_def->get_members())
+           for (SgDeclarationStatement* item_decl : table_def->get_members())
               {
                  if (isSgVariableDeclaration(item_decl))
                     {
@@ -1052,7 +1072,7 @@ Unparse_Jovial::unparseTableBody(SgClassDefinition* table_def, SgUnparse_Info& i
    }
 
 void
-Unparse_Jovial::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgVariableDeclaration* vardecl = isSgVariableDeclaration(stmt);
      ASSERT_not_null(vardecl);
@@ -1064,7 +1084,7 @@ Unparse_Jovial::unparseVarDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    }
 
 void
-Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initializedName, SgUnparse_Info& info)
+UnparseJovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initializedName, SgUnparse_Info& info)
    {
      SgName name         = initializedName->get_name();
      SgType* type        = initializedName->get_type();
@@ -1074,6 +1094,7 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
      SgModifierType* modifier_type = isSgModifierType(type);
 
      info.set_inVarDecl();
+     unparseCommentsBefore(stmt, info);
 
   // pretty printing
      curprint( ws_prefix(info.get_nestingLevel()) );
@@ -1220,14 +1241,16 @@ Unparse_Jovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initialized
         }
      else
         {
-           curprint(";\n");
+           curprint(";");
+           unparseCommentsAfter(stmt, info);
+           curprint("\n");
         }
 
      info.unset_inVarDecl();
    }
 
 void
-Unparse_Jovial::unparseExprStmt(SgStatement* stmt, SgUnparse_Info& info)
+UnparseJovial::unparseExprStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgExprStatement* expr_stmt = isSgExprStatement(stmt);
      ASSERT_not_null(expr_stmt);
@@ -1249,3 +1272,31 @@ Unparse_Jovial::unparseExprStmt(SgStatement* stmt, SgUnparse_Info& info)
      unp->u_sage->curprint_newline();
    }
 
+void
+UnparseJovial::unparseCommentsBefore(SgStatement* stmt, SgUnparse_Info& info)
+{
+  // unparse comments preceding the statement
+  const AttachedPreprocessingInfoType* preprocInfo = stmt->get_attachedPreprocessingInfoPtr();
+  if (preprocInfo) {
+    for (PreprocessingInfo* info : *preprocInfo) {
+      if (info->getRelativePosition() == PreprocessingInfo::before) {
+        curprint(info->getString());
+      }
+    }
+  }
+  curprint("\n");
+}
+
+void
+UnparseJovial::unparseCommentsAfter(SgStatement* stmt, SgUnparse_Info& info)
+{
+  // unparse comments after the statement
+  const AttachedPreprocessingInfoType* preprocInfo = stmt->get_attachedPreprocessingInfoPtr();
+  if (preprocInfo) {
+    for (PreprocessingInfo* info : *preprocInfo) {
+      if (info->getRelativePosition() == PreprocessingInfo::after) {
+        curprint(info->getString());
+      }
+    }
+  }
+}

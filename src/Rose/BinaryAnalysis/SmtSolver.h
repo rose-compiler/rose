@@ -15,8 +15,8 @@
 #include <boost/noncopyable.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/thread/mutex.hpp>
-#include <boost/unordered_map.hpp>
 #include <inttypes.h>
+#include <unordered_map>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -29,17 +29,25 @@ public:
     bool operator()(const SymbolicExpr::LeafPtr&, const SymbolicExpr::LeafPtr&) const;
 };
 
+class CompareRawLeavesByName {
+public:
+    bool operator()(const SymbolicExpr::Leaf*, const SymbolicExpr::Leaf*) const;
+};
+
 /** Interface to Satisfiability Modulo Theory (SMT) solvers.
  *
  *  The purpose of an SMT solver is to determine if an expression is satisfiable. Solvers are reference counted objects that
  *  are allocated with @c instance static methods or @c create virtual constructors and should not be explicitly deleted. */
 class SmtSolver: private boost::noncopyable {
 public:
+    /** Ordered list of expressions. */
+    using ExprList = std::vector<SymbolicExpr::Ptr>;
+
     /** Reference counting pointer for SMT solvers. */
     using Ptr = SmtSolverPtr;
 
     /** Solver availability map. */
-    typedef std::map<std::string, bool> Availability;
+    using Availability = std::map<std::string, bool>;
 
     /** Bit flags to indicate the kind of solver interface. */
     enum LinkMode {
@@ -57,11 +65,11 @@ public:
     enum Type { NO_TYPE, BOOLEAN, BIT_VECTOR, MEM_STATE };
 
     /** Maps expression nodes to term names.  This map is populated for common subexpressions. */
-    typedef std::pair<std::string, Type> StringTypePair;
-    typedef Sawyer::Container::Map<SymbolicExpr::Ptr, StringTypePair> TermNames;
+    using StringTypePair = std::pair<std::string, Type>;
+    using TermNames = Sawyer::Container::Map<SymbolicExpr::Ptr, StringTypePair>;
 
     /** Maps one symbolic expression to another. */
-    typedef Sawyer::Container::Map<SymbolicExpr::Ptr, SymbolicExpr::Ptr> ExprExprMap;
+    using ExprExprMap = Sawyer::Container::Map<SymbolicExpr::Ptr, SymbolicExpr::Ptr>;
 
     /** Exceptions for all things SMT related. */
     struct Exception: Rose::Exception {
@@ -167,16 +175,16 @@ public:
             return solver_;
         }
     };
-    
-    /** Set of variables. */
-    typedef Sawyer::Container::Set<SymbolicExpr::LeafPtr, CompareLeavesByName> VariableSet;
 
-    typedef std::set<uint64_t> Definitions;             /**< Free variables that have been defined. */
+    /** Set of variables. */
+    using VariableSet = Sawyer::Container::Set<SymbolicExpr::LeafPtr, CompareLeavesByName>;
+
+    using Definitions = std::set<uint64_t>;             /**< Free variables that have been defined. */
 
     /** S-Expr parsed from SMT solver text output. */
     class SExpr: public Sawyer::SmallObject, public Sawyer::SharedObject {
     public:
-        typedef Sawyer::SharedPointer<SExpr> Ptr;
+        using Ptr = Sawyer::SharedPointer<SExpr>;
     private:
         explicit SExpr(const std::string &content): content_(content) {}
         std::string content_;
@@ -193,24 +201,122 @@ public:
         void print(std::ostream&) const;
     };
 
-    typedef std::pair<SExpr::Ptr, Type> SExprTypePair;
+    using SExprTypePair = std::pair<SExpr::Ptr, Type>;
 
-    typedef boost::unordered_map<SymbolicExpr::Hash, Satisfiable> Memoization;
+    /** Memoizes calls to an SMT solver.
+     *
+     *  This class memoizes calls to the @c check function for a particular SMT solver, or across some collection of solvers. For
+     *  every non-trivial call to @c check, the memoizer caches the input set of assertions and the output satisfiability and, if
+     *  satisfiable, the output evidence of satisfiability. Moreover, it does this in such a way that assertions that only vary in
+     *  their variable names can be matched to previously cached calls.
+     *
+     *  In order to use memoization, a non-null memoizer should be passed to the @ref SmtSolver::instance factory, or a non-null
+     *  memoizer pointer should be assigned to the @c memoizer property of the @ref SmtSolver. To disable memoization, assign
+     *  a null pointer to the @c memoizer property.  Multiple @ref SmtSolver objects can share the same memoizer, but this should
+     *  generally only be done when all such solvers are guaranteed to return the same values for any given inputs, which is not
+     *  always the case due to differences in implementation.
+     *
+     *  In order to match calls whose inputs vary only in order of assertions and/or variable names, the assertions are sorted and
+     *  normalized before being stored in the cache. First, to sort the assertions each assertion is independently normalized by
+     *  renaming its variables starting at "v0" in the order they're encountered in a depth-first-search traversal. Then the input
+     *  assertions are sorted according to the hashes of their corresponding normalized versions. Finally, the variables in the
+     *  sorted assertions are collectively renamed, producing a sorted-normalized set of assertions and a renaming map.  When a new
+     *  result is added to the cache, the variables in the evidence of satisfiability are renamed according to renaming map. The
+     *  original assertions, original evidence of satisfiability, and renaming map are discarded.  When a cache hit occurs and the
+     *  evidence needs to be returned, the cached evidence is de-normalized using the inverse of the temporary renaming map for the
+     *  current input assertions.
+     *
+     *  Thread safety: All member functions are thread safe unless otherwise noted. */
+    class Memoizer: public Sawyer::SharedObject {
+    public:
+        /** Reference counting pointer. */
+        using Ptr = Sawyer::SharedPointer<Memoizer>;
+
+        /* Return value from @ref find function. */
+        struct Found {
+            Sawyer::Optional<Satisfiable> satisfiable;      /**< If found, whether satisfiable. */
+            ExprList sortedNormalized;                      /**< Sorted and normalized assertions, regardless if found. */
+            SymbolicExpr::ExprExprHashMap rewriteMap;       /**< Mapping from provided to sortedNormalized assertions. */
+            ExprExprMap evidence;                           /**< Normalized evidence if found and satisfiable. */
+
+            /** True if lookup was a cache hit. */
+            explicit operator bool() const {
+                return satisfiable;
+            }
+        };
+
+    private:
+        using ExprExpr = std::pair<SymbolicExpr::Ptr, SymbolicExpr::Ptr>;
+
+        // The thing that is memoized
+        struct Record {
+            ExprList assertions;                        // "find" inputs, sorted and normalized
+            Satisfiable satisfiable;                    // main output of SMT solver
+            ExprExprMap evidence;                       // output if satisfied: sorted and normalized
+        };
+
+        // Mapping from hash of sorted-normalized assertions to the memoization record.
+        using Map = std::multimap<SymbolicExpr::Hash, Record>;
+
+    private:
+        mutable SAWYER_THREAD_TRAITS::Mutex mutex_;     // protects the following data members
+        Map map_;                                       // memoization records indexed by hash of sorted-normalized assertions
+
+    protected:
+        Memoizer() {}
+
+    public:
+        /** Allocating constructor. */
+        static Ptr instance();
+
+        /** Clear the entire cache as if it was just constructed. */
+        void clear();
+
+        /** Search for the specified assertions in the cache.
+         *
+         *  If this is a cache hit, then the return value evaluates to true in Boolean context and contains the satisfiability and
+         *  normalized evidence. The evidence needs to be de-normalized by the @ref evidence function before it can be used.  If
+         *  this is a cache miss, then the return value evaluates to false in Boolean context, but it contains enough information
+         *  for the SMT solver results to be inserted into the cache later by the @ref insert function.
+         *
+         *  The documentation for this class describes how the search works by sorting and normalizing the input assertions. */
+        Found find(const ExprList &assertions);
+
+        /** Returns evidence of satisfiability.
+         *
+         *  The argument is the result from @ref find. If the argument evaluates to true in Boolean context (i.e., the @ref find
+         *  was a cache hit) then this function will de-normalize the cached evidence of satisfiability and return it. This function
+         *  should not be called if the argument evaluates to false in a Boolean context (i.e., the @ref find was a cache miss). */
+        ExprExprMap evidence(const Found&) const;
+
+        /** Insert a call record into the cache.
+         *
+         *  The first argument is the return value from @ref find which must have been a cache miss.  The remaining arguments are
+         *  the results from the SMT solver for the same assertions that were used in the @ref find call. The evidence is normalized
+         *  using the same variable mapping as was used for the input assertions during the @ref find call, and then stored in the
+         *  cache in normalized form. */
+        void insert(const Found&, Satisfiable, const ExprExprMap &evidence);
+
+        /** Number of call records cached. */
+        size_t size() const;
+
+    public:
+        // Non-synchronized search for the sorted-normalized assertions which have the specified hash.
+        Map::iterator searchNS(SymbolicExpr::Hash, const ExprList &sortedNormalized);
+    };
 
 private:
     std::string name_;
-    std::vector<std::vector<SymbolicExpr::Ptr> > stack_;
+    std::vector<ExprList> stack_;
     bool errorIfReset_;
 
 protected:
     LinkMode linkage_;
     std::string outputText_;                            /**< Additional output obtained by satisfiable(). */
     std::vector<SExpr::Ptr> parsedOutput_;              // the evidence output
+    ExprExprMap evidence_;                              // evidence for last check() if satisfiable
     TermNames termNames_;                               // maps ROSE exprs to SMT exprs and their basic type
-    Memoization memoization_;                           // cache of previously computed results
-    bool doMemoization_;                                // use the memoization_ table?
-    Sawyer::Optional<SymbolicExpr::Hash> latestMemoizationId_; // key for last found or inserted memoization, or nothing
-    SymbolicExpr::ExprExprHashMap latestMemoizationRewrite_; // variables rewritten, need to be undone when parsing evidence
+    Memoizer::Ptr memoizer_;                            // cache of previously computed results
 
     // Statistics
     static boost::mutex classStatsMutex;
@@ -234,10 +340,7 @@ private:
         // outputText_               -- not serialized
         // parsedOutput_             -- not serialized
         // termNames_                -- not serialized
-        // memoization_              -- not serialized
-        // doMemoization_            -- not serialized
-        // latestMemoizationId_      -- not serialized
-        // latestMemoizationRewrite_ -- not serialized
+        // memoizer_                 -- not serialized
         // classStatsMutex           -- not serialized
         // classStats                -- not serialized
         // stats                     -- not serialized
@@ -255,7 +358,7 @@ protected:
      *  situation by reading the @p linkage property, or just wait for one of the other methods to throw an @ref
      *  SmtSolver::Exception. */
     SmtSolver(const std::string &name, unsigned linkages)
-        : name_(name), errorIfReset_(false), linkage_(LM_NONE), doMemoization_(true) {
+        : name_(name), errorIfReset_(false), linkage_(LM_NONE) {
         init(linkages);
     }
     
@@ -320,33 +423,16 @@ public:
      *  "Best" is defined as that with the best performance, which is usually direct calls to the solver's API. */
     static LinkMode bestLinkage(unsigned linkages);
 
-    /** Property: Perform memoization.
+    /** Property: Memoizer.
      *
-     *  If set, then perform memoization by caching all previous results.
+     *  The value of this property is a pointer to the object that caches the memoization for this solver. Setting it to a
+     *  non-null pointer turns on memoization (using that object) and setting it to a null pointer turns off
+     *  memoization. Memoization can be turned on or off at any time, and multiple SMT solvers can share the same memoizer.
      *
      * @{ */
-    bool memoization() const { return doMemoization_; }
-    void memoization(bool b) {
-        doMemoization_ = b;
-        if (!b)
-            clearMemoization();
-    }
+    Memoizer::Ptr memoizer() const;
+    void memoizer(const Memoizer::Ptr&);
     /** @} */
-
-    /** Id for latest memoized result, or zero. */
-    Sawyer::Optional<SymbolicExpr::Hash> latestMemoizationId() const {
-        return latestMemoizationId_;
-    }
-    
-    /** Clear memoization table. */
-    virtual void clearMemoization() {
-        memoization_.clear();
-    }
-
-    /** Size of memoization table. */
-    virtual size_t memoizationNEntries() const {
-        return memoization_.size();
-    }
 
     /** Set the timeout for the solver.
      *
@@ -366,7 +452,7 @@ public:
      *
      *  This is a high-level abstraction that resets this object state so it contains a single assertion set on its stack, and
      *  clears evidence of satisfiability. */
-    virtual Satisfiable triviallySatisfiable(const std::vector<SymbolicExpr::Ptr> &exprs);
+    virtual Satisfiable triviallySatisfiable(const ExprList &exprs);
 
     /** Determines if the specified expressions are all satisfiable, unsatisfiable, or unknown.
      *
@@ -376,7 +462,7 @@ public:
      *
      * @{ */
     virtual Satisfiable satisfiable(const SymbolicExpr::Ptr&);
-    virtual Satisfiable satisfiable(const std::vector<SymbolicExpr::Ptr>&);
+    virtual Satisfiable satisfiable(const ExprList&);
     /** @} */
 
 
@@ -444,19 +530,19 @@ public:
      *
      * @{ */
     virtual void insert(const SymbolicExpr::Ptr&);
-    virtual void insert(const std::vector<SymbolicExpr::Ptr>&);
+    virtual void insert(const ExprList&);
     /** @} */
 
     /** All assertions.
      *
      *  Returns the list of all assertions across all backtracking points. */
-    virtual std::vector<SymbolicExpr::Ptr> assertions() const;
+    virtual ExprList assertions() const;
 
     /** Assertions for a particular level.
      *
      *  Returns the assertions associated with a particular level of the stack. Level zero is the oldest entry in the stack;
      *  all smt objects have a level zero. See also, @ref nLevels. */
-    virtual std::vector<SymbolicExpr::Ptr> assertions(size_t level) const;
+    virtual const ExprList& assertions(size_t level) const;
 
     /** Check satisfiability of current stack.
      *
@@ -487,24 +573,29 @@ public:
      *
      *  The returned names are only for those variables and addresses whose evidence of satisfiability can be parsed by
      *  ROSE. The subclasses provide additional methods for obtaining more detailed information. */
-    virtual std::vector<std::string> evidenceNames() {
-        return std::vector<std::string>();
-    }
+    virtual std::vector<std::string> evidenceNames() const;
 
     /** Evidence of satisfiability for a variable or memory address.
      *
      *  If the string starts with the letter 'v' then variable evidence is returned, otherwise the string must be an address.
      *  Valid strings are those returned by the @ref evidenceNames method; other strings result in a null return
      *  value. Subclasses might define additional methods for obtaining evidence of satisfiability. */
-    virtual SymbolicExpr::Ptr evidenceForName(const std::string&) {
-        return SymbolicExpr::Ptr();
-    }
+    virtual SymbolicExpr::Ptr evidenceForName(const std::string&) const;
 
     /** All evidence of satisfiability.
      *
-     *  This is the same as calling @ref evidenceNames and then calling @ref evidenceForName for each of those names. */
-    Evidence evidence();
-
+     *  The version that returns a map indexed by variable name is the same as calling @ref evidenceNames and then @ref
+     *  evidenceForName for each of those names.
+     *
+     *  The version that returns a map indexed by symbolic expression returns all the evidence in symbolic form. The keys for
+     *  that return value are symbolic expressions that are simply variables.
+     *
+     *  Evidence is only returned if the previous check was satisfiable. Otherwise the return value is an empty map.
+     *
+     * @{ */
+    Evidence evidenceByName() const;
+    ExprExprMap evidence() const;
+    /** @} */
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Mid-level abstraction for solver results.
@@ -584,7 +675,7 @@ public:
      *
      *  This function is also useful for debugging because it will convert ROSE's symbolic expressions to whatever format
      *  is used by the SMT solver. */
-    virtual void generateFile(std::ostream&, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*) = 0;
+    virtual void generateFile(std::ostream&, const ExprList &exprs, Definitions*) = 0;
 
 protected:
     /** Check satisfiability using text files and an executable. */
@@ -626,8 +717,7 @@ protected:
      *  it encounters. The variables are renumbered starting at zero.  The return value is a vector new new expressions, some
      *  of which may be the unmodified original expressions if there were no variables.  The @p index is also a return value
      *  which indicates how original variables were mapped to new variables. */
-    static std::vector<SymbolicExpr::Ptr> normalizeVariables(const std::vector<SymbolicExpr::Ptr>&,
-                                                             SymbolicExpr::ExprExprHashMap &index /*out*/);
+    static ExprList normalizeVariables(const ExprList&, SymbolicExpr::ExprExprHashMap &index /*out*/);
 
     /** Undo the normalizations that were performed earlier.
      *
@@ -636,8 +726,7 @@ protected:
      *  expressions need not be those same expressions. For each input expression, the expression is rewritten by substituting
      *  the inverse of the index. That is, a depth first search is performed on the expression and if the subexpression matches
      *  a value of the index, then it's replaced by the corresponding key. */
-    static std::vector<SymbolicExpr::Ptr> undoNormalization(const std::vector<SymbolicExpr::Ptr>&,
-                                                            const SymbolicExpr::ExprExprHashMap &index);
+    static ExprList undoNormalization(const ExprList&, const SymbolicExpr::ExprExprHashMap &index);
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -657,9 +746,6 @@ private:
 };
 
 std::ostream& operator<<(std::ostream&, const SmtSolver::SExpr&);
-
-// FIXME[Robb Matzke 2017-10-17]: This typedef is deprecated. Use SmtSolver instead.
-typedef SmtSolver SMTSolver;
 
 } // namespace
 } // namespace

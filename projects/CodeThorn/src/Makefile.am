@@ -7,7 +7,7 @@ COUNTEREXAMPLES = counterexamples/ltl2haskell.sh counterexamples/Makefile counte
 EXTRA_DIST = Doxyfile $(TESTS) $(COUNTEREXAMPLES)
 
 #
-bin_PROGRAMS = codethorn thorn1 thorn2 thorn3 ltlthorn woodpecker analyterix addressTakenAnalysis cldemo
+bin_PROGRAMS = codethorn thorn1 thorn2 thorn3 thorn4 ltlthorn woodpecker analyterix addressTakenAnalysis cldemo
 
 # matcher_demo matcher astinfo cldemo
 noinst_PROGRAMS = addressTakenAnalysis cldemo matcher_demo
@@ -115,6 +115,8 @@ CODETHORN_HEADER_FILES=\
   FunctionCallTarget.h \
   FunctionId.h \
   FunctionIdMapping.h \
+  GeneralWorkList.h \
+  GeneralPriorityWorkList.h \
   InputOutput.h \
   InternalChecks.h \
   IntervalAnalysis.h \
@@ -177,6 +179,8 @@ CODETHORN_HEADER_FILES=\
   RoseCompatibility.h \
   Solver5.h \
   Solver16.h \
+  Solver17.h \
+  Solver18.h \
   Solver8.h \
   Solver.h \
   Specialization.h \
@@ -308,6 +312,8 @@ CODETHORN_SOURCE_FILES=\
   RoseCompatibility.C \
   Solver5.C \
   Solver16.C \
+  Solver17.C \
+  Solver18.C \
   Solver8.C \
   Solver.C \
   Specialization.C \
@@ -541,7 +547,7 @@ thorn2_SOURCES = \
   thorn2.C
 
 ###################################################################
-# TOOL: THORN3 create graph visualizations of ROSE data structures
+# TOOL: THORN3 create dumps of ROSE ASTs and data structures
 ###################################################################
 
 # thorn3 uses libcodethorn
@@ -555,6 +561,23 @@ thorn3_CXXFLAGS = -fopenmp -Wall -O3
 # codethorn sources in addition to libcodethorn
 thorn3_SOURCES = \
   thorn3.C
+
+
+###################################################################
+# TOOL: THORN4 create graph visualizations of state transition systems
+###################################################################
+
+# thorn4 uses libcodethorn
+thorn4_DEPENDENCIES=libcodethorn.la
+
+thorn4_LDADD = $(LIBS_WITH_RPATH) $(ROSE_LIBS) -lcodethorn
+
+# this line creates speparately named object files, fopenmp is required
+thorn4_CXXFLAGS = -fopenmp -Wall -O3
+
+# codethorn sources in addition to libcodethorn
+thorn4_SOURCES = \
+  thorn4.C
 
 
 ##############################################################
@@ -693,7 +716,7 @@ check-matcher:
 
 
 CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-lc check-io unit-test check-omp-cfg check-commandline-options check-vis \
-                      check-thorn2 check-stg
+                      check-thorn2 check-stg check-thorn4
 CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 
 CHECK_WITH_SPOT_PASSING=check-reachability-seq check-ltl-seq check-ltl-par
@@ -738,6 +761,9 @@ check-domain-avset:
 
 check-domain-avset-err:
 	$(srcdir)/scripts/runDomainTests --testdir $(srcdir)/tests --show-errors --l2avset
+
+check-cfg:
+	$(srcdir)/scripts/runCfgTests $(srcdir)/tests
 
 check-lc:
 	$(srcdir)/scripts/runLineColTests $(srcdir)/tests
@@ -827,7 +853,7 @@ check-ltl-rers-timeout-seq:
 
 #test the analysis of RERS Problem1402 and terminate after 3 seconds, 4 threads
 check-ltl-rers-timeout-par:
-	@$(srcdir)/scripts/runRersTimeoutTest $(srcdir) $(top_builddir)/projects/CodeThorn/src 3 4
+	@$(srcdir)/scripts/runRersTimeoutTest $(srcdir) $(top_builddir)/projects/CodeThorn/src 1 2
 
 #one test for the loop-aware-sync analysis (solver 12, ISoLA'16 paper)
 check-ltl-rers-loop-aware-sync:
@@ -903,6 +929,12 @@ check-thorn2: thorn2
 	./thorn2 -I$(includedir) -I$(includedir)/rose --thorn:dot=simple.dot --thorn:layout_txt=simple_class_layout.txt --thorn:layout_dot=simple_class_layout.dot --thorn:virtual_functions=simple_virtual_functions.txt   $(srcdir)/tests/thorn2/simple.cc
 	./thorn2 -I$(includedir) -I$(includedir)/rose --thorn:dot=simple-e.dot --thorn:layout_txt=simple-e_class_layout.txt --thorn:layout_dot=simple-e_class_layout.dot --thorn:virtual_functions=simple-e_virtual_functions.txt --thorn:original_name=0 $(srcdir)/tests/thorn2/simple.cc
 
+check-thorn4: thorn4
+	rm -rf thorn4-test-abstract
+	rm -rf thorn4-test-concrete
+	./thorn4 --thorn4:report-dir=thorn4-test-abstract $(srcdir)/tests/rers_mini1.c
+	./thorn4 --thorn4:mode=concrete --thorn4:report-dir=thorn4-test-concrete $(srcdir)/tests/rers_mini1.c --thorn4:input-values="{1,2,3}" --thorn4:status
+
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))
 rers: $(RERS)
@@ -910,7 +942,10 @@ rers: $(RERS)
 docs:
 	cd "$(srcdir)" && doxygen
 
-clean-local:
+clean-thorn4:
+	rm -rf thorn4-test-concrete thorn4-test-abstract
+
+clean-local: clean-thorn4
 	rm -f *.dot *.dat
 	rm -f *.ps
 	rm -f *.jpg

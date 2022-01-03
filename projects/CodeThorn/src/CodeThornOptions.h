@@ -129,11 +129,13 @@ public:
   bool forkFunctionEnabled=false;
   std::string forkFunctionName="";
 
-  bool sharedPStates=true;
+  bool sharedPStates=false;
   bool fastPointerHashing=true;
   bool exitOnHashError=false;
   bool readWriteTrace=false;
   
+  bool keepErrorStates=false;
+
   // RERS C-subset program options
   struct Rers {
     std::string assertResultsOutputFileName;

@@ -37,7 +37,7 @@ void Solver5::run() {
   //SAWYER_MESG(logger[INFO])<<"number of error labels: "<<_analyzer->reachabilityResults.size()<<endl;
   size_t prevStateSetSize=0; // force immediate report at start
   int threadNum;
-  int workers=_analyzer->_numberOfThreadsToUse;
+  int workers=_analyzer->getNumberOfThreadsToUse();
   vector<bool> workVector(workers);
   _analyzer->set_finished(workVector,true);
   bool terminateEarly=false;
@@ -59,18 +59,18 @@ void Solver5::run() {
     threadNum=omp_get_thread_num();
     while(!_analyzer->all_false(workVector)) {
       // SAWYER_MESG(logger[DEBUG])<<"running : WL:"<<estateWorkListCurrent->size()<<endl;
-      if(threadNum==0 && _analyzer->_displayDiff && (_analyzer->estateSet.size()>(prevStateSetSize+_analyzer->_displayDiff))) {
+      if(threadNum==0 && _analyzer->getDisplayDiff() && (_analyzer->getEStateSetSize()>(prevStateSetSize+_analyzer->getDisplayDiff()))) {
         _analyzer->printStatusMessage(true);
-        prevStateSetSize=_analyzer->estateSet.size();
+        prevStateSetSize=_analyzer->getEStateSetSize();
       }
       //perform reduction to I/O/worklist states only if specified threshold was reached
       if (ioReductionActive) {
 #pragma omp critical
         {
-          if (_analyzer->estateSet.size() > (estatesLastReduction + ioReductionThreshold)) {
+          if (_analyzer->getEStateSetSize() > (estatesLastReduction + ioReductionThreshold)) {
             _analyzer->reduceStgToInOutAssertWorklistStates();
-            estatesLastReduction = _analyzer->estateSet.size();
-            cout<< "STATUS: transition system reduced to I/O/worklist states. remaining transitions: " << _analyzer->transitionGraph.size() << endl;
+            estatesLastReduction = _analyzer->getEStateSetSize();
+            cout<< "STATUS: transition system reduced to I/O/worklist states. remaining transitions: " << _analyzer->getTransitionGraphSize() << endl;
           }
         }
       }
@@ -95,21 +95,21 @@ void Solver5::run() {
         continue;
       if(!currentEStatePtr) {
         //cerr<<"Thread "<<threadNum<<" found empty worklist. Continue without work. "<<endl;
-        ROSE_ASSERT(threadNum>=0 && threadNum<=_analyzer->_numberOfThreadsToUse);
+        ROSE_ASSERT(threadNum>=0 && threadNum<=_analyzer->getNumberOfThreadsToUse());
       } else {
         ROSE_ASSERT(currentEStatePtr);
         Flow edgeSet=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
         //cout << "DEBUG: out-edgeSet size:"<<edgeSet.size()<<endl;
         for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
           Edge e=*i;
-          list<EState> newEStateList;
-          newEStateList=_analyzer->transferEdgeEState(e,currentEStatePtr);
-          for(list<EState>::iterator nesListIter=newEStateList.begin();
+          list<EStatePtr> newEStateList=_analyzer->transferEdgeEState(e,currentEStatePtr);
+          for(list<EStatePtr>::iterator nesListIter=newEStateList.begin();
               nesListIter!=newEStateList.end();
               ++nesListIter) {
             // newEstate is passed by value (not created yet)
-            EState newEState=*nesListIter;
-            ROSE_ASSERT(newEState.label()!=Labeler::NO_LABEL);
+            //EState newEState=*nesListIter;
+            EStatePtr newEStatePtr0=*nesListIter;
+            ROSE_ASSERT(newEStatePtr0->label()!=Labeler::NO_LABEL);
             if(_analyzer->getOptionsRef().stgTraceFileName.size()>0) {
               std::ofstream fout;
               // _csv_stg_trace_filename is the member-variable of analyzer
@@ -121,16 +121,20 @@ void Solver5::run() {
                 string sourceString=_analyzer->getCFAnalyzer()->getLabeler()->getNode(currentEStatePtr->label())->unparseToString().substr(0,40);
                 if(sourceString.size()==60) sourceString+="...";
                 fout<<"\n==>"<<"TRANSFER:"<<sourceString;
-                fout<<"==>\n"<<"ESTATE-OUT:"<<newEState.toString(_analyzer->getVariableIdMapping());
+                fout<<"==>\n"<<"ESTATE-OUT:"<<newEStatePtr0->toString(_analyzer->getVariableIdMapping());
                 fout<<endl;
                 fout<<endl;
                 fout.close();
               }
             }
             
-            if((!_analyzer->isFailedAssertEState(&newEState)&&!_analyzer->isVerificationErrorEState(&newEState))) {
-              HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState);
+            if((!_analyzer->isFailedAssertEState(newEStatePtr0)&&!_analyzer->isVerificationErrorEState(newEStatePtr0))) {
+              HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEStatePtr0);
               EStatePtr newEStatePtr=const_cast<EStatePtr>(pres.second);
+              if(newEStatePtr!=newEStatePtr0) {
+                //cout<<"DEBUG: deleting temporary solver 5 state."<<endl;
+                delete newEStatePtr0;
+              }
               if(pres.first==true) {
                 int abstractionMode=_analyzer->getAbstractionMode();
                 switch(abstractionMode) {
@@ -192,7 +196,7 @@ void Solver5::run() {
                     exit(1);
                 }
                 default:
-                  cerr<<"Error: unknown abstraction mode "<<abstractionMode<<endl;
+                  cerr<<"Error: unknown abstraction mode "<<abstractionMode<<" (solver 5)"<<endl;
                   exit(1);
                 }
               } else {
@@ -200,13 +204,12 @@ void Solver5::run() {
               }
               _analyzer->recordTransition(currentEStatePtr,e,newEStatePtr);
             }
-            if(((_analyzer->isFailedAssertEState(&newEState))||_analyzer->isVerificationErrorEState(&newEState))) {
+            if(((_analyzer->isFailedAssertEState(newEStatePtr0))||_analyzer->isVerificationErrorEState(newEStatePtr0))) {
               // failed-assert end-state: do not add to work list but do add it to the transition graph
-              EStatePtr newEStatePtr;
-              newEStatePtr=_analyzer->processNewOrExisting(newEState);
+              EStatePtr newEStatePtr=_analyzer->processNewOrExisting(newEStatePtr0);
               _analyzer->recordTransition(currentEStatePtr,e,newEStatePtr);
 
-              if(_analyzer->isVerificationErrorEState(&newEState)) {
+              if(_analyzer->isVerificationErrorEState(newEStatePtr)) {
 #pragma omp critical
                 {
                   //SAWYER_MESG(logger[TRACE]) <<"STATUS: detected verification error state ... terminating early"<<endl;
@@ -215,7 +218,7 @@ void Solver5::run() {
 		  _analyzer->_firstAssertionOccurences.push_back(pair<int, EStatePtr>(0, newEStatePtr));
                   terminateEarly=true;
                 }
-              } else if(_analyzer->isFailedAssertEState(&newEState)) {
+              } else if(_analyzer->isFailedAssertEState(newEStatePtr0)) {
                 // record failed assert
                 int assertCode;
                 if(_analyzer->getOptionsRef().rers.rersBinary) {
@@ -250,15 +253,15 @@ void Solver5::run() {
     _analyzer->printStatusMessage(true);
     _analyzer->printStatusMessage("STATUS: analysis finished (incomplete STG due to specified resource restriction).",true);
     _analyzer->reachabilityResults.finishedReachability(_analyzer->isPrecise(),!isComplete);
-    _analyzer->transitionGraph.setIsComplete(!isComplete);
+    _analyzer->getTransitionGraph()->setIsComplete(!isComplete);
   } else {
     bool tmpcomplete=true;
     _analyzer->reachabilityResults.finishedReachability(_analyzer->isPrecise(),tmpcomplete);
     _analyzer->printStatusMessage(true);
-    _analyzer->transitionGraph.setIsComplete(tmpcomplete);
+    _analyzer->getTransitionGraph()->setIsComplete(tmpcomplete);
     _analyzer->printStatusMessage("STATUS: analysis finished (worklist is empty).",true);
   }
-  _analyzer->transitionGraph.setIsPrecise(_analyzer->isPrecise());
+  _analyzer->getTransitionGraph()->setIsPrecise(_analyzer->isPrecise());
 }
 
 void Solver5::initDiagnostics() {
@@ -266,4 +269,12 @@ void Solver5::initDiagnostics() {
     _diagnosticsInitialized = true;
     Solver::initDiagnostics(logger, 5);
   }
+}
+
+bool Solver5::createsTransitionSystem() {
+  return true;
+}
+
+bool Solver5::checksAssertions() {
+  return true;
 }

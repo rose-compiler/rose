@@ -1166,7 +1166,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
           case SgFile::e_Jovial_language:
              {
             // Rasmussen (11/24/2017): Begin implementation of the Jovial unparser
-               Unparse_Jovial unparser(this, file->getFileName());
+               UnparseJovial unparser{this, file->getFileName()};
                unparser.unparseJovialFile(file, info);
 
                break;
