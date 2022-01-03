@@ -46,8 +46,18 @@ using SmtSolverPtr = std::shared_ptr<SmtSolver>;
 namespace SymbolicExpr {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                      Basic Types
+//                                      Basic Types and settings
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/** Whether to serialize variable IDs.
+ *
+ *  If set, then all threads will coordinate so that variable IDs are allocated in a monotonic fashion. This should only be set
+ *  when necessary in order to make test results more deterministic.  The default is to clear, which means variable IDs are
+ *  allocated from some number of pools in order to reduce lock contention.
+ *
+ *  Thread safety: This property is not thread safe. If reproducible results are desired, it should be set before any analysis
+ *  begins. */
+extern bool serializeVariableIds;
 
 /** Whether to use abbreviated or full output. */
 namespace TypeStyle {
@@ -594,8 +604,12 @@ public:
     /** Argument.
      *
      *  Returns the specified argument by index. If the index is out of range, then returns null. A leaf node always returns
-     *  null since it never has children. */
-    virtual Ptr child(size_t idx) const = 0;
+     *  null since it never has children.
+     *
+     * @{ */
+    virtual const Ptr& child(size_t idx) const = 0;
+    virtual const Node* childRaw(size_t idx) const = 0;
+    /** @} */
 
     /** Arguments.
      *
@@ -788,13 +802,21 @@ public:
 
     /** Dynamic cast of this object to an interior node.
      *
-     *  Returns null if the cast is not valid. */
+     *  Returns null if the cast is not valid.
+     *
+     *  @{ */
     InteriorPtr isInteriorNode() const;
+    Interior* isInteriorNodeRaw() const;
+    /** @} */
 
     /** Dynamic cast of this object to a leaf node.
      *
-     *  Returns null if the cast is not valid. */
+     *  Returns null if the cast is not valid.
+     *
+     * @{ */
     LeafPtr isLeafNode() const;
+    Leaf* isLeafNodeRaw() const;
+    /** @} */
 
     /** Returns true if this node has a hash value computed and cached. The hash value zero is reserved to indicate that no
      *  hash has been computed; if a node happens to actually hash to zero, it will not be cached and will be recomputed for
@@ -845,6 +867,9 @@ public:
     void print(std::ostream &o) const { Formatter fmt; print(o, fmt); }
     /** @} */
 
+    /** Convert expression to string. */
+    std::string toString() const;
+
     /** Asserts that expressions are acyclic. This is intended only for debugging. */
     void assertAcyclic() const;
 
@@ -867,6 +892,10 @@ public:
 
 protected:
     void printFlags(std::ostream &o, unsigned flags, char &bracket) const;
+
+public: // only used internally
+    using EquivPairs = std::map<Node*, std::vector<std::pair<Node*, bool>>>;
+    virtual bool isEquivalentHelper(Node*, EquivPairs&) = 0;
 };
 
 /** Operator-specific simplification methods. */
@@ -1122,6 +1151,7 @@ public:
     virtual bool mustEqual(const Ptr &other, const SmtSolverPtr &solver = SmtSolverPtr()) override;
     virtual bool mayEqual(const Ptr &other, const SmtSolverPtr &solver = SmtSolverPtr()) override;
     virtual bool isEquivalentTo(const Ptr &other) override;
+    virtual bool isEquivalentHelper(Node*, EquivPairs&) override;
     virtual int compareStructure(const Ptr& other) override;
     virtual Ptr substitute(const Ptr &from, const Ptr &to, const SmtSolverPtr &solver = SmtSolverPtr()) override;
     virtual VisitAction depthFirstTraversal(Visitor&) const override;
@@ -1129,7 +1159,8 @@ public:
     virtual const Nodes& children() const override { return children_; }
     virtual Operator getOperator() const override { return op_; }
     virtual size_t nChildren() const override { return children_.size(); }
-    virtual Ptr child(size_t idx) const override { return idx < children_.size() ? children_[idx] : Ptr(); }
+    virtual const Ptr& child(size_t idx) const override;
+    virtual Node* childRaw(size_t idx) const override;
     virtual Sawyer::Optional<uint64_t> toUnsigned() const override { return Sawyer::Nothing(); }
     virtual Sawyer::Optional<int64_t> toSigned() const override { return Sawyer::Nothing(); }
     virtual bool isConstant() const override { return false; }
@@ -1283,12 +1314,14 @@ public:
     //--------------------------------------------------------
 public:
     virtual size_t nChildren() const override { return 0; }
-    virtual Ptr child(size_t idx) const override { return Ptr(); }
+    virtual const Ptr& child(size_t idx) const override;
+    virtual const Node* childRaw(size_t idx) const override { return nullptr; }
     virtual const Nodes& children() const override;
     virtual Operator getOperator() const override { return OP_NONE; }
     virtual bool mustEqual(const Ptr &other, const SmtSolverPtr &solver = SmtSolverPtr()) override;
     virtual bool mayEqual(const Ptr &other, const SmtSolverPtr &solver = SmtSolverPtr()) override;
     virtual bool isEquivalentTo(const Ptr &other) override;
+    virtual bool isEquivalentHelper(Node*, EquivPairs&) override;
     virtual int compareStructure(const Ptr& other) override;
     virtual Ptr substitute(const Ptr &from, const Ptr &to, const SmtSolverPtr &solver = SmtSolverPtr()) override;
     virtual VisitAction depthFirstTraversal(Visitor&) const override;
@@ -1627,7 +1660,7 @@ Ptr substitute(const Ptr &src, Substitution &subber, const SmtSolverPtr &solver 
         return dst;
 
     // Try substituting all the subexpressions.
-    InteriorPtr inode = src->isInteriorNode();
+    const Interior *inode = src->isInteriorNodeRaw();
     if (!inode)
         return src;
     bool anyChildChanged = false;

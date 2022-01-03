@@ -45,7 +45,7 @@ class PlusApplicator : public OPApplicator
   bool MergeElem(const SymbolicTerm& t1, const SymbolicTerm& t2,
                             SymbolicTerm& result)
     { 
-      int valu1,vald1, valu2, vald2;
+      int valu1=0,vald1=0, valu2=0, vald2=0;
       if ( IsZero(t1)) {
         result = t2; return true;
       }

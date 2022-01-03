@@ -106,7 +106,7 @@ generateJovialCompoolFile(SgFile *sfile)
        // The output_filename is the name that will be matched against in the selection of statements to unparse.
        // However, that its suffix is ".rcmp" will cause UnparseLanguageIndependentConstructs::statementFromFile() 
        // to always return true.  So use of output_filename should map to the file from the file constructed.
-          Unparse_Jovial myunp(&unp, output_filename);
+          UnparseJovial myunp{&unp, output_filename};
 
           output_stream << "START\n";
           myunp.unparseStatement(global_scope, (SgUnparse_Info&)ninfo);

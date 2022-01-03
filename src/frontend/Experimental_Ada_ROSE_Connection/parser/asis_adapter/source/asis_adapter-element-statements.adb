@@ -140,6 +140,13 @@ package body Asis_Adapter.Element.Statements is
             Add_Edges      => True);
       end;
 
+      procedure Add_Is_Prefix_Notation is
+         Value : constant Boolean := Asis.Elements.Is_Prefix_Notation (Element);
+      begin
+         State.Add_To_Dot_Label ("Is_Prefix_Notation", Value);
+         Result.Is_Prefix_Notation := a_nodes_h.Support.To_bool (Value);
+      end;
+
       procedure Add_Called_Name is
          ID : constant a_nodes_h.Element_ID :=
            Get_Element_ID (Asis.Statements.Called_Name (Element));
@@ -406,6 +413,7 @@ package body Asis_Adapter.Element.Statements is
             Add_Corresponding_Destination_Statement;
 
          when A_Procedure_Call_Statement =>
+            Add_Is_Prefix_Notation;
             Add_Called_Name;
             Add_Corresponding_Called_Entity;
             Add_Call_Statement_Parameters;

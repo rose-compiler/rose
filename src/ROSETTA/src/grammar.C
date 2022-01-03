@@ -1236,6 +1236,10 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
           (nodeName == "UntypedInitializedName"     && variableNameString == "type")  ||
           (nodeName == "EnumDeclaration"            && variableNameString == "type")  ||
           (nodeName == "TypedefDeclaration"         && variableNameString == "type")  ||
+          (nodeName == "AdaDiscriminatedTypeDecl"   && variableNameString == "type")  ||
+          (nodeName == "AdaTaskTypeDecl"            && variableNameString == "type")  ||
+          (nodeName == "AdaTaskSpecDecl"            && variableNameString == "type")  ||
+          (nodeName == "AdaFormalTypeDecl"          && variableNameString == "type")  ||
           (nodeName == "ClassDeclaration"           && variableNameString == "type")  ||
           (nodeName == "FunctionDeclaration"        && variableNameString == "type")  ||
           (nodeName == "AsmExpression"              && variableNameString == "type")  ||
@@ -1372,6 +1376,10 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
           (nodeName == "UntypedInitializedName"     && variableNameString == "type")  ||
           (nodeName == "EnumDeclaration"            && variableNameString == "type")  ||
           (nodeName == "TypedefDeclaration"         && variableNameString == "type")  ||
+          (nodeName == "AdaDiscriminatedTypeDecl"   && variableNameString == "type")  ||
+          (nodeName == "AdaTaskTypeDecl"            && variableNameString == "type")  ||
+          (nodeName == "AdaTaskSpecDecl"            && variableNameString == "type")  ||
+          (nodeName == "AdaFormalTypeDecl"          && variableNameString == "type")  ||
           (nodeName == "ClassDeclaration"           && variableNameString == "type")  ||
           (nodeName == "FunctionDeclaration"        && variableNameString == "type")  ||
           (nodeName == "FunctionTypeSymbol"         && variableNameString == "type")  ||
@@ -4266,7 +4274,7 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
                     outputFile << successorContainerName << ".push_back(compute_baseTypeDefiningDeclaration());\n";
                   }
             // else if (nodeName == "SgVariableDeclaration" && memberVariableName == "baseTypeDefiningDeclaration")
-               else if ( (nodeName == "SgVariableDeclaration" || nodeName == "SgTemplateVariableDeclaration" || nodeName == "SgAdaVariantFieldDecl") 
+               else if ( (nodeName == "SgVariableDeclaration" || nodeName == "SgTemplateVariableDeclaration" || nodeName == "SgAdaVariantFieldDecl")
                        && memberVariableName == "baseTypeDefiningDeclaration"
                        )
                   {
@@ -4342,7 +4350,7 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
             // Exceptional case first: SgVariableDeclaration, which has a fixed member (that we compute using a special
             // function) followed by a container.
             // if (string(node.getName()) == "SgVariableDeclaration")
-               if (  string(node.getName()) == "SgVariableDeclaration" 
+               if (  string(node.getName()) == "SgVariableDeclaration"
                   || string(node.getName()) == "SgTemplateVariableDeclaration"
                   || string(node.getName()) == "SgAdaVariantFieldDecl"
                   )
@@ -4451,7 +4459,7 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
             // Exceptional case first: SgVariableDeclaration, which has a fixed member (that we compute using a special
             // function) followed by a container.
             // if (string(node.getName()) == "SgVariableDeclaration")
-               if (  string(node.getName()) == "SgVariableDeclaration" 
+               if (  string(node.getName()) == "SgVariableDeclaration"
                   || string(node.getName()) == "SgTemplateVariableDeclaration"
                   || string(node.getName()) == "SgAdaVariantFieldDecl"
                   )

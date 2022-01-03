@@ -18,9 +18,6 @@ private:
     ExprExprMap varsForSets_;                           // variables to use for sets
 
 protected:
-    ExprExprMap evidence;
-    typedef boost::unordered_map<SymbolicExpr::Hash, ExprExprMap> MemoizedEvidence;
-    MemoizedEvidence memoizedEvidence;
     Sawyer::Optional<boost::chrono::duration<double> > timeout_; // max time for solving a single set of equations in seconds
 
 protected:
@@ -54,10 +51,6 @@ public:
     virtual std::string getCommand(const std::string &configName) override;
     virtual std::string getErrorMessage(int exitStatus) override;
     virtual void findVariables(const SymbolicExpr::Ptr&, VariableSet&) override;
-    virtual SymbolicExpr::Ptr evidenceForName(const std::string&) override;
-    virtual std::vector<std::string> evidenceNames() override;
-    virtual void clearEvidence() override;
-    virtual void clearMemoization() override;
     virtual void timeout(boost::chrono::duration<double>) override;
 
 protected:

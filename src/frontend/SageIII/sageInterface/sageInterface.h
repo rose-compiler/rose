@@ -320,6 +320,12 @@ int64_t getAsmSignedConstant(SgAsmValueExpression *e);
     */
      std::string get_name ( const SgToken* token );
 
+   /*! \brief Returns the type introduced by a declaration.
+    */
+   // PP (11/22/2021): General function for extracting the type of declarations (when they declare types)
+     SgType* getDeclaredType(const SgDeclarationStatement* declaration);
+
+
   // DQ (3/20/2016): Added to refactor some of the DSL infrastructure support.
    /*! \brief Generate a useful name to support construction of identifiers from declarations.
 
@@ -1938,6 +1944,13 @@ ROSE_DLL_API void moveStatementsBetweenBlocks ( SgAdaPackageBody* sourceBlock, S
 
 //! Move statements between C++ namespace's definitions
 ROSE_DLL_API void moveStatementsBetweenBlocks ( SgNamespaceDefinitionStatement* sourceBlock, SgNamespaceDefinitionStatement* targetBlock );
+
+//!  Check if a function declaration is a C++11 lambda function
+ROSE_DLL_API bool isLambdaFunction (SgFunctionDeclaration* func);
+
+//! check if a variable reference is this->a[i] inside of a lambda function
+ROSE_DLL_API bool isLambdaCapturedVariable (SgVarRefExp* varRef);
+
 
 //! Move a variable declaration to a new scope, handle symbol, special scopes like For loop, etc.
 ROSE_DLL_API void moveVariableDeclaration(SgVariableDeclaration* decl, SgScopeStatement* target_scope);

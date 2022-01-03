@@ -528,7 +528,6 @@ private:
         // Address must be an offset from some base address. The constant is the offet since the base address is probably a
         // symbolic stack or frame pointer. There might be more than one constant.
         if (SymbolicExpr::OP_ADD == addr->getOperator()) {
-            SymbolicExpr::InteriorPtr inode = addr->isInteriorNode();
             BOOST_FOREACH (SymbolicExpr::Ptr operand, addr->children()) {
                 int64_t offset = 0;
                 if (operand->toSigned().assignTo(offset)) {
@@ -957,9 +956,9 @@ VariableFinder::findConstants(const SymbolicExpr::Ptr &expr) {
         std::vector<SymbolicExpr::Ptr> path;
 
         SymbolicExpr::VisitAction preVisit(const SymbolicExpr::Ptr &node) {
-            SymbolicExpr::InteriorPtr parent;
+            const SymbolicExpr::Interior *parent = nullptr;
             if (!path.empty()) {
-                parent = path.back()->isInteriorNode();
+                parent = path.back()->isInteriorNodeRaw();
                 ASSERT_not_null(parent);
             }
             path.push_back(node);

@@ -86,7 +86,7 @@ namespace
   {
       using base = sg::DispatchHandler<SgExpression*>;
 
-      AdaCallBuilder(ElemIdRange params, AstContext astctx)
+      AdaCallBuilder(ElemIdRange params, bool useCallSyntax, AstContext astctx)
       : base(nullptr), range(params), ctx(astctx)
       {}
 
@@ -192,7 +192,6 @@ namespace
       {
         SgExprListExp& arglst = computeArguments();
 
-
         if (SgFunctionDeclaration* funDcl = n.getAssociatedFunctionDeclaration())
         {
           SgFunctionSymbol& origSym = SG_DEREF(n.get_symbol());
@@ -245,6 +244,7 @@ namespace
 
     private:
       ElemIdRange range;
+      bool        callSyntax;
       AstContext  ctx;
   };
 
@@ -432,8 +432,8 @@ namespace
 
 
   /// converts enum values to SgExpressions
-  /// \todo currently only True and False are handled
-  ///       revisit when Asis representation is complete
+  /// \note currently True and False are handled separately, because
+  ///       their definition in package Standard is not seen.
   SgExpression&
   getEnumLiteral(Expression_Struct& expr, AstContext ctx)
   {
@@ -512,8 +512,14 @@ namespace
 
     if (expr.Expression_Kind == An_Indexed_Component)
     {
+      // \todo should this always return true (like the cases below)?
       return roseRequiresPrefixID(expr.Prefix, ctx);
     }
+
+    if (  (expr.Expression_Kind == An_Explicit_Dereference)
+       || (expr.Expression_Kind == A_Function_Call)
+       )
+      return true;
 
     logWarn() << "roseRequiresPrefixID: untested expression-kind: "
               << expr.Expression_Kind
@@ -549,13 +555,7 @@ namespace
       void handle(SgAdaGenericDecl& n)         { res = &mkAdaUnitRefExp(n); }
       void handle(SgAdaGenericInstanceDecl& n) { res = &mkAdaUnitRefExp(n); }
       void handle(SgAdaPackageSpecDecl& n)     { res = &mkAdaUnitRefExp(n); }
-
-      void handle(SgAdaTaskTypeDecl& n)
-      {
-        SgAdaTaskType& ty = mkAdaTaskType(n);
-
-        res = sb::buildTypeExpression(&ty);
-      }
+      void handle(SgAdaTaskTypeDecl& n)        { res = sb::buildTypeExpression(n.get_type()); }
 
     private:
       AstContext ctx;
@@ -587,7 +587,7 @@ namespace
       void handle(SgClassDeclaration& n)   { set(n.get_type()); }
       void handle(SgTypedefDeclaration& n) { set(n.get_type()); }
       void handle(SgEnumDeclaration& n)    { set(n.get_type()); }
-      void handle(SgAdaFormalTypeDecl& n)  { set(n.get_formal_type()); }
+      void handle(SgAdaFormalTypeDecl& n)  { set(n.get_type()); }
 
     private:
       AstContext ctx;
@@ -895,12 +895,12 @@ namespace
           ElemIdRange             range  = idRange(expr.Function_Call_Parameters);
 
           // distinguish between operators and calls
-          res = &createCall(target, range, ctx);
+          res = &createCall(target, range, expr.Is_Prefix_Call, ctx);
 
           /* unused fields:
              Expression_Struct
                Expression_ID         Prefix;
-               bool                  Is_Prefix_Call;
+               bool                  Is_Prefix_Notation;
                bool                  Is_Generalized_Reference;
                bool                  Is_Dispatching_Call;
                bool                  Is_Call_On_Dispatching_Operation;
@@ -925,6 +925,7 @@ namespace
         {
           logKind("A_Character_Literal");
           res = &mkValue<SgCharVal>(expr.Name_Image);
+
           /* unused fields: (Expression_Struct)
                Defining_Name_ID      Corresponding_Name_Definition;
                Defining_Name_List    Corresponding_Name_Definition_List;
@@ -982,8 +983,12 @@ namespace
           logKind("An_Explicit_Dereference");
 
           SgExpression& exp = getExprID(expr.Prefix, ctx);
-          res = sb::buildPointerDerefExp(&exp);
 
+          // prefix calls are incorrectly unparsed as infix (check if data is avail in Asis)
+          // in this case, parenthesis are missing.
+          // if (isSgBinaryOp(&exp)) exp.set_need_paren(true);
+
+          res = sb::buildPointerDerefExp(&exp);
           break;
         }
 
@@ -1468,9 +1473,9 @@ getDefinitionExprID(Element_ID id, AstContext ctx)
   return getDefinitionExpr(retrieveAs(elemMap(), id), ctx);
 }
 
-SgExpression& createCall(SgExpression& target, ElemIdRange args, AstContext ctx)
+SgExpression& createCall(SgExpression& target, ElemIdRange args, bool callSyntax, AstContext ctx)
 {
-  SgExpression* res = sg::dispatch(AdaCallBuilder{args, ctx}, &target);
+  SgExpression* res = sg::dispatch(AdaCallBuilder{args, callSyntax, ctx}, &target);
 
   return SG_DEREF(res);
 }

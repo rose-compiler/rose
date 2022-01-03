@@ -40,7 +40,6 @@
 #include <vector>
 
 // Derived classes needed for serialization
-#include <Rose/BinaryAnalysis/YicesSolver.h>
 #include <Rose/BinaryAnalysis/Z3Solver.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherAarch32.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/DispatcherAarch64.h>
@@ -376,7 +375,6 @@ private:
         s.template register_type<InstructionSemantics2::DispatcherPowerpc>();
         s.template register_type<SymbolicExpr::Interior>();
         s.template register_type<SymbolicExpr::Leaf>();
-        s.template register_type<YicesSolver>();
         s.template register_type<Z3Solver>();
         s.template register_type<Semantics::SValue>();
         s.template register_type<Semantics::MemoryListState>();

@@ -205,6 +205,7 @@ mkAdaFloatType(SgExpression& digits, SgAdaRangeConstraint* range_opt)
   return sgnode;
 }
 
+/*
 SgAdaFormalType&
 mkAdaFormalType(const std::string& name)
 {
@@ -212,6 +213,7 @@ mkAdaFormalType(const std::string& name)
   ty.set_type_name(name);
   return ty;
 }
+*/
 
 SgDeclType&
 mkExceptionType(SgExpression& n)
@@ -241,14 +243,14 @@ mkTypeUnion(SgTypePtrList elemtypes)
   return sgnode;
 }
 
-SgClassType&
-mkRecordType(SgClassDeclaration& dcl)
+SgEnumDeclaration&
+mkEnumDecl(const std::string& name, SgScopeStatement& scope)
 {
-  return mkTypeNode<SgClassType>(&dcl);
+  return SG_DEREF(sb::buildNondefiningEnumDeclaration_nfi(name, &scope));
 }
 
 SgEnumDeclaration&
-mkEnumDecl(const std::string& name, SgScopeStatement& scope)
+mkEnumDefn(const std::string& name, SgScopeStatement& scope)
 {
   return SG_DEREF(sb::buildEnumDeclaration_nfi(name, &scope));
 }
@@ -259,24 +261,6 @@ mkAdaAccessType(SgType *base_type)
   SgAdaAccessType& sgnode = mkNonSharedTypeNode<SgAdaAccessType>(base_type);
   return sgnode;
 }
-
-SgAdaTaskType&
-mkAdaTaskType(SgAdaTaskTypeDecl& dcl)
-{
-  SgAdaTaskType& sgnode = mkTypeNode<SgAdaTaskType>(&dcl);
-
-  return sgnode;
-}
-
-SgAdaDiscriminatedType&
-mkAdaDiscriminatedType(SgAdaDiscriminatedTypeDecl& dcl)
-{
-  //~ SgAdaDiscriminatedType& sgnode = mkTypeNode<SgAdaDiscriminatedType>(&dcl);
-  SgAdaDiscriminatedType& sgnode = mkNonSharedTypeNode<SgAdaDiscriminatedType>(&dcl);
-
-  return sgnode;
-}
-
 
 SgFunctionType& mkAdaEntryType(SgFunctionParameterList& lst)
 {
@@ -651,9 +635,9 @@ mkAdaGenericDecl(SgScopeStatement& scope)
 }
 
 SgAdaFormalTypeDecl&
-mkAdaFormalTypeDecl(const std::string& name, SgAdaFormalType& ty, SgScopeStatement& scope)
+mkAdaFormalTypeDecl(const std::string& name, SgScopeStatement& scope)
 {
-  SgAdaFormalTypeDecl&  sgnode = mkLocatedNode<SgAdaFormalTypeDecl>(SgName(name),&ty);
+  SgAdaFormalTypeDecl&  sgnode = mkLocatedNode<SgAdaFormalTypeDecl>(SgName(name));
 
   sgnode.set_parent(&scope);
   sgnode.set_firstNondefiningDeclaration(&sgnode);
@@ -1187,7 +1171,10 @@ mkVarDecl(const SgInitializedNamePtrList& vars, SgScopeStatement& scope)
 SgAdaVariantFieldDecl&
 mkAdaVariantFieldDecl(const SgInitializedNamePtrList& vars, SgExprListExp& choices, SgScopeStatement& scope)
 {
-  return mkVarDeclInternal<SgAdaVariantFieldDecl>(vars.begin(), vars.end(), scope, &choices);
+  SgAdaVariantFieldDecl& sgnode = mkVarDeclInternal<SgAdaVariantFieldDecl>(vars.begin(), vars.end(), scope, &choices);
+
+  choices.set_parent(&sgnode);
+  return sgnode;
 }
 
 SgAdaVariantFieldDecl&
@@ -1495,22 +1482,6 @@ namespace
     return &orig == &actual ? derv : actual;
   }
 
-  struct DeclaredType : sg::DispatchHandler<SgType*>
-  {
-    void handle(SgNode& n, SgNode&) { SG_UNEXPECTED_NODE(n); }
-
-    template <class SageDeclarationStatement>
-    void handle(SageDeclarationStatement& n, SgDeclarationStatement&)
-    {
-      res = n.get_type();
-    }
-
-    template <class SageNode>
-    void handle(SageNode& n)
-    {
-      handle(n, n);
-    }
-  };
 
   /// replaces the original type of \ref declaredDerivedType with \ref declaredDerivedType in \ref funcTy.
   /// returns \ref funcTy to indicate an error.
@@ -1522,7 +1493,7 @@ namespace
     if (baseTypeDecl == nullptr)
       return funcTy;
 
-    SgType*              origTypePtr  = sg::dispatch(DeclaredType{}, baseTypeDecl);
+    SgType*              origTypePtr  = si::getDeclaredType(baseTypeDecl);
     SgType&              originalType = SG_DEREF(origTypePtr);
     SgType&              origRetTy    = SG_DEREF(funcTy.get_return_type());
     SgType&              dervRetTy    = convertType(origRetTy, originalType, declaredDerivedType);
@@ -1603,6 +1574,13 @@ template <>
 long double convAdaLiteral<long double>(const char* img)
 {
   return si::ada::convertRealLiteral(img);
+}
+
+
+template <>
+char convAdaLiteral<char>(const char* img)
+{
+  return si::ada::convertCharLiteral(img);
 }
 
 
