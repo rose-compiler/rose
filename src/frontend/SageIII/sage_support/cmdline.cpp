@@ -4173,7 +4173,39 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
             set_gnu_standard();
 
           } else if ( argv[i] == "-std=c++" ) {
+#if 0
+            printf ("####################################### \n");
+            printf ("Processing commandline option: -std=c++ \n");
+            printf ("Processing commandline option: display_standard() = %s \n",display_standard(get_standard()).c_str());
+         // printf ("compilerNameString[0] ========================= === %s \n",compilerNameString[0].c_str());
+            printf (" ---  get_C_only()                                = %s \n",get_C_only() ? "true" : "false");
+            printf (" ---  get_Cxx_only()                              = %s \n",get_Cxx_only() ? "true" : "false");
+            printf ("####################################### \n");
+#endif
             set_Cxx_only(true);
+#if 1
+         // DQ (12/23/2021): This is where it might be an issue for the C++ initializers in the unit-test application code.
+         // DQ (12/23/2021): Isolating the fixes to try again.
+         // DQ (12/22/2021): If we are suggesting this is using the C++ modes, then we have to treat it as a C++ file.
+         // And so it can't also be a C files (else --c and --c99 options to EDG could be added, which will cause 
+         // the EDG error: "Command-line error: language modes specified are incompatible"  So turn C_only mode off.
+            set_C_only(false);
+
+         // DQ (12/22/2021): Set the language standard to avoid it being c99, c++11 is a reasonable default for now.
+         // set_standard(e_cxx11_standard);
+            set_standard(e_default_standard);
+#endif
+#if 0
+            printf ("####################################### \n");
+            printf ("After processing -std=c++: display_standard() = %s \n",display_standard(get_standard()).c_str());
+            printf (" ---  get_C_only()                            = %s \n",get_C_only() ? "true" : "false");
+            printf (" ---  get_Cxx_only()                          = %s \n",get_Cxx_only() ? "true" : "false");
+            printf ("####################################### \n");
+#endif
+#if 0
+            printf ("Exiting as a test! \n");
+            ROSE_ASSERT(false);
+#endif
 
           } else if ( argv[i] == "-std=gnu++" ) {
             set_Cxx_only(true);
@@ -5950,6 +5982,30 @@ CommandlineProcessing::generateOptionListWithDeclaredParameters (const Rose_STL_
      return optionList;
    }
 
+
+void
+SgFile::stripTranslationCommandLineOptions ( vector<string> & argv )
+   {
+      //! function that removes options that should be used only in frontend from a command line
+
+     if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
+        {
+          printf ("In stripTranslationCommandLineOptions (TOP): List ALL arguments: argc = %" PRIuPTR " \n",argv.size());
+          for (size_t i=0; i < argv.size(); i++)
+             printf ("     argv[%" PRIuPTR "] = %s \n",i,argv[i].c_str());
+        }
+
+     // Pei-Hung (12/20/2021) gnatec is used when processing Ada input source code.  
+     // For ada2cpp translation, this option causes conflict in c++ compilation.
+     CommandlineProcessing::removeArgsWithParameters (argv,"-gnatec=");
+
+     if ( (ROSE_DEBUG >= 1) || (SgProject::get_verbose() > 2 ))
+        {
+          printf ("In stripTranslationCommandLineOptions (BOTTOM): List ALL arguments: argc = %" PRIuPTR " \n",argv.size());
+          for (size_t i=0; i < argv.size(); i++)
+             printf ("     argv[%" PRIuPTR "] = %s \n",i,argv[i].c_str());
+        }
+}
 
 void
 SgFile::processBackendSpecificCommandLineOptions ( const vector<string>& argvOrig )
@@ -7733,7 +7789,65 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
           case SgFile::e_C_language:
              {
+            // DQ (12/22/2021): If this is the language for the backend, keep the backend compiler consistant 
+            // with the specified language.  We want to be able to override the language selected based on the 
+            // file suffix when the -std= option is used.  This allows for C language files to be compiled as 
+            // C++ files and 
+#if 0
+               printf ("################################################ \n");
+               printf ("In case SgFile::e_C_language: display_standard() = %s \n",display_standard(get_standard()).c_str());
+               printf ("compilerNameString[0] ============================ %s \n",compilerNameString[0].c_str());
+               printf ("################################################ \n");
+#endif
+#if 0
                compilerNameString[0] = BACKEND_C_COMPILER_NAME_WITH_PATH;
+#else
+               switch (get_standard()) 
+                  {
+                    case e_cxx98_standard: 
+                    case e_cxx03_standard: 
+                    case e_cxx11_standard: 
+                    case e_cxx14_standard: 
+                    case e_cxx17_standard: 
+                    case e_cxx20_standard: 
+                       {
+                      // Don't change the backend compiler.
+                         compilerNameString[0] = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
+                         break;
+                       }
+
+                 // DQ (12/23/2021): UPC tests need to use the C compiler.
+                    case e_upc_standard: 
+
+                    case e_c89_standard: 
+                    case e_c90_standard: 
+                    case e_c99_standard: 
+                    case e_c11_standard: 
+                    case e_c14_standard: 
+                    case e_c18_standard: 
+                       {
+                         compilerNameString[0] = BACKEND_C_COMPILER_NAME_WITH_PATH;
+                         break;
+                       }
+
+                    case e_default_standard:
+                       {
+                      // DQ (12/23/2021): Don't modify the existing entry.
+#if 0
+                         printf ("case e_default_standard: Don't modify the existing entry: compilerNameString[0] = %s \n",compilerNameString[0].c_str());
+#endif
+                         compilerNameString[0] = BACKEND_CXX_COMPILER_NAME_WITH_PATH;
+                         break;
+                       }
+
+                    default:
+                       {
+                         printf ("Unhandled case in switch: get_standard() = %d = %s \n",get_standard(),display_standard(get_standard()).c_str());
+                         ROSE_ABORT();
+                       }
+                  }
+#endif
+
 #if 0
                printf ("In buildCompilerCommandLineOptions(): get_C99_only() = %s \n",get_C99_only() ? "true" : "false");
 #endif

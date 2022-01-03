@@ -63,7 +63,7 @@ public:
      *  This object can only represent the empty set, but it's useful to have this default constructor in order to create a set
      *  that can be stored in a vector of sets, among other things. */
     DenseIntegerSet()
-        : head_(&head_, &head_) {}
+        : head_(&head_, &head_), nMembers_(0) {}
 
     /** Construct an empty set that can hold values from the specified domain.
      *

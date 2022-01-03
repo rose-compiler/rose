@@ -550,7 +550,10 @@ int64_t getAsmSignedConstant(SgAsmValueExpression *e);
 //! A special purpose statement removal function, originally from inlinerSupport.h, Need Jeremiah's attention to refine it. Please don't use it for now.
 ROSE_DLL_API void myRemoveStatement(SgStatement* stmt);
 
+//! Check if a bool or int constant expression evaluates to be a true value
 ROSE_DLL_API bool isConstantTrue(SgExpression* e);
+
+//! Check if a bool or int constant expression evaluates to be a false value
 ROSE_DLL_API bool isConstantFalse(SgExpression* e);
 
 ROSE_DLL_API bool isCallToParticularFunction(SgFunctionDeclaration* decl, SgExpression* e);

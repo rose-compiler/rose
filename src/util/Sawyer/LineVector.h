@@ -30,7 +30,7 @@ class LineVector {
 
 public:
     /** Constructor that creates an empty line vector. */
-    LineVector(): charBuf_(NULL), bufSize_(0) {}
+    LineVector(): charBuf_(NULL), bufSize_(0), nextCharToScan_(0) {}
 
     /** Constructor that opens a file.
      *

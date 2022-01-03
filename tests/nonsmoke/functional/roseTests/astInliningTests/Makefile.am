@@ -90,7 +90,7 @@ inlineEverything_test_targets_v2 = $(addprefix rose_v2_, $(inlineEverything_spec
 check-v2:$(inlineEverything_test_targets_v2)
 
 TEST_TARGETS += $(inlineEverything_test_targets_v2)
-$(inlineEverything_test_targets_v2): $(@:rose_v2_%=%) inlineEverything 
+$(inlineEverything_test_targets_v2): $(@:rose_v2_%=%) $(inlineEverything_test_targets_v1) inlineEverything 
 		$(builddir)/inlineEverything -skip-postprocessing -c $(srcdir)/$(@:rose_v2_%=%) -rose:output $@
 
 # test token based unparsing option: -rose:unparse_tokens
