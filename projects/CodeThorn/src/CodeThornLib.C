@@ -359,7 +359,10 @@ namespace CodeThorn {
       IOAnalyzer* analyzer = new IOAnalyzer();
       analyzer->setOptions(ctOpt);
       analyzer->setLtlOptions(ltlOpt);
-      ROSE_ASSERT(ctOpt.sharedPStates==false);
+      if(ctOpt.sharedPStates==true) {
+        cerr<<"CodeThornLib::createAnalyzer: shared PStates not supported anymore. Exiting."<<endl;
+        exit(1);
+      }
       EState::sharedPStates=ctOpt.sharedPStates;
       EState::fastPointerHashing=ctOpt.fastPointerHashing;
       return analyzer;
@@ -436,7 +439,7 @@ namespace CodeThorn {
 	cout << "generating AST node info ... "<<endl;
 	analyzer->generateAstNodeInfo(root);
 	dotFile=AstTerm::functionAstTermsWithNullValuesToDot(root);
-        string astDotFileName=ctOpt.reportFilePath+"/"+"icfg.dot";
+        string astDotFileName=ctOpt.reportFilePath+"/"+"ast.dot";
 	if(write_file(astDotFileName, dotFile)) {
           cout << "generated AST file "<<astDotFileName<<endl;
         } else {

@@ -72,7 +72,7 @@ public:
     thorn4Parser.insert(scl::Switch("mode")
                         .argument("mode", scl::anyParser(params.mode))
                         .doc("analysis mode: concrete, abstract."));
-    thorn4Parser.insert(scl::Switch("inputValues")
+    thorn4Parser.insert(scl::Switch("input-values")
                         .argument("inputValues", scl::anyParser(params.inputValues))
                         .doc("set of values used for scanf in 'concrete' mode. e.g. \"{1,2,3}\""));
     thorn4Parser.insert(scl::Switch("status")
@@ -186,8 +186,8 @@ int main( int argc, char * argv[] )
       ctOpt.abstractionMode=1;
       ctOpt.arrayAbstractionIndex=0;
     } else if(params.mode=="concrete") {
-      ctOpt.solver=5; // default solver for this tool
-      ctOpt.sharedPStates=true; // supported by solver 5
+      ctOpt.solver=5; // default solver for concrete mode
+      ctOpt.sharedPStates=false;
       ctOpt.abstractionMode=0;
       ctOpt.arrayAbstractionIndex=-1; // no abstraction of arrays
     } else {

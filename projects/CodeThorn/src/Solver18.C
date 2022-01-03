@@ -85,12 +85,19 @@ void Solver18::run() {
     ROSE_ASSERT(currentEStatePtr);
     
     list<EStatePtr> newEStateList0;
+    size_t pathLen=0;
     while(isPassThroughLabel(currentEStatePtr->label())) {
       //cout<<"DEBUG: pass through: "<<currentEStatePtr->label().toString()<<endl;
       Flow edgeSet0=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
       if(edgeSet0.size()==1) {
         Edge e=*edgeSet0.begin();
-        list<EStatePtr> newEStateList0=_analyzer->transferEdgeEState(e,currentEStatePtr);
+        list<EStatePtr> newEStateList0;
+        if(pathLen==0) {
+          newEStateList0=_analyzer->transferEdgeEState(e,currentEStatePtr);
+        } else {
+          newEStateList0=_analyzer->transferEdgeEStateInPlace(e,currentEStatePtr);
+          pathLen++;
+        }
         if(newEStateList0.size()==1) {
           currentEStatePtr=*newEStateList0.begin();
         } else {
