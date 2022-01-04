@@ -135,6 +135,9 @@ public:
      *
      *  If @p myName is empty, then use the name from the system call event in the provided context. */
     void hello(const std::string &myName, const SyscallContext&) const;
+
+    /** Make the specified event not-an-input. */
+    void notAnInput(SyscallContext&, const ExecutionEventPtr&) const;
 };
 
 } // namespace

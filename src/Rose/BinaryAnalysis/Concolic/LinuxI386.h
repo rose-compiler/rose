@@ -70,6 +70,7 @@ public:
     virtual void ip(rose_addr_t) override;
     virtual std::vector<ExecutionEventPtr> createMemoryRestoreEvents() override;
     virtual std::vector<ExecutionEventPtr> createMemoryHashEvents() override;
+    virtual std::vector<ExecutionEventPtr> createMemoryAdjustEvents(const MemoryMap::Ptr&, rose_addr_t insnVa) override;
     virtual std::vector<ExecutionEventPtr> createRegisterRestoreEvents() override;
     virtual bool playEvent(const ExecutionEventPtr&) override;
     virtual void mapMemory(const AddressInterval&, unsigned permissions) override;
@@ -89,6 +90,11 @@ public:
 private:
     // Maps a scratch page for internal use and updates scratchVa_ with the address of the page.
     void mapScratchPage();
+
+    // Copy (share) some data from the dst map to the src map at where. Generate map and write events that will map the memory
+    // and initialize it when played back.
+    std::vector<ExecutionEventPtr> copyMemory(const MemoryMap::Ptr &src, const MemoryMap::Ptr &dst, const AddressInterval &where,
+                                              rose_addr_t insnVa);
 
     // List of process memory segments that are not special.
     std::vector<MemoryMap::ProcessMapRecord> disposableMemory();
@@ -224,6 +230,24 @@ public:
     void handlePostSyscall(SyscallContext&) override;
 };
 
+/** Callback for system calls that return an input.
+ *
+ *  This is for system calls that return a value that is treated as an input variable, but don't have any other constraints
+ *  on their behavior. */
+class LinuxI386SyscallReturnsInput: public LinuxI386SyscallBase {
+protected:
+    LinuxI386SyscallReturnsInput();
+public:
+    ~LinuxI386SyscallReturnsInput();
+
+public:
+    /** Allocating constructor. */
+    static Ptr instance();
+
+    void playback(SyscallContext&) override;
+    void handlePostSyscall(SyscallContext&) override;
+};
+
 /** Callback for system calls that terminate the process. */
 class LinuxI386SyscallTerminates: public LinuxI386SyscallBase {
 protected:
@@ -295,6 +319,66 @@ public:
 
     void playback(SyscallContext&) override;
     std::pair<SymbolicExprPtr, Sawyer::Optional<uint64_t>> makeReturnConstraint(SyscallContext&) override;
+};
+
+/** Callback for access system call. */
+class LinuxI386SyscallAccess: public LinuxI386SyscallBase {
+protected:
+    LinuxI386SyscallAccess();
+public:
+    ~LinuxI386SyscallAccess();
+
+public:
+    /** Allocating constructor. */
+    static Ptr instance();
+
+    void playback(SyscallContext&) override;
+    void handlePostSyscall(SyscallContext&) override;
+};
+
+/** Callback for brk system call. */
+class LinuxI386SyscallBrk: public LinuxI386SyscallBase {
+protected:
+    LinuxI386SyscallBrk();
+public:
+    ~LinuxI386SyscallBrk();
+
+public:
+    /** Allocating constructor. */
+    static Ptr instance();
+
+    void playback(SyscallContext&) override;
+    void handlePostSyscall(SyscallContext&) override;
+};
+
+/** Callback for mmap2 system call. */
+class LinuxI386SyscallMmap2: public LinuxI386SyscallBase {
+protected:
+    LinuxI386SyscallMmap2();
+public:
+    ~LinuxI386SyscallMmap2();
+
+public:
+    /** Allocating constructor. */
+    static Ptr instance();
+
+    void playback(SyscallContext&) override;
+    void handlePostSyscall(SyscallContext&) override;
+};
+
+/** Callback for openat system call. */
+class LinuxI386SyscallOpenat: public LinuxI386SyscallBase {
+protected:
+    LinuxI386SyscallOpenat();
+public:
+    ~LinuxI386SyscallOpenat();
+
+public:
+    /** Allocating constructor. */
+    static Ptr instance();
+
+    void playback(SyscallContext&) override;
+    void handlePostSyscall(SyscallContext&) override;
 };
 
 } // namespace
