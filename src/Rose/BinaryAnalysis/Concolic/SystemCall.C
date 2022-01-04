@@ -6,6 +6,7 @@
 #include <Rose/BinaryAnalysis/Concolic/Architecture.h>
 #include <Rose/BinaryAnalysis/Concolic/ConcolicExecutor.h>
 #include <Rose/BinaryAnalysis/Concolic/ExecutionEvent.h>
+#include <Rose/BinaryAnalysis/Concolic/InputVariables.h>
 
 using namespace Sawyer::Message::Common;
 
@@ -57,6 +58,14 @@ SyscallCallback::hello(const std::string &myName, const SyscallContext &ctx) con
         out <<(myName.empty() ? ctx.syscallEvent->name() + " system call" : myName)
             <<" at instruction " <<StringUtility::addrToString(ctx.ip) <<"\n";
     }
+}
+
+void
+SyscallCallback::notAnInput(SyscallContext &ctx, const ExecutionEvent::Ptr &event) const {
+    ASSERT_not_null(event);
+    SAWYER_MESG(mlog[DEBUG]) <<"  " <<event->printableName(ctx.ops->database()) <<" is now not an input variable\n";
+    ctx.ops->inputVariables()->deactivate(event);
+    ctx.symbolicReturn = SymbolicExpr::Ptr();
 }
 
 } // namespace
