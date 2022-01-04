@@ -31,9 +31,6 @@ void CodeThorn::EStatePriorityWorkList::clear() {
 }
 
 void CodeThorn::EStatePriorityWorkList::push_front(EStatePtr el) {
-  // there is only one push method
-  //static int priority=0; // this gives a normal work list (push_back does not work)
-  //priority++;
   ROSE_ASSERT(_labelToPriorityMap.size()>0);
   int priority=_labelToPriorityMap[el->label()];
   if(false && priority==0) {
@@ -44,7 +41,7 @@ void CodeThorn::EStatePriorityWorkList::push_front(EStatePtr el) {
 }
 
 void CodeThorn::EStatePriorityWorkList::push_back(EStatePtr el) {
-  // there is only one push method
+  // there is only one push method since the work list is priority list
   push_front(el);
 }
 
@@ -61,15 +58,7 @@ EStatePtr CodeThorn::EStatePriorityWorkList::front() {
 }
 
 void CodeThorn::EStatePriorityWorkList::pop_front() {
-  // there is only one pop method
+  // there is only one pop method since the work list is priority list
   _list.pop();
 }
-// this return type is only used for compatibility with EStateWorkList. Begin/end do not exist for the pri worklist
-CodeThorn::EStateWorkList::iterator CodeThorn::EStatePriorityWorkList::begin() {
-  std::cerr<<"Internal Error: EStatePriorityWorkList::begin() not available."<<std::endl;
-  exit(1);
-}
-CodeThorn::EStateWorkList::iterator CodeThorn::EStatePriorityWorkList::end() {
-  std::cerr<<"Internal Error: EStatePriorityWorkList::end() not available."<<std::endl;
-  exit(1);
-}
+

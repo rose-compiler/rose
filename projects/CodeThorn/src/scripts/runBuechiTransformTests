@@ -1,4 +1,4 @@
-#1/bin/bash
+#!/bin/bash
 
 #$1: CodeThorn's src directory
 #$2: CodeThorn's build directory
@@ -20,7 +20,7 @@ echo "*====================================*"
 
 #create a temp directory
 CURRENT_TIME=`date '+%m-%d-%y_%H:%M:%S'`
-TEMP_DIR="make_check_log_buechi_"${CURRENT_TIME}
+TEMP_DIR="make_check_log_buechi_"${CURRENT_TIME}_$$
 mkdir ${2}/${TEMP_DIR}
 echo "created directory for temporary files: <CodeThorn build dir>/src/${TEMP_DIR}"
 

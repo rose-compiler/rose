@@ -42,7 +42,7 @@ void Solver11::run() {
 
     CTAnalysis::SubSolverResultType subSolverResult= _analyzer->subSolver(currentEStatePtr);
     EStateWorkList deferedWorkList=subSolverResult.first;
-    for(EStateWorkList::iterator i=deferedWorkList.begin();i!=deferedWorkList.end();++i) {
+    for(auto i=deferedWorkList.begin();i!=deferedWorkList.end();++i) {
       _analyzer->addToWorkList(*i);
     }
   } // while loop

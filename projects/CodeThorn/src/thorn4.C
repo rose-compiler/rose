@@ -72,7 +72,7 @@ public:
     thorn4Parser.insert(scl::Switch("mode")
                         .argument("mode", scl::anyParser(params.mode))
                         .doc("analysis mode: concrete, abstract."));
-    thorn4Parser.insert(scl::Switch("inputValues")
+    thorn4Parser.insert(scl::Switch("input-values")
                         .argument("inputValues", scl::anyParser(params.inputValues))
                         .doc("set of values used for scanf in 'concrete' mode. e.g. \"{1,2,3}\""));
     thorn4Parser.insert(scl::Switch("status")
@@ -80,15 +80,24 @@ public:
                         .doc("print status messages during analysis."));
     thorn4Parser.insert(scl::Switch("reduce-stg")
                         .intrinsicValue(true,params.reduceStg)
-                        .doc("reduce STS to input/output states."));
+                        .doc("reduce STS graph to input/output states."));
     p.purpose("Generates State Transition System Graph files")
       .doc("synopsis",
            "@prop{programName} [@v{switches}] @v{specimen_name}")
       .doc("description",
            "This program generates AST files in term format. The same term format can be used in the AstMatcher as input for matching AST subtrees.");
-    scl::ParserResult cmdline = p.with(thorn4Parser).parse(clArgs).apply();
-    
-    return cmdline.unparsedArgs();
+    scl::ParserResult cmdLine = p.with(thorn4Parser).parse(clArgs).apply();
+
+    const std::vector<std::string> remainingArgs = cmdLine.unparsedArgs();
+    for (const std::string& arg: remainingArgs) {
+      //mlog[DEBUG] <<"remaining arg: \"" <<Rose::StringUtility::cEscape(arg) <<"\"\n";
+      if (boost::starts_with(arg, "--thorn4:")) {
+        cerr <<"thorn4: unrecognized commande line option: \"" <<Rose::StringUtility::cEscape(arg) <<"\"\n";
+        exit(1);
+      }
+    }
+
+    return cmdLine.unparsedArgs();
   }
 
   Parameters getParameters() {
@@ -186,8 +195,8 @@ int main( int argc, char * argv[] )
       ctOpt.abstractionMode=1;
       ctOpt.arrayAbstractionIndex=0;
     } else if(params.mode=="concrete") {
-      ctOpt.solver=5; // default solver for this tool
-      ctOpt.sharedPStates=true; // supported by solver 5
+      ctOpt.solver=5; // default solver for concrete mode
+      ctOpt.sharedPStates=false;
       ctOpt.abstractionMode=0;
       ctOpt.arrayAbstractionIndex=-1; // no abstraction of arrays
     } else {
