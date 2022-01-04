@@ -80,15 +80,24 @@ public:
                         .doc("print status messages during analysis."));
     thorn4Parser.insert(scl::Switch("reduce-stg")
                         .intrinsicValue(true,params.reduceStg)
-                        .doc("reduce STS to input/output states."));
+                        .doc("reduce STS graph to input/output states."));
     p.purpose("Generates State Transition System Graph files")
       .doc("synopsis",
            "@prop{programName} [@v{switches}] @v{specimen_name}")
       .doc("description",
            "This program generates AST files in term format. The same term format can be used in the AstMatcher as input for matching AST subtrees.");
-    scl::ParserResult cmdline = p.with(thorn4Parser).parse(clArgs).apply();
-    
-    return cmdline.unparsedArgs();
+    scl::ParserResult cmdLine = p.with(thorn4Parser).parse(clArgs).apply();
+
+    const std::vector<std::string> remainingArgs = cmdLine.unparsedArgs();
+    for (const std::string& arg: remainingArgs) {
+      //mlog[DEBUG] <<"remaining arg: \"" <<Rose::StringUtility::cEscape(arg) <<"\"\n";
+      if (boost::starts_with(arg, "--thorn4:")) {
+        cerr <<"thorn4: unrecognized commande line option: \"" <<Rose::StringUtility::cEscape(arg) <<"\"\n";
+        exit(1);
+      }
+    }
+
+    return cmdLine.unparsedArgs();
   }
 
   Parameters getParameters() {
