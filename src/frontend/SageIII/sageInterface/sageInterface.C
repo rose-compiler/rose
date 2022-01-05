@@ -25093,14 +25093,16 @@ void SageInterface::recursivePrintCurrentAndParent (SgNode* n)
   recursivePrintCurrentAndParent (n->get_parent());
 }
 // forward declaration is needed here
-static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringstream& out);
+static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringstream& out, string& edgeLabel);
 
 // A special node in the AST text dump
-static void serialize(SgTemplateArgumentPtrList& plist, string& prefix, bool hasRemaining, ostringstream& out)
+static void serialize(SgTemplateArgumentPtrList& plist, string& prefix, bool hasRemaining, ostringstream& out, string& edgeLabel)
 {
   out<<prefix;
   out<< (hasRemaining?"|---": "|___");
 
+//  out<<"+"<<edgeLabel<<"+>";
+  out<<" "<<edgeLabel<<" ->";
   // print address
   out<<"@"<<&plist<<" "<< "SgTemplateArgumentPtrList ";
 
@@ -25112,19 +25114,22 @@ static void serialize(SgTemplateArgumentPtrList& plist, string& prefix, bool has
       n_hasRemaining=true;
     string suffix= hasRemaining? "|   " : "    ";
     string n_prefix = prefix+suffix;
-    serialize (plist[i], n_prefix, n_hasRemaining, out);
+    string n_edge_label="";
+    serialize (plist[i], n_prefix, n_hasRemaining, out,n_edge_label);
   }
 }
 
 // print essential information from any AST node
 // hasRemaining if this node has a sibling node to be visited next.
-static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringstream& out)
+static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringstream& out, string& edgeLabel)
 {
   // there may be NULL children!!
   //if (!node) return;
 
   out<<prefix;
   out<< (hasRemaining?"|---": "|___");
+
+  out<<" "<<edgeLabel<<" ->";
   if (!node)
   {
     out<<" NULL "<<endl;
@@ -25235,9 +25240,11 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
 
     string suffix= hasRemaining? "|   " : "    ";
     string n_prefix = prefix+suffix;
-    serialize(plist, n_prefix, n_hasRemaining, out);
+    string n_edge_label= "";
+    serialize(plist, n_prefix, n_hasRemaining, out, n_edge_label);
   }
 
+  std::vector< std::string >  successorNames= node->get_traversalSuccessorNamesContainer();
    // finish sucessors
   for (size_t i =0; i< children.size(); i++)
   {
@@ -25248,7 +25255,7 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
 
     string suffix= hasRemaining? "|   " : "    ";
     string n_prefix = prefix+suffix;
-    serialize (children[i], n_prefix, n_hasRemaining, out);
+    serialize (children[i], n_prefix, n_hasRemaining, out, successorNames[i]);
   }
 }
 
@@ -25256,22 +25263,24 @@ void SageInterface::printAST(SgNode* node)
 {
   ostringstream oss;
   string prefix;
-  serialize(node, prefix, false, oss);
+  string label="";
+  serialize(node, prefix, false, oss, label);
   cout<<oss.str();
 }
 
-void SageInterface::printAST2TextFile (SgNode* node, std::string filename, bool printType/*=false*/)
+void SageInterface::printAST2TextFile (SgNode* node, std::string filename, bool printType/*=true*/)
 {
   // Rasmussen 9/21/2020: This leads to infinite recursion (clang warning message) and should be removed from API)
 //  ROSE_ABORT();
   printAST2TextFile (node, filename.c_str(), printType);
 }
 
-void SageInterface::printAST2TextFile(SgNode* node, const char* filename, bool printType/*=false*/)
+void SageInterface::printAST2TextFile(SgNode* node, const char* filename, bool printType/*=true*/)
 {
   ostringstream oss;
   string prefix;
-  serialize(node, prefix, false, oss);
+  string label="";
+  serialize(node, prefix, false, oss, label);
   ofstream textfile;
   textfile.open(filename, ios::out);
   textfile<<oss.str();
@@ -25285,7 +25294,7 @@ void SageInterface::printAST2TextFile(SgNode* node, const char* filename, bool p
     Rose_STL_Container<SgNode*> tnodes= NodeQuery::queryMemoryPool(vv);
     for (Rose_STL_Container<SgNode*>::const_iterator i = tnodes.begin(); i != tnodes.end(); ++i)
     {
-      serialize (*i, prefix, false, oss2);
+      serialize (*i, prefix, false, oss2, label);
     }
     textfile<<oss2.str();
   }
