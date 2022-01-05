@@ -84,7 +84,7 @@ public:
   bool constantConditionAnalysis=false;
   bool reduceStg=false; // calls analyzer->reduceStgToInOutStates();
 
-  std::string reportFilePath;
+  std::string reportFilePath=".";
   std::string nullPointerAnalysisFileName="null-pointer.csv";
   std::string outOfBoundsAnalysisFileName="out-of-bounds.csv";
   std::string uninitializedMemoryAnalysisFileName="uninitialized.csv";
@@ -198,7 +198,7 @@ public:
   bool reduceCfg=true;
   bool internalChecks=false;
   std::string analyzedProgramCLArgs;
-  std::string inputValues;
+  std::string inputValues="{}";
   bool inputValuesAsConstraints=false; // obsolete
   std::string inputSequence;
   std::string logLevel;
