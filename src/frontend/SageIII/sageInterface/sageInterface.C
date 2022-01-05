@@ -25107,15 +25107,31 @@ static void serialize(SgTemplateArgumentPtrList& plist, string& prefix, bool has
   out<<"@"<<&plist<<" "<< "SgTemplateArgumentPtrList ";
 
   out<<endl;
+
+  int last_non_null_child_idx =-1;
+  for (int i = (int) (plist.size())-1; i>=0; i--)
+  {
+    if (plist[i])
+    { 
+      last_non_null_child_idx = i;
+      break;
+    }
+  }
+
   for (size_t i=0; i< plist.size(); i++ )
   {
     bool n_hasRemaining=false;
+#if 0
     if (i+1 < plist.size())
       n_hasRemaining=true;
+#else
+    if ((int)i< last_non_null_child_idx) n_hasRemaining = true;
+#endif
     string suffix= hasRemaining? "|   " : "    ";
     string n_prefix = prefix+suffix;
     string n_edge_label="";
-    serialize (plist[i], n_prefix, n_hasRemaining, out,n_edge_label);
+    if (plist[i])
+      serialize (plist[i], n_prefix, n_hasRemaining, out,n_edge_label);
   }
 }
 
@@ -25224,6 +25240,16 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   int total_count = children.size();
   int current_index=0;
 
+  int last_non_null_child_idx =-1; 
+  for (int i = (int) (children.size())-1; i>=0; i--)
+  {
+    if (children[i]) 
+    {
+      last_non_null_child_idx = i;
+      break;
+    }
+  }
+
   // some Sg??PtrList are not AST nodes, not part of children , we need to handle them separatedly
   // we sum all children into single total_count to tell if there is remaining children.
   if (isSgTemplateInstantiationDecl (node))
@@ -25234,10 +25260,13 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   {
     SgTemplateArgumentPtrList& plist = sn->get_templateArguments();
      bool n_hasRemaining=false;
+#if 0     
     if (current_index+1<total_count)
       n_hasRemaining=true;
     current_index++;
-
+#else
+    if (last_non_null_child_idx>-1) n_hasRemaining = true;
+#endif
     string suffix= hasRemaining? "|   " : "    ";
     string n_prefix = prefix+suffix;
     string n_edge_label= "";
@@ -25245,17 +25274,22 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   }
 
   std::vector< std::string >  successorNames= node->get_traversalSuccessorNamesContainer();
+
    // finish sucessors
   for (size_t i =0; i< children.size(); i++)
   {
     bool n_hasRemaining=false;
+#if 0    
     if (current_index+1<total_count)
       n_hasRemaining=true;
     current_index++;
-
+#else
+    if ((int)i<last_non_null_child_idx) n_hasRemaining = true;
+#endif
     string suffix= hasRemaining? "|   " : "    ";
     string n_prefix = prefix+suffix;
-    serialize (children[i], n_prefix, n_hasRemaining, out, successorNames[i]);
+    if (children[i])
+      serialize (children[i], n_prefix, n_hasRemaining, out, successorNames[i]);
   }
 }
 
