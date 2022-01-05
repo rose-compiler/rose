@@ -42,12 +42,12 @@ class Thorn4Parser
 public:
   struct Parameters
   {
-    std::string reportDir="";
+    std::string reportDir=".";
     std::string mode="abstract";
     bool checkCLanguage=true;
     bool status=true;
     bool reduceStg=false;
-    std::string inputValues;
+    std::string inputValues="{}";
   };
   
   /// sets the Thorn4Parser settings using the command line arguments
@@ -176,6 +176,7 @@ int main( int argc, char * argv[] )
     ctOpt.status=params.status;
     ctOpt.reportFilePath=params.reportDir;
     ctOpt.reduceStg=params.reduceStg;
+    ctOpt.inputValues=params.inputValues;
 
     ctOpt.callStringLength=-1; // unbounded length
     ctOpt.normalizeLevel=2;
@@ -189,6 +190,8 @@ int main( int argc, char * argv[] )
     ctOpt.logLevel="none";
     ctOpt.visualization.vis=true; // generates ast, icfg, tg1, tg2
 
+    ctOpt.vimReportFileName=""; // do not generated vim report
+
     if(params.mode=="abstract") {
       ctOpt.solver=16; // default solver for this tool
       ctOpt.sharedPStates=false; // required for solver 16
@@ -199,6 +202,10 @@ int main( int argc, char * argv[] )
       ctOpt.sharedPStates=false;
       ctOpt.abstractionMode=0;
       ctOpt.arrayAbstractionIndex=-1; // no abstraction of arrays
+      if(ctOpt.inputValues=="{}") {
+        cerr<<"Concrete mode selected, but no input values provided. Use option --input-values=\"{ ... }\" to provide a set of input values."<<endl;
+        exit(1);
+      }
     } else {
       cerr<<"Wrong mode '"<<params.mode<<"' provided on command line."<<endl;
       exit(1);
