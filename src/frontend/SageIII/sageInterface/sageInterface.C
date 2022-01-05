@@ -25260,14 +25260,14 @@ void SageInterface::printAST(SgNode* node)
   cout<<oss.str();
 }
 
-void SageInterface::printAST2TextFile (SgNode* node, std::string filename)
+void SageInterface::printAST2TextFile (SgNode* node, std::string filename, bool printType/*=false*/)
 {
   // Rasmussen 9/21/2020: This leads to infinite recursion (clang warning message) and should be removed from API)
 //  ROSE_ABORT();
-  printAST2TextFile (node, filename.c_str());
+  printAST2TextFile (node, filename.c_str(), printType);
 }
 
-void SageInterface::printAST2TextFile(SgNode* node, const char* filename)
+void SageInterface::printAST2TextFile(SgNode* node, const char* filename, bool printType/*=false*/)
 {
   ostringstream oss;
   string prefix;
@@ -25276,22 +25276,20 @@ void SageInterface::printAST2TextFile(SgNode* node, const char* filename)
   textfile.open(filename, ios::out);
   textfile<<oss.str();
 
-  // append type information also
-  textfile<<"Types encountered ...."<<endl;
-  ostringstream oss2;
-#if 0
-  set<SgType*>::iterator iter;
-  for (iter = type_set.begin(); iter!= type_set.end(); iter++)
-    serialize (*iter, prefix, false, oss2);
-#else
-  VariantVector vv(V_SgType);
-  Rose_STL_Container<SgNode*> tnodes= NodeQuery::queryMemoryPool(vv);
-  for (Rose_STL_Container<SgNode*>::const_iterator i = tnodes.begin(); i != tnodes.end(); ++i)
+  if (printType)
   {
-    serialize (*i, prefix, false, oss2);
+    // append type information also
+    textfile<<"Types encountered ...."<<endl;
+    ostringstream oss2;
+    VariantVector vv(V_SgType);
+    Rose_STL_Container<SgNode*> tnodes= NodeQuery::queryMemoryPool(vv);
+    for (Rose_STL_Container<SgNode*>::const_iterator i = tnodes.begin(); i != tnodes.end(); ++i)
+    {
+      serialize (*i, prefix, false, oss2);
+    }
+    textfile<<oss2.str();
   }
-#endif
-  textfile<<oss2.str();
+
   textfile.close();
 }
 
