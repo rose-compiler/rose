@@ -33,43 +33,58 @@ void CodeThorn::GeneralPriorityWorkList<Element>::clear() {
   // fastest method to clear a queue, because it has not clear
   // function this also guarantees to deallocate the memory in
   // constrast to doing a series of pop().
-  typename GeneralPriorityWorkList::GeneralPriorityQueueType empty;
+  typename GeneralPriorityWorkList::ElementPriorityQueueType empty;
   std::swap( _list, empty );
 }
 
 template<typename Element>
-void CodeThorn::GeneralPriorityWorkList<Element>::push_front(Element el) {
+void CodeThorn::GeneralPriorityWorkList<Element>::push(Element el) {
   ROSE_ASSERT(_labelToPriorityMap.size()>0);
-  int priority=_labelToPriorityMap[el->label()];
+  int priority=_labelToPriorityMap[el.label()];
   if(false && priority==0) {
-    std::cerr<<"Error: push_front: priority=0 for estate lab:"<<el->label().toString()<<std::endl;
+    std::cerr<<"Error: push_front: priority=0 for label:"<<el.label().toString()<<std::endl;
     exit(1);
   }
   _list.push(GeneralPriorityElement<Element>(priority,el));
 }
 
 template<typename Element>
+Element CodeThorn::GeneralPriorityWorkList<Element>::top() {
+    auto priElem=_list.top();
+    int priority=priElem.priority;
+    //std::cout<<"DEBUG: EPWL: front(): pri:"<<el.priority<<" data:"<<el.data<<std::endl;
+    if(false && priority==0) {
+      std::cerr<<"Error: push_front: priority=0 for estate lab:"<<priElem.data.label().toString()<<std::endl;
+      
+      exit(1);
+    }
+    return priElem.data;
+}
+
+template<typename Element>
+void CodeThorn::GeneralPriorityWorkList<Element>::pop() {
+  // there is only one pop method since the work list is priority list
+  _list.pop();
+}
+
+template<typename Element>
+void CodeThorn::GeneralPriorityWorkList<Element>::push_front(Element el) {
+  push(el);
+}
+
+template<typename Element>
 void CodeThorn::GeneralPriorityWorkList<Element>::push_back(Element el) {
   // there is only one push method since the work list is priority list
-  push_front(el);
+  push(el);
 }
 
 template<typename Element>
 Element CodeThorn::GeneralPriorityWorkList<Element>::front() {
-    auto el=_list.top();
-    int priority=el.priority;
-    //std::cout<<"DEBUG: EPWL: front(): pri:"<<el.priority<<" data:"<<el.data<<std::endl;
-    if(false && priority==0) {
-      std::cerr<<"Error: push_front: priority=0 for estate lab:"<<el.data->label().toString()<<std::endl;
-      
-      exit(1);
-    }
-    return el.data;
+  return top();
 }
 
 template<typename Element>
 void CodeThorn::GeneralPriorityWorkList<Element>::pop_front() {
-  // there is only one pop method since the work list is priority list
-  _list.pop();
+  pop();
 }
 

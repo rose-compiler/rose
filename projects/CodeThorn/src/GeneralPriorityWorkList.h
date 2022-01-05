@@ -4,6 +4,8 @@
 #include <sstream>
 #include <vector>
 #include <cstddef>
+#include <queue>
+
 #include "GeneralWorkList.h"
 #include "TopologicalSort.h"
 
@@ -44,10 +46,16 @@ class GeneralPriorityWorkList : public GeneralWorkList<Element> {
   public:
     GeneralPriorityWorkList(CodeThorn::TopologicalSort::LabelToPriorityMap map);
     bool empty();
+    void push(Element el);
+    Element top();
+    void pop();
+
+    // overriding non-priority work list
     void push_front(Element el);
     void pop_front();
     Element front();
     void push_back(Element);
+
     std::size_t size();
     void clear();
     typedef GeneralPriorityElement<Element> GeneralPriorityElementType;

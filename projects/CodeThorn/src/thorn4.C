@@ -92,7 +92,7 @@ public:
     for (const std::string& arg: remainingArgs) {
       //mlog[DEBUG] <<"remaining arg: \"" <<Rose::StringUtility::cEscape(arg) <<"\"\n";
       if (boost::starts_with(arg, "--thorn4:")) {
-        cerr <<"thorn4: unrecognized commande line option: \"" <<Rose::StringUtility::cEscape(arg) <<"\"\n";
+        cerr <<"thorn4: unrecognized command line option: \"" <<Rose::StringUtility::cEscape(arg) <<"\"\n";
         exit(1);
       }
     }

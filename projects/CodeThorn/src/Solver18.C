@@ -53,6 +53,7 @@ void Solver18::initializeSummaryStatesFromWorkList() {
     ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(s->label()));
     _analyzer->setSummaryState(s->label(),s->callString,new EState(*s)); // ensure summary states are never added to the worklist
     _analyzer->addToWorkList(s);
+    _workList->push(WorkListEntry(s->label(),s->callString));
   }
 }
 
@@ -66,6 +67,10 @@ void Solver18::run() {
   if(_analyzer->getOptionsRef().explorationMode!="topologic-sort") {
     cerr<<"Error: topologic-sort required for exploration mode, but it is "<<_analyzer->getOptionsRef().explorationMode<<endl;
     exit(1);
+  }
+  ROSE_ASSERT(_analyzer->getTopologicalSort());
+  if(_workList==nullptr) {
+    _workList=new GeneralPriorityWorkList<Solver18::WorkListEntry>(_analyzer->getTopologicalSort()->labelToPriorityMap());
   }
 
   initializeSummaryStatesFromWorkList();
