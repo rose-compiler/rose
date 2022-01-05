@@ -490,6 +490,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BitOps.h									\
 	Rose/Color.h									\
 	Rose/CommandLine.h								\
+	Rose/CommandLine/IntervalParser.h						\
 	Rose/Constants.h								\
 	Rose/Diagnostics.h								\
 	Rose/Exception.h								\
