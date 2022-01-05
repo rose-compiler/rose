@@ -419,11 +419,11 @@ int64_t getAsmSignedConstant(SgAsmValueExpression *e);
    //! Pretty print AST horizontally, output to std output.
    void printAST (SgNode* node);
 
-   //! Pretty print AST horizontally, output to a specified text file. If printType is set to true, also print out all types.
-   void printAST2TextFile (SgNode* node, const char* filename, bool printType=false);
+   //! Pretty print AST horizontally, output to a specified text file. If printType is set to false, don't print out type info.
+   void printAST2TextFile (SgNode* node, const char* filename, bool printType=true);
 
-   //! Pretty print AST horizontally, output to a specified text file. If printType is set to true, also print out all types.
-   void printAST2TextFile (SgNode* node, std::string filename, bool printType=false);
+   //! Pretty print AST horizontally, output to a specified text file. If printType is set to false, don't print out types info.
+   void printAST2TextFile (SgNode* node, std::string filename, bool printType=true);
 
  // DQ (2/12/2012): Added some diagnostic support.
 //! Diagnostic function for tracing back through the parent list to understand at runtime where in the AST a failure happened.
