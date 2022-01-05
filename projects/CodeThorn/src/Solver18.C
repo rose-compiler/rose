@@ -29,6 +29,8 @@ void Solver18::initDiagnostics() {
 int Solver18::getId() {
   return 18;
 }
+
+// allows to handle sequences of nodes as basic blocks
 bool Solver18::isPassThroughLabel(Label lab) {
   Flow inEdgeSet1=_analyzer->getFlow()->inEdges(lab);
   Flow outEdgeSet1=_analyzer->getFlow()->outEdges(lab);
@@ -79,6 +81,10 @@ void Solver18::run() {
   bool terminateEarly=false;
   _analyzer->printStatusMessage(true);
   while(!_analyzer->isEmptyWorkList()) {
+    if(!_workList->empty()) {
+      auto p=_workList->top();
+      _workList->pop();
+    }
     EStatePtr currentEStatePtr0=_analyzer->popWorkList();
     // terminate early, ensure to stop all threads and empty the worklist (e.g. verification error found).
     if(terminateEarly||currentEStatePtr0==nullptr)
@@ -148,7 +154,8 @@ void Solver18::run() {
           ROSE_ASSERT(((addToWorkListFlag==true && newEStatePtr!=nullptr)||(addToWorkListFlag==false&&newEStatePtr==nullptr)));
           if(addToWorkListFlag) {
             ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(newEStatePtr->label()));
-            _analyzer->addToWorkList(newEStatePtr);  // uses its own omp synchronization, do not mix with above
+            _analyzer->addToWorkList(newEStatePtr);
+            _workList->push(WorkListEntry(newEStatePtr->label(),newEStatePtr->callString));
           }
         }
         if(((_analyzer->isFailedAssertEState(newEStatePtr0))||_analyzer->isVerificationErrorEState(newEStatePtr0))) {

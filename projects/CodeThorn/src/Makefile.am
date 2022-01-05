@@ -756,6 +756,9 @@ check-codethorn-internal:
 check-domain:
 	$(srcdir)/scripts/runDomainTests --testdir $(srcdir)/tests --all
 
+check-domain-l2basic:
+	$(srcdir)/scripts/runDomainTests --testdir $(srcdir)/tests --l2basic
+
 check-domain-avset:
 	$(srcdir)/scripts/runDomainTests --testdir $(srcdir)/tests --l2avset
 
