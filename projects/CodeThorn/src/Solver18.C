@@ -131,12 +131,10 @@ void Solver18::run() {
           EStatePtr newEStatePtr=newEStatePtr0;
           ROSE_ASSERT(newEStatePtr);
           // performing merge
-          bool addToWorkListFlag=false;
           EStatePtr summaryEStatePtr=_analyzer->getSummaryState(lab,cs);
           ROSE_ASSERT(summaryEStatePtr);
           if(_analyzer->getEStateTransferFunctions()->isApproximatedBy(newEStatePtr,summaryEStatePtr)) {
             delete newEStatePtr; // new state does not contain new information, therefore it can be deleted
-            addToWorkListFlag=false; // nothing to do (flag required because of OpenMP block, continue not allowed)
             newEStatePtr=nullptr;
           } else {
             EState newCombinedSummaryEState=_analyzer->getEStateTransferFunctions()->combine(summaryEStatePtr,const_cast<EStatePtr>(newEStatePtr));
@@ -146,14 +144,11 @@ void Solver18::run() {
             _analyzer->setSummaryState(lab,cs,newCombinedSummaryEStatePtr);
             delete summaryEStatePtr;
             delete newEStatePtr;
-            addToWorkListFlag=true;
-            newEStatePtr=new EState(*newCombinedSummaryEStatePtr); // ensure summary state ptrs are not added to the work list (avoid aliasing)
-          }
-          ROSE_ASSERT(((addToWorkListFlag==true && newEStatePtr!=nullptr)||(addToWorkListFlag==false&&newEStatePtr==nullptr)));
-          if(addToWorkListFlag) {
+            newEStatePtr=newCombinedSummaryEStatePtr;
             ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(newEStatePtr->label()));
             //_analyzer->addToWorkList(newEStatePtr);
             _workList->push(WorkListEntry(newEStatePtr->label(),newEStatePtr->callString));
+
           }
         }
         if(((_analyzer->isFailedAssertEState(newEStatePtr0))||_analyzer->isVerificationErrorEState(newEStatePtr0))) {
