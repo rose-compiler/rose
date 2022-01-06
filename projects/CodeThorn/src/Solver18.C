@@ -54,7 +54,7 @@ void Solver18::initializeSummaryStatesFromWorkList() {
     // initialize summarystate and push back to work lis
     ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(s->label()));
     _analyzer->setSummaryState(s->label(),s->callString,new EState(*s)); // ensure summary states are never added to the worklist
-    _analyzer->addToWorkList(s);
+    //_analyzer->addToWorkList(s);
     _workList->push(WorkListEntry(s->label(),s->callString));
   }
 }
@@ -80,19 +80,17 @@ void Solver18::run() {
   size_t displayTransferCounter=0;
   bool terminateEarly=false;
   _analyzer->printStatusMessage(true);
-  while(!_analyzer->isEmptyWorkList()) {
-    if(!_workList->empty()) {
-      auto p=_workList->top();
-      _workList->pop();
-    }
-    EStatePtr currentEStatePtr0=_analyzer->popWorkList();
+  while(!_workList->empty()) {
+    auto p=_workList->top();
+    _workList->pop();
+    //EStatePtr currentEStatePtr0=_analyzer->popWorkList();
     // terminate early, ensure to stop all threads and empty the worklist (e.g. verification error found).
-    if(terminateEarly||currentEStatePtr0==nullptr)
+    if(terminateEarly)
       continue;
-    ROSE_ASSERT(currentEStatePtr0);
-    ROSE_ASSERT(currentEStatePtr0->label().isValid());
-    ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(currentEStatePtr0->label()));
-    EStatePtr currentEStatePtr=_analyzer->getSummaryState(currentEStatePtr0->label(),currentEStatePtr0->callString);
+    
+    ROSE_ASSERT(p.label().isValid());
+    ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(p.label()));
+    EStatePtr currentEStatePtr=_analyzer->getSummaryState(p.label(),p.callString());
     ROSE_ASSERT(currentEStatePtr);
     
     list<EStatePtr> newEStateList0;
@@ -154,7 +152,7 @@ void Solver18::run() {
           ROSE_ASSERT(((addToWorkListFlag==true && newEStatePtr!=nullptr)||(addToWorkListFlag==false&&newEStatePtr==nullptr)));
           if(addToWorkListFlag) {
             ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(newEStatePtr->label()));
-            _analyzer->addToWorkList(newEStatePtr);
+            //_analyzer->addToWorkList(newEStatePtr);
             _workList->push(WorkListEntry(newEStatePtr->label(),newEStatePtr->callString));
           }
         }
