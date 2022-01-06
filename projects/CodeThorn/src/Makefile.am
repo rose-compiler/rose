@@ -116,7 +116,9 @@ CODETHORN_HEADER_FILES=\
   FunctionId.h \
   FunctionIdMapping.h \
   GeneralWorkList.h \
+  GeneralWorkList.C \
   GeneralPriorityWorkList.h \
+  GeneralPriorityWorkList.C \
   InputOutput.h \
   InternalChecks.h \
   IntervalAnalysis.h \
@@ -756,6 +758,9 @@ check-codethorn-internal:
 check-domain:
 	$(srcdir)/scripts/runDomainTests --testdir $(srcdir)/tests --all
 
+check-domain-l2basic:
+	$(srcdir)/scripts/runDomainTests --testdir $(srcdir)/tests --l2basic
+
 check-domain-avset:
 	$(srcdir)/scripts/runDomainTests --testdir $(srcdir)/tests --l2avset
 
@@ -930,10 +935,13 @@ check-thorn2: thorn2
 	./thorn2 -I$(includedir) -I$(includedir)/rose --thorn:dot=simple-e.dot --thorn:layout_txt=simple-e_class_layout.txt --thorn:layout_dot=simple-e_class_layout.dot --thorn:virtual_functions=simple-e_virtual_functions.txt --thorn:original_name=0 $(srcdir)/tests/thorn2/simple.cc
 
 check-thorn4: thorn4
-	rm -rf thorn4-test-abstract
-	rm -rf thorn4-test-concrete
-	./thorn4 --thorn4:report-dir=thorn4-test-abstract $(srcdir)/tests/rers_mini1.c
-	./thorn4 --thorn4:mode=concrete --thorn4:report-dir=thorn4-test-concrete $(srcdir)/tests/rers_mini1.c --thorn4:input-values="{1,2,3}" --thorn4:status
+	rm -rf thorn4-sts-graphs-abstract
+	rm -rf thorn4-sts-graphs-abstract-reduced
+	rm -rf thorn4-sts-graphs-concrete
+	./thorn4 $(srcdir)/tests/rers_mini1.c --thorn4:status --thorn4:report-dir=thorn4-sts-graphs-abstract
+	./thorn4 $(srcdir)/tests/rers_mini1.c --thorn4:status --thorn4:report-dir=thorn4-sts-graphs-abstract-reduced --thorn4:reduce-stg
+	./thorn4 $(srcdir)/tests/rers_mini1.c --thorn4:status --thorn4:report-dir=thorn4-sts-graphs-concrete --thorn4:input-values="{1,2,3}"
+	ls -ls thorn4-sts-graphs-*
 
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))

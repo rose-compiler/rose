@@ -22,10 +22,21 @@ namespace CodeThorn {
   void MemoryViolationAnalysis::readingFromMemoryLocation(Label lab, PStatePtr pstate, AbstractValue& memLoc) {
     //cout<<"MEM CHECK: @"<<lab.toString()<<": READ: @"<< memLoc.toString()<<endl;
     auto violation=checkMemoryAddress(memLoc);
+    // check uninitialized value read from memory location
+    if(pstate->memLocExists(memLoc)) {
+      auto val=pstate->readFromMemoryLocation(memLoc);
+      if(val.isUndefined()) {
+        if(val.isSummary()) {
+          violation.insert(ACCESS_POTENTIALLY_UNINIT);
+        } else {
+          violation.insert(ACCESS_DEFINITELY_UNINIT);
+        }
+      }
+    }
     recordViolation(violation,lab);
   }
 
-  void MemoryViolationAnalysis::writingToMemoryLocation(Label lab, PState* pstate, AbstractValue& memLoc, AbstractValue& newValue) {
+  void MemoryViolationAnalysis::writingToMemoryLocation(Label lab, PStatePtr pstate, AbstractValue& memLoc, AbstractValue& newValue) {
     //cout<<"MEM CHECK: @"<<lab.toString()<<": WRITE: @"<< memLoc.toString()<<" = "<<newValue<<endl;
     auto violation=checkMemoryAddress(memLoc);
     recordViolation(violation,lab);
@@ -98,8 +109,14 @@ namespace CodeThorn {
         _estateTransferFunctions->recordDefinitiveViolatingLocation2(ANALYSIS_OUT_OF_BOUNDS,label);
         break;
       case ACCESS_POTENTIALLY_OUTSIDE_BOUNDS:
-      _estateTransferFunctions->recordPotentialViolatingLocation2(ANALYSIS_OUT_OF_BOUNDS,label);
-      break;
+        _estateTransferFunctions->recordPotentialViolatingLocation2(ANALYSIS_OUT_OF_BOUNDS,label);
+        break;
+      case ACCESS_DEFINITELY_UNINIT:
+        _estateTransferFunctions->recordDefinitiveViolatingLocation2(ANALYSIS_UNINITIALIZED,label);
+        break;
+      case ACCESS_POTENTIALLY_UNINIT:
+        _estateTransferFunctions->recordPotentialViolatingLocation2(ANALYSIS_UNINITIALIZED,label);
+        break;
       default: // ignore others
         ;
       }
