@@ -83,7 +83,7 @@ parseCommandLine(int argc, char *argv[], Settings &settings) {
                 .argument("duration", Rose::CommandLine::durationParser(settings.maxAge))
                 .doc("Show reports that happened recently, where the @v{duration} is how far back to go in time "
                      "from now. " + Rose::CommandLine::DurationParser::docString() + " The default is " +
-                     Rose::CommandLine::DurationParser::toString(settings.maxAge) + "."));
+                     Rose::CommandLine::durationParser()->toString(settings.maxAge) + "."));
 
     tool.insert(Switch("slave")
                 .argument("name", anyParser(settings.slaveName))
@@ -286,7 +286,7 @@ main(int argc, char *argv[]) {
                 for (auto row: test) {
                     const std::string os = row.get<std::string>(0).orElse("");
                     const auto duration = row.get<uint64_t>(1);
-                    const std::string durationStr = duration ? Rose::CommandLine::DurationParser::toString(duration) : "";
+                    const std::string durationStr = duration ? Rose::CommandLine::durationParser()->toString(duration) : "";
                     const std::string status = row.get<std::string>(2).orElse("");
                     if (Format::YAML == settings.outputFormat) {
                         std::cout <<"  os: " <<os <<"\n";
