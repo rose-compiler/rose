@@ -1,7 +1,7 @@
 include_rules
 
 run $(librose_compile) --depend=$(ROSE)/src/roseSupport/license.h \
-    CommandLine.C
+    CommandLine.C DurationParser.C
 
 run $(public_header) -o include/rose/Rose/CommandLine \
-    IntervalParser.h SuffixMultiplierParser.h
+    DurationParser.h IntervalParser.h SuffixMultiplierParser.h
