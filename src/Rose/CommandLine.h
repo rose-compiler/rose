@@ -2,6 +2,7 @@
 #define ROSE_CommandLine_H
 
 #include <Rose/CommandLine/IntervalParser.h>
+#include <Rose/CommandLine/SuffixMultiplierParser.h>
 
 #include <Sawyer/CommandLine.h>
 #include <Rose/Color.h>
