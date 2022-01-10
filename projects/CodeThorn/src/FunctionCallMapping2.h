@@ -75,14 +75,7 @@ namespace CodeThorn {
     ClassAnalysis* _classAnalysis;
     VirtualFunctionAnalysis* _virtualFunctions;
   private:
-    using FunctionTypeMap = std::multimap<std::string, SgFunctionDeclaration*>;
-
     unsigned int _matchMode=3; // workaround mode
-
-    void computeFunctionPointerCalls( Label lbl, const FunctionTypeMap& funcMap, SgExpression& expr, bool& added);
-
-    // internal func. that computes all possible targets for pointer to member calls
-    void computeMemberFunctionPointerCalls(Label lbl, SgExpression& expr, bool& added);
 
     FunctionCallMapping2()                                       = delete;
     FunctionCallMapping2(const FunctionCallMapping2&)            = delete;

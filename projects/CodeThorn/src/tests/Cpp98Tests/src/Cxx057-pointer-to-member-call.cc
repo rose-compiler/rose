@@ -11,7 +11,9 @@ struct A
   void out() const { printf("a"); }
 };
 
-struct B : A
+typedef A Root;
+
+struct B : Root
 {
   B()  { printf("B"); }
   ~B() { printf("~B"); }
@@ -19,7 +21,8 @@ struct B : A
   void out() const { printf("b"); }
 };
 
-void foo(const B& obj, void (A::*fn)() const)
+
+void foo(const B& obj, void (Root::*fn)() const)
 {
   const A* a = &obj;
 
