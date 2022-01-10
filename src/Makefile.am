@@ -491,6 +491,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/Color.h									\
 	Rose/CommandLine.h								\
 	Rose/CommandLine/IntervalParser.h						\
+	Rose/CommandLine/SuffixMultiplierParser.h					\
 	Rose/Constants.h								\
 	Rose/Diagnostics.h								\
 	Rose/Exception.h								\
