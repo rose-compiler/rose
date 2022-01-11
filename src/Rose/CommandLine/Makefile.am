@@ -1,4 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+AUTOMAKE_OPTIONS = nostdinc
 AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 noinst_LTLIBRARIES = librose_partial.la

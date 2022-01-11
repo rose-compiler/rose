@@ -1,4 +1,5 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
+AUTOMAKE_OPTIONS = nostdinc
 SUBDIRS = Concolic InstructionSemantics2 ModelChecker Partitioner2 Unparser
 AM_CPPFLAGS = $(ROSE_INCLUDES)
 
