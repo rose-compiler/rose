@@ -6,7 +6,7 @@ namespace Rose {
 namespace CommandLine {
 
 const char *licenseText =
-#include "license.h"
+#include "licenseString.h"
 ;
 
 ShowLicenseAndExit::Ptr
