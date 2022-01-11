@@ -1,4 +1,3 @@
-// Author: Markus Schordan, 2013.
 
 #include "rose.h"
 #include "DataDependenceVisualizer.h"
@@ -12,10 +11,6 @@ class VariableIdSetAttribute;
 
 // public
 
-/*! 
-  * \author Markus Schordan
-  * \date 2013.
- */
 CodeThorn::DataDependenceVisualizer::DataDependenceVisualizer(Labeler* labeler, VariableIdMapping* varIdMapping, string useDefAttributeName)
   : _showSourceCode(true),
     _labeler(labeler),
@@ -28,46 +23,26 @@ CodeThorn::DataDependenceVisualizer::DataDependenceVisualizer(Labeler* labeler, 
 {
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2013.
- */
 VariableIdSet CodeThorn::DataDependenceVisualizer::useVars(SgNode* expr) {
   UDAstAttribute* useDefAttribute=getUDAstAttribute(expr,_useDefAttributeName);
   ROSE_ASSERT(useDefAttribute);
   return useDefAttribute->useVariables(*_variableIdMapping);
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2013.
- */
 LabelSet CodeThorn::DataDependenceVisualizer::defLabels(SgNode* expr, VariableId useVar) {
   UDAstAttribute* useDefAttribute=getUDAstAttribute(expr,_useDefAttributeName);
   ROSE_ASSERT(useDefAttribute);
   return useDefAttribute->definitionsOfVariable(useVar);
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2013.
- */
 Label CodeThorn::DataDependenceVisualizer::getLabel(SgNode* stmt) {
   return _labeler->getLabel(stmt);
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2013.
- */
 SgNode* CodeThorn::DataDependenceVisualizer::getNode(Label label) {
   return _labeler->getNode(label);
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2013.
- */
 string CodeThorn::DataDependenceVisualizer::nodeSourceCode(Label lab) {
   if(_labeler->isFunctionEntryLabel(lab))
     return "FunctionEntry";
@@ -78,27 +53,16 @@ string CodeThorn::DataDependenceVisualizer::nodeSourceCode(Label lab) {
   return SgNodeHelper::doubleQuotedEscapedString(node->unparseToString());
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2013.
- */
 void CodeThorn::DataDependenceVisualizer::generateDefUseDotGraph(SgNode* root, string fileName) {
   _mode=DDVMODE_DEFUSE;
   generateDot(root,fileName);
 }
-/*! 
-  * \author Markus Schordan
-  * \date 2013.
- */
+
 void CodeThorn::DataDependenceVisualizer::generateUseDefDotGraph(SgNode* root, string fileName) {
   _mode=DDVMODE_USEDEF;  
   generateDot(root,fileName);
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2013.
- */
 void CodeThorn::DataDependenceVisualizer::generateDotFunctionClusters(SgNode* root, CFAnalysis* cfanalyzer, string fileName, TopologicalSort* topSort, bool withDataDependencies) {
   /*
     generates a new cfg and a dot-cluster for each function and
@@ -195,10 +159,7 @@ void CodeThorn::DataDependenceVisualizer::generateDotFunctionClusters(SgNode* ro
   myfile<<"}"<<endl;
   myfile.close();
 }
-/*! 
-  * \author Markus Schordan
-  * \date 2013.
- */
+
 void CodeThorn::DataDependenceVisualizer::generateDot(SgNode* root, string fileName) {
   std::ofstream myfile;
   myfile.open(fileName.c_str(),std::ios::out);
@@ -258,10 +219,6 @@ void CodeThorn::DataDependenceVisualizer::generateDot(SgNode* root, string fileN
 
 // private
 
-/*! 
-  * \author Markus Schordan
-  * \date 2013.
- */
 UDAstAttribute* CodeThorn::DataDependenceVisualizer::getUDAstAttribute(SgNode* expr,string attributeName){
   if(existsUDAstAttribute(expr,attributeName)) {
     UDAstAttribute* udAttr=dynamic_cast<UDAstAttribute*>(expr->getAttribute(attributeName));
@@ -270,18 +227,11 @@ UDAstAttribute* CodeThorn::DataDependenceVisualizer::getUDAstAttribute(SgNode* e
     return 0;
   }
 }
-/*! 
-  * \author Markus Schordan
-  * \date 2013.
- */
+
 bool CodeThorn::DataDependenceVisualizer::existsUDAstAttribute(SgNode* expr,string attributeName){
   return expr->attributeExists(attributeName);
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2013.
- */
 void CodeThorn::DataDependenceVisualizer::setFunctionLabelSetSets(LabelSetSet functionLabelSetSets) {
   _functionLabelSetSets=functionLabelSetSets;
 }

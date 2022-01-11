@@ -88,6 +88,7 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   array_pointer_type.ads               \
   async_transfer_select.adb            \
   case_function.adb                    \
+  character_type.adb                   \
   constrained_array_definition.ads     \
   defining_character_literal.adb       \
   defining_enumeration_literal.adb     \
@@ -209,7 +210,9 @@ ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=                \
   fixed_point_definition.ads
 
 ROSE_FAILING_ADA_TESTS :=                           \
+  access_definition.ads                             \
   all_modes.ads                                     \
+  aspect_spec.ads                                   \
   deref_test.adb                                    \
   delay_until.adb                                   \
   entry_body_declaration.adb                        \
@@ -227,6 +230,7 @@ ROSE_FAILING_ADA_TESTS :=                           \
   requeue_statement_2.adb                           \
   requeue_statements.adb                            \
   single_protected_declaration.ads                  \
+  tagged_incomplete_type_declaration.ads            \
   test.adb                                          \
   test_unit.adb                                     \
   unit_2.adb                                        \

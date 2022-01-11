@@ -257,6 +257,8 @@ digraph "all_modes.adt" {
           <TR><TD ALIGN="LEFT">Defining_Name_Kind     </TD><TD> = </TD><TD ALIGN="LEFT">A_DEFINING_IDENTIFIER</TD></TR>
           <TR><TD ALIGN="LEFT">Defining_Name_Image     </TD><TD> = </TD><TD ALIGN="LEFT">"Access_Parm"</TD></TR>
           </TABLE>> ];
+  Element_2322198 -> Element_2323237
+      [ label=Anonymous_Access_To_Object_Subtype_Mark ];
   Element_2322198
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
           <TR><TD COLSPAN="3">Element_2322198</TD></TR>
@@ -265,7 +267,8 @@ digraph "all_modes.adt" {
           <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2321105</TD></TR>
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">All_Modes.ads - 6:22 .. 6:35</TD></TR>
           <TR><TD ALIGN="LEFT">Definition_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_ACCESS_DEFINITION</TD></TR>
-          <TR><TD ALIGN="LEFT">ASIS_PROCESSING    </TD><TD> = </TD><TD ALIGN="LEFT">ADA_2005_FEATURE_NOT_IMPLEMENTED_IN_ADA_95</TD></TR>
+          <TR><TD ALIGN="LEFT">Access_Definition_Kind      </TD><TD> = </TD><TD ALIGN="LEFT">AN_ANONYMOUS_ACCESS_TO_VARIABLE</TD></TR>
+          <TR><TD ALIGN="LEFT">Anonymous_Access_To_Object_Subtype_Mark          </TD><TD> = </TD><TD ALIGN="LEFT">Element_2323237</TD></TR>
           </TABLE>> ];
   Element_2323237
       [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 

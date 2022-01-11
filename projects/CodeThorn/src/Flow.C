@@ -285,6 +285,18 @@ Label Flow::getStartLabel() {
     return *_startLabelSet.begin();
   }
 }
+
+bool Flow::isPassThroughLabel(Label lab) {
+  Flow inEdgeSet1=inEdges(lab);
+  Flow outEdgeSet1=outEdges(lab);
+  if(inEdgeSet1.size()==1 && outEdgeSet1.size()==1) {
+    Edge outEdge1=*outEdgeSet1.begin();
+    Flow inEdgeSet2=outEdges(outEdge1.target());
+    return inEdgeSet2.size()==1;
+  }
+  return false;
+}
+
 void Flow::setStartLabel(Label label) {
   LabelSet ls;
   ls.insert(label);
@@ -508,6 +520,12 @@ Flow& Flow::operator+=(Flow& s2) {
   return *this;
 }
 
+void Flow::setDotOptionDisplayPassThroughLabel(bool opt) {
+  _dotOptionDisplayPassThroughLabel=opt;
+}
+bool Flow::getDotOptionDisplayPassThroughLabel() {
+  return _dotOptionDisplayPassThroughLabel;
+}
 void Flow::setDotOptionDisplayLabel(bool opt) {
   _dotOptionDisplayLabel=opt;
 }
@@ -552,7 +570,14 @@ string Flow::toDot(Labeler* labeler, TopologicalSort* topSort) {
       ss << " [label=\"";
       ss << Labeler::labelToString(*i);
       if(topSort) {
-  ss<<"["<<topSort->getLabelPosition(*i)<<"]";
+        ss<<"["<<topSort->getLabelPosition(*i)<<"]";
+      }
+      if(_dotOptionDisplayPassThroughLabel) {
+        if(isPassThroughLabel(*i)) {
+          ss << "[MOV]";
+        } else {
+          ss << "[STO]";
+        }
       }
       if(_dotOptionDisplayStmt)
         ss << ": ";

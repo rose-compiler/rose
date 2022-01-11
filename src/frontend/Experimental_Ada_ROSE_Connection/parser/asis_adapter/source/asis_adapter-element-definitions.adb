@@ -1,5 +1,7 @@
 with Asis.Definitions;
 with Asis.Elements;
+with A4G.A_Types; use A4G.A_Types;
+with Asis.Set_Get;
 
 package body Asis_Adapter.Element.Definitions is
 
@@ -29,6 +31,22 @@ package body Asis_Adapter.Element.Definitions is
       -----------------------------------------------------------------------
       -- BEGIN field support (Alphabetical order):
 
+      function Add_And_Return_Access_To_Function_Result_Profile return a_nodes_h.Element_ID is
+         ID : constant a_nodes_h.Element_ID :=
+           Get_Element_ID (Asis.Definitions.Access_To_Function_Result_Profile (Element));
+      begin
+         State.Add_To_Dot_Label_And_Edge ("Access_To_Function_Result_Profile", ID);
+         return ID;
+      end;
+
+      function Add_And_Return_Access_To_Subprogram_Parameter_Profile return a_nodes_h.Element_ID_List is
+      begin
+         return To_Element_ID_List
+           (This           => State,
+            Elements_In    => Asis.Definitions.Access_To_Subprogram_Parameter_Profile (Element),
+            Dot_Label_Name => "Access_To_Subprogram_Parameter_Profile");
+      end;
+
       function Add_And_Return_Ancestor_Subtype_Indication return a_nodes_h.Element_ID is
          ID : constant a_nodes_h.Element_ID :=
            Get_Element_ID (Asis.Definitions.Ancestor_Subtype_Indication (Element));
@@ -37,11 +55,35 @@ package body Asis_Adapter.Element.Definitions is
          return ID;
       end;
 
+      function Add_And_Return_Anonymous_Access_To_Object_Subtype_Mark return a_nodes_h.Element_ID is
+         ID : constant a_nodes_h.Element_ID :=
+           Get_Element_ID (Asis.Definitions.Anonymous_Access_To_Object_Subtype_Mark (Element));
+      begin
+         State.Add_To_Dot_Label_And_Edge ("Anonymous_Access_To_Object_Subtype_Mark", ID);
+         return ID;
+      end;
+
       function Add_And_Return_Array_Component_Definition return a_nodes_h.Element_ID is
          ID : constant a_nodes_h.Element_ID :=
            Get_Element_ID (Asis.Definitions.Array_Component_Definition (Element));
       begin
          State.Add_To_Dot_Label_And_Edge ("Array_Component_Definition", ID);
+         return ID;
+      end;
+
+      function Add_And_Return_Aspect_Mark return a_nodes_h.Element_ID is
+         ID : constant a_nodes_h.Element_ID :=
+           Get_Element_ID (Asis.Definitions.Aspect_Mark (Element));
+      begin
+         State.Add_To_Dot_Label_And_Edge ("Aspect_Mark", ID);
+         return ID;
+      end;
+
+      function Add_And_Return_Aspect_Definition return a_nodes_h.Element_ID is
+         ID : constant a_nodes_h.Element_ID :=
+           Get_Element_ID (Asis.Definitions.Aspect_Definition (Element));
+      begin
+         State.Add_To_Dot_Label_And_Edge ("Aspect_Definition", ID);
          return ID;
       end;
 
@@ -261,6 +303,13 @@ package body Asis_Adapter.Element.Definitions is
             Add_Edges      => True);
       end;
 
+      function Add_And_Return_Is_Not_Null_Return return ICE.bool is
+         Value : constant Boolean := Asis.Elements.Is_Not_Null_Return (Element);
+      begin
+         State.Add_To_Dot_Label ("Is_Not_Null_Return", Value);
+         return a_nodes_h.Support.To_bool (Value);
+      end;
+
       function Add_And_Return_Is_Private_Present return ICE.bool is
          Value : constant Boolean := Asis.Definitions.Is_Private_Present (Element);
       begin
@@ -384,6 +433,56 @@ package body Asis_Adapter.Element.Definitions is
 
       -- Has more than one caller:
       -- Has side effects:
+      function Create_And_Return_Access_Definition
+        return a_nodes_h.Access_Definition_Struct 
+      is
+         Parent_Name : constant String := Module_Name;
+         Module_Name : constant String := Parent_Name &
+           ".Create_And_Return_Access_Definition";
+
+         Result          : a_nodes_h.Access_Definition_Struct :=
+           a_nodes_h.Support.Default_Access_Definition_Struct;
+         Access_Definition_Kind : constant Asis.Access_Definition_Kinds :=
+           Asis.Elements.Access_Definition_Kind (Element);
+
+         procedure Add_Common_Items is
+         begin
+            State.Add_To_Dot_Label ("Access_Definition_Kind", Access_Definition_Kind'Image);
+            Result.Access_Definition_Kind := To_Access_Definition_Kinds (Access_Definition_Kind);
+            Result.Has_Null_Exclusion := Add_And_Return_Has_Null_Exclusion; 
+         end Add_Common_Items;
+
+         use all type Asis.Access_Definition_Kinds;
+      begin
+         If Access_Definition_Kind /= Not_An_Access_Definition then
+            Add_Common_Items;
+         end if;
+
+         case Access_Definition_Kind is
+         when Not_An_Access_Definition =>
+            raise Internal_Error with
+            Module_Name & " called with: " & Access_Definition_Kind'Image;
+         when An_Anonymous_Access_To_Variable =>
+            Result.Anonymous_Access_To_Object_Subtype_Mark := Add_And_Return_Anonymous_Access_To_Object_Subtype_Mark;
+         when An_Anonymous_Access_To_Constant =>
+            Result.Anonymous_Access_To_Object_Subtype_Mark := Add_And_Return_Anonymous_Access_To_Object_Subtype_Mark;
+         when An_Anonymous_Access_To_Procedure =>
+            Result.Access_To_Subprogram_Parameter_Profile := Add_And_Return_Access_To_Subprogram_Parameter_Profile;
+         when An_Anonymous_Access_To_Protected_Procedure =>
+            Result.Access_To_Subprogram_Parameter_Profile := Add_And_Return_Access_To_Subprogram_Parameter_Profile;
+         when An_Anonymous_Access_To_Function =>
+            Result.Access_To_Subprogram_Parameter_Profile := Add_And_Return_Access_To_Subprogram_Parameter_Profile;
+            Result.Is_Not_Null_Return := Add_And_Return_Is_Not_Null_Return;
+         when An_Anonymous_Access_To_Protected_Function =>
+            Result.Access_To_Subprogram_Parameter_Profile := Add_And_Return_Access_To_Subprogram_Parameter_Profile;
+            Result.Is_Not_Null_Return := Add_And_Return_Is_Not_Null_Return;
+         end case;
+
+         return Result;
+      end Create_And_Return_Access_Definition;
+
+
+      -- Has side effects:
       function Create_And_Return_Access_Type
         return a_nodes_h.Access_Type_Struct
       is
@@ -480,6 +579,15 @@ package body Asis_Adapter.Element.Definitions is
          --           Result.Is_Not_Null_Return
          return Result;
       end Create_And_Return_Access_Type;
+
+      -- Has side effects:
+      function Create_And_Return_Aspect_Specification
+        return a_nodes_h.Aspect_Specification_Struct is
+      begin
+         return
+           (Aspect_Mark      => Add_And_Return_Aspect_Mark,
+            Aspect_Definition => Add_And_Return_Aspect_Definition);
+      end Create_And_Return_Aspect_Specification;
 
       -- Has side effects:
       function Create_And_Return_Component_Definition
@@ -1102,8 +1210,8 @@ package body Asis_Adapter.Element.Definitions is
       when An_Others_Choice =>
          null; -- No more components
       when An_Access_Definition => -- A2005
-         -- Access_Definition_Kinds
-         State.Add_Not_Implemented (Ada_2005);
+         Result.The_Union.The_Access_Definition :=
+           Create_And_Return_Access_Definition;
       when A_Private_Type_Definition =>
          Result.The_Union.The_Private_Type_Definition :=
            Create_And_Return_Private_Type_Definition;
@@ -1123,7 +1231,8 @@ package body Asis_Adapter.Element.Definitions is
          Result.The_Union.The_Formal_Type_Definition :=
            Create_And_Return_Formal_Type_Definition;
       when An_Aspect_Specification => -- A2012
-         State.Add_Not_Implemented (Ada_2012);
+         Result.The_Union.The_Aspect_Specification :=
+           Create_And_Return_Aspect_Specification;
       end case;
 
       State.A_Element.Element_Kind := a_nodes_h.A_Definition;
@@ -1152,10 +1261,14 @@ package body Asis_Adapter.Element.Definitions is
                  Get_Element_ID (Elm);
                Element_Kind : constant Asis.Element_Kinds :=
                Asis.Elements.Element_Kind (Elm);
+               SpecialCase : A4G.A_Types.Special_Cases := Asis.Set_Get.Special_Case(Elm);
             begin
-               state.Process_Element_Tree(
-                Element => Elm,
-                Outputs => State.Outputs );
+               -- PUT_LINE(Special_Cases'Image (SpecialCase));
+               If SpecialCase /= Stand_Char_Literal then
+                 state.Process_Element_Tree(
+                  Element => Elm,
+                  Outputs => State.Outputs );
+               end if;
             end;
          end loop;
       end Append_Implicit_Inherited_Declarations;
@@ -1174,7 +1287,7 @@ package body Asis_Adapter.Element.Definitions is
      -- Derived enumeration literals
      -- Derived record components
 
-     If Definition_Kind = A_Type_Definition  then
+     If Definition_Kind = A_Type_Definition then
        declare
          Type_Kind : constant Asis.Type_Kinds :=
            Asis.Elements.Type_Kind (Element);

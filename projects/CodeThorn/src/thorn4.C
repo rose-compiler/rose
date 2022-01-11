@@ -42,12 +42,12 @@ class Thorn4Parser
 public:
   struct Parameters
   {
-    std::string reportDir="";
+    std::string reportDir=".";
     std::string mode="abstract";
     bool checkCLanguage=true;
     bool status=true;
     bool reduceStg=false;
-    std::string inputValues;
+    std::string inputValues="{}";
   };
   
   /// sets the Thorn4Parser settings using the command line arguments
@@ -80,15 +80,24 @@ public:
                         .doc("print status messages during analysis."));
     thorn4Parser.insert(scl::Switch("reduce-stg")
                         .intrinsicValue(true,params.reduceStg)
-                        .doc("reduce STS to input/output states."));
+                        .doc("reduce STS graph to input/output states."));
     p.purpose("Generates State Transition System Graph files")
       .doc("synopsis",
            "@prop{programName} [@v{switches}] @v{specimen_name}")
       .doc("description",
            "This program generates AST files in term format. The same term format can be used in the AstMatcher as input for matching AST subtrees.");
-    scl::ParserResult cmdline = p.with(thorn4Parser).parse(clArgs).apply();
-    
-    return cmdline.unparsedArgs();
+    scl::ParserResult cmdLine = p.with(thorn4Parser).parse(clArgs).apply();
+
+    const std::vector<std::string> remainingArgs = cmdLine.unparsedArgs();
+    for (const std::string& arg: remainingArgs) {
+      //mlog[DEBUG] <<"remaining arg: \"" <<Rose::StringUtility::cEscape(arg) <<"\"\n";
+      if (boost::starts_with(arg, "--thorn4:")) {
+        cerr <<"thorn4: unrecognized command line option: \"" <<Rose::StringUtility::cEscape(arg) <<"\"\n";
+        exit(1);
+      }
+    }
+
+    return cmdLine.unparsedArgs();
   }
 
   Parameters getParameters() {
@@ -167,6 +176,7 @@ int main( int argc, char * argv[] )
     ctOpt.status=params.status;
     ctOpt.reportFilePath=params.reportDir;
     ctOpt.reduceStg=params.reduceStg;
+    ctOpt.inputValues=params.inputValues;
 
     ctOpt.callStringLength=-1; // unbounded length
     ctOpt.normalizeLevel=2;
@@ -180,6 +190,8 @@ int main( int argc, char * argv[] )
     ctOpt.logLevel="none";
     ctOpt.visualization.vis=true; // generates ast, icfg, tg1, tg2
 
+    ctOpt.vimReportFileName=""; // do not generated vim report
+
     if(params.mode=="abstract") {
       ctOpt.solver=16; // default solver for this tool
       ctOpt.sharedPStates=false; // required for solver 16
@@ -190,6 +202,10 @@ int main( int argc, char * argv[] )
       ctOpt.sharedPStates=false;
       ctOpt.abstractionMode=0;
       ctOpt.arrayAbstractionIndex=-1; // no abstraction of arrays
+      if(ctOpt.inputValues=="{}") {
+        cerr<<"Concrete mode selected, but no input values provided. Use option --input-values=\"{ ... }\" to provide a set of input values."<<endl;
+        exit(1);
+      }
     } else {
       cerr<<"Wrong mode '"<<params.mode<<"' provided on command line."<<endl;
       exit(1);

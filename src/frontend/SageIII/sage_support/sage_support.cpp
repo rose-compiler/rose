@@ -8012,6 +8012,8 @@ int SgProject::link ( std::string linkerName )
   // strip out edg specific options that would cause an error in the backend linker (compiler).
      SgFile::stripEdgCommandLineOptions( argcArgvList );
 
+     SgFile::stripTranslationCommandLineOptions( argcArgvList );
+
   // remove the original compiler/linker name
      argcArgvList.erase(argcArgvList.begin());
 

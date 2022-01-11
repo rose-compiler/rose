@@ -29,15 +29,10 @@ void Solver18::initDiagnostics() {
 int Solver18::getId() {
   return 18;
 }
+
+// allows to handle sequences of nodes as basic blocks
 bool Solver18::isPassThroughLabel(Label lab) {
-  Flow inEdgeSet1=_analyzer->getFlow()->inEdges(lab);
-  Flow outEdgeSet1=_analyzer->getFlow()->outEdges(lab);
-  if(inEdgeSet1.size()==1 && outEdgeSet1.size()==1) {
-    Edge outEdge1=*outEdgeSet1.begin();
-    Flow inEdgeSet2=_analyzer->getFlow()->outEdges(outEdge1.target());
-    return inEdgeSet2.size()==1;
-  }
-  return false;
+  return _analyzer->isPassThroughLabel(lab);
 }
 
 void Solver18::initializeSummaryStatesFromWorkList() {
@@ -52,7 +47,8 @@ void Solver18::initializeSummaryStatesFromWorkList() {
     // initialize summarystate and push back to work lis
     ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(s->label()));
     _analyzer->setSummaryState(s->label(),s->callString,new EState(*s)); // ensure summary states are never added to the worklist
-    _analyzer->addToWorkList(s);
+    //_analyzer->addToWorkList(s);
+    _workList->push(WorkListEntry(s->label(),s->callString));
   }
 }
 
@@ -67,21 +63,27 @@ void Solver18::run() {
     cerr<<"Error: topologic-sort required for exploration mode, but it is "<<_analyzer->getOptionsRef().explorationMode<<endl;
     exit(1);
   }
+  ROSE_ASSERT(_analyzer->getTopologicalSort());
+  if(_workList==nullptr) {
+    _workList=new GeneralPriorityWorkList<Solver18::WorkListEntry>(_analyzer->getTopologicalSort()->labelToPriorityMap());
+  }
 
   initializeSummaryStatesFromWorkList();
 
   size_t displayTransferCounter=0;
   bool terminateEarly=false;
   _analyzer->printStatusMessage(true);
-  while(!_analyzer->isEmptyWorkList()) {
-    EStatePtr currentEStatePtr0=_analyzer->popWorkList();
+  while(!_workList->empty()) {
+    auto p=_workList->top();
+    _workList->pop();
+    //EStatePtr currentEStatePtr0=_analyzer->popWorkList();
     // terminate early, ensure to stop all threads and empty the worklist (e.g. verification error found).
-    if(terminateEarly||currentEStatePtr0==nullptr)
+    if(terminateEarly)
       continue;
-    ROSE_ASSERT(currentEStatePtr0);
-    ROSE_ASSERT(currentEStatePtr0->label().isValid());
-    ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(currentEStatePtr0->label()));
-    EStatePtr currentEStatePtr=_analyzer->getSummaryState(currentEStatePtr0->label(),currentEStatePtr0->callString);
+    
+    ROSE_ASSERT(p.label().isValid());
+    ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(p.label()));
+    EStatePtr currentEStatePtr=_analyzer->getSummaryState(p.label(),p.callString());
     ROSE_ASSERT(currentEStatePtr);
     
     list<EStatePtr> newEStateList0;
@@ -122,12 +124,10 @@ void Solver18::run() {
           EStatePtr newEStatePtr=newEStatePtr0;
           ROSE_ASSERT(newEStatePtr);
           // performing merge
-          bool addToWorkListFlag=false;
           EStatePtr summaryEStatePtr=_analyzer->getSummaryState(lab,cs);
           ROSE_ASSERT(summaryEStatePtr);
           if(_analyzer->getEStateTransferFunctions()->isApproximatedBy(newEStatePtr,summaryEStatePtr)) {
             delete newEStatePtr; // new state does not contain new information, therefore it can be deleted
-            addToWorkListFlag=false; // nothing to do (flag required because of OpenMP block, continue not allowed)
             newEStatePtr=nullptr;
           } else {
             EState newCombinedSummaryEState=_analyzer->getEStateTransferFunctions()->combine(summaryEStatePtr,const_cast<EStatePtr>(newEStatePtr));
@@ -137,13 +137,11 @@ void Solver18::run() {
             _analyzer->setSummaryState(lab,cs,newCombinedSummaryEStatePtr);
             delete summaryEStatePtr;
             delete newEStatePtr;
-            addToWorkListFlag=true;
-            newEStatePtr=new EState(*newCombinedSummaryEStatePtr); // ensure summary state ptrs are not added to the work list (avoid aliasing)
-          }
-          ROSE_ASSERT(((addToWorkListFlag==true && newEStatePtr!=nullptr)||(addToWorkListFlag==false&&newEStatePtr==nullptr)));
-          if(addToWorkListFlag) {
+            newEStatePtr=newCombinedSummaryEStatePtr;
             ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(newEStatePtr->label()));
-            _analyzer->addToWorkList(newEStatePtr);  // uses its own omp synchronization, do not mix with above
+            //_analyzer->addToWorkList(newEStatePtr);
+            _workList->push(WorkListEntry(newEStatePtr->label(),newEStatePtr->callString));
+
           }
         }
         if(((_analyzer->isFailedAssertEState(newEStatePtr0))||_analyzer->isVerificationErrorEState(newEStatePtr0))) {

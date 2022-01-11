@@ -305,8 +305,18 @@ FAILING_MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED  = \
 # I add _tokenunparsing- into the names to avoid name collision of targets used by other rules.   
 MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS = $(addprefix rose_tokenunparsing_, ${MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED})
 
+MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS_V2 = $(addprefix rose_tokenunparsing_v2_, ${MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED})
+
+# add order only prerequisites rules to avoid reading the same input files by multiple processes
+$(MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS_V2): | $(MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS)
+
+$(MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS) : | $(MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS)
+
+$(MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS) : | $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS) 
+
 PASSING_MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_RESULTS = \
-   $(MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS)
+   $(MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS) \
+   $(MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS_V2)
 
 PASSING_MOVE_MERGE_DECLS_TESTCODES_RESULTS = \
    $(MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS)
@@ -335,10 +345,12 @@ $(MOVE_MERGE_DECLS_NO_VAR_NORM_DIFF_FILES):$(MOVE_MERGE_DECLS_NO_VAR_NORM_TESTCO
 
 # DQ (6/28/2015): Added additional test using new option: -rose:merge_decl_assign
 $(MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS): $(srcdir)/$(@:rose_tokenunparsing_%=%) $(MOVE_TOOL) 
-	echo "Test without new option: -rose:merge_decl_assign"
-	$(VALGRIND) $(MOVE_TOOL) $(TEST_CXXFLAGS) -rose:unparse_tokens -c -rose:debug $(srcdir)/$(@:rose_tokenunparsing_%=%)
-	echo "Test using new option: -rose:merge_decl_assign"
-	$(VALGRIND) $(MOVE_TOOL) $(TEST_CXXFLAGS) -rose:unparse_tokens -rose:merge_decl_assign -c -rose:debug $(srcdir)/$(@:rose_tokenunparsing_%=%)
+	echo "Test without new option: -rose:unparse_tokens"
+	$(VALGRIND) $(MOVE_TOOL) $(TEST_CXXFLAGS) -rose:unparse_tokens -c -rose:debug $(srcdir)/$(@:rose_tokenunparsing_%=%) -rose:output $@
+
+$(MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS_V2): $(srcdir)/$(@:rose_tokenunparsing_v2_%=%) $(MOVE_TOOL) 
+	echo "Test using new option: -rose:unparse_tokens -rose:merge_decl_assign"
+	$(VALGRIND) $(MOVE_TOOL) $(TEST_CXXFLAGS) -rose:unparse_tokens -rose:merge_decl_assign -c -rose:debug $(srcdir)/$(@:rose_tokenunparsing_v2_%=%) -rose:output $@
 
 # Without new option fails for test2015_04.C?
 # With new option fails for test2014_12.C
@@ -359,9 +371,11 @@ test_move_decls_with_token_unparsing: $(PASSING_MOVE_DECLS_TESTCODES_WITH_TOKEN_
 # move_diff_check: move_decls_diff_check move_merge_decls_diff_check
 # move_diff_check: move_decls_diff_check move_merge_decls_diff_check test_move_decls_with_token_unparsing
 if ROSE_USING_GCC_VERSION_LATER_4_4
-move_diff_check: move_decls_diff_check move_merge_decls_diff_check test_move_decls_with_token_unparsing
+#move_diff_check: move_decls_diff_check move_merge_decls_diff_check test_move_decls_with_token_unparsing
+move_diff_check = $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS) $(MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS) $(MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS) $(MOVE_DECLS_TESTCODES_WITH_TOKEN_UNPARSING_FULLY_SUPPORTED_RESULTS_V2)
 else
-move_diff_check: move_decls_diff_check move_merge_decls_diff_check
+move_diff_check = $(MOVE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS) $(MOVE_MERGE_DECLS_TESTCODES_FULLY_SUPPORTED_RESULTS) 
+
 endif
 
 # only move , no merge
@@ -390,7 +404,7 @@ if USING_GNU_COMPILER
 if ROSE_USING_GCC_VERSION_LATER_4_8
 	@echo "moveDeclarationTool tests require configuration with either EDG version 4.9 and GNU version 4.8 or backend compiler or EDG 4.12 and 4.8 or any later GNU compiler."
 	@echo "moveDeclarationTool tests using EDG 4.12 and any supported backend compiler are allowed."
-	@$(MAKE) move_diff_check
+	@$(MAKE) $(move_diff_check)
 endif # ROSE_USING_GCC_VERSION_LATER_4_8
 else
 if USING_CLANG_COMPILER

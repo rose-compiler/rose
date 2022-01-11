@@ -106,6 +106,7 @@ namespace CodeThorn {
       funMap2->computeFunctionCallMapping(root);
       cfanalyzer->createCppICFG(root, funMap2);
     }
+    cfanalyzer->getIcfgFlow()->setDotOptionDisplayPassThroughLabel(ctOpt.visualization.displayPassThroughLabel);
     if(ctOpt.status) {
       cout<<"Phase: ICFG construction"<<endl;
       size_t icfgSize=cfanalyzer->getIcfgFlow()->size();

@@ -93,7 +93,7 @@ using namespace Sawyer::Message;
 
 using namespace Sawyer::Message;
 
-static std::string CodeThornLibraryVersion="1.13.43"; // b
+static std::string CodeThornLibraryVersion="1.13.44";
 
 // handler for generating backtrace
 void codethornBackTraceHandler(int sig) {
@@ -400,14 +400,6 @@ namespace CodeThorn {
     }
 
     void optionallyRunVisualizer(CodeThornOptions& ctOpt, CTAnalysis* analyzer, SgNode* root) {
-      if (ctOpt.visualization.icfgFileName.size()>0) {
-	string cfgFileName=ctOpt.visualization.icfgFileName;
-	DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
-	ddvis.setDotGraphName("CFG");
-	ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),cfgFileName,analyzer->getTopologicalSort(),false);
-	cout << "generated "<<cfgFileName<<" (top sort: "<<(analyzer->getTopologicalSort()!=0)<<")"<<endl;
-      }
-      
       ROSE_ASSERT(analyzer->getTransitionGraph());
       ROSE_ASSERT(analyzer->getEStateSet());
       Visualizer visualizer(analyzer);
@@ -456,13 +448,23 @@ namespace CodeThorn {
         
 	cout << "=============================================================="<<endl;
       }
+      if (ctOpt.visualization.icfgFileName.size()>0 && !ctOpt.visualization.vis) {
+	string icfgFileName=ctOpt.visualization.icfgFileName;
+	//DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
+	//ddvis.setDotGraphName("CFG");
+	//ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),icfgFileName,analyzer->getTopologicalSort(),false);
+        analyzer->getCFAnalyzer()->generateIcfgDotFile(ctOpt.visualization.icfgFileName,analyzer->getTopologicalSort());
+	cout << "generated "<<icfgFileName<<" (top sort: "<<(analyzer->getTopologicalSort()!=0)<<")"<<endl;
+      }
+      
+
       if(ctOpt.visualization.visTg2) {
         string dotFile3=visualizer.foldedTransitionGraphToDot();
         write_file("transitiongraph2.dot", dotFile3);
         cout << "generated transitiongraph2.dot."<<endl;
       }
 
-      if (ctOpt.visualization. dotIOStg.size()>0) {
+      if (ctOpt.visualization.dotIOStg.size()>0) {
         string filename=ctOpt.visualization. dotIOStg;
         cout << "generating dot IO graph file:"<<filename<<endl;
         string dotFile="digraph G {\n";

@@ -1,7 +1,3 @@
-/*************************************************************
- * Author   : Markus Schordan                                *
- *************************************************************/
-
 #include "sage3basic.h"
 #include "sageGeneric.h"
 #include "sageInterface.h"
@@ -12,6 +8,7 @@
 #include <boost/foreach.hpp>
 #include "CodeThornException.h"
 #include "CodeThornPasses.h"
+#include "CppStdUtilities.h"
 
 using namespace CodeThorn;
 using namespace std;
@@ -1897,3 +1894,10 @@ InterFlow* CFAnalysis::getInterFlow() {
 }
 
 void CFAnalysis::useCplusplus(bool flag) { _withCplusplus = flag; }
+
+void CFAnalysis::generateIcfgDotFile(std::string fileName, TopologicalSort* topSort) {
+  ROSE_ASSERT(getLabeler());
+  std::string s=getIcfgFlow()->toDot(getLabeler(),topSort);
+  //string descr=std::string("ICFG DOT");
+  CppStdUtilities::writeFile(fileName, s);
+}
