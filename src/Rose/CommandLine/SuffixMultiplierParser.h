@@ -81,15 +81,15 @@ public:
 
     Ptr with(const std::string &suffix, T multiplier, const std::string &alias1, const std::string &alias2 = "",
              const std::string &alias3 = "", const std::string &alias4 = "") {
-        suffixes_[suffix] = Suffix{.multiplier = multiplier, .preferred = Preferred::YES};
+        suffixes_[suffix] = Suffix{multiplier, Preferred::YES};
         if (!alias1.empty())
-            suffixes_[alias1] = Suffix{.multiplier = multiplier, .preferred = Preferred::NO};
+            suffixes_[alias1] = Suffix{multiplier, Preferred::NO};
         if (!alias2.empty())
-            suffixes_[alias2] = Suffix{.multiplier = multiplier, .preferred = Preferred::NO};
+            suffixes_[alias2] = Suffix{multiplier, Preferred::NO};
         if (!alias3.empty())
-            suffixes_[alias3] = Suffix{.multiplier = multiplier, .preferred = Preferred::NO};
+            suffixes_[alias3] = Suffix{multiplier, Preferred::NO};
         if (!alias4.empty())
-            suffixes_[alias4] = Suffix{.multiplier = multiplier, .preferred = Preferred::NO};
+            suffixes_[alias4] = Suffix{multiplier, Preferred::NO};
         return sharedFromThis().template dynamicCast<SuffixMultiplierParser>();
     }
     /** @} */
