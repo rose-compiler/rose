@@ -132,6 +132,10 @@ TopologicalSort* CodeThorn::CTAnalysis::getTopologicalSort() {
   return _topologicalSort;
 }
 
+bool CodeThorn::CTAnalysis::isPassThroughLabel(Label lab) {
+  return getFlow()->isPassThroughLabel(lab);
+}
+
 void CodeThorn::CTAnalysis::insertInputVarValue(int i) {
   _inputVarValues.insert(i);
 }

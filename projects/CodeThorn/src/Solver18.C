@@ -32,14 +32,7 @@ int Solver18::getId() {
 
 // allows to handle sequences of nodes as basic blocks
 bool Solver18::isPassThroughLabel(Label lab) {
-  Flow inEdgeSet1=_analyzer->getFlow()->inEdges(lab);
-  Flow outEdgeSet1=_analyzer->getFlow()->outEdges(lab);
-  if(inEdgeSet1.size()==1 && outEdgeSet1.size()==1) {
-    Edge outEdge1=*outEdgeSet1.begin();
-    Flow inEdgeSet2=_analyzer->getFlow()->outEdges(outEdge1.target());
-    return inEdgeSet2.size()==1;
-  }
-  return false;
+  return _analyzer->isPassThroughLabel(lab);
 }
 
 void Solver18::initializeSummaryStatesFromWorkList() {

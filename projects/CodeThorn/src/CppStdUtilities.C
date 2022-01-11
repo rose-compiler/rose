@@ -1,8 +1,8 @@
-#include "CppStdUtilities.h"
 #include <fstream>
 #include <iostream>
 #include <regex>
 #include <string>
+#include "CppStdUtilities.h"
 
 #if GCC_VERSION >= 40900
 #include <regex>
@@ -60,6 +60,22 @@ namespace CppStdUtilities {
     }
   }
 
+  bool writeFileWithErrorReporing(std::string fileName, std::string data, std::string fileTypeDescription) {
+    bool success=CppStdUtilities::writeFile(fileName, data);
+    if(!success) {
+      cerr<<"Error: could not write "<<fileTypeDescription<<" file "<<fileName<<endl;
+    }
+    return success;
+  }
+
+  bool writeFileWithErrorReporing(std::string fileName, std::string data) {
+    bool success=CppStdUtilities::writeFile(fileName, data);
+    if(!success) {
+      cerr<<"Error: could not write file "<<fileName<<endl;
+    }
+    return success;
+  }
+
   bool appendFile(std::string filename, std::string data) {
     std::ofstream myfile;
     myfile.open(filename.c_str(),std::ios::app);
@@ -115,3 +131,4 @@ namespace CppStdUtilities {
   }
 
 }
+

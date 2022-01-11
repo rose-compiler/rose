@@ -151,7 +151,7 @@ class CFAnalysis {
   void createCppICFG(SgProject* project, FunctionCallMapping2* functionCallMapping2);
   Flow* getIcfgFlow();
   InterFlow* getInterFlow();
-
+  void generateIcfgDotFile(std::string fileName, TopologicalSort* topSort=0);
   void useCplusplus(bool flag);
 
 protected:

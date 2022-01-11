@@ -69,10 +69,10 @@ namespace CodeThorn {
     }
 
     if(labeler.isLoopConditionLabel(lab)) {
-      // true edge leads to loop body, sort it first
-      semanticRevPostOrderTraversal(flow.outEdgeOfType(lab,EDGE_TRUE).target());
       // false edge exits the loop, sort it after the loop body
       semanticRevPostOrderTraversal(flow.outEdgeOfType(lab,EDGE_FALSE).target());
+      // true edge leads to loop body, sort it first
+      semanticRevPostOrderTraversal(flow.outEdgeOfType(lab,EDGE_TRUE).target());
     } else if(labeler.isFunctionCallLabel(lab)) {
       // call edge leads to function, sort it first
       Flow callFlow=flow.outEdgesOfType(lab,EDGE_CALL);

@@ -25,6 +25,14 @@ namespace CppStdUtilities {
   // if the file can be written the function returns true, otherwise false.
   bool writeFile(std::string filename, std::string data);
 
+  // write the string 'data' to file with name 'filename'. It opens and closes the file.
+  // if file cannot be written, an error message is printed on stderr and false is returned, otherwise true (=success).
+  bool writeFileWithErrorReporting(std::string filename, std::string data, std::string fileTypeDescription);
+  
+  // write the string 'data' to file with name 'filename'. It opens and closes the file.
+  // if file cannot be written, an error message is printed on stderr and false is returned, otherwise true (=success).
+  bool writeFileWithErrorReporting(std::string filename, std::string data);
+  
   // append the string 'data' to file with name 'filename'. It opens and closes the file.
   // if data can be written to the file  the function returns true, otherwise false.
   bool appendFile(std::string filename, std::string data);

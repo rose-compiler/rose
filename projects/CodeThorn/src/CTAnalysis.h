@@ -162,6 +162,9 @@ namespace CodeThorn {
     CFAnalysis* getCFAnalyzer();
     TopologicalSort* getTopologicalSort();
 
+    // a label predicate for in-out node property allowing state-move-optimization
+    bool isPassThroughLabel(Label lab);
+    
     CodeThorn::PStateSet* getPStateSet();
     EStateSet* getEStateSet();
     TransitionGraph* getTransitionGraph();
