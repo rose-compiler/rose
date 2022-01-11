@@ -25161,6 +25161,10 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
     out<< Rose::StringUtility::stripPathFromFileName ( lnode->get_file_info()->get_filename() )<<" "<<lnode->get_file_info()->get_line()<<":"<<lnode->get_file_info()->get_col();
   }
 
+  if (SgEnumVal* f = isSgEnumVal(node) )
+    out<<" value="<< f->get_value() <<" declaration="<<f->get_declaration() << " name="<< f->get_name().getString();
+
+
   // optionally  qualified name
   if (SgFunctionDeclaration* f = isSgFunctionDeclaration(node) )
     out<<" "<< f->get_qualified_name();
