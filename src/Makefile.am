@@ -228,18 +228,6 @@ libroseLibraries = \
    $(top_builddir)/src/util/Sawyer/libroseSawyer.la \
    $(top_builddir)/src/roseExtensions/failSafe/libfailsafe.la \
    $(top_builddir)/src/Rose/librose_partial.la \
-   $(top_builddir)/src/Rose/BinaryAnalysis/librose_partial.la \
-   $(top_builddir)/src/Rose/BinaryAnalysis/Concolic/librose_partial.la \
-   $(top_builddir)/src/Rose/BinaryAnalysis/InstructionSemantics2/librose_partial.la \
-   $(top_builddir)/src/Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/librose_partial.la \
-   $(top_builddir)/src/Rose/BinaryAnalysis/ModelChecker/librose_partial.la \
-   $(top_builddir)/src/Rose/BinaryAnalysis/Partitioner2/librose_partial.la \
-   $(top_builddir)/src/Rose/BinaryAnalysis/Unparser/librose_partial.la \
-   $(top_builddir)/src/Rose/Color/librose_partial.la \
-   $(top_builddir)/src/Rose/CommandLine/librose_partial.la \
-   $(top_builddir)/src/Rose/Diagnostics/librose_partial.la \
-   $(top_builddir)/src/Rose/FileSystem/librose_partial.la \
-   $(top_builddir)/src/Rose/StringUtility/librose_partial.la \
    $(libroseSqlite3xConnection) \
    $(libroseQtExtension)
 
