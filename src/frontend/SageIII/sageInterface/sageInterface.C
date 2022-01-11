@@ -25178,6 +25178,9 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   if (SgAdaPackageSpecDecl * f = isSgAdaPackageSpecDecl(node) )
     out<<" "<< f->get_qualified_name();
 
+  if (SgAdaEnumRepresentationClause* f = isSgAdaEnumRepresentationClause(node) )
+    out<<" enumType="<< f->get_enumType();
+
   if (SgInitializedName * v = isSgInitializedName(node) )
   {
     out<<" "<< v->get_qualified_name();
