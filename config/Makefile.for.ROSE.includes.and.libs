@@ -516,7 +516,7 @@ endif
 #    $(ROSE_CLANG_INCLUDE)
 
 SWIG_ROSE_INCLUDES = $(ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH)
-ROSE_INCLUDES = -I$(top_builddir) $(ROSE_BOOST_PREINCLUDE_PATH) $(ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH)
+ROSE_INCLUDES = -I$(top_builddir) -I$(top_builddir)/src $(ROSE_BOOST_PREINCLUDE_PATH) $(ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH)
 
 # DQ (8/15/2010): I have removed these directories from the include paths since it no longer exists.
 # I expect that the directories were removed and the include list not properly cleaned up.

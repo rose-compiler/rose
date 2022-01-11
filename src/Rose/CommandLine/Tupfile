@@ -1,6 +1,11 @@
 include_rules
 
-run $(librose_compile) --depend=$(ROSE)/src/roseSupport/licenseString.h \
+# LicenseString.h is included by License.C but is not installed.
+: $(ROOT)/LicenseInformation/ROSE_BSD_License.txt \
+  |> ^ GEN %o^ perl $(ROOT)/scripts/to-c-string.pl <%f >%o \
+  |> LicenseString.h
+
+run $(librose_compile) --depend=LicenseString.h \
     DurationParser.C License.C Parser.C SelfTest.C Version.C
 
 run $(public_header) -o include/rose/Rose/CommandLine \
