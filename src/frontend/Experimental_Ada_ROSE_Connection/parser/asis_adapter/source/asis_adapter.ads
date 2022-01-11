@@ -141,6 +141,10 @@ private
       Label     : in     String);
 
    -- Order below is alphabetical:
+   function To_Access_Definition_Kinds is new Unchecked_Conversion
+     (Source => Asis.Access_Definition_Kinds,
+      Target => a_nodes_h.Access_Definition_Kinds);
+
    function To_Access_Type_Kinds is new Unchecked_Conversion
      (Source => Asis.Access_Type_Kinds,
       Target => a_nodes_h.Access_Type_Kinds);

@@ -14,56 +14,54 @@ AC_REQUIRE([AC_PROG_CXX])
 # the language dialect (c++17, gnu++11, etc.).
 ROSE_COMPILER_FEATURES([c++], [$CXX $CPPFLAGS $CXXFLAGS], [HOST_CXX_])
 
-AC_MSG_NOTICE([Initial flags:])
-AC_MSG_NOTICE([CFLAGS       = "$CFLAGS"])
-AC_MSG_NOTICE([CXXFLAGS     = "$CXXFLAGS"])
-
 # Debug Flags
 
 AC_ARG_WITH(DEBUG, AS_HELP_STRING([--with-DEBUG], [manually set the compiler debug flags]))
 
+has_debug_flag=yes
 if test "$with_DEBUG" = "yes"; then
-  CC_DEBUG="-g"
+  C_DEBUG="-g"
   CXX_DEBUG="-g"
 elif test "$with_DEBUG" = "no"; then
-  CC_DEBUG=""
+  C_DEBUG=""
   CXX_DEBUG=""
 elif test "$with_DEBUG"; then
-  CC_DEBUG="$with_DEBUG"
+  C_DEBUG="$with_DEBUG"
   CXX_DEBUG="$with_DEBUG"
 else
-  CC_DEBUG=""
+  has_debug_flag=no
+  C_DEBUG=""
   CXX_DEBUG=""
 fi
 
-AC_SUBST(CC_DEBUG)
+AC_SUBST(C_DEBUG)
 AC_SUBST(CXX_DEBUG)
-if test -n "$CC_DEBUG"; then CFLAGS="$CFLAGS $CC_DEBUG"; fi
-if test -n "$CXX_DEBUG"; then CXXFLAGS="$CXXFLAGS $CXX_DEBUG"; fi
 
 # Optimization Flags
 
 AC_ARG_WITH(OPTIMIZE, AS_HELP_STRING([--with-OPTIMIZE], [manually set the compiler optimization flags]))
 
+has_optimize_flag=yes
 if test "$with_OPTIMIZE" = yes; then
-  CC_OPTIMIZE="-O2"
+  C_OPTIMIZE="-O2"
   CXX_OPTIMIZE="-O2"
+elif test "$with_OPTIMIZE" = debug; then
+  C_OPTIMIZE="-Og"
+  CXX_OPTIMIZE="-Og"
 elif test "$with_OPTIMIZE" = no; then
-  CC_OPTIMIZE=""
-  CXX_OPTIMIZE=""
+  C_OPTIMIZE="-O0"
+  CXX_OPTIMIZE="-O0"
 elif test "$with_OPTIMIZE"; then
-  CC_OPTIMIZE=$with_OPTIMIZE
+  C_OPTIMIZE=$with_OPTIMIZE
   CXX_OPTIMIZE=$with_OPTIMIZE
 else
-  CC_OPTIMIZE="-O2"
+  has_optimize_flag=no
+  C_OPTIMIZE="-O2"
   CXX_OPTIMIZE="-O2"
 fi
 
-AC_SUBST(CC_OPTIMIZE)
+AC_SUBST(C_OPTIMIZE)
 AC_SUBST(CXX_OPTIMIZE)
-
-if test "$CC_OPTIMIZE"; then CFLAGS="$CFLAGS $CC_OPTIMIZE"; fi
-if test "$CXX_OPTIMIZE"; then CXXFLAGS="$CXXFLAGS $CXX_OPTIMIZE"; fi
 
 # Warning Flags
 
@@ -84,54 +82,56 @@ develop_warn_on="$(for w in $warnings_of_interrest; do echo -W$w; done)"
 release_fail_on="$(for w in $warnings_of_interrest; do echo -Werror=$w; done)"
 develop_fail_on="$(for w in $warnings_causing_failure; do echo -Werror=$w; done)"
 
-
+has_warning_flag=yes
 if test "$with_WARNINGS" = none; then
   # Ensure no warnings
-  CC_WARNINGS=""
+  C_WARNINGS=""
   CXX_WARNINGS=""
 elif test "$with_WARNINGS" = basic; then
   # Basic warnings used by most projects
-  CC_WARNINGS="$rose_basic_warnings"
+  C_WARNINGS="$rose_basic_warnings"
   CXX_WARNINGS="$rose_basic_warnings"
 elif test "$with_WARNING" = all; then
   # All warnings that we could think of
-  CC_WARNINGS="$rose_basic_warnings $rose_extra_warnings"
+  C_WARNINGS="$rose_basic_warnings $rose_extra_warnings"
   CXX_WARNINGS="$rose_basic_warnings $rose_extra_warnings"
 elif test "$with_WARNINGS" = develop; then
   # Only warnings that we want to enforce in `develop` mode
-  CC_WARNINGS="$develop_warn_on $develop_fail_on"
+  C_WARNINGS="$develop_warn_on $develop_fail_on"
   CXX_WARNINGS="$develop_warn_on $develop_fail_on"
 elif test "$with_WARNINGS" = candidate; then
   # All warnings plus failure on important warnings
-  CC_WARNINGS="$develop_fail_on $release_fail_on"
+  C_WARNINGS="$develop_fail_on $release_fail_on"
   CXX_WARNINGS="$develop_fail_on $release_fail_on"
 elif test "$with_WARNINGS" = release; then
   # All warnings plus failure on important warnings
-  CC_WARNINGS="$rose_basic_warnings $rose_extra_warnings $develop_fail_on $release_fail_on"
+  C_WARNINGS="$rose_basic_warnings $rose_extra_warnings $develop_fail_on $release_fail_on"
   CXX_WARNINGS="$rose_basic_warnings $rose_extra_warnings $develop_fail_on $release_fail_on"
 elif test "$with_WARNING" = pedantic; then
   # Fails on any warnings (of `all`) but a few special ones
-  CC_WARNINGS="-Werror $rose_basic_warnings $rose_extra_warnings $rose_no_error_warnings"
+  C_WARNINGS="-Werror $rose_basic_warnings $rose_extra_warnings $rose_no_error_warnings"
   CXX_WARNINGS="-Werror $rose_basic_warnings $rose_extra_warnings $rose_no_error_warnings"
 elif test "$with_WARNINGS"; then
   # User defined
-  CC_WARNINGS=$with_WARNINGS
+  C_WARNINGS=$with_WARNINGS
   CXX_WARNINGS=$with_WARNINGS
 else
-  CC_WARNINGS=""
+  has_warning_flag=no
+  C_WARNINGS=""
   CXX_WARNINGS=""
 fi
 
-AC_SUBST(CC_WARNINGS)
+AC_SUBST(C_WARNINGS)
 AC_SUBST(CXX_WARNINGS)
-
-if test "$CC_WARNINGS"; then CFLAGS="$CFLAGS $CC_WARNINGS"; fi
-if test "$CXX_WARNINGS"; then CXXFLAGS="$CXXFLAGS $CXX_WARNINGS"; fi
 
 CXX_TEMPLATE_REPOSITORY_PATH='$(top_builddir)/src'
 CXX_TEMPLATE_OBJECTS= # A bunch of Makefile.ams use this
 AC_SUBST(CXX_TEMPLATE_REPOSITORY_PATH)
 AC_SUBST(CXX_TEMPLATE_OBJECTS)
+
+AC_MSG_NOTICE([Initial flags:])
+AC_MSG_NOTICE([CFLAGS       = "$CFLAGS"])
+AC_MSG_NOTICE([CXXFLAGS     = "$CXXFLAGS"])
 
 AC_MSG_NOTICE([Found Flags:])
 AC_MSG_NOTICE([C_DEBUG      = "$C_DEBUG"])
@@ -140,12 +140,25 @@ AC_MSG_NOTICE([C_OPTIMIZE   = "$C_OPTIMIZE"])
 AC_MSG_NOTICE([CXX_OPTIMIZE = "$CXX_OPTIMIZE"])
 AC_MSG_NOTICE([C_WARNINGS   = "$C_WARNINGS"])
 AC_MSG_NOTICE([CXX_WARNINGS = "$CXX_WARNINGS"])
+
+if test "$has_debug_flag" = yes; then
+  CFLAGS="$CFLAGS $C_DEBUG"
+  CXXFLAGS="$CXXFLAGS $CXX_DEBUG"
+fi
+if test "$has_optimize_flag" = yes; then
+  CFLAGS="$CFLAGS $C_OPTIMIZE"
+  CXXFLAGS="$CXXFLAGS $CXX_OPTIMIZE"
+fi
+if test "$has_warning_flag" = yes; then
+  CFLAGS="$CFLAGS $C_WARNINGS"
+  CXXFLAGS="$CXXFLAGS $CXX_WARNINGS"
+fi
+
 AC_MSG_NOTICE([Final Flags:])
 AC_MSG_NOTICE([CFLAGS       = "$CFLAGS"])
 AC_MSG_NOTICE([CXXFLAGS     = "$CXXFLAGS"])
 
 ])
-
 
 AC_DEFUN([ROSE_FLAG_CXX_OPTIONS], [
 # Begin macro ROSE_FLAG_CXX.

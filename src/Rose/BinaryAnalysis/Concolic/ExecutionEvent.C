@@ -26,7 +26,7 @@ namespace Concolic {
 
 static std::vector<uint8_t>
 toBytes(const std::vector<uint64_t> &values) {
-    static std::vector<uint8_t> bytes;
+    std::vector<uint8_t> bytes;
     bytes.reserve(values.size() * sizeof(uint64_t));
     for (uint64_t value: values) {
         for (size_t i = 0; i < sizeof(uint64_t); ++i)
