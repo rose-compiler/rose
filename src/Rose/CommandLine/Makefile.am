@@ -3,6 +3,6 @@ AM_CPPFLAGS = $(ROSE_INCLUDES)
 
 noinst_LTLIBRARIES = librose_partial.la
 librose_partial_la_SOURCES = \
-	CommandLine.C DurationParser.C
+	DurationParser.C License.C Parser.C SelfTest.C Version.C
 
 # Headers are installed by parent makefiles

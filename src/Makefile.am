@@ -492,7 +492,11 @@ nobase_pkginclude_HEADERS=								\
 	Rose/CommandLine.h								\
 	Rose/CommandLine/DurationParser.h						\
 	Rose/CommandLine/IntervalParser.h						\
+	Rose/CommandLine/License.h							\
+	Rose/CommandLine/Parser.h							\
+	Rose/CommandLine/SelfTest.h							\
 	Rose/CommandLine/SuffixMultiplierParser.h					\
+	Rose/CommandLine/Version.h							\
 	Rose/Constants.h								\
 	Rose/Diagnostics.h								\
 	Rose/Exception.h								\

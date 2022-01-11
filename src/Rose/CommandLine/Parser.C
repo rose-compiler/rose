@@ -1,13 +1,21 @@
-#include <sage3basic.h>
-#include <Rose/CommandLine.h>
+#include <sage3basic.h>                                 // must be first ROSE include
+#include <Rose/CommandLine/Parser.h>
+
+#include <Rose/CommandLine/SelfTest.h>
+#include <Rose/CommandLine/License.h>
+#include <Rose/CommandLine/Version.h>
 #include <Rose/Diagnostics.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <Rose/BinaryAnalysis/SmtCommandLine.h>
 #endif
+#include <Sawyer/CommandLine.h>
 
-#include <rose_strtoull.h>
-#include <boost/algorithm/string/predicate.hpp>
-#include <boost/lexical_cast.hpp>
+#include <processSupport.h>                             // ROSE
+#include <rose_paths.h>
+#include <rose_config.h>
+#include <utility_functions.h>                          // ROSE
+
+#include <iostream>
 
 using namespace Sawyer::Message::Common;
 
@@ -34,50 +42,6 @@ protected:
             case THROW_ON_FAILURE: handler = throwOnFailedAssertion; break;
         }
         failedAssertionBehavior(handler);
-    }
-};
-
-// Run self tests from the command-line, then exit.
-class SelfTests: public Sawyer::CommandLine::SwitchAction {
-protected:
-    SelfTests() {}
-
-public:
-    typedef Sawyer::SharedPointer<SelfTests> Ptr;
-
-    static Ptr instance() {
-        return Ptr(new SelfTests);
-    }
-
-protected:
-    void operator()(const Sawyer::CommandLine::ParserResult &cmdline) {
-        ASSERT_require(cmdline.have("self-test"));
-        runSelfTestsAndExit();
-    }
-};
-
-std::vector<SelfTest::Ptr> selfTests;
-
-const char *licenseText =
-#include "license.h"
-;
-
-// Show license text and exit.
-class ShowLicenseAndExit: public Sawyer::CommandLine::SwitchAction {
-protected:
-    ShowLicenseAndExit() {}
-
-public:
-    typedef Sawyer::SharedPointer<ShowLicenseAndExit> Ptr;
-
-    static Ptr instance() {
-        return Ptr(new ShowLicenseAndExit);
-    }
-
-protected:
-    void operator()(const Sawyer::CommandLine::ParserResult&) {
-        std::cout <<licenseText;
-        exit(0);
     }
 };
 
@@ -118,10 +82,6 @@ createEmptyParserStage(const std::string &purpose, const std::string &descriptio
 
 // Global place to store result of parsing genericSwitches.
 GenericSwitchArgs genericSwitchArgs;
-
-// Global place to store the string printed by --version.  This static variable is initialized by the ROSE_INITIALIZE macro
-// called from every ROSE tool's "main" function.
-std::string versionString;
 
 // Returns command-line description for switches that should be always available.
 // Don't add anything to this that might not be applicable to some tool -- this is for all tools, both source and binary.
@@ -234,39 +194,6 @@ insertBooleanSwitch(Sawyer::CommandLine::SwitchGroup &sg, const std::string &swi
               .key(switchName)
               .intrinsicValue(false, storageLocation)
               .hidden(true));
-}
-
-ROSE_DLL_API void
-runSelfTestsAndExit() {
-    using namespace Rose::Diagnostics;
-
-    // Run each test sequentially
-    size_t npass=0, nfail=0;
-    BOOST_FOREACH (const SelfTest::Ptr &test, selfTests) {
-        if (test) {
-            mlog[DEBUG] <<"running self test \"" <<StringUtility::cEscape(test->name()) <<"\"...\n";
-            if ((*test)()) {
-                mlog[INFO] <<"passed: self test \"" <<StringUtility::cEscape(test->name()) <<"\"\n";
-                ++npass;
-            } else {
-                mlog[ERROR] <<"failed: self test \"" <<StringUtility::cEscape(test->name()) <<"\"\n";
-                ++nfail;
-            }
-        }
-    }
-
-    // Report results and exit
-    if (npass + nfail == 0) {
-        mlog[INFO] <<"no self tests available for this tool\n";
-        exit(0);
-    } else if (nfail > 0) {
-        mlog[FATAL] <<StringUtility::plural(nfail, "self tests") <<" failed; "
-                    <<StringUtility::plural(npass, "self tests") <<" passed\n";
-        exit(1);
-    } else {
-        mlog[INFO] <<"all self tests pass\n";
-        exit(0);
-    }
 }
 
 } // namespace
