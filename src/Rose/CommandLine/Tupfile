@@ -1,6 +1,6 @@
 include_rules
 
-run $(librose_compile) --depend=$(ROSE)/src/roseSupport/license.h \
+run $(librose_compile) --depend=$(ROSE)/src/roseSupport/licenseString.h \
     DurationParser.C License.C Parser.C SelfTest.C Version.C
 
 run $(public_header) -o include/rose/Rose/CommandLine \

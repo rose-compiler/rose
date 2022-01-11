@@ -1,10 +1,10 @@
 add_custom_command(
-  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/license.h
-  COMMAND perl ${CMAKE_SOURCE_DIR}/scripts/to-c-string.pl <${CMAKE_SOURCE_DIR}/LicenseInformation/ROSE_BSD_License.txt >license.h
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/licenseString.h
+  COMMAND perl ${CMAKE_SOURCE_DIR}/scripts/to-c-string.pl <${CMAKE_SOURCE_DIR}/LicenseInformation/ROSE_BSD_License.txt >licenseString.h
   DEPENDS ${CMAKE_SOURCE_DIR}/LicenseInformation/ROSE_BSD_License.txt
   COMMENT "Generating license C string...")
 
-add_custom_target(generate_license_header DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/license.h)
+add_custom_target(generate_license_header DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/licenseString.h)
 
 ########### build library ###############
 add_definitions(-DROSE_DLL_EXPORTS)
