@@ -291,7 +291,7 @@ bool Flow::isPassThroughLabel(Label lab) {
   Flow outEdgeSet1=outEdges(lab);
   if(inEdgeSet1.size()==1 && outEdgeSet1.size()==1) {
     Edge outEdge1=*outEdgeSet1.begin();
-    Flow inEdgeSet2=outEdges(outEdge1.target());
+    Flow inEdgeSet2=inEdges(outEdge1.target());
     return inEdgeSet2.size()==1;
   }
   return false;
