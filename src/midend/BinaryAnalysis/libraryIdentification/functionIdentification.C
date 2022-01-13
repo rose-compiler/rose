@@ -34,14 +34,6 @@ using namespace std;
 using namespace sqlite3x;
 using namespace LibraryIdentification;
 
-/**
- *  FunctionIdentification
- *
- *  Constructor.  Either opens or creates a database named dbName.
- *  Then it creates a table, vectors, if it doesn't already exist.
- *
- * @param[in] dbName  Name of the database to open
- **/
 FunctionIdentification::FunctionIdentification(std::string dbName)
 {
   database_name = dbName;
@@ -51,10 +43,7 @@ FunctionIdentification::FunctionIdentification(std::string dbName)
   createTables();  
 };
 
-/**
- * @brief Create the function ID database table "vectors" if it doesn't already exist
- **/
-void 
+void
 FunctionIdentification::createTables()
 {
     try { //Functions: identifying hash, name, link to the source library
@@ -76,19 +65,7 @@ FunctionIdentification::createTables()
 
 };
 
-
-/**
- *  set_function_match
- *
- *  Add a function to the database.  Takes handle and opcode string.
- *  ( TODO: Use combinatorics included in rose rather than MD5. )
- *
- * @param[in] handle  Handle to the database
- * @param[in] str  A C array of characters containing the opcode
- * array, (not null terminated)
- * @param[in] str_length  The length of the opcode array
- **/
-void 
+void
 FunctionIdentification::set_function_match( const library_handle & handle, const unsigned char* str, size_t str_length  )
 {
   string db_select_n = "INSERT INTO vectors( file, function_name, begin, end, md5_sum ) VALUES(?,?,?,?,?)";
@@ -116,29 +93,13 @@ FunctionIdentification::set_function_match( const library_handle & handle, const
 
 };
 
-/**
- *  set_function_match
- *
- *  Add a function to the database.  Simple overloaded wrapper.
- *
- * @param[in] handle  Handle to the database
- * @param[in] functionString opcode string as a C++ char string
- **/
-void 
+void
 FunctionIdentification::set_function_match( const library_handle & handle, const std::string functionString  )
    {
      set_function_match( handle, (const unsigned char*)functionString.c_str() , functionString.size() );
    }
 
-/**
- *  set_function_match
- *
- *  Add a function to the database.  Simple overloaded wrapper.
- *
- * @param[in] handle  Handle to the database
- * @param[in] functionString opcode string as SgUnsignedCharList
- **/
-void 
+void
 FunctionIdentification::set_function_match( const library_handle & handle, const SgUnsignedCharList & opcode_vector )
    {
      set_function_match( handle, (const unsigned char*) &(*(opcode_vector.begin())) , opcode_vector.size() );
@@ -148,23 +109,7 @@ FunctionIdentification::set_function_match( const library_handle & handle, const
 
 //Return the library_handle matching string from the database. bool false
 //is returned if no such match was found, true otherwise.
-/**
- *  get_function_match
- *
- *  Attempt to find a function in the database.  Takes reference to
- *  handle and the opcode string of the function to match.
- *  If the function is found, true is returned, and the data in the
- *  handle is filled in.  
- *  (TODO: What's in the handle if the function is not found?
- *  ( TODO: Use combinatorics included in rose rather than MD5. )
- *
- * @param[out] handle  Handle to the database
- * @param[in] str  A C array of characters containing the opcode
- * array, (not null terminated)
- * @param[in] str_length  The length of the opcode array
- * @return true if function is in database, false otherwise
- **/
-bool 
+bool
 FunctionIdentification::get_function_match( library_handle & handle, const unsigned char* str, size_t str_length )
 {
   //Constructing query command to get the entry from the database
@@ -207,30 +152,12 @@ FunctionIdentification::get_function_match( library_handle & handle, const unsig
   return false;
 };
 
-/**
- *  get_function_match
- *
- *  Find a function in the database.  Simple overloaded wrapper.
- *
- * @param[out] handle  Handle to the database
- * @param[in] functionString opcode string as a C++ char string
- * @return true if function is in database, false otherwise
- **/
-bool 
+bool
 FunctionIdentification::get_function_match( library_handle & handle, const std::string functionString) const
    {
      return const_cast<FunctionIdentification*>(this)->get_function_match( handle, (const unsigned char*)functionString.c_str() , functionString.size() );
    }
 
-/**
- *  get_function_match
- *
- *  Find a function in the database.  Simple overloaded wrapper.
- *
- * @param[out] handle  Handle to the database
- * @param[in] functionString opcode string as SgUnsignedCharList
- * @return true if function is in database, false otherwise
- **/
 bool
 FunctionIdentification::get_function_match( library_handle & handle, const SgUnsignedCharList & opcode_vector ) const
    {

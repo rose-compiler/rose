@@ -25,9 +25,7 @@ enum DUPLICATE_OPTION LibraryIdentification::duplicateOptionFromString(std::stri
     return UNKNOWN;    
 }
 
-
-
-FunctionIdDatabaseInterface::FunctionIdDatabaseInterface(const std::string& dbName) 
+FunctionIdDatabaseInterface::FunctionIdDatabaseInterface(const std::string& dbName)
 {
     database_name = dbName;
     //open the database
@@ -38,11 +36,7 @@ FunctionIdDatabaseInterface::FunctionIdDatabaseInterface(const std::string& dbNa
 }
 
 
-/**
- * @brief Create the function ID database tables "functions" and
- * "libraries" if they don't already exist
- **/
-void 
+void
 FunctionIdDatabaseInterface::createTables()
 {
     try { //Functions: identifying hash, name, link to the source library
@@ -64,8 +58,7 @@ FunctionIdDatabaseInterface::createTables()
     
 };
 
-// @brief Add an entry for a function to the database
-void FunctionIdDatabaseInterface::addFunctionToDB(const FunctionInfo& fInfo, enum DUPLICATE_OPTION dupOption) 
+void FunctionIdDatabaseInterface::addFunctionToDB(const FunctionInfo& fInfo, enum DUPLICATE_OPTION dupOption)
 {
     vector<FunctionInfo> foundFunctions = matchFunction(fInfo);
     
@@ -105,10 +98,7 @@ void FunctionIdDatabaseInterface::addFunctionToDB(const FunctionInfo& fInfo, enu
     cmd.executenonquery();
 }
 
-/** @brief Removes any functions that match the hash
- *  @param[inout] The hash to remove from the database
- **/
-void FunctionIdDatabaseInterface::removeFunctions(const std::string& funcHash) 
+void FunctionIdDatabaseInterface::removeFunctions(const std::string& funcHash)
 {
     std::string db_select_n = "delete from functions where functionID = ?;";
     sqlite3_command cmd(sqConnection, db_select_n );
@@ -120,14 +110,7 @@ void FunctionIdDatabaseInterface::removeFunctions(const std::string& funcHash)
     while(sqReader.read());
 }
 
-
-/** @brief See if any function with this hash exists in the database.
- *  If so, return the first one
- *  @param[inout] fInfo The FunctionInfo only needs to
- *  contain the hash, the rest will be filled in.
- *  @return True if a function was found.
- **/
-bool FunctionIdDatabaseInterface::matchOneFunction(FunctionInfo& fInfo) 
+bool FunctionIdDatabaseInterface::matchOneFunction(FunctionInfo& fInfo)
 {
     std::string db_select_n = "select function_name, libraryId FROM functions where functionId=?;";
     sqlite3_command cmd(sqConnection, db_select_n );
@@ -147,14 +130,7 @@ bool FunctionIdDatabaseInterface::matchOneFunction(FunctionInfo& fInfo)
     return false;
 }
 
-
-/** @brief Lookup a function by hash in the database. All match
- * functions will be returned in vector
- *  
- *  @param[in] funcHash The hash to search for
- *  @return  All functions matching this hash will be returned
- **/
-vector<FunctionInfo> FunctionIdDatabaseInterface::matchFunction(const FunctionInfo& inFInfo) 
+vector<FunctionInfo> FunctionIdDatabaseInterface::matchFunction(const FunctionInfo& inFInfo)
 {
     std::string db_select_n = "select function_name, libraryId FROM functions where functionId=?;";
     sqlite3_command cmd(sqConnection, db_select_n );
@@ -175,13 +151,6 @@ vector<FunctionInfo> FunctionIdDatabaseInterface::matchFunction(const FunctionIn
     return funcVector;
 }
 
-/** @brief Exactly lookup a function in the database.  There should
- *  only be one that matches Id, name, and library hash
- *  @param[inout] fInfo This FunctionInfo needs to
- *  contain the hash, name, and library hash. There should only be one
- *  matching function in the database.
- *  @return true if found
- **/
 bool FunctionIdDatabaseInterface::exactMatchFunction(const FunctionInfo& fInfo)
 {
     std::string db_select_n = "select * FROM functions where functionId = ? and function_name = ? and libraryId = ?;";
@@ -213,8 +182,6 @@ bool FunctionIdDatabaseInterface::exactMatchFunction(const FunctionInfo& fInfo)
     return false;
 }
 
-
-// @brief Add an entry for a library to the database
 void FunctionIdDatabaseInterface::addLibraryToDB(const LibraryInfo& lInfo, bool replace)
 {
     LibraryInfo checkLib(lInfo.libHash);
@@ -239,12 +206,7 @@ void FunctionIdDatabaseInterface::addLibraryToDB(const LibraryInfo& lInfo, bool 
     
 }
 
-
-/** @brief Lookup a library in the database.  True returned if found
- *  @param[inout] lInfo The LibraryInfo only needs to
- *  contain the hash, the rest will be filled in.
- **/
-bool FunctionIdDatabaseInterface::matchLibrary(LibraryInfo& lInfo) 
+bool FunctionIdDatabaseInterface::matchLibrary(LibraryInfo& lInfo)
 {
     std::string db_select_n = "select library_name, library_version, architecture, time from libraries where libraryId=?;";
     sqlite3_command cmd(sqConnection, db_select_n );

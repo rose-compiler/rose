@@ -1,10 +1,8 @@
-static const char *purpose = "Test creation of a library attribution database";
+static const char *purpose = "test creation of a library attribution database";
 static const char *description =
-    "libraryIdentificationTest:"
-    ""
-    " The purpose of libraryIdentificationTest is to test the creation of"
-    "a library attribution database, and then using the ROSE backend. "
-    ""
+    "The purpose of libraryIdentificationTest is to test the creation of "
+    "a library attribution database, and then using the ROSE backend.\n\n"
+
     "This only really makes sense for statically compiled executables "
     "because dynamically linked executables already identify all the "
     "functions they call from dynamically loaded libraries.";
