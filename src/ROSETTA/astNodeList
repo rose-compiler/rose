@@ -997,3 +997,11 @@ SgAdaDiscriminantConstraint
 SgAdaGenericInstanceDecl
 SgAdaVariantFieldDecl
 SgAdaInheritedFunctionSymbol
+SgAdaProtectedBody
+SgAdaProtectedBodyDecl
+SgAdaProtectedSpec
+SgAdaProtectedSpecDecl
+SgAdaProtectedSymbol
+SgAdaProtectedRefExp
+SgAdaProtectedType
+SgAdaProtectedTypeDecl

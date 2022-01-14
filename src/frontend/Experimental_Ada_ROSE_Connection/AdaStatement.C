@@ -825,8 +825,11 @@ namespace
   }
 
 
+  //
+  // tasks
+
   void
-  fillTaskBody(Declaration_Struct& decl, SgAdaTaskBody& sgnode, AstContext ctx)
+  fillBody(Declaration_Struct& decl, SgAdaTaskBody& sgnode, AstContext ctx)
   {
     ADA_ASSERT(decl.Declaration_Kind == A_Task_Body_Declaration);
 
@@ -841,6 +844,18 @@ namespace
       LabelAndLoopManager lblmgr;
 
       traverseIDs(stmts, elemMap(), StmtCreator{ctx.scope(sgnode).labelsAndLoops(lblmgr)});
+    }
+  }
+
+  void
+  fillBody(Declaration_Struct& decl, SgAdaProtectedBody& sgnode, AstContext ctx)
+  {
+    ADA_ASSERT(decl.Declaration_Kind == A_Protected_Body_Declaration);
+
+    {
+      ElemIdRange decls = idRange(decl.Protected_Operation_Items);
+
+      traverseIDs(decls, elemMap(), StmtCreator{ctx.scope(sgnode)});
     }
   }
 
@@ -909,6 +924,77 @@ namespace
     ADA_ASSERT(decl.Declaration_Kind == A_Single_Task_Declaration);
 
     return getTaskSpecID(decl.Object_Declaration_View, ctx);
+  }
+
+  //
+  // protected objects
+  //
+  // protected objects are represented as ClassDeclaration and ClassDefinition
+
+  std::pair<SgAdaProtectedSpec*, DeferredBodyCompletion>
+  getProtectedSpec(Element_Struct& elem, AstContext ctx)
+  {
+    SgAdaProtectedSpec&     sgnode = mkAdaProtectedSpec();
+
+    ADA_ASSERT(elem.Element_Kind == A_Definition);
+    logKind("A_Definition");
+
+    Definition_Struct&      def = elem.The_Union.Definition;
+    ADA_ASSERT(def.Definition_Kind == A_Protected_Definition);
+
+    logKind("A_Protected_Definition");
+
+    Protected_Definition_Struct* protectedNode = &def.The_Union.The_Protected_Definition;
+    SgAdaProtectedSpec*     nodePtr  = &sgnode;
+
+    auto deferred = [ctx,nodePtr,protectedNode]() -> void
+                    {
+                      // visible items
+                      {
+                        ElemIdRange range = idRange(protectedNode->Visible_Part_Items);
+
+                        traverseIDs(range, elemMap(), ElemCreator{ctx.scope(*nodePtr)});
+                      }
+
+                      // private items
+                      {
+                        ElemIdRange range = idRange(protectedNode->Private_Part_Items);
+                        ADA_ASSERT((!range.empty()) == protectedNode->Is_Private_Present);
+
+                        traverseIDs(range, elemMap(), ElemCreator{ctx.scope(*nodePtr), true /* private items */});
+                      }
+                    };
+
+    /* unused fields: (Task_Definition_Struct)
+         bool                  Has_Task;
+    */
+    return std::make_pair(&sgnode, deferred);
+  }
+
+  std::pair<SgAdaProtectedSpec*, DeferredBodyCompletion>
+  getProtectedSpecID(Element_ID id, AstContext ctx)
+  {
+    return getProtectedSpec(retrieveAs(elemMap(), id), ctx);
+  }
+
+  std::pair<SgAdaProtectedSpec*, DeferredBodyCompletion>
+  getProtectedSpecForProtectedType(Declaration_Struct& decl, AstContext ctx)
+  {
+    ADA_ASSERT(decl.Declaration_Kind == A_Protected_Type_Declaration);
+
+    if (decl.Type_Declaration_View == 0)
+      return std::make_pair(&mkAdaProtectedSpec(), []()->void {}); // nothing to complete
+
+    return getProtectedSpecID(decl.Type_Declaration_View, ctx);
+  }
+
+
+  std::pair<SgAdaProtectedSpec*, DeferredBodyCompletion>
+  getProtectedSpecForSingleProtected(Declaration_Struct& decl, AstContext ctx)
+  {
+    ADA_ASSERT(decl.Declaration_Kind == A_Single_Protected_Declaration);
+
+    return getProtectedSpecID(decl.Object_Declaration_View, ctx);
   }
 
 
@@ -3508,6 +3594,42 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ROSE_ABORT();
       }
 
+    case A_Protected_Type_Declaration:             // 9.4(2)
+      {
+        logKind("A_Protected_Type_Declaration");
+
+        auto               spec    = getProtectedSpecForProtectedType(decl, ctx);
+        NameData           adaname = singleName(decl, ctx);
+        ADA_ASSERT(adaname.fullName == adaname.ident);
+        SgAdaProtectedTypeDecl& sgnode  = mkAdaProtectedTypeDecl(adaname.fullName, SG_DEREF(spec.first), ctx.scope());
+
+        attachSourceLocation(sgnode, elem, ctx);
+        privatize(sgnode, isPrivate);
+        ctx.scope().append_statement(&sgnode);
+        ADA_ASSERT(sgnode.get_parent() == &ctx.scope());
+        recordNode(asisTypes(), adaname.id(), sgnode);
+        recordNode(asisDecls(), adaname.id(), sgnode);
+        recordNode(asisDecls(), elem.ID, sgnode);
+        spec.second();
+
+        /* unused fields:
+             bool                           Has_Protected;
+             Element_ID                     Corresponding_End_Name;
+             Definition_ID                  Discriminant_Part;
+             Definition_ID                  Type_Declaration_View;
+             Declaration_ID                 Corresponding_Type_Declaration;
+             Declaration_ID                 Corresponding_Type_Partial_View
+             Declaration_ID                 Corresponding_First_Subtype;
+             Declaration_ID                 Corresponding_Last_Constraint;
+             Declaration_ID                 Corresponding_Last_Subtype;
+             bool                           Is_Name_Repeated;
+             Declaration_ID                 Corresponding_Declaration;
+             Declaration_ID                 Corresponding_Body
+             Expression_List                Declaration_Interface_List;
+         */
+        break;
+      }
+
     case A_Task_Type_Declaration:                  // 9.1(2)
       {
         logKind("A_Task_Type_Declaration");
@@ -3543,6 +3665,35 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
          break;
       }
 
+    case A_Single_Protected_Declaration:           // 3.3.1(2):9.4(2)
+    {
+        logKind("A_Single_Protected_Declaration");
+
+        auto               spec    = getProtectedSpecForSingleProtected(decl, ctx);
+        NameData           adaname = singleName(decl, ctx);
+        ADA_ASSERT(adaname.fullName == adaname.ident);
+        SgAdaProtectedSpecDecl& sgnode  = mkAdaProtectedSpecDecl(adaname.fullName, SG_DEREF(spec.first), ctx.scope());
+
+        attachSourceLocation(sgnode, elem, ctx);
+        privatize(sgnode, isPrivate);
+        ctx.scope().append_statement(&sgnode);
+        ADA_ASSERT(sgnode.get_parent() == &ctx.scope());
+        //~ recordNode(asisTypes(), adaname.id(), sgnode);
+        recordNode(asisDecls(), elem.ID, sgnode);
+        recordNode(asisDecls(), adaname.id(), sgnode);
+        spec.second();
+        /* unused fields:
+             bool                           Has_Protected;
+             Element_ID                     Corresponding_End_Name;
+             Definition_ID                  Object_Declaration_View
+             bool                           Is_Name_Repeated;
+             Declaration_ID                 Corresponding_Declaration
+             Declaration_ID                 Corresponding_Body
+             Expression_List                Declaration_Interface_List
+        */
+        break;
+      }
+
     case A_Single_Task_Declaration:                // 3.3.1(2):9.1(3)
       {
         logKind("A_Single_Task_Declaration");
@@ -3567,6 +3718,51 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
              Declaration_ID                 Corresponding_Declaration;
              Declaration_ID                 Corresponding_Body;
              Expression_List                Declaration_Interface_List
+        */
+        break;
+      }
+
+    case A_Protected_Body_Declaration:             // 9.4(7)
+      {
+        logKind("A_Protected_Body_Declaration");
+
+        SgAdaProtectedBody&     pobody = mkAdaProtectedBody();
+        NameData                adaname = singleName(decl, ctx);
+        Element_ID              declID  = decl.Corresponding_Declaration;
+        SgDeclarationStatement& podecl = lookupNode(asisDecls(), declID);
+        ADA_ASSERT(adaname.fullName == adaname.ident);
+
+        // \todo \review not sure why a task body could be independently created
+        //~ SgDeclarationStatement* tskdecl = findNode(asisDecls(), declID);
+        //~ if (tskdecl == nullptr)
+          //~ logError() << adaname.fullName << " task body w/o decl" << std::endl;
+
+        //~ SgAdaTaskBodyDecl&      sgnode  = tskdecl ? mkAdaTaskBodyDecl(*tskdecl, tskbody, ctx.scope())
+                                                  //~ : mkAdaTaskBodyDecl(adaname.fullName, tskbody, ctx.scope());
+
+        SgAdaProtectedBodyDecl& sgnode  = mkAdaProtectedBodyDecl(podecl, pobody, ctx.scope());
+
+        attachSourceLocation(sgnode, elem, ctx);
+        privatize(sgnode, isPrivate);
+        ctx.scope().append_statement(&sgnode);
+        ADA_ASSERT(sgnode.get_parent() == &ctx.scope());
+        //~ recordNode(asisDecls(), elem.ID, sgnode);
+        recordNode(asisDecls(), adaname.id(), sgnode);
+
+        placePragmas(decl.Pragmas, ctx, std::ref(pobody));
+
+        fillBody(decl, pobody, ctx);
+
+        /* unused fields:
+             bool                           Has_Task;
+             Pragma_Element_ID_List         Pragmas;
+             Element_ID                     Corresponding_End_Name;
+             Exception_Handler_List         Body_Exception_Handlers;
+             Declaration_ID                 Body_Block_Statement;
+             bool                           Is_Name_Repeated;
+             Declaration_ID                 Corresponding_Declaration;
+             bool                           Is_Subunit;
+             Declaration_ID                 Corresponding_Body_Stub;
         */
         break;
       }
@@ -3600,7 +3796,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         placePragmas(decl.Pragmas, ctx, std::ref(tskbody));
 
-        fillTaskBody(decl, tskbody, ctx);
+        fillBody(decl, tskbody, ctx);
 
         /* unused fields:
              bool                           Has_Task;
@@ -3901,8 +4097,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       }
 
     case Not_A_Declaration: /* break; */           // An unexpected element
-    case A_Protected_Type_Declaration:             // 9.4(2)
-    case A_Single_Protected_Declaration:           // 3.3.1(2):9.4(2)
     case A_Generalized_Iterator_Specification:     // 5.5.2    -> Trait_Kinds
     case An_Element_Iterator_Specification:        // 5.5.2    -> Trait_Kinds
     case A_Return_Variable_Specification:          // 6.5
@@ -3911,7 +4105,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case A_Generic_Package_Renaming_Declaration:   // 8.5.5(2)
     case A_Generic_Procedure_Renaming_Declaration: // 8.5.5(2)
     case A_Generic_Function_Renaming_Declaration:  // 8.5.5(2)
-    case A_Protected_Body_Declaration:             // 9.4(7)
     case An_Entry_Body_Declaration:                // 9.5.2(5)
     case An_Entry_Index_Specification:             // 9.5.2(2)
     case A_Procedure_Body_Stub:                    // 10.1.3(3)

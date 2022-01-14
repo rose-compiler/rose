@@ -1967,9 +1967,21 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
               break;
             }
 
+            case V_SgAdaProtectedTypeDecl:
+            {
+              name = genericGetName(isSgAdaProtectedTypeDecl(declaration));
+              break;
+            }
+
             case V_SgAdaTaskBodyDecl:
             {
               name = genericGetName(isSgAdaTaskBodyDecl(declaration));
+              break;
+            }
+
+            case V_SgAdaProtectedBodyDecl:
+            {
+              name = genericGetName(isSgAdaProtectedBodyDecl(declaration));
               break;
             }
 
@@ -1982,6 +1994,12 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
             case V_SgAdaTaskSpecDecl:
             {
               name = genericGetName(isSgAdaTaskSpecDecl(declaration));
+              break;
+            }
+
+            case V_SgAdaProtectedSpecDecl:
+            {
+              name = genericGetName(isSgAdaProtectedSpecDecl(declaration));
               break;
             }
 
@@ -2069,6 +2087,8 @@ SageInterface::get_name ( const SgScopeStatement* scope )
           case V_SgAdaPackageBody:
           case V_SgAdaTaskSpec:
           case V_SgAdaTaskBody:
+          case V_SgAdaProtectedSpec:
+          case V_SgAdaProtectedBody:
           case V_SgAdaGenericDefn:
           case V_SgAdaAcceptStmt:
           case V_SgJovialForThenStatement: //Rasmussen: Jovial for statement
@@ -11070,7 +11090,7 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
         //SgExprListExp* parentExpListExp = isSgExprListExp(parent);
         //parentExpListExp->replace_expression(oldExp,newExp);
         //ada_idx_c->replace_expression(oldExp,newExp);
-        *i = newExp; 
+        *i = newExp;
         newExp->set_parent(ada_idx_c);
        // break; //replace the first occurrence only??
       }
@@ -25112,7 +25132,7 @@ static void serialize(SgTemplateArgumentPtrList& plist, string& prefix, bool has
   for (int i = (int) (plist.size())-1; i>=0; i--)
   {
     if (plist[i])
-    { 
+    {
       last_non_null_child_idx = i;
       break;
     }
@@ -25247,10 +25267,10 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   int total_count = children.size();
   int current_index=0;
 
-  int last_non_null_child_idx =-1; 
+  int last_non_null_child_idx =-1;
   for (int i = (int) (children.size())-1; i>=0; i--)
   {
-    if (children[i]) 
+    if (children[i])
     {
       last_non_null_child_idx = i;
       break;
@@ -25267,7 +25287,7 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   {
     SgTemplateArgumentPtrList& plist = sn->get_templateArguments();
      bool n_hasRemaining=false;
-#if 0     
+#if 0
     if (current_index+1<total_count)
       n_hasRemaining=true;
     current_index++;
@@ -25286,7 +25306,7 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   for (size_t i =0; i< children.size(); i++)
   {
     bool n_hasRemaining=false;
-#if 0    
+#if 0
     if (current_index+1<total_count)
       n_hasRemaining=true;
     current_index++;

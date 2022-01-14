@@ -577,6 +577,7 @@ namespace
     void handle(const SgAdaGenericInstanceDecl& n) { usepkg(n.get_name(), n); }
     void handle(const SgTypedefDeclaration& n)     { usetype(n.get_name(), n); }
     void handle(const SgAdaTaskTypeDecl& n)        { usetype(n.get_name(), n); }
+    void handle(const SgAdaProtectedTypeDecl& n)   { usetype(n.get_name(), n); }
     void handle(const SgClassDeclaration& n)       { usetype(n.get_name(), n); }
     void handle(const SgEnumDeclaration& n)        { usetype(n.get_name(), n); }
 
@@ -767,9 +768,25 @@ namespace
       prn(STMT_SEP);
     }
 
-    void handle(SgAdaTaskBodyDecl& n)
+    void handle(SgAdaProtectedTypeDecl& n)
     {
-      prn("task body ");
+      prn("protected type ");
+      prn(n.get_name());
+
+      SgAdaProtectedSpec& spec = SG_DEREF(n.get_definition());
+
+      prn(" is\n");
+      stmt(&spec);
+
+      prn("end ");
+      prn(n.get_name());
+      prn(STMT_SEP);
+    }
+
+    template <class SageAdaConcurrentBodyDecl>
+    void handleConcurrentBodyDecl(SageAdaConcurrentBodyDecl& n, const std::string& prefix)
+    {
+      prn(prefix);
       prn(n.get_name());
       prn(" is\n");
 
@@ -779,6 +796,9 @@ namespace
       prn(n.get_name());
       prn(STMT_SEP);
     }
+
+    void handle(SgAdaTaskBodyDecl& n) { handleConcurrentBodyDecl(n, "task body "); }
+    void handle(SgAdaProtectedBodyDecl& n) { handleConcurrentBodyDecl(n, "protected body "); }
 
     void handle(SgAdaTaskSpecDecl& n)
     {
@@ -792,6 +812,21 @@ namespace
         prn(STMT_SEP);
         return;
       }
+
+      prn(" is\n");
+      stmt(&spec);
+
+      prn("end ");
+      prn(n.get_name());
+      prn(STMT_SEP);
+    }
+
+    void handle(SgAdaProtectedSpecDecl& n)
+    {
+      prn("protected ");
+      prn(n.get_name());
+
+      SgAdaProtectedSpec& spec = SG_DEREF(n.get_definition());
 
       prn(" is\n");
       stmt(&spec);
@@ -815,6 +850,13 @@ namespace
       list(n.get_declarations());
     }
 
+    void handle(SgAdaProtectedSpec& n)
+    {
+      ScopeUpdateGuard scopeGuard{unparser, info, n};
+
+      list(n.get_declarations());
+    }
+
     void handle(SgAdaTaskBody& n)
     {
       ScopeUpdateGuard scopeGuard{unparser, info, n};
@@ -828,6 +870,14 @@ namespace
 
       prn("begin\n");
       list(dcllimit, zz);
+      prn("end"); // omit newline, which will be added by the parent
+    }
+
+    void handle(SgAdaProtectedBody& n)
+    {
+      ScopeUpdateGuard scopeGuard{unparser, info, n};
+
+      list(n.get_statements());
       prn("end"); // omit newline, which will be added by the parent
     }
 
@@ -2137,6 +2187,8 @@ namespace
       void handle(const SgBasicBlock& n)           { withName(n.get_string_label()); }
       void handle(const SgAdaTaskSpec& n)          { checkParent(n); }
       void handle(const SgAdaTaskBody& n)          { checkParent(n); }
+      void handle(const SgAdaProtectedSpec& n)     { checkParent(n); }
+      void handle(const SgAdaProtectedBody& n)     { checkParent(n); }
       void handle(const SgAdaPackageBody& n)       { checkParent(n); }
       void handle(const SgAdaPackageSpec& n)       { checkParent(n); }
       // FunctionDefinition, ..
@@ -2146,6 +2198,8 @@ namespace
       void handle(const SgDeclarationStatement& n) { withoutName(); }
       void handle(const SgAdaTaskSpecDecl& n)      { withName(n.get_name()); }
       void handle(const SgAdaTaskBodyDecl& n)      { withName(n.get_name()); }
+      void handle(const SgAdaProtectedSpecDecl& n) { withName(n.get_name()); }
+      void handle(const SgAdaProtectedBodyDecl& n) { withName(n.get_name()); }
       void handle(const SgAdaPackageSpecDecl& n)   { withName(n.get_name()); }
       void handle(const SgAdaPackageBodyDecl& n)   { withName(n.get_name()); }
       void handle(const SgAdaRenamingDecl& n)      { withName(n.get_name()); }
@@ -2272,6 +2326,9 @@ namespace
 
     if (const SgAdaTaskBody* tskbody = isSgAdaTaskBody(&n))
       return scopeForScopeQualification(unparser, SG_DEREF(tskbody->get_spec()));
+
+    if (const SgAdaProtectedBody* pobody = isSgAdaProtectedBody(&n))
+      return scopeForScopeQualification(unparser, SG_DEREF(pobody->get_spec()));
 
     // if the scope is visible, produce a fully qualified scope
     if (unparser.isVisibleScope(&n))

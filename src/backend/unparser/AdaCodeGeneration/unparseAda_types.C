@@ -202,10 +202,26 @@ namespace
       type(n.get_base_type());
     }
 
+
     void handle(SgAdaTaskType& n)
     {
       // \todo fix in AST and override get_name and get_declaration in AdaTaskType
       SgAdaTaskTypeDecl&      tyDcl  = SG_DEREF( isSgAdaTaskTypeDecl(n.get_declaration()) );
+
+      prn(" ");
+
+      if (USE_COMPUTED_NAME_QUALIFICATION_TYPE)
+        prnNameQual(tyDcl);
+      else
+        prn(scopeQual(tyDcl));
+
+      prn(tyDcl.get_name());
+    }
+
+    void handle(SgAdaProtectedType& n)
+    {
+      // \todo fix in AST and override get_name and get_declaration in AdaTaskType
+      SgAdaProtectedTypeDecl& tyDcl  = SG_DEREF( isSgAdaProtectedTypeDecl(n.get_declaration()) );
 
       prn(" ");
 

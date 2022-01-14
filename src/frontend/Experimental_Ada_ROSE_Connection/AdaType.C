@@ -44,23 +44,24 @@ namespace
         set(declaredType);
       }
 
-      void set(SgType* ty)                 { ADA_ASSERT(ty); res = ty; }
+      void set(SgType* ty)                   { ADA_ASSERT(ty); res = ty; }
 
       // error handler
-      void handle(SgNode& n)               { SG_UNEXPECTED_NODE(n); }
+      void handle(SgNode& n)                 { SG_UNEXPECTED_NODE(n); }
 
       // just use the type
-      void handle(SgType& n)               { set(&n); }
+      void handle(SgType& n)                 { set(&n); }
 
       // undecorated declarations
-      void handle(SgAdaFormalTypeDecl& n)  { set(n.get_type()); }
+      void handle(SgAdaFormalTypeDecl& n)    { set(n.get_type()); }
 
       // possibly decorated with an SgAdaDiscriminatedTypeDecl
       // \{
-      void handle(SgClassDeclaration& n)   { handleDiscrDecl(n, n.get_type()); }
-      void handle(SgAdaTaskTypeDecl& n)    { handleDiscrDecl(n, n.get_type()); }
-      void handle(SgEnumDeclaration& n)    { handleDiscrDecl(n, n.get_type()); }
-      void handle(SgTypedefDeclaration& n) { handleDiscrDecl(n, n.get_type()); }
+      void handle(SgClassDeclaration& n)     { handleDiscrDecl(n, n.get_type()); }
+      void handle(SgAdaTaskTypeDecl& n)      { handleDiscrDecl(n, n.get_type()); }
+      void handle(SgAdaProtectedTypeDecl& n) { handleDiscrDecl(n, n.get_type()); }
+      void handle(SgEnumDeclaration& n)      { handleDiscrDecl(n, n.get_type()); }
+      void handle(SgTypedefDeclaration& n)   { handleDiscrDecl(n, n.get_type()); }
       // \}
 
       // others

@@ -1066,6 +1066,16 @@ namespace sg
     GEN_VISIT(SgAdaVariantFieldDecl)
     GEN_VISIT(SgAdaGenericSymbol)
 
+    GEN_VISIT(SgAdaProtectedBody)
+    GEN_VISIT(SgAdaProtectedBodyDecl)
+    GEN_VISIT(SgAdaProtectedSpec)
+    GEN_VISIT(SgAdaProtectedSpecDecl)
+    GEN_VISIT(SgAdaProtectedSymbol)
+    GEN_VISIT(SgAdaProtectedRefExp)
+    GEN_VISIT(SgAdaProtectedType)
+    GEN_VISIT(SgAdaProtectedTypeDecl)
+
+
 #if WITH_BINARY_NODES
     GEN_VISIT(SgAsmNullInstruction)
 #endif /* WITH_BINARY_NODES */

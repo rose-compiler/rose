@@ -391,6 +391,32 @@ namespace Ada_ROSE_Translation
   SgAdaTaskBody&
   mkAdaTaskBody();
 
+  /// creates an Ada protected object type declaration
+  // \todo revisit Ada protected object symbol creation
+  SgAdaProtectedTypeDecl&
+  mkAdaProtectedTypeDecl(const std::string& name, SgAdaProtectedSpec& spec, SgScopeStatement& scope);
+
+  /// creates an Ada protected object declaration
+  // \todo revisit Ada protected object symbol creation
+  SgAdaProtectedSpecDecl&
+  mkAdaProtectedSpecDecl(const std::string& name, SgAdaProtectedSpec& spec, SgScopeStatement& scope);
+
+  /// creates an Ada protected object body declaration
+  /// \param tskdecl the corresponding tasl declaration which can either be of type SgAdaProtectedSpecDecl
+  ///                or of type SgAdaProtectedTypeDecl.
+  /// \param tskbody the protected object body
+  /// \param scope   the enclosing scope
+  SgAdaProtectedBodyDecl&
+  mkAdaProtectedBodyDecl(SgDeclarationStatement& podecl, SgAdaProtectedBody& pobody, SgScopeStatement& scope);
+
+  /// creates an empty protected object specification definition node
+  SgAdaProtectedSpec&
+  mkAdaProtectedSpec();
+
+  /// creates an empty protected object body definition node
+  SgAdaProtectedBody&
+  mkAdaProtectedBody();
+
   /// builds a fresh function parameter list
   SgFunctionParameterList&
   mkFunctionParameterList();
@@ -585,6 +611,10 @@ namespace Ada_ROSE_Translation
   /// Creates a reference to a task \ref task
   SgAdaTaskRefExp&
   mkAdaTaskRefExp(SgAdaTaskSpecDecl& task);
+
+  /// Creates a reference to a protected object \ref po
+  SgAdaProtectedRefExp&
+  mkAdaProtectedRefExp(SgAdaProtectedSpecDecl& task);
 
   /// Creates a reference to a package \ref unit
   SgAdaUnitRefExp&
