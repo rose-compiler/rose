@@ -3195,6 +3195,16 @@ namespace CodeThorn {
     return res;
   }
 
+  bool EStateTransferFunctions::isTemporarySingleLocalVar(VariableId varId) {
+    auto vim=getVariableIdMapping();
+    if(vim->isTemporaryVariableId(varId)) {
+      auto vidInfo=vim->getVariableIdInfoPtr(varId);
+      return (vidInfo->aggregateType==VariableIdMapping::AT_SINGLE && vidInfo->variableScope==VariableIdMapping::VS_LOCAL);
+    } else {
+      return false;
+    }
+  }
+
   std::list<EStatePtr> EStateTransferFunctions::evalAssignOp3(SgAssignOp* node, Label targetLabel, EStatePtr estate) {
     auto pList=evalAssignOpMemUpdates(node, estate);
     std::list<EStatePtr> estateList;
@@ -4020,6 +4030,15 @@ namespace CodeThorn {
       //return AbstractValue::createBot();
       return AbstractValue::createTop();
     }
+
+    // optimization of temporary single local vars (guaranteed to be used only once, introduced by normalization)
+    if(memLoc.isPtr()) {
+      VariableId varId=memLoc.getVariableId();
+      if(isTemporarySingleLocalVar(varId)) {
+       pstate->deleteVar(varId); // optimization
+      }
+    }
+
     AbstractValue val=pstate->readFromMemoryLocation(memLoc); // relegating to pstate in estate->readFromMemoryLocation
     return val;
   }

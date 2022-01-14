@@ -67,6 +67,7 @@
 #include "Solver16.h"
 #include "Solver17.h"
 #include "Solver18.h"
+#include "Solver19.h"
 #include "Solver8.h"
 
 using namespace std;
@@ -179,6 +180,9 @@ namespace CodeThorn {
       }
       case 18 :  {  
         solver = new Solver18(); break; // does not create a TS
+      }
+      case 19 :  {  
+        solver = new Solver19(); break; // does not create a TS
       }
       case 8 :  {  
         solver = new Solver8(); break;

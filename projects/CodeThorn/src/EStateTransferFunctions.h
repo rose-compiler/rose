@@ -181,6 +181,7 @@ namespace CodeThorn {
     EStatePtr transferVariableDeclarationWithoutInitializerEState(SgVariableDeclaration* decl, SgInitializedName* initName, VariableId initDeclVarId, EStatePtr currentEState, Label targetLabel);
 
     PStatePtr analyzeSgAggregateInitializer(VariableId initDeclVarId, SgAggregateInitializer* aggregateInitializer,PStatePtr pstate, /* for evaluation only  */ EStatePtr currentEState);
+    bool isTemporarySingleLocalVar(VariableId varId);
   private:
     // auxiliary semantic functions
     EStatePtr reInitFailedAssertEState(EStatePtr estate, Label target);
