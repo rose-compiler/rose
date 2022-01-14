@@ -478,6 +478,7 @@ namespace
 
     void handle(const SgDeclarationStatement&) { res = true; }
     void handle(const SgAdaTaskSpecDecl&)      { res = false; }
+    void handle(const SgAdaProtectedSpecDecl&) { res = false; }
     void handle(const SgAdaPackageSpecDecl&)   { res = false; }
     void handle(const SgImportStatement&)      { res = false; }
     //~ void handle(const SgFunctionDeclaration&)  { res = false; }
@@ -552,10 +553,12 @@ namespace
       void handle(SgFunctionDeclaration& n)    { res = sb::buildFunctionRefExp(&n); }
       void handle(SgAdaRenamingDecl& n)        { res = &mkAdaRenamingRefExp(n); }
       void handle(SgAdaTaskSpecDecl& n)        { res = &mkAdaTaskRefExp(n); }
+      void handle(SgAdaProtectedSpecDecl& n)   { res = &mkAdaProtectedRefExp(n); }
       void handle(SgAdaGenericDecl& n)         { res = &mkAdaUnitRefExp(n); }
       void handle(SgAdaGenericInstanceDecl& n) { res = &mkAdaUnitRefExp(n); }
       void handle(SgAdaPackageSpecDecl& n)     { res = &mkAdaUnitRefExp(n); }
       void handle(SgAdaTaskTypeDecl& n)        { res = sb::buildTypeExpression(n.get_type()); }
+      void handle(SgAdaProtectedTypeDecl& n)   { res = sb::buildTypeExpression(n.get_type()); }
 
     private:
       AstContext ctx;

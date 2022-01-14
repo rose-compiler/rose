@@ -703,14 +703,13 @@ mkAdaPackageBodyDecl(SgAdaPackageSpecDecl& specdcl)
 
 namespace
 {
-  template <class SagaAdaTaskDecl>
-  SagaAdaTaskDecl&
-  mkAdaTaskDeclInternal(const std::string& name, SgAdaTaskSpec& spec, SgScopeStatement& scope)
+  template <class SageAdaConcurrentSymbol, class SageAdaConcurrentDecl, class SageAdaConcurrentSpec>
+  SageAdaConcurrentDecl&
+  mkAdaConcurrentDeclInternal(const std::string& name, SageAdaConcurrentSpec& spec, SgScopeStatement& scope)
   {
-    SagaAdaTaskDecl& sgnode = mkLocatedNode<SagaAdaTaskDecl>(name, &spec);
+    SageAdaConcurrentDecl& sgnode = mkLocatedNode<SageAdaConcurrentDecl>(name, &spec);
 
-    scope.insert_symbol(name, &mkBareNode<SgAdaTaskSymbol>(&sgnode));
-
+    scope.insert_symbol(name, &mkBareNode<SageAdaConcurrentSymbol>(&sgnode));
     spec.set_parent(&sgnode);
     return sgnode;
   }
@@ -720,13 +719,25 @@ namespace
 SgAdaTaskTypeDecl&
 mkAdaTaskTypeDecl(const std::string& name, SgAdaTaskSpec& spec, SgScopeStatement& scope)
 {
-  return mkAdaTaskDeclInternal<SgAdaTaskTypeDecl>(name, spec, scope);
+  return mkAdaConcurrentDeclInternal<SgAdaTaskSymbol, SgAdaTaskTypeDecl>(name, spec, scope);
 }
 
 SgAdaTaskSpecDecl&
 mkAdaTaskSpecDecl(const std::string& name, SgAdaTaskSpec& spec, SgScopeStatement& scope)
 {
-  return mkAdaTaskDeclInternal<SgAdaTaskSpecDecl>(name, spec, scope);
+  return mkAdaConcurrentDeclInternal<SgAdaTaskSymbol, SgAdaTaskSpecDecl>(name, spec, scope);
+}
+
+SgAdaProtectedTypeDecl&
+mkAdaProtectedTypeDecl(const std::string& name, SgAdaProtectedSpec& spec, SgScopeStatement& scope)
+{
+  return mkAdaConcurrentDeclInternal<SgAdaProtectedSymbol, SgAdaProtectedTypeDecl>(name, spec, scope);
+}
+
+SgAdaProtectedSpecDecl&
+mkAdaProtectedSpecDecl(const std::string& name, SgAdaProtectedSpec& spec, SgScopeStatement& scope)
+{
+  return mkAdaConcurrentDeclInternal<SgAdaProtectedSymbol, SgAdaProtectedSpecDecl>(name, spec, scope);
 }
 
 namespace
@@ -756,7 +767,7 @@ SgAdaTaskBodyDecl&
 mkAdaTaskBodyDecl(SgDeclarationStatement& tskdecl, SgAdaTaskBody& tskbody, SgScopeStatement& scope)
 {
   //~ SgAdaPackageBody&     pkgbody = SG_DEREF( new SgAdaPackageBody() );
-  TaskDeclInfoResult specinfo = sg::dispatch(TaskDeclInfo(), &tskdecl);
+  TaskDeclInfoResult specinfo = sg::dispatch(TaskDeclInfo{}, &tskdecl);
   SgAdaTaskBodyDecl& sgnode   = mkLocatedNode<SgAdaTaskBodyDecl>(specinfo.name, &tskbody);
 
   tskbody.set_parent(&sgnode);
@@ -776,33 +787,65 @@ mkAdaTaskBodyDecl(SgDeclarationStatement& tskdecl, SgAdaTaskBody& tskbody, SgSco
   return sgnode;
 }
 
-#if 0
-SgAdaTaskBodyDecl&
-mkAdaTaskBodyDecl(const std::string& name, SgAdaTaskBody& tskbody, SgScopeStatement& scope)
+namespace
 {
-  SgAdaTaskBodyDecl& sgnode = mkLocatedNode<SgAdaTaskBodyDecl>(name, &tskbody);
+  struct ProtectedDeclInfoResult
+  {
+    std::string         name;
+    SgAdaProtectedSpec* spec;
+  };
+
+  struct ProtectedDeclInfo : sg::DispatchHandler<ProtectedDeclInfoResult>
+  {
+    template <class SageProtectedDecl>
+    void handleProtectedDecl(SageProtectedDecl& n)
+    {
+      res.name = n.get_name();
+      res.spec = n.get_definition();
+    }
+
+    void handle(SgNode& n)                 { SG_UNEXPECTED_NODE(n); }
+    void handle(SgAdaProtectedSpecDecl& n) { handleProtectedDecl(n); }
+    void handle(SgAdaProtectedTypeDecl& n) { handleProtectedDecl(n); }
+  };
+} // anonymous namespace
+
+SgAdaProtectedBodyDecl&
+mkAdaProtectedBodyDecl(SgDeclarationStatement& tskdecl, SgAdaProtectedBody& tskbody, SgScopeStatement& scope)
+{
+  //~ SgAdaPackageBody&     pkgbody = SG_DEREF( new SgAdaPackageBody() );
+  ProtectedDeclInfoResult specinfo = sg::dispatch(ProtectedDeclInfo{}, &tskdecl);
+  SgAdaProtectedBodyDecl& sgnode   = mkLocatedNode<SgAdaProtectedBodyDecl>(specinfo.name, &tskbody);
 
   tskbody.set_parent(&sgnode);
   sgnode.set_parent(&scope);
 
-  /*
-  SgAdaTaskSpec&     tskspec = SG_DEREF( specinfo.spec );
+  SgAdaProtectedSpec&     tskspec = SG_DEREF( specinfo.spec );
 
   tskspec.set_body(&tskbody);
   tskbody.set_spec(&tskspec);
-  */
 
-  //~ ADA_ASSERT(scope.symbol_exists(specinfo.name));
-  scope.insert_symbol(name, &mkBareNode<SgAdaTaskSymbol>(&sgnode));
+  // \todo make sure assertion holds
+  // ADA_ASSERT(scope.symbol_exists(specinfo.name));
+
+  if (!scope.symbol_exists(specinfo.name))
+    scope.insert_symbol(specinfo.name, &mkBareNode<SgAdaProtectedSymbol>(&sgnode));
+
   return sgnode;
 }
-#endif
+
 
 SgAdaTaskSpec&
 mkAdaTaskSpec() { return mkScopeStmt<SgAdaTaskSpec>(); }
 
 SgAdaTaskBody&
 mkAdaTaskBody() { return mkScopeStmt<SgAdaTaskBody>(); }
+
+SgAdaProtectedSpec&
+mkAdaProtectedSpec() { return mkScopeStmt<SgAdaProtectedSpec>(); }
+
+SgAdaProtectedBody&
+mkAdaProtectedBody() { return mkScopeStmt<SgAdaProtectedBody>(); }
 
 SgFunctionParameterList&
 mkFunctionParameterList()
@@ -1364,6 +1407,12 @@ SgAdaTaskRefExp&
 mkAdaTaskRefExp(SgAdaTaskSpecDecl& task)
 {
   return mkLocatedNode<SgAdaTaskRefExp>(&task);
+}
+
+SgAdaProtectedRefExp&
+mkAdaProtectedRefExp(SgAdaProtectedSpecDecl& po)
+{
+  return mkLocatedNode<SgAdaProtectedRefExp>(&po);
 }
 
 SgAdaUnitRefExp&

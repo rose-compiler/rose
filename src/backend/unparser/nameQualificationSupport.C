@@ -108,6 +108,12 @@ namespace
   }
 
   inline
+  SgAdaProtectedSpecDecl& declOf(const SgAdaProtectedRefExp& n)
+  {
+    return SG_DEREF(n.get_decl());
+  }
+
+  inline
   const SgExprListExp* callArguments(const SgFunctionRefExp& n)
   {
     if (const SgCallExpression* callexp = isSgCallExpression(n.get_parent()))
@@ -210,6 +216,8 @@ namespace
       void handle(const SgBasicBlock& n)           { withName(n.get_string_label()); }
       void handle(const SgAdaTaskSpec& n)          { checkParent(n); }
       void handle(const SgAdaTaskBody& n)          { checkParent(n); }
+      void handle(const SgAdaProtectedSpec& n)     { checkParent(n); }
+      void handle(const SgAdaProtectedBody& n)     { checkParent(n); }
       void handle(const SgAdaPackageBody& n)       { checkParent(n); }
       void handle(const SgAdaPackageSpec& n)       { checkParent(n); }
       // FunctionDefinition, ..
@@ -219,6 +227,8 @@ namespace
       void handle(const SgDeclarationStatement& n) { withoutName(); }
       void handle(const SgAdaTaskSpecDecl& n)      { withName(n.get_name()); }
       void handle(const SgAdaTaskBodyDecl& n)      { withName(n.get_name()); }
+      void handle(const SgAdaProtectedSpecDecl& n) { withName(n.get_name()); }
+      void handle(const SgAdaProtectedBodyDecl& n) { withName(n.get_name()); }
       void handle(const SgAdaPackageSpecDecl& n)   { withName(n.get_name()); }
       void handle(const SgAdaPackageBodyDecl& n)   { withName(n.get_name()); }
       void handle(const SgAdaRenamingDecl& n)      { withName(n.get_name()); }
@@ -462,6 +472,9 @@ namespace
 
     if (const SgAdaTaskBody* tskbody = isSgAdaTaskBody(&n))
       return scopeForNameQualification(SG_DEREF(tskbody->get_spec()));
+
+    if (const SgAdaProtectedBody* pobody = isSgAdaProtectedBody(&n))
+      return scopeForNameQualification(SG_DEREF(pobody->get_spec()));
 
     // if the scope is visible, produce a fully qualified scope
     if (isVisibleScope(&n))
@@ -996,6 +1009,12 @@ namespace
           recordNameQualIfNeeded(n, declOf(n).get_scope());
       }
 
+      void handle(const SgAdaProtectedRefExp& n)
+      {
+        if (!elideNameQualification(n))
+          recordNameQualIfNeeded(n, declOf(n).get_scope());
+      }
+
       void handle(const SgDotExp& n)
       {
         suppressNameQualification(n.get_rhs_operand());
@@ -1033,6 +1052,7 @@ namespace
         recordNameQualIfNeeded(dcl, dcl.get_scope());
       }
 
+/*
       // \todo try to comment out this handler, as SgAdaTaskType is a
       //       SgNamedType and the behavior is the same.
       void handle(const SgAdaTaskType& n)
@@ -1041,7 +1061,7 @@ namespace
 
         recordNameQualIfNeeded(dcl, dcl.get_scope());
       }
-
+*/
       //
       // define subtree traversal for type elements that are not defined by default.
 
@@ -1222,6 +1242,9 @@ namespace
       return; // traversal.addUsedScope();
 
     if (/*const SgAdaTaskTypeDecl* tsktyp =*/ isSgAdaTaskTypeDecl(n))
+      return; // traversal.addUsedScope();
+
+    if (/*const SgAdaProtectedTypeDecl* potyp =*/ isSgAdaProtectedTypeDecl(n))
       return; // traversal.addUsedScope();
 
     if (/*const SgClassDeclaration* clsdcl =*/ isSgClassDeclaration(n))

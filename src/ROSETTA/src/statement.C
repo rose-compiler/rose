@@ -451,6 +451,8 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (AdaPackageSpec, "AdaPackageSpec", "ADA_PACKAGE_SPEC");
      NEW_TERMINAL_MACRO (AdaTaskBody,    "AdaTaskBody",    "ADA_TASK_BODY");
      NEW_TERMINAL_MACRO (AdaTaskSpec,    "AdaTaskSpec",    "ADA_TASK_SPEC");
+     NEW_TERMINAL_MACRO (AdaProtectedBody, "AdaProtectedBody", "ADA_PROTECTED_BODY");
+     NEW_TERMINAL_MACRO (AdaProtectedSpec, "AdaProtectedSpec", "ADA_PROTECTED_SPEC");
      NEW_TERMINAL_MACRO (AdaGenericDefn, "AdaGenericDefn", "ADA_GENERIC_DEFN" );
 
   // Note that the associate statement is really a scope, with its own declarations of variables declared by reference to
@@ -463,7 +465,8 @@ Grammar::setUpStatements ()
           NamespaceDefinitionStatement | BlockDataStatement   | AssociateStatement        | FortranDo              | ForAllStatement    |
           UpcForAllStatement           | CAFWithTeamStatement | JavaForEachStatement      | JavaLabelStatement     | MatlabForStatement |
           FunctionParameterScope       | DeclarationScope     | RangeBasedForStatement    | JovialForThenStatement | AdaAcceptStmt  |
-          AdaPackageSpec               | AdaPackageBody       | AdaTaskSpec               | AdaTaskBody            | AdaGenericDefn
+          AdaPackageSpec               | AdaPackageBody       | AdaTaskSpec               | AdaTaskBody            | AdaProtectedBody |
+          AdaProtectedSpec             | AdaGenericDefn
      /* | TemplateInstantiationDefn */ ,
           "ScopeStatement","SCOPE_STMT", false);
 
@@ -557,6 +560,9 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (AdaTaskSpecDecl,       "AdaTaskSpecDecl", "ADA_TASK_SPEC_DECL_STMT" );
      NEW_TERMINAL_MACRO (AdaTaskTypeDecl,       "AdaTaskTypeDecl", "ADA_TASK_TYPE_DECL_STMT" );
      NEW_TERMINAL_MACRO (AdaTaskBodyDecl,       "AdaTaskBodyDecl", "ADA_TASK_BODY_DECL_STMT" );
+     NEW_TERMINAL_MACRO (AdaProtectedSpecDecl,  "AdaProtectedSpecDecl", "ADA_PROTECTED_SPEC_DECL_STMT" );
+     NEW_TERMINAL_MACRO (AdaProtectedTypeDecl,  "AdaProtectedTypeDecl", "ADA_PROTECTED_TYPE_DECL_STMT" );
+     NEW_TERMINAL_MACRO (AdaProtectedBodyDecl,  "AdaProtectedBodyDecl", "ADA_PROTECTED_BODY_DECL_STMT" );
      NEW_TERMINAL_MACRO (AdaRecordRepresentationClause, "AdaRecordRepresentationClause", "ADA_RECORD_REPRESENTATION_CLAUSE" );
      NEW_TERMINAL_MACRO (AdaEnumRepresentationClause,   "AdaEnumRepresentationClause",   "ADA_ENUM_REPRESENTATION_CLAUSE" );
      NEW_TERMINAL_MACRO (AdaLengthClause,               "AdaLengthClause",               "ADA_LENGTH_CLAUSE" );
@@ -588,6 +594,7 @@ Grammar::setUpStatements ()
           JovialOverlayDeclaration                | NonrealDecl               | EmptyDeclaration             |
           AdaPackageBodyDecl                      | AdaPackageSpecDecl        | AdaRenamingDecl              |
           AdaTaskSpecDecl                         | AdaTaskBodyDecl           | AdaTaskTypeDecl              |
+          AdaProtectedSpecDecl                    | AdaProtectedBodyDecl      | AdaProtectedTypeDecl         |
           AdaRecordRepresentationClause           | AdaComponentClause        | AdaLengthClause              |
           AdaEnumRepresentationClause             | AdaGenericDecl            | AdaFormalTypeDecl            |
           AdaDiscriminatedTypeDecl                | AdaGenericInstanceDecl  /*| ClassPropertyList |*/,
@@ -3188,6 +3195,31 @@ Grammar::setUpStatements ()
      AdaTaskBodyDecl.setDataPrototype ( "SgAdaTaskBody*", "definition", "= NULL",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+     // protected objects
+     AdaProtectedSpecDecl.setFunctionPrototype  ( "HEADER_ADA_PROTECTED_SPEC_DECL_STATEMENT", "../Grammar/Statement.code" );
+     AdaProtectedSpecDecl.setDataPrototype ( "SgName", "name", "= \"\"",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaProtectedSpecDecl.setDataPrototype ( "SgAdaProtectedSpec*", "definition", "= NULL",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AdaProtectedSpecDecl.setDataPrototype ( "SgAdaProtectedType*", "type", "= nullptr",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     AdaProtectedTypeDecl.setFunctionPrototype  ( "HEADER_ADA_PROTECTED_TYPE_DECL_STATEMENT", "../Grammar/Statement.code" );
+     AdaProtectedTypeDecl.setDataPrototype ( "SgName", "name", "= \"\"",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaProtectedTypeDecl.setDataPrototype ( "SgAdaProtectedSpec*", "definition", "= NULL",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AdaProtectedTypeDecl.setDataPrototype ( "SgAdaProtectedType*", "type", "= nullptr",
+                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
+     AdaProtectedBodyDecl.setFunctionPrototype  ( "HEADER_ADA_PROTECTED_BODY_DECL_STATEMENT", "../Grammar/Statement.code" );
+     AdaProtectedBodyDecl.setDataPrototype ( "SgName", "name", "= \"\"",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaProtectedBodyDecl.setDataPrototype ( "SgAdaProtectedBody*", "definition", "= NULL",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     // renaming
      AdaRenamingDecl.setFunctionPrototype  ( "HEADER_ADA_RENAMING_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaRenamingDecl.setDataPrototype ( "SgName", "name", "= \"\"",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -4396,6 +4428,9 @@ Grammar::setUpStatements ()
      AdaTaskSpecDecl.setFunctionSource   ( "SOURCE_ADA_TASK_SPEC_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaTaskTypeDecl.setFunctionSource   ( "SOURCE_ADA_TASK_TYPE_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaTaskBodyDecl.setFunctionSource   ( "SOURCE_ADA_TASK_BODY_DECL_STATEMENT", "../Grammar/Statement.code" );
+     AdaProtectedSpecDecl.setFunctionSource   ( "SOURCE_ADA_PROTECTED_SPEC_DECL_STATEMENT", "../Grammar/Statement.code" );
+     AdaProtectedTypeDecl.setFunctionSource   ( "SOURCE_ADA_PROTECTED_TYPE_DECL_STATEMENT", "../Grammar/Statement.code" );
+     AdaProtectedBodyDecl.setFunctionSource   ( "SOURCE_ADA_PROTECTED_BODY_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaRenamingDecl.setFunctionSource   ( "SOURCE_ADA_RENAMING_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaDiscriminatedTypeDecl.setFunctionSource   ( "SOURCE_ADA_DISCRIMINATED_TYPE_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaRecordRepresentationClause.setFunctionSource ( "SOURCE_ADA_RECORD_REPRESENTATION_CLAUSE", "../Grammar/Statement.code" );
@@ -4500,6 +4535,8 @@ Grammar::setUpStatements ()
     AdaPackageBody.setFunctionSource            ( "SOURCE_ADA_PACKAGE_BODY_STATEMENT", "../Grammar/Statement.code" );
     AdaTaskSpec.setFunctionSource            ( "SOURCE_ADA_TASK_SPEC_STATEMENT", "../Grammar/Statement.code" );
     AdaTaskBody.setFunctionSource            ( "SOURCE_ADA_TASK_BODY_STATEMENT", "../Grammar/Statement.code" );
+    AdaProtectedSpec.setFunctionSource            ( "SOURCE_ADA_PROTECTED_SPEC_STATEMENT", "../Grammar/Statement.code" );
+    AdaProtectedBody.setFunctionSource            ( "SOURCE_ADA_PROTECTED_BODY_STATEMENT", "../Grammar/Statement.code" );
     AdaAcceptStmt.setFunctionSource          ( "SOURCE_ADA_ACCEPT_STATEMENT",    "../Grammar/Statement.code" );
 
 #if USE_FORTRAN_IR_NODES
@@ -4631,6 +4668,24 @@ Grammar::setUpStatements ()
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AdaTaskBody.setDataPrototype ( "SgStatementPtrList", "statements", "",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     // protected objects (PP 01/11/22)
+     AdaProtectedSpec.setFunctionPrototype ( "HEADER_ADA_PROTECTED_SPEC_STATEMENT", "../Grammar/Statement.code" );
+     AdaProtectedSpec.setDataPrototype ( "SgAdaProtectedBody*", "body", "= NULL",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     // hasMembers is true, if the task specification has an explicit member list
+     //               false, for cases like "task type The_Task_Type;"
+     //~ AdaProtectedSpec.setDataPrototype ( "bool", "hasMembers", "= false",
+                                    //~ NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaProtectedSpec.setDataPrototype ( "SgDeclarationStatementPtrList", "declarations", "",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     AdaProtectedBody.setFunctionPrototype ( "HEADER_ADA_PROTECTED_BODY_STATEMENT", "../Grammar/Statement.code" );
+     AdaProtectedBody.setDataPrototype ( "SgAdaProtectedSpec*", "spec", "= NULL",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaProtectedBody.setDataPrototype ( "SgStatementPtrList", "statements", "",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
 
      AdaAcceptStmt.setFunctionPrototype ( "HEADER_ADA_ACCEPT_STATEMENT", "../Grammar/Statement.code" );
      AdaAcceptStmt.setDataPrototype ( "SgFunctionParameterScope*", "parameterScope", "= NULL",

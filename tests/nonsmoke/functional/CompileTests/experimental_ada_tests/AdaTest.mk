@@ -170,6 +170,9 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   parent-child.adb                     \
   pkgrename.ads                        \
   procedure_renaming.adb               \
+  protected_object.adb                 \
+  protected_body_declaration.adb       \
+  protected_body_declaration.ads       \
   representation_clause.ads            \
   representation_clause_2.ads          \
   select_accept.adb                    \
@@ -179,6 +182,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   simple_hello_world.adb               \
   simple_hello_world_with_renamed.adb  \
   simple_hello_world_with_use.adb      \
+  single_protected_declaration.ads     \
   std_ascii_user.adb                   \
   taskarray.adb                        \
   task_type_declaration.ads            \
@@ -223,13 +227,10 @@ ROSE_FAILING_ADA_TESTS :=                           \
   generic_procedure_renaming_declaration.ads        \
   mpiuse.ads                                        \
   object_renaming_declaration.adb                   \
-  protected_body_declaration.adb                    \
-  protected_body_declaration.ads                    \
   procedure_body_stub.adb                           \
   protected_type_declaration.ads                    \
   requeue_statement_2.adb                           \
   requeue_statements.adb                            \
-  single_protected_declaration.ads                  \
   tagged_incomplete_type_declaration.ads            \
   test.adb                                          \
   test_unit.adb                                     \

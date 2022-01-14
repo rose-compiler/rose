@@ -1239,6 +1239,8 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
           (nodeName == "AdaDiscriminatedTypeDecl"   && variableNameString == "type")  ||
           (nodeName == "AdaTaskTypeDecl"            && variableNameString == "type")  ||
           (nodeName == "AdaTaskSpecDecl"            && variableNameString == "type")  ||
+          (nodeName == "AdaProtectedTypeDecl"       && variableNameString == "type")  ||
+          (nodeName == "AdaProtectedSpecDecl"       && variableNameString == "type")  ||
           (nodeName == "AdaFormalTypeDecl"          && variableNameString == "type")  ||
           (nodeName == "ClassDeclaration"           && variableNameString == "type")  ||
           (nodeName == "FunctionDeclaration"        && variableNameString == "type")  ||
@@ -1302,6 +1304,9 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
           (nodeName == "AdaTaskBodyDecl"            && variableNameString == "name")  ||
           (nodeName == "AdaTaskSpecDecl"            && variableNameString == "name")  ||
           (nodeName == "AdaTaskTypeDecl"            && variableNameString == "name")  ||
+          (nodeName == "AdaProtectedBodyDecl"       && variableNameString == "name")  ||
+          (nodeName == "AdaProtectedSpecDecl"       && variableNameString == "name")  ||
+          (nodeName == "AdaProtectedTypeDecl"       && variableNameString == "name")  ||
           (nodeName == "AdaRenamingDecl"            && variableNameString == "name")  ||
           (nodeName == "AdaDiscriminatedTypeDecl"   && variableNameString == "name")  ||
           (nodeName == "AdaGenericInstanceDecl"     && variableNameString == "name")  ||
@@ -1379,6 +1384,8 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
           (nodeName == "AdaDiscriminatedTypeDecl"   && variableNameString == "type")  ||
           (nodeName == "AdaTaskTypeDecl"            && variableNameString == "type")  ||
           (nodeName == "AdaTaskSpecDecl"            && variableNameString == "type")  ||
+          (nodeName == "AdaProtectedTypeDecl"       && variableNameString == "type")  ||
+          (nodeName == "AdaProtectedSpecDecl"       && variableNameString == "type")  ||
           (nodeName == "AdaFormalTypeDecl"          && variableNameString == "type")  ||
           (nodeName == "ClassDeclaration"           && variableNameString == "type")  ||
           (nodeName == "FunctionDeclaration"        && variableNameString == "type")  ||
@@ -1445,6 +1452,9 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
           (nodeName == "AdaTaskBodyDecl"            && variableNameString == "name")  ||
           (nodeName == "AdaTaskSpecDecl"            && variableNameString == "name")  ||
           (nodeName == "AdaTaskTypeDecl"            && variableNameString == "name")  ||
+          (nodeName == "AdaProtectedBodyDecl"       && variableNameString == "name")  ||
+          (nodeName == "AdaProtectedSpecDecl"       && variableNameString == "name")  ||
+          (nodeName == "AdaProtectedTypeDecl"       && variableNameString == "name")  ||
           (nodeName == "AdaRenamingDecl"            && variableNameString == "name")  ||
           (nodeName == "AdaDiscriminatedTypeDecl"   && variableNameString == "name")  ||
           (nodeName == "AdaGenericInstanceDecl"     && variableNameString == "name")  ||
@@ -4068,7 +4078,9 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(AstNodeClass* grammarnode) 
         ||nodeName == "SgOmpDoStatement"
         ||nodeName == "SgOmpAtomicStatement"
         ||nodeName == "SgExprListExp"
-        ||nodeName == "SgAdaTaskSpec" /* \todo \revisit PP */);
+        ||nodeName == "SgAdaTaskSpec" /* \todo \revisit PP */
+        ||nodeName == "SgAdaProtectedSpec" /* \todo \revisit PP */
+        );
   }
   return info;
 }
