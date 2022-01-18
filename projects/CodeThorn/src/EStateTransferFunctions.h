@@ -170,7 +170,8 @@ namespace CodeThorn {
     MemoryUpdateList evalAssignOpMemUpdates(SgAssignOp* assignOp, EStatePtr estate);
 
     // functions for handling callstring contexts
-    CallString transferFunctionCallContext(CallString cs, Label lab);
+    void transferFunctionCallContextInPlace(CallString& cs, Label lab);
+    void transferFunctionCallReturnContextInPlace(CallString& cs, Label lab);
     bool isFeasiblePathContext(CallString& cs,Label lab);
 
     CodeThorn::VariableIdSet determineUsedGlobalVars(SgProject* root, CodeThorn::VariableIdSet& setOfGlobalVars);

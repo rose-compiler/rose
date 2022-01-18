@@ -389,7 +389,7 @@ namespace CodeThorn {
     // ad 4
     CallString cs=currentEState->callString;
     if(_analyzer->getOptionContextSensitiveAnalysis()) {
-      cs=transferFunctionCallContext(cs, currentEState->label());
+      transferFunctionCallContextInPlace(cs, currentEState->label());
     }
     EStatePtr newEState=reInitEState(estate,edge.target(),cs,newPState);
     return elistify(newEState);
@@ -439,13 +439,9 @@ namespace CodeThorn {
         // to callstring by external function call)
       } else {
         if(isFeasiblePathContext(cs,functionCallLabel)) {
-          cs.removeLastLabel();
+          transferFunctionCallReturnContextInPlace(cs,functionCallLabel);
         } else {
-          if(cs.isEmpty()) {
-            SAWYER_MESG(logger[WARN])<<"Empty context on non-feasable path at label "<<functionCallLabel.toString()<<endl;
-          }
           // definitely not feasible path, do not return a state
-          SAWYER_MESG(logger[TRACE])<<"definitly on non-feasable path at label (no next state)"<<functionCallLabel.toString()<<endl;
           std::list<EStatePtr> emptyList;
           return emptyList;
         }
@@ -1825,14 +1821,19 @@ namespace CodeThorn {
     return memoryUpdateList;
   }
 
-  // value semantics for upates
-  CallString EStateTransferFunctions::transferFunctionCallContext(CallString cs, Label lab) {
-    SAWYER_MESG(logger[TRACE])<<"FunctionCallTransfer: adding "<<lab.toString()<<" to cs: "<<cs.toString()<<endl;
+  void EStateTransferFunctions::transferFunctionCallContextInPlace(CallString& cs, Label lab) {
     cs.addLabel(lab);
-    return cs;
   }
+
+  void EStateTransferFunctions::transferFunctionCallReturnContextInPlace(CallString& cs, Label lab) {
+    if(cs.isLastLabel(lab)) {
+      // TODO: callstring reduction requires call-graph depth-check!
+      cs.removeLastLabel();
+    } 
+  }
+
   bool EStateTransferFunctions::isFeasiblePathContext(CallString& cs,Label lab) {
-    return cs.getLength()==0||cs.isLastLabel(lab);
+    return cs.getLength()==0||cs.isLastLabel(lab)||cs.isMaxLength();
   }
 
   std::string EStateTransferFunctions::transferFunctionCodeToString(TransferFunctionCode tfCode) {
