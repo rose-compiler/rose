@@ -385,6 +385,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/InstructionSemantics2/TestSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/Util.h				\
+	Rose/BinaryAnalysis/LibraryIdentification.h					\
 	Rose/BinaryAnalysis/MagicNumber.h						\
 	Rose/BinaryAnalysis/Matrix.h							\
 	Rose/BinaryAnalysis/MemoryMap.h							\
