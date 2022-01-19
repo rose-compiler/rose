@@ -113,7 +113,6 @@ public:
   int interpreterMode=0;
 
   bool initialStateFilterUnusedVariables=true;
-  int initialStateGlobalVarsAbstractionLevel=1;
 
   std::string interpreterModeOuputFileName;
   bool printWarnings=false;

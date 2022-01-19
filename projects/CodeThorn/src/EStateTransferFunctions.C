@@ -2382,7 +2382,7 @@ namespace CodeThorn {
         res.result=AbstractValue::createTop();
         return res;
       } else {
-        // use of function addresses as values. Being implemented now.
+        // use of function addresses as value.
         return evalFunctionRefExp(isSgFunctionRefExp(node),estate,mode);
       }
     }
@@ -2813,20 +2813,15 @@ namespace CodeThorn {
         if(_variableIdMapping->isOfArrayType(arrayVarId)) {
           if(_variableIdMapping->isFunctionParameter(arrayVarId)) {
             // function parameter of array type contains a pointer value in C/C++
-            //cout<<"evalArrayReferenceOp:"<<" arrayPtrValue (of function parameter1) read from memory, arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<": mode"<<mode<<endl;
             arrayPtrValue=readFromMemoryLocation(estate->label(),pstate2,arrayVarId); // pointer value of array function paramter
-            SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp:"<<" arrayPtrValue (of function parameter) read from memory, arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<": mode"<<mode<<endl;
-            //cout<<"evalArrayReferenceOp:"<<" arrayPtrValue (of function parameter2) read from memory, arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
           } else {
             arrayPtrValue=AbstractValue::createAddressOfArray(arrayVarId);
             SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp: created array address (from array type): "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
           }
         } else if(_variableIdMapping->isOfPointerType(arrayVarId)) {
           // in case it is a pointer retrieve pointer value
-          SAWYER_MESG(logger[DEBUG])<<"pointer-array access."<<endl;
           if(pstate2->varExists(arrayVarId)) {
             arrayPtrValue=readFromMemoryLocation(estate->label(),pstate2,arrayVarId); // pointer value (without index)
-            SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp:"<<" arrayPtrValue read from memory (in state), arrayPtrValue:"<<arrayPtrValue.toString(_variableIdMapping)<<endl;
             if(!(arrayPtrValue.isTop()||arrayPtrValue.isBot()||arrayPtrValue.isPtr()||arrayPtrValue.isNullPtr())) {
               logger[ERROR]<<"@"<<SgNodeHelper::lineColumnNodeToString(node)<<": value not a pointer value: "<<arrayPtrValue.toString()<<endl;
               logger[ERROR]<<estate->toString(_variableIdMapping)<<endl;
@@ -2842,9 +2837,7 @@ namespace CodeThorn {
             return res;
           }
         } else if(_variableIdMapping->isOfReferenceType(arrayVarId)) {
-          SAWYER_MESG(logger[TRACE])<<"before reference array variable access"<<endl;
           arrayPtrValue=readFromReferenceMemoryLocation(estate->label(),pstate2,arrayVarId);
-          SAWYER_MESG(logger[TRACE])<<"after reference array variable access"<<endl;
           if(arrayPtrValue.isBot()) {
             // if referred memory location is not in state
             res.result=CodeThorn::Top();
@@ -4049,7 +4042,6 @@ namespace CodeThorn {
     notifyReadWriteListenersOnWriting(lab,pstate,memLoc,newValue);
 
     if(memLoc.isTop()) {
-      //SAWYER_MESG(logger[WARN])<<"EStateTransferFunctions::writeToMemoryLocation: writing to arbitrary memloc: "<<lab.toString()<<":"<<memLoc.toString(_variableIdMapping)<<":="<<newValue.toString(_variableIdMapping)<<endl;
       return;
     } else if(!pstate->memLocExists(memLoc)) {
       //SAWYER_MESG(logger[TRACE])<<"EStateTransferFunctions::writeToMemoryLocation: memloc does not exist"<<endl;
@@ -4057,16 +4049,7 @@ namespace CodeThorn {
     if(memLoc.isNullPtr()) {
       // do not write to null pointer
     } else {
-      switch(_analyzer->getOptionsRef().initialStateGlobalVarsAbstractionLevel) {
-      case 0:
-        if(!isGlobalAddress(memLoc)) {
-          // in mode 0 only write to non-global memory locations
-          pstate->writeToMemoryLocation(memLoc,newValue);
-        }
-      case 1:
-        pstate->writeToMemoryLocation(memLoc,newValue);
-        break;
-      }
+      pstate->writeToMemoryLocation(memLoc,newValue);
     }
   }
 

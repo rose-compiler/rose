@@ -1344,17 +1344,7 @@ EStatePtr CodeThorn::CTAnalysis::createInitialEState(SgProject* root, Label slab
   EStatePtr estate=new EState(slab,initialPStateStored);
 
   ROSE_ASSERT(_estateTransferFunctions);
-  switch(_ctOpt.initialStateGlobalVarsAbstractionLevel) {
-  case 0:
-    // do not add global vars to state and consider them as a single summary in read/write functions
-    break;
-  case 1: /* default */
-    _estateTransferFunctions->initializeGlobalVariables(root, estate);
-    break;
-  default:
-    cerr<<"Unknown initialStateGlobalVarsAbstractionLevel: "<<_ctOpt.initialStateGlobalVarsAbstractionLevel<<endl;
-    exit(1);
-  }
+  _estateTransferFunctions->initializeGlobalVariables(root, estate);
   SAWYER_MESG(logger[INFO]) <<"Initial state: number of entries:"<<estate->pstate()->stateSize()<<endl;
   
   // initialize summary states map for abstract model checking mode

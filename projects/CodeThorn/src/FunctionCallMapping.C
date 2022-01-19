@@ -21,6 +21,7 @@ using namespace CodeThorn;
 Sawyer::Message::Facility CodeThorn::FunctionCallMapping::logger;
 
 FunctionCallMapping::FunctionCallMapping() {
+  _matchMode=4;
 }
 
 void FunctionCallInfo::print() {
@@ -291,7 +292,7 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
         }
         if(matching) {
           if(fcInfo.isFunctionPointerCall()) {
-            mapping[fc].second.insert(fcTarget);
+            //mapping[fc].second.insert(fcTarget);
           } else if(fcInfo.funCallName==fcTarget.getFunctionName()) {
             mapping[fc].second.insert(fcTarget);
           }

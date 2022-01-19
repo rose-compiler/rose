@@ -180,7 +180,6 @@ int main( int argc, char * argv[] )
 
     ctOpt.callStringLength=-1; // unbounded length
     ctOpt.normalizeLevel=2;
-    ctOpt.initialStateGlobalVarsAbstractionLevel=1;
     ctOpt.intraProcedural=false; // inter-procedural
     ctOpt.contextSensitive=true;
     ctOpt.pointerSetsEnabled=false;
