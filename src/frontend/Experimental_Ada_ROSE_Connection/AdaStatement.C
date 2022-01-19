@@ -2202,7 +2202,7 @@ namespace
 
       SgAssignOp& itemValuePair(Element_Struct& el, Element_ID item, SgExpression& enumval)
       {
-        SgExpression& enumitem = getExprID(item, ctx);
+        SgExpression& enumitem = getExprID(item, ctx.enumBuilder(mkEnumeratorRef_repclause));
 
         return SG_DEREF(sb::buildAssignOp(&enumitem, &enumval));
       }
@@ -2755,8 +2755,8 @@ void handleRepresentationClause(Element_Struct& elem, AstContext ctx)
         Expression_Struct&      inilist  = inielem.The_Union.Expression;
 
         ADA_ASSERT(  inilist.Expression_Kind == A_Named_Array_Aggregate
-                   || inilist.Expression_Kind == A_Positional_Array_Aggregate
-                   );
+                  || inilist.Expression_Kind == A_Positional_Array_Aggregate
+                  );
 
         ElemIdRange             range    = idRange(inilist.Array_Component_Associations);
         SgExprListExp&          enumvals = traverseIDs(range, elemMap(), EnumValueCreator{ctx});

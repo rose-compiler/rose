@@ -1502,6 +1502,18 @@ mkNullExpression()
 }
 
 
+SgExpression&
+mkEnumeratorRef(SgEnumDeclaration& enumdecl, SgInitializedName& enumitem)
+{
+  return SG_DEREF( sb::buildEnumVal_nfi(-1, &enumdecl, enumitem.get_name()) );
+}
+
+SgExpression&
+mkEnumeratorRef_repclause(SgEnumDeclaration&, SgInitializedName& enumitem)
+{
+  return SG_DEREF( sb::buildVarRefExp(&enumitem, nullptr /* not needed */) );
+}
+
 
 SgAdaAttributeExp&
 mkAdaAttributeExp(SgExpression& expr, const std::string& ident, SgExprListExp& args)
