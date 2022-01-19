@@ -283,7 +283,7 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
           bool matching2=(fcInfo.getFunctionName()==fcTarget.getFunctionName());
           matching=matching1||matching2;
           // problematic handles special case of unspecified function pointers in C
-          //SAWYER_MESG(logger[INFO])<<"XXX: "<<fcInfo.getFunctionName()<<" : "<<funCallTypeName<<"<=>"<<fcTargetTypeName<<":::"<<matching<<endl;
+          //SAWYER_MESG(logger[INFO])<<"FunctionMatching: "<<fcInfo.getFunctionName()<<" : "<<funCallTypeName<<"<=>"<<fcTargetTypeName<<":::"<<matching<<endl;
           break;
           }
         default:
@@ -292,7 +292,7 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
         }
         if(matching) {
           if(fcInfo.isFunctionPointerCall()) {
-            //mapping[fc].second.insert(fcTarget);
+            mapping[fc].second.insert(fcTarget);
           } else if(fcInfo.funCallName==fcTarget.getFunctionName()) {
             mapping[fc].second.insert(fcTarget);
           }

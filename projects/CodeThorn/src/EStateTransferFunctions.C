@@ -4049,7 +4049,12 @@ namespace CodeThorn {
     if(memLoc.isNullPtr()) {
       // do not write to null pointer
     } else {
-      pstate->writeToMemoryLocation(memLoc,newValue);
+      if(memLoc.isPtr()||memLoc.isFunctionPtr()) {
+        pstate->writeToMemoryLocation(memLoc,newValue);
+      } else {
+        // memory location is a constant value
+        cerr<<"WARNING: attemping to write to integer value memory location: "<<memLoc.toString(getVariableIdMapping())<<endl;
+      }
     }
   }
 
