@@ -446,7 +446,8 @@ namespace
       SgEnumType&        enumtype = SG_DEREF( isSgEnumType(enumitem->get_type()) );
       SgEnumDeclaration& enumdecl = SG_DEREF( isSgEnumDeclaration(enumtype.get_declaration()) );
 
-      res = sb::buildEnumVal_nfi(-1, &enumdecl, enumitem->get_name());
+      // res = sb::buildEnumVal_nfi(-1, &enumdecl, enumitem->get_name());
+      res = &ctx.enumBuilder()(enumdecl, *enumitem);
     }
     else
     {

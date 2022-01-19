@@ -672,6 +672,15 @@ namespace Ada_ROSE_Translation
   SgNullExpression&
   mkNullExpression();
 
+  /// builds a reference to an enumerator in form of an SgEnumValue
+  SgExpression&
+  mkEnumeratorRef(SgEnumDeclaration&, SgInitializedName&);
+
+  /// builds a reference to an enumerator in form of an SgVarRefExp
+  /// (special case for SgAdaEnumRepresentationClause - RC1147)
+  SgExpression&
+  mkEnumeratorRef_repclause(SgEnumDeclaration&, SgInitializedName&);
+
   /// creates a remainder operation (different from SgModOp)
   /// \todo move to SageBuilder
   ///       should SgRemOp be called SgAdaRem?
