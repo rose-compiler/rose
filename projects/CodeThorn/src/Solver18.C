@@ -26,6 +26,19 @@ void Solver18::initDiagnostics() {
   }
 }
 
+void Solver18::deleteAllStates() {
+  cout<<"STATUS: Solver18: deleting states."<<endl;
+  size_t cnt=0;
+  for(auto entry : _summaryCSStateMapMap) {
+    auto map=entry.second;
+    for(auto entry2 : map) {
+      delete entry2.second;
+      cnt++;
+    }
+  }
+  cout<<"STATUS: Solver18: deleted "<<cnt<<" states."<<endl;
+}
+
 int Solver18::getId() {
   return 18;
 }
@@ -33,6 +46,15 @@ int Solver18::getId() {
 // allows to handle sequences of nodes as basic blocks
 bool Solver18::isPassThroughLabel(Label lab) {
   return _analyzer->isPassThroughLabel(lab);
+}
+
+bool Solver18::isUnreachableLabel(Label lab) {
+  // if code is unreachable no state is computed for it. In this case no entry is found for this label 
+  return _summaryCSStateMapMap.find(lab.getId())==_summaryCSStateMapMap.end();
+}
+
+bool Solver18::isReachableLabel(Label lab) {
+  return !isUnreachableLabel(lab);
 }
 
 void Solver18::initializeSummaryStatesFromWorkList() {
@@ -46,11 +68,63 @@ void Solver18::initializeSummaryStatesFromWorkList() {
   for(auto s : tmpWL) {
     // initialize summarystate and push back to work lis
     ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(s->label()));
-    _analyzer->setSummaryState(s->label(),s->callString,new EState(*s)); // ensure summary states are never added to the worklist
+    setSummaryState(s->label(),s->callString,new EState(*s)); // ensure summary states are never added to the worklist
     //_analyzer->addToWorkList(s);
     _workList->push(WorkListEntry(s->label(),s->callString));
   }
 }
+
+EStatePtr Solver18::getSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs) {
+  EStatePtr res;
+#pragma omp critical(SUMMARY_STATES)
+  {
+    auto iter1=_summaryCSStateMapMap.find(lab.getId());
+    if(iter1==_summaryCSStateMapMap.end()) {
+      res=getBottomSummaryState(lab,cs);
+    } else {
+      SummaryCSStateMap& summaryCSStateMap=(*iter1).second;
+      auto iter2=summaryCSStateMap.find(cs);
+      if(iter2==summaryCSStateMap.end()) {
+        res=getBottomSummaryState(lab,cs);
+      } else {
+        res=(*iter2).second;
+      }
+    }
+  }
+  return res;
+}
+
+void Solver18::setSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs, EStatePtr estate) {
+  ROSE_ASSERT(lab==estate->label());
+  ROSE_ASSERT(cs==estate->callString);
+  ROSE_ASSERT(estate);
+
+  //pair<int,CallString> p(lab.getId(),cs);
+  //_summaryCSStateMap[p]=estate;
+#pragma omp critical(SUMMARY_STATES)
+  {
+    auto iter1=_summaryCSStateMapMap.find(lab.getId());
+    if(iter1==_summaryCSStateMapMap.end()) {
+      // create new
+      SummaryCSStateMap newSummaryCSStateMap;
+      newSummaryCSStateMap[cs]=estate;
+      _summaryCSStateMapMap[lab.getId()]=newSummaryCSStateMap;
+    } else {
+      SummaryCSStateMap& summaryCSStateMap=(*iter1).second;
+      summaryCSStateMap[cs]=estate;
+    }
+  }
+}
+
+
+EStatePtr Solver18::getBottomSummaryState(Label lab, CallString cs) {
+  InputOutput io;
+  io.recordBot();
+  EState estate(lab,cs,new PState(),io);
+  ROSE_ASSERT(!createsTransitionSystem());
+  return new EState(estate);
+}
+
 
 void Solver18::run() {
   SAWYER_MESG(logger[INFO])<<"Running solver "<<getId()<<" (sharedpstates:"<<_analyzer->getOptionsRef().sharedPStates<<")"<<endl;
@@ -83,7 +157,7 @@ void Solver18::run() {
     
     ROSE_ASSERT(p.label().isValid());
     ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(p.label()));
-    EStatePtr currentEStatePtr=_analyzer->getSummaryState(p.label(),p.callString());
+    EStatePtr currentEStatePtr=getSummaryState(p.label(),p.callString());
     ROSE_ASSERT(currentEStatePtr);
     
     list<EStatePtr> newEStateList0;
@@ -124,7 +198,7 @@ void Solver18::run() {
           EStatePtr newEStatePtr=newEStatePtr0;
           ROSE_ASSERT(newEStatePtr);
           // performing merge
-          EStatePtr summaryEStatePtr=_analyzer->getSummaryState(lab,cs);
+          EStatePtr summaryEStatePtr=getSummaryState(lab,cs);
           ROSE_ASSERT(summaryEStatePtr);
           if(_analyzer->getEStateTransferFunctions()->isApproximatedBy(newEStatePtr,summaryEStatePtr)) {
             delete newEStatePtr; // new state does not contain new information, therefore it can be deleted
@@ -134,7 +208,7 @@ void Solver18::run() {
             EStatePtr newCombinedSummaryEStatePtr=new EState(newCombinedSummaryEState);
             newCombinedSummaryEStatePtr->setLabel(lab);
             newCombinedSummaryEStatePtr->setCallString(cs);
-            _analyzer->setSummaryState(lab,cs,newCombinedSummaryEStatePtr);
+            setSummaryState(lab,cs,newCombinedSummaryEStatePtr);
             delete summaryEStatePtr;
             delete newEStatePtr;
             newEStatePtr=newCombinedSummaryEStatePtr;

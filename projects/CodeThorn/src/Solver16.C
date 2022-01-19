@@ -23,6 +23,9 @@ int Solver16::getId() {
   return 16;
 }
     
+Solver16::~Solver16() {
+}
+
 void Solver16::recordTransition(EStatePtr currentEStatePtr0,EStatePtr currentEStatePtr,Edge e, EStatePtr newEStatePtr) {
   _analyzer->recordTransition(currentEStatePtr,e,newEStatePtr);
   if(currentEStatePtr0!=currentEStatePtr) {

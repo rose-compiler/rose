@@ -13,6 +13,7 @@ namespace CodeThorn {
   class Solver16 : public Solver {
   public:
     Solver16();
+    ~Solver16();
     void run();
     int getId();
     bool createsTransitionSystem();

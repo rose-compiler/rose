@@ -26,6 +26,7 @@
 #include "TopologicalSort.h"
 #include "Miscellaneous2.h"
 #include "CodeThornPasses.h"
+#include "Solver18.h"
 
 using namespace std;
 using namespace Sawyer::Message;
@@ -112,6 +113,12 @@ std::string CodeThorn::CTAnalysis::hashSetConsistencyReport() {
 }
   
 void CodeThorn::CTAnalysis::deleteAllStates() {
+
+  if(getSolver()->getId()==18) {
+    dynamic_cast<Solver18*>(getSolver())->deleteAllStates();
+    return;
+  }
+
   if(_ctOpt.status) {
     cout<<"STATUS: "<<hashSetConsistencyReport();
   }      
@@ -372,28 +379,14 @@ void CodeThorn::CTAnalysis::setOptionOutputWarnings(bool flag) {
   _estateTransferFunctions->setOptionOutputWarnings(flag);
 }
 
-//size_t CodeThorn::CTAnalysis::getSummaryStateMapSize() {
-//  return _summaryCSStateMapMap.size();
-//}
-
-Lattice* CodeThorn::CTAnalysis::getPreInfo(Label lab, CallString context) {
-  return const_cast<EStatePtr>(getSummaryState(lab,context));
-}
-
-Lattice* CodeThorn::CTAnalysis::getPostInfo(Label lab, CallString context) {
-  ROSE_ASSERT(0);
-}
-
-void CodeThorn::CTAnalysis::setPreInfo(Label lab, CallString context, Lattice* el) {
-  setSummaryState(lab,context,dynamic_cast<EStatePtr>(el));
-}
-
-void CodeThorn::CTAnalysis::setPostInfo(Label lab, CallString context, Lattice*) {
-  ROSE_ASSERT(0);
-}
-
 bool CodeThorn::CTAnalysis::isUnreachableLabel(Label lab) {
   // if code is unreachable no state is computed for it. In this case no entry is found for this label 
+  if(getSolver()->getId()==18) {
+    // solver 18 uses its own states
+    Solver18* solver18=dynamic_cast<CodeThorn::Solver18*>(getSolver());
+    ROSE_ASSERT(solver18);
+    return solver18->isUnreachableLabel(lab);
+  }
   return _summaryCSStateMapMap.find(lab.getId())==_summaryCSStateMapMap.end();
 }
 
@@ -645,9 +638,7 @@ void CodeThorn::CTAnalysis::setSolver(Solver* solver) {
 }
 
 Solver* CodeThorn::CTAnalysis::getSolver() {
-  CodeThorn::Solver* ctSolver=dynamic_cast<CodeThorn::Solver*>(_solver);
-  ROSE_ASSERT(ctSolver);
-  return ctSolver;
+  return dynamic_cast<CodeThorn::Solver*>(_solver);
 }
 
 void CodeThorn::CTAnalysis::runSolver() {

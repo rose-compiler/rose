@@ -122,6 +122,7 @@ void CodeThorn::initDiagnostics() {
   FunctionIdMapping::initDiagnostics();
   FunctionCallMapping::initDiagnostics();
   EStateTransferFunctions::initDiagnostics();
+  Solver18::initDiagnostics();
 }
 
 Sawyer::Message::Facility CodeThorn::logger;
@@ -197,6 +198,8 @@ namespace CodeThorn {
     
     AbstractValue evaluateExpressionWithEmptyState(SgExpression* expr) {
       CTAnalysis* analyzer=new CTAnalysis();
+      Solver* solver=new Solver16();
+      analyzer->setSolver(solver); // solver is required
       EStateTransferFunctions* exprAnalyzer=new EStateTransferFunctions();
       exprAnalyzer->setAnalyzer(analyzer);
       VariableIdMappingExtended* vid=new VariableIdMappingExtended();  // only empty vim required
@@ -204,9 +207,11 @@ namespace CodeThorn {
       AbstractValue::setVariableIdMapping(vid);
       AbstractValue aVal=exprAnalyzer->evaluateExpressionWithEmptyState(expr);
       AbstractValue::_variableIdMapping=oldVID;
+
       delete vid;
       delete exprAnalyzer;
       delete analyzer;
+      
       return aVal;
     }
 
@@ -243,7 +248,6 @@ namespace CodeThorn {
         }
         if(expr) {
           cout<<"Testing expr eval with empty state: "<<expr->unparseToString();
-          //AbstractValue aVal=exprAnalyzer->evaluateExpressionWithEmptyState(expr);
           AbstractValue aVal=evaluateExpressionWithEmptyState(expr);
           cout<<" => result value: "<<aVal.toString()<<" "<<endl;
         }

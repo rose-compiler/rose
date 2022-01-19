@@ -719,8 +719,7 @@ check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
 
-CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-normalization check-lc check-io unit-test check-omp-cfg check-commandline-options check-vis \
-                      check-thorn2 check-stg check-thorn4
+CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-expr-eval check-normalization check-lc check-io check-omp-cfg check-commandline-options check-vis check-thorn2 check-stg check-thorn4
 CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 
 CHECK_WITH_SPOT_PASSING=check-reachability-seq check-ltl-seq check-ltl-par
@@ -780,7 +779,7 @@ check-io: check-ioc
 check-ioc:
 	$(srcdir)/scripts/runIOCTests $(srcdir)/tests
 
-unit-test:
+check-expr-eval:
 	$(srcdir)/scripts/runUnitTests $(srcdir)/tests
 
 check-data-races:
@@ -948,6 +947,10 @@ check-thorn4: thorn4
 # MS: 1-6 is reasonable for V1.2
 RERS=$(patsubst %,Problem%.log, $(shell seq 6))
 rers: $(RERS)
+
+check-solver18:
+	./codethorn $(srcdir)/tests/DOM049_large_arrays.C --solver=18 --context-sensitive=yes --abstraction-mode=1 --exploration-mode="topologic-sort" --normalize-level=2 --precision=2 --vis --status
+
 
 docs:
 	cd "$(srcdir)" && doxygen

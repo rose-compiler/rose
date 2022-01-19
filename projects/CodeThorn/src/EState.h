@@ -34,8 +34,6 @@ namespace CodeThorn {
   * \date 2012.
  */
 
-  #define ESTATE_PSTATE_MEM_COPY
-
   class EState;
   //typedef const EState* EStatePtr;
   typedef const EState* ConstEStatePtr;
@@ -49,10 +47,9 @@ namespace CodeThorn {
     EState(Label label, PStatePtr pstate, CodeThorn::InputOutput io):_label(label),_pstate(pstate),io(io){}
     EState(Label label, CallString cs, PStatePtr pstate, CodeThorn::InputOutput io):_label(label),_pstate(pstate),io(io),callString(cs) {}
     ~EState();
-    #ifdef ESTATE_PSTATE_MEM_COPY
+
     EState(const EState &other); // copy constructor
     EState& operator=(const EState &other); // assignment operator
-    #endif
     
     std::string toString() const;
     std::string toString(CodeThorn::VariableIdMapping* variableIdMapping) const;

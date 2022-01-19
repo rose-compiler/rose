@@ -25,22 +25,29 @@ namespace CodeThorn {
     bool isPassThroughLabel(Label lab);
     class WorkListEntry {
     public:
-    WorkListEntry(Label lab,CallString cs):_label(lab),_callString(cs) {}
+      WorkListEntry(Label lab,CallString cs):_label(lab),_callString(cs) {}
       Label label() { return _label; }
       CallString callString() { return _callString; }
     private:
       Label _label;
       CallString _callString;
     };
+    bool isReachableLabel(Label lab);
+    bool isUnreachableLabel(Label lab);
+    void deleteAllStates();
   private:
-    void initializeSummaryStatesFromWorkList();
-    // add Edge {(currentEStatePtr,e,NewEStatePtr)} to STS
-    // if currentEStatePtr!=currentEStatePtr) then also add 
-    //     (currentEStatePtr,e,NewEStatePtr)} where e'=(currentEStatePtr0,annot(e),NewStatePtr);
-    // this represents the effect of merging states also in the STS (without introducing new merge states)
+
     static Sawyer::Message::Facility logger;
     static bool _diagnosticsInitialized;
+    
     GeneralPriorityWorkList<WorkListEntry>* _workList=nullptr;
+
+    void initializeSummaryStatesFromWorkList();
+    EStatePtr getSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs);
+    void setSummaryState(CodeThorn::Label lab, CallString cs, EStatePtr estate);
+    EStatePtr getBottomSummaryState(Label lab, CallString cs);
+    typedef std::unordered_map <CallString ,EStatePtr> SummaryCSStateMap;
+    std::unordered_map< int, SummaryCSStateMap > _summaryCSStateMapMap;
   };
 
 } // end of namespace CodeThorn

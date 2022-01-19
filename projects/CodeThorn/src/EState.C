@@ -29,6 +29,17 @@ EState::EState():_label(Label()) {
   }
 }
 
+// copy constructor
+EState::EState(const EState &other) {
+  copy(this,&other,sharedPStates);
+}
+
+// assignment operator
+EState& EState::operator=(const EState &other) {
+  copy(this,&other,sharedPStates);
+  return *this;
+}
+
 EState::~EState() {
   if(EState::sharedPStates==false) {
     //cerr<<"DEBUG: Deleting estate: "<<this<<" with pstate: "<<_pstate<<endl;
@@ -84,21 +95,6 @@ EStatePtr EState::cloneWithoutIO() {
 EStatePtr EState::clone() {
   return new EState(*this);
 }
-
-#ifdef ESTATE_PSTATE_MEM_COPY
-// copy constructor
-EState::EState(const EState &other) {
-  copy(this,&other,sharedPStates);
-}
-#endif
-
-#ifdef ESTATE_PSTATE_MEM_COPY
-// assignment operator
-EState& EState::operator=(const EState &other) {
-  copy(this,&other,sharedPStates);
-  return *this;
-}
-#endif
 
 string EState::predicateToString(VariableIdMapping* variableIdMapping) const {
   string separator=",";
