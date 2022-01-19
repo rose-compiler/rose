@@ -3,7 +3,7 @@
 
 #include <featureTests.h>
 
-#if !defined(SAWYER_NO_SQLITE) && !defined(ROSE_HAVE_SQLITE)
+#if !defined(SAWYER_NO_SQLITE) && !defined(ROSE_HAVE_SQLITE3)
 #define SAWYER_NO_SQLITE
 #endif
 
