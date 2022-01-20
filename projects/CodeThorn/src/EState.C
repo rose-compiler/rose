@@ -20,6 +20,9 @@ using namespace CodeThorn;
 
 bool EState::sharedPStates=true;
 bool EState::fastPointerHashing=true;
+uint64_t EState::_constructCount=0;
+uint64_t EState::_destructCount=0;
+std::list<std::pair<uint64_t,uint64_t> > EState::_allocationHistory;
 
 EState::EState():_label(Label()) {
   if(EState::sharedPStates) {
@@ -27,11 +30,13 @@ EState::EState():_label(Label()) {
   } else {
     _pstate=new PState();
   }
+  _constructCount++;
 }
 
 // copy constructor
 EState::EState(const EState &other) {
   copy(this,&other,sharedPStates);
+  _constructCount++;
 }
 
 // assignment operator
@@ -48,6 +53,33 @@ EState::~EState() {
       _pstate=nullptr;
     }
   }
+  _destructCount++;
+}
+
+uint64_t EState::getConstructCount() {
+  return _constructCount;
+}
+
+uint64_t EState::getDestructCount() {
+  return _destructCount;
+}
+
+string EState::allocationStatsToString() {
+  stringstream ss;
+  ss<<"constructed: "<<_constructCount<<" destructed: "<<_destructCount<<" diff: "<<_constructCount-_destructCount;
+  return ss.str();
+}
+
+void EState::checkPointAllocationHistory() {
+  _allocationHistory.push_back(make_pair<uint64_t,uint64_t>(getConstructCount(),getDestructCount()));
+}
+
+std::string EState::allocationHistoryToString() {
+  string s;
+  for(auto p : _allocationHistory) {
+    s+=("("+std::to_string(p.first)+"-"+std::to_string(p.second)+"="+std::to_string(p.first-p.second)+") ");
+  }
+  return s;
 }
 
 // copy

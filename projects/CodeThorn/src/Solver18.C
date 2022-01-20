@@ -27,7 +27,7 @@ void Solver18::initDiagnostics() {
 }
 
 void Solver18::deleteAllStates() {
-  cout<<"STATUS: Solver18: deleting states."<<endl;
+  cout<<"STATUS: Solver18: deleting all remaining states."<<endl;
   size_t cnt=0;
   for(auto entry : _summaryCSStateMapMap) {
     auto map=entry.second;
@@ -36,7 +36,9 @@ void Solver18::deleteAllStates() {
       cnt++;
     }
   }
-  cout<<"STATUS: Solver18: deleted "<<cnt<<" states."<<endl;
+  EState::checkPointAllocationHistory();
+  cout<<"STATUS: Solver18: cleanup: deleted "<<cnt<<" states."<<endl;
+  cout<<"STATUS: Solver18: allocation history: "<<EState::allocationHistoryToString()<<endl;
 }
 
 int Solver18::getId() {
@@ -72,6 +74,13 @@ void Solver18::initializeSummaryStatesFromWorkList() {
     //_analyzer->addToWorkList(s);
     _workList->push(WorkListEntry(s->label(),s->callString));
   }
+  /* the other states are not initialized here because every context
+     (cs) requires its own bottom element and contexts ar computedat
+     analysis run time */
+}
+
+size_t Solver18::getNumberOfStates() {
+  return _numberOfStates;
 }
 
 EStatePtr Solver18::getSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs) {
@@ -109,14 +118,26 @@ void Solver18::setSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs, E
       SummaryCSStateMap newSummaryCSStateMap;
       newSummaryCSStateMap[cs]=estate;
       _summaryCSStateMapMap[lab.getId()]=newSummaryCSStateMap;
+      _numberOfStates++;
     } else {
       SummaryCSStateMap& summaryCSStateMap=(*iter1).second;
-      summaryCSStateMap[cs]=estate;
+      auto iter2=summaryCSStateMap.find(cs);
+      if(iter2==summaryCSStateMap.end()) {
+        summaryCSStateMap[cs]=estate;
+        _numberOfStates++;
+      } else {
+        // context already exists, re-set state, no additional state added
+        auto currentEState=(*iter2).second;
+        if(currentEState!=estate && currentEState!=nullptr) {
+          delete summaryCSStateMap[cs];
+        }
+        summaryCSStateMap[cs]=estate;
+      }
     }
   }
 }
 
-
+// creates bottom state
 EStatePtr Solver18::getBottomSummaryState(Label lab, CallString cs) {
   InputOutput io;
   io.recordBot();
@@ -125,6 +146,11 @@ EStatePtr Solver18::getBottomSummaryState(Label lab, CallString cs) {
   return new EState(estate);
 }
 
+size_t Solver18::checkDiff() {
+  ROSE_ASSERT(EState::getDestructCount()<=EState::getConstructCount());
+  ROSE_ASSERT(getNumberOfStates()<=(EState::getConstructCount()-EState::getDestructCount()));
+  return EState::getConstructCount()-EState::getDestructCount()-getNumberOfStates();
+}
 
 void Solver18::run() {
   SAWYER_MESG(logger[INFO])<<"Running solver "<<getId()<<" (sharedpstates:"<<_analyzer->getOptionsRef().sharedPStates<<")"<<endl;
@@ -162,7 +188,7 @@ void Solver18::run() {
     
     list<EStatePtr> newEStateList0;
     size_t pathLen=0;
-    while(isPassThroughLabel(currentEStatePtr->label())) {
+    while(false && isPassThroughLabel(currentEStatePtr->label())) {
       //cout<<"DEBUG: pass through: "<<currentEStatePtr->label().toString()<<endl;
       Flow edgeSet0=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
       if(edgeSet0.size()==1) {
@@ -186,14 +212,29 @@ void Solver18::run() {
     for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
       Edge e=*i;
       //cout<<"Transfer:"<<e.source().toString()<<"=>"<<e.target().toString()<<endl;
-      list<EStatePtr> newEStateList=_analyzer->transferEdgeEState(e,currentEStatePtr);
+      cout<<"P1:"<<EState::allocationStatsToString()<<": num states:"<<getNumberOfStates()<<endl;
+      auto newEState=currentEStatePtr->clone();
+      cout<<"P2:"<<EState::allocationStatsToString()<<": num states:"<<getNumberOfStates()<<endl;
+      auto checkDiff1=checkDiff();
+      list<EStatePtr> newEStateList=_analyzer->transferEdgeEStateInPlace(e,newEState);
+      if(newEStateList.size()==0) {
+        delete newEState;
+        cout<<"P2b:"<<EState::allocationStatsToString()<<": num states:"<<getNumberOfStates()<<endl;
+        continue;
+      }
+      cout<<"P3:"<<EState::allocationStatsToString()<<": num states:"<<getNumberOfStates()<<endl;
+      auto checkDiff2=checkDiff();
+      //if(checkDiff1!=checkDiff2 && newEStateList.size()<=1) {
+      //  cerr<<"Solver18: FAIL1: "<<checkDiff1<<":"<<checkDiff2<<" :"<< newEStateList.size()<<endl;
+      //  exit(1);
+      //}
       displayTransferCounter++;
       for(list<EStatePtr>::iterator nesListIter=newEStateList.begin();nesListIter!=newEStateList.end();++nesListIter) {
-        // newEstate is passed by value (not created yet)
         EStatePtr newEStatePtr0=*nesListIter; // TEMPORARY PTR
         ROSE_ASSERT(newEStatePtr0->label()!=Labeler::NO_LABEL);
         Label lab=newEStatePtr0->label();
         CallString cs=newEStatePtr0->callString;
+        cout<<"P4:"<<EState::allocationStatsToString()<<": num states:"<<getNumberOfStates()<<endl;
         if((!_analyzer->isFailedAssertEState(newEStatePtr0)&&!_analyzer->isVerificationErrorEState(newEStatePtr0))) {
           EStatePtr newEStatePtr=newEStatePtr0;
           ROSE_ASSERT(newEStatePtr);
@@ -201,16 +242,22 @@ void Solver18::run() {
           EStatePtr summaryEStatePtr=getSummaryState(lab,cs);
           ROSE_ASSERT(summaryEStatePtr);
           if(_analyzer->getEStateTransferFunctions()->isApproximatedBy(newEStatePtr,summaryEStatePtr)) {
+            cout<<"P5a:"<<EState::allocationStatsToString()<<": num states:"<<getNumberOfStates()<<endl;
             delete newEStatePtr; // new state does not contain new information, therefore it can be deleted
+            cout<<"P5b:"<<EState::allocationStatsToString()<<": num states:"<<getNumberOfStates()<<endl;
             newEStatePtr=nullptr;
           } else {
+            cout<<"P6a:"<<EState::allocationStatsToString()<<": num states:"<<getNumberOfStates()<<endl;
             EState newCombinedSummaryEState=_analyzer->getEStateTransferFunctions()->combine(summaryEStatePtr,const_cast<EStatePtr>(newEStatePtr));
             EStatePtr newCombinedSummaryEStatePtr=new EState(newCombinedSummaryEState);
+            cout<<"P6b:"<<EState::allocationStatsToString()<<": num states:"<<getNumberOfStates()<<endl;
             newCombinedSummaryEStatePtr->setLabel(lab);
             newCombinedSummaryEStatePtr->setCallString(cs);
             setSummaryState(lab,cs,newCombinedSummaryEStatePtr);
-            delete summaryEStatePtr;
+            cout<<"P6c:"<<EState::allocationStatsToString()<<": num states:"<<getNumberOfStates()<<endl;
+            //delete summaryEStatePtr;
             delete newEStatePtr;
+            cout<<"P6d:"<<EState::allocationStatsToString()<<": num states:"<<getNumberOfStates()<<endl;
             newEStatePtr=newCombinedSummaryEStatePtr;
             ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(newEStatePtr->label()));
             //_analyzer->addToWorkList(newEStatePtr);
@@ -218,6 +265,7 @@ void Solver18::run() {
 
           }
         }
+        cout<<"P7:"<<EState::allocationStatsToString()<<": num states:"<<getNumberOfStates()<<endl;
         if(((_analyzer->isFailedAssertEState(newEStatePtr0))||_analyzer->isVerificationErrorEState(newEStatePtr0))) {
           // failed-assert end-state: do not add to work list but do add it to the transition graph
           EStatePtr newEStatePtr=newEStatePtr0;
@@ -228,7 +276,9 @@ void Solver18::run() {
             _analyzer->_firstAssertionOccurences.push_back(pair<int, EStatePtr>(0, newEStatePtr));
             terminateEarly=true;
           } else if(_analyzer->isFailedAssertEState(newEStatePtr)) {
+            cout<<"P8a:"<<EState::allocationStatsToString()<<": num states:"<<getNumberOfStates()<<endl;
             delete newEStatePtr;
+            cout<<"P8b:"<<EState::allocationStatsToString()<<": num states:"<<getNumberOfStates()<<endl;
             continue;
           } // end of failed assert handling
         } // end of if
@@ -249,4 +299,7 @@ void Solver18::run() {
     _analyzer->printStatusMessage(true);
     _analyzer->printStatusMessage("STATUS: analysis finished (worklist is empty).",true);
   }
+  EState::checkPointAllocationHistory();
+  _analyzer->printStatusMessage("STATUS: number of states: "+std::to_string(getNumberOfStates()),true);
+  _analyzer->printStatusMessage("STATUS: "+EState::allocationStatsToString(),true);
 }

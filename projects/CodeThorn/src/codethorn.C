@@ -297,11 +297,13 @@ int main( int argc, char * argv[] ) {
     optionallyRunIOSequenceGenerator(ctOpt, analyzer);
     optionallyAnnotateTermsAndUnparse(ctOpt, project, analyzer);
 
+    delete analyzer;
+
+    // generate report after analyzer is deleted, to see amount of
+    // deleted memory in report
     optionallyPrintRunTimeAndMemoryUsageReport(ctOpt,tc);
     generateRunTimeAndMemoryUsageReport(ctOpt,tc);
     if(ctOpt.status) cout<<color("normal")<<"done."<<endl;
-
-    delete analyzer;
 
     // main function try-catch
   } catch(const CodeThorn::Exception& e) {

@@ -23,6 +23,7 @@ namespace CodeThorn {
     // a pass through node has a single in-edge, a single-out edge, and
     // the next node has also a single-in-edge.
     bool isPassThroughLabel(Label lab);
+    size_t checkDiff();
     class WorkListEntry {
     public:
       WorkListEntry(Label lab,CallString cs):_label(lab),_callString(cs) {}
@@ -35,8 +36,8 @@ namespace CodeThorn {
     bool isReachableLabel(Label lab);
     bool isUnreachableLabel(Label lab);
     void deleteAllStates();
+    size_t getNumberOfStates();
   private:
-
     static Sawyer::Message::Facility logger;
     static bool _diagnosticsInitialized;
     
@@ -48,6 +49,8 @@ namespace CodeThorn {
     EStatePtr getBottomSummaryState(Label lab, CallString cs);
     typedef std::unordered_map <CallString ,EStatePtr> SummaryCSStateMap;
     std::unordered_map< int, SummaryCSStateMap > _summaryCSStateMapMap;
+    // number of active states stored in _summaryCSStateMapMap (computed incrementally by setSummaryState)
+    size_t _numberOfStates=0;
   };
 
 } // end of namespace CodeThorn

@@ -85,10 +85,17 @@ namespace CodeThorn {
     EStatePtr clone(); // equivalent to deepClone, if sharedPStates==false
     EStatePtr cloneWithoutIO(); // equivalent to deepClone, if sharedPStates==false
     
+    static std::string allocationStatsToString();
+    static std::string allocationHistoryToString();
+    static void checkPointAllocationHistory();
+
   private:
     void copy(EState* target, ConstEStatePtr source,bool sharedPStatesFlag);
     Label _label;
     PStatePtr _pstate;
+    static uint64_t _constructCount;
+    static uint64_t _destructCount;
+    static std::list<std::pair<uint64_t,uint64_t> > _allocationHistory;
   public:
     static bool sharedPStates;
     static bool fastPointerHashing;
@@ -97,6 +104,8 @@ namespace CodeThorn {
     CallString getCallString() const;
     size_t getCallStringLength() const;
     CallString callString;
+    static uint64_t getConstructCount();
+    static uint64_t getDestructCount();
     
   };
 
