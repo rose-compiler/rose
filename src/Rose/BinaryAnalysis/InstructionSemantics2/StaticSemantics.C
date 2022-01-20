@@ -130,12 +130,12 @@ RiscOperators::saveSemanticEffect(const BaseSemantics::SValuePtr &a_) {
         // We're about to make a copy of the a->ast(), so we need to ensure all the parent pointers are correct.
         struct T1: AstPrePostProcessing {
             std::vector<SgNode*> path;
-            void preOrderVisit(SgNode *node) ROSE_OVERRIDE {
+            void preOrderVisit(SgNode *node) override {
                 if (!path.empty())
                     node->set_parent(path.back());
                 path.push_back(node);
             }
-            void postOrderVisit(SgNode *node) ROSE_OVERRIDE {
+            void postOrderVisit(SgNode *node) override {
                 ASSERT_require(!path.empty());
                 ASSERT_require(path.back() == node);
                 path.pop_back();

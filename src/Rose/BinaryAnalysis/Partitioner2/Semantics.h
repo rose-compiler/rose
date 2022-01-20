@@ -107,19 +107,19 @@ public:
     /** Virtual constructor. Creates a memory state having specified prototypical value. */
     virtual InstructionSemantics2::BaseSemantics::MemoryStatePtr
     create(const InstructionSemantics2::BaseSemantics::SValuePtr &addrProtoval,
-           const InstructionSemantics2::BaseSemantics::SValuePtr &valProtoval) const ROSE_OVERRIDE {
+           const InstructionSemantics2::BaseSemantics::SValuePtr &valProtoval) const override {
         return instance(addrProtoval, valProtoval);
     }
 
     /** Virtual constructor. Creates a new memory state having specified prototypical cells and value. */
     virtual InstructionSemantics2::BaseSemantics::MemoryStatePtr
-    create(const InstructionSemantics2::BaseSemantics::MemoryCellPtr &protocell) const ROSE_OVERRIDE {
+    create(const InstructionSemantics2::BaseSemantics::MemoryCellPtr &protocell) const override {
         return instance(protocell);
     }
 
     /** Virtual copy constructor. Creates a new deep copy of this memory state. */
     virtual InstructionSemantics2::BaseSemantics::MemoryStatePtr
-    clone() const ROSE_OVERRIDE {
+    clone() const override {
         return Ptr(new MemoryState(*this));
     }
 
@@ -167,19 +167,19 @@ public:
     readMemory(const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
                const InstructionSemantics2::BaseSemantics::SValuePtr &dflt,
                InstructionSemantics2::BaseSemantics::RiscOperators *addrOps,
-               InstructionSemantics2::BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
+               InstructionSemantics2::BaseSemantics::RiscOperators *valOps) override;
 
     virtual void
     writeMemory(const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
                 const InstructionSemantics2::BaseSemantics::SValuePtr &value,
                 InstructionSemantics2::BaseSemantics::RiscOperators *addrOps,
-                InstructionSemantics2::BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
+                InstructionSemantics2::BaseSemantics::RiscOperators *valOps) override;
 
     virtual InstructionSemantics2::BaseSemantics::SValuePtr
     peekMemory(const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
                const InstructionSemantics2::BaseSemantics::SValuePtr &dflt,
                InstructionSemantics2::BaseSemantics::RiscOperators *addrOps,
-               InstructionSemantics2::BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
+               InstructionSemantics2::BaseSemantics::RiscOperators *valOps) override;
 
 private:
     InstructionSemantics2::BaseSemantics::SValuePtr
@@ -190,7 +190,7 @@ private:
                      bool withSideEffects);
 
 public:
-    void print(std::ostream&, InstructionSemantics2::BaseSemantics::Formatter&) const ROSE_OVERRIDE;
+    void print(std::ostream&, InstructionSemantics2::BaseSemantics::Formatter&) const override;
 };
 
 /** Memory state using a chronological list of cells. */
@@ -294,13 +294,13 @@ public:
 public:
     virtual InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
     create(const InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
-           const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
+           const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         return instance(protoval, solver);
     }
 
     virtual InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
     create(const InstructionSemantics2::BaseSemantics::StatePtr &state,
-           const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
+           const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         return instance(state, solver);
     }
 
@@ -319,7 +319,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override methods from base class.
 public:
-    virtual void startInstruction(SgAsmInstruction*) ROSE_OVERRIDE;
+    virtual void startInstruction(SgAsmInstruction*) override;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

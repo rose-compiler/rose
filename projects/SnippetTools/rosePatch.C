@@ -99,7 +99,7 @@ struct Patcher: UnparseFormatHelp::PostOutputCallback {
     FileSystem::Path identityRoot, translatedRoot, buildRoot;
     Patcher(const FileSystem::Path &identityRoot, const FileSystem::Path &translatedRoot, const FileSystem::Path &buildRoot)
         : identityRoot(identityRoot), translatedRoot(translatedRoot), buildRoot(buildRoot) {}
-    bool operator()(bool chain, const Args &args) ROSE_OVERRIDE {
+    bool operator()(bool chain, const Args &args) override {
         if (chain) {
             FileSystem::Path identityName = identityRoot / FileSystem::makeRelative(args.outputName, buildRoot);
             FileSystem::Path translatedName = translatedRoot / FileSystem::makeRelative(args.outputName, buildRoot);

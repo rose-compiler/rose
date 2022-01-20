@@ -106,7 +106,7 @@ namespace MatlabToCpp
     : BinaryExpressionToFunctionCallTransformer(V_SgDivideOp, "mrdivide")
     {}
 
-    bool skipExpression(SgExpression* expr) ROSE_OVERRIDE
+    bool skipExpression(SgExpression* expr) override
     {
       return isScalarType(fn::getInferredType(expr));
     }

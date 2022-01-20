@@ -133,11 +133,11 @@ public:                                                 // typical boilerplate
     }
 
     virtual BaseSemantics::StatePtr create(const BaseSemantics::RegisterStatePtr &registers,
-                                           const BaseSemantics::MemoryStatePtr &memory) const ROSE_OVERRIDE {
+                                           const BaseSemantics::MemoryStatePtr &memory) const override {
         return instance(registers, memory);
     }
 
-    virtual BaseSemantics::StatePtr clone() const ROSE_OVERRIDE {
+    virtual BaseSemantics::StatePtr clone() const override {
         return BaseSemantics::StatePtr(new MyState(*this));
     }
     
@@ -157,7 +157,7 @@ public:                                                 // new methods
 
 public:                                                 // overrides
     virtual BaseSemantics::SValuePtr readRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt,
-                                                  BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE {
+                                                  BaseSemantics::RiscOperators *ops) override {
         BaseSemantics::SValuePtr retval = Super::readRegister(reg, dflt, ops);
         if (isInitialState_) {
             SymbolicSemantics::SValuePtr symval = SymbolicSemantics::SValue::promote(retval);
@@ -168,7 +168,7 @@ public:                                                 // overrides
 
     virtual BaseSemantics::SValuePtr readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
                                                 BaseSemantics::RiscOperators *addrOps,
-                                                BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE {
+                                                BaseSemantics::RiscOperators *valOps) override {
         BaseSemantics::SValuePtr retval = Super::readMemory(addr, dflt, addrOps, valOps);
         if (isInitialState_) {
             SymbolicSemantics::SValuePtr symval = SymbolicSemantics::SValue::promote(retval);

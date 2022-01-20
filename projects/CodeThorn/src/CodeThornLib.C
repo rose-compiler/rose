@@ -25,12 +25,6 @@
 #include "Miscellaneous2.h"
 #include "FIConstAnalysis.h"
 #include "ReachabilityAnalysis.h"
-#include "Solver5.h"
-#include "Solver8.h"
-#include "Solver16.h"
-#include "ltlthorn-lib/Solver10.h"
-#include "ltlthorn-lib/Solver11.h"
-#include "ltlthorn-lib/Solver12.h"
 #include "AnalysisParameters.h"
 #include "CodeThornException.h"
 #include "ProgramInfo.h"
@@ -66,8 +60,14 @@
 
 // required only for ROSE AST Consistency tests
 #include "AstConsistencyTests.h"
-
 #include "IOSequenceGenerator.h"
+
+// required for createSolver function
+#include "Solver5.h"
+#include "Solver16.h"
+#include "Solver17.h"
+#include "Solver18.h"
+#include "Solver8.h"
 
 using namespace std;
 
@@ -93,7 +93,7 @@ using namespace Sawyer::Message;
 
 using namespace Sawyer::Message;
 
-static std::string CodeThornLibraryVersion="1.13.32";
+static std::string CodeThornLibraryVersion="1.13.44";
 
 // handler for generating backtrace
 void codethornBackTraceHandler(int sig) {
@@ -164,7 +164,32 @@ namespace CodeThorn {
       signal(SIGSEGV, codethornBackTraceHandler);   // install handler for backtrace
     }
 
-    
+    Solver* createSolver(CodeThornOptions& ctOpt) {
+      Solver* solver = nullptr;
+      // solver "factory"
+      switch(ctOpt.solver) {
+      case 5 :  {  
+        solver = new Solver5(); break;
+      }
+      case 16 :  {  
+        solver = new Solver16(); break; // variant of solver5
+      }
+      case 17 :  {  
+        solver = new Solver17(); break; // does not create a TS
+      }
+      case 18 :  {  
+        solver = new Solver18(); break; // does not create a TS
+      }
+      case 8 :  {  
+        solver = new Solver8(); break;
+      }
+      default :  { 
+        logger[ERROR] <<"Unknown solver ID: "<<ctOpt.solver<<endl;
+        exit(1);
+      }
+      }
+      return solver;
+    }
     
     AbstractValue evaluateExpressionWithEmptyState(SgExpression* expr) {
       CTAnalysis* analyzer=new CTAnalysis();
@@ -334,6 +359,10 @@ namespace CodeThorn {
       IOAnalyzer* analyzer = new IOAnalyzer();
       analyzer->setOptions(ctOpt);
       analyzer->setLtlOptions(ltlOpt);
+      if(ctOpt.sharedPStates==true) {
+        cerr<<"CodeThornLib::createAnalyzer: shared PStates not supported anymore. Exiting."<<endl;
+        exit(1);
+      }
       EState::sharedPStates=ctOpt.sharedPStates;
       EState::fastPointerHashing=ctOpt.fastPointerHashing;
       return analyzer;
@@ -371,7 +400,6 @@ namespace CodeThorn {
     }
 
     void optionallyRunVisualizer(CodeThornOptions& ctOpt, CTAnalysis* analyzer, SgNode* root) {
-      Visualizer visualizer(analyzer->getLabeler(),analyzer->getVariableIdMapping(),analyzer->getFlow(),analyzer->getEStateSet(),analyzer->getTransitionGraph());
       if (ctOpt.visualization.icfgFileName.size()>0) {
 	string cfgFileName=ctOpt.visualization.icfgFileName;
 	DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
@@ -379,21 +407,31 @@ namespace CodeThorn {
 	ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),cfgFileName,analyzer->getTopologicalSort(),false);
 	cout << "generated "<<cfgFileName<<" (top sort: "<<(analyzer->getTopologicalSort()!=0)<<")"<<endl;
       }
+      
+      ROSE_ASSERT(analyzer->getTransitionGraph());
+      ROSE_ASSERT(analyzer->getEStateSet());
+      Visualizer visualizer(analyzer);
       if(ctOpt.visualization.vis) {
 	cout << "generating graphvis files:"<<endl;
 	visualizer.setOptionMemorySubGraphs(ctOpt.visualization.tg1EStateMemorySubgraphs);
 	string dotFile="digraph G {\n";
 	dotFile+=visualizer.transitionGraphToDot();
 	dotFile+="}\n";
-	write_file("transitiongraph1.dot", dotFile);
-	cout << "generated transitiongraph1.dot."<<endl;
-	string dotFile3=visualizer.foldedTransitionGraphToDot();
-	write_file("transitiongraph2.dot", dotFile3);
-	cout << "generated transitiongraph2.dot."<<endl;
+        string tg1DotFileName=ctOpt.reportFilePath+"/"+"transitiongraph1.dot";
+	if(write_file(tg1DotFileName, dotFile)) {
+          cout << "generated "<<tg1DotFileName<<endl;
+        }
+	string tg2DotFileData=visualizer.foldedTransitionGraphToDot();
+        string tg2DotFileName=ctOpt.reportFilePath+"/"+"transitiongraph2.dot";
+	if(write_file(tg2DotFileName, tg2DotFileData)) {
+          cout << "generated "<<tg2DotFileName<<endl;
+        }
 
 	string datFile1=(analyzer->getTransitionGraph())->toString(analyzer->getVariableIdMapping());
-	write_file("transitiongraph1.dat", datFile1);
-	cout << "generated transitiongraph1.dat."<<endl;
+        string tg1DatFileName=ctOpt.reportFilePath+"/"+"transitiongraph1.dat";
+	if(write_file(tg1DatFileName, datFile1)) {
+          cout << "generated "<<tg1DatFileName<<endl;
+        }
 
 	//analyzer->generateAstNodeInfo(analyzer->startFunRoot);
 	//dotFile=astTermWithNullValuesToDot(analyzer->startFunRoot);
@@ -401,14 +439,21 @@ namespace CodeThorn {
 	cout << "generating AST node info ... "<<endl;
 	analyzer->generateAstNodeInfo(root);
 	dotFile=AstTerm::functionAstTermsWithNullValuesToDot(root);
-	write_file("ast.dot", dotFile);
-	cout << "generated ast.dot."<<endl;
+        string astDotFileName=ctOpt.reportFilePath+"/"+"ast.dot";
+	if(write_file(astDotFileName, dotFile)) {
+          cout << "generated AST file "<<astDotFileName<<endl;
+        } else {
+          cerr << "Error: failed to generate AST file "<<astDotFileName<<endl;
+        }
+	SAWYER_MESG(logger[TRACE]) << "Option VIS: generating icfg dot file ..."<<endl;
 
-	SAWYER_MESG(logger[TRACE]) << "Option VIS: generating cfg dot file ..."<<endl;
-	write_file("cfg_non_clustered.dot", analyzer->getFlow()->toDot(analyzer->getCFAnalyzer()->getLabeler(),analyzer->getTopologicalSort()));
+        //string icfgNonClusteredFileName=ctOpt.reportFilePath+"/"+"icfg_non_clustered.dot";
+	//write_file(icfgNonClusteredFileName, analyzer->getFlow()->toDot(analyzer->getCFAnalyzer()->getLabeler(),analyzer->getTopologicalSort()));
+        string icfgFileName=ctOpt.reportFilePath+"/"+"icfg.dot";
 	DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
-	ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),"cfg.dot",analyzer->getTopologicalSort(),false);
-	cout << "generated cfg.dot, cfg_non_clustered.dot"<<endl;
+	ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),icfgFileName,analyzer->getTopologicalSort(),false);
+        cout<<"Generated ICFG dot file "<<icfgFileName<<endl;
+        
 	cout << "=============================================================="<<endl;
       }
       if(ctOpt.visualization.visTg2) {
@@ -725,11 +770,11 @@ namespace CodeThorn {
       if(ctOpt.generateReports) {
         if(ctOpt.analysisList().size()>0) {
           const bool reportDetectedErrorLines=true;
-          AnalysisReporting::generateVerificationReports(ctOpt,analyzer,reportDetectedErrorLines); // also generates verification call graph
-          AnalysisReporting::generateAnalysisLocationReports(ctOpt,analyzer);
-          AnalysisReporting::generateAnalyzedFunctionsAndFilesReports(ctOpt,analyzer);
-	  AnalysisReporting::generateInternalAnalysisReport(ctOpt,analyzer);
-	  AnalysisReporting::generateUnusedVariablesReport(ctOpt,analyzer);
+          AnalysisReporting anaRep;
+          anaRep.generateVerificationReports(ctOpt,analyzer,reportDetectedErrorLines); // also generates verification call graph
+          anaRep.generateAnalyzedFunctionsAndFilesReports(ctOpt,analyzer);
+	  anaRep.generateInternalAnalysisReport(ctOpt,analyzer);
+	  anaRep.generateUnusedVariablesReport(ctOpt,analyzer);
         } else {
           if(ctOpt.status) cout<<"STATUS: no analysis reports generated (no analysis selected)."<<endl;
         }
@@ -800,11 +845,9 @@ namespace CodeThorn {
 
 
     Labeler* createLabeler(SgProject* project, VariableIdMappingExtended* variableIdMapping, bool withCplusplus) {
-      //~ CTIOLabeler* res = new CTIOLabeler(project,variableIdMapping);
       CTIOLabeler* res = new CTIOLabeler(variableIdMapping);
-
-      if (withCplusplus) res->setIsFunctionCallFn(matchCxxCall);
-
+      if (withCplusplus)
+        res->setIsFunctionCallFn(matchCxxCall);
       res->initialize(project);
       return res;
     }

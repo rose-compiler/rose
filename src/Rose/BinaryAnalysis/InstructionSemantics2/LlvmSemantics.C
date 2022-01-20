@@ -256,7 +256,7 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
         std::set<SymbolicExpr::Hash> seen;
         T1(RiscOperators *ops, std::ostream &o, const RegisterDescriptors &regs, const RegisterDictionary *dictionary)
             : ops(ops), o(o), regs(regs), dictionary(dictionary) {}
-        virtual SymbolicExpr::VisitAction preVisit(const ExpressionPtr &node) ROSE_OVERRIDE {
+        virtual SymbolicExpr::VisitAction preVisit(const ExpressionPtr &node) override {
             if (!seen.insert(node->hash()).second)
                 return SymbolicExpr::TRUNCATE; // already processed this same expression
             size_t width = node->nBits();
@@ -277,7 +277,7 @@ RiscOperators::emit_prerequisites(std::ostream &o, const RegisterDescriptors &re
             }
             return SymbolicExpr::CONTINUE;
         }
-        virtual SymbolicExpr::VisitAction postVisit(const ExpressionPtr&) ROSE_OVERRIDE {
+        virtual SymbolicExpr::VisitAction postVisit(const ExpressionPtr&) override {
             return SymbolicExpr::CONTINUE;
         }
     } t1(this, o, regs, dictionary);

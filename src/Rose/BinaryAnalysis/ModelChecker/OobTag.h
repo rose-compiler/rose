@@ -5,6 +5,7 @@
 
 #include <Rose/BinaryAnalysis/ModelChecker/Tag.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Types.h>
+#include <Rose/BinaryAnalysis/Variables.h>
 
 namespace Rose {
 namespace BinaryAnalysis {
@@ -20,20 +21,37 @@ private:
     const IoMode ioMode_;                                        // read or write
     const SgAsmInstruction *insn_;                               // instruction where the oob access occurs (optional)
     const InstructionSemantics2::BaseSemantics::SValuePtr addr_; // memory address that is accessed
+    const Variables::StackVariable intendedVariable_;            // variable that was incorrectly accessed
+    const AddressInterval intendedVariableLocation_;             // location and size of stack variable in memory
+    const Variables::StackVariable accessedVariable_;            // optional info about variable actually accessed
+    const AddressInterval accessedVariableLocation_;             // optional location and size of variable actually accessed
 
 protected:
     OobTag() = delete;
     OobTag(size_t nodeStep, TestMode, IoMode, SgAsmInstruction*,
-           const InstructionSemantics2::BaseSemantics::SValuePtr &addr);
+           const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
+           const Variables::StackVariable &intendedVariable, const AddressInterval &intendedVariableLocation,
+           const Variables::StackVariable &accessedVariable, const AddressInterval &accessedVariableLocation);
+
+    OobTag(const OobTag&) = delete;
 
 public:
     ~OobTag();
 
     /** Allocating constructor.
      *
+     *  Constructs a tag with information about out-of-bounds access to a stack variable.  The @p intendedVariable is the
+     *  variable that was apparently intended to be accessed along with its @p intendedVariableLocation in memory. If the
+     *  memory I/O accessed some other known stack variable, this can be indicated by the @p accessedVariable argument and its
+     *  @p accessedVariableLocation. The @p accessedVariable should be a default constructed object if the I/O didn't access
+     *  any part of any other known variable (the stack often has areas that are reserved by the compiler that don't correspond
+     *  to any source level variables).
+     *
      *  Thread safety: This constructor is thread safe. */
     static Ptr instance(size_t nodeStep, TestMode, IoMode, SgAsmInstruction*,
-                        const InstructionSemantics2::BaseSemantics::SValuePtr &addr);
+                        const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
+                        const Variables::StackVariable &intendedVariable, const AddressInterval &intendedVariableLocation,
+                        const Variables::StackVariable &accessedVariable, const AddressInterval &accessedVariableLocation);
 
 public:
     virtual std::string name() const override;

@@ -102,7 +102,7 @@ Transform( LoopTreeDepComp& c, const CompSlice *_slice, LoopTreeNode *root)
        fa.NewVar(fa.GetType("int"), name);
        args.push_back( fa.CreateVarRef( name).get_ptr() );
     }
-    int id;
+    int id = 0;
     AstNodePtr config = LoopTransformInterface::CreateDynamicFusionConfig( fa.CreateVarRef(groupVarN), args, id);
     LoopTreeNode *configNode = tc->CreateStmtNode(config);
     configNode->Link( nr, LoopTreeNode::AsPrevSibling);

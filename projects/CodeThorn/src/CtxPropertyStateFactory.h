@@ -22,7 +22,7 @@ struct CtxPropertyStateFactory : PropertyStateFactory
     : compFactory(compFac)
     {}
 
-    context_lattice_t* create() ROSE_OVERRIDE
+    context_lattice_t* create() override
     {
       return new context_lattice_t(compFactory);
     }

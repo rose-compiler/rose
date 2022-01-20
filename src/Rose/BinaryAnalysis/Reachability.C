@@ -71,7 +71,7 @@ public:
     static Ptr instance(Reachability::ReasonFlags &storage) {
         return Ptr(new ReasonSaver(storage));
     }
-    void save(const boost::any &value, const std::string &/*switchKey*/) ROSE_OVERRIDE {
+    void save(const boost::any &value, const std::string &/*switchKey*/) override {
         Reachability::Reason reason = boost::any_cast<Reachability::Reason>(value);
         if (isDefault_)
             storage_.clear();

@@ -253,6 +253,7 @@ digraph "parenthesis_matters.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Parenthesis_Matter.adb - 11:8 .. 11:18</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_FUNCTION_CALL</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2280089</TD></TR>
+          <TR><TD ALIGN="LEFT">Is_Prefix_Call    </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
           <TR><TD ALIGN="LEFT">Prefix  </TD><TD> = </TD><TD ALIGN="LEFT">Element_2336237</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Called_Function        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2303107</TD></TR>
           </TABLE>> ];
@@ -383,6 +384,7 @@ digraph "parenthesis_matters.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Parenthesis_Matter.adb - 17:9 .. 17:19</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_FUNCTION_CALL</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2280089</TD></TR>
+          <TR><TD ALIGN="LEFT">Is_Prefix_Call    </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
           <TR><TD ALIGN="LEFT">Prefix  </TD><TD> = </TD><TD ALIGN="LEFT">Element_2340237</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Called_Function        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2303107</TD></TR>
           </TABLE>> ];

@@ -2,7 +2,7 @@
 #include "sage3basic.h"
 #include "ConstantConditionAnalysis.h"
 
-void ConstantConditionAnalysis::trueFalseEdgeEvaluation(Edge edge, SingleEvalResult& evalResult , const EState* estate) {
+void ConstantConditionAnalysis::trueFalseEdgeEvaluation(Edge edge, SingleEvalResult& evalResult , EStatePtr estate) {
   BoolLattice val=constConditions[estate->label()]; // default is bot
   // determine whether all results at this label are true (or false), otherwise top.
   if(val.isBot()) {

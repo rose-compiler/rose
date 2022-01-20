@@ -179,6 +179,13 @@ public:
      *  the same hash. The returned events have no location or test case and are not yet written to a database. */
     virtual std::vector<ExecutionEventPtr> createMemoryHashEvents() = 0;
 
+    /** Create events that adjust memory mapping.
+     *
+     *  This is called after memory is inserted into or erased from the process memory map, such as in response to a brk or
+     *  mmap2 system call.  It compares the process' current memory mapping with the provided mapping and adjusts the current
+     *  mapping to match the concrete map by inserting and/or erasing certain regions. */
+    virtual std::vector<ExecutionEventPtr> createMemoryAdjustEvents(const MemoryMap::Ptr&, rose_addr_t insnVa) = 0;
+
     /** Create events that would restore register values.
      *
      *  This function reads all registers and creates events that when replayed would restore the registers to their saved

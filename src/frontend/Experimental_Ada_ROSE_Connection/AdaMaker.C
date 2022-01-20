@@ -205,6 +205,7 @@ mkAdaFloatType(SgExpression& digits, SgAdaRangeConstraint* range_opt)
   return sgnode;
 }
 
+/*
 SgAdaFormalType&
 mkAdaFormalType(const std::string& name)
 {
@@ -212,6 +213,7 @@ mkAdaFormalType(const std::string& name)
   ty.set_type_name(name);
   return ty;
 }
+*/
 
 SgDeclType&
 mkExceptionType(SgExpression& n)
@@ -241,14 +243,14 @@ mkTypeUnion(SgTypePtrList elemtypes)
   return sgnode;
 }
 
-SgClassType&
-mkRecordType(SgClassDeclaration& dcl)
+SgEnumDeclaration&
+mkEnumDecl(const std::string& name, SgScopeStatement& scope)
 {
-  return mkTypeNode<SgClassType>(&dcl);
+  return SG_DEREF(sb::buildNondefiningEnumDeclaration_nfi(name, &scope));
 }
 
 SgEnumDeclaration&
-mkEnumDecl(const std::string& name, SgScopeStatement& scope)
+mkEnumDefn(const std::string& name, SgScopeStatement& scope)
 {
   return SG_DEREF(sb::buildEnumDeclaration_nfi(name, &scope));
 }
@@ -259,24 +261,6 @@ mkAdaAccessType(SgType *base_type)
   SgAdaAccessType& sgnode = mkNonSharedTypeNode<SgAdaAccessType>(base_type);
   return sgnode;
 }
-
-SgAdaTaskType&
-mkAdaTaskType(SgAdaTaskTypeDecl& dcl)
-{
-  SgAdaTaskType& sgnode = mkTypeNode<SgAdaTaskType>(&dcl);
-
-  return sgnode;
-}
-
-SgAdaDiscriminatedType&
-mkAdaDiscriminatedType(SgAdaDiscriminatedTypeDecl& dcl)
-{
-  //~ SgAdaDiscriminatedType& sgnode = mkTypeNode<SgAdaDiscriminatedType>(&dcl);
-  SgAdaDiscriminatedType& sgnode = mkNonSharedTypeNode<SgAdaDiscriminatedType>(&dcl);
-
-  return sgnode;
-}
-
 
 SgFunctionType& mkAdaEntryType(SgFunctionParameterList& lst)
 {
@@ -486,9 +470,9 @@ mkAbortStmt(SgExprListExp& abortList)
 
 
 SgLabelStatement&
-mkLabelStmt(const std::string& label, SgStatement& stmt, SgScopeStatement& encl)
+mkLabelStmt(const std::string& label, SgStatement& stmt, SgScopeStatement& scope)
 {
-  SgLabelStatement& sgnode = SG_DEREF( sb::buildLabelStatement(label, &stmt, &encl) );
+  SgLabelStatement& sgnode = SG_DEREF( sb::buildLabelStatement(label, &stmt, &scope) );
 
   sg::linkParentChild(sgnode, stmt, &SgLabelStatement::set_statement);
   return sgnode;
@@ -648,20 +632,20 @@ mkAdaGenericDecl(SgScopeStatement& scope)
    sg::linkParentChild(sgnode, defn, &SgAdaGenericDecl::set_definition);
 
    return sgnode;
- }
+}
 
- SgAdaFormalTypeDecl&
- mkAdaFormalTypeDecl(const std::string& name, SgAdaFormalType& ty, SgScopeStatement& scope)
- {
-   SgAdaFormalTypeDecl&  sgnode = mkLocatedNode<SgAdaFormalTypeDecl>(SgName(name),&ty);
+SgAdaFormalTypeDecl&
+mkAdaFormalTypeDecl(const std::string& name, SgScopeStatement& scope)
+{
+  SgAdaFormalTypeDecl&  sgnode = mkLocatedNode<SgAdaFormalTypeDecl>(SgName(name));
 
-   sgnode.set_parent(&scope);
-   sgnode.set_firstNondefiningDeclaration(&sgnode);
+  sgnode.set_parent(&scope);
+  sgnode.set_firstNondefiningDeclaration(&sgnode);
 
-   scope.insert_symbol(name, new SgAdaGenericSymbol(&sgnode));
+  scope.insert_symbol(name, new SgAdaGenericSymbol(&sgnode));
 
-   return sgnode;
- }
+  return sgnode;
+}
 
 
 namespace
@@ -719,14 +703,13 @@ mkAdaPackageBodyDecl(SgAdaPackageSpecDecl& specdcl)
 
 namespace
 {
-  template <class SagaAdaTaskDecl>
-  SagaAdaTaskDecl&
-  mkAdaTaskDeclInternal(const std::string& name, SgAdaTaskSpec& spec, SgScopeStatement& scope)
+  template <class SageAdaConcurrentSymbol, class SageAdaConcurrentDecl, class SageAdaConcurrentSpec>
+  SageAdaConcurrentDecl&
+  mkAdaConcurrentDeclInternal(const std::string& name, SageAdaConcurrentSpec& spec, SgScopeStatement& scope)
   {
-    SagaAdaTaskDecl& sgnode = mkLocatedNode<SagaAdaTaskDecl>(name, &spec);
+    SageAdaConcurrentDecl& sgnode = mkLocatedNode<SageAdaConcurrentDecl>(name, &spec);
 
-    scope.insert_symbol(name, &mkBareNode<SgAdaTaskSymbol>(&sgnode));
-
+    scope.insert_symbol(name, &mkBareNode<SageAdaConcurrentSymbol>(&sgnode));
     spec.set_parent(&sgnode);
     return sgnode;
   }
@@ -736,13 +719,25 @@ namespace
 SgAdaTaskTypeDecl&
 mkAdaTaskTypeDecl(const std::string& name, SgAdaTaskSpec& spec, SgScopeStatement& scope)
 {
-  return mkAdaTaskDeclInternal<SgAdaTaskTypeDecl>(name, spec, scope);
+  return mkAdaConcurrentDeclInternal<SgAdaTaskSymbol, SgAdaTaskTypeDecl>(name, spec, scope);
 }
 
 SgAdaTaskSpecDecl&
 mkAdaTaskSpecDecl(const std::string& name, SgAdaTaskSpec& spec, SgScopeStatement& scope)
 {
-  return mkAdaTaskDeclInternal<SgAdaTaskSpecDecl>(name, spec, scope);
+  return mkAdaConcurrentDeclInternal<SgAdaTaskSymbol, SgAdaTaskSpecDecl>(name, spec, scope);
+}
+
+SgAdaProtectedTypeDecl&
+mkAdaProtectedTypeDecl(const std::string& name, SgAdaProtectedSpec& spec, SgScopeStatement& scope)
+{
+  return mkAdaConcurrentDeclInternal<SgAdaProtectedSymbol, SgAdaProtectedTypeDecl>(name, spec, scope);
+}
+
+SgAdaProtectedSpecDecl&
+mkAdaProtectedSpecDecl(const std::string& name, SgAdaProtectedSpec& spec, SgScopeStatement& scope)
+{
+  return mkAdaConcurrentDeclInternal<SgAdaProtectedSymbol, SgAdaProtectedSpecDecl>(name, spec, scope);
 }
 
 namespace
@@ -772,7 +767,7 @@ SgAdaTaskBodyDecl&
 mkAdaTaskBodyDecl(SgDeclarationStatement& tskdecl, SgAdaTaskBody& tskbody, SgScopeStatement& scope)
 {
   //~ SgAdaPackageBody&     pkgbody = SG_DEREF( new SgAdaPackageBody() );
-  TaskDeclInfoResult specinfo = sg::dispatch(TaskDeclInfo(), &tskdecl);
+  TaskDeclInfoResult specinfo = sg::dispatch(TaskDeclInfo{}, &tskdecl);
   SgAdaTaskBodyDecl& sgnode   = mkLocatedNode<SgAdaTaskBodyDecl>(specinfo.name, &tskbody);
 
   tskbody.set_parent(&sgnode);
@@ -792,33 +787,65 @@ mkAdaTaskBodyDecl(SgDeclarationStatement& tskdecl, SgAdaTaskBody& tskbody, SgSco
   return sgnode;
 }
 
-#if 0
-SgAdaTaskBodyDecl&
-mkAdaTaskBodyDecl(const std::string& name, SgAdaTaskBody& tskbody, SgScopeStatement& scope)
+namespace
 {
-  SgAdaTaskBodyDecl& sgnode = mkLocatedNode<SgAdaTaskBodyDecl>(name, &tskbody);
+  struct ProtectedDeclInfoResult
+  {
+    std::string         name;
+    SgAdaProtectedSpec* spec;
+  };
+
+  struct ProtectedDeclInfo : sg::DispatchHandler<ProtectedDeclInfoResult>
+  {
+    template <class SageProtectedDecl>
+    void handleProtectedDecl(SageProtectedDecl& n)
+    {
+      res.name = n.get_name();
+      res.spec = n.get_definition();
+    }
+
+    void handle(SgNode& n)                 { SG_UNEXPECTED_NODE(n); }
+    void handle(SgAdaProtectedSpecDecl& n) { handleProtectedDecl(n); }
+    void handle(SgAdaProtectedTypeDecl& n) { handleProtectedDecl(n); }
+  };
+} // anonymous namespace
+
+SgAdaProtectedBodyDecl&
+mkAdaProtectedBodyDecl(SgDeclarationStatement& tskdecl, SgAdaProtectedBody& tskbody, SgScopeStatement& scope)
+{
+  //~ SgAdaPackageBody&     pkgbody = SG_DEREF( new SgAdaPackageBody() );
+  ProtectedDeclInfoResult specinfo = sg::dispatch(ProtectedDeclInfo{}, &tskdecl);
+  SgAdaProtectedBodyDecl& sgnode   = mkLocatedNode<SgAdaProtectedBodyDecl>(specinfo.name, &tskbody);
 
   tskbody.set_parent(&sgnode);
   sgnode.set_parent(&scope);
 
-  /*
-  SgAdaTaskSpec&     tskspec = SG_DEREF( specinfo.spec );
+  SgAdaProtectedSpec&     tskspec = SG_DEREF( specinfo.spec );
 
   tskspec.set_body(&tskbody);
   tskbody.set_spec(&tskspec);
-  */
 
-  //~ ADA_ASSERT(scope.symbol_exists(specinfo.name));
-  scope.insert_symbol(name, &mkBareNode<SgAdaTaskSymbol>(&sgnode));
+  // \todo make sure assertion holds
+  // ADA_ASSERT(scope.symbol_exists(specinfo.name));
+
+  if (!scope.symbol_exists(specinfo.name))
+    scope.insert_symbol(specinfo.name, &mkBareNode<SgAdaProtectedSymbol>(&sgnode));
+
   return sgnode;
 }
-#endif
+
 
 SgAdaTaskSpec&
 mkAdaTaskSpec() { return mkScopeStmt<SgAdaTaskSpec>(); }
 
 SgAdaTaskBody&
 mkAdaTaskBody() { return mkScopeStmt<SgAdaTaskBody>(); }
+
+SgAdaProtectedSpec&
+mkAdaProtectedSpec() { return mkScopeStmt<SgAdaProtectedSpec>(); }
+
+SgAdaProtectedBody&
+mkAdaProtectedBody() { return mkScopeStmt<SgAdaProtectedBody>(); }
 
 SgFunctionParameterList&
 mkFunctionParameterList()
@@ -1187,7 +1214,10 @@ mkVarDecl(const SgInitializedNamePtrList& vars, SgScopeStatement& scope)
 SgAdaVariantFieldDecl&
 mkAdaVariantFieldDecl(const SgInitializedNamePtrList& vars, SgExprListExp& choices, SgScopeStatement& scope)
 {
-  return mkVarDeclInternal<SgAdaVariantFieldDecl>(vars.begin(), vars.end(), scope, &choices);
+  SgAdaVariantFieldDecl& sgnode = mkVarDeclInternal<SgAdaVariantFieldDecl>(vars.begin(), vars.end(), scope, &choices);
+
+  choices.set_parent(&sgnode);
+  return sgnode;
 }
 
 SgAdaVariantFieldDecl&
@@ -1379,6 +1409,12 @@ mkAdaTaskRefExp(SgAdaTaskSpecDecl& task)
   return mkLocatedNode<SgAdaTaskRefExp>(&task);
 }
 
+SgAdaProtectedRefExp&
+mkAdaProtectedRefExp(SgAdaProtectedSpecDecl& po)
+{
+  return mkLocatedNode<SgAdaProtectedRefExp>(&po);
+}
+
 SgAdaUnitRefExp&
 mkAdaUnitRefExp(SgDeclarationStatement& unit)
 {
@@ -1480,6 +1516,84 @@ mkAdaAttributeExp(SgExpression& expr, const std::string& ident, SgExprListExp& a
   return sgnode;
 }
 
+
+namespace
+{
+  SgFunctionParameterTypeList&
+  mkFunctionParameterTypeList()
+  {
+    return mkBareNode<SgFunctionParameterTypeList>();
+  }
+
+  SgType&
+  convertType(SgType& actual, SgType& orig, SgTypedefType& derv)
+  {
+    return &orig == &actual ? derv : actual;
+  }
+
+
+  /// replaces the original type of \ref declaredDerivedType with \ref declaredDerivedType in \ref funcTy.
+  /// returns \ref funcTy to indicate an error.
+  SgFunctionType&
+  convertToDerivedType(SgFunctionType& funcTy, SgTypedefType& declaredDerivedType)
+  {
+    SgDeclarationStatement* baseTypeDecl = si::ada::baseDeclaration(declaredDerivedType.get_base_type());
+
+    if (baseTypeDecl == nullptr)
+      return funcTy;
+
+    SgType*              origTypePtr  = si::getDeclaredType(baseTypeDecl);
+    SgType&              originalType = SG_DEREF(origTypePtr);
+    SgType&              origRetTy    = SG_DEREF(funcTy.get_return_type());
+    SgType&              dervRetTy    = convertType(origRetTy, originalType, declaredDerivedType);
+    int                  numUpdTypes  = (&dervRetTy != &origRetTy);
+    std::vector<SgType*> newTypeList;
+
+    for (SgType* origArgTy : funcTy.get_arguments())
+    {
+      SgType* newArgTy = &convertType(SG_DEREF(origArgTy), originalType, declaredDerivedType);
+
+      newTypeList.push_back(newArgTy);
+      if (newArgTy != origArgTy) ++numUpdTypes;
+    }
+
+    // only create new nodes if everything worked
+    if (numUpdTypes == 0)
+      return funcTy;
+
+    SgFunctionParameterTypeList& paramTyLst  = mkFunctionParameterTypeList();
+
+    // \todo could we just swap the lists?
+    for (SgType* argTy : newTypeList)
+      paramTyLst.append_argument(argTy);
+
+    return SG_DEREF( sb::buildFunctionType(&dervRetTy, &paramTyLst) );
+  }
+}
+
+
+SgAdaInheritedFunctionSymbol&
+mkAdaInheritedFunctionSymbol(SgFunctionDeclaration& fn, SgTypedefType& declaredDerivedType, SgScopeStatement& scope)
+{
+  SgFunctionType&               functy = SG_DEREF(fn.get_type());
+  SgFunctionType&               dervty = convertToDerivedType(functy, declaredDerivedType);
+
+  if (&functy == &dervty)
+  {
+    // \todo in a first step, just report the errors in the log.
+    //       => fix this issues for all ROSE and ACATS tests.
+    logError() << "Inherited subroutine w/o type modification: " << fn.get_name()
+               << std::endl;
+  }
+
+  SgAdaInheritedFunctionSymbol& sgnode = mkBareNode<SgAdaInheritedFunctionSymbol>(&fn, &dervty);
+
+  scope.insert_symbol(fn.get_name(), &sgnode);
+  sgnode.set_parent(&scope);
+  return sgnode;
+}
+
+
 //
 // specialized templates
 
@@ -1509,6 +1623,13 @@ template <>
 long double convAdaLiteral<long double>(const char* img)
 {
   return si::ada::convertRealLiteral(img);
+}
+
+
+template <>
+char convAdaLiteral<char>(const char* img)
+{
+  return si::ada::convertCharLiteral(img);
 }
 
 

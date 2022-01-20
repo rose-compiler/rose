@@ -4,20 +4,20 @@ COMPOOL status'type;
 
 TYPE status'1 STATUS
 (
-  V(LOW),
-  V(MED),
-  V(HIGH)
+  V(LOW), % Low value, too low! %
+  V(MED), % Medium value, just right. %
+  V(HIGH) % High value, too high! %
 );
 
 TYPE status'2 STATUS
 (
-   V(ZERO),
-  1V(ONE),
-   V(TWO),
-  3V(THREE),
-  5V(FIVE),
-   V(SIX),
-   V(SEVEN)
+  %0% V(ZERO),
+  %1% 1V(ONE),
+  %2%  V(TWO),
+  %3% 3V(THREE),
+  %5% 5V(FIVE),
+  %6%  V(SIX),
+  %7%  V(SEVEN)
 );
 
 TERM

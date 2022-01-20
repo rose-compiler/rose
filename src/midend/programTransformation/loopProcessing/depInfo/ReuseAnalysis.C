@@ -103,7 +103,7 @@ DepType TemporaryReuseRefs( DepInfoConstIterator ep, Map2Object<AstNodePtr, DepD
                             CollectObject<AstNodePtr>& refCollect, int* dist)
 {
   int mdist = 0;
-  DepType reuseType;
+  DepType reuseType=DEPTYPE_NONE;
 
   for ( ep.Reset();  !ep.ReachEnd(); ++ep) {
      DepInfo d = ep.Current();

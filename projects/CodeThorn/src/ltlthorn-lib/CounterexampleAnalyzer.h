@@ -27,8 +27,8 @@ namespace CodeThorn {
 
   typedef std::pair<int, IoType> CeIoVal;
   typedef std::pair<list<CeIoVal> , std::list<CeIoVal> > PrefixAndCycle;
-  typedef std::list<std::unordered_set<const EState*> > StateSets;
-  typedef std::unordered_map<const EState*, list<int> > InputsAtEState;
+  typedef std::list<std::unordered_set<EStatePtr> > StateSets;
+  typedef std::unordered_map<EStatePtr, list<int> > InputsAtEState;
 
   /*! 
    * \author Marc Jasper
@@ -45,7 +45,7 @@ namespace CodeThorn {
    */
   struct CEAnalysisStep {
     CounterexampleType analysisResult;
-    const EState* mostRecentStateRealTrace; 
+    EStatePtr mostRecentStateRealTrace; 
     int spuriousIndexInCurrentPart;
     bool continueTracingOriginal;
     //special case for an output state followed by a failing assertion in the original program (leading to spurious input)
@@ -68,7 +68,7 @@ namespace CodeThorn {
     //                                        be reachable according to the original program but is reachable in the counterexample
     // If "startState" != NULL it will be taken as the start state for tracing the original program's execution path.
     // "resetAnaylzerData" indicates whether or not previously discovered states should be deleted initially.
-    CEAnalysisResult analyzeCounterexample(string counterexample, const EState* startState, bool returnSpuriousLabel, bool resetAnalyzerData);
+    CEAnalysisResult analyzeCounterexample(string counterexample, EStatePtr startState, bool returnSpuriousLabel, bool resetAnalyzerData);
     // CEGPRA: Iterative verification attempts using the cegar prefix mode for LTL. Iterates over all LTL properties, respects the limit for 
     // analyzed counterexamples for each individual property.
     PropertyValueTable* cegarPrefixAnalysisForLtl(SpotConnection& spotConnection, LtlRersMapping ltlRersMapping);
@@ -84,15 +84,15 @@ namespace CodeThorn {
     // checks if a certain sequence (part of the counterexample) can be executed on the original program. If the list of EState sets
     // "statesPerCycleIndex" is provided, then this function can identify cycles in the original program and thus identify real counterexamples.
     CEAnalysisStep getSpuriousTransition(std::list<CeIoVal> partOfCeTrace, TransitionGraph* originalTraceGraph, 
-                                         const EState* compareFollowingHere, StateSets* statesPerCycleIndex = NULL);
+                                         EStatePtr compareFollowingHere, StateSets* statesPerCycleIndex = NULL);
     // final evaluation of the result of the "getSpuriousTransition(...)" function
     void determineAnalysisStepResult(CEAnalysisStep& result, IoType mostRecentOriginalIoType, 
-                                                const EState* currentState, TransitionGraph* originalTraceGraph, int index);
+                                                EStatePtr currentState, TransitionGraph* originalTraceGraph, int index);
     // retrieve a label in the original program where spurious behavior of the counterexample occured first 
     // (according to observable input/output behavior)
     Label getFirstObservableSpuriousLabel(TransitionGraph* analyzedModel, PrefixAndCycle counterexample, int numberOfSteps);
     // retrieve input/output/error information from a given estate
-    CeIoVal eStateToCeIoVal(const EState* eState);
+    CeIoVal eStateToCeIoVal(EStatePtr eState);
     // parses the InputOuput into the IoType format (enum of observable behavior)
     IoType getIoType(InputOutput io);
 
@@ -100,24 +100,24 @@ namespace CodeThorn {
     // updates the information about error branches regarding the latest addition to the traces stored in "model". 
     void removeAndMarkErroneousBranches(TransitionGraph* model);
     // Returns a boolean vector indicating for which input alphabet value a successor of "eState" exists in "model".
-    std::vector<bool> hasFollowingInputStates(std::vector<bool> v, const EState* eState, TransitionGraph* model) ;   
+    std::vector<bool> hasFollowingInputStates(std::vector<bool> v, EStatePtr eState, TransitionGraph* model) ;   
     // Retrieves a vector of input states that are successors of "eState" in "model". "eState" has to have one input
     // successor for all possible input values.
-    std::vector<const EState*> getFollowingInputStates(std::vector<const EState*> v, const EState* startEState, TransitionGraph* model);
+    std::vector<EStatePtr> getFollowingInputStates(std::vector<EStatePtr> v, EStatePtr startEState, TransitionGraph* model);
     // marks index in "v" as true iff the entry in "erroneousBranches" that corresponds to "eState" containts (index+1) in its mapping.
 
-    //std::vector<bool> setErrorBranches(vector<bool> v, const EState* eState, InputsAtEState erroneousBranches);
-    std::vector<bool> setErrorBranches(vector<bool> v, const EState* eState);
-    std::list<pair<const EState*, int> > removeTraceLeadingToErrorState(const EState* errorState, TransitionGraph* stg);
+    //std::vector<bool> setErrorBranches(vector<bool> v, EStatePtr eState, InputsAtEState erroneousBranches);
+    std::vector<bool> setErrorBranches(vector<bool> v, EStatePtr eState);
+    std::list<pair<EStatePtr, int> > removeTraceLeadingToErrorState(EStatePtr errorState, TransitionGraph* stg);
 
     // Adds all output states in the prefix to "startAndOuputStatesPrefix" and returns the set.
     EStatePtrSet addAllPrefixOutputStates(EStatePtrSet& startAndOuputStatesPrefix, TransitionGraph* model);
     // identify states needed to disconnect the concrete prefix and the over-approximated part in the initial abstract model
     pair<EStatePtrSet, EStatePtrSet> getConcreteOutputAndAbstractInput(TransitionGraph* model);
     // sort the |<input_alphabet>| abstract input states according to their input value and insert them into the vector "v". 
-    vector<const EState*> sortAbstractInputStates(vector<const EState*> v, EStatePtrSet abstractInputStates);
+    vector<EStatePtr> sortAbstractInputStates(vector<EStatePtr> v, EStatePtrSet abstractInputStates);
     // deprecated: now implemented as function of EState ("isRersTopified(...)");
-    bool isPrefixState(const EState* state);
+    bool isPrefixState(EStatePtr state);
     // prints #transitions, details about states and #counterexamples analyzed
     void printStgSizeAndCeCount(TransitionGraph* model, int counterexampleCount, int property);
 

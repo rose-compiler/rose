@@ -41,11 +41,17 @@ namespace spot {
   class tgba;
 }
 
+// required for Visualizer::spotTgbaToDot when compiling without SPOT
+#ifndef HAVE_SPOT
+namespace spot {
+  class tgba;
+}
+#endif
+
 class Visualizer {
  public:
   Visualizer();
   Visualizer(CodeThorn::CTAnalysis* analyzer);
-  Visualizer(CodeThorn::Labeler* l, CodeThorn::VariableIdMapping* vim, CodeThorn::Flow* f, CodeThorn::EStateSet* ess, CodeThorn::TransitionGraph* tg);
   void setVariableIdMapping(CodeThorn::VariableIdMapping* x);
   void setLabeler(CodeThorn::Labeler* x);
   void setFlow(CodeThorn::Flow* x);
@@ -55,28 +61,25 @@ class Visualizer {
   void setOptionTransitionGraphDotHtmlNode(bool);
   void setOptionMemorySubGraphs(bool flag);
   bool getOptionMemorySubGraphs();
-  std::string cfasToDotSubgraphs(std::vector<Flow*> cfas);
-  std::string estateToString(const CodeThorn::EState* estate);
-  std::string estateToDotString(const CodeThorn::EState* estate);
+  std::string estateToString(EStatePtr estate);
+  std::string estateToDotString(EStatePtr estate);
   std::string transitionGraphDotHtmlNode(CodeThorn::Label lab);
   std::string transitionGraphToDot();
   std::string transitionGraphWithIOToDot();
-  //#ifdef HAVE_SPOT
-  std::string spotTgbaToDot(spot::tgba& tgba);
-  //#endif
+
   // used for displaying abstract ("topified") transition graphs.
   std::string transitionGraphWithIOToDot(CodeThorn::EStatePtrSet displayedEStates, 
                                     bool uniteOutputFromAbstractStates, bool includeErrorStates, bool allignAbstractStates);
   std::string abstractTransitionGraphToDot(); // groups abstract states into a cluster (currently specific to Rers).
   std::string foldedTransitionGraphToDot();
-  std::string estateIdStringWithTemporaries(const CodeThorn::EState* estate);
+  std::string estateIdStringWithTemporaries(EStatePtr estate);
   std::string visualizeReadWriteAccesses(IndexToReadWriteDataMap& indexToReadWriteDataMap, VariableIdMapping* variableIdMapping, 
 					 ArrayElementAccessDataSet& readWriteRaces, ArrayElementAccessDataSet& writeWriteRaces, 
 					 bool arrayElementsAsPoints, bool useClusters, bool prominentRaceWarnings);
-  std::string dotEStateAddressString(const EState* estate);
-  std::string dotEStateMemoryString(const EState* estate);
+  std::string dotEStateAddressString(EStatePtr estate);
+  std::string dotEStateMemoryString(EStatePtr estate);
   void setMemorySubGraphsOption(bool flag);
-  std::string dotClusterName(const EState* estate);
+  std::string dotClusterName(EStatePtr estate);
  private:
   CodeThorn::Labeler* labeler;
   CodeThorn::VariableIdMapping* variableIdMapping;
@@ -86,13 +89,14 @@ class Visualizer {
   
   bool tg1; // is true when we are visualizing transition graph 1, otherwise false.
   bool tg2; // is true when we are visualizing transition graph 2, otherwise false.
-  bool optionPStateObjectAddress;
-  bool optionPStateId;
-  bool optionPStateProperties;
-  bool optionEStateObjectAddress;
-  bool optionEStateId;
-  bool optionEStateProperties;
+  //bool optionPStateObjectAddress;
+  //bool optionPStateId;
+  //bool optionPStateProperties;
+  //bool optionEStateObjectAddress;
+  //bool optionEStateId;
+  //bool optionEStateProperties;
   bool optionTransitionGraphDotHtmlNode;
+  CodeThornOptions _ctOpt;
   bool optionMemorySubGraphs;
 };
 

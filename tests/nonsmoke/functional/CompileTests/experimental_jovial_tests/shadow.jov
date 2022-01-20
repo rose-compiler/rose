@@ -1,0 +1,186 @@
+START
+
+DEF PROC main;
+BEGIN
+   TYPE OVER STATUS     (V(AA),V(BB),V(CC),V(DD));
+   TYPE SHADOWED STATUS (V(GG),V(CC),V(EE),V(BB),V(FF));
+
+   ITEM OVER'VAR     OVER;
+   ITEM SHADOWED'VAR SHADOWED;
+   ITEM BOOL         B 1;
+   ITEM TEMP         U;
+
+   %Non Overlapping Table%
+   TABLE NON'OVERLAP'OVER'TABLE     (V(AA):V(DD)) U;
+   TABLE NON'OVERLAP'SHADOWED'TABLE (V(GG):V(FF)) U;
+
+   TABLE OVERLAP'OVER'TABLE     (V(BB):V(DD)) U;
+   TABLE OVERLAP'SHADOWED'TABLE (V(EE):V(BB)) U;
+
+   %Non Overlapping%
+   %Assign%
+   OVER'VAR = V(AA);
+   SHADOWED'VAR = V(EE);
+
+   %Table Ref%
+   NON'OVERLAP'OVER'TABLE(V(AA)) = TEMP;
+   TEMP = NON'OVERLAP'OVER'TABLE(V(AA));
+
+   OVERLAP'OVER'TABLE(V(DD)) = TEMP;
+   TEMP = OVERLAP'OVER'TABLE(V(DD));
+
+   NON'OVERLAP'SHADOWED'TABLE(V(FF)) = TEMP;
+   TEMP = NON'OVERLAP'SHADOWED'TABLE(V(FF));
+
+   OVERLAP'SHADOWED'TABLE(V(EE)) = TEMP;
+   TEMP = OVERLAP'SHADOWED'TABLE(V(EE));
+
+   %Equals%
+   BOOL = (OVER'VAR = V(AA));
+   BOOL = (V(AA) = OVER'VAR);
+   BOOL = (SHADOWED'VAR = V(EE));
+   BOOL = (V(EE) = SHADOWED'VAR);
+
+   %Not Equals%
+   BOOL = (OVER'VAR <> V(AA));
+   BOOL = (V(AA) <> OVER'VAR);
+   BOOL = (SHADOWED'VAR <> V(EE));
+   BOOL = (V(EE) <> SHADOWED'VAR);
+
+   %Less than or  Equals%
+   BOOL = (OVER'VAR <= V(AA));
+   BOOL = (V(AA) <= OVER'VAR);
+   BOOL = (SHADOWED'VAR <= V(EE));
+   BOOL = (V(EE) <= SHADOWED'VAR);
+
+   %Greater than or  Equals%
+   BOOL = (OVER'VAR >= V(AA));
+   BOOL = (V(AA) >= OVER'VAR);
+   BOOL = (SHADOWED'VAR >= V(EE));
+   BOOL = (V(EE) >= SHADOWED'VAR);
+
+   %Less than%
+   BOOL = (OVER'VAR < V(AA));
+   BOOL = (V(AA) < OVER'VAR);
+   BOOL = (SHADOWED'VAR < V(EE));
+   BOOL = (V(EE) < SHADOWED'VAR);
+   %Greater than%
+   BOOL = (OVER'VAR > V(AA));
+   BOOL = (V(AA) > OVER'VAR);
+   BOOL = (SHADOWED'VAR > V(EE));
+   BOOL = (V(EE) > SHADOWED'VAR);
+
+   %Case Statement%
+   CASE OVER'VAR;
+   BEGIN
+      (V(AA)):
+      BEGIN
+         STOP;
+      END
+      (V(DD)):
+      BEGIN
+         STOP;
+      END
+   END
+
+   CASE SHADOWED'VAR;
+   BEGIN
+      (V(EE)):
+      BEGIN
+         STOP;
+      END
+      (V(FF)):
+      BEGIN
+         STOP;
+      END
+   END
+   %Overlapping%
+   %Assign%
+   OVER'VAR = V(BB);
+   SHADOWED'VAR = V(BB);
+
+   %Table Ref%
+   NON'OVERLAP'OVER'TABLE(V(BB)) = TEMP;
+   TEMP = NON'OVERLAP'OVER'TABLE(V(BB));
+
+   OVERLAP'OVER'TABLE(V(BB)) = TEMP;
+   TEMP = OVERLAP'OVER'TABLE(V(BB));
+
+   NON'OVERLAP'SHADOWED'TABLE(V(BB)) = TEMP;
+   TEMP = NON'OVERLAP'SHADOWED'TABLE(V(BB));
+
+   OVERLAP'SHADOWED'TABLE(V(BB)) = TEMP;
+   TEMP = OVERLAP'SHADOWED'TABLE(V(BB));
+
+   %Equals%
+   BOOL = (OVER'VAR = V(BB));
+   BOOL = (V(BB) = OVER'VAR);
+   BOOL = (SHADOWED'VAR = V(BB));
+   BOOL = (V(BB) = SHADOWED'VAR);
+
+   %Not Equals%
+   BOOL = (OVER'VAR <> V(BB));
+   BOOL = (V(BB) <> OVER'VAR);
+   BOOL = (SHADOWED'VAR <> V(BB));
+   BOOL = (V(BB) <> SHADOWED'VAR);
+
+   %Less than or  Equals%
+   BOOL = (OVER'VAR <= V(BB));
+   BOOL = (V(BB) <= OVER'VAR);
+   BOOL = (SHADOWED'VAR <= V(BB));
+   BOOL = (V(BB) <= SHADOWED'VAR);
+
+   %Greater than or  Equals%
+   BOOL = (OVER'VAR >= V(BB));
+   BOOL = (V(BB) >= OVER'VAR);
+   BOOL = (SHADOWED'VAR >= V(BB));
+   BOOL = (V(BB) >= SHADOWED'VAR);
+
+   %Less than%
+   BOOL = (OVER'VAR < V(BB));
+   BOOL = (V(BB) < OVER'VAR);
+   BOOL = (SHADOWED'VAR < V(BB));
+   BOOL = (V(BB) < SHADOWED'VAR);
+
+   %Greater than%
+   BOOL = (OVER'VAR > V(BB));
+   BOOL = (V(BB) > OVER'VAR);
+   BOOL = (SHADOWED'VAR > V(BB));
+   BOOL = (V(BB) > SHADOWED'VAR);
+
+   %Case Statement%
+   CASE OVER'VAR;
+   BEGIN
+      (V(BB)):
+      BEGIN
+         STOP;
+      END
+      (V(CC)):
+      BEGIN
+         STOP;
+      END
+      (V(DD)):
+      BEGIN
+         STOP;
+      END
+   END
+
+   CASE SHADOWED'VAR;
+   BEGIN
+      (V(BB)):
+      BEGIN
+         STOP;
+      END
+      (V(CC)):
+      BEGIN
+         STOP;
+      END
+      (V(EE)):
+      BEGIN
+         STOP;
+      END
+   END
+
+END
+
+TERM

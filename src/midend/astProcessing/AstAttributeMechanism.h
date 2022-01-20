@@ -2,7 +2,6 @@
 #define ROSE_AstAttributeMechanism_H
 
 #include "rosedll.h"
-#include "rose_override.h"
 #include <Sawyer/Attribute.h>
 #include <list>
 #include <set>
@@ -165,9 +164,9 @@ public:
     }
 
     // DO NOT DOCUMENT!  The original implementation used a non-const copy constructor and many subclasses that implemented a
-    // copy constructor didn't use C++11's "override" (ROSE_OVERRIDE) word as a defensive measure. Since we don't have access
-    // to all those subclasses, we must continue to support the non-const version.  Subclasses should only have to implement
-    // one or the other, not both.
+    // copy constructor didn't use C++11's "override" word as a defensive measure. Since we don't have access to all those
+    // subclasses, we must continue to support the non-const version.  Subclasses should only have to implement one or the
+    // other, not both.
     virtual AstAttribute* copy() {
         return const_cast<const AstAttribute*>(this)->copy();
     }
@@ -421,18 +420,18 @@ public:
     MetricAttribute(double value, bool is_derived=false)
         : is_derived_(is_derived), value_(value) {}
     
-    virtual AstAttribute* copy() const ROSE_OVERRIDE;
-    virtual std::string attribute_class_name() const ROSE_OVERRIDE;
+    virtual AstAttribute* copy() const override;
+    virtual std::string attribute_class_name() const override;
 
     virtual bool isDerived() const { return is_derived_; }
     virtual double getValue()  const { return value_; }
     virtual void setValue(double newVal) { value_ = newVal; }
 
-    virtual std::string toString() ROSE_OVERRIDE;
+    virtual std::string toString() override;
 
-    virtual int packed_size() ROSE_OVERRIDE;
-    virtual char* packed_data() ROSE_OVERRIDE;
-    virtual void unpacked_data(int size, char* data) ROSE_OVERRIDE;
+    virtual int packed_size() override;
+    virtual char* packed_data() override;
+    virtual void unpacked_data(int size, char* data) override;
 
     MetricAttribute& operator+=(const MetricAttribute &other);
     MetricAttribute& operator-=(const MetricAttribute &other);
@@ -464,8 +463,8 @@ public:
     /** Copy constructor. Invokes the copy-constructor of the contained value. */
     AstValueAttribute(const AstValueAttribute &other): value_(other.value_) {}
 
-    virtual AstAttribute* copy() const ROSE_OVERRIDE { return new AstValueAttribute(*this); }
-    virtual std::string attribute_class_name() const ROSE_OVERRIDE { return "AstValueAttribute"; }
+    virtual AstAttribute* copy() const override { return new AstValueAttribute(*this); }
+    virtual std::string attribute_class_name() const override { return "AstValueAttribute"; }
 
     /** Return the stored value by reference.
      *
@@ -491,11 +490,11 @@ public:
     explicit AstRegExAttribute(const std::string & s)
         : expression(s) {}
 
-    virtual AstAttribute* copy() const ROSE_OVERRIDE {
+    virtual AstAttribute* copy() const override {
         return new AstRegExAttribute(*this);
     }
 
-    virtual std::string attribute_class_name() const ROSE_OVERRIDE {
+    virtual std::string attribute_class_name() const override {
         return "AstRegExAttribute";
     }
 };
@@ -511,8 +510,8 @@ public:
     AstSgNodeAttribute(): Super(NULL) {}
     explicit AstSgNodeAttribute(SgNode *value): Super(value) {}
     AstSgNodeAttribute(const AstSgNodeAttribute &other): Super(other) {}
-    virtual AstAttribute* copy() const ROSE_OVERRIDE { return new AstSgNodeAttribute(*this); }
-    virtual std::string attribute_class_name() const ROSE_OVERRIDE { return "AstSgNodeAttribute"; }
+    virtual AstAttribute* copy() const override { return new AstSgNodeAttribute(*this); }
+    virtual std::string attribute_class_name() const override { return "AstSgNodeAttribute"; }
     SgNode* getNode() { return get(); }
     void setNode(SgNode *node) { set(node); }
 };
@@ -523,8 +522,8 @@ public:
     AstSgNodeListAttribute() {}
     explicit AstSgNodeListAttribute(std::vector<SgNode *> &value): Super(value) {}
     AstSgNodeListAttribute(const AstSgNodeListAttribute &other): Super(other) {}
-    virtual AstAttribute* copy() const ROSE_OVERRIDE { return new AstSgNodeListAttribute(*this); }
-    virtual std::string attribute_class_name() const ROSE_OVERRIDE { return "AstSgNodeListAttribute"; }
+    virtual AstAttribute* copy() const override { return new AstSgNodeListAttribute(*this); }
+    virtual std::string attribute_class_name() const override { return "AstSgNodeListAttribute"; }
     std::vector<SgNode*> &getNodeList() { return get(); }
     void addNode(SgNode *n) { get().push_back(n); }
     void setNode(SgNode*, int);
@@ -538,8 +537,8 @@ public:
     AstIntAttribute(): Super(0) {}
     explicit AstIntAttribute(int value): Super(value) {}
     AstIntAttribute(const AstIntAttribute &other): Super(other) {}
-    virtual AstAttribute* copy() const ROSE_OVERRIDE { return new AstIntAttribute(*this); }
-    virtual std::string attribute_class_name() const ROSE_OVERRIDE { return "AstIntAttribute"; }
+    virtual AstAttribute* copy() const override { return new AstIntAttribute(*this); }
+    virtual std::string attribute_class_name() const override { return "AstIntAttribute"; }
     int getValue() { return get(); }
 };
 
@@ -556,11 +555,11 @@ public:
     AstParameterizedTypeAttribute(const AstParameterizedTypeAttribute &other)
         : genericType(other.genericType), parameterizedTypes(other.parameterizedTypes) {}
 
-    virtual AstAttribute* copy() const ROSE_OVERRIDE {
+    virtual AstAttribute* copy() const override {
         return new AstParameterizedTypeAttribute(*this);
     }
 
-    virtual std::string attribute_class_name() const ROSE_OVERRIDE {
+    virtual std::string attribute_class_name() const override {
         return "AstParameterizedTypeAttribute";
     }
 

@@ -138,6 +138,8 @@ emit-statistics() {
 
     if [ -n "$did_fail" ]; then
 	echo "script faild after $(seconds-to-hms $elapsed_time)"
+	uptime
+	df -h
     else
 	echo "script took $(seconds-to-hms $elapsed_time)"
     fi

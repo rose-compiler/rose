@@ -29,11 +29,11 @@ private:
 public:
     DisassemblerNull();
     virtual ~DisassemblerNull();
-    virtual Disassembler* clone() const ROSE_OVERRIDE;
-    virtual bool canDisassemble(SgAsmGenericHeader*) const ROSE_OVERRIDE;
-    virtual Unparser::BasePtr unparser() const ROSE_OVERRIDE;
-    virtual SgAsmInstruction* disassembleOne(const MemoryMap::Ptr&, rose_addr_t va, AddressSet *successors = NULL) ROSE_OVERRIDE;
-    virtual SgAsmInstruction* makeUnknownInstruction(const Exception&) ROSE_OVERRIDE;
+    virtual Disassembler* clone() const override;
+    virtual bool canDisassemble(SgAsmGenericHeader*) const override;
+    virtual Unparser::BasePtr unparser() const override;
+    virtual SgAsmInstruction* disassembleOne(const MemoryMap::Ptr&, rose_addr_t va, AddressSet *successors = NULL) override;
+    virtual SgAsmInstruction* makeUnknownInstruction(const Exception&) override;
 };
 
 } // namespace

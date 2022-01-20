@@ -70,6 +70,9 @@ namespace CppStdUtilities {
   // compares two strings case-insensitively (useful as comparison function when sorting strings)
   bool compareCaseInsensitively (const std::string& first, const std::string& second);
 
+  std::string getFileAppendModeSelector();
+  std::string getFileGenerateModeSelector();
+
 }
 
 #endif

@@ -97,6 +97,7 @@ DisassemblerPowerpc::init() {
 
     REG_IP = regdict->findOrThrow("iar");
     REG_SP = regdict->findOrThrow("r1");
+    REG_SF = regdict->findOrThrow("r31");
     REG_LINK = regdict->findOrThrow("lr");
     InstructionSemantics2::DispatcherPowerpcPtr d = InstructionSemantics2::DispatcherPowerpc::instance(8*wordSizeBytes(), regdict);
     d->registerDictionary(regdict);

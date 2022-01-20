@@ -4,7 +4,6 @@
 
 #include <Rose/BinaryAnalysis/NoOperation.h>
 #include <Rose/BinaryAnalysis/SerialIo.h>
-#include <Rose/BinaryAnalysis/YicesSolver.h>
 #include <Rose/BinaryAnalysis/Z3Solver.h>
 #include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/ConcreteSemantics.h>

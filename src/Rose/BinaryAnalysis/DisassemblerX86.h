@@ -52,8 +52,8 @@ class DisassemblerX86: public Disassembler {
             : ip(0), insnbufat(0), segOverride(x86_segreg_none), branchPrediction(x86_branch_prediction_none),
               branchPredictionEnabled(false), rexPresent(false), rexW(false), rexR(false), rexX(false), rexB(false),
               sizeMustBe64Bit(false), operandSizeOverride(false), addressSizeOverride(false), lock(false),
-              repeatPrefix(x86_repeat_none), modregrmByteSet(false), modregrmByte(0), modeField(0), rmField(0),
-              modrm(NULL), reg(NULL), isUnconditionalJump(false) {}
+              repeatPrefix(x86_repeat_none), modregrmByteSet(false), modregrmByte(0), modeField(0), regField(0),
+              rmField(0), modrm(NULL), reg(NULL), isUnconditionalJump(false) {}
     };
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -103,20 +103,20 @@ public:
 
     virtual ~DisassemblerX86() {}
 
-    virtual DisassemblerX86 *clone() const ROSE_OVERRIDE { return new DisassemblerX86(*this); }
+    virtual DisassemblerX86 *clone() const override { return new DisassemblerX86(*this); }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Public methods
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
-    virtual bool canDisassemble(SgAsmGenericHeader*) const ROSE_OVERRIDE;
+    virtual bool canDisassemble(SgAsmGenericHeader*) const override;
 
-    virtual Unparser::BasePtr unparser() const ROSE_OVERRIDE;
+    virtual Unparser::BasePtr unparser() const override;
 
     virtual SgAsmInstruction *disassembleOne(const MemoryMap::Ptr &map, rose_addr_t start_va,
-                                             AddressSet *successors=NULL) ROSE_OVERRIDE;
+                                             AddressSet *successors=NULL) override;
 
-    virtual SgAsmInstruction *makeUnknownInstruction(const Exception&) ROSE_OVERRIDE;
+    virtual SgAsmInstruction *makeUnknownInstruction(const Exception&) override;
 
 
     /*========================================================================================================================

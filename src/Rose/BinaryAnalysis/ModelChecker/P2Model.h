@@ -374,26 +374,6 @@ public: // Supporting functions
     /** Print information about the function call stack. */
     void printCallStack(std::ostream&);
 
-    /** Saturating addition.
-     *
-     *  Add the signed value to the unsigned base, returning an unsigned result. If the result would overflow then return
-     *  either zero or the maximum unsigned value, depending on the direction of overflow. The return value is a pair that
-     *  contains the saturated result and a Boolean indicating whether saturation occured. */
-    static std::pair<uint64_t /*sum*/, bool /*saturated?*/> saturatedAdd(uint64_t base, int64_t delta);
-
-    /** Offset an interval by a signed amount.
-     *
-     *  The unsigned address interval is shifted lower or higher according to the signed @p delta value. The endpoints of the
-     *  returned interval saturate to zero or maximum address if the @p delta causes the interval to partially overflow. If the
-     *  interval completely overflows (both its least and greatest values overflow) then the empty interval is
-     *  returned. Shifting an empty address interval any amount also returns the emtpy interval. The return value is clipped
-     *  by intersecting it with the specified @p limit.
-     *
-     * @{ */
-    static AddressInterval shiftAddresses(const AddressInterval &base, int64_t delta, const AddressInterval &limit);
-    static AddressInterval shiftAddresses(uint64_t base, const Variables::OffsetInterval &delta, const AddressInterval &limit);
-    /** @} */
-
     /** Assign a region to an expression.
      *
      *  The region is assigned to the first argument, which is also returned.
@@ -509,6 +489,7 @@ public:
 private:
     Settings settings_;                                 // settings are set by the constructor and not modified thereafter
     const Partitioner2::Partitioner &partitioner_;      // generally shouldn't be changed once model checking starts
+    SmtSolver::Memoizer::Ptr smtMemoizer_;              // memoizer shared among all solvers
 
     mutable SAWYER_THREAD_TRAITS::Mutex unitsMutex_;    // protects only the units_ data member
     Sawyer::Container::Map<rose_addr_t, ExecutionUnitPtr> units_; // cached execution units
@@ -574,6 +555,17 @@ public:
     void followingOnePath(bool);
     /** @} */
 
+    /** Property: SMT solver memoizer.
+     *
+     *  This is the memoizer used each time a new SMT solver is created. An initial memoizer is created by the @c
+     *  SemanticCallbacks constructor if the @p solverMemoization field of the @ref Settings is set. If memoization is
+     *  not enabled in the settings, then a memoizer is not used even if one is set for this property.
+     *
+     * @{ */
+    SmtSolver::Memoizer::Ptr smtMemoizer() const;
+    void smtMemoizer(const SmtSolver::Memoizer::Ptr&);
+    /** @} */
+
     /** Property: Number of duplicate states.
      *
      *  This read-only property returns the number of times that a semantic state was encountered that had been encountered
@@ -624,12 +616,22 @@ public:
      *
      *  Returns true to accept an out of bounds access, or false to say that it's a false positive.
      *
+     *  The arguments are the symbolic virtual starting address for the accessed memory (@p addr), the memory region that's
+     *  associated with the symbolic address (@p referencedRegion), the memory region that the I/O operation is actually
+     *  accessing (@p accessedRegion), the instruction that's accessing that memory region (@p insn), whether the accessed
+     *  memory "must" or "may" be outside the referenced region (@p testMode), and whether the instruction is reading or
+     *  writing to the memory (@p ioMode). The @p intendedVariable and @p intendedVariableLocation is information about the
+     *  stack variable that was intended to be accessed and its location in memory. The @p accessedVariable and @p
+     *  accessedVariableLocation describe a variable (perhaps one of many) that was actually accessed, if any.
+     *
      *  The default implementation always returns true.
      *
      *  Thread safety: The implementation must be thread safe. */
     virtual bool filterOobAccess(const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
                                  const AddressInterval &referencedRegion, const AddressInterval &accessedRegion,
-                                 SgAsmInstruction*, TestMode, IoMode);
+                                 SgAsmInstruction *insn, TestMode testMode, IoMode ioMode,
+                                 const Variables::StackVariable &intendedVariable, const AddressInterval &intendedVariableLocation,
+                                 const Variables::StackVariable &accessedVariable, const AddressInterval &accessedVariableLocation);
 
 public:
     virtual void reset() override;

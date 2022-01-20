@@ -15,7 +15,7 @@ CounterexampleAnalyzer::CounterexampleAnalyzer(IOAnalyzer* analyzer)
 CounterexampleAnalyzer::CounterexampleAnalyzer(IOAnalyzer* analyzer, stringstream* csvOutput) 
                         : _analyzer(analyzer), _csvOutput(csvOutput), _maxCounterexamples(-1) {}
 
-CEAnalysisResult CounterexampleAnalyzer::analyzeCounterexample(string counterexample, const EState* startState, 
+CEAnalysisResult CounterexampleAnalyzer::analyzeCounterexample(string counterexample, EStatePtr startState, 
 								bool returnSpuriousLabel, bool resetAnalyzerData) {
   // OVERVIEW
   // (0) compare counterexample(CE) prefix with real trace
@@ -42,9 +42,9 @@ CEAnalysisResult CounterexampleAnalyzer::analyzeCounterexample(string counterexa
   EState* startEState;
   if (startState) {
     //workaround for the start state not being part of the STG without having transitions 
-    startEState = const_cast<EState*>(startState);
+    startEState = const_cast<EStatePtr>(startState);
   } else {
-    startEState = const_cast<EState*>((_analyzer->getTransitionGraph())->getStartEState());
+    startEState = const_cast<EStatePtr>((_analyzer->getTransitionGraph())->getStartEState());
   }
   ROSE_ASSERT(startEState);
   _analyzer->setAnalyzerToSolver8(startEState, resetAnalyzerData);
@@ -53,7 +53,7 @@ CEAnalysisResult CounterexampleAnalyzer::analyzeCounterexample(string counterexa
   _analyzer->reduceToObservableBehavior();
   TransitionGraph* traceGraph = _analyzer->getTransitionGraph(); 
   // compare
-  const EState * compareFollowingHereNext = traceGraph->getStartEState();
+  EStatePtr compareFollowingHereNext = traceGraph->getStartEState();
   CEAnalysisStep currentResult = getSpuriousTransition(cePrefix, traceGraph, compareFollowingHereNext);
   if (currentResult.analysisResult == CE_TYPE_SPURIOUS) {
     // the number of steps to the spurious label will be updated at the end of this function
@@ -63,14 +63,14 @@ CEAnalysisResult CounterexampleAnalyzer::analyzeCounterexample(string counterexa
     // (1) initialize one hashset per index in the cyclic part of the CE (bookkeeping)
     StateSets* statesPerCycleIndex = new StateSets(); 
     for (unsigned int i = 0; i < ceCycle.size(); i++) {
-      std::unordered_set<const EState*> newSet;
+      std::unordered_set<EStatePtr> newSet;
       statesPerCycleIndex->push_back(newSet);
     }
     //(2) while (unknown whether or not CE is spurious)
     while (currentResult.analysisResult == CE_TYPE_UNKNOWN) {
       if (currentResult.continueTracingOriginal) {
         //run one cycle iteration on the original program
-        EState* continueTracingFromHere = const_cast<EState*>(_analyzer->getEstateBeforeMissingInput());
+        EState* continueTracingFromHere = const_cast<EStatePtr>(_analyzer->getEstateBeforeMissingInput());
         assert(continueTracingFromHere);
         setInputSequence(ceCycle);
         _analyzer->continueAnalysisFrom(continueTracingFromHere);
@@ -138,9 +138,9 @@ string CounterexampleAnalyzer::ioErrTraceToString(list<pair<int, IoType> > trace
 }
 
 CEAnalysisStep CounterexampleAnalyzer::getSpuriousTransition(list<CeIoVal> partOfCeTrace, TransitionGraph* originalTraceGraph, 
-                                           const EState* compareFollowingHere, StateSets* statesPerCycleIndex) {
+                                           EStatePtr compareFollowingHere, StateSets* statesPerCycleIndex) {
   assert(compareFollowingHere);
-  const EState* currentState = compareFollowingHere;
+  EStatePtr currentState = compareFollowingHere;
   bool matchingState;
   CeIoVal realBehavior;
   int index = 1;
@@ -167,7 +167,7 @@ CEAnalysisStep CounterexampleAnalyzer::getSpuriousTransition(list<CeIoVal> partO
         matchingState = true;
         if (statesPerCycleIndex) {
           //check if the real state has already been seen
-          pair<std::unordered_set<const EState*>::iterator, bool> notYetSeen = cycleIndexStates->insert(currentState);
+          pair<std::unordered_set<EStatePtr>::iterator, bool> notYetSeen = cycleIndexStates->insert(currentState);
           if (notYetSeen.second == false) {
             //state encountered twice at the some counterexample index. cycle found --> real counterexample
             result.analysisResult = CE_TYPE_REAL;
@@ -197,7 +197,7 @@ CEAnalysisStep CounterexampleAnalyzer::getSpuriousTransition(list<CeIoVal> partO
 }
 
 void CounterexampleAnalyzer::determineAnalysisStepResult(CEAnalysisStep& result, IoType mostRecentOriginalIoType, 
-                                                const EState* currentState, TransitionGraph* originalTraceGraph, int index) {
+                                                EStatePtr currentState, TransitionGraph* originalTraceGraph, int index) {
   result.analysisResult = CE_TYPE_UNKNOWN;
   result.mostRecentStateRealTrace = currentState;
   result.continueTracingOriginal = true;
@@ -207,7 +207,7 @@ void CounterexampleAnalyzer::determineAnalysisStepResult(CEAnalysisStep& result,
   if (mostRecentOriginalIoType == IO_TYPE_INPUT) {
     EStatePtrSet successors = originalTraceGraph->succ(currentState);
     assert(successors.size() == 1);  //(input-)determinism of the original program
-    const EState * nextEState = *(successors.begin());
+    EStatePtr nextEState = *(successors.begin());
     assert(nextEState);
     if (nextEState->io.isStdErrIO() || nextEState->io.isFailedAssertIO()) {
       // (*) see below (the first symbol of the next partOfCeTrace has to be the spurious transition here)
@@ -216,7 +216,7 @@ void CounterexampleAnalyzer::determineAnalysisStepResult(CEAnalysisStep& result,
     } else if (nextEState->io.isStdOutIO()) {
       successors = originalTraceGraph->succ(nextEState);
       for (EStatePtrSet::iterator i = successors.begin(); i != successors.end(); ++i) {
-        const EState* nextEState = *i;
+        EStatePtr nextEState = *i;
         if (nextEState->io.isStdErrIO() || nextEState->io.isFailedAssertIO()) {
           // (*) see below
           result.continueTracingOriginal = false;
@@ -226,7 +226,7 @@ void CounterexampleAnalyzer::determineAnalysisStepResult(CEAnalysisStep& result,
   } else if (mostRecentOriginalIoType == IO_TYPE_OUTPUT) {
     EStatePtrSet successors = originalTraceGraph->succ(currentState);
     for (EStatePtrSet::iterator i = successors.begin(); i != successors.end(); ++i) {
-      const EState* nextEState = *i;
+      EStatePtr nextEState = *i;
       if (nextEState->io.isStdErrIO() || nextEState->io.isFailedAssertIO()) {
         // (*) see below
         result.continueTracingOriginal = false;
@@ -254,7 +254,7 @@ PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(int proper
   //std::set<int> ltlOutAlphabet=ltlRersMapping.getOutputValueSet();
 
   // visualizer for in-depth model outputs (.dot files)
-  Visualizer visualizer(_analyzer->getLabeler(),_analyzer->getVariableIdMapping(), _analyzer->getFlow(),_analyzer->getEStateSet(),_analyzer->getTransitionGraph());
+  Visualizer visualizer(_analyzer);
   string visFilenamePrefix = "";
   if(args.isDefined("vis-cegpra-detailed")) {
     visFilenamePrefix=args.getString("vis-cegpra-detailed");
@@ -288,10 +288,10 @@ PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(int proper
   currentResults = spotConnection.getLtlResults();
   // (0.5) prepare for the continuous tracing of concrete states (will become the prefix of a refined abstract model)
   // store connectors in the over-approx. part of the model (single row of input states in the initial "topified" model)
-  const EState* startEState = model->getStartEState();
+  EStatePtr startEState = model->getStartEState();
   pair<EStatePtrSet, EStatePtrSet> concOutputAndAbstrInput = getConcreteOutputAndAbstractInput(model); 
   EStatePtrSet startAndOuputStatesPrefix = concOutputAndAbstrInput.first;
-  vector<const EState*> firstInputOverApprox(ltlInAlphabet.size());
+  vector<EStatePtr> firstInputOverApprox(ltlInAlphabet.size());
   firstInputOverApprox = sortAbstractInputStates(firstInputOverApprox, concOutputAndAbstrInput.second);
   int loopCount = 0;
   bool falsified = false;
@@ -353,7 +353,7 @@ PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(int proper
     model->setIsPrecise(false);
     //update set of output states (plus start state) in the precise prefix
     addAllPrefixOutputStates(startAndOuputStatesPrefix, model);
-    for (set<const EState*>::iterator i=startAndOuputStatesPrefix.begin(); i!=startAndOuputStatesPrefix.end(); ++i) {
+    for (set<EStatePtr>::iterator i=startAndOuputStatesPrefix.begin(); i!=startAndOuputStatesPrefix.end(); ++i) {
       vector<bool> inputSuccessors(ltlInAlphabet.size(), false);
       if(!args.getBool("keep-error-states")) {
         inputSuccessors = setErrorBranches(inputSuccessors, *i); 
@@ -406,18 +406,18 @@ PropertyValueTable* CounterexampleAnalyzer::cegarPrefixAnalysisForLtl(int proper
 }
 
 void CounterexampleAnalyzer::removeAndMarkErroneousBranches(TransitionGraph* model) {
-  const EState* errorState = _analyzer->getLatestErrorEState();
+  EStatePtr errorState = _analyzer->getLatestErrorEState();
   if (errorState) {
-    list<pair<const EState*, int> > erroneousTransitions = removeTraceLeadingToErrorState(errorState, model);
+    list<pair<EStatePtr, int> > erroneousTransitions = removeTraceLeadingToErrorState(errorState, model);
     // store entries for the newly discovered transitions to an error path (same path should never be discovered twice)
-    for (list<pair<const EState*, int> >::iterator i=erroneousTransitions.begin(); i!=erroneousTransitions.end(); ++i) {
+    for (list<pair<EStatePtr, int> >::iterator i=erroneousTransitions.begin(); i!=erroneousTransitions.end(); ++i) {
       InputsAtEState::iterator errorStateEntry = _erroneousBranches.find(i->first);
       if (errorStateEntry != _erroneousBranches.end()) {
         errorStateEntry->second.push_back(i->second);
       } else {
         list<int> newEntryTransitionList;
         newEntryTransitionList.push_back(i->second);
-        pair<const EState*, list<int> > newEntry(i->first, newEntryTransitionList);
+        pair<EStatePtr, list<int> > newEntry(i->first, newEntryTransitionList);
         _erroneousBranches.insert(newEntry);
       }
     }
@@ -443,20 +443,20 @@ pair<EStatePtrSet, EStatePtrSet> CounterexampleAnalyzer::getConcreteOutputAndAbs
   return pair<EStatePtrSet, EStatePtrSet> (concreteOutputStates, abstractInputStates);
 }
 
-vector<const EState*> CounterexampleAnalyzer::sortAbstractInputStates(vector<const EState*> v, EStatePtrSet abstractInputStates) {
+vector<EStatePtr> CounterexampleAnalyzer::sortAbstractInputStates(vector<EStatePtr> v, EStatePtrSet abstractInputStates) {
   for (EStatePtrSet::iterator i=abstractInputStates.begin(); i!=abstractInputStates.end(); ++i) {
-    PState* pstate = const_cast<PState*>( (*i)->pstate() ); 
+    PState* pstate = const_cast<PStatePtr>( (*i)->pstate() ); 
     int inVal = pstate->readFromMemoryLocation(globalVarIdByName("input")).getIntValue();
     v[inVal - 1] = (*i);
   }
   return v;
 }
 
-vector<const EState*> CounterexampleAnalyzer::getFollowingInputStates(vector<const EState*> v, const EState* startEState, TransitionGraph* model) {
+vector<EStatePtr> CounterexampleAnalyzer::getFollowingInputStates(vector<EStatePtr> v, EStatePtr startEState, TransitionGraph* model) {
   EStatePtrSet firstInputStates = model->succ(startEState);
   for (EStatePtrSet::iterator i=firstInputStates.begin(); i!=firstInputStates.end(); ++i) {
     if ((*i)->io.isStdInIO()) {
-      PState* pstate = const_cast<PState*>( (*i)->pstate() ); 
+      PState* pstate = const_cast<PStatePtr>( (*i)->pstate() ); 
       int inVal = pstate->readFromMemoryLocation(globalVarIdByName("input")).getIntValue();
       v[inVal - 1] = (*i);
     } else {
@@ -473,11 +473,11 @@ CodeThorn::VariableId CounterexampleAnalyzer::globalVarIdByName(std::string s) {
   return _analyzer->getEStateTransferFunctions()->globalVarIdByName(s);
 }
 
-vector<bool> CounterexampleAnalyzer::hasFollowingInputStates(vector<bool> v, const EState*eState, TransitionGraph* model) {
+vector<bool> CounterexampleAnalyzer::hasFollowingInputStates(vector<bool> v, EStatePtr eState, TransitionGraph* model) {
   EStatePtrSet successors = model->succ(eState);
   for (EStatePtrSet::iterator k=successors.begin(); k!=successors.end(); ++k) {
     if ((*k)->io.isStdInIO()) {
-      PState* pstate = const_cast<PState*>( (*k)->pstate() ); 
+      PState* pstate = const_cast<PStatePtr>( (*k)->pstate() ); 
       int inVal = pstate->readFromMemoryLocation(globalVarIdByName("input")).getIntValue();
       v[inVal - 1] = true; 
     }else {
@@ -488,9 +488,9 @@ vector<bool> CounterexampleAnalyzer::hasFollowingInputStates(vector<bool> v, con
   return v;
 }
 
-vector<bool> CounterexampleAnalyzer::setErrorBranches(vector<bool> v, const EState* eState) {
+vector<bool> CounterexampleAnalyzer::setErrorBranches(vector<bool> v, EStatePtr eState) {
   // do not (re-)connect in a way as to pretend the existence of a path where erroneous behavior was previously discovered
-  std::unordered_map<const EState*, list<int> >::iterator errorStateEntry = _erroneousBranches.find(eState);
+  std::unordered_map<EStatePtr, list<int> >::iterator errorStateEntry = _erroneousBranches.find(eState);
   if (errorStateEntry != _erroneousBranches.end()) {
     list<int> dontFollowTheseInputs = errorStateEntry->second;
     for (list<int>::iterator k=dontFollowTheseInputs.begin(); k!=dontFollowTheseInputs.end(); ++k) {
@@ -513,7 +513,7 @@ EStatePtrSet CounterexampleAnalyzer::addAllPrefixOutputStates(EStatePtrSet& star
   return startAndOuputStatesPrefix;
 }
 
-bool CounterexampleAnalyzer::isPrefixState(const EState* state) {
+bool CounterexampleAnalyzer::isPrefixState(EStatePtr state) {
   boost::regex re("a(.)*");
   CodeThorn::PStatePtr pstate = state->pstate();
   AbstractValueSet varSet=pstate->getVariableIds();
@@ -531,17 +531,17 @@ bool CounterexampleAnalyzer::isPrefixState(const EState* state) {
   assert(0);
 }
 
-list<pair<const EState*, int> > CounterexampleAnalyzer::removeTraceLeadingToErrorState(const EState* errorState, TransitionGraph* stg) {
+list<pair<EStatePtr, int> > CounterexampleAnalyzer::removeTraceLeadingToErrorState(EStatePtr errorState, TransitionGraph* stg) {
   assert(errorState->io.isFailedAssertIO() || errorState->io.isStdErrIO() );
-  list<pair<const EState*, int> > erroneousTransitions;
-  PState* pstate = const_cast<PState*>( errorState->pstate() ); 
+  list<pair<EStatePtr, int> > erroneousTransitions;
+  PState* pstate = const_cast<PStatePtr>( errorState->pstate() ); 
   int latestInputVal = pstate->readFromMemoryLocation(globalVarIdByName("input")).getIntValue();
   //eliminate the error state
-  const EState* eliminateThisOne = errorState;
+  EStatePtr eliminateThisOne = errorState;
   EStatePtrSet preds = stg->pred(eliminateThisOne);
   assert (stg->succ(eliminateThisOne).size() == 0); // error state should have no successors.
   assert (preds.size() == 1); // error states are immediately removed after being discovered.
-  const EState* currentState = *(preds.begin());
+  EStatePtr currentState = *(preds.begin());
   stg->eliminateEState(eliminateThisOne);
   //in the case of new input->output->error behavior, delete the output too
   if (currentState->io.isStdOutIO()) {
@@ -558,14 +558,14 @@ list<pair<const EState*, int> > CounterexampleAnalyzer::removeTraceLeadingToErro
   // exclude all edges leading to the input state right before the error state for future tracing attempts
   // (due to the reduction to observable behavior, even a single execution trace can lead to multiple predecessors)
   for (EStatePtrSet::iterator i=preds.begin(); i!= preds.end(); ++i) {
-    erroneousTransitions.push_back(pair<const EState*, int>(*i, latestInputVal));
+    erroneousTransitions.push_back(pair<EStatePtr, int>(*i, latestInputVal));
   }
   stg->eliminateEState(eliminateThisOne);
   return erroneousTransitions;
 }
 
-CeIoVal CounterexampleAnalyzer::eStateToCeIoVal(const EState* eState) {
-  PState* pstate = const_cast<PState*>( eState->pstate() ); 
+CeIoVal CounterexampleAnalyzer::eStateToCeIoVal(EStatePtr eState) {
+  PState* pstate = const_cast<PStatePtr>( eState->pstate() ); 
   int inOutVal;
   pair<int, IoType> result;
   if (eState->io.isStdInIO()) {
@@ -651,8 +651,8 @@ void CounterexampleAnalyzer::setInputSequence(list<CeIoVal> sourceOfInputs) {
 }
 
 Label CounterexampleAnalyzer::getFirstObservableSpuriousLabel(TransitionGraph* analyzedModel, PrefixAndCycle counterexample, int numberOfSteps) {
-  std::unordered_set<const EState*>* currentDepth = new std::unordered_set<const EState*>();
-  std::unordered_set<const EState*>* nextDepth = new std::unordered_set<const EState*>();
+  std::unordered_set<EStatePtr>* currentDepth = new std::unordered_set<EStatePtr>();
+  std::unordered_set<EStatePtr>* nextDepth = new std::unordered_set<EStatePtr>();
   currentDepth->insert(analyzedModel->getStartEState());
   list<CeIoVal> prefix = counterexample.first;
   list<CeIoVal> cycle = counterexample.second;
@@ -664,7 +664,7 @@ Label CounterexampleAnalyzer::getFirstObservableSpuriousLabel(TransitionGraph* a
   // traverse all paths in the analyzed model that match with the counterexample's behavior
   for (int i = 0; i < numberOfSteps; i++) {
     //traverse one more level
-    for (std::unordered_set<const EState*>::iterator k = currentDepth->begin(); k != currentDepth->end(); k++) {
+    for (std::unordered_set<EStatePtr>::iterator k = currentDepth->begin(); k != currentDepth->end(); k++) {
       EStatePtrSet successors = analyzedModel->succ(*k);
       // add those successor states to "nextDepth" that match the desired behavior
       for (EStatePtrSet::iterator m = successors.begin(); m != successors.end(); m++) {
@@ -674,7 +674,7 @@ Label CounterexampleAnalyzer::getFirstObservableSpuriousLabel(TransitionGraph* a
       }
     } 
     // swap currentDepth and nextDepth, then clear nextDepth
-    std::unordered_set<const EState*>* swapTemp = currentDepth;  
+    std::unordered_set<EStatePtr>* swapTemp = currentDepth;  
     currentDepth = nextDepth;
     nextDepth = swapTemp;
     nextDepth->clear();
@@ -699,7 +699,7 @@ Label CounterexampleAnalyzer::getFirstObservableSpuriousLabel(TransitionGraph* a
   }
   // the counterexample itself comes from analyzing "anaylzedModel", there has to be at least one matching state
   assert (currentDepth->size() > 0);
-  const EState* firstMatch = *(currentDepth->begin());
+  EStatePtr firstMatch = *(currentDepth->begin());
   delete currentDepth;
   delete nextDepth;
   assert(firstMatch);

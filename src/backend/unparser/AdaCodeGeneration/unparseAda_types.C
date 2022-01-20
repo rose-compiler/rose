@@ -127,13 +127,13 @@ namespace
       prn("mod ");
       expr(n.get_modexpr());
     }
-
+/*
     void handle(SgAdaFormalType& n)
     {
       prn(" ");
       prn(n.get_type_name());
     }
-
+*/
     void handle(SgModifierType& n)
     {
       if (n.get_typeModifier().isAliased())
@@ -202,10 +202,26 @@ namespace
       type(n.get_base_type());
     }
 
+
     void handle(SgAdaTaskType& n)
     {
       // \todo fix in AST and override get_name and get_declaration in AdaTaskType
       SgAdaTaskTypeDecl&      tyDcl  = SG_DEREF( isSgAdaTaskTypeDecl(n.get_declaration()) );
+
+      prn(" ");
+
+      if (USE_COMPUTED_NAME_QUALIFICATION_TYPE)
+        prnNameQual(tyDcl);
+      else
+        prn(scopeQual(tyDcl));
+
+      prn(tyDcl.get_name());
+    }
+
+    void handle(SgAdaProtectedType& n)
+    {
+      // \todo fix in AST and override get_name and get_declaration in AdaTaskType
+      SgAdaProtectedTypeDecl& tyDcl  = SG_DEREF( isSgAdaProtectedTypeDecl(n.get_declaration()) );
 
       prn(" ");
 
@@ -237,10 +253,10 @@ namespace
           prn(" constant");
         }
 
+        // consider: ASSERT_not_null(n.get_base_type());
         if (n.get_base_type() != NULL) {
           type(n.get_base_type());
         }
-
       } else {
         // subprogram access type
         if (n.get_is_protected()) {
@@ -336,7 +352,7 @@ namespace
 void
 Unparse_Ada::unparseType(const SgLocatedNode& ref, SgType* ty, SgUnparse_Info& info)
 {
-  using TypeQualMap = std::map<SgNode*,std::map<SgNode*,std::string> >;
+  using MapOfNameQualMap = std::map<SgNode*, NameQualMap>;
 
   ASSERT_not_null(ty);
 
@@ -348,7 +364,7 @@ Unparse_Ada::unparseType(const SgLocatedNode& ref, SgType* ty, SgUnparse_Info& i
 
   SgNode*            refNode = info.get_reference_node_for_qualification();
   const NameQualMap& currentNameQualMap = nameQualificationMap();
-  const TypeQualMap& typeQualMap = SgNode::get_globalQualifiedNameMapForMapsOfTypes();
+  const MapOfNameQualMap& typeQualMap = SgNode::get_globalQualifiedNameMapForMapsOfTypes();
   const NameQualMap& nameQualMapForTypeSubtree = getQualMapping(typeQualMap, refNode, SgNode::get_globalQualifiedNameMapForTypes());
 
   withNameQualificationMap(nameQualMapForTypeSubtree);

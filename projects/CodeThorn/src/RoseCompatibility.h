@@ -13,12 +13,17 @@
 namespace CodeThorn
 {
 
-using ClassKeyType    = const SgClassDefinition*;
-using TypeKeyType     = const SgType*;
-using CastKeyType     = const SgCastExp*;
-using VariableKeyType = const SgInitializedName*;
-using FunctionKeyType = const SgMemberFunctionDeclaration*;
-using ASTRootType     = SgProject*;
+constexpr
+unsigned char STRIP_MODIFIER_ALIAS = SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_TYPEDEF_TYPE;
+
+
+using ClassKeyType        = const SgClassDefinition*;
+using FunctionTypeKeyType = const SgFunctionType*;
+using TypeKeyType         = const SgType*;
+using CastKeyType         = const SgCastExp*;
+using VariableKeyType     = const SgInitializedName*;
+using FunctionKeyType     = const SgMemberFunctionDeclaration*;
+using ASTRootType         = SgProject*;
 
 /// type of a class naming function
 using ClassNameFn   = std::function<std::string(ClassKeyType)>;
@@ -70,6 +75,20 @@ class RoseCompatibilityBridge
     ///          1 iff lhs > rhs
     ///          -1 iff lhs < rhs
     int compareNames(FunctionKeyType lhs, FunctionKeyType rhs) const;
+
+    /// compares the types of \ref lhs and \ref rhs
+    /// \param lhs some function type
+    /// \param rhs some function type
+    /// \param exclReturnType if true the return types of \ref lhs and \ref rhs
+    ///        are not considered (though the return types of potential arguments
+    ///        and return types are). This can be useful for obtaining equality of
+    ///        functions that have covariant return types.
+    /// \returns 0 iff lhs and rhs have the same type
+    ///          1 iff lhs > rhs
+    ///          -1 iff lhs < rhs
+    /// \details
+    ///    The comparison skips over typedef aliases and handles array to pointer decay.
+    int compareFunctionTypes(FunctionTypeKeyType lhs, FunctionTypeKeyType rhs, bool exclReturnType = true) const;
 
     /// compares the types of \ref lhs and \ref rhs
     /// \param lhs some function
@@ -135,7 +154,7 @@ std::string typeNameOf(ClassKeyType key);
 
 
 /// calls the callback function \ref fn(derived, base, isvirtual)
-///   for all direct base calsses of \ref clkey
+///   for all direct base classes of \ref clkey
 void inheritanceEdges( ClassKeyType clkey,
                        std::function<void(ClassKeyType, ClassKeyType, bool)> fn
                      );
@@ -145,6 +164,27 @@ void inheritanceEdges( ClassKeyType clkey,
 ///     is returned.
 ///   - base type refers to a type after aliases, references, pointers, decltype, and modifiers.
 std::pair<ClassKeyType, TypeKeyType> getClassCastInfo(TypeKeyType tykey);
+
+//
+// ROSE utilities
+
+/// returns the class definition for \ref n.
+/// \pre isSgClassDeclaration(n.get_definingDeclaration())
+SgClassDefinition& getClassDef(const SgDeclarationStatement& n);
+
+/// returns the class definition where \ref n is defined
+SgClassDefinition& getClassDef(const SgMemberFunctionDeclaration& n);
+
+/// returns the class definition of \ref n
+/// returns nullptr if a class definition cannot be found
+SgClassDefinition& getClassDef(const SgExpression& n, bool skipUpCasts = false);
+
+/// returns the class definition of \ref n
+/// returns nullptr if a class definition cannot be found
+SgClassDefinition* getClassDefOpt(const SgClassType& n);
+
+/// returns the representative declaration for \ref memfn
+SgMemberFunctionDeclaration& keyDecl(SgMemberFunctionDeclaration& memfn);
 
 }
 #endif /* ROSE_MAPPING */

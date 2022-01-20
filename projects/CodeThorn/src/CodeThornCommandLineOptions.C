@@ -45,7 +45,7 @@ void checkNumThreads(CodeThornOptions& ctOpt) {
 }
 
 void checkReportMode(CodeThornOptions& ctOpt) {
-  if(ctOpt.csvReportModeString!="generate" && ctOpt.csvReportModeString!="append") {
+  if(ctOpt.csvReportModeString!=CppStdUtilities::getFileGenerateModeSelector() && ctOpt.csvReportModeString!=CppStdUtilities::getFileAppendModeSelector()) {
     cerr<<"Error: unsupported argument for --csv-report-mode : "<<ctOpt.csvReportModeString<<endl;
     exit(1);
   }
@@ -77,7 +77,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("counterexamples-with-output", po::value< bool >(&ltlOpt.counterExamplesWithOutput)->default_value(false)->implicit_value(true), "Reported counterexamples for LTL or reachability properties also include output values.")
     ("inf-paths-only", po::value< bool >(&ltlOpt.inifinitePathsOnly)->default_value(false)->implicit_value(true), "Recursively prune the transition graph so that only infinite paths remain when checking LTL properties.")
     ("io-reduction", po::value< int >(&ltlOpt.ioReduction), "(work in progress) IO reduction threshold. Reduce the transition system to only input/output/worklist states after every <arg> computed EStates.")
-    ("keep-error-states",  po::value< bool >(&ltlOpt.keepErrorStates)->default_value(false)->implicit_value(true), "Do not reduce error states for the LTL analysis.")      
+    ("keep-error-states",  po::value< bool >(&ctOpt.keepErrorStates)->default_value(false)->implicit_value(true), "Do not reduce error states for the LTL analysis.")      
     ("ltl-in-alphabet",po::value< string >(&ltlOpt.ltlInAlphabet),"Specify an input alphabet used by the LTL formulae. (e.g. \"{1,2,3}\")")
     ("ltl-out-alphabet",po::value< string >(&ltlOpt.ltlOutAlphabet),"Specify an output alphabet used by the LTL formulae. (e.g. \"{19,20,21,22,23,24,25,26}\")")
     ("ltl-rers-mapping-file",po::value< string >(&ltlOpt.ltlRersMappingFileName),"File containing input/ouput alphabets and mapping (as provided in RERS)")
@@ -184,7 +184,6 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("annotate-terms", po::value< bool >(&ctOpt.annotateTerms)->default_value(false)->implicit_value(true),"Annotate term representation of expressions in unparsed program.")
     ("eliminate-stg-back-edges", po::value< bool >(&ctOpt.eliminateSTGBackEdges)->default_value(false)->implicit_value(true), "Eliminate STG back-edges (STG becomes a tree).")
     ("generate-assertions", po::value< bool >(&ctOpt.generateAssertions)->default_value(false)->implicit_value(true),"Generate assertions (pre-conditions) in program and output program (using ROSE unparser).")
-    ("precision-exact-constraints", po::value< bool >(&ctOpt.precisionExactConstraints)->default_value(false)->implicit_value(true),"Use precise constraint extraction.")
     ("stg-trace-file", po::value< string >(&ctOpt.stgTraceFileName), "Generate STG computation trace and write to file <arg>.")
     ("rw-trace",po::value< bool >(&ctOpt.readWriteTrace)->default_value(false)->implicit_value(true),"Print read-write trace.")
     ("arrays-not-in-state", po::value< bool >(&ctOpt.arraysNotInState)->default_value(false)->implicit_value(true),"Arrays are not represented in state. Only correct if all arrays are read-only (manual optimization - to be eliminated).")
@@ -232,7 +231,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("test-selector",po::value< int >(&ctOpt.testSelector)->default_value(0)->implicit_value(0),"Option for selecting dev tests.")
     ("intra",po::value< bool >(&ctOpt.intraProcedural)->default_value(false)->implicit_value(true),"Select intra-procedural analysis.")
     ("precision",po::value< int >(&ctOpt.precisionLevel),"Option for selecting level of precision.")
-    ("csv-report-mode",po::value< std::string >(&ctOpt.csvReportModeString)->default_value("generate"),"Report file mode: generate|append.")
+    ("csv-report-mode",po::value< std::string >(&ctOpt.csvReportModeString)->default_value(CppStdUtilities::getFileGenerateModeSelector()),"Report file mode: generate|append.")
     ("pointer-sets", po::value< bool >(&ctOpt.pointerSetsEnabled)->default_value(false)->implicit_value(true), "Enable sets of pointers in abstract pointer analysis.")
     ("fork-function-enabled",po::value< bool >(&ctOpt.forkFunctionEnabled),"sets fork function name (also requires --set-fork-function-name)")
     ("fork-function-name",po::value< std::string >(&ctOpt.forkFunctionName),"sets fork function name (also requires --fork-function-enabled)")
@@ -301,7 +300,6 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("internal-checks", po::value< bool >(&ctOpt.internalChecks)->default_value(false)->implicit_value(true), "Run internal consistency checks (without input program).")
     ("cl-args",po::value< string >(&ctOpt.analyzedProgramCLArgs),"Specify command line options for the analyzed program (as one quoted string).")
     ("input-values",po::value< string >(&ctOpt.inputValues),"Specify a set of input values. (e.g. \"{1,2,3}\")")
-    ("input-values-as-constraints", po::value< bool >(&ctOpt.inputValuesAsConstraints)->default_value(false)->implicit_value(true),"Represent input var values as constraints (otherwise as constants in PState).")
     ("input-sequence",po::value< string >(&ctOpt.inputSequence),"Specify a sequence of input values. (e.g. \"[1,2,3]\")")
     ("log-level",po::value< string >(&ctOpt.logLevel)->default_value("none,>=error"),"Set the log level (\"x,>=y\" with x,y in: (none|info|warn|trace|error|fatal|debug)).")
     ("max-transitions",po::value< int >(&ctOpt.maxTransitions)->default_value(-1),"Passes (possibly) incomplete STG to verifier after <arg> transitions have been computed.")

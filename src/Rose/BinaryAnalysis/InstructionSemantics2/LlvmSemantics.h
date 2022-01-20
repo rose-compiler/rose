@@ -99,12 +99,12 @@ public:
     // Virtual constructors
 public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         return instance(protoval, solver);
     }
 
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         return instance(state, solver);
     }
 
@@ -138,9 +138,9 @@ public:
 public:
     virtual BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,
-                                                const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
+                                                const BaseSemantics::SValuePtr &cond) override;
     virtual void writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,
-                             const BaseSemantics::SValuePtr &data, const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
+                             const BaseSemantics::SValuePtr &data, const BaseSemantics::SValuePtr &cond) override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods to control indentation of LLVM output

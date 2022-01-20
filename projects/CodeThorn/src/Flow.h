@@ -131,7 +131,12 @@ namespace CodeThorn {
     bool contains(Label l);
     void erase(Flow::iterator iter);
     size_t erase(Edge e);
+
+    // same as numEdges()
     size_t size();
+
+    size_t numNodes();
+    size_t numEdges();
     LabelSet nodeLabels();
     LabelSet sourceLabels();
     LabelSet targetLabels();
@@ -182,6 +187,8 @@ namespace CodeThorn {
     std::size_t deleteEdges(Flow& flow);
     void establishBoostGraph();
 
+    // creates pair "(numNodes,numEdges)"
+    std::string numNodesEdgesToString();
     //! inverts all edges in the graph. The root node is updated. This operation is only successful if
     //! the original graph had exactly one final node (which becomes the start node of the new graph).
     CodeThorn::Flow reverseFlow();

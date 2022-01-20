@@ -28,7 +28,7 @@ HEADER_START
      protected:
      // void delete_file_info();
      // void directives(ostream& os);
-        void post_construction_initialization() $ROSE_OVERRIDE;
+        void post_construction_initialization() override;
 
      private:
           $CLASSNAME( const $CLASSNAME & X ); /* until we know what to do with it */
@@ -52,7 +52,7 @@ HEADER_START
           start and end of the located node object (previously we only stored the starting location).
           This function still returns the starting location of the construct.
         */
-          virtual Sg_File_Info* get_file_info() const $ROSE_OVERRIDE;
+          virtual Sg_File_Info* get_file_info() const override;
 
       //! Access function calls set_startingConstruct(Sg_File_Info*) member function
           virtual void set_file_info(Sg_File_Info* X);
@@ -178,9 +178,9 @@ HEADER_START
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const override;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const override;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const override;
 #else
        // DQ (11/1/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -945,24 +945,24 @@ HEADER_ADA_TYPE_CONSTRAINT_START
 HEADER_ADA_TYPE_CONSTRAINT_END
 
 HEADER_ADA_RANGE_CONSTRAINT_START
-  void post_construction_initialization() $ROSE_OVERRIDE;
-  std::string displayString() const $ROSE_OVERRIDE;
+  void post_construction_initialization() override;
+  std::string displayString() const override;
   void display ( std::string label ) const;
   friend std::ostream & operator<< ( std::ostream& os, const SgAdaRangeConstraint& c);
   //~ friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 HEADER_ADA_RANGE_CONSTRAINT_END
 
 HEADER_ADA_INDEX_CONSTRAINT_START
-  void post_construction_initialization() $ROSE_OVERRIDE;
-  std::string displayString() const $ROSE_OVERRIDE;
+  void post_construction_initialization() override;
+  std::string displayString() const override;
   void display ( std::string label ) const;
   friend std::ostream & operator<< ( std::ostream& os, const SgAdaIndexConstraint& c);
   //~ friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 HEADER_ADA_INDEX_CONSTRAINT_END
 
 HEADER_ADA_DISCRIMINANT_CONSTRAINT_START
-  void post_construction_initialization() $ROSE_OVERRIDE;
-  std::string displayString() const $ROSE_OVERRIDE;
+  void post_construction_initialization() override;
+  std::string displayString() const override;
   void display ( std::string label ) const;
   friend std::ostream & operator<< ( std::ostream& os, const SgAdaIndexConstraint& c);
   //~ friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);

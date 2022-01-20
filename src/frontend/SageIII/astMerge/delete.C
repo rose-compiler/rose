@@ -3,8 +3,9 @@
 #include "fixupTraversal.h"
 
 #define DEBUG_DeleteDisconnectedNode 0
-#define DEBUG_DeleteDisconnectedNode_ordered_delete 0
-#if DEBUG_DeleteDisconnectedNode_ordered_delete
+
+#define DEBUG_ordered_delete 0
+#if DEBUG_ordered_delete
 #  include "wholeAST_API.h"
 #  include "memory-pool-snapshot.h"
 #endif
@@ -12,6 +13,82 @@
 
 namespace Rose {
 namespace AST {
+
+// Prevent double deletes by traversing the various subtree in a top down fashion
+static void ordered_delete(std::vector<SgNode*> const & deletes) {
+  std::map< SgNode *, std::vector<SgNode *> > descendants; // direct descendants
+  for (std::vector<SgNode *>::const_iterator i = deletes.begin(); i != deletes.end(); ++i) {
+    descendants.insert(std::pair< SgNode *, std::vector<SgNode *> >(*i, std::vector<SgNode *>()));
+  }
+
+  std::vector<SgNode *> roots;
+  for (std::vector<SgNode *>::const_iterator i = deletes.begin(); i != deletes.end(); ++i) {
+    SgNode * ni = *i;
+    SgNode * pi = ni->get_parent();
+
+    // If there is an entry for this node's parent then it is NOT a root (because previous loop init.)
+    std::map< SgNode *, std::vector<SgNode *> >::iterator d = descendants.find(pi);
+    if (d != descendants.end()) {
+      d->second.push_back(ni);
+    } else {
+      roots.push_back(ni);
+    }
+  }
+
+#if DEBUG_ordered_delete
+  unsigned cnt = 0;
+#endif
+
+  // Delete starting from the roots
+  while (roots.size() > 0) {
+    std::vector<SgNode *> next;
+    for (std::vector<SgNode *>::const_iterator i = roots.begin(); i != roots.end(); ++i) {
+      SgNode * r = *i;
+
+      // Only delete if it has not already been deleted
+      if (r->get_freepointer() == AST_FileIO::IS_VALID_POINTER()) {
+#if DEBUG_ordered_delete
+        std::cout << "Delete[" << std::dec << cnt << "] " << std::hex << r << " " << r->class_name() << std::endl;
+//      std::ostringstream oss; oss << "astmerge-delete-" << cnt;
+//      generateWholeGraphOfAST(oss.str());
+//      Rose::MemPool::snapshot(oss.str()+".csv");
+        cnt++;
+#endif
+        delete r;
+      }
+
+      std::map< SgNode *, std::vector<SgNode *> >::const_iterator d = descendants.find(r);
+      if (d != descendants.end()) {
+        next.insert(next.end(), d->second.begin(), d->second.end());
+      }
+    }
+    roots.clear();
+    roots.insert(roots.end(), next.begin(), next.end());
+  }
+#if DEBUG_ordered_delete
+//  std::ostringstream oss; oss << "astmerge-delete-" << cnt;
+//  generateWholeGraphOfAST(oss.str());
+//  Rose::MemPool::snapshot(oss.str()+".csv");
+#endif
+}
+
+struct DeleteAllNode : public ROSE_VisitTraversal {
+  std::vector<SgNode*> deletes;
+
+  void visit (SgNode* node) {
+    deletes.push_back(node);
+  }
+
+  void apply() {
+    traverseMemoryPool();
+    ordered_delete(deletes);
+  }
+};
+
+void deleteAll() {
+  DeleteAllNode dan;
+  dan.apply();
+}
 
 struct DeleteDisconnectedNode : public ROSE_VisitTraversal {
   std::set<SgNode*> saves;
@@ -46,71 +123,13 @@ struct DeleteDisconnectedNode : public ROSE_VisitTraversal {
     }
   }
 
-  // Prevent double deletes by traversing the various subtree in a top down fashion
-  void ordered_delete() {
-    std::map< SgNode *, std::vector<SgNode *> > descendants; // direct descendants
-    for (std::vector<SgNode *>::const_iterator i = deletes.begin(); i != deletes.end(); ++i) {
-      descendants.insert(std::pair< SgNode *, std::vector<SgNode *> >(*i, std::vector<SgNode *>()));
-    }
-
-    std::vector<SgNode *> roots;
-    for (std::vector<SgNode *>::const_iterator i = deletes.begin(); i != deletes.end(); ++i) {
-      SgNode * ni = *i;
-      SgNode * pi = ni->get_parent();
-
-      // If there is an entry for this node's parent then it is NOT a root (because previous loop init.)
-      std::map< SgNode *, std::vector<SgNode *> >::iterator d = descendants.find(pi);
-      if (d != descendants.end()) {
-        d->second.push_back(ni);
-      } else {
-        roots.push_back(ni);
-      }
-    }
-
-#if DEBUG_DeleteDisconnectedNode_ordered_delete
-    unsigned cnt = 0;
-#endif
-
-    // Delete starting from the roots
-    while (roots.size() > 0) {
-      std::vector<SgNode *> next;
-      for (std::vector<SgNode *>::const_iterator i = roots.begin(); i != roots.end(); ++i) {
-        SgNode * r = *i;
-
-        // Only delete if it has not already been deleted
-        if (r->get_freepointer() == AST_FileIO::IS_VALID_POINTER()) {
-#if DEBUG_DeleteDisconnectedNode_ordered_delete
-          std::cout << "Delete[" << std::dec << cnt << "] " << std::hex << r << " " << r->class_name() << std::endl;
-//          std::ostringstream oss; oss << "astmerge-delete-" << cnt;
-//          generateWholeGraphOfAST(oss.str());
-//          Rose::MemPool::snapshot(oss.str()+".csv");
-          cnt++;
-#endif
-          delete r;
-        }
-
-        std::map< SgNode *, std::vector<SgNode *> >::const_iterator d = descendants.find(r);
-        if (d != descendants.end()) {
-          next.insert(next.end(), d->second.begin(), d->second.end());
-        }
-      }
-      roots.clear();
-      roots.insert(roots.end(), next.begin(), next.end());
-    }
-#if DEBUG_DeleteDisconnectedNode_ordered_delete
-//    std::ostringstream oss; oss << "astmerge-delete-" << cnt;
-//    generateWholeGraphOfAST(oss.str());
-//    Rose::MemPool::snapshot(oss.str()+".csv");
-#endif
-  }
-
   void apply(SgProject * project) {
     recursive_saves(project);
     recursive_saves(SgNode::get_globalFunctionTypeTable());
     recursive_saves(SgNode::get_globalTypeTable());
 
     traverseMemoryPool();
-    ordered_delete();
+    ordered_delete(deletes);
   }
 };
 

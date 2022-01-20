@@ -12,7 +12,7 @@ class visitorTraversal:public AstSimpleProcessing
 void
 visitorTraversal::visit (SgNode * n)
 {
-  // On each node look for any comments of CPP directives
+  // On each node look for any comments or CPP directives
   SgLocatedNode *locatedNode = isSgLocatedNode (n);
   if (locatedNode != NULL)
   {

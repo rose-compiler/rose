@@ -107,24 +107,24 @@ public:
 
 public:
     virtual void hash(Combinatorics::Hasher&, RiscOperators *addrOps, RiscOperators *valOps) const override;
-    virtual void clear() ROSE_OVERRIDE;
-    virtual bool merge(const MemoryStatePtr &other, RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
+    virtual void clear() override;
+    virtual bool merge(const MemoryStatePtr &other, RiscOperators *addrOps, RiscOperators *valOps) override;
     virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt,
-                                 RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
+                                 RiscOperators *addrOps, RiscOperators *valOps) override;
     virtual SValuePtr peekMemory(const SValuePtr &address, const SValuePtr &dflt,
-                                 RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
+                                 RiscOperators *addrOps, RiscOperators *valOps) override;
     virtual void writeMemory(const SValuePtr &address, const SValuePtr &value,
-                             RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
-    virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
-    virtual std::vector<MemoryCellPtr> matchingCells(const MemoryCell::Predicate&) const ROSE_OVERRIDE;
-    virtual std::vector<MemoryCellPtr> leadingCells(const MemoryCell::Predicate&) const ROSE_OVERRIDE;
-    virtual void eraseMatchingCells(const MemoryCell::Predicate&) ROSE_OVERRIDE;
-    virtual void eraseLeadingCells(const MemoryCell::Predicate&) ROSE_OVERRIDE;
-    virtual void traverse(MemoryCell::Visitor&) ROSE_OVERRIDE;
+                             RiscOperators *addrOps, RiscOperators *valOps) override;
+    virtual void print(std::ostream&, Formatter&) const override;
+    virtual std::vector<MemoryCellPtr> matchingCells(const MemoryCell::Predicate&) const override;
+    virtual std::vector<MemoryCellPtr> leadingCells(const MemoryCell::Predicate&) const override;
+    virtual void eraseMatchingCells(const MemoryCell::Predicate&) override;
+    virtual void eraseLeadingCells(const MemoryCell::Predicate&) override;
+    virtual void traverse(MemoryCell::Visitor&) override;
     virtual AddressSet getWritersUnion(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps,
-                                       RiscOperators *valOps) ROSE_OVERRIDE;
+                                       RiscOperators *valOps) override;
     virtual AddressSet getWritersIntersection(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps,
-                                              RiscOperators *valOps) ROSE_OVERRIDE;
+                                              RiscOperators *valOps) override;
 };
 
 } // namespace

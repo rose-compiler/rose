@@ -76,8 +76,6 @@ AC_DEFUN([ROSE_SUPPORT_SUMMARY],[
 	echo "    readline     (interactive input) ${LIBREADLINE_LIBRARY_PATH:-none}"
 	echo "    SQLite3     (database in a file) ${SQLITE3_VERSION:-none}"
 	echo "    YAML-cpp         (configuration) ${ROSE_YAML_PREFIX:-none}"
-	echo "    yices executable    (SMT solver) ${ROSE_YICES:-none}"
-	echo "    yices library                    ${ROSE_HAVE_LIBYICES:-none}"
 	echo "    z3 version          (SMT solver) ${Z3_VERSION:-unknown}"
 	echo "    z3 executable                    ${Z3:-none}"
 	echo "    z3 library                       ${Z3_LIBRARY_PATH:-none}"

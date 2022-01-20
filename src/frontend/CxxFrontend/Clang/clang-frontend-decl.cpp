@@ -90,7 +90,7 @@ SgSymbol * ClangToSageTranslator::GetSymbolFromSymbolTable(clang::NamedDecl * de
         }
         case clang::Decl::EnumConstant:
         {
-            name = SgName(((clang::EnumConstantDecl *)decl)->getName());
+            name = SgName(((clang::EnumConstantDecl *)decl)->getName().str());
             it = SageBuilder::ScopeStack.rbegin();
             while (it != SageBuilder::ScopeStack.rend() && sym == NULL) {
                 sym = (*it)->lookup_enum_field_symbol(name);
@@ -100,7 +100,7 @@ SgSymbol * ClangToSageTranslator::GetSymbolFromSymbolTable(clang::NamedDecl * de
         }
         case clang::Decl::Enum:
         {
-            name = SgName(((clang::EnumDecl *)decl)->getName());
+            name = SgName(((clang::EnumDecl *)decl)->getName().str());
             it = SageBuilder::ScopeStack.rbegin();
             while (it != SageBuilder::ScopeStack.rend() && sym == NULL) {
                 sym = (*it)->lookup_enum_symbol(name);

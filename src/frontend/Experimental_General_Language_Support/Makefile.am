@@ -9,7 +9,7 @@ endif
 noinst_LTLIBRARIES = libexperimentalRoseGeneralLanguage.la
 
 libexperimentalRoseGeneralLanguage_la_SOURCES = \
-  sage-tree-builder.C ModuleBuilder.C
+  sage-tree-builder.C ModuleBuilder.C Tokens.C
 
 noinst_HEADERS = \
-  sage-tree-builder.h ModuleBuilder.h
+  sage-tree-builder.h ModuleBuilder.h Tokens.h

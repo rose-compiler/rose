@@ -61,7 +61,7 @@ namespace CodeThorn {
 
   typedef CallString Context;
 
-  typedef std::pair<int, const EState*> FailedAssertion;
+  typedef std::pair<int, EStatePtr> FailedAssertion;
   typedef std::pair<PState,  std::list<int> > PStatePlusIOHistory;
   enum AnalyzerMode { AM_ALL_STATES, AM_LTL_STATES };
 
@@ -84,11 +84,6 @@ namespace CodeThorn {
 
 
   class CTAnalysis {
-    friend class Solver;
-    friend class Solver5;
-    friend class Solver8;
-    friend class Solver10;
-    friend class Solver11;
     friend class Solver12;
     friend class Visualizer;
     friend class VariableValueMonitor;
@@ -107,7 +102,7 @@ namespace CodeThorn {
     virtual void runAnalysisPhase1(SgProject* root, TimingCollector& tc);
     virtual void runAnalysisPhase2(TimingCollector& tc);
   protected:
-    EState createInitialEState(SgProject* root, Label slab);
+    EStatePtr createInitialEState(SgProject* root, Label slab);
     void initializeSolverWithInitialEState(SgProject* root);
     virtual void postInitializeSolver();
     void runAnalysisPhase1Sub1(SgProject* root, TimingCollector& tc);
@@ -148,7 +143,7 @@ namespace CodeThorn {
 
     // consistency checks
     bool checkEStateSet();
-    bool isConsistentEStatePtrSet(std::set<const EState*> estatePtrSet);
+    bool isConsistentEStatePtrSet(std::set<EStatePtr> estatePtrSet);
     bool checkTransitionGraph();
 
     EStateTransferFunctions* getEStateTransferFunctions();
@@ -181,8 +176,8 @@ namespace CodeThorn {
     bool getIgnoreFunctionPointers();
 
     // specific to the loop-aware exploration modes
-    int getIterations() { return _iterations; }
-    int getApproximatedIterations() { return _approximated_iterations; }
+    size_t getIterations() { return _iterations; }
+    size_t getApproximatedIterations() { return _approximated_iterations; }
 
     // used by the hybrid analyzer (state marshalling)
     void mapGlobalVarInsert(std::string name, int* addr);
@@ -217,13 +212,16 @@ namespace CodeThorn {
     void setPrintDetectedViolations(bool flag);
 
     void setMaxTransitions(size_t maxTransitions) { _maxTransitions=maxTransitions; }
+    size_t getMaxTransitions() { return _maxTransitions; }
     void setMaxIterations(size_t maxIterations) { _maxIterations=maxIterations; }
+    size_t getMaxIterations() { return _maxIterations; }
     void setMaxTransitionsForcedTop(size_t maxTransitions) { _maxTransitionsForcedTop=maxTransitions; }
     void setMaxIterationsForcedTop(size_t maxIterations) { _maxIterationsForcedTop=maxIterations; }
     void setMaxBytesForcedTop(long int maxBytesForcedTop) { _maxBytesForcedTop=maxBytesForcedTop; }
     void setMaxSecondsForcedTop(long int maxSecondsForcedTop) { _maxSecondsForcedTop=maxSecondsForcedTop; }
     void setResourceLimitDiff(int diff) { _resourceLimitDiff=diff; }
     void setDisplayDiff(int diff) { _displayDiff=diff; }
+    int getDisplayDiff() { return _displayDiff; }
     void setNumberOfThreadsToUse(int n) { _numberOfThreadsToUse=n; }
     int getNumberOfThreadsToUse() { return _numberOfThreadsToUse; }
     void setTreatStdErrLikeFailedAssert(bool x) { _treatStdErrLikeFailedAssert=x; }
@@ -282,7 +280,7 @@ namespace CodeThorn {
     bool isIncompleteSTGReady();
     bool isPrecise();
 
-    void reduceStg(function<bool(const EState*)> predicate);
+    void reduceStg(function<bool(EStatePtr)> predicate);
 
     virtual Lattice* getPreInfo(Label lab, CallString context);
     virtual Lattice* getPostInfo(Label lab, CallString context);
@@ -290,16 +288,16 @@ namespace CodeThorn {
     virtual void setPostInfo(Label lab, CallString context, Lattice*);
 
     void initializeSummaryStates(PStatePtr initialPStateStored);
-    const CodeThorn::EState* getSummaryState(CodeThorn::Label lab, CallString cs);
-    void setSummaryState(CodeThorn::Label lab, CallString cs, CodeThorn::EState const* estate);
+    EStatePtr getSummaryState(CodeThorn::Label lab, CallString cs);
+    void setSummaryState(CodeThorn::Label lab, CallString cs, EStatePtr estate);
     std::string programPositionInfo(CodeThorn::Label);
 
     void setOptionOutputWarnings(bool flag);
     bool getOptionOutputWarnings();
 
     // first: list of new states (worklist), second: set of found existing states
-    typedef pair<EStateWorkList,std::set<const EState*> > SubSolverResultType;
-    SubSolverResultType subSolver(const EState* currentEStatePtr);
+    typedef pair<EStateWorkList,std::set<EStatePtr> > SubSolverResultType;
+    SubSolverResultType subSolver(EStatePtr currentEStatePtr);
     std::string typeSizeMappingToString();
     void setModeLTLDriven(bool ltlDriven) { transitionGraph.setModeLTLDriven(ltlDriven); }
     bool getModeLTLDriven() { return transitionGraph.getModeLTLDriven(); }
@@ -314,6 +312,7 @@ namespace CodeThorn {
     std::string externalFunctionsToString();
     void setOptions(CodeThornOptions options);
     CodeThornOptions& getOptionsRef();
+    CodeThornOptions getOptions();
     void setLtlOptions(LTLOptions ltlOptions);
     LTLOptions& getLtlOptionsRef();
     //protected:
@@ -330,47 +329,54 @@ namespace CodeThorn {
 
     std::string analyzerStateToString();
 
-    void addToWorkList(const EState* estate);
+    void addToWorkList(EStatePtr estate);
     bool isEmptyWorkList();
-    const EState* popWorkList();
-    const EState* topWorkList();
+    EStatePtr popWorkList();
+    EStatePtr topWorkList();
     void swapWorkLists();
     void eraseWorkList();
-
-    std::pair<CallString,const EState*> popWorkListCS();
-    std::pair<CallString,const EState*> topWorkListCS();
-    void pushWorkListCS(CallString,const EState*);
 
     /*! if state exists in stateSet, a pointer to the existing state is returned otherwise
       a new state is entered into stateSet and a pointer to it is returned.
     */
+
     PStatePtr processNew(PState& s);
     PStatePtr processNewOrExisting(PState& s);
-    const EState* processNew(EState& s);
-    const EState* processNewOrExisting(EState& s);
-    //const EState* processCompleteNewOrExisting(const EState* es);
+
+    PStatePtr processNew(PState* s);
+    PStatePtr processNewOrExisting(PState* s);
+
+    EStatePtr processNew(EStateRef s);
+    EStatePtr processNewOrExisting(EStateRef s);
+    EStateSet::ProcessingResult process(EStateRef s);
+
+    EStatePtr processNew(EStatePtr s);
+    EStatePtr processNewOrExisting(EStatePtr s);
+    EStateSet::ProcessingResult process(EStatePtr s);
+
+    
     void topifyVariable(PState& pstate, AbstractValue varId);
     bool isTopified(EState& s);
-    EStateSet::ProcessingResult process(EState& s);
 
-    void recordTransition(const EState* sourceEState, Edge e, const EState* targetEState);
+    void recordTransition(EStatePtr sourceEState, Edge e, EStatePtr targetEState);
 
     void set_finished(std::vector<bool>& v, bool val);
     bool all_false(std::vector<bool>& v);
 
-    std::list<EState> transferEdgeEState(Edge edge, const EState* estate);
+    std::list<EStatePtr> transferEdgeEStateInPlace(Edge edge, EStatePtr estate);
+    std::list<EStatePtr> transferEdgeEState(Edge edge, EStatePtr estate);
 
     // forwarding functions for EStateTransferFunctions (backward compatibility)
-    std::list<EState> elistify();
-    std::list<EState> elistify(EState res);
+    std::list<EStatePtr> elistify();
+    std::list<EStatePtr> elistify(EState res);
 
     std::set<std::string> variableIdsToVariableNames(CodeThorn::VariableIdSet);
 
     bool isStartLabel(Label label);
-    int reachabilityAssertCode(const EState* currentEStatePtr);
+    int reachabilityAssertCode(EStatePtr currentEStatePtr);
 
-    bool isFailedAssertEState(const EState* estate);
-    bool isVerificationErrorEState(const EState* estate);
+    bool isFailedAssertEState(EStatePtr estate);
+    bool isVerificationErrorEState(EStatePtr estate);
     //! adds a specific code to the io-info of an estate which is checked by isFailedAsserEState and determines a failed-assert estate. Note that the actual assert (and its label) is associated with the previous estate (this information can therefore be obtained from a transition-edge in the transition graph).
     EState createFailedAssertEState(const EState estate, Label target);
     EState createVerificationErrorEState(const EState estate, Label target);
@@ -410,6 +416,8 @@ namespace CodeThorn {
     void setTotalNumberOfFunctions(uint32_t num);
     std::string hashSetConsistencyReport();
 
+    EStateWorkList* getWorkList();
+    EStateWorkList* getWorkListNext(); // only used in Solver12
   protected:
 
     // EStateWorkLists: Current and Next should point to One and Two (or swapped)
@@ -444,10 +452,10 @@ namespace CodeThorn {
     bool _topifyModeActive;
     int _abstractionMode=0; // 0=no abstraction, >=1: different abstraction modes.
 
-    int _iterations;
-    int _approximated_iterations;
-    int _curr_iteration_cnt;
-    int _next_iteration_cnt;
+    size_t _iterations;
+    size_t _approximated_iterations;
+    size_t _curr_iteration_cnt;
+    size_t _next_iteration_cnt;
 
     bool _stdFunctionSemantics=true;
 
@@ -466,8 +474,8 @@ namespace CodeThorn {
     // *current* summary state (more than one may be created to allow
     // to represent multiple summary states in the transition system)
     //size_t getSummaryStateMapSize();
-    const EState* getBottomSummaryState(Label lab, CallString cs);
-    bool isLTLRelevantEState(const EState* estate);
+    EStatePtr getBottomSummaryState(Label lab, CallString cs);
+    bool isLTLRelevantEState(EStatePtr estate);
 
     size_t _prevStateSetSizeDisplay = 0;
     size_t _prevStateSetSizeResource = 0;
@@ -484,9 +492,9 @@ namespace CodeThorn {
 
   private:
 
-    //std::unordered_map<int,const EState*> _summaryStateMap;
-    //std::unordered_map< pair<int, CallString> ,const EState*, hash_pair> _summaryCSStateMap;
-    typedef std::unordered_map <CallString ,const EState*> SummaryCSStateMap;
+    //std::unordered_map<int,EStatePtr> _summaryStateMap;
+    //std::unordered_map< pair<int, CallString> ,EStatePtr, hash_pair> _summaryCSStateMap;
+    typedef std::unordered_map <CallString ,EStatePtr> SummaryCSStateMap;
     std::unordered_map< int, SummaryCSStateMap > _summaryCSStateMapMap;
 
     Labeler* _labeler=nullptr;
@@ -500,7 +508,7 @@ namespace CodeThorn {
     Solver* _solver;
     TopologicalSort* _topologicalSort=nullptr;
 
-    const CodeThorn::PState* _initialPStateStored=nullptr;
+    PStatePtr _initialPStateStored=nullptr;
     CodeThorn::EStateTransferFunctions* _estateTransferFunctions=nullptr;
 
   }; // end of class CTAnalysis

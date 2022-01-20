@@ -12,7 +12,7 @@ using namespace CodeThorn;
   * \date 2012.
  */
 
-Transition::Transition(const EState* source,Edge edge, const EState* target)
+Transition::Transition(EStatePtr source,Edge edge, EStatePtr target)
   :source(source),edge(edge),target(target) {
 }
 
@@ -37,7 +37,7 @@ size_t TransitionHashFun::operator()(Transition* s) const {
     return hash;
   } else {
     EStateHashFun estateHashFun;
-    return ((estateHashFun(const_cast<EState*>(s->source))+1)<<8)+((estateHashFun(const_cast<EState*>(s->target))+1)<<8)*(size_t)s->edge.hash();
+    return ((estateHashFun(const_cast<EStatePtr>(s->source))+1)<<8)+((estateHashFun(const_cast<EStatePtr>(s->target))+1)<<8)*(size_t)s->edge.hash();
   }
 }
 
@@ -74,8 +74,8 @@ LabelSet TransitionGraph::labelSetOfIoOperations(InputOutput::OpType op) {
   * \author Markus Schordan
   * \date 2012.
  */
-void TransitionGraph::reduceEStates(set<const EState*> toReduce) {
-  for(set<const EState*>::const_iterator i=toReduce.begin();i!=toReduce.end();++i) { 
+void TransitionGraph::reduceEStates(set<EStatePtr> toReduce) {
+  for(set<EStatePtr>::const_iterator i=toReduce.begin();i!=toReduce.end();++i) { 
     reduceEState(*i);
   }
 }
@@ -84,7 +84,7 @@ void TransitionGraph::reduceEStates(set<const EState*> toReduce) {
  * \author Markus Schordan
  * \date 2019 (linear algorithm for IO reduction)
  */         
-void TransitionGraph::reduceEStates3(function<bool(const EState*)> predicate) {
+void TransitionGraph::reduceEStates3(function<bool(EStatePtr)> predicate) {
   const size_t reportingInterval=10000;
   EStatePtrSet states=estateSet();
   size_t todo=states.size();
@@ -111,7 +111,7 @@ void TransitionGraph::reduceEStates3(function<bool(const EState*)> predicate) {
   * \date 2012.
  */
 
-TransitionGraph::TransitionPtrSet TransitionGraph::inEdges(const EState* estate) {
+TransitionGraph::TransitionPtrSet TransitionGraph::inEdges(EStatePtr estate) {
   ROSE_ASSERT(estate);
 #if 1
   return _inEdges[estate];
@@ -148,7 +148,7 @@ TransitionGraph::TransitionPtrSet TransitionGraph::inEdges(const EState* estate)
   * \date 2012.
  */
 // MS: we definitely need to cache all the results or use a proper graph structure
-TransitionGraph::TransitionPtrSet TransitionGraph::outEdges(const EState* estate) {
+TransitionGraph::TransitionPtrSet TransitionGraph::outEdges(EStatePtr estate) {
   ROSE_ASSERT(estate);
   if(getModeLTLDriven()) {
     ROSE_ASSERT(_analyzer);
@@ -166,7 +166,7 @@ TransitionGraph::TransitionPtrSet TransitionGraph::outEdges(const EState* estate
       EStateWorkList& deferedWorkList=subSolverResult.first;
       EStatePtrSet& existingEStateSet=subSolverResult.second;
       EStatePtrSet succNodes;
-      for(EStateWorkList::iterator i=deferedWorkList.begin();i!=deferedWorkList.end();++i) {
+      for(auto i=deferedWorkList.begin();i!=deferedWorkList.end();++i) {
         succNodes.insert(*i);
       }
       for(EStatePtrSet::iterator i=existingEStateSet.begin();i!=existingEStateSet.end();++i) {
@@ -185,7 +185,7 @@ TransitionGraph::TransitionPtrSet TransitionGraph::outEdges(const EState* estate
   return _outEdges[estate];
 }
 
-EStatePtrSet TransitionGraph::pred(const EState* estate) {
+EStatePtrSet TransitionGraph::pred(EStatePtr estate) {
   EStatePtrSet predNodes;
   TransitionPtrSet tset=inEdges(estate);
   for(TransitionPtrSet::iterator i=tset.begin();i!=tset.end();++i) {
@@ -194,7 +194,7 @@ EStatePtrSet TransitionGraph::pred(const EState* estate) {
   return predNodes;
 }
 
-EStatePtrSet TransitionGraph::succ(const EState* estate) {
+EStatePtrSet TransitionGraph::succ(EStatePtr estate) {
   EStatePtrSet succNodes;
   TransitionPtrSet tset=outEdges(estate);
   for(TransitionPtrSet::iterator i=tset.begin();i!=tset.end();++i) {
@@ -209,7 +209,7 @@ EStatePtrSet TransitionGraph::succ(const EState* estate) {
   * \author Markus Schordan
   * \date 2012.
  */
-void TransitionGraph::reduceEState(const EState* estate) {
+void TransitionGraph::reduceEState(EStatePtr estate) {
   assert(0);
   /* description of essential operations:
    *   inedges: (n_i,b)
@@ -300,7 +300,7 @@ void TransitionGraph::erase(const Transition trans) {
   assert(num==1);
 }
 
-void TransitionGraph::eliminateEState(const EState* estate) {
+void TransitionGraph::eliminateEState(EStatePtr estate) {
   TransitionGraph::TransitionPtrSet in=inEdges(estate);
   for(TransitionPtrSet::iterator i=in.begin();i!=in.end();++i)
     erase(**i);
@@ -329,8 +329,8 @@ string TransitionGraph::toString(VariableIdMapping* variableIdMapping) const {
   * \author Markus Schordan
   * \date 2012.
  */
-set<const EState*> TransitionGraph::estateSetOfLabel(Label lab) {
-  set<const EState*> estateSet;
+set<EStatePtr> TransitionGraph::estateSetOfLabel(Label lab) {
+  set<EStatePtr> estateSet;
   for(TransitionGraph::iterator j=begin();j!=end();++j) {
     if((*j)->source->label()==lab)
       estateSet.insert((*j)->source);
@@ -360,7 +360,7 @@ bool TransitionGraph::checkConsistency() {
   return ok;
 }
 
-const Transition* TransitionGraph::hasSelfEdge(const EState* estate) {
+const Transition* TransitionGraph::hasSelfEdge(EStatePtr estate) {
   TransitionPtrSet in=inEdges(estate);
   for(TransitionPtrSet::iterator i=in.begin();i!=in.end();++i) {
     if((*i)->source==estate)
@@ -373,7 +373,7 @@ const Transition* TransitionGraph::hasSelfEdge(const EState* estate) {
   * \author Markus Schordan
   * \date 2012.
  */
-void TransitionGraph::reduceEState2(const EState* estate) {
+void TransitionGraph::reduceEState2(EStatePtr estate) {
   /* description of essential operations:
    *   inedges: (n_i,b)
    *   outedges: (b,n_j) 
@@ -442,7 +442,7 @@ void TransitionGraph::reduceEState2(const EState* estate) {
   * \date 2012.
  */
 // later, we may want to maintain this set with every graph-operation (turning the linear access to constant)
-set<const EState*> TransitionGraph::estateSet() {
+set<EStatePtr> TransitionGraph::estateSet() {
   _recomputedestateSet.clear();
   for(TransitionGraph::iterator j=begin();j!=end();++j) {
       _recomputedestateSet.insert((*j)->source);
@@ -465,8 +465,8 @@ long TransitionGraph::numberOfObservableStates(bool includeIn, bool includeOut, 
 }
 
 int TransitionGraph::eliminateBackEdges() {
-  const EState* startState=getStartEState();
-  set<const EState*> visited;
+  EStatePtr startState=getStartEState();
+  set<EStatePtr> visited;
   visited.insert(startState);
   TransitionPtrSet backEdges; // default empty
   determineBackEdges(startState, visited, backEdges);
@@ -475,7 +475,7 @@ int TransitionGraph::eliminateBackEdges() {
   }
   return backEdges.size();
 }
-void TransitionGraph::determineBackEdges(const EState* state, set<const EState*>& visited, TransitionPtrSet& tpSet) {
+void TransitionGraph::determineBackEdges(EStatePtr state, set<EStatePtr>& visited, TransitionPtrSet& tpSet) {
   TransitionPtrSet succPtrs=outEdges(state);
   for(TransitionPtrSet::iterator i=succPtrs.begin();i!=succPtrs.end();++i) {
     if(visited.find((*i)->target)!=visited.end()) {
@@ -514,19 +514,19 @@ size_t TransitionGraph::memorySize() const {
   size_t mem = HSetMaintainer<Transition,TransitionHashFun,TransitionEqualToPred>::memorySize();
   // The size of the Transition objects has been counted by the HSetMaintainer already.
   // However, the additional pointers in the _inEdges and _outEdges maps need to be considered too.
-  for (map<const EState*,TransitionPtrSet >::const_iterator i=_inEdges.begin(); i!=_inEdges.end(); ++i) {
+  for (map<EStatePtr,TransitionPtrSet >::const_iterator i=_inEdges.begin(); i!=_inEdges.end(); ++i) {
     for (TransitionPtrSet::const_iterator k=(*i).second.begin(); k!=(*i).second.end(); ++k) {
       mem+=sizeof(*k);
     }
     mem+=sizeof(*i);
   }
-  for (map<const EState*,TransitionPtrSet >::const_iterator i=_outEdges.begin(); i!=_outEdges.end(); ++i) {
+  for (map<EStatePtr,TransitionPtrSet >::const_iterator i=_outEdges.begin(); i!=_outEdges.end(); ++i) {
     for (TransitionPtrSet::const_iterator k=(*i).second.begin(); k!=(*i).second.end(); ++k) {
       mem+=sizeof(*k);
     }
     mem+=sizeof(*i);
   }
-  for(set<const EState*>::const_iterator i=_recomputedestateSet.begin(); i!= _recomputedestateSet.end(); ++i) {
+  for(set<EStatePtr>::const_iterator i=_recomputedestateSet.begin(); i!= _recomputedestateSet.end(); ++i) {
     mem+=sizeof(*i);
   }
   return mem + sizeof(*this);  // TODO: check if sizeof(base class HSetMaintainer) is now counted twice
@@ -536,12 +536,12 @@ size_t TransitionGraph::memorySize() const {
   * \author Markus Schordan
   * \date 2012.
  */
-void TransitionGraph::setStartEState(const EState* estate) {
+void TransitionGraph::setStartEState(EStatePtr estate) {
   ROSE_ASSERT(getModeLTLDriven());
   _startEState=estate;
 }
 
-const EState* TransitionGraph::getStartEState() {
+EStatePtr TransitionGraph::getStartEState() {
   if(getModeLTLDriven()) {
     return _startEState;
   }

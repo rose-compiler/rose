@@ -6,61 +6,11 @@ int main() { std::cout <<"disabled for " <<ROSE_BINARY_TEST_DISABLED <<"\n"; ret
 
 #include <rose.h>
 #include <Rose/BinaryAnalysis/SymbolicExpr.h>
-#include <Rose/BinaryAnalysis/YicesSolver.h>
 #include <Rose/BinaryAnalysis/Z3Solver.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
 
 using namespace Rose;
 using namespace Rose::BinaryAnalysis;
-
-#if 0 // [Robb P. Matzke 2015-06-25]: cannot be tested automatically since Jenkins might not have an SMT solver
-static void
-test_yices_linkage() {
-    if (unsigned avail = YicesSolver::availableLinkage()) {
-        std::cout <<"Yices is available as";
-        if (avail & YicesSolver::LM_EXECUTABLE)
-            std::cout <<" an executable";
-        if (avail & YicesSolver::LM_LIBRARY)
-            std::cout <<" a library";
-        std::cout <<"\n";
-    } else {
-        std::cout <<"Yices is not available";
-    }
-    
-    YicesSolver yices1;
-    switch (yices1.linkage()) {
-        case YicesSolver::LM_NONE:
-            std::cout <<"Yices is not available.\n";
-            break;
-        case YicesSolver::LM_LIBRARY:
-            std::cout <<"Yices is linked as a library.\n";
-            break;
-        case YicesSolver::LM_EXECUTABLE:
-            std::cout <<"Yices is used as a separate executable.\n";
-            break;
-        default:
-            ASSERT_not_reachable("invalid yices linkage");
-    }
-
-    if ((YicesSolver::availableLinkage() & YicesSolver::LM_LIBRARY) != 0) {
-        YicesSolver yices2;
-        yices2.linkage(YicesSolver::LM_LIBRARY);
-        switch (yices2.linkage()) {
-            case YicesSolver::LM_NONE:
-                std::cout <<"Yices is not available.\n";
-                break;
-            case YicesSolver::LM_LIBRARY:
-                std::cout <<"Yices is linked as a library.\n";
-                break;
-            case YicesSolver::LM_EXECUTABLE:
-                std::cout <<"Yices is used as a separate executable.\n";
-                break;
-            default:
-                ASSERT_not_reachable("invalid yices linkage");
-        }
-    }
-}
-#endif
 
 static void
 test_add_simplifications() {
@@ -96,9 +46,6 @@ test_svalues() {
 
 int
 main() {
-#if 0 // [Robb P. Matzke 2015-06-25]: cannot be tested automatically since Jenkins might not have Yices
-    test_yices_linkage();
-#endif
     test_add_simplifications();
     test_svalues();
 }

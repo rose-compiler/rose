@@ -31,7 +31,7 @@ public:
      *  An optional Linux system call header file can be provided to override the default. */
     static Ptr instance(const Partitioner&, const boost::filesystem::path &syscallHeader = "");
 
-    virtual bool operator()(bool chain, const Args&) ROSE_OVERRIDE;
+    virtual bool operator()(bool chain, const Args&) override;
 };
 
 /** Basic block callback to add "main" address as a function.
@@ -45,7 +45,7 @@ public:
     typedef Sawyer::SharedPointer<LibcStartMain> Ptr;
 
     static Ptr instance() { return Ptr(new LibcStartMain); } /**< Allocating constructor. */
-    virtual bool operator()(bool chain, const Args&) ROSE_OVERRIDE;
+    virtual bool operator()(bool chain, const Args&) override;
 
     /** Give the name "main" to the main function if it has no name yet. */
     void nameMainFunction(const Partitioner&) const;

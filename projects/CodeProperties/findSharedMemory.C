@@ -8,7 +8,7 @@ class SharedMemoryFinder: public AstSimpleProcessing {
 public:
     std::vector<SgFunctionCallExp*> found;
 
-    virtual void visit(SgNode *node) ROSE_OVERRIDE {
+    virtual void visit(SgNode *node) override {
         SgFunctionCallExp *fcall = isSgFunctionCallExp(node);
         SgFunctionDeclaration *fdecl = fcall ? fcall->getAssociatedFunctionDeclaration() : NULL;
         std::string fname = fdecl ? fdecl->get_qualified_name().getString() : "";

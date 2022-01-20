@@ -1023,6 +1023,7 @@ digraph "inherited_primitive_operation.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Inherited_Primitive_Operation.adb - 33:8 .. 33:22</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_FUNCTION_CALL</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2483082</TD></TR>
+          <TR><TD ALIGN="LEFT">Is_Prefix_Call    </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
           <TR><TD ALIGN="LEFT">Prefix  </TD><TD> = </TD><TD ALIGN="LEFT">Element_2445237</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Called_Function        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2336104</TD></TR>
           <TR><TD ALIGN="LEFT">Function_Call_Parameters ( 1)        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2447385</TD></TR>

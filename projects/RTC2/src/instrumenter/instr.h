@@ -61,17 +61,17 @@ namespace Instr
       //
       // overridden functions from base class
 
-      TempNameAttr* copy() const ROSE_OVERRIDE
+      TempNameAttr* copy() const override
       {
         return new TempNameAttr(stored, current);
       }
 
-      std::string attribute_class_name() const ROSE_OVERRIDE
+      std::string attribute_class_name() const override
       {
         return attributeName();
       }
 
-      OwnershipPolicy getOwnershipPolicy() const ROSE_OVERRIDE
+      OwnershipPolicy getOwnershipPolicy() const override
       {
         return CONTAINER_OWNERSHIP;
       }

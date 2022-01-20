@@ -1,0 +1,9 @@
+pragma Source_File_Name
+  (with_dot_issue,
+   Spec_File_Name => "with_dot_issue.ads");
+pragma Source_File_Name
+  (with_dot_issue.sub,
+   Spec_File_Name => "with_dot_issue.sub.ads");
+pragma Source_File_Name
+  (start,
+   Body_File_Name => "start.adb");

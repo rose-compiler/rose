@@ -56,8 +56,8 @@ struct CtxSolver0 : DFAbstractSolver
 		            Labeler& thelabeler
 	            );
 	     
-    void runSolver() ROSE_OVERRIDE;
-    void computeCombinedPreInfo(Label lab, Lattice& inInfo) ROSE_OVERRIDE;
+    void runSolver() override;
+    void computeCombinedPreInfo(Label lab, Lattice& inInfo) override;
     
   private:
     //

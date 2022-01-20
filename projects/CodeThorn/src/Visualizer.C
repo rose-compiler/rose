@@ -117,19 +117,8 @@ Visualizer::Visualizer(CTAnalysis* analyzer):
   setFlow(analyzer->getFlow());
   setEStateSet(analyzer->getEStateSet());
   setTransitionGraph(analyzer->getTransitionGraph());
+  _ctOpt=analyzer->getOptions();
 }
-
-  //! For providing specific information. For some visualizations not all information is required. The respective set-function can be used as well to set specific program information (this allows to also visualize computed subsets of information (such as post-processed transition graphs etc.).
-Visualizer::Visualizer(Labeler* l, VariableIdMapping* vim, Flow* f, EStateSet* ess, TransitionGraph* tg):
-  labeler(l),
-  variableIdMapping(vim),
-  flow(f),
-  estateSet(ess),
-  transitionGraph(tg),
-  tg1(false),
-  tg2(false),
-  optionTransitionGraphDotHtmlNode(true)
-{}
 
 void Visualizer::setOptionTransitionGraphDotHtmlNode(bool x) {optionTransitionGraphDotHtmlNode=x;}
 void Visualizer::setLabeler(Labeler* x) { labeler=x; }
@@ -141,72 +130,27 @@ void Visualizer::setTransitionGraph(TransitionGraph* x) { transitionGraph=x; }
 void Visualizer::setOptionMemorySubGraphs(bool flag) { optionMemorySubGraphs=flag; }
 bool Visualizer::getOptionMemorySubGraphs() { return optionMemorySubGraphs; }
 
-/*! 
- * \author Marc Jasper
- * \date 2016.
- */
-string Visualizer::cfasToDotSubgraphs(vector<Flow*> cfas) {
-  // define a color scheme
-  int numColors = 16;
-  vector<string> colors(numColors);
-  colors[0] = "#6699FF";
-  colors[1] = "#7F66FF";
-  colors[2] = "#CC66FF";
-  colors[3] = "#FF66E6";
-
-  colors[4] = "#66E6FF";
-  colors[5] = "#2970FF";
-  colors[6] = "#004EEB";
-  colors[7] = "#FF6699";
-
-  colors[8] = "#66FFCC";
-  colors[9] = "#EB9C00";
-  colors[10] = "#FFB829";
-  colors[11] = "#FF7F66";
-
-  colors[12] = "#66FF7F";
-  colors[13] = "#99FF66";
-  colors[14] = "#E6FF66";
-  colors[15] = "#FFCC66";
-
-  stringstream ss;
-  ss << "digraph G {" << endl;
-  for (unsigned int i = 0; i < cfas.size(); ++i) {
-    Flow* cfa = cfas[i];
-    cfa->setDotOptionHeaderFooter(false);
-    cfa->setDotOptionDisplayLabel(true);
-    cfa->setDotOptionDisplayStmt(false);
-    cfa->setDotOptionEdgeAnnotationsOnly(true);
-    cfa->setDotFixedNodeColor(colors[(i % numColors)]);
-    ss << "  subgraph component" << i << " {" << endl;
-    ss << cfa->toDot(NULL,0);
-    ss << "  }" << endl;
-  }
-  ss << "}" << endl;
-  return ss.str();
-}
-
-string Visualizer::estateToString(const EState* estate) {
+string Visualizer::estateToString(EStatePtr estate) {
   stringstream ss;
   bool pstateAddressSeparator=false;
-  if((tg1&&args.getBool("tg1-estate-address"))||(tg2&&args.getBool("tg2-estate-address"))) {
+  if((tg1&&_ctOpt.visualization.tg1EStateAddress)||(tg2&&_ctOpt.visualization.tg2EStateAddress)) {
     ss<<"@"<<estate;
     pstateAddressSeparator=true;
   }    
-  if((tg1&&args.getBool("tg1-estate-id"))||(tg2&&args.getBool("tg2-estate-id"))) {
+  if((tg1&&_ctOpt.visualization.tg1EStateId)||(tg2&&_ctOpt.visualization.tg2EStateId)) {
     if(pstateAddressSeparator) {
       ss<<":";
     }
     ss<<estateIdStringWithTemporaries(estate);
   }
-  if((tg1&&args.getBool("tg1-estate-properties"))||(tg2&&args.getBool("tg2-estate-properties"))) {
+  if((tg1&&_ctOpt.visualization.tg1EStateProperties)||(tg2&&_ctOpt.visualization.tg2EStateProperties)) {
     ss<<estate->toString(variableIdMapping);
   } 
   return ss.str();
 }
 
 
-string Visualizer::estateToDotString(const EState* estate) {
+string Visualizer::estateToDotString(EStatePtr estate) {
   return string("\""+SgNodeHelper::doubleQuotedEscapedString(estateToString(estate))+"\"");
 }
 
@@ -222,8 +166,8 @@ string Visualizer::transitionGraphDotHtmlNode(Label lab) {
   s+="</TD>\n";
 
   string sinline;
-  set<const EState*> estateSetOfLabel=transitionGraph->estateSetOfLabel(lab);
-  for(set<const EState*>::iterator j=estateSetOfLabel.begin();j!=estateSetOfLabel.end();++j) {
+  set<EStatePtr> estateSetOfLabel=transitionGraph->estateSetOfLabel(lab);
+  for(set<EStatePtr>::iterator j=estateSetOfLabel.begin();j!=estateSetOfLabel.end();++j) {
     // decide on color first
     string textcolor="black";
     string bgcolor="lightgrey";
@@ -259,18 +203,18 @@ string Visualizer::transitionGraphDotHtmlNode(Label lab) {
   return s;
 }
 
-string Visualizer::dotEStateAddressString(const EState* estate) {
+string Visualizer::dotEStateAddressString(EStatePtr estate) {
   stringstream ss;
   ss<<"s"<<estate;
   return ss.str();
 }
 
-string Visualizer::dotEStateMemoryString(const EState* estate) {
+string Visualizer::dotEStateMemoryString(EStatePtr estate) {
   string prefix=dotClusterName(estate);
   return estate->pstate()->toDotString(prefix,variableIdMapping);
 }
 
-std::string Visualizer::dotClusterName(const EState* estate) {
+std::string Visualizer::dotClusterName(EStatePtr estate) {
   return "cluster_"+this->dotEStateAddressString(estate);
 }
 
@@ -285,7 +229,6 @@ string Visualizer::transitionGraphToDot() {
   int numInvisibleLayoutEdges=2; // only used for memory subgraphs
 
   for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
-
     // // FAILEDASSERTVIS: the next check allows to turn off edges of failing assert to target node (text=red, background=black)
     if((*j)->target->io.op==InputOutput::FAILED_ASSERT) continue;
 
@@ -366,7 +309,7 @@ string Visualizer::abstractTransitionGraphToDot() {
       concreteEStates.insert(*i);
     } 
   }
-  ss << transitionGraphWithIOToDot(concreteEStates, true, args.getBool("keep-error-states"), false);
+  ss << transitionGraphWithIOToDot(concreteEStates, true, _ctOpt.keepErrorStates, false);
   ss << "subgraph cluster_abstractStates {" << endl;
   ss << transitionGraphWithIOToDot(abstractEStates, true, false, true);
   ss << "}" << endl;
@@ -379,7 +322,7 @@ string Visualizer::transitionGraphWithIOToDot(EStatePtrSet displayedEStates,
   EStatePtrSet estatePtrSet = displayedEStates;
   set<int> outputValues;
   EStatePtrSet abstractInputStates;
-  for(set<const EState*>::iterator i=estatePtrSet.begin();i!=estatePtrSet.end();++i) {
+  for(set<EStatePtr>::iterator i=estatePtrSet.begin();i!=estatePtrSet.end();++i) {
     if ( !includeErrorStates && ((*i)->io.isStdErrIO() || (*i)->io.isFailedAssertIO()) ){
       continue;
     }
@@ -406,7 +349,7 @@ string Visualizer::transitionGraphWithIOToDot(EStatePtrSet displayedEStates,
     if (displayCurrentState) {
       // generate number which is used in IO operation
       string name="\"";
-      if(args.getBool("rersmode") && !args.getBool("rers-numeric")) {
+      if(_ctOpt.rers.rersMode && !_ctOpt.rers.rersNumeric) {
         if(!number.isTop() && !number.isBot()) {
           // convert number to letter
           int num=number.getIntValue();
@@ -450,13 +393,13 @@ string Visualizer::transitionGraphWithIOToDot(EStatePtrSet displayedEStates,
 #if 0 // debug only
     if ((*i)->io.isStdInIO() && (*i)->isRersTopified(variableIdMapping)) {
       int inputVal = (*i)->determineUniqueIOValue().getIntValue();
-      cout << "DEBUG: abstract input " << inputVal << " has "<<  outTrans.size() << " successors." << endl;
+      //cout << "DEBUG: abstract input " << inputVal << " has "<<  outTrans.size() << " successors." << endl;
     }
 #endif
     for(TransitionGraph::TransitionPtrSet::iterator j=outTrans.begin();
     j!=outTrans.end();
     ++j) { 
-      const EState* target = (*j)->target;
+      EStatePtr target = (*j)->target;
       if ( !includeErrorStates && (target->io.isStdErrIO() || target->io.isFailedAssertIO()) ){
         continue;
       }
@@ -509,8 +452,8 @@ string Visualizer::transitionGraphWithIOToDot() {
     }
   }
 #endif
-  set<const EState*> estatePtrSet=transitionGraph->estateSet();
-  for(set<const EState*>::iterator i=estatePtrSet.begin();i!=estatePtrSet.end();++i) {
+  set<EStatePtr> estatePtrSet=transitionGraph->estateSet();
+  for(set<EStatePtr>::iterator i=estatePtrSet.begin();i!=estatePtrSet.end();++i) {
     ss<<"n"<<*i<<" [label=";
     Label lab=(*i)->label();
     string name="\"";
@@ -527,7 +470,7 @@ string Visualizer::transitionGraphWithIOToDot() {
 #endif
     // generate number which is used in IO operation
     AbstractValue number=(*i)->determineUniqueIOValue();
-    if(args.getBool("rersmode") && !args.getBool("rers-numeric")) {
+    if(_ctOpt.rers.rersMode && !_ctOpt.rers.rersNumeric) {
       if(!number.isTop() && !number.isBot()) {
         // convert number to letter
         int num=number.getIntValue();
@@ -581,7 +524,7 @@ string Visualizer::transitionGraphWithIOToDot() {
 }
 
 
-string Visualizer::estateIdStringWithTemporaries(const EState* estate) {
+string Visualizer::estateIdStringWithTemporaries(EStatePtr estate) {
   stringstream ss;
   EStateId estateId=estateSet->estateId(estate);
   if(estateId!=NO_ESTATE) {
@@ -734,8 +677,8 @@ string Visualizer::foldedTransitionGraphToDot() {
   // generate edges
   size_t edgeNr=0;
    for(TransitionGraph::iterator j=transitionGraph->begin();j!=transitionGraph->end();++j) {
-    const EState* source=(*j)->source;
-    const EState* target=(*j)->target;
+    EStatePtr source=(*j)->source;
+    EStatePtr target=(*j)->target;
 
     if(gSize>reportInterval && edgeNr%reportInterval==0) {
       cout<<"INFO: generating transition "<<edgeNr<<" of "<<gSize<<endl;
@@ -763,56 +706,6 @@ string Visualizer::foldedTransitionGraphToDot() {
   return ss.str();
 }
 
-#ifdef HAVE_SPOT
-struct spot_state_compare {
-  bool operator() (spot::state* const& lhs, spot::state* const& rhs) const {
-    if (lhs->compare(rhs) < 0) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-};
-#endif
-
-/*! 
- * \author Marc Jasper
- * \date 2016.
- */
-string Visualizer::spotTgbaToDot(spot::tgba& tgba) {
-#ifdef HAVE_SPOT
-  stringstream ss;
-  ss << "digraph G {" << endl;
-  spot::state* initState = tgba.get_init_state();
-  list<spot::state*> worklist;
-  set<spot::state*, spot_state_compare> added;
-  worklist.push_back(initState);
-  added.insert(initState);
-  while (!worklist.empty()) {
-    spot::state* next = worklist.front();
-    ss <<"  "<< "\""<<tgba.format_state(next)<<"\" [ label=\"\" ]" << endl;
-    worklist.pop_front();
-    spot::tgba_succ_iterator* outEdgesIter = tgba.succ_iter(next, NULL, NULL);
-    outEdgesIter->first();
-    while(!outEdgesIter->done()) {
-      spot::state* successor = outEdgesIter->current_state();
-      ss <<"  "<< "\""<<tgba.format_state(next)<<"\""<<" -> "<<"\""<<tgba.format_state(successor)<<"\"";
-      ss <<" [ label=\""<<tgba.transition_annotation(outEdgesIter)<<"\" ]" << endl;
-      if (added.find(successor) == added.end()) {
-	worklist.push_back(successor);
-	added.insert(successor);
-      }
-      outEdgesIter->next();
-    }
-    delete outEdgesIter;
-  }
-  ss << "}" << endl;
-  return ss.str();
-#else
-  cerr<<"Visualizer::spotTgbaToDot: SPOT is required, but not installed."<<endl;
-  exit(1);
-#endif
-}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // END OF VISUALIZER

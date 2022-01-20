@@ -497,12 +497,6 @@ std::string version_message() {
     ss <<"  ---   yaml library:             unused\n";
 #endif
 
-#ifdef ROSE_HAVE_LIBYICES
-    ss <<"  ---   yices library:            " <<yices_version() <<"\n";
-#else
-    ss <<"  ---   yices library:            unused\n";
-#endif
-
 #ifdef Z3_FULL_VERSION
     ss <<"  ---   z3 library:               " <<Z3_FULL_VERSION <<" (" <<ROSE_Z3 <<")\n";
 #elif defined(ROSE_HAVE_Z3)

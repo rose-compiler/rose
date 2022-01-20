@@ -295,12 +295,12 @@ public:
      *
      *  This is information for summarized functions. */
     struct FunctionSummary {
-        rose_addr_t address;                            /**< Address of summarized function. */
-        int64_t stackDelta;                             /**< Stack delta for summarized function. */
+        rose_addr_t address = 0;                            /**< Address of summarized function. */
+        int64_t stackDelta = SgAsmInstruction::INVALID_STACK_DELTA; /**< Stack delta for summarized function. */
         std::string name;                               /**< Name of summarized function. */
 
         /** Construct empty function summary. */
-        FunctionSummary(): stackDelta(SgAsmInstruction::INVALID_STACK_DELTA) {}
+        FunctionSummary();
 
         /** Construct function summary with information. */
         FunctionSummary(const Partitioner2::ControlFlowGraph::ConstVertexIterator &cfgFuncVertex, uint64_t stackDelta);
@@ -344,8 +344,8 @@ public:
     //                                  Private data members
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 private:
-    const Partitioner2::Partitioner *partitioner_;      // binary analysis context
-    RegisterDictionary *registers_;                     // registers augmented with "path" pseudo-register
+    const Partitioner2::Partitioner *partitioner_ = nullptr; // binary analysis context
+    RegisterDictionary *registers_ = nullptr;           // registers augmented with "path" pseudo-register
     RegisterDescriptor REG_RETURN_;                     // FIXME[Robb P Matzke 2016-10-11]: see source
     Settings settings_;
     FunctionSummaries functionSummaries_;
@@ -353,7 +353,7 @@ private:
     Partitioner2::ControlFlowGraph paths_;              // all possible paths, feasible or otherwise
     Partitioner2::CfgConstVertexSet pathsBeginVertices_;// vertices of paths_ where searching starts
     Partitioner2::CfgConstVertexSet pathsEndVertices_;  // vertices of paths_ where searching stops
-    bool isDirectedSearch_;                             // use pathsEndVertices_?
+    bool isDirectedSearch_ = true;                      // use pathsEndVertices_?
     Partitioner2::CfgConstEdgeSet cfgAvoidEdges_;       // CFG edges to avoid
     Partitioner2::CfgConstVertexSet cfgEndAvoidVertices_;// CFG end-of-path and other avoidance vertices
     FunctionSummarizer::Ptr functionSummarizer_;        // user-defined function for handling function summaries
@@ -370,10 +370,8 @@ private:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Constructs a new feasible path analyzer. */
-    FeasiblePath()
-        : registers_(NULL), isDirectedSearch_(true) {}
-
-    virtual ~FeasiblePath() {}
+    FeasiblePath();
+    virtual ~FeasiblePath();
 
     /** Reset to initial state without changing settings. */
     void reset() {

@@ -107,24 +107,29 @@ void LanguageRestrictor::initialize() {
 
 bool LanguageRestrictor::checkProgram(SgNode* root) {
   initialize();
-  if(!checkIfAstIsAllowed(root)) {
-    cerr << "INIT FAILED: Input program not valid."<<endl;
-    exit(1);
-  }
-  return true;
+  return checkIfAstIsAllowed(root);
 }
 
 bool LanguageRestrictor::checkIfAstIsAllowed(SgNode* node) {
   RoseAst ast(node);
+  std::map<std::string,uint64_t> errorMap;
   for(RoseAst::iterator i=ast.begin();i!=ast.end();++i) {
     if(!isAllowedAstNode(*i)) {
-      cerr << "Language-Restrictor: excluded language construct found: " << (*i)->sage_class_name() <<" : "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<" : "<<(*i)->unparseToString()<< endl;
-      // report first error and return
-      if((*i)->variantT()==V_SgContinueStmt) {
-        cerr << "cfg construction for continue-statement not supported yet."<<endl; break;
+      string nodeName=(*i)->class_name();
+      if(errorMap.find(nodeName)==errorMap.end()) {
+        errorMap[nodeName]=0;
       }
-      return false;
+      errorMap[nodeName]++;
+      //cerr << "Language-Restrictor: excluded language construct found: " << (*i)->sage_class_name() <<" : "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<" : "<<(*i)->unparseToString()<< endl;
     }
+  }
+  if(errorMap.size()>0) {
+    // print violations count
+    cout<<"Incorrect input program. Number of non-C AST nodes:"<<endl;
+    for(auto entry : errorMap) {
+      cout<<entry.first<<": "<<entry.second<<endl;
+    }
+    return false;
   }
   return true;
 }

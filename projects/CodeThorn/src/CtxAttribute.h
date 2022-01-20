@@ -17,12 +17,12 @@ struct CtxAttribute : DFAstAttribute
 
     ~CtxAttribute() { delete &lattice; }
 
-    void toStream(std::ostream& os, VariableIdMapping* vm) ROSE_OVERRIDE
+    void toStream(std::ostream& os, VariableIdMapping* vm) override
     {
       lattice.toStream(os, vm);
     }
 
-    std::string toString() ROSE_OVERRIDE
+    std::string toString() override
     {
       return lattice.toString();
     }

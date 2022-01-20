@@ -5,77 +5,178 @@
 
 using namespace CodeThorn;
 
-void LanguageRestrictorCppSubset1::initialize() {
+void LanguageRestrictorRers::initialize() {
   allowAstNodesRequiredForEmptyProgram();
-  LanguageRestrictor::VariantSet vs;
-  vs.insert(V_SgIntVal);
-  vs.insert(V_SgAssignOp);
-  vs.insert(V_SgCastExp);
-  vs.insert(V_SgVarRefExp);
-  vs.insert(V_SgExprStatement);
-  vs.insert(V_SgIfStmt);
-  vs.insert(V_SgWhileStmt);
-  vs.insert(V_SgDoWhileStmt);
+  LanguageRestrictor::VariantSet vs={
+  V_SgIntVal,
+  V_SgAssignOp,
+  V_SgCastExp,
+  V_SgVarRefExp,
+  V_SgExprStatement,
+  V_SgIfStmt,
+  V_SgWhileStmt,
+  V_SgDoWhileStmt,
   
-  vs.insert(V_SgForInitStatement);
-  vs.insert(V_SgForStatement);
+  V_SgForInitStatement,
+  V_SgForStatement,
   
-  vs.insert(V_SgBreakStmt);
-  vs.insert(V_SgContinueStmt);
-  vs.insert(V_SgGotoStatement);
+  V_SgBreakStmt,
+  V_SgContinueStmt,
+  V_SgGotoStatement,
 
-  vs.insert(V_SgAndOp);
-  vs.insert(V_SgOrOp);
-  vs.insert(V_SgNotOp);
-  vs.insert(V_SgNotEqualOp);
-  vs.insert(V_SgEqualityOp);
-  vs.insert(V_SgIntVal);
-  vs.insert(V_SgVariableDeclaration);
-  vs.insert(V_SgReturnStmt);
-  vs.insert(V_SgAssignInitializer);
-  vs.insert(V_SgBoolValExp);
-  vs.insert(V_SgLabelStatement);
-  vs.insert(V_SgNullStatement);
-  vs.insert(V_SgConditionalExp); // TODO: case if inside expressions
-  vs.insert(V_SgMinusOp);
+  V_SgAndOp,
+  V_SgOrOp,
+  V_SgNotOp,
+  V_SgNotEqualOp,
+  V_SgEqualityOp,
+  V_SgIntVal,
+  V_SgVariableDeclaration,
+  V_SgReturnStmt,
+  V_SgAssignInitializer,
+  V_SgBoolValExp,
+  V_SgLabelStatement,
+  V_SgNullStatement,
+  V_SgConditionalExp,
+  V_SgMinusOp,
   
-  vs.insert(V_SgPlusPlusOp);
-  vs.insert(V_SgMinusMinusOp);
+  V_SgPlusPlusOp,
+  V_SgMinusMinusOp,
   
   // inter-procedural
-  vs.insert(V_SgFunctionCallExp);
-  vs.insert(V_SgFunctionRefExp);
-  vs.insert(V_SgExprListExp);
+  V_SgFunctionCallExp,
+  V_SgFunctionRefExp,
+  V_SgExprListExp,
 
-  //vs.insert(V_SgPragmaDeclaration);
-  //vs.insert(V_SgPragma);
+  //V_SgPragmaDeclaration,
+  //V_SgPragma,
   
   // rers Problems
-  vs.insert(V_SgTypedefDeclaration);
-  vs.insert(V_SgClassDeclaration);
-  vs.insert(V_SgClassDefinition);
-  vs.insert(V_SgEnumDeclaration);
-  vs.insert(V_SgStringVal);
-  vs.insert(V_SgAddressOfOp);
+  V_SgTypedefDeclaration,
+  V_SgClassDeclaration,
+  V_SgClassDefinition,
+  V_SgEnumDeclaration,
+  V_SgStringVal,
+  V_SgAddressOfOp,
   
   // rers Problems 10-13
   // arithmetic operators
-  vs.insert(V_SgAddOp);
-  vs.insert(V_SgSubtractOp);
-  vs.insert(V_SgMultiplyOp);
-  vs.insert(V_SgDivideOp);
-  vs.insert(V_SgModOp);
-  vs.insert(V_SgGreaterOrEqualOp);
-  vs.insert(V_SgLessThanOp);
-  vs.insert(V_SgGreaterThanOp);
-  vs.insert(V_SgLessOrEqualOp);
+  V_SgAddOp,
+  V_SgSubtractOp,
+  V_SgMultiplyOp,
+  V_SgDivideOp,
+  V_SgModOp,
+  V_SgGreaterOrEqualOp,
+  V_SgLessThanOp,
+  V_SgGreaterThanOp,
+  V_SgLessOrEqualOp,
   
-  // temporary: is used inside asserts (on some systems), but no handled yet in general. It is ignored in assert, because __fail is called before.
-  vs.insert(V_SgCommaOpExp);
-  //vs.insert(V_SgNullExpression); TODO (e.g. return;)
+  // is used inside asserts
+  V_SgCommaOpExp,
 
-  vs.insert(V_SgEnumVal);
+  V_SgNullExpression,
+  V_SgEnumVal,
+  V_SgSizeOfOp,
 
+  V_SgStatementExpression, // GNU extension
+  };
+  
   setAstNodeVariantSet(vs,true);
 }
 
+void LanguageRestrictorC::initialize() {
+  // generated with 'thorn3 --print-variant-set program.c'
+  LanguageRestrictor::VariantSet vs
+    ={
+    V_SgAddOp,
+    V_SgAddressOfOp,
+    V_SgAggregateInitializer,
+    V_SgAndAssignOp,
+    V_SgAndOp,
+    V_SgArrowExp,
+    V_SgAsmOp,
+    V_SgAsmStmt,
+    V_SgAssignInitializer,
+    V_SgAssignOp,
+    V_SgBasicBlock,
+    V_SgBitAndOp,
+    V_SgBitComplementOp,
+    V_SgBitOrOp,
+    V_SgBitXorOp,
+    V_SgBreakStmt,
+    V_SgCaseOptionStmt,
+    V_SgCastExp,
+    V_SgCharVal,
+    V_SgClassDeclaration,
+    V_SgClassDefinition,
+    V_SgCommaOpExp,
+    V_SgConditionalExp,
+    V_SgContinueStmt,
+    V_SgDefaultOptionStmt,
+    V_SgDesignatedInitializer,
+    V_SgDivAssignOp,
+    V_SgDivideOp,
+    V_SgDoWhileStmt,
+    V_SgDotExp,
+    V_SgDoubleVal,
+    V_SgEnumDeclaration,
+    V_SgEnumVal,
+    V_SgEqualityOp,
+    V_SgExprListExp,
+    V_SgExprStatement,
+    V_SgFileList,
+    V_SgForInitStatement,
+    V_SgForStatement,
+    V_SgFunctionCallExp,
+    V_SgFunctionDeclaration,
+    V_SgFunctionDefinition,
+    V_SgFunctionParameterList,
+    V_SgFunctionRefExp,
+    V_SgGlobal,
+    V_SgGotoStatement,
+    V_SgGreaterOrEqualOp,
+    V_SgGreaterThanOp,
+    V_SgIfStmt,
+    V_SgInitializedName,
+    V_SgIntVal,
+    V_SgIorAssignOp,
+    V_SgLabelStatement,
+    V_SgLessOrEqualOp,
+    V_SgLessThanOp,
+    V_SgLongIntVal,
+    V_SgLshiftAssignOp,
+    V_SgLshiftOp,
+    V_SgMinusAssignOp,
+    V_SgMinusMinusOp,
+    V_SgMinusOp,
+    V_SgModAssignOp,
+    V_SgModOp,
+    V_SgMultAssignOp,
+    V_SgMultiplyOp,
+    V_SgNotEqualOp,
+    V_SgNotOp,
+    V_SgNullExpression,
+    V_SgNullStatement,
+    V_SgOrOp,
+    V_SgPlusAssignOp,
+    V_SgPlusPlusOp,
+    V_SgPntrArrRefExp,
+    V_SgPointerDerefExp,
+    V_SgProject,
+    V_SgReturnStmt,
+    V_SgRshiftAssignOp,
+    V_SgRshiftOp,
+    V_SgShortVal,
+    V_SgSizeOfOp,
+    V_SgSourceFile,
+    V_SgStatementExpression,
+    V_SgStringVal,
+    V_SgSubtractOp,
+    V_SgSwitchStatement,
+    V_SgTypedefDeclaration,
+    V_SgVarRefExp,
+    V_SgVariableDeclaration,
+    V_SgWhileStmt,
+    V_SgXorAssignOp,
+  };
+  setAstNodeVariantSet(vs,true);
+}

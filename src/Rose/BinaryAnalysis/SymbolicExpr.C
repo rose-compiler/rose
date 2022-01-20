@@ -6,6 +6,7 @@
 
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <boost/foreach.hpp>
+#include <boost/lexical_cast.hpp>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
 #include <Combinatorics.h>
@@ -34,6 +35,8 @@ typedef Sawyer::Container::BitVector::BitRange BitRange;
 
 const uint64_t
 MAX_NNODES = UINT64_MAX;
+
+bool serializeVariableIds = false;
 
 std::string
 toStr(Operator o) {
@@ -140,13 +143,13 @@ ExpressionLessp::operator()(const Ptr &a, const Ptr &b) const {
 Ptr
 setToIte(const Ptr &set, const SmtSolverPtr &solver, const LeafPtr &var) {
     ASSERT_not_null(set);
-    InteriorPtr iset = set->isInteriorNode();
+    const Interior *iset = set->isInteriorNodeRaw();
     if (!iset || iset->getOperator() != OP_SET)
         return set;
     ASSERT_require(iset->nChildren() >= 1);
     LeafPtr condVar = var==NULL ? makeIntegerVariable(32)->isLeafNode() : var;
     Ptr retval;
-    for (size_t i=iset->nChildren(); i>0; --i) {
+    for (size_t i = iset->nChildren(); i>0; --i) {
         Ptr member = iset->child(i-1);
         if (!retval) {
             retval = member;
@@ -182,7 +185,7 @@ struct VariableRenamer {
         ExprExprHashMap::iterator found = seen.find(input);
         if (found != seen.end()) {
             return found->second;
-        } else if (InteriorPtr inode = input->isInteriorNode()) {
+        } else if (const Interior *inode = input->isInteriorNodeRaw()) {
             bool anyChildRenamed = false;
             Nodes newChildren;
             newChildren.reserve(inode->nChildren());
@@ -241,7 +244,7 @@ struct SingleSubstituter {
         } else if (input->isEquivalentTo(from)) {
             retval = to;
             seen.insert(std::make_pair(input, retval));
-        } else if (InteriorPtr inode = input->isInteriorNode()) {
+        } else if (const Interior *inode = input->isInteriorNodeRaw()) {
             bool anyChildChanged = false;
             Nodes newChildren;
             newChildren.reserve(inode->nChildren());
@@ -285,7 +288,7 @@ struct MultiSubstituter {
         ExprExprHashMap::const_iterator found = substitutions.find(input);
         if (found != substitutions.end()) {
             retval = found->second;
-        } else if (InteriorPtr inode = input->isInteriorNode()) {
+        } else if (const Interior *inode = input->isInteriorNodeRaw()) {
             bool anyChildChanged = false;
             Nodes newChildren;
             newChildren.reserve(inode->nChildren());
@@ -408,22 +411,32 @@ Node::isInteriorNode() const {
     return InteriorPtr(dynamic_cast<Interior*>(const_cast<Node*>(this)));
 }
 
+Interior*
+Node::isInteriorNodeRaw() const {
+    return dynamic_cast<Interior*>(const_cast<Node*>(this));
+}
+
 LeafPtr
 Node::isLeafNode() const {
     return LeafPtr(dynamic_cast<Leaf*>(const_cast<Node*>(this)));
+}
+
+Leaf*
+Node::isLeafNodeRaw() const {
+    return dynamic_cast<Leaf*>(const_cast<Node*>(this));
 }
 
 Ptr
 Node::newFlags(unsigned newFlags) const {
     if (newFlags == flags_)
         return Ptr(const_cast<Node*>(this));
-    if (InteriorPtr inode = isInteriorNode()) {
+    if (const Interior *inode = isInteriorNodeRaw()) {
         // No SMT solver is necessary since changing the flags won't cause the new expression to simplify any differently than
         // it already is. In fact, it there might be a faster way to create the new expression given this fact.
         SmtSolverPtr solver;
         return Interior::instance(inode->type(), inode->getOperator(), inode->children(), solver, comment(), newFlags);
     }
-    LeafPtr lnode = isLeafNode();
+    const Leaf *lnode = isLeafNodeRaw();
     ASSERT_not_null(lnode);
     if (lnode->isConstant()) {
         return makeConstant(type(), lnode->bits(), comment(), newFlags);
@@ -482,7 +495,7 @@ struct Hasher: Visitor {
         ASSERT_not_null(node);
         if (!node->isHashed()) {                        // probably true, but some other thread may have beaten us here.
             Hash h = hash(hash(node->isMemoryExpr() ? node->domainWidth() : 0, node->nBits()), node->flags());
-            if (LeafPtr leaf = node->isLeafNode()) {
+            if (const Leaf *leaf = node->isLeafNodeRaw()) {
                 if (leaf->isConstant()) {
                     if (leaf->isIntegerConstant() && leaf->nBits() <= 64) {
                         h = hash(h, leaf->toUnsigned().get());
@@ -493,12 +506,12 @@ struct Hasher: Visitor {
                         }
                     }
                 } else {
-                    // It's okay to hash only the variable ID and not the type because one variable shouldn't never be more
-                    // than one type.
+                    // It's okay to hash only the variable ID and not the type because one variable should never be more than
+                    // one type.
                     h = hash(h, leaf->nameId());
                 }
             } else {
-                InteriorPtr inode = node->isInteriorNode();
+                const Interior *inode = node->isInteriorNodeRaw();
                 ASSERT_not_null(inode);
                 h = hash(h, inode->getOperator());
                 BOOST_FOREACH (const Ptr &child, inode->children()) {
@@ -611,8 +624,8 @@ bool
 Node::matchAddVariableConstant(LeafPtr &variable/*out*/, LeafPtr &constant/*out*/) const {
     if (InteriorPtr inode = isOperator(OP_ADD)) {
         if (inode->nChildren() == 2) {
-            LeafPtr arg0 = inode->child(0)->isLeafNode();
-            LeafPtr arg1 = inode->child(1)->isLeafNode();
+            LeafPtr arg0 = inode->childRaw(0)->isLeafNode();
+            LeafPtr arg1 = inode->childRaw(1)->isLeafNode();
             if (arg0 && arg1) {
                 if (arg0->isIntegerVariable() && arg1->isIntegerConstant()) {
                     variable = arg0;
@@ -632,10 +645,15 @@ Node::matchAddVariableConstant(LeafPtr &variable/*out*/, LeafPtr &constant/*out*
 Sawyer::Optional<uint64_t>
 Node::variableId() const {
     if (isVariable2()) {
-        return isLeafNode()->nameId();
+        return isLeafNodeRaw()->nameId();
     } else {
         return Sawyer::Nothing();
     }
+}
+
+std::string
+Node::toString() const {
+    return boost::lexical_cast<std::string>(*this);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -727,6 +745,17 @@ Interior::addChild(const Ptr &child)
     }
 }
 
+const Ptr&
+Interior::child(size_t i) const {
+    static const Ptr none;
+    return i < children_.size() ? children_[i] : none;
+}
+
+Node*
+Interior::childRaw(size_t i) const {
+    return i < children_.size() ? children_[i].getRawPointer() : nullptr;
+}
+
 void
 Interior::adjustWidth(const Type &type) {
     if (children_.empty())
@@ -741,11 +770,11 @@ Interior::adjustWidth(const Type &type) {
         case OP_SHR1: {
             if (nChildren() != 2)
                 throw Exception(toStr(op_) + " operator expects two arguments");
-            if (!child(0)->isIntegerExpr())
+            if (!childRaw(0)->isIntegerExpr())
                 throw Exception(toStr(op_) + " operator's first argument (shift amount) must be integer");
-            if (!child(1)->isIntegerExpr())
+            if (!childRaw(1)->isIntegerExpr())
                 throw Exception(toStr(op_) + " operator's second argument (value to shift) must be integer");
-            type_ = Type::integer(child(1)->nBits());
+            type_ = Type::integer(childRaw(1)->nBits());
             break;
         }
         case OP_CONCAT: {
@@ -767,7 +796,7 @@ Interior::adjustWidth(const Type &type) {
         case OP_REINTERPRET: {
             if (nChildren() != 1)
                 throw Exception(toStr(op_) + " operator expects one argument");
-            if (child(0)->type().nBits() == type.nBits())
+            if (childRaw(0)->type().nBits() == type.nBits())
                 type_ = type;
             break;
         }
@@ -783,11 +812,11 @@ Interior::adjustWidth(const Type &type) {
         case OP_ULT: {
             if (nChildren() != 2)
                 throw Exception(toStr(op_) + " operator expects two arguments");
-            if (!child(0)->isIntegerExpr())
+            if (!childRaw(0)->isIntegerExpr())
                 throw Exception(toStr(op_) + " operator's first argument (shift amount) must be integer");
-            if (!child(1)->isIntegerExpr())
+            if (!childRaw(1)->isIntegerExpr())
                 throw Exception(toStr(op_) + " operator's second argument (value to shift) must be integer");
-            if (child(0)->nBits() != child(1)->nBits())
+            if (childRaw(0)->nBits() != childRaw(1)->nBits())
                 throw Exception(toStr(op_) + " operator's arguments must both be the same width");
             type_ = Type::integer(1);
             break;
@@ -795,19 +824,19 @@ Interior::adjustWidth(const Type &type) {
         case OP_EXTRACT: {
             if (nChildren() != 3)
                 throw Exception(toStr(op_) + " operator expects three arguments");
-            if (!child(0)->isIntegerConstant())
+            if (!childRaw(0)->isIntegerConstant())
                 throw Exception(toStr(op_) + " operator's first argument (begin bit) must be an integer constant");
-            if (!child(1)->isIntegerConstant())
+            if (!childRaw(1)->isIntegerConstant())
                 throw Exception(toStr(op_) + " operator's second argument (end bit) must be an integer constant");
-            if (child(0)->nBits() > 64)
+            if (childRaw(0)->nBits() > 64)
                 throw Exception(toStr(op_) + " operator's first argument (begin bit) must be 64 bits or narrower");
-            if (child(1)->nBits() > 64)
+            if (childRaw(1)->nBits() > 64)
                 throw Exception(toStr(op_) + " operator's second argument (end bit) must be 64 bits or narrower");
-            if (!child(2)->isScalarExpr())
+            if (!childRaw(2)->isScalarExpr())
                 throw Exception(toStr(op_) + " operator's third argument must be scalar");
-            if (*child(0)->toUnsigned() >= *child(1)->toUnsigned())
+            if (*childRaw(0)->toUnsigned() >= *childRaw(1)->toUnsigned())
                 throw Exception(toStr(op_) + " operator's first argument must be less than the second");
-            size_t totalSize = *child(1)->toUnsigned() - *child(0)->toUnsigned();
+            size_t totalSize = *childRaw(1)->toUnsigned() - *childRaw(0)->toUnsigned();
             // Result will be integer even if arg is floating-point. Example: extracting the bytes of a floating-point value in
             // order to store it in memory results in integer-valued bytes since it doesn't make sense to interpret the bytes
             // as floating-point values.
@@ -817,19 +846,19 @@ Interior::adjustWidth(const Type &type) {
         case OP_ITE: {
             if (nChildren() != 3)
                 throw Exception(toStr(op_) + " operator expects three arguments");
-            if (!child(0)->isIntegerExpr())
+            if (!childRaw(0)->isIntegerExpr())
                 throw Exception(toStr(op_) + " operator's first argument (condition) must be integer");
-            if (child(0)->nBits() != 1)
+            if (childRaw(0)->nBits() != 1)
                 throw Exception(toStr(op_) + " operator's first argument (condition) must be Boolean");
-            if (child(1)->type() != child(2)->type())
+            if (childRaw(1)->type() != childRaw(2)->type())
                 throw Exception(toStr(op_) + " operator's second and third arguments must have the same type");
-            type_ = child(1)->type();
+            type_ = childRaw(1)->type();
             break;
         }
         case OP_LET: {
             if (nChildren() != 3)
                 throw Exception(toStr(op_) + " operator expects three arguments");
-            type_ = child(2)->type();
+            type_ = childRaw(2)->type();
             break;
         }
         case OP_LSSB:
@@ -837,44 +866,44 @@ Interior::adjustWidth(const Type &type) {
         case OP_NEGATE: {
             if (nChildren() != 1)
                 throw Exception(toStr(op_) + " operator expects one argument");
-            if (!child(0)->isIntegerExpr())
+            if (!childRaw(0)->isIntegerExpr())
                 throw Exception(toStr(op_) + " argument must be integer");
-            type_ = child(0)->type();
+            type_ = childRaw(0)->type();
             break;
         }
         case OP_READ: {
             if (nChildren() != 2)
                 throw Exception(toStr(op_) + " operator expects two arguments");
-            if (!child(0)->isMemoryExpr())
+            if (!childRaw(0)->isMemoryExpr())
                 throw Exception(toStr(op_) + " operator's first argument must be a memory state");
-            if (!child(1)->isIntegerExpr())
+            if (!childRaw(1)->isIntegerExpr())
                 throw Exception(toStr(op_) + " operator's second argument (address) must be integer");
-            if (child(0)->domainWidth() != child(1)->nBits())
+            if (childRaw(0)->domainWidth() != childRaw(1)->nBits())
                 throw Exception(toStr(op_) + " operator's arguments have mismatched sizes");
-            type_ = Type::integer(child(0)->nBits());   // size of values stored in memory
+            type_ = Type::integer(childRaw(0)->nBits());   // size of values stored in memory
             break;
         }
         case OP_SDIV:
         case OP_UDIV: {
             if (nChildren() != 2)
                 throw Exception(toStr(op_) + " operator expects two arguments");
-            if (!child(0)->isIntegerExpr())
+            if (!childRaw(0)->isIntegerExpr())
                 throw Exception(toStr(op_) + " operator's first argument must be integer");
-            if (!child(1)->isIntegerExpr())
+            if (!childRaw(1)->isIntegerExpr())
                 throw Exception(toStr(op_) + " operator's second argument must be integer");
-            type_ = child(0)->type();
+            type_ = childRaw(0)->type();
             break;
         }
         case OP_SEXTEND: {
             if (nChildren() != 2)
                 throw Exception(toStr(op_) + " operator expects two arguments");
-            if (!child(0)->isIntegerConstant())
+            if (!childRaw(0)->isIntegerConstant())
                 throw Exception(toStr(op_) + " operator's first argument (size) must be an integer constant");
-            if (child(0)->nBits() > 64)
+            if (childRaw(0)->nBits() > 64)
                 throw Exception(toStr(op_) + " operator's first argument (size) must be 64 bits or narrower");
-            if (!child(1)->isIntegerExpr())
+            if (!childRaw(1)->isIntegerExpr())
                 throw Exception(toStr(op_) + " operator's second argument must be integer");
-            type_ = Type::integer(child(0)->toUnsigned().get());
+            type_ = Type::integer(childRaw(0)->toUnsigned().get());
             break;
         }
         case OP_UEXTEND: {
@@ -883,24 +912,24 @@ Interior::adjustWidth(const Type &type) {
             // bit vector type since it wouldn't make sense anymore as a floating point type.
             if (nChildren() != 2)
                 throw Exception(toStr(op_) + " operator expects two arguments");
-            if (!child(0)->isIntegerConstant())
+            if (!childRaw(0)->isIntegerConstant())
                 throw Exception(toStr(op_) + " operator's first argument (size) must be an integer constant");
-            if (child(0)->nBits() > 64)
+            if (childRaw(0)->nBits() > 64)
                 throw Exception(toStr(op_) + " operator's first argument (size) must be 64 bits or narrower");
-            if (!child(1)->isScalarExpr())
+            if (!childRaw(1)->isScalarExpr())
                 throw Exception(toStr(op_) + " operator's second argument must be scalar");
-            type_ = Type::integer(child(0)->toUnsigned().get());
+            type_ = Type::integer(childRaw(0)->toUnsigned().get());
             break;
         }
         case OP_SMOD:
         case OP_UMOD: {
             if (nChildren() != 2)
                 throw Exception(toStr(op_) + " operator expects two arguments");
-            if (!child(0)->isIntegerExpr())
+            if (!childRaw(0)->isIntegerExpr())
                 throw Exception(toStr(op_) + " operator's first argument must be integer");
-            if (!child(1)->isIntegerExpr())
+            if (!childRaw(1)->isIntegerExpr())
                 throw Exception(toStr(op_) + " operator's second argument must be integer");
-            type_ = child(1)->type();
+            type_ = childRaw(1)->type();
             break;
         }
         case OP_SMUL:
@@ -909,9 +938,9 @@ Interior::adjustWidth(const Type &type) {
                 throw Exception(toStr(op_) + " operator expects at least one argument");
             size_t totalWidth = 0;
             for (size_t i=0; i<nChildren(); ++i) {
-                if (!child(i)->isIntegerExpr())
+                if (!childRaw(i)->isIntegerExpr())
                     throw Exception(toStr(op_) + " operator's arguments must all be integer");
-                totalWidth += child(i)->nBits();
+                totalWidth += childRaw(i)->nBits();
             }
             type_ = Type::integer(totalWidth);
             break;
@@ -919,23 +948,23 @@ Interior::adjustWidth(const Type &type) {
         case OP_WRITE: {
             if (nChildren() != 3)
                 throw Exception(toStr(op_) + " operator expects three arguments");
-            if (!child(0)->isMemoryExpr())
+            if (!childRaw(0)->isMemoryExpr())
                 throw Exception(toStr(op_) + " operator's first operand must be a memory state");
-            if (!child(1)->isIntegerExpr())
+            if (!childRaw(1)->isIntegerExpr())
                 throw Exception(toStr(op_) + " operator's second argument (address) must be integer");
-            if (!child(2)->isIntegerExpr())
+            if (!childRaw(2)->isIntegerExpr())
                 throw Exception(toStr(op_) + " operator's third argument (value to write) must be integer");
-            if (child(1)->nBits() != child(0)->domainWidth())
+            if (childRaw(1)->nBits() != childRaw(0)->domainWidth())
                 throw Exception(toStr(op_) + " operator's second argument (address) has incorrect width");
-            if (child(2)->nBits() != child(0)->nBits())
+            if (childRaw(2)->nBits() != childRaw(0)->nBits())
                 throw Exception(toStr(op_) + " operator's third argument (value to write) has incorrect width");
-            type_ = child(0)->type();
+            type_ = childRaw(0)->type();
             break;
         }
         case OP_ZEROP: {
             if (nChildren() != 1)
                 throw Exception(toStr(op_) + " operator expects one argument");
-            if (!child(0)->isIntegerExpr())
+            if (!childRaw(0)->isIntegerExpr())
                 throw Exception(toStr(op_) + " operator's argument must be integer");
             type_ = Type::integer(1);
             break;
@@ -947,9 +976,9 @@ Interior::adjustWidth(const Type &type) {
         case OP_FP_EQ: {
             if (nChildren() != 2)
                 throw Exception(toStr(op_) + " operator expects two arguments");
-            if (!child(0)->isFloatingPointExpr())
+            if (!childRaw(0)->isFloatingPointExpr())
                 throw Exception(toStr(op_) + " operator's first argument must be floating-point");
-            if (!child(1)->isFloatingPointExpr())
+            if (!childRaw(1)->isFloatingPointExpr())
                 throw Exception(toStr(op_) + " operator's second argument must be floating-point");
             type_ = Type::integer(1);
             break;
@@ -963,7 +992,7 @@ Interior::adjustWidth(const Type &type) {
         case OP_FP_ISPOS: {
             if (nChildren() != 1)
                 throw Exception(toStr(op_) + " operator expects one argument");
-            if (!child(0)->isFloatingPointExpr())
+            if (!childRaw(0)->isFloatingPointExpr())
                 throw Exception(toStr(op_) + " operator's argument must be floating-point");
             type_ = Type::integer(1);
             break;
@@ -973,10 +1002,10 @@ Interior::adjustWidth(const Type &type) {
             // bitwise operators, add, etc.
             ASSERT_require(nChildren() > 0);
             for (size_t i = 1; i < nChildren(); ++i) {
-                if (child(i)->type() != child(0)->type())
+                if (childRaw(i)->type() != childRaw(0)->type())
                     throw Exception(toStr(op_) + " operator's arguments must all be the same type");
             }
-            type_ = child(0)->type();
+            type_ = childRaw(0)->type();
             break;
         }
     }
@@ -1026,7 +1055,7 @@ Interior::print(std::ostream &o, Formatter &fmt) const {
     } else {
         for (size_t i=0; i<children_.size(); i++) {
             bool printed = false;
-            LeafPtr child_leaf = children_[i]->isLeafNode();
+            const Leaf *child_leaf = children_[i]->isLeafNodeRaw();
             o <<" ";
             switch (op_) {
                 case OP_ASR:
@@ -1166,10 +1195,10 @@ Interior::mayEqual(const Ptr &other, const SmtSolverPtr &solver/*NULL*/) {
 
 int
 Interior::compareStructure(const Ptr &other_) {
-    InteriorPtr other = other_->isInteriorNode();
-    if (this==getRawPointer(other)) {
+    const Interior *other = other_->isInteriorNodeRaw();
+    if (this == other) {
         return 0;
-    } else if (other==NULL) {
+    } else if (other == nullptr) {
         return 1;                                       // leaf nodes < internal nodes
     } else if (op_ != other->op_) {
         return op_ < other->op_ ? -1 : 1;
@@ -1191,23 +1220,41 @@ Interior::compareStructure(const Ptr &other_) {
 }
 
 bool
-Interior::isEquivalentTo(const Ptr &other_) {
-    bool retval = false;
+Interior::isEquivalentTo(const Ptr &other) {
+    EquivPairs matched;
+    return isEquivalentHelper(other.getRawPointer(), matched);
+}
+
+bool
+Interior::isEquivalentHelper(Node *other_, EquivPairs &matched) {
     if (!other_)
         return false;
-    InteriorPtr other = other_->isInteriorNode();
-    if (this == getRawPointer(other)) {
-        retval = true;
-    } else if (NULL == other || type() != other->type() || flags() != other->flags()) {
-        retval = false;
+    const Interior *other = other_->isInteriorNodeRaw();
+    if (this == other) {
+        return true;
+    } else if (!other || type() != other->type() || flags() != other->flags()) {
+        return false;
     } else if (hashval_ != 0 && other->hashval_ != 0 && hashval_ != other->hashval_) {
         // Unequal hashvals imply non-equivalent expressions.  The converse is not necessarily true due to possible
         // collisions.
-        retval = false;
-    } else if (op_ == other->op_ && children_.size() == other->children_.size()) {
-        retval = true;
-        for (size_t i=0; i < children_.size() && retval; ++i)
-            retval = children_[i]->isEquivalentTo(other->children_[i]);
+        return false;
+    } else if (op_ != other->op_ || children_.size() != other->children_.size()) {
+        return false;
+    } else {
+        // Did we test this pair of nodes already?
+        auto node = matched.find(this);
+        if (node != matched.end()) {
+            for (const auto &pair: node->second) {
+                if (pair.first == other)
+                    return pair.second;                 // previously tested pair of node pointers
+            }
+        }
+
+        // Test equivalence
+        bool retval = true;
+        for (size_t i = 0; retval && i < children_.size(); ++i)
+            retval = children_[i]->isEquivalentHelper(other->children_[i].getRawPointer(), matched);
+
         // Cache hash values. There's no need to compute a hash value if we've determined that the two expressions are
         // equivalent because it wouldn't save us any work--two equal hash values doesn't necessarily mean that two expressions
         // are equivalent.  However, if we already know one of the hash values then we can cache that hash value in the other
@@ -1220,14 +1267,12 @@ Interior::isEquivalentTo(const Ptr &other_) {
             } else {
                 ASSERT_require(hashval_ == other->hashval_);
             }
-        } else {
-#ifdef InsnInstructionExpr_USE_HASHES
-            hashval_ = hash();
-            other->hashval_ = other->hash();
-#endif
         }
+
+        // Remember equivalence results for this pair of nodes.
+        matched.insert(std::make_pair(this, EquivPairs::value_type::second_type{{other_, retval}}));
+        return retval;
     }
-    return retval;
 }
 
 Ptr
@@ -1262,7 +1307,7 @@ Interior::associative() {
     while (!worklist.empty()) {
         Ptr child = worklist.front();
         worklist.pop_front();
-        InteriorPtr ichild = child->isInteriorNode();
+        const Interior *ichild = child->isInteriorNodeRaw();
         if (ichild && ichild->op_ == op_) {
             worklist.insert(worklist.begin(), ichild->children_.begin(), ichild->children_.end());
             modified = true;
@@ -1288,19 +1333,19 @@ expr_cmp(const Ptr &a, const Ptr &b)
 {
     ASSERT_not_null(a);
     ASSERT_not_null(b);
-    InteriorPtr ai = a->isInteriorNode();
-    InteriorPtr bi = b->isInteriorNode();
-    LeafPtr al = a->isLeafNode();
-    LeafPtr bl = b->isLeafNode();
-    ASSERT_require((ai!=NULL) ^ (al!=NULL));
-    ASSERT_require((bi!=NULL) ^ (bl!=NULL));
+    const Interior *ai = a->isInteriorNodeRaw();
+    const Interior *bi = b->isInteriorNodeRaw();
+    const Leaf *al = a->isLeafNodeRaw();
+    const Leaf *bl = b->isLeafNodeRaw();
+    ASSERT_require((ai != nullptr) ^ (al != nullptr));
+    ASSERT_require((bi != nullptr) ^ (bl != nullptr));
 
     if (a == b) {
         return 0;
-    } else if ((ai==NULL) != (bi==NULL)) {
+    } else if ((ai == nullptr) != (bi == nullptr)) {
         // internal nodes are less than leaf nodes
-        return ai!=NULL ? -1 : 1;
-    } else if (al!=NULL) {
+        return ai != nullptr ? -1 : 1;
+    } else if (al != nullptr) {
         // both are leaf nodes
         ASSERT_not_null(bl);
 
@@ -1418,9 +1463,9 @@ Interior::idempotent(const SmtSolverPtr &solver) {
 
 Ptr
 Interior::involutary() {
-    if (InteriorPtr inode = isInteriorNode()) {
+    if (const Interior *inode = isInteriorNodeRaw()) {
         if (1==inode->nChildren()) {
-            if (InteriorPtr sub1 = inode->child(0)->isInteriorNode()) {
+            if (const Interior *sub1 = inode->childRaw(0)->isInteriorNodeRaw()) {
                 if (sub1->getOperator() == inode->getOperator() && 1==sub1->nChildren()) {
                     return sub1->child(0);
                 }
@@ -1435,17 +1480,17 @@ Interior::involutary() {
 // making sure a and b are extended to the same width
 Ptr
 Interior::additiveNesting(const SmtSolverPtr &solver) {
-    InteriorPtr nested = child(1)->isInteriorNode();
-    if (nested!=NULL && nested->getOperator()==getOperator()) {
-        ASSERT_require(nested->nChildren()==nChildren());
-        ASSERT_require(nested->nBits()==nBits());
-        size_t additive_nbits = std::max(child(0)->nBits(), nested->child(0)->nBits());
+    const Interior *nested = childRaw(1)->isInteriorNodeRaw();
+    if (nested != nullptr && nested->getOperator() == getOperator()) {
+        ASSERT_require(nested->nChildren() == nChildren());
+        ASSERT_require(nested->nBits() == nBits());
+        size_t additive_nbits = std::max(childRaw(0)->nBits(), nested->childRaw(0)->nBits());
 
         // The two addends must be the same width, so zero-extend them if necessary (or should we sign extend?)
         // Note that the first argument (new width) of the UEXTEND operator is not actually used.
-        Ptr a = child(0)->nBits()==additive_nbits ? child(0) :
+        Ptr a = childRaw(0)->nBits()==additive_nbits ? child(0) :
                 makeExtend(makeIntegerConstant(8, additive_nbits), child(0), solver);
-        Ptr b = nested->child(0)->nBits()==additive_nbits ? nested->child(0) :
+        Ptr b = nested->childRaw(0)->nBits()==additive_nbits ? nested->child(0) :
                 makeExtend(makeIntegerConstant(8, additive_nbits), nested->child(0), solver);
 
         // construct the new node but don't simplify it yet (i.e., don't use Interior::create())
@@ -1463,7 +1508,7 @@ Interior::identity(uint64_t ident, const SmtSolverPtr &solver) {
     Nodes args;
     bool modified = false;
     for (Nodes::const_iterator ci=children_.begin(); ci!=children_.end(); ++ci) {
-        LeafPtr leaf = (*ci)->isLeafNode();
+        const Leaf *leaf = (*ci)->isLeafNodeRaw();
         if (leaf && leaf->isIntegerConstant()) {
             Sawyer::Container::BitVector identBv = Sawyer::Container::BitVector(leaf->nBits()).fromInteger(ident);
             if (0==leaf->bits().compare(identBv)) {
@@ -1498,7 +1543,7 @@ Interior::identity(uint64_t ident, const SmtSolverPtr &solver) {
 Ptr
 Interior::poisonNan(const SmtSolverPtr &solver) {
     BOOST_FOREACH (Ptr child, children()) {
-        LeafPtr leaf = child->isLeafNode();
+        const Leaf *leaf = child->isLeafNodeRaw();
         if (leaf && leaf->isFloatingPointNan())
             return makeFloatingPointNan(leaf->type().exponentWidth(), leaf->type().significandWidth(), comment(), flags());
     }
@@ -1524,8 +1569,8 @@ Interior::foldConstants(const Simplifier &simplifier) {
     Nodes::const_iterator ci1 = children_.begin();
     while (ci1!=children_.end()) {
         Nodes::const_iterator ci2 = ci1;
-        LeafPtr leaf;
-        while (ci2 != children_.end() && (leaf = (*ci2)->isLeafNode()) && leaf->isIntegerConstant())
+        const Leaf *leaf;
+        while (ci2 != children_.end() && (leaf = (*ci2)->isLeafNodeRaw()) && leaf->isIntegerConstant())
             ++ci2;
         if (ci1==ci2 || ci1+1==ci2) {                           // arg is not a constant, or we had only one constant by itself
             newOperands.push_back(*ci1);
@@ -1553,7 +1598,7 @@ AddSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) cons
     Sawyer::Container::BitVector accumulator((*begin)->nBits());
     unsigned flags = 0;
     for (/*void*/; begin!=end; ++begin) {
-        accumulator.add((*begin)->isLeafNode()->bits());
+        accumulator.add((*begin)->isLeafNodeRaw()->bits());
         flags |= (*begin)->flags();
     }
     return makeIntegerConstant(accumulator, "", flags);
@@ -1569,17 +1614,17 @@ AddSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     //   (ite C (add X Z) (add Y Z))
     // and simplify the add operations
     if (inode->nChildren() == 2) {
-        if (InteriorPtr ite = inode->child(0)->isOperator(OP_ITE)) {
+        if (InteriorPtr ite = inode->childRaw(0)->isOperator(OP_ITE)) {
             // (add (ite C X Y) Z) => (ite (add X Z) (add Y Z))
-            if (!inode->child(1)->isOperator(OP_ITE)) {
+            if (!inode->childRaw(1)->isOperator(OP_ITE)) {
                 return makeIte(ite->child(0),
                                makeAdd(ite->child(1), inode->child(1), solver),
                                makeAdd(ite->child(2), inode->child(1), solver),
                                solver);
             }
-        } else if (InteriorPtr ite = inode->child(1)->isOperator(OP_ITE)) {
+        } else if (InteriorPtr ite = inode->childRaw(1)->isOperator(OP_ITE)) {
             // (add Z (ite C X Y)) => (ite (add Z X) (add Z Y))
-            ASSERT_forbid(inode->child(0)->isOperator(OP_ITE));
+            ASSERT_forbid(inode->childRaw(0)->isOperator(OP_ITE));
             return makeIte(ite->child(0),
                            makeAdd(inode->child(0), ite->child(1), solver),
                            makeAdd(inode->child(0), ite->child(2), solver),
@@ -1608,20 +1653,20 @@ AddSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
         bool operator()(Ptr a, Ptr b, Sawyer::Container::BitVector &adjustment/*in,out*/) {
             ASSERT_not_null(a);
             ASSERT_not_null(b);
-            ASSERT_require(a->nBits()==b->nBits());
+            ASSERT_require(a->nBits() == b->nBits());
 
             // swap A and B if necessary so we have form (1) or (2).
-            if (b->isInteriorNode()==NULL)
+            if (b->isInteriorNodeRaw() == nullptr)
                 std::swap(a, b);
-            if (b->isInteriorNode()==NULL)
+            if (b->isInteriorNodeRaw() == nullptr)
                 return false;
 
-            InteriorPtr bi = b->isInteriorNode();
-            if (bi->getOperator()==OP_NEGATE) {
+            const Interior *bi = b->isInteriorNodeRaw();
+            if (bi->getOperator() == OP_NEGATE) {
                 // form (3)
-                ASSERT_require(1==bi->nChildren());
+                ASSERT_require(1 == bi->nChildren());
                 return a->isEquivalentTo(bi->child(0));
-            } else if (bi->getOperator()==OP_INVERT) {
+            } else if (bi->getOperator() == OP_INVERT) {
                 // form (4) and ninverts is small enough
                 if (a->isEquivalentTo(bi->child(0))) {
                     adjustment.decrement();
@@ -1639,11 +1684,11 @@ AddSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
             bool distributed = false;
             for (size_t i=0; i<add->nChildren(); ++i) {
                 bool pushed = false;
-                InteriorPtr addArg = add->child(i)->isInteriorNode();
-                if (addArg && addArg->getOperator()==OP_NEGATE && addArg->nChildren()==1) {
-                    if (InteriorPtr negateArg = addArg->child(0)->isInteriorNode()) {
-                        if (negateArg && negateArg->getOperator()==OP_ADD && negateArg->nChildren()>0) {
-                            for (size_t j=0; j<negateArg->nChildren(); ++j)
+                const Interior *addArg = add->childRaw(i)->isInteriorNodeRaw();
+                if (addArg && addArg->getOperator() == OP_NEGATE && addArg->nChildren() == 1) {
+                    if (const Interior *negateArg = addArg->childRaw(0)->isInteriorNodeRaw()) {
+                        if (negateArg && negateArg->getOperator() == OP_ADD && negateArg->nChildren() > 0) {
+                            for (size_t j = 0; j < negateArg->nChildren(); ++j)
                                 children.push_back(makeNegate(negateArg->child(j), solver));
                             pushed = distributed = true;
                         }
@@ -1699,7 +1744,7 @@ AndSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) cons
     Sawyer::Container::BitVector accumulator((*begin)->nBits(), true);
     unsigned flags = 0;
     for (/*void*/; begin!=end; ++begin) {
-        accumulator.bitwiseAnd((*begin)->isLeafNode()->bits());
+        accumulator.bitwiseAnd((*begin)->isLeafNodeRaw()->bits());
         flags |= (*begin)->flags();
     }
     return makeIntegerConstant(accumulator, "", flags);
@@ -1709,7 +1754,7 @@ Ptr
 AndSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Result is zero if any argument is zero
     for (size_t i=0; i<inode->nChildren(); ++i) {
-        LeafPtr child = inode->child(i)->isLeafNode();
+        const Leaf *child = inode->childRaw(i)->isLeafNodeRaw();
         if (child && child->isIntegerConstant() && child->bits().isEqualToZero())
             return makeIntegerConstant(inode->nBits(), 0, inode->comment(), child->flags());
     }
@@ -1717,7 +1762,7 @@ AndSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // (and X X) => X (for any number of arguments that are all the same)
     bool allSameArgs = true;
     for (size_t i=1; i<inode->nChildren() && allSameArgs; ++i) {
-        if (!inode->child(0)->isEquivalentTo(inode->child(i)))
+        if (!inode->childRaw(0)->isEquivalentTo(inode->child(i)))
             allSameArgs = false;
     }
     if (allSameArgs)
@@ -1731,7 +1776,7 @@ OrSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) const
     Sawyer::Container::BitVector accumulator((*begin)->nBits());
     unsigned flags = 0;
     for (/*void*/; begin!=end; ++begin) {
-        accumulator.bitwiseOr((*begin)->isLeafNode()->bits());
+        accumulator.bitwiseOr((*begin)->isLeafNodeRaw()->bits());
         flags |= (*begin)->flags();
     }
     return makeIntegerConstant(accumulator, "", flags);
@@ -1744,7 +1789,7 @@ OrSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     std::vector<bool> removed(inode->nChildren(), false);
     bool modified = false;
     for (size_t i=0; i<inode->nChildren(); ++i) {
-        LeafPtr child = inode->child(i)->isLeafNode();
+        const Leaf *child = inode->childRaw(i)->isLeafNodeRaw();
         if (child && child->isIntegerConstant()) {
             if (child->bits().isEqualToZero()) {
                 removed[i] = modified = true;
@@ -1775,10 +1820,10 @@ OrSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 
 Ptr
 XorSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) const {
-    Sawyer::Container::BitVector accumulator((*begin)->isLeafNode()->bits());
+    Sawyer::Container::BitVector accumulator((*begin)->isLeafNodeRaw()->bits());
     unsigned flags = (*begin)->flags();
     for (++begin; begin!=end; ++begin) {
-        accumulator.bitwiseXor((*begin)->isLeafNode()->bits());
+        accumulator.bitwiseXor((*begin)->isLeafNodeRaw()->bits());
         flags |= (*begin)->flags();
     }
     return makeIntegerConstant(accumulator, "", flags);
@@ -1793,12 +1838,12 @@ XorSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     for (size_t i=0; i<inode->nChildren(); ++i) {
         if (removed[i])
             continue;
-        LeafPtr leaf = inode->child(i)->isLeafNode();
+        const Leaf *leaf = inode->childRaw(i)->isLeafNodeRaw();
         if (leaf && leaf->isIntegerConstant() && leaf->bits().isEqualToZero()) {
             removed[i] = modified = true;
         } else {
             for (size_t j=i+1; j<inode->nChildren(); ++j) {
-                if (!removed[j] && inode->child(i)->mustEqual(inode->child(j), solver)) {
+                if (!removed[j] && inode->childRaw(i)->mustEqual(inode->child(j), solver)) {
                     removed[i] = removed[j] = modified = true;
                     break;
                 }
@@ -1828,9 +1873,9 @@ XorSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 Ptr
 SmulSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) const {
     unsigned flags = (*begin)->flags();
-    Sawyer::Container::BitVector product = (*begin)->isLeafNode()->bits();
+    Sawyer::Container::BitVector product = (*begin)->isLeafNodeRaw()->bits();
     for (++begin; begin != end; ++begin) {
-        product = product.multiplySigned((*begin)->isLeafNode()->bits());
+        product = product.multiplySigned((*begin)->isLeafNodeRaw()->bits());
         flags |= (*begin)->flags();
     }
     return makeIntegerConstant(product, "", flags);
@@ -1839,9 +1884,9 @@ SmulSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) con
 Ptr
 UmulSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) const {
     unsigned flags = (*begin)->flags();
-    Sawyer::Container::BitVector product = (*begin)->isLeafNode()->bits();
+    Sawyer::Container::BitVector product = (*begin)->isLeafNodeRaw()->bits();
     for (++begin; begin != end; ++begin) {
-        product = product.multiply((*begin)->isLeafNode()->bits());
+        product = product.multiply((*begin)->isLeafNodeRaw()->bits());
         flags |= (*begin)->flags();
     }
     return makeIntegerConstant(product, "", flags);
@@ -1858,7 +1903,7 @@ ConcatSimplifier::fold(Nodes::const_iterator begin, Nodes::const_iterator end) c
     // Copy bits into wherever they belong in the accumulator
     unsigned flags = 0;
     for (size_t sa=resultSize; begin!=end; ++begin) {
-        LeafPtr leaf = (*begin)->isLeafNode();
+        const Leaf *leaf = (*begin)->isLeafNodeRaw();
         sa -= leaf->nBits();
         BitRange destination = BitRange::baseSize(sa, leaf->nBits());
         accumulator.copy(destination, leaf->bits(), leaf->bits().hull());
@@ -1877,13 +1922,13 @@ ConcatSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     Ptr condition;
     Nodes trueValues, falseValues;
     BOOST_FOREACH (const Ptr &child, inode->children()) {
-        InteriorPtr ite = child->isInteriorNode();
+        const Interior *ite = child->isInteriorNodeRaw();
         if (!ite || ite->getOperator() != OP_ITE) {
             condition = Ptr();
             break;
         } else if (!condition) {
             condition = ite->child(0);
-        } else if (!ite->child(0)->mustEqual(condition, solver)) {
+        } else if (!ite->childRaw(0)->mustEqual(condition, solver)) {
             condition = Ptr();
             break;
         }
@@ -1917,31 +1962,31 @@ ConcatSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     //       0x00[5]
     //       (extract[27] 0x05[32] 0x20[32] v2[32]))
     Nodes newArgs;
-    InteriorPtr isPrevExtract;                          // is newArgs.back a suitable (extract X Y X)?
-    rose_addr_t prevLoOffset = 0;                          // valid only if isPrevExtract non-null
-    for (size_t argno=0; argno<inode->nChildren(); ++argno) {
+    const Interior *isPrevExtract = nullptr;            // is newArgs.back a suitable (extract X Y X)?
+    rose_addr_t prevLoOffset = 0;                       // valid only if isPrevExtract non-null
+    for (size_t argno = 0; argno < inode->nChildren(); ++argno) {
 
         // Does the argument have the form (extract X Y EXPR) where X and Y are known integers. If so, make isExtract point to
         // this argument.
-        InteriorPtr isCurExtract = inode->child(argno)->isInteriorNode();
-        rose_addr_t curLoOffset=0, curHiOffset=0;
-        if (isCurExtract!=NULL && isCurExtract->getOperator()==OP_EXTRACT &&
-            isCurExtract->child(0)->nBits() <= 8*sizeof(prevLoOffset) &&
-            isCurExtract->child(1)->nBits() <= 8*sizeof(prevLoOffset) &&
-            isCurExtract->child(0)->isLeafNode() && isCurExtract->child(0)->isLeafNode()->isIntegerConstant() &&
-            isCurExtract->child(1)->isLeafNode() && isCurExtract->child(1)->isLeafNode()->isIntegerConstant()) {
-            curLoOffset = isCurExtract->child(0)->isLeafNode()->toUnsigned().get();
-            curHiOffset = isCurExtract->child(1)->isLeafNode()->toUnsigned().get();
+        const Interior *isCurExtract = inode->childRaw(argno)->isInteriorNodeRaw();
+        rose_addr_t curLoOffset = 0, curHiOffset = 0;
+        if (isCurExtract != nullptr && isCurExtract->getOperator() == OP_EXTRACT &&
+            isCurExtract->childRaw(0)->nBits() <= 8*sizeof(prevLoOffset) &&
+            isCurExtract->childRaw(1)->nBits() <= 8*sizeof(prevLoOffset) &&
+            isCurExtract->childRaw(0)->isLeafNodeRaw() && isCurExtract->childRaw(0)->isLeafNodeRaw()->isIntegerConstant() &&
+            isCurExtract->childRaw(1)->isLeafNodeRaw() && isCurExtract->childRaw(1)->isLeafNodeRaw()->isIntegerConstant()) {
+            curLoOffset = isCurExtract->childRaw(0)->isLeafNodeRaw()->toUnsigned().get();
+            curHiOffset = isCurExtract->childRaw(1)->isLeafNodeRaw()->toUnsigned().get();
             ASSERT_require(curLoOffset < curHiOffset);
         } else {
-            isCurExtract = InteriorPtr();
+            isCurExtract = nullptr;
         }
 
         // Can this argument be joined with the previous one?
-        if (isPrevExtract && isCurExtract && curHiOffset==prevLoOffset &&
-            isPrevExtract->child(2)->mustEqual(isCurExtract->child(2), solver)) {
+        if (isPrevExtract && isCurExtract && curHiOffset == prevLoOffset &&
+            isPrevExtract->childRaw(2)->mustEqual(isCurExtract->child(2), solver)) {
             newArgs.back() = makeExtract(isCurExtract->child(0), isPrevExtract->child(1), isCurExtract->child(2), solver);
-            isPrevExtract = newArgs.back()->isInteriorNode(); // merged arg is still a valid extract expression
+            isPrevExtract = newArgs.back()->isInteriorNodeRaw(); // merged arg is still a valid extract expression
         } else {
             newArgs.push_back(inode->child(argno));
             isPrevExtract = isCurExtract;
@@ -1963,12 +2008,12 @@ ConcatSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 Ptr
 ConvertSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // (convert[X] Y[X]) => Y[X]
-    if (inode->type() == inode->child(0)->type())
+    if (inode->type() == inode->childRaw(0)->type())
         return inode->child(0);
 
     // Converting one integer type to another is the same as unsigned extending/truncating.
-    if (inode->type().typeClass() == Type::INTEGER && inode->child(0)->type().typeClass() == Type::INTEGER) {
-        if (inode->type().nBits() > inode->child(0)->type().nBits()) {
+    if (inode->type().typeClass() == Type::INTEGER && inode->childRaw(0)->type().typeClass() == Type::INTEGER) {
+        if (inode->type().nBits() > inode->childRaw(0)->type().nBits()) {
             return makeExtend(makeIntegerConstant(16, inode->type().nBits()), inode->child(0),
                               solver, inode->comment(), inode->flags());
         } else {
@@ -1982,8 +2027,8 @@ ConvertSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 
 Ptr
 ExtractSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
-    LeafPtr from_node = inode->child(0)->isLeafNode();
-    LeafPtr to_node   = inode->child(1)->isLeafNode();
+    const Leaf *from_node = inode->childRaw(0)->isLeafNodeRaw();
+    const Leaf *to_node   = inode->childRaw(1)->isLeafNodeRaw();
     Ptr operand   = inode->child(2);
     ASSERT_require(!from_node->isIntegerConstant() || from_node->nBits() <= 8*sizeof(size_t));
     ASSERT_require(!to_node->isIntegerConstant()   || to_node->nBits() <= 8*sizeof(size_t));
@@ -1996,10 +2041,10 @@ ExtractSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 
     // Constant folding
     if (from_node && to_node && from_node->isIntegerConstant() && to_node->isIntegerConstant() &&
-        operand->isLeafNode() && operand->isLeafNode()->isIntegerConstant()) {
+        operand->isLeafNodeRaw() && operand->isLeafNodeRaw()->isIntegerConstant()) {
         Sawyer::Container::BitVector result(to-from);
         BitRange source = BitRange::hull(from, to-1);
-        result.copy(result.hull(), operand->isLeafNode()->bits(), source);
+        result.copy(result.hull(), operand->isLeafNodeRaw()->bits(), source);
         return makeIntegerConstant(result, inode->comment(), inode->flags());
     }
 
@@ -2011,9 +2056,9 @@ ExtractSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // If the operand is a concat operation then take only the parts we need.  Some examples:
     // (extract 0 24 (concat X[24] Y[8]))  ==> (concat (extract 0 16 X) Y)
     Nodes newChildren;
-    InteriorPtr ioperand = operand->isInteriorNode();
+    const Interior *ioperand = operand->isInteriorNodeRaw();
     if (from_node && to_node && from_node->isIntegerConstant() && to_node->isIntegerConstant() &&
-        ioperand && OP_CONCAT==ioperand->getOperator()) {
+        ioperand && OP_CONCAT == ioperand->getOperator()) {
         size_t partAt = 0;                              // starting bit number in child
         BOOST_REVERSE_FOREACH (const Ptr part, ioperand->children()) { // concatenated parts
             size_t partEnd = partAt + part->nBits();
@@ -2063,9 +2108,9 @@ ExtractSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 
     // If the operand is another extract operation and we know all the limits then they can be replaced with a single extract.
     if (from_node && to_node && from_node->isIntegerConstant() && to_node->isIntegerConstant() &&
-        ioperand && OP_EXTRACT==ioperand->getOperator()) {
-        LeafPtr from2_node = ioperand->child(0)->isLeafNode();
-        LeafPtr to2_node = ioperand->child(1)->isLeafNode();
+        ioperand && OP_EXTRACT == ioperand->getOperator()) {
+        const Leaf *from2_node = ioperand->childRaw(0)->isLeafNodeRaw();
+        const Leaf *to2_node = ioperand->childRaw(1)->isLeafNodeRaw();
         if (from2_node && to2_node && from2_node->isIntegerConstant() && to2_node->isIntegerConstant()) {
             size_t from2 = from2_node->toUnsigned().get();
             return makeExtract(makeIntegerConstant(32, from2+from), makeIntegerConstant(32, from2+to), ioperand->child(2),
@@ -2074,10 +2119,10 @@ ExtractSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     }
 
     // Simplifications for (extract 0 a (uextend b c))
-    if (from_node && to_node && from_node->isIntegerConstant() && 0==from && to_node->isIntegerConstant()) {
+    if (from_node && to_node && from_node->isIntegerConstant() && 0 == from && to_node->isIntegerConstant()) {
         size_t a=to, b=operand->nBits();
         // (extract[a] 0 a (uextend[b] b c[a])) => c when b>=a
-        if (ioperand && OP_UEXTEND==ioperand->getOperator() && b>=a && ioperand->child(1)->nBits()==a)
+        if (ioperand && OP_UEXTEND == ioperand->getOperator() && b >= a && ioperand->childRaw(1)->nBits() == a)
             return ioperand->child(1);
     }
 
@@ -2090,9 +2135,9 @@ AsrSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     ASSERT_require(2==inode->nChildren());
 
     // Constant folding
-    LeafPtr shift_leaf   = inode->child(0)->isLeafNode();
-    LeafPtr operand_leaf = inode->child(1)->isLeafNode();
-    if (shift_leaf!=NULL && operand_leaf!=NULL && shift_leaf->isIntegerConstant() && operand_leaf->isIntegerConstant()) {
+    const Leaf *shift_leaf   = inode->childRaw(0)->isLeafNodeRaw();
+    const Leaf *operand_leaf = inode->childRaw(1)->isLeafNodeRaw();
+    if (shift_leaf != nullptr && operand_leaf != nullptr && shift_leaf->isIntegerConstant() && operand_leaf->isIntegerConstant()) {
         size_t sa = shift_leaf->toUnsigned().get();
         Sawyer::Container::BitVector result = operand_leaf->bits();
         result.shiftRightArithmetic(sa);
@@ -2104,7 +2149,7 @@ AsrSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 Ptr
 InvertSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
-    LeafPtr operand_node = inode->child(0)->isLeafNode();
+    const Leaf *operand_node = inode->childRaw(0)->isLeafNodeRaw();
     if (operand_node==NULL || !operand_node->isIntegerConstant())
         return Ptr();
     Sawyer::Container::BitVector result = operand_node->bits();
@@ -2115,7 +2160,7 @@ InvertSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 Ptr
 NegateSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
-    LeafPtr operand_node = inode->child(0)->isLeafNode();
+    const Leaf *operand_node = inode->childRaw(0)->isLeafNodeRaw();
     if (operand_node==NULL || !operand_node->isIntegerConstant())
         return Ptr();
     Sawyer::Container::BitVector result = operand_node->bits();
@@ -2126,7 +2171,7 @@ NegateSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 Ptr
 IteSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Is the condition known?
-    LeafPtr cond_node = inode->child(0)->isLeafNode();
+    const Leaf *cond_node = inode->childRaw(0)->isLeafNodeRaw();
     if (cond_node!=NULL && cond_node->isIntegerConstant()) {
         if (cond_node->nBits() != 1)
             throw Exception(toStr(inode->getOperator()) + " operator's first argument (condition) should be one bit wide");
@@ -2135,20 +2180,20 @@ IteSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     }
 
     // Are both operands the same? Then the condition doesn't matter
-    if (inode->child(1)->isEquivalentTo(inode->child(2)))
+    if (inode->childRaw(1)->isEquivalentTo(inode->child(2)))
         return inode->child(1);
 
     // Are both extracts of the same offsets?
     // convert this: (ite cond (extract x y expr1) (extract x y expr2))
     // to this:      (extract x y (ite cond expr1 expr2))
-    InteriorPtr in1 = inode->child(1)->isInteriorNode();
-    InteriorPtr in2 = inode->child(2)->isInteriorNode();
+    const Interior *in1 = inode->childRaw(1)->isInteriorNodeRaw();
+    const Interior *in2 = inode->childRaw(2)->isInteriorNodeRaw();
     if (in1 && in2 &&
         in1->getOperator() == OP_EXTRACT && in2->getOperator() == OP_EXTRACT &&
         in1->nBits() == in2->nBits() &&
-        in1->child(0)->mustEqual(in2->child(0), solver) &&      // both extracts have same "from" bit offset
-        in1->child(1)->mustEqual(in2->child(1), solver) &&      // both extracts have same "to" bit offset
-        in1->child(2)->nBits() == in2->child(2)->nBits()) {     // both extracted-from values are same width
+        in1->childRaw(0)->mustEqual(in2->child(0), solver) &&      // both extracts have same "from" bit offset
+        in1->childRaw(1)->mustEqual(in2->child(1), solver) &&      // both extracts have same "to" bit offset
+        in1->childRaw(2)->nBits() == in2->childRaw(2)->nBits()) {  // both extracted-from values are same width
 
         Ptr newIte = makeIte(inode->child(0), in1->child(2), in2->child(2), solver);
         Ptr newExtract = makeExtract(in1->child(0), in1->child(1), newIte, solver);
@@ -2157,7 +2202,7 @@ IteSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 
     // Convert a negative condition to a positive condition
     //   (ite (invert X) A B) => (ite X B A)
-    if (InteriorPtr invert = inode->child(0)->isOperator(OP_INVERT))
+    if (InteriorPtr invert = inode->childRaw(0)->isOperator(OP_INVERT))
         return makeIte(invert->child(0), inode->child(2), inode->child(1), solver, inode->comment(), inode->flags());
 
     return Ptr();
@@ -2182,8 +2227,8 @@ isPowerOfTwo(T n) {
 
 Ptr
 RolSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
-    LeafPtr sa_leaf = inode->child(0)->isLeafNode();
-    LeafPtr val_leaf = inode->child(1)->isLeafNode();
+    const Leaf *sa_leaf = inode->childRaw(0)->isLeafNodeRaw();
+    const Leaf *val_leaf = inode->childRaw(1)->isLeafNodeRaw();
 
     // Get the effective shift amount
     Sawyer::Optional<uint64_t> sa;
@@ -2219,8 +2264,8 @@ RolSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // If the shift amount is greater than the value width, replace it with modulo
     if (sa && *sa > inode->nBits()) {
         return Interior::instance(inode->type(), inode->getOperator(),
-                                  makeIntegerConstant(inode->child(0)->nBits(), *sa % inode->nBits(),
-                                                      inode->child(0)->comment(), inode->child(0)->flags()),
+                                  makeIntegerConstant(inode->childRaw(0)->nBits(), *sa % inode->nBits(),
+                                                      inode->childRaw(0)->comment(), inode->childRaw(0)->flags()),
                                   inode->child(1),
                                   solver, inode->comment(), inode->flags());
     }
@@ -2229,8 +2274,8 @@ RolSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 }
 Ptr
 RorSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
-    LeafPtr sa_leaf = inode->child(0)->isLeafNode();
-    LeafPtr val_leaf = inode->child(1)->isLeafNode();
+    const Leaf *sa_leaf = inode->childRaw(0)->isLeafNodeRaw();
+    const Leaf *val_leaf = inode->childRaw(1)->isLeafNodeRaw();
 
     // Get the effective shift amount
     Sawyer::Optional<uint64_t> sa;
@@ -2266,8 +2311,8 @@ RorSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // If the shift amount is greater than the value width, replace it with modulo
     if (sa && *sa > inode->nBits()) {
         return Interior::instance(inode->type(), inode->getOperator(),
-                                  makeIntegerConstant(inode->child(0)->nBits(), *sa % inode->nBits(),
-                                                      inode->child(0)->comment(), inode->child(0)->flags()),
+                                  makeIntegerConstant(inode->childRaw(0)->nBits(), *sa % inode->nBits(),
+                                                      inode->childRaw(0)->comment(), inode->childRaw(0)->flags()),
                                   inode->child(1),
                                   solver, inode->comment(), inode->flags());
     }
@@ -2278,7 +2323,7 @@ RorSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 Ptr
 UextendSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Noop case
-    size_t oldsize = inode->child(1)->nBits();
+    size_t oldsize = inode->childRaw(1)->nBits();
     size_t newsize = inode->nBits();
 
     // Identity
@@ -2289,7 +2334,7 @@ UextendSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
         return inode->child(1);
 
     // Constant folding
-    LeafPtr val_leaf = inode->child(1)->isLeafNode();
+    const Leaf *val_leaf = inode->childRaw(1)->isLeafNodeRaw();
     if (val_leaf && val_leaf->isIntegerConstant()) {
         Sawyer::Container::BitVector result = val_leaf->bits();
         result.resize(newsize);
@@ -2301,15 +2346,15 @@ UextendSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     //   and newsize >= oldsize
     //   and oldsize >= k
     // => (uextend newsize arg[k])
-    InteriorPtr arg = inode->child(1)->isInteriorNode();
-    if (arg && arg->getOperator() == OP_UEXTEND && newsize >= oldsize && oldsize >= arg->child(1)->nBits())
+    const Interior *arg = inode->childRaw(1)->isInteriorNodeRaw();
+    if (arg && arg->getOperator() == OP_UEXTEND && newsize >= oldsize && oldsize >= arg->childRaw(1)->nBits())
         return makeExtend(inode->child(0), arg->child(1), solver, inode->comment());
 
     // Shrinking an extend
     // (uextend newsize (uextend oldsize arg[k]))
     //   and k <= newsize <= oldsize
     // => (uextend newsize arg[k])
-    if (arg && arg->getOperator() == OP_UEXTEND && newsize >= arg->child(1)->nBits() && newsize <= oldsize)
+    if (arg && arg->getOperator() == OP_UEXTEND && newsize >= arg->childRaw(1)->nBits() && newsize <= oldsize)
         return makeExtend(inode->child(0), arg->child(1), solver, inode->comment());
 
     // Shrinking
@@ -2325,13 +2370,13 @@ UextendSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 Ptr
 SextendSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Noop case
-    size_t oldsize = inode->child(1)->nBits();
+    size_t oldsize = inode->childRaw(1)->nBits();
     size_t newsize = inode->nBits();
     if (oldsize==newsize)
         return inode->child(1);
 
     // Constant folding
-    LeafPtr val_leaf = inode->child(1)->isLeafNode();
+    const Leaf *val_leaf = inode->childRaw(1)->isLeafNodeRaw();
     if (val_leaf && val_leaf->isIntegerConstant()) {
         Sawyer::Container::BitVector result(inode->nBits());
         result.signExtend(val_leaf->bits());
@@ -2349,15 +2394,15 @@ SextendSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 Ptr
 EqSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
-    LeafPtr a_leaf = inode->child(0)->isLeafNode();
-    LeafPtr b_leaf = inode->child(1)->isLeafNode();
+    const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
+    const Leaf *b_leaf = inode->childRaw(1)->isLeafNodeRaw();
     if (a_leaf && b_leaf && a_leaf->isIntegerConstant() && b_leaf->isIntegerConstant()) {
         int cmp = a_leaf->bits().compare(b_leaf->bits());
         return makeBooleanConstant(0==cmp, inode->comment(), inode->flags());
     }
 
     // (eq x x) => 1
-    if (inode->child(0)->mustEqual(inode->child(1), SmtSolverPtr()))
+    if (inode->childRaw(0)->mustEqual(inode->child(1), SmtSolverPtr()))
         return makeBooleanConstant(true, inode->comment(), inode->flags());
 
     return Ptr();
@@ -2366,15 +2411,15 @@ EqSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 Ptr
 SgeSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
-    LeafPtr a_leaf = inode->child(0)->isLeafNode();
-    LeafPtr b_leaf = inode->child(1)->isLeafNode();
+    const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
+    const Leaf *b_leaf = inode->childRaw(1)->isLeafNodeRaw();
     if (a_leaf && b_leaf && a_leaf->isIntegerConstant() && b_leaf->isIntegerConstant()) {
         int cmp = a_leaf->bits().compareSigned(b_leaf->bits());
         return makeBooleanConstant(cmp>=0, inode->comment(), inode->flags());
     }
 
     // (sge x x) => 1
-    if (inode->child(0)->mustEqual(inode->child(1), SmtSolverPtr()))
+    if (inode->childRaw(0)->mustEqual(inode->child(1), SmtSolverPtr()))
         return makeBooleanConstant(true, inode->comment(), inode->flags());
 
     return Ptr();
@@ -2383,8 +2428,8 @@ SgeSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 Ptr
 SgtSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
-    LeafPtr a_leaf = inode->child(0)->isLeafNode();
-    LeafPtr b_leaf = inode->child(1)->isLeafNode();
+    const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
+    const Leaf *b_leaf = inode->childRaw(1)->isLeafNodeRaw();
     if (a_leaf && b_leaf && a_leaf->isIntegerConstant() && b_leaf->isIntegerConstant()) {
         int cmp = a_leaf->bits().compareSigned(b_leaf->bits());
         return makeBooleanConstant(cmp>0, inode->comment(), inode->flags());
@@ -2396,15 +2441,15 @@ SgtSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 Ptr
 SleSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
-    LeafPtr a_leaf = inode->child(0)->isLeafNode();
-    LeafPtr b_leaf = inode->child(1)->isLeafNode();
+    const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
+    const Leaf *b_leaf = inode->childRaw(1)->isLeafNodeRaw();
     if (a_leaf && b_leaf && a_leaf->isIntegerConstant() && b_leaf->isIntegerConstant()) {
         int cmp = a_leaf->bits().compareSigned(b_leaf->bits());
         return makeBooleanConstant(cmp<=0, inode->comment(), inode->flags());
     }
 
     // (sle x x) => 1
-    if (inode->child(0)->mustEqual(inode->child(1), SmtSolverPtr()))
+    if (inode->childRaw(0)->mustEqual(inode->child(1), SmtSolverPtr()))
         return makeBooleanConstant(true, inode->comment(), inode->flags());
 
     return Ptr();
@@ -2413,8 +2458,8 @@ SleSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 Ptr
 SltSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
-    LeafPtr a_leaf = inode->child(0)->isLeafNode();
-    LeafPtr b_leaf = inode->child(1)->isLeafNode();
+    const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
+    const Leaf *b_leaf = inode->childRaw(1)->isLeafNodeRaw();
     if (a_leaf && b_leaf && a_leaf->isIntegerConstant() && b_leaf->isIntegerConstant()) {
         int cmp = a_leaf->bits().compareSigned(b_leaf->bits());
         return makeBooleanConstant(cmp<0, inode->comment(), inode->flags());
@@ -2426,15 +2471,15 @@ SltSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 Ptr
 UgeSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
-    LeafPtr a_leaf = inode->child(0)->isLeafNode();
-    LeafPtr b_leaf = inode->child(1)->isLeafNode();
+    const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
+    const Leaf *b_leaf = inode->childRaw(1)->isLeafNodeRaw();
     if (a_leaf && b_leaf && a_leaf->isIntegerConstant() && b_leaf->isIntegerConstant()) {
         int cmp = a_leaf->bits().compare(b_leaf->bits());
         return makeBooleanConstant(cmp>=0, inode->comment(), inode->flags());
     }
 
     // (uge x x) => 1
-    if (inode->child(0)->mustEqual(inode->child(1), SmtSolverPtr()))
+    if (inode->childRaw(0)->mustEqual(inode->child(1), SmtSolverPtr()))
         return makeBooleanConstant(true, inode->comment(), inode->flags());
 
    return Ptr();
@@ -2443,8 +2488,8 @@ UgeSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 Ptr
 UgtSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
-    LeafPtr a_leaf = inode->child(0)->isLeafNode();
-    LeafPtr b_leaf = inode->child(1)->isLeafNode();
+    const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
+    const Leaf *b_leaf = inode->childRaw(1)->isLeafNodeRaw();
     if (a_leaf && b_leaf && a_leaf->isIntegerConstant() && b_leaf->isIntegerConstant()) {
         int cmp = a_leaf->bits().compare(b_leaf->bits());
         return makeBooleanConstant(cmp>0, inode->comment(), inode->flags());
@@ -2456,15 +2501,15 @@ UgtSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 Ptr
 UleSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
-    LeafPtr a_leaf = inode->child(0)->isLeafNode();
-    LeafPtr b_leaf = inode->child(1)->isLeafNode();
+    const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
+    const Leaf *b_leaf = inode->childRaw(1)->isLeafNodeRaw();
     if (a_leaf && b_leaf && a_leaf->isIntegerConstant() && b_leaf->isIntegerConstant()) {
         int cmp = a_leaf->bits().compare(b_leaf->bits());
         return makeBooleanConstant(cmp<=0, inode->comment(), inode->flags());
     }
 
     // (ule x x) => 1
-    if (inode->child(0)->mustEqual(inode->child(1), SmtSolverPtr()))
+    if (inode->childRaw(0)->mustEqual(inode->child(1), SmtSolverPtr()))
         return makeBooleanConstant(true, inode->comment(), inode->flags());
 
     return Ptr();
@@ -2473,8 +2518,8 @@ UleSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 Ptr
 UltSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
-    LeafPtr a_leaf = inode->child(0)->isLeafNode();
-    LeafPtr b_leaf = inode->child(1)->isLeafNode();
+    const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
+    const Leaf *b_leaf = inode->childRaw(1)->isLeafNodeRaw();
     if (a_leaf && b_leaf && a_leaf->isIntegerConstant() && b_leaf->isIntegerConstant()) {
         int cmp = a_leaf->bits().compare(b_leaf->bits());
         return makeBooleanConstant(cmp<0, inode->comment(), inode->flags());
@@ -2486,7 +2531,7 @@ UltSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 Ptr
 ZeropSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
-    LeafPtr a_leaf = inode->child(0)->isLeafNode();
+    const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
     if (a_leaf && a_leaf->isIntegerConstant())
         return makeBooleanConstant(a_leaf->bits().isEqualToZero(), inode->comment(), inode->flags());
 
@@ -2496,8 +2541,8 @@ ZeropSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 Ptr
 SdivSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
-    LeafPtr a_leaf = inode->child(0)->isLeafNode();
-    LeafPtr b_leaf = inode->child(1)->isLeafNode();
+    const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
+    const Leaf *b_leaf = inode->childRaw(1)->isLeafNodeRaw();
     if (a_leaf && b_leaf && a_leaf->isIntegerConstant() && b_leaf->isIntegerConstant() && !b_leaf->bits().isEqualToZero()) {
         if (a_leaf->nBits() <= 64 && b_leaf->nBits() <= 64) {
             int64_t a = a_leaf->toSigned().get();
@@ -2514,8 +2559,8 @@ SdivSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 Ptr
 SmodSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
-    LeafPtr a_leaf = inode->child(0)->isLeafNode();
-    LeafPtr b_leaf = inode->child(1)->isLeafNode();
+    const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
+    const Leaf *b_leaf = inode->childRaw(1)->isLeafNodeRaw();
     if (a_leaf && b_leaf && a_leaf->isIntegerConstant() && b_leaf->isIntegerConstant() && !b_leaf->bits().isEqualToZero()) {
         if (a_leaf->nBits() <= 64 && b_leaf->nBits() <= 64) {
             int64_t a = a_leaf->toSigned().get();
@@ -2533,8 +2578,8 @@ SmodSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 Ptr
 UdivSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
-    LeafPtr a_leaf = inode->child(0)->isLeafNode();
-    LeafPtr b_leaf = inode->child(1)->isLeafNode();
+    const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
+    const Leaf *b_leaf = inode->childRaw(1)->isLeafNodeRaw();
     if (a_leaf && b_leaf && a_leaf->isIntegerConstant() && b_leaf->isIntegerConstant() && !b_leaf->bits().isEqualToZero()) {
         if (a_leaf->nBits() <= 64 && b_leaf->nBits() <= 64) {
             uint64_t a = a_leaf->toUnsigned().get();
@@ -2552,8 +2597,8 @@ UdivSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 Ptr
 UmodSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
-    LeafPtr a_leaf = inode->child(0)->isLeafNode();
-    LeafPtr b_leaf = inode->child(1)->isLeafNode();
+    const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
+    const Leaf *b_leaf = inode->childRaw(1)->isLeafNodeRaw();
     if (a_leaf && b_leaf && a_leaf->isIntegerConstant() && b_leaf->isIntegerConstant() && !b_leaf->bits().isEqualToZero()) {
         if (a_leaf->nBits() <= 64 && b_leaf->nBits() <= 64) {
             uint64_t a = a_leaf->toUnsigned().get();
@@ -2599,8 +2644,8 @@ ShiftSimplifier::combine_strengths(Ptr strength1, Ptr strength2, size_t value_wi
 
 Ptr
 ShlSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
-    LeafPtr sa_leaf = inode->child(0)->isLeafNode();
-    LeafPtr val_leaf = inode->child(1)->isLeafNode();
+    const Leaf *sa_leaf = inode->childRaw(0)->isLeafNodeRaw();
+    const Leaf *val_leaf = inode->childRaw(1)->isLeafNodeRaw();
 
     // Effective shift amount
     Sawyer::Optional<uint64_t> sa;
@@ -2630,9 +2675,9 @@ ShlSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 
     // If the shifted operand is itself a shift of the same kind, then simplify by combining the strengths:
     // (shl AMT1 (shl AMT2 X)) ==> (shl (add AMT1 AMT2) X)
-    InteriorPtr val_inode = inode->child(1)->isInteriorNode();
+    const Interior *val_inode = inode->childRaw(1)->isInteriorNodeRaw();
     if (val_inode && val_inode->getOperator()==inode->getOperator()) {
-        if (Ptr strength = combine_strengths(inode->child(0), val_inode->child(0), inode->child(1)->nBits(), solver)) {
+        if (Ptr strength = combine_strengths(inode->child(0), val_inode->child(0), inode->childRaw(1)->nBits(), solver)) {
             return Interior::instance(inode->type(), inode->getOperator(), strength, val_inode->child(1), solver);
         }
     }
@@ -2663,8 +2708,8 @@ ShlSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 
 Ptr
 ShrSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
-    LeafPtr sa_leaf = inode->child(0)->isLeafNode();
-    LeafPtr val_leaf = inode->child(1)->isLeafNode();
+    const Leaf *sa_leaf = inode->childRaw(0)->isLeafNodeRaw();
+    const Leaf *val_leaf = inode->childRaw(1)->isLeafNodeRaw();
 
     // Effective shift amount
     Sawyer::Optional<uint64_t> sa;
@@ -2694,9 +2739,9 @@ ShrSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 
     // If the shifted operand is itself a shift of the same kind, then simplify by combining the strengths:
     //   (shr0 AMT1 (shr0 AMT2 X)) ==> (shr0 (add AMT1 AMT2) X)
-    InteriorPtr val_inode = inode->child(1)->isInteriorNode();
+    const Interior *val_inode = inode->childRaw(1)->isInteriorNodeRaw();
     if (val_inode && val_inode->getOperator()==inode->getOperator()) {
-        if (Ptr strength = combine_strengths(inode->child(0), val_inode->child(0), inode->child(1)->nBits(), solver)) {
+        if (Ptr strength = combine_strengths(inode->child(0), val_inode->child(0), inode->childRaw(1)->nBits(), solver)) {
             return Interior::instance(inode->type(), inode->getOperator(), strength, val_inode->child(1), solver);
         }
     }
@@ -2727,7 +2772,7 @@ ShrSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 Ptr
 LssbSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
-    LeafPtr a_leaf = inode->child(0)->isLeafNode();
+    const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
     if (a_leaf && a_leaf->isIntegerConstant()) {
         if (Sawyer::Optional<size_t> idx = a_leaf->bits().leastSignificantSetBit())
             return makeIntegerConstant(inode->nBits(), *idx, inode->comment());
@@ -2740,7 +2785,7 @@ LssbSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 Ptr
 MssbSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Constant folding
-    LeafPtr a_leaf = inode->child(0)->isLeafNode();
+    const Leaf *a_leaf = inode->childRaw(0)->isLeafNodeRaw();
     if (a_leaf && a_leaf->isIntegerConstant()) {
         if (Sawyer::Optional<size_t> idx = a_leaf->bits().mostSignificantSetBit())
             return makeIntegerConstant(inode->nBits(), *idx, inode->comment());
@@ -2753,7 +2798,7 @@ MssbSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
 Ptr
 ReinterpretSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // (reinterpret[X] Y[X]) => Y[X]
-    if (inode->type() == inode->child(0)->type())
+    if (inode->type() == inode->childRaw(0)->type())
         return inode->child(0);
 
     return Ptr();
@@ -2771,10 +2816,17 @@ SetSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     BOOST_FOREACH (const Ptr &elmt1, inode->children()) {
         bool isDuplicate = false;
         BOOST_FOREACH (const Ptr &elmt2, elements) {
+#if 0 // [Robb Matzke 2021-12-14]
             if (elmt1->mustEqual(elmt2, solver)) {
                 isDuplicate = true;
                 break;
             }
+#else
+            if (elmt1->isEquivalentTo(elmt2)) {
+                isDuplicate = true;
+                break;
+            }
+#endif
         }
         if (!isDuplicate) {
             elements.push_back(elmt1);
@@ -3039,16 +3091,84 @@ Leaf::createConstant(const Type &type, const Sawyer::Container::BitVector &bits,
     return LeafPtr(node);
 }
 
+const Ptr&
+Leaf::child(size_t) const {
+    static const Ptr none;
+    return none;
+}
+
 // class method
 uint64_t
-Leaf::nextNameCounter(uint64_t useThis) {
-    static boost::mutex mutex;
-    static uint64_t counter = 0;
-    boost::lock_guard<boost::mutex> lock(mutex);
-    if (useThis == (uint64_t)(-1))
-        return ++counter;
-    counter = std::max(counter, useThis);
-    return useThis;
+Leaf::nextNameCounter(uint64_t highWaterMark) {
+    if (serializeVariableIds /*[[unlikely]]*/) {                // intentionally not an atomic access
+        // Original version that uses a single mutex for all threads.
+        static boost::mutex mutex;
+        static uint64_t counter = 0;
+        boost::lock_guard<boost::mutex> lock(mutex);
+        if (highWaterMark == (uint64_t)(-1))
+            return ++counter;
+        counter = std::max(counter, highWaterMark);
+        return highWaterMark;
+    } else {
+        // [Robb Matzke 2021-11-04]: New version that uses multiple mutexes to reduce contention.
+        struct IdPool {
+            SAWYER_THREAD_TRAITS::Mutex mutex;                  // protects the following data members
+            uint64_t nextId = 0;                                // next ID to hand out, if less than endId.
+            uint64_t endId = 0;                                 // one past maximum available ID
+        };
+        static const size_t nPools = 16;
+        static IdPool pools[nPools];
+
+        // If you need to lock both a pool and the globalMutex, the pool must be locked first to avoid potential deadlock.
+        static SAWYER_THREAD_TRAITS::Mutex globalMutex;         // protects globalNextId
+        static uint64_t globalNextId = 0;                       // next ID when replenishing a pool
+
+        if ((uint64_t)(-1) == highWaterMark /*[[likely]]*/) {
+            // To reduce contention on the global mutex, we have 16 disjoint pools of available IDs. Requests are handled by a
+            // random pool. We only lock the global mutex if a pool needs to aquire more IDs.
+            static const uint64_t poolSize = 10000;             // number of IDs to give to each pool when replenishing it
+            const size_t i = Sawyer::fastRandomIndex(nPools);
+            IdPool &pool = pools[i];
+            {
+                SAWYER_THREAD_TRAITS::LockGuard lock(pool.mutex);
+                if (pool.nextId >= pool.endId) {
+                    // We need to replenish this pool from the global counter.
+                    SAWYER_THREAD_TRAITS::LockGuard lock(globalMutex);
+                    pool.nextId = globalNextId;
+                    globalNextId += poolSize;
+                    pool.endId = globalNextId;
+                }
+                return pool.nextId++;
+            }
+
+        } else {
+            // Specifying an high-water ID normally only happens when we're reading an RBA file and there's only one active
+            // thread. First increment the global counter, then remove from pools all IDs that are too small. Although pools
+            // could still be handing out too-small IDs during this, by time we return from this function, all pools will be
+            // handing out proper IDs. Furthermore, if two or more threads try to set high-water marks at the same time, only
+            // the highest high-water mark is used.
+            {
+                SAWYER_THREAD_TRAITS::LockGuard lock(globalMutex);
+                if (highWaterMark >= globalNextId)
+                    globalNextId = highWaterMark + 1;
+            }
+
+            for (size_t i = 0; i < nPools; ++i) {
+                IdPool &pool = pools[i];
+                SAWYER_THREAD_TRAITS::LockGuard lock(pool.mutex);
+                for (size_t i = 0; i < nPools; ++i) {
+                    if (pool.endId <= highWaterMark) {
+                        // All this pool's IDs are now too small. Empty the pool.
+                        pool.nextId = pool.endId = 0;
+                    } else if (pool.nextId <= highWaterMark) {
+                        // Some of this pool's IDs are now too small. Discard them.
+                        pool.nextId = highWaterMark + 1;
+                    }
+                }
+            }
+            return highWaterMark;
+        }
+    }
 }
 
 Sawyer::Optional<uint64_t>
@@ -3206,8 +3326,8 @@ Leaf::printAsSigned(std::ostream &o, Formatter &formatter, bool as_signed) const
 bool
 Leaf::mustEqual(const Ptr &other_, const SmtSolverPtr &solver) {
     bool retval = false;
-    LeafPtr other = other_->isLeafNode();
-    if (this == getRawPointer(other)) {
+    const Leaf *other = other_->isLeafNodeRaw();
+    if (this == other) {
         retval = true;
     } else if (flags() != other_->flags()) {
         // Expressions with different flags are not considered mustEqual
@@ -3251,7 +3371,7 @@ Leaf::mustEqual(const Ptr &other_, const SmtSolverPtr &solver) {
 
 bool
 Leaf::mayEqual(const Ptr &other, const SmtSolverPtr &solver) {
-    LeafPtr otherLeaf = other->isLeafNode();
+    const Leaf *otherLeaf = other->isLeafNodeRaw();
 
     // Fast comparison of literally the same expression pointer
     if (this == getRawPointer(other))
@@ -3259,7 +3379,7 @@ Leaf::mayEqual(const Ptr &other, const SmtSolverPtr &solver) {
 
     // The may-equal operator is symmetric, therefore if other is an interior node use that method instead (which is where the
     // more complicated logic lives).
-    if (other->isInteriorNode())
+    if (other->isInteriorNodeRaw())
         return other->mayEqual(sharedFromThis(), solver);
 
     // Give the user a chance to decide.
@@ -3307,10 +3427,10 @@ Leaf::mayEqual(const Ptr &other, const SmtSolverPtr &solver) {
 
 int
 Leaf::compareStructure(const Ptr &other_) {
-    LeafPtr other = other_->isLeafNode();
-    if (this==getRawPointer(other)) {
+    const Leaf *other = other_->isLeafNodeRaw();
+    if (this == other) {
         return 0;
-    } else if (other==NULL) {
+    } else if (other == nullptr) {
         return -1;                                      // leaf nodes < internal nodes
     } else if (nBits() != other->nBits()) {
         return nBits() < other->nBits() ? -1 : 1;
@@ -3335,19 +3455,25 @@ Leaf::compareStructure(const Ptr &other_) {
 }
 
 bool
-Leaf::isEquivalentTo(const Ptr &other_) {
-    bool retval = false;
-    LeafPtr other = other_->isLeafNode();
-    if (this==getRawPointer(other)) {
-        retval = true;
-    } else if (other && nBits() == other->nBits() && flags() == other->flags()) {
+Leaf::isEquivalentTo(const Ptr &other) {
+    EquivPairs matched;
+    return isEquivalentHelper(other.getRawPointer(), matched);
+}
+
+bool
+Leaf::isEquivalentHelper(Node *other_, EquivPairs &matched) {
+    const Leaf *other = other_->isLeafNodeRaw();
+    if (this == other) {
+        return true;
+    } else if (!other || nBits() != other->nBits() || flags() != other->flags()) {
+        return false;
+    } else {
         if (isConstant()) {
-            retval = other->isConstant() && bits().equalTo(other->bits());
+            return other->isConstant() && bits().equalTo(other->bits());
         } else {
-            retval = !other->isConstant() && name_ == other->name_;
+            return !other->isConstant() && name_ == other->name_;
         }
     }
-    return retval;
 }
 
 Ptr

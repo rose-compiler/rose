@@ -33,16 +33,16 @@ void Solver11::run() {
   logger[TRACE]<<"STATUS: Running sequential solver 11 with 1 thread."<<endl;
   _analyzer->printStatusMessage(true);
   while(!_analyzer->isEmptyWorkList()) {
-    if(_analyzer->_displayDiff && (_analyzer->estateSet.size()>(prevStateSetSize+_analyzer->_displayDiff))) {
+    if(_analyzer->getDisplayDiff() && (_analyzer->getEStateSetSize()>(prevStateSetSize+_analyzer->getDisplayDiff()))) {
       _analyzer->printStatusMessage(true);
-      prevStateSetSize=_analyzer->estateSet.size();
+      prevStateSetSize=_analyzer->getEStateSetSize();
     }
-    const EState* currentEStatePtr=_analyzer->popWorkList();
+    EStatePtr currentEStatePtr=_analyzer->popWorkList();
     ROSE_ASSERT(currentEStatePtr);
 
     CTAnalysis::SubSolverResultType subSolverResult= _analyzer->subSolver(currentEStatePtr);
     EStateWorkList deferedWorkList=subSolverResult.first;
-    for(EStateWorkList::iterator i=deferedWorkList.begin();i!=deferedWorkList.end();++i) {
+    for(auto i=deferedWorkList.begin();i!=deferedWorkList.end();++i) {
       _analyzer->addToWorkList(*i);
     }
   } // while loop
@@ -54,15 +54,15 @@ void Solver11::run() {
     _analyzer->printStatusMessage(true);
     logger[TRACE]<< "STATUS: analysis finished (incomplete STG due to specified resource restriction)."<<endl;
     _analyzer->reachabilityResults.finishedReachability(_analyzer->isPrecise(),!isComplete);
-    _analyzer->transitionGraph.setIsComplete(!isComplete);
+    _analyzer->getTransitionGraph()->setIsComplete(!isComplete);
   } else {
     bool tmpcomplete=true;
     _analyzer->reachabilityResults.finishedReachability(_analyzer->isPrecise(),tmpcomplete);
     _analyzer->printStatusMessage(true);
-    _analyzer->transitionGraph.setIsComplete(tmpcomplete);
+    _analyzer->getTransitionGraph()->setIsComplete(tmpcomplete);
     logger[TRACE]<< "analysis finished (worklist is empty)."<<endl;
   }
-  _analyzer->transitionGraph.setIsPrecise(_analyzer->isPrecise());
+  _analyzer->getTransitionGraph()->setIsPrecise(_analyzer->isPrecise());
   _analyzer->printStatusMessage(true);
   logger[TRACE]<< "analysis with solver 11 finished (worklist is empty)."<<endl;
 }

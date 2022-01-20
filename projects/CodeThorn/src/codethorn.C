@@ -28,12 +28,6 @@
 #include "Miscellaneous2.h"
 #include "FIConstAnalysis.h"
 #include "ReachabilityAnalysis.h"
-#include "Solver5.h"
-#include "Solver16.h"
-#include "Solver8.h"
-#include "ltlthorn-lib/Solver10.h"
-#include "ltlthorn-lib/Solver11.h"
-#include "ltlthorn-lib/Solver12.h"
 #include "AnalysisParameters.h"
 #include "CodeThornException.h"
 #include "CodeThornException.h"
@@ -62,6 +56,11 @@
 #include "LTLThornLib.h"
 #include "CppStdUtilities.h"
 
+// only required for LTL verification
+#include "ltlthorn-lib/Solver10.h"
+#include "ltlthorn-lib/Solver11.h"
+#include "ltlthorn-lib/Solver12.h"
+
 using namespace std;
 
 using namespace CodeThorn;
@@ -70,15 +69,6 @@ using namespace boost;
 #include "Rose/Diagnostics.h"
 using namespace Sawyer::Message;
 using namespace CodeThornLib;
-
-// required for createSolver function
-#include "Solver5.h"
-#include "Solver16.h"
-#include "Solver8.h"
-#include "ltlthorn-lib/Solver10.h"
-#include "ltlthorn-lib/Solver11.h"
-#include "ltlthorn-lib/Solver12.h"
-
 
 void configureRersSpecialization() {
 #ifdef RERS_SPECIALIZATION
@@ -91,36 +81,6 @@ void configureRersSpecialization() {
   extern void RERS_Problem_FunctionPointerInit();
   RERS_Problem_FunctionPointerInit();
 #endif
-}
-
-Solver* createSolver(CodeThornOptions& ctOpt) {
-  Solver* solver = nullptr;
-  // solver "factory"
-  switch(ctOpt.solver) {
-  case 5 :  {  
-    solver = new Solver5(); break;
-  }
-  case 16 :  {  
-    solver = new Solver16(); break; // variant of solver5
-  }
-  case 8 :  {  
-    solver = new Solver8(); break;
-  }
-  case 10 :  {  
-    solver = new Solver10(); break;
-  }
-  case 11 :  {  
-    solver = new Solver11(); break;
-  }
-  case 12 :  {  
-    solver = new Solver12(); break;
-  }
-  default :  { 
-    logger[ERROR] <<"Unknown solver ID: "<<ctOpt.solver<<endl;
-    exit(1);
-  }
-  }
-  return solver;
 }
 
 void optionallyRunZ3AndExit(CodeThornOptions& ctOpt,CTAnalysis* analyzer) {
@@ -169,6 +129,8 @@ int main( int argc, char * argv[] ) {
 
     tc.startTimer();
     CodeThornOptions ctOpt;
+    ctOpt.sharedPStates=false; // experimental
+    
     LTLOptions ltlOpt; // to be moved into separate tool
     ParProOptions parProOpt; // options only available in parprothorn
     parseCommandLine(argc, argv, logger,CodeThorn::CodeThornLib::getCodeThornLibraryVersionNumber(),ctOpt,ltlOpt,parProOpt);
@@ -179,11 +141,43 @@ int main( int argc, char * argv[] ) {
     CodeThornLib::optionallyRunInternalChecks(ctOpt,argc,argv);
     CodeThornLib::optionallyRunExprEvalTestAndExit(ctOpt,argc,argv);
     analyzer->configureOptions(ctOpt,ltlOpt,parProOpt);
-    analyzer->setSolver(createSolver(ctOpt));
+
+    Solver* solver=nullptr;
+    // ltl verification specific solvers
+    switch(ctOpt.solver) {
+    case 10 :  {
+      solver = new Solver10(); break; // only available in LTLThornLib
+    }
+    case 11 :  {  
+      solver = new Solver11(); break; // only available in LTLThornLib
+    }
+    case 12 :  {  
+      solver = new Solver12(); break; // only available in LTLThornLib
+    }
+    default:
+      solver = CodeThornLib::createSolver(ctOpt); // available in CodeThornLib
+    }
+
+    ROSE_ASSERT(solver);
+    analyzer->setSolver(solver);
     analyzer->setOptionContextSensitiveAnalysis(ctOpt.contextSensitive);
     optionallySetRersMapping(ctOpt,ltlOpt,analyzer);
     tc.stopTimer();
 
+    if(ctOpt.generateReports) {
+      // set fixed set of analyses
+      CodeThornOptions::AnalysisListType
+        analysisList={
+                      {CodeThorn::ANALYSIS_NULL_POINTER,"null-pointer"},
+                      {CodeThorn::ANALYSIS_OUT_OF_BOUNDS,"out-of-bounds"},
+                      {CodeThorn::ANALYSIS_UNINITIALIZED,"uninitialized"},
+                      //{CodeThorn::ANALYSIS_DEAD_CODE,"dead-code"},
+                      //{CodeThorn::ANALYSIS_OPAQUE_PREDICATE,"opaque-predicate"}
+      };
+      ctOpt.setAnalysisList(analysisList);
+      if(ctOpt.status) cout<<"STATUS: codethorn: Number of activated analyses: "<<ctOpt.analysisList().size()<<endl;
+    }
+    
     SgProject* project=runRoseFrontEnd(argc,argv,ctOpt,tc);
     if(ctOpt.status) cout << "STATUS: Parsing and creating AST finished."<<endl;
     optionallyRunRoseAstChecks(ctOpt, project);
@@ -254,7 +248,7 @@ int main( int argc, char * argv[] ) {
     if(ctOpt.constantConditionAnalysisFileName.size()>0) {
       analyzer->getEStateTransferFunctions()->registerReadWriteListener(new ConstantConditionAnalysis(),"constant-condition");
     }
-    if(ctOpt.nullPointerAnalysis||ctOpt.generateReports) {
+    if(ctOpt.generateReports) {
       auto memViolationAnalysis=new MemoryViolationAnalysis();
       memViolationAnalysis->setEStateTransferFunctions(analyzer->getEStateTransferFunctions()); // temporary until reports are moved
       analyzer->getEStateTransferFunctions()->registerReadWriteListener(memViolationAnalysis,"memory-violation");
@@ -270,12 +264,15 @@ int main( int argc, char * argv[] ) {
     }
 
     analyzer->printStatusMessageLine("==============================================================");
+    
     optionallyWriteSVCompWitnessFile(ctOpt, analyzer);
-    optionallyAnalyzeAssertions(ctOpt, ltlOpt, analyzer, tc);
+    if(analyzer->getSolver()->checksAssertions())
+      optionallyAnalyzeAssertions(ctOpt, ltlOpt, analyzer, tc);
 
 #if HAVE_Z3
     optionallyRunZ3AndExit(ctOpt,analyzer);
 #endif
+
     tc.startTimer();
     optionallyGenerateVerificationReports(ctOpt,analyzer);
     tc.stopTimer(TimingCollector::reportGeneration);
@@ -284,14 +281,14 @@ int main( int argc, char * argv[] ) {
     optionallyGenerateCallGraphDotFile(ctOpt,analyzer);
     tc.stopTimer(TimingCollector::callGraphDotFile);
 
-    runLTLAnalysis(ctOpt,ltlOpt,analyzer,tc);
-    processCtOptGenerateAssertions(ctOpt, analyzer, project);
-
+    if(analyzer->getSolver()->createsTransitionSystem()) {
+      runLTLAnalysis(ctOpt,ltlOpt,analyzer,tc);
+      processCtOptGenerateAssertions(ctOpt, analyzer, project);
     
-    if(ctOpt.reduceStg) {
-      analyzer->reduceStgToInOutStates();
+      if(ctOpt.reduceStg) {
+        analyzer->reduceStgToInOutStates();
+      }
     }
-
 
     tc.startTimer();
     optionallyRunVisualizer(ctOpt,analyzer,project);

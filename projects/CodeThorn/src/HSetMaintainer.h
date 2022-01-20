@@ -99,25 +99,35 @@ public:
     return ret;
   }
 
-  ProcessingResult process(const KeyType* key) {
+  ProcessingResult process(KeyType* key) {
     ProcessingResult res2;
 #pragma omp critical(HASHSET)
     {
       std::pair<typename HSetMaintainer::iterator, bool> res;
 
-      typename HSetMaintainer::iterator iter=this->find(const_cast<KeyType*>(key)); // TODO: eliminate const_cast
+      typename HSetMaintainer::iterator iter=this->find(key);
       if(iter!=this->end()) {
         // found it!
         res=std::make_pair(iter,false);
       } else {
-        res=this->insert(const_cast<KeyType*>(key)); // TODO: eliminate const_cast
+        res=this->insert(key);
       }
       res2=std::make_pair(res.second,*res.first);
     }
     return res2;
   }
-  const KeyType* processNewOrExisting(const KeyType* s) {
-    ProcessingResult res=process(s);
+
+    ProcessingResult process(const KeyType* key) {
+      return const_cast<KeyType*>(process(key));
+    }
+
+    const KeyType* processNewOrExisting(KeyType* key) {
+      ProcessingResult res=process(key);
+      return res.second;
+    }
+
+    const KeyType* processNewOrExisting(const KeyType* key) {
+    ProcessingResult res=process(key);
     return res.second;
   }
 

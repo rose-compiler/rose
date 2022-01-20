@@ -1211,6 +1211,15 @@ test2020_113: ../../testTranslator
 
 
 #########
+# Test compilation of C file using C++11 mode
+
+test_C_language_file_as_cxx: C_language_file_1.c
+	$(VALGRIND) $(TEST_TRANSLATOR) -std=c++ $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/C_language_file_1.c 
+
+test_C_language_file_as_cxx11: C_language_file_2.c
+	$(VALGRIND) $(TEST_TRANSLATOR) -std=c++11 $(ROSE_FLAGS)  $(TESTCODE_INCLUDES) -c $(srcdir)/C_language_file_2.c 
+
+#########
 # Targets lists
 
 # PASSING_TEST_Source_passed = ${TESTCODES:.C=.C.passed}
@@ -1304,6 +1313,8 @@ else # NOT USING_INTEL_COMPILER
 endif # USING_INTEL_COMPILER
 endif # USING_CLANG_COMPILER
 endif # USING_GNU_COMPILER
+	@echo "Test C++ and C++11 modes to override the source file suffix (C files)."
+	@$(MAKE) test_C_language_file_as_cxx test_C_language_file_as_cxx11
 	@echo "*********************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/Cxx11_tests: make check rule complete (terminated normally) ******"
 	@echo "*********************************************************************************************************************"

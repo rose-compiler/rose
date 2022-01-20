@@ -24,8 +24,8 @@ class DFSolver1 : public DFAbstractSolver {
            DFTransferFunctions& transferFunctions
            );
 
-  void runSolver() ROSE_OVERRIDE;
-  void computeCombinedPreInfo(Label lab,Lattice& inInfo) ROSE_OVERRIDE;
+  void runSolver() override;
+  void computeCombinedPreInfo(Label lab,Lattice& inInfo) override;
 
   void setLabeler(Labeler& labeler) { l = &labeler; }
   Labeler* getLabeler()

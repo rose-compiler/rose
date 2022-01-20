@@ -77,9 +77,9 @@ SgAsmFloatValueExpression* buildValueFloat(double value, SgAsmType*);
 SgAsmFloatValueExpression* buildValueFloat(const Sawyer::Container::BitVector&, SgAsmType*);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Building integer values.
+// Building integer or FP values.
 
-// Build integer values generically (one of these per buildType function above)
+// Build integer or FP values generically (one of these per buildType function above)
 SgAsmIntegerValueExpression* buildValueU1(bool);
 SgAsmIntegerValueExpression* buildValueU8(uint8_t);
 SgAsmIntegerValueExpression* buildValueU16(uint16_t);
@@ -92,7 +92,7 @@ SgAsmIntegerValueExpression* buildValueI64(int64_t);
 SgAsmFloatValueExpression* buildValueIeee754Binary32(double);
 SgAsmFloatValueExpression* buildValueIeee754Binary64(double);
 
-// Building integer values with x86-specific type names
+// Building integer or FP values with x86-specific type names
 SgAsmIntegerValueExpression* buildValueX86Byte(uint8_t);
 SgAsmIntegerValueExpression* buildValueX86Word(uint16_t);
 SgAsmIntegerValueExpression* buildValueX86DWord(uint32_t);

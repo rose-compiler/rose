@@ -125,7 +125,7 @@ struct CtxTransfer : DFTransferFunctions
 
 
     /// sets its and its' component's abstraction layer
-    void setProgramAbstractionLayer(ProgramAbstractionLayer* pal) ROSE_OVERRIDE
+    void setProgramAbstractionLayer(ProgramAbstractionLayer* pal) override
     {
       ROSE_ASSERT(pal);
 
@@ -133,7 +133,7 @@ struct CtxTransfer : DFTransferFunctions
       component.setProgramAbstractionLayer(pal);
     }
 
-    void setPointerAnalysis(PointerAnalysisInterface* pai) ROSE_OVERRIDE
+    void setPointerAnalysis(PointerAnalysisInterface* pai) override
     {
       ROSE_ASSERT(pai);
 
@@ -148,7 +148,7 @@ struct CtxTransfer : DFTransferFunctions
 
     /// handles transfers on edges
     /// \note CURRENTLY ONLY CALLED from post-info processing
-    void transfer(Label lbl, Lattice& element) ROSE_OVERRIDE
+    void transfer(Label lbl, Lattice& element) override
     {
       ctx_lattice_t& lat = dynamic_cast<ctx_lattice_t&>(element);
 
@@ -160,10 +160,10 @@ struct CtxTransfer : DFTransferFunctions
     ///   calls the component's transfer function for each context.
     ///   It also calls the concrete transfer function (above) to
     ///   handle context changes.
-    void transfer(Edge edge, Lattice& element) ROSE_OVERRIDE;
+    void transfer(Edge edge, Lattice& element) override;
 
     /// initializes extremal values
-    void initializeExtremalValue(Lattice& element) ROSE_OVERRIDE
+    void initializeExtremalValue(Lattice& element) override
     {
       ctx_lattice_t& lat = dynamic_cast<ctx_lattice_t&>(element);
 
@@ -174,7 +174,7 @@ struct CtxTransfer : DFTransferFunctions
     /// overrides behavior from base function for cases where
     ///   root = nullptr, indicating a nested analysis that must not
     ///   reinitialize global state.
-    ctx_lattice_t* initializeGlobalVariables(SgProject* root) ROSE_OVERRIDE
+    ctx_lattice_t* initializeGlobalVariables(SgProject* root) override
     {
       if (!root) return cloneLattice(analysis.factory(), *initialElement);
 

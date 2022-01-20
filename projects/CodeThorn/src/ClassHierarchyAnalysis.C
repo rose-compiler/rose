@@ -499,6 +499,7 @@ void computeOverriders( const RoseCompatibilityBridge& rcb,
                         const ClassAnalysis& classes,
                         VirtualFunctionAnalysis& vfunAnalysis,
                         const ClassAnalysis::value_type& entry,
+                        bool normalizedSignature,
                         SortedVirtualMemberFunctions& sortedVFunMap
                       )
 {
@@ -532,16 +533,16 @@ void computeOverriders( const RoseCompatibilityBridge& rcb,
 }
 
 VirtualFunctionAnalysis
-analyzeVirtualFunctions(const RoseCompatibilityBridge& rcb, const ClassAnalysis& all)
+analyzeVirtualFunctions(const RoseCompatibilityBridge& rcb, const ClassAnalysis& all, bool normalizedSignature)
 {
   VirtualFunctionAnalysis      res;
   SortedVirtualMemberFunctions tmpSorted;
 
   topDownTraversal( all,
-                    [&rcb, &all, &res, &tmpSorted]
+                    [&rcb, &all, &res, &tmpSorted, &normalizedSignature]
                     (const ClassAnalysis::value_type& clrep) -> void
                     {
-                      computeOverriders(rcb, all, res, clrep, tmpSorted);
+                      computeOverriders(rcb, all, res, clrep, normalizedSignature, tmpSorted);
                     }
                   );
 
@@ -549,9 +550,9 @@ analyzeVirtualFunctions(const RoseCompatibilityBridge& rcb, const ClassAnalysis&
 }
 
 VirtualFunctionAnalysis
-analyzeVirtualFunctions(const ClassAnalysis& all)
+analyzeVirtualFunctions(const ClassAnalysis& all, bool normalizedSignature)
 {
-  return analyzeVirtualFunctions(RoseCompatibilityBridge{}, all);
+  return analyzeVirtualFunctions(RoseCompatibilityBridge{}, all, normalizedSignature);
 }
 
 

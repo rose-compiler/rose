@@ -13,7 +13,7 @@ using namespace Sawyer::Message;
 
 namespace PredefinedSemanticFunctions {
   /* TODO: in case an error is detected the target region remains unmodified. Change to invalidating all elements of target region */
-  SingleEvalResult evalFunctionCallMemCpy(EStateTransferFunctions* exprAnalyzer, SgFunctionCallExp* funCall, EState estate) {
+  SingleEvalResult evalFunctionCallMemCpy(EStateTransferFunctions* exprAnalyzer, SgFunctionCallExp* funCall, EStatePtr estate) {
     //cout<<"DETECTED: memcpy: "<<funCall->unparseToString()<<endl;
     SingleEvalResult res;
     // memcpy is a void function, no return value
@@ -29,7 +29,7 @@ namespace PredefinedSemanticFunctions {
         memcpyArgs[i++]=argVal;
       }
       if(memcpyArgs[0].isTop()||memcpyArgs[1].isTop()||memcpyArgs[2].isTop()) {
-        exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate.label());
+        exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate->label());
         return res; // returns top
       }
       int memRegionSizeTarget=exprAnalyzer->getMemoryRegionNumElements(memcpyArgs[0]);
@@ -40,11 +40,11 @@ namespace PredefinedSemanticFunctions {
       int copyRegionElementSize=0; // TODO: use AbstractValue for all sizes
       // check if size to copy is either top
       if(memcpyArgs[2].isTop()) {
-        exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate.label());
+        exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate->label());
         return res;
       } else if(memRegionSizeTarget!=memRegionSizeSource) {
         // check if the element size of the two regions is different (=> conservative analysis result; will be modelled in future)
-        exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate.label());
+        exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate->label());
         return res;
       } else {
         if(copyRegionElementSizeTarget!=copyRegionElementSizeSource) {
@@ -66,7 +66,7 @@ namespace PredefinedSemanticFunctions {
       // the copy function length argument is converted here into number of elements. This needs to be adapted if the repsentation of size is changed.
       if(copyRegionElementSize==0) {
         cout<<"WARNING: memcpy: copy region element size is 0. Recording potential out of bounds access."<<endl;
-        exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate.label());
+        exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate->label());
         return res;
       }
       int copyRegionNumElements=copyRegionLengthValue/copyRegionElementSize;
@@ -78,29 +78,29 @@ namespace PredefinedSemanticFunctions {
       if(memRegionSizeSource<copyRegionNumElements) {
         if(memRegionSizeSource==0) {
           errorDetected=true;
-          exprAnalyzer->recordDefinitiveOutOfBoundsAccessLocation(estate.label());
+          exprAnalyzer->recordDefinitiveOutOfBoundsAccessLocation(estate->label());
         } else {
           errorDetected=true;
-          exprAnalyzer->recordDefinitiveOutOfBoundsAccessLocation(estate.label());
+          exprAnalyzer->recordDefinitiveOutOfBoundsAccessLocation(estate->label());
         }
       }
       if(memRegionSizeTarget<copyRegionNumElements) {
         if(memRegionSizeTarget==0) {
           errorDetected=true;
-          exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate.label());
+          exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate->label());
         } else {
           errorDetected=true;
-          exprAnalyzer->recordDefinitiveOutOfBoundsAccessLocation(estate.label());
+          exprAnalyzer->recordDefinitiveOutOfBoundsAccessLocation(estate->label());
         }
       }
       if(!errorDetected) {
         // no error occured. Copy region.
-        PState newPState=*estate.pstate();
+        PStatePtr newPState=estate->pstate();
         AbstractValue targetPtr=memcpyArgs[0];
         AbstractValue sourcePtr=memcpyArgs[1];
         AbstractValue one=CodeThorn::AbstractValue(1);
         for(int i=0;i<copyRegionNumElements;i++) {
-          exprAnalyzer->writeToMemoryLocation(estate.label(),&newPState,targetPtr,exprAnalyzer->readFromMemoryLocation(estate.label(),&newPState,sourcePtr));
+          exprAnalyzer->writeToMemoryLocation(estate->label(),newPState,targetPtr,exprAnalyzer->readFromMemoryLocation(estate->label(),newPState,sourcePtr));
           targetPtr=AbstractValue::operatorAdd(targetPtr,one); // targetPtr++;
           sourcePtr=AbstractValue::operatorAdd(sourcePtr,one); // sourcePtr++;
         }
@@ -113,7 +113,7 @@ namespace PredefinedSemanticFunctions {
     return res;
   }
 
-  SingleEvalResult evalFunctionCallStrLen(EStateTransferFunctions* exprAnalyzer, SgFunctionCallExp* funCall, EState estate) {
+  SingleEvalResult evalFunctionCallStrLen(EStateTransferFunctions* exprAnalyzer, SgFunctionCallExp* funCall, EStatePtr estate) {
     SingleEvalResult res;
     res.init(estate,AbstractValue(CodeThorn::Top()));
     return res;
@@ -143,23 +143,23 @@ namespace PredefinedSemanticFunctions {
         AbstractValue currentPos=AbstractValue::operatorAdd(stringPtr,AbstractPos);
         cout<<"DEBUG: evalFunctionCallStrLen: currentPos:"<<currentPos.toString()<<endl;
         if(currentPos.isTop()) {
-          exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate.label());
+          exprAnalyzer->recordPotentialOutOfBoundsAccessLocation(estate->label());
           break;
         }
 #if 0
         // TODO: enable this check when strings are registered with size in all modes
         // check bounds of string's memory region
         if(!accessIsWithinArrayBounds(stringPtr.getVariableId(),pos)) {
-          exprAnalyzer->recordDefinitiveOutOfBoundsAccessLocation(estate.label());
+          exprAnalyzer->recordDefinitiveOutOfBoundsAccessLocation(estate->label());
           break;
         }
 #endif
-        AbstractValue currentPosValue=exprAnalyzer->readFromMemoryLocation(estate.label(),estate.pstate(),currentPos);
+        AbstractValue currentPosValue=exprAnalyzer->readFromMemoryLocation(estate->label(),estate->pstate(),currentPos);
         //cout<<"DEBUG: currentPosValue:"<<currentPosValue.toString()<<endl;
         // if the memory location that is read, does not exist, it is an out-of-bounds access
         if(currentPosValue.isBot()) {
           //cout<<estate.pstate()->toString()<<endl;
-          exprAnalyzer->recordDefinitiveOutOfBoundsAccessLocation(estate.label());
+          exprAnalyzer->recordDefinitiveOutOfBoundsAccessLocation(estate->label());
           break;
         }
         AbstractValue cmpResult=(currentPosValue==AbstractValue(0));

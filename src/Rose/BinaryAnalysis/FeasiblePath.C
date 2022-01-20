@@ -6,7 +6,6 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
 #include <Rose/BinaryAnalysis/FeasiblePath.h>
 #include <Rose/BinaryAnalysis/SymbolicExprParser.h>
-#include <Rose/BinaryAnalysis/YicesSolver.h>
 #include <Combinatorics.h>
 #include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/DisassemblerAarch32.h>
@@ -98,11 +97,11 @@ public:
     }
 
     virtual BaseSemantics::StatePtr create(const BaseSemantics::RegisterStatePtr &registers,
-                                           const BaseSemantics::MemoryStatePtr &memory) const ROSE_OVERRIDE {
+                                           const BaseSemantics::MemoryStatePtr &memory) const override {
         return instance(registers, memory);
     }
 
-    virtual BaseSemantics::StatePtr clone() const ROSE_OVERRIDE {
+    virtual BaseSemantics::StatePtr clone() const override {
         return StatePtr(new State(*this));
     }
 
@@ -216,13 +215,13 @@ public:
 public:
     virtual BaseSemantics::RiscOperatorsPtr
     create(const BaseSemantics::SValuePtr &protoval,
-           const Rose::BinaryAnalysis::SmtSolverPtr &solver = Rose::BinaryAnalysis::SmtSolverPtr()) const ROSE_OVERRIDE {
+           const Rose::BinaryAnalysis::SmtSolverPtr &solver = Rose::BinaryAnalysis::SmtSolverPtr()) const override {
         return instance(NULL, protoval, solver);
     }
 
     virtual BaseSemantics::RiscOperatorsPtr
     create(const BaseSemantics::StatePtr &state,
-           const Rose::BinaryAnalysis::SmtSolverPtr &solver = Rose::BinaryAnalysis::SmtSolverPtr()) const ROSE_OVERRIDE {
+           const Rose::BinaryAnalysis::SmtSolverPtr &solver = Rose::BinaryAnalysis::SmtSolverPtr()) const override {
         return instance(NULL, state, solver);
     }
 
@@ -329,7 +328,7 @@ private:
 
             VarFinder(): hasVariable(false) {}
 
-            SymbolicExpr::VisitAction preVisit(const SymbolicExpr::Ptr &node) ROSE_OVERRIDE {
+            SymbolicExpr::VisitAction preVisit(const SymbolicExpr::Ptr &node) override {
                 if (node->isLeafNode() && !node->isLeafNode()->isIntegerConstant()) {
                     hasVariable = true;
                     return SymbolicExpr::TERMINATE;
@@ -338,7 +337,7 @@ private:
                 }
             }
 
-            SymbolicExpr::VisitAction postVisit(const SymbolicExpr::Ptr &node) ROSE_OVERRIDE {
+            SymbolicExpr::VisitAction postVisit(const SymbolicExpr::Ptr &node) override {
                 return SymbolicExpr::CONTINUE;
             }
         } varFinder;
@@ -408,7 +407,7 @@ private:
     }
 
 public:
-    virtual void startInstruction(SgAsmInstruction *insn) ROSE_OVERRIDE {
+    virtual void startInstruction(SgAsmInstruction *insn) override {
         ASSERT_not_null(partitioner_);
         Super::startInstruction(insn);
         if (mlog[DEBUG]) {
@@ -421,7 +420,7 @@ public:
         }
     }
 
-    virtual void finishInstruction(SgAsmInstruction *insn) ROSE_OVERRIDE {
+    virtual void finishInstruction(SgAsmInstruction *insn) override {
         if (mlog[DEBUG]) {
             SymbolicSemantics::Formatter fmt = symbolicFormat("      ");
             mlog[DEBUG] <<"    state after instruction:\n" <<(*currentState()+fmt);
@@ -430,7 +429,7 @@ public:
     }
 
     virtual BaseSemantics::SValuePtr readRegister(RegisterDescriptor reg,
-                 const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE {
+                 const BaseSemantics::SValuePtr &dflt) override {
         SValuePtr retval = SValue::promote(Super::readRegister(reg, dflt));
         SymbolicExpr::Ptr expr = retval->get_expression();
         if (expr->isLeafNode())
@@ -439,7 +438,7 @@ public:
     }
 
     virtual void writeRegister(RegisterDescriptor reg,
-                  const BaseSemantics::SValuePtr &value) ROSE_OVERRIDE {
+                  const BaseSemantics::SValuePtr &value) override {
         SymbolicExpr::Ptr expr = SValue::promote(value)->get_expression();
         if (expr->isLeafNode())
             State::promote(currentState())->varDetail(expr->isLeafNode()->toString(), detailForVariable(reg, "write"));
@@ -451,7 +450,7 @@ public:
     // address that's being read if we've never seen it before.
     virtual BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
                                                 const BaseSemantics::SValuePtr &dflt_,
-                                                const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
+                                                const BaseSemantics::SValuePtr &cond) override {
         BaseSemantics::SValuePtr dflt = dflt_;
         const size_t nBytes = dflt->nBits() / 8;
         if (cond->isFalse())
@@ -542,7 +541,7 @@ public:
     // otherwise update the memory directly.  In any case, record some information about the address that was written if we've
     // never seen it before.
     virtual void writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
-                             const BaseSemantics::SValuePtr &value, const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE {
+                             const BaseSemantics::SValuePtr &value, const BaseSemantics::SValuePtr &cond) override {
         if (cond->isFalse())
             return;
         Super::writeMemory(segreg, addr_, value, cond);
@@ -634,6 +633,8 @@ FeasiblePath::Expression::print(std::ostream &out) const {
     }
 }
 
+FeasiblePath::FunctionSummary::FunctionSummary() {}
+
 FeasiblePath::FunctionSummary::FunctionSummary(const P2::ControlFlowGraph::ConstVertexIterator &cfgFuncVertex,
                                                uint64_t stackDelta)
     : address(cfgFuncVertex->value().address()), stackDelta(stackDelta) {
@@ -658,6 +659,10 @@ FeasiblePath::Statistics::operator+=(const FeasiblePath::Statistics &other) {
         reachedBlockVas.insertMaybe(node.key(), 0) += node.value();
     return *this;
 }
+
+FeasiblePath::FeasiblePath() {}
+
+FeasiblePath::~FeasiblePath() {}
 
 // class method
 void
@@ -1777,7 +1782,9 @@ FeasiblePath::createSmtSolver() {
     if (settings_.smtTimeout)
         solver->timeout(*settings_.smtTimeout);
 #if 1 // DEBUGGING [Robb Matzke 2018-11-14]
-    solver->memoization(false);
+    solver->memoizer(SmtSolver::Memoizer::Ptr());
+#else
+    solver->memoizer(...something_not_null...);
 #endif
     return solver;
 }

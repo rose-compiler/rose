@@ -6,7 +6,6 @@
 #include <AsmUnparser_compat.h>
 #include <Rose/BinaryAnalysis/SourceLocations.h>
 #include <Rose/BinaryAnalysis/SymbolicExprParser.h>
-#include <Rose/BinaryAnalysis/YicesSolver.h>
 #include <boost/thread/condition_variable.hpp>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
@@ -469,7 +468,7 @@ public:
     GraphVizEmitter(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &cfg)
         : Super(partitioner, cfg), gref(cfg) {}
 
-    virtual std::string vertexLabel(const P2::ControlFlowGraph::ConstVertexIterator &vertex) const ROSE_OVERRIDE {
+    virtual std::string vertexLabel(const P2::ControlFlowGraph::ConstVertexIterator &vertex) const override {
         if (vertex->value().type() == P2::V_USER_DEFINED) {
             const FunctionSummary &summary = functionSummaries[vertex->value().address()];
             return "summary for " + summary.name;
@@ -855,7 +854,7 @@ public:
         functor->docString(doc);
         return functor;
     }
-    SymbolicExpr::Ptr immediateExpansion(const SymbolicExprParser::Token &token) ROSE_OVERRIDE {
+    SymbolicExpr::Ptr immediateExpansion(const SymbolicExprParser::Token &token) override {
         BaseSemantics::RegisterStatePtr regState = ops_->currentState()->registerState();
         const RegisterDescriptor regp = regState->registerDictionary()->find(token.lexeme());
         if (!regp)

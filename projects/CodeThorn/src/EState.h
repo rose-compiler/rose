@@ -34,9 +34,13 @@ namespace CodeThorn {
   * \date 2012.
  */
 
-  typedef const CodeThorn::PState* PStatePtr;
+  #define ESTATE_PSTATE_MEM_COPY
 
-  //#define ESTATE_PSTATE_MEM_COPY
+  class EState;
+  //typedef const EState* EStatePtr;
+  typedef const EState* ConstEStatePtr;
+  typedef EState* EStatePtr;
+  typedef EState& EStateRef;
   
   class EState : public Lattice {
   public:
@@ -58,7 +62,7 @@ namespace CodeThorn {
     
     void setLabel(Label lab) { _label=lab; }
     Label label() const { return _label; }
-    void setPState(PStatePtr pstate) { _pstate=pstate; }
+    void setPState(PStatePtr pstate);
     //void setIO(CodeThorn::InputOutput io) { io=io;} TODO: investigate
     PStatePtr pstate() const { return _pstate; }
     CodeThorn::InputOutput::OpType ioOp() const;
@@ -73,14 +77,19 @@ namespace CodeThorn {
     std::string programPosToString(Labeler* labeler) const;
 
     // uses isApproximatedBy of PState
-    bool isApproximatedBy(const CodeThorn::EState* other) const;
+    bool isApproximatedBy(EStatePtr other) const;
 
     // required for PropertyState class
     bool isBot() const; 
     bool approximatedBy(PropertyState& other) const;
     void combine(PropertyState& other);
+
+    EStatePtr deepClone();
+    EStatePtr clone(); // equivalent to deepClone, if sharedPStates==false
+    EStatePtr cloneWithoutIO(); // equivalent to deepClone, if sharedPStates==false
     
   private:
+    void copy(EState* target, ConstEStatePtr source,bool sharedPStatesFlag);
     Label _label;
     PStatePtr _pstate;
   public:
@@ -150,9 +159,9 @@ class EStateHashFun {
  public:
    typedef HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult ProcessingResult;
    std::string toString(CodeThorn::VariableIdMapping* variableIdMapping=0) const;
-   EStateId estateId(const EState* estate) const;
+   EStateId estateId(EStatePtr estate) const;
    EStateId estateId(const EState estate) const;
-   std::string estateIdString(const EState* estate) const;
+   std::string estateIdString(EStatePtr estate) const;
    int numberOfIoTypeEStates(CodeThorn::InputOutput::OpType) const;
    int numberOfConstEStates(CodeThorn::VariableIdMapping* vid) const;
  private:

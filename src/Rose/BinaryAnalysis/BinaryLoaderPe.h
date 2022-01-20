@@ -29,7 +29,7 @@ public:
         return Ptr(new BinaryLoaderPe);
     }
 
-    virtual BinaryLoaderPtr clone() const ROSE_OVERRIDE {
+    virtual BinaryLoaderPtr clone() const override {
         return BinaryLoaderPtr(new BinaryLoaderPe(*this));
     }
 
@@ -38,10 +38,10 @@ public:
     /* Override virtual methods from BinaryLoader */
 public:
 
-    virtual bool canLoad(SgAsmGenericHeader*) const ROSE_OVERRIDE;
+    virtual bool canLoad(SgAsmGenericHeader*) const override;
 
     // Returns sections in order of their definition in the PE Section Table.
-    virtual SgAsmGenericSectionPtrList getRemapSections(SgAsmGenericHeader*) ROSE_OVERRIDE;
+    virtual SgAsmGenericSectionPtrList getRemapSections(SgAsmGenericHeader*) override;
 
     /** Windows-specific PE section alignment. */
     virtual MappingContribution alignValues(SgAsmGenericSection*, const MemoryMap::Ptr&,
@@ -49,7 +49,7 @@ public:
                                             rose_addr_t *va, rose_addr_t *mem_size,
                                             rose_addr_t *offset, rose_addr_t *file_size, bool *map_private,
                                             rose_addr_t *va_offset, bool *anon_lo, bool *anon_hi,
-                                            ConflictResolution *resolve) ROSE_OVERRIDE;
+                                            ConflictResolution *resolve) override;
 };
 
 } // namespace

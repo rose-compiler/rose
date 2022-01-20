@@ -209,7 +209,7 @@ Dispatcher::preUpdate(SgAsmExpression *e, const BaseSemantics::SValuePtr &enable
         BaseSemantics::SValuePtr enabled;
         T1(Dispatcher *self, const BaseSemantics::SValuePtr &enabled)
             : self(self), enabled(enabled) {}
-        void visit(SgNode *node) ROSE_OVERRIDE {
+        void visit(SgNode *node) override {
             if (SgAsmBinaryPreupdate *op = isSgAsmBinaryPreupdate(node)) {
                 if (enabled->isTrue()) {
                     // Definitely updating, therefore not necessary to read old value
@@ -235,7 +235,7 @@ Dispatcher::postUpdate(SgAsmExpression *e, const BaseSemantics::SValuePtr &enabl
         BaseSemantics::SValuePtr enabled;
         T1(Dispatcher *self, const BaseSemantics::SValuePtr &enabled)
             : self(self), enabled(enabled) {}
-        void visit(SgNode *node) ROSE_OVERRIDE {
+        void visit(SgNode *node) override {
             if (SgAsmBinaryPostupdate *op = isSgAsmBinaryPostupdate(node)) {
                 if (enabled->isTrue()) {
                     // Definitely updating, therefore not necessary to read old value

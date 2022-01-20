@@ -307,7 +307,9 @@ testPointerDetection_SWITCHES += --function=flow05
 testPointerDetection_SWITCHES += --function=flow06
 #testPointerDetection_SWITCHES += --function=flow07   # Not currently working: finds local, but not L-values
 run $(test) testPointerDetection --answer=testPointerDetection.ans \
+    --disabled="prone to random failures due to output ordering" \
     ./testPointerDetection $(testPointerDetection_SWITCHES) $(testPointerDetection_INPUT)
+      
 
 ###############################################################################################################################
 # Test function call detection
@@ -388,8 +390,6 @@ run $(tool_compile_linkexe) semantics.C -DSEMANTIC_DOMAIN=NULL_DOMAIN     -DSMT_
 run $(tool_compile_linkexe) semantics.C -DSEMANTIC_DOMAIN=PARTSYM_DOMAIN  -DSMT_SOLVER=NO_SOLVER -o partialSymbolicSemantics2
 run $(tool_compile_linkexe) semantics.C -DSEMANTIC_DOMAIN=INTERVAL_DOMAIN -DSMT_SOLVER=NO_SOLVER -o intervalSemantics2
 run $(tool_compile_linkexe) semantics.C -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=NO_SOLVER -o symbolicSemantics2
-run $(tool_compile_linkexe) semantics.C -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=YICES_EXE -o yicesSemanticsExe2
-run $(tool_compile_linkexe) semantics.C -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=YICES_LIB -o yicesSemanticsLib2
 run $(tool_compile_linkexe) semantics.C -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=Z3_EXE    -o z3SemanticsExe2
 run $(tool_compile_linkexe) semantics.C -DSEMANTIC_DOMAIN=SYMBOLIC_DOMAIN -DSMT_SOLVER=Z3_LIB    -o z3SemanticsLib2
 
@@ -407,14 +407,6 @@ run $(test) symbolicSemantics2 --answer=symbolicSemantics2-x86.ans --filter='per
 
 run $(test) symbolicSemantics2 -o trace --answer=traceSymbolicSemantics2-x86.ans --filter='perl -p semanticsFilter' \
     ./symbolicSemantics2 --trace --no-usedef $(ROSE)/tests/nonsmoke/specimens/binary/i686-test1.O3.bin
-
-ifneq (@(WITH_YICES),no)
-    run $(test) yicesSemanticsExe2 --answer=yicesSemanticsExe2-x86.ans --filter='perl -p semanticsFilter' \
-	./yicesSemanticsExe2 $(ROSE)/tests/nonsmoke/specimens/binary/i686-test1.O3.bin
-
-    run $(test) yicesSemanticsLib2 --answer=yicesSemanticsLib2-x86.ans --filter='perl -p semanticsFilter' \
-	./yicesSemanticsLib2 $(ROSE)/tests/nonsmoke/specimens/binary/i686-test1.O3.bin
-endif
 
 ifneq (@(WITH_Z3),no)
     run $(test) z3SemanticsExe2 --answer=z3SemanticsExe2-x86.ans --filter='perl -p semanticsFilter' \

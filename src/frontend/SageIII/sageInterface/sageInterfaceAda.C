@@ -382,6 +382,11 @@ namespace
 
     return (lhs == rhs) || (BaseScope::find(lhs) == BaseScope::find(rhs));
   }
+
+  bool isPrivate(const SgDeclarationStatement& dcl)
+  {
+    return dcl.get_declarationModifier().get_accessModifier().isPrivate();
+  }
 }
 
 namespace SageInterface
@@ -390,10 +395,13 @@ namespace ada
 {
   bool withPrivateDefinition(const SgDeclarationStatement& dcl)
   {
-    // \todo check that dcl refers to a type
+    // return false if dcl is already private
+    if (isPrivate(dcl))
+      return false;
+
     const SgDeclarationStatement* def = dcl.get_definingDeclaration();
 
-    return def && def->get_declarationModifier().get_accessModifier().isPrivate();
+    return def && isPrivate(*def);
   }
 
   bool withPrivateDefinition(const SgDeclarationStatement* n)
@@ -563,8 +571,6 @@ namespace ada
   SgAdaDiscriminatedTypeDecl*
   getAdaDiscriminatedTypeDecl(const SgDeclarationStatement& n)
   {
-    //~ SgDeclarationScope* scope = isSgDeclarationScope(n.get_parent());
-
     return isSgAdaDiscriminatedTypeDecl(n.get_parent());
   }
 
@@ -974,7 +980,7 @@ namespace ada
       : AstSimpleProcessing(), fn(std::move(conversionFn))
       {}
 
-      void visit(SgNode*) ROSE_OVERRIDE;
+      void visit(SgNode*) override;
 
     private:
       std::function<void(SgNode*)> fn;
@@ -991,6 +997,38 @@ namespace ada
     fn(n);
   }
 
+  StatementRange
+  declsInPackage(SgGlobal& globalScope, const std::string& mainFile)
+  {
+    auto declaredInMainFile = [&mainFile](const SgDeclarationStatement* dcl)
+                              {
+                                ROSE_ASSERT(dcl);
+
+                                const Sg_File_Info& fileInfo = SG_DEREF(dcl->get_startOfConstruct());
+
+                                return fileInfo.get_filenameString() == mainFile;
+                              };
+    auto notDeclaredInMainFile = [&declaredInMainFile](const SgDeclarationStatement* dcl)
+                                 {
+                                   return !declaredInMainFile(dcl);
+                                 };
+
+    SgDeclarationStatementPtrList&          lst   = globalScope.get_declarations();
+    SgDeclarationStatementPtrList::iterator zz    = lst.end();
+    SgDeclarationStatementPtrList::iterator first = std::find_if(lst.begin(), zz, declaredInMainFile);
+    SgDeclarationStatementPtrList::iterator limit = std::find_if(first, zz, notDeclaredInMainFile);
+
+    return std::make_pair(first, limit);
+  }
+
+
+  StatementRange
+  declsInPackage(SgGlobal& globalScope, const SgSourceFile& mainFile)
+  {
+    return declsInPackage(globalScope, mainFile.getFileName());
+  }
+
+
 
   /// Traversal to change the comment style from Ada to C++
   struct CommentCxxifier
@@ -1002,10 +1040,8 @@ namespace ada
         commentKind(useLineComments ? PreprocessingInfo::CplusplusStyleComment : PreprocessingInfo:: C_StyleComment)
       {}
 
-      CommentCxxifier& operator=(CommentCxxifier&&)      = default;
       CommentCxxifier(CommentCxxifier&&)                 = default;
       CommentCxxifier(const CommentCxxifier&)            = default;
-      CommentCxxifier& operator=(const CommentCxxifier&) = default;
 
       void operator()(SgNode*) const;
 
@@ -1016,6 +1052,8 @@ namespace ada
       const PreprocessingInfo::DirectiveType commentKind;
 
       CommentCxxifier()                                  = delete;
+      CommentCxxifier& operator=(const CommentCxxifier&) = delete;
+      CommentCxxifier& operator=(CommentCxxifier&&)      = delete;
   };
 
 
@@ -1339,6 +1377,21 @@ long double convertRealLiteral(const char* img)
   return computeLiteral(res, base, exp);
 }
 
+char convertCharLiteral(const char* img)
+{
+  // recognized form: 'l' -> l
+  ASSERT_not_null(img);
+
+  const char delimiter = *img;
+  ROSE_ASSERT(delimiter == '\'');
+
+  const char res = img[1];
+  // \todo could we have a null character in quotes?
+  ROSE_ASSERT(res && img[2] == '\'');
+  return res;
+}
+
+
 std::vector<PrimitiveParameterDesc>
 primitiveParameterPositions(const SgFunctionDeclaration& dcl)
 {
@@ -1452,6 +1505,19 @@ overridingScope(const SgExprListExp* args, const std::vector<PrimitiveParameterD
 
   return overridingScope(*args, primitiveArgs);
 }
+
+SgDeclarationStatement*
+baseDeclaration(SgType& ty)
+{
+  return baseDeclaration(&ty);
+}
+
+SgDeclarationStatement*
+baseDeclaration(SgType* ty)
+{
+  return BaseTypeDecl::find(ty);
+}
+
 
 bool
 explicitNullProcedure(const SgFunctionDefinition& fndef)

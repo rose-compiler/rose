@@ -223,6 +223,12 @@ Unparser_Nameq::lookup_generated_qualified_name ( SgNode* referencedNode )
                break;
              }
 
+           // Liao, 2021/11/1. We skip translation of some Ada AST from system packages in Ada2Cpp. The C++ unparser  will see them. 
+           // So we just skip them
+          case V_SgAdaFunctionRenamingDecl:
+             {
+               break;
+             }
           case V_SgClassType:
              {
             // These can appear in throw expression lists...ignore for now...

@@ -415,6 +415,22 @@ size_t Flow::erase(Edge e) {
 }
 
 size_t Flow::size() {
+  return numEdges();
+}
+
+size_t Flow::numNodes() {
+#ifdef USE_SAWYER_GRAPH
+  return _sawyerFlowGraph.nVertices();
+#else
+  return nodeLabels().size();
+#endif
+}
+
+std::string Flow::numNodesEdgesToString() {
+  return "("+std::to_string(numNodes())+","+std::to_string(numEdges())+")";
+}
+
+size_t Flow::numEdges() {
 #ifdef USE_SAWYER_GRAPH
   return _sawyerFlowGraph.nEdges();
 #else

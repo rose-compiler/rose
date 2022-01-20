@@ -61,16 +61,16 @@ class PreviousAndNextAttribute : public AstAttribute
           PreviousAndNextAttribute(const PreviousAndNextAttribute & X);
 
        // Support for graphics output of IR nodes using attributes (see the DOT graph of the AST)
-          virtual std::string additionalNodeOptions() ROSE_OVERRIDE;
-          virtual std::vector<AstAttribute::AttributeEdgeInfo> additionalEdgeInfo() ROSE_OVERRIDE;
-          virtual std::vector<AstAttribute::AttributeNodeInfo> additionalNodeInfo() ROSE_OVERRIDE;
+          virtual std::string additionalNodeOptions() override;
+          virtual std::vector<AstAttribute::AttributeEdgeInfo> additionalEdgeInfo() override;
+          virtual std::vector<AstAttribute::AttributeNodeInfo> additionalNodeInfo() override;
 
        // Support for the coping of AST and associated attributes on each IR node (required for attributes
        // derived from AstAttribute, else just the base class AstAttribute will be copied).
-          virtual AstAttribute* copy() const ROSE_OVERRIDE;
+          virtual AstAttribute* copy() const override;
 
        // DQ (6/11/2017): Added virtual function now required to eliminate warning at runtime.
-          virtual AstAttribute::OwnershipPolicy getOwnershipPolicy() const ROSE_OVERRIDE; // { return CONTAINER_OWNERSHIP; }
+          virtual AstAttribute::OwnershipPolicy getOwnershipPolicy() const override; // { return CONTAINER_OWNERSHIP; }
    };
 
 

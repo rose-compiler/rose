@@ -19,6 +19,8 @@ void link(SgProject *);
 
 void consistency(SgProject *);
 
+void deleteAll();
+
 }
 }
 

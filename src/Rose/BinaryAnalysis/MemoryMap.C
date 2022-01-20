@@ -981,6 +981,16 @@ MemoryMap::insertProcess(pid_t pid, Attach::Boolean doAttach) {
 #endif
 }
 
+Sawyer::Optional<uint8_t>
+MemoryMap::readByte(rose_addr_t va) const {
+    uint8_t byte = 0;
+    if (at(va).limit(1).read(&byte)) {
+        return byte;
+    } else {
+        return {};
+    }
+}
+
 SgUnsignedCharList
 MemoryMap::readVector(rose_addr_t va, size_t desired, unsigned requiredPerms) const
 {

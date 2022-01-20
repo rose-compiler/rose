@@ -141,7 +141,7 @@ namespace CodeThorn {
   }
   void Normalization::normalizeAstPhaseByPhase(SgNode* root) {
     normPhaseNr=1;
-    normPhaseNrLast=14;
+    normPhaseNrLast=15;
     printNormalizationPhase();
     if(options.normalizeSingleStatements) {
       normalizeSingleStatementsToBlocks(root);
@@ -175,10 +175,10 @@ namespace CodeThorn {
     if(options.hoistBranchInitStatements) {
       hoistBranchInitStatementsInAst(root);
     }
-    //printNormalizationPhase();
-    //if(options.normalizeCompoundAssignments) {
-    //  normalizeCompoundAssignmentsInAst(root);
-    //}
+    printNormalizationPhase();
+    if(options.normalizeSwitchWithoutDefault) {
+      normalizeSwitchWithoutDefaultInAst(root);
+    }
     printNormalizationPhase();
     if(options.hoistConditionExpressions) {
       hoistConditionsInAst(root,false && options.restrictToFunCallExpressions);
@@ -217,11 +217,14 @@ namespace CodeThorn {
     if(this->options.printPhaseInfo) {
       cout<<"Normalization done."<<endl;
     }
-    if(SgProject* project=isSgProject(root)) {
-      logger[INFO]<<"INFO: Normalization: running ROSE AST checks."<<endl;
-      AstTests::runAllTests(project);
-      logger[INFO]<<"INFO: Normalization: running ROSE AST checks done."<<endl;
-    }
+
+    // AST tests are incompatible with C++ normalizations
+    if (!options.normalizeCplusplus)
+      if(SgProject* project=isSgProject(root)) {
+        logger[INFO]<<"INFO: Normalization: running ROSE AST checks."<<endl;
+        AstTests::runAllTests(project);
+        logger[INFO]<<"INFO: Normalization: running ROSE AST checks done."<<endl;
+      }
   }
 
   Normalization::RegisteredSubExprTransformation::RegisteredSubExprTransformation(SubExprTransformationEnum t,SgStatement* s, SgExpression* e)
@@ -717,6 +720,45 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
 #endif
 }
 
+void Normalization::addEmptyDefaultCase(SgSwitchStatement* node) {
+  SgStatement * emptyStatement=SageBuilder::buildBreakStmt(); // add a break to ensure it does not conflict with other following added cases
+  SgDefaultOptionStmt* defaultOptionStatement=SageBuilder::buildDefaultOptionStmt_nfi(emptyStatement);
+  // add it to switch
+  node->append_default(defaultOptionStatement); // TODO: need a prepend_default (otherwise the last case without break falls through)
+}
+
+void Normalization::normalizeSwitchWithoutDefaultInAst(SgNode* node) {
+  RoseAst ast(node);
+  // build list of stmts to transform
+  for (auto i=ast.begin();i!=ast.end();++i) {
+    // TEMPLATESKIP this will skip all templates that are found (mostly in header files). This could also be integrated into the iterator itself.
+    if(isTemplateNode(*i)) {
+      i.skipChildrenOnForward();
+      continue;
+    }
+    if(SgSwitchStatement* switchStmt=isSgSwitchStatement(*i)) {
+      normalizeSwitchWithoutDefault(switchStmt);
+    }
+  }
+}
+
+// normalize to always contain a block (e.g. switch(x) case 1: return 0; => switch(x) { case 1: return 0; }
+// add default case if it does not exist
+void Normalization::normalizeSwitchWithoutDefault(SgSwitchStatement* node) {
+  ROSE_ASSERT(node);
+  SgStatement* body=node->get_body();
+  ROSE_ASSERT(body);
+  if(!isSgBasicBlock(body)) {
+    // introduce basic block around existing single statement
+    SgBasicBlock* block=SageBuilder::buildBasicBlock(body);
+    node->set_body(block);
+  }
+  // add empty 'default' if 'switch' has no default case
+  if(SgNodeHelper::switchRelevantDefaultStmtNode(node)==nullptr) {
+    addEmptyDefaultCase(node);
+  }
+}
+
 /***************************************************************************
    * NORMALIZE EXPRESSIONS
    **************************************************************************/
@@ -793,7 +835,7 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
           bool shareExpression=false;
           SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: stmt:"<<stmt->unparseToString()<<endl;
           SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: expr (SRC): "<<expr->unparseToString()<<endl;
-	  SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: expr (AST): "<<AstTerm::astTermWithNullValuesToString(expr)<<endl;
+    SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: expr (AST): "<<AstTerm::astTermWithNullValuesToString(expr)<<endl;
           ROSE_ASSERT(expr->get_type());
           SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: expr type:"<<expr->get_type()<<endl;
           //SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: scope:"<<AstTerm::astTermWithNullValuesToString(scope)<<endl;
@@ -817,7 +859,7 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
           // ii) replace use of expr with tmp-var and set file info of original AST
           bool deleteReplacedExpression=false;
           SgNodeHelper::replaceExpression(expr,tmpVarReference,deleteReplacedExpression);
-	  setFileInfo(tmpVarReference,originalFileInfo);
+    setFileInfo(tmpVarReference,originalFileInfo);
           //SAWYER_MESG(logger[TRACE])<<"inserted: "<<tmpVarDeclaration->unparseToString()<<endl;
           break;
         }
@@ -837,7 +879,7 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
           SgVariableDeclaration* tmpVarDeclaration=generateVarDecl((*j).tmpVarDeclType,scope);
           ROSE_ASSERT(tmpVarDeclaration);
           tmpVarDeclaration->set_parent(stmt->get_parent());
-	  setFileInfo(tmpVarDeclaration,originalFileInfo);
+    setFileInfo(tmpVarDeclaration,originalFileInfo);
           SAWYER_MESG(logger[TRACE])<<"GENERATING TMP VAR DECL:tmpVarDeclaration:"<<tmpVarDeclaration->unparseToString()<<endl;
           // using declVarNr instead of tmpVarNr for control-flow operator transformations
           SAWYER_MESG(logger[TRACE])<<"add:"<<(*j).tmpVarNr<<endl;
@@ -851,7 +893,7 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
             SgScopeStatement* scope=stmt->get_scope();
             SgVariableDeclaration* tmpVarDeclaration=generateFalseBoolVarDecl(scope);
             tmpVarDeclaration->set_parent(stmt->get_parent());
-	    setFileInfo(tmpVarDeclaration,originalFileInfo);
+      setFileInfo(tmpVarDeclaration,originalFileInfo);
             ROSE_ASSERT(tmpVarDeclaration);
             // using declVarNr instead of tmpVarNr for control-flow operator transformations
             addToTmpVarMapping((*j).declVarNr,tmpVarDeclaration);
@@ -868,8 +910,8 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
           SgStatement* false_body=(*j).falseBody;
           SgIfStmt* ifStmt=Normalization::generateIfElseStmt(cond,true_body,false_body);
 
-	  // set line col file-info
-	  setFileInfo(cond,originalFileInfo);
+    // set line col file-info
+    setFileInfo(cond,originalFileInfo);
 
           insertNormalizedSubExpressionFragment(ifStmt,stmt);
           break;
@@ -900,10 +942,10 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
           SgStatement* true_body=(*j).trueBody;
           SgIfStmt* ifStmt=Normalization::generateBoolVarIfElseStmt(cond,varRefExp,true_body,0,scope);
 
-	  // set line col file-info
-	  setFileInfo(cond,originalFileInfo);
-	  
-	  insertNormalizedSubExpressionFragment(ifStmt,stmt);
+    // set line col file-info
+    setFileInfo(cond,originalFileInfo);
+
+    insertNormalizedSubExpressionFragment(ifStmt,stmt);
           break;
         }
         case Normalization::GEN_LOG_OP_REPLACEMENT: {
@@ -912,8 +954,8 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
             SgVariableDeclaration* decl=getVarDecl((*j).declVarNr);
             SgVarRefExp* varRefExp=SageBuilder::buildVarRefExp(decl);
 
-	    // set line col file-info
-	    //setFileInfo(varRefExp,originalFileInfo); // breaks?
+      // set line col file-info
+      //setFileInfo(varRefExp,originalFileInfo); // breaks?
 
             SAWYER_MESG(logger[TRACE])<<"GEN_LOG_OP: REPLACING "<<expr->unparseToString()<<" with tmp var:"<<varRefExp->unparseToString()<<endl;
             SgNodeHelper::replaceExpression(expr,varRefExp);
@@ -927,7 +969,7 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
           SgStatement* true_body=(*j).trueBody;
           SgStatement* false_body=(*j).falseBody;
           SgIfStmt* ifStmt=Normalization::generateIfElseStmt(cond,true_body,false_body);
-	  setFileInfo(cond,originalFileInfo);
+    setFileInfo(cond,originalFileInfo);
           insertNormalizedSubExpressionFragment(ifStmt,stmt);
           break;
         }
@@ -1585,12 +1627,11 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
     SgType* expressionType = expression->get_type();
     SgType* variableType = expressionType;
 
-    //MS 10/24/2018: If variable has referece type, use a value type for the temporary variable (otherwise reference would be duplicated into 2 memory locations)
+    // PP (08/27/21): Stripping references in C++ introduces temporaries and could have
+    //                side effects.
     if (!options.normalizeCplusplus)
     {
-      // PP (08/27/21): Stripping references in C++ introduces temporaries and could have
-      //                side effects.
-
+      //MS 10/24/2018: If variable has referece type, use a value type for the temporary variable (otherwise reference would be duplicated into 2 memory locations)
       if (SgReferenceType* referenceType=isSgReferenceType(expressionType))
       {
         if(SgReferenceType* strippedReferenceType = isSgReferenceType(referenceType->stripType(SgType::STRIP_TYPEDEF_TYPE))) {
@@ -1643,7 +1684,12 @@ void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
 
     /* special case: check if expression is a struct/class/union copied by value. If yes introduce a reference type for the tmp var (to avoid
      copy semantics which would make assignments to the members of the struct not having any effect on the original data */
-    if(isSgClassType(variableType) && !isSgReferenceType(variableType) && !cppCreatesTemporaryObject(expression, options.normalizeCplusplus)) {
+    // PP (11/08/21) add handling for C++
+    const bool addRefForC   = (isSgClassType(variableType) && !isSgReferenceType(variableType));
+    const bool addReference = options.normalizeCplusplus ? cppNormalizedRequiresReference(variableType, expression)
+                                                         : addRefForC;
+
+    if(addReference) {
       variableType = SageBuilder::buildReferenceType(variableType);
     }
 

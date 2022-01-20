@@ -132,7 +132,7 @@ namespace ArmaOpt
 
   struct ArmaExpressionOptimizer : AstSimpleProcessing
   {
-    void visit(SgNode*) ROSE_OVERRIDE;
+    void visit(SgNode*) override;
   };
 
   static

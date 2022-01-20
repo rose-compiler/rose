@@ -43,7 +43,7 @@ static int kind(Instruction *insn) {
 
 // When can AST nodes be substituted?
 static struct: EditDistance::TreeEditDistance::SubstitutionPredicate {
-    virtual bool operator()(SgNode *a, SgNode *b) ROSE_OVERRIDE {
+    virtual bool operator()(SgNode *a, SgNode *b) override {
         if (a->variantT()==b->variantT()) {
             if (SgAsmInstruction *ai = isSgAsmInstruction(a)) {
                 SgAsmInstruction *bi = isSgAsmInstruction(b);

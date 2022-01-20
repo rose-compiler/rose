@@ -65,8 +65,8 @@ struct SSAConverter : AstTopDownBottomUpProcessing<SSAContext, SSAResult>
   typedef SSAResult                       synthesized_type;
   typedef base::SynthesizedAttributesList synthesized_attributes;
 
-  inherited_type evaluateInheritedAttribute(SgNode* n, inherited_type inh) ROSE_OVERRIDE;
-  synthesized_type evaluateSynthesizedAttribute(SgNode* n, inherited_type inh, synthesized_attributes syn) ROSE_OVERRIDE;
+  inherited_type evaluateInheritedAttribute(SgNode* n, inherited_type inh) override;
+  synthesized_type evaluateSynthesizedAttribute(SgNode* n, inherited_type inh, synthesized_attributes syn) override;
 };
 
 struct LValueCandidateSetter : sg::DispatchHandler<SSAContext>

@@ -59,7 +59,7 @@ namespace
       output.clear();
     }
 
-    void visit(SgNode* n) ROSE_OVERRIDE
+    void visit(SgNode* n) override
     {
 /*
       if (!n) return;

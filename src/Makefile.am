@@ -228,18 +228,6 @@ libroseLibraries = \
    $(top_builddir)/src/util/Sawyer/libroseSawyer.la \
    $(top_builddir)/src/roseExtensions/failSafe/libfailsafe.la \
    $(top_builddir)/src/Rose/librose_partial.la \
-   $(top_builddir)/src/Rose/BinaryAnalysis/librose_partial.la \
-   $(top_builddir)/src/Rose/BinaryAnalysis/Concolic/librose_partial.la \
-   $(top_builddir)/src/Rose/BinaryAnalysis/InstructionSemantics2/librose_partial.la \
-   $(top_builddir)/src/Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/librose_partial.la \
-   $(top_builddir)/src/Rose/BinaryAnalysis/ModelChecker/librose_partial.la \
-   $(top_builddir)/src/Rose/BinaryAnalysis/Partitioner2/librose_partial.la \
-   $(top_builddir)/src/Rose/BinaryAnalysis/Unparser/librose_partial.la \
-   $(top_builddir)/src/Rose/Color/librose_partial.la \
-   $(top_builddir)/src/Rose/CommandLine/librose_partial.la \
-   $(top_builddir)/src/Rose/Diagnostics/librose_partial.la \
-   $(top_builddir)/src/Rose/FileSystem/librose_partial.la \
-   $(top_builddir)/src/Rose/StringUtility/librose_partial.la \
    $(libroseSqlite3xConnection) \
    $(libroseQtExtension)
 
@@ -485,12 +473,18 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/Unparser/X86.h						\
 	Rose/BinaryAnalysis/Utils.h							\
 	Rose/BinaryAnalysis/Variables.h							\
-	Rose/BinaryAnalysis/YicesSolver.h						\
 	Rose/BinaryAnalysis/Z3Solver.h							\
 	Rose/BitFlags.h									\
 	Rose/BitOps.h									\
 	Rose/Color.h									\
 	Rose/CommandLine.h								\
+	Rose/CommandLine/DurationParser.h						\
+	Rose/CommandLine/IntervalParser.h						\
+	Rose/CommandLine/License.h							\
+	Rose/CommandLine/Parser.h							\
+	Rose/CommandLine/SelfTest.h							\
+	Rose/CommandLine/SuffixMultiplierParser.h					\
+	Rose/CommandLine/Version.h							\
 	Rose/Constants.h								\
 	Rose/Diagnostics.h								\
 	Rose/Exception.h								\

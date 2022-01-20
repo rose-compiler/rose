@@ -10,10 +10,10 @@ namespace CodeThorn {
    */
   class Transition {
   public:
-    Transition(const EState* source,Edge edge, const EState* target);
-    const EState* source; // source node
+    Transition(EStatePtr source,Edge edge, EStatePtr target);
+    EStatePtr source; // source node
     Edge edge;
-    const EState* target; // target node
+    EStatePtr target; // target node
     string toString(CodeThorn::VariableIdMapping* variableIdMapping=0) const;
     size_t memorySize() const;
   private:
@@ -42,7 +42,7 @@ namespace CodeThorn {
   bool operator<(const Transition& t1, const Transition& t2);
   
   typedef std::set<const Transition*> TransitionPtrSet;
-  typedef std::set<const EState*> EStatePtrSet;
+  typedef std::set<EStatePtr> EStatePtrSet;
   
   /*! 
    * \author Markus Schordan
@@ -64,28 +64,28 @@ namespace CodeThorn {
     Label getStartLabel() { assert(_startLabel!=Label()); return _startLabel; }
     void setStartLabel(Label lab) { _startLabel=lab; }
     // this allows to deal with multiple start transitions (must share same start state)
-    const EState* getStartEState();
-    void setStartEState(const EState* estate);
+    EStatePtr getStartEState();
+    void setStartEState(EStatePtr estate);
     Transition getStartTransition();
 
     void erase(TransitionGraph::iterator transiter);
     void erase(const Transition trans);
 
     //! deprecated
-    void reduceEStates(std::set<const EState*> toReduce);
-    void reduceEState(const EState* estate);
-    void reduceEState2(const EState* estate); // used for semantic folding
-    void reduceEStates3(std::function<bool(const EState*)> predicate); // used for semantic folding
-    TransitionPtrSet inEdges(const EState* estate);
-    TransitionPtrSet outEdges(const EState* estate);
-    EStatePtrSet pred(const EState* estate);
-    EStatePtrSet succ(const EState* estate);
+    void reduceEStates(std::set<EStatePtr> toReduce);
+    void reduceEState(EStatePtr estate);
+    void reduceEState2(EStatePtr estate); // used for semantic folding
+    void reduceEStates3(std::function<bool(EStatePtr)> predicate); // used for semantic folding
+    TransitionPtrSet inEdges(EStatePtr estate);
+    TransitionPtrSet outEdges(EStatePtr estate);
+    EStatePtrSet pred(EStatePtr estate);
+    EStatePtrSet succ(EStatePtr estate);
     bool checkConsistency();
-    const Transition* hasSelfEdge(const EState* estate);
+    const Transition* hasSelfEdge(EStatePtr estate);
     // deletes EState and *deletes* all ingoing and outgoing transitions
-    void eliminateEState(const EState* estate);
+    void eliminateEState(EStatePtr estate);
     int eliminateBackEdges();
-    void determineBackEdges(const EState* state, std::set<const EState*>& visited, TransitionPtrSet& tpSet);
+    void determineBackEdges(EStatePtr state, std::set<EStatePtr>& visited, TransitionPtrSet& tpSet);
     void setIsPrecise(bool v);
     void setIsComplete(bool v);
     bool isPrecise();
@@ -105,9 +105,9 @@ namespace CodeThorn {
   private:
     Label _startLabel;
     int _numberOfNodes; // not used yet
-    std::map<const EState*,TransitionPtrSet > _inEdges;
-    std::map<const EState*,TransitionPtrSet > _outEdges;
-    std::set<const EState*> _recomputedestateSet;
+    std::map<EStatePtr,TransitionPtrSet > _inEdges;
+    std::map<EStatePtr,TransitionPtrSet > _outEdges;
+    std::set<EStatePtr> _recomputedestateSet;
     bool _preciseSTG;
     bool _completeSTG;
     bool _modeLTLDriven;
@@ -116,7 +116,7 @@ namespace CodeThorn {
     // only used by ltl-driven mode in function succ
     CTAnalysis* _analyzer = nullptr;
     // only used by ltl-driven mode in function succ
-    const EState* _startEState = nullptr;
+    EStatePtr _startEState = nullptr;
   };
 }
 #endif

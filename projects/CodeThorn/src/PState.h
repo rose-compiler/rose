@@ -14,7 +14,6 @@
 
 typedef int PStateId;
 
-//#include "HashFun.h"
 #include "HSetMaintainer.h"
 
 namespace CodeThorn {
@@ -23,7 +22,8 @@ namespace CodeThorn {
   class CTAnalysis;
 
   class PState;
-  typedef const PState* PStatePtr;
+  
+  typedef PState* PStatePtr; // allow for in-place updates, no longer const; old version: const PState* PStatePtr;
 
   /*! 
    * \author Markus Schordan
@@ -85,6 +85,7 @@ namespace CodeThorn {
     PState::const_iterator begin() const;
     PState::const_iterator end() const;
     bool isApproximatedBy(CodeThorn::PState& other) const;
+    static CodeThorn::PState combine(CodeThorn::PStatePtr p1, CodeThorn::PStatePtr p2);
     static CodeThorn::PState combine(CodeThorn::PState& p1, CodeThorn::PState& p2);
     AbstractValueSet getVariableIds() const;
 

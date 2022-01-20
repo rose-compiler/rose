@@ -150,7 +150,7 @@ VariableId Specialization::determineVariableIdToSpecialize(SgFunctionDefinition*
   return variableId;
 }
 
-int Specialization::substituteConstArrayIndexExprsWithConst(VariableIdMapping* variableIdMapping, EStateTransferFunctions* exprAnalyzer, const EState* estate, SgNode* root) {
+int Specialization::substituteConstArrayIndexExprsWithConst(VariableIdMapping* variableIdMapping, EStateTransferFunctions* exprAnalyzer, EStatePtr estate, SgNode* root) {
   typedef pair<SgExpression*,int> SubstitutionPair;
   typedef list<SubstitutionPair > SubstitutionList;
   SubstitutionList substitutionList;
@@ -168,7 +168,7 @@ int Specialization::substituteConstArrayIndexExprsWithConst(VariableIdMapping* v
        if(arrayIndexExpr) {
          // avoid substituting a constant by a constant
          if(!isSgIntVal(arrayIndexExpr)) {
-           SingleEvalResult evalResult=exprAnalyzer->evaluateExpression(arrayIndexExpr,*estate);
+           SingleEvalResult evalResult=exprAnalyzer->evaluateExpression(arrayIndexExpr,estate);
            // only when we get exactly one result it is considered for substitution
            // there can be multiple const-results which do not allow to replace it with a single const
 	   AbstractValue varVal=evalResult.value();
@@ -232,13 +232,13 @@ void Specialization::extractArrayUpdateOperations(CTAnalysis* ana,
    VariableIdMapping* variableIdMapping=ana->getVariableIdMapping();
    TransitionGraph* tg=ana->getTransitionGraph();
 
-   const EState* estate=tg->getStartEState();
+   EStatePtr estate=tg->getStartEState();
    ROSE_ASSERT(estate!=0);
 
    EStatePtrSet succSet=tg->succ(estate);
    EStateTransferFunctions* exprAnalyzer=ana->getEStateTransferFunctions();
    int numProcessedArrayUpdates=0;
-   vector<pair<const EState*, SgExpression*> > stgArrayUpdateSequence;
+   vector<pair<EStatePtr, SgExpression*> > stgArrayUpdateSequence;
 
    long numberOfExtractedUpdates=0;
    while(succSet.size()>=1) {
@@ -295,7 +295,7 @@ void Specialization::extractArrayUpdateOperations(CTAnalysis* ana,
    // this loop is prepared for parallel execution (but rewriting the AST in parallel causes problems)
    //  #pragma omp parallel for
    for(int i=0;i<N;++i) {
-     const EState* p_estate=stgArrayUpdateSequence[i].first;
+     EStatePtr p_estate=stgArrayUpdateSequence[i].first;
      PStatePtr p_pstate=p_estate->pstate();
      SgExpression* p_exp=stgArrayUpdateSequence[i].second;
      SgNode* p_expCopy;
@@ -581,7 +581,7 @@ void Specialization::substituteArrayRefs(ArrayUpdatesSequence& arrayUpdates, Var
 void Specialization::printUpdateInfos(ArrayUpdatesSequence& arrayUpdates, VariableIdMapping* variableIdMapping) {
   int cnt=0;
   for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
-    const EState* estate=(*i).first;
+    EStatePtr estate=(*i).first;
     PStatePtr pstate=estate->pstate();
     SgExpression* exp=(*i).second;
     cout<<"UPD"<<cnt<<":"<<pstate->toString(variableIdMapping)<<" : "<<exp->unparseToString()<<endl;

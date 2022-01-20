@@ -2,6 +2,7 @@
 
 #include <Rose/StringUtility/StringToNumber.h>
 
+#include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/replace.hpp>
 
 namespace Rose {
@@ -200,7 +201,12 @@ yamlEscape(const std::string &s) {
     } else if (s.find(':') != std::string::npos) {
         return "\"" + s + "\"";
     } else {
-        return s;
+        const std::string lc = boost::to_lower_copy(s);
+        if ("yes" == lc || "true" == lc || "no" == lc || "false" == lc) {
+            return"\"" + s + "\"";
+        } else {
+            return s;
+        }
     }
 }
 

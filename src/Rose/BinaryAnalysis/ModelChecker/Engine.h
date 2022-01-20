@@ -9,6 +9,7 @@
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Sawyer/Stopwatch.h>
+#include <boost/thread/thread.hpp>
 #include <thread>
 
 namespace Rose {
@@ -81,6 +82,7 @@ private:
     Sawyer::Stopwatch elapsedTime_;                     // time since model checking started
     mutable Sawyer::Stopwatch timeSinceStats_;          // time since last statistics were reported
     mutable size_t nPathsStats_ = 0;                    // number of paths reported in last statistics output
+    size_t nExpressionsTrimmed_ = 0;                    // number of symbolic expressions trimmed down to a new variable
 
 protected:
     Engine() = delete;
@@ -296,7 +298,7 @@ public:
     size_t nPathsPending() const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // Model checker results
+    // Model checker status
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 public:
     /** Property: Elapsed time for model checking.
@@ -331,6 +333,29 @@ public:
      *  should be called. */
     const PathQueue& pendingPaths() const;
 
+    /** Paths that are currently in progress.
+     *
+     *  Returns a copy of the information about paths that are in progress at the time this function is called.
+     *
+     *  Thread safety: This method is thread safe. */
+    std::vector<InProgress> inProgress() const;
+
+    /** Number of symbolic expressions trimmed to a new variable.
+     *
+     *  This is the number of times a large symbolic expression was replaced by a new variable.
+     *
+     *  Thread safety: This method is thread safe. */
+    size_t nExpressionsTrimmed() const;
+
+    /** Print some statistics.
+     *
+     *  Thread safety: This method is thread safe. */
+    void showStatistics(std::ostream&, const std::string &prefix = "") const;
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    // Model checker results
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+public:
     /** Property: The interesting results queue.
      *
      *  As workers discover interesting things, they will insert those paths into the "interesting" queue. The queue can be
@@ -359,21 +384,6 @@ public:
      *  Thread safety: This method is thread safe. */
     PathPtr takeNextInteresting();
 
-    /** Indicates that a path has been finished.
-     *
-     *  This should be called by a worker thread whenever its work on a path finishes, regardless of whether the work was
-     *  successful or not.  It removes the path from the @ref inProgress list.
-     *
-     *  Thread safety: This method is thread safe. */
-    void finishPath();
-
-    /** Paths that are currently in progress.
-     *
-     *  Returns a copy of the information about paths that are in progress at the time this function is called.
-     *
-     *  Thread safety: This method is thread safe. */
-    std::vector<InProgress> inProgress() const;
-
     /** Potentially insert a path into the interesting queue.
      *
      *  The specified path is checked by the @ref interestingPredicate and if the predicate returns true then the path is
@@ -390,11 +400,6 @@ public:
      *
      *  Thread safety: This method is thread safe. */
     double estimatedForestSize(size_t k) const;
-
-    /** Print some statistics.
-     *
-     *  Thread safety: This method is thread safe. */
-    void showStatistics(std::ostream&, const std::string &prefix = "") const;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Worker functions. It is useful to call these from user code.
@@ -472,6 +477,17 @@ private:
 
     // Perform one step of model checking.
     void doOneStep(const PathPtr&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&, const SmtSolver::Ptr&);
+
+    // Indicates that a path has been finished.
+    //
+    // This should be called by a worker thread whenever its work on a path finishes, regardless of whether the work was
+    // successful or not.  It removes the path from the @ref inProgress list.
+    //
+    // Thread safety: This method is thread safe.
+    void finishPath(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&);
+
+    // Display diagnostics about where variables appear in path constraints.
+    void displaySmtAssertions(const PathPtr&);
 };
 
 

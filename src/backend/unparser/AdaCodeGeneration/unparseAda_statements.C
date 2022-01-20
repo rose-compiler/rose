@@ -80,6 +80,19 @@ namespace
     return Rose::Diagnostics::mlog[Sawyer::Message::FATAL];
   }
 
+  /// returns m[key] iff \ref key is in \ref m
+  ///                otherwise \ref defaultVal
+  template <class Map>
+  const typename Map::mapped_type&
+  getQualMapping( const Map& m,
+                  const typename Map::key_type& key,
+                  const typename Map::mapped_type& defaultVal
+                )
+  {
+    auto pos = m.find(key);
+
+    return (pos == m.end()) ? defaultVal : pos->second;
+  }
 
   struct ScopeUpdateGuard
   {
@@ -436,31 +449,6 @@ namespace
       std::string& renamedName() { return std::get<2>(*this); }
   };
 
-  using StatementRange = std::pair<SgDeclarationStatementPtrList::iterator, SgDeclarationStatementPtrList::iterator>;
-
-  StatementRange
-  declsInPackage(SgDeclarationStatementPtrList& lst, const std::string& mainFile)
-  {
-    auto declaredInMainFile = [&mainFile](const SgDeclarationStatement* dcl)
-                              {
-                                ROSE_ASSERT(dcl);
-
-                                const Sg_File_Info& fileInfo = SG_DEREF(dcl->get_startOfConstruct());
-
-                                return fileInfo.get_filenameString() == mainFile;
-                              };
-    auto notDeclaredInMainFile = [&declaredInMainFile](const SgDeclarationStatement* dcl)
-                              {
-                                return !declaredInMainFile(dcl);
-                              };
-
-    SgDeclarationStatementPtrList::iterator zz    = lst.end();
-    SgDeclarationStatementPtrList::iterator first = std::find_if(lst.begin(), zz, declaredInMainFile);
-    SgDeclarationStatementPtrList::iterator limit = std::find_if(first, zz, notDeclaredInMainFile);
-
-    return std::make_pair(first, limit);
-  }
-
   struct ImportedUnitResult : std::tuple<std::string, const SgDeclarationStatement*, const SgAdaRenamingDecl*>
   {
     using base = std::tuple<std::string, const SgDeclarationStatement*, const SgAdaRenamingDecl*>;
@@ -589,6 +577,7 @@ namespace
     void handle(const SgAdaGenericInstanceDecl& n) { usepkg(n.get_name(), n); }
     void handle(const SgTypedefDeclaration& n)     { usetype(n.get_name(), n); }
     void handle(const SgAdaTaskTypeDecl& n)        { usetype(n.get_name(), n); }
+    void handle(const SgAdaProtectedTypeDecl& n)   { usetype(n.get_name(), n); }
     void handle(const SgClassDeclaration& n)       { usetype(n.get_name(), n); }
     void handle(const SgEnumDeclaration& n)        { usetype(n.get_name(), n); }
 
@@ -613,20 +602,37 @@ namespace
     : AdaDetailsUnparser(unp, inf, outp), publicMode(true), pendingDiscriminants(nullptr)
     {}
 
+    //
+    // name qualification
+
+    /// returns the name qualification recorded for scope \ref n in map \ref qualMap
+    /// \todo use const std::string& as return type as soon as the old name qualification
+    ///       has been phased out.
+    std::string
+    getQualification(const std::map<SgNode*, std::string>& qualMap, const SgNode& n, SgScopeStatement* scope);
+
+    std::string
+    getQualification(const SgNode& n, SgScopeStatement* scope);
+
+    /// prints name qualification
+    void prnNameQual(const SgNode& n, SgScopeStatement* scope);
+
+    /// prints name qualification with an anchor point \ref ref
+    void prnNameQual(const SgLocatedNode& ref, const SgNode& n, SgScopeStatement* scope);
+
+    //
+    // sequences
+
     template <class SageStmtList>
     void list(SageStmtList& lst, bool hasPrivateSection = false);
 
     template <class ForwardIterator>
     void list(ForwardIterator aa, ForwardIterator zz, bool hasPrivateSection = false);
 
+    //
+    // SageNode handling
+
     void handleBasicBlock(SgBasicBlock& n, bool functionbody = false);
-
-    // \todo use const std::string& as return type as soon as the old name qualification
-    //       has been phased out.
-    std::string getQualification(const SgNode& n, SgScopeStatement* scope);
-
-    // prints name qualification
-    void prnNameQual(const SgNode& n, SgScopeStatement* scope);
 
     void handleBasicBlock(SgBasicBlock* n, bool functionbody = false)
     {
@@ -665,8 +671,8 @@ namespace
 
     void handle(SgGlobal& n)
     {
-      ScopeUpdateGuard scopeGuard{unparser, info, n};
-      StatementRange   pkgRange = declsInPackage(n.get_declarations(), unparser.getFileName());
+      ScopeUpdateGuard        scopeGuard{unparser, info, n};
+      si::ada::StatementRange pkgRange = si::ada::declsInPackage(n, unparser.getFileName());
 
       list(pkgRange.first, pkgRange.second);
     }
@@ -762,9 +768,25 @@ namespace
       prn(STMT_SEP);
     }
 
-    void handle(SgAdaTaskBodyDecl& n)
+    void handle(SgAdaProtectedTypeDecl& n)
     {
-      prn("task body ");
+      prn("protected type ");
+      prn(n.get_name());
+
+      SgAdaProtectedSpec& spec = SG_DEREF(n.get_definition());
+
+      prn(" is\n");
+      stmt(&spec);
+
+      prn("end ");
+      prn(n.get_name());
+      prn(STMT_SEP);
+    }
+
+    template <class SageAdaConcurrentBodyDecl>
+    void handleConcurrentBodyDecl(SageAdaConcurrentBodyDecl& n, const std::string& prefix)
+    {
+      prn(prefix);
       prn(n.get_name());
       prn(" is\n");
 
@@ -774,6 +796,9 @@ namespace
       prn(n.get_name());
       prn(STMT_SEP);
     }
+
+    void handle(SgAdaTaskBodyDecl& n) { handleConcurrentBodyDecl(n, "task body "); }
+    void handle(SgAdaProtectedBodyDecl& n) { handleConcurrentBodyDecl(n, "protected body "); }
 
     void handle(SgAdaTaskSpecDecl& n)
     {
@@ -787,6 +812,21 @@ namespace
         prn(STMT_SEP);
         return;
       }
+
+      prn(" is\n");
+      stmt(&spec);
+
+      prn("end ");
+      prn(n.get_name());
+      prn(STMT_SEP);
+    }
+
+    void handle(SgAdaProtectedSpecDecl& n)
+    {
+      prn("protected ");
+      prn(n.get_name());
+
+      SgAdaProtectedSpec& spec = SG_DEREF(n.get_definition());
 
       prn(" is\n");
       stmt(&spec);
@@ -810,6 +850,13 @@ namespace
       list(n.get_declarations());
     }
 
+    void handle(SgAdaProtectedSpec& n)
+    {
+      ScopeUpdateGuard scopeGuard{unparser, info, n};
+
+      list(n.get_declarations());
+    }
+
     void handle(SgAdaTaskBody& n)
     {
       ScopeUpdateGuard scopeGuard{unparser, info, n};
@@ -823,6 +870,14 @@ namespace
 
       prn("begin\n");
       list(dcllimit, zz);
+      prn("end"); // omit newline, which will be added by the parent
+    }
+
+    void handle(SgAdaProtectedBody& n)
+    {
+      ScopeUpdateGuard scopeGuard{unparser, info, n};
+
+      list(n.get_statements());
       prn("end"); // omit newline, which will be added by the parent
     }
 
@@ -845,13 +900,17 @@ namespace
 
     void handle(SgAdaPackageBodyDecl& n)
     {
+      const std::string& pkgqual = getQualification(n, n.get_scope());
+
       prn("package body ");
+      prn(pkgqual);
       prn(n.get_name());
       prn(" is\n");
 
       stmt(n.get_definition());
 
       prn("end ");
+      prn(pkgqual);
       prn(n.get_name());
       prn(STMT_SEP);
     }
@@ -925,35 +984,33 @@ namespace
 
     void handle(SgAdaGenericInstanceDecl& n)
     {
-      // determine which kind of generic instance this is
-      SgAdaGenericDecl*       dcl     = n.get_declaration();
       SgName                  name    = n.get_name();
       SgExprListExp*          args    = n.get_actual_parameters();
-      SgDeclarationStatement* thedecl = dcl->get_declaration();
+      SgAdaGenericDecl&       dcl     = SG_DEREF(n.get_declaration());
+      SgDeclarationStatement* thedecl = dcl.get_declaration();
 
-      if (isSgAdaPackageSpecDecl(thedecl)) {
+      // determine which kind of generic instance this is
+      if (SgAdaPackageSpecDecl* pkg = isSgAdaPackageSpecDecl(thedecl)) {
         // package
-        SgAdaPackageSpecDecl* pkg     = isSgAdaPackageSpecDecl(thedecl);
         SgName                genname = pkg->get_name();
 
         prn("package ");
         prn(name.getString());
         prn(" is new ");
+        prnNameQual(n, *pkg, pkg->get_scope());
         prn(genname.getString());
-      } else {
+      } else if (SgFunctionDeclaration* fn = isSgFunctionDeclaration(thedecl)) {
         // function/procedure
-        SgFunctionDeclaration* fn      = isSgFunctionDeclaration(thedecl);
         SgName                 genname = fn->get_name();
 
-        if (n.get_return_type() == NULL) {
-          prn("procedure ");
-        } else {
-          prn("function ");
-        }
+        prn(si::ada::isFunction(fn->get_type()) ? "function " : "procedure ");
         prn(name.getString());
         prn(" is new ");
+        prnNameQual(n, *fn, fn->get_scope());
         prn(genname.getString());
       }
+      else
+        ROSE_ABORT();
 
       associationList(args->get_expressions());
       prn(STMT_SEP);
@@ -1078,10 +1135,17 @@ namespace
     {
       prn("type ");
       prn(n.get_name());
-      prn(" is");
+      prn(" is ");
       modifiers(n);
 
-      SgAdaFormalType* ty = n.get_formal_type();
+      SgAdaFormalType* ty = n.get_type();
+      ASSERT_not_null(ty);
+
+      // \todo what types need to be printed?
+      //       print all non-null ty->get_formal_type() ?
+      if (SgAdaAccessType* accty = isSgAdaAccessType(ty->get_formal_type()))
+        type(n, accty);
+
       if (ty->get_is_private()) {
         prn(" private");
       }
@@ -1507,15 +1571,42 @@ namespace
 
     void handle(SgEnumDeclaration& n)
     {
-      SgInitializedNamePtrList& lst = n.get_enumerators();
+      const bool                isDefinition = &n == n.get_definingDeclaration();
+      SgInitializedNamePtrList& lst          = n.get_enumerators();
 
       prn("type ");
       prn(n.get_name());
-      prn(" is (");
 
-      std::for_each(lst.begin(), lst.end(), AdaEnumeratorUnparser(unparser, info, os));
+      if (!isDefinition)
+      {
+        // unparse as forward declaration
+        const bool requiresPrivate = si::ada::withPrivateDefinition(&n);
+        const bool requiresIs      = requiresPrivate || hasModifiers(n);
 
-      prn(")");
+        if (requiresIs)
+          prn(" is");
+
+        modifiers(n);
+
+        if (requiresPrivate)
+          prn(" private");
+      }
+      else if (SgType* parentType = n.get_adaParentType())
+      {
+        // unparse as derived type
+        prn(" is");
+        prn(" new");
+        type(n, parentType);
+      }
+      else
+      {
+        // unparse as normal enum
+        prn(" is");
+        prn(" (");
+        std::for_each(lst.begin(), lst.end(), AdaEnumeratorUnparser(unparser, info, os));
+        prn(")");
+      }
+
       prn(STMT_SEP);
     }
 
@@ -1659,27 +1750,44 @@ namespace
   };
 
   std::string
-  AdaStatementUnparser::getQualification(const SgNode& n, SgScopeStatement* scope)
+  AdaStatementUnparser::getQualification(const std::map<SgNode*, std::string>& qualMap, const SgNode& n, SgScopeStatement* scope)
   {
     static const std::string NOQUAL;
 
     if (USE_COMPUTED_NAME_QUALIFICATION_STMT)
     {
-      using NodeQualMap = std::map<SgNode*, std::string>;
-      using Iterator    = NodeQualMap::const_iterator;
+      using Iterator = std::map<SgNode*, std::string>::const_iterator;
 
-      const NodeQualMap& nameQualMap = unparser.nameQualificationMap();
-      const Iterator     pos = nameQualMap.find(const_cast<SgNode*>(&n));
+      const Iterator pos = qualMap.find(const_cast<SgNode*>(&n));
 
-      return (pos != nameQualMap.end()) ? pos->second : NOQUAL;
+      return (pos != qualMap.end()) ? pos->second : NOQUAL;
     }
 
     return scopeQual(scope);
   }
 
+  std::string
+  AdaStatementUnparser::getQualification(const SgNode& n, SgScopeStatement* scope)
+  {
+    return getQualification(unparser.nameQualificationMap(), n, scope);
+  }
+
+
   void AdaStatementUnparser::prnNameQual(const SgNode& n, SgScopeStatement* scope)
   {
     prn(getQualification(n, scope));
+  }
+
+  void AdaStatementUnparser::prnNameQual(const SgLocatedNode& ref, const SgNode& n, SgScopeStatement* scope)
+  {
+    using NameQualMap = Unparse_Ada::NameQualMap;
+    using MapOfNameQualMap = std::map<SgNode*, NameQualMap>;
+
+    SgLocatedNode*          key = const_cast<SgLocatedNode*>(&ref);
+    const MapOfNameQualMap& typeQualMap = SgNode::get_globalQualifiedNameMapForMapsOfTypes();
+    const NameQualMap&      nameQualMapForShared = getQualMapping(typeQualMap, key, SgNode::get_globalQualifiedNameMapForTypes());
+
+    prn(getQualification(nameQualMapForShared, n, scope));
   }
 
 
@@ -2079,6 +2187,8 @@ namespace
       void handle(const SgBasicBlock& n)           { withName(n.get_string_label()); }
       void handle(const SgAdaTaskSpec& n)          { checkParent(n); }
       void handle(const SgAdaTaskBody& n)          { checkParent(n); }
+      void handle(const SgAdaProtectedSpec& n)     { checkParent(n); }
+      void handle(const SgAdaProtectedBody& n)     { checkParent(n); }
       void handle(const SgAdaPackageBody& n)       { checkParent(n); }
       void handle(const SgAdaPackageSpec& n)       { checkParent(n); }
       // FunctionDefinition, ..
@@ -2088,6 +2198,8 @@ namespace
       void handle(const SgDeclarationStatement& n) { withoutName(); }
       void handle(const SgAdaTaskSpecDecl& n)      { withName(n.get_name()); }
       void handle(const SgAdaTaskBodyDecl& n)      { withName(n.get_name()); }
+      void handle(const SgAdaProtectedSpecDecl& n) { withName(n.get_name()); }
+      void handle(const SgAdaProtectedBodyDecl& n) { withName(n.get_name()); }
       void handle(const SgAdaPackageSpecDecl& n)   { withName(n.get_name()); }
       void handle(const SgAdaPackageBodyDecl& n)   { withName(n.get_name()); }
       void handle(const SgAdaRenamingDecl& n)      { withName(n.get_name()); }
@@ -2214,6 +2326,9 @@ namespace
 
     if (const SgAdaTaskBody* tskbody = isSgAdaTaskBody(&n))
       return scopeForScopeQualification(unparser, SG_DEREF(tskbody->get_spec()));
+
+    if (const SgAdaProtectedBody* pobody = isSgAdaProtectedBody(&n))
+      return scopeForScopeQualification(unparser, SG_DEREF(pobody->get_spec()));
 
     // if the scope is visible, produce a fully qualified scope
     if (unparser.isVisibleScope(&n))

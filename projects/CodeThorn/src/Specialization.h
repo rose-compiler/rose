@@ -24,13 +24,13 @@ using namespace CodeThorn;
 typedef vector< pair< VariableId, IterVarType> > IterationVariables;
 
 struct EStateExprInfo {
-  const EState* first;
+  EStatePtr first;
   SgExpression* originalExpr;
   SgExpression* second;
   bool mark;
   SgForStatement* forLoop;
 EStateExprInfo():first(0),second(0),mark(false){}
-EStateExprInfo(const EState* estate,SgExpression* originalExpr, SgExpression* transformedExp):first(estate),originalExpr(originalExpr),second(transformedExp),mark(false),forLoop(0){
+EStateExprInfo(EStatePtr estate,SgExpression* originalExpr, SgExpression* transformedExp):first(estate),originalExpr(originalExpr),second(transformedExp),mark(false),forLoop(0){
 }
 };
 
@@ -49,7 +49,7 @@ public:
     return ss.str();
   }
   virtual AstAttribute::OwnershipPolicy
-    getOwnershipPolicy() const ROSE_OVERRIDE {
+    getOwnershipPolicy() const override {
     return CONTAINER_OWNERSHIP;
   }
 };
@@ -116,7 +116,7 @@ class Specialization {
  private:
   static Sawyer::Message::Facility logger;
   string iterVarsToString(IterationVariables iterationVars, VariableIdMapping* variableIdMapping);
-  int substituteConstArrayIndexExprsWithConst(VariableIdMapping* variableIdMapping, EStateTransferFunctions* exprAnalyzer, const EState* estate, SgNode* root);
+  int substituteConstArrayIndexExprsWithConst(VariableIdMapping* variableIdMapping, EStateTransferFunctions* exprAnalyzer, EStatePtr estate, SgNode* root);
   VariableId determineVariableIdToSpecialize(SgFunctionDefinition* funDef, int param, VariableIdMapping* variableIdMapping);
 
   // replaces each use of SgVarRefExp if the corresponding variableId in pstate is constant (with this constant)

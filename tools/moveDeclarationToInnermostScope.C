@@ -1590,7 +1590,7 @@ void copyMoveVariableDeclaration(SgVariableDeclaration* decl, std::vector <SgSco
 
 	    }
 	    // TODO: it can be SgCommanOpExp
-            if (isSgCommaOpExp (exp_stmt->get_expression()) )
+            else if (isSgCommaOpExp (exp_stmt->get_expression()) )
             {
                cerr<<"Error in moveVariableDeclaration(), multiple expressions in for-condition is not supported now. "<<endl;
                if (tool_keep_going) 

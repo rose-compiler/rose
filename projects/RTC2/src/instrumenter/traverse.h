@@ -22,9 +22,9 @@ namespace Trav
   {
     protected:
       Util::nodeType
-      evaluateSynthesizedAttribute(SgNode* node, Util::nodeType inh, SynthesizedAttributesList synList) ROSE_OVERRIDE;
+      evaluateSynthesizedAttribute(SgNode* node, Util::nodeType inh, SynthesizedAttributesList synList) override;
 
-      Util::nodeType evaluateInheritedAttribute(SgNode* node, Util::nodeType inh) ROSE_OVERRIDE;
+      Util::nodeType evaluateInheritedAttribute(SgNode* node, Util::nodeType inh) override;
   };
 
   void traverse(SgProject* proj, SgFile* file);

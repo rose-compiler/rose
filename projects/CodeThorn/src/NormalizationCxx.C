@@ -9,6 +9,7 @@
 
 #include "Normalization.h"
 #include "NormalizationCxx.h"
+#include "RoseCompatibility.h"
 
 namespace sb = SageBuilder;
 namespace si = SageInterface;
@@ -19,8 +20,6 @@ namespace CodeThorn
 {
 namespace
 {
-  constexpr unsigned char STRIP_MODIFIER_ALIAS = SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_TYPEDEF_TYPE;
-
   struct CxxTransformStats
   {
     int cnt = 0;
@@ -179,7 +178,7 @@ namespace
       : tf(std::move(concreteTf))
       {}
 
-      void execute(CxxTransformStats& stat) ROSE_OVERRIDE
+      void execute(CxxTransformStats& stat) override
       {
         tf.execute(stat);
       }
@@ -338,32 +337,6 @@ namespace
 
     return SG_DEREF(def.get_body());
   }
-
-  SgClassDefinition& getClassDef(const SgDeclarationStatement& n)
-  {
-    SgDeclarationStatement* defdcl = n.get_definingDeclaration();
-    SgClassDeclaration&     clsdef = SG_DEREF(isSgClassDeclaration(defdcl));
-
-    return SG_DEREF(clsdef.get_definition());
-  }
-
-  SgClassDefinition& getClassDef(const SgMemberFunctionDeclaration& n)
-  {
-    return getClassDef(SG_DEREF(n.get_associatedClassDeclaration()));
-  }
-
-  SgClassDefinition* getClassDefOpt(const SgClassType& n)
-  {
-    SgDeclarationStatement& dcl    = SG_DEREF( n.get_declaration() );
-    SgDeclarationStatement* defdcl = dcl.get_definingDeclaration();
-
-    logWarn() << dcl.get_mangled_name() << std::endl;
-
-    return defdcl ? SG_ASSERT_TYPE(SgClassDeclaration, *defdcl).get_definition()
-                  : nullptr
-                  ;
-  }
-
 
   /// a compiler generated destructor is required, if
   ///   (1) no destructor has been specified
@@ -616,31 +589,31 @@ namespace
 
   struct SameClassDef
   {
-    explicit
+      explicit
       SameClassDef(const SgClassDefinition& base)
       : classdef(base)
-    {}
+      {}
 
-    bool operator()(SgInitializedName* cand)
-    {
-      if (ERROR_TOLERANT && !(cand && cand->get_initializer()))
+      bool operator()(SgInitializedName* cand)
       {
-        throw ConstructorInitializerListError("unusual constructor list element", cand);
+        if (ERROR_TOLERANT && !(cand && cand->get_initializer()))
+        {
+          throw ConstructorInitializerListError("unusual constructor list element", cand);
+        }
+
+        ROSE_ASSERT(cand && cand->get_initializer());
+        SgConstructorInitializer* ctorini = isSgConstructorInitializer(cand->get_initializer());
+
+        // if it is not a base class initialization, it must be member variable initialization
+        //   -> ignore
+        // \todo once we see a member variable initialization, the base class was not found,
+        //       and the iteration can be aborted.
+        if (!ctorini) return false;
+
+        SgMemberFunctionDeclaration& mfn = SG_DEREF( ctorini->get_declaration() );
+
+        return &getClassDef(mfn) == &classdef;
       }
-
-      ROSE_ASSERT(cand && cand->get_initializer());
-      SgConstructorInitializer* ctorini = isSgConstructorInitializer(cand->get_initializer());
-
-      // if it is not a base class initialization, it must be member variable initialization
-      //   -> ignore
-      // \todo once we see a member variable initialization, the base class was not found,
-      //       and the iteration can be aborted.
-      if (!ctorini) return false;
-
-      SgMemberFunctionDeclaration& mfn = SG_DEREF( ctorini->get_declaration() );
-
-      return &getClassDef(mfn) == &classdef;
-    }
 
     private:
       const SgClassDefinition& classdef;
@@ -694,6 +667,7 @@ namespace
 
   SgStatement&
   createMemberCall( SgExpression& obj,
+                    SgType& objTy,
                     SgMemberFunctionDeclaration& fnDcl,
                     SgExprListExp& args,
                     bool virtualCall = false
@@ -705,17 +679,17 @@ namespace
   }
 
   SgForStatement&
-  createArrayElementOperation( SgArrayType& arrty,
-                               SgExpression& elem,
+  createArrayElementOperation( SgExpression& elem,
                                SgMemberFunctionDeclaration& fnDcl,
                                SgExprListExp& args,
+                               SgExpression& limit,
                                bool virtualCall = false
                              )
   {
     // loop skeleton
     SgForStatement&        sgnode  = SG_DEREF( new SgForStatement(dummyFileInfo()) );
     SgExpression&          start   = SG_DEREF( sb::buildIntVal(0) );
-    std::string            varname = si::generateUniqueVariableName(&sgnode, "dtorloop");
+    std::string            varname = si::generateUniqueVariableName(&sgnode, "_tmploopvar");
     SgInitializer&         varini  = SG_DEREF( sb::buildAssignInitializer(&start, start.get_type()) );
     SgVariableDeclaration& var     = SG_DEREF( sb::buildVariableDeclaration(varname, sb::buildIntType(), &varini, &sgnode) );
 
@@ -723,7 +697,6 @@ namespace
     sgnode.append_init_stmt(&var);
 
     // test
-    SgExpression&          limit   = SG_DEREF( si::deepCopy(arrty.get_index()) );
     SgExpression&          vartst  = SG_DEREF( sb::buildVarRefExp(&var) );
     SgExpression&          lt      = SG_DEREF( sb::buildLessThanOp(&vartst, &limit) );
     SgStatement&           ltstmt  = SG_DEREF( sb::buildExprStatement(&lt) );
@@ -739,10 +712,8 @@ namespace
     // index expression + body recursion
     SgExpression&          varidx  = SG_DEREF( sb::buildVarRefExp(&var) );
     SgExpression&          indexed = SG_DEREF( sb::buildPntrArrRefExp(&elem, &varidx) );
-
-    ROSE_ASSERT(arrty.get_base_type() == indexed.get_type());
-    SgStatement&           bdy     = createMemberCall(indexed, fnDcl, args, virtualCall);
-    //~ was: bdy = sg::dispatch(Creator{indexed}, arrty.get_base_type());
+    SgType&                idxTy   = SG_DEREF( indexed.get_type() );
+    SgStatement&           bdy     = createMemberCall(indexed, idxTy, fnDcl, args, virtualCall);
 
     sg::linkParentChild(sgnode, bdy, &SgForStatement::set_loop_body);
 
@@ -764,19 +735,24 @@ namespace
 
   SgStatement&
   createMemberCall( SgExpression& obj,
+                    SgType& objTy,
                     SgMemberFunctionDeclaration& fnDcl,
                     SgExprListExp& args,
                     bool virtualCall
                   )
   {
-    if (SgArrayType* arrTy = isArrayType(obj.get_type()))
-      return createArrayElementOperation(*arrTy, obj, fnDcl, args, virtualCall);
+    if (SgArrayType* arrTy = isArrayType(&objTy))
+    {
+      SgExpression& upperBound = SG_DEREF(si::deepCopy(arrTy->get_index()));
+
+      return createArrayElementOperation(obj, fnDcl, args, upperBound, virtualCall);
+    }
 
     SgSymbol*               sym    = fnDcl.search_for_symbol_from_symbol_table();
     SgMemberFunctionSymbol& fnSym  = SG_DEREF(isSgMemberFunctionSymbol(sym));
     SgMemberFunctionRefExp& fnRef  = SG_DEREF(sb::buildMemberFunctionRefExp( &fnSym,
-                                                                             virtualCall,
-                                                                             false /* no qualifier */
+                                                                             virtualCall, /* are these reliably set? */
+                                                                             !virtualCall /* qualifiers are needed for non-virtual calls */
                                                                            ));
 
     SgExpression&           target = createMemberSelection(obj, fnRef);
@@ -795,17 +771,9 @@ namespace
   {
     SgScopeStatement&       scope  = SG_DEREF(si::getEnclosingScope(&var));
     SgVarRefExp&            varRef = SG_DEREF(sb::buildVarRefExp(&var, &scope));
+    SgType&                 varTy  = SG_DEREF(varRef.get_type());
 
-    return createMemberCall(varRef, fnDcl, args, virtualCall);
-  }
-
-  SgStatement&
-  createMemberCallFromConstructorInitializer(SgInitializedName& var, SgConstructorInitializer& ini)
-  {
-    SgMemberFunctionDeclaration& ctorDecl = SG_DEREF(ini.get_declaration());
-    SgExprListExp&               ctorArgs = SG_DEREF(si::deepCopy(ini.get_args()));
-
-    return createMemberCall(var, ctorDecl, ctorArgs);
+    return createMemberCall(varRef, varTy, fnDcl, args, virtualCall);
   }
 
 
@@ -846,13 +814,22 @@ namespace
 
 
   SgStatement&
-  createMemberCallFromConstructorInitializer(SgExpression& obj, SgConstructorInitializer& ini)
+  createMemberCallFromConstructorInitializer(SgExpression& obj, SgType& objTy, SgConstructorInitializer& ini)
   {
     SgConstructorInitializer&    ctorInit = SG_DEREF(constructorInitializer(ini));
     SgMemberFunctionDeclaration& ctorDecl = SG_DEREF(ctorInit.get_declaration());
+    SgExprListExp&               ctorArgs = SG_DEREF(si::deepCopy(ctorInit.get_args()));
+
+    return createMemberCall(obj, objTy, ctorDecl, ctorArgs);
+  }
+
+  SgStatement&
+  createMemberCallFromConstructorInitializer(SgInitializedName& var, SgConstructorInitializer& ini)
+  {
+    SgMemberFunctionDeclaration& ctorDecl = SG_DEREF(ini.get_declaration());
     SgExprListExp&               ctorArgs = SG_DEREF(si::deepCopy(ini.get_args()));
 
-    return createMemberCall(obj, ctorDecl, ctorArgs);
+    return createMemberCall(var, ctorDecl, ctorArgs);
   }
 
 
@@ -983,7 +960,7 @@ namespace
         if (!mem || (funname != std::string(mem->get_name())))
           return false;
 
-        // if there are no args and the name matches this is a candidate
+        // if there are no args and the name matches, mem becomes a candidate
         //   in particular for dtors.
         if (!args)
           return true;
@@ -1110,6 +1087,11 @@ namespace
   {
     typedef SgTemplateInstantiationMemberFunctionDecl TemplateMemberFunction;
 
+    if (nondef.get_definingDeclaration())
+    {
+      logError() << "culprit: " << nondef.get_name() << std::endl;
+    }
+
     ROSE_ASSERT(nondef.get_definingDeclaration() == nullptr);
 
     SgName                       nm   = nondef.get_name();
@@ -1162,6 +1144,9 @@ namespace
     ROSE_ASSERT(ctorargs.get_expressions().size() == 0); // \todo handle copy and move ctors
 
     FindFunction::result res = FindFunction::find(clsdef, n, ctorargs);
+
+    //~ logWarn() << n << " " << ctorargs.unparseToString() << " found " << FindFunction::found(res)
+              //~ << std::endl;
 
     return FindFunction::found(res) ? FindFunction::declaration(res)
                                     : createCtorDtor(clsdef, n.at(0) != DTOR_PREFIX.at(0))
@@ -1223,37 +1208,45 @@ namespace
   };
 */
 
+  /// returns static_cast<Base*>(this)
+  SgExpression& mkThisExpForBase(const SgClassDeclaration& clsdcl, const SgClassDeclaration& base)
+  {
+    SgSymbol&           clssym = SG_DEREF(clsdcl.search_for_symbol_from_symbol_table());
+    SgThisExp&          thisop = SG_DEREF(sb::buildThisExp(&clssym));
+    SgType&             bseptr = SG_DEREF(sb::buildPointerType(base.get_type()));
+
+    return SG_DEREF(sb::buildCastExp(&thisop, &bseptr, SgCastExp::e_static_cast));
+  }
+
+
   struct CtorCallCreator
   {
       CtorCallCreator(SgClassDefinition& clz, SgClassDeclaration& basecls, SgConstructorInitializer* how)
       : cls(clz), bsedcl(basecls), ini(how)
       {}
 
-      /// returns static_cast<Base*>(this)
-      SgExpression& mkThisExpForBase(SgClassDeclaration& base) const
+      SgExpression& mkThisExpForBaseCall(SgClassDeclaration& base) const
       {
-        SgClassDeclaration& clsdcl = SG_DEREF(cls.get_declaration());
-        SgSymbol&           clssym = SG_DEREF(clsdcl.search_for_symbol_from_symbol_table());
-        SgThisExp&          thisop = SG_DEREF(sb::buildThisExp(&clssym));
-        SgType&             bseptr = SG_DEREF(sb::buildPointerType(base.get_type()));
-
-        return SG_DEREF(sb::buildCastExp(&thisop, &bseptr, SgCastExp::e_static_cast));
+        return mkThisExpForBase(SG_DEREF(cls.get_declaration()), base);
       }
 
       SgStatement& mkDefaultInitializer(SgClassDeclaration& clazz, bool ctorcall) const
       {
-        SgExprListExp&               args  = SG_DEREF( sb::buildExprListExp() );
+        SgExprListExp&               args   = SG_DEREF( sb::buildExprListExp() );
         SgClassDefinition&           clsdef = getClassDef(clazz);
-        SgMemberFunctionDeclaration& ctor  = ctorcall ? obtainGeneratableCtor(clsdef, args)
-                                                      : obtainGeneratableDtor(clsdef, args);
-        SgExpression&                self  = mkThisExpForBase(clazz);
+        SgMemberFunctionDeclaration& ctor   = ctorcall ? obtainGeneratableCtor(clsdef, args)
+                                                       : obtainGeneratableDtor(clsdef, args);
+        SgExpression&                self   = mkThisExpForBaseCall(clazz);
+        SgType&                      selfTy = SG_DEREF( self.get_type() );
 
-        return createMemberCall(self, ctor, args, false /* non-virtual call */);
+        return createMemberCall(self, selfTy, ctor, args, false /* non-virtual call */);
       }
 
       SgStatement& mkCtorCall(bool ctorcall = true) const
       {
-        return ini ? createMemberCallFromConstructorInitializer(mkThisExpForBase(bsedcl), *ini)
+        SgClassType& clsTy = SG_DEREF( bsedcl.get_type() );
+
+        return ini ? createMemberCallFromConstructorInitializer(mkThisExpForBaseCall(bsedcl), clsTy, *ini)
                    : mkDefaultInitializer(bsedcl, ctorcall);
       }
 
@@ -1285,6 +1278,7 @@ namespace
       SgStatement*              newStmt = nullptr;
   };
 
+/*
   SgFunctionSymbol&
   get_symbol(SgFunctionDeclaration& fundecl)
   {
@@ -1292,22 +1286,23 @@ namespace
 
     return SG_ASSERT_TYPE(SgFunctionSymbol, symbl);
   }
+*/
 
   struct BaseDtorCallTransformer
   {
-      BaseDtorCallTransformer(SgBasicBlock& where, SgBaseClass& what)
-      : blk(where), baseclass(what)
+      BaseDtorCallTransformer(const SgClassDeclaration& clazz, const SgBaseClass& what, SgBasicBlock& where)
+      : clsdcl(clazz), baseclass(what), blk(where)
       {}
 
-      SgExprStatement& mkDtorCall() const
+      SgStatement& mkDtorCall() const
       {
-        SgExprListExp&               args  = SG_DEREF( sb::buildExprListExp() );
-        SgClassDeclaration&          clazz = SG_DEREF( baseclass.get_base_class() );
-        SgMemberFunctionDeclaration& dtor  = obtainGeneratableDtor(getClassDef(clazz), args);
-        SgFunctionSymbol&            symbl = get_symbol(dtor);
-        SgFunctionCallExp&           call  = SG_DEREF( sb::buildFunctionCallExp(&symbl, &args) );
+        SgExprListExp&               args    = SG_DEREF( sb::buildExprListExp() );
+        SgClassDeclaration&          basedcl = SG_DEREF( baseclass.get_base_class() );
+        SgMemberFunctionDeclaration& dtor    = obtainGeneratableDtor(getClassDef(basedcl), args);
+        SgExpression&                baseobj = mkThisExpForBase(clsdcl, basedcl);
+        SgType&                      baseTy  = SG_DEREF( baseobj.get_type() );
 
-        return SG_DEREF( sb::buildExprStatement(&call) );
+        return createMemberCall(baseobj, baseTy, dtor, args, false /* non-virtual call */);
       }
 
       void execute(CxxTransformStats&)
@@ -1318,10 +1313,11 @@ namespace
       }
 
     private:
-      SgBasicBlock&    blk;
-      SgBaseClass&     baseclass;
+      const SgClassDeclaration& clsdcl;
+      const SgBaseClass&        baseclass;
+      SgBasicBlock&             blk;
 
-      SgExprStatement* newStmt = nullptr;
+      SgStatement*              newStmt = nullptr;
   };
 
 
@@ -1415,7 +1411,7 @@ namespace
         SgMemberFunctionDeclaration& dtorDcl    = obtainGeneratableDtor(clsDef, args);
 
         // we know the full type, thus we can use a non-virtual call
-        dtorCall = &createMemberCall(destructed, dtorDcl, args, false /* non-virtual call */);
+        dtorCall = &createMemberCall(destructed, varTy, dtorDcl, args, false /* non-virtual call */);
 
         if (isTemporary(var) && !needsLifetimeExtension(var))
         {
@@ -1778,8 +1774,10 @@ namespace
         // create the initialization call
         SgConstructorInitializer& ini     = SG_DEREF(newexp.get_constructor_args());
         SgVarRefExp&              varref  = SG_DEREF(sb::buildVarRefExp(varsym));
+        SgPointerType&            expTy   = SG_DEREF(isSgPointerType(newexp.get_type()));
+        SgType&                   allocTy = SG_DEREF(expTy.get_base_type());
 
-        newCtorStmt = &createMemberCallFromConstructorInitializer(varref, ini);
+        newCtorStmt = &createMemberCallFromConstructorInitializer(varref, allocTy, ini);
 
         SgStatement*              currentNewStmt = &sg::ancestor<SgStatement>(newexp);
 
@@ -1799,10 +1797,6 @@ namespace
 
         // insert the initialization (constructor calls)
         si::insertStatement(currentNewStmt, newCtorStmt, false /* insert after */);
-
-        // deallocation
-        // if (newAllocStmt) delete &currentNewStmt;
-        // if (newNewExpr)   delete &newexp;
       }
 
     private:
@@ -1826,13 +1820,14 @@ namespace
                    << std::endl;
 
         SgVarRefExp&   varRef    = SG_DEREF(isSgVarRefExp(delexp.get_variable()));
+        SgType&        varTy     = SG_DEREF(varRef.get_type());
 
         // build new stmt
         SgExprListExp& args      = SG_DEREF( sb::buildExprListExp() );
         SgVarRefExp&   newVarRef = SG_DEREF(si::deepCopy(&varRef));
 
         // \todo check if dtor is a virtual function
-        newDtorStmt = &createMemberCall(newVarRef, dtor, args, true /* virtual */);
+        newDtorStmt = &createMemberCall(newVarRef, varTy, dtor, args, true /* virtual */);
 
         // insert statement
         SgStatement&   stmt      = sg::ancestor<SgStatement>(delexp);
@@ -1987,6 +1982,7 @@ namespace
         std::string                  fullName = mkFullName(ctordtor.get_name());
         SgClassDefinition&           clsdef  = getClassDef(ctordtor);
         const bool                   isConstructor = !isDtor(ctordtor);
+
         SgMemberFunctionDeclaration* fulldclNondef = sb::buildNondefiningMemberFunctionDeclaration(
                                                                  fullName,
                                                                  &getReturnType(ctordtor),
@@ -2095,11 +2091,166 @@ namespace
       SgMemberFunctionRefExp* newCtorDtorRef = nullptr;
   };
 
+  using TypeModifer = std::function<SgType*(SgType*)>;
+
+  SgType* noTypeModifier(SgType* ty) { return ty; }
+
+  TypeModifer typeBuilder(SgMemberFunctionDeclaration& fn)
+  {
+    TypeModifer                    res    = noTypeModifier;
+    const SgDeclarationModifier&   dclmod = fn.get_declarationModifier();
+    const SgConstVolatileModifier& mods   = dclmod.get_typeModifier().get_constVolatileModifier();
+
+    if (mods.isConst())
+      res = mods.isVolatile() ? sb::buildConstVolatileType : sb::buildConstType;
+    else if (mods.isVolatile())
+      res = sb::buildVolatileType;
+
+    return res;
+  }
+
+  struct ThisParameterTransformer
+  {
+      explicit
+      ThisParameterTransformer(SgMemberFunctionDeclaration& memberFn)
+      : memfn(memberFn)
+      {}
+
+      SgType& getThisType()
+      {
+        SgClassDefinition&  clsdef  = getClassDef(memfn);
+        SgClassDeclaration& clsdcl  = SG_DEREF(clsdef.get_declaration());
+        SgClassType&        clsty   = SG_DEREF(clsdcl.get_type());
+        TypeModifer         modBldr = typeBuilder(memfn);
+
+        return SG_DEREF(modBldr(&clsty));
+      }
+
+      void execute(CxxTransformStats&)
+      {
+        SgType& thisType = getThisType();
+
+        newThisParam = sb::buildInitializedName_nfi("This", &thisType, nullptr);
+
+        // memfn.prepend_arg(newThisParam);
+        si::prependArg(memfn.get_parameterList(), newThisParam);
+      }
+
+    private:
+      SgMemberFunctionDeclaration& memfn;
+      SgInitializedName*           newThisParam = nullptr;
+  };
+
+  struct ThisPointerTransformer
+  {
+      ThisPointerTransformer(SgThisExp& thisNode, SgMemberFunctionDeclaration& memberFn)
+      : self(thisNode), memfn(memberFn)
+      {}
+
+      SgInitializedName& findThisParam()
+      {
+        SgInitializedNamePtrList& lst = memfn.get_args();
+        SgInitializedName&        cand = SG_DEREF(lst.at(0)); // a member function must have at least one argument
+
+        ROSE_ASSERT(cand.get_name() == "This");
+        return cand;
+      }
+
+      void execute(CxxTransformStats&)
+      {
+        SgInitializedName& thisParam = findThisParam();
+
+        newThisExpr = sb::buildVarRefExp(&thisParam, memfn.get_definition());
+
+        //~ std::cerr << self.get_parent()->unparseToString()
+                  //~ << "\n   =>\n"
+                  //~ << std::flush;
+
+        replaceExpression(self, SG_DEREF(newThisExpr));
+
+        //~ std::cerr << newThisExpr->get_parent()->unparseToString()
+                  //~ << std::endl;
+      }
+
+    private:
+      SgThisExp&                   self;
+      SgMemberFunctionDeclaration& memfn;
+      SgVarRefExp*                 newThisExpr = nullptr;
+  };
+
+  struct ThisArgumentTransformer
+  {
+      using ExprModifier = std::function<SgExpression& (SgExpression&)>;
+
+      static
+      SgExpression& noop(SgExpression& exp) { return exp; }
+
+      static
+      SgExpression& refToPtr(SgExpression& exp) { return SG_DEREF(sb::buildAddressOfOp(&exp)); }
+
+      ThisArgumentTransformer(SgBinaryOp& exp, SgExprListExp& arguments, ExprModifier modifier)
+      : binexp(exp), args(arguments), argModifier(modifier)
+      {}
+
+      void execute(CxxTransformStats&)
+      {
+        newReceiver = si::deepCopy(binexp.get_lhs_operand());
+        newFunction = si::deepCopy(binexp.get_rhs_operand());
+        newReceiver = &argModifier(SG_DEREF(newReceiver));
+
+        args.prepend_expression(newReceiver);
+
+        //~ std::cerr << binexp.get_parent()->unparseToString()
+                  //~ << "\n    =>\n"
+                  //~ << std::flush;
+
+        replaceExpression(binexp, SG_DEREF(newFunction));
+
+        //~ std::cerr << newFunction->get_parent()->unparseToString()
+                  //~ << std::endl;
+      }
+
+    private:
+      SgBinaryOp&    binexp;
+      SgExprListExp& args;
+      ExprModifier   argModifier;
+
+      SgExpression*  newReceiver = nullptr;
+      SgExpression*  newFunction = nullptr;
+  };
+
+  struct DefaultArgumentTransformer
+  {
+      DefaultArgumentTransformer(SgFunctionCallExp& callexp, const int argnum, SgFunctionDeclaration& dcl)
+      : call(callexp), pos(argnum), func(dcl)
+      {}
+
+      SgExpression* defaultValue() const
+      {
+        SgFunctionParameterList& lst = SG_DEREF(func.get_parameterList());
+        SgInitializedName&       prm = SG_DEREF(lst.get_args().at(pos));
+        SgExpression*            res = prm.get_initializer();
+
+        ROSE_ASSERT(res);
+        return res;
+      }
+
+      void execute(CxxTransformStats&)
+      {
+        SgExprListExp& arguments = SG_DEREF(call.get_args());
+
+        arguments.append_expression(si::copyExpression(defaultValue()));
+      }
+
+    private:
+      SgFunctionCallExp&     call;
+      const int              pos;
+      SgFunctionDeclaration& func;
+  };
 
 
   //
   // memoized functors
-
 
   SgInitializedNamePtrList
   extractNonStaticMemberVars(const SgClassDefinition* cls)
@@ -2277,11 +2428,13 @@ namespace
       }
     }
 
+    const SgClassDeclaration& clsdcl = SG_DEREF(cls.get_declaration());
+
     // explicitly destruct all direct non-virtual base classes;
     //   execute the transformations in reverse order
     for (SgBaseClass* base : adapt::reverse(getDirectNonVirtualBases(&cls)))
     {
-      cont.emplace_back(BaseDtorCallTransformer{blk, *base});
+      cont.emplace_back(BaseDtorCallTransformer{clsdcl, *base, blk});
     }
   }
 
@@ -2375,6 +2528,16 @@ namespace
 
     sg::traverseChildren(std::move(tf), n);
   }
+
+  template <class Transformer>
+  void descend_collect(Transformer& tf, SgNode& n)
+  {
+    if (alreadyProcessed(tf.visitedNodes(), &n))
+      return;
+
+    tf = std::move(sg::traverseChildren(std::move(tf), n));
+  }
+
 
   /// adds constructors and destructors as needed and normalizes these functions
   struct CxxCtorDtorGenerator : GeneratorBase
@@ -2592,7 +2755,7 @@ namespace
 
   void CxxVirtualBaseCtorDtorGenerator::descend(SgNode& n)
   {
-    ::ct::descend(*this, n);
+    ::ct::descend_collect(*this, n);
   }
 
 
@@ -2808,6 +2971,245 @@ namespace
     descend(n);
   }
 
+
+  /// Makes this parameter explicit
+  /// \details
+  ///   Three transformations are generated:
+  ///   - Introduce "This" parameter for non-static member functions as the first parameter
+  ///     void x(); => void x(X* This); // assuming x is a member function of X
+  ///   - Replace SgThisExp with SgVarRefExp to This
+  ///     this->x => This->x
+  ///   - Move the receiver object into the argument list when a non-static member function is called
+  ///     a->f() => f(a)
+  ///     a.f()  => f(&a)
+  ///     (a.*f)() => f(&a)
+  ///     (a->*f)() => f(a)
+  struct CxxThisParameterGenerator : GeneratorBase
+  {
+      using GeneratorBase::GeneratorBase;
+      using GeneratorBase::handle;
+
+      /// records this only iff n refers to a member function, not a member variable
+      void
+      recordIfMemberFnCall(SgBinaryOp& n, SgExprListExp& args, ThisArgumentTransformer::ExprModifier mod);
+
+      // recursive tree traversal
+      void descend(SgNode& n);
+
+      void handle(SgNode& n)         { descend(n); }
+
+      void handle(SgCtorInitializerList&) { /* skip */ }
+
+      void handle(SgMemberFunctionDeclaration& n)
+      {
+        if (!si::isStatic(&n))
+        {
+          record(ThisParameterTransformer{n});
+
+          memfn = &n;
+        }
+
+        descend(n);
+      }
+
+      void handle(SgThisExp& n)
+      {
+        record(ThisPointerTransformer{n, SG_DEREF(memfn)});
+      }
+
+      void handle(SgFunctionCallExp& n);
+
+    private:
+      SgMemberFunctionDeclaration* memfn;
+  };
+
+  void CxxThisParameterGenerator::descend(SgNode& n)
+  {
+    ::ct::descend(*this, n);
+  }
+
+  void CxxThisParameterGenerator::recordIfMemberFnCall( SgBinaryOp& n,
+                                                        SgExprListExp& args,
+                                                        ThisArgumentTransformer::ExprModifier mod
+                                                      )
+  {
+    // test if this is a call through a function pointer
+    if (!isSgVarRefExp(n.get_rhs_operand()))
+      record(ThisArgumentTransformer{n, args, mod});
+  }
+
+  void CxxThisParameterGenerator::handle(SgFunctionCallExp& n)
+  {
+    // find the this expressions first, before the call is updated
+    descend(n);
+
+    SgExprListExp& args = SG_DEREF(n.get_args());
+    SgExpression*  tgt  = n.get_function();
+
+    if (SgArrowExp* arrow = isSgArrowExp(tgt))
+      recordIfMemberFnCall(*arrow, args, ThisArgumentTransformer::noop);
+    else if (SgDotExp* dot = isSgDotExp(tgt))
+      recordIfMemberFnCall(*dot, args, ThisArgumentTransformer::refToPtr);
+    else if (SgArrowStarOp* arrowStar = isSgArrowStarOp(tgt))
+      record(ThisArgumentTransformer{*arrowStar, args, ThisArgumentTransformer::noop});
+    else if (SgDotStarOp* dotStar = isSgDotStarOp(tgt))
+      record(ThisArgumentTransformer{*dotStar, args, ThisArgumentTransformer::refToPtr});
+  }
+
+  /// Predicate that returns true if a function declaration defines a default argument
+  /// at a give position.
+  struct DefinesDefaultValueAt
+  {
+    bool operator()(const SgFunctionDeclaration* n) const
+    {
+      SgFunctionParameterList&  paramlst = SG_DEREF(n->get_parameterList());
+      SgInitializedNamePtrList& params   = paramlst.get_args();
+
+      return SG_DEREF(params.at(pos)).get_initializer() != nullptr;
+    }
+
+    const int pos;
+  };
+
+  /// Adds the default argument of function declarations to call sites if needed.
+  /// \details
+  ///   - given a declaration: void foo(int i, double d = 2.2 * 3.3);
+  ///     foo(0) => foo(0, 2.2 * 3.3);
+  struct CxxDefaultArgumentGenerator : GeneratorBase
+  {
+      using GeneratorBase::GeneratorBase;
+      using GeneratorBase::handle;
+      using DeclarationSet = std::vector<SgFunctionDeclaration*>;
+
+      void reportAmbiguity(int pos, const DeclarationSet& candidates);
+      void reportNone(int pos, const SgFunctionDeclaration& callee, const DeclarationSet& decls);
+
+      int numberOfTrueParameters(SgFunctionParameterList& params, SgFunctionType& ty)
+      {
+        // ty.get_has_ellipses() does not work
+        const SgFunctionParameterTypeList& paramTypeList = SG_DEREF(ty.get_argument_list());
+        const SgTypePtrList&               tylst = paramTypeList.get_arguments();
+        const bool hasEllipsis = tylst.size() && isSgTypeEllipse(tylst.back());
+        const int  adj         = hasEllipsis ? 1 : 0;
+        const int  len         = params.get_args().size();
+
+        ROSE_ASSERT(adj <= len);
+        return len-adj;
+      }
+
+      void processCall(SgFunctionCallExp& n);
+
+      // recursive tree traversal
+      void descend(SgNode& n);
+
+      void handle(SgNode& n)          { descend(n); }
+
+      DeclarationSet& declarationSet(SgFunctionDeclaration& n)
+      {
+        SgFunctionDeclaration* key = isSgFunctionDeclaration(n.get_firstNondefiningDeclaration());
+
+        ROSE_ASSERT(key);
+        return funcs[key];
+      }
+
+      void handle(SgClassDefinition& n)
+      {
+        // calls in classes are processed as if all declarations have been seen.
+        //   => delay call processing until the entire body has been handled.
+        std::vector<SgFunctionCallExp*>* savedDelayedCalls = delayedCalls;
+        std::vector<SgFunctionCallExp*>  calls;
+
+        delayedCalls = &calls;
+        descend(n);
+        delayedCalls = savedDelayedCalls;
+
+        for (SgFunctionCallExp* callexp : calls)
+          processCall(SG_DEREF(callexp));
+      }
+
+      void handle(SgFunctionCallExp& n)
+      {
+        descend(n);
+
+        if (!n.getAssociatedFunctionDeclaration()) return;
+
+        if (delayedCalls)
+        {
+          delayedCalls->push_back(&n);
+          return;
+        }
+
+        processCall(n);
+      }
+
+      void handle(SgFunctionDeclaration& n)
+      {
+        descend(n);
+
+        declarationSet(n).push_back(&n);
+      }
+
+    private:
+      std::unordered_map<SgFunctionDeclaration*, DeclarationSet> funcs;
+      std::vector<SgFunctionCallExp*>*                           delayedCalls = nullptr;
+  };
+
+  void CxxDefaultArgumentGenerator::processCall(SgFunctionCallExp& n)
+  {
+    // check if the number of arguments is less than the declared number of parameters
+    SgFunctionDeclaration&   callee    = SG_DEREF(n.getAssociatedFunctionDeclaration());
+    SgFunctionParameterList& params    = SG_DEREF(callee.get_parameterList());
+    SgFunctionType&          fntype    = SG_DEREF(callee.get_type());
+    const int                numparams = numberOfTrueParameters(params, fntype);
+    SgExprListExp&           args      = SG_DEREF(n.get_args());
+    int                      numargs   = args.get_expressions().size();
+
+    // numargs > numparams for functions with ellipsis
+    if (numargs >= numparams) return;
+
+    // create the transformers
+    const DeclarationSet&    declSet = declarationSet(callee);
+
+    for ( ; numargs < numparams; ++numargs)
+    {
+      DeclarationSet candidates;
+
+      std::copy_if( declSet.begin(), declSet.end(),
+                    std::back_inserter(candidates),
+                    DefinesDefaultValueAt{numargs}
+                  );
+
+      if (candidates.size() == 0) reportNone(numargs, callee, declSet);
+      if (candidates.size() > 1)  reportAmbiguity(numargs, candidates);
+      ROSE_ASSERT(candidates.size());
+
+      record(DefaultArgumentTransformer{n, numargs, *candidates.back()});
+    }
+  }
+
+  void CxxDefaultArgumentGenerator::descend(SgNode& n)
+  {
+    ::ct::descend_collect(*this, n);
+  }
+
+  void CxxDefaultArgumentGenerator::reportAmbiguity(int pos, const DeclarationSet& candidates)
+  {
+    logError() << "Multiple function declarations defining a default value for parameter " << pos
+               << " exist for function " << candidates.front()->get_name() << ".\n"
+               << "checked " << candidates.size() << '\n'
+               << std::endl;
+  }
+
+  void CxxDefaultArgumentGenerator::reportNone(int pos, const SgFunctionDeclaration& callee, const DeclarationSet& decls)
+  {
+    logError() << "No function declarations defining a default value for parameter " << pos
+               << " exist for function " << callee.unparseToString() << ".\n"
+               << "checked " << decls.size() << '\n'
+               << std::endl;
+  }
+
+
+  /// checks if all links to unwanted AST nodes have been removed
   struct CxxNormalizationCheck : GeneratorBase
   {
       using GeneratorBase::GeneratorBase;
@@ -2822,8 +3224,10 @@ namespace
 
       void handle(SgNode& n)                   { descend(n); }
 
-      void handle(SgConstructorInitializer& n) { report(n); }
       void handle(SgNewExp& n)                 { /* do not descend */ }
+
+      void handle(SgConstructorInitializer& n) { report(n); }
+      void handle(SgThisExp& n)                { report(n); }
   };
 
   void CxxNormalizationCheck::descend(SgNode& n)
@@ -2833,11 +3237,12 @@ namespace
 
   void CxxNormalizationCheck::reportNode(SgStatement& n, SgLocatedNode& offender)
   {
-    std::cerr << "wanted: " << n.unparseToString()
-              << " <" << typeid(offender).name() << ">"
-              << " parent = " << typeid(*n.get_parent()).name()
-              << "\n@" << SrcLoc(offender) << " / " << SrcLoc(*isSgLocatedNode(n.get_parent()))
-              << std::endl;
+    logError() << "wanted: " << n.unparseToString()
+               << " <" << typeid(offender).name() << "> " << offender.unparseToString()
+               << " parent = " << typeid(*n.get_parent()).name()
+               << "\n@" << SrcLoc(offender) << " / " << SrcLoc(*isSgLocatedNode(n.get_parent()))
+               << " in:\n" << n.get_parent()->unparseToString()
+               << std::endl;
   }
 
   struct CxxCleanCtorInitlistGenerator : GeneratorBase
@@ -2856,7 +3261,7 @@ namespace
       {
         if (SgCtorInitializerList* lst = n.get_CtorInitializerList())
           record(CtorInitListTransformer{*lst});
-  }
+      }
   };
 
   void CxxCleanCtorInitlistGenerator::descend(SgNode& n)
@@ -2932,20 +3337,26 @@ namespace
     // splits allocation and initialization
     normalize<CxxAllocInitSplitGenerator>     (root, "brilliant C++ alloc/init splits...");
 
+    // adds default values to the argument list
+    normalize<CxxDefaultArgumentGenerator>    (root, "crucial C++ default argument normalizations...");
+
     // return value optimization
-    normalize<CxxRVOGenerator>                (root, "crucial C++ return value optimizations...");
+    normalize<CxxRVOGenerator>                (root, "delightful C++ return value optimizations...");
 
     // inserts object destruction into blocks
-    normalize<CxxObjectDestructionGenerator>  (root, "delightful C++ object destruction insertion...");
+    normalize<CxxObjectDestructionGenerator>  (root, "extraordinary C++ object destruction insertion...");
 
     // inserts calls to virtual base class constructor and destructor
     //   generates full constructors (those that initialize the virtual bases) and destructors if needed
     //   replaces references to constructors
-    normalize<CxxVirtualBaseCtorDtorGenerator>(root, "extraordinary C++ ctor/dtor w/ virtual base class normalizations...");
+    normalize<CxxVirtualBaseCtorDtorGenerator>(root, "fantastic C++ ctor/dtor w/ virtual base class normalizations...");
 
     // last pass that removes AST nodes from the initializer list. They have been moved into the appropriate
     // destructors, and now they are removed so that any subsequent traversal will not see them.
-    normalize<CxxCleanCtorInitlistGenerator>  (root, "fantastic C++ ctor initializer list normalizations...");
+    normalize<CxxCleanCtorInitlistGenerator>  (root, "gigantic C++ ctor initializer list normalizations...");
+
+
+    normalize<CxxThisParameterGenerator>      (root, "huge C++ this pointer normalizations...");
 
     // check if any unwanted nodes remain in the AST
     normalize<CxxNormalizationCheck>          (root, "checking AST for unwanted nodes...");
@@ -2956,22 +3367,35 @@ namespace
 
   bool cppCreatesTemporaryObject(const SgExpression* n, bool withCplusplus)
   {
-    if (!withCplusplus) return false;
-
     ASSERT_not_null(n);
 
-    const SgClassType* ty = isSgClassType(n->get_type());
+    if (!withCplusplus)
+      return false;
 
-    return ty && !si::IsTrivial(ty);
+    const SgType&      ty    = SG_DEREF(n->get_type());
+    const SgClassType* clsty = isSgClassType(ty.stripType(STRIP_MODIFIER_ALIAS));
 
 /*
-    const SgConstructorInitializer* init = isSgConstructorInitializer(n);
-
-    if (!init) return false;
-
-    // exclude variable declarations
-    return isSgInitializedName(init->get_parent()) == nullptr;
+    if (clsty)
+      std::cerr << "PP22: " << typeid(*clsty).name()
+                << " / " << typeid(*n).name()
+                << std::endl;
 */
+    return clsty && !si::IsTrivial(clsty);
+  }
+
+  bool cppNormalizedRequiresReference(const SgType* varTy, const SgExpression* exp)
+  {
+    ASSERT_not_null(varTy);
+
+    varTy = varTy->stripType(SgType::STRIP_TYPEDEF_TYPE);
+
+    if (isSgReferenceType(varTy))
+      return false;
+
+    SgType* beyondModifers = varTy->stripType(SgType::STRIP_MODIFIER_TYPE);
+
+    return isSgClassType(beyondModifers) && !cppCreatesTemporaryObject(exp, true);
   }
 
   bool cppReturnValueOptimization(const SgReturnStmt* n, bool withCplusplus)

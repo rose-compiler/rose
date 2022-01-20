@@ -76,7 +76,7 @@ Settings::commandLineSwitches() {
               .argument("duration", Rose::CommandLine::durationParser(maxTime))
               .doc("Maximum time to spend exploring any given path. If a path takes longer than the specified time, "
                    "then no paths with that prefix are explored. " + Rose::CommandLine::DurationParser::docString() +
-                   " The default is " + Rose::CommandLine::DurationParser::toString(maxTime) + "."));
+                   " The default is " + Rose::CommandLine::durationParser()->toString(maxTime) + "."));
 
     sg.insert(Switch("replace-symbolic")
               .argument("nnodes", nonNegativeIntegerParser(maxSymbolicSize))
@@ -88,7 +88,7 @@ Settings::commandLineSwitches() {
               .argument("duration", Rose::CommandLine::durationParser(solverTimeout))
               .doc("Specifies the maximum amount of elapsed time for each call to the SMT solver. If this time limit expires, the "
                    "solver returns an answer of \"unknown\". " + Rose::CommandLine::DurationParser::docString() +
-                   " The default is " + Rose::CommandLine::DurationParser::toString(solverTimeout) + "."));
+                   " The default is " + Rose::CommandLine::durationParser()->toString(solverTimeout) + "."));
 
     return sg;
 }

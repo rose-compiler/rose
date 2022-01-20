@@ -131,25 +131,18 @@ namespace Ada_ROSE_Translation
   SgTypeTuple&
   mkTypeUnion(SgTypePtrList elemtypes);
 
-  /// creates a type that references a record declaration \ref dcl.
-  SgClassType&
-  mkRecordType(SgClassDeclaration& dcl);
-
-  /// creates an enumeration with name \ref name in scope \ref scope.
+  /// creates a forward declaration with name \ref name in scope \ref scope.
   SgEnumDeclaration&
   mkEnumDecl(const std::string& name, SgScopeStatement& scope);
+
+  /// creates an enumeration with name \ref name in scope \ref scope.
+  /// \note uses builder function which looks up the forward declaration if one exists
+  SgEnumDeclaration&
+  mkEnumDefn(const std::string& name, SgScopeStatement& scope);
 
   /// creates an ada access type with \ref base_type as the type being referenced.
   SgAdaAccessType&
   mkAdaAccessType(SgType *base_type);
-
-  /// creates a task type that references a task type declaration \ref dcl.
-  SgAdaTaskType&
-  mkAdaTaskType(SgAdaTaskTypeDecl& dcl);
-
-  /// creates a Discriminated type that references a Discriminated type declaration \ref dcl.
-  SgAdaDiscriminatedType&
-  mkAdaDiscriminatedType(SgAdaDiscriminatedTypeDecl& dcl);
 
   /// creates an entry type from a function parameter list
   // \todo the representation is incomplete and should be replaced
@@ -177,10 +170,13 @@ namespace Ada_ROSE_Translation
   SgType& mkAliasedType(SgType& underType);
 
   /// create a formal type
-  SgAdaFormalType& mkAdaFormalType(const std::string& name);
+  // SgAdaFormalType& mkAdaFormalType(const std::string& name);
+
+  //~ SgAdaFormalTypeDecl&
+  //~ mkAdaFormalTypeDecl(const std::string& name, SgAdaFormalType& ty, SgScopeStatement& scope);
 
   SgAdaFormalTypeDecl&
-  mkAdaFormalTypeDecl(const std::string& name, SgAdaFormalType& ty, SgScopeStatement& scope);
+  mkAdaFormalTypeDecl(const std::string& name, SgScopeStatement& scope);
 
   //
   // Statement Makers
@@ -395,6 +391,32 @@ namespace Ada_ROSE_Translation
   SgAdaTaskBody&
   mkAdaTaskBody();
 
+  /// creates an Ada protected object type declaration
+  // \todo revisit Ada protected object symbol creation
+  SgAdaProtectedTypeDecl&
+  mkAdaProtectedTypeDecl(const std::string& name, SgAdaProtectedSpec& spec, SgScopeStatement& scope);
+
+  /// creates an Ada protected object declaration
+  // \todo revisit Ada protected object symbol creation
+  SgAdaProtectedSpecDecl&
+  mkAdaProtectedSpecDecl(const std::string& name, SgAdaProtectedSpec& spec, SgScopeStatement& scope);
+
+  /// creates an Ada protected object body declaration
+  /// \param tskdecl the corresponding tasl declaration which can either be of type SgAdaProtectedSpecDecl
+  ///                or of type SgAdaProtectedTypeDecl.
+  /// \param tskbody the protected object body
+  /// \param scope   the enclosing scope
+  SgAdaProtectedBodyDecl&
+  mkAdaProtectedBodyDecl(SgDeclarationStatement& podecl, SgAdaProtectedBody& pobody, SgScopeStatement& scope);
+
+  /// creates an empty protected object specification definition node
+  SgAdaProtectedSpec&
+  mkAdaProtectedSpec();
+
+  /// creates an empty protected object body definition node
+  SgAdaProtectedBody&
+  mkAdaProtectedBody();
+
   /// builds a fresh function parameter list
   SgFunctionParameterList&
   mkFunctionParameterList();
@@ -590,6 +612,10 @@ namespace Ada_ROSE_Translation
   SgAdaTaskRefExp&
   mkAdaTaskRefExp(SgAdaTaskSpecDecl& task);
 
+  /// Creates a reference to a protected object \ref po
+  SgAdaProtectedRefExp&
+  mkAdaProtectedRefExp(SgAdaProtectedSpecDecl& task);
+
   /// Creates a reference to a package \ref unit
   SgAdaUnitRefExp&
   mkAdaUnitRefExp(SgDeclarationStatement& unit);
@@ -663,7 +689,17 @@ namespace Ada_ROSE_Translation
   SgIfStmt&
   mkIfStmt();
 
-  // SgExpression& cond, SgStatement& thenBranch, SgStatement* elseBranch_opt);
+  //
+  // special Ada symbols
+
+  /// creates a symbol for the inherited function \ref fn for inherited type \ref declaredDerivedType.
+  ///   adds the symbol to the scope \ref scope of the derived type.
+  SgAdaInheritedFunctionSymbol&
+  mkAdaInheritedFunctionSymbol(SgFunctionDeclaration& fn, SgTypedefType& declaredDerivedType, SgScopeStatement& scope);
+
+  //
+  // conversions
+
 
   /// converts a value of type V to a value of type U via streaming
   /// \tparam  V input value type
@@ -697,6 +733,9 @@ namespace Ada_ROSE_Translation
 
   template <>
   long double convAdaLiteral<long double>(const char* img);
+
+  template <>
+  char convAdaLiteral<char>(const char* img);
   /// \}
 
 

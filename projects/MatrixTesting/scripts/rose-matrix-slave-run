@@ -18,7 +18,7 @@ MATRIX_ROOT="$HOME/var/rose-portability-testing"
 
 # Minimum amount of free disk space in GiB. At the end of each test, this script deletes as many cached software
 # dependencies as necessary to reach this amount of free space.
-MIN_FREE_SPACE=35
+MIN_FREE_SPACE=40
 
 # If non-empty, prepare to run tests but do not run any tests.
 SETUP=
@@ -79,60 +79,59 @@ die() {
     exit 1
 }
 
-matrix-parse-command-line() {
-    while [ "$#" -gt 0 ]; do
-	case "$1" in
-	    --help|-h)
-		help
-		exit 0
-		;;
-	    --root=*)
-		MATRIX_ROOT="${1#--root=}"
-		shift
-		;;
-	    --aggressive-cleanup)
-		SMALL_FOOTPRINT=yes
-		shift
-		;;
-	    --slave=*)
-		SLAVE_NAME="${1#--slave=}"
-		shift
-		;;
-	    --update-system-software)
-		UPDATE_SYSTEM_SOFTWARE=yes
-		shift
-		;;
-	    --no-update-system-software)
-		UPDATE_SYSTEM_SOFTWARE=
-		shift
-		;;
-	    -*)
-		die "error: unrecognized switch: $1"
-		;;
-	    setup)
-		SETUP=yes
-		shift
-		break
-		;;
-	    *)
-		die "error: incorrect usage; see --help"
-		;;
-	esac
-    done
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+	--help|-h)
+	    help
+	    exit 0
+	    ;;
+	--root=*)
+	    MATRIX_ROOT="${1#--root=}"
+	    shift
+	    ;;
+	--aggressive-cleanup)
+	    SMALL_FOOTPRINT=yes
+	    shift
+	    ;;
+	--slave=*)
+	    SLAVE_NAME="${1#--slave=}"
+	    shift
+	    ;;
+	--update-system-software)
+	    UPDATE_SYSTEM_SOFTWARE=yes
+	    shift
+	    ;;
+	--no-update-system-software)
+	    UPDATE_SYSTEM_SOFTWARE=
+	    shift
+	    ;;
+	-*)
+	    die "error: unrecognized switch: $1"
+	    ;;
+	setup)
+	    SETUP=yes
+	    UPDATE_SYSTEM_SOFTWARE=yes
+	    shift
+	    break
+	    ;;
+	*)
+	    die "error: incorrect usage; see --help"
+	    ;;
+    esac
+done
 
-    [ "$#" -eq 0 ] || die "error: incorrect usage; see --help"
+[ "$#" -eq 0 ] || die "error: incorrect usage; see --help"
 
-    # Only update system software when we're in "setup" mode. Here's why: if this script is run by
-    # rose-matrix-slave-babysitter, then the first time it runs the user will probably notice that
-    # it's asking for a password for sudo (if it needs one). Then if this script crashes after a few
-    # hours and the babysitter re-runs it, a password might be required but there's no user around
-    # anymore to supply it and everything hangs.
-    if [ -n "$UPDATE_SYSTEM_SOFTWARE" -a "$SETUP" = "" ]; then
-	echo "$arg0: warning: forcing --no-update-system-software for non-\"setup\" runs"
-	echo "$arg0: info: if you want system softare to be updated, add the \"setup\" argument."
-	UPDATE_SYSTEM_SOFTWARE=
-    fi
-}
+# Only update system software when we're in "setup" mode. Here's why: if this script is run by
+# rose-matrix-slave-babysitter, then the first time it runs the user will probably notice that
+# it's asking for a password for sudo (if it needs one). Then if this script crashes after a few
+# hours and the babysitter re-runs it, a password might be required but there's no user around
+# anymore to supply it and everything hangs.
+if [ -n "$UPDATE_SYSTEM_SOFTWARE" -a "$SETUP" = "" ]; then
+    echo "$arg0: warning: forcing --no-update-system-software for non-\"setup\" runs"
+    echo "$arg0: info: if you want system softare to be updated, add the \"setup\" argument."
+    UPDATE_SYSTEM_SOFTWARE=
+fi
 
 #------------------------------------------------------------------------------------------------------------------------
 # Try to report our health to the database. It's okay if this fails.
@@ -520,7 +519,9 @@ matrix-reclaim-disk() {
 
     local have_free=$(matrix-free-space)
     if [ $have_free -lt $min_free_space ]; then
-	die "error: not enough free disk space for running tests (have $have_free but need $min_free_space GB)"
+	local have_free_gb=$[have_free / 1024 / 1024]
+	local min_free_gb=$[min_free_space / 1024 / 1024]
+	die "error: not enough free disk space for running tests (have $have_free_gb but need $min_free_gb GB)"
     fi
 }
 
@@ -592,7 +593,6 @@ matrix-cleanup() {
 
 #------------------------------------------------------------------------------------------------------------------------
 # Main program...
-matrix-parse-command-line "$@"
 
 # All work is done from the portability testing root directory. This script takes care to not create or remove files
 # anywhere else in the filesystem other than temporary files created in the usual temp directories. It will not clean

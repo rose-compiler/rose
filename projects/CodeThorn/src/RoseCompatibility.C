@@ -607,15 +607,23 @@ int compareTypes(const SgType& lhs, const SgType& rhs)
   return TypeComparator::compare(lhs, rhs, false, false);
 }
 
+
 int
-RoseCompatibilityBridge::compareTypes(FunctionKeyType lhs, FunctionKeyType rhs, bool exclReturn) const
+RoseCompatibilityBridge::compareFunctionTypes(FunctionTypeKeyType lhs, FunctionTypeKeyType rhs, bool exclReturn) const
 {
   static constexpr bool withArrayDecay = true;
 
+  return TypeComparator::compare(SG_DEREF(lhs), SG_DEREF(rhs), exclReturn, withArrayDecay);
+}
+
+
+int
+RoseCompatibilityBridge::compareTypes(FunctionKeyType lhs, FunctionKeyType rhs, bool exclReturn) const
+{
   const SgFunctionType& lhsty = functionType(lhs);
   const SgFunctionType& rhsty = functionType(rhs);
 
-  return sg::dispatch(TypeComparator{rhsty, withArrayDecay, exclReturn}, &lhsty);
+  return compareFunctionTypes(&lhsty, &rhsty, exclReturn);
 }
 
 VariableKeyType
@@ -714,7 +722,7 @@ namespace
       }
 
       /// generic template routine to check for covariance
-      /// if @chw is null, the check tests for strict equality
+      /// if \ref chw is null, the check tests for strict equality
       template <class SageType>
       ReturnType
       check(const SageType& drvTy)
@@ -852,8 +860,7 @@ RoseCompatibilityBridge::haveSameOrCovariantReturn( const ClassAnalysis& classes
 FunctionKeyType
 RoseCompatibilityBridge::functionId(const SgMemberFunctionDeclaration* fun) const
 {
-  return fun;
-  //~ return funLabeler.getFunctionEntryLabel(fun);
+  return fun ? &keyDecl(*const_cast<SgMemberFunctionDeclaration*>(fun)) : fun;
 }
 
 void
@@ -891,6 +898,64 @@ ClassNameFn
 RoseCompatibilityBridge::classNomenclator() const
 {
   return typeNameOf;
+}
+
+SgClassDefinition& getClassDef(const SgDeclarationStatement& n)
+{
+  SgDeclarationStatement* defdcl = n.get_definingDeclaration();
+  SgClassDeclaration&     clsdef = SG_DEREF(isSgClassDeclaration(defdcl));
+
+  return SG_DEREF(clsdef.get_definition());
+}
+
+SgClassDefinition& getClassDef(const SgMemberFunctionDeclaration& n)
+{
+  return getClassDef(SG_DEREF(n.get_associatedClassDeclaration()));
+}
+
+SgClassDefinition* getClassDefOpt(const SgClassType& n)
+{
+  SgDeclarationStatement& dcl    = SG_DEREF( n.get_declaration() );
+  SgDeclarationStatement* defdcl = dcl.get_definingDeclaration();
+
+  if (SgClassDeclaration* clsdcl = isSgClassDeclaration(defdcl))
+    return clsdcl->get_definition();
+
+  logWarn() << "class type without class declaration.." << std::endl;
+  return nullptr;
+}
+
+SgClassDefinition* getClassDefOpt(const SgExpression& n, bool skipUpCasts = false)
+{
+  static constexpr unsigned char STRIP_TO_CLASS = ( STRIP_MODIFIER_ALIAS
+                                                  | SgType::STRIP_REFERENCE_TYPE
+                                                  | SgType::STRIP_POINTER_TYPE
+                                                  | SgType::STRIP_TYPEDEF_TYPE
+                                                  );
+
+  SgType&          ty  = SG_DEREF(n.get_type());
+  SgClassType*     cls = isSgClassType(ty.stripType(STRIP_TO_CLASS));
+
+  if (cls == nullptr) return nullptr;
+  if (!skipUpCasts) return getClassDefOpt(*cls);
+
+  const SgCastExp* castexp = isSgCastExp(&n);
+
+  // \todo also work with other casts, such as const_cast or C-style cast?
+  if ((castexp == nullptr) || (castexp->cast_type() != SgCastExp::e_static_cast))
+    return getClassDefOpt(*cls);
+
+  return getClassDefOpt(SG_DEREF(castexp->get_operand()), true /* continue skipping up casts */);
+}
+
+
+SgMemberFunctionDeclaration& keyDecl(SgMemberFunctionDeclaration& memfn)
+{
+  SgMemberFunctionDeclaration* fKey = isSgMemberFunctionDeclaration(memfn.get_firstNondefiningDeclaration());
+  SgMemberFunctionDeclaration* res  = fKey ? fKey : &memfn;
+
+  ROSE_ASSERT(isVirtual(*res) == isVirtual(memfn));
+  return *res;
 }
 
 }

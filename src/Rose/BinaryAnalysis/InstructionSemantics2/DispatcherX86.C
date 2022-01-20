@@ -8,6 +8,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/RegisterStateGeneric.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/Util.h>
 #include "integerOps.h"
+#include <SageBuilderAsm.h>
 
 #undef si_value                                         // name pollution from siginfo.h
 
@@ -742,6 +743,22 @@ struct IP_cqo: P {
             ops->interrupt(x86_exception_ud, 0);
         } else {
             d->writeRegister(d->REG_RDX, ops->extract(ops->signExtend(d->readRegister(d->REG_RAX), 128), 64, 128));
+        }
+    }
+};
+
+// Convert dword integer to scalar double-precision FP value
+struct IP_cvtsi2sd: P {
+    void p(D d, Ops ops, I insn, A args) {
+        assert_args(insn, args, 2);
+        if (insn->get_lockPrefix()) {
+            ops->interrupt(x86_exception_ud, 0);
+        } else {
+            BaseSemantics::SValuePtr integer = d->read(args[1]);
+            BaseSemantics::SValuePtr fp = ops->fpFromInteger(integer, SageBuilderAsm::buildIeee754Binary64());
+            BaseSemantics::SValuePtr highBits = ops->extract(d->read(args[0]), 64, 128);
+            BaseSemantics::SValuePtr result = ops->concatHiLo(highBits, fp);
+            d->write(args[0], result);
         }
     }
 };
@@ -4070,6 +4087,7 @@ DispatcherX86::iproc_init()
     iprocSet(x86_cmpxchg16b,   new X86::IP_cmpxchg2);
     iprocSet(x86_cpuid,        new X86::IP_cpuid);
     iprocSet(x86_cqo,          new X86::IP_cqo);
+    iprocSet(x86_cvtsi2sd,     new X86::IP_cvtsi2sd);
     iprocSet(x86_cwd,          new X86::IP_cwd);
     iprocSet(x86_cwde,         new X86::IP_cwde);
     iprocSet(x86_dec,          new X86::IP_dec);

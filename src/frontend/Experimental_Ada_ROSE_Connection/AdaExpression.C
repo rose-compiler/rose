@@ -5,6 +5,7 @@
 
 #include "sageGeneric.h"
 #include "sageBuilder.h"
+#include "sageInterfaceAda.h"
 
 #include "AdaExpression.h"
 
@@ -19,6 +20,7 @@
 
 
 namespace sb = SageBuilder;
+namespace si = SageInterface;
 
 namespace Ada_ROSE_Translation
 {
@@ -82,69 +84,168 @@ namespace
 {
   struct AdaCallBuilder : sg::DispatchHandler<SgExpression*>
   {
-    typedef sg::DispatchHandler<SgExpression*> base;
+      using base = sg::DispatchHandler<SgExpression*>;
 
-    AdaCallBuilder(ElemIdRange params, AstContext astctx)
-    : base(nullptr), range(params), ctx(astctx)
-    {}
+      AdaCallBuilder(ElemIdRange params, bool useCallSyntax, AstContext astctx)
+      : base(nullptr), range(params), ctx(astctx)
+      {}
 
-    ArgListCreator computeArguments()
-    {
-      return traverseIDs(range, elemMap(), ArgListCreator{ctx});
-    }
-
-    void mkCall(SgExpression& n)
-    {
-      SgExprListExp& arglst = computeArguments();
-
-      res = sb::buildFunctionCallExp(&n, &arglst);
-    }
-
-    void handle(SgNode& n)       { SG_UNEXPECTED_NODE(n); }
-
-    // default
-    void handle(SgExpression& n) { mkCall(n); }
-
-    void handle(SgUnaryOp& n)
-    {
-      // computed target ?
-      if (n.get_operand() != nullptr)
+      ArgListCreator computeArguments()
       {
-        mkCall(n);
-        return;
+        return traverseIDs(range, elemMap(), ArgListCreator{ctx});
       }
 
-      ADA_ASSERT(range.size() == 1);
-      std::vector<SgExpression*> args = computeArguments();
-
-      ADA_ASSERT(args.size() == 1);
-      n.set_operand(args[0]);
-      res = &n;
-    }
-
-    void handle(SgBinaryOp& n)
-    {
-      // lhs and rhs must be null or not-null
-      ADA_ASSERT((n.get_lhs_operand() == nullptr) == (n.get_rhs_operand() == nullptr));
-
-      // computed target ?
-      if (n.get_lhs_operand() != nullptr)
+      void mkCall(SgExpression& n)
       {
-        mkCall(n);
-        return;
+        SgExprListExp& arglst = computeArguments();
+
+        res = sb::buildFunctionCallExp(&n, &arglst);
       }
 
-      ADA_ASSERT(range.size() == 2);
-      std::vector<SgExpression*> args = computeArguments();
+      SgAdaInheritedFunctionSymbol*
+      inheritedFunctionSymbol(SgType* ty, SgFunctionSymbol& origSymbol)
+      {
+        using key_t = std::pair<const SgFunctionDeclaration*, const SgTypedefType*>;
 
-      ADA_ASSERT(args.size() == 2);
-      n.set_lhs_operand(args[0]);
-      n.set_rhs_operand(args[1]);
-      res = &n;
-    }
+        const SgDeclarationStatement* tydcl = si::ada::baseDeclaration(ty);
+        const SgTypedefDeclaration*   tydefDcl = isSgTypedefDeclaration(tydcl);
 
-    ElemIdRange range;
-    AstContext  ctx;
+        if (tydefDcl == nullptr)
+          return nullptr;
+
+        key_t key{origSymbol.get_declaration(), tydefDcl->get_type()};
+
+        return findNode(inheritedSymbols(), key);
+      }
+
+      SgFunctionSymbol&
+      functionSymbol( const std::vector<si::ada::PrimitiveParameterDesc>& primitiveArgs,
+                      const SgExprListExp& args,
+                      SgFunctionSymbol& implSymbol
+                    )
+      {
+        using PrimitiveParmIterator = std::vector<si::ada::PrimitiveParameterDesc>::const_iterator;
+        using ArgumentIterator      = SgExpressionPtrList::const_iterator;
+
+        if (primitiveArgs.size() == 0)
+          return implSymbol;
+
+        const SgExpressionPtrList& arglst      = args.get_expressions();
+        const size_t               posArgLimit = si::ada::positionalArgumentLimit(args);
+        PrimitiveParmIterator      aa          = primitiveArgs.begin();
+        PrimitiveParmIterator      zz          = primitiveArgs.end();
+
+        // check all positional arguments
+        while ((aa != zz) && (aa->pos() < posArgLimit))
+        {
+          const SgExpression* arg = arglst.at(aa->pos());
+
+          if (SgAdaInheritedFunctionSymbol* inhSym = inheritedFunctionSymbol(arg->get_type(), implSymbol))
+            return *inhSym;
+
+          ++aa;
+        }
+
+        ROSE_ASSERT(posArgLimit <= arglst.size());
+        ArgumentIterator firstNamed = arglst.begin() + posArgLimit;
+        ArgumentIterator argLimit   = arglst.end();
+
+        // check all named arguments
+        while (aa != zz)
+        {
+          const std::string parmName = SG_DEREF(aa->name()).get_name();
+          auto              sameNamePred = [&parmName](const SgExpression* arg) -> bool
+                                           {
+                                             const SgActualArgumentExpression* actarg = isSgActualArgumentExpression(arg);
+
+                                             ROSE_ASSERT(actarg);
+                                             return parmName == std::string{actarg->get_argument_name()};
+                                           };
+          ArgumentIterator argpos   = std::find_if(firstNamed, argLimit, sameNamePred);
+
+          ++aa;
+
+          if (argpos == argLimit)
+            continue;
+
+          if (SgAdaInheritedFunctionSymbol* inhSym = inheritedFunctionSymbol((*argpos)->get_type(), implSymbol))
+            return *inhSym;
+        }
+
+        return implSymbol;
+      }
+
+      SgFunctionSymbol&
+      functionSymbol(SgFunctionDeclaration& dcl, SgFunctionSymbol& fnsym, SgExprListExp& args)
+      {
+        auto primitiveArgs = si::ada::primitiveParameterPositions(fnsym.get_declaration());
+
+        return functionSymbol(primitiveArgs, args, fnsym);
+      }
+
+      void handle(SgNode& n)       { SG_UNEXPECTED_NODE(n); }
+
+      // default
+      void handle(SgExpression& n) { mkCall(n); }
+
+      void handle(SgFunctionRefExp& n)
+      {
+        SgExprListExp& arglst = computeArguments();
+
+        if (SgFunctionDeclaration* funDcl = n.getAssociatedFunctionDeclaration())
+        {
+          SgFunctionSymbol& origSym = SG_DEREF(n.get_symbol());
+          SgFunctionSymbol& funSym  = functionSymbol(*funDcl, origSym, arglst);
+
+          if (&origSym != &funSym)
+            n.set_symbol(&funSym);
+        }
+
+        res = sb::buildFunctionCallExp(&n, &arglst);
+      }
+
+      void handle(SgUnaryOp& n)
+      {
+        // computed target ?
+        if (n.get_operand() != nullptr)
+        {
+          mkCall(n);
+          return;
+        }
+
+        ADA_ASSERT(range.size() == 1);
+        std::vector<SgExpression*> args = computeArguments();
+
+        ADA_ASSERT(args.size() == 1);
+        n.set_operand(args[0]);
+        res = &n;
+      }
+
+      void handle(SgBinaryOp& n)
+      {
+        // lhs and rhs must both be null or not-null
+        ADA_ASSERT((n.get_lhs_operand() == nullptr) == (n.get_rhs_operand() == nullptr));
+
+        // computed target ?
+        if (n.get_lhs_operand() != nullptr)
+        {
+          mkCall(n);
+          return;
+        }
+
+        ADA_ASSERT(range.size() == 2);
+        std::vector<SgExpression*> args = computeArguments();
+
+        ADA_ASSERT(args.size() == 2);
+        n.set_lhs_operand(args[0]);
+        n.set_rhs_operand(args[1]);
+        res = &n;
+      }
+
+    private:
+      ElemIdRange range;
+      bool        callSyntax;
+      AstContext  ctx;
   };
 
   struct ArrayAggregateCreator
@@ -331,8 +432,8 @@ namespace
 
 
   /// converts enum values to SgExpressions
-  /// \todo currently only True and False are handled
-  ///       revisit when Asis representation is complete
+  /// \note currently True and False are handled separately, because
+  ///       their definition in package Standard is not seen.
   SgExpression&
   getEnumLiteral(Expression_Struct& expr, AstContext ctx)
   {
@@ -377,6 +478,7 @@ namespace
 
     void handle(const SgDeclarationStatement&) { res = true; }
     void handle(const SgAdaTaskSpecDecl&)      { res = false; }
+    void handle(const SgAdaProtectedSpecDecl&) { res = false; }
     void handle(const SgAdaPackageSpecDecl&)   { res = false; }
     void handle(const SgImportStatement&)      { res = false; }
     //~ void handle(const SgFunctionDeclaration&)  { res = false; }
@@ -399,7 +501,7 @@ namespace
 
       // \note getDecl_opt does not retrieve variable declarations
       //       => assuming a is a variable of record: a.x (the dcl for a would be nullptr)
-      return dcl == nullptr || sg::dispatch(RoseRequiresScopeQual(), dcl);
+      return dcl == nullptr || sg::dispatch(RoseRequiresScopeQual{}, dcl);
       //~ return dcl != nullptr && sg::dispatch(RoseRequiresScopeQual(), dcl);
     }
 
@@ -411,8 +513,14 @@ namespace
 
     if (expr.Expression_Kind == An_Indexed_Component)
     {
+      // \todo should this always return true (like the cases below)?
       return roseRequiresPrefixID(expr.Prefix, ctx);
     }
+
+    if (  (expr.Expression_Kind == An_Explicit_Dereference)
+       || (expr.Expression_Kind == A_Function_Call)
+       )
+      return true;
 
     logWarn() << "roseRequiresPrefixID: untested expression-kind: "
               << expr.Expression_Kind
@@ -445,16 +553,12 @@ namespace
       void handle(SgFunctionDeclaration& n)    { res = sb::buildFunctionRefExp(&n); }
       void handle(SgAdaRenamingDecl& n)        { res = &mkAdaRenamingRefExp(n); }
       void handle(SgAdaTaskSpecDecl& n)        { res = &mkAdaTaskRefExp(n); }
+      void handle(SgAdaProtectedSpecDecl& n)   { res = &mkAdaProtectedRefExp(n); }
       void handle(SgAdaGenericDecl& n)         { res = &mkAdaUnitRefExp(n); }
       void handle(SgAdaGenericInstanceDecl& n) { res = &mkAdaUnitRefExp(n); }
       void handle(SgAdaPackageSpecDecl& n)     { res = &mkAdaUnitRefExp(n); }
-
-      void handle(SgAdaTaskTypeDecl& n)
-      {
-        SgAdaTaskType& ty = mkAdaTaskType(n);
-
-        res = sb::buildTypeExpression(&ty);
-      }
+      void handle(SgAdaTaskTypeDecl& n)        { res = sb::buildTypeExpression(n.get_type()); }
+      void handle(SgAdaProtectedTypeDecl& n)   { res = sb::buildTypeExpression(n.get_type()); }
 
     private:
       AstContext ctx;
@@ -486,7 +590,7 @@ namespace
       void handle(SgClassDeclaration& n)   { set(n.get_type()); }
       void handle(SgTypedefDeclaration& n) { set(n.get_type()); }
       void handle(SgEnumDeclaration& n)    { set(n.get_type()); }
-      void handle(SgAdaFormalTypeDecl& n)  { set(n.get_formal_type()); }
+      void handle(SgAdaFormalTypeDecl& n)  { set(n.get_type()); }
 
     private:
       AstContext ctx;
@@ -794,12 +898,12 @@ namespace
           ElemIdRange             range  = idRange(expr.Function_Call_Parameters);
 
           // distinguish between operators and calls
-          res = sg::dispatch(AdaCallBuilder(range, ctx), &target);
+          res = &createCall(target, range, expr.Is_Prefix_Call, ctx);
 
           /* unused fields:
              Expression_Struct
                Expression_ID         Prefix;
-               bool                  Is_Prefix_Call;
+               bool                  Is_Prefix_Notation;
                bool                  Is_Generalized_Reference;
                bool                  Is_Dispatching_Call;
                bool                  Is_Call_On_Dispatching_Operation;
@@ -824,6 +928,7 @@ namespace
         {
           logKind("A_Character_Literal");
           res = &mkValue<SgCharVal>(expr.Name_Image);
+
           /* unused fields: (Expression_Struct)
                Defining_Name_ID      Corresponding_Name_Definition;
                Defining_Name_List    Corresponding_Name_Definition_List;
@@ -881,8 +986,12 @@ namespace
           logKind("An_Explicit_Dereference");
 
           SgExpression& exp = getExprID(expr.Prefix, ctx);
-          res = sb::buildPointerDerefExp(&exp);
 
+          // prefix calls are incorrectly unparsed as infix (check if data is avail in Asis)
+          // in this case, parenthesis are missing.
+          // if (isSgBinaryOp(&exp)) exp.set_need_paren(true);
+
+          res = sb::buildPointerDerefExp(&exp);
           break;
         }
 
@@ -1365,6 +1474,13 @@ SgExpression&
 getDefinitionExprID(Element_ID id, AstContext ctx)
 {
   return getDefinitionExpr(retrieveAs(elemMap(), id), ctx);
+}
+
+SgExpression& createCall(SgExpression& target, ElemIdRange args, bool callSyntax, AstContext ctx)
+{
+  SgExpression* res = sg::dispatch(AdaCallBuilder{args, callSyntax, ctx}, &target);
+
+  return SG_DEREF(res);
 }
 
 } // namespace Ada_ROSE_Translation

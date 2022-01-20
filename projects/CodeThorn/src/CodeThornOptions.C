@@ -12,7 +12,6 @@ void CodeThornOptions::configurePrecisionOption() {
     intraProcedural=true;
     contextSensitive=false;
     abstractionMode=1;
-    solver=16;
     if(arrayAbstractionIndex==-1)
       arrayAbstractionIndex=0;
     break;
@@ -22,16 +21,17 @@ void CodeThornOptions::configurePrecisionOption() {
     if(callStringLength<1)
       callStringLength=3;
     abstractionMode=1;
-    solver=16;
     if(arrayAbstractionIndex==-1)
       arrayAbstractionIndex=0;
-    
     break;
   case 3:
     intraProcedural=false;
     contextSensitive=true;
     abstractionMode=0;
-    solver=5;
+    if(solver!=5) {
+      std::cout<<"STATUS: overriding solver "<<solver<<" with 5 (required by precision 3)"<<std::endl;
+      solver=5; // override solver, L3 requires solver 5
+    }
     arrayAbstractionIndex=-1;
     if(callStringLength<1)
       callStringLength=5;

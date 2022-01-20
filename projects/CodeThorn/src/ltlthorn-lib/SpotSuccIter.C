@@ -9,7 +9,7 @@ using namespace CodeThorn;
 SpotSuccIter::SpotSuccIter(TransitionGraph& tg, const EState& state, 
    				  const std::map<int, int>& p2d, std::set<int> inVars, std::set<int> outVars) 
 					: stg(tg), propNum2DictNum(p2d), ltlInVars(inVars), ltlOutVars(outVars) {
-  outEdges = stg.outEdges(&state);
+  outEdges = stg.outEdges(const_cast<EStatePtr>(&state));
 }
 
 void SpotSuccIter::first() {
@@ -43,7 +43,7 @@ bdd SpotSuccIter::current_acceptance_conditions() const {
 
 bdd SpotSuccIter::generateSpotTransition(const Transition& t) const {
   bdd transCond = bddtrue;
-  const EState* myTarget=t.target;
+  EStatePtr myTarget=t.target;
 
   ROSE_ASSERT(myTarget);
   InputOutput io =myTarget->io; 

@@ -2132,7 +2132,19 @@ Unparse_ExprStmt::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_
                if (SgAdaPackageSpecDecl * ada_decl=isSgAdaPackageSpecDecl(stmt))
                {
                  string qname= ada_decl->get_qualified_name().getString();
-                 if (qname=="::System" || qname=="::System::Unsigned_Types")
+                 if (qname=="::System" 
+                     || qname=="::System::Unsigned_Types"
+                     || qname=="::System::Parameters"
+                     || qname=="::System::CRTL"
+                     || qname=="::Ada"
+                     || qname=="::Ada::Streams"
+                     || qname=="::Interfaces"
+                     || qname=="::Interfaces::C_Streams"
+                     || qname=="::System::File_Control_Block"
+                     || qname=="::System::WCh_Con"
+                     || qname=="::Ada::IO_Exceptions"
+                     || qname=="::Ada::Text_IO"
+                     )
                    expectedAdaStmt=true;
                }
 
@@ -9266,6 +9278,31 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
              }
             else
              {
+#if 1
+            // DQ (11/21/2021): I think we can skip the name of the enum here for where this is used in the typedef as a anonymous type.
+            // curprint(enum_stmt->get_name() + " ");
+            // printf ("We could skip the name of the enum here ... \n");
+            // if (info.PrintName() == true)
+            // if (isAnonymousName == false && classdecl_stmt->get_isUnNamed() == false)
+            // if (isAnonymousName == false && classdecl_stmt->get_isUnNamed() == false && info.PrintName() == true)
+               if (isAnonymousName == false && classdecl_stmt->get_isUnNamed() == false)
+                  {
+                    curprint(nameQualifier.str());
+                    curprint(classdecl_stmt->get_name() + " ");
+                  }
+#if 1
+                 else
+                  {
+                 // DQ (11/21/2021): Need to handle the case of multiple names used to name the anonymous class declaration 
+                 // in a typedef (see test2021_14.c).
+                 // printf ("Skip the output of the class name = %s (unless explicitly required) \n",classdecl_stmt->get_name().str());
+                    if (info.PrintName() == true)
+                       {
+                         curprint(classdecl_stmt->get_name() + " ");
+                       }
+                  }
+#endif
+#else
             // DQ (8/19/2014): Original code (copied to the else branch).
                if (isAnonymousName == false && classdecl_stmt->get_isUnNamed() == false)
                   {
@@ -9273,6 +9310,7 @@ Unparse_ExprStmt::unparseClassDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                     curprint (nameQualifier);
                     curprint ( (nm + " ").str());
                   }
+#endif
              }
 #endif
 #else
@@ -9889,9 +9927,29 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
           SgName nameQualifier = enum_stmt->get_qualified_name_prefix();
 
-          curprint(nameQualifier.str());
-
-          curprint(enum_stmt->get_name() + " ");
+       // DQ (11/21/2021): I think we can skip the name of the enum here for where this is used in the typedef as a anonymous type.
+       // curprint(enum_stmt->get_name() + " ");
+       // printf ("We could skip the name of the enum here ... \n");
+          bool isAnonymousName = (string(enum_stmt->get_name()).substr(0,14) == "__anonymous_0x");
+          if (isAnonymousName == false)
+             {
+               curprint(nameQualifier.str());
+               curprint(enum_stmt->get_name() + " ");
+             }
+            else
+             {
+               if (info.PrintName() == true)
+                  {
+                    curprint(nameQualifier.str());
+                    curprint(enum_stmt->get_name() + " ");
+                  }
+#if 0
+                 else
+                  {
+                    printf ("Skip the output of the enum name = %s \n",enum_stmt->get_name().str());
+                  }
+#endif
+             }
         }
        else
         {
@@ -10000,7 +10058,7 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
 
        // DQ (2/5/2021): Note that token-based unparsing is not supported for partial token sequence output.
        // DQ (2/5/2021): I think this should be a while loop...
-          for (; p!=enum_stmt->get_enumerators().end(); p++)
+          for (; p != enum_stmt->get_enumerators().end(); p++)
              {
             // Liao, 5/14/2009
             // enumerators may come from another included file
@@ -10036,7 +10094,7 @@ Unparse_ExprStmt::unparseEnumDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
                   } // end same file
              } // end for
 
-          if  (enum_stmt->get_enumerators().size()!=0)
+          if  (enum_stmt->get_enumerators().size() != 0)
              {
             // DQ (3/17/2005): This helps handle cases such as void foo () { #include "constant_code.h" }
                unparseAttachedPreprocessingInfo(enum_stmt, info, PreprocessingInfo::inside);
@@ -11475,7 +11533,8 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
 #define DEBUG_TYPEDEF_DECLARATIONS 0
 
 #if DEBUG_TYPEDEF_DECLARATIONS
-     printf ("In unp->u_type->unparseTypeDefStmt() = %p \n",typedef_stmt);
+     printf ("TOP of unp->u_type->unparseTypeDefStmt() = %p \n",typedef_stmt);
+     typedef_stmt->get_file_info()->display("In unp->u_type->unparseTypeDefStmt(): debug");
 #endif
 #if DEBUG_TYPEDEF_DECLARATIONS
      curprint("\n /* In unp->u_type->unparseTypeDefStmt() */ \n");
@@ -11655,6 +11714,7 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
      printf ("In unp->u_type->unparseTypedef: pointerToMemberType         = %p \n",pointerToMemberType);
      printf ("In unp->u_type->unparseTypedef: pointerToMemberFunctionType = %p \n",pointerToMemberFunctionType);
      printf ("In unp->u_type->unparseTypedef: enumType                    = %p \n",enumType);
+     printf ("In unp->u_type->unparseTypedef: classType                   = %p \n",classType);
 #endif
 
   // DQ (9/22/2004): It is not clear why we need to handle this case with special code.
@@ -11960,6 +12020,101 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
           printf ("In unparseTypeDefStmt(): not a function type or member function type: before unparsing first part: ninfo_for_type.inTypedefDecl() = %s \n",ninfo_for_type.inTypedefDecl() ? "true" : "false");
           printf ("In unparseTypeDefStmt(): not a function type or member function type: before unparsing first part: ninfo_for_type.inArgList()     = %s \n",ninfo_for_type.inArgList() ? "true" : "false");
 #endif
+
+       // DQ (11/21/2021): When there is a declaration of the base type then we can't unparse the declaration by 
+       // going through the base type because types are shared and in the case of supporting multiple files we 
+       // will unparse the declaration from the other file.
+
+          if (outputTypeDefinition == true)
+             {
+            // DQ (11/21/2021): Fixing bug reported by Jim Leek, Markus, and part of work with Liao.
+            // Get the defining class declaration and output it directly, instead of through the shared type which 
+            // can only refer to one file (half the time the wrong file) and for which the body of unt e class 
+            // declaration will not match the current file and will not be unparsed.  Note that this is not an 
+            // issue of supporting shared declarations across two or more files, since this is before merge, and 
+            // thus there is a defining declaration for the class in each file. This detail is a requirement for 
+            // the support of multiple source files specified on the command line only.
+
+#if DEBUG_TYPEDEF_DECLARATIONS
+               printf ("Adding support for outputTypeDefinition == true for multiple files \n");
+#endif
+               SgDeclarationStatement* declaration = typedef_stmt->get_declaration();
+               ROSE_ASSERT(declaration != NULL);
+            // SgScopeStatement* scope = NULL;
+
+               switch (declaration->variantT())
+                  {
+                    case V_SgClassDeclaration:
+                       {
+                         SgClassDeclaration* classDeclaration = isSgClassDeclaration(declaration);
+                         ROSE_ASSERT(classDeclaration != NULL);
+#if 1
+                      // SgClassDefinition* classDefinition = classDeclaration->get_definition();
+                      // ROSE_ASSERT(classDefinition != NULL);
+                      // scope = classDefinition;
+                      // ROSE_ASSERT(scope != NULL);
+                         if (typedef_stmt->get_isAssociatedWithDeclarationList() == true)
+                            {
+                           // DQ (8/2/2012): Make this consistant with the design for the variable declarations.
+                           // This is an alternative to permit the unparsing of the type to control the name output for types.
+                           // But it would have to be uniform that all the pieces of the first part of the type would have to 
+                           // be output.  E.g. "*" in "*X".
+                           // ninfo.set_PrintName();
+                              ninfo_for_type.set_PrintName();
+                            }
+                           else
+                            {
+                           // ninfo.unset_PrintName();
+                              ninfo_for_type.unset_PrintName();
+                            }
+#endif
+                      // unparseStatement(scope,ninfo);
+                      // unparseStatement(classDeclaration,ninfo);
+
+                         ninfo_for_type.set_declaration_of_context(classDeclaration);
+                         unp->u_type->unparseType(btype, ninfo_for_type);
+                         break;
+                       }
+
+                    case V_SgEnumDeclaration:
+                       {
+                      // DQ (11/21/2021): Note that we can't handle these two cases the same way.
+                         SgEnumDeclaration* enumDeclaration = isSgEnumDeclaration(declaration);
+                         ROSE_ASSERT(enumDeclaration != NULL);
+#if 1
+                      // DQ (11/21/2021): Not clear if this case is well tests.
+                         if (typedef_stmt->get_isAssociatedWithDeclarationList() == true)
+                            {
+                           // DQ (11/21/2021): Need to also support the case of multiple names being used.
+                           // ninfo.set_PrintName();
+                              ninfo_for_type.set_PrintName();
+                            }
+                           else
+                            {
+                           // ninfo.unset_PrintName();
+                              ninfo_for_type.unset_PrintName();
+                            }
+#endif
+                      // ninfo.set_SkipSemiColon();
+                      // unparseEnumDeclStmt(enumDeclaration, ninfo);
+                         ninfo_for_type.set_declaration_of_context(enumDeclaration);
+                         unp->u_type->unparseType(btype, ninfo_for_type);
+                         break;
+                       }
+
+                    default:
+                       {
+                         printf ("Default reached in identification of declaration in typedef \n");
+                         ROSE_ASSERT(false);
+                       }
+                  };
+#if 0
+               printf ("Exiting as a test! \n");
+               ROSE_ASSERT(false);
+#endif
+             }
+            else
+             {
 #if 1
        // DQ (7/28/2012): This is similar to code in the variable declaration unparser function and so might be refactored.
        // DQ (7/28/2012): If this is a declaration associated with a declaration list from a previous (the last statement) typedef
@@ -11991,10 +12146,11 @@ Unparse_ExprStmt::unparseTypeDefStmt(SgStatement* stmt, SgUnparse_Info& info)
                curprint("\n/* Output a non function pointer typedef (Not a typedef for a function type or member function type) */ \n");
 #endif
 
-            // DQ (5/7/2013): Using ninfoallows test2013_156.C to work.
+            // DQ (5/7/2013): Using ninfo allows test2013_156.C to work.
             // unp->u_type->unparseType(btype, ninfo_for_type);
             // unp->u_type->unparseType(btype, ninfo);
                unp->u_type->unparseType(btype, ninfo_for_type);
+             }
              }
 #else
 

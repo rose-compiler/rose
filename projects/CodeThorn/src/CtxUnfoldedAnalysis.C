@@ -65,7 +65,7 @@ namespace CodeThorn
 struct CtxUnfoldFactory : PropertyStateFactory
 {
   CtxReachabilityLattice*
-  create() ROSE_OVERRIDE
+  create() override
   {
     return new CtxReachabilityLattice;
   }
@@ -73,7 +73,7 @@ struct CtxUnfoldFactory : PropertyStateFactory
 
 struct CtxUnfoldTransfer : DFTransferFunctions
 {
-  void transfer(Edge e, Lattice& element) ROSE_OVERRIDE
+  void transfer(Edge e, Lattice& element) override
   {
 #if 0
     Labeler& labeler = SG_DEREF(getLabeler());
@@ -121,7 +121,7 @@ struct CtxUnfoldAnalysis : CtxAnalysis<FiniteCallString>
     std::pair<CtxLabeler<context_t>*, std::unique_ptr<Flow> >
     unfold();
 
-    void initializeSolver() ROSE_OVERRIDE;
+    void initializeSolver() override;
 };
 
 }
@@ -480,7 +480,7 @@ namespace // anonymous
         for (Lattice* el : _analyzerDataPostInfo) delete el;
       }
 
-      void initializeSolver() ROSE_OVERRIDE
+      void initializeSolver() override
       {
 #if 1
         typedef SeqPrioritySolver SolverType;

@@ -411,10 +411,6 @@ detect_pointers(SgAsmFunction *func, const FunctionIdMap &function_ids)
     // Choose an SMT solver. This is completely optional.  Pointer detection still seems to work fairly well (and much,
     // much faster) without an SMT solver.
     SmtSolverPtr solver;
-#if 0   // optional code
-    if (YicesSolver::availableLinkage())
-        solver = new YicesSolver;
-#endif
     InstructionProvidor insn_providor(func);
     if (opt.verbosity>=LACONIC)
         std::cerr <<argv0 <<": " <<function_to_str(func, function_ids) <<" pointer detection analysis\n";

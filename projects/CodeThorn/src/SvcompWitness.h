@@ -11,7 +11,7 @@ namespace CodeThorn {
   class SvcompWitness : public ExecutionTrace {
 
   public:
-    SvcompWitness onlyStatesSatisfying(std::function<bool(const EState*)> predicate) const;
+    SvcompWitness onlyStatesSatisfying(std::function<bool(EStatePtr)> predicate) const;
     void writeErrorAutomatonToFile(std::string filename);
   };
 }

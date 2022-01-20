@@ -333,7 +333,7 @@ StringUtility::FileWithLineNumbers AstNodeClass::buildCopyMemberFunctionHeader (
              }
             else
              {
-               returnString.push_back(StringUtility::StringWithLineNumber("          virtual SgNode* copy ( SgCopyHelp& help) const ROSE_OVERRIDE;", "" /* "<copy member function>" */, 1));
+               returnString.push_back(StringUtility::StringWithLineNumber("          virtual SgNode* copy ( SgCopyHelp& help) const override;", "" /* "<copy member function>" */, 1));
              }
         }
        else

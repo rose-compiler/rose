@@ -117,7 +117,7 @@ public:
 public:
     virtual Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
     create(const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
-           const Rose::BinaryAnalysis::SmtSolverPtr &solver=Rose::BinaryAnalysis::SmtSolverPtr()) const ROSE_OVERRIDE {
+           const Rose::BinaryAnalysis::SmtSolverPtr &solver=Rose::BinaryAnalysis::SmtSolverPtr()) const override {
         ASSERT_not_reachable("no architecture or thread available");
     }
 
@@ -130,7 +130,7 @@ public:
 
     virtual Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
     create(const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
-           const Rose::BinaryAnalysis::SmtSolverPtr &solver=Rose::BinaryAnalysis::SmtSolverPtr()) const ROSE_OVERRIDE {
+           const Rose::BinaryAnalysis::SmtSolverPtr &solver=Rose::BinaryAnalysis::SmtSolverPtr()) const override {
         ASSERT_not_reachable("no architecture or thread available");
     }
 
@@ -172,31 +172,31 @@ public:
     Architecture architecture() const { return architecture_; }
 
 public:
-    virtual void hlt() ROSE_OVERRIDE {
+    virtual void hlt() override {
         throw Halt(currentInstruction()->get_address());
     }
 
-    virtual void startInstruction(SgAsmInstruction*) ROSE_OVERRIDE;
+    virtual void startInstruction(SgAsmInstruction*) override;
 
     // Handles INT, SYSENTER, etc.
-    virtual void interrupt(int majr, int minr) ROSE_OVERRIDE;
+    virtual void interrupt(int majr, int minr) override;
 
     // Special handling for segment registers.
     virtual void writeRegister(Rose::BinaryAnalysis::RegisterDescriptor reg,
-                               const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &value) ROSE_OVERRIDE;
+                               const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &value) override;
 
     // Read and write memory from the memory map directly.
     virtual Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr
     readMemory(Rose::BinaryAnalysis::RegisterDescriptor segreg,
                const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &address,
                const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &dflt,
-               const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
+               const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &cond) override;
 
     virtual void
     writeMemory(Rose::BinaryAnalysis::RegisterDescriptor segreg,
                 const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &address,
                 const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &value,
-                const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
+                const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &cond) override;
 };
 
 /** Create a new dispatcher.

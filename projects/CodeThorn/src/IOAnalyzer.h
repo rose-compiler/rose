@@ -35,7 +35,7 @@ namespace CodeThorn {
 
     // only used in LTL-driven mode
     void setSpotConnection(SpotConnection* connection) { _spotConnection = connection; }
-    void setLTLDrivenStartEState(const EState* estate);
+    void setLTLDrivenStartEState(EStatePtr estate);
 
     // only used to initialize solver 10
     void setStartPState(PState startPState) { _startPState=startPState; }
@@ -57,16 +57,16 @@ namespace CodeThorn {
     void setAnalyzerToSolver8(EState* startEState, bool resetAnalyzerData);
     void continueAnalysisFrom(EState* newStartEState);
 
-    const EState* getEstateBeforeMissingInput() {return _estateBeforeMissingInput;}
-    const EState* getLatestErrorEState() {return _latestErrorEState;}
+    EStatePtr getEstateBeforeMissingInput() {return _estateBeforeMissingInput;}
+    EStatePtr getLatestErrorEState() {return _latestErrorEState;}
   private:
     // adds a string representation of the input (/output) path from start state to assertEState to reachabilityResults.
-    void addCounterexample(int assertCode, const EState* assertEState);
+    void addCounterexample(int assertCode, EStatePtr assertEState);
 
     // solver 8
-    const EState* _estateBeforeMissingInput = nullptr;
-    const EState* _latestOutputEState  = nullptr;
-    const EState* _latestErrorEState  = nullptr;
+    EStatePtr _estateBeforeMissingInput = nullptr;
+    EStatePtr _latestOutputEState  = nullptr;
+    EStatePtr _latestErrorEState  = nullptr;
 
     // only used in LTL-driven mode
     SpotConnection* _spotConnection = nullptr;

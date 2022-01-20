@@ -257,6 +257,7 @@ select-docker-template() {
 
     # Then remove the OS tag and look just for the base name. E.g., look for "ubuntu".
     local base_os="${os%:*}"
+    local tag="${os#*:}"
     template="${LIBDIR}/docker-templates/${base_os}"
     if [ -r "$template" ]; then
 	echo "$template"
@@ -265,15 +266,26 @@ select-docker-template() {
 
     # Look for the OS from which the specified OS is derived. E.g., if os is "ubuntu" look for "debian"
     local derived_from=
-    case "$os" in
-	ubuntu*)
+    case "$base_os" in
+	ubuntu)
 	    derived_from=debian
 	    ;;
+	redhat)
+	    derived_from=almalinux
+	    ;;
     esac
-    template="${LIBDIR}/docker-templates/${derived_from}"
-    if [ -n "$derived_from" -a -r "$template" ]; then
-	echo "$template"
-	return 0
+    if [ -n "$derived_from" ]; then
+	template="${LIBDIR}/docker-templates/${derived_from}:${tag}"
+	if [ -r "$template" ]; then
+	    echo "$template"
+	    return 0
+	fi
+
+	template="${LIBDIR}/docker-templates/${derived_from}"
+	if [ -r "$template" ]; then
+	    echo "$template"
+	    return 0
+	fi
     fi
 
     # Give up
@@ -345,44 +357,6 @@ generate-rmc-config-file() {
     fi
     constrain-rmc-config-file "${rundir}/rmc-config"
     adjust-rmc-config-file "${rundir}/rmc-config" rmc_rosesrc /home/user/project-source-ro
-}
-
-########################################################################################################################
-# Check whether the RMC configuration file is suitable for the specified OS.
-check-rmc-suitability() {
-    local os="$1" rundir="$2"
-
-    local reject_script="$ETCDIR/$(simplified-os-name "$os")-reject.sh"
-    (
-	echo "#!/bin/bash"
-	echo "os='$os'"
-	echo "SOURCE_CODE='$SOURCE_CODE'"
-	echo
-	# This does not work at all because of a number of things:
-	#   (1) The rmc-config file has end-of-line comments that get sucked up into the value,
-	#       resulting in: rmc_dlib='19.19 # DLib version number (optional)'
-	#   (2) The arguments for the rmc_* commands are arbitrary shell expressions that
-	#       don't get evaluated, resulting in: rmc_warnings='$WARNINGS'
-	#   (3) Some rmc_ commands take more than one argument that can appear in any order,
-	#       resulting in: rmc_assertions='disabled abort'
-	#   (4) Some arguments are more than one word and already quoted, and the doubled up
-	#       single quotes are the same as no quote at all,
-	#       resulting in: rmc_others=''--disable-xxx --disable-yyy''
-	#
-	# Therefore, I'm commenting this out for now, which means all the *-reject.sh scripts
-	# are going to have empty values for all the rmc_* variables. We need to come up with
-	# an entirely different way of handling this.
-	#sed -n "s/^\([^ \t]\+\)[ \t]\+\(.*\)/\1='\2'/p" <"$rundir/rmc-config"
-	echo
-	cat "$LIBDIR/run-support"
-	echo
-	[ -f "$ETCDIR/general-reject.sh" ] && cat "$ETCDIR/general-reject.sh"
-	echo
-	[ -f "$reject_script" ] && cat "$reject_script"
-    ) >"$rundir/rejected"
-    bash "$rundir/rejected" || return 1
-    rm -f "$rundir/rejected"
-    return 0
 }
 
 ########################################################################################################################
@@ -677,10 +651,7 @@ run-test() {
 
     # Create configuration files
     echo "Obtaining test configuration for $os..."
-    while true; do
-	generate-rmc-config-file "$rundir" "$os"
-	check-rmc-suitability "$os" "$rundir" && break
-    done
+    generate-rmc-config-file "$rundir" "$os"
     echo "RMC configuration:"
     cat -n "${rundir}/rmc-config"
 

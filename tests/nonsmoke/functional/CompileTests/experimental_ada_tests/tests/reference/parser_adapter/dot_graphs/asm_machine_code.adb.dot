@@ -614,6 +614,7 @@ digraph "asm_machine_code.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Asm_Machine_Code.adb - 16:20 .. 16:54</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_FUNCTION_CALL</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_4004087</TD></TR>
+          <TR><TD ALIGN="LEFT">Is_Prefix_Call    </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
           <TR><TD ALIGN="LEFT">Prefix  </TD><TD> = </TD><TD ALIGN="LEFT">Element_2336360</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Called_Function        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           <TR><TD ALIGN="LEFT">Function_Call_Parameters ( 1)        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2337385</TD></TR>
@@ -758,6 +759,7 @@ digraph "asm_machine_code.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Asm_Machine_Code.adb - 17:20 .. 17:56</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_FUNCTION_CALL</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_4012087</TD></TR>
+          <TR><TD ALIGN="LEFT">Is_Prefix_Call    </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
           <TR><TD ALIGN="LEFT">Prefix  </TD><TD> = </TD><TD ALIGN="LEFT">Element_2343360</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Called_Function        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           <TR><TD ALIGN="LEFT">Function_Call_Parameters ( 1)        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2344385</TD></TR>
@@ -1104,6 +1106,7 @@ digraph "asm_machine_code.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Asm_Machine_Code.adb - 25:34 .. 25:44</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_FUNCTION_CALL</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_931082</TD></TR>
+          <TR><TD ALIGN="LEFT">Is_Prefix_Call    </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
           <TR><TD ALIGN="LEFT">Prefix  </TD><TD> = </TD><TD ALIGN="LEFT">Element_2368295</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Called_Function        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           </TABLE>> ];
@@ -1193,6 +1196,7 @@ digraph "asm_machine_code.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Asm_Machine_Code.adb - 26:13 .. 26:23</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_FUNCTION_CALL</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2558082</TD></TR>
+          <TR><TD ALIGN="LEFT">Is_Prefix_Call    </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
           <TR><TD ALIGN="LEFT">Prefix  </TD><TD> = </TD><TD ALIGN="LEFT">Element_2371237</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Called_Function        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2319107</TD></TR>
           <TR><TD ALIGN="LEFT">Function_Call_Parameters ( 1)        </TD><TD> = </TD><TD ALIGN="LEFT">Element_2373385</TD></TR>
@@ -1364,6 +1368,7 @@ digraph "asm_machine_code.adt" {
           <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">Asm_Machine_Code.adb - 27:34 .. 27:44</TD></TR>
           <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_FUNCTION_CALL</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_931082</TD></TR>
+          <TR><TD ALIGN="LEFT">Is_Prefix_Call    </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
           <TR><TD ALIGN="LEFT">Prefix  </TD><TD> = </TD><TD ALIGN="LEFT">Element_2380295</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Called_Function        </TD><TD> = </TD><TD ALIGN="LEFT">(none)</TD></TR>
           </TABLE>> ];

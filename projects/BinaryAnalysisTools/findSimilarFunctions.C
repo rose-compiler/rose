@@ -232,7 +232,7 @@ private:
 
 class SubstitutionPredicate: public EditDistance::TreeEditDistance::SubstitutionPredicate {
 public:
-    virtual bool operator()(SgNode *source, SgNode *target) ROSE_OVERRIDE {
+    virtual bool operator()(SgNode *source, SgNode *target) override {
         if (source->variantT() != target->variantT())
             return false;
         if (SgAsmInstruction *si = isSgAsmInstruction(source)) {

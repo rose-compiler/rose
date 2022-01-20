@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# normalize-level 2 is required because of switch normalization
+OPTIONS="--normalize-level=2 --vis=1"
+
+TESTDIR=$1
+echo "------------------------------------------------"
+echo "running CFG TESTS"
+echo "------------------------------------------------"
+
+let BENCH_PASS=0
+let BENCH_FAIL=0
+
+testNumbers1=`echo {001..008}`
+testNumbers="$testNumbers1"
+echo "Scheduled tests: $testNumbers"
+for testNumber in $testNumbers; do
+    benchmarkprefix=$TESTDIR/CFG${testNumber};
+    for benchmark in ${benchmarkprefix}_*.C; do
+        benchmarkname=$(basename $benchmark)
+        printf "Testing %-35s: " $benchmarkname
+        ./codethorn ${OPTIONS} $benchmark > /dev/null
+        if [ ! $? -eq 0 ]
+        then
+	    echo "FAIL"
+            let BENCH_FAIL=BENCH_FAIL+1
+        else
+	    echo "PASS"
+            let BENCH_PASS=BENCH_PASS+1
+        fi
+    done
+done
+let TOTAL=BENCH_PASS+BENCH_FAIL
+echo "PASS: $BENCH_PASS FAIL: $BENCH_FAIL TOTAL: $TOTAL"
+if [[ $BENCH_FAIL -gt 0 ]]; then
+    echo "Some tests failed. Aborting test."
+    exit 1
+fi
+rm -f *.dot
+rm -f *.

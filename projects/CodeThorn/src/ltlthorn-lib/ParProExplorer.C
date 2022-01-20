@@ -1,15 +1,110 @@
 // Author: Marc Jasper, 2016.
 
-#include "ParProExplorer.h"
 #include "rose_config.h"
-
+#include "ParProExplorer.h"
 #include "LtsminConnection.h"
 #include "ParProAutomataGenerator.h"
 
 
 using namespace CodeThorn;
-using namespace CodeThorn;
 using namespace std;
+
+#ifdef HAVE_SPOT
+/*! 
+ * \author Marc Jasper
+ * \date 2016.
+ */
+std::string ParProExplorer::spotTgbaToDot(spot::tgba& tgba) {
+  stringstream ss;
+  ss << "digraph G {" << endl;
+  spot::state* initState = tgba.get_init_state();
+  list<spot::state*> worklist;
+
+  struct spot_state_compare {
+    bool operator() (spot::state* const& lhs, spot::state* const& rhs) const {
+      if (lhs->compare(rhs) < 0) {
+        return true;
+      } else {
+        return false;
+      }
+    }
+  };
+
+  set<spot::state*, spot_state_compare> added;
+  worklist.push_back(initState);
+  added.insert(initState);
+  while (!worklist.empty()) {
+    spot::state* next = worklist.front();
+    ss <<"  "<< "\""<<tgba.format_state(next)<<"\" [ label=\"\" ]" << endl;
+    worklist.pop_front();
+    spot::tgba_succ_iterator* outEdgesIter = tgba.succ_iter(next, NULL, NULL);
+    outEdgesIter->first();
+    while(!outEdgesIter->done()) {
+      spot::state* successor = outEdgesIter->current_state();
+      ss <<"  "<< "\""<<tgba.format_state(next)<<"\""<<" -> "<<"\""<<tgba.format_state(successor)<<"\"";
+      ss <<" [ label=\""<<tgba.transition_annotation(outEdgesIter)<<"\" ]" << endl;
+      if (added.find(successor) == added.end()) {
+	worklist.push_back(successor);
+	added.insert(successor);
+      }
+      outEdgesIter->next();
+    }
+    delete outEdgesIter;
+  }
+  ss << "}" << endl;
+  return ss.str();
+  //#else
+  //cerr<<"Visualizer::spotTgbaToDot: SPOT is required, but not installed."<<endl;
+  //exit(1);
+  //#endif
+}
+#endif
+
+/*! 
+ * \author Marc Jasper
+ * \date 2016.
+ */
+string ParProExplorer::cfasToDotSubgraphs(vector<Flow*> cfas) {
+  // define a color scheme
+  int numColors = 16;
+  vector<string> colors(numColors);
+  colors[0] = "#6699FF";
+  colors[1] = "#7F66FF";
+  colors[2] = "#CC66FF";
+  colors[3] = "#FF66E6";
+
+  colors[4] = "#66E6FF";
+  colors[5] = "#2970FF";
+  colors[6] = "#004EEB";
+  colors[7] = "#FF6699";
+
+  colors[8] = "#66FFCC";
+  colors[9] = "#EB9C00";
+  colors[10] = "#FFB829";
+  colors[11] = "#FF7F66";
+
+  colors[12] = "#66FF7F";
+  colors[13] = "#99FF66";
+  colors[14] = "#E6FF66";
+  colors[15] = "#FFCC66";
+
+  stringstream ss;
+  ss << "digraph G {" << endl;
+  for (unsigned int i = 0; i < cfas.size(); ++i) {
+    Flow* cfa = cfas[i];
+    cfa->setDotOptionHeaderFooter(false);
+    cfa->setDotOptionDisplayLabel(true);
+    cfa->setDotOptionDisplayStmt(false);
+    cfa->setDotOptionEdgeAnnotationsOnly(true);
+    cfa->setDotFixedNodeColor(colors[(i % numColors)]);
+    ss << "  subgraph component" << i << " {" << endl;
+    ss << cfa->toDot(NULL,0);
+    ss << "  }" << endl;
+  }
+  ss << "}" << endl;
+  return ss.str();
+}
+
 
 ParProExplorer::ParProExplorer(vector<Flow*>& cfas, EdgeAnnotationMap& annotationMap):
 _parProLtlMiner(ParProLtlMiner(this)),
@@ -56,8 +151,7 @@ PropertyValueTable* ParProExplorer::ltlAnalysis(ParallelSystem system) {
 	if (_visualize) {
 #if HAVE_SPOT
 	  ParProSpotTgba* spotTgba = spotConnection.toTgba(*(system.stg()));
-	  Visualizer visualizer;
-	  string dotTgba = visualizer.spotTgbaToDot(*spotTgba);
+	  string dotTgba = spotTgbaToDot(*spotTgba);
 	  delete spotTgba;
 	  spotTgba = NULL;
 	  string outputFilename = "spotTgba_no_approx.dot";
@@ -72,8 +166,7 @@ PropertyValueTable* ParProExplorer::ltlAnalysis(ParallelSystem system) {
 	  if (_visualize) {
 #if HAVE_SPOT
 	    ParProSpotTgba* spotTgba = spotConnection.toTgba(*(system.stgOverApprox()));
-	    Visualizer visualizer;
-	    string dotTgba = visualizer.spotTgbaToDot(*spotTgba);
+	    string dotTgba = spotTgbaToDot(*spotTgba);
 	    delete spotTgba;
 	    spotTgba = NULL;
 	    string outputFilename = "spotTgba_over_approx.dot";
@@ -87,8 +180,7 @@ PropertyValueTable* ParProExplorer::ltlAnalysis(ParallelSystem system) {
 	  if (_visualize) {
 #if HAVE_SPOT
 	    ParProSpotTgba* spotTgba = spotConnection.toTgba(*(system.stgUnderApprox()));
-	    Visualizer visualizer;
-	    string dotTgba = visualizer.spotTgbaToDot(*spotTgba);
+	    string dotTgba = spotTgbaToDot(*spotTgba);
 	    delete spotTgba;
 	    spotTgba = NULL;
 	    string outputFilename = "spotTgba_under_approx.dot";
@@ -212,8 +304,7 @@ void ParProExplorer::explore() {
     }
   }
   if (_visualize) {
-    Visualizer visualizer;
-    string dotFlow = visualizer.cfasToDotSubgraphs(dotGraphs);
+    string dotFlow = cfasToDotSubgraphs(dotGraphs);
     string outputFilename = "all_analyzed_systems_enumerated_states.dot";
     write_file(outputFilename, dotFlow);
     cout << "generated " << outputFilename <<"."<<endl;

@@ -6,7 +6,7 @@ using namespace std;
 namespace CodeThorn {
   InputPath::InputPath():_numInputStates(0) {
   }
-  int InputPath::addState(const EState* s) {
+  int InputPath::addState(EStatePtr s) {
     if(s->io.isStdInIO()) {
       _numInputStates++;
     }
@@ -46,7 +46,7 @@ namespace CodeThorn {
 
   void IOSequenceGenerator::computeInputPathSet(unsigned int maxlen, TransitionGraph& g) {
     InputPath p;
-    const EState* s=g.getStartEState();
+    EStatePtr s=g.getStartEState();
     randomSearch=false;
     computeInputPathSet(p,0,maxlen,s,g,ipset);
   }
@@ -68,7 +68,7 @@ namespace CodeThorn {
     myfile.close();
   }
 
-  const EState* IOSequenceGenerator::chooseElement(EStatePtrSet& S0) {
+  EStatePtr IOSequenceGenerator::chooseElement(EStatePtrSet& S0) {
     if(S0.size()>0) {
       EStatePtrSet::const_iterator it(S0.begin());
       int r = rand() % S0.size();
@@ -91,13 +91,13 @@ namespace CodeThorn {
     }
   }
 
-  void IOSequenceGenerator::computeInputPathSet(InputPath p, int len, unsigned int maxlen, const EState* s, TransitionGraph& g, InputPathSet& pathSet) {
+  void IOSequenceGenerator::computeInputPathSet(InputPath p, int len, unsigned int maxlen, EStatePtr s, TransitionGraph& g, InputPathSet& pathSet) {
     // add one additional state to ensure found state is not followed by failing assert
     if(p.numInputStates()<maxlen+1) {
       EStatePtrSet S;
       if(randomSearch) {
         EStatePtrSet S0=g.succ(s);
-        const EState* randomElement=this->chooseElement(S0);
+        EStatePtr randomElement=this->chooseElement(S0);
         if(randomElement!=0) {
           S.insert(randomElement);
         }
@@ -105,7 +105,7 @@ namespace CodeThorn {
         S=g.succ(s);
       }
       for(EStatePtrSet::iterator i=S.begin();i!=S.end();++i) {
-        const EState* succState=*i;
+        EStatePtr succState=*i;
         int num=0;
         InputPath p2=p;
         if(succState->io.isStdInIO()||succState->io.isFailedAssertIO()) {
@@ -119,7 +119,7 @@ namespace CodeThorn {
     } else {
       // only insert if last element if it is not a failing assertion OR output on stderr (RERS specific)
       if(p.numInputStates()>0) {
-        const EState* lastState=p.back();
+        EStatePtr lastState=p.back();
         if(!(lastState->io.isFailedAssertIO()||lastState->io.isStdErrIO())) {
           // remove last state
           p.pop_back();

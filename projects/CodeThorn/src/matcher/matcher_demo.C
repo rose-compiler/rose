@@ -11,6 +11,10 @@
 
 using namespace std;
 
+// required for some options in codethorn library (until removed)
+#include "CommandLineOptions.h"
+CodeThorn::CommandLineOptions CodeThorn::args;
+
 class TestTraversal : public AstSimpleProcessing {
 public:
   virtual void visit(SgNode* node) { /* do nothing */ };
@@ -43,9 +47,9 @@ int main( int argc, char * argv[] ) {
   SgNode* root;
   //root=sageProject->get_traversalSuccessorByIndex(0)->get_traversalSuccessorByIndex(0)->get_traversalSuccessorByIndex(0)->get_traversalSuccessorByIndex(0);
   root=sageProject;
-#if 0
+#if 1
   std::cout << "TERM INFO OUTPUT: START\n";
-  std::cout << astTermToMultiLineString(root,0);
+  std::cout << AstTerm::astTermToMultiLineString(root,2);
   std::cout << "TERM INFO OUTPUT: END\n";
 #endif
   RoseAst ast(root);
@@ -118,14 +122,12 @@ int main( int argc, char * argv[] ) {
   for(RoseAst::iterator i=ast.begin().withNullValues();i!=ast.end();++i) {
     num1++;
   }
-  timer.stop();
   double iteratorMeasurementTime=timer.getTimeDurationAndStop().milliSeconds();
 
   timer.start();
   for(RoseAst::iterator i=ast.begin().withoutNullValues();i!=ast.end();++i) {
     num2++;
   }
-  timer.stop();
   double iteratorMeasurementTimeWithoutNull=timer.getTimeDurationAndStop().milliSeconds();
 
   std::cout << "Iteration Length: with    null: " << num1 << std::endl;
@@ -136,7 +138,6 @@ int main( int argc, char * argv[] ) {
   if(!measurementmode) {
     timer.start();
     MatchResult r=m.performMatching(matchexpression,root);
-    timer.stop();
     double matchingMeasurementTime=timer.getTimeDurationAndStop().milliSeconds();
     // print result in readable form for demo purposes
     std::cout << "Number of matched patterns with bound variables: " << r.size() << std::endl;
@@ -162,14 +163,12 @@ int main( int argc, char * argv[] ) {
     for(int i=0;i<measurement_test_cases_num;i++) {
       timer.start();
       m.performMatching(measurement_matchexpressions[i],root);
-      timer.stop();
       measurementTimes[i]=timer.getTimeDurationAndStop().milliSeconds();
     }
 
     TestTraversal tt;
     timer.start();
     tt.traverse(root, preorder);
-    timer.stop();
     double ttm=timer.getTimeDurationAndStop().milliSeconds();
     std::cout << "Measurement:\n";
     std::cout << "Trav:"<<ttm << ";";

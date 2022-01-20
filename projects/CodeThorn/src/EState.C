@@ -39,62 +39,63 @@ EState::~EState() {
   }
 }
 
-#ifdef ESTATE_PSTATE_MEM_COPY
-// copy constructor
-EState::EState(const EState &other) {
-  this->_label=other._label;
-  this->io=other.io;
-  this->callString=other.callString;
-  if(sharedPStates) {
+// copy
+void EState::EState::copy(EState* target, ConstEStatePtr source,bool sharedPStatesFlag) {
+  target->_label=source->_label;
+  target->io=source->io;
+  target->callString=source->callString;
+  if(sharedPStatesFlag) {
     // copy pstate pointer, objects are managed and shared. Identical pointers guarantee equivalence
-    _pstate=other._pstate;
+    target->_pstate=source->_pstate;
   } else {
     // copy entire pstate
-    //_pstate=new PState(*other._pstate);
-    if(other.pstate()==nullptr) {
-      _pstate=nullptr;
-      //cout<<"DEBUG: ESTATE COPY: "<<&other<<"=>"<<this<<": pstate: nullptr"<<" ==> nullptr"<<endl;
+    //_pstate=new PState(*source->_pstate);
+    if(source->pstate()==nullptr) {
+      target->_pstate=nullptr;
+      //cout<<"DEBUG: ESTATE COPY: "<<&source-><<"=>"<<target<<": pstate: nullptr"<<" ==> nullptr"<<endl;
     } else {
-      PState* newPState=new PState();
-      for(auto iter=other._pstate->begin(); iter!=other._pstate->end();++iter) {
+      PStatePtr newPState=new PState();
+      for(auto iter=source->_pstate->begin(); iter!=source->_pstate->end();++iter) {
 	auto address=(*iter).first;
 	auto value=(*iter).second;
 	newPState->writeToMemoryLocation(address,value);
       }
-      //cout<<"DEBUG: ESTATE COPY: "<<&other<<"=>"<<this<<": pstate:"<<other.pstate()<<" ==> "<<newPState<<endl;
-      _pstate=newPState;
+      //cout<<"DEBUG: ESTATE COPY: "<<&source-><<"=>"<<target<<": pstate:"<<source->pstate()<<" ==> "<<newPState<<endl;
+      target->_pstate=newPState;
     }
   }
+}
+
+EState* EState::deepClone() {
+  EState* newEState=new EState();
+  copy(newEState,this,false);
+  return newEState;
+}
+
+// equivalent to deepClone, if sharedPStates==false
+EStatePtr EState::cloneWithoutIO() {
+  EStatePtr estate=clone();
+  if(!estate->io.isBot())
+    estate->io.recordNone(); // remove any existing IO info if not Bottom
+  return estate;
+}
+
+// equivalent to deepClone, if sharedPStates==false
+EStatePtr EState::clone() {
+  return new EState(*this);
+}
+
+#ifdef ESTATE_PSTATE_MEM_COPY
+// copy constructor
+EState::EState(const EState &other) {
+  copy(this,&other,sharedPStates);
 }
 #endif
 
 #ifdef ESTATE_PSTATE_MEM_COPY
 // assignment operator
 EState& EState::operator=(const EState &other) {
-  this->_label=other._label;
-  this->io=other.io;
-  this->callString=other.callString;
-  if(sharedPStates) {
-    // copy pstate pointer, objects are managed and shared. Non-Identical pointers guarantee inequivalence
-    _pstate=other._pstate;
-  } else {
-    // copy entire pstate
-    if(other.pstate()==nullptr) {
-      _pstate=nullptr;
-      //cout<<"DEBUG: ESTATE ASSIGNMENT: "<<&other<<"=>"<<this<<": pstate: nullptr"<<" ==> nullptr"<<endl;
-    } else {
-      PState* newPState=new PState();
-      //_pstate=new PState(*other._pstate);
-      for(auto iter=other._pstate->begin(); iter!=other._pstate->end();++iter) {
-	auto address=(*iter).first;
-	auto value=(*iter).second;
-	newPState->writeToMemoryLocation(address,value);
-      }
-      //cout<<"DEBUG: ESTATE ASSIGNMENT: "<<&other<<"=>"<<this<<": pstate:"<<other.pstate()<<" ==> "<<newPState<<endl;
-      _pstate=newPState;
-    }
-  }
-  //cout<<"DEBUG: ASSIGNMENT EXIT: "<<this<<": pstate:"<<this->_pstate<<endl;
+  copy(this,&other,sharedPStates);
   return *this;
 }
 #endif
@@ -182,7 +183,7 @@ bool CodeThorn::operator!=(const EState& c1, const EState& c2) {
   return !(c1==c2);
 }
 
-EStateId EStateSet::estateId(const EState* estate) const {
+EStateId EStateSet::estateId(EStatePtr estate) const {
   return estateId(*estate);
 }
 
@@ -205,7 +206,7 @@ EStateId EStateSet::estateId(const EState estate) const {
   * \author Markus Schordan
   * \date 2012.
  */
-string EStateSet::estateIdString(const EState* estate) const {
+string EStateSet::estateIdString(EStatePtr estate) const {
   stringstream ss;
   ss<<estateId(estate);
   return ss.str();
@@ -400,20 +401,20 @@ std::string EState::labelString() const {
   return "L"+label().toString();
 }
 
-bool EState::isApproximatedBy(const EState* other) const {
+bool EState::isApproximatedBy(EStatePtr other) const {
   ROSE_ASSERT(label()==other->label()); // ensure same location
   if(callString!=other->callString) {
     return false;
   }
   // it only remains to check the pstate
-  return pstate()->isApproximatedBy(*const_cast<PState*>(other->pstate())) && (io.isBot()||(io==other->io));
+  return pstate()->isApproximatedBy(*const_cast<PStatePtr>(other->pstate())) && (io.isBot()||(io==other->io));
 }
 
 // required for PropertyState
 bool EState::approximatedBy(PropertyState& other) const {
   // This function is always read only
   // EStates are used in hash sets and therefore only const pointers exist
-  return isApproximatedBy(const_cast<const EState*>(&dynamic_cast<EState&>(other)));
+  return isApproximatedBy(const_cast<EStatePtr>(&dynamic_cast<EState&>(other)));
 }
 // required for PropertyState
 bool EState::isBot() const {
@@ -452,7 +453,7 @@ void EState::combine(PropertyState& other0) {
   PState ps2=*other.pstate();
   PState newPState=PState::combine(ps1,ps2);
   // allowing in-place update for framework not maintaining a state set, not compatible with use in sorted containers
-  *(const_cast<PState*>(this->pstate()))=newPState; 
+  *(this->pstate())=newPState; 
 
   // (4) update IO entry
   InputOutput newIO;
@@ -479,3 +480,12 @@ size_t EState::getCallStringLength() const {
   return callString.getLength();
 }
 
+void EState::setPState(PStatePtr pstate) {
+  if(!EState::sharedPStates) {
+    if(_pstate!=nullptr && _pstate!=pstate)
+      delete _pstate;
+    _pstate=pstate;
+  } else {
+    _pstate=pstate;
+  }
+}

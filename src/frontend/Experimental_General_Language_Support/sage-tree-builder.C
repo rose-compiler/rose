@@ -20,62 +20,106 @@ using namespace LanguageTranslation;
 namespace SB = SageBuilder;
 namespace SI = SageInterface;
 
+/// Initialize the global scope and push it onto the scope stack
+///
 SgGlobal* initialize_global_scope(SgSourceFile* file)
 {
- // First we have to get the global scope initialized (and pushed onto the stack).
-
  // Set the default for source position generation to be consistent with other languages (e.g. C/C++).
     SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionFrontendConstruction);
- // TODO      SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionCompilerGenerated);
 
     SgGlobal* globalScope = file->get_globalScope();
-    ROSE_ASSERT(globalScope != NULL);
-    ROSE_ASSERT(globalScope->get_parent() != NULL);
+    ROSE_ASSERT(globalScope);
+    ROSE_ASSERT(globalScope->get_parent());
 
- // Fortran is case insensitive
-    std::cout << "--- is this needed global_scope is case sensitive " << globalScope->isCaseInsensitive() << std::endl;
+ // Fortran and Jovial are case insensitive
     globalScope->setCaseInsensitive(true);
-    std::cout << "--- is this needed global_scope is case sensitive " << globalScope->isCaseInsensitive() << std::endl;
 
- // DQ (8/21/2008): endOfConstruct is not set to be consistent with startOfConstruct.
-    ROSE_ASSERT(globalScope->get_endOfConstruct()   != NULL);
-    ROSE_ASSERT(globalScope->get_startOfConstruct() != NULL);
+    ROSE_ASSERT(globalScope->get_endOfConstruct());
+    ROSE_ASSERT(globalScope->get_startOfConstruct());
 
- // DQ (10/10/2010): Set the start position of global scope to "1".
+ // Not sure why this isn't set at construction
     globalScope->get_startOfConstruct()->set_line(1);
-
- // DQ (10/10/2010): Set this position to the same value so that if we increment
- // by "1" the start and end will not be the same value.
     globalScope->get_endOfConstruct()->set_line(1);
 
-    ROSE_ASSERT(SageBuilder::topScopeStack()->isCaseInsensitive());//TEMPORARY
-    ROSE_ASSERT(SageBuilder::emptyScopeStack() == true);
     SageBuilder::pushScopeStack(globalScope);
 
     return globalScope;
 }
 
 void
+SageTreeBuilder::attachComment(SgLocatedNode* node)
+{
+  Sg_File_Info* start = node->get_startOfConstruct();
+  Sg_File_Info* end = node->get_endOfConstruct();
+
+  if (start && end) {
+    ATermSupport::PosInfo pos{node};
+    attachComment(node, pos);
+  }
+}
+
+void
+SageTreeBuilder::attachComment(SgLocatedNode* node, const ATermSupport::PosInfo &pos)
+{
+  PreprocessingInfo::DirectiveType commentType{PreprocessingInfo::JovialStyleComment};
+  PreprocessingInfo::RelativePositionType commentPosition{PreprocessingInfo::before};
+
+  if (SgStatement* stmt = isSgStatement(node)) {
+    boost::optional<const Token&> token{};
+    while ((token = tokens_->getNextToken()) && token->getStartLine() <= pos.getStartLine()) {
+      SgLocatedNode* commentNode{stmt};
+      if (token->getTokenType() == JovialEnum::comment) {
+        commentPosition = PreprocessingInfo::before;
+        if (token->getStartLine() == pos.getStartLine()) {
+          commentPosition = PreprocessingInfo::after;
+          // check for comment following a variable initializer
+          if (SgVariableDeclaration* varDecl = isSgVariableDeclaration(stmt)) {
+            for (SgInitializedName* name : varDecl->get_variables()) {
+              if (SgInitializer* init = name->get_initializer()) {
+                ATermSupport::PosInfo initPos{init};
+                if (initPos.getEndCol() > token->getStartCol()) {
+                  // attach comment after this variable initializer
+                  commentNode = init;
+                  break;
+                }
+              }
+            }
+          }
+        }
+        SI::attachComment(commentNode, token->getLexeme(), commentPosition, commentType);
+      }
+      tokens_->consumeNextToken();
+    }
+  }
+  else if (SgEnumVal* expr = isSgEnumVal(node)) {
+    boost::optional<const Token&> token{};
+    // try only attaching comments from same line (what about multi-line comments)
+    while ((token = tokens_->getNextToken()) && token->getStartLine() == pos.getStartLine()) {
+      if (token->getTokenType() == JovialEnum::comment) {
+        if (token->getEndCol() == pos.getStartCol()) {
+          commentPosition = PreprocessingInfo::after;
+        }
+        SI::attachComment(expr, token->getLexeme(), commentPosition, commentType);
+      }
+      tokens_->consumeNextToken();
+    }
+  }
+}
+
+void
 SageTreeBuilder::setSourcePosition(SgLocatedNode* node, const SourcePosition &start, const SourcePosition &end)
 {
-   ROSE_ASSERT(node != NULL);
+   ROSE_ASSERT(node);
 
 // SageBuilder may have been used and it builds FileInfo
-   if (node->get_startOfConstruct() != NULL) {
+   if (node->get_startOfConstruct() != nullptr) {
       delete node->get_startOfConstruct();
-      node->set_startOfConstruct(NULL);
+      node->set_startOfConstruct(nullptr);
    }
-   if (node->get_endOfConstruct() != NULL) {
+   if (node->get_endOfConstruct() != nullptr) {
       delete node->get_endOfConstruct();
-      node->set_endOfConstruct(NULL);
+      node->set_endOfConstruct(nullptr);
    }
-
-#if 0
-   std::cout << "SageTreeBuilder::setSourcePosition: for node: "
-        << node << " "
-        << ":" << start.line << ":" << start.column
-        << "-" <<   end.line << ":" <<   end.column << "\n";
-#endif
 
    node->set_startOfConstruct(new Sg_File_Info(start.path, start.line, start.column));
    node->get_startOfConstruct()->set_parent(node);
@@ -86,14 +130,19 @@ SageTreeBuilder::setSourcePosition(SgLocatedNode* node, const SourcePosition &st
    SageInterface::setSourcePosition(node);
 }
 
+/// Constructor
+///
+SageTreeBuilder::SageTreeBuilder(SgSourceFile* source, LanguageEnum language, std::istringstream &tokens)
+  : language_{language}, source_{source}
+{
+  tokens_ = new TokenStream(tokens);
+}
+
+
 void SageTreeBuilder::Enter(SgScopeStatement* &scope)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgScopeStatement* &) \n";
 
-   // Maybe this is where
-   //   static SgGlobal* initialize_global_scope(SgSourceFile* file)
-   // from jovial_support.C (for example) could go.
-   //
    scope = isSgGlobal(SageBuilder::topScopeStack());
    ROSE_ASSERT(scope);
 }
@@ -213,7 +262,7 @@ Enter(SgProgramHeaderStatement* &program_decl,
    SgFunctionType* function_type = SageBuilder::buildFunctionType(SageBuilder::buildVoidType(), param_list);
 
    program_decl = new SgProgramHeaderStatement(program_name, function_type, /*function_def*/nullptr);
-   ROSE_ASSERT(program_decl != nullptr);
+   ROSE_ASSERT(program_decl);
 
 // A Fortran program has no non-defining declaration (assume same for other languages)
    program_decl->set_definingDeclaration(program_decl);
@@ -258,7 +307,7 @@ Enter(SgProgramHeaderStatement* &program_decl,
       }
 
    ROSE_ASSERT(program_body == SageBuilder::topScopeStack());
-   ROSE_ASSERT(program_decl->get_firstNondefiningDeclaration() == NULL);
+   ROSE_ASSERT(program_decl->get_firstNondefiningDeclaration() == nullptr);
 }
 
 void SageTreeBuilder::Leave(SgProgramHeaderStatement* program_decl)
@@ -276,7 +325,7 @@ void SageTreeBuilder::Leave(SgProgramHeaderStatement* program_decl)
 
  // The program declaration must go into the global scope
    SgGlobal* global_scope = isSgGlobal(scope);
-   ROSE_ASSERT(global_scope != NULL);
+   ROSE_ASSERT(global_scope);
 
 // A symbol using this name should not already exist
    SgName program_name = program_decl->get_name();
@@ -295,7 +344,7 @@ setFortranEndProgramStmt(SgProgramHeaderStatement* program_decl,
                          const boost::optional<std::string> &name,
                          const boost::optional<std::string> &label)
 {
-   ROSE_ASSERT(program_decl != NULL);
+   ROSE_ASSERT(program_decl);
 
    SgFunctionDefinition* program_def = program_decl->get_definition();
    ROSE_ASSERT(program_def);
@@ -425,7 +474,7 @@ Enter(SgFunctionDefinition* &function_def)
    SgBasicBlock* block = SageBuilder::buildBasicBlock_nfi();
 
    function_def = new SgFunctionDefinition(block);
-   ROSE_ASSERT(function_def != nullptr);
+   ROSE_ASSERT(function_def);
    SageInterface::setSourcePosition(function_def);
 
    ROSE_ASSERT(SageBuilder::topScopeStack()->isCaseInsensitive());
@@ -623,7 +672,7 @@ void SageTreeBuilder::
 Leave(SgDerivedTypeStatement* derived_type_stmt)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgDerivedTypeStatement*) \n";
-   ROSE_ASSERT(derived_type_stmt != nullptr);
+   ROSE_ASSERT(derived_type_stmt);
 
    SageBuilder::popScopeStack();  // class definition
 #if APPEND_BEFORE_LEAVE==0
@@ -719,7 +768,7 @@ void SageTreeBuilder::
 Leave(SgExprStatement* expr_stmt)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgExprStatement*) \n";
-   ROSE_ASSERT(expr_stmt != nullptr);
+   ROSE_ASSERT(expr_stmt);
 
    SageInterface::appendStatement(expr_stmt, SageBuilder::topScopeStack());
 }
@@ -1256,7 +1305,7 @@ Enter(SgJovialDefineDeclaration* &define_decl, const std::string &define_string)
    mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialDefineDeclaration* &, ...) \n";
 
    define_decl = new SgJovialDefineDeclaration(define_string);
-   ROSE_ASSERT(define_decl != nullptr);
+   ROSE_ASSERT(define_decl);
    SageInterface::setSourcePosition(define_decl);
 
 // The first nondefining declaration must be set
@@ -1268,7 +1317,7 @@ Leave(SgJovialDefineDeclaration* define_decl)
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgJovialDirectiveStatement*) \n";
 
-   ROSE_ASSERT(define_decl != nullptr);
+   ROSE_ASSERT(define_decl);
 
    SageInterface::appendStatement(define_decl, SageBuilder::topScopeStack());
    ROSE_ASSERT(define_decl->get_parent() == SageBuilder::topScopeStack());
@@ -1328,7 +1377,7 @@ Leave(SgJovialDirectiveStatement* directive)
 {
    mlog[TRACE] << "SageTreeBuilder::Leave(SgJovialDirectiveStatement*) \n";
 
-   ROSE_ASSERT(directive != nullptr);
+   ROSE_ASSERT(directive);
 
    switch (directive->get_directive_type())
      {
@@ -1409,10 +1458,10 @@ Leave(SgJovialForThenStatement* for_stmt)
 
    ROSE_ASSERT(for_stmt);
 
-   if (for_stmt->get_while_expression() == NULL) {
+   if (for_stmt->get_while_expression() == nullptr) {
       for_stmt->set_while_expression(SageBuilder::buildNullExpression_nfi());
    }
-   if (for_stmt->get_by_or_then_expression() == NULL) {
+   if (for_stmt->get_by_or_then_expression() == nullptr) {
       for_stmt->set_by_or_then_expression(SageBuilder::buildNullExpression_nfi());
    }
 
@@ -1514,7 +1563,7 @@ Enter(SgVariableDeclaration* &var_decl, const std::string &name, SgType* type, S
 {
    mlog[TRACE] << "SageTreeBuilder::Enter(SgVariableDeclaration* &, ...) \n";
 
-   ROSE_ASSERT(type != nullptr);
+   ROSE_ASSERT(type);
 
    SgName var_name = name;
    SgInitializer* var_init = nullptr;
@@ -1534,10 +1583,10 @@ Enter(SgVariableDeclaration* &var_decl, const std::string &name, SgType* type, S
    }
 
    var_decl = SageBuilder::buildVariableDeclaration_nfi(var_name, type, var_init, SageBuilder::topScopeStack());
-   ROSE_ASSERT(var_decl != nullptr);
+   ROSE_ASSERT(var_decl);
 
 // Why isn't this done in SageBuilder?
-   if (var_decl->get_definingDeclaration() == NULL)
+   if (var_decl->get_definingDeclaration() == nullptr)
       {
          var_decl->set_definingDeclaration(var_decl);
       }

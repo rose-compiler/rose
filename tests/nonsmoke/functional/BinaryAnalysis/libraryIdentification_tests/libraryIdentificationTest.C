@@ -56,8 +56,7 @@ namespace P2 = Partitioner2;
 //---------------------------------------------------------------------------------
 // Settings adjusted from the command line. Defuault c'tor initializes the defaults
 struct Settings {
-    std::string databaseName;  //Name of the database file to read from
-    Settings(): databaseName("RoseFlirt.db") {}
+    std::string databaseName = "testLibraryIdentification.db";  //Name of the database file to read from
 };
 
 // Describe and parse the command-line
@@ -76,13 +75,12 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     
     flirtLibraryMatch.insert(Switch("database-filename", 'd')
                              .argument("string", anyParser(settings.databaseName))
-                             .doc("Filename of the FLIRT database.  Default is \"RoseFlirt.db\""));
+                             .doc("Filename of the FLIRT database.  Default is \"" + settings.databaseName + "\""));
     
     // Parse the command-line and get the non-switch, positional arguments at the end
-  return p.with(flirtLibraryMatch).parse(argc, argv).apply().unreachedArgs();
+    return p.with(flirtLibraryMatch).parse(argc, argv).apply().unreachedArgs();
 
 }
-
 
 int
 main(int argc, char** argv)
@@ -133,7 +131,7 @@ main(int argc, char** argv)
 
 
   // Build a Library Identification database (in the current directory).
-     generateLibraryIdentificationDataBase( "testLibraryIdentification.db", "foo", "0.0", libHash, partitioner, REPLACE );
+     generateLibraryIdentificationDataBase(settings.databaseName, "foo", "0.0", libHash, partitioner, REPLACE);
 
 #if 0
   // Match functions in AST against Library Identification database.

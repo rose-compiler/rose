@@ -56,7 +56,7 @@ list<ExecutionTrace*> CounterexampleGenerator::createExecutionTraces() {
  * \author Marc Jasper
  * \date 2017.
  */
-ExecutionTrace* CounterexampleGenerator::traceLeadingTo(const EState* target) {
+ExecutionTrace* CounterexampleGenerator::traceLeadingTo(EStatePtr target) {
   if (_type == TRACE_TYPE_RERS_CE) {
     return reverseTraceBreadthFirst<RersCounterexample>(target, _stg->getStartEState());
   } else if (_type == TRACE_TYPE_SVCOMP_WITNESS) {
@@ -71,23 +71,23 @@ ExecutionTrace* CounterexampleGenerator::traceLeadingTo(const EState* target) {
  * \date 2014.
  */
 template <class T>
-T* CounterexampleGenerator::reverseTraceBreadthFirst(const EState* source, const EState* target) {
+T* CounterexampleGenerator::reverseTraceBreadthFirst(EStatePtr source, EStatePtr target) {
   // 1.) init: list wl , hashmap predecessor, hashset visited
-  list<const EState*> worklist;
+  list<EStatePtr> worklist;
   worklist.push_back(source);
-  std::unordered_map <const EState*, const EState*> predecessor;
-  std::unordered_set<const EState*> visited;
+  std::unordered_map <EStatePtr, EStatePtr> predecessor;
+  std::unordered_set<EStatePtr> visited;
   // 2.) while (elem in worklist) {s <-- pop wl; if (s not yet visited) {update predecessor map;
   //                                check if s==target: yes --> break, no --> add all pred to wl }}
   bool targetFound = false;
   while (worklist.size() > 0 && !targetFound) {
-    const EState* vertex = worklist.front();
+    EStatePtr vertex = worklist.front();
     worklist.pop_front();
     if (visited.find(vertex) == visited.end()) {  //avoid cycles
       visited.insert(vertex);
       EStatePtrSet predsOfVertex = _stg->pred(vertex);
       for(EStatePtrSet::iterator i=predsOfVertex.begin();i!=predsOfVertex.end();++i) {
-        predecessor.insert(pair<const EState*, const EState*>((*i), vertex));
+        predecessor.insert(pair<EStatePtr, EStatePtr>((*i), vertex));
         if ((*i) == target) {
           targetFound=true;
           break;
@@ -105,7 +105,7 @@ T* CounterexampleGenerator::reverseTraceBreadthFirst(const EState* source, const
   // 3.) reconstruct trace.
   T* run = new T;
   run->push_back(target);
-  std::unordered_map <const EState*, const EState*>::iterator nextPred = predecessor.find(target);
+  std::unordered_map <EStatePtr, EStatePtr>::iterator nextPred = predecessor.find(target);
 
   while (nextPred != predecessor.end()) {
     run->push_back(nextPred->second);
@@ -116,19 +116,19 @@ T* CounterexampleGenerator::reverseTraceBreadthFirst(const EState* source, const
 }
 
 template<class T>
-T* CounterexampleGenerator::reverseTraceDijkstra(const EState* source, const EState* target) {
-  typedef std::pair<size_t, const EState*> entry;
+T* CounterexampleGenerator::reverseTraceDijkstra(EStatePtr source, EStatePtr target) {
+  typedef std::pair<size_t, EStatePtr> entry;
 
   // 1.) init: list wl , hashmap predecessor, hashset visited
   boost::heap::fibonacci_heap<entry> heap;
   heap.push(std::make_pair(std::numeric_limits<size_t>::max(), source));
-  unordered_set<const EState*> visited;
-  unordered_map <const EState*, const EState*> predecessor;
+  unordered_set<EStatePtr> visited;
+  unordered_map <EStatePtr, EStatePtr> predecessor;
 
   bool targetFound = false;
   while (heap.size() > 0 && !targetFound) {
     auto top = heap.top();
-    const EState* current = top.second;
+    EStatePtr current = top.second;
     size_t priority = top.first;
     heap.pop();
     if (visited.count(current) == 0) {
@@ -153,7 +153,7 @@ T* CounterexampleGenerator::reverseTraceDijkstra(const EState* source, const ESt
   // 3.) reconstruct trace.
   T* run = new T;
   run->push_back(target);
-  unordered_map <const EState*, const EState*>::iterator nextPred = predecessor.find(target);
+  unordered_map <EStatePtr, EStatePtr>::iterator nextPred = predecessor.find(target);
 
   while (nextPred != predecessor.end()) {
     run->push_back(nextPred->second);

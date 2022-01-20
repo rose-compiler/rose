@@ -16,9 +16,9 @@ namespace ada
   /// defines the result type for \ref flattenArrayType
   typedef std::pair<SgArrayType*, std::vector<SgExpression*> > FlatArrayType;
 
-  /// tests if the declaration \ref dcl defines a type that is completed
+  /// tests if the declaration \ref dcl defines a public type that is completed
   ///   in a private section.
-  /// \return true, iff dcl is completed in a private section.
+  /// \return true, iff dcl is public and completed in a private section.
   /// \pre dcl is not null and points to a first-nondefining declaration.
   /// @{
   bool withPrivateDefinition(const SgDeclarationStatement* dcl);
@@ -31,6 +31,24 @@ namespace ada
   bool unconstrained(const SgArrayType* ty);
   bool unconstrained(const SgArrayType& ty);
   /// @}
+
+  using StatementRange = std::pair<SgDeclarationStatementPtrList::iterator, SgDeclarationStatementPtrList::iterator>;
+
+  /// returns all statements/declarations in the global scope that were defined
+  /// in the source file.
+  /// \param   globalScope a reference to the global scope
+  /// \param   mainfile    a reference to the main source file (name)
+  /// \returns a range [first-in-sequence, limit-of-sequence) of
+  ///          global-scope level statements in \ref mainFile
+  /// \details
+  ///   In other words, the declarations in the with'ed packages are excluded from the returned range.
+  /// \{
+  StatementRange
+  declsInPackage(SgGlobal& globalScope, const std::string& mainFile);
+
+  StatementRange
+  declsInPackage(SgGlobal& globalScope, const SgSourceFile& mainFile);
+  /// \}
 
 
   /// returns a flattened representation of Ada array types.
@@ -203,6 +221,18 @@ namespace ada
   overridingScope(const SgExprListExp* args, const std::vector<PrimitiveParameterDesc>& primitiveArgs);
   /// @}
 
+  /// finds the type declaration of a type
+  /// \details
+  ///    Skips over intermediate derived types, subtypes, etc. until a SgNamedType is found.
+  ///    Returns the declaration of said type.
+  /// \{
+  SgDeclarationStatement*
+  baseDeclaration(SgType& ty);
+
+  SgDeclarationStatement*
+  baseDeclaration(SgType* ty);
+  /// \}
+
   /// returns true, iff \ref fndef is the body of an explicit null procedure
   bool explicitNullProcedure(const SgFunctionDefinition& fndef);
 
@@ -240,6 +270,8 @@ namespace ada
   std::string convertStringLiteral(const char* img);
 
   long double convertRealLiteral(const char* img);
+
+  char convertCharLiteral(const char* img);
   /// \}
 
 

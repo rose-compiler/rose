@@ -91,8 +91,12 @@ namespace Assert {
 
 /** Cause immediate failure.  This function is the low-level function called by most of the other Sawyer::Assert macros
  *  when an assertion fails. Calls to this function do not return. */
-SAWYER_EXPORT_NORETURN void fail(const char *mesg, const char *expr, const std::string &note,
-                                 const char *filename, unsigned linenum, const char *funcname) SAWYER_ATTR_NORETURN;
+SAWYER_EXPORT
+#if __cplusplus >= 201103L
+[[noreturn]]
+#endif
+void fail(const char *mesg, const char *expr, const std::string &note,
+          const char *filename, unsigned linenum, const char *funcname);
 
 /** Type for user-defined assertion failure handler. */
 typedef void (*AssertFailureHandler)(const char *mesg, const char *expr, const std::string &note,

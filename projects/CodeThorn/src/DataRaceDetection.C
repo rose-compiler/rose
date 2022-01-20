@@ -295,7 +295,7 @@ void DataRaceDetection::populateReadWriteDataIndex(LoopInfo& li, IndexToReadWrit
                                                    ArrayUpdatesSequence& arrayUpdates, 
                                                    VariableIdMapping* variableIdMapping) {
   for(ArrayUpdatesSequence::iterator i=arrayUpdates.begin();i!=arrayUpdates.end();++i) {
-    const EState* estate=(*i).first;
+    EStatePtr estate=(*i).first;
     if (li.isInAssociatedLoop(estate)) {
       PStatePtr pstate=estate->pstate();
       SgExpression* exp=(*i).second;

@@ -70,6 +70,11 @@ namespace CodeThorn {
     std::list<SgVariableDeclaration*> getListOfGlobalVarDecls();
     std::list<SgVariableDeclaration*> getVariableDeclarationsOfVariableIdSet(VariableIdSet&);
 
+    // temporary variable used for transferring return value of functions
+    void registerReturnVariable();
+    VariableId getReturnVariableId();
+    bool isReturnVariableId(VariableId);
+    
     void addVariableDeclaration(SgVariableDeclaration* decl);
     CodeThorn::TypeSize registerClassMembers(SgClassType* classType, CodeThorn::TypeSize offset, bool replaceClassDataMembers=false);
     CodeThorn::TypeSize registerClassMembers(SgClassType* classType, std::list<SgVariableDeclaration*>& memberList, CodeThorn::TypeSize offset, bool replaceClassDataMembers=false);
@@ -80,10 +85,12 @@ namespace CodeThorn {
     void setArrayAbstractionIndex(int32_t remapIndex);
     int32_t getArrayAbstractionIndex();
     OffsetAbstractionMappingEntry getOffsetAbstractionMappingEntry(VariableId varId, CodeThorn::TypeSize regionOffset);
+
   private:
     void memOffsetRemap(VariableId memRegId, VariableId varId, int32_t remapIndex, CodeThorn::TypeSize regionOffset, CodeThorn::TypeSize remappedOffset, IndexRemappingEnum mappingType);
     void registerMapping(VariableId memRegId, CodeThorn::TypeSize regionOffset,CodeThorn::TypeSize remappedOffset, IndexRemappingEnum idx);
     int32_t _arrayAbstractionIndex=-1;
+    VariableId _returnVarId;
     
   public:
     SgType* strippedType(SgType* type);

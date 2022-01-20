@@ -5,6 +5,7 @@
 #include <fstream>
 #include "CodeThornException.h"
 #include "SgNodeHelper.h"
+#include "CppStdUtilities.h"
 
 using namespace std;
 using namespace CodeThorn;
@@ -62,8 +63,12 @@ bool CodeThorn::ProgramLocationsReport::hasSourceLocation(SgNode* stmt) {
 }
 
 string CodeThorn::ProgramLocationsReport::findOriginalProgramLocationOfLabel(Labeler* labeler, Label lab) {
-  SgNode* node=labeler->getNode(lab);
-  return findOriginalProgramLocationOfNode(node);
+  if(lab.isValid()) {
+    SgNode* node=labeler->getNode(lab);
+    return findOriginalProgramLocationOfNode(node);
+  } else {
+    return "?:?";
+  }
 }
 
 string CodeThorn::ProgramLocationsReport::findOriginalProgramLocationOfNode(SgNode* node) {
@@ -97,9 +102,13 @@ string CodeThorn::ProgramLocationsReport::fileInfoAsFormattedProgramLocation(SgN
 }
   
 string CodeThorn::ProgramLocationsReport::sourceCodeAtLabel(Labeler* labeler, Label lab) {
-  SgNode* node=labeler->getNode(lab);
-  ROSE_ASSERT(node);
-  return SgNodeHelper::doubleQuotedEscapedString(node->unparseToString());
+  if(lab.isValid()) {
+    SgNode* node=labeler->getNode(lab);
+    ROSE_ASSERT(node);
+    return SgNodeHelper::doubleQuotedEscapedString(node->unparseToString());
+  } else {
+    return "invalid_label_error2";
+  }
 }
 
 bool CodeThorn::ProgramLocationsReport::isRecordedLocation(Label lab) {
@@ -131,13 +140,15 @@ LabelSet CodeThorn::ProgramLocationsReport::determineRecordFreeFunctions(CFAnaly
 void ProgramLocationsReport::recordDefinitiveLocation(CodeThorn::Label lab) {
 #pragma omp critical(definitiveproglocrecording)
   {
-    definitiveLocations.insert(lab);
+    if(lab.isValid())
+      definitiveLocations.insert(lab);
   }
 }
 void ProgramLocationsReport::recordPotentialLocation(CodeThorn::Label lab) {
 #pragma omp critical(potentialproglocrecording)
   {
-    potentialLocations.insert(lab);
+    if(lab.isValid())
+      potentialLocations.insert(lab);
   }
 }
  
@@ -155,9 +166,9 @@ size_t ProgramLocationsReport::numTotalRecordedLocations() {
 void CodeThorn::ProgramLocationsReport::writeResultFile(CodeThornOptions& ctOpt, string fileName, CodeThorn::Labeler* labeler) {
   string writeMode=ctOpt.csvReportModeString;
   std::ofstream myfile;
-  if(writeMode=="generate") {
+  if(writeMode==CppStdUtilities::getFileGenerateModeSelector()) {
     myfile.open(fileName.c_str(),std::ios::out);
-  } else if(writeMode=="append") {
+  } else if(writeMode==CppStdUtilities::getFileAppendModeSelector()) {
     myfile.open(fileName.c_str(),std::ios::app);
   } else {
     cerr<<"Error: unknown write mode: "<<writeMode<<endl;
@@ -198,17 +209,27 @@ void CodeThorn::ProgramLocationsReport::writeLocationsToStream(std::ostream& str
       stream<<qualifier;
     if(qualifier.size()>0&&(programLocation||sourceCode))
       stream<<": ";
-    if(programLocation)
-      stream<<this->findOriginalProgramLocationOfLabel(labeler,lab);
+    if(programLocation) {
+      if(lab.isValid()) {
+        stream<<this->findOriginalProgramLocationOfLabel(labeler,lab);
+      } else {
+        stream<<"?:?";
+      }
+    }
     if(programLocation&&sourceCode)
       stream<<": ";
-    if(sourceCode)
-      stream<<sourceCodeAtLabel(labeler,lab);
+    if(sourceCode) {
+      if(lab.isValid()) {
+        stream<<sourceCodeAtLabel(labeler,lab);
+      } else {
+        stream<<"invalid_label_error1";
+      }
+    }
     stream<<endl;
   }
 }
 
-void ProgramLocationsReport::writeLocationsVerificationReport(CodeThornOptions& ctOpt, std::ostream& os, Labeler* labeler) {
+void ProgramLocationsReport::writeLocationsVerificationOverview(CodeThornOptions& ctOpt, std::ostream& os, Labeler* labeler) {
   int int_n=reachableLocations.size();
   double n=(double)int_n;
   LabelSet verified=verifiedLocations();
@@ -239,7 +260,3 @@ void ProgramLocationsReport::writeLocationsVerificationReport(CodeThornOptions& 
 #endif
 }
 
-void ProgramLocationsReport::writeFunctionsVerificationReport(CodeThornOptions& ctOpt, std::ostream& os, Labeler* labeler) {
-  cerr<<"Error: writeFunctionsVerificationReport not implemented yet."<<endl;
-  exit(1);
-}

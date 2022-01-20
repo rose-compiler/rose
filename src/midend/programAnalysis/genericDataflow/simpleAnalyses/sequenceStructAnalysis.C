@@ -408,7 +408,7 @@ bool SeqStructAnalysis::transfer(const Function& func, const DataflowNode& n, No
                 // Variable that corresponds to the value referenced by the array index or the new value of the assigned variable
                 varID refVar;
                 // The SeqStructLattice associated with refVar
-                SeqStructLattice* ssL;
+                SeqStructLattice* ssL = 0;
                 
                 if(isSgPntrArrRefExp(n.getNode())) {
                         ssL = dynamic_cast<SeqStructLattice*>(prodLat->getVarLattice(SgExpr2Var(isSgPntrArrRefExp(n.getNode()))));
@@ -417,9 +417,11 @@ bool SeqStructAnalysis::transfer(const Function& func, const DataflowNode& n, No
                 } else if(isSgAssignOp(n.getNode())) {
                         ssL = dynamic_cast<SeqStructLattice*>(prodLat->getVarLattice(SgExpr2Var(isSgAssignOp(n.getNode())->get_lhs_operand())));
                         // If the lhs of this assignment is live
-                        if(ssL) refVar = SgExpr2Var(isSgPntrArrRefExp(n.getNode())->get_rhs_operand());
+                        if(ssL)
+                           refVar = SgExpr2Var(isSgPntrArrRefExp(n.getNode())->get_rhs_operand());
                         // Otherwise, we're done
-                        else    goto DONE;
+                        else
+                           goto DONE;
                 }
                 
                 if(ssL->getLevel() == SeqStructLattice::bottom) {

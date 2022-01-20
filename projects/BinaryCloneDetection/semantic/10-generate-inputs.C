@@ -249,7 +249,7 @@ public:
             values.push_back(parse_int(args[i]));
     }
 
-    virtual void operator()(InputQueue &q, int igroup_id) ROSE_OVERRIDE {
+    virtual void operator()(InputQueue &q, int igroup_id) override {
         if (q.is_infinite())
             return;
         q.append_range(values.begin(), values.end());
@@ -266,7 +266,7 @@ public:
             values.push_back(parse_int(args[i]));
     }
 
-    virtual void operator()(InputQueue &q, int igroup_id) ROSE_OVERRIDE {
+    virtual void operator()(InputQueue &q, int igroup_id) override {
         InputQueueName dest = q.redirect();
         q.clear();
         q.redirect(dest);
@@ -290,7 +290,7 @@ public:
         value = parse_int(args[1]);
     }
 
-    virtual void operator()(InputQueue &q, int igroup_id) ROSE_OVERRIDE {
+    virtual void operator()(InputQueue &q, int igroup_id) override {
         if (q.is_infinite())
             return;
         if (infinite) {
@@ -326,7 +326,7 @@ public:
             std::swap(minval, maxval);
     }
 
-    virtual void operator()(InputQueue &q, int igroup_id) ROSE_OVERRIDE {
+    virtual void operator()(InputQueue &q, int igroup_id) override {
         if (q.is_infinite())
             return;
         assert(minval<=maxval);
@@ -359,7 +359,7 @@ public:
             src_queuename = parse_queuename(args[2]);
     }
 
-    virtual void operator()(InputQueue &q, int igroup_id) ROSE_OVERRIDE {
+    virtual void operator()(InputQueue &q, int igroup_id) override {
         if (q.is_infinite())
             return;
         int src_igroup_id = src_igroup_id_set ?
@@ -392,7 +392,7 @@ public:
         }
     }
 
-    virtual void operator()(InputQueue &q, int igroup_id) ROSE_OVERRIDE {
+    virtual void operator()(InputQueue &q, int igroup_id) override {
         size_t nvalues = nvalues_set ? this->nvalues : q.size();
         if (nvalues > q.size()) {
             if (q.is_infinite()) {
@@ -421,7 +421,7 @@ public:
         }
     }
 
-    virtual void operator()(InputQueue &q, int igroup_id) ROSE_OVERRIDE {
+    virtual void operator()(InputQueue &q, int igroup_id) override {
         size_t nvalues = nvalues_set ? this->nvalues : q.size();
         if (nvalues > q.size()) {
             if (q.is_infinite()) {
@@ -449,7 +449,7 @@ public:
         redirect_to = parse_queuename(args[0]);
     }
 
-    virtual void operator()(InputQueue &q, int igroup_id) ROSE_OVERRIDE {
+    virtual void operator()(InputQueue &q, int igroup_id) override {
         if (redirect_to!=q.redirect() && q.redirect()!=queuename && q.redirect()!=IQ_NONE)
             throw Exception("queue is already redirected to "+InputGroup::queue_name(q.redirect()));
         q.redirect(redirect_to);

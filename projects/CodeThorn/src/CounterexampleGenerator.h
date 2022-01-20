@@ -1,9 +1,10 @@
 #ifndef COUNTEREXAMPLE_GENERATOR_H
 #define COUNTEREXAMPLE_GENERATOR_H
 
+#include "EState.h"
+
 namespace CodeThorn {
 
-  class EState;
   class TransitionGraph;
   class ExecutionTrace;
 
@@ -24,7 +25,7 @@ namespace CodeThorn {
  * @brief Extracts an execution trace from the STG's start state leading to "target"
  * @details Actual type of returned element depends on" _type" member variable (factory pattern)
  */
-    ExecutionTrace* traceLeadingTo(const EState* target);
+    ExecutionTrace* traceLeadingTo(EStatePtr target);
 
   private:
 /**
@@ -37,7 +38,7 @@ namespace CodeThorn {
  * @return A trace starting at target and ending at source (newly allocated on the heap).
  */
     template <class T> 
-    T* reverseTraceBreadthFirst(const EState* source, const EState* target);
+    T* reverseTraceBreadthFirst(EStatePtr source, EStatePtr target);
 
 /**
  * @brief Extracts an execution trace using Dijkstra's algorithm (searching backwards)
@@ -49,7 +50,7 @@ namespace CodeThorn {
  * @return A trace starting at target and ending at source (newly allocated on the heap).
  */
     template <class T>
-    T* reverseTraceDijkstra(const EState* source, const EState* target);
+    T* reverseTraceDijkstra(EStatePtr source, EStatePtr target);
 
   protected:
     static Sawyer::Message::Facility logger;

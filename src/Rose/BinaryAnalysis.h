@@ -64,7 +64,6 @@
 #include <Rose/BinaryAnalysis/Unparser.h>
 #include <Rose/BinaryAnalysis/Utils.h>
 #include <Rose/BinaryAnalysis/Variables.h>
-#include <Rose/BinaryAnalysis/YicesSolver.h>
 #include <Rose/BinaryAnalysis/Z3Solver.h>
 
 #endif

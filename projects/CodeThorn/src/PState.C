@@ -410,7 +410,7 @@ AbstractValue PState::varValue(AbstractValue memLoc) const {
       // address is not reserved, return top
       return AbstractValue::createTop();
     }
-    AbstractValue val=((*(const_cast<PState*>(this)))[memLoc]);
+    AbstractValue val=((*(const_cast<PStatePtr>(this)))[memLoc]);
     return val;
   }
 }
@@ -492,7 +492,7 @@ void PState::rawWriteAtMemoryLocation(AbstractValue abstractAddress, AbstractVal
 
 void PState::rawCombineAtMemoryLocation(AbstractValue abstractMemLoc,
                                      AbstractValue abstractValue) {
-  ROSE_ASSERT(abstractMemLoc.getValueType()!=AbstractValue::AV_SET);
+  ROSE_ASSERT(!abstractMemLoc.isAVSet());
   AbstractValue currentValue=rawReadFromMemoryLocation(abstractMemLoc);
   AbstractValue newValue=AbstractValue::combine(currentValue,abstractValue);
   //cout<<"DEBUG: rawCombine:"<<abstractMemLoc.toString()<<":="<<newValue.toString()<<endl;
@@ -542,11 +542,14 @@ bool PState::isApproximatedBy(CodeThorn::PState& other) const {
 }
 
 CodeThorn::PState PState::combine(CodeThorn::PState& p1, CodeThorn::PState& p2) {
+  return combine(&p1,&p2);
+}
+CodeThorn::PState PState::combine(CodeThorn::PStatePtr p1, CodeThorn::PStatePtr p2) {
   CodeThorn::PState res;
   size_t numMatched=0;
-  for(auto elem1:p1) {
-    auto iter=p2.find(elem1.first);
-    if(iter!=p2.end()) {
+  for(auto elem1:*p1) {
+    auto iter=(*p2).find(elem1.first);
+    if(iter!=(*p2).end()) {
       // same memory location in both states: elem.first==(*iter).first
       // combine values elem.second and (*iter).second
 
@@ -559,23 +562,23 @@ CodeThorn::PState PState::combine(CodeThorn::PState& p1, CodeThorn::PState& p2) 
   }
   // add elements that are only in p2 to res - this can only be the
   // case if the number of matched elements above is different to p2.size()
-  if(numMatched!=p2.size()) {
-    for(auto elem2:p2) {
+  if(numMatched!=(*p2).size()) {
+    for(auto elem2:*p2) {
       // only add elements of p2 that are not in p1
-      if(p1.find(elem2.first)==p1.end()) {
+      if((*p1).find(elem2.first)==(*p1).end()) {
         res.writeToMemoryLocation(elem2.first,elem2.second);
       }
     }
   }
   if(PState::combineConsistencyCheck) {
     // consistency check: all elements of p1 and p2 must be represented in res
-    for(auto elem1:p1) {
+    for(auto elem1:*p1) {
       if(res.find(elem1.first)==res.end()) {
         cerr<<"Error: Element of PState1 "<<elem1.first.toString()<<" not in combined state."<<endl;
         exit(1);
       }
     }
-    for(auto elem2:p2) {
+    for(auto elem2:*p2) {
       if(res.find(elem2.first)==res.end()) {
         cerr<<"Error: Element of PState2 "<<elem2.first.toString()<<" not in combined state."<<endl;
         exit(1);

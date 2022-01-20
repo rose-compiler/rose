@@ -1,6 +1,8 @@
 #ifndef EXECUTION_TRACE_H
 #define EXECUTION_TRACE_H
 
+#include "EState.h"
+
 namespace CodeThorn {
 
   class EState;
@@ -12,13 +14,13 @@ namespace CodeThorn {
  * \date June 2017
  */
   class ExecutionTrace:
-    public std::list<const EState*> {
+    public std::list<EStatePtr> {
   public:
     virtual ~ExecutionTrace() {};
 
   protected:
     template <class T>
-    T onlyStatesSatisfyingTemplate(std::function<bool(const EState*)> predicate) const;
+    T onlyStatesSatisfyingTemplate(std::function<bool(EStatePtr)> predicate) const;
   };
 }
 
@@ -35,7 +37,7 @@ using namespace std;
  * \date 2017.
  */
 template <class T>
-T ExecutionTrace::onlyStatesSatisfyingTemplate(std::function<bool(const EState*)> predicate) const {
+T ExecutionTrace::onlyStatesSatisfyingTemplate(std::function<bool(EStatePtr)> predicate) const {
   T newTrace;
   ExecutionTrace::const_iterator begin = this->begin();
   ExecutionTrace::const_iterator end = this->end();

@@ -34,30 +34,30 @@ istream& CodeThorn::operator>>(istream& is, AbstractValue& value) {
 }
 
 // default constructor
-AbstractValue::AbstractValue():valueType(AbstractValue::BOT),extension(0) {}
+AbstractValue::AbstractValue():valueType(AbstractValue::AV_BOT),extension(0) {}
 
 // type conversion
 // TODO: represent value 'undefined' here
-AbstractValue::AbstractValue(VariableId varId):valueType(AbstractValue::PTR),variableId(varId),intValue(0) {
+AbstractValue::AbstractValue(VariableId varId):valueType(AbstractValue::AV_PTR),variableId(varId),intValue(0) {
   if(byteMode) {
     // also set element type size
     ROSE_ASSERT(_variableIdMapping);
   }
 }
 
-AbstractValue::AbstractValue(Label lab):valueType(AbstractValue::FUN_PTR),label(lab) {}
+AbstractValue::AbstractValue(Label lab):valueType(AbstractValue::AV_FUN_PTR),label(lab) {}
 
 AbstractValue::~AbstractValue() {
   switch(valueType) {
-  case BOT:
-  case INTEGER:
-  case FLOAT:
-  case DOUBLE:
-  case PTR:
-  case REF:
-  case FUN_PTR:
-  case TOP:
-  case UNDEFINED:
+  case AV_BOT:
+  case AV_INTEGER:
+  case AV_FP_SINGLE_PRECISION:
+  case AV_FP_DOUBLE_PRECISION:
+  case AV_PTR:
+  case AV_REF:
+  case AV_FUN_PTR:
+  case AV_TOP:
+  case AV_UNDEFINED:
     // nothing to do
     break;
   case AV_SET:
@@ -81,19 +81,19 @@ void AbstractValue::copy(const AbstractValue& other) {
   variableId = other.variableId;
   label= other.label;
   _summaryFlag=other._summaryFlag;
-  switch(valueType) {
-  case BOT:
-  case TOP:
-  case UNDEFINED:
-  case FUN_PTR: // uses label
+  switch(other.valueType) {
+  case AV_BOT:
+  case AV_TOP:
+  case AV_UNDEFINED:
+  case AV_FUN_PTR: // uses label
     break;
-  case PTR:
-  case REF:
-  case INTEGER: intValue=other.intValue;
+  case AV_PTR:
+  case AV_REF:
+  case AV_INTEGER: intValue=other.intValue;
     break;
-  case FLOAT: floatValue=other.floatValue;
+  case AV_FP_SINGLE_PRECISION: floatValue=other.floatValue;
     break;
-  case DOUBLE: doubleValue=other.doubleValue;
+  case AV_FP_DOUBLE_PRECISION: doubleValue=other.doubleValue;
     break;
   case AV_SET: extension=other.abstractValueSetCopy();
     break;
@@ -111,10 +111,10 @@ AbstractValue& AbstractValue::operator=(AbstractValue other) {
 // type conversion
 AbstractValue::AbstractValue(bool val) {
   if(val) {
-    valueType=AbstractValue::INTEGER;
+    valueType=AbstractValue::AV_INTEGER;
     intValue=1;
   } else {
-    valueType=AbstractValue::INTEGER;
+    valueType=AbstractValue::AV_INTEGER;
     intValue=0;
   }
 }
@@ -151,26 +151,26 @@ AbstractValue AbstractValue::createIntegerValue(CodeThorn::BuiltInType btype, lo
 }
 
 void AbstractValue::initInteger(CodeThorn::BuiltInType btype, long int ival) {
-  valueType=AbstractValue::INTEGER;
+  valueType=AbstractValue::AV_INTEGER;
   setValue(ival);
 }
 
 void AbstractValue::initFloat(CodeThorn::BuiltInType btype, float fval) {
   ROSE_ASSERT(btype==BITYPE_FLOAT);
-  valueType=AbstractValue::FLOAT;
+  valueType=AbstractValue::AV_FP_SINGLE_PRECISION;
   setValue(fval);
 }
 
 void AbstractValue::initDouble(CodeThorn::BuiltInType btype, double dval) {
   ROSE_ASSERT(btype==BITYPE_DOUBLE);
-  valueType=AbstractValue::DOUBLE;
+  valueType=AbstractValue::AV_FP_DOUBLE_PRECISION;
   setValue(dval);
 }
 
 // type conversion
-AbstractValue::AbstractValue(Top e) {valueType=AbstractValue::TOP;intValue=0;} // intValue=0 superfluous
+AbstractValue::AbstractValue(Top e) {valueType=AbstractValue::AV_TOP;intValue=0;} // intValue=0 superfluous
 // type conversion
-AbstractValue::AbstractValue(Bot e) {valueType=AbstractValue::BOT;intValue=0;} // intValue=0 superfluous
+AbstractValue::AbstractValue(Bot e) {valueType=AbstractValue::AV_BOT;intValue=0;} // intValue=0 superfluous
 
 AbstractValue::AbstractValue(unsigned char x) {
   initInteger(BITYPE_CHAR,x);
@@ -247,7 +247,7 @@ AbstractValue::createAddressOfArrayElement(CodeThorn::VariableId arrayVariableId
   } else if(index.isConstInt()) {
     // create address of array element 0 and add index by multiplying it with element size
     AbstractValue addr0;
-    addr0.valueType=PTR;
+    addr0.valueType=AV_PTR;
     addr0.variableId=arrayVariableId;
     addr0.intValue=0;
     AbstractValue arrayElemAddress=operatorAdd(addr0,index,elementSize);
@@ -302,14 +302,14 @@ AbstractValue AbstractValue::conditionallyApplyArrayAbstraction(AbstractValue va
 
 std::string AbstractValue::valueTypeToString() const {
   switch(valueType) {
-  case TOP: return "top";
-  case UNDEFINED: return "uninit";
-  case INTEGER: return "constint";
-  case FLOAT: return "float";
-  case PTR: return "ptr";
-  case FUN_PTR: return "funptr";
-  case REF: return "ref";
-  case BOT: return "bot";
+  case AV_TOP: return "top";
+  case AV_UNDEFINED: return "uninit";
+  case AV_INTEGER: return "constint";
+  case AV_FP_SINGLE_PRECISION: return "float";
+  case AV_PTR: return "ptr";
+  case AV_FUN_PTR: return "funptr";
+  case AV_REF: return "ref";
+  case AV_BOT: return "bot";
   case AV_SET: return "ptrset";
   default:
     return "unknown";
@@ -318,22 +318,22 @@ std::string AbstractValue::valueTypeToString() const {
 
 // currently maps to isTop(); in preparation for explicit handling of
 // undefined values.
-bool AbstractValue::isUndefined() const {return valueType==AbstractValue::UNDEFINED;}
-bool AbstractValue::isTop() const {return valueType==AbstractValue::TOP||isUndefined();}
-bool AbstractValue::isTrue() const {return valueType==AbstractValue::INTEGER && intValue!=0;}
-bool AbstractValue::isFalse() const {return valueType==AbstractValue::INTEGER && intValue==0;}
-bool AbstractValue::isBot() const {return valueType==AbstractValue::BOT;}
-bool AbstractValue::isConstInt() const {return valueType==AbstractValue::INTEGER;}
-bool AbstractValue::isConstFloat() const {return valueType==AbstractValue::FLOAT;}
-bool AbstractValue::isConstDouble() const {return valueType==AbstractValue::DOUBLE;}
-bool AbstractValue::isConstPtr() const {return (valueType==AbstractValue::PTR);}
-bool AbstractValue::isPtr() const {return (valueType==AbstractValue::PTR);}
+bool AbstractValue::isUndefined() const {return valueType==AbstractValue::AV_UNDEFINED;}
+bool AbstractValue::isTop() const {return valueType==AbstractValue::AV_TOP||isUndefined();}
+bool AbstractValue::isTrue() const {return valueType==AbstractValue::AV_INTEGER && intValue!=0;}
+bool AbstractValue::isFalse() const {return valueType==AbstractValue::AV_INTEGER && intValue==0;}
+bool AbstractValue::isBot() const {return valueType==AbstractValue::AV_BOT;}
+bool AbstractValue::isConstInt() const {return valueType==AbstractValue::AV_INTEGER;}
+bool AbstractValue::isConstFloat() const {return valueType==AbstractValue::AV_FP_SINGLE_PRECISION;}
+bool AbstractValue::isConstDouble() const {return valueType==AbstractValue::AV_FP_DOUBLE_PRECISION;}
+bool AbstractValue::isConstPtr() const {return (valueType==AbstractValue::AV_PTR);}
+bool AbstractValue::isPtr() const {return (valueType==AbstractValue::AV_PTR);}
 // deprecated (use isAVSet instead)
 bool AbstractValue::isPtrSet() const {return (isAVSet());}
 bool AbstractValue::isAVSet() const {return (valueType==AbstractValue::AV_SET);}
-bool AbstractValue::isFunctionPtr() const {return (valueType==AbstractValue::FUN_PTR);}
-bool AbstractValue::isRef() const {return (valueType==AbstractValue::REF);}
-bool AbstractValue::isNullPtr() const {return (valueType==AbstractValue::INTEGER && intValue==0 && !isSummary());}
+bool AbstractValue::isFunctionPtr() const {return (valueType==AbstractValue::AV_FUN_PTR);}
+bool AbstractValue::isRef() const {return (valueType==AbstractValue::AV_REF);}
+bool AbstractValue::isNullPtr() const {return (valueType==AbstractValue::AV_INTEGER && intValue==0 && !isSummary());}
 
 bool AbstractValue::isSummary() const {
   if(isTop()||_summaryFlag)
@@ -394,7 +394,7 @@ size_t AbstractValue::getAVSetSize() const {
 AbstractValue AbstractValue::operatorNot() {
   AbstractValue tmp;
   switch(valueType) {
-  case AbstractValue::INTEGER: 
+  case AbstractValue::AV_INTEGER: 
     tmp.valueType=valueType;
     if(intValue==0) {
       tmp.intValue=1;
@@ -402,9 +402,9 @@ AbstractValue AbstractValue::operatorNot() {
       tmp.intValue=0;
     }
     break;
-  case AbstractValue::TOP: tmp=Top();break;
-  case AbstractValue::BOT: tmp=Bot();break;
-  case AbstractValue::UNDEFINED: tmp=*this;break;
+  case AbstractValue::AV_TOP: tmp=Top();break;
+  case AbstractValue::AV_BOT: tmp=Bot();break;
+  case AbstractValue::AV_UNDEFINED: tmp=*this;break;
   case AbstractValue::AV_SET:
     if(AbstractValue::ptrSetContainsNullPtr() && getPtrSetSize()>1) {
     tmp=Top();
@@ -477,19 +477,19 @@ AbstractValue AbstractValue::operatorUnaryMinus(AbstractValue& v1) {
 
 AbstractValue AbstractValue::operatorOr(AbstractValue other) const {
   AbstractValue tmp;
-  // all TOP cases
+  // all AV_TOP cases
   if(isTop()   && other.isTop())   return Top();
   if(isTop()   && other.isTrue())  return true;
   if(isTrue()  && other.isTop())   return true;
   if(isTop()   && other.isFalse()) return Top();
   if(isFalse() && other.isTop())   return Top();
-  // all BOT cases
-  if(valueType==BOT) {
+  // all AV_BOT cases
+  if(valueType==AV_BOT) {
     tmp.valueType=other.valueType; 
     tmp.intValue=other.intValue;
     return tmp;
   }
-  if(other.valueType==BOT) {
+  if(other.valueType==AV_BOT) {
     tmp.valueType=valueType; 
     tmp.intValue=intValue;
     return tmp;
@@ -505,19 +505,19 @@ AbstractValue AbstractValue::operatorOr(AbstractValue other) const {
 
 AbstractValue AbstractValue::operatorAnd(AbstractValue other) const {
   AbstractValue tmp;
-  // all TOP cases
+  // all AV_TOP cases
   if(isTop()   && other.isTop())   return Top();
   if(isTop()   && other.isTrue())  return Top();
   if(isTrue()  && other.isTop())   return Top();
   if(isTop()   && other.isFalse()) return false;
   if(isFalse() && other.isTop())   return false;
-  // all BOT cases
-  if(valueType==BOT) {
+  // all AV_BOT cases
+  if(valueType==AV_BOT) {
     tmp.valueType=other.valueType;
     tmp.intValue=other.intValue;
     return tmp;
   }
-  if(other.valueType==BOT) {
+  if(other.valueType==AV_BOT) {
     tmp.valueType=valueType; 
     tmp.intValue=intValue;
     return tmp;
@@ -644,14 +644,14 @@ bool AbstractValue::operator<(AbstractValue other) const {
 
 // TODO: comparison with nullptr
 AbstractValue AbstractValue::operatorEq(AbstractValue other) const {
-  // all TOP cases
-  if(valueType==TOP || other.valueType==TOP) { 
+  // all AV_TOP cases
+  if(valueType==AV_TOP || other.valueType==AV_TOP) { 
     return CodeThorn::Top();
   }
-  // all BOT cases
-  if(valueType==BOT) {
+  // all AV_BOT cases
+  if(valueType==AV_BOT) {
     return other;
-  } else if(other.valueType==BOT) { 
+  } else if(other.valueType==AV_BOT) { 
     return *this;
   } else if(isPtr() && other.isPtr()) {
     // element type size is not relevant in byteMode when comparing pointers
@@ -790,10 +790,10 @@ AbstractValue AbstractValue::operatorBitwiseShiftRight(AbstractValue other) cons
 
 string AbstractValue::toLhsString(CodeThorn::VariableIdMapping* vim) const {
   switch(valueType) {
-  case TOP: return "top";
-  case BOT: return "bot";
-  case UNDEFINED: return "undefined(lhs)";
-  case INTEGER: {
+  case AV_TOP: return "top";
+  case AV_BOT: return "bot";
+  case AV_UNDEFINED: return "undefined(lhs)";
+  case AV_INTEGER: {
     stringstream ss;
     ss<<getIntValue();
     return ss.str();
@@ -809,7 +809,7 @@ string AbstractValue::toLhsString(CodeThorn::VariableIdMapping* vim) const {
     }
     ss<<"}";
   }
-  case PTR: {
+  case AV_PTR: {
     stringstream ss;
     if(vim->getNumberOfElements(variableId)==1) {
       ss<<variableId.toString(vim); // variables are arrays of size 1
@@ -830,15 +830,15 @@ string AbstractValue::toLhsString(CodeThorn::VariableIdMapping* vim) const {
 
 string AbstractValue::toRhsString(CodeThorn::VariableIdMapping* vim) const {
   switch(valueType) {
-  case TOP: return "top";
-  case BOT: return "bot";
-  case UNDEFINED: return "uninit(rhs)";
-  case INTEGER: {
+  case AV_TOP: return "top";
+  case AV_BOT: return "bot";
+  case AV_UNDEFINED: return "uninit(rhs)";
+  case AV_INTEGER: {
     stringstream ss;
     ss<<getIntValue();
     return ss.str();
   }
-  case PTR: {
+  case AV_PTR: {
     stringstream ss;
     ss<<"&"; // on the rhs an abstract pointer is always a pointer value of some abstract value
     if(vim->getNumberOfElements(variableId)==1) {
@@ -859,7 +859,7 @@ string AbstractValue::toRhsString(CodeThorn::VariableIdMapping* vim) const {
 
 string AbstractValue::arrayVariableNameToString(CodeThorn::VariableIdMapping* vim) const {
   switch(valueType) {
-  case PTR: {
+  case AV_PTR: {
     stringstream ss;
     ss<<variableId.toString(vim);
     return ss.str();
@@ -875,19 +875,19 @@ string AbstractValue::arrayVariableNameToString(CodeThorn::VariableIdMapping* vi
 
 string AbstractValue::toString(CodeThorn::VariableIdMapping* vim) const {
   switch(valueType) {
-  case TOP: return "top";
-  case BOT: return "bot";
-  case UNDEFINED: return "uninit";
-  case INTEGER: {
+  case AV_TOP: return "top";
+  case AV_BOT: return "bot";
+  case AV_UNDEFINED: return "uninit";
+  case AV_INTEGER: {
     stringstream ss;
     ss<<getIntValue();
     return ss.str();
   }
-  case FLOAT:
-  case DOUBLE: {
+  case AV_FP_SINGLE_PRECISION:
+  case AV_FP_DOUBLE_PRECISION: {
     return getFloatValueString();
   }
-  case PTR: {
+  case AV_PTR: {
     //    if(vim->isOfArrayType(variableId)||vim->isOfClassType(variableId)||vim->isOfReferenceType(variableId)||vim->isHeapMemoryRegionId(variableId)) {
       stringstream ss;
       ss<<"("
@@ -914,7 +914,7 @@ string AbstractValue::toString(CodeThorn::VariableIdMapping* vim) const {
     ss<<"}";
     return ss.str();
   }
-  case FUN_PTR: {
+  case AV_FUN_PTR: {
     return "fptr:"+label.toString();
   }
   default:
@@ -931,24 +931,24 @@ string AbstractValue::toString() const {
     return toString(vim);
   }
   switch(valueType) {
-  case TOP: return "top";
-  case BOT: return "bot";
-  case UNDEFINED: return "uninit";
-  case INTEGER: {
+  case AV_TOP: return "top";
+  case AV_BOT: return "bot";
+  case AV_UNDEFINED: return "uninit";
+  case AV_INTEGER: {
     stringstream ss;
     ss<<getIntValue();
     return ss.str();
   }
-  case FLOAT:
-  case DOUBLE: {
+  case AV_FP_SINGLE_PRECISION:
+  case AV_FP_DOUBLE_PRECISION: {
     return getFloatValueString();
   }
-  case PTR: {
+  case AV_PTR: {
     stringstream ss;
     ss<<"("<<variableId.toString()<<","<<getIntValue()<<","<<isSummary()<<")";
     return ss.str();
   }
-  case FUN_PTR: {
+  case AV_FUN_PTR: {
     return "fptr:"+label.toString();
   }
   case AV_SET: {
@@ -975,13 +975,13 @@ string AbstractValue::toString() const {
 void AbstractValue::fromStream(istream& is) {
   int tmpintValue=0;
   if(CodeThorn::Parse::checkWord("top",is)) {
-    valueType=TOP;
+    valueType=AV_TOP;
     intValue=0;
   } else if(CodeThorn::Parse::checkWord("bot",is)) {
-    valueType=BOT;
+    valueType=AV_BOT;
     intValue=0;
   } else if(CodeThorn::Parse::integer(is,tmpintValue)) {
-    valueType=INTEGER;
+    valueType=AV_INTEGER;
     intValue=tmpintValue;
   } else {
     throw CodeThorn::Exception("Error: ConstIntLattic::fromStream failed.");
@@ -1022,7 +1022,7 @@ AbstractValue AbstractValue::getIndexValue() const {
 }
 
 int AbstractValue::getIndexIntValue() const { 
-  if(valueType!=PTR) {
+  if(valueType!=AV_PTR) {
     cerr << "AbstractValue::getIndexIntValue:  valueType="<<valueTypeToString()<<endl;
     throw CodeThorn::Exception("Error: AbstractValue::getIndexIntValue operation failed.");
   }
@@ -1031,8 +1031,8 @@ int AbstractValue::getIndexIntValue() const {
 }
 
 int AbstractValue::getIntValue() const { 
-  // TODO: PTR will be removed once all ptrs are adapted to getIndexIntValue
-  if(valueType!=INTEGER && valueType!=PTR) {
+  // TODO: AV_PTR will be removed once all ptrs are adapted to getIndexIntValue
+  if(valueType!=AV_INTEGER && valueType!=AV_PTR) {
     cerr << "AbstractValue::getIntValue:  valueType="<<valueTypeToString()<<endl;
     throw CodeThorn::Exception("Error: AbstractValue::getIntValue operation failed.");
   }
@@ -1054,13 +1054,13 @@ long double AbstractValue::getLongDoubleValue() const {
 }
 */
 std::string AbstractValue::getFloatValueString() const { 
-   if(valueType!=FLOAT && valueType!=DOUBLE) {
+   if(valueType!=AV_FP_SINGLE_PRECISION && valueType!=AV_FP_DOUBLE_PRECISION) {
      cerr << "AbstractValue::getFloatValueString: valueType="<<valueTypeToString()<<endl;
      throw CodeThorn::Exception("Error: AbstractValue::getFloatValueString operation failed.");
    } else {
      stringstream ss;
      // emulate printf output
-     if(valueType==FLOAT) {
+     if(valueType==AV_FP_SINGLE_PRECISION) {
        ss<<std::fixed<<std::setprecision(6)<<floatValue;
      } else {
        ss<<std::fixed<<std::setprecision(6)<<doubleValue;
@@ -1070,7 +1070,7 @@ std::string AbstractValue::getFloatValueString() const {
 }
 
 CodeThorn::VariableId AbstractValue::getVariableId() const { 
-  if(valueType!=PTR && valueType!=REF) {
+  if(valueType!=AV_PTR && valueType!=AV_REF) {
     cerr << "AbstractValue::getVariableId() valueType="<<valueTypeToString()<<endl;
     cerr << "AbstractValue: value:"<<toString()<<endl;
     //int *x=0;
@@ -1085,27 +1085,27 @@ CodeThorn::VariableId AbstractValue::getVariableId() const {
 AbstractValue AbstractValue::operatorUnaryMinus() {
   AbstractValue tmp;
   switch(valueType) {
-  case AbstractValue::INTEGER: 
-    tmp.valueType=AbstractValue::INTEGER;
+  case AbstractValue::AV_INTEGER: 
+    tmp.valueType=AbstractValue::AV_INTEGER;
     tmp.intValue=-intValue; // unary minus
     break;
-  case AbstractValue::FLOAT: 
-    tmp.valueType=AbstractValue::FLOAT;
+  case AbstractValue::AV_FP_SINGLE_PRECISION: 
+    tmp.valueType=AbstractValue::AV_FP_SINGLE_PRECISION;
     tmp.floatValue=-floatValue; // unary minus
     break;
-  case AbstractValue::DOUBLE: 
-    tmp.valueType=AbstractValue::DOUBLE;
+  case AbstractValue::AV_FP_DOUBLE_PRECISION: 
+    tmp.valueType=AbstractValue::AV_FP_DOUBLE_PRECISION;
     tmp.doubleValue=-doubleValue; // unary minus
     break;
-  case AbstractValue::TOP:
+  case AbstractValue::AV_TOP:
     tmp=Top();break;
-  case AbstractValue::UNDEFINED:
+  case AbstractValue::AV_UNDEFINED:
     tmp=*this;break; // keep information that it is undefined
-  case AbstractValue::BOT: tmp=Bot();break;
-  case AbstractValue::PTR:
-  case AbstractValue::FUN_PTR:
+  case AbstractValue::AV_BOT: tmp=Bot();break;
+  case AbstractValue::AV_PTR:
+  case AbstractValue::AV_FUN_PTR:
     return topOrError("Error: AbstractValue operator unary minus on pointer value.");
-  case AbstractValue::REF:
+  case AbstractValue::AV_REF:
     return topOrError("Error: AbstractValue operator unary minus on reference value.");
     //  default case intentionally not present to force all values to be handled explicitly
   case AbstractValue::AV_SET:
@@ -1189,12 +1189,12 @@ AbstractValue AbstractValue::operatorSub(AbstractValue& a,AbstractValue& b) {
           return Top();
         } else {
           val.intValue=(a.intValue-b.intValue)/pointerElementSize;
-          val.valueType=INTEGER;
+          val.valueType=AV_INTEGER;
           val.variableId=a.variableId; // same as b.variableId
         }
       } else {
         val.intValue=a.intValue-b.intValue;
-        val.valueType=INTEGER;
+        val.valueType=AV_INTEGER;
         val.variableId=a.variableId; // same as b.variableId
       }
       return val;
@@ -1291,20 +1291,20 @@ bool AbstractValue::approximatedBy(AbstractValue val1, AbstractValue val2) {
     // bot <= x, x <= top
     return true;
   } else if(val1.isTop() && val2.isTop()) {
-    // this case is necessary because TOP and UNDEFINED need to be treated the same
+    // this case is necessary because AV_TOP and AV_UNDEFINED need to be treated the same
     // and isTop also includes isUndefined (in its definition).
     return true;
   } else if(val1.valueType==val2.valueType) {
     switch(val1.valueType) {
-    case BOT: return true;
-    case INTEGER: return (val1.intValue==val2.intValue);
-    case FLOAT: return (val1.floatValue==val2.floatValue);
-    case DOUBLE: return (val1.doubleValue==val2.doubleValue);
-    case PTR:
-    case REF: return (val1.getVariableId()==val2.getVariableId()&&val1.intValue==val2.intValue);
-    case FUN_PTR: return (val1.label==val2.label);
-    case TOP:
-    case UNDEFINED:
+    case AV_BOT: return true;
+    case AV_INTEGER: return (val1.intValue==val2.intValue);
+    case AV_FP_SINGLE_PRECISION: return (val1.floatValue==val2.floatValue);
+    case AV_FP_DOUBLE_PRECISION: return (val1.doubleValue==val2.doubleValue);
+    case AV_PTR:
+    case AV_REF: return (val1.getVariableId()==val2.getVariableId()&&val1.intValue==val2.intValue);
+    case AV_FUN_PTR: return (val1.label==val2.label);
+    case AV_TOP:
+    case AV_UNDEFINED:
       // should be unreachable because of 2nd if-condition above
       // TODO: enforce non-reachable here
       return true;
@@ -1337,32 +1337,32 @@ AbstractValue AbstractValue::combine(AbstractValue val1, AbstractValue val2) {
     return val1;
   } else if(val1.valueType==val2.valueType) {
     switch(val1.valueType) {
-    case BOT: return val2;
-    case TOP: return val1; // special case of above if-conds (TODO: enforce not reachable)
-    case UNDEFINED: return val1; // special case of above if-cond (TODO: enforce not reachable)
-    case INTEGER: {
+    case AV_BOT: return val2;
+    case AV_TOP: return val1; // special case of above if-conds (TODO: enforce not reachable)
+    case AV_UNDEFINED: return val1; // special case of above if-cond (TODO: enforce not reachable)
+    case AV_INTEGER: {
       if(val1.intValue==val2.intValue) {
         return val1;
       } else {
         return createTop();
       }
     }
-    case FLOAT: {
+    case AV_FP_SINGLE_PRECISION: {
       if(val1.floatValue==val2.floatValue) {
         return val1;
       } else {
         return createTop();
       }
     }
-    case DOUBLE: {
+    case AV_FP_DOUBLE_PRECISION: {
       if(val1.doubleValue==val2.doubleValue) {
         return val1;
       } else {
         return createTop();
       }
     }
-    case PTR: 
-    case REF: {
+    case AV_PTR: 
+    case AV_REF: {
       if(val1.getVariableId()==val2.getVariableId()
          &&val1.getIntValue()==val2.getIntValue()) {
         return val1;
@@ -1384,7 +1384,7 @@ AbstractValue AbstractValue::combine(AbstractValue val1, AbstractValue val2) {
         }
       }
     }
-    case FUN_PTR: {
+    case AV_FUN_PTR: {
       if(val1.label==val2.label) {
         return val1;
       } else {
@@ -1420,7 +1420,7 @@ AbstractValue AbstractValue::createTop() {
 }
 AbstractValue AbstractValue::createUndefined() {
   AbstractValue newValue;
-  newValue.valueType=AbstractValue::UNDEFINED;
+  newValue.valueType=AbstractValue::AV_UNDEFINED;
   return newValue;
 }
 AbstractValue AbstractValue::createBot() {

@@ -21,7 +21,7 @@ VariableValueMonitor::VariableMode VariableValueMonitor::getVariableMode(Abstrac
 }
 
 // the init function only uses the variableIds of a given estate (not its values) for initialization
-void VariableValueMonitor::init(const EState* estate) {
+void VariableValueMonitor::init(EStatePtr estate) {
   CodeThorn::PStatePtr pstate=estate->pstate();
   init(pstate);
 }

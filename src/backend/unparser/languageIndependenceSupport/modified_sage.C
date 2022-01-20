@@ -2575,6 +2575,10 @@ Unparse_MOD_SAGE::printAttributes(SgInitializedName* initializedName, SgUnparse_
 #endif
         }
 
+     if (initializedName->isGnuAttributeNoReorder() == true) {
+       curprint(" __attribute__((no_reorder)) ");
+     }
+
 #if 0
   // DQ (12/31/2013): This is now handled by the new printAttributesForType() function.
   // DQ (12/30/2013): Added support for more GNU attributes.

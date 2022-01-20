@@ -7,12 +7,12 @@
 #include "unparseLanguageIndependentConstructs.h"
 
 
-class Unparse_Jovial : public UnparseLanguageIndependentConstructs
-   {
-     public:
-          Unparse_Jovial(Unparser* unp, std::string fname);
+class UnparseJovial : public UnparseLanguageIndependentConstructs
+{
+public:
+          UnparseJovial(Unparser* unp, std::string fname);
 
-          virtual ~Unparse_Jovial();
+          virtual ~UnparseJovial();
 
           virtual std::string languageName() const { return "Jovial Unparser"; }
 
@@ -60,7 +60,8 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
                   void unparseTableBody              (SgClassDefinition* table_def, SgUnparse_Info& info);
 
           virtual void unparseVarDeclStmt            (SgStatement* stmt, SgUnparse_Info& info);
-          virtual void unparseVarDecl                (SgStatement* stmt, SgInitializedName* initializedName, SgUnparse_Info& info);
+                  void unparseVarDecl                (SgStatement* stmt, SgInitializedName* initializedName,
+                                                                         SgUnparse_Info& info);
 
           virtual void unparseExprStmt               (SgStatement* stmt, SgUnparse_Info& info);
 
@@ -115,22 +116,25 @@ class Unparse_Jovial : public UnparseLanguageIndependentConstructs
        // Table dimension list
           void unparseDimInfo (SgExprListExp* dim_info, SgUnparse_Info& info);
 
-     private:
-          std::string ws_prefix(int nesting_level)
-             {
-                std::stringstream code;
-                for (int i = 0; i < nesting_level; i++) {
-                   code << "  ";
-                }
-                return code.str();
-             }
+private:
+  void unparseCommentsBefore(SgStatement* stmt, SgUnparse_Info& info);
+  void unparseCommentsAfter (SgStatement* stmt, SgUnparse_Info& info);
 
-          void curprint_indented(std::string txt, SgUnparse_Info& info)
-             {
-                curprint( ws_prefix(info.get_nestingLevel()) );
-                curprint( txt );
-             }
+  std::string ws_prefix(int nesting_level)
+  {
+    std::stringstream code;
+    for (int i = 0; i < nesting_level; i++) {
+      code << "  ";
+    }
+    return code.str();
+  }
 
-   };
+  void curprint_indented(std::string txt, SgUnparse_Info& info)
+  {
+    curprint( ws_prefix(info.get_nestingLevel()) );
+    curprint( txt );
+  }
+
+};
 
 #endif

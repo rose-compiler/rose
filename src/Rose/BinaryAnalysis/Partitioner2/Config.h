@@ -17,7 +17,7 @@ namespace Partitioner2 {
 
 /** Configuration information for a basic block. */
 class BasicBlockConfig {
-    rose_addr_t address_;
+    rose_addr_t address_ = 0;
     std::string comment_;
     Sawyer::Optional<rose_addr_t> finalInsnVa_;
     std::set<rose_addr_t> successorVas_;
@@ -25,7 +25,7 @@ class BasicBlockConfig {
 
 public:
     // default constructor needed by some STL containers
-    BasicBlockConfig(): address_(0) {}
+    BasicBlockConfig() {}
 
     /** Configuration information for a basic block. */
     explicit BasicBlockConfig(rose_addr_t va): address_(va) {}
@@ -237,7 +237,7 @@ public:
  *
  *  If the address is the start of a function, basic block, or data block, then use one of those configuration objects instead. */
 class AddressConfig {
-    rose_addr_t address_;
+    rose_addr_t address_ = 0;
     std::string name_;
     std::string comment_;
     SourceLocation sourceLocation_;

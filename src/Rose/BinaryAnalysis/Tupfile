@@ -51,7 +51,6 @@ run $(librose_compile)				\
     TaintedFlow.C				\
     ToSource.C					\
     Variables.C					\
-    YicesSolver.C				\
     Z3Solver.C
 
 run $(public_header) -o include/rose/Rose/BinaryAnalysis	\
@@ -118,5 +117,4 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis	\
     Unparser.h							\
     Utils.h							\
     Variables.h							\
-    YicesSolver.h						\
     Z3Solver.h

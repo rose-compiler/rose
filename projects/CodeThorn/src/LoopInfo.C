@@ -90,7 +90,7 @@ void LoopInfo::computeLoopLabelSet(Labeler* labeler) {
   }
 }
 
-bool LoopInfo::isInAssociatedLoop(const EState* estate) {
+bool LoopInfo::isInAssociatedLoop(EStatePtr estate) {
   Label lab=estate->label();
   ROSE_ASSERT(forStmt);
   return loopLabelSet.find(lab)!=loopLabelSet.end();

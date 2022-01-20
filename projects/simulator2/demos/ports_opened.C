@@ -168,7 +168,7 @@ protected:
 
 public:
     // Keep it simple--don't worry about multiple threads.
-    virtual BaseSocketSyscallHandler* clone() ROSE_OVERRIDE { return this; }
+    virtual BaseSocketSyscallHandler* clone() override { return this; }
     
     // Assume addr_va points to a struct sockaddr and decode and return the IP port number.
     std::string decode_ip_addr(RSIM_Process *proc, rose_addr_t addr_va, size_t addrlen) {
@@ -243,7 +243,7 @@ class SocketSyscallHandler: public BaseSocketSyscallHandler {};
 template<>
 class SocketSyscallHandler<RSIM_Linux32>: public BaseSocketSyscallHandler {
 
-    bool operator()(bool enabled, const Args &args) ROSE_OVERRIDE {
+    bool operator()(bool enabled, const Args &args) override {
         if (!enabled)
             return false;
 
@@ -315,7 +315,7 @@ class SocketSyscallHandler<RSIM_Linux32>: public BaseSocketSyscallHandler {
 template<>
 class SocketSyscallHandler<RSIM_Linux64>: public BaseSocketSyscallHandler {
 public:
-    bool operator()(bool enabled, const Args &args) ROSE_OVERRIDE {
+    bool operator()(bool enabled, const Args &args) override {
         if (!enabled)
             return false;
 
@@ -377,7 +377,7 @@ public:
     typedef Sawyer::Container::Map<int /*fd*/, std::string /*filename*/> Files;
     Files files;
 
-    BaseFilesystemSyscallHandler* clone() ROSE_OVERRIDE { return this; }
+    BaseFilesystemSyscallHandler* clone() override { return this; }
 
     void emitWarning() {
         static int ncalls = 0;
@@ -400,7 +400,7 @@ class FilesystemSyscallHandler: public BaseFilesystemSyscallHandler {};
 // Specialization for linux-x86
 template<>
 class FilesystemSyscallHandler<RSIM_Linux32>: public BaseFilesystemSyscallHandler {
-    bool operator()(bool enabled, const Args &args) ROSE_OVERRIDE {
+    bool operator()(bool enabled, const Args &args) override {
         if (!enabled)
             return false;
         emitWarning();
@@ -547,7 +547,7 @@ class FilesystemSyscallHandler<RSIM_Linux32>: public BaseFilesystemSyscallHandle
 // Specialization for linux-x86
 template<>
 class FilesystemSyscallHandler<RSIM_Linux64>: public BaseFilesystemSyscallHandler {
-    bool operator()(bool enabled, const Args &args) ROSE_OVERRIDE {
+    bool operator()(bool enabled, const Args &args) override {
         if (!enabled)
             return false;
         emitWarning();

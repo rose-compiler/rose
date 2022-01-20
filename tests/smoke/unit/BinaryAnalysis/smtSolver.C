@@ -4,7 +4,6 @@ static const char *description =
 
 #include <rose.h>
 #include <Rose/BinaryAnalysis/SmtlibSolver.h>
-#include <Rose/BinaryAnalysis/YicesSolver.h>
 #include <Rose/BinaryAnalysis/Z3Solver.h>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>

@@ -130,15 +130,15 @@ namespace CodeThorn {
       //SAWYER_MESG(CodeThorn::logger[TRACE])<<"DEBUG: ARRAYTYPE: "<<sgType->unparseToString()<<endl;
       SgArrayType* arrayType=isSgArrayType(sgType);
       CodeThorn::TypeSize elementTypeSize=determineElementTypeSize(arrayType);
-      if(elementTypeSize>10000) {
-	cout<<"DEBUG: ARRAY: ELEMENT TYPE SIZE:"<<elementTypeSize<<endl;
-	return -1;
-      }
+      //if(elementTypeSize>10000) {
+      //	cout<<"DEBUG: ARRAY: ELEMENT TYPE SIZE:"<<elementTypeSize<<endl;
+      //	return -1;
+      //}
       CodeThorn::TypeSize numberOfElements=determineNumberOfElements(arrayType);
-      if(numberOfElements>10000) {
-	cout<<"DEBUG: ARRAY: NUM ELEMENTS:"<<elementTypeSize<<endl;
-	return -1;
-      }
+      //if(numberOfElements>10000) {
+      //	cout<<"DEBUG: ARRAY: NUM ELEMENTS:"<<elementTypeSize<<endl;
+      //	return -1;
+      //}
       unsigned int totalSize=-1;
       if(elementTypeSize!=-1 && numberOfElements!=-1) {
 	totalSize=numberOfElements*elementTypeSize;
@@ -163,12 +163,12 @@ namespace CodeThorn {
     }
       */
     default: {
-      unsigned int totalSize=-1;
-      totalSize=getBuiltInTypeSize(determineBuiltInTypeId(sgType));
-      if(totalSize>10000) {
-	cout<<"DEBUG: TYPESIZE: DEFAULT (BUILT-IN): typesize="<<totalSize<<endl;
-	return -1;
-      }
+      //unsigned int totalSize=-1;
+      //totalSize=getBuiltInTypeSize(determineBuiltInTypeId(sgType));
+      //if(totalSize>10000) {
+      //	cout<<"DEBUG: TYPESIZE: DEFAULT (BUILT-IN): typesize="<<totalSize<<endl;
+      //	return -1;
+      //}
 
       //SAWYER_MESG(CodeThorn::logger[WARN])<<"VID:TSM:Unknown type:  "<<sgType->unparseToString()<<":"<<AstTerm::astTermWithNullValuesToString(sgType)<<endl;
       return 0;

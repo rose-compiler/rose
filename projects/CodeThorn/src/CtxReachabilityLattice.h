@@ -14,18 +14,18 @@ namespace CodeThorn
 struct CtxReachabilityLattice : Lattice 
 {
     /// tests if @ref other over-approximates this lattice
-    bool approximatedBy(Lattice& other) const ROSE_OVERRIDE;
+    bool approximatedBy(Lattice& other) const override;
     
     /// merges @ref other into this 
-    void combine(Lattice& other) ROSE_OVERRIDE;
+    void combine(Lattice& other) override;
     
     /// tests if this lattice represents bot
-    bool isBot() const ROSE_OVERRIDE;
+    bool isBot() const override;
     
     /// prints a representation of this lattice on stream @ref os
     /// \param os  the output stream
     /// \param vim a variable ID mapping that gives names to Variable-ids
-    void toStream(std::ostream& os, VariableIdMapping* vim) ROSE_OVERRIDE;
+    void toStream(std::ostream& os, VariableIdMapping* vim) override;
         
     //
     // setters and getters

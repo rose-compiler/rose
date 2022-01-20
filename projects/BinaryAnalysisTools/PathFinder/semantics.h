@@ -66,12 +66,12 @@ public:
 
     virtual Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr
     create(const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RegisterStatePtr &registers,
-           const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::MemoryStatePtr &memory) const ROSE_OVERRIDE {
+           const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::MemoryStatePtr &memory) const override {
         return instance(registers, memory);
     }
 
     virtual Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr
-    clone() const ROSE_OVERRIDE {
+    clone() const override {
         return StatePtr(new State(*this));
     }
 
@@ -144,13 +144,13 @@ public:
 public:
     virtual Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
     create(const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &protoval,
-           const Rose::BinaryAnalysis::SmtSolverPtr &solver=Rose::BinaryAnalysis::SmtSolverPtr()) const ROSE_OVERRIDE {
+           const Rose::BinaryAnalysis::SmtSolverPtr &solver=Rose::BinaryAnalysis::SmtSolverPtr()) const override {
         return instance(NULL, protoval, solver);
     }
 
     virtual Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperatorsPtr
     create(const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::StatePtr &state,
-           const Rose::BinaryAnalysis::SmtSolverPtr &solver=Rose::BinaryAnalysis::SmtSolverPtr()) const ROSE_OVERRIDE {
+           const Rose::BinaryAnalysis::SmtSolverPtr &solver=Rose::BinaryAnalysis::SmtSolverPtr()) const override {
         return instance(NULL, state, solver);
     }
 
@@ -191,30 +191,30 @@ private:
 
 public:
     virtual void
-    startInstruction(SgAsmInstruction *insn) ROSE_OVERRIDE;
+    startInstruction(SgAsmInstruction *insn) override;
 
     virtual void
-    finishInstruction(SgAsmInstruction *insn) ROSE_OVERRIDE;
+    finishInstruction(SgAsmInstruction *insn) override;
 
     virtual Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr
     readRegister(Rose::BinaryAnalysis::RegisterDescriptor reg,
-                 const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
+                 const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &dflt) override;
 
     virtual void
     writeRegister(Rose::BinaryAnalysis::RegisterDescriptor reg,
-                  const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &value) ROSE_OVERRIDE;
+                  const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &value) override;
 
     virtual Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr
     readMemory(Rose::BinaryAnalysis::RegisterDescriptor segreg,
                const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &addr,
                const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &dflt_,
-               const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
+               const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &cond) override;
 
     virtual void
     writeMemory(Rose::BinaryAnalysis::RegisterDescriptor segreg,
                 const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &addr,
                 const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &value,
-                const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
+                const Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::SValuePtr &cond) override;
 };
 
 

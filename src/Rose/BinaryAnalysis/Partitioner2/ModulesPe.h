@@ -157,7 +157,7 @@ public:
     /** @} */
 
     // Callback invoked by the partitioner each time an instruction is appended to a basic block.
-    virtual bool operator()(bool chain, const Args&) ROSE_OVERRIDE;
+    virtual bool operator()(bool chain, const Args&) override;
 
 private:
     // True if the only CFG successor for the specified block is the PEScrambler dispatcher and the block ends with a CALL

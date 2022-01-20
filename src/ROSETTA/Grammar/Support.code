@@ -237,7 +237,7 @@ HEADER_GRAPH_START
  //! Add support for externally build SgGraphNode objects
      SgGraphEdge* addEdge( SgGraphEdge* edge );
 
-     void post_construction_initialization() $ROSE_OVERRIDE;
+     void post_construction_initialization() override;
 
  //! Support for Boost Minimum Spanning Tree.
   // std::vector <BoostEdgeDescriptor> generateSpanningTree();
@@ -334,14 +334,14 @@ HEADER_GRAPH_POSTDECLARATION_END
 HEADER_GRAPHNODE_START
      void append_properties( int addr, const std::string & prop );
 
-     void post_construction_initialization() $ROSE_OVERRIDE;
+     void post_construction_initialization() override;
 HEADER_GRAPHNODE_END
 
 
 HEADER_GRAPHEDGE_START
      void append_properties( int addr, const std::string & prop );
 
-     void post_construction_initialization() $ROSE_OVERRIDE;
+     void post_construction_initialization() override;
 HEADER_GRAPHEDGE_END
 
 
@@ -411,7 +411,7 @@ HEADER_INCIDENCE_DIRECTED_GRAPH_START
       std::set<SgGraphEdge*> getEdge(SgGraphNode* src);
       bool checkIfGraphEdgeExists(SgGraphNode* src);
 
-     void post_construction_initialization() $ROSE_OVERRIDE;
+     void post_construction_initialization() override;
 
  //! Support for adding SgGraphEdge to SgGraph.
      SgDirectedGraphEdge* addDirectedEdge( SgGraphNode* a, SgGraphNode* b, const std::string & name = "");
@@ -469,7 +469,7 @@ HEADER_MODIFIER_NODES_START
           SgModifierNodes();
       // ~SgModifierNodes();
 
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 
        // DQ (2/12/2007): This function is not used.
        // SgModifierType* match(SgType*, unsigned int);
@@ -509,7 +509,7 @@ HEADER_CV_TYPE_MODIFIER_START
        // Assignment Operator
           $CLASSNAME & operator= ( const $CLASSNAME & X );
 
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 
           bool isUnknown() const;
           void setUnknown();
@@ -612,7 +612,7 @@ HEADER_STORAGE_MODIFIER_START
        // Assignment Operator
           $CLASSNAME & operator= ( const $CLASSNAME & X );
 
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 
           bool isUnknown() const;
           void setUnknown();
@@ -754,7 +754,7 @@ HEADER_ACCESS_MODIFIER_START
        // Assignment Operator
           SgAccessModifier & operator= ( const SgAccessModifier & X );
 
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 
           bool isUnknown() const;
           void setUnknown();
@@ -868,7 +868,7 @@ HEADER_FUNCTION_MODIFIER_START
        // Assignment Operator
           $CLASSNAME & operator= ( const $CLASSNAME & X );
 
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 
           bool isUnknown() const;
           void setUnknown();
@@ -1091,7 +1091,7 @@ HEADER_UPC_ACCESS_MODIFIER_START
        // Assignment Operator
           $CLASSNAME & operator= ( const $CLASSNAME & X );
 
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 
           bool isUnknown() const;
           void setUnknown();
@@ -1144,7 +1144,7 @@ HEADER_STRUCTURE_MODIFIER_START
        // Assignment Operator
           $CLASSNAME & operator= ( const $CLASSNAME & X );
 
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 
           bool isUnknown() const;
           void setUnknown();
@@ -1199,7 +1199,7 @@ HEADER_SPECIAL_FUNCTION_MODIFIER_START
        // Assignment Operator
           $CLASSNAME & operator= ( const $CLASSNAME & X );
 
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 
           bool isUnknown() const;
           void setUnknown();
@@ -1332,7 +1332,7 @@ HEADER_DECLARATION_MODIFIER_START
        // Assignment Operator
           SgDeclarationModifier & operator= ( const SgDeclarationModifier & X );
 
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 
           SgTypeModifier    & get_typeModifier();
           SgAccessModifier  & get_accessModifier();
@@ -1701,7 +1701,7 @@ HEADER_TYPE_MODIFIER_START
        // Convert a single type_modifier_enum to an initializer
        // SgTypeModifier ( const SgTypeModifier::type_modifier_enum & m );
 
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 
           SgUPC_AccessModifier     & get_upcModifier();
           SgConstVolatileModifier  & get_constVolatileModifier();
@@ -1933,7 +1933,7 @@ HEADER_ELABORATED_TYPE_MODIFIER_START
        // Assignment Operator
           $CLASSNAME & operator= ( const $CLASSNAME & X );
 
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 
           bool isUnknown() const;
           void setUnknown();
@@ -1994,7 +1994,7 @@ HEADER_LINKAGE_MODIFIER_START
        // Assignment Operator
           $CLASSNAME & operator= ( const $CLASSNAME & X );
 
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 
           bool isUnknown() const;
           void setUnknown();
@@ -2046,7 +2046,7 @@ HEADER_BASECLASS_MODIFIER_START
        // Assignment Operator
           $CLASSNAME & operator= ( const $CLASSNAME & X );
 
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 
           SgAccessModifier & get_accessModifier();
           const SgAccessModifier & get_accessModifier() const;
@@ -2092,22 +2092,22 @@ HEADER_ATTRIBUTE_SUPPORT_START
       */
      /* */
      //! Add a new attribute represented by the named string.
-         virtual void addNewAttribute(std::string s,AstAttribute* a) $ROSE_OVERRIDE;
+         virtual void addNewAttribute(std::string s,AstAttribute* a) override;
      //! Returns attribute of name 's'.
-         virtual AstAttribute* getAttribute(std::string s) const $ROSE_OVERRIDE;
+         virtual AstAttribute* getAttribute(std::string s) const override;
      //! Replace existing attribute of name 's' with new AstAttribute.
-         virtual void updateAttribute(std::string s,AstAttribute* a) $ROSE_OVERRIDE;  // formerly called: replace in AstAttributeMechanism
+         virtual void updateAttribute(std::string s,AstAttribute* a) override;  // formerly called: replace in AstAttributeMechanism
      /*! \brief This is a wrapper function with the following semantics:
          if no attribute of name 's' exists then \b addNewAttribute(s,a); is called,
          otherwise \b updateAttribute(s,a); is called.
       */
-         virtual void setAttribute(std::string s,AstAttribute* a) $ROSE_OVERRIDE;
+         virtual void setAttribute(std::string s,AstAttribute* a) override;
      //! Remove attribute of name 's' if present.
-         virtual void removeAttribute(std::string s) $ROSE_OVERRIDE;
+         virtual void removeAttribute(std::string s) override;
      //! Tests if attribute of name 's' is present.
-         virtual bool attributeExists(std::string s) const $ROSE_OVERRIDE;
+         virtual bool attributeExists(std::string s) const override;
      //! Returns the number of attributes on this IR node.
-         virtual int numberOfAttributes() const $ROSE_OVERRIDE;
+         virtual int numberOfAttributes() const override;
 
      /*! \fn AstAttributeMechanism* $CLASSNAME::get_attributeMechanism() const;
          \brief \b FOR \b INTERNAL \b USE Access function; if an attribute exists then
@@ -2169,7 +2169,7 @@ HEADER_DATA_STATEMENT_VALUE_START
                e_last_initializer_form  /*!< last value (upper bound on range of values, used in error checking) */
              };
 
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 
 HEADER_DATA_STATEMENT_VALUE_END
 
@@ -4966,7 +4966,7 @@ HEADER_SYMBOL_TABLE_POSTDECLARATION_END
 
 HEADER_BASECLASS_START
      public:
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 
        // This function should be autogenerated
        // SgBaseClass(int specifier=0, SgClassDeclaration* ptr = NULL, int dir = 0);
@@ -4988,9 +4988,9 @@ HEADER_BASECLASS_START
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const override;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const override;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const override;
 #else
        // DQ (10/20/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -5024,12 +5024,12 @@ HEADER_BASECLASS_END
 
 HEADER_EXP_BASE_CLASS_START
      public:
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 HEADER_EXP_BASE_CLASS_END
 
 HEADER_NONREAL_BASE_CLASS_START
      public:
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 HEADER_NONREAL_BASE_CLASS_END
 
 
@@ -5137,15 +5137,16 @@ HEADER_INITIALIZED_NAME_START
 
             // DQ (1/6/2014): Added support for GNU noreturn attribute
                e_gnu_attribute__noreturn__               = 8,/*!< GNU specific attribute for (GNU extension) */
+               e_gnu_attribute__noreorder__              = 9,/*!< GNU specific attribute for (GNU extension) */
 
-               e_ms_declspec_parameter_appdomain    =  9, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_parameter_deprecated   = 10, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_parameter_dllimport    = 11, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_parameter_dllexport    = 12, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_parameter_novtable     = 13, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_parameter_process      = 14, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_parameter_property     = 15, /*!< Microsoft declspec() attributes */
-               e_ms_declspec_parameter_restrict     = 16, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_appdomain    = 10, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_deprecated   = 11, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_dllimport    = 12, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_dllexport    = 13, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_novtable     = 14, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_process      = 15, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_property     = 16, /*!< Microsoft declspec() attributes */
+               e_ms_declspec_parameter_restrict     = 17, /*!< Microsoft declspec() attributes */
                e_ms_declspec_parameter_selectany    = 18, /*!< Microsoft declspec() attributes */
                e_ms_declspec_parameter_thread       = 19, /*!< Microsoft declspec() attributes */
                e_ms_declspec_parameter_uuid         = 20, /*!< Microsoft declspec() attributes */
@@ -5205,6 +5206,10 @@ HEADER_INITIALIZED_NAME_START
           void setGnuAttributeNoReturn();
           void unsetGnuAttributeNoReturn();
 
+          bool isGnuAttributeNoReorder() const;
+          void setGnuAttributeNoReorder();
+          void unsetGnuAttributeNoReorder();
+
 #if 0
  // DQ (8/17/2014): Associated Microsoft attributes that are valid in a function parameter.
     appdomain
@@ -5259,16 +5264,16 @@ HEADER_INITIALIZED_NAME_START
           void set_ms_declspec_parameter_uuid();
           void unset_ms_declspec_parameter_uuid();
 
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
        // Overriding SgNode versions of these
-          virtual unsigned int cfgIndexForEnd() const $ROSE_OVERRIDE;
-          virtual bool cfgIsIndexInteresting(unsigned int index) const $ROSE_OVERRIDE;
-          virtual unsigned int cfgFindChildIndex(SgNode* n) $ROSE_OVERRIDE;
-          virtual unsigned int cfgFindNextChildIndex(SgNode* n) $ROSE_OVERRIDE;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) $ROSE_OVERRIDE;
-          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) $ROSE_OVERRIDE;
+          virtual unsigned int cfgIndexForEnd() const override;
+          virtual bool cfgIsIndexInteresting(unsigned int index) const override;
+          virtual unsigned int cfgFindChildIndex(SgNode* n) override;
+          virtual unsigned int cfgFindNextChildIndex(SgNode* n) override;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) override;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) override;
 #endif
 
           SgStorageModifier & get_storageModifier();
@@ -5366,9 +5371,9 @@ HEADER_INITIALIZED_NAME_START
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const override;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const override;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const override;
 #else
        // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -5622,16 +5627,16 @@ HEADER_TEMPLATE_INSTANTIATION_DECLARATION_ATTRIBUTE_POSTDECLARATION_END
 HEADER_PRAGMA_START
        // SgPragma(char *name);
 
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 
           std::string get_pragma() const;
           bool samePragma(const std::string& str);
-          bool isPragma() const $ROSE_OVERRIDE;
+          bool isPragma() const override;
           bool gotPrinted() const;
           void setPrinted(bool s = true);
 
        // DQ (8/3/2004): added function to match virtual function in SgNode
-          Sg_File_Info* get_file_info() const $ROSE_OVERRIDE;
+          Sg_File_Info* get_file_info() const override;
 
 HEADER_PRAGMA_END
 
@@ -5692,7 +5697,7 @@ HEADER_FILE_INFORMATION_START
        // DQ (11/6/2008): Added to support construction of objects using Dwarf information.
           Sg_File_Info( int file_id, int line, int column );
 
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 
        // ROSE-1499, ROSE-1639 (added const to char*)
           void check_file_id(const char * label, bool assertion=true) const;
@@ -6264,6 +6269,10 @@ public:
       //! function that removes all OFP related options from a command line
           static void stripFortranCommandLineOptions ( std::vector<std::string> & argv );
 
+       // Pei-Hung (12/20/2021): Added translator support to filter command line options from the backend compiler's command line.
+      //! function that removes options that should be used only in frontend from a command line
+          static void stripTranslationCommandLineOptions ( std::vector<std::string> & argv );
+
        // BP : 11/13/2001, modified to take compiler name
           void build_EDG_CommandLine ( std::vector<std::string> & inputCommandLine, std::vector<std::string>& argv, int fileNameIndex );
 
@@ -6322,7 +6331,7 @@ public:
       //    void setupSourceFilename ( const std::vector<std::string>& argv );
 
       //! Access function calling get_startOfConstruct(), provided to support older interface.
-          Sg_File_Info* get_file_info() const $ROSE_OVERRIDE;
+          Sg_File_Info* get_file_info() const override;
 
       //! Access function calling set_startOfConstruct(), provided to support older interface.
           void set_file_info( Sg_File_Info* fileinfo );
@@ -6343,9 +6352,9 @@ public:
 // DQ (9/5/2008): Moved to SgSourceFile
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const override;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const override;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const override;
 #else
        // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -6386,13 +6395,13 @@ HEADER_APPLICATION_SOURCE_FILE_START
 
        // SgSourceFile ( int & argc, char** & argv, int & errorCode, int fileNameIndex = 0, SgProject* project = NULL );
           SgSourceFile(std::vector<std::string>& argv, SgProject* project = NULL);
-          virtual int callFrontEnd() $ROSE_OVERRIDE;
+          virtual int callFrontEnd() override;
        // SgSourceFile ( const SgSourceFile & X );
 
       //! Default constructor (not meant to be used)
        // SgSourceFile() ROSE_DEPRECATED_FUNCTION;
 
-          virtual int buildAST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine ) $ROSE_OVERRIDE;
+          virtual int buildAST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine ) override;
 // #ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT // Liao 6/25/2010, support enable-only-c and haskell
 
       //! Divide up the handling of different languages
@@ -6412,7 +6421,7 @@ HEADER_APPLICATION_SOURCE_FILE_START
           int build_Jovial_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
           int build_Cobol_AST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine );
 
-          virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project) $ROSE_OVERRIDE;
+          virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project) override;
 
        // DQ (12/19/2008): Added support for translation source position information using CPP linemarkers (this is specific to Fortran).
           void processCppLinemarkers();
@@ -6430,9 +6439,9 @@ HEADER_APPLICATION_SOURCE_FILE_START
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const override;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const override;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const override;
 #else
        // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -6521,14 +6530,14 @@ HEADER_APPLICATION_BINARY_FILE_START
           SgBinaryComposite(std::vector<std::string>& argv,  SgProject* project = NULL);
        // SgBinaryComposite ( const SgBinaryFile & X );
 
-          virtual int callFrontEnd() $ROSE_OVERRIDE;
+          virtual int callFrontEnd() override;
       //  Default constructor (not meant to be used)
       //  JJW (9/5/2008): the normal constructor has defaults for all of its arguments, so this is ambiguous
       //  SgBinaryComposite() ROSE_DEPRECATED_FUNCTION;
 
-          virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project) $ROSE_OVERRIDE;
+          virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project) override;
 
-          virtual int buildAST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine ) $ROSE_OVERRIDE;
+          virtual int buildAST( std::vector<std::string> argv, std::vector<std::string> inputCommandLine ) override;
 
       //! However, now we have a list of them to support library archives which contain multiple object files (*.o's).
           const SgAsmGenericFile* get_binaryFile() const;
@@ -6543,8 +6552,8 @@ HEADER_APPLICATION_UNKNOWN_FILE_START
      public:
           SgUnknownFile(std::vector<std::string>& argv, SgProject* project = NULL);
 
-          virtual int callFrontEnd() $ROSE_OVERRIDE;
-          virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project) $ROSE_OVERRIDE;
+          virtual int callFrontEnd() override;
+          virtual void doSetupForConstructor(const std::vector<std::string>& argv, SgProject* project) override;
 
 HEADER_APPLICATION_UNKNOWN_FILE_END
 
@@ -6564,7 +6573,7 @@ HEADER_APPLICATION_DIRECTORY_START
           int numberOfDirectories() const;
           SgDirectory* get_directory(int i) const;
 
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 
 HEADER_APPLICATION_DIRECTORY_END
 
@@ -6834,9 +6843,9 @@ HEADER_APPLICATION_PROJECT_START
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const override;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const override;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const override;
 #else
        // DQ (10/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -6926,7 +6935,7 @@ HEADER_UNPARSE_INFO_START
           SgUnparse_Info ( const SgUnparse_Info & X );
           SgUnparse_Info & operator= ( const SgUnparse_Info & X );
 
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 
        // DQ (4/16/2003): Notes on how to improve the unparser:
        // Rather than having an inherited attribute that stores some context information
@@ -7462,7 +7471,13 @@ HEADER_UNPARSE_INFO_START
           bool usedInUparseToStringFunction() const;
           void set_usedInUparseToStringFunction();
           void unset_usedInUparseToStringFunction();
-
+#if 0
+       // DQ (11/21/2021): Adding support for types to be unparsed with the context of the correct declaration to support multi-file handling.
+          SgDeclarationStatement* get_declaration_of_context();
+          void set_declaration_of_context(SgDeclarationStatement* d);
+#endif
+       // DQ (11/21/2021): Adding support for types to be unparsed with the context of the correct declaration to support multi-file handling.
+          void unset_declaration_of_context();
 
 #if 0
    // MK: These access functions are now automatically generated!
@@ -7548,7 +7563,7 @@ HEADER_TEMPLATE_PARAMETER_START
                template_parameter  = 3  /*!< template parameter */
              };
 
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 
        // Different constructors for use in building the different types of parameters possible
           SgTemplateParameter ( SgType* parameter               , SgType* defaultParameter );
@@ -7582,7 +7597,7 @@ HEADER_TEMPLATE_ARGUMENT_START
                start_of_pack_expansion_argument = 4  /*!< start of pack expansion parameter */
              };
 
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 
        // Different constructors for use in building the different types of parameters possible
           SgTemplateArgument ( SgType*                      parameter, bool explicitlySpecified );
@@ -7602,9 +7617,9 @@ HEADER_TEMPLATE_ARGUMENT_START
 
 #if ALT_FIXUP_COPY
        // DQ (11/7/2007): These need to be called separately (see documentation)
-          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
-          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
-          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const $ROSE_OVERRIDE;
+          virtual void fixupCopy_scopes     (SgNode* copy, SgCopyHelp & help) const override;
+          virtual void fixupCopy_symbols    (SgNode* copy, SgCopyHelp & help) const override;
+          virtual void fixupCopy_references (SgNode* copy, SgCopyHelp & help) const override;
 #else
        // DQ (11/5/2007): Added fixup function to set scopes not set properly by the ROSETTA generated copy!
           virtual void fixupCopy(SgNode* copy, SgCopyHelp & help) const;
@@ -7707,7 +7722,7 @@ HEADER_OPENCL_ACCESS_MODE_MODIFIER_START
        // Assignment Operator
           $CLASSNAME & operator= ( const $CLASSNAME & X );
 
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 
           bool isUnknown() const;
           void setUnknown();
@@ -8206,6 +8221,27 @@ SgSymbolTable::get_name( const SgNode* node) const
           case V_SgAdaTaskBodyDecl:
              {
                const SgAdaTaskBodyDecl* dcl = isSgAdaTaskBodyDecl(node);
+               name = dcl->get_name();
+               break;
+             }
+
+          case V_SgAdaProtectedSpecDecl:
+             {
+               const SgAdaProtectedSpecDecl* dcl = isSgAdaProtectedSpecDecl(node);
+               name = dcl->get_name();
+               break;
+             }
+
+          case V_SgAdaProtectedTypeDecl:
+             {
+               const SgAdaProtectedTypeDecl* dcl = isSgAdaProtectedTypeDecl(node);
+               name = dcl->get_name();
+               break;
+             }
+
+          case V_SgAdaProtectedBodyDecl:
+             {
+               const SgAdaProtectedBodyDecl* dcl = isSgAdaProtectedBodyDecl(node);
                name = dcl->get_name();
                break;
              }
@@ -13160,6 +13196,10 @@ bool SgInitializedName::isGnuAttributeNoReturn() const  { return checkBit(e_gnu_
 void SgInitializedName::setGnuAttributeNoReturn()       { setBit(e_gnu_attribute__noreturn__); }
 void SgInitializedName::unsetGnuAttributeNoReturn()     { unsetBit(e_gnu_attribute__noreturn__); }
 
+bool SgInitializedName::isGnuAttributeNoReorder() const  { return checkBit(e_gnu_attribute__noreorder__); }
+void SgInitializedName::setGnuAttributeNoReorder()       { setBit(e_gnu_attribute__noreorder__); }
+void SgInitializedName::unsetGnuAttributeNoReorder()     { unsetBit(e_gnu_attribute__noreorder__); }
+
 #if 0
  // DQ (8/17/2014): Associated Microsoft attributes that are valid in a function parameter.
     appdomain
@@ -16559,6 +16599,12 @@ SgFile::compileOutput ( int fileNameIndex )
           stripEdgCommandLineOptions( argv );
         }
 
+  // Pei-Hung: 12/20/2021, strip out options for frontend parsing.  Needed by ada2cpp
+     if (get_Cxx_only())
+        {
+          stripTranslationCommandLineOptions( argv );
+        }
+
      if (get_Fortran_only())
         {
           stripFortranCommandLineOptions( argv );
@@ -19955,17 +20001,18 @@ SgUnparse_Info::SgUnparse_Info ( const SgUnparse_Info & X )
 
 SgUnparse_Info & SgUnparse_Info::operator= ( const SgUnparse_Info & X )
    {
-     p_unparse_attribute = X.p_unparse_attribute;
-     p_access_attribute  = X.p_access_attribute;
-     p_nested_expression = X.p_nested_expression;
-     p_operator_name     = X.p_operator_name;
-     p_var_name          = X.p_var_name;
-     p_declstatement_ptr = X.p_declstatement_ptr;
-     p_current_context   = X.p_current_context;
-     p_array_index_list  = X.p_array_index_list;
+     p_unparse_attribute      = X.p_unparse_attribute;
+     p_access_attribute       = X.p_access_attribute;
+     p_nested_expression      = X.p_nested_expression;
+     p_operator_name          = X.p_operator_name;
+     p_var_name               = X.p_var_name;
+     p_declstatement_ptr      = X.p_declstatement_ptr;
+     p_declaration_of_context = X.p_declaration_of_context;
+     p_current_context        = X.p_current_context;
+     p_array_index_list       = X.p_array_index_list;
 
   // DQ (11/6/2004): aded initialization of namespace context
-     p_current_namespace = X.p_current_namespace;
+     p_current_namespace      = X.p_current_namespace;
 
   // DQ (3/18/2006): Support for specification of output useful in debugging formatting
   // of generated code (unparsing).
@@ -20077,13 +20124,14 @@ SgUnparse_Info::post_construction_initialization()
         }
      assert (p_unparse_attribute.size() > 0);
 
-     p_access_attribute  = a_unset_access;
-     p_nested_expression = false;
-     p_operator_name     = "";
-     p_var_name          = "";
-     p_declstatement_ptr = NULL;
-     p_current_context   = NULL;
-     p_array_index_list  = "";
+     p_access_attribute       = a_unset_access;
+     p_nested_expression      = false;
+     p_operator_name          = "";
+     p_var_name               = "";
+     p_declstatement_ptr      = NULL;
+     p_declaration_of_context = NULL;
+     p_current_context        = NULL;
+     p_array_index_list       = "";
 
   // DQ (1/12/2003): If calling constructor then empty the list
   // constructors (except copy constructor) are only call in the
@@ -20812,6 +20860,24 @@ void
 SgUnparse_Info::unset_nested_expression()
    { p_nested_expression--; }
 
+
+#if 0
+// DQ (11/21/2021): Adding support for types to be unparsed with the context of the correct declaration to support multi-file handling.
+SgDeclarationStatement*
+SgUnparse_Info::get_declaration_of_context()
+   { return p_declaration_of_context; }
+
+// DQ (11/21/2021): Adding support for types to be unparsed with the context of the correct declaration to support multi-file handling.
+void
+SgUnparse_Info::set_declaration_of_context(SgDeclarationStatement* d )
+   { p_declaration_of_context = d; }
+#endif
+
+// DQ (11/21/2021): Adding support for types to be unparsed with the context of the correct declaration to support multi-file handling.
+void
+SgUnparse_Info::unset_declaration_of_context()
+   { p_declaration_of_context = NULL; }
+
 void
 SgUnparse_Info::unset_current_context()
    { p_current_context = NULL; }
@@ -21132,6 +21198,7 @@ SgUnparse_Info::display ( const std::string & label ) const
           printf ("   --- definingDeclaration         = %p \n",p_declstatement_ptr->get_definingDeclaration());
         }
 
+     printf ("p_declaration_of_context               = %p \n",p_declaration_of_context);
      printf ("p_current_context                      = %p \n",p_current_context);
      printf ("p_array_index_list                     = %s \n",(p_array_index_list.is_null() == false) ? p_array_index_list.str() : "EmPtY sTrInG");
      printf ("p_current_namespace                    = %p \n",p_current_namespace);

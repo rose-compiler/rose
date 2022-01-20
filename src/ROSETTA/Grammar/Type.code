@@ -341,7 +341,7 @@ HEADER_GET_MANGLED_START
       //! Mangled name support for unparser support
        // SgName get_mangled ( SgUnparse_Info & info );
        // RV (1/31/2006): Removed dependence on SgUnparse_Info.
-          virtual SgName get_mangled (void) const $ROSE_OVERRIDE;
+          virtual SgName get_mangled (void) const override;
 
 HEADER_GET_MANGLED_END
 
@@ -372,7 +372,7 @@ HEADER_GET_NAME_START
           This applies to the SgClassType, SgTypedef and the
           SgEnumType (derived from SgNamedType)
        */
-          SgName get_name() const $ROSE_OVERRIDE;
+          SgName get_name() const override;
 HEADER_GET_NAME_END
 
 
@@ -767,7 +767,7 @@ HEADER_MODIFIER_TYPE_START
 #endif
 
       //! Performs final initialization of data members (called by constructors)
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 
 HEADER_MODIFIER_TYPE_END
 
@@ -795,7 +795,7 @@ HEADER_FUNCTION_TYPE_START
        // static SgFunctionType* createType(SgPartialFunctionType *);
 
       //! Performs final initialization of data members (called by constructors)
-          void post_construction_initialization () $ROSE_OVERRIDE;
+          void post_construction_initialization () override;
 
       // Get a const list of input types (types of the parameters list) to this function type (from a cost functionType object)
       //! This is a const convience access function to the STL container of types in the child IR node (SgFunctionParameterTypeList* p_argument_list).
@@ -843,7 +843,7 @@ HEADER_MEMBER_FUNCTION_TYPE_START
           SgMemberFunctionType(SgPartialFunctionType *);
 
       //! Performs final initialization of data members (called by constructors)
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 
 #if 1
       //! Enum for const and volatile function modifiers
@@ -924,7 +924,7 @@ HEADER_MEMBER_FUNCTION_TYPE_END
 
 
 HEADER_PARTIAL_FUNCTION_TYPE_START
-          void post_construction_initialization () $ROSE_OVERRIDE;
+          void post_construction_initialization () override;
 HEADER_PARTIAL_FUNCTION_TYPE_END
 
 
@@ -952,8 +952,8 @@ HEADER_TYPE_COMPLEX_TYPE_START
        // static $CLASSNAME* createType(SgType* base_type);
           static $CLASSNAME* createType(SgType* base_type, SgExpression* optional_fortran_type_kind = NULL);
        // SKW (3/1/2011): Added these explicit declarations since we no longer build them automatically
-          virtual SgExpression* get_type_kind () const $ROSE_OVERRIDE;
-          virtual void set_type_kind ( SgExpression* type_kind ) $ROSE_OVERRIDE;
+          virtual SgExpression* get_type_kind () const override;
+          virtual void set_type_kind ( SgExpression* type_kind ) override;
 HEADER_TYPE_COMPLEX_TYPE_END
 
 // SK(08/20/2015): SgTypeTuple implementation
@@ -991,7 +991,7 @@ HEADER_TYPE_STRING_TYPE_START
           static $CLASSNAME* createType(SgExpression*, SgExpression* optional_fortran_type_kind = NULL);
 
       //! Performs final initialization of data members (called by constructors)
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 HEADER_TYPE_STRING_TYPE_END
 
 HEADER_TYPE_DEFAULT_TYPE_START
@@ -1067,6 +1067,10 @@ HEADER_ADA_MODULAR_TYPE_END
 HEADER_ADA_TASK_TYPE_START
           //~ SgName get_name() const;
 HEADER_ADA_TASK_TYPE_END
+
+HEADER_ADA_PROTECTED_TYPE_START
+          //~ SgName get_name() const;
+HEADER_ADA_PROTECTED_TYPE_END
 
 HEADER_ADA_DISCRIMINATED_TYPE_START
   //~ SgName get_name() const;
@@ -2421,7 +2425,16 @@ SgType::handledUsingLocalTable(SgType* t)
      bool returnValue = false;
 
   // DQ (9/3/2012): I think this should be modified to include SgTemplateType as well.
-     if (isSgEnumType(t) != NULL || isSgClassType(t) != NULL || isSgTypedefType(t) != NULL)
+  // PP (11/22/2021): added ada types.
+  //                  Question: should this be named types (isSgNamedType) in general?
+     if (  isSgEnumType(t) != NULL
+        || isSgClassType(t) != NULL
+        || isSgTypedefType(t) != NULL
+        || isSgAdaTaskType(t) != NULL
+        || isSgAdaProtectedType(t) != NULL
+        || isSgAdaDiscriminatedType(t) != NULL
+        //~ || isSgAdaFormalType(t) != NULL /* todo: add to local type tables */
+        )
         {
           returnValue = true;
         }
@@ -6732,6 +6745,12 @@ SOURCE_ADA_ACCESS_TYPE_END
 
 SOURCE_ADA_TASK_TYPE_START
 
+SgName
+SgAdaTaskType::get_name() const {
+    return SageInterface::get_name(get_declaration());
+}
+
+
 /*
 SgName
 SgAdaTaskType::get_mangled(void) const {
@@ -6743,6 +6762,26 @@ SgAdaTaskType::get_mangled(void) const {
 */
 
 SOURCE_ADA_TASK_TYPE_END
+
+SOURCE_ADA_PROTECTED_TYPE_START
+
+SgName
+SgAdaProtectedType::get_name() const {
+    return SageInterface::get_name(get_declaration());
+}
+
+
+/*
+SgName
+SgAdaTaskType::get_mangled(void) const {
+    string name("t'");
+
+    name.append(get_decl()->get_task_name());
+    return SgName(name);
+}
+*/
+
+SOURCE_ADA_PROTECTED_TYPE_END
 
 
 SOURCE_ADA_DISCRIMINATED_TYPE_START
@@ -6836,6 +6875,12 @@ SgAdaFloatType::get_mangled(void) const {
 SOURCE_ADA_FLOAT_TYPE_END
 
 SOURCE_ADA_FORMAL_TYPE_START
+
+SgName
+SgAdaFormalType::get_name() const {
+    return SageInterface::get_name(get_declaration());
+}
+
 
 /*
 SgName
@@ -8848,6 +8893,7 @@ SgAdaAccessType::createType (SgType* base_type, SgExpression* /*optional_fortran
 SOURCE_CREATE_TYPE_FOR_ADA_ACCESS_TYPE_END
 
 SOURCE_CREATE_TYPE_FOR_ADA_FORMAL_TYPE_START
+#if 0
 SgAdaFormalType*
 SgAdaFormalType::createType(SgType* type, SgExpression* /*optional_fortran_type_kind*/)
 {
@@ -8858,6 +8904,17 @@ SgAdaFormalType::createType(SgType* type, SgExpression* /*optional_fortran_type_
   get_globalTypeTable()->insert_type(name, res);
   return res;
 }
+#endif /* 0 */
+
+SgAdaFormalType*
+SgAdaFormalType::createType(SgAdaFormalTypeDecl* decl, SgExpression* /*optional_fortran_type_kind*/)
+{
+  ASSERT_not_null(decl);
+
+  SgAdaFormalType* res = decl->get_type();
+
+  return res ? res : new SgAdaFormalType(decl);
+}
 SOURCE_CREATE_TYPE_FOR_ADA_FORMAL_TYPE_END
 
 SOURCE_CREATE_TYPE_FOR_ADA_TASK_TYPE_START
@@ -8865,6 +8922,7 @@ SOURCE_CREATE_TYPE_FOR_ADA_TASK_TYPE_START
 SgAdaTaskType*
 SgAdaTaskType::createType (SgDeclarationStatement* decl, SgExpression* /*optional_fortran_type_kind*/)
 {
+#if 0
   SgAdaTaskType    proto(decl); // \pp not sure if stack allocation works
   SgName           name = proto.get_mangled();
   SgType*          ty   = get_globalTypeTable()->lookup_type(name);
@@ -8877,15 +8935,47 @@ SgAdaTaskType::createType (SgDeclarationStatement* decl, SgExpression* /*optiona
 
   get_globalTypeTable()->insert_type(name, res);
   return res;
+#endif
+
+  SgAdaTaskType* res = nullptr;
+
+  if (SgAdaTaskSpecDecl* tskspec = isSgAdaTaskSpecDecl(decl))
+    res = tskspec->get_type();
+  else if (SgAdaTaskTypeDecl* tsktype = isSgAdaTaskTypeDecl(decl))
+    res = tsktype->get_type();
+  else
+    ROSE_ASSERT(!"Ada task types can be created from SgAdaTaskSpecDecl or SgAdaTaskSpecDecl only!");
+
+  return res ? res : new SgAdaTaskType(decl);
 }
 
 SOURCE_CREATE_TYPE_FOR_ADA_TASK_TYPE_END
+
+SOURCE_CREATE_TYPE_FOR_ADA_PROTECTED_TYPE_START
+
+SgAdaProtectedType*
+SgAdaProtectedType::createType (SgDeclarationStatement* decl, SgExpression* /*optional_fortran_type_kind*/)
+{
+  SgAdaProtectedType* res = nullptr;
+
+  if (SgAdaProtectedSpecDecl* tskspec = isSgAdaProtectedSpecDecl(decl))
+    res = tskspec->get_type();
+  else if (SgAdaProtectedTypeDecl* tsktype = isSgAdaProtectedTypeDecl(decl))
+    res = tsktype->get_type();
+  else
+    ROSE_ASSERT(!"Ada task types can be created from SgAdaProtectedSpecDecl or SgAdaProtectedSpecDecl only!");
+
+  return res ? res : new SgAdaProtectedType(decl);
+}
+
+SOURCE_CREATE_TYPE_FOR_ADA_PROTECTED_TYPE_END
 
 SOURCE_CREATE_TYPE_FOR_ADA_DISCRIMINATED_TYPE_START
 
 SgAdaDiscriminatedType*
 SgAdaDiscriminatedType::createType (SgAdaDiscriminatedTypeDecl* decl, SgExpression* /*optional_fortran_type_kind*/)
 {
+#if 0
   SgAdaDiscriminatedType proto(decl); // \pp not sure if stack allocation works
   SgName                 name = proto.get_mangled();
   SgType*                ty   = get_globalTypeTable()->lookup_type(name);
@@ -8897,7 +8987,13 @@ SgAdaDiscriminatedType::createType (SgAdaDiscriminatedTypeDecl* decl, SgExpressi
   SgAdaDiscriminatedType* res = new SgAdaDiscriminatedType(decl);
 
   get_globalTypeTable()->insert_type(name, res);
-  return res;
+#endif
+
+  ASSERT_not_null(decl);
+
+  SgAdaDiscriminatedType* res = decl->get_type();
+
+  return res ? res : new SgAdaDiscriminatedType(decl);
 }
 
 SOURCE_CREATE_TYPE_FOR_ADA_DISCRIMINATED_TYPE_END
@@ -8933,9 +9029,9 @@ SgAdaDerivedType::createType (SgType* base_type, SgExpression* /*optional_fortra
   // ===> do not unify them.
   ROSE_ASSERT(base_type != NULL);
   SgAdaDerivedType* res  = new SgAdaDerivedType(base_type);
-  SgName            name = res->get_mangled();
+  //~ SgName            name = res->get_mangled();
 
-  get_globalTypeTable()->insert_type(name, res);
+  // get_globalTypeTable()->insert_type(name, res);
   return res;
 }
 
@@ -8946,7 +9042,7 @@ SOURCE_CREATE_TYPE_FOR_ADA_MODULAR_TYPE_START
 SgAdaModularType*
 SgAdaModularType::createType(SgExpression* moduloexpr, SgExpression* /*optional_fortran_type_kind*/)
 {
-  SgAdaModularType proto(moduloexpr); // \pp not sure if stack allocation works
+  SgAdaModularType proto{moduloexpr}; // \pp not sure if stack allocation works
   SgName           name = proto.get_mangled();
   SgType*          ty = get_globalTypeTable()->lookup_type(name);
 

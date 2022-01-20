@@ -256,16 +256,26 @@ namespace CodeThorn {
     }
   }
 
+  void VariableIdMappingExtended::registerReturnVariable() {
+    _returnVarId=createUniqueTemporaryVariableId(string("$return"));
+  }
+
+  VariableId VariableIdMappingExtended::getReturnVariableId() {
+    return _returnVarId;
+  }
+
+  bool VariableIdMappingExtended::isReturnVariableId(VariableId varId) {
+    return varId==getReturnVariableId();
+  }
+
   CodeThorn::TypeSize VariableIdMappingExtended::registerClassMembers(SgClassType* classType, CodeThorn::TypeSize offset, bool replaceClassDataMembersMode) {
     ROSE_ASSERT(offset==0); // this parameter can be removed
 
-    //cout<<"DEBUG: register class members/2:"<<endl;
     auto result=memberVariableDeclarationsList(classType);
     // if member variables of class cannot be determined, return
     // unknown size. The number of class members can also be 0,
     // therefore the additional parameter is used to cover all other
     // cases.
-    //cout<<"DEBUG: register class members/2 (2):"<<endl;
     if(result.first==false)
       return unknownSizeValue();
     else
@@ -276,7 +286,6 @@ namespace CodeThorn {
     ROSE_ASSERT(offset==0); // this parameter can be removed and turned into a local variable
     ROSE_ASSERT(classType!=nullptr);
     CodeThorn::TypeSize totalSize=0;
-    //cout<<"DEBUG: Class members of: "<<classType->unparseToString()<<":"<<memberList.size()<<endl;
     if(replaceClassDataMembersMode) {
       // remove current entries of classType (will be replaced with new ones)
       removeDataMembersOfClass(classType);
@@ -285,7 +294,6 @@ namespace CodeThorn {
     for(auto memberVarDecl : memberList) {
       SgSymbol* sym=SgNodeHelper::getSymbolOfVariableDeclaration(memberVarDecl);
       if(sym->get_symbol_basis()!=0) {
-        //cout<<"DEBUG: Register member decl:"<<memberVarDecl->unparseToString()<<endl;
         registerNewSymbol(sym);
         SgType* type=sym->get_type();
         VariableId varId=variableId(sym);
@@ -293,7 +301,6 @@ namespace CodeThorn {
         getVariableIdInfoPtr(varId)->variableScope=VS_MEMBER;
         setOffset(varId,offset);
         ROSE_ASSERT(varId.isValid());
-        //cout<<"DEBUG: Type:"<<type->unparseToString()<<endl;
         CodeThorn::TypeSize typeSize=unknownSizeValue();
         if(SgClassType* memberClassType=isSgClassType(type)) {
           getVariableIdInfoPtr(varId)->aggregateType=AT_STRUCT;
@@ -306,12 +313,10 @@ namespace CodeThorn {
           typeSize=determineTypeSize(type);
           setTypeSize(type,typeSize);
           auto numElements=determineNumberOfArrayElements(arrayType);
-          //cout<<"DEBUG: registerClassMembers: set numElements: "<<numElements<<endl;
           setNumberOfElements(varId,numElements);
           SgType* elementType=SageInterface::getArrayElementType(arrayType);
           setElementSize(varId,determineTypeSize(elementType));
           setTotalSize(varId,typeSize);
-          //cout<<"DEBUG: registerClassMembers: arraytype: "<<varIdInfoToString(varId)<<" set numElements: "<<numElements<<endl;
         } else {
           // only built-in scalar types
           typeSize=determineTypeSize(type);
@@ -359,7 +364,6 @@ namespace CodeThorn {
 
   void VariableIdMappingExtended::setTypeSize(SgType* type, CodeThorn::TypeSize newTypeSize) {
     auto typeIter=_typeSize.find(type);
-    //cout<<"DEBUG: VariableIdMappingExtended::setTypeSize:"<<type->unparseToString()<<":"<<newTypeSize<<":"<<AstTerm::astTermWithNullValuesToString(type)<<endl;
     if(typeIter==_typeSize.end()) {
       // new entry
       _typeSize[type]=newTypeSize;
@@ -394,22 +398,15 @@ namespace CodeThorn {
   }
 
   CodeThorn::TypeSize VariableIdMappingExtended::getTypeSize(SgType* type) {
-    //cout<<"DEBUG: VIME:getTypeSize:"<<type->class_name()<<endl;
     type=strippedType(type);
-    //cout<<"DEBUG: VIME:getTypeSize(stripped):"<<type->class_name()<<endl;
     auto typeIter=_typeSize.find(type);
     if(typeIter!=_typeSize.end()) {
-      //cout<<"DEBUG: known type with size: "<<(*typeIter).first->unparseToString()<<":"<<(*typeIter).second<<endl;
-
       return (*typeIter).second;
     } else {
       BuiltInType biTypeId=TypeSizeMapping::determineBuiltInTypeId(type);
-      //cout<<"DEBUG: builtin-case: "<<biTypeId<<endl;
       if(biTypeId!=BITYPE_UNKNOWN) {
-        //cout<<"DEBUG: known size:"<<getBuiltInTypeSize(biTypeId)<<endl;
         return getBuiltInTypeSize(biTypeId);
       } else {
-        //cout<<"DEBUG: unknown size"<<endl;
         return unknownSizeValue();
       }
     }
@@ -545,10 +542,8 @@ namespace CodeThorn {
     if(type==nullptr)
       return;
     type=strippedType(type);// strip typedef and const
-    //cout<<"DEBUG:  setVarIdInfoFrom type: "<<type->unparseToString()<<endl;
     if(SgClassType* classType=isSgClassType(type)) {
       getVariableIdInfoPtr(varId)->aggregateType=AT_STRUCT;
-      //cout<<"DEBUG: register class members:"<<endl;
       CodeThorn::TypeSize totalTypeSize;
       auto result=memberVariableDeclarationsList(classType);
       if(result.first) {
@@ -563,7 +558,6 @@ namespace CodeThorn {
       getVariableIdInfoPtr(varId)->aggregateType=AT_ARRAY;
       SgType* elementType=SageInterface::getArrayElementType(arrayType);
       // the array base type must have been declared before or it is a pointer type
-      //cout<<"DEBUG: register array type with element type:"<<elementType->unparseToString()<<endl;
       setElementSize(varId,determineTypeSize(elementType));
       setNumberOfElements(varId,determineNumberOfArrayElements(arrayType));
 
@@ -587,14 +581,12 @@ namespace CodeThorn {
       setTypeSize(type,typeSize);
       setTotalSize(varId,typeSize);
     } else {
-      //cout<<"DEBUG: register variable with built-in type : "<<type->unparseToString()<<":"<<varIdInfo->getVarDecl()->unparseToString()<<endl;
       // built-in type
       getVariableIdInfoPtr(varId)->aggregateType=AT_SINGLE;
       BuiltInType biType=TypeSizeMapping::determineBuiltInTypeId(type);
       setElementSize(varId,typeSizeMapping.getBuiltInTypeSize(biType));
       setNumberOfElements(varId,1);
       setTotalSize(varId,getElementSize(varId));
-      //cout<<"DEBUG: total size: "<<getVariableIdInfoPtr(varId)->totalSize<<endl;
     }
   }
 
@@ -663,6 +655,7 @@ namespace CodeThorn {
     initTypeSizes();
     computeTypeSizes(); // currently does not compute any typesizes
     registerClassMembersNew();
+    registerReturnVariable();
     
     int ct=0;
     for(auto classDef:_memPoolTraversal.classDefinitions) {
@@ -692,17 +685,15 @@ namespace CodeThorn {
           if(isMemberVariableDeclaration(varDecl))
             continue;
 	  Sg_File_Info* fi=varDecl->get_file_info();
-	  logger[TRACE]<<"DEBUG: varDecl: "<<varDecl<<" parent:"<<varDecl->get_parent()<<" file_id:"<<fi->get_file_id()<<" AST:"<<AstTerm::astTermWithNullValuesToString(varDecl)<<endl;
+	  logger[TRACE]<<"varDecl: "<<varDecl<<" parent:"<<varDecl->get_parent()<<" file_id:"<<fi->get_file_id()<<" AST:"<<AstTerm::astTermWithNullValuesToString(varDecl)<<endl;
           addVariableDeclaration(varDecl);
-          logger[TRACE]<<"DEBUG: registering var decl: "<<++numVarDecls<<":"<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<":"<<varDecl->unparseToString()<<endl;
+          logger[TRACE]<<"registering var decl: "<<++numVarDecls<<":"<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<":"<<varDecl->unparseToString()<<endl;
         }
         if(SgFunctionDefinition* funDef=isSgFunctionDefinition(*i)) {
-          //cout<<"DEBUG: fun def : "<<SgNodeHelper::sourceFilenameLineColumnToString(*i)<<":"<<funDef->unparseToString()<<endl;
           std::vector<SgInitializedName *> & funFormalParams=SgNodeHelper::getFunctionDefinitionFormalParameterList(*i);
 	  int paramNr=0;
           for(auto initName : funFormalParams) {
 	    paramNr++;
-            //cout<<"DEBUG: registering param: "<<initName->unparseToString()<<endl;
             SgSymbol* sym=SgNodeHelper::getSymbolOfInitializedName(initName);
             if(symbolExists(sym)) {
 	      stringstream ss;
@@ -713,9 +704,14 @@ namespace CodeThorn {
             }
             if(sym->get_symbol_basis()!=0) {
               registerNewSymbol(sym);
+              
               VariableId varId=variableId(sym);
               getVariableIdInfoPtr(varId)->variableScope=VS_FUNPARAM; // formal parameter declaration
-              setVarIdInfoFromType(varId);
+              getVariableIdInfoPtr(varId)->setTypeFromInitializedName(initName);
+              SgType* type=getVariableIdInfoPtr(varId)->getType();
+              if(type) {
+                setVarIdInfoFromType(varId);
+              }
               numFunctionParams++;
             } else {
               appendErrorReportLine(SgNodeHelper::locationToString(funDef)+": no symbol basis found for function parameter nr "+std::to_string(paramNr)+" (starting at 1)");
@@ -738,12 +734,10 @@ namespace CodeThorn {
   void VariableIdMappingExtended::addVariableDeclaration(SgVariableDeclaration* varDecl) {
     SgSymbol* sym=SgNodeHelper::getSymbolOfVariableDeclaration(varDecl);
     if(sym) {
-      //cout<<"DEBUG: computeVariableSymbolMapping2: addVariableDeclaration: "<<varDecl->unparseToString()<<": sym="<<sym<<endl;
       if(sym->get_symbol_basis()!=0) {
 	VariableIdInfo* vidInfo=0;
 	if(symbolExists(sym)) {
 	  vidInfo=getVariableIdInfoPtr(variableId(sym));
-	  //cout<<"DEBUG: VID: found symbol again: "<<sym->unparseToString();
 	} else {
 	  registerNewSymbol(sym);
 	  vidInfo=getVariableIdInfoPtr(variableId(sym));
@@ -802,7 +796,6 @@ namespace CodeThorn {
         numElems=arrayType->get_number_of_elements();
       }
     }
-    //cout<<"DEBUG:VariableIdMappingExtended::determineNumberOfArrayElements:"<<arrayType->unparseToString()<<" size: "<<numElems<<endl;
     return numElems;
   }
 
@@ -820,13 +813,10 @@ namespace CodeThorn {
         SgType* elementType=SageInterface::getArrayElementType(arrayType);
         CodeThorn::TypeSize elementTypeSize=determineTypeSize(elementType);
         CodeThorn::TypeSize numberOfElements=determineNumberOfArrayElements(arrayType);
-        //cout<<"DEBUG: arraytype: elementTypeSize: "<<elementTypeSize<<" numElements: "<<numberOfElements<<endl;
         if(numberOfElements!=unknownSizeValue()&&elementTypeSize!=unknownSizeValue()) {
           CodeThorn::TypeSize totalArraySize=elementTypeSize*numberOfElements;
-          //cout<<"DEBUG: total array size: "<<totalArraySize<<endl;
           return totalArraySize;
         } else {
-          //cout<<"DEBUG: array size unknown: "<<type->unparseToString()<<":"<<numberOfElements<<" * "<<elementTypeSize<<endl;
           return unknownSizeValue();
         }
       } else {
@@ -972,7 +962,6 @@ namespace CodeThorn {
   }
 
   void VariableIdMappingExtended::memOffsetRemap(VariableId memRegId, VariableId varId, int32_t remapIndex, CodeThorn::TypeSize regionOffset, CodeThorn::TypeSize remappedOffset, IndexRemappingEnum mappingType) {
-    //cout<<"DEBUG: :memOffsetRemap:"<<varId.toString(this)<<": "<<regionOffset<<" -> "<<remappedOffset<<" ("<<mappingType<<")"<<endl;
     switch(getVariableIdInfo(varId).aggregateType) {
     case AT_STRUCT: {
       registerMapping(memRegId, regionOffset, remappedOffset, mappingType);
@@ -980,12 +969,10 @@ namespace CodeThorn {
       for(auto memberVarId : members) {
         CodeThorn::TypeSize mVarOffset=getOffset(memberVarId);
         if(mVarOffset==unknownSizeValue()) {
-          //cout<<"DEBUG: skipping2"<<endl;
           return; // skip remapping for rest of type if offset is unknown
         }
         regionOffset+=mVarOffset;
         remappedOffset+=mVarOffset;
-        //cout<<"DEBUG: :memOffsetRemap(REK):"<<memberVarId.toString(this)<<": "<<regionOffset<<" -> "<<remappedOffset<<" ("<<mappingType<<")"<<endl;
         memOffsetRemap(memRegId,memberVarId,remapIndex,regionOffset,remappedOffset,mappingType);
       }
       break;
@@ -994,7 +981,6 @@ namespace CodeThorn {
     case AT_STRING_LITERAL: {
       auto elemSize=getElementSize(varId);
       if(elemSize==unknownSizeValue()) {
-        //cout<<"DEBUG: skipping1"<<endl;
         return; // skip remapping for rest of type if elemSize is unknown
       }
       CodeThorn::TypeSize regionStartOffset=regionOffset;
@@ -1043,7 +1029,6 @@ namespace CodeThorn {
   void VariableIdMappingExtended::registerMapping(VariableId varId, CodeThorn::TypeSize regionOffset,CodeThorn::TypeSize remappedOffset, IndexRemappingEnum mappingType) {
     ROSE_ASSERT(varId.isValid());
     _offsetAbstractionMapping[varId][regionOffset]=OffsetAbstractionMappingEntry(remappedOffset,mappingType);
-    //cout<<"DEBUG: :registered:"<<varId.toString(this)<<": "<<regionOffset<<" -> "<<_offsetAbstractionMapping[varId][regionOffset].getRemappedOffset()<<" ("<<mappingType<<")"<<endl;
   }
   VariableIdMappingExtended::OffsetAbstractionMappingEntry VariableIdMappingExtended::getOffsetAbstractionMappingEntry(VariableId varId, CodeThorn::TypeSize regionOffset) {
     ROSE_ASSERT(varId.isValid());

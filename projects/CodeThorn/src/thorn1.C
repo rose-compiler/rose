@@ -89,36 +89,6 @@ void configureRersSpecialization() {
 #endif
 }
 
-Solver* createSolver(CodeThornOptions& ctOpt) {
-  Solver* solver = nullptr;
-  // solver "factory"
-  switch(ctOpt.solver) {
-  case 5 :  {  
-    solver = new Solver5(); break;
-  }
-  case 16 :  {  
-    solver = new Solver16(); break; // variant of solver5
-  }
-  case 8 :  {  
-    solver = new Solver8(); break;
-  }
-  case 10 :  {  
-    solver = new Solver10(); break;
-  }
-  case 11 :  {  
-    solver = new Solver11(); break;
-  }
-  case 12 :  {  
-    solver = new Solver12(); break;
-  }
-  default :  { 
-    logger[ERROR] <<"Unknown solver ID: "<<ctOpt.solver<<endl;
-    exit(1);
-  }
-  }
-  return solver;
-}
-
 int main( int argc, char * argv[] ) {
   try {
     ROSE_INITIALIZE;
@@ -162,7 +132,7 @@ int main( int argc, char * argv[] ) {
     IOAnalyzer* analyzer=CodeThorn::CodeThornLib::createAnalyzer(ctOpt,ltlOpt); // sets ctOpt,ltlOpt in analyzer
     CodeThorn::CodeThornLib::optionallyRunInternalChecks(ctOpt,argc,argv);
     analyzer->configureOptions(ctOpt,ltlOpt,parProOpt);
-    analyzer->setSolver(createSolver(ctOpt));
+    analyzer->setSolver(CodeThornLib::createSolver(ctOpt));
     analyzer->setOptionContextSensitiveAnalysis(ctOpt.contextSensitive);
     CodeThorn::CodeThornLib::optionallySetRersMapping(ctOpt,ltlOpt,analyzer);
     tc.stopTimer();
@@ -217,7 +187,8 @@ int main( int argc, char * argv[] ) {
     
     ctOpt.generateReports=true;
     CodeThorn::CodeThornLib::optionallyGenerateExternalFunctionsFile(ctOpt, analyzer->getFunctionCallMapping());
-    AnalysisReporting::generateUnusedVariablesReport(ctOpt,analyzer);
+    AnalysisReporting anaRep;
+    anaRep.generateUnusedVariablesReport(ctOpt,analyzer);
 
     tc.startTimer();tc.stopTimer();
 

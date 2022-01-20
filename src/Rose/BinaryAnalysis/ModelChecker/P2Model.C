@@ -168,6 +168,86 @@ commandLineSwitches(Settings &settings) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Supporting functions
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+// Saturating addition.
+//
+// Add the signed value to the unsigned base, returning an unsigned result. If the result would overflow then return either
+// zero or the maximum unsigned value, depending on the direction of overflow. The return value is a pair that contains the
+// saturated result and a Boolean indicating whether saturation occured. We have to be careful here because signed integer
+// overflows are undefined behavior in C++11 and earlier -- the compiler can optimize them however it likes, which might not be
+// the 2's complement we're expecting.
+static std::pair<uint64_t /*sum*/, bool /*saturated?*/>
+saturatedAdd(uint64_t base, int64_t delta) {
+    if (0 == delta) {
+        return {base, false};
+    } else if (delta > 0) {
+        uint64_t addend = (uint64_t)delta;
+        if (base + addend < base) {
+            return {~(uint64_t)0, true};
+        } else {
+            return {base + addend, false};
+        }
+    } else {
+        uint64_t subtrahend = (uint64_t)(-delta);
+        if (subtrahend > base) {
+            return {0, true};
+        } else {
+            return {base - subtrahend, false};
+        }
+    }
+}
+
+// Offset an interval by a signed amount.
+//
+// The unsigned address interval is shifted lower or higher according to the signed @p delta value. The endpoints of the
+// returned interval saturate to zero or maximum address if the @p delta causes the interval to partially overflow. If the
+// interval completely overflows (both its least and greatest values overflow) then the empty interval is
+// returned. Shifting an empty address interval any amount also returns the emtpy interval. The return value is clipped
+// by intersecting it with the specified @p limit.
+static AddressInterval shiftAddresses(uint64_t base, const Variables::OffsetInterval &delta, const AddressInterval &limit) {
+    if (delta.isEmpty()) {
+        return AddressInterval();
+    } else {
+        auto loSat = saturatedAdd(base, delta.least());
+        auto hiSat = saturatedAdd(base, delta.greatest());
+        if (loSat.second && hiSat.second) {
+            return AddressInterval();
+        } else {
+            return AddressInterval::hull(loSat.first, hiSat.first) & limit;
+        }
+    }
+}
+
+// Scan through the call stack and try to find a local variable that overlaps all the specified addresses. If more than one
+// such variable exists, return the smallest one, arbitrarily breaking ties. Stack variables are described in terms of their
+// offsets in a call frame w.r.t. a frame pointer, but we search for them using concrete addresses. We also return the concrete
+// addresses where the variable lives on the stack.
+static std::pair<AddressInterval, Variables::StackVariable>
+findStackVariable(const FunctionCallStack &callStack, const AddressInterval &location, const AddressInterval &stackLimits) {
+    AddressInterval foundInterval;
+    Variables::StackVariable foundVariable;
+
+    for (size_t i = 0; i < callStack.size(); ++i) {
+        const FunctionCall &fcall = callStack[i];
+        for (const Variables::StackVariable &var: fcall.stackVariables().values()) {
+            if (AddressInterval varAddrs = shiftAddresses(fcall.initialStackPointer() + fcall.framePointerDelta(),
+                                                          var.interval(), stackLimits)) {
+                if (varAddrs.isContaining(location)) {
+                    if (!foundInterval || varAddrs.size() < foundInterval.size()) {
+                        foundInterval = varAddrs;
+                        foundVariable = var;
+                    }
+                }
+            }
+        }
+    }
+    return {foundInterval, foundVariable};
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Function call stack
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -500,12 +580,30 @@ RiscOperators::checkOobAccess(const BS::SValue::Ptr &addrSVal_, TestMode testMod
             if (AddressInterval referencedRegion = addrSVal->region()) {
                 AddressInterval accessedRegion = AddressInterval::baseSizeSat(*va, nBytes);
                 if (!referencedRegion.isContaining(accessedRegion)) {
+
+                    // Get information about the variable that was intended to be accessed, and the variable (if any) that was
+                    // actually accessed.
+                    FunctionCallStack &callStack = State::promote(currentState())->callStack();
+                    auto whereWhatIntended = findStackVariable(callStack, referencedRegion, stackLimits_);
+                    auto whereWhatActual = findStackVariable(callStack, accessedRegion, stackLimits_);
+                    if (!whereWhatActual.first) {
+                        for (rose_addr_t accessedByteVa: accessedRegion) {
+                            whereWhatActual = findStackVariable(callStack, accessedByteVa, stackLimits_);
+                            if (whereWhatActual.first)
+                                break;
+                        }
+                    }
+
+                    // Optionally throw the tag that describes the OOB access
                     if (!semantics_->filterOobAccess(addrSVal, referencedRegion, accessedRegion, currentInstruction(),
-                                                     testMode, ioMode)) {
+                                                     testMode, ioMode, whereWhatIntended.second, whereWhatIntended.first,
+                                                     whereWhatActual.second, whereWhatActual.first)) {
                         SAWYER_MESG(mlog[DEBUG]) <<"      buffer overflow rejected by user; this one is ignored\n";
                     } else {
                         currentState(BS::State::Ptr());         // indicates that execution failed
-                        throw ThrownTag{OobTag::instance(nInstructions(), testMode, ioMode, currentInstruction(), addrSVal)};
+                        throw ThrownTag{OobTag::instance(nInstructions(), testMode, ioMode, currentInstruction(), addrSVal,
+                                                         whereWhatIntended.second, whereWhatIntended.first,
+                                                         whereWhatActual.second, whereWhatActual.first)};
                     }
                 }
             }
@@ -529,13 +627,14 @@ RiscOperators::pruneCallStack() {
     if (computeMemoryRegions_) {
         const RegisterDescriptor SP = partitioner_.instructionProvider().stackPointerRegister();
         const BS::SValue::Ptr spSValue = peekRegister(SP, undefined_(SP.nBits()));
-        const rose_addr_t sp = spSValue->toUnsigned().get(); // must be concrete
-        FunctionCallStack &callStack = State::promote(currentState())->callStack();
+        if (auto sp = spSValue->toUnsigned()) {
+            FunctionCallStack &callStack = State::promote(currentState())->callStack();
 
-        while (!callStack.isEmpty() && callStack.top().initialStackPointer() < sp) {
-            SAWYER_MESG(mlog[DEBUG]) <<"      returned from " <<callStack.top().function()->printableName() <<"\n";
-            callStack.pop();
-            ++nPopped;
+            while (!callStack.isEmpty() && callStack.top().initialStackPointer() < *sp) {
+                SAWYER_MESG(mlog[DEBUG]) <<"      returned from " <<callStack.top().function()->printableName() <<"\n";
+                callStack.pop();
+                ++nPopped;
+            }
         }
     }
     return nPopped;
@@ -560,7 +659,7 @@ RiscOperators::pushCallStack(const P2::Function::Ptr &callee, rose_addr_t initia
         {
             SAWYER_THREAD_TRAITS::LockGuard lock(variableFinderMutex_);
             lvars = variableFinder_unsync->findStackVariables(partitioner_, callee);
-            frameSize = variableFinder_unsync->functionFrameSize(partitioner_, callee);
+            frameSize = variableFinder_unsync->detectFrameAttributes(partitioner_, callee).size;
         }
         callStack.push(FunctionCall(callee, initialSp, lvars));
         if (frameSize)
@@ -593,60 +692,6 @@ RiscOperators::printCallStack(std::ostream &out) {
     }
 }
 
-// Add the signed delta to the unsigned base and return an unsigned saturated value. We have to be careful here because
-// signed integer overflows are undefined behavior in C++11 and earlier -- the compiler can optimize them however it likes,
-// which might not be the 2's complement we're expecting.
-std::pair<uint64_t /*sum*/, bool /*saturated?*/>
-RiscOperators::saturatedAdd(uint64_t base, int64_t delta) {
-    if (0 == delta) {
-        return {base, false};
-    } else if (delta > 0) {
-        uint64_t addend = (uint64_t)delta;
-        if (base + addend < base) {
-            return {~(uint64_t)0, true};
-        } else {
-            return {base + addend, false};
-        }
-    } else {
-        uint64_t subtrahend = (uint64_t)(-delta);
-        if (subtrahend > base) {
-            return {0, true};
-        } else {
-            return {base - subtrahend, false};
-        }
-    }
-}
-
-AddressInterval
-RiscOperators::shiftAddresses(const AddressInterval &base, int64_t delta, const AddressInterval &limit) {
-    if (base.isEmpty()) {
-        return AddressInterval();
-    } else {
-        auto loSat = saturatedAdd(base.least(), delta);
-        auto hiSat = saturatedAdd(base.greatest(), delta);
-        if (loSat.second && hiSat.second) {
-            return AddressInterval();
-        } else {
-            return AddressInterval::hull(loSat.first, hiSat.first) & limit;
-        }
-    }
-}
-
-AddressInterval
-RiscOperators::shiftAddresses(uint64_t base, const Variables::OffsetInterval &delta, const AddressInterval &limit) {
-    if (delta.isEmpty()) {
-        return AddressInterval();
-    } else {
-        auto loSat = saturatedAdd(base, delta.least());
-        auto hiSat = saturatedAdd(base, delta.greatest());
-        if (loSat.second && hiSat.second) {
-            return AddressInterval();
-        } else {
-            return AddressInterval::hull(loSat.first, hiSat.first) & limit;
-        }
-    }
-}
-
 BS::SValue::Ptr
 RiscOperators::assignRegion(const BS::SValue::Ptr &result_) {
     if (computeMemoryRegions_) {
@@ -654,21 +699,28 @@ RiscOperators::assignRegion(const BS::SValue::Ptr &result_) {
         if (!result->region()) {
             if (auto va = result->toUnsigned()) {
                 FunctionCallStack &callStack = State::promote(currentState())->callStack();
-                AddressInterval found;
-                for (size_t i = 0; i < callStack.size(); ++i) {
-                    const FunctionCall &fcall = callStack[i];
-                    for (const Variables::StackVariable &var: fcall.stackVariables().values()) {
-                        if (AddressInterval varAddrs = shiftAddresses(fcall.initialStackPointer() + fcall.framePointerDelta(),
-                                                                      var.interval(), stackLimits_)) {
-                            if (varAddrs.isContaining(*va)) {
-                                if (!found || varAddrs.size() < found.size())
-                                    found = varAddrs;
-                            }
-                        }
+                auto whereWhat = findStackVariable(callStack, *va, stackLimits_);
+                if (whereWhat.first) {
+                    switch (whereWhat.second.purpose()) {
+                        case Variables::StackVariable::Purpose::RETURN_ADDRESS:
+                        case Variables::StackVariable::Purpose::FRAME_POINTER:
+                        case Variables::StackVariable::Purpose::SPILL_AREA:
+                            // These types of stack areas don't really have hard-and-fast boundaries because the compiler often
+                            // generates code to compute these addresses as part of accessing other areas of the stack frame.
+                            break;
+
+                        case Variables::StackVariable::Purpose::NORMAL:
+                            // The variable is known source-code. These are things we definitely want to check!
+                            result->region(whereWhat.first);
+                            break;
+
+                        case Variables::StackVariable::Purpose::UNKNOWN:
+                        case Variables::StackVariable::Purpose::OTHER:
+                            // We're not quite sure what's here, so treat it as if it were a source code variable.
+                            result->region(whereWhat.first);
+                            break;
                     }
                 }
-                if (found)
-                    result->region(found);
             }
         }
     }
@@ -760,8 +812,8 @@ RiscOperators::finishInstruction(SgAsmInstruction *insn) {
                     // We are calling a function, so push a record onto the call stack.
                     const RegisterDescriptor SP = partitioner_.instructionProvider().stackPointerRegister();
                     const BS::SValue::Ptr spSValue = peekRegister(SP, undefined_(SP.nBits()));
-                    const rose_addr_t sp = spSValue->toUnsigned().get();      // must be concrete
-                    pushCallStack(callee, sp);
+                    if (auto sp = spSValue->toUnsigned())
+                        pushCallStack(callee, *sp);
                 }
             }
         }
@@ -1002,6 +1054,16 @@ SemanticCallbacks::instance(const ModelChecker::Settings::Ptr &mcSettings, const
     return Ptr(new SemanticCallbacks(mcSettings, settings, partitioner));
 }
 
+SmtSolver::Memoizer::Ptr
+SemanticCallbacks::smtMemoizer() const {
+    return smtMemoizer_;
+}
+
+void
+SemanticCallbacks::smtMemoizer(const SmtSolver::Memoizer::Ptr &memoizer) {
+    smtMemoizer_ = memoizer;
+}
+
 void
 SemanticCallbacks::followOnePath(const std::list<ExecutionUnitPtr> &units) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
@@ -1123,9 +1185,16 @@ SemanticCallbacks::createSolver() {
     if (solverName.empty() || "none" == solverName)
         solverName = "best";
     auto solver = SmtSolver::instance(solverName);
-    solver->memoization(settings_.solverMemoization);
+
+    if (settings_.solverMemoization) {
+        if (!smtMemoizer_)
+            smtMemoizer_ = SmtSolver::Memoizer::instance();
+        solver->memoizer(smtMemoizer_);
+    }
+
     if (mcSettings()->solverTimeout)
         solver->timeout(boost::chrono::seconds(*mcSettings()->solverTimeout));
+
     return solver;
 }
 
@@ -1232,11 +1301,6 @@ SemanticCallbacks::findUnit(rose_addr_t va) {
         }
     }
 
-    // We use a separate mutex for the unit_ cache so that only one thread computes this at a time without blocking
-    // threads trying to make progress on other things.  An alternative would be to lock the main mutex, but only when
-    // accessing the cache, and allow the computations to be duplicated with only the first thread saving the result.
-    SAWYER_THREAD_TRAITS::LockGuard lock(unitsMutex_);
-
     if (unit) {
         // We took it from the one path we're following (see above)
         if (*unit->address() != va) {
@@ -1246,60 +1310,73 @@ SemanticCallbacks::findUnit(rose_addr_t va) {
             return ExecutionUnit::Ptr();
         }
         return unit;
+    }
 
-    } else if ((unit = units_.getOrDefault(va))) {
-        // preexisting
 
-    } else {
-        P2::Function::Ptr func = partitioner_.functionExists(va);
-        if (func && boost::ends_with(func->name(), "@plt")) {
-            unit = ExternalFunctionUnit::instance(func, partitioner_.sourceLocations().get(va));
-        } else if (P2::BasicBlock::Ptr bb = partitioner_.basicBlockExists(va)) {
-            // Depending on partitioner settings, sometimes a basic block could have an internal loop. For instance, some x86
-            // instructions have an optional repeat prefix. Since execution units need to know how many steps they are (so we
-            // can inforce the K limit), and since the content of the execution unit needs to be immutable, and since we can't
-            // really re-compute path successors with new data (we would have already thrown away the outgoing state), we have
-            // to make a decision here and now.
-            //
-            // So we evaluate each instruction semantically on a clean state and check that the instruction pointer follows the
-            // instrucitons in the basic block.  If not, we switch to one-instruction-at-a-time mode for this basic block,
-            // which is about half as fast and takes more memory.  By caching our results, we only do this expensive calcultion
-            // once per basic block, not each time a path reaches this block.
-            if (bb->nInstructions() > 0) {
-                auto ops = partitioner_.newOperators(P2::MAP_BASED_MEMORY);
-                ops->solver(createSolver());
-                IS::SymbolicSemantics::RiscOperators::promote(ops)->trimThreshold(mcSettings()->maxSymbolicSize);
-                auto cpu = partitioner_.newDispatcher(ops);
-                const RegisterDescriptor IP = partitioner_.instructionProvider().instructionPointerRegister();
-                for (size_t i = 0; i < bb->nInstructions() - 1; ++i) {
-                    SgAsmInstruction *insn = bb->instructions()[i];
-                    try {
-                        cpu->processInstruction(insn);
-                    } catch (...) {
-                        SAWYER_MESG(mlog[DEBUG]) <<"    " <<bb->printableName() <<" at " <<insn->toString() <<"; switched to insn\n";
-                        unit = BasicBlockUnit::instance(partitioner_, bb);
-                        break;
-                    }
-                    BS::SValue::Ptr actualIp = ops->peekRegister(IP);
-                    rose_addr_t expectedIp = bb->instructions()[i+1]->get_address();
-                    if (actualIp->toUnsigned().orElse(expectedIp+1) != expectedIp) {
-                        SAWYER_MESG(mlog[DEBUG]) <<"    " <<bb->printableName()
-                                                 <<" sequence error after " <<insn->toString() <<"; switched to insn\n";
-                        unit = InstructionUnit::instance(bb->instructions()[0], partitioner_.sourceLocations().get(va));
-                        break;
-                    }
-                }
-            }
-            if (!unit)
-                unit = BasicBlockUnit::instance(partitioner_, bb);
-        } else if (SgAsmInstruction *insn = partitioner_.instructionProvider()[va]) {
-            SAWYER_MESG(mlog[DEBUG]) <<"    no basic block at " <<StringUtility::addrToString(va) <<"; switched to insn\n";
-            unit = InstructionUnit::instance(insn, partitioner_.sourceLocations().get(va));
-        }
+    {
+        // We use a separate mutex for the unit_ cache so that only one tahread computes this at a time without blocking
+        // threads trying to make progress on other things.  An alternative would be to lock the main mutex, but only when
+        // accessing the cache, and allow the computations to be duplicated with only the first thread saving the result.
+        SAWYER_THREAD_TRAITS::LockGuard lock(unitsMutex_);
+        unit = units_.getOrDefault(va);
     }
 
     if (unit)
-        units_.insert(va, unit);
+        return unit;                                    // preexisting
+
+    // Compute the next unit
+    P2::Function::Ptr func = partitioner_.functionExists(va);
+    if (func && boost::ends_with(func->name(), "@plt")) {
+        unit = ExternalFunctionUnit::instance(func, partitioner_.sourceLocations().get(va));
+    } else if (P2::BasicBlock::Ptr bb = partitioner_.basicBlockExists(va)) {
+        // Depending on partitioner settings, sometimes a basic block could have an internal loop. For instance, some x86
+        // instructions have an optional repeat prefix. Since execution units need to know how many steps they are (so we can
+        // inforce the K limit), and since the content of the execution unit needs to be immutable, and since we can't really
+        // re-compute path successors with new data (we would have already thrown away the outgoing state), we have to make a
+        // decision here and now.
+        //
+        // So we evaluate each instruction semantically on a clean state and check that the instruction pointer follows the
+        // instrucitons in the basic block.  If not, we switch to one-instruction-at-a-time mode for this basic block, which is
+        // about half as fast and takes more memory.  By caching our results, we only do this expensive calcultion once per
+        // basic block, not each time a path reaches this block.
+        if (bb->nInstructions() > 0) {
+            auto ops = partitioner_.newOperators(P2::MAP_BASED_MEMORY);
+            ops->solver(createSolver());
+            IS::SymbolicSemantics::RiscOperators::promote(ops)->trimThreshold(mcSettings()->maxSymbolicSize);
+            auto cpu = partitioner_.newDispatcher(ops);
+            const RegisterDescriptor IP = partitioner_.instructionProvider().instructionPointerRegister();
+            for (size_t i = 0; i < bb->nInstructions() - 1; ++i) {
+                SgAsmInstruction *insn = bb->instructions()[i];
+                try {
+                    cpu->processInstruction(insn);
+                } catch (...) {
+                    SAWYER_MESG(mlog[DEBUG]) <<"    " <<bb->printableName() <<" at " <<insn->toString() <<"; switched to insn\n";
+                    unit = BasicBlockUnit::instance(partitioner_, bb);
+                    break;
+                }
+                BS::SValue::Ptr actualIp = ops->peekRegister(IP);
+                rose_addr_t expectedIp = bb->instructions()[i+1]->get_address();
+                if (actualIp->toUnsigned().orElse(expectedIp+1) != expectedIp) {
+                    SAWYER_MESG(mlog[DEBUG]) <<"    " <<bb->printableName()
+                                             <<" sequence error after " <<insn->toString() <<"; switched to insn\n";
+                    unit = InstructionUnit::instance(bb->instructions()[0], partitioner_.sourceLocations().get(va));
+                    break;
+                }
+            }
+        }
+        if (!unit)
+            unit = BasicBlockUnit::instance(partitioner_, bb);
+    } else if (SgAsmInstruction *insn = partitioner_.instructionProvider()[va]) {
+        SAWYER_MESG(mlog[DEBUG]) <<"    no basic block at " <<StringUtility::addrToString(va) <<"; switched to insn\n";
+        unit = InstructionUnit::instance(insn, partitioner_.sourceLocations().get(va));
+    }
+
+    // Save the result, but if some other thread beat us to this point, use their result instead.
+    if (unit) {
+        SAWYER_THREAD_TRAITS::LockGuard lock(unitsMutex_);
+        unit = units_.insertMaybe(va, unit);
+    }
+
     return unit;
 }
 
@@ -1309,8 +1386,10 @@ SemanticCallbacks::nextCodeAddresses(const BS::RiscOperators::Ptr &ops) {
     {
         SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
         if (followingOnePath_) {
-            if (onePath_.empty())
+            if (onePath_.empty()) {
+                SAWYER_MESG(mlog[DEBUG]) <<"reached end of predetermined path\n";
                 return CodeAddresses();
+            }
             nextUnit = onePath_.front();
         }
     }
@@ -1340,6 +1419,8 @@ SemanticCallbacks::nextUnits(const Path::Ptr &path, const BS::RiscOperators::Ptr
 
     // Find next concrete addresses from instruction pointer symbolic expression.
     CodeAddresses next = nextCodeAddresses(ops);
+    if (!next.ip)
+        return {};
     auto ip = IS::SymbolicSemantics::SValue::promote(next.ip)->get_expression();
     if (!next.isComplete) {
         auto tag = ErrorTag::instance(0, "abstract jump", "symbolic address not handled yet", nullptr, ip);
@@ -1360,7 +1441,7 @@ SemanticCallbacks::nextUnits(const Path::Ptr &path, const BS::RiscOperators::Ptr
             case SmtSolver::SAT_YES:
                 // Create the next execution unit
                 if (ExecutionUnit::Ptr unit = findUnit(va)) {
-                    units.push_back({unit, assertion, solver->evidence()});
+                    units.push_back({unit, assertion, solver->evidenceByName()});
                 } else if (settings_.nullRead != TestMode::OFF && va <= settings_.maxNullAddress) {
                     SourceLocation sloc = partitioner_.sourceLocations().get(va);
                     BS::SValue::Ptr addr = ops->number_(partitioner_.instructionProvider().wordSize(), va);
@@ -1396,7 +1477,10 @@ SemanticCallbacks::filterNullDeref(const BS::SValue::Ptr &addr, SgAsmInstruction
 bool
 SemanticCallbacks::filterOobAccess(const BS::SValue::Ptr &addr, const AddressInterval &referencedRegion,
                                    const AddressInterval &accessedRegion, SgAsmInstruction *insn, TestMode testMode,
-                                   IoMode ioMode) {
+                                   IoMode ioMode, const Variables::StackVariable &intendedVariable,
+                                   const AddressInterval &intendedVariableLocation,
+                                   const Variables::StackVariable &accessedVariable,
+                                   const AddressInterval &accessedVariableLocation) {
     return true;
 }
 

@@ -4,10 +4,20 @@
 #include "LanguageRestrictor.h"
 
 namespace CodeThorn {
-  class LanguageRestrictorCppSubset1 : public CodeThorn::LanguageRestrictor {
-public:
-  void initialize();
-};
+
+  class LanguageRestrictorRers : public CodeThorn::LanguageRestrictor {
+  public:
+    void initialize();
+  };
+
+  class LanguageRestrictorC : public CodeThorn::LanguageRestrictorRers {
+  public:
+    void initialize();
+  };
+  
+  class LanguageRestrictorCppSubset1 : public CodeThorn::LanguageRestrictorC {
+  public:
+  };
 
 } // end of namespace CodeThorn
 

@@ -2,6 +2,8 @@
 #define ROSE_SAGE_TREE_BUILDER_H_
 
 #include "general_language_translation.h"
+#include "Tokens.h"
+#include "ATerm/ATermTraversal.h"
 #include <boost/optional.hpp>
 #include <boost/tuple/tuple.hpp>
 
@@ -52,8 +54,6 @@ class SgUseStatement;
 class SgVarRefExp;
 class SgWhileStmt;
 
-enum language_enum{e_language_unknown, e_language_fortran, e_language_jovial};
-
 namespace Rose {
 namespace builder {
 
@@ -76,8 +76,6 @@ struct SourcePosition {
 typedef boost::tuple<SourcePosition, SourcePosition> SourcePositionPair;
 typedef boost::tuple<SourcePosition, SourcePosition, SourcePosition> SourcePositions;
 
-// The global must be initialized before using the SageTreeBuilder class
-// Consider creating a constructor (may not work well with interface for F18/Flang)
 SgGlobal* initialize_global_scope(SgSourceFile* file);
 
 // Create a builder class that does nothing
@@ -92,14 +90,20 @@ public:
 class SageTreeBuilder {
 public:
 
-   // C++11
-   // enum class LanguageEnum{Fortran, Jovial};
-   enum LanguageEnum{e_language_unknown, e_language_fortran, e_language_jovial};
+   enum class LanguageEnum{Fortran, Jovial};
 
-   // C++11
-   // Don't allow default constructor, ...
+   // C++11: disallow default constructor, ...
    SageTreeBuilder() = delete;
-   SageTreeBuilder(SageTreeBuilder::LanguageEnum language) : language_(language) {}
+   SageTreeBuilder(const SageTreeBuilder &) = delete;
+   SageTreeBuilder &operator=(const SageTreeBuilder &) = delete;
+   SageTreeBuilder(SageTreeBuilder &&) = delete;
+   SageTreeBuilder &operator=(SageTreeBuilder &&) = delete;
+
+   SageTreeBuilder(SgSourceFile* source, LanguageEnum language, std::istringstream &tokens);
+
+   const TokenStream& getTokens() {
+     return *tokens_;
+   }
 
    // Default action for a sage tree node is to do nothing.
    template<typename T> void Enter(T* &) {}
@@ -238,18 +242,19 @@ public:
 private:
 
    LanguageEnum language_;
+   SgSourceFile* source_;
+   TokenStream* tokens_;
    TraversalContext context_;
    std::map<const std::string, SgVarRefExp*> forward_var_refs_;
    std::multimap<const std::string, SgPointerType*> forward_type_refs_;
 
-   void setSourcePosition(SgLocatedNode* node, const SourcePosition &start, const SourcePosition &end);
    void importModule(const std::string &module_name);
 
    void reset_forward_type_refs(const std::string &type_name, SgNamedType* type);
 
 public:
-   bool is_Fortran_language() {return (language_ == e_language_fortran);}
-   bool is_Jovial_language()  {return (language_ == e_language_jovial);}
+   bool is_Fortran_language() {return (language_ == LanguageEnum::Fortran);}
+   bool is_Jovial_language()  {return (language_ == LanguageEnum::Jovial);}
 
    const TraversalContext & get_context(void) {return context_;}
    void setContext(SgType* type) {context_.type = type;}
@@ -257,6 +262,10 @@ public:
 
    void setInitializationContext(bool flag) {context_.is_initialization = flag;}
    bool  isInitializationContext()          {return context_.is_initialization;}
+
+   void attachComment(SgLocatedNode* locatedNode);
+   void attachComment(SgLocatedNode* locatedNode, const ATermSupport::PosInfo &pos);
+   void setSourcePosition(SgLocatedNode* node, const SourcePosition &start, const SourcePosition &end);
 
 // Helper function
    bool list_contains(const std::list<LanguageTranslation::FunctionModifier>& lst, const LanguageTranslation::FunctionModifier& item)
@@ -319,7 +328,7 @@ namespace SageBuilderCpp17 {
    SgExpression*  buildFloatVal_nfi(const std::string &);
    SgExpression*  buildComplexVal_nfi(SgExpression* real_value, SgExpression* imaginary_value, const std::string &str);
    SgExpression*  buildExprListExp_nfi();
-   SgExpression*  buildVarRefExp_nfi(std::string &name, SgScopeStatement* scope = NULL);
+   SgExpression*  buildVarRefExp_nfi(std::string &name, SgScopeStatement* scope = nullptr);
    SgExpression*  buildSubtractOp_nfi(SgExpression* lhs, SgExpression* rhs);
    SgExpression*  buildSubscriptExpression_nfi(SgExpression* lower_bound, SgExpression* upper_bound, SgExpression* stride);
    SgExpression*  buildPntrArrRefExp_nfi(SgExpression* lhs, SgExpression* rhs);

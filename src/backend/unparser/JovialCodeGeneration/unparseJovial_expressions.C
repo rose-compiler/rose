@@ -9,12 +9,12 @@
 #endif
 
 
-void Unparse_Jovial::unparseNullptrVal (SgExpression* expr, SgUnparse_Info& info)
+void UnparseJovial::unparseNullptrVal(SgExpression* expr, SgUnparse_Info& info)
   {
      curprint("NULL");
   }
 
-void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_Info& info) 
+void UnparseJovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnparse_Info& info)
   {
     ASSERT_not_null(expr);
 
@@ -79,7 +79,7 @@ void Unparse_Jovial::unparseLanguageSpecificExpression(SgExpression* expr, SgUnp
    }
 
 void
-Unparse_Jovial::unparseJovialBitVal(SgExpression* expr, SgUnparse_Info& info)
+UnparseJovial::unparseJovialBitVal(SgExpression* expr, SgUnparse_Info& info)
   {
      SgJovialBitVal* bitval = isSgJovialBitVal(expr);
      ASSERT_not_null(bitval);
@@ -87,7 +87,7 @@ Unparse_Jovial::unparseJovialBitVal(SgExpression* expr, SgUnparse_Info& info)
   }
 
 void
-Unparse_Jovial::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
+UnparseJovial::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
   {
      SgStringVal* string_val = isSgStringVal(expr);
      ASSERT_not_null(string_val);
@@ -98,7 +98,7 @@ Unparse_Jovial::unparseStringVal(SgExpression* expr, SgUnparse_Info& info)
   }
 
 void
-Unparse_Jovial::unparseAssignOp(SgExpression* expr, SgUnparse_Info& info) 
+UnparseJovial::unparseAssignOp(SgExpression* expr, SgUnparse_Info& info)
   {
      SgAssignOp* op = isSgAssignOp(expr);
      ASSERT_not_null(op);
@@ -122,7 +122,7 @@ Unparse_Jovial::unparseAssignOp(SgExpression* expr, SgUnparse_Info& info)
   }
 
 void
-Unparse_Jovial::unparseBinaryOperator(SgExpression* expr, const char* op, SgUnparse_Info& info)
+UnparseJovial::unparseBinaryOperator(SgExpression* expr, const char* op, SgUnparse_Info& info)
    {
      SgUnparse_Info ninfo(info);
      ninfo.set_operator_name(op);
@@ -130,7 +130,7 @@ Unparse_Jovial::unparseBinaryOperator(SgExpression* expr, const char* op, SgUnpa
    }
 
 void
-Unparse_Jovial::unparseUnaryOperator(SgExpression* expr, const char* op, SgUnparse_Info& info)
+UnparseJovial::unparseUnaryOperator(SgExpression* expr, const char* op, SgUnparse_Info& info)
    {
      SgUnparse_Info ninfo(info);
      ninfo.set_operator_name(op);
@@ -148,7 +148,7 @@ Unparse_Jovial::unparseUnaryOperator(SgExpression* expr, const char* op, SgUnpar
 //  cast expr
 //----------------------------------------------------------------------------
 void
-Unparse_Jovial::unparseCastExp(SgExpression* expr, SgUnparse_Info& info)
+UnparseJovial::unparseCastExp(SgExpression* expr, SgUnparse_Info& info)
    {
      SgCastExp* cast_expr = isSgCastExp(expr);
      ASSERT_not_null(cast_expr);
@@ -226,7 +226,7 @@ Unparse_Jovial::unparseCastExp(SgExpression* expr, SgUnparse_Info& info)
 //----------------------------------------------------------------------------
 
 void
-Unparse_Jovial::unparseSubscriptExpr(SgExpression* expr, SgUnparse_Info& info) 
+UnparseJovial::unparseSubscriptExpr(SgExpression* expr, SgUnparse_Info& info)
    {
      SgSubscriptExpression* sub_expr = isSgSubscriptExpression(expr);
      ASSERT_not_null(sub_expr);
@@ -263,7 +263,7 @@ Unparse_Jovial::unparseSubscriptExpr(SgExpression* expr, SgUnparse_Info& info)
    }
 
 void
-Unparse_Jovial::unparseArrayOp(SgExpression* expr, SgUnparse_Info& info)
+UnparseJovial::unparseArrayOp(SgExpression* expr, SgUnparse_Info& info)
    {
   // Sage node corresponds to array indicing
      SgPntrArrRefExp* arrayRefExp = isSgPntrArrRefExp(expr);
@@ -279,7 +279,7 @@ Unparse_Jovial::unparseArrayOp(SgExpression* expr, SgUnparse_Info& info)
    }
 
 void
-Unparse_Jovial::unparseEqualityOp(SgExpression* expr, SgUnparse_Info& info)
+UnparseJovial::unparseEqualityOp(SgExpression* expr, SgUnparse_Info& info)
    {
      SgEqualityOp* eqOp = isSgEqualityOp(expr);
      ROSE_ASSERT(eqOp);
@@ -300,7 +300,7 @@ Unparse_Jovial::unparseEqualityOp(SgExpression* expr, SgUnparse_Info& info)
    }
 
 void
-Unparse_Jovial::unparseAsteriskShapeExpr(SgExpression* expr, SgUnparse_Info& info) 
+UnparseJovial::unparseAsteriskShapeExpr(SgExpression* expr, SgUnparse_Info& info)
    {
      ASSERT_not_null( isSgAsteriskShapeExp(expr));
 
@@ -308,7 +308,7 @@ Unparse_Jovial::unparseAsteriskShapeExpr(SgExpression* expr, SgUnparse_Info& inf
    }
 
 void
-Unparse_Jovial::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
+UnparseJovial::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
    {
       SgFunctionCallExp* func_call = isSgFunctionCallExp(expr);
       ASSERT_not_null(func_call);
@@ -356,7 +356,7 @@ Unparse_Jovial::unparseFuncCall(SgExpression* expr, SgUnparse_Info& info)
    }
 
 void
-Unparse_Jovial::unparseOverlayExpr(SgExprListExp* overlay, SgUnparse_Info& info)
+UnparseJovial::unparseOverlayExpr(SgExprListExp* overlay, SgUnparse_Info& info)
   {
      ASSERT_not_null(overlay);
 
@@ -408,7 +408,7 @@ Unparse_Jovial::unparseOverlayExpr(SgExprListExp* overlay, SgUnparse_Info& info)
 //----------------------------------------------------------------------------
 
 void
-Unparse_Jovial::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
+UnparseJovial::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
    {
       SgFunctionRefExp* func_ref = isSgFunctionRefExp(expr);
       ASSERT_not_null(func_ref);
@@ -418,7 +418,7 @@ Unparse_Jovial::unparseFuncRef(SgExpression* expr, SgUnparse_Info& info)
    }
 
 void
-Unparse_Jovial::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
+UnparseJovial::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
    {
      SgVarRefExp* var_ref = isSgVarRefExp(expr);
 
@@ -429,7 +429,7 @@ Unparse_Jovial::unparseVarRef(SgExpression* expr, SgUnparse_Info& info)
    }
 
 void
-Unparse_Jovial::unparsePtrDeref(SgExpression* expr, SgUnparse_Info& info)
+UnparseJovial::unparsePtrDeref(SgExpression* expr, SgUnparse_Info& info)
    {
      SgPointerDerefExp* deref = isSgPointerDerefExp(expr);
      ASSERT_not_null(deref);
@@ -464,7 +464,7 @@ Unparse_Jovial::unparsePtrDeref(SgExpression* expr, SgUnparse_Info& info)
    }
 
 void
-Unparse_Jovial::unparseTypeExpr(SgExpression* expr, SgUnparse_Info& info)
+UnparseJovial::unparseTypeExpr(SgExpression* expr, SgUnparse_Info& info)
    {
      SgTypeExpression* type_expr = isSgTypeExpression(expr);
      ASSERT_not_null(type_expr);
@@ -504,16 +504,26 @@ Unparse_Jovial::unparseTypeExpr(SgExpression* expr, SgUnparse_Info& info)
 //----------------------------------------------------------------------------
 
 void
-Unparse_Jovial::unparseAssnInit(SgExpression* expr, SgUnparse_Info& info)
-  {
-     SgAssignInitializer* assn_init = isSgAssignInitializer(expr);
-     ASSERT_not_null(assn_init);
+UnparseJovial::unparseAssnInit(SgExpression* expr, SgUnparse_Info& info)
+{
+  SgAssignInitializer* assn_init = isSgAssignInitializer(expr);
+  ASSERT_not_null(assn_init);
 
-     unparseExpression(assn_init->get_operand(), info);
+  unparseExpression(assn_init->get_operand(), info);
+
+  // unparse comments after the expression
+  const AttachedPreprocessingInfoType* preprocInfo = assn_init->get_attachedPreprocessingInfoPtr();
+  if (preprocInfo) {
+    for (PreprocessingInfo* info : *preprocInfo) {
+      if (info->getRelativePosition() == PreprocessingInfo::after) {
+        curprint(info->getString());
+      }
+    }
   }
+}
 
 void
-Unparse_Jovial::unparseTablePreset(SgExpression* expr, SgUnparse_Info& info)
+UnparseJovial::unparseTablePreset(SgExpression* expr, SgUnparse_Info& info)
   {
      SgJovialTablePresetExp* table_preset = isSgJovialTablePresetExp(expr);
      ASSERT_not_null(table_preset);
@@ -537,7 +547,7 @@ Unparse_Jovial::unparseTablePreset(SgExpression* expr, SgUnparse_Info& info)
   }
 
 void
-Unparse_Jovial::unparsePresetPos(SgExpression* expr, SgUnparse_Info& info)
+UnparseJovial::unparsePresetPos(SgExpression* expr, SgUnparse_Info& info)
   {
      SgJovialPresetPositionExp* pos_preset = isSgJovialPresetPositionExp(expr);
      ASSERT_not_null(pos_preset);
@@ -558,7 +568,7 @@ Unparse_Jovial::unparsePresetPos(SgExpression* expr, SgUnparse_Info& info)
   }
 
 void
-Unparse_Jovial::unparseReplicationOp(SgExpression* expr, SgUnparse_Info& info)
+UnparseJovial::unparseReplicationOp(SgExpression* expr, SgUnparse_Info& info)
   {
      SgReplicationOp* rep_op = isSgReplicationOp(expr);
      ASSERT_not_null(rep_op);
@@ -574,7 +584,7 @@ Unparse_Jovial::unparseReplicationOp(SgExpression* expr, SgUnparse_Info& info)
 //----------------------------------------------------------------------------
 
 void
-Unparse_Jovial::unparseDimInfo(SgExprListExp* dim_info, SgUnparse_Info& info)
+UnparseJovial::unparseDimInfo(SgExprListExp* dim_info, SgUnparse_Info& info)
    {
       ASSERT_not_null(dim_info);
 

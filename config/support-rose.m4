@@ -897,6 +897,7 @@ ROSE_CONFIG_TOKEN="$ROSE_CONFIG_TOKEN $FRONTEND_CXX_COMPILER_VENDOR-$FRONTEND_CX
 # Setup default options for C and C++ compilers compiling ROSE source code.
 ROSE_FLAG_C_OPTIONS
 ROSE_FLAG_CXX_OPTIONS
+ROSE_FLAG_OPTIONS
 
 # This must go after the setup of the headers options
 # Setup the CXX_INCLUDE_STRING to be used by EDG to find the correct headers
@@ -1930,6 +1931,9 @@ fi
 ROSE_SUPPORT_BINARY
 # ****************************************************
 
+# Was inside ROSE_SUPPORT_BINARY. It is no longer used by binary anslysis, but other parts of ROSE use it.
+ROSE_SUPPORT_YICES
+
 ROSE_SUPPORT_PYTHON_API
 
 # Added support for detection of libnuma, a NUMA aware memory allocation mechanism for many-core optimizations.
@@ -2226,18 +2230,6 @@ src/3rdPartyLibraries/qrose/QRoseLib/Makefile
 src/3rdPartyLibraries/qrose/Widgets/Makefile
 src/Makefile
 src/Rose/Makefile
-src/Rose/BinaryAnalysis/Makefile
-src/Rose/BinaryAnalysis/Concolic/Makefile
-src/Rose/BinaryAnalysis/InstructionSemantics2/Makefile
-src/Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/Makefile
-src/Rose/BinaryAnalysis/ModelChecker/Makefile
-src/Rose/BinaryAnalysis/Partitioner2/Makefile
-src/Rose/BinaryAnalysis/Unparser/Makefile
-src/Rose/Color/Makefile
-src/Rose/CommandLine/Makefile
-src/Rose/Diagnostics/Makefile
-src/Rose/FileSystem/Makefile
-src/Rose/StringUtility/Makefile
 src/ROSETTA/Makefile
 src/ROSETTA/src/Makefile
 src/backend/Makefile
@@ -2419,6 +2411,7 @@ tests/nonsmoke/functional/CompileTests/experimental_ada_tests/compile_tests/Make
 tests/nonsmoke/functional/CompileTests/experimental_ada_tests/sageInterfaceAda_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_ada_tests/literalParser_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_ada_tests/preprocessor_tests/Makefile
+tests/nonsmoke/functional/CompileTests/experimental_ada_tests/configurationPragma_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_ada_tests/ROSEGprIntegration_tests/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_ada_tests/ROSEGprIntegration_tests/PackageNaming/Makefile
 tests/nonsmoke/functional/CompileTests/experimental_ada_tests/ROSEGprIntegration_tests/MultiSource/Makefile

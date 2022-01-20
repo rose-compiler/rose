@@ -1,5 +1,6 @@
-
 #include "sage3basic.h"
+#include "sageBuilder.h"
+#include "sageInterfaceAda.h"
 #include "sageGeneric.h"
 
 #include <numeric>
@@ -610,7 +611,7 @@ namespace
   void
   setModifiers(SgDeclarationStatement& dcl, const TypeData& info)
   {
-    setModifiers(dcl, info.hasAbstract, info.hasLimited, info.hasTagged);
+    setModifiers(dcl, info.isAbstract(), info.isLimited(), info.isTagged());
   }
 
   template <class AsisStruct>
@@ -628,24 +629,25 @@ namespace
   }
 
   /// creates a ROSE declaration depending on the provided type/definition
-  struct MakeDeclaration : sg::DispatchHandler<SgDeclarationStatement*>
+  struct TypeDeclMaker : sg::DispatchHandler<SgDeclarationStatement*>
   {
       typedef sg::DispatchHandler<SgDeclarationStatement*> base;
 
-      MakeDeclaration( const std::string& name,
-                       SgScopeStatement& scope,
-                       TypeData basis,
-                       SgDeclarationStatement* incompl
-                     )
-      : base(), dclname(name), dclscope(scope), foundation(basis), incomplDecl(incompl)
+      TypeDeclMaker( const std::string& name,
+                     SgScopeStatement& scope,
+                     TypeData basis,
+                     SgDeclarationStatement* incompl
+                   )
+      : base(nullptr), dclname(name), dclscope(scope), foundation(basis), incomplDecl(incompl)
       {}
 
       void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
 
-      void handle(SgAdaFormalType& n)
+      void handle(SgAdaFormalTypeDecl& n)
       {
-        res = &mkAdaFormalTypeDecl(dclname, n, dclscope);
-        n.set_declaration(res);
+        ADA_ASSERT(n.get_scope() == &dclscope);
+
+        res = &n;
       }
 
       void handle(SgType& n)
@@ -658,6 +660,22 @@ namespace
           res->set_definingDeclaration(res);
           incomplDecl->set_definingDeclaration(res);
         }
+      }
+
+      void handle(SgAdaDerivedType& n)
+      {
+        SgEnumDeclaration* enmdcl = isSgEnumDeclaration(si::ada::baseDeclaration(n));
+
+        if (enmdcl == nullptr)
+        {
+          handle(sg::asBaseType(n));
+          return;
+        }
+
+        SgEnumDeclaration& derivedEnum = mkEnumDefn(dclname, dclscope);
+
+        derivedEnum.set_adaParentType(&n);
+        res = &derivedEnum;
       }
 
       void handle(SgEnumDeclaration& n)
@@ -807,8 +825,11 @@ namespace
   }
 
 
+  //
+  // tasks
+
   void
-  fillTaskBody(Declaration_Struct& decl, SgAdaTaskBody& sgnode, AstContext ctx)
+  fillBody(Declaration_Struct& decl, SgAdaTaskBody& sgnode, AstContext ctx)
   {
     ADA_ASSERT(decl.Declaration_Kind == A_Task_Body_Declaration);
 
@@ -823,6 +844,18 @@ namespace
       LabelAndLoopManager lblmgr;
 
       traverseIDs(stmts, elemMap(), StmtCreator{ctx.scope(sgnode).labelsAndLoops(lblmgr)});
+    }
+  }
+
+  void
+  fillBody(Declaration_Struct& decl, SgAdaProtectedBody& sgnode, AstContext ctx)
+  {
+    ADA_ASSERT(decl.Declaration_Kind == A_Protected_Body_Declaration);
+
+    {
+      ElemIdRange decls = idRange(decl.Protected_Operation_Items);
+
+      traverseIDs(decls, elemMap(), StmtCreator{ctx.scope(sgnode)});
     }
   }
 
@@ -891,6 +924,77 @@ namespace
     ADA_ASSERT(decl.Declaration_Kind == A_Single_Task_Declaration);
 
     return getTaskSpecID(decl.Object_Declaration_View, ctx);
+  }
+
+  //
+  // protected objects
+  //
+  // protected objects are represented as ClassDeclaration and ClassDefinition
+
+  std::pair<SgAdaProtectedSpec*, DeferredBodyCompletion>
+  getProtectedSpec(Element_Struct& elem, AstContext ctx)
+  {
+    SgAdaProtectedSpec&     sgnode = mkAdaProtectedSpec();
+
+    ADA_ASSERT(elem.Element_Kind == A_Definition);
+    logKind("A_Definition");
+
+    Definition_Struct&      def = elem.The_Union.Definition;
+    ADA_ASSERT(def.Definition_Kind == A_Protected_Definition);
+
+    logKind("A_Protected_Definition");
+
+    Protected_Definition_Struct* protectedNode = &def.The_Union.The_Protected_Definition;
+    SgAdaProtectedSpec*     nodePtr  = &sgnode;
+
+    auto deferred = [ctx,nodePtr,protectedNode]() -> void
+                    {
+                      // visible items
+                      {
+                        ElemIdRange range = idRange(protectedNode->Visible_Part_Items);
+
+                        traverseIDs(range, elemMap(), ElemCreator{ctx.scope(*nodePtr)});
+                      }
+
+                      // private items
+                      {
+                        ElemIdRange range = idRange(protectedNode->Private_Part_Items);
+                        ADA_ASSERT((!range.empty()) == protectedNode->Is_Private_Present);
+
+                        traverseIDs(range, elemMap(), ElemCreator{ctx.scope(*nodePtr), true /* private items */});
+                      }
+                    };
+
+    /* unused fields: (Task_Definition_Struct)
+         bool                  Has_Task;
+    */
+    return std::make_pair(&sgnode, deferred);
+  }
+
+  std::pair<SgAdaProtectedSpec*, DeferredBodyCompletion>
+  getProtectedSpecID(Element_ID id, AstContext ctx)
+  {
+    return getProtectedSpec(retrieveAs(elemMap(), id), ctx);
+  }
+
+  std::pair<SgAdaProtectedSpec*, DeferredBodyCompletion>
+  getProtectedSpecForProtectedType(Declaration_Struct& decl, AstContext ctx)
+  {
+    ADA_ASSERT(decl.Declaration_Kind == A_Protected_Type_Declaration);
+
+    if (decl.Type_Declaration_View == 0)
+      return std::make_pair(&mkAdaProtectedSpec(), []()->void {}); // nothing to complete
+
+    return getProtectedSpecID(decl.Type_Declaration_View, ctx);
+  }
+
+
+  std::pair<SgAdaProtectedSpec*, DeferredBodyCompletion>
+  getProtectedSpecForSingleProtected(Declaration_Struct& decl, AstContext ctx)
+  {
+    ADA_ASSERT(decl.Declaration_Kind == A_Single_Protected_Declaration);
+
+    return getProtectedSpecID(decl.Object_Declaration_View, ctx);
   }
 
 
@@ -1702,13 +1806,11 @@ namespace
         {
           logKind(stmt.Statement_Kind == An_Entry_Call_Statement ? "An_Entry_Call_Statement" : "A_Procedure_Call_Statement");
 
-          SgExpression&    funrefexp = getExprID(stmt.Called_Name, ctx);
-          ElemIdRange      range  = idRange(stmt.Call_Statement_Parameters);
-          SgExprListExp&   arglst = traverseIDs(range, elemMap(), ArgListCreator{ctx});
-          SgExprStatement& sgnode = SG_DEREF(sb::buildFunctionCallStmt(&funrefexp, &arglst));
-          SgExpression&    call   = SG_DEREF(sgnode.get_expression());
+          SgExpression&    target = getExprID(stmt.Called_Name, ctx);
+          ElemIdRange      args   = idRange(stmt.Call_Statement_Parameters);
+          SgExpression&    call   = createCall(target, args, true /* call syntax */, ctx);
+          SgExprStatement& sgnode = SG_DEREF(sb::buildExprStatement(&call));
 
-          ADA_ASSERT(arglst.get_parent());
           attachSourceLocation(call, elem, ctx);
           completeStmt(sgnode, elem, ctx);
           /* unused fields:
@@ -2212,6 +2314,166 @@ namespace
     }
   }
 
+  struct InheritedSymbolCreator
+  {
+      InheritedSymbolCreator(SgTypedefType& declDervType, AstContext astctx)
+      : declaredDervivedType(declDervType), ctx(astctx)
+      {}
+
+      void operator()(Element_Struct& elem)
+      {
+        SgDeclarationStatement*       fndcl  = findFirst(asisDecls(), elem.ID);
+        SgFunctionDeclaration*        fn     = isSgFunctionDeclaration(fndcl);
+
+        if (fn == nullptr)
+        {
+          logError() << "unable to find function with Asis element ID " << elem.ID << std::endl;
+          return;
+        }
+
+        SgAdaInheritedFunctionSymbol& sgnode = mkAdaInheritedFunctionSymbol(*fn, declaredDervivedType, ctx.scope());
+        const bool inserted = inheritedSymbols().insert(std::make_pair(std::make_pair(fn, &declaredDervivedType), &sgnode)).second;
+
+        ROSE_ASSERT(inserted);
+    }
+
+    private:
+      SgTypedefType& declaredDervivedType;
+      AstContext     ctx;
+  };
+
+  struct InheritedEnumeratorCreator
+  {
+      InheritedEnumeratorCreator(SgEnumDeclaration& enumDcl, SgEnumDeclaration& orig, AstContext astctx)
+      : derivedDcl(enumDcl), origAA(orig.get_enumerators().begin()), origZZ(orig.get_enumerators().end()), ctx(astctx)
+      {}
+
+      // assuming that the inherited enumerators appear in the same order
+      void operator()(Element_ID id)
+      {
+        ROSE_ASSERT(origAA != origZZ);
+
+        SgInitializedName& origEnum = SG_DEREF(*origAA);
+        SgVarRefExp&       enumInit = SG_DEREF(sb::buildVarRefExp(&origEnum, &ctx.scope()));
+
+        enumInit.unsetTransformation();
+        enumInit.setCompilerGenerated();
+
+        SgType&            enumTy   = SG_DEREF(derivedDcl.get_type());
+        SgInitializedName& sgnode   = mkInitializedName(origEnum.get_name(), enumTy, &enumInit);
+
+        sgnode.set_scope(derivedDcl.get_scope());
+        derivedDcl.append_enumerator(&sgnode);
+        recordNode(asisVars(), id, sgnode);
+
+        ++origAA;
+      }
+
+    private:
+      SgEnumDeclaration&                             derivedDcl;
+      SgInitializedNamePtrList::const_iterator       origAA;
+      const SgInitializedNamePtrList::const_iterator origZZ;
+      AstContext                                     ctx;
+  };
+
+
+  void
+  processInheritedSubroutines( Type_Definition_Struct& tydef,
+                               SgTypedefDeclaration& derivedTypeDcl,
+                               AstContext ctx
+                             )
+  {
+    {
+      SgTypedefType& ty    = SG_DEREF(derivedTypeDcl.get_type());
+      ElemIdRange    range = idRange(tydef.Implicit_Inherited_Subprograms);
+
+      traverseIDs(range, elemMap(), InheritedSymbolCreator{ty, ctx});
+    }
+
+    {
+      ElemIdRange range = idRange(tydef.Implicit_Inherited_Declarations);
+
+      if (!range.empty())
+        logError() << "A derived types implicit declaration is not empty: "
+                   << derivedTypeDcl.get_name()
+                   << std::endl;
+    }
+  }
+
+  std::tuple<SgEnumDeclaration*, SgAdaRangeConstraint*>
+  getBaseEnum(SgType* baseTy)
+  {
+    SgAdaRangeConstraint* constraint = nullptr;
+    SgEnumDeclaration*    basedecl   = nullptr;
+
+    logError() << typeid(*baseTy).name() << std::endl;
+
+    if (SgAdaDerivedType* deriveTy = isSgAdaDerivedType(baseTy))
+    {
+      SgType* ty = deriveTy->get_base_type();
+
+      logError() << typeid(*ty).name() << std::endl;
+
+      if (SgAdaSubtype* subTy = isSgAdaSubtype(ty))
+      {
+        ty = subTy->get_base_type();
+        constraint = isSgAdaRangeConstraint(subTy->get_constraint());
+      }
+
+      if (SgEnumType* enumTy = isSgEnumType(ty))
+        basedecl = isSgEnumDeclaration(enumTy->get_declaration());
+    }
+
+    ROSE_ASSERT(basedecl);
+    return std::make_tuple(basedecl, constraint);
+  }
+
+  void
+  processInheritedEnumValues( Type_Definition_Struct& tydef,
+                              SgEnumDeclaration& derivedTypeDcl,
+                              AstContext ctx
+                            )
+  {
+    {
+      ElemIdRange range = idRange(tydef.Implicit_Inherited_Subprograms);
+
+      //~ traverseIDs(range, elemMap(), InheritedSymbolCreator{declDerivedType, ctx});
+      if (!range.empty())
+        logError() << "A derived enum has implicitly inherited subprograms: "
+                   << derivedTypeDcl.get_name()
+                   << std::endl;
+    }
+
+    {
+      using BaseTuple = std::tuple<SgEnumDeclaration*, SgAdaRangeConstraint*>;
+
+      BaseTuple          baseInfo = getBaseEnum(derivedTypeDcl.get_adaParentType());
+      SgEnumDeclaration& origDecl = SG_DEREF(std::get<0>(baseInfo));
+      ElemIdRange        range    = idRange(tydef.Implicit_Inherited_Declarations);
+
+      // just traverse the IDs, as the elements are not present
+      std::for_each(range.first, range.second, InheritedEnumeratorCreator{derivedTypeDcl, origDecl, ctx});
+    }
+  }
+
+  void
+  processInheritedElementsOfDerivedTypes(TypeData& ty, SgDeclarationStatement& dcl, AstContext ctx)
+  {
+    Type_Definition_Struct& tydef = ty.definitionStruct();
+
+    if (tydef.Type_Kind != A_Derived_Type_Definition)
+      return;
+
+    if (SgTypedefDeclaration* derivedTypeDcl = isSgTypedefDeclaration(&dcl))
+      processInheritedSubroutines(tydef, *derivedTypeDcl, ctx);
+    else if (SgEnumDeclaration* derivedEnumDcl = isSgEnumDeclaration(&dcl))
+      processInheritedEnumValues(tydef, *derivedEnumDcl, ctx);
+    else
+      ROSE_ABORT();
+  }
+
+
+
   SgDeclarationStatement&
   createOpaqueDecl(NameData adaname, Declaration_Struct& decl, Type_Kinds tyKind, AstContext ctx)
   {
@@ -2234,11 +2496,18 @@ namespace
       case An_Ordinary_Fixed_Point_Definition:
       case A_Decimal_Fixed_Point_Definition:
       case An_Access_Type_Definition:
-      case An_Enumeration_Type_Definition:    // \todo untested
       case An_Unconstrained_Array_Definition: // \todo untested
       case A_Constrained_Array_Definition:    // \todo untested
         {
           res = &mkTypeDecl(adaname.ident, mkOpaqueType(), scope);
+          break;
+        }
+
+      case An_Enumeration_Type_Definition:
+        {
+          SgEnumDeclaration& sgnode = mkEnumDecl(adaname.ident, scope);
+
+          res = &sgnode;
           break;
         }
 
@@ -2255,23 +2524,6 @@ namespace
           break;
         }
 
-  /*
-  Not_A_Type_Definition,                 // An unexpected element
-  A_Derived_Type_Definition,             // 3.4(2)     -> Trait_Kinds
-  A_Derived_Record_Extension_Definition, // 3.4(2)     -> Trait_Kinds
-  An_Enumeration_Type_Definition,        // 3.5.1(2)
-  A_Root_Type_Definition,                // 3.5.4(14), 3.5.6(3)
-  //                                               -> Root_Type_Kinds
-  An_Unconstrained_Array_Definition,     // 3.6(2)
-  A_Constrained_Array_Definition,        // 3.6(2)
-
-  //  //|A2005 start
-  An_Interface_Type_Definition,          // 3.9.4      -> Interface_Kinds
-  //  //|A2005 end
-
-  An_Access_Type_Definition            // 3.10(2)    -> Access_Type_Kinds
-  */
-
       default:
         logWarn() << "unhandled opaque type declaration: " << tyKind
                   << std::endl;
@@ -2286,7 +2538,6 @@ namespace
       setTypeModifiers(resdcl, typeview->The_Union.Definition, ctx);
     else if (decl.Declaration_Kind == A_Tagged_Incomplete_Type_Declaration)
       setModifiers(resdcl, false /*abstract*/, false /*limited*/, true /*tagged*/);
-
 
     return resdcl;
   }
@@ -2304,7 +2555,7 @@ namespace
                   : mkProcedureDef(name,    scope, rettype, std::move(complete));
   }
 
-    void completeDiscriminatedDecl( SgAdaDiscriminatedTypeDecl& sgnode,
+  void completeDiscriminatedDecl( SgAdaDiscriminatedTypeDecl& sgnode,
                                   SgDeclarationStatement* nondef,
                                   Element_ID id,
                                   SgDeclarationStatement& child,
@@ -2736,13 +2987,10 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         // we need to check if the SgAdaPackageSpecDecl is directly available
         // or if it is wrapped by an SgAdaGenericDecl node.
         SgNode*               declnode = &lookupNode(asisDecls(), specID);
-        SgAdaPackageSpecDecl* specdcl;
+        SgAdaPackageSpecDecl* specdcl  = isSgAdaPackageSpecDecl(declnode);
 
-        if (isSgAdaPackageSpecDecl(declnode)) {
-          specdcl = isSgAdaPackageSpecDecl(declnode);
-        } else {
-          if (isSgAdaGenericDecl(declnode)) {
-            SgAdaGenericDecl* generic = isSgAdaGenericDecl(declnode);
+        if (!specdcl) {
+          if (SgAdaGenericDecl* generic = isSgAdaGenericDecl(declnode)) {
             if (isSgAdaPackageSpecDecl(generic->get_declaration())) {
               specdcl = isSgAdaPackageSpecDecl(generic->get_declaration());
             } else {
@@ -2755,7 +3003,10 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
           }
         }
 
-        SgAdaPackageBodyDecl& sgnode  = mkAdaPackageBodyDecl(*specdcl);
+        // unhandled package bodies
+        if (specdcl == nullptr) break;
+
+        SgAdaPackageBodyDecl& sgnode  = mkAdaPackageBodyDecl(SG_DEREF(specdcl));
         SgAdaPackageBody&     pkgbody = SG_DEREF(sgnode.get_definition());
 
         //~ recordNode(asisDecls(), elem.ID, sgnode);
@@ -3184,7 +3435,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         TypeData                ty   = getTypeFoundation(adaname.ident, decl, ctx.scope(scope));
         Element_ID              id   = adaname.id();
         SgDeclarationStatement* nondef = findFirst(asisTypes(), id);
-        SgDeclarationStatement& sgdecl = sg::dispatch(MakeDeclaration(adaname.ident, scope, ty, nondef), ty.n);
+        SgDeclarationStatement& sgdecl = sg::dispatch(TypeDeclMaker{adaname.ident, scope, ty, nondef}, &ty.sageNode());
 
         privatize(sgdecl, isPrivate);
         recordNode(asisTypes(), id, sgdecl, nondef != nullptr);
@@ -3194,6 +3445,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         {
           scope.append_statement(&sgdecl);
           ADA_ASSERT(sgdecl.get_parent() == &scope);
+
+          processInheritedElementsOfDerivedTypes(ty, sgdecl, ctx.scope(scope));
         }
         else
         {
@@ -3226,7 +3479,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         Element_ID              id     = adaname.id();
         SgDeclarationStatement* nondef = findFirst(asisTypes(), id);
-        SgDeclarationStatement& sgnode = sg::dispatch(MakeDeclaration(adaname.ident, scope, ty, nondef), ty.n);
+        SgDeclarationStatement& sgnode = sg::dispatch(TypeDeclMaker{adaname.ident, scope, ty, nondef}, &ty.sageNode());
 
         setModifiers(sgnode, ty);
 
@@ -3341,6 +3594,42 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ROSE_ABORT();
       }
 
+    case A_Protected_Type_Declaration:             // 9.4(2)
+      {
+        logKind("A_Protected_Type_Declaration");
+
+        auto               spec    = getProtectedSpecForProtectedType(decl, ctx);
+        NameData           adaname = singleName(decl, ctx);
+        ADA_ASSERT(adaname.fullName == adaname.ident);
+        SgAdaProtectedTypeDecl& sgnode  = mkAdaProtectedTypeDecl(adaname.fullName, SG_DEREF(spec.first), ctx.scope());
+
+        attachSourceLocation(sgnode, elem, ctx);
+        privatize(sgnode, isPrivate);
+        ctx.scope().append_statement(&sgnode);
+        ADA_ASSERT(sgnode.get_parent() == &ctx.scope());
+        recordNode(asisTypes(), adaname.id(), sgnode);
+        recordNode(asisDecls(), adaname.id(), sgnode);
+        recordNode(asisDecls(), elem.ID, sgnode);
+        spec.second();
+
+        /* unused fields:
+             bool                           Has_Protected;
+             Element_ID                     Corresponding_End_Name;
+             Definition_ID                  Discriminant_Part;
+             Definition_ID                  Type_Declaration_View;
+             Declaration_ID                 Corresponding_Type_Declaration;
+             Declaration_ID                 Corresponding_Type_Partial_View
+             Declaration_ID                 Corresponding_First_Subtype;
+             Declaration_ID                 Corresponding_Last_Constraint;
+             Declaration_ID                 Corresponding_Last_Subtype;
+             bool                           Is_Name_Repeated;
+             Declaration_ID                 Corresponding_Declaration;
+             Declaration_ID                 Corresponding_Body
+             Expression_List                Declaration_Interface_List;
+         */
+        break;
+      }
+
     case A_Task_Type_Declaration:                  // 9.1(2)
       {
         logKind("A_Task_Type_Declaration");
@@ -3376,6 +3665,35 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
          break;
       }
 
+    case A_Single_Protected_Declaration:           // 3.3.1(2):9.4(2)
+    {
+        logKind("A_Single_Protected_Declaration");
+
+        auto               spec    = getProtectedSpecForSingleProtected(decl, ctx);
+        NameData           adaname = singleName(decl, ctx);
+        ADA_ASSERT(adaname.fullName == adaname.ident);
+        SgAdaProtectedSpecDecl& sgnode  = mkAdaProtectedSpecDecl(adaname.fullName, SG_DEREF(spec.first), ctx.scope());
+
+        attachSourceLocation(sgnode, elem, ctx);
+        privatize(sgnode, isPrivate);
+        ctx.scope().append_statement(&sgnode);
+        ADA_ASSERT(sgnode.get_parent() == &ctx.scope());
+        //~ recordNode(asisTypes(), adaname.id(), sgnode);
+        recordNode(asisDecls(), elem.ID, sgnode);
+        recordNode(asisDecls(), adaname.id(), sgnode);
+        spec.second();
+        /* unused fields:
+             bool                           Has_Protected;
+             Element_ID                     Corresponding_End_Name;
+             Definition_ID                  Object_Declaration_View
+             bool                           Is_Name_Repeated;
+             Declaration_ID                 Corresponding_Declaration
+             Declaration_ID                 Corresponding_Body
+             Expression_List                Declaration_Interface_List
+        */
+        break;
+      }
+
     case A_Single_Task_Declaration:                // 3.3.1(2):9.1(3)
       {
         logKind("A_Single_Task_Declaration");
@@ -3400,6 +3718,51 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
              Declaration_ID                 Corresponding_Declaration;
              Declaration_ID                 Corresponding_Body;
              Expression_List                Declaration_Interface_List
+        */
+        break;
+      }
+
+    case A_Protected_Body_Declaration:             // 9.4(7)
+      {
+        logKind("A_Protected_Body_Declaration");
+
+        SgAdaProtectedBody&     pobody = mkAdaProtectedBody();
+        NameData                adaname = singleName(decl, ctx);
+        Element_ID              declID  = decl.Corresponding_Declaration;
+        SgDeclarationStatement& podecl = lookupNode(asisDecls(), declID);
+        ADA_ASSERT(adaname.fullName == adaname.ident);
+
+        // \todo \review not sure why a task body could be independently created
+        //~ SgDeclarationStatement* tskdecl = findNode(asisDecls(), declID);
+        //~ if (tskdecl == nullptr)
+          //~ logError() << adaname.fullName << " task body w/o decl" << std::endl;
+
+        //~ SgAdaTaskBodyDecl&      sgnode  = tskdecl ? mkAdaTaskBodyDecl(*tskdecl, tskbody, ctx.scope())
+                                                  //~ : mkAdaTaskBodyDecl(adaname.fullName, tskbody, ctx.scope());
+
+        SgAdaProtectedBodyDecl& sgnode  = mkAdaProtectedBodyDecl(podecl, pobody, ctx.scope());
+
+        attachSourceLocation(sgnode, elem, ctx);
+        privatize(sgnode, isPrivate);
+        ctx.scope().append_statement(&sgnode);
+        ADA_ASSERT(sgnode.get_parent() == &ctx.scope());
+        //~ recordNode(asisDecls(), elem.ID, sgnode);
+        recordNode(asisDecls(), adaname.id(), sgnode);
+
+        placePragmas(decl.Pragmas, ctx, std::ref(pobody));
+
+        fillBody(decl, pobody, ctx);
+
+        /* unused fields:
+             bool                           Has_Task;
+             Pragma_Element_ID_List         Pragmas;
+             Element_ID                     Corresponding_End_Name;
+             Exception_Handler_List         Body_Exception_Handlers;
+             Declaration_ID                 Body_Block_Statement;
+             bool                           Is_Name_Repeated;
+             Declaration_ID                 Corresponding_Declaration;
+             bool                           Is_Subunit;
+             Declaration_ID                 Corresponding_Body_Stub;
         */
         break;
       }
@@ -3433,7 +3796,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         placePragmas(decl.Pragmas, ctx, std::ref(tskbody));
 
-        fillTaskBody(decl, tskbody, ctx);
+        fillBody(decl, tskbody, ctx);
 
         /* unused fields:
              bool                           Has_Task;
@@ -3678,20 +4041,23 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         // an entity that was traversed during the AST creation.  Instead we need
         // to dig up the Corresponding_Name_Declaration from the Expression
         // associated with Generic_Unit_Name. (MS: 8/1/21)
-        auto gunitname = retrieveAs(elemMap(), decl.Generic_Unit_Name);
-        auto gunitexpr = gunitname.The_Union.Expression;
+        NameData                  basename = getNameID(decl.Generic_Unit_Name, ctx);
+        Element_Struct&           baseelem = basename.elem();
+        Expression_Struct&        baseexpr = baseelem.The_Union.Expression;
+        SgDeclarationStatement*   basedecl = findFirst(asisDecls(), baseexpr.Corresponding_Name_Declaration, baseexpr.Corresponding_Name_Definition);
+        SgAdaGenericDecl*         gendecl  = isSgAdaGenericDecl(basedecl);
 
-        SgDeclarationStatement*   gendecl = NULL;
+        if (!gendecl)
+        {
+          logError() << "Unable to generate generic instantiation: " << adaname.fullName
+                     << " base decl: " << basename.fullName << " / " << basename.id()
+                     << "\n" << basedecl
+                     << std::endl;
 
-        // MS: 8/10/21 - in some cases (likely with the standard library) we may
-        // encounter an instantiation with no corresponding declaration.  In that case
-        // the name will be -1.  When that occurs set the declaration statement pointer
-        // to null.  Otherwise, lookup the corresponding declaration.
-        if (gunitexpr.Corresponding_Name_Declaration > 0) {
-           gendecl = &lookupNode(asisDecls(), gunitexpr.Corresponding_Name_Declaration);
+          break;
         }
 
-        SgAdaGenericInstanceDecl& sgnode  = mkAdaGenericInstanceDecl(adaname.ident, *isSgAdaGenericDecl(gendecl), outer);
+        SgAdaGenericInstanceDecl& sgnode  = mkAdaGenericInstanceDecl(adaname.ident, *gendecl, outer);
 
         {
           // generic actual part
@@ -3724,10 +4090,13 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ROSE_ABORT();
       }
 
-    case Not_A_Declaration: /* break; */           // An unexpected element
-    case A_Protected_Type_Declaration:             // 9.4(2)
-    case A_Single_Protected_Declaration:           // 3.3.1(2):9.4(2)
     case A_Discriminant_Specification:             // 3.7(5)   -> Trait_Kinds
+      {
+        // handled in getDiscriminant
+        ROSE_ABORT();
+      }
+
+    case Not_A_Declaration: /* break; */           // An unexpected element
     case A_Generalized_Iterator_Specification:     // 5.5.2    -> Trait_Kinds
     case An_Element_Iterator_Specification:        // 5.5.2    -> Trait_Kinds
     case A_Return_Variable_Specification:          // 6.5
@@ -3736,7 +4105,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case A_Generic_Package_Renaming_Declaration:   // 8.5.5(2)
     case A_Generic_Procedure_Renaming_Declaration: // 8.5.5(2)
     case A_Generic_Function_Renaming_Declaration:  // 8.5.5(2)
-    case A_Protected_Body_Declaration:             // 9.4(7)
     case An_Entry_Body_Declaration:                // 9.5.2(5)
     case An_Entry_Index_Specification:             // 9.5.2(2)
     case A_Procedure_Body_Stub:                    // 10.1.3(3)

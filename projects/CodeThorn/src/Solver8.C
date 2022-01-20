@@ -24,7 +24,7 @@ int Solver8::getId() {
  */
 void Solver8::run() {
   while(!_analyzer->isEmptyWorkList()) {
-    const EState* currentEStatePtr;
+    EStatePtr currentEStatePtr;
     //solver 8
     ROSE_ASSERT(_analyzer->estateWorkListCurrent->size() == 1);
     if (!_analyzer->isEmptyWorkList()) {
@@ -37,7 +37,7 @@ void Solver8::run() {
     Flow edgeSet=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
     for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
       Edge e=*i;
-      list<EState> newEStateList;
+      list<EStatePtr> newEStateList;
       newEStateList=_analyzer->transferEdgeEState(e,currentEStatePtr);
       // solver 8: keep track of the input state where the input sequence ran out of elements (where solver8 stops)
       if (newEStateList.size()== 0) {
@@ -55,15 +55,15 @@ void Solver8::run() {
       }
       // solver 8: only single traces allowed
       ROSE_ASSERT(newEStateList.size()<=1);
-      for(list<EState>::iterator nesListIter=newEStateList.begin();
+      for(list<EStatePtr>::iterator nesListIter=newEStateList.begin();
           nesListIter!=newEStateList.end();
           ++nesListIter) {
         // newEstate is passed by value (not created yet)
-        EState newEState=*nesListIter;
-        ROSE_ASSERT(newEState.label()!=Labeler::NO_LABEL);
-        if((!_analyzer->isFailedAssertEState(&newEState))) {
-          HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState);
-          const EState* newEStatePtr=pres.second;
+        EStatePtr newEStatePtr0=*nesListIter;
+        ROSE_ASSERT(newEStatePtr0->label()!=Labeler::NO_LABEL);
+        if((!_analyzer->isFailedAssertEState(newEStatePtr0))) {
+          HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEStatePtr0);
+          EStatePtr newEStatePtr=const_cast<EStatePtr>(pres.second);
           // maintain the most recent output state. It can be connected with _estateBeforeMissingInput to facilitate
           // further tracing of an STG that is reduced to input/output/error states.
           if (newEStatePtr->io.isStdOutIO()) {
@@ -73,10 +73,10 @@ void Solver8::run() {
             _analyzer->addToWorkList(newEStatePtr);
           _analyzer->recordTransition(currentEStatePtr,e,newEStatePtr);
         }
-        if((_analyzer->isFailedAssertEState(&newEState))) {
+        if((_analyzer->isFailedAssertEState(newEStatePtr0))) {
           // failed-assert end-state: do not add to work list but do add it to the transition graph
-          const EState* newEStatePtr;
-          newEStatePtr=_analyzer->processNewOrExisting(newEState);
+          EStatePtr newEStatePtr;
+          newEStatePtr=_analyzer->processNewOrExisting(newEStatePtr0);
           _analyzer->_latestErrorEState = newEStatePtr;
           _analyzer->recordTransition(currentEStatePtr,e,newEStatePtr);
         }

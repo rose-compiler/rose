@@ -451,17 +451,22 @@ namespace
       prn(nameOf(n));
     }
 
-    void handle(SgAdaTaskRefExp& n)
+    template <class SageAdaRefExp>
+    void handleConcurrentObjectRef(SageAdaRefExp& n)
     {
-      SgAdaTaskSpecDecl& tskdcl = SG_DEREF(n.get_decl());
+      auto& dcl = SG_DEREF(n.get_decl());
 
       if (USE_COMPUTED_NAME_QUALIFICATION_EXPR)
         prnNameQual(n);
       else
-        prn(scopeQual(tskdcl.get_scope()));
+        prn(scopeQual(dcl.get_scope()));
 
-      prn(tskdcl.get_name());
+      prn(dcl.get_name());
     }
+
+    void handle(SgAdaTaskRefExp& n) { handleConcurrentObjectRef(n); }
+
+    void handle(SgAdaProtectedRefExp& n) { handleConcurrentObjectRef(n); }
 
     void handle(SgAdaUnitRefExp& n)
     {

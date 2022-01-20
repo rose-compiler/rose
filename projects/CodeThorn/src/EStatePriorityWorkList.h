@@ -9,8 +9,6 @@
 #include "EStateWorkList.h"
 #include "TopologicalSort.h"
 
-// Author: Markus Schordan, 2020.
-
 namespace CodeThorn {
 
   class EState;
@@ -32,13 +30,13 @@ struct PriorityElement {
   }
 };
 
-  bool operator<(const PriorityElement<const EState*>& e1, const PriorityElement<const EState*>& e2);
-  bool operator==(const PriorityElement<const EState*>& e1, const PriorityElement<const EState*>& e2);
-  bool operator!=(const PriorityElement<const EState*>& c1, const PriorityElement<const EState*>& c2);
+  bool operator<(const PriorityElement<EStatePtr>& e1, const PriorityElement<EStatePtr>& e2);
+  bool operator==(const PriorityElement<EStatePtr>& e1, const PriorityElement<EStatePtr>& e2);
+  bool operator!=(const PriorityElement<EStatePtr>& c1, const PriorityElement<EStatePtr>& c2);
 
   // functor object to provide greater operator as predicate
   struct PriorityElementGreaterOp {
-    bool operator()(const PriorityElement<const EState*>& e1, const PriorityElement<const EState*>& e2) {
+    bool operator()(const PriorityElement<EStatePtr>& e1, const PriorityElement<EStatePtr>& e2) {
       return !(e1==e2||e1<e2);
     }
   };
@@ -47,15 +45,13 @@ struct PriorityElement {
   public:
     EStatePriorityWorkList(CodeThorn::TopologicalSort::LabelToPriorityMap map);
     bool empty();
-    void push_front(const EState* el);
+    void push_front(EStatePtr el);
     void pop_front();
-    const EState* front();
-    void push_back(const EState*);
+    EStatePtr front();
+    void push_back(EStatePtr);
     std::size_t size();
     void clear();
-    EStateWorkList::iterator begin();
-    EStateWorkList::iterator end();
-    typedef PriorityElement<const EState*> EStatePriElem;
+    typedef PriorityElement<EStatePtr> EStatePriElem;
     // min priority queue (smaller elements are orderered first)
     typedef std::priority_queue <EStatePriElem,std::vector<EStatePriElem>,PriorityElementGreaterOp> EStateMinPriorityQueueType;
     //typedef std::priority_queue <EStatePriElem> EStateMaxPriorityQueueType;

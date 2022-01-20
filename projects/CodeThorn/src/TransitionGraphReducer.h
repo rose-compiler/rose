@@ -1,9 +1,10 @@
 #ifndef TRANSITION_GRAPH_REDUCER_H
 #define TRANSITION_GRAPH_REDUCER_H
 
+#include "EState.h"
+
 namespace CodeThorn {
 
-  class EState;
   class EStateSet;
   class TransitionGraph;
 
@@ -14,10 +15,10 @@ namespace CodeThorn {
   class TransitionGraphReducer {
   public:
     TransitionGraphReducer(EStateSet* eStateSet, TransitionGraph* stg);
-    void reduceStgToStatesSatisfying(std::function<bool(const EState*)> predicate);
+    void reduceStgToStatesSatisfying(std::function<bool(EStatePtr)> predicate);
 
   private:
-    std::list<const EState*> successorsOfStateSatisfying(const EState* state, std::function<bool(const EState*)> predicate);
+    std::list<EStatePtr> successorsOfStateSatisfying(EStatePtr state, std::function<bool(EStatePtr)> predicate);
 
     EStateSet* _states;
     TransitionGraph* _stg;

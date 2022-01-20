@@ -34,8 +34,7 @@ namespace CodeThorn {
     static bool hasSourceLocation(SgNode* stmt);
     LabelSet filterFunctionEntryLabels(Labeler* labeler, LabelSet labSet);
 
-    void writeLocationsVerificationReport(CodeThornOptions& ctOpt, std::ostream& os, CodeThorn::Labeler* labeler);
-    void writeFunctionsVerificationReport(CodeThornOptions& ctOpt, std::ostream& os, CodeThorn::Labeler* labeler);
+    void writeLocationsVerificationOverview(CodeThornOptions& ctOpt, std::ostream& os, CodeThorn::Labeler* labeler);
     void writeResultFile(CodeThornOptions& ctOpt, std::string fileName, CodeThorn::Labeler* labeler);
     void writeResultToStream(CodeThornOptions& ctOpt, std::ostream& stream, CodeThorn::Labeler* labeler);
     void writeAllDefinitiveLocationsToStream(std::ostream& stream, CodeThorn::Labeler* labeler, bool qualifier, bool programLocation, bool sourceCode);
