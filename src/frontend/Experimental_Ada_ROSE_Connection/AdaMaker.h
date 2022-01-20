@@ -677,7 +677,7 @@ namespace Ada_ROSE_Translation
   mkEnumeratorRef(SgEnumDeclaration&, SgInitializedName&);
 
   /// builds a reference to an enumerator in form of an SgVarRefExp
-  /// (special case for SgAdaEnumRepresentationClause - RC1147)
+  /// (special case for SgAdaEnumRepresentationClause - RC-1147)
   SgExpression&
   mkEnumeratorRef_repclause(SgEnumDeclaration&, SgInitializedName&);
 
