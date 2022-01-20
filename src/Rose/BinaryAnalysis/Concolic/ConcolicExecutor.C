@@ -449,6 +449,11 @@ ConcolicExecutor::run() {
         debug <<"initial state:\n" <<(*ops->currentState() + fmt);
     }
 
+    if (mlog[DEBUG]) {
+        mlog[DEBUG] <<"partitioner memory map:\n";
+        partitioner_.memoryMap()->dump(mlog[DEBUG], "  ");
+    }
+
     // Process instructions in execution order
     rose_addr_t executionVa = cpu()->concreteInstructionPointer();
     while (!cpu()->isTerminated()) {
@@ -460,8 +465,24 @@ ConcolicExecutor::run() {
 
         // FIXME[Robb Matzke 2020-07-13]: I'm not sure how this ends up happening yet. Perhaps one way is because we don't
         // handle certain system calls like mmap, brk, etc.
-        ASSERT_not_null(insn);
+        //
+        // Update[Robb Matzke 2021-12-15]: It was because ROSE disassembled the "run::a.out" specimen with one memory mapping
+        // when the partitioner result was computed, but because of address space layout randomization (ASLR), the subsequent
+        // runs each had different mappings.  The fix was to change the "run::" loading method so it turns off ASLR by
+        // default. The comment about mmap, brk, etc. still stands, however.
+        if (!insn) {
+            std::vector<uint8_t> buf = ops->process()->readMemory(executionVa, 64);
+            if (buf.empty()) {
+                mlog[FATAL] <<"no memory mapped at " <<StringUtility::addrToString(executionVa) <<"\n";
+            } else {
+                mlog[FATAL] <<"no executable memory mapped at " <<StringUtility::addrToString(executionVa) <<"\n";
+                mlog[FATAL] <<StringUtility::plural(buf.size(), "bytes") <<" starting at this address:\n";
+                SgAsmExecutableFileFormat::hexdump(mlog[FATAL], executionVa, "  ", buf, true);
+            }
+            ASSERT_not_reachable("terminating due to prior error");
+        }
 
+        // Process the instruction concretely and symbolically
         try {
             cpu()->processInstruction(insn);
         } catch (const BS::Exception &e) {
@@ -483,11 +504,10 @@ ConcolicExecutor::run() {
 //            }
         }
 
-#if 0 // DEBUGGING [Robb Matzke 2021-06-29]
-        if (insn->get_address() == 0x0804903b)
-            debug.enable();
-        SAWYER_MESG(debug) <<"state:\n" <<*ops->currentState();
+#if 0 // DEBUGGING [Robb Matzke 2021-12-10]
+        SAWYER_MESG(debug) <<"symbolic state after instruction:\n" <<*ops;
 #endif
+
         if (cpu()->isTerminated()) {
             SAWYER_MESG_OR(trace, debug) <<"subordinate has terminated\n";
             break;
@@ -840,6 +860,7 @@ RiscOperators::instance(const Settings &settings, const Database::Ptr &db, const
     RegisterStatePtr registers = RegisterState::instance(protoval, regdict);
     MemoryStatePtr memory = MemoryState::instance(protoval, protoval);
     memory->set_byteOrder(ByteOrder::ORDER_LSB);
+    memory->cellCompressor(IS::SymbolicSemantics::MemoryListState::CellCompressorSimple::instance());
     StatePtr state = State::instance(registers, memory);
     RiscOperatorsPtr ops(new RiscOperators(settings, db, testCase, partitioner, process, state, solver));
     ASSERT_require(ops->REG_PATH == path);

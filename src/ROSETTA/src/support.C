@@ -477,6 +477,14 @@ Grammar::setUpSupport ()
   // Keep ptr to the declaration statement
      Unparse_Info.setDataPrototype("SgDeclarationStatement*", "declstatement_ptr", "= NULL",
                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+  // DQ (11/21/2021): I think this may be useful to support using the correct declaration 
+  // (class declaration or enum declaration) when unparsing embedded types in typedef declarations 
+  // that are properly represented in multiple files, but for which we can't use the declaration 
+  // referenced through the shared type since it will be from the incorrect file (and will not unparse).
+     Unparse_Info.setDataPrototype("SgDeclarationStatement*", "declaration_of_context", "= NULL",
+                                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
   // Keep current scope's type, set in SgClassDefinition's unparser
      Unparse_Info.setDataPrototype("SgNamedType*", "current_context", "= NULL",
                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);

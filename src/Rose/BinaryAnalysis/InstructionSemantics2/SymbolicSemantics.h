@@ -273,22 +273,22 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual allocating constructors
 public:
-    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const ROSE_OVERRIDE {
+    virtual BaseSemantics::SValuePtr bottom_(size_t nbits) const override {
         return instance_bottom(nbits);
     }
-    virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const ROSE_OVERRIDE {
+    virtual BaseSemantics::SValuePtr undefined_(size_t nbits) const override {
         return instance_undefined(nbits);
     }
-    virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) const ROSE_OVERRIDE {
+    virtual BaseSemantics::SValuePtr unspecified_(size_t nbits) const override {
         return instance_unspecified(nbits);
     }
-    virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) const ROSE_OVERRIDE {
+    virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) const override {
         return instance_integer(nbits, value);
     }
-    virtual BaseSemantics::SValuePtr boolean_(bool value) const ROSE_OVERRIDE {
+    virtual BaseSemantics::SValuePtr boolean_(bool value) const override {
         return instance_integer(1, value?1:0);
     }
-    virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const ROSE_OVERRIDE {
+    virtual BaseSemantics::SValuePtr copy(size_t new_width=0) const override {
         SValuePtr retval(new SValue(*this));
         if (new_width!=0 && new_width!=retval->nBits())
             retval->set_width(new_width);
@@ -296,7 +296,7 @@ public:
     }
     virtual Sawyer::Optional<BaseSemantics::SValuePtr>
     createOptionalMerge(const BaseSemantics::SValuePtr &other, const BaseSemantics::MergerPtr&,
-                        const SmtSolverPtr&) const ROSE_OVERRIDE;
+                        const SmtSolverPtr&) const override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Dynamic pointer casts
@@ -311,32 +311,32 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override virtual methods...
 public:
-    virtual bool isBottom() const ROSE_OVERRIDE;
+    virtual bool isBottom() const override;
 
-    virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE;
+    virtual void print(std::ostream&, BaseSemantics::Formatter&) const override;
 
     virtual void hash(Combinatorics::Hasher&) const override;
 
 protected: // when implementing use these names; but when calling, use the camelCase names
     virtual bool may_equal(const BaseSemantics::SValuePtr &other,
-                           const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE;
+                           const SmtSolverPtr &solver = SmtSolverPtr()) const override;
     virtual bool must_equal(const BaseSemantics::SValuePtr &other,
-                            const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE;
+                            const SmtSolverPtr &solver = SmtSolverPtr()) const override;
 
     // It's not possible to change the size of a symbolic expression in place. That would require that we recursively change
     // the size of the SymbolicExpr, which might be shared with many unrelated values whose size we don't want to affect.
-    virtual void set_width(size_t nbits) ROSE_OVERRIDE {
+    virtual void set_width(size_t nbits) override {
         ASSERT_require(nbits==nBits());
     }
 
-    virtual bool is_number() const ROSE_OVERRIDE {
+    virtual bool is_number() const override {
         return expr->isIntegerConstant();
     }
 
-    virtual uint64_t get_number() const ROSE_OVERRIDE;
+    virtual uint64_t get_number() const override;
 
-    virtual std::string get_comment() const ROSE_OVERRIDE;
-    virtual void set_comment(const std::string&) const ROSE_OVERRIDE;
+    virtual std::string get_comment() const override;
+    virtual void set_comment(const std::string&) const override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Additional methods first declared in this class...
@@ -478,8 +478,15 @@ public:
     using Ptr = MemoryListStatePtr;
 
     /** Functor for handling a memory read that found more than one cell that might alias the requested address. */
-    struct CellCompressor {
+    class CellCompressor: public Sawyer::SharedObject {
+    public:
+        using Ptr = Sawyer::SharedPointer<CellCompressor>;
+    protected:
+        CellCompressor() {}
+    public:
         virtual ~CellCompressor() {}
+
+        /** Compress the cells into a single value. */
         virtual SValuePtr operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
                                      BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
                                      const MemoryCellList::CellList &cells) = 0;
@@ -498,33 +505,51 @@ public:
      *  }
      * @endcode
      */
-    struct CellCompressorMcCarthy: CellCompressor {
+    class CellCompressorMcCarthy: public CellCompressor {
+    public:
+        static Ptr instance();                          /**< Allocating constructor. */
         virtual SValuePtr operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
                                      BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
-                                     const CellList &cells) ROSE_OVERRIDE;
+                                     const CellList &cells) override;
     };
 
     /** Functor for handling a memory read whose address matches more than one memory cell.  Simply returns the @p dflt value. */
-    struct CellCompressorSimple: CellCompressor {
+    class CellCompressorSimple: public CellCompressor {
+    public:
+        static Ptr instance();                          /**< Allocating constructor. */
         virtual SValuePtr operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
                                      BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
-                                     const CellList &cells) ROSE_OVERRIDE;
+                                     const CellList &cells) override;
     };
 
     /** Functor for handling a memory read whose address matches more than one memory cell.  This is the default cell
      *  compressor and simply calls either CellCompressionMcCarthy or CellCompressionSimple depending on whether an SMT
      *  solver is being used. */
-    struct CellCompressorChoice: CellCompressor {
-        CellCompressorMcCarthy cc_mccarthy;
-        CellCompressorSimple cc_simple;
+    class CellCompressorChoice: public CellCompressor {
+        CellCompressor::Ptr mccarthy_;
+        CellCompressor::Ptr simple_;
+    protected:
+        CellCompressorChoice();
+    public:
+        static Ptr instance();                          /**< Allocating constructor. */
         virtual SValuePtr operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
                                      BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
-                                     const CellList &cells) ROSE_OVERRIDE;
+                                     const CellList &cells) override;
     };
 
-protected:
-    CellCompressor *cell_compressor;            /**< Callback when a memory read aliases multiple memory cells. */
-    static CellCompressorChoice cc_choice;      /**< The default cell compressor. Static because we use its address. */
+    /** Functor for handling a memory read whose address matches more than one memory cell.
+     *
+     *  The return value is the set of possibly matching values. */
+    class CellCompressorSet: public CellCompressor {
+    public:
+        static Ptr instance();                          /**< Allocating constructor. */
+        virtual SValuePtr operator()(const SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
+                                     BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps,
+                                     const CellList &cells) override;
+    };
+
+private:
+    CellCompressor::Ptr cellCompressor_;                // Callback when a memory read aliases multiple memory cells.
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization
@@ -543,16 +568,16 @@ private:
     // Real constructors
 protected:
     MemoryListState()                                   // for serialization
-        : cell_compressor(&cc_choice) {}
+        : cellCompressor_(CellCompressorChoice::instance()) {}
 
     explicit MemoryListState(const BaseSemantics::MemoryCellPtr &protocell)
-        : BaseSemantics::MemoryCellList(protocell), cell_compressor(&cc_choice) {}
+        : BaseSemantics::MemoryCellList(protocell), cellCompressor_(CellCompressorChoice::instance()) {}
 
     MemoryListState(const BaseSemantics::SValuePtr &addrProtoval, const BaseSemantics::SValuePtr &valProtoval)
-        : BaseSemantics::MemoryCellList(addrProtoval, valProtoval), cell_compressor(&cc_choice) {}
+        : BaseSemantics::MemoryCellList(addrProtoval, valProtoval), cellCompressor_(CellCompressorChoice::instance()) {}
 
     MemoryListState(const MemoryListState &other)
-        : BaseSemantics::MemoryCellList(other), cell_compressor(other.cell_compressor) {}
+        : BaseSemantics::MemoryCellList(other), cellCompressor_(other.cellCompressor_) {}
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Static allocating constructors
@@ -580,17 +605,17 @@ public:
     /** Virtual constructor. Creates a memory state having specified prototypical value.  This constructor uses
      * BaseSemantics::MemoryCell as the cell type. */
     virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &addrProtoval,
-                                                 const BaseSemantics::SValuePtr &valProtoval) const ROSE_OVERRIDE {
+                                                 const BaseSemantics::SValuePtr &valProtoval) const override {
         return instance(addrProtoval, valProtoval);
     }
 
     /** Virtual constructor. Creates a new memory state having specified prototypical cells and value. */
-    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell) const ROSE_OVERRIDE {
+    virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::MemoryCellPtr &protocell) const override {
         return instance(protocell);
     }
 
     /** Virtual copy constructor. Creates a new deep copy of this memory state. */
-    virtual BaseSemantics::MemoryStatePtr clone() const ROSE_OVERRIDE {
+    virtual BaseSemantics::MemoryStatePtr clone() const override {
         return BaseSemantics::MemoryStatePtr(new MemoryListState(*this));
     }
 
@@ -613,20 +638,20 @@ public:
      *  In order to read a multi-byte value, use RiscOperators::readMemory(). */
     virtual BaseSemantics::SValuePtr readMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
                                                 BaseSemantics::RiscOperators *addrOps,
-                                                BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
+                                                BaseSemantics::RiscOperators *valOps) override;
 
     /** Read a byte from memory with no side effects.
      *
      *  In order to read a multi-byte value, use RiscOperators::peekMemory(). */
     virtual BaseSemantics::SValuePtr peekMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &dflt,
                                                 BaseSemantics::RiscOperators *addrOps,
-                                                BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
+                                                BaseSemantics::RiscOperators *valOps) override;
 
     /** Write a byte to memory.
      *
      *  In order to write a multi-byte value, use RiscOperators::writeMemory(). */
     virtual void writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &value,
-                             BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
+                             BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) override;
 
 protected:
     BaseSemantics::SValuePtr readOrPeekMemory(const BaseSemantics::SValuePtr &address,
@@ -638,12 +663,18 @@ protected:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first declared in this class
 public:
-    /** Callback for handling a memory read whose address matches more than one memory cell.  See also,
-     * cell_compression_mccarthy(), cell_compression_simple(), cell_compression_choice().
+    /** Callback for handling a memory read whose address matches more than one memory cell.
+     *
+     *  See also, cell_compression_mccarthy(), cell_compression_simple(), cell_compression_choice().
+     *
      * @{ */
-    CellCompressor* get_cell_compressor() const { return cell_compressor; }
-    void set_cell_compressor(CellCompressor *cc) { cell_compressor = cc; }
+    CellCompressor::Ptr cellCompressor() const;
+    void cellCompressor(const CellCompressor::Ptr&);
     /** @} */
+
+    // Deprecated [Robb Matzke 2021-12-15]
+    CellCompressor::Ptr get_cell_compressor() const ROSE_DEPRECATED("use cellCompressor");
+    void set_cell_compressor(const CellCompressor::Ptr&) ROSE_DEPRECATED("use cellCompressor");
 };
 
 
@@ -728,7 +759,7 @@ public:
     /** Virtual constructor. Creates a memory state having specified prototypical value.  This constructor uses
      * BaseSemantics::MemoryCell as the cell type. */
     virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &addrProtoval,
-                                                 const BaseSemantics::SValuePtr &valProtoval) const ROSE_OVERRIDE {
+                                                 const BaseSemantics::SValuePtr &valProtoval) const override {
         return instance(addrProtoval, valProtoval);
     }
 
@@ -738,7 +769,7 @@ public:
     }
 
     /** Virtual copy constructor. Creates a new deep copy of this memory state. */
-    virtual BaseSemantics::MemoryStatePtr clone() const ROSE_OVERRIDE {
+    virtual BaseSemantics::MemoryStatePtr clone() const override {
         return BaseSemantics::MemoryStatePtr(new MemoryMapState(*this));
     }
 
@@ -756,7 +787,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods we override from the super class (documented in the super class)
 public:
-    virtual CellKey generateCellKey(const BaseSemantics::SValuePtr &addr_) const ROSE_OVERRIDE;
+    virtual CellKey generateCellKey(const BaseSemantics::SValuePtr &addr_) const override;
 };
 
 
@@ -835,6 +866,7 @@ protected:
     uint64_t trimThreshold_;                            // max size of expressions (zero means no maximimum)
     bool reinterpretMemoryReads_;                       // cast data to unsigned integer when reading from memory
     bool reinterpretRegisterReads_;                     // cast data to unsigned integer when reading from registers
+    size_t nTrimmed_ = 0;                               // number of expressions trimmed down to a new variable
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -915,12 +947,12 @@ public:
     // Virtual constructors
 public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         return instance(protoval, solver);
     }
 
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         return instance(state, solver);
     }
 
@@ -938,14 +970,14 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Inherited methods for constructing values.
 public:
-    virtual BaseSemantics::SValuePtr boolean_(bool b) ROSE_OVERRIDE {
+    virtual BaseSemantics::SValuePtr boolean_(bool b) override {
         SValuePtr retval = SValue::promote(BaseSemantics::RiscOperators::boolean_(b));
         if (computingDefiners() != TRACK_NO_DEFINERS && !omit_cur_insn)
             retval->defined_by(currentInstruction());
         return retval;
     }
 
-    virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) ROSE_OVERRIDE {
+    virtual BaseSemantics::SValuePtr number_(size_t nbits, uint64_t value) override {
         SValuePtr retval = SValue::promote(BaseSemantics::RiscOperators::number_(nbits, value));
         if (computingDefiners() != TRACK_NO_DEFINERS && !omit_cur_insn)
             retval->defined_by(currentInstruction());
@@ -1098,6 +1130,16 @@ public:
     uint64_t trimThreshold() const { return trimThreshold_; }
     /** @} */
 
+    /** Property: Number of symbolic expressions trimmed.
+     *
+     *  Each time the trim threshold causes an expression to be replaced by a new variable, this property is incremented. The
+     *  counter starts at zero when this object is created, but can be adjusted (usually back to zero) by the user.
+     *
+     * @{ */
+    size_t nTrimmed() const { return nTrimmed_; }
+    void nTrimmed(size_t n) { nTrimmed_ = n; }
+    /** @} */
+
     /** Property: Reinterpret data as unsigned integers when reading from memory or registers.
      *
      *  If this property is set, then a call to @ref reinterpret is used to convert the return value to an unsigned integer if
@@ -1197,74 +1239,74 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Override methods from base class.  These are the RISC operators that are invoked by a Dispatcher.
 public:
-    virtual void interrupt(int majr, int minr) ROSE_OVERRIDE;
+    virtual void interrupt(int majr, int minr) override;
     virtual BaseSemantics::SValuePtr and_(const BaseSemantics::SValuePtr &a_,
-                                          const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
+                                          const BaseSemantics::SValuePtr &b_) override;
     virtual BaseSemantics::SValuePtr or_(const BaseSemantics::SValuePtr &a_,
-                                         const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
+                                         const BaseSemantics::SValuePtr &b_) override;
     virtual BaseSemantics::SValuePtr xor_(const BaseSemantics::SValuePtr &a_,
-                                          const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr invert(const BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
+                                          const BaseSemantics::SValuePtr &b_) override;
+    virtual BaseSemantics::SValuePtr invert(const BaseSemantics::SValuePtr &a_) override;
     virtual BaseSemantics::SValuePtr extract(const BaseSemantics::SValuePtr &a_,
-                                             size_t begin_bit, size_t end_bit) ROSE_OVERRIDE;
+                                             size_t begin_bit, size_t end_bit) override;
     virtual BaseSemantics::SValuePtr concat(const BaseSemantics::SValuePtr &a_,
-                                            const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr leastSignificantSetBit(const BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr mostSignificantSetBit(const BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
+                                            const BaseSemantics::SValuePtr &b_) override;
+    virtual BaseSemantics::SValuePtr leastSignificantSetBit(const BaseSemantics::SValuePtr &a_) override;
+    virtual BaseSemantics::SValuePtr mostSignificantSetBit(const BaseSemantics::SValuePtr &a_) override;
     virtual BaseSemantics::SValuePtr rotateLeft(const BaseSemantics::SValuePtr &a_,
-                                                const BaseSemantics::SValuePtr &sa_) ROSE_OVERRIDE;
+                                                const BaseSemantics::SValuePtr &sa_) override;
     virtual BaseSemantics::SValuePtr rotateRight(const BaseSemantics::SValuePtr &a_,
-                                                 const BaseSemantics::SValuePtr &sa_) ROSE_OVERRIDE;
+                                                 const BaseSemantics::SValuePtr &sa_) override;
     virtual BaseSemantics::SValuePtr shiftLeft(const BaseSemantics::SValuePtr &a_,
-                                               const BaseSemantics::SValuePtr &sa_) ROSE_OVERRIDE;
+                                               const BaseSemantics::SValuePtr &sa_) override;
     virtual BaseSemantics::SValuePtr shiftRight(const BaseSemantics::SValuePtr &a_,
-                                                const BaseSemantics::SValuePtr &sa_) ROSE_OVERRIDE;
+                                                const BaseSemantics::SValuePtr &sa_) override;
     virtual BaseSemantics::SValuePtr shiftRightArithmetic(const BaseSemantics::SValuePtr &a_,
-                                                          const BaseSemantics::SValuePtr &sa_) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr equalToZero(const BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
+                                                          const BaseSemantics::SValuePtr &sa_) override;
+    virtual BaseSemantics::SValuePtr equalToZero(const BaseSemantics::SValuePtr &a_) override;
     virtual BaseSemantics::SValuePtr ite(const BaseSemantics::SValuePtr &sel_,
                                          const BaseSemantics::SValuePtr &a_,
-                                         const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr unsignedExtend(const BaseSemantics::SValuePtr &a_, size_t new_width) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width) ROSE_OVERRIDE;
+                                         const BaseSemantics::SValuePtr &b_) override;
+    virtual BaseSemantics::SValuePtr unsignedExtend(const BaseSemantics::SValuePtr &a_, size_t new_width) override;
+    virtual BaseSemantics::SValuePtr signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width) override;
     virtual BaseSemantics::SValuePtr add(const BaseSemantics::SValuePtr &a_,
-                                         const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
+                                         const BaseSemantics::SValuePtr &b_) override;
     virtual BaseSemantics::SValuePtr addWithCarries(const BaseSemantics::SValuePtr &a_,
                                                     const BaseSemantics::SValuePtr &b_,
                                                     const BaseSemantics::SValuePtr &c_,
-                                                    BaseSemantics::SValuePtr &carry_out/*out*/) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr negate(const BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
+                                                    BaseSemantics::SValuePtr &carry_out/*out*/) override;
+    virtual BaseSemantics::SValuePtr negate(const BaseSemantics::SValuePtr &a_) override;
     virtual BaseSemantics::SValuePtr signedDivide(const BaseSemantics::SValuePtr &a_,
-                                                  const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
+                                                  const BaseSemantics::SValuePtr &b_) override;
     virtual BaseSemantics::SValuePtr signedModulo(const BaseSemantics::SValuePtr &a_,
-                                                  const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
+                                                  const BaseSemantics::SValuePtr &b_) override;
     virtual BaseSemantics::SValuePtr signedMultiply(const BaseSemantics::SValuePtr &a_,
-                                                    const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
+                                                    const BaseSemantics::SValuePtr &b_) override;
     virtual BaseSemantics::SValuePtr unsignedDivide(const BaseSemantics::SValuePtr &a_,
-                                                    const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
+                                                    const BaseSemantics::SValuePtr &b_) override;
     virtual BaseSemantics::SValuePtr unsignedModulo(const BaseSemantics::SValuePtr &a_,
-                                                    const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
+                                                    const BaseSemantics::SValuePtr &b_) override;
     virtual BaseSemantics::SValuePtr unsignedMultiply(const BaseSemantics::SValuePtr &a_,
-                                                      const BaseSemantics::SValuePtr &b_) ROSE_OVERRIDE;
+                                                      const BaseSemantics::SValuePtr &b_) override;
     virtual BaseSemantics::SValuePtr fpConvert(const BaseSemantics::SValuePtr &a, SgAsmFloatType *aType,
-                                               SgAsmFloatType *retType) ROSE_OVERRIDE;
-    virtual BaseSemantics::SValuePtr reinterpret(const BaseSemantics::SValuePtr&, SgAsmType*) ROSE_OVERRIDE;
+                                               SgAsmFloatType *retType) override;
+    virtual BaseSemantics::SValuePtr reinterpret(const BaseSemantics::SValuePtr&, SgAsmType*) override;
     virtual BaseSemantics::SValuePtr readRegister(RegisterDescriptor reg,
-                                                  const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
+                                                  const BaseSemantics::SValuePtr &dflt) override;
     virtual BaseSemantics::SValuePtr peekRegister(RegisterDescriptor reg,
-                                                  const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
-    virtual void writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
+                                                  const BaseSemantics::SValuePtr &dflt) override;
+    virtual void writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &a_) override;
     virtual BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg,
                                                 const BaseSemantics::SValuePtr &addr,
                                                 const BaseSemantics::SValuePtr &dflt,
-                                                const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
+                                                const BaseSemantics::SValuePtr &cond) override;
     virtual BaseSemantics::SValuePtr peekMemory(RegisterDescriptor segreg,
                                                 const BaseSemantics::SValuePtr &addr,
-                                                const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
+                                                const BaseSemantics::SValuePtr &dflt) override;
     virtual void writeMemory(RegisterDescriptor segreg,
                              const BaseSemantics::SValuePtr &addr,
                              const BaseSemantics::SValuePtr &data,
-                             const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
+                             const BaseSemantics::SValuePtr &cond) override;
 
 public:
     BaseSemantics::SValuePtr readOrPeekMemory(RegisterDescriptor segreg,

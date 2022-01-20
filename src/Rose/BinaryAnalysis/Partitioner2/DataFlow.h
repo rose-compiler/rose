@@ -123,7 +123,7 @@ public:
 /** Predicate that always returns false, preventing interprocedural analysis. */
 class NotInterprocedural: public InterproceduralPredicate {
 public:
-    bool operator()(const ControlFlowGraph&, const ControlFlowGraph::ConstEdgeIterator&, size_t depth) ROSE_OVERRIDE {
+    bool operator()(const ControlFlowGraph&, const ControlFlowGraph::ConstEdgeIterator&, size_t depth) override {
         return false;
     }
 };

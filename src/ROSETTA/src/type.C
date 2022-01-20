@@ -121,12 +121,12 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( PartialFunctionModifierType, "PartialFunctionModifierType", "T_PARTIAL_FUNCTION_MODIFIER" );
      NEW_TERMINAL_MACRO ( ArrayType           , "ArrayType",            "T_ARRAY" );
      NEW_TERMINAL_MACRO ( TypeEllipse         , "TypeEllipse",          "T_ELLIPSE" );
-     NEW_TERMINAL_MACRO ( AdaAccessType       , "AdaAccessType",        "T_ADA_ACCESS" );
+     NEW_TERMINAL_MACRO ( AdaAccessType       , "AdaAccessType",        "T_ADA_ACCESS_TYPE" );
      NEW_TERMINAL_MACRO ( AdaSubtype          , "AdaSubtype",           "T_ADA_SUBTYPE" );
-     NEW_TERMINAL_MACRO ( AdaDerivedType      , "AdaDerivedType",       "T_ADA_DERIVEDTYPE" );
+     NEW_TERMINAL_MACRO ( AdaDerivedType      , "AdaDerivedType",       "T_ADA_DERIVED_TYPE" );
      NEW_TERMINAL_MACRO ( AdaModularType      , "AdaModularType",       "T_ADA_MODULAR_TYPE" );
      NEW_TERMINAL_MACRO ( AdaDiscriminatedType, "AdaDiscriminatedType", "T_ADA_DISCRIMINATED_TYPE" );
-     NEW_TERMINAL_MACRO ( AdaFloatType        , "AdaFloatType",         "T_ADA_FLOAT" );
+     NEW_TERMINAL_MACRO ( AdaFloatType        , "AdaFloatType",         "T_ADA_FLOAT_TYPE" );
      NEW_TERMINAL_MACRO ( AdaFormalType       , "AdaFormalType",        "T_ADA_FORMAL_TYPE" );
 
   // Rasmussen (4/4/2020): Added SgJovialBitType for Jovial. This type participates in logical operations
@@ -174,6 +174,9 @@ Grammar::setUpTypes ()
   // PP 05/07/20
      NEW_TERMINAL_MACRO ( AdaTaskType , "AdaTaskType", "T_ADA_TASK_TYPE" );
 
+  // PP 01/11/22
+     NEW_TERMINAL_MACRO ( AdaProtectedType , "AdaProtectedType", "T_ADA_PROTECTED_TYPE" );
+
   // NEW_NONTERMINAL_MACRO (NamedType,
   //                        ClassType | TemplateInstantiationType | EnumType | TypedefType,
   //                        "NamedType","T_NAME");
@@ -191,7 +194,7 @@ Grammar::setUpTypes ()
      NEW_NONTERMINAL_MACRO (NamedType,
                             ClassType             | EnumType          | TypedefType      | NonrealType |
                             JavaParameterizedType | JavaQualifiedType | JavaWildcardType | AdaTaskType |
-                            AdaFormalType         | AdaDiscriminatedType,
+                            AdaProtectedType      | AdaFormalType     | AdaDiscriminatedType,
                             "NamedType","T_NAME", false);
 #endif
 
@@ -459,6 +462,7 @@ Grammar::setUpTypes ()
   // PP (5/7/20): Adding ADA types
      //~ AdaTaskType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      AdaTaskType.setFunctionSource        ( "SOURCE_ADA_TASK_TYPE", "../Grammar/Type.code");
+     AdaProtectedType.setFunctionSource   ( "SOURCE_ADA_PROTECTED_TYPE", "../Grammar/Type.code");
 
   // PP (8/5/21): Adding ADA types
      //~ AdaDiscriminatedType.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
@@ -693,6 +697,10 @@ Grammar::setUpTypes ()
             "SOURCE_CREATE_TYPE_FOR_ADA_TASK_TYPE",
             "SgDeclarationStatement* decl = NULL");
 
+     CUSTOM_CREATE_TYPE_MACRO(AdaProtectedType,
+            "SOURCE_CREATE_TYPE_FOR_ADA_PROTECTED_TYPE",
+            "SgDeclarationStatement* decl = NULL");
+
      CUSTOM_CREATE_TYPE_MACRO(AdaDiscriminatedType,
             "SOURCE_CREATE_TYPE_FOR_ADA_DISCRIMINATED_TYPE",
             "SgAdaDiscriminatedTypeDecl* decl = NULL");
@@ -700,7 +708,7 @@ Grammar::setUpTypes ()
 
      CUSTOM_CREATE_TYPE_MACRO(AdaFormalType,
             "SOURCE_CREATE_TYPE_FOR_ADA_FORMAL_TYPE",
-            "SgType* formal_type = NULL");
+            "SgAdaFormalTypeDecl* decl = NULL");
 
   // PP (3/24/20): Adding ADA types
      CUSTOM_CREATE_TYPE_MACRO(AdaAccessType,
@@ -1120,12 +1128,13 @@ Grammar::setUpTypes ()
 
   // PP (5/7/20): Adding ADA types
      AdaTaskType.setFunctionPrototype ("HEADER_ADA_TASK_TYPE", "../Grammar/Type.code" );
-
+     AdaTaskType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
      AdaTaskType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
-     // maybe: AdaTaskType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
 
-     //~ AdaTaskType.setDataPrototype ("SgAdaTaskTypeDecl*", "decl", "= NULL",
-                                     //~ CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+  // PP (1/11/22): Adding ADA protected type
+     AdaProtectedType.setFunctionPrototype ("HEADER_ADA_PROTECTED_TYPE", "../Grammar/Type.code" );
+     AdaProtectedType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
+     AdaProtectedType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
 
   // PP (8/5/21): Adding ADA types
      AdaDiscriminatedType.setFunctionPrototype ("HEADER_ADA_DISCRIMINATED_TYPE", "../Grammar/Type.code" );
@@ -1135,6 +1144,7 @@ Grammar::setUpTypes ()
   // MS (5/1/21): Adding Ada generics
      AdaFormalType.setFunctionPrototype ("HEADER_ADA_FORMAL_TYPE", "../Grammar/Type.code" );
 
+     AdaFormalType.setFunctionPrototype ("HEADER_GET_NAME", "../Grammar/Type.code" );
      AdaFormalType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
 
      AdaFormalType.setDataPrototype ("bool"         , "is_private" , "= false",
@@ -1143,8 +1153,8 @@ Grammar::setUpTypes ()
      AdaFormalType.setDataPrototype ("SgType*"      , "formal_type", "= NULL",
                                      CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
-     AdaFormalType.setDataPrototype("std::string", "type_name", "= \"\"",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     //~ AdaFormalType.setDataPrototype("std::string", "type_name", "= \"\"",
+                                     //~ NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
   // PP (3/24/20): Adding ADA types
      AdaAccessType.setFunctionPrototype ("HEADER_ADA_ACCESS_TYPE", "../Grammar/Type.code" );

@@ -907,7 +907,14 @@ Engine::specimenNameDocumentation() {
             "@named{replace}{This option causes the memory map to be entirely replaced with the process map rather than "
             "the default behavior of the process map augmenting the map created by the ROSE loader.  This can be useful "
             "if ROSE's internal loader resulted in wrong addresses, although symbols will then probably also be pointing to "
-            "those wrong addresses and will be dangling when those addresses are removed from the map.}}"
+            "those wrong addresses and will be dangling when those addresses are removed from the map.}"
+
+            "@named{aslr}{Turns on address space layout randomization. ASLR is an exploitation counter measure on Linux "
+            "systems, but ROSE tools normally disable it in order to have reproducible results during analysis. The \"aslr\" "
+            "option causes ROSE to re-enable address space randomization. Although \"noaslr\" is the default, it can also be "
+            "explicitly specified.}"
+
+            "}"                                         // end of @bullet
 
             "@bullet{If the file name begins with the string \"srec:\" then it is treated as Motorola S-Record format. "
             "Mapping attributes are stored after the first column and before the second; the file name appears after the "
@@ -1255,7 +1262,7 @@ Engine::loadContainers(const std::vector<std::string> &fileNames) {
 void
 Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
     ASSERT_not_null(map_);
-    BOOST_FOREACH (const std::string &fileName, fileNames) {
+    for (const std::string &fileName: fileNames) {
         if (boost::starts_with(fileName, "map:")) {
             std::string resource = fileName.substr(3);  // remove "map", leaving colon and rest of string
             map_->insertFile(resource);
@@ -1269,28 +1276,30 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
             std::string resource = fileName.substr(4);  // remove "proc", leaving colon and the rest of the string
             map_->insertProcess(resource);
         } else if (boost::starts_with(fileName, "run:")) {
-            // Parse the options between the two colons in "run:OPTIONS:EXECUTABLE"
+            // Split resource as "run:OPTIONS:EXECUTABLE"
             static const size_t colon1 = 3;             // index of first colon in fileName
             const size_t colon2 = fileName.find(':', colon1+1); // index of second colon in FileName
-            std::string exeName;
-            bool doReplace = false;
-            if (colon2 == std::string::npos) {
-                // [Robb Matzke 2017-07-24]: deprecated. ROSE used to accept "run:/name/of/executable" which is a
-                // different syntax than what all the other methods accept (the others all have at least two colons).
-                exeName = fileName.substr(colon1+1);
-            } else {
-                std::string optionsStr = fileName.substr(colon1+1, colon2-(colon1+1));
-                exeName = fileName.substr(colon2+1);
-                std::vector<std::string> options;
-                boost::split(options, optionsStr, boost::is_any_of(","));
-                BOOST_FOREACH (const std::string &option, options) {
-                    if (option.empty()) {
-                    } else if ("replace" == option) {
-                        doReplace = true;
-                    } else {
-                        throw std::runtime_error("option \"" + StringUtility::cEscape(option) + "\" not recognized"
-                                                 " in resource \"" + StringUtility::cEscape(fileName) + "\"");
-                    }
+            if (std::string::npos == colon2)
+                throw Rose::Exception("two colons are required in \"run\" resource \"" + StringUtility::cEscape(fileName) + "\"");
+            std::string optionsStr = fileName.substr(colon1+1, colon2-(colon1+1)); // between the first two colons
+            std::string exeName = fileName.substr(colon2+1);                       // after the second colon
+
+            // Parse options
+            bool doReplace = false;                                                // "replace" word was present?
+            bool aslr = false;                                                     // allow address space layout randomization?
+            std::vector<std::string> options;
+            boost::split(options, optionsStr, boost::is_any_of(","));
+            for (const std::string &option: options) {
+                if (option.empty()) {
+                } else if ("replace" == option) {
+                    doReplace = true;
+                } else if ("aslr" == option) {
+                    aslr = true;
+                } else if ("noaslr" == option) {
+                    aslr = false;
+                } else {
+                    throw Rose::Exception("option \"" + StringUtility::cEscape(option) + "\" not recognized"
+                                          " in resource \"" + StringUtility::cEscape(fileName) + "\"");
                 }
             }
 
@@ -1300,11 +1309,13 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
                 .set(Debugger::REDIRECT_INPUT)
                 .set(Debugger::REDIRECT_OUTPUT)
                 .set(Debugger::REDIRECT_ERROR);
-            BOOST_FOREACH (const std::string &name, settings_.loader.envEraseNames)
+            subordinate.randomizedAddresses(aslr);
+
+            for (const std::string &name: settings_.loader.envEraseNames)
                 subordinate.eraseEnvironmentVariable(name);
-            BOOST_FOREACH (const boost::regex &re, settings_.loader.envErasePatterns)
+            for (const boost::regex &re: settings_.loader.envErasePatterns)
                 subordinate.eraseMatchingEnvironmentVariables(re);
-            BOOST_FOREACH (const std::string &var, settings_.loader.envInsert) {
+            for (const std::string &var: settings_.loader.envInsert) {
                 size_t eq = var.find('=');
                 if (std::string::npos == eq)
                     throw std::runtime_error("no '=' in NAME=VALUE: \"" + StringUtility::cEscape(var) + "\"");
@@ -1326,7 +1337,7 @@ Engine::loadNonContainers(const std::vector<std::string> &fileNames) {
             if (procMap->isEmpty())
                 throw std::runtime_error(exeName + " has no executable addresses");
             std::string name = procMap->segments().begin()->name(); // lowest segment is always part of the main executable
-            BOOST_FOREACH (const MemoryMap::Node &node, procMap->nodes()) {
+            for (const MemoryMap::Node &node: procMap->nodes()) {
                 if (node.value().name() == name)        // usually just one match; names are like "proc:123(/bin/ls)"
                     debugger->setBreakpoint(node.key());
             }
@@ -2927,7 +2938,7 @@ Engine::CodeConstants::nextConstant(const Partitioner &partitioner) {
 
             struct T1: AstSimpleProcessing {
                 std::set<rose_addr_t> constants;
-                virtual void visit(SgNode *node) ROSE_OVERRIDE {
+                virtual void visit(SgNode *node) override {
                     if (SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(node)) {
                         if (ival->get_significantBits() <= 64)
                             constants.insert(ival->get_absoluteValue());

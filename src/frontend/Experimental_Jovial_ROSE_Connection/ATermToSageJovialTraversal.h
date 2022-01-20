@@ -13,19 +13,22 @@ namespace ATermSupport {
    using namespace LanguageTranslation;
    using StrucSpecEnum = SgJovialTableType::StructureSpecifier;
    using WordsPerEntry = SgJovialTableStatement::WordsPerEntry;
+   using Language = rb::SageTreeBuilder::LanguageEnum;
 
 class ATermToSageJovialTraversal : public ATermTraversal
 {
  private:
-   rb::SageTreeBuilder sage_tree_builder{rb::SageTreeBuilder::e_language_jovial};
+   rb::SageTreeBuilder sage_tree_builder;
 
  protected:
    void setSourcePositions(ATerm term, Rose::builder::SourcePosition &start, Rose::builder::SourcePosition &end);
    void setDeclarationModifier(SgVariableDeclaration* var_decl, int def_or_ref);
+   void setSourcePosition(SgLocatedNode* node, ATerm term);
 
  public:
-   ATermToSageJovialTraversal(SgSourceFile* source)
-     : ATermTraversal(source), sage_tree_builder(rb::SageTreeBuilder(rb::SageTreeBuilder::e_language_jovial))
+   ATermToSageJovialTraversal() = delete;
+   ATermToSageJovialTraversal(SgSourceFile* source, std::istringstream &tokens)
+     : ATermTraversal{source}, sage_tree_builder{source, Language::Jovial, tokens}
      {
      }
 

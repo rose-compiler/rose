@@ -72,13 +72,13 @@ class AstUnparseAttribute : public AstAttribute
           bool replacementStringExists();
 
        //! This will output all the strings (mostly for debugging).
-          virtual std::string toString() ROSE_OVERRIDE;
+          virtual std::string toString() override;
 
        //! This is selective in putting out only the strings that match a specific location.
           virtual std::string toString( RelativePositionType inputlocation );
 
           //! required for ast attribute mechanism
-          virtual AstAttribute::OwnershipPolicy getOwnershipPolicy() const ROSE_OVERRIDE;
+          virtual AstAttribute::OwnershipPolicy getOwnershipPolicy() const override;
 
    };
 

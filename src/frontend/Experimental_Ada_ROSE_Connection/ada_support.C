@@ -188,9 +188,23 @@ int main(int argc, char** argv)
        boostfs::path currentDir    = boostfs::current_path();
        string_type   srcFile       = file->getFileName();
        string_type   gnatOutputDir = currentDir.string<string_type>();
+       string_type   defaultConfig = currentDir.string<string_type>();
 
        gnatOutputDir += boostfs::path::preferred_separator;
        gnatOutputDir += "gnatOutput";
+
+       // check if default configuation, gnat.adc, exists
+       defaultConfig += boostfs::path::preferred_separator;
+       defaultConfig += "gnat.adc";
+       struct stat buffer;
+       // inject gnatec only when gnat.adc is available, and gnatA switch is not used
+       if (stat (defaultConfig.c_str(), &buffer) == 0 && GNATArgs.find("gnatA") == std::string::npos )
+       {
+         if(!ASISArgs.empty())
+            ASISArgs += " ";
+         ASISArgs += "-gnatec=";
+         ASISArgs += defaultConfig;
+       }
 
        // create a new output directory for every import file to support
        // parallel compilation (e.g., testing).

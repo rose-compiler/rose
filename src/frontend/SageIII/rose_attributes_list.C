@@ -844,6 +844,9 @@ PreprocessingInfo::directiveTypeName ( const DirectiveType & directive )
           case F90StyleComment:
              returnString = "F90StyleComment";
              break;
+          case JovialStyleComment:
+             returnString = "JovialStyleComment";
+             break;
           case C_StyleComment:
              returnString = "C_StyleComment";
              break;

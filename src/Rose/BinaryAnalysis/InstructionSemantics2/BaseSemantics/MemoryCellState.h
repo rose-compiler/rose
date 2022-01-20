@@ -68,7 +68,7 @@ public:
     }
 
 public:
-    virtual void clear() ROSE_OVERRIDE;
+    virtual void clear() override;
 
 public:
     /** Property: Cell most recently written.

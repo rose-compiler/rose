@@ -16,6 +16,7 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (NonrealRefExp,          "NonrealRefExp",          "NONREAL_REF" );
      NEW_TERMINAL_MACRO (AdaUnitRefExp,          "AdaUnitRefExp",          "ADA_UNIT_REF" );
      NEW_TERMINAL_MACRO (AdaTaskRefExp,          "AdaTaskRefExp",          "ADA_TASK_REF" );
+     NEW_TERMINAL_MACRO (AdaProtectedRefExp,     "AdaProtectedRefExp",     "ADA_PROTECTED_REF" );
      NEW_TERMINAL_MACRO (AdaRenamingRefExp,      "AdaRenamingRefExp",      "ADA_RENAMING_REF" );
      NEW_TERMINAL_MACRO (AdaAttributeExp,        "AdaAttributeExp",        "ADA_ATTRIBUTE_EXP" );
 
@@ -476,7 +477,7 @@ Grammar::setUpExpressions ()
           RangeExp            | MagicColonExp           | //SK(08/20/2015): RangeExp and MagicColonExp for Matlab
           TypeTraitBuiltinOperator | CompoundLiteralExp | JavaAnnotation           | JavaTypeExpression           | TypeExpression |
           ClassExp            | FunctionParameterRefExp | LambdaExp | HereExp | AtExp | FinishExp | NoexceptOp | NonrealRefExp |
-          AdaTaskRefExp       | FoldExpression | AwaitExpression | ChooseExpression | AdaAttributeExp |
+          AdaTaskRefExp       | AdaProtectedRefExp      | FoldExpression | AwaitExpression | ChooseExpression | AdaAttributeExp |
           JovialTablePresetExp| JovialPresetPositionExp | AdaOthersExp | AdaRenamingRefExp |
           AdaUnitRefExp, "Expression", "ExpressionTag", false);
 
@@ -644,6 +645,9 @@ Grammar::setUpExpressions ()
                                   "../Grammar/Expression.code" );
 
      AdaTaskRefExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
+                                  "../Grammar/Expression.code" );
+
+     AdaProtectedRefExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                   "../Grammar/Expression.code" );
 
      AdaRenamingRefExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
@@ -1329,12 +1333,18 @@ Grammar::setUpExpressions ()
                                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AdaUnitRefExp.setFunctionPrototype ( "HEADER_ADA_UNIT_REF_EXPRESSION", "../Grammar/Expression.code" );
-     // PP (06/30/21): For now AdaUnitRefExp can refer to any declaration. Consider narrowing that to packages via SgAdaPackageSymbol/SgAdaPackageSpecDecl once we have generic packages.
+     // PP (06/30/21): For now AdaUnitRefExp can refer to any declaration.
+     //                Consider narrowing that to packages via SgAdaPackageSymbol/SgAdaPackageSpecDecl
+     //                once we have generic packages.
      AdaUnitRefExp.setDataPrototype ( "SgDeclarationStatement*", "decl", "= NULL",
                                       CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AdaTaskRefExp.setFunctionPrototype ( "HEADER_ADA_TASK_REF_EXPRESSION", "../Grammar/Expression.code" );
      AdaTaskRefExp.setDataPrototype ( "SgAdaTaskSpecDecl*", "decl", "= NULL",
+                                      CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     AdaProtectedRefExp.setFunctionPrototype ( "HEADER_ADA_PROTECTED_REF_EXPRESSION", "../Grammar/Expression.code" );
+     AdaProtectedRefExp.setDataPrototype ( "SgAdaProtectedSpecDecl*", "decl", "= NULL",
                                       CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AdaRenamingRefExp.setFunctionPrototype ( "HEADER_ADA_RENAMING_REF_EXPRESSION", "../Grammar/Expression.code" );
@@ -3074,6 +3084,7 @@ Grammar::setUpExpressions ()
      JovialBitVal.setFunctionSource ( "SOURCE_JOVIAL_BIT_VALUE_EXPRESSION","../Grammar/Expression.code" );
      AdaUnitRefExp.setFunctionSource ( "SOURCE_ADA_UNIT_REF_EXPRESSION","../Grammar/Expression.code" );
      AdaTaskRefExp.setFunctionSource ( "SOURCE_ADA_TASK_REF_EXPRESSION","../Grammar/Expression.code" );
+     AdaProtectedRefExp.setFunctionSource ( "SOURCE_ADA_PROTECTED_REF_EXPRESSION","../Grammar/Expression.code" );
      AdaRenamingRefExp.setFunctionSource ( "SOURCE_ADA_RENAMING_REF_EXPRESSION","../Grammar/Expression.code" );
      AdaAttributeExp.setFunctionSource ( "SOURCE_ADA_ATTRIBUTE_EXPRESSION","../Grammar/Expression.code" );
 

@@ -153,28 +153,38 @@ std::string VariableIdMapping::mangledName(VariableId varId) {
     return "*";
 }
 
+std::string VariableIdMapping::toCSVString(VariableId varId) {
+  if(!varId.isValid()) {
+    return "invalid";
+  }
+  VariableIdInfo& varIdInfo=*getVariableIdInfoPtr(varId);
+  stringstream ss;
+  ss<<varId.toString(this)
+    //<<","<<SgNodeHelper::symbolToString(mappingVarIdToInfo[i].sym)
+    //<<","<<mappingVarIdToInfo[variableIdFromCode(i)]._sym
+    <<","<<varIdInfo.variableScopeToString()
+    <<","<<varIdInfo.aggregateTypeToString()
+    <<",elems:"<<getNumberOfElements(varId)
+    <<",elemsize:"<<getElementSize(varId)
+    <<",total:"<<getTotalSize(varId)
+    <<",offset:"<<getOffset(varId);
+  if(isStringLiteralAddress(varId)) {
+    ss<<","<<"<non-symbol-string-literal-id>";
+  } else if(isTemporaryVariableId(varId)) {
+    ss<<","<<"<non-symbol-memory-region-id>";
+  } else if(SgSymbol* sym=getSymbol(varId)) {
+    ss<<","<<variableName(varId);
+  } else {
+    ss<<","<<"<missing-symbol>";
+  }
+  return ss.str();
+}
+
 void VariableIdMapping::toStream(ostream& os) {
   for(size_t i=0;i<mappingVarIdToInfo.size();++i) {
     VariableId varId=variableIdFromCode(i);
-    os<<i
-      <<","<<varId.toString(this)
-      //<<","<<SgNodeHelper::symbolToString(mappingVarIdToInfo[i].sym)
-      //<<","<<mappingVarIdToInfo[variableIdFromCode(i)]._sym
-      <<","<<getVariableIdInfo(varId).variableScopeToString()
-      <<","<<getVariableIdInfo(varId).aggregateTypeToString()
-      <<",elems:"<<getNumberOfElements(varId)
-      <<",elemsize:"<<getElementSize(varId)
-      <<",total:"<<getTotalSize(varId)
-      <<",offset:"<<getOffset(varId);
-    if(isStringLiteralAddress(varId)) {
-      os<<","<<"<non-symbol-string-literal-id>";
-    } else if(isTemporaryVariableId(varId)) {
-      os<<","<<"<non-symbol-memory-region-id>";
-    } else if(SgSymbol* sym=getSymbol(varId)) {
-      os<<","<<variableName(varId);
-    } else {
-      os<<","<<"<missing-symbol>";
-    }
+    os<<i<<":";
+    os<<toCSVString(varId);
     os<<endl;
   }
 }

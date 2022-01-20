@@ -126,7 +126,7 @@ class Labeler {
      this can only be the case if label is erroneously higher than the number of labeled nodes or NO_LABEL.
   */
   virtual SgNode* getNode(Label label) = 0;
-  virtual long numberOfLabels() = 0;
+  virtual size_t numberOfLabels() = 0;
   virtual std::string toString() = 0;
   virtual Label functionCallLabel(SgNode* node) = 0;
   virtual Label functionCallReturnLabel(SgNode* node) = 0;
@@ -175,6 +175,9 @@ class Labeler {
   virtual bool isExternalFunctionCallLabel(Label lab) = 0;
   virtual void setExternalFunctionCallLabel(Label lab) = 0;
 
+  // checks that id range is correct
+  virtual bool isValidLabelIdRange(Label lab);
+  
   virtual
   Label getFunctionCallReturnLabelFromCallLabel(Label callLabel) = 0;
 
@@ -207,79 +210,79 @@ class CLabeler : public Labeler {
   //~ explicit CLabeler(SgNode*);
   ~CLabeler() = default;
 
-  int numberOfAssociatedLabels(SgNode* node) ROSE_OVERRIDE;
-  void createLabels(SgNode* node) ROSE_OVERRIDE;
-  void initialize(SgNode* node) ROSE_OVERRIDE;
+  int numberOfAssociatedLabels(SgNode* node) override;
+  void createLabels(SgNode* node) override;
+  void initialize(SgNode* node) override;
 
   /** Labels are numbered 0..n-1 where n is the number of labels
       associated with AST nodes (not all nodes are labeled, and some
       nodes are associated with more than one label).
      A return value of NO_LABEL means that this node has no label.
   */
-  Label getLabel(SgNode* node) ROSE_OVERRIDE;
-  LabelSet getLabelSet(std::set<SgNode*>& nodeSet) ROSE_OVERRIDE;
+  Label getLabel(SgNode* node) override;
+  LabelSet getLabelSet(std::set<SgNode*>& nodeSet) override;
 
   /** Returns the node with the label 'label'. If the return value is 0 then no node exists for this label -
      this can only be the case if label is erroneously higher than the number of labeled nodes or NO_LABEL.
   */
-  SgNode* getNode(Label label) ROSE_OVERRIDE;
-  long numberOfLabels() ROSE_OVERRIDE;
-  std::string toString() ROSE_OVERRIDE;
-  Label functionCallLabel(SgNode* node) ROSE_OVERRIDE;
-  Label functionCallReturnLabel(SgNode* node) ROSE_OVERRIDE;
-  Label functionEntryLabel(SgNode* node) ROSE_OVERRIDE;
-  Label functionExitLabel(SgNode* node) ROSE_OVERRIDE;
-  Label blockBeginLabel(SgNode* node) ROSE_OVERRIDE;
-  Label blockEndLabel(SgNode* node) ROSE_OVERRIDE;
-  Label joinLabel(SgNode *node) ROSE_OVERRIDE;
-  Label forkLabel(SgNode *node) ROSE_OVERRIDE;
-  Label workshareLabel(SgNode *node) ROSE_OVERRIDE;
-  Label barrierLabel(SgNode *node) ROSE_OVERRIDE;
+  SgNode* getNode(Label label) override;
+  size_t numberOfLabels() override;
+  std::string toString() override;
+  Label functionCallLabel(SgNode* node) override;
+  Label functionCallReturnLabel(SgNode* node) override;
+  Label functionEntryLabel(SgNode* node) override;
+  Label functionExitLabel(SgNode* node) override;
+  Label blockBeginLabel(SgNode* node) override;
+  Label blockEndLabel(SgNode* node) override;
+  Label joinLabel(SgNode *node) override;
+  Label forkLabel(SgNode *node) override;
+  Label workshareLabel(SgNode *node) override;
+  Label barrierLabel(SgNode *node) override;
 
   // info obtained from LabelProperty
-  bool isFunctionCallLabel(Label lab) ROSE_OVERRIDE;
-  bool isFunctionCallReturnLabel(Label lab) ROSE_OVERRIDE;
-  bool isFunctionEntryLabel(Label lab) ROSE_OVERRIDE;
-  bool isFunctionExitLabel(Label lab) ROSE_OVERRIDE;
-  bool isBlockBeginLabel(Label lab) ROSE_OVERRIDE;
-  bool isBlockEndLabel(Label lab) ROSE_OVERRIDE;
-  bool isEmptyStmtLabel(Label lab) ROSE_OVERRIDE;
-  bool isFirstLabelOfMultiLabeledNode(Label lab) ROSE_OVERRIDE;
-  bool isSecondLabelOfMultiLabeledNode(Label lab) ROSE_OVERRIDE;
+  bool isFunctionCallLabel(Label lab) override;
+  bool isFunctionCallReturnLabel(Label lab) override;
+  bool isFunctionEntryLabel(Label lab) override;
+  bool isFunctionExitLabel(Label lab) override;
+  bool isBlockBeginLabel(Label lab) override;
+  bool isBlockEndLabel(Label lab) override;
+  bool isEmptyStmtLabel(Label lab) override;
+  bool isFirstLabelOfMultiLabeledNode(Label lab) override;
+  bool isSecondLabelOfMultiLabeledNode(Label lab) override;
 
   // info obtained from AST node
-  bool isForkLabel(Label lab) ROSE_OVERRIDE;
-  bool isJoinLabel(Label lab) ROSE_OVERRIDE;
-  bool isWorkshareLabel(Label lab) ROSE_OVERRIDE;
-  bool isBarrierLabel(Label lab) ROSE_OVERRIDE;
-  bool isConditionLabel(Label lab) ROSE_OVERRIDE;
-  bool isLoopConditionLabel(Label lab) ROSE_OVERRIDE;
-  bool isSwitchExprLabel(Label lab) ROSE_OVERRIDE;
+  bool isForkLabel(Label lab) override;
+  bool isJoinLabel(Label lab) override;
+  bool isWorkshareLabel(Label lab) override;
+  bool isBarrierLabel(Label lab) override;
+  bool isConditionLabel(Label lab) override;
+  bool isLoopConditionLabel(Label lab) override;
+  bool isSwitchExprLabel(Label lab) override;
 
   /** tests if @ref call and @ref ret are call and return labels of
    *  the same function call
    */
-  bool areCallAndReturnLabels(Label call, Label ret) ROSE_OVERRIDE;
+  bool areCallAndReturnLabels(Label call, Label ret) override;
 
   /** returns the call label for the provided return label. */
-  Label getFunctionCallLabelFromReturnLabel(Label retnLabel) ROSE_OVERRIDE;
+  Label getFunctionCallLabelFromReturnLabel(Label retnLabel) override;
 
-  LabelProperty getProperty(Label lbl) ROSE_OVERRIDE;
+  LabelProperty getProperty(Label lbl) override;
 
   // by default false for all labels. This must be set by the CF analysis.
-  bool isExternalFunctionCallLabel(Label lab) ROSE_OVERRIDE;
-  void setExternalFunctionCallLabel(Label lab) ROSE_OVERRIDE;
-  Label getFunctionCallReturnLabelFromCallLabel(Label callLabel) ROSE_OVERRIDE;
+  bool isExternalFunctionCallLabel(Label lab) override;
+  void setExternalFunctionCallLabel(Label lab) override;
+  Label getFunctionCallReturnLabelFromCallLabel(Label callLabel) override;
 
-  Labeler::iterator begin() ROSE_OVERRIDE;
-  Labeler::iterator end() ROSE_OVERRIDE;
+  Labeler::iterator begin() override;
+  Labeler::iterator end() override;
   void setIsFunctionCallFn(std::function<bool(SgNode*)>); // non-virtual setter
  protected:
   virtual void computeNodeToLabelMapping();
   virtual void registerLabel(LabelProperty);
   virtual void ensureValidNodeToLabelMapping();
 
-  // bool isFunctionCallNode(SgNode*) const ROSE_OVERRIDE; repl. with function pointer
+  // bool isFunctionCallNode(SgNode*) const override; repl. with function pointer
 
   bool _isValidMappingNodeToLabel = false;
   typedef std::vector<LabelProperty> LabelToLabelPropertyMapping;
@@ -303,7 +306,7 @@ class IOLabeler : public CLabeler {
   virtual bool isStdErrLabel(Label label, VariableId* id=0);
   virtual  ~IOLabeler();
 
-  void initialize(SgNode* n) ROSE_OVERRIDE;
+  void initialize(SgNode* n) override;
 
  protected:
   VariableIdMapping* _variableIdMapping;

@@ -3,6 +3,163 @@ dnl ROSE_FLAG_CXX set the C++ compiler flags.
 dnl This macro modifies CXXFLAGS.  Secondarily,
 dnl it defines variables such as CXX_DEBUG, CXX_OPTIMIZE, etc.
 dnl
+AC_DEFUN([ROSE_FLAG_OPTIONS], [
+
+AC_REQUIRE([AC_CANONICAL_HOST])
+AC_REQUIRE([AC_PROG_CC])
+AC_REQUIRE([AC_PROG_CXX])
+
+# Given the C++ compiler command-line, create output variables HOST_CXX_VENDOR, HOST_CXX_VERSION, and HOST_CXX_LANGUAGE
+# that contain the vendor (gnu, llvm, or intel), the version (as defined by CPP macros, not the --version output), and
+# the language dialect (c++17, gnu++11, etc.).
+ROSE_COMPILER_FEATURES([c++], [$CXX $CPPFLAGS $CXXFLAGS], [HOST_CXX_])
+
+# Debug Flags
+
+AC_ARG_WITH(DEBUG, AS_HELP_STRING([--with-DEBUG], [manually set the compiler debug flags]))
+
+has_debug_flag=yes
+if test "$with_DEBUG" = "yes"; then
+  C_DEBUG="-g"
+  CXX_DEBUG="-g"
+elif test "$with_DEBUG" = "no"; then
+  C_DEBUG=""
+  CXX_DEBUG=""
+elif test "$with_DEBUG"; then
+  C_DEBUG="$with_DEBUG"
+  CXX_DEBUG="$with_DEBUG"
+else
+  has_debug_flag=no
+  C_DEBUG=""
+  CXX_DEBUG=""
+fi
+
+AC_SUBST(C_DEBUG)
+AC_SUBST(CXX_DEBUG)
+
+# Optimization Flags
+
+AC_ARG_WITH(OPTIMIZE, AS_HELP_STRING([--with-OPTIMIZE], [manually set the compiler optimization flags]))
+
+has_optimize_flag=yes
+if test "$with_OPTIMIZE" = yes; then
+  C_OPTIMIZE="-O2"
+  CXX_OPTIMIZE="-O2"
+elif test "$with_OPTIMIZE" = debug; then
+  C_OPTIMIZE="-Og"
+  CXX_OPTIMIZE="-Og"
+elif test "$with_OPTIMIZE" = no; then
+  C_OPTIMIZE="-O0"
+  CXX_OPTIMIZE="-O0"
+elif test "$with_OPTIMIZE"; then
+  C_OPTIMIZE=$with_OPTIMIZE
+  CXX_OPTIMIZE=$with_OPTIMIZE
+else
+  has_optimize_flag=no
+  C_OPTIMIZE="-O2"
+  CXX_OPTIMIZE="-O2"
+fi
+
+AC_SUBST(C_OPTIMIZE)
+AC_SUBST(CXX_OPTIMIZE)
+
+# Warning Flags
+
+AC_ARG_WITH(WARNINGS, AS_HELP_STRING([--with-WARNINGS], [manually set the compiler warning flags]))
+
+# Large set of warnings
+rose_basic_warnings="-Wall -Wextra"
+# Even more warnings
+rose_extra_warnings="-Wshadow -Wdouble-promotion -Wformat=2 -Wformat-truncation -Wundef -Wconversion"
+# Some warnings that cannot be made errors in ROSE (last 3 should get fixed in EDG -- probably with pragma)
+rose_no_error_warnings="-Wno-error=cpp -Wno-error=multichar -Wno-error=shift-count-overflow -Wno-error=stringop-overflow="
+
+# Evolving list of warnings that we want to fix in ROSE
+#warnings_of_interrest="uninitialized maybe-uninitialized format format-overflow format-truncation"
+warnings_of_interrest="uninitialized"
+warnings_causing_failure=""
+develop_warn_on="$(for w in $warnings_of_interrest; do echo -W$w; done)"
+release_fail_on="$(for w in $warnings_of_interrest; do echo -Werror=$w; done)"
+develop_fail_on="$(for w in $warnings_causing_failure; do echo -Werror=$w; done)"
+
+has_warning_flag=yes
+if test "$with_WARNINGS" = none; then
+  # Ensure no warnings
+  C_WARNINGS=""
+  CXX_WARNINGS=""
+elif test "$with_WARNINGS" = basic; then
+  # Basic warnings used by most projects
+  C_WARNINGS="$rose_basic_warnings"
+  CXX_WARNINGS="$rose_basic_warnings"
+elif test "$with_WARNING" = all; then
+  # All warnings that we could think of
+  C_WARNINGS="$rose_basic_warnings $rose_extra_warnings"
+  CXX_WARNINGS="$rose_basic_warnings $rose_extra_warnings"
+elif test "$with_WARNINGS" = develop; then
+  # Only warnings that we want to enforce in `develop` mode
+  C_WARNINGS="$develop_warn_on $develop_fail_on"
+  CXX_WARNINGS="$develop_warn_on $develop_fail_on"
+elif test "$with_WARNINGS" = candidate; then
+  # All warnings plus failure on important warnings
+  C_WARNINGS="$develop_fail_on $release_fail_on"
+  CXX_WARNINGS="$develop_fail_on $release_fail_on"
+elif test "$with_WARNINGS" = release; then
+  # All warnings plus failure on important warnings
+  C_WARNINGS="$rose_basic_warnings $rose_extra_warnings $develop_fail_on $release_fail_on"
+  CXX_WARNINGS="$rose_basic_warnings $rose_extra_warnings $develop_fail_on $release_fail_on"
+elif test "$with_WARNING" = pedantic; then
+  # Fails on any warnings (of `all`) but a few special ones
+  C_WARNINGS="-Werror $rose_basic_warnings $rose_extra_warnings $rose_no_error_warnings"
+  CXX_WARNINGS="-Werror $rose_basic_warnings $rose_extra_warnings $rose_no_error_warnings"
+elif test "$with_WARNINGS"; then
+  # User defined
+  C_WARNINGS=$with_WARNINGS
+  CXX_WARNINGS=$with_WARNINGS
+else
+  has_warning_flag=no
+  C_WARNINGS=""
+  CXX_WARNINGS=""
+fi
+
+AC_SUBST(C_WARNINGS)
+AC_SUBST(CXX_WARNINGS)
+
+CXX_TEMPLATE_REPOSITORY_PATH='$(top_builddir)/src'
+CXX_TEMPLATE_OBJECTS= # A bunch of Makefile.ams use this
+AC_SUBST(CXX_TEMPLATE_REPOSITORY_PATH)
+AC_SUBST(CXX_TEMPLATE_OBJECTS)
+
+AC_MSG_NOTICE([Initial flags:])
+AC_MSG_NOTICE([CFLAGS       = "$CFLAGS"])
+AC_MSG_NOTICE([CXXFLAGS     = "$CXXFLAGS"])
+
+AC_MSG_NOTICE([Found Flags:])
+AC_MSG_NOTICE([C_DEBUG      = "$C_DEBUG"])
+AC_MSG_NOTICE([CXX_DEBUG    = "$CXX_DEBUG"])
+AC_MSG_NOTICE([C_OPTIMIZE   = "$C_OPTIMIZE"])
+AC_MSG_NOTICE([CXX_OPTIMIZE = "$CXX_OPTIMIZE"])
+AC_MSG_NOTICE([C_WARNINGS   = "$C_WARNINGS"])
+AC_MSG_NOTICE([CXX_WARNINGS = "$CXX_WARNINGS"])
+
+if test "$has_debug_flag" = yes; then
+  CFLAGS="$CFLAGS $C_DEBUG"
+  CXXFLAGS="$CXXFLAGS $CXX_DEBUG"
+fi
+if test "$has_optimize_flag" = yes; then
+  CFLAGS="$CFLAGS $C_OPTIMIZE"
+  CXXFLAGS="$CXXFLAGS $CXX_OPTIMIZE"
+fi
+if test "$has_warning_flag" = yes; then
+  CFLAGS="$CFLAGS $C_WARNINGS"
+  CXXFLAGS="$CXXFLAGS $CXX_WARNINGS"
+fi
+
+AC_MSG_NOTICE([Final Flags:])
+AC_MSG_NOTICE([CFLAGS       = "$CFLAGS"])
+AC_MSG_NOTICE([CXXFLAGS     = "$CXXFLAGS"])
+
+])
+
 AC_DEFUN([ROSE_FLAG_CXX_OPTIONS], [
 # Begin macro ROSE_FLAG_CXX.
 
@@ -10,9 +167,6 @@ AC_DEFUN([ROSE_FLAG_CXX_OPTIONS], [
 # so we must know our host and the compiler used.
 AC_REQUIRE([AC_CANONICAL_HOST])
 AC_REQUIRE([AC_PROG_CXX])
-
-# DQ (9/26/2015): Commented out to supress warning in aclocal.
-# AC_REQUIRE([BTNG_INFO_CXX_ID])
 
 # Given the C++ compiler command-line, create output variables HOST_CXX_VENDOR, HOST_CXX_VERSION, and HOST_CXX_LANGUAGE
 # that contain the vendor (gnu, llvm, or intel), the version (as defined by CPP macros, not the --version output), and
@@ -24,19 +178,7 @@ AC_MSG_NOTICE([in c++ option setting: FRONTEND_CXX_COMPILER_VENDOR = "$FRONTEND_
 dnl *********************************************************************
 dnl * Set up the Preprocessor -D options CXXDEBUG and ARCH_DEFINES
 dnl *********************************************************************
-# AC_ARG_WITH(CXX_DEBUG, [  --with-CXX_DEBUG=ARG    manually set the C++ compiler debug flags to ARG (leave blank to choose automatically)])
 AC_ARG_WITH(CXX_DEBUG, AS_HELP_STRING([--with-CXX_DEBUG], [manually set the C++ compiler debug flags to ARG (leave blank to choose automatically)]),[withval=yes],[withval=yes])
-
-# if test "$with_CXX_DEBUG" = yes; then
-#  # CXX_DEBUG was activated but not specified, so set it.
-#  case $CXX in
-#    *) CXX_DEBUG='-g' ;;
-#  esac
-#elif test "$with_CXX_DEBUG" = no; then
-#  CXX_DEBUG=''
-#else
-#  CXX_DEBUG=$with_CXX_DEBUG
-#fi
 
 AC_MSG_NOTICE([with_CXX_DEBUG = "$with_CXX_DEBUG"])
 
@@ -54,22 +196,6 @@ fi
 
 AC_MSG_NOTICE([after initialization: with_CXX_DEBUG = "$with_CXX_DEBUG"])
 
-# echo "Setting with_CXX_DEBUG to withval = $withval"
-# with_CXX_DEBUG=$withval
-
-# echo "OS_VENDOR_APPLE = $OS_VENDOR_APPLE"
-# echo "OS_vendor = $OS_vendor"
-
-# if "x$OS_vendor" == "xapple"; then
-#    echo "This IS a Mac OSX machine (even though we call the g++ compiler (which is really clang), CXX resolves to clang): Cxx = $CXX"
-# else
-#    echo "This is NOT a Mac OSX machine"
-# fi
-
-# echo "FRONTEND_CXX_VERSION_MAJOR = $FRONTEND_CXX_VERSION_MAJOR"
-
-# if test $FRONTEND_CXX_COMPILER_VENDOR == "gnu" && test $FRONTEND_CXX_VERSION_MAJOR -ge 5; then
-# if test "x$FRONTEND_CXX_COMPILER_VENDOR" = "xgnu" && test $FRONTEND_CXX_VERSION_MAJOR -ge 5; then
 if test "x$FRONTEND_CXX_COMPILER_VENDOR" = "xgnu" ; then
    AC_MSG_NOTICE([using additional GNU compiler options: -fno-var-tracking-assignments -Wno-misleading-indentation])
 else
@@ -81,30 +207,7 @@ if test "x$with_CXX_DEBUG" = "xyes"; then
   AC_MSG_NOTICE([using default options for maximal debug (true case)])
   case $CXX in
     g++)
-    # DQ (9/18/2020): The reason we can't use these options is because the MacOSX compiler is clang,
-    # but it calls itself g++, and we need to figure out how to tell with the g++ is acutally clang 
-    # so that we can suppress these options in just that case.
-    # DQ (9/17/2020): We can't use these option until we use more modern compilers than 4.8.5 in Jenkins.
-    # DQ (9/16/2020): Adding -fno-var-tracking-asignment -fno-misleading-indentation -wfatal-errors
-    # CXX_DEBUG="-g"
-    # CXX_DEBUG="-g -fno-var-tracking-asignment -fno-misleading-indentation"
-    # CXX_DEBUG="-g -fno-misleading-indentation"
-    # CXX_DEBUG="-g -Wno-misleading-indentation"
-    # CXX_DEBUG="-g -fno-var-tracking-assignments"
-    # CXX_DEBUG="-g -fno-var-tracking-assignments -Wno-misleading-indentation"
-    # CXX_DEBUG="-g -fno-var-tracking-assignments -Wno-misleading-indentation"
-    # CXX_DEBUG="-g"
-    # DQ (9/20/20): We need to make sure that where the Clang compiler on MacOSX pretends to be 
-    # the GNU compiler that we don't use some GNU options that are an error when used with Clang.
-    # if test $FRONTEND_CXX_COMPILER_VENDOR == "gnu" && test $FRONTEND_CXX_VERSION_MAJOR -ge 5; then
-    # if test $FRONTEND_CXX_COMPILER_VENDOR == "gnu" ; then
-      if test "x$FRONTEND_CXX_COMPILER_VENDOR" == "xgnu" && test $FRONTEND_CXX_VERSION_MAJOR -ge 5; then
-         AC_MSG_NOTICE([using additional GNU compiler options: -fno-var-tracking-assignments -Wno-misleading-indentation])
-         CXX_DEBUG="-g -fno-var-tracking-assignments -Wno-misleading-indentation"
-      else
-         AC_MSG_NOTICE([skip using additional GNU compiler options (likely clang trying to look like g++ on MaxOSX): -fno-var-tracking-assignments -Wno-misleading-indentation])
-         CXX_DEBUG="-g"
-      fi
+      CXX_DEBUG="-g"
       ;;
     clang++)
       CXX_DEBUG="-g"
@@ -158,8 +261,6 @@ if test -n "$CXX_DEBUG"; then CXXFLAGS="$CXXFLAGS $CXX_DEBUG"; fi
 # echo "Am I set: CXX_DEBUG= $CXX_DEBUG"
 AC_MSG_NOTICE([CXXFLAGS currently set to $CXXFLAGS])
 
-# exit 1
-
 dnl *********************************************************************
 dnl * Set the C++ compiler optimization flags in CXXOPT
 dnl *********************************************************************
@@ -188,12 +289,6 @@ fi
 AC_SUBST(CXX_OPTIMIZE)
 if test "$CXX_OPTIMIZE"; then CXXFLAGS="$CXXFLAGS $CXX_OPTIMIZE"; fi
 
-AC_MSG_NOTICE([after initialization: with_CXX_OPTIMIZE = "$with_CXX_OPTIMIZE"])
-AC_MSG_NOTICE([after initialization: CXX_OPTIMIZE = "$CXX_OPTIMIZE"])
-
-# echo "After processing CXX_OPTIMIZE: Exiting as a test!"
-# exit 1
-
 dnl *********************************************************************
 dnl * Set the C++ compiler flags in CXX_WARNINGS
 dnl *********************************************************************
@@ -201,10 +296,7 @@ dnl This should use the AC_ARG_ENABLE not AC_ARC_WITH!
 
 AC_MSG_NOTICE([setup CXX_WARNING CXX = "$CXX"])
 
-# AC_ARG_ENABLE(warnings, AS_HELP_STRING([--enable-warnings], [Support for a uniform warning level for ROSE development]),[enableval=yes],[enableval=yes])
-# AC_ARG_WITH(CXX_WARNINGS, [  --with-CXX_WARNINGS=ARG   manually set the C++ compiler warning flags to ARG (leave blank to choose automatically)])
-AC_ARG_WITH(CXX_WARNINGS, AS_HELP_STRING([--with-CXX_WARNINGS], [Support for a uniform warning level for ROSE development]),[withval=yes],[withval=yes])
-# AC_ARG_WITH(CXX_WARNINGS, AS_HELP_STRING([--with-CXX_WARNINGS], [Support for a uniform warning level for ROSE development]),[with_CXX_WARNINGS=yes],[with_CXX_WARNINGS=yes])
+AC_ARG_WITH(CXX_WARNINGS, AS_HELP_STRING([--with-CXX_WARNINGS], [Support for a uniform warning level for ROSE development]),[withval=yes],[withval=no])
 
 AC_MSG_NOTICE([with_CXX_WARNINGS = "$with_CXX_WARNINGS"])
 
@@ -222,80 +314,43 @@ fi
 
 AC_MSG_NOTICE([after initialization: with_CXX_WARNINGS = "$with_CXX_WARNINGS"])
 
-# echo "Setting with_CXX_WARNINGS to withval = $withval"
-# with_CXX_WARNINGS=$withval
-
 if test "x$with_CXX_WARNINGS" = "xyes"; then
-# DQ (12/3/2016): Add these options to what may have been specified using enable_fatal_rose_warnings.
-# CXX_WARNINGS was activated but not specified, so set it.
   AC_MSG_NOTICE([using default options for maximal warnings (true case)])
-# case $CXX in
   case $FRONTEND_CXX_COMPILER_VENDOR in
-#   g++)
     gnu)
-    # cc1plus: warning: command line option "-Wstrict-prototypes" is valid for Ada/C/ObjC but not for C++
-    # cc1plus: warning: command line option "-Wmissing-prototypes" is valid for Ada/C/ObjC but not for C++
-    # CXX_WARNINGS="-Wall -Wstrict-prototypes -Wmissing-prototypes"
-    #  CXX_WARNINGS="-Wall"
-    # DQ (4/5/2017): Ignore some warnings (GNU feature only meaningful for small codes).
-    # CXX_WARNINGS+="-Wall -Wnomisleading-indentation -Wnonnull-compare"
-    # DQ (4/5/2017): Note: specification of "-Wnomisleading-indentation" causes errors downstream in boost configuration.
-    # CXX_WARNINGS+="-Wall -Wnomisleading-indentation"
-      CXX_WARNINGS+="-Wall"
+      CXX_WARNINGS="-Wall"
       ;;
-#   icpc)
     intel)
-    # For Intel turn on 64bit migration/portability warnings
-    # CXX_WARNINGS="-w1 -Wall -Wcheck -Wp64"
-    # CXX_WARNINGS+="-w1 -Wall -Wcheck -Wp64"
-      CXX_WARNINGS+="-Wall"
+      CXX_WARNINGS="-Wall"
       ;;
     clang)
-    # For Intel turn on 64bit migration/portability warnings
-    # CXX_WARNINGS="-w1 -Wall -Wcheck -Wp64"
-    # CXX_WARNINGS+="-w1 -Wall -Wcheck -Wp64"
-      CXX_WARNINGS+="-Wall -Wno-unused-local-typedefs -Wno-attributes"
+      CXX_WARNINGS="-Wall -Wno-unused-local-typedefs -Wno-attributes"
       ;;
-#   KCC | mpKCC)
     kai)
-    # CXX_WARNINGS="--for_init_diff_warning --new_for_init -w"
-      CXX_WARNINGS+="--for_init_diff_warning --new_for_init -w"
+      CXX_WARNINGS="--for_init_diff_warning --new_for_init -w"
       ;;
-#   CC)
     sun)
       case $host_os in
         solaris*| sun4*)
-        # CXX_WARNINGS=""
-          CXX_WARNINGS+=""
+          CXX_WARNINGS=""
     esac
     ;;
   esac
 elif test "x$with_CXX_WARNINGS" = "xno"; then
-
-  CXX_WARNINGS=''
-# DQ (1/15/2007): turn on warnings by default.
   AC_MSG_NOTICE([using at least some default (minimal) options for warnings (false case)])
-# case $CXX in
   case $FRONTEND_CXX_COMPILER_VENDOR in
-#   g++)
     gnu)
-    # CXX_WARNINGS="-Wall -Wstrict-prototypes -Wmissing-prototypes"
-      CXX_WARNINGS="-Wall"
+      CXX_WARNINGS=""
       ;;
-#   icpc)
     intel)
-    # For Intel turn on 64bit migration/portability warnings
-      CXX_WARNINGS="-w1 -Wall -Wcheck -Wp64"
+      CXX_WARNINGS=""
       ;;
     clang)
-    # CXX_WARNINGS="-Wall -Wstrict-prototypes -Wmissing-prototypes"
-      CXX_WARNINGS="-Wall -Wno-unused-local-typedefs -Wno-attributes"
+      CXX_WARNINGS=""
       ;;
-#   "KCC --c" | mpKCC)
     kai)
-      CXX_WARNINGS="--for_init_diff_warning --new_for_init -w"
+      CXX_WARNINGS=""
       ;;
-#   CC)
     sun)
       case $host_os in
         solaris*| sun4*)
@@ -306,7 +361,7 @@ elif test "x$with_CXX_WARNINGS" = "xno"; then
 else
 # Settings specified explicitly by the user.
   AC_MSG_NOTICE([adding explicitly specified warnings to be used for CXX_WARNINGS])
-  CXX_WARNINGS+=$with_CXX_WARNINGS
+  CXX_WARNINGS=$with_CXX_WARNINGS
 fi
 
 AC_SUBST(CXX_WARNINGS)
@@ -487,9 +542,7 @@ dnl This should use the AC_ARG_ENABLE not AC_ARC_WITH!
 
 AC_MSG_NOTICE([setup C_WARNINGS CC = "$CC"])
 
-# AC_ARG_WITH(C_WARNINGS, [  --with-C_WARNINGS=ARG   manually set the C compiler warning flags to ARG (leave blank to choose automatically)])
-# AC_ARG_WITH(C_WARNINGS, AS_HELP_STRING([--with-C_WARNINGS], [Support for a uniform warning level for ROSE development]),[with_C_WARNINGS=yes],[with_C_WARNINGS=yes])
-AC_ARG_WITH(C_WARNINGS, AS_HELP_STRING([--with-C_WARNINGS], [Support for a uniform warning level for ROSE development]),[withval=yes],[withval=yes])
+AC_ARG_WITH(C_WARNINGS, AS_HELP_STRING([--with-C_WARNINGS], [Support for a uniform warning level for ROSE development]),[withval=yes],[withval=no])
 
 AC_MSG_NOTICE([with_C_WARNINGS = "$with_C_WARNINGS"])
 
@@ -508,64 +561,40 @@ fi
 AC_MSG_NOTICE([after initialization: with_C_WARNINGS = "$with_C_WARNINGS"])
 
 if test "x$with_C_WARNINGS" = "xyes"; then
-  # C_WARNINGS was activated but not specified, so set it.
-# DQ (3/21/2017): Base the C language warning specification on the vendor for the C++ compiler (same as vendor for C compiler).
-# case $CC in
   case $FRONTEND_CXX_COMPILER_VENDOR in
-#   gcc)
     gnu)
-    # C_WARNINGS="-Wall -Wstrict-prototypes -Wmissing-prototypes"
-      C_WARNINGS+="-Wall -Wstrict-prototypes -Wmissing-prototypes"
+      C_WARNINGS="-Wall -Wstrict-prototypes -Wmissing-prototypes"
       ;;
-#   icc)
     intel)
-    # For Intel turn on 64bit migration/portability warnings
-    # C_WARNINGS="-w -Wall -Wcheck -Wp64"
-      C_WARNINGS+="-w -Wall -Wcheck -Wp64"
+      C_WARNINGS="-w -Wall -Wcheck -Wp64"
       ;;
     clang)
-    # C_WARNINGS="-Wall -Wstrict-prototypes -Wmissing-prototypes"
-      C_WARNINGS+="-Wall -Wno-unused-local-typedefs -Wno-attributes"
+      C_WARNINGS="-Wall -Wno-unused-local-typedefs -Wno-attributes"
       ;;
-#   "KCC --c" | mpKCC)
     kai)
-    # C_WARNINGS="--for_init_diff_warning --new_for_init -w"
-      C_WARNINGS+="--for_init_diff_warning --new_for_init -w"
+      C_WARNINGS="--for_init_diff_warning --new_for_init -w"
       ;;
-#   cc)
     sun)
       case $host_os in
         solaris*| sun4*)
-        # C_WARNINGS=""
-          C_WARNINGS+=""
+          C_WARNINGS=""
     esac
     ;;
   esac
 elif test "x$with_C_WARNINGS" = "xno"; then
-# DQ (12/3/2016): Ony use default warning when enable_fatal_rose_warnings is not used.
-  C_WARNINGS=''
-# DQ (1/15/2007): turn on warnings by default.
-# case $CC in
   case $FRONTEND_CXX_COMPILER_VENDOR in
-#   gcc)
     gnu)
-    # C_WARNINGS="-Wall -Wstrict-prototypes -Wmissing-prototypes"
-      C_WARNINGS="-Wall"
+      C_WARNINGS=""
       ;;
-#   icc)
     intel)
-    # For Intel turn on 64bit migration/portability warnings
-      C_WARNINGS="-w1 -Wall -Wcheck -Wp64"
+      C_WARNINGS=""
       ;;
     clang)
-    # C_WARNINGS="-Wall -Wstrict-prototypes -Wmissing-prototypes"
-      C_WARNINGS="-Wall -Wno-unused-local-typedefs -Wno-attributes"
+      C_WARNINGS=""
       ;;
-#   "KCC --c" | mpKCC)
     kai)
-      C_WARNINGS="--for_init_diff_warning --new_for_init -w"
+      C_WARNINGS=""
       ;;
-#   cc)
     sun)
       case $host_os in
         solaris*| sun4*)
@@ -575,7 +604,7 @@ elif test "x$with_C_WARNINGS" = "xno"; then
   esac
 else
   AC_MSG_NOTICE([adding explicitly specified warnings to be used.])
-  C_WARNINGS+=$with_C_WARNINGS
+  C_WARNINGS=$with_C_WARNINGS
 fi
 
 AC_SUBST(C_WARNINGS)
@@ -592,107 +621,6 @@ AC_MSG_NOTICE([CXX_WARNINGS = "$CXX_WARNINGS"])
 
 # End macro ROSE_FLAG_C_OPTIONS.
 ])
-
-
-dnl *****************************************************************************
-dnl * Specify the C/C++ header files used by EDG (should match back-end compiler)
-dnl *****************************************************************************
-
-AC_DEFUN([ROSE_CXX_HEADER_OPTIONS], [
-# Begin macro ROSE_CXX_HEADER_OPTIONS.
-
-# DQ (1/15/2007): This is an older discontinued option (when we used to package a 
-# set of system header files for use by ROSE.
-# This macro is useful if there is a prepared set of system header files that should be
-# used instead of the ones that the ROSE configure process will set up automatically.
-# such header are specified, they should be put into the srcdir.
-
-AC_MSG_NOTICE([setup ROSE_CXX_HEADERS_DIR])
-# echo "GCC_MAJOR = $GCC_MAJOR"
-
-AC_ARG_WITH(GNU_CXX_HEADERS, [  --with-GNU_CXX_HEADERS            use the the directory of included GNU header files in the ROSE source tree])
-
-# For the g++ 3.x compilers we can generally use the 2.96 header files. However
-# it does not always work (using namespace std requires a previously defined 
-# namespace std which is in the 3.x headers but NOT in the 2.96 headers).
-if test "$with_GNU_CXX_HEADERS" = yes; then
-# if ((test "$with_GNU_HEADERS" = yes) || (test "$GCC_MAJOR" = 3)); then
-  # GNU_HEADERS was activated but not specified, so set it.
-    AC_MSG_NOTICE([with-GNU_CXX_HEADERS = yes (use default GNU headers (preprocessed) distributed with ROSE)])
-    ROSE_CXX_HEADERS_DIR="${srcdir}/GNU_CXX_HEADERS"
-else
-    AC_MSG_NOTICE([with_GNU_CXX_HEADERS = "$with_GNU_CXX_HEADERS"])
-fi
-
-# echo "with-GNU_CXX_HEADERS = $with_GNU_CXX_HEADERS"
-# echo "ROSE_CXX_HEADERS_DIR = $ROSE_CXX_HEADERS_DIR"
-
-AC_ARG_WITH(ROSE_INTERNAL_HEADERS, [  --with-ROSE_INTERNAL_HEADERS=ARG  manually set the directory of header files used internally)])
-if test "$with_ROSE_INTERNAL_HEADERS" = ""; then
-    AC_MSG_NOTICE([with-ROSE_INTERNAL_HEADERS not set])
-else
-    AC_MSG_NOTICE([with-ROSE_INTERNAL_HEADERS is a user defined directory])
-    ROSE_CXX_HEADERS_DIR=$with_ROSE_INTERNAL_HEADERS
-fi
-
-# echo "with-ROSE_INTERNAL_HEADERS = $with_ROSE_INTERNAL_HEADERS"
-# echo "ROSE_CXX_HEADERS_DIR = $ROSE_CXX_HEADERS_DIR"
-
-export ROSE_CXX_HEADERS_DIR
-# AC_SUBST(ROSE_CXX_HEADERS_DIR)
-
-])
-
-dnl *****************************************************************************
-dnl * Specify the C/C++ header files used by EDG (should match back-end compiler)
-dnl *****************************************************************************
-
-AC_DEFUN([ROSE_C_HEADER_OPTIONS], [
-# Begin macro ROSE_C_HEADER_OPTIONS.
-
-# DQ (1/15/2007): This is an older discontinued option (when we used to package a 
-# set of system header files for use by ROSE.
-# This macro is useful if there is a prepared set of system header files that should be
-# used instead of the ones that the ROSE configure process will set up automatically.
-# such header are specified, they should be put into the srcdir.
-
-AC_MSG_NOTICE([setup ROSE_C_HEADERS_DIR])
-# echo "GCC_MAJOR = $GCC_MAJOR"
-
-AC_ARG_WITH(GNU_C_HEADERS, [  --with-GNU_C_HEADERS              use the the directory of included GNU header files in the ROSE source tree])
-
-# For the g++ 3.x compilers we can generally use the 2.96 header files. However
-# it does not always work (using namespace std requires a previously defined 
-# namespace std which is in the 3.x headers but NOT in the 2.96 headers).
-if test "$with_GNU_C_HEADERS" = yes; then
-# if ((test "$with_GNU_HEADERS" = yes) || (test "$GCC_MAJOR" = 3)); then
-  # GNU_HEADERS was activated but not specified, so set it.
-    AC_MSG_NOTICE([with-GNU_C_HEADERS = yes (use default GNU headers (preprocessed) distributed with ROSE)])
-    ROSE_C_HEADERS_DIR="${srcdir}/GNU_C_HEADERS"
-else
-    AC_MSG_NOTICE([with-GNU_C_HEADERS = "$with_GNU_C_HEADERS"])
-fi
-
-# echo "with-GNU_C_HEADERS = $with_GNU_C_HEADERS"
-# echo "ROSE_C_HEADERS_DIR = $ROSE_C_HEADERS_DIR"
-
-AC_ARG_WITH(ROSE_INTERNAL_HEADERS, [  --with-ROSE_INTERNAL_HEADERS=ARG  manually set the directory of header files used internally)])
-if test "$with_ROSE_INTERNAL_HEADERS" = ""; then
-    AC_MSG_NOTICE([with-ROSE_INTERNAL_HEADERS not set])
-else
-    AC_MSG_NOTICE([with-ROSE_INTERNAL_HEADERS is a user defined directory])
-    ROSE_C_HEADERS_DIR=$with_ROSE_INTERNAL_HEADERS
-fi
-
-# echo "with-ROSE_INTERNAL_HEADERS = $with_ROSE_INTERNAL_HEADERS"
-# echo "ROSE_C_HEADERS_DIR = $ROSE_C_HEADERS_DIR"
-
-export ROSE_C_HEADERS_DIR
-# AC_SUBST(ROSE_C_HEADERS_DIR)
-
-])
-
-
 
 AC_DEFUN([ROSE_SUPPORT_LONG_MAKE_CHECK_RULE], [
 # Begin macro ROSE_TESTING_OPTIONS.

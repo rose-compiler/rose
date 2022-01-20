@@ -139,7 +139,7 @@ bool LoopTreeRestrLoopRange :: RemoveSelf()
             LoopInfo *info = l->GetLoopInfo();
             if (info == 0)
                continue;
-            int align;
+            int align = 0;
             if ((info->GetVar() - b.lb).isConstInt(align)) {
                  LoopTreeMergeStmtLoop()( l1, l, this, align);
                  LoopTreeNode::RemoveSelf();

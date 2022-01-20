@@ -1338,7 +1338,9 @@ AstNodePtr GetFunctionDecl( const AstNodePtr& _s)
     case V_SgDotExp:
          return GetFunctionDecl( AstNodePtrImpl(isSgDotExp(s)->get_rhs_operand()));
     }
-    cerr << "Error: not recognizable function type : " << s->sage_class_name() << endl;
+    mlog[ERROR] << "Error: not recognizable function type : " << s->sage_class_name() << endl;
+    mlog[ERROR] << " at " << s->get_file_info()->get_filenameString() << ":" << s->get_file_info()->get_line() << std::endl;
+    mlog[ERROR] << s->unparseToString() << endl;
     ROSE_ABORT();
 }
 
@@ -2364,7 +2366,12 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args)
   case V_SgFunctionCallExp:
     {
       SgFunctionCallExp *fs = isSgFunctionCallExp(exp);
-      f = fs->get_function(); //Should be SgFunctionRefExp
+      f = fs->get_function(); //Should be SgFunctionRefExp 
+      if(isSgFunctionRefExp(f) == NULL) {
+        //must be a function pointer call, bail out!-leek2 2021
+        func = 0; args = 0;
+        return false;
+      }
       argexp = fs->get_args(); // SgExprListExp
     }
     break;
@@ -2383,10 +2390,16 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args)
   
   switch (f->variantT()) {
   case V_SgDotExp: 
-      { 
+    { 
         SgDotExp* dot = isSgDotExp(f);
         SgNode* cur = dot->get_lhs_operand();
         f = dot->get_rhs_operand();
+        if(!isSgFunctionType(f)) {
+          //It is NOT safe to assume rhs is a function!
+          //If it's not it must be a function pointer call, bail out!-leek2 2021
+          func = 0; args = 0;
+          return false;
+        } 
         if (args != 0)
           args->push_back( cur ); 
       }
@@ -2396,6 +2409,42 @@ IsFunctionCall( SgNode* s, SgNode** func, AstNodeList* args)
         SgArrowExp* arrow = isSgArrowExp(f);
         SgNode* cur = arrow->get_lhs_operand();
         f = arrow->get_rhs_operand();
+        if(!isSgFunctionType(f)) {
+          //It is NOT safe to assume rhs is a function!
+          //If it's not it must be a function pointer call, bail out!-leek2 2021
+          func = 0; args = 0;
+          return false;
+        } 
+        if (args != 0)
+          args->push_back( cur ); 
+      }
+      break;
+  case V_SgArrowStarOp:
+      { 
+        SgArrowStarOp* arrow = isSgArrowStarOp(f);
+        SgNode* cur = arrow->get_lhs_operand();
+        f = arrow->get_rhs_operand();
+        if(!isSgFunctionType(f)) {
+          //It is NOT safe to assume rhs is a function!
+          //If it's not it must be a function pointer call, bail out!-leek2 2021
+          func = 0; args = 0;
+          return false;
+        } 
+        if (args != 0)
+          args->push_back( cur ); 
+      }
+      break;
+  case V_SgPntrArrRefExp:
+      { 
+        SgPntrArrRefExp* arrow = isSgPntrArrRefExp(f);
+        SgNode* cur = arrow->get_lhs_operand();
+        f = arrow->get_rhs_operand();
+        if(!isSgFunctionType(f)) {
+          //It is NOT safe to assume rhs is a function!
+          //If it's not it must be a function pointer call, bail out!-leek2 2021
+          func = 0; args = 0;
+          return false;
+        } 
         if (args != 0)
           args->push_back( cur ); 
       }

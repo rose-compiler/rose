@@ -53,39 +53,38 @@ alignDown(T address, U alignment) {
 
 /** An efficient mapping from an address space to stored data.
  *
- *  This class maps addresses in a 64-bit virtual address space to bytes stored in buffers and is a specialization of @ref
- *  Sawyer::Container::AddressMap.  A MemoryMap stores pairs of address ranges and segments, and each segment points to a
- *  buffer. The address space is segmented into non-overlapping, contiguous regions called "segments" (@ref
- *  Sawyer::Container::AddressSegment) and the addresses in a segment are mapped 1:1 onto data storage containers (@ref
- *  Sawyer::Container::Buffer).
+ *  This class, a specialization of @ref Sawyer::Container::AddressMap, maps 64-bit addresses to bytes. The address space is
+ *  organized into non-overlapping, contiguous "segments" (@ref Sawyer::Container::AddressSegment) that impart properties such
+ *  as names and access permissions. Each segment points into a buffer (subclass of @ref Sawyer::Container::Buffer) where the
+ *  data bytes are stored.
  *
- *  Buffers come in a variety of kinds, all derived from @ref Sawyer::Container::Buffer and they are reference counted via
- *  shared-ownership smart pointers (@ref heap_object_shared_ownership).  Always refer to a buffer with its @c Ptr type. They
- *  should be created with various @c instance class methods, and they should never be explicitly freed.
+ *  The buffers pointed to by the segments are reference counted with smart pointers. Normally, each segment points to the
+ *  beginning of its own buffer, but this is not always true. Sometimes segments share buffers, and sometimes segments point
+ *  into the middle of buffers. This flexibility allows parts of an address space to be erased or replaced even from the middle
+ *  of existing segments. It also allows the same data to be mapped and shared at multiple addresses.
  *
- *  MemoryMap objects are reference counted and always created on the heap. They are referred to by the @ref Ptr type which can
- *  be usually treated as an ordinary C++ pointer.  Objects can be created with the static method @ref instance, or by doing a
- *  shallow copy of an existing object using the @ref shallowCopy method. Plain assignment (operator=) is similar to @ref
- *  shallowCopy in that after the assignment the two objects will have independent copies of the segment information but will
- *  share the underlying data buffers.  MemoryMap objects should not be explicitly deleted since the shared pointers will
- *  delete the object when it's no longer referenced.
+ *  The MemoryMap objects are also reference counted and created by the @ref instance method. Copying a MemoryMap object is
+ *  shallow: the new object will have its own mapping and segments, but will share the underying buffers with the source map.
+ *
+ *  Most of the low level functionality for a MemoryMap comes from the @ref Sawyer::Container::AddressMap base class, such as
+ *  the ability to add, erase, or replace parts of the address space and the ability to read data from the address space. The
+ *  base class documentation has lots of example code. On the other hand, most of the more complex behaviors are defined in the
+ *  MemoryMap class, such as initializing a MemoryMap from a Linux process or reading a NUL-terminated string.
  *
  *  Here's an example of mapping a file into an address space at virtual address 0x08040000 and then temporarily replacing the
  *  second 1kB page of the file with our own data.  We demonstrate using a @ref Sawyer::Container::MappedBuffer because these
- *  are very fast for large files, especially if only small parts of the file are accessed due to their use of OS-level memory
- *  mapping.
+ *  are very fast for large files, especially if only small parts of the file are ever accessed.
  *
  * @code
  *  using namespace Sawyer::Container;
  *
  *  // Create and initialize the overlay data
- *  myData_size = 8192;
- *  uint8_t *myData = new uint8_t[myDataSize];
+ *  uint8_t myData[8192];
  *  initialize(myData, myDataSize);
  *
  *  // Create the two buffers: one for the file, one for the overlay data
  *  Buffer::Ptr fileBuf = MappedBuffer::instance("the_file", boost::iostreams::mapped_file::readonly);
- *  Buffer::Ptr dataBuf = StaticBuffer::instance(myData, myDataSize);
+ *  Buffer::Ptr dataBuf = StaticBuffer::instance(myData, 8192);
  *
  *  // Create the memory map.
  *  MemoryMap::Ptr map = MemoryMap::instance();
@@ -103,7 +102,7 @@ alignDown(T address, U alignment) {
  *  // read part of the data, right across the file/overlay boundary
  *  uint8_t data[4096];
  *  size_t nRead = map->at(0x08040100).limit(sizeof data).read(data).size();
- *  assert(nread==sizeof data);
+ *  assert(nread == sizeof data);
  * @endcode
  *
  *  The Sawyer documentation contains many more examples.
@@ -514,6 +513,11 @@ public:
         ByteOrder::convert((void*)&val, sizeof val, endianness_, ByteOrder::host_order());
         return val;
     }
+
+    /** Read a byte from memory.
+     *
+     *  Reads a byte at the specified address and returns it. Returns nothing if the address is not mapped. */
+    Sawyer::Optional<uint8_t> readByte(rose_addr_t) const;
 
     /** Read quickly into a vector. */
     SgUnsignedCharList readVector(rose_addr_t startVa, size_t desired, unsigned requiredPerms=READABLE) const;

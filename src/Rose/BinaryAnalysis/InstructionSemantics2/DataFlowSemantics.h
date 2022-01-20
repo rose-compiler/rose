@@ -98,7 +98,7 @@ public:
     // dataflow semantics framework only through the "instance" method. (But we still must override them.)
 private:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         ASSERT_not_reachable("should not be called by user code");
 #ifdef _MSC_VER
         return BaseSemantics::RiscOperatorsPtr();
@@ -106,7 +106,7 @@ private:
     }
 
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::StatePtr &state,
-                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         ASSERT_not_reachable("should not be called by user code");
 #ifdef _MSC_VER
         return BaseSemantics::RiscOperatorsPtr();
@@ -163,21 +163,21 @@ private:
     // address for the bytes of memory); when writing they add vertices and edges to the dataflow graph.
 public:
     virtual BaseSemantics::SValuePtr readRegister(RegisterDescriptor reg,
-                                                  const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
+                                                  const BaseSemantics::SValuePtr &dflt) override;
     virtual BaseSemantics::SValuePtr peekRegister(RegisterDescriptor reg,
-                                                  const BaseSemantics::SValuePtr &dflt) ROSE_OVERRIDE;
+                                                  const BaseSemantics::SValuePtr &dflt) override;
 
-    virtual void writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &a_) ROSE_OVERRIDE;
+    virtual void writeRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &a_) override;
 
     virtual BaseSemantics::SValuePtr readMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
                                                 const BaseSemantics::SValuePtr &dflt_,
-                                                const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
+                                                const BaseSemantics::SValuePtr &cond) override;
 
     virtual BaseSemantics::SValuePtr peekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
-                                                const BaseSemantics::SValuePtr &dflt_) ROSE_OVERRIDE;
+                                                const BaseSemantics::SValuePtr &dflt_) override;
 
     virtual void writeMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr_,
-                             const BaseSemantics::SValuePtr &data_, const BaseSemantics::SValuePtr &cond) ROSE_OVERRIDE;
+                             const BaseSemantics::SValuePtr &data_, const BaseSemantics::SValuePtr &cond) override;
 
 protected:
     BaseSemantics::SValuePtr readOrPeekMemory(RegisterDescriptor segreg, const BaseSemantics::SValuePtr &addr,

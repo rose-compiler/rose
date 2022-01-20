@@ -446,6 +446,37 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                     break;
                   }
 
+               case V_SgAdaProtectedSpec:
+                  {
+                    const SgAdaProtectedSpec* spec   = isSgAdaProtectedSpec(scope);
+                    const SgNode*             parent = spec->get_parent();
+                    ROSE_ASSERT(parent);
+
+                    // or get_mangled_name ??
+                    if (const SgAdaProtectedSpecDecl* pospec = isSgAdaProtectedSpecDecl(parent))
+                      mangled_name = pospec->get_name().getString();
+                    else if (const SgAdaProtectedTypeDecl* potype = isSgAdaProtectedTypeDecl(parent))
+                      mangled_name = potype->get_name().getString();
+                    else
+                      ROSE_ABORT();
+
+                    break;
+                  }
+
+               case V_SgAdaProtectedBody:
+                  {
+                    const SgAdaProtectedBody* body   = isSgAdaProtectedBody(scope);
+                    const SgNode*             parent = body->get_parent();
+                    ROSE_ASSERT(parent);
+
+                    // or get_mangled_name ??
+                    const SgAdaProtectedBodyDecl* bodydecl = isSgAdaProtectedBodyDecl(parent);
+                    ROSE_ASSERT(bodydecl);
+
+                    mangled_name = bodydecl->get_name().getString();
+                    break;
+                  }
+
                case V_SgAdaGenericDefn:
                   {
                     const SgAdaGenericDefn*   defn = isSgAdaGenericDefn(scope);

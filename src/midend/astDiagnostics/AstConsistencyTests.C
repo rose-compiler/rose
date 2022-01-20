@@ -3353,6 +3353,7 @@ TestAstSymbolTables::visit ( SgNode* node )
                  // These can be handled by the same case
                     case V_SgFunctionSymbol:
                     case V_SgMemberFunctionSymbol:
+                    case V_SgAdaInheritedFunctionSymbol:
                        {
                          SgFunctionSymbol* functionSymbol = isSgFunctionSymbol(symbol);
                          ROSE_ASSERT(functionSymbol != NULL);
@@ -3478,6 +3479,14 @@ TestAstSymbolTables::visit ( SgNode* node )
                     case V_SgAdaTaskSymbol:
                        {
                          SgAdaTaskSymbol* sy = isSgAdaTaskSymbol(symbol);
+
+                         ROSE_ASSERT(sy && sy->get_declaration());
+                         break;
+                       }
+
+                    case V_SgAdaProtectedSymbol:
+                       {
+                         SgAdaProtectedSymbol* sy = isSgAdaProtectedSymbol(symbol);
 
                          ROSE_ASSERT(sy && sy->get_declaration());
                          break;

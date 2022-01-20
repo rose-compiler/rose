@@ -55,7 +55,6 @@ add_library(roseBinaryAnalysis OBJECT
   TaintedFlow.C
   ToSource.C
   Variables.C
-  YicesSolver.C
   Z3Solver.C
   )
 
@@ -125,7 +124,6 @@ install(FILES
   Unparser.h
   Utils.h
   Variables.h
-  YicesSolver.h
   Z3Solver.h
 
   DESTINATION ${INCLUDE_INSTALL_DIR}/Rose/BinaryAnalysis)

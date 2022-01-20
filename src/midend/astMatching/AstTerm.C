@@ -67,6 +67,11 @@ std::string AstTerm::astTermWithNullValuesToString(SgNode* node, bool withNumber
 }
 
 std::string AstTerm::astTermWithNullValuesToString(SgNode* node, bool withNumbers, bool withTypes) {
+  std::unordered_set<SgNode*> visited; // empty set
+  return astTermWithNullValuesToString(node,withNumbers,withTypes,visited);
+}
+  
+std::string AstTerm::astTermWithNullValuesToString(SgNode* node, bool withNumbers, bool withTypes, std::unordered_set<SgNode*>& visited) {
   if(node==0)
     return "null";
   std::string s=nodeTypeName(node);
@@ -75,9 +80,18 @@ std::string AstTerm::astTermWithNullValuesToString(SgNode* node, bool withNumber
     // add type of expression
     if(SgExpression* exp=isSgExpression(node)) {
       SgType* expType=exp->get_type();
-      typeTerm+="type:"+astTermWithNullValuesAndTypesToString(expType);
-      if(SgArrayType* arrayType=isSgArrayType(expType)) {
-        typeTerm+=",basetype:"+astTermWithNullValuesAndTypesToString(arrayType->get_base_type());
+      if(expType) {
+        if(visited.find(expType)==visited.end()) {
+          visited.insert(expType); // for detecting sharing and/or cycle in type info
+          typeTerm+="type:"+astTermWithNullValuesToString(expType,withNumbers,withTypes,visited);
+          if(SgArrayType* arrayType=isSgArrayType(expType)) {
+            typeTerm+=",basetype:"+astTermWithNullValuesToString(arrayType->get_base_type(),withNumbers,withTypes,visited);
+          }
+        } else {
+          typeTerm+="type:"+expType->class_name()+"[shared]";
+        }
+      } else {
+        typeTerm+="type:null";
       }
     }
   }
@@ -85,13 +99,14 @@ std::string AstTerm::astTermWithNullValuesToString(SgNode* node, bool withNumber
   if(arity>0) {
     s+="(";
     if(withTypes) {
-      s+=typeTerm+",";
+      if(typeTerm.size()>0)
+        s+=typeTerm+",";
     }
     for(int i=0; i<arity;i++) {
       SgNode* child = node->get_traversalSuccessorByIndex(i);
       if(i!=0)
         s+=",";
-      s+=astTermWithNullValuesToString(child,withNumbers,withTypes);
+      s+=astTermWithNullValuesToString(child,withNumbers,withTypes,visited);
     }
     s+=")";
   }

@@ -26,7 +26,7 @@ namespace Concolic {
 
 static std::vector<uint8_t>
 toBytes(const std::vector<uint64_t> &values) {
-    static std::vector<uint8_t> bytes;
+    std::vector<uint8_t> bytes;
     bytes.reserve(values.size() * sizeof(uint64_t));
     for (uint64_t value: values) {
         for (size_t i = 0; i < sizeof(uint64_t); ++i)
@@ -750,7 +750,6 @@ ExecutionEvent::toYaml(std::ostream &out, const Database::Ptr &db, std::string p
 
         case Action::BULK_REGISTER_WRITE: {
             out <<prefix <<(nameValue % "action:" % "bulk-register-write");
-            out <<prefix <<(nameValue % "where:" % StringUtility::addrToString(memoryLocation().least()));
             out <<prefix <<(nameValue % "size:" % StringUtility::plural(memoryLocation().size(), "# bytes"));
             Combinatorics::HasherSha256Builtin hasher;
             hasher.insert(bytes());

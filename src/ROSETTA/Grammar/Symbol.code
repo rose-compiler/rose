@@ -37,13 +37,13 @@ HEADER_NON_X_SYMBOL_END
 
 HEADER_GET_TYPE_START
        // DQ (3/23/2017): ROSETTA macro expansion
-          SgType* get_type() const $ROSE_OVERRIDE;
+          SgType* get_type() const override;
        // SgNode* get_symbol_basis() const; // from GET_TYPE
 HEADER_GET_TYPE_END
 
 HEADER_GET_NAME_START
-          SgName get_name() const $ROSE_OVERRIDE;
-          SgNode* get_symbol_basis() const $ROSE_OVERRIDE; // from GET_NAME
+          SgName get_name() const override;
+          SgNode* get_symbol_basis() const override; // from GET_NAME
 HEADER_GET_NAME_END
 
 
@@ -51,7 +51,7 @@ HEADER_DECLARATION_START
           SgMemberFunctionDeclaration* get_declaration() const;
 
        // DQ (6/10/2007): This is now depricated in favor of a more uniform implementation for all symbols.
-          SgClassDefinition *get_scope() const $ROSE_OVERRIDE ROSE_DEPRECATED_FUNCTION;
+          SgClassDefinition *get_scope() const override ROSE_DEPRECATED_FUNCTION;
 
        // SgNode* get_symbol_basis() const; // from DECLARATION
 HEADER_DECLARATION_END
@@ -83,6 +83,11 @@ HEADER_LABEL_SYMBOL_START
 
 HEADER_LABEL_SYMBOL_END
 
+HEADER_ADA_INHERITED_FUNCTION_SYMBOL_START
+  //! returns the scope where the inherited function is implicitly defined.
+  SgScopeStatement* get_scope() const override;
+HEADER_ADA_INHERITED_FUNCTION_SYMBOL_END
+
 
 HEADER_JAVA_LABEL_SYMBOL_START
 // DQ (9/9/2011): Not clear yet what member functions we might require.
@@ -98,7 +103,7 @@ HEADER_ALIAS_SYMBOL_START
           SgAliasSymbol( const SgAliasSymbol & X );
 
        // DQ (2/28/2015): Add this function so that we can check and for alias of SgAliasSymbol.
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 
       //! For a chain of aliased symbols, this function returns the last (non-aliased) symbol.
           SgSymbol* get_base() const;
@@ -116,7 +121,7 @@ HEADER_RENAME_SYMBOL_START
 HEADER_RENAME_SYMBOL_END
 
 HEADER_NAMESPACE_SYMBOL_START
-          void post_construction_initialization() $ROSE_OVERRIDE;
+          void post_construction_initialization() override;
 HEADER_NAMESPACE_SYMBOL_END
 
 
@@ -249,6 +254,17 @@ SgSymbol::get_mangled_name() const
           case V_SgAdaTaskSymbol:
              {
                const SgAdaTaskSymbol* symbol = isSgAdaTaskSymbol(symbolFromTable);
+               ROSE_ASSERT(symbol != NULL);
+               SgDeclarationStatement* decl = symbol->get_declaration();
+               ROSE_ASSERT(decl != NULL);
+
+               mangledName = decl->get_mangled_name();
+               break;
+             }
+
+          case V_SgAdaProtectedSymbol:
+             {
+               const SgAdaProtectedSymbol* symbol = isSgAdaProtectedSymbol(symbolFromTable);
                ROSE_ASSERT(symbol != NULL);
                SgDeclarationStatement* decl = symbol->get_declaration();
                ROSE_ASSERT(decl != NULL);
@@ -1150,6 +1166,15 @@ SgAliasSymbol::get_declaration() const
                break;
              }
 
+           case V_SgAdaProtectedSymbol:
+             {
+               SgAdaProtectedSymbol* symbol = isSgAdaProtectedSymbol(get_alias());
+               ROSE_ASSERT(symbol != NULL);
+               returnValue = symbol->get_declaration();
+               ROSE_ASSERT(returnValue != NULL);
+               break;
+             }
+
            case V_SgAdaGenericSymbol:
              {
                SgAdaGenericSymbol* symbol = isSgAdaGenericSymbol(get_alias());
@@ -1487,11 +1512,34 @@ SgAdaTaskSymbol::get_symbol_basis() const
 }
 SOURCE_ADA_TASK_SYMBOL_END
 
+SOURCE_ADA_PROTECTED_SYMBOL_START
+SgName
+SgAdaProtectedSymbol::get_name() const
+{
+  if (SgAdaProtectedSpecDecl* dcl = isSgAdaProtectedSpecDecl(get_declaration()))
+    return dcl->get_name();
+
+  if (SgAdaProtectedTypeDecl* dcl = isSgAdaProtectedTypeDecl(get_declaration()))
+    return dcl->get_name();
+
+  if (SgAdaProtectedBodyDecl* dcl = isSgAdaProtectedBodyDecl(get_declaration()))
+    return dcl->get_name();
+
+  return SgName("undefined");
+}
+
+SgNode*
+SgAdaProtectedSymbol::get_symbol_basis() const
+{
+  return get_declaration();
+}
+SOURCE_ADA_PROTECTED_SYMBOL_END
+
 SOURCE_ADA_RENAMING_SYMBOL_START
 SgName
 SgAdaRenamingSymbol::get_name() const
 {
-  SgAdaRenamingDecl* dcl = isSgAdaRenamingDecl(get_declaration());
+  SgAdaRenamingDecl* dcl = get_declaration();
   ROSE_ASSERT(dcl);
 
   return dcl->get_name();
@@ -1503,6 +1551,40 @@ SgAdaRenamingSymbol::get_symbol_basis() const
   return get_declaration();
 }
 SOURCE_ADA_RENAMING_SYMBOL_END
+
+
+SOURCE_ADA_INHERITED_FUNCTION_SYMBOL_START
+SgName
+SgAdaInheritedFunctionSymbol::get_name() const
+{
+  SgFunctionDeclaration* dcl = get_declaration();
+  ROSE_ASSERT(dcl);
+
+  return dcl->get_name();
+}
+
+SgNode*
+SgAdaInheritedFunctionSymbol::get_symbol_basis() const
+{
+  return get_declaration();
+}
+
+SgType*
+SgAdaInheritedFunctionSymbol::get_type() const
+{
+  return get_derivedType();
+}
+
+SgScopeStatement*
+SgAdaInheritedFunctionSymbol::get_scope() const
+{
+  SgScopeStatement* res = isSgScopeStatement(get_parent());
+
+  ROSE_ASSERT(res);
+  return res;
+}
+
+SOURCE_ADA_INHERITED_FUNCTION_SYMBOL_END
 
 
 

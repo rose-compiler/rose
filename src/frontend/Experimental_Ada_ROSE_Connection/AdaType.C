@@ -1,4 +1,3 @@
-
 #include "sage3basic.h"
 
 #include <limits>
@@ -30,36 +29,42 @@ namespace
 {
   struct MakeTyperef : sg::DispatchHandler<SgType*>
   {
-      typedef sg::DispatchHandler<SgType*> base;
+      using base = sg::DispatchHandler<SgType*>;
 
       MakeTyperef(Element_Struct& elem, AstContext astctx)
       : base(), el(elem), ctx(astctx)
       {}
 
-      // checks whether this is a discriminated declaration and generates the type accordingly
-      void decl(SgDeclarationStatement& n, std::function<SgType*()> nonDiscriminatedTypeGen)
+      // checks whether this is a discriminated declaration and sets the type accordingly
+      void handleDiscrDecl(SgDeclarationStatement& n, SgType* declaredType)
       {
-        SgType* ty = nullptr;
-
         if (SgAdaDiscriminatedTypeDecl* discrDcl = si::ada::getAdaDiscriminatedTypeDecl(n))
-          ty = &mkAdaDiscriminatedType(*discrDcl);
-        else
-          ty = nonDiscriminatedTypeGen();
+          declaredType = discrDcl->get_type();
 
-        set(ty);
+        set(declaredType);
       }
 
-      void set(SgType* ty)                 { ADA_ASSERT(ty); res = ty; }
+      void set(SgType* ty)                   { ADA_ASSERT(ty); res = ty; }
 
-      void handle(SgNode& n)               { SG_UNEXPECTED_NODE(n); }
+      // error handler
+      void handle(SgNode& n)                 { SG_UNEXPECTED_NODE(n); }
 
-      void handle(SgType& n)               { set(&n); }
-      void handle(SgAdaFormalTypeDecl& n)  { decl(n, [&]() -> SgType* { return n.get_formal_type(); } ); }
-      void handle(SgClassDeclaration& n)   { decl(n, [&]() -> SgType* { return &mkRecordType(n);    } ); }
-      void handle(SgAdaTaskTypeDecl& n)    { decl(n, [&]() -> SgType* { return &mkAdaTaskType(n);   } ); }
-      void handle(SgEnumDeclaration& n)    { decl(n, [&]() -> SgType* { return n.get_type();        } ); }
-      void handle(SgTypedefDeclaration& n) { decl(n, [&]() -> SgType* { return n.get_type();        } ); }
+      // just use the type
+      void handle(SgType& n)                 { set(&n); }
 
+      // undecorated declarations
+      void handle(SgAdaFormalTypeDecl& n)    { set(n.get_type()); }
+
+      // possibly decorated with an SgAdaDiscriminatedTypeDecl
+      // \{
+      void handle(SgClassDeclaration& n)     { handleDiscrDecl(n, n.get_type()); }
+      void handle(SgAdaTaskTypeDecl& n)      { handleDiscrDecl(n, n.get_type()); }
+      void handle(SgAdaProtectedTypeDecl& n) { handleDiscrDecl(n, n.get_type()); }
+      void handle(SgEnumDeclaration& n)      { handleDiscrDecl(n, n.get_type()); }
+      void handle(SgTypedefDeclaration& n)   { handleDiscrDecl(n, n.get_type()); }
+      // \}
+
+      // others
       void handle(SgAdaAttributeExp& n)
       {
         attachSourceLocation(n, el, ctx); // \todo why is this not set where the node is made?
@@ -183,7 +188,7 @@ namespace
       case An_Anonymous_Access_To_Protected_Function:  // access protected function
       case Not_An_Access_Definition: /* break; */ // An unexpected element
       default:
-        logWarn() << "ak? " << access.Access_Definition_Kind << std::endl;
+        logWarn() << "adk? " << access.Access_Definition_Kind << std::endl;
         res = &mkAdaAccessType(sb::buildVoidType());
         ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
@@ -334,7 +339,7 @@ namespace
   {
     auto access_type_kind = access_type.Access_Type_Kind;
     bool isFuncAccess = false;
-    SgAdaAccessType* access_t;
+    SgAdaAccessType* access_t = nullptr;
 
     switch (access_type_kind) {
       // variable access kinds
@@ -404,14 +409,17 @@ namespace
         break;
       }
     default:
-      logWarn() << "Unhandled access type kind." << std::endl;
-      ADA_ASSERT(false);
-      access_t = NULL;
+      logWarn() << "Unhandled access type kind: " << access_type_kind << std::endl;
+      access_t = &mkAdaAccessType(sb::buildVoidType());
+      ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
 
+    ROSE_ASSERT(access_t);
     return access_t;
   }
 
+
+  // PP: rewrote this code to create the SgAdaFormalTypeDecl together with the type
   TypeData
   getFormalTypeFoundation(const std::string& name, Definition_Struct& def, AstContext ctx)
   {
@@ -419,7 +427,7 @@ namespace
     logKind("A_Formal_Type_Definition");
 
     Formal_Type_Definition_Struct& typenode = def.The_Union.The_Formal_Type_Definition;
-    TypeData                       res{nullptr, false, false, false};
+    TypeData                       res{nullptr, nullptr, false, false, false};
 
     switch (typenode.Formal_Type_Kind)
       {
@@ -428,19 +436,20 @@ namespace
       case A_Formal_Private_Type_Definition:         // 12.5.1(2)   -> Trait_Kinds
         {
           logKind("A_Formal_Private_Type_Definition");
-          SgAdaFormalType* t = &mkAdaFormalType(name);
-          res.hasAbstract = typenode.Has_Abstract;
-          res.hasLimited = typenode.Has_Limited;
-          res.hasTagged = typenode.Has_Tagged;
+          SgAdaFormalTypeDecl& dcl =mkAdaFormalTypeDecl(name, ctx.scope());
+          SgAdaFormalType&     t = SG_DEREF(dcl.get_type());
+          res.setAbstract(typenode.Has_Abstract);
+          res.setLimited(typenode.Has_Limited);
+          res.setTagged(typenode.Has_Tagged);
 
           // NOTE: we use a private flag on the type instead of the privatize()
           // code used elsewhere since they currently denote different types of
           // private-ness.
           if (typenode.Has_Private) {
-            t->set_is_private(true);
+            t.set_is_private(true);
           }
 
-          res.n = t;
+          res.sageNode(dcl);
           break;
         }
 
@@ -448,11 +457,11 @@ namespace
         {
           logKind("A_Formal_Access_Type_Definition");
 
-          SgAdaFormalType* t = &mkAdaFormalType(name);
+          SgAdaFormalTypeDecl& dcl =mkAdaFormalTypeDecl(name, ctx.scope());
+          SgAdaFormalType&     t = SG_DEREF(dcl.get_type());
           SgAdaAccessType* access_t = getAccessTypeDefinition(typenode.Access_Type, ctx);
-          t->set_formal_type(access_t);
-          res.n = t;
-
+          t.set_formal_type(access_t);
+          res.sageNode(dcl);
           break;
         }
 
@@ -479,8 +488,8 @@ namespace
         //       but set no fields.  This is sufficient to pass some test cases but
         //       is not correct.
         ADA_ASSERT(!FAIL_ON_ERROR(ctx));
-        SgAdaFormalType* t = &mkAdaFormalType(name);
-        res.n = t;
+        SgAdaFormalTypeDecl& dcl =mkAdaFormalTypeDecl(name, ctx.scope());
+        res.sageNode(dcl);
       }
 
     return res;
@@ -494,7 +503,7 @@ namespace
     logKind("A_Type_Definition");
 
     Type_Definition_Struct& typenode = def.The_Union.The_Type_Definition;
-    TypeData                res{nullptr, false, false, false};
+    TypeData                res{&typenode, nullptr, false, false, false};
 
     /* unused fields:
        Definition_Struct
@@ -512,7 +521,7 @@ namespace
           */
           SgType& basetype = getDefinitionTypeID(typenode.Parent_Subtype_Indication, ctx);
 
-          res.n = &mkAdaDerivedType(basetype);
+          res.sageNode(mkAdaDerivedType(basetype));
           break;
         }
 
@@ -534,7 +543,7 @@ namespace
           Declaration          Corresponding_Type_Structure;
           Expression_List      Definition_Interface_List;
           */
-          res.n = &def;
+          res.sageNode(def);
           break;
         }
 
@@ -544,13 +553,13 @@ namespace
 
           logKind("An_Enumeration_Type_Definition");
 
-          SgEnumDeclaration& sgnode = mkEnumDecl(name, ctx.scope());
+          SgEnumDeclaration& sgnode = mkEnumDefn(name, ctx.scope());
           ElemIdRange        enums = idRange(typenode.Enumeration_Literal_Declarations);
 
           traverseIDs(enums, elemMap(), EnumElementCreator{sgnode, ctx});
           /* unused fields:
            */
-          res.n = &sgnode;
+          res.sageNode(sgnode);
           break ;
         }
 
@@ -561,7 +570,7 @@ namespace
           SgAdaTypeConstraint& constraint = getConstraintID(typenode.Integer_Constraint, ctx);
           SgTypeInt&           superty    = SG_DEREF(sb::buildIntType());
 
-          res.n = &mkAdaSubtype(superty, constraint, true);
+          res.sageNode(mkAdaSubtype(superty, constraint, true));
           /* unused fields:
            */
           break;
@@ -573,7 +582,7 @@ namespace
 
           SgExpression& modexpr = getExprID(typenode.Mod_Static_Expression, ctx);
 
-          res.n = &mkAdaModularType(modexpr);
+          res.sageNode(mkAdaModularType(modexpr));
           /* unused fields:
            */
           break;
@@ -588,7 +597,7 @@ namespace
           SgAdaRangeConstraint* rngconstr  = isSgAdaRangeConstraint(constraint);
           ADA_ASSERT(!constraint || rngconstr);
 
-          res.n = &mkAdaFloatType(digits, rngconstr);
+          res.sageNode(mkAdaFloatType(digits, rngconstr));
           break;
         }
 
@@ -601,7 +610,7 @@ namespace
           SgExprListExp&             indicesAst  = mkExprListExp(indicesSeq);
           SgType&                    compType    = getDefinitionTypeID(typenode.Array_Component_Definition, ctx);
 
-          res.n = &mkArrayType(compType, indicesAst, false /* constrained */);
+          res.sageNode(mkArrayType(compType, indicesAst, false /* constrained */));
           ADA_ASSERT(indicesAst.get_parent());
           /* unused fields:
           */
@@ -617,7 +626,7 @@ namespace
           SgExprListExp&             indicesAst  = mkExprListExp(indicesSeq);
           SgType&                    compType    = getDefinitionTypeID(typenode.Array_Component_Definition, ctx);
 
-          res.n = &mkArrayType(compType, indicesAst, true /* unconstrained */);
+          res.sageNode(mkArrayType(compType, indicesAst, true /* unconstrained */));
           ADA_ASSERT(indicesAst.get_parent());
           /* unused fields:
           */
@@ -635,7 +644,7 @@ namespace
              << "Type_Definition_Struct::tagged set ? " << typenode.Has_Tagged
              << std::endl;
 
-          res = TypeData{&def, typenode.Has_Abstract, typenode.Has_Limited, typenode.Type_Kind == A_Tagged_Record_Type_Definition};
+          res = TypeData{&typenode, &def, typenode.Has_Abstract, typenode.Has_Limited, typenode.Type_Kind == A_Tagged_Record_Type_Definition};
           /*
              unused fields (A_Record_Type_Definition):
 
@@ -653,7 +662,7 @@ namespace
         {
           logKind("An_Access_Type_Definition");
           SgAdaAccessType* access_t = getAccessTypeDefinition(typenode.Access_Type, ctx);
-          res.n = access_t;
+          res.sageNode(SG_DEREF(access_t));
           break;
         }
 
@@ -668,11 +677,11 @@ namespace
         {
           logWarn() << "unhandled type kind " << typenode.Type_Kind << std::endl;
           ADA_ASSERT(!FAIL_ON_ERROR(ctx));
-          res.n = sb::buildVoidType();
+          res.sageNode(SG_DEREF(sb::buildVoidType()));
         }
     }
 
-    ADA_ASSERT(res.n);
+    ADA_ASSERT(&res.sageNode());
     return res;
   }
 
@@ -687,7 +696,7 @@ namespace
         {
           TypeData resdata = getTypeFoundation("", def, ctx);
 
-          res = isSgType(resdata.n);
+          res = isSgType(&resdata.sageNode());
           ADA_ASSERT(res);
           break;
         }
@@ -696,7 +705,7 @@ namespace
         {
           logKind("A_Subtype_Indication");
 
-          Subtype_Indication_Struct& subtype   = def.The_Union.The_Subtype_Indication;
+          Subtype_Indication_Struct& subtype = def.The_Union.The_Subtype_Indication;
 
           res = &getDeclTypeID(subtype.Subtype_Mark, ctx);
 

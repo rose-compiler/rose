@@ -59,7 +59,7 @@ namespace ROSE_Statistics
    AstNodeTraversalCSVStatistics();
 
    // generate CSV format for each entry (2 columns): <AST Node Name>, <Node Count>
-   virtual std::string toString(SgNode* node) ROSE_OVERRIDE;
+   virtual std::string toString(SgNode* node) override;
 
    // set minimum node count to show in CSV file (default is 1)
    // example: when setting it to 0, all entries (including those with count 0) are shown.

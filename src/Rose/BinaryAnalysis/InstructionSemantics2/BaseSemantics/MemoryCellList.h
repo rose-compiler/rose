@@ -106,7 +106,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Virtual constructors
 public:
-    virtual MemoryStatePtr create(const SValuePtr &addrProtoval, const SValuePtr &valProtoval) const ROSE_OVERRIDE {
+    virtual MemoryStatePtr create(const SValuePtr &addrProtoval, const SValuePtr &valProtoval) const override {
         return instance(addrProtoval, valProtoval);
     }
     
@@ -115,7 +115,7 @@ public:
         return instance(protocell);
     }
 
-    virtual MemoryStatePtr clone() const ROSE_OVERRIDE {
+    virtual MemoryStatePtr clone() const override {
         return MemoryStatePtr(new MemoryCellList(*this));
     }
 
@@ -133,13 +133,13 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods we inherited
 public:
-    virtual void clear() ROSE_OVERRIDE;
-    virtual bool merge(const MemoryStatePtr &other, RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
-    virtual std::vector<MemoryCellPtr> matchingCells(const MemoryCell::Predicate&) const ROSE_OVERRIDE;
-    virtual std::vector<MemoryCellPtr> leadingCells(const MemoryCell::Predicate&) const ROSE_OVERRIDE;
-    virtual void eraseMatchingCells(const MemoryCell::Predicate&) ROSE_OVERRIDE;
-    virtual void eraseLeadingCells(const MemoryCell::Predicate&) ROSE_OVERRIDE;
-    virtual void traverse(MemoryCell::Visitor&) ROSE_OVERRIDE;
+    virtual void clear() override;
+    virtual bool merge(const MemoryStatePtr &other, RiscOperators *addrOps, RiscOperators *valOps) override;
+    virtual std::vector<MemoryCellPtr> matchingCells(const MemoryCell::Predicate&) const override;
+    virtual std::vector<MemoryCellPtr> leadingCells(const MemoryCell::Predicate&) const override;
+    virtual void eraseMatchingCells(const MemoryCell::Predicate&) override;
+    virtual void eraseLeadingCells(const MemoryCell::Predicate&) override;
+    virtual void traverse(MemoryCell::Visitor&) override;
     virtual void hash(Combinatorics::Hasher&, RiscOperators *addrOps, RiscOperators *valOps) const override;
 
     /** Read a value from memory.
@@ -153,10 +153,10 @@ public:
      *  The width of the @p dflt value determines how much data is read. The base implementation assumes that all cells contain
      *  8-bit values. */
     virtual SValuePtr readMemory(const SValuePtr &address, const SValuePtr &dflt,
-                                 RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
+                                 RiscOperators *addrOps, RiscOperators *valOps) override;
 
     virtual SValuePtr peekMemory(const SValuePtr &address, const SValuePtr &dflt,
-                                 RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
+                                 RiscOperators *addrOps, RiscOperators *valOps) override;
 
     /** Write a value to memory.
      *
@@ -165,9 +165,9 @@ public:
      *
      *  The base implementation assumes that all cells contain 8-bit values. */
     virtual void writeMemory(const SValuePtr &addr, const SValuePtr &value,
-                             RiscOperators *addrOps, RiscOperators *valOps) ROSE_OVERRIDE;
+                             RiscOperators *addrOps, RiscOperators *valOps) override;
 
-    virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
+    virtual void print(std::ostream&, Formatter&) const override;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Methods first declared at this level of the class hierarchy
@@ -238,10 +238,10 @@ public:
     /** @} */
 
     virtual AddressSet getWritersUnion(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps,
-                                       RiscOperators *valOps) ROSE_OVERRIDE;
+                                       RiscOperators *valOps) override;
 
     virtual AddressSet getWritersIntersection(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps,
-                                              RiscOperators *valOps) ROSE_OVERRIDE;
+                                              RiscOperators *valOps) override;
 
 protected:
     // Compute a new value by merging the specified cells.  If the cell list is empty return the specified default.

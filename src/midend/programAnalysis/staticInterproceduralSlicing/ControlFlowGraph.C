@@ -59,8 +59,8 @@ void ControlFlowGraph::_buildCFG() {
 
   //Go through each CFGNodeImpl in CFGImpl to find the "entry" node
   DefaultCFGImpl::NodeIterator nodes;
-  CFGNodeImpl * entry;
-  CFGNodeImpl * exit;
+  CFGNodeImpl* entry = 0;
+  CFGNodeImpl* exit  = 0;
   for (nodes = _cfg->GetNodeIterator(); !nodes.ReachEnd(); ++nodes) {
     //    printf("\nNODE!\n\n");
     CFGNodeImpl * node = *nodes;
@@ -88,7 +88,7 @@ void ControlFlowGraph::_buildCFG() {
     //Add the node itself to the graph
     createNode(node);
   }
- 
+
   //set _entry and _exit appropriately
   if (_cfgnodemap.count(entry))
     _entry = _cfgnodemap[entry];
@@ -151,7 +151,7 @@ void ControlFlowGraph::_setupIDs(ID_dir direction) {
   int currid = 0;
   queue<SimpleDirectedGraphNode *> remaining;
   set<SimpleDirectedGraphNode *> seen;
-  
+
   _forIndex = new ControlNode*[_numNodes];
   _backIndex = new ControlNode*[_numNodes];
 

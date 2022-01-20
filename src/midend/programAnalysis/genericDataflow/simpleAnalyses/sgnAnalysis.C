@@ -522,7 +522,7 @@ bool SgnAnalysis::transfer(const Function& func, const DataflowNode& n, NodeStat
                   ) {
                 varID lhs, arg1, arg2;
                 varID res = SgExpr2Var(isSgExpression(n.getNode()));
-                SgnLattice *resLat, *arg1Lat, *arg2Lat;
+                SgnLattice *resLat, *arg1Lat=0, *arg2Lat=0;
                 
                 // Set up the information on the arguments and target of the arithmetic operation
                 if(isSgBinaryOp(n.getNode())) {

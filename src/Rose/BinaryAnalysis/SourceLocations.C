@@ -142,7 +142,7 @@ SourceLocations::insertFromDebug(SgNode *ast) {
     struct T: AstSimpleProcessing {
         SourceLocations *self;
         T(SourceLocations *self): self(self) {}
-        void visit(SgNode *node) ROSE_OVERRIDE {
+        void visit(SgNode *node) override {
             if (SgAsmDwarfLineList *ll = isSgAsmDwarfLineList(node)) {
                 BOOST_FOREACH (SgAsmDwarfLine *line, ll->get_line_list()) {
                     SourceLocation src(Sg_File_Info::getFilenameFromID(line->get_file_id()), line->get_line());

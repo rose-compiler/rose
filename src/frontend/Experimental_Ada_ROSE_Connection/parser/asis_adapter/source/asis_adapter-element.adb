@@ -535,12 +535,27 @@ package body Asis_Adapter.Element is
      (Element :        Asis.Element;
       Control : in out Asis.Traverse_Control;
       State   : in out Class) is
+
+      Element_Kind : constant Asis.Element_Kinds :=
+        Asis.Elements.Element_Kind (Element);
+
+      use all type Asis.Element_Kinds;
+
    begin
       State.Outputs.Text.End_Line;
       State.Outputs.Text.Dedent;
       State.Outputs.Text.Put_Indented_Line
         (String'("END " & To_String (State.Element_IDs.First_Element)));
       State.Element_IDs.Delete_First;
+
+      -- Another traversal is needed to retrieve information for 
+      -- implicit elements.  This has to happen in post_child_processing
+      -- as the elements are created in the pre_child_processing step.
+
+      If Element_Kind = A_Definition then
+         Definitions.Do_Post_Child_Processing (Element, State);
+      end if;
+      
    end Do_Post_Child_Processing;
 
    -- Call Pre_Operation on ths element, call Traverse_Element on all children,

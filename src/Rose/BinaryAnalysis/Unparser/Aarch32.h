@@ -31,12 +31,12 @@ public:
         return Ptr(new Aarch32(settings));
     }
 
-    Ptr copy() const ROSE_OVERRIDE {
+    Ptr copy() const override {
         return instance(settings());
     }
 
-    const Aarch32Settings& settings() const ROSE_OVERRIDE { return settings_; }
-    Aarch32Settings& settings() ROSE_OVERRIDE { return settings_; }
+    const Aarch32Settings& settings() const override { return settings_; }
+    Aarch32Settings& settings() override { return settings_; }
 
 protected:
     void emitInstructionMnemonic(std::ostream&, SgAsmInstruction*, State&) const override;

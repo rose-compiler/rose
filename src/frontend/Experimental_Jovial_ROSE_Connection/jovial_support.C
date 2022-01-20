@@ -6,15 +6,18 @@
 
 #include "rose_config.h"
 
+#include "jovial_support.h"
+#include "preprocess.h"
+#include "ATermToSageJovialTraversal.h"
+
 #include <assert.h>
 #include <iostream>
+#include <sstream>
 #include <string>
-
-#include "ATermToSageJovialTraversal.h"
-#include "jovial_support.h"
 
 #define ATERM_TRAVERSAL_ONLY 0
 #define DEBUG_EXPERIMENTAL_JOVIAL 0
+#define DEBUG_PREPROCESS_OUTPUT 0
 #define OUTPUT_WHOLE_GRAPH_AST 0
 #define OUTPUT_DOT_FILE_AST 0
 
@@ -22,43 +25,13 @@
 #  include "wholeAST_API.h"
 #endif
 
-
-// TODO: THIS IS TEMPORARY (obtain it from somewhere else)
-static SgGlobal* initialize_global_scope(SgSourceFile* file)
-{
- // First we have to get the global scope initialized (and pushed onto the stack).
-
- // Set the default for source position generation to be consistent with other languages (e.g. C/C++).
-    SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionFrontendConstruction);
- // TODO      SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionCompilerGenerated);
-
-    SgGlobal* globalScope = file->get_globalScope();
-    ROSE_ASSERT(globalScope != NULL);
-    ROSE_ASSERT(globalScope->get_parent() != NULL);
-
- // Jovial is case insensitive
-    globalScope->setCaseInsensitive(true);
-
-    ROSE_ASSERT(globalScope->get_endOfConstruct()   != NULL);
-    ROSE_ASSERT(globalScope->get_startOfConstruct() != NULL);
-
- // Not sure why this isn't set at construction
-    globalScope->get_startOfConstruct()->set_line(1);
-    globalScope->get_endOfConstruct()->set_line(1);
-
-    SageBuilder::pushScopeStack(globalScope);
-
-    return globalScope;
-}
-
-
 int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
    {
      int status;
      std::string parse_table;
      std::string preprocessor;
 
-     assert(sg_source_file != NULL);
+     assert(sg_source_file != nullptr);
 
      std::string stratego_bin_path = STRATEGO_BIN_PATH;
      assert (stratego_bin_path.empty() == false);
@@ -91,11 +64,10 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
 
   // Make system call to run parser and output ATerm parse-tree file
      status = system(commandString.c_str());
-     if (status != 0)
-        {
-           fprintf(stderr, "\nFAILED: in jovial_main(), unable to parse file %s\n\n", filenameWithoutPath.c_str());
-           return status;
-        }
+     if (status != 0) {
+       std::cerr << "\nFAILED: in jovial_main(), unable to parse file " << filenameWithoutPath;
+       return status;
+     }
 
   // Step 2 - Traverse the ATerm parse tree and convert into Sage nodes
   // ------
@@ -112,11 +84,11 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
 
   // Read the ATerm file that was created by the parser
      FILE * file = fopen(aterm_filename.c_str(), "r");
-     if (file == NULL)
-        {
-           fprintf(stderr, "\nFAILED: in jovial_main(), unable to open file %s\n\n", aterm_filename.c_str());
-           return 1;
-        }
+     if (file == nullptr) {
+       std::cerr << "\nFAILED: in jovial_main(), unable to open file " << aterm_filename;
+       std::cerr << "\n\n";
+       return 1;
+     }
 
      ATerm module_term = ATreadFromTextFile(file);
      fclose(file);
@@ -125,18 +97,30 @@ int jovial_main(int argc, char** argv, SgSourceFile* sg_source_file)
      std::cout << "SUCCESSFULLY read ATerm parse-tree file " << "\n";
 #endif
 
+  // Get the token stream for access to comments
+     std::ifstream in_stream{filenameWithPath};
+     std::ofstream out_stream{"/dev/null"};
+     std::ostringstream oss;
+     status = Jovial::preprocess(in_stream, out_stream, oss);
+     if (status) {
+       std::cerr << "\nFAILED: in jovial_main(), unable to read tokens for file "
+                 << filenameWithPath << "\n\n";
+       return status;
+     }
+     std::istringstream tokens{oss.str()};
+
   // Initialize the global scope and put it on the SageInterface scope stack
   // for usage by the sage tree builder during the ATerm traversal.
-     initialize_global_scope(sg_source_file);
+     Rose::builder::initialize_global_scope(sg_source_file);
 
      ATermSupport::ATermToSageJovialTraversal* aterm_traversal;
-     aterm_traversal = new ATermSupport::ATermToSageJovialTraversal(sg_source_file);
+     aterm_traversal = new ATermSupport::ATermToSageJovialTraversal(sg_source_file, tokens);
 
-     if (aterm_traversal->traverse_Module(module_term) != ATtrue)
-        {
-           fprintf(stderr, "\nFAILED: in jovial_main(), unable to traverse ATerm file %s\n\n", aterm_filename.c_str());
-           return 1;
-        }
+     if (aterm_traversal->traverse_Module(module_term) != ATtrue) {
+       std::cerr << "\nFAILED: in jovial_main(), unable to traverse ATerm file "
+                 << aterm_filename << "\n\n";
+       return 1;
+     }
 
 #if DEBUG_EXPERIMENTAL_JOVIAL
      std::cout << "SUCCESSFULLY traversed Jovial parse-tree" << "\n\n";

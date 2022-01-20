@@ -5,6 +5,8 @@
 #include "Sawyer/Assert.h"
 #include "Sawyer/Message.h"
 
+#include <rosedll.h>
+
 // How failed assertions behave
 #define ROSE_ASSERTION_ABORT    1                       // call abort()
 #define ROSE_ASSERTION_EXIT     2                       // call exit(1)

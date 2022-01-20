@@ -25,16 +25,16 @@ public:
         return Ptr(new M68k(settings));
     }
 
-    Ptr copy() const ROSE_OVERRIDE {
+    Ptr copy() const override {
         return instance(settings());
     }
     
-    const M68kSettings& settings() const ROSE_OVERRIDE { return settings_; }
-    M68kSettings& settings() ROSE_OVERRIDE { return settings_; }
+    const M68kSettings& settings() const override { return settings_; }
+    M68kSettings& settings() override { return settings_; }
 
 protected:
-    void emitInstruction(std::ostream&, SgAsmInstruction*, State&) const ROSE_OVERRIDE;
-    void emitOperandBody(std::ostream&, SgAsmExpression*, State&) const ROSE_OVERRIDE;
+    void emitInstruction(std::ostream&, SgAsmInstruction*, State&) const override;
+    void emitOperandBody(std::ostream&, SgAsmExpression*, State&) const override;
 
 private:
     void outputExpr(std::ostream&, SgAsmExpression*, State&) const;

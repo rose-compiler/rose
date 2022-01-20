@@ -29,8 +29,8 @@ protected:
     Function::Ptr function_;
 public:
     static Ptr instance() { return Ptr(new MatchStandardPrologue); } /**< Allocating constructor. */
-    virtual std::vector<Function::Ptr> functions() const ROSE_OVERRIDE { return std::vector<Function::Ptr>(1, function_); }
-    virtual bool match(const Partitioner &partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
+    virtual std::vector<Function::Ptr> functions() const override { return std::vector<Function::Ptr>(1, function_); }
+    virtual bool match(const Partitioner &partitioner, rose_addr_t anchor) override;
 };
 
 /** Matches an x86 function prologue with hot patch.
@@ -44,8 +44,8 @@ public:
 class MatchHotPatchPrologue: public MatchStandardPrologue {
 public:
     static Ptr instance() { return Ptr(new MatchHotPatchPrologue); } /**< Allocating constructor. */
-    virtual std::vector<Function::Ptr> functions() const ROSE_OVERRIDE { return std::vector<Function::Ptr>(1, function_); }
-    virtual bool match(const Partitioner &partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
+    virtual std::vector<Function::Ptr> functions() const override { return std::vector<Function::Ptr>(1, function_); }
+    virtual bool match(const Partitioner &partitioner, rose_addr_t anchor) override;
 };
 
 /** Matches an x86 <code>MOV EDI,EDI; PUSH ESI</code> function prologe. */
@@ -54,8 +54,8 @@ protected:
     Function::Ptr function_;
 public:
     static Ptr instance() { return Ptr(new MatchAbbreviatedPrologue); }
-    virtual std::vector<Function::Ptr> functions() const ROSE_OVERRIDE { return std::vector<Function::Ptr>(1, function_); }
-    virtual bool match(const Partitioner &partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
+    virtual std::vector<Function::Ptr> functions() const override { return std::vector<Function::Ptr>(1, function_); }
+    virtual bool match(const Partitioner &partitioner, rose_addr_t anchor) override;
 };
 
 /** Matches an x86 "ENTER xxx, 0" prologue. */
@@ -64,8 +64,8 @@ protected:
     Function::Ptr function_;
 public:
     static Ptr instance() { return Ptr(new MatchEnterPrologue); } /**< Allocating constructor. */
-    virtual std::vector<Function::Ptr> functions() const ROSE_OVERRIDE { return std::vector<Function::Ptr>(1, function_); }
-    virtual bool match(const Partitioner &partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
+    virtual std::vector<Function::Ptr> functions() const override { return std::vector<Function::Ptr>(1, function_); }
+    virtual bool match(const Partitioner &partitioner, rose_addr_t anchor) override;
 };
 
 /** Match RET followed by PUSH with intervening no-op padding. */
@@ -74,8 +74,8 @@ protected:
     Function::Ptr function_;
 public:
     static Ptr instance() { return Ptr(new MatchRetPadPush); } /**< Allocating constructor. */
-    virtual std::vector<Function::Ptr> functions() const ROSE_OVERRIDE { return std::vector<Function::Ptr>(1, function_); }
-    virtual bool match(const Partitioner &partitioner, rose_addr_t anchor) ROSE_OVERRIDE;
+    virtual std::vector<Function::Ptr> functions() const override { return std::vector<Function::Ptr>(1, function_); }
+    virtual bool match(const Partitioner &partitioner, rose_addr_t anchor) override;
 };
 
 /** Basic block callback to detect function returns.
@@ -87,7 +87,7 @@ public:
 class FunctionReturnDetector: public BasicBlockCallback {
 public:
     static Ptr instance() { return Ptr(new FunctionReturnDetector); } /**< Allocating constructor. */
-    virtual bool operator()(bool chain, const Args&) ROSE_OVERRIDE;
+    virtual bool operator()(bool chain, const Args&) override;
 };
 
 /** Basic block callback to detect "switch" statements.
@@ -107,7 +107,7 @@ public:
     SwitchSuccessors()
         : entryType_(ABSOLUTE), entrySizeBytes_(4) {}
     static Ptr instance() { return Ptr(new SwitchSuccessors); } /**< Allocating constructor. */
-    virtual bool operator()(bool chain, const Args&) ROSE_OVERRIDE;
+    virtual bool operator()(bool chain, const Args&) override;
 private:
     bool matchPattern1(SgAsmExpression *jmpArg);
     bool matchPattern2(const BasicBlockPtr&, SgAsmInstruction *jmp);

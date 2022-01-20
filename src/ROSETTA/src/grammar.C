@@ -1236,6 +1236,12 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
           (nodeName == "UntypedInitializedName"     && variableNameString == "type")  ||
           (nodeName == "EnumDeclaration"            && variableNameString == "type")  ||
           (nodeName == "TypedefDeclaration"         && variableNameString == "type")  ||
+          (nodeName == "AdaDiscriminatedTypeDecl"   && variableNameString == "type")  ||
+          (nodeName == "AdaTaskTypeDecl"            && variableNameString == "type")  ||
+          (nodeName == "AdaTaskSpecDecl"            && variableNameString == "type")  ||
+          (nodeName == "AdaProtectedTypeDecl"       && variableNameString == "type")  ||
+          (nodeName == "AdaProtectedSpecDecl"       && variableNameString == "type")  ||
+          (nodeName == "AdaFormalTypeDecl"          && variableNameString == "type")  ||
           (nodeName == "ClassDeclaration"           && variableNameString == "type")  ||
           (nodeName == "FunctionDeclaration"        && variableNameString == "type")  ||
           (nodeName == "AsmExpression"              && variableNameString == "type")  ||
@@ -1298,6 +1304,9 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
           (nodeName == "AdaTaskBodyDecl"            && variableNameString == "name")  ||
           (nodeName == "AdaTaskSpecDecl"            && variableNameString == "name")  ||
           (nodeName == "AdaTaskTypeDecl"            && variableNameString == "name")  ||
+          (nodeName == "AdaProtectedBodyDecl"       && variableNameString == "name")  ||
+          (nodeName == "AdaProtectedSpecDecl"       && variableNameString == "name")  ||
+          (nodeName == "AdaProtectedTypeDecl"       && variableNameString == "name")  ||
           (nodeName == "AdaRenamingDecl"            && variableNameString == "name")  ||
           (nodeName == "AdaDiscriminatedTypeDecl"   && variableNameString == "name")  ||
           (nodeName == "AdaGenericInstanceDecl"     && variableNameString == "name")  ||
@@ -1372,6 +1381,12 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
           (nodeName == "UntypedInitializedName"     && variableNameString == "type")  ||
           (nodeName == "EnumDeclaration"            && variableNameString == "type")  ||
           (nodeName == "TypedefDeclaration"         && variableNameString == "type")  ||
+          (nodeName == "AdaDiscriminatedTypeDecl"   && variableNameString == "type")  ||
+          (nodeName == "AdaTaskTypeDecl"            && variableNameString == "type")  ||
+          (nodeName == "AdaTaskSpecDecl"            && variableNameString == "type")  ||
+          (nodeName == "AdaProtectedTypeDecl"       && variableNameString == "type")  ||
+          (nodeName == "AdaProtectedSpecDecl"       && variableNameString == "type")  ||
+          (nodeName == "AdaFormalTypeDecl"          && variableNameString == "type")  ||
           (nodeName == "ClassDeclaration"           && variableNameString == "type")  ||
           (nodeName == "FunctionDeclaration"        && variableNameString == "type")  ||
           (nodeName == "FunctionTypeSymbol"         && variableNameString == "type")  ||
@@ -1437,6 +1452,9 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
           (nodeName == "AdaTaskBodyDecl"            && variableNameString == "name")  ||
           (nodeName == "AdaTaskSpecDecl"            && variableNameString == "name")  ||
           (nodeName == "AdaTaskTypeDecl"            && variableNameString == "name")  ||
+          (nodeName == "AdaProtectedBodyDecl"       && variableNameString == "name")  ||
+          (nodeName == "AdaProtectedSpecDecl"       && variableNameString == "name")  ||
+          (nodeName == "AdaProtectedTypeDecl"       && variableNameString == "name")  ||
           (nodeName == "AdaRenamingDecl"            && variableNameString == "name")  ||
           (nodeName == "AdaDiscriminatedTypeDecl"   && variableNameString == "name")  ||
           (nodeName == "AdaGenericInstanceDecl"     && variableNameString == "name")  ||
@@ -1520,9 +1538,9 @@ Grammar::buildStringForDataAccessFunctionDeclaration ( AstNodeClass & node )
 #endif
              }
 
-       // And surviving references to $ROSE_OVERRIDE_GET and $ROSE_OVERRIDE_SET should be edited to be ROSE_OVERRIDE.
-          codeString = GrammarString::copyEdit(codeString, " $ROSE_OVERRIDE_GET", " ROSE_OVERRIDE");
-          codeString = GrammarString::copyEdit(codeString, " $ROSE_OVERRIDE_SET", " ROSE_OVERRIDE");
+       // And surviving references to $ROSE_OVERRIDE_GET and $ROSE_OVERRIDE_SET should be edited to be override.
+          codeString = GrammarString::copyEdit(codeString, " $ROSE_OVERRIDE_GET", " override");
+          codeString = GrammarString::copyEdit(codeString, " $ROSE_OVERRIDE_SET", " override");
 
        // StringUtility::FileWithLineNumbers tempString(1, StringUtility::StringWithLineNumber(data.getDataAccessFunctionPrototypeString(), "" /* "<getDataAccessFunctionPrototypeString>" */, 1));
           StringUtility::FileWithLineNumbers tempString(1, StringUtility::StringWithLineNumber(codeString, "" /* "<getDataAccessFunctionPrototypeString>" */, 1));
@@ -2230,11 +2248,7 @@ Grammar::buildHeaderFiles( AstNodeClass & node, StringUtility::FileWithLineNumbe
   // DQ (3/21/2017): Modify code generation to eliminate Clang C++11 override warning.
      if (className == "SgNode")
         {
-          editedHeaderFileString = GrammarString::copyEdit(editedHeaderFileString, " $ROSE_OVERRIDE", "");
-        }
-       else
-        {
-          editedHeaderFileString = GrammarString::copyEdit(editedHeaderFileString, " $ROSE_OVERRIDE", " ROSE_OVERRIDE");
+          editedHeaderFileString = GrammarString::copyEdit(editedHeaderFileString, " override", "");
         }
 
      editedHeaderFileString = editSubstitution (node,editedHeaderFileString);
@@ -4064,7 +4078,9 @@ Grammar::GrammarNodeInfo Grammar::getGrammarNodeInfo(AstNodeClass* grammarnode) 
         ||nodeName == "SgOmpDoStatement"
         ||nodeName == "SgOmpAtomicStatement"
         ||nodeName == "SgExprListExp"
-        ||nodeName == "SgAdaTaskSpec" /* \todo \revisit PP */);
+        ||nodeName == "SgAdaTaskSpec" /* \todo \revisit PP */
+        ||nodeName == "SgAdaProtectedSpec" /* \todo \revisit PP */
+        );
   }
   return info;
 }
@@ -4270,7 +4286,7 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
                     outputFile << successorContainerName << ".push_back(compute_baseTypeDefiningDeclaration());\n";
                   }
             // else if (nodeName == "SgVariableDeclaration" && memberVariableName == "baseTypeDefiningDeclaration")
-               else if ( (nodeName == "SgVariableDeclaration" || nodeName == "SgTemplateVariableDeclaration" || nodeName == "SgAdaVariantFieldDecl") 
+               else if ( (nodeName == "SgVariableDeclaration" || nodeName == "SgTemplateVariableDeclaration" || nodeName == "SgAdaVariantFieldDecl")
                        && memberVariableName == "baseTypeDefiningDeclaration"
                        )
                   {
@@ -4346,7 +4362,7 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
             // Exceptional case first: SgVariableDeclaration, which has a fixed member (that we compute using a special
             // function) followed by a container.
             // if (string(node.getName()) == "SgVariableDeclaration")
-               if (  string(node.getName()) == "SgVariableDeclaration" 
+               if (  string(node.getName()) == "SgVariableDeclaration"
                   || string(node.getName()) == "SgTemplateVariableDeclaration"
                   || string(node.getName()) == "SgAdaVariantFieldDecl"
                   )
@@ -4455,7 +4471,7 @@ Grammar::buildTreeTraversalFunctions(AstNodeClass& node, StringUtility::FileWith
             // Exceptional case first: SgVariableDeclaration, which has a fixed member (that we compute using a special
             // function) followed by a container.
             // if (string(node.getName()) == "SgVariableDeclaration")
-               if (  string(node.getName()) == "SgVariableDeclaration" 
+               if (  string(node.getName()) == "SgVariableDeclaration"
                   || string(node.getName()) == "SgTemplateVariableDeclaration"
                   || string(node.getName()) == "SgAdaVariantFieldDecl"
                   )

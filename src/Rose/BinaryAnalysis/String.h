@@ -220,9 +220,9 @@ void initDiagnostics();
  *  sequence of octets by the @ref CharacterEncodingScheme (CES). */
 class ROSE_DLL_API CharacterEncodingForm: public Sawyer::SharedObject {
 protected:
-    State state_;
+    State state_ = INITIAL_STATE;
 public:
-    CharacterEncodingForm(): state_(INITIAL_STATE) {}
+    CharacterEncodingForm() {}
     virtual ~CharacterEncodingForm() {}
 
     /** Shared ownership pointer to a @ref CharacterEncodingForm. See @ref heap_object_shared_ownership. */
@@ -269,12 +269,12 @@ public:
     typedef Sawyer::SharedPointer<NoopCharacterEncodingForm> Ptr;
 
     static Ptr instance() { return Ptr(new NoopCharacterEncodingForm); }
-    virtual CharacterEncodingForm::Ptr clone() const ROSE_OVERRIDE { return Ptr(new NoopCharacterEncodingForm(*this)); }
-    virtual std::string name() const ROSE_OVERRIDE { return "no-op"; }
-    virtual CodeValues encode(CodePoint cp) ROSE_OVERRIDE;
-    virtual State decode(CodeValue) ROSE_OVERRIDE;
-    virtual CodePoint consume() ROSE_OVERRIDE;
-    virtual void reset() ROSE_OVERRIDE;
+    virtual CharacterEncodingForm::Ptr clone() const override { return Ptr(new NoopCharacterEncodingForm(*this)); }
+    virtual std::string name() const override { return "no-op"; }
+    virtual CodeValues encode(CodePoint cp) override;
+    virtual State decode(CodeValue) override;
+    virtual CodePoint consume() override;
+    virtual void reset() override;
 };
 
 /** Returns a new no-op character encoding form. */
@@ -292,12 +292,12 @@ public:
     typedef Sawyer::SharedPointer<Utf8CharacterEncodingForm> Ptr;
 
     static Ptr instance() { return Ptr(new Utf8CharacterEncodingForm); }
-    virtual CharacterEncodingForm::Ptr clone() const ROSE_OVERRIDE { return Ptr(new Utf8CharacterEncodingForm(*this)); }
-    virtual std::string name() const ROSE_OVERRIDE { return "UTF-8"; }
-    virtual CodeValues encode(CodePoint cp) ROSE_OVERRIDE;
-    virtual State decode(CodeValue) ROSE_OVERRIDE;
-    virtual CodePoint consume() ROSE_OVERRIDE;
-    virtual void reset() ROSE_OVERRIDE;
+    virtual CharacterEncodingForm::Ptr clone() const override { return Ptr(new Utf8CharacterEncodingForm(*this)); }
+    virtual std::string name() const override { return "UTF-8"; }
+    virtual CodeValues encode(CodePoint cp) override;
+    virtual State decode(CodeValue) override;
+    virtual CodePoint consume() override;
+    virtual void reset() override;
 };
 
 /** Returns a new UTF-8 character encoding form. */
@@ -315,12 +315,12 @@ public:
     typedef Sawyer::SharedPointer<Utf16CharacterEncodingForm> Ptr;
 
     static Ptr instance() { return Ptr(new Utf16CharacterEncodingForm); }
-    virtual CharacterEncodingForm::Ptr clone() const ROSE_OVERRIDE { return Ptr(new Utf16CharacterEncodingForm(*this)); }
-    virtual std::string name() const ROSE_OVERRIDE { return "UTF-16"; }
-    virtual CodeValues encode(CodePoint cp) ROSE_OVERRIDE;
-    virtual State decode(CodeValue) ROSE_OVERRIDE;
-    virtual CodePoint consume() ROSE_OVERRIDE;
-    virtual void reset() ROSE_OVERRIDE;
+    virtual CharacterEncodingForm::Ptr clone() const override { return Ptr(new Utf16CharacterEncodingForm(*this)); }
+    virtual std::string name() const override { return "UTF-16"; }
+    virtual CodeValues encode(CodePoint cp) override;
+    virtual State decode(CodeValue) override;
+    virtual CodePoint consume() override;
+    virtual void reset() override;
 };
 
 /** Returns a new UTF-16 character encoding form. */
@@ -333,9 +333,9 @@ Utf16CharacterEncodingForm::Ptr utf16CharacterEncodingForm();
  *  depending on the character encoding scheme. */
 class ROSE_DLL_API CharacterEncodingScheme: public Sawyer::SharedObject {
 protected:
-    State state_;
+    State state_ = INITIAL_STATE;
 public:
-    CharacterEncodingScheme(): state_(INITIAL_STATE) {}
+    CharacterEncodingScheme() {}
     virtual ~CharacterEncodingScheme() {}
 
     /** Shared ownership pointer to a @ref CharacterEncodingScheme. See @ref heap_object_shared_ownership. */
@@ -388,14 +388,14 @@ public:
     static Ptr instance(size_t octetsPerValue, ByteOrder::Endianness sex = ByteOrder::ORDER_UNSPECIFIED) {
         return Ptr(new BasicCharacterEncodingScheme(octetsPerValue, sex));
     }
-    virtual Ptr clone() const ROSE_OVERRIDE {
+    virtual Ptr clone() const override {
         return Ptr(new BasicCharacterEncodingScheme(*this));
     }
-    virtual std::string name() const ROSE_OVERRIDE;
-    virtual Octets encode(CodeValue) ROSE_OVERRIDE;
-    virtual State decode(Octet) ROSE_OVERRIDE;
-    virtual CodeValue consume() ROSE_OVERRIDE;
-    virtual void reset() ROSE_OVERRIDE;
+    virtual std::string name() const override;
+    virtual Octets encode(CodeValue) override;
+    virtual State decode(Octet) override;
+    virtual CodeValue consume() override;
+    virtual void reset() override;
 };
 
 /** Returns a new basic character encoding scheme. */
@@ -408,9 +408,9 @@ BasicCharacterEncodingScheme::Ptr basicCharacterEncodingScheme(size_t octetsPerV
  *  code points. */
 class ROSE_DLL_API LengthEncodingScheme: public Sawyer::SharedObject {
 protected:
-    State state_;
+    State state_ = INITIAL_STATE;
 public:
-    LengthEncodingScheme(): state_(INITIAL_STATE) {}
+    LengthEncodingScheme() {}
     virtual ~LengthEncodingScheme() {}
 
     /** Shared ownership pointer to a @ref LengthEncodingScheme. See @ref heap_object_shared_ownership. */
@@ -462,14 +462,14 @@ public:
     static Ptr instance(size_t octetsPerValue, ByteOrder::Endianness sex = ByteOrder::ORDER_UNSPECIFIED) {
         return Ptr(new BasicLengthEncodingScheme(octetsPerValue, sex));
     }
-    virtual Ptr clone() const ROSE_OVERRIDE {
+    virtual Ptr clone() const override {
         return Ptr(new BasicLengthEncodingScheme(*this));
     }
-    virtual std::string name() const ROSE_OVERRIDE;
-    virtual Octets encode(size_t) ROSE_OVERRIDE;
-    virtual State decode(Octet) ROSE_OVERRIDE;
-    virtual size_t consume() ROSE_OVERRIDE;
-    virtual void reset() ROSE_OVERRIDE;
+    virtual std::string name() const override;
+    virtual Octets encode(size_t) override;
+    virtual State decode(Octet) override;
+    virtual size_t consume() override;
+    virtual void reset() override;
 };
 
 /** Returns a new basic length encoding scheme. */
@@ -504,8 +504,8 @@ public:
     static Ptr instance() {
         return Ptr(new PrintableAscii);
     }
-    virtual std::string name() const ROSE_OVERRIDE { return "printable ASCII"; }
-    virtual bool isValid(CodePoint) ROSE_OVERRIDE;
+    virtual std::string name() const override { return "printable ASCII"; }
+    virtual bool isValid(CodePoint) override;
 };
 
 /** Returns a new printable ASCII predicate. */
@@ -519,8 +519,8 @@ protected:
     AnyCodePoint() {}
 public:
     static Ptr instance() { return Ptr(new AnyCodePoint); }
-    virtual std::string name() const ROSE_OVERRIDE { return "any code point"; }
-    virtual bool isValid(CodePoint) ROSE_OVERRIDE { return true; }
+    virtual std::string name() const override { return "any code point"; }
+    virtual bool isValid(CodePoint) override { return true; }
 };
 
 /** Returns a new predicate that matches all code points. */
@@ -532,15 +532,15 @@ AnyCodePoint::Ptr anyCodePoint();
  *  versa. */
 class ROSE_DLL_API StringEncodingScheme: public Sawyer::SharedObject {
 protected:
-    State state_;                                       // decoding state
+    State state_ = INITIAL_STATE;                       // decoding state
     CodePoints codePoints_;                             // unconsumed code points
-    size_t nCodePoints_;                                // number of code points decoded since reset
+    size_t nCodePoints_ = 0;                            // number of code points decoded since reset
     CharacterEncodingForm::Ptr cef_;
     CharacterEncodingScheme::Ptr ces_;
     CodePointPredicate::Ptr cpp_;
 
 protected:
-    StringEncodingScheme(): state_(INITIAL_STATE), nCodePoints_(0) {}
+    StringEncodingScheme() {}
 
     StringEncodingScheme(const CharacterEncodingForm::Ptr &cef, const CharacterEncodingScheme::Ptr &ces,
                          const CodePointPredicate::Ptr &cpp)
@@ -641,7 +641,7 @@ public:
                         const CharacterEncodingScheme::Ptr &ces, const CodePointPredicate::Ptr &cpp) {
         return Ptr(new LengthEncodedString(les, cef, ces, cpp));
     }
-    virtual StringEncodingScheme::Ptr clone() const ROSE_OVERRIDE {
+    virtual StringEncodingScheme::Ptr clone() const override {
         LengthEncodingScheme::Ptr les = les_->clone();
         CharacterEncodingForm::Ptr cef = cef_->clone();
         CharacterEncodingScheme::Ptr ces = ces_->clone();
@@ -653,10 +653,10 @@ public:
         inst->declaredLength_ = declaredLength_;
         return Ptr(inst);
     }
-    virtual std::string name() const ROSE_OVERRIDE;
-    virtual Octets encode(const CodePoints&) ROSE_OVERRIDE;
-    virtual State decode(Octet) ROSE_OVERRIDE;
-    virtual void reset() ROSE_OVERRIDE;
+    virtual std::string name() const override;
+    virtual Octets encode(const CodePoints&) override;
+    virtual State decode(Octet) override;
+    virtual void reset() override;
 
     /** Returns the declared length, if any.
      *
@@ -710,7 +710,7 @@ public:
                         const CodePointPredicate::Ptr &cpp, CodePoint terminator = 0) {
         return Ptr(new TerminatedString(cef, ces, cpp, CodePoints(1, terminator)));
     }
-    virtual StringEncodingScheme::Ptr clone() const ROSE_OVERRIDE {
+    virtual StringEncodingScheme::Ptr clone() const override {
         CharacterEncodingForm::Ptr cef = cef_->clone();
         CharacterEncodingScheme::Ptr ces = ces_->clone();
         CodePointPredicate::Ptr cpp = cpp_;             // not cloned since they have no state
@@ -721,10 +721,10 @@ public:
         inst->terminated_ = terminated_;
         return Ptr(inst);
     }
-    virtual std::string name() const ROSE_OVERRIDE;
-    virtual Octets encode(const CodePoints&) ROSE_OVERRIDE;
-    virtual State decode(Octet) ROSE_OVERRIDE;
-    virtual void reset() ROSE_OVERRIDE;
+    virtual std::string name() const override;
+    virtual Octets encode(const CodePoints&) override;
+    virtual State decode(Octet) override;
+    virtual void reset() override;
 
     /** Returns the decoded termination character, if any.
      *

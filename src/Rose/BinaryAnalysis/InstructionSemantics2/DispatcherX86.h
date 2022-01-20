@@ -142,7 +142,7 @@ public:
 
     /** Virtual constructor. */
     virtual BaseSemantics::DispatcherPtr create(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth=0,
-                                                const RegisterDictionary *regs=NULL) const ROSE_OVERRIDE {
+                                                const RegisterDictionary *regs=NULL) const override {
         if (0==addrWidth)
             addrWidth = addressWidth();
         if (NULL==regs)
@@ -164,26 +164,26 @@ public:
     void processorMode(X86InstructionSize m) { processorMode_ = m; }
     /** @} */
 
-    virtual void set_register_dictionary(const RegisterDictionary *regdict) ROSE_OVERRIDE;
+    virtual void set_register_dictionary(const RegisterDictionary *regdict) override;
 
     /** Get list of common registers. Returns a list of non-overlapping registers composed of the largest registers except
      *  using individual flags for the fields of the FLAGS/EFLAGS register. */
     virtual RegisterDictionary::RegisterDescriptors get_usual_registers() const;
 
-    virtual RegisterDescriptor instructionPointerRegister() const ROSE_OVERRIDE;
-    virtual RegisterDescriptor stackPointerRegister() const ROSE_OVERRIDE;
-    virtual RegisterDescriptor stackFrameRegister() const ROSE_OVERRIDE;
-    virtual RegisterDescriptor callReturnRegister() const ROSE_OVERRIDE;
+    virtual RegisterDescriptor instructionPointerRegister() const override;
+    virtual RegisterDescriptor stackPointerRegister() const override;
+    virtual RegisterDescriptor stackFrameRegister() const override;
+    virtual RegisterDescriptor callReturnRegister() const override;
 
-    virtual int iprocKey(SgAsmInstruction *insn_) const ROSE_OVERRIDE {
+    virtual int iprocKey(SgAsmInstruction *insn_) const override {
         SgAsmX86Instruction *insn = isSgAsmX86Instruction(insn_);
         assert(insn!=NULL);
         return insn->get_kind();
     }
 
-    virtual void write(SgAsmExpression *e, const BaseSemantics::SValuePtr &value, size_t addr_nbits=0) ROSE_OVERRIDE;
+    virtual void write(SgAsmExpression *e, const BaseSemantics::SValuePtr &value, size_t addr_nbits=0) override;
 
-    virtual void initializeState(const BaseSemantics::StatePtr&) ROSE_OVERRIDE;
+    virtual void initializeState(const BaseSemantics::StatePtr&) override;
 
     enum AccessMode { READ_REGISTER, PEEK_REGISTER };
 
@@ -309,7 +309,7 @@ public:
     typedef SgAsmX86Instruction *I;
     typedef const SgAsmExpressionPtrList &A;
     virtual void p(D, Ops, I, A) = 0;
-    virtual void process(const BaseSemantics::DispatcherPtr&, SgAsmInstruction*) ROSE_OVERRIDE;
+    virtual void process(const BaseSemantics::DispatcherPtr&, SgAsmInstruction*) override;
     virtual void assert_args(I insn, A args, size_t nargs);
     void check_arg_width(D d, I insn, A args);
 };

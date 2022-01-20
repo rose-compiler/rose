@@ -74,7 +74,7 @@ deleteAttributeValue(AstAttribute *value, Sawyer::Attribute::Id id) {
                                    <<"    attribute memory to be managed by ROSE's AstAttributeMechanism, then\n"
                                    <<"    the following definition should be added to the attribute's class:\n"
                                    <<"        virtual AstAttribute::OwnershipPolicy\n"
-                                   <<"        getOwnershipPolicy() const ROSE_OVERRIDE {\n"
+                                   <<"        getOwnershipPolicy() const override {\n"
                                    <<"            return CONTAINER_OWNERSHIP;\n"
                                    <<"        }\n"
                                    <<"    and the attribute should not be explicitly deleted by the attribute\n"

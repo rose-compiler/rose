@@ -79,10 +79,14 @@ Grammar::setUpSymbols ()
   // SgAliasSymbol IR nodes could be properly evaluated.
      NEW_TERMINAL_MACRO ( RenameSymbol,         "RenameSymbol",        "RENAME_SYMBOL");
 
+  // PP (06/03/2020) Adding Ada support for "inherited" functions of derived types
+     NEW_TERMINAL_MACRO ( AdaInheritedFunctionSymbol, "AdaInheritedFunctionSymbol", "ADA_INHERITED_FUNCTION_SYMBOL" );
+
   // DQ (12/27/2011): Added more support for template declaration details in the AST.
   // NEW_NONTERMINAL_MACRO ( FunctionSymbol,MemberFunctionSymbol | RenameSymbol,"FunctionSymbol","FUNCTION_NAME", true);
      NEW_NONTERMINAL_MACRO ( MemberFunctionSymbol,TemplateMemberFunctionSymbol,"MemberFunctionSymbol","MEMBER_FUNC_NAME", true);
-     NEW_NONTERMINAL_MACRO ( FunctionSymbol, MemberFunctionSymbol | TemplateFunctionSymbol | RenameSymbol,"FunctionSymbol","FUNCTION_NAME", true);
+     NEW_NONTERMINAL_MACRO ( FunctionSymbol, MemberFunctionSymbol | TemplateFunctionSymbol | RenameSymbol | AdaInheritedFunctionSymbol,
+                             "FunctionSymbol","FUNCTION_NAME", true);
 
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
   // DQ (5/3/2010): Added symbol table support to the binary analysis within ROSE.  Values that
@@ -100,6 +104,7 @@ Grammar::setUpSymbols ()
   // PP (06/03/2020) Adding Ada support
      NEW_TERMINAL_MACRO ( AdaPackageSymbol,  "AdaPackageSymbol", "ADA_PACKAGE_SYMBOL" );
      NEW_TERMINAL_MACRO ( AdaTaskSymbol,     "AdaTaskSymbol", "ADA_TASK_SYMBOL" );
+     NEW_TERMINAL_MACRO ( AdaProtectedSymbol, "AdaProtectedSymbol", "ADA_PROTECTED_SYMBOL" );
      NEW_TERMINAL_MACRO ( AdaGenericSymbol,  "AdaGenericSymbol", "ADA_GENERIC_SYMBOL" );
 
   // PP (04/29/2021) Add symbol for renaming declarations
@@ -112,7 +117,8 @@ Grammar::setUpSymbols ()
           TypedefSymbol    | LabelSymbol            | DefaultSymbol          | NamespaceSymbol    |
           IntrinsicSymbol  | ModuleSymbol           | InterfaceSymbol        | CommonSymbol       |
           AliasSymbol      | AsmBinaryAddressSymbol | AsmBinaryDataSymbol    | JavaLabelSymbol    |
-          AdaPackageSymbol | AdaTaskSymbol          | AdaRenamingSymbol      | AdaGenericSymbol /* | RenameSymbol */,
+          AdaPackageSymbol | AdaTaskSymbol          | AdaProtectedSymbol     | AdaRenamingSymbol  |
+          AdaGenericSymbol   /* | RenameSymbol */,
           "Symbol","SymbolTag", false);
 #else
      NEW_NONTERMINAL_MACRO (Symbol,
@@ -121,7 +127,8 @@ Grammar::setUpSymbols ()
           TypedefSymbol    | LabelSymbol            | DefaultSymbol          | NamespaceSymbol    |
           IntrinsicSymbol  | ModuleSymbol           | InterfaceSymbol        | CommonSymbol       |
           AliasSymbol      |                                                   JavaLabelSymbol    |
-          AdaPackageSymbol | AdaTaskSymbol          | AdaRenamingSymbol      | AdaGenericSymbol /* | RenameSymbol */,
+          AdaPackageSymbol | AdaTaskSymbol          | AdaProtectedSymbol     | AdaRenamingSymbol  |
+          AdaGenericSymbol  /* | RenameSymbol */,
           "Symbol","SymbolTag", false);
 #endif
 
@@ -204,11 +211,19 @@ Grammar::setUpSymbols ()
      AdaTaskSymbol.setDataPrototype    ( "SgDeclarationStatement*",   "declaration", "= NULL",
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+     AdaProtectedSymbol.setDataPrototype ( "SgDeclarationStatement*",   "declaration", "= NULL",
+                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
      AdaGenericSymbol.setDataPrototype    ( "SgDeclarationStatement*",   "declaration", "= NULL",
                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      AdaRenamingSymbol.setDataPrototype ( "SgAdaRenamingDecl*",   "declaration", "= NULL",
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     AdaInheritedFunctionSymbol.setFunctionPrototype     ( "HEADER_ADA_INHERITED_FUNCTION_SYMBOL", "../Grammar/Symbol.code" );
+
+     AdaInheritedFunctionSymbol.setDataPrototype ( "SgFunctionType*",   "derivedType", "= NULL",
+                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
   // DQ (2/29/2004): Header file support code for template declaration support
@@ -445,12 +460,18 @@ Grammar::setUpSymbols ()
      AdaTaskSymbol.setFunctionSource        ( "SOURCE_ADA_TASK_SYMBOL", "../Grammar/Symbol.code" );
      AdaTaskSymbol.setFunctionSource        ( "SOURCE_EMPTY_GET_TYPE", "../Grammar/Symbol.code" );
 
+  // PP (01/11/22): + protected objects
+     AdaProtectedSymbol.setFunctionSource   ( "SOURCE_ADA_PROTECTED_SYMBOL", "../Grammar/Symbol.code" );
+     AdaProtectedSymbol.setFunctionSource   ( "SOURCE_EMPTY_GET_TYPE", "../Grammar/Symbol.code" );
+
   // MS (05/01/21): Ada generics
      AdaGenericSymbol.setFunctionSource     ( "SOURCE_ADA_GENERIC_SYMBOL", "../Grammar/Symbol.code" );
      AdaGenericSymbol.setFunctionSource     ( "SOURCE_EMPTY_GET_TYPE", "../Grammar/Symbol.code" );
 
      AdaRenamingSymbol.setFunctionSource    ( "SOURCE_ADA_RENAMING_SYMBOL", "../Grammar/Symbol.code" );
      AdaRenamingSymbol.setFunctionSource    ( "SOURCE_EMPTY_GET_TYPE", "../Grammar/Symbol.code" );
+
+     AdaInheritedFunctionSymbol.setFunctionSource ( "SOURCE_ADA_INHERITED_FUNCTION_SYMBOL", "../Grammar/Symbol.code" );
 
   // DQ (12/23/2005): Removed SgName object and so we now need to build the get_name() member function
      DefaultSymbol.setFunctionSource        ( "SOURCE_SHORT_DEFAULT_GET_NAME", "../Grammar/Symbol.code" );

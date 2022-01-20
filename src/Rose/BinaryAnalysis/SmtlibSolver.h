@@ -18,9 +18,6 @@ private:
     ExprExprMap varsForSets_;                           // variables to use for sets
 
 protected:
-    ExprExprMap evidence;
-    typedef boost::unordered_map<SymbolicExpr::Hash, ExprExprMap> MemoizedEvidence;
-    MemoizedEvidence memoizedEvidence;
     Sawyer::Optional<boost::chrono::duration<double> > timeout_; // max time for solving a single set of equations in seconds
 
 protected:
@@ -49,16 +46,12 @@ public:
     virtual Ptr create() const override;
 
 public:
-    virtual void reset() ROSE_OVERRIDE;
-    virtual void generateFile(std::ostream&, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*) ROSE_OVERRIDE;
-    virtual std::string getCommand(const std::string &configName) ROSE_OVERRIDE;
-    virtual std::string getErrorMessage(int exitStatus) ROSE_OVERRIDE;
-    virtual void findVariables(const SymbolicExpr::Ptr&, VariableSet&) ROSE_OVERRIDE;
-    virtual SymbolicExpr::Ptr evidenceForName(const std::string&) ROSE_OVERRIDE;
-    virtual std::vector<std::string> evidenceNames() ROSE_OVERRIDE;
-    virtual void clearEvidence() ROSE_OVERRIDE;
-    virtual void clearMemoization() ROSE_OVERRIDE;
-    virtual void timeout(boost::chrono::duration<double>) ROSE_OVERRIDE;
+    virtual void reset() override;
+    virtual void generateFile(std::ostream&, const std::vector<SymbolicExpr::Ptr> &exprs, Definitions*) override;
+    virtual std::string getCommand(const std::string &configName) override;
+    virtual std::string getErrorMessage(int exitStatus) override;
+    virtual void findVariables(const SymbolicExpr::Ptr&, VariableSet&) override;
+    virtual void timeout(boost::chrono::duration<double>) override;
 
 protected:
     /** Specify variable to use for OP_SET.
@@ -71,7 +64,7 @@ protected:
     SymbolicExpr::LeafPtr varForSet(const SymbolicExpr::InteriorPtr &set);
     /** @} */
 
-    virtual void parseEvidence() ROSE_OVERRIDE;
+    virtual void parseEvidence() override;
 
     /** Generate definitions for bit-wise XOR functions.
      *

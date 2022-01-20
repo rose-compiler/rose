@@ -151,6 +151,49 @@ void nodeTraversal::visit(SgNode* n)
         //cout << "## " << n->variantT() <<":" << n->class_name() << " " << locatedNode->getFilenameString()  << endl;
         debugVector.push_back(o.str());
       }
+
+      // retrieve preprocessing information
+      AttachedPreprocessingInfoType* info = locatedNode->getAttachedPreprocessingInfo();
+      if(info)
+      {
+        std::ostringstream o;
+        for (AttachedPreprocessingInfoType::iterator i = info->begin (); i != info->end (); i++)
+        {
+          PreprocessingInfo::DirectiveType  directive =  (*i)->getTypeOfDirective();
+          //std::cout << PreprocessingInfo::directiveTypeName (directive) << " : " << (*i)->getString() << std::endl;
+          switch(directive)
+          {
+            case PreprocessingInfo::DirectiveType::CpreprocessorUnknownDeclaration:
+            case PreprocessingInfo::DirectiveType::CpreprocessorBlankLine:
+            case PreprocessingInfo::DirectiveType::CpreprocessorIncludeDeclaration:
+            case PreprocessingInfo::DirectiveType::CpreprocessorIncludeNextDeclaration:
+            case PreprocessingInfo::DirectiveType::CpreprocessorDefineDeclaration:
+            case PreprocessingInfo::DirectiveType::CpreprocessorUndefDeclaration:
+            case PreprocessingInfo::DirectiveType::CpreprocessorIfdefDeclaration:
+            case PreprocessingInfo::DirectiveType::CpreprocessorIfndefDeclaration:
+            case PreprocessingInfo::DirectiveType::CpreprocessorIfDeclaration:
+            case PreprocessingInfo::DirectiveType::CpreprocessorDeadIfDeclaration:
+            case PreprocessingInfo::DirectiveType::CpreprocessorElseDeclaration:
+            case PreprocessingInfo::DirectiveType::CpreprocessorElifDeclaration:
+            case PreprocessingInfo::DirectiveType::CpreprocessorEndifDeclaration:
+            case PreprocessingInfo::DirectiveType::CpreprocessorLineDeclaration:
+            case PreprocessingInfo::DirectiveType::CpreprocessorErrorDeclaration:
+            case PreprocessingInfo::DirectiveType::CpreprocessorWarningDeclaration:
+            case PreprocessingInfo::DirectiveType::CpreprocessorEmptyDeclaration:
+              o << n->variantT() << ":" << n->class_name() << " (" << PreprocessingInfo::relativePositionName((*i)->getRelativePosition()) << "):" << PreprocessingInfo::directiveTypeName (directive) << ":" << (*i)->getString();
+              break;
+            default :
+              ;
+          }
+        }
+        if(!o.str().empty())        
+        {
+          if(enable_verbose)
+              cout << o.str() << endl; 
+          debugVector.push_back(o.str());
+        }
+      }
+
       // get type info from SgVariableDeclaration
       SgVariableDeclaration* varDecl = isSgVariableDeclaration(n);
       if(varDecl) {

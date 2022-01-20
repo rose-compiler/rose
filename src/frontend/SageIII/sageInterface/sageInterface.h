@@ -320,6 +320,12 @@ int64_t getAsmSignedConstant(SgAsmValueExpression *e);
     */
      std::string get_name ( const SgToken* token );
 
+   /*! \brief Returns the type introduced by a declaration.
+    */
+   // PP (11/22/2021): General function for extracting the type of declarations (when they declare types)
+     SgType* getDeclaredType(const SgDeclarationStatement* declaration);
+
+
   // DQ (3/20/2016): Added to refactor some of the DSL infrastructure support.
    /*! \brief Generate a useful name to support construction of identifiers from declarations.
 
@@ -410,12 +416,14 @@ int64_t getAsmSignedConstant(SgAsmValueExpression *e);
    void saveToPDF(SgNode* node, std::string filename);
    void saveToPDF(SgNode* node); // enable calling from gdb
 
-   //! Pretty print AST horizontally, output to std output
+   //! Pretty print AST horizontally, output to std output.
    void printAST (SgNode* node);
 
-   //! Pretty print AST horizontally, output to a specified text file.
-   void printAST2TextFile (SgNode* node, const char* filename);
-   void printAST2TextFile (SgNode* node, std::string filename);
+   //! Pretty print AST horizontally, output to a specified text file. If printType is set to false, don't print out type info.
+   void printAST2TextFile (SgNode* node, const char* filename, bool printType=true);
+
+   //! Pretty print AST horizontally, output to a specified text file. If printType is set to false, don't print out types info.
+   void printAST2TextFile (SgNode* node, std::string filename, bool printType=true);
 
  // DQ (2/12/2012): Added some diagnostic support.
 //! Diagnostic function for tracing back through the parent list to understand at runtime where in the AST a failure happened.
@@ -544,7 +552,10 @@ int64_t getAsmSignedConstant(SgAsmValueExpression *e);
 //! A special purpose statement removal function, originally from inlinerSupport.h, Need Jeremiah's attention to refine it. Please don't use it for now.
 ROSE_DLL_API void myRemoveStatement(SgStatement* stmt);
 
+//! Check if a bool or int constant expression evaluates to be a true value
 ROSE_DLL_API bool isConstantTrue(SgExpression* e);
+
+//! Check if a bool or int constant expression evaluates to be a false value
 ROSE_DLL_API bool isConstantFalse(SgExpression* e);
 
 ROSE_DLL_API bool isCallToParticularFunction(SgFunctionDeclaration* decl, SgExpression* e);
@@ -1938,6 +1949,13 @@ ROSE_DLL_API void moveStatementsBetweenBlocks ( SgAdaPackageBody* sourceBlock, S
 
 //! Move statements between C++ namespace's definitions
 ROSE_DLL_API void moveStatementsBetweenBlocks ( SgNamespaceDefinitionStatement* sourceBlock, SgNamespaceDefinitionStatement* targetBlock );
+
+//!  Check if a function declaration is a C++11 lambda function
+ROSE_DLL_API bool isLambdaFunction (SgFunctionDeclaration* func);
+
+//! check if a variable reference is this->a[i] inside of a lambda function
+ROSE_DLL_API bool isLambdaCapturedVariable (SgVarRefExp* varRef);
+
 
 //! Move a variable declaration to a new scope, handle symbol, special scopes like For loop, etc.
 ROSE_DLL_API void moveVariableDeclaration(SgVariableDeclaration* decl, SgScopeStatement* target_scope);

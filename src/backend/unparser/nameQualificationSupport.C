@@ -108,6 +108,12 @@ namespace
   }
 
   inline
+  SgAdaProtectedSpecDecl& declOf(const SgAdaProtectedRefExp& n)
+  {
+    return SG_DEREF(n.get_decl());
+  }
+
+  inline
   const SgExprListExp* callArguments(const SgFunctionRefExp& n)
   {
     if (const SgCallExpression* callexp = isSgCallExpression(n.get_parent()))
@@ -210,6 +216,8 @@ namespace
       void handle(const SgBasicBlock& n)           { withName(n.get_string_label()); }
       void handle(const SgAdaTaskSpec& n)          { checkParent(n); }
       void handle(const SgAdaTaskBody& n)          { checkParent(n); }
+      void handle(const SgAdaProtectedSpec& n)     { checkParent(n); }
+      void handle(const SgAdaProtectedBody& n)     { checkParent(n); }
       void handle(const SgAdaPackageBody& n)       { checkParent(n); }
       void handle(const SgAdaPackageSpec& n)       { checkParent(n); }
       // FunctionDefinition, ..
@@ -219,6 +227,8 @@ namespace
       void handle(const SgDeclarationStatement& n) { withoutName(); }
       void handle(const SgAdaTaskSpecDecl& n)      { withName(n.get_name()); }
       void handle(const SgAdaTaskBodyDecl& n)      { withName(n.get_name()); }
+      void handle(const SgAdaProtectedSpecDecl& n) { withName(n.get_name()); }
+      void handle(const SgAdaProtectedBodyDecl& n) { withName(n.get_name()); }
       void handle(const SgAdaPackageSpecDecl& n)   { withName(n.get_name()); }
       void handle(const SgAdaPackageBodyDecl& n)   { withName(n.get_name()); }
       void handle(const SgAdaRenamingDecl& n)      { withName(n.get_name()); }
@@ -374,6 +384,7 @@ namespace
 
       /// records that a node \ref n needs to be qualified with \ref qual.
       void recordNameQual(const SgNode& n, std::string qual);
+      void recordNameQual(std::map<SgNode*, std::string>& m, const SgNode& n, std::string qual);
 
       /// replaces the scope to be unparsed with a different representation
       ///   (i.e., scope or alias declaration).
@@ -431,6 +442,15 @@ namespace
       NameQualificationTraversalAda& operator=(NameQualificationTraversalAda&&) = delete;
   };
 
+  void
+  NameQualificationTraversalAda::recordNameQual( std::map<SgNode*, std::string>& m,
+                                                 const SgNode& n,
+                                                 std::string qual
+                                               )
+  {
+    m.emplace(const_cast<SgNode*>(&n), std::move(qual));
+  }
+
 
   void
   NameQualificationTraversalAda::recordNameQual(const SgNode& n, std::string qual)
@@ -438,8 +458,7 @@ namespace
     //~ std::cerr << "record " << qual << "@" << &n << " %" << typeid(n).name()
               //~ << " / " << &qualifiedNameMapForNames
               //~ << std::endl;
-
-    qualifiedNameMapForNames.emplace(const_cast<SgNode*>(&n), std::move(qual));
+    recordNameQual(qualifiedNameMapForNames, n, std::move(qual));
   }
 
   const SgStatement&
@@ -453,6 +472,9 @@ namespace
 
     if (const SgAdaTaskBody* tskbody = isSgAdaTaskBody(&n))
       return scopeForNameQualification(SG_DEREF(tskbody->get_spec()));
+
+    if (const SgAdaProtectedBody* pobody = isSgAdaProtectedBody(&n))
+      return scopeForNameQualification(SG_DEREF(pobody->get_spec()));
 
     // if the scope is visible, produce a fully qualified scope
     if (isVisibleScope(&n))
@@ -725,27 +747,33 @@ namespace
       /// \details \ref child must be a direct child of the current node
       void suppressNameQualification(const SgNode* child);
 
-      /// computes the name qualification for \ref n when used in the current scope
+      /// computes the name qualification for \ref n when used in the current scope.
       /// if the name qualification is not the empty string it gets recorded
       /// \param n     a declaration of a node referenced in the active scope
       /// \param scope the scope where n was declared
       void recordNameQualIfNeeded(const SgNode& n, const SgScopeStatement* scope);
+      void recordNameQualIfNeeded(std::map<SgNode*, std::string>& m, const SgNode& n, const SgScopeStatement* scope);
 
-      /// computes the name qualification for \ref ty with type reference node \ref n
-      void computeNameQualForTypeSubtree(const SgNode& n, const SgType* ty);
-
-      /// computes the name qualification for \ref exp.
+      /// computes the name qualification for \ref n with reference node \ref ref.
       /// \details
-      ///    Expressions reachable with the ROSE traversal mechanism are handled by the
-      ///    default traversal. Some expression subtrees within types are not reached
-      ///    by the type traversal mechanism. Those need to be visited separately.
-      ///    e.g., SgDeclType::get_base_expression
-      void computeNameQualForExprSubtree(const SgExpression* exp);
+      ///    Introduces a local reference map based on the anchor point \ref ref.
+      ///    Suitable for name qualifying types and back-references (e.g., declarations).
+      void computeNameQualForShared(const SgNode& ref, const SgNode* n);
 
-      /// records a use declaration of \ref scope
+      /// computes the name qualification for a non-shared node \ref n.
+      /// \details
+      ///    suitable for declarations, expressions, and other non-shared nodes.
+      ///    note: some expression subtrees within types are not reached by the
+      ///          type traversal mechanism. Those need to be visited separately.
+      ///          e.g., SgDeclType::get_base_expression
+      void computeNameQualForNonshared(const SgNode* n);
+
+      void computeNameQualForDeclLink(const SgNode& ref, const SgDeclarationStatement& n);
+
+      /// records a use declaration of \ref scope.
       void addVisibleScope(const SgScopeStatement* scope);
 
-      /// records renaming iff the renamed entity is associated with a scope
+      /// records renaming iff the renamed entity is associated with a scope.
       /// \param sy renamed symbol
       /// \param n  the current renaming declaration
       /// \details
@@ -754,7 +782,7 @@ namespace
       ///     was itself a renaming (recursive call).
       void addRenamedScopeIfNeeded(const SgSymbol* sy, const SgAdaRenamingDecl& n);
 
-      /// records a use declaration of \ref scope iff \ref n is associated with a scope
+      /// records a use declaration of \ref scope iff \ref n is associated with a scope.
       void addUsedScopeIfNeeded(const SgDeclarationStatement* n);
 
       /// produce name qualification required for \ref remote with respect
@@ -797,10 +825,36 @@ namespace
       {
         handle(sg::asBaseType(n));
 
-        computeNameQualForTypeSubtree(n, n.get_base_type());
+        computeNameQualForShared(n, n.get_base_type());
+      }
+
+      void handle(const SgAdaFormalTypeDecl& n)
+      {
+        handle(sg::asBaseType(n));
+
+        SgAdaFormalType* ty = n.get_type();
+        ASSERT_not_null(ty);
+
+        if (SgType* formalType = ty->get_formal_type())
+          computeNameQualForShared(n, ty->get_formal_type());
+      }
+
+      void handle(const SgEnumDeclaration& n)
+      {
+        handle(sg::asBaseType(n));
+
+        if (SgType* parentType = n.get_adaParentType())
+          computeNameQualForShared(n, parentType);
       }
 
       void handle(const SgAdaPackageSpecDecl& n)
+      {
+        handle(sg::asBaseType(n));
+
+        recordNameQualIfNeeded(n, n.get_scope());
+      }
+
+      void handle(const SgAdaPackageBodyDecl& n)
       {
         handle(sg::asBaseType(n));
 
@@ -831,14 +885,14 @@ namespace
       {
         handle(sg::asBaseType(n));
 
-        computeNameQualForTypeSubtree(n, n.get_recordType());
+        computeNameQualForShared(n, n.get_recordType());
       }
 
       void handle(const SgAdaEnumRepresentationClause& n)
       {
         handle(sg::asBaseType(n));
 
-        computeNameQualForTypeSubtree(n, n.get_enumType());
+        computeNameQualForShared(n, n.get_enumType());
       }
 
       void handle(const SgFunctionDeclaration& n)
@@ -848,7 +902,17 @@ namespace
         // parameters are handled by the traversal, so just qualify
         //   the return type, if this is a function.
         if (SageInterface::ada::isFunction(n.get_type()))
-          computeNameQualForTypeSubtree(n, n.get_orig_return_type());
+          computeNameQualForShared(n, n.get_orig_return_type());
+      }
+
+      void handle(const SgAdaGenericInstanceDecl& n)
+      {
+        handle(sg::asBaseType(n));
+
+        SgAdaGenericDecl&       dcl     = SG_DEREF(n.get_declaration());
+        SgDeclarationStatement* thedecl = dcl.get_declaration();
+
+        computeNameQualForDeclLink(n, SG_DEREF(thedecl));
       }
 
 
@@ -882,7 +946,7 @@ namespace
         //~ std::cerr << "ini: " << n.get_name() << "@" << &n
                   //~ << " t: " << typeid(*n.get_type()).name()
                   //~ << std::endl;
-        computeNameQualForTypeSubtree(n, n.get_type());
+        computeNameQualForShared(n, n.get_type());
       }
 
       void handle(const SgBaseClass& n)
@@ -896,6 +960,15 @@ namespace
       // expressions
 
       void handle(const SgExpression&) { /* do nothing */ }
+
+      void handle(const SgExprListExp& n)
+      {
+        if (!elideNameQualification(n)) return;
+
+        // forward name qualifcation suppression to children
+        for (const SgExpression* child : n.get_expressions())
+          suppressNameQualification(child);
+      }
 
       void handle(const SgVarRefExp& n)
       {
@@ -918,18 +991,8 @@ namespace
       const SgScopeStatement&
       assumedDeclarativeScope(const SgFunctionRefExp& n)
       {
-        const SgFunctionDeclaration& fundcl = SG_DEREF(n.getAssociatedFunctionDeclaration());
-        const SgScopeStatement*      res    = fundcl.get_scope();
-        const SgExprListExp*         args   = callArguments(n);
-
-        if (args)
-        {
-          // check for "inherited" functions depending on argument types
-          auto                    primitiveArgs = si::ada::primitiveParameterPositions(fundcl);
-          const SgScopeStatement* overridingScope = si::ada::overridingScope(args, primitiveArgs);
-
-          if (overridingScope) res = overridingScope;
-        }
+        const SgFunctionSymbol& sym = SG_DEREF(n.get_symbol());
+        const SgScopeStatement* res = sym.get_scope();
 
         return SG_DEREF(res);
       }
@@ -946,6 +1009,12 @@ namespace
           recordNameQualIfNeeded(n, declOf(n).get_scope());
       }
 
+      void handle(const SgAdaProtectedRefExp& n)
+      {
+        if (!elideNameQualification(n))
+          recordNameQualIfNeeded(n, declOf(n).get_scope());
+      }
+
       void handle(const SgDotExp& n)
       {
         suppressNameQualification(n.get_rhs_operand());
@@ -953,25 +1022,22 @@ namespace
 
       void handle(const SgDesignatedInitializer& n)
       {
-        const SgExprListExp& children = SG_DEREF(n.get_designatorList());
-
-        for (const SgExpression* child : children.get_expressions())
-          suppressNameQualification(child);
+        suppressNameQualification(n.get_designatorList());
       }
 
       void handle(const SgNewExp& n)
       {
-        computeNameQualForTypeSubtree(n, n.get_specified_type());
+        computeNameQualForShared(n, n.get_specified_type());
       }
 
       void handle(const SgCastExp& n)
       {
-        computeNameQualForTypeSubtree(n, n.get_type());
+        computeNameQualForShared(n, n.get_type());
       }
 
       void handle(const SgTypeExpression& n)
       {
-        computeNameQualForTypeSubtree(n, n.get_type());
+        computeNameQualForShared(n, n.get_type());
       }
 
       //
@@ -986,6 +1052,7 @@ namespace
         recordNameQualIfNeeded(dcl, dcl.get_scope());
       }
 
+/*
       // \todo try to comment out this handler, as SgAdaTaskType is a
       //       SgNamedType and the behavior is the same.
       void handle(const SgAdaTaskType& n)
@@ -994,18 +1061,18 @@ namespace
 
         recordNameQualIfNeeded(dcl, dcl.get_scope());
       }
-
+*/
       //
       // define subtree traversal for type elements that are not defined by default.
 
       void handle(const SgDeclType& n)
       {
-        computeNameQualForExprSubtree(n.get_base_expression());
+        computeNameQualForNonshared(n.get_base_expression());
       }
 
       void handle(const SgArrayType& n)
       {
-        computeNameQualForTypeSubtree(SG_DEREF(res.get_referenceNode()), n.get_base_type());
+        computeNameQualForShared(SG_DEREF(res.get_referenceNode()), n.get_base_type());
       }
 
       void handle(const SgTypeTuple& n)
@@ -1013,7 +1080,7 @@ namespace
         const SgNode& refnode = SG_DEREF(res.get_referenceNode());
 
         for (const SgType* elem : n.get_types())
-          computeNameQualForTypeSubtree(refnode, elem);
+          computeNameQualForShared(refnode, elem);
       }
 
 
@@ -1177,6 +1244,9 @@ namespace
     if (/*const SgAdaTaskTypeDecl* tsktyp =*/ isSgAdaTaskTypeDecl(n))
       return; // traversal.addUsedScope();
 
+    if (/*const SgAdaProtectedTypeDecl* potyp =*/ isSgAdaProtectedTypeDecl(n))
+      return; // traversal.addUsedScope();
+
     if (/*const SgClassDeclaration* clsdcl =*/ isSgClassDeclaration(n))
       return; // traversal.addUsedScope();
 
@@ -1206,25 +1276,50 @@ namespace
   }
 
   void
-  AdaPreNameQualifier::computeNameQualForTypeSubtree(const SgNode& n, const SgType* ty)
+  AdaPreNameQualifier::recordNameQualIfNeeded( std::map<SgNode*, std::string>& m,
+                                               const SgNode& n,
+                                               const SgScopeStatement* scope
+                                             )
+  {
+    ROSE_ASSERT((isSgType(&n) == nullptr) || res.is_typeMode());
+
+    std::string qual = nameQual(scope);
+
+    if (qual.size() > 0)
+      traversal.recordNameQual(m, n, std::move(qual));
+  }
+
+  void
+  AdaPreNameQualifier::computeNameQualForDeclLink(const SgNode& ref, const SgDeclarationStatement& n)
   {
     using NameQualMap = std::map<SgNode*, std::string>;
 
-    NameQualMap& localQualMapForTypes = traversal.createQualMapForTypeSubtreeIfNeeded(n);
+    NameQualMap& localQualMapForTypes = traversal.createQualMapForTypeSubtreeIfNeeded(ref);
+
+    recordNameQualIfNeeded(localQualMapForTypes, n, n.get_scope());
+  }
+
+  void
+  AdaPreNameQualifier::computeNameQualForShared(const SgNode& ref, const SgNode* n)
+  {
+    using NameQualMap = std::map<SgNode*, std::string>;
+
+    NameQualMap& localQualMapForTypes = traversal.createQualMapForTypeSubtreeIfNeeded(ref);
     NameQualificationTraversalAda sub{ traversal, localQualMapForTypes };
     InheritedAttribute            attr{res};
 
     // fix the reference node for the type subtree traversal
-    attr.set_typeReferenceNode(n);
+    attr.set_typeReferenceNode(ref);
     // explore the sub-tree
-    sub.traverse(const_cast<SgType*>(ty), attr);
+    sub.traverse(const_cast<SgNode*>(n), attr);
   }
 
+
   void
-  AdaPreNameQualifier::computeNameQualForExprSubtree(const SgExpression* n)
+  AdaPreNameQualifier::computeNameQualForNonshared(const SgNode* n)
   {
-    // since we are already in a type subtree, we do not need to switch
-    // the loccal reference map.
+    // since we are already in a subtree, we do not need to switch
+    // the local reference map.
     ROSE_ASSERT(&traversal.get_qualifiedNameMapForNames() != &SgNode::get_globalQualifiedNameMapForNames());
 
     /// not sure if we need a separate traversal here,
@@ -1236,7 +1331,7 @@ namespace
     //~ attr.set_typeReferenceNode(n);
 
     // explore the sub-tree
-    sub.traverse(const_cast<SgExpression*>(n), attr);
+    sub.traverse(const_cast<SgNode*>(n), attr);
   }
 
   bool
@@ -2016,6 +2111,8 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
           case V_SgAdaSubtype:
           case V_SgAdaModularType:
           case V_SgAdaDerivedType:
+          case V_SgAdaFloatType:
+          case V_SgAdaAccessType:
              {
                return_declaration = NULL;
                break;

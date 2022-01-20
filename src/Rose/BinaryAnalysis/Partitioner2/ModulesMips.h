@@ -19,10 +19,10 @@ protected:
 public:
     /** Allocating constructor. */
     static Ptr instance() { return Ptr(new MatchRetAddiu); }
-    virtual std::vector<Function::Ptr> functions() const ROSE_OVERRIDE {
+    virtual std::vector<Function::Ptr> functions() const override {
         return std::vector<Function::Ptr>(1, function_);
     }
-    virtual bool match(const Partitioner&, rose_addr_t anchor) ROSE_OVERRIDE;
+    virtual bool match(const Partitioner&, rose_addr_t anchor) override;
 };
 
 } // namespace

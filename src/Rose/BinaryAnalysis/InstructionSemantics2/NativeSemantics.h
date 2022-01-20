@@ -82,11 +82,11 @@ public:
     //----------------------------------------
 public:
     virtual BaseSemantics::RegisterStatePtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   const RegisterDictionary *regdict) const ROSE_OVERRIDE {
+                                                   const RegisterDictionary *regdict) const override {
         ASSERT_not_implemented("not applicable for this class");
     }
 
-    virtual BaseSemantics::RegisterStatePtr clone() const ROSE_OVERRIDE {
+    virtual BaseSemantics::RegisterStatePtr clone() const override {
         ASSERT_not_implemented("not applicable for this class");
     }
     
@@ -113,30 +113,30 @@ public:
     // Virtual function implementations
     //----------------------------------------
 public:
-    virtual void clear() ROSE_OVERRIDE {}
+    virtual void clear() override {}
 
-    virtual void zero() ROSE_OVERRIDE {
+    virtual void zero() override {
         TODO("[Robb Matzke 2019-09-05]");               // set all registers to zero
     }
 
-    virtual bool merge(const BaseSemantics::RegisterStatePtr &other, BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE {
+    virtual bool merge(const BaseSemantics::RegisterStatePtr &other, BaseSemantics::RiscOperators *ops) override {
         ASSERT_not_implemented("[Robb Matzke 2019-09-05]");
     }
 
     virtual BaseSemantics::SValuePtr readRegister(RegisterDescriptor reg, const BaseSemantics::SValuePtr &dflt,
-                                                  BaseSemantics::RiscOperators *ops) ROSE_OVERRIDE {
+                                                  BaseSemantics::RiscOperators *ops) override {
         return peekRegister(reg, dflt, ops);
     }
     
     virtual BaseSemantics::SValuePtr peekRegister(RegisterDescriptor, const BaseSemantics::SValuePtr &dflt,
-                                                  BaseSemantics::RiscOperators*) ROSE_OVERRIDE;
+                                                  BaseSemantics::RiscOperators*) override;
 
     virtual void writeRegister(RegisterDescriptor, const BaseSemantics::SValuePtr &value,
-                               BaseSemantics::RiscOperators*) ROSE_OVERRIDE;
+                               BaseSemantics::RiscOperators*) override;
 
     virtual void hash(Combinatorics::Hasher&, BaseSemantics::RiscOperators*) const override;
 
-    virtual void print(std::ostream&, Formatter&) const ROSE_OVERRIDE;
+    virtual void print(std::ostream&, Formatter&) const override;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -192,11 +192,11 @@ public:
     //----------------------------------------
 public:
     virtual BaseSemantics::MemoryStatePtr create(const BaseSemantics::SValuePtr &addrProtoval,
-                                                 const BaseSemantics::SValuePtr &valProtoval) const ROSE_OVERRIDE {
+                                                 const BaseSemantics::SValuePtr &valProtoval) const override {
         ASSERT_not_implemented("not applicable for this class");
     }
 
-    virtual BaseSemantics::MemoryStatePtr clone() const ROSE_OVERRIDE {
+    virtual BaseSemantics::MemoryStatePtr clone() const override {
         ASSERT_not_implemented("not applicable for this class");
     }
 
@@ -223,25 +223,25 @@ public:
     // Virtual function implementations
     //----------------------------------------
 public:
-    virtual void clear() ROSE_OVERRIDE {}
+    virtual void clear() override {}
 
     virtual bool merge(const BaseSemantics::MemoryStatePtr &other, BaseSemantics::RiscOperators *addrOps,
-                       BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE {
+                       BaseSemantics::RiscOperators *valOps) override {
         ASSERT_not_implemented("not applicable for this class");
     }
 
     virtual BaseSemantics::SValuePtr readMemory(const BaseSemantics::SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
                                                 BaseSemantics::RiscOperators *addrOps,
-                                                BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE {
+                                                BaseSemantics::RiscOperators *valOps) override {
         return peekMemory(address, dflt, addrOps, valOps);
     }
 
     virtual BaseSemantics::SValuePtr peekMemory(const BaseSemantics::SValuePtr &address, const BaseSemantics::SValuePtr &dflt,
                                                 BaseSemantics::RiscOperators *addrOps,
-                                                BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE;
+                                                BaseSemantics::RiscOperators *valOps) override;
 
     virtual void writeMemory(const BaseSemantics::SValuePtr &addr, const BaseSemantics::SValuePtr &value,
-                             BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) ROSE_OVERRIDE {
+                             BaseSemantics::RiscOperators *addrOps, BaseSemantics::RiscOperators *valOps) override {
         ASSERT_not_implemented("[Robb Matzke 2019-09-05]");
     }
 
@@ -250,7 +250,7 @@ public:
         ASSERT_not_implemented("[Robb Matzke 2021-03-26]");
     }
 
-    virtual void print(std::ostream&, BaseSemantics::Formatter&) const ROSE_OVERRIDE {
+    virtual void print(std::ostream&, BaseSemantics::Formatter&) const override {
         ASSERT_not_implemented("[Robb Matzke 2019-09-05]");
     }
 };
@@ -347,7 +347,7 @@ public:
     //----------------------------------------
 public:
     virtual BaseSemantics::RiscOperatorsPtr create(const BaseSemantics::SValuePtr &protoval,
-                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const ROSE_OVERRIDE {
+                                                   const SmtSolverPtr &solver = SmtSolverPtr()) const override {
         TODO("[Robb Matzke 2019-09-05]");
     }
 
@@ -442,7 +442,7 @@ public:
 public:
     virtual BaseSemantics::DispatcherPtr
     create(const BaseSemantics::RiscOperatorsPtr &ops, size_t addrWidth=0,
-           const RegisterDictionary *regs=NULL) const ROSE_OVERRIDE {
+           const RegisterDictionary *regs=NULL) const override {
         notApplicable("create");
     }
     
@@ -458,36 +458,36 @@ public:
      *  appears at that address.
      *
      * @{ */
-    virtual void processInstruction(SgAsmInstruction *insn) ROSE_OVERRIDE;
+    virtual void processInstruction(SgAsmInstruction *insn) override;
     void processInstruction(rose_addr_t va);
     /** @} */
 
     /** Decode the current instruction.
      *
      *  Decodes the instruction at the current instruction address. */
-    virtual SgAsmInstruction* currentInstruction() const ROSE_OVERRIDE;
+    virtual SgAsmInstruction* currentInstruction() const override;
 
-    virtual RegisterDescriptor instructionPointerRegister() const ROSE_OVERRIDE;
-    virtual RegisterDescriptor stackPointerRegister() const ROSE_OVERRIDE;
-    virtual RegisterDescriptor stackFrameRegister() const ROSE_OVERRIDE;
-    virtual RegisterDescriptor callReturnRegister() const ROSE_OVERRIDE;
+    virtual RegisterDescriptor instructionPointerRegister() const override;
+    virtual RegisterDescriptor stackPointerRegister() const override;
+    virtual RegisterDescriptor stackFrameRegister() const override;
+    virtual RegisterDescriptor callReturnRegister() const override;
 
     /** Disabled in this class.
      *
      * @{ */
-    virtual void iprocReplace(SgAsmInstruction*, BaseSemantics::InsnProcessor*) ROSE_OVERRIDE {
+    virtual void iprocReplace(SgAsmInstruction*, BaseSemantics::InsnProcessor*) override {
         notApplicable("iprocReplace");
     }
-    virtual void iprocSet(int key, BaseSemantics::InsnProcessor*) ROSE_OVERRIDE {
+    virtual void iprocSet(int key, BaseSemantics::InsnProcessor*) override {
         notApplicable("iprocSet");
     }
-    virtual int iprocKey(SgAsmInstruction*) const ROSE_OVERRIDE {
+    virtual int iprocKey(SgAsmInstruction*) const override {
         notApplicable("iprocKey");
     }
     /** @} */
 
 private:
-    void notApplicable(const std::string &what) const SAWYER_ATTR_NORETURN {
+    [[noreturn]] void notApplicable(const std::string &what) const {
         ASSERT_not_implemented(what + " is not applicable for this class");
     }
 };

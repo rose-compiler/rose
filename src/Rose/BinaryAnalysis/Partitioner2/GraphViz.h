@@ -839,9 +839,9 @@ class ROSE_DLL_API CgInlinedEmitter: public CgEmitter {
 public:
     CgInlinedEmitter(const Partitioner &partitioner, const boost::regex &nameMatcher);
     CgInlinedEmitter(const Partitioner &partitioner, const FunctionCallGraph &cg, const boost::regex &nameMatcher);
-    virtual const FunctionCallGraph& callGraph() const ROSE_OVERRIDE { return CgEmitter::callGraph(); }
-    virtual void callGraph(const FunctionCallGraph&) ROSE_OVERRIDE;
-    virtual std::string functionLabel(const Function::Ptr&) const ROSE_OVERRIDE;
+    virtual const FunctionCallGraph& callGraph() const override { return CgEmitter::callGraph(); }
+    virtual void callGraph(const FunctionCallGraph&) override;
+    virtual std::string functionLabel(const Function::Ptr&) const override;
     virtual bool shouldInline(const Function::Ptr&) const;
 };
 

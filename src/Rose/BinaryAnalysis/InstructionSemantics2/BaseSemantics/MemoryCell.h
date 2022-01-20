@@ -48,7 +48,7 @@ public:
     /** Predicate that always returns true. */
     class AllCells: public Predicate {
     public:
-        virtual bool operator()(const MemoryCellPtr&) const ROSE_OVERRIDE {
+        virtual bool operator()(const MemoryCellPtr&) const override {
             return true;
         }
     };
@@ -58,7 +58,7 @@ public:
      *  Returns true if a cell has no writers. */
     class NonWrittenCells: public Predicate {
     public:
-        virtual bool operator()(const MemoryCellPtr&) const ROSE_OVERRIDE;
+        virtual bool operator()(const MemoryCellPtr&) const override;
     };
 
 private:
