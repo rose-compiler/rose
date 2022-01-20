@@ -31,7 +31,7 @@ gnat_home=`dirname ${gnat_bin}`
 repo_base_dir=`(cd ${base_dir}/../../../../..; pwd)`
 test_base_dir="${repo_base_dir}/tests/nonsmoke/functional/CompileTests/experimental_ada_tests"
 tests_dir="${test_base_dir}/tests"
-reference_dot_file_dir="${tests_dir}/reference/parser_adapter/dot_graphs"
+reference_dot_file_dir="${tests_dir}/reference/parser_adapter/lal_dot_graphs"
 
 target_dir="${tests_dir}"
 output_dir="${reference_dot_file_dir}"

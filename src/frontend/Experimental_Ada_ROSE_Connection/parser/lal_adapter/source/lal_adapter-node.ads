@@ -80,10 +80,10 @@ private
    Module_Name : constant String := Parent_Name & ".Node";
 
 -- This provides a map for the address of node to look up for its ID
-   package Node_ID_Map is new Indefinite_Hashed_Maps (Key_Type => String,
+   package Node_ID_Map is new Indefinite_Hashed_Maps (Key_Type => LAL.Ada_Node,
                                                Element_Type => Integer,
-                                               Hash => Ada.Strings.Hash,
-                                               Equivalent_Keys => "=");
+                                               Hash => LAL.Hash,
+                                               Equivalent_Keys => LAL."=");
 
    package Element_ID_Lists is new
      Ada.Containers.Doubly_Linked_Lists
