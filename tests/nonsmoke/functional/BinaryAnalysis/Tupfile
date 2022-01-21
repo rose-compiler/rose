@@ -193,15 +193,6 @@ run $(test) testReadPastEOF --answer=testReadPastEOF.ans \
     SPECIMEN_DIR=$(ROSE)/tests/nonsmoke/specimens/binary ./testReadPastEOFScript
 
 ###############################################################################################################################
-# Not sure what this does.
-###############################################################################################################################
-ifneq (@(WITH_SQLITE),no)
-run $(tool_compile_linkexe) testLibraryDb.C
-run $(test) testLibraryDb -x test.db \
-    ./testLibraryDb
-endif
-
-###############################################################################################################################
 # Tests reading import sections from PE files
 ###############################################################################################################################
 run $(tool_compile_linkexe) testPeImports.C

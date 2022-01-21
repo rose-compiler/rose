@@ -474,28 +474,6 @@ testReadPastEOF.passed: testReadPastEOF.conf testReadPastEOF testReadPastEOF.ans
 
 
 ###############################################################################################################################
-# Not sure what this does.
-###############################################################################################################################
-if ROSE_USE_SQLITE_DATABASE
-
-noinst_PROGRAMS += testLibraryDb
-testLibraryDb_SOURCES = testLibraryDb.C
-testLibraryDb_LDADD = $(ROSE_SEPARATE_LIBS)
-
-TEST_TARGETS += testLibraryDb.passed
-
-testLibraryDb.passed: $(TEST_EXIT_STATUS) testLibraryDb conditionalDisable
-	@$(RTH_RUN)					\
-		TITLE="library identification [$@]"	\
-		DISABLED="$$(./conditionalDisable)"	\
-		CMD="$$(pwd)/testLibraryDb"		\
-		USE_SUBDIR=yes				\
-		$< $@
-
-endif
-
-
-###############################################################################################################################
 # Tests reading import sections from PE files
 ###############################################################################################################################
 noinst_PROGRAMS += testPeImports
