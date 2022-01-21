@@ -1,133 +1,89 @@
 // Support for writing a FLIRT data base from an existing AST.
 #include <featureTests.h>
-#ifdef ROSE_ENABLE_BINARY_ANALYSIS
-#include "sage3basic.h"                                 // every librose .C file must start with this
+#ifdef ROSE_ENABLE_LIBRARY_IDENTIFICATION
+#include <sage3basic.h>
 #include "libraryIdentification.h"
 
-#include <Rose/BinaryAnalysis/Demangler.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
-#include <Rose/BinaryAnalysis/Partitioner2/GraphViz.h>
-#include <Rose/BinaryAnalysis/Partitioner2/ModulesM68k.h>
-#include <Rose/BinaryAnalysis/Partitioner2/ModulesPe.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
-#include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
-
-using namespace std;
-using namespace Rose;
+#include <Rose/BinaryAnalysis/LibraryIdentification.h>
 
 using namespace Rose::BinaryAnalysis;
-using namespace Rose::Diagnostics;
-
 namespace P2 = Partitioner2;
+using Flir = Rose::BinaryAnalysis::LibraryIdentification;
+
+// Deprecated [Robb Matzke 2022-01-20]: Incorrect namespace "::LibraryIdentification"
+namespace LibraryIdentification {
 
 void
-LibraryIdentification::generateLibraryIdentificationDataBase( const std::string& databaseName,
-                                                              const std::string& libraryName,
-                                                              const std::string& libraryVersion,
-                                                              const std::string& libraryHash,
-                                                              const P2::Partitioner& partitioner,
-                                                              enum DUPLICATE_OPTION dupOption)
-{
-    Rose::BinaryAnalysis::Demangler demangler;
-    // DQ (9/1/2006): Introduce tracking of performance of ROSE at the top most level.
-    TimingPerformance timer ("AST Library Identification reader : time (sec) = ",true);
+generateLibraryIdentificationDataBase(const std::string &databaseName, const std::string &libraryName,
+                                      const std::string &libraryVersion, const std::string &libraryHash,
+                                      const P2::Partitioner &partitioner, enum DUPLICATE_OPTION dupOption) {
+    ASSERT_require(COMBINE == dupOption);
 
-    mlog[INFO] << "Building LibraryIdentification database: " << databaseName.c_str() << " from AST of Library: " << libraryName.c_str() << " : " << libraryVersion.c_str() << std::endl;
+    Flir flir;
+    try {
+        flir.connect("sqlite://" + databaseName);
+    } catch (...) {
+        flir.createDatabase("sqlite://" + databaseName);
+    }
 
-    FunctionIdDatabaseInterface ident(databaseName);
-
-    const std::string& libraryIsa = partitioner.instructionProvider().disassembler()->name();
-
-    LibraryInfo libraryInfo( libraryName, libraryVersion, libraryHash, libraryIsa);
-    ident.addLibraryToDB(libraryInfo, dupOption == NO_ADD ? false : true); //libraries don't have a "COMBINE option, so convert dupOption to a bool replace
-
-    //Now get all the functions in the library
-    std::vector< P2::Function::Ptr > binaryFunctionList = partitioner.functions();
-
-    for (std::vector< P2::Function::Ptr >::iterator funcIt = binaryFunctionList.begin(); funcIt != binaryFunctionList.end(); funcIt++)
-        {
-            // Build a pointer to the current type so that we can call the get_name() member function.
-            P2::Function::Ptr binaryFunction = *funcIt;
-            ROSE_ASSERT(binaryFunction != NULL);
-
-            FunctionInfo functionInfo(partitioner, binaryFunction, libraryInfo);
-
-            string mangledFunctionName = binaryFunction->name();
-            string demangledFunctionName = binaryFunction->demangledName();
-            mlog[INFO] << "Function " << mangledFunctionName.c_str() << " demangled = " << demangledFunctionName.c_str() << "going into database" << std::endl;
-
-            ident.addFunctionToDB(functionInfo, dupOption);
-        }
-
+    const std::string arch = partitioner.instructionProvider().disassembler()->name();
+    auto lib = Flir::Library::instance(libraryHash, libraryName, libraryVersion, arch);
+    flir.insertLibrary(lib, partitioner);
 }
 
-LibraryIdentification::LibToFuncsMap
-LibraryIdentification::matchLibraryIdentificationDataBase (const std::string& databaseName,
-                                                           const P2::Partitioner& partitioner)
-{
-    // DQ (9/1/2006): Introduce tracking of performance of ROSE at the top most level.
-    TimingPerformance timer ("AST Library Identification matcher : time (sec) = ",true);
-    LibraryIdentification::LibToFuncsMap libToFuncsMap;
+LibToFuncsMap
+matchLibraryIdentificationDataBase(const std::string &databaseName, const P2::Partitioner &partitioner) {
+    LibToFuncsMap retval;
+    Flir flir;
+    flir.connect("sqlite://" + databaseName);
+    for (const P2::Function::Ptr &function: partitioner.functions()) {
+        std::vector<Flir::Function::Ptr> matches = flir.search(partitioner, function);
+        FunctionInfo functionInfo(partitioner, function);
+        if (matches.empty()) {
+            // No match, leave name from binary and put it under the UNKNOWN library
+            auto libraryInfo = LibraryInfo::getUnknownLibraryInfo();
+            functionInfo.libHash = libraryInfo.libHash;
+            insertFunctionToMap(retval, libraryInfo, functionInfo);
 
-    FunctionIdDatabaseInterface ident(databaseName);
-    std::vector< P2::Function::Ptr > binaryFunctionList = partitioner.functions();
+        } else {
+            const bool isMulti = matches.size() > 1;
+            auto libraryInfo = isMulti ? LibraryInfo::getMultiLibraryInfo() : LibraryInfo(matches[0]->library()->hash());
+            libraryInfo.libName = matches[0]->library()->name();
+            libraryInfo.libHash = matches[0]->library()->hash();
+            libraryInfo.libVersion = matches[0]->library()->version();
+            libraryInfo.architecture = matches[0]->library()->architecture();
+            libraryInfo.analysisTime = 0;
 
-    for (std::vector< P2::Function::Ptr >::iterator funcIt = binaryFunctionList.begin(); funcIt != binaryFunctionList.end(); funcIt++)
-        {
-            P2::Function::Ptr binaryFunction = *funcIt;
-            ROSE_ASSERT(binaryFunction != NULL);
-            FunctionInfo functionInfo(partitioner, binaryFunction);
+            // If lots of matches, stick in the multi-library. Use the name in the binary if it exists, otherwise first
+            // match. Otherwise if one match, positive ID!
+            functionInfo.libHash = libraryInfo.libHash;
+            if (isMulti) {
+                functionInfo.funcName = function->name();
+            } else {
+                functionInfo.funcName = matches[0]->name();
+                functionInfo.funcHash = matches[0]->hash();
+            }
 
-            std::vector<FunctionInfo> matches = ident.matchFunction(functionInfo);
-
-            if(matches.size() == 0)
-                {
-                    //No match, leave name from binary and put it under the UNKNOWN library
-                    LibraryInfo libraryInfo = LibraryInfo::getUnknownLibraryInfo();
-                    functionInfo.libHash = libraryInfo.libHash;
-                    insertFunctionToMap(libToFuncsMap, libraryInfo, functionInfo);
-                }
-
-            else if(matches.size() > 1)
-                { //Lots of matches, stick in the multi-library.
-                  //Use the name in the binary if it exists, otherwise
-                  //first match
-                    functionInfo = matches[0];
-                    if(!binaryFunction->name().empty())
-                        {
-                            functionInfo.funcName = binaryFunction->name();
-                        }
-
-                    LibraryInfo libraryInfo = LibraryInfo::getMultiLibraryInfo();
-                    ident.matchLibrary(libraryInfo);
-                    insertFunctionToMap(libToFuncsMap, libraryInfo, functionInfo);
-                }
-            else  //Only one match, positive ID!
-                {
-                    functionInfo = matches[0];
-                    LibraryInfo libraryInfo(functionInfo.libHash);
-                    ident.matchLibrary(libraryInfo);
-                    insertFunctionToMap(libToFuncsMap, libraryInfo, functionInfo);
-                }
+            insertFunctionToMap(retval, libraryInfo, functionInfo);
         }
-
-    return libToFuncsMap;
+    }
+    return retval;
 }
 
-void LibraryIdentification::insertFunctionToMap(LibraryIdentification::LibToFuncsMap& libToFuncsMap, const LibraryInfo& libraryInfo, const FunctionInfo& functionInfo)
-{
-    LibraryIdentification::LibToFuncsMap::iterator libIt = libToFuncsMap.find(libraryInfo);
-    if(libIt == libToFuncsMap.end()) //If no library was found, add it.
-        {
-            std::set<FunctionInfo> funcSet;
-            funcSet.insert(functionInfo);
-            std::pair<LibraryInfo, std::set<FunctionInfo> > insertPair(libraryInfo, funcSet);
-            libToFuncsMap.insert(insertPair);
-        } else
-        {
-            std::set<FunctionInfo>& funcSet = libIt->second;
-            funcSet.insert(functionInfo);
-        }
+void
+insertFunctionToMap(LibToFuncsMap &libToFuncsMap, const LibraryInfo &libraryInfo, const FunctionInfo &functionInfo) {
+    LibToFuncsMap::iterator libIt = libToFuncsMap.find(libraryInfo);
+    if (libToFuncsMap.end() == libIt) {
+        std::set<FunctionInfo> funcSet;
+        funcSet.insert(functionInfo);
+        std::pair<LibraryInfo, std::set<FunctionInfo>> insertPair(libraryInfo, funcSet);
+        libToFuncsMap.insert(insertPair);
+    } else {
+        std::set<FunctionInfo>& funcSet = libIt->second;
+        funcSet.insert(functionInfo);
+    }
 }
+
+} // namespace
 
 #endif
