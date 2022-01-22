@@ -264,6 +264,9 @@ package body Lal_Adapter.Node is
                Log ("NodeListFirst: " & NodeListFirst'Image);
             end;
 
+         when Ada_Abstract_State_Decl_List =>
+            This.Add_Not_Implemented;
+            
          when Ada_Alternatives_List =>
             declare
                Alternatives_List_Node : constant LAL.Alternatives_List := LAL.As_Alternatives_List (Node);
@@ -315,6 +318,9 @@ package body Lal_Adapter.Node is
               NULL; 
             end;
 
+         when Ada_Basic_Decl_List =>
+            This.Add_Not_Implemented;
+            
          when Ada_Case_Expr_Alternative_List =>
             declare
                Case_Expr_Alternative_List_Node : constant LAL.Case_Expr_Alternative_List := LAL.As_Case_Expr_Alternative_List (Node);
@@ -546,7 +552,7 @@ package body Lal_Adapter.Node is
                Constrained_Array_Indices_Node : constant LAL.Constrained_Array_Indices := LAL.As_Constrained_Array_Indices (Node);
                ConstraintList : constant LAL.Constraint_List := LAL.F_List (Constrained_Array_Indices_Node);
             begin
-               Log ("ConstraintList: " & ConstraintList.Debug_Text);
+               Log ("ConstraintList: " & ConstraintList.Image);
             end;
 
          when Ada_Unconstrained_Array_Indices =>
@@ -554,7 +560,7 @@ package body Lal_Adapter.Node is
                Unconstrained_Array_Indices_Node : constant LAL.Unconstrained_Array_Indices := LAL.As_Unconstrained_Array_Indices (Node);
                UnconstrainedArrayIndexList : constant LAL.Unconstrained_Array_Index_List := LAL.F_Types (Unconstrained_Array_Indices_Node);
             begin
-               Log ("UnconstrainedArrayIndexList: " & UnconstrainedArrayIndexList.Debug_Text);
+               Log ("UnconstrainedArrayIndexList: " & UnconstrainedArrayIndexList.Image);
             end;
 
       end case;
@@ -582,9 +588,9 @@ package body Lal_Adapter.Node is
                name : constant LAL.Name := LAL.F_Id (Aspect_Assoc_Node);
                expr : constant LAL.Expr := LAL.F_Expr (Aspect_Assoc_Node);
             begin
-               Log ("name: " & name.Debug_Text);
+               Log ("name: " & name.Image);
                if not expr.Is_Null then
-                 Log ("expr: " & expr.Debug_Text);
+                 Log ("expr: " & expr.Image);
                end if;
             end;
 
@@ -613,8 +619,8 @@ package body Lal_Adapter.Node is
                baseID : constant LAL.Base_Id := LAL.F_Name (At_Clause_Node);
                expr : constant LAL.Expr := LAL.F_Expr (At_Clause_Node);
             begin
-               Log ("baseID: " & baseID.Debug_Text);
-               Log ("expr: " & expr.Debug_Text);
+               Log ("baseID: " & baseID.Image);
+               Log ("expr: " & expr.Image);
             end;
 
          when Ada_Attribute_Def_Clause =>
@@ -623,8 +629,8 @@ package body Lal_Adapter.Node is
                name : constant LAL.Name := LAL.F_Attribute_Expr (Attribute_Def_Clause_Node);
                expr : constant LAL.Expr := LAL.F_Expr (Attribute_Def_Clause_Node);
             begin
-               Log ("name: " & name.Debug_Text);
-               Log ("expr: " & expr.Debug_Text);
+               Log ("name: " & name.Image);
+               Log ("expr: " & expr.Image);
             end;
 
          when Ada_Enum_Rep_Clause =>
@@ -633,8 +639,8 @@ package body Lal_Adapter.Node is
                name : constant LAL.Name := LAL.F_Type_Name (Enum_Rep_Clause_Node);
                baseAggregate : constant LAL.Base_Aggregate := LAL.F_Aggregate (Enum_Rep_Clause_Node);
             begin
-               Log ("name: " & name.Debug_Text);
-               Log ("baseAggregate: " & baseAggregate.Debug_Text);
+               Log ("name: " & name.Image);
+               Log ("baseAggregate: " & baseAggregate.Image);
             end;
 
          when Ada_Record_Rep_Clause =>
@@ -644,11 +650,11 @@ package body Lal_Adapter.Node is
                expr : constant LAL.Expr := LAL.F_At_Expr (Record_Rep_Clause_Node);
                nodeList : constant LAL.Ada_Node_List := LAL.F_Components (Record_Rep_Clause_Node);
             begin
-               Log ("name: " & name.Debug_Text);
+               Log ("name: " & name.Image);
                if not expr.Is_Null then
-                 Log ("expr: " & expr.Debug_Text);
+                 Log ("expr: " & expr.Image);
                end if;
-               Log ("nodeList: " & nodeList.Debug_Text);
+               Log ("nodeList: " & nodeList.Image);
             end;
 
       end case;
@@ -675,7 +681,7 @@ package body Lal_Adapter.Node is
                Aspect_Spec_Node : constant LAL.Aspect_Spec := LAL.As_Aspect_Spec (Node);
                aspectAssocList : constant LAL.Aspect_Assoc_List := LAL.F_Aspect_Assocs (Aspect_Spec_Node);
             begin
-               Log ("aspectAssocList: " & aspectAssocList.Debug_Text);
+               Log ("aspectAssocList: " & aspectAssocList.Image);
             end;
 
       end case;
@@ -704,8 +710,8 @@ package body Lal_Adapter.Node is
                guard : constant LAL.Ada_Node := LAL.F_Guard (Contract_Case_Assoc_Node);
                consequence : constant LAL.Expr := LAL.F_Consequence (Contract_Case_Assoc_Node);
             begin
-               Log ("guard: " & guard.Debug_Text);
-               Log ("consequence: " & consequence.Debug_Text);
+               Log ("guard: " & guard.Image);
+               Log ("consequence: " & consequence.Image);
             end;
 
          when Ada_Pragma_Argument_Assoc =>
@@ -715,10 +721,10 @@ package body Lal_Adapter.Node is
                expr : constant LAL.Expr := LAL.F_Expr (Pragma_Argument_Assoc_Node);
             begin
                if not id.Is_Null then
-                 Log ("id: " & id.Debug_Text);
+                 Log ("id: " & id.Image);
                end if;
                if not expr.Is_Null then
-                 Log ("expr: " & expr.Debug_Text);
+                 Log ("expr: " & expr.Image);
                end if;
             end;
 
@@ -748,12 +754,12 @@ package body Lal_Adapter.Node is
                familyType : constant LAL.Ada_Node := LAL.F_Family_Type (Entry_Spec_Node);
                entryParams : constant LAL.Params := LAL.F_Entry_Params (Entry_Spec_Node);
             begin
-               Log ("entryName: " & entryName.Debug_Text);
+               Log ("entryName: " & entryName.Image);
                if not familyType.Is_Null then
-                 Log ("familyType: " & familyType.Debug_Text);
+                 Log ("familyType: " & familyType.Image);
                end if;
                if not entryParams.Is_Null then
-                 Log ("entryParams: " & entryParams.Debug_Text);
+                 Log ("entryParams: " & entryParams.Image);
                end if;
             end;
 
@@ -772,15 +778,15 @@ package body Lal_Adapter.Node is
                subpParams : constant LAL.Params := LAL.F_Subp_Params (Subp_Spec_Node);
                subpReturn : constant LAL.Type_Expr := LAL.F_Subp_Returns (Subp_Spec_Node);
             begin
-               Log ("subpKind: " & subpKind.Debug_Text);
+               Log ("subpKind: " & subpKind.Image);
                if not subpName.Is_Null then
-                 Log ("subpName: " & subpName.Debug_Text);
+                 Log ("subpName: " & subpName.Image);
                end if;
                if not subpParams.Is_Null then
-                 Log ("subpParams: " & subpParams.Debug_Text);
+                 Log ("subpParams: " & subpParams.Image);
                end if;
                if not subpReturn.Is_Null then
-                 Log ("subpReturn: " & subpReturn.Debug_Text);
+                 Log ("subpReturn: " & subpReturn.Image);
                end if;
             end;
 
@@ -790,9 +796,9 @@ package body Lal_Adapter.Node is
                components : constant LAL.Ada_Node_List := LAL.F_Components (Component_List_Node);
                variantPart : constant LAL.Variant_Part := LAL.F_Variant_Part (Component_List_Node);
             begin
-               Log ("components: " & components.Debug_Text);
+               Log ("components: " & components.Image);
                if not variantPart.Is_Null then
-                 Log ("variantPart: " & variantPart.Debug_Text);
+                 Log ("variantPart: " & variantPart.Image);
                end if;
             end;
 
@@ -801,7 +807,7 @@ package body Lal_Adapter.Node is
                Known_Discriminant_Part_Node : constant LAL.Known_Discriminant_Part := LAL.As_Known_Discriminant_Part (Node);
                discrSpecs : constant LAL.Discriminant_Spec_List := LAL.F_Discr_Specs (Known_Discriminant_Part_Node);
             begin
-               Log ("discrSpecs: " & discrSpecs.Debug_Text);
+               Log ("discrSpecs: " & discrSpecs.Image);
             end;
 
          when Ada_Unknown_Discriminant_Part =>
@@ -817,7 +823,7 @@ package body Lal_Adapter.Node is
                params : constant LAL.Params := LAL.F_Params (Entry_Completion_Formal_Params_Node);
             begin
                if not params.Is_Null then
-                 Log ("params: " & params.Debug_Text);
+                 Log ("params: " & params.Image);
                end if;
             end;
 
@@ -826,7 +832,7 @@ package body Lal_Adapter.Node is
                Generic_Formal_Part_Node : constant LAL.Generic_Formal_Part := LAL.As_Generic_Formal_Part (Node);
                decls : constant LAL.Ada_Node_List := LAL.F_Decls (Generic_Formal_Part_Node);
             begin
-               Log ("decls: " & decls.Debug_Text);
+               Log ("decls: " & decls.Image);
             end;
 
       end case;
@@ -887,8 +893,8 @@ package body Lal_Adapter.Node is
                designators : constant LAL.Alternatives_List := LAL.F_Designators (Aggregate_Assoc_Node);
                rExpr : constant LAL.Expr := LAL.F_R_Expr (Aggregate_Assoc_Node);
             begin
-               Log ("designators: " & designators.Debug_Text);
-               Log ("rExpr: " & rExpr.Debug_Text);
+               Log ("designators: " & designators.Image);
+               Log ("rExpr: " & rExpr.Image);
             end;
 
          when Ada_Multi_Dim_Array_Assoc =>
@@ -899,14 +905,14 @@ package body Lal_Adapter.Node is
             end;
 
          when Ada_Discriminant_Assoc =>
-	    declare
-	       Discriminant_Assoc_Node : constant LAL.Discriminant_Assoc := LAL.As_Discriminant_Assoc (Node);
-	       ids : constant LAL.Discriminant_Choice_List := LAL.F_Ids (Discriminant_Assoc_Node);
-	       discrExpr : constant LAL.Expr := LAL.F_Discr_Expr (Discriminant_Assoc_Node);
-	    begin
-	       Log ("ids: " & ids.Debug_Text);
-	       Log ("discrExpr: " & discrExpr.Debug_Text);
-	    end;
+            declare
+               Discriminant_Assoc_Node : constant LAL.Discriminant_Assoc := LAL.As_Discriminant_Assoc (Node);
+               ids : constant LAL.Discriminant_Choice_List := LAL.F_Ids (Discriminant_Assoc_Node);
+               discrExpr : constant LAL.Expr := LAL.F_Discr_Expr (Discriminant_Assoc_Node);
+            begin
+               Log ("ids: " & ids.Image);
+               Log ("discrExpr: " & discrExpr.Image);
+            end;
 
          when Ada_Param_Assoc =>
             declare
@@ -915,12 +921,15 @@ package body Lal_Adapter.Node is
                rExpr : constant LAL.Expr := LAL.F_R_Expr (Param_Assoc_Node);
             begin
                if not designators.Is_Null then
-                 Log ("designators: " & designators.Debug_Text);
+                 Log ("designators: " & designators.Image);
                end if;
                if not rExpr.Is_Null then
-                 Log ("rExpr: " & rExpr.Debug_Text);
+                 Log ("rExpr: " & rExpr.Image);
                end if;
             end;
+            
+         when Ada_Iterated_Assoc =>
+            This.Add_Not_Implemented;
 
       end case;
    end Process_Ada_Basic_Assoc;
@@ -940,6 +949,12 @@ package body Lal_Adapter.Node is
       use LALCO; -- For subtype names in case stmt
    begin -- Process_Ada_Basic_Decl
       case Kind is
+         when Ada_Abstract_State_Decl =>
+            This.Add_Not_Implemented;
+            
+         when Ada_Anonymous_Expr_Decl =>
+            This.Add_Not_Implemented;
+
          --when Ada_Base_Formal_Param_Decl =>
          --   This.Add_Not_Implemented;
          when Ada_Component_Decl =>
@@ -949,10 +964,10 @@ package body Lal_Adapter.Node is
                Component_Def : constant LAL.Component_Def := LAL.F_Component_Def (Component_Decl_Node);
                Expr : constant LAL.Expr := LAL.F_Default_Expr (Component_Decl_Node);
             begin
-               Log ("NameList: " & NameList.Debug_Text);
-               Log ("Component_Def: " & Component_Def.Debug_Text);
+               Log ("NameList: " & NameList.Image);
+               Log ("Component_Def: " & Component_Def.Image);
                if not Expr.Is_Null then
-                 Log ("Expr: " & Expr.Debug_Text);
+                 Log ("Expr: " & Expr.Image);
                end if;
             end;
 
@@ -964,10 +979,10 @@ package body Lal_Adapter.Node is
                TypeExpr : constant LAL.Type_Expr := LAL.F_Type_Expr (Discriminant_Spec_Node);
                DefaultExpr : constant LAL.Expr := LAL.F_Default_Expr (Discriminant_Spec_Node);
             begin
-               Log ("NameList: " & NameList.Debug_Text);
-               Log ("TypeExpr: " & TypeExpr.Debug_Text);
+               Log ("NameList: " & NameList.Image);
+               Log ("TypeExpr: " & TypeExpr.Image);
                if not DefaultExpr.Is_Null then
-                 Log ("DefaultExpr: " & DefaultExpr.Debug_Text);
+                 Log ("DefaultExpr: " & DefaultExpr.Image);
                end if;
             end;
 
@@ -1013,9 +1028,9 @@ package body Lal_Adapter.Node is
                Has_Aliased : constant Boolean := LAL.F_Has_Aliased (Param_Spec_Node);
                Mode : constant LAL.Mode := LAL.F_Mode (Param_Spec_Node);
             begin
-               Log ("NameList: " & NameList.Debug_Text);
+               Log ("NameList: " & NameList.Image);
                Log ("Has_Alias: " & Boolean'Image (Has_Aliased));
-               Log ("Mode: " & Mode.Debug_Text);
+               Log ("Mode: " & Mode.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -1054,7 +1069,7 @@ package body Lal_Adapter.Node is
                Subtype_Decl_Node : constant LAL.Subtype_Decl := LAL.As_Subtype_Decl (Node);
                bareSubtype : constant LAL.Subtype_Indication := LAL.F_Subtype (Subtype_Decl_Node);
             begin
-               Log ("bareSubtype: " & bareSubtype.Debug_Text);
+               Log ("bareSubtype: " & bareSubtype.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -1072,7 +1087,7 @@ package body Lal_Adapter.Node is
                Discriminants : constant LAL.Discriminant_Part := LAL.F_Discriminants (Incomplete_Type_Decl_Node);
             begin
                if not Discriminants.Is_Null then
-                 Log ("Discriminants: " & Discriminants.Debug_Text);
+                 Log ("Discriminants: " & Discriminants.Image);
                end if;
             end;
 
@@ -1093,10 +1108,10 @@ package body Lal_Adapter.Node is
                Definition : constant LAL.Protected_Def := LAL.F_Definition (Protected_Type_Decl_Node);
             begin
                if not Discriminants.Is_Null then
-                 Log ("Discriminants: " & Discriminants.Debug_Text);
+                 Log ("Discriminants: " & Discriminants.Image);
                end if;
                if not Definition.Is_Null then
-                 Log ("Definition: " & Definition.Debug_Text);
+                 Log ("Definition: " & Definition.Image);
                end if;
             end;
 
@@ -1108,10 +1123,10 @@ package body Lal_Adapter.Node is
                Definition : constant LAL.Task_Def := LAL.F_Definition (Task_Type_Decl_Node);
             begin
                if not Discriminants.Is_Null then
-                 Log ("Discriminants: " & Discriminants.Debug_Text);
+                 Log ("Discriminants: " & Discriminants.Image);
                end if;
                if not Definition.Is_Null then
-                 Log ("Definition: " & Definition.Debug_Text);
+                 Log ("Definition: " & Definition.Image);
                end if;
             end;
 
@@ -1130,9 +1145,9 @@ package body Lal_Adapter.Node is
                typeDef : constant LAL.Type_Def := LAL.F_Type_Def (Type_Decl_Node);
             begin
                if not Discriminants.Is_Null then
-                 Log ("Discriminants: " & Discriminants.Debug_Text);
+                 Log ("Discriminants: " & Discriminants.Image);
                end if;
-               Log ("typeDef: " & typeDef.Debug_Text);
+               Log ("typeDef: " & typeDef.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -1191,8 +1206,8 @@ package body Lal_Adapter.Node is
                overridding : constant LAL.Overriding_Node := LAL.F_Overriding (Entry_Decl_Node);
                spec : constant LAL.Entry_Spec := LAL.F_Spec (Entry_Decl_Node);
             begin
-               Log ("overridding: " & overridding.Debug_Text);
-               Log ("spec: " & spec.Debug_Text);
+               Log ("overridding: " & overridding.Image);
+               Log ("spec: " & spec.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -1202,8 +1217,8 @@ package body Lal_Adapter.Node is
                name : constant LAL.Defining_Name := LAL.F_Name (Enum_Literal_Decl_Node);
                enumType : constant LAL.Type_Decl := LAL.P_Enum_Type (Enum_Literal_Decl_Node);
             begin
-               Log ("name: " & name.Debug_Text);
-               Log ("enumType: " & enumType.Debug_Text);
+               Log ("name: " & name.Image);
+               Log ("enumType: " & enumType.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -1212,7 +1227,7 @@ package body Lal_Adapter.Node is
                Generic_Subp_Internal_Node : constant LAL.Generic_Subp_Internal := LAL.As_Generic_Subp_Internal (Node);
                subpSpec : constant LAL.Subp_Spec := LAL.F_Subp_Spec (Generic_Subp_Internal_Node);
             begin
-               Log ("subpSpec: " & subpSpec.Debug_Text);
+               Log ("subpSpec: " & subpSpec.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -1225,7 +1240,7 @@ package body Lal_Adapter.Node is
                Expr_Function_Node : constant LAL.Expr_Function := LAL.As_Expr_Function (Node);
                expr : constant LAL.Expr := LAL.F_Expr (Expr_Function_Node);
             begin
-               Log ("expr: " & expr.Debug_Text);
+               Log ("expr: " & expr.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -1244,10 +1259,10 @@ package body Lal_Adapter.Node is
                stmt : constant LAL.Handled_Stmts := LAL.F_Stmts (Subp_Body_Node);
                endname : constant LAL.End_Name := LAL.F_End_Name (Subp_Body_Node);
             begin
-               Log ("decl: " & decl.Debug_Text);
-               Log ("stmt: " & stmt.Debug_Text);
+               Log ("decl: " & decl.Image);
+               Log ("stmt: " & stmt.Image);
                if not endname.Is_Null then
-                 Log ("endname: " & endname.Debug_Text);
+                 Log ("endname: " & endname.Image);
                end if;
             end;
 
@@ -1257,7 +1272,7 @@ package body Lal_Adapter.Node is
                Subp_Renaming_Decl_Node : constant LAL.Subp_Renaming_Decl := LAL.As_Subp_Renaming_Decl (Node);
                rename : constant LAL.Renaming_Clause := LAL.F_Renames (Subp_Renaming_Decl_Node);
             begin
-               Log ("rename: " & rename.Debug_Text);
+               Log ("rename: " & rename.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -1268,7 +1283,7 @@ package body Lal_Adapter.Node is
                Package_Body_Stub_Node : constant LAL.Package_Body_Stub := LAL.As_Package_Body_Stub (Node);
                name : constant LAL.Defining_Name := LAL.F_Name (Package_Body_Stub_Node);
             begin
-               Log ("name: " & name.Debug_Text);
+               Log ("name: " & name.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -1277,7 +1292,7 @@ package body Lal_Adapter.Node is
                Protected_Body_Stub_Node : constant LAL.Protected_Body_Stub := LAL.As_Protected_Body_Stub (Node);
                name : constant LAL.Defining_Name := LAL.F_Name (Protected_Body_Stub_Node);
             begin
-               Log ("name: " & name.Debug_Text);
+               Log ("name: " & name.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -1287,8 +1302,8 @@ package body Lal_Adapter.Node is
                overridding : constant LAL.Overriding_Node := LAL.F_Overriding (Subp_Body_Stub_Node);
                subSpec : constant LAL.Subp_Spec := LAL.F_Subp_Spec (Subp_Body_Stub_Node);
             begin
-               Log ("overridding: " & overridding.Debug_Text);
-               Log ("subSpec: " & subSpec.Debug_Text);
+               Log ("overridding: " & overridding.Image);
+               Log ("subSpec: " & subSpec.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -1297,7 +1312,7 @@ package body Lal_Adapter.Node is
                Task_Body_Stub_Node : constant LAL.Task_Body_Stub := LAL.As_Task_Body_Stub (Node);
                name : constant LAL.Defining_Name := LAL.F_Name (Task_Body_Stub_Node);
             begin
-               Log ("name: " & name.Debug_Text);
+               Log ("name: " & name.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -1310,12 +1325,12 @@ package body Lal_Adapter.Node is
                stmts : constant LAL.Handled_Stmts := LAL.F_Stmts (Entry_Body_Node);
                endname : constant LAL.End_Name := LAL.F_End_Name (Entry_Body_Node);
             begin
-               Log ("params: " & params.Debug_Text);
-               Log ("barrier: " & barrier.Debug_Text);
-               Log ("decls: " & decls.Debug_Text);
-               Log ("stmts: " & stmts.Debug_Text);
+               Log ("params: " & params.Image);
+               Log ("barrier: " & barrier.Image);
+               Log ("decls: " & decls.Image);
+               Log ("stmts: " & stmts.Image);
                if not endname.Is_Null then
-                 Log ("endname: " & endname.Debug_Text);
+                 Log ("endname: " & endname.Image);
                end if;
             end;
 
@@ -1328,13 +1343,13 @@ package body Lal_Adapter.Node is
                stmts : constant LAL.Handled_Stmts := LAL.F_Stmts (Package_Body_Node);
                endname : constant LAL.End_Name := LAL.F_End_Name (Package_Body_Node);
             begin
-               Log ("name: " & name.Debug_Text);
-               Log ("decls: " & decls.Debug_Text);
+               Log ("name: " & name.Image);
+               Log ("decls: " & decls.Image);
                if not stmts.Is_Null then
-                 Log ("stmts: " & stmts.Debug_Text);
+                 Log ("stmts: " & stmts.Image);
                end if;
                if not endname.Is_Null then
-                 Log ("endname: " & endname.Debug_Text);
+                 Log ("endname: " & endname.Image);
                end if;
             end;
 
@@ -1346,9 +1361,9 @@ package body Lal_Adapter.Node is
                decls : constant LAL.Declarative_Part := LAL.F_Decls (Protected_Body_Node);
                endname : constant LAL.End_Name := LAL.F_End_Name (Protected_Body_Node);
             begin
-               Log ("name: " & name.Debug_Text);
-               Log ("decls: " & decls.Debug_Text);
-               Log ("endname: " & endname.Debug_Text);
+               Log ("name: " & name.Image);
+               Log ("decls: " & decls.Image);
+               Log ("endname: " & endname.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -1360,10 +1375,10 @@ package body Lal_Adapter.Node is
                stmts : constant LAL.Declarative_Part := LAL.F_Decls (Task_Body_Node);
                endname : constant LAL.End_Name := LAL.F_End_Name (Task_Body_Node);
             begin
-               Log ("name: " & name.Debug_Text);
-               Log ("decls: " & decls.Debug_Text);
-               Log ("stmts: " & stmts.Debug_Text);
-               Log ("endname: " & endname.Debug_Text);
+               Log ("name: " & name.Image);
+               Log ("decls: " & decls.Image);
+               Log ("stmts: " & stmts.Image);
+               Log ("endname: " & endname.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -1373,8 +1388,8 @@ package body Lal_Adapter.Node is
                id : constant LAL.Defining_Name := LAL.F_Id (Entry_Index_Spec_Node);
                sub_type : constant LAL.Ada_Node := LAL.F_Subtype (Entry_Index_Spec_Node);
             begin
-               Log ("id: " & id.Debug_Text);
-               Log ("sub_type: " & sub_type.Debug_Text);
+               Log ("id: " & id.Image);
+               Log ("sub_type: " & sub_type.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -1392,9 +1407,9 @@ package body Lal_Adapter.Node is
                ids : constant LAL.Defining_Name_List := LAL.F_Ids (Exception_Decl_Node);
                rename : constant LAL.Renaming_Clause := LAL.F_Renames (Exception_Decl_Node);
             begin
-               Log ("ids: " & ids.Debug_Text);
+               Log ("ids: " & ids.Image);
                if not rename.Is_Null then
-                 Log ("rename: " & rename.Debug_Text);
+                 Log ("rename: " & rename.Image);
                end if;
             end;
 
@@ -1407,10 +1422,10 @@ package body Lal_Adapter.Node is
                stmts : constant LAL.Stmt_List := LAL.F_Stmts (Exception_Handler_Node);
             begin
                if not exceptionName.Is_Null then
-                 Log ("exceptionName: " & exceptionName.Debug_Text);
+                 Log ("exceptionName: " & exceptionName.Image);
                end if;
-               Log ("handledExceptions: " & handledExceptions.Debug_Text);
-               Log ("stmts: " & stmts.Debug_Text);
+               Log ("handledExceptions: " & handledExceptions.Image);
+               Log ("stmts: " & stmts.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -1420,9 +1435,9 @@ package body Lal_Adapter.Node is
                id : constant LAL.Defining_Name := LAL.F_Id (For_Loop_Var_Decl_Node);
                idType : constant LAL.Subtype_Indication := LAL.F_Id_Type (For_Loop_Var_Decl_Node);
             begin
-               Log ("id: " & id.Debug_Text);
+               Log ("id: " & id.Image);
                if not idType.Is_Null then
-                 Log ("idType: " & idType.Debug_Text);
+                 Log ("idType: " & idType.Image);
                end if;
             end;
 
@@ -1435,9 +1450,9 @@ package body Lal_Adapter.Node is
                packageDecl : constant LAL.Generic_Package_Internal := LAL.F_Package_Decl (Generic_Package_Decl_Node);
                bodyPart : constant LAL.Package_Body := LAL.P_Body_Part (Generic_Package_Decl_Node);
             begin
-               Log ("packageDecl: " & packageDecl.Debug_Text);
+               Log ("packageDecl: " & packageDecl.Image);
                if not bodyPart.Is_Null then
-                 Log ("bodyPart: " & bodyPart.Debug_Text);
+                 Log ("bodyPart: " & bodyPart.Image);
                end if;
             end;
 
@@ -1448,8 +1463,8 @@ package body Lal_Adapter.Node is
                subpDecl : constant LAL.Generic_Subp_Internal := LAL.F_Subp_Decl (Generic_Subp_Decl_Node);
 --               bodyPart : constant LAL.Base_Subp_Body := LAL.P_Body_Part (Generic_Subp_Decl_Node);
             begin
-               Log ("subpDecl: " & subpDecl.Debug_Text);
---               Log ("bodyPart: " & bodyPart.Debug_Text);
+               Log ("subpDecl: " & subpDecl.Image);
+--               Log ("bodyPart: " & bodyPart.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -1462,9 +1477,9 @@ package body Lal_Adapter.Node is
                gericPackageName : constant LAL.Name := LAL.F_Generic_Pkg_Name (Generic_Package_Instantiation_Node);
                params : constant LAL.Assoc_List := LAL.F_Params (Generic_Package_Instantiation_Node);
             begin
-               Log ("name: " & name.Debug_Text);
-               Log ("gericPackageName: " & gericPackageName.Debug_Text);
-               Log ("params: " & params.Debug_Text);
+               Log ("name: " & name.Image);
+               Log ("gericPackageName: " & gericPackageName.Image);
+               Log ("params: " & params.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -1477,11 +1492,11 @@ package body Lal_Adapter.Node is
                params : constant LAL.Assoc_List := LAL.F_Params (Generic_Subp_Instantiation_Node);
                designatedSubp : constant LAL.Ada_Node := LAL.P_Designated_Subp (Generic_Subp_Instantiation_Node);
             begin
-               --Log ("kind: " & kind.Debug_Text);
-               Log ("subpName: " & subpName.Debug_Text);
-               Log ("genericSubpName: " & genericSubpName.Debug_Text);
-               Log ("params: " & params.Debug_Text);
-               Log ("designatedSubp: " & designatedSubp.Debug_Text);
+               --Log ("kind: " & kind.Image);
+               Log ("subpName: " & subpName.Image);
+               Log ("genericSubpName: " & genericSubpName.Image);
+               Log ("params: " & params.Image);
+               Log ("designatedSubp: " & designatedSubp.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -1493,8 +1508,8 @@ package body Lal_Adapter.Node is
                name : constant LAL.Defining_Name := LAL.F_Name (Generic_Package_Renaming_Decl_Node);
                rename : constant LAL.Name := LAL.F_Renames (Generic_Package_Renaming_Decl_Node);
             begin
-               Log ("name: " & name.Debug_Text);
-               Log ("rename: " & rename.Debug_Text);
+               Log ("name: " & name.Image);
+               Log ("rename: " & rename.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -1505,10 +1520,10 @@ package body Lal_Adapter.Node is
                name : constant LAL.Defining_Name := LAL.F_Name (Generic_Subp_Renaming_Decl_Node);
                rename : constant LAL.Name := LAL.F_Renames (Generic_Subp_Renaming_Decl_Node);
             begin
-               --Log ("kind: " & kind.Debug_Text);
-               Log ("kind: " & kind.Debug_Text);
-               Log ("name: " & name.Debug_Text);
-               Log ("rename: " & rename.Debug_Text);
+               --Log ("kind: " & kind.Image);
+               Log ("kind: " & kind.Image);
+               Log ("name: " & name.Image);
+               Log ("rename: " & rename.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -1517,8 +1532,8 @@ package body Lal_Adapter.Node is
                Label_Decl_Node : constant LAL.Label_Decl := LAL.As_Label_Decl (Node);
                name : constant LAL.Defining_Name := LAL.F_Name (Label_Decl_Node);
             begin
-               --Log ("kind: " & kind.Debug_Text);
-               Log ("name: " & name.Debug_Text);
+               --Log ("kind: " & kind.Image);
+               Log ("name: " & name.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -1527,8 +1542,8 @@ package body Lal_Adapter.Node is
                Named_Stmt_Decl_Node : constant LAL.Named_Stmt_Decl := LAL.As_Named_Stmt_Decl (Node);
                name : constant LAL.Defining_Name := LAL.F_Name (Named_Stmt_Decl_Node);
             begin
-               --Log ("kind: " & kind.Debug_Text);
-               Log ("name: " & name.Debug_Text);
+               --Log ("kind: " & kind.Image);
+               Log ("name: " & name.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -1538,9 +1553,9 @@ package body Lal_Adapter.Node is
                ids : constant LAL.Defining_Name_List := LAL.F_Ids (Number_Decl_Node);
                expr : constant LAL.Expr := LAL.F_Expr (Number_Decl_Node);
             begin
-               --Log ("kind: " & kind.Debug_Text);
-               Log ("ids: " & ids.Debug_Text);
-               Log ("expr: " & expr.Debug_Text);
+               --Log ("kind: " & kind.Image);
+               Log ("ids: " & ids.Image);
+               Log ("expr: " & expr.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -1556,30 +1571,22 @@ package body Lal_Adapter.Node is
                renamingClause         : constant LAL.Renaming_Clause := LAL.F_Renaming_Clause (Object_Decl_Node);
                publicPartDecl         : constant LAL.Basic_Decl := LAL.P_Public_Part_Decl (Object_Decl_Node);
             begin
-               Log ("FIds: " & FIds.Debug_Text);
+               Log ("FIds: " & FIds.Image);
                Log ("Has_Aliased: " & Boolean'Image (Has_Constant));
                Log ("F_Has_Constant: " & Boolean'Image (Has_Constant));
-               Log ("mode: " & mode.Debug_Text);
+               Log ("mode: " & mode.Image);
                if not typeExpr.Is_Null then
-                 Log ("typeExpr: " & typeExpr.Debug_Text);
+                 Log ("typeExpr: " & typeExpr.Image);
                end if;
                if not defaultExpr.Is_Null then
-                 Log ("defaultExpr: " & defaultExpr.Debug_Text);
+                 Log ("defaultExpr: " & defaultExpr.Image);
                end if;
                if not renamingClause.Is_Null then
-                 Log ("renamingClause: " & renamingClause.Debug_Text);
+                 Log ("renamingClause: " & renamingClause.Image);
                end if;
                if not publicPartDecl.Is_Null then
-                 Log ("publicPartDecl: " & publicPartDecl.Debug_Text);
+                 Log ("publicPartDecl: " & publicPartDecl.Image);
                end if;
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Anonymous_Object_Decl =>
-            declare
-               Anonymous_Object_Decl_Node : constant LAL.Anonymous_Object_Decl := LAL.As_Anonymous_Object_Decl (Node);
-            begin
-              NULL;
             end;
 
             This.Add_Not_Implemented;
@@ -1599,10 +1606,10 @@ package body Lal_Adapter.Node is
                renamedPackage         : constant LAL.Basic_Decl := LAL.P_Renamed_Package (Package_Renaming_Decl_Node);
                finalRenamedPackage         : constant LAL.Basic_Decl := LAL.P_Final_Renamed_Package (Package_Renaming_Decl_Node);
             begin
-               Log ("name: " & name.Debug_Text);
-               Log ("rename: " & rename.Debug_Text);
-               Log ("renamedPackage: " & renamedPackage.Debug_Text);
-               Log ("finalRenamedPackage: " & finalRenamedPackage.Debug_Text);
+               Log ("name: " & name.Image);
+               Log ("rename: " & rename.Image);
+               Log ("renamedPackage: " & renamedPackage.Image);
+               Log ("finalRenamedPackage: " & finalRenamedPackage.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -1613,9 +1620,9 @@ package body Lal_Adapter.Node is
                interfaces         : constant LAL.Parent_List := LAL.F_Interfaces (Single_Protected_Decl_Node);
                definition         : constant LAL.Protected_Def := LAL.F_Definition (Single_Protected_Decl_Node);
             begin
-               Log ("name: " & name.Debug_Text);
-               Log ("interfaces: " & interfaces.Debug_Text);
-               Log ("definition: " & definition.Debug_Text);
+               Log ("name: " & name.Image);
+               Log ("interfaces: " & interfaces.Image);
+               Log ("definition: " & definition.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -1624,7 +1631,7 @@ package body Lal_Adapter.Node is
                Single_Task_Decl_Node : constant LAL.Single_Task_Decl := LAL.As_Single_Task_Decl (Node);
                taskType         : constant LAL.Single_Task_Type_Decl := LAL.F_Task_Type (Single_Task_Decl_Node);
             begin
-               Log ("taskType: " & taskType.Debug_Text);
+               Log ("taskType: " & taskType.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -1653,8 +1660,8 @@ package body Lal_Adapter.Node is
                choices         : constant LAL.Alternatives_List := LAL.F_Choices (Case_Stmt_Alternative_Node);
                stmts         : constant LAL.Stmt_List := LAL.F_Stmts (Case_Stmt_Alternative_Node);
             begin
-               Log ("choices: " & choices.Debug_Text);
-               Log ("stmts: " & stmts.Debug_Text);
+               Log ("choices: " & choices.Image);
+               Log ("stmts: " & stmts.Image);
             end;
 
       end case;
@@ -1685,11 +1692,11 @@ package body Lal_Adapter.Node is
                syntaticQualifiedName         : constant LAL.Unbounded_Text_Type_Array := LAL.P_Syntactic_Fully_Qualified_Name (Compilation_Unit_Node);
                unitKind         : constant LALCO.Analysis_Unit_Kind := LAL.P_Unit_Kind (Compilation_Unit_Node);
             begin
-               Log ("prelude: " & prelude.Debug_Text);
-               Log ("bodyunit: " & bodyunit.Debug_Text);
-               Log ("pragmas: " & pragmas.Debug_Text);
-               -- Log ("syntaticQualifiedName: " & syntaticQualifiedName.Debug_Text);
-               -- Log ("unitKind: " & unitKind.Debug_Text);
+               Log ("prelude: " & prelude.Image);
+               Log ("bodyunit: " & bodyunit.Image);
+               Log ("pragmas: " & pragmas.Image);
+               -- Log ("syntaticQualifiedName: " & syntaticQualifiedName.Image);
+               -- Log ("unitKind: " & unitKind.Image);
             end;
 
       end case;
@@ -1718,9 +1725,9 @@ package body Lal_Adapter.Node is
                position         : constant LAL.Expr := LAL.F_Position (Component_Clause_Node);
                ranges         : constant LAL.Range_Spec := LAL.F_Range (Component_Clause_Node);
             begin
-               Log ("id: " & id.Debug_Text);
-               Log ("position: " & position.Debug_Text);
-               Log ("ranges: " & ranges.Debug_Text);
+               Log ("id: " & id.Image);
+               Log ("position: " & position.Image);
+               Log ("ranges: " & ranges.Image);
             end;
 
       end case;
@@ -1777,8 +1784,8 @@ package body Lal_Adapter.Node is
                Digit         : constant LAL.Expr := LAL.F_Digits (Delta_Constraint_Node);
                ranges         : constant LAL.Range_Spec := LAL.F_Range (Delta_Constraint_Node);
             begin
-               Log ("Digit: " & Digit.Debug_Text);
-               Log ("ranges: " & ranges.Debug_Text);
+               Log ("Digit: " & Digit.Image);
+               Log ("ranges: " & ranges.Image);
             end;
 
          when Ada_Digits_Constraint =>
@@ -1787,8 +1794,8 @@ package body Lal_Adapter.Node is
                Digit         : constant LAL.Expr := LAL.F_Digits (Digits_Constraint_Node);
                ranges         : constant LAL.Range_Spec := LAL.F_Range (Digits_Constraint_Node);
             begin
-               Log ("Digit: " & Digit.Debug_Text);
-               Log ("ranges: " & ranges.Debug_Text);
+               Log ("Digit: " & Digit.Image);
+               Log ("ranges: " & ranges.Image);
             end;
 
          when Ada_Discriminant_Constraint =>
@@ -1796,7 +1803,7 @@ package body Lal_Adapter.Node is
                Discriminant_Constraint_Node : constant LAL.Discriminant_Constraint := LAL.As_Discriminant_Constraint (Node);
                constraints         : constant LAL.Assoc_List := LAL.F_Constraints (Discriminant_Constraint_Node);
             begin
-               Log ("constraints: " & constraints.Debug_Text);
+               Log ("constraints: " & constraints.Image);
             end;
 
          when Ada_Index_Constraint =>
@@ -1804,7 +1811,7 @@ package body Lal_Adapter.Node is
                Index_Constraint_Node : constant LAL.Index_Constraint := LAL.As_Index_Constraint (Node);
                constraints         : constant LAL.Constraint_List := LAL.F_Constraints (Index_Constraint_Node);
             begin
-               Log ("constraints: " & constraints.Debug_Text);
+               Log ("constraints: " & constraints.Image);
             end;
 
          when Ada_Range_Constraint =>
@@ -1812,7 +1819,7 @@ package body Lal_Adapter.Node is
                Range_Constraint_Node : constant LAL.Range_Constraint := LAL.As_Range_Constraint (Node);
                ranges         : constant LAL.Range_Spec := LAL.F_Range (Range_Constraint_Node);
             begin
-               Log ("Range: " & ranges.Debug_Text);
+               Log ("Range: " & ranges.Image);
             end;
 
       end case;
@@ -1872,7 +1879,7 @@ package body Lal_Adapter.Node is
                Declarative_Part_Node : constant LAL.Declarative_Part := LAL.As_Declarative_Part (Node);
                decls         : constant LAL.Ada_Node_List := LAL.F_Decls (Declarative_Part_Node);
             begin
-               Log ("decls: " & decls.Debug_Text);
+               Log ("decls: " & decls.Image);
             end;
 
          when Ada_Private_Part =>
@@ -1914,8 +1921,8 @@ package body Lal_Adapter.Node is
                Cond_Expr         : constant LAL.Expr := LAL.F_Cond_Expr (Elsif_Expr_Part_Node);
                Then_Expr         : constant LAL.Expr := LAL.F_Then_Expr (Elsif_Expr_Part_Node);
             begin
-               Log ("Cond_Expr: " & Cond_Expr.Debug_Text);
-               Log ("Then_Expr: " & Then_Expr.Debug_Text);
+               Log ("Cond_Expr: " & Cond_Expr.Image);
+               Log ("Then_Expr: " & Then_Expr.Image);
             end;
 
       end case;
@@ -1943,8 +1950,8 @@ package body Lal_Adapter.Node is
                Cond_Expr         : constant LAL.Expr := LAL.F_Cond_Expr (Elsif_Stmt_Part_Node);
                Stmts         : constant LAL.Stmt_List := LAL.F_Stmts (Elsif_Stmt_Part_Node);
             begin
-               Log ("Cond_Expr: " & Cond_Expr.Debug_Text);
-               Log ("Stmts: " & Stmts.Debug_Text);
+               Log ("Cond_Expr: " & Cond_Expr.Image);
+               Log ("Stmts: " & Stmts.Image);
             end;
 
       end case;
@@ -1965,6 +1972,9 @@ package body Lal_Adapter.Node is
       use LALCO; -- For subtype names in case stmt
    begin -- Process_Ada_Expr
       case Kind is
+         when Ada_Abstract_State_Decl_Expr =>
+            This.Add_Not_Implemented;
+
          when Ada_Allocator =>
             declare
                Allocator_Node : constant LAL.Allocator := LAL.As_Allocator (Node);
@@ -1973,13 +1983,13 @@ package body Lal_Adapter.Node is
                Get_Allocated_Type : constant LAL.Base_Type_Decl := LAL.P_Get_Allocated_Type (Allocator_Node);
             begin
                if not Subpool.Is_Null then
-                 Log ("Subpool: " & Subpool.Debug_Text);
+                 Log ("Subpool: " & Subpool.Image);
                end if;
                if not Type_Or_Expr.Is_Null then
-                 Log ("Type_Or_Expr: " & Type_Or_Expr.Debug_Text);
+                 Log ("Type_Or_Expr: " & Type_Or_Expr.Image);
                end if;
                if not Get_Allocated_Type.Is_Null then
-                 Log ("Get_Allocated_Type: " & Get_Allocated_Type.Debug_Text);
+                 Log ("Get_Allocated_Type: " & Get_Allocated_Type.Image);
                end if;
             end;
 
@@ -1989,7 +1999,16 @@ package body Lal_Adapter.Node is
             begin
                NULL;
             end;
+            
+         when Ada_Bracket_Aggregate =>
+            This.Add_Not_Implemented;
 
+         when Ada_Delta_Aggregate =>
+            This.Add_Not_Implemented; 
+
+         when Ada_Bracket_Delta_Aggregate =>
+            This.Add_Not_Implemented;
+            
          when Ada_Null_Record_Aggregate =>
             declare
                Null_Record_Aggregate_Node : constant LAL.Null_Record_Aggregate := LAL.As_Null_Record_Aggregate (Node);
@@ -2004,9 +2023,9 @@ package body Lal_Adapter.Node is
                Op : constant LAL.Op := LAL.F_Op (Bin_Op_Node);
                Right : constant LAL.Expr := LAL.F_Right (Bin_Op_Node);
             begin
-               Log ("Left: " & Left.Debug_Text);
-               Log ("Op: " & Op.Debug_Text);
-               Log ("Right: " & Right.Debug_Text);
+               Log ("Left: " & Left.Image);
+               Log ("Op: " & Op.Image);
+               Log ("Right: " & Right.Image);
             end;
 
          when Ada_Relation_Op =>
@@ -2023,32 +2042,24 @@ package body Lal_Adapter.Node is
                NULL;
             end;
 
-         when Ada_Case_Expr =>
-            declare
-               Case_Expr_Node : constant LAL.Case_Expr := LAL.As_Case_Expr (Node);
-               Expr : constant LAL.Expr := LAL.F_Expr (Case_Expr_Node);
-               Cases : constant LAL.Case_Expr_Alternative_List := LAL.F_Cases (Case_Expr_Node);
-            begin
-               Log ("Expr: " & Expr.Debug_Text);
-               Log ("Cases: " & Cases.Debug_Text);
-            end;
-
          when Ada_Case_Expr_Alternative =>
             declare
                Case_Expr_Alternative_Node : constant LAL.Case_Expr_Alternative := LAL.As_Case_Expr_Alternative (Node);
                choices : constant LAL.Alternatives_List := LAL.F_Choices (Case_Expr_Alternative_Node);
                expr : constant LAL.Expr := LAL.F_Expr (Case_Expr_Alternative_Node);
             begin
-               Log ("choices: " & choices.Debug_Text);
-               Log ("expr: " & expr.Debug_Text);
+               Log ("choices: " & choices.Image);
+               Log ("expr: " & expr.Image);
             end;
 
-         when Ada_Contract_Cases =>
+         when Ada_Case_Expr =>
             declare
-               Contract_Cases_Node : constant LAL.Contract_Cases := LAL.As_Contract_Cases (Node);
-               contract_cases : constant LAL.Contract_Case_Assoc_List := LAL.F_Contract_Cases (Contract_Cases_Node);
+               Case_Expr_Node : constant LAL.Case_Expr := LAL.As_Case_Expr (Node);
+               Expr : constant LAL.Expr := LAL.F_Expr (Case_Expr_Node);
+               Cases : constant LAL.Case_Expr_Alternative_List := LAL.F_Cases (Case_Expr_Node);
             begin
-               Log ("contract_cases: " & contract_cases.Debug_Text);
+               Log ("Expr: " & Expr.Image);
+               Log ("Cases: " & Cases.Image);
             end;
 
          when Ada_If_Expr =>
@@ -2059,14 +2070,25 @@ package body Lal_Adapter.Node is
                Alternatives : constant LAL.Elsif_Expr_Part_List := LAL.F_Alternatives (If_Expr_Node);
                Else_Expr : constant LAL.Expr := LAL.F_Else_Expr (If_Expr_Node);
             begin
-               Log ("Cond_Expr: " & Cond_Expr.Debug_Text);
-               Log ("Then_Expr: " & Then_Expr.Debug_Text);
-               Log ("Alternatives: " & Alternatives.Debug_Text);
+               Log ("Cond_Expr: " & Cond_Expr.Image);
+               Log ("Then_Expr: " & Then_Expr.Image);
+               Log ("Alternatives: " & Alternatives.Image);
                if not Else_Expr.Is_Null then
-                 Log ("Else_Expr: " & Else_Expr.Debug_Text);
+                 Log ("Else_Expr: " & Else_Expr.Image);
                end if;
             end;
 
+         when Ada_Contract_Cases =>
+            declare
+               Contract_Cases_Node : constant LAL.Contract_Cases := LAL.As_Contract_Cases (Node);
+               contract_cases : constant LAL.Contract_Case_Assoc_List := LAL.F_Contract_Cases (Contract_Cases_Node);
+            begin
+               Log ("contract_cases: " & contract_cases.Image);
+            end;
+            
+         when Ada_Decl_Expr =>
+            This.Add_Not_Implemented;
+            
          when Ada_Membership_Expr =>
             declare
                Membership_Expr_Node : constant LAL.Membership_Expr := LAL.As_Membership_Expr (Node);
@@ -2074,9 +2096,9 @@ package body Lal_Adapter.Node is
                Op : constant LAL.Op := LAL.F_Op (Membership_Expr_Node);
                Membership_Exprs : constant LAL.Expr_Alternatives_List := LAL.F_Membership_Exprs (Membership_Expr_Node);
             begin
-               Log ("Expr: " & Expr.Debug_Text);
-               Log ("Op: " & Op.Debug_Text);
-               Log ("Membership_Exprs: " & Membership_Exprs.Debug_Text);
+               Log ("Expr: " & Expr.Image);
+               Log ("Op: " & Op.Image);
+               Log ("Membership_Exprs: " & Membership_Exprs.Image);
             end;
 
          when Ada_Attribute_Ref =>
@@ -2086,10 +2108,10 @@ package body Lal_Adapter.Node is
                Attribute : constant LAL.Identifier := LAL.F_Attribute (Attribute_Ref_Node);
                Args : constant LAL.Ada_Node := LAL.F_Args (Attribute_Ref_Node);
             begin
-               Log ("Prefix: " & Prefix.Debug_Text);
-               Log ("Attribute: " & Attribute.Debug_Text);
+               Log ("Prefix: " & Prefix.Image);
+               Log ("Attribute: " & Attribute.Image);
                if not Args.Is_Null then
-                 Log ("Args: " & Args.Debug_Text);
+                 Log ("Args: " & Args.Image);
                end if;
             end;
 
@@ -2107,8 +2129,8 @@ package body Lal_Adapter.Node is
                Suffix : constant LAL.Ada_Node := LAL.F_Suffix (Call_Expr_Node);
 --               Is_Array_Slice : constant Boolean := LAL.P_Is_Array_Slice (Call_Expr_Node);
             begin
-               Log ("Name: " & Name.Debug_Text);
-               Log ("Suffix: " & Suffix.Debug_Text);
+               Log ("Name: " & Name.Image);
+               Log ("Suffix: " & Suffix.Image);
 --               Log ("Is_Array_Slice: " & Boolean'Image(Is_Array_Slice));
             end;
 
@@ -2124,7 +2146,7 @@ package body Lal_Adapter.Node is
                Discrete_Subtype_Name_Node : constant LAL.Discrete_Subtype_Name := LAL.As_Discrete_Subtype_Name (Node);
                Sub_Type : constant LAL.Discrete_Subtype_Indication := LAL.F_Subtype (Discrete_Subtype_Name_Node);
             begin
-               Log ("Sub_Type: " & Sub_Type.Debug_Text);
+               Log ("Sub_Type: " & Sub_Type.Image);
             end;
 
          when Ada_Dotted_Name =>
@@ -2133,8 +2155,8 @@ package body Lal_Adapter.Node is
                Prefix : constant LAL.Name := LAL.F_Prefix (Dotted_Name_Node);
                Suffix : constant LAL.Base_Id := LAL.F_Suffix (Dotted_Name_Node);
             begin
-               Log ("Prefix: " & Prefix.Debug_Text);
-               Log ("Suffix: " & Suffix.Debug_Text);
+               Log ("Prefix: " & Prefix.Image);
+               Log ("Suffix: " & Suffix.Image);
             end;
 
          when Ada_End_Name =>
@@ -2143,8 +2165,8 @@ package body Lal_Adapter.Node is
                Name : constant LAL.Name := LAL.F_Name (End_Name_Node);
                Basic_Decl : constant LAL.Basic_Decl := LAL.P_Basic_Decl (End_Name_Node);
             begin
-               Log ("Name: " & Name.Debug_Text);
-               Log ("Basic_Decl: " & Basic_Decl.Debug_Text);
+               Log ("Name: " & Name.Image);
+               Log ("Basic_Decl: " & Basic_Decl.Image);
             end;
 
          when Ada_Explicit_Deref =>
@@ -2152,7 +2174,7 @@ package body Lal_Adapter.Node is
                Explicit_Deref_Node : constant LAL.Explicit_Deref := LAL.As_Explicit_Deref (Node);
                Prefix : constant LAL.Name := LAL.F_Prefix (Explicit_Deref_Node);
             begin
-               Log ("Prefix: " & Prefix.Debug_Text);
+               Log ("Prefix: " & Prefix.Image);
             end;
 
          when Ada_Qual_Expr =>
@@ -2161,8 +2183,8 @@ package body Lal_Adapter.Node is
                Prefix : constant LAL.Name := LAL.F_Prefix (Qual_Expr_Node);
                Suffix : constant LAL.Expr := LAL.F_Suffix (Qual_Expr_Node);
             begin
-               Log ("Prefix: " & Prefix.Debug_Text);
-               Log ("Suffix: " & Suffix.Debug_Text);
+               Log ("Prefix: " & Prefix.Image);
+               Log ("Suffix: " & Suffix.Image);
             end;
 
          when Ada_Char_Literal =>
@@ -2170,7 +2192,7 @@ package body Lal_Adapter.Node is
                Char_Literal_Node : constant LAL.Char_Literal := LAL.As_Char_Literal (Node);
                -- Denoted_Value : constant LALCO.Character_Type := LAL.P_Denoted_Value (Char_Literal_Node);
             begin
-               -- Log ("Denoted_Value: " & Denoted_Value.Debug_Text);
+               -- Log ("Denoted_Value: " & Denoted_Value.Image);
                NULL;
             end;
 
@@ -2354,7 +2376,7 @@ package body Lal_Adapter.Node is
                String_Literal_Node : constant LAL.String_Literal := LAL.As_String_Literal (Node);
                -- Denoted_Value : constant LALCO.Stringacter_Type := LAL.P_Denoted_Value (String_Literal_Node);
             begin
-               -- Log ("Denoted_Value: " & Denoted_Value.Debug_Text);
+               -- Log ("Denoted_Value: " & Denoted_Value.Image);
                NULL;
             end;
 
@@ -2370,7 +2392,7 @@ package body Lal_Adapter.Node is
                Int_Literal_Node : constant LAL.Int_Literal := LAL.As_Int_Literal (Node);
                -- Denoted_Value : constant LALCO.Big_Integer := LAL.P_Denoted_Value (Int_Literal_Node);
             begin
-               -- Log ("Denoted_Value: " & Denoted_Value.Debug_Text);
+               -- Log ("Denoted_Value: " & Denoted_Value.Image);
                NULL;
             end;
 
@@ -2393,7 +2415,7 @@ package body Lal_Adapter.Node is
                Paren_Expr_Node : constant LAL.Paren_Expr := LAL.As_Paren_Expr (Node);
                Expr : constant LAL.Expr := LAL.F_Expr (Paren_Expr_Node);
             begin
-               Log ("Expr: " & Expr.Debug_Text);
+               Log ("Expr: " & Expr.Image);
             end;
 
          when Ada_Quantified_Expr =>
@@ -2403,9 +2425,9 @@ package body Lal_Adapter.Node is
                Loop_Spec : constant LAL.For_Loop_Spec := LAL.F_Loop_Spec (Quantified_Expr_Node);
                Expr : constant LAL.Expr := LAL.F_Expr (Quantified_Expr_Node);
             begin
-               Log ("Quantifier: " & Quantifier.Debug_Text);
-               Log ("Loop_Spec: " & Loop_Spec.Debug_Text);
-               Log ("Expr: " & Expr.Debug_Text);
+               Log ("Quantifier: " & Quantifier.Image);
+               Log ("Loop_Spec: " & Loop_Spec.Image);
+               Log ("Expr: " & Expr.Image);
             end;
 
          when Ada_Raise_Expr =>
@@ -2414,8 +2436,8 @@ package body Lal_Adapter.Node is
                Exception_Name : constant LAL.Name := LAL.F_Exception_Name (Raise_Expr_Node);
                Error_Message : constant LAL.Expr := LAL.F_Error_Message (Raise_Expr_Node);
             begin
-               Log ("Exception_Name: " & Exception_Name.Debug_Text);
-               Log ("Error_Message: " & Error_Message.Debug_Text);
+               Log ("Exception_Name: " & Exception_Name.Image);
+               Log ("Error_Message: " & Error_Message.Image);
             end;
 
          when Ada_Un_Op =>
@@ -2423,7 +2445,7 @@ package body Lal_Adapter.Node is
                Un_Op_Node : constant LAL.Un_Op := LAL.As_Un_Op (Node);
                Op : constant LAL.Op := LAL.F_Op (Un_Op_Node);
             begin
-               Log ("Op: " & Op.Debug_Text);
+               Log ("Op: " & Op.Image);
             end;
 
       end case;
@@ -2452,8 +2474,8 @@ package body Lal_Adapter.Node is
                Stmts : constant LAL.Stmt_List := LAL.F_Stmts (Handled_Stmts_Node);
                Exceptions : constant LAL.Ada_Node_List := LAL.F_Exceptions (Handled_Stmts_Node);
             begin
-               Log ("Stmts: " & Stmts.Debug_Text);
-               Log ("Exceptions: " & Exceptions.Debug_Text);
+               Log ("Stmts: " & Stmts.Image);
+               Log ("Exceptions: " & Exceptions.Image);
             end;
 
       end case;
@@ -2562,7 +2584,7 @@ package body Lal_Adapter.Node is
                item : constant LAL.Basic_Decl := LAL.F_Item (Library_Item_Node);
             begin
                Log ("Has_Private: " & Boolean'Image (Has_Private));
-               Log ("item: " & item.Debug_Text);
+               Log ("item: " & item.Image);
             end;
             this.add_not_implemented;
 
@@ -2628,8 +2650,8 @@ package body Lal_Adapter.Node is
                loop_type         : constant LAL.Iter_Type := LAL.F_Loop_Type (For_Loop_Spec_Node);
             begin
                Log ("F_Has_Reverse: " & Boolean'Image (Has_Reverse));
-               Log ("var_decl: " & var_decl.Debug_Text);
-               Log ("loop_type: " & loop_type.Debug_Text);
+               Log ("var_decl: " & var_decl.Image);
+               Log ("loop_type: " & loop_type.Image);
             end;
             this.add_not_implemented;
 
@@ -2638,7 +2660,7 @@ package body Lal_Adapter.Node is
                While_Loop_Spec_Node : constant LAL.While_Loop_Spec := LAL.As_While_Loop_Spec (Node);
                expr         : constant LAL.Expr := LAL.F_Expr (While_Loop_Spec_Node);
             begin
-               Log ("expr: " & expr.Debug_Text);
+               Log ("expr: " & expr.Image);
             end;
             this.add_not_implemented;
 
@@ -2695,6 +2717,35 @@ package body Lal_Adapter.Node is
 
       end case;
    end process_ada_Mode;
+
+   procedure Process_Ada_Multi_Abstract_State_Decl_Range
+     (This    : in out Class;
+      --  Node    : in     LAL.Stmt'Class;
+      Node    : in     LAL.Ada_Node'Class)
+   is
+      Parent_Name : constant String := Module_Name;
+      Module_Name : constant String := Parent_Name & ".Process_Ada_Multi_Abstract_State_Decl_Range";
+      package Logging is new Generic_Logging (Module_Name); use Logging;
+      --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
+
+      -- Will raise Constraint_Error if Node.Kind is not in Ada_Stmt:
+      Kind : constant LALCO.Ada_Multi_Abstract_State_Decl_Range := Node.Kind;
+      use LALCO; -- For subtype names in case stmt
+   begin -- Process_Ada_Multi_Abstract_State_Decl_Range
+      case Kind is
+
+         when Ada_Multi_Abstract_State_Decl =>
+            declare
+               Multi_Abstract_State_Decl_Node : constant LAL.Multi_Abstract_State_Decl :=
+                 LAL.As_Multi_Abstract_State_Decl (Node);
+               F_Decls : constant LAL.Abstract_State_Decl_List := 
+                 LAL.F_Decls (Multi_Abstract_State_Decl_Node);
+            begin
+               this.add_not_implemented;
+            end;
+
+      end case;
+   end Process_Ada_Multi_Abstract_State_Decl_Range;
 
    procedure process_ada_Not_Null
      (this    : in out class;
@@ -2849,12 +2900,40 @@ package body Lal_Adapter.Node is
                Params_Node : constant LAL.Params := LAL.As_Params (Node);
                params : constant LAL.Param_Spec_List := LAL.F_Params (Params_Node);
             begin
-               Log ("params: " & params.Debug_Text);
+               Log ("params: " & params.Image);
             end;
             this.add_not_implemented;
 
       end case;
    end process_ada_Params_Range;
+
+   procedure Process_Ada_Paren_Abstract_State_Decl_Range
+     (This    : in out Class;
+      --  Node    : in     LAL.Stmt'Class;
+      Node    : in     LAL.Ada_Node'Class)
+   is
+      Parent_Name : constant String := Module_Name;
+      Module_Name : constant String := Parent_Name & ".Process_Ada_Paren_Abstract_State_Decl_Range";
+      package Logging is new Generic_Logging (Module_Name); use Logging;
+      --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
+
+      -- Will raise Constraint_Error if Node.Kind is not in Ada_Stmt:
+      Kind             : constant LALCO.Ada_Paren_Abstract_State_Decl_Range := Node.Kind;
+      use LALCO; -- For subtype names in case stmt
+   begin -- Process_Ada_Paren_Abstract_State_Decl_Range
+      case Kind is
+
+         when Ada_Paren_Abstract_State_Decl =>
+            declare
+               Paren_Abstract_State_Decl_Node : constant LAL.Paren_Abstract_State_Decl := LAL.As_Paren_Abstract_State_Decl (Node);
+               F_Decl : constant LAL.Ada_Node := LAL.F_Decl (Paren_Abstract_State_Decl_Node);
+            begin
+               Log ("F_Decl: " & F_Decl.Image);
+               this.add_not_implemented;
+            end;
+
+      end case;
+   end Process_Ada_Paren_Abstract_State_Decl_Range;
 
    procedure process_ada_Pragma_Node_Range
      (this    : in out class;
@@ -2879,41 +2958,14 @@ package body Lal_Adapter.Node is
                args : constant LAL.Base_Assoc_List := LAL.F_Args (Pragma_Node_Node);
 --               associated_Decls : constant LAL.Basic_Decl_Array := LAL.P_Associated_Decls (Pragma_Node_Node);
             begin
-               Log ("id: " & id.Debug_Text);
-               Log ("args: " & args.Debug_Text);
---               Log ("associated_Decls: " & associated_Decls.Debug_Text);
+               Log ("id: " & id.Image);
+               Log ("args: " & args.Image);
+--               Log ("associated_Decls: " & associated_Decls.Image);
             end;
             this.add_not_implemented;
 
       end case;
    end process_ada_Pragma_Node_Range;
-
-   procedure process_ada_Prim_Type_Accessor_Range
-     (this    : in out class;
-      --  node    : in     lal.stmt'class;
-      node    : in     lal.ada_node'class)
-   is
-      parent_name : constant string := module_name;
-      module_name : constant string := parent_name & ".process_Prim_Type_Accessor_Range";
-      package logging is new generic_logging (module_name); use logging;
-      --  auto : logging.auto_logger; -- logs begin and end
-
-      -- will raise declarative_part_error if node.kind is not in ada_stmt:
-      kind             : constant lalco.ada_Prim_Type_Accessor_Range := node.kind;
-      use lalco; -- for subtype names in case stmt
-   begin -- process_ada_Prim_Type_Accessor_Range
-      case kind is
-
-         when ada_Prim_Type_Accessor =>
-            declare
-               Prim_Type_Accessor_Node : constant LAL.Prim_Type_Accessor := LAL.As_Prim_Type_Accessor (Node);
-            begin
-               NULL;
-            end;
-            this.add_not_implemented;
-
-      end case;
-   end process_ada_Prim_Type_Accessor_Range;
 
    procedure process_ada_Private_Node
      (this    : in out class;
@@ -3008,12 +3060,12 @@ package body Lal_Adapter.Node is
                private_part : constant LAL.Private_Part := LAL.F_Private_Part (Protected_Def_Node);
                end_name : constant LAL.End_Name := LAL.F_End_Name (Protected_Def_Node);
             begin
-               Log ("public_part: " & public_part.Debug_Text);
+               Log ("public_part: " & public_part.Image);
                if not private_part.Is_Null then
-                 Log ("private_part: " & private_part.Debug_Text);
+                 Log ("private_part: " & private_part.Image);
                end if;
                if not end_name.Is_Null then
-                 Log ("end_name: " & end_name.Debug_Text);
+                 Log ("end_name: " & end_name.Image);
                end if;
             end;
             this.add_not_implemented;
@@ -3077,7 +3129,7 @@ package body Lal_Adapter.Node is
                Range_Spec_Node : constant LAL.Range_Spec := LAL.As_Range_Spec (Node);
                F_Range : constant LAL.Expr := LAL.F_Range (Range_Spec_Node);
             begin
-               Log ("F_Range: " & F_Range.Debug_Text);
+               Log ("F_Range: " & F_Range.Image);
             end;
             this.add_not_implemented;
 
@@ -3105,7 +3157,7 @@ package body Lal_Adapter.Node is
                Renaming_Clause_Node : constant LAL.Renaming_Clause := LAL.As_Renaming_Clause (Node);
                renamed_object : constant LAL.Name := LAL.F_Renamed_Object (Renaming_Clause_Node);
             begin
-               Log ("renamed_object: " & renamed_object.Debug_Text);
+               Log ("renamed_object: " & renamed_object.Image);
             end;
             this.add_not_implemented;
 
@@ -3178,10 +3230,10 @@ package body Lal_Adapter.Node is
                stmts : constant LAL.Stmt_List := LAL.F_Stmts (Select_When_Part_Node);
             begin
                if not cond_expr.Is_Null then
-                 Log ("cond_expr: " & cond_expr.Debug_Text);
+                 Log ("cond_expr: " & cond_expr.Image);
                end if;
                if not stmts.Is_Null then
-                 Log ("stmts: " & stmts.Debug_Text);
+                 Log ("stmts: " & stmts.Image);
                end if;
             end;
             this.add_not_implemented;
@@ -3211,11 +3263,11 @@ package body Lal_Adapter.Node is
                Entry_Index_Expr : constant LAL.Expr := LAL.F_Entry_Index_Expr (Accept_Stmt_Node);
                Params : constant LAL.Entry_Completion_Formal_Params := LAL.F_Params (Accept_Stmt_Node);
             begin
-               Log ("Name: " & Name.Debug_Text);
+               Log ("Name: " & Name.Image);
                if not Entry_Index_Expr.Is_Null then
-                 Log ("Entry_Index_Expr: " & Entry_Index_Expr.Debug_Text);
+                 Log ("Entry_Index_Expr: " & Entry_Index_Expr.Image);
                end if;
-               Log ("Params: " & Params.Debug_Text);
+               Log ("Params: " & Params.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -3225,8 +3277,8 @@ package body Lal_Adapter.Node is
                Stmts : constant LAL.Handled_Stmts := LAL.F_Stmts (Accept_Stmt_With_Stmts_Node);
                End_Name : constant LAL.End_Name := LAL.F_End_Name (Accept_Stmt_With_Stmts_Node);
             begin
-               Log ("Stmts: " & Stmts.Debug_Text);
-               Log ("End_Name: " & End_Name.Debug_Text);
+               Log ("Stmts: " & Stmts.Image);
+               Log ("End_Name: " & End_Name.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -3260,9 +3312,9 @@ package body Lal_Adapter.Node is
                Stmt : constant LAL.Handled_Stmts := LAL.F_Stmts (Begin_Block_Node);
                End_Name : constant LAL.End_Name := LAL.F_End_Name (Begin_Block_Node);
             begin
-               Log ("Stmt: " & Stmt.Debug_Text);
+               Log ("Stmt: " & Stmt.Image);
                if not End_Name.Is_Null then
-                 Log ("End_Name: " & End_Name.Debug_Text);
+                 Log ("End_Name: " & End_Name.Image);
                end if;
             end;
 
@@ -3274,10 +3326,10 @@ package body Lal_Adapter.Node is
                Stmt : constant LAL.Handled_Stmts := LAL.F_Stmts (Decl_Block_Node);
                End_Name : constant LAL.End_Name := LAL.F_End_Name (Decl_Block_Node);
             begin
-               Log ("Decl: " & Decl.Debug_Text);
-               Log ("Stmt: " & Stmt.Debug_Text);
+               Log ("Decl: " & Decl.Image);
+               Log ("Stmt: " & Stmt.Image);
                if not End_Name.Is_Null then
-                 Log ("End_Name: " & End_Name.Debug_Text);
+                 Log ("End_Name: " & End_Name.Image);
                end if;
             end;
 
@@ -3288,8 +3340,8 @@ package body Lal_Adapter.Node is
                Expr : constant LAL.Expr := LAL.F_Expr (Case_Stmt_Node);
                Alternatives : constant LAL.Case_Stmt_Alternative_List := LAL.F_Alternatives (Case_Stmt_Node);
             begin
-               Log ("Expr: " & Expr.Debug_Text);
-               Log ("Alternatives: " & Alternatives.Debug_Text);
+               Log ("Expr: " & Expr.Image);
+               Log ("Alternatives: " & Alternatives.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -3299,8 +3351,8 @@ package body Lal_Adapter.Node is
                Decl_Stmt : constant LAL.Extended_Return_Stmt_Object_Decl := LAL.F_Decl (Extended_Return_Stmt_Node);
                Stmt : constant LAL.Handled_Stmts := LAL.F_Stmts (Extended_Return_Stmt_Node);
             begin
-               Log ("Decl_Stmt: " & Decl_Stmt.Debug_Text);
-               Log ("Stmt: " & Stmt.Debug_Text);
+               Log ("Decl_Stmt: " & Decl_Stmt.Image);
+               Log ("Stmt: " & Stmt.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -3311,9 +3363,9 @@ package body Lal_Adapter.Node is
                Alternative : constant LAL.Elsif_Stmt_Part_List := LAL.F_Alternatives (If_Stmt_Node);
                Else_Stmt : constant LAL.Stmt_List := LAL.F_Else_Stmts (If_Stmt_Node);
             begin
-               Log ("Then_Stmt: " & Then_Stmt.Debug_Text);
-               Log ("Alternative: " & Alternative.Debug_Text);
-               Log ("Else_Stmt: " & Else_Stmt.Debug_Text);
+               Log ("Then_Stmt: " & Then_Stmt.Image);
+               Log ("Alternative: " & Alternative.Image);
+               Log ("Else_Stmt: " & Else_Stmt.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -3323,8 +3375,8 @@ package body Lal_Adapter.Node is
                Decl_Stmt : constant LAL.Named_Stmt_Decl := LAL.F_Decl (Named_Stmt_Node);
                Stmt : constant LAL.Composite_Stmt := LAL.F_Stmt (Named_Stmt_Node);
             begin
-               Log ("Decl_Stmt: " & Decl_Stmt.Debug_Text);
-               Log ("Stmt: " & Stmt.Debug_Text);
+               Log ("Decl_Stmt: " & Decl_Stmt.Image);
+               Log ("Stmt: " & Stmt.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -3335,9 +3387,9 @@ package body Lal_Adapter.Node is
                Else_Stmt : constant LAL.Stmt_List := LAL.F_Else_Stmts (Select_Stmt_Node);
                Abort_Stmts : constant LAL.Stmt_List := LAL.F_Abort_Stmts (Select_Stmt_Node);
             begin
-               Log ("F_Guards: " & Guards.Debug_Text);
-               Log ("F_Else_Stmts: " & Else_Stmt.Debug_Text);
-               Log ("F_Abort_Stmts: " & Abort_Stmts.Debug_Text);
+               Log ("F_Guards: " & Guards.Image);
+               Log ("F_Else_Stmts: " & Else_Stmt.Image);
+               Log ("F_Abort_Stmts: " & Abort_Stmts.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -3354,7 +3406,7 @@ package body Lal_Adapter.Node is
                Abort_Stmt_Node : constant LAL.Abort_Stmt := LAL.As_Abort_Stmt (Node);
                Names           : constant LAL.Name_List := LAL.F_Names (Abort_Stmt_Node);
             begin
-               Log ("F_Names: " & Names.Debug_Text);
+               Log ("F_Names: " & Names.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -3365,8 +3417,8 @@ package body Lal_Adapter.Node is
                Dest             : constant LAL.Name := LAL.F_Dest (Assign_Stmt_Node);
                Expr             : constant LAL.Expr := LAL.F_Expr (Assign_Stmt_Node);
             begin
-               Log ("F_Dest: " & Dest.Debug_Text);
-               Log ("F_Expr: " & Expr.Debug_Text);
+               Log ("F_Dest: " & Dest.Image);
+               Log ("F_Expr: " & Expr.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -3376,7 +3428,7 @@ package body Lal_Adapter.Node is
                Call_Stmt_Node : constant LAL.Call_Stmt := LAL.As_Call_Stmt (Node);
                Call           : constant LAL.Name := LAL.F_Call (Call_Stmt_Node);
             begin
-               Log ("F_Call: " & Call.Debug_Text);
+               Log ("F_Call: " & Call.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -3388,7 +3440,7 @@ package body Lal_Adapter.Node is
                Seconds         : constant LAL.Expr := LAL.F_Expr (Delay_Stmt_Node);
             begin
                Log ("F_Has_Until: " & Boolean'Image (Has_Until));
-               Log ("Seconds: " & Seconds.Debug_Text);
+               Log ("Seconds: " & Seconds.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -3396,14 +3448,14 @@ package body Lal_Adapter.Node is
          when Ada_Exit_Stmt =>
             declare
                Exit_Stmt_Node : constant LAL.Exit_Stmt := LAL.As_Exit_Stmt (Node);
-               Loop_Name      : constant LAL.Identifier := LAL.F_Loop_Name (Exit_Stmt_Node);
+               Loop_Name      : constant LAL.Name := LAL.F_Loop_Name (Exit_Stmt_Node);
                Cond_Expr      : constant LAL.Expr := LAL.F_Cond_Expr (Exit_Stmt_Node);
             begin
                if not Loop_Name.Is_Null then
-                 Log ("F_Loop_Name: " & Loop_Name.Debug_Text);
+                 Log ("F_Loop_Name: " & Loop_Name.Image);
                end if;
                if not Cond_Expr.Is_Null then
-                 Log ("F_Cond_Expr: " & Cond_Expr.Debug_Text);
+                 Log ("F_Cond_Expr: " & Cond_Expr.Image);
                end if;
             end;
 
@@ -3413,7 +3465,7 @@ package body Lal_Adapter.Node is
                Goto_Stmt_Node : constant LAL.Goto_Stmt := LAL.As_Goto_Stmt (Node);
                Label          : constant LAL.Name := LAL.F_Label_Name (Goto_Stmt_Node);
             begin
-               Log ("F_Label_Name: " & Label.Debug_Text);
+               Log ("F_Label_Name: " & Label.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -3422,7 +3474,7 @@ package body Lal_Adapter.Node is
                Label_Node : constant LAL.Label := LAL.As_Label (Node);
                Label_Decl : constant LAL.Label_Decl := LAL.F_Decl (Label_Node);
             begin
-               Log ("F_Decl: " & Label_Decl.Debug_Text);
+               Log ("F_Decl: " & Label_Decl.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -3440,9 +3492,9 @@ package body Lal_Adapter.Node is
                Exception_Name  : constant LAL.Name := LAL.F_Exception_Name (Raise_Stmt_Node);
                Error_Message  : constant LAL.Expr := LAL.F_Error_Message (Raise_Stmt_Node);
             begin
-               Log ("F_Exception_Name: " & Exception_Name.Debug_Text);
+               Log ("F_Exception_Name: " & Exception_Name.Image);
                if not Error_Message.Is_Null then
-                 Log ("Error_Message: " & Error_Message.Debug_Text);
+                 Log ("Error_Message: " & Error_Message.Image);
                end if;
             end;
 
@@ -3453,7 +3505,7 @@ package body Lal_Adapter.Node is
                Call_Name         : constant LAL.Name := LAL.F_Call_Name (Requeue_Stmt_Node);
                Has_Abort         : constant Boolean := LAL.F_Has_Abort (Requeue_Stmt_Node);
             begin
-               Log ("F_Call_Name: " & Call_Name.Debug_Text);
+               Log ("F_Call_Name: " & Call_Name.Image);
                Log ("F_Has_Abort: " & Boolean'Image (Has_Abort));
             end;
 
@@ -3463,7 +3515,7 @@ package body Lal_Adapter.Node is
                Return_Stmt_Node : constant LAL.Return_Stmt := LAL.As_Return_Stmt (Node);
                Return_Expr      : constant LAL.Expr := LAL.F_Return_Expr (Return_Stmt_Node);
             begin
-               Log ("F_Return_Expr: " & Return_Expr.Debug_Text);
+               Log ("F_Return_Expr: " & Return_Expr.Image);
             end;
 
             This.Add_Not_Implemented;
@@ -3542,9 +3594,9 @@ package body Lal_Adapter.Node is
                f_body      : constant LAL.Body_Node := LAL.F_Body (Subunit_Node);
                body_root      : constant LAL.Basic_Decl := LAL.P_Body_Root (Subunit_Node);
             begin
-               Log ("name: " & name.Debug_Text);
-               Log ("f_body: " & f_body.Debug_Text);
-               Log ("body_root: " & body_root.Debug_Text);
+               Log ("name: " & name.Image);
+               Log ("f_body: " & f_body.Image);
+               Log ("body_root: " & body_root.Image);
             end;
 
       end case;
@@ -3640,12 +3692,12 @@ package body Lal_Adapter.Node is
                private_part      : constant LAL.Private_part := LAL.F_Private_Part (Task_Def_Node);
                end_name      : constant LAL.End_Name := LAL.F_End_Name (Task_Def_Node);
             begin
-               Log ("interfaces: " & interfaces.Debug_Text);
-               Log ("public_part: " & public_part.Debug_Text);
+               Log ("interfaces: " & interfaces.Image);
+               Log ("public_part: " & public_part.Image);
                if not private_part.Is_Null then
-                 Log ("private_part: " & private_part.Debug_Text);
+                 Log ("private_part: " & private_part.Image);
                end if;
-               Log ("end_name: " & end_name.Debug_Text);
+               Log ("end_name: " & end_name.Image);
             end;
 
       end case;
@@ -3674,7 +3726,7 @@ package body Lal_Adapter.Node is
                sub_spec      : constant LAL.Subp_Spec := LAL.F_Subp_Spec (Access_To_Subp_Def_Node);
             begin
                Log ("has_protected: " & Boolean'Image(has_protected));
-               Log ("sub_spec: " & sub_spec.Debug_Text);
+               Log ("sub_spec: " & sub_spec.Image);
             end;
 
          when ada_Anonymous_Type_Access_Def =>
@@ -3682,7 +3734,7 @@ package body Lal_Adapter.Node is
                Anonymous_Type_Access_Def_Node : constant LAL.Anonymous_Type_Access_Def := LAL.As_Anonymous_Type_Access_Def (Node);
                type_decl      : constant LAL.Base_Type_Decl := LAL.F_Type_Decl (Anonymous_Type_Access_Def_Node);
             begin
-               Log ("type_decl: " & type_decl.Debug_Text);
+               Log ("type_decl: " & type_decl.Image);
             end;
 
          when ada_Type_Access_Def =>
@@ -3701,8 +3753,8 @@ package body Lal_Adapter.Node is
                indices      : constant LAL.Array_Indices := LAL.F_Indices (Array_Type_Def_Node);
                component_type      : constant LAL.Component_Def := LAL.F_Component_Type (Array_Type_Def_Node);
             begin
-               Log ("indices: " & indices.Debug_Text);
-               Log ("component_type: " & component_type.Debug_Text);
+               Log ("indices: " & indices.Image);
+               Log ("component_type: " & component_type.Image);
             end;
 
          when ada_Derived_Type_Def =>
@@ -3713,10 +3765,10 @@ package body Lal_Adapter.Node is
                has_with_private      : constant Boolean := LAL.F_Has_With_Private (Derived_Type_Def_Node);
             begin
                if not interfaces.Is_Null then
-                 Log ("interfaces: " & interfaces.Debug_Text);
+                 Log ("interfaces: " & interfaces.Image);
                end if;
                if not record_extension.Is_Null then
-                 Log ("record_extension: " & record_extension.Debug_Text);
+                 Log ("record_extension: " & record_extension.Image);
                end if;
                Log ("has_with_private: " & Boolean'Image(has_with_private));
             end;
@@ -3726,7 +3778,7 @@ package body Lal_Adapter.Node is
                Enum_Type_Def_Node : constant LAL.Enum_Type_Def := LAL.As_Enum_Type_Def (Node);
                enum_literals      : constant LAL.Enum_Literal_Decl_List := LAL.F_Enum_Literals (Enum_Type_Def_Node);
             begin
-               Log ("enum_literals: " & enum_literals.Debug_Text);
+               Log ("enum_literals: " & enum_literals.Image);
             end;
 
          when ada_Formal_Discrete_Type_Def =>
@@ -3741,7 +3793,7 @@ package body Lal_Adapter.Node is
                Interface_Type_Def_Node : constant LAL.Interface_Type_Def := LAL.As_Interface_Type_Def (Node);
                interface_kind      : constant LAL.Interface_Kind := LAL.F_Interface_Kind (Interface_Type_Def_Node);
             begin
-               Log ("interface_kind: " & interface_kind.Debug_Text);
+               Log ("interface_kind: " & interface_kind.Image);
             end;
 
          when ada_Mod_Int_Type_Def =>
@@ -3749,7 +3801,7 @@ package body Lal_Adapter.Node is
                Mod_Int_Type_Def_Node : constant LAL.Mod_Int_Type_Def := LAL.As_Mod_Int_Type_Def (Node);
                expr      : constant LAL.Expr := LAL.F_Expr (Mod_Int_Type_Def_Node);
             begin
-               Log ("expr: " & expr.Debug_Text);
+               Log ("expr: " & expr.Image);
             end;
 
          when ada_Private_Type_Def =>
@@ -3771,10 +3823,10 @@ package body Lal_Adapter.Node is
                f_digits      : constant LAL.Expr := LAL.F_Digits (Decimal_Fixed_Point_Def_Node);
                f_range      : constant LAL.Range_Spec := LAL.F_Range (Decimal_Fixed_Point_Def_Node);
             begin
-               Log ("f_delta: " & f_delta.Debug_Text);
-               Log ("f_digits: " & f_digits.Debug_Text);
+               Log ("f_delta: " & f_delta.Image);
+               Log ("f_digits: " & f_digits.Image);
                if not f_range.Is_Null then
-                 Log ("f_range: " & f_range.Debug_Text);
+                 Log ("f_range: " & f_range.Image);
                end if;
             end;
 
@@ -3784,9 +3836,9 @@ package body Lal_Adapter.Node is
                num_digits      : constant LAL.Expr := LAL.F_Num_Digits (Floating_Point_Def_Node);
                f_range      : constant LAL.Range_Spec := LAL.F_Range (Floating_Point_Def_Node);
             begin
-               Log ("num_digits: " & num_digits.Debug_Text);
+               Log ("num_digits: " & num_digits.Image);
                if not f_range.Is_Null then
-                 Log ("f_range: " & f_range.Debug_Text);
+                 Log ("f_range: " & f_range.Image);
                end if;
             end;
 
@@ -3796,8 +3848,8 @@ package body Lal_Adapter.Node is
                f_delta      : constant LAL.Expr := LAL.F_Delta (Ordinary_Fixed_Point_Def_Node);
                f_range      : constant LAL.Range_Spec := LAL.F_Range (Ordinary_Fixed_Point_Def_Node);
             begin
-               Log ("f_delta: " & f_delta.Debug_Text);
-               Log ("f_range: " & f_range.Debug_Text);
+               Log ("f_delta: " & f_delta.Image);
+               Log ("f_range: " & f_range.Image);
             end;
 
          when ada_Record_Type_Def =>
@@ -3817,7 +3869,7 @@ package body Lal_Adapter.Node is
                Signed_Int_Type_Def_Node : constant LAL.Signed_Int_Type_Def := LAL.As_Signed_Int_Type_Def (Node);
                f_range      : constant LAL.Range_Spec := LAL.F_Range (Signed_Int_Type_Def_Node);
             begin
-               Log ("f_range: " & f_range.Debug_Text);
+               Log ("f_range: " & f_range.Image);
             end;
 
       end case;
@@ -3844,7 +3896,7 @@ package body Lal_Adapter.Node is
                Anonymous_Type_Node : constant LAL.Anonymous_Type := LAL.As_Anonymous_Type (Node);
                type_Decl      : constant LAL.Anonymous_Type_Decl := LAL.F_Type_Decl (Anonymous_Type_Node);
             begin
-               Log ("type_Decl: " & type_Decl.Debug_Text);
+               Log ("type_Decl: " & type_Decl.Image);
             end;
 
          when ada_Enum_Lit_Synth_Type_Expr =>
@@ -3862,9 +3914,9 @@ package body Lal_Adapter.Node is
                constraint      : constant LAL.Constraint := LAL.F_Constraint (Subtype_Indication_Node);
             begin
                Log ("has_not_null: " & Boolean'Image(has_not_null));
-               Log ("name: " & name.Debug_Text);
+               Log ("name: " & name.Image);
                if not constraint.Is_Null then
-                 Log ("constraint: " & constraint.Debug_Text);
+                 Log ("constraint: " & constraint.Image);
                end if;
             end;
 
@@ -3965,7 +4017,7 @@ package body Lal_Adapter.Node is
                Use_Package_Clause_Node : constant LAL.Use_Package_Clause := LAL.As_Use_Package_Clause (Node);
                packages      : constant LAL.Name_List := LAL.F_Packages (Use_Package_Clause_Node);
             begin
-               Log ("packages: " & packages.Debug_Text);
+               Log ("packages: " & packages.Image);
             end;
 
          when ada_Use_Type_Clause =>
@@ -3975,7 +4027,7 @@ package body Lal_Adapter.Node is
                types      : constant LAL.Name_List := LAL.F_Types (Use_Type_Clause_Node);
             begin
                Log ("has_all: " & Boolean'Image(has_all));
-               Log ("types: " & types.Debug_Text);
+               Log ("types: " & types.Image);
             end;
 
       end case;
@@ -4003,8 +4055,8 @@ package body Lal_Adapter.Node is
                choices      : constant LAL.Alternatives_List := LAL.F_Choices (Variant_Node);
                components      : constant LAL.Component_List := LAL.F_Components (Variant_Node);
             begin
-               Log ("choices: " & choices.Debug_Text);
-               Log ("components: " & components.Debug_Text);
+               Log ("choices: " & choices.Image);
+               Log ("components: " & components.Image);
             end;
 
       end case;
@@ -4032,8 +4084,8 @@ package body Lal_Adapter.Node is
                discr_name      : constant LAL.Identifier := LAL.F_Discr_Name (Variant_Part_Node);
                variant      : constant LAL.Variant_List := LAL.F_Variant (Variant_Part_Node);
             begin
-               Log ("discr_name: " & discr_name.Debug_Text);
-               Log ("variant: " & variant.Debug_Text);
+               Log ("discr_name: " & discr_name.Image);
+               Log ("variant: " & variant.Image);
             end;
 
       end case;
@@ -4062,7 +4114,7 @@ package body Lal_Adapter.Node is
                has_private      : constant Boolean := LAL.F_Has_Private (With_Clause_Node);
                has_limited      : constant Boolean := LAL.F_Has_Limited (With_Clause_Node);
             begin
-               Log ("packages: " & packages.Debug_Text);
+               Log ("packages: " & packages.Image);
                Log ("has_private: " & Boolean'Image(has_private));
                Log ("has_limited: " & Boolean'Image(has_limited));
             end;
@@ -4130,7 +4182,7 @@ package body Lal_Adapter.Node is
       Kind             : constant LALCO.Ada_Node_Kind_Type := Node.Kind;
       Kind_Image       : constant String := LALCO.Ada_Node_Kind_Type'Image (Kind);
       Kind_Name        : constant String := Node.Kind_Name;
-      Debug_Text       : constant String := Node.Debug_Text;
+      Debug_Text       : constant String := Node.Image;
 
       procedure Add_Element_ID is begin
          -- ID is in the Dot node twice (once in the Label and once in
@@ -4324,6 +4376,9 @@ package body Lal_Adapter.Node is
          -- 3 included kinds:
          when Ada_Mode'First .. Ada_Mode'Last =>
             This.Process_Ada_Mode (Node);
+         -- 1 included Kind:   
+         when Ada_Multi_Abstract_State_Decl_Range'First .. Ada_Multi_Abstract_State_Decl_Range'Last =>
+            This.Process_Ada_Multi_Abstract_State_Decl_Range (Node);
          -- 3 included kinds:
          when Ada_Not_Null'First .. Ada_Not_Null'Last =>
             This.Process_Ada_Not_Null (Node);
@@ -4339,12 +4394,12 @@ package body Lal_Adapter.Node is
          -- 4 included kinds:
          when Ada_Params_Range'First .. Ada_Params_Range'Last =>
             This.Process_Ada_Params_Range (Node);
+         -- 1 included Kind:   
+         when Ada_Paren_Abstract_State_Decl_Range'First .. Ada_Paren_Abstract_State_Decl_Range'Last =>
+            This.Process_Ada_Paren_Abstract_State_Decl_Range (Node);
          -- 4 included kinds:
          when Ada_Pragma_Node_Range'First .. Ada_Pragma_Node_Range'Last =>
             This.Process_Ada_Pragma_Node_Range (Node);
-         -- 4 included kinds:
-         when Ada_Prim_Type_Accessor_Range'First .. Ada_Prim_Type_Accessor_Range'Last =>
-            This.Process_Ada_Prim_Type_Accessor_Range (Node);
          -- 4 included kinds:
          when Ada_Private_Node'First .. Ada_Private_Node'Last =>
             This.Process_Ada_Private_Node (Node);
