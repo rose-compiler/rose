@@ -641,6 +641,8 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2021_23.c \
      test2021_24.c \
      test2021_25.c \
+     test2021_27.c \
+     test2021_28.c \
      test2022_01.c 
 
 
