@@ -18,9 +18,33 @@
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 
+// DQ (9/12/2021): Save this typedef so that we can investigate it later.
+extern SgTypedefDeclaration*   global_debug_typedef;
+extern SgDeclarationStatement* global_debug_typedef_declaration;
 
 // DQ (8/20/2005): Make this local so that it can't be called externally!
 void postProcessingSupport (SgNode* node);
+
+#if 0
+  // DQ (1/22/2022): Turing this off to use this version of ROSE with the unit test project.
+void test_bug(const string &  s)
+   {
+#if 1
+  // DQ (9/12/2021): Save this typedef so that we can investigate it later.
+  // SgTypedefDeclaration*   global_debug_typedef             = NULL;
+  // SgDeclarationStatement* global_debug_typedef_declaration = NULL;
+     printf (" --- s = %s \n",s.c_str());
+     printf (" --- global_debug_typedef             = %p \n",global_debug_typedef);
+     printf (" --- global_debug_typedef_declaration = %p \n",global_debug_typedef_declaration);
+     if (global_debug_typedef_declaration != NULL)
+        {
+          SgNode* parent = global_debug_typedef_declaration->get_parent();
+          ROSE_ASSERT(parent != NULL);
+          printf (" --- global_debug_typedef_declaration->get_parent() = %p = %s \n",parent,parent->class_name().c_str());
+        }
+#endif
+   }
+#endif
 
 // DQ (5/22/2005): Added function with better name, since none of the fixes are really
 // temporary any more.
@@ -32,9 +56,16 @@ void AstPostProcessing (SgNode* node)
      ROSE_ASSERT(node != NULL);
 
 #if 0
+  // DQ (1/22/2022): Turing this off to use this version of ROSE with the unit test project.
      printf ("+++++++++++++++++++++++++++++++++++++++++++++++ \n");
      printf ("Inside of AstPostProcessing(node = %p = %s) \n",node,node->class_name().c_str());
      printf ("+++++++++++++++++++++++++++++++++++++++++++++++ \n");
+#endif
+
+#if 0
+  // DQ (1/22/2022): Turing this off to use this version of ROSE with the unit test project.
+  // DQ (9/12/2021): testing for parent of declaration in typedef.
+     test_bug("at start");
 #endif
 
 #if 0
@@ -188,6 +219,12 @@ void postProcessingSupport (SgNode* node)
 #endif
 
 #if 0
+  // DQ (1/22/2022): Turing this off to use this version of ROSE with the unit test project.
+  // DQ (9/12/2021): testing for parent of declaration in typedef.
+     test_bug("top of postProcessingSupport");
+#endif
+
+#if 0
   // DQ (11/23/2015): Before we do any modifications, check for unique IR nodes in the AST (see test2015_121.C).
 #if 1
      printf ("Checking for unique nodes in the AST before AST post-processing: issolating possible multiple references friend function \n");
@@ -310,6 +347,12 @@ void postProcessingSupport (SgNode* node)
 #endif
 
 
+#if 0
+  // DQ (1/22/2022): Turing this off to use this version of ROSE with the unit test project.
+  // DQ (9/12/2021): testing for parent of declaration in typedef.
+     test_bug("before topLevelResetParentPointer");
+#endif
+
        // Reset and test and parent pointers so that it matches our definition 
        // of the AST (as defined by the AST traversal mechanism).
           topLevelResetParentPointer(node);
@@ -318,6 +361,12 @@ void postProcessingSupport (SgNode* node)
              {
                printf ("DONE: Calling topLevelResetParentPointer() \n");
              }
+
+#if 0
+  // DQ (1/22/2022): Turing this off to use this version of ROSE with the unit test project.
+  // DQ (9/12/2021): testing for parent of declaration in typedef.
+     test_bug("after topLevelResetParentPointer");
+#endif
 
 #if 0
        // DQ (8/2/2019): Testing test2019_501.C for extra non-defining template instantiation in global scope.
@@ -407,6 +456,12 @@ void postProcessingSupport (SgNode* node)
              {
                printf ("Calling fixupAstSymbolTablesToSupportAliasedSymbols() \n");
              }
+
+#if 0
+  // DQ (1/22/2022): Turing this off to use this version of ROSE with the unit test project.
+  // DQ (9/12/2021): testing for parent of declaration in typedef.
+     test_bug("after fixupAstSymbolTables");
+#endif
 
        // DQ (4/14/2010): Added support for symbol aliases for C++
        // This is the support for C++ "using declarations" which uses symbol aliases in the symbol table to provide 
@@ -828,6 +883,12 @@ void postProcessingSupport (SgNode* node)
 
 #if 0
           SageInterface::reportModifiedStatements("In postProcessingSupport(): calling reportModifiedStatements(): node",node);
+#endif
+
+#if 0
+  // DQ (1/22/2022): Turing this off to use this version of ROSE with the unit test project.
+  // DQ (9/12/2021): testing for parent of declaration in typedef.
+     test_bug("at end");
 #endif
 
 #if 0

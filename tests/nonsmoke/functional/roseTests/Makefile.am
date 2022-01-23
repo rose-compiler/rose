@@ -23,6 +23,7 @@ if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
               astLValueTests abstractMemoryObjectTests varDeclNorm \
 	      roseCodeGen
 
+# DQ (8/24/2021): We could put back astSymbolTableTests and astSnippetTests, but astTokenStreamTests is still failing.
 # DQ (3/31/2021): Testing by removing astTokenStreamTests (above)
 #              astSymbolTableTests astTokenStreamTests astSnippetTests 
 

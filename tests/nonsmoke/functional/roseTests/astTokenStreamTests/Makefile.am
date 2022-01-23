@@ -325,6 +325,108 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2010_14.c \
      constants.c
 
+# DQ (8/24/2021):
+# Organization of failing tests:
+# test2012_01.c
+# test2012_06.c
+# test2012_09.c
+# test2012_13.c
+# test2012_23.c
+# test2012_25.c
+# test2012_27.c
+# test2012_36.c
+# test2012_42.c
+# test2012_56.c
+# test2012_58.c
+# test2012_64.c
+# test2012_79.c
+# test2012_80.c
+# test2012_82.c
+# test2012_90.c
+# test2012_94.c
+# test2012_96.c
+# test2012_97.c
+# test2012_100.c
+# test2012_101.c
+# test2012_102.c
+# test2012_103.c
+# test2012_104.c
+# test2012_105.c
+# test2012_116.c
+# test2012_119.c
+# test2012_123.c
+# test2012_124.c
+# test2012_133.c
+# test2012_141.c
+# test2012_142.c
+# test2012_144.c
+# test2012_146.c
+# test2012_148.c
+# test2012_166.c
+# test2012_172.c
+# test2013_54.c
+# test2013_63.c
+
+
+# Frontend: unparseLanguageIndependentConstructs.C:4391
+# test2012_141.c
+# test2012_142.c
+# test2012_144.c
+# test2013_63.c
+
+# Backend errors: undeclared (first use in this function)
+# test2012_01.c
+# test2012_06.c
+# test2012_09.c
+# test2012_13.c
+# test2012_23.c
+# test2012_25.c
+# test2012_42.c
+# test2012_56.c
+# test2012_79.c
+# test2012_80.c
+# test2012_101.c
+# test2012_102.c
+# test2012_103.c
+# test2012_104.c
+# test2012_105.c
+
+# Backend expected expression before ‘}’ token
+#         ‘else’ without a previous ‘if’
+# test2012_116.c
+
+# Backend ‘else’ without a previous ‘if’
+# test2012_119.c
+# test2012_123.c
+
+# Backend label handling:
+# test2012_27.c
+# test2012_64.c
+# test2012_82.c
+# test2012_90.c
+# test2012_96.c
+# test2012_124.c
+
+# Backend "(" handling in conditionals:
+# test2012_36.c
+# test2012_94.c
+# test2012_97.c
+# test2012_100.c
+# test2012_146.c
+# test2012_166.c
+# test2013_54.c
+# test2012_58.c
+
+# Backend invalid type argument of unary ‘*’ (have ‘int’)
+# test2012_133.c
+
+# Backend:  duplicate case value
+# test2012_148.c
+# test2012_172.c
+
+# test2013_54.c
+
+
 
 # DQ (5/31/2021): Failing test.
 #    YardenPragmaPackExample.c 

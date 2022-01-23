@@ -7948,6 +7948,10 @@ buildTokenStreamFrontier(SgSourceFile* sourceFile, bool traverseHeaderFiles)
   // DQ (5/31/2021): Adding testing support for token-based unparsing.
      if (ROSE_tokenUnparsingTestingMode == true)
         {
+       // DQ (9/3/2021): Note that traverseHeaderFiles will most often be false in testing since it is more straight forward to test the token-based unparsing on the input code directly.
+#if 1
+          printf ("Detected ROSE_tokenUnparsingTestingMode == true: calling buildArtificialFrontier(sourceFile=%p,traverseHeaderFiles=%s) \n",sourceFile,traverseHeaderFiles ? "true" : "false");
+#endif
           buildArtificialFrontier(sourceFile,traverseHeaderFiles);
         }
 

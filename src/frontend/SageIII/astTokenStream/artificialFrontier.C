@@ -176,6 +176,11 @@ ArtificialFrontierTraversal::evaluateInheritedAttribute(SgNode* n, ArtificialFro
 
      static int random_counter = 0;
 
+#if 0
+     printf ("Test of use of ArtificialFrontierTraversal: Exiting as a test! \n");
+     ROSE_ABORT();
+#endif
+
 #define DEBUG_INHERIT 0
 
      int lowerbound = -1;
@@ -195,7 +200,7 @@ ArtificialFrontierTraversal::evaluateInheritedAttribute(SgNode* n, ArtificialFro
 
      SgStatement* statement = isSgStatement(n);
 
-#if DEBUG_INHERIT
+#if DEBUG_INHERIT || 0
   // static int random_counter = 0;
   // printf ("*** In ArtificialFrontierTraversal::evaluateInheritedAttribute(): random_counter = %d n = %p = %s \n",random_counter,n,n->class_name().c_str());
      if (statement != NULL)
@@ -325,16 +330,26 @@ ArtificialFrontierTraversal::evaluateInheritedAttribute(SgNode* n, ArtificialFro
                   }
 
 #if DEBUG_INHERIT || 0
-               printf ("In FrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): random_counter = %d lowerbound = %d upperbound = %d \n",random_counter,lowerbound,upperbound);
+               printf ("In artificial FrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): random_counter = %d lowerbound = %d upperbound = %d \n",
+                    random_counter,lowerbound,upperbound);
 #endif
             // bool skipMarkingAsToBeUnparsedFromAST  = false;
             // if ( (random_counter > lowerbound && random_counter < upperbound) || forceFromTokenStream == true)
                if ( random_counter >= lowerbound && random_counter <= upperbound )
                   {
 #if DEBUG_INHERIT || 0
-                    printf ("In FrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): Mark this statement as a transformation: random_counter = %d statement = %p = %s \n",
-                    random_counter,statement,statement->class_name().c_str());
+                    printf ("In artificial FrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): Mark this statement as a transformation: random_counter = %d statement = %p = %s \n",
+                         random_counter,statement,statement->class_name().c_str());
 #endif
+#if DEBUG_INHERIT || 1
+                 // DQ (9/30/2021): Limiting the output spew.
+                    if (random_counter == lowerbound || random_counter == upperbound)
+                       {
+                         printf ("In artificial FrontierDetectionForTokenStreamMapping::evaluateInheritedAttribute(): Mark this statement as a transformation: random_counter = %d statement = %p = %s \n",
+                              random_counter,statement,statement->class_name().c_str());
+                       }
+#endif
+
                  // options = "color=\"red\"";
                  // options = "penwidth=5, color=\"red\"";
 #if 0
@@ -380,6 +395,19 @@ ArtificialFrontierTraversal::evaluateInheritedAttribute(SgNode* n, ArtificialFro
 
             // DQ (5/3/2021): There may be some additional details of setting the physical_file_id as well to make 
             // sure that it is output into the correct file when header file unparsing is being supported.
+#endif
+#if 0
+               printf ("statement->get_containsTransformation() = %s \n",statement->get_containsTransformation() ? "true" : "false");
+               printf ("statement->isTransformation()           = %s \n",statement->isTransformation() ? "true" : "false");
+               printf ("statement->isOutputInCodeGeneration()   = %s \n",statement->isOutputInCodeGeneration() ? "true" : "false");
+#endif
+#if 1
+            // DQ (9/3/2021): test if we ever mark a statement to be transformed.
+            // If we never mark a statement to be a transforamtion then why do we 
+            // have any errors in the token-based unparsing tests?
+               ROSE_ASSERT(statement->get_containsTransformation() == false);
+               ROSE_ASSERT(statement->isTransformation()           == false);
+               ROSE_ASSERT(statement->isOutputInCodeGeneration()   == false);
 #endif
 #if 0
                printf ("AFTER: In ArtificialFrontierTraversal::evaluateInheritedAttribute(): statement->get_file_info()->getFileName() = %s \n",statement->get_file_info()->get_filenameString().c_str());
@@ -703,7 +731,7 @@ buildArtificialFrontier ( SgSourceFile* sourceFile, bool traverseHeaderFiles )
      ArtificialFrontier_InheritedAttribute inheritedAttribute (sourceFile);
      ArtificialFrontierTraversal fdTraversal(sourceFile);
 
-#if 1
+#if 0
      printf ("AFAFAFAFAFAFAFAFAFAFAFAAFAFAFAFAFAAFAFAFAFAFAFAFAFAFAFAFAAFAFAFAF \n");
      printf ("AFAFAFAFAFAFAFAFAFAFAFAAFAFAFAFAFAAFAFAFAFAFAFAFAFAFAFAFAAFAFAFAF \n");
      printf ("In buildArtificialFrontier(): calling traverse() sourceFile = %p filename = %s \n",sourceFile,sourceFile->getFileName().c_str());
