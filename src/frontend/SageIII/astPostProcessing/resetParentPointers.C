@@ -1599,6 +1599,17 @@ void ResetParentPointersOfClassAndNamespaceDeclarations::visit(SgNode* node)
 
      ROSE_ASSERT(node != NULL);
 
+#if 0
+  // DQ (1/22/2022): Turing this off to use this version of ROSE with the unit test project.
+     void test_bug(const string & s);
+
+     printf ("In ResetParentPointersOfClassAndNamespaceDeclarations::visit(): node = %p = %s \n",node,node->class_name().c_str());
+
+  // DQ (9/12/2021): testing for parent of declaration in typedef.
+     test_bug("In ResetParentPointersOfClassAndNamespaceDeclarations::visit()");
+#endif
+
+
      switch(node->variantT())
         {
           case V_SgClassDefinition:
@@ -1691,6 +1702,14 @@ void ResetParentPointersOfClassAndNamespaceDeclarations::visit(SgNode* node)
             // Nothing else to do here!
              }
         }
+
+#if 0
+  // DQ (1/22/2022): Turing this off to use this version of ROSE with the unit test project.
+     printf ("Leaving ResetParentPointersOfClassAndNamespaceDeclarations::visit(): node = %p = %s \n",node,node->class_name().c_str());
+
+  // DQ (9/12/2021): testing for parent of declaration in typedef.
+     test_bug("Leaving ResetParentPointersOfClassAndNamespaceDeclarations::visit()");
+#endif
    }
 
 
@@ -1715,14 +1734,35 @@ void topLevelResetParentPointer ( SgNode* node )
   // DQ (7/7/2005): Introduce tracking of performance of ROSE.
      TimingPerformance resetParentPointerTimer ("Reset parent pointers:");
 
+#if 0
+  // DQ (1/22/2022): Turing this off to use this version of ROSE with the unit test project.
+     void test_bug(const string & s);
+
+  // DQ (9/12/2021): testing for parent of declaration in typedef.
+     test_bug("before resetParentPointers");
+#endif
+
   // reset the parent pointers
      resetParentPointers(node,node->get_parent());
+
+#if 0
+  // DQ (1/22/2022): Turing this off to use this version of ROSE with the unit test project.
+  // DQ (9/12/2021): testing for parent of declaration in typedef.
+     test_bug("after resetParentPointers");
+#endif
 
   // DQ (9/24/2007): This might not be required now that AST islands are fixed.  This IS required!
 #if 1
   // reset the parent pointers in any class definitions, namespace definitions or global scope
      resetParentPointersOfClassOrNamespaceDeclarations(node);
 #endif
+
+#if 0
+  // DQ (1/22/2022): Turing this off to use this version of ROSE with the unit test project.
+  // DQ (9/12/2021): testing for parent of declaration in typedef.
+     test_bug("after resetParentPointersOfClassOrNamespaceDeclarations");
+#endif
+
    }
 
 

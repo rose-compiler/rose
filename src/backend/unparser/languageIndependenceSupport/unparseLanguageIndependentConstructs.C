@@ -1237,14 +1237,30 @@ UnparseLanguageIndependentConstructs::canBeUnparsedFromTokenStream(SgSourceFile*
        else
         {
 
-#if DEBUG_CAN_BE_UNPARSED
+#if DEBUG_CAN_BE_UNPARSED || 0
           printf ("Note: In canBeUnparsedFromTokenStream(): the requested subsequence mapping object was not found: stmt = %p = %s \n",stmt,stmt->class_name().c_str());
 #endif
         }
 
-#if DEBUG_CAN_BE_UNPARSED
+#if DEBUG_CAN_BE_UNPARSED || 0
      printf ("Leaving canBeUnparsedFromTokenStream(): stmt = %p = %s canBeUnparsed = %s \n",stmt,stmt->class_name().c_str(),canBeUnparsed ? "true" : "false");
 #endif
+
+  // DQ (9/3/2021): Debugging code for test in the roseTests/astTokenStreamTests.
+  // I think that the artifical frontiers are not being marked properly, or we are using a different mechanism 
+  // to trigger when to switch between unparsing from the AST and the token stream.
+     if (canBeUnparsed == false)
+        {
+          stmt->get_file_info()->display("Output location of node that can't be unparsed from the token stream");
+
+          ROSE_ASSERT(stmt->get_parent() != NULL);
+          printf ("parent = %p = %s \n",stmt->get_parent(),stmt->get_parent()->class_name().c_str());
+
+#if 1
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+#endif
+        }
 
      return canBeUnparsed;
    }
@@ -2984,7 +3000,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
           return;
         }
 
-#if 0
+#if 1
   // DQ (12/5/2019): Use this here to ouly generate output for statements that weill be unparsed.
   // DQ (10/30/2013): Debugging support for file info data for each IR node (added comment only)
      curprint ( string("\n/* Unparse statement (" ) + StringUtility::numberToString(stmt)
@@ -3157,7 +3173,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
         }
        else
         {
-#if DEBUG_USING_CURPRINT
+#if DEBUG_USING_CURPRINT || 1
           curprint ("/* In unparseStatement(): (unparseAttribute != NULL && unparseAttribute->replacementStringExists() == true) == false */");
 #endif
        // Use a static varible to track the previous statement.
@@ -3231,7 +3247,6 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
        // ROSE_ASSERT(info.get_current_source_file()->get_unparse_tokens() == cur_file->get_unparse_tokens());
           ROSE_ASSERT(cur_file == NULL || info.get_current_source_file()->get_unparse_tokens() == cur_file->get_unparse_tokens());
 
-
        // DQ (6/26/2021): If we are unparsing to a string, then we don't want to use the token stream, since we might not have identified the frountier nodes yet.
        // printf ("info.usedInUparseToStringFunction() = %s \n",info.usedInUparseToStringFunction() ? "true" : "false");
        // ROSE_ASSERT(info.usedInUparseToStringFunction() == false);
@@ -3279,7 +3294,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                bool isFrontierNode = (i != frontier_nodes.end());
                FrontierNode* associatedFrontierNode = (isFrontierNode == true) ? i->second : NULL;
 
-#if DEBUG_UNPARSE_STATEMENT
+#if DEBUG_UNPARSE_STATEMENT || 0
                printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): associatedFrontierNode = %p \n",associatedFrontierNode);
 #endif
             // Check is this is marked as already being handled via the unparsing of the token stream from another statement.
@@ -3299,7 +3314,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
             // bool unparseViaTokenStream = (isFrontierNode == true && associatedFrontierNode->unparseUsingTokenStream == true);
                bool unparseViaTokenStream = (isFrontierNode == true && associatedFrontierNode->unparseUsingTokenStream == true);
 
-#if DEBUG_UNPARSE_STATEMENT
+#if DEBUG_UNPARSE_STATEMENT || 0
                printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): isFrontierNode         = %s \n",isFrontierNode ? "true" : "false");
                printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): associatedFrontierNode = %p \n",associatedFrontierNode);
                if (associatedFrontierNode != NULL)
@@ -3365,10 +3380,14 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
                ROSE_ASSERT(frontier_nodes.size() > 0);
 #endif
 
-#if DEBUG_UNPARSE_STATEMENT
+#if DEBUG_UNPARSE_STATEMENT || 0
                printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): lastStatementOfGlobalScopeUnparsedUsingTokenStream = %s \n",
                     lastStatementOfGlobalScopeUnparsedUsingTokenStream == true ? "true" : "false");
                printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): unparseViaTokenStream = %s \n",unparseViaTokenStream == true ? "true" : "false");
+#else
+#if 0
+               printf ("In UnparseLanguageIndependentConstructs::unparseStatement(): unparseViaTokenStream = %s \n",unparseViaTokenStream == true ? "true" : "false");
+#endif
 #endif
 #if DEBUG_USING_CURPRINT
                curprint ("\n/* Before test for if (unparseViaTokenStream == true) ... */");
