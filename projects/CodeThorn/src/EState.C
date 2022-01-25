@@ -66,7 +66,8 @@ uint64_t EState::getDestructCount() {
 
 string EState::allocationStatsToString() {
   stringstream ss;
-  ss<<"constructed: "<<_constructCount<<" destructed: "<<_destructCount<<" diff: "<<_constructCount-_destructCount;
+  int64_t diff=(int64_t)_constructCount-(int64_t)_destructCount;
+  ss<<"constructed: "<<_constructCount<<" destructed: "<<_destructCount<<" diff: "<<diff;
   return ss.str();
 }
 
@@ -77,7 +78,8 @@ void EState::checkPointAllocationHistory() {
 std::string EState::allocationHistoryToString() {
   string s;
   for(auto p : _allocationHistory) {
-    s+=("("+std::to_string(p.first)+"-"+std::to_string(p.second)+"="+std::to_string(p.first-p.second)+") ");
+    int64_t diff=(int64_t)p.first-(int64_t)p.second;
+    s+=("("+std::to_string(p.first)+"-"+std::to_string(p.second)+"="+std::to_string(diff)+") ");
   }
   return s;
 }
