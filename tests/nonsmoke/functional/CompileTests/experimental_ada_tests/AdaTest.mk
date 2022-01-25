@@ -159,6 +159,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   entry_declaration.ads                \
   exception_rename.ads                 \
   formal_procedure_declaration.ads     \
+  formal_subprogram_declaration.ads    \
   generic_function_declaration.ads     \
   generic_package_declaration.ads      \
   inherited_primitive_operation.adb    \

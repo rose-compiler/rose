@@ -1121,6 +1121,10 @@ Grammar::setUpStatements ()
      FunctionDeclaration.setDataPrototype ( "SgExprListExp*", "decoratorList", "= NULL",
                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+     // MS (01/24/22) support for Ada formal subprogram declarations */
+     FunctionDeclaration.setDataPrototype ( "bool", "ada_formal_subprogram_decl", "= false",
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      FunctionParameterList.setFunctionPrototype ( "HEADER_FUNCTION_PARAMETER_LIST", "../Grammar/Statement.code" );
 
      FunctionParameterList.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );

@@ -1648,6 +1648,8 @@ namespace
       const bool      isFunc  = si::ada::isFunction(n.get_type());
       std::string     keyword = isFunc ? "function" : "procedure";
 
+      if (n.get_ada_formal_subprogram_decl())
+        prn("with ");
       if (n.get_declarationModifier().isOverride())
         prn("overriding ");
 
