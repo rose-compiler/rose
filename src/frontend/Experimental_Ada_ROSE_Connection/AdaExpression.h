@@ -48,6 +48,11 @@ namespace Ada_ROSE_Translation
   SgAdaAttributeExp&
   getAttributeExprID(Element_ID id, AstContext ctx);
 
+  /// returns an expression for the representation value of an enumerator
+  SgExpression&
+  getEnumRepresentationValue(Element_Struct& el, AstContext ctx);
+
+
   /// creates a call to subroutine expression \ref target, and passes params as arguments.
   SgExpression& createCall(SgExpression& target, ElemIdRange params, bool callSyntax, AstContext ctx);
 

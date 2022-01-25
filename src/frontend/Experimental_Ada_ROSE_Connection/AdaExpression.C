@@ -1484,4 +1484,17 @@ SgExpression& createCall(SgExpression& target, ElemIdRange args, bool callSyntax
   return SG_DEREF(res);
 }
 
+SgExpression&
+getEnumRepresentationValue(Element_Struct& el, AstContext ctx)
+{
+  ADA_ASSERT(el.Element_Kind == A_Defining_Name);
+
+  Defining_Name_Struct& def = el.The_Union.Defining_Name;
+  ADA_ASSERT(  def.Defining_Name_Kind == A_Defining_Enumeration_Literal
+            || def.Defining_Name_Kind == A_Defining_Character_Literal
+            );
+
+  return mkValue<SgIntVal>(def.Representation_Value_Image);
+}
+
 } // namespace Ada_ROSE_Translation

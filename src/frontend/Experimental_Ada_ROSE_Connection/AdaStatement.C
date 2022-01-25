@@ -2376,7 +2376,7 @@ namespace
       InheritedEnumeratorCreator(SgEnumDeclaration& enumDcl, SgEnumDeclaration& orig, AstContext astctx)
       : derivedDcl(enumDcl), origAA(orig.get_enumerators().begin()), origZZ(orig.get_enumerators().end()), ctx(astctx)
       {
-        logError() << "|| " << std::distance(origAA, origZZ) << std::endl;
+        //~ logError() << "|| " << std::distance(origAA, origZZ) << std::endl;
       }
 
       // assuming that the inherited enumerators appear in the same order
@@ -2384,7 +2384,10 @@ namespace
       {
         ROSE_ASSERT(origAA != origZZ);
 
+#if OLD_CODE
         SgInitializedName& origEnum = SG_DEREF(*origAA);
+        ADA_ASSERT(isSgAssignInitializer(origEnum.get_initializer()));
+
         SgVarRefExp&       enumInit = SG_DEREF(sb::buildVarRefExp(&origEnum, &ctx.scope()));
 
         enumInit.unsetTransformation();
@@ -2393,9 +2396,41 @@ namespace
         SgType&            enumTy   = SG_DEREF(derivedDcl.get_type());
         SgInitializedName& sgnode   = mkInitializedName(origEnum.get_name(), enumTy, &enumInit);
 
+        std::cerr << "derenum " << reinterpret_cast<uint64_t>(&sgnode) << std::endl;
+#endif /* OLD _CODE */
+
+        // PP (01/25/22) new code: the old code tried to link the enumerators to their original definition
+        // by setting the initializer to the old value. However, derived enumerators can have
+        // different representation values, and to support JACCEL-265 and the translation to C++
+        // in general, the link to the original declaration is no longer maintained.
+        // Instead, the initializer now links to the representation value. The relationshio to the
+        // inherited values is no implied.
+        // \todo The code is most similar to the normal EnumeratorCreator in AdaType.C and
+        //       could be refactored to eliminate code duplication.
+        SgType&             enumTy = SG_DEREF(derivedDcl.get_type());
+        Element_Struct&     elem = retrieveAs(elemMap(), id);
+        ADA_ASSERT(elem.Element_Kind == A_Declaration);
+        logKind("A_Declaration");
+
+        Declaration_Struct& decl = elem.The_Union.Declaration;
+        ADA_ASSERT(decl.Declaration_Kind == An_Enumeration_Literal_Specification);
+        logKind("An_Enumeration_Literal_Specification");
+
+        NameData            name = singleName(decl, ctx);
+        ADA_ASSERT(name.ident == name.fullName);
+
+        // \todo name.ident could be a character literal, such as 'c'
+        //       since SgEnumDeclaration only accepts SgInitializedName as enumerators
+        //       SgInitializedName are created with the name 'c' instead of character constants.
+        SgExpression&       repval = getEnumRepresentationValue(name.elem(), ctx);
+        SgInitializedName&  sgnode = mkInitializedName(name.ident, enumTy, &repval);
+
         sgnode.set_scope(derivedDcl.get_scope());
+        //~ sg::linkParentChild(enumdcl, sgnode, &SgEnumDeclaration::append_enumerator);
         derivedDcl.append_enumerator(&sgnode);
-        recordNode(asisVars(), id, sgnode);
+        ADA_ASSERT(sgnode.get_parent() == &derivedDcl);
+
+        recordNode(asisVars(), name.id(), sgnode);
 
         ++origAA;
       }
