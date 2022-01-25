@@ -1502,10 +1502,24 @@ mkNullExpression()
 }
 
 
+namespace
+{
+  int getInitialValue(SgInitializedName& enumitem)
+  {
+    //~ if (enumitem.get_initializer() == nullptr)
+      //~ return -1;
+
+    SgAssignInitializer& ini = SG_DEREF( isSgAssignInitializer(enumitem.get_initializer()) );
+    SgIntVal&            val = SG_DEREF( isSgIntVal(ini.get_operand()) );
+
+    return val.get_value();
+  }
+};
+
 SgExpression&
 mkEnumeratorRef(SgEnumDeclaration& enumdecl, SgInitializedName& enumitem)
 {
-  return SG_DEREF( sb::buildEnumVal_nfi(-1, &enumdecl, enumitem.get_name()) );
+  return SG_DEREF( sb::buildEnumVal_nfi(getInitialValue(enumitem), &enumdecl, enumitem.get_name()) );
 }
 
 SgExpression&

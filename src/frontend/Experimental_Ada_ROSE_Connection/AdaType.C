@@ -296,9 +296,9 @@ namespace
   }
 
 
-  struct EnumElementCreator
+  struct EnumeratorCreator
   {
-      EnumElementCreator(SgEnumDeclaration& n, AstContext astctx)
+      EnumeratorCreator(SgEnumDeclaration& n, AstContext astctx)
       : enumdcl(n), enumty(SG_DEREF(n.get_type())), ctx(astctx)
       {}
 
@@ -317,7 +317,8 @@ namespace
         // \todo name.ident could be a character literal, such as 'c'
         //       since SgEnumDeclaration only accepts SgInitializedName as enumerators
         //       SgInitializedName are created with the name 'c' instead of character constants.
-        SgInitializedName&  sgnode = mkInitializedName(name.ident, enumty, nullptr);
+        SgExpression&       repval = getEnumRepresentationValue(name.elem(), ctx);
+        SgInitializedName&  sgnode = mkInitializedName(name.ident, enumty, &repval);
 
         sgnode.set_scope(enumdcl.get_scope());
         attachSourceLocation(sgnode, elem, ctx);
@@ -556,7 +557,7 @@ namespace
           SgEnumDeclaration& sgnode = mkEnumDefn(name, ctx.scope());
           ElemIdRange        enums = idRange(typenode.Enumeration_Literal_Declarations);
 
-          traverseIDs(enums, elemMap(), EnumElementCreator{sgnode, ctx});
+          traverseIDs(enums, elemMap(), EnumeratorCreator{sgnode, ctx});
           /* unused fields:
            */
           res.sageNode(sgnode);
