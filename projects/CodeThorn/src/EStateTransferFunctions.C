@@ -152,6 +152,27 @@ namespace CodeThorn {
     return es1->isApproximatedBy(es2);
   }
 
+  // merges es2 into es1
+  void EStateTransferFunctions::combineInPlace1st(EStatePtr es1, EStatePtr es2) {
+    ROSE_ASSERT(es1->label()==es2->label());
+    if(es1->callString!=es2->callString) {
+      if(_analyzer->getOptionOutputWarnings()) {
+        SAWYER_MESG(logger[WARN])<<"combining estates with different callstrings at label:"<<es1->label().toString()<<endl;
+        SAWYER_MESG(logger[WARN])<<"cs1: "<<es1->callString.toString()<<endl;
+        SAWYER_MESG(logger[WARN])<<"cs2: "<<es2->callString.toString()<<endl;
+      }
+    }
+    InputOutput io;
+    if(es1->io.isBot()) {
+      es1->io=es2->io;
+    } else if(es2->io.isBot()) {
+      // no update of es1 necessary
+    } else {
+      ROSE_ASSERT(es1->io==es2->io);
+    }
+    PState::combineInPlace1st(es1->pstate(),es2->pstate());
+  }
+  
   EState EStateTransferFunctions::combine(EStatePtr es1, EStatePtr es2) {
     ROSE_ASSERT(es1->label()==es2->label());
     //ROSE_ASSERT(es1->constraints()==es2->constraints()); // pointer equality

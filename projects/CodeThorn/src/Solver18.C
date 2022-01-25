@@ -89,12 +89,12 @@ EStatePtr Solver18::getSummaryState(CodeThorn::Label lab, CodeThorn::CallString 
   {
     auto iter1=_summaryCSStateMapMap.find(lab.getId());
     if(iter1==_summaryCSStateMapMap.end()) {
-      res=getBottomSummaryState(lab,cs);
+      res=nullptr;
     } else {
       SummaryCSStateMap& summaryCSStateMap=(*iter1).second;
       auto iter2=summaryCSStateMap.find(cs);
       if(iter2==summaryCSStateMap.end()) {
-        res=getBottomSummaryState(lab,cs);
+        res=nullptr;
       } else {
         res=(*iter2).second;
       }
@@ -124,7 +124,7 @@ void Solver18::setSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs, E
       auto iter2=summaryCSStateMap.find(cs);
       if(iter2==summaryCSStateMap.end()) {
         summaryCSStateMap[cs]=estate;
-        _numberOfStates++;
+        //_numberOfStates++;
       } else {
         // context already exists, re-set state, no additional state added
         auto currentEState=(*iter2).second;
@@ -138,7 +138,7 @@ void Solver18::setSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs, E
 }
 
 // creates bottom state
-EStatePtr Solver18::getBottomSummaryState(Label lab, CallString cs) {
+EStatePtr Solver18::createBottomSummaryState(Label lab, CallString cs) {
   InputOutput io;
   io.recordBot();
   EState estate(lab,cs,new PState(),io);
@@ -184,11 +184,14 @@ void Solver18::run() {
     ROSE_ASSERT(p.label().isValid());
     ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(p.label()));
     EStatePtr currentEStatePtr=getSummaryState(p.label(),p.callString());
+    if(currentEStatePtr==nullptr)
+      currentEStatePtr=createBottomSummaryState(p.label(),p.callString());
+
     ROSE_ASSERT(currentEStatePtr);
     
     list<EStatePtr> newEStateList0;
     size_t pathLen=0;
-    while(false && isPassThroughLabel(currentEStatePtr->label())) {
+    while(isPassThroughLabel(currentEStatePtr->label())) {
       //cout<<"DEBUG: pass through: "<<currentEStatePtr->label().toString()<<endl;
       Flow edgeSet0=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
       if(edgeSet0.size()==1) {
@@ -215,7 +218,7 @@ void Solver18::run() {
       cout<<"P1:"<<EState::allocationStatsToString()<<": num states:"<<getNumberOfStates()<<endl;
       auto newEState=currentEStatePtr->clone();
       cout<<"P2:"<<EState::allocationStatsToString()<<": num states:"<<getNumberOfStates()<<endl;
-      auto checkDiff1=checkDiff();
+      //auto checkDiff1=checkDiff();
       list<EStatePtr> newEStateList=_analyzer->transferEdgeEStateInPlace(e,newEState);
       if(newEStateList.size()==0) {
         delete newEState;
@@ -223,7 +226,7 @@ void Solver18::run() {
         continue;
       }
       cout<<"P3:"<<EState::allocationStatsToString()<<": num states:"<<getNumberOfStates()<<endl;
-      auto checkDiff2=checkDiff();
+      //auto checkDiff2=checkDiff();
       //if(checkDiff1!=checkDiff2 && newEStateList.size()<=1) {
       //  cerr<<"Solver18: FAIL1: "<<checkDiff1<<":"<<checkDiff2<<" :"<< newEStateList.size()<<endl;
       //  exit(1);
@@ -240,6 +243,9 @@ void Solver18::run() {
           ROSE_ASSERT(newEStatePtr);
           // performing merge
           EStatePtr summaryEStatePtr=getSummaryState(lab,cs);
+          if(summaryEStatePtr==nullptr)
+            summaryEStatePtr=createBottomSummaryState(lab,cs);
+
           ROSE_ASSERT(summaryEStatePtr);
           if(_analyzer->getEStateTransferFunctions()->isApproximatedBy(newEStatePtr,summaryEStatePtr)) {
             cout<<"P5a:"<<EState::allocationStatsToString()<<": num states:"<<getNumberOfStates()<<endl;
@@ -248,24 +254,21 @@ void Solver18::run() {
             newEStatePtr=nullptr;
           } else {
             cout<<"P6a:"<<EState::allocationStatsToString()<<": num states:"<<getNumberOfStates()<<endl;
-            EState newCombinedSummaryEState=_analyzer->getEStateTransferFunctions()->combine(summaryEStatePtr,const_cast<EStatePtr>(newEStatePtr));
-            EStatePtr newCombinedSummaryEStatePtr=new EState(newCombinedSummaryEState);
+            _analyzer->getEStateTransferFunctions()->combineInPlace1st(summaryEStatePtr,const_cast<EStatePtr>(newEStatePtr));
             cout<<"P6b:"<<EState::allocationStatsToString()<<": num states:"<<getNumberOfStates()<<endl;
-            newCombinedSummaryEStatePtr->setLabel(lab);
-            newCombinedSummaryEStatePtr->setCallString(cs);
-            setSummaryState(lab,cs,newCombinedSummaryEStatePtr);
+            setSummaryState(lab,cs,summaryEStatePtr);
             cout<<"P6c:"<<EState::allocationStatsToString()<<": num states:"<<getNumberOfStates()<<endl;
-            //delete summaryEStatePtr;
+            //  delete summaryEStatePtr;
             delete newEStatePtr;
             cout<<"P6d:"<<EState::allocationStatsToString()<<": num states:"<<getNumberOfStates()<<endl;
-            newEStatePtr=newCombinedSummaryEStatePtr;
-            ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(newEStatePtr->label()));
+            ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(summaryEStatePtr->label()));
             //_analyzer->addToWorkList(newEStatePtr);
-            _workList->push(WorkListEntry(newEStatePtr->label(),newEStatePtr->callString));
+            _workList->push(WorkListEntry(summaryEStatePtr->label(),summaryEStatePtr->callString));
 
           }
         }
         cout<<"P7:"<<EState::allocationStatsToString()<<": num states:"<<getNumberOfStates()<<endl;
+        /*
         if(((_analyzer->isFailedAssertEState(newEStatePtr0))||_analyzer->isVerificationErrorEState(newEStatePtr0))) {
           // failed-assert end-state: do not add to work list but do add it to the transition graph
           EStatePtr newEStatePtr=newEStatePtr0;
@@ -282,6 +285,7 @@ void Solver18::run() {
             continue;
           } // end of failed assert handling
         } // end of if
+        */
       } // end of loop on transfer function return-estates
     } // edge set iterator
     if(_analyzer->getOptionsRef().displayDiff && displayTransferCounter>=(size_t)_analyzer->getOptionsRef().displayDiff) {

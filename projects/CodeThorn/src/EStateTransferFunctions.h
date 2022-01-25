@@ -98,6 +98,7 @@ namespace CodeThorn {
     
     bool isApproximatedBy(EStatePtr es1, EStatePtr es2);
     EState combine(EStatePtr es1, EStatePtr es2);
+    void combineInPlace1st(EStatePtr es1, EStatePtr es2);
 
     /* determines transfer function code from CFG and AST-matching and calls transferEdgeEStateDispatch
        ultimately this function can be used to operate on its own IR. Updates provided estate in-place. */

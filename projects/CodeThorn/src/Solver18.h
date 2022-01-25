@@ -46,7 +46,7 @@ namespace CodeThorn {
     void initializeSummaryStatesFromWorkList();
     EStatePtr getSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs);
     void setSummaryState(CodeThorn::Label lab, CallString cs, EStatePtr estate);
-    EStatePtr getBottomSummaryState(Label lab, CallString cs);
+    EStatePtr createBottomSummaryState(Label lab, CallString cs);
     typedef std::unordered_map <CallString ,EStatePtr> SummaryCSStateMap;
     std::unordered_map< int, SummaryCSStateMap > _summaryCSStateMapMap;
     // number of active states stored in _summaryCSStateMapMap (computed incrementally by setSummaryState)
