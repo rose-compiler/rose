@@ -965,7 +965,7 @@ ROSE_DLL_API bool isScalarType(SgType* t);
 //! There is another similar function named SgType::isIntegerType(), which allows additional types char, wchar, and bool.
 ROSE_DLL_API bool isStrictIntegerType(SgType* t);
 
-//! Check if a type is a struct type (a special SgClassType in ROSE)
+//! Check if a type is a struct type (a special SgClassType in ROSE). Typedef and modifier types are not stripped off. Only direct struct type is returned as true.
 ROSE_DLL_API bool isStructType(SgType* t);
 
 //! Generate a mangled string for a given type based on Itanium C++ ABI
@@ -2822,6 +2822,7 @@ SgInitializedName& getFirstVariable(SgVariableDeclaration& vardecl);
       bool HasVirtualDestructor(const SgType * const inputType);
       bool IsBaseOf(const SgType * const inputBaseType, const SgType * const inputDerivedType);
       bool IsAbstract(const SgType * const inputType);
+      //! strip off typedef and modifer types, then check if a type is a class type, excluding union type.
       bool IsClass(const SgType * const inputType);
       bool IsEmpty(const SgType * const inputType);
       bool IsEnum(const SgType * const inputType);
