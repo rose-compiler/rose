@@ -7,7 +7,7 @@ procedure Enumeration is
                  Yellow  => 44);
 
   type YourColor is (Blue, White, Red);
-  for YourColor use (0,    1,     2);
+  for YourColor use (- 1,    0,   + 1);
 
 begin
   null;

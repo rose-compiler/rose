@@ -150,6 +150,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   choice_parameter_specification.adb   \
   complex.ads                          \
   complex.adb                          \
+  derived_private_record.adb           \
   discriminant.adb                     \
   discriminant_constraint.ads          \
   discriminated_record.adb             \
@@ -170,6 +171,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   package_renaming_declaration.ads     \
   parent-child.adb                     \
   pkgrename.ads                        \
+  private_derived_formal_type.adb      \
   procedure_renaming.adb               \
   protected_object.adb                 \
   protected_body_declaration.adb       \
