@@ -93,32 +93,9 @@ if test "$prefix" = NONE; then
    prefix="$PWD"
 fi
 
-# DQ & PC (11/3/2009): Debugging the Java support.
-if false; then
-  if test "x$JAVA_HOME" = "x"; then
-    JAVA="`which javac`"
-    if test -f /usr/bin/javaconfig; then # Mac Java
-      :
-    else
-      while test `readlink "$JAVA"` ; do
-        JAVA=`readlink "$JAVA"` ;
-     done
-
-     if test $JAVA = "gcj"; then
-        AC_MSG_ERROR([gcj not supported; please configure sun java as javac])
-     fi
-
-    fi
-    JAVA_HOME="`dirname $JAVA`/.."
-  fi
-fi
-
 # Call supporting macro for the Java path required by the Open Fortran Parser (for Fortran 2003 support)
 # Use our classpath in case the user's is messed up
 AS_SET_CATFILE([ABSOLUTE_SRCDIR], [`pwd`], [${srcdir}])
-
-# Check for Java support used internally to support both the Fortran language (OFP fortran parser) and Java language (ECJ java parser).
-ROSE_SUPPORT_JAVA # This macro uses JAVA_HOME
 
 ROSE_CONFIGURE_SECTION([Checking GNU Fortran])
 # DQ (10/18/2010): Check for gfortran (required for syntax checking and semantic analysis of input Fortran codes)
@@ -148,6 +125,9 @@ AC_MSG_NOTICE([GFORTRAN_PATH = "$GFORTRAN_PATH"])
   AC_CHECK_LIB([curl], [Curl_connect], [HAVE_CURL=yes], [HAVE_CURL=no])
   AM_CONDITIONAL([HAS_LIBRARY_CURL], [test "x$HAVE_CURL" = "xyes"])
 
+# Rasmussen (01/13/2021): Moved checking for Java until after language configuration
+# options are set.  Otherwise configure fails if jdk libraries aren't found even if not used.
+  ROSE_SUPPORT_JAVA # This macro uses JAVA_HOME
   ROSE_SUPPORT_UPC
   ROSE_SUPPORT_COMPASS2
   ROSE_SUPPORT_GMP
