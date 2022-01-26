@@ -3557,6 +3557,35 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         break;
       }
 
+    case A_Formal_Procedure_Declaration:           // 12.6(2)
+    case A_Formal_Function_Declaration:            // 12.6(2)
+      {
+        logKind(decl.Declaration_Kind == A_Formal_Procedure_Declaration ?
+                "A_Formal_Procedure_Declaration" : "A_Formal_Function_Declaration");
+
+        const bool        isFormalFuncDecl = decl.Declaration_Kind == A_Formal_Function_Declaration;
+        NameData          adaname          = singleName(decl, ctx);
+        ElemIdRange       range            = idRange(decl.Parameter_Profile);
+        SgType&           rettype          = isFormalFuncDecl
+          ? getDeclTypeID(decl.Result_Profile, ctx)
+          : SG_DEREF(sb::buildVoidType());
+
+        ADA_ASSERT(adaname.fullName == adaname.ident);
+
+        SgScopeStatement&     logicalScope = adaname.parent_scope();
+
+        // create a function declaration for formal function/procedure declaration.
+        SgFunctionDeclaration& sgnode = mkProcedure(adaname.ident, logicalScope, rettype, ParameterCompletion{range, ctx});
+        sgnode.set_ada_formal_subprogram_decl(true);
+        recordNode(asisDecls(), elem.ID, sgnode);
+        recordNode(asisDecls(), adaname.id(), sgnode);
+
+        attachSourceLocation(sgnode, elem, ctx);
+        ctx.scope().append_statement(&sgnode);
+
+        break;
+      }
+
     case A_Subtype_Declaration:                    // 3.2.2(2)
       {
         logKind("A_Subtype_Declaration");
@@ -4179,8 +4208,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case A_Protected_Body_Stub:                    // 10.1.3(6)
     case A_Formal_Object_Declaration:              // 12.4(2)  -> Mode_Kinds
     case A_Formal_Incomplete_Type_Declaration:
-    case A_Formal_Procedure_Declaration:           // 12.6(2)
-    case A_Formal_Function_Declaration:            // 12.6(2)
     case A_Formal_Package_Declaration:             // 12.7(2)
     case A_Formal_Package_Declaration_With_Box:    // 12.7(3)
     default:
