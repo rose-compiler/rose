@@ -43,12 +43,13 @@ namespace CodeThorn {
   class EState : public Lattice {
   public:
     EState();
-    EState(Label label, PStatePtr pstate):_label(label),_pstate(pstate) {}
-    EState(Label label, PStatePtr pstate, CodeThorn::InputOutput io):_label(label),_pstate(pstate),io(io){}
-    EState(Label label, CallString cs, PStatePtr pstate, CodeThorn::InputOutput io):_label(label),_pstate(pstate),io(io),callString(cs) {}
+  EState(Label label, PStatePtr pstate):_label(label),_pstate(pstate) { _constructCount++; }
+    EState(Label label, PStatePtr pstate, CodeThorn::InputOutput io):_label(label),_pstate(pstate),io(io){ _constructCount++; }
+    EState(Label label, CallString cs, PStatePtr pstate, CodeThorn::InputOutput io):_label(label),_pstate(pstate),io(io),callString(cs) { _constructCount++; }
+    EState(EState&& other); // move constructor
     ~EState();
-
     EState(const EState &other); // copy constructor
+
     EState& operator=(const EState &other); // assignment operator
     
     std::string toString() const;

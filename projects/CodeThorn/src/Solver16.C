@@ -287,6 +287,7 @@ void Solver16::run() {
     _analyzer->printStatusMessage("STATUS: analysis finished (worklist is empty).",true);
   }
   _analyzer->getTransitionGraph()->setIsPrecise(_analyzer->isPrecise());
+  EState::checkPointAllocationHistory();
 }
 
 void Solver16::initDiagnostics() {

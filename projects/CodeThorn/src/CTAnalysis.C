@@ -123,12 +123,37 @@ void CodeThorn::CTAnalysis::deleteAllStates() {
     cout<<"STATUS: "<<hashSetConsistencyReport();
   }      
   
+  EState::checkPointAllocationHistory();
+  size_t numSetEStates=estateSet.size();
   if(_ctOpt.status) cout<<"STATUS: deleting "<<estateSet.size()<<" estates, ";
+  for(auto es : estateSet) {
+    delete es;
+  }
   estateSet.clear();
+  size_t numSetPStates=pstateSet.size();
   if(_ctOpt.status) cout<<pstateSet.size()<<" pstates, ";
+  for(auto ps : pstateSet) {
+    delete ps;
+  }
   pstateSet.clear();
+
+  EState::checkPointAllocationHistory();
+
   if(_ctOpt.status) cout<<transitionGraph.size()<<" transitions in TS."<<endl;
   transitionGraph.clear();
+
+  // check is necessary for mixed modes. If states already deleted above, they cannot be deleted again
+  if(numSetEStates==0 && numSetPStates==0 && _summaryCSStateMapMap.size()>0) {
+    size_t cnt=0;
+    for(auto entry : _summaryCSStateMapMap) {
+      auto map=entry.second;
+      for(auto entry2 : map) {
+        delete entry2.second;
+      cnt++;
+      }
+    }
+    if(_ctOpt.status) cout<<"STATUS: deleted "<<cnt<<" CS-estates."<<endl;
+  }
 }
 
 void CodeThorn::CTAnalysis::run() {

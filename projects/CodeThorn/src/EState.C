@@ -33,6 +33,17 @@ EState::EState():_label(Label()) {
   _constructCount++;
 }
 
+// move constructor
+EState::EState(EState&& other) {
+  bool sharedPStates=true; // copies only pointer to PState
+  copy(this,&other,sharedPStates);
+  if(other._pstate) {
+    // pointer is copied by above 'copy' function
+    other._pstate=nullptr;
+  }
+  _constructCount++;
+}
+
 // copy constructor
 EState::EState(const EState &other) {
   copy(this,&other,sharedPStates);
@@ -48,6 +59,7 @@ EState& EState::operator=(const EState &other) {
 EState::~EState() {
   if(EState::sharedPStates==false) {
     //cerr<<"DEBUG: Deleting estate: "<<this<<" with pstate: "<<_pstate<<endl;
+    // check, because it may be null because of move semantics
     if(_pstate!=nullptr) {
       delete _pstate;
       _pstate=nullptr;

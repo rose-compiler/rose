@@ -152,7 +152,7 @@ size_t Solver18::checkDiff() {
   return EState::getConstructCount()-EState::getDestructCount()-getNumberOfStates();
 }
 
-static bool debugFlag=false;
+static bool debugFlag=true;
 
 void Solver18::run() {
   SAWYER_MESG(logger[INFO])<<"Running solver "<<getId()<<" (sharedpstates:"<<_analyzer->getOptionsRef().sharedPStates<<")"<<endl;

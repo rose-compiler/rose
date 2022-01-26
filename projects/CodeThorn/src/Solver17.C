@@ -139,6 +139,7 @@ void Solver17::run() {
     _analyzer->printStatusMessage(true);
     _analyzer->printStatusMessage("STATUS: analysis finished (worklist is empty).",true);
   }
+  EState::checkPointAllocationHistory();
 }
 
 void Solver17::initDiagnostics() {
