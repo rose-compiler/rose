@@ -836,7 +836,7 @@ namespace
         ASSERT_not_null(ty);
 
         if (SgType* formalType = ty->get_formal_type())
-          computeNameQualForShared(n, ty->get_formal_type());
+          computeNameQualForShared(n, formalType);
       }
 
       void handle(const SgEnumDeclaration& n)

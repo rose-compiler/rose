@@ -162,7 +162,7 @@ struct LabelAndLoopManager
 ///   containts context that is passed top-down
 struct AstContext
 {
-    AstContext()                             = default;
+    AstContext();
     AstContext(AstContext&&)                 = default;
     AstContext& operator=(AstContext&&)      = default;
     AstContext(const AstContext&)            = default;
@@ -209,6 +209,18 @@ struct AstContext
     /// gets all variant choice lists in the context
     const std::vector<Element_ID_List>& variantChoices() const;
 
+    //
+    // policies for building the AST depending on context
+
+    /// enumerator (i.e., elements of an enum) builder
+    using EnumeratorBuilder = std::function<SgExpression&(SgEnumDeclaration&, SgInitializedName&)>;
+
+    /// sets new context for building enums
+    AstContext enumBuilder(EnumeratorBuilder bld) const;
+
+    /// gets the current policy for building enumerators
+    EnumeratorBuilder enumBuilder() const;
+
 /**
     /// returns a new context with the element
     AstContext element(Element_struct& el) const;
@@ -223,6 +235,7 @@ struct AstContext
     const std::string*           unit_file_name          = nullptr;
     std::vector<Name>            active_variant_names;
     std::vector<Element_ID_List> active_variant_choices;
+    EnumeratorBuilder            enum_builder;
 
     //~ Element_Struct*      elem;
 };

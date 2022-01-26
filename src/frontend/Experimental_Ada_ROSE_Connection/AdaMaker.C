@@ -139,6 +139,18 @@ mkAdaRangeConstraint(SgExpression& range)
   return sgnode;
 }
 
+SgAdaDigitsConstraint&
+mkAdaDigitsConstraint(SgExpression& digits, SgAdaRangeConstraint* range_opt)
+{
+  SgAdaDigitsConstraint& sgnode = mkLocatedNode<SgAdaDigitsConstraint>(&digits, range_opt);
+
+  digits.set_parent(&sgnode);
+  if (range_opt) range_opt->set_parent(&sgnode);
+
+  return sgnode;
+}
+
+
 namespace
 {
   void incorporateConstraintExpressions(SgNode& parent, SgExpressionPtrList& constraints, SgExpressionPtrList&& exprs)
@@ -194,6 +206,7 @@ mkAdaModularType(SgExpression& modexpr)
   return sgnode;
 }
 
+/*
 SgAdaFloatType&
 mkAdaFloatType(SgExpression& digits, SgAdaRangeConstraint* range_opt)
 {
@@ -205,7 +218,6 @@ mkAdaFloatType(SgExpression& digits, SgAdaRangeConstraint* range_opt)
   return sgnode;
 }
 
-/*
 SgAdaFormalType&
 mkAdaFormalType(const std::string& name)
 {
@@ -1501,6 +1513,32 @@ mkNullExpression()
   return sgnode;
 }
 
+
+namespace
+{
+  int getInitialValue(SgInitializedName& enumitem)
+  {
+    //~ if (enumitem.get_initializer() == nullptr)
+      //~ return -1;
+
+    SgAssignInitializer& ini = SG_DEREF( isSgAssignInitializer(enumitem.get_initializer()) );
+    SgIntVal&            val = SG_DEREF( isSgIntVal(ini.get_operand()) );
+
+    return val.get_value();
+  }
+};
+
+SgExpression&
+mkEnumeratorRef(SgEnumDeclaration& enumdecl, SgInitializedName& enumitem)
+{
+  return SG_DEREF( sb::buildEnumVal_nfi(getInitialValue(enumitem), &enumdecl, enumitem.get_name()) );
+}
+
+SgExpression&
+mkEnumeratorRef_repclause(SgEnumDeclaration&, SgInitializedName& enumitem)
+{
+  return SG_DEREF( sb::buildVarRefExp(&enumitem, nullptr /* not needed */) );
+}
 
 
 SgAdaAttributeExp&
