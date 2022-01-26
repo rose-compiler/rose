@@ -79,9 +79,24 @@ namespace
   SgNode&
   getExprTypeID(Element_ID tyid, AstContext ctx);
 
+  namespace
+  {
+    SgType* errorType(Expression_Struct& typeEx, AstContext ctx)
+    {
+      logError() << "unknown type name: " << typeEx.Name_Image
+                 << " / " << typeEx.Corresponding_Name_Definition
+                 << std::endl;
+
+      ADA_ASSERT(!FAIL_ON_ERROR(ctx));
+      return sb::buildVoidType();
+    }
+  }
+
   SgNode&
   getExprType(Expression_Struct& typeEx, AstContext ctx)
   {
+    static constexpr bool findFirstOf = false;
+
     SgNode* res = nullptr;
 
     switch (typeEx.Expression_Kind)
@@ -92,31 +107,12 @@ namespace
 
           // is it a type?
           // typeEx.Corresponding_Name_Declaration ?
-          res = findFirst(asisTypes(), typeEx.Corresponding_Name_Definition);
-
-          if (!res)
-          {
-            // is it an exception?
-            // typeEx.Corresponding_Name_Declaration ?
-            res = findFirst(asisExcps(), typeEx.Corresponding_Name_Definition);
-          }
-
-          if (!res)
-          {
-            // is it a predefined Ada type?
-            res = findFirst(adaTypes(), AdaIdentifier{typeEx.Name_Image});
-          }
-
-          if (!res)
-          {
-            // what is it?
-            logWarn() << "unknown type name: " << typeEx.Name_Image
-                      << " / " << typeEx.Corresponding_Name_Definition
-                      << std::endl;
-
-            ADA_ASSERT(!FAIL_ON_ERROR(ctx));
-            res = sb::buildVoidType();
-          }
+          findFirstOf
+          || (res = findFirst(asisTypes(), typeEx.Corresponding_Name_Definition))
+          || (res = findFirst(asisExcps(), typeEx.Corresponding_Name_Definition))
+          || (res = findFirst(adaTypes(),  AdaIdentifier{typeEx.Name_Image}))
+          || (res = errorType(typeEx, ctx))
+          ;
 
           break;
         }
@@ -223,7 +219,7 @@ namespace
   SgAdaTypeConstraint*
   getConstraintID_opt(Element_ID el, AstContext ctx)
   {
-    return el ?  &getConstraintID(el, ctx) : nullptr;
+    return el ? &getConstraintID(el, ctx) : nullptr;
   }
 
 
@@ -296,9 +292,9 @@ namespace
   }
 
 
-  struct EnumElementCreator
+  struct EnumeratorCreator
   {
-      EnumElementCreator(SgEnumDeclaration& n, AstContext astctx)
+      EnumeratorCreator(SgEnumDeclaration& n, AstContext astctx)
       : enumdcl(n), enumty(SG_DEREF(n.get_type())), ctx(astctx)
       {}
 
@@ -317,7 +313,8 @@ namespace
         // \todo name.ident could be a character literal, such as 'c'
         //       since SgEnumDeclaration only accepts SgInitializedName as enumerators
         //       SgInitializedName are created with the name 'c' instead of character constants.
-        SgInitializedName&  sgnode = mkInitializedName(name.ident, enumty, nullptr);
+        SgExpression&       repval = getEnumRepresentationValue(name.elem(), ctx);
+        SgInitializedName&  sgnode = mkInitializedName(name.ident, enumty, &repval);
 
         sgnode.set_scope(enumdcl.get_scope());
         attachSourceLocation(sgnode, elem, ctx);
@@ -556,7 +553,7 @@ namespace
           SgEnumDeclaration& sgnode = mkEnumDefn(name, ctx.scope());
           ElemIdRange        enums = idRange(typenode.Enumeration_Literal_Declarations);
 
-          traverseIDs(enums, elemMap(), EnumElementCreator{sgnode, ctx});
+          traverseIDs(enums, elemMap(), EnumeratorCreator{sgnode, ctx});
           /* unused fields:
            */
           res.sageNode(sgnode);
@@ -570,7 +567,7 @@ namespace
           SgAdaTypeConstraint& constraint = getConstraintID(typenode.Integer_Constraint, ctx);
           SgTypeInt&           superty    = SG_DEREF(sb::buildIntType());
 
-          res.sageNode(mkAdaSubtype(superty, constraint, true));
+          res.sageNode(mkAdaSubtype(superty, constraint, true /* from root */));
           /* unused fields:
            */
           break;
@@ -592,12 +589,24 @@ namespace
         {
           logKind("A_Floating_Point_Definition");
 
-          SgExpression&         digits     = getExprID_opt(typenode.Digits_Expression, ctx);
+          SgType*               resultType = sb::buildFloatType();
           SgAdaTypeConstraint*  constraint = getConstraintID_opt(typenode.Real_Range_Constraint, ctx);
           SgAdaRangeConstraint* rngconstr  = isSgAdaRangeConstraint(constraint);
           ADA_ASSERT(!constraint || rngconstr);
 
-          res.sageNode(mkAdaFloatType(digits, rngconstr));
+          if (typenode.Digits_Expression)
+          {
+            SgExpression& digits = getExprID(typenode.Digits_Expression, ctx);
+
+            constraint = &mkAdaDigitsConstraint(digits, rngconstr);
+          }
+
+          if (constraint)
+          {
+            resultType = &mkAdaSubtype(SG_DEREF(resultType), *constraint, true /* from root */);
+          }
+
+          res.sageNode(SG_DEREF(resultType));
           break;
         }
 
@@ -983,8 +992,18 @@ getConstraintID(Element_ID el, AstContext ctx)
         break;
       }
 
-    case Not_A_Constraint: /* break; */         // An unexpected element
     case A_Digits_Constraint:                   // 3.2.2: 3.5.9
+      {
+        SgExpression&         digits = getExprID(constraint.Digits_Expression, ctx);
+        SgAdaTypeConstraint*  rngConstr = getConstraintID_opt(constraint.Real_Range_Constraint, ctx);
+        SgAdaRangeConstraint* range = isSgAdaRangeConstraint(rngConstr);
+        ADA_ASSERT(!rngConstr || range);
+
+        res = &mkAdaDigitsConstraint(digits, range);
+        break;
+      }
+
+    case Not_A_Constraint: /* break; */         // An unexpected element
     case A_Delta_Constraint:                    // 3.2.2: J.3
     default:
       logWarn() << "Unhandled constraint: " << constraint.Constraint_Kind << std::endl;

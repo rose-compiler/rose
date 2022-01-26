@@ -960,6 +960,15 @@ HEADER_ADA_INDEX_CONSTRAINT_START
   //~ friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
 HEADER_ADA_INDEX_CONSTRAINT_END
 
+HEADER_ADA_DIGITS_CONSTRAINT_START
+  void post_construction_initialization() override;
+  std::string displayString() const override;
+  void display ( std::string label ) const;
+  friend std::ostream & operator<< ( std::ostream& os, const SgAdaDigitsConstraint& c);
+  //~ friend bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs);
+HEADER_ADA_DIGITS_CONSTRAINT_END
+
+
 HEADER_ADA_DISCRIMINANT_CONSTRAINT_START
   void post_construction_initialization() override;
   std::string displayString() const override;
@@ -2336,6 +2345,40 @@ std::ostream & operator<< ( std::ostream& os, const SgAdaIndexConstraint& c)
 }
 
 SOURCE_ADA_INDEX_CONSTRAINT_END
+
+SOURCE_ADA_DIGITS_CONSTRAINT_START
+void SgAdaDigitsConstraint::post_construction_initialization() {};
+
+std::string SgAdaDigitsConstraint::displayString() const
+{
+  SgExpression*         exp = get_digits();
+  SgAdaRangeConstraint* rng = get_range();
+
+  ROSE_ASSERT(exp);
+
+  std::stringstream buf;
+
+  buf << "digits " << get_range()->unparseToString();
+
+  if (rng)
+    buf << " range " << rng->displayString();
+
+  return buf.str();
+}
+
+void SgAdaDigitsConstraint::display ( std::string label ) const
+{
+  mprintf ("In $CLASSNAME::display(%s) \n",label.c_str());
+  mprintf ("%s \n",displayString().c_str());
+}
+
+std::ostream & operator<< ( std::ostream& os, const SgAdaDigitsConstraint& c)
+{
+  return os << c.displayString();
+}
+
+SOURCE_ADA_DIGITS_CONSTRAINT_END
+
 
 SOURCE_ADA_DISCRIMINANT_CONSTRAINT_START
 void SgAdaDiscriminantConstraint::post_construction_initialization() {};
