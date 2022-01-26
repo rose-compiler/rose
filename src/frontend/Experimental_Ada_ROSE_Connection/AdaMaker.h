@@ -86,6 +86,12 @@ namespace Ada_ROSE_Translation
   SgAdaIndexConstraint&
   mkAdaIndexConstraint(SgExpressionPtrList ranges);
 
+  /// builds a digits constraint for floating point numbers
+  /// \param digits an expression indicating the number of digits
+  /// \param range_opt an optional floating point range specification
+  SgAdaDigitsConstraint&
+  mkAdaDigitsConstraint(SgExpression& digits, SgAdaRangeConstraint* range_opt);
+
   /// builds a discriminant constraint from \ref discriminants
   /// \param discriminants a sequence of discriminants.
   SgAdaDiscriminantConstraint&
@@ -104,8 +110,9 @@ namespace Ada_ROSE_Translation
   mkAdaModularType(SgExpression& modexpr);
 
   /// builds a float type with an optional range constraint \ref range_opt
-  SgAdaFloatType&
-  mkAdaFloatType(SgExpression& digits, SgAdaRangeConstraint* range_opt);
+  // \no longer used
+  //SgAdaFloatType&
+  //mkAdaFloatType(SgExpression& digits, SgAdaRangeConstraint* range_opt);
 
   /// returns the type of an exception
   // \todo revise Exception representation
@@ -759,7 +766,7 @@ namespace Ada_ROSE_Translation
                    "template argument is not derived from SgValueExp"
                  );
 
-    typedef decltype(std::declval<SageValue>().get_value()) rose_rep_t;
+    using rose_rep_t = decltype(std::declval<SageValue>().get_value());
 
     ADA_ASSERT(textrep);
     return mkLocatedNode<SageValue>(convAdaLiteral<rose_rep_t>(textrep), textrep);

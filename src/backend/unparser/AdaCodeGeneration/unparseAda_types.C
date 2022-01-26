@@ -73,6 +73,15 @@ namespace
       expr(n.get_range());
     }
 
+    void handle(SgAdaDigitsConstraint& n)
+    {
+      prn(" digits ");
+      expr(n.get_digits());
+
+      if (SgAdaRangeConstraint* rng = n.get_range())
+        handle(*rng);
+    }
+
     void handle(SgAdaIndexConstraint& n)
     {
       prn(" (");

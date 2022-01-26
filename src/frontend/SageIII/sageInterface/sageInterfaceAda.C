@@ -1236,7 +1236,10 @@ namespace
   template <class T>
   T computeLiteral(T val, int base, int exp)
   {
-    return val * std::pow(base, exp);
+    T res = val * std::pow(base, exp);
+
+    // std::cerr << "complit: " << res << std::endl;
+    return res;
   }
 
 

@@ -1,6 +1,6 @@
 #include "a_nodes.h"
 
-namespace Ada_ROSE_Translation 
+namespace Ada_ROSE_Translation
    {
      const int UNTYPED_FILE_ID = 0;
      const int MAX_NUMBER_OF_UNITS = 10;
@@ -197,8 +197,8 @@ namespace Ada_ROSE_Translation
      void setAsisAttribute ( SgUntypedNode* untypedNode, int element_id);
      int  getAsisAttribute ( SgUntypedNode* untypedNode);
 
-  // This is the map from Ada node Id numbers to constructed SgUntypedNodes 
-  // used to build the intermediate AST and from which we will define traversals 
+  // This is the map from Ada node Id numbers to constructed SgUntypedNodes
+  // used to build the intermediate AST and from which we will define traversals
   // to support the construction of the ROSE IR.
   // typedef std::map<int,SgUntypedNode*> MapType;
      typedef std::map<int,SgUntypedNode*>  ASIS_element_id_to_ROSE_MapType;
