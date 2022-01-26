@@ -1640,7 +1640,22 @@ testDisassembler-t32.passed: $(top_srcdir)/scripts/test_with_answer testDisassem
 		ANS="$(testDisassembler_t32_answer)"						\
 		$< $@
 
+########################################################################################################################
+# Concrete memory state cloning
+########################################################################################################################
 
+noinst_PROGRAMS += concreteStates
+concreteStates_SOURCES = concreteStates.C
+concreteStates_LDADD = $(ROSE_SEPARATE_LIBS)
+
+TEST_TARGETS += concreteStates.passed
+concreteStates.passed: $(top_srcdir)/scripts/test_exit_status concreteStates
+	@$(RTH_RUN)					\
+		TITLE="test concrete state clone [$@]"	\
+		DISABLED="$$(./conditionalDisable)"	\
+		USE_SUBDIR=yes				\
+		CMD="$$(pwd)/concreteStates"		\
+		$< $@
 
 ###############################################################################################################################
 # Standard boilerplate

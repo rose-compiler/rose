@@ -574,5 +574,12 @@ run $(test) testDisassembler -o t32 --input=isAarch32Disabled --disabled-by=./is
 
 run $(tool_compile_linkexe) testNativeSemantics.C
 
+########################################################################################################################
+# Concrete semantic memory test
+########################################################################################################################
+
+run $(tool_compile_linkexe) concreteStates.C
+run $(test) concreteStates
+
 endif
 endif
