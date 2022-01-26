@@ -206,6 +206,7 @@ mkAdaModularType(SgExpression& modexpr)
   return sgnode;
 }
 
+/*
 SgAdaFloatType&
 mkAdaFloatType(SgExpression& digits, SgAdaRangeConstraint* range_opt)
 {
@@ -217,7 +218,6 @@ mkAdaFloatType(SgExpression& digits, SgAdaRangeConstraint* range_opt)
   return sgnode;
 }
 
-/*
 SgAdaFormalType&
 mkAdaFormalType(const std::string& name)
 {
