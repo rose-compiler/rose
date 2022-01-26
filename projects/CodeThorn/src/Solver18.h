@@ -51,6 +51,7 @@ namespace CodeThorn {
     std::unordered_map< int, SummaryCSStateMap > _summaryCSStateMapMap;
     // number of active states stored in _summaryCSStateMapMap (computed incrementally by setSummaryState)
     size_t _numberOfStates=0;
+    void printAllocationStats(string text);
   };
 
 } // end of namespace CodeThorn

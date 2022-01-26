@@ -153,7 +153,7 @@ size_t Solver18::checkDiff() {
 }
 
 static bool debugFlag=false;
-static void printAllocationStats(string text) {
+void Solver18::printAllocationStats(string text) {
   if(debugFlag) cout<<text<<EState::allocationStatsToString()<<": num states:"<<getNumberOfStates()<<endl;
 }
 
