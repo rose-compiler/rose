@@ -626,8 +626,11 @@ rose_config_LDFLAGS = $(ROSE_RPATHS)
 rose_config_DEPENDENCIES = $(REQUIRED_LIBS)
 rose_config_CPPFLAGS = -DLIBDIR='"$(libdir)"'
 rose_config_LDADD = $(ROSE_LIBS)
+
+if ROSE_USE_INTERNAL_JAVA_SUPPORT
 if OS_MACOSX
   rose_config_LDFLAGS += -Xlinker -rpath -Xlinker $(JAVA_JVM_PATH)
+endif
 endif
 
 # DQ (4/12/2016): This is required for use with clang (not clear how to compile ROSE with out it).
@@ -747,8 +750,11 @@ if USING_CLANG_COMPILER
   ROSEBIN_LDFLAGS += -fno-rtti
 endif
   ROSEBIN_LDFLAGS += -fno-rtti
+
+if ROSE_USE_INTERNAL_JAVA_SUPPORT
 if OS_MACOSX
   ROSEBIN_LDFLAGS += -Xlinker -rpath -Xlinker $(JAVA_JVM_PATH)
+endif
 endif
 
 rose_compiler_SOURCES      = rose-compiler.C
