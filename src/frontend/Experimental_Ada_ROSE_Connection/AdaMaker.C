@@ -139,6 +139,18 @@ mkAdaRangeConstraint(SgExpression& range)
   return sgnode;
 }
 
+SgAdaDigitsConstraint&
+mkAdaDigitsConstraint(SgExpression& digits, SgAdaRangeConstraint* range_opt)
+{
+  SgAdaDigitsConstraint& sgnode = mkLocatedNode<SgAdaDigitsConstraint>(&digits, range_opt);
+
+  digits.set_parent(&sgnode);
+  if (range_opt) range_opt->set_parent(&sgnode);
+
+  return sgnode;
+}
+
+
 namespace
 {
   void incorporateConstraintExpressions(SgNode& parent, SgExpressionPtrList& constraints, SgExpressionPtrList&& exprs)

@@ -1005,3 +1005,4 @@ SgAdaProtectedSymbol
 SgAdaProtectedRefExp
 SgAdaProtectedType
 SgAdaProtectedTypeDecl
+SgAdaDigitsConstraint
