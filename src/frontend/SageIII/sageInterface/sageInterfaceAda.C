@@ -1156,8 +1156,15 @@ namespace
   std::pair<T, const char*>
   parseDec(const char* buf, size_t base = 10)
   {
-    ROSE_ASSERT((*buf != '\0') && char2Val(*buf, base).second);
+    ROSE_ASSERT(*buf != '\0');
 
+    // In constants folded by ASIS there can be a leading '-'
+    //   otherwise a '-' is represented as unary operator.
+    const bool neg = *buf == '-';
+
+    if (neg) ++buf;
+
+    ROSE_ASSERT((*buf != '\0') && char2Val(*buf, base).second);
     T res = 0;
 
     while (*buf != '\0')
@@ -1175,6 +1182,12 @@ namespace
       // \note (this is imprecise, since an underscore must be followed
       //       by an integer.
       while (*buf == '_') ++buf;
+    }
+
+    if (neg)
+    {
+      ROSE_ASSERT((res == 0) || (res != -res));
+      res = -res;
     }
 
     return std::make_pair(res, buf);
