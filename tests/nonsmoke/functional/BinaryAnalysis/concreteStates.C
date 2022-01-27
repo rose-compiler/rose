@@ -5,6 +5,7 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics2/ConcreteSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
+#include <sstream>
 
 using namespace Rose::BinaryAnalysis;
 namespace BS = Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
@@ -12,16 +13,15 @@ namespace IS = Rose::BinaryAnalysis::InstructionSemantics2;
 namespace P2 = Rose::BinaryAnalysis::Partitioner2;
 
 static void
-dumpMemory(const std::string &title, const MemoryMap::Ptr &memory) {
+dumpMemory(std::ostream &out, const MemoryMap::Ptr &memory) {
     uint8_t buf[4096];                                  // multiple of 16
     rose_addr_t va = 0;
-    std::cout <<title <<"\n";
     HexdumpFormat fmt;
     fmt.prefix = "  ";
     while (AddressInterval where = memory->atOrAfter(va).limit(sizeof buf).read(buf)) {
-        std::cout <<"  ";
-        SgAsmExecutableFileFormat::hexdump(std::cout, where.least(), buf, where.size(), fmt);
-        std::cout <<"\n";
+        out <<"  ";
+        SgAsmExecutableFileFormat::hexdump(out, where.least(), buf, where.size(), fmt);
+        out <<"\n";
         if (where.greatest() == memory->hull().greatest())
             break;                                      // avoid possible integer overflow in next stmt
         va = where.greatest() + 1;
@@ -46,7 +46,9 @@ int main(int argc, char *argv[]) {
 
     // Show the initial state's memory map.
     auto origMemState = IS::ConcreteSemantics::MemoryState::promote(ops->currentState()->clone()->memoryState());
-    dumpMemory("Original state before instructions", origMemState->memoryMap());
+    std::ostringstream memBeforeRunning;
+    dumpMemory(memBeforeRunning, origMemState->memoryMap());
+    std::cout <<"Original state before instructions\n" <<memBeforeRunning.str();
 
     // Process the instructions
     BS::Dispatcher::Ptr dispatcher = partitioner.newDispatcher(ops);
@@ -55,10 +57,22 @@ int main(int argc, char *argv[]) {
         dispatcher->processInstruction(insn);
     }
 
-    // Show the original state (which should be unmodified from what we printed earlier) and the current state.
-    dumpMemory("Original state after processing instructions", origMemState->memoryMap());
+    // Show the original state again, and the current state.
+    std::ostringstream memAfterRunning;
+    dumpMemory(memAfterRunning, origMemState->memoryMap());
+    std::cout <<"Original state after processing instructions\n" <<memAfterRunning.str();
+
+    std::ostringstream memCurrent;
     auto curMemState = IS::ConcreteSemantics::MemoryState::promote(ops->currentState()->memoryState());
-    dumpMemory("Current state after instructions", curMemState->memoryMap());
+    dumpMemory(memCurrent, curMemState->memoryMap());
+    std::cout <<"Current state after instructions\n" <<memCurrent.str();
+
+    // The original state should not have been modified by executing instructions because we cloned it. The instructions
+    // should have modified only the current state.
+    ASSERT_always_require2(memBeforeRunning.str() == memAfterRunning.str(),
+                           "initial saved memory was modified by executing instructions");
+    ASSERT_always_require2(memBeforeRunning.str() != memCurrent.str(),
+                           "executing instructions should have changed the current memory state");
 }
 
 #else
