@@ -166,6 +166,7 @@ namespace CodeThorn {
     Edge outEdgeOfType(Label label, EdgeType edgeType);
 
     bool isPassThroughLabel(Label label);
+    bool singleSuccessorIsPassThroughLabel(Label label);
     void setStartLabel(Label label);
     void addStartLabel(Label label);
     Label getStartLabel();

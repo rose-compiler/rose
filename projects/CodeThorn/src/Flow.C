@@ -304,6 +304,16 @@ bool Flow::isPassThroughLabel(Label lab) {
   return false;
 }
 
+bool Flow::singleSuccessorIsPassThroughLabel(Label lab) {
+  Flow outEdgeSet=outEdges(lab);
+  if(outEdgeSet.size()==1) {
+    auto edge=*outEdgeSet.begin();
+    return isPassThroughLabel(edge.target());
+  }
+  return false;
+}
+
+
 void Flow::setStartLabel(Label label) {
   LabelSet ls;
   ls.insert(label);

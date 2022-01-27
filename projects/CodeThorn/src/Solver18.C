@@ -188,10 +188,8 @@ void Solver18::run() {
     ROSE_ASSERT(p.label().isValid());
     ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(p.label()));
     EStatePtr currentEStatePtr=getSummaryState(p.label(),p.callString());
-    bool createdBottomState=false;
     if(currentEStatePtr==nullptr) {
       currentEStatePtr=createBottomSummaryState(p.label(),p.callString());
-      createdBottomState=true;
     }
     ROSE_ASSERT(currentEStatePtr);
     
@@ -200,42 +198,53 @@ void Solver18::run() {
     size_t pathLen=0;
     bool endStateFound=false;
     bool bbClonedState=false;
-    cout<<"DEBUG: at: "<<currentEStatePtr->label().toString()<<endl;
-    while(true && isPassThroughLabel(currentEStatePtr->label())) {
-      cout<<"DEBUG: pass through: "<<currentEStatePtr->label().toString()<<endl;
-      Flow edgeSet0=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
-      if(edgeSet0.size()==1) {
-        Edge e=*edgeSet0.begin();
-        list<EStatePtr> newEStateList0;
-        if(pathLen==0) {
-          auto newEStatePtr=currentEStatePtr->clone();
-          bbClonedState=true;
-          if(createdBottomState)
-            delete currentEStatePtr;
-          newEStateList0=_analyzer->transferEdgeEStateInPlace(e,newEStatePtr);
-        } else {
+    //cout<<"DEBUG: at: "<<currentEStatePtr->label().toString()<<endl;
+#if 1
+    if(_analyzer->getFlow()->singleSuccessorIsPassThroughLabel(currentEStatePtr->label())) {
+      // transfer to successor
+      EStatePtr newEStatePtr=currentEStatePtr->clone();
+      currentEStatePtr=newEStatePtr;
+      bbClonedState=true;
+      Flow outEdges=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
+      ROSE_ASSERT(outEdges.size()==1);
+      Edge e=*outEdges.begin();
+      
+      auto newEStateList0=_analyzer->transferEdgeEStateInPlace(e,currentEStatePtr);
+      ROSE_ASSERT(newEStateList0.size()<=1);
+      if(newEStateList0.size()==0) {
+        delete currentEStatePtr;
+        continue;
+      }
+      ROSE_ASSERT(newEStateList0.size()==1);
+      currentEStatePtr=*newEStateList0.begin();
+      while(true && isPassThroughLabel(currentEStatePtr->label())) {
+        //cout<<"DEBUG: pass through: "<<currentEStatePtr->label().toString()<<endl;
+        Flow edgeSet0=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
+        if(edgeSet0.size()==1) {
+          Edge e=*edgeSet0.begin();
+          list<EStatePtr> newEStateList0;
           newEStateList0=_analyzer->transferEdgeEStateInPlace(e,currentEStatePtr);
           pathLen++;
+          ROSE_ASSERT(newEStateList0.size()<=1);
+          if(newEStateList0.size()==1) {
+            currentEStatePtr=*newEStateList0.begin();
+          } else {
+            endStateFound=true;
+            break;
+          }
+          ROSE_ASSERT(currentEStatePtr);
+          ROSE_ASSERT(currentEStatePtr->pstate());
+          ROSE_ASSERT(currentEStatePtr->label()==e.target());
         }
-        ROSE_ASSERT(newEStateList0.size()<=1);
-        if(newEStateList0.size()==1) {
-          currentEStatePtr=*newEStateList0.begin();
-        } else {
-          endStateFound=true;
-          break;
-        }
-        ROSE_ASSERT(currentEStatePtr);
-        ROSE_ASSERT(currentEStatePtr->pstate());
-        ROSE_ASSERT(currentEStatePtr->label()==e.target());
       }
+      if(endStateFound) {
+        delete currentEStatePtr;
+        continue;
+      }
+      ROSE_ASSERT(currentEStatePtr);
+      ROSE_ASSERT(currentEStatePtr->pstate());
     }
-    if(endStateFound) {
-      delete currentEStatePtr;
-      continue;
-    }
-    ROSE_ASSERT(currentEStatePtr);
-    ROSE_ASSERT(currentEStatePtr->pstate());
-
+#endif
     Flow edgeSet=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
     for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
       Edge e=*i;
