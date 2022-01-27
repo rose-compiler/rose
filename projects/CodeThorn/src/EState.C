@@ -35,7 +35,7 @@ EState::EState():_label(Label()) {
 
 // move constructor
 EState::EState(EState&& other) {
-  bool sharedPStates=true; // copies only pointer to PState
+  bool sharedPStates=false; // true:copies only pointer to PState, false:deep-copy
   copy(this,&other,sharedPStates);
   if(other._pstate) {
     // pointer is copied by above 'copy' function

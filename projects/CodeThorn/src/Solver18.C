@@ -181,7 +181,6 @@ void Solver18::run() {
   while(!_workList->empty()) {
     auto p=_workList->top();
     _workList->pop();
-    //EStatePtr currentEStatePtr0=_analyzer->popWorkList();
     // terminate early, ensure to stop all threads and empty the worklist (e.g. verification error found).
     if(terminateEarly)
       continue;
@@ -189,42 +188,75 @@ void Solver18::run() {
     ROSE_ASSERT(p.label().isValid());
     ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(p.label()));
     EStatePtr currentEStatePtr=getSummaryState(p.label(),p.callString());
-    if(currentEStatePtr==nullptr)
+    bool createdBottomState=false;
+    if(currentEStatePtr==nullptr) {
       currentEStatePtr=createBottomSummaryState(p.label(),p.callString());
-
+      createdBottomState=true;
+    }
     ROSE_ASSERT(currentEStatePtr);
     
+    // basic block optimization
     list<EStatePtr> newEStateList0;
     size_t pathLen=0;
-    while(false && isPassThroughLabel(currentEStatePtr->label())) {
-      //cout<<"DEBUG: pass through: "<<currentEStatePtr->label().toString()<<endl;
+    bool endStateFound=false;
+    bool bbClonedState=false;
+    cout<<"DEBUG: at: "<<currentEStatePtr->label().toString()<<endl;
+    while(true && isPassThroughLabel(currentEStatePtr->label())) {
+      cout<<"DEBUG: pass through: "<<currentEStatePtr->label().toString()<<endl;
       Flow edgeSet0=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
       if(edgeSet0.size()==1) {
         Edge e=*edgeSet0.begin();
         list<EStatePtr> newEStateList0;
         if(pathLen==0) {
           auto newEStatePtr=currentEStatePtr->clone();
-          //currentEStatePtr->setLabel(oldEState->label());
-          delete currentEStatePtr;
-          newEStateList0=_analyzer->transferEdgeEState(e,newEStatePtr);
+          bbClonedState=true;
+          if(createdBottomState)
+            delete currentEStatePtr;
+          newEStateList0=_analyzer->transferEdgeEStateInPlace(e,newEStatePtr);
         } else {
           newEStateList0=_analyzer->transferEdgeEStateInPlace(e,currentEStatePtr);
           pathLen++;
         }
+        ROSE_ASSERT(newEStateList0.size()<=1);
         if(newEStateList0.size()==1) {
           currentEStatePtr=*newEStateList0.begin();
         } else {
+          endStateFound=true;
           break;
         }
+        ROSE_ASSERT(currentEStatePtr);
+        ROSE_ASSERT(currentEStatePtr->pstate());
+        ROSE_ASSERT(currentEStatePtr->label()==e.target());
       }
     }
+    if(endStateFound) {
+      delete currentEStatePtr;
+      continue;
+    }
     ROSE_ASSERT(currentEStatePtr);
+    ROSE_ASSERT(currentEStatePtr->pstate());
+
     Flow edgeSet=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
     for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
       Edge e=*i;
       //cout<<"Transfer:"<<e.source().toString()<<"=>"<<e.target().toString()<<endl;
       printAllocationStats("P1:");
-      auto newEState=currentEStatePtr->clone();
+
+      ROSE_ASSERT(currentEStatePtr);
+      ROSE_ASSERT(currentEStatePtr->pstate());
+
+      // check if state was already cloned in preceding basic-block section
+      EStatePtr newEState=nullptr;
+      if(bbClonedState) {
+        newEState=currentEStatePtr->clone();
+        delete currentEStatePtr;
+        
+      } else
+        newEState=currentEStatePtr->clone();
+
+      ROSE_ASSERT(newEState);
+      ROSE_ASSERT(newEState->pstate());
+
       printAllocationStats("P2:");
       //auto checkDiff1=checkDiff();
       list<EStatePtr> newEStateList=_analyzer->transferEdgeEStateInPlace(e,newEState);
@@ -242,6 +274,8 @@ void Solver18::run() {
       displayTransferCounter++;
       for(list<EStatePtr>::iterator nesListIter=newEStateList.begin();nesListIter!=newEStateList.end();++nesListIter) {
         EStatePtr newEStatePtr0=*nesListIter; // TEMPORARY PTR
+        ROSE_ASSERT(newEStatePtr0);
+        ROSE_ASSERT(newEStatePtr0->pstate());
         ROSE_ASSERT(newEStatePtr0->label()!=Labeler::NO_LABEL);
         Label lab=newEStatePtr0->label();
         CallString cs=newEStatePtr0->callString;
@@ -255,6 +289,7 @@ void Solver18::run() {
             summaryEStatePtr=createBottomSummaryState(lab,cs);
 
           ROSE_ASSERT(summaryEStatePtr);
+          ROSE_ASSERT(summaryEStatePtr->pstate());
           if(_analyzer->getEStateTransferFunctions()->isApproximatedBy(newEStatePtr,summaryEStatePtr)) {
             printAllocationStats("P5a:");
             delete newEStatePtr; // new state does not contain new information, therefore it can be deleted
@@ -262,7 +297,14 @@ void Solver18::run() {
             newEStatePtr=nullptr;
           } else {
             printAllocationStats("P6a:");
+            ROSE_ASSERT(summaryEStatePtr);
+            ROSE_ASSERT(summaryEStatePtr->pstate());
+            ROSE_ASSERT(newEStatePtr);
+            ROSE_ASSERT(newEStatePtr->pstate());
             _analyzer->getEStateTransferFunctions()->combineInPlace1st(summaryEStatePtr,const_cast<EStatePtr>(newEStatePtr));
+            ROSE_ASSERT(summaryEStatePtr);
+            ROSE_ASSERT(summaryEStatePtr->pstate());
+
             printAllocationStats("P6b:");
             setSummaryState(lab,cs,summaryEStatePtr);
             printAllocationStats("P6c:");

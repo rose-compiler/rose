@@ -949,10 +949,10 @@ RERS=$(patsubst %,Problem%.log, $(shell seq 6))
 rers: $(RERS)
 
 check-solver17:
-	./codethorn $(srcdir)/tests/DOM049_large_arrays.C --solver=17 --context-sensitive=yes --abstraction-mode=1 --exploration-mode="topologic-sort" --normalize-level=2 --precision=2 --vis --status
+	./codethorn $(srcdir)/tests/DOM049_large_arrays.C --solver=17 --context-sensitive=yes --abstraction-mode=1 --exploration-mode="topologic-sort" --normalize-level=2 --precision=2 --vis --status --icfg-pass-through-labels
 
 check-solver18:
-	./codethorn $(srcdir)/tests/DOM049_large_arrays.C --solver=18 --context-sensitive=yes --abstraction-mode=1 --exploration-mode="topologic-sort" --normalize-level=2 --precision=2 --vis --status
+	./codethorn $(srcdir)/tests/DOM049_large_arrays.C --solver=18 --context-sensitive=yes --abstraction-mode=1 --exploration-mode="topologic-sort" --normalize-level=2 --precision=2 --icfg=icfg.dot --status --icfg-pass-through-labels
 
 
 docs:
