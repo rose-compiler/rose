@@ -153,6 +153,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/FunctionSimilarity.C						\
 	BinaryAnalysis/HotPatch.C							\
 	BinaryAnalysis/InstructionCache.C						\
+	BinaryAnalysis/LibraryIdentification.C						\
 	BinaryAnalysis/MagicNumber.C							\
 	BinaryAnalysis/MemoryMap.C							\
 	BinaryAnalysis/NoOperation.C							\

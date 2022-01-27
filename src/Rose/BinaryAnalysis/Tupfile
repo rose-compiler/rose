@@ -28,6 +28,7 @@ run $(librose_compile)				\
     FunctionSimilarity.C			\
     HotPatch.C					\
     InstructionCache.C				\
+    LibraryIdentification.C			\
     MagicNumber.C				\
     MemoryMap.C					\
     NoOperation.C				\
@@ -89,6 +90,7 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis	\
     InstructionEnumsPowerpc.h					\
     InstructionEnumsX86.h					\
     InstructionSemantics2.h					\
+    LibraryIdentification.h					\
     MagicNumber.h						\
     Matrix.h							\
     MemoryMap.h							\

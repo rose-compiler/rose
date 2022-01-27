@@ -32,6 +32,7 @@ add_library(roseBinaryAnalysis OBJECT
   FunctionSimilarity.C
   HotPatch.C
   InstructionCache.C
+  LibraryIdentification.C
   MagicNumber.C
   MemoryMap.C
   NoOperation.C
@@ -96,6 +97,7 @@ install(FILES
   InstructionEnumsPowerpc.h
   InstructionEnumsX86.h
   InstructionSemantics2.h
+  LibraryIdentification.h
   MagicNumber.h
   Matrix.h
   MemoryMap.h
