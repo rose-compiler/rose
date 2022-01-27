@@ -210,6 +210,7 @@ protected:
         if (map_) {
             BOOST_FOREACH (MemoryMap::Segment &segment, map_->values())
                 segment.buffer()->copyOnWrite(true);
+            map_ = map_->shallowCopy();
         }
     }
     

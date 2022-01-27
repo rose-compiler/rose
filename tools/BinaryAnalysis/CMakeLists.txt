@@ -22,6 +22,15 @@ if(enable-binary-analysis)
   add_executable(bat-dis bat-dis.C)
   target_link_libraries(bat-dis bat ROSE_DLL)
 
+  add_executable(bat-flir-ascribe bat-flir-ascribe.C)
+  target_link_libraries(bat-flir-ascribe bat ROSE_DLL)
+
+  add_executable(bat-flir-insert bat-flir-insert.C)
+  target_link_libraries(bat-flir-insert bat ROSE_DLL)
+
+  add_executable(bat-flir-lib bat-flir-lib.C)
+  target_link_libraries(bat-flir-lib bat ROSE_DLL)
+
   add_executable(bat-insnfreq bat-insnfreq.C)
   target_link_libraries(bat-insnfreq bat ROSE_DLL)
 

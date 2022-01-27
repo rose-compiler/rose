@@ -29,6 +29,15 @@
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Configuration fixes
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// SQLite3 does not work on macOS. Jenkins tests fail with many link errors for _sqlite3_* functions.
+#if defined(__APPLE__) && defined(__MACH__)             // Apple macOS
+    #undef ROSE_HAVE_SQLITE3
+#endif
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Binary analysis features
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -55,6 +64,13 @@
     BOOST_VERSION >= 106400 && \
     defined(ROSE_HAVE_BOOST_SERIALIZATION_LIB)
 #define ROSE_ENABLE_CONCOLIC_TESTING
+#endif
+
+// Whether to enable library identification.
+#if !defined(ROSE_ENABLE_LIBRARY_IDENTIFICATION) && \
+    (defined(ROSE_HAVE_SQLITE3) || defined(ROSE_HAVE_LIBPQXX)) &&                                                              \
+    !(defined(__APPLE__) && defined(__MACH__))
+#define ROSE_ENABLE_LIBRARY_IDENTIFICATION
 #endif
 
 #endif
