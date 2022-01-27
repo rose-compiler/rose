@@ -15,6 +15,39 @@ BinaryLoaderPe::canLoad(SgAsmGenericHeader *hdr) const {
     return isSgAsmPEFileHeader(hdr)!=NULL;
 }
 
+/* For any given file header, start mapping at a particular location in the address space. */
+rose_addr_t
+BinaryLoaderPe::rebase(const MemoryMap::Ptr &map, SgAsmGenericHeader *header, const SgAsmGenericSectionPtrList &sections) {
+    SgAsmPEFileHeader* pe_header = isSgAsmPEFileHeader(header);
+    ROSE_ASSERT(pe_header != NULL);
+    const size_t maximum_alignment = pe_header->get_e_section_align();
+    AddressInterval mappableArea = AddressInterval::whole();
+
+    // Find the minimum address desired by the sections to be mapped.
+    rose_addr_t min_preferred_rva = (uint64_t)(-1);
+    for (SgAsmGenericSectionPtrList::const_iterator si=sections.begin(); si!=sections.end(); ++si)
+        min_preferred_rva = std::min(min_preferred_rva, (*si)->get_mapped_preferred_rva());
+    rose_addr_t min_preferred_va = header->get_base_va() + min_preferred_rva;
+
+    // Minimum address at which to map
+    //AddressInterval freeSpace = map->unmapped(mappableArea.greatest(), Sawyer::Container::MATCH_BACKWARD);
+    AddressInterval valid_range = AddressInterval::hull(pe_header->get_base_va(),0x7FFFFFFFFFFF);
+    ROSE_ASSERT(!valid_range.isEmpty());
+    rose_addr_t map_base_va = map->findFreeSpace(pe_header->get_e_image_size(), maximum_alignment, valid_range).get();
+    map_base_va = alignUp(map_base_va, (rose_addr_t)maximum_alignment);
+
+    // If the minimum preferred virtual address is less than the floor of the page-aligned mapping area, then
+    // return a base address which moves the min_preferred_va to somewhere in the page pointed to by map_base_va.
+    if (min_preferred_va < map_base_va) {
+        size_t min_preferred_page = min_preferred_va / maximum_alignment;
+        if (map_base_va < min_preferred_page * maximum_alignment)
+            return 0;
+        return map_base_va;
+    }
+
+    return header->get_base_va();
+}
+
 /* Returns sections to be mapped */
 SgAsmGenericSectionPtrList
 BinaryLoaderPe::getRemapSections(SgAsmGenericHeader *header) {

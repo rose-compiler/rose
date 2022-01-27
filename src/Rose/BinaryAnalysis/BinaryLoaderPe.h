@@ -40,6 +40,9 @@ public:
 
     virtual bool canLoad(SgAsmGenericHeader*) const override;
 
+    /** Returns a new, temporary base address which is greater than everything that's been mapped already. */
+    virtual rose_addr_t rebase(const MemoryMap::Ptr&, SgAsmGenericHeader*, const SgAsmGenericSectionPtrList&) override;
+
     // Returns sections in order of their definition in the PE Section Table.
     virtual SgAsmGenericSectionPtrList getRemapSections(SgAsmGenericHeader*) override;
 
