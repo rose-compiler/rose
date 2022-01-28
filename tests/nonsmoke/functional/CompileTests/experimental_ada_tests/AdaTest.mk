@@ -163,6 +163,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   formal_subprogram_declaration.ads    \
   generic_function_declaration.ads     \
   generic_package_declaration.ads      \
+  identity.ads                         \
   inherited_primitive_operation.adb    \
   io.ads                               \
   iterate_range.adb                    \
@@ -178,6 +179,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   protected_body_declaration.ads       \
   representation_clause.ads            \
   representation_clause_2.ads          \
+  renamings.adb                        \
   select_accept.adb                    \
   simple_select_accept.adb             \
   simple_select_accept_guarded.adb     \

@@ -2579,9 +2579,9 @@ namespace
       case A_Signed_Integer_Type_Definition:
       case A_Modular_Type_Definition:
       case A_Floating_Point_Definition:
-      case An_Ordinary_Fixed_Point_Definition:
       case A_Decimal_Fixed_Point_Definition:
       case An_Access_Type_Definition:
+      case An_Ordinary_Fixed_Point_Definition:// \todo untested
       case An_Unconstrained_Array_Definition: // \todo untested
       case A_Constrained_Array_Definition:    // \todo untested
         {
@@ -4079,9 +4079,13 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         recordNode(asisDecls(), adaname.id(), sgnode);
 
         // find declaration for the thing being renamed
-        auto re = retrieveAs(elemMap(), decl.Renamed_Entity);
-        auto renamed_entity = re.The_Union.Expression;
-        SgFunctionDeclaration* renamedDecl = isSgFunctionDeclaration(getDecl_opt(renamed_entity, ctx));
+        Element_Struct&        renamedElemFull = retrieveAs(elemMap(), decl.Renamed_Entity);
+        NameData               renamedName = getQualName(renamedElemFull, ctx);
+        Element_Struct&        renamedElem = renamedName.elem();
+        ROSE_ASSERT(renamedElem.Element_Kind == An_Expression);
+
+        Expression_Struct&     renamedFuncRef = renamedElem.The_Union.Expression;
+        SgFunctionDeclaration* renamedDecl = isSgFunctionDeclaration(getDecl_opt(renamedFuncRef, ctx));
 
         if (renamedDecl != nullptr)
         {

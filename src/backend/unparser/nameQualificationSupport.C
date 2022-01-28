@@ -915,6 +915,15 @@ namespace
         computeNameQualForDeclLink(n, SG_DEREF(thedecl));
       }
 
+      void handle(const SgAdaFunctionRenamingDecl& n)
+      {
+        handle(sg::asBaseType(n));
+
+        // ROSE_ASSERT(n.get_renamed_function());
+        if (const SgFunctionDeclaration* renamed = n.get_renamed_function())
+          computeNameQualForDeclLink(n, *renamed);
+      }
+
 
       void handle(const SgUsingDeclarationStatement& n)
       {
@@ -1052,16 +1061,6 @@ namespace
         recordNameQualIfNeeded(dcl, dcl.get_scope());
       }
 
-/*
-      // \todo try to comment out this handler, as SgAdaTaskType is a
-      //       SgNamedType and the behavior is the same.
-      void handle(const SgAdaTaskType& n)
-      {
-        const SgDeclarationStatement& dcl = SG_DEREF(n.get_declaration());
-
-        recordNameQualIfNeeded(dcl, dcl.get_scope());
-      }
-*/
       //
       // define subtree traversal for type elements that are not defined by default.
 
