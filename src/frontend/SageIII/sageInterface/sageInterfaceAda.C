@@ -1160,9 +1160,9 @@ namespace
 
     // In constants folded by ASIS there can be a leading '-'
     //   otherwise a '-' is represented as unary operator.
-    const bool neg = *buf == '-';
+    const int negmul = (*buf == '-') ? -1 : 1;
 
-    if (neg) ++buf;
+    if (negmul < 0) ++buf;
 
     ROSE_ASSERT((*buf != '\0') && char2Val(*buf, base).second);
     T res = 0;
@@ -1171,10 +1171,17 @@ namespace
     {
       const auto v = char2Val(*buf, base);
 
+      // \todo why is this exit needed?
       if (!v.second)
         return std::make_pair(res, buf);
 
-      res = res*base + v.first;
+      // The digits cannot be summed all positive and negmul only applied once,
+      // because this leads to an integer underflow for System.Min_Int.
+      // While the underflow is likely benign (System.Min_Int == -System.Min_Int)
+      // for a two's complement representation, it seems more prudent to avoid it
+      // altogether.
+      res = res*base + (v.first * negmul);
+      ROSE_ASSERT((res == 0) || ((res < 0) && (negmul < 0)) || ((res > 0) && (negmul > 0)));
 
       ++buf;
 
@@ -1182,12 +1189,6 @@ namespace
       // \note (this is imprecise, since an underscore must be followed
       //       by an integer.
       while (*buf == '_') ++buf;
-    }
-
-    if (neg)
-    {
-      ROSE_ASSERT((res == 0) || (res != -res));
-      res = -res;
     }
 
     return std::make_pair(res, buf);

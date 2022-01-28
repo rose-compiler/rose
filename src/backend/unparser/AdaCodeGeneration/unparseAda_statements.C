@@ -1961,11 +1961,14 @@ namespace
     // MS 12/22/20 : if this is actually a function renaming declaration,
     // print the renaming syntax after the function/procedure declaration
     // and immediately return.
-    SgAdaFunctionRenamingDecl* renaming = isSgAdaFunctionRenamingDecl(&n);
-    if (renaming != nullptr)
+    if (SgAdaFunctionRenamingDecl* renaming = isSgAdaFunctionRenamingDecl(&n))
     {
       prn(" renames ");
-      prn(convertOperatorNames(renaming->get_renamed_function()->get_name()));
+
+      SgFunctionDeclaration& renamed = SG_DEREF(renaming->get_renamed_function());
+
+      prnNameQual(n, renamed, renamed.get_scope());
+      prn(convertOperatorNames(renamed.get_name()));
       prn(STMT_SEP);
       return;
     }
