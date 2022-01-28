@@ -820,12 +820,19 @@ public:
     size_t nPaths = 0;                                  // number of paths
     Sawyer::Optional<size_t> minSteps;                  // number of steps in shortest path
     Sawyer::Optional<size_t> maxSteps;                  // number of steps in longest path
+    Sawyer::Optional<size_t> minNodes;                  // number of nodes in shortest path
+    Sawyer::Optional<size_t> maxNodes;                  // number of nodes in longest path
 
     virtual bool operator()(const Path::Ptr &path) {
         ++nPaths;
         size_t nSteps = path->nSteps();
         minSteps = std::min(minSteps.orElse(nSteps), nSteps);
         maxSteps = std::max(maxSteps.orElse(nSteps), nSteps);
+
+        size_t nNodes = path->nNodes();
+        minNodes = std::min(minNodes.orElse(nNodes), nNodes);
+        maxNodes = std::max(maxNodes.orElse(nNodes), nNodes);
+
         return true;
     }
 };
@@ -833,8 +840,8 @@ public:
 void
 Engine::showStatistics(std::ostream &out, const std::string &prefix) const {
     // Gather information
-    const size_t k = settings()->k;
-    const double forestSize = estimatedForestSize(k);
+    const size_t kSteps = settings()->kSteps;
+    const double forestSize = estimatedForestSize(kSteps);
     const size_t forestExplored = nStepsExplored();
     const double percentExplored = forestSize > 0.0 ? 100.0 * forestExplored / forestSize : 0.0;
     const size_t nPathsExplored = this->nPathsExplored();
@@ -848,12 +855,15 @@ Engine::showStatistics(std::ostream &out, const std::string &prefix) const {
     PathStatsAccumulator pendingStats;
     pendingPaths().traverse(pendingStats);
 
-    ////////////////---------1---------2---------3---------4
-    out <<prefix <<"total elapsed time:                     " <<elapsedTime() <<"\n";
-    out <<prefix <<"threads:                                " <<nWorking() <<" working of " <<workCapacity() <<" total\n";
+    out <<prefix <<"total elapsed time:                           " <<elapsedTime() <<"\n";
+    out <<prefix <<"threads:                                      " <<nWorking() <<" working of " <<workCapacity() <<" total\n";
     if (currentStats.nPaths > 0) {
-        out <<prefix <<"  shortest in-progress path length:     " <<StringUtility::plural(*currentStats.minSteps, "steps") <<"\n";
-        out <<prefix <<"  longest in-progress path length:      " <<StringUtility::plural(*currentStats.maxSteps, "steps") <<"\n";
+        out <<prefix <<"  shortest in-progress path length:           "
+            <<StringUtility::plural(*currentStats.minNodes, "nodes") <<", "
+            <<StringUtility::plural(*currentStats.minSteps, "steps") <<"\n";
+        out <<prefix <<"  longest in-progress path length:            "
+            <<StringUtility::plural(*currentStats.maxNodes, "nodes") <<", "
+            <<StringUtility::plural(*currentStats.maxSteps, "steps") <<"\n";
         for (const InProgress &work: currentWork) {
             out <<prefix <<"  thread " <<work.threadId;
             if (work.tid > 0)
@@ -864,41 +874,46 @@ Engine::showStatistics(std::ostream &out, const std::string &prefix) const {
         }
     }
 
-    out <<prefix <<"paths waiting to be explored:           " <<pendingStats.nPaths <<"\n";
+    out <<prefix <<"paths waiting to be explored:                 " <<pendingStats.nPaths <<"\n";
     if (pendingStats.nPaths > 0) {
-        out <<prefix <<"  shortest pending path length:         " <<StringUtility::plural(*pendingStats.minSteps, "steps") <<"\n";
-        out <<prefix <<"  longest pending path length:          " <<StringUtility::plural(*pendingStats.maxSteps, "steps") <<"\n";
+        out <<prefix <<"  shortest pending path length:               "
+            <<StringUtility::plural(*pendingStats.minNodes, "nodes") <<", "
+            <<StringUtility::plural(*pendingStats.minSteps, "steps") <<"\n";
+        out <<prefix <<"  longest pending path length:                "
+            <<StringUtility::plural(*pendingStats.maxNodes, "nodes") <<", "
+            <<StringUtility::plural(*pendingStats.maxSteps, "steps") <<"\n";
     }
-    out <<prefix <<"paths explored:                         " <<nPathsExplored <<"\n";
+    out <<prefix <<"paths explored:                               " <<nPathsExplored <<"\n";
 
     const size_t nNewPaths = nPathsExplored - nPathsStats_;
     if (age >= 60.0) {
         double rate = 60.0 * nNewPaths / age;           // paths per minute
          if (nNewPaths >= 1.0) {
-            out <<prefix <<(boost::format("%-39s %1.3f paths/minute\n") % "exploration rate:" % rate);
+            out <<prefix <<(boost::format("%-45s %1.3f paths/minute\n") % "exploration rate:" % rate);
         } else {
-            out <<prefix <<(boost::format("%-39s less than one path/minute\n") % "exploration rate:");
+            out <<prefix <<(boost::format("%-45s less than one path/minute\n") % "exploration rate:");
         }
     }
-    out <<prefix <<"execution tree nodes explored:          " <<forestExplored <<"\n";
+    out <<prefix <<"execution tree nodes explored:                " <<forestExplored <<"\n";
     if (forestSize < 1e9) {
-        out <<prefix <<(boost::format("%-39s %1.0f nodes estimated\n")
-                        % ("execution tree size to depth " + boost::lexical_cast<std::string>(k) + ":") % forestSize);
+        out <<prefix <<(boost::format("%-45s %1.0f nodes estimated\n")
+                        % ("execution tree size to depth " + StringUtility::plural(kSteps, "steps") + ":")
+                        % forestSize);
     } else {
-        out <<prefix <<(boost::format("%-39s very large estimated\n")
-                        % ("execution tree size to depth " + boost::lexical_cast<std::string>(k) + ":"));
+        out <<prefix <<(boost::format("%-45s very large estimated\n")
+                        % ("execution tree size to depth " + StringUtility::plural(kSteps, "steps") + ":"));
     }
-    out <<prefix <<(boost::format("%-39s %1.2f%% estimated\n") % "portion of execution tree explored:" % percentExplored);
+    out <<prefix <<(boost::format("%-45s %1.2f%% estimated\n") % "portion of execution tree explored:" % percentExplored);
     out <<prefix <<"(estimates can be wildly incorrect for small sample sizes)\n";
     if (auto p = std::dynamic_pointer_cast<WorkPredicate>(explorationPredicate())) {
-        out <<prefix <<"paths terminated due to K limit:        " <<p->kLimitReached() <<"\n";
-        out <<prefix <<"paths terminated due to time limit:     " <<p->timeLimitReached() <<"\n";
+        out <<prefix <<"paths terminated due to length limit:         " <<p->kLimitReached() <<"\n";
+        out <<prefix <<"paths terminated due to time limit:           " <<p->timeLimitReached() <<"\n";
     }
     if (auto s = std::dynamic_pointer_cast<P2Model::SemanticCallbacks>(semantics())) {
-        out <<prefix <<"paths terminated at duplicate states:   " <<s->nDuplicateStates() <<"\n";
-        out <<prefix <<"paths terminated for solver failure:    " <<s->nSolverFailures() <<" (including timeouts)\n";
+        out <<prefix <<"paths terminated at duplicate states:         " <<s->nDuplicateStates() <<"\n";
+        out <<prefix <<"paths terminated for solver failure:          " <<s->nSolverFailures() <<" (including timeouts)\n";
     }
-    out <<prefix <<"symbolic expressions truncated:         " <<nExpressionsTrimmed() <<"\n";
+    out <<prefix <<"symbolic expressions truncated:               " <<nExpressionsTrimmed() <<"\n";
 
     nPathsStats_ = nPathsExplored;
 }
