@@ -45,7 +45,7 @@ DurationParser::toString(const Sawyer::Optional<uint64_t> &seconds) {
     if (seconds) {
         return Super::toString(*seconds);
     } else {
-        return "ulimited";
+        return "unlimited";
     }
 }
 
