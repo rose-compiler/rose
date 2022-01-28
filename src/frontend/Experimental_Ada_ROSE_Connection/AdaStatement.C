@@ -656,6 +656,8 @@ namespace
 
         if (incomplDecl)
         {
+          //~ logError() << dclname << " " << typeid(*res).name() << typeid(*incomplDecl).name()
+                     //~ << std::endl;
           res->set_firstNondefiningDeclaration(incomplDecl);
           res->set_definingDeclaration(res);
           incomplDecl->set_definingDeclaration(res);
@@ -2251,8 +2253,13 @@ namespace
 
     Element_Struct* baseElem = retrieveAsOpt(elemMap(), typeDefn.The_Union.The_Type_Definition.Corresponding_Type_Structure);
 
-    return baseElem ? queryDefinitionData(*baseElem, ctx).second
-                    : tyKind;
+    // derived enumeration types are handled differently ...
+    //   so, if the representation is a derived enum, we change the tyKind;
+    //   otherwise we keep the A_Derived_Type_Definition.
+    if (baseElem && (queryDefinitionData(*baseElem, ctx).second == An_Enumeration_Type_Definition))
+      tyKind = An_Enumeration_Type_Definition;
+
+    return tyKind;
   }
 
   std::pair<Element_ID, Type_Kinds>
@@ -2263,24 +2270,38 @@ namespace
     Declaration_Struct& complDecl = complElem.The_Union.Declaration;
     NameData            declname  = singleName(complDecl, ctx);
 
-    ADA_ASSERT(complDecl.Declaration_Kind == An_Ordinary_Type_Declaration);
-    logKind("An_Ordinary_Type_Declaration");
+    ADA_ASSERT(  complDecl.Declaration_Kind == An_Ordinary_Type_Declaration
+              || complDecl.Declaration_Kind == A_Formal_Type_Declaration
+              );
+    logKind( complDecl.Declaration_Kind == An_Ordinary_Type_Declaration
+                        ? "An_Ordinary_Type_Declaration"
+                        : "A_Formal_Type_Declaration"
+           );
 
     Element_Struct&     typeElem = retrieveAs(elemMap(), complDecl.Type_Declaration_View);
     ADA_ASSERT(typeElem.Element_Kind == A_Definition);
 
     Definition_Struct&  typeDefn = typeElem.The_Union.Definition;
-    ADA_ASSERT(typeDefn.Definition_Kind == A_Type_Definition);
 
-    Type_Kinds          resKind = typeDefn.The_Union.The_Type_Definition.Type_Kind;
+    // this is questionable, but how shall we deal with formal type definitions ..?
+    Type_Kinds          resKind  = A_Derived_Type_Definition;
 
-    // look at the base of a derived type
-    if (resKind == A_Derived_Type_Definition)
-      resKind = queryBaseDefinitionData(typeDefn, resKind, ctx);
+    if (typeDefn.Definition_Kind == A_Type_Definition)
+    {
+      resKind = typeDefn.The_Union.The_Type_Definition.Type_Kind;
+
+      // look at the base of a derived type
+      if (resKind == A_Derived_Type_Definition)
+        resKind = queryBaseDefinitionData(typeDefn, resKind, ctx);
+    }
+    else
+    {
+      ADA_ASSERT(typeDefn.Definition_Kind == A_Formal_Type_Definition);
+      // not sure what we need to do here ...
+    }
 
     return std::make_pair(declname.id(), resKind);
   }
-
 
   // find the element and type kind of the corresponding complete declaration
   std::pair<Element_ID, Type_Kinds>
