@@ -443,7 +443,8 @@ void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
     abstractValue=AbstractValue(CodeThorn::Top()); // INVESTIGATE
     conditionalApproximateRawWriteToMemoryLocation(abstractMemLoc,abstractValue,strongUpdate);
   } else if(abstractMemLoc.isTop()) {
-    combineValueAtAllMemoryLocations(abstractValue); // BUG: leads to infinite loop in DOM029
+    //skip (crude memory abstraction)
+    //combineValueAtAllMemoryLocations(abstractValue);
   } else if(abstractMemLoc.isPtrSet()) {
     // call recursively for all values in the set
     //cout<<"DEBUG: ptr set recursion."<<endl;
