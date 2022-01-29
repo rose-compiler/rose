@@ -1182,8 +1182,11 @@ Grammar::setUpTypes ()
                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      // for function access types, retain the return type
-     AdaAccessType.setDataPrototype ("SgType*", "return_type", "= NULL",
-                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     // PP (01/28/22) commented out, because an access type can point to a SgFunctionType which has a representation
+     //   of the return type. Not sure about the parameter profile, b/c SgFunctionType only stores
+     //   parameter types and not their names.
+     //~ AdaAccessType.setDataPrototype ("SgType*", "return_type", "= NULL",
+                                     //~ NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      // MS: is subprogram access type protected?
      AdaAccessType.setDataPrototype ("bool", "is_protected", "= false",

@@ -6289,8 +6289,10 @@ SgPointerDerefExp::get_type() const
        // PP (7/9/21): Support Ada types
           case V_SgAdaAccessType:
              {
-               someType = isSgAdaAccessType(someType)->get_base_type();
-               goto keepStripping;
+               returnType = isSgAdaAccessType(someType)->get_base_type();
+               ROSE_ASSERT(returnType && ("access"));
+               // \todo shall we strip modifiers, similar to SgPointerType ??
+               break;
              }
 
           default:
