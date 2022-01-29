@@ -250,6 +250,22 @@ namespace
       support_opt(n.get_constraint());
     }
 
+    void handle(SgFunctionType& n)
+    {
+      const bool func = si::ada::isFunction(n);
+
+      prn(func ? " function" : " procedure");
+
+      // TODO: print parameter profile here if it is specified.
+      //       parameter profiles are not currently implemented for
+      //       AdaAccessType nodes.
+
+      if (!func) return;
+
+      prn(" return");
+      type(n.get_return_type());
+    }
+
     void handle(SgAdaAccessType& n)
     {
       prn("access");
@@ -262,30 +278,15 @@ namespace
           prn(" constant");
         }
 
-        // consider: ASSERT_not_null(n.get_base_type());
-        if (n.get_base_type() != NULL) {
-          type(n.get_base_type());
-        }
+        type(n.get_base_type());
       } else {
         // subprogram access type
         if (n.get_is_protected()) {
           prn(" protected");
         }
 
-        if (n.get_return_type() != NULL) {
-          prn(" function");
-        } else {
-          prn(" procedure");
-        }
-
-        // TODO: print parameter profile here if it is specified.
-        //       parameter profiles are not currently implemented for
-        //       AdaAccessType nodes.
-
-        if (n.get_return_type() != NULL) {
-          prn(" return");
-          type(n.get_return_type());
-        }
+        // TODO: pass parameter profile into type printing... if needed.
+        type(n.get_base_type());
       }
 
     }

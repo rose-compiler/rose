@@ -268,15 +268,29 @@ mkEnumDefn(const std::string& name, SgScopeStatement& scope)
 }
 
 SgAdaAccessType&
-mkAdaAccessType(SgType *base_type)
+mkAdaAccessType(SgType& base_type)
 {
-  SgAdaAccessType& sgnode = mkNonSharedTypeNode<SgAdaAccessType>(base_type);
+  // \todo PP (01/28/22) this may need to be a shared type node
+  SgAdaAccessType& sgnode = mkNonSharedTypeNode<SgAdaAccessType>(&base_type);
   return sgnode;
 }
 
+namespace
+{
+
 SgFunctionType& mkAdaEntryType(SgFunctionParameterList& lst)
 {
+  // \todo build entry type
   return SG_DEREF(sb::buildFunctionType(sb::buildVoidType(), &lst));
+}
+
+}
+
+SgFunctionType& mkFunctionType(SgType& returnType)
+{
+  SgFunctionParameterTypeList& paramTypes = mkBareNode<SgFunctionParameterTypeList>();
+
+  return SG_DEREF(sb::buildFunctionType(&returnType, &paramTypes));
 }
 
 SgFunctionType& mkAdaFunctionRenamingDeclType(SgType& retty, SgFunctionParameterList& lst)

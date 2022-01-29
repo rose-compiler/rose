@@ -2395,7 +2395,8 @@ namespace
   struct InheritedEnumeratorCreator
   {
       InheritedEnumeratorCreator(SgEnumDeclaration& enumDcl, SgEnumDeclaration& orig, AstContext astctx)
-      : derivedDcl(enumDcl), origAA(orig.get_enumerators().begin()), origZZ(orig.get_enumerators().end()), ctx(astctx)
+      : derivedDcl(enumDcl), // origAA(orig.get_enumerators().begin()), origZZ(orig.get_enumerators().end()),
+        ctx(astctx)
       {
         //~ logError() << "|| " << std::distance(origAA, origZZ) << std::endl;
       }
@@ -2403,7 +2404,7 @@ namespace
       // assuming that the inherited enumerators appear in the same order
       void operator()(Element_ID id)
       {
-        ROSE_ASSERT(origAA != origZZ);
+        //~ ROSE_ASSERT(origAA != origZZ);
 
 #if OLD_CODE
         SgInitializedName& origEnum = SG_DEREF(*origAA);
@@ -2453,13 +2454,13 @@ namespace
 
         recordNode(asisVars(), name.id(), sgnode);
 
-        ++origAA;
+        //~ ++origAA;
       }
 
     private:
       SgEnumDeclaration&                             derivedDcl;
-      SgInitializedNamePtrList::const_iterator       origAA;
-      const SgInitializedNamePtrList::const_iterator origZZ;
+//      SgInitializedNamePtrList::const_iterator       origAA;
+//      const SgInitializedNamePtrList::const_iterator origZZ;
       AstContext                                     ctx;
   };
 

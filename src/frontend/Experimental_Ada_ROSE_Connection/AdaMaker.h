@@ -148,13 +148,15 @@ namespace Ada_ROSE_Translation
   mkEnumDefn(const std::string& name, SgScopeStatement& scope);
 
   /// creates an ada access type with \ref base_type as the type being referenced.
+  // PP (01/28/22) changed base_type to reference, b/c null is not allowed in the
+  //               ROSE type checker.
   SgAdaAccessType&
-  mkAdaAccessType(SgType *base_type);
+  mkAdaAccessType(SgType& base_type);
 
   /// creates an entry type from a function parameter list
   // \todo the representation is incomplete and should be replaced
   //       by a new IR node SgAdaEntryType
-  SgFunctionType& mkAdaEntryType(SgFunctionParameterList& lst);
+  // SgFunctionType& mkAdaEntryType(SgFunctionParameterList& lst);
 
   /// creates an array type with index ranges \ref indices and component
   /// type \ref comptype.
@@ -175,6 +177,10 @@ namespace Ada_ROSE_Translation
 
   /// creates an aliased type for \ref basety
   SgType& mkAliasedType(SgType& underType);
+
+  /// creates a function/procedure type with return type \ref returnType
+  /// \todo add parameter list and ada parameter profiles (types + name)
+  SgFunctionType& mkFunctionType(SgType& returnType);
 
   /// create a formal type
   // SgAdaFormalType& mkAdaFormalType(const std::string& name);

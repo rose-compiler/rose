@@ -170,7 +170,7 @@ namespace
 
           SgType& ty = getDeclTypeID(access.Anonymous_Access_To_Object_Subtype_Mark, ctx);
 
-          res = &mkAdaAccessType(&ty);
+          res = &mkAdaAccessType(ty);
 
           /** unused fields:
                  bool                         Has_Null_Exclusion;
@@ -185,7 +185,7 @@ namespace
       case Not_An_Access_Definition: /* break; */ // An unexpected element
       default:
         logWarn() << "adk? " << access.Access_Definition_Kind << std::endl;
-        res = &mkAdaAccessType(sb::buildVoidType());
+        res = &mkAdaAccessType(SG_DEREF(sb::buildVoidType()));
         ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
 
@@ -345,7 +345,7 @@ namespace
     case An_Access_To_Constant:
       {
         SgType& ato = getDefinitionTypeID(access_type.Access_To_Object_Definition, ctx);
-        access_t = &mkAdaAccessType(&ato);
+        access_t = &mkAdaAccessType(ato);
 
         // handle cases for ALL or CONSTANT general access modifiers
         switch (access_type_kind) {
@@ -389,13 +389,13 @@ namespace
           */
         }
 
-        access_t = &mkAdaAccessType(NULL);
+        SgType& retType = isFuncAccess ? getDeclTypeID(access_type.Access_To_Function_Result_Profile, ctx)
+                                       : SG_DEREF(sb::buildVoidType());
+        SgFunctionType& funty = mkFunctionType(retType /* \todo add paramter profile */);
+
+        access_t = &mkAdaAccessType(funty);
         access_t->set_is_object_type(false);
 
-        if (isFuncAccess) {
-          SgType &rettype = getDeclTypeID(access_type.Access_To_Function_Result_Profile, ctx);
-          access_t->set_return_type(&rettype);
-        }
 
         // if protected, set the flag
         if (access_type_kind == An_Access_To_Protected_Procedure ||
@@ -407,7 +407,7 @@ namespace
       }
     default:
       logWarn() << "Unhandled access type kind: " << access_type_kind << std::endl;
-      access_t = &mkAdaAccessType(sb::buildVoidType());
+      access_t = &mkAdaAccessType(SG_DEREF(sb::buildVoidType()));
       ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
 
