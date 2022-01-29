@@ -4376,7 +4376,17 @@ getQualName(Element_Struct& elem, AstContext ctx)
     return NameData{ ident, ident, ctx.scope(), elem };
   }
 
+  if (idex.Expression_Kind == An_Operator_Symbol)
+  {
+    logKind("An_Operator_Symbol");
+
+    std::string ident{idex.Name_Image};
+
+    return NameData{ ident, ident, ctx.scope(), elem };
+  }
+
   ADA_ASSERT(idex.Expression_Kind == A_Selected_Component);
+  logKind("A_Selected_Component");
 
   NameData compound = getNameID(idex.Prefix, ctx);
   NameData selected = getNameID(idex.Selector, ctx);

@@ -265,7 +265,7 @@ namespace ada
 
   /// converts text to constant values
   /// \{
-  int convertIntLiteral(const char* img);
+  long long int convertIntegerLiteral(const char* img);
 
   std::string convertStringLiteral(const char* img);
 

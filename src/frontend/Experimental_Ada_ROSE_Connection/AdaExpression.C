@@ -916,9 +916,8 @@ namespace
         {
           logKind("An_Integer_Literal");
 
-          res = &mkValue<SgIntVal>(expr.Value_Image);
+          res = &mkAdaIntegerLiteral(expr.Value_Image);
 
-          //~ res = &mkValue<SgLongIntVal>(expr.Value_Image);
           /* unused fields: (Expression_Struct)
                enum Attribute_Kinds  Attribute_Kind
           */
@@ -1494,7 +1493,7 @@ getEnumRepresentationValue(Element_Struct& el, AstContext ctx)
             || def.Defining_Name_Kind == A_Defining_Character_Literal
             );
 
-  return mkValue<SgIntVal>(def.Representation_Value_Image);
+  return mkAdaIntegerLiteral(def.Representation_Value_Image);
 }
 
 } // namespace Ada_ROSE_Translation
