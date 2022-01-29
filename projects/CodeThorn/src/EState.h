@@ -45,7 +45,7 @@ namespace CodeThorn {
     EState();
   EState(Label label, PStatePtr pstate):_label(label),_pstate(pstate) { _constructCount++; }
     EState(Label label, PStatePtr pstate, CodeThorn::InputOutput io):_label(label),_pstate(pstate),io(io){ _constructCount++; }
-    EState(Label label, CallString cs, PStatePtr pstate, CodeThorn::InputOutput io):_label(label),_pstate(pstate),io(io),callString(cs) { _constructCount++; }
+    EState(Label label, CallString cs, PStatePtr pstate, CodeThorn::InputOutput io):_label(label),callString(cs),_pstate(pstate),io(io) { _constructCount++; }
     EState(EState&& other); // move constructor
     ~EState();
     EState(const EState &other); // copy constructor
@@ -90,23 +90,33 @@ namespace CodeThorn {
     static std::string allocationHistoryToString();
     static void checkPointAllocationHistory();
 
-  private:
-    void copy(EState* target, ConstEStatePtr source,bool sharedPStatesFlag);
-    Label _label;
-    PStatePtr _pstate;
-    static uint64_t _constructCount;
-    static uint64_t _destructCount;
-    static std::list<std::pair<uint64_t,uint64_t> > _allocationHistory;
   public:
     static bool sharedPStates;
     static bool fastPointerHashing;
-    CodeThorn::InputOutput io;
     void setCallString(CallString cs);
     CallString getCallString() const;
     size_t getCallStringLength() const;
-    CallString callString;
+
+  public:
     static uint64_t getConstructCount();
     static uint64_t getDestructCount();
+    // returns number of non-pointer addresses (e.g. numbers, which should never occur).
+    // exits with error message, if more addresses of same memory region exist, than allowed by arrayAbstractionIndex.
+    uint32_t checkArrayAbstractionIndexConsistency(int32_t arrayAbstractionIndex, VariableIdMapping* vim);
+
+  private:
+    void copy(EState* target, ConstEStatePtr source,bool sharedPStatesFlag);
+    Label _label;
+  public:
+    CallString callString;
+  private:
+    PStatePtr _pstate;
+  public:
+    CodeThorn::InputOutput io;
+  private:
+    static uint64_t _constructCount;
+    static uint64_t _destructCount;
+    static std::list<std::pair<uint64_t,uint64_t> > _allocationHistory;
     
   };
 

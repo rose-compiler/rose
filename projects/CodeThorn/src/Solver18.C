@@ -70,8 +70,7 @@ void Solver18::initializeSummaryStatesFromWorkList() {
   for(auto s : tmpWL) {
     // initialize summarystate and push back to work lis
     ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(s->label()));
-    setSummaryState(s->label(),s->callString,new EState(*s)); // ensure summary states are never added to the worklist
-    //_analyzer->addToWorkList(s);
+    setSummaryState(s->label(),s->callString,s);
     _workList->push(WorkListEntry(s->label(),s->callString));
   }
   /* the other states are not initialized here because every context
@@ -108,6 +107,13 @@ void Solver18::setSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs, E
   ROSE_ASSERT(cs==estate->callString);
   ROSE_ASSERT(estate);
 
+  if(_abstractionConsistencyCheckEnabled) {
+    auto vim=_analyzer->getVariableIdMapping();
+    auto nonPointerAddresses=estate->checkArrayAbstractionIndexConsistency(vim->getArrayAbstractionIndex(),vim);
+    if(nonPointerAddresses>0) {
+      cout<<"WARNING: number of non-pointer addresses at "<<estate->label().toString()<<": "<<nonPointerAddresses<<endl;
+    }
+  }
   //pair<int,CallString> p(lab.getId(),cs);
   //_summaryCSStateMap[p]=estate;
 #pragma omp critical(SUMMARY_STATES)

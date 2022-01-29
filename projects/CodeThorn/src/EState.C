@@ -531,3 +531,50 @@ void EState::setPState(PStatePtr pstate) {
     _pstate=pstate;
   }
 }
+
+uint32_t EState::checkArrayAbstractionIndexConsistency(int32_t arrayAbstractionIndex, VariableIdMapping* vim) {
+  uint32_t numNonPtr=0;
+  map<VariableId,int32_t> cntMap;
+  bool foundError=false;
+  if(arrayAbstractionIndex<0)
+    return 0;
+  for (auto iter=pstate()->begin(); iter!=pstate()->end(); ++iter) {
+    AbstractValue address=(*iter).first;
+    AbstractValue value=(*iter).second;
+    if(!address.isPtr()) {
+      numNonPtr++;
+    } else {
+      VariableId varId=address.getVariableId();
+      if(vim->isMemberVariable(varId)) {
+        cout<<"State consistency error: found member variable in state: "<<varId.toString(vim)<<endl;
+      }
+      if(vim->isOfArrayType(varId)) {
+        SgType* arrayType=vim->getType(varId);
+        SgType* elementType=SageInterface::getArrayElementType(arrayType);
+        // select the integral types to check for at least
+        if(SageInterface::isStrictIntegerType(elementType)||isSgTypeSigned128bitInteger(elementType)) {
+          if(cntMap.find(varId)==cntMap.end()) {
+            cntMap[varId]=1;
+          } else {
+            cntMap[varId]++;
+            if(cntMap[varId]-1>arrayAbstractionIndex) {
+              foundError=true;
+            }
+          }
+        }
+      }
+    }
+  }
+  if(foundError) {
+    // generate detailed report
+    for(auto p : cntMap) {
+      if(p.second-1>arrayAbstractionIndex) {
+        cout<<"State abstraction inconistency detected: "<<labelString()<<": "<<p.first.toString(AbstractValue::getVariableIdMapping())<<" : "<<p.second<<endl;
+      }
+    }
+    cout<<"Exiting analysis because of detected inconsistency."<<endl;
+    exit(1);
+  }
+  return numNonPtr;
+}
+

@@ -52,6 +52,7 @@ namespace CodeThorn {
     // number of active states stored in _summaryCSStateMapMap (computed incrementally by setSummaryState)
     size_t _numberOfStates=0;
     void printAllocationStats(string text);
+    bool _abstractionConsistencyCheckEnabled=false; // slow, only used for debugging
   };
 
 } // end of namespace CodeThorn
