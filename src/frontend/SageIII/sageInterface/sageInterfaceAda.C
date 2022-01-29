@@ -4,6 +4,7 @@
 #include "sageGeneric.h"
 
 #include <iostream>
+#include <limits>
 #include <exception>
 
 #include <boost/lexical_cast.hpp>
@@ -1129,16 +1130,16 @@ namespace
     return ch == 'E' || ch == 'e';
   }
 
-  std::pair<size_t, bool>
-  check(size_t s, size_t m)
+  std::pair<int, bool>
+  check(int s, int m)
   {
     return std::make_pair(s, s < m);
   }
 
-  std::pair<size_t, bool>
-  char2Val(char c, size_t max)
+  std::pair<int, bool>
+  char2Val(char c, int max)
   {
-    using ResultType = std::pair<size_t, bool>;
+    using ResultType = std::pair<int, bool>;
 
     if ((c >= '0') && (c <= '9'))
       return check(c - '0', max);
@@ -1154,7 +1155,7 @@ namespace
 
   template <class T>
   std::pair<T, const char*>
-  parseDec(const char* buf, size_t base = 10)
+  parseDec(const char* buf, int base = 10)
   {
     ROSE_ASSERT(*buf != '\0');
 
@@ -1180,9 +1181,19 @@ namespace
       // While the underflow is likely benign (System.Min_Int == -System.Min_Int)
       // for a two's complement representation, it seems more prudent to avoid it
       // altogether.
-      res = res*base + (v.first * negmul);
-      ROSE_ASSERT((res == 0) || ((res < 0) && (negmul < 0)) || ((res > 0) && (negmul > 0)));
+      ROSE_ASSERT(  (std::numeric_limits<decltype(res)>::min() / base <= res)
+                 && (std::numeric_limits<decltype(res)>::max() / base >= res)
+                 && ("arithmethic over-/underflow during literal parsing (mul)")
+                 );
+      res = res*base;
 
+      ROSE_ASSERT(  ((negmul < 0) && (std::numeric_limits<decltype(res)>::min() + v.first <= res))
+                 || ((negmul > 0) && (std::numeric_limits<decltype(res)>::max() - v.first >= res))
+                 || (!"arithmethic over-/underflow during literal parsing (add)")
+                 );
+      res += (v.first * negmul);
+
+      //~ ROSE_ASSERT((res == 0) || ((res < 0) && (negmul < 0)) || ((res > 0) && (negmul > 0)));
       ++buf;
 
       // skip underscores
@@ -1257,17 +1268,20 @@ namespace
   }
 
 
-  long int
-  basedLiteral(long int res, const char* cur, int base)
+  long long int
+  basedLiteral(long long int res, const char* cur, int base)
   {
     int exp = 0;
 
     ROSE_ASSERT(isBasedDelimiter(*cur));
 
     ++cur;
+    ROSE_ASSERT(  (res >= std::numeric_limits<decltype(base)>::min())
+               && (res <= std::numeric_limits<decltype(base)>::max())
+               );
     base = res;
 
-    std::tie(res, cur) = parseDec<long int>(cur, base);
+    std::tie(res, cur) = parseDec<long long int>(cur, base);
 
     if (isBasedDelimiter(*cur))
     {
@@ -1286,14 +1300,14 @@ namespace
 } // anonymous
 
 
-int convertIntLiteral(const char* img)
+long long int convertIntegerLiteral(const char* img)
 {
-  long int    res  = 0;
-  int         base = 10;
-  int         exp  = 0;
-  const char* cur  = img;
+  long long int res  = 0;
+  int           base = 10;
+  int           exp  = 0;
+  const char*   cur  = img;
 
-  std::tie(res, cur) = parseDec<long int>(cur);
+  std::tie(res, cur) = parseDec<long long int>(cur);
 
   if (isBasedDelimiter(*cur))
   {

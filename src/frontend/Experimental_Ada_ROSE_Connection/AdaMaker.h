@@ -751,9 +751,6 @@ namespace Ada_ROSE_Translation
   }
 
   template <>
-  int convAdaLiteral<int>(const char* img);
-
-  template <>
   long double convAdaLiteral<long double>(const char* img);
 
   template <>
@@ -782,6 +779,10 @@ namespace Ada_ROSE_Translation
   /// \note specialized since SgStringVal constructor requires special handling
   template <>
   SgStringVal& mkValue<SgStringVal>(const char* textrep);
+
+  /// creates a signed integral literal node of the appropriate size (e.g., short, int, long, long long)
+  SgValueExp&
+  mkAdaIntegerLiteral(const char* textrep);
 } // namespace Ada_ROSE_Translation
 
 #endif /* _ADA_MAKER_H */

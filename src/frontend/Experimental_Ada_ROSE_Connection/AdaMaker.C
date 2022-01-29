@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <numeric>
+#include <limits>
 #include <cmath>
 
 #include <boost/algorithm/string/replace.hpp>
@@ -1530,22 +1531,35 @@ mkNullExpression()
 
 namespace
 {
-  int getInitialValue(SgInitializedName& enumitem)
+  struct IntegerValue : sg::DispatchHandler<long long int>
   {
-    //~ if (enumitem.get_initializer() == nullptr)
-      //~ return -1;
+    void handle(const SgNode& n)           { SG_UNEXPECTED_NODE(n); }
+    void handle(const SgShortVal& n)       { res = n.get_value(); }
+    void handle(const SgIntVal& n)         { res = n.get_value(); }
+    void handle(const SgLongIntVal& n)     { res = n.get_value(); }
+    void handle(const SgLongLongIntVal& n) { res = n.get_value(); }
+  };
 
+  long long int getIntegralValue(SgInitializedName& enumitem)
+  {
     SgAssignInitializer& ini = SG_DEREF( isSgAssignInitializer(enumitem.get_initializer()) );
-    SgIntVal&            val = SG_DEREF( isSgIntVal(ini.get_operand()) );
 
-    return val.get_value();
+    return sg::dispatch(IntegerValue{}, ini.get_operand());
   }
 };
 
 SgExpression&
 mkEnumeratorRef(SgEnumDeclaration& enumdecl, SgInitializedName& enumitem)
 {
-  return SG_DEREF( sb::buildEnumVal_nfi(getInitialValue(enumitem), &enumdecl, enumitem.get_name()) );
+  using rose_rep_t = decltype(std::declval<SgEnumVal>().get_value());
+
+  const long long int enumval = getIntegralValue(enumitem);
+  ROSE_ASSERT(  (enumval >= std::numeric_limits<rose_rep_t>::min())
+             && (enumval <= std::numeric_limits<rose_rep_t>::max())
+             && ("integral value over-/underflow during conversion")
+             );
+
+  return SG_DEREF( sb::buildEnumVal_nfi(enumval, &enumdecl, enumitem.get_name()) );
 }
 
 SgExpression&
@@ -1665,13 +1679,6 @@ SgStringVal& mkValue<SgStringVal>(const char* textrep)
 
 
 template <>
-int convAdaLiteral<int>(const char* img)
-{
-  return si::ada::convertIntLiteral(img);
-}
-
-
-template <>
 long double convAdaLiteral<long double>(const char* img)
 {
   return si::ada::convertRealLiteral(img);
@@ -1683,6 +1690,45 @@ char convAdaLiteral<char>(const char* img)
 {
   return si::ada::convertCharLiteral(img);
 }
+
+namespace
+{
+  template <class SageIntegralValue>
+  SageIntegralValue*
+  mkIntegralLiteralIfWithinRange(long long int val, const char* textrep)
+  {
+    using rose_rep_t = decltype(std::declval<SageIntegralValue>().get_value());
+
+    const bool withinRange = (  (val >= std::numeric_limits<rose_rep_t>::min())
+                             && (val <= std::numeric_limits<rose_rep_t>::max())
+                             );
+
+    if (!withinRange) return nullptr;
+
+    return &mkLocatedNode<SageIntegralValue>(val, textrep);
+  }
+}
+
+SgValueExp&
+mkAdaIntegerLiteral(const char* textrep)
+{
+  static constexpr bool MakeSmallest = false;
+
+  ADA_ASSERT(textrep);
+
+  long long int val = si::ada::convertIntegerLiteral(textrep);
+  SgValueExp*   res = nullptr;
+
+  MakeSmallest
+  || (res = mkIntegralLiteralIfWithinRange<SgShortVal>      (val, textrep))
+  || (res = mkIntegralLiteralIfWithinRange<SgIntVal>        (val, textrep))
+  || (res = mkIntegralLiteralIfWithinRange<SgLongIntVal>    (val, textrep))
+  || (res = mkIntegralLiteralIfWithinRange<SgLongLongIntVal>(val, textrep))
+  ;
+
+  return SG_DEREF(res);
+}
+
 
 
 //
