@@ -29,7 +29,13 @@ class SgType;
 
 typedef std::tuple<std::string, SgType*, SgExpression*> EntityDeclTuple;
 
+// Needed until Rose compiles with C++17 (see setSgSourceFile below)
+class SgSourceFile;
+
 namespace Rose::builder {
+
+// SgSourceFile* temporary needed until ROSE supports C++17
+void setSgSourceFile(SgSourceFile* sg_file);
 
 // Converts parsed program to ROSE Sage nodes
 void Build(const Fortran::parser::Program &x, Fortran::parser::AllCookedSources &cooked);

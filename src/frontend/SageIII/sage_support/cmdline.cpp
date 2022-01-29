@@ -5264,9 +5264,9 @@ SgFile::processRoseCommandLineOptions ( vector<string> & argv )
   // Added support the experimental fortran frontend using the Flang parser [Rasmussen 2019.08.30]
      if ( CommandlineProcessing::isOption(argv,"-rose:","experimental_flang_frontend",true) == true )
         {
-          if ( SgProject::get_verbose() >= 0 )
+          if ( SgProject::get_verbose() > 0 )
              {
-               printf ("also: experimental Flang frontend (explicitly set: ON) \n");
+               std::cout << "Using experimental Flang Fortran frontend (explicitly set: ON)\n";
              }
           set_experimental_flang_frontend(true);
         }

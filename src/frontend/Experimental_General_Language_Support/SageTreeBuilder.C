@@ -1,7 +1,7 @@
 #include "sage3basic.h"
 #include "rose_config.h"
 
-#include "sage-tree-builder.h"
+#include "SageTreeBuilder.h"
 #include "Jovial_to_ROSE_translation.h"
 #include "ModuleBuilder.h"
 
@@ -53,13 +53,13 @@ SageTreeBuilder::attachComment(SgLocatedNode* node)
   Sg_File_Info* end = node->get_endOfConstruct();
 
   if (start && end) {
-    ATermSupport::PosInfo pos{node};
+    PosInfo pos{node};
     attachComment(node, pos);
   }
 }
 
 void
-SageTreeBuilder::attachComment(SgLocatedNode* node, const ATermSupport::PosInfo &pos)
+SageTreeBuilder::attachComment(SgLocatedNode* node, const PosInfo &pos)
 {
   PreprocessingInfo::DirectiveType commentType{PreprocessingInfo::JovialStyleComment};
   PreprocessingInfo::RelativePositionType commentPosition{PreprocessingInfo::before};
@@ -76,7 +76,7 @@ SageTreeBuilder::attachComment(SgLocatedNode* node, const ATermSupport::PosInfo 
           if (SgVariableDeclaration* varDecl = isSgVariableDeclaration(stmt)) {
             for (SgInitializedName* name : varDecl->get_variables()) {
               if (SgInitializer* init = name->get_initializer()) {
-                ATermSupport::PosInfo initPos{init};
+                PosInfo initPos{init};
                 if (initPos.getEndCol() > token->getStartCol()) {
                   // attach comment after this variable initializer
                   commentNode = init;

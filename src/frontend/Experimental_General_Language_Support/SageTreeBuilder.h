@@ -2,10 +2,11 @@
 #define ROSE_SAGE_TREE_BUILDER_H_
 
 #include "general_language_translation.h"
+#include "PosInfo.h"
 #include "Tokens.h"
-#include "ATerm/ATermTraversal.h"
 #include <boost/optional.hpp>
 #include <boost/tuple/tuple.hpp>
+#include <sstream>
 
 // WARNING: This file has been designed to compile with -std=c++17
 // This limits the use of ROSE header files at the moment.
@@ -63,13 +64,13 @@ struct SourcePosition {
    int line, column;
 };
 
- struct TraversalContext {
-    TraversalContext() : type(nullptr), is_initialization(false),
-                         actual_function_param_scope(nullptr) {}
-    SgType* type;
-    bool is_initialization;
-    SgScopeStatement* actual_function_param_scope;
- };
+struct TraversalContext {
+  TraversalContext() : type(nullptr), is_initialization(false),
+                       actual_function_param_scope(nullptr) {}
+  SgType* type;
+  bool is_initialization;
+  SgScopeStatement* actual_function_param_scope;
+};
 
 //using SourcePositionPair = boost::tuple<SourcePosition, SourcePosition>;
 //using SourcePositions    = boost::tuple<SourcePosition, SourcePosition, SourcePosition>;
@@ -100,6 +101,15 @@ public:
    SageTreeBuilder &operator=(SageTreeBuilder &&) = delete;
 
    SageTreeBuilder(SgSourceFile* source, LanguageEnum language, std::istringstream &tokens);
+
+   // WARNING: this constructor requires source_ to be set before usage (called by flang main)
+   SageTreeBuilder(LanguageEnum language) : language_{language}, source_{nullptr} {
+     // Sort out how to get token stream from flang
+     tokens_ = new TokenStream(iss_empty_);
+   }
+   void setSourceFile(SgSourceFile* source) {
+     source_ = source;
+   }
 
    const TokenStream& getTokens() {
      return *tokens_;
@@ -245,6 +255,7 @@ private:
    SgSourceFile* source_;
    TokenStream* tokens_;
    TraversalContext context_;
+   std::istringstream iss_empty_{};
    std::map<const std::string, SgVarRefExp*> forward_var_refs_;
    std::multimap<const std::string, SgPointerType*> forward_type_refs_;
 
@@ -264,7 +275,7 @@ public:
    bool  isInitializationContext()          {return context_.is_initialization;}
 
    void attachComment(SgLocatedNode* locatedNode);
-   void attachComment(SgLocatedNode* locatedNode, const ATermSupport::PosInfo &pos);
+   void attachComment(SgLocatedNode* locatedNode, const PosInfo &pos);
    void setSourcePosition(SgLocatedNode* node, const SourcePosition &start, const SourcePosition &end);
 
 // Helper function

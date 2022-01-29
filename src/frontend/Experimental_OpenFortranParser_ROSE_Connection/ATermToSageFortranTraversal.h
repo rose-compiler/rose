@@ -4,7 +4,7 @@
 #include "ATerm/ATermTraversal.h"
 #include "general_language_translation.h"
 #include "FASTNodes.h"
-#include "sage-tree-builder.h"
+#include "SageTreeBuilder.h"
 
 namespace rb = Rose::builder;
 
