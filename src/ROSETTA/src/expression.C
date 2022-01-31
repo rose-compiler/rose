@@ -1726,7 +1726,9 @@ Grammar::setUpExpressions ()
                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      EnumVal.setFunctionPrototype ( "HEADER_ENUM_VALUE_EXPRESSION", "../Grammar/Expression.code" );
-     EnumVal.setDataPrototype ( "int", "value", "= 0",
+
+     // PP (01/31/22) changed type from int to long long int to handle large enum values in Ada.
+     EnumVal.setDataPrototype ( "long long int", "value", "= 0",
                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      EnumVal.setDataPrototype ( "SgEnumDeclaration*", "declaration", "= NULL",
                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
