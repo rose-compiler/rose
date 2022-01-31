@@ -23,24 +23,36 @@ namespace CodeThorn {
     // a pass through node has a single in-edge, a single-out edge, and
     // the next node has also a single-in-edge.
     bool isPassThroughLabel(Label lab);
+    size_t checkDiff();
     class WorkListEntry {
     public:
-    WorkListEntry(Label lab,CallString cs):_label(lab),_callString(cs) {}
+      WorkListEntry(Label lab,CallString cs):_label(lab),_callString(cs) {}
       Label label() { return _label; }
       CallString callString() { return _callString; }
     private:
       Label _label;
       CallString _callString;
     };
+    bool isReachableLabel(Label lab);
+    bool isUnreachableLabel(Label lab);
+    void deleteAllStates();
+    size_t getNumberOfStates();
   private:
-    void initializeSummaryStatesFromWorkList();
-    // add Edge {(currentEStatePtr,e,NewEStatePtr)} to STS
-    // if currentEStatePtr!=currentEStatePtr) then also add 
-    //     (currentEStatePtr,e,NewEStatePtr)} where e'=(currentEStatePtr0,annot(e),NewStatePtr);
-    // this represents the effect of merging states also in the STS (without introducing new merge states)
     static Sawyer::Message::Facility logger;
     static bool _diagnosticsInitialized;
+    
     GeneralPriorityWorkList<WorkListEntry>* _workList=nullptr;
+
+    void initializeSummaryStatesFromWorkList();
+    EStatePtr getSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs);
+    void setSummaryState(CodeThorn::Label lab, CallString cs, EStatePtr estate);
+    EStatePtr createBottomSummaryState(Label lab, CallString cs);
+    typedef std::unordered_map <CallString ,EStatePtr> SummaryCSStateMap;
+    std::unordered_map< int, SummaryCSStateMap > _summaryCSStateMapMap;
+    // number of active states stored in _summaryCSStateMapMap (computed incrementally by setSummaryState)
+    size_t _numberOfStates=0;
+    void printAllocationStats(string text);
+    bool _abstractionConsistencyCheckEnabled=false; // slow, only used for debugging
   };
 
 } // end of namespace CodeThorn

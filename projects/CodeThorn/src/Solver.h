@@ -7,11 +7,13 @@ namespace CodeThorn {
 
   class CTAnalysis;
 
-  class Solver : public DFSolver2 {
+  //  class Solver : public DFSolver2 {
+  class Solver {
 
   public:
     Solver();
     Solver(CTAnalysis* analyzer);
+    virtual ~Solver();
     virtual void run() = 0;
     virtual int getId() = 0;
     virtual bool createsTransitionSystem(); // default false

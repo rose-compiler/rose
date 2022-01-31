@@ -1073,8 +1073,8 @@ CodeThorn::VariableId AbstractValue::getVariableId() const {
   if(valueType!=AV_PTR && valueType!=AV_REF) {
     cerr << "AbstractValue::getVariableId() valueType="<<valueTypeToString()<<endl;
     cerr << "AbstractValue: value:"<<toString()<<endl;
-    //int *x=0;
-    //*x=1; // trigger stack trace
+    int *x=0;
+    *x=1; // trigger stack trace
     throw CodeThorn::Exception("Error: AbstractValue::getVariableId operation failed.");
   }
   else 

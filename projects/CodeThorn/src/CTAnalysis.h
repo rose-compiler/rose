@@ -162,6 +162,9 @@ namespace CodeThorn {
     CFAnalysis* getCFAnalyzer();
     TopologicalSort* getTopologicalSort();
 
+    // a label predicate for in-out node property allowing state-move-optimization
+    bool isPassThroughLabel(Label lab);
+    
     CodeThorn::PStateSet* getPStateSet();
     EStateSet* getEStateSet();
     TransitionGraph* getTransitionGraph();
@@ -282,14 +285,10 @@ namespace CodeThorn {
 
     void reduceStg(function<bool(EStatePtr)> predicate);
 
-    virtual Lattice* getPreInfo(Label lab, CallString context);
-    virtual Lattice* getPostInfo(Label lab, CallString context);
-    virtual void setPreInfo(Label lab, CallString context, Lattice*);
-    virtual void setPostInfo(Label lab, CallString context, Lattice*);
-
     void initializeSummaryStates(PStatePtr initialPStateStored);
     EStatePtr getSummaryState(CodeThorn::Label lab, CallString cs);
     void setSummaryState(CodeThorn::Label lab, CallString cs, EStatePtr estate);
+
     std::string programPositionInfo(CodeThorn::Label);
 
     void setOptionOutputWarnings(bool flag);
@@ -492,8 +491,6 @@ namespace CodeThorn {
 
   private:
 
-    //std::unordered_map<int,EStatePtr> _summaryStateMap;
-    //std::unordered_map< pair<int, CallString> ,EStatePtr, hash_pair> _summaryCSStateMap;
     typedef std::unordered_map <CallString ,EStatePtr> SummaryCSStateMap;
     std::unordered_map< int, SummaryCSStateMap > _summaryCSStateMapMap;
 

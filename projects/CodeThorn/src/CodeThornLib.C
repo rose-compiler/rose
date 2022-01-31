@@ -67,6 +67,7 @@
 #include "Solver16.h"
 #include "Solver17.h"
 #include "Solver18.h"
+#include "Solver19.h"
 #include "Solver8.h"
 
 using namespace std;
@@ -121,6 +122,7 @@ void CodeThorn::initDiagnostics() {
   FunctionIdMapping::initDiagnostics();
   FunctionCallMapping::initDiagnostics();
   EStateTransferFunctions::initDiagnostics();
+  Solver18::initDiagnostics();
 }
 
 Sawyer::Message::Facility CodeThorn::logger;
@@ -180,6 +182,9 @@ namespace CodeThorn {
       case 18 :  {  
         solver = new Solver18(); break; // does not create a TS
       }
+      case 19 :  {  
+        solver = new Solver19(); break; // does not create a TS
+      }
       case 8 :  {  
         solver = new Solver8(); break;
       }
@@ -193,6 +198,8 @@ namespace CodeThorn {
     
     AbstractValue evaluateExpressionWithEmptyState(SgExpression* expr) {
       CTAnalysis* analyzer=new CTAnalysis();
+      Solver* solver=new Solver16();
+      analyzer->setSolver(solver); // solver is required
       EStateTransferFunctions* exprAnalyzer=new EStateTransferFunctions();
       exprAnalyzer->setAnalyzer(analyzer);
       VariableIdMappingExtended* vid=new VariableIdMappingExtended();  // only empty vim required
@@ -200,9 +207,11 @@ namespace CodeThorn {
       AbstractValue::setVariableIdMapping(vid);
       AbstractValue aVal=exprAnalyzer->evaluateExpressionWithEmptyState(expr);
       AbstractValue::_variableIdMapping=oldVID;
+
       delete vid;
       delete exprAnalyzer;
       delete analyzer;
+      
       return aVal;
     }
 
@@ -239,7 +248,6 @@ namespace CodeThorn {
         }
         if(expr) {
           cout<<"Testing expr eval with empty state: "<<expr->unparseToString();
-          //AbstractValue aVal=exprAnalyzer->evaluateExpressionWithEmptyState(expr);
           AbstractValue aVal=evaluateExpressionWithEmptyState(expr);
           cout<<" => result value: "<<aVal.toString()<<" "<<endl;
         }
@@ -400,14 +408,6 @@ namespace CodeThorn {
     }
 
     void optionallyRunVisualizer(CodeThornOptions& ctOpt, CTAnalysis* analyzer, SgNode* root) {
-      if (ctOpt.visualization.icfgFileName.size()>0) {
-	string cfgFileName=ctOpt.visualization.icfgFileName;
-	DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
-	ddvis.setDotGraphName("CFG");
-	ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),cfgFileName,analyzer->getTopologicalSort(),false);
-	cout << "generated "<<cfgFileName<<" (top sort: "<<(analyzer->getTopologicalSort()!=0)<<")"<<endl;
-      }
-      
       ROSE_ASSERT(analyzer->getTransitionGraph());
       ROSE_ASSERT(analyzer->getEStateSet());
       Visualizer visualizer(analyzer);
@@ -456,13 +456,23 @@ namespace CodeThorn {
         
 	cout << "=============================================================="<<endl;
       }
+      if (ctOpt.visualization.icfgFileName.size()>0 && !ctOpt.visualization.vis) {
+	string icfgFileName=ctOpt.visualization.icfgFileName;
+	//DataDependenceVisualizer ddvis(analyzer->getLabeler(),analyzer->getVariableIdMapping(),"none");
+	//ddvis.setDotGraphName("CFG");
+	//ddvis.generateDotFunctionClusters(root,analyzer->getCFAnalyzer(),icfgFileName,analyzer->getTopologicalSort(),false);
+        analyzer->getCFAnalyzer()->generateIcfgDotFile(ctOpt.visualization.icfgFileName,analyzer->getTopologicalSort());
+	cout << "generated "<<icfgFileName<<" (top sort: "<<(analyzer->getTopologicalSort()!=0)<<")"<<endl;
+      }
+      
+
       if(ctOpt.visualization.visTg2) {
         string dotFile3=visualizer.foldedTransitionGraphToDot();
         write_file("transitiongraph2.dot", dotFile3);
         cout << "generated transitiongraph2.dot."<<endl;
       }
 
-      if (ctOpt.visualization. dotIOStg.size()>0) {
+      if (ctOpt.visualization.dotIOStg.size()>0) {
         string filename=ctOpt.visualization. dotIOStg;
         cout << "generating dot IO graph file:"<<filename<<endl;
         string dotFile="digraph G {\n";
@@ -870,6 +880,8 @@ namespace CodeThorn {
       stringstream ss;
       ss<<tc.toString();
       ss<<"Total memory                   : "<<CodeThorn::getPhysicalMemorySize()/(1024*1024) <<" MiB"<<endl;
+      ss<<"Total states allocation history: "<<EState::allocationHistoryToString()<<endl;
+      ss<<"Total states                   : "<<EState::allocationStatsToString()<<endl;
       return ss.str();
     }
 

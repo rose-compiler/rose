@@ -52,6 +52,7 @@ public:
     bool visTg2=false;
     std::string icfgFileName;
     std::string callGraphFileName;
+    bool displayPassThroughLabel=false;
   } visualization;
 
   // experimental options
@@ -112,7 +113,6 @@ public:
   int interpreterMode=0;
 
   bool initialStateFilterUnusedVariables=true;
-  int initialStateGlobalVarsAbstractionLevel=1;
 
   std::string interpreterModeOuputFileName;
   bool printWarnings=false;

@@ -18,8 +18,6 @@ void CodeThornOptions::configurePrecisionOption() {
   case 2:
     intraProcedural=false;
     contextSensitive=true;
-    if(callStringLength<1)
-      callStringLength=3;
     abstractionMode=1;
     if(arrayAbstractionIndex==-1)
       arrayAbstractionIndex=0;

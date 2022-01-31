@@ -26,6 +26,7 @@
 #include "TopologicalSort.h"
 #include "Miscellaneous2.h"
 #include "CodeThornPasses.h"
+#include "Solver18.h"
 
 using namespace std;
 using namespace Sawyer::Message;
@@ -112,16 +113,47 @@ std::string CodeThorn::CTAnalysis::hashSetConsistencyReport() {
 }
   
 void CodeThorn::CTAnalysis::deleteAllStates() {
+
+  if(getSolver()->getId()==18) {
+    dynamic_cast<Solver18*>(getSolver())->deleteAllStates();
+    return;
+  }
+
   if(_ctOpt.status) {
     cout<<"STATUS: "<<hashSetConsistencyReport();
   }      
   
+  EState::checkPointAllocationHistory();
+  size_t numSetEStates=estateSet.size();
   if(_ctOpt.status) cout<<"STATUS: deleting "<<estateSet.size()<<" estates, ";
+  for(auto es : estateSet) {
+    delete es;
+  }
   estateSet.clear();
+  size_t numSetPStates=pstateSet.size();
   if(_ctOpt.status) cout<<pstateSet.size()<<" pstates, ";
+  for(auto ps : pstateSet) {
+    delete ps;
+  }
   pstateSet.clear();
+
+  EState::checkPointAllocationHistory();
+
   if(_ctOpt.status) cout<<transitionGraph.size()<<" transitions in TS."<<endl;
   transitionGraph.clear();
+
+  // check is necessary for mixed modes. If states already deleted above, they cannot be deleted again
+  if(numSetEStates==0 && numSetPStates==0 && _summaryCSStateMapMap.size()>0) {
+    size_t cnt=0;
+    for(auto entry : _summaryCSStateMapMap) {
+      auto map=entry.second;
+      for(auto entry2 : map) {
+        delete entry2.second;
+      cnt++;
+      }
+    }
+    if(_ctOpt.status) cout<<"STATUS: deleted "<<cnt<<" CS-estates."<<endl;
+  }
 }
 
 void CodeThorn::CTAnalysis::run() {
@@ -130,6 +162,10 @@ void CodeThorn::CTAnalysis::run() {
 
 TopologicalSort* CodeThorn::CTAnalysis::getTopologicalSort() {
   return _topologicalSort;
+}
+
+bool CodeThorn::CTAnalysis::isPassThroughLabel(Label lab) {
+  return getFlow()->isPassThroughLabel(lab);
 }
 
 void CodeThorn::CTAnalysis::insertInputVarValue(int i) {
@@ -368,28 +404,14 @@ void CodeThorn::CTAnalysis::setOptionOutputWarnings(bool flag) {
   _estateTransferFunctions->setOptionOutputWarnings(flag);
 }
 
-//size_t CodeThorn::CTAnalysis::getSummaryStateMapSize() {
-//  return _summaryCSStateMapMap.size();
-//}
-
-Lattice* CodeThorn::CTAnalysis::getPreInfo(Label lab, CallString context) {
-  return const_cast<EStatePtr>(getSummaryState(lab,context));
-}
-
-Lattice* CodeThorn::CTAnalysis::getPostInfo(Label lab, CallString context) {
-  ROSE_ASSERT(0);
-}
-
-void CodeThorn::CTAnalysis::setPreInfo(Label lab, CallString context, Lattice* el) {
-  setSummaryState(lab,context,dynamic_cast<EStatePtr>(el));
-}
-
-void CodeThorn::CTAnalysis::setPostInfo(Label lab, CallString context, Lattice*) {
-  ROSE_ASSERT(0);
-}
-
 bool CodeThorn::CTAnalysis::isUnreachableLabel(Label lab) {
   // if code is unreachable no state is computed for it. In this case no entry is found for this label 
+  if(getSolver()->getId()==18) {
+    // solver 18 uses its own states
+    Solver18* solver18=dynamic_cast<CodeThorn::Solver18*>(getSolver());
+    ROSE_ASSERT(solver18);
+    return solver18->isUnreachableLabel(lab);
+  }
   return _summaryCSStateMapMap.find(lab.getId())==_summaryCSStateMapMap.end();
 }
 
@@ -641,9 +663,7 @@ void CodeThorn::CTAnalysis::setSolver(Solver* solver) {
 }
 
 Solver* CodeThorn::CTAnalysis::getSolver() {
-  CodeThorn::Solver* ctSolver=dynamic_cast<CodeThorn::Solver*>(_solver);
-  ROSE_ASSERT(ctSolver);
-  return ctSolver;
+  return dynamic_cast<CodeThorn::Solver*>(_solver);
 }
 
 void CodeThorn::CTAnalysis::runSolver() {
@@ -1340,17 +1360,7 @@ EStatePtr CodeThorn::CTAnalysis::createInitialEState(SgProject* root, Label slab
   EStatePtr estate=new EState(slab,initialPStateStored);
 
   ROSE_ASSERT(_estateTransferFunctions);
-  switch(_ctOpt.initialStateGlobalVarsAbstractionLevel) {
-  case 0:
-    // do not add global vars to state and consider them as a single summary in read/write functions
-    break;
-  case 1: /* default */
-    _estateTransferFunctions->initializeGlobalVariables(root, estate);
-    break;
-  default:
-    cerr<<"Unknown initialStateGlobalVarsAbstractionLevel: "<<_ctOpt.initialStateGlobalVarsAbstractionLevel<<endl;
-    exit(1);
-  }
+  _estateTransferFunctions->initializeGlobalVariables(root, estate);
   SAWYER_MESG(logger[INFO]) <<"Initial state: number of entries:"<<estate->pstate()->stateSize()<<endl;
   
   // initialize summary states map for abstract model checking mode

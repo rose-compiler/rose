@@ -21,6 +21,7 @@ using namespace CodeThorn;
 Sawyer::Message::Facility CodeThorn::FunctionCallMapping::logger;
 
 FunctionCallMapping::FunctionCallMapping() {
+  _matchMode=4;
 }
 
 void FunctionCallInfo::print() {
@@ -282,7 +283,7 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
           bool matching2=(fcInfo.getFunctionName()==fcTarget.getFunctionName());
           matching=matching1||matching2;
           // problematic handles special case of unspecified function pointers in C
-          //SAWYER_MESG(logger[INFO])<<"XXX: "<<fcInfo.getFunctionName()<<" : "<<funCallTypeName<<"<=>"<<fcTargetTypeName<<":::"<<matching<<endl;
+          //SAWYER_MESG(logger[INFO])<<"FunctionMatching: "<<fcInfo.getFunctionName()<<" : "<<funCallTypeName<<"<=>"<<fcTargetTypeName<<":::"<<matching<<endl;
           break;
           }
         default:

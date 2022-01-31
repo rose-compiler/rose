@@ -1,5 +1,5 @@
 #include "sage3basic.h"
-#include "Solver17.h"
+#include "Solver19.h"
 #include "CTAnalysis.h"
 #include "CodeThornCommandLineOptions.h"
 #include "EStateTransferFunctions.h"
@@ -12,19 +12,30 @@ using namespace Sawyer::Message;
 
 #include "CTAnalysis.h"
 
-Sawyer::Message::Facility Solver17::logger;
-// initialize static member flag
-bool Solver17::_diagnosticsInitialized = false;
+Sawyer::Message::Facility Solver19::logger;
+bool Solver19::_diagnosticsInitialized = false;
 
-Solver17::Solver17() {
+Solver19::Solver19() {
   initDiagnostics();
 }
 
-int Solver17::getId() {
-  return 17;
+void Solver19::initDiagnostics() {
+  if (!_diagnosticsInitialized) {
+    _diagnosticsInitialized = true;
+    Solver::initDiagnostics(logger, 18);
+  }
 }
-    
-void Solver17::initializeSummaryStatesFromWorkList() {
+
+int Solver19::getId() {
+  return 18;
+}
+
+// allows to handle sequences of nodes as basic blocks
+bool Solver19::isPassThroughLabel(Label lab) {
+  return _analyzer->isPassThroughLabel(lab);
+}
+
+void Solver19::initializeSummaryStatesFromWorkList() {
   // pop all states from worklist (can contain more than one state)
   list<EStatePtr> tmpWL;
   while(!_analyzer->isEmptyWorkList()) {
@@ -36,12 +47,16 @@ void Solver17::initializeSummaryStatesFromWorkList() {
     // initialize summarystate and push back to work lis
     ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(s->label()));
     _analyzer->setSummaryState(s->label(),s->callString,new EState(*s)); // ensure summary states are never added to the worklist
-    _analyzer->addToWorkList(s);
+    //_analyzer->addToWorkList(s);
+    Flow outSet=_analyzer->getFlow()->outEdges(s->label());
+    for(auto e : outSet) {
+      _workList->push(WorkListEntry(e,s->callString));
+    }
   }
 }
 
-void Solver17::run() {
-  SAWYER_MESG(logger[INFO])<<"Running solver "<<getId()<<endl;
+void Solver19::run() {
+  SAWYER_MESG(logger[INFO])<<"Running solver "<<getId()<<" (sharedpstates:"<<_analyzer->getOptionsRef().sharedPStates<<")"<<endl;
   ROSE_ASSERT(_analyzer);
   if(_analyzer->getOptionsRef().abstractionMode==0) {
     cerr<<"Error: abstraction mode is 0, but >= 1 required."<<endl;
@@ -51,23 +66,46 @@ void Solver17::run() {
     cerr<<"Error: topologic-sort required for exploration mode, but it is "<<_analyzer->getOptionsRef().explorationMode<<endl;
     exit(1);
   }
+  ROSE_ASSERT(_analyzer->getTopologicalSort());
+  if(_workList==nullptr) {
+    _workList=new GeneralPriorityWorkList<Solver19::WorkListEntry>(_analyzer->getTopologicalSort()->labelToPriorityMap());
+  }
 
   initializeSummaryStatesFromWorkList();
 
   size_t displayTransferCounter=0;
   bool terminateEarly=false;
   _analyzer->printStatusMessage(true);
-  while(!_analyzer->isEmptyWorkList()) {
-    EStatePtr currentEStatePtr0=_analyzer->popWorkList();
+  while(!_workList->empty()) {
+    auto p=_workList->top();
+    _workList->pop();
+    //EStatePtr currentEStatePtr0=_analyzer->popWorkList();
     // terminate early, ensure to stop all threads and empty the worklist (e.g. verification error found).
-    if(terminateEarly||currentEStatePtr0==nullptr)
+    if(terminateEarly)
       continue;
-    ROSE_ASSERT(currentEStatePtr0);
-    ROSE_ASSERT(currentEStatePtr0->label().isValid());
-    ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(currentEStatePtr0->label()));
-    EStatePtr currentEStatePtr=_analyzer->getSummaryState(currentEStatePtr0->label(),currentEStatePtr0->callString);
+    
+    ROSE_ASSERT(p.label().isValid());
+    ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(p.label()));
+    EStatePtr currentEStatePtr=_analyzer->getSummaryState(p.label(),p.callString());
     ROSE_ASSERT(currentEStatePtr);
     
+    list<EStatePtr> newEStateList0;
+    while(isPassThroughLabel(currentEStatePtr->label())) {
+      //cout<<"DEBUG: pass through: "<<currentEStatePtr->label().toString()<<endl;
+      Flow edgeSet0=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
+      ROSE_ASSERT(edgeSet0.size()==1); // must be 1 for pass through labels
+      Edge e=*edgeSet0.begin();
+      list<EStatePtr> newEStateList0;
+      newEStateList0=_analyzer->transferEdgeEStateInPlace(e,currentEStatePtr);
+      if(newEStateList0.size()==1) {
+        // move pointer: nullify original
+        _analyzer->setSummaryState(p.label(),p.callString(),nullptr);
+        currentEStatePtr=*newEStateList0.begin();
+      } else {
+        break;
+      }
+    }
+
     Flow edgeSet=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
     for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
       Edge e=*i;
@@ -76,20 +114,18 @@ void Solver17::run() {
       displayTransferCounter++;
       for(list<EStatePtr>::iterator nesListIter=newEStateList.begin();nesListIter!=newEStateList.end();++nesListIter) {
         // newEstate is passed by value (not created yet)
-        EStatePtr newEStatePtr0=*nesListIter;
+        EStatePtr newEStatePtr0=*nesListIter; // TEMPORARY PTR
         ROSE_ASSERT(newEStatePtr0->label()!=Labeler::NO_LABEL);
+        Label lab=newEStatePtr0->label();
+        CallString cs=newEStatePtr0->callString;
         if((!_analyzer->isFailedAssertEState(newEStatePtr0)&&!_analyzer->isVerificationErrorEState(newEStatePtr0))) {
           EStatePtr newEStatePtr=newEStatePtr0;
           ROSE_ASSERT(newEStatePtr);
           // performing merge
-          bool addToWorkListFlag=false;
-          Label lab=newEStatePtr->label();
-          CallString cs=newEStatePtr->callString;
           EStatePtr summaryEStatePtr=_analyzer->getSummaryState(lab,cs);
           ROSE_ASSERT(summaryEStatePtr);
           if(_analyzer->getEStateTransferFunctions()->isApproximatedBy(newEStatePtr,summaryEStatePtr)) {
             delete newEStatePtr; // new state does not contain new information, therefore it can be deleted
-            addToWorkListFlag=false;
             newEStatePtr=nullptr;
           } else {
             EState newCombinedSummaryEState=_analyzer->getEStateTransferFunctions()->combine(summaryEStatePtr,const_cast<EStatePtr>(newEStatePtr));
@@ -99,13 +135,12 @@ void Solver17::run() {
             _analyzer->setSummaryState(lab,cs,newCombinedSummaryEStatePtr);
             delete summaryEStatePtr;
             delete newEStatePtr;
-            addToWorkListFlag=true;
-            newEStatePtr=new EState(*newCombinedSummaryEStatePtr); // ensure summary state ptrs are not added to the work list (avoid aliasing)
-          }
-          ROSE_ASSERT(((addToWorkListFlag==true && newEStatePtr!=nullptr)||(addToWorkListFlag==false&&newEStatePtr==nullptr)));
-          if(addToWorkListFlag) {
+            newEStatePtr=newCombinedSummaryEStatePtr;
             ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(newEStatePtr->label()));
-            _analyzer->addToWorkList(newEStatePtr);  // uses its own omp synchronization, do not mix with above
+            //_analyzer->addToWorkList(newEStatePtr);
+            ROSE_ASSERT(e.target()==newEStatePtr->label());
+            _workList->push(WorkListEntry(e,newEStatePtr->callString));
+
           }
         }
         if(((_analyzer->isFailedAssertEState(newEStatePtr0))||_analyzer->isVerificationErrorEState(newEStatePtr0))) {
@@ -138,13 +173,5 @@ void Solver17::run() {
   } else {
     _analyzer->printStatusMessage(true);
     _analyzer->printStatusMessage("STATUS: analysis finished (worklist is empty).",true);
-  }
-  EState::checkPointAllocationHistory();
-}
-
-void Solver17::initDiagnostics() {
-  if (!_diagnosticsInitialized) {
-    _diagnosticsInitialized = true;
-    Solver::initDiagnostics(logger, 17);
   }
 }

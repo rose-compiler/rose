@@ -165,6 +165,8 @@ namespace CodeThorn {
     // this function only returns a valid edge if exactly one edge exists
     Edge outEdgeOfType(Label label, EdgeType edgeType);
 
+    bool isPassThroughLabel(Label label);
+    bool singleSuccessorIsPassThroughLabel(Label label);
     void setStartLabel(Label label);
     void addStartLabel(Label label);
     Label getStartLabel();
@@ -172,6 +174,8 @@ namespace CodeThorn {
     LabelSet getStartLabelSet();
 
     void setDotOptionDisplayLabel(bool opt);
+    void setDotOptionDisplayPassThroughLabel(bool opt);
+    bool getDotOptionDisplayPassThroughLabel();
     void setDotOptionDisplayStmt(bool opt);
     void setDotOptionEdgeAnnotationsOnly(bool opt);
     void setDotOptionFixedColor(bool opt);
@@ -193,6 +197,7 @@ namespace CodeThorn {
     //! the original graph had exactly one final node (which becomes the start node of the new graph).
     CodeThorn::Flow reverseFlow();
   private:
+    bool _dotOptionDisplayPassThroughLabel=false;
     bool _dotOptionDisplayLabel;
     bool _dotOptionDisplayStmt;
     bool _dotOptionEdgeAnnotationsOnly;

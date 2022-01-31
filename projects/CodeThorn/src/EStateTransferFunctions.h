@@ -98,6 +98,7 @@ namespace CodeThorn {
     
     bool isApproximatedBy(EStatePtr es1, EStatePtr es2);
     EState combine(EStatePtr es1, EStatePtr es2);
+    void combineInPlace1st(EStatePtr es1, EStatePtr es2);
 
     /* determines transfer function code from CFG and AST-matching and calls transferEdgeEStateDispatch
        ultimately this function can be used to operate on its own IR. Updates provided estate in-place. */
@@ -170,7 +171,8 @@ namespace CodeThorn {
     MemoryUpdateList evalAssignOpMemUpdates(SgAssignOp* assignOp, EStatePtr estate);
 
     // functions for handling callstring contexts
-    CallString transferFunctionCallContext(CallString cs, Label lab);
+    void transferFunctionCallContextInPlace(CallString& cs, Label lab);
+    void transferFunctionCallReturnContextInPlace(CallString& cs, Label lab);
     bool isFeasiblePathContext(CallString& cs,Label lab);
 
     CodeThorn::VariableIdSet determineUsedGlobalVars(SgProject* root, CodeThorn::VariableIdSet& setOfGlobalVars);
@@ -181,6 +183,7 @@ namespace CodeThorn {
     EStatePtr transferVariableDeclarationWithoutInitializerEState(SgVariableDeclaration* decl, SgInitializedName* initName, VariableId initDeclVarId, EStatePtr currentEState, Label targetLabel);
 
     PStatePtr analyzeSgAggregateInitializer(VariableId initDeclVarId, SgAggregateInitializer* aggregateInitializer,PStatePtr pstate, /* for evaluation only  */ EStatePtr currentEState);
+    bool isTemporarySingleLocalVar(VariableId varId);
   private:
     // auxiliary semantic functions
     EStatePtr reInitFailedAssertEState(EStatePtr estate, Label target);

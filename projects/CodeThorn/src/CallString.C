@@ -16,8 +16,12 @@ namespace CodeThorn {
     return getLength()==0;
   }
 
+  bool CallString::isMaxLength() {
+    return getLength()==getMaxLength();
+  }
+
   bool CallString::addLabel(CodeThorn::Label lab) {
-    if(getLength()<=getMaxLength()) {
+    if(getLength()<getMaxLength()) {
       _callString.push_back(lab);
       return true;
     } else {

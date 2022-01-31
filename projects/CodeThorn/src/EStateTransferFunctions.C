@@ -152,6 +152,27 @@ namespace CodeThorn {
     return es1->isApproximatedBy(es2);
   }
 
+  // merges es2 into es1
+  void EStateTransferFunctions::combineInPlace1st(EStatePtr es1, EStatePtr es2) {
+    ROSE_ASSERT(es1->label()==es2->label());
+    if(es1->callString!=es2->callString) {
+      if(_analyzer->getOptionOutputWarnings()) {
+        SAWYER_MESG(logger[WARN])<<"combining estates with different callstrings at label:"<<es1->label().toString()<<endl;
+        SAWYER_MESG(logger[WARN])<<"cs1: "<<es1->callString.toString()<<endl;
+        SAWYER_MESG(logger[WARN])<<"cs2: "<<es2->callString.toString()<<endl;
+      }
+    }
+    InputOutput io;
+    if(es1->io.isBot()) {
+      es1->io=es2->io;
+    } else if(es2->io.isBot()) {
+      // no update of es1 necessary
+    } else {
+      ROSE_ASSERT(es1->io==es2->io);
+    }
+    PState::combineInPlace1st(es1->pstate(),es2->pstate());
+  }
+  
   EState EStateTransferFunctions::combine(EStatePtr es1, EStatePtr es2) {
     ROSE_ASSERT(es1->label()==es2->label());
     //ROSE_ASSERT(es1->constraints()==es2->constraints()); // pointer equality
@@ -389,7 +410,7 @@ namespace CodeThorn {
     // ad 4
     CallString cs=currentEState->callString;
     if(_analyzer->getOptionContextSensitiveAnalysis()) {
-      cs=transferFunctionCallContext(cs, currentEState->label());
+      transferFunctionCallContextInPlace(cs, currentEState->label());
     }
     EStatePtr newEState=reInitEState(estate,edge.target(),cs,newPState);
     return elistify(newEState);
@@ -439,13 +460,9 @@ namespace CodeThorn {
         // to callstring by external function call)
       } else {
         if(isFeasiblePathContext(cs,functionCallLabel)) {
-          cs.removeLastLabel();
+          transferFunctionCallReturnContextInPlace(cs,functionCallLabel);
         } else {
-          if(cs.isEmpty()) {
-            SAWYER_MESG(logger[WARN])<<"Empty context on non-feasable path at label "<<functionCallLabel.toString()<<endl;
-          }
           // definitely not feasible path, do not return a state
-          SAWYER_MESG(logger[TRACE])<<"definitly on non-feasable path at label (no next state)"<<functionCallLabel.toString()<<endl;
           std::list<EStatePtr> emptyList;
           return emptyList;
         }
@@ -1825,14 +1842,19 @@ namespace CodeThorn {
     return memoryUpdateList;
   }
 
-  // value semantics for upates
-  CallString EStateTransferFunctions::transferFunctionCallContext(CallString cs, Label lab) {
-    SAWYER_MESG(logger[TRACE])<<"FunctionCallTransfer: adding "<<lab.toString()<<" to cs: "<<cs.toString()<<endl;
+  void EStateTransferFunctions::transferFunctionCallContextInPlace(CallString& cs, Label lab) {
     cs.addLabel(lab);
-    return cs;
   }
+
+  void EStateTransferFunctions::transferFunctionCallReturnContextInPlace(CallString& cs, Label lab) {
+    if(cs.isLastLabel(lab)) {
+      // TODO: callstring reduction requires call-graph depth-check!
+      cs.removeLastLabel();
+    } 
+  }
+
   bool EStateTransferFunctions::isFeasiblePathContext(CallString& cs,Label lab) {
-    return cs.getLength()==0||cs.isLastLabel(lab);
+    return cs.getLength()==0||cs.isLastLabel(lab)||cs.isMaxLength();
   }
 
   std::string EStateTransferFunctions::transferFunctionCodeToString(TransferFunctionCode tfCode) {
@@ -2381,7 +2403,7 @@ namespace CodeThorn {
         res.result=AbstractValue::createTop();
         return res;
       } else {
-        // use of function addresses as values. Being implemented now.
+        // use of function addresses as value.
         return evalFunctionRefExp(isSgFunctionRefExp(node),estate,mode);
       }
     }
@@ -2812,20 +2834,15 @@ namespace CodeThorn {
         if(_variableIdMapping->isOfArrayType(arrayVarId)) {
           if(_variableIdMapping->isFunctionParameter(arrayVarId)) {
             // function parameter of array type contains a pointer value in C/C++
-            //cout<<"evalArrayReferenceOp:"<<" arrayPtrValue (of function parameter1) read from memory, arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<": mode"<<mode<<endl;
             arrayPtrValue=readFromMemoryLocation(estate->label(),pstate2,arrayVarId); // pointer value of array function paramter
-            SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp:"<<" arrayPtrValue (of function parameter) read from memory, arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<": mode"<<mode<<endl;
-            //cout<<"evalArrayReferenceOp:"<<" arrayPtrValue (of function parameter2) read from memory, arrayPtrValue: "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
           } else {
             arrayPtrValue=AbstractValue::createAddressOfArray(arrayVarId);
             SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp: created array address (from array type): "<<arrayPtrValue.toString(_variableIdMapping)<<endl;
           }
         } else if(_variableIdMapping->isOfPointerType(arrayVarId)) {
           // in case it is a pointer retrieve pointer value
-          SAWYER_MESG(logger[DEBUG])<<"pointer-array access."<<endl;
           if(pstate2->varExists(arrayVarId)) {
             arrayPtrValue=readFromMemoryLocation(estate->label(),pstate2,arrayVarId); // pointer value (without index)
-            SAWYER_MESG(logger[TRACE])<<"evalArrayReferenceOp:"<<" arrayPtrValue read from memory (in state), arrayPtrValue:"<<arrayPtrValue.toString(_variableIdMapping)<<endl;
             if(!(arrayPtrValue.isTop()||arrayPtrValue.isBot()||arrayPtrValue.isPtr()||arrayPtrValue.isNullPtr())) {
               logger[ERROR]<<"@"<<SgNodeHelper::lineColumnNodeToString(node)<<": value not a pointer value: "<<arrayPtrValue.toString()<<endl;
               logger[ERROR]<<estate->toString(_variableIdMapping)<<endl;
@@ -2841,9 +2858,7 @@ namespace CodeThorn {
             return res;
           }
         } else if(_variableIdMapping->isOfReferenceType(arrayVarId)) {
-          SAWYER_MESG(logger[TRACE])<<"before reference array variable access"<<endl;
           arrayPtrValue=readFromReferenceMemoryLocation(estate->label(),pstate2,arrayVarId);
-          SAWYER_MESG(logger[TRACE])<<"after reference array variable access"<<endl;
           if(arrayPtrValue.isBot()) {
             // if referred memory location is not in state
             res.result=CodeThorn::Top();
@@ -3193,6 +3208,16 @@ namespace CodeThorn {
     res.result=rhsResult.result; // value result of assignment
     res.estate=*estateList.begin();
     return res;
+  }
+
+  bool EStateTransferFunctions::isTemporarySingleLocalVar(VariableId varId) {
+    auto vim=getVariableIdMapping();
+    if(vim->isTemporaryVariableId(varId)) {
+      auto vidInfo=vim->getVariableIdInfoPtr(varId);
+      return (vidInfo->aggregateType==VariableIdMapping::AT_SINGLE && vidInfo->variableScope==VariableIdMapping::VS_LOCAL);
+    } else {
+      return false;
+    }
   }
 
   std::list<EStatePtr> EStateTransferFunctions::evalAssignOp3(SgAssignOp* node, Label targetLabel, EStatePtr estate) {
@@ -4020,6 +4045,15 @@ namespace CodeThorn {
       //return AbstractValue::createBot();
       return AbstractValue::createTop();
     }
+
+    // optimization of temporary single local vars (guaranteed to be used only once, introduced by normalization)
+    if(memLoc.isPtr()) {
+      VariableId varId=memLoc.getVariableId();
+      if(isTemporarySingleLocalVar(varId)) {
+       pstate->deleteVar(varId); // optimization
+      }
+    }
+
     AbstractValue val=pstate->readFromMemoryLocation(memLoc); // relegating to pstate in estate->readFromMemoryLocation
     return val;
   }
@@ -4029,7 +4063,6 @@ namespace CodeThorn {
     notifyReadWriteListenersOnWriting(lab,pstate,memLoc,newValue);
 
     if(memLoc.isTop()) {
-      //SAWYER_MESG(logger[WARN])<<"EStateTransferFunctions::writeToMemoryLocation: writing to arbitrary memloc: "<<lab.toString()<<":"<<memLoc.toString(_variableIdMapping)<<":="<<newValue.toString(_variableIdMapping)<<endl;
       return;
     } else if(!pstate->memLocExists(memLoc)) {
       //SAWYER_MESG(logger[TRACE])<<"EStateTransferFunctions::writeToMemoryLocation: memloc does not exist"<<endl;
@@ -4037,15 +4070,11 @@ namespace CodeThorn {
     if(memLoc.isNullPtr()) {
       // do not write to null pointer
     } else {
-      switch(_analyzer->getOptionsRef().initialStateGlobalVarsAbstractionLevel) {
-      case 0:
-        if(!isGlobalAddress(memLoc)) {
-          // in mode 0 only write to non-global memory locations
-          pstate->writeToMemoryLocation(memLoc,newValue);
-        }
-      case 1:
+      if(memLoc.isPtr()||memLoc.isFunctionPtr()) {
         pstate->writeToMemoryLocation(memLoc,newValue);
-        break;
+      } else {
+        // memory location is a constant value
+        cerr<<"WARNING: attemping to write to integer value memory location: "<<memLoc.toString(getVariableIdMapping())<<endl;
       }
     }
   }

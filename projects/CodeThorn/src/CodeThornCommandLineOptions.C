@@ -137,6 +137,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("vis-tg2", po::value< bool >(&ctOpt.visualization.visTg2)->default_value(false)->implicit_value(true),"Generate transition graph 2 (.dot).")
     ("cfg", po::value< string >(&ctOpt.visualization.icfgFileName), "same as --icfg.")
     ("icfg", po::value< string >(&ctOpt.visualization.icfgFileName), "Generate inter-procedural cfg as dot file. Each function is visualized as one dot cluster.")
+    ("icfg-pass-through-labels", po::value< bool >(&ctOpt.visualization.displayPassThroughLabel)->implicit_value(true), "Mark pass-through labels in ICFG (MOV/STO).")
     ("call-graph", po::value< string >(&ctOpt.visualization.callGraphFileName), "Generate call graph as dot file. Each function is one node.")
     ;
 
@@ -222,7 +223,6 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("interpreter-mode",po::value< int >(&ctOpt.interpreterMode)->default_value(0),"Select interpretation mode. 0: default, 1: execute stdout functions.")
     ("interpreter-mode-file",po::value< string >(&ctOpt.interpreterModeOuputFileName)->default_value(""),"Select interpretation mode output file (otherwise stdout is used).")
     ("filter-initial-state", po::value< bool > (&ctOpt.initialStateFilterUnusedVariables)->implicit_value(true),"Filter unused variables when creating initial state.")
-    ("global-vars-abstraction-level", po::value< int > (&ctOpt.initialStateGlobalVarsAbstractionLevel),"Override abstraction level for global variables in initial state.")
     ("print-warnings",po::value< bool >(&ctOpt.printWarnings)->default_value(false)->implicit_value(true),"Print warnings on stdout during analysis (this can slow down the analysis significantly)")
     //("print-violations",po::value< bool >(&ctOpt.printViolations)->default_value(false)->implicit_value(true),"Print detected violations on stdout during analysis (this can slow down the analysis significantly)")
     ("call-string-length",po::value< int >(&ctOpt.callStringLength)->default_value(10),"Set the length of the callstring for context-sensitive analysis. Default value is 10.")

@@ -23,6 +23,9 @@ int Solver16::getId() {
   return 16;
 }
     
+Solver16::~Solver16() {
+}
+
 void Solver16::recordTransition(EStatePtr currentEStatePtr0,EStatePtr currentEStatePtr,Edge e, EStatePtr newEStatePtr) {
   _analyzer->recordTransition(currentEStatePtr,e,newEStatePtr);
   if(currentEStatePtr0!=currentEStatePtr) {
@@ -284,6 +287,7 @@ void Solver16::run() {
     _analyzer->printStatusMessage("STATUS: analysis finished (worklist is empty).",true);
   }
   _analyzer->getTransitionGraph()->setIsPrecise(_analyzer->isPrecise());
+  EState::checkPointAllocationHistory();
 }
 
 void Solver16::initDiagnostics() {
