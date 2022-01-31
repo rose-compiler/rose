@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <limits>
+#include <cmath>
 #include <exception>
 
 #include <boost/lexical_cast.hpp>
@@ -1157,7 +1158,7 @@ namespace
   std::pair<T, const char*>
   parseDec(const char* buf, int base = 10)
   {
-    ROSE_ASSERT(*buf != '\0');
+    ROSE_ASSERT((*buf != '\0') && (base > 0));
 
     // In constants folded by ASIS there can be a leading '-'
     //   otherwise a '-' is represented as unary operator.
@@ -1181,23 +1182,22 @@ namespace
       // While the underflow is likely benign (System.Min_Int == -System.Min_Int)
       // for a two's complement representation, it seems more prudent to avoid it
       // altogether.
-      ROSE_ASSERT(  (std::numeric_limits<decltype(res)>::min() / base <= res)
-                 && (std::numeric_limits<decltype(res)>::max() / base >= res)
+      ROSE_ASSERT(  (std::numeric_limits<T>::lowest() / base <= res)
+                 && (std::numeric_limits<T>::max() / base >= res)
                  && ("arithmethic over-/underflow during literal parsing (mul)")
                  );
       res = res*base;
 
-      ROSE_ASSERT(  ((negmul < 0) && (std::numeric_limits<decltype(res)>::min() + v.first <= res))
-                 || ((negmul > 0) && (std::numeric_limits<decltype(res)>::max() - v.first >= res))
+      ROSE_ASSERT(  ((negmul < 0) && (std::numeric_limits<T>::lowest() + v.first <= res))
+                 || ((negmul > 0) && (std::numeric_limits<T>::max() - v.first >= res))
                  || (!"arithmethic over-/underflow during literal parsing (add)")
                  );
       res += (v.first * negmul);
 
-      //~ ROSE_ASSERT((res == 0) || ((res < 0) && (negmul < 0)) || ((res > 0) && (negmul > 0)));
       ++buf;
 
       // skip underscores
-      // \note (this is imprecise, since an underscore must be followed
+      // \note this is imprecise, since an underscore must be followed
       //       by an integer.
       while (*buf == '_') ++buf;
     }
@@ -1217,12 +1217,20 @@ namespace
     while ((*buf != '\0') && (!isBasedDelimiter(*buf)))
     {
       const auto v = char2Val(*buf, base);
-
       ROSE_ASSERT(v.second);
 
       T val = v.first;
 
-      res += val/divisor;
+      if (val)
+      {
+        ROSE_ASSERT(!std::isnan(divisor));
+
+        T frac = val/divisor;
+        ROSE_ASSERT(!std::isnan(frac));
+
+        res += frac;
+      }
+
       divisor = divisor*base;
 
       ++buf;
