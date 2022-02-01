@@ -27,7 +27,7 @@ void Solver18::initDiagnostics() {
 }
 
 void Solver18::deleteAllStates() {
-  cout<<"STATUS: Solver18: deleting all remaining states."<<endl;
+  if(_analyzer->getOptionsRef().status) cout<<"STATUS: Solver18: deleting all remaining states."<<endl;
   size_t cnt=0;
   for(auto entry : _summaryCSStateMapMap) {
     auto map=entry.second;
@@ -37,8 +37,8 @@ void Solver18::deleteAllStates() {
     }
   }
   EState::checkPointAllocationHistory();
-  cout<<"STATUS: Solver18: cleanup: deleted "<<cnt<<" states."<<endl;
-  cout<<"STATUS: Solver18: allocation history: "<<EState::allocationHistoryToString()<<endl;
+  if(_analyzer->getOptionsRef().status) cout<<"STATUS: Solver18: cleanup: deleted "<<cnt<<" states."<<endl;
+  if(_analyzer->getOptionsRef().status) cout<<"STATUS: Solver18: allocation history: "<<EState::allocationHistoryToString()<<endl;
 }
 
 int Solver18::getId() {
@@ -52,7 +52,7 @@ bool Solver18::isPassThroughLabel(Label lab) {
 
 bool Solver18::isUnreachableLabel(Label lab) {
   // if code is unreachable no state is computed for it. In this case no entry is found for this label 
-  return _summaryCSStateMapMap.find(lab.getId())==_summaryCSStateMapMap.end();
+  return (_summaryCSStateMapMap.find(lab.getId())==_summaryCSStateMapMap.end())&&lab!=_analyzer->getFlow()->getStartLabel()&&!_analyzer->isPassThroughLabel(lab);
 }
 
 bool Solver18::isReachableLabel(Label lab) {
