@@ -286,7 +286,12 @@ Label Flow::getStartLabel() {
   }
 }
 
-bool Flow::isPassThroughLabel(Label lab) {
+// this is a static property of the ICFG (inter-procedural CFG)
+bool Flow::isPassThroughLabel(Label lab, Labeler* labeler) {
+  // function calls can return more than one state, therefore they cannot be pass-through states (in-place state updates)
+  if(labeler->isFunctionCallLabel(lab))
+     return false;
+  //structural property (nodes inside blocks that can be analyzed by updating states in-place (similar to basic blocks)
   Flow inEdgeSet1=inEdges(lab);
   Flow outEdgeSet1=outEdges(lab);
   if(inEdgeSet1.size()==1 && outEdgeSet1.size()==1) {
@@ -304,11 +309,11 @@ bool Flow::isPassThroughLabel(Label lab) {
   return false;
 }
 
-bool Flow::singleSuccessorIsPassThroughLabel(Label lab) {
+bool Flow::singleSuccessorIsPassThroughLabel(Label lab,Labeler* labeler) {
   Flow outEdgeSet=outEdges(lab);
   if(outEdgeSet.size()==1) {
     auto edge=*outEdgeSet.begin();
-    return isPassThroughLabel(edge.target());
+    return isPassThroughLabel(edge.target(),labeler);
   }
   return false;
 }
@@ -590,7 +595,7 @@ string Flow::toDot(Labeler* labeler, TopologicalSort* topSort) {
         ss<<"["<<topSort->getLabelPosition(*i)<<"]";
       }
       if(_dotOptionDisplayPassThroughLabel) {
-        if(isPassThroughLabel(*i)) {
+        if(isPassThroughLabel(*i,labeler)) {
           ss << "[MOV]";
         } else {
           ss << "[STO]";
