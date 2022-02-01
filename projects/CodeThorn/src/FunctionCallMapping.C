@@ -21,7 +21,7 @@ using namespace CodeThorn;
 Sawyer::Message::Facility CodeThorn::FunctionCallMapping::logger;
 
 FunctionCallMapping::FunctionCallMapping() {
-  _matchMode=4;
+  _matchMode=5;
 }
 
 void FunctionCallInfo::print() {

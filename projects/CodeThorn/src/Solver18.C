@@ -27,7 +27,7 @@ void Solver18::initDiagnostics() {
 }
 
 void Solver18::deleteAllStates() {
-  cout<<"STATUS: Solver18: deleting all remaining states."<<endl;
+  if(_analyzer->getOptionsRef().status) cout<<"STATUS: Solver18: deleting all remaining states."<<endl;
   size_t cnt=0;
   for(auto entry : _summaryCSStateMapMap) {
     auto map=entry.second;
@@ -37,8 +37,8 @@ void Solver18::deleteAllStates() {
     }
   }
   EState::checkPointAllocationHistory();
-  cout<<"STATUS: Solver18: cleanup: deleted "<<cnt<<" states."<<endl;
-  cout<<"STATUS: Solver18: allocation history: "<<EState::allocationHistoryToString()<<endl;
+  if(_analyzer->getOptionsRef().status) cout<<"STATUS: Solver18: cleanup: deleted "<<cnt<<" states."<<endl;
+  if(_analyzer->getOptionsRef().status) cout<<"STATUS: Solver18: allocation history: "<<EState::allocationHistoryToString()<<endl;
 }
 
 int Solver18::getId() {
@@ -70,8 +70,6 @@ void Solver18::initializeSummaryStatesFromWorkList() {
   for(auto s : tmpWL) {
     // initialize summarystate and push back to work lis
     ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(s->label()));
-    cout<<"DEBUG:initializeSummaryStatesFromWorkList: WL Label   : "<<s->label().toString()<<endl;
-    cout<<"DEBUG:initializeSummaryStatesFromWorkList: start label: "<<_analyzer->getFlow()->getStartLabel().toString()<<endl;
     setSummaryState(s->label(),s->callString,s);
     _workList->push(WorkListEntry(s->label(),s->callString));
   }
