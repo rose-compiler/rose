@@ -412,7 +412,7 @@ bool CodeThorn::CTAnalysis::isUnreachableLabel(Label lab) {
     ROSE_ASSERT(solver18);
     return solver18->isUnreachableLabel(lab);
   }
-  return _summaryCSStateMapMap.find(lab.getId())==_summaryCSStateMapMap.end();
+  return _summaryCSStateMapMap.find(lab.getId())==_summaryCSStateMapMap.end()&&(lab!=getFlow()->getStartLabel());
 }
 
 bool CodeThorn::CTAnalysis::isReachableLabel(Label lab) {

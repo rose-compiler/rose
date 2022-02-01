@@ -330,16 +330,16 @@ void IOAnalyzer::setup(CTAnalysis* analyzer, Sawyer::Message::Facility logger,
   }
 
   if(ctOpt.inputValues.size()>0) {
-    cout << "STATUS: input-values="<<ctOpt.inputValues<<endl;
+    if(ctOpt.status) cout << "STATUS: input-values="<<ctOpt.inputValues<<endl;
     set<int> intSet=Parse::integerSet(ctOpt.inputValues);
     for(set<int>::iterator i=intSet.begin();i!=intSet.end();++i) {
       analyzer->insertInputVarValue(*i);
     }
-    cout << "STATUS: input-values stored."<<endl;
+    if(ctOpt.status) cout << "STATUS: input-values stored."<<endl;
   }
 
   if(ctOpt.inputSequence.size()>0) {
-    cout << "STATUS: input-sequence="<<ctOpt.inputSequence<<endl;
+    if(ctOpt.status)cout << "STATUS: input-sequence="<<ctOpt.inputSequence<<endl;
     list<int> intList=Parse::integerList(ctOpt.inputSequence);
     for(list<int>::iterator i=intList.begin();i!=intList.end();++i) {
       analyzer->addInputSequenceValue(*i);

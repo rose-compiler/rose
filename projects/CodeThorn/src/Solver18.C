@@ -52,7 +52,7 @@ bool Solver18::isPassThroughLabel(Label lab) {
 
 bool Solver18::isUnreachableLabel(Label lab) {
   // if code is unreachable no state is computed for it. In this case no entry is found for this label 
-  return _summaryCSStateMapMap.find(lab.getId())==_summaryCSStateMapMap.end();
+  return (_summaryCSStateMapMap.find(lab.getId())==_summaryCSStateMapMap.end())&&lab!=_analyzer->getFlow()->getStartLabel()&&!_analyzer->isPassThroughLabel(lab);
 }
 
 bool Solver18::isReachableLabel(Label lab) {
@@ -70,6 +70,8 @@ void Solver18::initializeSummaryStatesFromWorkList() {
   for(auto s : tmpWL) {
     // initialize summarystate and push back to work lis
     ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(s->label()));
+    cout<<"DEBUG:initializeSummaryStatesFromWorkList: WL Label   : "<<s->label().toString()<<endl;
+    cout<<"DEBUG:initializeSummaryStatesFromWorkList: start label: "<<_analyzer->getFlow()->getStartLabel().toString()<<endl;
     setSummaryState(s->label(),s->callString,s);
     _workList->push(WorkListEntry(s->label(),s->callString));
   }

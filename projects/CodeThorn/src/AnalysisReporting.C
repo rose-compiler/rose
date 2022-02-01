@@ -359,7 +359,7 @@ namespace CodeThorn {
       cerr<<"Error: could not generate callgraph dot file "<<fileName1<<endl;
       exit(1);
     } else {
-      cout<<"Generated verification call graph "<<fileName1<<endl;
+      if(!ctOpt.quiet) cout<<"Generated verification call graph "<<fileName1<<endl;
     }
 
     std::string dotFileString2=cgBegin+cgNodes.str()+cgEdges+cgEnd;
@@ -367,7 +367,7 @@ namespace CodeThorn {
       cerr<<"Error: could not generate callgraph dot file "<<fileName2<<endl;
       exit(1);
     } else {
-      cout<<"Generated verification call graph "<<fileName2<<endl;
+      if(!ctOpt.quiet) cout<<"Generated verification call graph "<<fileName2<<endl;
     }
 
   }
@@ -469,7 +469,7 @@ namespace CodeThorn {
       cerr<<"Error: could not generate function verification CSV file "<<csvFileName<<endl;
       exit(1);
     } else {
-      cout<<"Generated function verification CSV file "<<csvFileName<<endl;
+      if(!ctOpt.quiet) cout<<"Generated function verification CSV file "<<csvFileName<<endl;
     }
   }
   
