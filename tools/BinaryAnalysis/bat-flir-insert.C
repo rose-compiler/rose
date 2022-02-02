@@ -121,16 +121,22 @@ static void
 copyFromRba(const Settings &settings, Flir &dst, const std::string &rbaName) {
     P2::Engine engine;
     P2::Partitioner partitioner = engine.loadPartitioner(rbaName, settings.stateFormat);
+
     std::string libraryHash = settings.libraryHash;
     if (libraryHash.empty()) {
         libraryHash = hashLibrary(partitioner.memoryMap());
         mlog[INFO] <<"library hash is " <<libraryHash <<"\n";
     }
 
-    // Create the analysis object and connect to the database
+    std::string libraryArchitecture = settings.libraryArchitecture;
+    if (libraryArchitecture.empty()) {
+        libraryArchitecture = partitioner.instructionProvider().disassembler()->name();
+        mlog[INFO] <<"library architecture is " <<libraryArchitecture <<"\n";
+    }
 
+    // Create the analysis object and connect to the database
     auto lib = Flir::Library::instance(libraryHash, settings.libraryName, settings.libraryVersion,
-                                       settings.libraryArchitecture);
+                                       libraryArchitecture);
     size_t nInserted = dst.insertLibrary(lib, partitioner);
     mlog[INFO] <<"inserted/updated " <<StringUtility::plural(nInserted, "functions") <<"\n";
 }
