@@ -163,6 +163,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   formal_subprogram_declaration.ads    \
   generic_function_declaration.ads     \
   generic_package_declaration.ads      \
+  generic_package_declaration.adb      \
   identity.ads                         \
   inherited_primitive_operation.adb    \
   io.ads                               \
@@ -228,7 +229,7 @@ ROSE_FAILING_ADA_TESTS :=                           \
   extension_aggregate.adb                           \
   function_body_stub.adb                            \
   generic_function_renaming_declaration.ads         \
-  generic_package_renaming_declaration.ads          \
+  generic_package_renaming_declaration.adb          \
   generic_procedure_renaming_declaration.ads        \
   mpiuse.ads                                        \
   object_renaming_declaration.adb                   \

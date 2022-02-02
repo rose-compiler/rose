@@ -565,9 +565,10 @@ namespace
           break;
         }
 
+      case A_Generic_Package_Renaming:
       case A_Package_Renaming:
         {
-          logTrace() << "A package renaming"
+          logTrace() << "A " << (adaUnit.Unit_Kind == A_Package_Renaming ? "" : "generic") << " pkg renaming"
                      << PrnUnitHeader(adaUnit)
                      << std::endl;
 
@@ -589,7 +590,6 @@ namespace
 
       case A_Generic_Procedure_Renaming:
       case A_Generic_Function_Renaming:
-      case A_Generic_Package_Renaming:
 
       //  A unit interpreted only as the completion of a function: or a unit
       //  interpreted as both the declaration and body of a library
