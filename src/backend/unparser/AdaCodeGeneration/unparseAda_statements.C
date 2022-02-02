@@ -986,31 +986,39 @@ namespace
     {
       SgName                  name    = n.get_name();
       SgExprListExp*          args    = n.get_actual_parameters();
-      SgAdaGenericDecl&       dcl     = SG_DEREF(n.get_declaration());
-      SgDeclarationStatement* thedecl = dcl.get_declaration();
+      SgDeclarationStatement* basedcl = n.get_declaration();
+
+      if (SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(basedcl))
+        basedcl = gendcl->get_declaration();
 
       // determine which kind of generic instance this is
-      if (SgAdaPackageSpecDecl* pkg = isSgAdaPackageSpecDecl(thedecl)) {
+      if (SgAdaPackageSpecDecl* pkg = isSgAdaPackageSpecDecl(basedcl)) {
         // package
-        SgName                genname = pkg->get_name();
-
         prn("package ");
         prn(name.getString());
         prn(" is new ");
         prnNameQual(n, *pkg, pkg->get_scope());
-        prn(genname.getString());
-      } else if (SgFunctionDeclaration* fn = isSgFunctionDeclaration(thedecl)) {
+        prn(pkg->get_name().getString());
+      } else if (SgAdaRenamingDecl* ren = isSgAdaRenamingDecl(basedcl)) {
+        // renamed package
+        prn("package ");
+        prn(name.getString());
+        prn(" is new ");
+        prnNameQual(n, *ren, ren->get_scope());
+        prn(ren->get_name().getString());
+      } else if (SgFunctionDeclaration* fn = isSgFunctionDeclaration(basedcl)) {
         // function/procedure
-        SgName                 genname = fn->get_name();
-
         prn(si::ada::isFunction(fn->get_type()) ? "function " : "procedure ");
         prn(name.getString());
         prn(" is new ");
         prnNameQual(n, *fn, fn->get_scope());
-        prn(genname.getString());
+        prn(fn->get_name().getString());
       }
       else
+      {
         ROSE_ABORT();
+        // renamed generic function?
+      }
 
       associationList(args->get_expressions());
       prn(STMT_SEP);

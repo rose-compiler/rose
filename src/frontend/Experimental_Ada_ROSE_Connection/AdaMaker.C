@@ -635,9 +635,13 @@ mkAdaDiscriminatedTypeDecl(SgScopeStatement& scope)
 }
 
 SgAdaGenericInstanceDecl&
-mkAdaGenericInstanceDecl(const std::string& name, SgAdaGenericDecl& decl, SgScopeStatement& scope)
+mkAdaGenericInstanceDecl(const std::string& name, SgDeclarationStatement& gendecl, SgScopeStatement& scope)
 {
-  SgAdaGenericInstanceDecl& sgnode = mkLocatedNode<SgAdaGenericInstanceDecl>(name,&decl,(SgType*)NULL);
+  ROSE_ASSERT(  isSgAdaGenericDecl(&gendecl)
+             || isSgAdaRenamingDecl(&gendecl)
+             );
+
+  SgAdaGenericInstanceDecl& sgnode = mkLocatedNode<SgAdaGenericInstanceDecl>(name,&gendecl,nullptr);
 
   sgnode.set_parent(&scope);
   sgnode.set_firstNondefiningDeclaration(&sgnode);
@@ -1641,8 +1645,8 @@ namespace
 SgAdaInheritedFunctionSymbol&
 mkAdaInheritedFunctionSymbol(SgFunctionDeclaration& fn, SgTypedefType& declaredDerivedType, SgScopeStatement& scope)
 {
-  SgFunctionType&               functy = SG_DEREF(fn.get_type());
-  SgFunctionType&               dervty = convertToDerivedType(functy, declaredDerivedType);
+  SgFunctionType& functy = SG_DEREF(fn.get_type());
+  SgFunctionType& dervty = convertToDerivedType(functy, declaredDerivedType);
 
   if (&functy == &dervty)
   {

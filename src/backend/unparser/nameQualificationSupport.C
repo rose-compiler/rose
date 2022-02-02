@@ -909,10 +909,12 @@ namespace
       {
         handle(sg::asBaseType(n));
 
-        SgAdaGenericDecl&       dcl     = SG_DEREF(n.get_declaration());
-        SgDeclarationStatement* thedecl = dcl.get_declaration();
+        SgDeclarationStatement* basedecl = n.get_declaration();
 
-        computeNameQualForDeclLink(n, SG_DEREF(thedecl));
+        if (SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(basedecl))
+          basedecl = gendcl->get_declaration();
+
+        computeNameQualForDeclLink(n, SG_DEREF(basedecl));
       }
 
       void handle(const SgAdaFunctionRenamingDecl& n)
