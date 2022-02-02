@@ -697,9 +697,12 @@ size_t
 LibraryIdentification::insertLibrary(const Library::Ptr &library, const Partitioner2::Partitioner &partitioner) {
     ASSERT_not_null(library);
     size_t nInserted = 0;
-    for (const Partitioner2::Function::Ptr &function: partitioner.functions())
+    Sawyer::ProgressBar<size_t> progress(partitioner.nFunctions(), mlog[MARCH], "functions");
+    for (const Partitioner2::Function::Ptr &function: partitioner.functions()) {
+        ++progress;
         if (insertFunction(library, partitioner, function))
             ++nInserted;
+    }
     return nInserted;
 }
 
