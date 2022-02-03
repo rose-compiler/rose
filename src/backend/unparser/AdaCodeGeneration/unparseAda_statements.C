@@ -435,13 +435,13 @@ namespace
     return std::make_pair(std::string("<<"), std::string(">> "));
   }
 
-  struct RenamingSyntaxResult : std::tuple<std::string, std::string, std::string, const SgScopeStatement*>
+  struct RenamingSyntaxResult : std::tuple<std::string, bool, std::string, const SgScopeStatement*>
   {
-      using base = std::tuple<std::string, std::string, std::string, const SgScopeStatement*>;
+      using base = std::tuple<std::string, bool, std::string, const SgScopeStatement*>;
       using base::base;
 
       const std::string&      prefixSyntax() const { return std::get<0>(*this); }
-      const std::string&      infixSyntax()  const { return std::get<1>(*this); }
+      bool                    withType()     const { return std::get<1>(*this); }
       const std::string&      renamedName()  const { return std::get<2>(*this); }
       const SgScopeStatement* body()         const { return std::get<3>(*this); }
 
@@ -986,31 +986,39 @@ namespace
     {
       SgName                  name    = n.get_name();
       SgExprListExp*          args    = n.get_actual_parameters();
-      SgAdaGenericDecl&       dcl     = SG_DEREF(n.get_declaration());
-      SgDeclarationStatement* thedecl = dcl.get_declaration();
+      SgDeclarationStatement* basedcl = n.get_declaration();
+
+      if (SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(basedcl))
+        basedcl = gendcl->get_declaration();
 
       // determine which kind of generic instance this is
-      if (SgAdaPackageSpecDecl* pkg = isSgAdaPackageSpecDecl(thedecl)) {
+      if (SgAdaPackageSpecDecl* pkg = isSgAdaPackageSpecDecl(basedcl)) {
         // package
-        SgName                genname = pkg->get_name();
-
         prn("package ");
         prn(name.getString());
         prn(" is new ");
         prnNameQual(n, *pkg, pkg->get_scope());
-        prn(genname.getString());
-      } else if (SgFunctionDeclaration* fn = isSgFunctionDeclaration(thedecl)) {
+        prn(pkg->get_name().getString());
+      } else if (SgAdaRenamingDecl* ren = isSgAdaRenamingDecl(basedcl)) {
+        // renamed package
+        prn("package ");
+        prn(name.getString());
+        prn(" is new ");
+        prnNameQual(n, *ren, ren->get_scope());
+        prn(ren->get_name().getString());
+      } else if (SgFunctionDeclaration* fn = isSgFunctionDeclaration(basedcl)) {
         // function/procedure
-        SgName                 genname = fn->get_name();
-
         prn(si::ada::isFunction(fn->get_type()) ? "function " : "procedure ");
         prn(name.getString());
         prn(" is new ");
         prnNameQual(n, *fn, fn->get_scope());
-        prn(genname.getString());
+        prn(fn->get_name().getString());
       }
       else
+      {
         ROSE_ABORT();
+        // renamed generic function?
+      }
 
       associationList(args->get_expressions());
       prn(STMT_SEP);
@@ -1024,7 +1032,13 @@ namespace
 
       prn(renamed.prefixSyntax());
       prn(newName);
-      prn(renamed.infixSyntax());
+
+      if (renamed.withType())
+      {
+        prn(": ");
+        type(n, n.get_type());
+      }
+
       prn(" renames ");
       prnNameQual(n, orig->get_scope());
       prn(renamed.renamedName());
@@ -2078,15 +2092,14 @@ namespace
         bdy = SG_DEREF(pkgbdy->get_definition()).get_spec();
 
       ROSE_ASSERT(bdy);
-      res = ReturnType{"package ", "", n.get_name(), bdy};
+      res = ReturnType{"package ", false /* does not require type */, n.get_name(), bdy};
     }
 
     void handle(const SgVariableSymbol& n)
     {
       SgInitializedName& el = SG_DEREF(n.get_declaration());
 
-      ROSE_ASSERT(SG_DEREF(isSgTypedefType(el.get_type())).get_name() == std::string{"Exception"});
-      res = ReturnType{"", ": exception", el.get_name(), nullptr};
+      res = ReturnType{"", true /* requires type */, el.get_name(), nullptr};
     }
   };
 

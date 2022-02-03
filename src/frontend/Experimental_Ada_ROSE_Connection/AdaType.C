@@ -150,6 +150,7 @@ namespace
   }
 
 
+
   SgType&
   getAccessType(Definition_Struct& def, AstContext ctx)
   {
@@ -157,34 +158,82 @@ namespace
 
     logKind("An_Access_Definition");
 
-    SgType* res = nullptr;
+    SgType*                   res = nullptr;
     Access_Definition_Struct& access = def.The_Union.The_Access_Definition;
+    const auto                access_type_kind = access.Access_Definition_Kind;
 
-    switch (access.Access_Definition_Kind)
+    switch (access_type_kind)
     {
       case An_Anonymous_Access_To_Constant:            // [...] access constant subtype_mark
       case An_Anonymous_Access_To_Variable:            // [...] access subtype_mark
-        {
-          const bool isConstant = access.Access_Definition_Kind == An_Anonymous_Access_To_Constant;
-          logKind(isConstant ? "An_Anonymous_Access_To_Constant" : "An_Anonymous_Access_To_Variable");
+      {
+        const bool isConstant = access_type_kind == An_Anonymous_Access_To_Constant;
+        logKind(isConstant ? "An_Anonymous_Access_To_Constant" : "An_Anonymous_Access_To_Variable");
 
-          SgType& ty = getDeclTypeID(access.Anonymous_Access_To_Object_Subtype_Mark, ctx);
+        SgType&          ty = getDeclTypeID(access.Anonymous_Access_To_Object_Subtype_Mark, ctx);
+        SgAdaAccessType& access_t = mkAdaAccessType(ty);
 
-          res = &mkAdaAccessType(ty);
+        // PP(2/2/22)
+        // cmp. getAccessTypeDefinition
+        // \todo consider making a const qualifier
+        // \todo what is general_access?
+        if (isConstant)
+          access_t.set_is_constant(true);
+        //~ else
+          //~ access_t.set_is_general_access(true);
 
-          /** unused fields:
-                 bool                         Has_Null_Exclusion;
-           */
-          break;
-        }
+        res = &access_t;
+        /** unused fields:
+               bool                         Has_Null_Exclusion;
+         */
+        break;
+      }
 
       case An_Anonymous_Access_To_Procedure:           // access procedure
       case An_Anonymous_Access_To_Protected_Procedure: // access protected procedure
       case An_Anonymous_Access_To_Function:            // access function
       case An_Anonymous_Access_To_Protected_Function:  // access protected function
+      {
+        logWarn() << "subprogram access type support incomplete" << std::endl;
+
+        // these are functions, so we need to worry about return types
+        const bool isFuncAccess = (  (access_type_kind == An_Anonymous_Access_To_Function)
+                                  || (access_type_kind == An_Anonymous_Access_To_Protected_Function)
+                                  );
+
+        if (access.Access_To_Subprogram_Parameter_Profile.Length > 0) {
+          logWarn() << "subprogram access types with parameter profiles not supported." << std::endl;
+          /*
+            ElemIdRange range = idRange(access_type.Access_To_Subprogram_Parameter_Profile);
+
+            SgFunctionParameterList& lst   = mkFunctionParameterList();
+            SgFunctionParameterScope& psc  = mkLocatedNode<SgFunctionParameterScope>(&mkFileInfo());
+            ParameterCompletion{range,ctx}(lst, ctx);
+
+            ((SgAdaAccessType*)res.n)->set_subprogram_profile(&lst);
+          */
+        }
+
+        SgType& retType = isFuncAccess ? getDeclTypeID(access.Access_To_Function_Result_Profile, ctx)
+                                       : SG_DEREF(sb::buildVoidType());
+        SgFunctionType& funty = mkFunctionType(retType /* \todo add paramter profile */);
+        SgAdaAccessType& access_t = mkAdaAccessType(funty);
+
+        access_t.set_is_object_type(false);
+
+        // if protected, set the flag
+        if (access_type_kind == An_Anonymous_Access_To_Protected_Function ||
+            access_type_kind == An_Anonymous_Access_To_Protected_Procedure) {
+          access_t.set_is_protected(true);
+        }
+
+        res = &access_t;
+        break;
+      }
+
       case Not_An_Access_Definition: /* break; */ // An unexpected element
       default:
-        logWarn() << "adk? " << access.Access_Definition_Kind << std::endl;
+        logWarn() << "adk? " << access_type_kind << std::endl;
         res = &mkAdaAccessType(SG_DEREF(sb::buildVoidType()));
         ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
@@ -747,6 +796,15 @@ namespace
 
           if (component.Has_Aliased)
             res = &mkAliasedType(*res);
+
+          /* unused fields:
+          */
+          break;
+        }
+
+      case An_Access_Definition:
+        {
+          res = &getAccessType(def, ctx);
 
           /* unused fields:
           */
