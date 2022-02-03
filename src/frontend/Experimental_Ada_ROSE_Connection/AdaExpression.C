@@ -446,7 +446,8 @@ namespace
       SgEnumType&        enumtype = SG_DEREF( isSgEnumType(enumitem->get_type()) );
       SgEnumDeclaration& enumdecl = SG_DEREF( isSgEnumDeclaration(enumtype.get_declaration()) );
 
-      res = sb::buildEnumVal_nfi(-1, &enumdecl, enumitem->get_name());
+      // res = sb::buildEnumVal_nfi(-1, &enumdecl, enumitem->get_name());
+      res = &ctx.enumBuilder()(enumdecl, *enumitem);
     }
     else
     {
@@ -478,6 +479,7 @@ namespace
 
     void handle(const SgDeclarationStatement&) { res = true; }
     void handle(const SgAdaTaskSpecDecl&)      { res = false; }
+    void handle(const SgAdaProtectedSpecDecl&) { res = false; }
     void handle(const SgAdaPackageSpecDecl&)   { res = false; }
     void handle(const SgImportStatement&)      { res = false; }
     //~ void handle(const SgFunctionDeclaration&)  { res = false; }
@@ -552,10 +554,12 @@ namespace
       void handle(SgFunctionDeclaration& n)    { res = sb::buildFunctionRefExp(&n); }
       void handle(SgAdaRenamingDecl& n)        { res = &mkAdaRenamingRefExp(n); }
       void handle(SgAdaTaskSpecDecl& n)        { res = &mkAdaTaskRefExp(n); }
+      void handle(SgAdaProtectedSpecDecl& n)   { res = &mkAdaProtectedRefExp(n); }
       void handle(SgAdaGenericDecl& n)         { res = &mkAdaUnitRefExp(n); }
       void handle(SgAdaGenericInstanceDecl& n) { res = &mkAdaUnitRefExp(n); }
       void handle(SgAdaPackageSpecDecl& n)     { res = &mkAdaUnitRefExp(n); }
       void handle(SgAdaTaskTypeDecl& n)        { res = sb::buildTypeExpression(n.get_type()); }
+      void handle(SgAdaProtectedTypeDecl& n)   { res = sb::buildTypeExpression(n.get_type()); }
 
     private:
       AstContext ctx;
@@ -912,9 +916,8 @@ namespace
         {
           logKind("An_Integer_Literal");
 
-          res = &mkValue<SgIntVal>(expr.Value_Image);
+          res = &mkAdaIntegerLiteral(expr.Value_Image);
 
-          //~ res = &mkValue<SgLongIntVal>(expr.Value_Image);
           /* unused fields: (Expression_Struct)
                enum Attribute_Kinds  Attribute_Kind
           */
@@ -1478,6 +1481,19 @@ SgExpression& createCall(SgExpression& target, ElemIdRange args, bool callSyntax
   SgExpression* res = sg::dispatch(AdaCallBuilder{args, callSyntax, ctx}, &target);
 
   return SG_DEREF(res);
+}
+
+SgExpression&
+getEnumRepresentationValue(Element_Struct& el, AstContext ctx)
+{
+  ADA_ASSERT(el.Element_Kind == A_Defining_Name);
+
+  Defining_Name_Struct& def = el.The_Union.Defining_Name;
+  ADA_ASSERT(  def.Defining_Name_Kind == A_Defining_Enumeration_Literal
+            || def.Defining_Name_Kind == A_Defining_Character_Literal
+            );
+
+  return mkAdaIntegerLiteral(def.Representation_Value_Image);
 }
 
 } // namespace Ada_ROSE_Translation

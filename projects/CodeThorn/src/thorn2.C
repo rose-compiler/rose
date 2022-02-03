@@ -439,9 +439,12 @@ struct Acuity
       logInfo() << "getting all classes.. " << std::endl;
       ct::RoseCompatibilityBridge compatLayer;
       ct::AnalysesTuple   analyses = ct::analyzeClassesAndCasts(compatLayer, &project);
-      logInfo() << "getting all classes done. " << std::endl;
+      const int           numClasses = std::get<0>(analyses).size();
+      logInfo() << "getting all (" << numClasses << ") structs done. " << std::endl;
 
       IncludeInOutputSet  outset = buildOutputSet(std::get<0>(analyses));
+      logInfo() << "number of classes with virtual tables: " << outset.size() << std::endl;
+
       const int           maxlen = params.numCharsOfOriginalName;
       ct::ClassNameFn     clsNameGen = createNameGenerator(compatLayer.classNomenclator(), "Cl", maxlen);
       ct::FuncNameFn      funNameGen = createNameGenerator(compatLayer.functionNomenclator(), "fn", maxlen);

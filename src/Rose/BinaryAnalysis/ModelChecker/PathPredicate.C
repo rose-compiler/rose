@@ -65,17 +65,25 @@ WorkPredicate::operator()(const Settings::Ptr &settings, const Path::Ptr &path) 
     ASSERT_not_null(settings);
     ASSERT_not_null(path);
     ASSERT_forbid(path->isEmpty());
-    const size_t nSteps = path->nSteps();
-    const size_t maxSteps = settings->k;
     const double timeUsed = path->processingTime();
 
-    if (nSteps >= maxSteps) {
-        SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-        ++kLimitReached_;
-        return {false, "K bound"};
+    if (path->nSteps() >= settings->kSteps) {
+        {
+            SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+            ++kLimitReached_;
+        }
+        return {false, "K bound (steps)"};
+    } else if (path->nNodes() > settings->kNodes) {
+        {
+            SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+            ++kLimitReached_;
+        }
+        return {false, "K bound (nodes)"};
     } else if (settings->maxTime && !rose_isnan(timeUsed) && timeUsed >= settings->maxTime.get()) {
-        SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-        ++timeLimitReached_;
+        {
+            SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+            ++timeLimitReached_;
+        }
         return {false, "time limit"};
     } else {
         return {true, "okay"};

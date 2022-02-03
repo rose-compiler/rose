@@ -4,6 +4,7 @@
 #   expected numeric value (can be prefixed with space), 
 #   string value as specified in source
 # note: negative values are not part of Ada literals (the sign serves as unary operator).
+#       ^^^^^^^^^^^^^^^ this is not true for values that are constant folded by ASIS
 int, 1,  1
 int, 12, 1_2
 int, 13, 13
@@ -19,6 +20,7 @@ int, 224, 2#1110_0000#
 real, 0.1234, 0.1234
 real, 4095.0, 4095.0
 real, 4095.0, 16#F.FF#E+2
+real, 690.0, 16#2B.20000000000000000000000000000000000000000#E1
 real, 4095.0, 2#1.1111_1111_1110#E11
 real, 0.1234, 12.34e-2
 real, 4095.0, 16:F.FF:E+2

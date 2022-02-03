@@ -607,15 +607,23 @@ int compareTypes(const SgType& lhs, const SgType& rhs)
   return TypeComparator::compare(lhs, rhs, false, false);
 }
 
+
 int
-RoseCompatibilityBridge::compareTypes(FunctionKeyType lhs, FunctionKeyType rhs, bool exclReturn) const
+RoseCompatibilityBridge::compareFunctionTypes(FunctionTypeKeyType lhs, FunctionTypeKeyType rhs, bool exclReturn) const
 {
   static constexpr bool withArrayDecay = true;
 
+  return TypeComparator::compare(SG_DEREF(lhs), SG_DEREF(rhs), exclReturn, withArrayDecay);
+}
+
+
+int
+RoseCompatibilityBridge::compareTypes(FunctionKeyType lhs, FunctionKeyType rhs, bool exclReturn) const
+{
   const SgFunctionType& lhsty = functionType(lhs);
   const SgFunctionType& rhsty = functionType(rhs);
 
-  return sg::dispatch(TypeComparator{rhsty, withArrayDecay, exclReturn}, &lhsty);
+  return compareFunctionTypes(&lhsty, &rhsty, exclReturn);
 }
 
 VariableKeyType
@@ -714,7 +722,7 @@ namespace
       }
 
       /// generic template routine to check for covariance
-      /// if @chw is null, the check tests for strict equality
+      /// if \ref chw is null, the check tests for strict equality
       template <class SageType>
       ReturnType
       check(const SageType& drvTy)
@@ -852,15 +860,7 @@ RoseCompatibilityBridge::haveSameOrCovariantReturn( const ClassAnalysis& classes
 FunctionKeyType
 RoseCompatibilityBridge::functionId(const SgMemberFunctionDeclaration* fun) const
 {
-  if (!fun) return fun;
-
-  const SgMemberFunctionDeclaration* fKey = isSgMemberFunctionDeclaration(fun->get_firstNondefiningDeclaration());
-  const SgMemberFunctionDeclaration* res  = fKey ? fKey : fun;
-
-  ROSE_ASSERT(isVirtual(*res) == isVirtual(*fun));
-
-  return res;
-  //~ return funLabeler.getFunctionEntryLabel(fun);
+  return fun ? &keyDecl(*const_cast<SgMemberFunctionDeclaration*>(fun)) : fun;
 }
 
 void
@@ -948,5 +948,14 @@ SgClassDefinition* getClassDefOpt(const SgExpression& n, bool skipUpCasts = fals
   return getClassDefOpt(SG_DEREF(castexp->get_operand()), true /* continue skipping up casts */);
 }
 
+
+SgMemberFunctionDeclaration& keyDecl(SgMemberFunctionDeclaration& memfn)
+{
+  SgMemberFunctionDeclaration* fKey = isSgMemberFunctionDeclaration(memfn.get_firstNondefiningDeclaration());
+  SgMemberFunctionDeclaration* res  = fKey ? fKey : &memfn;
+
+  ROSE_ASSERT(isVirtual(*res) == isVirtual(memfn));
+  return *res;
+}
 
 }

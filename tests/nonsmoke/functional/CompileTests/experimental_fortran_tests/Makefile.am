@@ -54,7 +54,7 @@ check-fortran:
 	@echo $(PASSING_TEST_Objects)
 
 clean-local:
-	rm -f rose_*.*
+	rm -f rose_*.* *.o
 
 check-local:
 	@echo "Tests for experimental Fortran frontend."
@@ -62,6 +62,3 @@ check-local:
 	@echo "***********************************************************************************************************************"
 	@echo "****** ROSE/tests/nonsmoke/functional/CompileTests/experimental_fortran_tests: make check completed successfully ******"
 	@echo "***********************************************************************************************************************"
-	@echo "*************************************************************************************************"
-	@echo "***** Skipping tests of experimental Fortran clang frontend (must be configured explicitly) *****"
-	@echo "*************************************************************************************************"

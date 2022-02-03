@@ -636,7 +636,8 @@ constrainColumn(const Settings &settings, Column &c, const std::string &key, con
             if ("=" == comparison || "/" == comparison || "-" == comparison || "+" == comparison) {
                 const std::string sqlOp = sqlComparison(comparison);
                 c.constraintExpr(c.sql() + sqlOp + "?" + c.sqlAlias());
-                c.constraintBinding(c.sqlAlias(), Rose::CommandLine::DurationParser::parse(value));
+                auto parser = Rose::CommandLine::durationParser();
+                c.constraintBinding(c.sqlAlias(), parser->parse(value));
             } else {
                 mlog[FATAL] <<"field \"" <<key <<"\" cannot be constrained with \"" <<comparison <<"\" operator\n";
                 exit(1);
@@ -854,7 +855,7 @@ formatValue(const Settings &settings, const Column &c, const std::string &value)
             } catch (...) {
                 length = ::round(boost::lexical_cast<double>(value));
             }
-            return Rose::CommandLine::DurationParser::toString(length);
+            return Rose::CommandLine::durationParser()->toString(length);
         }
     }
 }

@@ -397,21 +397,17 @@ cuda)
         GENERATE_CUDA_SPECIFIC_HEADERS
 	;;
 fortran)
-	if test "x$USE_JAVA" = x1; then
-	  if test "x$GFORTRAN_PATH" = "x" -o "x$GFORTRAN_PATH" = "xno"; then
-            AC_MSG_FAILURE([[[Fortran support]] gfortran not found: required for syntax checking and semantic analysis.
+        # gfortran required for Fortran frontend support
+        if test "x$GFORTRAN_PATH" = "x" -o "x$GFORTRAN_PATH" = "xno"; then
+          AC_MSG_FAILURE([[[Fortran support]] gfortran not found: required for syntax checking and semantic analysis.
                            Do you need to explicitly specify gfortran using the --with-gfortran=path/to/gfortran configure-switch? (See ./configure --help)])
-          else
-     	    support_fortran_frontend=yes
-	    AC_DEFINE([ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT], [], [Build ROSE to support the Fortran langauge])
-          fi
-        elif test "x$with_java" = "xno" ; then
-	  AC_MSG_FAILURE([[[Fortran support]] cannot support the Fortran language because you specified --with-java="$with_java". You can turn off Fortran support with --disable-fortran (See ./configure --help)]) 
-	else
-	  AC_MSG_FAILURE([[[Fortran support]] Java Virtual Machine (JVM) not found: required by the Open Fortran Parser (OFP).
-	                 Do you need to explicitly specify Java using the --with-java configure-switch? (See ./configure --help)])
-	fi
-	;;
+        fi
+        # Java (JDK and JVM) is required for Fortran OFP parser
+        USE_JAVA=1
+        support_fortran_frontend=yes
+        support_fortran_language=yes
+        AC_DEFINE([ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT], [], [Build ROSE to support the Fortran langauge])
+        ;;
 java)
         if test "x$USE_JAVA" = x1; then
 	  support_java_frontend=yes
@@ -773,6 +769,17 @@ if test "x$support_opencl_frontend" = "xyes"; then
   AC_MSG_RESULT([yes])
 else
   AC_MSG_RESULT([no])
+fi
+
+#Turn off java unless explicitly needed/requested [Rasmussen 2022.01.21]
+if test "x$support_fortran_frontend" = "xyes"; then
+  with_java=yes
+else
+  if test "x$support_java_frontend" = "xyes"; then
+    with_java=yes
+  else
+    with_java=no
+  fi
 fi
 
 # End macro ROSE_SUPPORT_LANGUAGES.

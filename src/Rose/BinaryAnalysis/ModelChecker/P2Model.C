@@ -1314,7 +1314,7 @@ SemanticCallbacks::findUnit(rose_addr_t va) {
 
 
     {
-        // We use a separate mutex for the unit_ cache so that only one tahread computes this at a time without blocking
+        // We use a separate mutex for the unit_ cache so that only one thread computes this at a time without blocking
         // threads trying to make progress on other things.  An alternative would be to lock the main mutex, but only when
         // accessing the cache, and allow the computations to be duplicated with only the first thread saving the result.
         SAWYER_THREAD_TRAITS::LockGuard lock(unitsMutex_);
@@ -1364,7 +1364,7 @@ SemanticCallbacks::findUnit(rose_addr_t va) {
                 }
             }
         }
-        if (!unit)
+        if (!unit && bb->nInstructions() > 0)
             unit = BasicBlockUnit::instance(partitioner_, bb);
     } else if (SgAsmInstruction *insn = partitioner_.instructionProvider()[va]) {
         SAWYER_MESG(mlog[DEBUG]) <<"    no basic block at " <<StringUtility::addrToString(va) <<"; switched to insn\n";

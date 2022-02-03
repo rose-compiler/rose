@@ -44,23 +44,24 @@ namespace
         set(declaredType);
       }
 
-      void set(SgType* ty)                 { ADA_ASSERT(ty); res = ty; }
+      void set(SgType* ty)                   { ADA_ASSERT(ty); res = ty; }
 
       // error handler
-      void handle(SgNode& n)               { SG_UNEXPECTED_NODE(n); }
+      void handle(SgNode& n)                 { SG_UNEXPECTED_NODE(n); }
 
       // just use the type
-      void handle(SgType& n)               { set(&n); }
+      void handle(SgType& n)                 { set(&n); }
 
       // undecorated declarations
-      void handle(SgAdaFormalTypeDecl& n)  { set(n.get_type()); }
+      void handle(SgAdaFormalTypeDecl& n)    { set(n.get_type()); }
 
       // possibly decorated with an SgAdaDiscriminatedTypeDecl
       // \{
-      void handle(SgClassDeclaration& n)   { handleDiscrDecl(n, n.get_type()); }
-      void handle(SgAdaTaskTypeDecl& n)    { handleDiscrDecl(n, n.get_type()); }
-      void handle(SgEnumDeclaration& n)    { handleDiscrDecl(n, n.get_type()); }
-      void handle(SgTypedefDeclaration& n) { handleDiscrDecl(n, n.get_type()); }
+      void handle(SgClassDeclaration& n)     { handleDiscrDecl(n, n.get_type()); }
+      void handle(SgAdaTaskTypeDecl& n)      { handleDiscrDecl(n, n.get_type()); }
+      void handle(SgAdaProtectedTypeDecl& n) { handleDiscrDecl(n, n.get_type()); }
+      void handle(SgEnumDeclaration& n)      { handleDiscrDecl(n, n.get_type()); }
+      void handle(SgTypedefDeclaration& n)   { handleDiscrDecl(n, n.get_type()); }
       // \}
 
       // others
@@ -78,9 +79,24 @@ namespace
   SgNode&
   getExprTypeID(Element_ID tyid, AstContext ctx);
 
+  namespace
+  {
+    SgType* errorType(Expression_Struct& typeEx, AstContext ctx)
+    {
+      logError() << "unknown type name: " << typeEx.Name_Image
+                 << " / " << typeEx.Corresponding_Name_Definition
+                 << std::endl;
+
+      ADA_ASSERT(!FAIL_ON_ERROR(ctx));
+      return sb::buildVoidType();
+    }
+  }
+
   SgNode&
   getExprType(Expression_Struct& typeEx, AstContext ctx)
   {
+    static constexpr bool findFirstOf = false;
+
     SgNode* res = nullptr;
 
     switch (typeEx.Expression_Kind)
@@ -91,31 +107,12 @@ namespace
 
           // is it a type?
           // typeEx.Corresponding_Name_Declaration ?
-          res = findFirst(asisTypes(), typeEx.Corresponding_Name_Definition);
-
-          if (!res)
-          {
-            // is it an exception?
-            // typeEx.Corresponding_Name_Declaration ?
-            res = findFirst(asisExcps(), typeEx.Corresponding_Name_Definition);
-          }
-
-          if (!res)
-          {
-            // is it a predefined Ada type?
-            res = findFirst(adaTypes(), AdaIdentifier{typeEx.Name_Image});
-          }
-
-          if (!res)
-          {
-            // what is it?
-            logWarn() << "unknown type name: " << typeEx.Name_Image
-                      << " / " << typeEx.Corresponding_Name_Definition
-                      << std::endl;
-
-            ADA_ASSERT(!FAIL_ON_ERROR(ctx));
-            res = sb::buildVoidType();
-          }
+          findFirstOf
+          || (res = findFirst(asisTypes(), typeEx.Corresponding_Name_Definition))
+          || (res = findFirst(asisExcps(), typeEx.Corresponding_Name_Definition))
+          || (res = findFirst(adaTypes(),  AdaIdentifier{typeEx.Name_Image}))
+          || (res = errorType(typeEx, ctx))
+          ;
 
           break;
         }
@@ -153,6 +150,7 @@ namespace
   }
 
 
+
   SgType&
   getAccessType(Definition_Struct& def, AstContext ctx)
   {
@@ -160,35 +158,83 @@ namespace
 
     logKind("An_Access_Definition");
 
-    SgType* res = nullptr;
+    SgType*                   res = nullptr;
     Access_Definition_Struct& access = def.The_Union.The_Access_Definition;
+    const auto                access_type_kind = access.Access_Definition_Kind;
 
-    switch (access.Access_Definition_Kind)
+    switch (access_type_kind)
     {
       case An_Anonymous_Access_To_Constant:            // [...] access constant subtype_mark
       case An_Anonymous_Access_To_Variable:            // [...] access subtype_mark
-        {
-          const bool isConstant = access.Access_Definition_Kind == An_Anonymous_Access_To_Constant;
-          logKind(isConstant ? "An_Anonymous_Access_To_Constant" : "An_Anonymous_Access_To_Variable");
+      {
+        const bool isConstant = access_type_kind == An_Anonymous_Access_To_Constant;
+        logKind(isConstant ? "An_Anonymous_Access_To_Constant" : "An_Anonymous_Access_To_Variable");
 
-          SgType& ty = getDeclTypeID(access.Anonymous_Access_To_Object_Subtype_Mark, ctx);
+        SgType&          ty = getDeclTypeID(access.Anonymous_Access_To_Object_Subtype_Mark, ctx);
+        SgAdaAccessType& access_t = mkAdaAccessType(ty);
 
-          res = &mkAdaAccessType(&ty);
+        // PP(2/2/22)
+        // cmp. getAccessTypeDefinition
+        // \todo consider making a const qualifier
+        // \todo what is general_access?
+        if (isConstant)
+          access_t.set_is_constant(true);
+        //~ else
+          //~ access_t.set_is_general_access(true);
 
-          /** unused fields:
-                 bool                         Has_Null_Exclusion;
-           */
-          break;
-        }
+        res = &access_t;
+        /** unused fields:
+               bool                         Has_Null_Exclusion;
+         */
+        break;
+      }
 
       case An_Anonymous_Access_To_Procedure:           // access procedure
       case An_Anonymous_Access_To_Protected_Procedure: // access protected procedure
       case An_Anonymous_Access_To_Function:            // access function
       case An_Anonymous_Access_To_Protected_Function:  // access protected function
+      {
+        logWarn() << "subprogram access type support incomplete" << std::endl;
+
+        // these are functions, so we need to worry about return types
+        const bool isFuncAccess = (  (access_type_kind == An_Anonymous_Access_To_Function)
+                                  || (access_type_kind == An_Anonymous_Access_To_Protected_Function)
+                                  );
+
+        if (access.Access_To_Subprogram_Parameter_Profile.Length > 0) {
+          logWarn() << "subprogram access types with parameter profiles not supported." << std::endl;
+          /*
+            ElemIdRange range = idRange(access_type.Access_To_Subprogram_Parameter_Profile);
+
+            SgFunctionParameterList& lst   = mkFunctionParameterList();
+            SgFunctionParameterScope& psc  = mkLocatedNode<SgFunctionParameterScope>(&mkFileInfo());
+            ParameterCompletion{range,ctx}(lst, ctx);
+
+            ((SgAdaAccessType*)res.n)->set_subprogram_profile(&lst);
+          */
+        }
+
+        SgType& retType = isFuncAccess ? getDeclTypeID(access.Access_To_Function_Result_Profile, ctx)
+                                       : SG_DEREF(sb::buildVoidType());
+        SgFunctionType& funty = mkFunctionType(retType /* \todo add paramter profile */);
+        SgAdaAccessType& access_t = mkAdaAccessType(funty);
+
+        access_t.set_is_object_type(false);
+
+        // if protected, set the flag
+        if (access_type_kind == An_Anonymous_Access_To_Protected_Function ||
+            access_type_kind == An_Anonymous_Access_To_Protected_Procedure) {
+          access_t.set_is_protected(true);
+        }
+
+        res = &access_t;
+        break;
+      }
+
       case Not_An_Access_Definition: /* break; */ // An unexpected element
       default:
-        logWarn() << "adk? " << access.Access_Definition_Kind << std::endl;
-        res = &mkAdaAccessType(sb::buildVoidType());
+        logWarn() << "adk? " << access_type_kind << std::endl;
+        res = &mkAdaAccessType(SG_DEREF(sb::buildVoidType()));
         ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
 
@@ -222,7 +268,7 @@ namespace
   SgAdaTypeConstraint*
   getConstraintID_opt(Element_ID el, AstContext ctx)
   {
-    return el ?  &getConstraintID(el, ctx) : nullptr;
+    return el ? &getConstraintID(el, ctx) : nullptr;
   }
 
 
@@ -295,9 +341,9 @@ namespace
   }
 
 
-  struct EnumElementCreator
+  struct EnumeratorCreator
   {
-      EnumElementCreator(SgEnumDeclaration& n, AstContext astctx)
+      EnumeratorCreator(SgEnumDeclaration& n, AstContext astctx)
       : enumdcl(n), enumty(SG_DEREF(n.get_type())), ctx(astctx)
       {}
 
@@ -316,7 +362,8 @@ namespace
         // \todo name.ident could be a character literal, such as 'c'
         //       since SgEnumDeclaration only accepts SgInitializedName as enumerators
         //       SgInitializedName are created with the name 'c' instead of character constants.
-        SgInitializedName&  sgnode = mkInitializedName(name.ident, enumty, nullptr);
+        SgExpression&       repval = getEnumRepresentationValue(name.elem(), ctx);
+        SgInitializedName&  sgnode = mkInitializedName(name.ident, enumty, &repval);
 
         sgnode.set_scope(enumdcl.get_scope());
         attachSourceLocation(sgnode, elem, ctx);
@@ -347,7 +394,7 @@ namespace
     case An_Access_To_Constant:
       {
         SgType& ato = getDefinitionTypeID(access_type.Access_To_Object_Definition, ctx);
-        access_t = &mkAdaAccessType(&ato);
+        access_t = &mkAdaAccessType(ato);
 
         // handle cases for ALL or CONSTANT general access modifiers
         switch (access_type_kind) {
@@ -391,13 +438,13 @@ namespace
           */
         }
 
-        access_t = &mkAdaAccessType(NULL);
+        SgType& retType = isFuncAccess ? getDeclTypeID(access_type.Access_To_Function_Result_Profile, ctx)
+                                       : SG_DEREF(sb::buildVoidType());
+        SgFunctionType& funty = mkFunctionType(retType /* \todo add paramter profile */);
+
+        access_t = &mkAdaAccessType(funty);
         access_t->set_is_object_type(false);
 
-        if (isFuncAccess) {
-          SgType &rettype = getDeclTypeID(access_type.Access_To_Function_Result_Profile, ctx);
-          access_t->set_return_type(&rettype);
-        }
 
         // if protected, set the flag
         if (access_type_kind == An_Access_To_Protected_Procedure ||
@@ -409,7 +456,7 @@ namespace
       }
     default:
       logWarn() << "Unhandled access type kind: " << access_type_kind << std::endl;
-      access_t = &mkAdaAccessType(sb::buildVoidType());
+      access_t = &mkAdaAccessType(SG_DEREF(sb::buildVoidType()));
       ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
 
@@ -555,7 +602,7 @@ namespace
           SgEnumDeclaration& sgnode = mkEnumDefn(name, ctx.scope());
           ElemIdRange        enums = idRange(typenode.Enumeration_Literal_Declarations);
 
-          traverseIDs(enums, elemMap(), EnumElementCreator{sgnode, ctx});
+          traverseIDs(enums, elemMap(), EnumeratorCreator{sgnode, ctx});
           /* unused fields:
            */
           res.sageNode(sgnode);
@@ -569,7 +616,7 @@ namespace
           SgAdaTypeConstraint& constraint = getConstraintID(typenode.Integer_Constraint, ctx);
           SgTypeInt&           superty    = SG_DEREF(sb::buildIntType());
 
-          res.sageNode(mkAdaSubtype(superty, constraint, true));
+          res.sageNode(mkAdaSubtype(superty, constraint, true /* from root */));
           /* unused fields:
            */
           break;
@@ -591,12 +638,24 @@ namespace
         {
           logKind("A_Floating_Point_Definition");
 
-          SgExpression&         digits     = getExprID_opt(typenode.Digits_Expression, ctx);
+          SgType*               resultType = sb::buildFloatType();
           SgAdaTypeConstraint*  constraint = getConstraintID_opt(typenode.Real_Range_Constraint, ctx);
           SgAdaRangeConstraint* rngconstr  = isSgAdaRangeConstraint(constraint);
           ADA_ASSERT(!constraint || rngconstr);
 
-          res.sageNode(mkAdaFloatType(digits, rngconstr));
+          if (typenode.Digits_Expression)
+          {
+            SgExpression& digits = getExprID(typenode.Digits_Expression, ctx);
+
+            constraint = &mkAdaDigitsConstraint(digits, rngconstr);
+          }
+
+          if (constraint)
+          {
+            resultType = &mkAdaSubtype(SG_DEREF(resultType), *constraint, true /* from root */);
+          }
+
+          res.sageNode(SG_DEREF(resultType));
           break;
         }
 
@@ -737,6 +796,15 @@ namespace
 
           if (component.Has_Aliased)
             res = &mkAliasedType(*res);
+
+          /* unused fields:
+          */
+          break;
+        }
+
+      case An_Access_Definition:
+        {
+          res = &getAccessType(def, ctx);
 
           /* unused fields:
           */
@@ -982,8 +1050,18 @@ getConstraintID(Element_ID el, AstContext ctx)
         break;
       }
 
-    case Not_A_Constraint: /* break; */         // An unexpected element
     case A_Digits_Constraint:                   // 3.2.2: 3.5.9
+      {
+        SgExpression&         digits = getExprID(constraint.Digits_Expression, ctx);
+        SgAdaTypeConstraint*  rngConstr = getConstraintID_opt(constraint.Real_Range_Constraint, ctx);
+        SgAdaRangeConstraint* range = isSgAdaRangeConstraint(rngConstr);
+        ADA_ASSERT(!rngConstr || range);
+
+        res = &mkAdaDigitsConstraint(digits, range);
+        break;
+      }
+
+    case Not_A_Constraint: /* break; */         // An unexpected element
     case A_Delta_Constraint:                    // 3.2.2: J.3
     default:
       logWarn() << "Unhandled constraint: " << constraint.Constraint_Kind << std::endl;

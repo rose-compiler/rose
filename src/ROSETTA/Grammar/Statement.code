@@ -3561,24 +3561,48 @@ SgSymbol* get_symbol_from_symbol_table() const override;
 SgName get_mangled_name() const override;
 HEADER_ADA_TASK_SPEC_DECL_STATEMENT_END
 
+HEADER_ADA_PROTECTED_SPEC_DECL_STATEMENT_START
+SgSymbol* get_symbol_from_symbol_table() const override;
+SgName get_mangled_name() const override;
+HEADER_ADA_PROTECTED_SPEC_DECL_STATEMENT_END
+
 HEADER_ADA_TASK_TYPE_DECL_STATEMENT_START
 SgSymbol* get_symbol_from_symbol_table() const override;
 SgName get_mangled_name() const override;
 bool hasExplicitScope() const override;
 HEADER_ADA_TASK_TYPE_DECL_STATEMENT_END
 
+HEADER_ADA_PROTECTED_TYPE_DECL_STATEMENT_START
+SgSymbol* get_symbol_from_symbol_table() const override;
+SgName get_mangled_name() const override;
+bool hasExplicitScope() const override;
+HEADER_ADA_PROTECTED_TYPE_DECL_STATEMENT_END
+
 HEADER_ADA_TASK_BODY_DECL_STATEMENT_START
 SgSymbol* get_symbol_from_symbol_table() const override;
 SgName get_mangled_name() const override;
 HEADER_ADA_TASK_BODY_DECL_STATEMENT_END
 
+HEADER_ADA_PROTECTED_BODY_DECL_STATEMENT_START
+SgSymbol* get_symbol_from_symbol_table() const override;
+SgName get_mangled_name() const override;
+HEADER_ADA_PROTECTED_BODY_DECL_STATEMENT_END
+
 HEADER_ADA_TASK_SPEC_STATEMENT_START
 SgName get_mangled_name() const override;
 HEADER_ADA_TASK_SPEC_STATEMENT_END
 
+HEADER_ADA_PROTECTED_SPEC_STATEMENT_START
+SgName get_mangled_name() const override;
+HEADER_ADA_PROTECTED_SPEC_STATEMENT_END
+
 HEADER_ADA_TASK_BODY_STATEMENT_START
 SgName get_mangled_name() const override;
 HEADER_ADA_TASK_BODY_STATEMENT_END
+
+HEADER_ADA_PROTECTED_BODY_STATEMENT_START
+SgName get_mangled_name() const override;
+HEADER_ADA_PROTECTED_BODY_STATEMENT_END
 
 HEADER_ADA_SELECT_STATEMENT_START
      public:
@@ -6483,6 +6507,7 @@ SgScopeStatement::containsOnlyDeclarations() const
           case V_SgAdaPackageBody:
           case V_SgAdaAcceptStmt:
           case V_SgAdaTaskBody:
+          case V_SgAdaProtectedBody:
           case V_SgAdaGenericDecl:
           case V_SgAdaGenericInstanceDecl:
                returnValue = false;
@@ -6501,6 +6526,7 @@ SgScopeStatement::containsOnlyDeclarations() const
       // PP (05/11/20) - Ada support
           case V_SgAdaPackageSpec:
           case V_SgAdaTaskSpec:
+          case V_SgAdaProtectedSpec:
           case V_SgAdaGenericDefn:
                returnValue = true;
                break;
@@ -6826,6 +6852,14 @@ SgScopeStatement::getDeclarationList ()
                break;
              }
 
+          case V_SgAdaProtectedSpec:
+             {
+               SgAdaProtectedSpec* protectedScope = isSgAdaProtectedSpec(currentScope);
+               ROSE_ASSERT (protectedScope != NULL);
+               currentStatementList = &(protectedScope->get_declarations());
+               break;
+             }
+
           case V_SgAdaPackageSpec:
              {
                SgAdaPackageSpec* pkgScope = isSgAdaPackageSpec(currentScope);
@@ -6922,6 +6956,14 @@ SgScopeStatement::getDeclarationList () const
                const SgAdaTaskSpec* taskScope = isSgAdaTaskSpec(currentScope);
                ROSE_ASSERT (taskScope != NULL);
                return taskScope->get_declarations();
+               break;
+             }
+
+          case V_SgAdaProtectedSpec:
+             {
+               const SgAdaProtectedSpec* protectedScope = isSgAdaProtectedSpec(currentScope);
+               ROSE_ASSERT (protectedScope != NULL);
+               return protectedScope->get_declarations();
                break;
              }
 
@@ -7081,6 +7123,15 @@ SgScopeStatement::getStatementList ()
           case V_SgAdaTaskBody:
              {
                SgAdaTaskBody* adabody = isSgAdaTaskBody(currentScope);
+               ROSE_ASSERT(adabody);
+
+               currentStatementList = &(adabody->get_statements());
+               break;
+             }
+
+          case V_SgAdaProtectedBody:
+             {
+               SgAdaProtectedBody* adabody = isSgAdaProtectedBody(currentScope);
                ROSE_ASSERT(adabody);
 
                currentStatementList = &(adabody->get_statements());
@@ -7334,6 +7385,15 @@ SgScopeStatement::getStatementList () const
           case V_SgAdaTaskBody:
              {
                const SgAdaTaskBody* adabody = isSgAdaTaskBody(currentScope);
+               ROSE_ASSERT(adabody);
+
+               return adabody->get_statements();
+               break;
+             }
+
+          case V_SgAdaProtectedBody:
+             {
+               const SgAdaProtectedBody* adabody = isSgAdaProtectedBody(currentScope);
                ROSE_ASSERT(adabody);
 
                return adabody->get_statements();
@@ -20803,6 +20863,107 @@ SgAdaTaskBodyDecl::get_mangled_name() const
 
 SOURCE_ADA_TASK_BODY_DECL_STATEMENT_END
 
+
+// - protected
+
+SOURCE_ADA_PROTECTED_SPEC_DECL_STATEMENT_START
+void SgAdaProtectedSpecDecl::post_construction_initialization()
+{
+  set_type(SgAdaProtectedType::createType(this));
+}
+
+SgSymbol*
+SgAdaProtectedSpecDecl::get_symbol_from_symbol_table() const
+{
+  SgScopeStatement* scope = get_scope();
+
+  ROSE_ASSERT(scope);
+  return scope->find_symbol_from_declaration(this);
+}
+
+SgName
+SgAdaProtectedSpecDecl::get_mangled_name() const
+{
+  std::string name = "ada$prtctd$";
+
+  name.append(get_name());
+  return name;
+}
+
+SOURCE_ADA_PROTECTED_SPEC_DECL_STATEMENT_END
+
+SOURCE_ADA_PROTECTED_TYPE_DECL_STATEMENT_START
+void SgAdaProtectedTypeDecl::post_construction_initialization()
+{
+  set_type(SgAdaProtectedType::createType(this));
+}
+
+SgSymbol*
+SgAdaProtectedTypeDecl::get_symbol_from_symbol_table() const
+{
+  SgScopeStatement* scope = get_scope();
+
+  ROSE_ASSERT(scope);
+  return scope->find_symbol_from_declaration(this);
+}
+
+SgName
+SgAdaProtectedTypeDecl::get_mangled_name() const
+{
+  std::string name = "ada$prtctd$";
+
+  name.append(get_name());
+  return name;
+}
+
+bool SgAdaProtectedTypeDecl::hasExplicitScope() const { return true; }
+
+SOURCE_ADA_PROTECTED_TYPE_DECL_STATEMENT_END
+
+SOURCE_ADA_PROTECTED_BODY_DECL_STATEMENT_START
+void SgAdaProtectedBodyDecl::post_construction_initialization() {}
+
+SgSymbol*
+SgAdaProtectedBodyDecl::get_symbol_from_symbol_table() const
+{
+/*
+  PP (1/11/22)
+  Protected bodies do not have their own symbol currently,
+  as a body must have seen the spec.
+  ==> Return the spec's symbol.
+  see also SgAdaPackageBodyDecl::get_symbol_from_symbol_table
+
+  SgScopeStatement* scope = get_scope();
+
+  ROSE_ASSERT(scope);
+  return scope->find_symbol_from_declaration(this);
+*/
+
+  SgAdaProtectedBody* body = get_definition();
+  ROSE_ASSERT(body);
+
+  SgAdaProtectedSpec* spec = body->get_spec();
+  ROSE_ASSERT(spec);
+
+  SgDeclarationStatement* specdecl = isSgDeclarationStatement(spec->get_parent());
+  ROSE_ASSERT(specdecl);
+
+  return specdecl->search_for_symbol_from_symbol_table();
+}
+
+SgName
+SgAdaProtectedBodyDecl::get_mangled_name() const
+{
+  std::string name = "ada$prtctd$";
+
+  name.append(get_name());
+  return name;
+}
+
+SOURCE_ADA_PROTECTED_BODY_DECL_STATEMENT_END
+
+
+
 SOURCE_ADA_SELECT_STATEMENT_START
 
 void SgAdaSelectStmt::post_construction_initialization() {}
@@ -20979,7 +21140,7 @@ SgAdaComponentClause::get_mangled_name () const
 
 SOURCE_ADA_COMPONENT_CLAUSE_END
 
-
+// - tasks
 
 SOURCE_ADA_TASK_SPEC_STATEMENT_START
 void SgAdaTaskSpec::post_construction_initialization() {}
@@ -21001,3 +21162,26 @@ SgAdaTaskBody::get_mangled_name() const
   return "ada$tsk$body";
 }
 SOURCE_ADA_TASK_BODY_STATEMENT_END
+
+// - protected objects
+
+SOURCE_ADA_PROTECTED_SPEC_STATEMENT_START
+void SgAdaProtectedSpec::post_construction_initialization() {}
+
+SgName
+SgAdaProtectedSpec::get_mangled_name() const
+{
+  return "ada$prtctd$spec";
+}
+
+SOURCE_ADA_PROTECTED_SPEC_STATEMENT_END
+
+SOURCE_ADA_PROTECTED_BODY_STATEMENT_START
+void SgAdaProtectedBody::post_construction_initialization() {}
+
+SgName
+SgAdaProtectedBody::get_mangled_name() const
+{
+  return "ada$prtctd$body";
+}
+SOURCE_ADA_PROTECTED_BODY_STATEMENT_END

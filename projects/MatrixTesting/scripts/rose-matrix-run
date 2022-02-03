@@ -257,6 +257,7 @@ select-docker-template() {
 
     # Then remove the OS tag and look just for the base name. E.g., look for "ubuntu".
     local base_os="${os%:*}"
+    local tag="${os#*:}"
     template="${LIBDIR}/docker-templates/${base_os}"
     if [ -r "$template" ]; then
 	echo "$template"
@@ -265,15 +266,26 @@ select-docker-template() {
 
     # Look for the OS from which the specified OS is derived. E.g., if os is "ubuntu" look for "debian"
     local derived_from=
-    case "$os" in
-	ubuntu*)
+    case "$base_os" in
+	ubuntu)
 	    derived_from=debian
 	    ;;
+	redhat)
+	    derived_from=almalinux
+	    ;;
     esac
-    template="${LIBDIR}/docker-templates/${derived_from}"
-    if [ -n "$derived_from" -a -r "$template" ]; then
-	echo "$template"
-	return 0
+    if [ -n "$derived_from" ]; then
+	template="${LIBDIR}/docker-templates/${derived_from}:${tag}"
+	if [ -r "$template" ]; then
+	    echo "$template"
+	    return 0
+	fi
+
+	template="${LIBDIR}/docker-templates/${derived_from}"
+	if [ -r "$template" ]; then
+	    echo "$template"
+	    return 0
+	fi
     fi
 
     # Give up

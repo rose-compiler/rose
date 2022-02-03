@@ -3484,6 +3484,14 @@ TestAstSymbolTables::visit ( SgNode* node )
                          break;
                        }
 
+                    case V_SgAdaProtectedSymbol:
+                       {
+                         SgAdaProtectedSymbol* sy = isSgAdaProtectedSymbol(symbol);
+
+                         ROSE_ASSERT(sy && sy->get_declaration());
+                         break;
+                       }
+
                     case V_SgAdaRenamingSymbol:
                        {
                          SgAdaRenamingSymbol* sy = isSgAdaRenamingSymbol(symbol);

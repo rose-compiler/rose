@@ -699,6 +699,10 @@ HEADER_ADA_TASK_REF_EXPRESSION_START
 //~ SgType* get_type() const override;
 HEADER_ADA_TASK_REF_EXPRESSION_END
 
+HEADER_ADA_PROTECTED_REF_EXPRESSION_START
+//~ SgType* get_type() const override;
+HEADER_ADA_PROTECTED_REF_EXPRESSION_END
+
 HEADER_ADA_RENAMING_REF_EXPRESSION_START
 //~ SgType* get_type() const override;
 HEADER_ADA_RENAMING_REF_EXPRESSION_END
@@ -4410,6 +4414,14 @@ SgType* SgAdaTaskRefExp::get_type() const
 }
 SOURCE_ADA_TASK_REF_EXPRESSION_END
 
+SOURCE_ADA_PROTECTED_REF_EXPRESSION_START
+SgType* SgAdaProtectedRefExp::get_type() const
+{
+  return SgAdaProtectedType::createType(get_decl(), NULL);
+}
+SOURCE_ADA_PROTECTED_REF_EXPRESSION_END
+
+
 SOURCE_ADA_RENAMING_REF_EXPRESSION_START
 SgType* SgAdaRenamingRefExp::get_type() const
 {
@@ -6277,8 +6289,10 @@ SgPointerDerefExp::get_type() const
        // PP (7/9/21): Support Ada types
           case V_SgAdaAccessType:
              {
-               someType = isSgAdaAccessType(someType)->get_base_type();
-               goto keepStripping;
+               returnType = isSgAdaAccessType(someType)->get_base_type();
+               ROSE_ASSERT(returnType && ("access"));
+               // \todo shall we strip modifiers, similar to SgPointerType ??
+               break;
              }
 
           default:

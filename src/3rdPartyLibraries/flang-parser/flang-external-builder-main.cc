@@ -402,12 +402,14 @@ int printVersion() {
   return exitStatus;
 }
 
-int flang_external_builder_main(int argc, char *const argv[])
+class SgSourceFile;
+int flang_external_builder_main(int argc, char *const argv[], SgSourceFile* roseSourceFile)
 {
   atexit(CleanUpAtExit);
 
-  std::cout << "--> flang_external_builder_main: argc=" << argc << " argv=";
-  if (argc > 2) std::cout << argv[0] << argv[1] << argv[2] << std::endl;
+  // This construction with roseSourceFile is a hack needed until Rose compiles with C++17
+  // Meanwhile, the following must be set before Rose::builder::Build functions called.
+  Rose::builder::setSgSourceFile(roseSourceFile);
 
   DriverOptions driver;
   const char *F18_FC{getenv("F18_FC")};

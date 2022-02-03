@@ -171,7 +171,11 @@ private:
     }
 
     void bindLow(size_t idx, size_t value) override {
-        bindLow(idx, boost::numeric_cast<int64_t>(value));
+        // The SQLite API doesn't have a way to bind a size_t value to a prepared statement, so we'll zero extend the size_t
+        // to 64 bits (if necessary) and then reinterpret those bits as a 2's complement signed value and bind that instead.
+        assert(sizeof value <= 8);
+        int64_t reinterpreted = (int64_t)(uint64_t)value; // C++11 implementation defined behavior
+        bindLow(idx, reinterpreted);
     }
     
     void bindLow(size_t idx, double value) override {

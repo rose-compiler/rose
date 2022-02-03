@@ -211,8 +211,8 @@ boost::mutex SmtSolver::classStatsMutex;
 
 void
 SmtSolver::Stats::print(std::ostream &out, const std::string &prefix) const {
-    auto nameValue = boost::format("%-40s %s\n");
-    auto nameTimes = boost::format("%-40s total %s, maximum %s\n");
+    auto nameValue = boost::format("%-45s %s\n");
+    auto nameTimes = boost::format("%-45s total %s, maximum %s\n");
 
     if (nSolversCreated > 0) {
         out <<prefix <<             "number of solvers:\n";
@@ -229,7 +229,7 @@ SmtSolver::Stats::print(std::ostream &out, const std::string &prefix) const {
     out <<prefix <<(nameValue % "  hits:" % memoizationHits);
     out <<prefix <<(nameValue % "  misses:" % (ncalls - memoizationHits));
     if (ncalls > 0)
-        out <<prefix <<(boost::format("%-40s %1.4f%%\n") % "  hit rate:" % (100.0 * memoizationHits / ncalls));
+        out <<prefix <<(boost::format("%-45s %1.4f%%\n") % "  hit rate:" % (100.0 * memoizationHits / ncalls));
 
     out <<prefix <<             "time spent solving:\n";
     out <<prefix <<(nameTimes % "  time preparing:"

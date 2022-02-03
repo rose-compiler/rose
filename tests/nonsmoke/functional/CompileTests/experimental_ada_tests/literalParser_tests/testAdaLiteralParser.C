@@ -53,8 +53,8 @@ namespace
   T convertLiteral(const char* val) { ROSE_ASSERT(false); return T(); }
   
   template <>
-  int 
-  convertLiteral<int>(const char* val) { return si::ada::convertIntLiteral(val); }
+  long long int 
+  convertLiteral<long long int>(const char* val) { return si::ada::convertIntegerLiteral(val); }
   
   template <>
   long double 
@@ -106,7 +106,7 @@ namespace
     const std::string kind = read<std::string>(is);
 
     if (kind == "int")
-      checkConversion<int>(is);
+      checkConversion<long long int>(is);
     else if (kind == "real")
       checkConversion<long double>(is);
     else if (kind == "string")

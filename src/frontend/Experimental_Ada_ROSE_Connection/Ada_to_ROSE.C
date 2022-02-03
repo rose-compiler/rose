@@ -123,7 +123,12 @@ void LabelAndLoopManager::gotojmp(Element_ID id, SgGotoStatement& gotostmt)
   gotos.emplace_back(&gotostmt, id);
 }
 
-AstContext AstContext::scope_npc(SgScopeStatement& s) const
+AstContext::AstContext()
+: enum_builder(mkEnumeratorRef) /* all other members are default initialzied */
+{}
+
+AstContext
+AstContext::scope_npc(SgScopeStatement& s) const
 {
   AstContext tmp{*this};
 
@@ -131,14 +136,16 @@ AstContext AstContext::scope_npc(SgScopeStatement& s) const
   return tmp;
 }
 
-AstContext AstContext::scope(SgScopeStatement& s) const
+AstContext
+AstContext::scope(SgScopeStatement& s) const
 {
   ADA_ASSERT(s.get_parent());
 
   return scope_npc(s);
 }
 
-AstContext AstContext::labelsAndLoops(LabelAndLoopManager& lm) const
+AstContext
+AstContext::labelsAndLoops(LabelAndLoopManager& lm) const
 {
   AstContext tmp{*this};
 
@@ -146,7 +153,8 @@ AstContext AstContext::labelsAndLoops(LabelAndLoopManager& lm) const
   return tmp;
 }
 
-AstContext AstContext::sourceFileName(std::string& file) const
+AstContext
+AstContext::sourceFileName(std::string& file) const
 {
   AstContext tmp{*this};
 
@@ -154,7 +162,8 @@ AstContext AstContext::sourceFileName(std::string& file) const
   return tmp;
 }
 
-AstContext AstContext::variantName(Name name) const
+AstContext
+AstContext::variantName(Name name) const
 {
   AstContext tmp{*this};
 
@@ -162,7 +171,8 @@ AstContext AstContext::variantName(Name name) const
   return tmp;
 }
 
-AstContext AstContext::variantChoice(Element_ID_List choice) const
+AstContext
+AstContext::variantChoice(Element_ID_List choice) const
 {
   AstContext tmp{*this};
 
@@ -170,17 +180,32 @@ AstContext AstContext::variantChoice(Element_ID_List choice) const
   return tmp;
 }
 
-const std::vector<Name>& AstContext::variantNames() const
+const std::vector<Name>&
+AstContext::variantNames() const
 {
   return active_variant_names;
 }
 
-
-const std::vector<Element_ID_List>& AstContext::variantChoices() const
+const std::vector<Element_ID_List>&
+AstContext::variantChoices() const
 {
   return active_variant_choices;
 }
 
+AstContext
+AstContext::enumBuilder(EnumeratorBuilder bld) const
+{
+  AstContext cpy{*this};
+
+  cpy.enum_builder = std::move(bld);
+  return cpy;
+}
+
+AstContext::EnumeratorBuilder
+AstContext::enumBuilder() const
+{
+  return enum_builder;
+}
 
 
 void updFileInfo(Sg_File_Info* n, const Sg_File_Info* orig)
@@ -540,9 +565,10 @@ namespace
           break;
         }
 
+      case A_Generic_Package_Renaming:
       case A_Package_Renaming:
         {
-          logTrace() << "A package renaming"
+          logTrace() << "A " << (adaUnit.Unit_Kind == A_Package_Renaming ? "" : "generic") << " pkg renaming"
                      << PrnUnitHeader(adaUnit)
                      << std::endl;
 
@@ -564,7 +590,6 @@ namespace
 
       case A_Generic_Procedure_Renaming:
       case A_Generic_Function_Renaming:
-      case A_Generic_Package_Renaming:
 
       //  A unit interpreted only as the completion of a function: or a unit
       //  interpreted as both the declaration and body of a library

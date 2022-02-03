@@ -4,6 +4,8 @@
 #include "sageGeneric.h"
 
 #include <iostream>
+#include <limits>
+#include <cmath>
 #include <exception>
 
 #include <boost/lexical_cast.hpp>
@@ -1129,16 +1131,16 @@ namespace
     return ch == 'E' || ch == 'e';
   }
 
-  std::pair<size_t, bool>
-  check(size_t s, size_t m)
+  std::pair<int, bool>
+  check(int s, int m)
   {
     return std::make_pair(s, s < m);
   }
 
-  std::pair<size_t, bool>
-  char2Val(char c, size_t max)
+  std::pair<int, bool>
+  char2Val(char c, int max)
   {
-    using ResultType = std::pair<size_t, bool>;
+    using ResultType = std::pair<int, bool>;
 
     if ((c >= '0') && (c <= '9'))
       return check(c - '0', max);
@@ -1154,25 +1156,48 @@ namespace
 
   template <class T>
   std::pair<T, const char*>
-  parseDec(const char* buf, size_t base = 10)
+  parseDec(const char* buf, int base = 10)
   {
-    ROSE_ASSERT((*buf != '\0') && char2Val(*buf, base).second);
+    ROSE_ASSERT((*buf != '\0') && (base > 0));
 
+    // In constants folded by ASIS there can be a leading '-'
+    //   otherwise a '-' is represented as unary operator.
+    const int negmul = (*buf == '-') ? -1 : 1;
+
+    if (negmul < 0) ++buf;
+
+    ROSE_ASSERT((*buf != '\0') && char2Val(*buf, base).second);
     T res = 0;
 
     while (*buf != '\0')
     {
       const auto v = char2Val(*buf, base);
 
+      // \todo why is this exit needed?
       if (!v.second)
         return std::make_pair(res, buf);
 
-      res = res*base + v.first;
+      // The digits cannot be summed all positive and negmul only applied once,
+      // because this leads to an integer underflow for System.Min_Int.
+      // While the underflow is likely benign (System.Min_Int == -System.Min_Int)
+      // for a two's complement representation, it seems more prudent to avoid it
+      // altogether.
+      ROSE_ASSERT(  (std::numeric_limits<T>::lowest() / base <= res)
+                 && (std::numeric_limits<T>::max() / base >= res)
+                 && ("arithmethic over-/underflow during literal parsing (mul)")
+                 );
+      res = res*base;
+
+      ROSE_ASSERT(  ((negmul < 0) && (std::numeric_limits<T>::lowest() + v.first <= res))
+                 || ((negmul > 0) && (std::numeric_limits<T>::max() - v.first >= res))
+                 || (!"arithmethic over-/underflow during literal parsing (add)")
+                 );
+      res += (v.first * negmul);
 
       ++buf;
 
       // skip underscores
-      // \note (this is imprecise, since an underscore must be followed
+      // \note this is imprecise, since an underscore must be followed
       //       by an integer.
       while (*buf == '_') ++buf;
     }
@@ -1192,12 +1217,20 @@ namespace
     while ((*buf != '\0') && (!isBasedDelimiter(*buf)))
     {
       const auto v = char2Val(*buf, base);
-
       ROSE_ASSERT(v.second);
 
       T val = v.first;
 
-      res += val/divisor;
+      if (val)
+      {
+        ROSE_ASSERT(!std::isnan(divisor));
+
+        T frac = val/divisor;
+        ROSE_ASSERT(!std::isnan(frac));
+
+        res += frac;
+      }
+
       divisor = divisor*base;
 
       ++buf;
@@ -1236,21 +1269,27 @@ namespace
   template <class T>
   T computeLiteral(T val, int base, int exp)
   {
-    return val * std::pow(base, exp);
+    T res = val * std::pow(base, exp);
+
+    // std::cerr << "complit: " << res << std::endl;
+    return res;
   }
 
 
-  long int
-  basedLiteral(long int res, const char* cur, int base)
+  long long int
+  basedLiteral(long long int res, const char* cur, int base)
   {
     int exp = 0;
 
     ROSE_ASSERT(isBasedDelimiter(*cur));
 
     ++cur;
+    ROSE_ASSERT(  (res >= std::numeric_limits<decltype(base)>::min())
+               && (res <= std::numeric_limits<decltype(base)>::max())
+               );
     base = res;
 
-    std::tie(res, cur) = parseDec<long int>(cur, base);
+    std::tie(res, cur) = parseDec<long long int>(cur, base);
 
     if (isBasedDelimiter(*cur))
     {
@@ -1269,14 +1308,14 @@ namespace
 } // anonymous
 
 
-int convertIntLiteral(const char* img)
+long long int convertIntegerLiteral(const char* img)
 {
-  long int    res  = 0;
-  int         base = 10;
-  int         exp  = 0;
-  const char* cur  = img;
+  long long int res  = 0;
+  int           base = 10;
+  int           exp  = 0;
+  const char*   cur  = img;
 
-  std::tie(res, cur) = parseDec<long int>(cur);
+  std::tie(res, cur) = parseDec<long long int>(cur);
 
   if (isBasedDelimiter(*cur))
   {

@@ -23,7 +23,8 @@ public:
     bool showFinalStates = false;                       /**< Show final execution unit states when debugging. */
     bool showAssertions = false;                        /**< Show SMT assertions at the beginning of each execution unit. */
     bool ignoreSemanticFailures = false;                /**< Treat failed instructions as if they completed. */
-    size_t k = 1000;                                    /**< Maximum path length in steps. */
+    size_t kSteps = 1000;                               /**< Maximum path length in steps. */
+    size_t kNodes = UNLIMITED;                          /**< Maximum path length in nodes (usually basic blocks). */
     Sawyer::Optional<uint64_t> maxTime;                 /**< Maximum path time in seconds. */
     bool rejectUnknownInsns = true;                     /**< Reject "unknown" instructions even if semantic failure is allowed. */
     Sawyer::Optional<uint64_t> solverTimeout;           /**< Timeout per SMT solver call in seconds. */

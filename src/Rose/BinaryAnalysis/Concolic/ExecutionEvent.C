@@ -750,7 +750,6 @@ ExecutionEvent::toYaml(std::ostream &out, const Database::Ptr &db, std::string p
 
         case Action::BULK_REGISTER_WRITE: {
             out <<prefix <<(nameValue % "action:" % "bulk-register-write");
-            out <<prefix <<(nameValue % "where:" % StringUtility::addrToString(memoryLocation().least()));
             out <<prefix <<(nameValue % "size:" % StringUtility::plural(memoryLocation().size(), "# bytes"));
             Combinatorics::HasherSha256Builtin hasher;
             hasher.insert(bytes());

@@ -8225,6 +8225,27 @@ SgSymbolTable::get_name( const SgNode* node) const
                break;
              }
 
+          case V_SgAdaProtectedSpecDecl:
+             {
+               const SgAdaProtectedSpecDecl* dcl = isSgAdaProtectedSpecDecl(node);
+               name = dcl->get_name();
+               break;
+             }
+
+          case V_SgAdaProtectedTypeDecl:
+             {
+               const SgAdaProtectedTypeDecl* dcl = isSgAdaProtectedTypeDecl(node);
+               name = dcl->get_name();
+               break;
+             }
+
+          case V_SgAdaProtectedBodyDecl:
+             {
+               const SgAdaProtectedBodyDecl* dcl = isSgAdaProtectedBodyDecl(node);
+               name = dcl->get_name();
+               break;
+             }
+
           case V_SgAdaRenamingDecl:
              {
                const SgAdaRenamingDecl* dcl = isSgAdaRenamingDecl(node);

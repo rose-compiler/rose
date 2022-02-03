@@ -43,7 +43,7 @@ struct Settings {
     bool debugNull = false;                             /**< When debugging is enabled, show null pointer checking? */
     Sawyer::Optional<rose_addr_t> initialStackVa;       /**< Address for initial stack pointer. */
     MemoryType memoryType = MemoryType::MAP;            /**< Type of memory state. */
-    bool solverMemoization = true;                      /**< Whether the SMT solver should use memoization. */
+    bool solverMemoization = false;                     /**< Whether the SMT solver should use memoization. */
     bool traceSemantics = false;                        /**< Whether to trace all RISC operators. */
 };
 

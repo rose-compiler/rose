@@ -143,6 +143,8 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   ada_packages.adb                     \
   accept_statement.adb                 \
   accept_statement_task_decl.adb       \
+  access_definition.ads                \
+  all_modes.ads                        \
   array_declare.adb                    \
   array_declare_2.ads                  \
   asm_machine_code.adb                 \
@@ -150,6 +152,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   choice_parameter_specification.adb   \
   complex.ads                          \
   complex.adb                          \
+  derived_private_record.adb           \
   discriminant.adb                     \
   discriminant_constraint.ads          \
   discriminated_record.adb             \
@@ -159,19 +162,29 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   entry_declaration.ads                \
   exception_rename.ads                 \
   formal_procedure_declaration.ads     \
+  formal_subprogram_declaration.ads    \
   generic_function_declaration.ads     \
   generic_package_declaration.ads      \
+  generic_package_declaration.adb      \
+  identity.ads                         \
   inherited_primitive_operation.adb    \
   io.ads                               \
   iterate_range.adb                    \
   nested_package.ads                   \
+  object_renaming_declaration.adb      \
   opaque.ads                           \
   package_renaming_declaration.ads     \
   parent-child.adb                     \
   pkgrename.ads                        \
+  private_derived_formal_type.adb      \
   procedure_renaming.adb               \
+  protected_object.adb                 \
+  protected_body_declaration.adb       \
+  protected_body_declaration.ads       \
+  protected_type_declaration.ads       \
   representation_clause.ads            \
   representation_clause_2.ads          \
+  renamings.adb                        \
   select_accept.adb                    \
   simple_select_accept.adb             \
   simple_select_accept_guarded.adb     \
@@ -179,6 +192,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   simple_hello_world.adb               \
   simple_hello_world_with_renamed.adb  \
   simple_hello_world_with_use.adb      \
+  single_protected_declaration.ads     \
   std_ascii_user.adb                   \
   taskarray.adb                        \
   task_type_declaration.ads            \
@@ -210,8 +224,6 @@ ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=                \
   fixed_point_definition.ads
 
 ROSE_FAILING_ADA_TESTS :=                           \
-  access_definition.ads                             \
-  all_modes.ads                                     \
   aspect_spec.ads                                   \
   deref_test.adb                                    \
   delay_until.adb                                   \
@@ -219,17 +231,12 @@ ROSE_FAILING_ADA_TESTS :=                           \
   extension_aggregate.adb                           \
   function_body_stub.adb                            \
   generic_function_renaming_declaration.ads         \
-  generic_package_renaming_declaration.ads          \
+  generic_package_renaming_declaration.adb          \
   generic_procedure_renaming_declaration.ads        \
   mpiuse.ads                                        \
-  object_renaming_declaration.adb                   \
-  protected_body_declaration.adb                    \
-  protected_body_declaration.ads                    \
   procedure_body_stub.adb                           \
-  protected_type_declaration.ads                    \
   requeue_statement_2.adb                           \
   requeue_statements.adb                            \
-  single_protected_declaration.ads                  \
   tagged_incomplete_type_declaration.ads            \
   test.adb                                          \
   test_unit.adb                                     \

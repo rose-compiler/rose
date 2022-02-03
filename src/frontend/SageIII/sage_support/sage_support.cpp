@@ -2133,10 +2133,6 @@ SgSourceFile::SgSourceFile ( vector<string> & argv , int & errorCode, int fileNa
 int
 SgSourceFile::callFrontEnd()
    {
-#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-  // FortranParserState* currStks = new FortranParserState();
-#endif
-
      int frontendErrorLevel = SgFile::callFrontEnd();
   // DQ (1/21/2008): This must be set for all languages
      ROSE_ASSERT(get_globalScope() != NULL);
@@ -2147,10 +2143,6 @@ SgSourceFile::callFrontEnd()
   // DQ (8/21/2008): Added assertion.
      ROSE_ASSERT (get_globalScope()->get_startOfConstruct() != NULL);
      ROSE_ASSERT (get_globalScope()->get_endOfConstruct()   != NULL);
-
-#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
-  // delete  currStks ;
-#endif
 
      return frontendErrorLevel;
    }
@@ -4487,7 +4479,35 @@ SgSourceFile::fixupASTSourcePositionsBasedOnDetectedLineDirectives(set<int> equi
 int
 SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputCommandLine )
    {
-#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+  // Rasmussen (1/24/2022): Transitioning to using Flang as the Fortran parser.
+  // The variable ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION will be defined at configuration
+  // but not ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT.  Unfortunately the latter variable is
+  // too tightly coupled with Java usage at the moment. The Flang parser doesn't require Java.
+     if (get_experimental_flang_frontend() == true) {
+       int status{-1};
+       int flangArgc{0};
+       char** flangArgv{nullptr};
+
+       vector<string> flangCommandLine;
+       flangCommandLine.push_back("f18");
+       flangCommandLine.push_back("-fexternal-builder");
+       flangCommandLine.push_back(get_sourceFileNameWithPath());
+       CommandlineProcessing::generateArgcArgvFromList(flangCommandLine, flangArgc, flangArgv);
+
+    // SG (7/9/2015) In case of a mixed language project, force case sensitivity here.
+       SageBuilder::symbol_table_case_insensitive_semantics = true;
+
+#if defined(ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION)
+       status = experimental_fortran_main(flangArgc, flangArgv, const_cast<SgSourceFile*>(this));
+       ROSE_ASSERT(status == 0);
+#else
+       ROSE_ASSERT(! "[FATAL] [ROSE] [frontend] [Fortran] "
+                     "error: ROSE was not configured to support the Fortran Flang frontend.");
+#endif
+       return status;
+     }
+
+#if defined(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT)
   // This is how we pass the pointer to the SgFile created in ROSE before the Open
   // Fortran Parser is called to the Open Fortran Parser.  In the case of C/C++ using
   // EDG the SgFile is passed through the edg_main() function, but not so with the
@@ -4515,7 +4535,6 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
          break;
        }
      }
-
 
      extern SgSourceFile* OpenFortranParser_globalFilePointer;
 
@@ -4589,7 +4608,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 #endif
 
        // add source file name
-          string sourceFilename              = get_sourceFileNameWithPath();
+          string sourceFilename = get_sourceFileNameWithPath();
 
           // use a pseudonym for source file in case original extension does not permit preprocessing
           // compute absolute path for pseudonym
@@ -4633,16 +4652,14 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
              printf ("Error in running cpp on Fortran code: errorCode = %d \n",errorCode);
              ROSE_ABORT();
           }
-     }
+     } // Terminates if (requires_C_preprocessor == true)
+
 
 
   // DQ (9/30/2007): Introduce syntax checking on input code (initially we can just call the backend compiler
   // and let it report on the syntax errors).  Later we can make this a command line switch to disable (default
   // should be true).
-  // bool syntaxCheckInputCode = true;
      bool syntaxCheckInputCode = (get_skip_syntax_check() == false);
-
-  // printf ("In build_Fortran_AST(): syntaxCheckInputCode = %s \n",syntaxCheckInputCode ? "true" : "false");
 
      if (syntaxCheckInputCode == true)
         {
@@ -4669,8 +4686,6 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
        // string syntaxCheckingCommandline = "gfortran -S " + get_sourceFileNameWithPath();
        // string warnings = "-Wall -Wconversion -Waliasing -Wampersand -Wimplicit-interface -Wline-truncation -Wnonstd-intrinsics -Wsurprising -Wunderflow -Wunused-labels";
        // DQ (12/8/2007): Added commandline control over warnings output in using gfortran sytax checking prior to use of OFP.
-
-       // printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Setting up Fortran Syntax check @@@@@@@@@@@@@@@@@@@@@@@@@@@@ \n");
 
           vector<string> fortranCommandLine;
           fortranCommandLine.push_back(ROSE_GFORTRAN_PATH);
@@ -4853,7 +4868,7 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 
             // Note that since we are using gfortran to do the syntax checking, we could just
             // hand the original file to gfortran instead of the one that we generate using CPP.
-               string sourceFilename    = get_sourceFileNameWithPath();
+               string sourceFilename = get_sourceFileNameWithPath();
                string sourceFileNameOutputFromCpp = generate_C_preprocessor_intermediate_filename(sourceFilename);
                fortranCommandLine.push_back(sourceFileNameOutputFromCpp);
              }
@@ -4887,18 +4902,10 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
              throw std::exception();
            }
         ROSE_ASSERT(returnValueForSyntaxCheckUsingBackendCompiler == 0);
-
-     // printf ("@@@@@@@@@@@@@@@@@@@@@@@@@@ DONE: Setting up Fortran Syntax check @@@@@@@@@@@@@@@@@@@@@@@@@ \n");
-
-#if 0
-        printf ("Exiting as a test ... (after syntax check) \n");
-        ROSE_ABORT();
-#endif
-      }
+      } // Terminates if (syntaxCheckInputCode == true)
 
     // Build the classpath list for Fortran support.
-    string classpath =
-        Rose::Cmdline::Fortran::Ofp::GetRoseClasspath();
+    string classpath = Rose::Cmdline::Fortran::Ofp::GetRoseClasspath();
 
   //
   // In the case of Javam add the paths specified for the input program, if any.
@@ -5018,7 +5025,6 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                   }
              }
 
-       // printf ("foundSourceDirectoryExplicitlyListedInIncludePaths = %s \n",foundSourceDirectoryExplicitlyListedInIncludePaths ? "true" : "false");
           if (foundSourceDirectoryExplicitlyListedInIncludePaths == false)
              {
             // Add the source directory to the include list so that we reproduce the semantics of gfortran
@@ -5038,9 +5044,6 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
                OFPCommandLine.push_back(get_sourceFileNameWithPath());
              }
 
-#if 0
-          printf ("exit_after_parser: OFPCommandLine = %s \n",StringUtility::listToString(OFPCommandLine).c_str());
-#endif
 #if 1
        // Some security checking here could be helpful!!!
           int errorCode = systemFromVector (OFPCommandLine);
@@ -5059,12 +5062,10 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
           int openFortranParser_only_argc    = 0;
           char** openFortranParser_only_argv = NULL;
           CommandlineProcessing::generateArgcArgvFromList(OFPCommandLine,openFortranParser_only_argc,openFortranParser_only_argv);
-       // frontendErrorLevel = openFortranParser_main (openFortranParser_only_argc, openFortranParser_only_argv);
           int errorCode = openFortranParser_main (openFortranParser_only_argc, openFortranParser_only_argv);
 
 #endif
           printf ("Skipping all processing after parsing fortran (OFP) ... (get_exit_after_parser() == true) errorCode = %d \n",errorCode);
-       // exit(0);
 
           ROSE_ASSERT(errorCode == 0);
           return errorCode;
@@ -5075,7 +5076,6 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
      vector<string> frontEndCommandLine;
 
      frontEndCommandLine.push_back(argv[0]);
-  // frontEndCommandLine.push_back(classpath);
      frontEndCommandLine.push_back("--class");
      frontEndCommandLine.push_back("fortran.ofp.parser.c.jni.FortranParserActionJNI");
 
@@ -5090,10 +5090,8 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
 #endif
 
      const SgStringList & includeList = get_project()->get_includeDirectorySpecifierList();
-
      bool foundSourceDirectoryExplicitlyListedInIncludePaths = false;
 
-  // printf ("getSourceDirectory() = %s \n",getSourceDirectory().c_str());
      for (size_t i = 0; i < includeList.size(); i++)
         {
           frontEndCommandLine.push_back(includeList[i]);
@@ -5108,9 +5106,6 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
              }
         }
 
-#if 0
-     printf ("foundSourceDirectoryExplicitlyListedInIncludePaths = %s \n",foundSourceDirectoryExplicitlyListedInIncludePaths ? "true" : "false");
-#endif
      if (foundSourceDirectoryExplicitlyListedInIncludePaths == false)
         {
        // Add the source directory to the include list so that we reproduce the semantics of gfortran
@@ -5157,8 +5152,6 @@ SgSourceFile::build_Fortran_AST( vector<string> argv, vector<string> inputComman
      int openFortranParser_argc    = 0;
      char** openFortranParser_argv = NULL;
      CommandlineProcessing::generateArgcArgvFromList(frontEndCommandLine,openFortranParser_argc,openFortranParser_argv);
-
-  // printf ("openFortranParser_argc = %d openFortranParser_argv = %s \n",openFortranParser_argc,CommandlineProcessing::generateStringFromArgList(openFortranParser_argv,false,false).c_str());
 
   // DQ (8/19/2007): Setup the global pointer used to pass the SgFile to which the Open Fortran Parser
   // should attach the AST.  This is a bit ugly, but the parser interface only takes a commandline so it
@@ -6709,7 +6702,7 @@ SgSourceFile::buildAST( vector<string> argv, vector<string> inputCommandLine )
      bool frontend_failed = false;
      if (get_Fortran_only() == true)
         {
-#ifdef ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT
+#if defined(ROSE_BUILD_FORTRAN_LANGUAGE_SUPPORT) || defined(ROSE_EXPERIMENTAL_FLANG_ROSE_CONNECTION)
           frontendErrorLevel = build_Fortran_AST(argv,inputCommandLine);
           frontend_failed = (frontendErrorLevel > 1);  // DXN (01/18/2011): needed to pass make check.  TODO: need fixing up
 #else

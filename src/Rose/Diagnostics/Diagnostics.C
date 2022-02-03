@@ -6,6 +6,7 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <AsmUnparser.h>                                // Rose::BinaryAnalysis::AsmUnparser
 #include <Rose/BinaryAnalysis/BestMapAddress.h>
+#include <Rose/BinaryAnalysis/BinaryLoader.h>
 #include <Rose/BinaryAnalysis/CodeInserter.h>
 #include <Rose/BinaryAnalysis/Concolic/BasicTypes.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Types.h>
@@ -14,7 +15,7 @@
 #include <Rose/BinaryAnalysis/FeasiblePath.h>
 #include <Rose/BinaryAnalysis/FunctionSimilarity.h>
 #include <Rose/BinaryAnalysis/HotPatch.h>
-#include <Rose/BinaryAnalysis/BinaryLoader.h>
+#include <Rose/BinaryAnalysis/LibraryIdentification.h>
 #include <Rose/BinaryAnalysis/NoOperation.h>
 #include <Rose/BinaryAnalysis/Reachability.h>
 #include <Rose/BinaryAnalysis/SmtSolver.h>
@@ -139,6 +140,9 @@ void initialize() {
         BinaryAnalysis::FunctionSimilarity::initDiagnostics();
         BinaryAnalysis::HotPatch::initDiagnostics();
         BinaryAnalysis::InstructionSemantics2::initDiagnostics();
+#ifdef ROSE_ENABLE_LIBRARY_IDENTIFICATION
+        BinaryAnalysis::LibraryIdentification::initDiagnostics();
+#endif
         BinaryAnalysis::ModelChecker::initDiagnostics();
         BinaryAnalysis::NoOperation::initDiagnostics();
         BinaryAnalysis::Partitioner2::initDiagnostics();
