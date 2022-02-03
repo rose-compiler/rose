@@ -3168,7 +3168,9 @@ Grammar::setUpStatements ()
      AdaGenericInstanceDecl.setFunctionPrototype ( "HEADER_ADA_GENERIC_INSTANCE_DECL", "../Grammar/Statement.code" );
      AdaGenericInstanceDecl.setDataPrototype ( "SgName", "name", "=\"\"",
                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AdaGenericInstanceDecl.setDataPrototype ( "SgAdaGenericDecl*", "declaration", "= NULL",
+     // PP (2/2/22) weakend type to SgDeclarationStatement to account for renamed generics
+     // was: AdaGenericInstanceDecl.setDataPrototype ( "SgAdaGenericDecl*", "declaration", "= NULL",
+     AdaGenericInstanceDecl.setDataPrototype ( "SgDeclarationStatement*", "declaration", "= nullptr",
                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AdaGenericInstanceDecl.setDataPrototype ( "SgType*", "return_type", "= NULL",
                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -3227,7 +3229,9 @@ Grammar::setUpStatements ()
      AdaRenamingDecl.setFunctionPrototype  ( "HEADER_ADA_RENAMING_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaRenamingDecl.setDataPrototype ( "SgName", "name", "= \"\"",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AdaRenamingDecl.setDataPrototype ( "SgSymbol*", "renamed", "= NULL",
+     AdaRenamingDecl.setDataPrototype ( "SgSymbol*", "renamed", "= nullptr",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaRenamingDecl.setDataPrototype ( "SgType*", "type", "= nullptr",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AdaDiscriminatedTypeDecl.setFunctionPrototype  ( "HEADER_ADA_DISCRIMINATED_TYPE_DECL_STATEMENT", "../Grammar/Statement.code" );
