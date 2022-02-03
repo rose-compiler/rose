@@ -435,13 +435,13 @@ namespace
     return std::make_pair(std::string("<<"), std::string(">> "));
   }
 
-  struct RenamingSyntaxResult : std::tuple<std::string, std::string, std::string, const SgScopeStatement*>
+  struct RenamingSyntaxResult : std::tuple<std::string, bool, std::string, const SgScopeStatement*>
   {
-      using base = std::tuple<std::string, std::string, std::string, const SgScopeStatement*>;
+      using base = std::tuple<std::string, bool, std::string, const SgScopeStatement*>;
       using base::base;
 
       const std::string&      prefixSyntax() const { return std::get<0>(*this); }
-      const std::string&      infixSyntax()  const { return std::get<1>(*this); }
+      bool                    withType()     const { return std::get<1>(*this); }
       const std::string&      renamedName()  const { return std::get<2>(*this); }
       const SgScopeStatement* body()         const { return std::get<3>(*this); }
 
@@ -1032,7 +1032,13 @@ namespace
 
       prn(renamed.prefixSyntax());
       prn(newName);
-      prn(renamed.infixSyntax());
+
+      if (renamed.withType())
+      {
+        prn(": ");
+        type(n, n.get_type());
+      }
+
       prn(" renames ");
       prnNameQual(n, orig->get_scope());
       prn(renamed.renamedName());
@@ -2086,15 +2092,14 @@ namespace
         bdy = SG_DEREF(pkgbdy->get_definition()).get_spec();
 
       ROSE_ASSERT(bdy);
-      res = ReturnType{"package ", "", n.get_name(), bdy};
+      res = ReturnType{"package ", false /* does not require type */, n.get_name(), bdy};
     }
 
     void handle(const SgVariableSymbol& n)
     {
       SgInitializedName& el = SG_DEREF(n.get_declaration());
 
-      ROSE_ASSERT(SG_DEREF(isSgTypedefType(el.get_type())).get_name() == std::string{"Exception"});
-      res = ReturnType{"", ": exception", el.get_name(), nullptr};
+      res = ReturnType{"", true /* requires type */, el.get_name(), nullptr};
     }
   };
 

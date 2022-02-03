@@ -359,17 +359,19 @@ namespace Ada_ROSE_Translation
   /// creates an Ada renaming declaration
   /// \param name    the new name
   /// \param aliased the aliased declaration
+  /// \param ty      the type, if any of the declaration
   /// \param scope   the scope of the renaming decl
   /// \note the idx is assumed to be 0.
   SgAdaRenamingDecl&
-  mkAdaRenamingDecl(const std::string& name, SgDeclarationStatement& aliased, SgScopeStatement& scope);
+  mkAdaRenamingDecl(const std::string& name, SgDeclarationStatement& aliased, SgType* ty, SgScopeStatement& scope);
 
   /// creates an Ada renaming declaration
   /// \param name    the new name
   /// \param aliased the aliased initialized name
+  /// \param ty      the type, if any of the declaration
   /// \param scope   the scope of the renaming decl
   SgAdaRenamingDecl&
-  mkAdaRenamingDecl(const std::string& name, SgInitializedName& ini, SgScopeStatement& scope);
+  mkAdaRenamingDecl(const std::string& name, SgInitializedName& ini, SgType* ty, SgScopeStatement& scope);
 
   /// creates an Ada package body declaration
   SgAdaPackageBodyDecl&

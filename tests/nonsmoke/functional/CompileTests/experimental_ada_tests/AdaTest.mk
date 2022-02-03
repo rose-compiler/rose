@@ -143,6 +143,8 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   ada_packages.adb                     \
   accept_statement.adb                 \
   accept_statement_task_decl.adb       \
+  access_definition.ads                \
+  all_modes.ads                        \
   array_declare.adb                    \
   array_declare_2.ads                  \
   asm_machine_code.adb                 \
@@ -169,6 +171,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   io.ads                               \
   iterate_range.adb                    \
   nested_package.ads                   \
+  object_renaming_declaration.adb      \
   opaque.ads                           \
   package_renaming_declaration.ads     \
   parent-child.adb                     \
@@ -178,6 +181,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   protected_object.adb                 \
   protected_body_declaration.adb       \
   protected_body_declaration.ads       \
+  protected_type_declaration.ads       \
   representation_clause.ads            \
   representation_clause_2.ads          \
   renamings.adb                        \
@@ -220,8 +224,6 @@ ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=                \
   fixed_point_definition.ads
 
 ROSE_FAILING_ADA_TESTS :=                           \
-  access_definition.ads                             \
-  all_modes.ads                                     \
   aspect_spec.ads                                   \
   deref_test.adb                                    \
   delay_until.adb                                   \
@@ -232,9 +234,7 @@ ROSE_FAILING_ADA_TESTS :=                           \
   generic_package_renaming_declaration.adb          \
   generic_procedure_renaming_declaration.ads        \
   mpiuse.ads                                        \
-  object_renaming_declaration.adb                   \
   procedure_body_stub.adb                           \
-  protected_type_declaration.ads                    \
   requeue_statement_2.adb                           \
   requeue_statements.adb                            \
   tagged_incomplete_type_declaration.ads            \

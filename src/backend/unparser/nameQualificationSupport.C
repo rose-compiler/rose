@@ -818,6 +818,7 @@ namespace
         SgSymbol& orig = SG_DEREF(n.get_renamed());
 
         recordNameQualIfNeeded(n, orig.get_scope());
+        computeNameQualForShared(n, n.get_type());
         addRenamedScopeIfNeeded(n.get_renamed(), n);
       }
 
