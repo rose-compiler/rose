@@ -175,7 +175,7 @@ private:
 
   Flow _icfgFlow;
   InterFlow _interFlow;
-
+  bool _strictChecking=false; // see DOM057 (gnu extension)
 };
 
 } // end of namespace CodeThorn

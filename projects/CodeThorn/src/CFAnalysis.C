@@ -142,11 +142,24 @@ InterFlow::LabelToFunctionMap CFAnalysis::labelToFunctionMap(Flow& flow) {
   return map;
 }
 
+// this function is also used for dead code detection and
+// reporting. Therefore it determines all nodes of a function that are
+// considered to be analyzed, but since they may be unreachable from
+// the entry nodes, this set is computed from the AST. The special
+// case of class declarations (with its variable declarations which
+// are never in the CFG is detected at the beginning and properly
+// skipped (i.e. not included in the result set).
 LabelSet CFAnalysis::functionLabelSet(Label entryLabel, Flow& flow) {
   LabelSet fLabels;
   SgNode* functionDef=getLabeler()->getNode(entryLabel);
   RoseAst ast(functionDef);
-  for(auto node : ast) {
+  for(auto iter=ast.begin();iter!=ast.end();++iter) {
+    auto node=*iter;
+    if(isSgClassDeclaration(node)) {
+      // skip all children of class declaration (contains SgVariableDeclarations which are not in the CFG)
+      iter.skipChildrenOnForward();
+      continue;
+    }
     bool labeledNodeNotInCFG=
       isSgForStatement(node)
       ||isSgWhileStmt(node)
@@ -156,7 +169,14 @@ LabelSet CFAnalysis::functionLabelSet(Label entryLabel, Flow& flow) {
     if(!isSgBasicBlock(node)&&!labeledNodeNotInCFG) {
       Label lab=getLabeler()->getLabel(node);
       if(lab.isValid()) {
-        fLabels.insert(lab);
+        if(flow.contains(lab)) {
+          fLabels.insert(lab);
+        } else {
+          if(_strictChecking) {
+            cerr<<"Error: CFAnalysis::functionLabelSet: label "<<lab.toString()<<" not in CFG: "<<getLabeler()->getNode(lab)->class_name()<<": "<<SgNodeHelper::locationAndSourceCodeToString(getLabeler()->getNode(lab),30,100)<<endl;
+            exit(1);
+          }
+        }
       }
     }
   }

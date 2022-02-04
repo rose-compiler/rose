@@ -19,7 +19,7 @@ for testNumber in $testNumbers; do
     for benchmark in ${benchmarkprefix}_*.C; do
         benchmarkname=$(basename $benchmark)
         printf "Testing %-35s: " $benchmarkname
-        ./codethorn ${OPTIONS} $benchmark > /dev/null
+        ./codethorn ${OPTIONS} $benchmark --solver=18 --abstraction-mode=1 --exploration-mode="topologic-sort" > /dev/null
         if [ ! $? -eq 0 ]
         then
 	    echo "FAIL"
