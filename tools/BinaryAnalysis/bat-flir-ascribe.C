@@ -99,11 +99,13 @@ main(int argc, char *argv[]) {
     using Libraries = Sawyer::Container::Map<std::string /*libhash*/, LibraryCountPair>;
     Libraries libraries;
 
+    Sawyer::ProgressBar<size_t> progress(args.size() * partitioner.nFunctions(), mlog[MARCH]);
     for (const std::string &dbName: args) {
         Flir flir;
         flir.settings(settings.flir);
         flir.connect(dbName);
         for (const P2::Function::Ptr &function: partitioner.functions()) {
+            ++progress;
             for (const Flir::Function::Ptr &found: flir.search(partitioner, function)) {
                 functions.insertMaybeDefault(function->address()).push_back(DbFunctionPair(dbName, found));
                 ++libraries.insertMaybe(found->library()->hash(), LibraryCountPair(found->library(), 0)).second;
