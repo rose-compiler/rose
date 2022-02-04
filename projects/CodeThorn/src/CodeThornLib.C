@@ -779,12 +779,15 @@ namespace CodeThorn {
     void optionallyGenerateVerificationReports(CodeThornOptions& ctOpt,CTAnalysis* analyzer) {
       if(ctOpt.generateReports) {
         if(ctOpt.analysisList().size()>0) {
+          if(ctOpt.status) cout<<"STATUS: generating verification reports: started."<<endl;
           const bool reportDetectedErrorLines=true;
           AnalysisReporting anaRep;
+
           anaRep.generateVerificationReports(ctOpt,analyzer,reportDetectedErrorLines); // also generates verification call graph
           anaRep.generateAnalyzedFunctionsAndFilesReports(ctOpt,analyzer);
 	  anaRep.generateInternalAnalysisReport(ctOpt,analyzer);
 	  anaRep.generateUnusedVariablesReport(ctOpt,analyzer);
+          if(ctOpt.status) cout<<"STATUS: generating verification reports: finished."<<endl;
         } else {
           if(ctOpt.status) cout<<"STATUS: no analysis reports generated (no analysis selected)."<<endl;
         }
