@@ -847,14 +847,14 @@ namespace
     {
       ScopeUpdateGuard scopeGuard{unparser, info, n};
 
-      list(n.get_declarations());
+      list(n.get_declarations(), n.get_hasPrivate());
     }
 
     void handle(SgAdaProtectedSpec& n)
     {
       ScopeUpdateGuard scopeGuard{unparser, info, n};
 
-      list(n.get_declarations());
+      list(n.get_declarations(), n.get_hasPrivate());
     }
 
     void handle(SgAdaTaskBody& n)
@@ -962,6 +962,7 @@ namespace
       else
         {
           // should not reach this
+          ROSE_ABORT();
         }
     }
 
@@ -2010,10 +2011,13 @@ namespace
     prn(STMT_SEP);
   }
 
+
   template <class ForwardIterator>
   void AdaStatementUnparser::list(ForwardIterator aa, ForwardIterator zz, bool hasPrivateSection)
   {
-    const bool endedInPublicMode = std::for_each(aa, zz, *this).publicMode;
+    const bool endedInPublicMode = std::for_each( aa, zz,
+                                                  AdaStatementUnparser{unparser, info, os}
+                                                ).publicMode;
 
     // add private keyword for empty private sections
     if (hasPrivateSection && endedInPublicMode)

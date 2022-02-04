@@ -864,10 +864,6 @@ namespace
   std::pair<SgAdaTaskSpec*, DeferredBodyCompletion>
   getTaskSpec(Element_Struct& elem, AstContext ctx)
   {
-    SgAdaTaskSpec&          sgnode = mkAdaTaskSpec();
-
-    sgnode.set_hasMembers(true);
-
     ADA_ASSERT(elem.Element_Kind == A_Definition);
     logKind("A_Definition");
 
@@ -877,7 +873,11 @@ namespace
     logKind("A_Task_Definition");
 
     Task_Definition_Struct* tasknode = &def.The_Union.The_Task_Definition;
+    SgAdaTaskSpec&          sgnode   = mkAdaTaskSpec();
     SgAdaTaskSpec*          nodePtr  = &sgnode;
+
+    sgnode.set_hasMembers(true);
+    sgnode.set_hasPrivate(tasknode->Is_Private_Present);
 
     auto deferred = [ctx,nodePtr,tasknode]() -> void
                     {
@@ -899,6 +899,7 @@ namespace
 
     /* unused fields: (Task_Definition_Struct)
          bool                  Has_Task;
+         Declaration_List      Corresponding_Type_Operators;
     */
     return std::make_pair(&sgnode, deferred);
   }
@@ -936,7 +937,6 @@ namespace
   std::pair<SgAdaProtectedSpec*, DeferredBodyCompletion>
   getProtectedSpec(Element_Struct& elem, AstContext ctx)
   {
-    SgAdaProtectedSpec&     sgnode = mkAdaProtectedSpec();
 
     ADA_ASSERT(elem.Element_Kind == A_Definition);
     logKind("A_Definition");
@@ -947,7 +947,10 @@ namespace
     logKind("A_Protected_Definition");
 
     Protected_Definition_Struct* protectedNode = &def.The_Union.The_Protected_Definition;
+    SgAdaProtectedSpec&     sgnode = mkAdaProtectedSpec();
     SgAdaProtectedSpec*     nodePtr  = &sgnode;
+
+    sgnode.set_hasPrivate(protectedNode->Is_Private_Present);
 
     auto deferred = [ctx,nodePtr,protectedNode]() -> void
                     {
@@ -967,8 +970,9 @@ namespace
                       }
                     };
 
-    /* unused fields: (Task_Definition_Struct)
-         bool                  Has_Task;
+    /* unused fields: (Protected_Definition_Struct)
+         bool                  Has_Protected;
+         Declaration_List      Corresponding_Type_Operators;
     */
     return std::make_pair(&sgnode, deferred);
   }
