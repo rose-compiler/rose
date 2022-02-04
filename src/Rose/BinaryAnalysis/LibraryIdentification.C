@@ -281,7 +281,7 @@ LibraryIdentification::createTables() {
     db_.run("create table settings ("
             "name text,"
             "value text)");
-    db_.run("insert into settings (name, value) values ('version', '1')");
+    db_.run("insert into settings (name, value) values ('version', '2')");
 
     db_.run("drop table if exists libraries");
     db_.run("create table libraries ("
@@ -302,6 +302,9 @@ LibraryIdentification::createTables() {
             "ctime bigint,"
             "cversion text,"
             "library_hash text not null)");
+
+    db_.run("drop index if exists function_index");
+    db_.run("create unique index function_index on functions (address, library_hash)");
 }
 
 Sawyer::Optional<unsigned>
@@ -354,9 +357,18 @@ LibraryIdentification::upgradeDatabase() {
 
                 SAWYER_MESG(mlog[WARN]) <<"upgrading database from version 0: functions have no address or size\n"
                                         <<"upgraded database may not be entirely useful due to missing information\n";
-                break;
+                // fall through
 
             case 1:
+                // This may fail for a database that was upgraded from version zero because all the function starting addresses
+                // are zero (not available in the version 0 database).
+                SAWYER_MESG(mlog[INFO]) <<"upgrading database from version 1 to version 2\n";
+                db_.run("drop index if exists function_index");
+                db_.run("create unique index function_index on functions (address, library_hash)");
+                db_.run("update settings set value = 2 where name = 'version'");
+                // fall through
+
+            case 2:
                 // current version
                 break;
 
