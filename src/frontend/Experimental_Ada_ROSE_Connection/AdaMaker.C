@@ -1726,13 +1726,20 @@ mkAdaIntegerLiteral(const char* textrep)
   SgValueExp*   res = nullptr;
 
   MakeSmallest
-  || (res = mkIntegralLiteralIfWithinRange<SgShortVal>      (val, textrep))
+  //~ || (res = mkIntegralLiteralIfWithinRange<SgShortVal>      (val, textrep))
   || (res = mkIntegralLiteralIfWithinRange<SgIntVal>        (val, textrep))
   || (res = mkIntegralLiteralIfWithinRange<SgLongIntVal>    (val, textrep))
   || (res = mkIntegralLiteralIfWithinRange<SgLongLongIntVal>(val, textrep))
   ;
 
-  return SG_DEREF(res);
+  if (!res)
+  {
+    logError() << "Unable to represent " << textrep << " within the bounds of long long int"
+               << std::endl;
+    ROSE_ABORT();
+  }
+
+  return *res;
 }
 
 
