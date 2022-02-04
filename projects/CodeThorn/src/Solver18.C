@@ -52,8 +52,7 @@ bool Solver18::isPassThroughLabel(Label lab) {
 
 bool Solver18::isUnreachableLabel(Label lab) {
   // if code is unreachable no state is computed for it. In this case no entry is found for this label (with any callstring).
-  bool res=(_summaryCSStateMapMap.find(lab.getId())==_summaryCSStateMapMap.end())&&lab!=_analyzer->getFlow()->getStartLabel()&&!_analyzer->isPassThroughLabel(lab);
-  return res;
+  return (_summaryCSStateMapMap.find(lab.getId())==_summaryCSStateMapMap.end())&&lab!=_analyzer->getFlow()->getStartLabel()&&!isPassThroughLabel(lab);
 }
 
 bool Solver18::isReachableLabel(Label lab) {
@@ -207,7 +206,7 @@ void Solver18::run() {
     bool bbClonedState=false;
     //cout<<"DEBUG: at: "<<currentEStatePtr->label().toString()<<endl;
 #if 1
-    if(_analyzer->getFlow()->singleSuccessorIsPassThroughLabel(currentEStatePtr->label())) {
+    if(_analyzer->getFlow()->singleSuccessorIsPassThroughLabel(currentEStatePtr->label(),_analyzer->getLabeler())) {
       // transfer to successor
       EStatePtr newEStatePtr=currentEStatePtr->clone();
       currentEStatePtr=newEStatePtr;
