@@ -4669,6 +4669,8 @@ Grammar::setUpStatements ()
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AdaTaskSpec.setDataPrototype ( "SgDeclarationStatementPtrList", "declarations", "",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AdaTaskSpec.setDataPrototype ( "bool", "hasPrivate", "= false",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
 
      AdaTaskBody.setFunctionPrototype ( "HEADER_ADA_TASK_BODY_STATEMENT", "../Grammar/Statement.code" );
@@ -4687,6 +4689,8 @@ Grammar::setUpStatements ()
                                     //~ NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AdaProtectedSpec.setDataPrototype ( "SgDeclarationStatementPtrList", "declarations", "",
                                     NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AdaProtectedSpec.setDataPrototype ( "bool", "hasPrivate", "= false",
+                                    NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AdaProtectedBody.setFunctionPrototype ( "HEADER_ADA_PROTECTED_BODY_STATEMENT", "../Grammar/Statement.code" );
      AdaProtectedBody.setDataPrototype ( "SgAdaProtectedSpec*", "spec", "= NULL",
