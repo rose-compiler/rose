@@ -88,9 +88,15 @@ namespace Ada_ROSE_Translation
 
   /// builds a digits constraint for floating point numbers
   /// \param digits an expression indicating the number of digits
-  /// \param range_opt an optional floating point range specification
+  /// \param constraint_opt an optional floating point constraint
   SgAdaDigitsConstraint&
-  mkAdaDigitsConstraint(SgExpression& digits, SgAdaRangeConstraint* range_opt);
+  mkAdaDigitsConstraint(SgExpression& digits, SgAdaTypeConstraint* constraint_opt);
+
+  /// builds a delta constraint for floating point numbers
+  /// \param digits an expression indicating the number of digits
+  /// \param constraint_opt an optional floating point constraint
+  SgAdaDeltaConstraint&
+  mkAdaDeltaConstraint(SgExpression& digits, SgAdaTypeConstraint* constraint_opt);
 
   /// builds a discriminant constraint from \ref discriminants
   /// \param discriminants a sequence of discriminants.
@@ -171,6 +177,9 @@ namespace Ada_ROSE_Translation
 
   /// creates the most general real type
   SgType& mkRealType();
+
+  /// creates the most general fixed type
+  SgType& mkFixedType();
 
   /// creates a constant type for \ref basety
   SgType& mkConstType(SgType& underType);
@@ -625,6 +634,9 @@ namespace Ada_ROSE_Translation
   SgNewExp&
   mkNewExp(SgType& ty, SgExprListExp* args_opt = nullptr);
 
+  /// Creates an Ada box expression (indicating default value)
+  SgExpression&
+  mkAdaBoxExp();
 
   /// Creates a reference to the exception object \ref exception
   SgExpression&

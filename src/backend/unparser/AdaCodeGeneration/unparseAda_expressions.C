@@ -342,6 +342,10 @@ namespace
       prn(buf.str());
     }
 
+    void handle(const SgVoidVal&)
+    {
+      prn("<>");
+    }
 
     void handle(SgThrowOp& n)
     {

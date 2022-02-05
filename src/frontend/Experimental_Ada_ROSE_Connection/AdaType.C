@@ -541,6 +541,28 @@ namespace
     return res;
   }
 
+  SgAdaTypeConstraint*
+  createDigitsConstraintIfNeeded(Expression_ID digitId, SgAdaTypeConstraint* sub, AstContext ctx)
+  {
+    if (digitId == 0) return sub;
+
+    return &mkAdaDigitsConstraint(getExprID(digitId, ctx), sub);
+  }
+
+  SgAdaTypeConstraint*
+  createDeltaConstraintIfNeeded(Expression_ID deltaId, SgAdaTypeConstraint* sub, AstContext ctx)
+  {
+    if (deltaId == 0) return sub;
+
+    return &mkAdaDeltaConstraint(getExprID(deltaId, ctx), sub);
+  }
+
+  SgType&
+  createSubtypeFromRootIfNeeded(SgType& basetype, SgAdaTypeConstraint* constraint, AstContext)
+  {
+    return constraint ? mkAdaSubtype(basetype, *constraint, true /* from root */) : basetype;
+  }
+
   TypeData
   getTypeFoundation(const std::string& name, Definition_Struct& def, AstContext ctx)
   {
@@ -638,24 +660,37 @@ namespace
         {
           logKind("A_Floating_Point_Definition");
 
-          SgType*               resultType = sb::buildFloatType();
+          SgType&               basetype   = SG_DEREF(sb::buildFloatType()); // \todo use mkRealType() ??
           SgAdaTypeConstraint*  constraint = getConstraintID_opt(typenode.Real_Range_Constraint, ctx);
-          SgAdaRangeConstraint* rngconstr  = isSgAdaRangeConstraint(constraint);
-          ADA_ASSERT(!constraint || rngconstr);
 
-          if (typenode.Digits_Expression)
-          {
-            SgExpression& digits = getExprID(typenode.Digits_Expression, ctx);
+          constraint = createDigitsConstraintIfNeeded(typenode.Digits_Expression, constraint, ctx);
 
-            constraint = &mkAdaDigitsConstraint(digits, rngconstr);
-          }
+          res.sageNode(createSubtypeFromRootIfNeeded(basetype, constraint, ctx));
+          break;
+        }
 
-          if (constraint)
-          {
-            resultType = &mkAdaSubtype(SG_DEREF(resultType), *constraint, true /* from root */);
-          }
+      case An_Ordinary_Fixed_Point_Definition:     // 3.5.9(3)
+        {
+          logKind("An_Ordinary_Fixed_Point_Definition");
 
-          res.sageNode(SG_DEREF(resultType));
+          SgAdaTypeConstraint*  constraint = getConstraintID_opt(typenode.Real_Range_Constraint, ctx);
+
+          constraint = createDeltaConstraintIfNeeded(typenode.Delta_Expression, constraint, ctx);
+
+          res.sageNode(createSubtypeFromRootIfNeeded(mkFixedType(), constraint, ctx));
+          break;
+        }
+
+      case A_Decimal_Fixed_Point_Definition:       // 3.5.9(6)
+        {
+          logKind("A_Decimal_Fixed_Point_Definition");
+
+          SgAdaTypeConstraint*  constraint = getConstraintID_opt(typenode.Real_Range_Constraint, ctx);
+
+          constraint = createDigitsConstraintIfNeeded(typenode.Digits_Expression, constraint, ctx);
+          constraint = createDeltaConstraintIfNeeded(typenode.Delta_Expression, constraint, ctx);
+
+          res.sageNode(createSubtypeFromRootIfNeeded(mkFixedType(), constraint, ctx));
           break;
         }
 
@@ -726,8 +761,6 @@ namespace
 
       case Not_A_Type_Definition: /* break; */     // An unexpected element
       case A_Root_Type_Definition:                 // 3.5.4(14):  3.5.6(3)
-      case An_Ordinary_Fixed_Point_Definition:     // 3.5.9(3)
-      case A_Decimal_Fixed_Point_Definition:       // 3.5.9(6)
       //  //|A2005 start
       case An_Interface_Type_Definition:           // 3.9.4      -> Interface_Kinds
       //  //|A2005 end

@@ -144,11 +144,13 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   accept_statement.adb                 \
   accept_statement_task_decl.adb       \
   access_definition.ads                \
+  access_to_object.ads                 \
   all_modes.ads                        \
   array_declare.adb                    \
   array_declare_2.ads                  \
   asm_machine_code.adb                 \
   based_numbers.ads                    \
+  box.adb                              \
   choice_parameter_specification.adb   \
   complex.ads                          \
   complex.adb                          \
@@ -164,6 +166,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   exception_rename.ads                 \
   formal_procedure_declaration.ads     \
   formal_subprogram_declaration.ads    \
+  fixed_point_definition.ads           \
   generic_function_declaration.ads     \
   generic_package_declaration.ads      \
   generic_package_declaration.adb      \
@@ -220,9 +223,7 @@ ROSE_PASSING_ADA_TESTS :=                           \
 
 
 ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=                \
-  access_to_subprogram.ads                          \
-  access_to_object.ads                              \
-  fixed_point_definition.ads
+  access_to_subprogram.ads                          
 
 ROSE_FAILING_ADA_TESTS :=                           \
   aspect_spec.ads                                   \
@@ -249,8 +250,10 @@ ASIS_PASSING_TESTS :=                               \
   $(ROSE_PASSING_IMCOMPLETE_ADA_TESTS)              \
   $(ROSE_FAILING_ADA_TESTS)
 
+# the failing tests may actually not fail but just take a very long time
 ASIS_FAILING_TESTS :=                               \
   entry_index_specification.adb                     \
+  ifexpr.adb                                        \
   mpi.ads
 
 #defining all Ada test files
