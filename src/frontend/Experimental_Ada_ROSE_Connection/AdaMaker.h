@@ -594,6 +594,10 @@ namespace Ada_ROSE_Translation
   SgDesignatedInitializer&
   mkAdaNamedInitializer(SgExprListExp& components, SgExpression& val);
 
+  /// creates a parent initializer for extension record aggregates
+  SgAdaAncestorInitializer&
+  mkAdaAncestorInitializer(SgExpression& par);
+
   /// creates an expression for an unresolved name (e.g., imported names)
   /// \note unresolved names are an indication for an incomplete AST
   /// \todo remove this function, once translation is complete

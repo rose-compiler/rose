@@ -385,7 +385,7 @@ namespace
     void handle(SgAggregateInitializer& n)
     {
       prn("(");
-      exprlst(SG_DEREF(n.get_initializers()));
+      aggregate(SG_DEREF(n.get_initializers()));
       prn(")");
     }
 
@@ -402,13 +402,18 @@ namespace
       expr(n.get_operand());
     }
 
+    void handle(SgAdaAncestorInitializer& n)
+    {
+      expr(n.get_operand());
+    }
+
     void handle(SgConstructorInitializer& n)
     {
       ROSE_ASSERT(n.get_need_paren());
       // n has get_need_paren set and thus they are printed by expr(...)
 
       //~ prn("(");
-      exprlst(SG_DEREF(n.get_args()));
+      aggregate(SG_DEREF(n.get_args()));
       //~ prn(")");
     }
 
@@ -496,8 +501,15 @@ namespace
       prn(val);
     }
 
+    void exprlst( SgExpressionPtrList::const_iterator aa,
+                  SgExpressionPtrList::const_iterator zz,
+                  std::string sep = ", ",
+                  bool reqScopeQual = true
+                );
+
     void expr(SgExpression* exp, bool requiresScopeQual = true);
     void exprlst(SgExprListExp& exp, std::string sep = ", ", bool requiresScopeQual = true);
+    void aggregate(SgExprListExp& exp);
     void arglst_opt(SgExprListExp& args);
 
     void operator()(SgExpression* exp)
@@ -585,16 +597,42 @@ namespace
   {
     SgExpressionPtrList& lst = exp.get_expressions();
 
-    if (lst.empty()) return;
+    exprlst(lst.begin(), lst.end(), sep, reqScopeQual);
+  }
 
-    expr(lst[0], reqScopeQual);
+  void AdaExprUnparser::exprlst( SgExpressionPtrList::const_iterator aa,
+                                 SgExpressionPtrList::const_iterator zz,
+                                 std::string sep,
+                                 bool reqScopeQual
+                               )
+  {
+    if (aa == zz) return;
 
-    for (size_t i = 1; i < lst.size(); ++i)
+    expr(*aa, reqScopeQual);
+
+    while (++aa != zz)
     {
       prn(sep);
-      expr(lst[i], reqScopeQual);
+      expr(*aa, reqScopeQual);
     }
   }
+
+  void AdaExprUnparser::aggregate(SgExprListExp& n)
+  {
+    si::ada::AggregateInfo info = si::ada::splitAggregate(n);
+
+    if (SgAdaAncestorInitializer* ext = info.ancestor())
+    {
+      expr(ext->get_ancestor());
+      prn(" with ");
+
+      if (info.nullRecord())
+        prn("null record");
+    }
+
+    exprlst(info.begin(), info.end());
+  }
+
 
   void AdaExprUnparser::arglst_opt(SgExprListExp& args)
   {

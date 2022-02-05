@@ -160,6 +160,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   dynamic_array.adb                    \
   entry_call.adb                       \
   entry_declaration.ads                \
+  extension_aggregate.adb              \
   exception_rename.ads                 \
   formal_procedure_declaration.ads     \
   formal_subprogram_declaration.ads    \
@@ -228,7 +229,6 @@ ROSE_FAILING_ADA_TESTS :=                           \
   deref_test.adb                                    \
   delay_until.adb                                   \
   entry_body_declaration.adb                        \
-  extension_aggregate.adb                           \
   function_body_stub.adb                            \
   generic_function_renaming_declaration.ads         \
   generic_package_renaming_declaration.adb          \

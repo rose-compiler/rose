@@ -1362,6 +1362,16 @@ mkAdaNamedInitializer(SgExprListExp& components, SgExpression& val)
 }
 
 
+SgAdaAncestorInitializer&
+mkAdaAncestorInitializer(SgExpression& par)
+{
+  SgAdaAncestorInitializer& sgnode = mkLocatedNode<SgAdaAncestorInitializer>(&par);
+
+  par.set_parent(&sgnode);
+  return sgnode;
+}
+
+
 SgExpression&
 mkUnresolvedName(const std::string& n, SgScopeStatement& scope)
 {
