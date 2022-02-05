@@ -140,15 +140,31 @@ mkAdaRangeConstraint(SgExpression& range)
   return sgnode;
 }
 
-SgAdaDigitsConstraint&
-mkAdaDigitsConstraint(SgExpression& digits, SgAdaRangeConstraint* range_opt)
+namespace
 {
-  SgAdaDigitsConstraint& sgnode = mkLocatedNode<SgAdaDigitsConstraint>(&digits, range_opt);
+  template <class SageFixedPointConstraint>
+  SageFixedPointConstraint&
+  mkFixedPointConstraint(SgExpression& exp, SgAdaTypeConstraint* sub_opt)
+  {
+    SageFixedPointConstraint& sgnode = mkLocatedNode<SageFixedPointConstraint>(&exp, sub_opt);
 
-  digits.set_parent(&sgnode);
-  if (range_opt) range_opt->set_parent(&sgnode);
+    exp.set_parent(&sgnode);
+    if (sub_opt) sub_opt->set_parent(&sgnode);
 
-  return sgnode;
+    return sgnode;
+  }
+}
+
+SgAdaDigitsConstraint&
+mkAdaDigitsConstraint(SgExpression& digits, SgAdaTypeConstraint* sub_opt)
+{
+  return mkFixedPointConstraint<SgAdaDigitsConstraint>(digits, sub_opt);
+}
+
+SgAdaDeltaConstraint&
+mkAdaDeltaConstraint(SgExpression& delta, SgAdaTypeConstraint* sub_opt)
+{
+  return mkFixedPointConstraint<SgAdaDeltaConstraint>(delta, sub_opt);
 }
 
 
@@ -317,6 +333,11 @@ SgType& mkIntegralType()
 SgType& mkRealType()
 {
   return SG_DEREF(sb::buildLongDoubleType());
+}
+
+SgType& mkFixedType()
+{
+  return SG_DEREF(sb::buildFixedType(nullptr, nullptr));
 }
 
 SgType& mkConstType(SgType& underType)
@@ -1425,6 +1446,13 @@ mkNewExp(SgType& ty, SgExprListExp* args_opt)
 
   return mkLocatedNode<SgNewExp>(&ty, nullptr /*placement*/, init, nullptr, 0 /* no global */, nullptr);
 }
+
+SgExpression&
+mkAdaBoxExp()
+{
+  return SG_DEREF(sb::buildVoidVal());
+}
+
 
 
 SgAdaOthersExp&

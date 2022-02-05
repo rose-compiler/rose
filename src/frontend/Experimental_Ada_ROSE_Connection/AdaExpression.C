@@ -1212,10 +1212,13 @@ namespace
           break;
         }
 
-
       case A_Box_Expression:                          // Ada 2005 4.3.1(4): 4.3.3(3:6)
-      case A_Raise_Expression:                        // 4.4 Ada 2012 (AI12-0022-1)
+        {
+          res = &mkAdaBoxExp();
+          break;
+        }
 
+      case A_Raise_Expression:                        // 4.4 Ada 2012 (AI12-0022-1)
       case A_Case_Expression:                         // Ada 2012
       case An_If_Expression:                          // Ada 2012
       case A_For_All_Quantified_Expression:           // Ada 2012
