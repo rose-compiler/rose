@@ -456,14 +456,28 @@ namespace Ada_ROSE_Translation
   ///                 the function parameter scope have been constructed. The task of complete
   ///                 is to fill these objects with function parameters.
   SgFunctionDeclaration&
-  mkProcedure( const std::string& name,
-               SgScopeStatement& scope,
-               SgType& retty,
-               std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
-             );
+  mkProcedureDecl( const std::string& name,
+                   SgScopeStatement& scope,
+                   SgType& retty,
+                   std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
+                 );
+
+  /// creates a secondary function/procedure declaration
+  /// \param ndef     the first nondefining declaration
+  /// \param scope    the enclosing scope
+  /// \param retty    return type of a function (SgVoidType for procedures)
+  /// \param complete a functor that is called after the function parameter list and
+  ///                 the function parameter scope have been constructed. The task of complete
+  ///                 is to fill these objects with function parameters.
+  SgFunctionDeclaration&
+  mkProcedureDecl( SgFunctionDeclaration& ndef,
+                   SgScopeStatement& scope,
+                   SgType& retty,
+                   std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
+                 );
 
   /// creates a function/procedure declaration
-  /// \param ndef     the non-defining declaration
+  /// \param ndef     the first nondefining declaration
   /// \param scope    the enclosing scope
   /// \param retty    return type of a function (SgVoidType for procedures)
   /// \param complete a functor that is called after the function parameter list and
