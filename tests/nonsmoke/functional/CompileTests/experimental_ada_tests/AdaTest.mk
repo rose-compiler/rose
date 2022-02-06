@@ -166,6 +166,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   exception_rename.ads                 \
   formal_procedure_declaration.ads     \
   formal_subprogram_declaration.ads    \
+  function_body_stub.adb               \
   fixed_point_definition.ads           \
   generic_function_declaration.ads     \
   generic_package_declaration.ads      \
@@ -181,6 +182,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   parent-child.adb                     \
   pkgrename.ads                        \
   private_derived_formal_type.adb      \
+  procedure_body_stub.adb              \
   procedure_renaming.adb               \
   protected_object.adb                 \
   protected_body_declaration.adb       \
@@ -198,6 +200,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   simple_hello_world_with_use.adb      \
   single_protected_declaration.ads     \
   std_ascii_user.adb                   \
+  tagged_incomplete_type_declaration.ads \
   taskarray.adb                        \
   task_type_declaration.ads            \
   task_with_abort.adb                  \
@@ -230,15 +233,12 @@ ROSE_FAILING_ADA_TESTS :=                           \
   deref_test.adb                                    \
   delay_until.adb                                   \
   entry_body_declaration.adb                        \
-  function_body_stub.adb                            \
   generic_function_renaming_declaration.ads         \
   generic_package_renaming_declaration.adb          \
   generic_procedure_renaming_declaration.ads        \
   mpiuse.ads                                        \
-  procedure_body_stub.adb                           \
   requeue_statement_2.adb                           \
   requeue_statements.adb                            \
-  tagged_incomplete_type_declaration.ads            \
   test.adb                                          \
   test_unit.adb                                     \
   unit_2.adb                                        \

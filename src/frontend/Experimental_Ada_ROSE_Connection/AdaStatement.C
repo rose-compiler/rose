@@ -2634,6 +2634,7 @@ namespace
   }
 
   /// chooses whether an additional non-defining declaration is required
+
   SgFunctionDeclaration&
   createFunDef( SgFunctionDeclaration* nondef,
                 const std::string& name,
@@ -2644,6 +2645,19 @@ namespace
   {
     return nondef ? mkProcedureDef(*nondef, scope, rettype, std::move(complete))
                   : mkProcedureDef(name,    scope, rettype, std::move(complete));
+  }
+
+
+  SgFunctionDeclaration&
+  createFunDcl( SgFunctionDeclaration* nondef,
+                const std::string& name,
+                SgScopeStatement& scope,
+                SgType& rettype,
+                std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
+              )
+  {
+    return nondef ? mkProcedureDecl(*nondef, scope, rettype, std::move(complete))
+                  : mkProcedureDecl(name,    scope, rettype, std::move(complete));
   }
 
   void completeDiscriminatedDecl( SgAdaDiscriminatedTypeDecl& sgnode,
@@ -2818,6 +2832,26 @@ namespace
     init.set_scope(&ctx.scope());
     return std::make_pair(&init, nullptr);
   }
+
+  // returns a function declaration statement for a declaration statement
+  //   checks if the function is an Ada generic function, where the declaration
+  //   is hidden under an SgAdaGenericDecl.
+  SgFunctionDeclaration* getFunctionDeclaration(SgDeclarationStatement* dcl)
+  {
+    // PP: 2/6/22 refactored function out of handleDeclaration
+    if (SgFunctionDeclaration* fndcl  = isSgFunctionDeclaration(dcl))
+      return fndcl;
+
+    // MS: 7/26/2021 This point may be reached for both regular and
+    // generic subprograms.  If it is a generic subprogram that was
+    // declared, then we'll need to get the declaration out of the
+    // SgAdaGenericDecl node.
+    if (SgAdaGenericDecl* generic = isSgAdaGenericDecl(dcl))
+      return isSgFunctionDeclaration(generic->get_declaration());
+
+    return nullptr;
+  }
+
 
 } // anonymous
 
@@ -3297,8 +3331,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         // PP (10/20/21): changed scoping for packages and procedures/functions
         //                the generic proc/func is declared in the logical parent scope
-        // was: SgFunctionDeclaration&  fundec     = mkProcedure(adaname.fullName, gen_defn, rettype, ParameterCompletion{params, ctx});
-        SgFunctionDeclaration&  fundec     = mkProcedure(adaname.ident, logicalScope, rettype, ParameterCompletion{params, ctx});
+        // was: SgFunctionDeclaration&  fundec     = mkProcedureDecl(adaname.fullName, gen_defn, rettype, ParameterCompletion{params, ctx});
+        SgFunctionDeclaration&  fundec     = mkProcedureDecl(adaname.ident, logicalScope, rettype, ParameterCompletion{params, ctx});
 
         sgnode.set_declaration(&fundec);
         fundec.set_parent(&gen_defn);
@@ -3351,7 +3385,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                                                 : SG_DEREF(sb::buildVoidType());
 
         SgScopeStatement&      logicalScope = adaname.parent_scope();
-        SgFunctionDeclaration& sgnode  = mkProcedure(adaname.ident, logicalScope, rettype, ParameterCompletion{params, ctx});
+        SgFunctionDeclaration& sgnode  = mkProcedureDecl(adaname.ident, logicalScope, rettype, ParameterCompletion{params, ctx});
 
         setOverride(sgnode.get_declarationModifier(), decl.Is_Overriding_Declaration);
         recordNode(asisDecls(), elem.ID, sgnode);
@@ -3402,17 +3436,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         ADA_ASSERT(adaname.fullName == adaname.ident);
         SgDeclarationStatement* ndef    = findFirst(asisDecls(), decl.Corresponding_Declaration);
-
-        // MS: 7/26/2021 This point may be reached for both regular and
-        // generic subprograms.  If it is a generic subprogram that was
-        // declared, then we'll need to get the declaration out of the
-        // SgAdaGenericDecl node.
-        SgFunctionDeclaration*  nondef  = isSgFunctionDeclaration(ndef);
-        if (!nondef) {
-          if (SgAdaGenericDecl* generic = isSgAdaGenericDecl(ndef)) {
-            nondef = isSgFunctionDeclaration(generic->get_declaration());
-          }
-        }
+        SgFunctionDeclaration*  nondef  = getFunctionDeclaration(ndef);
 
         ADA_ASSERT(nondef || !ndef);
 
@@ -3429,7 +3453,10 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         if (decl.Declaration_Kind == A_Null_Procedure_Declaration)
         {
-          // \todo add pragma association if any
+          // PP 2/6/22: Since a null procedure does not have any body,
+          //            there should be no pragmas to process.
+          //            Pragmas on the declaration are processed by
+          //            the parent scope.
           break;
         }
 
@@ -3477,6 +3504,52 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         */
         break;
       }
+
+    case A_Function_Body_Stub:                     // 10.1.3(3)
+    case A_Procedure_Body_Stub:                    // 10.1.3(3)
+      {
+        const bool isFunc  = decl.Declaration_Kind == A_Function_Body_Stub;
+
+        logKind(isFunc ? "A_Function_Body_Stub" : "A_Procedure_Body_Stub");
+
+        SgScopeStatement&       outer   = ctx.scope();
+        NameData                adaname = singleName(decl, ctx);
+        ElemIdRange             params  = idRange(decl.Parameter_Profile);
+        SgType&                 rettype = isFunc ? getDeclTypeID(decl.Result_Profile, ctx)
+                                                 : SG_DEREF(sb::buildVoidType());
+
+        ADA_ASSERT(adaname.fullName == adaname.ident);
+        SgDeclarationStatement* ndef    = findFirst(asisDecls(), decl.Corresponding_Declaration);
+        SgFunctionDeclaration*  nondef  = getFunctionDeclaration(ndef);
+
+        ADA_ASSERT(nondef || !ndef);
+
+        SgScopeStatement&       logicalScope = adaname.parent_scope();
+        SgFunctionDeclaration&  sgnode  = createFunDcl(nondef, adaname.ident, logicalScope, rettype, ParameterCompletion{params, ctx});
+
+        sgnode.get_declarationModifier().setAdaSeparate();
+
+        recordNode(asisDecls(), elem.ID, sgnode);
+        recordNode(asisDecls(), adaname.id(), sgnode);
+        privatize(sgnode, isPrivate);
+        attachSourceLocation(sgnode, elem, ctx);
+        outer.append_statement(&sgnode);
+        ADA_ASSERT(sgnode.get_parent() == &outer);
+
+        /* unhandled field
+           bool                           Is_Overriding_Declaration;
+           bool                           Is_Not_Overriding_Declaration;
+           Declaration_ID                 Corresponding_Subunit
+           bool                           Is_Dispatching_Operation
+
+         +func:
+           bool                           Is_Not_Null_Return
+
+           break;
+        */
+        break;
+      }
+
 
     case An_Incomplete_Type_Declaration:           // 3.2.1(2):3.10(2)
     case A_Tagged_Incomplete_Type_Declaration:     //  3.10.1(2)
@@ -3644,7 +3717,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgScopeStatement&     logicalScope = adaname.parent_scope();
 
         // create a function declaration for formal function/procedure declaration.
-        SgFunctionDeclaration& sgnode = mkProcedure(adaname.ident, logicalScope, rettype, ParameterCompletion{range, ctx});
+        SgFunctionDeclaration& sgnode = mkProcedureDecl(adaname.ident, logicalScope, rettype, ParameterCompletion{range, ctx});
         sgnode.set_ada_formal_subprogram_decl(true);
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
@@ -4304,8 +4377,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case A_Generic_Function_Renaming_Declaration:  // 8.5.5(2)
     case An_Entry_Body_Declaration:                // 9.5.2(5)
     case An_Entry_Index_Specification:             // 9.5.2(2)
-    case A_Procedure_Body_Stub:                    // 10.1.3(3)
-    case A_Function_Body_Stub:                     // 10.1.3(3)
     case A_Package_Body_Stub:                      // 10.1.3(4)
     case A_Task_Body_Stub:                         // 10.1.3(5)
     case A_Protected_Body_Stub:                    // 10.1.3(6)

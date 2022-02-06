@@ -1992,6 +1992,9 @@ namespace
 
     if (!def)
     {
+      if (n.get_declarationModifier().isAdaSeparate())
+        prn(" is separate");
+
       prn(STMT_SEP);
       return;
     }

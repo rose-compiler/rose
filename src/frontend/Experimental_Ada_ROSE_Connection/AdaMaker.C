@@ -47,8 +47,8 @@ namespace
   }
 
   /// \private
-  /// sets the symbol defining decl
-  void linkDecls(SgFunctionSymbol& funcsy, SgFunctionDeclaration& func)
+  /// links a first nondefining declaration to a definition and vice versa
+  void linkDeclDef(SgFunctionSymbol& funcsy, SgFunctionDeclaration& func)
   {
     SgFunctionDeclaration& sdcl = SG_DEREF(funcsy.get_declaration());
 
@@ -56,6 +56,15 @@ namespace
     ADA_ASSERT(&sdcl != &func);
 
     sdcl.set_definingDeclaration(&func);
+    func.set_firstNondefiningDeclaration(&sdcl);
+  }
+
+  /// \private
+  /// links a secondary nondefining declaration to a first nondefining declaration
+  void linkDeclDecl(SgFunctionSymbol& funcsy, SgFunctionDeclaration& func)
+  {
+    SgFunctionDeclaration& sdcl = SG_DEREF(funcsy.get_declaration());
+    ADA_ASSERT(&sdcl != &func);
     func.set_firstNondefiningDeclaration(&sdcl);
   }
 }
@@ -949,7 +958,6 @@ namespace
   /// \private
   /// helps to create a procedure definition as declaration
   SgScopeStatement&
-  //~ mkProcDecl(SgFunctionDeclaration& dcl)
   mkProcDecl()
   {
     SgFunctionParameterScope& sgnode = mkScopeStmt<SgFunctionParameterScope>(&mkFileInfo());
@@ -986,13 +994,32 @@ namespace
 }
 
 SgFunctionDeclaration&
-mkProcedure( const std::string& nm,
-             SgScopeStatement& scope,
-             SgType& retty,
-             std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
-           )
+mkProcedureDecl( const std::string& nm,
+                 SgScopeStatement& scope,
+                 SgType& retty,
+                 std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
+               )
 {
   return mkProcedureInternal(nm, scope, retty, std::move(complete), mkProcDecl);
+}
+
+SgFunctionDeclaration&
+mkProcedureDecl( SgFunctionDeclaration& ndef,
+                 SgScopeStatement& scope,
+                 SgType& retty,
+                 std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
+               )
+{
+  SgName                 nm     = ndef.get_name();
+  SgFunctionDeclaration& sgnode = mkProcedureInternal(nm, scope, retty, std::move(complete), mkProcDecl);
+  SgSymbol*              baseSy = ndef.search_for_symbol_from_symbol_table();
+  SgFunctionSymbol&      funcSy = SG_DEREF(isSgFunctionSymbol(baseSy));
+
+  linkDeclDecl(funcSy, sgnode);
+
+  ADA_ASSERT(sgnode.get_definingDeclaration() == nullptr);
+  ADA_ASSERT(sgnode.isForward());
+  return sgnode;
 }
 
 SgFunctionDeclaration&
@@ -1007,7 +1034,7 @@ mkProcedureDef( SgFunctionDeclaration& ndef,
   SgSymbol*              baseSy = ndef.search_for_symbol_from_symbol_table();
   SgFunctionSymbol&      funcSy = SG_DEREF(isSgFunctionSymbol(baseSy));
 
-  linkDecls(funcSy, sgnode);
+  linkDeclDef(funcSy, sgnode);
   sgnode.set_definingDeclaration(&sgnode);
   sgnode.unsetForward();
 
@@ -1021,7 +1048,7 @@ mkProcedureDef( const std::string& nm,
                 std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
               )
 {
-  SgFunctionDeclaration& ndef = mkProcedure(nm, scope, retty, complete);
+  SgFunctionDeclaration& ndef   = mkProcedureDecl(nm, scope, retty, complete);
   SgFunctionDeclaration& sgnode = mkProcedureDef(ndef, scope, retty, std::move(complete));
 
   return sgnode;
