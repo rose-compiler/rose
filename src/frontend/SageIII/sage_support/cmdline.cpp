@@ -8986,7 +8986,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
      printf ("In buildCompilerCommandLineOptions: test 1.1: argcArgvList       = \n%s\n",CommandlineProcessing::generateStringFromArgList(argcArgvList,false,false).c_str());
 #endif
 
-     bool  objectNameSpecified = false;
+     bool objectNameSpecified = false;
      for (Rose_STL_Container<string>::iterator i = argcArgvList.begin(); i != argcArgvList.end(); i++)
         {
           if (i->substr(0,2) == "-o")
@@ -9004,7 +9004,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
                      Rose_STL_Container<string>::iterator j = i;
                      j++;
                      ROSE_ASSERT(j != argcArgvList.end());
-#if DEBUG_COMPILER_COMMAND_LINE
+#if DEBUG_COMPILER_COMMAND_LINE || 1
                      printf ("In SgFile::buildCompilerCommandLineOptions: Found object file as specified = %s \n",(*j).c_str());
 #endif
                      set_objectFileNameWithPath(*j);
@@ -9015,9 +9015,10 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
              }
         }
 
-#if DEBUG_COMPILER_COMMAND_LINE
+#if DEBUG_COMPILER_COMMAND_LINE || 0
+     printf ("objectNameSpecified                   = %s \n",objectNameSpecified ? "true" : "false");
      printf ("get_objectFileNameWithPath().length() = %zu \n",get_objectFileNameWithPath().length());
-     printf ("objectNameSpecified = %s \n",objectNameSpecified ? "true" : "false");
+     printf ("get_objectFileNameWithPath()          = %s \n",get_objectFileNameWithPath().c_str());
 #endif
 
 #if DEBUG_COMPILER_COMMAND_LINE || 0
@@ -9109,6 +9110,10 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
           printf ("In buildCompilerCommandLineOptions: test 1.3: argcArgvList       = \n%s\n",CommandlineProcessing::generateStringFromArgList(argcArgvList,false,false).c_str());
 #endif
         }
+       else
+        {
+       // DQ (1/26/2022): This case is for when the object file was not specified explicitly or when the get_objectFileNameWithPath() was not set to a valid string.
+        }
 
 #if DEBUG_COMPILER_COMMAND_LINE || 0
      printf ("In buildCompilerCommandLineOptions: After processing executable specification: argcArgvList.size() = %" PRIuPTR " argcArgvList = %s \n",argcArgvList.size(),StringUtility::listToString(argcArgvList).c_str());
@@ -9145,7 +9150,7 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #endif
 
 #if DEBUG_COMPILER_COMMAND_LINE
-     printf ("In buildCompilerCommandLineOptions: objectNameSpecified = %s \n",objectNameSpecified ? "true" : "false");
+     printf ("In buildCompilerCommandLineOptions: test 1.35: objectNameSpecified = %s \n",objectNameSpecified ? "true" : "false");
 #endif
 
      Rose_STL_Container<string> tempArgcArgv;
@@ -9440,9 +9445,26 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 
      if ( get_compileOnly() == true )
         {
+       // DQ (1/26/2022): Use the name from using set_objectFileNameWithoutPath(), if it is a valid (non-empty) string.
+       // std::string objectFileName = generateOutputFileName();
+#if 1
           std::string objectFileName = generateOutputFileName();
+#else
+          std::string objectFileName = get_objectFileNameWithoutPath();
+          if (objectFileName.length() == 0)
+             {
+               objectFileName = generateOutputFileName();
+#if 1
+               printf (" --- get_objectFileNameWithoutPath() returned empty string, using generateOutputFileName(): objectFileName = %s \n",objectFileName.c_str());
+#endif
+             }
+            else
+             {
+               printf (" --- using value from get_objectFileNameWithoutPath(): objectFileName = %s \n",objectFileName.c_str());
+             }
+#endif
 #if DEBUG_COMPILER_COMMAND_LINE
-          printf ("In buildCompilerCommandLineOptions: objectNameSpecified = %s objectFileName = %s \n",objectNameSpecified ? "true" : "false",objectFileName.c_str());
+          printf ("In buildCompilerCommandLineOptions: test 5.5: objectNameSpecified = %s objectFileName = %s \n",objectNameSpecified ? "true" : "false",objectFileName.c_str());
 #endif
        // DQ (4/2/2011): Java does not have -o as an accepted option, though the "-d <dir>" can be used to specify where class files are put.
        // Currently we explicitly output "-d ." so that generated class files will be put into the current directory (build tree), but this
@@ -9456,7 +9478,8 @@ SgFile::buildCompilerCommandLineOptions ( vector<string> & argv, int fileNameInd
 #if 0
                      printf ("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& \n");
                      printf ("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& \n");
-                     printf ("adding -o object name: objectFileName = %s \n",objectFileName.c_str());
+                     printf ("adding -o object name: objectFileName   = %s \n",objectFileName.c_str());
+                     printf (" --------------------- currentDirectory = %s \n",currentDirectory.c_str());
                      printf ("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& \n");
                      printf ("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&& \n");
 #endif

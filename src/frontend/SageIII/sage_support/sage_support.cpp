@@ -6659,7 +6659,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
 
   // TOO1 (05/14/2013): Handling for -rose:keep_going
   // Replace the unparsed file with the original input file.
-     if (use_original_input_file)
+     if (use_original_input_file == true)
         {
        // ROSE_ASSERT(get_skip_unparse() == true);
           string outputFilename = get_sourceFileNameWithPath();
@@ -6912,6 +6912,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
              }
 
 #if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS || 0
+       // DQ (2/6/2022): Set to "1" to output the backend compiler command line.
           printf ("In SgFile::compileOutput(): Calling systemFromVector(): compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
 #endif
 

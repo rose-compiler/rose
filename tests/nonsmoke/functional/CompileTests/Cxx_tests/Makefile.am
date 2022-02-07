@@ -2995,10 +2995,11 @@ performance_timing:
 if ROSE_WITH_LIBHARU
 # DQ (3/17/2017): Added PDF test for ROSE evaluation (forces testing of parts of ROSE for lcov):
 test_pdf_generation: $(TEST_PDF_TRANSLATOR)
+# DQ (2/4/2022): Commented out to run smaller tests first.
 	../../testPDFGeneration --edg:no_warnings -w -rose:verbose 0 -rose:skip_unparse_asm_commands -rose:skipAstConsistancyTests -rose:skip_commentsAndDirectives -rose:skip_unparse -I$(srcdir) -c $(srcdir)/test2004_77.C
 	ls -l *.pdf
 	@echo "Removing the generated PDF file because it is up to 150Meg and we want to save disk space."
-	rm *.pdf
+	rm -f *.pdf
 else
 test_pdf_generation:
 	@echo "libharu support is not enabled"

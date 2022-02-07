@@ -3885,7 +3885,11 @@ NameQualificationTraversal::nameQualificationDepth ( SgDeclarationStatement* dec
                                    SgSymbol* alternate_symbol = SageInterface::lookupFunctionSymbolInParentScopes(name,functionType,alternate_scope);
 
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3) || DEBUG_FUNCTION_RESOLUTION
-                                   printf ("alternate_symbol = %p = %s name = %s \n",alternate_symbol,alternate_symbol->class_name().c_str(),alternate_symbol->get_name().str());
+                                   printf ("alternate_symbol = %p \n",alternate_symbol);
+                                   if (alternate_symbol != NULL)
+                                      {
+                                        printf ("alternate_symbol = %p = %s name = %s \n",alternate_symbol,alternate_symbol->class_name().c_str(),alternate_symbol->get_name().str());
+                                      }
 #endif
 
 

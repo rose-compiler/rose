@@ -3000,7 +3000,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
           return;
         }
 
-#if 1
+#if 0
   // DQ (12/5/2019): Use this here to ouly generate output for statements that weill be unparsed.
   // DQ (10/30/2013): Debugging support for file info data for each IR node (added comment only)
      curprint ( string("\n/* Unparse statement (" ) + StringUtility::numberToString(stmt)
@@ -3173,7 +3173,7 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
         }
        else
         {
-#if DEBUG_USING_CURPRINT || 1
+#if DEBUG_USING_CURPRINT || 0
           curprint ("/* In unparseStatement(): (unparseAttribute != NULL && unparseAttribute->replacementStringExists() == true) == false */");
 #endif
        // Use a static varible to track the previous statement.
@@ -4604,8 +4604,49 @@ UnparseLanguageIndependentConstructs::unparseStatement(SgStatement* stmt, SgUnpa
        // include_file->set_first_source_sequence_number(first_seq_number);
        // include_file->set_last_source_sequence_number(last_seq_number);
 
-
 #if DEBUG_UNPARSE_STATEMENT
+       // DQ (4/16/2021): Moved outside of this true branch (above) so that it can be used after the executaion of the
+       // true and false branches (to support when to unparse and suppress the trailing whitespace of the global scope).
+          SgStatement* firstStatement = NULL;
+          SgStatement* lastStatement  = NULL;
+          if (sourceFile->get_isHeaderFile() == true)
+             {
+               SgIncludeFile* include_file = sourceFile->get_associated_include_file();
+               ROSE_ASSERT(include_file != NULL);
+#if 0
+               printf ("include_file->get_first_source_sequence_number() = %u \n",include_file->get_first_source_sequence_number());
+               printf ("include_file->get_last_source_sequence_number()  = %u \n",include_file->get_last_source_sequence_number());
+#endif
+               firstStatement = include_file->get_firstStatement();
+               lastStatement  = include_file->get_lastStatement();
+
+            // ROSE_ASSERT(firstStatement != NULL);
+            // ROSE_ASSERT(lastStatement  != NULL);
+
+               if (firstStatement != NULL && lastStatement != NULL)
+                  {
+#if 0
+                    Sg_File_Info* first_file_info = firstStatement->get_file_info();
+                    ROSE_ASSERT(first_file_info != NULL);
+                    printf (" --- firstStatement = %p = %s \n",firstStatement,firstStatement->class_name().c_str());
+                    printf (" --- firstStatement = %p: (physical) line = %d column = %d filename = %s \n",firstStatement,
+                         first_file_info->get_physical_line(),first_file_info->get_col(),first_file_info->get_physical_filename().c_str());
+
+                    Sg_File_Info* last_file_info = lastStatement->get_file_info();
+                    ROSE_ASSERT(last_file_info != NULL);
+                    printf (" --- lastStatement = %p = %s \n",lastStatement,lastStatement->class_name().c_str());
+                    printf (" --- lastStatement = %p: (physical) line = %d column = %d filename = %s \n",lastStatement,
+                         last_file_info->get_physical_line(),last_file_info->get_col(),last_file_info->get_physical_filename().c_str());
+#endif
+                  }
+                 else
+                  {
+                    ROSE_ASSERT(firstStatement == NULL);
+                    ROSE_ASSERT(lastStatement  == NULL);
+                  }
+             }
+#endif
+#if 0
           if (lastStatement != NULL)
              {
                printf ("stmt = %p = %s lastStatement = %p = %s \n",stmt,stmt->class_name().c_str(),lastStatement,lastStatement->class_name().c_str());

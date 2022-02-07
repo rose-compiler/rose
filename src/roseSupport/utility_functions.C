@@ -930,13 +930,13 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
                printf ("Calling project->unparse() \n");
 
 #if 0
-          printf ("Calling project->unparse() \n");
+          printf ("In backend(): Calling project->unparse() \n");
 #endif
 
           project->unparse(unparseFormatHelp,unparseDelegate);
 
 #if 0
-          printf ("DONE: Calling project->unparse() \n");
+          printf ("DONE: In backend(): Calling project->unparse() \n");
 #endif
 
           if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
@@ -944,9 +944,9 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
         }
 
 #if 0
-     printf ("Inside of backend(SgProject*): SgProject::get_verbose()       = %d \n",SgProject::get_verbose());
-     printf ("Inside of backend(SgProject*): project->numberOfFiles()       = %d \n",project->numberOfFiles());
-     printf ("Inside of backend(SgProject*): project->numberOfDirectories() = %d \n",project->numberOfDirectories());
+     printf ("In backend(SgProject*): SgProject::get_verbose()       = %d \n",SgProject::get_verbose());
+     printf ("In backend(SgProject*): project->numberOfFiles()       = %d \n",project->numberOfFiles());
+     printf ("In backend(SgProject*): project->numberOfDirectories() = %d \n",project->numberOfDirectories());
 #endif
 
   // DQ (1/25/2010): We have to now test for both numberOfFiles() and numberOfDirectories(),
@@ -959,8 +959,13 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
        // if templates exist).
           if ( SgProject::get_verbose() >= BACKEND_VERBOSE_LEVEL )
                printf ("Calling project->compileOutput() \n");
-
+#if 0
+          printf ("In backend(SgProject*): calling project->compileOutput() \n");
+#endif
           finalCombinedExitStatus = project->compileOutput();
+#if 0
+          printf ("DONE: In backend(SgProject*): calling project->compileOutput() \n");
+#endif
         }
        else
   // if (project->get_compileOnly() == false)

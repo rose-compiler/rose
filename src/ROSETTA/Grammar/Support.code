@@ -17013,6 +17013,52 @@ SgFile::generateOutputFileName() const
           objectFileName = baseFileNameWithoutSuffix + ".o";
         }
 
+  // DQ (1/26/2022): Need to enforce consistancy of the output object file path and the output object file.
+     if (get_objectFileNameWithoutPath() != "")
+        {
+          if (get_objectFileNameWithPath() == "")
+             {
+               printf ("NOTE: both objectFileNameWithPath and objectFileNameWithoutPath must be set consistantly \n");
+               printf (" --- get_objectFileNameWithoutPath() = %s \n",get_objectFileNameWithoutPath().c_str());
+               printf (" --- get_objectFileNameWithPath()    = %s \n",get_objectFileNameWithPath().c_str());
+#if 0
+               set_objectFileNameWithPath(get_objectFileNameWithoutPath());
+               printf (" --- after reset: get_objectFileNameWithPath() = %s \n",get_objectFileNameWithPath().c_str());
+#endif
+            // ROSE_ASSERT(false);
+             }
+        }
+       else
+        {
+          if (get_objectFileNameWithPath() != "")
+             {
+               printf ("NOTE: both objectFileNameWithPath and objectFileNameWithoutPath must be set consistantly \n");
+               printf (" --- get_objectFileNameWithoutPath() = %s \n",get_objectFileNameWithoutPath().c_str());
+               printf (" --- get_objectFileNameWithPath()    = %s \n",get_objectFileNameWithPath().c_str());
+#if 0
+               set_objectFileNameWithoutPath(get_objectFileNameWithPath());
+               printf (" --- after reset: get_objectFileNameWithoutPath() = %s \n",get_objectFileNameWithoutPath().c_str());
+#endif
+            // ROSE_ASSERT(false);
+             }
+        }
+
+
+     std::string specified_objectFileName = get_objectFileNameWithoutPath();
+     if (specified_objectFileName.length() == 0)
+        {
+#if 0
+          printf (" --- get_objectFileNameWithoutPath() returned empty string, using generateOutputFileName(): objectFileName = %s \n",objectFileName.c_str());
+#endif
+        }
+       else
+        {
+#if 0
+          printf (" --- using value from get_objectFileNameWithoutPath(): objectFileName = %s \n",objectFileName.c_str());
+#endif
+          objectFileName = specified_objectFileName;
+        }
+
   // mprintf ("At base of SgFile::generateOutputFileName(): objectFileName = %s \n",objectFileName.c_str());
   // display("In SgFile::generateOutputFileName()");
 
