@@ -342,7 +342,6 @@ Unparser::computeNameQualification(SgSourceFile* file)
        {
          isCxxFile = true;
        }
-
 #if 0
      printf ("\n\n");
      printf ("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ \n");
@@ -389,7 +388,7 @@ Unparser::computeNameQualification(SgSourceFile* file)
        // After discussion with Tristan, this is specific to Jovial to C++ translator, and supports the development of
        // separate header files that are built, instead of using the single translation unit and the unparse header file
        // support that has been recently built into ROSE (last year).  This is fine, but it brings up a possible somewhat
-       // philosophical discussion about how to defaine a translation unit in C and C++, nameily that the SgFile and SgSourceFile
+       // philosophical discussion about how to define a translation unit in C and C++, nameily that the SgFile and SgSourceFile
        // is really a translation unit for the source code in any source file (and does not refer to only the source file
        // to the exclusion of associated included file via CPP #include directives.
           SgNodePtrList & nodes_for_namequal_init = file->get_extra_nodes_for_namequal_init();
@@ -489,8 +488,8 @@ Unparser::computeNameQualification(SgSourceFile* file)
           printf (" --- file->getFileName() = %s \n",file->getFileName().c_str());
           printf (" --- file->get_isDynamicLibrary() = %s \n",file->get_isDynamicLibrary() ? "true" : "false");
 
-#if 1
-#if 1
+#if 0
+#if 0
      printf ("\n\n");
      printf ("################################################################ \n");
      printf ("########### CALLING generateDOTforMultipleFile() ############### \n");
@@ -1158,7 +1157,7 @@ Unparser::unparseFile ( SgSourceFile* file, SgUnparse_Info& info, SgScopeStateme
                  // DQ (10/23/2018): Output report of AST nodes marked as modified!
                     SageInterface::reportModifiedStatements("In Unparser::unparseFile():",globalScope);
 #endif
-#if DEBUG_UNPARSE_FILE
+#if DEBUG_UNPARSE_FILE || 0
                     printf ("In Unparser::unparseFile(): case C/C++: unparseStatement(globalScope, info): globalScope = %p \n",globalScope);
                     printf ("globalScope->getDeclarationList().size() = %zu \n",globalScope->getDeclarationList().size());
                     SgGlobal* temp_globalScope = isSgGlobal(globalScope);
@@ -4599,26 +4598,8 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
      printf ("include_sourceFile->get_globalScope() = %p \n",include_sourceFile->get_globalScope());
 #endif
 
-#if 0
-  // DQ (4/11/2021): We should already have a valid global scope, plus this is a bug because
-  // the global scope that we traverse should be in the in the token sequence list (else the
-  // statementInFile functionality will not alow the global scope to be unparsed when unparsing
-  // the header file (resulting in an empty header file being unparsed)).
-  // Set SgGlobal to avoid problems with checks during unparsing.
-     SgGlobal* headerFileGlobal = new SgGlobal();
-     include_sourceFile->set_globalScope(headerFileGlobal);
-#else
-
-#if DEBUG_BUILD_SOURCE_FILE_FOR_HEADER_FILE
-  // DQ (4/11/2021): We should already have a valid global scope, plus this is a bug because 
-  // the global scope that we traverse should be in the in the token sequence list (else the 
-  // statementInFile functionality will not alow the global scope to be unparsed when unparsing 
-  // the header file (resulting in an empty header file being unparsed)).
-  // DQ (11/22/2019): We don't want to overwrite the global scope in the include_sourceFile (note it is a valid global scope).
-
 #if DEBUG_BUILD_SOURCE_FILE_FOR_HEADER_FILE
      SgGlobal* headerFileGlobal = include_sourceFile->get_globalScope();
-
      SgSourceFile* sourceFileFromHeaderFile = isSgSourceFile(headerFileGlobal->get_parent());
      printf ("sourceFileFromHeaderFile = %p \n",sourceFileFromHeaderFile);
 
@@ -4630,7 +4611,6 @@ buildSourceFileForHeaderFile(SgProject* project, string includedFileName)
 
      printf ("globalScope_from_include_sourceFile->get_startOfConstruct()->get_filename()       = %s \n",globalScope_from_include_sourceFile->get_startOfConstruct()->get_filename());
      printf ("globalScope_from_sourceFileFromHeaderFile->get_startOfConstruct()->get_filename() = %s \n",globalScope_from_sourceFileFromHeaderFile->get_startOfConstruct()->get_filename());
-#endif
 #endif
 
 #if 0
@@ -8127,6 +8107,9 @@ void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, 
                   }
             // #endif
 
+#if 0
+               printf ("In unparseProject(): calling Unparser::computeNameQualification(): sourceFile = %p name = %s \n",sourceFile,sourceFile->getFileName().c_str());
+#endif
                Unparser::computeNameQualification(sourceFile);
 
             // DQ (4/4/2020): Added header file unparsing feature specific debug level.
@@ -8268,6 +8251,15 @@ void unparseProject ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, 
 #if 0
      printf ("Exiting as a test: BEFORE call to unparseFileList() \n");
      ROSE_ABORT();
+#endif
+
+#if 0
+     printf ("IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII \n");
+     printf ("IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII \n");
+     printf ("In unparseProject(): DONE: Calling unparseIncludedFiles(): project = %p (unparse any required header files) \n",project);
+     printf ("In unparseProject(): project = %p (unparse the input source file) \n",project);
+     printf ("IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII \n");
+     printf ("IIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII \n");
 #endif
 
   // DQ (1/23/2010): refactored the SgFileList

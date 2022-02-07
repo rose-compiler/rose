@@ -684,6 +684,9 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
 
      SgTemplateArgumentPtrList::const_iterator i = templateArgumentsList.begin();
      bool need_separator = false;
+
+     bool exit_after_name_is_generated = false;
+
      while (i != templateArgumentsList.end())
         {
           if ((*i)->get_argumentType() == SgTemplateArgument::start_of_pack_expansion_argument)
@@ -704,9 +707,243 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
           string s = string("/* templateArgument is explicitlySpecified = ") + (((*i)->get_explicitlySpecified() == true) ? "true" : "false") + " */";
 #endif
 
+       // DQ (2/5/2022): We need to use a fully qualified name as demonstrated by test2022_05.C. 
+       // Where there are two different template arguments with the same name (e.g. in different 
+       // namespaces) the generated names will be the same and the symbols will collide in the 
+       // symbol table for the scope where they are both constructed.
+       // So a fix is to add the fully qualified name of the scope of the expression used as a template argument.
+
+       // DQ (2/6/2022): Newer version of code (still refactoring this section).
+          bool used_fully_qualified_name = false;
+
+#define DEBUG_TEMPLATE_ARGUMENT_NAMES 0
+
+       // DQ (2/6/2022): This is the newly refactored implementation to add name qualification to 
+       // the template arguments in the used in symbol tables key for template instantiations.
+          SgTemplateArgument* templateArgument = *i;
+          ROSE_ASSERT(templateArgument != NULL);
+
+          switch (templateArgument->get_argumentType())
+             {
+               case SgTemplateArgument::type_argument:
+                  {
+                    SgType* type = templateArgument->get_type();
+                    ROSE_ASSERT(type != NULL);
+
+#if DEBUG_TEMPLATE_ARGUMENT_NAMES
+                    printf ("In SageBuilder::appendTemplateArgumentsToName(): case SgTemplateArgument::type_argument: BEFORE stripType: type = %p = %s \n",type,type->class_name().c_str());
+#endif
+                 // I think that we need to strip off any pointer or reference modifier types.
+                 // unsigned char bit_array == (SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_POINTER_TYPE | SgType::STRIP_ARRAY_TYPE | SgType::STRIP_TYPEDEF_TYPE | SgType::STRIP_POINTER_MEMBER_TYPE);
+                    unsigned char bit_array = (SgType::STRIP_MODIFIER_TYPE | SgType::STRIP_REFERENCE_TYPE | SgType::STRIP_RVALUE_REFERENCE_TYPE | SgType::STRIP_POINTER_TYPE | SgType::STRIP_ARRAY_TYPE | SgType::STRIP_POINTER_MEMBER_TYPE);
+                    type = type->stripType(bit_array);
+
+#if DEBUG_TEMPLATE_ARGUMENT_NAMES
+                    printf ("In SageBuilder::appendTemplateArgumentsToName(): case SgTemplateArgument::type_argument: AFTER stripType: type = %p = %s \n",type,type->class_name().c_str());
+#endif
+                 // DQ (2/6/2022): We need to find an example of the case where the template argument is a pointer type.
+                    if (isSgPointerType(templateArgument->get_type()) != NULL)
+                       {
+
+#if DEBUG_TEMPLATE_ARGUMENT_NAMES
+                         printf ("Found a templateArgument->get_type() that is SgPointerType: name = %s \n",name.str());
+#endif
+#if 0
+                         printf ("Exiting as a test! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+
+                    SgNamedType* namedType = isSgNamedType(type);
+                    if (namedType != NULL)
+                       {
+                      // printf ("type = %p = %s \n",type,type->class_name().c_str());
+                      // ROSE_ASSERT(namedType != NULL);
+
+                      // DQ (2/5/2022): Since SgNonrealType is a SgNamedType, is this sufficiant to handle those cases?
+                         SgDeclarationStatement* declaration = namedType->get_declaration();
+                         ROSE_ASSERT(declaration != NULL);
+
+                         switch (declaration->variantT())
+                            {
+                              case V_SgTemplateInstantiationDecl:
+                              case V_SgTemplateClassDeclaration:
+                              case V_SgClassDeclaration:
+                                 {
+                                   SgClassDeclaration* classDeclaration = isSgClassDeclaration(declaration);
+                                   string fully_qualified_name = classDeclaration->get_qualified_name();
+#if DEBUG_TEMPLATE_ARGUMENT_NAMES
+                                   printf ("fully_qualified_name = %s \n",fully_qualified_name.c_str());
+#endif
+                                   returnName += fully_qualified_name;
+                                   used_fully_qualified_name = true;
+                                   break;
+                                 }
+
+                              case V_SgTemplateInstantiationTypedefDeclaration:
+                              case V_SgTemplateTypedefDeclaration:
+                              case V_SgTypedefDeclaration:
+                                 {
+                                   SgTypedefDeclaration* typedefDeclaration = isSgTypedefDeclaration(declaration);
+                                   string fully_qualified_name = typedefDeclaration->get_qualified_name();
+#if DEBUG_TEMPLATE_ARGUMENT_NAMES
+                                   printf ("fully_qualified_name = %s \n",fully_qualified_name.c_str());
+#endif
+                                   returnName += fully_qualified_name;
+                                   used_fully_qualified_name = true;
+                                   break;
+                                 }
+
+                              case V_SgEnumDeclaration:
+                                 {
+                                   SgEnumDeclaration* enumDeclaration = isSgEnumDeclaration(declaration);
+                                   string fully_qualified_name = enumDeclaration->get_qualified_name();
+#if DEBUG_TEMPLATE_ARGUMENT_NAMES
+                                   printf ("fully_qualified_name = %s \n",fully_qualified_name.c_str());
+#endif
+                                   returnName += fully_qualified_name;
+                                   used_fully_qualified_name = true;
+                                   break;
+                                 }
+
+                           // DQ (2/5/2022): Is this implementation correct for SgNonrealDecl?
+                              case V_SgNonrealDecl:
+                                 {
+                                   SgNonrealDecl* nonrealDeclaration = isSgNonrealDecl(declaration);
+                                   string fully_qualified_name = nonrealDeclaration->get_qualified_name();
+#if DEBUG_TEMPLATE_ARGUMENT_NAMES
+                                   printf ("fully_qualified_name = %s \n",fully_qualified_name.c_str());
+#endif
+                                   returnName += fully_qualified_name;
+                                   used_fully_qualified_name = true;
+                                   break;
+                                 }
+
+                              default:
+                                 {
+                                // I'm not clear if we need to support any other cases, so this default case is an error.
+                                   printf ("In SageBuilder::appendTemplateArgumentsToName(): default reached: get_type() != NULL: declaration = %s \n",declaration->class_name().c_str());
+                                   ROSE_ASSERT(false);
+                                 }
+                            }
+                       }
+                      else
+                       {
+#if DEBUG_TEMPLATE_ARGUMENT_NAMES
+                         printf ("In SageBuilder::appendTemplateArgumentsToName(): not a SgNamedType: get_type() != NULL: type = %s \n",type->class_name().c_str());
+#endif
+                       }
+
+                    break;
+                  }
+
+               case SgTemplateArgument::nontype_argument:
+                  {
+                 // DQ (8/12/2013): This can be either an SgExpression or SgInitializedName.
+                 // ASSERT_not_null(templateArgument->get_expression());
+                    ROSE_ASSERT (templateArgument->get_expression() != NULL || templateArgument->get_initializedName() != NULL);
+                    ROSE_ASSERT (templateArgument->get_expression() == NULL || templateArgument->get_initializedName() == NULL);
+                    if (templateArgument->get_expression() != NULL)
+                       {
+                         SgExpression* expression = templateArgument->get_expression();
+                         ROSE_ASSERT(expression != NULL);
+
+                      // Now we care about types of expression that could require name qualification.
+                      // Is there anything more than SgVarRefExp that we need to worry about?
+                         SgVarRefExp* varRefExp = isSgVarRefExp(expression);
+                         if (varRefExp != NULL)
+                            {
+                           // SgVariableSymbol* variableSymbol = isSgVariableSymbol(varRefExp->get_symbol());
+                              SgVariableSymbol* variableSymbol = varRefExp->get_symbol();
+                              ROSE_ASSERT(variableSymbol != NULL);
+                              SgInitializedName* initializedName = variableSymbol->get_declaration();
+                              ROSE_ASSERT(initializedName != NULL);
+                              string fully_qualified_name = initializedName->get_qualified_name();
+#if DEBUG_TEMPLATE_ARGUMENT_NAMES
+                              printf ("fully_qualified_name = %s \n",fully_qualified_name.c_str());
+#endif
+                              returnName += fully_qualified_name;
+                              used_fully_qualified_name = true;
+                            }
+                           else
+                            {
+                           // Unclear if we have cases here to support (need more examples of different types of template arguments in use).
+#if DEBUG_TEMPLATE_ARGUMENT_NAMES
+                              printf ("In SageBuilder::appendTemplateArgumentsToName(): Case of template argument varRefExp == NULL: expression = %p = %s \n",
+                                   expression,expression->class_name().c_str());
+#endif
+#if 0
+                              printf ("In SageBuilder::appendTemplateArgumentsToName(): Case of template argument varRefExp == NULL is not yet supported! \n");
+                              ROSE_ASSERT(false);
+#endif
+                            }
+                       }
+                      else
+                       {
+                      // SgType* type = templateArgument->get_initializedName()->get_type();
+                      // ROSE_ASSERT(type != NULL);
+
+                         SgInitializedName* initializedName = templateArgument->get_initializedName();
+                         ROSE_ASSERT(initializedName != NULL);
+                         printf ("initializedName = %p = %s \n",initializedName,initializedName->get_name().str());
+
+                         printf ("In SageBuilder::appendTemplateArgumentsToName(): Case of template argument initializedName != NULL: Unclear what do do in this case \n");
+                         ROSE_ASSERT(false);
+                       }
+
+                    break;
+                  }
+
+               case SgTemplateArgument::template_template_argument:
+                  {
+                    SgDeclarationStatement* decl = templateArgument->get_templateDeclaration();
+                    ASSERT_not_null(decl);
+#if DEBUG_TEMPLATE_ARGUMENT_NAMES
+                    printf ("In SageBuilder::appendTemplateArgumentsToName(): case SgTemplateArgument::template_template_argument: decl = %p = %s \n",decl,decl->class_name().c_str());
+#endif
+                    exit_after_name_is_generated = true;
+#if 0
+                    printf ("Exiting as a test! \n");
+                    ROSE_ASSERT(false);
+#endif
+                    SgTemplateDeclaration* tpl_decl = isSgTemplateDeclaration(decl);
+                    ROSE_ASSERT(tpl_decl == NULL);
+
+                    break;
+                  }
+
+                case SgTemplateArgument::start_of_pack_expansion_argument:
+                  {
+#if DEBUG_TEMPLATE_ARGUMENT_NAMES
+                    printf("WARNING: start_of_pack_expansion_argument in evaluateNameQualificationForTemplateArgumentList (can happen from some debug output)\n");
+#endif
+                    break;
+                  }
+
+               case SgTemplateArgument::argument_undefined:
+                  {
+                 // mfprintf(mlog [ WARN ] ) ("Error argument_undefined in evaluateNameQualificationForTemplateArgumentList \n");
+                    printf("Error argument_undefined in evaluateNameQualificationForTemplateArgumentList \n");
+                    ROSE_ABORT();
+                    break;
+                  }
+
+               default:
+                  {
+                 // mfprintf(mlog [ WARN ] ) ("Error default reached in evaluateNameQualificationForTemplateArgumentList \n");
+                    printf("Error default reached in evaluateNameQualificationForTemplateArgumentList \n");
+                    ROSE_ABORT();
+                  }
+             }
+
+       // DQ (2/5/2022): if it is not set above then use the old way without name qualification (debugging test2022_05.C).
        // DQ (9/15/2012): We need to communicate that the language so that SgBoolVal will not be unparsed to "1" instead of "true" (see test2012_215.C).
        // Calling the unparseToString (SgUnparse_Info *info) function instead of the version not taking an argument.
-          returnName += (*i)->unparseToString(info);
+       // returnName += (*i)->unparseToString(info);
+          if (used_fully_qualified_name == false)
+             {
+               returnName += (*i)->unparseToString(info);
+             }
 
 #if DEBUG_APPEND_TEMPLATE_ARGUMENT_LIST
           printf ("In SageBuilder::appendTemplateArgumentsToName(): (after appending template name) *i = %p returnName = %s \n",*i,returnName.str());
@@ -724,8 +961,17 @@ SageBuilder::appendTemplateArgumentsToName( const SgName & name, const SgTemplat
      if (emptyArgumentList == false)
           returnName += " > ";
 
-#if DEBUG_APPEND_TEMPLATE_ARGUMENT_LIST
+#if DEBUG_APPEND_TEMPLATE_ARGUMENT_LIST || DEBUG_TEMPLATE_ARGUMENT_NAMES
      printf ("Leaving SageBuilder::appendTemplateArgumentsToName(): returnName = %s \n",returnName.str());
+#endif
+
+#if 0
+  // This allows me to test a large number of input codes and identify ones that are using specific features (e.g. template template parameters).
+     if (exit_after_name_is_generated == true)
+        {
+          printf ("Exiting as a test! \n");
+          ROSE_ASSERT(false);
+        }
 #endif
 
      delete info;
@@ -12623,6 +12869,8 @@ SageBuilder::buildNondefiningClassDeclaration_nfi(const SgName& XXX_name, SgClas
   // DQ (1/27/2019): Test that symbol table to debug Cxx11_tests/test2019)33.C.
      printf ("Leaving buildNondefiningClassDeclaration_nfi(): Calling find_symbol_from_declaration() \n");
      SgSymbol* test_symbol = nondefdecl->get_scope()->find_symbol_from_declaration(nondefdecl);
+
+     printf ("test_symbol = %p \n",test_symbol);
 
   // DQ (1/27/2019): Test that symbol table to debug Cxx11_tests/test2019)33.C.
      printf ("Leaving buildNondefiningClassDeclaration_nfi(): Calling get_symbol_from_symbol_table() \n");
