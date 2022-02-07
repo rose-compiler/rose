@@ -207,9 +207,6 @@ SgAsmElfNoteSection::reallocate()
 void
 SgAsmElfNoteSection::unparse(std::ostream &f) const
 {
-    SgAsmElfFileHeader *fhdr = get_elf_header();
-    ROSE_ASSERT(fhdr);
-
     rose_addr_t at = 0;
     for (size_t i=0; i<p_entries->get_entries().size(); i++) {
         SgAsmElfNoteEntry *ent = p_entries->get_entries()[i];

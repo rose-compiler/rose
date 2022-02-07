@@ -121,7 +121,7 @@ SgAsmElfDynamicSection::parse()
     SgAsmElfFileHeader *fhdr = get_elf_header();
     ROSE_ASSERT(fhdr);
     SgAsmElfSectionTableEntry *shdr = get_section_entry();
-    ROSE_ASSERT(shdr);
+    ASSERT_always_require(shdr);
     SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(get_linked_section());
     ROSE_ASSERT(strsec!=NULL);
 
