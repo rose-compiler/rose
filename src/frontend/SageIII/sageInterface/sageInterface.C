@@ -25224,6 +25224,9 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   if (SgIntVal* v= isSgIntVal(node))
     out<<" value="<< v->get_value() <<" valueString="<< v->get_valueString();
 
+  if (SgShortVal* v= isSgShortVal(node))
+    out<<" value="<< v->get_value() <<" valueString="<< v->get_valueString();
+
   if (SgVarRefExp* var_ref= isSgVarRefExp(node) )
     out<<" init name@"<< var_ref->get_symbol()->get_declaration() <<" symbol name="<<var_ref->get_symbol()->get_name();
 
