@@ -896,7 +896,9 @@ string AbstractValue::toString(CodeThorn::VariableIdMapping* vim) const {
         <<getIntValue()
         //<<","
         //<<getElementTypeSize()
-        <<")";
+        <<")"
+        <<(isSummary()?"*":"")
+        ;
       return ss.str();
       //    } else {
       //      return variableId.toString(vim);

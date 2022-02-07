@@ -68,10 +68,9 @@ namespace CodeThorn {
             reachableLabels.insert(lab);
           }
         }
-
         report.setReachableLocations(reachableLabels);
         report.setUnreachableLocations(unreachableLabels);
-
+        
         switch(analysisSel) {
         case ANALYSIS_NULL_POINTER:
         case ANALYSIS_OUT_OF_BOUNDS:

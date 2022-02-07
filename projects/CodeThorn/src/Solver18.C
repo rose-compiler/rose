@@ -51,7 +51,7 @@ bool Solver18::isPassThroughLabel(Label lab) {
 }
 
 bool Solver18::isUnreachableLabel(Label lab) {
-  // if code is unreachable no state is computed for it. In this case no entry is found for this label 
+  // if code is unreachable no state is computed for it. In this case no entry is found for this label (with any callstring).
   return (_summaryCSStateMapMap.find(lab.getId())==_summaryCSStateMapMap.end())&&lab!=_analyzer->getFlow()->getStartLabel()&&!isPassThroughLabel(lab);
 }
 

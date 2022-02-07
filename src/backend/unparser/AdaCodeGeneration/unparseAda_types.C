@@ -77,9 +77,14 @@ namespace
     {
       prn(" digits ");
       expr(n.get_digits());
+      support_opt(n.get_subConstraint());
+    }
 
-      if (SgAdaRangeConstraint* rng = n.get_range())
-        handle(*rng);
+    void handle(SgAdaDeltaConstraint& n)
+    {
+      prn(" delta ");
+      expr(n.get_delta());
+      support_opt(n.get_subConstraint());
     }
 
     void handle(SgAdaIndexConstraint& n)
@@ -111,6 +116,7 @@ namespace
     void handle(SgTypeLong&)       { prn(" Long_Integer"); }
     void handle(SgTypeShort&)      { prn(" Short_Integer"); }
     void handle(SgTypeLongLong&)   { prn(" Long_Long_Integer"); }
+    void handle(SgTypeFixed&)      { }
     void handle(SgTypeVoid&)       { prn(" -- void\n"); }  // error, should not be in Ada
 
     //

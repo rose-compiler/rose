@@ -20928,7 +20928,7 @@ SageBuilder::fixupCopyOfNodeFromSeparateFileInNewTargetAst(SgStatement* insertio
                  // DQ (4/13/2014): I think we all agreed these would not have to be handled, so issue a warning.
                  // It still is likely that I can allow this, but permit this intermediate fix.
                     printf ("Warning: can't handle enum values from unnamed enum declarations \n");
-                    printf ("   --- enumVal_original = %p = %d name = %s \n",enumVal_original,enumVal_original->get_value(),enumVal_original->get_name().str());
+                    printf ("   --- enumVal_original = %p = %lld name = %s \n",enumVal_original,enumVal_original->get_value(),enumVal_original->get_name().str());
                   }
 
                break;

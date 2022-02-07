@@ -101,6 +101,7 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (CompoundInitializer,    "CompoundInitializer",    "COMPOUND_INIT" );
      NEW_TERMINAL_MACRO (ConstructorInitializer, "ConstructorInitializer", "CONSTRUCTOR_INIT" );
      NEW_TERMINAL_MACRO (AssignInitializer,      "AssignInitializer",      "ASSIGN_INIT" );
+     NEW_TERMINAL_MACRO (AdaAncestorInitializer, "AdaAncestorInitializer", "ADA_ANCESTOR_INIT" );
 
   // DQ (11/15/2016): Adding support for new SgBracedInitializer, required to template support (see Cxx11_tests/test2016_82.C).
      NEW_TERMINAL_MACRO (BracedInitializer,      "BracedInitializer",      "BRACED_INIT" );
@@ -393,7 +394,8 @@ Grammar::setUpExpressions ()
 
      NEW_NONTERMINAL_MACRO (Initializer,
                             AggregateInitializer | CompoundInitializer | ConstructorInitializer |
-                            AssignInitializer | DesignatedInitializer | BracedInitializer,
+                            AssignInitializer | DesignatedInitializer | BracedInitializer |
+                            AdaAncestorInitializer,
                             "Initializer","EXPR_INIT", false);
 
   // User defined operator for Fortran named operators.
@@ -2671,12 +2673,18 @@ Grammar::setUpExpressions ()
   //        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AssignInitializer.setDataPrototype     ( "SgType*"      , "expression_type", "= NULL",
             CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 #if 0
   // DQ (5/20/2004): removed need_paren from this class and added it to the base class so that
   // all expression could allow it to be set (so that we can use the value as set in EDG)!
      AssignInitializer.setDataPrototype     ( "bool"    , "need_paren"     , "= true",
                                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
+
+     AdaAncestorInitializer.setFunctionPrototype ( "HEADER_ADA_ANCESTOR_INITIALIZER_EXPRESSION", "../Grammar/Expression.code" );
+
+     AdaAncestorInitializer.setDataPrototype ( "SgExpression*", "ancestor", "= nullptr",
+                                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (11/15/2016): Adding support for new SgBracedInitializer, required to template support (see Cxx11_tests/test2016_82.C).
      BracedInitializer.setFunctionPrototype ( "HEADER_BRACED_INITIALIZER_EXPRESSION", "../Grammar/Expression.code" );
@@ -3223,6 +3231,7 @@ Grammar::setUpExpressions ()
      CompoundInitializer.setFunctionSource ( "SOURCE_COMPOUND_INITIALIZER_EXPRESSION","../Grammar/Expression.code" );
      ConstructorInitializer.setFunctionSource ( "SOURCE_CONSTRUCTOR_INITIALIZER_EXPRESSION","../Grammar/Expression.code" );
      AssignInitializer.setFunctionSource ( "SOURCE_ASSIGNMENT_INITIALIZER_EXPRESSION","../Grammar/Expression.code" );
+     AdaAncestorInitializer.setFunctionSource ( "SOURCE_ADA_ANCESTOR_INITIALIZER_EXPRESSION","../Grammar/Expression.code" );
 
   // DQ (11/15/2016): Adding support for new SgBracedInitializer, required to template support (see Cxx11_tests/test2016_82.C).
      BracedInitializer.setFunctionSource ( "SOURCE_BRACED_INITIALIZER_EXPRESSION","../Grammar/Expression.code" );

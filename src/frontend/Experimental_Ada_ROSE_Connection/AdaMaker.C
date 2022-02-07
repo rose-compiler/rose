@@ -47,8 +47,8 @@ namespace
   }
 
   /// \private
-  /// sets the symbol defining decl
-  void linkDecls(SgFunctionSymbol& funcsy, SgFunctionDeclaration& func)
+  /// links a first nondefining declaration to a definition and vice versa
+  void linkDeclDef(SgFunctionSymbol& funcsy, SgFunctionDeclaration& func)
   {
     SgFunctionDeclaration& sdcl = SG_DEREF(funcsy.get_declaration());
 
@@ -56,6 +56,15 @@ namespace
     ADA_ASSERT(&sdcl != &func);
 
     sdcl.set_definingDeclaration(&func);
+    func.set_firstNondefiningDeclaration(&sdcl);
+  }
+
+  /// \private
+  /// links a secondary nondefining declaration to a first nondefining declaration
+  void linkDeclDecl(SgFunctionSymbol& funcsy, SgFunctionDeclaration& func)
+  {
+    SgFunctionDeclaration& sdcl = SG_DEREF(funcsy.get_declaration());
+    ADA_ASSERT(&sdcl != &func);
     func.set_firstNondefiningDeclaration(&sdcl);
   }
 }
@@ -140,15 +149,31 @@ mkAdaRangeConstraint(SgExpression& range)
   return sgnode;
 }
 
-SgAdaDigitsConstraint&
-mkAdaDigitsConstraint(SgExpression& digits, SgAdaRangeConstraint* range_opt)
+namespace
 {
-  SgAdaDigitsConstraint& sgnode = mkLocatedNode<SgAdaDigitsConstraint>(&digits, range_opt);
+  template <class SageFixedPointConstraint>
+  SageFixedPointConstraint&
+  mkFixedPointConstraint(SgExpression& exp, SgAdaTypeConstraint* sub_opt)
+  {
+    SageFixedPointConstraint& sgnode = mkLocatedNode<SageFixedPointConstraint>(&exp, sub_opt);
 
-  digits.set_parent(&sgnode);
-  if (range_opt) range_opt->set_parent(&sgnode);
+    exp.set_parent(&sgnode);
+    if (sub_opt) sub_opt->set_parent(&sgnode);
 
-  return sgnode;
+    return sgnode;
+  }
+}
+
+SgAdaDigitsConstraint&
+mkAdaDigitsConstraint(SgExpression& digits, SgAdaTypeConstraint* sub_opt)
+{
+  return mkFixedPointConstraint<SgAdaDigitsConstraint>(digits, sub_opt);
+}
+
+SgAdaDeltaConstraint&
+mkAdaDeltaConstraint(SgExpression& delta, SgAdaTypeConstraint* sub_opt)
+{
+  return mkFixedPointConstraint<SgAdaDeltaConstraint>(delta, sub_opt);
 }
 
 
@@ -317,6 +342,11 @@ SgType& mkIntegralType()
 SgType& mkRealType()
 {
   return SG_DEREF(sb::buildLongDoubleType());
+}
+
+SgType& mkFixedType()
+{
+  return SG_DEREF(sb::buildFixedType(nullptr, nullptr));
 }
 
 SgType& mkConstType(SgType& underType)
@@ -928,7 +958,6 @@ namespace
   /// \private
   /// helps to create a procedure definition as declaration
   SgScopeStatement&
-  //~ mkProcDecl(SgFunctionDeclaration& dcl)
   mkProcDecl()
   {
     SgFunctionParameterScope& sgnode = mkScopeStmt<SgFunctionParameterScope>(&mkFileInfo());
@@ -965,13 +994,32 @@ namespace
 }
 
 SgFunctionDeclaration&
-mkProcedure( const std::string& nm,
-             SgScopeStatement& scope,
-             SgType& retty,
-             std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
-           )
+mkProcedureDecl( const std::string& nm,
+                 SgScopeStatement& scope,
+                 SgType& retty,
+                 std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
+               )
 {
   return mkProcedureInternal(nm, scope, retty, std::move(complete), mkProcDecl);
+}
+
+SgFunctionDeclaration&
+mkProcedureDecl( SgFunctionDeclaration& ndef,
+                 SgScopeStatement& scope,
+                 SgType& retty,
+                 std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
+               )
+{
+  SgName                 nm     = ndef.get_name();
+  SgFunctionDeclaration& sgnode = mkProcedureInternal(nm, scope, retty, std::move(complete), mkProcDecl);
+  SgSymbol*              baseSy = ndef.search_for_symbol_from_symbol_table();
+  SgFunctionSymbol&      funcSy = SG_DEREF(isSgFunctionSymbol(baseSy));
+
+  linkDeclDecl(funcSy, sgnode);
+
+  ADA_ASSERT(sgnode.get_definingDeclaration() == nullptr);
+  ADA_ASSERT(sgnode.isForward());
+  return sgnode;
 }
 
 SgFunctionDeclaration&
@@ -986,7 +1034,7 @@ mkProcedureDef( SgFunctionDeclaration& ndef,
   SgSymbol*              baseSy = ndef.search_for_symbol_from_symbol_table();
   SgFunctionSymbol&      funcSy = SG_DEREF(isSgFunctionSymbol(baseSy));
 
-  linkDecls(funcSy, sgnode);
+  linkDeclDef(funcSy, sgnode);
   sgnode.set_definingDeclaration(&sgnode);
   sgnode.unsetForward();
 
@@ -1000,7 +1048,7 @@ mkProcedureDef( const std::string& nm,
                 std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
               )
 {
-  SgFunctionDeclaration& ndef = mkProcedure(nm, scope, retty, complete);
+  SgFunctionDeclaration& ndef   = mkProcedureDecl(nm, scope, retty, complete);
   SgFunctionDeclaration& sgnode = mkProcedureDef(ndef, scope, retty, std::move(complete));
 
   return sgnode;
@@ -1362,6 +1410,16 @@ mkAdaNamedInitializer(SgExprListExp& components, SgExpression& val)
 }
 
 
+SgAdaAncestorInitializer&
+mkAdaAncestorInitializer(SgExpression& par)
+{
+  SgAdaAncestorInitializer& sgnode = mkLocatedNode<SgAdaAncestorInitializer>(&par);
+
+  par.set_parent(&sgnode);
+  return sgnode;
+}
+
+
 SgExpression&
 mkUnresolvedName(const std::string& n, SgScopeStatement& scope)
 {
@@ -1415,6 +1473,13 @@ mkNewExp(SgType& ty, SgExprListExp* args_opt)
 
   return mkLocatedNode<SgNewExp>(&ty, nullptr /*placement*/, init, nullptr, 0 /* no global */, nullptr);
 }
+
+SgExpression&
+mkAdaBoxExp()
+{
+  return SG_DEREF(sb::buildVoidVal());
+}
+
 
 
 SgAdaOthersExp&
@@ -1726,13 +1791,20 @@ mkAdaIntegerLiteral(const char* textrep)
   SgValueExp*   res = nullptr;
 
   MakeSmallest
-  || (res = mkIntegralLiteralIfWithinRange<SgShortVal>      (val, textrep))
+  //~ || (res = mkIntegralLiteralIfWithinRange<SgShortVal>      (val, textrep))
   || (res = mkIntegralLiteralIfWithinRange<SgIntVal>        (val, textrep))
   || (res = mkIntegralLiteralIfWithinRange<SgLongIntVal>    (val, textrep))
   || (res = mkIntegralLiteralIfWithinRange<SgLongLongIntVal>(val, textrep))
   ;
 
-  return SG_DEREF(res);
+  if (!res)
+  {
+    logError() << "Unable to represent " << textrep << " within the bounds of long long int"
+               << std::endl;
+    ROSE_ABORT();
+  }
+
+  return *res;
 }
 
 

@@ -144,11 +144,13 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   accept_statement.adb                 \
   accept_statement_task_decl.adb       \
   access_definition.ads                \
+  access_to_object.ads                 \
   all_modes.ads                        \
   array_declare.adb                    \
   array_declare_2.ads                  \
   asm_machine_code.adb                 \
   based_numbers.ads                    \
+  box.adb                              \
   choice_parameter_specification.adb   \
   complex.ads                          \
   complex.adb                          \
@@ -160,9 +162,12 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   dynamic_array.adb                    \
   entry_call.adb                       \
   entry_declaration.ads                \
+  extension_aggregate.adb              \
   exception_rename.ads                 \
   formal_procedure_declaration.ads     \
   formal_subprogram_declaration.ads    \
+  function_body_stub.adb               \
+  fixed_point_definition.ads           \
   generic_function_declaration.ads     \
   generic_package_declaration.ads      \
   generic_package_declaration.adb      \
@@ -177,6 +182,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   parent-child.adb                     \
   pkgrename.ads                        \
   private_derived_formal_type.adb      \
+  procedure_body_stub.adb              \
   procedure_renaming.adb               \
   protected_object.adb                 \
   protected_body_declaration.adb       \
@@ -194,6 +200,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   simple_hello_world_with_use.adb      \
   single_protected_declaration.ads     \
   std_ascii_user.adb                   \
+  tagged_incomplete_type_declaration.ads \
   taskarray.adb                        \
   task_type_declaration.ads            \
   task_with_abort.adb                  \
@@ -219,25 +226,19 @@ ROSE_PASSING_ADA_TESTS :=                           \
 
 
 ROSE_PASSING_IMCOMPLETE_ADA_TESTS :=                \
-  access_to_subprogram.ads                          \
-  access_to_object.ads                              \
-  fixed_point_definition.ads
+  access_to_subprogram.ads                          
 
 ROSE_FAILING_ADA_TESTS :=                           \
   aspect_spec.ads                                   \
   deref_test.adb                                    \
   delay_until.adb                                   \
   entry_body_declaration.adb                        \
-  extension_aggregate.adb                           \
-  function_body_stub.adb                            \
   generic_function_renaming_declaration.ads         \
   generic_package_renaming_declaration.adb          \
   generic_procedure_renaming_declaration.ads        \
   mpiuse.ads                                        \
-  procedure_body_stub.adb                           \
   requeue_statement_2.adb                           \
   requeue_statements.adb                            \
-  tagged_incomplete_type_declaration.ads            \
   test.adb                                          \
   test_unit.adb                                     \
   unit_2.adb                                        \
@@ -249,8 +250,10 @@ ASIS_PASSING_TESTS :=                               \
   $(ROSE_PASSING_IMCOMPLETE_ADA_TESTS)              \
   $(ROSE_FAILING_ADA_TESTS)
 
+# the failing tests may actually not fail but just take a very long time
 ASIS_FAILING_TESTS :=                               \
   entry_index_specification.adb                     \
+  ifexpr.adb                                        \
   mpi.ads
 
 #defining all Ada test files

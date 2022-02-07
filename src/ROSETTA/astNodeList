@@ -1006,3 +1006,5 @@ SgAdaProtectedRefExp
 SgAdaProtectedType
 SgAdaProtectedTypeDecl
 SgAdaDigitsConstraint
+SgAdaAncestorInitializer
+SgAdaDeltaConstraint
