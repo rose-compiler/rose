@@ -925,12 +925,22 @@ SgClassDefinition* getClassDefOpt(const SgClassType& n)
   return nullptr;
 }
 
-SgClassDefinition* getClassDefOpt(const SgExpression& n, bool skipUpCasts = false)
+
+SgClassDefinition* getClassDefOpt(const SgInitializedName& n)
+{
+  SgType&          ty  = SG_DEREF(n.get_type());
+  SgClassType*     cls = isSgClassType(ty.stripType(STRIP_MODIFIER_ALIAS | SgType::STRIP_ARRAY_TYPE));
+
+  return (cls == nullptr) ? nullptr : getClassDefOpt(*cls);
+}
+
+
+SgClassDefinition* getClassDefOpt(const SgExpression& n, bool skipUpCasts)
 {
   static constexpr unsigned char STRIP_TO_CLASS = ( STRIP_MODIFIER_ALIAS
                                                   | SgType::STRIP_REFERENCE_TYPE
                                                   | SgType::STRIP_POINTER_TYPE
-                                                  | SgType::STRIP_TYPEDEF_TYPE
+                                                  // | SgType::STRIP_ARRAY_TYPE
                                                   );
 
   SgType&          ty  = SG_DEREF(n.get_type());
