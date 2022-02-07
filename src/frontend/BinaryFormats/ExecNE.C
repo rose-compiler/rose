@@ -569,9 +569,6 @@ SgAsmNENameTable::ctor(rose_addr_t offset)
     set_name(new SgAsmBasicString("NE Name Table"));
     set_purpose(SP_HEADER);
 
-    SgAsmNEFileHeader *fhdr = dynamic_cast<SgAsmNEFileHeader*>(get_header());
-    ROSE_ASSERT(fhdr!=NULL);
-    
     /* Resident exported procedure names, until we hit a zero length name. The first name
      * is for the library itself and the corresponding ordinal has no meaning. */
     rose_addr_t at = 0;
