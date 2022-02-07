@@ -608,9 +608,10 @@ namespace
   SgExprListExp&
   getRecordAggregate(Element_Struct& elem, Expression_Struct& expr, AstContext ctx)
   {
-    ADA_ASSERT(expr.Expression_Kind == A_Record_Aggregate);
+    ADA_ASSERT(  expr.Expression_Kind == A_Record_Aggregate
+              || expr.Expression_Kind == An_Extension_Aggregate
+              );
 
-    logKind("A_Record_Aggregate");
     ElemIdRange                range  = idRange(expr.Record_Component_Associations);
     std::vector<SgExpression*> components = traverseIDs(range, elemMap(), RecordAggregateCreator{ctx});
     SgExprListExp&             sgnode = mkExprListExp(components);
@@ -623,8 +624,8 @@ namespace
   getArrayAggregate(Element_Struct& elem, Expression_Struct& expr, AstContext ctx)
   {
     ADA_ASSERT(  expr.Expression_Kind == A_Named_Array_Aggregate
-               || expr.Expression_Kind == A_Positional_Array_Aggregate
-               );
+              || expr.Expression_Kind == A_Positional_Array_Aggregate
+              );
 
     const bool namedAggregate = expr.Expression_Kind == A_Named_Array_Aggregate;
 
@@ -638,17 +639,6 @@ namespace
     return sgnode;
   }
 
-/*
- * no longer used
-  SgExprListExp&
-  getAggregate(Element_Struct& elem, Expression_Struct& expr, AstContext ctx)
-  {
-    if (expr.Expression_Kind == A_Record_Aggregate)
-      return getRecordAggregate(elem, expr, ctx);
-
-    return getArrayAggregate(elem, expr, ctx);
-  }
-*/
 
 } // anonymous
 
@@ -1074,15 +1064,25 @@ namespace
 
       case A_Record_Aggregate:                        // 4.3
         {
-          res = &getRecordAggregate(elem, expr, ctx);
-          /*
-          SgExprListExp& explst = getRecordAggregate(elem, expr, ctx);
+          logKind("A_Record_Aggregate");
 
-          res = sb::buildAggregateInitializer(&explst);
-          ADA_ASSERT(explst.get_parent());
-          */
+          res = &getRecordAggregate(elem, expr, ctx);
           break;
         }
+
+      case An_Extension_Aggregate:                    // 4.3
+        {
+          logKind("An_Extension_Aggregate");
+
+          SgExprListExp& elemlst   = getRecordAggregate(elem, expr, ctx);
+          SgExpression&  parentexp = getExprID(expr.Extension_Aggregate_Expression, ctx);
+
+          elemlst.prepend_expression(&mkAdaAncestorInitializer(parentexp));
+
+          res = &elemlst;
+          break;
+        }
+
 
       case An_And_Then_Short_Circuit:                 // 4.4
         {
@@ -1212,14 +1212,13 @@ namespace
           break;
         }
 
-
       case A_Box_Expression:                          // Ada 2005 4.3.1(4): 4.3.3(3:6)
-
-      case An_Extension_Aggregate:                    // 4.3
+        {
+          res = &mkAdaBoxExp();
+          break;
+        }
 
       case A_Raise_Expression:                        // 4.4 Ada 2012 (AI12-0022-1)
-
-
       case A_Case_Expression:                         // Ada 2012
       case An_If_Expression:                          // Ada 2012
       case A_For_All_Quantified_Expression:           // Ada 2012
@@ -1253,6 +1252,7 @@ getExpr(Element_Struct& elem, AstContext ctx)
     case A_Positional_Array_Aggregate:              // 4.3
     case A_Named_Array_Aggregate:                   // 4.3
     case A_Record_Aggregate:                        // 4.3
+    case An_Extension_Aggregate:                    // 4.3
       {
         SgExprListExp* explst = isSgExprListExp(res);
         ADA_ASSERT(explst);
@@ -1260,6 +1260,7 @@ getExpr(Element_Struct& elem, AstContext ctx)
         res = sb::buildAggregateInitializer(explst);
         ADA_ASSERT(explst->get_parent());
         attachSourceLocation(SG_DEREF(res), elem, ctx);
+        break;
       }
 
     default:;

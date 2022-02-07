@@ -121,6 +121,39 @@ namespace ada
   SgAdaDiscriminatedTypeDecl* getAdaDiscriminatedTypeDecl(const SgDeclarationStatement* n);
   /// @}
 
+  /// Details of expression aggregates
+  struct AggregateInfo : std::tuple< SgAdaAncestorInitializer*,
+                                     SgExpressionPtrList::const_iterator,
+                                     SgExpressionPtrList::const_iterator
+                                   >
+  {
+    using base = std::tuple< SgAdaAncestorInitializer*,
+                             SgExpressionPtrList::const_iterator,
+                             SgExpressionPtrList::const_iterator
+                           >;
+    using base::base;
+
+    /// returns the ancestor initializer iff it exists, otherwise null
+    SgAdaAncestorInitializer* ancestor() const { return std::get<0>(*this); }
+
+    /// returns the remaining range-begin without the ancestor initializer (if it existed)
+    SgExpressionPtrList::const_iterator begin() const { return std::get<1>(*this); }
+
+    /// returns the underlying's list end iterator
+    SgExpressionPtrList::const_iterator end() const { return std::get<2>(*this); }
+
+    /// returns if the remaining range (w/o the ancestor initializer) indicates a null record.
+    bool nullRecord() const { return begin() == end(); }
+  };
+
+  /// returns the ancestor initializer, if \ref exp refers to an extension aggregate
+  ///         null otherwise
+  /// @{
+  AggregateInfo splitAggregate(const SgExprListExp& exp);
+  AggregateInfo splitAggregate(const SgExprListExp* exp);
+  /// @}
+
+
   /// returns a package symbol if the declaration \ref n renames a package
   /// returns nullptr otherwise
   /// @{
@@ -205,6 +238,7 @@ namespace ada
   std::vector<PrimitiveParameterDesc>
   primitiveParameterPositions(const SgFunctionDeclaration*);
   /// @}
+
 
   /// returns the overriding scope of a primitive function based on the
   ///   associated arguments as defined by the argument list \ref args and

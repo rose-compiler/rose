@@ -1075,6 +1075,9 @@ namespace sg
     GEN_VISIT(SgAdaProtectedType)
     GEN_VISIT(SgAdaProtectedTypeDecl)
     GEN_VISIT(SgAdaDigitsConstraint)
+    GEN_VISIT(SgAdaAncestorInitializer)
+    GEN_VISIT(SgAdaDeltaConstraint)
+
 
 
 #if WITH_BINARY_NODES

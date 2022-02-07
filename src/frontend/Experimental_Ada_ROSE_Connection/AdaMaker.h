@@ -88,9 +88,15 @@ namespace Ada_ROSE_Translation
 
   /// builds a digits constraint for floating point numbers
   /// \param digits an expression indicating the number of digits
-  /// \param range_opt an optional floating point range specification
+  /// \param constraint_opt an optional floating point constraint
   SgAdaDigitsConstraint&
-  mkAdaDigitsConstraint(SgExpression& digits, SgAdaRangeConstraint* range_opt);
+  mkAdaDigitsConstraint(SgExpression& digits, SgAdaTypeConstraint* constraint_opt);
+
+  /// builds a delta constraint for floating point numbers
+  /// \param digits an expression indicating the number of digits
+  /// \param constraint_opt an optional floating point constraint
+  SgAdaDeltaConstraint&
+  mkAdaDeltaConstraint(SgExpression& digits, SgAdaTypeConstraint* constraint_opt);
 
   /// builds a discriminant constraint from \ref discriminants
   /// \param discriminants a sequence of discriminants.
@@ -171,6 +177,9 @@ namespace Ada_ROSE_Translation
 
   /// creates the most general real type
   SgType& mkRealType();
+
+  /// creates the most general fixed type
+  SgType& mkFixedType();
 
   /// creates a constant type for \ref basety
   SgType& mkConstType(SgType& underType);
@@ -447,14 +456,28 @@ namespace Ada_ROSE_Translation
   ///                 the function parameter scope have been constructed. The task of complete
   ///                 is to fill these objects with function parameters.
   SgFunctionDeclaration&
-  mkProcedure( const std::string& name,
-               SgScopeStatement& scope,
-               SgType& retty,
-               std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
-             );
+  mkProcedureDecl( const std::string& name,
+                   SgScopeStatement& scope,
+                   SgType& retty,
+                   std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
+                 );
+
+  /// creates a secondary function/procedure declaration
+  /// \param ndef     the first nondefining declaration
+  /// \param scope    the enclosing scope
+  /// \param retty    return type of a function (SgVoidType for procedures)
+  /// \param complete a functor that is called after the function parameter list and
+  ///                 the function parameter scope have been constructed. The task of complete
+  ///                 is to fill these objects with function parameters.
+  SgFunctionDeclaration&
+  mkProcedureDecl( SgFunctionDeclaration& ndef,
+                   SgScopeStatement& scope,
+                   SgType& retty,
+                   std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
+                 );
 
   /// creates a function/procedure declaration
-  /// \param ndef     the non-defining declaration
+  /// \param ndef     the first nondefining declaration
   /// \param scope    the enclosing scope
   /// \param retty    return type of a function (SgVoidType for procedures)
   /// \param complete a functor that is called after the function parameter list and
@@ -594,6 +617,10 @@ namespace Ada_ROSE_Translation
   SgDesignatedInitializer&
   mkAdaNamedInitializer(SgExprListExp& components, SgExpression& val);
 
+  /// creates a parent initializer for extension record aggregates
+  SgAdaAncestorInitializer&
+  mkAdaAncestorInitializer(SgExpression& par);
+
   /// creates an expression for an unresolved name (e.g., imported names)
   /// \note unresolved names are an indication for an incomplete AST
   /// \todo remove this function, once translation is complete
@@ -621,6 +648,9 @@ namespace Ada_ROSE_Translation
   SgNewExp&
   mkNewExp(SgType& ty, SgExprListExp* args_opt = nullptr);
 
+  /// Creates an Ada box expression (indicating default value)
+  SgExpression&
+  mkAdaBoxExp();
 
   /// Creates a reference to the exception object \ref exception
   SgExpression&

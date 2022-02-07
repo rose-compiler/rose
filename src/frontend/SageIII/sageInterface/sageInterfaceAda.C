@@ -582,6 +582,31 @@ namespace ada
     return n ? getAdaDiscriminatedTypeDecl(*n) : nullptr;
   }
 
+  AggregateInfo splitAggregate(const SgExprListExp& lst)
+  {
+    using Iterator = SgExpressionPtrList::const_iterator;
+
+    const SgExpressionPtrList& exprs = lst.get_expressions();
+    Iterator                   aa = exprs.begin();
+    Iterator                   zz = exprs.end();
+    SgAdaAncestorInitializer*  ini = nullptr;
+
+    if (aa != zz)
+    {
+      ini = isSgAdaAncestorInitializer(*aa);
+
+      if (ini) ++aa;
+    }
+
+    return AggregateInfo{ ini, aa, zz };
+  }
+
+  AggregateInfo splitAggregate(const SgExprListExp* exp)
+  {
+    return splitAggregate(SG_DEREF(exp));
+  }
+
+
   SgAdaPackageSymbol* renamedPackageSymbol(const SgAdaRenamingDecl& n)
   {
     SgSymbol* sym = n.get_renamed();
