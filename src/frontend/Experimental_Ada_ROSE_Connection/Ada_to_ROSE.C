@@ -487,10 +487,21 @@ namespace
           break;
         }
 
+      case A_Procedure_Body_Subunit:
+      case A_Function_Body_Subunit:
       case A_Function_Body:
       case A_Procedure_Body:
         {
-          logTrace() << "A " << (adaUnit.Unit_Kind == A_Function_Body ? "function" : "procedure") << " body"
+          const char* kind = "A_Procedure_Body_Subunit";
+
+          if (adaUnit.Unit_Kind == A_Function_Body)
+            kind = "A_Function_Body";
+          else if (adaUnit.Unit_Kind == A_Procedure_Body)
+            kind = "A_Procedure_Body";
+          else if (adaUnit.Unit_Kind == A_Function_Body_Subunit)
+            kind = "A_Function_Body_Subunit";
+
+          logTrace() << kind
                      << PrnUnitHeader(adaUnit)
                      << std::endl;
           ElemIdRange range = idRange(adaUnit.Context_Clause_Elements);
@@ -499,9 +510,13 @@ namespace
           handleElementID(adaUnit.Unit_Declaration, ctx);
 
           /* unused optional elems:
+             A_Function_Body && A_Procedure_Body
                Unit_ID             Corresponding_Parent_Declaration;
                Unit_ID             Corresponding_Declaration;
                Unit_List           Subunits;
+             A_Procedure_Body_Subunit && A_Function_Body_Subunit
+               Unit_List           Subunits;
+               Unit_ID Corresponding_Subunit_Parent_Body
           */
 
 
@@ -595,8 +610,6 @@ namespace
       //  interpreted as both the declaration and body of a library
       //  function. Reference Manual 10.1.4(4)
 
-      case A_Procedure_Body_Subunit:
-      case A_Function_Body_Subunit:
       case A_Package_Body_Subunit:
       case A_Task_Body_Subunit:
       case A_Protected_Body_Subunit:
@@ -767,6 +780,51 @@ namespace
     return UniqueUnitId{isBody, AdaIdentifier{unit.Unit_Full_Name}};
   }
 
+  size_t getUnitIDofParent(const Unit_Struct& unit)
+  {
+    size_t res = 0;
+
+    switch (unit.Unit_Kind)
+    {
+      case A_Procedure:
+      case A_Function:
+      case A_Package:
+      case A_Generic_Procedure:
+      case A_Generic_Function:
+      case A_Generic_Package:
+      case A_Procedure_Instance:
+      case A_Function_Instance:
+      case A_Package_Instance:
+      case A_Procedure_Renaming:
+      case A_Function_Renaming:
+      case A_Package_Renaming:
+      case A_Generic_Procedure_Renaming:
+      case A_Generic_Function_Renaming:
+      case A_Generic_Package_Renaming:
+      case A_Procedure_Body:
+      case A_Function_Body:
+      case A_Package_Body:
+        {
+          res = unit.Corresponding_Parent_Declaration;
+          break;
+        }
+
+      case A_Procedure_Body_Subunit:
+      case A_Function_Body_Subunit:
+      case A_Package_Body_Subunit:
+      case A_Task_Body_Subunit:
+      case A_Protected_Body_Subunit:
+        {
+          res = unit.Corresponding_Subunit_Parent_Body;
+          break;
+        }
+
+      default: ;
+    }
+
+    return res;
+  }
+
   std::vector<Unit_Struct*>
   sortUnitsTopologically(Unit_Struct_List_Struct* adaUnit, AstContext ctx)
   {
@@ -800,7 +858,7 @@ namespace
       ADA_ASSERT(uit != idmap.end());
 
       DependencyMap::iterator pos = uit->second;
-      const size_t            parentID = unit->Unit.Corresponding_Parent_Declaration;
+      const size_t            parentID = getUnitIDofParent(unit->Unit);
       IdEntryMap::iterator    idpos    = idmap.find(parentID);
 
       if (idpos != idmap.end())
@@ -819,6 +877,9 @@ namespace
       }
 
       addWithClausDependencies(unit->Unit, pos->second.dependencies, ctx);
+
+      // \todo should we also add body->spec constraints?
+      //       unit.Corresponding_Declaration;
     }
 
     std::vector<Unit_Struct*> res;
