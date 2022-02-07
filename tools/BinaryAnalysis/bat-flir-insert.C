@@ -149,7 +149,10 @@ copyFromDatabase(const Settings &settings, Flir &dst, const std::string &dbUrl) 
 
     size_t nInserted = 0;
     std::set<std::string> libraryHashes;
-    for (const auto &function: src.functions()) {
+    std::vector<Flir::Function::Ptr> srcFunctions = src.functions();
+    Sawyer::ProgressBar<size_t> progress(srcFunctions.size(), mlog[MARCH], "functions");
+    for (const auto &function: srcFunctions) {
+        ++progress;
         if (dst.insertFunction(function))
             ++nInserted;
     }
