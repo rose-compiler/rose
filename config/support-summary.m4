@@ -47,6 +47,7 @@ AC_DEFUN([ROSE_SUPPORT_SUMMARY],[
     echo "    location                         ${ac_boost_path:-unknown}"
     echo "    version constant                 ${rose_boost_version:-unknown}"
     echo "    asio library                     ${BOOST_ASIO_LIB:-none}"
+    echo "    atomic library                   ${BOOST_ATOMIC_LIB:-none}"
     echo "    chrono library                   ${BOOST_CHRONO_LIB:-none}"
     echo "    date/time library                ${BOOST_DATE_TIME_LIB:-none}"
     echo "    filesystem library               ${BOOST_FILESYSTEM_LIB:-none}"
