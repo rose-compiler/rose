@@ -281,7 +281,7 @@ LibraryIdentification::createTables() {
     db_.run("create table settings ("
             "name text,"
             "value text)");
-    db_.run("insert into settings (name, value) values ('version', '1')");
+    db_.run("insert into settings (name, value) values ('version', '2')");
 
     db_.run("drop table if exists libraries");
     db_.run("create table libraries ("
@@ -302,6 +302,9 @@ LibraryIdentification::createTables() {
             "ctime bigint,"
             "cversion text,"
             "library_hash text not null)");
+
+    db_.run("drop index if exists function_index");
+    db_.run("create unique index function_index on functions (address, library_hash)");
 }
 
 Sawyer::Optional<unsigned>
@@ -354,9 +357,18 @@ LibraryIdentification::upgradeDatabase() {
 
                 SAWYER_MESG(mlog[WARN]) <<"upgrading database from version 0: functions have no address or size\n"
                                         <<"upgraded database may not be entirely useful due to missing information\n";
-                break;
+                // fall through
 
             case 1:
+                // This may fail for a database that was upgraded from version zero because all the function starting addresses
+                // are zero (not available in the version 0 database).
+                SAWYER_MESG(mlog[INFO]) <<"upgrading database from version 1 to version 2\n";
+                db_.run("drop index if exists function_index");
+                db_.run("create unique index function_index on functions (address, library_hash)");
+                db_.run("update settings set value = 2 where name = 'version'");
+                // fall through
+
+            case 2:
                 // current version
                 break;
 
@@ -457,24 +469,10 @@ LibraryIdentification::functions(Sawyer::Database::Statement stmt) {
 void
 LibraryIdentification::createLibrary(const Library::Ptr &library) {
     ASSERT_not_null(library);
-
-    bool exists = db_.stmt("select count(*) from libraries where hash = ?hash")
-                  .bind("hash", library->hash())
-                  .get<size_t>().orElse(0) > 0;
-
-    Sawyer::Database::Statement stmt;
-    if (exists) {
-        stmt = db_.stmt("update libraries"
-                        " set name = ?name, version = ?version, architecture = ?architecture,"
-                        "   ctime = ?ctime, cversion = ?cversion"
-                        " where hash = ?hash");
-
-    } else {
-        stmt = db_.stmt("insert into libraries (hash,  name,  version,  architecture,  ctime,  cversion)"
-                        "               values (?hash, ?name, ?version, ?architecture, ?ctime, ?cversion)");
-    }
-
-    stmt
+    db_.stmt("insert into libraries (hash, name, version, architecture, ctime, cversion)"
+             " values (?hash, ?name, ?version, ?architecture, ?ctime, ?cversion)"
+             " on conflict (hash) do"
+             " update set name = ?name, version = ?version, architecture = ?architecture, ctime = ?ctime, cversion = ?cversion")
         .bind("hash", library->hash())
         .bind("name", library->name())
         .bind("version", library->version())
@@ -489,48 +487,11 @@ LibraryIdentification::createLibrary(const Library::Ptr &library) {
 void
 LibraryIdentification::createFunction(const Function::Ptr &function) {
     ASSERT_not_null(function);
-
-    Sawyer::Database::Statement stmt;
-    bool exists = false;
-    if (settings_.identifyFunctionsByHash) {
-        // This is how version zero of the ::LibraryIdentification namespace worked. If a library has more than one function
-        // that hashes to the same value (as is common with accessors, mutators, and dynamic linking stubs), then only one such
-        // function can be stored per library.
-        exists = db_.stmt("select count(*) from functions where library_hash = ?library and hash = ?hash")
-                 .bind("library", function->library()->hash())
-                 .bind("hash", function->hash())
-                 .get<size_t>().orElse(0) > 0;
-
-        if (exists) {
-            stmt = db_.stmt("update functions set"
-                            " name = ?name, demangled_name = ?demangled_name, address = ?address, ninsns = ?ninsns,"
-                            " ctime = ?ctime, cversion = ?cversion"
-                            " where library_hash = ?library and hash = ?hash");
-        }
-    } else {
-        // Subsequent versions of this analysis identify functions by their containing library (its hash) and the function's
-        // starting address within that library since starting addresses within a single executable (or library) are always
-        // unique.
-        exists = db_.stmt("select count(*) from functions where library_hash = ?library and address = ?address")
-                 .bind("library", function->library()->hash())
-                 .bind("address", function->address())
-                 .get<size_t>().orElse(0) > 0;
-
-        if (exists) {
-            stmt = db_.stmt("update functions set "
-                            " name = ?name, demangled_name = ?demangled_name, hash = ?hash, ninsns = ?ninsns,"
-                            "   ctime = ?ctime, cversion = ?cversion"
-                            " where library_hash = ?library and address = ?address");
-        }
-    }
-
-    // If not updated, insert a new row
-    if (!exists) {
-        stmt = db_.stmt("insert into functions (address,  name,  demangled_name,  hash,  ninsns,  ctime,  cversion,  library_hash)"
-                        "               values (?address, ?name, ?demangled_name, ?hash, ?ninsns, ?ctime, ?cversion, ?library)");
-    }
-
-    stmt
+    db_.stmt("insert into functions (address,  name,  demangled_name,  hash,  ninsns,  ctime,  cversion,  library_hash)"
+             " values (?address, ?name, ?demangled_name, ?hash, ?ninsns, ?ctime, ?cversion, ?library)"
+             " on conflict (address, library_hash) do"
+             " update set name = ?name, demangled_name = ?demangled_name, hash = ?hash, ninsns = ?ninsns, "
+             "   ctime = ?ctime, cversion = ?cversion")
         .bind("address", function->address())
         .bind("name", function->name())
         .bind("demangled_name", function->demangledName())

@@ -1152,6 +1152,7 @@ LinuxI386::copyMemory(const MemoryMap::Ptr &srcMap, const MemoryMap::Ptr &dstMap
         // Create the initialization event
         std::vector<uint8_t> buf(where.size());
         size_t nRead = srcMap->at(where).read(buf).size();
+        ASSERT_always_require(nRead == buf.size());
         auto eeInit = ExecutionEvent::bulkMemoryWrite(testCase(), nextEventLocation(When::POST), insnVa, where, buf);
         eeInit->name("init " + StringUtility::addrToString(where) + " " + segment.name());
         SAWYER_MESG(mlog[DEBUG]) <<"  created " <<eeInit->printableName(database()) <<"\n";

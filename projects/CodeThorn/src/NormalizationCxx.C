@@ -20,6 +20,35 @@ namespace CodeThorn
 {
 namespace
 {
+  struct GlobalClassAnalysis
+  {
+      static
+      const ClassAnalysis& get()
+      {
+        return SG_DEREF(globalClassAnalysis);
+      }
+
+      static
+      void init(SgProject* prj)
+      {
+        if (globalClassAnalysis)
+          return;
+
+        globalClassAnalysis = new ClassAnalysis(ct::analyzeClasses(prj));
+      }
+
+      static
+      void clear()
+      {
+        delete globalClassAnalysis;
+      }
+
+    private:
+      static ClassAnalysis* globalClassAnalysis;
+  };
+
+  ClassAnalysis* GlobalClassAnalysis::globalClassAnalysis = nullptr;
+
   struct CxxTransformStats
   {
     int cnt = 0;
@@ -1024,11 +1053,6 @@ namespace
     n.set_file_info(dummyFileInfo());
   }
 
-  void setSpecialFunctionModifier(SgSpecialFunctionModifier& mod, bool ctor)
-  {
-    if (ctor) mod.setConstructor(); else mod.setDestructor();
-  }
-
   std::string nameOf(SgClassDefinition& clsdef)
   {
     return SG_DEREF(clsdef.get_declaration()).get_name();
@@ -1044,26 +1068,52 @@ namespace
     return ctor ? nameOf(clsdef) : nameDtor(clsdef);
   }
 
-  SgMemberFunctionDeclaration&
-  mkCtorDtor(SgClassDefinition& scope, bool ctor)
+  using SpecialFunctionModifierSetter = void (*) (SgSpecialFunctionModifier&);
+
+  void noSpecialFunctionModifierSetter(SgSpecialFunctionModifier&)     {}
+  void ctorSpecialFunctionModifierSetter(SgSpecialFunctionModifier& m) { m.setConstructor(); }
+  void dtorSpecialFunctionModifierSetter(SgSpecialFunctionModifier& m) { m.setDestructor(); }
+
+  SpecialFunctionModifierSetter
+  specialFunctionModifierSetter(bool ctor)
   {
-    SgName                       nm(nameCtorDtor(scope, ctor));
-    SgType&                      ty  = SG_DEREF(sb::buildVoidType());
+    return ctor ? ctorSpecialFunctionModifierSetter : dtorSpecialFunctionModifierSetter;
+  }
+
+  SgMemberFunctionDeclaration&
+  mkMemfnDcl( SgClassDefinition& clsdef,
+              std::string name,
+              SgType& returnType,
+              std::function<void (SgFunctionParameterList&, SgScopeStatement&)> completeParamList,
+              SpecialFunctionModifierSetter specialModifierSetter = noSpecialFunctionModifierSetter
+            )
+  {
+    SgName                       nm(name);
     SgFunctionParameterList&     lst = SG_DEREF(sb::buildFunctionParameterList());
-    SgMemberFunctionDeclaration& dcl = SG_DEREF(sb::buildNondefiningMemberFunctionDeclaration(nm, &ty, &lst, &scope));
     SgFunctionParameterScope&    psc = SG_DEREF(new SgFunctionParameterScope(dummyFileInfo()));
 
     markCompilerGenerated(lst);
-    markCompilerGenerated(dcl);
     markCompilerGenerated(psc);
+    completeParamList(lst, psc);
 
-    setSpecialFunctionModifier(dcl.get_specialFunctionModifier(), ctor);
+    SgMemberFunctionDeclaration& dcl = SG_DEREF(sb::buildNondefiningMemberFunctionDeclaration(nm, &returnType, &lst, &clsdef));
 
+    markCompilerGenerated(dcl);
+
+    specialModifierSetter(dcl.get_specialFunctionModifier());
     dcl.set_functionParameterScope(&psc);
     psc.set_parent(&dcl);
     dcl.set_firstNondefiningDeclaration(&dcl);
-
     return dcl;
+  }
+
+  SgMemberFunctionDeclaration&
+  mkCtorDtor(SgClassDefinition& scope, bool ctor)
+  {
+    SgName nm{nameCtorDtor(scope, ctor)};
+    auto   paramSetter = [](SgFunctionParameterList&, SgScopeStatement&) -> void {};
+
+    return mkMemfnDcl(scope, nm, SG_DEREF(sb::buildVoidType()), paramSetter, specialFunctionModifierSetter(ctor));
   }
 
   SgTemplateArgumentPtrList*
@@ -1083,14 +1133,12 @@ namespace
 
 
   SgMemberFunctionDeclaration&
-  mkCtorDtorDef(SgClassDefinition& clsdef, SgMemberFunctionDeclaration& nondef, bool ctor)
+  mkMemfnDef( SgClassDefinition& clsdef,
+              SgMemberFunctionDeclaration& nondef,
+              SpecialFunctionModifierSetter specialModifierSetter = noSpecialFunctionModifierSetter
+            )
   {
     typedef SgTemplateInstantiationMemberFunctionDecl TemplateMemberFunction;
-
-    if (nondef.get_definingDeclaration())
-    {
-      logError() << "culprit: " << nondef.get_name() << std::endl;
-    }
 
     ROSE_ASSERT(nondef.get_definingDeclaration() == nullptr);
 
@@ -1117,13 +1165,19 @@ namespace
     ROSE_ASSERT(dcl.get_functionParameterScope() == nullptr);
     ROSE_ASSERT(nondef.get_definingDeclaration() != nullptr);
 
-    setSpecialFunctionModifier(dcl.get_specialFunctionModifier(), ctor);
+    specialModifierSetter(dcl.get_specialFunctionModifier());
     dcl.set_functionParameterScope(&psc);
 
     psc.set_parent(&dcl);
-
     return dcl;
   }
+
+  SgMemberFunctionDeclaration&
+  mkCtorDtorDef(SgClassDefinition& clsdef, SgMemberFunctionDeclaration& nondef, bool ctor)
+  {
+    return mkMemfnDef(clsdef, nondef, specialFunctionModifierSetter(ctor));
+  }
+
 
   SgMemberFunctionDeclaration&
   createCtorDtor(SgClassDefinition& clsdef, bool ctor)
@@ -1194,6 +1248,161 @@ namespace
     return &obtainGeneratableCtor( clsdef, *emptyargs );
   }
 
+  template <class Pred>
+  struct FunctionPredicate
+  {
+      FunctionPredicate(const std::string& fnName, Pred&& fnPred)
+      : name(fnName), pred(std::move(fnPred))
+      {}
+
+      bool operator()(const SgDeclarationStatement* dcl) const
+      {
+        const SgMemberFunctionDeclaration* memfn = isSgMemberFunctionDeclaration(dcl);
+
+        return memfn && (memfn->get_name() == name) && pred(*memfn);
+      }
+
+    private:
+      const std::string& name;
+      Pred  pred;
+  };
+
+  template <class Pred>
+  FunctionPredicate<Pred>
+  functionPredicate(const std::string& name, Pred&& pred)
+  {
+    return FunctionPredicate<Pred>{name, std::move(pred)};
+  }
+
+
+  template <class ArgumentListPredicate>
+  std::vector<SgMemberFunctionDeclaration*>
+  findEligibleMemberFunction(const SgClassDefinition& clsdef, const std::string& name, ArgumentListPredicate argpred)
+  {
+    using Iterator = SgDeclarationStatementPtrList::const_iterator;
+
+    std::vector<SgMemberFunctionDeclaration*> res;
+    const SgDeclarationStatementPtrList&      lst = clsdef.get_members();
+    Iterator                                  zzz = lst.end();
+    Iterator                                  pos = lst.begin();
+
+    for (;;)
+    {
+      pos = std::find_if(pos, zzz, functionPredicate(name, std::move(argpred)));
+      if (pos == zzz) break;
+
+      res.push_back(isSgMemberFunctionDeclaration(*pos));
+    }
+
+    return res;
+  }
+
+  enum class CopyAssign : int
+  {
+    none                = 0,
+    volatile_qual       = (1 << 0),
+    const_qual          = (1 << 1),
+    copy                = (1 << 2),
+    ref                 = (1 << 3),
+    const_volatile_qual = const_qual + volatile_qual,
+    const_ref           = const_qual + ref
+  };
+
+  CopyAssign operator|(CopyAssign lhs, CopyAssign rhs)
+  {
+    return static_cast<CopyAssign>(lhs | rhs);
+  }
+
+  std::tuple<const SgType*, CopyAssign>
+  skipCVQualifier(const SgType* ty, CopyAssign knd)
+  {
+    const SgModifierType*          modty = isSgModifierType(ty);
+
+    if (!modty) return std::make_tuple(ty, knd);
+
+    const SgConstVolatileModifier& mods = modty->get_typeModifier().get_constVolatileModifier();
+
+    if (mods.isConst())    knd = knd | CopyAssign::const_qual;
+    if (mods.isVolatile()) knd = knd | CopyAssign::volatile_qual;
+
+    return skipCVQualifier(modty->get_base_type(), knd);
+  }
+
+  /// returns the kind of operator=
+  CopyAssign
+  copyAssignParam(const SgMemberFunctionType& memfn)
+  {
+    const SgTypePtrList& tylst = memfn.get_arguments();
+    CopyAssign           res   = CopyAssign::none;
+
+    if (tylst.size() != 1)
+      return res;
+
+    const SgType*        argty = tylst[0];
+
+    if (const SgReferenceType* refty = isSgReferenceType(argty))
+      std::tie(argty, res) = skipCVQualifier(refty->get_base_type(), CopyAssign::ref);
+
+    if (memfn.get_class_type() != argty)
+      return CopyAssign::none;
+
+    return (res == CopyAssign::none) ? CopyAssign::copy : res;
+  }
+
+  CopyAssign
+  copyAssignParam(const SgMemberFunctionDeclaration* memfn)
+  {
+    ROSE_ASSERT(memfn);
+
+    return copyAssignParam(SG_DEREF(isSgMemberFunctionType(memfn->get_type())));
+  }
+
+  bool
+  copyAssignReturn(const SgMemberFunctionType& memfn)
+  {
+    SgReferenceType* refty = isSgReferenceType(memfn.get_return_type());
+
+    return refty && (refty->get_base_type() == memfn.get_class_type());
+  }
+
+  CopyAssign
+  copyAssignSignature(const SgMemberFunctionDeclaration& memfn)
+  {
+    const SgMemberFunctionType& fnty = SG_DEREF(isSgMemberFunctionType(memfn.get_type()));
+
+    return copyAssignReturn(fnty) ? copyAssignParam(fnty) : CopyAssign::none;
+  }
+
+  bool
+  hasCopyAssignSignature(const SgMemberFunctionDeclaration& memfn)
+  {
+    return copyAssignSignature(memfn) != CopyAssign::none;
+  }
+
+  SgMemberFunctionDeclaration*
+  findEligibleCopyAssignment(const SgClassDefinition& clsdef)
+  {
+    std::vector<SgMemberFunctionDeclaration*> cands = findEligibleMemberFunction(clsdef, "operator=", hasCopyAssignSignature);
+
+    if (cands.size() == 0) return nullptr;
+
+    if (cands.size() > 1)
+      logWarn() << "Multiple assignment operators are available. Choosing one RANDOMLY!"
+                << std::endl;
+
+    // it is not that random after all ...
+    std::sort( cands.begin(), cands.end(),
+               [](const SgMemberFunctionDeclaration* lhs, SgMemberFunctionDeclaration* rhs) -> bool
+               {
+                 // reverse the relationship in CopyAssign
+                 //   -> moves const & to front
+                 return copyAssignParam(lhs) > copyAssignParam(rhs);
+               }
+             );
+
+    return cands[0];
+  }
+
 /*
   concept EmptyTransformer
   {
@@ -1209,14 +1418,63 @@ namespace
 */
 
   /// returns static_cast<Base*>(this)
-  SgExpression& mkThisExpForBase(const SgClassDeclaration& clsdcl, const SgClassDeclaration& base)
+  SgThisExp&
+  mkThisExp(const SgClassDeclaration& clsdcl)
   {
-    SgSymbol&           clssym = SG_DEREF(clsdcl.search_for_symbol_from_symbol_table());
-    SgThisExp&          thisop = SG_DEREF(sb::buildThisExp(&clssym));
-    SgType&             bseptr = SG_DEREF(sb::buildPointerType(base.get_type()));
+    SgSymbol& clssym = SG_DEREF(clsdcl.search_for_symbol_from_symbol_table());
 
-    return SG_DEREF(sb::buildCastExp(&thisop, &bseptr, SgCastExp::e_static_cast));
+    return SG_DEREF(sb::buildThisExp(&clssym));
   }
+
+  SgExpression&
+  mkThisExpForBase(const SgClassDeclaration& clsdcl, const SgClassDeclaration& base, bool cst = false)
+  {
+    SgThisExp&          self = mkThisExp(clsdcl);
+    SgType*             bseptr = base.get_type();
+
+    if (cst) bseptr = sb::buildConstType(bseptr);
+
+    bseptr = sb::buildPointerType(bseptr);
+
+    ROSE_ASSERT(bseptr);
+    return SG_DEREF(sb::buildCastExp(&self, bseptr, SgCastExp::e_static_cast));
+  }
+
+  /// returns static static_cast<const Base&>(var)
+  SgExpression&
+  mkVarRefForBase(SgInitializedName& var, const SgClassDeclaration& base, bool cst = false)
+  {
+    SgVarRefExp* varref = sb::buildVarRefExp(&var, nullptr /* not used */);
+    SgType*      bseptr = base.get_type();
+
+    if (cst) bseptr = sb::buildConstType(bseptr);
+
+    bseptr = sb::buildReferenceType(bseptr);
+    ROSE_ASSERT(varref && bseptr);
+    return SG_DEREF(sb::buildCastExp(varref, bseptr, SgCastExp::e_static_cast));
+  }
+
+  /// returns this->fld
+  SgExpression& mkFieldAccess(const SgClassDeclaration& clsdcl, SgInitializedName& fld)
+  {
+    SgThisExp&   lhs = mkThisExp(clsdcl);
+    SgVarRefExp& rhs = SG_DEREF(sb::buildVarRefExp(&fld, nullptr /* not used */));
+
+    return SG_DEREF(sb::buildArrowExp(&lhs, &rhs));
+  }
+
+  /// returns var.fld
+  SgExpression& mkFieldAccess(SgInitializedName& var, SgInitializedName& fld)
+  {
+    SgVarRefExp& lhs = SG_DEREF(sb::buildVarRefExp(&var, nullptr /* unused */));
+    SgVarRefExp& rhs = SG_DEREF(sb::buildVarRefExp(&fld, nullptr /* unused */));
+
+    return SG_DEREF(sb::buildDotExp(&lhs, &rhs));
+  }
+
+
+
+
 
 
   struct CtorCallCreator
@@ -1511,6 +1769,148 @@ namespace
 
     private:
       SgClassDefinition& cls;
+  };
+
+  SgVariableDeclaration&
+  mkParameter(std::string name, SgType& ty, SgScopeStatement& scope)
+  {
+    SgVariableDeclaration& sgnode = SG_DEREF(sb::buildVariableDeclaration(name, &ty, nullptr, &scope));
+    //~ SgInitializedName&     parm   = SG_DEREF(sgnode.get_variables().at(0));
+
+    // sgnode.set_parent(&scope);
+    ROSE_ASSERT(sgnode.get_parent() == &scope);
+    ROSE_ASSERT(sgnode.get_definingDeclaration() != nullptr);
+    ROSE_ASSERT(sgnode.get_firstNondefiningDeclaration() == nullptr);
+    return sgnode;
+  }
+
+
+  struct CopyAssignmentTransformer
+  {
+      CopyAssignmentTransformer(SgClassDefinition& classdef, SgMemberFunctionDeclaration* memdcl)
+      : clsdef(classdef), fndcl(memdcl)
+      {}
+
+      void execute(CxxTransformStats& stat)
+      {
+        logTrace() << "creating defining operator= .."
+                   << std::endl;
+
+        SgClassDeclaration&  clsdcl = SG_DEREF(clsdef.get_declaration());
+        SgClassType&         clsTy  = SG_DEREF(clsdcl.get_type());
+
+        if (fndcl == nullptr)
+        {
+          SgType* cnstRf    = sb::buildReferenceType(sb::buildConstType(&clsTy));
+          ROSE_ASSERT(cnstRf);
+          auto    signature = [cnstRf]
+                              (SgFunctionParameterList& lst, SgScopeStatement& scp) -> void
+                              {
+                                SgVariableDeclaration&    decl = mkParameter("that", *cnstRf, scp);
+                                SgInitializedNamePtrList& args = lst.get_args();
+
+                                ROSE_ASSERT(decl.get_variables().size() == 1);
+                                SgInitializedName*        parm = decl.get_variables().front();
+                                ROSE_ASSERT(parm);
+
+                                parm->set_parent(&lst);
+                                args.push_back(parm);
+                              };
+
+          SgType& clsRf = SG_DEREF(sb::buildReferenceType(&clsTy));
+
+          gendcl = fndcl = &mkMemfnDcl(clsdef, "operator=", clsRf, signature);
+        }
+
+        ROSE_ASSERT(fndcl && fndcl->get_definingDeclaration() == nullptr);
+
+        gendef = &mkMemfnDef(clsdef, *fndcl);
+
+        // traverse all sub-objects and call their operator= if needed
+        const ::ct::ClassAnalysis& classes = GlobalClassAnalysis::get();
+        SgInitializedNamePtrList&  parmlst = gendef->get_args();
+        ROSE_ASSERT(parmlst.size() == 1);
+        SgInitializedName&         thatvar = SG_DEREF(parmlst.front());
+        SgFunctionDefinition&      memdef = SG_DEREF(gendef->get_definition());
+        SgBasicBlock&              body = SG_DEREF(memdef.get_body());
+
+        // Traverse all bases and either call their (generated) operator= member function
+        // or use assignment, if none is present.
+        // \note
+        //   We mimic assignment operators as generated by: gcc, clang, suncc, and xlc
+        //   where virtual base classes are assigned multiple times.
+        //   The rational is that this is the interpretation that is more likely to bring out
+        //   bugs in the code.
+        //   https://eel.is/c++draft/class.copy.assign
+        // \todo Make it possible to choose semantics of the Intel compiler.
+        //       A design could be similar to constructors where most derived
+        //       and base constructors coexist.
+        for (const ::ct::InheritanceDesc& inh : classes.at(clsdef).ancestors())
+        {
+          if (!inh.isDirect()) continue;
+
+          const SgClassDefinition&     basecls   = SG_DEREF(inh.getClass());
+          SgMemberFunctionDeclaration* basefn    = findEligibleCopyAssignment(basecls);
+          SgClassDeclaration&          basedcl   = SG_DEREF(basecls.get_declaration());
+          SgExpression&                self      = mkThisExpForBase(clsdcl, basedcl);
+          SgExpression&                thatbase  = mkVarRefForBase(thatvar, basedcl, true /* const */);
+          SgStatement*                 subassign = nullptr;
+
+          if (basefn)
+          {
+            // generate assignment call: static_cast<Base*>(this)->operator=(static_cast<Base&>(that))
+            SgType&        selfTy  = SG_DEREF(self.get_type());
+            SgExprListExp& args    = SG_DEREF(sb::buildExprListExp(&thatbase));
+
+            subassign = &createMemberCall(self, selfTy, *basefn, args, false /* non-virtual call */);
+          }
+          else
+          {
+            // generate C-style assignment: (*static_cast<Base*>(this)) = static_cast<Base&>(that)
+            SgExpression& derefSelf = SG_DEREF(sb::buildPointerDerefExp(&self));
+
+            subassign = sb::buildAssignStatement(&derefSelf, &thatbase);
+          }
+
+          ROSE_ASSERT(subassign);
+          body.append_statement(subassign);
+        }
+
+        // Traverse all members and call their operator= if present, otherwise just use
+        // the a
+        for (const SgInitializedName* mem : classes.at(clsdef).dataMembers())
+        {
+          SgInitializedName& var = SG_DEREF(const_cast<SgInitializedName*>(mem));
+          SgExpression&      thisfld   = mkFieldAccess(clsdcl, var);
+          SgClassDefinition* varcls    = getClassDefOpt(var);
+          SgExpression&      thatfld   = mkFieldAccess(thatvar, var);
+          SgStatement*       subassign = nullptr;
+
+          if (SgMemberFunctionDeclaration* fldfn = varcls ? findEligibleCopyAssignment(*varcls) : nullptr)
+          {
+            // generate assignment call: this->var.operator=(that.var)
+            SgType&        thisfldTy = SG_DEREF(thisfld.get_type());
+            SgExprListExp& args      = SG_DEREF(sb::buildExprListExp(&thatfld));
+
+            subassign = &createMemberCall(thisfld, thisfldTy, *fldfn, args, false /* non-virtual call */);
+          }
+          else
+          {
+            // generate C-style assignment: this->var = that.var
+            subassign = sb::buildAssignStatement(&thisfld, &thatfld);
+          }
+
+          ROSE_ASSERT(subassign);
+          body.append_statement(subassign);
+        }
+      }
+
+    private:
+      SgClassDefinition&           clsdef;
+      SgMemberFunctionDeclaration* fndcl;
+
+      SgMemberFunctionDeclaration* gendcl = nullptr;
+      SgMemberFunctionDeclaration* gendef = nullptr;
   };
 
   /// extracts the declared variables in a scope
@@ -2306,35 +2706,6 @@ namespace
                      }
                    );
 
-  struct GlobalClassAnalysis
-  {
-      static
-      const ClassAnalysis& get()
-      {
-        return SG_DEREF(globalClassAnalysis);
-      }
-
-      static
-      void init(SgProject* prj)
-      {
-        if (globalClassAnalysis)
-          return;
-
-        globalClassAnalysis = new ClassAnalysis(ct::analyzeClasses(prj));
-      }
-
-      static
-      void clear()
-      {
-        delete globalClassAnalysis;
-      }
-
-    private:
-      static ClassAnalysis* globalClassAnalysis;
-  };
-
-  ClassAnalysis* GlobalClassAnalysis::globalClassAnalysis = nullptr;
-
 
   void clearMemoized()
   {
@@ -2501,6 +2872,13 @@ namespace
       container*            cont       = nullptr;
       node_set*             knownNodes = nullptr;
 
+      /// wrapper to access class hierarchy analysis
+      const ct::ClassAnalysis&
+      classAnalysis() const
+      {
+        return GlobalClassAnalysis::get();
+      }
+
     private:
       GeneratorBase() = delete;
   };
@@ -2512,6 +2890,14 @@ namespace
   {
     return !s.insert(e).second;
   }
+
+  template <class SetT, class ElemT, class ValT>
+  inline
+  bool alreadyProcessed(SetT& s, const ElemT& e, ValT v)
+  {
+    return !s.insert(std::make_pair(e, v)).second;
+  }
+
 /*
   template <class SetT, class ElemT>
   inline
@@ -2539,7 +2925,11 @@ namespace
   }
 
 
-  /// adds constructors and destructors as needed and normalizes these functions
+  /// Adds constructors, destructors, operator= as needed and generates/normalizes these functions.
+  /// If needed defining declarations for this functions will be generated.
+  // \todo currently the incomplete declarations are identified in ideosyncratic
+  //       ways. It would be nicer to find a more uniform way (if possible) to
+  //       find declarations that need compiler generation.
   struct CxxCtorDtorGenerator : GeneratorBase
   {
       using GeneratorBase::GeneratorBase;
@@ -2570,7 +2960,7 @@ namespace
           record(ConstructorTransformer{*ctor});
         }
 
-        descend(*this, n);
+        handle(sg::asBaseType(n));
       }
 
       void handle(SgMemberFunctionDeclaration& n)
@@ -2584,7 +2974,7 @@ namespace
           //~ normalizeDtorDef(n, *cont);
         //~ }
 
-        descend(*this, n);
+        handle(sg::asBaseType(n));
       }
 
       void handle(SgClassDefinition& n)
@@ -2608,13 +2998,126 @@ namespace
           record(DestructorTransformer{n});
         }
 
-        descend(*this, n);
+        handle(sg::asBaseType(n));
       }
+
+      void handle(SgMemberFunctionRefExp& n)
+      {
+        // no need to handle SgMemberFunctionRefExp's base class
+        // handle(sg::asBaseType(n));
+
+        SgMemberFunctionDeclaration* memdcl = n.getAssociatedMemberFunctionDeclaration();
+
+        if (memdcl == nullptr || memdcl->get_definingDeclaration())
+          return;
+
+        // \todo how can we distinguish a compiler generated copy-assignment operator from
+        //       a user-defined copy-assignment operator that resides in an external
+        //       translation unit?
+        //       memdcl->isCompilerGenerated returns false for compiler generated ones
+
+        if (memdcl->get_name() != std::string{"operator="})
+          return;
+
+        // check if base classes and all non-trivial members have copy assignment
+        SgClassDefinition& clsdef = getClassDef(*memdcl);
+
+        if (alreadyProcessed(classesWithCopyAssignment, &clsdef, true /* needs copy-assign */))
+          return;
+
+        /* bool basesOrMembersRequireCopyAssignment = */ checkCopyAssignInBasesAndMembers(clsdef);
+        record(CopyAssignmentTransformer{clsdef, memdcl});
+      }
+
+    private:
+      void descend(SgNode& n);
+
+      /// check whether a class (or its bases and members) have or need
+      /// a copy assignment function.
+      /// \return true if the class structure requires a copy assignment operator;
+      ///         false otherwise, indicating that standard assignment can be used.
+      /// \{
+      bool checkCopyAssignInClass(SgClassDefinition& clsdef);
+      bool checkCopyAssignInBasesAndMembers(SgClassDefinition& clsdef);
+      /// \}
+
+      // tracks if a class has been handled, and whether the base has
+      // an implemented copy assignment operator.
+      std::map<SgClassDefinition*, bool> classesWithCopyAssignment;
   };
+
+
+  bool CxxCtorDtorGenerator::checkCopyAssignInClass(SgClassDefinition& clsdef)
+  {
+    if (alreadyProcessed(classesWithCopyAssignment, &clsdef, false))
+      return classesWithCopyAssignment[&clsdef];
+
+    SgMemberFunctionDeclaration* memdcl = findEligibleCopyAssignment(clsdef);
+
+    if (memdcl && memdcl->get_definingDeclaration())
+    {
+      classesWithCopyAssignment[&clsdef] = true;
+      return true;
+    }
+
+    const bool basesOrMembersRequireCopyAssign = checkCopyAssignInBasesAndMembers(clsdef);
+    const bool thisClassRequiresCopyAssign     = memdcl || basesOrMembersRequireCopyAssign;
+
+    // only generate the copy assignment when a operator= is already present
+    //   or if any base or member has a non-trivial copy assignment
+    if (thisClassRequiresCopyAssign)
+    {
+      classesWithCopyAssignment[&clsdef] = true;
+      record(CopyAssignmentTransformer{clsdef, memdcl});
+    }
+
+    return thisClassRequiresCopyAssign;
+  }
+
+  bool CxxCtorDtorGenerator::checkCopyAssignInBasesAndMembers(SgClassDefinition& clsdef)
+  {
+    bool                       res     = false;
+    const ::ct::ClassAnalysis& classes = classAnalysis();
+
+    // for all base classes
+    for (const ct::InheritanceDesc& desc : classes.at(&clsdef).ancestors())
+    {
+      res = res || desc.isVirtual(); // required if there is a virtual base
+
+      if (!desc.isDirect())
+        continue;
+
+      const SgClassDefinition& ancestorClass   = SG_DEREF(desc.getClass());
+      SgClassDefinition&       ancestorCls     = const_cast<SgClassDefinition&>(ancestorClass);
+      const bool               needsCopyAssign = checkCopyAssignInClass(ancestorCls);
+
+      res = res || needsCopyAssign;
+    }
+
+    // for all members
+    for (const SgInitializedName* datamem : classes.at(&clsdef).dataMembers())
+    {
+      SgClassDefinition* classdef = getClassDefOpt(SG_DEREF(datamem));
+
+      if (!classdef)
+        continue;
+
+      const bool needsCopyAssign = checkCopyAssignInClass(*classdef);
+
+      res = res || needsCopyAssign;
+    }
+
+    return res;
+  }
 
   void CxxCtorDtorGenerator::handle(SgNode& n)
   {
-    descend(*this, n);
+    descend(n);
+  }
+
+  void CxxCtorDtorGenerator::descend(SgNode& n)
+  {
+    ::ct::descend_collect(*this, n);
   }
 
 
@@ -2709,7 +3212,7 @@ namespace
       CxxVirtualBaseCtorDtorGenerator( GeneratorBase::container& transf,
                                        GeneratorBase::node_set& visited
                                      )
-      : GeneratorBase(transf, visited), classes(&GlobalClassAnalysis::get()), newCtorDtorList()
+      : GeneratorBase(transf, visited), newCtorDtorList()
       {}
 
       using GeneratorBase::handle;
@@ -2730,7 +3233,7 @@ namespace
         if (!ctordtor) return;
 
         ClassKeyType                classkey     = &getClassDef(memdcl);
-        const ClassData&            classdesc    = classes->at(classkey);
+        const ClassData&            classdesc    = classAnalysis().at(classkey);
         const VirtualBaseContainer& virtualBases = classdesc.virtualBaseClassOrder();
 
         // no transformation if there is no virtual base class
@@ -2748,7 +3251,6 @@ namespace
       }
 
     private:
-      const ClassAnalysis* classes;
       NewCtorDtorList      newCtorDtorList;
   };
 
@@ -3165,7 +3667,8 @@ namespace
     int                      numargs   = args.get_expressions().size();
 
     // numargs > numparams for functions with ellipsis
-    if (numargs >= numparams) return;
+    if (numargs >= numparams)
+      return;
 
     // create the transformers
     const DeclarationSet&    declSet = declarationSet(callee);

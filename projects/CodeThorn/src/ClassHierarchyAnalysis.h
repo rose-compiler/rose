@@ -269,6 +269,9 @@ class ClassAnalysis : std::unordered_map<ClassKeyType, ClassData>
     ///   returns false when ancestorKey == descendantKey
     bool
     areBaseDerived(ClassKeyType ancestorKey, ClassKeyType descendantKey) const;
+
+    /// convenience function to access the map using a SgClassDefinition&.
+    const ClassData& at(const SgClassDefinition& clsdef) const { return this->at(&clsdef); }
 };
 
 

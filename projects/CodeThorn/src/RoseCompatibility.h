@@ -175,13 +175,22 @@ SgClassDefinition& getClassDef(const SgDeclarationStatement& n);
 /// returns the class definition where \ref n is defined
 SgClassDefinition& getClassDef(const SgMemberFunctionDeclaration& n);
 
-/// returns the class definition of \ref n
+/// returns the class definition associated with expression \ref n
+/// \details
+///    strips modifiers, aliases, references, and pointers
 /// returns nullptr if a class definition cannot be found
-SgClassDefinition& getClassDef(const SgExpression& n, bool skipUpCasts = false);
+SgClassDefinition* getClassDefOpt(const SgExpression& n, bool skipUpCasts = false);
 
 /// returns the class definition of \ref n
 /// returns nullptr if a class definition cannot be found
 SgClassDefinition* getClassDefOpt(const SgClassType& n);
+
+/// returns the associated class definitions of \ref n
+/// \details
+///   strips arrays, modifiers, and typedefs.
+///   DOES NOT strip references and pointers.
+/// returns nullptr if a class definition cannot be found
+SgClassDefinition* getClassDefOpt(const SgInitializedName& n);
 
 /// returns the representative declaration for \ref memfn
 SgMemberFunctionDeclaration& keyDecl(SgMemberFunctionDeclaration& memfn);
