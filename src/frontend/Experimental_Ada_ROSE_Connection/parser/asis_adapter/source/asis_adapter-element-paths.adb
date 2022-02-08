@@ -1,5 +1,6 @@
 with Asis.Elements;
 with Asis.Statements;
+with Asis.Expressions;
 
 package body Asis_Adapter.Element.Paths is
 
@@ -24,6 +25,14 @@ package body Asis_Adapter.Element.Paths is
             Dot_Label_Name => "Case_Path_Alternative_Choices",
             List_Out       => Result.Case_Path_Alternative_Choices,
             Add_Edges      => True);
+      end;
+
+      procedure Add_Dependent_Expression is
+         ID : constant a_nodes_h.Element_ID :=
+           Get_Element_ID (Asis.Expressions.Dependent_Expression (Element));
+      begin
+         State.Add_To_Dot_Label_And_Edge ("Dependent_Expression", ID);
+         Result.Dependent_Expression := ID;
       end;
 
       procedure Add_Condition_Expression is
@@ -91,12 +100,15 @@ package body Asis_Adapter.Element.Paths is
             null; -- No more info
          when A_Case_Expression_Path => -- A2012
             Add_Case_Path_Alternative_Choices;
+            Add_Dependent_Expression;
          when An_If_Expression_Path => -- A2012
             Add_Condition_Expression;
+            Add_Dependent_Expression;
          when An_Elsif_Expression_Path => -- A2012
             Add_Condition_Expression;
+            Add_Dependent_Expression;
          when An_Else_Expression_Path => -- A2012
-            null; -- No more info
+            Add_Dependent_Expression;
       end case;
 
       State.A_Element.Element_Kind := a_nodes_h.A_Path;
