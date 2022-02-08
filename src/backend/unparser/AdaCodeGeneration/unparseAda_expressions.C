@@ -293,6 +293,40 @@ namespace
       arglst_opt(args);
     }
 
+    void handle(SgConditionalExp& n)
+    {
+      using Iterator = std::vector<si::ada::IfExpressionInfo>::iterator;
+
+      std::vector<si::ada::IfExpressionInfo> seq = si::ada::flattenIfExpressions(n);
+      Iterator                               aa = seq.begin();
+      const Iterator                         zz = seq.end();
+
+      prn(" if ");
+      expr(aa->condition());
+      prn(" then ");
+      expr(aa->trueValue());
+
+      ROSE_ASSERT(aa != zz);
+      ++aa;
+      ROSE_ASSERT(aa != zz);
+      while (!aa->isElse())
+      {
+        prn(" elsif ");
+        expr(aa->condition());
+        prn(" then ");
+        expr(aa->trueValue());
+
+        ++aa;
+        ROSE_ASSERT(aa != zz);
+      }
+
+      prn(" else ");
+      expr(aa->trueValue());
+
+      ++aa;
+      ROSE_ASSERT(aa == zz);
+    }
+
     // unparse expression attributes
     void handle(SgAdaAttributeExp& n)
     {

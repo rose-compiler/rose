@@ -13,9 +13,6 @@ namespace SageInterface
 /// Contains Ada-specific functionality
 namespace ada
 {
-  /// defines the result type for \ref flattenArrayType
-  typedef std::pair<SgArrayType*, std::vector<SgExpression*> > FlatArrayType;
-
   /// tests if the declaration \ref dcl defines a public type that is completed
   ///   in a private section.
   /// \return true, iff dcl is public and completed in a private section.
@@ -50,6 +47,8 @@ namespace ada
   declsInPackage(SgGlobal& globalScope, const SgSourceFile& mainFile);
   /// \}
 
+  /// defines the result type for \ref getArrayTypeInfo
+  using FlatArrayType = std::pair<SgArrayType*, std::vector<SgExpression*> >;
 
   /// returns a flattened representation of Ada array types.
   /// \param   atype the type of the array to be flattened.
@@ -61,8 +60,24 @@ namespace ada
   /// \pre     \ref atype is not null.
   /// @{
   FlatArrayType getArrayTypeInfo(SgType* atype);
-  //~ FlatArrayType flattenArrayType(SgType& atype);
   /// @}
+
+
+  /// returns a sequence of if (x) then value
+  ///   the last else does not have
+  struct IfExpressionInfo : std::tuple<SgExpression*, SgExpression*>
+  {
+    using base = std::tuple<SgExpression*, SgExpression*>;
+    using base::base;
+
+    SgExpression* condition() const { return std::get<0>(*this); }
+    SgExpression* trueValue() const { return std::get<1>(*this); }
+    bool          isElse()    const { return condition() == nullptr; }
+  };
+
+  /// returns a flat representation of if expressions
+  std::vector<IfExpressionInfo>
+  flattenIfExpressions(SgConditionalExp& n);
 
   /// returns a range for the range attribute \ref rangeAttribute.
   /// \return a range if rangeAttribute is a range attribute and a range expression is in the AST;

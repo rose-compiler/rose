@@ -1474,6 +1474,13 @@ mkNewExp(SgType& ty, SgExprListExp* args_opt)
   return mkLocatedNode<SgNewExp>(&ty, nullptr /*placement*/, init, nullptr, 0 /* no global */, nullptr);
 }
 
+SgConditionalExp&
+mkIfExpr()
+{
+  return SG_DEREF( sb::buildConditionalExp_nfi(nullptr, nullptr, nullptr, nullptr) );
+}
+
+
 SgExpression&
 mkAdaBoxExp()
 {
