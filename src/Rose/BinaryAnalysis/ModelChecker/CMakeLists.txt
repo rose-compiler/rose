@@ -19,6 +19,7 @@ add_library(roseBinaryAnalysisModelChecker OBJECT
   SemanticCallbacks.C
   SourceLister.C
   Tag.C
+  UninitVarTag.C
   WorkerStatus.C)
 
 add_dependencies(roseBinaryAnalysisModelChecker rosetta_generated)
@@ -46,6 +47,7 @@ install(FILES
   SourceLister.h
   Tag.h
   Types.h
+  UninitVarTag.h
   WorkerStatus.h
 
   DESTINATION ${INCLUDE_INSTALL_DIR}/Rose/BinaryAnalysis/ModelChecker)

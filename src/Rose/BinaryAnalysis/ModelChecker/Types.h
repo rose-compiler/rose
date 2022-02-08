@@ -95,6 +95,9 @@ using SourceListerPtr = std::shared_ptr<SourceLister>;
 class Tag;
 using TagPtr = std::shared_ptr<Tag>;
 
+class UninitVarTag;
+using UninitVarTagPtr = std::shared_ptr<UninitVarTag>;
+
 class WorkerStatus;
 using WorkerStatusPtr = std::shared_ptr<WorkerStatus>;
 
