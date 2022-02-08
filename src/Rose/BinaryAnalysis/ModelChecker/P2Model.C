@@ -13,6 +13,7 @@
 #include <Rose/BinaryAnalysis/ModelChecker/OobTag.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Path.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
+#include <Rose/BinaryAnalysis/ModelChecker/UninitVarTag.h>
 
 #include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
@@ -125,6 +126,25 @@ commandLineSwitches(Settings &settings) {
 
                    "@named{must}{Find out-of-bounds variable writes that must necessarily occur." +
                    std::string(TestMode::MUST == settings.oobWrite ? " This is the default." : "") + "}"));
+
+    sg.insert(Switch("detect-uninitialized-vars")
+              .argument("method", enumParser<TestMode>(settings.uninitVar)
+                        ->with("off", TestMode::OFF)
+                        ->with("may", TestMode::MAY)
+                        ->with("must", TestMode::MUST),
+                        "must")
+              .doc("Method by which to test for uninitialized variable reads. Memory addresses are tested during write operations "
+                   "to determine if the address is a variable that has not been initialized yet. If no switch argument is "
+                   "supplied, then \"must\" is assumed. The arguments are:"
+
+                   "@named{off}{Do not check for uninitialized variable reads." +
+                   std::string(TestMode::OFF == settings.uninitVar ? " This is the default." : "") + "}"
+
+                   "@named{may}{Find cases where an uninitialized variable might be read." +
+                   std::string(TestMode::MAY == settings.uninitVar ? " This is the default." : "") + "}"
+
+                   "@named{must}{Find casew where an uninitialized variable read must necessarily occur." +
+                   std::string(TestMode::MUST == settings.uninitVar ? " This is the default." : "") + "}"));
 
     sg.insert(Switch("max-null-page")
               .argument("address", nonNegativeIntegerParser(settings.maxNullAddress))
@@ -613,6 +633,42 @@ RiscOperators::checkOobAccess(const BS::SValue::Ptr &addrSVal_, TestMode testMod
     }
 }
 
+void
+RiscOperators::checkUninitVar(const BS::SValue::Ptr &addrSVal_, TestMode testMode, size_t nBytes) {
+    if (computeMemoryRegions_) {
+        auto addrSVal = SValue::promote(addrSVal_);
+
+        // Uninitialized reads are only tested when we're actually executing an instruction.
+        if (!currentInstruction())
+            return;
+        if (TestMode::OFF == testMode)
+            return;
+
+        // If the address is concrete and contained inside a variable region, then check for uninitialized value.
+        if (auto va = addrSVal->toUnsigned()) {
+            if (AddressInterval referencedRegion = addrSVal->region()) {
+                AddressInterval accessedRegion = AddressInterval::baseSize(*va, nBytes);
+                if (referencedRegion.isContaining(accessedRegion)) {
+                    // If there are no writers for this address, then this is an uninitialized variable read
+                    auto mem = BS::MemoryCellState::promote(currentState()->memoryState());
+                    if (mem->getWritersUnion(addrSVal, 8*nBytes, this, this).isEmpty()) {
+                        FunctionCallStack &callStack = State::promote(currentState())->callStack();
+                        auto whereWhatIntended = findStackVariable(callStack, referencedRegion, stackLimits_);
+                        if (!semantics_->filterUninitVar(addrSVal, referencedRegion, accessedRegion, currentInstruction(),
+                                                         testMode, whereWhatIntended.second, whereWhatIntended.first)) {
+                            SAWYER_MESG(mlog[DEBUG]) <<"      uninitialized variable rejected by user; this one is ignored\n";
+                        } else {
+                            currentState(BS::State::Ptr()); // indicates that execution failed
+                            throw ThrownTag{UninitVarTag::instance(nInstructions(), testMode, currentInstruction(), addrSVal,
+                                                                   whereWhatIntended.second, whereWhatIntended.first)};
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 size_t
 RiscOperators::nInstructions() const {
     return nInstructions_;
@@ -630,12 +686,40 @@ RiscOperators::pruneCallStack() {
         const RegisterDescriptor SP = partitioner_.instructionProvider().stackPointerRegister();
         const BS::SValue::Ptr spSValue = peekRegister(SP, undefined_(SP.nBits()));
         if (auto sp = spSValue->toUnsigned()) {
-            FunctionCallStack &callStack = State::promote(currentState())->callStack();
 
+            // Pop call records from the top of the stack
+            FunctionCallStack &callStack = State::promote(currentState())->callStack();
+            Sawyer::Optional<rose_addr_t> poppedInitialSp; // initial stack pointer of last function to be popped
             while (!callStack.isEmpty() && callStack.top().initialStackPointer() < *sp) {
                 SAWYER_MESG(mlog[DEBUG]) <<"      returned from " <<callStack.top().function()->printableName() <<"\n";
+                poppedInitialSp = callStack.top().initialStackPointer();
                 callStack.pop();
                 ++nPopped;
+            }
+
+            // Remove memory cells that are part of the stack for function calls we just popped.
+            if (poppedInitialSp) {
+                class IsPopped: public BS::MemoryCell::Predicate {
+                    SymbolicExpr::Ptr start;
+                public:
+                    explicit IsPopped(const SymbolicExpr::Ptr &start)
+                        : start(start) {}
+
+                    bool operator()(const BS::MemoryCell::Ptr &cell) const {
+                        SymbolicExpr::Ptr va = SValue::promote(cell->address())->get_expression();
+
+                        // Assume stack grows down, so we want to erase memory whose address is less than the address specified
+                        // in the constructor. For example, i386 will erase everything below the return address.
+                        SymbolicExpr::Ptr shouldDiscard = SymbolicExpr::makeLt(va, start);
+                        bool retval = shouldDiscard->mustEqual(SymbolicExpr::makeBooleanConstant(true));
+                        if (retval)
+                            SAWYER_MESG(mlog[DEBUG]) <<"        erasing memory at " <<*va <<"\n";
+                        return retval;
+                    }
+                };
+
+                auto mem = BS::MemoryCellState::promote(currentState()->memoryState());
+                mem->eraseMatchingCells(IsPopped(SymbolicExpr::makeIntegerConstant(32, *poppedInitialSp)));
             }
         }
     }
@@ -964,6 +1048,7 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BS::SValue::Ptr &addr
     // Check the model and throw exception if violated.
     checkNullAccess(adjustedVa, settings_.nullRead, IoMode::READ);
     checkOobAccess(adjustedVa, settings_.oobRead, IoMode::READ, dflt->nBits() / 8);
+    checkUninitVar(adjustedVa, settings_.uninitVar, dflt->nBits() / 8);
 
     // Read from memory map. If we know the address and that memory exists, then read the memory to obtain the default value
     // which we'll use to update the symbolic state in a moment.
@@ -1152,7 +1237,9 @@ SemanticCallbacks::createRiscOperators() {
     ops->initialState(nullptr);
     ops->currentState(nullptr);
     ops->solver(SmtSolver::Ptr());
-    ops->computeMemoryRegions(settings_.oobRead != TestMode::OFF || settings_.oobWrite != TestMode::OFF);
+    ops->computeMemoryRegions(settings_.oobRead != TestMode::OFF ||
+                              settings_.oobWrite != TestMode::OFF ||
+                              settings_.uninitVar != TestMode::OFF);
 
     if (settings_.traceSemantics) {
         auto trace = IS::TraceSemantics::RiscOperators::instance(ops);
@@ -1488,6 +1575,13 @@ SemanticCallbacks::filterOobAccess(const BS::SValue::Ptr &addr, const AddressInt
                                    const AddressInterval &intendedVariableLocation,
                                    const Variables::StackVariable &accessedVariable,
                                    const AddressInterval &accessedVariableLocation) {
+    return true;
+}
+
+bool
+SemanticCallbacks::filterUninitVar(const BS::SValue::Ptr &addr, const AddressInterval &referencedRegion,
+                                   const AddressInterval &accessedRegion, SgAsmInstruction *insn, TestMode testMode,
+                                   const Variables::StackVariable &variable, const AddressInterval &variableLocation) {
     return true;
 }
 

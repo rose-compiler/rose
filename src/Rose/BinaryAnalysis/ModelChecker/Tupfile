@@ -23,6 +23,7 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis/ModelChecker \
     SourceLister.h \
     Tag.h \
     Types.h \
+    UninitVarTag.h \
     WorkerStatus.h
 
 run $(librose_compile) \
@@ -46,4 +47,5 @@ run $(librose_compile) \
     SemanticCallbacks.C \
     SourceLister.C \
     Tag.C \
+    UninitVarTag.C \
     WorkerStatus.C

@@ -412,6 +412,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/ModelChecker/SourceLister.h					\
 	Rose/BinaryAnalysis/ModelChecker/Tag.h						\
 	Rose/BinaryAnalysis/ModelChecker/Types.h					\
+	Rose/BinaryAnalysis/ModelChecker/UninitVarTag.h					\
 	Rose/BinaryAnalysis/ModelChecker/WorkerStatus.h					\
 	Rose/BinaryAnalysis/NoOperation.h						\
 	Rose/BinaryAnalysis/Partitioner2.h						\

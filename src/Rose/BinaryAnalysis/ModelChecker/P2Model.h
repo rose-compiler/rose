@@ -39,6 +39,7 @@ struct Settings {
     TestMode nullWrite = TestMode::MUST;                /**< How to test for writes from the null page. */
     TestMode oobRead = TestMode::OFF;                   /**< How to test for out-of-bounds reads. */
     TestMode oobWrite = TestMode::OFF;                  /**< How to test for out-of-bounds writes. */
+    TestMode uninitVar = TestMode::OFF;                 /**< How to test for uninitialized variable reads. */
     rose_addr_t maxNullAddress = 4095;                  /**< Maximum address of the null page. */
     bool debugNull = false;                             /**< When debugging is enabled, show null pointer checking? */
     Sawyer::Optional<rose_addr_t> initialStackVa;       /**< Address for initial stack pointer. */
@@ -350,6 +351,11 @@ public: // Supporting functions
      *  If an OOB access is detected, then an OobTag is thrown. */
     void checkOobAccess(const InstructionSemantics2::BaseSemantics::SValuePtr &addr, TestMode, IoMode, size_t nBytes);
 
+    /** Test whether the specified address accesses an uninitialized variable.
+     *
+     *  If an uninitialized access is detected, then an UninitReadTag is thrown. */
+    void checkUninitVar(const InstructionSemantics2::BaseSemantics::SValuePtr &addr, TestMode, size_t nBytes);
+
     /** Property: Number of instructions executed.
      *
      *  This property contains teh number of instructions executed. It is incremented automatically at the end of each
@@ -632,6 +638,11 @@ public:
                                  SgAsmInstruction *insn, TestMode testMode, IoMode ioMode,
                                  const Variables::StackVariable &intendedVariable, const AddressInterval &intendedVariableLocation,
                                  const Variables::StackVariable &accessedVariable, const AddressInterval &accessedVariableLocation);
+
+    virtual bool filterUninitVar(const InstructionSemantics2::BaseSemantics::SValuePtr &addr,
+                                 const AddressInterval &referencedREgion, const AddressInterval &accessedRegion,
+                                 SgAsmInstruction *insn, TestMode testMode, const Variables::StackVariable &variable,
+                                 const AddressInterval &variableLocation);
 
 public:
     virtual void reset() override;
