@@ -1312,79 +1312,85 @@ namespace CodeThorn {
     }
   }
 
+  void EStateTransferFunctions::createAbstractArrayInPlace(Label label,PStatePtr pstate, VariableId initDeclVarId) {
+    int arrayAbstractionIndex=getVariableIdMapping()->getArrayAbstractionIndex();
+    int abstractionMode=getAnalyzer()->getOptionsRef().abstractionMode;
+    if(arrayAbstractionIndex>=0 && getAnalyzer()->getOptionsRef().abstractionMode==1) {
+      if(arrayAbstractionIndex>=1) {
+        // only abstraction index 0 is currently supported
+        cerr<<"Error: Array Abstraction index "<<arrayAbstractionIndex<<" not supported."<<endl;
+        exit(1);
+      }
+      // declare abstract array, since only a coarse abstraction is supported, size>0 is irrelevant
+      int elemIndex=0;
+      int elemSize=1;
+      AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex),AbstractValue(elemSize));
+      // set default init value
+      reserveMemoryLocation(label,pstate,newArrayElementAddr);
+      newArrayElementAddr.setSummaryFlag(true);
+    } else {
+      cout<<"Error: array abstraction requested, but abstraction mode = "<<abstractionMode<<endl;
+      cout<<"Analysis is misconfigured, exiting."<<endl;
+      exit(1);
+    }
+  }
+      
   EStatePtr EStateTransferFunctions::transferVariableDeclarationWithoutInitializerEState(SgVariableDeclaration* decl, SgInitializedName* initName, VariableId initDeclVarId, EStatePtr currentEState, Label targetLabel) {
     CallString cs=currentEState->callString;
     Label label=currentEState->label();
-    ROSE_ASSERT(currentEState->pstate());
-
-    SgArrayType* arrayType=isSgArrayType(initName->get_type());
-    if(arrayType) {
-      //SgType* arrayElementType=arrayType->get_base_type();
-      //setElementSize(initDeclVarId,arrayElementType); // DO NOT OVERRIDE
-      int numElements=getVariableIdMapping()->getArrayElementCount(arrayType);
-      if(numElements==0) {
-        SAWYER_MESG(logger[TRACE])<<"Number of elements in array is 0 (from variableIdMapping) - evaluating expression"<<endl;
-        std::vector<SgExpression*> arrayDimExps=SageInterface::get_C_array_dimensions(*arrayType);
-        if(arrayDimExps.size()>1) {
-          if(_analyzer->getAbstractionMode()==3) {
-            CodeThorn::Exception("multi-dimensional arrays not supported yet.");
-          } else {
-            SAWYER_MESG(logger[WARN])<<"multi-dimensional arrays not supported yet. Only linear arrays are supported. Not added to state (assuming arbitrary value)."<<endl;
-          }
-          // not adding it to state. Will be used as unknown.
-          ROSE_ASSERT(currentEState->pstate());
-          PStatePtr newPState=currentEState->pstate();
-          return reInitEState(currentEState,targetLabel,cs,newPState);
-        }
-        ROSE_ASSERT(arrayDimExps.size()==1);
-        SgExpression* arrayDimExp=*arrayDimExps.begin();
-        SAWYER_MESG(logger[TRACE])<<"Array dimension expression: "<<arrayDimExp->unparseToString()<<endl;
-        SingleEvalResult evalRes=evaluateExpression(arrayDimExp,currentEState);
-        AbstractValue arrayDimAVal=evalRes.result;
-        SAWYER_MESG(logger[TRACE])<<"Computed array dimension: "<<arrayDimAVal.toString()<<endl;
-        if(arrayDimAVal.isConstInt()) {
-          numElements=arrayDimAVal.getIntValue();
-          getVariableIdMapping()->setNumberOfElements(initDeclVarId,numElements);
-        } else {
-          if(_analyzer->getAbstractionMode()==3) {
-            CodeThorn::Exception("Could not determine size of array (non-const size).");
-          }
-          // TODO: size of array remains 1?
-        }
-      } else {
-        getVariableIdMapping()->setNumberOfElements(initDeclVarId,numElements);
-      }
-    } else {
-      // set type info for initDeclVarId
-      getVariableIdMapping()->setNumberOfElements(initDeclVarId,1); // single variable
-      //SgType* variableType=initName->get_type();
-      //setElementSize(initDeclVarId,variableType); DO NOT OVERRIDE
-    }
-
-    SAWYER_MESG(logger[TRACE])<<"Creating new PState"<<endl;
-    ROSE_ASSERT(currentEState->pstate());
     PStatePtr newPState=currentEState->pstate();
-    if(getVariableIdMapping()->isOfArrayType(initDeclVarId)) {
-      SAWYER_MESG(logger[TRACE])<<"PState: upd: array"<<endl;
-      // add default array elements to PState
-      auto length=getVariableIdMapping()->getNumberOfElements(initDeclVarId);
-      if(length>0) {
-        SAWYER_MESG(logger[TRACE])<<"DECLARING ARRAY of size: "<<decl->unparseToString()<<":"<<length<<endl;
-        for(CodeThorn::TypeSize elemIndex=0;elemIndex<length;elemIndex++) {
-          auto elemSize=getVariableIdMapping()->getElementSize(initDeclVarId);
-          if(!getVariableIdMapping()->isUnknownSizeValue(elemSize)) {
+    ROSE_ASSERT(newPState);
+    //VariableId initDeclVarId=getVariableIdMapping()->variableId(decl);
+    if(SgArrayType* arrayType=isSgArrayType(initName->get_type())) {
+      //SgType* arrayElementType=arrayType->get_base_type();
+      int numElements=getVariableIdMapping()->getNumberOfElements(initDeclVarId);
+      SAWYER_MESG(logger[TRACE])<<"Number of elements in array is 0 (from variableIdMapping) - evaluating expression"<<endl;
+      std::vector<SgExpression*> arrayDimExps=SageInterface::get_C_array_dimensions(*arrayType);
+      // check if numElements is known, if not, try to determine dynamic value from state
+      if(numElements<0) {
+        // unknown number of elements, try to compute by evaluating expressions and compute size
+        int computedNumElements=-1;
+        for(auto dimIter=arrayDimExps.begin();dimIter!=arrayDimExps.end();++dimIter) {
+          SgExpression* arrayDimExp=*dimIter;
+          cout<<"DEBUG: Array dimension expression: "<<arrayDimExp->unparseToString()<<endl;
+          SingleEvalResult evalRes=evaluateExpression(arrayDimExp,currentEState);
+          AbstractValue arrayDimAVal=evalRes.result;
+          cout<<"DEBUG: Computed array dimension: "<<arrayDimAVal.toString()<<endl;
+          if(dimIter==arrayDimExps.begin()) {
+            if(arrayDimAVal.isConstInt()) {
+              computedNumElements=arrayDimAVal.getIntValue();
+            } else {
+              // computedNumElements remains -1 (=unknown)
+              break;
+            }
+          } else {
+            if(arrayDimAVal.isConstInt()) {
+              numElements*=arrayDimAVal.getIntValue();
+            } else {
+              numElements=-1; // reset - any unknown dimension means size is unknown
+              break;
+            }
+          }
+        }
+        numElements=computedNumElements; // determined by evaluating expressions (allows to handle variable length arrays)
+      }
+      auto elemSize=getVariableIdMapping()->getElementSize(initDeclVarId);
+      if(numElements>0) {
+        getVariableIdMapping()->setNumberOfElements(initDeclVarId,numElements);
+        if(getAnalyzer()->getOptionsRef().abstractionMode>=1 || getVariableIdMapping()->isUnknownSizeValue(elemSize)) {
+          createAbstractArrayInPlace(label,newPState,initDeclVarId);
+        } else {
+          // size is known, element size is known, and abstractionMode==0 (=concrete)
+          // initialize all elements of contiguous possibliy multi-dim array of known size
+          for(CodeThorn::TypeSize elemIndex=0;elemIndex<numElements;elemIndex++) {
             AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex),AbstractValue(elemSize));
             // set default init value
             reserveMemoryLocation(label,newPState,newArrayElementAddr);
-          }
+          } // end of concrete init loop
         }
       } else {
-        SAWYER_MESG(logger[TRACE])<<"DECLARING ARRAY of unknown size: "<<decl->unparseToString()<<":"<<length<<endl;
-        AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(0)); // use elem index 0
-        // set default init value
-        reserveMemoryLocation(label,newPState,newArrayElementAddr);
+        createAbstractArrayInPlace(label,newPState,initDeclVarId); // unknown size of array
       }
-
     } else if(getVariableIdMapping()->isOfClassType(initDeclVarId)) {
       SAWYER_MESG(logger[TRACE])<<"PState: upd: class"<<endl;
       // create only address start address of struct (on the
