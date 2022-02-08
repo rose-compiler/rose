@@ -1710,6 +1710,15 @@ namespace
 
     void handle(SgFunctionDeclaration& n)
     {
+      const std::string& parent = getQualification(n, n.get_scope());
+
+      if (parent.size())
+      {
+        prn("separate(");
+        prn(parent.substr(0, parent.size()-1)); // remove the trailing '.'
+        prn(")\n");
+      }
+
       const bool      isFunc  = si::ada::isFunction(n.get_type());
       std::string     keyword = isFunc ? "function" : "procedure";
 

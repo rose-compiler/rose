@@ -172,6 +172,7 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   generic_package_declaration.ads      \
   generic_package_declaration.adb      \
   identity.ads                         \
+  ifexpr.adb                           \
   inherited_primitive_operation.adb    \
   io.ads                               \
   iterate_range.adb                    \
@@ -236,7 +237,6 @@ ROSE_FAILING_ADA_TESTS :=                           \
   generic_function_renaming_declaration.ads         \
   generic_package_renaming_declaration.adb          \
   generic_procedure_renaming_declaration.ads        \
-  ifexpr.adb                                        \
   mpiuse.ads                                        \
   requeue_statement_2.adb                           \
   requeue_statements.adb                            \
