@@ -52,11 +52,13 @@ function runDomainTestsLevel3 {
             extension="${benchmarkname##*.}"
             printf "Testing %-38s: " $benchmarkname
             CT_OUTPUT_FILE=$benchmarkname.imout
-            ./codethorn $benchmark $CT_MODE_OPTIONS --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR > /dev/null
+            COMMAND="./codethorn $benchmark $CT_MODE_OPTIONS --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR"
+            eval $COMMAND > /dev/null
             if [ ! $? -eq 0 ]
             then
 	        echo $COLORED_FAIL
                 ((numFail++))
+                echo "REPRODUCE WITH: $COMMAND"
             else
                 echo -n "$COLORED_PASS "
                 EXEFILE=${benchmarkname}.exe
