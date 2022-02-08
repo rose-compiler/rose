@@ -419,6 +419,30 @@ namespace ada
     return std::make_pair(restype, ArrayBounds::find(atype, restype));
   }
 
+  std::vector<IfExpressionInfo>
+  flattenIfExpressions(SgConditionalExp& n)
+  {
+    std::vector<IfExpressionInfo> res;
+    SgConditionalExp*             next = &n;
+    SgConditionalExp*             cond = nullptr;
+    bool                          last = false;
+
+    // flatten a sequence of unparenthesized conditional expressions
+    // c0 ? x :  c1 ? y : z => { <c0, x>, <c1, y>, <null, z> }
+    do
+    {
+      cond = next;
+      res.emplace_back(cond->get_conditional_exp(), cond->get_true_exp());
+
+      next = isSgConditionalExp(cond->get_false_exp());
+      last = !next || next->get_need_paren();
+    } while (!last);
+
+    res.emplace_back(nullptr, SG_DEREF(cond).get_false_exp());
+    return res;
+  }
+
+
   SgRangeExp*
   range(const SgAdaAttributeExp& n)
   {
@@ -840,6 +864,14 @@ namespace ada
                  && equalChild(l, r, &SgBinaryOp::get_rhs_operand)
                  );
         }
+
+        bool eval(const SgBinaryOp& l, const SgBinaryOp& r, const SgDotExp&)
+        {
+          return equalChild(l, r, &SgBinaryOp::get_rhs_operand);
+        }
+
+        //
+        // special
 
         bool eval(const SgVarRefExp& l, const SgVarRefExp& r, const SgVarRefExp&)
         {

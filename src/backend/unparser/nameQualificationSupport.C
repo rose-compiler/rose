@@ -159,6 +159,12 @@ namespace
       using base::reference;
       using base::size;
 
+      //~ size_t size() const
+      //~ {
+        //~ std::cerr << "sz = " << base::size() << std::endl;
+        //~ return base::size();
+      //~ }
+
       /// returns a string version of the scopes in range [rbegin(), rend())
       std::string path() const
       {
@@ -220,6 +226,7 @@ namespace
       void handle(const SgAdaProtectedBody& n)     { checkParent(n); }
       void handle(const SgAdaPackageBody& n)       { checkParent(n); }
       void handle(const SgAdaPackageSpec& n)       { checkParent(n); }
+      void handle(const SgFunctionDefinition& n)   { checkParent(n); }
       // FunctionDefinition, ..
 
 
@@ -232,6 +239,7 @@ namespace
       void handle(const SgAdaPackageSpecDecl& n)   { withName(n.get_name()); }
       void handle(const SgAdaPackageBodyDecl& n)   { withName(n.get_name()); }
       void handle(const SgAdaRenamingDecl& n)      { withName(n.get_name()); }
+      void handle(const SgFunctionDeclaration& n)  { withName(n.get_name()); }
       // FunctionDeclaration, ..
   };
 
@@ -525,6 +533,7 @@ namespace
   {
     ScopePath               res;
     const SgScopeStatement* curr = &n;
+    const SgScopeStatement* lastDbg = nullptr;
 
     /// add all scopes on the path to the global scope
     while (requiresNameQual(curr))
@@ -532,6 +541,11 @@ namespace
       const SgStatement& scopeOrDecl = scopeForNameQualification(*curr);
 
       res.push_back(&scopeOrDecl);
+
+      // assert progress
+      ROSE_ASSERT(curr != lastDbg);
+      lastDbg = curr;
+
       curr = scopeOrDecl.get_scope();
     }
 
@@ -556,6 +570,9 @@ namespace
     PathIterator    remotePos  = std::mismatch( localstart, localstart + pathlen,
                                                 remotePath.rbegin()
                                               ).second;
+
+    //~ std::cerr << remotePath.path() << " <> " << localPath.path()
+              //~ << std::endl;
 
     // \todo
     // a case that is currently not handled is if an inner scope
@@ -809,6 +826,9 @@ namespace
 
         traversal.openScope(n);
         res.set_currentScope(const_cast<SgScopeStatement*>(&n));
+
+        if (scopeName(&n).size())
+          traversal.addVisibleScope(&n);
       }
 
       void handle(const SgAdaRenamingDecl& n)
@@ -899,6 +919,8 @@ namespace
       void handle(const SgFunctionDeclaration& n)
       {
         handle(sg::asBaseType(n));
+
+        recordNameQualIfNeeded(n, n.get_scope());
 
         // parameters are handled by the traversal, so just qualify
         //   the return type, if this is a function.

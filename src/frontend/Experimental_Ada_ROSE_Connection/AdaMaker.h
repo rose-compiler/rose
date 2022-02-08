@@ -642,6 +642,10 @@ namespace Ada_ROSE_Translation
   SgAdaOthersExp&
   mkAdaOthersExp();
 
+  /// makes an empty if expression (aka SgConditionalExp)
+  SgConditionalExp&
+  mkIfExpr();
+
   /// Creates a new expression
   /// \param ty the type of the allocation
   /// \param args_opt an optional aggregate to initialize the type
