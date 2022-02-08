@@ -933,9 +933,14 @@ namespace
           {
             res = sg::dispatch(TypeRefMaker{ctx}, tydcl);
           }
+          // after there was no matching declaration, try to look up declarations in the standard package by name
           else if (SgType* ty = findFirst(adaTypes(), AdaIdentifier{expr.Name_Image}))
           {
             res = sb::buildTypeExpression(ty);
+          }
+          else if (SgAdaPackageSpecDecl* pkg = findFirst(adaPkgs(), AdaIdentifier{expr.Name_Image}))
+          {
+            res = &mkAdaUnitRefExp(*pkg);
           }
           else
           {

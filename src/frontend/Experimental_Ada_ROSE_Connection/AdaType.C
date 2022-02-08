@@ -1226,6 +1226,7 @@ void initializePkgStandard(SgGlobal& global)
   adaExcps()["TASKING_ERROR"]       = &declareException("Tasking_Error",    exceptionType, stdspec);
 
   // added packages
+  adaPkgs()["STANDARD"]             = &stddecl;
   adaPkgs()["STANDARD.ASCII"]       = &declarePackage("Ascii", stdspec);
   adaPkgs()["ASCII"]                = adaPkgs()["STANDARD.ASCII"];
 }
