@@ -2643,7 +2643,7 @@ namespace
                 std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
               )
   {
-    return nondef ? mkProcedureDef(*nondef, scope, rettype, std::move(complete))
+    return nondef ? mkProcedureDef(*nondef, SG_DEREF(nondef->get_scope()), rettype, std::move(complete))
                   : mkProcedureDef(name,    scope, rettype, std::move(complete));
   }
 
@@ -3435,7 +3435,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                                                  : SG_DEREF(sb::buildVoidType());
 
         ADA_ASSERT(adaname.fullName == adaname.ident);
-        SgDeclarationStatement* ndef    = findFirst(asisDecls(), decl.Corresponding_Declaration);
+        SgDeclarationStatement* ndef    = findFirst(asisDecls(), decl.Corresponding_Declaration, decl.Corresponding_Body_Stub);
         SgFunctionDeclaration*  nondef  = getFunctionDeclaration(ndef);
 
         ADA_ASSERT(nondef || !ndef);
