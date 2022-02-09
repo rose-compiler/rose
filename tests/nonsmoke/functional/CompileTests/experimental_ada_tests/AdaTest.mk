@@ -176,6 +176,8 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   inherited_primitive_operation.adb    \
   io.ads                               \
   iterate_range.adb                    \
+  namequal_with_renamed_1.adb          \
+  namequal_with_renamed_2.adb          \
   nested_package.ads                   \
   object_renaming_declaration.adb      \
   opaque.ads                           \

@@ -62,22 +62,34 @@ namespace ada
   FlatArrayType getArrayTypeInfo(SgType* atype);
   /// @}
 
+  /// represents a branch in an if elsif else context (either statement or expression).
+  template <class SageLocatedNode>
+  struct IfInfo : std::tuple<SgExpression*, SageLocatedNode*>
+  {
+    using base = std::tuple<SgExpression*, SageLocatedNode*>;
+    using base::base;
+
+    SgExpression*    condition()  const { return std::get<0>(*this); }
+    SageLocatedNode* trueBranch() const { return std::get<1>(*this); }
+    bool             isElse()     const { return condition() == nullptr; }
+  };
 
   /// returns a sequence of if (x) then value
   ///   the last else does not have
-  struct IfExpressionInfo : std::tuple<SgExpression*, SgExpression*>
-  {
-    using base = std::tuple<SgExpression*, SgExpression*>;
-    using base::base;
-
-    SgExpression* condition() const { return std::get<0>(*this); }
-    SgExpression* trueValue() const { return std::get<1>(*this); }
-    bool          isElse()    const { return condition() == nullptr; }
-  };
+  using IfExpressionInfo = IfInfo<SgExpression>;
+  using IfStatementInfo  = IfInfo<SgStatement>;
 
   /// returns a flat representation of if expressions
   std::vector<IfExpressionInfo>
   flattenIfExpressions(SgConditionalExp& n);
+
+  /// returns a flat representation of if-elsif-else statements
+  std::vector<IfStatementInfo>
+  flattenIfStatements(SgIfStmt& n);
+
+  /// returns the expression of an expression statement, or nullptr if s is some other node
+  SgExpression*
+  underlyingExpr(const SgStatement* s);
 
   /// returns a range for the range attribute \ref rangeAttribute.
   /// \return a range if rangeAttribute is a range attribute and a range expression is in the AST;

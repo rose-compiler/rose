@@ -244,13 +244,6 @@ namespace
   const std::string STMT_SEP = ";\n";
   const std::string PARAM_SEP = "; ";
 
-  SgExpression* underlyingExpr(SgStatement* s)
-  {
-    SgExprStatement* es = isSgExprStatement(s);
-
-    return SG_DEREF(es).get_expression();
-  }
-
   template <class UnparserT>
   void unparseTypeModifiers(UnparserT& unparser, SgTypeModifier tymod)
   {
@@ -363,7 +356,7 @@ namespace
     void handle(SgIfStmt& n)
     {
       prn("elsif ");
-      unparser.unparseExpression(underlyingExpr(n.get_conditional()), info);
+      unparser.unparseExpression(si::ada::underlyingExpr(n.get_conditional()), info);
       prn(" then\n");
       unparser.unparseStatement(n.get_true_body(), info);
 
@@ -1182,7 +1175,7 @@ namespace
     void handle(SgIfStmt& n)
     {
       prn("if ");
-      expr(underlyingExpr(n.get_conditional()));
+      expr(si::ada::underlyingExpr(n.get_conditional()));
       prn(" then\n");
       stmt(n.get_true_body());
 
@@ -1202,7 +1195,7 @@ namespace
     void handle(SgWhileStmt& n)
     {
       prn("while ");
-      expr(underlyingExpr(n.get_condition()));
+      expr(si::ada::underlyingExpr(n.get_condition()));
       prn(" loop\n");
       stmt(n.get_body());
       prn("end loop");
@@ -1352,7 +1345,7 @@ namespace
     void handle(SgSwitchStatement& n)
     {
       prn("case ");
-      expr(underlyingExpr(n.get_item_selector()));
+      expr(si::ada::underlyingExpr(n.get_item_selector()));
       prn(" is\n");
       stmt(n.get_body());
       prn("end case;\n");
