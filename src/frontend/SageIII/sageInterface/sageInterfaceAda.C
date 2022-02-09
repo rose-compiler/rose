@@ -865,6 +865,14 @@ namespace ada
                  );
         }
 
+        bool eval(const SgBinaryOp& l, const SgBinaryOp& r, const SgDotExp&)
+        {
+          return equalChild(l, r, &SgBinaryOp::get_rhs_operand);
+        }
+
+        //
+        // special
+
         bool eval(const SgVarRefExp& l, const SgVarRefExp& r, const SgVarRefExp&)
         {
           return equalRef(l, r);

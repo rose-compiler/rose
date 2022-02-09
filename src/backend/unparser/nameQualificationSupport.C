@@ -533,6 +533,7 @@ namespace
   {
     ScopePath               res;
     const SgScopeStatement* curr = &n;
+    const SgScopeStatement* lastDbg = nullptr;
 
     /// add all scopes on the path to the global scope
     while (requiresNameQual(curr))
@@ -540,6 +541,11 @@ namespace
       const SgStatement& scopeOrDecl = scopeForNameQualification(*curr);
 
       res.push_back(&scopeOrDecl);
+
+      // assert progress
+      ROSE_ASSERT(curr != lastDbg);
+      lastDbg = curr;
+
       curr = scopeOrDecl.get_scope();
     }
 
@@ -820,6 +826,9 @@ namespace
 
         traversal.openScope(n);
         res.set_currentScope(const_cast<SgScopeStatement*>(&n));
+
+        if (scopeName(&n).size())
+          traversal.addVisibleScope(&n);
       }
 
       void handle(const SgAdaRenamingDecl& n)
