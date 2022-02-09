@@ -442,6 +442,34 @@ namespace ada
     return res;
   }
 
+  SgExpression* underlyingExpr(const SgStatement* s)
+  {
+    const SgExprStatement* es = isSgExprStatement(s);
+
+    return SG_DEREF(es).get_expression();
+  }
+
+  std::vector<IfStatementInfo>
+  flattenIfStatements(SgIfStmt& n)
+  {
+    std::vector<IfStatementInfo> res;
+    SgIfStmt*                    next = &n;
+    SgIfStmt*                    cond = nullptr;
+
+    // flatten a sequence of if a then A (else if b then B (else if c then C else D)) if statements
+    // into <a, A>, <b, B>, <c, C>, <nullptr, D>
+    do
+    {
+      cond = next;
+      res.emplace_back(underlyingExpr(cond), cond->get_true_body());
+
+      next = isSgIfStmt(cond->get_false_body());
+    } while (next);
+
+    res.emplace_back(nullptr, SG_DEREF(cond).get_false_body());
+    return res;
+  }
+
 
   SgRangeExp*
   range(const SgAdaAttributeExp& n)
