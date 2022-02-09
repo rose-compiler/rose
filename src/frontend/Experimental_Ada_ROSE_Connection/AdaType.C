@@ -1020,11 +1020,7 @@ getExceptionBase(Element_Struct& el, AstContext ctx)
 SgAdaTypeConstraint&
 getConstraintID(Element_ID el, AstContext ctx)
 {
-  if (isInvalidId(el))
-  {
-    logWarn() << "Uninitialized element [range constraint]" << std::endl;
-    return mkAdaRangeConstraint(mkRangeExp());
-  }
+  ADA_ASSERT(!isInvalidId(el));
 
   SgAdaTypeConstraint*  res = nullptr;
   Element_Struct&       elem = retrieveAs(elemMap(), el);
@@ -1085,21 +1081,26 @@ getConstraintID(Element_ID el, AstContext ctx)
 
     case A_Digits_Constraint:                   // 3.2.2: 3.5.9
       {
-        SgExpression&         digits = getExprID(constraint.Digits_Expression, ctx);
-        SgAdaTypeConstraint*  rngConstr = getConstraintID_opt(constraint.Real_Range_Constraint, ctx);
-        SgAdaRangeConstraint* range = isSgAdaRangeConstraint(rngConstr);
-        ADA_ASSERT(!rngConstr || range);
+        SgAdaTypeConstraint* rangeConstr = getConstraintID_opt(constraint.Real_Range_Constraint, ctx);
+        SgExpression&        digits = getExprID(constraint.Digits_Expression, ctx);
 
-        res = &mkAdaDigitsConstraint(digits, range);
+        res = &mkAdaDigitsConstraint(digits, rangeConstr);
         break;
       }
 
-    case Not_A_Constraint: /* break; */         // An unexpected element
     case A_Delta_Constraint:                    // 3.2.2: J.3
+      {
+        SgAdaTypeConstraint* rangeConstr = getConstraintID_opt(constraint.Real_Range_Constraint, ctx);
+        SgExpression&        delta = getExprID(constraint.Delta_Expression, ctx);
+
+        res = &mkAdaDeltaConstraint(delta, rangeConstr);
+        break;
+      }
+
+    case Not_A_Constraint:                      // An unexpected element
     default:
-      logWarn() << "Unhandled constraint: " << constraint.Constraint_Kind << std::endl;
-      ADA_ASSERT(!FAIL_ON_ERROR(ctx));
-      res = &mkAdaRangeConstraint(mkRangeExp());
+      logError() << "Unhandled constraint: " << constraint.Constraint_Kind << std::endl;
+      ROSE_ABORT();
   }
 
   attachSourceLocation(SG_DEREF(res), elem, ctx);
