@@ -20,10 +20,7 @@ namespace CodeThorn {
     int getId();
 
     static void initDiagnostics();
-    // a pass through node has a single in-edge, a single-out edge, and
-    // the next node has also a single-in-edge.
-    bool isPassThroughLabel(Label lab);
-    size_t checkDiff();
+
     class WorkListEntry {
     public:
       WorkListEntry(Label lab,CallString cs):_label(lab),_callString(cs) {}
@@ -33,6 +30,11 @@ namespace CodeThorn {
       Label _label;
       CallString _callString;
     };
+
+    // at pass through labels the state does not need to be stored
+    // and can be passed through allowing in-place updates of the state.
+    bool isPassThroughLabel(Label lab);
+    size_t checkDiff();
     bool isReachableLabel(Label lab);
     bool isUnreachableLabel(Label lab);
     void deleteAllStates();

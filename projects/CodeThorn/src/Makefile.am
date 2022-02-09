@@ -768,6 +768,10 @@ check-domain-avset:
 check-domain-avset-err:
 	$(srcdir)/scripts/runDomainTests --testdir $(srcdir)/tests --show-errors --l2avset
 
+check-domain-regression:
+	$(srcdir)/scripts/runDomainTests --testdir $(srcdir)/tests --regression-tests
+
+
 check-cfg:
 	$(srcdir)/scripts/runCfgTests $(srcdir)/tests
 

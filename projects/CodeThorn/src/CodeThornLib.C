@@ -884,7 +884,7 @@ namespace CodeThorn {
       ss<<tc.toString();
       ss<<"Total memory                   : "<<CodeThorn::getPhysicalMemorySize()/(1024*1024) <<" MiB"<<endl;
       ss<<"Total states allocation history: "<<EState::allocationHistoryToString()<<endl;
-      ss<<"Total states                   : "<<EState::allocationStatsToString()<<endl;
+      ss<<"Total states alloc/dealloced   : "<<EState::allocationStatsToString()<<endl;
       return ss.str();
     }
 

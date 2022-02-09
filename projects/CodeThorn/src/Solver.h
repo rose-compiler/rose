@@ -1,13 +1,10 @@
 #ifndef SOLVER_H
 #define SOLVER_H
 
-#include "DFSolver2.h"
-
 namespace CodeThorn {
 
   class CTAnalysis;
 
-  //  class Solver : public DFSolver2 {
   class Solver {
 
   public:

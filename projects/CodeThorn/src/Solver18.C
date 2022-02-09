@@ -130,7 +130,7 @@ void Solver18::setSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs, E
       auto iter2=summaryCSStateMap.find(cs);
       if(iter2==summaryCSStateMap.end()) {
         summaryCSStateMap[cs]=estate;
-        //_numberOfStates++;
+        _numberOfStates++;
       } else {
         // context already exists, re-set state, no additional state added
         auto currentEState=(*iter2).second;
@@ -164,6 +164,7 @@ void Solver18::printAllocationStats(string text) {
 }
 
 void Solver18::run() {
+  //_abstractionConsistencyCheckEnabled=true;
   SAWYER_MESG(logger[INFO])<<"Running solver "<<getId()<<" (sharedpstates:"<<_analyzer->getOptionsRef().sharedPStates<<")"<<endl;
   ROSE_ASSERT(_analyzer);
   if(_analyzer->getOptionsRef().abstractionMode==0) {
