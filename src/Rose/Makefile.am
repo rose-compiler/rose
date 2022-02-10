@@ -87,6 +87,7 @@ librose_partial_la_SOURCES =								\
 	BinaryAnalysis/ModelChecker/SemanticCallbacks.C					\
 	BinaryAnalysis/ModelChecker/SourceLister.C					\
 	BinaryAnalysis/ModelChecker/Tag.C						\
+	BinaryAnalysis/ModelChecker/WorkerStatus.C					\
 	BinaryAnalysis/Partitioner2/AddressUsageMap.C					\
 	BinaryAnalysis/Partitioner2/BasicBlock.C					\
 	BinaryAnalysis/Partitioner2/CfgPath.C						\

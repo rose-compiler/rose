@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Engine.h>
 
+#include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
 #include <Rose/BinaryAnalysis/ModelChecker/ExecutionUnit.h>
 #include <Rose/BinaryAnalysis/ModelChecker/P2Model.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Path.h>
@@ -12,13 +13,13 @@
 #include <Rose/BinaryAnalysis/ModelChecker/SemanticCallbacks.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 #include <Rose/BinaryAnalysis/ModelChecker/SourceLister.h>
-#include <boost/format.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/scope_exit.hpp>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
+#include <Rose/BinaryAnalysis/ModelChecker/WorkerStatus.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 
+#include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/scope_exit.hpp>
 #ifdef __linux
 #include <sys/syscall.h>                                // SYS_* constants
 #include <sys/types.h>                                  // pid_t
@@ -89,6 +90,8 @@ Engine::instance(const Settings::Ptr &settings) {
 Engine::~Engine() {
     for (std::thread &t: workers_)
         t.join();
+    if (workerStatus_)
+        workerStatus_->updateFileNow();
 }
 
 Settings::Ptr
@@ -218,7 +221,11 @@ Engine::startWorkers(size_t n) {
         SAWYER_MESG_FIRST(mlog[WHERE], mlog[TRACE], mlog[DEBUG]) <<"starting " <<StringUtility::plural(n, "workers") <<"\n";
         for (size_t i = 0; i < n; ++i) {
             ++workCapacity_;
-            workers_.push_back(std::thread([this](){worker();}));
+            const size_t id = workers_.size();
+            Progress::Ptr progress = workerStatus_ ? Progress::instance() : Progress::Ptr();
+            workers_.push_back(std::thread([this, id, progress](){worker(id, progress);}));
+            if (workerStatus_)
+                workerStatus_->insert(workers_.size()-1, progress);
         }
     }
 }
@@ -255,9 +262,9 @@ bool
 Engine::step() {
     // Show when this user thread starts and ends work
     WorkerState state = WorkerState::STARTING;
-    changeState(state, WorkerState::STARTING);
+    changeState(UNMANAGED_WORKER, state, WorkerState::STARTING);
     BOOST_SCOPE_EXIT(this_, &state) {
-        this_->changeState(state, WorkerState::FINISHED);
+        this_->changeState(UNMANAGED_WORKER, state, WorkerState::FINISHED);
     } BOOST_SCOPE_EXIT_END;
 
     // Create a thread-local RISC operators that will be used to update semantic states
@@ -284,11 +291,11 @@ Engine::step() {
 
 // called only by managed worker threads.
 void
-Engine::worker() {
+Engine::worker(size_t workerId, const Progress::Ptr &progress) {
     // Show when this managed worker starts and ends work
     WorkerState state = WorkerState::STARTING;          // the caller has already changed our state for us.
-    BOOST_SCOPE_EXIT(this_, &state) {
-        this_->changeState(state, WorkerState::FINISHED);
+    BOOST_SCOPE_EXIT(this_, &state, workerId) {
+        this_->changeState(workerId, state, WorkerState::FINISHED);
     } BOOST_SCOPE_EXIT_END;
 
     // Create a thread-local RISC operators that will be used to update semantic states
@@ -299,14 +306,15 @@ Engine::worker() {
     ASSERT_require2(ops->currentState() == nullptr, "please remove the current state for added safety");
     SmtSolver::Ptr solver = semantics_->createSolver();
     ASSERT_not_null(solver);
+    solver->progress(progress);
 
-    changeState(state, WorkerState::WAITING);
-    while (Path::Ptr path = takeNextWorkItem(state)) {
+    changeState(workerId, state, WorkerState::WAITING);
+    while (Path::Ptr path = takeNextWorkItem(workerId, state)) {
         BOOST_SCOPE_EXIT(this_, &ops) {
             this_->finishPath(ops);
         } BOOST_SCOPE_EXIT_END;
         doOneStep(path, ops, solver);
-        changeState(state, WorkerState::WAITING);
+        changeState(workerId, state, WorkerState::WAITING);
     }
 }
 
@@ -401,20 +409,20 @@ Engine::takeNextWorkItemNow(WorkerState &state) {
         return Path::Ptr();
     Path::Ptr retval = frontier_.takeNext();
     if (retval) {
-        changeStateNS(state, WorkerState::WORKING);
+        changeStateNS(UNMANAGED_WORKER, state, WorkerState::WORKING);
         inProgress_.insert(boost::this_thread::get_id(), InProgress(retval));
     }
     return retval;
 }
 
 Path::Ptr
-Engine::takeNextWorkItem(WorkerState &state) {
+Engine::takeNextWorkItem(size_t workerId, WorkerState &state) {
     SAWYER_THREAD_TRAITS::UniqueLock lock(mutex_);
     while (true) {
         if (stopping_)
             return Path::Ptr();
         if (Path::Ptr retval = frontier_.takeNext()) {
-            changeStateNS(state, WorkerState::WORKING);
+            changeStateNS(workerId, state, WorkerState::WORKING);
             inProgress_.insert(boost::this_thread::get_id(), InProgress(retval));
             return retval;
         }
@@ -453,9 +461,9 @@ Engine::takeNextInteresting() {
 }
 
 void
-Engine::changeState(WorkerState &cur, WorkerState next) {
+Engine::changeState(size_t workerId, WorkerState &cur, WorkerState next) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    changeStateNS(cur, next);
+    changeStateNS(workerId, cur, next);
 }
 
 void
@@ -473,7 +481,7 @@ Engine::finishWorkingNS() {
 }
 
 void
-Engine::changeStateNS(WorkerState &cur, WorkerState next) {
+Engine::changeStateNS(size_t workerId, WorkerState &cur, WorkerState next) {
     switch (cur) {
         case WorkerState::STARTING:
             switch (next) {
@@ -534,6 +542,9 @@ Engine::changeStateNS(WorkerState &cur, WorkerState next) {
             ASSERT_not_reachable("invalid worker transition from finished state");
     }
     cur = next;
+
+    if (workerStatus_)
+        workerStatus_->setState(workerId, cur);
 }
 
 // An entry in a variable index that says where a variable is constrained along a path.
@@ -916,6 +927,25 @@ Engine::showStatistics(std::ostream &out, const std::string &prefix) const {
     out <<prefix <<"symbolic expressions truncated:               " <<nExpressionsTrimmed() <<"\n";
 
     nPathsStats_ = nPathsExplored;
+}
+
+boost::filesystem::path
+Engine::workerStatusFile() const {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    if (workerStatus_) {
+        return workerStatus_->fileName();
+    } else {
+        return {};
+    }
+}
+
+void
+Engine::workerStatusFile(const boost::filesystem::path &fileName) {
+    WorkerStatus::Ptr workerStatus;
+    if (!fileName.empty())
+        workerStatus = WorkerStatus::instance(fileName);
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    workerStatus_ = workerStatus;
 }
 
 } // namespace
