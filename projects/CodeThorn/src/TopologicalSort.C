@@ -12,13 +12,26 @@ namespace CodeThorn {
 
   void TopologicalSort::createTopologicallySortedLabelList() {
     if(revPostOrderList.size()==0) {
-      // determine nodes with no predecessors (this is sufficient to find all entry nodes including disconnected subgraphs)
+      // begin topsort at start label
+      Label startLab=flow.getStartLabel();
+      if(startLab.isValid()) {
+        semanticRevPostOrderTraversal(startLab);
+      }
+
+      // store revlist for all labels reachable from start and reset result list
+      std::list<Label> revPostOrderListStart=revPostOrderList;
+      revPostOrderList.clear();
+      
+      // compute top sort for all functions that are not reachable from start
       for(auto iter=flow.nodes_begin();iter!=flow.nodes_end();++iter) {
         Label lab=*iter;
+        // determine nodes with no predecessors (this is sufficient to find all entry nodes including disconnected subgraphs)
         if(labeler.isFunctionEntryLabel(lab) && flow.pred(lab).size()==0) {
           semanticRevPostOrderTraversal(lab);
         }
       }
+      // insert revPostOrderList with start node (at beginning) in revlist of non-reachable subgraphs (otherwise start is not first if unreachable nodes exist)
+      revPostOrderList.insert(revPostOrderList.begin(),revPostOrderListStart.begin(),revPostOrderListStart.end());
     }
   }
 
@@ -49,10 +62,7 @@ namespace CodeThorn {
     LabelToPriorityMap map;
     if(_map.size()==0)
       computeLabelToPriorityMap();
-    for(auto e : _map) {
-      map[e.first]=map[e.second];
-    }
-    return map;
+    return _map;
   }
     
   // computes reverse post-order of labels in revPostOrderList

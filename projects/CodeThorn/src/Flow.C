@@ -277,7 +277,6 @@ Label Flow::getStartLabel() {
   if(_startLabelSet.size()==1) {
     return *_startLabelSet.begin();
   } else if(_startLabelSet.size()==0) {
-    //cerr<<"Flow::getStartLabel: start label requested, but no start label available."<<endl;
     Label lab;
     return lab; // intentionally returns invalid label
   } else {
@@ -590,10 +589,12 @@ string Flow::toDot(Labeler* labeler, TopologicalSort* topSort) {
     if(_dotOptionDisplayLabel) {
       ss << *i;
       ss << " [label=\"";
-      ss << Labeler::labelToString(*i);
       if(topSort) {
-        ss<<"["<<topSort->getLabelPosition(*i)<<"]";
+        ss<<topSort->getLabelPosition(*i)<<": ";
+      } else {
+        ss<<"-: ";
       }
+      ss << "L"<<Labeler::labelToString(*i);
       if(_dotOptionDisplayPassThroughLabel) {
         if(isPassThroughLabel(*i,labeler)) {
           ss << "[MOV]";

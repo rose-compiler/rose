@@ -186,8 +186,9 @@ void Solver18::run() {
   bool terminateEarly=false;
   _analyzer->printStatusMessage(true);
   while(!_workList->empty()) {
+    //_workList->print();
     auto p=_workList->top();
-    _workList->pop();
+     _workList->pop();
     // terminate early, ensure to stop all threads and empty the worklist (e.g. verification error found).
     if(terminateEarly)
       continue;

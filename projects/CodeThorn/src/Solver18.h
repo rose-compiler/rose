@@ -24,8 +24,9 @@ namespace CodeThorn {
     class WorkListEntry {
     public:
       WorkListEntry(Label lab,CallString cs):_label(lab),_callString(cs) {}
-      Label label() { return _label; }
-      CallString callString() { return _callString; }
+      Label label() const { return _label; }
+      CallString callString() const { return _callString; }
+      std::string toString() const { return "("+_label.toString()+","+_callString.toString()+")"; }
     private:
       Label _label;
       CallString _callString;

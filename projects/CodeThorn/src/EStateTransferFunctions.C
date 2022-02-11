@@ -451,16 +451,18 @@ namespace CodeThorn {
     Label functionCallReturnLabel=edge.source();
     SgNode* node=getLabeler()->getNode(functionCallReturnLabel);
     Label functionCallLabel=getLabeler()->functionCallLabel(node);
-    SAWYER_MESG(logger[TRACE])<<"FunctionCallReturnTransfer: "<<functionCallLabel.toString()<<":"<<functionCallReturnLabel.toString()<<" cs: "<<estate->callString.toString()<<endl;
+    SAWYER_MESG(logger[TRACE])<<"FunctionCallReturnTransfer: call: L"<<functionCallLabel.toString()<<": callret: L"<<functionCallReturnLabel.toString()<<" cs: "<<estate->callString.toString()<<endl;
 
     CallString cs=currentEState->callString;
     if(_analyzer->getOptionContextSensitiveAnalysis()) {
       if(getLabeler()->isExternalFunctionCallLabel(functionCallLabel)) {
         // nothing to do for external function call (label is not added
         // to callstring by external function call)
+        SAWYER_MESG(logger[TRACE])<<": external edge"<<endl;
       } else {
         if(isFeasiblePathContext(cs,functionCallLabel)) {
           transferFunctionCallReturnContextInPlace(cs,functionCallLabel);
+          SAWYER_MESG(logger[TRACE])<<"new context: cs: "<<cs.toString()<<endl;
         } else {
           // definitely not feasible path, do not return a state
           std::list<EStatePtr> emptyList;
@@ -1854,13 +1856,13 @@ namespace CodeThorn {
 
   void EStateTransferFunctions::transferFunctionCallReturnContextInPlace(CallString& cs, Label lab) {
     if(cs.isLastLabel(lab)) {
-      // TODO: callstring reduction requires call-graph depth-check!
       cs.removeLastLabel();
     } 
   }
 
-  bool EStateTransferFunctions::isFeasiblePathContext(CallString& cs,Label lab) {
-    return cs.getLength()==0||cs.isLastLabel(lab)||cs.isMaxLength();
+  bool EStateTransferFunctions::isFeasiblePathContext(CallString& cs,Label callLabel) {
+    //return cs.getLength()==0||cs.isLastLabel(callLabel)||cs.isMaxLength();
+    return cs.getLength()==0||cs.isLastLabel(callLabel);
   }
 
   std::string EStateTransferFunctions::transferFunctionCodeToString(TransferFunctionCode tfCode) {
@@ -1893,7 +1895,9 @@ namespace CodeThorn {
 
   void EStateTransferFunctions::printTransferFunctionInfo(TransferFunctionCode tfCode, SgNode* node, Edge edge, EStatePtr estate) {
     stringstream ss;
-    ss<<"transfer: "<<std::setw(6)<<"L"+estate->label().toString()<<": "<<std::setw(22)<<std::left<<transferFunctionCodeToString(tfCode)<<": ";
+    ss<<"transfer: "<<std::setw(6)<<"L"+estate->label().toString()
+      <<" "<<estate->getCallStringRef().toString()
+      <<": "<<std::setw(22)<<std::left<<transferFunctionCodeToString(tfCode)<<": ";
     if(getLabeler()->isFunctionEntryLabel(edge.source())||getLabeler()->isFunctionExitLabel(edge.source())) {
       ss<<SgNodeHelper::locationToString(node)<<": "<<SgNodeHelper::getFunctionName(node);
     } else {

@@ -15,7 +15,7 @@ namespace CodeThorn {
   GeneralPriorityElement(int priority, Element data):priority(priority),data(data){}
     std::string toString() const {
       std::stringstream ss;
-      ss<<"(pri:"<<priority<<",data:"<<data<<")";
+      ss<<"(pri:"<<priority<<",data:"<<data.toString()<<")";
       return ss.str();
     }
     int priority;
@@ -63,9 +63,11 @@ class GeneralPriorityWorkList : public GeneralWorkList<Element> {
     typedef std::priority_queue <GeneralPriorityElementType,std::vector<GeneralPriorityElementType>,GeneralPriorityElementGreaterOp<Element> > ElementMinPriorityQueueType;
     //typedef std::priority_queue <GeneralPriorityElementType> ElementMaxPriorityQueueType;
     typedef ElementMinPriorityQueueType ElementPriorityQueueType;
+    void print();
  protected:
     TopologicalSort::LabelToPriorityMap _labelToPriorityMap;
     ElementPriorityQueueType _list;
+  private:
   };
 }
 #include "GeneralPriorityWorkList.C"
