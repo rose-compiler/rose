@@ -164,6 +164,28 @@ TopologicalSort* CodeThorn::CTAnalysis::getTopologicalSort() {
   return _topologicalSort;
 }
 
+void CodeThorn::CTAnalysis::ensureToplogicSortFlowConsistency() {
+  auto l2pMap=getTopologicalSort()->labelToPriorityMap();
+  LabelSet allLabels=getFlow()->nodeLabels();
+  uint64_t numFail=0;
+  for(auto lab : allLabels) {
+    if(!lab.isValid()) {
+      cerr<<"Error: checkToplogicSortFlowConsistency failed: invalid label."<<endl;
+      numFail++;
+    }
+    if(l2pMap[lab]==0) {
+      SgNode* node=getLabeler()->getNode(lab);
+      cerr<<"Error: checkToplogicSortFlowConsistency failed: flow-node not in topological sort: L"<<lab<<": "<<SgNodeHelper::locationAndSourceCodeToString(node,25,25)<<endl;
+      numFail++;
+    }
+  }
+  if(numFail>0) {
+    cerr<<"Error: checkToplogicSortFlowConsistency: "<<numFail<<" inconsistencies detected. Exiting."<<endl;
+    exit(1);
+  }
+  cout<<"INFO: ensureToplogicSortFlowConsistency: PASS"<<endl;
+}
+
 bool CodeThorn::CTAnalysis::isPassThroughLabel(Label lab) {
   ROSE_ASSERT(getLabeler());
   return getFlow()->isPassThroughLabel(lab,getLabeler());

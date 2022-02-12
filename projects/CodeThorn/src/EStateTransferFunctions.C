@@ -2503,12 +2503,20 @@ namespace CodeThorn {
     switch(node->variantT()) {
     case V_SgAndOp: {
       // short circuit semantics
-      if(lhsResult.isTrue()||lhsResult.isTop()||lhsResult.isBot()) {
+      if(lhsResult.isTrue()
+         ||lhsResult.isTop()
+         ||lhsResult.isBot()
+         ||((lhsResult.result.isPtr()||lhsResult.result.isFunctionPtr())&&!lhsResult.result.isNullPtr())
+         ||lhsResult.result.isRef() // this can be refined to access the referenced value and check that it is not 0
+         ) {
         SgNode* rhs=SgNodeHelper::getRhs(node);
         SingleEvalResult rhsResult=evaluateExpression(rhs,estate,mode);
         return evalAndOp(isSgAndOp(node),lhsResult,rhsResult,estate,mode);
       } else {
         // rhs not executed
+        if(!lhsResult.isFalse()) {
+          cerr<<"Error: lhsResult is not false as expected here (of short-circuit AND op): "<<lhsResult.result.toString()<<endl;
+        }
         ROSE_ASSERT(lhsResult.isFalse());
         // result must be zero (=false)
         return lhsResult;

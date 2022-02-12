@@ -257,13 +257,14 @@ namespace CodeThorn {
     void setCommandLineOptions(vector<string> clOptions);
     vector<string> getCommandLineOptions();
     SgNode* getStartFunRoot();
+    // exists with error message if any violation is detected
+    void ensureToplogicSortFlowConsistency();
   protected:
     void setFunctionResolutionModeInCFAnalysis(CodeThornOptions& ctOpt);
     void deleteWorkLists();
 
     // creates topologically order list and initializes work lists
     void setWorkLists(ExplorationMode explorationMode);
-
     SgNode* _startFunRoot;
   public:
     // TODO: move to flow analyzer (reports label,init,final sets)

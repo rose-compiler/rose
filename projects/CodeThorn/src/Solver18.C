@@ -178,6 +178,7 @@ void Solver18::run() {
   ROSE_ASSERT(_analyzer->getTopologicalSort());
   if(_workList==nullptr) {
     _workList=new GeneralPriorityWorkList<Solver18::WorkListEntry>(_analyzer->getTopologicalSort()->labelToPriorityMap());
+    _analyzer->ensureToplogicSortFlowConsistency();
   }
 
   initializeSummaryStatesFromWorkList();

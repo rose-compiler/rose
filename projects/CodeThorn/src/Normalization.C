@@ -286,10 +286,13 @@ namespace CodeThorn {
     RoseAst ast(expr);
     for(auto node:ast) {
       if(isSgFunctionCallExp(node)
-         //         ||isSgConditionalExp(node)
+         ||isSgConditionalExp(node) // E?E:E;
          ||isSgPntrArrRefExp(node)
          ||isSgPlusPlusOp(node)||isSgMinusMinusOp(node)
          ||isSgCompoundAssignOp(node)
+         ||isSgAndOp(node)
+         ||isSgOrOp(node)
+         ||isSgNotOp(node)
          ) {
         return false;
       }
