@@ -930,7 +930,7 @@ namespace
           addVisibleScope(unitDef);
       }
 
-      void handle(const SgAdaRecordRepresentationClause& n)
+      void handle(const SgAdaRepresentationClause& n)
       {
         handle(sg::asBaseType(n));
 

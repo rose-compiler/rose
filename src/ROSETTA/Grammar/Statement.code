@@ -3652,9 +3652,9 @@ HEADER_ADA_COMPONENT_CLAUSE_START
 SgName get_mangled_name() const override;
 HEADER_ADA_COMPONENT_CLAUSE_END
 
-HEADER_ADA_LENGTH_CLAUSE_START
+HEADER_ADA_ATTRIBUTE_CLAUSE_START
 SgName get_mangled_name() const override;
-HEADER_ADA_LENGTH_CLAUSE_END
+HEADER_ADA_ATTRIBUTE_CLAUSE_END
 
 
 HEADER_PROGRAM_HEADER_STATEMENT_START
@@ -3740,6 +3740,9 @@ HEADER_ENTRY_STATEMENT_END
 HEADER_ADA_ENTRY_DECL_STMT_START
 
           SgName get_mangled_name() const override;
+
+          /// returns the entry index type or a SgVoidType if the entry index is not used
+          SgType* get_entryIndexType() const;
 
 HEADER_ADA_ENTRY_DECL_STMT_END
 
@@ -3849,6 +3852,7 @@ HEADER_PROCESS_CONTROL_STATEMENT_START
        // Rasmussen (4/26/2018): Added e_exit for Jovial (exit similar to Fortran stop)
        // Rasmussen (5/21/2018): Added e_abort for Jovial
        // Rasmussen (7/11/2020): Renamed SgStopOrPauseStatement to SgProcessControlStatement
+       // PP (2/11/22): added requeue and requeue_with_abort to support Ada
           enum control_enum
              {
                e_unknown,
@@ -3856,7 +3860,9 @@ HEADER_PROCESS_CONTROL_STATEMENT_START
                e_stop,
                e_error_stop,
                e_exit,
-               e_pause
+               e_pause,
+               e_requeue,
+               e_requeue_with_abort,
              };
 
 #ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
@@ -19087,6 +19093,15 @@ SgAdaEntryDecl::get_mangled_name() const
   return SgFunctionDeclaration::get_mangled_name();
 }
 
+SgType*
+SgAdaEntryDecl::get_entryIndexType() const
+{
+  ROSE_ASSERT(p_entryIndex);
+
+  return p_entryIndex->get_type();
+}
+
+
 SOURCE_ADA_ENTRY_DECL_STMT_END
 
 SOURCE_ADA_FUNCTION_RENAMING_DECL_STMT_START
@@ -21056,27 +21071,48 @@ SgAdaDiscriminatedTypeDecl::prepend_discriminant(SgInitializedName* what)
 SOURCE_ADA_DISCRIMINATED_TYPE_DECL_STATEMENT_END
 
 
-HEADER_ADA_RECORD_REPRESENTATION_CLAUSE_START
+HEADER_ADA_REPRESENTATION_CLAUSE_START
 
 // HEADER_LIST_DECLARATIONS
 
 SgName get_mangled_name() const override;
 
-HEADER_ADA_RECORD_REPRESENTATION_CLAUSE_END
+/// returns if this node is a record representation clause
+/// \details
+///   a record representation clause has get_components() != nullptr
+bool isRecordRepresentationClause() const;
 
-SOURCE_ADA_RECORD_REPRESENTATION_CLAUSE_START
-void SgAdaRecordRepresentationClause::post_construction_initialization() {}
+/// returns if this is an at clause
+/// \details
+///   a at clause has get_components() == nullptr
+bool isAtClause() const;
+
+HEADER_ADA_REPRESENTATION_CLAUSE_END
+
+SOURCE_ADA_REPRESENTATION_CLAUSE_START
+void SgAdaRepresentationClause::post_construction_initialization() {}
 
 SgName
-SgAdaRecordRepresentationClause::get_mangled_name() const
+SgAdaRepresentationClause::get_mangled_name() const
 {
-  std::string res = "ada$recordrepresentation$clause";
+  std::string res = "ada$representation$clause";
 
   res += get_recordType()->get_mangled();
   return res;
 }
 
-SOURCE_ADA_RECORD_REPRESENTATION_CLAUSE_END
+bool SgAdaRepresentationClause::isRecordRepresentationClause() const
+{
+  return get_components() != nullptr;
+}
+
+bool SgAdaRepresentationClause::isAtClause() const
+{
+  return !isRecordRepresentationClause();
+}
+
+
+SOURCE_ADA_REPRESENTATION_CLAUSE_END
 
 HEADER_ADA_ENUM_REPRESENTATION_CLAUSE_START
 
@@ -21099,18 +21135,18 @@ SgAdaEnumRepresentationClause::get_mangled_name() const
 SOURCE_ADA_ENUM_REPRESENTATION_CLAUSE_END
 
 
-SOURCE_ADA_LENGTH_CLAUSE_START
-void SgAdaLengthClause::post_construction_initialization() {}
+SOURCE_ADA_ATTRIBUTE_CLAUSE_START
+void SgAdaAttributeClause::post_construction_initialization() {}
 
 SgName
-SgAdaLengthClause::get_mangled_name() const
+SgAdaAttributeClause::get_mangled_name() const
 {
   std::string res = "ada$length$clause";
 
   res += get_attribute()->unparseToString();
   return res;
 }
-SOURCE_ADA_LENGTH_CLAUSE_END
+SOURCE_ADA_ATTRIBUTE_CLAUSE_END
 
 SOURCE_ADA_COMPONENT_CLAUSE_START
 void SgAdaComponentClause::post_construction_initialization() {};

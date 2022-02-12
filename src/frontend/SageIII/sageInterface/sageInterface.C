@@ -1937,15 +1937,15 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
               break;
             }
 
-            case V_SgAdaLengthClause:
+            case V_SgAdaAttributeClause:
             {
-              name = "_ada_length_clause_";
+              name = "_ada_attribute_clause_";
               break;
             }
 
-            case V_SgAdaRecordRepresentationClause:
+            case V_SgAdaRepresentationClause:
             {
-              name = "_ada_record_representation_clause_";
+              name = "_ada_representation_clause_";
               break;
             }
 
@@ -21584,7 +21584,7 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
       case V_SgJovialDefineDeclaration:
       case V_SgJovialDirectiveStatement:
       case V_SgPragmaDeclaration:
-      case V_SgAdaLengthClause:
+      case V_SgAdaAttributeClause:
         break;
       default:
         {

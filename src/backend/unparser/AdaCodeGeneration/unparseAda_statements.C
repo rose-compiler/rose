@@ -332,44 +332,6 @@ namespace
     }
   };
 
-  template <class AstVisitor>
-  void unparseElseBranch(AstVisitor vis, SgStatement* elseBranch)
-  {
-    if (!elseBranch) return;
-
-    sg::dispatch(vis, elseBranch);
-  }
-
-
-  struct AdaElseUnparser : AdaDetailsUnparser
-  {
-    using AdaDetailsUnparser::AdaDetailsUnparser;
-
-    void handle(SgNode& n) { SG_UNEXPECTED_NODE(n); }
-
-    void handle(SgBasicBlock& n)
-    {
-      prn("else\n");
-      unparser.unparseStatement(&n, info);
-    }
-
-    void handle(SgIfStmt& n)
-    {
-      prn("elsif ");
-      unparser.unparseExpression(si::ada::underlyingExpr(n.get_conditional()), info);
-      prn(" then\n");
-      unparser.unparseStatement(n.get_true_body(), info);
-
-      unparseElseBranch(*this, n.get_false_body());
-    }
-
-    void handle(SgNullStatement&)
-    {
-      prn("null");
-      prn(STMT_SEP);
-    }
-  };
-
 
   SgVariableDeclaration* variableDeclaration(SgInitializedName* ini)
   {
@@ -1172,15 +1134,41 @@ namespace
       stmt(dcl);
     }
 
+    void prnIfBranch(const si::ada::IfStatementInfo& branch, const std::string& cond)
+    {
+      prn(cond);
+      expr(branch.condition());
+      prn(" then ");
+      stmt(branch.trueBranch());
+    }
+
+
     void handle(SgIfStmt& n)
     {
-      prn("if ");
-      expr(si::ada::underlyingExpr(n.get_conditional()));
-      prn(" then\n");
-      stmt(n.get_true_body());
+      using Iterator = std::vector<si::ada::IfStatementInfo>::iterator;
 
-      unparseElseBranch(AdaElseUnparser(unparser, info, os), n.get_false_body());
+      std::vector<si::ada::IfStatementInfo> seq = si::ada::flattenIfStatements(n);
+      Iterator                              aa = seq.begin();
+      const Iterator                        zz = seq.end();
 
+      ROSE_ASSERT(aa != zz);
+      prnIfBranch(*aa, "if ");
+
+      ++aa;
+      while ((aa != zz) && (!aa->isElse()))
+      {
+        prnIfBranch(*aa, "elsif ");
+        ++aa;
+      }
+
+      if (aa != zz)
+      {
+        prn("else\n");
+        stmt(aa->trueBranch());
+        ++aa;
+      }
+
+      ROSE_ASSERT(aa == zz);
       prn("end if");
       prn(STMT_SEP);
     }
@@ -1335,10 +1323,30 @@ namespace
 
     void handle(SgProcessControlStatement& n)
     {
-      ROSE_ASSERT(n.get_control_kind() == SgProcessControlStatement::e_abort);
+      std::string stmt;
+      std::string postfix;
 
-      prn("abort ");
+      switch (n.get_control_kind())
+      {
+        case SgProcessControlStatement::e_abort:
+          stmt = "abort ";
+          break;
+
+        case SgProcessControlStatement::e_requeue_with_abort:
+          stmt = " with abort";
+          /* fall-through */
+
+        case SgProcessControlStatement::e_requeue:
+          stmt = "requeue ";
+          break;
+
+        default:
+          ROSE_ASSERT(!"invalid SgProcessControlStatement::p_control_kind");
+      };
+
+      prn(stmt);
       expr(n.get_code());
+      prn(postfix);
       prn(STMT_SEP);
     }
 
@@ -1402,19 +1410,30 @@ namespace
       prn(STMT_SEP);
     }
 
-    void handle(SgAdaRecordRepresentationClause& n)
+    void handle(SgAdaRepresentationClause& n)
     {
-      SgBasicBlock& blk = SG_DEREF(n.get_components());
-
       prn("for ");
       type(n, n.get_recordType());
-      prn(" use record\n");
-      expr_opt(n.get_alignment(), "at mod ", STMT_SEP);
 
-      // do not unparse the block like a normal block..
-      // it just contains a sequence of clauses and declarations.
-      list(blk.get_statements());
-      prn("end record");
+      if (SgBasicBlock* blk = n.get_components())
+      {
+        // unparse as record representation clause
+        prn(" use record\n");
+        expr_opt(n.get_alignment(), "at mod ", STMT_SEP);
+
+        // do not unparse the block like a normal block..
+        // it just contains a sequence of clauses and declarations.
+        list(blk->get_statements());
+        prn("end record");
+
+      }
+      else
+      {
+        // unparse as at clause
+        prn(" use at ");
+        expr(n.get_alignment());
+      }
+
       prn(STMT_SEP);
     }
 
@@ -1458,7 +1477,7 @@ namespace
     }
 
 
-    void handle(SgAdaLengthClause& n)
+    void handle(SgAdaAttributeClause& n)
     {
       prn("for ");
       expr(n.get_attribute());
@@ -1835,7 +1854,7 @@ namespace
       void handle(SgAdaSelectStmt&)                 { res = true; }
       void handle(SgAdaSelectAlternativeStmt&)      { res = true; }
       void handle(SgAdaAcceptStmt&)                 { res = true; }
-      void handle(SgAdaRecordRepresentationClause&) { res = true; }
+      void handle(SgAdaRepresentationClause&)       { res = true; }
     };
 
     bool adaStmtSequence(SgBasicBlock& n)
@@ -1967,6 +1986,36 @@ namespace
     prn(" ");
     prn(name);
 
+    SgAdaEntryDecl* adaEntry = isSgAdaEntryDecl(&n);
+
+    if (adaEntry)
+    {
+      // print entry index if present, otherwise nothing
+      //   for entry declarations: (type)
+      //   for entry definitions:  (for varname in type)
+      SgInitializedName& idxvar = SG_DEREF(adaEntry->get_entryIndex());
+      SgType*            idxty = idxvar.get_type();
+
+      if (isSgTypeVoid(idxty) == nullptr)
+      {
+        ROSE_ASSERT(idxty);
+
+        std::string idxname = idxvar.get_name();
+
+        prn("(");
+
+        if (idxname.size())
+        {
+          prn("for ");
+          prn(idxname);
+          prn(" in ");
+        }
+
+        type(n, idxty);
+        prn(")");
+      }
+    }
+
     handleParameterList( SG_DEREF(n.get_parameterList()).get_args() );
 
     if (hasReturn)
@@ -2006,6 +2055,21 @@ namespace
       prn(" is null");
       prn(STMT_SEP);
       return;
+    }
+
+    if (adaEntry)
+    {
+      SgExpression* barrier = adaEntry->get_entryBarrier();
+
+      if (barrier)
+      std::cerr << "barrier: " << typeid(*barrier).name() << std::endl;
+
+      if (barrier && (isSgNullExpression(barrier) == nullptr))
+      {
+        std::cerr << "barrier2: " << barrier << std::endl;
+        prn(" when ");
+        expr(barrier);
+      }
     }
 
     prn(" is\n");
