@@ -461,12 +461,14 @@ namespace ada
     do
     {
       cond = next;
-      res.emplace_back(underlyingExpr(cond), cond->get_true_body());
+      res.emplace_back(underlyingExpr(cond->get_conditional()), cond->get_true_body());
 
       next = isSgIfStmt(cond->get_false_body());
     } while (next);
 
-    res.emplace_back(nullptr, SG_DEREF(cond).get_false_body());
+    if (SgStatement* falseBranch = cond->get_false_body())
+      res.emplace_back(nullptr, falseBranch);
+
     return res;
   }
 

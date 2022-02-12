@@ -1,3 +1,6 @@
+with Ada.Text_IO; 
+use Ada.Text_IO;
+
 package body Complex is
 
 function "+" (lhs, rhs : in Complex) return Complex is
@@ -19,5 +22,14 @@ function Origin return Complex is
 begin
   return zero;
 end Origin;
+
+procedure Put(v : in Complex) is
+begin
+  Put("(");
+  Put(Float'Image(v.Re));
+  Put(" + ");
+  Put(Float'Image(v.Im));
+  Put("i)");
+end Put;
 
 end Complex;

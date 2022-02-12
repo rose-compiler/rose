@@ -17,6 +17,8 @@ package Complex is
 
   function Origin return Complex;
 
+  procedure Put(v : in Complex);
+
 private
 
   type Complex is record
