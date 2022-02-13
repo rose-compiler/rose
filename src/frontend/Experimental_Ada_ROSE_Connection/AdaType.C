@@ -88,7 +88,24 @@ namespace
                  << std::endl;
 
       ADA_ASSERT(!FAIL_ON_ERROR(ctx));
-      return &mkTypeVoid();
+      return &mkUnresolvedType(typeEx.Name_Image, ctx.scope());
+    }
+
+    // stop gap function
+    // \todo remove after instantiations can be fully represented
+    SgAdaGenericInstanceDecl*
+    instantiationDeclID(Element_ID id, AstContext ctx)
+    {
+      Element_Struct*         elem = retrieveAsOpt(elemMap(), id);
+      if (!elem || (elem->Element_Kind != An_Expression))
+        return nullptr;
+
+      Expression_Struct&      ex   = elem->The_Union.Expression;
+
+      if (ex.Expression_Kind != An_Identifier)
+        return nullptr;
+
+      return isSgAdaGenericInstanceDecl(findFirst(asisDecls(), ex.Corresponding_Name_Definition));
     }
   }
 
@@ -121,6 +138,18 @@ namespace
         {
           logKind("A_Selected_Component");
           res = &getExprTypeID(typeEx.Selector, ctx);
+
+          /// temporary code to handle incomplete AST for generic instantiations
+          if (SgType* ty = isSgType(res))
+          {
+            if (SgAdaGenericInstanceDecl* gendecl = instantiationDeclID(typeEx.Prefix, ctx))
+            {
+              SgExpression& declref = mkAdaUnitRefExp(*gendecl);
+
+              res = &mkQualifiedType(declref, *ty);
+            }
+          }
+          /// end temporary code
           break;
         }
 

@@ -4184,7 +4184,9 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgFunctionDefinition&   fndef   = SG_DEREF(sgnode.get_definition());
         SgBasicBlock&           declblk = SG_DEREF(fndef.get_body());
 
-        logError() << "barrier-id " << decl.Entry_Barrier << std::endl;
+        if (isInvalidId(decl.Entry_Barrier))
+          logError() << "Entry_Barrier-id " << decl.Entry_Barrier << std::endl;
+
         SgExpression&           barrier = getExprID_opt(decl.Entry_Barrier, ctx.scope(fndef));
 
         sgnode.set_entryBarrier(&barrier);
