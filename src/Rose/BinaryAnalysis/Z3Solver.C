@@ -179,9 +179,13 @@ Z3Solver::checkLib() {
     requireLinkage(LM_LIBRARY);
 
 #ifdef ROSE_HAVE_Z3
-    z3Update();
+    {
+        ProgressTask task(progress_, "smt-prepare");
+        z3Update();
+    }
 
     Sawyer::Stopwatch timer;
+    ProgressTask task(progress_, "smt-check");
     z3::check_result result = solver_->check();
     stats.solveTime += timer.stop();
     stats.longestSolveTime = std::max(stats.longestSolveTime, timer.report());
