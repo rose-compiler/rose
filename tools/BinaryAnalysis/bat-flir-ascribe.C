@@ -144,8 +144,8 @@ main(int argc, char *argv[]) {
                 return a.second > b.second;
             });
         for (const LibraryCountPair &pair: sorted) {
-            std::cout <<StringUtility::plural(pair.second, "matches") <<" for"
-                      <<" library \"" <<StringUtility::cEscape(pair.first->name()) <<"\""
+            std::cout <<StringUtility::plural(pair.second, "matches", "match") <<" for"
+                      <<" library " <<pair.first->hash() <<" \"" <<StringUtility::cEscape(pair.first->name()) <<"\""
                       <<" version \"" <<StringUtility::cEscape(pair.first->version()) <<"\""
                       <<" arch \"" <<StringUtility::cEscape(pair.first->architecture()) <<"\"\n";
         }
