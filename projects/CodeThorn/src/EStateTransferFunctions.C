@@ -407,7 +407,7 @@ namespace CodeThorn {
       logger[WARN]<<"fdef    : "<<SgNodeHelper::sourceLineColumnToString(funDef)<<endl;
     }
 
-    // ad 4
+    // ad 4 call context (call string)
     CallString cs=currentEState->callString;
     if(_analyzer->getOptionContextSensitiveAnalysis()) {
       transferFunctionCallContextInPlace(cs, currentEState->label());
@@ -649,9 +649,18 @@ namespace CodeThorn {
       VariableIdMapping::VariableIdSet vars=localVars+formalParams;
       set<string> names=_analyzer->variableIdsToVariableNames(vars);
 
+      std::list<PState::iterator> toBeDeleted;
       for(VariableIdMapping::VariableIdSet::iterator i=vars.begin();i!=vars.end();++i) {
         VariableId varId=*i;
-        newPState->deleteVar(varId);
+        // delete all entries with varid as part of address (e.g. struct members, etc.)
+        for(auto psIter=newPState->begin();psIter!=newPState->end();++psIter) {
+          if((*psIter).first==varId)
+            toBeDeleted.push_back(psIter);
+          //newPState->deleteVar(varId);
+        }
+      }
+      for(auto mapElIter : toBeDeleted) {
+        newPState->erase(mapElIter);
       }
       // ad 3)
       return elistify(reInitEState(currentEState,edge.target(),estate->callString,newPState));
@@ -1329,7 +1338,7 @@ namespace CodeThorn {
       AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex),AbstractValue(elemSize));
       // set default init value
       reserveMemoryLocation(label,pstate,newArrayElementAddr);
-      newArrayElementAddr.setSummaryFlag(true);
+      newArrayElementAddr.setAbstractFlag(true);
     } else {
       cout<<"Error: array abstraction requested, but abstraction mode = "<<abstractionMode<<endl;
       cout<<"Analysis is misconfigured, exiting."<<endl;
@@ -4156,7 +4165,7 @@ namespace CodeThorn {
     // those shared variables
     if(_analyzer->getOptionsRef().getIntraProceduralFlag()) {
       if(isGlobalAddress(memLoc)) {
-        memLoc.setSummaryFlag(true);
+        memLoc.setAbstractFlag(true);
       }
     }
     SAWYER_MESG(logger[TRACE])<<"initializeMemoryLocation: "<<memLoc.toString()<<" := "<<newValue.toString()<<endl;
@@ -4180,7 +4189,7 @@ namespace CodeThorn {
 
     if(_analyzer->getOptionsRef().getIntraProceduralFlag()) {
       if(isGlobalAddress(memLoc)) {
-        memLoc.setSummaryFlag(true);
+        memLoc.setAbstractFlag(true);
       }
     }
 

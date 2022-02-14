@@ -214,9 +214,9 @@ class AbstractValue {
   static bool strictChecking; // if turned off, some error conditions are not active, but the result remains sound.
   static AbstractValue convertPtrToPtrSet(AbstractValue val); // requires val to be AV_PTR
   static AbstractValue conditionallyApplyArrayAbstraction(AbstractValue val);
-  bool isSummary() const;
+  bool isAbstract() const;
   // forces abstract value to be handled as a summary
-  void setSummaryFlag(bool flag); 
+  void setAbstractFlag(bool flag); 
 
 private:
 
@@ -246,7 +246,7 @@ private:
     void* extension=nullptr; // used for AVSet
   };
   Label label;
-  bool _summaryFlag=false;
+  bool _abstractionFlag=false;
 public:
   static CodeThorn::VariableIdMappingExtended* _variableIdMapping;
   static bool byteMode; // computes byte offset for array and struct elements

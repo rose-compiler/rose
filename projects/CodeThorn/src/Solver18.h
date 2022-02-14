@@ -46,13 +46,13 @@ namespace CodeThorn {
     
     GeneralPriorityWorkList<WorkListEntry>* _workList=nullptr;
 
-    void initializeSummaryStatesFromWorkList();
-    EStatePtr getSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs);
-    void setSummaryState(CodeThorn::Label lab, CallString cs, EStatePtr estate);
-    EStatePtr createBottomSummaryState(Label lab, CallString cs);
-    typedef std::unordered_map <CallString ,EStatePtr> SummaryCSStateMap;
-    std::unordered_map< int, SummaryCSStateMap > _summaryCSStateMapMap;
-    // number of active states stored in _summaryCSStateMapMap (computed incrementally by setSummaryState)
+    void initializeAbstractStatesFromWorkList();
+    EStatePtr getAbstractState(CodeThorn::Label lab, CodeThorn::CallString cs);
+    void setAbstractState(CodeThorn::Label lab, CallString cs, EStatePtr estate);
+    EStatePtr createBottomAbstractState(Label lab, CallString cs);
+    typedef std::unordered_map <CallString ,EStatePtr> AbstractCSStateMap;
+    std::unordered_map< int, AbstractCSStateMap > _abstractCSStateMapMap;
+    // number of active states stored in _abstractCSStateMapMap (computed incrementally by setAbstractState)
     size_t _numberOfStates=0;
     void printAllocationStats(string text);
     bool _abstractionConsistencyCheckEnabled=false; // slow, only used for debugging

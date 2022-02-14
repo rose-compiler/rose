@@ -25,7 +25,6 @@ namespace CodeThorn {
       _callString.push_back(lab);
       return true;
     } else {
-      //cout<<"DEBUG: cutting off callstring!"<<endl;
       return false;
     }
   }
@@ -74,6 +73,22 @@ namespace CodeThorn {
         ss<<", ";
       }
       ss<<(*iter).toString();
+    }
+    ss<<"]";
+    return ss.str();
+  }
+
+  std::string CallString::toString(Labeler* labeler) const {
+    stringstream ss;
+    ss<<"[";
+    for(auto iter = _callString.begin(); iter!=_callString.end();++iter) {
+      if(iter!=_callString.begin()) {
+        ss<<", ";
+      }
+      ROSE_ASSERT(labeler->isFunctionCallLabel(*iter));
+      SgNode* node=labeler->getNode(*iter);
+      string functionName=SgNodeHelper::getFunctionName(node);
+      ss<<(*iter).toString()+":"+functionName;
     }
     ss<<"]";
     return ss.str();

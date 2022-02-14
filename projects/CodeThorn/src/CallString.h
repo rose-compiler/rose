@@ -52,6 +52,9 @@ namespace CodeThorn {
     */
     std::string toString() const;
 
+    // same as toString() but also prints the function names
+    std::string toString(Labeler* labeler) const;
+
     /** Establish an ordering of call strings as required for ordered STL containers.
         Compares this string with 'other'.
         Returns true if the length is shorter or if same length then all values are lower

@@ -29,7 +29,7 @@ void Solver18::initDiagnostics() {
 void Solver18::deleteAllStates() {
   if(_analyzer->getOptionsRef().status) cout<<"STATUS: Solver18: deleting all remaining states."<<endl;
   size_t cnt=0;
-  for(auto entry : _summaryCSStateMapMap) {
+  for(auto entry : _abstractCSStateMapMap) {
     auto map=entry.second;
     for(auto entry2 : map) {
       delete entry2.second;
@@ -52,14 +52,14 @@ bool Solver18::isPassThroughLabel(Label lab) {
 
 bool Solver18::isUnreachableLabel(Label lab) {
   // if code is unreachable no state is computed for it. In this case no entry is found for this label (with any callstring).
-  return (_summaryCSStateMapMap.find(lab.getId())==_summaryCSStateMapMap.end())&&lab!=_analyzer->getFlow()->getStartLabel()&&!isPassThroughLabel(lab);
+  return (_abstractCSStateMapMap.find(lab.getId())==_abstractCSStateMapMap.end())&&lab!=_analyzer->getFlow()->getStartLabel()&&!isPassThroughLabel(lab);
 }
 
 bool Solver18::isReachableLabel(Label lab) {
   return !isUnreachableLabel(lab);
 }
 
-void Solver18::initializeSummaryStatesFromWorkList() {
+void Solver18::initializeAbstractStatesFromWorkList() {
   // pop all states from worklist (can contain more than one state)
   list<EStatePtr> tmpWL;
   while(!_analyzer->isEmptyWorkList()) {
@@ -68,9 +68,9 @@ void Solver18::initializeSummaryStatesFromWorkList() {
     tmpWL.push_back(estate);
   }
   for(auto s : tmpWL) {
-    // initialize summarystate and push back to work lis
+    // initialize abstractstate and push back to work lis
     ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(s->label()));
-    setSummaryState(s->label(),s->callString,s);
+    setAbstractState(s->label(),s->callString,s);
     _workList->push(WorkListEntry(s->label(),s->callString));
   }
   /* the other states are not initialized here because every context
@@ -82,17 +82,17 @@ size_t Solver18::getNumberOfStates() {
   return _numberOfStates;
 }
 
-EStatePtr Solver18::getSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs) {
+EStatePtr Solver18::getAbstractState(CodeThorn::Label lab, CodeThorn::CallString cs) {
   EStatePtr res;
 #pragma omp critical(SUMMARY_STATES)
   {
-    auto iter1=_summaryCSStateMapMap.find(lab.getId());
-    if(iter1==_summaryCSStateMapMap.end()) {
+    auto iter1=_abstractCSStateMapMap.find(lab.getId());
+    if(iter1==_abstractCSStateMapMap.end()) {
       res=nullptr;
     } else {
-      SummaryCSStateMap& summaryCSStateMap=(*iter1).second;
-      auto iter2=summaryCSStateMap.find(cs);
-      if(iter2==summaryCSStateMap.end()) {
+      AbstractCSStateMap& abstractCSStateMap=(*iter1).second;
+      auto iter2=abstractCSStateMap.find(cs);
+      if(iter2==abstractCSStateMap.end()) {
         res=nullptr;
       } else {
         res=(*iter2).second;
@@ -102,7 +102,7 @@ EStatePtr Solver18::getSummaryState(CodeThorn::Label lab, CodeThorn::CallString 
   return res;
 }
 
-void Solver18::setSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs, EStatePtr estate) {
+void Solver18::setAbstractState(CodeThorn::Label lab, CodeThorn::CallString cs, EStatePtr estate) {
   ROSE_ASSERT(lab==estate->label());
   ROSE_ASSERT(cs==estate->callString);
   ROSE_ASSERT(estate);
@@ -118,33 +118,33 @@ void Solver18::setSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs, E
   //_summaryCSStateMap[p]=estate;
 #pragma omp critical(SUMMARY_STATES)
   {
-    auto iter1=_summaryCSStateMapMap.find(lab.getId());
-    if(iter1==_summaryCSStateMapMap.end()) {
+    auto iter1=_abstractCSStateMapMap.find(lab.getId());
+    if(iter1==_abstractCSStateMapMap.end()) {
       // create new
-      SummaryCSStateMap newSummaryCSStateMap;
-      newSummaryCSStateMap[cs]=estate;
-      _summaryCSStateMapMap[lab.getId()]=newSummaryCSStateMap;
+      AbstractCSStateMap newAbstractCSStateMap;
+      newAbstractCSStateMap[cs]=estate;
+      _abstractCSStateMapMap[lab.getId()]=newAbstractCSStateMap;
       _numberOfStates++;
     } else {
-      SummaryCSStateMap& summaryCSStateMap=(*iter1).second;
-      auto iter2=summaryCSStateMap.find(cs);
-      if(iter2==summaryCSStateMap.end()) {
-        summaryCSStateMap[cs]=estate;
+      AbstractCSStateMap& abstractCSStateMap=(*iter1).second;
+      auto iter2=abstractCSStateMap.find(cs);
+      if(iter2==abstractCSStateMap.end()) {
+        abstractCSStateMap[cs]=estate;
         _numberOfStates++;
       } else {
         // context already exists, re-set state, no additional state added
         auto currentEState=(*iter2).second;
         if(currentEState!=estate && currentEState!=nullptr) {
-          delete summaryCSStateMap[cs];
+          delete abstractCSStateMap[cs];
         }
-        summaryCSStateMap[cs]=estate;
+        abstractCSStateMap[cs]=estate;
       }
     }
   }
 }
 
 // creates bottom state
-EStatePtr Solver18::createBottomSummaryState(Label lab, CallString cs) {
+EStatePtr Solver18::createBottomAbstractState(Label lab, CallString cs) {
   InputOutput io;
   io.recordBot();
   EState estate(lab,cs,new PState(),io);
@@ -181,7 +181,7 @@ void Solver18::run() {
     _analyzer->ensureToplogicSortFlowConsistency();
   }
 
-  initializeSummaryStatesFromWorkList();
+  initializeAbstractStatesFromWorkList();
 
   size_t displayTransferCounter=0;
   bool terminateEarly=false;
@@ -196,9 +196,9 @@ void Solver18::run() {
     
     ROSE_ASSERT(p.label().isValid());
     ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(p.label()));
-    EStatePtr currentEStatePtr=getSummaryState(p.label(),p.callString());
+    EStatePtr currentEStatePtr=getAbstractState(p.label(),p.callString());
     if(currentEStatePtr==nullptr) {
-      currentEStatePtr=createBottomSummaryState(p.label(),p.callString());
+      currentEStatePtr=createBottomAbstractState(p.label(),p.callString());
     }
     ROSE_ASSERT(currentEStatePtr);
     
@@ -302,34 +302,34 @@ void Solver18::run() {
           EStatePtr newEStatePtr=newEStatePtr0;
           ROSE_ASSERT(newEStatePtr);
           // performing merge
-          EStatePtr summaryEStatePtr=getSummaryState(lab,cs);
-          if(summaryEStatePtr==nullptr)
-            summaryEStatePtr=createBottomSummaryState(lab,cs);
+          EStatePtr abstractEStatePtr=getAbstractState(lab,cs);
+          if(abstractEStatePtr==nullptr)
+            abstractEStatePtr=createBottomAbstractState(lab,cs);
 
-          ROSE_ASSERT(summaryEStatePtr);
-          ROSE_ASSERT(summaryEStatePtr->pstate());
-          if(_analyzer->getEStateTransferFunctions()->isApproximatedBy(newEStatePtr,summaryEStatePtr)) {
+          ROSE_ASSERT(abstractEStatePtr);
+          ROSE_ASSERT(abstractEStatePtr->pstate());
+          if(_analyzer->getEStateTransferFunctions()->isApproximatedBy(newEStatePtr,abstractEStatePtr)) {
             printAllocationStats("P5a:");
             delete newEStatePtr; // new state does not contain new information, therefore it can be deleted
             printAllocationStats("P5b:");
             newEStatePtr=nullptr;
           } else {
             printAllocationStats("P6a:");
-            ROSE_ASSERT(summaryEStatePtr);
-            ROSE_ASSERT(summaryEStatePtr->pstate());
+            ROSE_ASSERT(abstractEStatePtr);
+            ROSE_ASSERT(abstractEStatePtr->pstate());
             ROSE_ASSERT(newEStatePtr);
             ROSE_ASSERT(newEStatePtr->pstate());
-            _analyzer->getEStateTransferFunctions()->combineInPlace1st(summaryEStatePtr,const_cast<EStatePtr>(newEStatePtr));
-            ROSE_ASSERT(summaryEStatePtr);
-            ROSE_ASSERT(summaryEStatePtr->pstate());
+            _analyzer->getEStateTransferFunctions()->combineInPlace1st(abstractEStatePtr,const_cast<EStatePtr>(newEStatePtr));
+            ROSE_ASSERT(abstractEStatePtr);
+            ROSE_ASSERT(abstractEStatePtr->pstate());
 
             printAllocationStats("P6b:");
-            setSummaryState(lab,cs,summaryEStatePtr);
+            setAbstractState(lab,cs,abstractEStatePtr);
             printAllocationStats("P6c:");
             delete newEStatePtr;
             printAllocationStats("P6d:");
-            ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(summaryEStatePtr->label()));
-            _workList->push(WorkListEntry(summaryEStatePtr->label(),summaryEStatePtr->callString));
+            ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(abstractEStatePtr->label()));
+            _workList->push(WorkListEntry(abstractEStatePtr->label(),abstractEStatePtr->callString));
 
           }
         }
