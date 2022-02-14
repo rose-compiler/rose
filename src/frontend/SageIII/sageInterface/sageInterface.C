@@ -27465,3 +27465,26 @@ SgType* SageInterface::getDeclaredType(const SgDeclarationStatement* declaration
 {
   return sg::dispatch(DeclaredType{}, declaration);
 }
+
+void SageInterface::clearSharedGlobalScopes(SgProject * project) {
+  SgGlobal * gsaf = project->get_globalScopeAcrossFiles();
+  ROSE_ASSERT(gsaf != nullptr);
+  SgSymbolTable * st = gsaf->get_symbol_table();
+  ROSE_ASSERT(st != nullptr);
+  rose_hash_multimap * hmm = st->get_table();
+  ROSE_ASSERT(hmm != nullptr);
+  hmm->clear();
+
+  st = SgNode::get_globalTypeTable()->get_type_table();
+  ROSE_ASSERT(st != nullptr);
+  hmm = st->get_table();
+  ROSE_ASSERT(hmm != nullptr);
+  hmm->clear();
+
+  st = SgNode::get_globalFunctionTypeTable()->get_function_type_table();
+  ROSE_ASSERT(st != nullptr);
+  hmm = st->get_table();
+  ROSE_ASSERT(hmm != nullptr);
+  hmm->clear();
+}
+
