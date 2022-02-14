@@ -558,8 +558,8 @@ namespace
       void handle(SgAdaGenericDecl& n)         { res = &mkAdaUnitRefExp(n); }
       void handle(SgAdaGenericInstanceDecl& n) { res = &mkAdaUnitRefExp(n); }
       void handle(SgAdaPackageSpecDecl& n)     { res = &mkAdaUnitRefExp(n); }
-      void handle(SgAdaTaskTypeDecl& n)        { res = sb::buildTypeExpression(n.get_type()); }
-      void handle(SgAdaProtectedTypeDecl& n)   { res = sb::buildTypeExpression(n.get_type()); }
+      void handle(SgAdaTaskTypeDecl& n)        { res = &mkTypeExpression(SG_DEREF(n.get_type())); }
+      void handle(SgAdaProtectedTypeDecl& n)   { res = &mkTypeExpression(SG_DEREF(n.get_type())); }
 
     private:
       AstContext ctx;
@@ -599,9 +599,7 @@ namespace
 
   void TypeRefMaker::set(SgType* ty)
   {
-    ADA_ASSERT(ty);
-    res = sb::buildTypeExpression(ty);
-    ADA_ASSERT(res);
+    res = &mkTypeExpression(SG_DEREF(ty));
   }
 
 
@@ -936,7 +934,7 @@ namespace
           // after there was no matching declaration, try to look up declarations in the standard package by name
           else if (SgType* ty = findFirst(adaTypes(), AdaIdentifier{expr.Name_Image}))
           {
-            res = sb::buildTypeExpression(ty);
+            res = &mkTypeExpression(*ty);
           }
           else if (SgAdaPackageSpecDecl* pkg = findFirst(adaPkgs(), AdaIdentifier{expr.Name_Image}))
           {
@@ -1409,8 +1407,7 @@ namespace
             ty = &mkAdaSubtype(SG_DEREF(ty), constraint);
           }
 
-          ADA_ASSERT(ty);
-          res = sb::buildTypeExpression(ty);
+          res = &mkTypeExpression(SG_DEREF(ty));
           break;
         }
 

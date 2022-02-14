@@ -223,6 +223,7 @@ mkAdaDerivedType(SgType& basetype)
   return mkNonSharedTypeNode<SgAdaDerivedType>(&basetype);
 }
 
+
 SgAdaModularType&
 mkAdaModularType(SgExpression& modexpr)
 {
@@ -272,6 +273,24 @@ mkOpaqueType()
   // not in sage builder
   return mkTypeNode<SgTypeDefault>();
 }
+
+
+SgDeclType&
+mkUnresolvedType(const std::string& n, SgScopeStatement& scope)
+{
+  return mkNonSharedTypeNode<SgDeclType>(&mkUnresolvedName(n, scope));
+}
+
+SgType& mkQualifiedType(SgExpression& qual, SgType& base)
+{
+  SgTypeExpression& baseexp   = mkTypeExpression(base);
+  SgDotExp&         qualified = SG_DEREF(sb::buildDotExp(&qual, &baseexp));
+  //~ SgExprListExp     list     = mkExprListExp({&namequal, &baseexp});
+  SgDeclType&       sgnode   = mkNonSharedTypeNode<SgDeclType>(&qualified);
+
+  return sgnode;
+}
+
 
 SgTypeVoid&
 mkTypeVoid()
@@ -1665,6 +1684,17 @@ mkExprListExp(const std::vector<SgExpression*>& exprs)
   markCompilerGenerated(sgnode);
   return sgnode;
 }
+
+
+SgTypeExpression&
+mkTypeExpression(SgType& ty)
+{
+  SgTypeExpression& sgnode = SG_DEREF(sb::buildTypeExpression(&ty));
+
+  markCompilerGenerated(sgnode);
+  return sgnode;
+}
+
 
 SgNullExpression&
 mkNullExpression()

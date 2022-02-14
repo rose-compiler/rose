@@ -111,6 +111,10 @@ namespace Ada_ROSE_Translation
   SgAdaDerivedType&
   mkAdaDerivedType(SgType& basetype);
 
+  /// builds a qualified type ref.base
+  /// \todo this is a stop gap function and should not be in the final code
+  SgType& mkQualifiedType(SgExpression& ref, SgType& base);
+
   /// builds a modular integral type with mod expression \ref modexpr.
   SgAdaModularType&
   mkAdaModularType(SgExpression& modexpr);
@@ -141,6 +145,11 @@ namespace Ada_ROSE_Translation
   /// returns a default type, used to represent an opaque declaration
   SgTypeDefault&
   mkOpaqueType();
+
+  /// makes an unresolved type
+  /// \todo should not be in the final version of the translator
+  SgDeclType&
+  mkUnresolvedType(const std::string& n, SgScopeStatement& scope);
 
   /// creates a type union for a list of types
   /// \note
@@ -750,6 +759,10 @@ namespace Ada_ROSE_Translation
   /// creates an  expression list from \ref exprs
   SgExprListExp&
   mkExprListExp(const SgExpressionPtrList& exprs = {});
+
+  /// creates an expression wrapper for type \ref ty
+  SgTypeExpression&
+  mkTypeExpression(SgType& ty);
 
   /// creates an SgNullExpression
   SgNullExpression&

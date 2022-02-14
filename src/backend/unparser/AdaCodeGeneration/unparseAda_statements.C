@@ -2061,12 +2061,8 @@ namespace
     {
       SgExpression* barrier = adaEntry->get_entryBarrier();
 
-      if (barrier)
-      std::cerr << "barrier: " << typeid(*barrier).name() << std::endl;
-
       if (barrier && (isSgNullExpression(barrier) == nullptr))
       {
-        std::cerr << "barrier2: " << barrier << std::endl;
         prn(" when ");
         expr(barrier);
       }
