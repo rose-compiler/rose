@@ -1588,6 +1588,17 @@ mangleExpression (const SgExpression* expr)
           mangled_name << "_badaRenamingRefExp_" << std::hex << e << "_eadaRenamingRefExp_";
           break;
         }
+        case V_SgAdaUnitRefExp: {
+          const SgAdaUnitRefExp* e = isSgAdaUnitRefExp(expr);
+          mangled_name << "_badaUnitRefExp_" << std::hex << e << "_eadaUnitRefExp_";
+          break;
+        }
+        // PP 2/13/22 added to support stop gap implementation for type from ada instantiations
+        case V_SgTypeExpression: {
+          const SgTypeExpression* e = isSgTypeExpression(expr);
+          mangled_name << "_btypeExp_" << std::hex << e << "_etypeExp_";
+          break;
+        }
         default: {
           printf("In mangleExpression: Unsupported expression %p (%s)\n", expr, expr ? expr->class_name().c_str() : "");
           ROSE_ABORT();
