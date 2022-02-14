@@ -2953,8 +2953,11 @@ void detectCycleInType(SgType * type, const std::string & from);
 // DQ (7/14/2020): Debugging support.
 void checkForInitializers( SgNode* node );
 
+void clearSharedGlobalScopes(SgProject * project);
+
 }// end of namespace
 
 
 
 #endif
+
