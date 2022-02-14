@@ -404,7 +404,6 @@ TESTCODES_REQUIRED_TO_PASS = \
      test2015_02.c \
      test2015_03.c \
      test2015_04.c \
-     test2015_05.c \
      test2015_06.c \
      test2015_07.c \
      test2015_08.c \
@@ -955,6 +954,7 @@ if !OS_MACOSX
       test2014_13.c \
       test2014_83.c \
       test2014_93.c \
+      test2015_05.c \
       test2015_34.c \
       test2012_09.c
 else
