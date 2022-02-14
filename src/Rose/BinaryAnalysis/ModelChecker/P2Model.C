@@ -1343,8 +1343,11 @@ SemanticCallbacks::findUnit(rose_addr_t va, const Progress::Ptr &progress) {
         // basic block, not each time a path reaches this block.
         if (bb->nInstructions() > 0) {
             ProgressTask task(progress, "findNext");
+
+            // We intentionally don't use an SMT solver here because it's not usually needed--we're only processing a single
+            // basic block. If the Z3 solver is used here, we find that Z3 eventually hangs during the z3check call on some
+            // threads even when we tell it to time out after a few seconds.
             auto ops = partitioner_.newOperators(P2::MAP_BASED_MEMORY);
-            ops->solver(createSolver());
             IS::SymbolicSemantics::RiscOperators::promote(ops)->trimThreshold(mcSettings()->maxSymbolicSize);
             auto cpu = partitioner_.newDispatcher(ops);
             const RegisterDescriptor IP = partitioner_.instructionProvider().instructionPointerRegister();
