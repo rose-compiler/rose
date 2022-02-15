@@ -111,6 +111,10 @@ namespace Ada_ROSE_Translation
   SgAdaDerivedType&
   mkAdaDerivedType(SgType& basetype);
 
+  /// builds a qualified type ref.base
+  /// \todo this is a stop gap function and should not be in the final code
+  SgType& mkQualifiedType(SgExpression& ref, SgType& base);
+
   /// builds a modular integral type with mod expression \ref modexpr.
   SgAdaModularType&
   mkAdaModularType(SgExpression& modexpr);
@@ -129,6 +133,10 @@ namespace Ada_ROSE_Translation
   SgDeclType&
   mkExceptionType(SgExpression& n);
 
+  /// returns the void type
+  SgTypeVoid&
+  mkTypeVoid();
+
   /// returns the type produced by an attribute expression
   // \todo consider returning an SgTypeOfType instead of SgDeclType
   SgDeclType&
@@ -137,6 +145,11 @@ namespace Ada_ROSE_Translation
   /// returns a default type, used to represent an opaque declaration
   SgTypeDefault&
   mkOpaqueType();
+
+  /// makes an unresolved type
+  /// \todo should not be in the final version of the translator
+  SgDeclType&
+  mkUnresolvedType(const std::string& n, SgScopeStatement& scope);
 
   /// creates a type union for a list of types
   /// \note
@@ -286,6 +299,12 @@ namespace Ada_ROSE_Translation
   /// \param abortList a list of aborted tasks
   SgProcessControlStatement&
   mkAbortStmt(SgExprListExp& abortList);
+
+  /// creates an Ada requeue statement
+  /// \param abortList a list of aborted tasks
+  SgProcessControlStatement&
+  mkRequeueStmt(SgExpression& entryexpr, bool withAbort);
+
 
   /// creates an Ada labeled statement.
   /// \param label the label name
@@ -451,7 +470,7 @@ namespace Ada_ROSE_Translation
   /// creates a function/procedure declaration
   /// \param nm       name of the function/procedure
   /// \param scope    the enclosing scope
-  /// \param retty    return type of a function (SgVoidType for procedures)
+  /// \param retty    return type of a function (SgTypeVoid for procedures)
   /// \param complete a functor that is called after the function parameter list and
   ///                 the function parameter scope have been constructed. The task of complete
   ///                 is to fill these objects with function parameters.
@@ -465,7 +484,7 @@ namespace Ada_ROSE_Translation
   /// creates a secondary function/procedure declaration
   /// \param ndef     the first nondefining declaration
   /// \param scope    the enclosing scope
-  /// \param retty    return type of a function (SgVoidType for procedures)
+  /// \param retty    return type of a function (SgTypeVoid for procedures)
   /// \param complete a functor that is called after the function parameter list and
   ///                 the function parameter scope have been constructed. The task of complete
   ///                 is to fill these objects with function parameters.
@@ -479,21 +498,21 @@ namespace Ada_ROSE_Translation
   /// creates a function/procedure declaration
   /// \param ndef     the first nondefining declaration
   /// \param scope    the enclosing scope
-  /// \param retty    return type of a function (SgVoidType for procedures)
+  /// \param retty    return type of a function (SgTypeVoid for procedures)
   /// \param complete a functor that is called after the function parameter list and
   ///                 the function parameter scope have been constructed. The task of complete
   ///                 is to fill these objects with function parameters.
   SgFunctionDeclaration&
-  mkProcedureDef( SgFunctionDeclaration& ndef,
-                  SgScopeStatement& scope,
-                  SgType& retty,
-                  std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
-                );
+  mkProcedureDefn( SgFunctionDeclaration& ndef,
+                   SgScopeStatement& scope,
+                   SgType& retty,
+                   std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
+                 );
 
   /// creates a function/procedure definition and a corresponding non-defining declaration
   /// \param nm       the function/procedure name
   /// \param scope    the enclosing scope
-  /// \param retty    return type of a function (SgVoidType for procedures)
+  /// \param retty    return type of a function (SgTypeVoid for procedures)
   /// \param complete a functor that is called after the function parameter list and
   ///                 the function parameter scope have been constructed. The task of complete
   ///                 is to fill these objects with function parameters.
@@ -501,11 +520,11 @@ namespace Ada_ROSE_Translation
   ///                       non-defining declaration.
   /// \returns the defining declaration
   SgFunctionDeclaration&
-  mkProcedureDef( const std::string& name,
-                  SgScopeStatement& scope,
-                  SgType& retty,
-                  std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
-                );
+  mkProcedureDefn( const std::string& name,
+                   SgScopeStatement& scope,
+                   SgType& retty,
+                   std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
+                 );
 
   SgAdaFunctionRenamingDecl&
   mkAdaFunctionRenamingDecl( const std::string& name,
@@ -516,18 +535,39 @@ namespace Ada_ROSE_Translation
 
 
   /// creates an Ada entry declaration
-  /// \param name     the entry name
-  /// \param scope    the enclosing scope
-  /// \param complete a functor that is called after the function parameter list and
-  ///                 the function parameter list have been constructed. The task of complete
-  ///                 is to fill these objects with function parameters.
+  /// \param name      the entry name
+  /// \param scope     the enclosing scope
+  /// \param complete  a functor that is called after the function parameter list and
+  ///                  the function parameter list have been constructed. The task of complete
+  ///                  is to fill these objects with function parameters.
+  /// \param indexType the type of the index. If no index exists, the type shall be SgTypeVoid.
   SgAdaEntryDecl&
   mkAdaEntryDecl( const std::string& name,
                   SgScopeStatement& scope,
-                  std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
+                  std::function<void(SgFunctionParameterList&, SgScopeStatement&)> completeParams,
+                  SgType& indexType
                 );
 
+  /// creates a defining declaration for an Ada entry
+  /// \param name     the entry name
+  /// \param scope    the enclosing scope, where the entry gets declared
+  /// \param complete a function that is called after the function parameter list and
+  ///                 the function parameter list have been constructed. The task of complete
+  ///                 is to fill these objects with function parameters.
+  /// \param genIndex a function that generates the index variable if present. If an entry does
+  ///                 not have an index variable, the generated SgInitializedName shall have
+  ///                 no name, "", and the type shall be SgTypeVoid.
+  SgAdaEntryDecl&
+  mkAdaEntryDefn( SgAdaEntryDecl& nondef,
+                  SgScopeStatement& scope,
+                  std::function<void(SgFunctionParameterList&, SgScopeStatement&)> completeParams,
+                  std::function<SgInitializedName&(SgScopeStatement&)> genIndex
+                );
+
+
   /// creates an Ada accept statement
+  /// \param ref a reference to the corresponding entry declaration
+  /// \param idx the entry index
   SgAdaAcceptStmt&
   mkAdaAcceptStmt(SgExpression& ref, SgExpression& idx);
 
@@ -536,11 +576,11 @@ namespace Ada_ROSE_Translation
   mkExceptionHandler(SgInitializedName& parm, SgBasicBlock& body);
 
   /// creates an initialized name
-  /// \param name the variable name
-  /// \param ty   the variable type
-  /// \param init the initializer
+  /// \param name     the variable name
+  /// \param ty       the variable type
+  /// \param init_opt the initial value (if any).
   SgInitializedName&
-  mkInitializedName(const std::string& name, SgType& ty, SgExpression* init);
+  mkInitializedName(const std::string& name, SgType& ty, SgExpression* init_opt = nullptr);
 
   /// creates a parameter declaration from a list of initialized names \ref parms.
   /// \param parm      a list of individual parameters that get combined into a single parameter declaration
@@ -590,8 +630,8 @@ namespace Ada_ROSE_Translation
   /// creates an Ada Record representation clause for \ref record aligned at \ref align.
   /// \details
   ///   the type of \ref record should be either SgClassType or SgTypedefType
-  SgAdaRecordRepresentationClause&
-  mkAdaRecordRepresentationClause(SgType& record, SgExpression& align);
+  SgAdaRepresentationClause&
+  mkAdaRepresentationClause(SgType& record, SgExpression& align, bool isAtClause = false);
 
   /// creates an Ada Enum representation clause for \ref enumtype and
   ///   enumerator initializations \ref initlst.
@@ -601,8 +641,8 @@ namespace Ada_ROSE_Translation
   mkAdaEnumRepresentationClause(SgType& enumtype, SgExprListExp& initlst);
 
   /// creates an Ada length clause for attribute \ref attr aligned and length \ref size.
-  SgAdaLengthClause&
-  mkAdaLengthClause(SgAdaAttributeExp& attr, SgExpression& size);
+  SgAdaAttributeClause&
+  mkAdaAttributeClause(SgAdaAttributeExp& attr, SgExpression& size);
 
   /// creates an Ada pragma declaration
   SgPragmaDeclaration&
@@ -641,6 +681,10 @@ namespace Ada_ROSE_Translation
   /// Creates an Ada others expression (for case and expression switches)
   SgAdaOthersExp&
   mkAdaOthersExp();
+
+  /// makes an empty if expression (aka SgConditionalExp)
+  SgConditionalExp&
+  mkIfExpr();
 
   /// Creates a new expression
   /// \param ty the type of the allocation
@@ -715,6 +759,10 @@ namespace Ada_ROSE_Translation
   /// creates an  expression list from \ref exprs
   SgExprListExp&
   mkExprListExp(const SgExpressionPtrList& exprs = {});
+
+  /// creates an expression wrapper for type \ref ty
+  SgTypeExpression&
+  mkTypeExpression(SgType& ty);
 
   /// creates an SgNullExpression
   SgNullExpression&

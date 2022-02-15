@@ -1937,15 +1937,15 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
               break;
             }
 
-            case V_SgAdaLengthClause:
+            case V_SgAdaAttributeClause:
             {
-              name = "_ada_length_clause_";
+              name = "_ada_attribute_clause_";
               break;
             }
 
-            case V_SgAdaRecordRepresentationClause:
+            case V_SgAdaRepresentationClause:
             {
-              name = "_ada_record_representation_clause_";
+              name = "_ada_representation_clause_";
               break;
             }
 
@@ -21584,7 +21584,7 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
       case V_SgJovialDefineDeclaration:
       case V_SgJovialDirectiveStatement:
       case V_SgPragmaDeclaration:
-      case V_SgAdaLengthClause:
+      case V_SgAdaAttributeClause:
         break;
       default:
         {
@@ -27473,3 +27473,26 @@ SgType* SageInterface::getDeclaredType(const SgDeclarationStatement* declaration
 {
   return sg::dispatch(DeclaredType{}, declaration);
 }
+
+void SageInterface::clearSharedGlobalScopes(SgProject * project) {
+  SgGlobal * gsaf = project->get_globalScopeAcrossFiles();
+  ROSE_ASSERT(gsaf != nullptr);
+  SgSymbolTable * st = gsaf->get_symbol_table();
+  ROSE_ASSERT(st != nullptr);
+  rose_hash_multimap * hmm = st->get_table();
+  ROSE_ASSERT(hmm != nullptr);
+  hmm->clear();
+
+  st = SgNode::get_globalTypeTable()->get_type_table();
+  ROSE_ASSERT(st != nullptr);
+  hmm = st->get_table();
+  ROSE_ASSERT(hmm != nullptr);
+  hmm->clear();
+
+  st = SgNode::get_globalFunctionTypeTable()->get_function_type_table();
+  ROSE_ASSERT(st != nullptr);
+  hmm = st->get_table();
+  ROSE_ASSERT(hmm != nullptr);
+  hmm->clear();
+}
+
