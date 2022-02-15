@@ -88,7 +88,24 @@ namespace
                  << std::endl;
 
       ADA_ASSERT(!FAIL_ON_ERROR(ctx));
-      return sb::buildVoidType();
+      return &mkUnresolvedType(typeEx.Name_Image, ctx.scope());
+    }
+
+    // stop gap function
+    // \todo remove after instantiations can be fully represented
+    SgAdaGenericInstanceDecl*
+    instantiationDeclID(Element_ID id, AstContext ctx)
+    {
+      Element_Struct*         elem = retrieveAsOpt(elemMap(), id);
+      if (!elem || (elem->Element_Kind != An_Expression))
+        return nullptr;
+
+      Expression_Struct&      ex   = elem->The_Union.Expression;
+
+      if (ex.Expression_Kind != An_Identifier)
+        return nullptr;
+
+      return isSgAdaGenericInstanceDecl(findFirst(asisDecls(), ex.Corresponding_Name_Definition));
     }
   }
 
@@ -121,6 +138,18 @@ namespace
         {
           logKind("A_Selected_Component");
           res = &getExprTypeID(typeEx.Selector, ctx);
+
+          /// temporary code to handle incomplete AST for generic instantiations
+          if (SgType* ty = isSgType(res))
+          {
+            if (SgAdaGenericInstanceDecl* gendecl = instantiationDeclID(typeEx.Prefix, ctx))
+            {
+              SgExpression& declref = mkAdaUnitRefExp(*gendecl);
+
+              res = &mkQualifiedType(declref, *ty);
+            }
+          }
+          /// end temporary code
           break;
         }
 
@@ -134,7 +163,7 @@ namespace
       default:
         logWarn() << "Unknown type expression: " << typeEx.Expression_Kind << std::endl;
         ADA_ASSERT(!FAIL_ON_ERROR(ctx));
-        res = sb::buildVoidType();
+        res = &mkTypeVoid();
     }
 
     return SG_DEREF(res);
@@ -215,7 +244,7 @@ namespace
         }
 
         SgType& retType = isFuncAccess ? getDeclTypeID(access.Access_To_Function_Result_Profile, ctx)
-                                       : SG_DEREF(sb::buildVoidType());
+                                       : mkTypeVoid();
         SgFunctionType& funty = mkFunctionType(retType /* \todo add paramter profile */);
         SgAdaAccessType& access_t = mkAdaAccessType(funty);
 
@@ -234,7 +263,7 @@ namespace
       case Not_An_Access_Definition: /* break; */ // An unexpected element
       default:
         logWarn() << "adk? " << access_type_kind << std::endl;
-        res = &mkAdaAccessType(SG_DEREF(sb::buildVoidType()));
+        res = &mkAdaAccessType(mkTypeVoid());
         ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
 
@@ -261,7 +290,7 @@ namespace
     logError() << "getDeclType: unhandled definition kind: " << def.Definition_Kind
                << std::endl;
     ADA_ASSERT(!FAIL_ON_ERROR(ctx));
-    return SG_DEREF(sb::buildVoidType());
+    return mkTypeVoid();
   }
 
 
@@ -439,7 +468,7 @@ namespace
         }
 
         SgType& retType = isFuncAccess ? getDeclTypeID(access_type.Access_To_Function_Result_Profile, ctx)
-                                       : SG_DEREF(sb::buildVoidType());
+                                       : mkTypeVoid();
         SgFunctionType& funty = mkFunctionType(retType /* \todo add paramter profile */);
 
         access_t = &mkAdaAccessType(funty);
@@ -456,7 +485,7 @@ namespace
       }
     default:
       logWarn() << "Unhandled access type kind: " << access_type_kind << std::endl;
-      access_t = &mkAdaAccessType(SG_DEREF(sb::buildVoidType()));
+      access_t = &mkAdaAccessType(mkTypeVoid());
       ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
 
@@ -768,7 +797,7 @@ namespace
         {
           logWarn() << "unhandled type kind " << typenode.Type_Kind << std::endl;
           ADA_ASSERT(!FAIL_ON_ERROR(ctx));
-          res.sageNode(SG_DEREF(sb::buildVoidType()));
+          res.sageNode(mkTypeVoid());
         }
     }
 
@@ -846,7 +875,7 @@ namespace
 
       default:
         logWarn() << "Unhandled type definition: " << def.Definition_Kind << std::endl;
-        res = sb::buildVoidType();
+        res = &mkTypeVoid();
         ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
 
@@ -1020,11 +1049,7 @@ getExceptionBase(Element_Struct& el, AstContext ctx)
 SgAdaTypeConstraint&
 getConstraintID(Element_ID el, AstContext ctx)
 {
-  if (isInvalidId(el))
-  {
-    logWarn() << "Uninitialized element [range constraint]" << std::endl;
-    return mkAdaRangeConstraint(mkRangeExp());
-  }
+  ADA_ASSERT(!isInvalidId(el));
 
   SgAdaTypeConstraint*  res = nullptr;
   Element_Struct&       elem = retrieveAs(elemMap(), el);
@@ -1085,21 +1110,26 @@ getConstraintID(Element_ID el, AstContext ctx)
 
     case A_Digits_Constraint:                   // 3.2.2: 3.5.9
       {
-        SgExpression&         digits = getExprID(constraint.Digits_Expression, ctx);
-        SgAdaTypeConstraint*  rngConstr = getConstraintID_opt(constraint.Real_Range_Constraint, ctx);
-        SgAdaRangeConstraint* range = isSgAdaRangeConstraint(rngConstr);
-        ADA_ASSERT(!rngConstr || range);
+        SgAdaTypeConstraint* rangeConstr = getConstraintID_opt(constraint.Real_Range_Constraint, ctx);
+        SgExpression&        digits = getExprID(constraint.Digits_Expression, ctx);
 
-        res = &mkAdaDigitsConstraint(digits, range);
+        res = &mkAdaDigitsConstraint(digits, rangeConstr);
         break;
       }
 
-    case Not_A_Constraint: /* break; */         // An unexpected element
     case A_Delta_Constraint:                    // 3.2.2: J.3
+      {
+        SgAdaTypeConstraint* rangeConstr = getConstraintID_opt(constraint.Real_Range_Constraint, ctx);
+        SgExpression&        delta = getExprID(constraint.Delta_Expression, ctx);
+
+        res = &mkAdaDeltaConstraint(delta, rangeConstr);
+        break;
+      }
+
+    case Not_A_Constraint:                      // An unexpected element
     default:
-      logWarn() << "Unhandled constraint: " << constraint.Constraint_Kind << std::endl;
-      ADA_ASSERT(!FAIL_ON_ERROR(ctx));
-      res = &mkAdaRangeConstraint(mkRangeExp());
+      logError() << "Unhandled constraint: " << constraint.Constraint_Kind << std::endl;
+      ROSE_ABORT();
   }
 
   attachSourceLocation(SG_DEREF(res), elem, ctx);
@@ -1117,16 +1147,30 @@ getDeclTypeID(Element_ID id, AstContext ctx)
 SgType&
 getDefinitionTypeID(Element_ID defid, AstContext ctx)
 {
-  if (isInvalidId(defid))
-  {
-    logWarn() << "undefined type id: " << defid << std::endl;
-    return SG_DEREF(sb::buildVoidType());
-  }
+  ADA_ASSERT(!isInvalidId(defid));
 
   Element_Struct&     elem = retrieveAs(elemMap(), defid);
   ADA_ASSERT(elem.Element_Kind == A_Definition);
 
   return getDefinitionType(elem.The_Union.Definition, ctx);
+}
+
+/// returns the ROSE type for an Asis definition \ref defid
+/// iff defid is NULL, an SgTypeVoid is returned.
+SgType&
+getDefinitionTypeID_opt(Element_ID defid, AstContext ctx)
+{
+  if (defid == 0)
+    return mkTypeVoid();
+
+  if (defid < 0)
+  {
+    logError() << "undefined type id: " << defid << std::endl;
+    ADA_ASSERT(!FAIL_ON_ERROR(ctx));
+    return mkTypeVoid();
+  }
+
+  return getDefinitionTypeID(defid, ctx);
 }
 
 SgClassDeclaration&
@@ -1226,6 +1270,7 @@ void initializePkgStandard(SgGlobal& global)
   adaExcps()["TASKING_ERROR"]       = &declareException("Tasking_Error",    exceptionType, stdspec);
 
   // added packages
+  adaPkgs()["STANDARD"]             = &stddecl;
   adaPkgs()["STANDARD.ASCII"]       = &declarePackage("Ascii", stdspec);
   adaPkgs()["ASCII"]                = adaPkgs()["STANDARD.ASCII"];
 }

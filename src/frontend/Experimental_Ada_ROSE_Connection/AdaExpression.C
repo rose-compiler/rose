@@ -558,8 +558,8 @@ namespace
       void handle(SgAdaGenericDecl& n)         { res = &mkAdaUnitRefExp(n); }
       void handle(SgAdaGenericInstanceDecl& n) { res = &mkAdaUnitRefExp(n); }
       void handle(SgAdaPackageSpecDecl& n)     { res = &mkAdaUnitRefExp(n); }
-      void handle(SgAdaTaskTypeDecl& n)        { res = sb::buildTypeExpression(n.get_type()); }
-      void handle(SgAdaProtectedTypeDecl& n)   { res = sb::buildTypeExpression(n.get_type()); }
+      void handle(SgAdaTaskTypeDecl& n)        { res = &mkTypeExpression(SG_DEREF(n.get_type())); }
+      void handle(SgAdaProtectedTypeDecl& n)   { res = &mkTypeExpression(SG_DEREF(n.get_type())); }
 
     private:
       AstContext ctx;
@@ -582,7 +582,7 @@ namespace
       {
         logError() << "TypeRefMaker: " << typeid(n).name() << std::endl;
 
-        set(sb::buildVoidType());
+        set(&mkTypeVoid());
         ADA_ASSERT(!FAIL_ON_ERROR(ctx));
       }
 
@@ -599,9 +599,7 @@ namespace
 
   void TypeRefMaker::set(SgType* ty)
   {
-    ADA_ASSERT(ty);
-    res = sb::buildTypeExpression(ty);
-    ADA_ASSERT(res);
+    res = &mkTypeExpression(SG_DEREF(ty));
   }
 
 
@@ -815,6 +813,80 @@ getAttributeExprID(Element_ID el, AstContext ctx)
 
 namespace
 {
+  // \todo cmp. AdaStatement.C
+  struct IfExprCreator
+  {
+      IfExprCreator(SgConditionalExp& sgnode, AstContext astctx)
+      : ifExpr(&sgnode), ctx(astctx)
+      {}
+
+      void commonBranch(Path_Struct& path, void (SgConditionalExp::*branchSetter)(SgExpression*))
+      {
+        SgExpression& thenExpr = getExprID(path.Dependent_Expression, ctx);
+
+        sg::linkParentChild(SG_DEREF(ifExpr), thenExpr, branchSetter);
+      }
+
+      void conditionedBranch(Path_Struct& path)
+      {
+        SgExpression& condExpr = getExprID(path.Condition_Expression, ctx);
+
+        sg::linkParentChild(SG_DEREF(ifExpr), condExpr, &SgConditionalExp::set_conditional_exp);
+        commonBranch(path, &SgConditionalExp::set_true_exp);
+      }
+
+      void operator()(Element_Struct& elem)
+      {
+        Path_Struct& path = elem.The_Union.Path;
+
+        switch (path.Path_Kind)
+        {
+          case An_If_Expression_Path:
+            {
+              logKind("An_If_Expression_Path");
+              ADA_ASSERT(ifExpr);
+              conditionedBranch(path);
+              break;
+            }
+
+          case An_Elsif_Expression_Path:
+            {
+              logKind("An_Elsif_Expression_Path");
+              ADA_ASSERT(ifExpr);
+
+              SgConditionalExp& cascadingIf = mkIfExpr();
+
+              sg::linkParentChild( SG_DEREF(ifExpr),
+                                   static_cast<SgExpression&>(cascadingIf),
+                                   &SgConditionalExp::set_false_exp
+                                 );
+              ifExpr = &cascadingIf;
+              conditionedBranch(path);
+              break;
+            }
+
+          case An_Else_Expression_Path:
+            {
+              logKind("An_Else_Expression_Path");
+              ADA_ASSERT(ifExpr);
+              commonBranch(path, &SgConditionalExp::set_false_exp);
+              break;
+            }
+
+          default:
+            ROSE_ABORT();
+        }
+      }
+
+    private:
+      SgConditionalExp* ifExpr;
+      AstContext        ctx;
+
+      IfExprCreator() = delete;
+  };
+
+
+
   SgExprListExp& createExprListExpIfNeeded(SgExpression& exp)
   {
     SgExprListExp* res = isSgExprListExp(&exp);
@@ -859,9 +931,14 @@ namespace
           {
             res = sg::dispatch(TypeRefMaker{ctx}, tydcl);
           }
+          // after there was no matching declaration, try to look up declarations in the standard package by name
           else if (SgType* ty = findFirst(adaTypes(), AdaIdentifier{expr.Name_Image}))
           {
-            res = sb::buildTypeExpression(ty);
+            res = &mkTypeExpression(*ty);
+          }
+          else if (SgAdaPackageSpecDecl* pkg = findFirst(adaPkgs(), AdaIdentifier{expr.Name_Image}))
+          {
+            res = &mkAdaUnitRefExp(*pkg);
           }
           else
           {
@@ -1214,13 +1291,29 @@ namespace
 
       case A_Box_Expression:                          // Ada 2005 4.3.1(4): 4.3.3(3:6)
         {
+          logKind("A_Box_Expression");
+
           res = &mkAdaBoxExp();
           break;
         }
 
+      case An_If_Expression:                          // Ada 2012
+        {
+          logKind("An_If_Expression");
+
+          SgConditionalExp& sgnode = mkIfExpr();
+          ElemIdRange       range  = idRange(expr.Expression_Paths);
+
+          traverseIDs(range, elemMap(), IfExprCreator{sgnode, ctx});
+          res = &sgnode;
+          /* unused fields:
+          */
+          break;
+
+        }
+
       case A_Raise_Expression:                        // 4.4 Ada 2012 (AI12-0022-1)
       case A_Case_Expression:                         // Ada 2012
-      case An_If_Expression:                          // Ada 2012
       case A_For_All_Quantified_Expression:           // Ada 2012
       case A_For_Some_Quantified_Expression:          // Ada 2012
       case Not_An_Expression: /* break; */            // An unexpected element
@@ -1314,8 +1407,7 @@ namespace
             ty = &mkAdaSubtype(SG_DEREF(ty), constraint);
           }
 
-          ADA_ASSERT(ty);
-          res = sb::buildTypeExpression(ty);
+          res = &mkTypeExpression(SG_DEREF(ty));
           break;
         }
 

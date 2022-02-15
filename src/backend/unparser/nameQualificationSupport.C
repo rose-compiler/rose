@@ -38,11 +38,11 @@ namespace
   struct SrcLoc
   {
     explicit
-    SrcLoc(SgLocatedNode& n)
+    SrcLoc(const SgLocatedNode& n)
     : info(n.get_file_info())
     {}
 
-    Sg_File_Info* info;
+    const Sg_File_Info* info;
   };
 
   std::ostream& operator<<(std::ostream& os, SrcLoc el)
@@ -159,6 +159,12 @@ namespace
       using base::reference;
       using base::size;
 
+      //~ size_t size() const
+      //~ {
+        //~ std::cerr << "sz = " << base::size() << std::endl;
+        //~ return base::size();
+      //~ }
+
       /// returns a string version of the scopes in range [rbegin(), rend())
       std::string path() const
       {
@@ -220,6 +226,7 @@ namespace
       void handle(const SgAdaProtectedBody& n)     { checkParent(n); }
       void handle(const SgAdaPackageBody& n)       { checkParent(n); }
       void handle(const SgAdaPackageSpec& n)       { checkParent(n); }
+      void handle(const SgFunctionDefinition& n)   { checkParent(n); }
       // FunctionDefinition, ..
 
 
@@ -232,6 +239,7 @@ namespace
       void handle(const SgAdaPackageSpecDecl& n)   { withName(n.get_name()); }
       void handle(const SgAdaPackageBodyDecl& n)   { withName(n.get_name()); }
       void handle(const SgAdaRenamingDecl& n)      { withName(n.get_name()); }
+      void handle(const SgFunctionDeclaration& n)  { withName(n.get_name()); }
       // FunctionDeclaration, ..
   };
 
@@ -511,7 +519,7 @@ namespace
       return (dcl.get_name() != "Standard") || !isSgGlobal(dcl.get_scope());
     }
 
-    return true;
+    return n;
   }
 
 
@@ -531,7 +539,19 @@ namespace
     {
       const SgStatement& scopeOrDecl = scopeForNameQualification(*curr);
 
+/*
+      std::cerr << ">" << typeid(scopeOrDecl).name() << " @ " << SrcLoc(scopeOrDecl)
+                << " - " << typeid(*curr).name() << " @ " << SrcLoc(*curr)
+                << " / " << res.size()
+                << std::endl;
+      if (const SgAdaRenamingDecl* ren = isSgAdaRenamingDecl(&scopeOrDecl))
+        std::cerr << "  " << ren->get_name() << " renames " << SG_DEREF(ren->get_renamed()).get_name()
+                  << std::endl;
+*/
+      // assert progress
+      ROSE_ASSERT(std::find(res.rbegin(), res.rend(), &scopeOrDecl) == res.rend());
       res.push_back(&scopeOrDecl);
+
       curr = scopeOrDecl.get_scope();
     }
 
@@ -557,6 +577,9 @@ namespace
                                                 remotePath.rbegin()
                                               ).second;
 
+    //~ std::cerr << remotePath.path() << " <> " << localPath.path()
+              //~ << std::endl;
+
     // \todo
     // a case that is currently not handled is if an inner scope
     //   overloads a declaration of an outer scope. In this case
@@ -570,8 +593,14 @@ namespace
   NameQualificationTraversalAda::addVisibleScope(const SgScopeStatement* scope)
   {
     ASSERT_not_null(scope);
-    state.visibleScopes.insert(scope);
-    state.scopeState.back().addedVisibleScopes.emplace_back(scope);
+    const bool added = state.visibleScopes.insert(scope).second;
+
+    if (added)
+    {
+      // only record the scope if it was not already visible before.
+      // (prevents the scope from being removed from the visible scopes too early.)
+      state.scopeState.back().addedVisibleScopes.emplace_back(scope);
+    }
   }
 
   bool
@@ -584,8 +613,12 @@ namespace
   NameQualificationTraversalAda::addUsedScope(const SgScopeStatement* scope)
   {
     ASSERT_not_null(scope);
-    state.useScopes.insert(scope);
-    state.scopeState.back().addedUsedScopes.emplace_back(scope);
+    const bool added = state.useScopes.insert(scope).second;
+
+    if (added)
+    {
+      state.scopeState.back().addedUsedScopes.emplace_back(scope);
+    }
   }
 
   // inline prevents GCC's function not used warning (which is correct currently)
@@ -809,6 +842,9 @@ namespace
 
         traversal.openScope(n);
         res.set_currentScope(const_cast<SgScopeStatement*>(&n));
+
+        if (scopeName(&n).size())
+          traversal.addVisibleScope(&n);
       }
 
       void handle(const SgAdaRenamingDecl& n)
@@ -848,11 +884,22 @@ namespace
           computeNameQualForShared(n, parentType);
       }
 
+
+      /// records all parent scopes as visisble
+      /// \details
+      ///    should be used only from nodes, if a node (child) is not declared
+      ///    within its logical parent.
+      ///    e.g., package Ada.Text_IO: Text_IO is logically declared within Ada
+      ///            but since it is a separate package/file its parent
+      ///            is the global scope.
+      void recordParentScopeVisibility(const SgScopeStatement* n);
+
       void handle(const SgAdaPackageSpecDecl& n)
       {
         handle(sg::asBaseType(n));
 
         recordNameQualIfNeeded(n, n.get_scope());
+        recordParentScopeVisibility(n.get_scope());
       }
 
       void handle(const SgAdaPackageBodyDecl& n)
@@ -860,6 +907,7 @@ namespace
         handle(sg::asBaseType(n));
 
         recordNameQualIfNeeded(n, n.get_scope());
+        recordParentScopeVisibility(SG_DEREF(n.get_definition()).get_spec());
       }
 
       void handle(const SgImportStatement& n)
@@ -882,7 +930,7 @@ namespace
           addVisibleScope(unitDef);
       }
 
-      void handle(const SgAdaRecordRepresentationClause& n)
+      void handle(const SgAdaRepresentationClause& n)
       {
         handle(sg::asBaseType(n));
 
@@ -899,6 +947,8 @@ namespace
       void handle(const SgFunctionDeclaration& n)
       {
         handle(sg::asBaseType(n));
+
+        recordNameQualIfNeeded(n, n.get_scope());
 
         // parameters are handled by the traversal, so just qualify
         //   the return type, if this is a function.
@@ -1150,6 +1200,17 @@ namespace
       traversal.resetNameQualificationContext();
   }
 
+  void AdaPreNameQualifier::recordParentScopeVisibility(const SgScopeStatement* n)
+  {
+    ASSERT_not_null(n);
+
+    while (requiresNameQual(n))
+    {
+      traversal.addVisibleScope(n);
+      n = n->get_scope();
+      ASSERT_not_null(n);
+    }
+  }
 
 
   std::string

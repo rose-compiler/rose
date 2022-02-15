@@ -563,9 +563,9 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (AdaProtectedSpecDecl,  "AdaProtectedSpecDecl", "ADA_PROTECTED_SPEC_DECL_STMT" );
      NEW_TERMINAL_MACRO (AdaProtectedTypeDecl,  "AdaProtectedTypeDecl", "ADA_PROTECTED_TYPE_DECL_STMT" );
      NEW_TERMINAL_MACRO (AdaProtectedBodyDecl,  "AdaProtectedBodyDecl", "ADA_PROTECTED_BODY_DECL_STMT" );
-     NEW_TERMINAL_MACRO (AdaRecordRepresentationClause, "AdaRecordRepresentationClause", "ADA_RECORD_REPRESENTATION_CLAUSE" );
+     NEW_TERMINAL_MACRO (AdaRepresentationClause, "AdaRepresentationClause", "ADA_REPRESENTATION_CLAUSE" );
      NEW_TERMINAL_MACRO (AdaEnumRepresentationClause,   "AdaEnumRepresentationClause",   "ADA_ENUM_REPRESENTATION_CLAUSE" );
-     NEW_TERMINAL_MACRO (AdaLengthClause,               "AdaLengthClause",               "ADA_LENGTH_CLAUSE" );
+     NEW_TERMINAL_MACRO (AdaAttributeClause,            "AdaAttributeClause",            "ADA_ATTRIBUTE_CLAUSE" );
      NEW_TERMINAL_MACRO (AdaComponentClause,            "AdaComponentClause",            "ADA_COMPONENT_CLAUSE" );
   // PP (07/14/20): Adding Ada renaming declarations
      NEW_TERMINAL_MACRO (AdaRenamingDecl,       "AdaRenamingDecl", "ADA_RENAMING_DECL_STMT" );
@@ -595,7 +595,7 @@ Grammar::setUpStatements ()
           AdaPackageBodyDecl                      | AdaPackageSpecDecl        | AdaRenamingDecl              |
           AdaTaskSpecDecl                         | AdaTaskBodyDecl           | AdaTaskTypeDecl              |
           AdaProtectedSpecDecl                    | AdaProtectedBodyDecl      | AdaProtectedTypeDecl         |
-          AdaRecordRepresentationClause           | AdaComponentClause        | AdaLengthClause              |
+          AdaRepresentationClause                 | AdaComponentClause        | AdaAttributeClause           |
           AdaEnumRepresentationClause             | AdaGenericDecl            | AdaFormalTypeDecl            |
           AdaDiscriminatedTypeDecl                | AdaGenericInstanceDecl  /*| ClassPropertyList |*/,
           "DeclarationStatement", "DECL_STMT", false);
@@ -3261,22 +3261,22 @@ Grammar::setUpStatements ()
 
 
 
-     AdaRecordRepresentationClause.setFunctionPrototype("HEADER_ADA_RECORD_REPRESENTATION_CLAUSE", "../Grammar/Statement.code" );
-     AdaRecordRepresentationClause.setDataPrototype ( "SgType*", "recordType", "= NULL",
+     AdaRepresentationClause.setFunctionPrototype("HEADER_ADA_REPRESENTATION_CLAUSE", "../Grammar/Statement.code" );
+     AdaRepresentationClause.setDataPrototype ( "SgType*", "recordType", "= NULL",
                                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AdaRecordRepresentationClause.setDataPrototype ( "SgExpression*", "alignment", "= NULL",
+     AdaRepresentationClause.setDataPrototype ( "SgExpression*", "alignment", "= NULL",
                                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     AdaRecordRepresentationClause.setDataPrototype ( "SgBasicBlock*", "components", "= NULL",
+     AdaRepresentationClause.setDataPrototype ( "SgBasicBlock*", "components", "= NULL",
                                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 /*
      \pp replaced list of SgAdaComponentClausePtrList with an SgBasicBlock, because we need to also store pragmas.
-     AdaRecordRepresentationClause.editSubstitute( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
-     AdaRecordRepresentationClause.editSubstitute( "LIST_DATA_TYPE", "SgAdaComponentClausePtrList" );
-     AdaRecordRepresentationClause.editSubstitute( "LIST_NAME", "components" );
-     AdaRecordRepresentationClause.editSubstitute( "LIST_FUNCTION_RETURN_TYPE", "void" );
-     AdaRecordRepresentationClause.editSubstitute( "LIST_FUNCTION_NAME", "component" );
-     AdaRecordRepresentationClause.editSubstitute( "LIST_ELEMENT_DATA_TYPE", "SgAdaComponentClause*" );
-     AdaRecordRepresentationClause.setDataPrototype("SgAdaComponentClausePtrList", "components", "",
+     AdaRepresentationClause.editSubstitute( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
+     AdaRepresentationClause.editSubstitute( "LIST_DATA_TYPE", "SgAdaComponentClausePtrList" );
+     AdaRepresentationClause.editSubstitute( "LIST_NAME", "components" );
+     AdaRepresentationClause.editSubstitute( "LIST_FUNCTION_RETURN_TYPE", "void" );
+     AdaRepresentationClause.editSubstitute( "LIST_FUNCTION_NAME", "component" );
+     AdaRepresentationClause.editSubstitute( "LIST_ELEMENT_DATA_TYPE", "SgAdaComponentClause*" );
+     AdaRepresentationClause.setDataPrototype("SgAdaComponentClausePtrList", "components", "",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 */
 
@@ -3287,10 +3287,10 @@ Grammar::setUpStatements ()
                                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
-     AdaLengthClause.setFunctionPrototype("HEADER_ADA_LENGTH_CLAUSE", "../Grammar/Statement.code" );
-     AdaLengthClause.setDataPrototype ( "SgAdaAttributeExp*", "attribute", "= NULL",
+     AdaAttributeClause.setFunctionPrototype("HEADER_ADA_ATTRIBUTE_CLAUSE", "../Grammar/Statement.code" );
+     AdaAttributeClause.setDataPrototype ( "SgAdaAttributeExp*", "attribute", "= NULL",
                                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-     AdaLengthClause.setDataPrototype ( "SgExpression*", "size", "= NULL",
+     AdaAttributeClause.setDataPrototype ( "SgExpression*", "size", "= NULL",
                                                       CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
@@ -4441,10 +4441,10 @@ Grammar::setUpStatements ()
      AdaProtectedBodyDecl.setFunctionSource   ( "SOURCE_ADA_PROTECTED_BODY_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaRenamingDecl.setFunctionSource   ( "SOURCE_ADA_RENAMING_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaDiscriminatedTypeDecl.setFunctionSource   ( "SOURCE_ADA_DISCRIMINATED_TYPE_DECL_STATEMENT", "../Grammar/Statement.code" );
-     AdaRecordRepresentationClause.setFunctionSource ( "SOURCE_ADA_RECORD_REPRESENTATION_CLAUSE", "../Grammar/Statement.code" );
+     AdaRepresentationClause.setFunctionSource ( "SOURCE_ADA_REPRESENTATION_CLAUSE", "../Grammar/Statement.code" );
      AdaEnumRepresentationClause.setFunctionSource ( "SOURCE_ADA_ENUM_REPRESENTATION_CLAUSE", "../Grammar/Statement.code" );
      AdaComponentClause.setFunctionSource ( "SOURCE_ADA_COMPONENT_CLAUSE", "../Grammar/Statement.code");
-     AdaLengthClause.setFunctionSource ( "SOURCE_ADA_LENGTH_CLAUSE", "../Grammar/Statement.code" );
+     AdaAttributeClause.setFunctionSource ( "SOURCE_ADA_ATTRIBUTE_CLAUSE", "../Grammar/Statement.code" );
      AdaGenericDecl.setFunctionSource ( "SOURCE_ADA_GENERIC_DECL", "../Grammar/Statement.code" );
      AdaGenericDefn.setFunctionSource ( "SOURCE_ADA_GENERIC_DEFN", "../Grammar/Statement.code" );
      AdaGenericInstanceDecl.setFunctionSource ( "SOURCE_ADA_GENERIC_INSTANCE_DECL", "../Grammar/Statement.code" );
@@ -4712,10 +4712,16 @@ Grammar::setUpStatements ()
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      AdaEntryDecl.setFunctionPrototype ( "HEADER_ADA_ENTRY_DECL_STMT", "../Grammar/Statement.code" );
+     AdaEntryDecl.setDataPrototype ( "SgInitializedName*", "entryIndex", "= nullptr",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AdaEntryDecl.setDataPrototype ( "SgExpression*", "entryBarrier", "= nullptr",
+                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
+/*
+     // PP (2/11/22) the type of the index variable is determined by the type of the possibly unnamed entryIndex variable.
      AdaEntryDecl.setDataPrototype ( "SgType*", "discrete_index_type", "= NULL",
                   NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-
+*/
      AdaEntryDecl.setFunctionSource ( "SOURCE_ADA_ENTRY_DECL_STMT", "../Grammar/Statement.code");
 
      AdaFunctionRenamingDecl.setFunctionPrototype ( "HEADER_ADA_FUNCTION_RENAMING_DECL_STMT", "../Grammar/Statement.code" );

@@ -13,9 +13,6 @@ namespace SageInterface
 /// Contains Ada-specific functionality
 namespace ada
 {
-  /// defines the result type for \ref flattenArrayType
-  typedef std::pair<SgArrayType*, std::vector<SgExpression*> > FlatArrayType;
-
   /// tests if the declaration \ref dcl defines a public type that is completed
   ///   in a private section.
   /// \return true, iff dcl is public and completed in a private section.
@@ -50,6 +47,8 @@ namespace ada
   declsInPackage(SgGlobal& globalScope, const SgSourceFile& mainFile);
   /// \}
 
+  /// defines the result type for \ref getArrayTypeInfo
+  using FlatArrayType = std::pair<SgArrayType*, std::vector<SgExpression*> >;
 
   /// returns a flattened representation of Ada array types.
   /// \param   atype the type of the array to be flattened.
@@ -61,8 +60,36 @@ namespace ada
   /// \pre     \ref atype is not null.
   /// @{
   FlatArrayType getArrayTypeInfo(SgType* atype);
-  //~ FlatArrayType flattenArrayType(SgType& atype);
   /// @}
+
+  /// represents a branch in an if elsif else context (either statement or expression).
+  template <class SageLocatedNode>
+  struct IfInfo : std::tuple<SgExpression*, SageLocatedNode*>
+  {
+    using base = std::tuple<SgExpression*, SageLocatedNode*>;
+    using base::base;
+
+    SgExpression*    condition()  const { return std::get<0>(*this); }
+    SageLocatedNode* trueBranch() const { return std::get<1>(*this); }
+    bool             isElse()     const { return condition() == nullptr; }
+  };
+
+  /// returns a sequence of if (x) then value
+  ///   the last else does not have
+  using IfExpressionInfo = IfInfo<SgExpression>;
+  using IfStatementInfo  = IfInfo<SgStatement>;
+
+  /// returns a flat representation of if expressions
+  std::vector<IfExpressionInfo>
+  flattenIfExpressions(SgConditionalExp& n);
+
+  /// returns a flat representation of if-elsif-else statements
+  std::vector<IfStatementInfo>
+  flattenIfStatements(SgIfStmt& n);
+
+  /// returns the expression of an expression statement, or nullptr if s is some other node
+  SgExpression*
+  underlyingExpr(const SgStatement* s);
 
   /// returns a range for the range attribute \ref rangeAttribute.
   /// \return a range if rangeAttribute is a range attribute and a range expression is in the AST;

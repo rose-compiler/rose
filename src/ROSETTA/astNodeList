@@ -967,14 +967,14 @@ SgAsmNullInstruction
 SgAdaComponentClause
 SgAdaIndexConstraint
 SgAdaModularType
-SgAdaRecordRepresentationClause
+SgAdaRepresentationClause
 SgAdaFunctionRenamingDecl
 SgAdaSelectStmt
 SgAdaSelectAlternativeStmt
 SgAdaTerminateStmt
 SgAsmAarch32Instruction
 SgAsmAarch32Coprocessor
-SgAdaLengthClause
+SgAdaAttributeClause
 SgAsmBinaryConcat
 SgAsmByteOrder
 SgAdaDerivedType

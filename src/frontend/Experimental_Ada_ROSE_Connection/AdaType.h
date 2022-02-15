@@ -64,6 +64,11 @@ getDeclTypeID(Element_ID id, AstContext ctx);
 SgType&
 getDefinitionTypeID(Element_ID defid, AstContext ctx);
 
+/// returns the ROSE type for an Asis definition \ref defid
+/// iff defid is NULL, an SgTypeVoid is returned.
+SgType&
+getDefinitionTypeID_opt(Element_ID defid, AstContext ctx);
+
 /// creates a constraint node for \ref el
 SgAdaTypeConstraint&
 getConstraintID(Element_ID el, AstContext ctx);
