@@ -35,6 +35,13 @@ namespace CodeThorn {
     }
   }
 
+  CallString CallString::withoutLastLabel() {
+    ROSE_ASSERT(_callString.size()>0);
+    CallString csCopy=CallString(*this);
+    csCopy.removeLastLabel();
+    return csCopy;
+  }
+  
   bool CallString::removeIfLastLabel(CodeThorn::Label lab) {
     if(isLastLabel(lab)) {
       _callString.pop_back();

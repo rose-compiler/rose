@@ -59,6 +59,13 @@ bool Solver18::isReachableLabel(Label lab) {
   return !isUnreachableLabel(lab);
 }
 
+void Solver18::dumpAbstractStateMapMap() {
+  cout<<"AbstractStateMapMap:"<<endl;
+  for(auto p : _abstractCSStateMapMap) {
+    cout<<"Label ID"<<p.first<<": "<<endl;
+  }
+  cout<<"----------------------"<<endl;
+}
 void Solver18::initializeAbstractStatesFromWorkList() {
   // pop all states from worklist (can contain more than one state)
   list<EStatePtr> tmpWL;
@@ -163,6 +170,19 @@ void Solver18::printAllocationStats(string text) {
   if(debugFlag) cout<<text<<EState::allocationStatsToString()<<": num states:"<<getNumberOfStates()<<endl;
 }
 
+bool Solver18::callStringExistsAtLabel(CallString& cs, Label lab) {
+  ROSE_ASSERT(lab.isValid());
+  auto iter=_abstractCSStateMapMap.find(lab.getId());
+  if(iter==_abstractCSStateMapMap.end()) {
+    // call site has never been analyzed before
+    //dumpAbstractStateMapMap();
+    return false;
+  } else { 
+    AbstractCSStateMap& map=_abstractCSStateMapMap.at(lab.getId());
+    return map[cs]!=nullptr;
+  }
+}
+
 void Solver18::run() {
   //_abstractionConsistencyCheckEnabled=true;
   SAWYER_MESG(logger[INFO])<<"Running solver "<<getId()<<" (sharedpstates:"<<_analyzer->getOptionsRef().sharedPStates<<")"<<endl;
@@ -226,11 +246,13 @@ void Solver18::run() {
       }
       ROSE_ASSERT(newEStateList0.size()==1);
       currentEStatePtr=*newEStateList0.begin();
-      while(true && isPassThroughLabel(currentEStatePtr->label())) {
+      while(false && isPassThroughLabel(currentEStatePtr->label())) {
         //cout<<"DEBUG: pass through: "<<currentEStatePtr->label().toString()<<endl;
         Flow edgeSet0=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
         if(edgeSet0.size()==1) {
           Edge e=*edgeSet0.begin();
+          if(!isPassThroughLabel(e.target()))
+             break;
           list<EStatePtr> newEStateList0;
           newEStateList0=_analyzer->transferEdgeEStateInPlace(e,currentEStatePtr);
           pathLen++;
@@ -253,6 +275,7 @@ void Solver18::run() {
       ROSE_ASSERT(currentEStatePtr);
       ROSE_ASSERT(currentEStatePtr->pstate());
     }
+    // last state of BB must be stored
 #endif
     Flow edgeSet=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
     for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
@@ -269,9 +292,10 @@ void Solver18::run() {
         newEState=currentEStatePtr->clone();
         delete currentEStatePtr;
         
-      } else
+      } else {
         newEState=currentEStatePtr->clone();
-
+      }
+      
       ROSE_ASSERT(newEState);
       ROSE_ASSERT(newEState->pstate());
 
@@ -283,6 +307,11 @@ void Solver18::run() {
         printAllocationStats("P2b:");
         continue;
       }
+
+      // must be a state that needs to be stored (source of transfer)
+      //ROSE_ASSERT(!isPassThroughLabel(newEState->label()));
+      //setAbstractState(newEState->label(),newEState->getCallString(),newEState);
+
       printAllocationStats("P3:");
       //auto checkDiff2=checkDiff();
       //if(checkDiff1!=checkDiff2 && newEStateList.size()<=1) {

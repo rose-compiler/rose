@@ -40,6 +40,12 @@ namespace CodeThorn {
     bool isUnreachableLabel(Label lab);
     void deleteAllStates();
     size_t getNumberOfStates();
+    /* checks if at least one state has been computed at this label with the given call string
+     * in this case the call string can be used to retrieve the state (otherwise it defaults to the bottom state)
+     * this check is used when determining path feasibility in context sensitive analysis
+     */
+    bool callStringExistsAtLabel(CallString& cs, Label lab);
+    void dumpAbstractStateMapMap();
   private:
     static Sawyer::Message::Facility logger;
     static bool _diagnosticsInitialized;

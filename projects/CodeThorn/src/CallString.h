@@ -36,6 +36,8 @@ namespace CodeThorn {
         If call string is of length 0 no operation is performed.
     */
     void removeLastLabel();
+    // creates a copy without last label
+    CallString withoutLastLabel();
 
 
     /** returns the length of the call string.

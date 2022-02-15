@@ -172,9 +172,15 @@ namespace CodeThorn {
 
     // functions for handling callstring contexts
     void transferFunctionCallContextInPlace(CallString& cs, Label lab);
-    void transferFunctionCallReturnContextInPlace(CallString& cs, Label lab);
-    bool isFeasiblePathContext(CallString& cs,Label lab);
 
+    /* new, more general method, uses available callstrings in all states stored for a label to determine path feasibility
+     * the returned callstring can be shorter or of same length
+     */
+    std::pair<bool,CallString> determinePathFeasibilityAndContext(CallString cs, Label functionCallLabel);
+    // old methods, to be removed once older solvers are adapted as well
+    void transferFunctionCallReturnContextInPlaceOld(CallString& cs, Label lab);
+    bool isFeasiblePathContextOld(CallString& cs,Label lab);
+    
     CodeThorn::VariableIdSet determineUsedGlobalVars(SgProject* root, CodeThorn::VariableIdSet& setOfGlobalVars);
     void initializeGlobalVariables(SgProject* root, EStatePtr estate);
     // modifies PState with written initializers
@@ -199,7 +205,6 @@ namespace CodeThorn {
     // this function uses the respective function of ExprAnalyzer and
     // extracts the result from the ExprAnalyzer data structure.
     std::list<EStatePtr> evaluateFunctionCallArguments(Edge edge, SgFunctionCallExp* funCall, EStatePtr estate, bool useConstraints);
-
 
     // Limits the number of results to one result only. Does not permit state splitting.
     // requires normalized AST

@@ -13,6 +13,9 @@
 #include <map>
 #include <iomanip>
 
+// context sensitive transfer functions for function calls are only provided by Solver 18. This is explicitly checked.
+#include "Solver18.h"
+
 using namespace std;
 using namespace CodeThorn;
 using namespace Sawyer::Message;
@@ -410,6 +413,7 @@ namespace CodeThorn {
     // ad 4 call context (call string)
     CallString cs=currentEState->callString;
     if(_analyzer->getOptionContextSensitiveAnalysis()) {
+       SAWYER_MESG(logger[TRACE])<<"transfer functioncall:"<<currentEState->label().toString()<<":"<<cs.toString()<<":"<<SgNodeHelper::sourceLocationAndNodeToString(funCall)<<endl;
       transferFunctionCallContextInPlace(cs, currentEState->label());
     }
     EStatePtr newEState=reInitEState(estate,edge.target(),cs,newPState);
@@ -444,6 +448,64 @@ namespace CodeThorn {
     }
   }
 
+  std::pair<bool,CallString> EStateTransferFunctions::determinePathFeasibilityAndContext(CallString cs, Label functionCallLabel) {
+    if(_analyzer->getSolver()->getId()==18) {
+      Solver18* solver18=dynamic_cast<Solver18*>(_analyzer->getSolver());
+      ROSE_ASSERT(solver18);
+      size_t k=CallString::getMaxLength();
+      if(cs.getLength()==0) {
+        if(solver18->callStringExistsAtLabel(cs,functionCallLabel)) {
+          return make_pair(true,cs);
+        } else {
+          return make_pair(false,CallString());
+        }
+      }
+      if(cs.getLength()<k) {
+        // callstring is exact
+        if(cs.isLastLabel(functionCallLabel)) {
+          // exact
+          CallString shortenedCs=cs.withoutLastLabel();
+          if(solver18->callStringExistsAtLabel(shortenedCs,functionCallLabel)) {
+            return make_pair(true,shortenedCs);
+          }
+        }
+        // infeasible
+        return make_pair(false,CallString());
+      } else {
+        // callstring is possibly approximate (=k can represent exact length k OR truncated)
+        ROSE_ASSERT(cs.getLength()==k);
+        /* the callstring can be shortened if the last label is the
+         * callstring label AND the shortened cs has been computed
+         * before at the callsite
+         */
+        if(cs.isLastLabel(functionCallLabel)) {
+          CallString shortenedCs=cs.withoutLastLabel();
+          if(solver18->callStringExistsAtLabel(shortenedCs,functionCallLabel)) {
+            // becomes exact again
+            return make_pair(true,shortenedCs);
+          }
+          // intentional fall through to the following two cases
+        }
+        if(solver18->callStringExistsAtLabel(cs,functionCallLabel)) {
+          // remains aproximate
+          return make_pair(true,cs);
+        } else {
+          // infeasible
+          return make_pair(false,CallString());
+        }
+      }
+    } else {
+      // old default behavior for older solvers, to be updated to above
+      if(isFeasiblePathContextOld(cs,functionCallLabel)) {
+        transferFunctionCallReturnContextInPlaceOld(cs,functionCallLabel);
+        SAWYER_MESG(logger[TRACE])<<"new context: cs: "<<cs.toString()<<endl;
+        return make_pair(true,cs);
+      } else {
+        return make_pair(false,CallString());
+      }
+    }
+  }
+  
   std::list<EStatePtr> EStateTransferFunctions::transferFunctionCallReturn(Edge edge, EStatePtr estate) {
     EStatePtr currentEState=estate;
 
@@ -452,7 +514,6 @@ namespace CodeThorn {
     SgNode* node=getLabeler()->getNode(functionCallReturnLabel);
     Label functionCallLabel=getLabeler()->functionCallLabel(node);
     SAWYER_MESG(logger[TRACE])<<"FunctionCallReturnTransfer: call: L"<<functionCallLabel.toString()<<": callret: L"<<functionCallReturnLabel.toString()<<" cs: "<<estate->callString.toString()<<endl;
-
     CallString cs=currentEState->callString;
     if(_analyzer->getOptionContextSensitiveAnalysis()) {
       if(getLabeler()->isExternalFunctionCallLabel(functionCallLabel)) {
@@ -460,9 +521,14 @@ namespace CodeThorn {
         // to callstring by external function call)
         SAWYER_MESG(logger[TRACE])<<": external edge"<<endl;
       } else {
-        if(isFeasiblePathContext(cs,functionCallLabel)) {
-          transferFunctionCallReturnContextInPlace(cs,functionCallLabel);
-          SAWYER_MESG(logger[TRACE])<<"new context: cs: "<<cs.toString()<<endl;
+        std::pair<bool,CallString> resultPair=determinePathFeasibilityAndContext(cs,functionCallLabel);
+        SAWYER_MESG(logger[TRACE])<<"transfer functioncallreturn: call: L"<<functionCallLabel.toString()<<": callret: L"<<functionCallReturnLabel.toString()<<" cs: "<<estate->callString.toString()<<" : pathfeasibility:"<<resultPair.first<<" : ";
+        if(resultPair.first) SAWYER_MESG(logger[TRACE])<<resultPair.second.toString()<<endl;
+        else SAWYER_MESG(logger[TRACE])<<"infeasible"<<endl;
+          
+        if(resultPair.first) {
+          // set new, possibly shorter, callstring
+          cs=resultPair.second;
         } else {
           // definitely not feasible path, do not return a state
           std::list<EStatePtr> emptyList;
@@ -1863,15 +1929,15 @@ namespace CodeThorn {
     cs.addLabel(lab);
   }
 
-  void EStateTransferFunctions::transferFunctionCallReturnContextInPlace(CallString& cs, Label lab) {
+  void EStateTransferFunctions::transferFunctionCallReturnContextInPlaceOld(CallString& cs, Label lab) {
     if(cs.isLastLabel(lab)) {
       cs.removeLastLabel();
     } 
   }
 
-  bool EStateTransferFunctions::isFeasiblePathContext(CallString& cs,Label callLabel) {
-    //return cs.getLength()==0||cs.isLastLabel(callLabel)||cs.isMaxLength();
-    return cs.getLength()==0||cs.isLastLabel(callLabel);
+  bool EStateTransferFunctions::isFeasiblePathContextOld(CallString& cs,Label callLabel) {
+    return cs.getLength()==0||cs.isLastLabel(callLabel)||cs.isMaxLength();
+    //return cs.getLength()==0||cs.isLastLabel(callLabel);
   }
 
   std::string EStateTransferFunctions::transferFunctionCodeToString(TransferFunctionCode tfCode) {
