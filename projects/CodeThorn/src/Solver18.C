@@ -251,8 +251,6 @@ void Solver18::run() {
         Flow edgeSet0=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
         if(edgeSet0.size()==1) {
           Edge e=*edgeSet0.begin();
-          if(!isPassThroughLabel(e.target()))
-             break;
           list<EStatePtr> newEStateList0;
           newEStateList0=_analyzer->transferEdgeEStateInPlace(e,currentEStatePtr);
           pathLen++;
@@ -285,17 +283,17 @@ void Solver18::run() {
 
       ROSE_ASSERT(currentEStatePtr);
       ROSE_ASSERT(currentEStatePtr->pstate());
-
       // check if state was already cloned in preceding basic-block section
+      // MSTODO: move (outside this loop) & store if bbCloned and not delete in this case (because it's stored)
       EStatePtr newEState=nullptr;
       if(bbClonedState) {
-        newEState=currentEStatePtr->clone();
-        delete currentEStatePtr;
-        
+        //newEState=currentEStatePtr->clone();
+        //delete currentEStatePtr;
+        newEState=currentEStatePtr;
+        bbClonedState=false;
       } else {
         newEState=currentEStatePtr->clone();
       }
-      
       ROSE_ASSERT(newEState);
       ROSE_ASSERT(newEState->pstate());
 
