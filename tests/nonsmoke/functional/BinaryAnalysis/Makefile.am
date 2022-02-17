@@ -1657,6 +1657,23 @@ concreteStates.passed: $(top_srcdir)/scripts/test_exit_status concreteStates
 		CMD="$$(pwd)/concreteStates"		\
 		$< $@
 
+########################################################################################################################
+# SgAsmInterpretation must have non-null RegisterDictionary
+########################################################################################################################
+
+noinst_PROGRAMS += testInterpRegs
+testInterpRegs_SOURCES = testInterpRegs.C
+testInterpRegs_LDADD = $(ROSE_SEPARATE_LIBS)
+
+TEST_TARGETS += testInterpRegs.passed
+testInterpRegs.passed: $(top_srcdir)/scripts/test_exit_status testInterpRegs
+	@$(RTH_RUN)											\
+		TITLE="SgAsmInterpretation must have non-null RegisterDictionary [$@]"			\
+		DISABLED="$$(./conditionalDisable)"							\
+		USE_SUBDIR=yes										\
+		CMD="$$(pwd)/testInterpRegs $(top_srcdir)/tests/nonsmoke/specimens/binary/i386-pop"	\
+		$< $@
+
 ###############################################################################################################################
 # Standard boilerplate
 ###############################################################################################################################

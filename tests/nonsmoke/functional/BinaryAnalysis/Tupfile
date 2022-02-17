@@ -581,5 +581,13 @@ run $(tool_compile_linkexe) testNativeSemantics.C
 run $(tool_compile_linkexe) concreteStates.C
 run $(test) concreteStates
 
+########################################################################################################################
+# SgAsmInterpretation must have non-null RegisterDictionary
+########################################################################################################################
+
+run $(tool_compile_linkexe) testInterpRegs.C
+run $(test) testInterpRegs \
+    ./testInterpRegs $(ROSE)/tests/nonsmoke/specimens/binary/i386-pop
+
 endif
 endif
