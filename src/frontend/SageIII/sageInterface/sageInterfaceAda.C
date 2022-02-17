@@ -686,6 +686,71 @@ namespace ada
     return ty ? isFunction(*ty) : false;
   }
 
+  bool isIntegerType(const SgType& ty)
+  {
+    return isIntegerType(&ty);
+  }
+
+  bool isIntegerType(const SgType* ty)
+  {
+    return isSgTypeLongLong(ty);
+  }
+
+  bool isFloatingPointType(const SgType& ty)
+  {
+    return isFloatingPointType(&ty);
+  }
+
+  bool isFloatingPointType(const SgType* ty)
+  {
+    return isSgTypeLongDouble(ty);
+  }
+
+  bool isDiscreteType(const SgType& ty)
+  {
+    return isDiscreteType(&ty);
+  }
+
+  bool isDiscreteType(const SgType* ty)
+  {
+    return isSgAdaDiscreteType(ty);
+  }
+
+  bool isFixedType(const SgType& ty)
+  {
+    return isFixedType(&ty);
+  }
+
+  bool isFixedType(const SgType* ty)
+  {
+    return isSgTypeFixed(ty);
+  }
+
+  namespace
+  {
+    bool isDecimalConstraint(SgAdaTypeConstraint* constr)
+    {
+      SgAdaDeltaConstraint* delta = isSgAdaDeltaConstraint(constr);
+
+      return delta && delta->get_isDecimal();
+    }
+  }
+
+  bool isDecimalFixedType(const SgType* ty)
+  {
+    if (const SgAdaSubtype* sub = isSgAdaSubtype(ty))
+      return isFixedType(sub->get_base_type()) && isDecimalConstraint(sub->get_constraint());
+
+    return false;
+  }
+
+  bool isDecimalFixedType(const SgType& ty)
+  {
+    return isDecimalFixedType(&ty);
+  }
+
+
+
   //
   // for variants
 

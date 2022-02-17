@@ -180,7 +180,7 @@ namespace sg
     GEN_VISIT(SgAdaDelayStmt)
     GEN_VISIT(SgAdaEntryDecl)
     GEN_VISIT(SgAdaExitStmt)
-    GEN_VISIT(SgAdaFloatType)
+    GEN_VISIT(SgAdaDiscreteType)
     GEN_VISIT(SgAdaFloatVal)
     GEN_VISIT(SgAdaFormalType)
     GEN_VISIT(SgAdaFormalTypeDecl)

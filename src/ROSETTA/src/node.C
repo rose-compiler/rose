@@ -1637,6 +1637,8 @@ Grammar::setUpNodes ()
                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AdaDeltaConstraint.setDataPrototype("SgAdaTypeConstraint*", "subConstraint", "= nullptr",
                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AdaDeltaConstraint.setDataPrototype("bool", "isDecimal", "= false",
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AdaDiscriminantConstraint.setDataPrototype("SgExpressionPtrList", "discriminants", "",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);

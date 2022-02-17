@@ -582,7 +582,7 @@ namespace
       {
         logError() << "TypeRefMaker: " << typeid(n).name() << std::endl;
 
-        set(&mkTypeVoid());
+        set(&mkTypeUnknown());
         ADA_ASSERT(!FAIL_ON_ERROR(ctx));
       }
 

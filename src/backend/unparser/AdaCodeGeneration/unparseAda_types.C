@@ -97,7 +97,7 @@ namespace
     void handle(SgAdaDiscriminantConstraint& n)
     {
       prn(" (");
-      exprSequence(n.get_discriminants());
+      exprSequence(n.get_discriminants(), "<>");
       prn(")");
     }
 
@@ -117,7 +117,8 @@ namespace
     void handle(SgTypeShort&)      { prn(" Short_Integer"); }
     void handle(SgTypeLongLong&)   { prn(" Long_Long_Integer"); }
     void handle(SgTypeFixed&)      { }
-    void handle(SgTypeVoid&)       { prn(" -- void\n"); }  // error, should not be in Ada
+    void handle(SgTypeVoid&)       { /* do nothing */ }
+    void handle(SgTypeUnknown&)    { prn("-- error type (incomplete impl.?)\n"); } // error, should not be in Ada
 
     //
     // Ada types
@@ -134,6 +135,7 @@ namespace
 
     void handle(SgAdaDerivedType& n)
     {
+      prn("new ");
       type(n.get_base_type());
     }
 
@@ -248,6 +250,13 @@ namespace
       prn(tyDcl.get_name());
     }
 
+    void handle(SgAdaDiscreteType&)
+    {
+      // should not be reached
+      ROSE_ABORT();
+    }
+
+/*
     void handle(SgAdaFloatType& n)
     {
       prn("digits ");
@@ -255,6 +264,7 @@ namespace
 
       support_opt(n.get_constraint());
     }
+*/
 
     void handle(SgFunctionType& n)
     {
@@ -328,16 +338,16 @@ namespace
       }
     }
 
-    void exprSequence(const SgExpressionPtrList& lst);
+    void exprSequence(const SgExpressionPtrList& lst, std::string alt = "");
 
     Unparse_Ada&      unparser;
     SgUnparse_Info&   info;
     std::ostream&     os;
   };
 
-  void AdaTypeUnparser::exprSequence(const SgExpressionPtrList& lst)
+  void AdaTypeUnparser::exprSequence(const SgExpressionPtrList& lst, std::string alt)
   {
-    if (lst.empty()) return;
+    if (lst.empty()) { prn(alt); return; }
 
     expr(lst[0]);
 

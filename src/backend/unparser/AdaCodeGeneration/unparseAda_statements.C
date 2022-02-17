@@ -550,7 +550,6 @@ namespace
     return sg::dispatch(UseClauseSyntax{}, n);
   }
 
-
   struct AdaStatementUnparser : AdaDetailsUnparser
   {
     AdaStatementUnparser(Unparse_Ada& unp, SgUnparse_Info& inf, std::ostream& outp)
@@ -601,7 +600,7 @@ namespace
     void handleParameterList(const SgInitializedNamePtrList& params);
 
     static
-    std::pair<std::string, std::string>
+    std::string
     typedeclSyntax(SgType* n);
 
     static
@@ -1018,9 +1017,7 @@ namespace
 
     void handle(SgTypedefDeclaration& n)
     {
-      std::pair<std::string, std::string> declwords = typedeclSyntax(n.get_base_type());
-
-      prn(declwords.first);
+      prn(typedeclSyntax(n.get_base_type()));
       prn(" ");
       prn(n.get_name());
 
@@ -1030,7 +1027,7 @@ namespace
       const bool requiresPrivate = (!isDefinition) && si::ada::withPrivateDefinition(&n);
       const bool requiresIs      = (  requiresPrivate
                                    || hasModifiers(n)
-                                   || declwords.second.size() != 0
+                                   //~ || declwords.second.size() != 0
                                    || !isSgTypeDefault(n.get_base_type())
                                    );
 
@@ -1038,7 +1035,6 @@ namespace
         prn(" is");
 
       modifiers(n);
-      prn(declwords.second);
       prn(" ");
       type(n, n.get_base_type());
 
@@ -1101,20 +1097,60 @@ namespace
       list(decls);
     }
 
+    SgType&
+    processUnknownDiscriminatPart(SgType* ty)
+    {
+      if (SgAdaSubtype* sub = isSgAdaSubtype(ty))
+      {
+        if (SgAdaDiscriminantConstraint* constr = isSgAdaDiscriminantConstraint(sub->get_constraint()))
+        {
+          ROSE_ASSERT(constr->get_discriminants().size() == 0);
+          prn("(<>)");
+
+          ty = sub->get_base_type();
+        }
+      }
+
+      return SG_DEREF(ty);
+    }
+
     void handle(SgAdaFormalTypeDecl& n)
     {
       prn("type ");
       prn(n.get_name());
-      prn(" is ");
-      modifiers(n);
 
       SgAdaFormalType* ty = n.get_type();
       ASSERT_not_null(ty);
 
+      SgType* formalBase = ty->get_formal_type();
+      ASSERT_not_null(formalBase);
+
+      formalBase = &processUnknownDiscriminatPart(formalBase);
+
+      prn(" is ");
+      modifiers(n);
+
       // \todo what types need to be printed?
       //       print all non-null ty->get_formal_type() ?
-      if (SgAdaAccessType* accty = isSgAdaAccessType(ty->get_formal_type()))
-        type(n, accty);
+      if (si::ada::isIntegerType(formalBase))
+        prn("range <>");
+      else if (si::ada::isFloatingPointType(formalBase))
+        prn("digits <>");
+      else if (si::ada::isDiscreteType(formalBase))
+        prn("(<>)");
+      else if (si::ada::isDecimalFixedType(formalBase))
+        prn(" delta<> digits<> ");
+      else if (si::ada::isFixedType(formalBase))
+        prn(" delta<> ");
+      else if (!isSgTypeDefault(formalBase))
+      {
+        //~ const bool withRequired = !isSgAdaAccessType(formalBase) && ty->get_is_private();
+        const bool withRequired = ty->get_is_private();
+
+        type(n, formalBase);
+
+        if (withRequired) prn(" with");
+      }
 
       if (ty->get_is_private()) {
         prn(" private");
@@ -1621,8 +1657,7 @@ namespace
       else if (SgType* parentType = n.get_adaParentType())
       {
         // unparse as derived type
-        prn(" is");
-        prn(" new");
+        prn(" is ");
         type(n, parentType);
       }
       else
@@ -2111,31 +2146,29 @@ namespace
     return mod.isAdaAbstract() || mod.isAdaTagged() || mod.isAdaLimited();
   }
 
-  struct TypedeclSyntax : sg::DispatchHandler<std::pair<std::string, std::string> >
+  struct TypedeclSyntax : sg::DispatchHandler<std::string>
   {
     void handle(SgNode& n)         { SG_UNEXPECTED_NODE(n); }
 
-    void handle(SgType&)           { res = ReturnType{"subtype", ""    }; }
-    void handle(SgAdaFormalType&)  { res = ReturnType{"type",    ""    }; }
-    void handle(SgAdaAccessType&)  { res = ReturnType{"type",    ""    }; }
-    void handle(SgAdaDerivedType&) { res = ReturnType{"type",    " new"}; }
-    void handle(SgAdaModularType&) { res = ReturnType{"type",    ""    }; }
-    void handle(SgTypeDefault&)    { res = ReturnType{"type",    ""    }; }
-    void handle(SgArrayType&)      { res = ReturnType{"type",    ""    }; }
-    void handle(SgAdaFloatType&)   { res = ReturnType{"type",    ""    }; }
+    void handle(SgType&)           { res = "subtype"; }
+    void handle(SgAdaFormalType&)  { res = "type"; }
+    void handle(SgAdaAccessType&)  { res = "type"; }
+    void handle(SgAdaDerivedType&) { res = "type"; }
+    void handle(SgAdaModularType&) { res = "type"; }
+    void handle(SgTypeDefault&)    { res = "type"; }
+    void handle(SgArrayType&)      { res = "type"; }
+    //~ void handle(SgAdaFloatType&)   { res = "type"; }
 
     void handle(SgAdaSubtype& n)
     {
-      res = n.get_fromRootType() ? ReturnType{"type",    ""}
-                                 : ReturnType{"subtype", ""};
+      res = n.get_fromRootType() ? "type" : "subtype";
     }
   };
 
-
-  std::pair<std::string, std::string>
+  std::string
   AdaStatementUnparser::typedeclSyntax(SgType* n)
   {
-    return sg::dispatch(TypedeclSyntax(), n);
+    return sg::dispatch(TypedeclSyntax{}, n);
   }
 
   struct RenamingSyntax : sg::DispatchHandler<RenamingSyntaxResult>

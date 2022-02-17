@@ -151,11 +151,11 @@ mkAdaRangeConstraint(SgExpression& range)
 
 namespace
 {
-  template <class SageFixedPointConstraint>
+  template <class SageFixedPointConstraint, class... Other>
   SageFixedPointConstraint&
-  mkFixedPointConstraint(SgExpression& exp, SgAdaTypeConstraint* sub_opt)
+  mkFixedPointConstraint(SgExpression& exp, SgAdaTypeConstraint* sub_opt, Other... other)
   {
-    SageFixedPointConstraint& sgnode = mkLocatedNode<SageFixedPointConstraint>(&exp, sub_opt);
+    SageFixedPointConstraint& sgnode = mkLocatedNode<SageFixedPointConstraint>(&exp, sub_opt, other...);
 
     exp.set_parent(&sgnode);
     if (sub_opt) sub_opt->set_parent(&sgnode);
@@ -171,9 +171,9 @@ mkAdaDigitsConstraint(SgExpression& digits, SgAdaTypeConstraint* sub_opt)
 }
 
 SgAdaDeltaConstraint&
-mkAdaDeltaConstraint(SgExpression& delta, SgAdaTypeConstraint* sub_opt)
+mkAdaDeltaConstraint(SgExpression& delta, bool isDecimal, SgAdaTypeConstraint* sub_opt)
 {
-  return mkFixedPointConstraint<SgAdaDeltaConstraint>(delta, sub_opt);
+  return mkFixedPointConstraint<SgAdaDeltaConstraint>(delta, sub_opt, isDecimal);
 }
 
 
@@ -274,6 +274,12 @@ mkOpaqueType()
   return mkTypeNode<SgTypeDefault>();
 }
 
+SgAdaDiscreteType&
+mkAdaDiscreteType()
+{
+  return mkTypeNode<SgAdaDiscreteType>();
+}
+
 
 SgDeclType&
 mkUnresolvedType(const std::string& n, SgScopeStatement& scope)
@@ -296,6 +302,12 @@ SgTypeVoid&
 mkTypeVoid()
 {
   return SG_DEREF(sb::buildVoidType());
+}
+
+SgTypeUnknown&
+mkTypeUnknown()
+{
+  return mkTypeNode<SgTypeUnknown>();
 }
 
 
@@ -363,16 +375,21 @@ SgArrayType& mkArrayType(SgType& comptype, SgExprListExp& dimInfo, bool variable
 
 SgType& mkIntegralType()
 {
+  // if this type is changed, the type comparison in si::ada::isIntegerType
+  // needs to be updated.
   return SG_DEREF(sb::buildLongLongType());
 }
 
 SgType& mkRealType()
 {
+  // if this type is changed, the type comparison in si::ada::isFloatingPointType
+  // needs to be updated.
   return SG_DEREF(sb::buildLongDoubleType());
 }
 
 SgType& mkFixedType()
 {
+  // return mkTypeNode<SgTypeFixed>(nullptr, nullptr);
   return SG_DEREF(sb::buildFixedType(nullptr, nullptr));
 }
 
@@ -1689,7 +1706,7 @@ mkExprListExp(const std::vector<SgExpression*>& exprs)
 SgTypeExpression&
 mkTypeExpression(SgType& ty)
 {
-  SgTypeExpression& sgnode = SG_DEREF(sb::buildTypeExpression(&ty));
+  SgTypeExpression& sgnode = SG_DEREF(sb::buildTypeExpression(&ty)) ;
 
   markCompilerGenerated(sgnode);
   return sgnode;
