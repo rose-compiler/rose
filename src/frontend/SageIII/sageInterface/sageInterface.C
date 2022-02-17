@@ -25208,7 +25208,8 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
 
   if (SgAdaAccessType* v = isSgAdaAccessType(node) )
   {
-    out<<" "<< v->get_qualified_name();
+    // out<<" "<< v->get_qualified_name();
+    //out<<" "<< v->get_name();
     out<<" is_object_type"<< v->get_is_object_type();
     out<<" is_general_access"<< v->get_is_general_access();
     out<<" is_constant:"<< v->get_is_constant();
