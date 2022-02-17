@@ -96,7 +96,7 @@ namespace Ada_ROSE_Translation
   /// \param digits an expression indicating the number of digits
   /// \param constraint_opt an optional floating point constraint
   SgAdaDeltaConstraint&
-  mkAdaDeltaConstraint(SgExpression& digits, SgAdaTypeConstraint* constraint_opt);
+  mkAdaDeltaConstraint(SgExpression& digits, bool isDecimal, SgAdaTypeConstraint* constraint_opt);
 
   /// builds a discriminant constraint from \ref discriminants
   /// \param discriminants a sequence of discriminants.
@@ -134,8 +134,19 @@ namespace Ada_ROSE_Translation
   mkExceptionType(SgExpression& n);
 
   /// returns the void type
+  /// \details
+  ///   In the ROSE AST, void is used as return type for procedures and for
+  ///   unconstrained types.
   SgTypeVoid&
   mkTypeVoid();
+
+  /// returns an unknown type, indicating an incomplete AST implementation
+  SgTypeUnknown&
+  mkTypeUnknown();
+
+  /// returns a type representing all discrete types in Ada
+  SgAdaDiscreteType&
+  mkAdaDiscreteType();
 
   /// returns the type produced by an attribute expression
   // \todo consider returning an SgTypeOfType instead of SgDeclType

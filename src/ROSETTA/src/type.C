@@ -39,6 +39,11 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( TypeString          , "TypeString",           "T_STRING" );
      NEW_TERMINAL_MACRO ( TypeBool            , "TypeBool",             "T_BOOL" );
 
+   // PP (2/16/22) add support for ada discrete type, which is an intermediate
+   //    type in the Ada class hierarchy, that is only used to constrain
+   //    generic formal arguments
+     NEW_TERMINAL_MACRO ( AdaDiscreteType     , "AdaDiscreteType",      "T_ADA_DISCRETE_TYPE" );
+
   // Rasmussen (2/18/2020): Added TypeFixed for Jovial
      NEW_TERMINAL_MACRO ( TypeFixed           , "TypeFixed",            "T_FIXED" );
 
@@ -126,7 +131,6 @@ Grammar::setUpTypes ()
      NEW_TERMINAL_MACRO ( AdaDerivedType      , "AdaDerivedType",       "T_ADA_DERIVED_TYPE" );
      NEW_TERMINAL_MACRO ( AdaModularType      , "AdaModularType",       "T_ADA_MODULAR_TYPE" );
      NEW_TERMINAL_MACRO ( AdaDiscriminatedType, "AdaDiscriminatedType", "T_ADA_DISCRIMINATED_TYPE" );
-     NEW_TERMINAL_MACRO ( AdaFloatType        , "AdaFloatType",         "T_ADA_FLOAT_TYPE" );
      NEW_TERMINAL_MACRO ( AdaFormalType       , "AdaFormalType",        "T_ADA_FORMAL_TYPE" );
 
   // Rasmussen (4/4/2020): Added SgJovialBitType for Jovial. This type participates in logical operations
@@ -230,7 +234,7 @@ Grammar::setUpTypes ()
           TypeNullptr          | DeclType                | TypeOfType                | TypeMatrix           |
           TypeTuple            | TypeChar16              | TypeChar32                | TypeFloat128         |
           TypeFixed            | AutoType                | AdaAccessType             | AdaSubtype           |
-          AdaFloatType         | AdaModularType          | AdaDerivedType            | JovialBitType,
+          AdaDiscreteType      | AdaModularType          | AdaDerivedType            | JovialBitType,
         "Type","TypeTag", false);
 
      //SK(08/20/2015): TypeMatrix and TypeTuple for Matlab
@@ -517,6 +521,8 @@ Grammar::setUpTypes ()
      TypeSignedLongLong.setDataPrototype   ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      TypeUnsignedLongLong.setDataPrototype ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
 
+     AdaDiscreteType.setDataPrototype         ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
+
   // DQ (3/24/2014): Adding support for 128 bit integers.
      TypeSigned128bitInteger.setDataPrototype   ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
      TypeUnsigned128bitInteger.setDataPrototype   ("static $CLASSNAME*","builtin_type","",NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE, NO_COPY_DATA);
@@ -727,10 +733,6 @@ Grammar::setUpTypes ()
      CUSTOM_CREATE_TYPE_MACRO(AdaModularType,
             "SOURCE_CREATE_TYPE_FOR_ADA_MODULAR_TYPE",
             "SgExpression* modexpr = NULL");
-
-     CUSTOM_CREATE_TYPE_MACRO(AdaFloatType,
-            "SOURCE_CREATE_TYPE_FOR_ADA_FLOAT_TYPE",
-            "SgExpression* digits = NULL, SgAdaRangeConstraint* range = NULL");
 
      CUSTOM_CREATE_TYPE_MACRO(JovialBitType,
             "SOURCE_CREATE_TYPE_FOR_JOVIAL_BIT_TYPE",
@@ -1220,16 +1222,6 @@ Grammar::setUpTypes ()
                                   CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
 
-     AdaFloatType.setFunctionPrototype ("HEADER_ADA_FLOAT_TYPE", "../Grammar/Type.code" );
-
-     AdaFloatType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
-
-     AdaFloatType.setDataPrototype ("SgExpression*", "digits", "= NULL",
-                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
-     AdaFloatType.setDataPrototype ("SgAdaRangeConstraint*", "constraint", "= NULL",
-                                     CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
-
      JovialBitType.setFunctionPrototype ("HEADER_JOVIAL_BIT_TYPE", "../Grammar/Type.code" );
      JovialBitType.setFunctionPrototype ("HEADER_GET_QUALIFIED_NAME", "../Grammar/Type.code" );
      JovialBitType.setDataPrototype ("SgExpression*", "size", "= NULL",
@@ -1331,7 +1323,6 @@ Grammar::setUpTypes ()
      AdaSubtype.excludeFunctionSource    ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      AdaDerivedType.excludeFunctionSource( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
      AdaModularType.excludeFunctionSource( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
-     AdaFloatType.excludeFunctionSource  ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
 
      JovialBitType.excludeFunctionSource  ( "SOURCE_GET_MANGLED", "../Grammar/Type.code");
 
@@ -1402,6 +1393,8 @@ Grammar::setUpTypes ()
      TypeLongLong.editSubstitute( "MANGLED_ID_STRING", "L" );
      TypeSignedLongLong.editSubstitute( "MANGLED_ID_STRING", "SL" );
      TypeUnsignedLongLong.editSubstitute( "MANGLED_ID_STRING", "UL" );
+
+     AdaDiscreteType.editSubstitute( "MANGLED_ID_STRING", "Ada'D" );
 
   // TV (12/29/2018): using literal suffixes
      TypeFloat80.editSubstitute( "MANGLED_ID_STRING", "w" );
@@ -1508,7 +1501,6 @@ Grammar::setUpTypes ()
      AdaSubtype.setFunctionSource        ( "SOURCE_ADA_SUBTYPE", "../Grammar/Type.code");
      AdaDerivedType.setFunctionSource    ( "SOURCE_ADA_DERIVEDTYPE", "../Grammar/Type.code");
      AdaModularType.setFunctionSource    ( "SOURCE_ADA_MODULAR_TYPE", "../Grammar/Type.code");
-     AdaFloatType.setFunctionSource      ( "SOURCE_ADA_FLOAT_TYPE", "../Grammar/Type.code");
 
      JovialBitType.setFunctionSource     ( "SOURCE_JOVIAL_BIT_TYPE", "../Grammar/Type.code");
 #endif

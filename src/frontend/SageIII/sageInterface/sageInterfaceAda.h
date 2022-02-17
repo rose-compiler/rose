@@ -141,6 +141,34 @@ namespace ada
   bool hasUnknownDiscriminants(const SgAdaDiscriminatedTypeDecl* n);
   /// @}
 
+
+  /// return if the type @ref ty is the corresponding universal type representation in ROSE
+  /// @{
+  bool isIntegerType(const SgType& ty);
+  bool isIntegerType(const SgType* ty);
+  bool isFloatingPointType(const SgType& ty);
+  bool isFloatingPointType(const SgType* ty);
+  bool isDiscreteType(const SgType* ty);
+  bool isDiscreteType(const SgType& ty);
+  /// @}
+
+  /// returns if the type @ref ty is a fixed point type
+  /// \details
+  ///    also return true for decimal fixed points
+  /// @{
+  bool isFixedType(const SgType* ty);
+  bool isFixedType(const SgType& ty);
+  /// @}
+
+  /// returns if the type @ref ty is a decimal fixed point type
+  /// \details
+  ///    implementation is incomplete and only detects formal decimal fixed point constraints
+  /// @{
+  bool isDecimalFixedType(const SgType* ty);
+  bool isDecimalFixedType(const SgType& ty);
+  /// @}
+
+
   /// returns the SgAdaDiscriminatedTypeDecl iff \ref n is discriminated
   ///         null otherwise
   /// @{

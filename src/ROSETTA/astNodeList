@@ -6,7 +6,7 @@ SgAdaAcceptStmt
 SgAdaDelayStmt
 SgAdaEntryDecl
 SgAdaExitStmt
-SgAdaFloatType
+SgAdaDiscreteType
 SgAdaFloatVal
 SgAdaLoopStmt
 SgAdaPackageBody

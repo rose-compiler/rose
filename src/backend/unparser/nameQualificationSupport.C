@@ -2174,7 +2174,7 @@ NameQualificationTraversal::associatedDeclaration(SgType* type)
           case V_SgAdaSubtype:
           case V_SgAdaModularType:
           case V_SgAdaDerivedType:
-          case V_SgAdaFloatType:
+          case V_SgAdaDiscreteType:
           case V_SgAdaAccessType:
              {
                return_declaration = NULL;

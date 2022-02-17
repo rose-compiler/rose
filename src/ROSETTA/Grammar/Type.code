@@ -1076,12 +1076,11 @@ HEADER_ADA_DISCRIMINATED_TYPE_START
   //~ SgName get_name() const;
 HEADER_ADA_DISCRIMINATED_TYPE_END
 
+HEADER_ADA_DISCRETE_TYPE_START
+  //~ SgName get_name() const;
+HEADER_ADA_DISCRETE_TYPE_END
 
-HEADER_ADA_FLOAT_TYPE_START
 
-          SgName get_name() const;
-
-HEADER_ADA_FLOAT_TYPE_END
 
 HEADER_ADA_FORMAL_TYPE_START
 
@@ -6860,20 +6859,6 @@ SgAdaModularType::get_mangled(void) const {
 SOURCE_ADA_MODULAR_TYPE_END
 
 
-SOURCE_ADA_FLOAT_TYPE_START
-
-SgName
-SgAdaFloatType::get_mangled(void) const {
-    string name("f'");
-
-    name.append(get_digits()->unparseToString());
-    name.append("'");
-    name.append(get_constraint()->displayString());
-    return SgName(name);
-}
-
-SOURCE_ADA_FLOAT_TYPE_END
-
 SOURCE_ADA_FORMAL_TYPE_START
 
 SgName
@@ -9061,27 +9046,6 @@ SgAdaModularType::createType(SgExpression* moduloexpr, SgExpression* /*optional_
 
 SOURCE_CREATE_TYPE_FOR_ADA_MODULAR_TYPE_END
 
-
-SOURCE_CREATE_TYPE_FOR_ADA_FLOAT_TYPE_START
-
-SgAdaFloatType*
-SgAdaFloatType::createType (SgExpression* digits, SgAdaRangeConstraint* range, SgExpression* /*optional_fortran_type_kind*/)
-{
-  SgAdaFloatType   proto(digits, range);
-  SgName           name = proto.get_mangled();
-  SgType*          ty   = get_globalTypeTable()->lookup_type(name);
-
-  if (SgAdaFloatType* unified = isSgAdaFloatType(ty))
-    return unified;
-
-  ROSE_ASSERT(ty == NULL);
-  SgAdaFloatType* res = new SgAdaFloatType(digits, range);
-
-  get_globalTypeTable()->insert_type(name, res);
-  return res;
-}
-
-SOURCE_CREATE_TYPE_FOR_ADA_FLOAT_TYPE_END
 
 SOURCE_CREATE_TYPE_FOR_JOVIAL_BIT_TYPE_START
 SgJovialBitType*
