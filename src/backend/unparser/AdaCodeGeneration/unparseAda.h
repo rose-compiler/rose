@@ -79,6 +79,10 @@ struct Unparse_Ada : UnparseLanguageIndependentConstructs
           //
           // API to keep track of visible scopes
           // impl. in unparseAda_statements.C
+          void unparseParameterList(const SgInitializedNamePtrList& params, SgUnparse_Info& info);
+
+          /// obsolete
+          /// @{
           void addVisibleScope(const SgScopeStatement*);
           bool isVisibleScope(const SgScopeStatement*) const;
 
@@ -90,6 +94,7 @@ struct Unparse_Ada : UnparseLanguageIndependentConstructs
 
           void openScope(SgUnparse_Info& info, SgScopeStatement& scope);
           void closeScope();
+          /// @}
 
           const NameQualMap& nameQualificationMap() const;
           void withNameQualificationMap(const NameQualMap&);

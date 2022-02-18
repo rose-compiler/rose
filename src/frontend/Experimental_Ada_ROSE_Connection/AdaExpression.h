@@ -40,6 +40,12 @@ namespace Ada_ROSE_Translation
   SgExpression&
   getDefinitionExprID(Element_ID id, AstContext ctx);
 
+  /// returns an expression for a discrete subtype.
+  /// \details
+  ///    if this is converted to a type, the getDefinitionType (SgType.C) should be used instead.
+  SgExpression&
+  getDiscreteSubtypeExpr(Element_Struct& el, Definition_Struct& def, AstContext ctx);
+
   /// returns an expression for attribute defined in expr
   SgAdaAttributeExp&
   getAttributeExpr(Expression_Struct& expr, AstContext ctx);

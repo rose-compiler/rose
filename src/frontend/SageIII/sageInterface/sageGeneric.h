@@ -1077,6 +1077,7 @@ namespace sg
     GEN_VISIT(SgAdaDigitsConstraint)
     GEN_VISIT(SgAdaAncestorInitializer)
     GEN_VISIT(SgAdaDeltaConstraint)
+    GEN_VISIT(SgAdaSubroutineType)
 
 
 
