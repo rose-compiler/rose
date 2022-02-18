@@ -246,7 +246,7 @@ void Solver18::run() {
       }
       ROSE_ASSERT(newEStateList0.size()==1);
       currentEStatePtr=*newEStateList0.begin();
-      while(false && isPassThroughLabel(currentEStatePtr->label())) {
+      while(true && isPassThroughLabel(currentEStatePtr->label())) {
         //cout<<"DEBUG: pass through: "<<currentEStatePtr->label().toString()<<endl;
         Flow edgeSet0=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
         if(edgeSet0.size()==1) {
@@ -275,20 +275,25 @@ void Solver18::run() {
     }
     // last state of BB must be stored
 #endif
+
+    if(bbClonedState) {
+      // was cloned and modified in BB, create a clone, and store the current one
+      EStatePtr oldEStatePtr=currentEStatePtr;
+      setAbstractState(oldEStatePtr->label(),oldEStatePtr->getCallString(),oldEStatePtr);
+      // store oldEStatePtr
+      currentEStatePtr=currentEStatePtr->clone();
+      //delete oldEStatePtr;
+    }
+
     Flow edgeSet=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
     for(Flow::iterator i=edgeSet.begin();i!=edgeSet.end();++i) {
       Edge e=*i;
       //cout<<"Transfer:"<<e.source().toString()<<"=>"<<e.target().toString()<<endl;
-      printAllocationStats("P1:");
-
       ROSE_ASSERT(currentEStatePtr);
       ROSE_ASSERT(currentEStatePtr->pstate());
-      // check if state was already cloned in preceding basic-block section
-      // MSTODO: move (outside this loop) & store if bbCloned and not delete in this case (because it's stored)
+      // check if state was already cloned in preceding basic-block section, if yes, don't clone again.
       EStatePtr newEState=nullptr;
       if(bbClonedState) {
-        //newEState=currentEStatePtr->clone();
-        //delete currentEStatePtr;
         newEState=currentEStatePtr;
         bbClonedState=false;
       } else {
@@ -297,25 +302,12 @@ void Solver18::run() {
       ROSE_ASSERT(newEState);
       ROSE_ASSERT(newEState->pstate());
 
-      printAllocationStats("P2:");
-      //auto checkDiff1=checkDiff();
       list<EStatePtr> newEStateList=_analyzer->transferEdgeEStateInPlace(e,newEState);
       if(newEStateList.size()==0) {
         delete newEState;
-        printAllocationStats("P2b:");
         continue;
       }
 
-      // must be a state that needs to be stored (source of transfer)
-      //ROSE_ASSERT(!isPassThroughLabel(newEState->label()));
-      //setAbstractState(newEState->label(),newEState->getCallString(),newEState);
-
-      printAllocationStats("P3:");
-      //auto checkDiff2=checkDiff();
-      //if(checkDiff1!=checkDiff2 && newEStateList.size()<=1) {
-      //  cerr<<"Solver18: FAIL1: "<<checkDiff1<<":"<<checkDiff2<<" :"<< newEStateList.size()<<endl;
-      //  exit(1);
-      //}
       displayTransferCounter++;
       for(list<EStatePtr>::iterator nesListIter=newEStateList.begin();nesListIter!=newEStateList.end();++nesListIter) {
         EStatePtr newEStatePtr0=*nesListIter; // TEMPORARY PTR
@@ -324,7 +316,6 @@ void Solver18::run() {
         ROSE_ASSERT(newEStatePtr0->label()!=Labeler::NO_LABEL);
         Label lab=newEStatePtr0->label();
         CallString cs=newEStatePtr0->callString;
-        printAllocationStats("P4:");
         if((!_analyzer->isFailedAssertEState(newEStatePtr0)&&!_analyzer->isVerificationErrorEState(newEStatePtr0))) {
           EStatePtr newEStatePtr=newEStatePtr0;
           ROSE_ASSERT(newEStatePtr);
@@ -336,12 +327,9 @@ void Solver18::run() {
           ROSE_ASSERT(abstractEStatePtr);
           ROSE_ASSERT(abstractEStatePtr->pstate());
           if(_analyzer->getEStateTransferFunctions()->isApproximatedBy(newEStatePtr,abstractEStatePtr)) {
-            printAllocationStats("P5a:");
             delete newEStatePtr; // new state does not contain new information, therefore it can be deleted
-            printAllocationStats("P5b:");
             newEStatePtr=nullptr;
           } else {
-            printAllocationStats("P6a:");
             ROSE_ASSERT(abstractEStatePtr);
             ROSE_ASSERT(abstractEStatePtr->pstate());
             ROSE_ASSERT(newEStatePtr);
@@ -350,17 +338,13 @@ void Solver18::run() {
             ROSE_ASSERT(abstractEStatePtr);
             ROSE_ASSERT(abstractEStatePtr->pstate());
 
-            printAllocationStats("P6b:");
             setAbstractState(lab,cs,abstractEStatePtr);
-            printAllocationStats("P6c:");
             delete newEStatePtr;
-            printAllocationStats("P6d:");
             ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(abstractEStatePtr->label()));
             _workList->push(WorkListEntry(abstractEStatePtr->label(),abstractEStatePtr->callString));
 
           }
         }
-        printAllocationStats("P7:");
         /*
         if(((_analyzer->isFailedAssertEState(newEStatePtr0))||_analyzer->isVerificationErrorEState(newEStatePtr0))) {
           // failed-assert end-state: do not add to work list but do add it to the transition graph
@@ -372,9 +356,7 @@ void Solver18::run() {
             _analyzer->_firstAssertionOccurences.push_back(pair<int, EStatePtr>(0, newEStatePtr));
             terminateEarly=true;
           } else if(_analyzer->isFailedAssertEState(newEStatePtr)) {
-            printAllocationStats("P8a:");
             delete newEStatePtr;
-            printAllocationStats("P8b:");
             continue;
           } // end of failed assert handling
         } // end of if
