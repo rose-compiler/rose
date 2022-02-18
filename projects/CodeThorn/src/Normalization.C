@@ -116,7 +116,7 @@ namespace CodeThorn {
   }
 
   void Normalization::normalizeAst(SgNode* root) {
-    options.configureLevel(2); // default level of normalization
+    options.configureLevel(1); // default level of normalization
     normalizeAstPhaseByPhase(root);
   }
 
