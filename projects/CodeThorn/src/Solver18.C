@@ -397,6 +397,5 @@ void Solver18::run() {
     _analyzer->printStatusMessage("STATUS: analysis finished (worklist is empty).",true);
   }
   EState::checkPointAllocationHistory();
-  _analyzer->printStatusMessage("STATUS: number of states: "+std::to_string(getNumberOfStates()),true);
-  _analyzer->printStatusMessage("STATUS: "+EState::allocationStatsToString(),true);
+  _analyzer->printStatusMessage("STATUS: number of states stored: "+std::to_string(getNumberOfStates()),true);
 }
