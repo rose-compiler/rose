@@ -118,7 +118,16 @@ namespace
     void handle(SgTypeLongLong&)   { prn(" Long_Long_Integer"); }
     void handle(SgTypeFixed&)      { }
     void handle(SgTypeVoid&)       { /* do nothing */ }
-    void handle(SgTypeUnknown&)    { prn("-- error type (incomplete impl.?)\n"); } // error, should not be in Ada
+
+    //
+    // error type
+    void handle(SgTypeUnknown& n)
+    {
+      if (n.get_has_type_name())
+        prn(n.get_type_name());
+      else
+        prn("-- error type (incomplete impl.?)\n");
+    }
 
     //
     // Ada types
@@ -153,10 +162,12 @@ namespace
 */
     void handle(SgModifierType& n)
     {
-      if (n.get_typeModifier().isAliased())
+      const SgTypeModifier& tm = n.get_typeModifier();
+
+      if (tm.isAliased())
         prn("aliased ");
 
-      if (n.get_typeModifier().get_constVolatileModifier().isConst())
+      if (tm.get_constVolatileModifier().isConst())
         prn("constant ");
 
       type(n.get_base_type());
@@ -284,27 +295,28 @@ namespace
 
     void handle(SgAdaAccessType& n)
     {
-      prn("access");
-      if (n.get_is_object_type()) {
-        if (n.get_is_general_access()) {
-          prn(" all");
-        }
+      prn("access ");
 
-        if (n.get_is_constant()) {
-          prn(" constant");
-        }
+      if (n.get_is_general_access()) prn("all"); // can this become a modifier?
 
-        type(n.get_base_type());
-      } else {
-        // subprogram access type
-        if (n.get_is_protected()) {
-          prn(" protected");
-        }
+      type(n.get_base_type());
+    }
 
-        // TODO: pass parameter profile into type printing... if needed.
-        type(n.get_base_type());
+    void handle(SgAdaSubroutineType& n)
+    {
+      const bool isFunction = isSgTypeVoid(n.get_return_type()) == nullptr;
+
+      if (n.get_is_protected()) prn(" protected ");
+
+      prn(isFunction ? " function " : " procedure ");
+      SgFunctionParameterList&  lst = SG_DEREF(n.get_parameterList());
+
+      unparser.unparseParameterList(lst.get_args(), info);
+      if (isFunction)
+      {
+        prn(" return ");
+        type(n.get_return_type());
       }
-
     }
 
     void type(SgType* ty)

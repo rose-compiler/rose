@@ -511,6 +511,8 @@ namespace
   Element_Struct*
   retrieveAsOpt(std::map<int, Element_Struct*>& map, int key)
   {
+    ADA_ASSERT(key >= 0); // fails on invalid elements
+
     //~ logInfo() << "key: " << key << std::endl;
     std::map<int, Element_Struct*>::iterator pos = map.find(key);
 
@@ -522,6 +524,8 @@ namespace
   Element_Struct&
   retrieveAs(std::map<int, Element_Struct*>& map, int key)
   {
+    ADA_ASSERT(key != 0); // fails on optional elements
+
     return SG_DEREF(retrieveAsOpt(map, key));
   }
 

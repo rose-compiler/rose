@@ -73,6 +73,12 @@ getDefinitionTypeID_opt(Element_ID defid, AstContext ctx);
 SgAdaTypeConstraint&
 getConstraintID(Element_ID el, AstContext ctx);
 
+/// creates a discrete subtype from super type indicated by \ref typeId
+///   and constraint \ref constraintID
+SgType&
+getDiscreteSubtypeID(Element_ID typeId, Element_ID constraintID, AstContext ctx);
+
+
 /// looks up the record declaration associated with \ref defid
 SgClassDeclaration&
 getParentRecordDeclID(Element_ID defid, AstContext ctx);
