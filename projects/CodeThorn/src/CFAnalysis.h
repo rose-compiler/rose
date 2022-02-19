@@ -137,7 +137,7 @@ class CFAnalysis {
   void setCreateLocalEdge(bool le);
   bool getCreateLocalEdge();
   static bool isLoopConstructRootNode(SgNode* node);
-  enum FunctionResolutionMode { FRM_TRANSLATION_UNIT, FRM_WHOLE_AST_LOOKUP, FRM_FUNCTION_CALL_MAPPING };
+  enum FunctionResolutionMode { FRM_FUNCTION_CALL_MAPPING };
   static FunctionResolutionMode functionResolutionMode;
   static Sawyer::Message::Facility logger;
   void setInterProcedural(bool flag); // by default true

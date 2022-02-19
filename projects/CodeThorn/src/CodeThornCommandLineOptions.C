@@ -323,13 +323,14 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ;
 
   infoOptions.add_options()
-    ("dump-vim",po::value< bool >(&ctOpt.info.printVariableIdMapping)->default_value(false)->implicit_value(true),"Dump variable-id-mapping info on stdout.")
+    ("dump-vim",po::value< bool >(&ctOpt.info.printVariableIdMapping)->implicit_value(true),"Dump variable-id-mapping info on stdout.")
+    ("dump-fcm",po::value< bool >(&ctOpt.info.dumpFunctionCallMapping)->implicit_value(true),"Dump function call mapping on stdout.")
+    ("dump-tsm",po::value< bool >(&ctOpt.info.printTypeSizeMapping)->default_value(false)->implicit_value(true),"Print type-size mapping on stdout.")
+    ("dump-tsm-csv",po::value<std::string>(&ctOpt.info.typeSizeMappingCSVFileName),"Write type-size mapping to CSV file [arg].")
     ("ast-stats-print",po::value< bool >(&ctOpt.info.printAstNodeStats)->default_value(false)->implicit_value(true),"Print ast node statistics on stdout.")
     ("ast-stats-csv",po::value< string >(&ctOpt.info.astNodeStatsCSVFileName),"Write ast node statistics to CSV file [arg].")
     ("ast-traversal-csv",po::value< string >(&ctOpt.info.astTraversalCSVFileName),"Write ast node traversal (sequence of node types) to file [arg].")
     ("ast-traversal-csv-mode",po::value< int >(&ctOpt.info.astTraversalCSVMode)->default_value(1),"Select mode to generate csv file (1..2) [arg].")
-    ("type-size-mapping-print",po::value< bool >(&ctOpt.info.printTypeSizeMapping)->default_value(false)->implicit_value(true),"Print type-size mapping on stdout.")
-    ("type-size-mapping-csv",po::value<std::string>(&ctOpt.info.typeSizeMappingCSVFileName),"Write type-size mapping to CSV file [arg].")
     ("tf-trace",po::value< bool >(&ctOpt.info.printTransferFunctionInfo)->default_value(false)->implicit_value(true),"Print info about invoked transfer functions.")
     ("line-col-csv",po::value< string >(&ctOpt.info.astTraversalLineColumnCSVFileName),"Write ast node traversal (sequence of line column pairs) to file [arg].")
     ("ast-symbol-pointer-check",po::value< bool >(&ctOpt.info.astSymbolPointerCheckReport)->implicit_value(true),"Run ast symbol pointer check. Writes report to ast-symbol-pointer-check-report.txt.")

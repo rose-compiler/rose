@@ -50,7 +50,12 @@ SgName CodeThorn::FunctionCallTarget::getMangledFunctionName() {
 }
 
 void CodeThorn::FunctionCallTarget::print() {
-  cout<<"NAME: "<<getFunctionName()<<" TYPE: "<<getFunctionType()<<":"<<getFunctionType()->unparseToString()<<" MANGLEDFUNCALLTYPE: "<<getMangledFunctionName()<<endl;
+  cout<<toString()<<endl;
+}
+
+std::string CodeThorn::FunctionCallTarget::toString() {
+  ROSE_ASSERT(getFunctionType());
+  return "NAME: "+getFunctionName()+" TYPE: "+getFunctionType()->unparseToString()+" MANGLEDFUNCALLTYPE: "+getMangledFunctionName();
 }
 
 bool CodeThorn::FunctionCallTarget::operator==(const CodeThorn::FunctionCallTarget& other) const {

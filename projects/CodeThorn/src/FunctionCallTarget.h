@@ -28,6 +28,7 @@ class FunctionCallTarget {
   SgFunctionType* getFunctionType();
   SgName getMangledFunctionName();
   void print();
+  std::string toString();
  private:
   SgFunctionDeclaration* _funDecl=nullptr;
   SgFunctionDefinition* _funDef=nullptr;

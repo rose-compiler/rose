@@ -680,6 +680,7 @@ namespace CodeThorn {
     }
 
     void optionallyPrintProgramInfos(CodeThornOptions& ctOpt, CTAnalysis* analyzer) {
+
       if(ctOpt.info.printVariableIdMapping) {
         analyzer->getVariableIdMapping()->toStream(cout);
       }
@@ -699,6 +700,20 @@ namespace CodeThorn {
           }
         }
       }
+
+      if(ctOpt.info.dumpFunctionCallMapping) {
+        ROSE_ASSERT(analyzer->getCFAnalyzer());
+        auto cfAnalyzer=analyzer->getCFAnalyzer();
+        ROSE_ASSERT(cfAnalyzer->getFunctionCallMapping());
+        auto fcMapping=cfAnalyzer->getFunctionCallMapping();
+        fcMapping->dumpFunctionCallMapping();
+      }
+
+      // exit if any of above output is requested
+      if(ctOpt.info.printVariableIdMapping||ctOpt.info.printTypeSizeMapping||ctOpt.info.typeSizeMappingCSVFileName.size()>0||ctOpt.info.dumpFunctionCallMapping) {
+        exit(0);
+      }
+      
     }
 
     void optionallyRunNormalization(CodeThornOptions& ctOpt,SgProject* sageProject, TimingCollector& timingCollector) {
@@ -909,7 +924,7 @@ namespace CodeThorn {
       vim->typeSizeOverviewtoStream(ss);
       return ss.str();
     }
-
+    
     std::string programStatsToString(ProgramInfo* progInfo1, ProgramInfo* progInfo2, VariableIdMappingExtended* vim) {
       stringstream ss;
       ss<<progInfo1->toStringCompared(progInfo2);
