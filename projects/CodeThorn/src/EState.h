@@ -95,6 +95,8 @@ namespace CodeThorn {
     static bool fastPointerHashing;
     void setCallString(CallString cs);
     CallString getCallString() const;
+    CallString* getCallStringPtr();
+    CallString& getCallStringRef();
     size_t getCallStringLength() const;
 
   public:

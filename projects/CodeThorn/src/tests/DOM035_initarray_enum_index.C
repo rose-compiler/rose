@@ -6,14 +6,14 @@ enum BAR {
   CSLOT
 };
 
-int foo[2];
+int globalArray[2];
 
 int main() {
-  foo[ASLOT] = 10;
-  foo[BSLOT] = 101;
-  if(foo[BSLOT] == 101) {
+  globalArray[ASLOT] = 10;
+  globalArray[BSLOT] = 101;
+  if(globalArray[BSLOT] == 101) {
     /* do something */
-    printf("foo[ASLOT]:%d\n",foo[ASLOT]);
-    printf("foo[BSLOT]:%d\n",foo[BSLOT]);
+    printf("globalArray[ASLOT]:%d\n",globalArray[ASLOT]);
+    printf("globalArray[BSLOT]:%d\n",globalArray[BSLOT]);
   }
 }

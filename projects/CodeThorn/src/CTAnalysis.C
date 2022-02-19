@@ -143,9 +143,9 @@ void CodeThorn::CTAnalysis::deleteAllStates() {
   transitionGraph.clear();
 
   // check is necessary for mixed modes. If states already deleted above, they cannot be deleted again
-  if(numSetEStates==0 && numSetPStates==0 && _summaryCSStateMapMap.size()>0) {
+  if(numSetEStates==0 && numSetPStates==0 && _abstractCSStateMapMap.size()>0) {
     size_t cnt=0;
-    for(auto entry : _summaryCSStateMapMap) {
+    for(auto entry : _abstractCSStateMapMap) {
       auto map=entry.second;
       for(auto entry2 : map) {
         delete entry2.second;
@@ -162,6 +162,28 @@ void CodeThorn::CTAnalysis::run() {
 
 TopologicalSort* CodeThorn::CTAnalysis::getTopologicalSort() {
   return _topologicalSort;
+}
+
+void CodeThorn::CTAnalysis::ensureToplogicSortFlowConsistency() {
+  auto l2pMap=getTopologicalSort()->labelToPriorityMap();
+  LabelSet allLabels=getFlow()->nodeLabels();
+  uint64_t numFail=0;
+  for(auto lab : allLabels) {
+    if(!lab.isValid()) {
+      cerr<<"Error: checkToplogicSortFlowConsistency failed: invalid label."<<endl;
+      numFail++;
+    }
+    if(l2pMap[lab]==0) {
+      SgNode* node=getLabeler()->getNode(lab);
+      cerr<<"Error: checkToplogicSortFlowConsistency failed: flow-node not in topological sort: L"<<lab<<": "<<SgNodeHelper::locationAndSourceCodeToString(node,25,25)<<endl;
+      numFail++;
+    }
+  }
+  if(numFail>0) {
+    cerr<<"Error: checkToplogicSortFlowConsistency: "<<numFail<<" inconsistencies detected. Exiting."<<endl;
+    exit(1);
+  }
+  cout<<"INFO: ensureToplogicSortFlowConsistency: PASS"<<endl;
 }
 
 bool CodeThorn::CTAnalysis::isPassThroughLabel(Label lab) {
@@ -413,25 +435,25 @@ bool CodeThorn::CTAnalysis::isUnreachableLabel(Label lab) {
     ROSE_ASSERT(solver18);
     return solver18->isUnreachableLabel(lab);
   }
-  return _summaryCSStateMapMap.find(lab.getId())==_summaryCSStateMapMap.end()&&(lab!=getFlow()->getStartLabel());
+  return _abstractCSStateMapMap.find(lab.getId())==_abstractCSStateMapMap.end()&&(lab!=getFlow()->getStartLabel());
 }
 
 bool CodeThorn::CTAnalysis::isReachableLabel(Label lab) {
   return !isUnreachableLabel(lab);
 }
 
-EStatePtr CodeThorn::CTAnalysis::getSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs) {
+EStatePtr CodeThorn::CTAnalysis::getAbstractState(CodeThorn::Label lab, CodeThorn::CallString cs) {
   EStatePtr res;
 #pragma omp critical(SUMMARY_STATES)
   {
-    auto iter1=_summaryCSStateMapMap.find(lab.getId());
-    if(iter1==_summaryCSStateMapMap.end()) {
-      res=getBottomSummaryState(lab,cs);
+    auto iter1=_abstractCSStateMapMap.find(lab.getId());
+    if(iter1==_abstractCSStateMapMap.end()) {
+      res=getBottomAbstractState(lab,cs);
     } else {
-      SummaryCSStateMap& summaryCSStateMap=(*iter1).second;
-      auto iter2=summaryCSStateMap.find(cs);
-      if(iter2==summaryCSStateMap.end()) {
-        res=getBottomSummaryState(lab,cs);
+      AbstractCSStateMap& abstractCSStateMap=(*iter1).second;
+      auto iter2=abstractCSStateMap.find(cs);
+      if(iter2==abstractCSStateMap.end()) {
+        res=getBottomAbstractState(lab,cs);
       } else {
         res=(*iter2).second;
       }
@@ -440,7 +462,7 @@ EStatePtr CodeThorn::CTAnalysis::getSummaryState(CodeThorn::Label lab, CodeThorn
   return res;
 }
 
-void CodeThorn::CTAnalysis::setSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs, EStatePtr estate) {
+void CodeThorn::CTAnalysis::setAbstractState(CodeThorn::Label lab, CodeThorn::CallString cs, EStatePtr estate) {
   ROSE_ASSERT(lab==estate->label());
   ROSE_ASSERT(cs==estate->callString);
   ROSE_ASSERT(estate);
@@ -449,21 +471,21 @@ void CodeThorn::CTAnalysis::setSummaryState(CodeThorn::Label lab, CodeThorn::Cal
   //_summaryCSStateMap[p]=estate;
 #pragma omp critical(SUMMARY_STATES)
   {
-    auto iter1=_summaryCSStateMapMap.find(lab.getId());
-    if(iter1==_summaryCSStateMapMap.end()) {
+    auto iter1=_abstractCSStateMapMap.find(lab.getId());
+    if(iter1==_abstractCSStateMapMap.end()) {
       // create new
-      SummaryCSStateMap newSummaryCSStateMap;
-      newSummaryCSStateMap[cs]=estate;
-      _summaryCSStateMapMap[lab.getId()]=newSummaryCSStateMap;
+      AbstractCSStateMap newAbstractCSStateMap;
+      newAbstractCSStateMap[cs]=estate;
+      _abstractCSStateMapMap[lab.getId()]=newAbstractCSStateMap;
     } else {
-      SummaryCSStateMap& summaryCSStateMap=(*iter1).second;
-      summaryCSStateMap[cs]=estate;
+      AbstractCSStateMap& abstractCSStateMap=(*iter1).second;
+      abstractCSStateMap[cs]=estate;
     }
   }
 }
 
 
-EStatePtr CodeThorn::CTAnalysis::getBottomSummaryState(Label lab, CallString cs) {
+EStatePtr CodeThorn::CTAnalysis::getBottomAbstractState(Label lab, CallString cs) {
   InputOutput io;
   io.recordBot();
   if(EState::sharedPStates) {
@@ -483,7 +505,7 @@ EStatePtr CodeThorn::CTAnalysis::getBottomSummaryState(Label lab, CallString cs)
   }
 }
 
-void CodeThorn::CTAnalysis::initializeSummaryStates(PStatePtr initialPStateStored) {
+void CodeThorn::CTAnalysis::initializeAbstractStates(PStatePtr initialPStateStored) {
   _initialPStateStored=initialPStateStored;
 #if 0
   for(auto label:*getLabeler()) {
@@ -492,8 +514,8 @@ void CodeThorn::CTAnalysis::initializeSummaryStates(PStatePtr initialPStateStore
     io.recordBot();
     CallString cs; // empty callstring
     EState estate(label,cs,initialPStateStored,io); // implicitly empty cs
-    EStatePtr bottomElement=processNewOrExisting(getBottomSummaryState());
-    setSummaryState(label,estate.callString,bottomElement);
+    EStatePtr bottomElement=processNewOrExisting(getBottomAbstractState());
+    setAbstractState(label,estate.callString,bottomElement);
   }
 #endif
 }
@@ -1365,7 +1387,7 @@ EStatePtr CodeThorn::CTAnalysis::createInitialEState(SgProject* root, Label slab
   SAWYER_MESG(logger[INFO]) <<"Initial state: number of entries:"<<estate->pstate()->stateSize()<<endl;
   
   // initialize summary states map for abstract model checking mode
-  initializeSummaryStates(initialPStateStored);
+  initializeAbstractStates(initialPStateStored);
   estate->io.recordNone(); // ensure that extremal value is different to bot
 
   return estate;

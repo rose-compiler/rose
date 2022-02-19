@@ -148,16 +148,16 @@ void Solver5::run() {
                   // performing merge
 #pragma omp critical(SUMMARY_STATES_MAP)
                   {
-                    EStatePtr summaryEState=_analyzer->getSummaryState(newEStatePtr->label(),newEStatePtr->callString);
-                    if(_analyzer->getEStateTransferFunctions()->isApproximatedBy(newEStatePtr,summaryEState)) {
+                    EStatePtr abstractEState=_analyzer->getAbstractState(newEStatePtr->label(),newEStatePtr->callString);
+                    if(_analyzer->getEStateTransferFunctions()->isApproximatedBy(newEStatePtr,abstractEState)) {
                       // this is not a memory leak. newEStatePtr is
                       // stored in EStateSet and will be collected
                       // later. It may be already used in the state
                       // graph as an existing estate.
-                      newEStatePtr=summaryEState; 
+                      newEStatePtr=abstractEState; 
                     } else {
                       stringstream condss;
-                      EState newEState2=_analyzer->getEStateTransferFunctions()->combine(summaryEState,const_cast<EState*>(newEStatePtr));
+                      EState newEState2=_analyzer->getEStateTransferFunctions()->combine(abstractEState,const_cast<EState*>(newEStatePtr));
                       ROSE_ASSERT(_analyzer);
                       HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState2);
                       EStatePtr newEStatePtr2=const_cast<EStatePtr>(pres.second);
@@ -169,7 +169,7 @@ void Solver5::run() {
                       if(id==checkId) {
                         cout<<"--------------------------------------------------"<<endl;
                         cout<<"@"<<id<<": APPROX-BY-1:"<<newEStatePtr->toString()<<endl;
-                        cout<<"@"<<id<<": APPROX-BY-2:"<<summaryEState->toString()<<endl;
+                        cout<<"@"<<id<<": APPROX-BY-2:"<<abstractEState->toString()<<endl;
                         cout<<"@"<<id<<": MERGED     :"<<newEStatePtr2->toString()<<endl;
                       }
 #endif
@@ -180,10 +180,10 @@ void Solver5::run() {
                         // nothing to do, EState already exists
                       }
                       ROSE_ASSERT(newEStatePtr);
-                      _analyzer->setSummaryState(newEStatePtr->label(),newEStatePtr->callString,newEStatePtr);
+                      _analyzer->setAbstractState(newEStatePtr->label(),newEStatePtr->callString,newEStatePtr);
 #if 0
                       if(id==checkId) {
-                        cout<<"@"<<id<<": MERGED SUM :"<<_analyzer->getSummaryState(newEStatePtr->label(),newEStatePtr->callString)->toString()<<endl;
+                        cout<<"@"<<id<<": MERGED SUM :"<<_analyzer->getAbstractState(newEStatePtr->label(),newEStatePtr->callString)->toString()<<endl;
                         cout<<"--------------------------------------------------"<<endl;
                       }
 #endif

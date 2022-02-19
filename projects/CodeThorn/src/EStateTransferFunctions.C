@@ -13,6 +13,9 @@
 #include <map>
 #include <iomanip>
 
+// context sensitive transfer functions for function calls are only provided by Solver 18. This is explicitly checked.
+#include "Solver18.h"
+
 using namespace std;
 using namespace CodeThorn;
 using namespace Sawyer::Message;
@@ -407,9 +410,10 @@ namespace CodeThorn {
       logger[WARN]<<"fdef    : "<<SgNodeHelper::sourceLineColumnToString(funDef)<<endl;
     }
 
-    // ad 4
+    // ad 4 call context (call string)
     CallString cs=currentEState->callString;
     if(_analyzer->getOptionContextSensitiveAnalysis()) {
+       SAWYER_MESG(logger[TRACE])<<"transfer functioncall:"<<currentEState->label().toString()<<":"<<cs.toString()<<":"<<SgNodeHelper::sourceLocationAndNodeToString(funCall)<<endl;
       transferFunctionCallContextInPlace(cs, currentEState->label());
     }
     EStatePtr newEState=reInitEState(estate,edge.target(),cs,newPState);
@@ -444,6 +448,64 @@ namespace CodeThorn {
     }
   }
 
+  std::pair<bool,CallString> EStateTransferFunctions::determinePathFeasibilityAndContext(CallString cs, Label functionCallLabel) {
+    if(_analyzer->getSolver()->getId()==18) {
+      Solver18* solver18=dynamic_cast<Solver18*>(_analyzer->getSolver());
+      ROSE_ASSERT(solver18);
+      size_t k=CallString::getMaxLength();
+      if(cs.getLength()==0) {
+        if(solver18->callStringExistsAtLabel(cs,functionCallLabel)) {
+          return make_pair(true,cs);
+        } else {
+          return make_pair(false,CallString());
+        }
+      }
+      if(cs.getLength()<k) {
+        // callstring is exact
+        if(cs.isLastLabel(functionCallLabel)) {
+          // exact
+          CallString shortenedCs=cs.withoutLastLabel();
+          if(solver18->callStringExistsAtLabel(shortenedCs,functionCallLabel)) {
+            return make_pair(true,shortenedCs);
+          }
+        }
+        // infeasible
+        return make_pair(false,CallString());
+      } else {
+        // callstring is possibly approximate (=k can represent exact length k OR truncated)
+        ROSE_ASSERT(cs.getLength()==k);
+        /* the callstring can be shortened if the last label is the
+         * callstring label AND the shortened cs has been computed
+         * before at the callsite
+         */
+        if(cs.isLastLabel(functionCallLabel)) {
+          CallString shortenedCs=cs.withoutLastLabel();
+          if(solver18->callStringExistsAtLabel(shortenedCs,functionCallLabel)) {
+            // becomes exact again
+            return make_pair(true,shortenedCs);
+          }
+          // intentional fall through to the following two cases
+        }
+        if(solver18->callStringExistsAtLabel(cs,functionCallLabel)) {
+          // remains aproximate
+          return make_pair(true,cs);
+        } else {
+          // infeasible
+          return make_pair(false,CallString());
+        }
+      }
+    } else {
+      // old default behavior for older solvers, to be updated to above
+      if(isFeasiblePathContextOld(cs,functionCallLabel)) {
+        transferFunctionCallReturnContextInPlaceOld(cs,functionCallLabel);
+        SAWYER_MESG(logger[TRACE])<<"new context: cs: "<<cs.toString()<<endl;
+        return make_pair(true,cs);
+      } else {
+        return make_pair(false,CallString());
+      }
+    }
+  }
+  
   std::list<EStatePtr> EStateTransferFunctions::transferFunctionCallReturn(Edge edge, EStatePtr estate) {
     EStatePtr currentEState=estate;
 
@@ -451,16 +513,22 @@ namespace CodeThorn {
     Label functionCallReturnLabel=edge.source();
     SgNode* node=getLabeler()->getNode(functionCallReturnLabel);
     Label functionCallLabel=getLabeler()->functionCallLabel(node);
-    SAWYER_MESG(logger[TRACE])<<"FunctionCallReturnTransfer: "<<functionCallLabel.toString()<<":"<<functionCallReturnLabel.toString()<<" cs: "<<estate->callString.toString()<<endl;
-
+    SAWYER_MESG(logger[TRACE])<<"FunctionCallReturnTransfer: call: L"<<functionCallLabel.toString()<<": callret: L"<<functionCallReturnLabel.toString()<<" cs: "<<estate->callString.toString()<<endl;
     CallString cs=currentEState->callString;
     if(_analyzer->getOptionContextSensitiveAnalysis()) {
       if(getLabeler()->isExternalFunctionCallLabel(functionCallLabel)) {
         // nothing to do for external function call (label is not added
         // to callstring by external function call)
+        SAWYER_MESG(logger[TRACE])<<": external edge"<<endl;
       } else {
-        if(isFeasiblePathContext(cs,functionCallLabel)) {
-          transferFunctionCallReturnContextInPlace(cs,functionCallLabel);
+        std::pair<bool,CallString> resultPair=determinePathFeasibilityAndContext(cs,functionCallLabel);
+        SAWYER_MESG(logger[TRACE])<<"transfer functioncallreturn: call: L"<<functionCallLabel.toString()<<": callret: L"<<functionCallReturnLabel.toString()<<" cs: "<<estate->callString.toString()<<" : pathfeasibility:"<<resultPair.first<<" : ";
+        if(resultPair.first) SAWYER_MESG(logger[TRACE])<<resultPair.second.toString()<<endl;
+        else SAWYER_MESG(logger[TRACE])<<"infeasible"<<endl;
+          
+        if(resultPair.first) {
+          // set new, possibly shorter, callstring
+          cs=resultPair.second;
         } else {
           // definitely not feasible path, do not return a state
           std::list<EStatePtr> emptyList;
@@ -647,9 +715,18 @@ namespace CodeThorn {
       VariableIdMapping::VariableIdSet vars=localVars+formalParams;
       set<string> names=_analyzer->variableIdsToVariableNames(vars);
 
+      std::list<PState::iterator> toBeDeleted;
       for(VariableIdMapping::VariableIdSet::iterator i=vars.begin();i!=vars.end();++i) {
         VariableId varId=*i;
-        newPState->deleteVar(varId);
+        // delete all entries with varid as part of address (e.g. struct members, etc.)
+        for(auto psIter=newPState->begin();psIter!=newPState->end();++psIter) {
+          if((*psIter).first==varId)
+            toBeDeleted.push_back(psIter);
+          //newPState->deleteVar(varId);
+        }
+      }
+      for(auto mapElIter : toBeDeleted) {
+        newPState->erase(mapElIter);
       }
       // ad 3)
       return elistify(reInitEState(currentEState,edge.target(),estate->callString,newPState));
@@ -1312,79 +1389,85 @@ namespace CodeThorn {
     }
   }
 
+  void EStateTransferFunctions::createAbstractArrayInPlace(Label label,PStatePtr pstate, VariableId initDeclVarId) {
+    int arrayAbstractionIndex=getVariableIdMapping()->getArrayAbstractionIndex();
+    int abstractionMode=getAnalyzer()->getOptionsRef().abstractionMode;
+    if(arrayAbstractionIndex>=0 && getAnalyzer()->getOptionsRef().abstractionMode==1) {
+      if(arrayAbstractionIndex>=1) {
+        // only abstraction index 0 is currently supported
+        cerr<<"Error: Array Abstraction index "<<arrayAbstractionIndex<<" not supported."<<endl;
+        exit(1);
+      }
+      // declare abstract array, since only a coarse abstraction is supported, size>0 is irrelevant
+      int elemIndex=0;
+      int elemSize=1;
+      AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex),AbstractValue(elemSize));
+      // set default init value
+      reserveMemoryLocation(label,pstate,newArrayElementAddr);
+      newArrayElementAddr.setAbstractFlag(true);
+    } else {
+      cout<<"Error: array abstraction requested, but abstraction mode = "<<abstractionMode<<endl;
+      cout<<"Analysis is misconfigured, exiting."<<endl;
+      exit(1);
+    }
+  }
+      
   EStatePtr EStateTransferFunctions::transferVariableDeclarationWithoutInitializerEState(SgVariableDeclaration* decl, SgInitializedName* initName, VariableId initDeclVarId, EStatePtr currentEState, Label targetLabel) {
     CallString cs=currentEState->callString;
     Label label=currentEState->label();
-    ROSE_ASSERT(currentEState->pstate());
-
-    SgArrayType* arrayType=isSgArrayType(initName->get_type());
-    if(arrayType) {
-      //SgType* arrayElementType=arrayType->get_base_type();
-      //setElementSize(initDeclVarId,arrayElementType); // DO NOT OVERRIDE
-      int numElements=getVariableIdMapping()->getArrayElementCount(arrayType);
-      if(numElements==0) {
-        SAWYER_MESG(logger[TRACE])<<"Number of elements in array is 0 (from variableIdMapping) - evaluating expression"<<endl;
-        std::vector<SgExpression*> arrayDimExps=SageInterface::get_C_array_dimensions(*arrayType);
-        if(arrayDimExps.size()>1) {
-          if(_analyzer->getAbstractionMode()==3) {
-            CodeThorn::Exception("multi-dimensional arrays not supported yet.");
-          } else {
-            SAWYER_MESG(logger[WARN])<<"multi-dimensional arrays not supported yet. Only linear arrays are supported. Not added to state (assuming arbitrary value)."<<endl;
-          }
-          // not adding it to state. Will be used as unknown.
-          ROSE_ASSERT(currentEState->pstate());
-          PStatePtr newPState=currentEState->pstate();
-          return reInitEState(currentEState,targetLabel,cs,newPState);
-        }
-        ROSE_ASSERT(arrayDimExps.size()==1);
-        SgExpression* arrayDimExp=*arrayDimExps.begin();
-        SAWYER_MESG(logger[TRACE])<<"Array dimension expression: "<<arrayDimExp->unparseToString()<<endl;
-        SingleEvalResult evalRes=evaluateExpression(arrayDimExp,currentEState);
-        AbstractValue arrayDimAVal=evalRes.result;
-        SAWYER_MESG(logger[TRACE])<<"Computed array dimension: "<<arrayDimAVal.toString()<<endl;
-        if(arrayDimAVal.isConstInt()) {
-          numElements=arrayDimAVal.getIntValue();
-          getVariableIdMapping()->setNumberOfElements(initDeclVarId,numElements);
-        } else {
-          if(_analyzer->getAbstractionMode()==3) {
-            CodeThorn::Exception("Could not determine size of array (non-const size).");
-          }
-          // TODO: size of array remains 1?
-        }
-      } else {
-        getVariableIdMapping()->setNumberOfElements(initDeclVarId,numElements);
-      }
-    } else {
-      // set type info for initDeclVarId
-      getVariableIdMapping()->setNumberOfElements(initDeclVarId,1); // single variable
-      //SgType* variableType=initName->get_type();
-      //setElementSize(initDeclVarId,variableType); DO NOT OVERRIDE
-    }
-
-    SAWYER_MESG(logger[TRACE])<<"Creating new PState"<<endl;
-    ROSE_ASSERT(currentEState->pstate());
     PStatePtr newPState=currentEState->pstate();
-    if(getVariableIdMapping()->isOfArrayType(initDeclVarId)) {
-      SAWYER_MESG(logger[TRACE])<<"PState: upd: array"<<endl;
-      // add default array elements to PState
-      auto length=getVariableIdMapping()->getNumberOfElements(initDeclVarId);
-      if(length>0) {
-        SAWYER_MESG(logger[TRACE])<<"DECLARING ARRAY of size: "<<decl->unparseToString()<<":"<<length<<endl;
-        for(CodeThorn::TypeSize elemIndex=0;elemIndex<length;elemIndex++) {
-          auto elemSize=getVariableIdMapping()->getElementSize(initDeclVarId);
-          if(!getVariableIdMapping()->isUnknownSizeValue(elemSize)) {
+    ROSE_ASSERT(newPState);
+    //VariableId initDeclVarId=getVariableIdMapping()->variableId(decl);
+    if(SgArrayType* arrayType=isSgArrayType(initName->get_type())) {
+      //SgType* arrayElementType=arrayType->get_base_type();
+      int numElements=getVariableIdMapping()->getNumberOfElements(initDeclVarId);
+      SAWYER_MESG(logger[TRACE])<<"Number of elements in array is 0 (from variableIdMapping) - evaluating expression"<<endl;
+      std::vector<SgExpression*> arrayDimExps=SageInterface::get_C_array_dimensions(*arrayType);
+      // check if numElements is known, if not, try to determine dynamic value from state
+      if(numElements<0) {
+        // unknown number of elements, try to compute by evaluating expressions and compute size
+        int computedNumElements=-1;
+        for(auto dimIter=arrayDimExps.begin();dimIter!=arrayDimExps.end();++dimIter) {
+          SgExpression* arrayDimExp=*dimIter;
+          cout<<"DEBUG: Array dimension expression: "<<arrayDimExp->unparseToString()<<endl;
+          SingleEvalResult evalRes=evaluateExpression(arrayDimExp,currentEState);
+          AbstractValue arrayDimAVal=evalRes.result;
+          cout<<"DEBUG: Computed array dimension: "<<arrayDimAVal.toString()<<endl;
+          if(dimIter==arrayDimExps.begin()) {
+            if(arrayDimAVal.isConstInt()) {
+              computedNumElements=arrayDimAVal.getIntValue();
+            } else {
+              // computedNumElements remains -1 (=unknown)
+              break;
+            }
+          } else {
+            if(arrayDimAVal.isConstInt()) {
+              numElements*=arrayDimAVal.getIntValue();
+            } else {
+              numElements=-1; // reset - any unknown dimension means size is unknown
+              break;
+            }
+          }
+        }
+        numElements=computedNumElements; // determined by evaluating expressions (allows to handle variable length arrays)
+      }
+      auto elemSize=getVariableIdMapping()->getElementSize(initDeclVarId);
+      if(numElements>0) {
+        getVariableIdMapping()->setNumberOfElements(initDeclVarId,numElements);
+        if(getAnalyzer()->getOptionsRef().abstractionMode>=1 || getVariableIdMapping()->isUnknownSizeValue(elemSize)) {
+          createAbstractArrayInPlace(label,newPState,initDeclVarId);
+        } else {
+          // size is known, element size is known, and abstractionMode==0 (=concrete)
+          // initialize all elements of contiguous possibliy multi-dim array of known size
+          for(CodeThorn::TypeSize elemIndex=0;elemIndex<numElements;elemIndex++) {
             AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(elemIndex),AbstractValue(elemSize));
             // set default init value
             reserveMemoryLocation(label,newPState,newArrayElementAddr);
-          }
+          } // end of concrete init loop
         }
       } else {
-        SAWYER_MESG(logger[TRACE])<<"DECLARING ARRAY of unknown size: "<<decl->unparseToString()<<":"<<length<<endl;
-        AbstractValue newArrayElementAddr=AbstractValue::createAddressOfArrayElement(initDeclVarId,AbstractValue(0)); // use elem index 0
-        // set default init value
-        reserveMemoryLocation(label,newPState,newArrayElementAddr);
+        createAbstractArrayInPlace(label,newPState,initDeclVarId); // unknown size of array
       }
-
     } else if(getVariableIdMapping()->isOfClassType(initDeclVarId)) {
       SAWYER_MESG(logger[TRACE])<<"PState: upd: class"<<endl;
       // create only address start address of struct (on the
@@ -1846,15 +1929,15 @@ namespace CodeThorn {
     cs.addLabel(lab);
   }
 
-  void EStateTransferFunctions::transferFunctionCallReturnContextInPlace(CallString& cs, Label lab) {
+  void EStateTransferFunctions::transferFunctionCallReturnContextInPlaceOld(CallString& cs, Label lab) {
     if(cs.isLastLabel(lab)) {
-      // TODO: callstring reduction requires call-graph depth-check!
       cs.removeLastLabel();
     } 
   }
 
-  bool EStateTransferFunctions::isFeasiblePathContext(CallString& cs,Label lab) {
-    return cs.getLength()==0||cs.isLastLabel(lab)||cs.isMaxLength();
+  bool EStateTransferFunctions::isFeasiblePathContextOld(CallString& cs,Label callLabel) {
+    return cs.getLength()==0||cs.isLastLabel(callLabel)||cs.isMaxLength();
+    //return cs.getLength()==0||cs.isLastLabel(callLabel);
   }
 
   std::string EStateTransferFunctions::transferFunctionCodeToString(TransferFunctionCode tfCode) {
@@ -1887,7 +1970,9 @@ namespace CodeThorn {
 
   void EStateTransferFunctions::printTransferFunctionInfo(TransferFunctionCode tfCode, SgNode* node, Edge edge, EStatePtr estate) {
     stringstream ss;
-    ss<<"transfer: "<<std::setw(6)<<"L"+estate->label().toString()<<": "<<std::setw(22)<<std::left<<transferFunctionCodeToString(tfCode)<<": ";
+    ss<<"transfer: "<<std::setw(6)<<"L"+estate->label().toString()
+      <<" "<<estate->getCallStringRef().toString()
+      <<": "<<std::setw(22)<<std::left<<transferFunctionCodeToString(tfCode)<<": ";
     if(getLabeler()->isFunctionEntryLabel(edge.source())||getLabeler()->isFunctionExitLabel(edge.source())) {
       ss<<SgNodeHelper::locationToString(node)<<": "<<SgNodeHelper::getFunctionName(node);
     } else {
@@ -2493,12 +2578,20 @@ namespace CodeThorn {
     switch(node->variantT()) {
     case V_SgAndOp: {
       // short circuit semantics
-      if(lhsResult.isTrue()||lhsResult.isTop()||lhsResult.isBot()) {
+      if(lhsResult.isTrue()
+         ||lhsResult.isTop()
+         ||lhsResult.isBot()
+         ||((lhsResult.result.isPtr()||lhsResult.result.isFunctionPtr())&&!lhsResult.result.isNullPtr())
+         ||lhsResult.result.isRef() // this can be refined to access the referenced value and check that it is not 0
+         ) {
         SgNode* rhs=SgNodeHelper::getRhs(node);
         SingleEvalResult rhsResult=evaluateExpression(rhs,estate,mode);
         return evalAndOp(isSgAndOp(node),lhsResult,rhsResult,estate,mode);
       } else {
         // rhs not executed
+        if(!lhsResult.isFalse()) {
+          cerr<<"Error: lhsResult is not false as expected here (of short-circuit AND op): "<<lhsResult.result.toString()<<endl;
+        }
         ROSE_ASSERT(lhsResult.isFalse());
         // result must be zero (=false)
         return lhsResult;
@@ -4138,7 +4231,7 @@ namespace CodeThorn {
     // those shared variables
     if(_analyzer->getOptionsRef().getIntraProceduralFlag()) {
       if(isGlobalAddress(memLoc)) {
-        memLoc.setSummaryFlag(true);
+        memLoc.setAbstractFlag(true);
       }
     }
     SAWYER_MESG(logger[TRACE])<<"initializeMemoryLocation: "<<memLoc.toString()<<" := "<<newValue.toString()<<endl;
@@ -4162,7 +4255,7 @@ namespace CodeThorn {
 
     if(_analyzer->getOptionsRef().getIntraProceduralFlag()) {
       if(isGlobalAddress(memLoc)) {
-        memLoc.setSummaryFlag(true);
+        memLoc.setAbstractFlag(true);
       }
     }
 

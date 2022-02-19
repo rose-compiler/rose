@@ -35,7 +35,7 @@ bool Solver19::isPassThroughLabel(Label lab) {
   return _analyzer->isPassThroughLabel(lab);
 }
 
-void Solver19::initializeSummaryStatesFromWorkList() {
+void Solver19::initializeAbstractStatesFromWorkList() {
   // pop all states from worklist (can contain more than one state)
   list<EStatePtr> tmpWL;
   while(!_analyzer->isEmptyWorkList()) {
@@ -44,9 +44,9 @@ void Solver19::initializeSummaryStatesFromWorkList() {
     tmpWL.push_back(estate);
   }
   for(auto s : tmpWL) {
-    // initialize summarystate and push back to work lis
+    // initialize abstractstate and push back to work lis
     ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(s->label()));
-    _analyzer->setSummaryState(s->label(),s->callString,new EState(*s)); // ensure summary states are never added to the worklist
+    _analyzer->setAbstractState(s->label(),s->callString,new EState(*s)); // ensure summary states are never added to the worklist
     //_analyzer->addToWorkList(s);
     Flow outSet=_analyzer->getFlow()->outEdges(s->label());
     for(auto e : outSet) {
@@ -71,7 +71,7 @@ void Solver19::run() {
     _workList=new GeneralPriorityWorkList<Solver19::WorkListEntry>(_analyzer->getTopologicalSort()->labelToPriorityMap());
   }
 
-  initializeSummaryStatesFromWorkList();
+  initializeAbstractStatesFromWorkList();
 
   size_t displayTransferCounter=0;
   bool terminateEarly=false;
@@ -86,7 +86,7 @@ void Solver19::run() {
     
     ROSE_ASSERT(p.label().isValid());
     ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(p.label()));
-    EStatePtr currentEStatePtr=_analyzer->getSummaryState(p.label(),p.callString());
+    EStatePtr currentEStatePtr=_analyzer->getAbstractState(p.label(),p.callString());
     ROSE_ASSERT(currentEStatePtr);
     
     list<EStatePtr> newEStateList0;
@@ -99,7 +99,7 @@ void Solver19::run() {
       newEStateList0=_analyzer->transferEdgeEStateInPlace(e,currentEStatePtr);
       if(newEStateList0.size()==1) {
         // move pointer: nullify original
-        _analyzer->setSummaryState(p.label(),p.callString(),nullptr);
+        _analyzer->setAbstractState(p.label(),p.callString(),nullptr);
         currentEStatePtr=*newEStateList0.begin();
       } else {
         break;
@@ -122,20 +122,20 @@ void Solver19::run() {
           EStatePtr newEStatePtr=newEStatePtr0;
           ROSE_ASSERT(newEStatePtr);
           // performing merge
-          EStatePtr summaryEStatePtr=_analyzer->getSummaryState(lab,cs);
-          ROSE_ASSERT(summaryEStatePtr);
-          if(_analyzer->getEStateTransferFunctions()->isApproximatedBy(newEStatePtr,summaryEStatePtr)) {
+          EStatePtr abstractEStatePtr=_analyzer->getAbstractState(lab,cs);
+          ROSE_ASSERT(abstractEStatePtr);
+          if(_analyzer->getEStateTransferFunctions()->isApproximatedBy(newEStatePtr,abstractEStatePtr)) {
             delete newEStatePtr; // new state does not contain new information, therefore it can be deleted
             newEStatePtr=nullptr;
           } else {
-            EState newCombinedSummaryEState=_analyzer->getEStateTransferFunctions()->combine(summaryEStatePtr,const_cast<EStatePtr>(newEStatePtr));
-            EStatePtr newCombinedSummaryEStatePtr=new EState(newCombinedSummaryEState);
-            newCombinedSummaryEStatePtr->setLabel(lab);
-            newCombinedSummaryEStatePtr->setCallString(cs);
-            _analyzer->setSummaryState(lab,cs,newCombinedSummaryEStatePtr);
-            delete summaryEStatePtr;
+            EState newCombinedAbstractEState=_analyzer->getEStateTransferFunctions()->combine(abstractEStatePtr,const_cast<EStatePtr>(newEStatePtr));
+            EStatePtr newCombinedAbstractEStatePtr=new EState(newCombinedAbstractEState);
+            newCombinedAbstractEStatePtr->setLabel(lab);
+            newCombinedAbstractEStatePtr->setCallString(cs);
+            _analyzer->setAbstractState(lab,cs,newCombinedAbstractEStatePtr);
+            delete abstractEStatePtr;
             delete newEStatePtr;
-            newEStatePtr=newCombinedSummaryEStatePtr;
+            newEStatePtr=newCombinedAbstractEStatePtr;
             ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(newEStatePtr->label()));
             //_analyzer->addToWorkList(newEStatePtr);
             ROSE_ASSERT(e.target()==newEStatePtr->label());

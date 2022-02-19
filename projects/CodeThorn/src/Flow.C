@@ -277,7 +277,6 @@ Label Flow::getStartLabel() {
   if(_startLabelSet.size()==1) {
     return *_startLabelSet.begin();
   } else if(_startLabelSet.size()==0) {
-    //cerr<<"Flow::getStartLabel: start label requested, but no start label available."<<endl;
     Label lab;
     return lab; // intentionally returns invalid label
   } else {
@@ -289,7 +288,8 @@ Label Flow::getStartLabel() {
 // this is a static property of the ICFG (inter-procedural CFG)
 bool Flow::isPassThroughLabel(Label lab, Labeler* labeler) {
   // function calls can return more than one state, therefore they cannot be pass-through states (in-place state updates)
-  if(labeler->isFunctionCallLabel(lab))
+  // all functioncallreturn states must be stored because the map is used for path feasibility checks
+  if(labeler->isFunctionCallLabel(lab)||labeler->isFunctionCallReturnLabel(lab))
      return false;
   //structural property (nodes inside blocks that can be analyzed by updating states in-place (similar to basic blocks)
   Flow inEdgeSet1=inEdges(lab);
@@ -590,10 +590,12 @@ string Flow::toDot(Labeler* labeler, TopologicalSort* topSort) {
     if(_dotOptionDisplayLabel) {
       ss << *i;
       ss << " [label=\"";
-      ss << Labeler::labelToString(*i);
       if(topSort) {
-        ss<<"["<<topSort->getLabelPosition(*i)<<"]";
+        ss<<topSort->getLabelPosition(*i)<<": ";
+      } else {
+        ss<<"-: ";
       }
+      ss << "L"<<Labeler::labelToString(*i);
       if(_dotOptionDisplayPassThroughLabel) {
         if(isPassThroughLabel(*i,labeler)) {
           ss << "[MOV]";

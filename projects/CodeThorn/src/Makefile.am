@@ -719,7 +719,7 @@ check-matcher:
 	./matcher_demo  --edg:no_warnings $(srcdir)/tests/basictest5.C < $(srcdir)/tests/matchexpressions/test1.mat
 
 
-CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-expr-eval check-normalization check-lc check-io check-omp-cfg check-commandline-options check-vis check-thorn2 check-stg check-thorn4
+CHECK_DEFAULT_PASSING=check-codethorn-internal check-domain check-expr-eval check-normalization check-line-col check-io check-omp-cfg check-commandline-options check-vis check-thorn2 check-stg check-thorn4
 CHECK_DEFAULT_FAILING=check-data-races check-deadcode
 
 CHECK_WITH_SPOT_PASSING=check-reachability-seq check-ltl-seq check-ltl-par
@@ -768,10 +768,14 @@ check-domain-avset:
 check-domain-avset-err:
 	$(srcdir)/scripts/runDomainTests --testdir $(srcdir)/tests --show-errors --l2avset
 
+check-domain-regression:
+	$(srcdir)/scripts/runDomainTests --testdir $(srcdir)/tests --regression-tests
+
+
 check-cfg:
 	$(srcdir)/scripts/runCfgTests $(srcdir)/tests
 
-check-lc:
+check-line-col:
 	$(srcdir)/scripts/runLineColTests $(srcdir)/tests
 
 check-io: check-ioc

@@ -394,7 +394,7 @@ bool PState::hasEqualMemRegionApproximation(const PState& other) const {
 AbstractValue PState::varValue(AbstractValue memLoc) const {
   if(memLoc.isPtrSet()) {
     // reading from set of values, combined all and return
-    AbstractValue readSummary; // defaults to bot
+    AbstractValue readAbstraction; // defaults to bot
     AbstractValueSet& set=*memLoc.getAbstractValueSet();
     for(auto memLoc : set) {
       AbstractValue av=readFromMemoryLocation(memLoc); // indirect recursive cal
@@ -402,9 +402,9 @@ AbstractValue PState::varValue(AbstractValue memLoc) const {
         av=varValue(av);
       } 
       ROSE_ASSERT(!av.isPtrSet());
-      readSummary=AbstractValue::combine(readSummary,av);
+      readAbstraction=AbstractValue::combine(readAbstraction,av);
     }
-    return readSummary;
+    return readAbstraction;
   } else {
     if(find(memLoc)==end()) {
       // address is not reserved, return top
@@ -455,7 +455,7 @@ void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
   } else {
     // if an abstract memloc is a summary, ensure that only a weak update is performed by setting the strongupdate flag to false
     // in other words: a strong update is only requested if the parameter strongUpdate is true AND abstractMemLoc is NOT a summary
-    conditionalApproximateRawWriteToMemoryLocation(abstractMemLoc,abstractValue,strongUpdate&&(!abstractMemLoc.isSummary()));
+    conditionalApproximateRawWriteToMemoryLocation(abstractMemLoc,abstractValue,strongUpdate&&(!abstractMemLoc.isAbstract()));
   }
 }
 
@@ -464,7 +464,7 @@ void PState::conditionalApproximateRawWriteToMemoryLocation(AbstractValue memLoc
 							    bool strongUpdate) {
   bool weakUpdate=!strongUpdate;
 #if 1
-  if(memLoc.isSummary()||weakUpdate) {
+  if(memLoc.isAbstract()||weakUpdate) {
     rawCombineAtMemoryLocation(memLoc,abstractValue);
     //rawWriteAtAbstractAddress(memLoc,abstractValue);
   } else {
@@ -514,6 +514,10 @@ PState::iterator PState::end() {
   return map<AbstractValue,CodeThorn::AbstractValue>::end();
 }
 
+void PState::erase(PState::iterator iter) {
+  map<AbstractValue,CodeThorn::AbstractValue>::erase(iter);
+}
+
 PState::const_iterator PState::begin() const {
   return map<AbstractValue,CodeThorn::AbstractValue>::begin();
 }
@@ -521,6 +525,7 @@ PState::const_iterator PState::begin() const {
 PState::const_iterator PState::end() const {
   return map<AbstractValue,CodeThorn::AbstractValue>::end();
 }
+
 
 // Lattice functions
 bool PState::isApproximatedBy(CodeThorn::PState& other) const {
