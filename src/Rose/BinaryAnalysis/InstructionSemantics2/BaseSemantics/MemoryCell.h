@@ -66,6 +66,7 @@ private:
     SValuePtr value_;                                   // Value stored at that address.
     AddressSet writers_;                                // Instructions that wrote to this cell
     InputOutputPropertySet ioProperties_;
+    unsigned position_ = 0;                             // position when printing a memory state
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization
@@ -74,11 +75,13 @@ private:
     friend class boost::serialization::access;
 
     template<class S>
-    void serialize(S &s, const unsigned /*version*/) {
+    void serialize(S &s, const unsigned version) {
         s & BOOST_SERIALIZATION_NVP(address_);
         s & BOOST_SERIALIZATION_NVP(value_);
         s & BOOST_SERIALIZATION_NVP(writers_);
         s & BOOST_SERIALIZATION_NVP(ioProperties_);
+        if (version >= 1)
+            s & BOOST_SERIALIZATION_NVP(position_);
     }
 #endif
 
@@ -215,6 +218,19 @@ public:
     InputOutputPropertySet& ioProperties() { return ioProperties_; }
     /** @} */
 
+    /** Property: Position in listings.
+     *
+     *  For memory states that support it, this property holds an integer position of the cell relative to the other cells. For
+     *  instance, a map-based memory state that uses address hashes would normally list the memory cells in order of their
+     *  hashes, which makes it confusing for a human to look at because the bytes for a single multi-byte word will be
+     *  scattered throughout the listing.  By setting a position, the user can control the order that the four bytes are listed
+     *  with respect to each other and with respect to the other cells in the memory state.
+     *
+     * @{ */
+    unsigned position() const { return position_; }
+    void position(unsigned p) { position_ = p; }
+    /** @} */
+
     /** Test whether two memory cells can alias one another.
      *
      *  Two cells may alias one another if it is possible that their addresses cause them to overlap.  For cells containing
@@ -303,8 +319,6 @@ public:
         ASSERT_not_null(v);
         value_ = v;
     }
-
-
 };
 
 
@@ -317,6 +331,7 @@ std::ostream& operator<<(std::ostream&, const MemoryCell::WithFormatter&);
 } // namespace
 
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::MemoryCell);
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::MemoryCell, 1);
 
 #endif
 #endif

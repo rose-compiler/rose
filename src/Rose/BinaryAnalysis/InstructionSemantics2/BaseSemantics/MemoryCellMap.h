@@ -45,6 +45,9 @@ public:
     /** Map of memory cells indexed by cell keys. */
     typedef Sawyer::Container::Map<CellKey, MemoryCellPtr> CellMap;
 
+private:
+    uint32_t lastPosition_ = 0;                         // used when inserting new cells
+
 protected:
     CellMap cells;
 
@@ -68,11 +71,7 @@ protected:
     MemoryCellMap(const SValuePtr &addrProtoval, const SValuePtr &valProtoval)
         : MemoryCellState(addrProtoval, valProtoval) {}
 
-    MemoryCellMap(const MemoryCellMap &other)
-        : MemoryCellState(other) {
-        BOOST_FOREACH (const MemoryCellPtr &cell, other.cells.values())
-            cells.insert(other.generateCellKey(cell->address()), cell->clone());
-    }
+    MemoryCellMap(const MemoryCellMap&);
 
 private:
     MemoryCellMap& operator=(MemoryCellMap&) /*delete*/;
@@ -125,6 +124,14 @@ public:
                                        RiscOperators *valOps) override;
     virtual AddressSet getWritersIntersection(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps,
                                               RiscOperators *valOps) override;
+
+private:
+    // Increment lastPosition_ and return its new value.
+    unsigned nextPosition();
+
+    // Last position returned by nextPosition
+    unsigned lastPosition() const;
+    void lastPosition(unsigned);
 };
 
 } // namespace
