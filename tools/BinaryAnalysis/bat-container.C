@@ -53,10 +53,10 @@ main(int argc, char *argv[]) {
     boost::filesystem::path inputFileName = parseCommandLine(argc, argv, engine);
     P2::Partitioner partitioner = engine.loadPartitioner(inputFileName, stateFormat);
 
-    BOOST_FOREACH (SgFile *file, SageInterface::generateFileList()) {
+    for (SgFile *file: SageInterface::generateFileList()) {
         if (SgBinaryComposite *binComp = isSgBinaryComposite(file)) {
             if (SgAsmGenericFileList *genFileList = binComp->get_genericFileList()) {
-                BOOST_FOREACH (SgAsmGenericFile *asmFile, genFileList->get_files()) {
+                for (SgAsmGenericFile *asmFile: genFileList->get_files()) {
                     std::cout <<asmFile->format_name() <<"\n";
 
                     // A table describing the sections of the file

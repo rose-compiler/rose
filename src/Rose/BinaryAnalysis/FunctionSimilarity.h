@@ -349,7 +349,7 @@ public:
     compareOneToMany(const Partitioner2::Function::Ptr &needle,
                      const boost::iterator_range<FunctionIterator> &haystack) const {
         std::vector<Partitioner2::Function::Ptr> others;
-        BOOST_FOREACH (const Partitioner2::Function::Ptr &other, haystack)
+        for (const Partitioner2::Function::Ptr &other: haystack)
             others.push_back(other);
         return compareOneToMany(needle, others);
     }

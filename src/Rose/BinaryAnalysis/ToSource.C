@@ -167,7 +167,7 @@ void
 BinaryToSource::declareGlobalRegisters(std::ostream &out) {
     out <<"\n/* Global register variables */\n";
     RegisterStatePtr regs = RegisterState::promote(raisingOps_->currentState()->registerState());
-    BOOST_FOREACH (const RegisterState::RegPair &regpair, regs->get_stored_registers()) {
+    for (const RegisterState::RegPair &regpair: regs->get_stored_registers()) {
         std::string ctext = SValue::unsignedTypeNameForSize(regpair.desc.nBits()) + " " +
                             raisingOps_->registerVariableName(regpair.desc);
         if (regpair.desc.nBits() > 64) {
@@ -202,7 +202,7 @@ BinaryToSource::defineInterrupts(std::ostream &out) {
 void
 BinaryToSource::emitEffects(std::ostream &out) {
     out <<"                    /* SSA */\n";
-    BOOST_FOREACH (const RiscOperators::SideEffect &sideEffect, raisingOps_->sideEffects()) {
+    for (const RiscOperators::SideEffect &sideEffect: raisingOps_->sideEffects()) {
         std::string value = SValue::promote(sideEffect.expression)->ctext();
         if (sideEffect.temporary) {
             std::string tempType = SValue::unsignedTypeNameForSize(sideEffect.expression->nBits());
@@ -261,7 +261,7 @@ BinaryToSource::emitBasicBlock(const P2::Partitioner &partitioner, const P2::Bas
 
     rose_addr_t fallThroughVa = 0;
     raisingOps_->resetState();
-    BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
+    for (SgAsmInstruction *insn: bblock->instructions()) {
         emitInstruction(insn, out);
         fallThroughVa = insn->get_address() + insn->get_size();
     }
@@ -302,7 +302,7 @@ BinaryToSource::emitFunction(const P2::Partitioner &partitioner, const P2::Funct
         <<") {\n"
         <<"    while (" <<raisingOps_->registerVariableName(IP) <<" != ret_va) {\n"
         <<"        switch (" <<raisingOps_->registerVariableName(IP) <<") {\n";
-    BOOST_FOREACH (rose_addr_t bblockVa, function->basicBlockAddresses()) {
+    for (rose_addr_t bblockVa: function->basicBlockAddresses()) {
         P2::ControlFlowGraph::ConstVertexIterator placeholder = partitioner.findPlaceholder(bblockVa);
         ASSERT_require(partitioner.cfg().isValidVertex(placeholder));
         ASSERT_require(placeholder->value().type() == P2::V_BASIC_BLOCK);
@@ -318,7 +318,7 @@ BinaryToSource::emitFunction(const P2::Partitioner &partitioner, const P2::Funct
 
 void
 BinaryToSource::emitAllFunctions(const P2::Partitioner &partitioner, std::ostream &out) {
-    BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions())
+    for (const P2::Function::Ptr &function: partitioner.functions())
         emitFunction(partitioner, function, out);
 }
 
@@ -344,7 +344,7 @@ BinaryToSource::emitFunctionDispatcher(const P2::Partitioner &partitioner, std::
 
     // Emit the dispatch table
     out <<"    switch (" <<raisingOps_->registerVariableName(IP) <<") {\n";
-    BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions()) {
+    for (const P2::Function::Ptr &function: partitioner.functions()) {
         out <<"        case " <<StringUtility::addrToString(function->address()) <<": ";
         out <<"            F_" <<StringUtility::addrToString(function->address()).substr(2) <<"(returnTarget); ";
         out <<"            break;";
@@ -411,7 +411,7 @@ BinaryToSource::emitMain(const P2::Partitioner &partitioner, std::ostream &out) 
     if (settings_.initialInstructionPointer) {
         initialIp = *settings_.initialInstructionPointer;
     } else {
-        BOOST_FOREACH (const P2::Function::Ptr &f, partitioner.functions()) {
+        for (const P2::Function::Ptr &f: partitioner.functions()) {
             if (f->name() == "_start") {
                 initialIp = f->address();
                 break;

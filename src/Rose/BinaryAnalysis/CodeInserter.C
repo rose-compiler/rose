@@ -86,7 +86,7 @@ CodeInserter::replaceBlockInsns(const P2::BasicBlock::Ptr &bb, size_t index, siz
             }
         }
         debug <<"  replacing " <<StringUtility::plural(nInsns, "instructions") <<" with [";
-        BOOST_FOREACH (uint8_t byte, replacement)
+        for (uint8_t byte: replacement)
             Diagnostics::mfprintf(debug)(" 0x%02x", byte);
         debug <<" ], " <<StringUtility::plural(replacement.size(), "bytes") <<"\n";
     }
@@ -132,7 +132,7 @@ CodeInserter::replaceBlockInsns(const P2::BasicBlock::Ptr &bb, size_t index, siz
             int relIdx = (int)insnIdx - (int)insertAt;  // relative to insertion point
             SgAsmInstruction *prevInsn = bb->instructions()[insnIdx];
 
-            BOOST_FOREACH (InstructionInfo &info, insnInfoMap.values()) {
+            for (InstructionInfo &info: insnInfoMap.values()) {
                 if (info.newVaOffset)
                     info.newVaOffset = info.newVaOffset.get() + prevInsn->get_size();
             }
@@ -171,10 +171,10 @@ CodeInserter::replaceInsns(const std::vector<SgAsmInstruction*> &toReplace, cons
     if (debug) {
         debug <<"replaceInsns:\n";
         debug <<"  instructions to replace:\n";
-        BOOST_FOREACH (SgAsmInstruction *insn, toReplace)
+        for (SgAsmInstruction *insn: toReplace)
             debug <<"    " <<partitioner_.unparse(insn) <<"\n";
         debug <<"  replacement = [";
-        BOOST_FOREACH (uint8_t byte, replacement)
+        for (uint8_t byte: replacement)
             Diagnostics::mfprintf(debug)(" 0x%02x", byte);
         debug <<" ], " <<StringUtility::plural(replacement.size(), "bytes") <<"\n";
     }
@@ -190,7 +190,7 @@ CodeInserter::fillWithNops(const AddressIntervalSet &where) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
 
     std::string isa = partitioner_.instructionProvider().disassembler()->name();
-    BOOST_FOREACH (const AddressInterval &interval, where.intervals()) {
+    for (const AddressInterval &interval: where.intervals()) {
         SAWYER_MESG(debug) <<"filling " <<StringUtility::addrToString(interval) <<" with no-op instructions\n";
 
         // Create the vector containing the encoded instructions
@@ -224,7 +224,7 @@ CodeInserter::fillWithRandom(const AddressIntervalSet &where) {
     Sawyer::Message::Stream debug(mlog[DEBUG]);
 
     std::string isa = partitioner_.instructionProvider().disassembler()->name();
-    BOOST_FOREACH (const AddressInterval &interval, where.intervals()) {
+    for (const AddressInterval &interval: where.intervals()) {
         SAWYER_MESG(debug) <<"filling " <<StringUtility::addrToString(interval) <<" with random data\n";
         std::vector<uint8_t> data;
         data.reserve(interval.size());
@@ -267,7 +267,7 @@ CodeInserter::encodeJump(rose_addr_t srcVa, rose_addr_t tgtVa) {
     if (debug) {
         debug <<"  jump from " <<StringUtility::addrToString(srcVa) <<" to " <<StringUtility::addrToString(tgtVa)
               <<" is encoded as [";
-        BOOST_FOREACH (uint8_t byte, retval)
+        for (uint8_t byte: retval)
             Diagnostics::mfprintf(debug)(" %02x", byte);
         debug <<" ]\n";
     }
@@ -283,12 +283,12 @@ CodeInserter::applyRelocations(rose_addr_t va, std::vector<uint8_t> replacement,
         debug <<"applying relocations at va " <<StringUtility::addrToString(va) <<"\n"
               <<"  relocStart = " <<relocStart <<"\n"
               <<"  reloc input =  [";
-        BOOST_FOREACH (uint8_t byte, replacement)
+        for (uint8_t byte: replacement)
             Diagnostics::mfprintf(debug)(" 0x%02x", byte);
         debug <<" ], " <<StringUtility::plural(replacement.size(), "bytes") <<"\n";
     }
 
-    BOOST_FOREACH (const Relocation &reloc, relocations) {
+    for (const Relocation &reloc: relocations) {
         ASSERT_require(reloc.offset < replacement.size());
         rose_addr_t value = 0;
         SAWYER_MESG(debug) <<"  at offset " <<(relocStart + reloc.offset) <<": ";
@@ -463,7 +463,7 @@ CodeInserter::applyRelocations(rose_addr_t va, std::vector<uint8_t> replacement,
 
     if (debug) {
         debug <<"  reloc output = [";
-        BOOST_FOREACH (uint8_t byte, replacement)
+        for (uint8_t byte: replacement)
             Diagnostics::mfprintf(debug)(" 0x%02x", byte);
         debug <<" ], " <<StringUtility::plural(replacement.size(), "bytes") <<"\n";
     }
@@ -525,7 +525,7 @@ CodeInserter::commitAllocation(const AddressInterval &where, Commit::Boolean com
 AddressIntervalSet
 CodeInserter::instructionLocations(const std::vector<SgAsmInstruction*> &insns) {
     AddressIntervalSet retval;
-    BOOST_FOREACH (SgAsmInstruction *insn, insns)
+    for (SgAsmInstruction *insn: insns)
         retval |= AddressInterval::baseSize(insn->get_address(), insn->get_size());
     return retval;
 }
@@ -542,7 +542,7 @@ CodeInserter::replaceByOverwrite(const AddressIntervalSet &toReplaceVas, const A
         debug <<"  entryInterval = " <<StringUtility::addrToString(entryInterval)
               <<", " <<StringUtility::plural(entryInterval.size(), "bytes") <<"\n";
         debug <<"  replacement [";
-        BOOST_FOREACH (uint8_t byte, replacement)
+        for (uint8_t byte: replacement)
             Diagnostics::mfprintf(debug)(" 0x%02x", byte);
         debug <<" ], " <<StringUtility::plural(replacement.size(), "bytes") <<"\n";
     }
@@ -604,10 +604,10 @@ CodeInserter::replaceByTransfer(const AddressIntervalSet &toReplaceVas, const Ad
         debug <<"  entryInterval = " <<StringUtility::addrToString(entryInterval)
               <<", " <<StringUtility::plural(entryInterval.size(), "bytes") <<"\n";
         debug <<"  instructions to be moved:\n";
-        BOOST_FOREACH (SgAsmInstruction *insn, toReplace)
+        for (SgAsmInstruction *insn: toReplace)
             debug <<"    " <<partitioner_.unparse(insn) <<"\n";
         debug <<"  replacement = [";
-        BOOST_FOREACH (uint8_t byte, replacement)
+        for (uint8_t byte: replacement)
             Diagnostics::mfprintf(debug)(" 0x%02x", byte);
         debug <<" ], " <<StringUtility::plural(replacement.size(), "bytes") <<"\n";
     }

@@ -11,7 +11,6 @@ static const char *description =
 #include <batSupport.h>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/filesystem.hpp>
-#include <boost/foreach.hpp>
 #include <fstream>
 #include <iostream>
 #include <Sawyer/CommandLine.h>
@@ -78,7 +77,7 @@ main(int argc, char *argv[]) {
     P2::Partitioner partitioner = engine.loadPartitioner(inputFileName, format);
 
     P2::AddressUsers allUsers = partitioner.aum().overlapping(partitioner.aum().hull());
-    BOOST_FOREACH (const P2::AddressUser &user, allUsers.addressUsers()) {
+    for (const P2::AddressUser &user: allUsers.addressUsers()) {
         if (P2::DataBlock::Ptr db = user.dataBlock()) {
             // Header
             std::cout <<db->printableName() <<"\n";
@@ -91,14 +90,14 @@ main(int argc, char *argv[]) {
             if (db->attachedFunctionOwners().empty()) {
                 std::cout <<"  not owned by any functions\n";
             } else {
-                BOOST_FOREACH (const P2::Function::Ptr &func, db->attachedFunctionOwners())
+                for (const P2::Function::Ptr &func: db->attachedFunctionOwners())
                     std::cout <<"  owned by " <<func->printableName() <<"\n";
             }
 
             if (db->attachedBasicBlockOwners().empty()) {
                 std::cout<<"  not owned by any basic blocks\n";
             } else {
-                BOOST_FOREACH (const P2::BasicBlock::Ptr &bb, db->attachedBasicBlockOwners())
+                for (const P2::BasicBlock::Ptr &bb: db->attachedBasicBlockOwners())
                     std::cout <<"  owned by " <<bb->printableName() <<"\n";
             }
 

@@ -11,6 +11,7 @@ static const char *description =
 #include <Rose/FormattedTable.h>
 
 #include <batSupport.h>
+#include <boost/range/adaptor/reversed.hpp>
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/Stopwatch.h>
 
@@ -133,7 +134,7 @@ ccDefnBestName(const CallingConvention::Definition::Ptr &defn) {
 FuncDefNames
 functionCcDefinitionNames(const P2::Partitioner &p, const Settings &settings, const std::vector<P2::Function::Ptr> &functions) {
     FuncDefNames retval;
-    BOOST_FOREACH (P2::Function::Ptr f, functions) {
+    for (P2::Function::Ptr f: functions) {
         SAWYER_MESG(mlog[DEBUG]) <<"finding matching definitions for " <<f->printableName() <<"\n";
         if (!f->callingConventionAnalysis().hasResults()) {
             SAWYER_MESG(mlog[DEBUG]) <<"  analysis was not run\n";
@@ -150,7 +151,7 @@ functionCcDefinitionNames(const P2::Partitioner &p, const Settings &settings, co
                 if (!settings.ignoreFailure)
                     retval.insertMaybeDefault(f).push_back("no-match");
             } else {
-                BOOST_FOREACH (const CallingConvention::Definition::Ptr &defn, matches) {
+                for (const CallingConvention::Definition::Ptr &defn: matches) {
                     SAWYER_MESG(mlog[DEBUG]) <<"  matched: " <<*defn <<"\n";
                     retval.insertMaybeDefault(f).push_back(ccDefnBestName(defn));
                 }
@@ -164,8 +165,8 @@ functionCcDefinitionNames(const P2::Partitioner &p, const Settings &settings, co
 DefNameCounts
 countDefinitionNames(const FuncDefNames &fdns) {
     DefNameCounts retval;
-    BOOST_FOREACH (const FuncDefNames::Node &node, fdns.nodes()) {
-        BOOST_FOREACH (const std::string &name, node.value())
+    for (const FuncDefNames::Node &node: fdns.nodes()) {
+        for (const std::string &name: node.value())
             ++retval.insertMaybe(name, 0);
     }
     return retval;
@@ -175,7 +176,7 @@ countDefinitionNames(const FuncDefNames &fdns) {
 CountDefNames
 rankDefinitionNames(const DefNameCounts &dncs) {
     CountDefNames retval;
-    BOOST_FOREACH (const DefNameCounts::Node &node, dncs.nodes())
+    for (const DefNameCounts::Node &node: dncs.nodes())
         retval.insertMaybeDefault(node.value()).push_back(node.key());
     return retval;
 }
@@ -187,8 +188,8 @@ show(const CountDefNames &cdns) {
     table.columnHeader(0, 0, "Count");
     table.columnHeader(0, 1, "CC Name");
 
-    BOOST_REVERSE_FOREACH (const CountDefNames::Node &node, cdns.nodes()) {
-        BOOST_FOREACH (const std::string &ccname, node.value()) {
+    for (const CountDefNames::Node &node: boost::adaptors::reverse(cdns.nodes())) {
+        for (const std::string &ccname: node.value()) {
             const size_t i = table.nRows();
             table.insert(i, 0, node.key());
             table.insert(i, 1, ccname);
@@ -222,7 +223,7 @@ main(int argc, char *argv[]) {
 
     // Output the dictionary if requested. This is fast, so do it before the cc analysis starts.
     if (settings.showingDictionary) {
-        BOOST_FOREACH (const CallingConvention::Definition::Ptr &ccdef, partitioner.instructionProvider().callingConventions())
+        for (const CallingConvention::Definition::Ptr &ccdef: partitioner.instructionProvider().callingConventions())
             std::cout <<"cc definition: " <<*ccdef <<"\n";
     }
 
@@ -233,7 +234,7 @@ main(int argc, char *argv[]) {
     
     // Obtain or remove calling convention analysis results.
     if (settings.removeAnalysis) {
-        BOOST_FOREACH (const P2::Function::Ptr &function, selectedFunctions)
+        for (const P2::Function::Ptr &function: selectedFunctions)
             function->callingConventionAnalysis().clearResults();
     } else {
         // If the input state file already has calling convention analysis then nothing really happens here.
@@ -245,7 +246,7 @@ main(int argc, char *argv[]) {
         if (settings.functionNames.empty()) {
             partitioner.allFunctionCallingConventionDefinition(defaultCc); // faster than a loop since this runs in parallel
         } else {
-            BOOST_FOREACH (const P2::Function::Ptr &function, selectedFunctions)
+            for (const P2::Function::Ptr &function: selectedFunctions)
                 partitioner.functionCallingConvention(function, defaultCc);
         }
     }
@@ -264,10 +265,10 @@ main(int argc, char *argv[]) {
     CountDefNames countDefNames = rankDefinitionNames(defNameCounts);
 
     if (settings.showingCcAnalysis) {
-        BOOST_FOREACH (const P2::Function::Ptr &function, selectedFunctions) {
+        for (const P2::Function::Ptr &function: selectedFunctions) {
             std::cout <<function->printableName() <<": " <<function->callingConventionAnalysis() <<"\n";
             std::cout <<"   matches these definitions:";
-            BOOST_FOREACH (const std::string &s, funcDefNames[function])
+            for (const std::string &s: funcDefNames[function])
                 std::cout <<" " <<s;
             std::cout <<"\n";
         }

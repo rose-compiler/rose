@@ -61,10 +61,10 @@ SmtlibSolver::generateFile(std::ostream &o, const std::vector<SymbolicExpr::Ptr>
 
     // Find all variables
     VariableSet vars;
-    BOOST_FOREACH (const SymbolicExpr::Ptr &expr, exprs) {
+    for (const SymbolicExpr::Ptr &expr: exprs) {
         VariableSet tmp;
         findVariables(expr, tmp);
-        BOOST_FOREACH (const SymbolicExpr::LeafPtr &var, tmp.values())
+        for (const SymbolicExpr::LeafPtr &var: tmp.values())
             vars.insert(var);
     }
 
@@ -96,7 +96,7 @@ SmtlibSolver::generateFile(std::ostream &o, const std::vector<SymbolicExpr::Ptr>
       <<"; Assertions\n"
       <<";;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;\n";
 
-    BOOST_FOREACH (const SymbolicExpr::Ptr &expr, exprs) {
+    for (const SymbolicExpr::Ptr &expr: exprs) {
         o <<"\n";
         const std::string &comment = expr->comment();
         if (!comment.empty())
@@ -112,7 +112,7 @@ SmtlibSolver::generateFile(std::ostream &o, const std::vector<SymbolicExpr::Ptr>
 
 std::string
 SmtlibSolver::getErrorMessage(int exitStatus) {
-    BOOST_FOREACH (const SExpr::Ptr &sexpr, parsedOutput_) {
+    for (const SExpr::Ptr &sexpr: parsedOutput_) {
         if (sexpr->children().size() == 2 && sexpr->children()[0]->name() == "error") {
             if (sexpr->children()[1]->name().empty()) {
                 std::ostringstream ss;
@@ -221,7 +221,7 @@ SmtlibSolver::findVariables(const SymbolicExpr::Ptr &expr, VariableSet &variable
 
 void
 SmtlibSolver::outputVariableDeclarations(std::ostream &o, const VariableSet &variables) {
-    BOOST_FOREACH (const SymbolicExpr::LeafPtr &var, variables.values()) {
+    for (const SymbolicExpr::LeafPtr &var: variables.values()) {
         ASSERT_require(var->isVariable2());
         o <<"\n";
         if (!var->comment().empty())
@@ -265,7 +265,7 @@ SmtlibSolver::outputComments(std::ostream &o, const std::vector<SymbolicExpr::Pt
         }
     } t1(o);
 
-    BOOST_FOREACH (const SymbolicExpr::Ptr &expr, exprs)
+    for (const SymbolicExpr::Ptr &expr: exprs)
         expr->depthFirstTraversal(t1);
 }
 
@@ -296,7 +296,7 @@ SmtlibSolver::outputBvxorFunctions(std::ostream &o, const std::vector<SymbolicEx
         }
     } t1(o);
 
-    BOOST_FOREACH (const SymbolicExpr::Ptr &expr, exprs)
+    for (const SymbolicExpr::Ptr &expr: exprs)
         expr->depthFirstTraversal(t1);
 }
 
@@ -388,7 +388,7 @@ SmtlibSolver::outputComparisonFunctions(std::ostream &o, const std::vector<Symbo
         }
     } t1(o);
 
-    BOOST_FOREACH (const SymbolicExpr::Ptr &expr, exprs)
+    for (const SymbolicExpr::Ptr &expr: exprs)
         expr->depthFirstTraversal(t1);
 }
 
@@ -396,7 +396,7 @@ void
 SmtlibSolver::outputCommonSubexpressions(std::ostream &o, const std::vector<SymbolicExpr::Ptr> &exprs) {
     std::vector<SymbolicExpr::Ptr> cses = findCommonSubexpressions(exprs);
     size_t cseId = 0;
-    BOOST_FOREACH (const SymbolicExpr::Ptr &cse, cses) {
+    for (const SymbolicExpr::Ptr &cse: cses) {
         o <<"\n";
         if (!cse->comment().empty())
             o <<StringUtility::prefixLines(cse->comment(), "; ") <<"\n";
@@ -416,11 +416,11 @@ SmtSolver::Type
 SmtlibSolver::mostType(const std::vector<SExprTypePair> &ets) {
     typedef Sawyer::Container::Map<Type, size_t> Histogram;
     Histogram histogram;
-    BOOST_FOREACH (const SExprTypePair &et, ets)
+    for (const SExprTypePair &et: ets)
         ++histogram.insertMaybe(et.second, 0);
     Type bestType = NO_TYPE;
     size_t bestCount = 0;
-    BOOST_FOREACH (const Histogram::Node &node, histogram.nodes()) {
+    for (const Histogram::Node &node: histogram.nodes()) {
         if (node.value() > bestCount) {
             bestType = node.key();
             bestCount = node.value();
@@ -450,7 +450,7 @@ std::vector<SmtSolver::SExprTypePair>
 SmtlibSolver::outputCast(const std::vector<SExprTypePair> &ets, Type toType) {
     std::vector<SExprTypePair> retval;
     retval.reserve(ets.size());
-    BOOST_FOREACH (const SExprTypePair &et, ets)
+    for (const SExprTypePair &et: ets)
         retval.push_back(outputCast(et, toType));
     return retval;
 }
@@ -459,7 +459,7 @@ std::vector<SmtSolver::SExprTypePair>
 SmtlibSolver::outputExpressions(const std::vector<SymbolicExpr::Ptr> &exprs) {
     std::vector<SExprTypePair> retval;
     retval.reserve(exprs.size());
-    BOOST_FOREACH (const SymbolicExpr::Ptr &expr, exprs)
+    for (const SymbolicExpr::Ptr &expr: exprs)
         retval.push_back(outputExpression(expr));
     return retval;
 }
@@ -1251,7 +1251,7 @@ SmtlibSolver::parseEvidence() {
     // where V is the ROSE variable name, e.g., "v100")
     // and N is the size in bits
     // and X are hexadecimal characters (lower-case x is a literal "x")
-    BOOST_FOREACH (const SExpr::Ptr &sexpr, parsedOutput_) {
+    for (const SExpr::Ptr &sexpr: parsedOutput_) {
         Sawyer::Optional<size_t> foundEvidenceStartingAt;
         if (sexpr->children().size() > 0) {
             if (sexpr->children()[0]->name() == "model") {

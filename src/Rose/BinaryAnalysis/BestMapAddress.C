@@ -59,7 +59,7 @@ BestMapAddress::gatherAddresses(P2::Engine &engine) {
     engine.runPartitioner(partitioner);
 
     // Scan for and insert two lists of addresses
-    BOOST_FOREACH (const P2::ControlFlowGraph::Vertex &vertex, partitioner.cfg().vertices()) {
+    for (const P2::ControlFlowGraph::Vertex &vertex: partitioner.cfg().vertices()) {
         if (vertex.value().type() == P2::V_BASIC_BLOCK) {
             if (P2::BasicBlock::Ptr bb = vertex.value().bblock()) {
 
@@ -69,7 +69,7 @@ BestMapAddress::gatherAddresses(P2::Engine &engine) {
 
                 // Target address list
                 if (partitioner.basicBlockIsFunctionCall(bb)) {
-                    BOOST_FOREACH (rose_addr_t target, partitioner.basicBlockConcreteSuccessors(bb)) {
+                    for (rose_addr_t target: partitioner.basicBlockConcreteSuccessors(bb)) {
                         if (target != bb->fallthroughVa())
                             targetVas_.insert(target);
                     }
@@ -100,7 +100,7 @@ struct Worker {
     void operator()(size_t taskId, const Task &task) {
         const rose_addr_t mask = IntegerOps::genMask<rose_addr_t>(self->nBits());
         size_t nMatches = 0;
-        BOOST_FOREACH (rose_addr_t a, self->entryAddresses().values()) {
+        for (rose_addr_t a: self->entryAddresses().values()) {
             if (self->targetAddresses().exists((a + task.delta) & mask))
                 ++nMatches;
         }
@@ -117,10 +117,10 @@ BestMapAddress::analyze(const AddressInterval &restrictEntryAddresses, const Add
     const rose_addr_t mask = IntegerOps::genMask<rose_addr_t>(nBits_);
     std::set<rose_addr_t> deltaSet;
     maxMatches_ = 0;
-    BOOST_FOREACH (rose_addr_t entryVa, entryVas_.values()) {
+    for (rose_addr_t entryVa: entryVas_.values()) {
         if (restrictEntryAddresses.isContaining(entryVa)) {
             ++maxMatches_;
-            BOOST_FOREACH (rose_addr_t targetVa, targetVas_.values()) {
+            for (rose_addr_t targetVa: targetVas_.values()) {
                 if (restrictTargetAddresses.isContaining(targetVa))
                     deltaSet.insert((targetVa - entryVa) & mask);
             }
@@ -181,7 +181,7 @@ BestMapAddress::align(const MemoryMap::Ptr &map, const P2::Engine::Settings &set
     // Process one executable segment (plus all non-executable) at a time.
     BestMapAddress::AddressSet entryAddresses;
     size_t nWork = 0, totalWork = 2 * map->nSegments();
-    BOOST_FOREACH (const MemoryMap::Node &mmNode, map->nodes()) {
+    for (const MemoryMap::Node &mmNode: map->nodes()) {
         nWork += 2;                                     // incremented early in case of "continue" statements
 
         // What to align
@@ -213,7 +213,7 @@ BestMapAddress::align(const MemoryMap::Ptr &map, const P2::Engine::Settings &set
         }
         mlog[INFO] <<"found " <<StringUtility::plural(mapAnalyzer.entryAddresses().size(), "entry addresses") <<" and "
                    <<StringUtility::plural(mapAnalyzer.targetAddresses().size(), "target addresses") <<"\n";
-        BOOST_FOREACH (rose_addr_t entryVa, entryAddresses.values())
+        for (rose_addr_t entryVa: entryAddresses.values())
             mapAnalyzer.insertEntryAddress(entryVa);
         mlog[INFO] <<"using " <<StringUtility::plural(mapAnalyzer.entryAddresses().size(), "total entry addresses") <<"\n";
         info <<"performing remap analysis";
@@ -233,7 +233,7 @@ BestMapAddress::align(const MemoryMap::Ptr &map, const P2::Engine::Settings &set
         bool remapped = false;
         size_t bestDelta = 0;
         const rose_addr_t mask = mapAnalyzer.mask();
-        BOOST_FOREACH (rose_addr_t delta, deltas) {
+        for (rose_addr_t delta: deltas) {
             // Check for overflow: we don't want a delta that would split the executable segment between the highest addresses
             // and the lowest addresses.
             rose_addr_t newLo = (interval.least() + delta) & mask;
@@ -264,7 +264,7 @@ BestMapAddress::align(const MemoryMap::Ptr &map, const P2::Engine::Settings &set
 
         // Add adjusted entry addresses to the set of all entry addresses.  This is optional, but sometimes helps the remap
         // analysis by giving it more information.
-        BOOST_FOREACH (rose_addr_t origEntryVa, mapAnalyzer.entryAddresses().values()) {
+        for (rose_addr_t origEntryVa: mapAnalyzer.entryAddresses().values()) {
             rose_addr_t adjustedEntryVa = (origEntryVa + bestDelta) & mask;
             entryAddresses.insert(adjustedEntryVa);
         }

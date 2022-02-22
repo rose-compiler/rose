@@ -95,7 +95,7 @@ FunctionSimilarity::findMinimumAssignment(const DistanceMatrix &matrix) {
     // Return a proper type -- indexes and sizes should never be signed types since it makes no sense for them to be negative.
     std::vector<size_t> retval;
     retval.reserve(matrix.nr());
-    BOOST_FOREACH (double d, dlib::max_cost_assignment(intMatrix))
+    for (double d: dlib::max_cost_assignment(intMatrix))
         retval.push_back(d);
     return retval;
 #else
@@ -124,7 +124,7 @@ combine(FunctionSimilarity::Statistic s, const std::vector<double> &values) {
     switch (s) {
         case FunctionSimilarity::AVERAGE: {
             double sum = 0.0;
-            BOOST_FOREACH (double v, values)
+            for (double v: values)
                 sum += v;
             return sum / values.size();
         }
@@ -363,7 +363,7 @@ struct ComparisonMonitor {
         if (stream) {
             stream <<StringUtility::plural(running.size(), "tasks")
                    <<" running on " <<StringUtility::plural(running.size(), "workers") <<"\n";
-            BOOST_FOREACH (size_t vertexId, running) {
+            for (size_t vertexId: running) {
                 ComparisonTasks::ConstVertexIterator vertex = tasks.findVertex(vertexId);
                 const ComparisonTask &task = vertex->value();
                 stream <<"  task " <<vertexId <<": start=(" <<task.startRow <<", " <<task.startCol <<") "
@@ -597,7 +597,7 @@ static double
 normalizedNumberOfNeighbors(const boost::iterator_range<P2::ControlFlowGraph::ConstEdgeIterator> &edgeList,
                             LinkageDirection direction) {
     size_t n = 0;
-    BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, edgeList) {
+    for (const P2::ControlFlowGraph::Edge &edge: edgeList) {
         P2::ControlFlowGraph::ConstVertexIterator vertex = direction(edge);
         if (vertex->value().type() == P2::V_INDETERMINATE) {
             return 1.0;
@@ -622,7 +622,7 @@ void
 FunctionSimilarity::measureCfgConnectivity(CategoryId id, const P2::Partitioner &partitioner,
                                            const P2::Function::Ptr &function, size_t maxPoints) {
     size_t nPoints = 0;
-    BOOST_FOREACH (rose_addr_t bbva, function->basicBlockAddresses()) {
+    for (rose_addr_t bbva: function->basicBlockAddresses()) {
         CartesianPoint point;
         P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner.findPlaceholder(bbva);
         if (partitioner.cfg().isValidVertex(vertex)) {
@@ -638,9 +638,9 @@ FunctionSimilarity::measureCfgConnectivity(CategoryId id, const P2::Partitioner 
 
             // Second-level neighbors
             double totalForward = 0.0, totalReverse = 0.0;
-            BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, vertex->outEdges())
+            for (const P2::ControlFlowGraph::Edge &edge: vertex->outEdges())
                 totalForward = normalizedNumberOfNeighbors(edge.target()->outEdges(), forward);
-            BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, vertex->inEdges())
+            for (const P2::ControlFlowGraph::Edge &edge: vertex->inEdges())
                 totalReverse = normalizedNumberOfNeighbors(edge.source()->inEdges(), reverse);
             point.push_back(vertex->nOutEdges() ? totalForward/vertex->nOutEdges() : 0.0);
             point.push_back(vertex->nInEdges() ? totalReverse/vertex->nInEdges() : 0.0);
@@ -659,11 +659,11 @@ void
 FunctionSimilarity::measureCallGraphConnectivity(CategoryId id, const P2::Partitioner &partitioner,
                                                  const P2::Function::Ptr &function) {
     ASSERT_require(partitioner.nFunctions() > 0);
-    BOOST_FOREACH (rose_addr_t bbva, function->basicBlockAddresses()) {
+    for (rose_addr_t bbva: function->basicBlockAddresses()) {
         P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner.findPlaceholder(bbva);
         if (partitioner.cfg().isValidVertex(vertex) && vertex->value().type() == P2::V_BASIC_BLOCK &&
             partitioner.basicBlockIsFunctionCall(vertex->value().bblock())) {
-            BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, vertex->outEdges()) {
+            for (const P2::ControlFlowGraph::Edge &edge: vertex->outEdges()) {
                 P2::ControlFlowGraph::ConstVertexIterator callee = edge.target();
                 CartesianPoint point;
                 if (callee->value().type() == P2::V_INDETERMINATE) {
@@ -688,10 +688,10 @@ FunctionSimilarity::declareMnemonicStream(const std::string &categoryName) {
 void
 FunctionSimilarity::measureMnemonicStream(CategoryId id, const P2::Partitioner &partitioner,
                                           const P2::Function::Ptr &function) {
-    BOOST_FOREACH (rose_addr_t bbva, function->basicBlockAddresses()) {
+    for (rose_addr_t bbva: function->basicBlockAddresses()) {
         if (P2::BasicBlock::Ptr bb = partitioner.basicBlockExists(bbva)) {
             OrderedList list;
-            BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
+            for (SgAsmInstruction *insn: bb->instructions())
                 list.push_back(insn->get_anyKind());
             insertList(function, id, list);
         }
@@ -701,7 +701,7 @@ FunctionSimilarity::measureMnemonicStream(CategoryId id, const P2::Partitioner &
 void
 FunctionSimilarity::printCharacteristicValues(std::ostream &out) const {
     out <<"FunctionSimilarity characteristic values for all functions:\n";
-    BOOST_FOREACH (const Functions::Node &fnode, functions_.nodes()) {
+    for (const Functions::Node &fnode: functions_.nodes()) {
         out <<"  " <<fnode.key()->printableName() <<":\n";
         for (size_t id=0; id<categories_.size(); ++id) {
             out <<"    category \"" <<StringUtility::cEscape(categories_[id].name) <<"\""
@@ -712,7 +712,7 @@ FunctionSimilarity::printCharacteristicValues(std::ostream &out) const {
                     case CARTESIAN_POINT:
                         out <<", npoints=" <<finfo.categories[id].pointCloud.size() <<":\n";
                         ASSERT_require(finfo.categories[id].orderedLists.empty());
-                        BOOST_FOREACH (const CartesianPoint &pt, finfo.categories[id].pointCloud) {
+                        for (const CartesianPoint &pt: finfo.categories[id].pointCloud) {
                             ASSERT_require(pt.size() == categories_[id].dimensionality);
                             out <<"      (";
                             for (size_t i=0; i<pt.size(); ++i)
@@ -723,7 +723,7 @@ FunctionSimilarity::printCharacteristicValues(std::ostream &out) const {
                     case ORDERED_LIST:
                         out <<", nlists=" <<finfo.categories[id].orderedLists.size() <<":\n";
                         ASSERT_require(finfo.categories[id].pointCloud.empty());
-                        BOOST_FOREACH (const OrderedList &list, finfo.categories[id].orderedLists) {
+                        for (const OrderedList &list: finfo.categories[id].orderedLists) {
                             out <<"      [";
                             for (size_t i=0; i<list.size(); ++i)
                                 out <<(0==i?"":", ") <<list[i];

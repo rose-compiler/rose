@@ -9,8 +9,6 @@
 #include <Sawyer/FileSystem.h>
 #include <x86InstructionProperties.h>
 
-#include <boost/foreach.hpp>
-
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
@@ -49,7 +47,7 @@ std::vector<Function::Ptr>
 findErrorHandlingFunctions(SgAsmInterpretation *interp) {
     std::vector<Function::Ptr> functions;
     if (interp!=NULL) {
-        BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers())
+        for (SgAsmGenericHeader *fileHeader: interp->get_headers()->get_headers())
             findErrorHandlingFunctions(isSgAsmElfFileHeader(fileHeader), functions);
     }
     return functions;
@@ -642,7 +640,7 @@ findPltFunctions(Partitioner &partitioner, SgAsmElfFileHeader *elfHeader, std::v
 
     // Find all relocation sections
     std::set<SgAsmElfRelocSection*> relocSections;
-    BOOST_FOREACH (SgAsmGenericSection *section, elfHeader->get_sections()->get_sections()) {
+    for (SgAsmGenericSection *section: elfHeader->get_sections()->get_sections()) {
         if (SgAsmElfRelocSection *relocSection = isSgAsmElfRelocSection(section))
             relocSections.insert(relocSection);
 
@@ -670,10 +668,10 @@ findPltFunctions(Partitioner &partitioner, SgAsmElfFileHeader *elfHeader, std::v
 
         // Find the relocation entry whose offset is the gotVa and use that entry's symbol for the function name
         std::string name;
-        BOOST_FOREACH (SgAsmElfRelocSection *relocSection, relocSections) {
+        for (SgAsmElfRelocSection *relocSection: relocSections) {
             SgAsmElfSymbolSection *symbolSection = isSgAsmElfSymbolSection(relocSection->get_linked_section());
             if (SgAsmElfSymbolList *symbols = symbolSection ? symbolSection->get_symbols() : NULL) {
-                BOOST_FOREACH (SgAsmElfRelocEntry *rel, relocSection->get_entries()->get_entries()) {
+                for (SgAsmElfRelocEntry *rel: relocSection->get_entries()->get_entries()) {
                     if (rel->get_r_offset() == gotVa) {
                         unsigned long symbolIdx = rel->get_sym();
                         if (symbolIdx < symbols->get_symbols().size()) {
@@ -818,7 +816,7 @@ tryLink(const std::string &commandTemplate, const boost::filesystem::path &outpu
         return false;
 
     std::string allInputs;
-    BOOST_FOREACH (const boost::filesystem::path &input, inputNames)
+    for (const boost::filesystem::path &input: inputNames)
         allInputs += (allInputs.empty()?"":" ") + StringUtility::bourneEscape(input.string());
 
     std::string cmd;
@@ -879,7 +877,7 @@ tryLink(const std::string &commandTemplate, const boost::filesystem::path &outpu
     Sawyer::FileSystem::TemporaryFile cFile((boost::filesystem::temp_directory_path() /
                                              boost::filesystem::unique_path()).string() + ".c");
     mlog[DEBUG] <<"defining symbols in a C file\n";
-    BOOST_FOREACH (const std::string &symbol, undefinedSymbols) {
+    for (const std::string &symbol: undefinedSymbols) {
         cFile.stream() <<"void " <<symbol <<"() {}\n";
         mlog[DEBUG] <<"  void " <<symbol <<"() {}\n";
     }
@@ -942,7 +940,7 @@ std::vector<Function::Ptr>
 findPltFunctions(Partitioner &partitioner, SgAsmInterpretation *interp) {
     std::vector<Function::Ptr> functions;
     if (interp!=NULL) {
-        BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers())
+        for (SgAsmGenericHeader *fileHeader: interp->get_headers()->get_headers())
             findPltFunctions(partitioner, isSgAsmElfFileHeader(fileHeader), functions);
     }
     return functions;
@@ -952,9 +950,9 @@ std::vector<SgAsmElfSection*>
 findSectionsByName(SgAsmInterpretation *interp, const std::string &name) {
     std::vector<SgAsmElfSection*> retval;
     if (interp!=NULL) {
-        BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers()) {
+        for (SgAsmGenericHeader *fileHeader: interp->get_headers()->get_headers()) {
             std::vector<SgAsmGenericSection*> sections = fileHeader->get_sections_by_name(name);
-            BOOST_FOREACH (SgAsmGenericSection *section, sections) {
+            for (SgAsmGenericSection *section: sections) {
                 if (SgAsmElfSection *elfSection = isSgAsmElfSection(section))
                     retval.push_back(elfSection);
             }

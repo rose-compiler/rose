@@ -206,7 +206,7 @@ public:
         const size_t symbolSize = symbols_.least().size(); // bytes per symbol
         ASSERT_require(symbolSize > 0);
         double totalSymbols = pow(2.0, 8*symbolSize);   // number of possible distinct symbols
-        BOOST_FOREACH (size_t n, symbols_.values()) {
+        for (size_t n: symbols_.values()) {
             ASSERT_forbid(0 == n);
             double symbolProbability = double(n) / nSymbols();
             e -= symbolProbability * log(symbolProbability) / log(totalSymbols);
@@ -250,7 +250,7 @@ public:
     typedef std::vector<Bucket> Buckets;
     Buckets bucketize(size_t nBuckets) const {
         Buckets buckets(nBuckets);
-        BOOST_FOREACH (const Symbols::Node &node, symbols_.nodes()) {
+        for (const Symbols::Node &node: symbols_.nodes()) {
 #if 0 // [Robb Matzke 2019-07-19]
             size_t idx = hash(node.key()) % nBuckets;
 #else

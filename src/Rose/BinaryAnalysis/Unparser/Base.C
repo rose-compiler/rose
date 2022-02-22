@@ -16,6 +16,7 @@
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/range/adaptor/reversed.hpp>
 #include <boost/variant.hpp>
 #include <ctype.h>
 #include <sstream>
@@ -139,7 +140,7 @@ StyleStack::merge(const Style &style) {
 void
 StyleStack::mergeAll() {
     current_ = Style();
-    BOOST_REVERSE_FOREACH (const Style &style, stack_) {
+    for (const Style &style: boost::adaptors::reverse(stack_)) {
         if (current_.foreground && current_.background)
             break;
         if (!current_.foreground && style.foreground)
@@ -245,7 +246,7 @@ State::reachabilityName(Reachability::ReasonFlags value) const {
                 }
             } else if (const char *cs = stringify::Rose::BinaryAnalysis::Reachability::Reason(bit.vector())) {
                 s = cs;
-                BOOST_FOREACH (char &ch, s)
+                for (char &ch: s)
                     ch = tolower(ch);
             } else {
                 s = StringUtility::toHex2(bit.vector(), 8*sizeof(Reachability::ReasonFlags::Vector), false, false);
@@ -822,7 +823,7 @@ Base::unparse(std::ostream &out, const Partitioner2::Partitioner &p, const Progr
     progressBar.suffix(" functions");
     State state(p, settings(), *this);
     initializeState(state);
-    BOOST_FOREACH (P2::Function::Ptr f, p.functions()) {
+    for (P2::Function::Ptr f: p.functions()) {
         ++progressBar;
         if (progress)
             progress->update(Progress::Report("unparse", progressBar.ratio()));
@@ -1032,7 +1033,7 @@ Base::emitFunctionBody(std::ostream &out, const P2::Function::Ptr &function, Sta
         // If we're not emitting instruction addresses then we need some other way to identify basic blocks for branch targets.
         if (settings().insn.address.showing && settings().insn.address.useLabels) {
             state.basicBlockLabels().clear();
-            BOOST_FOREACH (rose_addr_t bbVa, function->basicBlockAddresses()) {
+            for (rose_addr_t bbVa: function->basicBlockAddresses()) {
                 std::string label = "L" + boost::lexical_cast<std::string>(state.basicBlockLabels().size()+1);
                 state.basicBlockLabels().insertMaybe(bbVa, label);
             }
@@ -1043,21 +1044,21 @@ Base::emitFunctionBody(std::ostream &out, const P2::Function::Ptr &function, Sta
         std::set<P2::DataBlock::Ptr> dblocks;
         std::vector<InsnsOrData> blocks;
         blocks.reserve(function->nBasicBlocks() + function->nDataBlocks());
-        BOOST_FOREACH (rose_addr_t bbVa, function->basicBlockAddresses()) {
+        for (rose_addr_t bbVa: function->basicBlockAddresses()) {
             if (P2::BasicBlock::Ptr bb = state.partitioner().basicBlockExists(bbVa)) {
                 blocks.push_back(bb);
-                BOOST_FOREACH (const P2::DataBlock::Ptr db, bb->dataBlocks())
+                for (const P2::DataBlock::Ptr &db: bb->dataBlocks())
                     dblocks.insert(db);
             }
         }
-        BOOST_FOREACH (const P2::DataBlock::Ptr &db, function->dataBlocks())
+        for (const P2::DataBlock::Ptr &db: function->dataBlocks())
             dblocks.insert(db);
         blocks.insert(blocks.end(), dblocks.begin(), dblocks.end());
         std::sort(blocks.begin(), blocks.end(), increasingAddress);
 
         // Emit each basic- or data-block
         rose_addr_t nextBlockVa = function->address();
-        BOOST_FOREACH (const InsnsOrData &block, blocks)
+        for (const InsnsOrData &block: blocks)
             boost::apply_visitor(EmitBlockVisitor(out, function, nextBlockVa, state), block);
     }
 }
@@ -1177,7 +1178,7 @@ Base::emitFunctionCallers(std::ostream &out, const P2::Function::Ptr &function, 
         P2::FunctionCallGraph::Graph::ConstVertexIterator vertex = state.cg().findFunction(function);
         if (state.cg().graph().isValidVertex(vertex)) {
             StyleGuard style(state.styleStack(), settings().comment.line.style);
-            BOOST_FOREACH (const P2::FunctionCallGraph::Graph::Edge &edge, vertex->inEdges()) {
+            for (const P2::FunctionCallGraph::Graph::Edge &edge: vertex->inEdges()) {
                 state.frontUnparser().emitLinePrefix(out, state);
                 out <<style.render() <<";;; ";
                 switch (edge.value().type()) {
@@ -1208,7 +1209,7 @@ Base::emitFunctionCallees(std::ostream &out, const P2::Function::Ptr &function, 
         P2::FunctionCallGraph::Graph::ConstVertexIterator vertex = state.cg().findFunction(function);
         if (state.cg().graph().isValidVertex(vertex)) {
             StyleGuard style(state.styleStack(), settings().comment.line.style);
-            BOOST_FOREACH (const P2::FunctionCallGraph::Graph::Edge &edge, vertex->outEdges()) {
+            for (const P2::FunctionCallGraph::Graph::Edge &edge: vertex->outEdges()) {
                 state.frontUnparser().emitLinePrefix(out, state);
                 out <<style.render() <<";;; ";
                 switch (edge.value().type()) {
@@ -1287,7 +1288,7 @@ Base::emitFunctionCallingConvention(std::ostream &out, const P2::Function::Ptr &
                 CallingConvention::Dictionary matches = state.partitioner().functionCallingConventionDefinitions(function);
                 std::string s = "calling convention definitions:";
                 if (!matches.empty()) {
-                    BOOST_FOREACH (const CallingConvention::Definition::Ptr &ccdef, matches)
+                    for (const CallingConvention::Definition::Ptr &ccdef: matches)
                         s += " " + ccdef->name();
                 } else {
                     s += " unknown";
@@ -1398,7 +1399,7 @@ Base::emitBasicBlockBody(std::ostream &out, const P2::BasicBlock::Ptr &bb, State
         } else {
             state.thisIsBasicBlockFirstInstruction();
             state.nextInsnLabel(state.basicBlockLabels().getOrElse(bb->address(), ""));
-            BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
+            for (SgAsmInstruction *insn: bb->instructions()) {
                 if (insn == bb->instructions().back())
                     state.thisIsBasicBlockLastInstruction();
                 state.frontUnparser().emitInstruction(out, insn, state);
@@ -1414,7 +1415,7 @@ Base::emitBasicBlockEpilogue(std::ostream &out, const P2::BasicBlock::Ptr &bb, S
     if (nextUnparser()) {
         nextUnparser()->emitBasicBlockEpilogue(out, bb, state);
     } else {
-        BOOST_FOREACH (P2::DataBlock::Ptr db, bb->dataBlocks()) {
+        for (P2::DataBlock::Ptr db: bb->dataBlocks()) {
             state.frontUnparser().emitLinePrefix(out, state);
             StyleGuard style(state.styleStack(), settings().comment.line.style);
             out <<"\t" <<style.render() <<";; related " <<db->printableName() <<", " <<StringUtility::plural(db->size(), "bytes")
@@ -1460,7 +1461,7 @@ Base::emitBasicBlockSharing(std::ostream &out, const P2::BasicBlock::Ptr &bb, St
             std::find(functions.begin(), functions.end(), state.currentFunction());
         if (current != functions.end())
             functions.erase(current);
-        BOOST_FOREACH (P2::Function::Ptr function, functions) {
+        for (P2::Function::Ptr function: functions) {
             state.frontUnparser().emitLinePrefix(out, state);
             StyleGuard style(state.styleStack(), settings().comment.line.style);
             out <<"\t" <<style.render() <<";; block also owned by " <<function->printableName() <<style.restore() <<"\n";
@@ -1471,7 +1472,7 @@ Base::emitBasicBlockSharing(std::ostream &out, const P2::BasicBlock::Ptr &bb, St
 static std::string
 edgeTypeName(const P2::EdgeType &edgeType) {
     std::string retval = stringifyBinaryAnalysisPartitioner2EdgeType(edgeType, "E_");
-    BOOST_FOREACH (char &ch, retval)
+    for (char &ch: retval)
         ch = '_' == ch ? ' ' : tolower(ch);
     return retval;
 }
@@ -1483,7 +1484,7 @@ Base::emitBasicBlockPredecessors(std::ostream &out, const P2::BasicBlock::Ptr &b
         nextUnparser()->emitBasicBlockPredecessors(out, bb, state);
     } else {
         std::vector<P2::ControlFlowGraph::ConstEdgeIterator> edges = orderedBlockPredecessors(state.partitioner(), bb);
-        BOOST_FOREACH (P2::ControlFlowGraph::ConstEdgeIterator edge, edges) {
+        for (P2::ControlFlowGraph::ConstEdgeIterator edge: edges) {
 
             if (!state.cfgArrowsPointToInsns()) {
                 // The line were about to emit is the sharp end of the arrow--the arrow's target, and we're emitting arrows
@@ -1537,7 +1538,7 @@ Base::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::Ptr &bb,
         // Get the CFG edges in the order they should be displayed even though we actually emit the basicBlockSuccessors
         std::vector<P2::ControlFlowGraph::ConstEdgeIterator> edges = orderedBlockSuccessors(state.partitioner(), bb);
         P2::BasicBlock::Successors successors = state.partitioner().basicBlockSuccessors(bb);
-        BOOST_FOREACH (P2::ControlFlowGraph::ConstEdgeIterator edge, edges) {
+        for (P2::ControlFlowGraph::ConstEdgeIterator edge: edges) {
             Sawyer::Optional<rose_addr_t> targetVa = edge->target()->value().optionalAddress();
 
             if (!state.cfgArrowsPointToInsns()) {
@@ -1592,7 +1593,7 @@ Base::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::Ptr &bb,
         }
 
         // Emit the basic block successors that don't correspond to any CFG edge. Can this happen? [Robb Matzke 2018-12-05]
-        BOOST_FOREACH (const P2::BasicBlock::Successor &successor, successors) {
+        for (const P2::BasicBlock::Successor &successor: successors) {
             ASSERT_not_null(successor.expr());
             SymbolicExpr::Ptr expr = successor.expr()->get_expression();
             if (expr->isIntegerConstant() && expr->nBits() <= 64) {
@@ -1619,7 +1620,7 @@ Base::emitBasicBlockSuccessors(std::ostream &out, const P2::BasicBlock::Ptr &bb,
 
         // Ghost successors due to opaque predicates
         if (bb->ghostSuccessors().isCached()) {
-            BOOST_FOREACH (rose_addr_t va, bb->ghostSuccessors().get()) {
+            for (rose_addr_t va: bb->ghostSuccessors().get()) {
                 state.frontUnparser().emitLinePrefix(out, state);
                 StyleGuard style(state.styleStack(), settings().comment.line.style);
                 out <<"\t" <<style.render() <<";; successor: (ghost) ";
@@ -1683,7 +1684,7 @@ Base::emitDataBlockPrologue(std::ostream &out, const P2::DataBlock::Ptr &db, Sta
                 <<style.restore() <<"\n";
         }
         if (P2::Function::Ptr function = state.currentFunction()) {
-            BOOST_FOREACH (rose_addr_t bbVa, function->basicBlockAddresses()) {
+            for (rose_addr_t bbVa: function->basicBlockAddresses()) {
                 if (P2::BasicBlock::Ptr bb = state.partitioner().basicBlockExists(bbVa)) {
                     if (bb->dataBlockExists(db)) {
                         state.frontUnparser().emitLinePrefix(out, state);
@@ -2184,7 +2185,7 @@ Base::emitCommentBlock(std::ostream &out, const std::string &comment, State &sta
         StyleGuard style(state.styleStack(), settings().comment.line.style);
         out <<style.render();
         std::vector<std::string> lines = StringUtility::split('\n', comment);
-        BOOST_FOREACH (const std::string &line, lines) {
+        for (const std::string &line: lines) {
             state.frontUnparser().emitLinePrefix(out, state);
             out <<prefix <<line <<"\n";
         }

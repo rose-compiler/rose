@@ -14,7 +14,6 @@ static const char *description =
 
 #include <batSupport.h>
 #include <boost/filesystem.hpp>
-#include <boost/foreach.hpp>
 #include <fstream>
 #include <iostream>
 #include <Sawyer/CommandLine.h>
@@ -139,18 +138,18 @@ emitGraphViz(const P2::Partitioner &partitioner, const Settings &settings) {
 void
 emitText(const P2::Partitioner &partitioner, std::vector<P2::Function::Ptr> &functions, const Settings &settings) {
     P2::FunctionCallGraph cg = partitioner.functionCallGraph(P2::AllowParallelEdges::YES);
-    BOOST_FOREACH (P2::Function::Ptr function, functions) {
+    for (P2::Function::Ptr function: functions) {
         std::cout <<function->printableName() <<"\n";
         if (cg.callers(function).empty()) {
             std::cout <<"  no callers\n";
         } else {
-            BOOST_FOREACH (P2::Function::Ptr caller, cg.callers(function))
+            for (P2::Function::Ptr caller: cg.callers(function))
                 std::cout <<"  from  " <<caller->printableName() <<"\n";
         }
         if (cg.callees(function).empty()) {
             std::cout <<"  no callees\n";
         } else {
-            BOOST_FOREACH (P2::Function::Ptr callee, cg.callees(function))
+            for (P2::Function::Ptr callee: cg.callees(function))
                 std::cout <<"  calls " <<callee->printableName() <<"\n";
         }
     }
@@ -171,7 +170,7 @@ emitGexf(const P2::Partitioner &partitioner, const Settings &settings) {
               <<"  <graph mode=\"static\" defaultedgetype=\"directed\">\n";
 
     std::cout <<"    <nodes>\n";
-    BOOST_FOREACH (const P2::FunctionCallGraph::Graph::Vertex &vertex, cg.vertices()) {
+    for (const P2::FunctionCallGraph::Graph::Vertex &vertex: cg.vertices()) {
         std::cout <<"      <node id=\"" <<vertex.id() <<"\""
                   <<" label=\"" <<StringUtility::addrToString(vertex.value()->address()) <<"\""
                   <<" function=\"" <<StringUtility::cEscape(vertex.value()->name()) <<"\"/>\n";
@@ -180,7 +179,7 @@ emitGexf(const P2::Partitioner &partitioner, const Settings &settings) {
     std::cout <<"    </nodes>\n";
 
     std::cout <<"    <edges>\n";
-    BOOST_FOREACH (const P2::FunctionCallGraph::Graph::Edge &edge, cg.edges()) {
+    for (const P2::FunctionCallGraph::Graph::Edge &edge: cg.edges()) {
         std::cout <<"      <edge id=\"" <<edge.id() <<"\""
                   <<" source=\"" <<edge.source()->id() <<"\""
                   <<" target=\"" <<edge.target()->id() <<"\""
@@ -229,7 +228,7 @@ main(int argc, char *argv[]) {
             if (!settings.functionNames.empty() || !settings.addresses.empty()) {
                 selectedFunctions = Bat::selectFunctionsByNameOrAddress(selectedFunctions, settings.functionNames, mlog[WARN]);
                 std::vector<P2::Function::Ptr> more = Bat::selectFunctionsContainingInstruction(partitioner, settings.addresses);
-                BOOST_FOREACH (const P2::Function::Ptr &f, more)
+                for (const P2::Function::Ptr &f: more)
                     P2::insertUnique(selectedFunctions, f, P2::sortFunctionsByAddress);
                 if (selectedFunctions.empty())
                         mlog[WARN] <<"no matching functions found\n";

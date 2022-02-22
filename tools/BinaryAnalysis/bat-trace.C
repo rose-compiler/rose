@@ -188,7 +188,7 @@ void
 showDistinctInstructions(std::ostream &out, const Sawyer::Container::Trace<rose_addr_t> &trace,
                          const P2::Partitioner &partitioner) {
     Sawyer::Container::Set<rose_addr_t> vas = trace.labels();
-    BOOST_FOREACH (rose_addr_t va, vas.values()) {
+    for (rose_addr_t va: vas.values()) {
         if (SgAsmInstruction *insn = partitioner.instructionProvider()[va]) {
             out <<partitioner.unparse(insn) <<"\n";
         } else {
@@ -200,7 +200,7 @@ showDistinctInstructions(std::ostream &out, const Sawyer::Container::Trace<rose_
 void
 showDistinctAddresses(std::ostream &out, const Sawyer::Container::Trace<rose_addr_t> &trace) {
     Sawyer::Container::Set<rose_addr_t> vas = trace.labels();
-    BOOST_FOREACH (rose_addr_t va, vas.values())
+    for (rose_addr_t va: vas.values())
         out <<StringUtility::addrToString(va) <<"\n";
 }
 

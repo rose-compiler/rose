@@ -1,7 +1,6 @@
 #include <Rose/Progress.h>
 
 #include <boost/algorithm/string/join.hpp>
-#include <boost/foreach.hpp>
 
 namespace Rose {
 
@@ -187,7 +186,7 @@ Progress::reportNameNS(const std::string &nameSeparator) const {
     if (1 == reports_.size() || nameSeparator.empty())
         return reports_.back().name;
     std::vector<std::string> names;
-    BOOST_FOREACH (const Report &report, reports_) {
+    for (const Report &report: reports_) {
         if (!report.name.empty())
             names.push_back(report.name);
     }

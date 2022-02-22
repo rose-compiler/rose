@@ -655,7 +655,7 @@ FeasiblePath::Statistics::operator+=(const FeasiblePath::Statistics &other) {
     maxCallDepthHits += other.maxCallDepthHits;
     maxRecursionDepthHits += other.maxRecursionDepthHits;
     typedef Sawyer::Container::Map<rose_addr_t, size_t> Map;
-    BOOST_FOREACH (const Map::Node &node, other.reachedBlockVas.nodes())
+    for (const Map::Node &node: other.reachedBlockVas.nodes())
         reachedBlockVas.insertMaybe(node.key(), 0) += node.value();
     return *this;
 }
@@ -1032,7 +1032,7 @@ FeasiblePath::processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSem
     }
 
     // Process each instruction in the basic block
-    BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
+    for (SgAsmInstruction *insn: bblock->instructions()) {
         try {
             if (pathInsnIndex != size_t(-1)) {
                 SAWYER_MESG(debug) <<"        processing path insn #" <<pathInsnIndex <<" at " <<insn->toString() <<"\n";
@@ -1191,7 +1191,7 @@ void
 FeasiblePath::printPathVertex(std::ostream &out, const P2::ControlFlowGraph::Vertex &pathVertex, size_t &insnIdx) const {
     switch (pathVertex.value().type()) {
         case P2::V_BASIC_BLOCK: {
-            BOOST_FOREACH (SgAsmInstruction *insn, pathVertex.value().bblock()->instructions()) {
+            for (SgAsmInstruction *insn: pathVertex.value().bblock()->instructions()) {
                 out <<"    #" <<std::setw(5) <<std::left <<insnIdx++
                     <<" " <<partitioner_->unparse(insn) <<"\n";
             }
@@ -1225,7 +1225,7 @@ FeasiblePath::printPathVertex(std::ostream &out, const P2::ControlFlowGraph::Ver
 void
 FeasiblePath::printPath(std::ostream &out, const P2::CfgPath &path) const {
     size_t pathIdx = 0, insnIdx = 0;
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &pathVertex, path.vertices()) {
+    for (const P2::ControlFlowGraph::ConstVertexIterator &pathVertex: path.vertices()) {
         if (0==pathIdx) {
             out <<"  at path vertex " <<partitioner().vertexName(pathVertex) <<"\n";
         } else {
@@ -1315,7 +1315,7 @@ FeasiblePath::pathToCfg(const P2::ControlFlowGraph::ConstVertexIterator &pathVer
 P2::CfgConstVertexSet
 FeasiblePath::cfgToPaths(const P2::CfgConstVertexSet &vertexSet) const {
     P2::CfgConstVertexSet retval;
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &vertex, vertexSet.values()) {
+    for (const P2::ControlFlowGraph::ConstVertexIterator &vertex: vertexSet.values()) {
         if (Sawyer::Optional<P2::ControlFlowGraph::ConstVertexIterator> found = vmap_.forward().find(vertex))
             retval.insert(*found);
     }
@@ -1325,7 +1325,7 @@ FeasiblePath::cfgToPaths(const P2::CfgConstVertexSet &vertexSet) const {
 P2::CfgConstEdgeSet
 FeasiblePath::cfgToPaths(const P2::CfgConstEdgeSet &cfgEdgeSet) const {
     P2::CfgConstEdgeSet retval;
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &cfgEdge, cfgEdgeSet.values()) {
+    for (const P2::ControlFlowGraph::ConstEdgeIterator &cfgEdge: cfgEdgeSet.values()) {
         // We don't have a mapping directly from CFG to Paths for edges, so we use the vertex mapping instead.
         Sawyer::Optional<P2::ControlFlowGraph::ConstVertexIterator> pathSrcVertex = vmap_.forward().find(cfgEdge->source());
         Sawyer::Optional<P2::ControlFlowGraph::ConstVertexIterator> pathTgtVertex = vmap_.forward().find(cfgEdge->target());
@@ -1409,7 +1409,7 @@ bool
 FeasiblePath::isFunctionCall(const P2::ControlFlowGraph::ConstVertexIterator &pathVertex) const {
     P2::ControlFlowGraph::ConstVertexIterator cfgVertex = pathToCfg(pathVertex);
     ASSERT_require(partitioner().cfg().isValidVertex(cfgVertex));
-    BOOST_FOREACH (P2::ControlFlowGraph::Edge edge, cfgVertex->outEdges()) {
+    for (P2::ControlFlowGraph::Edge edge: cfgVertex->outEdges()) {
         if (edge.value().type() == P2::E_FUNCTION_CALL)
             return true;
     }
@@ -1513,7 +1513,7 @@ FeasiblePath::insertCallSummary(const P2::ControlFlowGraph::ConstVertexIterator 
     P2::ControlFlowGraph::VertexIterator summaryVertex = paths_.insertVertex(P2::CfgVertex(P2::V_USER_DEFINED));
     paths_.insertEdge(pathsCallSite, summaryVertex, P2::CfgEdge(P2::E_FUNCTION_CALL));
     P2::CfgConstEdgeSet callReturnEdges = P2::findCallReturnEdges(pathsCallSite);
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &callret, callReturnEdges.values())
+    for (const P2::ControlFlowGraph::ConstEdgeIterator &callret: callReturnEdges.values())
         paths_.insertEdge(summaryVertex, callret->target(), P2::CfgEdge(P2::E_FUNCTION_RETURN));
 
     int64_t stackDelta = function ? function->stackDeltaConcrete() : SgAsmInstruction::INVALID_STACK_DELTA;
@@ -1539,11 +1539,11 @@ FeasiblePath::emitPathGraph(size_t callId, size_t graphId) {
     emitter.showInstructions(true);
     emitter.selectWholeGraph();
 
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &v, pathsBeginVertices_.values()) {
+    for (const P2::ControlFlowGraph::ConstVertexIterator &v: pathsBeginVertices_.values()) {
         emitter.vertexOrganization(v).attributes().insert("style", "filled");
         emitter.vertexOrganization(v).attributes().insert("fillcolor", "#faff7d");
     }
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &v, pathsEndVertices_.values()) {
+    for (const P2::ControlFlowGraph::ConstVertexIterator &v: pathsEndVertices_.values()) {
         emitter.vertexOrganization(v).attributes().insert("style", "filled");
         emitter.vertexOrganization(v).attributes().insert("fillcolor", "#faff7d");
     }
@@ -1629,7 +1629,7 @@ FeasiblePath::parseExpression(Expression expr, const std::string &where, Symboli
             // If we get here, then the "where" string isn't a valid address or address interval. Try
             // looking for a function with this name.
             ASSERT_not_null(partitioner_);
-            BOOST_FOREACH (const P2::Function::Ptr &function, partitioner_->functions()) {
+            for (const P2::Function::Ptr &function: partitioner_->functions()) {
                 if (function->name() == where)
                     expr.location.insert(function->address());
             }
@@ -1741,10 +1741,10 @@ FeasiblePath::dfsDebugHeader(Sawyer::Message::Stream &trace, Sawyer::Message::St
     if (trace || debug) {
         SAWYER_MESG_OR(trace, debug) <<"depthFirstSearch call #" <<callId <<":\n";
         SAWYER_MESG_OR(trace, debug) <<"  paths graph saved in " <<emitPathGraph(callId, graphId) <<"\n";
-        BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &v, pathsBeginVertices_.values())
+        for (const P2::ControlFlowGraph::ConstVertexIterator &v: pathsBeginVertices_.values())
             SAWYER_MESG_OR(trace, debug) <<"  begin at vertex " <<partitioner().vertexName(v) <<"\n";
         if (isDirectedSearch()) {
-            BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &v, pathsEndVertices_.values())
+            for (const P2::ControlFlowGraph::ConstVertexIterator &v: pathsEndVertices_.values())
                 SAWYER_MESG_OR(trace, debug) <<"  end   at vertex " <<partitioner().vertexName(v) <<"\n";
         } else {
             SAWYER_MESG_OR(trace, debug) <<"  undirected search (no particular end vertices)\n";
@@ -1817,7 +1817,7 @@ FeasiblePath::dfsDebugCurrentPath(Sawyer::Message::Stream &debug, const P2::CfgP
                                   size_t effectiveMaxPathLength) {
     if (debug) {
         debug <<"  path vertices (" <<path.nVertices() <<"):";
-        BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &v, path.vertices())
+        for (const P2::ControlFlowGraph::ConstVertexIterator &v: path.vertices())
             debug <<" " <<partitioner().vertexName(v);
         debug <<"\n";
         debug <<"    SMT solver has " <<StringUtility::plural(solver->nLevels(), "transactions") <<"\n";
@@ -2021,7 +2021,7 @@ FeasiblePath::summarizeOrInline(P2::CfgPath &path, const Semantics &sem) {
     P2::CfgConstEdgeSet callEdges = P2::findCallEdges(cfgBackVertex);
     P2::CfgConstEdgeSet erasableEdges;
 
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &cfgCallEdge, callEdges.values()) {
+    for (const P2::ControlFlowGraph::ConstEdgeIterator &cfgCallEdge: callEdges.values()) {
         if (shouldSummarizeCall(path.backVertex(), partitioner().cfg(), cfgCallEdge->target())) {
             SAWYER_MESG(debug) <<indent <<"summarizing function for edge " <<partitioner().edgeName(cfgCallEdge) <<"\n";
             insertCallSummary(backVertex, partitioner().cfg(), cfgCallEdge);
@@ -2098,7 +2098,7 @@ FeasiblePath::depthFirstSearch(PathProcessor &pathProcessor) {
     Substitutions subst = parseSubstitutions();
 
     // Analyze each of the starting locations individually
-    BOOST_FOREACH (P2::ControlFlowGraph::ConstVertexIterator pathsBeginVertex, pathsBeginVertices_.values()) {
+    for (P2::ControlFlowGraph::ConstVertexIterator pathsBeginVertex: pathsBeginVertices_.values()) {
         // Initialize this starting point. The solver will have one initial state, plus one additional state pushed for each
         // edge of the current path.
         Sawyer::ProgressBar<size_t> progress(std::min(settings_.maxPathLength, (size_t)5000 /*arbitrary*/), mlog[MARCH], "path");

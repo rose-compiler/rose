@@ -20,8 +20,8 @@ RegisterParts::erase(RegisterDescriptor reg) {
 
 RegisterParts&
 RegisterParts::operator-=(const RegisterParts &other) {
-    BOOST_FOREACH (const Map::Node &node, other.map_.nodes()) {
-        BOOST_FOREACH (const BitRange &bits, node.value().intervals())
+    for (const Map::Node &node: other.map_.nodes()) {
+        for (const BitRange &bits: node.value().intervals())
             erase(RegisterDescriptor(node.key().get_major(), node.key().get_minor(), bits.least(), bits.size()));
     }
     return *this;
@@ -36,7 +36,7 @@ RegisterParts::operator-(const RegisterParts &other) const {
 
 RegisterParts&
 RegisterParts::operator|=(const RegisterParts &other) {
-    BOOST_FOREACH (const Map::Node &node, other.map_.nodes())
+    for (const Map::Node &node: other.map_.nodes())
         map_.insertMaybeDefault(node.key()).insertMultiple(node.value());
     return *this;
 }
@@ -51,7 +51,7 @@ RegisterParts::operator|(const RegisterParts &other) const {
 RegisterParts&
 RegisterParts::operator&=(const RegisterParts &other) {
     Map newmap;
-    BOOST_FOREACH (const Map::Node &node, map_.nodes()) {
+    for (const Map::Node &node: map_.nodes()) {
         if (other.map_.exists(node.key())) {
             BitSet intersection = node.value() & other.map_[node.key()];
             if (!intersection.isEmpty())
@@ -76,10 +76,10 @@ RegisterParts::extract(const RegisterDictionary *regDict, bool extractAll) {
         return retval;
 
     if (regDict) {
-        BOOST_FOREACH (const RegisterDictionary::Entries::value_type &pair, regDict->get_registers())
+        for (const RegisterDictionary::Entries::value_type &pair: regDict->get_registers())
             allRegs.push_back(pair.second);
         std::sort(allRegs.begin(), allRegs.end(), RegisterDictionary::SortBySize(RegisterDictionary::SortBySize::DESCENDING));
-        BOOST_FOREACH (RegisterDescriptor reg, allRegs) {
+        for (RegisterDescriptor reg: allRegs) {
             if (existsAll(reg)) {
                 retval.push_back(reg);
                 erase(reg);
@@ -90,8 +90,8 @@ RegisterParts::extract(const RegisterDictionary *regDict, bool extractAll) {
     }
 
     if (!regDict || extractAll) {
-        BOOST_FOREACH (const Map::Node &node, map_.nodes()) {
-            BOOST_FOREACH (const BitRange &bits, node.value().intervals())
+        for (const Map::Node &node: map_.nodes()) {
+            for (const BitRange &bits: node.value().intervals())
                 retval.push_back(RegisterDescriptor(node.key().get_major(), node.key().get_minor(), bits.least(), bits.size()));
         }
         clear();

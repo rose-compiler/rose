@@ -8,7 +8,6 @@
 #include <Rose/Exception.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
 
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <list>
 #include <Sawyer/GraphTraversal.h>
@@ -383,7 +382,7 @@ public:
                 if (mlog[DEBUG]) {
                     mlog[DEBUG] <<"runOneIteration: vertex #" <<cfgVertexId <<"\n";
                     mlog[DEBUG] <<"  remaining worklist is {";
-                    BOOST_FOREACH (size_t id, workList_.items())
+                    for (size_t id: workList_.items())
                         mlog[DEBUG] <<" " <<id;
                     mlog[DEBUG] <<" }\n";
                 }
@@ -407,7 +406,7 @@ public:
                 // is modified as a result will have its CFG vertex added to the work list.
                 SAWYER_MESG(mlog[DEBUG]) <<"  forwarding vertex #" <<cfgVertexId <<" output state to "
                                          <<StringUtility::plural(vertex->nOutEdges(), "vertices", "vertex") <<"\n";
-                BOOST_FOREACH (const typename CFG::Edge &edge, vertex->outEdges()) {
+                for (const typename CFG::Edge &edge: vertex->outEdges()) {
                     size_t nextVertexId = edge.target()->id();
                     if (!isFeasible_(cfg_, edge, state, incomingState_[nextVertexId])) {
                         SAWYER_MESG(mlog[DEBUG]) <<"    path to vertex #" <<nextVertexId <<" is not feasible, thus skipped\n";

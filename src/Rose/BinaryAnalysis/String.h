@@ -98,7 +98,7 @@ namespace BinaryAnalysis {
  *  finder.insertCommonEncoders();              // how to match strings
  *  finder.find(map.require(MemoryMap::READABLE).prohibit(MemoryMap::WRITABLE));
  *
- *  BOOST_FOREACH (const EncodedString &string, finder.strings()) {
+ *  for (const EncodedString &string: finder.strings()) {
  *      std::cout <<"string at " <<string.address() <<" for " <<string.size() <<" bytes\n";
  *      std::cout <<"encoding: " <<string.encoder()->name() <<"\n";
  *      std::cout <<"narrow value: \"" <<StringUtility::cEscape(string.narrow()) <<"\"\n"; // std::string
@@ -131,7 +131,7 @@ namespace BinaryAnalysis {
  *                                     basicCharacterEncodingScheme(1),             // 1:1 mapping to octets
  *                                     anyCodePoint());                             // allow any characters
  *  std::wstring s;                                   
- *  BOOST_FOREACH (const EncodedString &string, finder.find(map.at(stringVa)).strings()) {
+ *  for (const EncodedString &string: finder.find(map.at(stringVa)).strings()) {
  *      s = string.wide();
  *      break;
  *  }
@@ -155,7 +155,7 @@ namespace BinaryAnalysis {
  *  Utf8CharacterEncodingForm::Ptr utf8 = utf8CharacterEncodingForm();
  * 
  *  CodePoints codePoints;
- *  BOOST_FOREACH (Octet octet, octets) {
+ *  for (Octet octet: octets) {
  *      CodeValue codeValue = octet; // 1:1 translation
  *      if (isDone(utf8->decode(codeValue))) {
  *          codePoints.push_back(utf8->consume());

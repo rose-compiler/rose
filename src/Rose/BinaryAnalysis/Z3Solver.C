@@ -447,7 +447,7 @@ Z3Solver::z3Assertions(size_t level) const {
 std::vector<z3::expr>
 Z3Solver::z3Assertions() const {
     std::vector<z3::expr> retval;
-    BOOST_FOREACH (const std::vector<z3::expr> &level, z3Stack_)
+    for (const std::vector<z3::expr> &level: z3Stack_)
         retval.insert(retval.end(), level.begin(), level.end());
     return retval;
 }
@@ -521,11 +521,11 @@ SmtSolver::Type
 Z3Solver::mostType(const std::vector<Z3ExprTypePair> &ets) {
     typedef Sawyer::Container::Map<Type, size_t> Histogram;
     Histogram histogram;
-    BOOST_FOREACH (const Z3ExprTypePair &et, ets)
+    for (const Z3ExprTypePair &et: ets)
         ++histogram.insertMaybe(et.second, 0);
     Type bestType = NO_TYPE;
     size_t bestCount = 0;
-    BOOST_FOREACH (const Histogram::Node &node, histogram.nodes()) {
+    for (const Histogram::Node &node: histogram.nodes()) {
         if (node.value() > bestCount) {
             bestType = node.key();
             bestCount = node.value();
@@ -786,7 +786,7 @@ std::vector<Z3Solver::Z3ExprTypePair>
 Z3Solver::ctxExpressions(const std::vector<SymbolicExpr::Ptr> &exprs) {
     std::vector<Z3Solver::Z3ExprTypePair> retval;
     retval.reserve(exprs.size());
-    BOOST_FOREACH (const SymbolicExpr::Ptr &expr, exprs)
+    for (const SymbolicExpr::Ptr &expr: exprs)
         retval.push_back(ctxExpression(expr.getRawPointer()));
     return retval;
 }
@@ -806,7 +806,7 @@ Z3Solver::outputList(const std::string &name, const std::vector<SExprTypePair> &
     Type childType = mostType(children);
     SExpr::Ptr retval = SExpr::instance(SExpr::instance(name));
     std::vector<SExprTypePair> castChildren = outputCast(children, childType);
-    BOOST_FOREACH (const SExprTypePair child, castChildren)
+    for (const SExprTypePair &child: castChildren)
         retval->children().push_back(child.first);
 
     if (NO_TYPE == rettype)
@@ -837,7 +837,7 @@ Z3Solver::outputArithmeticShiftRight(const SymbolicExpr::InteriorPtr &inode) {
 #ifdef ROSE_HAVE_Z3
 void
 Z3Solver::ctxVariableDeclarations(const VariableSet &vars) {
-    BOOST_FOREACH (const SymbolicExpr::LeafPtr &var, vars.values()) {
+    for (const SymbolicExpr::LeafPtr &var: vars.values()) {
         ASSERT_not_null(var);
         const SymbolicExpr::Leaf *varRaw = var.getRawPointer();
         ASSERT_require(var->isVariable2());
@@ -861,7 +861,7 @@ Z3Solver::ctxVariableDeclarations(const VariableSet &vars) {
 void
 Z3Solver::ctxCommonSubexpressions(const SymbolicExpr::Ptr &expr) {
     std::vector<SymbolicExpr::Ptr> cses = expr->findCommonSubexpressions();
-    BOOST_FOREACH (const SymbolicExpr::Ptr &cse, cses) {
+    for (const SymbolicExpr::Ptr &cse: cses) {
         SymbolicExpr::Node *cseRaw = cse.getRawPointer();
         if (!ctxCses_.exists(cseRaw))
             ctxCses_.insert(cseRaw, ctxExpression(cseRaw));
@@ -889,7 +889,7 @@ std::vector<Z3Solver::Z3ExprTypePair>
 Z3Solver::ctxCast(const std::vector<Z3ExprTypePair> &ets, Type toType) {
     std::vector<Z3ExprTypePair> retval;
     retval.reserve(ets.size());
-    BOOST_FOREACH (const Z3ExprTypePair &et, ets)
+    for (const Z3ExprTypePair &et: ets)
         retval.push_back(ctxCast(et, toType));
     return retval;
 }
@@ -1209,7 +1209,7 @@ Z3Solver::parseEvidence() {
         // below because the Z3 interface lacks a way to get type information from the variables returned as part of the evidence.
         VariableSet allVariables;
         std::vector<SymbolicExpr::Ptr> allAssertions = assertions();
-        BOOST_FOREACH (const SymbolicExpr::Ptr &expr, allAssertions)
+        for (const SymbolicExpr::Ptr &expr: allAssertions)
             findVariables(expr, allVariables /*in,out*/);
 
         // Parse the evidence
@@ -1226,7 +1226,7 @@ Z3Solver::parseEvidence() {
             // of all variables from above (regardless of transaction level) and try to match of the z3 variable name with the ROSE
             // variable name and obtain the type information from the ROSE variable.
             SymbolicExpr::LeafPtr var;
-            BOOST_FOREACH (const SymbolicExpr::LeafPtr &v, allVariables.values()) {
+            for (const SymbolicExpr::LeafPtr &v: allVariables.values()) {
                 if (v->toString() == fdecl.name().str()) {
                     var = v;
                     break;
@@ -1320,7 +1320,7 @@ Z3Solver::selfTest() {
     // Get an answer
     mlog[DEBUG] <<"parsing evidence\n";
     std::vector<std::string> enames = evidenceNames();
-    BOOST_FOREACH (const std::string &name, enames) {
+    for (const std::string &name: enames) {
         mlog[DEBUG] <<"evidence name = " <<name <<"\n";
         Expr expr = evidenceForName(name);
         ASSERT_always_not_null(expr);

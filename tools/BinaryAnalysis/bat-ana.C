@@ -88,7 +88,7 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 
     // Check some informational switches before we die for lack of specimen.
     if (engine.settings().disassembler.isaName == "list") {
-        BOOST_FOREACH (const std::string &name, Disassembler::isaNames())
+        for (const std::string &name: Disassembler::isaNames())
 	    std::cout <<name <<"\n";
         exit(0);
     }
@@ -131,7 +131,7 @@ public:
                 succs = args.bblock->successors().get();
             bool modified = false;
             for (size_t i=0; i<succs.size(); ++i) {
-                BOOST_FOREACH (const SValueSValue &rewrite, rewrites_) {
+                for (const SValueSValue &rewrite: rewrites_) {
                     if (succs[i].expr()->mustEqual(rewrite.first)) {
                         succs[i] = P2::BasicBlock::Successor(rewrite.second, succs[i].type(), succs[i].confidence());
                         modified = true;

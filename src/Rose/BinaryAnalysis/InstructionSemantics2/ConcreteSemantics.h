@@ -208,7 +208,7 @@ protected:
     MemoryState(const MemoryState &other)
         : BaseSemantics::MemoryState(other), map_(other.map_), pageSize_(other.pageSize_) {
         if (map_) {
-            BOOST_FOREACH (MemoryMap::Segment &segment, map_->values())
+            for (MemoryMap::Segment &segment: map_->values())
                 segment.buffer()->copyOnWrite(true);
             map_ = map_->shallowCopy();
         }

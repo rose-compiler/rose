@@ -183,7 +183,7 @@ public:
         MemoryMap::Ptr map = MemoryMap::instance();
         map->insert(dataInterval, MemoryMap::Segment::staticInstance(data, dataInterval.size(), MemoryMap::READABLE));
         std::vector<SRecord> srecs = SRecord::create(map, syntax_);
-        BOOST_FOREACH (const SRecord &srec, srecs)
+        for (const SRecord &srec: srecs)
             stream <<srec <<"\n";
     }
 };
@@ -244,12 +244,12 @@ main(int argc, char *argv[]) {
         if (!output.good())
             throw std::runtime_error("cannot create \"" + outputName);
         Rose::BinaryAnalysis::VxcoreParser parser;
-        BOOST_FOREACH (AddressInterval where, settings.where)
+        for (AddressInterval where: settings.where)
             parser.unparse(output, map, where, "output");
         exit(0);
 
     } else {
-        BOOST_FOREACH (AddressInterval where, settings.where) {
+        for (AddressInterval where: settings.where) {
             rose_addr_t va = where.least();
             while (AddressInterval interval = map->atOrAfter(va).singleSegment().available()) {
                 interval = interval.intersection(where);

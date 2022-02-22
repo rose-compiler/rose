@@ -365,7 +365,7 @@ public:
      *  Causes all vertices to be selected as the core part of the graph. If @p b is false then all vertices are deselected
      *  instead. */
     void selectAllVertices(bool b=true) {
-        BOOST_FOREACH (Organization &org, vertexOrganization_)
+        for (Organization &org: vertexOrganization_)
             org.select(b);
     }
 
@@ -374,7 +374,7 @@ public:
      *  Causes all edges to be selected as the core part of the graph. If @p b is false then all edges are deselected
      *  instead. */
     void selectAllEdges(bool b=true) {
-        BOOST_FOREACH (Organization &org, edgeOrganization_)
+        for (Organization &org: edgeOrganization_)
             org.select(b);
     }
 
@@ -963,7 +963,7 @@ BaseEmitter<G>::emit(std::ostream &out) const {
     }
 
     // Emit named subgraphs to output
-    BOOST_FOREACH (const Subgraphs::value_type &node, subgraphs) {
+    for (const Subgraphs::value_type &node: subgraphs) {
         const std::string &subgraphName = node.first;
         const std::string &subgraphContent = node.second;
         if (!subgraphName.empty()) {
@@ -981,7 +981,7 @@ BaseEmitter<G>::emit(std::ostream &out) const {
         out <<unnamedSubgraph->second;
 
     // Emit pseudo edges
-    BOOST_FOREACH (const PseudoEdge &edge, pseudoEdges_) {
+    for (const PseudoEdge &edge: pseudoEdges_) {
         if (vertexOrganization(edge.src).isSelected() && vertexOrganization(edge.dst).isSelected()) {
             std::string sourceName = vertexOrganization(edge.src).name();
             std::string targetName = vertexOrganization(edge.dst).name();
@@ -998,10 +998,10 @@ BaseEmitter<G>::emit(std::ostream &out) const {
 template<class G>
 void
 BaseEmitter<G>::deselectParallelEdges() {
-    BOOST_FOREACH (const typename G::Vertex &src, graph_.vertices()) {
+    for (const typename G::Vertex &src: graph_.vertices()) {
         if (vertexOrganization(src).isSelected()) {
             std::set<size_t> targets;
-            BOOST_FOREACH (const typename G::Edge &edge, src.outEdges()) {
+            for (const typename G::Edge &edge: src.outEdges()) {
                 if (edgeOrganization(edge).isSelected() && !targets.insert(edge.target()->id()).second)
                     edgeOrganization(edge).select(false);
             }

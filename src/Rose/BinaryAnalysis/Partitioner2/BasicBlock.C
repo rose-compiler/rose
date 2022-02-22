@@ -7,8 +7,6 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 
-#include <boost/foreach.hpp>
-
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
@@ -53,7 +51,7 @@ BasicBlock::insertSuccessor(const BaseSemantics::SValuePtr &successor_, EdgeType
         } else {
             Successors successors = successors_.get();
             bool found = false;
-            BOOST_FOREACH (const Successor &exists, successors) {
+            for (const Successor &exists: successors) {
                 if (exists.type()==type && exists.expr()->get_expression()->isEquivalentTo(successor->get_expression())) {
                     found = true;
                     break;
@@ -84,7 +82,7 @@ BasicBlock::instructionExists(rose_addr_t startVa) const {
             return insns_[idx];
     } else {
         // O(N) search for small blocks
-        BOOST_FOREACH (SgAsmInstruction *insn, insns_) {
+        for (SgAsmInstruction *insn: insns_) {
             if (insn->get_address() == startVa)
                 return insn;
         }
@@ -145,7 +143,7 @@ BasicBlock::undropSemanticsNS(const Partitioner &partitioner) {
             sem.usingDispatcher = true;
 
             BaseSemantics::StatePtr penultimateState = curState->clone();
-            BOOST_FOREACH (SgAsmInstruction *insn, instructions()) {
+            for (SgAsmInstruction *insn: instructions()) {
                 penultimateState = sem.operators->currentState()->clone();
                 try {
                     sem.dispatcher->processInstruction(insn);
@@ -242,7 +240,7 @@ BasicBlock::pop() {
 AddressIntervalSet
 BasicBlock::insnAddresses() const {
     AddressIntervalSet retval;
-    BOOST_FOREACH (SgAsmInstruction *insn, insns_)
+    for (SgAsmInstruction *insn: insns_)
         retval.insert(AddressInterval::baseSize(insn->get_address(), insn->get_size()));
     return retval;
 }
@@ -250,7 +248,7 @@ BasicBlock::insnAddresses() const {
 AddressIntervalSet
 BasicBlock::dataAddresses() const {
     AddressIntervalSet retval;
-    BOOST_FOREACH (const DataBlock::Ptr &db, dblocks_)
+    for (const DataBlock::Ptr &db: dblocks_)
         retval.insert(db->extent());
     return retval;
 }
@@ -306,7 +304,7 @@ std::set<rose_addr_t>
 BasicBlock::explicitConstants() const {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     std::set<rose_addr_t> retval;
-    BOOST_FOREACH (SgAsmInstruction *insn, insns_) {
+    for (SgAsmInstruction *insn: insns_) {
         std::set<rose_addr_t> insnConstants = insn->explicitConstants();
         retval.insert(insnConstants.begin(), insnConstants.end());
     }

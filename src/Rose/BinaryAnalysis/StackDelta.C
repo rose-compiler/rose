@@ -4,7 +4,6 @@
 #include <Rose/BinaryAnalysis/StackDelta.h>
 
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics.h>
-#include <boost/foreach.hpp>
 #include <Rose/CommandLine.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataFlow.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
@@ -118,7 +117,7 @@ public:
             ASSERT_not_null(vertex->value().bblock());
             RegisterDescriptor SP = cpu()->stackPointerRegister();
             BaseSemantics::SValuePtr oldSp = retval->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
-            BOOST_FOREACH (SgAsmInstruction *insn, vertex->value().bblock()->instructions()) {
+            for (SgAsmInstruction *insn: vertex->value().bblock()->instructions()) {
                 cpu()->processInstruction(insn);
                 BaseSemantics::SValuePtr newSp = retval->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
                 BaseSemantics::SValuePtr delta = ops->subtract(newSp, oldSp);
@@ -147,7 +146,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
                                            ipPredicate);
     size_t startVertexId = 0;
     DfCfg::ConstVertexIterator returnVertex = dfCfg.vertices().end();
-    BOOST_FOREACH (const DfCfg::Vertex &vertex, dfCfg.vertices()) {
+    for (const DfCfg::Vertex &vertex: dfCfg.vertices()) {
         if (vertex.value().type() == P2::DataFlow::DfCfgVertex::FUNCRET) {
             returnVertex = dfCfg.findVertex(vertex.id());
             break;
@@ -224,7 +223,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     }
 
     // Get stack pointers for each basic block
-    BOOST_FOREACH (const DfCfg::Vertex &vertex, dfCfg.vertices()) {
+    for (const DfCfg::Vertex &vertex: dfCfg.vertices()) {
         if (vertex.value().type() == P2::DataFlow::DfCfgVertex::BBLOCK) {
             P2::BasicBlock::Ptr bblock = vertex.value().bblock();
             ASSERT_not_null(bblock);
@@ -345,11 +344,11 @@ Analysis::saveAnalysisResults(SgAsmFunction *function) const {
             BaseSemantics::RiscOperatorsPtr ops = cpu_ ? cpu_->operators() : BaseSemantics::RiscOperatorsPtr();
             BaseSemantics::SValuePtr sp0 = functionStackPtrs_.first;
             if (sp0 && ops) {
-                BOOST_FOREACH (SgAsmBlock *block, SageInterface::querySubTree<SgAsmBlock>(function)) {
+                for (SgAsmBlock *block: SageInterface::querySubTree<SgAsmBlock>(function)) {
                     if (BaseSemantics::SValuePtr blkAbs = basicBlockStackPointers(block->get_address()).second) {
                         block->set_stackDeltaOut(toInt(ops->subtract(blkAbs, sp0)));
 
-                        BOOST_FOREACH (SgAsmInstruction *insn, SageInterface::querySubTree<SgAsmInstruction>(block)) {
+                        for (SgAsmInstruction *insn: SageInterface::querySubTree<SgAsmInstruction>(block)) {
                             if (BaseSemantics::SValuePtr insnAbs = instructionStackPointers(insn).first)
                                 insn->set_stackDeltaIn(toInt(ops->subtract(insnAbs, sp0)));
                         }
@@ -389,11 +388,11 @@ Analysis::print(std::ostream &out) const {
 
     out <<"  Basic block information:\n";
     std::set<rose_addr_t> bblockVas;
-    BOOST_FOREACH (rose_addr_t va, bblockStackPtrs_.keys())
+    for (rose_addr_t va: bblockStackPtrs_.keys())
         bblockVas.insert(va);
-    BOOST_FOREACH (rose_addr_t va, bblockDeltas_.keys())
+    for (rose_addr_t va: bblockDeltas_.keys())
         bblockVas.insert(va);
-    BOOST_FOREACH (rose_addr_t va, bblockVas) {
+    for (rose_addr_t va: bblockVas) {
         out <<"    Basic block " <<StringUtility::addrToString(va) <<":\n";
         if (BaseSemantics::SValuePtr v = basicBlockStackPointers(va).first) {
             out <<"      Initial stack pointer: " <<*v <<"\n";
@@ -414,11 +413,11 @@ Analysis::print(std::ostream &out) const {
 
     out <<"  Instruction information:\n";
     std::set<rose_addr_t> insnVas;
-    BOOST_FOREACH (rose_addr_t va, insnStackPtrs_.keys())
+    for (rose_addr_t va: insnStackPtrs_.keys())
         insnVas.insert(va);
-    BOOST_FOREACH (rose_addr_t va, insnDeltas_.keys())
+    for (rose_addr_t va: insnDeltas_.keys())
         insnVas.insert(va);
-    BOOST_FOREACH (rose_addr_t va, insnVas) {
+    for (rose_addr_t va: insnVas) {
         out <<"    Instruction " <<StringUtility::addrToString(va) <<":\n";
         if (BaseSemantics::SValuePtr v = insnStackPtrs_.getOrDefault(va).first) {
             out <<"      Initial stack pointer: " <<*v <<"\n";

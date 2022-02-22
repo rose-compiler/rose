@@ -64,7 +64,7 @@ void
 ExecutionManager::insertConcolicResults(const TestCase::Ptr& original, const std::vector<TestCase::Ptr> &newCases) {
   original->concolicResult(1);
   database_->id(original, Update::YES);
-  BOOST_FOREACH (const TestCase::Ptr &tc, newCases)
+  for (const TestCase::Ptr &tc: newCases)
       database_->save(tc);
 }
 

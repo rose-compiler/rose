@@ -400,7 +400,7 @@ ConcolicExecutor::handleBranch(SgAsmInstruction *insn) {
                 case SmtSolver::SAT_YES:
                     if (debug) {
                         debug <<"conditions are satisfied when:\n";
-                        BOOST_FOREACH (const std::string &varName, solver()->evidenceNames()) {
+                        for (const std::string &varName: solver()->evidenceNames()) {
                             ExecutionEvent::Ptr inputEvent = ops->inputVariables()->event(varName);
                             if (inputEvent) {
                                 debug <<"  " <<inputEvent->name() <<" (" <<varName <<") = ";

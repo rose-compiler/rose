@@ -5,7 +5,6 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/RiscOperators.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/SValue.h>
 #include <Rose/BinaryAnalysis/HotPatch.h>
-#include <boost/foreach.hpp>
 
 using namespace Sawyer::Message::Common;
 
@@ -33,7 +32,7 @@ HotPatch::apply(const RiscOperatorsPtr &ops) const {
     ASSERT_not_null(ops);
     size_t nMatches = 0;
 
-    BOOST_FOREACH (const Record &record, records_) {
+    for (const Record &record: records_) {
         bool matched = false;
         switch (record.type()) {
             case Record::PATCH_NONE:

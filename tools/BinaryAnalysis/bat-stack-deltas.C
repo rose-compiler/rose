@@ -12,7 +12,6 @@ static const char *description =
 
 #include <batSupport.h>
 #include <boost/filesystem.hpp>
-#include <boost/foreach.hpp>
 #include <fstream>
 #include <iostream>
 #include <Sawyer/CommandLine.h>
@@ -102,7 +101,7 @@ insertDeltaPairs(StackDeltaMap &sdmap /*in,out*/, const AddressIntervalSet &inte
         postDelta->toSigned().assignTo(sdpair.postDelta);
 
     if (sdpair.preDelta || sdpair.postDelta) {
-        BOOST_FOREACH (const AddressInterval &interval, intervals.intervals())
+        for (const AddressInterval &interval: intervals.intervals())
             sdmap.insert(interval, sdpair);
     }
 }
@@ -128,7 +127,7 @@ insertDeltaPairs(StackDeltaMap &sdmap /*in,out*/, const AddressIntervalSet &inte
     if (postDelta)
         postDelta->toSigned().assignTo(sdpair.postDelta);
 
-    BOOST_FOREACH (const AddressInterval &interval, intervals.intervals())
+    for (const AddressInterval &interval: intervals.intervals())
         sdmap.insert(interval, sdpair);
 }
     
@@ -152,12 +151,12 @@ main(int argc, char *argv[]) {
     Sawyer::Stopwatch timer;
     mlog[INFO] <<"calculating stack deltas";
     StackDeltaMap sdmap;
-    BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions()) {
+    for (const P2::Function::Ptr &function: partitioner.functions()) {
         if (SD_FUNCTION == settings.domain) {
             BaseSemantics::SValuePtr postDelta = partitioner.functionStackDelta(function);
             insertDeltaPairs(sdmap, partitioner.functionBasicBlockExtent(function), postDelta);
         } else {
-            BOOST_FOREACH (const rose_addr_t bbva, function->basicBlockAddresses()) {
+            for (const rose_addr_t bbva: function->basicBlockAddresses()) {
                 if (P2::BasicBlock::Ptr bb = partitioner.basicBlockExists(bbva)) {
                     if (SD_BASIC_BLOCK == settings.domain) {
                         BaseSemantics::SValuePtr preDelta = partitioner.basicBlockStackDeltaIn(bb, function);
@@ -166,7 +165,7 @@ main(int argc, char *argv[]) {
                     } else {
                         ASSERT_require(SD_INSTRUCTION == settings.domain);
                         const BinaryAnalysis::StackDelta::Analysis &sda = function->stackDeltaAnalysis();
-                        BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
+                        for (SgAsmInstruction *insn: bb->instructions()) {
                             BaseSemantics::SValuePtr preDelta = sda.instructionInputStackDeltaWrtFunction(insn);
                             BaseSemantics::SValuePtr postDelta = sda.instructionOutputStackDeltaWrtFunction(insn);
                             insertDeltaPairs(sdmap, partitioner.instructionExtent(insn), preDelta, postDelta);
@@ -179,7 +178,7 @@ main(int argc, char *argv[]) {
     mlog[INFO] <<"; took " <<timer <<"\n";
     
     // Print results
-    BOOST_FOREACH (const StackDeltaMap::Node &node, sdmap.nodes()) {
+    for (const StackDeltaMap::Node &node: sdmap.nodes()) {
         std::cout <<StringUtility::addrToString(node.key().least()) <<"\t"
                   <<StringUtility::addrToString(node.key().greatest()) <<"\t";
         if (node.value().preDelta) {

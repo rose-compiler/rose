@@ -39,7 +39,7 @@ makeEdgeColor(const Color::HSV &bg) {
 ROSE_DLL_API std::string
 toString(const Attributes &attrs) {
     std::string retval;
-    BOOST_FOREACH (const Attributes::Node &attr, attrs.nodes())
+    for (const Attributes::Node &attr: attrs.nodes())
         retval += (retval.empty()?"":" ") + escape(attr.key()) + "=" + escape(attr.value());
     return retval;
 }
@@ -83,14 +83,14 @@ isId(const std::string &s) {
     if (s.empty())
         return false;
     if (isalpha(s[0])) {
-        BOOST_FOREACH (char ch, s) {
+        for (char ch: s) {
             if (!isalnum(ch) || '_'==ch)
                 return false;
         }
         return true;
     }
     if (isdigit(s[0])) {
-        BOOST_FOREACH (char ch, s) {
+        for (char ch: s) {
             if (!isdigit(ch))
                 return false;
         }
@@ -107,7 +107,7 @@ escape(const std::string &s) {
         return s;
     if ('<'==s[0]) {
         int depth = 0;
-        BOOST_FOREACH (char ch, s) {
+        for (char ch: s) {
             if ('<'==ch) {
                 ++depth;
             } else if ('>'==ch) {
@@ -195,7 +195,7 @@ CfgEmitter::init() {
 
 void
 CfgEmitter::nameVertices() {
-    BOOST_FOREACH (const ControlFlowGraph::Vertex &vertex, graph_.vertices()) {
+    for (const ControlFlowGraph::Vertex &vertex: graph_.vertices()) {
         if (vertexOrganization(vertex.id()).name().empty()) {
             switch (vertex.value().type()) {
                 case V_BASIC_BLOCK:
@@ -228,12 +228,12 @@ CfgEmitter::selectWholeGraph() {
     selectNone();
     selectAll();
 
-    BOOST_FOREACH (const ControlFlowGraph::Vertex &vertex, graph_.vertices()) {
+    for (const ControlFlowGraph::Vertex &vertex: graph_.vertices()) {
         vertexOrganization(vertex).label(vertexLabelDetailed(vertex));
         vertexOrganization(vertex).attributes(vertexAttributes(vertex));
     }
 
-    BOOST_FOREACH (const ControlFlowGraph::Edge &edge, graph_.edges()) {
+    for (const ControlFlowGraph::Edge &edge: graph_.edges()) {
         edgeOrganization(edge).label(edgeLabel(edge));
         edgeOrganization(edge).attributes(edgeAttributes(edge));
     }
@@ -291,7 +291,7 @@ CfgEmitter::selectIntervalGraph(const AddressInterval &interval) {
 
 void
 CfgEmitter::selectInterval(const AddressInterval &interval) {
-    BOOST_FOREACH (const ControlFlowGraph::Vertex &vertex, graph_.vertices()) {
+    for (const ControlFlowGraph::Vertex &vertex: graph_.vertices()) {
         if (vertex.value().type() == V_BASIC_BLOCK && interval.isContaining(vertex.value().address())) {
             Organization &org = vertexOrganization(vertex);
             org.select();
@@ -300,7 +300,7 @@ CfgEmitter::selectInterval(const AddressInterval &interval) {
         }
     }
 
-    BOOST_FOREACH (const ControlFlowGraph::Edge &edge, graph_.edges()) {
+    for (const ControlFlowGraph::Edge &edge: graph_.edges()) {
         if (vertexOrganization(edge.source()).isSelected() && vertexOrganization(edge.target()).isSelected()) {
             Organization &org = edgeOrganization(edge);
             if (!org.isSelected()) {
@@ -316,14 +316,14 @@ void
 CfgEmitter::selectIntraFunction(const Function::Ptr &function) {
     // Use an iteration rather than a traversal because we want all vertices that belong to the function, including those
     // not reachable from the entry vertex.
-    BOOST_FOREACH (const ControlFlowGraph::Vertex &vertex, graph_.vertices()) {
+    for (const ControlFlowGraph::Vertex &vertex: graph_.vertices()) {
         if (vertex.value().isOwningFunction(function)) {
             if (!vertexOrganization(vertex).isSelected()) {
                 vertexOrganization(vertex).select();
                 vertexOrganization(vertex).label(vertexLabelDetailed(vertex));
                 vertexOrganization(vertex).attributes(vertexAttributes(vertex));
             }
-            BOOST_FOREACH (const ControlFlowGraph::Edge &edge, vertex.outEdges()) {
+            for (const ControlFlowGraph::Edge &edge: vertex.outEdges()) {
                 if (!edgeOrganization(edge).isSelected() && partitioner_.isEdgeIntraProcedural(edge, function)) {
                     edgeOrganization(edge).select();
                     edgeOrganization(edge).label(edgeLabel(edge));
@@ -338,9 +338,9 @@ void
 CfgEmitter::selectFunctionCallees(const Function::Ptr &function) {
     // Use an iteration rather than a traversal because we want to consider all vertices that belong to the function, including
     // those not reachable from the entry vertex.
-    BOOST_FOREACH (const ControlFlowGraph::Vertex &vertex, graph_.vertices()) {
+    for (const ControlFlowGraph::Vertex &vertex: graph_.vertices()) {
         if (vertexOrganization(vertex).isSelected() && vertex.value().isOwningFunction(function)) {
-            BOOST_FOREACH (const ControlFlowGraph::Edge &edge, vertex.outEdges()) {
+            for (const ControlFlowGraph::Edge &edge: vertex.outEdges()) {
                 if (partitioner_.isEdgeInterProcedural(edge, function)) {
                     if (!edgeOrganization(edge).isSelected()) {
                         edgeOrganization(edge).select();
@@ -377,13 +377,13 @@ void
 CfgEmitter::selectFunctionCallers(const Function::Ptr &callee) {
     // Use an iteration rather than a traversal because we want to consider all vertices that belong to the function, including
     // those not reachable from the entry vertex.
-    BOOST_FOREACH (const ControlFlowGraph::Vertex &vertex, graph_.vertices()) {
+    for (const ControlFlowGraph::Vertex &vertex: graph_.vertices()) {
         if (vertexOrganization(vertex).isSelected() && vertex.value().isOwningFunction(callee)) {
 
             // Are there edges coming into this vertex from outside this function?
             typedef Sawyer::Container::Map<rose_addr_t /*caller*/, CallInfo> Callers;
             Callers callers;
-            BOOST_FOREACH (const ControlFlowGraph::Edge &interEdge, vertex.inEdges()) {
+            for (const ControlFlowGraph::Edge &interEdge: vertex.inEdges()) {
                 if (partitioner_.isEdgeInterProcedural(interEdge, Function::Ptr(), callee) &&
                     !edgeOrganization(interEdge).isSelected()) {
 
@@ -413,7 +413,7 @@ CfgEmitter::selectFunctionCallers(const Function::Ptr &callee) {
             }
             
             // Organize the calls to this vertex from a function-as-a-whole
-            BOOST_FOREACH (const Callers::Node &callNode, callers.nodes()) {
+            for (const Callers::Node &callNode: callers.nodes()) {
                 Function::Ptr callerFunc = partitioner_.functionExists(callNode.key());
                 ASSERT_not_null(callerFunc);
                 ControlFlowGraph::ConstVertexIterator caller = partitioner_.findPlaceholder(callerFunc->address());
@@ -443,12 +443,12 @@ CfgEmitter::selectFunctionCallers(const Function::Ptr &callee) {
 
 void
 CfgEmitter::deselectReturnEdges() {
-    BOOST_FOREACH (const ControlFlowGraph::Edge &edge, graph_.edges()) {
+    for (const ControlFlowGraph::Edge &edge: graph_.edges()) {
         if (edgeOrganization(edge).isSelected() && edge.value().type() == E_FUNCTION_RETURN) {
             // If we're removing the last edge to a vertex then remove the vertex also.
             edgeOrganization(edge).select(false);
             size_t nSelectedIncomingEdges = 0;
-            BOOST_FOREACH (const ControlFlowGraph::Edge &inEdge, edge.target()->inEdges()) {
+            for (const ControlFlowGraph::Edge &inEdge: edge.target()->inEdges()) {
                 if (edgeOrganization(inEdge).isSelected())
                     ++nSelectedIncomingEdges;
             }
@@ -460,7 +460,7 @@ CfgEmitter::deselectReturnEdges() {
 
 void
 CfgEmitter::deselectUnusedVertexType(VertexType type) {
-    BOOST_FOREACH (const ControlFlowGraph::Vertex &vertex, graph_.vertices()) {
+    for (const ControlFlowGraph::Vertex &vertex: graph_.vertices()) {
         if (vertex.value().type() == type)
             deselectUnusedVertex(graph_.findVertex(vertex.id()));
     }
@@ -469,14 +469,14 @@ CfgEmitter::deselectUnusedVertexType(VertexType type) {
 void
 CfgEmitter::deselectUnusedVertex(ControlFlowGraph::ConstVertexIterator vertex) {
     bool isUsed = false;
-    BOOST_FOREACH (const ControlFlowGraph::Edge &edge, vertex->inEdges()) {
+    for (const ControlFlowGraph::Edge &edge: vertex->inEdges()) {
         if (edgeOrganization(edge).isSelected()) {
             isUsed = true;
             break;
         }
     }
     if (!isUsed) {
-        BOOST_FOREACH (const ControlFlowGraph::Edge &edge, vertex->outEdges()) {
+        for (const ControlFlowGraph::Edge &edge: vertex->outEdges()) {
             if (edgeOrganization(edge).isSelected()) {
                 isUsed = true;
                 break;
@@ -494,7 +494,7 @@ CfgEmitter::selectNeighbors(bool selectIn, bool selectOut) {
         return;
 
     std::vector<ControlFlowGraph::ConstVertexIterator> needed;
-    BOOST_FOREACH (const ControlFlowGraph::Edge &edge, graph_.edges()) {
+    for (const ControlFlowGraph::Edge &edge: graph_.edges()) {
         if ((selectOut && vertexOrganization(edge.source()).isSelected() && !vertexOrganization(edge.target()).isSelected()) ||
             (selectIn  && !vertexOrganization(edge.source()).isSelected() && vertexOrganization(edge.target()).isSelected())) {
             if (!edgeOrganization(edge).isSelected()) {
@@ -509,7 +509,7 @@ CfgEmitter::selectNeighbors(bool selectIn, bool selectOut) {
         }
     }
 
-    BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &vertex, needed) {
+    for (const ControlFlowGraph::ConstVertexIterator &vertex: needed) {
         Organization &org = vertexOrganization(vertex);
         if (!org.isSelected()) {
             org.select();
@@ -554,7 +554,7 @@ CfgEmitter::isInterFunctionEdge(const ControlFlowGraph::Edge &edge) {
 
 void
 CfgEmitter::assignFunctionSubgraphs() {
-    BOOST_FOREACH (const ControlFlowGraph::Vertex &vertex, graph_.vertices()) {
+    for (const ControlFlowGraph::Vertex &vertex: graph_.vertices()) {
         Organization &org = vertexOrganization(vertex);
         Function::Ptr function;
         if (org.isSelected() && org.subgraph().empty() && (function=firstOwningFunction(vertex))) {
@@ -603,7 +603,7 @@ CfgEmitter::vertexLabel(const ControlFlowGraph::ConstVertexIterator &vertex) con
             bool foundEntryPoint = false;
             FunctionSet functions = owningFunctions(vertex);
             if (!functions.isEmpty()) {
-                BOOST_FOREACH (const Function::Ptr &function, functions.values()) {
+                for (const Function::Ptr &function: functions.values()) {
                     if (function->address() == vertex->value().address()) {
                         srcLoc += htmlEscape(function->printableName()) + "<br align=\"left\"/>";
                         foundEntryPoint = true;
@@ -648,7 +648,7 @@ CfgEmitter::vertexLabelDetailed(const ControlFlowGraph::ConstVertexIterator &ver
         if (strikeNoopSequences_ && !isPartOfNoopSequence.empty()) {
             NoOperation::IndexIntervals noopSequences = noOpAnalysis_.findNoopSubsequences(insns);
             noopSequences = NoOperation::largestEarliestNonOverlapping(noopSequences);
-            BOOST_FOREACH (const NoOperation::IndexInterval &where, noopSequences) {
+            for (const NoOperation::IndexInterval &where: noopSequences) {
                 for (size_t i=where.least(); i<=where.greatest(); ++i)
                     isPartOfNoopSequence[i] = true;
             }
@@ -853,7 +853,7 @@ CgEmitter::callGraph(const FunctionCallGraph &cg) {
 
 void
 CgEmitter::nameVertices() {
-    BOOST_FOREACH (const FunctionCallGraph::Graph::Vertex &vertex, graph_.vertices()) {
+    for (const FunctionCallGraph::Graph::Vertex &vertex: graph_.vertices()) {
         const Function::Ptr &function = vertex.value();
         vertexOrganization(vertex.id()).name("V_" + StringUtility::addrToString(function->address()));
     }
@@ -892,7 +892,7 @@ CgEmitter::emitCallGraph(std::ostream &out) const {
     out <<" node  [ " <<toString(defaultNodeAttributes_) <<" ];\n";
     out <<" edge  [ " <<toString(defaultEdgeAttributes_) <<" ];\n";
 
-    BOOST_FOREACH (const CG::Vertex &vertex, graph_.vertices()) {
+    for (const CG::Vertex &vertex: graph_.vertices()) {
         const Function::Ptr &function = vertex.value();
 
         std::string vertexName = vertexOrganization(vertex.id()).name();
@@ -904,7 +904,7 @@ CgEmitter::emitCallGraph(std::ostream &out) const {
             <<toString(functionAttributes(function)) <<" ]\n";
     }
 
-    BOOST_FOREACH (const CG::Edge &edge, graph_.edges()) {
+    for (const CG::Edge &edge: graph_.edges()) {
         std::string label;
         switch (edge.value().type()) {
             case E_FUNCTION_CALL: label = "calls";  break;
@@ -947,7 +947,7 @@ CgInlinedEmitter::callGraph(const FunctionCallGraph &fullCg) {
     inlines_.clear();
 
     // Insert all vertices that will be needed.
-    BOOST_FOREACH (const FunctionCallGraph::Graph::Vertex &vertex, fullCg.graph().vertices()) {
+    for (const FunctionCallGraph::Graph::Vertex &vertex: fullCg.graph().vertices()) {
         Function::Ptr function = vertex.value();
         if (!shouldInline(function) || fullCg.nCallees(function)>0) {
             cg.insertFunction(function);
@@ -956,7 +956,7 @@ CgInlinedEmitter::callGraph(const FunctionCallGraph &fullCg) {
     }
 
     // Insert call edges
-    BOOST_FOREACH (const FunctionCallGraph::Graph::Edge &edge, fullCg.graph().edges()) {
+    for (const FunctionCallGraph::Graph::Edge &edge: fullCg.graph().edges()) {
         Function::Ptr caller = edge.source()->value();
         Function::Ptr callee = edge.target()->value();
         if (shouldInline(callee)) {
@@ -978,7 +978,7 @@ std::string
 CgInlinedEmitter::functionLabel(const Function::Ptr &function) const {
     ASSERT_not_null(function);
     std::string s = htmlEscape(function->printableName()) + "<br align=\"left\"/>";
-    BOOST_FOREACH (const Function::Ptr &inlined, inlines_[function])
+    for (const Function::Ptr &inlined: inlines_[function])
         s += "  " + htmlEscape(inlined->printableName()) + "<br align=\"left\"/>";
     return "<" + s + ">";
 }

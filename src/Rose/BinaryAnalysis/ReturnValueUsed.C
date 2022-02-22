@@ -35,7 +35,7 @@ static std::string
 locationNames(const RegisterParts &parts, const RegisterDictionary *regdict) {
     std::vector<std::string> retval;
     RegisterNames regNames(regdict);
-    BOOST_FOREACH (RegisterDescriptor reg, parts.listAll(regdict))
+    for (RegisterDescriptor reg: parts.listAll(regdict))
         retval.push_back(regNames(reg));
     return boost::join(retval, ", ");
 }
@@ -218,9 +218,9 @@ Analysis::clearResults() {
 std::vector<P2::Function::Ptr>
 Analysis::findCallees(const P2::Partitioner &partitioner, const P2::ControlFlowGraph::ConstVertexIterator &callSite) {
     std::vector<P2::Function::Ptr> callees;
-    BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, callSite->outEdges()) {
+    for (const P2::ControlFlowGraph::Edge &edge: callSite->outEdges()) {
         if (edge.value().type() == P2::E_FUNCTION_CALL) {
-            BOOST_FOREACH (const P2::Function::Ptr &f, partitioner.functionsOwningBasicBlock(edge.target()))
+            for (const P2::Function::Ptr &f: partitioner.functionsOwningBasicBlock(edge.target()))
                 P2::insertUnique(callees, f, P2::sortFunctionsByAddress);
         }
     }
@@ -230,7 +230,7 @@ Analysis::findCallees(const P2::Partitioner &partitioner, const P2::ControlFlowG
 std::vector<P2::ControlFlowGraph::ConstVertexIterator>
 Analysis::findReturnTargets(const P2::Partitioner &partitioner, const P2::ControlFlowGraph::ConstVertexIterator &callSite) {
     std::vector<P2::ControlFlowGraph::ConstVertexIterator> returnVertices;
-    BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, callSite->outEdges()) {
+    for (const P2::ControlFlowGraph::Edge &edge: callSite->outEdges()) {
         if (edge.value().type() == P2::E_CALL_RETURN)
             returnVertices.push_back(edge.target());
     }
@@ -307,7 +307,7 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
     calleeReturnRegs -= RegisterParts(partitioner.instructionProvider().stackPointerRegister());
     Variables::StackVariables calleeReturnMem;
 #if 0 // [Robb Matzke 2019-08-14]: turning off warning
-    BOOST_FOREACH (const CallingConvention::ParameterLocation &location, calleeDefinition->outputParameters()) {
+    for (const CallingConvention::ParameterLocation &location: calleeDefinition->outputParameters()) {
         // FIXME[Robb P Matzke 2017-03-20]: todo
     }
 #endif
@@ -388,7 +388,7 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
         }
 
         // Forward output state to the input states for vertices we have yet to traverse.
-        BOOST_FOREACH (const P2::DataFlow::DfCfg::Edge &edge, t.vertex()->outEdges()) {
+        for (const P2::DataFlow::DfCfg::Edge &edge: t.vertex()->outEdges()) {
             if (!inputStates[edge.target()->id()])
                 inputStates[edge.target()->id()] = outputState;
         }
@@ -416,12 +416,12 @@ Analysis::analyzeCallSite(const P2::Partitioner &partitioner, const P2::ControlF
             StatePtr returnState = inputStates[returnVertex->id()];
             ASSERT_always_not_null(returnState);
             ops->currentState(returnState);
-            BOOST_FOREACH (const P2::Function::Ptr caller, callers) {
+            for (const P2::Function::Ptr &caller: callers) {
                 const CallingConvention::Analysis &callerBehavior = caller->callingConventionAnalysis();
                 if (callerBehavior.didConverge()) {
                     SAWYER_MESG(mlog[DEBUG]) <<"  return from " <<caller->printableName() <<" implicitly uses: "
                                              <<locationNames(callerBehavior.outputRegisters(), regdict) <<"\n";
-                    BOOST_FOREACH (RegisterDescriptor reg, callerBehavior.outputRegisters().listAll(regdict))
+                    for (RegisterDescriptor reg: callerBehavior.outputRegisters().listAll(regdict))
                         (void) ops->readRegister(reg, ops->undefined_(reg.nBits()));
                 }
             }

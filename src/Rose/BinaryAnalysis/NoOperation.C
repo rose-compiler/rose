@@ -203,7 +203,7 @@ NoOperation::isNoop(const std::vector<SgAsmInstruction*> &insns) const {
     cpu_->operators()->currentState(initialState(insns.front()));
     std::string startState = normalizeState(cpu_->currentState());
     try {
-        BOOST_FOREACH (SgAsmInstruction *insn, insns)
+        for (SgAsmInstruction *insn: insns)
             cpu_->processInstruction(insn);
     } catch (const BaseSemantics::Exception&) {
         return false;
@@ -223,7 +223,7 @@ NoOperation::findNoopSubsequences(const std::vector<SgAsmInstruction*> &insns) c
 
     if (debug) {
         debug <<"findNoopSubsequences(\n";
-        BOOST_FOREACH (SgAsmInstruction *insn, insns)
+        for (SgAsmInstruction *insn: insns)
             debug <<"  " <<insn->toString() <<"\n";
         debug <<")\n";
     }
@@ -240,7 +240,7 @@ NoOperation::findNoopSubsequences(const std::vector<SgAsmInstruction*> &insns) c
     cpu_->operators()->currentState(initialState(insns.front()));
     const RegisterDescriptor regIP = cpu_->instructionPointerRegister();
     try {
-        BOOST_FOREACH (SgAsmInstruction *insn, insns) {
+        for (SgAsmInstruction *insn: insns) {
             cpu_->operators()->writeRegister(regIP, cpu_->operators()->number_(regIP.nBits(), insn->get_address()));
             states.push_back(normalizeState(cpu_->currentState()));
             if (debug) {
@@ -309,7 +309,7 @@ NoOperation::largestEarliestNonOverlapping(const NoOperation::IndexIntervals &in
     NoOperation::IndexIntervals sorted = in, retval;
     std::sort(sorted.begin(), sorted.end(), sortBySizeAddress);
     Sawyer::Container::IntervalSet<IndexInterval> seen;
-    BOOST_FOREACH (const NoOperation::IndexInterval &where, sorted) {
+    for (const NoOperation::IndexInterval &where: sorted) {
         if (!seen.isOverlapping(where)) {
             retval.push_back(where);
             seen.insert(where);
@@ -322,7 +322,7 @@ NoOperation::largestEarliestNonOverlapping(const NoOperation::IndexIntervals &in
 std::vector<bool>
 NoOperation::toVector(const IndexIntervals &in, size_t size) {
     std::vector<bool> retval(size, false);
-    BOOST_FOREACH (const IndexInterval &where, in) {
+    for (const IndexInterval &where: in) {
         if (where.greatest()+1 < retval.size())
             retval.resize(where.greatest()+1, false);
         for (size_t i=where.least(); i<=where.greatest(); ++i)

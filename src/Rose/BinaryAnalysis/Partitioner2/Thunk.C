@@ -164,7 +164,7 @@ ThunkPredicates::allThunks() {
 
 ThunkDetection
 ThunkPredicates::isThunk(const Partitioner &partitioner, const std::vector<SgAsmInstruction*> &insns) const {
-    BOOST_FOREACH (ThunkPredicate predicate, predicates_) {
+    for (ThunkPredicate predicate: predicates_) {
         if (predicate) {
             if (ThunkDetection retval = (predicate)(partitioner, insns))
                 return retval;
@@ -205,7 +205,7 @@ splitThunkFunctions(Partitioner &partitioner, const ThunkPredicates::Ptr &thunkP
         // the entry block if the entry block is a successor of some other non-call block in the same function (e.g., the top
         // of a loop).  Recursive calls (other than optimized tail recursion) should be fine.
         bool hasIntraFunctionEdge = false;
-        BOOST_FOREACH (const ControlFlowGraph::Edge &edge, entryVertex->inEdges()) {
+        for (const ControlFlowGraph::Edge &edge: entryVertex->inEdges()) {
             if (partitioner.isEdgeIntraProcedural(edge, candidate)) {
                 hasIntraFunctionEdge = true;
                 break;
@@ -280,11 +280,11 @@ splitThunkFunctions(Partitioner &partitioner, const ThunkPredicates::Ptr &thunkP
             } else {
                 newFunc->reasonComment(candidate->reasonComment());
             }
-            BOOST_FOREACH (rose_addr_t va, candidate->basicBlockAddresses()) {
+            for (rose_addr_t va: candidate->basicBlockAddresses()) {
                 if (va != thunkFunction->address())
                     newFunc->insertBasicBlock(va);
             }
-            BOOST_FOREACH (const DataBlock::Ptr &db, candidate->dataBlocks())
+            for (const DataBlock::Ptr &db: candidate->dataBlocks())
                 newFunc->insertDataBlock(db);
             partitioner.attachFunction(newFunc);
             workList.push_back(newFunc);                // new function might have more thunks to split off yet.
@@ -301,7 +301,7 @@ splitThunkFunctions(Partitioner &partitioner, const ThunkPredicates::Ptr &thunkP
                 //     nop                  ; originally part of this block, but now will start a new block
                 BasicBlock::Ptr targetBlock = partitioner.discoverBasicBlock(newFunc->address());
                 if (targetBlock->nInstructions() + entryBlock->nInstructions() == origEntryBlock->nInstructions()) {
-                    BOOST_FOREACH (const DataBlock::Ptr &db, origEntryBlock->dataBlocks())
+                    for (const DataBlock::Ptr &db: origEntryBlock->dataBlocks())
                         targetBlock->insertDataBlock(db);
                     targetBlock->copyCache(origEntryBlock);
                 }

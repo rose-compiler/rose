@@ -249,7 +249,7 @@ PlainTextFormatter::solverEvidence(std::ostream &out, const Rose::BinaryAnalysis
         if (names.empty()) {
             out <<"      none (trivial solution?)\n";
         } else {
-            BOOST_FOREACH (const std::string &name, names) {
+            for (const std::string &name: names) {
                 if (SymbolicExpr::Ptr value = solver->evidenceForName(name)) {
                     out <<"      " <<name <<" = " <<*value <<"\n";
                 } else {
@@ -494,7 +494,7 @@ YamlFormatter::solverEvidence(std::ostream &out, const Rose::BinaryAnalysis::Smt
             writeln(out, "  evidence:", "none (trivial solution?)");
         } else {
             writeln(out, "  evidence:");
-            BOOST_FOREACH (const std::string &name, names) {
+            for (const std::string &name: names) {
                 writeln(out, "    - name:", name);
                 if (SymbolicExpr::Ptr value = solver->evidenceForName(name)) {
                     writeln(out, "      value:", *value);
@@ -576,7 +576,7 @@ selectFunctionsByNameOrAddress(const std::vector<P2::Function::Ptr> &functions, 
     std::vector<std::string> names(nameSet.begin(), nameSet.end());
     typedef std::vector<Sawyer::Optional<rose_addr_t> > AddressPerName;
     AddressPerName vas;
-    BOOST_FOREACH (const std::string &name, names) {
+    for (const std::string &name: names) {
         errno = 0;
         const char *s = name.c_str();
         char *rest = NULL;
@@ -590,7 +590,7 @@ selectFunctionsByNameOrAddress(const std::vector<P2::Function::Ptr> &functions, 
 
     // Get the list of matching functions
     std::vector<bool> hits(names.size(), false);;
-    BOOST_FOREACH (const P2::Function::Ptr &function, functions) {
+    for (const P2::Function::Ptr &function: functions) {
         ASSERT_not_null(function);
 
         bool matched = false;
@@ -622,7 +622,7 @@ selectFunctionsByNameOrAddress(const std::vector<P2::Function::Ptr> &functions, 
     std::set<std::string> unmatched;
     std::vector<P2::Function::Ptr> retval = selectFunctionsByNameOrAddress(functions, nameSet, unmatched);
     if (!unmatched.empty() && errors) {
-        BOOST_FOREACH (const std::string &name, unmatched)
+        for (const std::string &name: unmatched)
             errors <<"name or address \"" <<Rose::StringUtility::cEscape(name) <<"\" didn't match any functions\n";
     }
     return retval;
@@ -632,9 +632,9 @@ std::vector<P2::Function::Ptr>
 selectFunctionsContainingInstruction(const P2::Partitioner &partitioner, const std::set<rose_addr_t> &insnVas) {
     std::vector<P2::Function::Ptr> retval;
 
-    BOOST_FOREACH (rose_addr_t insnVa, insnVas) {
+    for (rose_addr_t insnVa: insnVas) {
         std::vector<P2::Function::Ptr> found = partitioner.functionsOverlapping(insnVa);
-        BOOST_FOREACH (const P2::Function::Ptr &f, found)
+        for (const P2::Function::Ptr &f: found)
             P2::insertUnique(retval, f, P2::sortFunctionsByAddress);
     }
     return retval;
@@ -748,7 +748,7 @@ printPath(std::ostream &out, const FeasiblePath &fpAnalysis, const P2::CfgPath &
             if (bb->sourceLocation())
                 formatter->bbSrcLoc(out, bb->sourceLocation());
             formatter->insnListIntro(out);
-            BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
+            for (SgAsmInstruction *insn: bb->instructions()) {
                 formatter->insnStep(out, insnIdx++, partitioner, insn);
                 if (insn->semanticFailure())
                     formatter->semanticFailure(out);
@@ -790,7 +790,7 @@ vertexForInstruction(const P2::Partitioner &partitioner, const std::string &name
     rose_addr_t va = rose_strtoull(s, &rest, 0);
     if (*rest || errno!=0) {
         size_t nFound = 0;
-        BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions()) {
+        for (const P2::Function::Ptr &function: partitioner.functions()) {
             if (function->name() == nameOrVa) {
                 va = function->address();
                 ++nFound;

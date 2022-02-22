@@ -175,7 +175,7 @@ Reachability::insertReasonSwitch(Sawyer::CommandLine::SwitchGroup &sg, const std
         std::vector<Reason> dfltReasons = storage.split(stringify::Rose::BinaryAnalysis::Reachability::Reason(), leftovers /*out*/);
         ASSERT_require2(leftovers == ReasonFlags::Vector(0), "default value has unnamed bits set");
         std::vector<std::string> dfltNames;
-        BOOST_FOREACH (Reason reason, dfltReasons)
+        for (Reason reason: dfltReasons)
             dfltNames.push_back("\"" + reasonArgument(reason) + "\"");
         noSwitchDefaults += StringUtility::joinEnglish(dfltNames) + ".";
     } else {
@@ -331,7 +331,7 @@ Reachability::markEntryFunctions(const P2::Partitioner &partitioner, ReasonFlags
 
     resize(partitioner);
     size_t nChanges = 0;
-    BOOST_FOREACH (const P2::Function::Ptr &func, partitioner.functions()) {
+    for (const P2::Function::Ptr &func: partitioner.functions()) {
         P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner.findPlaceholder(func->address());
         ASSERT_require(partitioner.cfg().isValidVertex(vertex));
         if (0 != (func->reasons() & SgAsmFunction::FUNC_ENTRY_POINT)) {
@@ -356,7 +356,7 @@ Reachability::markExportFunctions(const P2::Partitioner &partitioner, ReasonFlag
 
     resize(partitioner);
     size_t nChanges = 0;
-    BOOST_FOREACH (const P2::Function::Ptr &func, partitioner.functions()) {
+    for (const P2::Function::Ptr &func: partitioner.functions()) {
         P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner.findPlaceholder(func->address());
         ASSERT_require(partitioner.cfg().isValidVertex(vertex));
         if (0 != (func->reasons() & SgAsmFunction::FUNC_EXPORT)) {
@@ -420,9 +420,9 @@ Reachability::markSpecifiedVas(const P2::Partitioner &partitioner, const std::ve
 
     resize(partitioner);
     size_t nChanges = 0;
-    BOOST_FOREACH (const AddressInterval &interval, where) {
+    for (const AddressInterval &interval: where) {
         std::vector<SgAsmInstruction*> insns = partitioner.instructionsOverlapping(interval);
-        BOOST_FOREACH (SgAsmInstruction *insn, insns) {
+        for (SgAsmInstruction *insn: insns) {
             P2::BasicBlock::Ptr bb = partitioner.basicBlockContainingInstruction(insn->get_address());
             ASSERT_not_null(bb);
             if (intrinsicallyReachable(partitioner.findPlaceholder(bb->address())->id(), how))
@@ -522,7 +522,7 @@ std::set<size_t>
 Reachability::findExplicitInstructionReferents(const P2::Partitioner &partitioner, const P2::BasicBlock::Ptr &bb) {
     ASSERT_not_null(bb);
     std::set<size_t> vertexIds;
-    BOOST_FOREACH (rose_addr_t constant, bb->explicitConstants()) {
+    for (rose_addr_t constant: bb->explicitConstants()) {
         P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner.findPlaceholder(constant);
         if (vertex != partitioner.cfg().vertices().end() && vertex->value().type() == P2::V_BASIC_BLOCK)
             vertexIds.insert(vertex->id());
@@ -617,7 +617,7 @@ Reachability::findImplicitFunctionReferents(const P2::Partitioner &partitioner, 
     ASSERT_not_null(function);
     std::set<size_t> vertexIds;
 
-    BOOST_FOREACH (rose_addr_t constant, partitioner.functionDataFlowConstants(function)) {
+    for (rose_addr_t constant: partitioner.functionDataFlowConstants(function)) {
         P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner.findPlaceholder(constant);
         if (vertex != partitioner.cfg().vertices().end() && vertex->value().type() == P2::V_BASIC_BLOCK)
             vertexIds.insert(vertex->id());
@@ -657,7 +657,7 @@ Reachability::cacheImplicitFunctionReferents(const P2::Partitioner &partitioner,
     DataFlowReferences analyzer(partitioner, dfReferents_);
     Sawyer::Stopwatch timer;
     Sawyer::Container::Graph<P2::Function::Ptr> depgraph;
-    BOOST_FOREACH (const P2::Function::Ptr &function, functions) {
+    for (const P2::Function::Ptr &function: functions) {
         if (!dfReferents_.exists(function))
             depgraph.insertVertex(function);
     }
@@ -740,7 +740,7 @@ Reachability::iterationMarking(const P2::Partitioner &partitioner, const std::ve
     size_t nMarked = 0;
     std::set<P2::Function::Ptr> functionsToAnalyze;
 
-    BOOST_FOREACH (size_t vertexId, vertexIds) {
+    for (size_t vertexId: vertexIds) {
         P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner.cfg().findVertex(vertexId);
         P2::BasicBlock::Ptr bblock;
         if (vertex->value().type() == P2::V_BASIC_BLOCK)
@@ -753,7 +753,7 @@ Reachability::iterationMarking(const P2::Partitioner &partitioner, const std::ve
         // Find functions that need to have the data-flow constants calculated
         if (settings_.markingImplicitFunctionReferents.isAnySet() && bblock) {
             std::vector<P2::Function::Ptr> functions = partitioner.functionsOwningBasicBlock(bblock);
-            BOOST_FOREACH (const P2::Function::Ptr &function, functions) {
+            for (const P2::Function::Ptr &function: functions) {
                 if (!dfReferents_.exists(function))
                     functionsToAnalyze.insert(function);
             }
@@ -762,7 +762,7 @@ Reachability::iterationMarking(const P2::Partitioner &partitioner, const std::ve
 
     // Implicit constants in function data-flow
     cacheImplicitFunctionReferents(partitioner, functionsToAnalyze); // done in parallel
-    BOOST_FOREACH (const P2::Function::Ptr &function, functionsToAnalyze) {
+    for (const P2::Function::Ptr &function: functionsToAnalyze) {
         const std::set<size_t> referents = dfReferents_.get(function); // must exist by now, but may be empty
         nMarked += intrinsicallyReachable(referents.begin(), referents.end(), settings_.markingImplicitFunctionReferents);
     }

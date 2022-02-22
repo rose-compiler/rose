@@ -35,7 +35,7 @@ toString(boost::logic::tribool tb,
 
 void
 Partitioner::basicBlockMayReturnReset() const {
-    BOOST_FOREACH (const ControlFlowGraph::VertexValue &vertex, cfg_.vertexValues()) {
+    for (const ControlFlowGraph::VertexValue &vertex: cfg_.vertexValues()) {
         if (vertex.type() == V_BASIC_BLOCK) {
             if (BasicBlock::Ptr bblock = vertex.bblock())
                 bblock->mayReturn().clear();
@@ -66,7 +66,7 @@ Partitioner::basicBlockOptionalMayReturn(const BasicBlock::Ptr &bb) const {
     // If the basic block has any significant successor that may return then this basic block may return.
     bool successorIsIndeterminate=false, calleeMayReturn=false, calleeIsIndeterminate=false;
     std::vector<ControlFlowGraph::ConstVertexIterator> callReturnSuccessors;
-    BOOST_FOREACH (const BasicBlock::Successor &edge, successors) {
+    for (const BasicBlock::Successor &edge: successors) {
         if (!edge.expr()->isConcrete()) {
             successorIsIndeterminate = true;            // sucessor vertex is (or would be) the indeterminate vertex
             continue;
@@ -104,7 +104,7 @@ Partitioner::basicBlockOptionalMayReturn(const BasicBlock::Ptr &bb) const {
 
     // Call-return edges can be processed now.
     if (calleeMayReturn) {
-        BOOST_FOREACH (const ControlFlowGraph::ConstVertexIterator &successor, callReturnSuccessors) {
+        for (const ControlFlowGraph::ConstVertexIterator &successor: callReturnSuccessors) {
             bool b;
             if (!basicBlockOptionalMayReturn(successor).assignTo(b)) {
                 successorIsIndeterminate = true;
@@ -183,7 +183,7 @@ Partitioner::mayReturnDoesCalleeReturn(const ControlFlowGraph::ConstVertexIterat
     if (!vertexInfo[caller->id()].processedCallees) {
         vertexInfo[caller->id()].anyCalleesReturn = false;
         bool hasPositiveCallee = false, hasIndeterminateCallee = false;
-        BOOST_FOREACH (const ControlFlowGraph::Edge &edge, caller->outEdges()) {
+        for (const ControlFlowGraph::Edge &edge: caller->outEdges()) {
             if (edge.value().type() == E_FUNCTION_CALL) {
                 ControlFlowGraph::ConstVertexIterator callee = edge.target();
                 bool mayReturn = false;
@@ -315,7 +315,7 @@ Partitioner::basicBlockOptionalMayReturn(const ControlFlowGraph::ConstVertexIter
 
                     // Properties of functions that own this block.
                     Function::Ptr isBlackListed, isWhiteListed, isDynamicLinked;
-                    BOOST_FOREACH (const Function::Ptr &function, t.vertex()->value().owningFunctions().values()) {
+                    for (const Function::Ptr &function: t.vertex()->value().owningFunctions().values()) {
                         if (function->address() == t.vertex()->value().address()) {
                             bool b = false;
                             if (config_.functionMayReturn(function).assignTo(b)) {

@@ -11,6 +11,8 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Sawyer/GraphTraversal.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/SymbolicSemantics.h>
+
+#include <boost/range/adaptor/reversed.hpp>
 #include <sstream>
 
 using namespace Sawyer::Container;
@@ -129,7 +131,7 @@ public:
         ASSERT_require(cfgCallSite != cfg.vertices().end());
         ASSERT_require(cfgCallSite->value().type() == V_BASIC_BLOCK);
         DfCfg::VertexIterator dfReturnSite = dfCfg.vertices().end();
-        BOOST_FOREACH (const ControlFlowGraph::Edge &edge, cfgCallSite->outEdges()) {
+        for (const ControlFlowGraph::Edge &edge: cfgCallSite->outEdges()) {
             if (edge.value().type() == E_CALL_RETURN) {
                 ASSERT_require(edge.target()->value().type() == V_BASIC_BLOCK);
                 ASSERT_require2(dfReturnSite == dfCfg.vertices().end(),
@@ -249,7 +251,7 @@ public:
 Function::Ptr
 bestSummaryFunction(const FunctionSet &functions) {
     Function::Ptr best;
-    BOOST_FOREACH (const Function::Ptr &function, functions.values()) {
+    for (const Function::Ptr &function: functions.values()) {
         // FIXME[Robb Matzke 2015-12-10]: for now, just choose any function
         best = function;
         break;
@@ -272,7 +274,7 @@ dumpDfCfg(std::ostream &out, const DfCfg &dfCfg) {
 
     // How many subgraphs?
     Sawyer::Container::Map<size_t, std::string> subgraphs;
-    BOOST_FOREACH (const DfCfg::Vertex &vertex, dfCfg.vertices()) {
+    for (const DfCfg::Vertex &vertex: dfCfg.vertices()) {
         if (vertex.value().parentFunction()) {
             subgraphs.insert(vertex.value().inliningId(), vertex.value().parentFunction()->printableName());
         } else {
@@ -281,7 +283,7 @@ dumpDfCfg(std::ostream &out, const DfCfg &dfCfg) {
     }
     
     out <<"digraph dfCfg {\n";
-    BOOST_FOREACH (size_t subgraphId, subgraphs.keys()) {
+    for (size_t subgraphId: subgraphs.keys()) {
         if (subgraphs.size() > 1) {
             out <<"subgraph cluster_" <<subgraphId <<" {\n"
                 <<" graph ["
@@ -289,7 +291,7 @@ dumpDfCfg(std::ostream &out, const DfCfg &dfCfg) {
                 <<" ];\n";
         }
         
-        BOOST_FOREACH (const DfCfg::Vertex &vertex, dfCfg.vertices()) {
+        for (const DfCfg::Vertex &vertex: dfCfg.vertices()) {
             if (vertex.value().inliningId() == subgraphId) {
                 out <<vertex.id() <<" [";
                 if (0 == vertex.id())
@@ -298,7 +300,7 @@ dumpDfCfg(std::ostream &out, const DfCfg &dfCfg) {
                 out <<" label=<<b>Vertex " <<vertex.id() <<"</b>";
                 switch (vertex.value().type()) {
                     case DfCfgVertex::BBLOCK:
-                        BOOST_FOREACH (SgAsmInstruction *insn, vertex.value().bblock()->instructions())
+                        for (SgAsmInstruction *insn: vertex.value().bblock()->instructions())
                             out <<"<br align=\"left\"/>" <<GraphViz::htmlEscape(unparseInstructionWithAddress(insn));
                         out <<"<br align=\"left\"/>> shape=box fontname=Courier";
                         break;
@@ -326,7 +328,7 @@ dumpDfCfg(std::ostream &out, const DfCfg &dfCfg) {
             out <<"}\n";
     }
 
-    BOOST_FOREACH (const DfCfg::Edge &edge, dfCfg.edges()) {
+    for (const DfCfg::Edge &edge: dfCfg.edges()) {
         out <<edge.source()->id() <<" -> " <<edge.target()->id() <<";\n";
     }
 
@@ -405,7 +407,7 @@ findStackVariables(const Function::Ptr &function, const BaseSemantics::RiscOpera
     typedef Sawyer::Container::Map<int64_t, BaseSemantics::SValuePtr> OffsetAddress; // full address per stack offset
     OffsetAddress offsetAddresses;
     BaseSemantics::MemoryCellStatePtr mem = BaseSemantics::MemoryCellState::promote(state->memoryState());
-    BOOST_REVERSE_FOREACH (const BaseSemantics::MemoryCellPtr &cell, mem->allCells()) {
+    for (const BaseSemantics::MemoryCellPtr &cell: boost::adaptors::reverse(mem->allCells())) {
         SymbolicSemantics::SValuePtr address = SymbolicSemantics::SValue::promote(cell->address());
         ASSERT_require2(0 == cell->value()->nBits() % 8, "memory must be byte addressable");
         size_t nBytes = cell->value()->nBits() / 8;
@@ -424,7 +426,7 @@ findStackVariables(const Function::Ptr &function, const BaseSemantics::RiscOpera
     // The cellCoalescer has automatically organized the individual bytes into the largest possible intervals that have the
     // same set of writers and I/O properties.  We just need to pick them off in order to build the return value.
     Variables::StackVariables retval;
-    BOOST_FOREACH (const Variables::OffsetInterval &interval, cellCoalescer.intervals()) {
+    for (const Variables::OffsetInterval &interval: cellCoalescer.intervals()) {
         int64_t offset = interval.least();
         int64_t nRemaining = interval.size();
         ASSERT_require2(nRemaining > 0, "overflow");
@@ -462,7 +464,7 @@ findLocalVariables(const Function::Ptr &function, const BaseSemantics::RiscOpera
                    const BaseSemantics::SValuePtr &initialStackPointer) {
     Variables::StackVariables vars = findStackVariables(function, ops, initialStackPointer);
     Variables::StackVariables retval;
-    BOOST_FOREACH (const Variables::StackVariable &var, vars.values()) {
+    for (const Variables::StackVariable &var: vars.values()) {
         if (var.frameOffset() < 0)
             retval.insert(var.interval(), var);
     }
@@ -474,7 +476,7 @@ findFunctionArguments(const Function::Ptr &function, const BaseSemantics::RiscOp
                       const BaseSemantics::SValuePtr &initialStackPointer) {
     Variables::StackVariables vars = findStackVariables(function, ops, initialStackPointer);
     Variables::StackVariables retval;
-    BOOST_FOREACH (const Variables::StackVariable &var, vars.values()) {
+    for (const Variables::StackVariable &var: vars.values()) {
         if (var.frameOffset() >= 0)
             retval.insert(var.interval(), var);
     }
@@ -496,7 +498,7 @@ findGlobalVariables(const BaseSemantics::RiscOperatorsPtr &ops, size_t wordNByte
     StackWriters stackWriters;
     SymbolicAddresses symbolicAddrs;
     BaseSemantics::MemoryCellStatePtr mem = BaseSemantics::MemoryCellState::promote(state->memoryState());
-    BOOST_REVERSE_FOREACH (const BaseSemantics::MemoryCellPtr &cell, mem->allCells()) {
+    for (const BaseSemantics::MemoryCellPtr &cell: boost::adaptors::reverse(mem->allCells())) {
         ASSERT_require2(0 == cell->value()->nBits() % 8, "memory must be byte addressable");
         size_t nBytes = cell->value()->nBits() / 8;
         ASSERT_require(nBytes > 0);
@@ -514,7 +516,7 @@ findGlobalVariables(const BaseSemantics::RiscOperatorsPtr &ops, size_t wordNByte
 
     // Organize the intervals into a list of global variables
     std::vector<AbstractLocation> retval;
-    BOOST_FOREACH (const AddressInterval &interval, stackWriters.intervals()) {
+    for (const AddressInterval &interval: stackWriters.intervals()) {
         rose_addr_t va = interval.least();
         rose_addr_t nRemaining = interval.size();
         ASSERT_require2(nRemaining>0, "overflow");
@@ -576,7 +578,7 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
             // A previous calling convention analysis knows what registers are clobbered by the call.
             const CallingConvention::Analysis &ccAnalysis = callee->callingConventionAnalysis();
             ccDefn = ccAnalysis.defaultCallingConvention();
-            BOOST_FOREACH (RegisterDescriptor reg, ccAnalysis.outputRegisters().listAll(regDict)) {
+            for (RegisterDescriptor reg: ccAnalysis.outputRegisters().listAll(regDict)) {
                 ops->writeRegister(reg, ops->undefined_(reg.nBits()));
                 if (genericRegState)
                     genericRegState->insertProperties(reg, BaseSemantics::IO_WRITE);
@@ -587,14 +589,14 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
         } else if ((ccDefn = defaultCallingConvention_)) {
             // Use a default calling convention definition to decide what registers should be clobbered. Don't clobber the
             // stack pointer because we might be able to adjust it more intelligently below.
-            BOOST_FOREACH (const CallingConvention::ParameterLocation &loc, ccDefn->outputParameters()) {
+            for (const CallingConvention::ParameterLocation &loc: ccDefn->outputParameters()) {
                 if (loc.type() == CallingConvention::ParameterLocation::REGISTER && loc.reg() != STACK_POINTER_REG) {
                     ops->writeRegister(loc.reg(), ops->undefined_(loc.reg().nBits()));
                     if (genericRegState)
                         genericRegState->updateWriteProperties(loc.reg(), BaseSemantics::IO_WRITE);
                 }
             }
-            BOOST_FOREACH (RegisterDescriptor reg, ccDefn->scratchRegisters()) {
+            for (RegisterDescriptor reg: ccDefn->scratchRegisters()) {
                 if (reg != STACK_POINTER_REG) {
                     ops->writeRegister(reg, ops->undefined_(reg.nBits()));
                     if (genericRegState)
@@ -647,7 +649,7 @@ TransferFunction::operator()(const DfCfg &dfCfg, size_t vertexId, const BaseSema
         // Build a new state using the retval created above, then execute instructions to update it.
         ASSERT_require(vertex->value().type() == DfCfgVertex::BBLOCK);
         ASSERT_not_null(vertex->value().bblock());
-        BOOST_FOREACH (SgAsmInstruction *insn, vertex->value().bblock()->instructions())
+        for (SgAsmInstruction *insn: vertex->value().bblock()->instructions())
             cpu_->processInstruction(insn);
     }
     return retval;

@@ -490,7 +490,7 @@ SmtSolver::nAssertions(size_t level) {
 size_t
 SmtSolver::nAssertions() const {
     size_t retval = 0;
-    BOOST_FOREACH (const std::vector<SymbolicExpr::Ptr> &level, stack_)
+    for (const std::vector<SymbolicExpr::Ptr> &level: stack_)
         retval += level.size();
     return retval;
 }
@@ -498,7 +498,7 @@ SmtSolver::nAssertions() const {
 std::vector<SymbolicExpr::Ptr>
 SmtSolver::assertions() const {
     std::vector<SymbolicExpr::Ptr> retval;
-    BOOST_FOREACH (const std::vector<SymbolicExpr::Ptr> &level, stack_)
+    for (const std::vector<SymbolicExpr::Ptr> &level: stack_)
         retval.insert(retval.end(), level.begin(), level.end());
     return retval;
 }
@@ -520,7 +520,7 @@ SmtSolver::insert(const SymbolicExpr::Ptr &expr) {
 
 void
 SmtSolver::insert(const std::vector<SymbolicExpr::Ptr> &exprs) {
-    BOOST_FOREACH (const SymbolicExpr::Ptr &expr, exprs)
+    for (const SymbolicExpr::Ptr &expr: exprs)
         insert(expr);
 }
 
@@ -534,7 +534,7 @@ SmtSolver::checkTrivial() {
     // If any assertion is a constant zero, then NO
     // If all assertions are non-zero integer constants, then YES
     bool allTrue = true;
-    BOOST_FOREACH (const SymbolicExpr::Ptr &expr, exprs) {
+    for (const SymbolicExpr::Ptr &expr: exprs) {
         if (expr->isIntegerConstant()) {
             ASSERT_require(1 == expr->nBits());
             if (expr->toUnsigned().get() == 0)
@@ -555,7 +555,7 @@ SmtSolver::normalizeVariables(const std::vector<SymbolicExpr::Ptr> &exprs, Symbo
     size_t varCounter = 0;
     std::vector<SymbolicExpr::Ptr> retval;
     retval.reserve(exprs.size());
-    BOOST_FOREACH (const SymbolicExpr::Ptr &expr, exprs)
+    for (const SymbolicExpr::Ptr &expr: exprs)
         retval.push_back(expr->renameVariables(index /*in,out*/, varCounter /*in,out*/));
     return retval;
 }
@@ -565,7 +565,7 @@ SmtSolver::undoNormalization(const std::vector<SymbolicExpr::Ptr> &exprs, const 
     SymbolicExpr::ExprExprHashMap denorm = norm.invert();
     std::vector<SymbolicExpr::Ptr> retval;
     retval.reserve(exprs.size());
-    BOOST_FOREACH (const SymbolicExpr::Ptr &expr, exprs)
+    for (const SymbolicExpr::Ptr &expr: exprs)
         retval.push_back(expr->substituteMultiple(denorm));
     return retval;
 }
@@ -576,7 +576,7 @@ SmtSolver::check() {
 
     if (mlog[DEBUG]) {
         mlog[DEBUG] <<"assertions:\n";
-        BOOST_FOREACH (const SymbolicExpr::Ptr &expr, assertions())
+        for (const SymbolicExpr::Ptr &expr: assertions())
             mlog[DEBUG] <<"  " <<*expr <<"\n";
     }
 
@@ -750,7 +750,7 @@ SmtSolver::checkExe() {
 
     // Look for an expression that's just "sat" or "unsat"
     Satisfiable sat = SAT_UNKNOWN;
-    BOOST_FOREACH (const SExpr::Ptr &expr, parsedOutput_) {
+    for (const SExpr::Ptr &expr: parsedOutput_) {
         if (expr->name() == "sat") {
             sat = SAT_YES;
         } else if (expr->name() == "unsat") {
@@ -1101,7 +1101,7 @@ SmtSolver::selfTest() {
                 case SAT_YES:
                     mlog[TRACE] <<"satisfiable\n";
 
-                    BOOST_FOREACH (const std::string &evidenceName, evidenceNames()) {
+                    for (const std::string &evidenceName: evidenceNames()) {
                         E evidence = evidenceForName(evidenceName);
                         ASSERT_always_not_null(evidence);
                         mlog[DEBUG] <<"  evidence: " <<evidenceName <<" = " <<*evidence <<"\n";

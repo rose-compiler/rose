@@ -5,7 +5,6 @@
 #include <Rose/BinaryAnalysis/Partitioner2/AddressUsageMap.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 #include "AsmUnparser_compat.h"
-#include <boost/foreach.hpp>
 #include <integerOps.h>
 
 using namespace Sawyer::Message::Common;
@@ -42,7 +41,7 @@ AddressUser::eraseBasicBlock(const BasicBlock::Ptr &bblock) {
 BasicBlock::Ptr
 AddressUser::isBlockEntry() const {
     if (insn_) {
-        BOOST_FOREACH (const BasicBlock::Ptr &bb, bblocks_) {
+        for (const BasicBlock::Ptr &bb: bblocks_) {
             if (insn_->get_address() == bb->address())
                 return bb;
         }
@@ -94,7 +93,7 @@ AddressUser::print(std::ostream &out) const {
         if (bblocks_.empty()) {
             out <<"{B-none ";
         } else {
-            BOOST_FOREACH (const BasicBlock::Ptr &bb, bblocks_)
+            for (const BasicBlock::Ptr &bb: bblocks_)
                 out <<"B-" <<StringUtility::addrToString(bb->address()) <<" ";
         }
         out <<insn_->toString() <<"}";
@@ -155,7 +154,7 @@ AddressUsers::basicBlockExists(const BasicBlock::Ptr &bb) const {
 BasicBlock::Ptr
 AddressUsers::basicBlockExists(rose_addr_t va) const {
     const std::vector<BasicBlock::Ptr> &candidates = findBasicBlock(va).basicBlocks();
-    BOOST_FOREACH (const BasicBlock::Ptr &bb, candidates) {
+    for (const BasicBlock::Ptr &bb: candidates) {
         if (bb->address() == va)
             return bb;
     }
@@ -184,7 +183,7 @@ AddressUsers::findInstruction(SgAsmInstruction *insn) const {
 AddressUser
 AddressUsers::findInstruction(rose_addr_t va) const {
     // This could be a binary search, but since instructions seldom overlap much, linear is almost certainly ok.
-    BOOST_FOREACH (const AddressUser &user, users_) {
+    for (const AddressUser &user: users_) {
         if (user.insn() && user.insn()->get_address() == va)
             return user;
     }
@@ -202,9 +201,9 @@ AddressUsers::findBasicBlock(const BasicBlock::Ptr &bblock) const {
 
 AddressUser
 AddressUsers::findBasicBlock(rose_addr_t va) const {
-    BOOST_FOREACH (const AddressUser &user, users_) {
+    for (const AddressUser &user: users_) {
         if (user.insn()) {
-            BOOST_FOREACH (const BasicBlock::Ptr &bb, user.basicBlocks()) {
+            for (const BasicBlock::Ptr &bb: user.basicBlocks()) {
                 if (bb->address() == va)
                     return user;
             }
@@ -224,7 +223,7 @@ AddressUsers::findDataBlock(const DataBlock::Ptr &dblock) const {
 
 AddressUser
 AddressUsers::findDataBlock(rose_addr_t va, rose_addr_t size) const {
-    BOOST_FOREACH (const AddressUser &user, users_) {
+    for (const AddressUser &user: users_) {
         if (const DataBlock::Ptr &candidate = user.dataBlock()) {
             if (candidate->address() == va && candidate->size() == size)
                 return user;
@@ -268,7 +267,7 @@ AddressUsers::insert(const AddressUsers &other) {
     if (users_.empty()) {
         users_ = other.users_;
     } else {
-        BOOST_FOREACH (const AddressUser &user, other.users_) {
+        for (const AddressUser &user: other.users_) {
             std::vector<AddressUser>::iterator lb = std::lower_bound(users_.begin(), users_.end(), user);
             if (lb == users_.end() || !(*lb == user))
                 users_.insert(lb, user);
@@ -315,7 +314,7 @@ AddressUsers::eraseDataBlock(const DataBlock::Ptr &dblock) {
 std::vector<SgAsmInstruction*>
 AddressUsers::instructions() const {
     std::vector<SgAsmInstruction*> insns;
-    BOOST_FOREACH (const AddressUser &user, users_) {
+    for (const AddressUser &user: users_) {
         if (SgAsmInstruction *insn = user.insn())
             insns.push_back(insn);
     }
@@ -326,9 +325,9 @@ AddressUsers::instructions() const {
 std::vector<BasicBlock::Ptr>
 AddressUsers::instructionOwners() const {
     std::vector<BasicBlock::Ptr> bblocks;
-    BOOST_FOREACH (const AddressUser &user, users_) {
+    for (const AddressUser &user: users_) {
         if (user.insn()) {
-            BOOST_FOREACH (const BasicBlock::Ptr &bb, user.basicBlocks()) {
+            for (const BasicBlock::Ptr &bb: user.basicBlocks()) {
                 ASSERT_not_null(bb);
                 insertUnique(bblocks, bb, sortBasicBlocksByAddress);
             }
@@ -340,7 +339,7 @@ AddressUsers::instructionOwners() const {
 std::vector<DataBlock::Ptr>
 AddressUsers::dataBlocks() const {
     std::vector<DataBlock::Ptr> dblocks;
-    BOOST_FOREACH (const AddressUser &user, users_) {
+    for (const AddressUser &user: users_) {
         if (DataBlock::Ptr dblock = user.dataBlock())
             insertUnique(dblocks, dblock, sortDataBlocks);
     }
@@ -432,7 +431,7 @@ AddressUsers::isConsistent() const {
 void
 AddressUsers::print(std::ostream &out) const {
     size_t nItems = 0;
-    BOOST_FOREACH (const AddressUser &addressUser, users_)
+    for (const AddressUser &addressUser: users_)
         out <<(1==++nItems?"":", ") <<addressUser;
 }
 
@@ -443,7 +442,7 @@ AddressUsers::print(std::ostream &out) const {
 AddressIntervalSet
 AddressUsageMap::extent() const {
     AddressIntervalSet retval;
-    BOOST_FOREACH (const Map::Interval &interval, map_.intervals())
+    for (const Map::Interval &interval: map_.intervals())
         retval.insert(interval);
     return retval;
 }
@@ -456,7 +455,7 @@ AddressUsageMap::anyExists(const AddressInterval &where) const {
 bool
 AddressUsageMap::anyExists(const AddressIntervalSet &where) const {
     // FIXME[Robb P Matzke 2016-06-28]: this could be even faster by using iterators and lowerBound.
-    BOOST_FOREACH (const AddressInterval &interval, where.intervals()) {
+    for (const AddressInterval &interval: where.intervals()) {
         if (anyExists(interval))
             return true;
     }
@@ -580,7 +579,7 @@ AddressUsageMap::insertInstruction(SgAsmInstruction *insn, const BasicBlock::Ptr
     AddressInterval interval = AddressInterval::baseSize(insn->get_address(), insn->get_size());
     Map adjustment;
     adjustment.insert(interval, AddressUsers(insn, bblock));
-    BOOST_FOREACH (const Map::Node &node, map_.findAll(interval)) {
+    for (const Map::Node &node: map_.findAll(interval)) {
         AddressUsers newUsers = node.value();
         retval = newUsers.insertInstruction(insn, bblock); // all should be the same
         adjustment.insert(interval.intersection(node.key()), newUsers);
@@ -597,7 +596,7 @@ AddressUsageMap::insertDataBlock(const DataBlock::Ptr &db) {
     AddressInterval interval = db->extent();
     Map adjustment;
     adjustment.insert(interval, AddressUsers(db));
-    BOOST_FOREACH (const Map::Node &node, map_.findAll(interval)) {
+    for (const Map::Node &node: map_.findAll(interval)) {
         AddressUsers newUsers = node.value();
         retval = newUsers.insertDataBlock(db);          // all should be the same
         adjustment.insert(interval.intersection(node.key()), newUsers);
@@ -613,7 +612,7 @@ AddressUsageMap::eraseInstruction(SgAsmInstruction *insn, const BasicBlock::Ptr 
         ASSERT_not_null(bblock);
         AddressInterval interval = AddressInterval::baseSize(insn->get_address(), insn->get_size());
         Map adjustment;
-        BOOST_FOREACH (const Map::Node &node, map_.findAll(interval)) {
+        for (const Map::Node &node: map_.findAll(interval)) {
             AddressUsers newUsers = node.value();
             retval = newUsers.eraseInstruction(insn, bblock);// all should be the same
             if (!newUsers.isEmpty())
@@ -631,7 +630,7 @@ AddressUsageMap::eraseDataBlock(const DataBlock::Ptr &db) {
     if (db) {
         AddressInterval interval = db->extent();
         Map adjustment;
-        BOOST_FOREACH (const Map::Node &node, map_.findAll(interval)) {
+        for (const Map::Node &node: map_.findAll(interval)) {
             AddressUsers newUsers = node.value();
             retval = newUsers.eraseDataBlock(db);       // all should be the same
             if (!newUsers.isEmpty())
@@ -649,14 +648,14 @@ AddressUsageMap::print(std::ostream &out, const std::string &prefix) const {
     if (map_.isEmpty()) {
         out <<prefix <<"empty\n";
     } else {
-        BOOST_FOREACH (const Map::Node &node, map_.nodes()) {
+        for (const Map::Node &node: map_.nodes()) {
             out <<prefix <<"[" <<addrToString(node.key().least()) <<"," <<addrToString(node.key().greatest())
                 <<"] " <<StringUtility::plural(node.key().size(), "bytes") << "\n";
             const AddressUsers users = node.value();
-            BOOST_FOREACH (const AddressUser &user, users.addressUsers()) {
+            for (const AddressUser &user: users.addressUsers()) {
                 if (SgAsmInstruction *insn = user.insn()) {
                     out <<prefix <<"  " <<insn->toString() <<"\n";
-                    BOOST_FOREACH (const BasicBlock::Ptr &bb, user.basicBlocks())
+                    for (const BasicBlock::Ptr &bb: user.basicBlocks())
                         out <<prefix <<"    owned by " <<bb->printableName()
                             <<" having " <<plural(bb->nInstructions(), "instructions") <<"\n";
                 } else {
@@ -664,9 +663,9 @@ AddressUsageMap::print(std::ostream &out, const std::string &prefix) const {
                     ASSERT_not_null(db);
                     out <<prefix <<"  " <<db->printableName()
                         <<" having " <<plural(db->size(), "bytes")<<"\n";
-                    BOOST_FOREACH (const BasicBlock::Ptr &bb, db->attachedBasicBlockOwners())
+                    for (const BasicBlock::Ptr &bb: db->attachedBasicBlockOwners())
                         out <<prefix <<"    owned by " <<bb->printableName() <<"\n";
-                    BOOST_FOREACH (const Function::Ptr &f, db->attachedFunctionOwners())
+                    for (const Function::Ptr &f: db->attachedFunctionOwners())
                         out <<prefix <<"    owned by " <<f->printableName() <<"\n";
                 }
             }
@@ -681,9 +680,9 @@ AddressUsageMap::checkConsistency() const {
 
     // Find all distinct data block objects
     std::set<DataBlock::Ptr> allDataBlocks;
-    BOOST_FOREACH (const Map::Node &node, map_.nodes()) {
+    for (const Map::Node &node: map_.nodes()) {
         const AddressUsers &users = node.value();
-        BOOST_FOREACH (const AddressUser &user, users.addressUsers()) {
+        for (const AddressUser &user: users.addressUsers()) {
             if (DataBlock::Ptr dblock = user.dataBlock())
                 allDataBlocks.insert(dblock);
         }
@@ -719,14 +718,14 @@ AddressUsageMap::insertDataBlock(const OwnedDataBlock &odb) {
     // Update the existing parts of the interval by merging this odb's ownership info into the existing odb. Even if the map
     // contains multiple overlapping parts, all the OwnedDataBlock objects containing the specified dblock or equivalent dblock
     // will have the same data block pointer and ownership lists.
-    BOOST_FOREACH (Map::Node &node, map_.findAll(interval)) {
+    for (Map::Node &node: map_.findAll(interval)) {
         missingParts.erase(node.key());
         AddressUsers &newUsers = node.value();
         retval = newUsers.insertDataBlock(odb);
     }
 
     // Add the missing parts of the interval.
-    BOOST_FOREACH (const AddressInterval &i, missingParts.intervals())
+    for (const AddressInterval &i: missingParts.intervals())
         map_.insert(i, AddressUsers(odb));
 
     // Either there was at least one matching OwnedDataBlock that was updated (and copied into retval), or we simply inserted
@@ -739,7 +738,7 @@ AddressUsageMap::eraseDataBlock(const DataBlock::Ptr &dblock) {
     if (dblock) {
         AddressInterval interval = dblock->extent();
         Map adjustment;
-        BOOST_FOREACH (const Map::Node &node, map_.findAll(interval)) {
+        for (const Map::Node &node: map_.findAll(interval)) {
             AddressUsers newUsers = node.value();
             newUsers.eraseDataBlock(dblock);
             if (!newUsers.isEmpty())
@@ -755,7 +754,7 @@ AddressUsageMap::eraseDataBlockOwners(const OwnedDataBlock &odb) {
     OwnedDataBlock remaining;
     if (odb.isValid()) {
         AddressInterval interval = odb.dataBlock()->extent();
-        BOOST_FOREACH (Map::Node &node, map_.findAll(interval)) {
+        for (Map::Node &node: map_.findAll(interval)) {
             AddressUsers &users = node.value();
             remaining = users.eraseDataBlockOwners(odb); // all returns will be the same
         }

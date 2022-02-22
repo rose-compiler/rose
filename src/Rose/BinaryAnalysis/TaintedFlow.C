@@ -39,7 +39,7 @@ TaintedFlow::merge(Taintedness a, Taintedness b) {
 
 TaintedFlow::Taintedness &
 TaintedFlow::State::lookup(const DataFlow::Variable &variable) {
-    BOOST_FOREACH (VarTaintList::value_type &node, taints_) {
+    for (VarTaintList::value_type &node: taints_) {
         if (node.first.mustAlias(variable))
             return node.second;
     }
@@ -48,7 +48,7 @@ TaintedFlow::State::lookup(const DataFlow::Variable &variable) {
 
 bool
 TaintedFlow::State::setIfExists(const DataFlow::Variable &variable, Taintedness taint) {
-    BOOST_FOREACH (VarTaintList::value_type &node, taints_) {
+    for (VarTaintList::value_type &node: taints_) {
         if (node.first.mustAlias(variable)) {
             node.second = taint;
             return true;
@@ -60,7 +60,7 @@ TaintedFlow::State::setIfExists(const DataFlow::Variable &variable, Taintedness 
 bool
 TaintedFlow::State::merge(const StatePtr &other) {
     bool changed = false;
-    BOOST_FOREACH (const VarTaintList::value_type &otherNode, other->taints_) {
+    for (const VarTaintList::value_type &otherNode: other->taints_) {
         Taintedness otherTaint = otherNode.second;
         Taintedness &myTaint = lookup(otherNode.first);
         Taintedness newTaint = TaintedFlow::merge(myTaint, otherTaint);
@@ -73,7 +73,7 @@ TaintedFlow::State::merge(const StatePtr &other) {
 
 void
 TaintedFlow::State::print(std::ostream &out) const {
-    BOOST_FOREACH (const VarTaintList::value_type &node, taints_) {
+    for (const VarTaintList::value_type &node: taints_) {
         DataFlow::Variable var = node.first;
         Taintedness taint = node.second;
         switch (taint) {
@@ -129,7 +129,7 @@ TaintedFlow::TransferFunction::operator()(size_t cfgVertex, const StatePtr &in) 
 
             case OVER_APPROXIMATE: {
                 StatePtr tmp = out->copy();
-                BOOST_FOREACH (VariableTaint &varTaint, tmp->variables()) {
+                for (VariableTaint &varTaint: tmp->variables()) {
                     DataFlow::Variable &dstVariable = varTaint.first;
                     Taintedness &dstTaint = varTaint.second;
                     if (dstVariable.mustAlias(edge.target()->value(), smtSolver_)) {

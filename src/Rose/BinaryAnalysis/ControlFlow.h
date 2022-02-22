@@ -7,7 +7,7 @@
 #include "WorkLists.h"
 #include "SageBuilderAsm.h"
 
-#include <boost/foreach.hpp>
+#include <boost/foreach.hpp>                            // needed for iteration over boost::vertices
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/reverse_graph.hpp>
 #include <boost/graph/depth_first_search.hpp>
@@ -674,7 +674,7 @@ ControlFlow::build_block_cfg_from_ast(SgNode *root, ControlFlowGraph &cfg)
     // Add the edges
     BOOST_FOREACH (Vertex sourceVertex, boost::vertices(cfg)) {
         SgAsmBlock *sourceBlock = get_ast_node(cfg, sourceVertex);
-        BOOST_FOREACH (SgAsmIntegerValueExpression *integerValue, sourceBlock->get_successors()) {
+        for (SgAsmIntegerValueExpression *integerValue: sourceBlock->get_successors()) {
             Vertex targetVertex = addrToVertex.get_value_or(integerValue->get_absoluteValue(), NO_VERTEX);
             if (targetVertex!=NO_VERTEX) {
                 SgAsmBlock *targetBlock = get_ast_node(cfg, targetVertex);
