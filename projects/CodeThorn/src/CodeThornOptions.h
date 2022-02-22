@@ -239,6 +239,7 @@ public:
     std::string astTraversalLineColumnCSVFileName;
     bool astSymbolPointerCheckReport=false; // checks if symbol pointers are non-zero or contain memory pool delete fill byte
     std::string astSymbolPointerCheckReportFileName="ast-symbol-pointer-check-report.txt";
+    bool dumpFunctionCallMapping=false;
   } info;
 
   void configurePrecisionOption();
