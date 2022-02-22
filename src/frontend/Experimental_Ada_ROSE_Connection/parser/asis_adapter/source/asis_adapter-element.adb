@@ -1,4 +1,5 @@
 with Asis.Compilation_Units;
+with Asis.Declarations;
 with Asis.Elements;
 with Asis.Iterator;
 --  -- GNAT-specific:
@@ -566,6 +567,46 @@ package body Asis_Adapter.Element is
         Pre_Operation     => Do_Pre_Child_Processing,
         Post_Operation    => Do_Post_Child_Processing);
 
+  procedure Process_Instantiation (
+        Elem       : in Asis.Element;               -- 3.6
+        Control    : in out Asis.Traverse_Control;  -- 3.13
+        Dummy      : in out boolean) is
+      Element_Kind : constant Asis.Element_Kinds :=
+        Asis.Elements.Element_Kind (Elem);
+      use all type Asis.Element_Kinds;
+      use all type Asis.Declaration_Kinds;
+      corresponding_Decl : Asis.Declaration;
+      corresponding_Body : Asis.Declaration;
+   begin
+      if Element_Kind = A_Declaration then
+        declare
+           Declaration_Kind : Asis.Declaration_Kinds :=
+             Asis.Elements.Declaration_Kind (Elem);
+        begin
+          if Declaration_Kind = A_PACKAGE_INSTANTIATION  then
+            corresponding_Decl := Asis.Declarations.Corresponding_Declaration (Elem); 
+            corresponding_Body := Asis.Declarations.Corresponding_Body (Elem); 
+            PUT_LINE("found instantiation"); 
+          end if;
+        end;
+     end if;
+
+   end Process_Instantiation;
+
+   procedure No_Op (
+        Elem       : in Asis.Element;               -- 3.6
+        Control    : in out Asis.Traverse_Control;  -- 3.13
+        Dummy      : in out boolean) is
+   begin
+     NULL;
+   end No_Op;
+
+   procedure Traverse_Instantiation is new
+     Asis.Iterator.Traverse_Element
+       (Boolean,
+        Process_Instantiation,
+        No_Op);
+
    ------------
    -- EXPORTED:
    ------------
@@ -587,6 +628,19 @@ package body Asis_Adapter.Element is
          Control => Process_Control,
          State   => This);
    end Process_Element_Tree;
+
+   procedure Process_Instantiation 
+     (This    : in out Class;
+      Element : in     Asis.Element)
+   is
+      Process_Control : Asis.Traverse_Control := Asis.Continue;
+      Dummy   : boolean;
+   begin
+      Traverse_Instantiation
+        (Element => Element,
+         Control => Process_Control,
+         State   => Dummy);
+   end Process_Instantiation;
 
 end Asis_Adapter.Element;
 

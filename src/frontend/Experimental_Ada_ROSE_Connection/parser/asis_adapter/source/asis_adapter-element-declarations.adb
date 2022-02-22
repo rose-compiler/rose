@@ -1,8 +1,12 @@
 with Asis.Declarations;
+with Asis.Iterator;
 with Asis.Extensions;
 with Asis.Elements;
 with Asis.Expressions;
 with Asis.Set_Get;
+with Asis.Compilation_Units;
+with Asis_Adapter.Element;
+with Asis_Adapter.Unit;
 package body Asis_Adapter.Element.Declarations is
 
    procedure Do_Pre_Child_Processing
@@ -69,9 +73,23 @@ package body Asis_Adapter.Element.Declarations is
       end;
 
       procedure Add_Corresponding_Body is
+         decl : Asis.Declaration := Asis.Declarations.Corresponding_Body (Element);
+         cunit : Asis.Compilation_Unit;
          ID : constant a_nodes_h.Element_ID :=
            Get_Element_ID (Asis.Declarations.Corresponding_Body (Element));
+         additional_Element : Asis_Adapter.Element.Class;
+
+      use all type Asis.Declaration_Kinds;
       begin
+ 
+         if Declaration_Kind = A_PACKAGE_INSTANTIATION  
+           or else Declaration_Kind = A_PROCEDURE_INSTANTIATION 
+           or else Declaration_Kind = A_FUNCTION_INSTANTIATION then
+             cunit := Asis.Elements.Enclosing_Compilation_Unit(decl);
+             PUT_LINE("AssocBody CUNIT name:" &  Asis.Set_Get.Get_Unit_Id (cunit)'Image & " kind:" & Declaration_Kind'Image & " body ID:" & To_String(ID)); 
+             additional_Element.Process_Instantiation(decl);
+             additional_Element.Process_Element_Tree(decl, state.Outputs);
+        end if;
          State.Add_To_Dot_Label ("Corresponding_Body", ID);
          Result.Corresponding_Body := ID;
       end;
@@ -101,9 +119,21 @@ package body Asis_Adapter.Element.Declarations is
       end;
 
       procedure Add_Corresponding_Declaration is
+         decl : Asis.Declaration := Asis.Declarations.Corresponding_Declaration (Element);
+         cunit : Asis.Compilation_Unit;
          ID : constant a_nodes_h.Element_ID :=
            Get_Element_ID (Asis.Declarations.Corresponding_Declaration (Element));
+         additional_Element : Asis_Adapter.Element.Class;
+      use all type Asis.Declaration_Kinds;
       begin
+         if Declaration_Kind = A_PACKAGE_INSTANTIATION  
+           or else Declaration_Kind = A_PROCEDURE_INSTANTIATION 
+           or else Declaration_Kind = A_FUNCTION_INSTANTIATION then
+             cunit := Asis.Elements.Enclosing_Compilation_Unit(decl);
+             PUT_LINE("CUNIT name:" &  Asis.Set_Get.Get_Unit_Id (cunit)'Image & " kind:" & Declaration_Kind'Image & " body ID:" & To_String(ID)); 
+             additional_Element.Process_Instantiation(decl);
+             additional_Element.Process_Element_Tree(decl, state.Outputs);
+         end if;
          State.Add_To_Dot_Label ("Corresponding_Declaration", ID);
          Result.Corresponding_Declaration := ID;
       end;
