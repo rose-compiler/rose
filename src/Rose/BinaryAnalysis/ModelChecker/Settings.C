@@ -67,16 +67,22 @@ Settings::commandLineSwitches() {
                                            "the trade off is that a hash must be computed and stored.");
 
     sg.insert(Switch("max-path-length", 'k')
-              .argument("nsteps", positiveIntegerParser(k))
+              .argument("nsteps", positiveIntegerParser(kSteps))
               .doc("Maximum path length in steps before abandoning any further exploration. A step generally corresponds to "
                    "a single instruction for those execution units that have instructions. The default is " +
-                   StringUtility::plural(k, "steps") + "."));
+                   (UNLIMITED == kSteps ? "unlimited" : StringUtility::plural(kSteps, "steps")) + "."));
+
+    sg.insert(Switch("max-path-nodes")
+              .argument("nnodes", positiveIntegerParser(kNodes))
+              .doc("Maximum path length in nodes before abandoning any further exploration. A node is usually a basic block "
+                   "but can occassionally be an instruction or a function call summary. The default is " +
+                   (UNLIMITED == kNodes ? "unlimited" : StringUtility::plural(kNodes, "nodes")) + "."));
 
     sg.insert(Switch("max-path-time", 't')
               .argument("duration", Rose::CommandLine::durationParser(maxTime))
               .doc("Maximum time to spend exploring any given path. If a path takes longer than the specified time, "
                    "then no paths with that prefix are explored. " + Rose::CommandLine::DurationParser::docString() +
-                   " The default is " + Rose::CommandLine::DurationParser::toString(maxTime) + "."));
+                   " The default is " + Rose::CommandLine::durationParser()->toString(maxTime) + "."));
 
     sg.insert(Switch("replace-symbolic")
               .argument("nnodes", nonNegativeIntegerParser(maxSymbolicSize))
@@ -88,7 +94,7 @@ Settings::commandLineSwitches() {
               .argument("duration", Rose::CommandLine::durationParser(solverTimeout))
               .doc("Specifies the maximum amount of elapsed time for each call to the SMT solver. If this time limit expires, the "
                    "solver returns an answer of \"unknown\". " + Rose::CommandLine::DurationParser::docString() +
-                   " The default is " + Rose::CommandLine::DurationParser::toString(solverTimeout) + "."));
+                   " The default is " + Rose::CommandLine::durationParser()->toString(solverTimeout) + "."));
 
     return sg;
 }

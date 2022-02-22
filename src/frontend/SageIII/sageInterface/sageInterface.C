@@ -1937,15 +1937,15 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
               break;
             }
 
-            case V_SgAdaLengthClause:
+            case V_SgAdaAttributeClause:
             {
-              name = "_ada_length_clause_";
+              name = "_ada_attribute_clause_";
               break;
             }
 
-            case V_SgAdaRecordRepresentationClause:
+            case V_SgAdaRepresentationClause:
             {
-              name = "_ada_record_representation_clause_";
+              name = "_ada_representation_clause_";
               break;
             }
 
@@ -1967,9 +1967,21 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
               break;
             }
 
+            case V_SgAdaProtectedTypeDecl:
+            {
+              name = genericGetName(isSgAdaProtectedTypeDecl(declaration));
+              break;
+            }
+
             case V_SgAdaTaskBodyDecl:
             {
               name = genericGetName(isSgAdaTaskBodyDecl(declaration));
+              break;
+            }
+
+            case V_SgAdaProtectedBodyDecl:
+            {
+              name = genericGetName(isSgAdaProtectedBodyDecl(declaration));
               break;
             }
 
@@ -1982,6 +1994,12 @@ SageInterface::get_name ( const SgDeclarationStatement* declaration )
             case V_SgAdaTaskSpecDecl:
             {
               name = genericGetName(isSgAdaTaskSpecDecl(declaration));
+              break;
+            }
+
+            case V_SgAdaProtectedSpecDecl:
+            {
+              name = genericGetName(isSgAdaProtectedSpecDecl(declaration));
               break;
             }
 
@@ -2069,6 +2087,8 @@ SageInterface::get_name ( const SgScopeStatement* scope )
           case V_SgAdaPackageBody:
           case V_SgAdaTaskSpec:
           case V_SgAdaTaskBody:
+          case V_SgAdaProtectedSpec:
+          case V_SgAdaProtectedBody:
           case V_SgAdaGenericDefn:
           case V_SgAdaAcceptStmt:
           case V_SgJovialForThenStatement: //Rasmussen: Jovial for statement
@@ -11070,7 +11090,7 @@ void SageInterface::replaceExpression(SgExpression* oldExp, SgExpression* newExp
         //SgExprListExp* parentExpListExp = isSgExprListExp(parent);
         //parentExpListExp->replace_expression(oldExp,newExp);
         //ada_idx_c->replace_expression(oldExp,newExp);
-        *i = newExp; 
+        *i = newExp;
         newExp->set_parent(ada_idx_c);
        // break; //replace the first occurrence only??
       }
@@ -21564,7 +21584,7 @@ static void moveOneStatement(SgScopeStatement* sourceBlock, SgScopeStatement* ta
       case V_SgJovialDefineDeclaration:
       case V_SgJovialDirectiveStatement:
       case V_SgPragmaDeclaration:
-      case V_SgAdaLengthClause:
+      case V_SgAdaAttributeClause:
         break;
       default:
         {
@@ -25093,38 +25113,59 @@ void SageInterface::recursivePrintCurrentAndParent (SgNode* n)
   recursivePrintCurrentAndParent (n->get_parent());
 }
 // forward declaration is needed here
-static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringstream& out);
+static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringstream& out, string& edgeLabel);
 
 // A special node in the AST text dump
-static void serialize(SgTemplateArgumentPtrList& plist, string& prefix, bool hasRemaining, ostringstream& out)
+static void serialize(SgTemplateArgumentPtrList& plist, string& prefix, bool hasRemaining, ostringstream& out, string& edgeLabel)
 {
   out<<prefix;
   out<< (hasRemaining?"|---": "|___");
 
+//  out<<"+"<<edgeLabel<<"+>";
+  out<<" "<<edgeLabel<<" ->";
   // print address
   out<<"@"<<&plist<<" "<< "SgTemplateArgumentPtrList ";
 
   out<<endl;
+
+  int last_non_null_child_idx =-1;
+  for (int i = (int) (plist.size())-1; i>=0; i--)
+  {
+    if (plist[i])
+    {
+      last_non_null_child_idx = i;
+      break;
+    }
+  }
+
   for (size_t i=0; i< plist.size(); i++ )
   {
     bool n_hasRemaining=false;
+#if 0
     if (i+1 < plist.size())
       n_hasRemaining=true;
+#else
+    if ((int)i< last_non_null_child_idx) n_hasRemaining = true;
+#endif
     string suffix= hasRemaining? "|   " : "    ";
     string n_prefix = prefix+suffix;
-    serialize (plist[i], n_prefix, n_hasRemaining, out);
+    string n_edge_label="";
+    if (plist[i])
+      serialize (plist[i], n_prefix, n_hasRemaining, out,n_edge_label);
   }
 }
 
 // print essential information from any AST node
 // hasRemaining if this node has a sibling node to be visited next.
-static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringstream& out)
+static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringstream& out, string& edgeLabel)
 {
   // there may be NULL children!!
   //if (!node) return;
 
   out<<prefix;
   out<< (hasRemaining?"|---": "|___");
+
+  out<<" "<<edgeLabel<<" ->";
   if (!node)
   {
     out<<" NULL "<<endl;
@@ -25140,7 +25181,16 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
     out<< Rose::StringUtility::stripPathFromFileName ( lnode->get_file_info()->get_filename() )<<" "<<lnode->get_file_info()->get_line()<<":"<<lnode->get_file_info()->get_col();
   }
 
+  if (SgDeclarationStatement* v= isSgDeclarationStatement(node))
+  {
+    out<<" first nondefining decl@"<< v->get_firstNondefiningDeclaration();
+    out<<" defining decl@"<< v->get_definingDeclaration();
+  }
+
+  if (SgEnumVal* f = isSgEnumVal(node) )
+    out<<" value="<< f->get_value() <<" declaration="<<f->get_declaration() << " name="<< f->get_name().getString();
   // optionally  qualified name
+
   if (SgFunctionDeclaration* f = isSgFunctionDeclaration(node) )
     out<<" "<< f->get_qualified_name();
 
@@ -25152,6 +25202,26 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
 
   if (SgAdaPackageSpecDecl * f = isSgAdaPackageSpecDecl(node) )
     out<<" "<< f->get_qualified_name();
+
+  if (SgAdaEnumRepresentationClause* f = isSgAdaEnumRepresentationClause(node) )
+    out<<" enumType="<< f->get_enumType();
+
+  if (SgAdaAccessType* v = isSgAdaAccessType(node) )
+  {
+    // out<<" "<< v->get_qualified_name();
+    //out<<" "<< v->get_name();
+    // PP (2/18/22) updated to reflect properties in AdaAccessType
+    //~ out<<" is_object_type"<< v->get_is_object_type();
+    out<<" is_general_access"<< v->get_is_general_access();
+    //~ out<<" is_constant:"<< v->get_is_constant();
+    //~ out<<" is_protected:"<< v->get_is_protected ();
+    out<<" is_anonymous:"<< v->get_is_anonymous ();
+  }
+
+  if (SgAdaSubroutineType* v = isSgAdaSubroutineType(node) )
+  {
+    out<<" is_protected"<< v->get_is_protected();
+  }
 
   if (SgInitializedName * v = isSgInitializedName(node) )
   {
@@ -25174,6 +25244,9 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   }
 
   if (SgIntVal* v= isSgIntVal(node))
+    out<<" value="<< v->get_value() <<" valueString="<< v->get_valueString();
+
+  if (SgShortVal* v= isSgShortVal(node))
     out<<" value="<< v->get_value() <<" valueString="<< v->get_valueString();
 
   if (SgVarRefExp* var_ref= isSgVarRefExp(node) )
@@ -25201,23 +25274,30 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   if (SgArrayType* v= isSgArrayType(node))
     out<<" base_type@"<< v->get_base_type();
 
+  if (SgAdaAccessType* v= isSgAdaAccessType(node))
+    out<<" base_type@"<< v->get_base_type();
+
   if (SgTypeExpression* v= isSgTypeExpression(node))
     out<<" type@"<< v->get_type();
 
   if (SgAdaAttributeExp* v= isSgAdaAttributeExp(node))
     out<<" attribute@"<< v->get_attribute();
 
-  if (SgDeclarationStatement* v= isSgDeclarationStatement(node))
-  {
-    out<<" first nondefining decl@"<< v->get_firstNondefiningDeclaration();
-    out<<" defining decl@"<< v->get_definingDeclaration();
-  }
-
   out<<endl;
 
   std::vector<SgNode* > children = node->get_traversalSuccessorContainer();
   int total_count = children.size();
   int current_index=0;
+
+  int last_non_null_child_idx =-1;
+  for (int i = (int) (children.size())-1; i>=0; i--)
+  {
+    if (children[i])
+    {
+      last_non_null_child_idx = i;
+      break;
+    }
+  }
 
   // some Sg??PtrList are not AST nodes, not part of children , we need to handle them separatedly
   // we sum all children into single total_count to tell if there is remaining children.
@@ -25229,26 +25309,36 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   {
     SgTemplateArgumentPtrList& plist = sn->get_templateArguments();
      bool n_hasRemaining=false;
+#if 0
     if (current_index+1<total_count)
       n_hasRemaining=true;
     current_index++;
-
+#else
+    if (last_non_null_child_idx>-1) n_hasRemaining = true;
+#endif
     string suffix= hasRemaining? "|   " : "    ";
     string n_prefix = prefix+suffix;
-    serialize(plist, n_prefix, n_hasRemaining, out);
+    string n_edge_label= "";
+    serialize(plist, n_prefix, n_hasRemaining, out, n_edge_label);
   }
+
+  std::vector< std::string >  successorNames= node->get_traversalSuccessorNamesContainer();
 
    // finish sucessors
   for (size_t i =0; i< children.size(); i++)
   {
     bool n_hasRemaining=false;
+#if 0
     if (current_index+1<total_count)
       n_hasRemaining=true;
     current_index++;
-
+#else
+    if ((int)i<last_non_null_child_idx) n_hasRemaining = true;
+#endif
     string suffix= hasRemaining? "|   " : "    ";
     string n_prefix = prefix+suffix;
-    serialize (children[i], n_prefix, n_hasRemaining, out);
+    if (children[i])
+      serialize (children[i], n_prefix, n_hasRemaining, out, successorNames[i]);
   }
 }
 
@@ -25256,42 +25346,42 @@ void SageInterface::printAST(SgNode* node)
 {
   ostringstream oss;
   string prefix;
-  serialize(node, prefix, false, oss);
+  string label="";
+  serialize(node, prefix, false, oss, label);
   cout<<oss.str();
 }
 
-void SageInterface::printAST2TextFile (SgNode* node, std::string filename)
+void SageInterface::printAST2TextFile (SgNode* node, std::string filename, bool printType/*=true*/)
 {
   // Rasmussen 9/21/2020: This leads to infinite recursion (clang warning message) and should be removed from API)
 //  ROSE_ABORT();
-  printAST2TextFile (node, filename.c_str());
+  printAST2TextFile (node, filename.c_str(), printType);
 }
 
-void SageInterface::printAST2TextFile(SgNode* node, const char* filename)
+void SageInterface::printAST2TextFile(SgNode* node, const char* filename, bool printType/*=true*/)
 {
   ostringstream oss;
   string prefix;
-  serialize(node, prefix, false, oss);
+  string label="";
+  serialize(node, prefix, false, oss, label);
   ofstream textfile;
   textfile.open(filename, ios::out);
   textfile<<oss.str();
 
-  // append type information also
-  textfile<<"Types encountered ...."<<endl;
-  ostringstream oss2;
-#if 0
-  set<SgType*>::iterator iter;
-  for (iter = type_set.begin(); iter!= type_set.end(); iter++)
-    serialize (*iter, prefix, false, oss2);
-#else
-  VariantVector vv(V_SgType);
-  Rose_STL_Container<SgNode*> tnodes= NodeQuery::queryMemoryPool(vv);
-  for (Rose_STL_Container<SgNode*>::const_iterator i = tnodes.begin(); i != tnodes.end(); ++i)
+  if (printType)
   {
-    serialize (*i, prefix, false, oss2);
+    // append type information also
+    textfile<<"Types encountered ...."<<endl;
+    ostringstream oss2;
+    VariantVector vv(V_SgType);
+    Rose_STL_Container<SgNode*> tnodes= NodeQuery::queryMemoryPool(vv);
+    for (Rose_STL_Container<SgNode*>::const_iterator i = tnodes.begin(); i != tnodes.end(); ++i)
+    {
+      serialize (*i, prefix, false, oss2, label);
+    }
+    textfile<<oss2.str();
   }
-#endif
-  textfile<<oss2.str();
+
   textfile.close();
 }
 
@@ -27394,3 +27484,26 @@ SgType* SageInterface::getDeclaredType(const SgDeclarationStatement* declaration
 {
   return sg::dispatch(DeclaredType{}, declaration);
 }
+
+void SageInterface::clearSharedGlobalScopes(SgProject * project) {
+  SgGlobal * gsaf = project->get_globalScopeAcrossFiles();
+  ROSE_ASSERT(gsaf != nullptr);
+  SgSymbolTable * st = gsaf->get_symbol_table();
+  ROSE_ASSERT(st != nullptr);
+  rose_hash_multimap * hmm = st->get_table();
+  ROSE_ASSERT(hmm != nullptr);
+  hmm->clear();
+
+  st = SgNode::get_globalTypeTable()->get_type_table();
+  ROSE_ASSERT(st != nullptr);
+  hmm = st->get_table();
+  ROSE_ASSERT(hmm != nullptr);
+  hmm->clear();
+
+  st = SgNode::get_globalFunctionTypeTable()->get_function_type_table();
+  ROSE_ASSERT(st != nullptr);
+  hmm = st->get_table();
+  ROSE_ASSERT(hmm != nullptr);
+  hmm->clear();
+}
+

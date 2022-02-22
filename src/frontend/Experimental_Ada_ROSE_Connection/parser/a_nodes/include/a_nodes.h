@@ -12,7 +12,7 @@ typedef char* Program_Text;
 typedef int   ASIS_Integer;
 
 ///////////////////////////////////////////////////////////////////////////////
-// BEGIN element 
+// BEGIN element
 ///////////////////////////////////////////////////////////////////////////////
 
 // This is NOT a subset of Node_ID:
@@ -30,7 +30,7 @@ typedef int Element_ID;
 // GNAT C-to-Ada translator produces:
 //   type Element_ID_Array_Ptr is array (size_t) of access Element_ID;
 //
-// So, we are just going to use a pointer to an Element_ID and treat it as an 
+// So, we are just going to use a pointer to an Element_ID and treat it as an
 // array:
 
 typedef Element_ID *Element_ID_Ptr;
@@ -62,11 +62,11 @@ enum Element_Kinds {
 // BEGIN supporting kinds
 ///////////////////////////////////////////////////////////////////////////////
 
-// These are needed in multiple structs below, so they are all 
+// These are needed in multiple structs below, so they are all
 // defined here:
 
 
-typedef Element_ID      Access_Type_Definition;      
+typedef Element_ID      Access_Type_Definition;
 typedef Element_ID      Association;
 typedef Element_ID_List Association_List;
 typedef Element_ID      Case_Statement_Alternative;
@@ -258,7 +258,7 @@ struct Defining_Name_Struct {
   char                     *Defining_Name_Image;
   Name_List                 References;
   bool                      Is_Referenced;
-  
+
   // These fields are only valid for the kinds above them:
   // A_Defining_Operator_Symbol:
   enum Operator_Kinds       Operator_Kind;
@@ -266,12 +266,12 @@ struct Defining_Name_Struct {
   // A_Defining_Enumeration_Literal
   char                     *Position_Number_Image;
   char                     *Representation_Value_Image;
-  // A_Defining_Expanded_Name 
+  // A_Defining_Expanded_Name
   Name_ID                   Defining_Prefix;
   Defining_Name_ID          Defining_Selector;
   // When this is the name of a constant or a deferred constant:
   Declaration_ID            Corresponding_Constant_Declaration;
-  // The defining name of an entity declared within the 
+  // The defining name of an entity declared within the
   // implicit specification of a generic instantiation:
   Defining_Name_ID          Corresponding_Generic_Element;
   };
@@ -312,7 +312,7 @@ enum Declaration_Kinds {
   A_Real_Number_Declaration,                // 3.5.6(2)
 
   An_Enumeration_Literal_Specification,     // 3.5.1(3)
-  
+
   A_Discriminant_Specification,             // 3.7(5)   -> Trait_Kinds
   A_Component_Declaration,                  // 3.8(6)
 
@@ -412,7 +412,7 @@ enum Mode_Kinds {
   An_Out_Mode,             // procedure A(B :    OUT C);
   An_In_Out_Mode           // procedure A(B : IN OUT C);
 };
-  
+
 // For Declaration:
 enum Subprogram_Default_Kinds {
       Not_A_Default,         // An unexpected element
@@ -430,10 +430,10 @@ struct Declaration_Struct {
   enum Declaration_Kinds         Declaration_Kind;
   enum Declaration_Origins       Declaration_Origin;
   Pragma_Element_ID_List         Corresponding_Pragmas;
-  Defining_Name_List             Names;  
+  Defining_Name_List             Names;
   Element_ID_List                Aspect_Specifications;
   Representation_Clause_List     Corresponding_Representation_Clauses;
-  
+
   // These fields are only valid for the kinds above them:
   //     A_Formal_Procedure_Declaration
   //     A_Formal_Function_Declaration
@@ -544,9 +544,9 @@ struct Declaration_Struct {
   //  A_Deferred_Constant_Declaration,          // 3.3.1(6),7.4(2)
   //  A_Single_Task_Declaration,                // 3.3.1(2),9.1(3)
   //  A_Single_Protected_Declaration,           // 3.3.1(2),9.4(2)
-  //  A_Discriminant_Specification,             // 3.7(5)  
+  //  A_Discriminant_Specification,             // 3.7(5)
   //  A_Component_Declaration,                  // 3.8(6)
-  //  A_Parameter_Specification,                // 6.1(15) 
+  //  A_Parameter_Specification,                // 6.1(15)
   //  A_Return_Variable_Specification,          // 6.5
   //  An_Object_Renaming_Declaration,           // 8.5.1(2)
   //  A_Formal_Object_Declaration,              // 12.4(2)
@@ -555,9 +555,9 @@ struct Declaration_Struct {
   //  A_Constant_Declaration,                   // 3.3.1(4)
   //  An_Integer_Number_Declaration,            // 3.3.2(2)
   //  A_Real_Number_Declaration,                // 3.5.6(2)
-  //  A_Discriminant_Specification,             // 3.7(5)  
+  //  A_Discriminant_Specification,             // 3.7(5)
   //  A_Component_Declaration,                  // 3.8(6)
-  //  A_Parameter_Specification,                // 6.1(15) 
+  //  A_Parameter_Specification,                // 6.1(15)
   //  A_Return_Variable_Specification,          // 6.5
   //  A_Formal_Object_Declaration,              // 12.4(2)
   Expression_ID                  Initialization_Expression;
@@ -592,16 +592,16 @@ struct Declaration_Struct {
   Declaration_ID                 Corresponding_First_Subtype;
   Declaration_ID                 Corresponding_Last_Constraint;
   Declaration_ID                 Corresponding_Last_Subtype;
-  //  A_Loop_Parameter_Specification,           // 5.5(4)  
+  //  A_Loop_Parameter_Specification,           // 5.5(4)
   //  An_Entry_Index_Specification,             // 9.5.2(2)
   Discrete_Subtype_Definition_ID Specification_Subtype_Definition;
-  //  A_Generalized_Iterator_Specification,     // 5.5.2   
-  //  An_Element_Iterator_Specification,        // 5.5.2   
+  //  A_Generalized_Iterator_Specification,     // 5.5.2
+  //  An_Element_Iterator_Specification,        // 5.5.2
   Element_ID                     Iteration_Scheme_Name;
-  //  An_Element_Iterator_Specification,        // 5.5.2   
+  //  An_Element_Iterator_Specification,        // 5.5.2
   Element_ID                     Subtype_Indication;
-  //  A_Procedure_Declaration,                  // 6.1(4)  
-  //  A_Function_Declaration,                   // 6.1(4)  
+  //  A_Procedure_Declaration,                  // 6.1(4)
+  //  A_Function_Declaration,                   // 6.1(4)
   //  A_Procedure_Body_Declaration,             // 6.3(2)
   //  A_Function_Body_Declaration,              // 6.3(2)
   //  A_Null_Procedure_Declaration,             // 6.7
@@ -617,7 +617,7 @@ struct Declaration_Struct {
   //  A_Formal_Procedure_Declaration,           // 12.6(2)
   //  A_Formal_Function_Declaration,            // 12.6(2)
   Parameter_Specification_List   Parameter_Profile;
-  //  A_Function_Declaration,                   // 6.1(4)  
+  //  A_Function_Declaration,                   // 6.1(4)
   //  A_Function_Body_Declaration,              // 6.3(2)
   //  An_Expression_Function_Declaration,       // 6.8
   //  A_Function_Renaming_Declaration,          // 8.5.4(2)
@@ -627,8 +627,8 @@ struct Declaration_Struct {
   Element_ID                     Result_Profile;
   //  An_Expression_Function_Declaration,       // 6.8
   Expression_ID                  Result_Expression;
-  //  A_Procedure_Declaration,                  // 6.1(4)  
-  //  A_Function_Declaration,                   // 6.1(4)  
+  //  A_Procedure_Declaration,                  // 6.1(4)
+  //  A_Function_Declaration,                   // 6.1(4)
   //  A_Procedure_Body_Declaration,             // 6.3(2)
   //  A_Function_Body_Declaration,              // 6.3(2)
   //  A_Null_Procedure_Declaration,             // 6.7
@@ -670,8 +670,8 @@ struct Declaration_Struct {
   //  A_Protected_Type_Declaration,             // 9.4(2)
   //  A_Single_Task_Declaration,                // 3.3.1(2),9.1(3)
   //  A_Single_Protected_Declaration,           // 3.3.1(2),9.4(2)
-  //  A_Procedure_Declaration,                  // 6.1(4)  
-  //  A_Function_Declaration,                   // 6.1(4)  
+  //  A_Procedure_Declaration,                  // 6.1(4)
+  //  A_Function_Declaration,                   // 6.1(4)
   //  A_Procedure_Body_Declaration,             // 6.3(2)
   //  A_Function_Body_Declaration,              // 6.3(2)
   //  A_Null_Procedure_Declaration,             // 6.7
@@ -706,8 +706,8 @@ struct Declaration_Struct {
   //  A_Protected_Type_Declaration,             // 9.4(2)
   //  A_Single_Task_Declaration,                // 3.3.1(2),9.1(3)
   //  A_Single_Protected_Declaration,           // 3.3.1(2),9.4(2)
-  //  A_Procedure_Declaration,                  // 6.1(4)  
-  //  A_Function_Declaration,                   // 6.1(4)  
+  //  A_Procedure_Declaration,                  // 6.1(4)
+  //  A_Function_Declaration,                   // 6.1(4)
   //  An_Entry_Declaration,                     // 9.5.2(2)
   //  An_Entry_Index_Specification,             // 9.5.2(2)
   //  A_Generic_Procedure_Declaration,          // 12.1(2)
@@ -718,14 +718,14 @@ struct Declaration_Struct {
   //  A_Function_Instantiation,                 // 12.3(2)
   //  A_Formal_Package_Declaration,             // 12.7(2)
   Declaration_ID                 Corresponding_Body;
-  //  A_Procedure_Declaration,                  // 6.1(4)  
-  //  A_Function_Declaration,                   // 6.1(4)  
+  //  A_Procedure_Declaration,                  // 6.1(4)
+  //  A_Function_Declaration,                   // 6.1(4)
   Declaration_ID                 Corresponding_Subprogram_Derivation;
-  //  A_Procedure_Declaration,                  // 6.1(4)  
-  //  A_Function_Declaration,                   // 6.1(4)  
+  //  A_Procedure_Declaration,                  // 6.1(4)
+  //  A_Function_Declaration,                   // 6.1(4)
   //  An_Expression_Function_Declaration,       // 6.8
   Type_Definition_ID             Corresponding_Type;
-  //  A_Function_Declaration,                   // 6.1(4)  
+  //  A_Function_Declaration,                   // 6.1(4)
   Declaration_ID                 Corresponding_Equality_Operator;
   //  A_Package_Declaration,                    // 7.1(2)
   //  A_Generic_Package_Declaration,            // 12.1(2)
@@ -787,8 +787,8 @@ struct Declaration_Struct {
   //  A_Formal_Procedure_Declaration,           // 12.6(2)
   //  A_Formal_Function_Declaration,            // 12.6(2)
   Expression_ID                  Formal_Subprogram_Default;
-  //  A_Procedure_Declaration,                  // 6.1(4)  
-  //  A_Function_Declaration,                   // 6.1(4)  
+  //  A_Procedure_Declaration,                  // 6.1(4)
+  //  A_Function_Declaration,                   // 6.1(4)
   //  A_Procedure_Body_Declaration,             // 6.3(2)
   //  A_Function_Body_Declaration,              // 6.3(2)
   //  A_Null_Procedure_Declaration,             // 6.7
@@ -840,7 +840,7 @@ enum Definition_Kinds {
 
   //  //|A2012 start
   An_Aspect_Specification           // 13.3.1
-  //  //|A2012 end  
+  //  //|A2012 end
 };
 
 typedef enum _Type_Kinds {
@@ -884,7 +884,7 @@ typedef enum _Interface_Kinds {  // 3.9.4
   A_Task_Interface,                 // task interface ...
   A_Protected_Interface,            // protected interface ...
   A_Synchronized_Interface        // synchronized interface ...
-} Interface_Kinds; 
+} Interface_Kinds;
 
 typedef enum _Root_Type_Kinds {
   Not_A_Root_Type_Definition,            // An unexpected element
@@ -946,7 +946,7 @@ typedef enum _Access_Definition_Kinds {
 } Access_Definition_Kinds;
 
 typedef struct _Access_Type_Struct {
-  Access_Type_Kinds            Access_Type_Kind;  
+  Access_Type_Kinds            Access_Type_Kind;
   bool                         Has_Null_Exclusion;
   // These fields are only valid for the kinds above them:
   // An_Access_To_Function
@@ -960,7 +960,7 @@ typedef struct _Access_Type_Struct {
   // An_Access_To_Protected_Procedure
   // An_Access_To_Function
   // An_Access_To_Protected_Function
-  Parameter_Specification_List Access_To_Subprogram_Parameter_Profile; 
+  Parameter_Specification_List Access_To_Subprogram_Parameter_Profile;
   // An_Access_To_Function
   // An_Access_To_Protected_Function
   Element_ID                   Access_To_Function_Result_Profile;
@@ -991,7 +991,7 @@ typedef struct _Type_Definition_Struct {
   Root_Type_Kinds      Root_Type_Kind;
   // A_Derived_Type_Definition
   // A_Derived_Record_Extension_Definition
-  Subtype_Indication   Parent_Subtype_Indication;  
+  Subtype_Indication   Parent_Subtype_Indication;
   // A_Derived_Record_Extension_Definition
   // A_Record_Type_Definition
   // A_Tagged_Record_Type_Definition
@@ -1069,8 +1069,8 @@ typedef struct _Component_Definition_Struct {
   Definition Component_Definition_View;
 } Component_Definition_Struct;
 
-// Discrete_Subtype_Definition_Struct and Discrete_Range_Struct are the same 
-// because discrete_subtype_definition  - LRM 3.6(6) and 
+// Discrete_Subtype_Definition_Struct and Discrete_Range_Struct are the same
+// because discrete_subtype_definition  - LRM 3.6(6) and
 // discrete_range - LRM 3.6.1(3) are the same.
 
 typedef struct _Discrete_Subtype_Definition_Struct {
@@ -1133,7 +1133,7 @@ typedef struct _Access_Definition_Struct {
   // An_Anonymous_Access_To_Protected_Procedure
   // An_Anonymous_Access_To_Function
   // An_Anonymous_Access_To_Protected_Function
-  Parameter_Specification_List Access_To_Subprogram_Parameter_Profile; 
+  Parameter_Specification_List Access_To_Subprogram_Parameter_Profile;
   // An_Anonymous_Access_To_Function
   // An_Anonymous_Access_To_Protected_Function
   Element_ID                   Access_To_Function_Result_Profile;
@@ -1254,7 +1254,7 @@ typedef union _Definition_Union {
   Protected_Definition_Struct           The_Protected_Definition;
   Formal_Type_Definition_Struct         The_Formal_Type_Definition;
   Aspect_Specification_Struct           The_Aspect_Specification;
-} Definition_Union;  
+} Definition_Union;
 
 // May take ??*4 bytes:
 struct Definition_Struct {
@@ -1301,7 +1301,7 @@ enum Expression_Kinds {
 
   A_Null_Literal,                            // 4.4
   A_Parenthesized_Expression,                // 4.4
-  
+
   A_Raise_Expression,                        // 4.4 Ada 2012 (AI12-0022-1)
 
   A_Type_Conversion,                         // 4.6
@@ -1432,8 +1432,8 @@ struct Expression_Struct {
   bool                  Is_Prefix_Notation;
   Declaration_ID        Corresponding_Expression_Type;
   Element_ID            Corresponding_Expression_Type_Definition;
-  
-  // These fields are only valid for the kinds above them:  
+
+  // These fields are only valid for the kinds above them:
   // An_Operator_Symbol:
   enum Operator_Kinds   Operator_Kind;
   // An_Integer_Literal,                        // 2.4
@@ -1441,7 +1441,7 @@ struct Expression_Struct {
   // A_String_Literal,                          // 2.6
   // An_Attribute_Reference :
   enum Attribute_Kinds  Attribute_Kind;
-  char                 *Value_Image;  
+  char                 *Value_Image;
   // An_Identifier |                              // 4.1
   // An_Operator_Symbol |                         // 4.1
   // A_Character_Literal |                        // 4.1
@@ -1480,13 +1480,13 @@ struct Expression_Struct {
   // An_Extension_Aggregate =>                    // 4.3
   Expression_ID         Extension_Aggregate_Expression;
   // A_Positional_Array_Aggregate |               // 4.3
-  // A_Named_Array_Aggregate =>                   // 4.3  
+  // A_Named_Array_Aggregate =>                   // 4.3
   Association_List      Array_Component_Associations;
   // A_Parenthesized_Expression =>                // 4.4
   Expression_ID         Expression_Parenthesized;
   // A_Function_Call =>                           // 4.1
   bool                  Is_Prefix_Call;
-  // A_Function_Call =>                           // 4.1 
+  // A_Function_Call =>                           // 4.1
   // An_Indexed_Component (Is_Generalized_Indexing == true) //ASIS 2012 // 4.1.1
   Declaration_ID        Corresponding_Called_Function;
   // A_Function_Call =>                           // 4.1
@@ -1555,7 +1555,7 @@ enum Association_Kinds {
 // May take 10*4 bytes - 1*enum, 3*List, 4*ID, 2*bool:
 struct Association_Struct {
   enum Association_Kinds Association_Kind;
-  // These fields are only valid for the kinds above them:  
+  // These fields are only valid for the kinds above them:
   // An_Array_Component_Association,        // 4.3.3
   Expression_List        Array_Component_Choices;
   // A_Record_Component_Association,        // 4.3.1
@@ -1568,7 +1568,7 @@ struct Association_Struct {
   // A_Generic_Association                  // 12.3
   Expression_ID          Formal_Parameter;
   Expression_ID          Actual_Parameter;
-  // A_Discriminant_Association,            // 3.7.1  
+  // A_Discriminant_Association,            // 3.7.1
   Expression_List        Discriminant_Selector_Names;
   Expression_ID          Discriminant_Expression;
   // A_Discriminant_Association,            // 3.7.1
@@ -1630,8 +1630,8 @@ struct Statement_Struct {
   enum Statement_Kinds   Statement_Kind;
   Pragma_Element_ID_List    Corresponding_Pragmas;
   Defining_Name_List     Label_Names;
-  
-  // These fields are only valid for the kinds above them:  
+
+  // These fields are only valid for the kinds above them:
   //   A_Procedure_Call_Statement
   bool                   Is_Prefix_Notation;
   //   A_Loop_Statement                (pragmas from statement list)
@@ -1647,7 +1647,7 @@ struct Statement_Struct {
   //   A_Block_Statement
   //   An_Accept_Statement
   Element_ID             Corresponding_End_Name;
-  //   An_Assignment_Statement,             // 5.2  
+  //   An_Assignment_Statement,             // 5.2
   Expression_ID          Assignment_Variable_Name;
   Expression_ID          Assignment_Expression;
   //   An_If_Statement,                     // 5.3
@@ -1704,7 +1704,7 @@ struct Statement_Struct {
   //   An_Accept_Statement,                 // 9.5.2
   Expression_ID          Accept_Entry_Index;
   Name_ID                Accept_Entry_Direct_Name;
-  Parameter_Specification_List 
+  Parameter_Specification_List
                          Accept_Parameters;
   Statement_List         Accept_Body_Statements;
   Statement_List         Accept_Body_Exception_Handlers;
@@ -1743,7 +1743,7 @@ enum Path_Kinds {
   //  An unexpected element
 
   //  Statement paths:
-  
+
   An_If_Path,
   //  5.3:
   //  if condition then
@@ -1777,7 +1777,7 @@ enum Path_Kinds {
 
   //  //|A2012 start
   //  Expression paths:
-  
+
   A_Case_Expression_Path,
   //  ??? (RM 2012)
   //  when expression => expression
@@ -1798,7 +1798,7 @@ struct Path_Struct {
   Statement_List Sequence_Of_Statements;
   Expression     Dependent_Expression;
 
-  // These fields are only valid for the kinds above them:  
+  // These fields are only valid for the kinds above them:
   // An_If_Path,
   // An_Elsif_Path,
   Expression_ID  Condition_Expression;
@@ -1822,7 +1822,7 @@ enum Clause_Kinds {
   Not_A_Clause,                 // An unexpected element
   A_Use_Package_Clause,         // 8.4
   A_Use_Type_Clause,            // 8.4
-  
+
   A_Use_All_Type_Clause,        // 8.4, Ada 2012
 
   A_With_Clause,                // 10.1.2
@@ -1849,8 +1849,8 @@ typedef struct _Representation_Clause_Struct {
   // An_At_Clause
   Expression                  Representation_Clause_Expression;
   // A_Record_Representation_Clause
-  Expression                  Mod_Clause_Expression;  
-  Component_Clause_List       Component_Clauses; 
+  Expression                  Mod_Clause_Expression;
+  Component_Clause_List       Component_Clauses;
 } Representation_Clause_Struct;
 
 // May take 9*4 bytes - 2*enum, 2*List, 5*ID:
@@ -1864,12 +1864,12 @@ struct Clause_Struct {
   //   A_Use_All_Type_Clause
   //   A_With_Clause
   Name_List         Clause_Names;
-  //   A_Component_Clause  
+  //   A_Component_Clause
   Name_ID           Representation_Clause_Name;
   Expression_ID     Component_Clause_Position;
   Element_ID        Component_Clause_Range;
   //   A_Representation_Clause
-  Representation_Clause_Struct  
+  Representation_Clause_Struct
                     Representation_Clause;
 };
 
@@ -1881,7 +1881,7 @@ struct Clause_Struct {
 // BEGIN Exception_Handler
 ///////////////////////////////////////////////////////////////////////////////
 
-// There is no enum Exception_Handler_Kinds because there is only one kind of 
+// There is no enum Exception_Handler_Kinds because there is only one kind of
 // exception handler.
 
 // May take 7*4 bytes - 1 ID, 3 List:
@@ -1918,7 +1918,7 @@ union Element_Union {
 enum Enclosing_Kinds { // Not an ASIS type
   Not_Enclosing,
   Enclosing_Element,
-  Enclosing_Unit 
+  Enclosing_Unit
 };
 
 // May take 5*4 bytes - 1*char*, 4*int:
@@ -1950,7 +1950,7 @@ typedef struct _Element_Struct {
 } Element_Struct;
 
 ///////////////////////////////////////////////////////////////////////////////
-// END element 
+// END element
 ///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2054,7 +2054,7 @@ enum Unit_Classes {
   A_Separate_Body
   //  separate (parent_unit_name) proper_body.
 };
-  
+
 enum Unit_Origins {
   Not_An_Origin,
   //  A nil or nonexistent unit origin. An_Unknown_Unit can be any origin
@@ -2094,7 +2094,7 @@ typedef struct _Unit_Struct {
   Context_Clause_List Context_Clause_Elements;
   Pragma_Element_ID_List Compilation_Pragmas;
   bool                Is_Standard;
-  
+
   // The fields below are only applicable to the kinds above them:
   //  A_Package,
   //  A_Generic_Package,
@@ -2149,7 +2149,7 @@ typedef struct _Unit_Struct {
   Unit_ID             Corresponding_Subunit_Parent_Body;
 } Unit_Struct;
 ///////////////////////////////////////////////////////////////////////////////
-// END unit 
+// END unit
 ///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////

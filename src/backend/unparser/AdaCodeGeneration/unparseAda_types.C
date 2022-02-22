@@ -73,6 +73,20 @@ namespace
       expr(n.get_range());
     }
 
+    void handle(SgAdaDigitsConstraint& n)
+    {
+      prn(" digits ");
+      expr(n.get_digits());
+      support_opt(n.get_subConstraint());
+    }
+
+    void handle(SgAdaDeltaConstraint& n)
+    {
+      prn(" delta ");
+      expr(n.get_delta());
+      support_opt(n.get_subConstraint());
+    }
+
     void handle(SgAdaIndexConstraint& n)
     {
       prn(" (");
@@ -83,7 +97,7 @@ namespace
     void handle(SgAdaDiscriminantConstraint& n)
     {
       prn(" (");
-      exprSequence(n.get_discriminants());
+      exprSequence(n.get_discriminants(), "<>");
       prn(")");
     }
 
@@ -102,7 +116,18 @@ namespace
     void handle(SgTypeLong&)       { prn(" Long_Integer"); }
     void handle(SgTypeShort&)      { prn(" Short_Integer"); }
     void handle(SgTypeLongLong&)   { prn(" Long_Long_Integer"); }
-    void handle(SgTypeVoid&)       { prn(" -- void\n"); }  // error, should not be in Ada
+    void handle(SgTypeFixed&)      { }
+    void handle(SgTypeVoid&)       { /* do nothing */ }
+
+    //
+    // error type
+    void handle(SgTypeUnknown& n)
+    {
+      if (n.get_has_type_name())
+        prn(n.get_type_name());
+      else
+        prn("-- error type (incomplete impl.?)\n");
+    }
 
     //
     // Ada types
@@ -119,6 +144,7 @@ namespace
 
     void handle(SgAdaDerivedType& n)
     {
+      prn("new ");
       type(n.get_base_type());
     }
 
@@ -136,10 +162,12 @@ namespace
 */
     void handle(SgModifierType& n)
     {
-      if (n.get_typeModifier().isAliased())
+      const SgTypeModifier& tm = n.get_typeModifier();
+
+      if (tm.isAliased())
         prn("aliased ");
 
-      if (n.get_typeModifier().get_constVolatileModifier().isConst())
+      if (tm.get_constVolatileModifier().isConst())
         prn("constant ");
 
       type(n.get_base_type());
@@ -202,6 +230,7 @@ namespace
       type(n.get_base_type());
     }
 
+
     void handle(SgAdaTaskType& n)
     {
       // \todo fix in AST and override get_name and get_declaration in AdaTaskType
@@ -217,6 +246,28 @@ namespace
       prn(tyDcl.get_name());
     }
 
+    void handle(SgAdaProtectedType& n)
+    {
+      // \todo fix in AST and override get_name and get_declaration in AdaTaskType
+      SgAdaProtectedTypeDecl& tyDcl  = SG_DEREF( isSgAdaProtectedTypeDecl(n.get_declaration()) );
+
+      prn(" ");
+
+      if (USE_COMPUTED_NAME_QUALIFICATION_TYPE)
+        prnNameQual(tyDcl);
+      else
+        prn(scopeQual(tyDcl));
+
+      prn(tyDcl.get_name());
+    }
+
+    void handle(SgAdaDiscreteType&)
+    {
+      // should not be reached
+      ROSE_ABORT();
+    }
+
+/*
     void handle(SgAdaFloatType& n)
     {
       prn("digits ");
@@ -224,45 +275,48 @@ namespace
 
       support_opt(n.get_constraint());
     }
+*/
+
+    void handle(SgFunctionType& n)
+    {
+      const bool func = si::ada::isFunction(n);
+
+      prn(func ? " function" : " procedure");
+
+      // TODO: print parameter profile here if it is specified.
+      //       parameter profiles are not currently implemented for
+      //       AdaAccessType nodes.
+
+      if (!func) return;
+
+      prn(" return");
+      type(n.get_return_type());
+    }
 
     void handle(SgAdaAccessType& n)
     {
-      prn("access");
-      if (n.get_is_object_type()) {
-        if (n.get_is_general_access()) {
-          prn(" all");
-        }
+      prn("access ");
 
-        if (n.get_is_constant()) {
-          prn(" constant");
-        }
+      if (n.get_is_general_access()) prn("all"); // can this become a modifier?
 
-        // consider: ASSERT_not_null(n.get_base_type());
-        if (n.get_base_type() != NULL) {
-          type(n.get_base_type());
-        }
-      } else {
-        // subprogram access type
-        if (n.get_is_protected()) {
-          prn(" protected");
-        }
+      type(n.get_base_type());
+    }
 
-        if (n.get_return_type() != NULL) {
-          prn(" function");
-        } else {
-          prn(" procedure");
-        }
+    void handle(SgAdaSubroutineType& n)
+    {
+      const bool isFunction = isSgTypeVoid(n.get_return_type()) == nullptr;
 
-        // TODO: print parameter profile here if it is specified.
-        //       parameter profiles are not currently implemented for
-        //       AdaAccessType nodes.
+      if (n.get_is_protected()) prn(" protected ");
 
-        if (n.get_return_type() != NULL) {
-          prn(" return");
-          type(n.get_return_type());
-        }
+      prn(isFunction ? " function " : " procedure ");
+      SgFunctionParameterList&  lst = SG_DEREF(n.get_parameterList());
+
+      unparser.unparseParameterList(lst.get_args(), info);
+      if (isFunction)
+      {
+        prn(" return ");
+        type(n.get_return_type());
       }
-
     }
 
     void type(SgType* ty)
@@ -296,16 +350,16 @@ namespace
       }
     }
 
-    void exprSequence(const SgExpressionPtrList& lst);
+    void exprSequence(const SgExpressionPtrList& lst, std::string alt = "");
 
     Unparse_Ada&      unparser;
     SgUnparse_Info&   info;
     std::ostream&     os;
   };
 
-  void AdaTypeUnparser::exprSequence(const SgExpressionPtrList& lst)
+  void AdaTypeUnparser::exprSequence(const SgExpressionPtrList& lst, std::string alt)
   {
-    if (lst.empty()) return;
+    if (lst.empty()) { prn(alt); return; }
 
     expr(lst[0]);
 

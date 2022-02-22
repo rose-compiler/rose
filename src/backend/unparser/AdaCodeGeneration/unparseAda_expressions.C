@@ -293,6 +293,41 @@ namespace
       arglst_opt(args);
     }
 
+    void prnIfBranch(const si::ada::IfExpressionInfo& branch, const std::string& cond)
+    {
+      prn(cond);
+      expr(branch.condition());
+      prn(" then ");
+      expr(branch.trueBranch());
+    }
+
+    void handle(SgConditionalExp& n)
+    {
+      using Iterator = std::vector<si::ada::IfExpressionInfo>::iterator;
+
+      std::vector<si::ada::IfExpressionInfo> seq = si::ada::flattenIfExpressions(n);
+      Iterator                               aa = seq.begin();
+      const Iterator                         zz = seq.end();
+
+      ROSE_ASSERT(aa != zz);
+      prnIfBranch(*aa, " if ");
+
+      ++aa;
+      ROSE_ASSERT(aa != zz);
+      while (!aa->isElse())
+      {
+        prnIfBranch(*aa, " elsif ");
+        ++aa;
+        ROSE_ASSERT(aa != zz);
+      }
+
+      prn(" else ");
+      expr(aa->trueBranch());
+
+      ++aa;
+      ROSE_ASSERT(aa == zz);
+    }
+
     // unparse expression attributes
     void handle(SgAdaAttributeExp& n)
     {
@@ -342,6 +377,10 @@ namespace
       prn(buf.str());
     }
 
+    void handle(const SgVoidVal&)
+    {
+      prn("<>");
+    }
 
     void handle(SgThrowOp& n)
     {
@@ -385,7 +424,7 @@ namespace
     void handle(SgAggregateInitializer& n)
     {
       prn("(");
-      exprlst(SG_DEREF(n.get_initializers()));
+      aggregate(SG_DEREF(n.get_initializers()));
       prn(")");
     }
 
@@ -402,13 +441,18 @@ namespace
       expr(n.get_operand());
     }
 
+    void handle(SgAdaAncestorInitializer& n)
+    {
+      expr(n.get_operand());
+    }
+
     void handle(SgConstructorInitializer& n)
     {
       ROSE_ASSERT(n.get_need_paren());
       // n has get_need_paren set and thus they are printed by expr(...)
 
       //~ prn("(");
-      exprlst(SG_DEREF(n.get_args()));
+      aggregate(SG_DEREF(n.get_args()));
       //~ prn(")");
     }
 
@@ -451,17 +495,22 @@ namespace
       prn(nameOf(n));
     }
 
-    void handle(SgAdaTaskRefExp& n)
+    template <class SageAdaRefExp>
+    void handleConcurrentObjectRef(SageAdaRefExp& n)
     {
-      SgAdaTaskSpecDecl& tskdcl = SG_DEREF(n.get_decl());
+      auto& dcl = SG_DEREF(n.get_decl());
 
       if (USE_COMPUTED_NAME_QUALIFICATION_EXPR)
         prnNameQual(n);
       else
-        prn(scopeQual(tskdcl.get_scope()));
+        prn(scopeQual(dcl.get_scope()));
 
-      prn(tskdcl.get_name());
+      prn(dcl.get_name());
     }
+
+    void handle(SgAdaTaskRefExp& n) { handleConcurrentObjectRef(n); }
+
+    void handle(SgAdaProtectedRefExp& n) { handleConcurrentObjectRef(n); }
 
     void handle(SgAdaUnitRefExp& n)
     {
@@ -491,8 +540,15 @@ namespace
       prn(val);
     }
 
+    void exprlst( SgExpressionPtrList::const_iterator aa,
+                  SgExpressionPtrList::const_iterator zz,
+                  std::string sep = ", ",
+                  bool reqScopeQual = true
+                );
+
     void expr(SgExpression* exp, bool requiresScopeQual = true);
     void exprlst(SgExprListExp& exp, std::string sep = ", ", bool requiresScopeQual = true);
+    void aggregate(SgExprListExp& exp);
     void arglst_opt(SgExprListExp& args);
 
     void operator()(SgExpression* exp)
@@ -580,16 +636,42 @@ namespace
   {
     SgExpressionPtrList& lst = exp.get_expressions();
 
-    if (lst.empty()) return;
+    exprlst(lst.begin(), lst.end(), sep, reqScopeQual);
+  }
 
-    expr(lst[0], reqScopeQual);
+  void AdaExprUnparser::exprlst( SgExpressionPtrList::const_iterator aa,
+                                 SgExpressionPtrList::const_iterator zz,
+                                 std::string sep,
+                                 bool reqScopeQual
+                               )
+  {
+    if (aa == zz) return;
 
-    for (size_t i = 1; i < lst.size(); ++i)
+    expr(*aa, reqScopeQual);
+
+    while (++aa != zz)
     {
       prn(sep);
-      expr(lst[i], reqScopeQual);
+      expr(*aa, reqScopeQual);
     }
   }
+
+  void AdaExprUnparser::aggregate(SgExprListExp& n)
+  {
+    si::ada::AggregateInfo info = si::ada::splitAggregate(n);
+
+    if (SgAdaAncestorInitializer* ext = info.ancestor())
+    {
+      expr(ext->get_ancestor());
+      prn(" with ");
+
+      if (info.nullRecord())
+        prn("null record");
+    }
+
+    exprlst(info.begin(), info.end());
+  }
+
 
   void AdaExprUnparser::arglst_opt(SgExprListExp& args)
   {

@@ -13,9 +13,6 @@ namespace SageInterface
 /// Contains Ada-specific functionality
 namespace ada
 {
-  /// defines the result type for \ref flattenArrayType
-  typedef std::pair<SgArrayType*, std::vector<SgExpression*> > FlatArrayType;
-
   /// tests if the declaration \ref dcl defines a public type that is completed
   ///   in a private section.
   /// \return true, iff dcl is public and completed in a private section.
@@ -50,6 +47,8 @@ namespace ada
   declsInPackage(SgGlobal& globalScope, const SgSourceFile& mainFile);
   /// \}
 
+  /// defines the result type for \ref getArrayTypeInfo
+  using FlatArrayType = std::pair<SgArrayType*, std::vector<SgExpression*> >;
 
   /// returns a flattened representation of Ada array types.
   /// \param   atype the type of the array to be flattened.
@@ -61,8 +60,36 @@ namespace ada
   /// \pre     \ref atype is not null.
   /// @{
   FlatArrayType getArrayTypeInfo(SgType* atype);
-  //~ FlatArrayType flattenArrayType(SgType& atype);
   /// @}
+
+  /// represents a branch in an if elsif else context (either statement or expression).
+  template <class SageLocatedNode>
+  struct IfInfo : std::tuple<SgExpression*, SageLocatedNode*>
+  {
+    using base = std::tuple<SgExpression*, SageLocatedNode*>;
+    using base::base;
+
+    SgExpression*    condition()  const { return std::get<0>(*this); }
+    SageLocatedNode* trueBranch() const { return std::get<1>(*this); }
+    bool             isElse()     const { return condition() == nullptr; }
+  };
+
+  /// returns a sequence of if (x) then value
+  ///   the last else does not have
+  using IfExpressionInfo = IfInfo<SgExpression>;
+  using IfStatementInfo  = IfInfo<SgStatement>;
+
+  /// returns a flat representation of if expressions
+  std::vector<IfExpressionInfo>
+  flattenIfExpressions(SgConditionalExp& n);
+
+  /// returns a flat representation of if-elsif-else statements
+  std::vector<IfStatementInfo>
+  flattenIfStatements(SgIfStmt& n);
+
+  /// returns the expression of an expression statement, or nullptr if s is some other node
+  SgExpression*
+  underlyingExpr(const SgStatement* s);
 
   /// returns a range for the range attribute \ref rangeAttribute.
   /// \return a range if rangeAttribute is a range attribute and a range expression is in the AST;
@@ -114,12 +141,73 @@ namespace ada
   bool hasUnknownDiscriminants(const SgAdaDiscriminatedTypeDecl* n);
   /// @}
 
+
+  /// return if the type @ref ty is the corresponding universal type representation in ROSE
+  /// @{
+  bool isIntegerType(const SgType& ty);
+  bool isIntegerType(const SgType* ty);
+  bool isFloatingPointType(const SgType& ty);
+  bool isFloatingPointType(const SgType* ty);
+  bool isDiscreteType(const SgType* ty);
+  bool isDiscreteType(const SgType& ty);
+  /// @}
+
+  /// returns if the type @ref ty is a fixed point type
+  /// \details
+  ///    also return true for decimal fixed points
+  /// @{
+  bool isFixedType(const SgType* ty);
+  bool isFixedType(const SgType& ty);
+  /// @}
+
+  /// returns if the type @ref ty is a decimal fixed point type
+  /// \details
+  ///    implementation is incomplete and only detects formal decimal fixed point constraints
+  /// @{
+  bool isDecimalFixedType(const SgType* ty);
+  bool isDecimalFixedType(const SgType& ty);
+  /// @}
+
+
   /// returns the SgAdaDiscriminatedTypeDecl iff \ref n is discriminated
   ///         null otherwise
   /// @{
   SgAdaDiscriminatedTypeDecl* getAdaDiscriminatedTypeDecl(const SgDeclarationStatement& n);
   SgAdaDiscriminatedTypeDecl* getAdaDiscriminatedTypeDecl(const SgDeclarationStatement* n);
   /// @}
+
+  /// Details of expression aggregates
+  struct AggregateInfo : std::tuple< SgAdaAncestorInitializer*,
+                                     SgExpressionPtrList::const_iterator,
+                                     SgExpressionPtrList::const_iterator
+                                   >
+  {
+    using base = std::tuple< SgAdaAncestorInitializer*,
+                             SgExpressionPtrList::const_iterator,
+                             SgExpressionPtrList::const_iterator
+                           >;
+    using base::base;
+
+    /// returns the ancestor initializer iff it exists, otherwise null
+    SgAdaAncestorInitializer* ancestor() const { return std::get<0>(*this); }
+
+    /// returns the remaining range-begin without the ancestor initializer (if it existed)
+    SgExpressionPtrList::const_iterator begin() const { return std::get<1>(*this); }
+
+    /// returns the underlying's list end iterator
+    SgExpressionPtrList::const_iterator end() const { return std::get<2>(*this); }
+
+    /// returns if the remaining range (w/o the ancestor initializer) indicates a null record.
+    bool nullRecord() const { return begin() == end(); }
+  };
+
+  /// returns the ancestor initializer, if \ref exp refers to an extension aggregate
+  ///         null otherwise
+  /// @{
+  AggregateInfo splitAggregate(const SgExprListExp& exp);
+  AggregateInfo splitAggregate(const SgExprListExp* exp);
+  /// @}
+
 
   /// returns a package symbol if the declaration \ref n renames a package
   /// returns nullptr otherwise
@@ -206,6 +294,7 @@ namespace ada
   primitiveParameterPositions(const SgFunctionDeclaration*);
   /// @}
 
+
   /// returns the overriding scope of a primitive function based on the
   ///   associated arguments as defined by the argument list \ref args and
   ///   the primitive argument positions defined by \ref primitiveArgs.
@@ -265,7 +354,7 @@ namespace ada
 
   /// converts text to constant values
   /// \{
-  int convertIntLiteral(const char* img);
+  long long int convertIntegerLiteral(const char* img);
 
   std::string convertStringLiteral(const char* img);
 

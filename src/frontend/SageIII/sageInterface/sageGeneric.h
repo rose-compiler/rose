@@ -180,7 +180,7 @@ namespace sg
     GEN_VISIT(SgAdaDelayStmt)
     GEN_VISIT(SgAdaEntryDecl)
     GEN_VISIT(SgAdaExitStmt)
-    GEN_VISIT(SgAdaFloatType)
+    GEN_VISIT(SgAdaDiscreteType)
     GEN_VISIT(SgAdaFloatVal)
     GEN_VISIT(SgAdaFormalType)
     GEN_VISIT(SgAdaFormalTypeDecl)
@@ -189,7 +189,7 @@ namespace sg
     GEN_VISIT(SgAdaGenericInstanceDecl)
     GEN_VISIT(SgAdaGenericDefn)
     GEN_VISIT(SgAdaIndexConstraint)
-    GEN_VISIT(SgAdaLengthClause)
+    GEN_VISIT(SgAdaAttributeClause)
     GEN_VISIT(SgAdaLoopStmt)
     GEN_VISIT(SgAdaModularType)
     GEN_VISIT(SgAdaPackageBody)
@@ -198,7 +198,7 @@ namespace sg
     GEN_VISIT(SgAdaPackageSpecDecl)
     GEN_VISIT(SgAdaPackageSymbol)
     GEN_VISIT(SgAdaRangeConstraint)
-    GEN_VISIT(SgAdaRecordRepresentationClause)
+    GEN_VISIT(SgAdaRepresentationClause)
     GEN_VISIT(SgAdaEnumRepresentationClause)
     GEN_VISIT(SgAdaRenamingDecl)
     GEN_VISIT(SgAdaSelectStmt)
@@ -1065,6 +1065,21 @@ namespace sg
     GEN_VISIT(SgAdaDiscriminantConstraint)
     GEN_VISIT(SgAdaVariantFieldDecl)
     GEN_VISIT(SgAdaGenericSymbol)
+
+    GEN_VISIT(SgAdaProtectedBody)
+    GEN_VISIT(SgAdaProtectedBodyDecl)
+    GEN_VISIT(SgAdaProtectedSpec)
+    GEN_VISIT(SgAdaProtectedSpecDecl)
+    GEN_VISIT(SgAdaProtectedSymbol)
+    GEN_VISIT(SgAdaProtectedRefExp)
+    GEN_VISIT(SgAdaProtectedType)
+    GEN_VISIT(SgAdaProtectedTypeDecl)
+    GEN_VISIT(SgAdaDigitsConstraint)
+    GEN_VISIT(SgAdaAncestorInitializer)
+    GEN_VISIT(SgAdaDeltaConstraint)
+    GEN_VISIT(SgAdaSubroutineType)
+
+
 
 #if WITH_BINARY_NODES
     GEN_VISIT(SgAsmNullInstruction)

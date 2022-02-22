@@ -7,6 +7,7 @@
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/DataBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
+#include <Rose/CommandLine/IntervalParser.h>
 
 #include <Rose/Diagnostics.h>
 
@@ -158,14 +159,16 @@ std::ostream& operator<<(std::ostream&, const AddressUsageMap&);
  * @li "N+M" is the base/size form where N is the minimum value and M is the number of items.
  *
  * The integers can be specified in decimal, octal, hexadecimal, or binary using the usual C/C++ syntax. */
-class AddressIntervalParser: public Sawyer::CommandLine::ValueParser {
+class AddressIntervalParser: public Rose::CommandLine::IntervalParser<AddressInterval> {
+    using Super =                   Rose::CommandLine::IntervalParser<AddressInterval>;
+
 protected:
     AddressIntervalParser() {}
     AddressIntervalParser(const Sawyer::CommandLine::ValueSaver::Ptr &valueSaver)
-        : Sawyer::CommandLine::ValueParser(valueSaver) {}
+        : Super(valueSaver) {}
 public:
     /** Shared-ownership pointer to an @ref AddressIntervalParser. See @ref heap_object_shared_ownership. */
-    typedef Sawyer::SharedPointer<AddressIntervalParser> Ptr;
+    using Ptr = Sawyer::SharedPointer<AddressIntervalParser>;
 
     /** Default allocating constructor. */
     static Ptr instance() {
@@ -179,24 +182,6 @@ public:
 
     /** Runtime documentation. */
     static std::string docString();
-
-    /** Parse an interval from a C string.
-     *
-     *  Tries to parse an interval from the @p input string, and if successful adjusts @p rest to point to the
-     *  first character beyond what was parsed. If a syntax error occurs, then an @c std::runtime_error is thrown. */
-    static AddressInterval parse(const char *input, const char **rest);
-
-    /** Parse an interval from a C++ string.
-     *
-     *  Tries to parse an interval from the @p input string. The string may contain leading and trailing white space,
-     *  but any extra characters will cause a syntax error. Syntax errors are reported by throwing @c std::runtime_error.
-     *  Since the underlying parsing is done on C strings, this function is ill-defined when the @p input contains NUL
-     *  bytes. */
-    static AddressInterval parse(const std::string &input);
-
-private:
-    virtual Sawyer::CommandLine::ParsedValue operator()(const char *input, const char **rest,
-                                                        const Sawyer::CommandLine::Location &loc) override;
 };
 
 AddressIntervalParser::Ptr addressIntervalParser(AddressInterval &storage);

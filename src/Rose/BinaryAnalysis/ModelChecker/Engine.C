@@ -3,6 +3,7 @@
 #include <sage3basic.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Engine.h>
 
+#include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
 #include <Rose/BinaryAnalysis/ModelChecker/ExecutionUnit.h>
 #include <Rose/BinaryAnalysis/ModelChecker/P2Model.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Path.h>
@@ -12,13 +13,13 @@
 #include <Rose/BinaryAnalysis/ModelChecker/SemanticCallbacks.h>
 #include <Rose/BinaryAnalysis/ModelChecker/Settings.h>
 #include <Rose/BinaryAnalysis/ModelChecker/SourceLister.h>
-#include <boost/format.hpp>
-#include <boost/lexical_cast.hpp>
-#include <boost/scope_exit.hpp>
-#include <Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h>
+#include <Rose/BinaryAnalysis/ModelChecker/WorkerStatus.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Function.h>
 
+#include <boost/format.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/scope_exit.hpp>
 #ifdef __linux
 #include <sys/syscall.h>                                // SYS_* constants
 #include <sys/types.h>                                  // pid_t
@@ -89,6 +90,8 @@ Engine::instance(const Settings::Ptr &settings) {
 Engine::~Engine() {
     for (std::thread &t: workers_)
         t.join();
+    if (workerStatus_)
+        workerStatus_->updateFileNow();
 }
 
 Settings::Ptr
@@ -218,7 +221,11 @@ Engine::startWorkers(size_t n) {
         SAWYER_MESG_FIRST(mlog[WHERE], mlog[TRACE], mlog[DEBUG]) <<"starting " <<StringUtility::plural(n, "workers") <<"\n";
         for (size_t i = 0; i < n; ++i) {
             ++workCapacity_;
-            workers_.push_back(std::thread([this](){worker();}));
+            const size_t id = workers_.size();
+            Progress::Ptr progress = workerStatus_ ? Progress::instance() : Progress::Ptr();
+            workers_.push_back(std::thread([this, id, progress](){worker(id, progress);}));
+            if (workerStatus_)
+                workerStatus_->insert(workers_.size()-1, progress);
         }
     }
 }
@@ -255,9 +262,9 @@ bool
 Engine::step() {
     // Show when this user thread starts and ends work
     WorkerState state = WorkerState::STARTING;
-    changeState(state, WorkerState::STARTING);
+    changeState(UNMANAGED_WORKER, state, WorkerState::STARTING);
     BOOST_SCOPE_EXIT(this_, &state) {
-        this_->changeState(state, WorkerState::FINISHED);
+        this_->changeState(UNMANAGED_WORKER, state, WorkerState::FINISHED);
     } BOOST_SCOPE_EXIT_END;
 
     // Create a thread-local RISC operators that will be used to update semantic states
@@ -284,11 +291,11 @@ Engine::step() {
 
 // called only by managed worker threads.
 void
-Engine::worker() {
+Engine::worker(size_t workerId, const Progress::Ptr &progress) {
     // Show when this managed worker starts and ends work
     WorkerState state = WorkerState::STARTING;          // the caller has already changed our state for us.
-    BOOST_SCOPE_EXIT(this_, &state) {
-        this_->changeState(state, WorkerState::FINISHED);
+    BOOST_SCOPE_EXIT(this_, &state, workerId) {
+        this_->changeState(workerId, state, WorkerState::FINISHED);
     } BOOST_SCOPE_EXIT_END;
 
     // Create a thread-local RISC operators that will be used to update semantic states
@@ -299,14 +306,15 @@ Engine::worker() {
     ASSERT_require2(ops->currentState() == nullptr, "please remove the current state for added safety");
     SmtSolver::Ptr solver = semantics_->createSolver();
     ASSERT_not_null(solver);
+    solver->progress(progress);
 
-    changeState(state, WorkerState::WAITING);
-    while (Path::Ptr path = takeNextWorkItem(state)) {
+    changeState(workerId, state, WorkerState::WAITING);
+    while (Path::Ptr path = takeNextWorkItem(workerId, state)) {
         BOOST_SCOPE_EXIT(this_, &ops) {
             this_->finishPath(ops);
         } BOOST_SCOPE_EXIT_END;
         doOneStep(path, ops, solver);
-        changeState(state, WorkerState::WAITING);
+        changeState(workerId, state, WorkerState::WAITING);
     }
 }
 
@@ -401,20 +409,20 @@ Engine::takeNextWorkItemNow(WorkerState &state) {
         return Path::Ptr();
     Path::Ptr retval = frontier_.takeNext();
     if (retval) {
-        changeStateNS(state, WorkerState::WORKING);
+        changeStateNS(UNMANAGED_WORKER, state, WorkerState::WORKING);
         inProgress_.insert(boost::this_thread::get_id(), InProgress(retval));
     }
     return retval;
 }
 
 Path::Ptr
-Engine::takeNextWorkItem(WorkerState &state) {
+Engine::takeNextWorkItem(size_t workerId, WorkerState &state) {
     SAWYER_THREAD_TRAITS::UniqueLock lock(mutex_);
     while (true) {
         if (stopping_)
             return Path::Ptr();
         if (Path::Ptr retval = frontier_.takeNext()) {
-            changeStateNS(state, WorkerState::WORKING);
+            changeStateNS(workerId, state, WorkerState::WORKING);
             inProgress_.insert(boost::this_thread::get_id(), InProgress(retval));
             return retval;
         }
@@ -453,9 +461,9 @@ Engine::takeNextInteresting() {
 }
 
 void
-Engine::changeState(WorkerState &cur, WorkerState next) {
+Engine::changeState(size_t workerId, WorkerState &cur, WorkerState next) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    changeStateNS(cur, next);
+    changeStateNS(workerId, cur, next);
 }
 
 void
@@ -473,7 +481,7 @@ Engine::finishWorkingNS() {
 }
 
 void
-Engine::changeStateNS(WorkerState &cur, WorkerState next) {
+Engine::changeStateNS(size_t workerId, WorkerState &cur, WorkerState next) {
     switch (cur) {
         case WorkerState::STARTING:
             switch (next) {
@@ -534,6 +542,9 @@ Engine::changeStateNS(WorkerState &cur, WorkerState next) {
             ASSERT_not_reachable("invalid worker transition from finished state");
     }
     cur = next;
+
+    if (workerStatus_)
+        workerStatus_->setState(workerId, cur);
 }
 
 // An entry in a variable index that says where a variable is constrained along a path.
@@ -820,12 +831,19 @@ public:
     size_t nPaths = 0;                                  // number of paths
     Sawyer::Optional<size_t> minSteps;                  // number of steps in shortest path
     Sawyer::Optional<size_t> maxSteps;                  // number of steps in longest path
+    Sawyer::Optional<size_t> minNodes;                  // number of nodes in shortest path
+    Sawyer::Optional<size_t> maxNodes;                  // number of nodes in longest path
 
     virtual bool operator()(const Path::Ptr &path) {
         ++nPaths;
         size_t nSteps = path->nSteps();
         minSteps = std::min(minSteps.orElse(nSteps), nSteps);
         maxSteps = std::max(maxSteps.orElse(nSteps), nSteps);
+
+        size_t nNodes = path->nNodes();
+        minNodes = std::min(minNodes.orElse(nNodes), nNodes);
+        maxNodes = std::max(maxNodes.orElse(nNodes), nNodes);
+
         return true;
     }
 };
@@ -833,8 +851,8 @@ public:
 void
 Engine::showStatistics(std::ostream &out, const std::string &prefix) const {
     // Gather information
-    const size_t k = settings()->k;
-    const double forestSize = estimatedForestSize(k);
+    const size_t kSteps = settings()->kSteps;
+    const double forestSize = estimatedForestSize(kSteps);
     const size_t forestExplored = nStepsExplored();
     const double percentExplored = forestSize > 0.0 ? 100.0 * forestExplored / forestSize : 0.0;
     const size_t nPathsExplored = this->nPathsExplored();
@@ -848,12 +866,15 @@ Engine::showStatistics(std::ostream &out, const std::string &prefix) const {
     PathStatsAccumulator pendingStats;
     pendingPaths().traverse(pendingStats);
 
-    ////////////////---------1---------2---------3---------4
-    out <<prefix <<"total elapsed time:                     " <<elapsedTime() <<"\n";
-    out <<prefix <<"threads:                                " <<nWorking() <<" working of " <<workCapacity() <<" total\n";
+    out <<prefix <<"total elapsed time:                           " <<elapsedTime() <<"\n";
+    out <<prefix <<"threads:                                      " <<nWorking() <<" working of " <<workCapacity() <<" total\n";
     if (currentStats.nPaths > 0) {
-        out <<prefix <<"  shortest in-progress path length:     " <<StringUtility::plural(*currentStats.minSteps, "steps") <<"\n";
-        out <<prefix <<"  longest in-progress path length:      " <<StringUtility::plural(*currentStats.maxSteps, "steps") <<"\n";
+        out <<prefix <<"  shortest in-progress path length:           "
+            <<StringUtility::plural(*currentStats.minNodes, "nodes") <<", "
+            <<StringUtility::plural(*currentStats.minSteps, "steps") <<"\n";
+        out <<prefix <<"  longest in-progress path length:            "
+            <<StringUtility::plural(*currentStats.maxNodes, "nodes") <<", "
+            <<StringUtility::plural(*currentStats.maxSteps, "steps") <<"\n";
         for (const InProgress &work: currentWork) {
             out <<prefix <<"  thread " <<work.threadId;
             if (work.tid > 0)
@@ -864,43 +885,67 @@ Engine::showStatistics(std::ostream &out, const std::string &prefix) const {
         }
     }
 
-    out <<prefix <<"paths waiting to be explored:           " <<pendingStats.nPaths <<"\n";
+    out <<prefix <<"paths waiting to be explored:                 " <<pendingStats.nPaths <<"\n";
     if (pendingStats.nPaths > 0) {
-        out <<prefix <<"  shortest pending path length:         " <<StringUtility::plural(*pendingStats.minSteps, "steps") <<"\n";
-        out <<prefix <<"  longest pending path length:          " <<StringUtility::plural(*pendingStats.maxSteps, "steps") <<"\n";
+        out <<prefix <<"  shortest pending path length:               "
+            <<StringUtility::plural(*pendingStats.minNodes, "nodes") <<", "
+            <<StringUtility::plural(*pendingStats.minSteps, "steps") <<"\n";
+        out <<prefix <<"  longest pending path length:                "
+            <<StringUtility::plural(*pendingStats.maxNodes, "nodes") <<", "
+            <<StringUtility::plural(*pendingStats.maxSteps, "steps") <<"\n";
     }
-    out <<prefix <<"paths explored:                         " <<nPathsExplored <<"\n";
+    out <<prefix <<"paths explored:                               " <<nPathsExplored <<"\n";
 
     const size_t nNewPaths = nPathsExplored - nPathsStats_;
     if (age >= 60.0) {
         double rate = 60.0 * nNewPaths / age;           // paths per minute
          if (nNewPaths >= 1.0) {
-            out <<prefix <<(boost::format("%-39s %1.3f paths/minute\n") % "exploration rate:" % rate);
+            out <<prefix <<(boost::format("%-45s %1.3f paths/minute\n") % "exploration rate:" % rate);
         } else {
-            out <<prefix <<(boost::format("%-39s less than one path/minute\n") % "exploration rate:");
+            out <<prefix <<(boost::format("%-45s less than one path/minute\n") % "exploration rate:");
         }
     }
-    out <<prefix <<"execution tree nodes explored:          " <<forestExplored <<"\n";
+    out <<prefix <<"execution tree nodes explored:                " <<forestExplored <<"\n";
     if (forestSize < 1e9) {
-        out <<prefix <<(boost::format("%-39s %1.0f nodes estimated\n")
-                        % ("execution tree size to depth " + boost::lexical_cast<std::string>(k) + ":") % forestSize);
+        out <<prefix <<(boost::format("%-45s %1.0f nodes estimated\n")
+                        % ("execution tree size to depth " + StringUtility::plural(kSteps, "steps") + ":")
+                        % forestSize);
     } else {
-        out <<prefix <<(boost::format("%-39s very large estimated\n")
-                        % ("execution tree size to depth " + boost::lexical_cast<std::string>(k) + ":"));
+        out <<prefix <<(boost::format("%-45s very large estimated\n")
+                        % ("execution tree size to depth " + StringUtility::plural(kSteps, "steps") + ":"));
     }
-    out <<prefix <<(boost::format("%-39s %1.2f%% estimated\n") % "portion of execution tree explored:" % percentExplored);
+    out <<prefix <<(boost::format("%-45s %1.2f%% estimated\n") % "portion of execution tree explored:" % percentExplored);
     out <<prefix <<"(estimates can be wildly incorrect for small sample sizes)\n";
     if (auto p = std::dynamic_pointer_cast<WorkPredicate>(explorationPredicate())) {
-        out <<prefix <<"paths terminated due to K limit:        " <<p->kLimitReached() <<"\n";
-        out <<prefix <<"paths terminated due to time limit:     " <<p->timeLimitReached() <<"\n";
+        out <<prefix <<"paths terminated due to length limit:         " <<p->kLimitReached() <<"\n";
+        out <<prefix <<"paths terminated due to time limit:           " <<p->timeLimitReached() <<"\n";
     }
     if (auto s = std::dynamic_pointer_cast<P2Model::SemanticCallbacks>(semantics())) {
-        out <<prefix <<"paths terminated at duplicate states:   " <<s->nDuplicateStates() <<"\n";
-        out <<prefix <<"paths terminated for solver failure:    " <<s->nSolverFailures() <<" (including timeouts)\n";
+        out <<prefix <<"paths terminated at duplicate states:         " <<s->nDuplicateStates() <<"\n";
+        out <<prefix <<"paths terminated for solver failure:          " <<s->nSolverFailures() <<" (including timeouts)\n";
     }
-    out <<prefix <<"symbolic expressions truncated:         " <<nExpressionsTrimmed() <<"\n";
+    out <<prefix <<"symbolic expressions truncated:               " <<nExpressionsTrimmed() <<"\n";
 
     nPathsStats_ = nPathsExplored;
+}
+
+boost::filesystem::path
+Engine::workerStatusFile() const {
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    if (workerStatus_) {
+        return workerStatus_->fileName();
+    } else {
+        return {};
+    }
+}
+
+void
+Engine::workerStatusFile(const boost::filesystem::path &fileName) {
+    WorkerStatus::Ptr workerStatus;
+    if (!fileName.empty())
+        workerStatus = WorkerStatus::instance(fileName);
+    SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
+    workerStatus_ = workerStatus;
 }
 
 } // namespace

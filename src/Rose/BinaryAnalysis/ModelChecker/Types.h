@@ -95,6 +95,9 @@ using SourceListerPtr = std::shared_ptr<SourceLister>;
 class Tag;
 using TagPtr = std::shared_ptr<Tag>;
 
+class WorkerStatus;
+using WorkerStatusPtr = std::shared_ptr<WorkerStatus>;
+
 class WorkPredicate;
 using WorkPredicatePtr = std::shared_ptr<WorkPredicate>;
 
@@ -124,6 +127,17 @@ enum class IoMode {
     WRITE,                                              /**< Data is moving to storage. */
     READ                                                /**< Data is moving from storage. */
 };
+
+
+// Worker states. Used internally.
+enum class WorkerState {
+    STARTING,                                           // thread is initializing
+    WAITING,                                            // thread is looking for new work
+    WORKING,                                            // thread is actively working on a path
+    FINISHED                                            // thread will never work again and is cleaning up
+};
+
+#define UNMANAGED_WORKER ((size_t)-1)                   // non-ID for an unmanaged worker; I.e., a user thread
 
 } // namespace
 } // namespace

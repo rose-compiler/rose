@@ -1,5 +1,5 @@
 #include "sage-build.h"
-#include "sage-tree-builder.h"
+#include "SageTreeBuilder.h"
 #include <boost/optional.hpp>
 #include <iostream>
 
@@ -12,7 +12,14 @@ using namespace Fortran;
 
 // The Build functions need to be turned into a class (global variable used for now)
 
-   SageTreeBuilder builder(SageTreeBuilder::e_language_fortran);
+// This constructor is temporary until ROSE supports C++17
+// WARNING, requires that setSgSourceFile be called (see below) before fully constructed
+   SageTreeBuilder builder{SageTreeBuilder::LanguageEnum::Fortran};
+// TEMPORARY until C++17
+void setSgSourceFile(SgSourceFile* sg_file) {
+  builder.setSourceFile(sg_file);
+}
+
 // TODO: change this to a reference
    parser::AllCookedSources* cooked_{nullptr};
 

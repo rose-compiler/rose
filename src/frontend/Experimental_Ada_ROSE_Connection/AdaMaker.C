@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <numeric>
+#include <limits>
 #include <cmath>
 
 #include <boost/algorithm/string/replace.hpp>
@@ -46,8 +47,8 @@ namespace
   }
 
   /// \private
-  /// sets the symbol defining decl
-  void linkDecls(SgFunctionSymbol& funcsy, SgFunctionDeclaration& func)
+  /// links a first nondefining declaration to a definition and vice versa
+  void linkDeclDef(SgFunctionSymbol& funcsy, SgFunctionDeclaration& func)
   {
     SgFunctionDeclaration& sdcl = SG_DEREF(funcsy.get_declaration());
 
@@ -55,6 +56,15 @@ namespace
     ADA_ASSERT(&sdcl != &func);
 
     sdcl.set_definingDeclaration(&func);
+    func.set_firstNondefiningDeclaration(&sdcl);
+  }
+
+  /// \private
+  /// links a secondary nondefining declaration to a first nondefining declaration
+  void linkDeclDecl(SgFunctionSymbol& funcsy, SgFunctionDeclaration& func)
+  {
+    SgFunctionDeclaration& sdcl = SG_DEREF(funcsy.get_declaration());
+    ADA_ASSERT(&sdcl != &func);
     func.set_firstNondefiningDeclaration(&sdcl);
   }
 }
@@ -141,6 +151,34 @@ mkAdaRangeConstraint(SgExpression& range)
 
 namespace
 {
+  template <class SageFixedPointConstraint, class... Other>
+  SageFixedPointConstraint&
+  mkFixedPointConstraint(SgExpression& exp, SgAdaTypeConstraint* sub_opt, Other... other)
+  {
+    SageFixedPointConstraint& sgnode = mkLocatedNode<SageFixedPointConstraint>(&exp, sub_opt, other...);
+
+    exp.set_parent(&sgnode);
+    if (sub_opt) sub_opt->set_parent(&sgnode);
+
+    return sgnode;
+  }
+}
+
+SgAdaDigitsConstraint&
+mkAdaDigitsConstraint(SgExpression& digits, SgAdaTypeConstraint* sub_opt)
+{
+  return mkFixedPointConstraint<SgAdaDigitsConstraint>(digits, sub_opt);
+}
+
+SgAdaDeltaConstraint&
+mkAdaDeltaConstraint(SgExpression& delta, bool isDecimal, SgAdaTypeConstraint* sub_opt)
+{
+  return mkFixedPointConstraint<SgAdaDeltaConstraint>(delta, sub_opt, isDecimal);
+}
+
+
+namespace
+{
   void incorporateConstraintExpressions(SgNode& parent, SgExpressionPtrList& constraints, SgExpressionPtrList&& exprs)
   {
     constraints.swap(exprs);
@@ -185,6 +223,7 @@ mkAdaDerivedType(SgType& basetype)
   return mkNonSharedTypeNode<SgAdaDerivedType>(&basetype);
 }
 
+
 SgAdaModularType&
 mkAdaModularType(SgExpression& modexpr)
 {
@@ -194,6 +233,7 @@ mkAdaModularType(SgExpression& modexpr)
   return sgnode;
 }
 
+/*
 SgAdaFloatType&
 mkAdaFloatType(SgExpression& digits, SgAdaRangeConstraint* range_opt)
 {
@@ -205,7 +245,6 @@ mkAdaFloatType(SgExpression& digits, SgAdaRangeConstraint* range_opt)
   return sgnode;
 }
 
-/*
 SgAdaFormalType&
 mkAdaFormalType(const std::string& name)
 {
@@ -222,7 +261,7 @@ mkExceptionType(SgExpression& n)
 }
 
 SgDeclType&
-mkAttributeType(SgAdaAttributeExp& n)
+mkExprAsType(SgExpression& n)
 {
   return mkNonSharedTypeNode<SgDeclType>(&n);
 }
@@ -231,8 +270,51 @@ mkAttributeType(SgAdaAttributeExp& n)
 SgTypeDefault&
 mkOpaqueType()
 {
+  // not in sage builder
   return mkTypeNode<SgTypeDefault>();
 }
+
+SgAdaDiscreteType&
+mkAdaDiscreteType()
+{
+  return mkTypeNode<SgAdaDiscreteType>();
+}
+
+SgType& mkQualifiedType(SgExpression& qual, SgType& base)
+{
+  SgTypeExpression& baseexp   = mkTypeExpression(base);
+  SgDotExp&         qualified = SG_DEREF(sb::buildDotExp(&qual, &baseexp));
+  //~ SgExprListExp     list     = mkExprListExp({&namequal, &baseexp});
+  SgDeclType&       sgnode   = mkNonSharedTypeNode<SgDeclType>(&qualified);
+
+  return sgnode;
+}
+
+
+SgTypeVoid&
+mkTypeVoid()
+{
+  return SG_DEREF(sb::buildVoidType());
+}
+
+SgTypeUnknown&
+mkTypeUnknown()
+{
+  return mkTypeNode<SgTypeUnknown>();
+}
+
+SgTypeUnknown&
+mkUnresolvedType(const std::string& n)
+{
+  SgTypeUnknown& sgnode = mkNonSharedTypeNode<SgTypeUnknown>();
+
+  sgnode.set_has_type_name(true);
+  sgnode.set_type_name(n);
+
+  return sgnode;
+}
+
+
 
 SgTypeTuple&
 mkTypeUnion(SgTypePtrList elemtypes)
@@ -256,15 +338,29 @@ mkEnumDefn(const std::string& name, SgScopeStatement& scope)
 }
 
 SgAdaAccessType&
-mkAdaAccessType(SgType *base_type)
+mkAdaAccessType(SgType& base_type)
 {
-  SgAdaAccessType& sgnode = mkNonSharedTypeNode<SgAdaAccessType>(base_type);
+  // \todo PP (28/1/22) this may need to be a shared type node
+  SgAdaAccessType& sgnode = mkNonSharedTypeNode<SgAdaAccessType>(&base_type);
   return sgnode;
 }
 
-SgFunctionType& mkAdaEntryType(SgFunctionParameterList& lst)
+namespace
 {
-  return SG_DEREF(sb::buildFunctionType(sb::buildVoidType(), &lst));
+
+SgFunctionType& mkAdaEntryType(SgType& /* indexType ignored */, SgFunctionParameterList& lst)
+{
+  // \todo build entry type
+  return SG_DEREF(sb::buildFunctionType(&mkTypeVoid(), &lst));
+}
+
+}
+
+SgFunctionType& mkFunctionType(SgType& returnType)
+{
+  SgFunctionParameterTypeList& paramTypes = mkBareNode<SgFunctionParameterTypeList>();
+
+  return SG_DEREF(sb::buildFunctionType(&returnType, &paramTypes));
 }
 
 SgFunctionType& mkAdaFunctionRenamingDeclType(SgType& retty, SgFunctionParameterList& lst)
@@ -284,12 +380,22 @@ SgArrayType& mkArrayType(SgType& comptype, SgExprListExp& dimInfo, bool variable
 
 SgType& mkIntegralType()
 {
+  // if this type is changed, the type comparison in si::ada::isIntegerType
+  // needs to be updated.
   return SG_DEREF(sb::buildLongLongType());
 }
 
 SgType& mkRealType()
 {
+  // if this type is changed, the type comparison in si::ada::isFloatingPointType
+  // needs to be updated.
   return SG_DEREF(sb::buildLongDoubleType());
+}
+
+SgType& mkFixedType()
+{
+  // return mkTypeNode<SgTypeFixed>(nullptr, nullptr);
+  return SG_DEREF(sb::buildFixedType(nullptr, nullptr));
 }
 
 SgType& mkConstType(SgType& underType)
@@ -458,15 +564,34 @@ mkAdaDelayStmt(SgExpression& timeExp, bool relativeTime)
   return sgnode;
 }
 
+namespace
+{
+  SgProcessControlStatement&
+  mkProcessControlStatement(SgExpression& code, SgProcessControlStatement::control_enum kind)
+  {
+    SgProcessControlStatement& sgnode = mkBareNode<SgProcessControlStatement>(&code);
+
+    code.set_parent(&sgnode);
+    sgnode.set_control_kind(kind);
+    return sgnode;
+  }
+};
+
 SgProcessControlStatement&
 mkAbortStmt(SgExprListExp& abortList)
 {
-  SgProcessControlStatement& sgnode = mkBareNode<SgProcessControlStatement>(&abortList);
-
-  abortList.set_parent(&sgnode);
-  sgnode.set_control_kind(SgProcessControlStatement::e_abort);
-  return sgnode;
+  return mkProcessControlStatement(abortList, SgProcessControlStatement::e_abort);
 }
+
+SgProcessControlStatement&
+mkRequeueStmt(SgExpression& entryexpr, bool withAbort)
+{
+  auto kind = withAbort ? SgProcessControlStatement::e_requeue
+                        : SgProcessControlStatement::e_requeue_with_abort;
+
+  return mkProcessControlStatement(entryexpr, kind);
+};
+
 
 
 SgLabelStatement&
@@ -608,9 +733,13 @@ mkAdaDiscriminatedTypeDecl(SgScopeStatement& scope)
 }
 
 SgAdaGenericInstanceDecl&
-mkAdaGenericInstanceDecl(const std::string& name, SgAdaGenericDecl& decl, SgScopeStatement& scope)
+mkAdaGenericInstanceDecl(const std::string& name, SgDeclarationStatement& gendecl, SgScopeStatement& scope)
 {
-  SgAdaGenericInstanceDecl& sgnode = mkLocatedNode<SgAdaGenericInstanceDecl>(name,&decl,(SgType*)NULL);
+  ROSE_ASSERT(  isSgAdaGenericDecl(&gendecl)
+             || isSgAdaRenamingDecl(&gendecl)
+             );
+
+  SgAdaGenericInstanceDecl& sgnode = mkLocatedNode<SgAdaGenericInstanceDecl>(name,&gendecl,nullptr);
 
   sgnode.set_parent(&scope);
   sgnode.set_firstNondefiningDeclaration(&sgnode);
@@ -652,10 +781,12 @@ namespace
 {
   template <class SageNode>
   SgAdaRenamingDecl&
-  mkAdaRenamingDeclInternal(const std::string& name, SageNode& renamed, SgScopeStatement& scope)
+  mkAdaRenamingDeclInternal(const std::string& name, SageNode& renamed, SgType* ty, SgScopeStatement& scope)
   {
+    if (ty == nullptr) ty = &mkTypeVoid();
+
     SgSymbol&          origsy = SG_DEREF(renamed.search_for_symbol_from_symbol_table());
-    SgAdaRenamingDecl& sgnode = mkLocatedNode<SgAdaRenamingDecl>(name, &origsy);
+    SgAdaRenamingDecl& sgnode = mkLocatedNode<SgAdaRenamingDecl>(name, &origsy, ty);
 
     sgnode.set_parent(&scope);
     sgnode.set_firstNondefiningDeclaration(&sgnode);
@@ -665,15 +796,15 @@ namespace
 }
 
 SgAdaRenamingDecl&
-mkAdaRenamingDecl(const std::string& name, SgDeclarationStatement& dcl, SgScopeStatement& scope)
+mkAdaRenamingDecl(const std::string& name, SgDeclarationStatement& dcl, SgType* ty, SgScopeStatement& scope)
 {
-  return mkAdaRenamingDeclInternal(name, dcl, scope);
+  return mkAdaRenamingDeclInternal(name, dcl, ty, scope);
 }
 
 SgAdaRenamingDecl&
-mkAdaRenamingDecl(const std::string& name, SgInitializedName& ini, SgScopeStatement& scope)
+mkAdaRenamingDecl(const std::string& name, SgInitializedName& ini, SgType* ty, SgScopeStatement& scope)
 {
-  return mkAdaRenamingDeclInternal(name, ini, scope);
+  return mkAdaRenamingDeclInternal(name, ini, ty, scope);
 }
 
 
@@ -703,14 +834,13 @@ mkAdaPackageBodyDecl(SgAdaPackageSpecDecl& specdcl)
 
 namespace
 {
-  template <class SagaAdaTaskDecl>
-  SagaAdaTaskDecl&
-  mkAdaTaskDeclInternal(const std::string& name, SgAdaTaskSpec& spec, SgScopeStatement& scope)
+  template <class SageAdaConcurrentSymbol, class SageAdaConcurrentDecl, class SageAdaConcurrentSpec>
+  SageAdaConcurrentDecl&
+  mkAdaConcurrentDeclInternal(const std::string& name, SageAdaConcurrentSpec& spec, SgScopeStatement& scope)
   {
-    SagaAdaTaskDecl& sgnode = mkLocatedNode<SagaAdaTaskDecl>(name, &spec);
+    SageAdaConcurrentDecl& sgnode = mkLocatedNode<SageAdaConcurrentDecl>(name, &spec);
 
-    scope.insert_symbol(name, &mkBareNode<SgAdaTaskSymbol>(&sgnode));
-
+    scope.insert_symbol(name, &mkBareNode<SageAdaConcurrentSymbol>(&sgnode));
     spec.set_parent(&sgnode);
     return sgnode;
   }
@@ -720,13 +850,25 @@ namespace
 SgAdaTaskTypeDecl&
 mkAdaTaskTypeDecl(const std::string& name, SgAdaTaskSpec& spec, SgScopeStatement& scope)
 {
-  return mkAdaTaskDeclInternal<SgAdaTaskTypeDecl>(name, spec, scope);
+  return mkAdaConcurrentDeclInternal<SgAdaTaskSymbol, SgAdaTaskTypeDecl>(name, spec, scope);
 }
 
 SgAdaTaskSpecDecl&
 mkAdaTaskSpecDecl(const std::string& name, SgAdaTaskSpec& spec, SgScopeStatement& scope)
 {
-  return mkAdaTaskDeclInternal<SgAdaTaskSpecDecl>(name, spec, scope);
+  return mkAdaConcurrentDeclInternal<SgAdaTaskSymbol, SgAdaTaskSpecDecl>(name, spec, scope);
+}
+
+SgAdaProtectedTypeDecl&
+mkAdaProtectedTypeDecl(const std::string& name, SgAdaProtectedSpec& spec, SgScopeStatement& scope)
+{
+  return mkAdaConcurrentDeclInternal<SgAdaProtectedSymbol, SgAdaProtectedTypeDecl>(name, spec, scope);
+}
+
+SgAdaProtectedSpecDecl&
+mkAdaProtectedSpecDecl(const std::string& name, SgAdaProtectedSpec& spec, SgScopeStatement& scope)
+{
+  return mkAdaConcurrentDeclInternal<SgAdaProtectedSymbol, SgAdaProtectedSpecDecl>(name, spec, scope);
 }
 
 namespace
@@ -756,7 +898,7 @@ SgAdaTaskBodyDecl&
 mkAdaTaskBodyDecl(SgDeclarationStatement& tskdecl, SgAdaTaskBody& tskbody, SgScopeStatement& scope)
 {
   //~ SgAdaPackageBody&     pkgbody = SG_DEREF( new SgAdaPackageBody() );
-  TaskDeclInfoResult specinfo = sg::dispatch(TaskDeclInfo(), &tskdecl);
+  TaskDeclInfoResult specinfo = sg::dispatch(TaskDeclInfo{}, &tskdecl);
   SgAdaTaskBodyDecl& sgnode   = mkLocatedNode<SgAdaTaskBodyDecl>(specinfo.name, &tskbody);
 
   tskbody.set_parent(&sgnode);
@@ -776,33 +918,65 @@ mkAdaTaskBodyDecl(SgDeclarationStatement& tskdecl, SgAdaTaskBody& tskbody, SgSco
   return sgnode;
 }
 
-#if 0
-SgAdaTaskBodyDecl&
-mkAdaTaskBodyDecl(const std::string& name, SgAdaTaskBody& tskbody, SgScopeStatement& scope)
+namespace
 {
-  SgAdaTaskBodyDecl& sgnode = mkLocatedNode<SgAdaTaskBodyDecl>(name, &tskbody);
+  struct ProtectedDeclInfoResult
+  {
+    std::string         name;
+    SgAdaProtectedSpec* spec;
+  };
+
+  struct ProtectedDeclInfo : sg::DispatchHandler<ProtectedDeclInfoResult>
+  {
+    template <class SageProtectedDecl>
+    void handleProtectedDecl(SageProtectedDecl& n)
+    {
+      res.name = n.get_name();
+      res.spec = n.get_definition();
+    }
+
+    void handle(SgNode& n)                 { SG_UNEXPECTED_NODE(n); }
+    void handle(SgAdaProtectedSpecDecl& n) { handleProtectedDecl(n); }
+    void handle(SgAdaProtectedTypeDecl& n) { handleProtectedDecl(n); }
+  };
+} // anonymous namespace
+
+SgAdaProtectedBodyDecl&
+mkAdaProtectedBodyDecl(SgDeclarationStatement& tskdecl, SgAdaProtectedBody& tskbody, SgScopeStatement& scope)
+{
+  //~ SgAdaPackageBody&     pkgbody = SG_DEREF( new SgAdaPackageBody() );
+  ProtectedDeclInfoResult specinfo = sg::dispatch(ProtectedDeclInfo{}, &tskdecl);
+  SgAdaProtectedBodyDecl& sgnode   = mkLocatedNode<SgAdaProtectedBodyDecl>(specinfo.name, &tskbody);
 
   tskbody.set_parent(&sgnode);
   sgnode.set_parent(&scope);
 
-  /*
-  SgAdaTaskSpec&     tskspec = SG_DEREF( specinfo.spec );
+  SgAdaProtectedSpec&     tskspec = SG_DEREF( specinfo.spec );
 
   tskspec.set_body(&tskbody);
   tskbody.set_spec(&tskspec);
-  */
 
-  //~ ADA_ASSERT(scope.symbol_exists(specinfo.name));
-  scope.insert_symbol(name, &mkBareNode<SgAdaTaskSymbol>(&sgnode));
+  // \todo make sure assertion holds
+  // ADA_ASSERT(scope.symbol_exists(specinfo.name));
+
+  if (!scope.symbol_exists(specinfo.name))
+    scope.insert_symbol(specinfo.name, &mkBareNode<SgAdaProtectedSymbol>(&sgnode));
+
   return sgnode;
 }
-#endif
+
 
 SgAdaTaskSpec&
 mkAdaTaskSpec() { return mkScopeStmt<SgAdaTaskSpec>(); }
 
 SgAdaTaskBody&
 mkAdaTaskBody() { return mkScopeStmt<SgAdaTaskBody>(); }
+
+SgAdaProtectedSpec&
+mkAdaProtectedSpec() { return mkScopeStmt<SgAdaProtectedSpec>(); }
+
+SgAdaProtectedBody&
+mkAdaProtectedBody() { return mkScopeStmt<SgAdaProtectedBody>(); }
 
 SgFunctionParameterList&
 mkFunctionParameterList()
@@ -814,12 +988,17 @@ mkFunctionParameterList()
 
 namespace
 {
-  void linkParameterScope(SgFunctionDeclaration& decl, SgFunctionParameterList& lst, SgScopeStatement& parmScope)
+  void linkParametersToScope(SgFunctionParameterList& lst, SgScopeStatement& parmScope)
   {
     // the sage builder overrides this information, so we reset it
     // \todo needs to be fixed in the sage builder
     for (SgInitializedName* n : lst.get_args())
       SG_DEREF(n).set_scope(&parmScope);
+  }
+
+  void linkParameterScope(SgFunctionDeclaration& decl, SgFunctionParameterList& lst, SgScopeStatement& parmScope)
+  {
+    linkParametersToScope(lst, parmScope);
 
     if (SgFunctionParameterScope* fps = isSgFunctionParameterScope(&parmScope))
     {
@@ -836,8 +1015,8 @@ namespace
   /// \private
   /// helps to create a procedure definition:
   ///   attaches the definition to the declaration and returns the *function body*.
-  SgScopeStatement&
-  mkProcDef()
+  SgFunctionDefinition&
+  mkProcDefn()
   {
     //~ SgFunctionDefinition& sgnode = mkLocatedNode<SgFunctionDefinition>(&dcl, nullptr);
     SgBasicBlock&         body   = mkBasicBlock();
@@ -851,14 +1030,10 @@ namespace
 
   /// \private
   /// helps to create a procedure definition as declaration
-  SgScopeStatement&
-  //~ mkProcDecl(SgFunctionDeclaration& dcl)
+  SgFunctionParameterScope&
   mkProcDecl()
   {
-    SgFunctionParameterScope& sgnode = mkScopeStmt<SgFunctionParameterScope>(&mkFileInfo());
-
-    //~ sg::linkParentChild(dcl, sgnode, &SgFunctionDeclaration::set_functionParameterScope);
-    return sgnode;
+    return mkScopeStmt<SgFunctionParameterScope>(&mkFileInfo());
   }
 
   SgFunctionDeclaration&
@@ -866,8 +1041,7 @@ namespace
                        SgScopeStatement& scope,
                        SgType& retty,
                        std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete,
-                       //~ SgScopeStatement& (*scopeMaker) (SgFunctionDeclaration&)
-                       SgScopeStatement& (*scopeMaker) ()
+                       std::function<SgScopeStatement&()> scopeMaker
                      )
   {
     SgFunctionParameterList& lst       = mkFunctionParameterList();
@@ -888,29 +1062,70 @@ namespace
   }
 }
 
+SgAdaSubroutineType&
+mkAdaSubroutineType( SgType& retty,
+                     std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete,
+                     bool isProtected
+                   )
+{
+  SgFunctionParameterList&  lst       = mkFunctionParameterList();
+  SgFunctionParameterScope& parmScope = mkProcDecl();
+
+  complete(lst, parmScope);
+
+  // \todo can we make this a shared type?
+  SgAdaSubroutineType&      sgnode = mkNonSharedTypeNode<SgAdaSubroutineType>(&lst, &parmScope, &retty, isProtected);
+
+  lst.set_parent(&sgnode);
+  // correct? or shall we link to surrounding scope?
+  parmScope.set_parent(&sgnode);
+
+  return sgnode;
+}
+
+
 SgFunctionDeclaration&
-mkProcedure( const std::string& nm,
-             SgScopeStatement& scope,
-             SgType& retty,
-             std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
-           )
+mkProcedureDecl( const std::string& nm,
+                 SgScopeStatement& scope,
+                 SgType& retty,
+                 std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
+               )
 {
   return mkProcedureInternal(nm, scope, retty, std::move(complete), mkProcDecl);
 }
 
 SgFunctionDeclaration&
-mkProcedureDef( SgFunctionDeclaration& ndef,
-                SgScopeStatement& scope,
-                SgType& retty,
-                std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
-              )
+mkProcedureDecl( SgFunctionDeclaration& ndef,
+                 SgScopeStatement& scope,
+                 SgType& retty,
+                 std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
+               )
 {
   SgName                 nm     = ndef.get_name();
-  SgFunctionDeclaration& sgnode = mkProcedureInternal(nm, scope, retty, std::move(complete), mkProcDef);
+  SgFunctionDeclaration& sgnode = mkProcedureInternal(nm, scope, retty, std::move(complete), mkProcDecl);
   SgSymbol*              baseSy = ndef.search_for_symbol_from_symbol_table();
   SgFunctionSymbol&      funcSy = SG_DEREF(isSgFunctionSymbol(baseSy));
 
-  linkDecls(funcSy, sgnode);
+  linkDeclDecl(funcSy, sgnode);
+
+  ADA_ASSERT(sgnode.get_definingDeclaration() == nullptr);
+  ADA_ASSERT(sgnode.isForward());
+  return sgnode;
+}
+
+SgFunctionDeclaration&
+mkProcedureDefn( SgFunctionDeclaration& ndef,
+                 SgScopeStatement& scope,
+                 SgType& retty,
+                 std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
+               )
+{
+  SgName                 nm     = ndef.get_name();
+  SgFunctionDeclaration& sgnode = mkProcedureInternal(nm, scope, retty, std::move(complete), mkProcDefn);
+  SgSymbol*              baseSy = ndef.search_for_symbol_from_symbol_table();
+  SgFunctionSymbol&      funcSy = SG_DEREF(isSgFunctionSymbol(baseSy));
+
+  linkDeclDef(funcSy, sgnode);
   sgnode.set_definingDeclaration(&sgnode);
   sgnode.unsetForward();
 
@@ -918,14 +1133,14 @@ mkProcedureDef( SgFunctionDeclaration& ndef,
 }
 
 SgFunctionDeclaration&
-mkProcedureDef( const std::string& nm,
-                SgScopeStatement& scope,
-                SgType& retty,
-                std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
-              )
+mkProcedureDefn( const std::string& nm,
+                 SgScopeStatement& scope,
+                 SgType& retty,
+                 std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
+               )
 {
-  SgFunctionDeclaration& ndef = mkProcedure(nm, scope, retty, complete);
-  SgFunctionDeclaration& sgnode = mkProcedureDef(ndef, scope, retty, std::move(complete));
+  SgFunctionDeclaration& ndef   = mkProcedureDecl(nm, scope, retty, complete);
+  SgFunctionDeclaration& sgnode = mkProcedureDefn(ndef, scope, retty, std::move(complete));
 
   return sgnode;
 }
@@ -963,46 +1178,89 @@ mkAdaFunctionRenamingDecl( const std::string& name,
   return sgnode;
 }
 
+namespace
+{
+  SgAdaEntryDecl&
+  mkAdaEntryDeclInternal( const std::string& name,
+                          SgScopeStatement& scope,
+                          std::function<void(SgFunctionParameterList&, SgScopeStatement&)> completeParams,
+                          std::function<SgInitializedName&(SgScopeStatement&)> genIndex,
+                          std::function<SgScopeStatement&()> scopeMaker
+                        )
+  {
+    SgAdaEntryDecl&           sgnode = mkLocatedNode<SgAdaEntryDecl>(name, nullptr /* entry type */, nullptr /* definition */);
+    SgFunctionParameterList&  lst    = SG_DEREF(sgnode.get_parameterList());
+    SgScopeStatement&         psc    = scopeMaker();
+
+    ADA_ASSERT(sgnode.get_functionParameterScope() == nullptr);
+    linkParameterScope(sgnode, lst, psc);
+
+    SgInitializedName&        entryIndexVar  = genIndex(psc);
+
+    sgnode.set_entryIndex(&entryIndexVar);
+    completeParams(lst, psc);
+
+    SgType&                   entryIndexType = SG_DEREF(entryIndexVar.get_type());
+    SgFunctionType&           funty          = mkAdaEntryType(entryIndexType, lst);
+
+    sgnode.set_type(&funty);
+
+    // not used
+    ADA_ASSERT(sgnode.get_parameterList_syntax() == nullptr);
+
+    SgFunctionSymbol*         funsy  = scope.find_symbol_by_type_of_function<SgFunctionDeclaration>(name, &funty, NULL, NULL);
+
+    ADA_ASSERT(funsy == nullptr);
+    funsy = &mkBareNode<SgFunctionSymbol>(&sgnode);
+
+    scope.insert_symbol(name, funsy);
+    sgnode.set_scope(&scope);
+
+    markCompilerGenerated(lst);
+    return sgnode;
+  }
+}
+
 SgAdaEntryDecl&
 mkAdaEntryDecl( const std::string& name,
                 SgScopeStatement& scope,
-                std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
+                std::function<void(SgFunctionParameterList&, SgScopeStatement&)> completeParams,
+                SgType& entryIndexType
               )
 {
-  //~ SgFunctionParameterList&  lst    = mkFunctionParameterList();
-  SgAdaEntryDecl&           sgnode = mkLocatedNode<SgAdaEntryDecl>(name, nullptr /* entry type */, nullptr /* definition */);
-  SgFunctionParameterList&  lst    = SG_DEREF(sgnode.get_parameterList());
-  SgFunctionParameterScope& psc    = mkScopeStmt<SgFunctionParameterScope>(&mkFileInfo());
+  SgType*         entryIdxType = &entryIndexType;
+  auto            genIndex = [entryIdxType](SgScopeStatement& scope) -> SgInitializedName&
+                             {
+                               SgInitializedName&     res = mkInitializedName("", *entryIdxType, nullptr);
+                               /*SgVariableDeclaration& var =*/ mkVarDecl(res, scope);
 
-  ADA_ASSERT(sgnode.get_functionParameterScope() == nullptr);
-  sg::linkParentChild<SgFunctionDeclaration>(sgnode, psc, &SgFunctionDeclaration::set_functionParameterScope);
+                               return res;
+                             };
+  SgAdaEntryDecl& sgnode = mkAdaEntryDeclInternal( name, scope, completeParams, genIndex, mkProcDecl);
 
-  complete(lst, psc);
+  sgnode.set_firstNondefiningDeclaration(&sgnode);
 
-  SgFunctionType&           funty  = mkAdaEntryType(lst);
-
-  sgnode.set_type(&funty);
-
-  //~ ADA_ASSERT(sgnode.get_parameterList() == nullptr);
-  //~ sg::linkParentChild<SgFunctionDeclaration>(sgnode, lst, &SgFunctionDeclaration::set_parameterList);
-
-  // not used
-  ADA_ASSERT(sgnode.get_parameterList_syntax() == nullptr);
-
-  //~ SgFunctionSymbol*         funsy  = scope.find_symbol_by_type_of_function<SgAdaEntryDecl>(name, &funty, NULL, NULL);
-  SgFunctionSymbol*         funsy  = scope.find_symbol_by_type_of_function<SgFunctionDeclaration>(name, &funty, NULL, NULL);
-
-  ADA_ASSERT(funsy == nullptr);
-  funsy = &mkBareNode<SgFunctionSymbol>(&sgnode);
-
-  scope.insert_symbol(name, funsy);
-  sgnode.set_scope(&scope);
-  sgnode.set_definingDeclaration(&sgnode);
-  sgnode.unsetForward();
-
-  markCompilerGenerated(lst);
   return sgnode;
 }
+
+SgAdaEntryDecl&
+mkAdaEntryDefn( SgAdaEntryDecl& ndef,
+                SgScopeStatement& scope,
+                std::function<void(SgFunctionParameterList&, SgScopeStatement&)> completeParams,
+                std::function<SgInitializedName&(SgScopeStatement&)> genIndex
+              )
+{
+  SgAdaEntryDecl&        sgnode = mkAdaEntryDeclInternal(ndef.get_name(), scope, completeParams, genIndex, mkProcDefn);
+  SgSymbol*              baseSy = ndef.search_for_symbol_from_symbol_table();
+  SgFunctionSymbol&      funcSy = SG_DEREF(isSgFunctionSymbol(baseSy));
+
+  sgnode.set_definingDeclaration(&sgnode);
+  sgnode.unsetForward();
+  linkDeclDef(funcSy, sgnode);
+
+  return sgnode;
+}
+
 
 SgAdaAcceptStmt&
 mkAdaAcceptStmt(SgExpression& ref, SgExpression& idx)
@@ -1212,14 +1470,14 @@ mkAdaComponentClause(SgVarRefExp& field, SgExpression& offset, SgRangeExp& range
   return sgnode;
 }
 
-SgAdaRecordRepresentationClause&
-mkAdaRecordRepresentationClause(SgType& record, SgExpression& align)
+SgAdaRepresentationClause&
+mkAdaRepresentationClause(SgType& record, SgExpression& align, bool isAtClause)
 {
-  SgBasicBlock&                    elems  = mkBasicBlock();
-  SgAdaRecordRepresentationClause& sgnode = mkLocatedNode<SgAdaRecordRepresentationClause>(&record, &align, &elems);
+  SgBasicBlock*              elems  = !isAtClause ?  &mkBasicBlock() : nullptr;
+  SgAdaRepresentationClause& sgnode = mkLocatedNode<SgAdaRepresentationClause>(&record, &align, elems);
 
+  if (!isAtClause) elems->set_parent(&sgnode);
   align.set_parent(&sgnode);
-  elems.set_parent(&sgnode);
   return sgnode;
 }
 
@@ -1233,10 +1491,10 @@ mkAdaEnumRepresentationClause(SgType& enumtype, SgExprListExp& initlst)
 }
 
 
-SgAdaLengthClause&
-mkAdaLengthClause(SgAdaAttributeExp& attr, SgExpression& size)
+SgAdaAttributeClause&
+mkAdaAttributeClause(SgAdaAttributeExp& attr, SgExpression& size)
 {
-  SgAdaLengthClause& sgnode = mkLocatedNode<SgAdaLengthClause>(&attr, &size);
+  SgAdaAttributeClause& sgnode = mkLocatedNode<SgAdaAttributeClause>(&attr, &size);
 
   attr.set_parent(&sgnode);
   size.set_parent(&sgnode);
@@ -1282,6 +1540,16 @@ mkAdaNamedInitializer(SgExprListExp& components, SgExpression& val)
   val.set_parent(&ini);
   components.set_parent(&sgnode);
   ini.set_parent(&sgnode);
+  return sgnode;
+}
+
+
+SgAdaAncestorInitializer&
+mkAdaAncestorInitializer(SgExpression& par)
+{
+  SgAdaAncestorInitializer& sgnode = mkLocatedNode<SgAdaAncestorInitializer>(&par);
+
+  par.set_parent(&sgnode);
   return sgnode;
 }
 
@@ -1340,6 +1608,20 @@ mkNewExp(SgType& ty, SgExprListExp* args_opt)
   return mkLocatedNode<SgNewExp>(&ty, nullptr /*placement*/, init, nullptr, 0 /* no global */, nullptr);
 }
 
+SgConditionalExp&
+mkIfExpr()
+{
+  return SG_DEREF( sb::buildConditionalExp_nfi(nullptr, nullptr, nullptr, nullptr) );
+}
+
+
+SgExpression&
+mkAdaBoxExp()
+{
+  return SG_DEREF(sb::buildVoidVal());
+}
+
+
 
 SgAdaOthersExp&
 mkAdaOthersExp()
@@ -1364,6 +1646,12 @@ SgAdaTaskRefExp&
 mkAdaTaskRefExp(SgAdaTaskSpecDecl& task)
 {
   return mkLocatedNode<SgAdaTaskRefExp>(&task);
+}
+
+SgAdaProtectedRefExp&
+mkAdaProtectedRefExp(SgAdaProtectedSpecDecl& po)
+{
+  return mkLocatedNode<SgAdaProtectedRefExp>(&po);
 }
 
 SgAdaUnitRefExp&
@@ -1443,6 +1731,17 @@ mkExprListExp(const std::vector<SgExpression*>& exprs)
   return sgnode;
 }
 
+
+SgTypeExpression&
+mkTypeExpression(SgType& ty)
+{
+  SgTypeExpression& sgnode = SG_DEREF(sb::buildTypeExpression(&ty)) ;
+
+  markCompilerGenerated(sgnode);
+  return sgnode;
+}
+
+
 SgNullExpression&
 mkNullExpression()
 {
@@ -1452,6 +1751,45 @@ mkNullExpression()
   return sgnode;
 }
 
+
+namespace
+{
+  struct IntegerValue : sg::DispatchHandler<long long int>
+  {
+    void handle(const SgNode& n)           { SG_UNEXPECTED_NODE(n); }
+    void handle(const SgShortVal& n)       { res = n.get_value(); }
+    void handle(const SgIntVal& n)         { res = n.get_value(); }
+    void handle(const SgLongIntVal& n)     { res = n.get_value(); }
+    void handle(const SgLongLongIntVal& n) { res = n.get_value(); }
+  };
+
+  long long int getIntegralValue(SgInitializedName& enumitem)
+  {
+    SgAssignInitializer& ini = SG_DEREF( isSgAssignInitializer(enumitem.get_initializer()) );
+
+    return sg::dispatch(IntegerValue{}, ini.get_operand());
+  }
+};
+
+SgExpression&
+mkEnumeratorRef(SgEnumDeclaration& enumdecl, SgInitializedName& enumitem)
+{
+  using rose_rep_t = decltype(std::declval<SgEnumVal>().get_value());
+
+  const long long int enumval = getIntegralValue(enumitem);
+  ROSE_ASSERT(  (enumval >= std::numeric_limits<rose_rep_t>::min())
+             && (enumval <= std::numeric_limits<rose_rep_t>::max())
+             && ("integral value over-/underflow during conversion")
+             );
+
+  return SG_DEREF( sb::buildEnumVal_nfi(enumval, &enumdecl, enumitem.get_name()) );
+}
+
+SgExpression&
+mkEnumeratorRef_repclause(SgEnumDeclaration&, SgInitializedName& enumitem)
+{
+  return SG_DEREF( sb::buildVarRefExp(&enumitem, nullptr /* not needed */) );
+}
 
 
 SgAdaAttributeExp&
@@ -1526,8 +1864,8 @@ namespace
 SgAdaInheritedFunctionSymbol&
 mkAdaInheritedFunctionSymbol(SgFunctionDeclaration& fn, SgTypedefType& declaredDerivedType, SgScopeStatement& scope)
 {
-  SgFunctionType&               functy = SG_DEREF(fn.get_type());
-  SgFunctionType&               dervty = convertToDerivedType(functy, declaredDerivedType);
+  SgFunctionType& functy = SG_DEREF(fn.get_type());
+  SgFunctionType& dervty = convertToDerivedType(functy, declaredDerivedType);
 
   if (&functy == &dervty)
   {
@@ -1564,13 +1902,6 @@ SgStringVal& mkValue<SgStringVal>(const char* textrep)
 
 
 template <>
-int convAdaLiteral<int>(const char* img)
-{
-  return si::ada::convertIntLiteral(img);
-}
-
-
-template <>
 long double convAdaLiteral<long double>(const char* img)
 {
   return si::ada::convertRealLiteral(img);
@@ -1582,6 +1913,52 @@ char convAdaLiteral<char>(const char* img)
 {
   return si::ada::convertCharLiteral(img);
 }
+
+namespace
+{
+  template <class SageIntegralValue>
+  SageIntegralValue*
+  mkIntegralLiteralIfWithinRange(long long int val, const char* textrep)
+  {
+    using rose_rep_t = decltype(std::declval<SageIntegralValue>().get_value());
+
+    const bool withinRange = (  (val >= std::numeric_limits<rose_rep_t>::min())
+                             && (val <= std::numeric_limits<rose_rep_t>::max())
+                             );
+
+    if (!withinRange) return nullptr;
+
+    return &mkLocatedNode<SageIntegralValue>(val, textrep);
+  }
+}
+
+SgValueExp&
+mkAdaIntegerLiteral(const char* textrep)
+{
+  static constexpr bool MakeSmallest = false;
+
+  ADA_ASSERT(textrep);
+
+  long long int val = si::ada::convertIntegerLiteral(textrep);
+  SgValueExp*   res = nullptr;
+
+  MakeSmallest
+  //~ || (res = mkIntegralLiteralIfWithinRange<SgShortVal>      (val, textrep))
+  || (res = mkIntegralLiteralIfWithinRange<SgIntVal>        (val, textrep))
+  || (res = mkIntegralLiteralIfWithinRange<SgLongIntVal>    (val, textrep))
+  || (res = mkIntegralLiteralIfWithinRange<SgLongLongIntVal>(val, textrep))
+  ;
+
+  if (!res)
+  {
+    logError() << "Unable to represent " << textrep << " within the bounds of long long int"
+               << std::endl;
+    ROSE_ABORT();
+  }
+
+  return *res;
+}
+
 
 
 //

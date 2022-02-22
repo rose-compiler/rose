@@ -1,9 +1,5 @@
 include_rules
 
-: $(ROOT)/LicenseInformation/ROSE_BSD_License.txt \
-  |> ^ GEN %o^ perl $(ROOT)/scripts/to-c-string.pl <%f >%o \
-  |> license.h
-
 run $(librose_compile) Combinatorics.C IncludeDirective.C \
     memoryUsage.C optionDeclaration.C rangemap.C roseTranslators.C \
     sourceLocationInheritedAttribute.C stringify.C transformationSupport.C utility_functions.C

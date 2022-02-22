@@ -146,9 +146,9 @@ void *$CLASSNAME::operator new ( size_t Size )
     SgNode * fp = object->p_freepointer;
 #if ROSE_ALLOC_MEMSET == 1
 #elif ROSE_ALLOC_MEMSET == 2
-    memset(((void*)object) + ROSE_ALLOC_MEMSET_OFFSET, 0x00, sizeof($CLASSNAME) - ROSE_ALLOC_MEMSET_OFFSET * sizeof(char*));
+    memset(((char*)object) + ROSE_ALLOC_MEMSET_OFFSET, 0x00, sizeof($CLASSNAME) - ROSE_ALLOC_MEMSET_OFFSET * sizeof(char*));
 #elif ROSE_ALLOC_MEMSET == 3
-    memset(((void*)object) + ROSE_ALLOC_MEMSET_OFFSET, 0xBB, sizeof($CLASSNAME) - ROSE_ALLOC_MEMSET_OFFSET * sizeof(char*));
+    memset(((char*)object) + ROSE_ALLOC_MEMSET_OFFSET, 0xBB, sizeof($CLASSNAME) - ROSE_ALLOC_MEMSET_OFFSET * sizeof(char*));
 #endif
     object->p_freepointer = fp;
 
@@ -214,9 +214,9 @@ void $CLASSNAME::operator delete(void *Pointer, size_t Size)
 
 #if ROSE_ALLOC_MEMSET == 1
 #elif ROSE_ALLOC_MEMSET == 2
-    memset(((void*)object) + ROSE_ALLOC_MEMSET_OFFSET, 0x00, sizeof($CLASSNAME) - ROSE_ALLOC_MEMSET_OFFSET * sizeof(char*));
+    memset(((char*)object) + ROSE_ALLOC_MEMSET_OFFSET, 0x00, sizeof($CLASSNAME) - ROSE_ALLOC_MEMSET_OFFSET * sizeof(char*));
 #elif ROSE_ALLOC_MEMSET == 3
-    memset(((void*)object) + ROSE_ALLOC_MEMSET_OFFSET, 0xDD, sizeof($CLASSNAME) - ROSE_ALLOC_MEMSET_OFFSET * sizeof(char*));
+    memset(((char*)object) + ROSE_ALLOC_MEMSET_OFFSET, 0xDD, sizeof($CLASSNAME) - ROSE_ALLOC_MEMSET_OFFSET * sizeof(char*));
 #endif
 
 // Liao, 8/11/2014, to support IR mapping, we need unique IDs for AST nodes.

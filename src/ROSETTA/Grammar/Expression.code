@@ -699,6 +699,10 @@ HEADER_ADA_TASK_REF_EXPRESSION_START
 //~ SgType* get_type() const override;
 HEADER_ADA_TASK_REF_EXPRESSION_END
 
+HEADER_ADA_PROTECTED_REF_EXPRESSION_START
+//~ SgType* get_type() const override;
+HEADER_ADA_PROTECTED_REF_EXPRESSION_END
+
 HEADER_ADA_RENAMING_REF_EXPRESSION_START
 //~ SgType* get_type() const override;
 HEADER_ADA_RENAMING_REF_EXPRESSION_END
@@ -1653,6 +1657,27 @@ HEADER_ASSIGNMENT_INITIALIZER_EXPRESSION_START
           virtual bool isChildUsedAsLValue(const SgExpression* child) const override; // INTERNAL Recursively call up the chain to answer the child
 
 HEADER_ASSIGNMENT_INITIALIZER_EXPRESSION_END
+
+HEADER_ADA_ANCESTOR_INITIALIZER_EXPRESSION_START
+#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
+          virtual std::vector<VirtualCFG::CFGEdge> cfgOutEdges(unsigned int index) override;
+          virtual std::vector<VirtualCFG::CFGEdge> cfgInEdges(unsigned int index) override;
+#endif
+
+          /// returns the ancestor (operand)
+          SgExpression * get_operand() const;
+
+          /// sets the ancestor (operand) and the ancestor's parent
+          void set_operand(SgExpression * exp);
+
+          // SgType* get_type() const;
+
+       // get lvalue
+          bool isLValue() const override;
+          bool isChildUsedAsLValue(const SgExpression*) const override;
+
+HEADER_ADA_ANCESTOR_INITIALIZER_EXPRESSION_END
+
 
 HEADER_BRACED_INITIALIZER_EXPRESSION_START
 HEADER_LIST_DECLARATIONS
@@ -4410,6 +4435,14 @@ SgType* SgAdaTaskRefExp::get_type() const
 }
 SOURCE_ADA_TASK_REF_EXPRESSION_END
 
+SOURCE_ADA_PROTECTED_REF_EXPRESSION_START
+SgType* SgAdaProtectedRefExp::get_type() const
+{
+  return SgAdaProtectedType::createType(get_decl(), NULL);
+}
+SOURCE_ADA_PROTECTED_REF_EXPRESSION_END
+
+
 SOURCE_ADA_RENAMING_REF_EXPRESSION_START
 SgType* SgAdaRenamingRefExp::get_type() const
 {
@@ -6277,8 +6310,10 @@ SgPointerDerefExp::get_type() const
        // PP (7/9/21): Support Ada types
           case V_SgAdaAccessType:
              {
-               someType = isSgAdaAccessType(someType)->get_base_type();
-               goto keepStripping;
+               returnType = isSgAdaAccessType(someType)->get_base_type();
+               ROSE_ASSERT(returnType && ("access"));
+               // \todo shall we strip modifiers, similar to SgPointerType ??
+               break;
              }
 
           default:
@@ -8194,6 +8229,73 @@ $CLASSNAME::replace_expression(SgExpression *o, SgExpression *n)
    }
 
 SOURCE_ASSIGNMENT_INITIALIZER_EXPRESSION_END
+
+
+SOURCE_ADA_ANCESTOR_INITIALIZER_EXPRESSION_START
+
+SgExpression*
+$CLASSNAME::get_operand() const
+{ return get_ancestor(); }
+
+void
+$CLASSNAME::post_construction_initialization()
+   {
+     if (get_operand() != NULL)
+          get_operand()->set_parent(this);
+   }
+
+SgType*
+$CLASSNAME::get_type() const
+   {
+     ROSE_ASSERT(get_operand() != NULL);
+
+#if 0
+     printf ("In $CLASSNAME::get_type() \n");
+#endif
+
+     return get_operand()->get_type();
+   }
+
+void
+$CLASSNAME::set_operand(SgExpression * exp)
+   {
+     set_ancestor(exp);
+
+     if (exp)
+          exp->set_parent(this);
+   }
+
+SgExpression*
+$CLASSNAME::get_next(int& n) const
+   {
+     if(n==0)
+      {
+        n=1;
+        return get_operand();
+      }
+
+     return nullptr;
+   }
+
+int
+$CLASSNAME::replace_expression(SgExpression *o, SgExpression *n)
+   {
+  // DQ (12/17/2006): This function should have the semantics that it will represent a
+  // structural change to the AST, thus it is free to set the parent of the new expression.
+
+     ROSE_ASSERT(o != NULL);
+     ROSE_ASSERT(n != NULL);
+
+     if(get_operand()==o)
+        {
+          set_operand(n);
+          return 1;
+        }
+
+     return 0;
+   }
+
+SOURCE_ADA_ANCESTOR_INITIALIZER_EXPRESSION_END
 
 
 SOURCE_BRACED_INITIALIZER_EXPRESSION_START

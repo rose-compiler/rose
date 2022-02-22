@@ -75,7 +75,7 @@ SgAsmElfSymverSection::parse()
     SgAsmElfFileHeader *fhdr = get_elf_header();
     ROSE_ASSERT(fhdr!=NULL);
     SgAsmElfSectionTableEntry *shdr = get_section_entry();
-    ROSE_ASSERT(shdr!=NULL);
+    ASSERT_always_require(shdr!=NULL);
   
     size_t entry_size, struct_size, extra_size, nentries;
     calculate_sizes(&entry_size, &struct_size, &extra_size, &nentries);
@@ -280,13 +280,7 @@ SgAsmElfSymverDefinedSection::parse()
   
     SgAsmElfFileHeader *fhdr = get_elf_header();
     ROSE_ASSERT(NULL!=fhdr);
-    SgAsmElfSectionTableEntry *shdr = get_section_entry();
-    ROSE_ASSERT(NULL!=shdr);
-    SgAsmElfStringSection *strsec = dynamic_cast<SgAsmElfStringSection*>(get_linked_section());
-    ROSE_ASSERT(NULL!=strsec);
-  
-    //size_t struct_size=sizeof(SgAsmElfSymverDefinedEntry::ElfSymverDefinedEntry_disk);
-  
+
     rose_addr_t entry_addr=0;
 
     ByteOrder::Endianness sex=fhdr->get_sex();
@@ -597,9 +591,7 @@ SgAsmElfSymverNeededSection::parse()
   
     SgAsmElfFileHeader *fhdr = get_elf_header();
     ROSE_ASSERT(NULL!=fhdr);
-    SgAsmElfSectionTableEntry *shdr = get_section_entry();
-    ROSE_ASSERT(NULL!=shdr);
-  
+
     //size_t struct_size=sizeof(SgAsmElfSymverNeededEntry::ElfSymverNeededEntry_disk);
   
     rose_addr_t entry_addr=0;

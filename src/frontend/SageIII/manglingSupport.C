@@ -446,6 +446,37 @@ mangleQualifiersToString (const SgScopeStatement* scope)
                     break;
                   }
 
+               case V_SgAdaProtectedSpec:
+                  {
+                    const SgAdaProtectedSpec* spec   = isSgAdaProtectedSpec(scope);
+                    const SgNode*             parent = spec->get_parent();
+                    ROSE_ASSERT(parent);
+
+                    // or get_mangled_name ??
+                    if (const SgAdaProtectedSpecDecl* pospec = isSgAdaProtectedSpecDecl(parent))
+                      mangled_name = pospec->get_name().getString();
+                    else if (const SgAdaProtectedTypeDecl* potype = isSgAdaProtectedTypeDecl(parent))
+                      mangled_name = potype->get_name().getString();
+                    else
+                      ROSE_ABORT();
+
+                    break;
+                  }
+
+               case V_SgAdaProtectedBody:
+                  {
+                    const SgAdaProtectedBody* body   = isSgAdaProtectedBody(scope);
+                    const SgNode*             parent = body->get_parent();
+                    ROSE_ASSERT(parent);
+
+                    // or get_mangled_name ??
+                    const SgAdaProtectedBodyDecl* bodydecl = isSgAdaProtectedBodyDecl(parent);
+                    ROSE_ASSERT(bodydecl);
+
+                    mangled_name = bodydecl->get_name().getString();
+                    break;
+                  }
+
                case V_SgAdaGenericDefn:
                   {
                     const SgAdaGenericDefn*   defn = isSgAdaGenericDefn(scope);
@@ -1555,6 +1586,24 @@ mangleExpression (const SgExpression* expr)
         case V_SgAdaRenamingRefExp: {
           const SgAdaRenamingRefExp* e = isSgAdaRenamingRefExp(expr);
           mangled_name << "_badaRenamingRefExp_" << std::hex << e << "_eadaRenamingRefExp_";
+          break;
+        }
+        case V_SgAdaUnitRefExp: {
+          const SgAdaUnitRefExp* e = isSgAdaUnitRefExp(expr);
+          mangled_name << "_badaUnitRefExp_" << std::hex << e << "_eadaUnitRefExp_";
+          break;
+        }
+        case V_SgRangeExp: {
+          const SgRangeExp* e = isSgRangeExp(expr);
+          mangled_name << "_bRangeExp_" << mangleExpression(e->get_start())
+                       << ".." << mangleExpression(e->get_end())
+                       << "_eRangeExp_";
+          break;
+        }
+        // PP 2/13/22 added to support stop gap implementation for type from ada instantiations
+        case V_SgTypeExpression: {
+          const SgTypeExpression* e = isSgTypeExpression(expr);
+          mangled_name << "_btypeExp_" << std::hex << e << "_etypeExp_";
           break;
         }
         default: {

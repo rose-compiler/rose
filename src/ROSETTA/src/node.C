@@ -133,10 +133,13 @@ Grammar::setUpNodes ()
   // PP (3/5/21) make ada type constraint extend SgLocatedNodeSupport instead SgSupport
      NEW_TERMINAL_MACRO (AdaRangeConstraint, "AdaRangeConstraint", "AdaRangeConstraintTag");
      NEW_TERMINAL_MACRO (AdaIndexConstraint, "AdaIndexConstraint", "AdaIndexConstraintTag");
+     NEW_TERMINAL_MACRO (AdaDigitsConstraint, "AdaDigitsConstraint", "AdaDigitsConstraintTag");
+     NEW_TERMINAL_MACRO (AdaDeltaConstraint,  "AdaDeltaConstraint", "AdaDeltaConstraintTag");
      NEW_TERMINAL_MACRO (AdaDiscriminantConstraint, "AdaDiscriminantConstraint", "AdaDiscriminantConstraintTag");
 
      NEW_NONTERMINAL_MACRO (AdaTypeConstraint,
-          AdaRangeConstraint | AdaIndexConstraint | AdaDiscriminantConstraint,
+          AdaRangeConstraint | AdaIndexConstraint | AdaDigitsConstraint | AdaDeltaConstraint |
+          AdaDiscriminantConstraint ,
           "AdaTypeConstraint", "AdaTypeConstraintTag", false);
 
 
@@ -637,9 +640,11 @@ Grammar::setUpNodes ()
      LambdaCapture.setFunctionPrototype     ( "HEADER_LAMBDA_CAPTURE", "../Grammar/LocatedNode.code");
      LambdaCaptureList.setFunctionPrototype ( "HEADER_LAMBDA_CAPTURE_LIST", "../Grammar/LocatedNode.code");
 
-     AdaTypeConstraint.setFunctionPrototype       ( "HEADER_ADA_TYPE_CONSTRAINT"      , "../Grammar/LocatedNode.code");
-     AdaRangeConstraint.setFunctionPrototype      ( "HEADER_ADA_RANGE_CONSTRAINT"     , "../Grammar/LocatedNode.code");
-     AdaIndexConstraint.setFunctionPrototype      ( "HEADER_ADA_INDEX_CONSTRAINT"     , "../Grammar/LocatedNode.code");
+     AdaTypeConstraint.setFunctionPrototype      ( "HEADER_ADA_TYPE_CONSTRAINT"      , "../Grammar/LocatedNode.code");
+     AdaRangeConstraint.setFunctionPrototype     ( "HEADER_ADA_RANGE_CONSTRAINT"     , "../Grammar/LocatedNode.code");
+     AdaIndexConstraint.setFunctionPrototype     ( "HEADER_ADA_INDEX_CONSTRAINT"     , "../Grammar/LocatedNode.code");
+     AdaDigitsConstraint.setFunctionPrototype    ( "HEADER_ADA_DIGITS_CONSTRAINT"    , "../Grammar/LocatedNode.code");
+     AdaDeltaConstraint.setFunctionPrototype     ( "HEADER_ADA_DELTA_CONSTRAINT"     , "../Grammar/LocatedNode.code");
      AdaDiscriminantConstraint.setFunctionPrototype ( "HEADER_ADA_DISCRIMINANT_CONSTRAINT", "../Grammar/LocatedNode.code");
 
 
@@ -1610,7 +1615,7 @@ Grammar::setUpNodes ()
 
 
   // PP: Ada Constraints
-     AdaRangeConstraint.setDataPrototype("SgExpression*", "range", "",
+     AdaRangeConstraint.setDataPrototype("SgExpression*", "range", "= nullptr",
                                          CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 /*
      AdaIndexConstraint.editSubstitute( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_DECLARATIONS", "../Grammar/Statement.code" );
@@ -1622,6 +1627,18 @@ Grammar::setUpNodes ()
 */
      AdaIndexConstraint.setDataPrototype("SgExpressionPtrList", "indexRanges", "",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     AdaDigitsConstraint.setDataPrototype("SgExpression*", "digits", "= nullptr",
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AdaDigitsConstraint.setDataPrototype("SgAdaTypeConstraint*", "subConstraint", "= nullptr",
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     AdaDeltaConstraint.setDataPrototype("SgExpression*", "delta", "= nullptr",
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AdaDeltaConstraint.setDataPrototype("SgAdaTypeConstraint*", "subConstraint", "= nullptr",
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     AdaDeltaConstraint.setDataPrototype("bool", "isDecimal", "= false",
+                                         CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AdaDiscriminantConstraint.setDataPrototype("SgExpressionPtrList", "discriminants", "",
                                       NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
@@ -1670,6 +1687,8 @@ Grammar::setUpNodes ()
      AdaTypeConstraint.setFunctionSource       ( "SOURCE_ADA_TYPE_CONSTRAINT"      , "../Grammar/LocatedNode.code");
      AdaRangeConstraint.setFunctionSource      ( "SOURCE_ADA_RANGE_CONSTRAINT"     , "../Grammar/LocatedNode.code");
      AdaIndexConstraint.setFunctionSource      ( "SOURCE_ADA_INDEX_CONSTRAINT"     , "../Grammar/LocatedNode.code");
+     AdaDigitsConstraint.setFunctionSource     ( "SOURCE_ADA_DIGITS_CONSTRAINT"    , "../Grammar/LocatedNode.code");
+     AdaDeltaConstraint.setFunctionSource      ( "SOURCE_ADA_DELTA_CONSTRAINT"     , "../Grammar/LocatedNode.code");
      AdaDiscriminantConstraint.setFunctionSource ( "SOURCE_ADA_DISCRIMINANT_CONSTRAINT", "../Grammar/LocatedNode.code");
 
 

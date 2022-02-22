@@ -30,8 +30,8 @@ package body Lal_Adapter.Node is
       return Element_ID is
 -- Tried to use address for mapping but got nodes with same address.
 -- Use Image for now till we have better option for the mapping.
-     Node_Image : String :=  LAL.Image(Node);
-     C : constant Node_ID_Map.Cursor := Node_Map.Find (Node_Image);
+     -- Node_Image : String :=  LAL.Image(Node);
+     C : constant Node_ID_Map.Cursor := Node_Map.Find (LAL.As_Ada_Node(Node));
      use type Node_ID_Map.Cursor;
      Node_Id : Integer := 0; 
    begin
@@ -41,7 +41,7 @@ package body Lal_Adapter.Node is
       else
          if C = Node_ID_Map.No_Element then
             Last_Node_ID := Last_Node_ID + 1;
-            Node_Map.Insert (Node_Image, Last_Node_ID);
+            Node_Map.Insert (LAL.As_Ada_Node(Node), Last_Node_ID);
             Node_Id := Last_Node_ID;
          else
             Node_Id := Node_ID_Map.Element (C);
@@ -187,6 +187,8 @@ package body Lal_Adapter.Node is
       -- Will raise Constraint_Error if Node.Kind is not in Ada_Stmt:
       Kind             : constant LALCO.Ada_Abort_Node := Node.Kind;
       use LALCO; -- For subtype names in case stmt
+      Ada_Abort_Node : constant LAL.Abort_Node := LAL.As_Abort_Node (Node);
+      -- asBool : constant Boolean := LAL.P_As_Bool (Ada_Abort_Node);
    begin -- Process_Ada_Abort_Node
       case Kind is
 
@@ -196,6 +198,7 @@ package body Lal_Adapter.Node is
             begin
                NULL; 
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Abort_Present =>
             declare
@@ -203,6 +206,7 @@ package body Lal_Adapter.Node is
             begin
                NULL; 
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end Process_Ada_Abort_Node;
@@ -220,6 +224,8 @@ package body Lal_Adapter.Node is
       -- Will raise Constraint_Error if Node.Kind is not in Ada_Stmt:
       Kind             : constant LALCO.Ada_Abstract_Node := Node.Kind;
       use LALCO; -- For subtype names in case stmt
+      Ada_Abstract_Node : constant LAL.Abstract_Node := LAL.As_Abstract_Node (Node);
+      -- asBool : constant Boolean := LAL.P_As_Bool (Ada_Abstract_Node);
    begin -- Process_Ada_Abstract_Node
       case Kind is
 
@@ -229,6 +235,7 @@ package body Lal_Adapter.Node is
             begin
                NULL; 
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Abstract_Present =>
             declare
@@ -236,6 +243,7 @@ package body Lal_Adapter.Node is
             begin
                NULL; 
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end Process_Ada_Abstract_Node;
@@ -253,44 +261,76 @@ package body Lal_Adapter.Node is
       -- Will raise Constraint_Error if Node.Kind is not in Ada_Stmt:
       Kind             : constant LALCO.Ada_Ada_List := Node.Kind;
       use LALCO; -- For subtype names in case stmt
+
+
+   -----------------------------------------------------------------------------
+      procedure Process_Ada_Ada_Node_List_Range
+        (This    : in out Class;
+         Node    : in     LAL.Ada_Node'Class)
+      is
+         Parent_Name : constant String := Module_Name;
+         Module_Name : constant String := Parent_Name & ".Process_Ada_Node_List_Range";
+         -- package Logging is new Generic_Logging (Module_Name); use Logging;
+         --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
+
+         -- Will raise Constraint_Error if Node.Kind is not in Ada_Stmt:
+         Kind             : constant LALCO.Ada_Ada_Node_List_Range := Node.Kind;
+         -- use LALCO; -- For subtype names in case stmt
+      begin -- Process_Ada_Ada_Node_List_Range
+            case Kind is
+               when Ada_Ada_Node_List =>
+                  declare
+                     Ada_Node_List_Node : constant LAL.Ada_Node_List := LAL.As_Ada_Node_List (Node);
+                     NodeListFirst : constant Positive := LAL.Ada_Node_List_First (Ada_Node_List_Node);
+                  begin
+                     Log ("NodeListFirst: " & NodeListFirst'Image);
+                  end;
+                  This.Add_Not_Implemented;
+
+               when Ada_Alternatives_List =>
+                  declare
+                     Alternatives_List_Node : constant LAL.Alternatives_List := LAL.As_Alternatives_List (Node);
+                  begin
+                    NULL;
+                  end;
+                  This.Add_Not_Implemented;
+
+               when Ada_Constraint_List =>
+                  declare
+                     Constraint_List_Node : constant LAL.Constraint_List := LAL.As_Constraint_List (Node);
+                  begin
+                    NULL;
+                  end;
+                  This.Add_Not_Implemented;
+
+               when Ada_Decl_List =>
+                  declare
+                     Decl_List_Node : constant LAL.Decl_List := LAL.As_Decl_List (Node);
+                  begin
+                    NULL;
+                  end;
+                  This.Add_Not_Implemented;
+
+               when Ada_Stmt_List =>
+                  declare
+                     Stmt_List_Node : constant LAL.Stmt_List := LAL.As_Stmt_List (Node);
+                  begin
+                    NULL;
+                  end;
+                  This.Add_Not_Implemented;
+
+            end case;
+      end Process_Ada_Ada_Node_List_Range;
+   -----------------------------------------------------------------------------
+
    begin -- Process_Ada_Ada_List
       case Kind is
 
-         when Ada_Ada_Node_List =>
-            declare
-               Ada_Node_List_Node : constant LAL.Ada_Node_List := LAL.As_Ada_Node_List (Node);
-               NodeListFirst : constant Positive := LAL.Ada_Node_List_First (Ada_Node_List_Node);
+         when Ada_Ada_Node_List_Range =>
             begin
-               Log ("NodeListFirst: " & NodeListFirst'Image);
+               Process_Ada_Ada_Node_List_Range (This, Node);
             end;
-
-         when Ada_Alternatives_List =>
-            declare
-               Alternatives_List_Node : constant LAL.Alternatives_List := LAL.As_Alternatives_List (Node);
-            begin
-              NULL;
-            end;
-
-         when Ada_Constraint_List =>
-            declare
-               Constraint_List_Node : constant LAL.Constraint_List := LAL.As_Constraint_List (Node);
-            begin
-              NULL;
-            end;
-
-         when Ada_Decl_List =>
-            declare
-               Decl_List_Node : constant LAL.Decl_List := LAL.As_Decl_List (Node);
-            begin
-              NULL;
-            end;
-
-         when Ada_Stmt_List =>
-            declare
-               Stmt_List_Node : constant LAL.Stmt_List := LAL.As_Stmt_List (Node);
-            begin
-              NULL;
-            end;
+            This.Add_Not_Implemented;
 
          when Ada_Aspect_Assoc_List =>
             declare
@@ -299,6 +339,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("AspectAsoocListFirst: " & AspectAsoocListFirst'Image);
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Base_Assoc_List =>
             declare
@@ -307,13 +348,16 @@ package body Lal_Adapter.Node is
             begin
                Log ("BaseAsoocListFirst: " & BaseAsoocListFirst'Image);
             end;
+            This.Add_Not_Implemented;
 
+         -- when Ada_Basic_Assoc_List =>
          when Ada_Assoc_List =>
             declare
                Assoc_list_Node : constant LAL.Assoc_list := LAL.As_Assoc_list (Node);
             begin
               NULL; 
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Case_Expr_Alternative_List =>
             declare
@@ -322,6 +366,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("CaseExprAlternativeListFirst: " & CaseExprAlternativeListFirst'Image);
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Case_Stmt_Alternative_List =>
             declare
@@ -330,6 +375,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("CaseStmtAlernativeListFirst: " & CaseStmtAlernativeListFirst'Image);
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Compilation_Unit_List =>
             declare
@@ -338,6 +384,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("CompilationUnitListFirst: " & CompilationUnitListFirst'Image);
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Contract_Case_Assoc_List =>
             declare
@@ -346,6 +393,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("ContractCastAssocListFirst: " & ContractCastAssocListFirst'Image);
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Defining_Name_List =>
             declare
@@ -354,6 +402,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("DefiningNameListFirst: " & DefiningNameListFirst'Image);
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Discriminant_Spec_List =>
             declare
@@ -362,6 +411,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("DiscriminantSpecListNodeFirst: " & DiscriminantSpecListNodeFirst'Image);
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Elsif_Expr_Part_List =>
             declare
@@ -370,6 +420,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("ElsifExprPartListNodeFirst: " & ElsifExprPartListNodeFirst'Image);
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Elsif_Stmt_Part_List =>
             declare
@@ -378,6 +429,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("ElsifExprPartListNodeFirst: " & ElsifStmtPartListNodeFirst'Image);
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Enum_Literal_Decl_List =>
             declare
@@ -386,13 +438,19 @@ package body Lal_Adapter.Node is
             begin
                Log ("EnumLiteralDeclListNodeFirst: " & EnumLiteralDeclListNodeFirst'Image);
             end;
+            This.Add_Not_Implemented;
 
+         -- when Ada_Expr_List =>
          when Ada_Expr_Alternatives_List =>
             declare
+               Expr_List_Node : constant LAL.Expr_List := LAL.As_Expr_List (Node);
+               Expr_List_First : constant Positive := LAL.Expr_List_First (Expr_List_Node);
+
                Expr_Alternatives_List_Node : constant LAL.Expr_Alternatives_List := LAL.As_Expr_Alternatives_List (Node);
             begin
-              NULL; 
+              Log ("Expr_List_First: " & Expr_List_First'Image);
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Discriminant_Choice_List =>
             declare
@@ -400,7 +458,9 @@ package body Lal_Adapter.Node is
             begin
               NULL; 
             end;
+            This.Add_Not_Implemented;
 
+         -- when Ada_Name_List_Range =>
          when Ada_Name_List =>
             declare
                Name_List_Node : constant LAL.Name_List := LAL.As_Name_List (Node);
@@ -408,6 +468,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("NameListFirst: " & NameListFirst'Image);
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Parent_List =>
             declare
@@ -415,6 +476,7 @@ package body Lal_Adapter.Node is
             begin
               NULL; 
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Param_Spec_List =>
             declare
@@ -423,6 +485,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("ParamSpecListFirst: " & ParamSpecListFirst'Image);
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Pragma_Node_List =>
             declare
@@ -431,6 +494,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("PragmaNodeListFirst: " & PragmaNodeListFirst'Image);
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Select_When_Part_List =>
             declare
@@ -439,6 +503,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("SelectWhenPartListFirst: " & SelectWhenPartListFirst'Image);
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Unconstrained_Array_Index_List =>
             declare
@@ -447,6 +512,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("UnconstrainedArrayIndexListFirst: " & UnconstrainedArrayIndexListFirst'Image);
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Variant_List =>
             declare
@@ -455,6 +521,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("VariantListFirst: " & VariantListFirst'Image);
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end Process_Ada_Ada_List;
@@ -472,6 +539,8 @@ package body Lal_Adapter.Node is
       -- Will raise Constraint_Error if Node.Kind is not in Ada_Stmt:
       Kind             : constant LALCO.Ada_Aliased_Node := Node.Kind;
       use LALCO; -- For subtype names in case stmt
+      Ada_Aliased_Node : constant LAL.Aliased_Node := LAL.As_Aliased_Node (Node);
+      -- asBool : constant Boolean := LAL.P_As_Bool (Ada_Aliased_Node);
    begin -- Process_Ada_Aliased_Node
       case Kind is
 
@@ -481,6 +550,7 @@ package body Lal_Adapter.Node is
             begin
               NULL; 
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Aliased_Present =>
             declare
@@ -488,6 +558,7 @@ package body Lal_Adapter.Node is
             begin
               NULL; 
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end Process_Ada_Aliased_Node;
@@ -505,6 +576,8 @@ package body Lal_Adapter.Node is
       -- Will raise Constraint_Error if Node.Kind is not in Ada_Stmt:
       Kind             : constant LALCO.Ada_All_Node := Node.Kind;
       use LALCO; -- For subtype names in case stmt
+      Ada_All_Node : constant LAL.All_Node := LAL.As_All_Node (Node);
+      -- asBool : constant Boolean := LAL.P_As_Bool (Ada_All_Node);
    begin -- Process_Ada_All_Node
       case Kind is
 
@@ -514,6 +587,7 @@ package body Lal_Adapter.Node is
             begin
               NULL; 
             end;
+            This.Add_Not_Implemented;
 
          when Ada_All_Present =>
             declare
@@ -521,6 +595,7 @@ package body Lal_Adapter.Node is
             begin
               NULL; 
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end Process_Ada_All_Node;
@@ -548,6 +623,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("ConstraintList: " & ConstraintList.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Unconstrained_Array_Indices =>
             declare
@@ -556,6 +632,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("UnconstrainedArrayIndexList: " & UnconstrainedArrayIndexList.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end Process_Ada_Array_Indices;
@@ -587,6 +664,7 @@ package body Lal_Adapter.Node is
                  Log ("expr: " & expr.Debug_Text);
                end if;
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end Process_Ada_Aspect_Assoc_Range;
@@ -616,6 +694,7 @@ package body Lal_Adapter.Node is
                Log ("baseID: " & baseID.Debug_Text);
                Log ("expr: " & expr.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Attribute_Def_Clause =>
             declare
@@ -626,6 +705,7 @@ package body Lal_Adapter.Node is
                Log ("name: " & name.Debug_Text);
                Log ("expr: " & expr.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Enum_Rep_Clause =>
             declare
@@ -636,6 +716,7 @@ package body Lal_Adapter.Node is
                Log ("name: " & name.Debug_Text);
                Log ("baseAggregate: " & baseAggregate.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Record_Rep_Clause =>
             declare
@@ -650,6 +731,7 @@ package body Lal_Adapter.Node is
                end if;
                Log ("nodeList: " & nodeList.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end Process_Ada_Aspect_Clause;
@@ -677,6 +759,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("aspectAssocList: " & aspectAssocList.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end Process_Ada_Aspect_Spec_Range;
@@ -695,6 +778,8 @@ package body Lal_Adapter.Node is
       -- Will raise Constraint_Error if Node.Kind is not in Ada_Stmt:
       Kind             : constant LALCO.Ada_Base_Assoc := Node.Kind;
       use LALCO; -- For subtype names in case stmt
+      Ada_Base_Assoc_Node : constant LAL.Base_Assoc := LAL.As_Base_Assoc (Node);
+      -- assocExpr : constant LAL.Expr := LAL.P_Assoc_Expr (Ada_Base_Assoc_Node);
    begin -- Process_Ada_Base_Assoc
       case Kind is
 
@@ -707,6 +792,7 @@ package body Lal_Adapter.Node is
                Log ("guard: " & guard.Debug_Text);
                Log ("consequence: " & consequence.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Pragma_Argument_Assoc =>
             declare
@@ -721,6 +807,7 @@ package body Lal_Adapter.Node is
                  Log ("expr: " & expr.Debug_Text);
                end if;
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end Process_Ada_Base_Assoc;
@@ -737,52 +824,123 @@ package body Lal_Adapter.Node is
 
       -- Will raise Constraint_Error if Node.Kind is not in Ada_Stmt:
       Kind             : constant LALCO.Ada_Base_Formal_Param_Holder := Node.Kind;
+      Base_Formal_Param_Holder_Node : constant LAL.Base_Formal_Param_Holder := LAL.As_Base_Formal_Param_Holder (Node);
+      -- P_Abstract_Formal_Params : constant LAL.Base_Formal_Param_Decl_Array := LAL.P_Abstract_Formal_Params(Base_Formal_Param_Holder_Node);
+
       use LALCO; -- For subtype names in case stmt
-   begin -- Process_Ada_Base_Formal_Param_Holder
+   -----------------------------------------------------------------------------
+      procedure Process_Ada_Base_Subp_Spec
+        (This    : in out Class;
+         Node    : in     LAL.Ada_Node'Class)
+      is
+         Parent_Name : constant String := Module_Name;
+         Module_Name : constant String := Parent_Name & ".Process_Base_Subp_Spec";
+         -- package Logging is new Generic_Logging (Module_Name); use Logging;
+         --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
+
+         -- Will raise Constraint_Error if Node.Kind is not in Ada_Stmt:
+         Kind             : constant LALCO.Ada_Base_Subp_Spec := Node.Kind;
+         Base_Subp_Spec_Node : constant LAL.Base_Subp_Spec := LAL.As_Base_Subp_Spec (Node);
+         -- P_Returns : constant LAL.Type_Expr := LAL.P_Returns(Base_Subp_Spec_Node);
+         -- P_Params : constant LAL.Param_Spec_Array := LAL.P_Params(Base_Subp_Spec_Node);
+         -- P_Primitive_Subp_Types : constant LAL.Base_Type_Decl_Array := LAL.P_Primitive_Subp_Types(Base_Subp_Spec_Node);
+         -- P_Primitive_Subp_First_Type : constant LAL.Base_Type_Decl := LAL.P_Primitive_Subp_First_Type(Base_Subp_Spec_Node);
+         -- P_Primitive_Subp_Tagged_Type : constant LAL.Base_Type_Decl := LAL.P_Primitive_Subp_Tagged_Type(Base_Subp_Spec_Node);
+         -- use LALCO; -- For subtype names in case stmt
+      begin -- Process_Ada_Base_Subp_Spec
+         case Kind is
+            when Ada_Entry_Spec =>
+               declare
+                  Entry_Spec_Node : constant LAL.Entry_Spec := LAL.As_Entry_Spec (Node);
+                  entryName : constant LAL.Defining_Name := LAL.F_Entry_Name (Entry_Spec_Node);
+                  familyType : constant LAL.Ada_Node := LAL.F_Family_Type (Entry_Spec_Node);
+                  entryParams : constant LAL.Params := LAL.F_Entry_Params (Entry_Spec_Node);
+               begin
+                  Log ("entryName: " & entryName.Debug_Text);
+                  if not familyType.Is_Null then
+                    Log ("familyType: " & familyType.Debug_Text);
+                  end if;
+                  if not entryParams.Is_Null then
+                    Log ("entryParams: " & entryParams.Debug_Text);
+                  end if;
+               end;
+               This.Add_Not_Implemented;
+
+            when Ada_Enum_Subp_Spec =>
+               declare
+                  Enum_Subp_Spec_Node : constant LAL.Enum_Subp_Spec := LAL.As_Enum_Subp_Spec (Node);
+               begin
+                 NULL;
+               end;
+               This.Add_Not_Implemented;
+
+            when Ada_Subp_Spec =>
+               declare
+                  Subp_Spec_Node : constant LAL.Subp_Spec := LAL.As_Subp_Spec (Node);
+                  subpKind : constant LAL.Subp_Kind := LAL.F_Subp_Kind (Subp_Spec_Node);
+                  subpName : constant LAL.Defining_Name := LAL.F_Subp_Name (Subp_Spec_Node);
+                  subpParams : constant LAL.Params := LAL.F_Subp_Params (Subp_Spec_Node);
+                  subpReturn : constant LAL.Type_Expr := LAL.F_Subp_Returns (Subp_Spec_Node);
+               begin
+                  Log ("subpKind: " & subpKind.Debug_Text);
+                  if not subpName.Is_Null then
+                    Log ("subpName: " & subpName.Debug_Text);
+                  end if;
+                  if not subpParams.Is_Null then
+                    Log ("subpParams: " & subpParams.Debug_Text);
+                  end if;
+                  if not subpReturn.Is_Null then
+                    Log ("subpReturn: " & subpReturn.Debug_Text);
+                  end if;
+               end;
+               This.Add_Not_Implemented;
+         end case;
+      end Process_Ada_Base_Subp_Spec;
+
+      procedure Process_Ada_Discriminant_Part
+        (This    : in out Class;
+         Node    : in     LAL.Ada_Node'Class)
+      is
+         Parent_Name : constant String := Module_Name;
+         Module_Name : constant String := Parent_Name & ".Process_Discriminant_Part";
+         -- package Logging is new Generic_Logging (Module_Name); use Logging;
+         --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
+
+         -- Will raise Constraint_Error if Node.Kind is not in Ada_Stmt:
+         Kind             : constant LALCO.Ada_Discriminant_Part := Node.Kind;
+         Discriminant_Part_Node : constant LAL.Discriminant_Part := LAL.As_Discriminant_Part (Node);
+         -- use LALCO; -- For subtype names in case stmt
+      begin -- Process_Ada_Discriminant_Part
+         case Kind is
+            when Ada_Known_Discriminant_Part =>
+               declare
+                  Known_Discriminant_Part_Node : constant LAL.Known_Discriminant_Part := LAL.As_Known_Discriminant_Part (Node);
+                  discrSpecs : constant LAL.Discriminant_Spec_List := LAL.F_Discr_Specs (Known_Discriminant_Part_Node);
+               begin
+                  Log ("discrSpecs: " & discrSpecs.Debug_Text);
+               end;
+               This.Add_Not_Implemented;
+
+            when Ada_Unknown_Discriminant_Part =>
+               declare
+                  Unknown_Discriminant_Part_Node : constant LAL.Unknown_Discriminant_Part := LAL.As_Unknown_Discriminant_Part (Node);
+               begin
+                  NULL; 
+               end;
+               This.Add_Not_Implemented;
+
+         end case;
+      end Process_Ada_Discriminant_Part;
+
+   -----------------------------------------------------------------------------
+
+   begin -- Process_Ada_Base_Formal_Param_Holder 
       case Kind is
-
-         when Ada_Entry_Spec =>
-            declare
-               Entry_Spec_Node : constant LAL.Entry_Spec := LAL.As_Entry_Spec (Node);
-               entryName : constant LAL.Defining_Name := LAL.F_Entry_Name (Entry_Spec_Node);
-               familyType : constant LAL.Ada_Node := LAL.F_Family_Type (Entry_Spec_Node);
-               entryParams : constant LAL.Params := LAL.F_Entry_Params (Entry_Spec_Node);
+         when Ada_Base_Subp_Spec =>
             begin
-               Log ("entryName: " & entryName.Debug_Text);
-               if not familyType.Is_Null then
-                 Log ("familyType: " & familyType.Debug_Text);
-               end if;
-               if not entryParams.Is_Null then
-                 Log ("entryParams: " & entryParams.Debug_Text);
-               end if;
+               Process_Ada_Base_Subp_Spec (This, Node);
             end;
-
-         when Ada_Enum_Subp_Spec =>
-            declare
-               Enum_Subp_Spec_Node : constant LAL.Enum_Subp_Spec := LAL.As_Enum_Subp_Spec (Node);
-            begin
-              NULL;
-            end;
-
-         when Ada_Subp_Spec =>
-            declare
-               Subp_Spec_Node : constant LAL.Subp_Spec := LAL.As_Subp_Spec (Node);
-               subpKind : constant LAL.Subp_Kind := LAL.F_Subp_Kind (Subp_Spec_Node);
-               subpName : constant LAL.Defining_Name := LAL.F_Subp_Name (Subp_Spec_Node);
-               subpParams : constant LAL.Params := LAL.F_Subp_Params (Subp_Spec_Node);
-               subpReturn : constant LAL.Type_Expr := LAL.F_Subp_Returns (Subp_Spec_Node);
-            begin
-               Log ("subpKind: " & subpKind.Debug_Text);
-               if not subpName.Is_Null then
-                 Log ("subpName: " & subpName.Debug_Text);
-               end if;
-               if not subpParams.Is_Null then
-                 Log ("subpParams: " & subpParams.Debug_Text);
-               end if;
-               if not subpReturn.Is_Null then
-                 Log ("subpReturn: " & subpReturn.Debug_Text);
-               end if;
-            end;
+            This.Add_Not_Implemented;
 
          when Ada_Component_List =>
             declare
@@ -795,21 +953,13 @@ package body Lal_Adapter.Node is
                  Log ("variantPart: " & variantPart.Debug_Text);
                end if;
             end;
+            This.Add_Not_Implemented;
 
-         when Ada_Known_Discriminant_Part =>
-            declare
-               Known_Discriminant_Part_Node : constant LAL.Known_Discriminant_Part := LAL.As_Known_Discriminant_Part (Node);
-               discrSpecs : constant LAL.Discriminant_Spec_List := LAL.F_Discr_Specs (Known_Discriminant_Part_Node);
+         when Ada_Discriminant_Part =>
             begin
-               Log ("discrSpecs: " & discrSpecs.Debug_Text);
+               Process_Ada_Discriminant_Part (This, Node);
             end;
-
-         when Ada_Unknown_Discriminant_Part =>
-            declare
-               Unknown_Discriminant_Part_Node : constant LAL.Unknown_Discriminant_Part := LAL.As_Unknown_Discriminant_Part (Node);
-            begin
-               NULL; 
-            end;
+            This.Add_Not_Implemented;
 
          when Ada_Entry_Completion_Formal_Params =>
             declare
@@ -820,6 +970,7 @@ package body Lal_Adapter.Node is
                  Log ("params: " & params.Debug_Text);
                end if;
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Generic_Formal_Part =>
             declare
@@ -828,6 +979,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("decls: " & decls.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end Process_Ada_Base_Formal_Param_Holder;
@@ -844,8 +996,13 @@ package body Lal_Adapter.Node is
 
       -- Will raise Constraint_Error if Node.Kind is not in Ada_Stmt:
       Kind             : constant LALCO.Ada_Base_Record_Def := Node.Kind;
+      Base_Record_Def_Node : constant LAL.Base_Record_Def := LAL.As_Base_Record_Def (Node);
+      F_Components : constant LAL.Component_List := LAL.F_Components(Base_Record_Def_Node);
+
       use LALCO; -- For subtype names in case stmt
    begin -- Process_Ada_Base_Record_Def
+      Log ("F_Components: " & F_Components.Debug_Text);
+
       case Kind is
 
          when Ada_Null_Record_Def =>
@@ -854,6 +1011,7 @@ package body Lal_Adapter.Node is
             begin
                NULL; 
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Record_Def =>
             declare
@@ -861,6 +1019,7 @@ package body Lal_Adapter.Node is
             begin
                NULL; 
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end Process_Ada_Base_Record_Def;
@@ -877,27 +1036,57 @@ package body Lal_Adapter.Node is
 
       -- Will raise Constraint_Error if Node.Kind is not in Ada_Stmt:
       Kind             : constant LALCO.Ada_Basic_Assoc := Node.Kind;
+      Basic_Assoc_Node : constant LAL.Basic_Assoc := LAL.As_Basic_Assoc (Node);
+
       use LALCO; -- For subtype names in case stmt
+   -----------------------------------------------------------------------------
+
+      procedure Process_Ada_Aggregate_Assoc_Range
+        (This    : in out Class;
+         Node    : in     LAL.Ada_Node'Class)
+      is
+         Parent_Name : constant String := Module_Name;
+         Module_Name : constant String := Parent_Name & ".Process_Aggregate_Assoc";
+         -- package Logging is new Generic_Logging (Module_Name); use Logging;
+         --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
+
+         -- Will raise Constraint_Error if Node.Kind is not in Ada_Stmt:
+         Kind             : constant LALCO.Ada_Aggregate_Assoc_Range := Node.Kind;
+         -- use LALCO; -- For subtype names in case stmt
+      begin -- Process_Ada_Aggregate_Assoc_Range
+         case Kind is
+            when Ada_Aggregate_Assoc =>
+               declare
+                  Aggregate_Assoc_Node : constant LAL.Aggregate_Assoc := LAL.As_Aggregate_Assoc (Node);
+                  designators : constant LAL.Alternatives_List := LAL.F_Designators (Aggregate_Assoc_Node);
+                  rExpr : constant LAL.Expr := LAL.F_R_Expr (Aggregate_Assoc_Node);
+               begin
+                  Log ("designators: " & designators.Debug_Text);
+                  Log ("rExpr: " & rExpr.Debug_Text);
+               end;
+               This.Add_Not_Implemented;
+
+            when Ada_Multi_Dim_Array_Assoc =>
+               declare
+                  Multi_Dim_Array_Assoc_Node : constant LAL.Multi_Dim_Array_Assoc := LAL.As_Multi_Dim_Array_Assoc (Node);
+               begin
+                  NULL;
+               end;
+               This.Add_Not_Implemented;
+         end case;
+      end Process_Ada_Aggregate_Assoc_Range;
+   -----------------------------------------------------------------------------
+
+
    begin -- Process_Ada_Basic_Assoc
+
       case Kind is
 
-         when Ada_Aggregate_Assoc =>
-            declare
-               Aggregate_Assoc_Node : constant LAL.Aggregate_Assoc := LAL.As_Aggregate_Assoc (Node);
-               designators : constant LAL.Alternatives_List := LAL.F_Designators (Aggregate_Assoc_Node);
-               rExpr : constant LAL.Expr := LAL.F_R_Expr (Aggregate_Assoc_Node);
+         when Ada_Aggregate_Assoc_Range =>
             begin
-               Log ("designators: " & designators.Debug_Text);
-               Log ("rExpr: " & rExpr.Debug_Text);
+              Process_Ada_Aggregate_Assoc_Range(this, node);
             end;
-
-         when Ada_Multi_Dim_Array_Assoc =>
-            declare
-               Multi_Dim_Array_Assoc_Node : constant LAL.Multi_Dim_Array_Assoc := LAL.As_Multi_Dim_Array_Assoc (Node);
-            begin
-               NULL;
-            end;
-
+ 
          when Ada_Discriminant_Assoc =>
 	    declare
 	       Discriminant_Assoc_Node : constant LAL.Discriminant_Assoc := LAL.As_Discriminant_Assoc (Node);
@@ -907,6 +1096,7 @@ package body Lal_Adapter.Node is
 	       Log ("ids: " & ids.Debug_Text);
 	       Log ("discrExpr: " & discrExpr.Debug_Text);
 	    end;
+            This.Add_Not_Implemented;
 
          when Ada_Param_Assoc =>
             declare
@@ -921,6 +1111,7 @@ package body Lal_Adapter.Node is
                  Log ("rExpr: " & rExpr.Debug_Text);
                end if;
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end Process_Ada_Basic_Assoc;
@@ -938,435 +1129,616 @@ package body Lal_Adapter.Node is
       -- Will raise Constraint_Error if Node.Kind is not in Ada_Stmt:
       Kind             : constant LALCO.Ada_Basic_Decl := Node.Kind;
       use LALCO; -- For subtype names in case stmt
+
+   -----------------------------------------------------------------------------
+      procedure Process_Ada_Base_Formal_Param_Decl
+        (This    : in out Class;
+         Node    : in     LAL.Ada_Node'Class)
+      is
+         Parent_Name : constant String := Module_Name;
+         Module_Name : constant String := Parent_Name & ".Process_Ada_Base_Formal_Param_Decl";
+         -- package Logging is new Generic_Logging (Module_Name); use Logging;
+         --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
+
+         -- Will raise Constraint_Error if Node.Kind is not in Ada_Stmt:
+         Kind             : constant LALCO.Ada_Base_Formal_Param_Decl := Node.Kind;
+         Base_Formal_Param_Decl_Node : constant LAL.Base_Formal_Param_Decl := LAL.As_Base_Formal_Param_Decl (Node);
+         -- P_Formal_Type : constant LAL.Base_Type_Decl := LAL.P_Formal_Type(Base_Formal_Param_Decl_Node);
+         -- use LALCO; -- For subtype names in case stmt
+      begin -- Process_Ada_Base_Formal_Param_Decl
+         case Kind is
+            when Ada_Component_Decl =>
+               declare
+                  Component_Decl_Node : constant LAL.Component_Decl := LAL.As_Component_Decl (Node);
+                  NameList : constant LAL.Defining_Name_List := LAL.F_Ids (Component_Decl_Node);
+                  Component_Def : constant LAL.Component_Def := LAL.F_Component_Def (Component_Decl_Node);
+                  Expr : constant LAL.Expr := LAL.F_Default_Expr (Component_Decl_Node);
+               begin
+                  Log ("NameList: " & NameList.Debug_Text);
+                  Log ("Component_Def: " & Component_Def.Debug_Text);
+                  if not Expr.Is_Null then
+                    Log ("Expr: " & Expr.Debug_Text);
+                  end if;
+               end;
+               This.Add_Not_Implemented;
+
+               This.Add_Not_Implemented;
+            when Ada_Discriminant_Spec =>
+               declare
+                  Discriminant_Spec_Node : constant LAL.Discriminant_Spec := LAL.As_Discriminant_Spec (Node);
+                  NameList : constant LAL.Defining_Name_List := LAL.F_Ids (Discriminant_Spec_Node);
+                  TypeExpr : constant LAL.Type_Expr := LAL.F_Type_Expr (Discriminant_Spec_Node);
+                  DefaultExpr : constant LAL.Expr := LAL.F_Default_Expr (Discriminant_Spec_Node);
+               begin
+                  Log ("NameList: " & NameList.Debug_Text);
+                  Log ("TypeExpr: " & TypeExpr.Debug_Text);
+                  if not DefaultExpr.Is_Null then
+                    Log ("DefaultExpr: " & DefaultExpr.Debug_Text);
+                  end if;
+               end;
+               This.Add_Not_Implemented;
+
+               This.Add_Not_Implemented;
+            --when Ada_Generic_Formal =>
+            --   This.Add_Not_Implemented;
+            when Ada_Generic_Formal_Obj_Decl =>
+               declare
+                  Generic_Formal_Obj_Decl_Node : constant LAL.Generic_Formal_Obj_Decl := LAL.As_Generic_Formal_Obj_Decl (Node);
+               begin
+                 NULL;
+               end;
+               This.Add_Not_Implemented;
+
+               This.Add_Not_Implemented;
+            when Ada_Generic_Formal_Package =>
+               declare
+                  Generic_Formal_Package_Node : constant LAL.Generic_Formal_Package := LAL.As_Generic_Formal_Package (Node);
+               begin
+                 NULL;
+               end;
+               This.Add_Not_Implemented;
+
+               This.Add_Not_Implemented;
+            when Ada_Generic_Formal_Subp_Decl =>
+               declare
+                  Generic_Formal_Subp_Decl_Node : constant LAL.Generic_Formal_Subp_Decl := LAL.As_Generic_Formal_Subp_Decl (Node);
+               begin
+                 NULL;
+               end;
+               This.Add_Not_Implemented;
+
+               This.Add_Not_Implemented;
+            when Ada_Generic_Formal_Type_Decl =>
+               declare
+                  Generic_Formal_Type_Decl_Node : constant LAL.Generic_Formal_Type_Decl := LAL.As_Generic_Formal_Type_Decl (Node);
+               begin
+                 NULL;
+               end;
+               This.Add_Not_Implemented;
+
+               This.Add_Not_Implemented;
+            when Ada_Param_Spec =>
+               declare
+                  Param_Spec_Node : constant LAL.Param_Spec := LAL.As_Param_Spec (Node);
+                  NameList : constant LAL.Defining_Name_List := LAL.F_Ids (Param_Spec_Node);
+                  Has_Aliased : constant Boolean := LAL.F_Has_Aliased (Param_Spec_Node);
+                  Mode : constant LAL.Mode := LAL.F_Mode (Param_Spec_Node);
+               begin
+                  Log ("NameList: " & NameList.Debug_Text);
+                  Log ("Has_Alias: " & Boolean'Image (Has_Aliased));
+                  Log ("Mode: " & Mode.Debug_Text);
+               end;
+               This.Add_Not_Implemented;
+         end case;
+      end Process_Ada_Base_Formal_Param_Decl;
+
+
+      procedure Process_Ada_Base_Package_Decl
+        (This    : in out Class;
+         Node    : in     LAL.Ada_Node'Class)
+      is
+         Parent_Name : constant String := Module_Name;
+         Module_Name : constant String := Parent_Name & ".Process_Ada_Base_Package_Decl";
+         -- package Logging is new Generic_Logging (Module_Name); use Logging;
+         --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
+
+         -- Will raise Constraint_Error if Node.Kind is not in Ada_Stmt:
+         Kind             : constant LALCO.Ada_Base_Package_Decl := Node.Kind;
+         Base_Package_Dec_Node : constant LAL.Base_Package_Decl := LAL.As_Base_Package_Decl (Node);
+
+         packageName : constant LAL.Defining_Name := LAL.F_Package_Name (Base_Package_Dec_Node);
+         publicPart : constant LAL.Public_Part := LAL.F_Public_Part (Base_Package_Dec_Node);
+         privatePart : constant LAL.Private_Part := LAL.F_Private_Part (Base_Package_Dec_Node);
+         endName : constant LAL.End_Name := LAL.F_End_Name (Base_Package_Dec_Node);
+         -- bodyPart : constant LAL.Package_Body := LAL.P_Body_Part (Base_Package_Dec_Node);
+         -- use LALCO; -- For subtype names in case stmt
+      begin -- Process_Ada_Base_Package_Decl
+         Log ("packageName: " & packageName.Debug_Text);
+         if not publicPart.Is_Null then
+            Log ("publicPart: " & publicPart.Debug_Text);
+         end if;
+         if not privatePart.Is_Null then
+            Log ("privatePart: " & privatePart.Debug_Text);
+         end if;
+         Log ("endName: " & endName.Debug_Text);
+         -- if not bodyPart.Is_Null then
+         --   Log ("bodyPart: " & bodyPart.Debug_Text);
+         -- end if;
+              
+         case Kind is
+            when Ada_Generic_Package_Internal =>
+               declare
+                  Generic_Package_Internal_Node : constant LAL.Generic_Package_Internal := LAL.As_Generic_Package_Internal (Node);
+               begin
+                 NULL;
+               end;
+               This.Add_Not_Implemented;
+
+            when Ada_Package_Decl =>
+               declare
+                  Package_Decl_Node : constant LAL.Package_Decl := LAL.As_Package_Decl (Node);
+               begin
+                 NULL;
+               end;
+               This.Add_Not_Implemented;
+        end case;
+      end Process_Ada_Base_Package_Decl;
+
+      procedure Process_Ada_Base_Type_Decl
+        (This    : in out Class;
+         Node    : in     LAL.Ada_Node'Class)
+      is
+         Parent_Name : constant String := Module_Name;
+         Module_Name : constant String := Parent_Name & ".Process_Ada_Base_Type_Decl";
+         -- package Logging is new Generic_Logging (Module_Name); use Logging;
+         --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
+
+         -- Will raise Constraint_Error if Node.Kind is not in Ada_Stmt:
+         Kind             : constant LALCO.Ada_Base_Type_Decl := Node.Kind;
+         -- use LALCO; -- For subtype names in case stmt
+      begin -- Process_Ada_Base_Type_Decl
+         case Kind is
+            when Ada_Discrete_Base_Subtype_Decl =>
+               declare
+                  Discrete_Base_Subtype_Decl_Node : constant LAL.Discrete_Base_Subtype_Decl := LAL.As_Discrete_Base_Subtype_Decl (Node);
+               begin
+                 NULL;
+               end;
+               This.Add_Not_Implemented;
+
+            when Ada_Subtype_Decl =>
+               declare
+                  Subtype_Decl_Node : constant LAL.Subtype_Decl := LAL.As_Subtype_Decl (Node);
+                  bareSubtype : constant LAL.Subtype_Indication := LAL.F_Subtype (Subtype_Decl_Node);
+               begin
+                  Log ("bareSubtype: " & bareSubtype.Debug_Text);
+               end;
+               This.Add_Not_Implemented;
+
+            when Ada_Classwide_Type_Decl =>
+               declare
+                  Classwide_Type_Decl_Node : constant LAL.Classwide_Type_Decl := LAL.As_Classwide_Type_Decl (Node);
+               begin
+                 NULL;
+               end;
+               This.Add_Not_Implemented;
+
+            when Ada_Incomplete_Type_Decl =>
+               declare
+                  Incomplete_Type_Decl_Node : constant LAL.Incomplete_Type_Decl := LAL.As_Incomplete_Type_Decl (Node);
+                  Discriminants : constant LAL.Discriminant_Part := LAL.F_Discriminants (Incomplete_Type_Decl_Node);
+               begin
+                  if not Discriminants.Is_Null then
+                    Log ("Discriminants: " & Discriminants.Debug_Text);
+                  end if;
+               end;
+
+               This.Add_Not_Implemented;
+            when Ada_Incomplete_Tagged_Type_Decl =>
+               declare
+                  Incomplete_Tagged_Type_Decl_Node : constant LAL.Incomplete_Tagged_Type_Decl := LAL.As_Incomplete_Tagged_Type_Decl (Node);
+                  Has_Abstract : constant Boolean := LAL.F_Has_Abstract (Incomplete_Tagged_Type_Decl_Node);
+               begin
+                  Log ("Has_Abstract: " & Boolean'Image (Has_Abstract));
+               end;
+
+               This.Add_Not_Implemented;
+            when Ada_Protected_Type_Decl =>
+               declare
+                  Protected_Type_Decl_Node : constant LAL.Protected_Type_Decl := LAL.As_Protected_Type_Decl (Node);
+                  Discriminants : constant LAL.Discriminant_Part := LAL.F_Discriminants (Protected_Type_Decl_Node);
+                  Definition : constant LAL.Protected_Def := LAL.F_Definition (Protected_Type_Decl_Node);
+               begin
+                  if not Discriminants.Is_Null then
+                    Log ("Discriminants: " & Discriminants.Debug_Text);
+                  end if;
+                  if not Definition.Is_Null then
+                    Log ("Definition: " & Definition.Debug_Text);
+                  end if;
+               end;
+
+               This.Add_Not_Implemented;
+            when Ada_Task_Type_Decl =>
+               declare
+                  Task_Type_Decl_Node : constant LAL.Task_Type_Decl := LAL.As_Task_Type_Decl (Node);
+                  Discriminants : constant LAL.Discriminant_Part := LAL.F_Discriminants (Task_Type_Decl_Node);
+                  Definition : constant LAL.Task_Def := LAL.F_Definition (Task_Type_Decl_Node);
+               begin
+                  if not Discriminants.Is_Null then
+                    Log ("Discriminants: " & Discriminants.Debug_Text);
+                  end if;
+                  if not Definition.Is_Null then
+                    Log ("Definition: " & Definition.Debug_Text);
+                  end if;
+               end;
+
+               This.Add_Not_Implemented;
+            when Ada_Single_Task_Type_Decl =>
+               declare
+                  Single_Task_Type_Decl_Node : constant LAL.Single_Task_Type_Decl := LAL.As_Single_Task_Type_Decl (Node);
+               begin
+                 NULL; 
+               end;
+
+            when Ada_Type_Decl =>
+               declare
+                  Type_Decl_Node : constant LAL.Type_Decl := LAL.As_Type_Decl (Node);
+                  Discriminants : constant LAL.Discriminant_Part := LAL.F_Discriminants (Type_Decl_Node);
+                  typeDef : constant LAL.Type_Def := LAL.F_Type_Def (Type_Decl_Node);
+               begin
+                  if not Discriminants.Is_Null then
+                    Log ("Discriminants: " & Discriminants.Debug_Text);
+                  end if;
+                  Log ("typeDef: " & typeDef.Debug_Text);
+               end;
+
+               This.Add_Not_Implemented;
+            when Ada_Anonymous_Type_Decl =>
+               declare
+                  Anonymous_Type_Decl_Node : constant LAL.Anonymous_Type_Decl := LAL.As_Anonymous_Type_Decl (Node);
+               begin
+                 NULL;
+               end;
+
+               This.Add_Not_Implemented;
+            when Ada_Synth_Anonymous_Type_Decl =>
+               declare
+                  Synth_Anonymous_Type_Decl_Node : constant LAL.Synth_Anonymous_Type_Decl := LAL.As_Synth_Anonymous_Type_Decl (Node);
+               begin
+                 NULL;
+               end;
+               This.Add_Not_Implemented;
+
+        end case;
+      end Process_Ada_Base_Type_Decl;
+
+      procedure Process_Ada_Basic_Subp_Decl
+        (This    : in out Class;
+         Node    : in     LAL.Ada_Node'Class)
+      is
+         Parent_Name : constant String := Module_Name;
+         Module_Name : constant String := Parent_Name & ".Process_Ada_Basic_Subp_Decl";
+         -- package Logging is new Generic_Logging (Module_Name); use Logging;
+         --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
+
+         -- Will raise Constraint_Error if Node.Kind is not in Ada_Stmt:
+         Kind             : constant LALCO.Ada_Basic_Subp_Decl := Node.Kind;
+         Basic_Subp_Decl_Node : constant LAL.Basic_Subp_Decl := LAL.As_Basic_Subp_Decl (Node);
+         -- P_Subp_Decl_Spec : constant LAL.Base_Subp_Spec := LAL.P_Subp_Decl_Spec(Basic_Subp_Decl_Node);
+         -- P_Body_Part : constant LAL.Base_Subp_Body := LAL.P_Body_Part(Basic_Subp_Decl_Node);
+         -- use LALCO; -- For subtype names in case stmt
+      begin -- Process_Ada_Basic_Subp_Decl
+         case Kind is
+            when Ada_Classic_Subp_Decl =>
+               declare
+                  Classic_Subp_Decl_kind  : constant LALCO.Ada_Classic_Subp_Decl := Node.Kind;
+                  Classic_Subp_Decl_Node : constant LAL.Classic_Subp_Decl := LAL.As_Classic_Subp_Decl (Node);
+                  F_Overriding : constant LAL.Overriding_Node := LAL.F_Overriding(Classic_Subp_Decl_Node);
+                  F_Subp_Spec : constant LAL.Subp_Spec := LAL.F_Subp_Spec(Classic_Subp_Decl_Node);
+               begin
+                  Log ("F_Overriding: " & F_Overriding.Debug_Text);
+                  Log ("F_Subp_Spec: " & F_Subp_Spec.Debug_Text);
+
+                  case Classic_Subp_Decl_kind is
+                     when Ada_Abstract_Subp_Decl =>
+                        declare
+                           Abstract_Subp_Decl_Node : constant LAL.Abstract_Subp_Decl := LAL.As_Abstract_Subp_Decl (Node);
+                        begin
+                          NULL; 
+                        end;
+
+                        This.Add_Not_Implemented;
+                     when Ada_Formal_Subp_Decl =>
+                        declare
+                           Formal_Subp_Decl_kind  : constant LALCO.Ada_Formal_Subp_Decl := Node.Kind;
+                           Formal_Subp_Decl_Node : constant LAL.Formal_Subp_Decl := LAL.As_Formal_Subp_Decl (Node);
+                           F_Default_Expr : constant LAL.Expr := LAL.F_Default_Expr(Formal_Subp_Decl_Node);
+                        begin
+                           if not F_Default_Expr.Is_Null then
+                              Log ("F_Default_Expr: " & F_Default_Expr.Debug_Text);
+                           end if;
+                           case Formal_Subp_Decl_kind is
+                              when Ada_Abstract_Formal_Subp_Decl =>
+                                 declare
+                                    Abstract_Formal_Subp_Decl_Node : constant LAL.Abstract_Formal_Subp_Decl := LAL.As_Abstract_Formal_Subp_Decl (Node);
+                                 begin
+                                   NULL; 
+                                 end;
+
+                                 This.Add_Not_Implemented;
+                              when Ada_Concrete_Formal_Subp_Decl =>
+                                 declare
+                                    Concrete_Formal_Subp_Decl_Node : constant LAL.Concrete_Formal_Subp_Decl := LAL.As_Concrete_Formal_Subp_Decl (Node);
+                                 begin
+                                   NULL; 
+                                  end;
+                                  This.Add_Not_Implemented;
+                           end case;
+                        end;
+                        This.Add_Not_Implemented;
+                     when Ada_Subp_Decl =>
+                        declare
+                           Subp_Decl_Node : constant LAL.Subp_Decl := LAL.As_Subp_Decl (Node);
+                        begin
+                          NULL; 
+                        end;
+                        This.Add_Not_Implemented;
+                  end case;
+               end;
+
+            when Ada_Entry_Decl =>
+               declare
+                  Entry_Decl_Node : constant LAL.Entry_Decl := LAL.As_Entry_Decl (Node);
+                  overridding : constant LAL.Overriding_Node := LAL.F_Overriding (Entry_Decl_Node);
+                  spec : constant LAL.Entry_Spec := LAL.F_Spec (Entry_Decl_Node);
+               begin
+                  Log ("overridding: " & overridding.Debug_Text);
+                  Log ("spec: " & spec.Debug_Text);
+               end;
+
+               This.Add_Not_Implemented;
+            when Ada_Enum_Literal_Decl =>
+               declare
+                  Enum_Literal_Decl_Node : constant LAL.Enum_Literal_Decl := LAL.As_Enum_Literal_Decl (Node);
+                  name : constant LAL.Defining_Name := LAL.F_Name (Enum_Literal_Decl_Node);
+                  -- enumType : constant LAL.Type_Decl := LAL.P_Enum_Type (Enum_Literal_Decl_Node);
+               begin
+                  Log ("name: " & name.Debug_Text);
+                  -- Log ("enumType: " & enumType.Debug_Text);
+               end;
+
+               This.Add_Not_Implemented;
+            when Ada_Generic_Subp_Internal =>
+               declare
+                  Generic_Subp_Internal_Node : constant LAL.Generic_Subp_Internal := LAL.As_Generic_Subp_Internal (Node);
+                  subpSpec : constant LAL.Subp_Spec := LAL.F_Subp_Spec (Generic_Subp_Internal_Node);
+               begin
+                  Log ("subpSpec: " & subpSpec.Debug_Text);
+               end;
+               This.Add_Not_Implemented;
+            end case;
+      end Process_Ada_Basic_Subp_Decl;
+
+      procedure Process_Ada_Body_Node
+        (This    : in out Class;
+         Node    : in     LAL.Ada_Node'Class)
+      is
+         Parent_Name : constant String := Module_Name;
+         Module_Name : constant String := Parent_Name & ".Process_Ada_Body_Node";
+         -- package Logging is new Generic_Logging (Module_Name); use Logging;
+         --  Auto : Logging.Auto_Logger; -- Logs BEGIN and END
+
+         -- Will raise Constraint_Error if Node.Kind is not in Ada_Stmt:
+         Kind             : constant LALCO.Ada_Body_Node := Node.Kind;
+         Body_Node_Node : constant LAL.Body_Node := LAL.As_Body_Node (Node);
+         -- use LALCO; -- For subtype names in case stmt
+      begin -- Process_Ada_Body_Node
+         case Kind is
+            when Ada_Base_Subp_Body =>
+               declare
+                  Base_Subp_Body_Kind : constant LALCO.Ada_Base_Subp_Body := Node.Kind;
+                  Base_Subp_Body_Node : constant LAL.Base_Subp_Body := LAL.As_Base_Subp_Body (Node);
+                  F_Overriding : constant LAL.Overriding_Node := LAL.F_Overriding(Base_Subp_Body_Node);
+                  F_Subp_Spec : constant LAL.Subp_Spec := LAL.F_Subp_Spec(Base_Subp_Body_Node);
+               begin
+                  Log ("F_Overriding: " & F_Overriding.Debug_Text);
+                  Log ("F_Subp_Spec: " & F_Subp_Spec.Debug_Text);
+                  case Base_Subp_Body_Kind is
+                  when Ada_Expr_Function =>
+                     declare
+                        Expr_Function_Node : constant LAL.Expr_Function := LAL.As_Expr_Function (Node);
+                        expr : constant LAL.Expr := LAL.F_Expr (Expr_Function_Node);
+                     begin
+                        Log ("expr: " & expr.Debug_Text);
+                     end;
+
+                     This.Add_Not_Implemented;
+                  when Ada_Null_Subp_Decl =>
+                     declare
+                        Null_Subp_Decl_Node : constant LAL.Null_Subp_Decl := LAL.As_Null_Subp_Decl (Node);
+                     begin
+                       NULL; 
+                     end;
+
+                     This.Add_Not_Implemented;
+                  when Ada_Subp_Body =>
+                     declare
+                        Subp_Body_Node : constant LAL.Subp_Body := LAL.As_Subp_Body (Node);
+                        decl : constant LAL.Declarative_Part := LAL.F_Decls (Subp_Body_Node);
+                        stmt : constant LAL.Handled_Stmts := LAL.F_Stmts (Subp_Body_Node);
+                        endname : constant LAL.End_Name := LAL.F_End_Name (Subp_Body_Node);
+                     begin
+                        Log ("decl: " & decl.Debug_Text);
+                        Log ("stmt: " & stmt.Debug_Text);
+                        if not endname.Is_Null then
+                          Log ("endname: " & endname.Debug_Text);
+                        end if;
+                     end;
+
+                     This.Add_Not_Implemented;
+                  when Ada_Subp_Renaming_Decl =>
+                     declare
+                        Subp_Renaming_Decl_Node : constant LAL.Subp_Renaming_Decl := LAL.As_Subp_Renaming_Decl (Node);
+                        rename : constant LAL.Renaming_Clause := LAL.F_Renames (Subp_Renaming_Decl_Node);
+                     begin
+                        Log ("rename: " & rename.Debug_Text);
+                     end;
+
+                     This.Add_Not_Implemented;
+                  end case;
+               end;
+            when Ada_Body_Stub =>
+               declare
+                  Body_Stub_Kind : constant LALCO.Ada_Body_Stub := Node.Kind;
+                  Body_Stub_Node : constant LAL.Body_Stub := LAL.As_Body_Stub (Node);
+               begin
+                  case Body_Stub_Kind is
+                     when Ada_Package_Body_Stub =>
+                        declare
+                           Package_Body_Stub_Node : constant LAL.Package_Body_Stub := LAL.As_Package_Body_Stub (Node);
+                           name : constant LAL.Defining_Name := LAL.F_Name (Package_Body_Stub_Node);
+                        begin
+                           Log ("name: " & name.Debug_Text);
+                        end;
+
+                        This.Add_Not_Implemented;
+                     when Ada_Protected_Body_Stub =>
+                        declare
+                           Protected_Body_Stub_Node : constant LAL.Protected_Body_Stub := LAL.As_Protected_Body_Stub (Node);
+                           name : constant LAL.Defining_Name := LAL.F_Name (Protected_Body_Stub_Node);
+                        begin
+                           Log ("name: " & name.Debug_Text);
+                        end;
+
+                        This.Add_Not_Implemented;
+                     when Ada_Subp_Body_Stub =>
+                        declare
+                           Subp_Body_Stub_Node : constant LAL.Subp_Body_Stub := LAL.As_Subp_Body_Stub (Node);
+                           overridding : constant LAL.Overriding_Node := LAL.F_Overriding (Subp_Body_Stub_Node);
+                           subSpec : constant LAL.Subp_Spec := LAL.F_Subp_Spec (Subp_Body_Stub_Node);
+                        begin
+                           Log ("overridding: " & overridding.Debug_Text);
+                           Log ("subSpec: " & subSpec.Debug_Text);
+                        end;
+
+                        This.Add_Not_Implemented;
+                     when Ada_Task_Body_Stub =>
+                        declare
+                           Task_Body_Stub_Node : constant LAL.Task_Body_Stub := LAL.As_Task_Body_Stub (Node);
+                           name : constant LAL.Defining_Name := LAL.F_Name (Task_Body_Stub_Node);
+                        begin
+                           Log ("name: " & name.Debug_Text);
+                        end;
+
+                        This.Add_Not_Implemented;
+                  end case;
+               end;
+               This.Add_Not_Implemented;
+
+            when Ada_Entry_Body =>
+               declare
+                  Entry_Body_Node : constant LAL.Entry_Body := LAL.As_Entry_Body (Node);
+                  params : constant LAL.Entry_Completion_Formal_Params := LAL.F_Params (Entry_Body_Node);
+                  barrier : constant LAL.Expr := LAL.F_Barrier (Entry_Body_Node);
+                  decls : constant LAL.Declarative_Part := LAL.F_Decls (Entry_Body_Node);
+                  stmts : constant LAL.Handled_Stmts := LAL.F_Stmts (Entry_Body_Node);
+                  endname : constant LAL.End_Name := LAL.F_End_Name (Entry_Body_Node);
+               begin
+                  Log ("params: " & params.Debug_Text);
+                  Log ("barrier: " & barrier.Debug_Text);
+                  Log ("decls: " & decls.Debug_Text);
+                  Log ("stmts: " & stmts.Debug_Text);
+                  if not endname.Is_Null then
+                    Log ("endname: " & endname.Debug_Text);
+                  end if;
+               end;
+
+               This.Add_Not_Implemented;
+            when Ada_Package_Body =>
+               declare
+                  Package_Body_Node : constant LAL.Package_Body := LAL.As_Package_Body (Node);
+                  name : constant LAL.Defining_Name := LAL.F_Package_Name (Package_Body_Node);
+                  decls : constant LAL.Declarative_Part := LAL.F_Decls (Package_Body_Node);
+                  stmts : constant LAL.Handled_Stmts := LAL.F_Stmts (Package_Body_Node);
+                  endname : constant LAL.End_Name := LAL.F_End_Name (Package_Body_Node);
+               begin
+                  Log ("name: " & name.Debug_Text);
+                  Log ("decls: " & decls.Debug_Text);
+                  if not stmts.Is_Null then
+                    Log ("stmts: " & stmts.Debug_Text);
+                  end if;
+                  if not endname.Is_Null then
+                    Log ("endname: " & endname.Debug_Text);
+                  end if;
+               end;
+
+               This.Add_Not_Implemented;
+            when Ada_Protected_Body =>
+               declare
+                  Protected_Body_Node : constant LAL.Protected_Body := LAL.As_Protected_Body (Node);
+                  name : constant LAL.Defining_Name := LAL.F_Name (Protected_Body_Node);
+                  decls : constant LAL.Declarative_Part := LAL.F_Decls (Protected_Body_Node);
+                  endname : constant LAL.End_Name := LAL.F_End_Name (Protected_Body_Node);
+               begin
+                  Log ("name: " & name.Debug_Text);
+                  Log ("decls: " & decls.Debug_Text);
+                  Log ("endname: " & endname.Debug_Text);
+               end;
+
+               This.Add_Not_Implemented;
+            when Ada_Task_Body =>
+               declare
+                  Task_Body_Node : constant LAL.Task_Body := LAL.As_Task_Body (Node);
+                  name : constant LAL.Defining_Name := LAL.F_Name (Task_Body_Node);
+                  decls : constant LAL.Declarative_Part := LAL.F_Decls (Task_Body_Node);
+                  stmts : constant LAL.Declarative_Part := LAL.F_Decls (Task_Body_Node);
+                  endname : constant LAL.End_Name := LAL.F_End_Name (Task_Body_Node);
+               begin
+                  Log ("name: " & name.Debug_Text);
+                  Log ("decls: " & decls.Debug_Text);
+                  Log ("stmts: " & stmts.Debug_Text);
+                  Log ("endname: " & endname.Debug_Text);
+               end;
+
+               This.Add_Not_Implemented;
+            end case;
+      end Process_Ada_Body_Node;
+   -----------------------------------------------------------------------------
+
    begin -- Process_Ada_Basic_Decl
       case Kind is
-         --when Ada_Base_Formal_Param_Decl =>
-         --   This.Add_Not_Implemented;
-         when Ada_Component_Decl =>
-            declare
-               Component_Decl_Node : constant LAL.Component_Decl := LAL.As_Component_Decl (Node);
-               NameList : constant LAL.Defining_Name_List := LAL.F_Ids (Component_Decl_Node);
-               Component_Def : constant LAL.Component_Def := LAL.F_Component_Def (Component_Decl_Node);
-               Expr : constant LAL.Expr := LAL.F_Default_Expr (Component_Decl_Node);
-            begin
-               Log ("NameList: " & NameList.Debug_Text);
-               Log ("Component_Def: " & Component_Def.Debug_Text);
-               if not Expr.Is_Null then
-                 Log ("Expr: " & Expr.Debug_Text);
-               end if;
-            end;
 
+         when Ada_Base_Formal_Param_Decl =>
+            begin
+              Process_Ada_Base_Formal_Param_Decl(this, node);
+            end;
             This.Add_Not_Implemented;
-         when Ada_Discriminant_Spec =>
-            declare
-               Discriminant_Spec_Node : constant LAL.Discriminant_Spec := LAL.As_Discriminant_Spec (Node);
-               NameList : constant LAL.Defining_Name_List := LAL.F_Ids (Discriminant_Spec_Node);
-               TypeExpr : constant LAL.Type_Expr := LAL.F_Type_Expr (Discriminant_Spec_Node);
-               DefaultExpr : constant LAL.Expr := LAL.F_Default_Expr (Discriminant_Spec_Node);
-            begin
-               Log ("NameList: " & NameList.Debug_Text);
-               Log ("TypeExpr: " & TypeExpr.Debug_Text);
-               if not DefaultExpr.Is_Null then
-                 Log ("DefaultExpr: " & DefaultExpr.Debug_Text);
-               end if;
-            end;
 
+
+         when Ada_Base_Package_Decl =>
+            begin
+               Process_Ada_Base_Package_Decl(this, Node); 
+            end;
             This.Add_Not_Implemented;
-         --when Ada_Generic_Formal =>
-         --   This.Add_Not_Implemented;
-         when Ada_Generic_Formal_Obj_Decl =>
-            declare
-               Generic_Formal_Obj_Decl_Node : constant LAL.Generic_Formal_Obj_Decl := LAL.As_Generic_Formal_Obj_Decl (Node);
-            begin
-              NULL;
-            end;
 
+         when Ada_Base_Type_Decl =>
+            begin
+               Process_Ada_Base_Type_Decl(this, Node); 
+            end;
             This.Add_Not_Implemented;
-         when Ada_Generic_Formal_Package =>
-            declare
-               Generic_Formal_Package_Node : constant LAL.Generic_Formal_Package := LAL.As_Generic_Formal_Package (Node);
-            begin
-              NULL;
-            end;
 
+         when Ada_Basic_Subp_Decl =>
+            begin
+               Process_Ada_Basic_Subp_Decl(this, Node); 
+            end;
             This.Add_Not_Implemented;
-         when Ada_Generic_Formal_Subp_Decl =>
-            declare
-               Generic_Formal_Subp_Decl_Node : constant LAL.Generic_Formal_Subp_Decl := LAL.As_Generic_Formal_Subp_Decl (Node);
-            begin
-              NULL;
-            end;
 
+         when Ada_Body_Node =>
+            begin
+               Process_Ada_Body_Node(this, Node); 
+            end;
             This.Add_Not_Implemented;
-         when Ada_Generic_Formal_Type_Decl =>
-            declare
-               Generic_Formal_Type_Decl_Node : constant LAL.Generic_Formal_Type_Decl := LAL.As_Generic_Formal_Type_Decl (Node);
-            begin
-              NULL;
-            end;
 
-            This.Add_Not_Implemented;
-         when Ada_Param_Spec =>
-            declare
-               Param_Spec_Node : constant LAL.Param_Spec := LAL.As_Param_Spec (Node);
-               NameList : constant LAL.Defining_Name_List := LAL.F_Ids (Param_Spec_Node);
-               Has_Aliased : constant Boolean := LAL.F_Has_Aliased (Param_Spec_Node);
-               Mode : constant LAL.Mode := LAL.F_Mode (Param_Spec_Node);
-            begin
-               Log ("NameList: " & NameList.Debug_Text);
-               Log ("Has_Alias: " & Boolean'Image (Has_Aliased));
-               Log ("Mode: " & Mode.Debug_Text);
-            end;
-
-            This.Add_Not_Implemented;
-         --when Ada_Base_Package_Decl =>
-         --   This.Add_Not_Implemented;
-         when Ada_Generic_Package_Internal =>
-            declare
-               Generic_Package_Internal_Node : constant LAL.Generic_Package_Internal := LAL.As_Generic_Package_Internal (Node);
-            begin
-              NULL;
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Package_Decl =>
-            declare
-               Package_Decl_Node : constant LAL.Package_Decl := LAL.As_Package_Decl (Node);
-            begin
-              NULL;
-            end;
-
-            This.Add_Not_Implemented;
-         --when Ada_Base_Type_Decl =>
-         --   This.Add_Not_Implemented;
-         --when Ada_Base_Subtype_Decl =>
-         --   This.Add_Not_Implemented;
-         when Ada_Discrete_Base_Subtype_Decl =>
-            declare
-               Discrete_Base_Subtype_Decl_Node : constant LAL.Discrete_Base_Subtype_Decl := LAL.As_Discrete_Base_Subtype_Decl (Node);
-            begin
-              NULL;
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Subtype_Decl =>
-            declare
-               Subtype_Decl_Node : constant LAL.Subtype_Decl := LAL.As_Subtype_Decl (Node);
-               bareSubtype : constant LAL.Subtype_Indication := LAL.F_Subtype (Subtype_Decl_Node);
-            begin
-               Log ("bareSubtype: " & bareSubtype.Debug_Text);
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Classwide_Type_Decl =>
-            declare
-               Classwide_Type_Decl_Node : constant LAL.Classwide_Type_Decl := LAL.As_Classwide_Type_Decl (Node);
-            begin
-              NULL;
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Incomplete_Type_Decl =>
-            declare
-               Incomplete_Type_Decl_Node : constant LAL.Incomplete_Type_Decl := LAL.As_Incomplete_Type_Decl (Node);
-               Discriminants : constant LAL.Discriminant_Part := LAL.F_Discriminants (Incomplete_Type_Decl_Node);
-            begin
-               if not Discriminants.Is_Null then
-                 Log ("Discriminants: " & Discriminants.Debug_Text);
-               end if;
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Incomplete_Tagged_Type_Decl =>
-            declare
-               Incomplete_Tagged_Type_Decl_Node : constant LAL.Incomplete_Tagged_Type_Decl := LAL.As_Incomplete_Tagged_Type_Decl (Node);
-               Has_Abstract : constant Boolean := LAL.F_Has_Abstract (Incomplete_Tagged_Type_Decl_Node);
-            begin
-               Log ("Has_Abstract: " & Boolean'Image (Has_Abstract));
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Protected_Type_Decl =>
-            declare
-               Protected_Type_Decl_Node : constant LAL.Protected_Type_Decl := LAL.As_Protected_Type_Decl (Node);
-               Discriminants : constant LAL.Discriminant_Part := LAL.F_Discriminants (Protected_Type_Decl_Node);
-               Definition : constant LAL.Protected_Def := LAL.F_Definition (Protected_Type_Decl_Node);
-            begin
-               if not Discriminants.Is_Null then
-                 Log ("Discriminants: " & Discriminants.Debug_Text);
-               end if;
-               if not Definition.Is_Null then
-                 Log ("Definition: " & Definition.Debug_Text);
-               end if;
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Task_Type_Decl =>
-            declare
-               Task_Type_Decl_Node : constant LAL.Task_Type_Decl := LAL.As_Task_Type_Decl (Node);
-               Discriminants : constant LAL.Discriminant_Part := LAL.F_Discriminants (Task_Type_Decl_Node);
-               Definition : constant LAL.Task_Def := LAL.F_Definition (Task_Type_Decl_Node);
-            begin
-               if not Discriminants.Is_Null then
-                 Log ("Discriminants: " & Discriminants.Debug_Text);
-               end if;
-               if not Definition.Is_Null then
-                 Log ("Definition: " & Definition.Debug_Text);
-               end if;
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Single_Task_Type_Decl =>
-            declare
-               Single_Task_Type_Decl_Node : constant LAL.Single_Task_Type_Decl := LAL.As_Single_Task_Type_Decl (Node);
-            begin
-              NULL; 
-            end;
-
-         when Ada_Type_Decl =>
-            declare
-               Type_Decl_Node : constant LAL.Type_Decl := LAL.As_Type_Decl (Node);
-               Discriminants : constant LAL.Discriminant_Part := LAL.F_Discriminants (Type_Decl_Node);
-               typeDef : constant LAL.Type_Def := LAL.F_Type_Def (Type_Decl_Node);
-            begin
-               if not Discriminants.Is_Null then
-                 Log ("Discriminants: " & Discriminants.Debug_Text);
-               end if;
-               Log ("typeDef: " & typeDef.Debug_Text);
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Anonymous_Type_Decl =>
-            declare
-               Anonymous_Type_Decl_Node : constant LAL.Anonymous_Type_Decl := LAL.As_Anonymous_Type_Decl (Node);
-            begin
-              NULL;
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Synth_Anonymous_Type_Decl =>
-            declare
-               Synth_Anonymous_Type_Decl_Node : constant LAL.Synth_Anonymous_Type_Decl := LAL.As_Synth_Anonymous_Type_Decl (Node);
-            begin
-              NULL;
-            end;
-
-         when Ada_Abstract_Subp_Decl =>
-            declare
-               Abstract_Subp_Decl_Node : constant LAL.Abstract_Subp_Decl := LAL.As_Abstract_Subp_Decl (Node);
-            begin
-              NULL; 
-            end;
-
-            This.Add_Not_Implemented;
-         --when Ada_Formal_Subp_Decl =>
-         --   This.Add_Not_Implemented;
-         when Ada_Abstract_Formal_Subp_Decl =>
-            declare
-               Abstract_Formal_Subp_Decl_Node : constant LAL.Abstract_Formal_Subp_Decl := LAL.As_Abstract_Formal_Subp_Decl (Node);
-            begin
-              NULL; 
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Concrete_Formal_Subp_Decl =>
-            declare
-               Concrete_Formal_Subp_Decl_Node : constant LAL.Concrete_Formal_Subp_Decl := LAL.As_Concrete_Formal_Subp_Decl (Node);
-            begin
-              NULL; 
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Subp_Decl =>
-            declare
-               Subp_Decl_Node : constant LAL.Subp_Decl := LAL.As_Subp_Decl (Node);
-            begin
-              NULL; 
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Entry_Decl =>
-            declare
-               Entry_Decl_Node : constant LAL.Entry_Decl := LAL.As_Entry_Decl (Node);
-               overridding : constant LAL.Overriding_Node := LAL.F_Overriding (Entry_Decl_Node);
-               spec : constant LAL.Entry_Spec := LAL.F_Spec (Entry_Decl_Node);
-            begin
-               Log ("overridding: " & overridding.Debug_Text);
-               Log ("spec: " & spec.Debug_Text);
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Enum_Literal_Decl =>
-            declare
-               Enum_Literal_Decl_Node : constant LAL.Enum_Literal_Decl := LAL.As_Enum_Literal_Decl (Node);
-               name : constant LAL.Defining_Name := LAL.F_Name (Enum_Literal_Decl_Node);
-               enumType : constant LAL.Type_Decl := LAL.P_Enum_Type (Enum_Literal_Decl_Node);
-            begin
-               Log ("name: " & name.Debug_Text);
-               Log ("enumType: " & enumType.Debug_Text);
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Generic_Subp_Internal =>
-            declare
-               Generic_Subp_Internal_Node : constant LAL.Generic_Subp_Internal := LAL.As_Generic_Subp_Internal (Node);
-               subpSpec : constant LAL.Subp_Spec := LAL.F_Subp_Spec (Generic_Subp_Internal_Node);
-            begin
-               Log ("subpSpec: " & subpSpec.Debug_Text);
-            end;
-
-            This.Add_Not_Implemented;
-         --when Ada_Body_Node =>
-         --   This.Add_Not_Implemented;
-         --when Ada_Base_Subp_Body =>
-         --   This.Add_Not_Implemented;
-         when Ada_Expr_Function =>
-            declare
-               Expr_Function_Node : constant LAL.Expr_Function := LAL.As_Expr_Function (Node);
-               expr : constant LAL.Expr := LAL.F_Expr (Expr_Function_Node);
-            begin
-               Log ("expr: " & expr.Debug_Text);
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Null_Subp_Decl =>
-            declare
-               Null_Subp_Decl_Node : constant LAL.Null_Subp_Decl := LAL.As_Null_Subp_Decl (Node);
-            begin
-              NULL; 
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Subp_Body =>
-            declare
-               Subp_Body_Node : constant LAL.Subp_Body := LAL.As_Subp_Body (Node);
-               decl : constant LAL.Declarative_Part := LAL.F_Decls (Subp_Body_Node);
-               stmt : constant LAL.Handled_Stmts := LAL.F_Stmts (Subp_Body_Node);
-               endname : constant LAL.End_Name := LAL.F_End_Name (Subp_Body_Node);
-            begin
-               Log ("decl: " & decl.Debug_Text);
-               Log ("stmt: " & stmt.Debug_Text);
-               if not endname.Is_Null then
-                 Log ("endname: " & endname.Debug_Text);
-               end if;
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Subp_Renaming_Decl =>
-            declare
-               Subp_Renaming_Decl_Node : constant LAL.Subp_Renaming_Decl := LAL.As_Subp_Renaming_Decl (Node);
-               rename : constant LAL.Renaming_Clause := LAL.F_Renames (Subp_Renaming_Decl_Node);
-            begin
-               Log ("rename: " & rename.Debug_Text);
-            end;
-
-            This.Add_Not_Implemented;
-         --when Ada_Body_Stub =>
-         --   This.Add_Not_Implemented;
-         when Ada_Package_Body_Stub =>
-            declare
-               Package_Body_Stub_Node : constant LAL.Package_Body_Stub := LAL.As_Package_Body_Stub (Node);
-               name : constant LAL.Defining_Name := LAL.F_Name (Package_Body_Stub_Node);
-            begin
-               Log ("name: " & name.Debug_Text);
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Protected_Body_Stub =>
-            declare
-               Protected_Body_Stub_Node : constant LAL.Protected_Body_Stub := LAL.As_Protected_Body_Stub (Node);
-               name : constant LAL.Defining_Name := LAL.F_Name (Protected_Body_Stub_Node);
-            begin
-               Log ("name: " & name.Debug_Text);
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Subp_Body_Stub =>
-            declare
-               Subp_Body_Stub_Node : constant LAL.Subp_Body_Stub := LAL.As_Subp_Body_Stub (Node);
-               overridding : constant LAL.Overriding_Node := LAL.F_Overriding (Subp_Body_Stub_Node);
-               subSpec : constant LAL.Subp_Spec := LAL.F_Subp_Spec (Subp_Body_Stub_Node);
-            begin
-               Log ("overridding: " & overridding.Debug_Text);
-               Log ("subSpec: " & subSpec.Debug_Text);
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Task_Body_Stub =>
-            declare
-               Task_Body_Stub_Node : constant LAL.Task_Body_Stub := LAL.As_Task_Body_Stub (Node);
-               name : constant LAL.Defining_Name := LAL.F_Name (Task_Body_Stub_Node);
-            begin
-               Log ("name: " & name.Debug_Text);
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Entry_Body =>
-            declare
-               Entry_Body_Node : constant LAL.Entry_Body := LAL.As_Entry_Body (Node);
-               params : constant LAL.Entry_Completion_Formal_Params := LAL.F_Params (Entry_Body_Node);
-               barrier : constant LAL.Expr := LAL.F_Barrier (Entry_Body_Node);
-               decls : constant LAL.Declarative_Part := LAL.F_Decls (Entry_Body_Node);
-               stmts : constant LAL.Handled_Stmts := LAL.F_Stmts (Entry_Body_Node);
-               endname : constant LAL.End_Name := LAL.F_End_Name (Entry_Body_Node);
-            begin
-               Log ("params: " & params.Debug_Text);
-               Log ("barrier: " & barrier.Debug_Text);
-               Log ("decls: " & decls.Debug_Text);
-               Log ("stmts: " & stmts.Debug_Text);
-               if not endname.Is_Null then
-                 Log ("endname: " & endname.Debug_Text);
-               end if;
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Package_Body =>
-            declare
-               Package_Body_Node : constant LAL.Package_Body := LAL.As_Package_Body (Node);
-               name : constant LAL.Defining_Name := LAL.F_Package_Name (Package_Body_Node);
-               decls : constant LAL.Declarative_Part := LAL.F_Decls (Package_Body_Node);
-               stmts : constant LAL.Handled_Stmts := LAL.F_Stmts (Package_Body_Node);
-               endname : constant LAL.End_Name := LAL.F_End_Name (Package_Body_Node);
-            begin
-               Log ("name: " & name.Debug_Text);
-               Log ("decls: " & decls.Debug_Text);
-               if not stmts.Is_Null then
-                 Log ("stmts: " & stmts.Debug_Text);
-               end if;
-               if not endname.Is_Null then
-                 Log ("endname: " & endname.Debug_Text);
-               end if;
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Protected_Body =>
-            declare
-               Protected_Body_Node : constant LAL.Protected_Body := LAL.As_Protected_Body (Node);
-               name : constant LAL.Defining_Name := LAL.F_Name (Protected_Body_Node);
-               decls : constant LAL.Declarative_Part := LAL.F_Decls (Protected_Body_Node);
-               endname : constant LAL.End_Name := LAL.F_End_Name (Protected_Body_Node);
-            begin
-               Log ("name: " & name.Debug_Text);
-               Log ("decls: " & decls.Debug_Text);
-               Log ("endname: " & endname.Debug_Text);
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Task_Body =>
-            declare
-               Task_Body_Node : constant LAL.Task_Body := LAL.As_Task_Body (Node);
-               name : constant LAL.Defining_Name := LAL.F_Name (Task_Body_Node);
-               decls : constant LAL.Declarative_Part := LAL.F_Decls (Task_Body_Node);
-               stmts : constant LAL.Declarative_Part := LAL.F_Decls (Task_Body_Node);
-               endname : constant LAL.End_Name := LAL.F_End_Name (Task_Body_Node);
-            begin
-               Log ("name: " & name.Debug_Text);
-               Log ("decls: " & decls.Debug_Text);
-               Log ("stmts: " & stmts.Debug_Text);
-               Log ("endname: " & endname.Debug_Text);
-            end;
-
-            This.Add_Not_Implemented;
          when Ada_Entry_Index_Spec =>
             declare
                Entry_Index_Spec_Node : constant LAL.Entry_Index_Spec := LAL.As_Entry_Index_Spec (Node);
@@ -1376,16 +1748,16 @@ package body Lal_Adapter.Node is
                Log ("id: " & id.Debug_Text);
                Log ("sub_type: " & sub_type.Debug_Text);
             end;
-
             This.Add_Not_Implemented;
+
          when Ada_Error_Decl =>
             declare
                Error_Decl_Node : constant LAL.Error_Decl := LAL.As_Error_Decl (Node);
             begin
                NULL;
             end;
-
             This.Add_Not_Implemented;
+
          when Ada_Exception_Decl =>
             declare
                Exception_Decl_Node : constant LAL.Exception_Decl := LAL.As_Exception_Decl (Node);
@@ -1425,93 +1797,121 @@ package body Lal_Adapter.Node is
                  Log ("idType: " & idType.Debug_Text);
                end if;
             end;
-
             This.Add_Not_Implemented;
-         --when Ada_Generic_Decl =>
-         --   This.Add_Not_Implemented;
-         when Ada_Generic_Package_Decl =>
+
+         when Ada_Generic_Decl =>
             declare
-               Generic_Package_Decl_Node : constant LAL.Generic_Package_Decl := LAL.As_Generic_Package_Decl (Node);
-               packageDecl : constant LAL.Generic_Package_Internal := LAL.F_Package_Decl (Generic_Package_Decl_Node);
-               bodyPart : constant LAL.Package_Body := LAL.P_Body_Part (Generic_Package_Decl_Node);
+               Generic_Decl_Node : constant LAL.Generic_Decl := LAL.As_Generic_Decl (Node);
+               Generic_Decl_Kind : constant LALCO.Ada_Generic_Decl := Node.Kind;
+               F_Formal_Part : constant LAL.Generic_Formal_Part := LAL.F_Formal_Part(Generic_Decl_Node);
             begin
-               Log ("packageDecl: " & packageDecl.Debug_Text);
-               if not bodyPart.Is_Null then
-                 Log ("bodyPart: " & bodyPart.Debug_Text);
-               end if;
+               Log ("F_Formal_Part: " & F_Formal_Part.Debug_Text);
+               case Generic_Decl_Kind is
+                  when Ada_Generic_Package_Decl =>
+                     declare
+                        Generic_Package_Decl_Node : constant LAL.Generic_Package_Decl := LAL.As_Generic_Package_Decl (Node);
+                        packageDecl : constant LAL.Generic_Package_Internal := LAL.F_Package_Decl (Generic_Package_Decl_Node);
+                        -- bodyPart : constant LAL.Package_Body := LAL.P_Body_Part (Generic_Package_Decl_Node);
+                     begin
+                        Log ("packageDecl: " & packageDecl.Debug_Text);
+                        -- if not bodyPart.Is_Null then
+                        --   Log ("bodyPart: " & bodyPart.Debug_Text);
+                        -- end if;
+                     end;
+
+                     This.Add_Not_Implemented;
+                  when Ada_Generic_Subp_Decl =>
+                     declare
+                        Generic_Subp_Decl_Node : constant LAL.Generic_Subp_Decl := LAL.As_Generic_Subp_Decl (Node);
+                        subpDecl : constant LAL.Generic_Subp_Internal := LAL.F_Subp_Decl (Generic_Subp_Decl_Node);
+--                        bodyPart : constant LAL.Base_Subp_Body := LAL.P_Body_Part (Generic_Subp_Decl_Node);
+                     begin
+                        Log ("subpDecl: " & subpDecl.Debug_Text);
+--                        Log ("bodyPart: " & bodyPart.Debug_Text);
+                     end;
+                     This.Add_Not_Implemented;
+               end case;
+            end;
+            This.Add_Not_Implemented;
+
+         when Ada_Generic_Instantiation =>
+            declare
+               Generic_Instantiation_Node : constant LAL.Generic_Instantiation := LAL.As_Generic_Instantiation (Node);
+               Generic_Instantiation_Kind : constant LALCO.Ada_Generic_Instantiation := Node.Kind;
+               -- P_Designated_Generic_Decl : constant LAL.Basic_Decl := LAL.P_Designated_Generic_Decl(Generic_Instantiation_Node);
+            begin
+               -- Log ("P_Designated_Generic_Decl: " & P_Designated_Generic_Decl.Debug_Text);
+               case Generic_Instantiation_Kind is
+                  when Ada_Generic_Package_Instantiation =>
+                     declare
+                        Generic_Package_Instantiation_Node : constant LAL.Generic_Package_Instantiation := LAL.As_Generic_Package_Instantiation (Node);
+                        name : constant LAL.Defining_Name := LAL.F_Name (Generic_Package_Instantiation_Node);
+                        gericPackageName : constant LAL.Name := LAL.F_Generic_Pkg_Name (Generic_Package_Instantiation_Node);
+                        params : constant LAL.Assoc_List := LAL.F_Params (Generic_Package_Instantiation_Node);
+                     begin
+                        Log ("name: " & name.Debug_Text);
+                        Log ("gericPackageName: " & gericPackageName.Debug_Text);
+                        Log ("params: " & params.Debug_Text);
+                     end;
+
+                     This.Add_Not_Implemented;
+                  when Ada_Generic_Subp_Instantiation =>
+                     declare
+                        Generic_Subp_Instantiation_Node : constant LAL.Generic_Subp_Instantiation := LAL.As_Generic_Subp_Instantiation (Node);
+                        --kind : constant Ada_Subp_Kind := LAL.F_Kind (Generic_Subp_Instantiation_Node);
+                        subpName : constant LAL.Defining_Name := LAL.F_Subp_Name (Generic_Subp_Instantiation_Node);
+                        genericSubpName : constant LAL.Name := LAL.F_Generic_Subp_Name (Generic_Subp_Instantiation_Node);
+                        params : constant LAL.Assoc_List := LAL.F_Params (Generic_Subp_Instantiation_Node);
+                        -- designatedSubp : constant LAL.Ada_Node := LAL.P_Designated_Subp (Generic_Subp_Instantiation_Node);
+                     begin
+                        --Log ("kind: " & kind.Debug_Text);
+                        Log ("subpName: " & subpName.Debug_Text);
+                        Log ("genericSubpName: " & genericSubpName.Debug_Text);
+                        Log ("params: " & params.Debug_Text);
+                        -- Log ("designatedSubp: " & designatedSubp.Debug_Text);
+                     end;
+                     This.Add_Not_Implemented;
+               end case;
+            end;
+            This.Add_Not_Implemented;
+
+         when Ada_Generic_Renaming_Decl =>
+            declare
+               Generic_Renaming_Decl_Node : constant LAL.Generic_Renaming_Decl := LAL.As_Generic_Renaming_Decl (Node);
+               Generic_Renaming_Decl_Kind : constant LALCO.Ada_Generic_Renaming_Decl := Node.Kind;
+               --P_Designated_Generic_Decl : constant LAL.Basic_Decl := LAL.P_Designated_Generic_Decl(Generic_Renaming_Decl_Node);
+            begin
+               --Log ("P_Designated_Generic_Decl: " & P_Designated_Generic_Decl.Debug_Text);
+               case Generic_Renaming_Decl_Kind is
+                  when Ada_Generic_Package_Renaming_Decl =>
+                     declare
+                        Generic_Package_Renaming_Decl_Node : constant LAL.Generic_Package_Renaming_Decl := LAL.As_Generic_Package_Renaming_Decl (Node);
+                        name : constant LAL.Defining_Name := LAL.F_Name (Generic_Package_Renaming_Decl_Node);
+                        rename : constant LAL.Name := LAL.F_Renames (Generic_Package_Renaming_Decl_Node);
+                     begin
+                        Log ("name: " & name.Debug_Text);
+                        Log ("rename: " & rename.Debug_Text);
+                     end;
+
+                     This.Add_Not_Implemented;
+                  when Ada_Generic_Subp_Renaming_Decl =>
+                     declare
+                        Generic_Subp_Renaming_Decl_Node : constant LAL.Generic_Subp_Renaming_Decl := LAL.As_Generic_Subp_Renaming_Decl (Node);
+                        kind : constant LAL.Subp_Kind := LAL.F_Kind (Generic_Subp_Renaming_Decl_Node);
+                        name : constant LAL.Defining_Name := LAL.F_Name (Generic_Subp_Renaming_Decl_Node);
+                        rename : constant LAL.Name := LAL.F_Renames (Generic_Subp_Renaming_Decl_Node);
+                     begin
+                        --Log ("kind: " & kind.Debug_Text);
+                        Log ("kind: " & kind.Debug_Text);
+                        Log ("name: " & name.Debug_Text);
+                        Log ("rename: " & rename.Debug_Text);
+                     end;
+
+                     This.Add_Not_Implemented;
+               end case;
+            This.Add_Not_Implemented;
             end;
 
-            This.Add_Not_Implemented;
-         when Ada_Generic_Subp_Decl =>
-            declare
-               Generic_Subp_Decl_Node : constant LAL.Generic_Subp_Decl := LAL.As_Generic_Subp_Decl (Node);
-               subpDecl : constant LAL.Generic_Subp_Internal := LAL.F_Subp_Decl (Generic_Subp_Decl_Node);
---               bodyPart : constant LAL.Base_Subp_Body := LAL.P_Body_Part (Generic_Subp_Decl_Node);
-            begin
-               Log ("subpDecl: " & subpDecl.Debug_Text);
---               Log ("bodyPart: " & bodyPart.Debug_Text);
-            end;
-
-            This.Add_Not_Implemented;
-         --when Ada_Generic_Instantiation =>
-         --   This.Add_Not_Implemented;
-         when Ada_Generic_Package_Instantiation =>
-            declare
-               Generic_Package_Instantiation_Node : constant LAL.Generic_Package_Instantiation := LAL.As_Generic_Package_Instantiation (Node);
-               name : constant LAL.Defining_Name := LAL.F_Name (Generic_Package_Instantiation_Node);
-               gericPackageName : constant LAL.Name := LAL.F_Generic_Pkg_Name (Generic_Package_Instantiation_Node);
-               params : constant LAL.Assoc_List := LAL.F_Params (Generic_Package_Instantiation_Node);
-            begin
-               Log ("name: " & name.Debug_Text);
-               Log ("gericPackageName: " & gericPackageName.Debug_Text);
-               Log ("params: " & params.Debug_Text);
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Generic_Subp_Instantiation =>
-            declare
-               Generic_Subp_Instantiation_Node : constant LAL.Generic_Subp_Instantiation := LAL.As_Generic_Subp_Instantiation (Node);
-               --kind : constant Ada_Subp_Kind := LAL.F_Kind (Generic_Subp_Instantiation_Node);
-               subpName : constant LAL.Defining_Name := LAL.F_Subp_Name (Generic_Subp_Instantiation_Node);
-               genericSubpName : constant LAL.Name := LAL.F_Generic_Subp_Name (Generic_Subp_Instantiation_Node);
-               params : constant LAL.Assoc_List := LAL.F_Params (Generic_Subp_Instantiation_Node);
-               designatedSubp : constant LAL.Ada_Node := LAL.P_Designated_Subp (Generic_Subp_Instantiation_Node);
-            begin
-               --Log ("kind: " & kind.Debug_Text);
-               Log ("subpName: " & subpName.Debug_Text);
-               Log ("genericSubpName: " & genericSubpName.Debug_Text);
-               Log ("params: " & params.Debug_Text);
-               Log ("designatedSubp: " & designatedSubp.Debug_Text);
-            end;
-
-            This.Add_Not_Implemented;
-         --when Ada_Generic_Renaming_Decl =>
-         --   This.Add_Not_Implemented;
-         when Ada_Generic_Package_Renaming_Decl =>
-            declare
-               Generic_Package_Renaming_Decl_Node : constant LAL.Generic_Package_Renaming_Decl := LAL.As_Generic_Package_Renaming_Decl (Node);
-               name : constant LAL.Defining_Name := LAL.F_Name (Generic_Package_Renaming_Decl_Node);
-               rename : constant LAL.Name := LAL.F_Renames (Generic_Package_Renaming_Decl_Node);
-            begin
-               Log ("name: " & name.Debug_Text);
-               Log ("rename: " & rename.Debug_Text);
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Generic_Subp_Renaming_Decl =>
-            declare
-               Generic_Subp_Renaming_Decl_Node : constant LAL.Generic_Subp_Renaming_Decl := LAL.As_Generic_Subp_Renaming_Decl (Node);
-               kind : constant LAL.Subp_Kind := LAL.F_Kind (Generic_Subp_Renaming_Decl_Node);
-               name : constant LAL.Defining_Name := LAL.F_Name (Generic_Subp_Renaming_Decl_Node);
-               rename : constant LAL.Name := LAL.F_Renames (Generic_Subp_Renaming_Decl_Node);
-            begin
-               --Log ("kind: " & kind.Debug_Text);
-               Log ("kind: " & kind.Debug_Text);
-               Log ("name: " & name.Debug_Text);
-               Log ("rename: " & rename.Debug_Text);
-            end;
-
-            This.Add_Not_Implemented;
          when Ada_Label_Decl =>
             declare
                Label_Decl_Node : constant LAL.Label_Decl := LAL.As_Label_Decl (Node);
@@ -1544,68 +1944,77 @@ package body Lal_Adapter.Node is
             end;
 
             This.Add_Not_Implemented;
-         when Ada_Object_Decl =>
+
+         when Ada_Object_Decl_Range =>
             declare
-               Object_Decl_Node : constant LAL.Object_Decl := LAL.As_Object_Decl (Node);
-               FIds         : constant LAL.Defining_Name_List := LAL.F_Ids (Object_Decl_Node);
-               Has_Aliased       : constant Boolean := LAL.F_Has_Aliased (Object_Decl_Node);
-               Has_Constant       : constant Boolean := LAL.F_Has_Constant (Object_Decl_Node);
-               mode         : constant LAL.Mode := LAL.F_Mode (Object_Decl_Node);
-               typeExpr         : constant LAL.Type_Expr := LAL.F_Type_Expr (Object_Decl_Node);
-               defaultExpr         : constant LAL.Expr := LAL.F_Default_Expr (Object_Decl_Node);
-               renamingClause         : constant LAL.Renaming_Clause := LAL.F_Renaming_Clause (Object_Decl_Node);
-               publicPartDecl         : constant LAL.Basic_Decl := LAL.P_Public_Part_Decl (Object_Decl_Node);
+               Object_Decl_Range_Kind : constant LALCO.Ada_Object_Decl_Range := Node.Kind;
             begin
-               Log ("FIds: " & FIds.Debug_Text);
-               Log ("Has_Aliased: " & Boolean'Image (Has_Constant));
-               Log ("F_Has_Constant: " & Boolean'Image (Has_Constant));
-               Log ("mode: " & mode.Debug_Text);
-               if not typeExpr.Is_Null then
-                 Log ("typeExpr: " & typeExpr.Debug_Text);
-               end if;
-               if not defaultExpr.Is_Null then
-                 Log ("defaultExpr: " & defaultExpr.Debug_Text);
-               end if;
-               if not renamingClause.Is_Null then
-                 Log ("renamingClause: " & renamingClause.Debug_Text);
-               end if;
-               if not publicPartDecl.Is_Null then
-                 Log ("publicPartDecl: " & publicPartDecl.Debug_Text);
-               end if;
+               case Object_Decl_Range_Kind is
+                  when Ada_Object_Decl =>
+                     declare
+                        Object_Decl_Node : constant LAL.Object_Decl := LAL.As_Object_Decl (Node);
+                        FIds         : constant LAL.Defining_Name_List := LAL.F_Ids (Object_Decl_Node);
+                        Has_Aliased       : constant Boolean := LAL.F_Has_Aliased (Object_Decl_Node);
+                        Has_Constant       : constant Boolean := LAL.F_Has_Constant (Object_Decl_Node);
+                        mode         : constant LAL.Mode := LAL.F_Mode (Object_Decl_Node);
+                        typeExpr         : constant LAL.Type_Expr := LAL.F_Type_Expr (Object_Decl_Node);
+                        defaultExpr         : constant LAL.Expr := LAL.F_Default_Expr (Object_Decl_Node);
+                        renamingClause         : constant LAL.Renaming_Clause := LAL.F_Renaming_Clause (Object_Decl_Node);
+                        -- publicPartDecl         : constant LAL.Basic_Decl := LAL.P_Public_Part_Decl (Object_Decl_Node);
+                     begin
+                        Log ("FIds: " & FIds.Debug_Text);
+                        Log ("Has_Aliased: " & Boolean'Image (Has_Constant));
+                        Log ("F_Has_Constant: " & Boolean'Image (Has_Constant));
+                        Log ("mode: " & mode.Debug_Text);
+                        if not typeExpr.Is_Null then
+                          Log ("typeExpr: " & typeExpr.Debug_Text);
+                        end if;
+                        if not defaultExpr.Is_Null then
+                          Log ("defaultExpr: " & defaultExpr.Debug_Text);
+                        end if;
+                        if not renamingClause.Is_Null then
+                          Log ("renamingClause: " & renamingClause.Debug_Text);
+                        end if;
+                        -- if not publicPartDecl.Is_Null then
+                        --   Log ("publicPartDecl: " & publicPartDecl.Debug_Text);
+                        -- end if;
+                     end;
+
+                     This.Add_Not_Implemented;
+                  when Ada_Anonymous_Object_Decl =>
+                     declare
+                        Anonymous_Object_Decl_Node : constant LAL.Anonymous_Object_Decl := LAL.As_Anonymous_Object_Decl (Node);
+                     begin
+                       NULL;
+                     end;
+
+                     This.Add_Not_Implemented;
+                  when Ada_Extended_Return_Stmt_Object_Decl =>
+                     declare
+                        Extended_Return_Stmt_Object_Decl_Node : constant LAL.Extended_Return_Stmt_Object_Decl := LAL.As_Extended_Return_Stmt_Object_Decl (Node);
+                     begin
+                       NULL;
+                     end;
+
+                     This.Add_Not_Implemented;
+               end case;
             end;
 
-            This.Add_Not_Implemented;
-         when Ada_Anonymous_Object_Decl =>
-            declare
-               Anonymous_Object_Decl_Node : constant LAL.Anonymous_Object_Decl := LAL.As_Anonymous_Object_Decl (Node);
-            begin
-              NULL;
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Extended_Return_Stmt_Object_Decl =>
-            declare
-               Extended_Return_Stmt_Object_Decl_Node : constant LAL.Extended_Return_Stmt_Object_Decl := LAL.As_Extended_Return_Stmt_Object_Decl (Node);
-            begin
-              NULL;
-            end;
-
-            This.Add_Not_Implemented;
          when Ada_Package_Renaming_Decl =>
             declare
                Package_Renaming_Decl_Node : constant LAL.Package_Renaming_Decl := LAL.As_Package_Renaming_Decl (Node);
                name         : constant LAL.Defining_Name := LAL.F_Name (Package_Renaming_Decl_Node);
                rename         : constant LAL.Renaming_Clause := LAL.F_Renames (Package_Renaming_Decl_Node);
-               renamedPackage         : constant LAL.Basic_Decl := LAL.P_Renamed_Package (Package_Renaming_Decl_Node);
-               finalRenamedPackage         : constant LAL.Basic_Decl := LAL.P_Final_Renamed_Package (Package_Renaming_Decl_Node);
+               -- renamedPackage         : constant LAL.Basic_Decl := LAL.P_Renamed_Package (Package_Renaming_Decl_Node);
+               -- finalRenamedPackage         : constant LAL.Basic_Decl := LAL.P_Final_Renamed_Package (Package_Renaming_Decl_Node);
             begin
                Log ("name: " & name.Debug_Text);
                Log ("rename: " & rename.Debug_Text);
-               Log ("renamedPackage: " & renamedPackage.Debug_Text);
-               Log ("finalRenamedPackage: " & finalRenamedPackage.Debug_Text);
+               -- Log ("renamedPackage: " & renamedPackage.Debug_Text);
+               -- Log ("finalRenamedPackage: " & finalRenamedPackage.Debug_Text);
             end;
-
             This.Add_Not_Implemented;
+
          when Ada_Single_Protected_Decl =>
             declare
                Single_Protected_Decl_Node : constant LAL.Single_Protected_Decl := LAL.As_Single_Protected_Decl (Node);
@@ -1617,8 +2026,8 @@ package body Lal_Adapter.Node is
                Log ("interfaces: " & interfaces.Debug_Text);
                Log ("definition: " & definition.Debug_Text);
             end;
-
             This.Add_Not_Implemented;
+
          when Ada_Single_Task_Decl =>
             declare
                Single_Task_Decl_Node : constant LAL.Single_Task_Decl := LAL.As_Single_Task_Decl (Node);
@@ -1656,6 +2065,7 @@ package body Lal_Adapter.Node is
                Log ("choices: " & choices.Debug_Text);
                Log ("stmts: " & stmts.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end Process_Ada_Case_Stmt_Alternative_Range;
@@ -1682,15 +2092,21 @@ package body Lal_Adapter.Node is
                prelude         : constant LAL.Ada_Node_List := LAL.F_Prelude (Compilation_Unit_Node);
                bodyunit         : constant LAL.Ada_Node := LAL.F_Body (Compilation_Unit_Node);
                pragmas         : constant LAL.Pragma_Node_List := LAL.F_Pragmas (Compilation_Unit_Node);
-               syntaticQualifiedName         : constant LAL.Unbounded_Text_Type_Array := LAL.P_Syntactic_Fully_Qualified_Name (Compilation_Unit_Node);
-               unitKind         : constant LALCO.Analysis_Unit_Kind := LAL.P_Unit_Kind (Compilation_Unit_Node);
+               -- syntaticQualifiedName         : constant LAL.Unbounded_Text_Type_Array := LAL.P_Syntactic_Fully_Qualified_Name (Compilation_Unit_Node);
+               -- unitKind         : constant LALCO.Analysis_Unit_Kind := LAL.P_Unit_Kind (Compilation_Unit_Node);
+               -- withedUnits         : constant LAL.Compilation_Unit_Array := LAL.P_Withed_Units (Compilation_Unit_Node);
+               -- importedUnits         : constant LAL.Compilation_Unit_Array := LAL.P_Imported_Units (Compilation_Unit_Node);
+               -- unitDependencies         : constant LAL.Compilation_Unit_Array := LAL.P_Unit_Dependencies (Compilation_Unit_Node);
+               -- decl         : constant LAL.Basic_Decl := LAL.P_Decl (Compilation_Unit_Node);
             begin
                Log ("prelude: " & prelude.Debug_Text);
                Log ("bodyunit: " & bodyunit.Debug_Text);
                Log ("pragmas: " & pragmas.Debug_Text);
                -- Log ("syntaticQualifiedName: " & syntaticQualifiedName.Debug_Text);
-               -- Log ("unitKind: " & unitKind.Debug_Text);
+               -- Log ("unitKind: " & unitKind'Image);
+               -- Log ("decl: " & decl.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end Process_Ada_Compilation_Unit_Range;
@@ -1722,6 +2138,7 @@ package body Lal_Adapter.Node is
                Log ("position: " & position.Debug_Text);
                Log ("ranges: " & ranges.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end Process_Ada_Component_Clause_Range;
@@ -1751,6 +2168,7 @@ package body Lal_Adapter.Node is
                Log ("Has_Aliased: " & Boolean'Image (Has_Aliased));
                Log ("Has_Constant: " & Boolean'Image (Has_Constant));
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end Process_Ada_Component_Def_Range;
@@ -1780,6 +2198,7 @@ package body Lal_Adapter.Node is
                Log ("Digit: " & Digit.Debug_Text);
                Log ("ranges: " & ranges.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Digits_Constraint =>
             declare
@@ -1790,6 +2209,7 @@ package body Lal_Adapter.Node is
                Log ("Digit: " & Digit.Debug_Text);
                Log ("ranges: " & ranges.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Discriminant_Constraint =>
             declare
@@ -1798,6 +2218,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("constraints: " & constraints.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Index_Constraint =>
             declare
@@ -1806,6 +2227,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("constraints: " & constraints.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Range_Constraint =>
             declare
@@ -1814,6 +2236,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("Range: " & ranges.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end Process_Ada_Constraint;
@@ -1840,6 +2263,7 @@ package body Lal_Adapter.Node is
             begin
                NULL; 
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Constant_Present =>
             declare
@@ -1847,6 +2271,7 @@ package body Lal_Adapter.Node is
             begin
                NULL; 
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end Process_Ada_Constant_Node;
@@ -1874,6 +2299,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("decls: " & decls.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Private_Part =>
             declare
@@ -1881,6 +2307,7 @@ package body Lal_Adapter.Node is
             begin
                NULL; 
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Public_Part =>
             declare
@@ -1888,6 +2315,7 @@ package body Lal_Adapter.Node is
             begin
                NULL; 
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end Process_Ada_Declarative_Part_Range;
@@ -1917,6 +2345,7 @@ package body Lal_Adapter.Node is
                Log ("Cond_Expr: " & Cond_Expr.Debug_Text);
                Log ("Then_Expr: " & Then_Expr.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end Process_Ada_Elsif_Expr_Part_Range;
@@ -1946,6 +2375,7 @@ package body Lal_Adapter.Node is
                Log ("Cond_Expr: " & Cond_Expr.Debug_Text);
                Log ("Stmts: " & Stmts.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end Process_Ada_Elsif_Stmt_Part_Range;
@@ -1962,6 +2392,11 @@ package body Lal_Adapter.Node is
 
       -- Will raise Constraint_Error if Node.Kind is not in Ada_Stmt:
       Kind             : constant LALCO.Ada_Expr := Node.Kind;
+      Expr_Node : constant LAL.Expr := LAL.As_Expr (Node);
+      -- P_Expression_Type : constant LAL.Base_Type_Decl := LAL.P_Expression_Type(Expr_Node);
+      -- P_First_Corresponding_Decl : constant LAL.Basic_Decl := LAL.P_First_Corresponding_Decl(Expr_Node);
+      -- P_Eval_As_Int : constant LALCO.Big_Integer := LAL.P_Eval_As_Int(Expr_Node);
+
       use LALCO; -- For subtype names in case stmt
    begin -- Process_Ada_Expr
       case Kind is
@@ -1982,39 +2417,69 @@ package body Lal_Adapter.Node is
                  Log ("Get_Allocated_Type: " & Get_Allocated_Type.Debug_Text);
                end if;
             end;
+            This.Add_Not_Implemented;
 
-         when Ada_Aggregate =>
+         when Ada_Base_Aggregate =>
             declare
-               Aggregate_Node : constant LAL.Aggregate := LAL.As_Aggregate (Node);
+               Base_Aggregate_Kind             : constant LALCO.Ada_Base_Aggregate := Node.Kind;
+               Base_Aggregate_Node : constant LAL.Base_Aggregate := LAL.As_Base_Aggregate (Node);
+               F_Ancestor_Expr : constant LAL.Expr := LAL.F_Ancestor_Expr(Base_Aggregate_Node);
+               F_Assocs : constant LAL.Assoc_List := LAL.F_Assocs(Base_Aggregate_Node);
             begin
-               NULL;
-            end;
+               if not F_Ancestor_Expr.Is_Null then
+                  Log ("F_Ancestor_Expr: " & F_Ancestor_Expr.Debug_Text);
+               end if;
+               if not F_Assocs.Is_Null then
+                  Log ("F_Assocs: " & F_Assocs.Debug_Text);
+               end if;
+               case Base_Aggregate_Kind is
+                  when Ada_Aggregate =>
+                     declare
+                        Aggregate_Node : constant LAL.Aggregate := LAL.As_Aggregate (Node);
+                     begin
+                        NULL;
+                     end;
+                     This.Add_Not_Implemented;
 
-         when Ada_Null_Record_Aggregate =>
-            declare
-               Null_Record_Aggregate_Node : constant LAL.Null_Record_Aggregate := LAL.As_Null_Record_Aggregate (Node);
-            begin
-               NULL;
+                  when Ada_Null_Record_Aggregate =>
+                     declare
+                        Null_Record_Aggregate_Node : constant LAL.Null_Record_Aggregate := LAL.As_Null_Record_Aggregate (Node);
+                     begin
+                        NULL;
+                     end;
+                     This.Add_Not_Implemented;
+               end case;
             end;
+         This.Add_Not_Implemented;
 
-         when Ada_Bin_Op =>
+         when Ada_Bin_Op_Range =>
             declare
-               Bin_Op_Node : constant LAL.Bin_Op := LAL.As_Bin_Op (Node);
-               Left : constant LAL.Expr := LAL.F_Left (Bin_Op_Node);
-               Op : constant LAL.Op := LAL.F_Op (Bin_Op_Node);
-               Right : constant LAL.Expr := LAL.F_Right (Bin_Op_Node);
+               Bin_Op_Range_Kind             : constant LALCO.Ada_Bin_Op_Range := Node.Kind;
             begin
-               Log ("Left: " & Left.Debug_Text);
-               Log ("Op: " & Op.Debug_Text);
-               Log ("Right: " & Right.Debug_Text);
-            end;
+               case Bin_Op_Range_Kind is
+                  when Ada_Bin_Op =>
+                     declare
+                        Bin_Op_Node : constant LAL.Bin_Op := LAL.As_Bin_Op (Node);
+                        Left : constant LAL.Expr := LAL.F_Left (Bin_Op_Node);
+                        Op : constant LAL.Op := LAL.F_Op (Bin_Op_Node);
+                        Right : constant LAL.Expr := LAL.F_Right (Bin_Op_Node);
+                     begin
+                        Log ("Left: " & Left.Debug_Text);
+                        Log ("Op: " & Op.Debug_Text);
+                        Log ("Right: " & Right.Debug_Text);
+                     end;
+                     This.Add_Not_Implemented;
 
-         when Ada_Relation_Op =>
-            declare
-               Relation_Op_Node : constant LAL.Relation_Op := LAL.As_Relation_Op (Node);
-            begin
-               NULL;
+                  when Ada_Relation_Op =>
+                     declare
+                        Relation_Op_Node : constant LAL.Relation_Op := LAL.As_Relation_Op (Node);
+                     begin
+                        NULL;
+                     end;
+                     This.Add_Not_Implemented;
+               end case;
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Box_Expr =>
             declare
@@ -2022,6 +2487,7 @@ package body Lal_Adapter.Node is
             begin
                NULL;
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Case_Expr =>
             declare
@@ -2032,6 +2498,7 @@ package body Lal_Adapter.Node is
                Log ("Expr: " & Expr.Debug_Text);
                Log ("Cases: " & Cases.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Case_Expr_Alternative =>
             declare
@@ -2042,6 +2509,7 @@ package body Lal_Adapter.Node is
                Log ("choices: " & choices.Debug_Text);
                Log ("expr: " & expr.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Contract_Cases =>
             declare
@@ -2050,6 +2518,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("contract_cases: " & contract_cases.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
          when Ada_If_Expr =>
             declare
@@ -2066,6 +2535,7 @@ package body Lal_Adapter.Node is
                  Log ("Else_Expr: " & Else_Expr.Debug_Text);
                end if;
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Membership_Expr =>
             declare
@@ -2078,314 +2548,393 @@ package body Lal_Adapter.Node is
                Log ("Op: " & Op.Debug_Text);
                Log ("Membership_Exprs: " & Membership_Exprs.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
-         when Ada_Attribute_Ref =>
-            declare
-               Attribute_Ref_Node : constant LAL.Attribute_Ref := LAL.As_Attribute_Ref (Node);
-               Prefix : constant LAL.Name := LAL.F_Prefix (Attribute_Ref_Node);
-               Attribute : constant LAL.Identifier := LAL.F_Attribute (Attribute_Ref_Node);
-               Args : constant LAL.Ada_Node := LAL.F_Args (Attribute_Ref_Node);
-            begin
-               Log ("Prefix: " & Prefix.Debug_Text);
-               Log ("Attribute: " & Attribute.Debug_Text);
-               if not Args.Is_Null then
-                 Log ("Args: " & Args.Debug_Text);
-               end if;
-            end;
 
-         when Ada_Update_Attribute_Ref =>
+         when Ada_Name =>
             declare
-               Update_Attribute_Ref_Node : constant LAL.Update_Attribute_Ref := LAL.As_Update_Attribute_Ref (Node);
+               Name_Kind             : constant LALCO.Ada_Name := Node.Kind;
+               Name_Node : constant LAL.Name := LAL.As_Name (Node);
             begin
-               NULL;
-            end;
+               case Name_Kind is
+                  when Ada_Attribute_Ref_Range =>
+                     declare 
+                        Attribute_Ref_Range_Kind             : constant LALCO.Ada_Attribute_Ref_Range := Node.Kind;
+                     begin
+                        case Attribute_Ref_Range_Kind is
+                           when Ada_Attribute_Ref =>
+                              declare
+                                 Attribute_Ref_Node : constant LAL.Attribute_Ref := LAL.As_Attribute_Ref (Node);
+                                 Prefix : constant LAL.Name := LAL.F_Prefix (Attribute_Ref_Node);
+                                 Attribute : constant LAL.Identifier := LAL.F_Attribute (Attribute_Ref_Node);
+                                 Args : constant LAL.Ada_Node := LAL.F_Args (Attribute_Ref_Node);
+                              begin
+                                 Log ("Prefix: " & Prefix.Debug_Text);
+                                 Log ("Attribute: " & Attribute.Debug_Text);
+                                 if not Args.Is_Null then
+                                   Log ("Args: " & Args.Debug_Text);
+                                 end if;
+                              end;
+                              This.Add_Not_Implemented;
 
-         when Ada_Call_Expr =>
-            declare
-               Call_Expr_Node : constant LAL.Call_Expr := LAL.As_Call_Expr (Node);
-               Name : constant LAL.Name := LAL.F_Name (Call_Expr_Node);
-               Suffix : constant LAL.Ada_Node := LAL.F_Suffix (Call_Expr_Node);
---               Is_Array_Slice : constant Boolean := LAL.P_Is_Array_Slice (Call_Expr_Node);
-            begin
-               Log ("Name: " & Name.Debug_Text);
-               Log ("Suffix: " & Suffix.Debug_Text);
---               Log ("Is_Array_Slice: " & Boolean'Image(Is_Array_Slice));
-            end;
+                           when Ada_Update_Attribute_Ref =>
+                              declare
+                                 Update_Attribute_Ref_Node : constant LAL.Update_Attribute_Ref := LAL.As_Update_Attribute_Ref (Node);
+                              begin
+                                 NULL;
+                              end;
+                              This.Add_Not_Implemented;
 
-         when Ada_Defining_Name =>
-            declare
-               Defining_Name_Node : constant LAL.Defining_Name := LAL.As_Defining_Name (Node);
-            begin
-               NULL;
-            end;
+                        end case;
+                     end;
+                  when Ada_Call_Expr =>
+                     declare
+                        Call_Expr_Node : constant LAL.Call_Expr := LAL.As_Call_Expr (Node);
+                        Name : constant LAL.Name := LAL.F_Name (Call_Expr_Node);
+                        Suffix : constant LAL.Ada_Node := LAL.F_Suffix (Call_Expr_Node);
+--                        Is_Array_Slice : constant Boolean := LAL.P_Is_Array_Slice (Call_Expr_Node);
+                     begin
+                        Log ("Name: " & Name.Debug_Text);
+                        Log ("Suffix: " & Suffix.Debug_Text);
+--                        Log ("Is_Array_Slice: " & Boolean'Image(Is_Array_Slice));
+                     end;
+                     This.Add_Not_Implemented;
 
-         when Ada_Discrete_Subtype_Name =>
-            declare
-               Discrete_Subtype_Name_Node : constant LAL.Discrete_Subtype_Name := LAL.As_Discrete_Subtype_Name (Node);
-               Sub_Type : constant LAL.Discrete_Subtype_Indication := LAL.F_Subtype (Discrete_Subtype_Name_Node);
-            begin
-               Log ("Sub_Type: " & Sub_Type.Debug_Text);
-            end;
+                  when Ada_Defining_Name =>
+                     declare
+                        Defining_Name_Node : constant LAL.Defining_Name := LAL.As_Defining_Name (Node);
+                        name : constant LAL.name := LAL.F_Name(Defining_Name_Node);
+                     begin
+                        PUT_LINE("Defining Name:" & LAL.Short_Image(Defining_Name_Node));
+                     end;
+                     This.Add_Not_Implemented;
 
-         when Ada_Dotted_Name =>
-            declare
-               Dotted_Name_Node : constant LAL.Dotted_Name := LAL.As_Dotted_Name (Node);
-               Prefix : constant LAL.Name := LAL.F_Prefix (Dotted_Name_Node);
-               Suffix : constant LAL.Base_Id := LAL.F_Suffix (Dotted_Name_Node);
-            begin
-               Log ("Prefix: " & Prefix.Debug_Text);
-               Log ("Suffix: " & Suffix.Debug_Text);
-            end;
+                  when Ada_Discrete_Subtype_Name =>
+                     declare
+                        Discrete_Subtype_Name_Node : constant LAL.Discrete_Subtype_Name := LAL.As_Discrete_Subtype_Name (Node);
+                        Sub_Type : constant LAL.Discrete_Subtype_Indication := LAL.F_Subtype (Discrete_Subtype_Name_Node);
+                     begin
+                        Log ("Sub_Type: " & Sub_Type.Debug_Text);
+                     end;
+                     This.Add_Not_Implemented;
 
-         when Ada_End_Name =>
-            declare
-               End_Name_Node : constant LAL.End_Name := LAL.As_End_Name (Node);
-               Name : constant LAL.Name := LAL.F_Name (End_Name_Node);
-               Basic_Decl : constant LAL.Basic_Decl := LAL.P_Basic_Decl (End_Name_Node);
-            begin
-               Log ("Name: " & Name.Debug_Text);
-               Log ("Basic_Decl: " & Basic_Decl.Debug_Text);
-            end;
+                  when Ada_Dotted_Name =>
+                     declare
+                        Dotted_Name_Node : constant LAL.Dotted_Name := LAL.As_Dotted_Name (Node);
+                        Prefix : constant LAL.Name := LAL.F_Prefix (Dotted_Name_Node);
+                        Suffix : constant LAL.Base_Id := LAL.F_Suffix (Dotted_Name_Node);
+                     begin
+                        Log ("Prefix: " & Prefix.Debug_Text);
+                        Log ("Suffix: " & Suffix.Debug_Text);
+                     end;
+                     This.Add_Not_Implemented;
 
-         when Ada_Explicit_Deref =>
-            declare
-               Explicit_Deref_Node : constant LAL.Explicit_Deref := LAL.As_Explicit_Deref (Node);
-               Prefix : constant LAL.Name := LAL.F_Prefix (Explicit_Deref_Node);
-            begin
-               Log ("Prefix: " & Prefix.Debug_Text);
-            end;
+                  when Ada_End_Name =>
+                     declare
+                        End_Name_Node : constant LAL.End_Name := LAL.As_End_Name (Node);
+                        Name : constant LAL.Name := LAL.F_Name (End_Name_Node);
+                        -- Basic_Decl : constant LAL.Basic_Decl := LAL.P_Basic_Decl (End_Name_Node);
+                     begin
+                        Log ("Name: " & Name.Debug_Text);
+                        -- Log ("Basic_Decl: " & Basic_Decl.Debug_Text);
+                     end;
+                     This.Add_Not_Implemented;
 
-         when Ada_Qual_Expr =>
-            declare
-               Qual_Expr_Node : constant LAL.Qual_Expr := LAL.As_Qual_Expr (Node);
-               Prefix : constant LAL.Name := LAL.F_Prefix (Qual_Expr_Node);
-               Suffix : constant LAL.Expr := LAL.F_Suffix (Qual_Expr_Node);
-            begin
-               Log ("Prefix: " & Prefix.Debug_Text);
-               Log ("Suffix: " & Suffix.Debug_Text);
-            end;
+                  when Ada_Explicit_Deref =>
+                     declare
+                        Explicit_Deref_Node : constant LAL.Explicit_Deref := LAL.As_Explicit_Deref (Node);
+                        Prefix : constant LAL.Name := LAL.F_Prefix (Explicit_Deref_Node);
+                     begin
+                        Log ("Prefix: " & Prefix.Debug_Text);
+                     end;
+                     This.Add_Not_Implemented;
 
-         when Ada_Char_Literal =>
-            declare
-               Char_Literal_Node : constant LAL.Char_Literal := LAL.As_Char_Literal (Node);
-               -- Denoted_Value : constant LALCO.Character_Type := LAL.P_Denoted_Value (Char_Literal_Node);
-            begin
-               -- Log ("Denoted_Value: " & Denoted_Value.Debug_Text);
-               NULL;
-            end;
+                  when Ada_Qual_Expr =>
+                     declare
+                        Qual_Expr_Node : constant LAL.Qual_Expr := LAL.As_Qual_Expr (Node);
+                        Prefix : constant LAL.Name := LAL.F_Prefix (Qual_Expr_Node);
+                        Suffix : constant LAL.Expr := LAL.F_Suffix (Qual_Expr_Node);
+                     begin
+                        Log ("Prefix: " & Prefix.Debug_Text);
+                        Log ("Suffix: " & Suffix.Debug_Text);
+                     end;
+                     This.Add_Not_Implemented;
 
-         when Ada_Identifier =>
-            declare
-               Identifier_Node : constant LAL.Identifier := LAL.As_Identifier (Node);
-            begin
-               NULL;
-            end;
+                  when Ada_Single_Tok_Node =>
+                     declare
+                        Single_Tok_Kind             : constant LALCO.Ada_Single_Tok_Node := Node.Kind;
+                        Single_Tok_Node : constant LAL.Single_Tok_Node := LAL.As_Single_Tok_Node (Node);
+                     begin
+                        case Single_Tok_Kind is
+                           when Ada_Char_Literal =>
+                              declare
+                                 Char_Literal_Node : constant LAL.Char_Literal := LAL.As_Char_Literal (Node);
+                                 -- Denoted_Value : constant LALCO.Character_Type := LAL.P_Denoted_Value (Char_Literal_Node);
+                              begin
+                                 -- Log ("Denoted_Value: " & Denoted_Value.Debug_Text);
+                                 NULL;
+                              end;
+                              This.Add_Not_Implemented;
 
-         when Ada_Op_Abs =>
-            declare
-               Op_Abs_Node : constant LAL.Op_Abs := LAL.As_Op_Abs (Node);
-            begin
-               NULL;
-            end;
+                           when Ada_Identifier =>
+                              declare
+                                 Identifier_Node : constant LAL.Identifier := LAL.As_Identifier (Node);
+                              begin
+                                 NULL;
+                              end;
+                              This.Add_Not_Implemented;
 
-         when Ada_Op_And =>
-            declare
-               Op_And_Node : constant LAL.Op_And := LAL.As_Op_And (Node);
-            begin
-               NULL;
-            end;
+                           when Ada_Op =>
+                              declare
+                                 Op_Node : constant LAL.Op := LAL.As_Op (Node);
+                                 Op_Kind             : constant LALCO.Ada_Op := Node.Kind;
+                              begin
+                                 case Op_Kind is
+                                    when Ada_Op_Abs =>
+                                       declare
+                                          Op_Abs_Node : constant LAL.Op_Abs := LAL.As_Op_Abs (Node);
+                                       begin
+                                          NULL;
+                                       end;
+                                       This.Add_Not_Implemented;
 
-         when Ada_Op_And_Then =>
-            declare
-               Op_And_Then_Node : constant LAL.Op_And_Then := LAL.As_Op_And_Then (Node);
-            begin
-               NULL;
-            end;
+                                    when Ada_Op_And =>
+                                       declare
+                                          Op_And_Node : constant LAL.Op_And := LAL.As_Op_And (Node);
+                                       begin
+                                          NULL;
+                                       end;
+                                       This.Add_Not_Implemented;
 
-         when Ada_Op_Concat =>
-            declare
-               Op_Concat_Node : constant LAL.Op_Concat := LAL.As_Op_Concat (Node);
-            begin
-               NULL;
-            end;
+                                    when Ada_Op_And_Then =>
+                                       declare
+                                          Op_And_Then_Node : constant LAL.Op_And_Then := LAL.As_Op_And_Then (Node);
+                                       begin
+                                          NULL;
+                                       end;
+                                       This.Add_Not_Implemented;
 
-         when Ada_Op_Div =>
-            declare
-               Op_Div_Node : constant LAL.Op_Div := LAL.As_Op_Div (Node);
-            begin
-               NULL;
-            end;
+                                    when Ada_Op_Concat =>
+                                       declare
+                                          Op_Concat_Node : constant LAL.Op_Concat := LAL.As_Op_Concat (Node);
+                                       begin
+                                          NULL;
+                                       end;
+                                       This.Add_Not_Implemented;
 
-         when Ada_Op_Double_Dot =>
-            declare
-               Op_Double_Dot_Node : constant LAL.Op_Double_Dot := LAL.As_Op_Double_Dot (Node);
-            begin
-               NULL;
-            end;
+                                    when Ada_Op_Div =>
+                                       declare
+                                          Op_Div_Node : constant LAL.Op_Div := LAL.As_Op_Div (Node);
+                                       begin
+                                          NULL;
+                                       end;
+                                       This.Add_Not_Implemented;
 
-         when Ada_Op_Eq =>
-            declare
-               Op_Eq_Node : constant LAL.Op_Eq := LAL.As_Op_Eq (Node);
-            begin
-               NULL;
-            end;
+                                    when Ada_Op_Double_Dot =>
+                                       declare
+                                          Op_Double_Dot_Node : constant LAL.Op_Double_Dot := LAL.As_Op_Double_Dot (Node);
+                                       begin
+                                          NULL;
+                                       end;
+                                       This.Add_Not_Implemented;
 
-         when Ada_Op_Gt =>
-            declare
-               Op_Gt_Node : constant LAL.Op_Gt := LAL.As_Op_Gt (Node);
-            begin
-               NULL;
-            end;
+                                    when Ada_Op_Eq =>
+                                       declare
+                                          Op_Eq_Node : constant LAL.Op_Eq := LAL.As_Op_Eq (Node);
+                                       begin
+                                          NULL;
+                                       end;
+                                       This.Add_Not_Implemented;
 
-         when Ada_Op_Gte =>
-            declare
-               Op_Gte_Node : constant LAL.Op_Gte := LAL.As_Op_Gte (Node);
-            begin
-               NULL;
-            end;
+                                    when Ada_Op_Gt =>
+                                       declare
+                                          Op_Gt_Node : constant LAL.Op_Gt := LAL.As_Op_Gt (Node);
+                                       begin
+                                          NULL;
+                                       end;
+                                       This.Add_Not_Implemented;
 
-         when Ada_Op_In =>
-            declare
-               Op_In_Node : constant LAL.Op_In := LAL.As_Op_In (Node);
-            begin
-               NULL;
-            end;
+                                    when Ada_Op_Gte =>
+                                       declare
+                                          Op_Gte_Node : constant LAL.Op_Gte := LAL.As_Op_Gte (Node);
+                                       begin
+                                          NULL;
+                                       end;
+                                       This.Add_Not_Implemented;
 
-         when Ada_Op_Lt =>
-            declare
-               Op_Lt_Node : constant LAL.Op_Lt := LAL.As_Op_Lt (Node);
-            begin
-               NULL;
-            end;
+                                    when Ada_Op_In =>
+                                       declare
+                                          Op_In_Node : constant LAL.Op_In := LAL.As_Op_In (Node);
+                                       begin
+                                          NULL;
+                                       end;
+                                       This.Add_Not_Implemented;
 
-         when Ada_Op_Lte =>
-            declare
-               Op_Lte_Node : constant LAL.Op_Lte := LAL.As_Op_Lte (Node);
-            begin
-               NULL;
-            end;
+                                    when Ada_Op_Lt =>
+                                       declare
+                                          Op_Lt_Node : constant LAL.Op_Lt := LAL.As_Op_Lt (Node);
+                                       begin
+                                          NULL;
+                                       end;
+                                       This.Add_Not_Implemented;
 
-         when Ada_Op_Minus =>
-            declare
-               Op_Minus_Node : constant LAL.Op_Minus := LAL.As_Op_Minus (Node);
-            begin
-               NULL;
-            end;
+                                    when Ada_Op_Lte =>
+                                       declare
+                                          Op_Lte_Node : constant LAL.Op_Lte := LAL.As_Op_Lte (Node);
+                                       begin
+                                          NULL;
+                                       end;
+                                       This.Add_Not_Implemented;
 
-         when Ada_Op_Mod =>
-            declare
-               Op_Mod_Node : constant LAL.Op_Mod := LAL.As_Op_Mod (Node);
-            begin
-               NULL;
-            end;
+                                    when Ada_Op_Minus =>
+                                       declare
+                                          Op_Minus_Node : constant LAL.Op_Minus := LAL.As_Op_Minus (Node);
+                                       begin
+                                          NULL;
+                                       end;
+                                       This.Add_Not_Implemented;
 
-         when Ada_Op_Mult =>
-            declare
-               Op_Mult_Node : constant LAL.Op_Mult := LAL.As_Op_Mult (Node);
-            begin
-               NULL;
-            end;
+                                    when Ada_Op_Mod =>
+                                       declare
+                                          Op_Mod_Node : constant LAL.Op_Mod := LAL.As_Op_Mod (Node);
+                                       begin
+                                          NULL;
+                                       end;
+                                       This.Add_Not_Implemented;
 
-         when Ada_Op_Neq =>
-            declare
-               Op_Neq_Node : constant LAL.Op_Neq := LAL.As_Op_Neq (Node);
-            begin
-               NULL;
-            end;
+                                    when Ada_Op_Mult =>
+                                       declare
+                                          Op_Mult_Node : constant LAL.Op_Mult := LAL.As_Op_Mult (Node);
+                                       begin
+                                          NULL;
+                                       end;
+                                       This.Add_Not_Implemented;
 
-         when Ada_Op_Not =>
-            declare
-               Op_Not_Node : constant LAL.Op_Not := LAL.As_Op_Not (Node);
-            begin
-               NULL;
-            end;
+                                    when Ada_Op_Neq =>
+                                       declare
+                                          Op_Neq_Node : constant LAL.Op_Neq := LAL.As_Op_Neq (Node);
+                                       begin
+                                          NULL;
+                                       end;
+                                       This.Add_Not_Implemented;
 
-         when Ada_Op_Not_In =>
-            declare
-               Op_Not_In_Node : constant LAL.Op_Not_In := LAL.As_Op_Not_In (Node);
-            begin
-               NULL;
-            end;
+                                    when Ada_Op_Not =>
+                                       declare
+                                          Op_Not_Node : constant LAL.Op_Not := LAL.As_Op_Not (Node);
+                                       begin
+                                          NULL;
+                                       end;
+                                       This.Add_Not_Implemented;
 
-         when Ada_Op_Or =>
-            declare
-               Op_Or_Node : constant LAL.Op_Or := LAL.As_Op_Or (Node);
-            begin
-               NULL;
-            end;
+                                    when Ada_Op_Not_In =>
+                                       declare
+                                          Op_Not_In_Node : constant LAL.Op_Not_In := LAL.As_Op_Not_In (Node);
+                                       begin
+                                          NULL;
+                                       end;
+                                       This.Add_Not_Implemented;
 
-         when Ada_Op_Or_Else =>
-            declare
-               Op_Or_Else_Node : constant LAL.Op_Or_Else := LAL.As_Op_Or_Else (Node);
-            begin
-               NULL;
-            end;
+                                    when Ada_Op_Or =>
+                                       declare
+                                          Op_Or_Node : constant LAL.Op_Or := LAL.As_Op_Or (Node);
+                                       begin
+                                          NULL;
+                                       end;
+                                       This.Add_Not_Implemented;
 
-         when Ada_Op_Plus =>
-            declare
-               Op_Plus_Node : constant LAL.Op_Plus := LAL.As_Op_Plus (Node);
-            begin
-               NULL;
-            end;
+                                    when Ada_Op_Or_Else =>
+                                       declare
+                                          Op_Or_Else_Node : constant LAL.Op_Or_Else := LAL.As_Op_Or_Else (Node);
+                                       begin
+                                          NULL;
+                                       end;
+                                       This.Add_Not_Implemented;
 
-         when Ada_Op_Pow =>
-            declare
-               Op_Pow_Node : constant LAL.Op_Pow := LAL.As_Op_Pow (Node);
-            begin
-               NULL;
-            end;
+                                    when Ada_Op_Plus =>
+                                       declare
+                                          Op_Plus_Node : constant LAL.Op_Plus := LAL.As_Op_Plus (Node);
+                                       begin
+                                          NULL;
+                                       end;
+                                       This.Add_Not_Implemented;
 
-         when Ada_Op_Rem =>
-            declare
-               Op_Rem_Node : constant LAL.Op_Rem := LAL.As_Op_Rem (Node);
-            begin
-               NULL;
-            end;
+                                    when Ada_Op_Pow =>
+                                       declare
+                                          Op_Pow_Node : constant LAL.Op_Pow := LAL.As_Op_Pow (Node);
+                                       begin
+                                          NULL;
+                                       end;
+                                       This.Add_Not_Implemented;
 
-         when Ada_Op_Xor =>
-            declare
-               Op_Xor_Node : constant LAL.Op_Xor := LAL.As_Op_Xor (Node);
-            begin
-               NULL;
-            end;
+                                    when Ada_Op_Rem =>
+                                       declare
+                                          Op_Rem_Node : constant LAL.Op_Rem := LAL.As_Op_Rem (Node);
+                                       begin
+                                          NULL;
+                                       end;
+                                       This.Add_Not_Implemented;
 
-         when Ada_String_Literal =>
-            declare
-               String_Literal_Node : constant LAL.String_Literal := LAL.As_String_Literal (Node);
-               -- Denoted_Value : constant LALCO.Stringacter_Type := LAL.P_Denoted_Value (String_Literal_Node);
-            begin
-               -- Log ("Denoted_Value: " & Denoted_Value.Debug_Text);
-               NULL;
-            end;
+                                    when Ada_Op_Xor =>
+                                       declare
+                                          Op_Xor_Node : constant LAL.Op_Xor := LAL.As_Op_Xor (Node);
+                                       begin
+                                          NULL;
+                                       end;
+                                       This.Add_Not_Implemented;
 
-         when Ada_Null_Literal =>
-            declare
-               Null_Literal_Node : constant LAL.Null_Literal := LAL.As_Null_Literal (Node);
-            begin
-               NULL;
-            end;
+                                 end case;
+                              end;
+                              This.Add_Not_Implemented;
 
-         when Ada_Int_Literal =>
-            declare
-               Int_Literal_Node : constant LAL.Int_Literal := LAL.As_Int_Literal (Node);
-               -- Denoted_Value : constant LALCO.Big_Integer := LAL.P_Denoted_Value (Int_Literal_Node);
-            begin
-               -- Log ("Denoted_Value: " & Denoted_Value.Debug_Text);
-               NULL;
-            end;
+                           when Ada_String_Literal =>
+                              declare
+                                 String_Literal_Node : constant LAL.String_Literal := LAL.As_String_Literal (Node);
+                                 -- Denoted_Value : constant LALCO.Stringacter_Type := LAL.P_Denoted_Value (String_Literal_Node);
+                              begin
+                                 -- Log ("Denoted_Value: " & Denoted_Value.Debug_Text);
+                                 NULL;
+                              end;
+                              This.Add_Not_Implemented;
 
-         when Ada_Real_Literal =>
-            declare
-               Real_Literal_Node : constant LAL.Real_Literal := LAL.As_Real_Literal (Node);
-            begin
-               NULL;
-            end;
+                           when Ada_Null_Literal =>
+                              declare
+                                 Null_Literal_Node : constant LAL.Null_Literal := LAL.As_Null_Literal (Node);
+                              begin
+                                 NULL;
+                              end;
+                              This.Add_Not_Implemented;
 
-         when Ada_Target_Name =>
-            declare
-               Target_Name_Node : constant LAL.Target_Name := LAL.As_Target_Name (Node);
-            begin
-               NULL;
+                           -- when Ada_Num_Literal =>
+                           when Ada_Int_Literal =>
+                              declare
+                                 Int_Literal_Node : constant LAL.Int_Literal := LAL.As_Int_Literal (Node);
+                                 -- Denoted_Value : constant LALCO.Big_Integer := LAL.P_Denoted_Value (Int_Literal_Node);
+                              begin
+                                 -- Log ("Denoted_Value: " & Denoted_Value.Debug_Text);
+                                 NULL;
+                              end;
+                              This.Add_Not_Implemented;
+
+                           when Ada_Real_Literal =>
+                              declare
+                                 Real_Literal_Node : constant LAL.Real_Literal := LAL.As_Real_Literal (Node);
+                              begin
+                                 NULL;
+                              end;
+                              This.Add_Not_Implemented;
+                        end case;
+                     end;
+
+                  when Ada_Target_Name =>
+                     declare
+                        Target_Name_Node : constant LAL.Target_Name := LAL.As_Target_Name (Node);
+                     begin
+                        NULL;
+                     end;
+                     This.Add_Not_Implemented;
+
+
+               end case;
             end;
 
          when Ada_Paren_Expr =>
@@ -2395,6 +2944,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("Expr: " & Expr.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Quantified_Expr =>
             declare
@@ -2407,6 +2957,7 @@ package body Lal_Adapter.Node is
                Log ("Loop_Spec: " & Loop_Spec.Debug_Text);
                Log ("Expr: " & Expr.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Raise_Expr =>
             declare
@@ -2417,6 +2968,7 @@ package body Lal_Adapter.Node is
                Log ("Exception_Name: " & Exception_Name.Debug_Text);
                Log ("Error_Message: " & Error_Message.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
          when Ada_Un_Op =>
             declare
@@ -2425,6 +2977,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("Op: " & Op.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end Process_Ada_Expr;
@@ -2455,6 +3008,7 @@ package body Lal_Adapter.Node is
                Log ("Stmts: " & Stmts.Debug_Text);
                Log ("Exceptions: " & Exceptions.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end Process_Ada_Handled_Stmts_Range;
@@ -2481,6 +3035,7 @@ package body Lal_Adapter.Node is
             begin
                NULL;
             end;
+            This.Add_Not_Implemented;
 
          when ada_interface_kind_protected =>
             declare
@@ -2488,6 +3043,7 @@ package body Lal_Adapter.Node is
             begin
                NULL;
             end;
+            This.Add_Not_Implemented;
 
          when ada_interface_kind_synchronized =>
             declare
@@ -2495,6 +3051,7 @@ package body Lal_Adapter.Node is
             begin
                NULL;
             end;
+            This.Add_Not_Implemented;
 
          when ada_interface_kind_task =>
             declare
@@ -2502,6 +3059,7 @@ package body Lal_Adapter.Node is
             begin
                NULL;
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end process_ada_interface_kind;
@@ -2528,6 +3086,7 @@ package body Lal_Adapter.Node is
             begin
                NULL;
             end;
+            This.Add_Not_Implemented;
 
          when ada_Iter_Type_Of =>
             declare
@@ -2535,6 +3094,7 @@ package body Lal_Adapter.Node is
             begin
                NULL;
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end process_ada_Iter_Type;
@@ -3100,23 +3660,30 @@ package body Lal_Adapter.Node is
    begin -- process_ada_Renaming_Clause_Range
       case kind is
 
-         when ada_Renaming_Clause =>
-            declare
-               Renaming_Clause_Node : constant LAL.Renaming_Clause := LAL.As_Renaming_Clause (Node);
-               renamed_object : constant LAL.Name := LAL.F_Renamed_Object (Renaming_Clause_Node);
+         when Ada_Renaming_Clause_Range =>
+            declare 
+               Renaming_Clause_Range_kind             : constant lalco.ada_Renaming_Clause_Range := node.kind;
             begin
-               Log ("renamed_object: " & renamed_object.Debug_Text);
-            end;
-            this.add_not_implemented;
+               case Renaming_Clause_Range_kind is
+                  when ada_Renaming_Clause =>
+                     declare
+                        Renaming_Clause_Node : constant LAL.Renaming_Clause := LAL.As_Renaming_Clause (Node);
+                        renamed_object : constant LAL.Name := LAL.F_Renamed_Object (Renaming_Clause_Node);
+                     begin
+                        Log ("renamed_object: " & renamed_object.Debug_Text);
+                     end;
+                     this.add_not_implemented;
 
-         when ada_Synthetic_Renaming_Clause =>
-            declare
-               Synthetic_Renaming_Clause_Node : constant LAL.Synthetic_Renaming_Clause := LAL.As_Synthetic_Renaming_Clause (Node);
-            begin
-               NULL; 
-            end;
-            this.add_not_implemented;
+                  when ada_Synthetic_Renaming_Clause =>
+                     declare
+                        Synthetic_Renaming_Clause_Node : constant LAL.Synthetic_Renaming_Clause := LAL.As_Synthetic_Renaming_Clause (Node);
+                     begin
+                        NULL; 
+                     end;
+                     this.add_not_implemented;
 
+               end case;
+            end;
       end case;
    end process_ada_Renaming_Clause_Range;
 
@@ -3204,143 +3771,171 @@ package body Lal_Adapter.Node is
       use LALCO; -- For subtype names in case stmt
    begin -- Process_Ada_Stmt
       case Kind is
-         when Ada_Accept_Stmt =>
+         when Ada_Composite_Stmt =>
             declare
-               Accept_Stmt_Node : constant LAL.Accept_Stmt := LAL.As_Accept_Stmt (Node);
-               Name : constant LAL.Identifier := LAL.F_Name (Accept_Stmt_Node);
-               Entry_Index_Expr : constant LAL.Expr := LAL.F_Entry_Index_Expr (Accept_Stmt_Node);
-               Params : constant LAL.Entry_Completion_Formal_Params := LAL.F_Params (Accept_Stmt_Node);
+               Composite_Stmt_Node : constant LAL.Composite_Stmt := LAL.As_Composite_Stmt (Node);
+               Composite_Stmt_Kind             : constant LALCO.Ada_Composite_Stmt := Node.Kind;
             begin
-               Log ("Name: " & Name.Debug_Text);
-               if not Entry_Index_Expr.Is_Null then
-                 Log ("Entry_Index_Expr: " & Entry_Index_Expr.Debug_Text);
-               end if;
-               Log ("Params: " & Params.Debug_Text);
-            end;
+               case Composite_Stmt_Kind is
+                  when Ada_Accept_Stmt =>
+                     declare
+                        Accept_Stmt_Node : constant LAL.Accept_Stmt := LAL.As_Accept_Stmt (Node);
+                        Name : constant LAL.Identifier := LAL.F_Name (Accept_Stmt_Node);
+                        Entry_Index_Expr : constant LAL.Expr := LAL.F_Entry_Index_Expr (Accept_Stmt_Node);
+                        Params : constant LAL.Entry_Completion_Formal_Params := LAL.F_Params (Accept_Stmt_Node);
+                     begin
+                        Log ("Name: " & Name.Debug_Text);
+                        if not Entry_Index_Expr.Is_Null then
+                          Log ("Entry_Index_Expr: " & Entry_Index_Expr.Debug_Text);
+                        end if;
+                        Log ("Params: " & Params.Debug_Text);
+                     end;
 
-            This.Add_Not_Implemented;
-         when Ada_Accept_Stmt_With_Stmts =>
-            declare
-               Accept_Stmt_With_Stmts_Node : constant LAL.Accept_Stmt_With_Stmts := LAL.As_Accept_Stmt_With_Stmts (Node);
-               Stmts : constant LAL.Handled_Stmts := LAL.F_Stmts (Accept_Stmt_With_Stmts_Node);
-               End_Name : constant LAL.End_Name := LAL.F_End_Name (Accept_Stmt_With_Stmts_Node);
-            begin
-               Log ("Stmts: " & Stmts.Debug_Text);
-               Log ("End_Name: " & End_Name.Debug_Text);
-            end;
+                     This.Add_Not_Implemented;
+                  when Ada_Accept_Stmt_With_Stmts =>
+                     declare
+                        Accept_Stmt_With_Stmts_Node : constant LAL.Accept_Stmt_With_Stmts := LAL.As_Accept_Stmt_With_Stmts (Node);
+                        Stmts : constant LAL.Handled_Stmts := LAL.F_Stmts (Accept_Stmt_With_Stmts_Node);
+                        End_Name : constant LAL.End_Name := LAL.F_End_Name (Accept_Stmt_With_Stmts_Node);
+                     begin
+                        Log ("Stmts: " & Stmts.Debug_Text);
+                        Log ("End_Name: " & End_Name.Debug_Text);
+                     end;
 
-            This.Add_Not_Implemented;
-         when Ada_For_Loop_Stmt =>
-            declare
-               For_Loop_Stmt_Node : constant LAL.For_Loop_Stmt := LAL.As_For_Loop_Stmt (Node);
-            begin
-               NULL;
-            end;
+                     This.Add_Not_Implemented;
 
-            This.Add_Not_Implemented;
-         when Ada_Loop_Stmt =>
-            declare
-               Loop_Stmt_Node : constant LAL.Loop_Stmt := LAL.As_Loop_Stmt (Node);
-            begin
-               NULL;
-            end;
+                  when Ada_Base_Loop_Stmt =>
+                     declare
+                        Base_Loop_Stmt_Node : constant LAL.Base_Loop_Stmt := LAL.As_Base_Loop_Stmt (Node);
+                        Base_Loop_Stmt_Kind             : constant LALCO.Ada_Base_Loop_Stmt := Node.Kind;
+                        F_Spec : constant LAL.Loop_Spec := LAL.F_Spec(Base_Loop_Stmt_Node);
+                        F_Stmts : constant LAL.Stmt_List := LAL.F_Stmts(Base_Loop_Stmt_Node);
+                        F_End_Name : constant LAL.End_Name := LAL.F_End_Name(Base_Loop_Stmt_Node);
+                     begin
+                        if not F_Spec.Is_Null then
+                           Log ("F_Spec: " & F_Spec.Debug_Text);
+                        end if;
+                        if not F_Stmts.Is_Null then
+                           Log ("F_Stmts: " & F_Stmts.Debug_Text);
+                        end if;
+                        if not F_End_Name.Is_Null then
+                           Log ("F_End_Name: " & F_End_Name.Debug_Text);
+                        end if;
+                        case Base_Loop_Stmt_Kind is
+                           when Ada_For_Loop_Stmt =>
+                              declare
+                                 For_Loop_Stmt_Node : constant LAL.For_Loop_Stmt := LAL.As_For_Loop_Stmt (Node);
+                              begin
+                                 NULL;
+                              end;
+                              This.Add_Not_Implemented;
+                           when Ada_Loop_Stmt =>
+                              declare
+                                 Loop_Stmt_Node : constant LAL.Loop_Stmt := LAL.As_Loop_Stmt (Node);
+                              begin
+                                 NULL;
+                              end;
+                              This.Add_Not_Implemented;
+                           when Ada_While_Loop_Stmt =>
+                              declare
+                                 While_Loop_Stmt_Node : constant LAL.While_Loop_Stmt := LAL.As_While_Loop_Stmt (Node);
+                              begin
+                                 NULL;
+                              end;
+                              This.Add_Not_Implemented;
+                        end case;
+                     end;
 
-            This.Add_Not_Implemented;
-         when Ada_While_Loop_Stmt =>
-            declare
-               While_Loop_Stmt_Node : constant LAL.While_Loop_Stmt := LAL.As_While_Loop_Stmt (Node);
-            begin
-               NULL;
-            end;
+                  -- when Ada_Block_Stmt =>
+                  when Ada_Begin_Block =>
+                     declare
+                        Begin_Block_Node : constant LAL.Begin_Block := LAL.As_Begin_Block (Node);
+                        Stmt : constant LAL.Handled_Stmts := LAL.F_Stmts (Begin_Block_Node);
+                        End_Name : constant LAL.End_Name := LAL.F_End_Name (Begin_Block_Node);
+                     begin
+                        Log ("Stmt: " & Stmt.Debug_Text);
+                        if not End_Name.Is_Null then
+                          Log ("End_Name: " & End_Name.Debug_Text);
+                        end if;
+                     end;
 
-            This.Add_Not_Implemented;
-         when Ada_Begin_Block =>
-            declare
-               Begin_Block_Node : constant LAL.Begin_Block := LAL.As_Begin_Block (Node);
-               Stmt : constant LAL.Handled_Stmts := LAL.F_Stmts (Begin_Block_Node);
-               End_Name : constant LAL.End_Name := LAL.F_End_Name (Begin_Block_Node);
-            begin
-               Log ("Stmt: " & Stmt.Debug_Text);
-               if not End_Name.Is_Null then
-                 Log ("End_Name: " & End_Name.Debug_Text);
-               end if;
-            end;
+                     This.Add_Not_Implemented;
+                  when Ada_Decl_Block =>
+                     declare
+                        Decl_Block_Node : constant LAL.Decl_Block := LAL.As_Decl_Block (Node);
+                        Decl : constant LAL.Declarative_Part := LAL.F_Decls (Decl_Block_Node);
+                        Stmt : constant LAL.Handled_Stmts := LAL.F_Stmts (Decl_Block_Node);
+                        End_Name : constant LAL.End_Name := LAL.F_End_Name (Decl_Block_Node);
+                     begin
+                        Log ("Decl: " & Decl.Debug_Text);
+                        Log ("Stmt: " & Stmt.Debug_Text);
+                        if not End_Name.Is_Null then
+                          Log ("End_Name: " & End_Name.Debug_Text);
+                        end if;
+                     end;
 
-            This.Add_Not_Implemented;
-         when Ada_Decl_Block =>
-            declare
-               Decl_Block_Node : constant LAL.Decl_Block := LAL.As_Decl_Block (Node);
-               Decl : constant LAL.Declarative_Part := LAL.F_Decls (Decl_Block_Node);
-               Stmt : constant LAL.Handled_Stmts := LAL.F_Stmts (Decl_Block_Node);
-               End_Name : constant LAL.End_Name := LAL.F_End_Name (Decl_Block_Node);
-            begin
-               Log ("Decl: " & Decl.Debug_Text);
-               Log ("Stmt: " & Stmt.Debug_Text);
-               if not End_Name.Is_Null then
-                 Log ("End_Name: " & End_Name.Debug_Text);
-               end if;
-            end;
+                     This.Add_Not_Implemented;
+                  when Ada_Case_Stmt =>
+                     declare
+                        Case_Stmt_Node : constant LAL.Case_Stmt := LAL.As_Case_Stmt (Node);
+                        Expr : constant LAL.Expr := LAL.F_Expr (Case_Stmt_Node);
+                        Alternatives : constant LAL.Case_Stmt_Alternative_List := LAL.F_Alternatives (Case_Stmt_Node);
+                     begin
+                        Log ("Expr: " & Expr.Debug_Text);
+                        Log ("Alternatives: " & Alternatives.Debug_Text);
+                     end;
 
-            This.Add_Not_Implemented;
-         when Ada_Case_Stmt =>
-            declare
-               Case_Stmt_Node : constant LAL.Case_Stmt := LAL.As_Case_Stmt (Node);
-               Expr : constant LAL.Expr := LAL.F_Expr (Case_Stmt_Node);
-               Alternatives : constant LAL.Case_Stmt_Alternative_List := LAL.F_Alternatives (Case_Stmt_Node);
-            begin
-               Log ("Expr: " & Expr.Debug_Text);
-               Log ("Alternatives: " & Alternatives.Debug_Text);
-            end;
+                     This.Add_Not_Implemented;
+                  when Ada_Extended_Return_Stmt =>
+                     declare
+                        Extended_Return_Stmt_Node : constant LAL.Extended_Return_Stmt := LAL.As_Extended_Return_Stmt (Node);
+                        Decl_Stmt : constant LAL.Extended_Return_Stmt_Object_Decl := LAL.F_Decl (Extended_Return_Stmt_Node);
+                        Stmt : constant LAL.Handled_Stmts := LAL.F_Stmts (Extended_Return_Stmt_Node);
+                     begin
+                        Log ("Decl_Stmt: " & Decl_Stmt.Debug_Text);
+                        Log ("Stmt: " & Stmt.Debug_Text);
+                     end;
 
-            This.Add_Not_Implemented;
-         when Ada_Extended_Return_Stmt =>
-            declare
-               Extended_Return_Stmt_Node : constant LAL.Extended_Return_Stmt := LAL.As_Extended_Return_Stmt (Node);
-               Decl_Stmt : constant LAL.Extended_Return_Stmt_Object_Decl := LAL.F_Decl (Extended_Return_Stmt_Node);
-               Stmt : constant LAL.Handled_Stmts := LAL.F_Stmts (Extended_Return_Stmt_Node);
-            begin
-               Log ("Decl_Stmt: " & Decl_Stmt.Debug_Text);
-               Log ("Stmt: " & Stmt.Debug_Text);
-            end;
+                     This.Add_Not_Implemented;
+                  when Ada_If_Stmt =>
+                     declare
+                        If_Stmt_Node : constant LAL.If_Stmt := LAL.As_If_Stmt (Node);
+                        Then_Stmt : constant LAL.Stmt_List := LAL.F_Then_Stmts (If_Stmt_Node);
+                        Alternative : constant LAL.Elsif_Stmt_Part_List := LAL.F_Alternatives (If_Stmt_Node);
+                        Else_Stmt : constant LAL.Stmt_List := LAL.F_Else_Stmts (If_Stmt_Node);
+                     begin
+                        Log ("Then_Stmt: " & Then_Stmt.Debug_Text);
+                        Log ("Alternative: " & Alternative.Debug_Text);
+                        Log ("Else_Stmt: " & Else_Stmt.Debug_Text);
+                     end;
 
-            This.Add_Not_Implemented;
-         when Ada_If_Stmt =>
-            declare
-               If_Stmt_Node : constant LAL.If_Stmt := LAL.As_If_Stmt (Node);
-               Then_Stmt : constant LAL.Stmt_List := LAL.F_Then_Stmts (If_Stmt_Node);
-               Alternative : constant LAL.Elsif_Stmt_Part_List := LAL.F_Alternatives (If_Stmt_Node);
-               Else_Stmt : constant LAL.Stmt_List := LAL.F_Else_Stmts (If_Stmt_Node);
-            begin
-               Log ("Then_Stmt: " & Then_Stmt.Debug_Text);
-               Log ("Alternative: " & Alternative.Debug_Text);
-               Log ("Else_Stmt: " & Else_Stmt.Debug_Text);
-            end;
+                     This.Add_Not_Implemented;
+                  when Ada_Named_Stmt =>
+                     declare
+                        Named_Stmt_Node : constant LAL.Named_Stmt := LAL.As_Named_Stmt (Node);
+                        Decl_Stmt : constant LAL.Named_Stmt_Decl := LAL.F_Decl (Named_Stmt_Node);
+                        Stmt : constant LAL.Composite_Stmt := LAL.F_Stmt (Named_Stmt_Node);
+                     begin
+                        Log ("Decl_Stmt: " & Decl_Stmt.Debug_Text);
+                        Log ("Stmt: " & Stmt.Debug_Text);
+                     end;
 
-            This.Add_Not_Implemented;
-         when Ada_Named_Stmt =>
-            declare
-               Named_Stmt_Node : constant LAL.Named_Stmt := LAL.As_Named_Stmt (Node);
-               Decl_Stmt : constant LAL.Named_Stmt_Decl := LAL.F_Decl (Named_Stmt_Node);
-               Stmt : constant LAL.Composite_Stmt := LAL.F_Stmt (Named_Stmt_Node);
-            begin
-               Log ("Decl_Stmt: " & Decl_Stmt.Debug_Text);
-               Log ("Stmt: " & Stmt.Debug_Text);
-            end;
+                     This.Add_Not_Implemented;
+                  when Ada_Select_Stmt =>
+                     declare
+                        Select_Stmt_Node : constant LAL.Select_Stmt := LAL.As_Select_Stmt (Node);
+                        Guards : constant LAL.Select_When_Part_List := LAL.F_Guards (Select_Stmt_Node);
+                        Else_Stmt : constant LAL.Stmt_List := LAL.F_Else_Stmts (Select_Stmt_Node);
+                        Abort_Stmts : constant LAL.Stmt_List := LAL.F_Abort_Stmts (Select_Stmt_Node);
+                     begin
+                        Log ("F_Guards: " & Guards.Debug_Text);
+                        Log ("F_Else_Stmts: " & Else_Stmt.Debug_Text);
+                        Log ("F_Abort_Stmts: " & Abort_Stmts.Debug_Text);
+                     end;
 
-            This.Add_Not_Implemented;
-         when Ada_Select_Stmt =>
-            declare
-               Select_Stmt_Node : constant LAL.Select_Stmt := LAL.As_Select_Stmt (Node);
-               Guards : constant LAL.Select_When_Part_List := LAL.F_Guards (Select_Stmt_Node);
-               Else_Stmt : constant LAL.Stmt_List := LAL.F_Else_Stmts (Select_Stmt_Node);
-               Abort_Stmts : constant LAL.Stmt_List := LAL.F_Abort_Stmts (Select_Stmt_Node);
-            begin
-               Log ("F_Guards: " & Guards.Debug_Text);
-               Log ("F_Else_Stmts: " & Else_Stmt.Debug_Text);
-               Log ("F_Abort_Stmts: " & Abort_Stmts.Debug_Text);
+                     This.Add_Not_Implemented;
+               end case;
             end;
-
-            This.Add_Not_Implemented;
          when Ada_Error_Stmt =>
             declare
                Error_Stmt_Node : constant LAL.Error_Stmt := LAL.As_Error_Stmt (Node);
@@ -3349,132 +3944,142 @@ package body Lal_Adapter.Node is
             end;
 
             This.Add_Not_Implemented;
-         when Ada_Abort_Stmt =>
+
+         when Ada_Simple_Stmt =>
             declare
-               Abort_Stmt_Node : constant LAL.Abort_Stmt := LAL.As_Abort_Stmt (Node);
-               Names           : constant LAL.Name_List := LAL.F_Names (Abort_Stmt_Node);
+               Simple_Stmt_Node : constant LAL.Simple_Stmt := LAL.As_Simple_Stmt (Node);
+               Simple_Stmt_Kind             : constant LALCO.Ada_Simple_Stmt := Node.Kind;
             begin
-               Log ("F_Names: " & Names.Debug_Text);
+               case Simple_Stmt_Kind is
+                  when Ada_Abort_Stmt =>
+                     declare
+                        Abort_Stmt_Node : constant LAL.Abort_Stmt := LAL.As_Abort_Stmt (Node);
+                        Names           : constant LAL.Name_List := LAL.F_Names (Abort_Stmt_Node);
+                     begin
+                        Log ("F_Names: " & Names.Debug_Text);
+                     end;
+
+                     This.Add_Not_Implemented;
+
+                  when Ada_Assign_Stmt =>
+                     declare
+                        Assign_Stmt_Node : constant LAL.Assign_Stmt := LAL.As_Assign_Stmt (Node);
+                        Dest             : constant LAL.Name := LAL.F_Dest (Assign_Stmt_Node);
+                        Expr             : constant LAL.Expr := LAL.F_Expr (Assign_Stmt_Node);
+                     begin
+                        Log ("F_Dest: " & Dest.Debug_Text);
+                        Log ("F_Expr: " & Expr.Debug_Text);
+                     end;
+
+                     This.Add_Not_Implemented;
+
+                  when Ada_Call_Stmt =>
+                     declare
+                        Call_Stmt_Node : constant LAL.Call_Stmt := LAL.As_Call_Stmt (Node);
+                        Call           : constant LAL.Name := LAL.F_Call (Call_Stmt_Node);
+                     begin
+                        Log ("F_Call: " & Call.Debug_Text);
+                     end;
+
+                     This.Add_Not_Implemented;
+
+                  when Ada_Delay_Stmt =>
+                     declare
+                        Delay_Stmt_Node : constant LAL.Delay_Stmt := LAL.As_Delay_Stmt (Node);
+                        Has_Until       : constant Boolean := LAL.F_Has_Until (Delay_Stmt_Node);
+                        Seconds         : constant LAL.Expr := LAL.F_Expr (Delay_Stmt_Node);
+                     begin
+                        Log ("F_Has_Until: " & Boolean'Image (Has_Until));
+                        Log ("Seconds: " & Seconds.Debug_Text);
+                     end;
+
+                     This.Add_Not_Implemented;
+
+                  when Ada_Exit_Stmt =>
+                     declare
+                        Exit_Stmt_Node : constant LAL.Exit_Stmt := LAL.As_Exit_Stmt (Node);
+                        Loop_Name      : constant LAL.Identifier := LAL.F_Loop_Name (Exit_Stmt_Node);
+                        Cond_Expr      : constant LAL.Expr := LAL.F_Cond_Expr (Exit_Stmt_Node);
+                     begin
+                        if not Loop_Name.Is_Null then
+                          Log ("F_Loop_Name: " & Loop_Name.Debug_Text);
+                        end if;
+                        if not Cond_Expr.Is_Null then
+                          Log ("F_Cond_Expr: " & Cond_Expr.Debug_Text);
+                        end if;
+                     end;
+
+                     This.Add_Not_Implemented;
+                  when Ada_Goto_Stmt =>
+                     declare
+                        Goto_Stmt_Node : constant LAL.Goto_Stmt := LAL.As_Goto_Stmt (Node);
+                        Label          : constant LAL.Name := LAL.F_Label_Name (Goto_Stmt_Node);
+                     begin
+                        Log ("F_Label_Name: " & Label.Debug_Text);
+                     end;
+
+                     This.Add_Not_Implemented;
+                  when Ada_Label =>
+                     declare
+                        Label_Node : constant LAL.Label := LAL.As_Label (Node);
+                        Label_Decl : constant LAL.Label_Decl := LAL.F_Decl (Label_Node);
+                     begin
+                        Log ("F_Decl: " & Label_Decl.Debug_Text);
+                     end;
+
+                     This.Add_Not_Implemented;
+                  when Ada_Null_Stmt =>
+                     declare
+                        Null_Stmt_Node : constant LAL.Null_Stmt := LAL.As_Null_Stmt (Node);
+                     begin
+                        NULL;
+                     end;
+
+                     This.Add_Not_Implemented;
+                  when Ada_Raise_Stmt =>
+                     declare
+                        Raise_Stmt_Node : constant LAL.Raise_Stmt := LAL.As_Raise_Stmt (Node);
+                        Exception_Name  : constant LAL.Name := LAL.F_Exception_Name (Raise_Stmt_Node);
+                        Error_Message  : constant LAL.Expr := LAL.F_Error_Message (Raise_Stmt_Node);
+                     begin
+                        Log ("F_Exception_Name: " & Exception_Name.Debug_Text);
+                        if not Error_Message.Is_Null then
+                          Log ("Error_Message: " & Error_Message.Debug_Text);
+                        end if;
+                     end;
+
+                     This.Add_Not_Implemented;
+                  when Ada_Requeue_Stmt =>
+                     declare
+                        Requeue_Stmt_Node : constant LAL.Requeue_Stmt := LAL.As_Requeue_Stmt (Node);
+                        Call_Name         : constant LAL.Name := LAL.F_Call_Name (Requeue_Stmt_Node);
+                        Has_Abort         : constant Boolean := LAL.F_Has_Abort (Requeue_Stmt_Node);
+                     begin
+                        Log ("F_Call_Name: " & Call_Name.Debug_Text);
+                        Log ("F_Has_Abort: " & Boolean'Image (Has_Abort));
+                     end;
+
+                     This.Add_Not_Implemented;
+                  when Ada_Return_Stmt =>
+                     declare
+                        Return_Stmt_Node : constant LAL.Return_Stmt := LAL.As_Return_Stmt (Node);
+                        Return_Expr      : constant LAL.Expr := LAL.F_Return_Expr (Return_Stmt_Node);
+                     begin
+                        if not Return_Expr.Is_Null then 
+                           Log ("Return_Expr: " & Return_Expr.Debug_Text);
+                        end if;
+                     end;
+
+                     This.Add_Not_Implemented;
+                  when Ada_Terminate_Alternative =>
+                     declare
+                        Terminate_Alternative_Node : constant LAL.Terminate_Alternative := LAL.As_Terminate_Alternative (Node);
+                     begin
+                        NULL;
+                     end;
+                     This.Add_Not_Implemented;
+               end case;
             end;
-
-            This.Add_Not_Implemented;
-
-         when Ada_Assign_Stmt =>
-            declare
-               Assign_Stmt_Node : constant LAL.Assign_Stmt := LAL.As_Assign_Stmt (Node);
-               Dest             : constant LAL.Name := LAL.F_Dest (Assign_Stmt_Node);
-               Expr             : constant LAL.Expr := LAL.F_Expr (Assign_Stmt_Node);
-            begin
-               Log ("F_Dest: " & Dest.Debug_Text);
-               Log ("F_Expr: " & Expr.Debug_Text);
-            end;
-
-            This.Add_Not_Implemented;
-
-         when Ada_Call_Stmt =>
-            declare
-               Call_Stmt_Node : constant LAL.Call_Stmt := LAL.As_Call_Stmt (Node);
-               Call           : constant LAL.Name := LAL.F_Call (Call_Stmt_Node);
-            begin
-               Log ("F_Call: " & Call.Debug_Text);
-            end;
-
-            This.Add_Not_Implemented;
-
-         when Ada_Delay_Stmt =>
-            declare
-               Delay_Stmt_Node : constant LAL.Delay_Stmt := LAL.As_Delay_Stmt (Node);
-               Has_Until       : constant Boolean := LAL.F_Has_Until (Delay_Stmt_Node);
-               Seconds         : constant LAL.Expr := LAL.F_Expr (Delay_Stmt_Node);
-            begin
-               Log ("F_Has_Until: " & Boolean'Image (Has_Until));
-               Log ("Seconds: " & Seconds.Debug_Text);
-            end;
-
-            This.Add_Not_Implemented;
-
-         when Ada_Exit_Stmt =>
-            declare
-               Exit_Stmt_Node : constant LAL.Exit_Stmt := LAL.As_Exit_Stmt (Node);
-               Loop_Name      : constant LAL.Identifier := LAL.F_Loop_Name (Exit_Stmt_Node);
-               Cond_Expr      : constant LAL.Expr := LAL.F_Cond_Expr (Exit_Stmt_Node);
-            begin
-               if not Loop_Name.Is_Null then
-                 Log ("F_Loop_Name: " & Loop_Name.Debug_Text);
-               end if;
-               if not Cond_Expr.Is_Null then
-                 Log ("F_Cond_Expr: " & Cond_Expr.Debug_Text);
-               end if;
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Goto_Stmt =>
-            declare
-               Goto_Stmt_Node : constant LAL.Goto_Stmt := LAL.As_Goto_Stmt (Node);
-               Label          : constant LAL.Name := LAL.F_Label_Name (Goto_Stmt_Node);
-            begin
-               Log ("F_Label_Name: " & Label.Debug_Text);
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Label =>
-            declare
-               Label_Node : constant LAL.Label := LAL.As_Label (Node);
-               Label_Decl : constant LAL.Label_Decl := LAL.F_Decl (Label_Node);
-            begin
-               Log ("F_Decl: " & Label_Decl.Debug_Text);
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Null_Stmt =>
-            declare
-               Null_Stmt_Node : constant LAL.Null_Stmt := LAL.As_Null_Stmt (Node);
-            begin
-               NULL;
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Raise_Stmt =>
-            declare
-               Raise_Stmt_Node : constant LAL.Raise_Stmt := LAL.As_Raise_Stmt (Node);
-               Exception_Name  : constant LAL.Name := LAL.F_Exception_Name (Raise_Stmt_Node);
-               Error_Message  : constant LAL.Expr := LAL.F_Error_Message (Raise_Stmt_Node);
-            begin
-               Log ("F_Exception_Name: " & Exception_Name.Debug_Text);
-               if not Error_Message.Is_Null then
-                 Log ("Error_Message: " & Error_Message.Debug_Text);
-               end if;
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Requeue_Stmt =>
-            declare
-               Requeue_Stmt_Node : constant LAL.Requeue_Stmt := LAL.As_Requeue_Stmt (Node);
-               Call_Name         : constant LAL.Name := LAL.F_Call_Name (Requeue_Stmt_Node);
-               Has_Abort         : constant Boolean := LAL.F_Has_Abort (Requeue_Stmt_Node);
-            begin
-               Log ("F_Call_Name: " & Call_Name.Debug_Text);
-               Log ("F_Has_Abort: " & Boolean'Image (Has_Abort));
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Return_Stmt =>
-            declare
-               Return_Stmt_Node : constant LAL.Return_Stmt := LAL.As_Return_Stmt (Node);
-               Return_Expr      : constant LAL.Expr := LAL.F_Return_Expr (Return_Stmt_Node);
-            begin
-               Log ("F_Return_Expr: " & Return_Expr.Debug_Text);
-            end;
-
-            This.Add_Not_Implemented;
-         when Ada_Terminate_Alternative =>
-            declare
-               Terminate_Alternative_Node : constant LAL.Terminate_Alternative := LAL.As_Terminate_Alternative (Node);
-            begin
-               NULL;
-            end;
-
-            This.Add_Not_Implemented;
       end case;
 
    exception
@@ -3508,6 +4113,7 @@ package body Lal_Adapter.Node is
             begin
                NULL;
             end;
+            This.Add_Not_Implemented;
 
          when ada_Subp_Kind_Procedure =>
             declare
@@ -3515,6 +4121,7 @@ package body Lal_Adapter.Node is
             begin
                NULL;
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end process_ada_Subp_Kind;
@@ -3540,12 +4147,13 @@ package body Lal_Adapter.Node is
                Subunit_Node : constant LAL.Subunit := LAL.As_Subunit (Node);
                name      : constant LAL.Name := LAL.F_Name (Subunit_Node);
                f_body      : constant LAL.Body_Node := LAL.F_Body (Subunit_Node);
-               body_root      : constant LAL.Basic_Decl := LAL.P_Body_Root (Subunit_Node);
+               -- body_root      : constant LAL.Basic_Decl := LAL.P_Body_Root (Subunit_Node);
             begin
                Log ("name: " & name.Debug_Text);
                Log ("f_body: " & f_body.Debug_Text);
-               Log ("body_root: " & body_root.Debug_Text);
+               -- Log ("body_root: " & body_root.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end process_ada_Subunit_Range;
@@ -3572,6 +4180,7 @@ package body Lal_Adapter.Node is
             begin
                NULL;
             end;
+            This.Add_Not_Implemented;
 
          when ada_Synchronized_Present =>
             declare
@@ -3579,6 +4188,7 @@ package body Lal_Adapter.Node is
             begin
                NULL;
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end process_ada_Synchronized_Node;
@@ -3605,6 +4215,7 @@ package body Lal_Adapter.Node is
             begin
                NULL;
             end;
+            This.Add_Not_Implemented;
 
          when ada_Tagged_Present =>
             declare
@@ -3612,6 +4223,7 @@ package body Lal_Adapter.Node is
             begin
                NULL;
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end process_ada_Tagged_Node;
@@ -3647,6 +4259,7 @@ package body Lal_Adapter.Node is
                end if;
                Log ("end_name: " & end_name.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end process_ada_Task_Def_Range;
@@ -3667,32 +4280,47 @@ package body Lal_Adapter.Node is
    begin -- process_ada_Type_Def
       case kind is
 
-         when ada_Access_To_Subp_Def =>
+         when Ada_Access_Def =>
             declare
-               Access_To_Subp_Def_Node : constant LAL.Access_To_Subp_Def := LAL.As_Access_To_Subp_Def (Node);
-               has_protected      : constant Boolean := LAL.F_Has_Protected (Access_To_Subp_Def_Node);
-               sub_spec      : constant LAL.Subp_Spec := LAL.F_Subp_Spec (Access_To_Subp_Def_Node);
+               Access_Def_kind             : constant lalco.ada_Access_Def := node.kind;
+               Access_Def_Node : constant LAL.Access_Def := LAL.As_Access_Def (Node);
+               F_Has_Not_Null : constant Boolean := LAL.F_Has_Not_Null(Access_Def_Node);
             begin
-               Log ("has_protected: " & Boolean'Image(has_protected));
-               Log ("sub_spec: " & sub_spec.Debug_Text);
-            end;
+               Log ("F_Has_Not_Null: " & Boolean'Image (F_Has_Not_Null));
+               case Access_Def_kind is
+                  when ada_Access_To_Subp_Def =>
+                     declare
+                        Access_To_Subp_Def_Node : constant LAL.Access_To_Subp_Def := LAL.As_Access_To_Subp_Def (Node);
+                        has_protected      : constant Boolean := LAL.F_Has_Protected (Access_To_Subp_Def_Node);
+                        sub_spec      : constant LAL.Subp_Spec := LAL.F_Subp_Spec (Access_To_Subp_Def_Node);
+                     begin
+                        Log ("has_protected: " & Boolean'Image(has_protected));
+                        Log ("sub_spec: " & sub_spec.Debug_Text);
+                     end;
+                     This.Add_Not_Implemented;
 
-         when ada_Anonymous_Type_Access_Def =>
-            declare
-               Anonymous_Type_Access_Def_Node : constant LAL.Anonymous_Type_Access_Def := LAL.As_Anonymous_Type_Access_Def (Node);
-               type_decl      : constant LAL.Base_Type_Decl := LAL.F_Type_Decl (Anonymous_Type_Access_Def_Node);
-            begin
-               Log ("type_decl: " & type_decl.Debug_Text);
-            end;
+                  -- when ada_Base_Type_Access_Def =>
+                  when ada_Anonymous_Type_Access_Def =>
+                     declare
+                        Anonymous_Type_Access_Def_Node : constant LAL.Anonymous_Type_Access_Def := LAL.As_Anonymous_Type_Access_Def (Node);
+                        type_decl      : constant LAL.Base_Type_Decl := LAL.F_Type_Decl (Anonymous_Type_Access_Def_Node);
+                     begin
+                        Log ("type_decl: " & type_decl.Debug_Text);
+                     end;
+                     This.Add_Not_Implemented;
 
-         when ada_Type_Access_Def =>
-            declare
-               Type_Access_Def_Node : constant LAL.Type_Access_Def := LAL.As_Type_Access_Def (Node);
-               has_all      : constant Boolean := LAL.F_Has_All (Type_Access_Def_Node);
-               has_constant      : constant Boolean := LAL.F_Has_Constant (Type_Access_Def_Node);
-            begin
-               Log ("has_all: " & Boolean'Image(has_all));
-               Log ("has_constant: " & Boolean'Image(has_constant));
+                  when ada_Type_Access_Def =>
+                     declare
+                        Type_Access_Def_Node : constant LAL.Type_Access_Def := LAL.As_Type_Access_Def (Node);
+                        has_all      : constant Boolean := LAL.F_Has_All (Type_Access_Def_Node);
+                        has_constant      : constant Boolean := LAL.F_Has_Constant (Type_Access_Def_Node);
+                     begin
+                        Log ("has_all: " & Boolean'Image(has_all));
+                        Log ("has_constant: " & Boolean'Image(has_constant));
+                     end;
+                     This.Add_Not_Implemented;
+
+               end case;
             end;
 
          when ada_Array_Type_Def =>
@@ -3704,6 +4332,7 @@ package body Lal_Adapter.Node is
                Log ("indices: " & indices.Debug_Text);
                Log ("component_type: " & component_type.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
          when ada_Derived_Type_Def =>
             declare
@@ -3720,6 +4349,7 @@ package body Lal_Adapter.Node is
                end if;
                Log ("has_with_private: " & Boolean'Image(has_with_private));
             end;
+            This.Add_Not_Implemented;
 
          when ada_Enum_Type_Def =>
             declare
@@ -3728,6 +4358,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("enum_literals: " & enum_literals.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
          when ada_Formal_Discrete_Type_Def =>
             declare
@@ -3735,6 +4366,7 @@ package body Lal_Adapter.Node is
             begin
                NULL; 
             end;
+            This.Add_Not_Implemented;
 
          when ada_Interface_Type_Def =>
             declare
@@ -3743,6 +4375,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("interface_kind: " & interface_kind.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
          when ada_Mod_Int_Type_Def =>
             declare
@@ -3751,6 +4384,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("expr: " & expr.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
          when ada_Private_Type_Def =>
             declare
@@ -3763,7 +4397,9 @@ package body Lal_Adapter.Node is
                Log ("has_tagged: " & Boolean'Image(has_tagged));
                Log ("has_limited: " & Boolean'Image(has_limited));
             end;
+            This.Add_Not_Implemented;
 
+         -- when ada_Real_Type_Def =>
          when ada_Decimal_Fixed_Point_Def =>
             declare
                Decimal_Fixed_Point_Def_Node : constant LAL.Decimal_Fixed_Point_Def := LAL.As_Decimal_Fixed_Point_Def (Node);
@@ -3777,6 +4413,7 @@ package body Lal_Adapter.Node is
                  Log ("f_range: " & f_range.Debug_Text);
                end if;
             end;
+            This.Add_Not_Implemented;
 
          when ada_Floating_Point_Def =>
             declare
@@ -3789,6 +4426,7 @@ package body Lal_Adapter.Node is
                  Log ("f_range: " & f_range.Debug_Text);
                end if;
             end;
+            This.Add_Not_Implemented;
 
          when ada_Ordinary_Fixed_Point_Def =>
             declare
@@ -3799,6 +4437,7 @@ package body Lal_Adapter.Node is
                Log ("f_delta: " & f_delta.Debug_Text);
                Log ("f_range: " & f_range.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
          when ada_Record_Type_Def =>
             declare
@@ -3811,6 +4450,7 @@ package body Lal_Adapter.Node is
                Log ("has_tagged: " & Boolean'Image(has_tagged));
                Log ("has_limited: " & Boolean'Image(has_limited));
             end;
+            This.Add_Not_Implemented;
 
          when ada_Signed_Int_Type_Def =>
             declare
@@ -3819,6 +4459,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("f_range: " & f_range.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end process_ada_Type_Def;
@@ -3846,6 +4487,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("type_Decl: " & type_Decl.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
          when ada_Enum_Lit_Synth_Type_Expr =>
             declare
@@ -3853,6 +4495,7 @@ package body Lal_Adapter.Node is
             begin
                NULL; 
             end;
+            This.Add_Not_Implemented;
 
          when ada_Subtype_Indication =>
             declare
@@ -3867,13 +4510,16 @@ package body Lal_Adapter.Node is
                  Log ("constraint: " & constraint.Debug_Text);
                end if;
             end;
+            This.Add_Not_Implemented;
 
+         -- when ada_Subtype_Indication_Range =>
          when ada_Constrained_Subtype_Indication =>
             declare
                Constrained_Subtype_Indication_Node : constant LAL.Constrained_Subtype_Indication := LAL.As_Constrained_Subtype_Indication (Node);
             begin
                NULL; 
             end;
+            This.Add_Not_Implemented;
 
          when ada_Discrete_Subtype_Indication =>
             declare
@@ -3881,6 +4527,7 @@ package body Lal_Adapter.Node is
             begin
                NULL; 
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end process_ada_Type_Expr;
@@ -3907,6 +4554,7 @@ package body Lal_Adapter.Node is
             begin
                NULL; 
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end process_ada_Unconstrained_Array_Index_Range;
@@ -3933,6 +4581,7 @@ package body Lal_Adapter.Node is
             begin
                NULL; 
             end;
+            This.Add_Not_Implemented;
 
          when ada_Until_Present =>
             declare
@@ -3940,6 +4589,7 @@ package body Lal_Adapter.Node is
             begin
                NULL; 
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end process_ada_Until_Node;
@@ -3967,6 +4617,7 @@ package body Lal_Adapter.Node is
             begin
                Log ("packages: " & packages.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
          when ada_Use_Type_Clause =>
             declare
@@ -3977,6 +4628,7 @@ package body Lal_Adapter.Node is
                Log ("has_all: " & Boolean'Image(has_all));
                Log ("types: " & types.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end process_ada_Use_Clause;
@@ -4006,6 +4658,7 @@ package body Lal_Adapter.Node is
                Log ("choices: " & choices.Debug_Text);
                Log ("components: " & components.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end process_ada_Variant_Range;
@@ -4035,6 +4688,7 @@ package body Lal_Adapter.Node is
                Log ("discr_name: " & discr_name.Debug_Text);
                Log ("variant: " & variant.Debug_Text);
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end process_ada_Variant_Part_Range;
@@ -4066,6 +4720,7 @@ package body Lal_Adapter.Node is
                Log ("has_private: " & Boolean'Image(has_private));
                Log ("has_limited: " & Boolean'Image(has_limited));
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end process_ada_With_Clause_Range;
@@ -4092,6 +4747,7 @@ package body Lal_Adapter.Node is
             begin
                NULL; 
             end;
+            This.Add_Not_Implemented;
 
          when ada_With_Private_Present =>
             declare
@@ -4099,6 +4755,7 @@ package body Lal_Adapter.Node is
             begin
                NULL; 
             end;
+            This.Add_Not_Implemented;
 
       end case;
    end process_ada_With_Private;
@@ -4171,6 +4828,14 @@ package body Lal_Adapter.Node is
          Result.Enclosing_Element_Id := Value;
       end;
 
+      procedure Add_Hash is
+         Value : constant Ada.Containers.Hash_Type :=  (LAL.Hash(Node));
+         hashVal : natural  := integer(Value);
+      begin
+         This.Add_To_Dot_Label ("Hash", Value'Image);
+         Result.Hash := a_nodes_h.ASIS_Integer (hashVal);
+      end;
+
       procedure Start_Output is
          Default_Node  : Dot.Node_Stmt.Class; -- Initialized
          Default_Label : Dot.HTML_Like_Labels.Class; -- Initialized
@@ -4198,6 +4863,7 @@ package body Lal_Adapter.Node is
          -- Put_Debug;
          Add_Element_ID;
          Add_Node_Kind;
+         -- Add_Hash;
          Add_Enclosing_Element;
          Add_Source_Location;
       end Start_Output;
