@@ -29,6 +29,7 @@ MemoryCell::MemoryCell(const MemoryCell &other)
     value_ = other.value_->copy();
     writers_ = other.writers_;
     ioProperties_ = other.ioProperties_;
+    position_ = other.position_;
 }
 
 MemoryCell::~MemoryCell() {}

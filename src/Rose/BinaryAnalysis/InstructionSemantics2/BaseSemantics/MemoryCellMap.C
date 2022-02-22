@@ -13,6 +13,29 @@ namespace BinaryAnalysis {
 namespace InstructionSemantics2 {
 namespace BaseSemantics {
 
+MemoryCellMap::MemoryCellMap(const MemoryCellMap &other)
+    : MemoryCellState(other) {
+    for (const MemoryCellPtr &cell: other.cells.values()) {
+        cells.insert(other.generateCellKey(cell->address()), cell->clone());
+        lastPosition_ = std::max(lastPosition_, cell->position());
+    }
+}
+
+unsigned
+MemoryCellMap::nextPosition() {
+    return ++lastPosition_;
+}
+
+unsigned
+MemoryCellMap::lastPosition() const {
+    return lastPosition_;
+}
+
+void
+MemoryCellMap::lastPosition(unsigned p) {
+    lastPosition_ = p;
+}
+
 void
 MemoryCellMap::clear() {
     cells.clear();
@@ -24,6 +47,7 @@ MemoryCellMap::readMemory(const SValuePtr &address, const SValuePtr &dflt, RiscO
     SValuePtr retval;
     CellKey key = generateCellKey(address);
     if (MemoryCellPtr cell = cells.getOrDefault(key)) {
+        cell->position(nextPosition());
         retval = cell->value();
     } else {
         retval = dflt->copy();
@@ -31,6 +55,7 @@ MemoryCellMap::readMemory(const SValuePtr &address, const SValuePtr &dflt, RiscO
         cell->ioProperties().insert(IO_READ);
         cell->ioProperties().insert(IO_READ_BEFORE_WRITE);
         cell->ioProperties().insert(IO_READ_UNINITIALIZED);
+        cell->position(nextPosition());
         cells.insert(key, cell);
     }
     return retval;
@@ -59,6 +84,7 @@ MemoryCellMap::writeMemory(const SValuePtr &address, const SValuePtr &value, Ris
     } else {
         newCell->ioProperties().insert(IO_INIT);
     }
+    newCell->position(nextPosition());
 
     CellKey key = generateCellKey(address);
     cells.insert(key, newCell);
@@ -82,14 +108,16 @@ MemoryCellMap::merge(const MemoryStatePtr &other_, RiscOperators *addrOps, RiscO
     MemoryCellMapPtr other = boost::dynamic_pointer_cast<MemoryCellMap>(other_);
     ASSERT_not_null(other);
     bool changed = false;
+    unsigned otherBasePosition = this->lastPosition();
+    unsigned maxPosition = 0;
 
     std::set<CellKey> allKeys;                          // union of cell keys from "this" and "other"
-    BOOST_FOREACH (const CellKey &key, cells.keys())
+    for (const CellKey &key: cells.keys())
         allKeys.insert(key);
-    BOOST_FOREACH (const CellKey &key, other->cells.keys())
+    for (const CellKey &key: other->cells.keys())
         allKeys.insert(key);
 
-    BOOST_FOREACH (const CellKey &key, allKeys) {
+    for (const CellKey &key: allKeys) {
         const MemoryCellPtr &thisCell  = cells.getOrDefault(key);
         const MemoryCellPtr &otherCell = other->cells.getOrDefault(key);
         bool thisCellChanged = false;
@@ -113,6 +141,9 @@ MemoryCellMap::merge(const MemoryStatePtr &other_, RiscOperators *addrOps, RiscO
         if (newProps != thisProps)
             thisCellChanged = true;
 
+        unsigned position = thisCell ? thisCell->position() : otherBasePosition + otherCell->position();
+        maxPosition = std::max(maxPosition, position);
+
         if (thisCellChanged) {
             if (!newValue)
                 newValue = thisValue->copy();
@@ -120,22 +151,37 @@ MemoryCellMap::merge(const MemoryStatePtr &other_, RiscOperators *addrOps, RiscO
             writeMemory(address, newValue, addrOps, valOps);
             latestWrittenCell_->setWriters(newWriters);
             latestWrittenCell_->ioProperties() = newProps;
+            latestWrittenCell_->position(position);
             changed = true;
         }
     }
+
+    if (changed)
+        this->lastPosition(maxPosition);
+
     return changed;
 }
     
 void
 MemoryCellMap::print(std::ostream &out, Formatter &fmt) const {
-    BOOST_FOREACH (const MemoryCellPtr &cell, cells.values())
+    // For better human readability, print the cells in order of descending position. This generally corresponds to reverse
+    // chronological order.
+    std::vector<MemoryCellPtr> sorted;
+    sorted.reserve(cells.size());
+    for (const MemoryCellPtr &cell: cells.values())
+        sorted.push_back(cell);
+    std::sort(sorted.begin(), sorted.end(), [](const MemoryCellPtr &a, const MemoryCellPtr &b) {
+            return a->position() > b->position();
+        });
+
+    for (const MemoryCellPtr &cell: sorted)
         out <<fmt.get_line_prefix() <<(*cell+fmt) <<"\n";
 }
 
 void
 MemoryCellMap::traverse(MemoryCell::Visitor &visitor) {
     CellMap newMap;
-    BOOST_FOREACH (MemoryCellPtr &cell, cells.values()) {
+    for (MemoryCellPtr &cell: cells.values()) {
         (visitor)(cell);
         newMap.insert(generateCellKey(cell->address()), cell);
     }
