@@ -49,34 +49,36 @@ run $(tool_compile_linkexe) count-mnemonics.C
 # Tests
 ########################################################################################################################
 
+ifeq (@(ENABLE_TESTS),yes)
 
-run $(test) rose-debug-semantics -o testAdaptiveRegisters \
-    --answer=TestAnswers/testAdaptiveRegisters.ans \
-    --filter='perl -p semanticsFilter' \
-    ./rose-debug-semantics --test-adaptive-registers --semantics=symbolic --track-writers=last specimens/x86-64-adaptiveRegs
+    run $(test) rose-debug-semantics -o testAdaptiveRegisters \
+	--answer=TestAnswers/testAdaptiveRegisters.ans \
+	--filter='perl -p semanticsFilter' \
+	./rose-debug-semantics --test-adaptive-registers --semantics=symbolic --track-writers=last specimens/x86-64-adaptiveRegs
 
-xml2json_INPUT =				\
-	xml2json-test01.xml			\
-	xml2json-test02.xml			\
-	xml2json-test03.xml			\
-	xml2json-test04.xml			\
-	xml2json-test05.xml			\
-	xml2json-test06.xml			\
-	xml2json-test07.xml			\
-	xml2json-test08.xml			\
-	xml2json-test09.xml			\
-	xml2json-test10.xml			\
-	xml2json-test11.xml			\
-	xml2json-test12.xml
+    xml2json_INPUT =				\
+	    xml2json-test01.xml			\
+	    xml2json-test02.xml			\
+	    xml2json-test03.xml			\
+	    xml2json-test04.xml			\
+	    xml2json-test05.xml			\
+	    xml2json-test06.xml			\
+	    xml2json-test07.xml			\
+	    xml2json-test08.xml			\
+	    xml2json-test09.xml			\
+	    xml2json-test10.xml			\
+	    xml2json-test11.xml			\
+	    xml2json-test12.xml
 
-run for iname in $(xml2json_INPUT); do \
-        input=./specimens/${iname}; \
-        basename=`basename ${iname} .xml`; \
-        output=${basename}.json; \
-        answer=./TestAnswers/${basename}.xml.ans; \
-        $(test) rose-xml2json -i ${input} -i ${answer} -o "${basename#xml2json-}" -x ${output} --answer=${answer} --filter='jq .' \
-	    --disabled="`jq -V >/dev/null 2>&1 || echo 'jq not installed'`" \
-	    "./rose-xml2json ${input} ${output} && cat ${output}"; \
-    done
+    run for iname in $(xml2json_INPUT); do \
+	    input=./specimens/${iname}; \
+	    basename=`basename ${iname} .xml`; \
+	    output=${basename}.json; \
+	    answer=./TestAnswers/${basename}.xml.ans; \
+	    $(test) rose-xml2json -i ${input} -i ${answer} -o "${basename#xml2json-}" -x ${output} --answer=${answer} --filter='jq .' \
+		--disabled="`jq -V >/dev/null 2>&1 || echo 'jq not installed'`" \
+		"./rose-xml2json ${input} ${output} && cat ${output}"; \
+	done
 
+endif
 endif
