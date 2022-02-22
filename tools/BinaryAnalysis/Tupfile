@@ -30,24 +30,26 @@ run $(tool_compile_linkexe) --install -I. bat-var.C          libbatSupport
 : bat-dis |> cp -p %f %o |> bat-dis-simple $(ROOT)/$(INSTALL_STAGING)/bin/<staging>
 
 # Tests
-run $(test) bat-ana          ./bat-ana          --self-test --no-error-if-disabled
-run $(test) bat-cc           ./bat-cc           --self-test --no-error-if-disabled
-run $(test) bat-cfg          ./bat-cfg          --self-test --no-error-if-disabled
-run $(test) bat-container    ./bat-container    --self-test --no-error-if-disabled
-run $(test) bat-dis          ./bat-dis          --self-test --no-error-if-disabled
-run $(test) bat-entropy      ./bat-entropy      --self-test --no-error-if-disabled
-run $(test) bat-flir-ascribe ./bat-flir-ascribe --self-test --no-error-if-disabled
-run $(test) bat-flir-insert  ./bat-flir-insert  --self-test --no-error-if-disabled
-run $(test) bat-flir-lib     ./bat-flir-lib     --self-test --no-error-if-disabled
-run $(test) bat-insnfreq     ./bat-insnfreq     --self-test --no-error-if-disabled
-run $(test) bat-insnfreq-cmp ./bat-insnfreq-cmp --self-test --no-error-if-disabled
-run $(test) bat-linear       ./bat-linear       --self-test --no-error-if-disabled
-run $(test) bat-lsb          ./bat-lsb          --self-test --no-error-if-disabled
-run $(test) bat-lsf          ./bat-lsf          --self-test --no-error-if-disabled
-run $(test) bat-mem          ./bat-mem          --self-test --no-error-if-disabled
-run $(test) bat-prop         ./bat-prop         --self-test --no-error-if-disabled
-run $(test) bat-stack-deltas ./bat-stack-deltas --self-test --no-error-if-disabled
-run $(test) bat-trace        ./bat-trace        --self-test --no-error-if-disabled
-run $(test) bat-var          ./bat-var          --self-test --no-error-if-disabled
+ifeq (@(ENABLE_TESTS),yes)
+    run $(test) bat-ana          ./bat-ana          --self-test --no-error-if-disabled
+    run $(test) bat-cc           ./bat-cc           --self-test --no-error-if-disabled
+    run $(test) bat-cfg          ./bat-cfg          --self-test --no-error-if-disabled
+    run $(test) bat-container    ./bat-container    --self-test --no-error-if-disabled
+    run $(test) bat-dis          ./bat-dis          --self-test --no-error-if-disabled
+    run $(test) bat-entropy      ./bat-entropy      --self-test --no-error-if-disabled
+    run $(test) bat-flir-ascribe ./bat-flir-ascribe --self-test --no-error-if-disabled
+    run $(test) bat-flir-insert  ./bat-flir-insert  --self-test --no-error-if-disabled
+    run $(test) bat-flir-lib     ./bat-flir-lib     --self-test --no-error-if-disabled
+    run $(test) bat-insnfreq     ./bat-insnfreq     --self-test --no-error-if-disabled
+    run $(test) bat-insnfreq-cmp ./bat-insnfreq-cmp --self-test --no-error-if-disabled
+    run $(test) bat-linear       ./bat-linear       --self-test --no-error-if-disabled
+    run $(test) bat-lsb          ./bat-lsb          --self-test --no-error-if-disabled
+    run $(test) bat-lsf          ./bat-lsf          --self-test --no-error-if-disabled
+    run $(test) bat-mem          ./bat-mem          --self-test --no-error-if-disabled
+    run $(test) bat-prop         ./bat-prop         --self-test --no-error-if-disabled
+    run $(test) bat-stack-deltas ./bat-stack-deltas --self-test --no-error-if-disabled
+    run $(test) bat-trace        ./bat-trace        --self-test --no-error-if-disabled
+    run $(test) bat-var          ./bat-var          --self-test --no-error-if-disabled
+endif
 
 endif
