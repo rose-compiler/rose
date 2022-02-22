@@ -193,6 +193,8 @@ package body Asis_Adapter.Unit is
    is
       Tool_Element : Element.Class; -- Initialized
    begin
+      Tool_Element.Process_Instantiation
+        (Element => Asis_Element);
       Tool_Element.Process_Element_Tree
         (Element => Asis_Element,
          Outputs => This.Outputs);
