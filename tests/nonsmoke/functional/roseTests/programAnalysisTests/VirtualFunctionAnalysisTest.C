@@ -8,6 +8,7 @@
 #include "VirtualFunctionAnalysis.h"
 using namespace boost;
 
+// warning: poor practice and possible name conflicts according to Boost documentation
 #define foreach BOOST_FOREACH
 #define reverse_foreach BOOST_REVERSE_FOREACH
 

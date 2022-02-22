@@ -156,7 +156,7 @@ Debugger::Specimen::eraseAllEnvironmentVariables() {
 void
 Debugger::Specimen::eraseEnvironmentVariable(const std::string &s) {
     std::string reStr = "^";
-    BOOST_FOREACH (char ch, s) {
+    for (char ch: s) {
         if (strchr(".|*?+(){}[]^$\\", ch))
             reStr += "\\";
         reStr += ch;
@@ -178,7 +178,7 @@ Debugger::Specimen::prepareEnvAdjustments() const {
         char *eq = std::strchr(*entryPtr, '=');
         ASSERT_not_null(eq);
         std::string name(*entryPtr, eq);
-        BOOST_FOREACH (const boost::regex &re, clearEnvVars_) {
+        for (const boost::regex &re: clearEnvVars_) {
             if (boost::regex_search(name, re)) {
                 erasures.push_back(name);
                 break;
@@ -190,7 +190,7 @@ Debugger::Specimen::prepareEnvAdjustments() const {
     // variables to be added will have an '=' in the string.
     char **retval = new char*[erasures.size() + setEnvVars_.size() + 1]();
     char **entryPtr = retval;
-    BOOST_FOREACH (const std::string &name, erasures) {
+    for (const std::string &name: erasures) {
         *entryPtr = new char[name.size()+1];
         std::strcpy(*entryPtr, name.c_str());
         ++entryPtr;
@@ -296,7 +296,7 @@ void
 Debugger::Specimen::print(std::ostream &out) const {
     if (!program_.empty()) {
         out <<program_;
-        BOOST_FOREACH (const std::string &arg, arguments_)
+        for (const std::string &arg: arguments_)
             out <<" \"" <<StringUtility::cEscape(arg);
     } else if (-1 != pid_) {
         out <<"pid " <<pid_;
@@ -1172,7 +1172,7 @@ Debugger::remoteOpenFile(const boost::filesystem::path &fileName, unsigned flags
     // Find some writable memory in which to write the file name
     Sawyer::Optional<rose_addr_t> nameVa;
     std::vector<MemoryMap::ProcessMapRecord> mapRecords = MemoryMap::readProcessMap(child_);
-    BOOST_FOREACH (const MemoryMap::ProcessMapRecord &record, mapRecords) {
+    for (const MemoryMap::ProcessMapRecord &record: mapRecords) {
         if ((record.accessibility & MemoryMap::READ_WRITE) == MemoryMap::READ_WRITE &&
             record.interval.size() > fileName.string().size()) {
             nameVa = record.interval.least();

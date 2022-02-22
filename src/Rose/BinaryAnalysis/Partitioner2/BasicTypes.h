@@ -4,7 +4,6 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 
 #include <boost/filesystem.hpp>
-#include <boost/foreach.hpp>
 #include <boost/regex.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/nvp.hpp>
@@ -290,11 +289,11 @@ private:
 
             // There's no serialization for boost::regex, so we do it ourselves.
             std::vector<std::string> reStrings;
-            BOOST_FOREACH (const boost::regex &re, envErasePatterns)
+            for (const boost::regex &re: envErasePatterns)
                 reStrings.push_back(re.str());
             s & BOOST_SERIALIZATION_NVP(reStrings);
             if (envErasePatterns.empty()) {
-                BOOST_FOREACH (const std::string &reStr, reStrings)
+                for (const std::string &reStr: reStrings)
                     envErasePatterns.push_back(boost::regex(reStr));
             }
         }

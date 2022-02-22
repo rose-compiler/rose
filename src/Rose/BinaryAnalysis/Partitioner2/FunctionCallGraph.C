@@ -91,7 +91,7 @@ std::vector<Function::Ptr>
 FunctionCallGraph::callers(const Graph::ConstVertexIterator &target) const {
     std::vector<Function::Ptr> callers;
     if (target != graph_.vertices().end()) {
-        BOOST_FOREACH (const Graph::Edge &edge, target->inEdges())
+        for (const Graph::Edge &edge: target->inEdges())
             insertUnique(callers, edge.source()->value(), sortFunctionsByAddress);
     }
     return callers;
@@ -106,7 +106,7 @@ std::vector<Function::Ptr>
 FunctionCallGraph::callees(const Graph::ConstVertexIterator &source) const {
     std::vector<Function::Ptr> callees;
     if (source != graph_.vertices().end()) {
-        BOOST_FOREACH (const Graph::Edge &edge, source->outEdges())
+        for (const Graph::Edge &edge: source->outEdges())
             insertUnique(callees, edge.target()->value(), sortFunctionsByAddress);
     }
     return callees;
@@ -141,7 +141,7 @@ size_t
 FunctionCallGraph::nCallsIn(const Graph::ConstVertexIterator &target) const {
     size_t n = 0;
     if (target != graph_.vertices().end()) {
-        BOOST_FOREACH (const Graph::Edge &edge, target->inEdges())
+        for (const Graph::Edge &edge: target->inEdges())
             n += edge.value().count();
     }
     return n;
@@ -156,7 +156,7 @@ size_t
 FunctionCallGraph::nCallsOut(const Graph::ConstVertexIterator &source) const {
     size_t n = 0;
     if (source != graph_.vertices().end()) {
-        BOOST_FOREACH (const Graph::Edge &edge, source->outEdges())
+        for (const Graph::Edge &edge: source->outEdges())
             n += edge.value().count();
     }
     return n;
@@ -171,7 +171,7 @@ size_t
 FunctionCallGraph::nCalls(const Graph::ConstVertexIterator &source, const Graph::ConstVertexIterator &target) const {
     size_t n = 0;
     if (source != graph_.vertices().end() && target != graph_.vertices().end()) {
-        BOOST_FOREACH (const Graph::Edge &edge, source->outEdges()) {
+        for (const Graph::Edge &edge: source->outEdges()) {
             if (edge.target() == target)
                 n += edge.value().count();
         }

@@ -2,7 +2,6 @@
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include <sage3basic.h>
 
-#include <boost/foreach.hpp>
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Config.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Modules.h>
@@ -104,7 +103,7 @@ void
 Configuration::loadFromFile(const FileSystem::Path &fileName) {
     using namespace FileSystem;
     if (isDirectory(fileName)) {
-        BOOST_FOREACH (const Path &name, findNamesRecursively(fileName, isFile)) {
+        for (const Path &name: findNamesRecursively(fileName, isFile)) {
             if (baseNameMatches(boost::regex(".*\\.json$"))(name))
                 loadFromFile(name);
         }
@@ -135,7 +134,7 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
         } else if (configFile["rose"]) {
             // This is a ROSE configuration file.
             if (YAML::Node functions = configFile["rose"]["functions"]) {
-                BOOST_FOREACH (const YAML::Node &function, functions) {
+                for (const YAML::Node &function: functions) {
                     Sawyer::Optional<rose_addr_t> addr;
                     std::string name;
                     if (function["address"])
@@ -167,7 +166,7 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                 }
             }
             if (YAML::Node bblocks = configFile["rose"]["bblocks"]) {
-                BOOST_FOREACH (const YAML::Node &bblock, bblocks) {
+                for (const YAML::Node &bblock: bblocks) {
                     if (!bblock["address"]) {
                         SAWYER_MESG(mlog[ERROR]) <<"missing address for basic block configuration record\n";
                         continue;
@@ -179,7 +178,7 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                     if (bblock["final_instruction"])
                         config.finalInstructionVa(bblock["final_instruction"].as<rose_addr_t>());
                     if (const YAML::Node &successors = bblock["successors"]) {
-                        BOOST_FOREACH (const YAML::Node &successor, successors)
+                        for (const YAML::Node &successor: successors)
                             config.successorVas().insert(successor.as<rose_addr_t>());
                     }
                     if (bblock["source_location"])
@@ -191,7 +190,7 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                 }
             }
             if (YAML::Node dblocks = configFile["rose"]["dblocks"]) {
-                BOOST_FOREACH (const YAML::Node &dblock, dblocks) {
+                for (const YAML::Node &dblock: dblocks) {
                     if (!dblock["address"]) {
                         SAWYER_MESG(mlog[ERROR]) <<"missing address for data block configuration record\n";
                         continue;
@@ -211,7 +210,7 @@ Configuration::loadFromFile(const FileSystem::Path &fileName) {
                 }
             }
             if (YAML::Node addrs = configFile["rose"]["addresses"]) {
-                BOOST_FOREACH (const YAML::Node &detail, addrs) {
+                for (const YAML::Node &detail: addrs) {
                     if (!detail["address"]) {
                         SAWYER_MESG(mlog[ERROR]) <<"missing address for address configuration record\n";
                         continue;
@@ -269,7 +268,7 @@ printBasicBlockConfig(YAML::Emitter &out, const BasicBlockConfig &config) {
         out <<YAML::Key <<"final_instruction" <<YAML::Value <<StringUtility::addrToString(*config.finalInstructionVa());
     if (!config.successorVas().empty()) {
         out <<YAML::Key <<"successors" <<YAML::Value <<YAML::BeginSeq;
-        BOOST_FOREACH (rose_addr_t va, config.successorVas())
+        for (rose_addr_t va: config.successorVas())
             out <<StringUtility::addrToString(va);
         out <<YAML::EndSeq;
     }
@@ -318,9 +317,9 @@ Configuration::print(std::ostream &out) const {
     if (!functionConfigsByAddress_.isEmpty() || !functionConfigsByName_.isEmpty()) {
         emitter <<YAML::Key <<"functions" <<YAML::Value;
         emitter <<YAML::BeginSeq;
-        BOOST_FOREACH (const FunctionConfig &config, functionConfigsByAddress_.values())
+        for (const FunctionConfig &config: functionConfigsByAddress_.values())
             printFunctionConfig(emitter, config);
-        BOOST_FOREACH (const FunctionConfig &config, functionConfigsByName_.values())
+        for (const FunctionConfig &config: functionConfigsByName_.values())
             printFunctionConfig(emitter, config);
         emitter <<YAML::EndSeq;
     }
@@ -328,7 +327,7 @@ Configuration::print(std::ostream &out) const {
     if (!bblockConfigs_.isEmpty()) {
         emitter <<YAML::Key <<"bblocks" <<YAML::Value;
         emitter <<YAML::BeginSeq;
-        BOOST_FOREACH (const BasicBlockConfig &config, bblockConfigs_.values())
+        for (const BasicBlockConfig &config: bblockConfigs_.values())
             printBasicBlockConfig(emitter, config);
         emitter <<YAML::EndSeq;
     }
@@ -336,14 +335,14 @@ Configuration::print(std::ostream &out) const {
     if (!dblockConfigs_.isEmpty()) {
         emitter <<YAML::Key <<"dblocks" <<YAML::Value;
         emitter <<YAML::BeginSeq;
-        BOOST_FOREACH (const DataBlockConfig &config, dblockConfigs_.values())
+        for (const DataBlockConfig &config: dblockConfigs_.values())
             printDataBlockConfig(emitter, config);
         emitter <<YAML::EndSeq;
     }
     if (!addressConfigs_.isEmpty()) {
         emitter <<YAML::Key <<"addresses" <<YAML::Value;
         emitter <<YAML::BeginSeq;
-        BOOST_FOREACH (const AddressConfig &config, addressConfigs_.values())
+        for (const AddressConfig &config: addressConfigs_.values())
             printAddressConfig(emitter, config);
         emitter <<YAML::EndSeq;
     }

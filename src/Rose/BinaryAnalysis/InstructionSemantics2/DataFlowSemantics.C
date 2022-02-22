@@ -441,7 +441,7 @@ RiscOperators::insertDataFlowEdges(const BaseSemantics::SValuePtr &svalue_, cons
     if (svalue->sources().empty()) {
         insertDataFlowEdge(AbstractLocation(), target, edgeType);
     } else {
-        BOOST_FOREACH (const AbstractLocation &source, svalue->sources()) {
+        for (const AbstractLocation &source: svalue->sources()) {
             insertDataFlowEdge(source, target, edgeType);
             edgeType = DataFlowEdge::AUGMENT;
         }

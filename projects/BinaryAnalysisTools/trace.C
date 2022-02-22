@@ -118,7 +118,7 @@ main(int argc, char *argv[]) {
     // blocks.
     InsnCfg insnCfg;
     const P2::ControlFlowGraph &bbCfg = partitioner.cfg();
-    BOOST_FOREACH (const P2::ControlFlowGraph::Vertex &bbVert, bbCfg.vertices()) {
+    for (const P2::ControlFlowGraph::Vertex &bbVert: bbCfg.vertices()) {
         if (P2::BasicBlock::Ptr bb = isBasicBlock(bbVert)) {
             const std::vector<SgAsmInstruction*> &insns = bb->instructions();
 
@@ -132,7 +132,7 @@ main(int argc, char *argv[]) {
             // blocks. Be careful that the successors are actually existing basic blocks.  Note that in ROSE's global CFG, a
             // function call has at least two successors: the function being called (normal edges), and the address to which
             // the function returns ("callret" edges). There are other types of edges too, but we want only the normal edges.
-            BOOST_FOREACH (const P2::ControlFlowGraph::Edge &bbEdge, bbVert.outEdges()) {
+            for (const P2::ControlFlowGraph::Edge &bbEdge: bbVert.outEdges()) {
                 if (bbEdge.value().type() == P2::E_NORMAL) {
                     if (P2::BasicBlock::Ptr target = isBasicBlock(*bbEdge.target()))
                         insnCfg.insertEdgeWithVertices(insns.back(), target->instructions()[0]);
@@ -172,13 +172,13 @@ main(int argc, char *argv[]) {
 
     // Print a list of CFG vertices that were never reached.  We use std::cout rather than diagnostics because this is one of
     // the main outputs of this demo. The "if" condition is constant time.
-    BOOST_FOREACH (const InsnCfg::Vertex &vertex, insnCfg.vertices()) {
+    for (const InsnCfg::Vertex &vertex: insnCfg.vertices()) {
         if (!trace.exists(vertex.id()))
             std::cout <<"not executed: " <<partitioner.unparse(vertex.value()) <<"\n";
     }
 
     // Print list of addresses that were executed but did not appear in the CFG
-    BOOST_FOREACH (rose_addr_t va, missingAddresses)
+    for (rose_addr_t va: missingAddresses)
         std::cout <<"missing address: " <<StringUtility::addrToString(va) <<"\n";
 
     // Print those branch instructions that were executed by the trace but always took the same branch.  Just to mix things up,
@@ -195,13 +195,13 @@ main(int argc, char *argv[]) {
     // Get a list of executed instructions that are branch points and sort them by their burstiness.  The "if" condition is
     // constant time.
     std::vector<InsnTraceInfo> info;
-    BOOST_FOREACH (const InsnCfg::Vertex &vertex, insnCfg.vertices()) {
+    for (const InsnCfg::Vertex &vertex: insnCfg.vertices()) {
         if (vertex.nOutEdges() > 1 && trace.exists(vertex.id()))
             info.push_back(InsnTraceInfo(vertex.value(), trace.burstiness(vertex.id()), trace.size(vertex.id())));
     }
     std::sort(info.begin(), info.end());
     std::reverse(info.begin(), info.end());
-    BOOST_FOREACH (const InsnTraceInfo &record, info) {
+    for (const InsnTraceInfo &record: info) {
         Diagnostics::mfprintf(std::cout)("burstiness %6.2f%% %5zu hits at %s\n",
                                          100.0*record.burstiness, record.nHits,
                                          partitioner.unparse(record.insn).c_str());

@@ -170,7 +170,7 @@ public:
             } else {
                 TODO("file descriptor breakpoints not implemented for 32-bit"); // [Robb P. Matzke 2015-06-29]
             }
-            BOOST_FOREACH (int fd, fds) {
+            for (int fd: fds) {
                 if (breakPointFds_.exists(fd)) {
                     singleStep_ = -1;
                     return true;
@@ -401,7 +401,7 @@ public:
         if (cmd.empty())
             throw std::runtime_error("protection letters 'r', 'w', and/or 'x' expected");
         unsigned prot = 0;
-        BOOST_FOREACH (char ch, cmd[1]) {
+        for (char ch: cmd[1]) {
             switch (ch) {
                 case 'r': prot |= MemoryMap::READABLE; break;
                 case 'w': prot |= MemoryMap::WRITABLE; break;
@@ -696,13 +696,13 @@ public:
                 if (breakPointVas_.hull() == allAddresses && breakPointVas_.size() == allAddresses.size()) {
                     out_ <<"  all\n";
                 } else {
-                    BOOST_FOREACH (const AddressInterval &interval, breakPointVas_.intervals())
+                    for (const AddressInterval &interval: breakPointVas_.intervals())
                         out_ <<"  " <<interval <<"\n";
                 }
             }
             if (!breakPointKinds_.empty()) {
                 out_ <<"instruction types:\n";
-                BOOST_FOREACH (unsigned kind, breakPointKinds_) {
+                for (unsigned kind: breakPointKinds_) {
                     // FIXME[Robb P. Matzke 2015-07-31]: handle other than x86 instructions
                     out_ <<"  " <<stringifyBinaryAnalysisX86InstructionKind(kind, "x86_") <<"\n";
                 }
@@ -712,7 +712,7 @@ public:
                 if (breakPointSyscalls_.hull() == allAddresses && breakPointSyscalls_.size() == allAddresses.size()) {
                     out_ <<"  all\n";
                 } else {
-                    BOOST_FOREACH (const AddressInterval &interval, breakPointSyscalls_.intervals()) {
+                    for (const AddressInterval &interval: breakPointSyscalls_.intervals()) {
                         if (interval.isSingleton()) {
                             out_ <<"  " <<interval.least() <<"\n";
                         } else {
@@ -726,7 +726,7 @@ public:
                 if (breakPointFds_.hull() == allAddresses && breakPointFds_.size() == allAddresses.size()) {
                     out_ <<"  all\n";
                 } else {
-                    BOOST_FOREACH (const AddressInterval &interval, breakPointFds_.intervals()) {
+                    for (const AddressInterval &interval: breakPointFds_.intervals()) {
                         if (interval.isSingleton()) {
                             out_ <<"  " <<interval.least() <<"\n";
                         } else {

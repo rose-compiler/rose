@@ -53,7 +53,7 @@ public:
     }
 
     void reset(const MemoryMap::Ptr &map) {
-        BOOST_FOREACH (MemoryMap::Segment &segment, map->segments())
+        for (MemoryMap::Segment &segment: map->segments())
             segment.buffer()->copyOnWrite(true);        // prevent the VM from changing the real map
         BaseSemantics::StatePtr state = ops_->currentState()->clone();
         state->clear();
@@ -222,7 +222,7 @@ processExistingCalls(const P2::Partitioner &partitioner, const Settings &setting
     VirtualMachine vm(partitioner, settings);
 
     // Find all calls to the decoder function
-    BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, decoderVertex->inEdges()) {
+    for (const P2::ControlFlowGraph::Edge &edge: decoderVertex->inEdges()) {
         if (edge.value().type() != P2::E_FUNCTION_CALL)
             continue;
         const P2::ControlFlowGraph::ConstVertexIterator caller = edge.source();
@@ -237,7 +237,7 @@ processExistingCalls(const P2::Partitioner &partitioner, const Settings &setting
         // Decoder return addresses
         std::set<rose_addr_t> breakpoints;
         P2::CfgConstEdgeSet callReturnEdges = P2::findCallReturnEdges(caller);
-        BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &callret, callReturnEdges.values()) {
+        for (const P2::ControlFlowGraph::ConstEdgeIterator &callret: callReturnEdges.values()) {
             const P2::ControlFlowGraph::ConstVertexIterator returnVertex = callret->target();
             if (returnVertex->value().type() == P2::V_BASIC_BLOCK)
                 breakpoints.insert(returnVertex->value().address());

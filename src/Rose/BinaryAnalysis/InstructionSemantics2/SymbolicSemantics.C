@@ -84,7 +84,7 @@ SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSe
     // Merge definers
     InsnSet mergedDefiners = retval->get_defining_instructions();
     InsnSet otherDefiners = other->get_defining_instructions();
-    BOOST_FOREACH (SgAsmInstruction *definer, otherDefiners) {
+    for (SgAsmInstruction *definer: otherDefiners) {
         if (mergedDefiners.insert(definer).second)
             changed = true;
     }

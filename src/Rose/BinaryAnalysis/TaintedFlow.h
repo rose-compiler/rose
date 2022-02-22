@@ -6,7 +6,6 @@
 #include <Rose/BinaryAnalysis/DataFlow.h>
 #include <Rose/Diagnostics.h>
 
-#include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 #include <stdexcept>
 
@@ -58,7 +57,7 @@ public:
     protected:
         // Initialize taintedness for all variables; this is protected because this is a reference-counted object
         State(const DataFlow::VariableList &variables, Taintedness taint) {
-            BOOST_FOREACH (const DataFlow::Variable &variable, variables)
+            for (const DataFlow::Variable &variable: variables)
                 taints_.push_back(std::make_pair(variable, taint));
         }
 
@@ -221,7 +220,7 @@ public:
         vlistInitialized_ = true;
         mesg <<"; found " <<StringUtility::plural(variableList_.size(), "variables") <<"\n";
         if (mlog[DEBUG]) {
-            BOOST_FOREACH (const DataFlow::Variable &variable, variableList_)
+            for (const DataFlow::Variable &variable: variableList_)
                 mlog[DEBUG] <<"  found variable: " <<variable <<"\n";
         }
     }

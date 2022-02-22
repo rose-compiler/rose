@@ -14,7 +14,6 @@ static const char *description =
 
 #include <batSupport.h>
 #include <boost/filesystem.hpp>
-#include <boost/foreach.hpp>
 #include <fstream>
 #include <iostream>
 #include <Sawyer/CommandLine.h>
@@ -177,7 +176,7 @@ std::string
 escapeFileNameComponent(const std::string &s) {
     std::string retval;
     bool hasNonUnderscore = false;
-    BOOST_FOREACH (char ch, s) {
+    for (char ch: s) {
         if (isalnum(ch) || strchr("@$%=+:,.", ch)) {
             retval += ch;
             hasNonUnderscore = true;
@@ -284,7 +283,7 @@ public:
 std::string
 edgeTypeName(const P2::ControlFlowGraph::Edge &edge) {
     std::string retval = stringifyBinaryAnalysisPartitioner2EdgeType(edge.value().type(), "E_");
-    BOOST_FOREACH (char &ch, retval)
+    for (char &ch: retval)
         ch = '_' == ch ? ' ' : tolower(ch);
     return retval;
 }
@@ -296,7 +295,7 @@ emitTextFunctionCfg(std::ostream &out, const P2::Partitioner &partitioner, const
     VertexLabels vertexLabels(partitioner, function);
 
     // Emit information about each basic block
-    BOOST_FOREACH (rose_addr_t bbVa, function->basicBlockAddresses()) {
+    for (rose_addr_t bbVa: function->basicBlockAddresses()) {
         P2::ControlFlowGraph::ConstVertexIterator placeholder = partitioner.findPlaceholder(bbVa);
         if (!partitioner.cfg().isValidVertex(placeholder)) {
             out <<"  " <<StringUtility::addrToString(bbVa) <<": not present in CFG\n";
@@ -305,13 +304,13 @@ emitTextFunctionCfg(std::ostream &out, const P2::Partitioner &partitioner, const
             out <<"  " <<vertexLabels(placeholder) <<":\n";
 
             // Predecessors
-            BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, placeholder->inEdges())
+            for (const P2::ControlFlowGraph::Edge &edge: placeholder->inEdges())
                 out <<"    " <<edgeTypeName(edge) <<" edge from " <<vertexLabels(edge.source()) <<"\n";
             
             // Vertex content
             P2::BasicBlock::Ptr bb = partitioner.basicBlockExists(bbVa);
             if (bb && settings.showingInstructions) {
-                BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions())
+                for (SgAsmInstruction *insn: bb->instructions())
                     out <<"      " <<unparseInstructionWithAddress(insn) <<"\n";
             }
 
@@ -323,7 +322,7 @@ emitTextFunctionCfg(std::ostream &out, const P2::Partitioner &partitioner, const
 
             // Owning functions
             P2::FunctionSet owners = placeholder->value().owningFunctions();
-            BOOST_FOREACH (const P2::Function::Ptr &owner, owners.values()) {
+            for (const P2::Function::Ptr &owner: owners.values()) {
                 if (owner != function)
                     out <<"    also owned by " <<owner->printableName() <<"\n";
             }
@@ -331,7 +330,7 @@ emitTextFunctionCfg(std::ostream &out, const P2::Partitioner &partitioner, const
                 out <<"    ERROR: not marked as owned by " <<function->printableName() <<"\n";
 
             // Successors
-            BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, placeholder->outEdges())
+            for (const P2::ControlFlowGraph::Edge &edge: placeholder->outEdges())
                 out <<"    " <<edgeTypeName(edge) <<" edge to " <<vertexLabels(edge.target()) <<"\n";
         }
     }
@@ -339,7 +338,7 @@ emitTextFunctionCfg(std::ostream &out, const P2::Partitioner &partitioner, const
 
 void
 emitTextGlobalCfg(std::ostream &out, const P2::Partitioner &partitioner, const Settings &settings) {
-    BOOST_FOREACH (P2::Function::Ptr function, partitioner.functions())
+    for (P2::Function::Ptr function: partitioner.functions())
         emitTextFunctionCfg(out, partitioner, function, settings);
 }
 
@@ -375,7 +374,7 @@ main(int argc, char *argv[]) {
                         <<"use the --prefix switch instead to specify output file names.\n";
             exit(1);
         }
-        BOOST_FOREACH (const P2::Function::Ptr &function, selectedFunctions) {
+        for (const P2::Function::Ptr &function: selectedFunctions) {
             boost::filesystem::path fileName = makeGraphVizFileName(settings.outputPrefix, "cfg", function);
             std::ofstream file;
             if (fileName != "-") {

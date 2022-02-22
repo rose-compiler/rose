@@ -453,8 +453,8 @@ LengthEncodedString::encode(const CodePoints &cps) {
 
     // Encode the code points
     Octets charOctets;
-    BOOST_FOREACH (CodePoint cp, cps) {
-        BOOST_FOREACH (CodeValue cv, cef_->encode(cp)) {
+    for (CodePoint cp: cps) {
+        for (CodeValue cv: cef_->encode(cp)) {
             Octets v = ces_->encode(cv);
             charOctets.insert(charOctets.end(), v.begin(), v.end());
         }
@@ -560,8 +560,8 @@ TerminatedString::encode(const CodePoints &cps) {
     Octets retval;
 
     // Encode the characters of the string
-    BOOST_FOREACH (CodePoint cp, cps) {
-        BOOST_FOREACH (CodeValue cv, cef_->encode(cp)) {
+    for (CodePoint cp: cps) {
+        for (CodeValue cv: cef_->encode(cp)) {
             Octets v = ces_->encode(cv);
             retval.insert(retval.end(), v.begin(), v.end());
         }
@@ -569,7 +569,7 @@ TerminatedString::encode(const CodePoints &cps) {
 
     // Encode the terminator
     if (!terminators_.empty()) {
-        BOOST_FOREACH (CodeValue cv, cef_->encode(terminators_.front())) {
+        for (CodeValue cv: cef_->encode(terminators_.front())) {
             Octets v = ces_->encode(cv);
             retval.insert(retval.end(), v.begin(), v.end());
         }
@@ -641,7 +641,7 @@ nulTerminatedPrintableAsciiWide(size_t charSize, ByteOrder::Endianness order) {
 std::string
 EncodedString::narrow() const {
     std::string s;
-    BOOST_FOREACH (CodePoint cp, codePoints())
+    for (CodePoint cp: codePoints())
         s += char(cp);
     return s;
 }
@@ -649,7 +649,7 @@ EncodedString::narrow() const {
 std::wstring
 EncodedString::wide() const {
     std::wstring s;
-    BOOST_FOREACH (CodePoint cp, codePoints())
+    for (CodePoint cp: codePoints())
         s += wchar_t(cp);
     return s;
 }
@@ -660,7 +660,7 @@ EncodedString::decode(const MemoryMap &map) {
     if (where_.size() != map.at(where_).read(octets).size())
         throw Exception("short read when decoding string");
     encoder_->reset();
-    BOOST_FOREACH (uint8_t octet, octets)
+    for (uint8_t octet: octets)
         encoder_->decode(octet);
     if (!isDone(encoder_->state()))
         throw Exception("error decoding string");
@@ -898,7 +898,7 @@ StringFinder::find(const MemoryMap::ConstConstraints &constraints, Sawyer::Conta
         return *this;
 
     size_t nBytesToCheck = 0;
-    BOOST_FOREACH (const MemoryMap::Node &node, constraints.nodes(Sawyer::Container::MATCH_NONCONTIGUOUS))
+    for (const MemoryMap::Node &node: constraints.nodes(Sawyer::Container::MATCH_NONCONTIGUOUS))
         nBytesToCheck += node.key().size();
 
     StringSearcher stringFinder(encoders_, settings_.minLength, settings_.maxLength, discardingCodePoints_,
@@ -907,13 +907,13 @@ StringFinder::find(const MemoryMap::ConstConstraints &constraints, Sawyer::Conta
         stringFinder.anchor(constraints.anchored().least());
     constraints.traverse(stringFinder, flags);
 
-    BOOST_FOREACH (const Finding &finding, stringFinder.results())
+    for (const Finding &finding: stringFinder.results())
         strings_.push_back(EncodedString(finding.encoder, AddressInterval::baseSize(finding.startVa, finding.nBytes)));
 
     if (settings_.keepingOnlyLongest) {
         AddressIntervalSet stringAddresses;
         std::sort(strings_.begin(), strings_.end(), byDecreasingLength);
-        BOOST_FOREACH (EncodedString &string, strings_) {
+        for (EncodedString &string: strings_) {
             if (stringAddresses.isOverlapping(string.where())) {
                 string = EncodedString();               // mark for erasing
             } else {
@@ -928,7 +928,7 @@ StringFinder::find(const MemoryMap::ConstConstraints &constraints, Sawyer::Conta
 
 std::ostream&
 StringFinder::print(std::ostream &out) const {
-    BOOST_FOREACH (const EncodedString &string, strings_) {
+    for (const EncodedString &string: strings_) {
         out <<StringUtility::addrToString(string.address())
             <<" " <<string.encoder()->name()
             <<" \"" <<StringUtility::cEscape(string.narrow()) <<"\"\n";

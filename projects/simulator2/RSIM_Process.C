@@ -7,7 +7,6 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Engine.h>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/replace.hpp>
-#include <boost/foreach.hpp>
 #include <boost/regex.hpp>
 #include <errno.h>
 #include <sys/mman.h>
@@ -720,7 +719,7 @@ RSIM_Process::guest_va(void *addr, size_t nbytes)
 {
     SAWYER_THREAD_TRAITS::RecursiveLockGuard lock(rwlock());
     rose_addr_t retval = 0;
-    BOOST_FOREACH (const MemoryMap::Node &node, get_memory()->nodes()) {
+    for (const MemoryMap::Node &node: get_memory()->nodes()) {
         const AddressInterval &range = node.key();
         const MemoryMap::Segment &segment = node.value();
         const uint8_t *base = segment.buffer()->data();
@@ -809,7 +808,7 @@ RSIM_Process::mem_transaction_start(const std::string &name)
     MemoryMap::Ptr new_map = MemoryMap::instance();
     if (!map_stack.empty()) {
         new_map = map_stack.back().first;
-        BOOST_FOREACH (MemoryMap::Segment &segment, new_map->segments())
+        for (MemoryMap::Segment &segment: new_map->segments())
             segment.buffer()->copyOnWrite(true);
     }
     map_stack.push_back(std::make_pair(new_map, name));
@@ -1351,7 +1350,7 @@ RSIM_Process::disassemble(bool fast, MemoryMap::Ptr map/*=null*/)
         engine.disassembler(disassembler_);
         block = engine.buildAst();
         std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(block);
-        BOOST_FOREACH (SgAsmInstruction *insn, insns)
+        for (SgAsmInstruction *insn: insns)
             icache.insert(std::make_pair(insn->get_address(), insn));
     }
 

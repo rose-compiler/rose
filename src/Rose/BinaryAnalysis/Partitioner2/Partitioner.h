@@ -1841,8 +1841,8 @@ public:
     std::vector<Function::Ptr>
     functionsOwningBasicBlocks(const Container &bblocks) const /*final*/ {
         std::vector<Function::Ptr> retval;
-        BOOST_FOREACH (const typename Container::value_type& bblock, bblocks) {
-            BOOST_FOREACH (const Function::Ptr &function, functionsOwningBasicBlock(bblock, false))
+        for (const typename Container::value_type& bblock: bblocks) {
+            for (const Function::Ptr &function: functionsOwningBasicBlock(bblock, false))
                 insertUnique(retval, function, sortFunctionsByAddress);
         }
         return retval;

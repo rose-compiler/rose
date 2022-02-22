@@ -6,6 +6,7 @@
 #include "integerOps.h"
 #include <Sawyer/CommandLine.h>
 #include <Sawyer/ProgressBar.h>
+#include <boost/range/adaptor/reversed.hpp>
 #include <set>
 
 typedef rose_addr_t Value;
@@ -112,7 +113,7 @@ readSet(const std::string &fileName, Value mask) {
 static size_t
 countMatches(const Set &s1, Set s2, Value delta, Value mask) {
     size_t n = 0;
-    BOOST_FOREACH (Value v1, s1) {
+    for (Value v1: s1) {
         Value v2 = (v1 + delta) & mask;
         if (s2.erase(v2)) {
             ++n;
@@ -154,8 +155,8 @@ main(int argc, char *argv[]) {
     typedef Sawyer::Container::Map<Value /*delta*/, size_t /*count*/> Deltas;
     Deltas deltas;
     Sawyer::ProgressBar<size_t> progress(setA.size()*setB.size(), mlog[MARCH]);
-    BOOST_FOREACH (Value a, setA) {
-        BOOST_FOREACH (Value b, setB) {
+    for (Value a: setA) {
+        for (Value b: setB) {
             ++progress;
             Value delta = (b-a) & mask;
             if (!deltas.exists(delta))
@@ -166,16 +167,16 @@ main(int argc, char *argv[]) {
     // Invert the deltas map and sort
     typedef Sawyer::Container::Map<size_t /*count*/, Set /*deltas*/> InvertedDelta;
     InvertedDelta results;
-    BOOST_FOREACH (const Deltas::Node &dn, deltas.nodes()) {
+    for (const Deltas::Node &dn: deltas.nodes()) {
         results.insertMaybeDefault(dn.value());
         results[dn.value()].insert(dn.key());
     }
 
     // Show results
     std::cout <<"NMatch(%Match) Deltas...\n";
-    BOOST_REVERSE_FOREACH (const InvertedDelta::Node &result, results.nodes()) {
+    for (const InvertedDelta::Node &result: boost::adaptors::reverse(results.nodes())) {
         std::cout <<result.key() <<"(" <<(100.0*result.key()/setB.size())<<"%):";
-        BOOST_FOREACH (Value delta, result.value())
+        for (Value delta: result.value())
             std::cout <<" " <<StringUtility::addrToString(delta);
         std::cout <<"\n";
     }

@@ -3,7 +3,6 @@
 
 #include <Combinatorics.h>
 
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
 #include <sstream>

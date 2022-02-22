@@ -98,14 +98,14 @@ main(int argc, char *argv[]) {
             SgAsmBlock *gblock = P2::Modules::buildAst(partitioner, engine.interpretation(), engine.settings().astConstruction);
             if (SgProject *project = SageInterface::getEnclosingNode<SgProject>(gblock)) {
                 std::vector<SgAsmGenericFile*> files = SageInterface::querySubTree<SgAsmGenericFile>(project);
-                BOOST_FOREACH (SgAsmGenericFile *file, files) {
+                for (SgAsmGenericFile *file: files) {
                     SgNode *parent = file->get_parent();
                     file->set_parent(NULL);
                     xml <<BOOST_SERIALIZATION_NVP(file);
                     file->set_parent(parent);
                 }
                 std::vector<SgAsmInterpretation*> interps = SageInterface::querySubTree<SgAsmInterpretation>(project);
-                BOOST_FOREACH (SgAsmInterpretation *interp, interps) {
+                for (SgAsmInterpretation *interp: interps) {
                     SgNode *parent = interp->get_parent();
                     interp->set_parent(NULL);
                     xml <<BOOST_SERIALIZATION_NVP(interp);

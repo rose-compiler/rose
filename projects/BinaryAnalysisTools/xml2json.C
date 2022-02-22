@@ -539,7 +539,7 @@ parsePathSpec(const std::string &name, const std::string &pstr, PathAction actio
 
     PathSpec retval;
     retval.push_back(std::make_pair(BEGIN, name));
-    BOOST_FOREACH (const std::string &part, parts) {
+    for (const std::string &part: parts) {
         if (part.empty())
             throw std::runtime_error("invalid path \"" + cEscape(pstr) + "\"");
         retval.push_back(std::make_pair(MATCH, part));
@@ -746,7 +746,7 @@ public:
     bool insertMatchingPaths(PathElement &elmt /*out*/, const PathSpecs &pathsToMatch, ActionAccumulator &actions /*out*/) {
         bool retval = false;
         elmt.nextMatch.reserve(pathsToMatch_.size());
-        BOOST_FOREACH (const PathSpec &pathSpec, pathsToMatch_) {
+        for (const PathSpec &pathSpec: pathsToMatch_) {
             ASSERT_forbid(pathSpec.empty());
             PathSpec::const_iterator component = pathSpec.begin();
             ASSERT_require(BEGIN == component->first);  // all paths start with a BEGIN
@@ -767,7 +767,7 @@ public:
         bool retval = false;
         if (prevElmt.suppressOutput)
             return false;                               // no need to match further if we're suppressing output
-        BOOST_FOREACH (PathSpec::const_iterator component, prevElmt.nextMatch) {
+        for (PathSpec::const_iterator component: prevElmt.nextMatch) {
             if (matchPathPattern(elmt.tag, component)) {
                 if (component->second == "*")
                     elmt.nextMatch.push_back(component);// next level could match the '*' again
@@ -900,7 +900,7 @@ public:
 
     // Find path patterns that match completely at the specified XML property
     bool matchProperty(char firstChar, const XmlLexer::Token &name, ActionAccumulator &actions /*out*/) {
-        BOOST_FOREACH (PathSpec::const_iterator component, path_.back().nextMatch) {
+        for (PathSpec::const_iterator component: path_.back().nextMatch) {
             if (matchPathPattern('@', name, component)) {
                 ++component;
                 actions.merge(component);
@@ -911,7 +911,7 @@ public:
 
     // Ditto
     bool matchProperty(const std::string &name, ActionAccumulator &actions /*out*/) {
-        BOOST_FOREACH (PathSpec::const_iterator component, path_.back().nextMatch) {
+        for (PathSpec::const_iterator component: path_.back().nextMatch) {
             if (matchPathPattern(name, component)) {
                 ++component;
                 actions.merge(component);

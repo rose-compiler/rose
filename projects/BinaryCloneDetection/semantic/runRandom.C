@@ -277,8 +277,8 @@ main(int argc, char *argv[]) {
 #if 0 // [Robb P. Matzke 2014-10-09]: not always working, but maybe not needed for this analysis
         loader->set_perform_relocations(true);
 #endif
-        BOOST_FOREACH (const std::string &paths, settings.libDirs) {
-            BOOST_FOREACH (const std::string &path, split(':', paths)) {
+        for (const std::string &paths: settings.libDirs) {
+            for (const std::string &path: split(':', paths)) {
                 loader->add_directory(path);
             }
         }
@@ -311,7 +311,7 @@ main(int argc, char *argv[]) {
         if (!*rest) {
             initVa = va;
         } else {
-            BOOST_FOREACH (const P2::Function::Ptr &function, functions) {
+            for (const P2::Function::Ptr &function: functions) {
                 if (function->name() == settings.initFunction) {
                     initVa = function->address();
                     break;
@@ -335,7 +335,7 @@ main(int argc, char *argv[]) {
         // Run the specimen natively under a debugger.
         info <<"running selected functions natively under a debugger\n";
         Sawyer::ProgressBar<size_t> progress(functions.size(), mlog[MARCH]);
-        BOOST_FOREACH (const P2::Function::Ptr &function, functions) {
+        for (const P2::Function::Ptr &function: functions) {
             mlog[WHERE] <<"running function " <<addrToString(function->address()) <<" \"" <<function->name() <<"\"\n";
             ++progress;
             std::pair<size_t, std::string> result = runNatively(settings, specimenName, initVa, partitioner,
@@ -348,7 +348,7 @@ main(int argc, char *argv[]) {
     if (settings.nInsnsTested > 0) {
         // Get list of all instructions.
         std::vector<SgAsmInstruction*> insns;
-        BOOST_FOREACH (const P2::BasicBlock::Ptr &bblock, partitioner.basicBlocks()) {
+        for (const P2::BasicBlock::Ptr &bblock: partitioner.basicBlocks()) {
             const std::vector<SgAsmInstruction*> &bi = bblock->instructions();
             insns.insert(insns.end(), bi.begin(), bi.end());
         }
@@ -365,7 +365,7 @@ main(int argc, char *argv[]) {
         // Run the speciment natively at each selected instruction.
         info <<"running selected instructions natively under a debugger\n";
         Sawyer::ProgressBar<size_t> progress(insns.size(), mlog[MARCH]);
-        BOOST_FOREACH (SgAsmInstruction *insn, insns) {
+        for (SgAsmInstruction *insn: insns) {
             mlog[WHERE] <<"running instruction " <<addrToString(insn->get_address()) <<"\"\n";
             ++progress;
             std::pair<size_t, std::string> result = runNatively(settings, specimenName, initVa, partitioner,

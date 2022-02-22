@@ -87,7 +87,7 @@ SyscallSuccessors::operator()(bool chain, const Args &args) {
 void
 nameSystemCalls(const Partitioner &partitioner, const boost::filesystem::path &syscallHeader) {
     SystemCall analyzer = systemCallAnalyzer(partitioner);
-    BOOST_FOREACH (const BasicBlock::Ptr &bb, partitioner.basicBlocks()) {
+    for (const BasicBlock::Ptr &bb: partitioner.basicBlocks()) {
         if (SgAsmInstruction *insn = analyzer.hasSystemCall(bb)) {
             SystemCall::Declaration decl;
             try {
@@ -126,7 +126,7 @@ LibcStartMain::operator()(bool chain, const Args &args) {
 
     // It must call a function named "__libc_start_main@plt"
     bool foundCallToLibcStartMain = false;
-    BOOST_FOREACH (const rose_addr_t &succVa, args.partitioner.basicBlockConcreteSuccessors(args.bblock)) {
+    for (const rose_addr_t &succVa: args.partitioner.basicBlockConcreteSuccessors(args.bblock)) {
         Function::Ptr func = args.partitioner.functionExists(succVa);
         if (func && (func->name() == "__libc_start_main@plt" || func->name() == "__libc_start_main")) {
             foundCallToLibcStartMain = true;
@@ -151,7 +151,7 @@ LibcStartMain::operator()(bool chain, const Args &args) {
         if (ops) {
             dispatcher = args.partitioner.newDispatcher(ops);
             if (dispatcher) {
-                BOOST_FOREACH (SgAsmInstruction *insn, args.bblock->instructions())
+                for (SgAsmInstruction *insn: args.bblock->instructions())
                     dispatcher->processInstruction(insn);
                 state = dispatcher->currentState();
             }
@@ -233,7 +233,7 @@ LibcStartMain::operator()(bool chain, const Args &args) {
     if (!functionPtrs.empty()) {
         ASSERT_require(args.bblock->successors().isCached());
         BasicBlock::Successors succs = args.bblock->successors().get();
-        BOOST_FOREACH (const BaseSemantics::SValuePtr &calleeVa, functionPtrs) {
+        for (const BaseSemantics::SValuePtr &calleeVa: functionPtrs) {
             succs.push_back(BasicBlock::Successor(Semantics::SValue::promote(calleeVa), E_FUNCTION_CALL));
             SAWYER_MESG(debug) <<"LibcStartMain analysis: fcall to " <<*calleeVa
                                <<(mainVa_ && calleeVa->toUnsigned().get() == *mainVa_ ? ", assumed to be \"main\"" : "") <<"\n";

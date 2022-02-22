@@ -1,7 +1,6 @@
 #include <Rose/Color.h>
 
 #include <boost/algorithm/string/trim.hpp>
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 #include <cmath>
@@ -202,7 +201,7 @@ std::ostream&
 operator<<(std::ostream &out, const Gradient &gradient) {
     out <<"Gradient(";
     size_t n = 0;
-    BOOST_FOREACH (const Gradient::ColorMap::Node &node, gradient.colorMap().nodes())
+    for (const Gradient::ColorMap::Node &node: gradient.colorMap().nodes())
         out <<(1==++n?"":", ") <<node.key() <<"=>" <<node.value();
     out <<")";
     return out;
@@ -307,7 +306,7 @@ ColorizationParser::parse(const std::string &input) {
     Colorization retval;
     std::vector<std::string> words = StringUtility::split(",", input);
 
-    BOOST_FOREACH (std::string word, words) {
+    for (std::string word: words) {
         word = boost::trim_copy(word);
         if ("off" == word) {
             retval.enabled = Enabled::OFF;
@@ -332,14 +331,14 @@ ColorizationMerge::operator()(const Sawyer::CommandLine::ParsedValues &prev,
                               const Sawyer::CommandLine::ParsedValues &cur) {
     ASSERT_forbid(prev.empty());
     Colorization merged;
-    BOOST_FOREACH (const Sawyer::CommandLine::ParsedValue &pv, prev) {
+    for (const Sawyer::CommandLine::ParsedValue &pv: prev) {
         const Colorization c = boost::any_cast<Colorization>(pv.value());
         if (c.enabled)
             merged.enabled = *c.enabled;
         if (c.theme)
             merged.theme = *c.theme;
     }
-    BOOST_FOREACH (const Sawyer::CommandLine::ParsedValue &pv, cur) {
+    for (const Sawyer::CommandLine::ParsedValue &pv: cur) {
         const Colorization c = boost::any_cast<Colorization>(pv.value());
         if (c.enabled)
             merged.enabled = *c.enabled;

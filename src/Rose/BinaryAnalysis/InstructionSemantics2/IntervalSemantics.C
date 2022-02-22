@@ -31,7 +31,7 @@ SValue::createOptionalMerge(const BaseSemantics::SValuePtr &other_, const BaseSe
         return bottom_(nBits());
 
     Intervals newIntervals = intervals_;
-    BOOST_FOREACH (const Interval &interval, other->intervals_.intervals())
+    for (const Interval &interval: other->intervals_.intervals())
         newIntervals.insert(interval);
 
     if (newIntervals == other->intervals_)
@@ -118,7 +118,7 @@ uint64_t
 SValue::possible_bits() const
 {
     uint64_t bits = 0;
-    BOOST_FOREACH (const Interval &interval, intervals_.intervals()) {
+    for (const Interval &interval: intervals_.intervals()) {
         uint64_t lo = interval.least(), hi = interval.greatest();
         bits |= lo | hi;
         for (uint64_t bitno=0; bitno<nBits(); ++bitno) {
@@ -163,7 +163,7 @@ SValue::print(std::ostream &output, BaseSemantics::Formatter&) const {
         output <<"any";
     } else {
         output <<"{";
-        BOOST_FOREACH (const Interval &interval, intervals_.intervals()) {
+        for (const Interval &interval: intervals_.intervals()) {
             if (interval.least() != intervals_.hull().least())
                 output <<", ";
             output <<toString(interval.least(), nBits());
@@ -270,7 +270,7 @@ RiscOperators::invert(const BaseSemantics::SValuePtr &a_)
         return bottom_(a->nBits());
     Intervals result;
     uint64_t mask = IntegerOps::genMask<uint64_t>(a->nBits());
-    BOOST_FOREACH (const Interval &interval, a->get_intervals().intervals()) {
+    for (const Interval &interval: a->get_intervals().intervals()) {
         uint64_t lo = ~interval.greatest() & mask;
         uint64_t hi = ~interval.least() & mask;
         result.insert(Interval::hull(lo, hi));
@@ -291,7 +291,7 @@ RiscOperators::extract(const BaseSemantics::SValuePtr &a_, size_t begin_bit, siz
     uint64_t discard_mask = ~genMask<uint64_t>(end_bit); // hi-order bits being discarded
     uint64_t src_mask = genMask<uint64_t>(a->nBits()); // significant bits in the source operand
     uint64_t dst_mask = genMask<uint64_t>(end_bit-begin_bit); // significant bits in the result
-    BOOST_FOREACH (const Interval &iv, a->get_intervals().intervals()) {
+    for (const Interval &iv: a->get_intervals().intervals()) {
         uint64_t d1 = shiftRightLogical2(iv.least()     & discard_mask, end_bit, a->nBits()); // discarded part, lo
         uint64_t d2 = shiftRightLogical2(iv.greatest()  & discard_mask, end_bit, a->nBits()); // discarded part, hi
         uint64_t k1 = shiftRightLogical2(iv.least()     & src_mask, begin_bit, a->nBits()) & dst_mask; // keep part, lo
@@ -321,8 +321,8 @@ RiscOperators::concat(const BaseSemantics::SValuePtr &a_, const BaseSemantics::S
     Intervals result;
     uint64_t mask_a = IntegerOps::genMask<uint64_t>(a->nBits());
     uint64_t mask_b = IntegerOps::genMask<uint64_t>(b->nBits());
-    BOOST_FOREACH (const Interval &av, a->get_intervals().intervals()) {
-        BOOST_FOREACH (const Interval &bv, b->get_intervals().intervals()) {
+    for (const Interval &av: a->get_intervals().intervals()) {
+        for (const Interval &bv: b->get_intervals().intervals()) {
             uint64_t lo = (IntegerOps::shiftLeft2(bv.least() & mask_b, retsize, a->nBits()) |
                            (av.least() & mask_a));
             uint64_t hi = (IntegerOps::shiftLeft2(bv.greatest() & mask_b, retsize, a->nBits()) |
@@ -487,7 +487,7 @@ RiscOperators::shiftRight(const BaseSemantics::SValuePtr &a_, const BaseSemantic
         if (auto aNum = a->toUnsigned())
             return number_(nbitsa, *aNum >> *bNum);
         Intervals result;
-        BOOST_FOREACH (const Interval &av, a->get_intervals().intervals()) {
+        for (const Interval &av: a->get_intervals().intervals()) {
             uint64_t lo = av.least() >> *bNum;
             uint64_t hi = av.greatest() >> *bNum;
             result.insert(Interval::hull(lo, hi));
@@ -495,7 +495,7 @@ RiscOperators::shiftRight(const BaseSemantics::SValuePtr &a_, const BaseSemantic
         return svalue_from_intervals(nbitsa, result);
     }
     Intervals result;
-    BOOST_FOREACH (const Interval &av, a->get_intervals().intervals()) {
+    for (const Interval &av: a->get_intervals().intervals()) {
         for (uint64_t i=0; i<(uint64_t)nbitsa; ++i) {
             if (b->get_intervals().contains(i)) {
                 uint64_t lo = av.least() >> i;
@@ -602,7 +602,7 @@ RiscOperators::signExtend(const BaseSemantics::SValuePtr &a_, size_t new_width)
     uint64_t old_signbit = IntegerOps::shl1<uint64_t>(a->nBits()-1);
     uint64_t new_signbit = IntegerOps::shl1<uint64_t>(new_width-1);
     Intervals result;
-    BOOST_FOREACH (const Interval &av, a->get_intervals().intervals()) {
+    for (const Interval &av: a->get_intervals().intervals()) {
         uint64_t lo = IntegerOps::signExtend2(av.least(), a->nBits(), new_width);
         uint64_t hi = IntegerOps::signExtend2(av.greatest(), a->nBits(), new_width);
         if (0==(lo & new_signbit) && 0!=(hi & new_signbit)) {
@@ -627,8 +627,8 @@ RiscOperators::add(const BaseSemantics::SValuePtr &a_, const BaseSemantics::SVal
 
     const Intervals &aints=a->get_intervals(), &bints=b->get_intervals();
     Intervals result;
-    BOOST_FOREACH (const Interval &av, aints.intervals()) {
-        BOOST_FOREACH (const Interval &bv, bints.intervals()) {
+    for (const Interval &av: aints.intervals()) {
+        for (const Interval &bv: bints.intervals()) {
             uint64_t lo = (av.least() + bv.least()) & IntegerOps::genMask<uint64_t>(nbits);
             uint64_t hi = (av.greatest()  + bv.greatest())  & IntegerOps::genMask<uint64_t>(nbits);
             if (lo < av.least() || lo < bv.least()) {
@@ -700,7 +700,7 @@ RiscOperators::negate(const BaseSemantics::SValuePtr &a_)
         return bottom_(nbits);
     Intervals result;
     uint64_t mask = IntegerOps::genMask<uint64_t>(nbits);
-    BOOST_FOREACH (const Interval &iv, a->get_intervals().intervals()) {
+    for (const Interval &iv: a->get_intervals().intervals()) {
         uint64_t lo = -iv.greatest() & mask;
         uint64_t hi = -iv.least() & mask;
         if (0==hi) {
@@ -769,8 +769,8 @@ RiscOperators::unsignedDivide(const BaseSemantics::SValuePtr &a_, const BaseSema
     if (a->isBottom() || b->isBottom())
         return bottom_(nbitsa);
     Intervals result;
-    BOOST_FOREACH (const Interval &av, a->get_intervals().intervals()) {
-        BOOST_FOREACH (const Interval &bv, b->get_intervals().intervals()) {
+    for (const Interval &av: a->get_intervals().intervals()) {
+        for (const Interval &bv: b->get_intervals().intervals()) {
             uint64_t lo = av.least() / std::max(bv.greatest(),  (uint64_t)1);
             uint64_t hi = av.greatest()  / std::max(bv.least(), (uint64_t)1);
             ASSERT_require((lo<=IntegerOps::genMask<uint64_t>(nbitsa)));
@@ -814,8 +814,8 @@ RiscOperators::unsignedMultiply(const BaseSemantics::SValuePtr &a_, const BaseSe
     if (a->isBottom() || b->isBottom())
         return bottom_(a->nBits() + b->nBits());
     Intervals result;
-    BOOST_FOREACH (const Interval &av, a->get_intervals().intervals()) {
-        BOOST_FOREACH (const Interval &bv, b->get_intervals().intervals()) {
+    for (const Interval &av: a->get_intervals().intervals()) {
+        for (const Interval &bv: b->get_intervals().intervals()) {
             uint64_t lo = av.least() * bv.least();
             uint64_t hi = av.greatest()  * bv.greatest();
             ASSERT_require(lo<=hi);

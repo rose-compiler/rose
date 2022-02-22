@@ -19,8 +19,6 @@
 #include <boost/graph/breadth_first_search.hpp>
 #include <boost/graph/visitors.hpp>
 
-#include <boost/foreach.hpp>
-
 #include "sage3basic.h"
 #include "CloneDetectionLib.h"
 
@@ -209,11 +207,11 @@ find_clusters(int max_cluster_size_signed, SqlDatabase::TransactionPtr transacti
     std::map<int,int> size_distribution;
 
     // Iterate through the component indices
-    BOOST_FOREACH(VertexIndex current_index, components) {
+    for(VertexIndex current_index: components) {
         std::vector<int> cluster_functions;
 
         // Iterate through the child vertex indices for [current_index]
-        BOOST_FOREACH(VertexIndex child_index, components[current_index]) {
+        for(VertexIndex child_index: components[current_index]) {
             cluster_functions.push_back(child_index);
         }
 

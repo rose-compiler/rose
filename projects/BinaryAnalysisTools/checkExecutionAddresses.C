@@ -1,6 +1,5 @@
 #include <rose.h>
 
-#include <boost/foreach.hpp>
 #include <rose_getline.h>
 #include <rose_strtoull.h>
 #include <Rose/BinaryAnalysis/Debugger.h>
@@ -213,7 +212,7 @@ main(int argc, char *argv[]) {
     map->dump(mlog[INFO]);
 
     // The addresses specified in the instruction address file must all be in memory that is mapped.
-    BOOST_FOREACH (rose_addr_t va, knownVas) {
+    for (rose_addr_t va: knownVas) {
         ASSERT_always_require2(map->at(va).require(MemoryMap::EXECUTABLE).exists(),
                                "given address " + addrToString(va) + " is not mapped or lacks execute permission");
     }
@@ -237,7 +236,7 @@ main(int argc, char *argv[]) {
 
     if (settings.showExpected) {
         std::cout <<"Expected addresses:\n";
-        BOOST_FOREACH (const AddressCounts::Node &addrCount, executed.nodes()) {
+        for (const AddressCounts::Node &addrCount: executed.nodes()) {
             if (isGoodAddr(knownVas, map, addrCount.key()))
                 std::cout <<"    " <<addrToString(addrCount.key()) <<"\t" <<addrCount.value() <<"\n";
         }
@@ -245,7 +244,7 @@ main(int argc, char *argv[]) {
 
     if (settings.showUnmapped) {
         std::cout <<"Unmapped addresses:\n";
-        BOOST_FOREACH (const AddressCounts::Node &addrCount, executed.nodes()) {
+        for (const AddressCounts::Node &addrCount: executed.nodes()) {
             if (!map->at(addrCount.key()).exists())
                 std::cout <<"    " <<addrToString(addrCount.key()) <<"\t" <<addrCount.value() <<"\n";
         }
@@ -253,7 +252,7 @@ main(int argc, char *argv[]) {
 
     if (settings.showUnexpected) {
         std::cout <<"Unexpected addresses:\n";
-        BOOST_FOREACH (const AddressCounts::Node &addrCount, executed.nodes()) {
+        for (const AddressCounts::Node &addrCount: executed.nodes()) {
             if (!isGoodAddr(knownVas, map, addrCount.key()))
                 std::cout <<"    " <<addrToString(addrCount.key()) <<"\t" <<addrCount.value() <<"\n";
         }

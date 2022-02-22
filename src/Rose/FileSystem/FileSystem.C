@@ -1,5 +1,4 @@
 #include <Rose/FileSystem.h>
-#include <boost/foreach.hpp>
 #include <set>
 #include <fstream>
 
@@ -94,7 +93,7 @@ makeNormal(const Path &path) {
 #endif
     }
     Path result;
-    BOOST_FOREACH (const Path &component, components)
+    for (const Path &component: components)
         result /= component;
     return result;
 }
@@ -201,7 +200,7 @@ copyFile(const Path &src, const Path &dst) {
 void
 copyFiles(const std::vector<Path> &fileNames, const Path &root, const Path &dstDir) {
     std::set<Path> dirs;
-    BOOST_FOREACH (const Path &fileName, fileNames) {
+    for (const Path &fileName: fileNames) {
         Path dirName = dstDir / makeRelative(fileName.parent_path(), root);
         if (dirs.insert(dirName).second)
             boost::filesystem::create_directories(dirName);

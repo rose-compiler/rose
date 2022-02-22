@@ -16,7 +16,6 @@
 #include "rose_getline.h"
 
 #include <boost/algorithm/string/predicate.hpp>
-#include <boost/foreach.hpp>
 #include <cerrno>
 #include <csignal>
 #include <sys/wait.h>
@@ -51,7 +50,7 @@ load_sorted_work(MultiWork &work /*out*/)
 
     // Return one worklist per specimen
     std::sort(all_work.begin(), all_work.end(), sortedBySpecimen);
-    BOOST_FOREACH (const WorkItem &item, all_work) {
+    for (const WorkItem &item: all_work) {
         if (work.empty() || item.specimen_id!=work.back().back().specimen_id)
             work.push_back(Work());
         work.back().push_back(item);
@@ -189,7 +188,7 @@ size_t runInParallel(std::vector<Functor> &functors, size_t nProcs) {
 
     // Look at exit status
     size_t retval = 0;
-    BOOST_FOREACH (int status, fstatus)
+    for (int status: fstatus)
         retval += status ? 1 : 0;
     return retval;
 }
@@ -421,7 +420,7 @@ main(int argc, char *argv[])
     tx.reset();
 
     // Process work items for each specimen sequentially
-    BOOST_FOREACH (const Work &workForSpecimen, work)
+    for (const Work &workForSpecimen: work)
         if (forkAndWait(SpecimenProcessor(workForSpecimen, files, databaseUrl, cmd_id)))
             exit(1);
 

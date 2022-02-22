@@ -443,7 +443,7 @@ makeCallTargetFunctions(P2::Partitioner &partitioner, size_t alignment=1) {
     }
 
     // Now create functions at each target address
-    BOOST_FOREACH (rose_addr_t entryVa, targets) {
+    for (rose_addr_t entryVa: targets) {
         P2::Function::Ptr function = P2::Function::instance(entryVa, SgAsmFunction::FUNC_CALL_INSN);
         partitioner.attachOrMergeFunction(function);
     }
@@ -461,7 +461,7 @@ static std::string
 escapeFileNameComponent(const std::string &s) {
     std::string retval;
     bool hasNonUnderscore = false;
-    BOOST_FOREACH (char ch, s) {
+    for (char ch: s) {
         if (isalnum(ch) || strchr("@$%=+:,.", ch)) {
             retval += ch;
             hasNonUnderscore = true;
@@ -498,9 +498,9 @@ emitControlFlowGraphs(const P2::Partitioner &partitioner, const Settings &settin
     std::set<P2::Function::Ptr> selectedFunctions;
     if (!settings.gvCfgFunctions.empty()) {
         std::vector<P2::Function::Ptr> allFunctions = partitioner.functions();
-        BOOST_FOREACH (const std::string &specified, settings.gvCfgFunctions) {
+        for (const std::string &specified: settings.gvCfgFunctions) {
             bool inserted = false;
-            BOOST_FOREACH (const P2::Function::Ptr &function, allFunctions) {
+            for (const P2::Function::Ptr &function: allFunctions) {
                 if (function->name() == specified) {
                     selectedFunctions.insert(function);
                     inserted = true;
@@ -513,7 +513,7 @@ emitControlFlowGraphs(const P2::Partitioner &partitioner, const Settings &settin
                 char *rest = NULL;
                 rose_addr_t specifiedVa = rose_strtoull(s, &rest, 0);
                 if (0==errno && *rest=='\0') {
-                    BOOST_FOREACH (const P2::Function::Ptr &function, allFunctions) {
+                    for (const P2::Function::Ptr &function: allFunctions) {
                         if (function->address() == specifiedVa) {
                             selectedFunctions.insert(function);
                             inserted = true;
@@ -531,7 +531,7 @@ emitControlFlowGraphs(const P2::Partitioner &partitioner, const Settings &settin
         }
     }
     
-    BOOST_FOREACH (const P2::Function::Ptr &function, selectedFunctions) {
+    for (const P2::Function::Ptr &function: selectedFunctions) {
         std::string fileName = makeGraphVizFileName(settings.gvBaseName, "cfg", function);
         std::ofstream out(fileName.c_str());
         if (out.fail()) {
@@ -637,7 +637,7 @@ static std::vector<P2::Function::Ptr>
 findCalledFunctions(const P2::Partitioner &partitioner, bool selectCalledFunctions) {
     std::vector<P2::Function::Ptr> retval;
     P2::FunctionCallGraph cg = partitioner.functionCallGraph(P2::AllowParallelEdges::NO);
-    BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions()) {
+    for (const P2::Function::Ptr &function: partitioner.functions()) {
         bool isCalled = !cg.callers(function).empty();
         if ((selectCalledFunctions && isCalled) || (!selectCalledFunctions && !isCalled))
             retval.push_back(function);
@@ -656,7 +656,7 @@ selectFunctions(P2::Engine &engine, const P2::Partitioner &partitioner, const Se
             return findCalledFunctions(partitioner, !settings.selectFunctionsInverted);
         case CONSTADDR_FUNCTIONS: {
             std::set<rose_addr_t> constants = findInstructionConstants(engine, partitioner);
-            BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions()) {
+            for (const P2::Function::Ptr &function: partitioner.functions()) {
                 bool isConstant = constants.find(function->address()) != constants.end();
                 if ((isConstant && !settings.selectFunctionsInverted) || (!isConstant && settings.selectFunctionsInverted))
                     retval.push_back(function);
@@ -689,7 +689,7 @@ int main(int argc, char *argv[]) {
     // Some analyses need to know what part of the address space is being disassembled.
     ASSERT_not_null(engine.memoryMap());
     AddressIntervalSet executableSpace;
-    BOOST_FOREACH (const MemoryMap::Node &node, engine.memoryMap()->nodes()) {
+    for (const MemoryMap::Node &node: engine.memoryMap()->nodes()) {
         if ((node.value().accessibility() & MemoryMap::EXECUTABLE)!=0)
             executableSpace.insert(node.key());
     }
@@ -702,7 +702,7 @@ int main(int argc, char *argv[]) {
         makeCallTargetFunctions(partitioner);           // not useful; see documentation at function definition
 
     // Insert debugging aids
-    BOOST_FOREACH (const std::string &s, settings.triggers) {
+    for (const std::string &s: settings.triggers) {
         if (boost::starts_with(s, "cfg-dot:")) {
             P2::Modules::CfgGraphVizDumper::Ptr aid = P2::Modules::CfgGraphVizDumper::instance(s.substr(8));
             partitioner.cfgAdjustmentCallbacks().append(aid);
@@ -770,7 +770,7 @@ int main(int argc, char *argv[]) {
     // but our function selection uses Partitioner2 data structures.
     if (settings.doListFunctions) {
         std::set<rose_addr_t> selectedVas;
-        BOOST_FOREACH (const P2::Function::Ptr &function, selectedFunctions)
+        for (const P2::Function::Ptr &function: selectedFunctions)
             selectedVas.insert(function->address());
         AsmFunctionIndex index;
         struct T1: AstSimpleProcessing {
@@ -797,12 +797,12 @@ int main(int argc, char *argv[]) {
         AddressIntervalSet unusedAddresses = partitioner.aum().unusedExtent(executableSpace);
         std::cout <<"Unused addresses: " <<StringUtility::plural(unusedAddresses.size(), "bytes")
                   <<" in " <<StringUtility::plural(unusedAddresses.nIntervals(), "intervals") <<"\n";
-        BOOST_FOREACH (const AddressInterval &unused, unusedAddresses.intervals())
+        for (const AddressInterval &unused: unusedAddresses.intervals())
             std::cout <<unused <<"\t" <<StringUtility::plural(unused.size(), "bytes") <<"\n";
     }
 
     if (settings.doListFunctionAddresses) {
-        BOOST_FOREACH (P2::Function::Ptr function, selectedFunctions) {
+        for (P2::Function::Ptr function: selectedFunctions) {
             rose_addr_t entryVa = function->address();
             P2::BasicBlock::Ptr bb = partitioner.basicBlockExists(entryVa);
             std::cout <<partitioner.functionName(function) <<": "
@@ -812,12 +812,12 @@ int main(int argc, char *argv[]) {
 
     if (settings.doListInstructionAddresses) {
         std::vector<P2::BasicBlock::Ptr> bblocks = partitioner.basicBlocks();
-        BOOST_FOREACH (const P2::BasicBlock::Ptr &bblock, bblocks) {
+        for (const P2::BasicBlock::Ptr &bblock: bblocks) {
             std::vector<P2::Function::Ptr> functions = partitioner.functionsOwningBasicBlock(bblock);
-            BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
+            for (SgAsmInstruction *insn: bblock->instructions()) {
                 std::cout <<StringUtility::addrToString(insn->get_address()) <<"+" <<insn->get_size();
                 std::cout <<"\t" <<StringUtility::addrToString(bblock->address());
-                BOOST_FOREACH (const P2::Function::Ptr &function, functions)
+                for (const P2::Function::Ptr &function: functions)
                     std::cout <<"\t" <<StringUtility::addrToString(function->address());
                 std::cout <<"\n";
             }
@@ -832,7 +832,7 @@ int main(int argc, char *argv[]) {
         analyzer.discardingCodePoints(false);
         analyzer.insertCommonEncoders(ByteOrder::ORDER_LSB);
         analyzer.find(partitioner.memoryMap()->any());
-        BOOST_FOREACH (const Strings::EncodedString &string, analyzer.strings()) {
+        for (const Strings::EncodedString &string: analyzer.strings()) {
             std::cout <<string.where() <<" " <<string.encoder()->length() <<"-character " <<string.encoder()->name() <<"\n";
             std::cout <<"  \"" <<StringUtility::cEscape(string.narrow()) <<"\"\n";
         }
@@ -840,12 +840,12 @@ int main(int argc, char *argv[]) {
     
     if (settings.doListContainer && interp) {
         std::set<SgAsmGenericFile*> emittedFiles;
-        BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers()) {
+        for (SgAsmGenericHeader *fileHeader: interp->get_headers()->get_headers()) {
             SgAsmGenericFile *container = SageInterface::getEnclosingNode<SgAsmGenericFile>(fileHeader);
             if (emittedFiles.insert(container).second) {
                 container->dump(stdout);
                 int i=0;
-                BOOST_FOREACH (SgAsmGenericSection *section, container->get_sections()) {
+                for (SgAsmGenericSection *section: container->get_sections()) {
                     printf("Section [%d]:\n", i++);
                     section->dump(stdout, "  ", -1);
                 }
@@ -884,7 +884,7 @@ int main(int argc, char *argv[]) {
             }
         } insnCounter;
         insnCounter.traverse(buildAst(engine, partitioner), preorder);
-        BOOST_FOREACH (const InsnCounter::InsnCount::Node &node, insnCounter.insnCount.nodes())
+        for (const InsnCounter::InsnCount::Node &node: insnCounter.insnCount.nodes())
             std::cout <<node.value() <<"\t" <<partitioner.unparse(node.key()) <<"\n";
     }
 
@@ -893,7 +893,7 @@ int main(int argc, char *argv[]) {
         const CallingConvention::Dictionary &dictionary = partitioner.instructionProvider().callingConventions();
         const CallingConvention::Definition *dfltCc = dictionary.empty() ? NULL : &dictionary.front();
         partitioner.allFunctionCallingConvention(dfltCc);
-        BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions()) {
+        for (const P2::Function::Ptr &function: partitioner.functions()) {
             std::cerr <<"calling conventions for " <<function->printableName() <<":\n";
             const CallingConvention::Analysis &ccAnalysis = function->callingConventionAnalysis();
             if (ccAnalysis.hasResults()) {
@@ -903,7 +903,7 @@ int main(int argc, char *argv[]) {
                 if (matches.empty()) {
                     std::cerr <<"  no maches; analysis reports " <<ccAnalysis <<"\n";
                 } else {
-                    BOOST_FOREACH (const CallingConvention::Definition &cc, matches)
+                    for (const CallingConvention::Definition &cc: matches)
                         std::cerr <<"  " <<cc.comment() <<"\n";
                 }
             } else {

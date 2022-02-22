@@ -144,7 +144,7 @@ nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
     // Find the locations of all the PLTs
     AddressIntervalSet pltAddresses;
     std::vector<SgAsmElfSection*> pltSections = ModulesElf::findSectionsByName(interp, ".plt");
-    BOOST_FOREACH (SgAsmElfSection *section, pltSections) {
+    for (SgAsmElfSection *section: pltSections) {
         if (section->is_mapped())
             pltAddresses |= AddressInterval::baseSize(section->get_mapped_actual_va(), section->get_mapped_size());
     }
@@ -152,7 +152,7 @@ nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
     // Look at all the functions that don't have names yet. If the function looks like a PowerPC ELF dynamic function
     // stub that goes through a particular PLT slot, then add "@plt" to the base name. If the PLT slot has a corresponding
     // entry in the .rela.plt section, then use that section's symbol table to get the base name of the function.
-    BOOST_FOREACH (const Function::Ptr &function, partitioner.functions()) {
+    for (const Function::Ptr &function: partitioner.functions()) {
         if (!function->name().empty())
             continue;
 
@@ -161,7 +161,7 @@ nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
             continue;
         
         std::vector<SgAsmElfSection*> relocSections = ModulesElf::findSectionsByName(interp, ".rela.plt");
-        BOOST_FOREACH (SgAsmGenericSection *genericRelocSection, relocSections) {
+        for (SgAsmGenericSection *genericRelocSection: relocSections) {
             SgAsmElfRelocSection *relocs = isSgAsmElfRelocSection(genericRelocSection);
             if (!relocs || !relocs->get_entries())
                 break;
@@ -169,7 +169,7 @@ nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
             if (!symtab)
                 break;
 
-            BOOST_FOREACH (SgAsmElfRelocEntry *reloc, relocs->get_entries()->get_entries()) {
+            for (SgAsmElfRelocEntry *reloc: relocs->get_entries()->get_entries()) {
                 if (reloc->get_r_offset() == *pltSlotVa) {
                     size_t symbolIdx = reloc->get_sym();
                     if (symbolIdx < symtab->get_symbols()->get_symbols().size()) {

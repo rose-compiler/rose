@@ -97,9 +97,9 @@ sizeStr(uint64_t n) {
 void
 print(const StackVariables &lvars, const P2::Partitioner &partitioner,
       std::ostream &out, const std::string &prefix) {
-    BOOST_FOREACH (const StackVariable &lvar, lvars.values()) {
+    for (const StackVariable &lvar: lvars.values()) {
         out <<prefix <<lvar <<"\n";
-        BOOST_FOREACH (rose_addr_t va, lvar.definingInstructionVas().values())
+        for (rose_addr_t va: lvar.definingInstructionVas().values())
             out <<prefix <<"  detected at " <<partitioner.instructionProvider()[va]->toString() <<"\n";
     }
 }
@@ -107,9 +107,9 @@ print(const StackVariables &lvars, const P2::Partitioner &partitioner,
 void
 print(const GlobalVariables &gvars, const P2::Partitioner &partitioner,
       std::ostream &out, const std::string &prefix) {
-    BOOST_FOREACH (const GlobalVariable &gvar, gvars.values()) {
+    for (const GlobalVariable &gvar: gvars.values()) {
         out <<prefix <<gvar <<"\n";
-        BOOST_FOREACH (rose_addr_t va, gvar.definingInstructionVas().values())
+        for (rose_addr_t va: gvar.definingInstructionVas().values())
             out <<prefix <<"  detected at " <<partitioner.instructionProvider()[va]->toString() <<"\n";
     }
 }
@@ -528,7 +528,7 @@ private:
         // Address must be an offset from some base address. The constant is the offet since the base address is probably a
         // symbolic stack or frame pointer. There might be more than one constant.
         if (SymbolicExpr::OP_ADD == addr->getOperator()) {
-            BOOST_FOREACH (SymbolicExpr::Ptr operand, addr->children()) {
+            for (SymbolicExpr::Ptr operand: addr->children()) {
                 int64_t offset = 0;
                 if (operand->toSigned().assignTo(offset)) {
                     SAWYER_MESG(debug) <<"    found offset " <<offsetStr(offset)
@@ -681,7 +681,7 @@ VariableFinder::referencedFrameArea(const Partitioner2::Partitioner &partitioner
     if (Sawyer::Optional<int64_t> offset = diff->toSigned()) {
         where = Variables::OffsetInterval::baseSize(*offset, nBytes);
     } else if (diff->getOperator() == SymbolicExpr::OP_ADD) {
-        BOOST_FOREACH (SymbolicExpr::Ptr child, diff->children()) {
+        for (SymbolicExpr::Ptr child: diff->children()) {
             if ((offset = child->toSigned())) {
                 where = Variables::OffsetInterval::baseSize(*offset, nBytes);
                 break;
@@ -923,7 +923,7 @@ VariableFinder::evict(const P2::Function::Ptr &function) {
 
 void
 VariableFinder::evict(const P2::Partitioner &partitioner) {
-    BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions())
+    for (const P2::Function::Ptr &function: partitioner.functions())
         evict(function);
 }
 
@@ -1007,7 +1007,7 @@ std::set<rose_addr_t>
 VariableFinder::findAddressConstants(const S2::BaseSemantics::MemoryCellStatePtr &mem) {
     std::set<SymbolicExpr::Ptr> addresses = getMemoryAddresses(mem);
     std::set<rose_addr_t> retval;
-    BOOST_FOREACH (const SymbolicExpr::Ptr &address, addresses) {
+    for (const SymbolicExpr::Ptr &address: addresses) {
         std::set<rose_addr_t> constants = findConstants(address);
         retval.insert(constants.begin(), constants.end());
     }
@@ -1028,9 +1028,9 @@ VariableFinder::findGlobalVariableVas(const P2::Partitioner &partitioner) {
     AddressToAddresses retval;
 
     // FIXME[Robb Matzke 2019-12-06]: This could be parallel
-    BOOST_FOREACH (const P2::ControlFlowGraph::Vertex &vertex, partitioner.cfg().vertices()) {
+    for (const P2::ControlFlowGraph::Vertex &vertex: partitioner.cfg().vertices()) {
         if (vertex.value().type() == P2::V_BASIC_BLOCK) {
-            BOOST_FOREACH (SgAsmInstruction *insn, vertex.value().bblock()->instructions()) {
+            for (SgAsmInstruction *insn: vertex.value().bblock()->instructions()) {
                 SAWYER_MESG(debug) <<"  " <<insn->toString() <<"\n";
 #if 1 // This method uses instruction semantics and then looks at the resulting memory state
                 ops->currentState()->clear();
@@ -1051,7 +1051,7 @@ VariableFinder::findGlobalVariableVas(const P2::Partitioner &partitioner) {
                 // Compute the contiguous regions formed by those constants. E.g., an instruction that reads four bytes of
                 // memory might have four consecutive constants.
                 AddressIntervalSet regions;
-                BOOST_FOREACH (rose_addr_t c, constants) {
+                for (rose_addr_t c: constants) {
                     if (partitioner.instructionExists(c))
                         continue;                       // not a variable pointer if it points to an instruction
                     if (!partitioner.memoryMap()->at(c).exists())
@@ -1061,7 +1061,7 @@ VariableFinder::findGlobalVariableVas(const P2::Partitioner &partitioner) {
                 }
 
                 // Save only the lowest constant in each contiguous region.
-                BOOST_FOREACH (const AddressInterval &interval, regions.intervals()) {
+                for (const AddressInterval &interval: regions.intervals()) {
                     SAWYER_MESG(debug) <<"      " <<StringUtility::addrToString(interval.least()) <<"\n";
                     retval[interval.least()].insert(insn->get_address());
                 }
@@ -1098,16 +1098,16 @@ VariableFinder::findGlobalVariables(const P2::Partitioner &partitioner) {
     }
 
     // Then remove code areas from the global variable location map
-    BOOST_FOREACH (const P2::ControlFlowGraph::Vertex &vertex, partitioner.cfg().vertices()) {
+    for (const P2::ControlFlowGraph::Vertex &vertex: partitioner.cfg().vertices()) {
         if (vertex.value().type() == P2::V_BASIC_BLOCK) {
-            BOOST_FOREACH (SgAsmInstruction *insn, vertex.value().bblock()->instructions())
+            for (SgAsmInstruction *insn: vertex.value().bblock()->instructions())
                 gvars.erase(AddressInterval::baseSize(insn->get_address(), insn->get_size()));
         }
     }
 
     // Finally build the return value
     GlobalVariables retval;
-    BOOST_FOREACH (const GVars::Node &node, gvars.nodes()) {
+    for (const GVars::Node &node: gvars.nodes()) {
         if (node.key().least() == node.value())
             retval.insert(node.key(), GlobalVariable(node.key().least(), node.key().size(), globalVariableVas[node.value()]));
     }

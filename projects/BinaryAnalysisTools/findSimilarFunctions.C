@@ -135,7 +135,7 @@ size_t treeSize(SgNode *ast) {
 
 size_t treeSize(const std::vector<SgAsmFunction*> &functions) {
     size_t n = 0;
-    BOOST_FOREACH (SgAsmFunction *function, functions)
+    for (SgAsmFunction *function: functions)
         n += treeSize(function);
     return n;
 }
@@ -202,10 +202,10 @@ public:
     SizeAddrDistance(const std::vector<SgAsmFunction*> &functions1, const std::vector<SgAsmFunction*> &functions2)
         : pos1_(0), pos2_(0) {
         ASSERT_require(P2::isSorted(functions1, P2::sortFunctionNodesByAddress));
-        BOOST_FOREACH (SgAsmFunction *function, functions1)
+        for (SgAsmFunction *function: functions1)
             fmap1_.insert(function, function->get_entry_va());
         ASSERT_require(P2::isSorted(functions1, P2::sortFunctionNodesByAddress));
-        BOOST_FOREACH (SgAsmFunction *function, functions2)
+        for (SgAsmFunction *function: functions2)
             fmap2_.insert(function, function->get_entry_va());
     }
     void setTree1(SgNode *ast) { SizeDistance::setTree1(ast); setTree(ast, fmap1_, pos1_/*out*/); }

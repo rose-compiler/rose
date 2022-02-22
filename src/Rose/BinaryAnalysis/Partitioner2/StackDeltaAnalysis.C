@@ -25,7 +25,7 @@ namespace Partitioner2 {
 
 void
 Partitioner::forgetStackDeltas() const {
-    BOOST_FOREACH (const Function::Ptr &function, functions())
+    for (const Function::Ptr &function: functions())
         forgetStackDeltas(function);
 }
 
@@ -45,7 +45,7 @@ struct InterproceduralPredicate: P2::DataFlow::InterproceduralPredicate {
             return false;
         ASSERT_require(callEdge != cfg.edges().end());
         ASSERT_require(callEdge->target()->value().type() == V_BASIC_BLOCK);
-        BOOST_FOREACH (const Function::Ptr &function, callEdge->target()->value().owningFunctions().values()) {
+        for (const Function::Ptr &function: callEdge->target()->value().owningFunctions().values()) {
             if (function->stackDelta())
                 return false;
         }

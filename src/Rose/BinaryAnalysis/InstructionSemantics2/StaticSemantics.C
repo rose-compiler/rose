@@ -29,7 +29,7 @@ void attachInstructionSemantics(SgNode *ast, Disassembler *disassembler) {
 void attachInstructionSemantics(SgNode *ast, const BaseSemantics::DispatcherPtr &cpu) {
     // We cannot use an AST traversal because we'd be modifying the AST while traversing, which is bad.
     std::vector<SgAsmInstruction*> insns = SageInterface::querySubTree<SgAsmInstruction>(ast);
-    BOOST_FOREACH (SgAsmInstruction *insn, insns) {
+    for (SgAsmInstruction *insn: insns) {
         if (insn->get_semantics()==NULL) {
             try {
                 // Side effect is that semanics are attached to the instruction.
@@ -191,7 +191,7 @@ void
 RiscOperators::startInstruction(SgAsmInstruction *insn) {
     // Make sure any previous semantics are erased before we start.
     if (SgAsmExprListExp *semantics = insn->get_semantics()) {
-        BOOST_FOREACH (SgAsmExpression *expr, semantics->get_expressions()) {
+        for (SgAsmExpression *expr: semantics->get_expressions()) {
             // FIXME[Robb P. Matzke 2015-06-06]: delete subtree mechanism is broken; this is a memory leak
             expr->set_parent(NULL);
         }

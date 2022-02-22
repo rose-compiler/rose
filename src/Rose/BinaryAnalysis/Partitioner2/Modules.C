@@ -43,7 +43,7 @@ void
 demangleFunctionNames(const Partitioner &p) {
     // The demangler is most efficient if we give it all the names at once.
     std::vector<std::string> mangledNames;
-    BOOST_FOREACH (const Function::Ptr &f, p.functions()) {
+    for (const Function::Ptr &f: p.functions()) {
         if (!f->name().empty() && f->name() == f->demangledName())
             mangledNames.push_back(f->name());
     }
@@ -58,7 +58,7 @@ demangleFunctionNames(const Partitioner &p) {
         return;
     }
 
-    BOOST_FOREACH (const Function::Ptr &f, p.functions()) {
+    for (const Function::Ptr &f: p.functions()) {
         if (!f->name().empty() && f->name() == f->demangledName()) { // same condition as above
             std::string demangled = demangler.demangle(f->name());
             if (demangled != f->name())
@@ -71,7 +71,7 @@ bool
 AddGhostSuccessors::operator()(bool chain, const Args &args) {
     if (chain) {
         size_t nBits = args.partitioner.instructionProvider().instructionPointerRegister().nBits();
-        BOOST_FOREACH (rose_addr_t successorVa, args.partitioner.basicBlockGhostSuccessors(args.bblock))
+        for (rose_addr_t successorVa: args.partitioner.basicBlockGhostSuccessors(args.bblock))
             args.bblock->insertSuccessor(successorVa, nBits);
     }
     return chain;
@@ -94,7 +94,7 @@ BasicBlockSizeLimiter::operator()(bool chain, const Args &args) {
         args.results.terminate = TERMINATE_NOW;
         if (mlog[DEBUG]) {
             mlog[DEBUG] <<"BasicBlockSizeLimiter triggered (max " <<StringUtility::plural(maxInsns_, "instructions") <<"):\n";
-            BOOST_FOREACH (SgAsmInstruction *insn, args.bblock->instructions())
+            for (SgAsmInstruction *insn: args.bblock->instructions())
                 mlog[DEBUG] <<"        " <<args.partitioner.unparse(insn) <<"\n";
         }
     }
@@ -112,7 +112,7 @@ IpRewriter::operator()(bool chain, const Args &args) {
         bool isModified = false;
         BaseSemantics::RiscOperatorsPtr ops = args.partitioner.newOperators();
         for (size_t i = 0; i < succs.size(); ++i) {
-            BOOST_FOREACH (const AddressPair &rewrite, rewrites_) {
+            for (const AddressPair &rewrite: rewrites_) {
                 BaseSemantics::SValuePtr oldValue = ops->number_(wordSize, rewrite.first);
                 if (succs[i].expr()->mustEqual(oldValue)) {
                     Semantics::SValuePtr newValue = Semantics::SValue::promote(ops->number_(wordSize, rewrite.second));
@@ -162,7 +162,7 @@ InstructionLister::docString() {
 InstructionLister::Ptr
 InstructionLister::instance(const std::string &config) {
     std::vector<std::string> args;
-    BOOST_FOREACH (const std::string &s, StringUtility::split(':', config))
+    for (const std::string &s: StringUtility::split(':', config))
         args.push_back(":"+s);
     return instance(args);
 }
@@ -192,7 +192,7 @@ InstructionLister::operator()(bool chain, const AttachedBasicBlock &args) {
               <<" in [" <<addrToString(settings_.what.least()) <<"," <<addrToString(settings_.what.greatest()) <<"]\n";
         if (!insns.empty()) {
             rose_addr_t va = insns.front()->get_address();
-            BOOST_FOREACH (SgAsmInstruction *insn, insns) {
+            for (SgAsmInstruction *insn: insns) {
                 std::string label;
                 if (insn->get_address() > va) {
                     label = "+" + numberToString(insn->get_address()-va);
@@ -258,7 +258,7 @@ CfgGraphVizDumper::docString() {
 CfgGraphVizDumper::Ptr
 CfgGraphVizDumper::instance(const std::string &config) {
     std::vector<std::string> args;
-    BOOST_FOREACH (const std::string &s, StringUtility::split(':', config))
+    for (const std::string &s: StringUtility::split(':', config))
         args.push_back(":"+s);
     return instance(args);
 }
@@ -342,7 +342,7 @@ HexDumper::docString() {
 HexDumper::Ptr
 HexDumper::instance(const std::string &config) {
     std::vector<std::string> args;
-    BOOST_FOREACH (const std::string &s, StringUtility::split(':', config))
+    for (const std::string &s: StringUtility::split(':', config))
         args.push_back(":"+s);
     return instance(args);
 }
@@ -428,7 +428,7 @@ Debugger::docString() {
 Debugger::Ptr
 Debugger::instance(const std::string &config) {
     std::vector<std::string> args;
-    BOOST_FOREACH (const std::string &s, StringUtility::split(':', config))
+    for (const std::string &s: StringUtility::split(':', config))
         args.push_back(":"+s);
     return instance(args);
 }
@@ -495,7 +495,7 @@ MatchThunk::match(const Partitioner &partitioner, rose_addr_t anchor) {
     BasicBlock::Ptr bb = BasicBlock::instance(anchor, partitioner);
     for (size_t i=0; i<found.nInsns; ++i)
         bb->append(partitioner, insns[i]);
-    BOOST_FOREACH (const BasicBlock::Successor &successor, partitioner.basicBlockSuccessors(bb)) {
+    for (const BasicBlock::Successor &successor: partitioner.basicBlockSuccessors(bb)) {
         if (auto targetVa = successor.expr()->toUnsigned()) {
             if (Function::Ptr thunkTarget = partitioner.functionExists(*targetVa)) {
                 thunkTarget->insertReasons(SgAsmFunction::FUNC_THUNK_TARGET);
@@ -662,14 +662,14 @@ nameStrings(const Partitioner &partitioner, const AddressInterval &where) {
             }
         }
     } t1(partitioner, where);
-    BOOST_FOREACH (SgAsmInstruction *insn, partitioner.instructionsOverlapping(AddressInterval::whole()))
+    for (SgAsmInstruction *insn: partitioner.instructionsOverlapping(AddressInterval::whole()))
         t1.traverse(insn, preorder);
 }
 
 void
 labelSymbolAddresses(Partitioner &partitioner, SgAsmInterpretation *interp) {
     if (interp!=NULL) {
-        BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers())
+        for (SgAsmGenericHeader *fileHeader: interp->get_headers()->get_headers())
             labelSymbolAddresses(partitioner, fileHeader);
     }
 }
@@ -727,7 +727,7 @@ findSymbolFunctions(const Partitioner &partitioner, SgAsmGenericHeader *fileHead
 
     size_t nInserted = 0;
     t1.traverse(fileHeader, preorder);
-    BOOST_FOREACH (const AddrNames::Node &node, t1.addrNames.nodes()) {
+    for (const AddrNames::Node &node: t1.addrNames.nodes()) {
         Function::Ptr function = Function::instance(node.key(), node.value(), SgAsmFunction::FUNC_SYMBOL);
         if (insertUnique(functions, function, sortFunctionsByAddress))
             ++nInserted;
@@ -747,7 +747,7 @@ std::vector<Function::Ptr>
 findSymbolFunctions(const Partitioner &partitioner, SgAsmInterpretation *interp) {
     std::vector<Function::Ptr> functions;
     if (interp!=NULL) {
-        BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers())
+        for (SgAsmGenericHeader *fileHeader: interp->get_headers()->get_headers())
             findSymbolFunctions(partitioner, fileHeader, functions);
     }
     return functions;
@@ -766,7 +766,7 @@ nameConstants(const Partitioner &partitioner) {
         }
     } constantRenamer(partitioner);
 
-    BOOST_FOREACH (SgAsmInstruction *insn, partitioner.instructionsOverlapping(AddressInterval::whole()))
+    for (SgAsmInstruction *insn: partitioner.instructionsOverlapping(AddressInterval::whole()))
         constantRenamer.traverse(insn, preorder);
 }
 
@@ -892,7 +892,7 @@ buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, co
     // deltas based on which function was analyzed. We must choose one function's stack deltas and we must make sure they're
     // current. The approach we take is simple: just store the stack deltas each time and let the last one win.
     if (sdAnalysis.hasResults()) {
-        BOOST_FOREACH (SgAsmInstruction *insn, insns)
+        for (SgAsmInstruction *insn: insns)
             insn->set_stackDeltaIn(sdAnalysis.toInt(sdAnalysis.instructionInputStackDeltaWrtFunction(insn)));
     }
 
@@ -903,7 +903,7 @@ buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, co
     // higher up on the AST-building stack.
     if (bblockVertex != partitioner.cfg().vertices().end()) {
         bool isComplete = true;
-        BOOST_FOREACH (const ControlFlowGraph::Edge &edge, bblockVertex->outEdges()) {
+        for (const ControlFlowGraph::Edge &edge: bblockVertex->outEdges()) {
             const ControlFlowGraph::Vertex &target = *edge.target();
             if (target.value().type() == V_INDETERMINATE || target.value().type() == V_NONEXISTING) {
                 isComplete = false;
@@ -917,7 +917,7 @@ buildBasicBlockAst(const Partitioner &partitioner, const BasicBlock::Ptr &bb, co
         ast->set_successors_complete(isComplete);
     } else {
         bool isComplete = true;
-        BOOST_FOREACH (rose_addr_t successorVa, partitioner.basicBlockConcreteSuccessors(bb, &isComplete)) {
+        for (rose_addr_t successorVa: partitioner.basicBlockConcreteSuccessors(bb, &isComplete)) {
             SgAsmIntegerValueExpression *succ = SageBuilderAsm::buildValueU64(successorVa);
             succ->set_parent(ast);
             ast->get_successors().push_back(succ);
@@ -946,7 +946,7 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
     // Build the child basic block IR nodes and remember all the data blocks
     std::vector<DataBlock::Ptr> dblocks = function->dataBlocks();
     std::vector<SgAsmBlock*> children;
-    BOOST_FOREACH (rose_addr_t blockVa, function->basicBlockAddresses()) {
+    for (rose_addr_t blockVa: function->basicBlockAddresses()) {
         ControlFlowGraph::ConstVertexIterator vertex = partitioner.findPlaceholder(blockVa);
         if (vertex == partitioner.cfg().vertices().end()) {
             mlog[WARN] <<function->printableName() <<" bblock "
@@ -954,7 +954,7 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
         } else if (BasicBlock::Ptr bb = vertex->value().bblock()) {
             if (SgAsmBlock *child = buildBasicBlockAst(partitioner, bb, function, settings))
                 children.push_back(child);
-            BOOST_FOREACH (const DataBlock::Ptr &dblock, bb->dataBlocks())
+            for (const DataBlock::Ptr &dblock: bb->dataBlocks())
                 insertUnique(dblocks, dblock, sortDataBlocks);
         } else {
             mlog[WARN] <<function->printableName() <<" bblock "
@@ -971,7 +971,7 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
 
     // Build the child data block IR nodes.  The data blocks attached to the SgAsmFunction node are the union of the data
     // blocks owned by the function and the data blocks owned by each of its basic blocks.
-    BOOST_FOREACH (const DataBlock::Ptr &dblock, dblocks) {
+    for (const DataBlock::Ptr &dblock: dblocks) {
         if (SgAsmBlock *child = buildDataBlockAst(partitioner, dblock, settings))
             children.push_back(child);
     }
@@ -992,7 +992,7 @@ buildFunctionAst(const Partitioner &partitioner, const Function::Ptr &function, 
 
     // Is the function the target of a function call?
     if (entryVertex != partitioner.cfg().vertices().end()) {
-        BOOST_FOREACH (const ControlFlowGraph::Edge &edge, entryVertex->inEdges()) {
+        for (const ControlFlowGraph::Edge &edge: entryVertex->inEdges()) {
             if (edge.value().type() == E_FUNCTION_CALL || edge.value().type() == E_FUNCTION_XFER) {
                 reasons |= SgAsmFunction::FUNC_CALL_TARGET;
                 break;
@@ -1031,7 +1031,7 @@ SgAsmBlock*
 buildGlobalBlockAst(const Partitioner &partitioner, const AstConstructionSettings &settings) {
     // Create the children first
     std::vector<SgAsmFunction*> children;
-    BOOST_FOREACH (const Function::Ptr &function, partitioner.functions()) {
+    for (const Function::Ptr &function: partitioner.functions()) {
         if (SgAsmFunction *func = buildFunctionAst(partitioner, function, settings)) {
             children.push_back(func);
         }
@@ -1046,7 +1046,7 @@ buildGlobalBlockAst(const Partitioner &partitioner, const AstConstructionSetting
 
     // Build the global block
     SgAsmBlock *global = new SgAsmBlock;
-    BOOST_FOREACH (SgAsmFunction *function, children) {
+    for (SgAsmFunction *function: children) {
         global->get_statementList().push_back(function);
         function->set_parent(global);
     }
@@ -1096,10 +1096,10 @@ fixupAstPointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/) {
     SgAsmGenericSectionPtrList mappedSections;
     Index sectionIndex;
     if (interp) {
-        BOOST_FOREACH (SgAsmGenericHeader *header, interp->get_headers()->get_headers()) {
+        for (SgAsmGenericHeader *header: interp->get_headers()->get_headers()) {
             if (header->is_mapped())
                 mappedSections.push_back(header);
-            BOOST_FOREACH (SgAsmGenericSection *section, header->get_mapped_sections()) {
+            for (SgAsmGenericSection *section: header->get_mapped_sections()) {
                 if (!section->get_mapped_xperm())
                     mappedSections.push_back(section);
             }
@@ -1121,7 +1121,7 @@ fixupAstPointers(SgNode *ast, SgAsmInterpretation *interp/*=NULL*/) {
                 ivals.push_back(ival);
             }
 
-            BOOST_FOREACH (SgAsmIntegerValueExpression *ival, ivals) {
+            for (SgAsmIntegerValueExpression *ival: ivals) {
                 if (ival->get_baseNode()==NULL) {
                     rose_addr_t va = ival->get_absoluteValue();
                     SgAsmNode *base = NULL;
@@ -1142,26 +1142,26 @@ void
 fixupAstCallingConventions(const Partitioner &partitioner, SgNode *ast) {
     // Pass 1: Sort all calling conventions by number of occurrences within the partitioner.
     Sawyer::Container::Map<std::string, size_t> totals; // how many times does each calling convention name match?
-    BOOST_FOREACH (const Function::Ptr &function, partitioner.functions()) {
+    for (const Function::Ptr &function: partitioner.functions()) {
         const CallingConvention::Analysis &ccAnalysis = function->callingConventionAnalysis();
         if (!ccAnalysis.hasResults())
             continue;                                   // don't run analysis if not run already
         CallingConvention::Dictionary ccDefs = partitioner.functionCallingConventionDefinitions(function);
-        BOOST_FOREACH (const CallingConvention::Definition::Ptr &ccDef, ccDefs)
+        for (const CallingConvention::Definition::Ptr &ccDef: ccDefs)
             ++totals.insertMaybe(ccDef->name(), 0);
     }
 
     // Pass 2: For each function in the AST, select the matching definition that's most frequent overall. If there's a tie, use
     // the first one from the function's definition list since this list is presumably sorted by how frequently the convention
     // is used by the whole world.
-    BOOST_FOREACH (SgAsmFunction *astFunction, SageInterface::querySubTree<SgAsmFunction>(ast)) {
+    for (SgAsmFunction *astFunction: SageInterface::querySubTree<SgAsmFunction>(ast)) {
         if (Function::Ptr function = partitioner.functionExists(astFunction->get_address())) {
             const CallingConvention::Analysis &ccAnalysis = function->callingConventionAnalysis();
             if (!ccAnalysis.hasResults())
                 continue;                               // don't run analysis if not run already
             CallingConvention::Dictionary ccDefs = partitioner.functionCallingConventionDefinitions(function);
             CallingConvention::Definition::Ptr ccBest;
-            BOOST_FOREACH (const CallingConvention::Definition::Ptr &ccDef, ccDefs) {
+            for (const CallingConvention::Definition::Ptr &ccDef: ccDefs) {
                 if (NULL==ccBest) {
                     ccBest = ccDef;
                 } else if (totals.getOrElse(ccDef->name(), 0) > totals.getOrElse(ccBest->name(), 0)) {
@@ -1181,7 +1181,7 @@ std::vector<Function::Ptr>
 findNoopFunctions(const Partitioner &partitioner) {
     partitioner.allFunctionIsNoop();
     std::vector<Function::Ptr> retval;
-    BOOST_FOREACH (const Function::Ptr &function, partitioner.functions()) {
+    for (const Function::Ptr &function: partitioner.functions()) {
         if (function->isNoop().getOptional().orElse(false))
             insertUnique(retval, function, sortFunctionsByAddress);
     }
@@ -1190,7 +1190,7 @@ findNoopFunctions(const Partitioner &partitioner) {
 
 void
 nameNoopFunctions(const Partitioner &partitioner) {
-    BOOST_FOREACH (const Function::Ptr &function, findNoopFunctions(partitioner)) {
+    for (const Function::Ptr &function: findNoopFunctions(partitioner)) {
         if (function->name().empty()) {
             std::string newName = "noop_" + StringUtility::addrToString(function->address()).substr(2) + "() -> void";
             function->name(newName);

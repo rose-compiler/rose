@@ -163,14 +163,14 @@ public:
 
     std::string doc() const {
         std::string s = "The following properties are defined:\n\n";
-        BOOST_FOREACH (Property *property, properties_.values())
+        for (Property *property: properties_.values())
             s += "@named{" + property->name() + "}{" + property->doc() + "}\n";
         return s;
     }
 
     bool check(const std::vector<std::string> &names, std::ostream &errorStream) const {
         size_t status = true;
-        BOOST_FOREACH (const std::string &name, names) {
+        for (const std::string &name: names) {
             if (name != "all" && !properties_.exists(name)) {
                 errorStream <<"unrecognized property: \"" <<StringUtility::cEscape(name) <<"\"\n";
                 status = false;
@@ -190,7 +190,7 @@ public:
     }
 
     void evalAll(const P2::Partitioner &partitioner) {
-        BOOST_FOREACH (Property *property, properties_.values()) {
+        for (Property *property: properties_.values()) {
             std::cout <<property->name() <<": ";
             property->eval(partitioner);
         }
@@ -266,7 +266,7 @@ main(int argc, char *argv[]) {
     if (showAllProperties) {
         properties.evalAll(partitioner);
     } else {
-        BOOST_FOREACH (const std::string &property, args)
+        for (const std::string &property: args)
             properties.eval(property, partitioner);
     }
 

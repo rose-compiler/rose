@@ -16,7 +16,7 @@ runSelfTestsAndExit() {
 
     // Run each test sequentially
     size_t npass=0, nfail=0;
-    BOOST_FOREACH (const SelfTest::Ptr &test, selfTests) {
+    for (const SelfTest::Ptr &test: selfTests) {
         if (test) {
             mlog[DEBUG] <<"running self test \"" <<StringUtility::cEscape(test->name()) <<"\"...\n";
             if ((*test)()) {

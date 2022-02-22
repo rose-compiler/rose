@@ -1,5 +1,6 @@
 #include <rose.h>
 #include <Sawyer/IntervalMap.h>
+#include <boost/range/adaptor/reversed.hpp>
 
 using namespace Rose::StringUtility;
 
@@ -20,6 +21,6 @@ main(int argc, char *argv[], char *envp[]) {
     whatsHere.insert(AddressInterval::baseSize((rose_addr_t)&envp, sizeof(char**)), "envp");
 
     // Print them
-    BOOST_REVERSE_FOREACH (const WhatsHere::Node &node, whatsHere.nodes())
+    for (const WhatsHere::Node &node: boost::adaptors::reverse(whatsHere.nodes()))
         std::cout <<node.key() <<"\t" <<node.value() <<"\n";
 }

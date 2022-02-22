@@ -12,7 +12,6 @@
 #include <boost/graph/visitors.hpp>
 #include <boost/algorithm/string.hpp>
 
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include <vector>
@@ -152,11 +151,11 @@ compute_eqivalence_classes(double similarity_threshold, bool reachability_graph)
     Components components(parent.begin(), parent.end());
 
     // Iterate through the component indices
-    BOOST_FOREACH(VertexIndex current_index, components) {
+    for(VertexIndex current_index: components) {
         int first_value = -1;
 
         // Iterate through the child vertex indices for [current_index]
-        BOOST_FOREACH(VertexIndex child_index, components[current_index]) {
+        for(VertexIndex child_index: components[current_index]) {
             if (first_value >= 0) {
                 insert_stmt->bind(0, child_index);
                 insert_stmt->bind(1, first_value);

@@ -456,7 +456,7 @@ scanCodeAddressTable(const Partitioner &partitioner, AddressInterval &tableLimit
                 debug <<"  found " <<StringUtility::plural(nBackwardEntries, "entries") <<" by scanning backward\n";
             debug <<"  total entries found: " <<tableEntries.size() <<"\n";
             int idx = -nBackwardEntries;
-            BOOST_FOREACH (rose_addr_t target, tableEntries) {
+            for (rose_addr_t target: tableEntries) {
                 debug <<"    entry[" <<boost::format("%4d") % idx <<"]"
                       <<" at " <<StringUtility::addrToString(actualStartVa + idx * tableEntrySizeBytes)
                       <<" = " <<StringUtility::addrToString(target) <<"\n";
@@ -822,7 +822,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
     // Replace basic block's successors with the new ones we found.
     std::set<rose_addr_t> successors(tableEntries.begin(), tableEntries.end());
     args.bblock->successors().clear();
-    BOOST_FOREACH (rose_addr_t va, successors)
+    for (rose_addr_t va: successors)
         args.bblock->insertSuccessor(va, wordSizeBytes*8);
 
     // Create a data block for the offset table and attach it to the basic block
@@ -844,7 +844,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
                     <<", " <<plural(tableLimits.size(), "bytes") <<"\n";
         mlog[DEBUG] <<"  successors:  " <<plural(successors.size(), "distinct addresses") <<"\n";
         mlog[DEBUG] <<"   ";
-        BOOST_FOREACH (rose_addr_t va, successors)
+        for (rose_addr_t va: successors)
             mlog[DEBUG] <<" " <<addrToString(va);
         mlog[DEBUG] <<"\n";
     }

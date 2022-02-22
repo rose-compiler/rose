@@ -16,7 +16,7 @@ void
 Demangler::fillCache(const std::vector<std::string> &mangledNames) {
     // Save mangled names to a file.  If the mangled name contains certain special characters then don't attempt to demangle it.
     Sawyer::FileSystem::TemporaryFile mangledFile;
-    BOOST_FOREACH (const std::string &s, mangledNames) {
+    for (const std::string &s: mangledNames) {
         bool isGood = true;
         for (size_t i=0; isGood && i<s.size(); ++i)
             isGood = isgraph(s[i]);

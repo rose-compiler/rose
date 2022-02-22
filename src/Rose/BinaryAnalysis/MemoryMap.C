@@ -11,7 +11,6 @@
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/filesystem.hpp>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
 #include <boost/scope_exit.hpp>
@@ -1051,7 +1050,7 @@ MemoryMap::eraseZeros(size_t minsize)
     }
     if (zeroInterval.size() >= minsize)
         toRemove.insert(zeroInterval);
-    BOOST_FOREACH (const AddressInterval &interval, toRemove.intervals())
+    for (const AddressInterval &interval: toRemove.intervals())
         erase(interval);
 }
 
@@ -1145,7 +1144,7 @@ MemoryMap::findSequence(const AddressInterval &interval, const std::vector<uint8
 bool
 MemoryMap::shrinkUnshare() {
     bool success = true;
-    BOOST_FOREACH (MemoryMap::Node &node, nodes()) {
+    for (MemoryMap::Node &node: nodes()) {
         const AddressInterval &interval = node.key();
         MemoryMap::Segment &segment = node.value();
         if (const uint8_t *data = segment.buffer()->data()) {
@@ -1193,7 +1192,7 @@ MemoryMap::dump(std::ostream &out, std::string prefix) const
         return;
     }
 
-    BOOST_FOREACH (const Node &node, nodes()) {
+    for (const Node &node: nodes()) {
         const AddressInterval &range = node.key();
         const Segment &segment = node.value();
         out <<prefix

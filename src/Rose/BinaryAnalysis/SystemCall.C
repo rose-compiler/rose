@@ -4,7 +4,6 @@
 #include <Rose/BinaryAnalysis/SystemCall.h>
 
 #include <Rose/BinaryAnalysis/AbstractLocation.h>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <fstream>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicBlock.h>
@@ -21,7 +20,7 @@ SystemCall::declare(const Declaration &declaration) {
 
 void
 SystemCall::declare(const std::vector<Declaration> &declarations) {
-    BOOST_FOREACH (const Declaration &declaration, declarations)
+    for (const Declaration &declaration: declarations)
         declare(declaration);
 }
 
@@ -38,7 +37,7 @@ SystemCall::lookup(uint64_t id) const {
 std::vector<SystemCall::Declaration>
 SystemCall::lookup(const std::string &name) const {
     std::vector<Declaration> retval;
-    BOOST_FOREACH (const Declaration &declaration, declarations_.values()) {
+    for (const Declaration &declaration: declarations_.values()) {
         if (declaration.name == name)
             retval.push_back(declaration);
     }
@@ -79,7 +78,7 @@ SystemCall::isSystemCall(SgAsmInstruction *insn_) const {
 
 SgAsmInstruction*
 SystemCall::hasSystemCall(const Partitioner2::BasicBlock::Ptr &bblock) const {
-    BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
+    for (SgAsmInstruction *insn: bblock->instructions()) {
         if (isSystemCall(insn))
             return insn;
     }
@@ -107,7 +106,7 @@ SystemCall::analyze(const Partitioner2::Partitioner &partitioner, const Partitio
 
     // Analyze the basic block.
     bool foundSyscallInsn = false;
-    BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
+    for (SgAsmInstruction *insn: bblock->instructions()) {
         if (insn == syscallInsn) {
             foundSyscallInsn = true;
             break;

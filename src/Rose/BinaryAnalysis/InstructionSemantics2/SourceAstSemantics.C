@@ -100,7 +100,7 @@ RiscOperators::resetState() {
     registers->initialize_large();
     registers->accessModifiesExistingLocations(false);
     RegisterState::RegPairs regpairs = registers->get_stored_registers();
-    BOOST_FOREACH (RegisterState::RegPair &regpair, regpairs) {
+    for (RegisterState::RegPair &regpair: regpairs) {
         std::string varName = registerVariableName(regpair.desc);
         BaseSemantics::SValuePtr value = makeSValue(regpair.desc.nBits(), NULL, varName);
         registers->writeRegister(regpair.desc, value, this);
@@ -505,7 +505,7 @@ RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValue
    RegisterStatePtr registers = RegisterState::promote(currentState()->registerState());
    RegisterState::BitRange wantLocation = RegisterState::BitRange::baseSize(reg.offset(), reg.nBits());
    RegisterState::RegPairs regpairs = registers->overlappingRegisters(reg);
-   BOOST_FOREACH (RegisterState::RegPair &regpair, regpairs) {
+   for (RegisterState::RegPair &regpair: regpairs) {
        RegisterState::BitRange storageLocation = regpair.location();
        RegisterState::BitRange overlapLocation = wantLocation & storageLocation;
 
@@ -532,7 +532,7 @@ RiscOperators::writeRegister(RegisterDescriptor reg, const BaseSemantics::SValue
    }
 
    // Substitute, and write substitution back to register state.
-   BOOST_FOREACH (const RegisterState::RegPair &regpair, regpairs) {
+   for (const RegisterState::RegPair &regpair: regpairs) {
        BaseSemantics::SValuePtr regVar = makeSValue(regpair.desc.nBits(), NULL, registerVariableName(regpair.desc));
        BaseSemantics::SValuePtr temp = saveSideEffect(regpair.value, regVar);
        registers->writeRegister(regpair.desc, temp, this);

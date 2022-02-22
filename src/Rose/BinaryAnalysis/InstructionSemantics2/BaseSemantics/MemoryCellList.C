@@ -9,6 +9,8 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/SValue.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/Util.h>
 
+#include <boost/range/adaptor/reversed.hpp>
+
 using namespace Sawyer::Message::Common;
 
 namespace Rose {
@@ -127,22 +129,22 @@ MemoryCellList::mergeWithAliasing(const MemoryStatePtr &other_, RiscOperators *a
     if (debug) {
         debug <<"MemoryCellList::mergeWithAliasing\n";
         debug <<"  merge into:\n";
-        BOOST_FOREACH (const MemoryCellPtr &cell, get_cells())
+        for (const MemoryCellPtr &cell: get_cells())
             debug <<"    addr=" <<*cell->address() <<" value=" <<*cell->value() <<"\n";
         debug <<"  merging from:\n";
-        BOOST_FOREACH (const MemoryCellPtr &cell, other->get_cells())
+        for (const MemoryCellPtr &cell: other->get_cells())
             debug <<"    addr=" <<*cell->address() <<" value=" <<*cell->value() <<"\n";
     }
 
-    BOOST_REVERSE_FOREACH (const MemoryCellPtr &otherCell, other->get_cells()) {
+    for (const MemoryCellPtr &otherCell: boost::adaptors::reverse(other->get_cells())) {
         SAWYER_MESG(debug) <<"  merging from cell"
-                                 <<" addr=" <<*otherCell->address()
-                                 <<" value=" <<*otherCell->value() <<"\n";
+                           <<" addr=" <<*otherCell->address()
+                           <<" value=" <<*otherCell->value() <<"\n";
 
         // Is there some later-in-time (earlier-in-list) cell that occludes this one? If so, then we don't need to process this
         // cell.
         bool isOccluded = false;
-        BOOST_FOREACH (const MemoryCellPtr &cell, other->get_cells()) {
+        for (const MemoryCellPtr &cell: other->get_cells()) {
             if (cell == otherCell) {
                 break;
             } else if (otherCell->address()->mustEqual(cell->address(), addrOps->solver())) {
@@ -210,7 +212,7 @@ MemoryCellList::mergeWithAliasing(const MemoryStatePtr &other_, RiscOperators *a
 
             if (debug) {
                 debug <<"    new destination state:\n";
-                BOOST_FOREACH (const MemoryCellPtr &cell, get_cells())
+                for (const MemoryCellPtr &cell: get_cells())
                     debug <<"      addr=" <<*cell->address() <<" value=" <<*cell->value() <<"\n";
             }
         }
@@ -230,14 +232,14 @@ MemoryCellList::mergeNoAliasing(const MemoryStatePtr &other_, RiscOperators *add
     if (debug) {
         debug <<"MemoryCellList::mergeNoAliasing:\n"
                     <<"  merging into:\n";
-        BOOST_FOREACH (const MemoryCellPtr &cell, get_cells())
+        for (const MemoryCellPtr &cell: get_cells())
             debug <<"    addr=" <<*cell->address() <<" value=" <<*cell->value() <<"\n";
         debug <<"  merging from:\n";
-        BOOST_FOREACH (const MemoryCellPtr &cell, other->get_cells())
+        for (const MemoryCellPtr &cell: other->get_cells())
             debug <<"    addr=" <<*cell->address() <<" value=" <<*cell->value() <<"\n";
     }
     
-    BOOST_REVERSE_FOREACH (const MemoryCellPtr &otherCell, other->get_cells()) {
+    for (const MemoryCellPtr &otherCell: boost::adaptors::reverse(other->get_cells())) {
         // Read the value, writers, and properties without disturbing the states
         SValuePtr otherAddress = otherCell->address();
         SValuePtr otherValue = otherCell->value();
@@ -248,7 +250,7 @@ MemoryCellList::mergeNoAliasing(const MemoryStatePtr &other_, RiscOperators *add
         // Is there some later-in-time (earlier-in-list) cell that occludes this one? If so, then we don't need to process this
         // cell.
         bool isOccluded = false;
-        BOOST_FOREACH (const MemoryCellPtr &cell, other->get_cells()) {
+        for (const MemoryCellPtr &cell: other->get_cells()) {
             if (cell == otherCell) {
                 break;
             } else if (otherAddress->mustEqual(cell->address(), addrOps->solver())) {
@@ -263,7 +265,7 @@ MemoryCellList::mergeNoAliasing(const MemoryStatePtr &other_, RiscOperators *add
         // If otherAddress is must_equal to something in the destination state, modify the destination state.
         SAWYER_MESG(debug) <<"    looking for must_equal match in destination state\n";
         bool foundExactMatchingAddress = false;
-        BOOST_FOREACH (const MemoryCellPtr &thisCell, get_cells()) {
+        for (const MemoryCellPtr &thisCell: get_cells()) {
             SValuePtr thisAddress = thisCell->address();
             SValuePtr thisValue = thisCell->value();
             AddressSet thisWriters = otherCell->getWriters();
@@ -298,7 +300,7 @@ MemoryCellList::mergeNoAliasing(const MemoryStatePtr &other_, RiscOperators *add
                         debug <<"      values are equal (no change)\n";
                     }
                     debug <<"      new destination state:\n";
-                    BOOST_FOREACH (const MemoryCellPtr &cell, get_cells())
+                    for (const MemoryCellPtr &cell: get_cells())
                         debug <<"        addr=" <<*cell->address() <<" value=" <<*cell->value() <<"\n";
                 }
                 
@@ -318,7 +320,7 @@ MemoryCellList::mergeNoAliasing(const MemoryStatePtr &other_, RiscOperators *add
         changed = true;
         if (debug) {
             debug <<"    new destination state:\n";
-            BOOST_FOREACH (const MemoryCellPtr &cell, get_cells())
+            for (const MemoryCellPtr &cell: get_cells())
             debug <<"      addr=" <<*cell->address() <<" value=" <<*cell->value() <<"\n";
         }
     }
@@ -328,7 +330,7 @@ MemoryCellList::mergeNoAliasing(const MemoryStatePtr &other_, RiscOperators *add
 SValuePtr
 MemoryCellList::mergeCellValues(const CellList &cells, const SValuePtr &dflt, RiscOperators *addrOps, RiscOperators *valOps) {
     SValuePtr retval;
-    BOOST_FOREACH (const MemoryCellPtr &cell, cells) {
+    for (const MemoryCellPtr &cell: cells) {
         // Get the cell's value. If the cell value is not the same width as the desired return value then we've go more work to
         // do. This isn't implemented yet. [Robb P. Matzke 2015-08-17]
         SValuePtr cellValue = valOps->unsignedExtend(cell->value(), dflt->nBits());
@@ -346,7 +348,7 @@ MemoryCellList::mergeCellValues(const CellList &cells, const SValuePtr &dflt, Ri
 AddressSet
 MemoryCellList::mergeCellWriters(const CellList &cells) {
     AddressSet writers;
-    BOOST_FOREACH (const MemoryCellPtr &cell, cells)
+    for (const MemoryCellPtr &cell: cells)
         writers |= cell->getWriters();
     return writers;
 }
@@ -354,14 +356,14 @@ MemoryCellList::mergeCellWriters(const CellList &cells) {
 InputOutputPropertySet
 MemoryCellList::mergeCellProperties(const CellList &cells) {
     InputOutputPropertySet props;
-    BOOST_FOREACH (const MemoryCellPtr &cell, cells)
+    for (const MemoryCellPtr &cell: cells)
         props |= cell->ioProperties();
     return props;
 }
 
 void
 MemoryCellList::updateReadProperties(CellList &cells) {
-    BOOST_FOREACH (MemoryCellPtr &cell, cells) {
+    for (MemoryCellPtr &cell: cells) {
         cell->ioProperties().insert(IO_READ);
         if (cell->ioProperties().exists(IO_WRITE)) {
             cell->ioProperties().insert(IO_READ_AFTER_WRITE);
@@ -397,7 +399,7 @@ AddressSet
 MemoryCellList::getWritersUnion(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps, RiscOperators *valOps) {
     AddressSet retval;
     CellList::iterator cursor = get_cells().begin();
-    BOOST_FOREACH (const MemoryCellPtr &cell, scan(cursor, addr, nBits, addrOps, valOps))
+    for (const MemoryCellPtr &cell: scan(cursor, addr, nBits, addrOps, valOps))
         retval |= cell->getWriters();
     return retval;
 }
@@ -407,7 +409,7 @@ MemoryCellList::getWritersIntersection(const SValuePtr &addr, size_t nBits, Risc
     AddressSet retval;
     CellList::iterator cursor = get_cells().begin();
     size_t nCells = 0;
-    BOOST_FOREACH (const MemoryCellPtr &cell, scan(cursor, addr, nBits, addrOps, valOps)) {
+    for (const MemoryCellPtr &cell: scan(cursor, addr, nBits, addrOps, valOps)) {
         if (1 == ++nCells) {
             retval = cell->getWriters();
         } else {
@@ -444,7 +446,7 @@ MemoryCellList::print(std::ostream &stream, Formatter &fmt) const
 std::vector<MemoryCellPtr>
 MemoryCellList::matchingCells(const MemoryCell::Predicate &p) const {
     std::vector<MemoryCellPtr> retval;
-    BOOST_FOREACH (const MemoryCellPtr &cell, cells) {
+    for (const MemoryCellPtr &cell: cells) {
         if (p(cell))
             retval.push_back(cell);
     }
@@ -454,7 +456,7 @@ MemoryCellList::matchingCells(const MemoryCell::Predicate &p) const {
 std::vector<MemoryCellPtr>
 MemoryCellList::leadingCells(const MemoryCell::Predicate &p) const {
     std::vector<MemoryCellPtr> retval;
-    BOOST_FOREACH (const MemoryCellPtr &cell, cells) {
+    for (const MemoryCellPtr &cell: cells) {
         if (!p(cell))
             break;
         retval.push_back(cell);
@@ -488,7 +490,7 @@ MemoryCellList::eraseLeadingCells(const MemoryCell::Predicate &p) {
 
 void
 MemoryCellList::traverse(MemoryCell::Visitor &v) {
-    BOOST_FOREACH (MemoryCellPtr &cell, cells)
+    for (MemoryCellPtr &cell: cells)
         v(cell);
 }
 

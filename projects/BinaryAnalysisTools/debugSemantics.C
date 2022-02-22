@@ -583,7 +583,7 @@ runSemantics(const P2::BasicBlock::Ptr &bblock, const Settings &settings, const 
     // Process each instruction regardless of the value of the instruction pointer
     if (settings.showStates && settings.showInitialState)
         std::cout <<"Initial state:\n" <<(*ops+formatter) <<"\n";
-    BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
+    for (SgAsmInstruction *insn: bblock->instructions()) {
         if (perInstructionOutput(settings))
             std::cout <<partitioner.unparse(insn) <<"\n";
         ++allInsns.insertMaybe(insn->get_mnemonic(), 0);
@@ -686,7 +686,7 @@ main(int argc, char *argv[]) {
     // Run sementics on each basic block
     Sawyer::ProgressBar<size_t> progress(partitioner.nBasicBlocks(), ::mlog[MARCH], "basic block semantics");
     InstructionHistogram allInsns, failedInsns;
-    BOOST_FOREACH (const P2::BasicBlock::Ptr &bblock, partitioner.basicBlocks()) {
+    for (const P2::BasicBlock::Ptr &bblock: partitioner.basicBlocks()) {
         runSemantics(bblock, settings, partitioner, allInsns /*in,out*/, failedInsns /*in,out*/);
         ++progress;
     }
@@ -695,7 +695,7 @@ main(int argc, char *argv[]) {
     if (settings.showHistogram) {
         std::cout <<"Processed instructions:\n";
         size_t total = 0;
-        BOOST_FOREACH (const InstructionHistogram::Node &node, allInsns.nodes()) {
+        for (const InstructionHistogram::Node &node: allInsns.nodes()) {
             Diagnostics::mfprintf(std::cout)("%-12zu %s\n", node.value(), node.key().c_str());
             total += node.value();
         }
@@ -704,7 +704,7 @@ main(int argc, char *argv[]) {
     if (settings.showFailedHistogram) {
         std::cout <<"Failed instructions:\n";
         size_t total = 0;
-        BOOST_FOREACH (const InstructionHistogram::Node &node, failedInsns.nodes()) {
+        for (const InstructionHistogram::Node &node: failedInsns.nodes()) {
             Diagnostics::mfprintf(std::cout)("%-12zu %s\n", node.value(), node.key().c_str());
             total += node.value();
         }

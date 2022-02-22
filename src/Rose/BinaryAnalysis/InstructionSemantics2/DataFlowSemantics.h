@@ -8,7 +8,6 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics2/MultiSemantics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/NullSemantics.h>
 
-#include <boost/foreach.hpp>
 #include <Sawyer/Assert.h>
 #include <Sawyer/Graph.h>
 

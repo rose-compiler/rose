@@ -4566,7 +4566,7 @@ DispatcherX86::get_usual_registers() const
 {
     RegisterDictionary::RegisterDescriptors registers = regdict->get_largest_registers();
     registers.erase(std::remove_if(registers.begin(), registers.end(), isStatusRegister), registers.end());
-    BOOST_FOREACH (RegisterDescriptor reg, regdict->get_smallest_registers()) {
+    for (RegisterDescriptor reg: regdict->get_smallest_registers()) {
         if (isStatusRegister(reg))
             registers.push_back(reg);
     }

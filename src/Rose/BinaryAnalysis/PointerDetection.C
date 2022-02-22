@@ -4,7 +4,6 @@
 #include <Rose/BinaryAnalysis/PointerDetection.h>
 
 #include <AsmUnparser_compat.h>
-#include <boost/foreach.hpp>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/Disassembler.h>
@@ -131,9 +130,9 @@ public:
     virtual bool merge(const BaseSemantics::StatePtr &other_, BaseSemantics::RiscOperators *ops) override {
         bool changed = false;
         StatePtr other = State::promote(other_);
-        BOOST_FOREACH (const MemoryTransfers::Node &otherNode, other->memoryReads_.nodes()) {
+        for (const MemoryTransfers::Node &otherNode: other->memoryReads_.nodes()) {
             SymbolicExpr::ExpressionSet &addresses = memoryReads_.insertMaybeDefault(otherNode.key());
-            BOOST_FOREACH (const SymbolicExpr::Ptr address, otherNode.value().values()) {
+            for (const SymbolicExpr::Ptr &address: otherNode.value().values()) {
                 if (addresses.insert(address))
                     changed = true;
             }
@@ -233,9 +232,9 @@ void
 Analysis::printInstructionsForDebugging(const P2::Partitioner &partitioner, const P2::Function::Ptr &function) {
     if (mlog[DEBUG]) {
         mlog[DEBUG] <<"  function instructions:\n";
-        BOOST_FOREACH (rose_addr_t bbVa, function->basicBlockAddresses()) {
+        for (rose_addr_t bbVa: function->basicBlockAddresses()) {
             if (P2::BasicBlock::Ptr bb = partitioner.basicBlockExists(bbVa)) {
-                BOOST_FOREACH (SgAsmInstruction *insn, bb->instructions()) {
+                for (SgAsmInstruction *insn: bb->instructions()) {
                     mlog[DEBUG] <<"    " <<partitioner.unparse(insn) <<"\n";
                 }
             }
@@ -254,7 +253,7 @@ struct ExprVisitor: public SymbolicExpr::Visitor {
 
     virtual SymbolicExpr::VisitAction preVisit(const SymbolicExpr::Ptr &node) {
         SymbolicExpr::VisitAction retval = SymbolicExpr::CONTINUE;
-        BOOST_FOREACH (SymbolicExpr::Ptr address, memoryReads.getOrDefault(node->hash()).values()) {
+        for (SymbolicExpr::Ptr address: memoryReads.getOrDefault(node->hash()).values()) {
             if (result.insert(PointerDescriptor(address, nBits)).second)
                 mlog[DEBUG] <<"            l-value = " <<*address <<"\n";
             retval = SymbolicExpr::TRUNCATE;
@@ -298,7 +297,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     DfCfg dfCfg = P2::DataFlow::buildDfCfg(partitioner, partitioner.cfg(), partitioner.findPlaceholder(function->address()));
     size_t startVertexId = 0;
     DfCfg::ConstVertexIterator returnVertex = dfCfg.vertices().end();
-    BOOST_FOREACH (const DfCfg::Vertex &vertex, dfCfg.vertices()) {
+    for (const DfCfg::Vertex &vertex: dfCfg.vertices()) {
         if (vertex.value().type() == P2::DataFlow::DfCfgVertex::FUNCRET) {
             returnVertex = dfCfg.findVertex(vertex.id());
             break;
@@ -350,9 +349,9 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
 
     if (mlog[DEBUG]) {
         mlog[DEBUG] <<"  memory reads:\n";
-        BOOST_FOREACH (const MemoryTransfers::Node &node, finalState->memoryReads().nodes()) {
+        for (const MemoryTransfers::Node &node: finalState->memoryReads().nodes()) {
             mlog[DEBUG] <<"    value-hash = " <<StringUtility::addrToString(node.key()).substr(2) <<"\n";
-            BOOST_FOREACH (const SymbolicExpr::Ptr &address, node.value().values()) {
+            for (const SymbolicExpr::Ptr &address: node.value().values()) {
                 mlog[DEBUG] <<"      address = " <<*address <<"\n";
             }
         }
@@ -362,9 +361,9 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     SAWYER_MESG(mlog[DEBUG]) <<"  potential data pointers:\n";
     size_t dataWordSize = partitioner.instructionProvider().stackPointerRegister().nBits();
     Sawyer::Container::Set<SymbolicExpr::Hash> addrSeen;
-    BOOST_FOREACH (const BaseSemantics::StatePtr &state, dfEngine.getFinalStates()) {
+    for (const BaseSemantics::StatePtr &state: dfEngine.getFinalStates()) {
         BaseSemantics::MemoryCellStatePtr memState = BaseSemantics::MemoryCellState::promote(state->memoryState());
-        BOOST_FOREACH (const BaseSemantics::MemoryCellPtr &cell, memState->allCells())
+        for (const BaseSemantics::MemoryCellPtr &cell: memState->allCells())
             conditionallySavePointer(cell->address(), addrSeen, dataWordSize, dataPointers_);
     }
 
@@ -373,7 +372,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
     size_t codeWordSize = partitioner.instructionProvider().instructionPointerRegister().nBits();
     addrSeen.clear();
     const RegisterDescriptor IP = partitioner.instructionProvider().instructionPointerRegister();
-    BOOST_FOREACH (const BaseSemantics::StatePtr &state, dfEngine.getFinalStates()) {
+    for (const BaseSemantics::StatePtr &state: dfEngine.getFinalStates()) {
         SymbolicSemantics::SValuePtr ip =
             SymbolicSemantics::SValue::promote(state->peekRegister(IP, ops->undefined_(IP.nBits()), ops.get()));
         SymbolicExpr::Ptr ipExpr = ip->get_expression();

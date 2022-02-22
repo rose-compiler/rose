@@ -212,12 +212,12 @@ RSIM_Simulator::configure(const Settings &providedSettings, char **envp) {
 
     // Turn on some tracing
     tracingFlags_ = tracingFacilityBit(TRACE_MISC);
-    BOOST_FOREACH (TracingFacility t, settings_.tracing)
+    for (TracingFacility t: settings_.tracing)
         tracingFlags_ |= tracingFacilityBit(t);
 
     // Core dump styles
     core_flags = 0;
-    BOOST_FOREACH (CoreStyle cs, settings_.coreStyles)
+    for (CoreStyle cs: settings_.coreStyles)
         core_flags |= cs;
 
     // Global semaphore.

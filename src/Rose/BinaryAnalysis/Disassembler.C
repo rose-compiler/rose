@@ -144,7 +144,7 @@ Disassembler::lookup(SgAsmInterpretation *interp) {
     } else if (disassemblerCounts.size() > 1) {
         mlog[WARN] <<"ambiguous disassemblers for file headers\n";
         size_t bestCount = 0;
-        BOOST_FOREACH (const DisassemblerCounts::Node &node, disassemblerCounts.nodes()) {
+        for (const DisassemblerCounts::Node &node: disassemblerCounts.nodes()) {
             if (Disassembler *disassembler = node.key()) {
                 mlog[WARN] <<"  " <<StringUtility::plural(node.value(), "file headers")
                             <<" using " <<disassembler->name() <<" disassember\n";
@@ -215,7 +215,7 @@ Disassembler::lookup(const std::string &name)
     Disassembler *retval = NULL;
     if (name == "list") {
         std::cout <<"The following ISAs are supported:\n";
-        BOOST_FOREACH (const std::string &name, isaNames())
+        for (const std::string &name: isaNames())
             std::cout <<"  " <<name <<"\n";
         exit(0);
     } else if (name == "a32") {

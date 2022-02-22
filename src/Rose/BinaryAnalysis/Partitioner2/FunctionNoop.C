@@ -43,14 +43,14 @@ Partitioner::functionIsNoop(const Function::Ptr &function) const {
     // If any vertex of this function (other than its return vertices) has successors that are in some other function and that
     // other function is not a proven no-op, then assume that this function is not a no-op either.  We do this separately from
     // the data-flow because this loop is much faster than that one.
-    BOOST_FOREACH (rose_addr_t bbVa, function->basicBlockAddresses()) {
+    for (rose_addr_t bbVa: function->basicBlockAddresses()) {
         ControlFlowGraph::ConstVertexIterator bbVertex = findPlaceholder(bbVa);
         ASSERT_require(cfg().isValidVertex(bbVertex));
         BasicBlock::Ptr bb = bbVertex->value().bblock();
         ASSERT_not_null(bb);
         if (!basicBlockIsFunctionReturn(bb)) {
-            BOOST_FOREACH (const ControlFlowGraph::Edge &edge, bbVertex->outEdges()) {
-                BOOST_FOREACH (const Function::Ptr &targetFunc, edge.target()->value().owningFunctions().values()) {
+            for (const ControlFlowGraph::Edge &edge: bbVertex->outEdges()) {
+                for (const Function::Ptr &targetFunc: edge.target()->value().owningFunctions().values()) {
                     if (targetFunc != function && !targetFunc->isNoop().isCached()) {
                         // target function is not a no-op, or no-op analysis has not been run on it yet.
                         SAWYER_MESG(debug) <<"  " <<function->printableName() <<" calls " <<targetFunc->printableName()
@@ -66,7 +66,7 @@ Partitioner::functionIsNoop(const Function::Ptr &function) const {
     
     // Now use data-flow to look at each basic block. If any basic block of this function is not a noop then assume the
     // function as a whole is not a no-op.
-    BOOST_FOREACH (rose_addr_t bbVa, function->basicBlockAddresses()) {
+    for (rose_addr_t bbVa: function->basicBlockAddresses()) {
         if (BasicBlock::Ptr bb = basicBlockExists(bbVa)) {
             // Get the instructions for this block, excluding the final instruction if this is a function return.
             std::vector<SgAsmInstruction*> insns = bb->instructions();
@@ -77,7 +77,7 @@ Partitioner::functionIsNoop(const Function::Ptr &function) const {
                 // must assume that its successor imparts some effect to this function.
                 ControlFlowGraph::ConstVertexIterator placeholder = findPlaceholder(bbVa);
                 ASSERT_require(cfg().isValidVertex(placeholder));
-                BOOST_FOREACH (const ControlFlowGraph::Edge &edge, placeholder->outEdges()) {
+                for (const ControlFlowGraph::Edge &edge: placeholder->outEdges()) {
                     if (edge.target()->value().type() != V_BASIC_BLOCK) {
                         SAWYER_MESG(debug) <<"  " <<function->printableName() <<" is not a no-op because the successor of "
                                            <<bb->printableName() <<" is missing: " <<vertexName(edge.target()) <<"\n";
@@ -143,7 +143,7 @@ Partitioner::allFunctionIsNoop() const {
 
 void
 Partitioner::forgetFunctionIsNoop() const {
-    BOOST_FOREACH (const Function::Ptr &function, functions())
+    for (const Function::Ptr &function: functions())
         forgetFunctionIsNoop(function);
 }
 

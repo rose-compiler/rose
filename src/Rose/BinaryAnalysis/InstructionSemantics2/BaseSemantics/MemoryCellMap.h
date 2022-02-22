@@ -8,7 +8,6 @@
 
 #include <Sawyer/Map.h>
 
-#include <boost/foreach.hpp>
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 #include <boost/serialization/export.hpp>

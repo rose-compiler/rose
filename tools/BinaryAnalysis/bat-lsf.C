@@ -13,7 +13,6 @@ static const char *description =
 
 #include <batSupport.h>
 #include <boost/filesystem.hpp>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <fstream>
 #include <iostream>
@@ -101,15 +100,15 @@ printFunctions(const P2::Partitioner &p) {
 
     P2::FunctionCallGraph cg = p.functionCallGraph(P2::AllowParallelEdges::NO);
 
-    BOOST_FOREACH (const P2::Function::Ptr &function, p.functions()) {
+    for (const P2::Function::Ptr &function: p.functions()) {
         AddressIntervalSet fe = p.functionExtent(function);
         size_t nInsns = 0;
-        BOOST_FOREACH (rose_addr_t bbva, function->basicBlockAddresses()) {
+        for (rose_addr_t bbva: function->basicBlockAddresses()) {
             if (P2::BasicBlock::Ptr bb = p.basicBlockExists(bbva))
                 nInsns += bb->nInstructions();
         }
         size_t nDBlockBytes = 0;
-        BOOST_FOREACH (const P2::DataBlock::Ptr &dblock, function->dataBlocks())
+        for (const P2::DataBlock::Ptr &dblock: function->dataBlocks())
             nDBlockBytes += dblock->size();
 
         std::string name = demangle ? function->demangledName() : function->name();

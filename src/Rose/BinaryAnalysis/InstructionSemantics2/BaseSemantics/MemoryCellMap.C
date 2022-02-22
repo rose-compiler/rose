@@ -191,7 +191,7 @@ MemoryCellMap::traverse(MemoryCell::Visitor &visitor) {
 std::vector<MemoryCellPtr>
 MemoryCellMap::matchingCells(const MemoryCell::Predicate &p) const {
     std::vector<MemoryCellPtr> retval;
-    BOOST_FOREACH (const MemoryCellPtr &cell, cells.values()) {
+    for (const MemoryCellPtr &cell: cells.values()) {
         if (p(cell))
             retval.push_back(cell);
     }
@@ -201,7 +201,7 @@ MemoryCellMap::matchingCells(const MemoryCell::Predicate &p) const {
 std::vector<MemoryCellPtr>
 MemoryCellMap::leadingCells(const MemoryCell::Predicate &p) const {
     std::vector<MemoryCellPtr> retval;
-    BOOST_FOREACH (const MemoryCellPtr &cell, cells.values()) {
+    for (const MemoryCellPtr &cell: cells.values()) {
         if (!p(cell))
             break;
         retval.push_back(cell);
@@ -212,7 +212,7 @@ MemoryCellMap::leadingCells(const MemoryCell::Predicate &p) const {
 void
 MemoryCellMap::eraseMatchingCells(const MemoryCell::Predicate &p) {
     CellMap tmp = cells;
-    BOOST_FOREACH (const CellMap::Node &cell, tmp.nodes()) {
+    for (const CellMap::Node &cell: tmp.nodes()) {
         if (p(cell.value()))
             cells.erase(cell.key());
     }
@@ -221,7 +221,7 @@ MemoryCellMap::eraseMatchingCells(const MemoryCell::Predicate &p) {
 void
 MemoryCellMap::eraseLeadingCells(const MemoryCell::Predicate &p) {
     CellMap tmp = cells;
-    BOOST_FOREACH (const CellMap::Node &cell, tmp.nodes()) {
+    for (const CellMap::Node &cell: tmp.nodes()) {
         if (!p(cell.value()))
             break;
         cells.erase(cell.key());

@@ -96,9 +96,9 @@ RegisterStateGeneric::assertStorageConditions(const std::string &when, RegisterD
     ++ncalls;
 #endif
     std::ostringstream error;
-    BOOST_FOREACH (const Registers::Node &rnode, registers_.nodes()) {
+    for (const Registers::Node &rnode: registers_.nodes()) {
         Sawyer::Container::IntervalSet<BitRange> foundLocations;
-        BOOST_FOREACH (const RegPair &regpair, rnode.value()) {
+        for (const RegPair &regpair: rnode.value()) {
             if (!regpair.desc.is_valid()) {
                 error <<"invalid register descriptor";
             } else if (regpair.desc.get_major() != rnode.key().majr || regpair.desc.minorNumber() != rnode.key().minr) {
@@ -119,7 +119,7 @@ RegisterStateGeneric::assertStorageConditions(const std::string &when, RegisterD
             mlog[FATAL] <<when <<" register " <<reg <<":\n";
             mlog[FATAL] <<"  " <<error.str() <<"\n";
             mlog[FATAL] <<"  related registers:\n";
-            BOOST_FOREACH (const RegPair &regpair, rnode.value()) {
+            for (const RegPair &regpair: rnode.value()) {
                 mlog[FATAL] <<"    " <<regpair.desc;
                 if (regpair.value == NULL)
                     mlog[FATAL] <<"\tnull value";
@@ -136,7 +136,7 @@ RegisterStateGeneric::scanAccessedLocations(RegisterDescriptor reg, RiscOperator
                                             RegPairs &accessedParts /*out*/, RegPairs &preservedParts /*out*/) const {
     BitRange accessedLocation = BitRange::baseSize(reg.offset(), reg.nBits());
     const RegPairs &pairList = registers_.getOrDefault(reg);
-    BOOST_FOREACH (const RegPair &regpair, pairList) {
+    for (const RegPair &regpair: pairList) {
         BitRange storedLocation = regpair.location();   // the thing that's already stored in this state
         BitRange overlap = storedLocation & accessedLocation;
         if (overlap.isEmpty())
@@ -173,7 +173,7 @@ RegisterStateGeneric::clearOverlappingLocations(RegisterDescriptor reg) {
     BitRange accessedLocation = BitRange::baseSize(reg.offset(), reg.nBits());
     RegPairs emptyPairList;
     RegPairs &pairList = registers_.getOrElse(reg, emptyPairList);
-    BOOST_FOREACH (RegPair &regpair, pairList) {
+    for (RegPair &regpair: pairList) {
         BitRange storedLocation = regpair.location();
         BitRange overlap = storedLocation & accessedLocation;
         if (!overlap.isEmpty())
@@ -224,12 +224,12 @@ RegisterStateGeneric::readRegister(RegisterDescriptor reg, const SValuePtr &dflt
     typedef Sawyer::Container::IntervalSet<BitRange> Locations;
     Locations newLocations;
     newLocations.insert(accessedLocation);
-    BOOST_FOREACH (const RegPair &regpair, accessedParts)
+    for (const RegPair &regpair: accessedParts)
         newLocations -= regpair.location();
 
     // Create values for the parts of the accessed register that weren't stored in the state, but don't store them yet.
     RegPairs newParts;
-    BOOST_FOREACH (const BitRange &newLocation, newLocations.intervals()) {
+    for (const BitRange &newLocation: newLocations.intervals()) {
         RegisterDescriptor subreg(reg.majorNumber(), reg.minorNumber(), newLocation.least(), newLocation.size());
         ASSERT_require(newLocation.least() >= reg.offset());
         SValuePtr newval = ops->extract(dflt,
@@ -243,7 +243,7 @@ RegisterStateGeneric::readRegister(RegisterDescriptor reg, const SValuePtr &dflt
     RegPairs retvalParts = accessedParts;
     retvalParts.insert(retvalParts.end(), newParts.begin(), newParts.end());
     std::sort(retvalParts.begin(), retvalParts.end(), sortByOffset);
-    BOOST_FOREACH (const RegPair &regpair, retvalParts)
+    for (const RegPair &regpair: retvalParts)
         retval = retval ? ops->concat(retval, regpair.value) : regpair.value;
     ASSERT_require(retval->nBits() == reg.nBits());
 
@@ -307,12 +307,12 @@ RegisterStateGeneric::peekRegister(RegisterDescriptor reg, const SValuePtr &dflt
     typedef Sawyer::Container::IntervalSet<BitRange> Locations;
     Locations newLocations;
     newLocations.insert(accessedLocation);
-    BOOST_FOREACH (const RegPair &regpair, accessedParts)
+    for (const RegPair &regpair: accessedParts)
         newLocations -= regpair.location();
 
     // Create values for the parts of the accessed register that weren't stored in the state
     RegPairs newParts;
-    BOOST_FOREACH (const BitRange &newLocation, newLocations.intervals()) {
+    for (const BitRange &newLocation: newLocations.intervals()) {
         RegisterDescriptor subreg(reg.majorNumber(), reg.minorNumber(), newLocation.least(), newLocation.size());
         ASSERT_require(newLocation.least() >= reg.offset());
         SValuePtr newval = ops->extract(dflt,
@@ -326,7 +326,7 @@ RegisterStateGeneric::peekRegister(RegisterDescriptor reg, const SValuePtr &dflt
     RegPairs retvalParts = accessedParts;
     retvalParts.insert(retvalParts.end(), newParts.begin(), newParts.end());
     std::sort(retvalParts.begin(), retvalParts.end(), sortByOffset);
-    BOOST_FOREACH (const RegPair &regpair, retvalParts)
+    for (const RegPair &regpair: retvalParts)
         retval = retval ? ops->concat(retval, regpair.value) : regpair.value;
     ASSERT_require(retval->nBits() == reg.nBits());
 
@@ -356,7 +356,7 @@ RegisterStateGeneric::writeRegister(RegisterDescriptor reg, const SValuePtr &val
     // Check that we're allowed to add storage locations if necessary.
     if (!accessCreatesLocations_) {
         size_t nBitsFound = 0;
-        BOOST_FOREACH (const RegPair &regpair, registers_.getOrDefault(reg))
+        for (const RegPair &regpair: registers_.getOrDefault(reg))
             nBitsFound += (regpair.location() & accessedLocation).size();
         ASSERT_require(nBitsFound <= accessedLocation.size());
         if (nBitsFound < accessedLocation.size())
@@ -376,7 +376,7 @@ RegisterStateGeneric::writeRegister(RegisterDescriptor reg, const SValuePtr &val
     typedef Sawyer::Container::IntervalSet<BitRange> Locations;
     Locations newLocations;
     newLocations.insert(accessedLocation);
-    BOOST_FOREACH (const RegPair &regpair, accessedParts)
+    for (const RegPair &regpair: accessedParts)
         newLocations -= regpair.location();
 
     // Update the register state by writing to the accessed area.
@@ -388,7 +388,7 @@ RegisterStateGeneric::writeRegister(RegisterDescriptor reg, const SValuePtr &val
         pairList.push_back(RegPair(reg, value));
     } else {
         // Don't insert/erase locations that existed already -- only change their values.
-        BOOST_FOREACH (RegPair &regpair, pairList) {
+        for (RegPair &regpair: pairList) {
             BitRange storedLocation = regpair.location();
             if (BitRange overlap = storedLocation & accessedLocation) {
                 SValuePtr valueToWrite;
@@ -418,7 +418,7 @@ RegisterStateGeneric::writeRegister(RegisterDescriptor reg, const SValuePtr &val
         }
 
         // Insert the parts that didn't exist before
-        BOOST_FOREACH (const BitRange &newLocation, newLocations.intervals()) {
+        for (const BitRange &newLocation: newLocations.intervals()) {
             size_t extractBegin = newLocation.least() - accessedLocation.least();
             size_t extractEnd = extractBegin + newLocation.size();
             SValuePtr valueToWrite = ops->extract(value, extractBegin, extractEnd);
@@ -442,7 +442,7 @@ RegisterStateGeneric::updateReadProperties(RegisterDescriptor reg) {
     insertProperties(reg, IO_READ);
     BitProperties &props = properties_.insertMaybeDefault(reg);
     BitRange where = BitRange::baseSize(reg.offset(), reg.nBits());
-    BOOST_FOREACH (BitProperties::Node &node, props.findAll(where)) {
+    for (BitProperties::Node &node: props.findAll(where)) {
         if (!node.value().exists(IO_WRITE)) {
             node.value().insert(IO_READ_BEFORE_WRITE);
             if (!node.value().exists(IO_INIT))
@@ -470,7 +470,7 @@ RegisterStateGeneric::erase_register(RegisterDescriptor reg, RiscOperators *ops)
     // need to eventually add the non-overlapping part back into the list.
     RegPairs nonoverlaps; // the non-overlapping parts of overlapping registers
     Extent need_extent(reg.offset(), reg.nBits());
-    BOOST_FOREACH (RegPair &reg_val, pairList) {
+    for (RegPair &reg_val: pairList) {
         BitRange haveLocation = reg_val.location();
         if (BitRange intersection = accessedLocation & haveLocation) {
             if (haveLocation.least() < intersection.least()) {
@@ -498,7 +498,7 @@ RegisterStateGeneric::RegPairs
 RegisterStateGeneric::get_stored_registers() const
 {
     RegPairs retval;
-    BOOST_FOREACH (const RegPairs &pairlist, registers_.values())
+    for (const RegPairs &pairlist: registers_.values())
         retval.insert(retval.end(), pairlist.begin(), pairlist.end());
     return retval;
 }
@@ -506,8 +506,8 @@ RegisterStateGeneric::get_stored_registers() const
 void
 RegisterStateGeneric::traverse(Visitor &visitor)
 {
-    BOOST_FOREACH (RegPairs &pairlist, registers_.values()) {
-        BOOST_FOREACH (RegPair &pair, pairlist) {
+    for (RegPairs &pairlist: registers_.values()) {
+        for (RegPair &pair: pairlist) {
             if (SValuePtr newval = (visitor)(pair.desc, pair.value)) {
                 ASSERT_require(newval->nBits() == pair.desc.nBits());
                 pair.value = newval;
@@ -519,8 +519,8 @@ RegisterStateGeneric::traverse(Visitor &visitor)
 void
 RegisterStateGeneric::deep_copy_values()
 {
-    BOOST_FOREACH (RegPairs &pairlist, registers_.values()) {
-        BOOST_FOREACH (RegPair &pair, pairlist)
+    for (RegPairs &pairlist: registers_.values()) {
+        for (RegPair &pair: pairlist)
             pair.value = pair.value->copy();
     }
 }
@@ -529,7 +529,7 @@ bool
 RegisterStateGeneric::is_partly_stored(RegisterDescriptor desc) const
 {
     BitRange want = BitRange::baseSize(desc.offset(), desc.nBits());
-    BOOST_FOREACH (const RegPair &pair, registers_.getOrDefault(desc)) {
+    for (const RegPair &pair: registers_.getOrDefault(desc)) {
         if (want & pair.location())
             return true;
     }
@@ -541,7 +541,7 @@ RegisterStateGeneric::is_wholly_stored(RegisterDescriptor desc) const
 {
     Sawyer::Container::IntervalSet<BitRange> desired;
     desired.insert(BitRange::baseSize(desc.offset(), desc.nBits()));
-    BOOST_FOREACH (const RegPair &pair, registers_.getOrDefault(desc))
+    for (const RegPair &pair: registers_.getOrDefault(desc))
         desired -= pair.location();
     return desired.isEmpty();
 }
@@ -549,7 +549,7 @@ RegisterStateGeneric::is_wholly_stored(RegisterDescriptor desc) const
 bool
 RegisterStateGeneric::is_exactly_stored(RegisterDescriptor desc) const
 {
-    BOOST_FOREACH (const RegPair &pair, registers_.getOrDefault(desc)) {
+    for (const RegPair &pair: registers_.getOrDefault(desc)) {
         if (desc == pair.desc)
             return true;
     }
@@ -561,7 +561,7 @@ RegisterStateGeneric::stored_parts(RegisterDescriptor desc) const
 {
     ExtentMap retval;
     Extent want(desc.offset(), desc.nBits());
-    BOOST_FOREACH (const RegPair &pair, registers_.getOrDefault(desc)) {
+    for (const RegPair &pair: registers_.getOrDefault(desc)) {
         Extent have(pair.desc.offset(), pair.desc.nBits());
         retval.insert(want.intersect(have));
     }
@@ -573,7 +573,7 @@ RegisterStateGeneric::overlappingRegisters(RegisterDescriptor needle) const {
     ASSERT_forbid(needle.isEmpty());
     BitRange needleBits = BitRange::baseSize(needle.offset(), needle.nBits());
     RegPairs retval;
-    BOOST_FOREACH (const RegPair &pair, registers_.getOrDefault(needle)) {
+    for (const RegPair &pair: registers_.getOrDefault(needle)) {
         if (needleBits & pair.location())
             retval.push_back(pair);
     }
@@ -751,15 +751,15 @@ std::vector<RegisterDescriptor>
 RegisterStateGeneric::findProperties(const InputOutputPropertySet &required, const InputOutputPropertySet &prohibited) const {
     std::vector<RegisterDescriptor> retval;
     typedef Sawyer::Container::IntervalSet<BitRange> Bits;
-    BOOST_FOREACH (const RegisterProperties::Node &regNode, properties_.nodes()) {
+    for (const RegisterProperties::Node &regNode: properties_.nodes()) {
         unsigned majr = regNode.key().majr;
         unsigned minr = regNode.key().minr;
         Bits bits;
-        BOOST_FOREACH (const BitProperties::Node &bitNode, regNode.value().nodes()) {
+        for (const BitProperties::Node &bitNode: regNode.value().nodes()) {
             if (bitNode.value().existsAll(required) && !bitNode.value().existsAny(prohibited))
                 bits.insert(bitNode.key());
         }
-        BOOST_FOREACH (const BitRange &bitRange, bits.intervals()) {
+        for (const BitRange &bitRange: bits.intervals()) {
             RegisterDescriptor reg(majr, minr, bitRange.least(), bitRange.size());
             retval.push_back(reg);
         }
@@ -775,7 +775,7 @@ RegisterStateGeneric::merge(const BaseSemantics::RegisterStatePtr &other_, RiscO
     bool changed = false;
 
     // Merge values stored in registers.
-    BOOST_FOREACH (const RegPair &otherRegVal, other->get_stored_registers()) {
+    for (const RegPair &otherRegVal: other->get_stored_registers()) {
         RegisterDescriptor otherReg = otherRegVal.desc;
         const BaseSemantics::SValuePtr &otherValue = otherRegVal.value;
         BaseSemantics::SValuePtr dflt = ops->undefined_(otherReg.nBits());
@@ -787,10 +787,10 @@ RegisterStateGeneric::merge(const BaseSemantics::RegisterStatePtr &other_, RiscO
     }
 
     // Merge writer sets.
-    BOOST_FOREACH (const RegisterAddressSet::Node &wmNode, other->writers_.nodes()) {
+    for (const RegisterAddressSet::Node &wmNode: other->writers_.nodes()) {
         const BitAddressSet &otherWriters = wmNode.value();
         BitAddressSet &thisWriters = writers_.insertMaybeDefault(wmNode.key());
-        BOOST_FOREACH (const BitAddressSet::Node &otherWritten, otherWriters.nodes()) {
+        for (const BitAddressSet::Node &otherWritten: otherWriters.nodes()) {
             bool inserted = thisWriters.insert(otherWritten.key(), otherWritten.value());
             if (inserted)
                 changed = true;
@@ -798,10 +798,10 @@ RegisterStateGeneric::merge(const BaseSemantics::RegisterStatePtr &other_, RiscO
     }
 
     // Merge property sets.
-    BOOST_FOREACH (const RegisterProperties::Node &otherRegNode, other->properties_.nodes()) {
+    for (const RegisterProperties::Node &otherRegNode: other->properties_.nodes()) {
         const BitProperties &otherBitProps = otherRegNode.value();
         BitProperties &thisBitProps = properties_.insertMaybeDefault(otherRegNode.key());
-        BOOST_FOREACH (const BitProperties::Node &otherBitNode, otherBitProps.nodes()) {
+        for (const BitProperties::Node &otherBitNode: otherBitProps.nodes()) {
             bool inserted = thisBitProps.insert(otherBitNode.key(), otherBitNode.value());
             if (inserted)
                 changed = true;
@@ -848,10 +848,10 @@ RegisterStateGeneric::print(std::ostream &stream, Formatter &fmt) const
     FormatRestorer oflags(stream);
     size_t maxlen = 6; // use at least this many columns even if register names are short.
     for (int i=0; i<2; ++i) {
-        BOOST_FOREACH (const RegPairs &pl, registers_.values()) {
+        for (const RegPairs &pl: registers_.values()) {
             RegPairs regPairs = pl;
             std::sort(regPairs.begin(), regPairs.end(), sortByOffset);
-            BOOST_FOREACH (const RegPair &pair, regPairs) {
+            for (const RegPair &pair: regPairs) {
                 std::string regname = regnames(pair.desc);
                 if (!fmt.get_suppress_initial_values() || pair.value->comment().empty() ||
                     0!=pair.value->comment().compare(regname+"_0")) {

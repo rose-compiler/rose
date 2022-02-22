@@ -326,7 +326,7 @@ vertexForInstruction(const P2::Partitioner &partitioner, const std::string &name
     rose_addr_t va = rose_strtoull(s, &rest, 0);
     if (*rest || errno!=0) {
         size_t nFound = 0;
-        BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions()) {
+        for (const P2::Function::Ptr &function: partitioner.functions()) {
             if (function->name() == nameOrVa) {
                 va = function->address();
                 ++nFound;
@@ -370,7 +370,7 @@ static bool
 isFunctionCall(const P2::Partitioner &partitioner, const P2::ControlFlowGraph::ConstVertexIterator &pathVertex) {
     P2::ControlFlowGraph::ConstVertexIterator cfgVertex = pathToCfg(partitioner, pathVertex);
     ASSERT_require(partitioner.cfg().isValidVertex(cfgVertex));
-    BOOST_FOREACH (P2::ControlFlowGraph::Edge edge, cfgVertex->outEdges()) {
+    for (P2::ControlFlowGraph::Edge edge: cfgVertex->outEdges()) {
         if (edge.value().type() == P2::E_FUNCTION_CALL)
             return true;
     }
@@ -502,13 +502,13 @@ printGraphViz(std::ostream &out, const P2::Partitioner &partitioner, const P2::C
     gv.selectWholeGraph();
     gv.deselectParallelEdges();
 
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &endVertex, endVertices.values())
+    for (const P2::ControlFlowGraph::ConstVertexIterator &endVertex: endVertices.values())
         gv.vertexOrganization(endVertex).attributes().insert("fillcolor", exitColor.toHtml());
     gv.vertexOrganization(beginVertex).attributes().insert("fillcolor", entryColor.toHtml());
 
     typedef Sawyer::Container::GraphIteratorMap<P2::ControlFlowGraph::ConstEdgeIterator, size_t> EdgeCounts;
     EdgeCounts edgeCounts;
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &edge, path.edges()) {
+    for (const P2::ControlFlowGraph::ConstEdgeIterator &edge: path.edges()) {
         gv.edgeOrganization(edge).attributes()
             .insert("penwidth", "3")
             .insert("arrowsize", "3")
@@ -517,7 +517,7 @@ printGraphViz(std::ostream &out, const P2::Partitioner &partitioner, const P2::C
         ++edgeCounts.insertMaybe(edge, 0);
     }
 
-    BOOST_FOREACH (const EdgeCounts::Node &edgeCount, edgeCounts.nodes()) {
+    for (const EdgeCounts::Node &edgeCount: edgeCounts.nodes()) {
         if (edgeCount.value() > 1) {
             std::string label = gv.edgeOrganization(edgeCount.key()).label();
             label = P2::GraphViz::concatenate(label, "("+StringUtility::numberToString(edgeCount.value())+"x)", " ");
@@ -619,7 +619,7 @@ processBasicBlock(const P2::BasicBlock::Ptr &bblock, const BaseSemantics::Dispat
 
     // Process each instruction in the basic block
     try {
-        BOOST_FOREACH (SgAsmInstruction *insn, bblock->instructions()) {
+        for (SgAsmInstruction *insn: bblock->instructions()) {
             if (pathInsnIndex != size_t(-1))
                 ops->pathInsnIndex(pathInsnIndex++);
             cpu->processInstruction(insn);
@@ -704,7 +704,7 @@ showPathEvidence(const SmtSolverPtr &solver, const RiscOperatorsPtr &ops) {
     if (enames.empty()) {
         std::cout <<"    not available (or none necessary)\n";
     } else {
-        BOOST_FOREACH (const std::string &ename, enames) {
+        for (const std::string &ename: enames) {
             if (ename.substr(0, 2) == "0x") {
                 std::cout <<"    memory[" <<ename <<"] == " <<*solver->evidenceForName(ename) <<"\n";
             } else {
@@ -737,7 +737,7 @@ generateTopLevelPaths(const P2::ControlFlowGraph &cfg,
 static P2::CfgConstVertexSet
 cfgToPaths(const P2::CfgConstVertexSet &vertices, const P2::CfgVertexMap &vmap) {
     P2::CfgConstVertexSet retval;
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &vertex, vertices.values()) {
+    for (const P2::ControlFlowGraph::ConstVertexIterator &vertex: vertices.values()) {
         if (vmap.forward().exists(vertex))
             retval.insert(vmap.forward()[vertex]);
     }
@@ -755,7 +755,7 @@ insertCallSummary(P2::ControlFlowGraph &paths /*in,out*/, const P2::ControlFlowG
     P2::ControlFlowGraph::VertexIterator summaryVertex = paths.insertVertex(P2::CfgVertex(P2::V_USER_DEFINED));
     paths.insertEdge(pathsCallSite, summaryVertex, P2::CfgEdge(P2::E_FUNCTION_CALL));
     P2::CfgConstEdgeSet callReturnEdges = P2::findCallReturnEdges(pathsCallSite);
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &callret, callReturnEdges.values())
+    for (const P2::ControlFlowGraph::ConstEdgeIterator &callret: callReturnEdges.values())
         paths.insertEdge(summaryVertex, callret->target(), P2::CfgEdge(P2::E_FUNCTION_RETURN));
 
     int64_t stackDelta = function ? function->stackDeltaConcrete() : SgAsmInstruction::INVALID_STACK_DELTA;
@@ -790,7 +790,7 @@ printResults(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &pat
         PathFinder::mlog[DEBUG].enable(true);
         size_t nInsnsProcessed = 0;
 #endif
-        BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &pathVertex, path.vertices()) {
+        for (const P2::ControlFlowGraph::ConstVertexIterator &pathVertex: path.vertices()) {
             if (0==pathIdx) {
                 std::cout <<"    at path vertex " <<partitioner.vertexName(pathVertex) <<"\n";
             } else {
@@ -798,7 +798,7 @@ printResults(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &pat
             }
             if (settings.showInstructions) {
                 if (pathVertex->value().type() == P2::V_BASIC_BLOCK) {
-                    BOOST_FOREACH (SgAsmInstruction *insn, pathVertex->value().bblock()->instructions()) {
+                    for (SgAsmInstruction *insn: pathVertex->value().bblock()->instructions()) {
                         std::cout <<"      #" <<std::setw(5) <<std::left <<insnIdx++
                                   <<" " <<partitioner.unparse(insn) <<"\n";
                     }
@@ -825,7 +825,7 @@ printResults(const P2::Partitioner &partitioner, const P2::ControlFlowGraph &pat
             std::cout <<"    none\n";
         } else {
             size_t idx = 0;
-            BOOST_FOREACH (const SymbolicExpr::Ptr &constraint, pathConstraints)
+            for (const SymbolicExpr::Ptr &constraint: pathConstraints)
                 std::cout <<"    #" <<std::setw(5) <<std::left <<idx++ <<" " <<*constraint <<"\n";
         }
     }
@@ -917,7 +917,7 @@ static void
 incorporatePostConditions(const BaseSemantics::RiscOperatorsPtr &ops, // ops contains final path state
                           std::vector<SymbolicExpr::Ptr> &pathConstraints /*out*/) {
     SymbolicExprParser parser = postConditionParser(ops);
-    BOOST_FOREACH (const std::string &postCondStr, settings.postConditionsStr) {
+    for (const std::string &postCondStr: settings.postConditionsStr) {
         try {
             SymbolicExpr::Ptr expr = parser.parse(postCondStr, "tool argument");
             pathConstraints.push_back(expr);
@@ -968,7 +968,7 @@ singlePathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowG
     std::vector<SymbolicExpr::Ptr> pathConstraints;
 
     size_t pathInsnIndex = 0;
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &pathEdge, path.edges()) {
+    for (const P2::ControlFlowGraph::ConstEdgeIterator &pathEdge: path.edges()) {
         processVertex(cpu, pathEdge->source(), pathInsnIndex /*in,out*/);
         RegisterDescriptor IP = partitioner.instructionProvider().instructionPointerRegister();
         BaseSemantics::SValuePtr ip = ops->readRegister(IP, ops->undefined_(IP.nBits()));
@@ -1066,7 +1066,7 @@ findAndProcessSinglePaths(const P2::Partitioner &partitioner, const P2::ControlF
 
         // Limit path length (in terms of number of instructions)
         size_t pathNInsns = 0;
-        BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &vertex, path.vertices()) {
+        for (const P2::ControlFlowGraph::ConstVertexIterator &vertex: path.vertices()) {
             switch (vertex->value().type()) {
                 case P2::V_BASIC_BLOCK:
                     pathNInsns += vertex->value().bblock()->instructions().size();
@@ -1091,7 +1091,7 @@ findAndProcessSinglePaths(const P2::Partitioner &partitioner, const P2::ControlF
         if (!doBacktrack && pathEndsWithFunctionCall(partitioner, path) && !P2::findCallReturnEdges(backVertex).empty()) {
             ASSERT_require(partitioner.cfg().isValidVertex(cfgBackVertex));
             P2::CfgConstEdgeSet callEdges = P2::findCallEdges(cfgBackVertex);
-            BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &cfgCallEdge, callEdges.values()) {
+            for (const P2::ControlFlowGraph::ConstEdgeIterator &cfgCallEdge: callEdges.values()) {
                 if (shouldSummarizeCall(path, partitioner.cfg(), cfgCallEdge->target())) {
                     insertCallSummary(paths, backVertex, partitioner.cfg(), cfgCallEdge);
                 } else if (shouldInline(path, cfgCallEdge->target())) {
@@ -1467,7 +1467,7 @@ singleThreadBfsWorker(BfsContext *ctx) {
             size_t nInsns = bfsVertex->value().nInsns;
             processVertex(cpu, pathsEdge->target(), nInsns /*in,out*/);
             boost::lock_guard<boost::mutex> lock(ctx->bfsForestMutex);
-            BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, pathsEdge->target()->outEdges()) {
+            for (const P2::ControlFlowGraph::Edge &edge: pathsEdge->target()->outEdges()) {
                 BfsForest::VertexIterator v = ctx->bfsForest.insertVertex(BfsForestVertex(ctx->pathsGraph.findEdge(edge.id()),
                                                                                           cpu->currentState(), nInsns));
                 ctx->bfsForest.insertEdge(bfsVertex, v);
@@ -1518,7 +1518,7 @@ findAndProcessSinglePathsShortestFirst(const P2::Partitioner &partitioner,
     setInitialState(cpu, ctx.pathsBeginVertex);
     size_t nInsns = 0;
     processVertex(cpu, ctx.pathsBeginVertex, nInsns /*in,out*/);
-    BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, ctx.pathsBeginVertex->outEdges()) {
+    for (const P2::ControlFlowGraph::Edge &edge: ctx.pathsBeginVertex->outEdges()) {
         ctx.bfsFrontier.push_back(ctx.bfsForest.insertVertex(BfsForestVertex(ctx.pathsGraph.findEdge(edge.id()),
                                                                              cpu->currentState(), nInsns)));
     }
@@ -1567,7 +1567,7 @@ mergeMultipathStates(const BaseSemantics::RiscOperatorsPtr &ops,
     BaseSemantics::RegisterStateGenericPtr s1reg = BaseSemantics::RegisterStateGeneric::promote(s1->registerState());
     BaseSemantics::RegisterStateGenericPtr s2reg = BaseSemantics::RegisterStateGeneric::promote(s2->registerState());
     BaseSemantics::RegisterStateGenericPtr mergedReg = BaseSemantics::RegisterStateGeneric::promote(s1reg->clone());
-    BOOST_FOREACH (const BaseSemantics::RegisterStateGeneric::RegPair &pair, s2reg->get_stored_registers()) {
+    for (const BaseSemantics::RegisterStateGeneric::RegPair &pair: s2reg->get_stored_registers()) {
         if (s1reg->is_partly_stored(pair.desc)) {
             // The register exists (at least partly) in both states, so merge its values.
             BaseSemantics::SValuePtr mergedVal =
@@ -1607,7 +1607,7 @@ mergePredecessorStates(const BaseSemantics::RiscOperatorsPtr &ops, const P2::Con
 
     // Create the incoming state for this vertex by merging the outgoing states of all predecessors.
     BaseSemantics::StatePtr state;
-    BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, vertex->inEdges()) {
+    for (const P2::ControlFlowGraph::Edge &edge: vertex->inEdges()) {
         P2::ControlFlowGraph::ConstVertexIterator predecessorVertex = edge.source();
         ASSERT_require(outStates.exists(predecessorVertex));
         ASSERT_forbid(outStates[predecessorVertex].empty());
@@ -1717,7 +1717,7 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
     // final state of the predecessors is computed before the successor.
     size_t pathInsnIndex(-1);
     info <<"  building path constraints expression\n";
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &pathsEndVertex, pathsEndVertices) {
+    for (const P2::ControlFlowGraph::ConstVertexIterator &pathsEndVertex: pathsEndVertices) {
         std::vector<std::vector<BaseSemantics::StatePtr> > outgoingStates(paths.nVertices());
         std::vector<size_t> nVisits(paths.nVertices(), 0); // number of times this vertex appears in the current traversal path
         for (ReverseMultiVisitDfsTraversal t(pathsEndVertex); t; ++t) {
@@ -1756,7 +1756,7 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
 
                 ASSERT_require(t.event() == LEAVE_VERTEX);
                 ASSERT_require(!outgoingStates[vId].empty());
-                BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, t.vertex()->inEdges()) {
+                for (const P2::ControlFlowGraph::Edge &edge: t.vertex()->inEdges()) {
                     P2::ControlFlowGraph::ConstVertexIterator predecessor = edge.target();
                     ASSERT_require(!outgoingStates[predecessor->id()].empty());
                     outgoingStates[
@@ -1769,7 +1769,7 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
                 // successors' incoming states.  Because the depth-first traversal is going backward along edges we know that
                 // the successors have not been processed yet, although the traversal has encountered (entered) them and
                 // allocated their incoming states.
-                BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, t.vertex()->outEdges()) {
+                for (const P2::ControlFlowGraph::Edge &edge: t.vertex()->outEdges()) {
                     P2::ControlFlowGraph::ConstVertexIterator successor = edge.target();
                     ASSERT_require(!incomingStates[successor->id()].empty());
                     incomingStates[successor->id()].back() = mergeMultipathStates(ops,
@@ -1784,7 +1784,7 @@ multiPathFeasibility(const P2::Partitioner &partitioner, const P2::ControlFlowGr
 #if 0 // [Robb P. Matzke 2015-05-07]: old stuff
     ASSERT_require(pathsBeginVertex->nInEdges() == 0);
     std::vector<BaseSemantics::StatePtr> outState(paths.nVertices());
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator pathsEndVertex, pathsEndVertices) {
+    for (const P2::ControlFlowGraph::ConstVertexIterator pathsEndVertex: pathsEndVertices) {
 
         ASSERT_not_null(outState[pathsEndVertex->id()]);
         if (settings.showFinalState) {
@@ -1875,7 +1875,7 @@ findAndProcessMultiPaths(const P2::Partitioner &partitioner, const P2::ControlFl
         workList.pop_back();
         P2::ControlFlowGraph::ConstVertexIterator cfgVertex = pathToCfg(partitioner, work.vertex);
         P2::CfgConstEdgeSet callEdges = P2::findCallEdges(cfgVertex);
-        BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &cfgCallEdge, callEdges.values()) {
+        for (const P2::ControlFlowGraph::ConstEdgeIterator &cfgCallEdge: callEdges.values()) {
             ++nVertsProcessed;
             if (work.callDepth < settings.maxCallDepth) {
                 if (shouldSummarizeCall(work.vertex, partitioner.cfg(), cfgCallEdge->target())) {
@@ -1887,7 +1887,7 @@ findAndProcessMultiPaths(const P2::Partitioner &partitioner, const P2::ControlFl
                     P2::inlineOneCallee(paths, work.vertex, partitioner.cfg(), cfgCallEdge->target(),
                                         calleeCfgAvoidVertices, cfgAvoidEdges, &insertedVertices);
                     P2::eraseEdges(paths, P2::findCallReturnEdges(work.vertex));
-                    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &vertex, insertedVertices) {
+                    for (const P2::ControlFlowGraph::ConstVertexIterator &vertex: insertedVertices) {
                         ++nVertsProcessed;
                         if (isFunctionCall(partitioner, vertex) && !P2::findCallReturnEdges(vertex).empty())
                             workList.push_back(CallSite(vertex, work.callDepth+1));
@@ -1921,7 +1921,7 @@ findAndProcessMultiPaths(const P2::Partitioner &partitioner, const P2::ControlFl
     if (pathsEndVertices.exists(pathsBeginVertex))
         pathsIncidentVertices.erase(pathsBeginVertex); // allow singleton paths if appropriate
     P2::eraseEdges(paths, pathsUnreachableEdges);
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &pathVertex, pathsIncidentVertices.values()) {
+    for (const P2::ControlFlowGraph::ConstVertexIterator &pathVertex: pathsIncidentVertices.values()) {
         if (pathVertex->degree() == 0) {
             vmap.eraseTarget(pathVertex);
             paths.eraseVertex(pathVertex);
@@ -1966,7 +1966,7 @@ int main(int argc, char *argv[]) {
 
     // Find vertices that terminate paths
     P2::CfgConstVertexSet endVertices;
-    BOOST_FOREACH (const std::string &nameOrVa, settings.endVertices) {
+    for (const std::string &nameOrVa: settings.endVertices) {
         P2::ControlFlowGraph::ConstVertexIterator vertex = vertexForInstruction(partitioner, nameOrVa);
         if (vertex == partitioner.cfg().vertices().end())
             throw std::runtime_error("no --end vertex at " + nameOrVa);
@@ -1977,7 +1977,7 @@ int main(int argc, char *argv[]) {
 
     // Which vertices should be avoided
     P2::CfgConstVertexSet avoidVertices;
-    BOOST_FOREACH (const std::string &nameOrVa, settings.avoidVertices) {
+    for (const std::string &nameOrVa: settings.avoidVertices) {
         P2::ControlFlowGraph::ConstVertexIterator vertex = vertexForInstruction(partitioner, nameOrVa);
         if (vertex == partitioner.cfg().vertices().end())
             throw std::runtime_error("no vertex at " + nameOrVa);
@@ -2000,18 +2000,18 @@ int main(int argc, char *argv[]) {
     // Show the configuration
     info <<"start at vertex: " <<partitioner.vertexName(beginVertex) <<";\n";
     info <<"end at vertices:";
-    BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &vertex, endVertices.values())
+    for (const P2::ControlFlowGraph::ConstVertexIterator &vertex: endVertices.values())
         info <<" " <<partitioner.vertexName(vertex) <<";";
     info <<"\n";
     if (!avoidVertices.empty()) {
         info <<"avoiding the following vertices:";
-        BOOST_FOREACH (const P2::ControlFlowGraph::ConstVertexIterator &vertex, avoidVertices.values())
+        for (const P2::ControlFlowGraph::ConstVertexIterator &vertex: avoidVertices.values())
             info <<" " <<partitioner.vertexName(vertex) <<";";
         info <<"\n";
     }
     if (!avoidEdges.empty()) {
         info <<"avoiding the following edges:";
-        BOOST_FOREACH (const P2::ControlFlowGraph::ConstEdgeIterator &edge, avoidEdges.values())
+        for (const P2::ControlFlowGraph::ConstEdgeIterator &edge: avoidEdges.values())
             info <<" " <<partitioner.edgeName(edge) <<";";
         info <<"\n";
     }
@@ -2023,7 +2023,7 @@ int main(int argc, char *argv[]) {
     // Calculate average number of function calls per function
     if (1) {
         size_t nFunctionCalls = 0;
-        BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, partitioner.cfg().edges()) {
+        for (const P2::ControlFlowGraph::Edge &edge: partitioner.cfg().edges()) {
             if (edge.value().type() == P2::E_FUNCTION_CALL)
                 ++nFunctionCalls;
         }

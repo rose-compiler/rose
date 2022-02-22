@@ -1149,12 +1149,12 @@ SymbolicExprParser::docString() const {
                     "a comment>\". Parentheses, square brackets, and angle-brackets can be escaped with a backslash to "
                     "remove their special meaning, although using this feature reduces human readability.";
 
-    BOOST_FOREACH (const AtomExpansion::Ptr &functor, atomTable_) {
+    for (const AtomExpansion::Ptr &functor: atomTable_) {
         if (!functor->title().empty() && !functor->docString().empty())
             s += "@named{" + functor->title() + "}{" + functor->docString() + "}";
     }
 
-    BOOST_FOREACH (const OperatorExpansion::Ptr &functor, operatorTable_) {
+    for (const OperatorExpansion::Ptr &functor: operatorTable_) {
         if (!functor->title().empty() && !functor->docString().empty())
             s += "@named{" + functor->title() + "}{" + functor->docString() + "}";
     }
@@ -1202,7 +1202,7 @@ SymbolicExprParser::parse(TokenStream &tokens) {
             case Token::SYMBOL: {
                 SymbolicExpr::Ptr expr;
                 try {
-                    BOOST_FOREACH (const AtomExpansion::Ptr &functor, atomTable_) {
+                    for (const AtomExpansion::Ptr &functor: atomTable_) {
                         if ((expr = functor->immediateExpansion(tokens[0])))
                             break;
                     }
@@ -1232,7 +1232,7 @@ SymbolicExprParser::parse(TokenStream &tokens) {
                     throw tokens[0].syntaxError("unexpected right parenthesis", tokens.name());
                 SymbolicExpr::Ptr expr;
                 try {
-                    BOOST_FOREACH (const OperatorExpansion::Ptr &functor, operatorTable_) {
+                    for (const OperatorExpansion::Ptr &functor: operatorTable_) {
                         if ((expr = functor->immediateExpansion(stack.back().op, stack.back().operands)))
                             break;
                     }
@@ -1278,11 +1278,11 @@ struct DelayedSubber {
         : parser(parser) {}
 
     SymbolicExpr::Ptr operator()(SymbolicExpr::Ptr expr, const SmtSolver::Ptr &solver/*=NULL*/) {
-        BOOST_FOREACH (SymbolicExprParser::AtomExpansion::Ptr expander, parser->atomTable()) {
+        for (SymbolicExprParser::AtomExpansion::Ptr expander: parser->atomTable()) {
             expr = expander->delayedExpansion(expr, parser);
             ASSERT_not_null(expr);
         }
-        BOOST_FOREACH (SymbolicExprParser::OperatorExpansion::Ptr expander, parser->operatorTable()) {
+        for (SymbolicExprParser::OperatorExpansion::Ptr expander: parser->operatorTable()) {
             expr = expander->delayedExpansion(expr, parser);
             ASSERT_not_null(expr);
         }

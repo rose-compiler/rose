@@ -4,7 +4,6 @@
 #include <Rose/BinaryAnalysis/CallingConvention.h>
 
 #include <Rose/BinaryAnalysis/DataFlow.h>
-#include <boost/foreach.hpp>
 #include <Rose/CommandLine.h>
 #include <Rose/Diagnostics.h>
 #include <Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/MemoryCellList.h>
@@ -545,7 +544,7 @@ Definition::x86_64bit_sysv() {
 void
 Definition::appendInputParameter(const ParameterLocation &newLocation) {
 #ifndef NDEBUG
-    BOOST_FOREACH (const ParameterLocation &existingLocation, inputParameters_)
+    for (const ParameterLocation &existingLocation: inputParameters_)
         ASSERT_forbid(newLocation == existingLocation);
 #endif
     inputParameters_.push_back(newLocation);
@@ -554,7 +553,7 @@ Definition::appendInputParameter(const ParameterLocation &newLocation) {
 void
 Definition::appendOutputParameter(const ParameterLocation &newLocation) {
 #ifndef NDEBUG
-    BOOST_FOREACH (const ParameterLocation &existingLocation, outputParameters_)
+    for (const ParameterLocation &existingLocation: outputParameters_)
         ASSERT_forbid(newLocation == existingLocation);
 #endif
     outputParameters_.push_back(newLocation);
@@ -563,7 +562,7 @@ Definition::appendOutputParameter(const ParameterLocation &newLocation) {
 RegisterParts
 Definition::outputRegisterParts() const {
     RegisterParts retval;
-    BOOST_FOREACH (const ParameterLocation &loc, outputParameters_) {
+    for (const ParameterLocation &loc: outputParameters_) {
         if (loc.type() == ParameterLocation::REGISTER)
             retval.insert(loc.reg());
     }
@@ -573,7 +572,7 @@ Definition::outputRegisterParts() const {
 RegisterParts
 Definition::inputRegisterParts() const {
     RegisterParts retval;
-    BOOST_FOREACH (const ParameterLocation &loc, inputParameters_) {
+    for (const ParameterLocation &loc: inputParameters_) {
         if (loc.type() == ParameterLocation::REGISTER)
             retval.insert(loc.reg());
     }
@@ -583,7 +582,7 @@ Definition::inputRegisterParts() const {
 RegisterParts
 Definition::scratchRegisterParts() const {
     RegisterParts retval;
-    BOOST_FOREACH (RegisterDescriptor reg, scratchRegisters_)
+    for (RegisterDescriptor reg: scratchRegisters_)
         retval.insert(reg);
     return retval;
 }
@@ -591,7 +590,7 @@ Definition::scratchRegisterParts() const {
 RegisterParts
 Definition::calleeSavedRegisterParts() const {
     RegisterParts retval;
-    BOOST_FOREACH (RegisterDescriptor reg, calleeSavedRegisters_)
+    for (RegisterDescriptor reg: calleeSavedRegisters_)
         retval.insert(reg);
     return retval;
 }
@@ -621,7 +620,7 @@ Definition::print(std::ostream &out, const RegisterDictionary *regDict/*=NULL*/)
 
     if (!inputParameters_.empty()) {
         out <<", inputs={";
-        BOOST_FOREACH (const ParameterLocation &loc, inputParameters_) {
+        for (const ParameterLocation &loc: inputParameters_) {
             out <<" ";
             loc.print(out, regNames);
         }
@@ -667,7 +666,7 @@ Definition::print(std::ostream &out, const RegisterDictionary *regDict/*=NULL*/)
 
     if (!outputParameters_.empty()) {
         out <<", outputs={";
-        BOOST_FOREACH (const ParameterLocation &loc, outputParameters_) {
+        for (const ParameterLocation &loc: outputParameters_) {
             out <<" ";
             loc.print(out, regNames);
         }
@@ -676,14 +675,14 @@ Definition::print(std::ostream &out, const RegisterDictionary *regDict/*=NULL*/)
 
     if (!scratchRegisters_.empty()) {
         out <<", scratch={";
-        BOOST_FOREACH (RegisterDescriptor loc, scratchRegisters_)
+        for (RegisterDescriptor loc: scratchRegisters_)
             out <<" " <<regNames(loc);
         out <<" }";
     }
 
     if (!calleeSavedRegisters_.empty()) {
         out <<", saved={";
-        BOOST_FOREACH (RegisterDescriptor loc, calleeSavedRegisters_)
+        for (RegisterDescriptor loc: calleeSavedRegisters_)
             out <<" " <<regNames(loc);
         out <<" }";
     }
@@ -752,7 +751,7 @@ Analysis::analyzeFunction(const P2::Partitioner &partitioner, const P2::Function
 #endif
     size_t startVertexId = 0;
     DfCfg::ConstVertexIterator returnVertex = dfCfg.vertices().end();
-    BOOST_FOREACH (const DfCfg::Vertex &vertex, dfCfg.vertices()) {
+    for (const DfCfg::Vertex &vertex: dfCfg.vertices()) {
         if (vertex.value().type() == P2::DataFlow::DfCfgVertex::FUNCRET) {
             returnVertex = dfCfg.findVertex(vertex.id());
             break;
@@ -847,7 +846,7 @@ Analysis::updateRestoredRegisters(const StatePtr &initialState, const StatePtr &
     InputOutputPropertySet props;
     props.insert(IO_READ_BEFORE_WRITE);
     props.insert(IO_WRITE);
-    BOOST_FOREACH (RegisterDescriptor reg, finalRegs->findProperties(props)) {
+    for (RegisterDescriptor reg: finalRegs->findProperties(props)) {
         SValuePtr initialValue = initialRegs->peekRegister(reg, ops->undefined_(reg.nBits()), ops.get());
         SValuePtr finalValue = finalRegs->peekRegister(reg, ops->undefined_(reg.nBits()), ops.get());
         SymbolicExpr::Ptr initialExpr = SymbolicSemantics::SValue::promote(initialValue)->get_expression();
@@ -861,7 +860,7 @@ void
 Analysis::updateInputRegisters(const StatePtr &state) {
     inputRegisters_.clear();
     RegisterStateGenericPtr regs = RegisterStateGeneric::promote(state->registerState());
-    BOOST_FOREACH (RegisterDescriptor reg, regs->findProperties(IO_READ_BEFORE_WRITE))
+    for (RegisterDescriptor reg: regs->findProperties(IO_READ_BEFORE_WRITE))
         inputRegisters_.insert(reg);
     inputRegisters_ -= restoredRegisters_;
 }
@@ -870,7 +869,7 @@ void
 Analysis::updateOutputRegisters(const StatePtr &state) {
     outputRegisters_.clear();
     RegisterStateGenericPtr regs = RegisterStateGeneric::promote(state->registerState());
-    BOOST_FOREACH (RegisterDescriptor reg, regs->findProperties(IO_WRITE))
+    for (RegisterDescriptor reg: regs->findProperties(IO_WRITE))
         outputRegisters_.insert(reg);
     outputRegisters_ -= restoredRegisters_;
 }
@@ -886,7 +885,7 @@ Analysis::updateStackParameters(const P2::Function::Ptr &function, const StatePt
     SValuePtr initialStackPointer = initialState->peekRegister(SP, ops->undefined_(SP.nBits()), ops.get());
     ops->currentState(finalState);
     Variables::StackVariables vars = P2::DataFlow::findFunctionArguments(function, ops, initialStackPointer);
-    BOOST_FOREACH (const Variables::StackVariable &var, vars.values()) {
+    for (const Variables::StackVariable &var: vars.values()) {
         if (var.ioProperties().exists(IO_READ_BEFORE_WRITE)) {
             inputStackParameters_.insert(var.interval(), var);
         } else if (var.ioProperties().exists(IO_WRITE) && var.ioProperties().exists(IO_READ_AFTER_WRITE)) {
@@ -914,12 +913,12 @@ Analysis::print(std::ostream &out, bool multiLine) const {
     if (!inputRegisters_.isEmpty() || !inputStackParameters_.isEmpty()) {
         out <<separator <<"inputs={";
         if (!inputRegisters_.isEmpty()) {
-            BOOST_FOREACH (RegisterDescriptor reg, inputRegisters_.listAll(regDict_))
+            for (RegisterDescriptor reg: inputRegisters_.listAll(regDict_))
                 out <<" " <<regName(reg);
         }
         if (!inputStackParameters_.isEmpty()) {
             Variables::StackVariables vars = inputStackParameters();
-            BOOST_FOREACH (const Variables::StackVariable &var, vars.values())
+            for (const Variables::StackVariable &var: vars.values())
                 out <<" stack[" <<var.frameOffset() <<"]+" <<var.maxSizeBytes();
         }
         out <<" }";
@@ -929,12 +928,12 @@ Analysis::print(std::ostream &out, bool multiLine) const {
     if (!outputRegisters_.isEmpty() || !outputStackParameters_.isEmpty()) {
         out <<separator <<"outputs={";
         if (!outputRegisters_.isEmpty()) {
-            BOOST_FOREACH (RegisterDescriptor reg, outputRegisters_.listAll(regDict_))
+            for (RegisterDescriptor reg: outputRegisters_.listAll(regDict_))
                 out <<" " <<regName(reg);
         }
         if (!outputStackParameters_.isEmpty()) {
             Variables::StackVariables vars = outputStackParameters();
-            BOOST_FOREACH (const Variables::StackVariable &var, vars.values())
+            for (const Variables::StackVariable &var: vars.values())
                 out <<" stack[" <<var.frameOffset() <<"]+" <<var.maxSizeBytes();
         }
         out <<" }";
@@ -943,7 +942,7 @@ Analysis::print(std::ostream &out, bool multiLine) const {
 
     if (!restoredRegisters_.isEmpty()) {
         out <<separator <<"saved={";
-        BOOST_FOREACH (RegisterDescriptor reg, restoredRegisters_.listAll(regDict_))
+        for (RegisterDescriptor reg: restoredRegisters_.listAll(regDict_))
             out <<" " <<regName(reg);
         out <<" }";
         separator = multiLine ? "\n" : ", ";
@@ -1018,9 +1017,9 @@ Analysis::match(const Definition::Ptr &cc) const {
         // pop even unused arguments).
         if (cc->stackCleanup() == CLEANUP_BY_CALLEE) {
             int64_t normalizedEnd = 0; // one-past first-pushed argument normlized for downward-growing stack
-            BOOST_FOREACH (const Variables::StackVariable &var, inputStackParameters_.values())
+            for (const Variables::StackVariable &var: inputStackParameters_.values())
                 normalizedEnd = std::max(normalizedEnd, (int64_t)(var.frameOffset() * normalization + var.maxSizeBytes()));
-            BOOST_FOREACH (const Variables::StackVariable &var, outputStackParameters_.values())
+            for (const Variables::StackVariable &var: outputStackParameters_.values())
                 normalizedEnd = std::max(normalizedEnd, (int64_t)(var.frameOffset() * normalization + var.maxSizeBytes()));
             if (normalizedStackDelta < normalizedEnd) {
                 SAWYER_MESG(debug) <<"  mismatch: callee failed to pop callee-cleanup stack parameters\n";
@@ -1035,7 +1034,7 @@ Analysis::match(const Definition::Ptr &cc) const {
             RegisterNames regName(registerDictionary());
             debug <<"  mismatch: actual outputs are not defined outputs or scratch registers: ";
             RegisterParts parts = outputRegisters_ - ccOutputRegisters;
-            BOOST_FOREACH (RegisterDescriptor reg, parts.listAll(registerDictionary()))
+            for (RegisterDescriptor reg: parts.listAll(registerDictionary()))
                 debug <<" " <<regName(reg);
             debug <<"\n";
         }
@@ -1048,7 +1047,7 @@ Analysis::match(const Definition::Ptr &cc) const {
             RegisterNames regName(registerDictionary());
             debug <<"  mismatch: actual inputs are not defined inputs or \"this\" register: ";
             RegisterParts parts = inputRegisters_ - ccInputRegisters;
-            BOOST_FOREACH (RegisterDescriptor reg, parts.listAll(registerDictionary()))
+            for (RegisterDescriptor reg: parts.listAll(registerDictionary()))
                 debug <<" " <<regName(reg);
             debug <<"\n";
         }
@@ -1061,7 +1060,7 @@ Analysis::match(const Definition::Ptr &cc) const {
             debug <<"  mismatch: restored registers that are not defined as callee-saved:";
             RegisterParts parts = restoredRegisters_ - cc->calleeSavedRegisterParts();
             RegisterNames regName(registerDictionary());
-            BOOST_FOREACH (RegisterDescriptor reg, parts.listAll(registerDictionary()))
+            for (RegisterDescriptor reg: parts.listAll(registerDictionary()))
                 debug <<" " <<regName(reg);
             debug <<"\n";
         }
@@ -1097,7 +1096,7 @@ Analysis::match(const Definition::Ptr &cc) const {
 Dictionary
 Analysis::match(const Dictionary &conventions) const {
     Dictionary retval;
-    BOOST_FOREACH (const Definition::Ptr &cc, conventions) {
+    for (const Definition::Ptr &cc: conventions) {
         if (match(cc))
             retval.push_back(cc);
     }

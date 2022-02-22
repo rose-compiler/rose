@@ -54,7 +54,7 @@ Function::dataBlockExists(const DataBlock::Ptr &dblock) const {
 AddressIntervalSet
 Function::dataAddresses() const {
     AddressIntervalSet retval;
-    BOOST_FOREACH (const DataBlock::Ptr &db, dblocks_)
+    for (const DataBlock::Ptr &db: dblocks_)
         retval.insert(db->extent());
     return retval;
 }

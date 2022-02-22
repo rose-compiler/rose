@@ -68,7 +68,7 @@ unparseM68kExpression(SgAsmExpression *expr, const LabelMap *labels, const Regis
         // curly braces.
         int nregs = 0;
         result = "{";
-        BOOST_FOREACH (SgAsmRegisterReferenceExpression *rre, regs->get_registers())
+        for (SgAsmRegisterReferenceExpression *rre: regs->get_registers())
             result += (nregs++ ? ", " : "") + unparseM68kExpression(rre, labels, registers);
         result += "}";
         if (regs->get_mask()!=0)
@@ -130,7 +130,7 @@ M68k::outputExpr(std::ostream &out, SgAsmExpression *expr, State &state) const {
         // curly braces.
         int nregs = 0;
         out <<"{";
-        BOOST_FOREACH (SgAsmRegisterReferenceExpression *rre, regs->get_registers()) {
+        for (SgAsmRegisterReferenceExpression *rre: regs->get_registers()) {
             if (++nregs > 1)
                 out <<", ";
             outputExpr(out, rre, state);

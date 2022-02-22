@@ -15,7 +15,6 @@
 #include <boost/serialization/vector.hpp>
 
 #include <algorithm>
-#include <boost/foreach.hpp>
 #include <ostream>
 #include <string>
 
@@ -328,7 +327,7 @@ public:
     template<class UserPredicate>
     AddressUsers select(UserPredicate predicate) const {
         AddressUsers retval;
-        BOOST_FOREACH (const AddressUser &user, users_) {
+        for (const AddressUser &user: users_) {
             if (predicate(user))
                 retval.users_.push_back(user);
         }
@@ -608,7 +607,7 @@ public:
     AddressUsers spanning(const AddressInterval &interval, UserPredicate userPredicate) const {
         AddressUsers retval;
         size_t nIters = 0;
-        BOOST_FOREACH (const Map::Node &node, map_.findAll(interval)) {
+        for (const Map::Node &node: map_.findAll(interval)) {
             AddressUsers users = node.value().select(userPredicate);
             retval = 0==nIters++ ? users : retval.intersection(users);
             if (retval.isEmpty())
@@ -634,7 +633,7 @@ public:
     template<class UserPredicate>
     AddressUsers overlapping(const AddressInterval &interval, UserPredicate userPredicate) const {
         AddressUsers retval;
-        BOOST_FOREACH (const Map::Node &node, map_.findAll(interval))
+        for (const Map::Node &node: map_.findAll(interval))
             retval.insert(node.value().select(userPredicate));
         return retval;
     }

@@ -9,7 +9,6 @@
 #include <Rose/BinaryAnalysis/InstructionSemantics2/Util.h>
 #include "integerOps.h"
 #include "stringify.h"
-#include <boost/foreach.hpp>
 
 using namespace Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics;
 using namespace Rose::Diagnostics;

@@ -46,27 +46,27 @@ EdgeArrows::reset() {
 void
 EdgeArrows::computeLayout(const Graph &graph, const std::vector<VertexId> &ordered) {
     // Locations for the ordered vertices.
-    BOOST_FOREACH (VertexId v, ordered) {
+    for (VertexId v: ordered) {
         if (!vertexLocations_.exists(v))
             appendVertex(v);
     }
     
     // Locations for the un-ordered vertices.
     std::vector<VertexId> unordered;
-    BOOST_FOREACH (VertexId v, graph.vertexValues()) {
+    for (VertexId v: graph.vertexValues()) {
         if (!vertexLocations_.exists(v))
             unordered.push_back(v);
     }
     std::sort(unordered.begin(), unordered.end());
     unordered.erase(std::unique(unordered.begin(), unordered.end()), unordered.end());
-    BOOST_FOREACH (VertexId v, unordered)
+    for (VertexId v: unordered)
         appendVertex(v);
     
     // Obtain info about each edge so we can sort them by length. We want to process small edges
     // before large edges in order to pack them nicely into columns.
     std::vector<Arrow> arrows;
     arrows.reserve(graph.nEdges());
-    BOOST_FOREACH (const Graph::Edge &edge, graph.edges()) {
+    for (const Graph::Edge &edge: graph.edges()) {
         size_t srcLine = vertexLocations_[edge.source()->value()].greatest(); // edges leave from the last line
         size_t dstLine = vertexLocations_[edge.target()->value()].least(); // and enter at the first line
         OutputLocation lines = OutputLocation::hull(srcLine, dstLine);
@@ -76,7 +76,7 @@ EdgeArrows::computeLayout(const Graph &graph, const std::vector<VertexId> &order
 
     // Process each arrow and assign it to the first layer where it fits (i.e., doesn't conflict with any other arrow). If
     // there is no such layer, append a new layer.
-    BOOST_FOREACH (const Arrow &arrow, arrows) {
+    for (const Arrow &arrow: arrows) {
         bool inserted = false;
         for (size_t i = 0; i < columns_.size() && !inserted; ++i) {
             if (!columns_[i].isOverlapping(arrow.location)) {
@@ -99,10 +99,10 @@ EdgeArrows::computeCfgBlockLayout(const P2::Partitioner &partitioner, const P2::
     // We use the basic block addresses as the arrow vertex names since the unparser will emit the basic blocks in order of
     // their starting address.
     Graph graph;                                        // the arrows (edges) and their endpoints (vertices)
-    BOOST_FOREACH (rose_addr_t sourceVa, function->basicBlockAddresses()) {
+    for (rose_addr_t sourceVa: function->basicBlockAddresses()) {
         P2::ControlFlowGraph::ConstVertexIterator vertex = partitioner.findPlaceholder(sourceVa);
         ASSERT_require(vertex != partitioner.cfg().vertices().end());
-        BOOST_FOREACH (const P2::ControlFlowGraph::Edge &edge, vertex->outEdges()) {
+        for (const P2::ControlFlowGraph::Edge &edge: vertex->outEdges()) {
             if (edge.target()->value().type() == P2::V_BASIC_BLOCK) {
                 rose_addr_t targetVa = edge.target()->value().address();
                 if (function->ownsBasicBlock(targetVa)) // don't use Partitioner::isIntraFunctionEdge; we want all self edges
@@ -127,13 +127,13 @@ EdgeArrows::computeCfgEdgeLayout(const P2::Partitioner &partitioner, const P2::F
     std::vector<VertexId> edgeEndpointIds;              // order that CFG edge endpoints are emitted by the unparser
     Graph graph;                                        // the arrows (edges) and their endpoints (vertices)
 
-    BOOST_FOREACH (rose_addr_t sourceVa, function->basicBlockAddresses()) {
+    for (rose_addr_t sourceVa: function->basicBlockAddresses()) {
         P2::BasicBlock::Ptr bb = partitioner.basicBlockExists(sourceVa);
         ASSERT_not_null(bb);
 
         // Incoming edges for the basic block (and we do the arrow at the same time)
         std::vector<P2::ControlFlowGraph::ConstEdgeIterator> inEdges = Unparser::Base::orderedBlockPredecessors(partitioner, bb);
-        BOOST_FOREACH (P2::ControlFlowGraph::ConstEdgeIterator inEdge, inEdges) {
+        for (P2::ControlFlowGraph::ConstEdgeIterator inEdge: inEdges) {
             edgeEndpointIds.push_back(cfgEdgeTargetEndpoint(inEdge->id()));
 
             if (inEdge->target()->value().type() == P2::V_BASIC_BLOCK) {
@@ -145,7 +145,7 @@ EdgeArrows::computeCfgEdgeLayout(const P2::Partitioner &partitioner, const P2::F
 
         // Followed by outgoing edges for the basic block
         std::vector<P2::ControlFlowGraph::ConstEdgeIterator> outEdges = Unparser::Base::orderedBlockSuccessors(partitioner, bb);
-        BOOST_FOREACH (P2::ControlFlowGraph::ConstEdgeIterator outEdge, outEdges)
+        for (P2::ControlFlowGraph::ConstEdgeIterator outEdge: outEdges)
             edgeEndpointIds.push_back(cfgEdgeSourceEndpoint(outEdge->id()));
     }
     computeLayout(graph, edgeEndpointIds);
@@ -187,7 +187,7 @@ EdgeArrows::debug(std::ostream &out) const {
     }
 
     out <<"vertex locations:\n";
-    BOOST_FOREACH (const VertexLocations::Node &node, vertexLocations_.nodes()) {
+    for (const VertexLocations::Node &node: vertexLocations_.nodes()) {
         out <<"  vertex " <<node.key() <<" (" <<StringUtility::addrToString(node.key()) <<")"
             <<" at lines " <<node.value().least()
             <<" through " <<node.value().greatest() <<"\n";
@@ -196,7 +196,7 @@ EdgeArrows::debug(std::ostream &out) const {
     out <<StringUtility::plural(columns_.size(), "columns") <<"\n";
     for (size_t i=0; i<columns_.size(); ++i) {
         out <<"  column #" <<i <<":\n";
-        BOOST_FOREACH (const Arrow &arrow, columns_[i].values()) {
+        for (const Arrow &arrow: columns_[i].values()) {
             out <<"    " <<(arrow.isForward ? "forward" : "backward") <<" arrow "
                 <<" at lines " <<arrow.location.least()
                 <<" through " <<arrow.location.greatest() <<"\n";

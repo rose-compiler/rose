@@ -13,7 +13,7 @@ listSmtSolverNames(std::ostream &out) {
     BinaryAnalysis::SmtSolver::Availability solvers = BinaryAnalysis::SmtSolver::availability();
     bool foundSolver = false;
     out <<"solver \"none\" is available\n";
-    BOOST_FOREACH (BinaryAnalysis::SmtSolver::Availability::value_type &node, solvers) {
+    for (BinaryAnalysis::SmtSolver::Availability::value_type &node: solvers) {
         out <<"solver \"" <<node.first <<"\" is " <<(node.second?"":"not ") <<"available\n";
         if (node.second)
             foundSolver = true;
@@ -66,7 +66,7 @@ smtSolverDocumentationString(const std::string &dfltValue) {
 
     SmtSolver::Availability solvers = SmtSolver::availability();
     std::vector<std::string> enabled, disabled;
-    BOOST_FOREACH (const SmtSolver::Availability::value_type &node, solvers) {
+    for (const SmtSolver::Availability::value_type &node: solvers) {
         if (node.second) {
             enabled.push_back("\"" + cEscape(node.first) + "\"");
         } else {

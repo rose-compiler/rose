@@ -119,7 +119,7 @@ public:
             std::vector<SgAsmInstruction*> instructions;
             for (size_t i=0; i<bb->nInstructions(); ++i) {
                 bool isGoodInstruction = true;
-                BOOST_FOREACH (const NoOperation::IndexInterval &interval, nopIndexes) {
+                for (const NoOperation::IndexInterval &interval: nopIndexes) {
                     if (interval.isContaining(i)) {
                         isGoodInstruction = false;
                         break;
@@ -137,7 +137,7 @@ public:
                 out <<StringUtility::addrToString(bb->address()) <<": no instructions\n";
             } else {
                 state.thisIsBasicBlockFirstInstruction();
-                BOOST_FOREACH (SgAsmInstruction *insn, instructions) {
+                for (SgAsmInstruction *insn: instructions) {
                     if (insn == instructions.back())
                         state.thisIsBasicBlockLastInstruction();
                     state.frontUnparser().emitInstruction(out, insn, state);
@@ -195,14 +195,14 @@ main(int argc, char *argv[]) {
         unparser->settings().function.cg.showing = false; // slow
         std::vector<P2::Function::Ptr> selectedFunctions =
             Bat::selectFunctionsByNameOrAddress(partitioner.functions(), settings.functionNames, mlog[WARN]);
-        BOOST_FOREACH (const P2::Function::Ptr &f, Bat::selectFunctionsContainingInstruction(partitioner, settings.addresses))
+        for (const P2::Function::Ptr &f: Bat::selectFunctionsContainingInstruction(partitioner, settings.addresses))
             P2::insertUnique(selectedFunctions, f, P2::sortFunctionsByAddress);
         if (selectedFunctions.empty())
             mlog[WARN] <<"no matching functions found\n";
 
         Sawyer::ProgressBar<size_t> progress(selectedFunctions.size(), mlog[MARCH], "unparsing");
         progress.suffix(" functions");
-        BOOST_FOREACH (const P2::Function::Ptr &function, selectedFunctions) {
+        for (const P2::Function::Ptr &function: selectedFunctions) {
             if (settings.fileNamePrefix.empty()) {
                 unparser->unparse(std::cout, partitioner, function);
             } else {
@@ -214,7 +214,7 @@ main(int argc, char *argv[]) {
 
     } else if (!settings.fileNamePrefix.empty()) {
         // Output all functions, each to its own file
-        BOOST_FOREACH (const P2::Function::Ptr &function, partitioner.functions()) {
+        for (const P2::Function::Ptr &function: partitioner.functions()) {
             std::ofstream file(functionFileName(settings, function).c_str());
             unparser->unparse(file, partitioner, Progress::instance());
         }

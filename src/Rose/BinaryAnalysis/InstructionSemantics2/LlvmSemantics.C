@@ -1528,7 +1528,7 @@ Transcoder::transcodeBasicBlock(SgAsmBlock *bb, std::ostream &o)
     }
 #else
     o <<"\n" <<operators->prefix() <<"; Basic block " <<StringUtility::addrToString(bb->get_address()) <<"\n";
-    BOOST_FOREACH (SgAsmInstruction *insn, insns) {
+    for (SgAsmInstruction *insn: insns) {
         o <<operators->prefix() <<operators->addr_label(insn->get_address()) <<":    ; " <<unparseInstruction(insn) <<"\n";
         try {
             operators->reset();

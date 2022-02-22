@@ -154,7 +154,7 @@ RegisterDictionary::resize(const std::string &name, unsigned new_nbits) {
 RegisterParts
 RegisterDictionary::getAllParts() const {
     RegisterParts retval;
-    BOOST_FOREACH (const Entries::value_type &node, forward)
+    for (const Entries::value_type &node: forward)
         retval.insert(node.second);
     return retval;
 }
@@ -199,7 +199,7 @@ firstUnused(std::vector<unsigned> &v /*in,out*/) {
 unsigned
 RegisterDictionary::firstUnusedMajor() const {
     std::vector<unsigned> used;
-    BOOST_FOREACH (const Entries::value_type &entry, forward) {
+    for (const Entries::value_type &entry: forward) {
         if (used.empty() || used.back()!=entry.second.majorNumber())
             used.push_back(entry.second.majorNumber());
     }
@@ -209,7 +209,7 @@ RegisterDictionary::firstUnusedMajor() const {
 unsigned
 RegisterDictionary::firstUnusedMinor(unsigned majr) const {
     std::vector<unsigned> used;
-    BOOST_FOREACH (const Entries::value_type &entry, forward) {
+    for (const Entries::value_type &entry: forward) {
         if (entry.second.majorNumber() == majr)
             used.push_back(entry.second.minorNumber());
     }

@@ -2,7 +2,6 @@
 #define ROSE_BitFlags_H
 
 #include <rosePublicConfig.h>
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/serialization/access.hpp>
 #include <Sawyer/Assert.h>
@@ -82,7 +81,7 @@ public:
         if (this->vector() != Vector(0)) {
             Vector leftovers(0);
             std::vector<Enum> members = this->split(constants, leftovers /*out*/);
-            BOOST_FOREACH (Enum member, members) {
+            for (Enum member: members) {
                 const char *name = stringifier(member);
                 ASSERT_not_null(name);
                 retval += std::string(retval.empty()?"":"|") + name;

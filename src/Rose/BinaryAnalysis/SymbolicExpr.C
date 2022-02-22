@@ -5,8 +5,8 @@
 #include <Rose/BinaryAnalysis/SymbolicExpr.h>
 
 #include <Rose/BinaryAnalysis/SmtSolver.h>
-#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/range/adaptor/reversed.hpp>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
 #include <Combinatorics.h>
@@ -79,7 +79,7 @@ escapeCharacter(char ch) {
 static std::string
 nameEscape(const std::string &s) {
     std::string retval;
-    BOOST_FOREACH (char ch, s) {
+    for (char ch: s) {
         switch (ch) {
             case '(':
             case ')':
@@ -106,7 +106,7 @@ commentEscape(const std::string &s) {
     // leave that as an exercise for the reader. ;-)
     bool escapeAngleBrackets = false;
     int angleBracketDepth = 0;
-    BOOST_FOREACH (char ch, s) {
+    for (char ch: s) {
         if ('<' == ch) {
             ++angleBracketDepth;
         } else if ('>' == ch && --angleBracketDepth < 0) {
@@ -115,7 +115,7 @@ commentEscape(const std::string &s) {
         }
     }
 
-    BOOST_FOREACH (char ch, s) {
+    for (char ch: s) {
         switch (ch) {
             case '<':
             case '>':
@@ -164,7 +164,7 @@ setToIte(const Ptr &set, const SmtSolverPtr &solver, const LeafPtr &var) {
 Hash
 hash(const std::vector<Ptr> &exprs) {
     Hash retval = 0;
-    BOOST_FOREACH (const Ptr &expr, exprs)
+    for (const Ptr &expr: exprs)
         retval ^= expr->hash();
     return retval;
 }
@@ -189,7 +189,7 @@ struct VariableRenamer {
             bool anyChildRenamed = false;
             Nodes newChildren;
             newChildren.reserve(inode->nChildren());
-            BOOST_FOREACH (const Ptr &child, inode->children()) {
+            for (const Ptr &child: inode->children()) {
                 Ptr newChild = rename(child);
                 if (newChild != child)
                     anyChildRenamed = true;
@@ -248,7 +248,7 @@ struct SingleSubstituter {
             bool anyChildChanged = false;
             Nodes newChildren;
             newChildren.reserve(inode->nChildren());
-            BOOST_FOREACH (const Ptr &child, inode->children()) {
+            for (const Ptr &child: inode->children()) {
                 Ptr newChild = substitute(child);
                 if (newChild != child)
                     anyChildChanged = true;
@@ -292,7 +292,7 @@ struct MultiSubstituter {
             bool anyChildChanged = false;
             Nodes newChildren;
             newChildren.reserve(inode->nChildren());
-            BOOST_FOREACH (const Ptr &child, inode->children()) {
+            for (const Ptr &child: inode->children()) {
                 Ptr newChild = substitute(child);
                 if (newChild != child)
                     anyChildChanged = true;
@@ -514,7 +514,7 @@ struct Hasher: Visitor {
                 const Interior *inode = node->isInteriorNodeRaw();
                 ASSERT_not_null(inode);
                 h = hash(h, inode->getOperator());
-                BOOST_FOREACH (const Ptr &child, inode->children()) {
+                for (const Ptr &child: inode->children()) {
                     ASSERT_require(child->isHashed());
                     h = hash(h, child->hash());
                 }
@@ -782,7 +782,7 @@ Interior::adjustWidth(const Type &type) {
             // two floating-point values results in an integer (i.e., bit vector) since it wouldn't make sense interpretted as
             // floating-point. If you want a floating-point result you must wrap the concatenation in a reinterpret operation.
             size_t totalWidth = 0;
-            BOOST_FOREACH (const Ptr &child, children_)
+            for (const Ptr &child: children_)
                 totalWidth += child->nBits();
             type_ = Type::integer(totalWidth);
             break;
@@ -1015,7 +1015,7 @@ Interior::adjustWidth(const Type &type) {
 void
 Interior::adjustBitFlags(unsigned flags) {
     flags_ = flags;
-    BOOST_FOREACH (const Ptr &child, children_)
+    for (const Ptr &child: children_)
         flags_ |= child->flags();
 }
 
@@ -1444,7 +1444,7 @@ InteriorPtr
 Interior::idempotent(const SmtSolverPtr &solver) {
     Nodes newArgs;
     bool isSimplified = false;
-    BOOST_FOREACH (const Ptr &arg, children()) {
+    for (const Ptr &arg: children()) {
         if (!newArgs.empty() && newArgs.back()->mustEqual(arg, solver)) {
             isSimplified = true;
         } else {
@@ -1542,7 +1542,7 @@ Interior::identity(uint64_t ident, const SmtSolverPtr &solver) {
 
 Ptr
 Interior::poisonNan(const SmtSolverPtr &solver) {
-    BOOST_FOREACH (Ptr child, children()) {
+    for (Ptr child: children()) {
         const Leaf *leaf = child->isLeafNodeRaw();
         if (leaf && leaf->isFloatingPointNan())
             return makeFloatingPointNan(leaf->type().exponentWidth(), leaf->type().significandWidth(), comment(), flags());
@@ -1921,7 +1921,7 @@ ConcatSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // and simplify the concat operations
     Ptr condition;
     Nodes trueValues, falseValues;
-    BOOST_FOREACH (const Ptr &child, inode->children()) {
+    for (const Ptr &child: inode->children()) {
         const Interior *ite = child->isInteriorNodeRaw();
         if (!ite || ite->getOperator() != OP_ITE) {
             condition = Ptr();
@@ -2060,7 +2060,7 @@ ExtractSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     if (from_node && to_node && from_node->isIntegerConstant() && to_node->isIntegerConstant() &&
         ioperand && OP_CONCAT == ioperand->getOperator()) {
         size_t partAt = 0;                              // starting bit number in child
-        BOOST_REVERSE_FOREACH (const Ptr part, ioperand->children()) { // concatenated parts
+        for (const Ptr &part: boost::adaptors::reverse(ioperand->children())) { // concatenated parts
             size_t partEnd = partAt + part->nBits();
             if (partEnd <= from) {
                 // Part is entirely left of what we need
@@ -2813,9 +2813,9 @@ SetSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     // Remove duplicate arguments
     bool removedDuplicate = false;
     Nodes elements;
-    BOOST_FOREACH (const Ptr &elmt1, inode->children()) {
+    for (const Ptr &elmt1: inode->children()) {
         bool isDuplicate = false;
-        BOOST_FOREACH (const Ptr &elmt2, elements) {
+        for (const Ptr &elmt2: elements) {
 #if 0 // [Robb Matzke 2021-12-14]
             if (elmt1->mustEqual(elmt2, solver)) {
                 isDuplicate = true;
@@ -3515,7 +3515,7 @@ Leaf::isFloatingPointNan() const {
 ExprExprHashMap
 ExprExprHashMap::invert() const {
     ExprExprHashMap retval;
-    BOOST_FOREACH (const ExprExprHashMap::value_type &node, *this)
+    for (const ExprExprHashMap::value_type &node: *this)
         retval[node.second] = node.first;
     return retval;
 }

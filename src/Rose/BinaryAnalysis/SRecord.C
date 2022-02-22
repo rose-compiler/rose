@@ -7,7 +7,6 @@
 #include <Rose/StringUtility.h>
 #include "integerOps.h"
 #include <boost/algorithm/string/predicate.hpp>
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <rose_getline.h>
 
@@ -317,7 +316,7 @@ SRecord::parse(std::istream &input)
     // Input should consist of only one syntax style: either Motorola or Intel syntax
     if (nMotorola > 0 && nIntel > 0) {
         Syntax expected = nMotorola >= nIntel ? SREC_MOTOROLA : SREC_INTEL;
-        BOOST_FOREACH (SRecord &srec, srecs) {
+        for (SRecord &srec: srecs) {
             if (srec.syntax() != expected)
                 srec.error("wrong syntax family for S-Record collection");
         }
@@ -415,7 +414,7 @@ AddressIntervalSet
 SRecord::dataAddresses(const std::vector<SRecord> &srecs) {
     AddressIntervalSet retval;
     RunLengthEncoding rle;
-    BOOST_FOREACH (const SRecord &srec, srecs) {
+    for (const SRecord &srec: srecs) {
         rose_addr_t va = 0;
         if (rle.dataAddress(srec).assignTo(va))
             retval.insert(AddressInterval::baseSize(va, srec.data().size()));
@@ -433,7 +432,7 @@ SRecord::load(const std::vector<SRecord> &srecs, const MemoryMap::Ptr &map, bool
         // We want to minimize the number of buffers in the map, so the first step is to discover what addresses are covered by
         // the data S-records
         AddressIntervalSet addresses = dataAddresses(srecs);
-        BOOST_FOREACH (const AddressInterval &interval, addresses.intervals()) {
+        for (const AddressInterval &interval: addresses.intervals()) {
             ASSERT_forbid(interval.isWhole());          // not practically possible since S-Record file would be >2^65 bytes
             map->insert(interval, MemoryMap::Segment::anonymousInstance(interval.size(), accessPerms, newSegmentNames));
         }
@@ -441,7 +440,7 @@ SRecord::load(const std::vector<SRecord> &srecs, const MemoryMap::Ptr &map, bool
 
     // Populate the map by writing the S-Record data into it.
     RunLengthEncoding rle;
-    BOOST_FOREACH (const SRecord &srec, srecs) {
+    for (const SRecord &srec: srecs) {
         rose_addr_t va = 0;
         if (rle.dataAddress(srec).assignTo(va)) {
             size_t nWritten = map->at(va).write(srec.data()).size();
@@ -600,7 +599,7 @@ SRecord::toString() const {
     }
 
     // Append the data and checksum
-    BOOST_FOREACH (uint8_t byte, data_)
+    for (uint8_t byte: data_)
         s += (boost::format("%|02X|") % (unsigned)byte).str();
     ASSERT_require(checksumOffset <= s.size());
     s += (boost::format("%|02X|") % (unsigned)checksum(syntax(), s, checksumOffset, s.size()-checksumOffset)).str();

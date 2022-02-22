@@ -55,7 +55,7 @@ DataFlow::buildGraph(const std::vector<SgAsmInstruction*> &insns)
             userOps_->print(mlog[DEBUG], "  |");
         }
 
-        BOOST_FOREACH (SgAsmInstruction *insn, insns) {
+        for (SgAsmInstruction *insn: insns) {
             mlog[DEBUG] <<"  processing " <<insn->toString() <<"\n";
             dispatcher_->processInstruction(insn);
         }
@@ -71,10 +71,10 @@ DataFlow::buildGraph(const std::vector<SgAsmInstruction*> &insns)
 DataFlow::VariableList
 DataFlow::getUniqueVariables(const VertexFlowGraphs &graphs) {
     VariableList variables;
-    BOOST_FOREACH (const DataFlow::Graph &dfg, graphs.values()) {
-        BOOST_FOREACH (const Variable &candidateVariable, dfg.vertexValues()) {
+    for (const DataFlow::Graph &dfg: graphs.values()) {
+        for (const Variable &candidateVariable: dfg.vertexValues()) {
             bool alreadyHaveIt = false;
-            BOOST_FOREACH (const Variable &existingVariable, variables) {
+            for (const Variable &existingVariable: variables) {
                 if (candidateVariable.mustAlias(existingVariable)) {
                     alreadyHaveIt = true;
                     break;

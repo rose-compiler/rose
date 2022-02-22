@@ -164,7 +164,7 @@ RSIM_Linux64::loadVsyscalls(RSIM_Process *process) {
     }
     AddressInterval loaded;
     std::string found;
-    BOOST_FOREACH (const std::string &vsyscallPath, paths) {
+    for (const std::string &vsyscallPath: paths) {
         FileSystem::Path path = vsyscallPath;
         FileSystem::Path name = path / "vsyscall-amd64";
         if (FileSystem::isFile(name)) {
@@ -179,7 +179,7 @@ RSIM_Linux64::loadVsyscalls(RSIM_Process *process) {
     }
 
     // Change the name from just a file name to "[vsyscall] ..."
-    BOOST_FOREACH (MemoryMap::Segment &segment, process->get_memory()->within(loaded).segments())
+    for (MemoryMap::Segment &segment: process->get_memory()->within(loaded).segments())
         segment.name("[vsyscall] " + found);
 }
 

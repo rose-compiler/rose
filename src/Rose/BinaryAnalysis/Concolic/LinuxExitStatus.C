@@ -61,7 +61,7 @@ LinuxExitStatus::run() {
         // Now that all the test cases have run concretely, run a few of the "best" ones concolically.  The "best" is defined
         // either by the ranks returned from the concrete executor, or by this class overriding pendingConcolicResult (which we
         // haven't done).
-        BOOST_FOREACH (TestCaseId testCaseId, pendingConcolicResults(10 /*arbitrary*/)) {
+        for (TestCaseId testCaseId: pendingConcolicResults(10 /*arbitrary*/)) {
             TestCase::Ptr testCase = database()->object(testCaseId);
             std::vector<TestCase::Ptr> newTestCases = concolicExecutor->execute(database(), testCase);
             insertConcolicResults(testCase, newTestCases);

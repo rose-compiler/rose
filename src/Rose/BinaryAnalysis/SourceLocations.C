@@ -34,14 +34,14 @@ void
 SourceLocations::insert(const SourceLocation &src, const AddressInterval &vas) {
     // No lock necessary since we call synchronized insert.
     // FIXME[Robb Matzke 2020-02-07]: this could be more efficient instead of doing one at a time
-    BOOST_FOREACH (rose_addr_t va, vas)
+    for (rose_addr_t va: vas)
         insert(src, va);
 }
 
 void
 SourceLocations::insert(const SourceLocation &src, const AddressIntervalSet &vas) {
     // No lock necessary since we call synchronized insert.
-    BOOST_FOREACH (const AddressInterval &interval, vas.intervals())
+    for (const AddressInterval &interval: vas.intervals())
         insert(src, interval);
 }
 
@@ -80,7 +80,7 @@ SourceLocations::erase(const SourceLocation &src, const AddressIntervalSet &vas)
     AddressIntervalSet &addrs = srcToAddr_.getOrElse(src, empty);
     AddressIntervalSet toErase = addrs & vas;           // links to be erased
     addrs -= vas;
-    BOOST_FOREACH (const AddressInterval &interval, toErase.intervals())
+    for (const AddressInterval &interval: toErase.intervals())
         addrToSrc_.erase(interval);
 }
 
@@ -107,14 +107,14 @@ void
 SourceLocations::erase(const AddressInterval &vas) {
     // No lock necessary since we call synchronized erase.
     // FIXME[Robb Matzke 2020-02-07]: This could be more efficient instead of doing one at a time
-    BOOST_FOREACH (rose_addr_t va, vas)
+    for (rose_addr_t va: vas)
         erase(va);
 }
 
 void
 SourceLocations::erase(const AddressIntervalSet &vas) {
     // No lock necessary since we call synchronized erase.
-    BOOST_FOREACH (const AddressInterval &interval, vas.intervals())
+    for (const AddressInterval &interval: vas.intervals())
         erase(interval);
 }
 
@@ -123,7 +123,7 @@ SourceLocations::erase(const SourceLocation &src) {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     if (!src.isEmpty()) {
         AddressIntervalSet empty;
-        BOOST_FOREACH (const AddressInterval &interval, srcToAddr_.getOrElse(src, empty).intervals())
+        for (const AddressInterval &interval: srcToAddr_.getOrElse(src, empty).intervals())
             addrToSrc_.erase(interval);
         srcToAddr_.erase(src);
     }
@@ -144,7 +144,7 @@ SourceLocations::insertFromDebug(SgNode *ast) {
         T(SourceLocations *self): self(self) {}
         void visit(SgNode *node) override {
             if (SgAsmDwarfLineList *ll = isSgAsmDwarfLineList(node)) {
-                BOOST_FOREACH (SgAsmDwarfLine *line, ll->get_line_list()) {
+                for (SgAsmDwarfLine *line: ll->get_line_list()) {
                     SourceLocation src(Sg_File_Info::getFilenameFromID(line->get_file_id()), line->get_line());
                     self->insert(src, line->get_address());
                 }
@@ -179,7 +179,7 @@ SourceLocations::fillHoles(size_t maxHoleSize) {
 
     // Delayed filling of holes
     addrToSrc_.insertMultiple(fill);
-    BOOST_FOREACH (const AddressToSource::Node &node, fill.nodes())
+    for (const AddressToSource::Node &node: fill.nodes())
         srcToAddr_[node.value()] |= node.key();
 }
 
@@ -208,7 +208,7 @@ std::set<boost::filesystem::path>
 SourceLocations::allFileNames() const {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     std::set<boost::filesystem::path> retval;
-    BOOST_FOREACH (const SourceLocation &src, srcToAddr_.keys())
+    for (const SourceLocation &src: srcToAddr_.keys())
         retval.insert(src.fileName());
     return retval;
 }
@@ -233,9 +233,9 @@ SourceLocations::nextSourceLocation(const SourceLocation &current) const {
 void
 SourceLocations::printSrcToAddr(std::ostream &out, const std::string &prefix) const {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    BOOST_FOREACH (const SourceToAddress::Node &node, srcToAddr_.nodes()) {
+    for (const SourceToAddress::Node &node: srcToAddr_.nodes()) {
         out <<prefix <<node.key() <<":";
-        BOOST_FOREACH (rose_addr_t va, node.value().scalars())
+        for (rose_addr_t va: node.value().scalars())
             out <<" " <<StringUtility::addrToString(va);
         out <<"\n";
     }
@@ -244,7 +244,7 @@ SourceLocations::printSrcToAddr(std::ostream &out, const std::string &prefix) co
 void
 SourceLocations::printAddrToSrc(std::ostream &out, const std::string &prefix) const {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
-    BOOST_FOREACH (const AddressToSource::Node &node, addrToSrc_.nodes())
+    for (const AddressToSource::Node &node: addrToSrc_.nodes())
         out <<prefix <<StringUtility::addrToString(node.key()) <<": " <<node.value() <<"\n";
 }
 

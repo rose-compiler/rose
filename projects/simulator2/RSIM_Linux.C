@@ -287,7 +287,7 @@ pushEnvironmentStrings(RSIM_Process *process, rose_addr_t sp, FILE *trace) {
     process->mem_write(envVarBuffer.c_str(), sp, envVarBuffer.size());
 
     // Adjust the offsets so they become addresses instead.
-    BOOST_FOREACH (Word &va, offsets)
+    for (Word &va: offsets)
         va += sp;
     offsets.push_back(0);
     return offsets;

@@ -5,7 +5,6 @@
 
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 #include <SageBuilderAsm.h>
-#include <boost/foreach.hpp>
 #include <set>
 
 namespace Rose {
@@ -193,7 +192,7 @@ SwitchSuccessors::operator()(bool chain, const Args &args) {
     // We now know the size of the offset table and the addresses of all the switch cases.  Throw away the successors that were
     // already computed (it was probably just a single indeterminate successor) and replace them with the ones we found.
     args.bblock->successors().clear();
-    BOOST_FOREACH (rose_addr_t va, codeVas)
+    for (rose_addr_t va: codeVas)
         args.bblock->insertSuccessor(va, 32);
 
     // Create a data block for the offset table and attach it to the basic block

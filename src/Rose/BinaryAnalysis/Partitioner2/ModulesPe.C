@@ -6,8 +6,6 @@
 #include <Rose/BinaryAnalysis/Partitioner2/Partitioner.h>
 #include <Rose/BinaryAnalysis/Partitioner2/Utility.h>
 
-#include <boost/foreach.hpp>
-
 namespace Rose {
 namespace BinaryAnalysis {
 namespace Partitioner2 {
@@ -33,10 +31,10 @@ size_t
 getImportIndex(const Partitioner &partitioner, SgAsmPEFileHeader *peHeader, ImportIndex &index /*in,out*/) {
     size_t nInserted = 0;
     if (peHeader!=NULL) {
-        BOOST_FOREACH (SgAsmGenericSection *section, peHeader->get_sections()->get_sections()) {
+        for (SgAsmGenericSection *section: peHeader->get_sections()->get_sections()) {
             if (SgAsmPEImportSection *importSection = isSgAsmPEImportSection(section)) {
-                BOOST_FOREACH (SgAsmPEImportDirectory *importDir, importSection->get_import_directories()->get_vector()) {
-                    BOOST_FOREACH (SgAsmPEImportItem *import, importDir->get_imports()->get_vector()) {
+                for (SgAsmPEImportDirectory *importDir: importSection->get_import_directories()->get_vector()) {
+                    for (SgAsmPEImportItem *import: importDir->get_imports()->get_vector()) {
                         rose_addr_t va = import->get_hintname_rva().get_va();
                         if (index.insertMaybe(va, import))
                             ++nInserted;
@@ -59,7 +57,7 @@ ImportIndex
 getImportIndex(const Partitioner &partitioner, SgAsmInterpretation *interp) {
     ImportIndex index;
     if (interp!=NULL) {
-        BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers())
+        for (SgAsmGenericHeader *fileHeader: interp->get_headers()->get_headers())
             getImportIndex(partitioner, isSgAsmPEFileHeader(fileHeader), index);
     }
     return index;
@@ -69,9 +67,9 @@ size_t
 findExportFunctions(const Partitioner &partitioner, SgAsmPEFileHeader *peHeader, std::vector<Function::Ptr> &functions) {
     size_t nInserted = 0;
     if (peHeader!=NULL) {
-        BOOST_FOREACH (SgAsmGenericSection *section, peHeader->get_sections()->get_sections()) {
+        for (SgAsmGenericSection *section: peHeader->get_sections()->get_sections()) {
             if (SgAsmPEExportSection *exportSection = isSgAsmPEExportSection(section)) {
-                BOOST_FOREACH (SgAsmPEExportEntry *exportEntry, exportSection->get_exports()->get_exports()) {
+                for (SgAsmPEExportEntry *exportEntry: exportSection->get_exports()->get_exports()) {
                     rose_addr_t va = exportEntry->get_export_rva().get_va();
                     if (partitioner.discoverInstruction(va)) {
                         Function::Ptr function = Function::instance(va, exportEntry->get_name()->get_string(),
@@ -97,7 +95,7 @@ std::vector<Function::Ptr>
 findExportFunctions(const Partitioner &partitioner, SgAsmInterpretation *interp) {
     std::vector<Function::Ptr> functions;
     if (interp!=NULL) {
-        BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers())
+        for (SgAsmGenericHeader *fileHeader: interp->get_headers()->get_headers())
             findExportFunctions(partitioner, isSgAsmPEFileHeader(fileHeader), functions);
     }
     return functions;
@@ -108,7 +106,7 @@ findImportFunctions(const Partitioner &partitioner, SgAsmPEFileHeader *peHeader,
                     std::vector<Function::Ptr> &functions) {
     size_t nInserted = 0;
     if (peHeader) {
-        BOOST_FOREACH (const ImportIndex::Node &import, imports.nodes()) {
+        for (const ImportIndex::Node &import: imports.nodes()) {
             std::string name = import.value()->get_name()->get_string();
             SgAsmPEImportDirectory *importDir = SageInterface::getEnclosingNode<SgAsmPEImportDirectory>(import.value());
             if (importDir && !importDir->get_dll_name()->get_string().empty())
@@ -134,7 +132,7 @@ findImportFunctions(const Partitioner &partitioner, SgAsmInterpretation *interp)
     std::vector<Function::Ptr> functions;
     if (interp!=NULL) {
         ImportIndex imports = getImportIndex(partitioner, interp);
-        BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers())
+        for (SgAsmGenericHeader *fileHeader: interp->get_headers()->get_headers())
             findImportFunctions(partitioner, isSgAsmPEFileHeader(fileHeader), imports, functions);
     }
     return functions;
@@ -154,18 +152,18 @@ rebaseImportAddressTables(Partitioner &partitioner, const ImportIndex &index) {
     // First, aggregate neighboring IAT entries so we don't need to create so many map segments (easier for users to debug
     // their code if we don't introduce hundreds of segments).
     AddressIntervalSet iatAddresses;
-    BOOST_FOREACH (SgAsmPEImportItem *import, index.values())
+    for (SgAsmPEImportItem *import: index.values())
         iatAddresses.insert(AddressInterval::baseSize(import->get_iat_entry_va(), wordSize));
 
     // Add segments to the memory map.
-    BOOST_FOREACH (const AddressInterval &iatExtent, iatAddresses.intervals()) {
+    for (const AddressInterval &iatExtent: iatAddresses.intervals()) {
         partitioner.memoryMap()->insert(iatExtent,
                                         MemoryMap::Segment::anonymousInstance(iatExtent.size(), MemoryMap::READABLE,
                                                                               "partitioner-adjusted IAT"));
     }
 
     // Write IAT entries into the newly mapped IATs
-    BOOST_FOREACH (const ImportIndex::Node &node, index.nodes()) {
+    for (const ImportIndex::Node &node: index.nodes()) {
         // First, pack it as little-endian
         uint8_t packed[8];
         memset(packed, 0, 8);
@@ -199,9 +197,9 @@ nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
 
     // Get the addresses for the PE Import Address Tables
     AddressIntervalSet iatExtent;
-    BOOST_FOREACH (SgAsmGenericHeader *fileHeader, interp->get_headers()->get_headers()) {
+    for (SgAsmGenericHeader *fileHeader: interp->get_headers()->get_headers()) {
         SgAsmGenericSectionPtrList iatSections = fileHeader->get_sections_by_name("Import Address Table");
-        BOOST_FOREACH (SgAsmGenericSection *section, iatSections) {
+        for (SgAsmGenericSection *section: iatSections) {
             if (section->get_id()==-1 && section->is_mapped())
                 iatExtent.insert(AddressInterval::baseSize(section->get_mapped_actual_va(), section->get_mapped_size()));
         }
@@ -214,7 +212,7 @@ nameImportThunks(const Partitioner &partitioner, SgAsmInterpretation *interp) {
     ImportIndex importIndex = getImportIndex(partitioner, interp);
 
     // Process each function that's attached to the CFG/AUM
-    BOOST_FOREACH (const Function::Ptr &function, functions) {
+    for (const Function::Ptr &function: functions) {
         if (!function->name().empty())
             continue;                                   // no need to name functions that already have a name
         if (function->basicBlockAddresses().size()!=1)
