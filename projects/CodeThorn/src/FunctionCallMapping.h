@@ -25,7 +25,7 @@ namespace CodeThorn {
     bool isFunctionPointerCall();
     void setFunctionPointerCallFlag(bool);
     SgFunctionDeclaration* getFunctionDeclaration();
-    void print();
+    std::string toString();
     SgFunctionType* funCallType=nullptr; // type of function to be called
     std::string funCallName; // non-qualified name of function 
     SgName mangledFunCallName;
@@ -54,6 +54,7 @@ namespace CodeThorn {
     /** @} */
     virtual void dumpFunctionCallInfo();
     virtual void dumpFunctionCallTargetInfo();
+    virtual void dumpFunctionCallMapping();
 
     typedef std::unordered_set< std::string> ExternalFunctionNameContainerType;
     // generates info about external functions: header file;function name;complete function declaration (3 entries separated by ';')

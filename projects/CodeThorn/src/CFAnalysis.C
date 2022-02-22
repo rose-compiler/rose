@@ -51,28 +51,15 @@ size_t CFAnalysis::deleteFunctionCallLocalEdges(Flow& flow) {
   return flow.deleteEdges(EDGE_LOCAL);
 }
 
-// MS: TODO: refactor thse two functions  (1/2)
 LabelSet CFAnalysis::functionCallLabels(Flow& flow) {
   LabelSet resultSet;
-  LabelSet nodeLabels;
-#ifdef ALTERNATIVE_LOCAL_EDGE_HANDLING
-  nodeLabels=flow.nodeLabels();
-  for(LabelSet::iterator i=nodeLabels.begin();i!=nodeLabels.end();++i) {
-    if(labeler->isFunctionCallLabel(*i))
-      resultSet.insert(*i);
-  }
-#else
-  // workaround: iterate over all labels to find also non-connected call nodes
   for(Labeler::iterator i=getLabeler()->begin();i!=getLabeler()->end();++i) {
     if(labeler->isFunctionCallLabel(*i))
       resultSet.insert(*i);
   }
-#endif
-
   return resultSet;
 }
 
-// MS: TODO: refactor these two functions  (2/2)
 LabelSet CFAnalysis::conditionLabels(Flow& flow) {
   LabelSet resultSet;
   LabelSet nodeLabels;
@@ -264,6 +251,7 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
     }
 
     if(functionResolutionMode!=FRM_FUNCTION_CALL_MAPPING) {
+      ROSE_ASSERT(false);
       Label callLabel,entryLabel,exitLabel,callReturnLabel;
       if(funDef==0) {
         //cout<<" [no definition found]"<<endl;
