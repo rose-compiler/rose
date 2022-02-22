@@ -2816,10 +2816,17 @@ SetSimplifier::rewrite(Interior *inode, const SmtSolverPtr &solver) const {
     BOOST_FOREACH (const Ptr &elmt1, inode->children()) {
         bool isDuplicate = false;
         BOOST_FOREACH (const Ptr &elmt2, elements) {
+#if 0 // [Robb Matzke 2021-12-14]
             if (elmt1->mustEqual(elmt2, solver)) {
                 isDuplicate = true;
                 break;
             }
+#else
+            if (elmt1->isEquivalentTo(elmt2)) {
+                isDuplicate = true;
+                break;
+            }
+#endif
         }
         if (!isDuplicate) {
             elements.push_back(elmt1);

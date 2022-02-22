@@ -9,6 +9,7 @@
 
 #include <Rose/BinaryAnalysis/SymbolicExpr.h>
 #include <Rose/Exception.h>
+#include <Rose/Progress.h>
 
 #include <boost/chrono.hpp>
 #include <boost/lexical_cast.hpp>
@@ -317,6 +318,7 @@ protected:
     ExprExprMap evidence_;                              // evidence for last check() if satisfiable
     TermNames termNames_;                               // maps ROSE exprs to SMT exprs and their basic type
     Memoizer::Ptr memoizer_;                            // cache of previously computed results
+    Progress::Ptr progress_;                            // optional progress reporting
 
     // Statistics
     static boost::mutex classStatsMutex;
@@ -661,6 +663,15 @@ public:
      *  Statistics are reset to initial values for the class as a whole.  Resetting statistics for the class does not affect
      *  statistics of any particular SMT solver object. */
     static void resetClassStatistics();
+
+    /** Progress reporting object.
+     *
+     *  If non-null, certain types of actions are reported to this progress object by pushing subtask progress objects.
+     *
+     * @{ */
+    Progress::Ptr progress() const;
+    void progress(const Progress::Ptr &progress);
+    /** @} */
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

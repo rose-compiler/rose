@@ -394,7 +394,7 @@ bool PState::hasEqualMemRegionApproximation(const PState& other) const {
 AbstractValue PState::varValue(AbstractValue memLoc) const {
   if(memLoc.isPtrSet()) {
     // reading from set of values, combined all and return
-    AbstractValue readSummary; // defaults to bot
+    AbstractValue readAbstraction; // defaults to bot
     AbstractValueSet& set=*memLoc.getAbstractValueSet();
     for(auto memLoc : set) {
       AbstractValue av=readFromMemoryLocation(memLoc); // indirect recursive cal
@@ -402,9 +402,9 @@ AbstractValue PState::varValue(AbstractValue memLoc) const {
         av=varValue(av);
       } 
       ROSE_ASSERT(!av.isPtrSet());
-      readSummary=AbstractValue::combine(readSummary,av);
+      readAbstraction=AbstractValue::combine(readAbstraction,av);
     }
-    return readSummary;
+    return readAbstraction;
   } else {
     if(find(memLoc)==end()) {
       // address is not reserved, return top
@@ -443,7 +443,8 @@ void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
     abstractValue=AbstractValue(CodeThorn::Top()); // INVESTIGATE
     conditionalApproximateRawWriteToMemoryLocation(abstractMemLoc,abstractValue,strongUpdate);
   } else if(abstractMemLoc.isTop()) {
-    combineValueAtAllMemoryLocations(abstractValue); // BUG: leads to infinite loop in DOM029
+    //skip (crude memory abstraction)
+    //combineValueAtAllMemoryLocations(abstractValue);
   } else if(abstractMemLoc.isPtrSet()) {
     // call recursively for all values in the set
     //cout<<"DEBUG: ptr set recursion."<<endl;
@@ -454,7 +455,7 @@ void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
   } else {
     // if an abstract memloc is a summary, ensure that only a weak update is performed by setting the strongupdate flag to false
     // in other words: a strong update is only requested if the parameter strongUpdate is true AND abstractMemLoc is NOT a summary
-    conditionalApproximateRawWriteToMemoryLocation(abstractMemLoc,abstractValue,strongUpdate&&(!abstractMemLoc.isSummary()));
+    conditionalApproximateRawWriteToMemoryLocation(abstractMemLoc,abstractValue,strongUpdate&&(!abstractMemLoc.isAbstract()));
   }
 }
 
@@ -463,7 +464,7 @@ void PState::conditionalApproximateRawWriteToMemoryLocation(AbstractValue memLoc
 							    bool strongUpdate) {
   bool weakUpdate=!strongUpdate;
 #if 1
-  if(memLoc.isSummary()||weakUpdate) {
+  if(memLoc.isAbstract()||weakUpdate) {
     rawCombineAtMemoryLocation(memLoc,abstractValue);
     //rawWriteAtAbstractAddress(memLoc,abstractValue);
   } else {
@@ -513,6 +514,10 @@ PState::iterator PState::end() {
   return map<AbstractValue,CodeThorn::AbstractValue>::end();
 }
 
+void PState::erase(PState::iterator iter) {
+  map<AbstractValue,CodeThorn::AbstractValue>::erase(iter);
+}
+
 PState::const_iterator PState::begin() const {
   return map<AbstractValue,CodeThorn::AbstractValue>::begin();
 }
@@ -520,6 +525,7 @@ PState::const_iterator PState::begin() const {
 PState::const_iterator PState::end() const {
   return map<AbstractValue,CodeThorn::AbstractValue>::end();
 }
+
 
 // Lattice functions
 bool PState::isApproximatedBy(CodeThorn::PState& other) const {
@@ -544,6 +550,8 @@ bool PState::isApproximatedBy(CodeThorn::PState& other) const {
 CodeThorn::PState PState::combine(CodeThorn::PState& p1, CodeThorn::PState& p2) {
   return combine(&p1,&p2);
 }
+
+
 CodeThorn::PState PState::combine(CodeThorn::PStatePtr p1, CodeThorn::PStatePtr p2) {
   CodeThorn::PState res;
   size_t numMatched=0;
@@ -586,4 +594,44 @@ CodeThorn::PState PState::combine(CodeThorn::PStatePtr p1, CodeThorn::PStatePtr 
     }
   }
   return res;
+}
+
+void PState::combineInPlace1st(CodeThorn::PStatePtr p1, CodeThorn::PStatePtr p2) {
+  size_t numMatched=0;
+  // record list of  updates before applying them, to not invalidate iterator
+  std::list<std::pair<AbstractValue, AbstractValue> > updates;
+  for(auto elem1:*p1) {
+    auto iter=(*p2).find(elem1.first);
+    if(iter!=(*p2).end()) {
+      // same memory location in both states: elem.first==(*iter).first
+      // combine values elem.second and (*iter).second
+      updates.push_back(make_pair(elem1.first,AbstractValue::combine(elem1.second,(*iter).second)));
+      numMatched++;
+    } else {
+      // a variable of 'p1' is not in state of 'p2', simply keep it in-place.
+    }
+  }
+  // add now updates of values of p2 which are not in p1
+  for(auto upd:updates) {
+    p1->writeToMemoryLocation(upd.first,upd.second);
+  }
+  // add elements that are only in p2 to res - this can only be the
+  // case if the number of matched elements above is different to p2.size()
+  if(numMatched!=(*p2).size()) {
+    for(auto elem2:*p2) {
+      // only add elements of p2 that are not in p1
+      if((*p1).find(elem2.first)==(*p1).end()) {
+        p1->writeToMemoryLocation(elem2.first,elem2.second);
+      }
+    }
+  }
+  if(PState::combineConsistencyCheck) {
+    // consistency check: all elements of p2 must be represented in p1
+    for(auto elem2:*p2) {
+      if(p1->find(elem2.first)==p1->end()) {
+        cerr<<"Error: in-place combine: Element of PState2 "<<elem2.first.toString()<<" not in combined state."<<endl;
+        exit(1);
+      }
+    }
+  }
 }

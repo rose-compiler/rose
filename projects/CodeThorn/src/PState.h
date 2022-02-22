@@ -84,7 +84,9 @@ namespace CodeThorn {
     PState::iterator end();
     PState::const_iterator begin() const;
     PState::const_iterator end() const;
+    void erase(PState::iterator);
     bool isApproximatedBy(CodeThorn::PState& other) const;
+    static void combineInPlace1st(CodeThorn::PStatePtr p1, CodeThorn::PStatePtr p2);
     static CodeThorn::PState combine(CodeThorn::PStatePtr p1, CodeThorn::PStatePtr p2);
     static CodeThorn::PState combine(CodeThorn::PState& p1, CodeThorn::PState& p2);
     AbstractValueSet getVariableIds() const;

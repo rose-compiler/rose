@@ -3712,9 +3712,9 @@ SgUnaryOp::cfgOutEdges(unsigned int idx)
           case 0:
                         if (this->get_operand())
                         {
-                                makeEdge(CFGNode(this, idx), this->get_operand()->cfgForBeginning(), result); break;
-                                break;
+                                makeEdge(CFGNode(this, idx), this->get_operand()->cfgForBeginning(), result);
                         }
+                        break;
           case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
           default: ROSE_ASSERT (!"Bad index for SgUnaryOp");
         }
@@ -3733,8 +3733,8 @@ SgUnaryOp::cfgInEdges(unsigned int idx)
                         if (this->get_operand())
                         {
                                 makeEdge(this->get_operand()->cfgForEnd(), CFGNode(this, idx), result);
-                                break;
                         }
+                                break;
           default: ROSE_ASSERT (!"Bad index for SgUnaryOp");
         }
 
@@ -5081,6 +5081,27 @@ std::vector<CFGEdge> SgConstructorInitializer::cfgInEdges(unsigned int idx) {
     return result;
   }
 
+  std::vector<CFGEdge> SgAdaAncestorInitializer::cfgOutEdges(unsigned int idx) {
+    std::vector<CFGEdge> result;
+    switch (idx) {
+      case 0: makeEdge(CFGNode(this, idx), this->get_operand()->cfgForBeginning(), result); break;
+      case 1: makeEdge(CFGNode(this, idx), getNodeJustAfterInContainer(this), result); break;
+      default: ROSE_ASSERT (!"Bad index for SgAdaAncestorInitializer");
+    }
+    return result;
+  }
+
+  std::vector<CFGEdge> SgAdaAncestorInitializer::cfgInEdges(unsigned int idx) {
+    std::vector<CFGEdge> result;
+    switch (idx) {
+      case 0: makeEdge(getNodeJustBeforeInContainer(this), CFGNode(this, idx), result); break;
+      case 1: makeEdge(this->get_operand()->cfgForEnd(), CFGNode(this, idx), result); break;
+      default: ROSE_ASSERT (!"Bad index for SgAdaAncestorInitializer");
+    }
+    return result;
+  }
+
+
   unsigned int SgNullExpression::cfgIndexForEnd() const {
     return 0;
   }
@@ -6138,6 +6159,21 @@ bool SgAssignInitializer::isChildUsedAsLValue(const SgExpression* child) const
                 return false;
         }
 }
+
+bool SgAdaAncestorInitializer::isLValue() const
+{
+        return get_operand()->isLValue();
+}
+
+bool SgAdaAncestorInitializer::isChildUsedAsLValue(const SgExpression* child) const
+{
+        if (get_operand() == child)
+          return false;
+
+        ROSE_ASSERT(!"Bad child in isChildUsedAsLValue on SgAdaAncestorInitializer");
+        return false;
+}
+
 
 /*! std:5.17 par:1 */
 bool SgAssignOp::isLValue() const

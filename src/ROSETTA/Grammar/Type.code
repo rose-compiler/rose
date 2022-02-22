@@ -1064,20 +1064,28 @@ HEADER_ADA_MODULAR_TYPE_START
 
 HEADER_ADA_MODULAR_TYPE_END
 
+HEADER_ADA_SUBROUTINE_TYPE_START
+          // SgName get_name() const;
+HEADER_ADA_SUBROUTINE_TYPE_END
+
+
 HEADER_ADA_TASK_TYPE_START
           //~ SgName get_name() const;
 HEADER_ADA_TASK_TYPE_END
+
+HEADER_ADA_PROTECTED_TYPE_START
+          //~ SgName get_name() const;
+HEADER_ADA_PROTECTED_TYPE_END
 
 HEADER_ADA_DISCRIMINATED_TYPE_START
   //~ SgName get_name() const;
 HEADER_ADA_DISCRIMINATED_TYPE_END
 
+HEADER_ADA_DISCRETE_TYPE_START
+  //~ SgName get_name() const;
+HEADER_ADA_DISCRETE_TYPE_END
 
-HEADER_ADA_FLOAT_TYPE_START
 
-          SgName get_name() const;
-
-HEADER_ADA_FLOAT_TYPE_END
 
 HEADER_ADA_FORMAL_TYPE_START
 
@@ -2427,6 +2435,7 @@ SgType::handledUsingLocalTable(SgType* t)
         || isSgClassType(t) != NULL
         || isSgTypedefType(t) != NULL
         || isSgAdaTaskType(t) != NULL
+        || isSgAdaProtectedType(t) != NULL
         || isSgAdaDiscriminatedType(t) != NULL
         //~ || isSgAdaFormalType(t) != NULL /* todo: add to local type tables */
         )
@@ -2649,12 +2658,15 @@ SgType::containsInternalTypes()
   // an AST subtree we might want to build a list of all referenced types (including indirect
   // references through pointers and arrays, etc.).  This function is a simple interface that
   // communicates the type IR nodes that can hide internal types and thus may require a
-  // nested traverals or a specialized recursive traveral.
+  // nested traversal or a specialized recursive traversal.
+
+  // PP (2/17/22) added Ada types
 
      bool returnValue = false;
 
-     if ( isSgPointerType(this) != NULL || isSgArrayType(this)    != NULL || isSgReferenceType(this) != NULL ||
-          isSgTypedefType(this) != NULL || isSgFunctionType(this) != NULL || isSgModifierType(this)  != NULL)
+     if ( isSgPointerType(this) != NULL || isSgArrayType(this)      != NULL || isSgReferenceType(this) != NULL ||
+          isSgTypedefType(this) != NULL || isSgFunctionType(this)   != NULL || isSgModifierType(this)  != NULL ||
+          isSgAdaSubtype(this)  != NULL || isSgAdaDerivedType(this) != NULL || isSgAdaAccessType(this) != NULL )
         {
           returnValue = true;
         }
@@ -5062,6 +5074,9 @@ SgModifierType::get_mangled (void) const
      const SgConstVolatileModifier & cv_mod   = type_mod.get_constVolatileModifier();
      const SgUPC_AccessModifier &    upc_mod  = type_mod.get_upcModifier();
 
+     // PP (02/17/22) Add aliased information to mangled name
+     if (type_mod.isAliased())   mangled_name << "A";
+
      if (cv_mod.isConst())       mangled_name << "C";
      if (cv_mod.isVolatile())    mangled_name << "V";
 
@@ -5071,7 +5086,7 @@ SgModifierType::get_mangled (void) const
      if (type_mod.isRestrict())    mangled_name << "RST";
   // if (upc_mod.isUPC_Shared())  mangled_name << "SHD";
 
-  // \pp make mangled name depend on blocksize
+  // PP make mangled name depend on blocksize
      if (upc_mod.get_isShared())
         {
           mangled_name << "SHD";
@@ -6758,6 +6773,26 @@ SgAdaTaskType::get_mangled(void) const {
 
 SOURCE_ADA_TASK_TYPE_END
 
+SOURCE_ADA_PROTECTED_TYPE_START
+
+SgName
+SgAdaProtectedType::get_name() const {
+    return SageInterface::get_name(get_declaration());
+}
+
+
+/*
+SgName
+SgAdaTaskType::get_mangled(void) const {
+    string name("t'");
+
+    name.append(get_decl()->get_task_name());
+    return SgName(name);
+}
+*/
+
+SOURCE_ADA_PROTECTED_TYPE_END
+
 
 SOURCE_ADA_DISCRIMINATED_TYPE_START
 
@@ -6824,6 +6859,7 @@ SOURCE_ADA_MODULAR_TYPE_START
 
 SgName
 SgAdaModularType::get_mangled(void) const {
+    ROSE_ASSERT(get_modexpr());
     std::stringstream buf;
 
     buf << "ada$modular$";
@@ -6834,20 +6870,23 @@ SgAdaModularType::get_mangled(void) const {
 
 SOURCE_ADA_MODULAR_TYPE_END
 
-
-SOURCE_ADA_FLOAT_TYPE_START
+SOURCE_ADA_SUBROUTINE_TYPE_START
 
 SgName
-SgAdaFloatType::get_mangled(void) const {
-    string name("f'");
+SgAdaSubroutineType::get_mangled(void) const {
+    ROSE_ASSERT(get_return_type() && get_parameterList() );
+    std::stringstream buf;
 
-    name.append(get_digits()->unparseToString());
-    name.append("'");
-    name.append(get_constraint()->displayString());
-    return SgName(name);
+    buf << "ada$subroutine$";
+    buf << get_return_type()->get_mangled();
+    buf << get_parameterList()->get_mangled_name();
+
+    return SgName(buf.str());
 }
 
-SOURCE_ADA_FLOAT_TYPE_END
+SOURCE_ADA_SUBROUTINE_TYPE_END
+
+
 
 SOURCE_ADA_FORMAL_TYPE_START
 
@@ -8926,6 +8965,25 @@ SgAdaTaskType::createType (SgDeclarationStatement* decl, SgExpression* /*optiona
 
 SOURCE_CREATE_TYPE_FOR_ADA_TASK_TYPE_END
 
+SOURCE_CREATE_TYPE_FOR_ADA_PROTECTED_TYPE_START
+
+SgAdaProtectedType*
+SgAdaProtectedType::createType (SgDeclarationStatement* decl, SgExpression* /*optional_fortran_type_kind*/)
+{
+  SgAdaProtectedType* res = nullptr;
+
+  if (SgAdaProtectedSpecDecl* tskspec = isSgAdaProtectedSpecDecl(decl))
+    res = tskspec->get_type();
+  else if (SgAdaProtectedTypeDecl* tsktype = isSgAdaProtectedTypeDecl(decl))
+    res = tsktype->get_type();
+  else
+    ROSE_ASSERT(!"Ada task types can be created from SgAdaProtectedSpecDecl or SgAdaProtectedSpecDecl only!");
+
+  return res ? res : new SgAdaProtectedType(decl);
+}
+
+SOURCE_CREATE_TYPE_FOR_ADA_PROTECTED_TYPE_END
+
 SOURCE_CREATE_TYPE_FOR_ADA_DISCRIMINATED_TYPE_START
 
 SgAdaDiscriminatedType*
@@ -9017,27 +9075,23 @@ SgAdaModularType::createType(SgExpression* moduloexpr, SgExpression* /*optional_
 
 SOURCE_CREATE_TYPE_FOR_ADA_MODULAR_TYPE_END
 
+SOURCE_CREATE_TYPE_FOR_ADA_SUBROUTINE_TYPE_START
 
-SOURCE_CREATE_TYPE_FOR_ADA_FLOAT_TYPE_START
-
-SgAdaFloatType*
-SgAdaFloatType::createType (SgExpression* digits, SgAdaRangeConstraint* range, SgExpression* /*optional_fortran_type_kind*/)
+SgAdaSubroutineType*
+SgAdaSubroutineType::createType( SgFunctionParameterList* parmList,
+                                 SgFunctionParameterScope* parmScope,
+                                 SgType* resultType,
+                                 SgExpression* /*optional_fortran_type_kind*/)
 {
-  SgAdaFloatType   proto(digits, range);
-  SgName           name = proto.get_mangled();
-  SgType*          ty   = get_globalTypeTable()->lookup_type(name);
+  ROSE_ASSERT(parmList && parmScope && resultType);
 
-  if (SgAdaFloatType* unified = isSgAdaFloatType(ty))
-    return unified;
-
-  ROSE_ASSERT(ty == NULL);
-  SgAdaFloatType* res = new SgAdaFloatType(digits, range);
-
-  get_globalTypeTable()->insert_type(name, res);
-  return res;
+  // \todo PP can we create shared types for subroutines?
+  return new SgAdaSubroutineType(parmList, parmScope, resultType);
 }
 
-SOURCE_CREATE_TYPE_FOR_ADA_FLOAT_TYPE_END
+SOURCE_CREATE_TYPE_FOR_ADA_SUBROUTINE_TYPE_END
+
+
 
 SOURCE_CREATE_TYPE_FOR_JOVIAL_BIT_TYPE_START
 SgJovialBitType*

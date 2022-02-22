@@ -16,6 +16,10 @@ bool operator!=(const GeneralPriorityElement<Element>& c1, const GeneralPriority
 template<typename Element>
 CodeThorn::GeneralPriorityWorkList<Element>::GeneralPriorityWorkList(TopologicalSort::LabelToPriorityMap map) {
   _labelToPriorityMap=map;
+  //std::cout<<"DEBUG: generating GenPriWorkList (label to priority map):"<<std::endl;
+  //for(auto e:map) {
+  //  std::cout<<"DEBUG: l2p map entry: "<<e.first.toString()<<":"<<e.second<<std::endl;
+  //}
 }
 
 template<typename Element>
@@ -41,9 +45,9 @@ template<typename Element>
 void CodeThorn::GeneralPriorityWorkList<Element>::push(Element el) {
   ROSE_ASSERT(_labelToPriorityMap.size()>0);
   int priority=_labelToPriorityMap[el.label()];
-  if(false && priority==0) {
-    std::cerr<<"Error: push_front: priority=0 for label:"<<el.label().toString()<<std::endl;
-    exit(1);
+  if(priority==0) {
+    std::cerr<<"Warning: push_front: priority=0 for label:"<<el.label().toString()<<std::endl;
+    //exit(1);
   }
   _list.push(GeneralPriorityElement<Element>(priority,el));
 }
@@ -54,8 +58,7 @@ Element CodeThorn::GeneralPriorityWorkList<Element>::top() {
     int priority=priElem.priority;
     //std::cout<<"DEBUG: EPWL: front(): pri:"<<el.priority<<" data:"<<el.data<<std::endl;
     if(false && priority==0) {
-      std::cerr<<"Error: push_front: priority=0 for estate lab:"<<priElem.data.label().toString()<<std::endl;
-      
+      std::cerr<<"Error: top: priority=0 for estate lab:"<<priElem.data.label().toString()<<std::endl;
       exit(1);
     }
     return priElem.data;
@@ -86,5 +89,23 @@ Element CodeThorn::GeneralPriorityWorkList<Element>::front() {
 template<typename Element>
 void CodeThorn::GeneralPriorityWorkList<Element>::pop_front() {
   pop();
+}
+
+template<typename Element>
+void CodeThorn::GeneralPriorityWorkList<Element>::print() {
+  std::list<GeneralPriorityElementType> tmpList;
+  std::cout<<"WL: "<<size()<<": [";
+  while(!empty()) {
+    auto p=_list.top();
+    pop();
+    std::cout<<"pri:"<<p.priority<<" data:"<<p.toString()<<", ";
+    tmpList.push_back(p);
+  }
+  std::cout<<"]"<<std::endl;
+  while(!tmpList.empty()) {
+    auto p=tmpList.front();
+    tmpList.pop_front();
+    _list.push(GeneralPriorityElement<Element>(p.priority,p.data));
+  }
 }
 

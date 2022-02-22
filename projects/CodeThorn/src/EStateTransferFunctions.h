@@ -98,6 +98,7 @@ namespace CodeThorn {
     
     bool isApproximatedBy(EStatePtr es1, EStatePtr es2);
     EState combine(EStatePtr es1, EStatePtr es2);
+    void combineInPlace1st(EStatePtr es1, EStatePtr es2);
 
     /* determines transfer function code from CFG and AST-matching and calls transferEdgeEStateDispatch
        ultimately this function can be used to operate on its own IR. Updates provided estate in-place. */
@@ -170,9 +171,16 @@ namespace CodeThorn {
     MemoryUpdateList evalAssignOpMemUpdates(SgAssignOp* assignOp, EStatePtr estate);
 
     // functions for handling callstring contexts
-    CallString transferFunctionCallContext(CallString cs, Label lab);
-    bool isFeasiblePathContext(CallString& cs,Label lab);
+    void transferFunctionCallContextInPlace(CallString& cs, Label lab);
 
+    /* new, more general method, uses available callstrings in all states stored for a label to determine path feasibility
+     * the returned callstring can be shorter or of same length
+     */
+    std::pair<bool,CallString> determinePathFeasibilityAndContext(CallString cs, Label functionCallLabel);
+    // old methods, to be removed once older solvers are adapted as well
+    void transferFunctionCallReturnContextInPlaceOld(CallString& cs, Label lab);
+    bool isFeasiblePathContextOld(CallString& cs,Label lab);
+    
     CodeThorn::VariableIdSet determineUsedGlobalVars(SgProject* root, CodeThorn::VariableIdSet& setOfGlobalVars);
     void initializeGlobalVariables(SgProject* root, EStatePtr estate);
     // modifies PState with written initializers
@@ -181,12 +189,14 @@ namespace CodeThorn {
     EStatePtr transferVariableDeclarationWithoutInitializerEState(SgVariableDeclaration* decl, SgInitializedName* initName, VariableId initDeclVarId, EStatePtr currentEState, Label targetLabel);
 
     PStatePtr analyzeSgAggregateInitializer(VariableId initDeclVarId, SgAggregateInitializer* aggregateInitializer,PStatePtr pstate, /* for evaluation only  */ EStatePtr currentEState);
+    bool isTemporarySingleLocalVar(VariableId varId);
   private:
     // auxiliary semantic functions
     EStatePtr reInitFailedAssertEState(EStatePtr estate, Label target);
     void declareUninitializedStruct(Label label,PState* pstate,AbstractValue structAddress, VariableId memVarId);
     AbstractValue createStructDataMemberAddress(AbstractValue structAddress,VariableId varId);
     bool isGlobalAddress(AbstractValue memLoc);
+    void createAbstractArrayInPlace(Label label, PStatePtr newPState, VariableId initDeclVarId);
   public:
     // determines whether lab is a function call label of a function
     // call of the form 'x=f(...)' and returns the varible-id of the
@@ -195,7 +205,6 @@ namespace CodeThorn {
     // this function uses the respective function of ExprAnalyzer and
     // extracts the result from the ExprAnalyzer data structure.
     std::list<EStatePtr> evaluateFunctionCallArguments(Edge edge, SgFunctionCallExp* funCall, EStatePtr estate, bool useConstraints);
-
 
     // Limits the number of results to one result only. Does not permit state splitting.
     // requires normalized AST

@@ -9,6 +9,7 @@
 #include <Rose/BinaryAnalysis/SmtSolver.h>
 #include <Rose/BinaryAnalysis/Partitioner2/BasicTypes.h>
 #include <Sawyer/Stopwatch.h>
+#include <boost/filesystem.hpp>
 #include <boost/thread/thread.hpp>
 #include <thread>
 
@@ -83,6 +84,7 @@ private:
     mutable Sawyer::Stopwatch timeSinceStats_;          // time since last statistics were reported
     mutable size_t nPathsStats_ = 0;                    // number of paths reported in last statistics output
     size_t nExpressionsTrimmed_ = 0;                    // number of symbolic expressions trimmed down to a new variable
+    WorkerStatusPtr workerStatus_;                      // mostly for debugging
 
 protected:
     Engine() = delete;
@@ -352,6 +354,18 @@ public:
      *  Thread safety: This method is thread safe. */
     void showStatistics(std::ostream&, const std::string &prefix = "") const;
 
+    /** Write worker status to a text file.
+     *
+     *  The specified file is created or truncated, and then updated continuously until this object is destroyed or this method
+     *  is called with a different file name.  An empty file name turns this feature off.
+     *
+     *  Thread safety: This method is thread safe.
+     *
+     * @{ */
+    boost::filesystem::path workerStatusFile() const;
+    void workerStatusFile(const boost::filesystem::path&);
+    /** @} */
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Model checker results
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -423,24 +437,17 @@ private:
     // the last node of the path.
     void updateFanout(size_t nChildren, size_t totalSteps, size_t lastSteps);
 
-    // Called by each worker thread when they start. Users should not call this even though it's public.
-    void worker();
-
-    // Worker states.
-    enum class WorkerState {
-        STARTING,                                       // thread is initializing
-        WAITING,                                        // thread is looking for new work
-        WORKING,                                        // thread is actively working on a path
-        FINISHED                                        // thread will never work again and is cleaning up
-    };
+    // Called by each worker thread when they start. Users should not call this even though it's public. The ID is the index
+    // of the managed worker in the workers_ vector.
+    void worker(size_t id, const Progress::Ptr&);
 
     // Change state. The thread should hold its current state in a local variable. The state transition edges affect how
     // various counters are updated. All threads must start by initializing their current state to STARTING and then calling
     // changeState to also specify the new state is STARTING. Only certain transitions are allowed--read the source.
-    void changeState(WorkerState &currentState, WorkerState newState);
+    void changeState(size_t workerId, WorkerState &currentState, WorkerState newState);
 
     // Non-synchronized version of changeState
-    void changeStateNS(WorkerState &currentState, WorkerState newState);
+    void changeStateNS(size_t workerId, WorkerState &currentState, WorkerState newState);
 
     // Do things that should be done when work is started.
     void startWorkingNS();
@@ -453,7 +460,7 @@ private:
     // state to WORKING, and returns the path. In the latter case, it returns a null pointer.
     //
     // Thread safety: This method is thread safe.
-    PathPtr takeNextWorkItem(WorkerState&);
+    PathPtr takeNextWorkItem(size_t workerId, WorkerState&);
 
     // Non-blocking version of takeNextWorkItem.
     PathPtr takeNextWorkItemNow(WorkerState&);

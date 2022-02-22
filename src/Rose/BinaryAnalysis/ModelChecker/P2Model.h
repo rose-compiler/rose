@@ -43,7 +43,7 @@ struct Settings {
     bool debugNull = false;                             /**< When debugging is enabled, show null pointer checking? */
     Sawyer::Optional<rose_addr_t> initialStackVa;       /**< Address for initial stack pointer. */
     MemoryType memoryType = MemoryType::MAP;            /**< Type of memory state. */
-    bool solverMemoization = true;                      /**< Whether the SMT solver should use memoization. */
+    bool solverMemoization = false;                     /**< Whether the SMT solver should use memoization. */
     bool traceSemantics = false;                        /**< Whether to trace all RISC operators. */
 };
 
@@ -282,7 +282,7 @@ public:
 private:
     const Settings settings_;
     const Partitioner2::Partitioner &partitioner_;
-    SmtSolver::Ptr modelCheckerSolver_;
+    SmtSolver::Ptr modelCheckerSolver_;                 // solver used for model checking, different than RISC operators
     size_t nInstructions_ = 0;
     SemanticCallbacks *semantics_ = nullptr;
     AddressInterval stackLimits_;                       // where the stack can exist in memory
@@ -679,7 +679,7 @@ private:
     bool seenState(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&);
 
     // Find and cache the execution unit at the specified address.
-    ExecutionUnitPtr findUnit(rose_addr_t va);
+    ExecutionUnitPtr findUnit(rose_addr_t va, const Progress::Ptr&);
 };
 
 } // namespace

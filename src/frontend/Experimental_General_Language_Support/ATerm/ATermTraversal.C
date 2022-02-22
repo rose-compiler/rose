@@ -1,18 +1,14 @@
 #include "sage3basic.h"
 #include "ATermTraversal.h"
-#include "sage-tree-builder.h"
+#include "SageTreeBuilder.h"
 
 #define PRINT_ATERM_TRAVERSAL 0
 
 using namespace ATermSupport;
-using std::cout;
-using std::cerr;
-using std::endl;
 
-ATermTraversal::ATermTraversal(SgSourceFile* source)
+ATermTraversal::ATermTraversal(SgSourceFile* source) : source_{source}
 {
-   ROSE_ASSERT(source);
-   pSourceFile = source;
+   ROSE_ASSERT(source_ && "ATermTraversal::ATermTraversal: source file is NULL");
 }
 
 void
@@ -68,44 +64,58 @@ ATermTraversal::setSourcePositions(ATerm term, rb::SourcePosition &start, rb::So
    end.column = pos.getStartCol();
 }
 
+void ATermTraversal::setSourcePosition(SgLocatedNode* node, PosInfo &pos) {
+  ROSE_ASSERT(node != NULL);
+
+  std::string filename = getCurrentFilename();
+
+  node->set_startOfConstruct(new Sg_File_Info(filename, pos.getStartLine(), pos.getStartCol()));
+  node->get_startOfConstruct()->set_parent(node);
+
+  node->set_endOfConstruct(new Sg_File_Info(filename, pos.getEndLine(), pos.getEndCol()));
+  node->get_endOfConstruct()->set_parent(node);
+
+  SageInterface::setSourcePosition(node);
+}
+
+void ATermTraversal::setSourcePosition(SgLocatedNode* node, const std::string &filename, PosInfo &pos) {
+  ROSE_ASSERT(node);
+
+  node->set_startOfConstruct(new Sg_File_Info(filename, pos.getStartLine(), pos.getStartCol()));
+  node->get_startOfConstruct()->set_parent(node);
+
+  node->set_endOfConstruct(new Sg_File_Info(filename, pos.getEndLine(), pos.getEndCol()));
+  node->get_endOfConstruct()->set_parent(node);
+
+  SageInterface::setSourcePosition(node);
+}
+
+void ATermTraversal::setSourcePositionFrom(SgLocatedNode* node, SgLocatedNode* fromNode) {
+  PosInfo pos{};
+
+  pos.setStartLine (fromNode->get_startOfConstruct()-> get_line());
+  pos.setStartCol  (fromNode->get_startOfConstruct()-> get_col() );
+  pos.setEndLine   (fromNode->get_endOfConstruct()  -> get_line());
+  pos.setEndCol    (fromNode->get_endOfConstruct()  -> get_col() );
+
+  return setSourcePosition(node, fromNode->getFilenameString(), pos);
+}
+
+void ATermTraversal::setSourcePositionFromEndOnly(SgLocatedNode* node, SgLocatedNode* fromNode) {
+  PosInfo pos{};
+
+  pos.setStartLine (fromNode->get_endOfConstruct()-> get_line());
+  pos.setStartCol  (fromNode->get_endOfConstruct()-> get_col() );
+  pos.setEndLine   (fromNode->get_endOfConstruct()-> get_line());
+  pos.setEndCol    (fromNode->get_endOfConstruct()-> get_col() );
+
+  return setSourcePosition(node, fromNode->getFilenameString(), pos);
+}
+
 void
 ATermTraversal::setSourcePosition(SgLocatedNode* node, ATerm term)
 {
    PosInfo pos = getLocation(term);
-   return setSourcePosition(node, pos);
-}
-
-void
-ATermTraversal::setSourcePosition(SgLocatedNode* node, PosInfo &pos)
-{
-   ROSE_ASSERT(node);
-
-   std::string filename = getCurrentFilename();
-
-#if PRINT_SOURCE_POSITION
-   std::cout << "... setSourcePosition: " << pos.getStartLine() << " " <<  pos.getStartCol();
-   std::cout <<                       " " << pos.getEndLine()   << " " <<  pos.getEndCol() << std::endl;
-#endif
-
-   node->set_startOfConstruct(new Sg_File_Info(filename, pos.getStartLine(), pos.getStartCol()));
-   node->get_startOfConstruct()->set_parent(node);
-
-   node->set_endOfConstruct(new Sg_File_Info(filename, pos.getEndLine(), pos.getEndCol()));
-   node->get_endOfConstruct()->set_parent(node);
-
-   SageInterface::setSourcePosition(node);
-}
-
-void
-ATermTraversal::setSourcePositionFrom(SgLocatedNode* node, SgLocatedNode* fromNode)
-{
-   PosInfo pos;
-
-   pos.setStartLine (fromNode->get_startOfConstruct()-> get_line());
-   pos.setStartCol  (fromNode->get_startOfConstruct()-> get_col() );
-   pos.setEndLine   (fromNode->get_endOfConstruct()  -> get_line());
-   pos.setEndCol    (fromNode->get_endOfConstruct()  -> get_col() );
-
    return setSourcePosition(node, pos);
 }
 
@@ -140,19 +150,6 @@ ATermTraversal::setSourcePositionIncludingNode(SgLocatedNode* node, ATerm startT
 
    pos.setEndLine(endNode->get_endOfConstruct()->get_line());
    pos.setEndCol (endNode->get_endOfConstruct()->get_col() );
-
-   return setSourcePosition(node, pos);
-}
-
-void
-ATermTraversal::setSourcePositionFromEndOnly(SgLocatedNode* node, SgLocatedNode* fromNode)
-{
-   PosInfo pos;
-
-   pos.setStartLine (fromNode->get_endOfConstruct()-> get_line());
-   pos.setStartCol  (fromNode->get_endOfConstruct()-> get_col() );
-   pos.setEndLine   (fromNode->get_endOfConstruct()-> get_line());
-   pos.setEndCol    (fromNode->get_endOfConstruct()-> get_col() );
 
    return setSourcePosition(node, pos);
 }

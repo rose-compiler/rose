@@ -12,6 +12,9 @@ Solver::Solver(CTAnalysis* analyzer) {
   setAnalyzer(analyzer);
 }
 
+Solver::~Solver() {
+}
+
 void Solver::setAnalyzer(CTAnalysis* analyzer) {
   _analyzer = analyzer;
 }

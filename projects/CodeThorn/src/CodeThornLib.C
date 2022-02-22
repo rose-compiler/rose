@@ -67,6 +67,7 @@
 #include "Solver16.h"
 #include "Solver17.h"
 #include "Solver18.h"
+#include "Solver19.h"
 #include "Solver8.h"
 
 using namespace std;
@@ -93,7 +94,7 @@ using namespace Sawyer::Message;
 
 using namespace Sawyer::Message;
 
-static std::string CodeThornLibraryVersion="1.13.44";
+static std::string CodeThornLibraryVersion="1.13.49";
 
 // handler for generating backtrace
 void codethornBackTraceHandler(int sig) {
@@ -121,6 +122,7 @@ void CodeThorn::initDiagnostics() {
   FunctionIdMapping::initDiagnostics();
   FunctionCallMapping::initDiagnostics();
   EStateTransferFunctions::initDiagnostics();
+  Solver18::initDiagnostics();
 }
 
 Sawyer::Message::Facility CodeThorn::logger;
@@ -180,6 +182,9 @@ namespace CodeThorn {
       case 18 :  {  
         solver = new Solver18(); break; // does not create a TS
       }
+      case 19 :  {  
+        solver = new Solver19(); break; // does not create a TS
+      }
       case 8 :  {  
         solver = new Solver8(); break;
       }
@@ -193,6 +198,8 @@ namespace CodeThorn {
     
     AbstractValue evaluateExpressionWithEmptyState(SgExpression* expr) {
       CTAnalysis* analyzer=new CTAnalysis();
+      Solver* solver=new Solver16();
+      analyzer->setSolver(solver); // solver is required
       EStateTransferFunctions* exprAnalyzer=new EStateTransferFunctions();
       exprAnalyzer->setAnalyzer(analyzer);
       VariableIdMappingExtended* vid=new VariableIdMappingExtended();  // only empty vim required
@@ -200,9 +207,11 @@ namespace CodeThorn {
       AbstractValue::setVariableIdMapping(vid);
       AbstractValue aVal=exprAnalyzer->evaluateExpressionWithEmptyState(expr);
       AbstractValue::_variableIdMapping=oldVID;
+
       delete vid;
       delete exprAnalyzer;
       delete analyzer;
+      
       return aVal;
     }
 
@@ -239,7 +248,6 @@ namespace CodeThorn {
         }
         if(expr) {
           cout<<"Testing expr eval with empty state: "<<expr->unparseToString();
-          //AbstractValue aVal=exprAnalyzer->evaluateExpressionWithEmptyState(expr);
           AbstractValue aVal=evaluateExpressionWithEmptyState(expr);
           cout<<" => result value: "<<aVal.toString()<<" "<<endl;
         }
@@ -771,12 +779,15 @@ namespace CodeThorn {
     void optionallyGenerateVerificationReports(CodeThornOptions& ctOpt,CTAnalysis* analyzer) {
       if(ctOpt.generateReports) {
         if(ctOpt.analysisList().size()>0) {
+          if(ctOpt.status) cout<<"STATUS: generating verification reports: started."<<endl;
           const bool reportDetectedErrorLines=true;
           AnalysisReporting anaRep;
+
           anaRep.generateVerificationReports(ctOpt,analyzer,reportDetectedErrorLines); // also generates verification call graph
           anaRep.generateAnalyzedFunctionsAndFilesReports(ctOpt,analyzer);
 	  anaRep.generateInternalAnalysisReport(ctOpt,analyzer);
 	  anaRep.generateUnusedVariablesReport(ctOpt,analyzer);
+          if(ctOpt.status) cout<<"STATUS: generating verification reports: finished."<<endl;
         } else {
           if(ctOpt.status) cout<<"STATUS: no analysis reports generated (no analysis selected)."<<endl;
         }
@@ -872,6 +883,8 @@ namespace CodeThorn {
       stringstream ss;
       ss<<tc.toString();
       ss<<"Total memory                   : "<<CodeThorn::getPhysicalMemorySize()/(1024*1024) <<" MiB"<<endl;
+      ss<<"Total states allocation history: "<<EState::allocationHistoryToString()<<endl;
+      ss<<"Total states alloc/dealloced   : "<<EState::allocationStatsToString()<<endl;
       return ss.str();
     }
 

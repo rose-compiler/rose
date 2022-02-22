@@ -65,6 +65,27 @@ bat_entropy_LDFLAGS = $(ROSE_RPATHS)
 bat_entropy_LDADD = libbatSupport.a $(ROSE_LIBS)
 tests += bat-entropy.passed
 
+bin_PROGRAMS += bat-flir-ascribe
+bat_flir_ascribe_SOURCES = bat-flir-ascribe.C
+bat_flir_ascribe_CPPFLAGS = $(ROSE_INCLUDES)
+bat_flir_ascribe_LDFLAGS = $(ROSE_RPATHS)
+bat_flir_ascribe_LDADD = libbatSupport.a $(ROSE_LIBS)
+tests += bat-flir-ascribe.passed
+
+bin_PROGRAMS += bat-flir-insert
+bat_flir_insert_SOURCES = bat-flir-insert.C
+bat_flir_insert_CPPFLAGS = $(ROSE_INCLUDES)
+bat_flir_insert_LDFLAGS = $(ROSE_RPATHS)
+bat_flir_insert_LDADD = libbatSupport.a $(ROSE_LIBS)
+tests += bat-flir-insert.passed
+
+bin_PROGRAMS += bat-flir-lib
+bat_flir_lib_SOURCES = bat-flir-lib.C
+bat_flir_lib_CPPFLAGS = $(ROSE_INCLUDES)
+bat_flir_lib_LDFLAGS = $(ROSE_RPATHS)
+bat_flir_lib_LDADD = libbatSupport.a $(ROSE_LIBS)
+tests += bat-flir-lib.passed
+
 bin_PROGRAMS += bat-linear
 bat_linear_SOURCES = bat-linear.C
 bat_linear_CPPFLAGS = $(ROSE_INCLUDES)

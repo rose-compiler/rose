@@ -171,8 +171,8 @@ int main( int argc, char * argv[] ) {
                       {CodeThorn::ANALYSIS_NULL_POINTER,"null-pointer"},
                       {CodeThorn::ANALYSIS_OUT_OF_BOUNDS,"out-of-bounds"},
                       {CodeThorn::ANALYSIS_UNINITIALIZED,"uninitialized"},
+                      {CodeThorn::ANALYSIS_OPAQUE_PREDICATE,"opaque-predicate"},
                       //{CodeThorn::ANALYSIS_DEAD_CODE,"dead-code"},
-                      //{CodeThorn::ANALYSIS_OPAQUE_PREDICATE,"opaque-predicate"}
       };
       ctOpt.setAnalysisList(analysisList);
       if(ctOpt.status) cout<<"STATUS: codethorn: Number of activated analyses: "<<ctOpt.analysisList().size()<<endl;
@@ -297,11 +297,13 @@ int main( int argc, char * argv[] ) {
     optionallyRunIOSequenceGenerator(ctOpt, analyzer);
     optionallyAnnotateTermsAndUnparse(ctOpt, project, analyzer);
 
+    delete analyzer;
+
+    // generate report after analyzer is deleted, to see amount of
+    // deleted memory in report
     optionallyPrintRunTimeAndMemoryUsageReport(ctOpt,tc);
     generateRunTimeAndMemoryUsageReport(ctOpt,tc);
     if(ctOpt.status) cout<<color("normal")<<"done."<<endl;
-
-    delete analyzer;
 
     // main function try-catch
   } catch(const CodeThorn::Exception& e) {

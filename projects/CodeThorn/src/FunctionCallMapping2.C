@@ -89,8 +89,8 @@ namespace
       {
         CallTargetSet::getPropertiesForExpression(&callexp, nullptr /*classHierarchy*/, res);
 
-        std::cerr << "PP4: " << n.unparseToString() << " " << res.size()
-                  << std::endl;
+        //~ std::cerr << "PP4: " << n.unparseToString() << " " << res.size()
+                  //~ << std::endl;
       }
 
       /// catches member calls
@@ -265,17 +265,36 @@ namespace
 }
 
 
+namespace
+{
+  struct FnLessThan
+  {
+    bool operator()(const SgFunctionType* lhs, const SgFunctionType* rhs) const
+    {
+      static constexpr bool withReturnType = true;
+
+      return RoseCompatibilityBridge{}.compareFunctionTypes(lhs, rhs, withReturnType) < 0;
+    }
+  };
+}
+
 void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
 {
-  using map_entry_t = std::unordered_map<Label, FunctionCallTargetSet, HashLabel>::mapped_type;
+  using map_entry_t         = std::unordered_map<Label, FunctionCallTargetSet, HashLabel>::mapped_type;
+  using FunctionTypeMap     = std::multimap<std::string, SgFunctionDeclaration*>;
+  using FnSet               = std::unordered_set<SgFunctionDeclaration*>;
+  using MemFnSet            = std::unordered_set<SgMemberFunctionDeclaration*>;
+  using MemfnPointerTypeMap = std::map<const SgFunctionType*, MemFnSet, FnLessThan>;
 
   ASSERT_not_null(_labeler); ASSERT_not_null(root);
 
-  std::multimap<std::string, SgFunctionDeclaration*> funDecls;
-  FunctionCallMapping2*                              fm = this;
+  FunctionTypeMap       funDecls;
+  MemfnPointerTypeMap   memberFunDecls;
+  FunctionCallMapping2* fm = this;
 
-  // lambda that computes all possible targets for function pointer calls
-  auto computeFunctionPointerCalls = [&funDecls,fm](Label lbl, SgExpression& expr, bool& added) -> void
+  // "nested function" that computes all possible targets for function pointer calls
+  auto computeFunctionPointerCalls =
+       [&funDecls,fm](Label lbl, SgExpression& expr, bool& added) -> void
        {
          // function pointer calls are handled separately in order to
          //   use the ROSE AST instead of the memory pool.
@@ -293,14 +312,70 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
          }
        };
 
-  // lambda that computes all possible targets for pointer-to-member calls
-  auto computeMemberFunctionPointerCalls = [](Label, SgExpression&, bool&) -> void
+  // "nested function" that computes all possible targets for pointer-to-member calls
+  auto computeMemberFunctionPointerCalls =
+       [&memberFunDecls, fm](Label lbl, SgExpression& expr, bool& added) -> void
        {
+         using MemFnVector = std::vector<SgMemberFunctionDeclaration*>;
+
+         FnSet                 candidates;
+         MemFnVector           virtualFunctions;
+
+         {
+           // collect all member functions that meet the requirements
+           SgPointerMemberType&  ty      = SG_DEREF(isSgPointerMemberType(expr.get_type()));
+           SgMemberFunctionType& memfnty = SG_DEREF(isSgMemberFunctionType(ty.get_base_type()));
+           ClassAnalysis&        classes = *fm->getClassAnalysis();
+           SgClassType&          clsty   = SG_DEREF(isSgClassType(ty.get_class_type()));
+           SgClassDefinition*    clsdef  = getClassDefOpt(clsty);
+           ROSE_ASSERT(clsdef);
+
+           for (SgMemberFunctionDeclaration* fn : memberFunDecls[&memfnty])
+           {
+             SgClassDefinition* candClass = &getClassDef(SG_DEREF(fn));
+
+             if ((clsdef == candClass) || classes.areBaseDerived(candClass, clsdef))
+             {
+               candidates.insert(fn);
+
+               if (fn->get_functionModifier().isVirtual())
+                 virtualFunctions.push_back(fn);
+             }
+           }
+         }
+
+         {
+           // for all virtual functions, also include their overriders
+           const VirtualFunctionAnalysis& vfa = *fm->getVirtualFunctions();
+
+           for (SgMemberFunctionDeclaration* fn : virtualFunctions)
+             for (const OverrideDesc& ovr : vfa.at(fn).overriders())
+               candidates.insert(const_cast<SgMemberFunctionDeclaration*>(ovr.functionId()));
+         }
+
+         {
+           // add the collected functions to the target set
+           map_entry_t&          map_entry = fm->mapping[lbl];
+
+           for (SgFunctionDeclaration* dcl : candidates)
+             addEntry(map_entry, dcl);
+
+           if (candidates.size()) added = true;
+         }
+
+         //~ logError() << "ptr-to-member call: " << expr.unparseToString()
+                    //~ << " / " << typeid(*).name()
+                    //~ << " #" << memberFunDecls[&memfnty].size()
+                    //~ << std::endl;
        };
 
-  for(auto node : RoseAst(root)) {
-    if(SgFunctionDeclaration* funDecl = isSgFunctionDeclaration(node)) {
-      if (!isSgMemberFunctionDeclaration(funDecl))
+  for(auto node : RoseAst(root))
+  {
+    if (SgFunctionDeclaration* funDecl = isSgFunctionDeclaration(node))
+    {
+      if (SgMemberFunctionDeclaration* memfn = isSgMemberFunctionDeclaration(funDecl))
+        memberFunDecls[memfn->get_type()].insert(&keyDecl(*memfn));
+      else
         funDecls.emplace(funDecl->get_type()->get_mangled().getString(), funDecl);
     }
   }
@@ -325,6 +400,7 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
       continue;
     }
 
+
     ++numCalls;
     SgNodeHelper::ExtendedCallInfo callinfo = SgNodeHelper::matchExtendedNormalizedCall(theNode);
 
@@ -332,7 +408,7 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
     {
       bool added = false;
 
-      if (isSgMemberFunctionType(targetNode->get_type()))
+      if (isSgPointerMemberType(targetNode->get_type()))
         computeMemberFunctionPointerCalls(lbl, *targetNode, added);
       else
         computeFunctionPointerCalls(lbl, *targetNode, added);
@@ -378,6 +454,9 @@ void FunctionCallMapping2::computeFunctionCallMapping(SgProject* root)
     else
     {
       // \todo handle implicit (ctor) calls
+      logError() << "unresolved call: "
+                  << callinfo.callExpression()->unparseToString()
+                  << std::endl;
     }
   }
 

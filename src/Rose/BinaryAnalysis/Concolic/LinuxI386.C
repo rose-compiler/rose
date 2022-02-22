@@ -506,6 +506,7 @@ LinuxI386SyscallBase::operator()(bool /*handled*/, SyscallContext &ctx) {
             }
             uint64_t retConcrete = i386->debugger()->readRegister(SYS_RET).toInteger();
             SymbolicExpr::Ptr retValue = SymbolicExpr::makeIntegerConstant(SYS_RET.nBits(), retConcrete);
+            SAWYER_MESG(debug) <<"  concrete return value: " <<*retValue <<"\n";
             ctx.returnEvent = ExecutionEvent::registerWrite(i386->testCase(), i386->nextEventLocation(When::POST),
                                                             ctx.syscallEvent->instructionPointer(), SYS_RET,
                                                             ctx.symbolicReturn, retValue, ctx.symbolicReturn);
@@ -602,6 +603,29 @@ void
 LinuxI386SyscallUnimplemented::handlePostSyscall(SyscallContext &ctx) {
     hello("not-implemented", ctx);
     mlog[ERROR] <<"  " <<syscallName(ctx.syscallEvent->syscallFunction()) <<" system call is not implemented\n";
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// System calls whose only behavior is to return value that's a program input.
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+LinuxI386SyscallReturnsInput::LinuxI386SyscallReturnsInput() {}
+
+LinuxI386SyscallReturnsInput::~LinuxI386SyscallReturnsInput() {}
+
+SyscallCallback::Ptr
+LinuxI386SyscallReturnsInput::instance() {
+    return Ptr(new LinuxI386SyscallReturnsInput);
+}
+
+void
+LinuxI386SyscallReturnsInput::playback(SyscallContext &ctx) {
+    hello("returns-input", ctx);
+}
+
+void
+LinuxI386SyscallReturnsInput::handlePostSyscall(SyscallContext &ctx) {
+    hello("returns-input", ctx);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -743,6 +767,142 @@ LinuxI386SyscallNondecreasing::makeReturnConstraint(SyscallContext &ctx) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Access system call
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+LinuxI386SyscallAccess::LinuxI386SyscallAccess() {}
+
+LinuxI386SyscallAccess::~LinuxI386SyscallAccess() {}
+
+SyscallCallback::Ptr
+LinuxI386SyscallAccess::instance() {
+    return Ptr(new LinuxI386SyscallAccess);
+}
+
+void
+LinuxI386SyscallAccess::playback(SyscallContext &ctx) {
+    hello("LinuxI386SyscallAccess::playback", ctx);
+}
+
+void
+LinuxI386SyscallAccess::handlePostSyscall(SyscallContext &ctx) {
+    hello("LinuxI386SyscallAccess::handlePostSyscall", ctx);
+    if (mlog[DEBUG]) {
+        rose_addr_t fileNameVa = ctx.argsConcrete[0];
+        std::string fileName = ctx.architecture->partitioner().memoryMap()->readString(fileNameVa, 16384);
+        mlog[DEBUG] <<"  pathname = \"" <<StringUtility::cEscape(fileName) <<"\"\n";
+        mlog[DEBUG] <<"  mode     = " <<StringUtility::toHex(ctx.argsConcrete[1]) <<"\n";
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Brk system call
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+LinuxI386SyscallBrk::LinuxI386SyscallBrk() {}
+
+LinuxI386SyscallBrk::~LinuxI386SyscallBrk() {}
+
+SyscallCallback::Ptr
+LinuxI386SyscallBrk::instance() {
+    return Ptr(new LinuxI386SyscallBrk);
+}
+
+void
+LinuxI386SyscallBrk::playback(SyscallContext &ctx) {
+    hello("LinuxI386SyscallBrk::playback", ctx);
+    ASSERT_not_implemented("[Robb Matzke 2021-12-16]");
+}
+
+void
+LinuxI386SyscallBrk::handlePostSyscall(SyscallContext &ctx) {
+    hello("LinuxI386SyscallBrk::handlePostSyscall", ctx);
+
+#if 0 // [Robb Matzke 2021-12-17]
+    ASSERT_not_null(ctx.returnEvent);
+    if (SymbolicExpr::Ptr v = ctx.returnEvent->value())
+        std::cerr <<"ROBB: value      = " <<*v <<"\n";
+    if (SymbolicExpr::Ptr v = ctx.returnEvent->expression())
+        std::cerr <<"ROBB: expression = " <<*v <<"\n";
+    if (SymbolicExpr::Ptr v = ctx.returnEvent->inputVariable())
+        std::cerr <<"ROBB: input var  = " <<*v <<"\n";
+    if (SymbolicExpr::Ptr v = ctx.returnEvent->calculateResult(ctx.ops->inputVariables()->bindings()))
+        std::cerr <<"ROBB: calc ret   = " <<*v <<"\n";
+#endif
+
+    rose_addr_t endVa = 0;
+    if (!ctx.returnEvent->calculateResult(ctx.ops->inputVariables()->bindings())->toUnsigned().assignTo(endVa)) {
+        SAWYER_MESG(mlog[ERROR]) <<"no concrete return value from brk system call\n";
+        return;
+    }
+
+    if (ctx.returnEvent)
+        notAnInput(ctx, ctx.returnEvent);
+
+    // The easy way to add more memory
+    MemoryMap::Ptr map = ctx.ops->process()->partitioner().memoryMap();
+    auto events = ctx.ops->process()->createMemoryAdjustEvents(map, ctx.ip);
+    ctx.relatedEvents.insert(ctx.relatedEvents.end(), events.begin(), events.end());
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Mmap2 system call
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+LinuxI386SyscallMmap2::LinuxI386SyscallMmap2() {}
+LinuxI386SyscallMmap2::~LinuxI386SyscallMmap2() {}
+
+SyscallCallback::Ptr
+LinuxI386SyscallMmap2::instance() {
+    return Ptr(new LinuxI386SyscallMmap2);
+}
+
+void
+LinuxI386SyscallMmap2::playback(SyscallContext &ctx) {
+    hello("LinuxI386SyscallMmap2::playback", ctx);
+    ASSERT_not_implemented("[Robb Matzke 2021-12-20]");
+}
+
+void
+LinuxI386SyscallMmap2::handlePostSyscall(SyscallContext &ctx) {
+    hello("LinuxI386SyscallMmap2::handlePostSyscall", ctx);
+
+    if (ctx.returnEvent)
+        notAnInput(ctx, ctx.returnEvent);
+
+    MemoryMap::Ptr map = ctx.ops->process()->partitioner().memoryMap();
+    auto events = ctx.ops->process()->createMemoryAdjustEvents(map, ctx.ip);
+    ctx.relatedEvents.insert(ctx.relatedEvents.end(), events.begin(), events.end());
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Openat system call
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+LinuxI386SyscallOpenat::LinuxI386SyscallOpenat() {}
+LinuxI386SyscallOpenat::~LinuxI386SyscallOpenat() {}
+
+SyscallCallback::Ptr
+LinuxI386SyscallOpenat::instance() {
+    return Ptr(new LinuxI386SyscallOpenat);
+}
+
+void
+LinuxI386SyscallOpenat::playback(SyscallContext &ctx) {
+    hello("LinuxI386SyscallOpenat::playback", ctx);
+}
+
+void
+LinuxI386SyscallOpenat::handlePostSyscall(SyscallContext &ctx) {
+    hello("LinuxI386SyscallOpenat::handlPostSyscall", ctx);
+    if (mlog[DEBUG]) {
+        rose_addr_t fileNameVa = ctx.argsConcrete[1];
+        std::string fileName = ctx.architecture->partitioner().memoryMap()->readString(fileNameVa, 16384);
+        mlog[DEBUG] <<"  pathname = \"" <<StringUtility::cEscape(fileName) <<"\"\n";
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // System call definitions
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -763,6 +923,12 @@ LinuxI386::configureSystemCalls() {
     // SYS_getuid: assumes SYS_setuid is never successfully called
     systemCalls(24, LinuxI386SyscallConstant::instance());
 
+    // SYS_access
+    systemCalls(33, LinuxI386SyscallAccess::instance());
+
+    // SYS_brk
+    systemCalls(45, LinuxI386SyscallBrk::instance());
+
     // SYS_getgid: assumes SYS_setgid is never successfully called
     systemCalls(47, LinuxI386SyscallConstant::instance());
 
@@ -775,8 +941,17 @@ LinuxI386::configureSystemCalls() {
     // SYS_getpgrp
     systemCalls(65, LinuxI386SyscallConstant::instance());
 
+    // SYS_mmap2
+    systemCalls(192, LinuxI386SyscallMmap2::instance());
+
     // SYS_exit_group
     systemCalls(252, LinuxI386SyscallTerminates::instance());
+
+    // SYS_openat
+    systemCalls(295, LinuxI386SyscallOpenat::instance());
+
+    // SYS_arch_prctl
+    systemCalls(384, LinuxI386SyscallReturnsInput::instance());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -951,6 +1126,145 @@ LinuxI386::createMemoryRestoreEvents() {
         }
     }
     return events;
+}
+
+std::vector<ExecutionEvent::Ptr>
+LinuxI386::copyMemory(const MemoryMap::Ptr &srcMap, const MemoryMap::Ptr &dstMap, const AddressInterval &where,
+                      rose_addr_t insnVa) {
+    ASSERT_not_null(srcMap);
+    ASSERT_not_null(dstMap);
+    std::vector<ExecutionEvent::Ptr> retval;
+
+    if (!where.isEmpty()) {
+        // Copy data from source to destination map, shared.
+        auto srcNode = srcMap->find(where.least());
+        ASSERT_forbid(srcNode == srcMap->nodes().end());
+        MemoryMap::Segment segment = srcNode->value();
+        segment.offset(segment.offset() + where.least() - srcNode->key().least());
+        dstMap->insert(where, segment);
+
+        // Create the map event
+        auto eeMap = ExecutionEvent::bulkMemoryMap(testCase(), nextEventLocation(When::POST), insnVa, where, segment.accessibility());
+        eeMap->name("map " + StringUtility::addrToString(where) + " " + segment.name());
+        SAWYER_MESG(mlog[DEBUG]) <<"  created " <<eeMap->printableName(database()) <<"\n";
+        retval.push_back(eeMap);
+
+        // Create the initialization event
+        std::vector<uint8_t> buf(where.size());
+        size_t nRead = srcMap->at(where).read(buf).size();
+        ASSERT_always_require(nRead == buf.size());
+        auto eeInit = ExecutionEvent::bulkMemoryWrite(testCase(), nextEventLocation(When::POST), insnVa, where, buf);
+        eeInit->name("init " + StringUtility::addrToString(where) + " " + segment.name());
+        SAWYER_MESG(mlog[DEBUG]) <<"  created " <<eeInit->printableName(database()) <<"\n";
+        retval.push_back(eeInit);
+    }
+
+    return retval;
+}
+
+std::vector<ExecutionEvent::Ptr>
+LinuxI386::createMemoryAdjustEvents(const MemoryMap::Ptr &oldMap, rose_addr_t insnVa) {
+    std::vector<ExecutionEvent::Ptr> retval;
+    SAWYER_MESG(mlog[DEBUG]) <<"saving memory map adjustments\n";
+    std::vector<ExecutionEvent::Ptr> events;
+    auto newMap = MemoryMap::instance();
+    std::vector<MemoryMap::ProcessMapRecord> segments = disposableMemory();
+    newMap->insertProcessPid(debugger_->isAttached(), segments);
+
+#if 1 // DEBUGGING [Robb Matzke 2021-12-20]
+    if (mlog[DEBUG]) {
+        mlog[DEBUG] <<"  old map:\n";
+        oldMap->dump(mlog[DEBUG], "    ");
+        mlog[DEBUG] <<"  new map:\n";
+        newMap->dump(mlog[DEBUG], "    ");
+    }
+#endif
+
+    // Addresses that exist in the old map but not the new map are removed from the old map and unmap events are generated.
+    rose_addr_t oldVa = 0;
+    while (AddressInterval oldWhere = oldMap->atOrAfter(oldVa).available()) {
+        AddressInterval newWhere = newMap->atOrAfter(oldWhere.least()).available();
+        rose_addr_t lastProcessedVa = 0;
+
+        if (!newWhere) {
+            // No addresses here or higher in new map, so delete the rest of the old map
+            SAWYER_MESG(mlog[DEBUG]) <<"  erasing " <<StringUtility::addrToString(oldWhere)
+                                     <<" " <<StringUtility::plural(oldWhere.size(), "bytes") <<"\n";
+            oldMap->erase(oldWhere);
+            lastProcessedVa = oldWhere.greatest();
+            auto event = ExecutionEvent::bulkMemoryUnmap(testCase(), nextEventLocation(When::POST), insnVa, oldWhere);
+            event->name("unmap " + StringUtility::addrToString(oldWhere));
+            retval.push_back(event);
+
+        } else if (newWhere.least() > oldWhere.least()) {
+            // The next mapped interval in the new address map starts after the current address, so delete all parts of the old
+            // map up to where the new map starts.
+            auto toErase = AddressInterval::hull(oldWhere.least(), newWhere.least() - 1);
+            SAWYER_MESG(mlog[DEBUG]) <<"  erasing " <<StringUtility::addrToString(toErase)
+                                     <<" " <<StringUtility::plural(toErase.size(), "bytes") <<"\n";
+            oldMap->erase(toErase);
+            lastProcessedVa = toErase.greatest();
+            auto event = ExecutionEvent::bulkMemoryUnmap(testCase(), nextEventLocation(When::POST), insnVa, toErase);
+            event->name("unmap " + StringUtility::addrToString(toErase));
+            retval.push_back(event);
+
+        } else {
+            // The new map has data at the old map's current address, so we can fast forward across the new addresses.
+            ASSERT_require(newWhere.least() == oldWhere.least());
+            lastProcessedVa = newWhere.greatest();
+        }
+
+        // Increment the address, but be careful of overflow.
+        if (lastProcessedVa < AddressInterval::whole().greatest()) {
+            oldVa = lastProcessedVa + 1;
+        } else {
+            break;
+        }
+    }
+
+    // Addresses that exist in the new map but not the old map are added to the old map and map events are generated.
+    rose_addr_t newVa = 0;
+    while (AddressInterval newWhere = newMap->atOrAfter(newVa).singleSegment().available()) {
+        AddressInterval oldWhere = oldMap->atOrAfter(newWhere.least()).singleSegment().available();
+        rose_addr_t lastProcessedVa = 0;
+
+
+        if (!oldWhere) {
+            // Old map doesn't contain any subsequent address from the new map.
+            SAWYER_MESG(mlog[DEBUG]) <<"  inserting " <<StringUtility::addrToString(newWhere) <<"\n";
+            lastProcessedVa = newWhere.greatest();
+            auto events = copyMemory(newMap, oldMap, newWhere, insnVa);
+            retval.insert(retval.end(), events.begin(), events.end());
+
+        } else if (oldWhere.least() > newWhere.least()) {
+            // New map contains some addresses not in the old map.
+            auto toInsert = AddressInterval::hull(newWhere.least(), std::min(newWhere.greatest(), oldWhere.least() - 1));
+            SAWYER_MESG(mlog[DEBUG]) <<"  inserting " <<StringUtility::addrToString(toInsert) <<"\n";
+            lastProcessedVa = toInsert.greatest();
+            auto events = copyMemory(newMap, oldMap, toInsert, insnVa);
+            retval.insert(retval.end(), events.begin(), events.end());
+
+        } else {
+            // Both maps have some of the same data.
+            ASSERT_require(newWhere.least() == oldWhere.least());
+            lastProcessedVa = oldWhere.least();
+        }
+
+        // Increment the address, but be careful of overflow.
+        if (lastProcessedVa < AddressInterval::whole().greatest()) {
+            newVa = lastProcessedVa + 1;
+        } else {
+            break;
+        }
+    }
+
+#if 1 // DEBUGGING [Robb Matzke 2021-12-20]
+    if (mlog[DEBUG]) {
+        mlog[DEBUG] <<"  adjusted map:\n";
+        oldMap->dump(mlog[DEBUG], "    ");
+    }
+#endif
+    return retval;
 }
 
 std::vector<ExecutionEvent::Ptr>
@@ -1546,10 +1860,15 @@ LinuxI386::systemCall(const P2::Partitioner &partitioner, const BS::RiscOperator
     }
 
     // Make sure all events have been written to the database.
+    SAWYER_MESG(mlog[DEBUG]) <<"saving events related to system call:\n";
     database()->save(ctx.syscallEvent);
+    SAWYER_MESG(mlog[DEBUG]) <<"  " <<ctx.syscallEvent->printableName(database()) <<"\n";
     database()->save(ctx.returnEvent);                  // should be in relatedEvents, but just in case...
-    for (const ExecutionEvent::Ptr &event: ctx.relatedEvents)
+    SAWYER_MESG(mlog[DEBUG]) <<"  " <<ctx.returnEvent->printableName(database()) <<"\n";
+    for (const ExecutionEvent::Ptr &event: ctx.relatedEvents) {
         database()->save(event);
+        SAWYER_MESG(mlog[DEBUG]) <<"  " <<event->printableName(database()) <<"\n";
+    }
 }
 
 } // namespace

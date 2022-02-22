@@ -228,18 +228,6 @@ libroseLibraries = \
    $(top_builddir)/src/util/Sawyer/libroseSawyer.la \
    $(top_builddir)/src/roseExtensions/failSafe/libfailsafe.la \
    $(top_builddir)/src/Rose/librose_partial.la \
-   $(top_builddir)/src/Rose/BinaryAnalysis/librose_partial.la \
-   $(top_builddir)/src/Rose/BinaryAnalysis/Concolic/librose_partial.la \
-   $(top_builddir)/src/Rose/BinaryAnalysis/InstructionSemantics2/librose_partial.la \
-   $(top_builddir)/src/Rose/BinaryAnalysis/InstructionSemantics2/BaseSemantics/librose_partial.la \
-   $(top_builddir)/src/Rose/BinaryAnalysis/ModelChecker/librose_partial.la \
-   $(top_builddir)/src/Rose/BinaryAnalysis/Partitioner2/librose_partial.la \
-   $(top_builddir)/src/Rose/BinaryAnalysis/Unparser/librose_partial.la \
-   $(top_builddir)/src/Rose/Color/librose_partial.la \
-   $(top_builddir)/src/Rose/CommandLine/librose_partial.la \
-   $(top_builddir)/src/Rose/Diagnostics/librose_partial.la \
-   $(top_builddir)/src/Rose/FileSystem/librose_partial.la \
-   $(top_builddir)/src/Rose/StringUtility/librose_partial.la \
    $(libroseSqlite3xConnection) \
    $(libroseQtExtension)
 
@@ -397,6 +385,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/InstructionSemantics2/TestSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/TraceSemantics.h			\
 	Rose/BinaryAnalysis/InstructionSemantics2/Util.h				\
+	Rose/BinaryAnalysis/LibraryIdentification.h					\
 	Rose/BinaryAnalysis/MagicNumber.h						\
 	Rose/BinaryAnalysis/Matrix.h							\
 	Rose/BinaryAnalysis/MemoryMap.h							\
@@ -423,6 +412,7 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BinaryAnalysis/ModelChecker/SourceLister.h					\
 	Rose/BinaryAnalysis/ModelChecker/Tag.h						\
 	Rose/BinaryAnalysis/ModelChecker/Types.h					\
+	Rose/BinaryAnalysis/ModelChecker/WorkerStatus.h					\
 	Rose/BinaryAnalysis/NoOperation.h						\
 	Rose/BinaryAnalysis/Partitioner2.h						\
 	Rose/BinaryAnalysis/Partitioner2/AddressUsageMap.h				\
@@ -490,6 +480,13 @@ nobase_pkginclude_HEADERS=								\
 	Rose/BitOps.h									\
 	Rose/Color.h									\
 	Rose/CommandLine.h								\
+	Rose/CommandLine/DurationParser.h						\
+	Rose/CommandLine/IntervalParser.h						\
+	Rose/CommandLine/License.h							\
+	Rose/CommandLine/Parser.h							\
+	Rose/CommandLine/SelfTest.h							\
+	Rose/CommandLine/SuffixMultiplierParser.h					\
+	Rose/CommandLine/Version.h							\
 	Rose/Constants.h								\
 	Rose/Diagnostics.h								\
 	Rose/Exception.h								\
@@ -631,8 +628,11 @@ rose_config_LDFLAGS = $(ROSE_RPATHS)
 rose_config_DEPENDENCIES = $(REQUIRED_LIBS)
 rose_config_CPPFLAGS = -DLIBDIR='"$(libdir)"'
 rose_config_LDADD = $(ROSE_LIBS)
+
+if ROSE_USE_INTERNAL_JAVA_SUPPORT
 if OS_MACOSX
   rose_config_LDFLAGS += -Xlinker -rpath -Xlinker $(JAVA_JVM_PATH)
+endif
 endif
 
 # DQ (4/12/2016): This is required for use with clang (not clear how to compile ROSE with out it).
@@ -752,8 +752,11 @@ if USING_CLANG_COMPILER
   ROSEBIN_LDFLAGS += -fno-rtti
 endif
   ROSEBIN_LDFLAGS += -fno-rtti
+
+if ROSE_USE_INTERNAL_JAVA_SUPPORT
 if OS_MACOSX
   ROSEBIN_LDFLAGS += -Xlinker -rpath -Xlinker $(JAVA_JVM_PATH)
+endif
 endif
 
 rose_compiler_SOURCES      = rose-compiler.C

@@ -22,7 +22,8 @@ run $(public_header) -o include/rose/Rose/BinaryAnalysis/ModelChecker \
     Settings.h \
     SourceLister.h \
     Tag.h \
-    Types.h
+    Types.h \
+    WorkerStatus.h
 
 run $(librose_compile) \
     BasicBlockUnit.C \
@@ -44,4 +45,5 @@ run $(librose_compile) \
     Settings.C \
     SemanticCallbacks.C \
     SourceLister.C \
-    Tag.C
+    Tag.C \
+    WorkerStatus.C

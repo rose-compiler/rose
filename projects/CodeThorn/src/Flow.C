@@ -277,7 +277,6 @@ Label Flow::getStartLabel() {
   if(_startLabelSet.size()==1) {
     return *_startLabelSet.begin();
   } else if(_startLabelSet.size()==0) {
-    //cerr<<"Flow::getStartLabel: start label requested, but no start label available."<<endl;
     Label lab;
     return lab; // intentionally returns invalid label
   } else {
@@ -286,16 +285,39 @@ Label Flow::getStartLabel() {
   }
 }
 
-bool Flow::isPassThroughLabel(Label lab) {
+// this is a static property of the ICFG (inter-procedural CFG)
+bool Flow::isPassThroughLabel(Label lab, Labeler* labeler) {
+  // function calls can return more than one state, therefore they cannot be pass-through states (in-place state updates)
+  // all functioncallreturn states must be stored because the map is used for path feasibility checks
+  if(labeler->isFunctionCallLabel(lab)||labeler->isFunctionCallReturnLabel(lab))
+     return false;
+  //structural property (nodes inside blocks that can be analyzed by updating states in-place (similar to basic blocks)
   Flow inEdgeSet1=inEdges(lab);
   Flow outEdgeSet1=outEdges(lab);
   if(inEdgeSet1.size()==1 && outEdgeSet1.size()==1) {
+    Edge inEdge1=*inEdgeSet1.begin();
     Edge outEdge1=*outEdgeSet1.begin();
-    Flow inEdgeSet2=outEdges(outEdge1.target());
-    return inEdgeSet2.size()==1;
+    Flow inEdgeSetOfPredecessor=inEdges(inEdge1.source());
+    Flow outEdgeSetOfPredecessor=outEdges(inEdge1.source());
+    Flow inEdgeSetOfSuccessor=inEdges(outEdge1.target());
+    Flow outEdgeSetOfSuccessor=outEdges(outEdge1.target());
+    return inEdgeSetOfPredecessor.size()==1
+      &&outEdgeSetOfPredecessor.size()==1 
+      &&inEdgeSetOfSuccessor.size()==1 
+      &&outEdgeSetOfSuccessor.size()==1;
   }
   return false;
 }
+
+bool Flow::singleSuccessorIsPassThroughLabel(Label lab,Labeler* labeler) {
+  Flow outEdgeSet=outEdges(lab);
+  if(outEdgeSet.size()==1) {
+    auto edge=*outEdgeSet.begin();
+    return isPassThroughLabel(edge.target(),labeler);
+  }
+  return false;
+}
+
 
 void Flow::setStartLabel(Label label) {
   LabelSet ls;
@@ -568,12 +590,14 @@ string Flow::toDot(Labeler* labeler, TopologicalSort* topSort) {
     if(_dotOptionDisplayLabel) {
       ss << *i;
       ss << " [label=\"";
-      ss << Labeler::labelToString(*i);
       if(topSort) {
-        ss<<"["<<topSort->getLabelPosition(*i)<<"]";
+        ss<<topSort->getLabelPosition(*i)<<": ";
+      } else {
+        ss<<"-: ";
       }
+      ss << "L"<<Labeler::labelToString(*i);
       if(_dotOptionDisplayPassThroughLabel) {
-        if(isPassThroughLabel(*i)) {
+        if(isPassThroughLabel(*i,labeler)) {
           ss << "[MOV]";
         } else {
           ss << "[STO]";

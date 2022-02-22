@@ -956,9 +956,10 @@ Unparse_Type::unparseType(SgType* type, SgUnparse_Info& info)
              // The enumerate type is defined in rose/src/ROSETTA/src/type.C
                case T_ADA_SUBTYPE:
                case T_ADA_MODULAR_TYPE:
-               case T_ADA_DERIVED_TYPE:   
-               case T_ADA_FLOAT_TYPE:   
-               case T_ADA_ACCESS_TYPE:   
+               case T_ADA_DERIVED_TYPE:
+               case T_ADA_ACCESS_TYPE:
+               case T_ADA_DISCRETE_TYPE: // PP (2/16/22) added two ada types
+               case T_ADA_FORMAL_TYPE:
                   {
                    // printf ("Warning: SgAda*Type is appearing in call to unparseType from Ada2Cpp (allow this for now) \n");
                     break;
@@ -2939,12 +2940,12 @@ Unparse_Type::unparseClassType(SgType* type, SgUnparse_Info& info)
             // DQ (8/17/2006): Handle the case where the definition does not exist (there may still be a pointer to the type).
                SgClassDefinition* classdefn_stmt = decl->get_definition();
 
-            // DQ (11/21/2021): Substitute the declaration_of_context so that we can support multiple file 
+            // DQ (11/21/2021): Substitute the declaration_of_context so that we can support multiple file
             // and use the correct declaration even though the types are shared.
 #if 0
                printf ("In unparseClassType(): info.get_declaration_of_context() = %p \n",info.get_declaration_of_context());
 #endif
-            // DQ (11/21/2021): If the declaration of context is set then use that declaration instead of 
+            // DQ (11/21/2021): If the declaration of context is set then use that declaration instead of
             // the one from the shared type, this allows us to support multiple files on the command line.
                if (info.get_declaration_of_context() != NULL)
                   {
@@ -3380,7 +3381,7 @@ Unparse_Type::unparseEnumType(SgType* type, SgUnparse_Info& info)
                   }
                ASSERT_not_null(edecl->get_definingDeclaration());
 
-            // DQ (11/21/2021): If the declaration of context is set then use that declaration instead of 
+            // DQ (11/21/2021): If the declaration of context is set then use that declaration instead of
             // the one from the shared type, this allows us to support multiple files on the command line.
             // DQ (4/22/2013): We need the defining declaration.
             // edecl = isSgEnumDeclaration(edecl->get_definingDeclaration());

@@ -69,7 +69,7 @@ namespace CodeThorn {
       normalization=false;
       return;
     }
-    restrictToFunCallExpressions=(level==1);
+    minimalNormalization=(level==1);
     if(level==1||level==2) {
       normalization=true;
       normalizeSingleStatements=true;
@@ -116,7 +116,7 @@ namespace CodeThorn {
   }
 
   void Normalization::normalizeAst(SgNode* root) {
-    options.configureLevel(2); // default level of normalization
+    options.configureLevel(1); // default level of normalization
     normalizeAstPhaseByPhase(root);
   }
 
@@ -181,11 +181,11 @@ namespace CodeThorn {
     }
     printNormalizationPhase();
     if(options.hoistConditionExpressions) {
-      hoistConditionsInAst(root,false && options.restrictToFunCallExpressions);
+      hoistConditionsInAst(root);
     }
     printNormalizationPhase();
     if(options.normalizeExpressions) {
-      normalizeExpressionsInAst(root,options.restrictToFunCallExpressions);
+      normalizeExpressionsInAst(root);
     }
     printNormalizationPhase();
     // obsolete, done as part of expression normalization, off by default
@@ -282,14 +282,22 @@ namespace CodeThorn {
     return isSgBasicBlock(current);
   }
 
-  bool Normalization::hasFunctionCall(SgExpression* expr) {
+  bool Normalization::isMinimalNormalizedExpression(SgExpression* expr) {
     RoseAst ast(expr);
     for(auto node:ast) {
-      if(isSgFunctionCallExp(node)||isSgConditionalExp(node)||isSgPlusPlusOp(node)||isSgMinusMinusOp(node)) {
-        return true;
+      if(isSgFunctionCallExp(node)
+         ||isSgConditionalExp(node) // E?E:E;
+         ||isSgPntrArrRefExp(node)
+         ||isSgPlusPlusOp(node)||isSgMinusMinusOp(node)
+         ||isSgCompoundAssignOp(node)
+         ||isSgAndOp(node)
+         ||isSgOrOp(node)
+         ||isSgNotOp(node)
+         ) {
+        return false;
       }
     }
-    return false;
+    return true;
   }
 
   /***************************************************************************
@@ -560,7 +568,7 @@ void Normalization::hoistBranchInitStatementsInAst(SgNode* node)
    * HOISTING OF CONDITION EXPRESSIONS (if, switch, do, do-while)
    **************************************************************************/
 
-  void Normalization::hoistConditionsInAst(SgNode* node, bool onlyNormalizeFunctionCallExpressions) {
+  void Normalization::hoistConditionsInAst(SgNode* node) {
     list<SgStatement*> hoistingTransformationList;
     RoseAst ast(node);
     // build list of stmts to transform
@@ -574,8 +582,9 @@ void Normalization::hoistBranchInitStatementsInAst(SgNode* node)
       if(SgNodeHelper::isCond(node)) {
         SgStatement* stmt=isSgStatement(node->get_parent());
         if(isSgIfStmt(stmt)||isSgSwitchStatement(stmt)||isSgWhileStmt(stmt)||isSgDoWhileStmt(stmt)) {
-          if(onlyNormalizeFunctionCallExpressions) {
-            if(hasFunctionCall(isSgExpression(SgNodeHelper::getCond(stmt)))) {
+          if(options.minimalNormalization) {
+            // requires additional test if the entire loop needs normalization (e.g. if it's a for loop)
+            if(true || !isMinimalNormalizedExpression(isSgExpression(SgNodeHelper::getCond(stmt)))) {
               hoistingTransformationList.push_back(stmt);
             } else {
               // do not hoist
@@ -763,7 +772,7 @@ void Normalization::normalizeSwitchWithoutDefault(SgSwitchStatement* node) {
    * NORMALIZE EXPRESSIONS
    **************************************************************************/
 
-  void Normalization::normalizeExpressionsInAst(SgNode* node, bool onlyNormalizeFunctionCallExpressions) {
+  void Normalization::normalizeExpressionsInAst(SgNode* node) {
     // find all expressions in SgExprStatement, SgReturnStmt,
     // SgVariableDeclaration. Conditions are normalized in previous
     // normalization steps to have only one variable in the condition
@@ -800,8 +809,8 @@ void Normalization::normalizeSwitchWithoutDefault(SgSwitchStatement* node) {
       }
       if(stmt&&expr) {
         if(isWithinBlockStmt(expr)) {
-          if(onlyNormalizeFunctionCallExpressions) {
-            if(hasFunctionCall(expr)) {
+          if(options.minimalNormalization) {
+            if(!isMinimalNormalizedExpression(expr)) {
               normalizeExpression(stmt,expr);
             }
           } else {

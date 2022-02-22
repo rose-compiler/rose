@@ -26,7 +26,7 @@ namespace CodeThorn {
     if(pstate->memLocExists(memLoc)) {
       auto val=pstate->readFromMemoryLocation(memLoc);
       if(val.isUndefined()) {
-        if(val.isSummary()) {
+        if(val.isAbstract()) {
           violation.insert(ACCESS_POTENTIALLY_UNINIT);
         } else {
           violation.insert(ACCESS_DEFINITELY_UNINIT);
@@ -55,6 +55,11 @@ namespace CodeThorn {
     } if(address.isNullPtr()) {
       resultList.insert(ACCESS_DEFINITELY_NP);
     } else {
+      if(!address.isPtr()) {
+        resultList.insert(ACCESS_POTENTIALLY_OUTSIDE_BOUNDS);
+        // e.g. when numbers become pointer values
+        return resultList;
+      }
       AbstractValue offset=address.getIndexValue();
       if(offset.isTop()) {
 	resultList.insert(ACCESS_POTENTIALLY_OUTSIDE_BOUNDS);

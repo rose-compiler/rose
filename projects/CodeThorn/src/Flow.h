@@ -165,7 +165,8 @@ namespace CodeThorn {
     // this function only returns a valid edge if exactly one edge exists
     Edge outEdgeOfType(Label label, EdgeType edgeType);
 
-    bool isPassThroughLabel(Label label);
+    bool isPassThroughLabel(Label label, Labeler* labeler);
+    bool singleSuccessorIsPassThroughLabel(Label label, Labeler* labeler);
     void setStartLabel(Label label);
     void addStartLabel(Label label);
     Label getStartLabel();

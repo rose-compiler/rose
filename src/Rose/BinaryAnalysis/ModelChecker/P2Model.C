@@ -519,6 +519,7 @@ RiscOperators::checkNullAccess(const BS::SValue::Ptr &addrSVal, TestMode testMod
     ASSERT_not_null(modelCheckerSolver_);               // should have all the path assertions already
     SymbolicExpr::Ptr addr = IS::SymbolicSemantics::SValue::promote(addrSVal)->get_expression();
     const char *direction = IoMode::READ == ioMode ? "read" : "write";
+    ProgressTask task(modelCheckerSolver_->progress(), "nullptr");
 
     bool isNull = false;
     switch (testMode) {
@@ -578,6 +579,7 @@ RiscOperators::checkOobAccess(const BS::SValue::Ptr &addrSVal_, TestMode testMod
         // If the address is concrete and refers to a region of memory but is outside that region, then we have an OOB access.
         if (auto va = addrSVal->toUnsigned()) {
             if (AddressInterval referencedRegion = addrSVal->region()) {
+                ProgressTask task(modelCheckerSolver_->progress(), "oob");
                 AddressInterval accessedRegion = AddressInterval::baseSizeSat(*va, nBytes);
                 if (!referencedRegion.isContaining(accessedRegion)) {
 
@@ -1287,7 +1289,7 @@ SemanticCallbacks::seenState(const BS::RiscOperators::Ptr &ops) {
 }
 
 ExecutionUnit::Ptr
-SemanticCallbacks::findUnit(rose_addr_t va) {
+SemanticCallbacks::findUnit(rose_addr_t va, const Progress::Ptr &progress) {
     ExecutionUnit::Ptr unit;
 
     // If we're following one path, then the execution unit is always the next one on the path.
@@ -1314,7 +1316,7 @@ SemanticCallbacks::findUnit(rose_addr_t va) {
 
 
     {
-        // We use a separate mutex for the unit_ cache so that only one tahread computes this at a time without blocking
+        // We use a separate mutex for the unit_ cache so that only one thread computes this at a time without blocking
         // threads trying to make progress on other things.  An alternative would be to lock the main mutex, but only when
         // accessing the cache, and allow the computations to be duplicated with only the first thread saving the result.
         SAWYER_THREAD_TRAITS::LockGuard lock(unitsMutex_);
@@ -1340,8 +1342,12 @@ SemanticCallbacks::findUnit(rose_addr_t va) {
         // about half as fast and takes more memory.  By caching our results, we only do this expensive calcultion once per
         // basic block, not each time a path reaches this block.
         if (bb->nInstructions() > 0) {
+            ProgressTask task(progress, "findNext");
+
+            // We intentionally don't use an SMT solver here because it's not usually needed--we're only processing a single
+            // basic block. If the Z3 solver is used here, we find that Z3 eventually hangs during the z3check call on some
+            // threads even when we tell it to time out after a few seconds.
             auto ops = partitioner_.newOperators(P2::MAP_BASED_MEMORY);
-            ops->solver(createSolver());
             IS::SymbolicSemantics::RiscOperators::promote(ops)->trimThreshold(mcSettings()->maxSymbolicSize);
             auto cpu = partitioner_.newDispatcher(ops);
             const RegisterDescriptor IP = partitioner_.instructionProvider().instructionPointerRegister();
@@ -1364,7 +1370,7 @@ SemanticCallbacks::findUnit(rose_addr_t va) {
                 }
             }
         }
-        if (!unit)
+        if (!unit && bb->nInstructions() > 0)
             unit = BasicBlockUnit::instance(partitioner_, bb);
     } else if (SgAsmInstruction *insn = partitioner_.instructionProvider()[va]) {
         SAWYER_MESG(mlog[DEBUG]) <<"    no basic block at " <<StringUtility::addrToString(va) <<"; switched to insn\n";
@@ -1410,6 +1416,7 @@ SemanticCallbacks::nextCodeAddresses(const BS::RiscOperators::Ptr &ops) {
 std::vector<SemanticCallbacks::NextUnit>
 SemanticCallbacks::nextUnits(const Path::Ptr &path, const BS::RiscOperators::Ptr &ops, const SmtSolver::Ptr &solver) {
     std::vector<SemanticCallbacks::NextUnit> units;
+    ProgressTask task(solver->progress(), "nextUnits");
 
     // If we've seen this state before, then there's nothing new for us to do.
     if (seenState(ops)) {
@@ -1440,7 +1447,7 @@ SemanticCallbacks::nextUnits(const Path::Ptr &path, const BS::RiscOperators::Ptr
         switch (solver->check()) {
             case SmtSolver::SAT_YES:
                 // Create the next execution unit
-                if (ExecutionUnit::Ptr unit = findUnit(va)) {
+                if (ExecutionUnit::Ptr unit = findUnit(va, solver->progress())) {
                     units.push_back({unit, assertion, solver->evidenceByName()});
                 } else if (settings_.nullRead != TestMode::OFF && va <= settings_.maxNullAddress) {
                     SourceLocation sloc = partitioner_.sourceLocations().get(va);

@@ -34,8 +34,6 @@ namespace CodeThorn {
   * \date 2012.
  */
 
-  #define ESTATE_PSTATE_MEM_COPY
-
   class EState;
   //typedef const EState* EStatePtr;
   typedef const EState* ConstEStatePtr;
@@ -45,14 +43,14 @@ namespace CodeThorn {
   class EState : public Lattice {
   public:
     EState();
-    EState(Label label, PStatePtr pstate):_label(label),_pstate(pstate) {}
-    EState(Label label, PStatePtr pstate, CodeThorn::InputOutput io):_label(label),_pstate(pstate),io(io){}
-    EState(Label label, CallString cs, PStatePtr pstate, CodeThorn::InputOutput io):_label(label),_pstate(pstate),io(io),callString(cs) {}
+  EState(Label label, PStatePtr pstate):_label(label),_pstate(pstate) { _constructCount++; }
+    EState(Label label, PStatePtr pstate, CodeThorn::InputOutput io):_label(label),_pstate(pstate),io(io){ _constructCount++; }
+    EState(Label label, CallString cs, PStatePtr pstate, CodeThorn::InputOutput io):_label(label),callString(cs),_pstate(pstate),io(io) { _constructCount++; }
+    EState(EState&& other); // move constructor
     ~EState();
-    #ifdef ESTATE_PSTATE_MEM_COPY
     EState(const EState &other); // copy constructor
+
     EState& operator=(const EState &other); // assignment operator
-    #endif
     
     std::string toString() const;
     std::string toString(CodeThorn::VariableIdMapping* variableIdMapping) const;
@@ -88,18 +86,39 @@ namespace CodeThorn {
     EStatePtr clone(); // equivalent to deepClone, if sharedPStates==false
     EStatePtr cloneWithoutIO(); // equivalent to deepClone, if sharedPStates==false
     
-  private:
-    void copy(EState* target, ConstEStatePtr source,bool sharedPStatesFlag);
-    Label _label;
-    PStatePtr _pstate;
+    static std::string allocationStatsToString();
+    static std::string allocationHistoryToString();
+    static void checkPointAllocationHistory();
+
   public:
     static bool sharedPStates;
     static bool fastPointerHashing;
-    CodeThorn::InputOutput io;
     void setCallString(CallString cs);
     CallString getCallString() const;
+    CallString* getCallStringPtr();
+    CallString& getCallStringRef();
     size_t getCallStringLength() const;
+
+  public:
+    static uint64_t getConstructCount();
+    static uint64_t getDestructCount();
+    // returns number of non-pointer addresses (e.g. numbers, which should never occur).
+    // exits with error message, if more addresses of same memory region exist, than allowed by arrayAbstractionIndex.
+    uint32_t checkArrayAbstractionIndexConsistency(int32_t arrayAbstractionIndex, VariableIdMapping* vim);
+
+  private:
+    void copy(EState* target, ConstEStatePtr source,bool sharedPStatesFlag);
+    Label _label;
+  public:
     CallString callString;
+  private:
+    PStatePtr _pstate;
+  public:
+    CodeThorn::InputOutput io;
+  private:
+    static uint64_t _constructCount;
+    static uint64_t _destructCount;
+    static std::list<std::pair<uint64_t,uint64_t> > _allocationHistory;
     
   };
 

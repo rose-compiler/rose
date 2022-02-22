@@ -1304,6 +1304,7 @@ HEADER_DECLARATION_MODIFIER_START
                e_ada_abstract = 34,         /*!< Ada abstract declaration */
                e_ada_limited  = 35,         /*!< Ada limited declaration */
                e_ada_tagged   = 36,         /*!< Ada tagged declaration */
+               e_ada_separate = 37,         /*!< Ada separate declaration */
 
                e_last_modifier       /*!< last modifier value (upper bound on range of values, used in error checking) */
              };
@@ -1516,6 +1517,11 @@ HEADER_DECLARATION_MODIFIER_START
           bool isAdaTagged() const;
           void setAdaTagged();
           void unsetAdaTagged();
+
+       // PP (02/22/2022): Adding Ada modifier for stubs
+          bool isAdaSeparate() const;
+          void setAdaSeparate();
+          void unsetAdaSeparate();
 
           std::string displayString() const;
           void display ( std::string label ) const;
@@ -3500,6 +3506,10 @@ void SgDeclarationModifier::unsetAdaLimited()     { unsetBit(e_ada_limited,p_mod
 bool SgDeclarationModifier::isAdaTagged() const   { return checkBit(e_ada_tagged,p_modifierVector); }
 void SgDeclarationModifier::setAdaTagged()        { setBit(e_ada_tagged,p_modifierVector); }
 void SgDeclarationModifier::unsetAdaTagged()      { unsetBit(e_ada_tagged,p_modifierVector); }
+
+bool SgDeclarationModifier::isAdaSeparate() const { return checkBit(e_ada_separate,p_modifierVector); }
+void SgDeclarationModifier::setAdaSeparate()      { setBit(e_ada_separate,p_modifierVector); }
+void SgDeclarationModifier::unsetAdaSeparate()    { unsetBit(e_ada_separate,p_modifierVector); }
 
 
 // DQ (8/16/2014): Adding non-C++ standard Microsoft specific attributes.
@@ -8221,6 +8231,27 @@ SgSymbolTable::get_name( const SgNode* node) const
           case V_SgAdaTaskBodyDecl:
              {
                const SgAdaTaskBodyDecl* dcl = isSgAdaTaskBodyDecl(node);
+               name = dcl->get_name();
+               break;
+             }
+
+          case V_SgAdaProtectedSpecDecl:
+             {
+               const SgAdaProtectedSpecDecl* dcl = isSgAdaProtectedSpecDecl(node);
+               name = dcl->get_name();
+               break;
+             }
+
+          case V_SgAdaProtectedTypeDecl:
+             {
+               const SgAdaProtectedTypeDecl* dcl = isSgAdaProtectedTypeDecl(node);
+               name = dcl->get_name();
+               break;
+             }
+
+          case V_SgAdaProtectedBodyDecl:
+             {
+               const SgAdaProtectedBodyDecl* dcl = isSgAdaProtectedBodyDecl(node);
                name = dcl->get_name();
                break;
              }

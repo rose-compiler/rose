@@ -26,6 +26,7 @@
 #include "TopologicalSort.h"
 #include "Miscellaneous2.h"
 #include "CodeThornPasses.h"
+#include "Solver18.h"
 
 using namespace std;
 using namespace Sawyer::Message;
@@ -112,16 +113,47 @@ std::string CodeThorn::CTAnalysis::hashSetConsistencyReport() {
 }
   
 void CodeThorn::CTAnalysis::deleteAllStates() {
+
+  if(getSolver()->getId()==18) {
+    dynamic_cast<Solver18*>(getSolver())->deleteAllStates();
+    return;
+  }
+
   if(_ctOpt.status) {
     cout<<"STATUS: "<<hashSetConsistencyReport();
   }      
   
+  EState::checkPointAllocationHistory();
+  size_t numSetEStates=estateSet.size();
   if(_ctOpt.status) cout<<"STATUS: deleting "<<estateSet.size()<<" estates, ";
+  for(auto es : estateSet) {
+    delete es;
+  }
   estateSet.clear();
+  size_t numSetPStates=pstateSet.size();
   if(_ctOpt.status) cout<<pstateSet.size()<<" pstates, ";
+  for(auto ps : pstateSet) {
+    delete ps;
+  }
   pstateSet.clear();
+
+  EState::checkPointAllocationHistory();
+
   if(_ctOpt.status) cout<<transitionGraph.size()<<" transitions in TS."<<endl;
   transitionGraph.clear();
+
+  // check is necessary for mixed modes. If states already deleted above, they cannot be deleted again
+  if(numSetEStates==0 && numSetPStates==0 && _abstractCSStateMapMap.size()>0) {
+    size_t cnt=0;
+    for(auto entry : _abstractCSStateMapMap) {
+      auto map=entry.second;
+      for(auto entry2 : map) {
+        delete entry2.second;
+      cnt++;
+      }
+    }
+    if(_ctOpt.status) cout<<"STATUS: deleted "<<cnt<<" CS-estates."<<endl;
+  }
 }
 
 void CodeThorn::CTAnalysis::run() {
@@ -132,8 +164,31 @@ TopologicalSort* CodeThorn::CTAnalysis::getTopologicalSort() {
   return _topologicalSort;
 }
 
+void CodeThorn::CTAnalysis::ensureToplogicSortFlowConsistency() {
+  auto l2pMap=getTopologicalSort()->labelToPriorityMap();
+  LabelSet allLabels=getFlow()->nodeLabels();
+  uint64_t numFail=0;
+  for(auto lab : allLabels) {
+    if(!lab.isValid()) {
+      cerr<<"Error: checkToplogicSortFlowConsistency failed: invalid label."<<endl;
+      numFail++;
+    }
+    if(l2pMap[lab]==0) {
+      SgNode* node=getLabeler()->getNode(lab);
+      cerr<<"Error: checkToplogicSortFlowConsistency failed: flow-node not in topological sort: L"<<lab<<": "<<SgNodeHelper::locationAndSourceCodeToString(node,25,25)<<endl;
+      numFail++;
+    }
+  }
+  if(numFail>0) {
+    cerr<<"Error: checkToplogicSortFlowConsistency: "<<numFail<<" inconsistencies detected. Exiting."<<endl;
+    exit(1);
+  }
+  cout<<"INFO: ensureToplogicSortFlowConsistency: PASS"<<endl;
+}
+
 bool CodeThorn::CTAnalysis::isPassThroughLabel(Label lab) {
-  return getFlow()->isPassThroughLabel(lab);
+  ROSE_ASSERT(getLabeler());
+  return getFlow()->isPassThroughLabel(lab,getLabeler());
 }
 
 void CodeThorn::CTAnalysis::insertInputVarValue(int i) {
@@ -372,47 +427,33 @@ void CodeThorn::CTAnalysis::setOptionOutputWarnings(bool flag) {
   _estateTransferFunctions->setOptionOutputWarnings(flag);
 }
 
-//size_t CodeThorn::CTAnalysis::getSummaryStateMapSize() {
-//  return _summaryCSStateMapMap.size();
-//}
-
-Lattice* CodeThorn::CTAnalysis::getPreInfo(Label lab, CallString context) {
-  return const_cast<EStatePtr>(getSummaryState(lab,context));
-}
-
-Lattice* CodeThorn::CTAnalysis::getPostInfo(Label lab, CallString context) {
-  ROSE_ASSERT(0);
-}
-
-void CodeThorn::CTAnalysis::setPreInfo(Label lab, CallString context, Lattice* el) {
-  setSummaryState(lab,context,dynamic_cast<EStatePtr>(el));
-}
-
-void CodeThorn::CTAnalysis::setPostInfo(Label lab, CallString context, Lattice*) {
-  ROSE_ASSERT(0);
-}
-
 bool CodeThorn::CTAnalysis::isUnreachableLabel(Label lab) {
   // if code is unreachable no state is computed for it. In this case no entry is found for this label 
-  return _summaryCSStateMapMap.find(lab.getId())==_summaryCSStateMapMap.end();
+  if(getSolver()->getId()==18) {
+    // solver 18 uses its own states
+    Solver18* solver18=dynamic_cast<CodeThorn::Solver18*>(getSolver());
+    ROSE_ASSERT(solver18);
+    return solver18->isUnreachableLabel(lab);
+  }
+  return _abstractCSStateMapMap.find(lab.getId())==_abstractCSStateMapMap.end()&&(lab!=getFlow()->getStartLabel());
 }
 
 bool CodeThorn::CTAnalysis::isReachableLabel(Label lab) {
   return !isUnreachableLabel(lab);
 }
 
-EStatePtr CodeThorn::CTAnalysis::getSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs) {
+EStatePtr CodeThorn::CTAnalysis::getAbstractState(CodeThorn::Label lab, CodeThorn::CallString cs) {
   EStatePtr res;
 #pragma omp critical(SUMMARY_STATES)
   {
-    auto iter1=_summaryCSStateMapMap.find(lab.getId());
-    if(iter1==_summaryCSStateMapMap.end()) {
-      res=getBottomSummaryState(lab,cs);
+    auto iter1=_abstractCSStateMapMap.find(lab.getId());
+    if(iter1==_abstractCSStateMapMap.end()) {
+      res=getBottomAbstractState(lab,cs);
     } else {
-      SummaryCSStateMap& summaryCSStateMap=(*iter1).second;
-      auto iter2=summaryCSStateMap.find(cs);
-      if(iter2==summaryCSStateMap.end()) {
-        res=getBottomSummaryState(lab,cs);
+      AbstractCSStateMap& abstractCSStateMap=(*iter1).second;
+      auto iter2=abstractCSStateMap.find(cs);
+      if(iter2==abstractCSStateMap.end()) {
+        res=getBottomAbstractState(lab,cs);
       } else {
         res=(*iter2).second;
       }
@@ -421,7 +462,7 @@ EStatePtr CodeThorn::CTAnalysis::getSummaryState(CodeThorn::Label lab, CodeThorn
   return res;
 }
 
-void CodeThorn::CTAnalysis::setSummaryState(CodeThorn::Label lab, CodeThorn::CallString cs, EStatePtr estate) {
+void CodeThorn::CTAnalysis::setAbstractState(CodeThorn::Label lab, CodeThorn::CallString cs, EStatePtr estate) {
   ROSE_ASSERT(lab==estate->label());
   ROSE_ASSERT(cs==estate->callString);
   ROSE_ASSERT(estate);
@@ -430,21 +471,21 @@ void CodeThorn::CTAnalysis::setSummaryState(CodeThorn::Label lab, CodeThorn::Cal
   //_summaryCSStateMap[p]=estate;
 #pragma omp critical(SUMMARY_STATES)
   {
-    auto iter1=_summaryCSStateMapMap.find(lab.getId());
-    if(iter1==_summaryCSStateMapMap.end()) {
+    auto iter1=_abstractCSStateMapMap.find(lab.getId());
+    if(iter1==_abstractCSStateMapMap.end()) {
       // create new
-      SummaryCSStateMap newSummaryCSStateMap;
-      newSummaryCSStateMap[cs]=estate;
-      _summaryCSStateMapMap[lab.getId()]=newSummaryCSStateMap;
+      AbstractCSStateMap newAbstractCSStateMap;
+      newAbstractCSStateMap[cs]=estate;
+      _abstractCSStateMapMap[lab.getId()]=newAbstractCSStateMap;
     } else {
-      SummaryCSStateMap& summaryCSStateMap=(*iter1).second;
-      summaryCSStateMap[cs]=estate;
+      AbstractCSStateMap& abstractCSStateMap=(*iter1).second;
+      abstractCSStateMap[cs]=estate;
     }
   }
 }
 
 
-EStatePtr CodeThorn::CTAnalysis::getBottomSummaryState(Label lab, CallString cs) {
+EStatePtr CodeThorn::CTAnalysis::getBottomAbstractState(Label lab, CallString cs) {
   InputOutput io;
   io.recordBot();
   if(EState::sharedPStates) {
@@ -464,7 +505,7 @@ EStatePtr CodeThorn::CTAnalysis::getBottomSummaryState(Label lab, CallString cs)
   }
 }
 
-void CodeThorn::CTAnalysis::initializeSummaryStates(PStatePtr initialPStateStored) {
+void CodeThorn::CTAnalysis::initializeAbstractStates(PStatePtr initialPStateStored) {
   _initialPStateStored=initialPStateStored;
 #if 0
   for(auto label:*getLabeler()) {
@@ -473,8 +514,8 @@ void CodeThorn::CTAnalysis::initializeSummaryStates(PStatePtr initialPStateStore
     io.recordBot();
     CallString cs; // empty callstring
     EState estate(label,cs,initialPStateStored,io); // implicitly empty cs
-    EStatePtr bottomElement=processNewOrExisting(getBottomSummaryState());
-    setSummaryState(label,estate.callString,bottomElement);
+    EStatePtr bottomElement=processNewOrExisting(getBottomAbstractState());
+    setAbstractState(label,estate.callString,bottomElement);
   }
 #endif
 }
@@ -645,9 +686,7 @@ void CodeThorn::CTAnalysis::setSolver(Solver* solver) {
 }
 
 Solver* CodeThorn::CTAnalysis::getSolver() {
-  CodeThorn::Solver* ctSolver=dynamic_cast<CodeThorn::Solver*>(_solver);
-  ROSE_ASSERT(ctSolver);
-  return ctSolver;
+  return dynamic_cast<CodeThorn::Solver*>(_solver);
 }
 
 void CodeThorn::CTAnalysis::runSolver() {
@@ -1344,21 +1383,11 @@ EStatePtr CodeThorn::CTAnalysis::createInitialEState(SgProject* root, Label slab
   EStatePtr estate=new EState(slab,initialPStateStored);
 
   ROSE_ASSERT(_estateTransferFunctions);
-  switch(_ctOpt.initialStateGlobalVarsAbstractionLevel) {
-  case 0:
-    // do not add global vars to state and consider them as a single summary in read/write functions
-    break;
-  case 1: /* default */
-    _estateTransferFunctions->initializeGlobalVariables(root, estate);
-    break;
-  default:
-    cerr<<"Unknown initialStateGlobalVarsAbstractionLevel: "<<_ctOpt.initialStateGlobalVarsAbstractionLevel<<endl;
-    exit(1);
-  }
+  _estateTransferFunctions->initializeGlobalVariables(root, estate);
   SAWYER_MESG(logger[INFO]) <<"Initial state: number of entries:"<<estate->pstate()->stateSize()<<endl;
   
   // initialize summary states map for abstract model checking mode
-  initializeSummaryStates(initialPStateStored);
+  initializeAbstractStates(initialPStateStored);
   estate->io.recordNone(); // ensure that extremal value is different to bot
 
   return estate;

@@ -90,7 +90,7 @@ SharedMemoryCallback::hello(const std::string &myName, const SharedMemoryContext
 
 void
 SharedMemoryCallback::normalRead(SharedMemoryContext &ctx) const {
-    mlog[DEBUG] <<"    canceled: this read will be treated as non-shared memory\n";
+    SAWYER_MESG(mlog[DEBUG]) <<"    canceled: this read will be treated as non-shared memory\n";
     ctx.ops->inputVariables()->deactivate(ctx.sharedMemoryEvent);
     ctx.sharedMemoryEvent->variable(SymbolicExpr::Ptr());
     ctx.valueRead = SymbolicExpr::Ptr();
@@ -98,19 +98,19 @@ SharedMemoryCallback::normalRead(SharedMemoryContext &ctx) const {
 
 void
 SharedMemoryCallback::notAnInput(SharedMemoryContext &ctx) const {
-    mlog[DEBUG] <<"    this shared memory read will not be treated as a test case input\n";
+    SAWYER_MESG(mlog[DEBUG]) <<"    this shared memory read will not be treated as a test case input\n";
     ctx.ops->inputVariables()->deactivate(ctx.sharedMemoryEvent);
 }
 
 void
 SharedMemoryCallback::returns(SharedMemoryContext &ctx, const SymbolicExpr::Ptr &value) const {
     ASSERT_not_null(value);
-    mlog[DEBUG] <<"    returning " <<*value <<"\n";
+    SAWYER_MESG(mlog[DEBUG]) <<"    returning " <<*value <<"\n";
     if (value->isConstant()) {
         ctx.ops->inputVariables()->deactivate(ctx.sharedMemoryEvent);
         ctx.sharedMemoryEvent->variable(SymbolicExpr::Ptr());
         ctx.valueRead = value;
-        mlog[DEBUG] <<"    this shared memory read will not be treated as a test case input\n";
+        SAWYER_MESG(mlog[DEBUG]) <<"    this shared memory read will not be treated as a test case input\n";
     } else {
         ctx.valueRead = value;
     }

@@ -20,6 +20,9 @@ using namespace CodeThorn;
 
 bool EState::sharedPStates=true;
 bool EState::fastPointerHashing=true;
+uint64_t EState::_constructCount=0;
+uint64_t EState::_destructCount=0;
+std::list<std::pair<uint64_t,uint64_t> > EState::_allocationHistory;
 
 EState::EState():_label(Label()) {
   if(EState::sharedPStates) {
@@ -27,16 +30,70 @@ EState::EState():_label(Label()) {
   } else {
     _pstate=new PState();
   }
+  _constructCount++;
+}
+
+// move constructor
+EState::EState(EState&& other) {
+  bool sharedPStates=false; // true:copies only pointer to PState, false:deep-copy
+  copy(this,&other,sharedPStates);
+  if(other._pstate) {
+    // pointer is copied by above 'copy' function
+    other._pstate=nullptr;
+  }
+  _constructCount++;
+}
+
+// copy constructor
+EState::EState(const EState &other) {
+  copy(this,&other,sharedPStates);
+  _constructCount++;
+}
+
+// assignment operator
+EState& EState::operator=(const EState &other) {
+  copy(this,&other,sharedPStates);
+  return *this;
 }
 
 EState::~EState() {
   if(EState::sharedPStates==false) {
     //cerr<<"DEBUG: Deleting estate: "<<this<<" with pstate: "<<_pstate<<endl;
+    // check, because it may be null because of move semantics
     if(_pstate!=nullptr) {
       delete _pstate;
       _pstate=nullptr;
     }
   }
+  _destructCount++;
+}
+
+uint64_t EState::getConstructCount() {
+  return _constructCount;
+}
+
+uint64_t EState::getDestructCount() {
+  return _destructCount;
+}
+
+string EState::allocationStatsToString() {
+  stringstream ss;
+  int64_t diff=(int64_t)_constructCount-(int64_t)_destructCount;
+  ss<<"constructed: "<<_constructCount<<" destructed: "<<_destructCount<<" diff: "<<diff;
+  return ss.str();
+}
+
+void EState::checkPointAllocationHistory() {
+  _allocationHistory.push_back(make_pair<uint64_t,uint64_t>(getConstructCount(),getDestructCount()));
+}
+
+std::string EState::allocationHistoryToString() {
+  string s;
+  for(auto p : _allocationHistory) {
+    int64_t diff=(int64_t)p.first-(int64_t)p.second;
+    s+=("("+std::to_string(p.first)+"-"+std::to_string(p.second)+"="+std::to_string(diff)+") ");
+  }
+  return s;
 }
 
 // copy
@@ -54,14 +111,14 @@ void EState::EState::copy(EState* target, ConstEStatePtr source,bool sharedPStat
       target->_pstate=nullptr;
       //cout<<"DEBUG: ESTATE COPY: "<<&source-><<"=>"<<target<<": pstate: nullptr"<<" ==> nullptr"<<endl;
     } else {
-      PStatePtr newPState=new PState();
+      target->_pstate=new PState();
       for(auto iter=source->_pstate->begin(); iter!=source->_pstate->end();++iter) {
 	auto address=(*iter).first;
 	auto value=(*iter).second;
-	newPState->writeToMemoryLocation(address,value);
+	target->_pstate->writeToMemoryLocation(address,value);
       }
       //cout<<"DEBUG: ESTATE COPY: "<<&source-><<"=>"<<target<<": pstate:"<<source->pstate()<<" ==> "<<newPState<<endl;
-      target->_pstate=newPState;
+      //target->_pstate=newPState;
     }
   }
 }
@@ -84,21 +141,6 @@ EStatePtr EState::cloneWithoutIO() {
 EStatePtr EState::clone() {
   return new EState(*this);
 }
-
-#ifdef ESTATE_PSTATE_MEM_COPY
-// copy constructor
-EState::EState(const EState &other) {
-  copy(this,&other,sharedPStates);
-}
-#endif
-
-#ifdef ESTATE_PSTATE_MEM_COPY
-// assignment operator
-EState& EState::operator=(const EState &other) {
-  copy(this,&other,sharedPStates);
-  return *this;
-}
-#endif
 
 string EState::predicateToString(VariableIdMapping* variableIdMapping) const {
   string separator=",";
@@ -476,6 +518,14 @@ CallString EState::getCallString() const {
   return callString;
 }
 
+CallString* EState::getCallStringPtr() {
+  return &callString;
+}
+
+CallString& EState::getCallStringRef() {
+  return callString;
+}
+
 size_t EState::getCallStringLength() const {
   return callString.getLength();
 }
@@ -489,3 +539,50 @@ void EState::setPState(PStatePtr pstate) {
     _pstate=pstate;
   }
 }
+
+uint32_t EState::checkArrayAbstractionIndexConsistency(int32_t arrayAbstractionIndex, VariableIdMapping* vim) {
+  uint32_t numNonPtr=0;
+  map<VariableId,int32_t> cntMap;
+  bool foundError=false;
+  if(arrayAbstractionIndex<0)
+    return 0;
+  for (auto iter=pstate()->begin(); iter!=pstate()->end(); ++iter) {
+    AbstractValue address=(*iter).first;
+    AbstractValue value=(*iter).second;
+    if(!address.isPtr()) {
+      numNonPtr++;
+    } else {
+      VariableId varId=address.getVariableId();
+      if(vim->isMemberVariable(varId)) {
+        cout<<"State consistency error: found member variable in state: "<<varId.toString(vim)<<endl;
+      }
+      if(vim->isOfArrayType(varId)) {
+        SgType* arrayType=vim->getType(varId);
+        SgType* elementType=SageInterface::getArrayElementType(arrayType);
+        // select the integral types to check for at least
+        if(SageInterface::isStrictIntegerType(elementType)||isSgTypeSigned128bitInteger(elementType)) {
+          if(cntMap.find(varId)==cntMap.end()) {
+            cntMap[varId]=1;
+          } else {
+            cntMap[varId]++;
+            if(cntMap[varId]-1>arrayAbstractionIndex) {
+              foundError=true;
+            }
+          }
+        }
+      }
+    }
+  }
+  if(foundError) {
+    // generate detailed report
+    for(auto p : cntMap) {
+      if(p.second-1>arrayAbstractionIndex) {
+        cout<<"State abstraction inconistency detected: "<<labelString()<<": "<<p.first.toString(AbstractValue::getVariableIdMapping())<<" : "<<p.second<<endl;
+      }
+    }
+    cout<<"Exiting analysis because of detected inconsistency."<<endl;
+    exit(1);
+  }
+  return numNonPtr;
+}
+

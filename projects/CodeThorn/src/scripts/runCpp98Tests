@@ -151,7 +151,7 @@ while [[ $# -gt 0 ]]; do
       shift # consume argument
       shift # consume value
       ;;
-    -v|--verbose)
+    -V|--verbose)
       VERBOSE_MODE=1
       shift # consume value
       ;;
@@ -166,9 +166,9 @@ done
 CT_MODE_OPTIONS="--vis=1 --context-sensitive=yes --exploration-mode=topologic-sort --normalize-level=2 --normalize-extended --interpreter-mode=1"
 
 echo "Valid C++98 Tests: "
-passingTests=`echo {001..016} {018..034} {036..051} {053..056}`
+passingTests=`echo {001..016} {018..034} {036..051} {053..060}`
 numWarnExpected=0
-numFailExpected=46
+numFailExpected=48
 runCxxTests $COMPILER $TESTDIR $TESTPREFIX $numWarnExpected $numFailExpected $passingTests
 
 echo "Undefined Behavior Tests: "

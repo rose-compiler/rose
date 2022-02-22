@@ -16,6 +16,7 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (NonrealRefExp,          "NonrealRefExp",          "NONREAL_REF" );
      NEW_TERMINAL_MACRO (AdaUnitRefExp,          "AdaUnitRefExp",          "ADA_UNIT_REF" );
      NEW_TERMINAL_MACRO (AdaTaskRefExp,          "AdaTaskRefExp",          "ADA_TASK_REF" );
+     NEW_TERMINAL_MACRO (AdaProtectedRefExp,     "AdaProtectedRefExp",     "ADA_PROTECTED_REF" );
      NEW_TERMINAL_MACRO (AdaRenamingRefExp,      "AdaRenamingRefExp",      "ADA_RENAMING_REF" );
      NEW_TERMINAL_MACRO (AdaAttributeExp,        "AdaAttributeExp",        "ADA_ATTRIBUTE_EXP" );
 
@@ -100,6 +101,7 @@ Grammar::setUpExpressions ()
      NEW_TERMINAL_MACRO (CompoundInitializer,    "CompoundInitializer",    "COMPOUND_INIT" );
      NEW_TERMINAL_MACRO (ConstructorInitializer, "ConstructorInitializer", "CONSTRUCTOR_INIT" );
      NEW_TERMINAL_MACRO (AssignInitializer,      "AssignInitializer",      "ASSIGN_INIT" );
+     NEW_TERMINAL_MACRO (AdaAncestorInitializer, "AdaAncestorInitializer", "ADA_ANCESTOR_INIT" );
 
   // DQ (11/15/2016): Adding support for new SgBracedInitializer, required to template support (see Cxx11_tests/test2016_82.C).
      NEW_TERMINAL_MACRO (BracedInitializer,      "BracedInitializer",      "BRACED_INIT" );
@@ -392,7 +394,8 @@ Grammar::setUpExpressions ()
 
      NEW_NONTERMINAL_MACRO (Initializer,
                             AggregateInitializer | CompoundInitializer | ConstructorInitializer |
-                            AssignInitializer | DesignatedInitializer | BracedInitializer,
+                            AssignInitializer | DesignatedInitializer | BracedInitializer |
+                            AdaAncestorInitializer,
                             "Initializer","EXPR_INIT", false);
 
   // User defined operator for Fortran named operators.
@@ -476,7 +479,7 @@ Grammar::setUpExpressions ()
           RangeExp            | MagicColonExp           | //SK(08/20/2015): RangeExp and MagicColonExp for Matlab
           TypeTraitBuiltinOperator | CompoundLiteralExp | JavaAnnotation           | JavaTypeExpression           | TypeExpression |
           ClassExp            | FunctionParameterRefExp | LambdaExp | HereExp | AtExp | FinishExp | NoexceptOp | NonrealRefExp |
-          AdaTaskRefExp       | FoldExpression | AwaitExpression | ChooseExpression | AdaAttributeExp |
+          AdaTaskRefExp       | AdaProtectedRefExp      | FoldExpression | AwaitExpression | ChooseExpression | AdaAttributeExp |
           JovialTablePresetExp| JovialPresetPositionExp | AdaOthersExp | AdaRenamingRefExp |
           AdaUnitRefExp, "Expression", "ExpressionTag", false);
 
@@ -644,6 +647,9 @@ Grammar::setUpExpressions ()
                                   "../Grammar/Expression.code" );
 
      AdaTaskRefExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
+                                  "../Grammar/Expression.code" );
+
+     AdaProtectedRefExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
                                   "../Grammar/Expression.code" );
 
      AdaRenamingRefExp.setFunctionSource ( "SOURCE_EMPTY_POST_CONSTRUCTION_INITIALIZATION",
@@ -1329,12 +1335,18 @@ Grammar::setUpExpressions ()
                                   NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AdaUnitRefExp.setFunctionPrototype ( "HEADER_ADA_UNIT_REF_EXPRESSION", "../Grammar/Expression.code" );
-     // PP (06/30/21): For now AdaUnitRefExp can refer to any declaration. Consider narrowing that to packages via SgAdaPackageSymbol/SgAdaPackageSpecDecl once we have generic packages.
+     // PP (06/30/21): For now AdaUnitRefExp can refer to any declaration.
+     //                Consider narrowing that to packages via SgAdaPackageSymbol/SgAdaPackageSpecDecl
+     //                once we have generic packages.
      AdaUnitRefExp.setDataPrototype ( "SgDeclarationStatement*", "decl", "= NULL",
                                       CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AdaTaskRefExp.setFunctionPrototype ( "HEADER_ADA_TASK_REF_EXPRESSION", "../Grammar/Expression.code" );
      AdaTaskRefExp.setDataPrototype ( "SgAdaTaskSpecDecl*", "decl", "= NULL",
+                                      CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+     AdaProtectedRefExp.setFunctionPrototype ( "HEADER_ADA_PROTECTED_REF_EXPRESSION", "../Grammar/Expression.code" );
+     AdaProtectedRefExp.setDataPrototype ( "SgAdaProtectedSpecDecl*", "decl", "= NULL",
                                       CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AdaRenamingRefExp.setFunctionPrototype ( "HEADER_ADA_RENAMING_REF_EXPRESSION", "../Grammar/Expression.code" );
@@ -1716,7 +1728,9 @@ Grammar::setUpExpressions ()
                                        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      EnumVal.setFunctionPrototype ( "HEADER_ENUM_VALUE_EXPRESSION", "../Grammar/Expression.code" );
-     EnumVal.setDataPrototype ( "int", "value", "= 0",
+
+     // PP (01/31/22) changed type from int to long long int to handle large enum values in Ada.
+     EnumVal.setDataPrototype ( "long long int", "value", "= 0",
                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      EnumVal.setDataPrototype ( "SgEnumDeclaration*", "declaration", "= NULL",
                                 CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -2659,12 +2673,18 @@ Grammar::setUpExpressions ()
   //        CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AssignInitializer.setDataPrototype     ( "SgType*"      , "expression_type", "= NULL",
             CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
 #if 0
   // DQ (5/20/2004): removed need_paren from this class and added it to the base class so that
   // all expression could allow it to be set (so that we can use the value as set in EDG)!
      AssignInitializer.setDataPrototype     ( "bool"    , "need_paren"     , "= true",
                                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
+
+     AdaAncestorInitializer.setFunctionPrototype ( "HEADER_ADA_ANCESTOR_INITIALIZER_EXPRESSION", "../Grammar/Expression.code" );
+
+     AdaAncestorInitializer.setDataPrototype ( "SgExpression*", "ancestor", "= nullptr",
+                                               CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
   // DQ (11/15/2016): Adding support for new SgBracedInitializer, required to template support (see Cxx11_tests/test2016_82.C).
      BracedInitializer.setFunctionPrototype ( "HEADER_BRACED_INITIALIZER_EXPRESSION", "../Grammar/Expression.code" );
@@ -3074,6 +3094,7 @@ Grammar::setUpExpressions ()
      JovialBitVal.setFunctionSource ( "SOURCE_JOVIAL_BIT_VALUE_EXPRESSION","../Grammar/Expression.code" );
      AdaUnitRefExp.setFunctionSource ( "SOURCE_ADA_UNIT_REF_EXPRESSION","../Grammar/Expression.code" );
      AdaTaskRefExp.setFunctionSource ( "SOURCE_ADA_TASK_REF_EXPRESSION","../Grammar/Expression.code" );
+     AdaProtectedRefExp.setFunctionSource ( "SOURCE_ADA_PROTECTED_REF_EXPRESSION","../Grammar/Expression.code" );
      AdaRenamingRefExp.setFunctionSource ( "SOURCE_ADA_RENAMING_REF_EXPRESSION","../Grammar/Expression.code" );
      AdaAttributeExp.setFunctionSource ( "SOURCE_ADA_ATTRIBUTE_EXPRESSION","../Grammar/Expression.code" );
 
@@ -3210,6 +3231,7 @@ Grammar::setUpExpressions ()
      CompoundInitializer.setFunctionSource ( "SOURCE_COMPOUND_INITIALIZER_EXPRESSION","../Grammar/Expression.code" );
      ConstructorInitializer.setFunctionSource ( "SOURCE_CONSTRUCTOR_INITIALIZER_EXPRESSION","../Grammar/Expression.code" );
      AssignInitializer.setFunctionSource ( "SOURCE_ASSIGNMENT_INITIALIZER_EXPRESSION","../Grammar/Expression.code" );
+     AdaAncestorInitializer.setFunctionSource ( "SOURCE_ADA_ANCESTOR_INITIALIZER_EXPRESSION","../Grammar/Expression.code" );
 
   // DQ (11/15/2016): Adding support for new SgBracedInitializer, required to template support (see Cxx11_tests/test2016_82.C).
      BracedInitializer.setFunctionSource ( "SOURCE_BRACED_INITIALIZER_EXPRESSION","../Grammar/Expression.code" );

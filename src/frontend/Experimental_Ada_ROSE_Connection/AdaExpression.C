@@ -446,7 +446,8 @@ namespace
       SgEnumType&        enumtype = SG_DEREF( isSgEnumType(enumitem->get_type()) );
       SgEnumDeclaration& enumdecl = SG_DEREF( isSgEnumDeclaration(enumtype.get_declaration()) );
 
-      res = sb::buildEnumVal_nfi(-1, &enumdecl, enumitem->get_name());
+      // res = sb::buildEnumVal_nfi(-1, &enumdecl, enumitem->get_name());
+      res = &ctx.enumBuilder()(enumdecl, *enumitem);
     }
     else
     {
@@ -478,6 +479,7 @@ namespace
 
     void handle(const SgDeclarationStatement&) { res = true; }
     void handle(const SgAdaTaskSpecDecl&)      { res = false; }
+    void handle(const SgAdaProtectedSpecDecl&) { res = false; }
     void handle(const SgAdaPackageSpecDecl&)   { res = false; }
     void handle(const SgImportStatement&)      { res = false; }
     //~ void handle(const SgFunctionDeclaration&)  { res = false; }
@@ -552,10 +554,12 @@ namespace
       void handle(SgFunctionDeclaration& n)    { res = sb::buildFunctionRefExp(&n); }
       void handle(SgAdaRenamingDecl& n)        { res = &mkAdaRenamingRefExp(n); }
       void handle(SgAdaTaskSpecDecl& n)        { res = &mkAdaTaskRefExp(n); }
+      void handle(SgAdaProtectedSpecDecl& n)   { res = &mkAdaProtectedRefExp(n); }
       void handle(SgAdaGenericDecl& n)         { res = &mkAdaUnitRefExp(n); }
       void handle(SgAdaGenericInstanceDecl& n) { res = &mkAdaUnitRefExp(n); }
       void handle(SgAdaPackageSpecDecl& n)     { res = &mkAdaUnitRefExp(n); }
-      void handle(SgAdaTaskTypeDecl& n)        { res = sb::buildTypeExpression(n.get_type()); }
+      void handle(SgAdaTaskTypeDecl& n)        { res = &mkTypeExpression(SG_DEREF(n.get_type())); }
+      void handle(SgAdaProtectedTypeDecl& n)   { res = &mkTypeExpression(SG_DEREF(n.get_type())); }
 
     private:
       AstContext ctx;
@@ -578,7 +582,7 @@ namespace
       {
         logError() << "TypeRefMaker: " << typeid(n).name() << std::endl;
 
-        set(sb::buildVoidType());
+        set(&mkTypeUnknown());
         ADA_ASSERT(!FAIL_ON_ERROR(ctx));
       }
 
@@ -595,18 +599,17 @@ namespace
 
   void TypeRefMaker::set(SgType* ty)
   {
-    ADA_ASSERT(ty);
-    res = sb::buildTypeExpression(ty);
-    ADA_ASSERT(res);
+    res = &mkTypeExpression(SG_DEREF(ty));
   }
 
 
   SgExprListExp&
   getRecordAggregate(Element_Struct& elem, Expression_Struct& expr, AstContext ctx)
   {
-    ADA_ASSERT(expr.Expression_Kind == A_Record_Aggregate);
+    ADA_ASSERT(  expr.Expression_Kind == A_Record_Aggregate
+              || expr.Expression_Kind == An_Extension_Aggregate
+              );
 
-    logKind("A_Record_Aggregate");
     ElemIdRange                range  = idRange(expr.Record_Component_Associations);
     std::vector<SgExpression*> components = traverseIDs(range, elemMap(), RecordAggregateCreator{ctx});
     SgExprListExp&             sgnode = mkExprListExp(components);
@@ -619,8 +622,8 @@ namespace
   getArrayAggregate(Element_Struct& elem, Expression_Struct& expr, AstContext ctx)
   {
     ADA_ASSERT(  expr.Expression_Kind == A_Named_Array_Aggregate
-               || expr.Expression_Kind == A_Positional_Array_Aggregate
-               );
+              || expr.Expression_Kind == A_Positional_Array_Aggregate
+              );
 
     const bool namedAggregate = expr.Expression_Kind == A_Named_Array_Aggregate;
 
@@ -634,17 +637,6 @@ namespace
     return sgnode;
   }
 
-/*
- * no longer used
-  SgExprListExp&
-  getAggregate(Element_Struct& elem, Expression_Struct& expr, AstContext ctx)
-  {
-    if (expr.Expression_Kind == A_Record_Aggregate)
-      return getRecordAggregate(elem, expr, ctx);
-
-    return getArrayAggregate(elem, expr, ctx);
-  }
-*/
 
 } // anonymous
 
@@ -821,6 +813,80 @@ getAttributeExprID(Element_ID el, AstContext ctx)
 
 namespace
 {
+  // \todo cmp. AdaStatement.C
+  struct IfExprCreator
+  {
+      IfExprCreator(SgConditionalExp& sgnode, AstContext astctx)
+      : ifExpr(&sgnode), ctx(astctx)
+      {}
+
+      void commonBranch(Path_Struct& path, void (SgConditionalExp::*branchSetter)(SgExpression*))
+      {
+        SgExpression& thenExpr = getExprID(path.Dependent_Expression, ctx);
+
+        sg::linkParentChild(SG_DEREF(ifExpr), thenExpr, branchSetter);
+      }
+
+      void conditionedBranch(Path_Struct& path)
+      {
+        SgExpression& condExpr = getExprID(path.Condition_Expression, ctx);
+
+        sg::linkParentChild(SG_DEREF(ifExpr), condExpr, &SgConditionalExp::set_conditional_exp);
+        commonBranch(path, &SgConditionalExp::set_true_exp);
+      }
+
+      void operator()(Element_Struct& elem)
+      {
+        Path_Struct& path = elem.The_Union.Path;
+
+        switch (path.Path_Kind)
+        {
+          case An_If_Expression_Path:
+            {
+              logKind("An_If_Expression_Path");
+              ADA_ASSERT(ifExpr);
+              conditionedBranch(path);
+              break;
+            }
+
+          case An_Elsif_Expression_Path:
+            {
+              logKind("An_Elsif_Expression_Path");
+              ADA_ASSERT(ifExpr);
+
+              SgConditionalExp& cascadingIf = mkIfExpr();
+
+              sg::linkParentChild( SG_DEREF(ifExpr),
+                                   static_cast<SgExpression&>(cascadingIf),
+                                   &SgConditionalExp::set_false_exp
+                                 );
+              ifExpr = &cascadingIf;
+              conditionedBranch(path);
+              break;
+            }
+
+          case An_Else_Expression_Path:
+            {
+              logKind("An_Else_Expression_Path");
+              ADA_ASSERT(ifExpr);
+              commonBranch(path, &SgConditionalExp::set_false_exp);
+              break;
+            }
+
+          default:
+            ROSE_ABORT();
+        }
+      }
+
+    private:
+      SgConditionalExp* ifExpr;
+      AstContext        ctx;
+
+      IfExprCreator() = delete;
+  };
+
+
+
   SgExprListExp& createExprListExpIfNeeded(SgExpression& exp)
   {
     SgExprListExp* res = isSgExprListExp(&exp);
@@ -865,9 +931,14 @@ namespace
           {
             res = sg::dispatch(TypeRefMaker{ctx}, tydcl);
           }
+          // after there was no matching declaration, try to look up declarations in the standard package by name
           else if (SgType* ty = findFirst(adaTypes(), AdaIdentifier{expr.Name_Image}))
           {
-            res = sb::buildTypeExpression(ty);
+            res = &mkTypeExpression(*ty);
+          }
+          else if (SgAdaPackageSpecDecl* pkg = findFirst(adaPkgs(), AdaIdentifier{expr.Name_Image}))
+          {
+            res = &mkAdaUnitRefExp(*pkg);
           }
           else
           {
@@ -912,9 +983,8 @@ namespace
         {
           logKind("An_Integer_Literal");
 
-          res = &mkValue<SgIntVal>(expr.Value_Image);
+          res = &mkAdaIntegerLiteral(expr.Value_Image);
 
-          //~ res = &mkValue<SgLongIntVal>(expr.Value_Image);
           /* unused fields: (Expression_Struct)
                enum Attribute_Kinds  Attribute_Kind
           */
@@ -1071,15 +1141,25 @@ namespace
 
       case A_Record_Aggregate:                        // 4.3
         {
-          res = &getRecordAggregate(elem, expr, ctx);
-          /*
-          SgExprListExp& explst = getRecordAggregate(elem, expr, ctx);
+          logKind("A_Record_Aggregate");
 
-          res = sb::buildAggregateInitializer(&explst);
-          ADA_ASSERT(explst.get_parent());
-          */
+          res = &getRecordAggregate(elem, expr, ctx);
           break;
         }
+
+      case An_Extension_Aggregate:                    // 4.3
+        {
+          logKind("An_Extension_Aggregate");
+
+          SgExprListExp& elemlst   = getRecordAggregate(elem, expr, ctx);
+          SgExpression&  parentexp = getExprID(expr.Extension_Aggregate_Expression, ctx);
+
+          elemlst.prepend_expression(&mkAdaAncestorInitializer(parentexp));
+
+          res = &elemlst;
+          break;
+        }
+
 
       case An_And_Then_Short_Circuit:                 // 4.4
         {
@@ -1209,16 +1289,31 @@ namespace
           break;
         }
 
-
       case A_Box_Expression:                          // Ada 2005 4.3.1(4): 4.3.3(3:6)
+        {
+          logKind("A_Box_Expression");
 
-      case An_Extension_Aggregate:                    // 4.3
+          res = &mkAdaBoxExp();
+          break;
+        }
+
+      case An_If_Expression:                          // Ada 2012
+        {
+          logKind("An_If_Expression");
+
+          SgConditionalExp& sgnode = mkIfExpr();
+          ElemIdRange       range  = idRange(expr.Expression_Paths);
+
+          traverseIDs(range, elemMap(), IfExprCreator{sgnode, ctx});
+          res = &sgnode;
+          /* unused fields:
+          */
+          break;
+
+        }
 
       case A_Raise_Expression:                        // 4.4 Ada 2012 (AI12-0022-1)
-
-
       case A_Case_Expression:                         // Ada 2012
-      case An_If_Expression:                          // Ada 2012
       case A_For_All_Quantified_Expression:           // Ada 2012
       case A_For_Some_Quantified_Expression:          // Ada 2012
       case Not_An_Expression: /* break; */            // An unexpected element
@@ -1250,6 +1345,7 @@ getExpr(Element_Struct& elem, AstContext ctx)
     case A_Positional_Array_Aggregate:              // 4.3
     case A_Named_Array_Aggregate:                   // 4.3
     case A_Record_Aggregate:                        // 4.3
+    case An_Extension_Aggregate:                    // 4.3
       {
         SgExprListExp* explst = isSgExprListExp(res);
         ADA_ASSERT(explst);
@@ -1257,6 +1353,7 @@ getExpr(Element_Struct& elem, AstContext ctx)
         res = sb::buildAggregateInitializer(explst);
         ADA_ASSERT(explst->get_parent());
         attachSourceLocation(SG_DEREF(res), elem, ctx);
+        break;
       }
 
     default:;
@@ -1290,7 +1387,7 @@ namespace
 {
   template <typename AsisDiscreteRangeStruct>
   SgExpression&
-  getDiscreteRangeGeneric(Element_Struct& el, Definition_Struct& def, AsisDiscreteRangeStruct& range, AstContext ctx)
+  getDiscreteRangeGeneric(Element_Struct& el, AsisDiscreteRangeStruct& range, AstContext ctx)
   {
     SgExpression* res = nullptr;
 
@@ -1299,19 +1396,10 @@ namespace
       case A_Discrete_Subtype_Indication:         // 3.6.1(6), 3.2.2
         {
           logKind("A_Discrete_Subtype_Indication");
-          SgType* ty = &getDeclTypeID(range.Subtype_Mark, ctx);
 
-          // \todo if there is no subtype constraint, shall we produce
-          //       a subtype w/ NoConstraint, or leave the original type?
-          if (range.Subtype_Constraint)
-          {
-            SgAdaTypeConstraint& constraint = getConstraintID(range.Subtype_Constraint, ctx);
+          SgType& ty = getDiscreteSubtypeID(range.Subtype_Mark, range.Subtype_Constraint, ctx);
 
-            ty = &mkAdaSubtype(SG_DEREF(ty), constraint);
-          }
-
-          ADA_ASSERT(ty);
-          res = sb::buildTypeExpression(ty);
+          res = &mkTypeExpression(ty);
           break;
         }
 
@@ -1352,7 +1440,7 @@ namespace
   {
     ADA_ASSERT(def.Definition_Kind == A_Discrete_Range);
 
-    return getDiscreteRangeGeneric(el, def, def.The_Union.The_Discrete_Range, ctx);
+    return getDiscreteRangeGeneric(el, def.The_Union.The_Discrete_Range, ctx);
   }
 
   SgExpression&
@@ -1361,14 +1449,6 @@ namespace
     ADA_ASSERT(el.Element_Kind == A_Definition);
 
     return getDiscreteRange(el, el.The_Union.Definition, ctx);
-  }
-
-  SgExpression&
-  getDiscreteSubtype(Element_Struct& el, Definition_Struct& def, AstContext ctx)
-  {
-    ADA_ASSERT(def.Definition_Kind == A_Discrete_Subtype_Definition);
-
-    return getDiscreteRangeGeneric(el, def, def.The_Union.The_Discrete_Subtype_Definition, ctx);
   }
 
   SgExpression&
@@ -1384,7 +1464,6 @@ namespace
 
       return getExprID(constraint.Range_Attribute, ctx);
     }
-
 
     ADA_ASSERT (constraint.Constraint_Kind == A_Simple_Expression_Range);
     logKind("A_Simple_Expression_Range");
@@ -1419,6 +1498,13 @@ void RangeListCreator::operator()(Element_Struct& elem)
   lst.push_back(&getDiscreteRange(elem, ctx));
 }
 
+SgExpression&
+getDiscreteSubtypeExpr(Element_Struct& el, Definition_Struct& def, AstContext ctx)
+{
+  ADA_ASSERT(def.Definition_Kind == A_Discrete_Subtype_Definition);
+
+  return getDiscreteRangeGeneric(el, def.The_Union.The_Discrete_Subtype_Definition, ctx);
+}
 
 /// returns an expression from the Asis definition \ref def
 SgExpression&
@@ -1438,7 +1524,7 @@ getDefinitionExpr(Element_Struct& el, AstContext ctx)
 
     case A_Discrete_Subtype_Definition:
       logKind("A_Discrete_Subtype_Definition");
-      res = &getDiscreteSubtype(el, def, ctx);
+      res = &getDiscreteSubtypeExpr(el, def, ctx);
       break;
 
     case An_Others_Choice:
@@ -1478,6 +1564,19 @@ SgExpression& createCall(SgExpression& target, ElemIdRange args, bool callSyntax
   SgExpression* res = sg::dispatch(AdaCallBuilder{args, callSyntax, ctx}, &target);
 
   return SG_DEREF(res);
+}
+
+SgExpression&
+getEnumRepresentationValue(Element_Struct& el, AstContext ctx)
+{
+  ADA_ASSERT(el.Element_Kind == A_Defining_Name);
+
+  Defining_Name_Struct& def = el.The_Union.Defining_Name;
+  ADA_ASSERT(  def.Defining_Name_Kind == A_Defining_Enumeration_Literal
+            || def.Defining_Name_Kind == A_Defining_Character_Literal
+            );
+
+  return mkAdaIntegerLiteral(def.Representation_Value_Image);
 }
 
 } // namespace Ada_ROSE_Translation

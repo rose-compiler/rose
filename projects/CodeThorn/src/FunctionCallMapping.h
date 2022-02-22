@@ -79,7 +79,7 @@ namespace CodeThorn {
     std::unordered_map<SgFunctionCallExp*,std::pair<FunctionCallInfo,FunctionCallTargetSet> > mapping;
     
   private:
-    unsigned int _matchMode=5;
+    unsigned int _matchMode; // init in constructor
     ClassHierarchyWrapper* classHierarchy=nullptr;
     bool _mappingValidFlag=false;
   };

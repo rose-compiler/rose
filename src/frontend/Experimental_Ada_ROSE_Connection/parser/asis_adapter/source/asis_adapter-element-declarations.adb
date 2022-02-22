@@ -280,7 +280,7 @@ package body Asis_Adapter.Element.Declarations is
            Get_Element_ID (Asis.Declarations.Entry_Barrier (Element));
       begin
          State.Add_To_Dot_Label_And_Edge ("Entry_Barrier", ID);
-         Result.Entry_Family_Definition := ID;
+         Result.Entry_Barrier := ID;
       end;
 
       procedure Add_Entry_Family_Definition is
