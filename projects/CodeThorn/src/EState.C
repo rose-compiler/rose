@@ -518,6 +518,14 @@ CallString EState::getCallString() const {
   return callString;
 }
 
+CallString* EState::getCallStringPtr() {
+  return &callString;
+}
+
+CallString& EState::getCallStringRef() {
+  return callString;
+}
+
 size_t EState::getCallStringLength() const {
   return callString.getLength();
 }

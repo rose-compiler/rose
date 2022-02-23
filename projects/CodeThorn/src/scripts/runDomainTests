@@ -21,6 +21,7 @@ KEEP_RESULTS="no"
 SHARED_PSTATES="no"
 COMBINE_SOLVER=18
 INTERPRETER_SOLVER=5
+NORMALIZE_LEVEL=1
 
 function printHeader {
     echo "------------------------------------------------"
@@ -52,11 +53,13 @@ function runDomainTestsLevel3 {
             extension="${benchmarkname##*.}"
             printf "Testing %-38s: " $benchmarkname
             CT_OUTPUT_FILE=$benchmarkname.imout
-            ./codethorn $benchmark $CT_MODE_OPTIONS --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR > /dev/null
+            COMMAND="./codethorn $benchmark $CT_MODE_OPTIONS --interpreter-mode-file=$CT_OUTPUT_FILE -I $TESTDIR"
+            eval $COMMAND > /dev/null
             if [ ! $? -eq 0 ]
             then
 	        echo $COLORED_FAIL
                 ((numFail++))
+                echo "REPRODUCE WITH: $COMMAND"
             else
                 echo -n "$COLORED_PASS "
                 EXEFILE=${benchmarkname}.exe
@@ -129,6 +132,8 @@ function runDomainTestsLevel2 {
     printStats
 }
 
+# 20,21,22,25,27,32,36,39 (8)
+# 20,21,22,25,--,32,36,39 (7)
 function level3Test {
     testNumbers=`echo {001..048}`
     testNumbers+=" 051 052"
@@ -137,29 +142,32 @@ function level3Test {
     numWarnExpected=7
     numFailExpected=0
     # solver 5 is required for level3
-    CT_MODE_OPTIONS="--context-sensitive=yes --normalize-level=2 --interpreter-mode=1 --in-state-string-literals --abstraction-mode=0 --exploration-mode=topologic-sort --shared-pstates=$SHARED_PSTATES --solver=5"
+    #testNumbers=027
+    CT_MODE_OPTIONS="--context-sensitive=yes --normalize-level=${NORMALIZE_LEVEL} --interpreter-mode=1 --in-state-string-literals --abstraction-mode=0 --exploration-mode=topologic-sort --shared-pstates=$SHARED_PSTATES --solver=5"
     echo -n "Level 3 (interpreter mode), solver $INTERPRETER_SOLVER: " 
     runDomainTestsLevel3
 }
 
 function level2BasicCombineTest {
     # 49,50 require abstraction mode
-    testNumbers=`echo {049..050}`
+    testNumbers=`echo {001..048}`
+    testNumbers+=" "
+    testNumbers+=`echo {049..050}`
     numWarnExpected=0
     numFailExpected=0
-    CT_MODE_OPTIONS="--context-sensitive=yes --normalize-level=2 --interpreter-mode=0 --in-state-string-literals --exploration-mode=topologic-sort --abstraction-mode=1 --array-abstraction-index=0 --pointer-sets=off --shared-pstates=$SHARED_PSTATES --solver=$COMBINE_SOLVER"
+    CT_MODE_OPTIONS="--context-sensitive=yes --normalize-level=${NORMALIZE_LEVEL} --interpreter-mode=0 --in-state-string-literals --exploration-mode=topologic-sort --abstraction-mode=1 --array-abstraction-index=0 --pointer-sets=off --shared-pstates=$SHARED_PSTATES --solver=$COMBINE_SOLVER"
     echo
     echo -n "Level 2 (abstraction mode, array abstraction index=0, solver $COMBINE_SOLVER): " 
     runDomainTestsLevel2
 
     # 49,50 require abstraction mode
-    testNumbers=`echo {049..050}`
-    numWarnExpected=0
-    numFailExpected=0
-    CT_MODE_OPTIONS="--context-sensitive=yes --normalize-level=2 --interpreter-mode=0 --in-state-string-literals --exploration-mode=topologic-sort --abstraction-mode=1 --array-abstraction-index=2 --pointer-sets=off --shared-pstates=$SHARED_PSTATES --solver=$COMBINE_SOLVER"
-    echo
-    echo -n "Level 2 (abstraction mode, array abstraction index=2, solver $COMBINE_SOLVER): " 
-    runDomainTestsLevel2
+    #testNumbers=`echo {049..050}`
+    #numWarnExpected=0
+    #numFailExpected=0
+    #CT_MODE_OPTIONS="--context-sensitive=yes --normalize-level=${NORMALIZE_LEVEL} --interpreter-mode=0 --in-state-string-literals --exploration-mode=topologic-sort --abstraction-mode=1 --array-abstraction-index=2 --pointer-sets=off --shared-pstates=$SHARED_PSTATES --solver=$COMBINE_SOLVER"
+    #echo
+    #echo -n "Level 2 (abstraction mode, array abstraction index=2, solver $COMBINE_SOLVER): " 
+    #runDomainTestsLevel2
 }
 
 function level2AvSetCombineTest {
@@ -168,7 +176,7 @@ function level2AvSetCombineTest {
     testNumbers="008"
     numWarnExpected=0
     numFailExpected=24
-    CT_MODE_OPTIONS="--context-sensitive=yes --normalize-level=2 --interpreter-mode=0 --in-state-string-literals=0 --exploration-mode=topologic-sort --abstraction-mode=1 --array-abstraction-index=0 --pointer-sets=on --vis --tg1-memory-subgraphs --shared-pstates=$SHARED_PSTATES --solver=$COMBINE_SOLVER"
+    CT_MODE_OPTIONS="--context-sensitive=yes --normalize-level=${NORMALIZE_LEVEL} --interpreter-mode=0 --in-state-string-literals=0 --exploration-mode=topologic-sort --abstraction-mode=1 --array-abstraction-index=0 --pointer-sets=on --vis --tg1-memory-subgraphs --shared-pstates=$SHARED_PSTATES --solver=$COMBINE_SOLVER"
     echo
     echo -n "Level 2 (abstraction mode, array abstraction index=0, av-sets, solver $COMBINE_SOLVER): " 
     runDomainTestsLevel2
@@ -182,7 +190,9 @@ function regressionTests {
     numPass=0
     numWarn=0
     numFail=0
-    local CT_MODE_OPTIONS="--context-sensitive=yes --normalize-level=2 --interpreter-mode=1 --in-state-string-literals=1 --exploration-mode=topologic-sort --abstraction-mode=0 --array-abstraction-index=-1 --pointer-sets=off --shared-pstates=$SHARED_PSTATES --solver=$INTERPRETER_SOLVER"
+    numWarnExpected=0
+    numFailExpected=0
+    local CT_MODE_OPTIONS="--context-sensitive=yes --normalize-level=${NORMALIZE_LEVEL} --interpreter-mode=1 --in-state-string-literals=1 --exploration-mode=topologic-sort --abstraction-mode=0 --array-abstraction-index=-1 --pointer-sets=off --shared-pstates=$SHARED_PSTATES --solver=$INTERPRETER_SOLVER"
     for testNumber in $testNumbers; do
         benchmarkprefix=$TESTDIR/DOM${testNumber};
         for benchmark in ${benchmarkprefix}*.[Cc]; do
@@ -247,6 +257,7 @@ while [[ $# -gt 0 ]]; do
 	;;
     --regression-tests)
         regressionTests
+        shift
         ;;
     --testdir)
 	TESTDIR=$2

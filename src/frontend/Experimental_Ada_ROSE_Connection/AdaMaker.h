@@ -133,17 +133,6 @@ namespace Ada_ROSE_Translation
   SgDeclType&
   mkExceptionType(SgExpression& n);
 
-  /// returns the void type
-  /// \details
-  ///   In the ROSE AST, void is used as return type for procedures and for
-  ///   unconstrained types.
-  SgTypeVoid&
-  mkTypeVoid();
-
-  /// returns an unknown type, indicating an incomplete AST implementation
-  SgTypeUnknown&
-  mkTypeUnknown();
-
   /// returns a type representing all discrete types in Ada
   SgAdaDiscreteType&
   mkAdaDiscreteType();
@@ -151,16 +140,28 @@ namespace Ada_ROSE_Translation
   /// returns the type produced by an attribute expression
   // \todo consider returning an SgTypeOfType instead of SgDeclType
   SgDeclType&
-  mkAttributeType(SgAdaAttributeExp& n);
+  mkExprAsType(SgExpression& n);
 
   /// returns a default type, used to represent an opaque declaration
   SgTypeDefault&
   mkOpaqueType();
 
+  /// returns the void type
+  /// \details
+  ///   In the ROSE AST, void is used as return type for procedures and to
+  ///   indicate unused types (e.g., an entry declaration without family type).
+  SgTypeVoid&
+  mkTypeVoid();
+
+  /// returns an unknown type, indicating an incomplete AST implementation
+  /// \todo should not be in the final AST implementation
+  SgTypeUnknown&
+  mkTypeUnknown();
+
   /// makes an unresolved type
   /// \todo should not be in the final version of the translator
-  SgDeclType&
-  mkUnresolvedType(const std::string& n, SgScopeStatement& scope);
+  SgTypeUnknown&
+  mkUnresolvedType(const std::string& n);
 
   /// creates a type union for a list of types
   /// \note
@@ -182,6 +183,17 @@ namespace Ada_ROSE_Translation
   //               ROSE type checker.
   SgAdaAccessType&
   mkAdaAccessType(SgType& base_type);
+
+  /// creates a new subroutine type with return type \ref retty
+  ///   and callback \ref complete, which fills in the argument names.
+  // \todo not sure if this is the proper way for specifying subroutine types,
+  //       because often ROSE types are shared across scopes, and this type cannot be...
+  SgAdaSubroutineType&
+  mkAdaSubroutineType( SgType& retty,
+                       std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete,
+                       bool isProtected = false
+                     );
+
 
   /// creates an entry type from a function parameter list
   // \todo the representation is incomplete and should be replaced

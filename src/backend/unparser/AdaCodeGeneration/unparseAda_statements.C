@@ -1665,7 +1665,7 @@ namespace
         // unparse as normal enum
         prn(" is");
         prn(" (");
-        std::for_each(lst.begin(), lst.end(), AdaEnumeratorUnparser(unparser, info, os));
+        std::for_each(lst.begin(), lst.end(), AdaEnumeratorUnparser{unparser, info, os});
         prn(")");
       }
 
@@ -1950,7 +1950,7 @@ namespace
   void
   AdaStatementUnparser::handleParameterList(const SgInitializedNamePtrList& params)
   {
-    typedef std::vector<SgVariableDeclaration*> parameter_decl_t;
+    using parameter_decl_t = std::vector<SgVariableDeclaration*>;
 
     parameter_decl_t           paramdecls;
 
@@ -2535,6 +2535,14 @@ Unparse_Ada::unparseStatement(SgStatement* stmt, SgUnparse_Info& info)
 
   // restore reference node
   info.set_reference_node_for_qualification(currentReferenceNode);
+}
+
+void
+Unparse_Ada::unparseParameterList(const SgInitializedNamePtrList& params, SgUnparse_Info& info)
+{
+  AdaStatementUnparser adaUnparser{*this, info, std::cerr};
+
+  adaUnparser.handleParameterList(params);
 }
 
 const Unparse_Ada::NameQualMap&

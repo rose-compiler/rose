@@ -18,7 +18,7 @@ namespace CodeThorn {
     
     static void initDiagnostics();
   private:
-    void initializeSummaryStatesFromWorkList();
+    void initializeAbstractStatesFromWorkList();
     // add Edge {(currentEStatePtr,e,NewEStatePtr)} to STS
     // if currentEStatePtr!=currentEStatePtr) then also add 
     //     (currentEStatePtr,e,NewEStatePtr)} where e'=(currentEStatePtr0,annot(e),NewStatePtr);

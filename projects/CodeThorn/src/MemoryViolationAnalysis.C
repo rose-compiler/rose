@@ -26,7 +26,7 @@ namespace CodeThorn {
     if(pstate->memLocExists(memLoc)) {
       auto val=pstate->readFromMemoryLocation(memLoc);
       if(val.isUndefined()) {
-        if(val.isSummary()) {
+        if(val.isAbstract()) {
           violation.insert(ACCESS_POTENTIALLY_UNINIT);
         } else {
           violation.insert(ACCESS_DEFINITELY_UNINIT);

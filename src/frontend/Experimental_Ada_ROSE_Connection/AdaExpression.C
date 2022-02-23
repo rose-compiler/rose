@@ -1387,7 +1387,7 @@ namespace
 {
   template <typename AsisDiscreteRangeStruct>
   SgExpression&
-  getDiscreteRangeGeneric(Element_Struct& el, Definition_Struct& def, AsisDiscreteRangeStruct& range, AstContext ctx)
+  getDiscreteRangeGeneric(Element_Struct& el, AsisDiscreteRangeStruct& range, AstContext ctx)
   {
     SgExpression* res = nullptr;
 
@@ -1396,18 +1396,10 @@ namespace
       case A_Discrete_Subtype_Indication:         // 3.6.1(6), 3.2.2
         {
           logKind("A_Discrete_Subtype_Indication");
-          SgType* ty = &getDeclTypeID(range.Subtype_Mark, ctx);
 
-          // \todo if there is no subtype constraint, shall we produce
-          //       a subtype w/ NoConstraint, or leave the original type?
-          if (range.Subtype_Constraint)
-          {
-            SgAdaTypeConstraint& constraint = getConstraintID(range.Subtype_Constraint, ctx);
+          SgType& ty = getDiscreteSubtypeID(range.Subtype_Mark, range.Subtype_Constraint, ctx);
 
-            ty = &mkAdaSubtype(SG_DEREF(ty), constraint);
-          }
-
-          res = &mkTypeExpression(SG_DEREF(ty));
+          res = &mkTypeExpression(ty);
           break;
         }
 
@@ -1448,7 +1440,7 @@ namespace
   {
     ADA_ASSERT(def.Definition_Kind == A_Discrete_Range);
 
-    return getDiscreteRangeGeneric(el, def, def.The_Union.The_Discrete_Range, ctx);
+    return getDiscreteRangeGeneric(el, def.The_Union.The_Discrete_Range, ctx);
   }
 
   SgExpression&
@@ -1457,14 +1449,6 @@ namespace
     ADA_ASSERT(el.Element_Kind == A_Definition);
 
     return getDiscreteRange(el, el.The_Union.Definition, ctx);
-  }
-
-  SgExpression&
-  getDiscreteSubtype(Element_Struct& el, Definition_Struct& def, AstContext ctx)
-  {
-    ADA_ASSERT(def.Definition_Kind == A_Discrete_Subtype_Definition);
-
-    return getDiscreteRangeGeneric(el, def, def.The_Union.The_Discrete_Subtype_Definition, ctx);
   }
 
   SgExpression&
@@ -1480,7 +1464,6 @@ namespace
 
       return getExprID(constraint.Range_Attribute, ctx);
     }
-
 
     ADA_ASSERT (constraint.Constraint_Kind == A_Simple_Expression_Range);
     logKind("A_Simple_Expression_Range");
@@ -1515,6 +1498,13 @@ void RangeListCreator::operator()(Element_Struct& elem)
   lst.push_back(&getDiscreteRange(elem, ctx));
 }
 
+SgExpression&
+getDiscreteSubtypeExpr(Element_Struct& el, Definition_Struct& def, AstContext ctx)
+{
+  ADA_ASSERT(def.Definition_Kind == A_Discrete_Subtype_Definition);
+
+  return getDiscreteRangeGeneric(el, def.The_Union.The_Discrete_Subtype_Definition, ctx);
+}
 
 /// returns an expression from the Asis definition \ref def
 SgExpression&
@@ -1534,7 +1524,7 @@ getDefinitionExpr(Element_Struct& el, AstContext ctx)
 
     case A_Discrete_Subtype_Definition:
       logKind("A_Discrete_Subtype_Definition");
-      res = &getDiscreteSubtype(el, def, ctx);
+      res = &getDiscreteSubtypeExpr(el, def, ctx);
       break;
 
     case An_Others_Choice:

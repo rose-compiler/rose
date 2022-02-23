@@ -37,8 +37,8 @@ namespace CodeThorn {
       // allows to turn off all normalizations (at once)
       bool normalization=true;
 
-      // only normalize expressions with function calls
-      bool restrictToFunCallExpressions=true;
+      // only normalize expressions that are required for the analysis to operate correctly
+      bool minimalNormalization=false;
 
       // print normalization progression info on stdout
       bool printPhaseInfo=false;
@@ -147,7 +147,7 @@ namespace CodeThorn {
     static void setTmpVarPrefix(std::string);
     static std::string newTmpVarName();
 
-    static bool hasFunctionCall(SgExpression* expr);
+    static bool isMinimalNormalizedExpression(SgExpression* expr);
     static bool isWithinBlockStmt(SgExpression* exp);
 
     // enable/disable inling. By default off.
@@ -200,7 +200,7 @@ namespace CodeThorn {
     /* normalize all Expressions in AST. The original variables remain
      * in the program and are assign the last value of the sequence of
      * operations of an expression. */
-    void normalizeExpressionsInAst(SgNode* node, bool onlyNormalizeFunctionCallExpressions=false);
+    void normalizeExpressionsInAst(SgNode* node);
 
 
     // moves variable declarations (TODO: and C++17 InitStatements) out of
@@ -208,7 +208,7 @@ namespace CodeThorn {
     void hoistBranchInitStatementsInAst(SgNode* node);
     
     // moves conditions out of if and switch constructs
-    void hoistConditionsInAst(SgNode* node, bool onlyNormalizeFunctionCallExpressions=false);
+    void hoistConditionsInAst(SgNode* node);
     // moves conditions out of if and switch constructs. Declares new
     // variable for intermediate result
     void hoistCondition(SgStatement* node);

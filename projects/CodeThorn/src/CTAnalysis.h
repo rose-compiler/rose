@@ -257,13 +257,14 @@ namespace CodeThorn {
     void setCommandLineOptions(vector<string> clOptions);
     vector<string> getCommandLineOptions();
     SgNode* getStartFunRoot();
+    // exists with error message if any violation is detected
+    void ensureToplogicSortFlowConsistency();
   protected:
     void setFunctionResolutionModeInCFAnalysis(CodeThornOptions& ctOpt);
     void deleteWorkLists();
 
     // creates topologically order list and initializes work lists
     void setWorkLists(ExplorationMode explorationMode);
-
     SgNode* _startFunRoot;
   public:
     // TODO: move to flow analyzer (reports label,init,final sets)
@@ -285,9 +286,9 @@ namespace CodeThorn {
 
     void reduceStg(function<bool(EStatePtr)> predicate);
 
-    void initializeSummaryStates(PStatePtr initialPStateStored);
-    EStatePtr getSummaryState(CodeThorn::Label lab, CallString cs);
-    void setSummaryState(CodeThorn::Label lab, CallString cs, EStatePtr estate);
+    void initializeAbstractStates(PStatePtr initialPStateStored);
+    EStatePtr getAbstractState(CodeThorn::Label lab, CallString cs);
+    void setAbstractState(CodeThorn::Label lab, CallString cs, EStatePtr estate);
 
     std::string programPositionInfo(CodeThorn::Label);
 
@@ -473,7 +474,7 @@ namespace CodeThorn {
     // *current* summary state (more than one may be created to allow
     // to represent multiple summary states in the transition system)
     //size_t getSummaryStateMapSize();
-    EStatePtr getBottomSummaryState(Label lab, CallString cs);
+    EStatePtr getBottomAbstractState(Label lab, CallString cs);
     bool isLTLRelevantEState(EStatePtr estate);
 
     size_t _prevStateSetSizeDisplay = 0;
@@ -491,8 +492,8 @@ namespace CodeThorn {
 
   private:
 
-    typedef std::unordered_map <CallString ,EStatePtr> SummaryCSStateMap;
-    std::unordered_map< int, SummaryCSStateMap > _summaryCSStateMapMap;
+    typedef std::unordered_map <CallString ,EStatePtr> AbstractCSStateMap;
+    std::unordered_map< int, AbstractCSStateMap > _abstractCSStateMapMap;
 
     Labeler* _labeler=nullptr;
     VariableIdMappingExtended* _variableIdMapping=nullptr;

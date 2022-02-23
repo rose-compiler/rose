@@ -261,7 +261,7 @@ mkExceptionType(SgExpression& n)
 }
 
 SgDeclType&
-mkAttributeType(SgAdaAttributeExp& n)
+mkExprAsType(SgExpression& n)
 {
   return mkNonSharedTypeNode<SgDeclType>(&n);
 }
@@ -278,13 +278,6 @@ SgAdaDiscreteType&
 mkAdaDiscreteType()
 {
   return mkTypeNode<SgAdaDiscreteType>();
-}
-
-
-SgDeclType&
-mkUnresolvedType(const std::string& n, SgScopeStatement& scope)
-{
-  return mkNonSharedTypeNode<SgDeclType>(&mkUnresolvedName(n, scope));
 }
 
 SgType& mkQualifiedType(SgExpression& qual, SgType& base)
@@ -309,6 +302,18 @@ mkTypeUnknown()
 {
   return mkTypeNode<SgTypeUnknown>();
 }
+
+SgTypeUnknown&
+mkUnresolvedType(const std::string& n)
+{
+  SgTypeUnknown& sgnode = mkNonSharedTypeNode<SgTypeUnknown>();
+
+  sgnode.set_has_type_name(true);
+  sgnode.set_type_name(n);
+
+  return sgnode;
+}
+
 
 
 SgTypeTuple&
@@ -983,12 +988,17 @@ mkFunctionParameterList()
 
 namespace
 {
-  void linkParameterScope(SgFunctionDeclaration& decl, SgFunctionParameterList& lst, SgScopeStatement& parmScope)
+  void linkParametersToScope(SgFunctionParameterList& lst, SgScopeStatement& parmScope)
   {
     // the sage builder overrides this information, so we reset it
     // \todo needs to be fixed in the sage builder
     for (SgInitializedName* n : lst.get_args())
       SG_DEREF(n).set_scope(&parmScope);
+  }
+
+  void linkParameterScope(SgFunctionDeclaration& decl, SgFunctionParameterList& lst, SgScopeStatement& parmScope)
+  {
+    linkParametersToScope(lst, parmScope);
 
     if (SgFunctionParameterScope* fps = isSgFunctionParameterScope(&parmScope))
     {
@@ -1020,13 +1030,10 @@ namespace
 
   /// \private
   /// helps to create a procedure definition as declaration
-  SgScopeStatement&
+  SgFunctionParameterScope&
   mkProcDecl()
   {
-    SgFunctionParameterScope& sgnode = mkScopeStmt<SgFunctionParameterScope>(&mkFileInfo());
-
-    //~ sg::linkParentChild(dcl, sgnode, &SgFunctionDeclaration::set_functionParameterScope);
-    return sgnode;
+    return mkScopeStmt<SgFunctionParameterScope>(&mkFileInfo());
   }
 
   SgFunctionDeclaration&
@@ -1054,6 +1061,28 @@ namespace
     return sgnode;
   }
 }
+
+SgAdaSubroutineType&
+mkAdaSubroutineType( SgType& retty,
+                     std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete,
+                     bool isProtected
+                   )
+{
+  SgFunctionParameterList&  lst       = mkFunctionParameterList();
+  SgFunctionParameterScope& parmScope = mkProcDecl();
+
+  complete(lst, parmScope);
+
+  // \todo can we make this a shared type?
+  SgAdaSubroutineType&      sgnode = mkNonSharedTypeNode<SgAdaSubroutineType>(&lst, &parmScope, &retty, isProtected);
+
+  lst.set_parent(&sgnode);
+  // correct? or shall we link to surrounding scope?
+  parmScope.set_parent(&sgnode);
+
+  return sgnode;
+}
+
 
 SgFunctionDeclaration&
 mkProcedureDecl( const std::string& nm,

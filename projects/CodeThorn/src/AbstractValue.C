@@ -80,7 +80,7 @@ void AbstractValue::copy(const AbstractValue& other) {
   valueType = other.valueType;
   variableId = other.variableId;
   label= other.label;
-  _summaryFlag=other._summaryFlag;
+  _abstractionFlag=other._abstractionFlag;
   switch(other.valueType) {
   case AV_BOT:
   case AV_TOP:
@@ -291,7 +291,7 @@ AbstractValue AbstractValue::conditionallyApplyArrayAbstraction(AbstractValue va
           if(remappingEntry.getIndexRemappingType()==VariableIdMappingExtended::IndexRemappingEnum::IDX_REMAPPED) {
             SAWYER_MESG(logger[TRACE])<<"remapping index "<<offset<<" -> "<<remappingEntry.getRemappedOffset()<<endl;
             val.setValue(remappingEntry.getRemappedOffset());
-            val.setSummaryFlag(true);
+            val.setAbstractFlag(true);
           }
         }
       }
@@ -333,10 +333,10 @@ bool AbstractValue::isPtrSet() const {return (isAVSet());}
 bool AbstractValue::isAVSet() const {return (valueType==AbstractValue::AV_SET);}
 bool AbstractValue::isFunctionPtr() const {return (valueType==AbstractValue::AV_FUN_PTR);}
 bool AbstractValue::isRef() const {return (valueType==AbstractValue::AV_REF);}
-bool AbstractValue::isNullPtr() const {return (valueType==AbstractValue::AV_INTEGER && intValue==0 && !isSummary());}
+bool AbstractValue::isNullPtr() const {return (valueType==AbstractValue::AV_INTEGER && intValue==0 && !isAbstract());}
 
-bool AbstractValue::isSummary() const {
-  if(isTop()||_summaryFlag)
+bool AbstractValue::isAbstract() const {
+  if(isTop()||_abstractionFlag)
      return true;
   if(isAVSet()) {
     if(getAVSetSize() > 1) {
@@ -346,15 +346,15 @@ bool AbstractValue::isSummary() const {
       // special case of one AV element only, can be both abstract or concrete
       AbstractValueSet* avSet=getAbstractValueSet();
       AbstractValue av=*avSet->begin();
-      return av.isSummary();
+      return av.isAbstract();
     }
     // an empty AV set is not a summary
   }
   return false;
 }
 
-void AbstractValue::setSummaryFlag(bool flag) {
-  _summaryFlag=flag;
+void AbstractValue::setAbstractFlag(bool flag) {
+  _abstractionFlag=flag;
 }
 
 size_t AbstractValue::hash() const {
@@ -581,8 +581,8 @@ bool CodeThorn::strictWeakOrderingIsSmaller(const AbstractValue& c1, const Abstr
         }
         return true;
       }
-    } else if(c1.isSummary()!=c2.isSummary()) {
-      return c1.isSummary()==false && c2.isSummary()==true;
+    } else if(c1.isAbstract()!=c2.isAbstract()) {
+      return c1.isAbstract()==false && c2.isAbstract()==true;
     } else if (c1.isBot()==c2.isBot()) {
       return false;
     } else if (c1.isTop()==c2.isTop()) {
@@ -607,7 +607,7 @@ bool CodeThorn::strictWeakOrderingIsEqual(const AbstractValue& c1, const Abstrac
       return c1.getLabel()==c2.getLabel();
     } else if(c1.isPtrSet() && c2.isPtrSet()) {
       return c1.getAbstractValueSet()->isEqual(*c2.getAbstractValueSet());
-    } else if(c1.isSummary()!=c2.isSummary()) {
+    } else if(c1.isAbstract()!=c2.isAbstract()) {
       return false;
     } else {
       ROSE_ASSERT((c1.isTop()&&c2.isTop()) || (c1.isBot()&&c2.isBot()));
@@ -897,7 +897,7 @@ string AbstractValue::toString(CodeThorn::VariableIdMapping* vim) const {
         //<<","
         //<<getElementTypeSize()
         <<")"
-        <<(isSummary()?"*":"")
+        <<(isAbstract()?"*":"")
         ;
       return ss.str();
       //    } else {
@@ -947,7 +947,7 @@ string AbstractValue::toString() const {
   }
   case AV_PTR: {
     stringstream ss;
-    ss<<"("<<variableId.toString()<<","<<getIntValue()<<","<<isSummary()<<")";
+    ss<<"("<<variableId.toString()<<","<<getIntValue()<<","<<isAbstract()<<")";
     return ss.str();
   }
   case AV_FUN_PTR: {

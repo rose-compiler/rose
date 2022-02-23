@@ -36,6 +36,8 @@ namespace CodeThorn {
         If call string is of length 0 no operation is performed.
     */
     void removeLastLabel();
+    // creates a copy without last label
+    CallString withoutLastLabel();
 
 
     /** returns the length of the call string.
@@ -51,6 +53,9 @@ namespace CodeThorn {
         Example: [2,1,5]
     */
     std::string toString() const;
+
+    // same as toString() but also prints the function names
+    std::string toString(Labeler* labeler) const;
 
     /** Establish an ordering of call strings as required for ordered STL containers.
         Compares this string with 'other'.

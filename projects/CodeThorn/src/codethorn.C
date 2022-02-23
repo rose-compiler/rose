@@ -171,8 +171,8 @@ int main( int argc, char * argv[] ) {
                       {CodeThorn::ANALYSIS_NULL_POINTER,"null-pointer"},
                       {CodeThorn::ANALYSIS_OUT_OF_BOUNDS,"out-of-bounds"},
                       {CodeThorn::ANALYSIS_UNINITIALIZED,"uninitialized"},
+                      {CodeThorn::ANALYSIS_OPAQUE_PREDICATE,"opaque-predicate"},
                       //{CodeThorn::ANALYSIS_DEAD_CODE,"dead-code"},
-                      //{CodeThorn::ANALYSIS_OPAQUE_PREDICATE,"opaque-predicate"}
       };
       ctOpt.setAnalysisList(analysisList);
       if(ctOpt.status) cout<<"STATUS: codethorn: Number of activated analyses: "<<ctOpt.analysisList().size()<<endl;

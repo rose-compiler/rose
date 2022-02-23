@@ -38,15 +38,15 @@ void Solver16::recordTransition(EStatePtr currentEStatePtr0,EStatePtr currentESt
   }
 }
 
-void Solver16::initializeSummaryStatesFromWorkList() {
+void Solver16::initializeAbstractStatesFromWorkList() {
   // pop all states from worklist (can contain more than one state)
   list<EStatePtr> tmpWL;
   while(!_analyzer->isEmptyWorkList()) {
     tmpWL.push_back(_analyzer->popWorkList());
   }
   for(auto s : tmpWL) {
-    // initialize summarystate and push back to work list
-    _analyzer->setSummaryState(s->label(),s->callString,s);
+    // initialize abstractstate and push back to work list
+    _analyzer->setAbstractState(s->label(),s->callString,s);
     _analyzer->addToWorkList(s);
   }
 }
@@ -68,7 +68,7 @@ void Solver16::run() {
     exit(1);
   }
 
-  initializeSummaryStatesFromWorkList();
+  initializeAbstractStatesFromWorkList();
 
   if(_analyzer->svCompFunctionSemantics()) {
     _analyzer->reachabilityResults.init(1); // in case of svcomp mode set single program property to unknown
@@ -137,7 +137,7 @@ void Solver16::run() {
       }
       // currentEStatePtr0 is not merged, because it must already be present in a summary state. Here only the (label,callstring) is used to obtain the summary state.
       // the worklist could be reduced to (label,callstring) pairs, but since it's also used for explicit model checking, it uses pointers to estates, which include some more info.
-      // note: initial summary states are set in initializeSummaryStatesFromWorkList()
+      // note: initial summary states are set in initializeAbstractStatesFromWorkList()
       EStatePtr currentEStatePtr0=_analyzer->popWorkList();
       // terminate early, ensure to stop all threads and empty the worklist (e.g. verification error found).
       if(terminateEarly)
@@ -147,7 +147,7 @@ void Solver16::run() {
         ROSE_ASSERT(threadNum>=0 && threadNum<=_analyzer->getOptionsRef().threads);
       } else {
         ROSE_ASSERT(currentEStatePtr0);
-        EStatePtr currentEStatePtr=_analyzer->getSummaryState(currentEStatePtr0->label(),currentEStatePtr0->callString);
+        EStatePtr currentEStatePtr=_analyzer->getAbstractState(currentEStatePtr0->label(),currentEStatePtr0->callString);
         ROSE_ASSERT(currentEStatePtr);
         Flow edgeSet=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
         //cout << "DEBUG: out-edgeSet size:"<<edgeSet.size()<<endl;
@@ -192,15 +192,15 @@ void Solver16::run() {
                   // performing merge
 #pragma omp critical(SUMMARY_STATES_MAP)
                   {
-                    EStatePtr summaryEState=_analyzer->getSummaryState(newEStatePtr->label(),newEStatePtr->callString);
-                    if(_analyzer->getEStateTransferFunctions()->isApproximatedBy(newEStatePtr,summaryEState)) {
+                    EStatePtr abstractEState=_analyzer->getAbstractState(newEStatePtr->label(),newEStatePtr->callString);
+                    if(_analyzer->getEStateTransferFunctions()->isApproximatedBy(newEStatePtr,abstractEState)) {
                       // this is not a memory leak. newEStatePtr is
                       // stored in EStateSet and will be collected
                       // later. It may be already used in the state
                       // graph as an existing estate.
-                      newEStatePtr=summaryEState; 
+                      newEStatePtr=abstractEState; 
                     } else {
-                      EState newEState2=_analyzer->getEStateTransferFunctions()->combine(summaryEState,const_cast<EState*>(newEStatePtr));
+                      EState newEState2=_analyzer->getEStateTransferFunctions()->combine(abstractEState,const_cast<EState*>(newEStatePtr));
                       HSetMaintainer<EState,EStateHashFun,EStateEqualToPred>::ProcessingResult pres=_analyzer->process(newEState2);
                       EStatePtr newEStatePtr2=const_cast<EStatePtr>(pres.second);
 
@@ -210,7 +210,7 @@ void Solver16::run() {
                         // nothing to do, EState already exists
                       }
                       ROSE_ASSERT(newEStatePtr);
-                      _analyzer->setSummaryState(newEStatePtr->label(),newEStatePtr->callString,newEStatePtr);
+                      _analyzer->setAbstractState(newEStatePtr->label(),newEStatePtr->callString,newEStatePtr);
                     }
                   }
                   _analyzer->addToWorkList(newEStatePtr);  
