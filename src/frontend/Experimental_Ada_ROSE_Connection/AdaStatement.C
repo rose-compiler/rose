@@ -909,8 +909,11 @@ namespace
   }
 
   std::pair<SgAdaTaskSpec*, DeferredBodyCompletion>
-  getTaskSpecID(Element_ID id, AstContext ctx)
+  getTaskSpecID_opt(Element_ID id, AstContext ctx)
   {
+    if (id == 0)
+      return std::make_pair(&mkAdaTaskSpec(), []()->void {}); // nothing to complete
+
     return getTaskSpec(retrieveAs(elemMap(), id), ctx);
   }
 
@@ -919,10 +922,7 @@ namespace
   {
     ADA_ASSERT (decl.Declaration_Kind == A_Task_Type_Declaration);
 
-    if (decl.Type_Declaration_View == 0)
-      return std::make_pair(&mkAdaTaskSpec(), []()->void {}); // nothing to complete
-
-    return getTaskSpecID(decl.Type_Declaration_View, ctx);
+    return getTaskSpecID_opt(decl.Type_Declaration_View, ctx);
   }
 
   std::pair<SgAdaTaskSpec*, DeferredBodyCompletion>
@@ -930,7 +930,7 @@ namespace
   {
     ADA_ASSERT (decl.Declaration_Kind == A_Single_Task_Declaration);
 
-    return getTaskSpecID(decl.Object_Declaration_View, ctx);
+    return getTaskSpecID_opt(decl.Object_Declaration_View, ctx);
   }
 
   //
@@ -1992,14 +1992,25 @@ namespace
           logKind("A_Terminate_Alternative_Statement");
 
           completeStmt(mkTerminateStmt(), elem, ctx);
+          /* unused fields:
+          */
           break;
         }
+
+      case A_Code_Statement:                    // 13.8 assembly
+        {
+          logKind("A_Code_Statement");
+
+
+
+          break;
+        }
+
 
       case Not_A_Statement: /* break; */        // An unexpected element
       //|A2005 start
       case An_Extended_Return_Statement:        // 6.5
       //|A2005 end
-      case A_Code_Statement:                    // 13.8 assembly
       default:
         logWarn() << "Unhandled statement " << stmt.Statement_Kind << std::endl;
         ADA_ASSERT (!FAIL_ON_ERROR(ctx));

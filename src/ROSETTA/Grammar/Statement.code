@@ -4739,10 +4739,6 @@ SgStatement::get_scope(void) const
                    break;
                }
 
-               if (SgAdaAcceptStmt* adaAccept = isSgAdaAcceptStmt(stmt->get_parent()))
-               {
-                 return adaAccept->get_parameterScope();
-               }
 
                SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(stmt->get_parent());
                if (functionDeclaration != NULL)
@@ -4751,7 +4747,15 @@ SgStatement::get_scope(void) const
                  // instead of a definition that depends on if it is a defining or non-defining declaration.
                     returnScope = functionDeclaration->get_scope();
                   }
-                 else
+               else if (SgAdaAcceptStmt* adaAccept = isSgAdaAcceptStmt(stmt->get_parent()))
+                  {
+                    returnScope = adaAccept->get_parameterScope();
+                  }
+               else if (SgAdaSubroutineType* adaSubroutine = isSgAdaSubroutineType(stmt->get_parent()))
+                  {
+                    returnScope = adaSubroutine->get_functionParameterScope();
+                  }
+               else
                   {
                  // DQ (11/25/2011): Added support for SgTemplateFunctionDeclaration (and SgTemplateMemberFunctionDeclaration)
                  // which uses a SgFunctionParameterList internally.

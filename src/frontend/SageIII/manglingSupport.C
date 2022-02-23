@@ -1593,6 +1593,13 @@ mangleExpression (const SgExpression* expr)
           mangled_name << "_badaUnitRefExp_" << std::hex << e << "_eadaUnitRefExp_";
           break;
         }
+        case V_SgRangeExp: {
+          const SgRangeExp* e = isSgRangeExp(expr);
+          mangled_name << "_bRangeExp_" << mangleExpression(e->get_start())
+                       << ".." << mangleExpression(e->get_end())
+                       << "_eRangeExp_";
+          break;
+        }
         // PP 2/13/22 added to support stop gap implementation for type from ada instantiations
         case V_SgTypeExpression: {
           const SgTypeExpression* e = isSgTypeExpression(expr);

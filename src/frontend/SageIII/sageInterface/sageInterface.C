@@ -25190,7 +25190,7 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   if (SgEnumVal* f = isSgEnumVal(node) )
     out<<" value="<< f->get_value() <<" declaration="<<f->get_declaration() << " name="<< f->get_name().getString();
   // optionally  qualified name
- 
+
   if (SgFunctionDeclaration* f = isSgFunctionDeclaration(node) )
     out<<" "<< f->get_qualified_name();
 
@@ -25210,10 +25210,17 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   {
     // out<<" "<< v->get_qualified_name();
     //out<<" "<< v->get_name();
-    out<<" is_object_type"<< v->get_is_object_type();
+    // PP (2/18/22) updated to reflect properties in AdaAccessType
+    //~ out<<" is_object_type"<< v->get_is_object_type();
     out<<" is_general_access"<< v->get_is_general_access();
-    out<<" is_constant:"<< v->get_is_constant();
-    out<<" is_protected:"<< v->get_is_protected ();
+    //~ out<<" is_constant:"<< v->get_is_constant();
+    //~ out<<" is_protected:"<< v->get_is_protected ();
+    out<<" is_anonymous:"<< v->get_is_anonymous ();
+  }
+
+  if (SgAdaSubroutineType* v = isSgAdaSubroutineType(node) )
+  {
+    out<<" is_protected"<< v->get_is_protected();
   }
 
   if (SgInitializedName * v = isSgInitializedName(node) )
@@ -25265,6 +25272,9 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
   }
 
   if (SgArrayType* v= isSgArrayType(node))
+    out<<" base_type@"<< v->get_base_type();
+
+  if (SgAdaAccessType* v= isSgAdaAccessType(node))
     out<<" base_type@"<< v->get_base_type();
 
   if (SgTypeExpression* v= isSgTypeExpression(node))

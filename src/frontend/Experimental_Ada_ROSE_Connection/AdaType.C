@@ -68,7 +68,7 @@ namespace
       void handle(SgAdaAttributeExp& n)
       {
         attachSourceLocation(n, el, ctx); // \todo why is this not set where the node is made?
-        set(&mkAttributeType(n));
+        set(&mkExprAsType(n));
       }
 
     private:
@@ -88,7 +88,7 @@ namespace
                  << std::endl;
 
       ADA_ASSERT(!FAIL_ON_ERROR(ctx));
-      return &mkUnresolvedType(typeEx.Name_Image, ctx.scope());
+      return &mkUnresolvedType(typeEx.Name_Image);
     }
 
     // stop gap function
@@ -203,17 +203,16 @@ namespace
   }
 
 
-
-  SgType&
-  getAccessType(Definition_Struct& def, AstContext ctx)
+  SgAdaAccessType&
+  getAnonymousAccessType(Definition_Struct& def, AstContext ctx)
   {
     ADA_ASSERT(def.Definition_Kind == An_Access_Definition);
 
     logKind("An_Access_Definition");
 
-    SgType*                   res = nullptr;
+    SgAdaAccessType*          res = nullptr;
     Access_Definition_Struct& access = def.The_Union.The_Access_Definition;
-    const auto                access_type_kind = access.Access_Definition_Kind;
+    Access_Definition_Kinds   access_type_kind = access.Access_Definition_Kind;
 
     switch (access_type_kind)
     {
@@ -223,19 +222,11 @@ namespace
         const bool isConstant = access_type_kind == An_Anonymous_Access_To_Constant;
         logKind(isConstant ? "An_Anonymous_Access_To_Constant" : "An_Anonymous_Access_To_Variable");
 
-        SgType&          ty = getDeclTypeID(access.Anonymous_Access_To_Object_Subtype_Mark, ctx);
-        SgAdaAccessType& access_t = mkAdaAccessType(ty);
+        SgType* underty = &getDeclTypeID(access.Anonymous_Access_To_Object_Subtype_Mark, ctx);
 
-        // PP(2/2/22)
-        // cmp. getAccessTypeDefinition
-        // \todo consider making a const qualifier
-        // \todo what is general_access?
-        if (isConstant)
-          access_t.set_is_constant(true);
-        //~ else
-          //~ access_t.set_is_general_access(true);
+        if (isConstant) underty = &mkConstType(*underty);
 
-        res = &access_t;
+        res = &mkAdaAccessType(SG_DEREF(underty));
         /** unused fields:
                bool                         Has_Null_Exclusion;
          */
@@ -247,52 +238,117 @@ namespace
       case An_Anonymous_Access_To_Function:            // access function
       case An_Anonymous_Access_To_Protected_Function:  // access protected function
       {
-        logWarn() << "subprogram access type support incomplete" << std::endl;
+        if (access_type_kind == An_Anonymous_Access_To_Procedure)
+          logKind("An_Anonymous_Access_To_Procedure");
+        else if (access_type_kind == An_Anonymous_Access_To_Protected_Procedure)
+          logKind("An_Anonymous_Access_To_Protected_Procedure");
+        else if (access_type_kind == An_Anonymous_Access_To_Function)
+          logKind("An_Anonymous_Access_To_Function");
+        else
+          logKind("An_Anonymous_Access_To_Protected_Function");
 
         // these are functions, so we need to worry about return types
         const bool isFuncAccess = (  (access_type_kind == An_Anonymous_Access_To_Function)
                                   || (access_type_kind == An_Anonymous_Access_To_Protected_Function)
                                   );
+        const bool isProtected  = (  (access_type_kind == An_Anonymous_Access_To_Protected_Function)
+                                  || (access_type_kind == An_Anonymous_Access_To_Protected_Procedure)
+                                  );
 
-        if (access.Access_To_Subprogram_Parameter_Profile.Length > 0) {
-          logWarn() << "subprogram access types with parameter profiles not supported." << std::endl;
-          /*
-            ElemIdRange range = idRange(access_type.Access_To_Subprogram_Parameter_Profile);
+        ElemIdRange          params  = idRange(access.Access_To_Subprogram_Parameter_Profile);
+        SgType&              rettype = isFuncAccess ? getDeclTypeID(access.Access_To_Function_Result_Profile, ctx)
+                                                    : mkTypeVoid();
+        SgAdaSubroutineType& funty   = mkAdaSubroutineType(rettype, ParameterCompletion{params, ctx}, isProtected);
 
-            SgFunctionParameterList& lst   = mkFunctionParameterList();
-            SgFunctionParameterScope& psc  = mkLocatedNode<SgFunctionParameterScope>(&mkFileInfo());
-            ParameterCompletion{range,ctx}(lst, ctx);
-
-            ((SgAdaAccessType*)res.n)->set_subprogram_profile(&lst);
-          */
-        }
-
-        SgType& retType = isFuncAccess ? getDeclTypeID(access.Access_To_Function_Result_Profile, ctx)
-                                       : mkTypeVoid();
-        SgFunctionType& funty = mkFunctionType(retType /* \todo add paramter profile */);
-        SgAdaAccessType& access_t = mkAdaAccessType(funty);
-
-        access_t.set_is_object_type(false);
-
-        // if protected, set the flag
-        if (access_type_kind == An_Anonymous_Access_To_Protected_Function ||
-            access_type_kind == An_Anonymous_Access_To_Protected_Procedure) {
-          access_t.set_is_protected(true);
-        }
-
-        res = &access_t;
+        res = &mkAdaAccessType(funty);
         break;
       }
 
-      case Not_An_Access_Definition: /* break; */ // An unexpected element
+      case Not_An_Access_Definition: // An unexpected element
       default:
-        logWarn() << "adk? " << access_type_kind << std::endl;
+        logError() << "Unhandled anonymous access type kind: " << access_type_kind << std::endl;
         res = &mkAdaAccessType(mkTypeUnknown());
         ADA_ASSERT(!FAIL_ON_ERROR(ctx));
     }
 
-    return SG_DEREF(res);
+    ROSE_ASSERT(res);
+    res->set_is_anonymous(true);
+    return *res;
   }
+
+  SgAdaAccessType&
+  getAccessType(Access_Type_Struct& access_type, AstContext ctx)
+  {
+    auto access_type_kind = access_type.Access_Type_Kind;
+    SgAdaAccessType* access_t = nullptr;
+
+    switch (access_type_kind) {
+      // variable access kinds
+    case A_Pool_Specific_Access_To_Variable:
+    case An_Access_To_Variable:
+    case An_Access_To_Constant:
+      {
+        const bool isConstant = (access_type_kind == An_Access_To_Constant);
+        const bool isVariable = (access_type_kind == An_Access_To_Variable);
+
+        if (isConstant)
+          logKind("An_Access_To_Constant");
+        else if (isVariable)
+          logKind("An_Access_To_Variable");
+        else
+          logKind("A_Pool_Specific_Access_To_Variable");
+
+        SgType* ato = &getDefinitionTypeID(access_type.Access_To_Object_Definition, ctx);
+
+        if (isConstant) ato = &mkConstType(*ato);
+        access_t = &mkAdaAccessType(SG_DEREF(ato));
+        if (isVariable) access_t->set_is_general_access(true);
+
+        break;
+      }
+
+      // subprogram access kinds
+    case An_Access_To_Function:
+    case An_Access_To_Protected_Function:
+    case An_Access_To_Procedure:
+    case An_Access_To_Protected_Procedure:
+      {
+        if (access_type_kind == An_Access_To_Procedure)
+          logKind("An_Access_To_Procedure");
+        else if (access_type_kind == An_Access_To_Protected_Procedure)
+          logKind("An_Access_To_Protected_Procedure");
+        else if (access_type_kind == An_Access_To_Function)
+          logKind("An_Access_To_Function");
+        else
+          logKind("An_Access_To_Protected_Function");
+
+        const bool isFuncAccess = (  (access_type_kind == An_Access_To_Function)
+                                  || (access_type_kind == An_Access_To_Protected_Function)
+                                  );
+        const bool isProtected  = (  (access_type_kind == An_Access_To_Protected_Procedure)
+                                  || (access_type_kind == An_Access_To_Protected_Function)
+                                  );
+
+        ElemIdRange          params  = idRange(access_type.Access_To_Subprogram_Parameter_Profile);
+        SgType&              rettype = isFuncAccess ? getDeclTypeID(access_type.Access_To_Function_Result_Profile, ctx)
+                                                    : mkTypeVoid();
+        SgAdaSubroutineType& funty   = mkAdaSubroutineType(rettype, ParameterCompletion{params, ctx}, isProtected);
+
+        access_t = &mkAdaAccessType(funty);
+        break;
+      }
+
+    case Not_An_Access_Type_Definition:
+    default:
+      logError() << "Unhandled access type kind: " << access_type_kind << std::endl;
+      access_t = &mkAdaAccessType(mkTypeUnknown());
+      ADA_ASSERT(!FAIL_ON_ERROR(ctx));
+    }
+
+    ROSE_ASSERT(access_t);
+    return *access_t;
+  }
+
 
   SgType&
   getDeclType(Element_Struct& elem, AstContext ctx)
@@ -309,7 +365,7 @@ namespace
     Definition_Struct& def = elem.The_Union.Definition;
 
     if (def.Definition_Kind == An_Access_Definition)
-      return getAccessType(def, ctx);
+      return getAnonymousAccessType(def, ctx);
 
     logError() << "getDeclType: unhandled definition kind: " << def.Definition_Kind
                << std::endl;
@@ -433,91 +489,6 @@ namespace
       AstContext         ctx;
   };
 
-  SgAdaAccessType*
-  getAccessTypeDefinition(Access_Type_Struct& access_type, AstContext ctx)
-  {
-    auto access_type_kind = access_type.Access_Type_Kind;
-    bool isFuncAccess = false;
-    SgAdaAccessType* access_t = nullptr;
-
-    switch (access_type_kind) {
-      // variable access kinds
-    case A_Pool_Specific_Access_To_Variable:
-    case An_Access_To_Variable:
-    case An_Access_To_Constant:
-      {
-        SgType& ato = getDefinitionTypeID(access_type.Access_To_Object_Definition, ctx);
-        access_t = &mkAdaAccessType(ato);
-
-        // handle cases for ALL or CONSTANT general access modifiers
-        switch (access_type_kind) {
-        case An_Access_To_Variable:
-          access_t->set_is_general_access(true);
-          break;
-        case An_Access_To_Constant:
-          access_t->set_is_constant(true);
-          break;
-        default:
-          break;
-        }
-
-        break;
-      }
-
-      // subprogram access kinds
-    case An_Access_To_Function:
-    case An_Access_To_Protected_Function:
-    case An_Access_To_Procedure:
-    case An_Access_To_Protected_Procedure:
-      {
-        logWarn() << "subprogram access type support incomplete" << std::endl;
-
-        if (access_type_kind == An_Access_To_Function ||
-            access_type_kind == An_Access_To_Protected_Function) {
-          // these are functions, so we need to worry about return types
-          isFuncAccess = true;
-        }
-
-        if (access_type.Access_To_Subprogram_Parameter_Profile.Length > 0) {
-          logWarn() << "subprogram access types with parameter profiles not supported." << std::endl;
-          /*
-            ElemIdRange range = idRange(access_type.Access_To_Subprogram_Parameter_Profile);
-
-            SgFunctionParameterList& lst   = mkFunctionParameterList();
-            SgFunctionParameterScope& psc  = mkLocatedNode<SgFunctionParameterScope>(&mkFileInfo());
-            ParameterCompletion{range,ctx}(lst, ctx);
-
-            ((SgAdaAccessType*)res.n)->set_subprogram_profile(&lst);
-          */
-        }
-
-        SgType& retType = isFuncAccess ? getDeclTypeID(access_type.Access_To_Function_Result_Profile, ctx)
-                                       : mkTypeVoid();
-        SgFunctionType& funty = mkFunctionType(retType /* \todo add paramter profile */);
-
-        access_t = &mkAdaAccessType(funty);
-        access_t->set_is_object_type(false);
-
-
-        // if protected, set the flag
-        if (access_type_kind == An_Access_To_Protected_Procedure ||
-            access_type_kind == An_Access_To_Protected_Function) {
-          access_t->set_is_protected(true);
-        }
-
-        break;
-      }
-    default:
-      logWarn() << "Unhandled access type kind: " << access_type_kind << std::endl;
-      access_t = &mkAdaAccessType(mkTypeUnknown());
-      ADA_ASSERT(!FAIL_ON_ERROR(ctx));
-    }
-
-    ROSE_ASSERT(access_t);
-    return access_t;
-  }
-
-
   // PP: rewrote this code to create the SgAdaFormalTypeDecl together with the type
   TypeData
   getFormalTypeFoundation(const std::string& name, Definition_Struct& def, Definition_ID discrId, AstContext ctx)
@@ -579,7 +550,7 @@ namespace
       case A_Formal_Access_Type_Definition:          // 3.10(3),3.10(5)
         {
           logKind("A_Formal_Access_Type_Definition");
-          formalBaseType = getAccessTypeDefinition(typenode.Access_Type, ctx);
+          formalBaseType = &getAccessType(typenode.Access_Type, ctx);
           /* unused fields:
            */
           break;
@@ -894,8 +865,8 @@ namespace
       case An_Access_Type_Definition:              // 3.10(2)    -> Access_Type_Kinds
         {
           logKind("An_Access_Type_Definition");
-          SgAdaAccessType* access_t = getAccessTypeDefinition(typenode.Access_Type, ctx);
-          res.sageNode(SG_DEREF(access_t));
+          SgAdaAccessType& access_t = getAccessType(typenode.Access_Type, ctx);
+          res.sageNode(access_t);
           break;
         }
 
@@ -917,9 +888,12 @@ namespace
   }
 
   SgType&
-  getDefinitionType(Definition_Struct& def, AstContext ctx)
+  getDefinitionType(Element_Struct& elem, AstContext ctx)
   {
-    SgType* res = nullptr;
+    ADA_ASSERT(elem.Element_Kind == A_Definition);
+
+    Definition_Struct& def = elem.The_Union.Definition;
+    SgType*            res = nullptr;
 
     switch (def.Definition_Kind)
     {
@@ -975,10 +949,25 @@ namespace
           break;
         }
 
+      case A_Discrete_Subtype_Definition:
+        {
+          logKind("A_Discrete_Subtype_Definition");
+
+          Discrete_Subtype_Definition_Struct& subdef = def.The_Union.The_Discrete_Subtype_Definition;
+
+          // handle A_Discrete_Subtype_Indication here, because getDefinitionExpr would
+          //   convert that into a type.
+          res = (subdef.Discrete_Range_Kind == A_Discrete_Subtype_Indication)
+                      ? &getDiscreteSubtypeID(subdef.Subtype_Mark, subdef.Subtype_Constraint, ctx)
+                      : &mkExprAsType(getDiscreteSubtypeExpr(elem, def, ctx));
+
+          break;
+        }
+
       case An_Access_Definition:
         {
-          res = &getAccessType(def, ctx);
-
+          logKind("An_Access_Definition");
+          res = &getAnonymousAccessType(def, ctx);
           /* unused fields:
           */
           break;
@@ -1157,6 +1146,16 @@ getExceptionBase(Element_Struct& el, AstContext ctx)
 }
 
 
+SgType&
+getDiscreteSubtypeID(Element_ID typeId, Element_ID constraintID, AstContext ctx)
+{
+  SgType*              res = &getDeclTypeID(typeId, ctx);
+  SgAdaTypeConstraint* constraint = getConstraintID_opt(constraintID, ctx);
+
+  ADA_ASSERT(res);
+  return constraint ? mkAdaSubtype(*res, *constraint) : *res;
+}
+
 SgAdaTypeConstraint&
 getConstraintID(Element_ID el, AstContext ctx)
 {
@@ -1259,12 +1258,7 @@ getDeclTypeID(Element_ID id, AstContext ctx)
 SgType&
 getDefinitionTypeID(Element_ID defid, AstContext ctx)
 {
-  ADA_ASSERT(!isInvalidId(defid));
-
-  Element_Struct&     elem = retrieveAs(elemMap(), defid);
-  ADA_ASSERT(elem.Element_Kind == A_Definition);
-
-  return getDefinitionType(elem.The_Union.Definition, ctx);
+  return getDefinitionType(retrieveAs(elemMap(), defid), ctx);
 }
 
 /// returns the ROSE type for an Asis definition \ref defid

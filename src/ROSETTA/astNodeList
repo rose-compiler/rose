@@ -1008,3 +1008,4 @@ SgAdaProtectedTypeDecl
 SgAdaDigitsConstraint
 SgAdaAncestorInitializer
 SgAdaDeltaConstraint
+SgAdaSubroutineType
