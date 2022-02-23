@@ -586,7 +586,6 @@ package body Asis_Adapter.Element is
           if Declaration_Kind = A_PACKAGE_INSTANTIATION  then
             corresponding_Decl := Asis.Declarations.Corresponding_Declaration (Elem); 
             corresponding_Body := Asis.Declarations.Corresponding_Body (Elem); 
-            PUT_LINE("found instantiation"); 
           end if;
         end;
      end if;
