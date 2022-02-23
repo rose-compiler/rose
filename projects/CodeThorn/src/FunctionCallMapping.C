@@ -24,11 +24,11 @@ FunctionCallMapping::FunctionCallMapping() {
   _matchMode=5;
 }
 
-void FunctionCallInfo::print() {
+string FunctionCallInfo::toString() {
   if(funCallType) {
-    cout<<"NAME: "<<funCallName<<" TYPE: "<<funCallType<<":"<<funCallType->unparseToString()<<" MANGLEDFUNCALLNAME: "<<mangledFunCallName<<endl;
+    return "NAME: "+funCallName+" TYPE: "+(funCallType->unparseToString())+" MANGLEDFUNCALLNAME: "+mangledFunCallName;
   } else {
-    cout<<"NAME: "<<funCallName<<" TYPE: unknown"<<endl;
+    return "NAME: "+funCallName+" TYPE: unknown";
   }
 }
 
@@ -221,7 +221,7 @@ void FunctionCallMapping::dumpFunctionCallInfo() {
   ROSE_ASSERT(isValidMapping());
   for (auto fc : funCallList) {
     FunctionCallInfo fcInfo=determineFunctionCallInfo(fc);
-    fcInfo.print();
+    cout<<fcInfo.toString()<<endl;
   }
 }
 
@@ -229,7 +229,25 @@ void FunctionCallMapping::dumpFunctionCallTargetInfo() {
   ROSE_ASSERT(isValidMapping());
   for (auto fd : funDefList) {
     FunctionCallTarget fcTarget(fd);
-    fcTarget.print();
+    cout<<fcTarget.toString()<<endl;
+  }
+}
+
+void FunctionCallMapping::dumpFunctionCallMapping() {
+  ROSE_ASSERT(isValidMapping());
+  for(auto pair : mapping) {
+    auto funCallNode=pair.first;
+    auto& functionCallInfo=pair.second.first;
+    auto& functionCallTargetSet=pair.second.second;
+    cout<<functionCallTargetSet.size()<<": "; // for easy sorting by num of targets
+    cout<<SgNodeHelper::abbreviatedLocationToString(funCallNode)<<": "<<functionCallInfo.toString()<<" ==> ";
+    cout<<functionCallTargetSet.size()<<": ";
+    for(auto target : functionCallTargetSet) {
+      cout<<"[";
+      cout<<target.toString();
+      cout<<"]";
+    }
+    cout<<endl;
   }
 }
 

@@ -231,6 +231,7 @@ int main( int argc, char * argv[] ) {
     optionallyGenerateExternalFunctionsFile(ctOpt, analyzer->getFunctionCallMapping());
     optionallyGenerateLineColumnCsv(ctOpt,project);
 
+    // ensure time was not run yet
     tc.startTimer();tc.stopTimer();
 
     setAssertConditionVariablesInAnalyzer(project,analyzer);

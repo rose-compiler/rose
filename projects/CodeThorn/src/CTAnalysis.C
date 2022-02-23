@@ -1995,8 +1995,6 @@ std::list<EStatePtr> CodeThorn::CTAnalysis::elistify(EState res) {
 
 void CodeThorn::CTAnalysis::setFunctionResolutionModeInCFAnalysis(CodeThornOptions& ctOpt) {
   switch(int argVal=ctOpt.functionResolutionMode) {
-  case 1: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_TRANSLATION_UNIT;break;
-  case 2: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_WHOLE_AST_LOOKUP;break;
   case 4: CFAnalysis::functionResolutionMode=CFAnalysis::FRM_FUNCTION_CALL_MAPPING;break;
   default: 
     cerr<<"Error: unsupported argument value of "<<argVal<<" for function-resolution-mode.";
