@@ -180,6 +180,15 @@ package body Asis_Adapter.Element.Definitions is
             Add_Edges      => True);
       end;
 
+      function Add_And_Return_Discrete_Subtype_Definitions return a_nodes_h.Element_ID_List is
+      begin
+         return To_Element_ID_List
+           (This           => State,
+            Elements_In    => Asis.Definitions.Discrete_Subtype_Definitions (Element),
+            Dot_Label_Name => "Discrete_Subtype_Definitions",
+            Add_Edges      => True);
+      end;
+
       function Add_And_Return_Discriminant_Associations return a_nodes_h.Element_ID_List is
       begin
          return To_Element_ID_List
@@ -821,8 +830,8 @@ package body Asis_Adapter.Element.Definitions is
             Result.Array_Component_Definition :=
               Add_And_Return_Array_Component_Definition;
          when A_Formal_Constrained_Array_Definition =>
-            Result.Index_Subtype_Definitions :=
-              Add_And_Return_Index_Subtype_Definitions;
+            Result.Discrete_Subtype_Definitions :=
+              Add_And_Return_Discrete_Subtype_Definitions;
             Result.Array_Component_Definition :=
               Add_And_Return_Array_Component_Definition;
          when A_Formal_Access_Type_Definition =>
