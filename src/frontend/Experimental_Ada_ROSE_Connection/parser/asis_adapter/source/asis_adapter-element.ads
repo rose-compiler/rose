@@ -19,6 +19,10 @@ package Asis_Adapter.Element is
       Element : in     Asis.Element;
       Outputs : in     Outputs_Record);
 
+    procedure Process_Instantiation 
+     (This    : in out Class;
+      Element : in     Asis.Element);
+
    -----------------------------------------------------------------------------
    -- This encapsulates the identity of an Element, since sometimes a
    -- Node_ID gets reused!
