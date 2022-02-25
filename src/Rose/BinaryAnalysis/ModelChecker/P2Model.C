@@ -718,8 +718,22 @@ RiscOperators::pruneCallStack() {
                     }
                 };
 
+                rose_addr_t stackBoundary = *poppedInitialSp;
+                const std::string isaName = partitioner_.instructionProvider().disassembler()->name();
+                if ("i386" == isaName) {
+                    // x86 "call" pushes a 4-byte return address that's popped when the function returns. The stack grows down.
+                    stackBoundary += 4;
+                } else if ("amd64" == isaName) {
+                    // x86-64 "call" pushes an 8-byte return address that's popped when the function returns. Stack grows down.
+                    stackBoundary += 8;
+                } else if (boost::starts_with(isaName, "ppc32") || boost::starts_with(isaName, "ppc64")) {
+                    // PowerPC function calls don't push a return value.
+                } else {
+                    ASSERT_not_implemented("isaName = " + isaName);
+                }
+
                 auto mem = BS::MemoryCellState::promote(currentState()->memoryState());
-                mem->eraseMatchingCells(IsPopped(SymbolicExpr::makeIntegerConstant(32, *poppedInitialSp)));
+                mem->eraseMatchingCells(IsPopped(SymbolicExpr::makeIntegerConstant(32, stackBoundary)));
             }
         }
     }
