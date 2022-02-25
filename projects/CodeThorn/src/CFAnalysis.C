@@ -115,7 +115,24 @@ LabelSetSet CFAnalysis::functionLabelSetSets(Flow& flow) {
   return result;
 }
 
-// TODO?: move this function to Flow
+// input 'flow' must be an ICFG
+Flow CFAnalysis::computeCallGraph(Flow& flow) {
+  Flow cg;
+  LabelSet callLabs=functionCallLabels(flow);
+  // maps any label in a function to the entry label of this function
+  InterFlow::LabelToFunctionMap l2fMap=labelToFunctionMap(flow);
+  for(auto callLab : callLabs) {
+    Flow outEdges=flow.outEdgesOfType(callLab, EDGE_CALL);
+    for (auto e : outEdges) {
+      cg.insert(Edge(l2fMap[callLab],EDGE_CALL,e.target()));
+    }
+  }
+  // set start label (of main function)
+  cg.setStartLabel(flow.getStartLabel());
+  return cg;
+}
+
+// uses the AST-based functionLabelSet, therefore this function is in CFAnalysis (not Flow)
 InterFlow::LabelToFunctionMap CFAnalysis::labelToFunctionMap(Flow& flow) {
   InterFlow::LabelToFunctionMap map;
   LabelSet entryLabels=functionEntryLabels(flow);
@@ -134,7 +151,7 @@ InterFlow::LabelToFunctionMap CFAnalysis::labelToFunctionMap(Flow& flow) {
 // considered to be analyzed, but since they may be unreachable from
 // the entry nodes, this set is computed from the AST. The special
 // case of class declarations (with its variable declarations which
-// are never in the CFG is detected at the beginning and properly
+// are never in the CFG) is detected at the beginning and properly
 // skipped (i.e. not included in the result set).
 LabelSet CFAnalysis::functionLabelSet(Label entryLabel, Flow& flow) {
   LabelSet fLabels;

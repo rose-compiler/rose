@@ -12,6 +12,8 @@ namespace CodeThorn {
 
   void TopologicalSort::createTopologicallySortedLabelList() {
     if(revPostOrderList.size()==0) {
+      // TODO: input: postorder list of CG-functions (with main last) and add each to topsort
+
       // begin topsort at start label
       Label startLab=flow.getStartLabel();
       if(startLab.isValid()) {
@@ -25,8 +27,7 @@ namespace CodeThorn {
       // compute top sort for all functions that are not reachable from start
       for(auto iter=flow.nodes_begin();iter!=flow.nodes_end();++iter) {
         Label lab=*iter;
-        // determine nodes with no predecessors (this is sufficient to find all entry nodes including disconnected subgraphs)
-        if(labeler.isFunctionEntryLabel(lab) /*&& flow.pred(lab).size()==0*/) {
+        if(labeler.isFunctionEntryLabel(lab)) {
           semanticRevPostOrderTraversal(lab);
         }
       }

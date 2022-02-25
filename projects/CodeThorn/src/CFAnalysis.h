@@ -67,6 +67,13 @@ class CFAnalysis {
   LabelSet initialLabelsOfStmtsInBlockSet(SgNode* node);
   LabelSet labelsOfInterestSet();
 
+  /* computes call graph from an existing ICFG (flow). All edges are CALL_EDGEs.
+   * the call graph contains disconnected subgraphs if the ICFG contained unrachable functions
+   * the start label is set to be the same as in flow
+   * input 'flow' must be an ICFG
+   */
+  Flow computeCallGraph(Flow& flow);
+  
   /* computes a map where for each label to the entry label of the function it belongs to
      if the label is not inside a function then the returned label is an invalid label
   */
