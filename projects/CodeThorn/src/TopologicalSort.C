@@ -9,11 +9,13 @@ namespace CodeThorn {
   // Author: Markus Schordan, 2020.
   TopologicalSort::TopologicalSort(Labeler& labeler0, Flow& flow0):labeler(labeler0),flow(flow0) {
   }
+  TopologicalSort::TopologicalSort(Labeler& labeler0, Flow& flow0, Flow* callGraph0):labeler(labeler0),flow(flow0), callGraph(callGraph0) {
+  }
 
   void TopologicalSort::createTopologicallySortedLabelList() {
     if(revPostOrderList.size()==0) {
       // TODO: input: postorder list of CG-functions (with main last) and add each to topsort
-
+      
       // begin topsort at start label
       Label startLab=flow.getStartLabel();
       if(startLab.isValid()) {

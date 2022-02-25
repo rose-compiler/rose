@@ -52,6 +52,7 @@ public:
     bool visTg2=false;
     std::string icfgFileName;
     std::string callGraphFileName;
+    std::string callGraphFileName2;
     bool displayPassThroughLabel=false;
   } visualization;
 

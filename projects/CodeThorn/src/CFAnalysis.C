@@ -1887,18 +1887,8 @@ void CFAnalysis::createCICFG(SgProject* project, FunctionCallMapping* functionCa
   _icfgFlow=flow(project);
   _interFlow=interFlow(_icfgFlow);
   intraInterFlow(_icfgFlow, _interFlow);
+  _callGraph=computeCallGraph(_icfgFlow);
 }
-
-#if 0
-// deprecated
-void CFAnalysis::createCppICFG(SgProject* project, ClassHierarchyWrapper* classHierarchy) {
-  FunctionCallMapping2* functionCallMapping2=new FunctionCallMapping2;
-  functionCallMapping2->setLabeler(labeler);
-  functionCallMapping2->setClassHierarchy(nullptr /*classHierarchy*/);
-  functionCallMapping2->computeFunctionCallMapping(project);
-  createCppICFG(project,functionCallMapping2);
-}
-#endif
 
 void CFAnalysis::createCppICFG(SgProject* project, FunctionCallMapping2* functionCallMapping2) {
   ROSE_ASSERT(functionCallMapping2->getLabeler());
@@ -1908,10 +1898,15 @@ void CFAnalysis::createCppICFG(SgProject* project, FunctionCallMapping2* functio
   _icfgFlow=flow(project);
   _interFlow=interFlow(_icfgFlow);
   intraInterFlow(_icfgFlow, _interFlow);
+  _callGraph=computeCallGraph(_icfgFlow);
 }
 
 Flow* CFAnalysis::getIcfgFlow() {
   return &_icfgFlow;
+}
+
+Flow* CFAnalysis::getCallGraph() {
+  return &_callGraph;
 }
 
 InterFlow* CFAnalysis::getInterFlow() {

@@ -15,7 +15,8 @@ namespace CodeThorn {
   class TopologicalSort {
   public:
     typedef std::map<Label,uint32_t> LabelToPriorityMap;
-    TopologicalSort(Labeler& labeler0, Flow& flow0);
+    TopologicalSort(Labeler& labeler, Flow& flow);
+    TopologicalSort(Labeler& labeler, Flow& flow, Flow* callGraph);
     void computeLabelToPriorityMap();
     uint32_t getLabelPosition(Label lab) const;
 
@@ -30,6 +31,7 @@ namespace CodeThorn {
 
     Labeler& labeler;
     Flow& flow;
+    Flow* callGraph=nullptr;
     std::map<Label,bool> visited;
     std::list<Label> callLabels;
     std::list<Label> revPostOrderList;

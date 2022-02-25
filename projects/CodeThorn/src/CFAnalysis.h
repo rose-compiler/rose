@@ -158,6 +158,7 @@ class CFAnalysis {
   void createCppICFG(SgProject* project, FunctionCallMapping2* functionCallMapping2);
   Flow* getIcfgFlow();
   InterFlow* getInterFlow();
+  Flow* getCallGraph();
   void generateIcfgDotFile(std::string fileName, TopologicalSort* topSort=0);
   void useCplusplus(bool flag);
 
@@ -182,6 +183,7 @@ private:
 
   Flow _icfgFlow;
   InterFlow _interFlow;
+  Flow _callGraph;
   bool _strictChecking=false; // see DOM057 (gnu extension)
 };
 
