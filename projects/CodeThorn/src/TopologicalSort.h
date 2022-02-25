@@ -22,7 +22,8 @@ namespace CodeThorn {
 
     std::list<Label> topologicallySortedLabelList();
     LabelToPriorityMap labelToPriorityMap();
-
+    // computes a post-order of labels in a given Flow graph
+    std::list<Label> computePostOrder(Label start, Flow& flow);
   private:
 
     // computes reverse post-order of labels in revPostOrderList

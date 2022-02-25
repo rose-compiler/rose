@@ -14,19 +14,28 @@ namespace CodeThorn {
 
   void TopologicalSort::createTopologicallySortedLabelList() {
     if(revPostOrderList.size()==0) {
-      // TODO: input: postorder list of CG-functions (with main last) and add each to topsort
-      
-      // begin topsort at start label
       Label startLab=flow.getStartLabel();
-      if(startLab.isValid()) {
-        semanticRevPostOrderTraversal(startLab);
+      ROSE_ASSERT(startLab.isValid());
+      // use call graph to compute post order (reverse topsort) and compute top sort for each function in this order
+      if(callGraph) {
+        auto postOrderList=computePostOrder(startLab,*callGraph);
+        cout<<"DEBUG: TopSort CG size: "<<flow.size()<<" postOrderList size: "<<postOrderList.size()<<endl;
+        for (auto label : postOrderList) {
+          cout<<"  TopSorting CG function entry label: "<<label.toString()<<endl;
+          semanticRevPostOrderTraversal(label);
+        }
+      } else {
+        // likely inefficient, without call graph, top-sort functions starting with main and then in some "random" order
+        if(startLab.isValid()) {
+          semanticRevPostOrderTraversal(startLab);
+        }
       }
 
       // store revlist for all labels reachable from start and reset result list
       std::list<Label> revPostOrderListStart=revPostOrderList;
       revPostOrderList.clear();
       
-      // compute top sort for all functions that are not reachable from start
+      // compute top sort for all functions that have not been considered yet
       for(auto iter=flow.nodes_begin();iter!=flow.nodes_end();++iter) {
         Label lab=*iter;
         if(labeler.isFunctionEntryLabel(lab)) {
@@ -48,6 +57,17 @@ namespace CodeThorn {
     }
   }
 
+  std::list<Label> TopologicalSort::computePostOrder(Label lab, Flow& flow) {
+    std::list<Label> list;
+    auto Succ=flow.succ(lab);
+    for (auto slab : Succ) {
+      auto poList=computePostOrder(slab,flow);
+      list.insert(list.end(),poList.begin(),poList.end());
+    }
+    list.push_back(lab);
+    return list;
+  }
+  
   uint32_t TopologicalSort::getLabelPosition(Label lab) const {
     auto iter=_map.find(lab);
     if(iter==_map.end())
