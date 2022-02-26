@@ -18,10 +18,9 @@ namespace CodeThorn {
       ROSE_ASSERT(startLab.isValid());
       // use call graph to compute post order (reverse topsort) and compute top sort for each function in this order
       if(callGraph) {
-        auto postOrderList=computePostOrder(startLab,*callGraph);
-        cout<<"DEBUG: TopSort CG size: "<<flow.size()<<" postOrderList size: "<<postOrderList.size()<<endl;
+        std::list<Label> postOrderList;
+        computePostOrder(startLab,*callGraph, postOrderList);
         for (auto label : postOrderList) {
-          cout<<"  TopSorting CG function entry label: "<<label.toString()<<endl;
           semanticRevPostOrderTraversal(label);
         }
       } else {
@@ -42,12 +41,11 @@ namespace CodeThorn {
           semanticRevPostOrderTraversal(lab);
         }
       }
-
       // DEBUG do one more traversal to find chunks that are not included in the sort yet
       for(auto iter=flow.nodes_begin();iter!=flow.nodes_end();++iter) {
         Label lab=*iter;
         if(!visited[lab]) {
-          cout<<"DEBUG: found non visited lab:"<<lab.toString()<<endl;
+          cout<<"TopSort: found non visited label (non-reachable):"<<lab.toString()<<endl;
           semanticRevPostOrderTraversal(lab);
         }
       }
@@ -57,15 +55,21 @@ namespace CodeThorn {
     }
   }
 
-  std::list<Label> TopologicalSort::computePostOrder(Label lab, Flow& flow) {
-    std::list<Label> list;
-    auto Succ=flow.succ(lab);
-    for (auto slab : Succ) {
-      auto poList=computePostOrder(slab,flow);
-      list.insert(list.end(),poList.begin(),poList.end());
+  void TopologicalSort::computePostOrder(Label lab, Flow& flow, std::list<Label>& list) {
+    std::set<Label> visited;
+    computePostOrder(lab,flow,list,visited);
+  }
+  
+  void TopologicalSort::computePostOrder(Label lab, Flow& flow, std::list<Label>& list, std::set<Label>& visited) {
+    ROSE_ASSERT(lab.isValid());
+    if(visited.find(lab)==visited.end()) {
+      visited.insert(lab);
+      auto Succ=flow.succ(lab);
+      for (auto slab : Succ) {
+        computePostOrder(slab,flow, list, visited);
+      }
     }
     list.push_back(lab);
-    return list;
   }
   
   uint32_t TopologicalSort::getLabelPosition(Label lab) const {
@@ -91,6 +95,7 @@ namespace CodeThorn {
       i++;
     }
   }
+
   TopologicalSort::LabelToPriorityMap TopologicalSort::labelToPriorityMap() {
     LabelToPriorityMap map;
     if(_map.size()==0)

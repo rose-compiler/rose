@@ -3,6 +3,8 @@
 
 #include <list>
 #include <map>
+#include <unordered_set>
+
 #include "Label.h"
 
 namespace CodeThorn {
@@ -23,9 +25,9 @@ namespace CodeThorn {
     std::list<Label> topologicallySortedLabelList();
     LabelToPriorityMap labelToPriorityMap();
     // computes a post-order of labels in a given Flow graph
-    std::list<Label> computePostOrder(Label start, Flow& flow);
+    void computePostOrder(Label start, Flow& flow, std::list<Label>& list);
   private:
-
+    void computePostOrder(Label start, Flow& flow, std::list<Label>& list, std::set<Label>& visited);
     // computes reverse post-order of labels in revPostOrderList
     void semanticRevPostOrderTraversal(Label lab);
     void createTopologicallySortedLabelList();

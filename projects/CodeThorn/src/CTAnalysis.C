@@ -235,7 +235,9 @@ void CodeThorn::CTAnalysis::setWorkLists(ExplorationMode explorationMode) {
     auto sLabelSetSize=getFlow()->getStartLabelSet().size();
     if(sLabelSetSize>0) {
       if(_ctOpt.status) cout<<"STATUS: creating topologic sort of "<<getFlow()->size()<<" labels ... "<<flush;
-      _topologicalSort=new TopologicalSort(*getLabeler(),*getFlow(),getCFAnalyzer()->getCallGraph());
+      auto cg=getCFAnalyzer()->getCallGraph();
+      _topologicalSort=new TopologicalSort(*getLabeler(),*getFlow(),cg);
+      ROSE_ASSERT(_topologicalSort);
       _topologicalSort->computeLabelToPriorityMap();
 #if 0
       std::list<Label> labelList=_topologicalSort.topologicallySortedLabelList();
