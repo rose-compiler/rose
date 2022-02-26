@@ -2025,7 +2025,8 @@ std::string CodeThorn::CTAnalysis::internalAnalysisReportToString() {
     ss<<"Total number of functions     : "<<totalIntraFunctions<<" ("<<getTotalNumberOfFunctions()<<")"<<endl;
   } else {
     ss<<"Inter-procedural analysis"<<endl;    
-    ss<<"Call string length: "<<_ctOpt.callStringLength<<endl;
+    ss<<"Call string length  : "<<_ctOpt.callStringLength<<endl;
+    ss<<"Recursive call graph: "<<getTopologicalSort()->isRecursive()<<endl;
   }
   ss<<hashSetConsistencyReport();
   return ss.str();

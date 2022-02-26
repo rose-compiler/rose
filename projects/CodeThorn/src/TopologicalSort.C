@@ -55,9 +55,21 @@ namespace CodeThorn {
     }
   }
 
+  bool TopologicalSort::isRecursive() {
+    return _recursiveCG;
+  }
+  
   void TopologicalSort::computePostOrder(Label lab, Flow& flow, std::list<Label>& list) {
     std::set<Label> visited;
-    computePostOrder(lab,flow,list,visited);
+    // check special case, if lab is in flow (e.g. start label
+    // represents main, but no function is called from main. Then
+    // there is no call edge, and the start node not in the call
+    // graph.
+    if(flow.contains(lab)) {
+      computePostOrder(lab,flow,list,visited);
+    } else {
+      //cout<<"DEBUG: special case start label not in flow."<<endl;
+    }
   }
   
   void TopologicalSort::computePostOrder(Label lab, Flow& flow, std::list<Label>& list, std::set<Label>& visited) {
@@ -68,6 +80,8 @@ namespace CodeThorn {
       for (auto slab : Succ) {
         computePostOrder(slab,flow, list, visited);
       }
+    } else {
+      _recursiveCG=true;
     }
     list.push_back(lab);
   }

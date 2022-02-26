@@ -26,6 +26,7 @@ namespace CodeThorn {
     LabelToPriorityMap labelToPriorityMap();
     // computes a post-order of labels in a given Flow graph
     void computePostOrder(Label start, Flow& flow, std::list<Label>& list);
+    bool isRecursive();
   private:
     void computePostOrder(Label start, Flow& flow, std::list<Label>& list, std::set<Label>& visited);
     // computes reverse post-order of labels in revPostOrderList
@@ -39,6 +40,7 @@ namespace CodeThorn {
     std::list<Label> callLabels;
     std::list<Label> revPostOrderList;
     LabelToPriorityMap _map;
+    bool _recursiveCG=false;
   };
 
 } // end of namespace CodeThorn
