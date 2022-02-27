@@ -685,9 +685,9 @@ namespace CodeThorn {
         _analyzer->printStatusMessage(std::to_string(_functionsAnalyzedNum)+". ");
         _functionsAnalyzedNum++;
         auto stateSize=estate->pstate()->stateSize();
-        _analyzer->printStatusMessage("Analyzing function (cslen="+std::to_string(estate->getCallStringLength())+") (state size:"+to_string(stateSize)+" max:"+std::to_string(_maxStateSize)+"): ");
         updateMaxStateSize(stateSize);
         updateMaxCSLength(estate->getCallStringLength());
+        _analyzer->printStatusMessage("Analyzing function (cslen="+std::to_string(estate->getCallStringLength())+") (state size:"+to_string(stateSize)+" max:"+std::to_string(_maxStateSize)+"): ");
       }
       if(_analyzer->getOptionsRef().precisionLevel>0)
         _analyzer->printStatusMessageLine(": "+fileName+" : "+functionName);
