@@ -298,6 +298,8 @@ int main( int argc, char * argv[] ) {
     optionallyRunIOSequenceGenerator(ctOpt, analyzer);
     optionallyAnnotateTermsAndUnparse(ctOpt, project, analyzer);
 
+    cout<<analyzer->internalAnalysisReportToString()<<endl;
+  
     delete analyzer;
 
     // generate report after analyzer is deleted, to see amount of
