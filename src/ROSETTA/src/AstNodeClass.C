@@ -171,9 +171,11 @@ AstNodeClass::buildDestructorBody ()
           if (!((*stringListIterator)->getToBeDeleted() == DEF_DELETE))
              continue;
 
+          std::string typeName = (*stringListIterator)->getTypeNameString();
+          std::string varName = (*stringListIterator)->getVariableNameString();
+
           std::string tempString;
 
-          std::string typeName = (*stringListIterator)->getTypeNameString();
           if ( typeName.find("char*") != string::npos && typeName.find("char**") == string::npos )
                tempString = "[] ";
 
@@ -183,8 +185,10 @@ AstNodeClass::buildDestructorBody ()
             tempString += "    else if (p_$DATA) { ROSE_ASSERT(false); }";
 #endif
           }
-          tempString = StringUtility::copyEdit(tempString, "$DATA", (*stringListIterator)->getVariableNameString());
-
+          if ( typeName == " rose_hash_multimap*" ) {
+            tempString  = "    if (p_$DATA) { delete " + tempString + "p_$DATA; }\n";
+          }
+          tempString = StringUtility::copyEdit(tempString, "$DATA", varName);
           returnString += tempString;
         }
 

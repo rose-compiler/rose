@@ -71,6 +71,7 @@ class ROSE_DLL_API AST_FILE_IO
        static void compressAstInMemoryPool() ;
        static void resetValidAstAfterWriting();
        static void clearAllMemoryPools ( );
+       static void deleteMemoryPools ( );
        static void deleteStaticData( );
        static void deleteStoredAsts( );
        static void setStaticDataOfAst(AstData* astInPool);

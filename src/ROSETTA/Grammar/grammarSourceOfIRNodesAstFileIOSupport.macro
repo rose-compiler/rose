@@ -200,6 +200,12 @@ $CLASSNAME::clearMemoryPool( )
         }
    }
 
+void $CLASSNAME::deleteMemoryPool() {
+  for (auto p: $CLASSNAME::pools) {
+    ROSE_FREE(p);
+  }
+  $CLASSNAME::next_node = nullptr;
+}
 
 // DQ (4/30/2006): New version of code added (from Jochen) to fix bug in
 //                 reading multiple binary files to for a single AST.
