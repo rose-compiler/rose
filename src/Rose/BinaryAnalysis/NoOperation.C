@@ -64,7 +64,7 @@ public:
         stackMinVa = ops->subtract(stackCurVa, ops->number_(stackCurVa->nBits(), closeness));
     }
 
-    virtual bool operator()(const BaseSemantics::MemoryCellPtr &cell) const override {
+    virtual bool operator()(const BaseSemantics::MemoryCellPtr &cell) override {
         if (cell->getWriters().isEmpty())
             return true;
         

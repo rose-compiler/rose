@@ -135,10 +135,10 @@ public:
 public:
     virtual void clear() override;
     virtual bool merge(const MemoryStatePtr &other, RiscOperators *addrOps, RiscOperators *valOps) override;
-    virtual std::vector<MemoryCellPtr> matchingCells(const MemoryCell::Predicate&) const override;
-    virtual std::vector<MemoryCellPtr> leadingCells(const MemoryCell::Predicate&) const override;
-    virtual void eraseMatchingCells(const MemoryCell::Predicate&) override;
-    virtual void eraseLeadingCells(const MemoryCell::Predicate&) override;
+    virtual std::vector<MemoryCellPtr> matchingCells(MemoryCell::Predicate&) const override;
+    virtual std::vector<MemoryCellPtr> leadingCells(MemoryCell::Predicate&) const override;
+    virtual void eraseMatchingCells(MemoryCell::Predicate&) override;
+    virtual void eraseLeadingCells(MemoryCell::Predicate&) override;
     virtual void traverse(MemoryCell::Visitor&) override;
     virtual void hash(Combinatorics::Hasher&, RiscOperators *addrOps, RiscOperators *valOps) const override;
 

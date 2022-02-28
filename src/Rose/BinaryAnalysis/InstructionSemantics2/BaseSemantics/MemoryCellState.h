@@ -103,25 +103,25 @@ public:
     /** Find all matching cells.
      *
      *  Returns a vector of cells for which the @p predicate returns true. */
-    virtual std::vector<MemoryCellPtr> matchingCells(const MemoryCell::Predicate&) const = 0;
+    virtual std::vector<MemoryCellPtr> matchingCells(MemoryCell::Predicate&) const = 0;
 
     /** Find leading matching cells.
      *
      *  Returns the vector of cells obtained by invoking the predicate on each cell and returning those leading cells for which
      *  the predicate is true.  The first cell for which the predicate is false terminates the traversal and does not appear
      *  in the return value. */
-    virtual std::vector<MemoryCellPtr> leadingCells(const MemoryCell::Predicate&) const = 0;
+    virtual std::vector<MemoryCellPtr> leadingCells(MemoryCell::Predicate&) const = 0;
     
     /** Remove all matching cells.
      *
      *  Traverses the memory cells and removes those for which the predicate returns true. */
-    virtual void eraseMatchingCells(const MemoryCell::Predicate&) = 0;
+    virtual void eraseMatchingCells(MemoryCell::Predicate&) = 0;
 
     /** Remove leading matching cells.
      *
      *  Traverses the memory cells and removes those for which the predicate returns true. The traversal is terminated the
      *  first time the predicate returns false. */
-    virtual void eraseLeadingCells(const MemoryCell::Predicate&) = 0;
+    virtual void eraseLeadingCells(MemoryCell::Predicate&) = 0;
 
     /** Traverse and modify cells.
      *
@@ -130,12 +130,14 @@ public:
 
     /** Erase cells that have no writers. */
     void eraseNonWritten() {
-        eraseMatchingCells(MemoryCell::NonWrittenCells());
+        MemoryCell::NonWrittenCells p;
+        eraseMatchingCells(p);
     }
 
     /** All cells. */
     std::vector<MemoryCellPtr> allCells() const {
-        return matchingCells(MemoryCell::AllCells());
+        MemoryCell::AllCells p;
+        return matchingCells(p);
     }
 };
 
