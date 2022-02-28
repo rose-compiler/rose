@@ -1446,10 +1446,10 @@ namespace CodeThorn {
         int computedNumElements=-1;
         for(auto dimIter=arrayDimExps.begin();dimIter!=arrayDimExps.end();++dimIter) {
           SgExpression* arrayDimExp=*dimIter;
-          cout<<"DEBUG: Array dimension expression: "<<arrayDimExp->unparseToString()<<endl;
+          SAWYER_MESG(logger[TRACE])<<"DEBUG: Array dimension expression: "<<arrayDimExp->unparseToString()<<endl;
           SingleEvalResult evalRes=evaluateExpression(arrayDimExp,currentEState);
           AbstractValue arrayDimAVal=evalRes.result;
-          cout<<"DEBUG: Computed array dimension: "<<arrayDimAVal.toString()<<endl;
+          SAWYER_MESG(logger[TRACE])<<"DEBUG: Computed array dimension: "<<arrayDimAVal.toString()<<endl;
           if(dimIter==arrayDimExps.begin()) {
             if(arrayDimAVal.isConstInt()) {
               computedNumElements=arrayDimAVal.getIntValue();
