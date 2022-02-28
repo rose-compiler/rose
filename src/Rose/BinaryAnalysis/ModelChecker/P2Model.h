@@ -366,8 +366,17 @@ public: // Supporting functions
     void nInstructions(size_t);
     /** @} */
 
+    /** Ensure call stack has a root function. */
+    void maybeInitCallStack(rose_addr_t insnVa);
+
     /** Push a function onto the call stack. */
     void pushCallStack(const Partitioner2::FunctionPtr &callee, rose_addr_t initialSp);
+
+    /** Pop a function from the call stack.
+     *
+     *  This pops the function from the top of the call stack and optionally discards memory that is beyond the top of the
+     *  stack. */
+    void popCallStack();
 
     /** Remove old call stack entries.
      *
@@ -408,7 +417,6 @@ public: // Supporting functions
     /** @} */
 
 public: // Override RISC operations
-    virtual void startInstruction(SgAsmInstruction*) override;
     virtual void finishInstruction(SgAsmInstruction*) override;
 
     virtual InstructionSemantics2::BaseSemantics::SValuePtr
@@ -673,6 +681,9 @@ public:
 
     virtual std::vector<TagPtr>
     preExecute(const ExecutionUnitPtr&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&) override;
+
+    virtual std::vector<TagPtr>
+    postExecute(const ExecutionUnitPtr&, const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&) override;
 
     virtual InstructionSemantics2::BaseSemantics::SValuePtr
     instructionPointer(const InstructionSemantics2::BaseSemantics::RiscOperatorsPtr&) override;

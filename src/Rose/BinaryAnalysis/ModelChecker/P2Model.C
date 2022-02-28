@@ -679,65 +679,31 @@ RiscOperators::nInstructions(size_t n) {
     nInstructions_ = n;
 }
 
-size_t
-RiscOperators::pruneCallStack() {
-    size_t nPopped = 0;
+void
+RiscOperators::maybeInitCallStack(rose_addr_t insnVa) {
+    // If the call stack is empty, then push a record for the current function.
     if (computeMemoryRegions_) {
-        const RegisterDescriptor SP = partitioner_.instructionProvider().stackPointerRegister();
-        const BS::SValue::Ptr spSValue = peekRegister(SP, undefined_(SP.nBits()));
-        if (auto sp = spSValue->toUnsigned()) {
-
-            // Pop call records from the top of the stack
-            FunctionCallStack &callStack = State::promote(currentState())->callStack();
-            Sawyer::Optional<rose_addr_t> poppedInitialSp; // initial stack pointer of last function to be popped
-            while (!callStack.isEmpty() && callStack.top().initialStackPointer() < *sp) {
-                SAWYER_MESG(mlog[DEBUG]) <<"      returned from " <<callStack.top().function()->printableName() <<"\n";
-                poppedInitialSp = callStack.top().initialStackPointer();
-                callStack.pop();
-                ++nPopped;
+        FunctionCallStack &callStack = State::promote(currentState())->callStack();
+        if (callStack.isEmpty()) {
+            std::vector<P2::Function::Ptr> functions = partitioner_.functionsSpanning(insnVa);
+            P2::Function::Ptr function;
+            if (functions.empty()) {
+                SAWYER_MESG(mlog[WARN]) <<"no function containing instruction at " <<StringUtility::addrToString(insnVa) <<"\n";
+            } else if (functions.size() == 1) {
+                function = functions[0];
+            } else {
+                SAWYER_MESG(mlog[WARN]) <<"multiple functions containing instruction at " <<StringUtility::addrToString(insnVa) <<"\n";
+                function = functions[0];                    // arbitrary
             }
 
-            // Remove memory cells that are part of the stack for function calls we just popped.
-            if (poppedInitialSp) {
-                class IsPopped: public BS::MemoryCell::Predicate {
-                    SymbolicExpr::Ptr start;
-                public:
-                    explicit IsPopped(const SymbolicExpr::Ptr &start)
-                        : start(start) {}
-
-                    bool operator()(const BS::MemoryCell::Ptr &cell) const {
-                        SymbolicExpr::Ptr va = SValue::promote(cell->address())->get_expression();
-
-                        // Assume stack grows down, so we want to erase memory whose address is less than the address specified
-                        // in the constructor. For example, i386 will erase everything below the return address.
-                        SymbolicExpr::Ptr shouldDiscard = SymbolicExpr::makeLt(va, start);
-                        bool retval = shouldDiscard->mustEqual(SymbolicExpr::makeBooleanConstant(true));
-                        if (retval)
-                            SAWYER_MESG(mlog[DEBUG]) <<"        erasing memory at " <<*va <<"\n";
-                        return retval;
-                    }
-                };
-
-                rose_addr_t stackBoundary = *poppedInitialSp;
-                const std::string isaName = partitioner_.instructionProvider().disassembler()->name();
-                if ("i386" == isaName) {
-                    // x86 "call" pushes a 4-byte return address that's popped when the function returns. The stack grows down.
-                    stackBoundary += 4;
-                } else if ("amd64" == isaName) {
-                    // x86-64 "call" pushes an 8-byte return address that's popped when the function returns. Stack grows down.
-                    stackBoundary += 8;
-                } else if (boost::starts_with(isaName, "ppc32") || boost::starts_with(isaName, "ppc64")) {
-                    // PowerPC function calls don't push a return value.
-                } else {
-                    ASSERT_not_implemented("isaName = " + isaName);
-                }
-
-                auto mem = BS::MemoryCellState::promote(currentState()->memoryState());
-                mem->eraseMatchingCells(IsPopped(SymbolicExpr::makeIntegerConstant(32, stackBoundary)));
+            if (function) {
+                const RegisterDescriptor SP = partitioner_.instructionProvider().stackPointerRegister();
+                const BS::SValue::Ptr spSValue = peekRegister(SP, undefined_(SP.nBits()));
+                const rose_addr_t sp = spSValue->toUnsigned().get();      // must be concrete
+                pushCallStack(function, sp);
             }
         }
     }
-    return nPopped;
 }
 
 void
@@ -768,6 +734,115 @@ RiscOperators::pushCallStack(const P2::Function::Ptr &callee, rose_addr_t initia
         if (mlog[DEBUG])
             printCallStack(mlog[DEBUG]);
     }
+}
+
+void
+RiscOperators::popCallStack() {
+    FunctionCallStack &callStack = State::promote(currentState())->callStack();
+    ASSERT_forbid(callStack.isEmpty());
+    SAWYER_MESG(mlog[DEBUG]) <<"    returned from " <<callStack.top().function()->printableName() <<"\n";
+    Sawyer::Optional<rose_addr_t> poppedInitialSp = callStack.top().initialStackPointer();
+    callStack.pop();
+
+    // Predicate to determine whether a memory cell should be discarded. When popping a call from the call stack, we need to
+    // discard the stack frame for the function being popped. Assume that the stack grows down, therefore we need to discard
+    // any memory address less than the boundary address.
+    class IsPopped: public BS::MemoryCell::Predicate {
+        SymbolicExpr::Ptr lowBoundaryInclusive;
+        SymbolicExpr::Ptr highBoundaryExclusive;
+    public:
+        size_t nErased = 0;
+
+    public:
+        explicit IsPopped(const SymbolicExpr::Ptr &lowBoundaryInclusive, const SymbolicExpr::Ptr &highBoundaryExclusive)
+            : lowBoundaryInclusive(lowBoundaryInclusive), highBoundaryExclusive(highBoundaryExclusive) {}
+
+        bool operator()(const BS::MemoryCell::Ptr &cell) {
+            SymbolicExpr::Ptr va = SValue::promote(cell->address())->get_expression();
+            SymbolicExpr::Ptr stackGe = SymbolicExpr::makeGe(va, lowBoundaryInclusive);
+            SymbolicExpr::Ptr stackLt = SymbolicExpr::makeLt(va, highBoundaryExclusive);
+            SymbolicExpr::Ptr isDiscardable = SymbolicExpr::makeAnd(stackGe, stackLt);
+            bool retval = isDiscardable->mustEqual(SymbolicExpr::makeBooleanConstant(true));
+            if (retval) {
+                ++nErased;
+                SAWYER_MESG(mlog[DEBUG]) <<"        erasing memory cell " <<*cell <<"\n";
+            }
+            return retval;
+        }
+    };
+
+    // Figure out what memory addresses need to be erased. For instance, on x86 the caller's CALL instruction pushed a 4-byte
+    // return address onto the stack but this address is removed by the callee's RET instruction. Therefore the initial stack
+    // pointer for the callee will be off by four -- we need to remove all the stuff pushed by the callee, plus the four byte
+    // return value pushed by the caller.
+    if (poppedInitialSp) {
+        rose_addr_t stackBoundary = *poppedInitialSp;
+        const std::string isaName = partitioner_.instructionProvider().disassembler()->name();
+        if ("i386" == isaName) {
+            // x86 "call" pushes a 4-byte return address that's popped when the function returns. The stack grows down.
+            stackBoundary += 4;
+        } else if ("amd64" == isaName) {
+            // x86-64 "call" pushes an 8-byte return address that's popped when the function returns. Stack grows down.
+            stackBoundary += 8;
+        } else if (boost::starts_with(isaName, "ppc32") || boost::starts_with(isaName, "ppc64")) {
+            // PowerPC function calls don't push a return value.
+        } else {
+            ASSERT_not_implemented("isaName = " + isaName);
+        }
+
+        const size_t wordSize = partitioner_.instructionProvider().wordSize();
+        ASSERT_require(wordSize > 8 && wordSize <= 64);
+        SymbolicExpr::Ptr highBoundaryExclusive = SymbolicExpr::makeIntegerConstant(wordSize, stackBoundary);
+        SymbolicExpr::Ptr lowBoundaryInclusive = SymbolicExpr::makeIntegerConstant(wordSize, stackLimits_.least());
+        SAWYER_MESG(mlog[DEBUG]) <<"      initial stack pointer = " <<StringUtility::addrToString(*poppedInitialSp) <<"\n"
+                                 <<"      erasing memory between " <<*lowBoundaryInclusive <<" (inclusive) and "
+                                 <<*highBoundaryExclusive <<" (exclusive)\n";
+        auto mem = BS::MemoryCellState::promote(currentState()->memoryState());
+        IsPopped predicate(lowBoundaryInclusive, highBoundaryExclusive);
+        mem->eraseMatchingCells(predicate);
+        if (mlog[DEBUG] && predicate.nErased > 0) {
+            BS::Formatter fmt;
+            fmt.set_line_prefix("        ");
+            mlog[DEBUG] <<"      memory state after erasures:\n" <<(*mem + fmt);
+        }
+    }
+}
+
+size_t
+RiscOperators::pruneCallStack() {
+    size_t nPopped = 0;
+    if (computeMemoryRegions_) {
+        FunctionCallStack &callStack = State::promote(currentState())->callStack();
+
+        // Pop call frames that are beyond the current top of stack
+        const RegisterDescriptor SP = partitioner_.instructionProvider().stackPointerRegister();
+        auto sp = peekRegister(SP, undefined_(SP.nBits()))->toUnsigned();
+        if (sp) {
+            Sawyer::Optional<rose_addr_t> poppedInitialSp; // initial stack pointer of last function to be popped
+            while (!callStack.isEmpty() && callStack.top().initialStackPointer() < *sp) {
+                popCallStack();
+                ++nPopped;
+            }
+        }
+
+        // On ISAs that use a link register, if the current top of stack is the same as the initial stack pointer for the top
+        // callee, and the current instruction pointer is the same as the link register, then we must have just returned from
+        // that function, so pop it.
+        if (!callStack.isEmpty() && sp && callStack.top().initialStackPointer() == *sp) {
+            const RegisterDescriptor IP = partitioner_.instructionProvider().instructionPointerRegister();
+            const RegisterDescriptor LR = partitioner_.instructionProvider().callReturnRegister();
+            if (IP && LR) {
+                auto ip = peekRegister(IP, undefined_(IP.nBits()))->toUnsigned();
+                auto lr = peekRegister(LR, undefined_(LR.nBits()))->toUnsigned();
+                if (ip && lr && *ip == *lr) {
+                    popCallStack();
+                    ++nPopped;
+                }
+            }
+        }
+    }
+
+    return nPopped;
 }
 
 void
@@ -854,40 +929,6 @@ RiscOperators::assignRegion(const BS::SValue::Ptr &result, const BS::SValue::Ptr
         }
     }
     return result;
-}
-
-void
-RiscOperators::startInstruction(SgAsmInstruction *insn) {
-    Super::startInstruction(insn);
-
-    // Remove stale function calls
-    if (pruneCallStack() && mlog[DEBUG])
-        printCallStack(mlog[DEBUG]);
-
-    // If the call stack is empty, then push a record for the current function.
-    if (computeMemoryRegions_) {
-        const rose_addr_t va = insn->get_address();
-        FunctionCallStack &callStack = State::promote(currentState())->callStack();
-        if (callStack.isEmpty()) {
-            std::vector<P2::Function::Ptr> functions = partitioner_.functionsSpanning(va);
-            P2::Function::Ptr function;
-            if (functions.empty()) {
-                SAWYER_MESG(mlog[WARN]) <<"no function containing instruction at " <<StringUtility::addrToString(va) <<"\n";
-            } else if (functions.size() == 1) {
-                function = functions[0];
-            } else {
-                SAWYER_MESG(mlog[WARN]) <<"multiple functions containing instruction at " <<StringUtility::addrToString(va) <<"\n";
-                function = functions[0];                    // arbitrary
-            }
-
-            if (function) {
-                const RegisterDescriptor SP = partitioner_.instructionProvider().stackPointerRegister();
-                const BS::SValue::Ptr spSValue = peekRegister(SP, undefined_(SP.nBits()));
-                const rose_addr_t sp = spSValue->toUnsigned().get();      // must be concrete
-                pushCallStack(function, sp);
-            }
-        }
-    }
 }
 
 void
@@ -1308,14 +1349,19 @@ SemanticCallbacks::attachModelCheckerSolver(const BS::RiscOperators::Ptr &ops, c
 }
 
 std::vector<Tag::Ptr>
-SemanticCallbacks::preExecute(const ExecutionUnit::Ptr &unit, const BS::RiscOperators::Ptr &ops) {
-    RiscOperators::promote(ops)->nInstructions(0);
+SemanticCallbacks::preExecute(const ExecutionUnit::Ptr &unit, const BS::RiscOperators::Ptr &ops_) {
+    auto ops = RiscOperators::promote(ops_);
+    ops->nInstructions(0);
 
     // Track which basic blocks (or instructions) were reached
     if (auto va = unit->address()) {
         SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
         ++unitsReached_.insertMaybe(*va, 0);
     }
+
+    // Remove stale function calls, but make sure there's at least one function call
+    ops->pruneCallStack();
+    ops->maybeInitCallStack(unit->address().orElse(0));
 
     // Debugging
     if (mlog[DEBUG]) {
@@ -1341,6 +1387,20 @@ SemanticCallbacks::preExecute(const ExecutionUnit::Ptr &unit, const BS::RiscOper
         if (callStack.isEmpty())
             mlog[DEBUG] <<"    empty\n";
     }
+
+    return {};
+}
+
+std::vector<Tag::Ptr>
+SemanticCallbacks::postExecute(const ExecutionUnit::Ptr &unit, const BS::RiscOperators::Ptr &ops_) {
+    ASSERT_not_null(unit);
+    ASSERT_not_null(ops_);
+
+    auto ops = RiscOperators::promote(ops_);
+
+    // Remove stale function calls, but make sure there's at least one function call
+    ops->pruneCallStack();
+    ops->maybeInitCallStack(unit->address().orElse(0));
 
     return {};
 }
