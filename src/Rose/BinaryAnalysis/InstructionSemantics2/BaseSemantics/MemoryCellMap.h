@@ -114,10 +114,10 @@ public:
     virtual void writeMemory(const SValuePtr &address, const SValuePtr &value,
                              RiscOperators *addrOps, RiscOperators *valOps) override;
     virtual void print(std::ostream&, Formatter&) const override;
-    virtual std::vector<MemoryCellPtr> matchingCells(const MemoryCell::Predicate&) const override;
-    virtual std::vector<MemoryCellPtr> leadingCells(const MemoryCell::Predicate&) const override;
-    virtual void eraseMatchingCells(const MemoryCell::Predicate&) override;
-    virtual void eraseLeadingCells(const MemoryCell::Predicate&) override;
+    virtual std::vector<MemoryCellPtr> matchingCells(MemoryCell::Predicate&) const override;
+    virtual std::vector<MemoryCellPtr> leadingCells(MemoryCell::Predicate&) const override;
+    virtual void eraseMatchingCells(MemoryCell::Predicate&) override;
+    virtual void eraseLeadingCells(MemoryCell::Predicate&) override;
     virtual void traverse(MemoryCell::Visitor&) override;
     virtual AddressSet getWritersUnion(const SValuePtr &addr, size_t nBits, RiscOperators *addrOps,
                                        RiscOperators *valOps) override;

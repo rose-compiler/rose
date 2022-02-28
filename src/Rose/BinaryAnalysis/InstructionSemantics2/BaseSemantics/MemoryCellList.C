@@ -444,7 +444,7 @@ MemoryCellList::print(std::ostream &stream, Formatter &fmt) const
 }
 
 std::vector<MemoryCellPtr>
-MemoryCellList::matchingCells(const MemoryCell::Predicate &p) const {
+MemoryCellList::matchingCells(MemoryCell::Predicate &p) const {
     std::vector<MemoryCellPtr> retval;
     for (const MemoryCellPtr &cell: cells) {
         if (p(cell))
@@ -454,7 +454,7 @@ MemoryCellList::matchingCells(const MemoryCell::Predicate &p) const {
 }
 
 std::vector<MemoryCellPtr>
-MemoryCellList::leadingCells(const MemoryCell::Predicate &p) const {
+MemoryCellList::leadingCells(MemoryCell::Predicate &p) const {
     std::vector<MemoryCellPtr> retval;
     for (const MemoryCellPtr &cell: cells) {
         if (!p(cell))
@@ -465,7 +465,7 @@ MemoryCellList::leadingCells(const MemoryCell::Predicate &p) const {
 }
 
 void
-MemoryCellList::eraseMatchingCells(const MemoryCell::Predicate &p) {
+MemoryCellList::eraseMatchingCells(MemoryCell::Predicate &p) {
     CellList::iterator ci = cells.begin();
     while (ci != cells.end()) {
         if (p(*ci)) {
@@ -477,7 +477,7 @@ MemoryCellList::eraseMatchingCells(const MemoryCell::Predicate &p) {
 }
 
 void
-MemoryCellList::eraseLeadingCells(const MemoryCell::Predicate &p) {
+MemoryCellList::eraseLeadingCells(MemoryCell::Predicate &p) {
     CellList::iterator ci = cells.begin();
     while (ci != cells.end()) {
         if (p(*ci)) {

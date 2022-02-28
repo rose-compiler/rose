@@ -35,7 +35,7 @@ MemoryCell::MemoryCell(const MemoryCell &other)
 MemoryCell::~MemoryCell() {}
 
 bool
-MemoryCell::NonWrittenCells::operator()(const MemoryCellPtr &cell) const {
+MemoryCell::NonWrittenCells::operator()(const MemoryCellPtr &cell) {
     return cell->getWriters().isEmpty();
 }
 

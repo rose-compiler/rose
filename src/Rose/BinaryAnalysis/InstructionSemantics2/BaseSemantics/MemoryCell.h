@@ -41,14 +41,16 @@ public:
     public:
         virtual ~Predicate() {};
 
-        /** Invoked for some cell. The predicate must not modify the cell. */
-        virtual bool operator()(const MemoryCellPtr&) const = 0;
+        /** Invoked for some cell.
+         *
+         *  The predicate must not modify the cell. */
+        virtual bool operator()(const MemoryCellPtr&) = 0;
     };
 
     /** Predicate that always returns true. */
     class AllCells: public Predicate {
     public:
-        virtual bool operator()(const MemoryCellPtr&) const override {
+        virtual bool operator()(const MemoryCellPtr&) override {
             return true;
         }
     };
@@ -58,7 +60,7 @@ public:
      *  Returns true if a cell has no writers. */
     class NonWrittenCells: public Predicate {
     public:
-        virtual bool operator()(const MemoryCellPtr&) const override;
+        virtual bool operator()(const MemoryCellPtr&) override;
     };
 
 private:

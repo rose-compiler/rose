@@ -189,7 +189,7 @@ MemoryCellMap::traverse(MemoryCell::Visitor &visitor) {
 }
     
 std::vector<MemoryCellPtr>
-MemoryCellMap::matchingCells(const MemoryCell::Predicate &p) const {
+MemoryCellMap::matchingCells(MemoryCell::Predicate &p) const {
     std::vector<MemoryCellPtr> retval;
     for (const MemoryCellPtr &cell: cells.values()) {
         if (p(cell))
@@ -199,7 +199,7 @@ MemoryCellMap::matchingCells(const MemoryCell::Predicate &p) const {
 }
 
 std::vector<MemoryCellPtr>
-MemoryCellMap::leadingCells(const MemoryCell::Predicate &p) const {
+MemoryCellMap::leadingCells(MemoryCell::Predicate &p) const {
     std::vector<MemoryCellPtr> retval;
     for (const MemoryCellPtr &cell: cells.values()) {
         if (!p(cell))
@@ -210,7 +210,7 @@ MemoryCellMap::leadingCells(const MemoryCell::Predicate &p) const {
 }
 
 void
-MemoryCellMap::eraseMatchingCells(const MemoryCell::Predicate &p) {
+MemoryCellMap::eraseMatchingCells(MemoryCell::Predicate &p) {
     CellMap tmp = cells;
     for (const CellMap::Node &cell: tmp.nodes()) {
         if (p(cell.value()))
@@ -219,7 +219,7 @@ MemoryCellMap::eraseMatchingCells(const MemoryCell::Predicate &p) {
 }
 
 void
-MemoryCellMap::eraseLeadingCells(const MemoryCell::Predicate &p) {
+MemoryCellMap::eraseLeadingCells(MemoryCell::Predicate &p) {
     CellMap tmp = cells;
     for (const CellMap::Node &cell: tmp.nodes()) {
         if (!p(cell.value()))
