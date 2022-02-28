@@ -19777,9 +19777,12 @@ void SageInterface::markNodeToBeUnparsed(SgNode* node, int physical_file_id)
           locatedNode->setTransformation();
           locatedNode->setOutputInCodeGeneration();
 
-       // DQ (10/26/2020): Set the physical_file_id, required for ueader file unparsing (is it?).
+       // DQ (10/26/2020): Set the physical_file_id, required for header file unparsing (is it?).
           if (locatedNode->get_file_info() != NULL)
              {
+#if 1
+               printf ("In SageInterface::markNodeToBeUnparsed(): locatedNode = %p = %s calling set_physical_file_id(%d) \n",locatedNode,locatedNode->class_name().c_str(),physical_file_id);
+#endif
                locatedNode->get_file_info()->set_physical_file_id(physical_file_id);
              }
             else
@@ -19811,7 +19814,7 @@ void SageInterface::markSubtreeToBeUnparsed(SgNode* root, int physical_file_id)
                printf ("In global scope: *i = %p = %s \n",*i,(*i)->class_name().c_str());
              }
 #endif
-#if 0
+#if 1
           printf ("In markSubtreeToBeUnparsed(): Calling markNodeToBeUnparsed(): *i = %p = %s physical_file_id = %d \n",*i,(*i)->class_name().c_str(),physical_file_id);
 #endif
           markNodeToBeUnparsed(*i,physical_file_id);
