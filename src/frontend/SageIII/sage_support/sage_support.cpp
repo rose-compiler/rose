@@ -6565,7 +6565,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
   // DQ (4/21/2006): I think we can now assert this!
      ROSE_ASSERT(fileNameIndex == 0);
 
-#if 0
+#if 1
      printf ("Inside of SgFile::compileOutput() \n");
 #endif
 
@@ -6911,7 +6911,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                   }
              }
 
-#if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS || 0
+#if DEBUG_PROJECT_COMPILE_COMMAND_LINE_WITH_ARGS || 1
        // DQ (2/6/2022): Set to "1" to output the backend compiler command line.
           printf ("In SgFile::compileOutput(): Calling systemFromVector(): compilerCmdLine = \n%s\n",CommandlineProcessing::generateStringFromArgList(compilerCmdLine,false,false).c_str());
 #endif
@@ -6920,7 +6920,7 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
        // CAVE3 double check that is correct and shouldn't be compilerCmdLine
           returnValueForCompiler = systemFromVector (compilerCmdLine);
 
-#if 0
+#if 1
           printf ("In SgFile::compileOutput(): Calling systemFromVector(): returnValueForCompiler = %d \n",returnValueForCompiler);
 #endif
 
@@ -6969,15 +6969,28 @@ SgFile::compileOutput ( vector<string>& argv, int fileNameIndex )
                // Note that the fact that Javac fails on the original input does not prove that
                // the unparsed file is correct. It simply proves that the input file is incorrect.
                //
-               else if (get_Java_only() == true) {
-                   compilerCmdLine[compilerCmdLine.size() - 1] = this -> get_sourceFileNameWithPath();
-                   int original_code = systemFromVector(compilerCmdLine);
-                   if (original_code != 0) { // The original file is erroneous too?
-                       returnValueForCompiler = 0;
-                       this->set_backendCompilerErrorCode(0);
-                       this -> set_ecjErrorCode(1); // Report this error as an ECJ error.
-                   }
-               }
+                 else 
+                  {
+                    if (get_Java_only() == true) 
+                       {
+                         compilerCmdLine[compilerCmdLine.size() - 1] = this -> get_sourceFileNameWithPath();
+                         int original_code = systemFromVector(compilerCmdLine);
+                         if (original_code != 0) 
+                            { // The original file is erroneous too?
+                              returnValueForCompiler = 0;
+                              this->set_backendCompilerErrorCode(0);
+                              this -> set_ecjErrorCode(1); // Report this error as an ECJ error.
+                            }
+                       }
+                      else
+                       {
+                      // DQ (2/7/2022): Allow the multi-file handling support to optionally exit after the first error (important for work with C/C++ tools).
+#if 1
+                         printf ("Exiting with an error in the backend compilation! \n");
+                         ROSE_ASSERT(false);
+#endif
+                       }
+                  }
              }
 
           //
