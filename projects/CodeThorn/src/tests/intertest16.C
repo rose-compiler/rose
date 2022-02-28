@@ -1,4 +1,4 @@
-// test inter-procedural propagation of constraints 
+// test inter-procedural propagation of constraints SAWYER_MESG(logger[TRACE])
 // 1. with function arguments
 // 2. on function return
 
