@@ -1936,6 +1936,9 @@ struct DeferredTransformation
 //! Function to delete AST subtree's nodes only, users must take care of any dangling pointers, symbols or types that result.
 ROSE_DLL_API void deleteAST(SgNode* node);
 
+// DQ (2/13/2022): Adding support to delete the whole AST (every SgNode).
+ROSE_DLL_API void deleteAllNodes();
+
 //! Special purpose function for deleting AST expression tress containing valid original expression trees in constant folded expressions (for internal use only).
 ROSE_DLL_API void deleteExpressionTreeWithOriginalExpressionSubtrees(SgNode* root);
 

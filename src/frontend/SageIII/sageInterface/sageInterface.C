@@ -119,6 +119,9 @@ namespace SageInterface {
 // DQ (3/4/2014): We need this feature to support the function: isStructurallyEquivalentAST().
 #include "RoseAst.h"
 
+// DQ (2/13/2022): We need this feature to support the function: deleteAllNodes().
+#include "AST_FILE_IO.h"
+
 
 // DQ (11/25/2020): Add support to set this as a specific language kind file (there is at least one language kind file processed by ROSE).
 // The value of 0 allows the old implementation to be tested, and the value of 1 allows the new optimized implementation to be tested.
@@ -152,6 +155,93 @@ namespace SageInterface
   // DQ (1/18/2015): Save the SgBasicBlock that has been added so that we can undo this transformation later.
      vector<SgBasicBlock*> addedBasicBlockNodes;
    }
+
+
+#if 1
+// DQ (2/13/2022): Adding support to delete the whole AST (every SgNode).
+void
+SageInterface::deleteAllNodes()
+   {
+  // This function uses a memory pool traversal specific to the SgFile IR nodes
+
+  // We need to use this function to get all of the SgNodes.
+  // template <typename NodeType> std::vector<NodeType*> getSgNodeListFromMemoryPool()
+
+     class MyTraversal : public ROSE_VisitTraversal
+        {
+          public:
+               std::vector<SgNode*> resultlist;
+               void visit ( SgNode* node)
+                  {
+                    SgNode* result = dynamic_cast<SgNode*>(node);
+                    ROSE_ASSERT(result != NULL);
+#if 0
+                    printf ("In SageInterface::deleteAllNodes(): result = %p = %s \n",result,result->class_name().c_str());
+#endif
+#if 0
+                    if (result != NULL)
+                       {
+                         resultlist.push_back(result);
+                       }
+#else
+                    resultlist.push_back(result);
+#endif
+                  };
+
+           virtual ~MyTraversal() {}
+        };
+
+  // For debugging, recode the number of IR nodes before we delete the AST.
+     size_t numberOfNodes_before = numberOfNodes();
+
+     MyTraversal my_traversal;
+
+  // We need to visit all of the IR nodes, not just those of a specific class in ROSE.
+  // NodeType::traverseMemoryPoolNodes(my_traversal);
+     my_traversal.traverseMemoryPool();
+
+  // return my_traversal.resultlist;
+
+
+  // vector<SgNode*> nodeList = getSgNodeListFromMemoryPool<SgNode>();
+     vector<SgNode*> & nodeList = my_traversal.resultlist;
+
+     printf ("In SageInterface::deleteAllNodes(): get list of SgNode: nodeList.size() = %zu \n",nodeList.size());
+
+     vector<SgNode*>::iterator i = nodeList.begin();
+
+  // This loop will call the delete operator on all of the IR nodes in the AST.
+     while (i != nodeList.end())
+        {
+          SgNode* node = *i;
+#if 0
+       // It is an error to be calling get_name() while so many nodes are being deleted.
+       // printf (" --- calling delete (and thus the destructor) node = %p = %s name = %s \n",node,node->class_name().c_str(),SageInterface::get_name(node).c_str());
+          printf (" --- calling delete (and thus the destructor) node = %p = %s \n",node,node->class_name().c_str());
+#endif
+          delete node;
+          node = NULL;
+
+          i++;
+        }
+
+#if 0
+  // This demonstrates that this function only visits the specific IR node that is used as a template parameter.
+     vector<SgFunctionDeclaration*> functionDeclarationList = getSgNodeListFromMemoryPool<SgFunctionDeclaration>();
+     printf ("In SageInterface::deleteAllNodes(): get list of SgFunctionDeclaration: functionDeclarationList.size() = %zu \n",functionDeclarationList.size());
+#endif
+
+  // Now we need to delete the memory pools (implemented by ROSETTA).
+     AST_FILE_IO::clearAllMemoryPools();
+
+     size_t numberOfNodes_after = numberOfNodes();
+
+#if 1
+     printf ("Leaving SageInterface::deleteAllNodes(): numberOfNodes_before = %zu numberOfNodes_after = %zu \n",numberOfNodes_before,numberOfNodes_after);
+#endif
+   }
+#endif
+
 
 void
 SageInterface::DeclarationSets::addDeclaration(SgDeclarationStatement* decl)
