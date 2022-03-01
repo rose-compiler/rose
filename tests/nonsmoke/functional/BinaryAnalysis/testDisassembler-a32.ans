@@ -110,1206 +110,1254 @@ L84   0x00000000: ff 2f 11 02               ?? ands.eq  r2, r1, 0x000003fc<1020>
 L85   
 L86   ################################################################################
 L87   
-L88   # beq #8
-L89   0x00 0x00 0x00 0x0a
-L89   0x00000000: 00 00 00 0a               ?? b.eq     8                                        ; branch
+L88   # asr.eq r1, r2, #1
+L89   0xc2 0x10 0xa0 0x01
+L89   0x00000000: c2 10 a0 01               ?? mov      r1, asr(r2, 1)                           ; move
 L90   
 L91   ################################################################################
 L92   
-L93   # bfceq r1, #8, #8
-L94   0x1f 0x14 0xcf 0x07
-L94   0x00000000: 1f 14 cf 07               ?? bfc.eq   r1, 8, 8                                 ; bitfield clear
+L93   # beq #8
+L94   0x00 0x00 0x00 0x0a
+L94   0x00000000: 00 00 00 0a               ?? b.eq     8                                        ; branch
 L95   
 L96   ################################################################################
 L97   
-L98   # bfieq r1, r2, #8, #8
-L99   0x12 0x14 0xcf 0x07
-L99   0x00000000: 12 14 cf 07               ?? bfi.eq   r1, r2, 8, 8                             ; bitfield insert
+L98   # bfceq r1, #8, #8
+L99   0x1f 0x14 0xcf 0x07
+L99   0x00000000: 1f 14 cf 07               ?? bfc.eq   r1, 8, 8                                 ; bitfield clear
 L100  
 L101  ################################################################################
 L102  
-L103  # bleq #8
-L104  0x00 0x00 0x00 0x0b
-L104  0x00000000: 00 00 00 0b               ?? bl.eq    8                                        ; branch with link
+L103  # bfieq r1, r2, #8, #8
+L104  0x12 0x14 0xcf 0x07
+L104  0x00000000: 12 14 cf 07               ?? bfi.eq   r1, r2, 8, 8                             ; bitfield insert
 L105  
-L106  # bleq #0
-L107  0xfe 0xff 0xff 0x0b
-L107  0x00000000: fe ff ff 0b               ?? bl.eq    0                                        ; branch with link
-L108  
-L109  # blne #0
-L110  0xfe 0xff 0xff 0x1b
-L110  0x00000000: fe ff ff 1b               ?? bl.ne    0                                        ; branch with link
-L111  
-L112  # blhs #0
-L113  0xfe 0xff 0xff 0x2b
-L113  0x00000000: fe ff ff 2b               ?? bl.hs    0                                        ; branch with link
-L114  
-L115  # bllo #0
-L116  0xfe 0xff 0xff 0x3b
-L116  0x00000000: fe ff ff 3b               ?? bl.lo    0                                        ; branch with link
-L117  
-L118  # blmi #0
-L119  0xfe 0xff 0xff 0x4b
-L119  0x00000000: fe ff ff 4b               ?? bl.mi    0                                        ; branch with link
-L120  
-L121  # blpl #0
-L122  0xfe 0xff 0xff 0x5b
-L122  0x00000000: fe ff ff 5b               ?? bl.pl    0                                        ; branch with link
-L123  
-L124  # blvs #0
-L125  0xfe 0xff 0xff 0x6b
-L125  0x00000000: fe ff ff 6b               ?? bl.vs    0                                        ; branch with link
-L126  
-L127  # blvc #0
-L128  0xfe 0xff 0xff 0x7b
-L128  0x00000000: fe ff ff 7b               ?? bl.vc    0                                        ; branch with link
-L129  
-L130  # blhi #0
-L131  0xfe 0xff 0xff 0x8b
-L131  0x00000000: fe ff ff 8b               ?? bl.hi    0                                        ; branch with link
-L132  
-L133  # blls #0
-L134  0xfe 0xff 0xff 0x9b
-L134  0x00000000: fe ff ff 9b               ?? bl.ls    0                                        ; branch with link
-L135  
-L136  # blge #0
-L137  0xfe 0xff 0xff 0xab
-L137  0x00000000: fe ff ff ab               ?? bl.ge    0                                        ; branch with link
-L138  
-L139  # bllt #0
-L140  0xfe 0xff 0xff 0xbb
-L140  0x00000000: fe ff ff bb               ?? bl.lt    0                                        ; branch with link
-L141  
-L142  # blgt #0
-L143  0xfe 0xff 0xff 0xcb
-L143  0x00000000: fe ff ff cb               ?? bl.gt    0                                        ; branch with link
-L144  
-L145  # blle #0
-L146  0xfe 0xff 0xff 0xdb
-L146  0x00000000: fe ff ff db               ?? bl.le    0                                        ; branch with link
-L147  
-L148  # bl #0
-L149  0xfe 0xff 0xff 0xeb
-L149  0x00000000: fe ff ff eb               ?? bl       0                                        ; branch with link
-L150  
-L151  ################################################################################
+L106  ################################################################################
+L107  
+L108  # bleq #8
+L109  0x00 0x00 0x00 0x0b
+L109  0x00000000: 00 00 00 0b               ?? bl.eq    8                                        ; branch with link
+L110  
+L111  # bleq #0
+L112  0xfe 0xff 0xff 0x0b
+L112  0x00000000: fe ff ff 0b               ?? bl.eq    0                                        ; branch with link
+L113  
+L114  # blne #0
+L115  0xfe 0xff 0xff 0x1b
+L115  0x00000000: fe ff ff 1b               ?? bl.ne    0                                        ; branch with link
+L116  
+L117  # blhs #0
+L118  0xfe 0xff 0xff 0x2b
+L118  0x00000000: fe ff ff 2b               ?? bl.hs    0                                        ; branch with link
+L119  
+L120  # bllo #0
+L121  0xfe 0xff 0xff 0x3b
+L121  0x00000000: fe ff ff 3b               ?? bl.lo    0                                        ; branch with link
+L122  
+L123  # blmi #0
+L124  0xfe 0xff 0xff 0x4b
+L124  0x00000000: fe ff ff 4b               ?? bl.mi    0                                        ; branch with link
+L125  
+L126  # blpl #0
+L127  0xfe 0xff 0xff 0x5b
+L127  0x00000000: fe ff ff 5b               ?? bl.pl    0                                        ; branch with link
+L128  
+L129  # blvs #0
+L130  0xfe 0xff 0xff 0x6b
+L130  0x00000000: fe ff ff 6b               ?? bl.vs    0                                        ; branch with link
+L131  
+L132  # blvc #0
+L133  0xfe 0xff 0xff 0x7b
+L133  0x00000000: fe ff ff 7b               ?? bl.vc    0                                        ; branch with link
+L134  
+L135  # blhi #0
+L136  0xfe 0xff 0xff 0x8b
+L136  0x00000000: fe ff ff 8b               ?? bl.hi    0                                        ; branch with link
+L137  
+L138  # blls #0
+L139  0xfe 0xff 0xff 0x9b
+L139  0x00000000: fe ff ff 9b               ?? bl.ls    0                                        ; branch with link
+L140  
+L141  # blge #0
+L142  0xfe 0xff 0xff 0xab
+L142  0x00000000: fe ff ff ab               ?? bl.ge    0                                        ; branch with link
+L143  
+L144  # bllt #0
+L145  0xfe 0xff 0xff 0xbb
+L145  0x00000000: fe ff ff bb               ?? bl.lt    0                                        ; branch with link
+L146  
+L147  # blgt #0
+L148  0xfe 0xff 0xff 0xcb
+L148  0x00000000: fe ff ff cb               ?? bl.gt    0                                        ; branch with link
+L149  
+L150  # blle #0
+L151  0xfe 0xff 0xff 0xdb
+L151  0x00000000: fe ff ff db               ?? bl.le    0                                        ; branch with link
 L152  
-L153  # biceq r2, r1, #0x3fc
-L154  0xff 0x2f 0xc1 0x03
-L154  0x00000000: ff 2f c1 03               ?? bic.eq   r2, r1, 0x000003fc<1020>                 ; bitwise bit clear
+L153  # bl #0
+L154  0xfe 0xff 0xff 0xeb
+L154  0x00000000: fe ff ff eb               ?? bl       0                                        ; branch with link
 L155  
-L156  # bicseq r2, r1, #0x3fc
-L157  0xff 0x2f 0xd1 0x03
-L157  0x00000000: ff 2f d1 03               ?? bics.eq  r2, r1, 0x000003fc<1020>                 ; bitwise bit clear
-L158  
-L159  ################################################################################
-L160              
-L161  # blx #0x1008
-L162  0x00 0x00 0x00 0xfa
-L162  0x00000000: 00 00 00 fa               ?? blx      8                                        ; branch with link and exchange
+L156  ################################################################################
+L157  
+L158  # biceq r2, r1, #0x3fc
+L159  0xff 0x2f 0xc1 0x03
+L159  0x00000000: ff 2f c1 03               ?? bic.eq   r2, r1, 0x000003fc<1020>                 ; bitwise bit clear
+L160  
+L161  # bicseq r2, r1, #0x3fc
+L162  0xff 0x2f 0xd1 0x03
+L162  0x00000000: ff 2f d1 03               ?? bics.eq  r2, r1, 0x000003fc<1020>                 ; bitwise bit clear
 L163  
 L164  ################################################################################
-L165  
-L166  # bxeq r1
-L167  0x11 0xff 0x2f 0x01
-L167  0x00000000: 11 ff 2f 01               ?? bx.eq    r1                                       ; branch and exchange
+L165              
+L166  # blx #0x1008
+L167  0x00 0x00 0x00 0xfa
+L167  0x00000000: 00 00 00 fa               ?? blx      8                                        ; branch with link and exchange
 L168  
 L169  ################################################################################
 L170  
-L171  # clzeq r1, r2
-L172  0x12 0x1f 0x6f 0x01
-L172  0x00000000: 12 1f 6f 01               ?? clz.eq   r1, r2                                   ; count leading zeros
+L171  # bxeq r1
+L172  0x11 0xff 0x2f 0x01
+L172  0x00000000: 11 ff 2f 01               ?? bx.eq    r1                                       ; branch and exchange
 L173  
 L174  ################################################################################
 L175  
-L176  # cmneq r1, #0x3fc
-L177  0xff 0x0f 0x71 0x03
-L177  0x00000000: ff 0f 71 03               ?? cmn.eq   r1, 0x000003fc<1020>                     ; compare negative
+L176  # clzeq r1, r2
+L177  0x12 0x1f 0x6f 0x01
+L177  0x00000000: 12 1f 6f 01               ?? clz.eq   r1, r2                                   ; count leading zeros
 L178  
 L179  ################################################################################
 L180  
-L181  # cmpeq r1, #0x3fc
-L182  0xff 0x0f 0x51 0x03
-L182  0x00000000: ff 0f 51 03               ?? cmp.eq   r1, 0x000003fc<1020>                     ; compare
+L181  # cmneq r1, #0x3fc
+L182  0xff 0x0f 0x71 0x03
+L182  0x00000000: ff 0f 71 03               ?? cmn.eq   r1, 0x000003fc<1020>                     ; compare negative
 L183  
-L184  # cmpeq r1, r3, ror #31
-L185  0xe3 0x0f 0x51 0x01
-L185  0x00000000: e3 0f 51 01               ?? cmp.eq   r1, ror(r3, 0x0000001f<31>)              ; compare
-L186  
-L187  # cmpeq r1, r3, ror r2
-L188  0x73 0x02 0x51 0x01
-L188  0x00000000: 73 02 51 01               ?? cmp.eq   r1, ror(r3, r2)                          ; compare
-L189  
-L190  ################################################################################
+L184  ################################################################################
+L185  
+L186  # cmpeq r1, #0x3fc
+L187  0xff 0x0f 0x51 0x03
+L187  0x00000000: ff 0f 51 03               ?? cmp.eq   r1, 0x000003fc<1020>                     ; compare
+L188  
+L189  # cmpeq r1, r3, ror #31
+L190  0xe3 0x0f 0x51 0x01
+L190  0x00000000: e3 0f 51 01               ?? cmp.eq   r1, ror(r3, 0x0000001f<31>)              ; compare
 L191  
-L192  # cps #1
-L193  0x01 0x00 0x02 0xf1
-L193  0x00000000: 01 00 02 f1               ?? cps      1                                        ; change PE state
+L192  # cmpeq r1, r3, ror r2
+L193  0x73 0x02 0x51 0x01
+L193  0x00000000: 73 02 51 01               ?? cmp.eq   r1, ror(r3, r2)                          ; compare
 L194  
-L195  # cpsid none, #1
-L196  0x01 0x00 0x0e 0xf1
-L196  0x00000000: 01 00 0e f1               ?? cpsid    1                                        ; change PE state
-L197  
-L198  # cpsie none, #1
-L199  0x01 0x00 0x0a 0xf1
-L199  0x00000000: 01 00 0a f1               ?? cpsie    1                                        ; change PE state
-L200  
-L201  ################################################################################
+L195  ################################################################################
+L196  
+L197  # cps #1
+L198  0x01 0x00 0x02 0xf1
+L198  0x00000000: 01 00 02 f1               ?? cps      1                                        ; change PE state
+L199  
+L200  # cpsid none, #1
+L201  0x01 0x00 0x0e 0xf1
+L201  0x00000000: 01 00 0e f1               ?? cpsid    1                                        ; change PE state
 L202  
-L203  # eoreq r2, r1, #0x3fc
-L204  0xff 0x2f 0x21 0x02
-L204  0x00000000: ff 2f 21 02               ?? eor.eq   r2, r1, 0x000003fc<1020>                 ; bitwise exclusive OR
+L203  # cpsie none, #1
+L204  0x01 0x00 0x0a 0xf1
+L204  0x00000000: 01 00 0a f1               ?? cpsie    1                                        ; change PE state
 L205  
-L206  # eoreq pc, r1, #0x3fc
-L207  0xff 0xff 0x21 0x02
-L207  0x00000000: ff ff 21 02               ?? eor.eq   pc, r1, 0x000003fc<1020>                 ; bitwise exclusive OR
-L208  
-L209  # eorseq r2, r1, #0x3fc
-L210  0xff 0x2f 0x31 0x02
-L210  0x00000000: ff 2f 31 02               ?? eors.eq  r2, r1, 0x000003fc<1020>                 ; bitwise exclusive OR
-L211  
-L212  # eoreq r2, r1, r3, asr #31
-L213  0xc3 0x2f 0x21 0x00
-L213  0x00000000: c3 2f 21 00               ?? eor.eq   r2, r1, asr(r3, 0x0000001f<31>)          ; bitwise exclusive OR
-L214  
-L215  # eorseq r2, r1, r3, asr #31
-L216  0xc3 0x2f 0x31 0x00
-L216  0x00000000: c3 2f 31 00               ?? eors.eq  r2, r1, asr(r3, 0x0000001f<31>)          ; bitwise exclusive OR
-L217  
-L218  # eoreq r2, r1, r4, ror r3
-L219  0x74 0x23 0x21 0x00
-L219  0x00000000: 74 23 21 00               ?? eor.eq   r2, r1, ror(r4, r3)                      ; bitwise exclusive OR
-L220  
-L221  # eorseq r2, r1, r4, ror r3
-L222  0x74 0x23 0x31 0x00
-L222  0x00000000: 74 23 31 00               ?? eors.eq  r2, r1, ror(r4, r3)                      ; bitwise exclusive OR
-L223  
-L224  ################################################################################
+L206  ################################################################################
+L207  
+L208  # eoreq r2, r1, #0x3fc
+L209  0xff 0x2f 0x21 0x02
+L209  0x00000000: ff 2f 21 02               ?? eor.eq   r2, r1, 0x000003fc<1020>                 ; bitwise exclusive OR
+L210  
+L211  # eoreq pc, r1, #0x3fc
+L212  0xff 0xff 0x21 0x02
+L212  0x00000000: ff ff 21 02               ?? eor.eq   pc, r1, 0x000003fc<1020>                 ; bitwise exclusive OR
+L213  
+L214  # eorseq r2, r1, #0x3fc
+L215  0xff 0x2f 0x31 0x02
+L215  0x00000000: ff 2f 31 02               ?? eors.eq  r2, r1, 0x000003fc<1020>                 ; bitwise exclusive OR
+L216  
+L217  # eoreq r2, r1, r3, asr #31
+L218  0xc3 0x2f 0x21 0x00
+L218  0x00000000: c3 2f 21 00               ?? eor.eq   r2, r1, asr(r3, 0x0000001f<31>)          ; bitwise exclusive OR
+L219  
+L220  # eorseq r2, r1, r3, asr #31
+L221  0xc3 0x2f 0x31 0x00
+L221  0x00000000: c3 2f 31 00               ?? eors.eq  r2, r1, asr(r3, 0x0000001f<31>)          ; bitwise exclusive OR
+L222  
+L223  # eoreq r2, r1, r4, ror r3
+L224  0x74 0x23 0x21 0x00
+L224  0x00000000: 74 23 21 00               ?? eor.eq   r2, r1, ror(r4, r3)                      ; bitwise exclusive OR
 L225  
-L226  # fstmdbxlo sb!, {d15, d16, d17, d18, d19, d20, d21, d22, d23, d24, d25, d26, d27, d28, d29, d30}
-L227  0xe7 0xfb 0x29 0x3d
-L227  0x00000000: e7 fb 29 3d               ?? fstmdbx.lo sb (then sb = sb + 0xffffff80<4294967168,-128>), d15, d16, d17, d18, d19, d20, d21, d22, d23, d24, d25, d26, d27, d28, d29, d30 ; store multiple SIMD&FP decrement before
+L226  # eorseq r2, r1, r4, ror r3
+L227  0x74 0x23 0x31 0x00
+L227  0x00000000: 74 23 31 00               ?? eors.eq  r2, r1, ror(r4, r3)                      ; bitwise exclusive OR
 L228  
 L229  ################################################################################
 L230  
-L231  # fstmiaxgt r5!, {d11, d12, d13, d14, d15, d16, d17, d18, d19, d20, d21, d22, d23, d24, d25, d26}
-L232  0xbb 0xbb 0xa5 0xcc
-L232  0x00000000: bb bb a5 cc               ?? fstmiax.gt r5 (then r5 = r5 + 0x00000080<128>), d11, d12, d13, d14, d15, d16, d17, d18, d19, d20, d21, d22, d23, d24, d25, d26 ; store multiple SIMD&FP increment after
+L231  # fstmdbxlo sb!, {d15, d16, d17, d18, d19, d20, d21, d22, d23, d24, d25, d26, d27, d28, d29, d30}
+L232  0xe7 0xfb 0x29 0x3d
+L232  0x00000000: e7 fb 29 3d               ?? fstmdbx.lo sb (then sb = sb + 0xffffff80<4294967168,-128>), d15, d16, d17, d18, d19, d20, d21, d22, d23, d24, d25, d26, d27, d28, d29, d30 ; store multiple SIMD&FP decrement before
 L233  
 L234  ################################################################################
 L235  
-L236  # ldceq p14, c5, [r1, #-0x3fc]
-L237  0xff 0x5e 0x11 0x0d
-L237  0x00000000: ff 5e 11 0d               ?? ldc.eq   p14, cr5, u32 [r1 + 0xfffffc04<4294966276,-1020>] ; load data to coprocessor
+L236  # fstmiaxgt r5!, {d11, d12, d13, d14, d15, d16, d17, d18, d19, d20, d21, d22, d23, d24, d25, d26}
+L237  0xbb 0xbb 0xa5 0xcc
+L237  0x00000000: bb bb a5 cc               ?? fstmiax.gt r5 (then r5 = r5 + 0x00000080<128>), d11, d12, d13, d14, d15, d16, d17, d18, d19, d20, d21, d22, d23, d24, d25, d26 ; store multiple SIMD&FP increment after
 L238  
-L239  # ldceq p14, c5, [r1], #-0x3fc
-L240  0xff 0x5e 0x31 0x0c
-L240  0x00000000: ff 5e 31 0c               ?? ldc.eq   p14, cr5, u32 [r1 (then r1 = r1 + 0xfffffc04<4294966276,-1020>)] ; load data to coprocessor
-L241  
-L242  # ldceq p14, c5, [r1, #0x3fc]!
-L243  0xff 0x5e 0xb1 0x0d
-L243  0x00000000: ff 5e b1 0d               ?? ldc.eq   p14, cr5, u32 [r1 (after r1 = r1 + 0x000003fc<1020>)] ; load data to coprocessor
-L244  
-L245  ################################################################################
+L239  ################################################################################
+L240  
+L241  # ldceq p14, c5, [r1, #-0x3fc]
+L242  0xff 0x5e 0x11 0x0d
+L242  0x00000000: ff 5e 11 0d               ?? ldc.eq   p14, cr5, u32 [r1 + 0xfffffc04<4294966276,-1020>] ; load data to coprocessor
+L243  
+L244  # ldceq p14, c5, [r1], #-0x3fc
+L245  0xff 0x5e 0x31 0x0c
+L245  0x00000000: ff 5e 31 0c               ?? ldc.eq   p14, cr5, u32 [r1 (then r1 = r1 + 0xfffffc04<4294966276,-1020>)] ; load data to coprocessor
 L246  
-L247  # ldmeq r1!, {r0, r2}
-L248  0x05 0x00 0xb1 0x08
-L248  0x00000000: 05 00 b1 08               ?? ldm.eq   r1 (then r1 = r1 + 8), r0, r2            ; load multiple
+L247  # ldceq p14, c5, [r1, #0x3fc]!
+L248  0xff 0x5e 0xb1 0x0d
+L248  0x00000000: ff 5e b1 0d               ?? ldc.eq   p14, cr5, u32 [r1 (after r1 = r1 + 0x000003fc<1020>)] ; load data to coprocessor
 L249  
 L250  ################################################################################
 L251  
-L252  # ldmdaeq r0!, {r1}
-L253  0x02 0x00 0x30 0x08
-L253  0x00000000: 02 00 30 08               ?? ldmda.eq r0 (then r0 = r0 + 0xfffffffc<4294967292,-4>), r1 ; load multiple decrement after
+L252  # ldmeq r1!, {r0, r2}
+L253  0x05 0x00 0xb1 0x08
+L253  0x00000000: 05 00 b1 08               ?? ldm.eq   r1 (then r1 = r1 + 8), r0, r2            ; load multiple
 L254  
-L255  # ldmdaeq r0, {r1}               
-L256  0x02 0x00 0x10 0x08
-L256  0x00000000: 02 00 10 08               ?? ldmda.eq r0, r1                                   ; load multiple decrement after
-L257  
-L258  # ldmdaeq r0!, {r1, r2}
-L259  0x06 0x00 0x30 0x08
-L259  0x00000000: 06 00 30 08               ?? ldmda.eq r0 (then r0 = r0 + 0xfffffff8<4294967288,-8>), r1, r2 ; load multiple decrement after
-L260  
-L261  ################################################################################
+L255  ################################################################################
+L256  
+L257  # ldmdaeq r0!, {r1}
+L258  0x02 0x00 0x30 0x08
+L258  0x00000000: 02 00 30 08               ?? ldmda.eq r0 (then r0 = r0 + 0xfffffffc<4294967292,-4>), r1 ; load multiple decrement after
+L259  
+L260  # ldmdaeq r0, {r1}               
+L261  0x02 0x00 0x10 0x08
+L261  0x00000000: 02 00 10 08               ?? ldmda.eq r0, r1                                   ; load multiple decrement after
 L262  
-L263  # ldmdbeq r0!, {r1}
-L264  0x02 0x00 0x30 0x09
-L264  0x00000000: 02 00 30 09               ?? ldmdb.eq r0 (then r0 = r0 + 0xfffffffc<4294967292,-4>), r1 ; load mulitple decrement before
+L263  # ldmdaeq r0!, {r1, r2}
+L264  0x06 0x00 0x30 0x08
+L264  0x00000000: 06 00 30 08               ?? ldmda.eq r0 (then r0 = r0 + 0xfffffff8<4294967288,-8>), r1, r2 ; load multiple decrement after
 L265  
-L266  # ldmdbeq r0, {r1}
-L267  0x02 0x00 0x10 0x09
-L267  0x00000000: 02 00 10 09               ?? ldmdb.eq r0, r1                                   ; load mulitple decrement before
-L268  
-L269  # ldmdbeq r0!, {r1, r2}
-L270  0x06 0x00 0x30 0x09
-L270  0x00000000: 06 00 30 09               ?? ldmdb.eq r0 (then r0 = r0 + 0xfffffff8<4294967288,-8>), r1, r2 ; load mulitple decrement before
-L271  
-L272  # ldmdbeq r0!, {r1, r2, r3, r4, r5, r6, r7, r8, sb, sl, fp, ip, sp, lr, pc}
-L273  0xfe 0xff 0x30 0x09
-L273  0x00000000: fe ff 30 09               ?? ldmdb.eq r0 (then r0 = r0 + 0xffffffc4<4294967236,-60>), r1, r2, r3, r4, r5, r6, r7, r8, sb, sl, fp, ip, sp, lr, pc ; load mulitple decrement before
-L274  
-L275  # ldmdbeq r0!, {r0}
-L276  0x01 0x00 0x30 0x09
-L276  0x00000000: 01 00 30 09               ?? ldmdb.eq r0 (then r0 = unknown), r0               ; load mulitple decrement before
-L277  
-L278  ################################################################################
+L266  ################################################################################
+L267  
+L268  # ldmdbeq r0!, {r1}
+L269  0x02 0x00 0x30 0x09
+L269  0x00000000: 02 00 30 09               ?? ldmdb.eq r0 (then r0 = r0 + 0xfffffffc<4294967292,-4>), r1 ; load mulitple decrement before
+L270  
+L271  # ldmdbeq r0, {r1}
+L272  0x02 0x00 0x10 0x09
+L272  0x00000000: 02 00 10 09               ?? ldmdb.eq r0, r1                                   ; load mulitple decrement before
+L273  
+L274  # ldmdbeq r0!, {r1, r2}
+L275  0x06 0x00 0x30 0x09
+L275  0x00000000: 06 00 30 09               ?? ldmdb.eq r0 (then r0 = r0 + 0xfffffff8<4294967288,-8>), r1, r2 ; load mulitple decrement before
+L276  
+L277  # ldmdbeq r0!, {r1, r2, r3, r4, r5, r6, r7, r8, sb, sl, fp, ip, sp, lr, pc}
+L278  0xfe 0xff 0x30 0x09
+L278  0x00000000: fe ff 30 09               ?? ldmdb.eq r0 (then r0 = r0 + 0xffffffc4<4294967236,-60>), r1, r2, r3, r4, r5, r6, r7, r8, sb, sl, fp, ip, sp, lr, pc ; load mulitple decrement before
 L279  
-L280  # ldmibeq r1!, {r0, r2}
-L281  0x05 0x00 0xb1 0x09
-L281  0x00000000: 05 00 b1 09               ?? ldmib.eq r1 (then r1 = r1 + 8), r0, r2            ; load multiple increment before
+L280  # ldmdbeq r0!, {r0}
+L281  0x01 0x00 0x30 0x09
+L281  0x00000000: 01 00 30 09               ?? ldmdb.eq r0 (then r0 = unknown), r0               ; load mulitple decrement before
 L282  
 L283  ################################################################################
 L284  
-L285  # ldrdeq r3, r4, [r1, #0xff]
-L286  0xdf 0x3f 0xc1 0x01
-L286  0x00000000: df 3f c1 01               ?? ldrd.eq  r3, r4, u64 [r1 + 0x000000ff<255>]       ; load register dual
+L285  # ldmibeq r1!, {r0, r2}
+L286  0x05 0x00 0xb1 0x09
+L286  0x00000000: 05 00 b1 09               ?? ldmib.eq r1 (then r1 = r1 + 8), r0, r2            ; load multiple increment before
 L287  
 L288  ################################################################################
 L289  
-L290  # ldreq r2, [r1, #-0xfff]
-L291  0xff 0x2f 0x11 0x05
-L291  0x00000000: ff 2f 11 05               ?? ldr.eq   r2, u32 [r1 + 0xfffff001<4294963201,-4095>] ; load register
+L290  # ldrdeq r3, r4, [r1, #0xff]
+L291  0xdf 0x3f 0xc1 0x01
+L291  0x00000000: df 3f c1 01               ?? ldrd.eq  r3, r4, u64 [r1 + 0x000000ff<255>]       ; load register dual
 L292  
-L293  # ldreq r1, [pc, #0xfff]
-L294  0xff 0x1f 0x9f 0x05
-L294  0x00000000: ff 1f 9f 05               ?? ldr.eq   r1, u32 [pc + 0x00000fff<4095><absolute=0x00001007>] ; load register
-L295  
-L296  # ldreq pc, [pc, #-0xfff]
-L297  0xff 0xff 0x1f 0x05
-L297  0x00000000: ff ff 1f 05               ?? ldr.eq   pc, u32 [pc + 0xfffff001<4294963201,-4095><absolute=0xfffff009>] ; load register
-L298  
-L299  # ldreq pc, [pc, #-0]
-L300  0x00 0xf0 0x1f 0x05
-L300  0x00000000: 00 f0 1f 05               ?? ldr.eq   pc, u32 [pc]                             ; load register
-L301  
-L302  # ldreq r2, [r1, -r3, ror #31]
-L303  0xe3 0x2f 0x11 0x07
-L303  0x00000000: e3 2f 11 07               ?? ldr.eq   r2, u32 [r1 - ror(r3, 0x0000001f<31>)]   ; load register
-L304  
-L305  # ldreq r2, [r1, -r3, lsl #31]
-L306  0x83 0x2f 0x11 0x07
-L306  0x00000000: 83 2f 11 07               ?? ldr.eq   r2, u32 [r1 - (r3 << 0x0000001f<31>)]    ; load register
-L307  
-L308  # ldreq r2, [r1, -r3, lsr #31]
-L309  0xa3 0x2f 0x11 0x07
-L309  0x00000000: a3 2f 11 07               ?? ldr.eq   r2, u32 [r1 - (r3 >> 0x0000001f<31>)]    ; load register
-L310  
-L311  # ldreq r2, [r1, -r3, asr #31]
-L312  0xc3 0x2f 0x11 0x07
-L312  0x00000000: c3 2f 11 07               ?? ldr.eq   r2, u32 [r1 - asr(r3, 0x0000001f<31>)]   ; load register
-L313  
-L314  ################################################################################
+L293  ################################################################################
+L294  
+L295  # ldreq r2, [r1, #-0xfff]
+L296  0xff 0x2f 0x11 0x05
+L296  0x00000000: ff 2f 11 05               ?? ldr.eq   r2, u32 [r1 + 0xfffff001<4294963201,-4095>] ; load register
+L297  
+L298  # ldreq r1, [pc, #0xfff]
+L299  0xff 0x1f 0x9f 0x05
+L299  0x00000000: ff 1f 9f 05               ?? ldr.eq   r1, u32 [pc + 0x00000fff<4095><absolute=0x00001007>] ; load register
+L300  
+L301  # ldreq pc, [pc, #-0xfff]
+L302  0xff 0xff 0x1f 0x05
+L302  0x00000000: ff ff 1f 05               ?? ldr.eq   pc, u32 [pc + 0xfffff001<4294963201,-4095><absolute=0xfffff009>] ; load register
+L303  
+L304  # ldreq pc, [pc, #-0]
+L305  0x00 0xf0 0x1f 0x05
+L305  0x00000000: 00 f0 1f 05               ?? ldr.eq   pc, u32 [pc]                             ; load register
+L306  
+L307  # ldreq r2, [r1, -r3, ror #31]
+L308  0xe3 0x2f 0x11 0x07
+L308  0x00000000: e3 2f 11 07               ?? ldr.eq   r2, u32 [r1 - ror(r3, 0x0000001f<31>)]   ; load register
+L309  
+L310  # ldreq r2, [r1, -r3, lsl #31]
+L311  0x83 0x2f 0x11 0x07
+L311  0x00000000: 83 2f 11 07               ?? ldr.eq   r2, u32 [r1 - (r3 << 0x0000001f<31>)]    ; load register
+L312  
+L313  # ldreq r2, [r1, -r3, lsr #31]
+L314  0xa3 0x2f 0x11 0x07
+L314  0x00000000: a3 2f 11 07               ?? ldr.eq   r2, u32 [r1 - (r3 >> 0x0000001f<31>)]    ; load register
 L315  
-L316  # ldrbne r8, [r7], #-0xfff
-L317  0xff 0x8f 0x57 0x14
-L317  0x00000000: ff 8f 57 14               ?? ldrb.ne  r8, u8 [r7 (then r7 = r7 + 0xfffff001<4294963201,-4095>)] ; load register byte
+L316  # ldreq r2, [r1, -r3, asr #31]
+L317  0xc3 0x2f 0x11 0x07
+L317  0x00000000: c3 2f 11 07               ?? ldr.eq   r2, u32 [r1 - asr(r3, 0x0000001f<31>)]   ; load register
 L318  
 L319  ################################################################################
 L320  
-L321  # ldrbths r2, [r1], #0xfff        
-L322  0xff 0x2f 0xf1 0x24
-L322  0x00000000: ff 2f f1 24               ?? ldrbt.hs r2, u8 [r1 (then r1 = r1 + 0x00000fff<4095>)] ; load register byte unprivileged
+L321  # ldrbne r8, [r7], #-0xfff
+L322  0xff 0x8f 0x57 0x14
+L322  0x00000000: ff 8f 57 14               ?? ldrb.ne  r8, u8 [r7 (then r7 = r7 + 0xfffff001<4294963201,-4095>)] ; load register byte
 L323  
 L324  ################################################################################
 L325  
-L326  # ldrhls ip, [sl], sp
-L327  0xbd 0xc0 0x9a 0x90
-L327  0x00000000: bd c0 9a 90               ?? ldrh.ls  ip, u16 [sl (then sl = sl + sp)]         ; load register half-word
+L326  # ldrbths r2, [r1], #0xfff        
+L327  0xff 0x2f 0xf1 0x24
+L327  0x00000000: ff 2f f1 24               ?? ldrbt.hs r2, u8 [r1 (then r1 = r1 + 0x00000fff<4095>)] ; load register byte unprivileged
 L328  
 L329  ################################################################################
 L330  
-L331  # ldrhtgt r0, [pc], #-0xff
-L332  0xbf 0x0f 0x7f 0xc0
-L332  0x00000000: bf 0f 7f c0               ?? ldrht.gt r0, u16 [pc (then pc = pc + 0x000000ff<255><absolute=0x00000107>)] ; load register half-word unprivileged
+L331  # ldrhls ip, [sl], sp
+L332  0xbd 0xc0 0x9a 0x90
+L332  0x00000000: bd c0 9a 90               ?? ldrh.ls  ip, u16 [sl (then sl = sl + sp)]         ; load register half-word
 L333  
 L334  ################################################################################
 L335  
-L336  # ldrsbhi sb, [r8, sl]!
-L337  0xda 0x90 0xb8 0x81
-L337  0x00000000: da 90 b8 81               ?? ldrsb.hi sb, u8 [r8 (after r8 = r8 + sl)]         ; load register signed byte
+L336  # ldrex.eq r2, u32 [r1]
+L337  0x9f 0x2f 0x91 0x01
+L337  0x00000000: 9f 2f 91 01               ?? ldrex.eq r2, u32 [r1]                             ; load register exclusive
 L338  
 L339  ################################################################################
 L340  
-L341  # ldrsbtge ip, [fp], #0xff
-L342  0xdf 0xcf 0xfb 0xa0
-L342  0x00000000: df cf fb a0               ?? ldrsbt.ge ip, u8 [fp (then fp = fp + 0x000000ff<255>)] ; load register signed byte unprivileged
+L341  # ldrhtgt r0, [pc], #-0xff
+L342  0xbf 0x0f 0x7f 0xc0
+L342  0x00000000: bf 0f 7f c0               ?? ldrht.gt r0, u16 [pc (then pc = pc + 0x000000ff<255><absolute=0x00000107>)] ; load register half-word unprivileged
 L343  
 L344  ################################################################################
 L345  
-L346  # ldrshlt lr, [sp], pc
-L347  0xff 0xe0 0x9d 0xb0
-L347  0x00000000: ff e0 9d b0               ?? ldrsh.lt lr, u16 [sp (then sp = sp + pc)]         ; load register signed half-word
+L346  # ldrsbhi sb, [r8, sl]!
+L347  0xda 0x90 0xb8 0x81
+L347  0x00000000: da 90 b8 81               ?? ldrsb.hi sb, u8 [r8 (after r8 = r8 + sl)]         ; load register signed byte
 L348  
 L349  ################################################################################
 L350  
-L351  # ldrshtle r1, [r0], #-0xff
-L352  0xff 0x1f 0x70 0xd0
-L352  0x00000000: ff 1f 70 d0               ?? ldrsht.le r1, u16 [r0 (then r0 = r0 + 0x000000ff<255>)] ; load register signed half-word unprivileged
+L351  # ldrsbtge ip, [fp], #0xff
+L352  0xdf 0xcf 0xfb 0xa0
+L352  0x00000000: df cf fb a0               ?? ldrsbt.ge ip, u8 [fp (then fp = fp + 0x000000ff<255>)] ; load register signed byte unprivileged
 L353  
 L354  ################################################################################
 L355  
-L356  # ldrtlo r4, [r3], #-0xfff
-L357  0xff 0x4f 0x33 0x34
-L357  0x00000000: ff 4f 33 34               ?? ldrt.lo  r4, u32 [r3 (then r3 = r3 + 0xfffff001<4294963201,-4095>)] ; load register unprivileged
+L356  # ldrshlt lr, [sp], pc
+L357  0xff 0xe0 0x9d 0xb0
+L357  0x00000000: ff e0 9d b0               ?? ldrsh.lt lr, u16 [sp (then sp = sp + pc)]         ; load register signed half-word
 L358  
 L359  ################################################################################
 L360  
-L361  # mcreq p14, #1, r1, c2, c7, #2
-L362  0x57 0x1e 0x22 0x0e
-L362  0x00000000: 57 1e 22 0e               ?? mcr.eq   p14, 1, r1, cr2, cr7, 2                  ; move general-purpose register to coprocessor
+L361  # ldrshtle r1, [r0], #-0xff
+L362  0xff 0x1f 0x70 0xd0
+L362  0x00000000: ff 1f 70 d0               ?? ldrsht.le r1, u16 [r0 (then r0 = r0 + 0x000000ff<255>)] ; load register signed half-word unprivileged
 L363  
 L364  ################################################################################
 L365  
-L366  # mcrreq p14, #1, r3, r1, c2
-L367  0x12 0x3e 0x41 0x0c
-L367  0x00000000: 12 3e 41 0c               ?? mcrr.eq  p14, 1, r3, r1, cr2                      ; move two general-purpose registers to coprocessor
+L366  # ldrtlo r4, [r3], #-0xfff
+L367  0xff 0x4f 0x33 0x34
+L367  0x00000000: ff 4f 33 34               ?? ldrt.lo  r4, u32 [r3 (then r3 = r3 + 0xfffff001<4294963201,-4095>)] ; load register unprivileged
 L368  
 L369  ################################################################################
 L370  
-L371  # mrceq p15, #1, r2, c1, c10, #4
-L372  0x9a 0x2f 0x31 0x0e
-L372  0x00000000: 9a 2f 31 0e               ?? mrc.eq   p15, 1, r2, cr1, cr10, 4                 ; move coprocessor to general-purpose register
+L371  # lsl.eq r1, r2, #1
+L372  0x82 0x10 0xa0 0x01
+L372  0x00000000: 82 10 a0 01               ?? mov      r1, r2 << 1                              ; move
 L373  
 L374  ################################################################################
 L375  
-L376  # mlaeq r1, r4, r3, r2
-L377  0x94 0x23 0x21 0x00
-L377  0x00000000: 94 23 21 00               ?? mla.eq   r1, r4, r3, r2                           ; multiply accumulate
+L376  # lsr.eq r1, r2, #1
+L377  0xa2 0x10 0xa0 0x01
+L377  0x00000000: a2 10 a0 01               ?? mov      r1, r2 >> 1                              ; move
 L378  
-L379  # mlaseq r1, r4, r3, r2
-L380  0x94 0x23 0x31 0x00
-L380  0x00000000: 94 23 31 00               ?? mlas.eq  r1, r4, r3, r2                           ; multiply accumulate
-L381  
-L382  ################################################################################
+L379  ################################################################################
+L380  
+L381  # mcreq p14, #1, r1, c2, c7, #2
+L382  0x57 0x1e 0x22 0x0e
+L382  0x00000000: 57 1e 22 0e               ?? mcr.eq   p14, 1, r1, cr2, cr7, 2                  ; move general-purpose register to coprocessor
 L383  
-L384  # mlseq r1, r4, r3, r2
-L385  0x94 0x23 0x61 0x00
-L385  0x00000000: 94 23 61 00               ?? mls.eq   r1, r4, r3, r2                           ; multiply and subtract
-L386  
-L387  ################################################################################
+L384  ################################################################################
+L385  
+L386  # mcrreq p14, #1, r3, r1, c2
+L387  0x12 0x3e 0x41 0x0c
+L387  0x00000000: 12 3e 41 0c               ?? mcrr.eq  p14, 1, r3, r1, cr2                      ; move two general-purpose registers to coprocessor
 L388  
-L389  # moveq r1, #0x3fc
-L390  0xff 0x1f 0xa0 0x03
-L390  0x00000000: ff 1f a0 03               ?? mov.eq   r1, 0x000003fc<1020>                     ; move
-L391  
-L392  # movseq r1, #0x3fc
-L393  0xff 0x1f 0xb0 0x03
-L393  0x00000000: ff 1f b0 03               ?? movs.eq  r1, 0x000003fc<1020>                     ; move
-L394  
-L395  # moveq pc, #0x3fc
-L396  0xff 0xff 0xa0 0x03
-L396  0x00000000: ff ff a0 03               ?? mov.eq   pc, 0x000003fc<1020>                     ; move
-L397  
-L398  ################################################################################
-L399  
-L400  # movteq r0, #0xffff
-L401  0xff 0x0f 0x4f 0x03
-L401  0x00000000: ff 0f 4f 03               ?? movt.eq  r0, 0x0000ffff                           ; move top
-L402  
-L403  ################################################################################
-L404  
-L405  # mrseq r1, spsr
-L406  0x00 0x10 0x4f 0x01
-L406  0x00000000: 00 10 4f 01               ?? mrs.eq   r1, spsr                                 ; move special register to general-purpose register
-L407  
-L408  # mrseq r1, apsr
-L409  0x00 0x10 0x0f 0x01
-L409  0x00000000: 00 10 0f 01               ?? mrs.eq   r1, apsr                                 ; move special register to general-purpose register
-L410  
-L411  # mrslo r2, r8_usr
-L412  0x00 0x22 0x41 0x01
-L412  0x00000000: 00 22 41 01               ?? mrs.lo   r2, {spsr_extension, spsr_flags}         ; move special register to general-purpose register
-L413  
-L414  # mrseq r2, r9_usr
-L415  0x00 0x22 0x01 0x01
-L415  0x00000000: 00 22 01 01               ?? mrs.eq   r2, {spsr_control, spsr_extension, spsr_flags} ; move special register to general-purpose register
-L416  
-L417  ################################################################################
-L418  
-L419  # msreq spsr_c, #0xc000000
-L420  0x03 0xf3 0x61 0x03
-L420  0x00000000: 03 f3 61 03               ?? msr.eq   spsr_control, 0x0c000000                 ; move to special register
-L421  
-L422  ################################################################################
-L423  
-L424  # muleq r1, r3, r2
-L425  0x93 0x02 0x01 0x00
-L425  0x00000000: 93 02 01 00               ?? mul.eq   r1, r3, r2                               ; multiply
-L426  
-L427  # mulseq r1, r3, r2
-L428  0x93 0x02 0x11 0x00
-L428  0x00000000: 93 02 11 00               ?? muls.eq  r1, r3, r2                               ; multiply
+L389  ################################################################################
+L390  
+L391  # mrceq p15, #1, r2, c1, c10, #4
+L392  0x9a 0x2f 0x31 0x0e
+L392  0x00000000: 9a 2f 31 0e               ?? mrc.eq   p15, 1, r2, cr1, cr10, 4                 ; move coprocessor to general-purpose register
+L393  
+L394  ################################################################################
+L395  
+L396  # mlaeq r1, r4, r3, r2
+L397  0x94 0x23 0x21 0x00
+L397  0x00000000: 94 23 21 00               ?? mla.eq   r1, r4, r3, r2                           ; multiply accumulate
+L398  
+L399  # mlaseq r1, r4, r3, r2
+L400  0x94 0x23 0x31 0x00
+L400  0x00000000: 94 23 31 00               ?? mlas.eq  r1, r4, r3, r2                           ; multiply accumulate
+L401  
+L402  ################################################################################
+L403  
+L404  # mlseq r1, r4, r3, r2
+L405  0x94 0x23 0x61 0x00
+L405  0x00000000: 94 23 61 00               ?? mls.eq   r1, r4, r3, r2                           ; multiply and subtract
+L406  
+L407  ################################################################################
+L408  
+L409  # moveq r1, #0x3fc
+L410  0xff 0x1f 0xa0 0x03
+L410  0x00000000: ff 1f a0 03               ?? mov.eq   r1, 0x000003fc<1020>                     ; move
+L411  
+L412  # movseq r1, #0x3fc
+L413  0xff 0x1f 0xb0 0x03
+L413  0x00000000: ff 1f b0 03               ?? movs.eq  r1, 0x000003fc<1020>                     ; move
+L414  
+L415  # moveq pc, #0x3fc
+L416  0xff 0xff 0xa0 0x03
+L416  0x00000000: ff ff a0 03               ?? mov.eq   pc, 0x000003fc<1020>                     ; move
+L417  
+L418  ################################################################################
+L419  
+L420  # movteq r0, #0xffff
+L421  0xff 0x0f 0x4f 0x03
+L421  0x00000000: ff 0f 4f 03               ?? movt.eq  r0, 0x0000ffff                           ; move top
+L422  
+L423  ################################################################################
+L424  
+L425  # movw.eq r1, 0x00000123<291>
+L426  0x23 0x11 0x00 0x03
+L426  0x00000000: 23 11 00 03               ?? movw.eq  r1, 0x00000123<291>                      ; move
+L427  
+L428  ################################################################################
 L429  
-L430  ################################################################################
-L431  
-L432  # mvneq r1, r4, ror #31
-L433  0xe4 0x1f 0xe0 0x01
-L433  0x00000000: e4 1f e0 01               ?? mvn.eq   r1, ror(r4, 0x0000001f<31>)              ; bitwise NOT
-L434  
-L435  # mvnseq r1, r4, ror #31
-L436  0xe4 0x1f 0xf0 0x01
-L436  0x00000000: e4 1f f0 01               ?? mvns.eq  r1, ror(r4, 0x0000001f<31>)              ; bitwise NOT
-L437  
-L438  ################################################################################
-L439  
-L440  # orreq r2, r1, #0x3fc
-L441  0xff 0x2f 0x81 0x03
-L441  0x00000000: ff 2f 81 03               ?? orr.eq   r2, r1, 0x000003fc<1020>                 ; bitwise OR
-L442  
-L443  # orrseq r2, r1, #0x3fc
-L444  0xff 0x2f 0x91 0x03
-L444  0x00000000: ff 2f 91 03               ?? orrs.eq  r2, r1, 0x000003fc<1020>                 ; bitwise OR
-L445  
-L446  ################################################################################
-L447  
-L448  # pkhbteq r2, r1, r3, lsl #0x1f
-L449  0x93 0x2f 0x81 0x06
-L449  0x00000000: 93 2f 81 06               ?? pkhbt.eq r2, r1, r3 << 0x0000001f<31>             ; pack half-word
-L450  
-L451  ################################################################################
-L452  
-L453  # pkhtbeq r2, r1, r3, asr #0x1f
-L454  0xd3 0x2f 0x81 0x06
-L454  0x00000000: d3 2f 81 06               ?? pkhtb.eq r2, r1, asr(r3, 0x0000001f<31>)          ; pack half-word
-L455  
-L456  ################################################################################
-L457  
-L458  # pld [pc, #-0xfff]
-L459  0xff 0xff 0x5f 0xf5
-L459  0x00000000: ff ff 5f f5               ?? pld      u32 [pc + 0xfffff001<4294963201,-4095><absolute=0xfffff009>] ; preload data
-L460  
-L461  # pld [pc, #0xfff]
-L462  0xff 0xff 0xdf 0xf5
-L462  0x00000000: ff ff df f5               ?? pld      u32 [pc + 0x00000fff<4095><absolute=0x00001007>] ; preload data
-L463  
-L464  ################################################################################
-L465  
-L466  # push {fp, lr}
-L467  0x00 0x48 0x2d 0xe9
-L467  0x00000000: 00 48 2d e9               ?? push     fp, lr                                   ; push multiple registers to stack
-L468  
-L469  ################################################################################
+L430  # mrseq r1, spsr
+L431  0x00 0x10 0x4f 0x01
+L431  0x00000000: 00 10 4f 01               ?? mrs.eq   r1, spsr                                 ; move special register to general-purpose register
+L432  
+L433  # mrseq r1, apsr
+L434  0x00 0x10 0x0f 0x01
+L434  0x00000000: 00 10 0f 01               ?? mrs.eq   r1, apsr                                 ; move special register to general-purpose register
+L435  
+L436  # mrslo r2, r8_usr
+L437  0x00 0x22 0x41 0x01
+L437  0x00000000: 00 22 41 01               ?? mrs.lo   r2, {spsr_extension, spsr_flags}         ; move special register to general-purpose register
+L438  
+L439  # mrseq r2, r9_usr
+L440  0x00 0x22 0x01 0x01
+L440  0x00000000: 00 22 01 01               ?? mrs.eq   r2, {spsr_control, spsr_extension, spsr_flags} ; move special register to general-purpose register
+L441  
+L442  ################################################################################
+L443  
+L444  # msreq spsr_c, #0xc000000
+L445  0x03 0xf3 0x61 0x03
+L445  0x00000000: 03 f3 61 03               ?? msr.eq   spsr_control, 0x0c000000                 ; move to special register
+L446  
+L447  ################################################################################
+L448  
+L449  # muleq r1, r3, r2
+L450  0x93 0x02 0x01 0x00
+L450  0x00000000: 93 02 01 00               ?? mul.eq   r1, r3, r2                               ; multiply
+L451  
+L452  # mulseq r1, r3, r2
+L453  0x93 0x02 0x11 0x00
+L453  0x00000000: 93 02 11 00               ?? muls.eq  r1, r3, r2                               ; multiply
+L454  
+L455  ################################################################################
+L456  
+L457  # mvneq r1, r4, ror #31
+L458  0xe4 0x1f 0xe0 0x01
+L458  0x00000000: e4 1f e0 01               ?? mvn.eq   r1, ror(r4, 0x0000001f<31>)              ; bitwise NOT
+L459  
+L460  # mvnseq r1, r4, ror #31
+L461  0xe4 0x1f 0xf0 0x01
+L461  0x00000000: e4 1f f0 01               ?? mvns.eq  r1, ror(r4, 0x0000001f<31>)              ; bitwise NOT
+L462  
+L463  ################################################################################
+L464  
+L465  # orreq r2, r1, #0x3fc
+L466  0xff 0x2f 0x81 0x03
+L466  0x00000000: ff 2f 81 03               ?? orr.eq   r2, r1, 0x000003fc<1020>                 ; bitwise OR
+L467  
+L468  # orrseq r2, r1, #0x3fc
+L469  0xff 0x2f 0x91 0x03
+L469  0x00000000: ff 2f 91 03               ?? orrs.eq  r2, r1, 0x000003fc<1020>                 ; bitwise OR
 L470  
-L471  # qadd16eq r2, r1, r3
-L472  0x13 0x2f 0x21 0x06
-L472  0x00000000: 13 2f 21 06               ?? qadd16.eq r2, r1, r3                               ; saturating add 16
-L473  
-L474  ################################################################################
+L471  ################################################################################
+L472  
+L473  # pkhbteq r2, r1, r3, lsl #0x1f
+L474  0x93 0x2f 0x81 0x06
+L474  0x00000000: 93 2f 81 06               ?? pkhbt.eq r2, r1, r3 << 0x0000001f<31>             ; pack half-word
 L475  
-L476  # qadd8eq r2, r1, r3
-L477  0x93 0x2f 0x21 0x06
-L477  0x00000000: 93 2f 21 06               ?? qadd8.eq r2, r1, r3                               ; saturating add 8
-L478  
-L479  ################################################################################
+L476  ################################################################################
+L477  
+L478  # pkhtbeq r2, r1, r3, asr #0x1f
+L479  0xd3 0x2f 0x81 0x06
+L479  0x00000000: d3 2f 81 06               ?? pkhtb.eq r2, r1, asr(r3, 0x0000001f<31>)          ; pack half-word
 L480  
-L481  # qasxeq r2, r1, r4
-L482  0x34 0x2f 0x21 0x06
-L482  0x00000000: 34 2f 21 06               ?? qasx.eq  r2, r1, r4                               ; saturating add and exchange
-L483  
-L484  ################################################################################
+L481  ################################################################################
+L482  
+L483  # pld [pc, #-0xfff]
+L484  0xff 0xff 0x5f 0xf5
+L484  0x00000000: ff ff 5f f5               ?? pld      u32 [pc + 0xfffff001<4294963201,-4095><absolute=0xfffff009>] ; preload data
 L485  
-L486  # qdaddeq r2, r3, r1
-L487  0x53 0x20 0x41 0x01
-L487  0x00000000: 53 20 41 01               ?? qdadd.eq r2, r3, r1                               ; saturating double and add
+L486  # pld [pc, #0xfff]
+L487  0xff 0xff 0xdf 0xf5
+L487  0x00000000: ff ff df f5               ?? pld      u32 [pc + 0x00000fff<4095><absolute=0x00001007>] ; preload data
 L488  
 L489  ################################################################################
 L490  
-L491  # qdsubeq r2, r3, r1
-L492  0x53 0x20 0x61 0x01
-L492  0x00000000: 53 20 61 01               ?? qdsub.eq r2, r3, r1                               ; saturating double and subtract
+L491  # push {fp, lr}
+L492  0x00 0x48 0x2d 0xe9
+L492  0x00000000: 00 48 2d e9               ?? push     fp, lr                                   ; push multiple registers to stack
 L493  
 L494  ################################################################################
 L495  
-L496  # qsaxeq r2, r1, r3
-L497  0x53 0x2f 0x21 0x06
-L497  0x00000000: 53 2f 21 06               ?? qsax.eq  r2, r1, r3                               ; saturating subtract and add with exchange
+L496  # qadd16eq r2, r1, r3
+L497  0x13 0x2f 0x21 0x06
+L497  0x00000000: 13 2f 21 06               ?? qadd16.eq r2, r1, r3                               ; saturating add 16
 L498  
 L499  ################################################################################
 L500  
-L501  # qsubeq r2, r3, r1
-L502  0x53 0x20 0x21 0x01
-L502  0x00000000: 53 20 21 01               ?? qsub.eq  r2, r3, r1                               ; saturating subtract
+L501  # qadd8eq r2, r1, r3
+L502  0x93 0x2f 0x21 0x06
+L502  0x00000000: 93 2f 21 06               ?? qadd8.eq r2, r1, r3                               ; saturating add 8
 L503  
 L504  ################################################################################
 L505  
-L506  # qsub16eq r2, r1, r3
-L507  0x73 0x2f 0x21 0x06
-L507  0x00000000: 73 2f 21 06               ?? qsub16.eq r2, r1, r3                               ; saturating subtract 16
+L506  # qasxeq r2, r1, r4
+L507  0x34 0x2f 0x21 0x06
+L507  0x00000000: 34 2f 21 06               ?? qasx.eq  r2, r1, r4                               ; saturating add and exchange
 L508  
 L509  ################################################################################
 L510  
-L511  # qsub8eq r2, r1, r3
-L512  0xf3 0x2f 0x21 0x06
-L512  0x00000000: f3 2f 21 06               ?? qsub8.eq r2, r1, r3                               ; saturating subtract 8
+L511  # qdaddeq r2, r3, r1
+L512  0x53 0x20 0x41 0x01
+L512  0x00000000: 53 20 41 01               ?? qdadd.eq r2, r3, r1                               ; saturating double and add
 L513  
 L514  ################################################################################
 L515  
-L516  # rfeda r1
-L517  0x00 0x0a 0x11 0xf8
-L517  0x00000000: 00 0a 11 f8               ?? rfeda    r1                                       ; return from exception
+L516  # qdsubeq r2, r3, r1
+L517  0x53 0x20 0x61 0x01
+L517  0x00000000: 53 20 61 01               ?? qdsub.eq r2, r3, r1                               ; saturating double and subtract
 L518  
-L519  # rfeda r1!
-L520  0x00 0x0a 0x31 0xf8
-L520  0x00000000: 00 0a 31 f8               ?? rfeda    r1 (then r1 = r1 + 0xfffffff8<4294967288,-8>) ; return from exception
-L521  
-L522  ################################################################################
+L519  ################################################################################
+L520  
+L521  # qsaxeq r2, r1, r3
+L522  0x53 0x2f 0x21 0x06
+L522  0x00000000: 53 2f 21 06               ?? qsax.eq  r2, r1, r3                               ; saturating subtract and add with exchange
 L523  
-L524  # rfedb r1
-L525  0x00 0x0a 0x11 0xf9
-L525  0x00000000: 00 0a 11 f9               ?? rfedb    r1                                       ; return from exception
-L526  
-L527  # rfedb r1!
-L528  0x00 0x0a 0x31 0xf9
-L528  0x00000000: 00 0a 31 f9               ?? rfedb    r1 (then r1 = r1 + 0xfffffff8<4294967288,-8>) ; return from exception
-L529  
-L530  ################################################################################
-L531  
-L532  # rfeia r1
-L533  0x00 0x0a 0x91 0xf8
-L533  0x00000000: 00 0a 91 f8               ?? rfeia    r1                                       ; return from exception
-L534  
-L535  # rfeia r1!
-L536  0x00 0x0a 0xb1 0xf8
-L536  0x00000000: 00 0a b1 f8               ?? rfeia    r1 (then r1 = r1 + 8)                    ; return from exception
-L537  
-L538  ################################################################################
-L539  
-L540  # rfeib r1
-L541  0x00 0x0a 0x91 0xf9
-L541  0x00000000: 00 0a 91 f9               ?? rfeib    r1                                       ; return from exception
-L542  
-L543  # rfeib r1!
-L544  0x00 0x0a 0xb1 0xf9
-L544  0x00000000: 00 0a b1 f9               ?? rfeib    r1 (then r1 = r1 + 8)                    ; return from exception
-L545  
-L546  ################################################################################
-L547  
-L548  # rsbeq r2, r1, #0x3fc
-L549  0xff 0x2f 0x61 0x02
-L549  0x00000000: ff 2f 61 02               ?? rsb.eq   r2, r1, 0x000003fc<1020>                 ; reverse subtract
-L550  
-L551  # rsbseq r2, r1, #0x3fc
-L552  0xff 0x2f 0x71 0x02
-L552  0x00000000: ff 2f 71 02               ?? rsbs.eq  r2, r1, 0x000003fc<1020>                 ; reverse subtract
-L553  
-L554  ################################################################################
-L555  
-L556  # rsceq r2, r1, #0x3fc
-L557  0xff 0x2f 0xe1 0x02
-L557  0x00000000: ff 2f e1 02               ?? rsc.eq   r2, r1, 0x000003fc<1020>                 ; reverse subtract with carry
-L558  
-L559  # rscseq r2, r1, #0x3fc
-L560  0xff 0x2f 0xf1 0x02
-L560  0x00000000: ff 2f f1 02               ?? rscs.eq  r2, r1, 0x000003fc<1020>                 ; reverse subtract with carry
-L561  
-L562  ################################################################################
-L563  
-L564  # sadd16eq r2, r1, r3
-L565  0x13 0x2f 0x11 0x06
-L565  0x00000000: 13 2f 11 06               ?? sadd16.eq r2, r1, r3                               ; signed add 16
-L566  
-L567  ################################################################################
-L568  
-L569  # sadd8eq r2, r1, r3
-L570  0x93 0x2f 0x11 0x06
-L570  0x00000000: 93 2f 11 06               ?? sadd8.eq r2, r1, r3                               ; signed add 8
-L571  
-L572  ################################################################################
-L573  
-L574  # sasxeq r2, r1, r3
-L575  0x33 0x2f 0x11 0x06
-L575  0x00000000: 33 2f 11 06               ?? sasx.eq  r2, r1, r3                               ; signed add and subtract with exchange
-L576  
-L577  ################################################################################
-L578  
-L579  # sbceq r2, r1, #0x3fc
-L580  0xff 0x2f 0xc1 0x02
-L580  0x00000000: ff 2f c1 02               ?? sbc.eq   r2, r1, 0x000003fc<1020>                 ; subtract with carry
-L581  
-L582  # sbcseq r2, r1, #0x3fc
-L583  0xff 0x2f 0xd1 0x02
-L583  0x00000000: ff 2f d1 02               ?? sbcs.eq  r2, r1, 0x000003fc<1020>                 ; subtract with carry
-L584  
-L585  ################################################################################
-L586  
-L587  # sbfxeq r1, r2, #8, #0x11
-L588  0x52 0x14 0xb0 0x07
-L588  0x00000000: 52 14 b0 07               ?? sbfx.eq  r1, r2, 8, 0x00000011<17>                ; signed bitfield extract
-L589  
-L590  ################################################################################
+L524  ################################################################################
+L525  
+L526  # qsubeq r2, r3, r1
+L527  0x53 0x20 0x21 0x01
+L527  0x00000000: 53 20 21 01               ?? qsub.eq  r2, r3, r1                               ; saturating subtract
+L528  
+L529  ################################################################################
+L530  
+L531  # qsub16eq r2, r1, r3
+L532  0x73 0x2f 0x21 0x06
+L532  0x00000000: 73 2f 21 06               ?? qsub16.eq r2, r1, r3                               ; saturating subtract 16
+L533  
+L534  ################################################################################
+L535  
+L536  # qsub8eq r2, r1, r3
+L537  0xf3 0x2f 0x21 0x06
+L537  0x00000000: f3 2f 21 06               ?? qsub8.eq r2, r1, r3                               ; saturating subtract 8
+L538  
+L539  ################################################################################
+L540  
+L541  # rfeda r1
+L542  0x00 0x0a 0x11 0xf8
+L542  0x00000000: 00 0a 11 f8               ?? rfeda    r1                                       ; return from exception
+L543  
+L544  # rfeda r1!
+L545  0x00 0x0a 0x31 0xf8
+L545  0x00000000: 00 0a 31 f8               ?? rfeda    r1 (then r1 = r1 + 0xfffffff8<4294967288,-8>) ; return from exception
+L546  
+L547  ################################################################################
+L548  
+L549  # rfedb r1
+L550  0x00 0x0a 0x11 0xf9
+L550  0x00000000: 00 0a 11 f9               ?? rfedb    r1                                       ; return from exception
+L551  
+L552  # rfedb r1!
+L553  0x00 0x0a 0x31 0xf9
+L553  0x00000000: 00 0a 31 f9               ?? rfedb    r1 (then r1 = r1 + 0xfffffff8<4294967288,-8>) ; return from exception
+L554  
+L555  ################################################################################
+L556  
+L557  # rfeia r1
+L558  0x00 0x0a 0x91 0xf8
+L558  0x00000000: 00 0a 91 f8               ?? rfeia    r1                                       ; return from exception
+L559  
+L560  # rfeia r1!
+L561  0x00 0x0a 0xb1 0xf8
+L561  0x00000000: 00 0a b1 f8               ?? rfeia    r1 (then r1 = r1 + 8)                    ; return from exception
+L562  
+L563  ################################################################################
+L564  
+L565  # rfeib r1
+L566  0x00 0x0a 0x91 0xf9
+L566  0x00000000: 00 0a 91 f9               ?? rfeib    r1                                       ; return from exception
+L567  
+L568  # rfeib r1!
+L569  0x00 0x0a 0xb1 0xf9
+L569  0x00000000: 00 0a b1 f9               ?? rfeib    r1 (then r1 = r1 + 8)                    ; return from exception
+L570  
+L571  ################################################################################
+L572  
+L573  # ror.eq r1, r2, #1
+L574  0xa2 0x10 0xa0 0x01
+L574  0x00000000: a2 10 a0 01               ?? mov      r1, r2 >> 1                              ; move
+L575  
+L576  ################################################################################
+L577  
+L578  # rsbeq r2, r1, #0x3fc
+L579  0xff 0x2f 0x61 0x02
+L579  0x00000000: ff 2f 61 02               ?? rsb.eq   r2, r1, 0x000003fc<1020>                 ; reverse subtract
+L580  
+L581  # rsbseq r2, r1, #0x3fc
+L582  0xff 0x2f 0x71 0x02
+L582  0x00000000: ff 2f 71 02               ?? rsbs.eq  r2, r1, 0x000003fc<1020>                 ; reverse subtract
+L583  
+L584  ################################################################################
+L585  
+L586  # rsceq r2, r1, #0x3fc
+L587  0xff 0x2f 0xe1 0x02
+L587  0x00000000: ff 2f e1 02               ?? rsc.eq   r2, r1, 0x000003fc<1020>                 ; reverse subtract with carry
+L588  
+L589  # rscseq r2, r1, #0x3fc
+L590  0xff 0x2f 0xf1 0x02
+L590  0x00000000: ff 2f f1 02               ?? rscs.eq  r2, r1, 0x000003fc<1020>                 ; reverse subtract with carry
 L591  
-L592  # seleq r2, r1, r3
-L593  0xb3 0x2f 0x81 0x06
-L593  0x00000000: b3 2f 81 06               ?? sel.eq   r2, r1, r3                               ; select bytes
-L594  
-L595  ################################################################################
+L592  ################################################################################
+L593  
+L594  # sadd16eq r2, r1, r3
+L595  0x13 0x2f 0x11 0x06
+L595  0x00000000: 13 2f 11 06               ?? sadd16.eq r2, r1, r3                               ; signed add 16
 L596  
-L597  # shadd16eq r2, r1, r3
-L598  0x13 0x2f 0x31 0x06
-L598  0x00000000: 13 2f 31 06               ?? shadd16.eq r2, r1, r3                               ; signed halving add 16
-L599  
-L600  ################################################################################
+L597  ################################################################################
+L598  
+L599  # sadd8eq r2, r1, r3
+L600  0x93 0x2f 0x11 0x06
+L600  0x00000000: 93 2f 11 06               ?? sadd8.eq r2, r1, r3                               ; signed add 8
 L601  
-L602  # shadd8eq r2, r1, r3
-L603  0x93 0x2f 0x31 0x06
-L603  0x00000000: 93 2f 31 06               ?? shadd8.eq r2, r1, r3                               ; signed halving add 8
-L604  
-L605  ################################################################################
+L602  ################################################################################
+L603  
+L604  # sasxeq r2, r1, r3
+L605  0x33 0x2f 0x11 0x06
+L605  0x00000000: 33 2f 11 06               ?? sasx.eq  r2, r1, r3                               ; signed add and subtract with exchange
 L606  
-L607  # shasxeq r2, r1, r3
-L608  0x33 0x2f 0x31 0x06
-L608  0x00000000: 33 2f 31 06               ?? shasx.eq r2, r1, r3                               ; signed halving add and subtract with exchange
-L609  
-L610  ################################################################################
+L607  ################################################################################
+L608  
+L609  # sbceq r2, r1, #0x3fc
+L610  0xff 0x2f 0xc1 0x02
+L610  0x00000000: ff 2f c1 02               ?? sbc.eq   r2, r1, 0x000003fc<1020>                 ; subtract with carry
 L611  
-L612  # shsaxeq r2, r1, r3
-L613  0x53 0x2f 0x31 0x06
-L613  0x00000000: 53 2f 31 06               ?? shsax.eq r2, r1, r3                               ; signed halving subtract and add with exchange
+L612  # sbcseq r2, r1, #0x3fc
+L613  0xff 0x2f 0xd1 0x02
+L613  0x00000000: ff 2f d1 02               ?? sbcs.eq  r2, r1, 0x000003fc<1020>                 ; subtract with carry
 L614  
 L615  ################################################################################
 L616  
-L617  # shsub16eq r2, r1, r3
-L618  0x73 0x2f 0x31 0x06
-L618  0x00000000: 73 2f 31 06               ?? shsub16.eq r2, r1, r3                               ; signed halving subtract 16
+L617  # sbfxeq r1, r2, #8, #0x11
+L618  0x52 0x14 0xb0 0x07
+L618  0x00000000: 52 14 b0 07               ?? sbfx.eq  r1, r2, 8, 0x00000011<17>                ; signed bitfield extract
 L619  
 L620  ################################################################################
 L621  
-L622  # shsub8eq r2, r1, r3
-L623  0xf3 0x2f 0x31 0x06
-L623  0x00000000: f3 2f 31 06               ?? shsub8.eq r2, r1, r3                               ; signed halving subtract 8
+L622  # seleq r2, r1, r3
+L623  0xb3 0x2f 0x81 0x06
+L623  0x00000000: b3 2f 81 06               ?? sel.eq   r2, r1, r3                               ; select bytes
 L624  
 L625  ################################################################################
 L626  
-L627  # smlabbeq r1, r4, r3, r2
-L628  0x84 0x23 0x01 0x01
-L628  0x00000000: 84 23 01 01               ?? smlabb.eq r1, r4, r3, r2                           ; signed multiply accumulate (half-words)
+L627  # shadd16eq r2, r1, r3
+L628  0x13 0x2f 0x31 0x06
+L628  0x00000000: 13 2f 31 06               ?? shadd16.eq r2, r1, r3                               ; signed halving add 16
 L629  
 L630  ################################################################################
 L631  
-L632  # smlabteq r1, r4, r3, r2
-L633  0xc4 0x23 0x01 0x01
-L633  0x00000000: c4 23 01 01               ?? smlabt.eq r1, r4, r3, r2                           ; signed multiply accumulate (lalf-words)
+L632  # shadd8eq r2, r1, r3
+L633  0x93 0x2f 0x31 0x06
+L633  0x00000000: 93 2f 31 06               ?? shadd8.eq r2, r1, r3                               ; signed halving add 8
 L634  
 L635  ################################################################################
 L636  
-L637  # smladeq r1, r4, r3, r2
-L638  0x14 0x23 0x01 0x07
-L638  0x00000000: 14 23 01 07               ?? smlad.eq r1, r4, r3, r2                           ; signed multiply accumulate dual
+L637  # shasxeq r2, r1, r3
+L638  0x33 0x2f 0x31 0x06
+L638  0x00000000: 33 2f 31 06               ?? shasx.eq r2, r1, r3                               ; signed halving add and subtract with exchange
 L639  
 L640  ################################################################################
 L641  
-L642  # smladxeq r1, r4, r3, r2
-L643  0x34 0x23 0x01 0x07
-L643  0x00000000: 34 23 01 07               ?? smladx.eq r1, r4, r3, r2                           ; signed multiply accumulate dual
+L642  # shsaxeq r2, r1, r3
+L643  0x53 0x2f 0x31 0x06
+L643  0x00000000: 53 2f 31 06               ?? shsax.eq r2, r1, r3                               ; signed halving subtract and add with exchange
 L644  
 L645  ################################################################################
 L646  
-L647  # smlaleq r2, r1, r4, r3
-L648  0x94 0x23 0xe1 0x00
-L648  0x00000000: 94 23 e1 00               ?? smlal.eq r2, r1, r4, r3                           ; signed multiply accumulate long
+L647  # shsub16eq r2, r1, r3
+L648  0x73 0x2f 0x31 0x06
+L648  0x00000000: 73 2f 31 06               ?? shsub16.eq r2, r1, r3                               ; signed halving subtract 16
 L649  
 L650  ################################################################################
 L651  
-L652  # smlalbbeq r2, r1, r4, r3
-L653  0x84 0x23 0x41 0x01
-L653  0x00000000: 84 23 41 01               ?? smlalbb.eq r2, r1, r4, r3                           ; signed multiply accumulate long (half-words)
+L652  # shsub8eq r2, r1, r3
+L653  0xf3 0x2f 0x31 0x06
+L653  0x00000000: f3 2f 31 06               ?? shsub8.eq r2, r1, r3                               ; signed halving subtract 8
 L654  
 L655  ################################################################################
 L656  
-L657  # smlalbteq r2, r1, r4, r3
-L658  0xc4 0x23 0x41 0x01
-L658  0x00000000: c4 23 41 01               ?? smlalbt.eq r2, r1, r4, r3                           ; signed multiply accumulate long (half-words)
+L657  # smlabbeq r1, r4, r3, r2
+L658  0x84 0x23 0x01 0x01
+L658  0x00000000: 84 23 01 01               ?? smlabb.eq r1, r4, r3, r2                           ; signed multiply accumulate (half-words)
 L659  
 L660  ################################################################################
 L661  
-L662  # smlaldeq r2, r1, r4, r3
-L663  0x14 0x23 0x41 0x07
-L663  0x00000000: 14 23 41 07               ?? smlald.eq r2, r1, r4, r3                           ; signed multiply accumulate long dual
+L662  # smlabteq r1, r4, r3, r2
+L663  0xc4 0x23 0x01 0x01
+L663  0x00000000: c4 23 01 01               ?? smlabt.eq r1, r4, r3, r2                           ; signed multiply accumulate (lalf-words)
 L664  
 L665  ################################################################################
 L666  
-L667  # smlaldxeq r2, r1, r4, r3
-L668  0x34 0x23 0x41 0x07
-L668  0x00000000: 34 23 41 07               ?? smlaldx.eq r2, r1, r4, r3                           ; signed multiply accumulate long dual
+L667  # smladeq r1, r4, r3, r2
+L668  0x14 0x23 0x01 0x07
+L668  0x00000000: 14 23 01 07               ?? smlad.eq r1, r4, r3, r2                           ; signed multiply accumulate dual
 L669  
 L670  ################################################################################
 L671  
-L672  # smlalseq r2, r1, r4, r3
-L673  0x94 0x23 0xf1 0x00
-L673  0x00000000: 94 23 f1 00               ?? smlals.eq r2, r1, r4, r3                           ; signed multiply accumulate long
+L672  # smladxeq r1, r4, r3, r2
+L673  0x34 0x23 0x01 0x07
+L673  0x00000000: 34 23 01 07               ?? smladx.eq r1, r4, r3, r2                           ; signed multiply accumulate dual
 L674  
 L675  ################################################################################
 L676  
-L677  # smlaltbeq r2, r1, r4, r3
-L678  0xa4 0x23 0x41 0x01
-L678  0x00000000: a4 23 41 01               ?? smlaltb.eq r2, r1, r4, r3                           ; signed multiply accumulate (half-words)
+L677  # smlaleq r2, r1, r4, r3
+L678  0x94 0x23 0xe1 0x00
+L678  0x00000000: 94 23 e1 00               ?? smlal.eq r2, r1, r4, r3                           ; signed multiply accumulate long
 L679  
 L680  ################################################################################
 L681  
-L682  # smlaltteq r2, r1, r4, r3
-L683  0xe4 0x23 0x41 0x01
-L683  0x00000000: e4 23 41 01               ?? smlaltt.eq r2, r1, r4, r3                           ; signed multiply accumulate (half-words)
+L682  # smlalbbeq r2, r1, r4, r3
+L683  0x84 0x23 0x41 0x01
+L683  0x00000000: 84 23 41 01               ?? smlalbb.eq r2, r1, r4, r3                           ; signed multiply accumulate long (half-words)
 L684  
 L685  ################################################################################
 L686  
-L687  # smlatbeq r1, r4, r3, r2
-L688  0xa4 0x23 0x01 0x01
-L688  0x00000000: a4 23 01 01               ?? smlatb.eq r1, r4, r3, r2                           ; signed multiply accumulate long (half-words)
+L687  # smlalbteq r2, r1, r4, r3
+L688  0xc4 0x23 0x41 0x01
+L688  0x00000000: c4 23 41 01               ?? smlalbt.eq r2, r1, r4, r3                           ; signed multiply accumulate long (half-words)
 L689  
 L690  ################################################################################
 L691  
-L692  # smlatteq r1, r4, r3, r2
-L693  0xe4 0x23 0x01 0x01
-L693  0x00000000: e4 23 01 01               ?? smlatt.eq r1, r4, r3, r2                           ; signed multiply accumulate (half-words)
+L692  # smlaldeq r2, r1, r4, r3
+L693  0x14 0x23 0x41 0x07
+L693  0x00000000: 14 23 41 07               ?? smlald.eq r2, r1, r4, r3                           ; signed multiply accumulate long dual
 L694  
 L695  ################################################################################
 L696  
-L697  # smlawbeq r1, r4, r3, r2
-L698  0x84 0x23 0x21 0x01
-L698  0x00000000: 84 23 21 01               ?? smlawb.eq r1, r4, r3, r2                           ; signed multiply accumulate (word by half-word)
+L697  # smlaldxeq r2, r1, r4, r3
+L698  0x34 0x23 0x41 0x07
+L698  0x00000000: 34 23 41 07               ?? smlaldx.eq r2, r1, r4, r3                           ; signed multiply accumulate long dual
 L699  
 L700  ################################################################################
 L701  
-L702  # smlawteq r1, r4, r3, r2
-L703  0xc4 0x23 0x21 0x01
-L703  0x00000000: c4 23 21 01               ?? smlawt.eq r1, r4, r3, r2                           ; signed multiply accumulate (word by half-word)
+L702  # smlalseq r2, r1, r4, r3
+L703  0x94 0x23 0xf1 0x00
+L703  0x00000000: 94 23 f1 00               ?? smlals.eq r2, r1, r4, r3                           ; signed multiply accumulate long
 L704  
 L705  ################################################################################
 L706  
-L707  # smlsdeq r1, r6, r3, r2
-L708  0x56 0x23 0x01 0x07
-L708  0x00000000: 56 23 01 07               ?? smlsd.eq r1, r6, r3, r2                           ; signed multiply subtract dual
+L707  # smlaltbeq r2, r1, r4, r3
+L708  0xa4 0x23 0x41 0x01
+L708  0x00000000: a4 23 41 01               ?? smlaltb.eq r2, r1, r4, r3                           ; signed multiply accumulate (half-words)
 L709  
 L710  ################################################################################
 L711  
-L712  # smlsdxeq r1, r6, r3, r2
-L713  0x76 0x23 0x01 0x07
-L713  0x00000000: 76 23 01 07               ?? smlsdx.eq r1, r6, r3, r2                           ; signed multiply subtract dual
+L712  # smlaltteq r2, r1, r4, r3
+L713  0xe4 0x23 0x41 0x01
+L713  0x00000000: e4 23 41 01               ?? smlaltt.eq r2, r1, r4, r3                           ; signed multiply accumulate (half-words)
 L714  
 L715  ################################################################################
 L716  
-L717  # smmlaeq r1, r4, r3, r2
-L718  0x14 0x23 0x51 0x07
-L718  0x00000000: 14 23 51 07               ?? smmla.eq r1, r4, r3, r2                           ; signed most significant word multiply accumulate
+L717  # smlatbeq r1, r4, r3, r2
+L718  0xa4 0x23 0x01 0x01
+L718  0x00000000: a4 23 01 01               ?? smlatb.eq r1, r4, r3, r2                           ; signed multiply accumulate long (half-words)
 L719  
 L720  ################################################################################
 L721  
-L722  # smmlareq r1, r4, r3, r2
-L723  0x34 0x23 0x51 0x07
-L723  0x00000000: 34 23 51 07               ?? smmlar.eq r1, r4, r3, r2                           ; signed most significant word multiply accumulate
+L722  # smlatteq r1, r4, r3, r2
+L723  0xe4 0x23 0x01 0x01
+L723  0x00000000: e4 23 01 01               ?? smlatt.eq r1, r4, r3, r2                           ; signed multiply accumulate (half-words)
 L724  
 L725  ################################################################################
 L726  
-L727  # smmlseq r1, r4, r3, r2
-L728  0xd4 0x23 0x51 0x07
-L728  0x00000000: d4 23 51 07               ?? smmls.eq r1, r4, r3, r2                           ; signed most significant word multiply subtract
+L727  # smlawbeq r1, r4, r3, r2
+L728  0x84 0x23 0x21 0x01
+L728  0x00000000: 84 23 21 01               ?? smlawb.eq r1, r4, r3, r2                           ; signed multiply accumulate (word by half-word)
 L729  
 L730  ################################################################################
 L731  
-L732  # smmlsreq r1, r4, r3, r2
-L733  0xf4 0x23 0x51 0x07
-L733  0x00000000: f4 23 51 07               ?? smmlsr.eq r1, r4, r3, r2                           ; signed most significant word multiply subtract
+L732  # smlawteq r1, r4, r3, r2
+L733  0xc4 0x23 0x21 0x01
+L733  0x00000000: c4 23 21 01               ?? smlawt.eq r1, r4, r3, r2                           ; signed multiply accumulate (word by half-word)
 L734  
 L735  ################################################################################
 L736  
-L737  # smulbbeq r1, r3, r2
-L738  0x83 0x02 0x61 0x01
-L738  0x00000000: 83 02 61 01               ?? smulbb.eq r1, r3, r2                               ; signed multiply (half-words)
+L737  # smlsdeq r1, r6, r3, r2
+L738  0x56 0x23 0x01 0x07
+L738  0x00000000: 56 23 01 07               ?? smlsd.eq r1, r6, r3, r2                           ; signed multiply subtract dual
 L739  
 L740  ################################################################################
 L741  
-L742  # smulbteq r1, r3, r2
-L743  0xc3 0x02 0x61 0x01
-L743  0x00000000: c3 02 61 01               ?? smulbt.eq r1, r3, r2                               ; signed multiply (half-words)
+L742  # smlsdxeq r1, r6, r3, r2
+L743  0x76 0x23 0x01 0x07
+L743  0x00000000: 76 23 01 07               ?? smlsdx.eq r1, r6, r3, r2                           ; signed multiply subtract dual
 L744  
 L745  ################################################################################
 L746  
-L747  # smulleq r2, r1, r4, r3
-L748  0x94 0x23 0xc1 0x00
-L748  0x00000000: 94 23 c1 00               ?? smull.eq r2, r1, r4, r3                           ; signed multiply long
+L747  # smmlaeq r1, r4, r3, r2
+L748  0x14 0x23 0x51 0x07
+L748  0x00000000: 14 23 51 07               ?? smmla.eq r1, r4, r3, r2                           ; signed most significant word multiply accumulate
 L749  
 L750  ################################################################################
 L751  
-L752  # smullseq r2, r1, r4, r3
-L753  0x94 0x23 0xd1 0x00
-L753  0x00000000: 94 23 d1 00               ?? smulls.eq r2, r1, r4, r3                           ; signed multiply long
+L752  # smmlareq r1, r4, r3, r2
+L753  0x34 0x23 0x51 0x07
+L753  0x00000000: 34 23 51 07               ?? smmlar.eq r1, r4, r3, r2                           ; signed most significant word multiply accumulate
 L754  
 L755  ################################################################################
 L756  
-L757  # smultbeq r1, r3, r2
-L758  0xa3 0x02 0x61 0x01
-L758  0x00000000: a3 02 61 01               ?? smultb.eq r1, r3, r2                               ; signed multiply (half-words)
+L757  # smmlseq r1, r4, r3, r2
+L758  0xd4 0x23 0x51 0x07
+L758  0x00000000: d4 23 51 07               ?? smmls.eq r1, r4, r3, r2                           ; signed most significant word multiply subtract
 L759  
 L760  ################################################################################
 L761  
-L762  # smultteq r1, r3, r2
-L763  0xe3 0x02 0x61 0x01
-L763  0x00000000: e3 02 61 01               ?? smultt.eq r1, r3, r2                               ; signed multiply (half-words)
+L762  # smmlsreq r1, r4, r3, r2
+L763  0xf4 0x23 0x51 0x07
+L763  0x00000000: f4 23 51 07               ?? smmlsr.eq r1, r4, r3, r2                           ; signed most significant word multiply subtract
 L764  
 L765  ################################################################################
 L766  
-L767  # smulwbeq r1, r3, r2
-L768  0xa3 0x02 0x21 0x01
-L768  0x00000000: a3 02 21 01               ?? smulwb.eq r1, r3, r2                               ; signed multiply (word by half-word)
+L767  # smulbbeq r1, r3, r2
+L768  0x83 0x02 0x61 0x01
+L768  0x00000000: 83 02 61 01               ?? smulbb.eq r1, r3, r2                               ; signed multiply (half-words)
 L769  
 L770  ################################################################################
 L771  
-L772  # smulwteq r1, r3, r2
-L773  0xe3 0x02 0x21 0x01
-L773  0x00000000: e3 02 21 01               ?? smulwt.eq r1, r3, r2                               ; signed multiply (word by half-word)
+L772  # smulbteq r1, r3, r2
+L773  0xc3 0x02 0x61 0x01
+L773  0x00000000: c3 02 61 01               ?? smulbt.eq r1, r3, r2                               ; signed multiply (half-words)
 L774  
 L775  ################################################################################
 L776  
-L777  # ssateq r1, #3, r3, asr #0x1f
-L778  0xd3 0x1f 0xa2 0x06
-L778  0x00000000: d3 1f a2 06               ?? ssat.eq  r1, 3, asr(r3, 0x0000001f<31>)           ; signed saturate
+L777  # smulleq r2, r1, r4, r3
+L778  0x94 0x23 0xc1 0x00
+L778  0x00000000: 94 23 c1 00               ?? smull.eq r2, r1, r4, r3                           ; signed multiply long
 L779  
 L780  ################################################################################
 L781  
-L782  # ssaxeq r2, r1, r3
-L783  0x53 0x2f 0x11 0x06
-L783  0x00000000: 53 2f 11 06               ?? ssax.eq  r2, r1, r3                               ; signed subtract and add with exchange
+L782  # smullseq r2, r1, r4, r3
+L783  0x94 0x23 0xd1 0x00
+L783  0x00000000: 94 23 d1 00               ?? smulls.eq r2, r1, r4, r3                           ; signed multiply long
 L784  
 L785  ################################################################################
 L786  
-L787  # ssub16eq r2, r1, r3
-L788  0x73 0x2f 0x11 0x06
-L788  0x00000000: 73 2f 11 06               ?? ssub16.eq r2, r1, r3                               ; signed subtract 16
+L787  # smultbeq r1, r3, r2
+L788  0xa3 0x02 0x61 0x01
+L788  0x00000000: a3 02 61 01               ?? smultb.eq r1, r3, r2                               ; signed multiply (half-words)
 L789  
 L790  ################################################################################
 L791  
-L792  # ssub8eq r2, r1, r3
-L793  0xf3 0x2f 0x11 0x06
-L793  0x00000000: f3 2f 11 06               ?? ssub8.eq r2, r1, r3                               ; signed subtract 8
+L792  # smultteq r1, r3, r2
+L793  0xe3 0x02 0x61 0x01
+L793  0x00000000: e3 02 61 01               ?? smultt.eq r1, r3, r2                               ; signed multiply (half-words)
 L794  
 L795  ################################################################################
 L796  
-L797  # stceq p14, c5, [r1, #-0x3fc]
-L798  0xff 0x5e 0x01 0x0d
-L798  0x00000000: ff 5e 01 0d               ?? stc.eq   p14, cr5, u32 [r1 + 0xfffffc04<4294966276,-1020>] ; store coprocessor
+L797  # smulwbeq r1, r3, r2
+L798  0xa3 0x02 0x21 0x01
+L798  0x00000000: a3 02 21 01               ?? smulwb.eq r1, r3, r2                               ; signed multiply (word by half-word)
 L799  
 L800  ################################################################################
 L801  
-L802  # stm r1!, {r1}
-L803  0x02 0x00 0xa1 0xe8
-L803  0x00000000: 02 00 a1 e8               ?? stm      r1 (then r1 = r1 + 4), r1                ; store multiple
+L802  # smulwteq r1, r3, r2
+L803  0xe3 0x02 0x21 0x01
+L803  0x00000000: e3 02 21 01               ?? smulwt.eq r1, r3, r2                               ; signed multiply (word by half-word)
 L804  
-L805  # The writen value for r1 is undefined for this one
-L806  # stm r1!, {r0, r1}
-L807  0x03 0x00 0xa1 0xe8
-L807  0x00000000: 03 00 a1 e8               ?? stm      r1 (then r1 = r1 + 8), r0, r1            ; store multiple
-L808  
-L809  # Both written values are defined for this one
-L810  # stm r1!, {r1, r2}
-L811  0x06 0x00 0xa1 0xe8
-L811  0x00000000: 06 00 a1 e8               ?? stm      r1 (then r1 = r1 + 8), r1, r2            ; store multiple
-L812  
-L813  ################################################################################
+L805  ################################################################################
+L806  
+L807  # ssateq r1, #3, r3, asr #0x1f
+L808  0xd3 0x1f 0xa2 0x06
+L808  0x00000000: d3 1f a2 06               ?? ssat.eq  r1, 3, asr(r3, 0x0000001f<31>)           ; signed saturate
+L809  
+L810  ################################################################################
+L811  
+L812  # ssaxeq r2, r1, r3
+L813  0x53 0x2f 0x11 0x06
+L813  0x00000000: 53 2f 11 06               ?? ssax.eq  r2, r1, r3                               ; signed subtract and add with exchange
 L814  
-L815  # stmdaeq r1, {r1, r3, r5, r7, sb, fp, sp, pc}
-L816  0xaa 0xaa 0x01 0x08
-L816  0x00000000: aa aa 01 08               ?? stmda.eq r1, r1, r3, r5, r7, sb, fp, sp, pc       ; store multiple decrement after
-L817  
-L818  ################################################################################
+L815  ################################################################################
+L816  
+L817  # ssub16eq r2, r1, r3
+L818  0x73 0x2f 0x11 0x06
+L818  0x00000000: 73 2f 11 06               ?? ssub16.eq r2, r1, r3                               ; signed subtract 16
 L819  
-L820  # stmdbeq r0!, {r1}
-L821  0x02 0x00 0x20 0x09
-L821  0x00000000: 02 00 20 09               ?? stmdb.eq r0 (then r0 = r0 + 0xfffffffc<4294967292,-4>), r1 ; store multiple decrement before
-L822  
-L823  # stmdbeq r0!, {r0}
-L824  0x01 0x00 0x20 0x09
-L824  0x00000000: 01 00 20 09               ?? stmdb.eq r0 (then r0 = r0 + 0xfffffffc<4294967292,-4>), r0 ; store multiple decrement before
-L825  
-L826  # stmdbeq r0!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, sb, sl, fp, ip, sp, lr, pc}
-L827  0xff 0xff 0x20 0x09
-L827  0x00000000: ff ff 20 09               ?? stmdb.eq r0 (then r0 = r0 + 0xffffffc0<4294967232,-64>), r0, r1, r2, r3, r4, r5, r6, r7, r8, sb, sl, fp, ip, sp, lr, pc ; store multiple decrement before
-L828  
-L829  ################################################################################
-L830  
-L831  # stmibeq r1!, {r0}
-L832  0x01 0x00 0xa1 0x09
-L832  0x00000000: 01 00 a1 09               ?? stmib.eq r1 (then r1 = r1 + 4), r0                ; store multiple increment before
-L833  
-L834  ################################################################################
-L835  
-L836  # streq r2, [r1, #-0]
-L837  0x00 0x20 0x01 0x05
-L837  0x00000000: 00 20 01 05               ?? str.eq   r2, u32 [r1]                             ; store register
+L820  ################################################################################
+L821  
+L822  # ssub8eq r2, r1, r3
+L823  0xf3 0x2f 0x11 0x06
+L823  0x00000000: f3 2f 11 06               ?? ssub8.eq r2, r1, r3                               ; signed subtract 8
+L824  
+L825  ################################################################################
+L826  
+L827  # stceq p14, c5, [r1, #-0x3fc]
+L828  0xff 0x5e 0x01 0x0d
+L828  0x00000000: ff 5e 01 0d               ?? stc.eq   p14, cr5, u32 [r1 + 0xfffffc04<4294966276,-1020>] ; store coprocessor
+L829  
+L830  ################################################################################
+L831  
+L832  # stm r1!, {r1}
+L833  0x02 0x00 0xa1 0xe8
+L833  0x00000000: 02 00 a1 e8               ?? stm      r1 (then r1 = r1 + 4), r1                ; store multiple
+L834  
+L835  # The writen value for r1 is undefined for this one
+L836  # stm r1!, {r0, r1}
+L837  0x03 0x00 0xa1 0xe8
+L837  0x00000000: 03 00 a1 e8               ?? stm      r1 (then r1 = r1 + 8), r0, r1            ; store multiple
 L838  
-L839  # streq r2, [r1, -r3, lsl #7]!
-L840  0x83 0x23 0x21 0x07
-L840  0x00000000: 83 23 21 07               ?? str.eq   r2, u32 [r1 (after r1 = r1 - (r3 << 7))] ; store register
-L841  
-L842  # streq r2, [r1, -r3, asr #7]!
-L843  0xc3 0x23 0x21 0x07
-L843  0x00000000: c3 23 21 07               ?? str.eq   r2, u32 [r1 (after r1 = r1 - asr(r3, 7))] ; store register
+L839  # Both written values are defined for this one
+L840  # stm r1!, {r1, r2}
+L841  0x06 0x00 0xa1 0xe8
+L841  0x00000000: 06 00 a1 e8               ?? stm      r1 (then r1 = r1 + 8), r1, r2            ; store multiple
+L842  
+L843  ################################################################################
 L844  
-L845  ################################################################################
-L846  
-L847  # strbeq r2, [r1, #-0xff]
-L848  0xff 0x20 0x41 0x05
-L848  0x00000000: ff 20 41 05               ?? strb.eq  r2, u8 [r1 + 0xffffff01<4294967041,-255>] ; store register byte
+L845  # stmdaeq r1, {r1, r3, r5, r7, sb, fp, sp, pc}
+L846  0xaa 0xaa 0x01 0x08
+L846  0x00000000: aa aa 01 08               ?? stmda.eq r1, r1, r3, r5, r7, sb, fp, sp, pc       ; store multiple decrement after
+L847  
+L848  ################################################################################
 L849  
-L850  ################################################################################
-L851  
-L852  # strbteq r2, [r1], #0xfff
-L853  0xff 0x2f 0xe1 0x04
-L853  0x00000000: ff 2f e1 04               ?? strbt.eq r2, u8 [r1 (then r1 = r1 + 0x00000fff<4095>)] ; store register byte unprivileged
-L854  
-L855  ################################################################################
-L856  
-L857  # strdeq r2, r3, [r1, #0xff]
-L858  0xff 0x2f 0xc1 0x01
-L858  0x00000000: ff 2f c1 01               ?? strd.eq  r2, r3, u64 [r1 + 0x000000ff<255>]       ; store register dual
-L859  
-L860  # strdeq r2, r3, [r1], #0xff
-L861  0xff 0x2f 0xc1 0x00
-L861  0x00000000: ff 2f c1 00               ?? strd.eq  r2, r3, u64 [r1 (then r1 = r1 + 0x000000ff<255>)] ; store register dual
-L862  
-L863  ################################################################################
-L864  
-L865  # strheq r2, [r1, r3]!
-L866  0xb3 0x20 0xa1 0x01
-L866  0x00000000: b3 20 a1 01               ?? strh.eq  r2, u16 [r1 (after r1 = r1 + r3)]        ; store register half-word
-L867  
-L868  ################################################################################
-L869  
-L870  # strhteq r2, [r1], #0xff
-L871  0xbf 0x2f 0xe1 0x00
-L871  0x00000000: bf 2f e1 00               ?? strht.eq r2, u16 [r1 (then r1 = r1 + 0x000000ff<255>)] ; store register half-word unprivileged
-L872  
-L873  ################################################################################
+L850  # stmdbeq r0!, {r1}
+L851  0x02 0x00 0x20 0x09
+L851  0x00000000: 02 00 20 09               ?? stmdb.eq r0 (then r0 = r0 + 0xfffffffc<4294967292,-4>), r1 ; store multiple decrement before
+L852  
+L853  # stmdbeq r0!, {r0}
+L854  0x01 0x00 0x20 0x09
+L854  0x00000000: 01 00 20 09               ?? stmdb.eq r0 (then r0 = r0 + 0xfffffffc<4294967292,-4>), r0 ; store multiple decrement before
+L855  
+L856  # stmdbeq r0!, {r0, r1, r2, r3, r4, r5, r6, r7, r8, sb, sl, fp, ip, sp, lr, pc}
+L857  0xff 0xff 0x20 0x09
+L857  0x00000000: ff ff 20 09               ?? stmdb.eq r0 (then r0 = r0 + 0xffffffc0<4294967232,-64>), r0, r1, r2, r3, r4, r5, r6, r7, r8, sb, sl, fp, ip, sp, lr, pc ; store multiple decrement before
+L858  
+L859  ################################################################################
+L860  
+L861  # stmibeq r1!, {r0}
+L862  0x01 0x00 0xa1 0x09
+L862  0x00000000: 01 00 a1 09               ?? stmib.eq r1 (then r1 = r1 + 4), r0                ; store multiple increment before
+L863  
+L864  ################################################################################
+L865  
+L866  # streq r2, [r1, #-0]
+L867  0x00 0x20 0x01 0x05
+L867  0x00000000: 00 20 01 05               ?? str.eq   r2, u32 [r1]                             ; store register
+L868  
+L869  # streq r2, [r1, -r3, lsl #7]!
+L870  0x83 0x23 0x21 0x07
+L870  0x00000000: 83 23 21 07               ?? str.eq   r2, u32 [r1 (after r1 = r1 - (r3 << 7))] ; store register
+L871  
+L872  # streq r2, [r1, -r3, asr #7]!
+L873  0xc3 0x23 0x21 0x07
+L873  0x00000000: c3 23 21 07               ?? str.eq   r2, u32 [r1 (after r1 = r1 - asr(r3, 7))] ; store register
 L874  
-L875  # strt r1, [r0], #-0xfff
-L876  0xff 0x1f 0x20 0xe4
-L876  0x00000000: ff 1f 20 e4               ?? strt     r1, u32 [r0 (then r0 = r0 + 0xfffff001<4294963201,-4095>)] ; store register unprivileged
-L877  
-L878  # strteq pc, [r0], #-0xfff
-L879  0xff 0xff 0x20 0x04
-L879  0x00000000: ff ff 20 04               ?? strt.eq  pc, u32 [r0 (then r0 = r0 + 0xfffff001<4294963201,-4095>)] ; store register unprivileged
-L880  
-L881  ################################################################################
-L882  
-L883  # subeq r2, r1, #0x3fc
-L884  0xff 0x2f 0x41 0x02
-L884  0x00000000: ff 2f 41 02               ?? sub.eq   r2, r1, 0x000003fc<1020>                 ; subtract
-L885  
-L886  # subseq r2, r1, #0x3fc
-L887  0xff 0x2f 0x51 0x02
-L887  0x00000000: ff 2f 51 02               ?? subs.eq  r2, r1, 0x000003fc<1020>                 ; subtract
-L888  
-L889  ################################################################################
-L890  
-L891  # svceq #1
-L892  0x01 0x00 0x00 0x0f
-L892  0x00000000: 01 00 00 0f               ?? svc.eq   1                                        ; supervisor call
-L893  
-L894  ################################################################################
-L895  
-L896  # sxtabeq r2, r1, r3, ror #24
-L897  0x73 0x2c 0xa1 0x06
-L897  0x00000000: 73 2c a1 06               ?? sxtab.eq r2, r1, ror(r3, 0x00000018<24>)          ; sign extend and add byte
-L898  
-L899  ################################################################################
-L900  
-L901  # sxtab16eq r2, r1, r3, ror #24
-L902  0x73 0x2c 0x81 0x06
-L902  0x00000000: 73 2c 81 06               ?? sxtab16.eq r2, r1, ror(r3, 0x00000018<24>)          ; sign extend and add byte 16
-L903  
-L904  ################################################################################
-L905  
-L906  # sxtaheq r2, r1, r3, ror #24
-L907  0x73 0x2c 0xb1 0x06
-L907  0x00000000: 73 2c b1 06               ?? sxtah.eq r2, r1, ror(r3, 0x00000018<24>)          ; sign extend and add half-word
-L908  
-L909  ################################################################################
+L875  ################################################################################
+L876  
+L877  # strbeq r2, [r1, #-0xff]
+L878  0xff 0x20 0x41 0x05
+L878  0x00000000: ff 20 41 05               ?? strb.eq  r2, u8 [r1 + 0xffffff01<4294967041,-255>] ; store register byte
+L879  
+L880  ################################################################################
+L881  
+L882  # strbteq r2, [r1], #0xfff
+L883  0xff 0x2f 0xe1 0x04
+L883  0x00000000: ff 2f e1 04               ?? strbt.eq r2, u8 [r1 (then r1 = r1 + 0x00000fff<4095>)] ; store register byte unprivileged
+L884  
+L885  ################################################################################
+L886  
+L887  # strdeq r2, r3, [r1, #0xff]
+L888  0xff 0x2f 0xc1 0x01
+L888  0x00000000: ff 2f c1 01               ?? strd.eq  r2, r3, u64 [r1 + 0x000000ff<255>]       ; store register dual
+L889  
+L890  # strdeq r2, r3, [r1], #0xff
+L891  0xff 0x2f 0xc1 0x00
+L891  0x00000000: ff 2f c1 00               ?? strd.eq  r2, r3, u64 [r1 (then r1 = r1 + 0x000000ff<255>)] ; store register dual
+L892  
+L893  ################################################################################
+L894  
+L895  # strheq r2, [r1, r3]!
+L896  0xb3 0x20 0xa1 0x01
+L896  0x00000000: b3 20 a1 01               ?? strh.eq  r2, u16 [r1 (after r1 = r1 + r3)]        ; store register half-word
+L897  
+L898  ################################################################################
+L899  
+L900  # strhteq r2, [r1], #0xff
+L901  0xbf 0x2f 0xe1 0x00
+L901  0x00000000: bf 2f e1 00               ?? strht.eq r2, u16 [r1 (then r1 = r1 + 0x000000ff<255>)] ; store register half-word unprivileged
+L902  
+L903  ################################################################################
+L904  
+L905  # strt r1, [r0], #-0xfff
+L906  0xff 0x1f 0x20 0xe4
+L906  0x00000000: ff 1f 20 e4               ?? strt     r1, u32 [r0 (then r0 = r0 + 0xfffff001<4294963201,-4095>)] ; store register unprivileged
+L907  
+L908  # strteq pc, [r0], #-0xfff
+L909  0xff 0xff 0x20 0x04
+L909  0x00000000: ff ff 20 04               ?? strt.eq  pc, u32 [r0 (then r0 = r0 + 0xfffff001<4294963201,-4095>)] ; store register unprivileged
 L910  
-L911  # teqeq r1, #0x3fc
-L912  0xff 0x0f 0x31 0x03
-L912  0x00000000: ff 0f 31 03               ?? teq.eq   r1, 0x000003fc<1020>                     ; test equivalence
-L913  
-L914  ################################################################################
+L911  ################################################################################
+L912  
+L913  # subeq r2, r1, #0x3fc
+L914  0xff 0x2f 0x41 0x02
+L914  0x00000000: ff 2f 41 02               ?? sub.eq   r2, r1, 0x000003fc<1020>                 ; subtract
 L915  
-L916  # tsteq r1, #0x3fc
-L917  0xff 0x0f 0x11 0x03
-L917  0x00000000: ff 0f 11 03               ?? tst.eq   r1, 0x000003fc<1020>                     ; test
+L916  # subseq r2, r1, #0x3fc
+L917  0xff 0x2f 0x51 0x02
+L917  0x00000000: ff 2f 51 02               ?? subs.eq  r2, r1, 0x000003fc<1020>                 ; subtract
 L918  
-L919  # tsteq r1, r2, ror #31
-L920  0xe2 0x0f 0x11 0x01
-L920  0x00000000: e2 0f 11 01               ?? tst.eq   r1, ror(r2, 0x0000001f<31>)              ; test
-L921  
-L922  # tsteq r1, r3, ror r2
-L923  0x73 0x02 0x11 0x01
-L923  0x00000000: 73 02 11 01               ?? tst.eq   r1, ror(r3, r2)                          ; test
-L924  
-L925  ################################################################################
-L926  
-L927  # uadd16eq r2, r1, r3
-L928  0x13 0x2f 0x51 0x06
-L928  0x00000000: 13 2f 51 06               ?? uadd16.eq r2, r1, r3                               ; unsigned add 16
-L929  
-L930  ################################################################################
-L931  
-L932  # uadd8eq r2, r1, r3
-L933  0x93 0x2f 0x51 0x06
-L933  0x00000000: 93 2f 51 06               ?? uadd8.eq r2, r1, r3                               ; unsigned add 8
-L934  
-L935  ################################################################################
-L936  
-L937  # uasxeq r2, r1, r3
-L938  0x33 0x2f 0x51 0x06
-L938  0x00000000: 33 2f 51 06               ?? uasx.eq  r2, r1, r3                               ; unsigned add and subtract with exchange
-L939  
-L940  ################################################################################
-L941  
-L942  # ubfxeq r1, r3, #4, #8
-L943  0x53 0x12 0xe7 0x07
-L943  0x00000000: 53 12 e7 07               ?? ubfx.eq  r1, r3, 4, 8                             ; unsigned bitfield extract
-L944  
-L945  ################################################################################
-L946  
-L947  # udf #0xffff
-L948  0xff 0xff 0xff 0xe7
-L948  0x00000000: ff ff ff e7               ?? udf      0x0000ffff                               ; permanently undefined
-L949  
-L950  ################################################################################
+L919  ################################################################################
+L920  
+L921  # svceq #1
+L922  0x01 0x00 0x00 0x0f
+L922  0x00000000: 01 00 00 0f               ?? svc.eq   1                                        ; supervisor call
+L923  
+L924  ################################################################################
+L925  
+L926  # sxtabeq r2, r1, r3, ror #24
+L927  0x73 0x2c 0xa1 0x06
+L927  0x00000000: 73 2c a1 06               ?? sxtab.eq r2, r1, ror(r3, 0x00000018<24>)          ; sign extend and add byte
+L928  
+L929  ################################################################################
+L930  
+L931  # sxtab16eq r2, r1, r3, ror #24
+L932  0x73 0x2c 0x81 0x06
+L932  0x00000000: 73 2c 81 06               ?? sxtab16.eq r2, r1, ror(r3, 0x00000018<24>)          ; sign extend and add byte 16
+L933  
+L934  ################################################################################
+L935  
+L936  # sxtaheq r2, r1, r3, ror #24
+L937  0x73 0x2c 0xb1 0x06
+L937  0x00000000: 73 2c b1 06               ?? sxtah.eq r2, r1, ror(r3, 0x00000018<24>)          ; sign extend and add half-word
+L938  
+L939  ################################################################################
+L940  
+L941  # teqeq r1, #0x3fc
+L942  0xff 0x0f 0x31 0x03
+L942  0x00000000: ff 0f 31 03               ?? teq.eq   r1, 0x000003fc<1020>                     ; test equivalence
+L943  
+L944  ################################################################################
+L945  
+L946  # tsteq r1, #0x3fc
+L947  0xff 0x0f 0x11 0x03
+L947  0x00000000: ff 0f 11 03               ?? tst.eq   r1, 0x000003fc<1020>                     ; test
+L948  
+L949  # tsteq r1, r2, ror #31
+L950  0xe2 0x0f 0x11 0x01
+L950  0x00000000: e2 0f 11 01               ?? tst.eq   r1, ror(r2, 0x0000001f<31>)              ; test
 L951  
-L952  # uhadd16eq r2, r1, r3
-L953  0x13 0x2f 0x71 0x06
-L953  0x00000000: 13 2f 71 06               ?? uhadd16.eq r2, r1, r3                               ; unsigned halving add 16
+L952  # tsteq r1, r3, ror r2
+L953  0x73 0x02 0x11 0x01
+L953  0x00000000: 73 02 11 01               ?? tst.eq   r1, ror(r3, r2)                          ; test
 L954  
 L955  ################################################################################
 L956  
-L957  # uhadd8eq r2, r1, r3
-L958  0x93 0x2f 0x71 0x06
-L958  0x00000000: 93 2f 71 06               ?? uhadd8.eq r2, r1, r3                               ; unsigned halving add 8
+L957  # uadd16eq r2, r1, r3
+L958  0x13 0x2f 0x51 0x06
+L958  0x00000000: 13 2f 51 06               ?? uadd16.eq r2, r1, r3                               ; unsigned add 16
 L959  
 L960  ################################################################################
 L961  
-L962  # uhasxeq r2, r1, r3
-L963  0x33 0x2f 0x71 0x06
-L963  0x00000000: 33 2f 71 06               ?? uhasx.eq r2, r1, r3                               ; unsigned halving add and subtract with exchange
+L962  # uadd8eq r2, r1, r3
+L963  0x93 0x2f 0x51 0x06
+L963  0x00000000: 93 2f 51 06               ?? uadd8.eq r2, r1, r3                               ; unsigned add 8
 L964  
 L965  ################################################################################
 L966  
-L967  # uhsaxeq r2, r1, r3
-L968  0x53 0x2f 0x71 0x06
-L968  0x00000000: 53 2f 71 06               ?? uhsax.eq r2, r1, r3                               ; unsigned halving subtract and add with exchange
+L967  # uasxeq r2, r1, r3
+L968  0x33 0x2f 0x51 0x06
+L968  0x00000000: 33 2f 51 06               ?? uasx.eq  r2, r1, r3                               ; unsigned add and subtract with exchange
 L969  
 L970  ################################################################################
 L971  
-L972  # uhsub16eq r2, r1, r3
-L973  0x73 0x2f 0x71 0x06
-L973  0x00000000: 73 2f 71 06               ?? uhsub16.eq r2, r1, r3                               ; unsigned halving subtract 16
+L972  # ubfxeq r1, r3, #4, #8
+L973  0x53 0x12 0xe7 0x07
+L973  0x00000000: 53 12 e7 07               ?? ubfx.eq  r1, r3, 4, 8                             ; unsigned bitfield extract
 L974  
 L975  ################################################################################
 L976  
-L977  # umaaleq r2, r1, r4, r3
-L978  0x94 0x23 0x41 0x00
-L978  0x00000000: 94 23 41 00               ?? umaal.eq r2, r1, r4, r3                           ; unsigned multiply accumulate accumulate long
+L977  # udf #0xffff
+L978  0xff 0xff 0xff 0xe7
+L978  0x00000000: ff ff ff e7               ?? udf      0x0000ffff                               ; permanently undefined
 L979  
 L980  ################################################################################
 L981  
-L982  # umlaleq r2, r1, r4, r3
-L983  0x94 0x23 0xa1 0x00
-L983  0x00000000: 94 23 a1 00               ?? umlal.eq r2, r1, r4, r3                           ; unsigned multiply accumulate long
+L982  # uhadd16eq r2, r1, r3
+L983  0x13 0x2f 0x71 0x06
+L983  0x00000000: 13 2f 71 06               ?? uhadd16.eq r2, r1, r3                               ; unsigned halving add 16
 L984  
 L985  ################################################################################
 L986  
-L987  # umlalseq r2, r1, r4, r3
-L988  0x94 0x23 0xb1 0x00
-L988  0x00000000: 94 23 b1 00               ?? umlals.eq r2, r1, r4, r3                           ; unsigned multiply accumulate long
+L987  # uhadd8eq r2, r1, r3
+L988  0x93 0x2f 0x71 0x06
+L988  0x00000000: 93 2f 71 06               ?? uhadd8.eq r2, r1, r3                               ; unsigned halving add 8
 L989  
 L990  ################################################################################
 L991  
-L992  # umulleq r2, r1, r4, r3
-L993  0x94 0x23 0x81 0x00
-L993  0x00000000: 94 23 81 00               ?? umull.eq r2, r1, r4, r3                           ; unsigned multiply long
+L992  # uhasxeq r2, r1, r3
+L993  0x33 0x2f 0x71 0x06
+L993  0x00000000: 33 2f 71 06               ?? uhasx.eq r2, r1, r3                               ; unsigned halving add and subtract with exchange
 L994  
-L995  # umullseq r2, r1, r4, r3
-L996  0x94 0x23 0x91 0x00
-L996  0x00000000: 94 23 91 00               ?? umulls.eq r2, r1, r4, r3                           ; unsigned multiply long
-L997  
-L998  ################################################################################
+L995  ################################################################################
+L996  
+L997  # uhsaxeq r2, r1, r3
+L998  0x53 0x2f 0x71 0x06
+L998  0x00000000: 53 2f 71 06               ?? uhsax.eq r2, r1, r3                               ; unsigned halving subtract and add with exchange
 L999  
-L1000 # uqasxeq r2, r1, r3
-L1001 0x33 0x2f 0x61 0x06
-L1001 0x00000000: 33 2f 61 06               ?? uqasx.eq r2, r1, r3                               ; unsigned saturating add and subtract with exchange
-L1002 
-L1003 ################################################################################
+L1000 ################################################################################
+L1001 
+L1002 # uhsub16eq r2, r1, r3
+L1003 0x73 0x2f 0x71 0x06
+L1003 0x00000000: 73 2f 71 06               ?? uhsub16.eq r2, r1, r3                               ; unsigned halving subtract 16
 L1004 
-L1005 # uqsaxeq r2, r1, r3
-L1006 0x53 0x2f 0x61 0x06
-L1006 0x00000000: 53 2f 61 06               ?? uqsax.eq r2, r1, r3                               ; unsigned saturating subtract and add with exchange
-L1007 
-L1008 ################################################################################
+L1005 ################################################################################
+L1006 
+L1007 # umaaleq r2, r1, r4, r3
+L1008 0x94 0x23 0x41 0x00
+L1008 0x00000000: 94 23 41 00               ?? umaal.eq r2, r1, r4, r3                           ; unsigned multiply accumulate accumulate long
 L1009 
-L1010 # uqsub16eq r2, r1, r3
-L1011 0x73 0x2f 0x61 0x06
-L1011 0x00000000: 73 2f 61 06               ?? uqsub16.eq r2, r1, r3                               ; unsigned saturating subtract 16
-L1012 
-L1013 ################################################################################
+L1010 ################################################################################
+L1011 
+L1012 # umlaleq r2, r1, r4, r3
+L1013 0x94 0x23 0xa1 0x00
+L1013 0x00000000: 94 23 a1 00               ?? umlal.eq r2, r1, r4, r3                           ; unsigned multiply accumulate long
 L1014 
-L1015 # uqsub8eq r2, r1, r3
-L1016 0xf3 0x2f 0x61 0x06
-L1016 0x00000000: f3 2f 61 06               ?? uqsub8.eq r2, r1, r3                               ; unsigned saturating subtract 8
-L1017 
-L1018 ################################################################################
+L1015 ################################################################################
+L1016 
+L1017 # umlalseq r2, r1, r4, r3
+L1018 0x94 0x23 0xb1 0x00
+L1018 0x00000000: 94 23 b1 00               ?? umlals.eq r2, r1, r4, r3                           ; unsigned multiply accumulate long
 L1019 
-L1020 # usada8eq r1, r4, r3, r2
-L1021 0x14 0x23 0x81 0x07
-L1021 0x00000000: 14 23 81 07               ?? usada8.eq r1, r4, r3, r2                           ; unsigned sum of absolute differences 8
-L1022 
-L1023 ################################################################################
+L1020 ################################################################################
+L1021 
+L1022 # umulleq r2, r1, r4, r3
+L1023 0x94 0x23 0x81 0x00
+L1023 0x00000000: 94 23 81 00               ?? umull.eq r2, r1, r4, r3                           ; unsigned multiply long
 L1024 
-L1025 # usateq r1, #8, r2, asr #0x1f
-L1026 0xd2 0x1f 0xe8 0x06
-L1026 0x00000000: d2 1f e8 06               ?? usat.eq  r1, 8, asr(r2, 0x0000001f<31>)           ; unsigned saturate
+L1025 # umullseq r2, r1, r4, r3
+L1026 0x94 0x23 0x91 0x00
+L1026 0x00000000: 94 23 91 00               ?? umulls.eq r2, r1, r4, r3                           ; unsigned multiply long
 L1027 
 L1028 ################################################################################
 L1029 
-L1030 # usaxeq r2, r1, r3
-L1031 0x53 0x2f 0x51 0x06
-L1031 0x00000000: 53 2f 51 06               ?? usax.eq  r2, r1, r3                               ; unsigned subtract and add with exchange
+L1030 # uqasxeq r2, r1, r3
+L1031 0x33 0x2f 0x61 0x06
+L1031 0x00000000: 33 2f 61 06               ?? uqasx.eq r2, r1, r3                               ; unsigned saturating add and subtract with exchange
 L1032 
 L1033 ################################################################################
 L1034 
-L1035 # usub16eq r2, r1, r3
-L1036 0x73 0x2f 0x51 0x06
-L1036 0x00000000: 73 2f 51 06               ?? usub16.eq r2, r1, r3                               ; unsigned subtract 16
+L1035 # uqsaxeq r2, r1, r3
+L1036 0x53 0x2f 0x61 0x06
+L1036 0x00000000: 53 2f 61 06               ?? uqsax.eq r2, r1, r3                               ; unsigned saturating subtract and add with exchange
 L1037 
 L1038 ################################################################################
 L1039 
-L1040 # usub8eq r2, r1, r3
-L1041 0xf3 0x2f 0x51 0x06
-L1041 0x00000000: f3 2f 51 06               ?? usub8.eq r2, r1, r3                               ; unsigned subtract 8
+L1040 # uqsub16eq r2, r1, r3
+L1041 0x73 0x2f 0x61 0x06
+L1041 0x00000000: 73 2f 61 06               ?? uqsub16.eq r2, r1, r3                               ; unsigned saturating subtract 16
 L1042 
 L1043 ################################################################################
 L1044 
-L1045 # uxtab16eq r2, r1, r3, ror #24
-L1046 0x73 0x2c 0xc1 0x06
-L1046 0x00000000: 73 2c c1 06               ?? uxtab16.eq r2, r1, ror(r3, 0x00000018<24>)          ; unsigned extend and add byte 16
+L1045 # uqsub8eq r2, r1, r3
+L1046 0xf3 0x2f 0x61 0x06
+L1046 0x00000000: f3 2f 61 06               ?? uqsub8.eq r2, r1, r3                               ; unsigned saturating subtract 8
 L1047 
 L1048 ################################################################################
 L1049 
-L1050 # vldmdbeq r1!, {d18, d19, d20, d21, d22, d23, d24, d25, d26, d27, d28, d29, d30, d31}
-L1051 0xfe 0x2b 0x31 0x0d
-L1051 0x00000000: fe 2b 31 0d               ?? vldmdb.eq r1 (then r1 = r1 + 0xffffff80<4294967168,-128>), d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, d15, d16, d17 ; load multiple SIMD&FP decrement before
+L1050 # usada8eq r1, r4, r3, r2
+L1051 0x14 0x23 0x81 0x07
+L1051 0x00000000: 14 23 81 07               ?? usada8.eq r1, r4, r3, r2                           ; unsigned sum of absolute differences 8
 L1052 
-L1053 # vldmiaeq r1!, {d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, d15, d16, d17}
-L1054 0xfe 0x2b 0xb1 0x0c
-L1054 0x00000000: fe 2b b1 0c               ?? vldmia.eq r1 (then r1 = r1 + 0x00000080<128>), d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, d15, d16, d17 ; load multiple SIMD&FP increment after
-L1055 
-L1056 ################################################################################
+L1053 ################################################################################
+L1054 
+L1055 # usateq r1, #8, r2, asr #0x1f
+L1056 0xd2 0x1f 0xe8 0x06
+L1056 0x00000000: d2 1f e8 06               ?? usat.eq  r1, 8, asr(r2, 0x0000001f<31>)           ; unsigned saturate
 L1057 
-L1058 # vstmdbeq r1!, {d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, d15, d16, d17}
-L1059 0xfe 0x2b 0x21 0x0d
-L1059 0x00000000: fe 2b 21 0d               ?? vstmdb.eq r1 (then r1 = r1 + 0xffffff80<4294967168,-128>), d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, d15, d16, d17 ; store multiple SIMD&FP registers decrement before
-L1060 
-L1061 # vstmiaeq r1!, {d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, d15, d16, d17}
-L1062 0xfe 0x2b 0xa1 0x0c
-L1062 0x00000000: fe 2b a1 0c               ?? vstmia.eq r1 (then r1 = r1 + 0x00000080<128>), d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, d15, d16, d17 ; store multiple SIMD&FP registers increment after
-L1063 
-L1064 # vstmia r1!, {d0, d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, d15}
-L1065 0x20 0x0b 0xa1 0xec
-L1065 0x00000000: 20 0b a1 ec               ?? vstmia   r1 (then r1 = r1 + 0x00000080<128>), d0, d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, d15 ; store multiple SIMD&FP registers increment after
+L1058 ################################################################################
+L1059 
+L1060 # usaxeq r2, r1, r3
+L1061 0x53 0x2f 0x51 0x06
+L1061 0x00000000: 53 2f 51 06               ?? usax.eq  r2, r1, r3                               ; unsigned subtract and add with exchange
+L1062 
+L1063 ################################################################################
+L1064 
+L1065 # usub16eq r2, r1, r3
+L1066 0x73 0x2f 0x51 0x06
+L1066 0x00000000: 73 2f 51 06               ?? usub16.eq r2, r1, r3                               ; unsigned subtract 16
+L1067 
+L1068 ################################################################################
+L1069 
+L1070 # usub8eq r2, r1, r3
+L1071 0xf3 0x2f 0x51 0x06
+L1071 0x00000000: f3 2f 51 06               ?? usub8.eq r2, r1, r3                               ; unsigned subtract 8
+L1072 
+L1073 ################################################################################
+L1074 
+L1075 # uxtab16eq r2, r1, r3, ror #24
+L1076 0x73 0x2c 0xc1 0x06
+L1076 0x00000000: 73 2c c1 06               ?? uxtab16.eq r2, r1, ror(r3, 0x00000018<24>)          ; unsigned extend and add byte 16
+L1077 
+L1078 ################################################################################
+L1079 
+L1080 # uxtb.vc r1, ror(r2, 8)
+L1081 0x72 0x14 0xef 0x76
+L1081 0x00000000: 72 14 ef 76               ?? uxtb.vc  r1, ror(r2, 8)                           ; unsigned extend byte
+L1082 
+L1083 ################################################################################
+L1084 
+L1085 # uxth.eq r1, ror(r2, 24)
+L1086 0x72 0x1c 0xff 0x06
+L1086 0x00000000: 72 1c ff 06               ?? uxth.eq  r1, ror(r2, 0x00000018<24>)              ; unsigned extend half-word
+L1087 
+L1088 ################################################################################
+L1089 
+L1090 # vldmdbeq r1!, {d18, d19, d20, d21, d22, d23, d24, d25, d26, d27, d28, d29, d30, d31}
+L1091 0xfe 0x2b 0x31 0x0d
+L1091 0x00000000: fe 2b 31 0d               ?? vldmdb.eq r1 (then r1 = r1 + 0xffffff80<4294967168,-128>), d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, d15, d16, d17 ; load multiple SIMD&FP decrement before
+L1092 
+L1093 # vldmiaeq r1!, {d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, d15, d16, d17}
+L1094 0xfe 0x2b 0xb1 0x0c
+L1094 0x00000000: fe 2b b1 0c               ?? vldmia.eq r1 (then r1 = r1 + 0x00000080<128>), d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, d15, d16, d17 ; load multiple SIMD&FP increment after
+L1095 
+L1096 ################################################################################
+L1097 
+L1098 # vstmdbeq r1!, {d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, d15, d16, d17}
+L1099 0xfe 0x2b 0x21 0x0d
+L1099 0x00000000: fe 2b 21 0d               ?? vstmdb.eq r1 (then r1 = r1 + 0xffffff80<4294967168,-128>), d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, d15, d16, d17 ; store multiple SIMD&FP registers decrement before
+L1100 
+L1101 # vstmiaeq r1!, {d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, d15, d16, d17}
+L1102 0xfe 0x2b 0xa1 0x0c
+L1102 0x00000000: fe 2b a1 0c               ?? vstmia.eq r1 (then r1 = r1 + 0x00000080<128>), d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, d15, d16, d17 ; store multiple SIMD&FP registers increment after
+L1103 
+L1104 # vstmia r1!, {d0, d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, d15}
+L1105 0x20 0x0b 0xa1 0xec
+L1105 0x00000000: 20 0b a1 ec               ?? vstmia   r1 (then r1 = r1 + 0x00000080<128>), d0, d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, d15 ; store multiple SIMD&FP registers increment after

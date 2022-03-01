@@ -577,6 +577,15 @@ struct IP_ldrd: P {
     }
 };
 
+// Load register exclusive
+struct IP_ldrex: P {
+    void p(D d, Ops ops, I insn, A args, V enabled) {
+        assert_args(insn, args, 2);
+        SValuePtr readValue = d->read(args[1], 32);
+        d->maybeWrite(enabled, args[0], readValue);
+    }
+};
+
 // Load register halfword
 struct IP_ldrh: P {
     void p(D d, Ops ops, I insn, A args, V enabled) {
@@ -726,6 +735,20 @@ struct IP_movt: P {
         SValuePtr valueLo = ops->extract(d->read(args[0]), 0, 16);
         SValuePtr value = ops->concatHiLo(valueHi, valueLo);
         d->maybeWrite(enabled, args[0], value);
+    }
+};
+
+// Move immediate
+struct IP_movw: P {
+    void p(D d, Ops ops, I insn, A args, V enabled) {
+        assert_args(insn, args, 2);
+        SValuePtr result = d->read(args[1], 32);
+        ASSERT_forbid(insn->get_updatesFlags());
+        if (d->isIpRegister(args[0])) {
+            d->aluWritePc(enabled, result);
+        } else {
+            d->maybeWrite(enabled, args[0], result);
+        }
     }
 };
 
@@ -2923,6 +2946,26 @@ struct IP_uxtab16: P {
     }
 };
 
+// extract 8-bit value from register and zero extend to 32 bits
+struct IP_uxtb: P {
+    void p(D d, Ops ops, I insn, A args, V enabled) {
+        assert_args(insn, args, 2);
+        SValuePtr u8 = d->read(args[1], 8);
+        SValuePtr u32 = ops->unsignedExtend(u8, 32);
+        d->maybeWrite(enabled, args[0], u32);
+    }
+};
+
+// Extract a 16-bit value from a register and zero extends it to 32 bits
+struct IP_uxth: P {
+    void p(D d, Ops ops, I insn, A args, V enabled) {
+        assert_args(insn, args, 2);
+        SValuePtr u16 = d->read(args[1], 16);
+        SValuePtr u32 = ops->unsignedExtend(u16, 32);
+        d->maybeWrite(enabled, args[0], u32);
+    }
+};
+
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2932,6 +2975,7 @@ DispatcherAarch32::initializeInsnDispatchTable() {
     iprocSet(ARM_INS_ADC,      new Aarch32::IP_adc);
     iprocSet(ARM_INS_ADD,      new Aarch32::IP_add);
     iprocSet(ARM_INS_AND,      new Aarch32::IP_and);
+    iprocSet(ARM_INS_ASR,      new Aarch32::IP_mov);   // ASR is a special case of MOV
     iprocSet(ARM_INS_B,        new Aarch32::IP_b);
     iprocSet(ARM_INS_BFC,      new Aarch32::IP_bfc);
     iprocSet(ARM_INS_BFI,      new Aarch32::IP_bfi);
@@ -2954,6 +2998,7 @@ DispatcherAarch32::initializeInsnDispatchTable() {
     iprocSet(ARM_INS_LDR,      new Aarch32::IP_ldr);
     iprocSet(ARM_INS_LDRB,     new Aarch32::IP_ldrb);
     iprocSet(ARM_INS_LDRBT,    new Aarch32::IP_ldrbt);
+    iprocSet(ARM_INS_LDREX,    new Aarch32::IP_ldrex);
     iprocSet(ARM_INS_LDRD,     new Aarch32::IP_ldrd);
     iprocSet(ARM_INS_LDRH,     new Aarch32::IP_ldrh);
     iprocSet(ARM_INS_LDRHT,    new Aarch32::IP_ldrht);
@@ -2962,12 +3007,15 @@ DispatcherAarch32::initializeInsnDispatchTable() {
     iprocSet(ARM_INS_LDRSH,    new Aarch32::IP_ldrsh);
     iprocSet(ARM_INS_LDRSHT,   new Aarch32::IP_ldrsht);
     iprocSet(ARM_INS_LDRT,     new Aarch32::IP_ldrt);
+    iprocSet(ARM_INS_LSL,      new Aarch32::IP_mov);    // LSL is a special case of MOV
+    iprocSet(ARM_INS_LSR,      new Aarch32::IP_mov);    // LSR is a special case of MOV
     iprocSet(ARM_INS_MCR,      new Aarch32::IP_mcr);
     iprocSet(ARM_INS_MCRR,     new Aarch32::IP_mcrr);
     iprocSet(ARM_INS_MLA,      new Aarch32::IP_mla);
     iprocSet(ARM_INS_MLS,      new Aarch32::IP_mls);
     iprocSet(ARM_INS_MOV,      new Aarch32::IP_mov);
     iprocSet(ARM_INS_MOVT,     new Aarch32::IP_movt);
+    iprocSet(ARM_INS_MOVW,     new Aarch32::IP_movw);
     iprocSet(ARM_INS_MRC,      new Aarch32::IP_mrc);
     iprocSet(ARM_INS_MRS,      new Aarch32::IP_mrs);
     iprocSet(ARM_INS_MSR,      new Aarch32::IP_msr);
@@ -2993,6 +3041,7 @@ DispatcherAarch32::initializeInsnDispatchTable() {
     iprocSet(ARM_INS_RFEDB,    new Aarch32::IP_rfedb);
     iprocSet(ARM_INS_RFEIA,    new Aarch32::IP_rfeia);
     iprocSet(ARM_INS_RFEIB,    new Aarch32::IP_rfeib);
+    iprocSet(ARM_INS_ROR,      new Aarch32::IP_mov);    // ROR is a special case of MOV
     iprocSet(ARM_INS_RSB,      new Aarch32::IP_rsb);
     iprocSet(ARM_INS_RSC,      new Aarch32::IP_rsc);
     iprocSet(ARM_INS_SADD16,   new Aarch32::IP_sadd16);
@@ -3081,6 +3130,8 @@ DispatcherAarch32::initializeInsnDispatchTable() {
     iprocSet(ARM_INS_USUB16,   new Aarch32::IP_usub16);
     iprocSet(ARM_INS_USUB8,    new Aarch32::IP_usub8);
     iprocSet(ARM_INS_UXTAB16,  new Aarch32::IP_uxtab16);
+    iprocSet(ARM_INS_UXTB,     new Aarch32::IP_uxtb);
+    iprocSet(ARM_INS_UXTH,     new Aarch32::IP_uxth);
 }
 
 void

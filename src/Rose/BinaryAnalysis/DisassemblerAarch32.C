@@ -206,6 +206,20 @@ DisassemblerAarch32::disassembleOne(const MemoryMap::Ptr &map, rose_addr_t va, A
     }
 
     //--------------------------------------------------------------------------------
+    // Some assembly aliases are self evident in the non-alias version. For instance,
+    // since nearly all instructions can shift and rotate arguments, the mnemonics for
+    // doing so are still self-evident with the move instruction (consider ROSE syntax
+    // for the alias "ASR R2, ASR(R1, 3)" versus the original "MOV R2, ASR(R1, 3)").
+    //--------------------------------------------------------------------------------
+    if ((arm_insn)r.csi->id == ARM_INS_ASR ||
+        (arm_insn)r.csi->id == ARM_INS_LSL ||
+        (arm_insn)r.csi->id == ARM_INS_LSR ||
+        (arm_insn)r.csi->id == ARM_INS_ROR) {
+        retval->set_mnemonic("mov");
+        retval->set_kind(ARM_INS_MOV);
+    }
+
+    //--------------------------------------------------------------------------------
     // Additional Capstone bug workarounds not already handled.
     //--------------------------------------------------------------------------------
     if ((arm_insn)r.csi->id == ARM_INS_ADC) {
