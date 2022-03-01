@@ -367,6 +367,12 @@ $REPLACE_CLEARMEMORYPOOLS
      return;
    }
 
+void AST_FILE_IO::deleteMemoryPools( ) {
+
+$REPLACE_DELETEMEMORYPOOLS
+
+   }
+
 void
 AST_FILE_IO :: deleteStaticData ( )
   {

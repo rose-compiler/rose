@@ -1,6 +1,7 @@
 
 #include "sage3basic.h"
 #include "fixupTraversal.h"
+#include "AST_FILE_IO.h"
 
 #define DEBUG_DeleteDisconnectedNode 0
 
@@ -9,7 +10,6 @@
 #  include "wholeAST_API.h"
 #  include "memory-pool-snapshot.h"
 #endif
-
 
 namespace Rose {
 namespace AST {
@@ -85,9 +85,16 @@ struct DeleteAllNode : public ROSE_VisitTraversal {
   }
 };
 
-void deleteAll() {
+void clear() {
   DeleteAllNode dan;
   dan.apply();
+  AST_FILE_IO::clearAllMemoryPools();
+}
+
+void free() {
+  DeleteAllNode dan;
+  dan.apply();
+  AST_FILE_IO::deleteMemoryPools();
 }
 
 struct DeleteDisconnectedNode : public ROSE_VisitTraversal {

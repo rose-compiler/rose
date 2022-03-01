@@ -8008,7 +8008,7 @@ int SgProject::link ( std::string linkerName )
      SgFile::stripTranslationCommandLineOptions( argcArgvList );
 
   // remove the original compiler/linker name
-     argcArgvList.erase(argcArgvList.begin());
+     if (argcArgvList.size() > 0) argcArgvList.erase(argcArgvList.begin());
 
   // remove all original file names
      Rose_STL_Container<string> sourceFilenames = get_sourceFileNameList();

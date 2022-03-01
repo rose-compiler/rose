@@ -439,6 +439,15 @@ Grammar::build_source_AST_FILE_IO_CLASS()
         }
      generatedCode = GrammarString::copyEdit(generatedCode,"$REPLACE_CLEARMEMORYPOOLS",clearMemoryPools.c_str() );
 
+     // TV (02/27/22): 
+     std::string delMemoryPools;
+     for (map<size_t, string>::const_iterator i = this->astVariantToNodeMap.begin(); i != this->astVariantToNodeMap.end(); ++i) {
+          nodeNameString = i->second  ;
+          if (presentNames.find(nodeNameString) == presentNames.end()) continue;
+          delMemoryPools += "     " + nodeNameString + "::deleteMemoryPool( );\n" ;
+        }
+     generatedCode = GrammarString::copyEdit(generatedCode,"$REPLACE_DELETEMEMORYPOOLS",delMemoryPools.c_str() );
+
   //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   /* JH (04/01/2006) : Generating code for deleteStaticData, the method that 
    * resets the static data of the IR nodes.

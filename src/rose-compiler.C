@@ -1,5 +1,6 @@
 
 #include "sage3basic.h"
+#include "merge.h"
 
 int main( int argc, char * argv[] ) {
   ROSE_INITIALIZE;
@@ -19,6 +20,14 @@ int main( int argc, char * argv[] ) {
   }
 #endif
 
-  return backend(frontend(args));
+  SgProject * project = args.size() > 1 ? frontend(args) : new SgProject(); // TODO this behavior should be part of ::frontend(std::vector<std::string> const &)
+
+  auto status = backend(project);
+
+#if !defined(_WIN32) && !defined(__CYGWIN__)
+  Rose::AST::free();
+#endif
+
+  return status;
 }
 
