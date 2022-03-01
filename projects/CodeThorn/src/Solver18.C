@@ -109,6 +109,14 @@ EStatePtr Solver18::getAbstractState(CodeThorn::Label lab, CodeThorn::CallString
   return res;
 }
 
+void Solver18::setAbstractionConsistencyCheckFlag(bool flag) {
+  _abstractionConsistencyCheckEnabled=flag;
+}
+
+bool Solver18::getAbstractionConsistencyCheckFlag() {
+  return _abstractionConsistencyCheckEnabled;
+}
+
 void Solver18::setAbstractState(CodeThorn::Label lab, CodeThorn::CallString cs, EStatePtr estate) {
   ROSE_ASSERT(lab==estate->label());
   ROSE_ASSERT(cs==estate->callString);
@@ -118,7 +126,7 @@ void Solver18::setAbstractState(CodeThorn::Label lab, CodeThorn::CallString cs, 
     auto vim=_analyzer->getVariableIdMapping();
     auto nonPointerAddresses=estate->checkArrayAbstractionIndexConsistency(vim->getArrayAbstractionIndex(),vim);
     if(nonPointerAddresses>0) {
-      cout<<"WARNING: number of non-pointer addresses at "<<estate->label().toString()<<": "<<nonPointerAddresses<<endl;
+      cout<<"WARNING: number of non-pointer addresses greater 0 at "<<estate->label().toString()<<": "<<nonPointerAddresses<<endl;
     }
   }
   //pair<int,CallString> p(lab.getId(),cs);
@@ -184,7 +192,7 @@ bool Solver18::callStringExistsAtLabel(CallString& cs, Label lab) {
 }
 
 void Solver18::run() {
-  //_abstractionConsistencyCheckEnabled=true;
+  //setAbstractionConsistencyCheckFlag(true);
   SAWYER_MESG(logger[INFO])<<"Running solver "<<getId()<<" (sharedpstates:"<<_analyzer->getOptionsRef().sharedPStates<<")"<<endl;
   ROSE_ASSERT(_analyzer);
   if(_analyzer->getOptionsRef().abstractionMode==0) {

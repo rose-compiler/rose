@@ -235,7 +235,9 @@ void CodeThorn::CTAnalysis::setWorkLists(ExplorationMode explorationMode) {
     auto sLabelSetSize=getFlow()->getStartLabelSet().size();
     if(sLabelSetSize>0) {
       if(_ctOpt.status) cout<<"STATUS: creating topologic sort of "<<getFlow()->size()<<" labels ... "<<flush;
-      _topologicalSort=new TopologicalSort(*getLabeler(),*getFlow());
+      auto cg=getCFAnalyzer()->getCallGraph();
+      _topologicalSort=new TopologicalSort(*getLabeler(),*getFlow(),cg);
+      ROSE_ASSERT(_topologicalSort);
       _topologicalSort->computeLabelToPriorityMap();
 #if 0
       std::list<Label> labelList=_topologicalSort.topologicallySortedLabelList();
@@ -2022,8 +2024,11 @@ std::string CodeThorn::CTAnalysis::internalAnalysisReportToString() {
     ss<<"Number of canceled functions  : "<<_statsIntraUnfinishedFunctions<<" (max time: "<<_ctOpt.maxTime<<" seconds)"<<endl;
     ss<<"Total number of functions     : "<<totalIntraFunctions<<" ("<<getTotalNumberOfFunctions()<<")"<<endl;
   } else {
-    ss<<"Inter-procedural analysis"<<endl;    
-    ss<<"Call string length: "<<_ctOpt.callStringLength<<endl;
+    ss<<"Inter-procedural analysis"<<endl;     
+    ss<<"Recursive call graph    : "<<getTopologicalSort()->isRecursive()<<endl;
+    ss<<"Call string length limit: "<<_ctOpt.callStringLength<<endl;
+    ss<<"Max call string length  : "<<getEStateTransferFunctions()->getMaxCSLength()<<endl;
+    ss<<"Max state size          : "<<getEStateTransferFunctions()->getMaxStateSize()<<endl;
   }
   ss<<hashSetConsistencyReport();
   return ss.str();

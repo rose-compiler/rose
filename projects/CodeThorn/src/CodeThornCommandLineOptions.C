@@ -139,6 +139,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("icfg", po::value< string >(&ctOpt.visualization.icfgFileName), "Generate inter-procedural cfg as dot file. Each function is visualized as one dot cluster.")
     ("icfg-pass-through-labels", po::value< bool >(&ctOpt.visualization.displayPassThroughLabel)->implicit_value(true), "Mark pass-through labels in ICFG (MOV/STO).")
     ("call-graph", po::value< string >(&ctOpt.visualization.callGraphFileName), "Generate call graph as dot file. Each function is one node.")
+    ("call-graph2", po::value< string >(&ctOpt.visualization.callGraphFileName2), "Generate call graph as dot file (from internal call graph). Each function is one node.")
     ;
 
   parallelProgramOptions.add_options()

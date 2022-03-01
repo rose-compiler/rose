@@ -342,6 +342,9 @@ namespace CodeThorn {
     void initializeStringLiteralInState(Label lab, PStatePtr initialPState,SgStringVal* stringValNode, VariableId stringVarId);
     void initializeStringLiteralsInState(Label lab, PStatePtr initialPState);
 
+    size_t getMaxStateSize();
+    size_t getMaxCSLength();
+
   protected:
     AbstractValue abstractValueFromSgValueExp(SgValueExp* valueExp, EvalMode mode);
     std::map<std::string,ReadWriteListener*> _readWriteListenerMap;
@@ -526,6 +529,8 @@ namespace CodeThorn {
     // outdated function, to be eliminated
     int computeNumberOfElements(SgVariableDeclaration* decl);
 
+    void updateMaxStateSize(size_t newVal);
+    void updateMaxCSLength(size_t newVal);
     void printLoggerWarning(EStatePtr estate);
     void initViolatingLocations();
     VariableIdMappingExtended* _variableIdMapping=nullptr;
@@ -541,6 +546,9 @@ namespace CodeThorn {
     enum InterpreterMode _interpreterMode=IM_DISABLED;
     std::string _interpreterModeFileName;
     bool _optionOutputWarnings=false;
+    uint64_t _functionsAnalyzedNum=0;
+    size_t _maxStateSize=0;
+    size_t _maxCSLength=0;
   };
 }
 
