@@ -224,7 +224,7 @@ UnparseLanguageIndependentConstructs::statementFromFile ( SgStatement* stmt, str
 
      bool statementInFile = false;
 
-#define DEBUG_STATEMENT_FROM_FILE 1
+#define DEBUG_STATEMENT_FROM_FILE 0
 
   // DQ (5/19/2020): Debugging new support for include directives.
      SgIncludeDirectiveStatement* includeDirectiveStatement = isSgIncludeDirectiveStatement(stmt);
