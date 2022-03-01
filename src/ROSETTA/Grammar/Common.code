@@ -45,6 +45,7 @@ HEADER_START
 
           /// \private
           static void clearMemoryPool(); // 
+          static void deleteMemoryPool(); // 
 
           /// \private
           static void extendMemoryPoolForFileIO(); // 
