@@ -46,6 +46,8 @@ namespace CodeThorn {
      */
     bool callStringExistsAtLabel(CallString& cs, Label lab);
     void dumpAbstractStateMapMap();
+    void setAbstractionConsistencyCheckFlag(bool flag);
+    bool getAbstractionConsistencyCheckFlag();
   private:
     static Sawyer::Message::Facility logger;
     static bool _diagnosticsInitialized;

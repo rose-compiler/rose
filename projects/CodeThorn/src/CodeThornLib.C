@@ -94,7 +94,7 @@ using namespace Sawyer::Message;
 
 using namespace Sawyer::Message;
 
-static std::string CodeThornLibraryVersion="1.13.49";
+static std::string CodeThornLibraryVersion="1.13.50";
 
 // handler for generating backtrace
 void codethornBackTraceHandler(int sig) {
@@ -823,8 +823,21 @@ namespace CodeThorn {
           cout<<"Generated call graph dot file "<<fileName<<endl;
         }
       }
-    }
 
+      {
+        // new call graph (to replace above)
+        std::string fileName=ctOpt.visualization.callGraphFileName2;
+        if(fileName.size()>0) {
+          string dotFileString=analyzer->getCFAnalyzer()->getCallGraph()->toDot(analyzer->getLabeler(),analyzer->getTopologicalSort());
+          if(!CppStdUtilities::writeFile(fileName, dotFileString)) {
+            cerr<<"Error: could not generate callgraph dot file "<<fileName<<endl;
+            exit(1);
+          } else {
+            cout<<"Generated call graph dot file "<<fileName<<endl;
+          }
+        }
+      }
+    }
     /*
       void runSolver(CodeThornOptions& ctOpt,CTAnalysis* analyzer, SgProject* sageProject,TimingCollector& tc) {
       tc.startTimer();

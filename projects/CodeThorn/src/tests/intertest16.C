@@ -1,4 +1,4 @@
-// test inter-procedural propagation of constraints 
+// test inter-procedural propagation of constraints SAWYER_MESG(logger[TRACE])
 // 1. with function arguments
 // 2. on function return
 
@@ -16,10 +16,11 @@ int h() {
   return 10;
 }
 
-int main() {
+void e() {
   int z;
   int y;
   int a;
+  int arr[]={1,2,3};
   if(y==1) {
     f(y);
   } else {
@@ -32,5 +33,14 @@ int main() {
   h(); // return value must be descarded
   y=3;
   a=1;
+}
+
+void i() {
+}
+
+int main() {
+  e();
+  e();
+  i();
   return 0;
 }

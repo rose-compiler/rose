@@ -659,18 +659,35 @@ namespace CodeThorn {
     return transferIdentity(edge,estate);
   }
 
-  long int functionAnalyzedNr=1;
+  void EStateTransferFunctions::updateMaxStateSize(size_t newVal) {
+    _maxStateSize=std::max(_maxStateSize,newVal);
+  }
+
+  size_t EStateTransferFunctions::getMaxStateSize() {
+    return _maxStateSize;
+  }
+
+  void EStateTransferFunctions::updateMaxCSLength(size_t newVal) {
+    _maxCSLength=std::max(_maxCSLength,newVal);
+  }
+
+  size_t EStateTransferFunctions::getMaxCSLength() {
+    return _maxCSLength;
+  }
 
   void EStateTransferFunctions::transferFunctionEntryPrintStatus(Edge edge, EStatePtr estate, std::string fileName, std::string functionName) {
     if(_analyzer->getOptionsRef().status) {
       if(_analyzer->getOptionsRef().precisionLevel==1) {
         size_t numFunctions=_analyzer->getTotalNumberOfFunctions();
-        _analyzer->printStatusMessage("Analyzing function #"+std::to_string(functionAnalyzedNr)+" of "+std::to_string(numFunctions)+": ");
-        functionAnalyzedNr++;
+        _analyzer->printStatusMessage("Analyzing function #"+std::to_string(_functionsAnalyzedNum)+" of "+std::to_string(numFunctions)+": ");
+        _functionsAnalyzedNum++;
       } else if(_analyzer->getOptionsRef().precisionLevel>=2) {
-        _analyzer->printStatusMessage(std::to_string(functionAnalyzedNr)+". ");
-        functionAnalyzedNr++;
-        _analyzer->printStatusMessage("Analyzing function (call string length="+std::to_string(estate->getCallStringLength())+"):");
+        _analyzer->printStatusMessage(std::to_string(_functionsAnalyzedNum)+". ");
+        _functionsAnalyzedNum++;
+        auto stateSize=estate->pstate()->stateSize();
+        updateMaxStateSize(stateSize);
+        updateMaxCSLength(estate->getCallStringLength());
+        _analyzer->printStatusMessage("Analyzing function (cslen="+std::to_string(estate->getCallStringLength())+") (state size:"+to_string(stateSize)+" max:"+std::to_string(_maxStateSize)+"): ");
       }
       if(_analyzer->getOptionsRef().precisionLevel>0)
         _analyzer->printStatusMessageLine(": "+fileName+" : "+functionName);
@@ -1429,10 +1446,10 @@ namespace CodeThorn {
         int computedNumElements=-1;
         for(auto dimIter=arrayDimExps.begin();dimIter!=arrayDimExps.end();++dimIter) {
           SgExpression* arrayDimExp=*dimIter;
-          cout<<"DEBUG: Array dimension expression: "<<arrayDimExp->unparseToString()<<endl;
+          SAWYER_MESG(logger[TRACE])<<"DEBUG: Array dimension expression: "<<arrayDimExp->unparseToString()<<endl;
           SingleEvalResult evalRes=evaluateExpression(arrayDimExp,currentEState);
           AbstractValue arrayDimAVal=evalRes.result;
-          cout<<"DEBUG: Computed array dimension: "<<arrayDimAVal.toString()<<endl;
+          SAWYER_MESG(logger[TRACE])<<"DEBUG: Computed array dimension: "<<arrayDimAVal.toString()<<endl;
           if(dimIter==arrayDimExps.begin()) {
             if(arrayDimAVal.isConstInt()) {
               computedNumElements=arrayDimAVal.getIntValue();

@@ -9,33 +9,43 @@ namespace CodeThorn {
   // Author: Markus Schordan, 2020.
   TopologicalSort::TopologicalSort(Labeler& labeler0, Flow& flow0):labeler(labeler0),flow(flow0) {
   }
+  TopologicalSort::TopologicalSort(Labeler& labeler0, Flow& flow0, Flow* callGraph0):labeler(labeler0),flow(flow0), callGraph(callGraph0) {
+  }
 
   void TopologicalSort::createTopologicallySortedLabelList() {
     if(revPostOrderList.size()==0) {
-      // begin topsort at start label
       Label startLab=flow.getStartLabel();
-      if(startLab.isValid()) {
-        semanticRevPostOrderTraversal(startLab);
+      ROSE_ASSERT(startLab.isValid());
+      // use call graph to compute post order (reverse topsort) and compute top sort for each function in this order
+      if(callGraph) {
+        std::list<Label> postOrderList;
+        computePostOrder(startLab,*callGraph, postOrderList);
+        for (auto label : postOrderList) {
+          semanticRevPostOrderTraversal(label);
+        }
+      } else {
+        // likely inefficient, without call graph, top-sort functions starting with main and then in some "random" order
+        if(startLab.isValid()) {
+          semanticRevPostOrderTraversal(startLab);
+        }
       }
 
       // store revlist for all labels reachable from start and reset result list
       std::list<Label> revPostOrderListStart=revPostOrderList;
       revPostOrderList.clear();
       
-      // compute top sort for all functions that are not reachable from start
+      // compute top sort for all functions that have not been considered yet
       for(auto iter=flow.nodes_begin();iter!=flow.nodes_end();++iter) {
         Label lab=*iter;
-        // determine nodes with no predecessors (this is sufficient to find all entry nodes including disconnected subgraphs)
-        if(labeler.isFunctionEntryLabel(lab) /*&& flow.pred(lab).size()==0*/) {
+        if(labeler.isFunctionEntryLabel(lab)) {
           semanticRevPostOrderTraversal(lab);
         }
       }
-
       // DEBUG do one more traversal to find chunks that are not included in the sort yet
       for(auto iter=flow.nodes_begin();iter!=flow.nodes_end();++iter) {
         Label lab=*iter;
         if(!visited[lab]) {
-          cout<<"DEBUG: found non visited lab:"<<lab.toString()<<endl;
+          cout<<"TopSort: found non visited label (non-reachable):"<<lab.toString()<<endl;
           semanticRevPostOrderTraversal(lab);
         }
       }
@@ -45,6 +55,37 @@ namespace CodeThorn {
     }
   }
 
+  bool TopologicalSort::isRecursive() {
+    return _recursiveCG;
+  }
+  
+  void TopologicalSort::computePostOrder(Label lab, Flow& flow, std::list<Label>& list) {
+    std::set<Label> visited;
+    // check special case, if lab is in flow (e.g. start label
+    // represents main, but no function is called from main. Then
+    // there is no call edge, and the start node not in the call
+    // graph.
+    if(flow.contains(lab)) {
+      computePostOrder(lab,flow,list,visited);
+    } else {
+      //cout<<"DEBUG: special case start label not in flow."<<endl;
+    }
+  }
+  
+  void TopologicalSort::computePostOrder(Label lab, Flow& flow, std::list<Label>& list, std::set<Label>& visited) {
+    ROSE_ASSERT(lab.isValid());
+    if(visited.find(lab)==visited.end()) {
+      visited.insert(lab);
+      auto Succ=flow.succ(lab);
+      for (auto slab : Succ) {
+        computePostOrder(slab,flow, list, visited);
+      }
+    } else {
+      _recursiveCG=true;
+    }
+    list.push_back(lab);
+  }
+  
   uint32_t TopologicalSort::getLabelPosition(Label lab) const {
     auto iter=_map.find(lab);
     if(iter==_map.end())
@@ -68,6 +109,7 @@ namespace CodeThorn {
       i++;
     }
   }
+
   TopologicalSort::LabelToPriorityMap TopologicalSort::labelToPriorityMap() {
     LabelToPriorityMap map;
     if(_map.size()==0)
