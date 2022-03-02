@@ -6549,9 +6549,10 @@ void unparseFileList ( SgFileList* fileList, UnparseFormatHelp *unparseFormatHel
   // size_t i;
   // for (i=0; i < fileList->get_listOfFiles().size(); ++i)
   // for (i=0; i < fileList->get_listOfFiles().size(); i++)
-     for (size_t i=0; i < fileList->get_listOfFiles().size(); ++i)
+     auto & listOfFiles = fileList->get_listOfFiles();
+     for (size_t i=0; i < listOfFiles.size(); ++i)
         {
-          SgFile* file = fileList->get_listOfFiles()[i];
+          SgFile* file = listOfFiles[i];
 #if 0
        // DQ (9/17/2020): Testing  for error reported by address sanitizer.
           printf ("file = %p \n",file);
