@@ -407,7 +407,8 @@ findStackVariables(const Function::Ptr &function, const BaseSemantics::RiscOpera
     typedef Sawyer::Container::Map<int64_t, BaseSemantics::SValuePtr> OffsetAddress; // full address per stack offset
     OffsetAddress offsetAddresses;
     BaseSemantics::MemoryCellStatePtr mem = BaseSemantics::MemoryCellState::promote(state->memoryState());
-    for (const BaseSemantics::MemoryCellPtr &cell: boost::adaptors::reverse(mem->allCells())) {
+    auto cells = mem->allCells();
+    for (const BaseSemantics::MemoryCellPtr &cell: boost::adaptors::reverse(cells)) {
         SymbolicSemantics::SValuePtr address = SymbolicSemantics::SValue::promote(cell->address());
         ASSERT_require2(0 == cell->value()->nBits() % 8, "memory must be byte addressable");
         size_t nBytes = cell->value()->nBits() / 8;
