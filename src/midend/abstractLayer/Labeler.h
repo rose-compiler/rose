@@ -158,6 +158,7 @@ class Labeler {
   virtual bool isConditionLabel(Label lab) = 0;
   virtual bool isLoopConditionLabel(Label lab) = 0;
   virtual bool isSwitchExprLabel(Label lab) = 0;
+  virtual bool isExprLabel(Label lab) = 0;
 
   /** tests if @ref call and @ref ret are call and return labels of
    *  the same function call
@@ -258,7 +259,8 @@ class CLabeler : public Labeler {
   bool isConditionLabel(Label lab) override;
   bool isLoopConditionLabel(Label lab) override;
   bool isSwitchExprLabel(Label lab) override;
-
+  bool isExprLabel(Label lab) override;
+  
   /** tests if @ref call and @ref ret are call and return labels of
    *  the same function call
    */
