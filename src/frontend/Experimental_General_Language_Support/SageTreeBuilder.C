@@ -47,22 +47,31 @@ SgGlobal* initialize_global_scope(SgSourceFile* file)
 }
 
 void
-SageTreeBuilder::attachComment(SgLocatedNode* node)
+SageTreeBuilder::attachComments(SgLocatedNode* node, bool at_end)
 {
-  Sg_File_Info* start = node->get_startOfConstruct();
-  Sg_File_Info* end = node->get_endOfConstruct();
+  auto start = node->get_startOfConstruct();
+  auto end = node->get_endOfConstruct();
 
   if (start && end) {
     PosInfo pos{node};
-    attachComment(node, pos);
+    attachComments(node, pos, at_end);
   }
 }
 
 void
-SageTreeBuilder::attachComment(SgLocatedNode* node, const PosInfo &pos)
+SageTreeBuilder::attachComments(SgLocatedNode* node, const PosInfo &pos, bool at_end)
 {
-  PreprocessingInfo::DirectiveType commentType{PreprocessingInfo::JovialStyleComment};
   PreprocessingInfo::RelativePositionType commentPosition{PreprocessingInfo::before};
+
+  // Attach comments at end of statement
+  if (at_end && isSgStatement(node)) {
+    boost::optional<const Token&> token{};
+    while ((token = tokens_->getNextToken()) && token->getEndLine() <= pos.getEndLine()) {
+      SI::attachComment(node, token->getLexeme(), PreprocessingInfo::after, PreprocessingInfo::JovialStyleComment);
+      tokens_->consumeNextToken();
+    }
+    return;
+  }
 
   if (SgStatement* stmt = isSgStatement(node)) {
     boost::optional<const Token&> token{};
@@ -86,7 +95,7 @@ SageTreeBuilder::attachComment(SgLocatedNode* node, const PosInfo &pos)
             }
           }
         }
-        SI::attachComment(commentNode, token->getLexeme(), commentPosition, commentType);
+        SI::attachComment(commentNode, token->getLexeme(), commentPosition, PreprocessingInfo::JovialStyleComment);
       }
       tokens_->consumeNextToken();
     }
@@ -99,10 +108,49 @@ SageTreeBuilder::attachComment(SgLocatedNode* node, const PosInfo &pos)
         if (token->getEndCol() == pos.getStartCol()) {
           commentPosition = PreprocessingInfo::after;
         }
-        SI::attachComment(expr, token->getLexeme(), commentPosition, commentType);
+        SI::attachComment(expr, token->getLexeme(), commentPosition, PreprocessingInfo::JovialStyleComment);
       }
       tokens_->consumeNextToken();
     }
+  }
+  else {
+    // Additional expressions?
+#if 0
+    std::cout << "SageTreeBuilder::attachComment: WARNING, not adding node " << node->class_name() << std::endl;
+#endif
+  }
+}
+
+/** Attach comments from a vector */
+void
+SageTreeBuilder::attachComments(SgLocatedNode* node, std::vector<Token> &tokens, const PosInfo &pos) {
+  int count{0};
+  for (auto token : tokens) {
+    if (token.getStartLine() <= pos.getStartLine()) {
+      SI::attachComment(node, token.getLexeme(), PreprocessingInfo::before, PreprocessingInfo::JovialStyleComment);
+      count += 1;
+    }
+  }
+  if (count>0) tokens.erase(tokens.begin(),tokens.begin()+count);
+}
+
+/** Attach any left over comments to end of node */
+void
+SageTreeBuilder::attachRemainingComments(SgLocatedNode* node) {
+  boost::optional<const Token&> token{};
+  while ((token = tokens_->getNextToken())) {
+    SI::attachComment(node, token->getLexeme(), PreprocessingInfo::after, PreprocessingInfo::JovialStyleComment);
+    tokens_->consumeNextToken();
+  }
+}
+
+/** Move comments preceding @pos to a vector */
+void
+SageTreeBuilder::consumePrecedingComments(std::vector<Token> &tokens, const PosInfo &pos) {
+  boost::optional<const Token&> token{};
+  while ((token = tokens_->getNextToken()) && token->getStartLine() <= pos.getStartLine()) {
+    tokens.push_back(*token);
+    tokens_->consumeNextToken();
   }
 }
 
@@ -128,6 +176,10 @@ SageTreeBuilder::setSourcePosition(SgLocatedNode* node, const SourcePosition &st
    node->get_endOfConstruct()->set_parent(node);
 
    SageInterface::setSourcePosition(node);
+
+   // and attach comments if they exist
+   PosInfo pinfo{start.line,start.column,end.line,end.column};
+   attachComments(node, pinfo);
 }
 
 /// Constructor
@@ -249,7 +301,8 @@ void SageTreeBuilder::
 Enter(SgProgramHeaderStatement* &program_decl,
       const boost::optional<std::string> &name, const std::vector<std::string> &labels, const SourcePositions &sources)
 {
-   mlog[TRACE] << "SageTreeBuilder::Enter(SgProgramHeaderStatement* &, ...) \n";
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgProgramHeaderStatement* &, ...) "
+               << sources.get<0>() << ":" << sources.get<1>() << ":" << sources.get<2>() << "\n";
 
    SgScopeStatement* scope = SageBuilder::topScopeStack();
 
@@ -274,11 +327,10 @@ Enter(SgProgramHeaderStatement* &program_decl,
    SgBasicBlock* program_body = new SgBasicBlock();
    SgFunctionDefinition* program_def = new SgFunctionDefinition(program_decl, program_body);
 
-   if (SageInterface::is_language_case_insensitive())
-      {
-         program_body->setCaseInsensitive(true);
-         program_def ->setCaseInsensitive(true);
-      }
+   if (SageInterface::is_language_case_insensitive()) {
+     program_body->setCaseInsensitive(true);
+     program_def ->setCaseInsensitive(true);
+   }
 
    ROSE_ASSERT(SageBuilder::topScopeStack()->isCaseInsensitive());
    SageBuilder::pushScopeStack(program_def);
@@ -288,23 +340,22 @@ Enter(SgProgramHeaderStatement* &program_decl,
    program_body->set_parent(program_def);
    program_def ->set_parent(program_decl);
 
+// set source position (order important as comments may be added as side effect)
    setSourcePosition(program_decl, sources.get<0>(), sources.get<2>());
    setSourcePosition(program_def,  sources.get<1>(), sources.get<2>());
    setSourcePosition(program_body, sources.get<1>(), sources.get<2>());
    SageInterface::setSourcePosition(program_decl->get_parameterList());
 
 // set labels
-   if (SageInterface::is_Fortran_language() && labels.size() == 1)
-      {
-         SageInterface::setFortranNumericLabel(program_decl, atoi(labels.front().c_str()),
-                                               SgLabelSymbol::e_start_label_type, /*label_scope=*/ program_def);
-      }
+   if (SageInterface::is_Fortran_language() && labels.size() == 1) {
+     SageInterface::setFortranNumericLabel(program_decl, atoi(labels.front().c_str()),
+                                           SgLabelSymbol::e_start_label_type, /*label_scope=*/ program_def);
+   }
 
 // If there is no program name then there is no ProgramStmt (this probably needs to be marked somehow?)
-   if (!name)
-      {
-         std::cerr << "WARNING: no ProgramStmt in the Fortran MainProgram \n";
-      }
+   if (!name) {
+     std::cerr << "WARNING: no ProgramStmt in the Fortran MainProgram \n";
+   }
 
    ROSE_ASSERT(program_body == SageBuilder::topScopeStack());
    ROSE_ASSERT(program_decl->get_firstNondefiningDeclaration() == nullptr);
@@ -321,7 +372,7 @@ void SageTreeBuilder::Leave(SgProgramHeaderStatement* program_decl)
    SageBuilder::popScopeStack();  // program body
    SageBuilder::popScopeStack();  // program definition
 
-   SgScopeStatement* scope = SageBuilder::topScopeStack();
+   auto scope = SageBuilder::topScopeStack();
 
  // The program declaration must go into the global scope
    SgGlobal* global_scope = isSgGlobal(scope);
@@ -334,6 +385,10 @@ void SageTreeBuilder::Leave(SgProgramHeaderStatement* program_decl)
 // Add a symbol to the symbol table in the global scope
    SgFunctionSymbol* symbol = new SgFunctionSymbol(program_decl);
    global_scope->insert_symbol(program_name, symbol);
+
+// Attach any remaining comments
+   scope = program_decl->get_definition()->get_body();
+   attachComments(scope, /*at_end*/true);
 
    SageInterface::appendStatement(program_decl, global_scope);
 }
@@ -489,10 +544,12 @@ Leave(SgFunctionDefinition* function_def)
 }
 
 void SageTreeBuilder::
-Enter(SgFunctionDeclaration* &function_decl, const std::string &name, SgType* return_type, SgFunctionParameterList* param_list,
-                                             const LanguageTranslation::FunctionModifierList &modifiers, bool is_defining_decl)
+Enter(SgFunctionDeclaration* &function_decl,const std::string &name, SgType* return_type, SgFunctionParameterList* param_list,
+                                            const LanguageTranslation::FunctionModifierList &modifiers, bool is_defining_decl,
+                                            const SourcePositions &sources, std::vector<Rose::builder::Token> &comments)
 {
-   mlog[TRACE] << "SageTreeBuilder::Enter(SgFunctionDeclaration* &, ...) \n";
+   mlog[TRACE] << "SageTreeBuilder::Enter(SgFunctionDeclaration* &, ...) "
+               << sources.get<0>() << ":" << sources.get<1>() << ":" << sources.get<2>() << "\n";
 
    SgFunctionDefinition* function_def = nullptr;
    SgBasicBlock* function_body = nullptr;
@@ -503,37 +560,45 @@ Enter(SgFunctionDeclaration* &function_decl, const std::string &name, SgType* re
    SgScopeStatement* scope = SageBuilder::topScopeStack();
    ROSE_ASSERT(scope);
 
-   if (return_type == nullptr)
-      {
-         return_type = SageBuilder::buildVoidType();
-         subprogram_kind = SgProcedureHeaderStatement::e_subroutine_subprogram_kind;
-      }
-   else
-      {
-         subprogram_kind = SgProcedureHeaderStatement::e_function_subprogram_kind;
-      }
+   if (return_type == nullptr) {
+      return_type = SageBuilder::buildVoidType();
+      subprogram_kind = SgProcedureHeaderStatement::e_subroutine_subprogram_kind;
+   }
+   else {
+      subprogram_kind = SgProcedureHeaderStatement::e_function_subprogram_kind;
+   }
 
-   if (is_defining_decl)
-      {
-         function_decl = SB::buildProcedureHeaderStatement(SgName(name), return_type,
-                                                           param_list, subprogram_kind, scope);
-         ROSE_ASSERT(function_decl);
+   if (is_defining_decl) {
+      function_decl = SB::buildProcedureHeaderStatement(SgName(name), return_type,
+                                                        param_list, subprogram_kind, scope);
+      ROSE_ASSERT(function_decl);
 
-         function_def = function_decl->get_definition();
-         function_body = function_def->get_body();
-         ROSE_ASSERT(function_def);
-         ROSE_ASSERT(function_body);
+      function_def = function_decl->get_definition();
+      function_body = function_def->get_body();
+      ROSE_ASSERT(function_def);
+      ROSE_ASSERT(function_body);
 
-         SageBuilder::pushScopeStack(function_def);
-         SageBuilder::pushScopeStack(function_body);
-      }
-   else
-      {
-         function_decl = SB::buildNondefiningProcedureHeaderStatement(SgName(name), return_type,
-                                                                      param_list, subprogram_kind, scope);
-      }
+      SageBuilder::pushScopeStack(function_def);
+      SageBuilder::pushScopeStack(function_body);
+   }
+   else {
+      function_decl = SB::buildNondefiningProcedureHeaderStatement(SgName(name), return_type,
+                                                                   param_list, subprogram_kind, scope);
+   }
    ROSE_ASSERT(function_decl);
-   SageInterface::setSourcePosition(function_decl);
+
+// set source position and attach comments (order important, from list first, decl before body)
+   const SourcePosition &fs = sources.get<0>();
+   const SourcePosition &bs = sources.get<1>();
+   const SourcePosition &fe = sources.get<2>();
+   attachComments(function_decl, comments, PosInfo{fs.line,fs.column,fe.line,fe.column});
+   attachComments(function_body, comments, PosInfo{bs.line,bs.column,fe.line,fe.column});
+
+   if (function_decl) setSourcePosition(function_decl, sources.get<0>(), sources.get<2>());
+   if (function_def)  setSourcePosition(function_def,  sources.get<1>(), sources.get<2>());
+   if (function_body) setSourcePosition(function_body, sources.get<1>(), sources.get<2>());
+
+   SageInterface::setSourcePosition(function_decl->get_parameterList());
 
    if (list_contains(modifiers, e_function_modifier_definition))  function_decl->get_declarationModifier().setJovialDef();
    if (list_contains(modifiers, e_function_modifier_reference ))  function_decl->get_declarationModifier().setJovialRef();
@@ -606,6 +671,12 @@ Leave(SgFunctionDeclaration* function_decl, SgScopeStatement* param_scope)
          result_name->set_parent(function_decl);
        }
      }
+
+   if (is_defining_decl) {
+      // Attach any remaining comments
+      auto scope = function_decl->get_definition()->get_body();
+      attachComments(scope, /*at_end*/true);
+   }
 
    SageInterface::appendStatement(function_decl, SageBuilder::topScopeStack());
 }

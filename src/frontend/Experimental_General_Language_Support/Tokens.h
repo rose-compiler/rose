@@ -26,10 +26,11 @@ using JE = JovialEnum;
 class Token {
 public:
 
-  Token(Token &&) = default;
-  Token &operator=(Token &&) = default;
-  Token(const Token &) = delete;
-  Token &operator=(const Token &) = delete;
+//Need to explore C++17 move (see SageTreeBuilder::consumePrecedingComments())
+//Token(Token &&) = default;
+//Token &operator=(Token &&) = default;
+//Token(const Token &) = delete;
+//Token &operator=(const Token &) = delete;
   Token() = delete;
 
  Token(std::vector<std::string> row)

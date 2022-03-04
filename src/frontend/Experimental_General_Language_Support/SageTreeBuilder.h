@@ -60,8 +60,12 @@ namespace builder {
 
 // This is similar to F18 Fortran::parser::SourcePosition
 struct SourcePosition {
-   std::string path;  // replaces Fortran::parser::SourceFile
-   int line, column;
+  std::string path;  // replaces Fortran::parser::SourceFile
+  int line, column;
+  friend std::ostream& operator<< (std::ostream &os, const SourcePosition &sp) {
+    os << sp.line << ',' << sp.column;
+    return os;
+  }
 };
 
 struct TraversalContext {
@@ -138,7 +142,8 @@ public:
    void Leave(SgFunctionParameterList*, SgScopeStatement*, const std::list<std::string> &);
 
    void Enter(SgFunctionDeclaration* &, const std::string &, SgType*, SgFunctionParameterList*,
-                                        const LanguageTranslation::FunctionModifierList &, bool);
+                                        const LanguageTranslation::FunctionModifierList &, bool,
+                                        const SourcePositions &, std::vector<Rose::builder::Token> &);
    void Leave(SgFunctionDeclaration*, SgScopeStatement*);
    void Leave(SgFunctionDeclaration*, SgScopeStatement*, bool, const std::string &result_name = "");
 
@@ -274,8 +279,11 @@ public:
    void setInitializationContext(bool flag) {context_.is_initialization = flag;}
    bool  isInitializationContext()          {return context_.is_initialization;}
 
-   void attachComment(SgLocatedNode* locatedNode);
-   void attachComment(SgLocatedNode* locatedNode, const PosInfo &pos);
+   void attachComments(SgLocatedNode* node, bool at_end=false);
+   void attachComments(SgLocatedNode* node, const PosInfo &pos, bool at_end=false);
+   void attachComments(SgLocatedNode* node, std::vector<Token> &tokens, const PosInfo &pos);
+   void attachRemainingComments(SgLocatedNode* node);
+   void consumePrecedingComments(std::vector<Token> &tokens, const PosInfo &pos);
    void setSourcePosition(SgLocatedNode* node, const SourcePosition &start, const SourcePosition &end);
 
 // Helper function
