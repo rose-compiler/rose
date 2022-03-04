@@ -2,6 +2,7 @@
 
 #include "ATermToSageJovialTraversal.h"
 #include "Jovial_to_ROSE_translation.h"
+#include "Tokens.h"
 #include <iostream>
 
 #define PRINT_ATERM_TRAVERSAL 0
@@ -20,10 +21,13 @@ namespace LT = LanguageTranslation;
 void
 ATermToSageJovialTraversal::setSourcePosition(SgLocatedNode* node, ATerm term)
 {
+#if PRINT_SOURCE_POSITION
+  std::cout << "Setting source position for " << node->class_name() << ": " << getLocation(term) << "\n";
+#endif
   // Set source position as normal
   ATermTraversal::setSourcePosition(node, term);
   // and attach comments if they exist
-  sage_tree_builder.attachComment(node, getLocation(term));
+  sage_tree_builder.attachComments(node, getLocation(term));
 }
 
 void
@@ -60,6 +64,7 @@ ATbool ATermToSageJovialTraversal::traverse_Module(ATerm term)
 
       SgScopeStatement* sage_tree_scope{nullptr};
       sage_tree_builder.Enter(sage_tree_scope);
+      setSourcePosition(sage_tree_scope, term);
 
       if (traverse_CompoolModule(module)) {
          // MATCHED CompoolModule
@@ -73,7 +78,10 @@ ATbool ATermToSageJovialTraversal::traverse_Module(ATerm term)
 
       sage_tree_builder.Leave(sage_tree_scope);
 
-   } else return ATfalse;
+      // Attaching any remaining comments
+      sage_tree_builder.attachRemainingComments(sage_tree_scope);
+   }
+   else return ATfalse;
 
    return ATtrue;
 }
@@ -90,10 +98,13 @@ ATbool ATermToSageJovialTraversal::traverse_CompoolModule(ATerm term)
    ATerm t_dirs, t_name, t_decls;
    std::string name;
    Rose::builder::SourcePositionPair sources;
-   SgJovialCompoolStatement* compool_stmt = nullptr;
-   SgNamespaceDeclarationStatement* namespace_decl = nullptr;
+   std::vector<Rose::builder::Token> saved_comments{};
+   SgJovialCompoolStatement* compool_stmt{nullptr};
+   SgNamespaceDeclarationStatement* namespace_decl{nullptr};
 
    if (ATmatch(term, "CompoolModule(<term>,<term>,<term>)", &t_dirs, &t_name, &t_decls)) {
+      // Save any comments preceding function_decl
+      sage_tree_builder.consumePrecedingComments(saved_comments, getLocation(term));
 
    // Traverse Name first to have it available
       if (traverse_Name(t_name, name)) {
@@ -108,9 +119,12 @@ ATbool ATermToSageJovialTraversal::traverse_CompoolModule(ATerm term)
       } else return ATfalse;
 
       sage_tree_builder.Enter(namespace_decl, name, sources);
+      sage_tree_builder.attachComments(namespace_decl, saved_comments, getLocation(term));
+      setSourcePosition(namespace_decl, term);
 
       sage_tree_builder.Enter(compool_stmt, name, sources);
       sage_tree_builder.Leave(compool_stmt);
+      setSourcePosition(compool_stmt, term);
 
       if (traverse_DeclarationList(t_decls)) {
          // MATCHED DeclarationList and CompoolDeclarationList
@@ -119,6 +133,7 @@ ATbool ATermToSageJovialTraversal::traverse_CompoolModule(ATerm term)
    } else return ATfalse;
 
    sage_tree_builder.Leave(namespace_decl);
+   sage_tree_builder.attachComments(namespace_decl, getLocation(term), /*at_end*/true);
 
    return ATtrue;
 }
@@ -196,12 +211,16 @@ ATbool ATermToSageJovialTraversal::traverse_MainProgramModule(ATerm term)
 #endif
 
    ATerm t_decls, t_name, t_body, t_funcs;
+   std::vector<Rose::builder::Token> comments{};
 
    SgProgramHeaderStatement* program_decl = nullptr;
 
    if (ATmatch(term, "MainProgramModule(<term>,<term>,<term>,<term>)", &t_decls,&t_name,&t_body,&t_funcs)) {
       std::string name;
       std::vector<std::string> labels;
+
+      // Save any comments preceding MainProgramModule
+      sage_tree_builder.consumePrecedingComments(comments, getLocation(term));
 
       if (traverse_DeclarationList(t_decls)) {
          // MATCHED DeclarationList
@@ -211,13 +230,15 @@ ATbool ATermToSageJovialTraversal::traverse_MainProgramModule(ATerm term)
          // MATCHED Name
       } else return ATfalse;
 
-      Rose::builder::SourcePosition prog_start, prog_end;   // start and end of program
-      Rose::builder::SourcePosition decls_start, decls_end; // start and end of declarations
-      setSourcePositions(term, prog_start, prog_end);
-      setSourcePositions(t_decls, decls_start, decls_end);
+   // Note that MainProgramModule term start and end is not that of the function,
+   // the Program name is the best we can do for a starting positioin.
+      Rose::builder::SourcePosition name_start, name_end; // start and end of program name
+      Rose::builder::SourcePosition body_start, body_end; // start and end of body
+      setSourcePositions(t_name, name_start, name_end);
+      setSourcePositions(t_body, body_start, body_end);
+      Rose::builder::SourcePositions sources(name_start, body_start, body_end);
 
    // Enter SageTreeBuilder for SgProgramHeaderStatement
-      Rose::builder::SourcePositions sources(prog_start, decls_start, prog_end);
       sage_tree_builder.Enter(program_decl, boost::optional<std::string>(name), labels, sources);
 
       if (traverse_ProgramBody(t_body)) {
@@ -306,6 +327,7 @@ ATbool ATermToSageJovialTraversal::traverse_NonNestedSubroutineList(ATerm term)
    LanguageTranslation::FunctionModifierList function_modifiers;
 
    if (ATmatch(term, "NonNestedSubroutineList(<term>)", &t_subroutine_list)) {
+
       ATermList tail = (ATermList) ATmake("<term>", t_subroutine_list);
       while (! ATisEmpty(tail)) {
          ATerm head = ATgetFirst(tail);
@@ -1426,6 +1448,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableDeclaration(ATerm term, int def
 //
    else if (traverse_TableDescriptionBody(t_table_desc, anon_type_name, table_decl)) {
       ROSE_ASSERT(table_decl);
+      setSourcePosition(table_decl, term);
 
       table_needs_body = true;
 
@@ -1636,6 +1659,7 @@ traverse_TableDescriptionBody(ATerm term, std::string &type_name, SgJovialTableS
       Rose::builder::SourcePositionPair sources;
       sage_tree_builder.Enter(table_decl, type_name, sources);
       ROSE_ASSERT(table_decl);
+      setSourcePosition(table_decl, term);
 
    // End SageTreeBuilder
       sage_tree_builder.Leave(table_decl);
@@ -2459,6 +2483,7 @@ ATbool ATermToSageJovialTraversal::traverse_ConstantDeclaration(ATerm term, int 
 // Begin SageTreeBuilder
    SgVariableDeclaration* var_decl;
    sage_tree_builder.Enter(var_decl, std::string(name), const_type, preset);
+   setSourcePosition(var_decl, term);
    if (preset) {
       // Set source position of initializer before var_decl for comment handling
       ROSE_ASSERT(var_decl->get_decl_item(name));
@@ -2466,7 +2491,6 @@ ATbool ATermToSageJovialTraversal::traverse_ConstantDeclaration(ATerm term, int 
       ROSE_ASSERT(initializer);
       setSourcePosition(initializer, t_preset);
    }
-   setSourcePosition(var_decl, term);
 
 // Jovial block and table members are visible in parent scope so create an alias
 // to the symbol if needed.
@@ -2520,6 +2544,7 @@ ATbool ATermToSageJovialTraversal::traverse_BlockDeclaration(ATerm term, int def
       // Begin SageTreeBuilder for type declaration
       Rose::builder::SourcePositionPair sources;
       sage_tree_builder.Enter(block_decl, type_name, sources, /*is_block*/ true);
+      setSourcePosition(block_decl, term);
 
       if (traverse_OptAllocationSpecifier(t_alloc, modifier_enum)) {
          // MATCHED OptAllocationSpecifier
@@ -3087,6 +3112,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableTypeDeclaration(ATerm term)
    // Begin SageTreeBuilder
       Rose::builder::SourcePositionPair sources;
       sage_tree_builder.Enter(table_decl, type_name, sources);
+      setSourcePosition(table_decl, term);
 
       if (traverse_TableTypeSpecifier(t_type_desc, table_decl)) {
          // MATCHED TableTypeSpecifier
@@ -3270,6 +3296,7 @@ ATbool ATermToSageJovialTraversal::traverse_BlockTypeDeclaration(ATerm term)
       // Begin SageTreeBuilder
       Rose::builder::SourcePositionPair sources;
       sage_tree_builder.Enter(block_decl, type_name, sources, /*is_block*/ true);
+      setSourcePosition(block_decl, term);
 
       if (traverse_BlockBodyPart(t_type_desc, block_decl)) {
          // MATCHED BlockBodyPart
@@ -3669,6 +3696,7 @@ ATbool ATermToSageJovialTraversal::traverse_OverlayDeclaration(ATerm term)
 
    // Begin SageTreeBuilder
       sage_tree_builder.Enter(overlay_decl, address, overlay_expr);
+      setSourcePosition(overlay_decl, term);
    }
    else return ATfalse;
 
@@ -3689,6 +3717,7 @@ ATbool ATermToSageJovialTraversal::traverse_OverlayExpression(ATerm term, SgExpr
 
    SgExprListExp* overlay_string;
    overlay_expr = SageBuilder::buildExprListExp_nfi();
+   setSourcePosition(overlay_expr, term);
 
    ATermList tail = (ATermList) ATmake("<term>", term);
    while (! ATisEmpty(tail)) {
@@ -3717,6 +3746,7 @@ ATbool ATermToSageJovialTraversal::traverse_OverlayString(ATerm term, SgExprList
 
    SgExpression* overlay_element;
    overlay_string = SageBuilder::buildExprListExp_nfi();
+   setSourcePosition(overlay_string, term);
 
    ATermList tail = (ATermList) ATmake("<term>", term);
    while (! ATisEmpty(tail)) {
@@ -3760,11 +3790,13 @@ ATbool ATermToSageJovialTraversal::traverse_OverlayElement(ATerm term, SgExpress
    if (ATmatch(term, "OverlayElement(<term>)", &t_expr)) {
       if (traverse_OverlayExpression(t_expr, overlay_expr)) {
          ROSE_ASSERT(overlay_expr);
+         setSourcePosition(overlay_expr, t_expr);
          overlay_element = overlay_expr;
       } else return ATfalse;
    }
    else if (traverse_Spacer(term, spacer)) {
       ROSE_ASSERT(spacer);
+      setSourcePosition(spacer, term);
       overlay_element = spacer;
    }
    else if (traverse_Name(term, name)) {
@@ -3811,11 +3843,12 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureDeclaration(ATerm term, Lan
 
    std::string name;
    std::list<FormalParameter> param_name_list;
+   std::vector<Rose::builder::Token> comments{};
 
-   SgFunctionDeclaration* function_decl = nullptr;
-   SgFunctionParameterList* param_list = nullptr;
-   SgScopeStatement* param_scope = nullptr;
-   bool is_defining_decl = true;
+   SgFunctionDeclaration* function_decl{nullptr};
+   SgFunctionParameterList* param_list{nullptr};
+   SgScopeStatement* param_scope{nullptr};
+   bool is_defining_decl{true};
 
    if (ATmatch(term, "ProcedureDeclaration(<term>,<term>,<term>)", &t_proc_heading, &t_directives, &t_decl)) {
 
@@ -3842,8 +3875,16 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureDeclaration(ATerm term, Lan
    }
    else return ATfalse;
 
+   Rose::builder::SourcePosition heading_start, heading_end; // start and end of ProcedureHeading
+   Rose::builder::SourcePosition decl_start, decl_end;       // start and end of Declaration
+   setSourcePositions(t_proc_heading, heading_start, heading_end);
+   setSourcePositions(t_decl, decl_start, decl_end);
+
+   Rose::builder::SourcePositions sources(heading_start, decl_start, decl_end);
+
 // Enter SageTreeBuilder for SgFunctionDeclaration
-   sage_tree_builder.Enter(function_decl, name, /*return_type*/nullptr, param_list, modifiers, is_defining_decl);
+   sage_tree_builder.Enter(function_decl, name, /*return_type*/nullptr,
+                           param_list, modifiers, is_defining_decl, sources, comments);
 
 // Leave SageTreeBuilder for SgFunctionDeclaration
    sage_tree_builder.Leave(function_decl, param_scope);
@@ -3859,15 +3900,18 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureDefinition(ATerm term, Lang
 
    ATerm t_proc_heading, t_directives, t_proc_body;
 
-   std::string name;
-   std::list<FormalParameter> param_name_list;
+   std::string name{};
+   std::list<FormalParameter> param_name_list{};
+   std::vector<Rose::builder::Token> comments{};
 
-   SgFunctionDeclaration* function_decl = nullptr;
-   SgFunctionParameterList* param_list = nullptr;
-   SgScopeStatement* param_scope = nullptr;
-   bool is_defining_decl = true;
+   SgFunctionDeclaration* function_decl{nullptr};
+   SgFunctionParameterList* param_list{nullptr};
+   SgScopeStatement* param_scope{nullptr};
+   bool is_defining_decl{true};
 
    if (ATmatch(term, "ProcedureDefinition(<term>,<term>,<term>)", &t_proc_heading, &t_directives, &t_proc_body)) {
+      // Save comments preceding body, otherwise they will be consumed by SubroutineBody
+      sage_tree_builder.consumePrecedingComments(comments, getLocation(t_proc_body));
 
       if (traverse_ProcedureHeading(t_proc_heading, name, param_name_list, modifiers)) {
          // MATCHED ProcedureHeading
@@ -3890,11 +3934,22 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureDefinition(ATerm term, Lang
    }
    else return ATfalse;
 
+   Rose::builder::SourcePosition proc_start, proc_end; // start and end of ProcedureDefinition
+   Rose::builder::SourcePosition body_start, body_end; // start and end of SubroutineBody
+   setSourcePositions(term, proc_start, proc_end);
+   setSourcePositions(t_proc_body, body_start, body_end);
+
+   Rose::builder::SourcePositions sources(proc_start, body_start, proc_end);
+
 // Enter SageTreeBuilder for SgFunctionDeclaration
-   sage_tree_builder.Enter(function_decl, name, /*return_type*/nullptr, param_list, modifiers, is_defining_decl);
+   sage_tree_builder.Enter(function_decl, name, /*return_type*/nullptr,
+                           param_list, modifiers, is_defining_decl, sources, comments);
 
 // Leave SageTreeBuilder for SgFunctionDeclaration
    sage_tree_builder.Leave(function_decl, param_scope);
+
+// Remaining source positions (last, comment processing may conflict with Leave() calls)
+   setSourcePosition(param_list, t_proc_heading);
 
    return ATtrue;
 }
@@ -4004,11 +4059,12 @@ traverse_FunctionDeclaration(ATerm term, LanguageTranslation::FunctionModifierLi
    std::string name;
    SgType* return_type = NULL;
    std::list<FormalParameter> param_name_list;
+   std::vector<Rose::builder::Token> comments{};
 
-   SgFunctionDeclaration* function_decl = nullptr;
-   SgFunctionParameterList* param_list = nullptr;
-   SgScopeStatement* param_scope = nullptr;
-   bool is_defining_decl = true;
+   SgFunctionDeclaration* function_decl{nullptr};
+   SgFunctionParameterList* param_list{nullptr};
+   SgScopeStatement* param_scope{nullptr};
+   bool is_defining_decl{true};
 
    if (ATmatch(term, "FunctionDeclaration(<term>,<term>,<term>)", &t_func_heading, &t_directives, &t_decl)) {
 
@@ -4034,8 +4090,16 @@ traverse_FunctionDeclaration(ATerm term, LanguageTranslation::FunctionModifierLi
    }
    else return ATfalse;
 
+   Rose::builder::SourcePosition heading_start, heading_end; // start and end of FunctionHeading
+   Rose::builder::SourcePosition decl_start, decl_end;       // start and end of Declaration
+   setSourcePositions(t_func_heading, heading_start, heading_end);
+   setSourcePositions(t_decl, decl_start, decl_end);
+
+   Rose::builder::SourcePositions sources(heading_start, decl_start, decl_end);
+
 // Enter SageTreeBuilder for SgFunctionDeclaration
-   sage_tree_builder.Enter(function_decl, name, return_type, param_list, modifiers, is_defining_decl);
+   sage_tree_builder.Enter(function_decl, name, return_type, param_list,
+                           modifiers, is_defining_decl, sources, comments);
 
 // Leave SageTreeBuilder for SgFunctionDeclaration
    sage_tree_builder.Leave(function_decl, param_scope);
@@ -4049,18 +4113,19 @@ ATbool ATermToSageJovialTraversal::traverse_FunctionDefinition(ATerm term, Langu
    printf("... traverse_FunctionDefinition: %s\n", ATwriteToString(term));
 #endif
 
-   ATerm t_func_heading, t_directives, t_proc_body;
+   ATerm t_func_heading, t_directives, t_func_body;
 
    std::string name;
    SgType* return_type = NULL;
    std::list<FormalParameter> param_name_list;
+   std::vector<Rose::builder::Token> comments{};
 
-   SgFunctionDeclaration* function_decl = nullptr;
-   SgFunctionParameterList* param_list = nullptr;
-   SgScopeStatement* param_scope = nullptr;
-   bool is_defining_decl = true;
+   SgFunctionDeclaration* function_decl{nullptr};
+   SgFunctionParameterList* param_list{nullptr};
+   SgScopeStatement* param_scope{nullptr};
+   bool is_defining_decl{true};
 
-   if (ATmatch(term, "FunctionDefinition(<term>,<term>,<term>)", &t_func_heading, &t_directives, &t_proc_body)) {
+   if (ATmatch(term, "FunctionDefinition(<term>,<term>,<term>)", &t_func_heading, &t_directives, &t_func_body)) {
 
       if (traverse_FunctionHeading(t_func_heading, name, return_type, param_name_list, modifiers)) {
          // MATCHED FunctionHeading
@@ -4073,7 +4138,7 @@ ATbool ATermToSageJovialTraversal::traverse_FunctionDefinition(ATerm term, Langu
          // MATCHED PostProcDirective*
       } else return ATfalse;
 
-      if (traverse_SubroutineBody(t_proc_body)) {
+      if (traverse_SubroutineBody(t_func_body)) {
          // MATCHED FunctionBody
       } else return ATfalse;
 
@@ -4082,8 +4147,16 @@ ATbool ATermToSageJovialTraversal::traverse_FunctionDefinition(ATerm term, Langu
    }
    else return ATfalse;
 
+   Rose::builder::SourcePosition heading_start, heading_end; // start and end of FunctionHeading
+   Rose::builder::SourcePosition body_start, body_end;       // start and end of SubroutineBody
+   setSourcePositions(t_func_heading, heading_start, heading_end);
+   setSourcePositions(t_func_body, body_start, body_end);
+
+   Rose::builder::SourcePositions sources(heading_start, body_start, body_end);
+
 // Enter SageTreeBuilder for SgFunctionDeclaration
-   sage_tree_builder.Enter(function_decl, name, return_type, param_list, modifiers, is_defining_decl);
+   sage_tree_builder.Enter(function_decl, name, return_type, param_list,
+                           modifiers, is_defining_decl, sources, comments);
 
 // Leave SageTreeBuilder for SgFunctionDeclaration
    sage_tree_builder.Leave(function_decl, param_scope);
@@ -4455,6 +4528,7 @@ ATbool ATermToSageJovialTraversal::traverse_CompoundStatement(ATerm term)
 
    // Begin SageTreeBuilder
       sage_tree_builder.Enter(block);
+      setSourcePosition(block, term);
 
       if (traverse_StatementList(t_stmt)) {
          // MATCHED StatementList
@@ -4517,7 +4591,7 @@ ATbool ATermToSageJovialTraversal::traverse_NullBlockStatement(ATerm term)
    return ATtrue;
 }
 
-ATbool ATermToSageJovialTraversal::traverse_LabelList(ATerm term, std::vector<std::string> & labels, std::vector<PosInfo> & locations)
+ATbool ATermToSageJovialTraversal::traverse_LabelList(ATerm term, std::vector<std::string> &labels, std::vector<PosInfo> &locations)
 {
 #if PRINT_ATERM_TRAVERSAL
    printf("... traverse_LabelList: %s\n", ATwriteToString(term));
@@ -4623,6 +4697,7 @@ ATbool ATermToSageJovialTraversal::traverse_WhileStatement(ATerm term)
 
    // Begin SageTreeBuilder
       sage_tree_builder.Enter(while_stmt, condition);
+      setSourcePosition(while_stmt, term);
 
    // Match ControlledStatement -- this is the body
       if (traverse_Statement(t_stmt)) {
@@ -4631,7 +4706,7 @@ ATbool ATermToSageJovialTraversal::traverse_WhileStatement(ATerm term)
    }
    else return ATfalse;
 
-// Begin SageTreeBuilder
+// End SageTreeBuilder
    sage_tree_builder.Leave(while_stmt);
 
    return ATtrue;
@@ -4675,6 +4750,7 @@ ATbool ATermToSageJovialTraversal::traverse_ForStatement(ATerm term)
 
    // Begin SageTreeBuilder
       sage_tree_builder.Enter(for_stmt, control_var_name);
+      setSourcePosition(for_stmt, term);
 
       if (traverse_ForClause(t_clause, var_ref, init, phrase1, phrase2, phrase1_enum, phrase2_enum)) {
          // MATCHED ForClause
@@ -4977,6 +5053,7 @@ ATbool ATermToSageJovialTraversal::traverse_IfStatement(ATerm term)
 
 // Begin SageTreeBuilder
    sage_tree_builder.Enter(if_stmt, conditional, true_body, false_body);
+   setSourcePosition(if_stmt, term);
 
 // End SageTreeBuilder
    sage_tree_builder.Leave(if_stmt);
@@ -5271,6 +5348,7 @@ ATbool ATermToSageJovialTraversal::traverse_ProcedureCallStatement(ATerm term)
 
    // Begin SageTreeBuilder
    sage_tree_builder.Enter(call_stmt, proc_name, param_list, abort_stmt_name);
+   setSourcePosition(call_stmt, term);
 
    // End SageTreeBuilder
    sage_tree_builder.Leave(call_stmt);
@@ -5372,6 +5450,7 @@ ATbool ATermToSageJovialTraversal::traverse_ReturnStatement(ATerm term)
 
    // Begin SageTreeBuilder
    sage_tree_builder.Enter(return_stmt, boost::none);
+   setSourcePosition(return_stmt, term);
 
    // End SageTreeBuilder
    sage_tree_builder.Leave(return_stmt);
@@ -5432,6 +5511,7 @@ ATbool ATermToSageJovialTraversal::traverse_ExitStatement(ATerm term)
 
    // Begin SageTreeBuilder
    sage_tree_builder.Enter(exit_stmt, std::string("exit"), boost::none);
+   setSourcePosition(exit_stmt, term);
 
    // End SageTreeBuilder
    sage_tree_builder.Leave(exit_stmt);
@@ -5473,6 +5553,7 @@ ATbool ATermToSageJovialTraversal::traverse_StopStatement(ATerm term)
 
    // Begin SageTreeBuilder
    sage_tree_builder.Enter(stop_stmt, std::string("stop"), opt_code);
+   setSourcePosition(stop_stmt, term);
 
    // End SageTreeBuilder
    sage_tree_builder.Leave(stop_stmt);
@@ -5504,6 +5585,7 @@ ATbool ATermToSageJovialTraversal::traverse_AbortStatement(ATerm term)
 
    // Begin SageTreeBuilder
    sage_tree_builder.Enter(abort_stmt, std::string("abort"), boost::none);
+   setSourcePosition(abort_stmt, term);
 
    // End SageTreeBuilder
    sage_tree_builder.Leave(abort_stmt);
@@ -8297,15 +8379,15 @@ ATbool ATermToSageJovialTraversal::traverse_OrderDirective(ATerm term)
 void ATermToSageJovialTraversal::
 setSourcePositions(ATerm term, Rose::builder::SourcePosition &start, Rose::builder::SourcePosition &end)
 {
-   PosInfo pos = getLocation(term);
+   PosInfo pos{getLocation(term)};
 
    start.path   = getCurrentFilename();
    start.line   = pos.getStartLine();
    start.column = pos.getStartCol();
 
    end.path   = getCurrentFilename();
-   end.line   = pos.getStartLine();
-   end.column = pos.getStartCol();
+   end.line   = pos.getEndLine();
+   end.column = pos.getEndCol();
 }
 
 void ATermToSageJovialTraversal::

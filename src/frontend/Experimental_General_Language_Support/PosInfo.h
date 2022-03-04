@@ -27,6 +27,12 @@ public:
   void setEndLine   (int line)  { endLine_   = line; }
   void setEndCol    (int col )  { endCol_    = col;  }
 
+  friend std::ostream& operator<< (std::ostream &os, const PosInfo &p) {
+    os << "(" << p.startLine_ << ',' << p.startCol_
+       << "," << p.endLine_   << ',' << p.endCol_ << ")";
+    return os;
+  }
+
 protected:
   int startLine_, startCol_;  // location (line,col) of first character ( 1 based)
   int endLine_,   endCol_;    // location (line,col) of last  character (+1 col)

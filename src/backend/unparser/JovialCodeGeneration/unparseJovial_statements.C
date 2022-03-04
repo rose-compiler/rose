@@ -38,8 +38,31 @@ UnparseJovial::unparseJovialFile(SgSourceFile *sourcefile, SgUnparse_Info& info)
   // so that care can be used to unparse and check comments in Jovial.
   info.set_SkipComments();
 
+  // unparse comments preceding the global scope
+  auto preprocInfo = globalScope->get_attachedPreprocessingInfoPtr();
+  if (preprocInfo) {
+    for (PreprocessingInfo* info : *preprocInfo) {
+      if (info->getRelativePosition() == PreprocessingInfo::before) {
+        curprint(info->getString());
+        curprint("\n");
+      }
+    }
+  }
+
   curprint("START\n");
   unparseStatement(globalScope, info);
+
+  // unparse comments near end of global scope
+  preprocInfo = globalScope->get_attachedPreprocessingInfoPtr();
+  if (preprocInfo) {
+    for (PreprocessingInfo* info : *preprocInfo) {
+      if (info->getRelativePosition() == PreprocessingInfo::after) {
+        curprint(info->getString());
+        curprint("\n");
+      }
+    }
+  }
+
   curprint("TERM\n");
 }
 
@@ -50,6 +73,17 @@ UnparseJovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Inf
   // This function unparses the language specific statements not handled by the base class unparseStatement() member function
 
      ASSERT_not_null(stmt);
+
+     // unparse comments preceding the expression
+     auto preprocInfo = stmt->get_attachedPreprocessingInfoPtr();
+     if (preprocInfo) {
+       for (PreprocessingInfo* info : *preprocInfo) {
+         if (info->getRelativePosition() == PreprocessingInfo::before) {
+           curprint(info->getString());
+           curprint("\n");
+         }
+       }
+     }
 
      switch (stmt->variantT())
         {
@@ -94,36 +128,25 @@ UnparseJovial::unparseLanguageSpecificStatement(SgStatement* stmt, SgUnparse_Inf
 
           case V_SgExprStatement:              unparseExprStmt       (stmt, info);  break;
 
-#if 0
-       // declarations
-          case V_SgVariableDefinition:     unparseVarDefnStmt  (stmt, info); break;
-
-       // executable statements, control flow
-
-          case V_SgAssertStmt:             unparseAssertStmt     (stmt, info); break;
-
-          case V_SgContinueStmt:           unparseContinueStmt(stmt, info);     break;
-
-
-
-          case V_SgForInitStatement:       unparseForInitStmt(stmt, info);      break;
-
-          case V_SgFunctionParameterList:  unparseFunctionParameterList(stmt, info); break;
-
-          case V_SgUsingDirectiveStatement:            unparseUsingDirectiveStatement (stmt, info);            break;
-          case V_SgUsingDeclarationStatement:          unparseUsingDeclarationStatement (stmt, info);          break;
-#endif
-
-          default:
-            {
-               cerr << "UnparseJovial::unparseLanguageSpecificStatement: Error: No handler for "
-                    <<  stmt->class_name() << ", variant: " << stmt->variantT() << endl;
-               ROSE_ABORT();
-               break;
-            }
+          default: {
+             cerr << "UnparseJovial::unparseLanguageSpecificStatement: Error: No handler for "
+                  <<  stmt->class_name() << ", variant: " << stmt->variantT() << endl;
+             ROSE_ABORT();
+             break;
+          }
         }
-   }
 
+     // unparse comments at end of the statement
+     preprocInfo = stmt->get_attachedPreprocessingInfoPtr();
+     if (preprocInfo && !isSgBasicBlock(stmt)) {
+       for (PreprocessingInfo* info : *preprocInfo) {
+         if (info->getRelativePosition() == PreprocessingInfo::after) {
+           curprint(info->getString());
+           curprint("\n");
+         }
+       }
+     }
+   }
 
 //----------------------------------------------------------------------------
 //  UnparseJovial::DIRECTIVES and DEFINE
@@ -263,8 +286,8 @@ UnparseJovial::unparseProcDeclStmt(SgStatement* stmt, SgUnparse_Info& info)
    {
      SgUnparse_Info ninfo(info);
 
-     SgBasicBlock* func_body = NULL;
-     SgScopeStatement* param_scope = NULL;
+     SgBasicBlock* func_body{nullptr};
+     SgScopeStatement* param_scope{nullptr};
 
      SgProcedureHeaderStatement* func = isSgProcedureHeaderStatement(stmt);
      ASSERT_not_null(func);
@@ -416,22 +439,29 @@ UnparseJovial::unparseBasicBlockStmt(SgStatement* stmt, SgUnparse_Info& info)
      int block_size = block->get_statements().size();
 
   // allow one declaration to be unparsed without BEGIN and END (except for switch stmts)
-     if (block_size > 1 || switch_stmt)
-        {
-           curprint_indented("BEGIN\n", info);
-        }
+     if (block_size > 1 || switch_stmt) {
+       curprint_indented("BEGIN\n", info);
+     }
 
      info.inc_nestingLevel();
-     for (SgStatement* block_stmt : block->get_statements())
-        {
-           unparseStatement(block_stmt, info);
-        }
+     for (SgStatement* block_stmt : block->get_statements()) {
+       unparseStatement(block_stmt, info);
+     }
      info.dec_nestingLevel();
 
-     if (block_size > 1 || switch_stmt)
-        {
-           curprint_indented("END\n", info);
-        }
+     // unparse comments at end of the block (this allows comments before "END")
+     auto preprocInfo = stmt->get_attachedPreprocessingInfoPtr();
+     if (preprocInfo) {
+       for (PreprocessingInfo* info : *preprocInfo) {
+         if (info->getRelativePosition() == PreprocessingInfo::after) {
+           curprint(info->getString());
+           curprint("\n");
+         }
+       }
+     }
+     if (block_size > 1 || switch_stmt) {
+       curprint_indented("END\n", info);
+     }
    }
 
 void UnparseJovial::unparseLabelStmt(SgStatement* stmt, SgUnparse_Info& info)
@@ -868,7 +898,7 @@ UnparseJovial::unparseEnumBody(SgEnumDeclaration* enum_decl, SgUnparse_Info& inf
       ASSERT_not_null(enum_val);
 
       // unparse comments preceding the expression
-      const AttachedPreprocessingInfoType* preprocInfo = enum_val->get_attachedPreprocessingInfoPtr();
+      auto preprocInfo = enum_val->get_attachedPreprocessingInfoPtr();
       if (preprocInfo) {
         for (PreprocessingInfo* info : *preprocInfo) {
           if (info->getRelativePosition() == PreprocessingInfo::before) {
@@ -1094,7 +1124,10 @@ UnparseJovial::unparseVarDecl(SgStatement* stmt, SgInitializedName* initializedN
      SgModifierType* modifier_type = isSgModifierType(type);
 
      info.set_inVarDecl();
+//erasmus
+#if 0
      unparseCommentsBefore(stmt, info);
+#endif
 
   // pretty printing
      curprint( ws_prefix(info.get_nestingLevel()) );

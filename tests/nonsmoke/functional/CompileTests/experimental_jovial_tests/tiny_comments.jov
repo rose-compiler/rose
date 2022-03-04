@@ -1,0 +1,45 @@
+" 1:Pre START (quotes comment) "
+START
+% 2:Post START
+    - multiple lines %
+
+" 3:Pre PROGRAM
+    - also multiple lines "
+PROGRAM main ;
+% 4:Post PROGRAM %
+% 5:Pre BEGIN %
+BEGIN
+% 6:Post BEGIN %
+  ITEM ia S ;
+  ITEM ib S ;
+  ITEM bf B 1 ;
+  ITEM ptr P ;
+
+  ia = 1 ;
+  ia = ib - 2 ;
+  ia = ib * 3 ;
+  ia = ib / 4 ;
+  bf = ib < 5 ;
+
+  ptr = loc(bf);
+
+% 7:Pre END %
+END
+% 8:Post END %
+
+% 9:Pre PROC %
+PROC boo (:hoo);
+% 10:Post PROC %
+
+% 11:Pre PROC BEGIN %
+  BEGIN
+% 12:Post PROC BEGIN %
+    ITEM hoo U;
+    hoo = 2020;
+% 13:Pre PROC END %
+  END
+% 14:Post PROC END %
+
+% 15:Pre TERM %
+TERM
+% 16:Post TERM %

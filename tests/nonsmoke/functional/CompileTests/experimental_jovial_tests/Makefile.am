@@ -8,6 +8,7 @@ LDADD    = $(ROSE_LIBS)
 
 JOVIAL_TESTCODES = \
  tiny.jov                               \
+ tiny_comments.jov                      \
  bit_conversion.jov                     \
  int_conversion.jov                     \
  item_desc_conversion.jov               \
@@ -229,7 +230,8 @@ JOVIAL_TESTCODES = \
  gitlab-issue-12.jov                    \
  gitlab-issue-13.jov                    \
  charlie.jov                            \
- shadow.jov
+ shadow.jov                             \
+ comments.jov
 
 JOVIAL_PARSER_TESTCODES = \
  fixed_cast.jov                         \
