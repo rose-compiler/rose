@@ -51,35 +51,26 @@ size_t CFAnalysis::deleteFunctionCallLocalEdges(Flow& flow) {
   return flow.deleteEdges(EDGE_LOCAL);
 }
 
-LabelSet CFAnalysis::functionCallLabels(Flow& flow) {
+LabelSet CFAnalysis::computeLabelSet(LabelPredicate predicate, Flow& flow) {
   LabelSet resultSet;
-  for(Labeler::iterator i=getLabeler()->begin();i!=getLabeler()->end();++i) {
-    if(labeler->isFunctionCallLabel(*i))
-      resultSet.insert(*i);
+  LabelSet nodeLabels=flow.nodeLabels();
+  for(auto lab : nodeLabels) {
+    if((getLabeler()->*predicate)(lab))
+      resultSet.insert(lab);
   }
   return resultSet;
+}
+
+LabelSet CFAnalysis::functionCallLabels(Flow& flow) {
+  return computeLabelSet(&Labeler::isFunctionCallLabel,flow);
 }
 
 LabelSet CFAnalysis::conditionLabels(Flow& flow) {
-  LabelSet resultSet;
-  LabelSet nodeLabels;
-  nodeLabels=flow.nodeLabels();
-  for(LabelSet::iterator i=nodeLabels.begin();i!=nodeLabels.end();++i) {
-    if(labeler->isConditionLabel(*i))
-      resultSet.insert(*i);
-  }
-  return resultSet;
+  return computeLabelSet(&Labeler::isConditionLabel,flow);
 }
 
 LabelSet CFAnalysis::functionEntryLabels(Flow& flow) {
-  LabelSet resultSet;
-  LabelSet nodeLabels;
-  nodeLabels=flow.nodeLabels();
-  for(LabelSet::iterator i=nodeLabels.begin();i!=nodeLabels.end();++i) {
-    if(labeler->isFunctionEntryLabel(*i))
-      resultSet.insert(*i);
-  }
-  return resultSet;
+  return computeLabelSet(&Labeler::isFunctionEntryLabel,flow);
 }
 
 Label CFAnalysis::correspondingFunctionExitLabel(Label entryLabel) {

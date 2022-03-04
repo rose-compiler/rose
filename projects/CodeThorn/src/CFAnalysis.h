@@ -55,6 +55,8 @@ class CFAnalysis {
   LabelSet functionCallLabels(Flow& flow);
   LabelSet functionEntryLabels(Flow& flow);
   LabelSet conditionLabels(Flow& flow);
+  LabelSet exprLabels();
+  
   // computes function exit label for a provided function entry label
   Label correspondingFunctionExitLabel(Label entryLabel);
   // computes function return label for a provided function call label
@@ -171,6 +173,8 @@ protected:
   void createIntraProceduralCallEdges(Flow& flow, InterFlow& interFlow);
   bool _interProcedural=true;
   bool _withCplusplus=false;
+  typedef bool (Labeler::*LabelPredicate)(Label);
+  LabelSet computeLabelSet(LabelPredicate predicate, Flow& flow);
 
 private:
   SgStatement* getCaseOrDefaultBodyStmt(SgNode* node);
