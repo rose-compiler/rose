@@ -240,6 +240,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("fast-pointer-hashing",po::value< bool >(&ctOpt.fastPointerHashing)->implicit_value(true), "Allows to disable fast pointer hashing of pstates and estates in transition graph.")
     ("exit-on-hash-error",po::value< bool >(&ctOpt.exitOnHashError)->implicit_value(true), "Allows to disable fast pointer hashing of pstates and estates in transition graph.")
     ("reduce-stg",po::value< bool >(&ctOpt.reduceStg)->implicit_value(true), "Reduce state transition system graph to IO states (without LTL verification).")
+    ("abstraction-check",po::value<bool>(&ctOpt.abstractionConsistencyCheck)->implicit_value(true), "Enable abstraction consistency check. Only used for debugging, slows down analysis significantly.")
     ;
 
   rersOptions.add_options()

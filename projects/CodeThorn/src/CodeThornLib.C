@@ -179,8 +179,11 @@ namespace CodeThorn {
       case 17 :  {  
         solver = new Solver17(); break; // does not create a TS
       }
-      case 18 :  {  
-        solver = new Solver18(); break; // does not create a TS
+      case 18 :  {
+        Solver18* solver18= new Solver18(); 
+        solver18->setAbstractionConsistencyCheckFlag(ctOpt.abstractionConsistencyCheck);
+        solver=solver18;
+        break; // does not create a TS
       }
       case 19 :  {  
         solver = new Solver19(); break; // does not create a TS
