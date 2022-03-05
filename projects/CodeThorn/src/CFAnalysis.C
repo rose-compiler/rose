@@ -2,6 +2,9 @@
 #include "sageGeneric.h"
 #include "sageInterface.h"
 
+#include <unordered_set>
+#include <algorithm>
+
 #include "CFAnalysis.h"
 #include "Labeler.h"
 #include "AstTerm.h"
@@ -19,6 +22,18 @@ namespace si = SageInterface;
 CFAnalysis::FunctionResolutionMode CFAnalysis::functionResolutionMode=CFAnalysis::FRM_FUNCTION_CALL_MAPPING;
 
 Sawyer::Message::Facility CFAnalysis::logger;
+
+namespace
+{
+  bool isFunctionCallNode(SgNode* n, bool withCplusplus)
+  {
+    if (withCplusplus)
+      return SgNodeHelper::matchExtendedNormalizedCall(n);
+
+    return SgNodeHelper::Pattern::matchFunctionCall(n);
+  }
+}
+
 void CFAnalysis::initDiagnostics() {
   static bool initialized = false;
   if (!initialized) {
@@ -72,6 +87,15 @@ LabelSet CFAnalysis::conditionLabels(Flow& flow) {
 LabelSet CFAnalysis::functionEntryLabels(Flow& flow) {
   return computeLabelSet(&Labeler::isFunctionEntryLabel,flow);
 }
+
+LabelSet CFAnalysis::exprLabels(Flow& flow) {
+  return computeLabelSet(&Labeler::isExprLabel,flow);
+}
+
+LabelSet CFAnalysis::exprOrDeclLabels(Flow& flow) {
+  return computeLabelSet(&Labeler::isExprOrDeclLabel,flow);
+}
+
 
 Label CFAnalysis::correspondingFunctionExitLabel(Label entryLabel) {
   ROSE_ASSERT(getLabeler()->isFunctionEntryLabel(entryLabel));
@@ -185,6 +209,74 @@ definingDecl(SageNode* decl)
   return sg::assert_sage_type<SageNode>(decl->get_definingDeclaration());
 }
 
+// SgFunctionRefExp* SgTemplateFunctionRefExp* SgMemberFunctionRefExp* SgTemplateMemberFunctionRefExp*
+// SgFunctionSymbol* funSym=functionRef->get_symbol();
+
+// SgFunctionDeclaration * funDecl= funSym->get_declaration();
+// SgFunctionDefinition * fundef=funDecl->get_definition();
+// Label entryLabel = labeler->functionEntryLabel(fundef);
+
+Label CFAnalysis::entryLabelOfFunctionSymbol(SgFunctionSymbol* funSym) {
+  //if(SgFunctionDeclaration* funDecl=funSym->get_declaration()) {
+  if(SgFunctionDeclaration* funDecl=SgNodeHelper::findFunctionDeclarationWithFunctionSymbol(funSym)) {
+    if(SgFunctionDefinition* funDef=funDecl->get_definition()) {
+      return getLabeler()->functionEntryLabel(funDef);
+    }
+  }
+  Label lab; // invalid label by default
+  return lab;
+}
+
+Label CFAnalysis::entryLabelOfFunctionDefinition(SgFunctionDefinition* def) {
+  return _functionDefinitionToEntryLabelMap[def];
+}
+  
+void CFAnalysis::computeFunctionDefinitionToEntryLabelMap(Flow& flow) {
+  auto entryLabelSet=functionEntryLabels(flow);
+  for (auto entryLab : entryLabelSet) {
+    SgFunctionDefinition* def=isSgFunctionDefinition(getLabeler()->getNode(entryLab));
+    _functionDefinitionToEntryLabelMap[def]=entryLab;
+  }
+}
+
+LabelSet CFAnalysis::addressTakenFunctions(Flow& flow) {
+  // get all expressions
+  // get all isSgFunctionRefExp(exp);
+  // determine entryLabel of referenced function in exp
+  computeFunctionDefinitionToEntryLabelMap(flow);
+  auto funIdMapping=getFunctionCallMapping()->getFunctionIdMapping();
+  LabelSet functionEntryLabels;
+  LabelSet labelSet=exprOrDeclLabels(flow);
+  for (auto lab : labelSet) {
+    auto node=getLabeler()->getNode(lab);
+    // for all nodes, except function calls, collect referenced function symbols
+    if(!isFunctionCallNode(node,_withCplusplus)) {
+      std::unordered_set<SgFunctionDefinition*> functionDefSet;
+      RoseAst ast(node);
+      for(auto subTreeNode : ast) {
+        // not adding SgTemplateFunctionRefExp* SgTemplateMemberFunctionRefExp*
+        if(SgFunctionRefExp* functionRefExp=isSgFunctionRefExp(subTreeNode)) {
+          FunctionId funId=funIdMapping->getFunctionIdFromFunctionRef(functionRefExp);
+          SgFunctionDefinition* funDef=funIdMapping->getFunctionDefFromFunctionId(funId);
+          functionDefSet.insert(funDef);
+        } else if(SgMemberFunctionRefExp* memFunctionRefExp=isSgMemberFunctionRefExp(subTreeNode)) {
+          FunctionId funId=funIdMapping->getFunctionIdFromFunctionRef(memFunctionRefExp);
+          SgFunctionDefinition* funDef=funIdMapping->getFunctionDefFromFunctionId(funId);
+          functionDefSet.insert(funDef);
+        }
+      }
+      for (auto funDef : functionDefSet) {
+        Label entryLabel=entryLabelOfFunctionDefinition(funDef);
+        if(entryLabel.isValid()) {
+          functionEntryLabels.insert(entryLabel);
+        }
+        //cout<<"DEBUG: Function Def:"<<funDef<<" entry label: "<<entryLabel.toString()<<endl;
+      }
+    }
+  }
+  return functionEntryLabels;
+}
+
 InterFlow CFAnalysis::interFlow(Flow& flow) {
   if (_withCplusplus)
     return interFlow2(flow);
@@ -201,6 +293,9 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
   int externalFunCallsWithoutDecl=0;
   int functionsFound=0;
 
+  LabelSet addressTakenFunctionEntryLabels=addressTakenFunctions(flow);
+  SAWYER_MESG(logger[INFO])<<"address taken function entry labels: "<<addressTakenFunctionEntryLabels.size()<<endl;
+  
   for(LabelSet::iterator i=callLabs.begin();i!=callLabs.end();++i) {
     //cout<<"INFO: resolving function call "<<callLabNr<<" of "<<callLabs.size()<<endl;
     SgNode* callNode=getNode(*i);
@@ -229,6 +324,18 @@ InterFlow CFAnalysis::interFlow(Flow& flow) {
     switch(functionResolutionMode) {
     case FRM_FUNCTION_CALL_MAPPING: {
       funCallTargetSet=determineFunctionDefinition4(funCall);
+      // filter funCallTargeSet if function pointer call with address taken functions
+      if(getFunctionCallMapping()->isFunctionPointerCall(funCall)) {
+        FunctionCallTargetSet targetSet2;
+        for(auto funCallTarget : funCallTargetSet) {
+          auto funDef=funCallTarget.getDefinition();
+          Label funCallTargetEntryLabel=labeler->functionEntryLabel(funDef);
+          if(addressTakenFunctionEntryLabels.isElement(funCallTargetEntryLabel))
+            targetSet2.insert(funCallTarget);
+        }
+        SAWYER_MESG(logger[INFO])<<"reduced function pointer call target set from "<<funCallTargetSet.size()<<" to "<<targetSet2.size()<<" ("<<((double)targetSet2.size()/funCallTargetSet.size()*100)<<" %)"<<endl;
+        funCallTargetSet=targetSet2;
+      }
       Label callLabel,entryLabel,exitLabel,callReturnLabel;
       if(funCallTargetSet.size()==0) {
         callLabel=*i;
@@ -403,17 +510,6 @@ SgStatement* CFAnalysis::getLastStmtInBlock(SgBasicBlock* block) {
     return stmtList.back();
   } else {
     return 0;
-  }
-}
-
-namespace
-{
-  bool isFunctionCallNode(SgNode* n, bool withCplusplus)
-  {
-    if (withCplusplus)
-      return SgNodeHelper::matchExtendedNormalizedCall(n);
-
-    return SgNodeHelper::Pattern::matchFunctionCall(n);
   }
 }
 
