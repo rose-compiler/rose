@@ -550,6 +550,14 @@ bool CLabeler::isExprLabel(Label lab) {
   return false;
 }
 
+bool CLabeler::isExprOrDeclLabel(Label lab) {
+  SgNode* node=getNode(lab);
+  if(SgLocatedNode* loc=isSgLocatedNode(node)) {
+    return isExprLabel(lab)||isSgDeclarationStatement(loc);
+  }
+  return false;
+}
+
 bool CLabeler::isFirstLabelOfMultiLabeledNode(Label lab) {
   return isFunctionCallLabel(lab)||isFunctionEntryLabel(lab)||isBlockBeginLabel(lab);
 }
