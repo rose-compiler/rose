@@ -1065,6 +1065,7 @@ namespace
 SgAdaSubroutineType&
 mkAdaSubroutineType( SgType& retty,
                      std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete,
+                     SgScopeStatement& scope,
                      bool isProtected
                    )
 {
@@ -1078,7 +1079,8 @@ mkAdaSubroutineType( SgType& retty,
 
   lst.set_parent(&sgnode);
   // correct? or shall we link to surrounding scope?
-  parmScope.set_parent(&sgnode);
+  //~ parmScope.set_parent(&sgnode);
+  parmScope.set_parent(&scope);
 
   return sgnode;
 }

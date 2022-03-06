@@ -191,6 +191,7 @@ namespace Ada_ROSE_Translation
   SgAdaSubroutineType&
   mkAdaSubroutineType( SgType& retty,
                        std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete,
+                       SgScopeStatement& scope,
                        bool isProtected = false
                      );
 
