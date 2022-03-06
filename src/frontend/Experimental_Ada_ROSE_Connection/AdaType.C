@@ -258,7 +258,7 @@ namespace
         ElemIdRange          params  = idRange(access.Access_To_Subprogram_Parameter_Profile);
         SgType&              rettype = isFuncAccess ? getDeclTypeID(access.Access_To_Function_Result_Profile, ctx)
                                                     : mkTypeVoid();
-        SgAdaSubroutineType& funty   = mkAdaSubroutineType(rettype, ParameterCompletion{params, ctx}, isProtected);
+        SgAdaSubroutineType& funty   = mkAdaSubroutineType(rettype, ParameterCompletion{params, ctx}, ctx.scope(), isProtected);
 
         res = &mkAdaAccessType(funty);
         break;
@@ -332,7 +332,7 @@ namespace
         ElemIdRange          params  = idRange(access_type.Access_To_Subprogram_Parameter_Profile);
         SgType&              rettype = isFuncAccess ? getDeclTypeID(access_type.Access_To_Function_Result_Profile, ctx)
                                                     : mkTypeVoid();
-        SgAdaSubroutineType& funty   = mkAdaSubroutineType(rettype, ParameterCompletion{params, ctx}, isProtected);
+        SgAdaSubroutineType& funty   = mkAdaSubroutineType(rettype, ParameterCompletion{params, ctx}, ctx.scope(), isProtected);
 
         access_t = &mkAdaAccessType(funty);
         break;
