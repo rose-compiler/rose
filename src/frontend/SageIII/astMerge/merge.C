@@ -263,7 +263,7 @@ void merge(SgProject * project) {
   Rose::MemPool::snapshot("mempool-astmerge-linked.csv");
 #endif
 
-  consistency(project);
+  consistency();
 
 #if !DEBUG__ROSE_AST_MERGE
   if (SgProject::get_verbose() > 0) {

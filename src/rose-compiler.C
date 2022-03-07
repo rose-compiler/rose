@@ -22,6 +22,10 @@ int main( int argc, char * argv[] ) {
 
   SgProject * project = args.size() > 1 ? frontend(args) : new SgProject(); // TODO this behavior should be part of ::frontend(std::vector<std::string> const &)
 
+#if !defined(_WIN32) && !defined(__CYGWIN__)
+  Rose::AST::consistency();
+#endif
+
   auto status = backend(project);
 
 #if !defined(_WIN32) && !defined(__CYGWIN__)

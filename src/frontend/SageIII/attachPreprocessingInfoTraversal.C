@@ -1242,7 +1242,8 @@ AttachPreprocessingInfoTreeTrav::buildCommentAndCppDirectiveList ( bool use_Wave
 #endif
             // DQ (1/9/2021): This adds the token list and the comments and CPP directives to the list of such things.
             // DQ (11/2/2019): Add the new attributes to the list.
-               filePreprocInfo->getList()[sourceFile->get_file_info()->get_filename()] = returnListOfAttributes;
+               auto & filePreprocInfoList = filePreprocInfo->getList();
+               filePreprocInfoList[sourceFile->get_file_info()->get_filename()] = returnListOfAttributes;
 #if 0
                string filename = sourceFile->get_file_info()->get_filename();
                printf ("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$ \n");

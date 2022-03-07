@@ -235,6 +235,7 @@ $CLASSNAME::extendMemoryPoolForFileIO( )
         memset(pointer, 0xCC, $CLASSNAME::pool_size * sizeof($CLASSNAME));
 #endif
         $CLASSNAME::pools.push_back( (unsigned char*)(pointer) );
+        SgNode::all_pools.push_back (std::tuple<unsigned char *, unsigned, VariantT>( (unsigned char *) pointer, $CLASSNAME::pool_size * sizeof($CLASSNAME), V_$CLASSNAME ) );
 
         if ( $CLASSNAME::next_node != NULL ) {
           if ( blockIndex > 0 ) {

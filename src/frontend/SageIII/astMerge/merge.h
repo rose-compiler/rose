@@ -3,6 +3,7 @@
 
 #include <list>
 #include <string>
+#include <iostream>
 
 #include "rosedll.h"
 
@@ -19,7 +20,7 @@ ROSE_DLL_API void shareRedundantNodes(SgProject *);
 ROSE_DLL_API void deleteIslands(SgProject *);
 ROSE_DLL_API void link(SgProject *);
 
-ROSE_DLL_API void consistency(SgProject *);
+ROSE_DLL_API bool consistency(std::ostream & out = std::cerr);
 
 ROSE_DLL_API void clear();
 ROSE_DLL_API void free();

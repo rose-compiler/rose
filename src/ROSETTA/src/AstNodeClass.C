@@ -185,7 +185,7 @@ AstNodeClass::buildDestructorBody ()
             tempString += "    else if (p_$DATA) { ROSE_ASSERT(false); }";
 #endif
           }
-          if ( typeName == " rose_hash_multimap*" ) {
+          if ( typeName == " rose_hash_multimap*" || typeName == "OSEAttributesListContainerPtr" ) {
             tempString  = "    if (p_$DATA) { delete " + tempString + "p_$DATA; }\n";
           }
           tempString = StringUtility::copyEdit(tempString, "$DATA", varName);
