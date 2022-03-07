@@ -167,9 +167,11 @@ namespace CodeThorn {
     }
     InputOutput io;
     if(es1->io.isBot()) {
-      es1->io=es2->io;
+      es1->copy(es1,es2,false);
+      return;
     } else if(es2->io.isBot()) {
       // no update of es1 necessary
+      return;
     } else {
       ROSE_ASSERT(es1->io==es2->io);
     }

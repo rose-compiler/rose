@@ -111,9 +111,9 @@ namespace CodeThorn {
 
     static EStatePtr createBottomEState(Label lab, CallString cs);
     bool isBottomEState();
-    
+    void copy(EState* target, ConstEStatePtr source,bool sharedPStatesFlag);    
+
   private:
-    void copy(EState* target, ConstEStatePtr source,bool sharedPStatesFlag);
     Label _label;
     CallString callString;
     PStatePtr _pstate;
