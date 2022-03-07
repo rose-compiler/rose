@@ -160,11 +160,8 @@ void Solver18::setAbstractState(CodeThorn::Label lab, CodeThorn::CallString cs, 
 
 // creates bottom state
 EStatePtr Solver18::createBottomAbstractState(Label lab, CallString cs) {
-  InputOutput io;
-  io.recordBot();
-  EState estate(lab,cs,new PState(),io);
   ROSE_ASSERT(!createsTransitionSystem());
-  return new EState(estate);
+  return EState::createBottomEState(lab,cs);
 }
 
 size_t Solver18::checkDiff() {

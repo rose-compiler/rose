@@ -466,7 +466,7 @@ EStatePtr CodeThorn::CTAnalysis::getAbstractState(CodeThorn::Label lab, CodeThor
 
 void CodeThorn::CTAnalysis::setAbstractState(CodeThorn::Label lab, CodeThorn::CallString cs, EStatePtr estate) {
   ROSE_ASSERT(lab==estate->label());
-  ROSE_ASSERT(cs==estate->callString);
+  ROSE_ASSERT(cs==estate->getCallString());
   ROSE_ASSERT(estate);
 
   //pair<int,CallString> p(lab.getId(),cs);
@@ -517,7 +517,7 @@ void CodeThorn::CTAnalysis::initializeAbstractStates(PStatePtr initialPStateStor
     CallString cs; // empty callstring
     EState estate(label,cs,initialPStateStored,io); // implicitly empty cs
     EStatePtr bottomElement=processNewOrExisting(getBottomAbstractState());
-    setAbstractState(label,estate.callString,bottomElement);
+    setAbstractState(label,estate.getCallString(),bottomElement);
   }
 #endif
 }

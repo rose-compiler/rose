@@ -42,8 +42,11 @@ namespace CodeThorn {
   
   class EState : public Lattice {
   public:
+    friend bool operator<(const EState& e1, const EState& e2);
+    friend bool operator==(const EState& c1, const EState& c2);
+
     EState();
-  EState(Label label, PStatePtr pstate):_label(label),_pstate(pstate) { _constructCount++; }
+    EState(Label label, PStatePtr pstate):_label(label),_pstate(pstate) { _constructCount++; }
     EState(Label label, PStatePtr pstate, CodeThorn::InputOutput io):_label(label),_pstate(pstate),io(io){ _constructCount++; }
     EState(Label label, CallString cs, PStatePtr pstate, CodeThorn::InputOutput io):_label(label),callString(cs),_pstate(pstate),io(io) { _constructCount++; }
     EState(EState&& other); // move constructor
@@ -106,12 +109,13 @@ namespace CodeThorn {
     // exits with error message, if more addresses of same memory region exist, than allowed by arrayAbstractionIndex.
     uint32_t checkArrayAbstractionIndexConsistency(int32_t arrayAbstractionIndex, VariableIdMapping* vim);
 
+    static EStatePtr createBottomEState(Label lab, CallString cs);
+    bool isBottomEState();
+    
   private:
     void copy(EState* target, ConstEStatePtr source,bool sharedPStatesFlag);
     Label _label;
-  public:
     CallString callString;
-  private:
     PStatePtr _pstate;
   public:
     CodeThorn::InputOutput io;
