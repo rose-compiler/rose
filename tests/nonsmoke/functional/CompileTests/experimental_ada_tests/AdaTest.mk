@@ -14,6 +14,7 @@
 ########################################################################################3#
 
 ADA_TRANSLATOR_PASSING_TESTS :=        \
+  access_to_object.ads                 \
   block_statement.adb                  \
   case_statement.adb                   \
   case_function.ads                    \
@@ -39,6 +40,7 @@ ADA_TRANSLATOR_PASSING_TESTS :=        \
   gototest.ads                         \
   if_statement.adb                     \
   increment.adb                        \
+  linkedlists.ads                      \
   loop_exit.adb                        \
   loop_parameter_specification.adb     \
   loop_statement.adb                   \
@@ -55,6 +57,7 @@ ADA_TRANSLATOR_PASSING_TESTS :=        \
   overload.adb                         \
   package_with_body.ads                \
   parameter_declaration.ads            \
+  private_enum.ads                     \
   private_extension_declaration.ads    \
   private_type_definition.ads          \
   procedure_body_stub.ads              \
@@ -73,16 +76,19 @@ ADA_TRANSLATOR_PASSING_TESTS :=        \
   subtypes.ads                         \
   switches.ads                         \
   tagged_definition.ads                \
+  tagged_incomplete_type_declaration.ads \
   unit_1.adb                           \
   unit_3.ads                           \
   variable_declaration.ads             \
-  very_large_value.adb                 \
   week_string_literal.ads              \
   while_loop_statement.adb
 
 ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
+  access_definition.ads                \
+  access_type_test.adb                 \
   access_variable.adb                  \
   alignment_component_clause.adb       \
+  all_modes.ads                        \
   allocators.adb                       \
   array_expressions.adb                \
   array_pointer_type.ads               \
@@ -93,12 +99,15 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   defining_character_literal.adb       \
   defining_enumeration_literal.adb     \
   defining_operator_symbol.ads         \
+  derived_private_record.adb           \
   enum_derived_type.adb                \
   enumeration.adb                      \
   enumeration_with_text_io.adb         \
+  function_body_stub.adb               \
   exception_declaration.ads            \
   exception_renamingrenaming.adb       \
   exhandler.adb                        \
+  extension_aggregate.adb              \
   explicit_deref.adb                   \
   floating_point_definition.ads        \
   function_renaming.adb                \
@@ -106,13 +115,15 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   goto_loop_v2.adb                     \
   hardwarestore.adb                    \
   hello_world.adb                      \
+  identity.ads                         \
+  ifexpr.adb                           \
   io_test.adb                          \
   io_test2.adb                         \
-  linkedlists.ads                      \
   multidimensional_array.adb           \
   multidimensional_array.ads           \
   myarray.adb                          \
   nullptr.adb                          \
+  object_renaming_declaration.adb      \
   package_pragma.ads                   \
   package_instantiation.adb            \
   package_with_body.adb                \
@@ -121,33 +132,33 @@ ADA_TRANSLATOR_PASSING_INCOMPLETE_TESTS :=       \
   parenthesis_matters.adb              \
   pragmas.adb                          \
   private_access_type.adb              \
-  private_enum.ads                     \
   procedure_call.adb                   \
   procedure_instantiation.adb          \
   procedure_instantiation2.adb         \
+  procedure_body_stub.adb              \
   procedure_pragma.adb                 \
   raise_statement.adb                  \
   real_typedecl.ads                    \
+  representation_clause.ads            \
+  representation_clause_2.ads          \
   scopequal.adb                        \
   simpleada-io.ads                     \
   simple_array_expressions.adb         \
   simple_expression_range.ads          \
+  simple_hello_world_with_renamed.adb  \
   sub_derived_types.ads                \
   type_conversion.adb                  \
   unconstrained_array_definition.ads   \
   default_function_argument.adb        \
   qualified_expression.adb             \
-  type_in_local_pkg.adb                
+  type_in_local_pkg.adb                \
+  very_large_value.adb                 
 
 ADA_TRANSLATOR_FAILING_TESTS :=        \
   ada_packages.adb                     \
   accept_statement.adb                 \
   accept_statement_task_decl.adb       \
-  access_definition.ads                \
-  access_to_object.ads                 \
-  access_to_subprogram.ads             \ 
-  access_type_test.adb                 \
-  all_modes.ads                        \
+  access_to_subprogram.ads             \
   array_declare.adb                    \
   array_declare_2.ads                  \
   asm_machine_code.adb                 \
@@ -156,7 +167,6 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   choice_parameter_specification.adb   \
   complex.ads                          \
   complex.adb                          \
-  derived_private_record.adb           \
   discriminant.adb                     \
   discriminant_constraint.ads          \
   discriminated_record.adb             \
@@ -166,50 +176,40 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   entry_declaration.ads                \
   entry_body_declaration.adb           \
   entry_index_specification.adb        \
-  extension_aggregate.adb              \
   exception_rename.ads                 \
   formal_procedure_declaration.ads     \
   formal_subprogram_declaration.ads    \
-  function_body_stub.adb               \
   fixed_point_definition.ads           \
   generic_function_declaration.ads     \
   generic_package_declaration.ads      \
   generic_package_declaration.adb      \
-  identity.ads                         \
-  ifexpr.adb                           \
   inherited_primitive_operation.adb    \
   io.ads                               \
   iterate_range.adb                    \
   namequal_with_renamed_1.adb          \
   namequal_with_renamed_2.adb          \
   nested_package.ads                   \
-  object_renaming_declaration.adb      \
   opaque.ads                           \
   package_renaming_declaration.ads     \
   parent-child.adb                     \
   pkgrename.ads                        \
   private_derived_formal_type.adb      \
-  procedure_body_stub.adb              \
   procedure_renaming.adb               \
   protected_object.adb                 \
   protected_body_declaration.adb       \
   protected_body_declaration.ads       \
   protected_type_declaration.ads       \
-  representation_clause.ads            \
-  representation_clause_2.ads          \
   renamings.adb                        \
   requeue_statement_2.adb              \
-  requeue_statements.adb               \             
+  requeue_statements.adb               \
   select_accept.adb                    \
   simple_select_accept.adb             \
   simple_select_accept_guarded.adb     \
   simple_use_type.ads                  \
   simple_hello_world.adb               \
-  simple_hello_world_with_renamed.adb  \
   simple_hello_world_with_use.adb      \
   single_protected_declaration.ads     \
   std_ascii_user.adb                   \
-  tagged_incomplete_type_declaration.ads \
   taskarray.adb                        \
   task_type_declaration.ads            \
   task_with_abort.adb                  \
@@ -219,10 +219,10 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   test.ads                             \
   test_unit.ads                        \
   test.adb                             \
-  test_unit.adb                        \             
+  test_unit.adb                        \
   usegenericinstance.adb               \
   unit_2.adb                           \
-  unit_2.ads                           \             
+  unit_2.ads                           \
   unknown_discriminant.ads             \
   uppercase.adb                        \
   variant_record.ads                   \
