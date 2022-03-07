@@ -2233,7 +2233,7 @@ $CLASSNAME::addNewAttribute( std::string s, AstAttribute* a )
      if (get_attributeMechanism() == NULL)
         {
           set_attributeMechanism( new AstAttributeMechanism() );
-          assert(get_attributeMechanism() != NULL);
+          ROSE_ASSERT(get_attributeMechanism() != NULL);
         }
      get_attributeMechanism()->add(s,a);
    }
@@ -2244,7 +2244,7 @@ $CLASSNAME::setAttribute( std::string s, AstAttribute* a )
      if (get_attributeMechanism() == NULL)
         {
           set_attributeMechanism( new AstAttributeMechanism() );
-          assert(get_attributeMechanism() != NULL);
+          ROSE_ASSERT(get_attributeMechanism() != NULL);
         }
      get_attributeMechanism()->set(s,a);
    }
@@ -2255,7 +2255,7 @@ $CLASSNAME::getAttribute(std::string s) const
      //assert(get_attributeMechanism() != NULL); // Liao, bug 130 6/4/2008
      if (attributeExists(s)==false) return NULL;
      AstAttribute* returnValue = get_attributeMechanism()->operator[](s);
-     assert(returnValue != NULL);
+     ROSE_ASSERT(returnValue != NULL);
      return returnValue;
    }
 
@@ -2263,7 +2263,7 @@ void
 $CLASSNAME::updateAttribute( std::string s, AstAttribute* a )
    {
   // formerly called: replace
-     assert(get_attributeMechanism() != NULL);
+     ROSE_ASSERT(get_attributeMechanism() != NULL);
      get_attributeMechanism()->replace(s,a);
    }
 
@@ -2322,21 +2322,21 @@ SgModifier::operator= ( const SgModifier & X )
 bool
 SgModifier::checkBit ( unsigned int bit, const SgBitVector & bitVector ) const
    {
-     assert (bit < bitVector.size());
+     ROSE_ASSERT (bit < bitVector.size());
      return bitVector[bit];
    }
 
 void
 SgModifier::setBit ( unsigned int bit, SgBitVector & bitVector ) const
    {
-     assert (bit < bitVector.size());
+     ROSE_ASSERT (bit < bitVector.size());
      bitVector[bit] = true;
    }
 
 void
 SgModifier::unsetBit ( unsigned int bit, SgBitVector & bitVector ) const
    {
-     assert (bit < bitVector.size());
+     ROSE_ASSERT (bit < bitVector.size());
      bitVector[bit] = false;
    }
 
@@ -3689,42 +3689,42 @@ bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
 SgTypeModifier &
 SgDeclarationModifier::get_typeModifier ()
    {
-     assert (this != NULL);
+     ROSE_ASSERT (this != NULL);
      return p_typeModifier;
    }
 
 SgAccessModifier &
 SgDeclarationModifier::get_accessModifier ()
    {
-     assert (this != NULL);
+     ROSE_ASSERT (this != NULL);
      return p_accessModifier;
    }
 
 SgStorageModifier &
 SgDeclarationModifier::get_storageModifier ()
    {
-     assert (this != NULL);
+     ROSE_ASSERT (this != NULL);
      return p_storageModifier;
    }
 
 const SgTypeModifier &
 SgDeclarationModifier::get_typeModifier () const
    {
-     assert (this != NULL);
+     ROSE_ASSERT (this != NULL);
      return p_typeModifier;
    }
 
 const SgAccessModifier &
 SgDeclarationModifier::get_accessModifier () const
    {
-     assert (this != NULL);
+     ROSE_ASSERT (this != NULL);
      return p_accessModifier;
    }
 
 const SgStorageModifier &
 SgDeclarationModifier::get_storageModifier () const
    {
-     assert (this != NULL);
+     ROSE_ASSERT (this != NULL);
      return p_storageModifier;
    }
 
@@ -4095,28 +4095,28 @@ bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
 SgConstVolatileModifier &
 $CLASSNAME::get_constVolatileModifier ()
    {
-     assert (this != NULL);
+     ROSE_ASSERT (this != NULL);
      return p_constVolatileModifier;
    }
 
 SgUPC_AccessModifier &
 $CLASSNAME::get_upcModifier ()
    {
-     assert (this != NULL);
+     ROSE_ASSERT (this != NULL);
      return p_upcModifier;
    }
 
 SgStructureModifier &
 $CLASSNAME::get_structureModifier ()
    {
-     assert (this != NULL);
+     ROSE_ASSERT (this != NULL);
      return p_structureModifier;
    }
 
 SgElaboratedTypeModifier &
 $CLASSNAME::get_elaboratedTypeModifier ()
    {
-     assert (this != NULL);
+     ROSE_ASSERT (this != NULL);
      return p_elaboratedTypeModifier;
    }
 
@@ -4139,7 +4139,7 @@ void $CLASSNAME::reset()
 const SgConstVolatileModifier &
 $CLASSNAME::get_constVolatileModifier (void) const
    {
-     assert (this != NULL);
+     ROSE_ASSERT (this != NULL);
      return p_constVolatileModifier;
    }
 
@@ -4147,14 +4147,14 @@ $CLASSNAME::get_constVolatileModifier (void) const
 const SgUPC_AccessModifier &
 $CLASSNAME::get_upcModifier (void) const
    {
-     assert (this != NULL);
+     ROSE_ASSERT (this != NULL);
      return p_upcModifier;
    }
 
 const SgStructureModifier &
 $CLASSNAME::get_structureModifier (void) const
    {
-     assert (this != NULL);
+     ROSE_ASSERT (this != NULL);
      return p_structureModifier;
    }
 
@@ -4162,7 +4162,7 @@ $CLASSNAME::get_structureModifier (void) const
 const SgElaboratedTypeModifier &
 $CLASSNAME::get_elaboratedTypeModifier (void) const
    {
-     assert (this != NULL);
+     ROSE_ASSERT (this != NULL);
      return p_elaboratedTypeModifier;
    }
 
@@ -4414,14 +4414,14 @@ bool operator== (const $CLASSNAME& lhs, const $CLASSNAME& rhs)
 SgAccessModifier &
 $CLASSNAME::get_accessModifier ()
    {
-     assert (this != NULL);
+     ROSE_ASSERT (this != NULL);
      return p_accessModifier;
    }
 
 const SgAccessModifier &
 $CLASSNAME::get_accessModifier () const
    {
-     assert (this != NULL);
+     ROSE_ASSERT (this != NULL);
      return p_accessModifier;
    }
 
@@ -7881,7 +7881,7 @@ SgSymbolTable::SgSymbolTable()
 #else
      p_table = new BaseHashType(symbolTableSize);
 #endif
-     assert (p_table != NULL);
+     ROSE_ASSERT (p_table != NULL);
    }
 
 // DQ (2/19/2007): I have put it back into use as a way of
@@ -7909,7 +7909,7 @@ SgSymbolTable::SgSymbolTable(int symbolTableSize)
 #else
      p_table = new BaseHashType(symbolTableSize);
 #endif
-     assert (p_table != NULL);
+     ROSE_ASSERT (p_table != NULL);
    }
 
 bool
@@ -7978,7 +7978,7 @@ SgSymbolTable::get_name( const SgNode* node) const
                  else
                   {
                  // name = Rose::StringUtility::numberToString(labelStatement->get_numeric_label()->get_name());
-                    assert(labelStatement->get_numeric_label() != NULL);
+                    ROSE_ASSERT(labelStatement->get_numeric_label() != NULL);
                     name = labelStatement->get_numeric_label()->get_name();
                   }
                break;
@@ -8203,7 +8203,14 @@ SgSymbolTable::get_name( const SgNode* node) const
                  break;
                }
                mprintf ("Malformed input: SgAdaGenericDecl expected PackageSpecDecl or FunctionDeclaration\n");
-               assert(false);
+               ROSE_ASSERT(false);
+               break;
+             }
+
+          case V_SgAdaGenericInstanceDecl:
+             {
+               const SgAdaGenericInstanceDecl* dcl = isSgAdaGenericInstanceDecl(node);
+               name = dcl->get_name();
                break;
              }
 
@@ -8280,7 +8287,7 @@ SgSymbolTable::get_name( const SgNode* node) const
           default:
              {
                mprintf ("SgSymbolTable::get_name(SgNode*) undefined for %s \n",node->class_name().c_str());
-               assert(false);
+               ROSE_ASSERT(false);
              }
         }
 
@@ -8307,13 +8314,13 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
 #endif
 
   // DQ (2/14/2007): Added assertion!
-     assert(this != NULL);
+     ROSE_ASSERT(this != NULL);
 
   // DQ (2/19/2007): Added additional assertion!
-     assert (p_table != NULL);
+     ROSE_ASSERT (p_table != NULL);
 
   // DQ (2/14/2007): Added assertion!
-     assert (sp != NULL);
+     ROSE_ASSERT (sp != NULL);
 
 #if 0
   // This outputs a message for every use of the insert function (for non function type symbols) useful for tracing through bugs
@@ -8365,7 +8372,7 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
              {
                mprintf ("Error (sp->get_symbol_basis() == NULL): name = %s sp = %p = %s \n",nm.str(),sp,sp->class_name().c_str());
              }
-          assert(sp->get_symbol_basis() != NULL);
+          ROSE_ASSERT(sp->get_symbol_basis() != NULL);
 #if 0
        // This outputs a message for every use of the insert function (for non function type symbols) useful for tracing through bugs
           mprintf ("In SgSymbolTable::insert(%s,%p) into SgSymbolTable = %p = %s of scope = %p = %s sp = %p = %s sp->get_symbol_basis() = %p = %s \n",
@@ -8421,8 +8428,8 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
 #if SYMBOL_TABLE_ERROR_CHECKING
   // DQ (2/19/2007): These is no need to do both of these since exists(sp) is more complete test!
   // DQ (2/25/2007): except that it is helpful to know which one fails.
-     assert(exists(nm,sp) == false);
-     assert(exists(sp)    == false);
+     ROSE_ASSERT(exists(nm,sp) == false);
+     ROSE_ASSERT(exists(sp)    == false);
 
   // DQ (2/14/2007): error checking (make sure that no two symbols are represented by the same basis declaration).
   // But skip such tests on the SgFunctionTypeSymbol (only used for the function type table)
@@ -8432,14 +8439,14 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
           map<SgNode*, rose_hash_multimap::iterator > existingSymbolBasisDeclarations;
 
           SgNode* sp_associatedDeclaration = sp->get_symbol_basis();
-          assert(sp_associatedDeclaration != NULL);
+          ROSE_ASSERT(sp_associatedDeclaration != NULL);
 
           rose_hash_multimap::iterator i = get_table()->begin();
           while (i != get_table()->end())
              {
             // test if symbol is in set
                SgNode* associatedDeclaration = i->second->get_symbol_basis();
-               assert(associatedDeclaration != NULL);
+               ROSE_ASSERT(associatedDeclaration != NULL);
 
             // Check if this declaration has previously been used with another symbol!
                if (existingSymbolBasisDeclarations.find( sp_associatedDeclaration ) == existingSymbolBasisDeclarations.end())
@@ -8451,7 +8458,7 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
                  else
                   {
                     mprintf ("Error in symbol table located in parent = %p = %s \n",get_parent(),get_parent()->class_name().c_str());
-                    assert(get_parent() != NULL);
+                    ROSE_ASSERT(get_parent() != NULL);
                     get_parent()->get_file_info()->display("Error in symbol table");
 
                     string associatedDeclarationName = SageInterface::get_name(sp_associatedDeclaration);
@@ -8466,7 +8473,7 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
                     mprintf ("existingSymbolBasisDeclarations[sp_associatedDeclaration]->first = %s second = %p \n",
                          existingSymbolBasisDeclarations[sp_associatedDeclaration]->first.str(),
                          existingSymbolBasisDeclarations[sp_associatedDeclaration]->second);
-                    assert(false);
+                    ROSE_ASSERT(false);
                   }
 
                i++;
@@ -8497,9 +8504,9 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
   // DQ (12/3/2011): Turning on symbol table checking.
 #if SYMBOL_TABLE_ERROR_CHECKING
   // Error checking
-     assert(exists(nm)    == true);
-     assert(exists(nm,sp) == true);
-     assert(exists(sp)    == true);
+     ROSE_ASSERT(exists(nm)    == true);
+     ROSE_ASSERT(exists(nm,sp) == true);
+     ROSE_ASSERT(exists(sp)    == true);
 #endif
 
   // DQ (11/20/2012): Make error checking dependent upon SYMBOL_TABLE_ERROR_CHECKING macro.
@@ -8515,7 +8522,7 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
      if (fortran_stmt != NULL)
      {
        int label_value = atoi (nm.getString().c_str());
-       assert (label_value == ls->get_numeric_label_value());
+       ROSE_ASSERT (label_value == ls->get_numeric_label_value());
        special_handled = true;
      }
    }
@@ -8527,11 +8534,11 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
         {
           mprintf ("Warning: symbol name does not match name used to input associated symbol into symbol table! sp = %p = %s nm = \"%s\" sp->get_name() = \"%s\" \n",sp,sp->class_name().c_str(),nm.str(),sp->get_name().str());
 
-          assert(sp->get_symbol_basis() != NULL);
-          assert(sp->get_symbol_basis()->get_file_info() != NULL);
+          ROSE_ASSERT(sp->get_symbol_basis() != NULL);
+          ROSE_ASSERT(sp->get_symbol_basis()->get_file_info() != NULL);
 
           sp->get_symbol_basis()->get_file_info()->display("Error in source: debug");
-          assert(false);
+          ROSE_ASSERT(false);
         }
 #endif
 
@@ -8545,8 +8552,8 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
        // mprintf ("In loop: p_iterator->second = %p = %s statement = %p = %s \n",p_iterator->second,p_iterator->second->class_name().c_str(),statement,statement->class_name().c_str());
        // SgNode* symbolBasis = p_iterator->second->get_symbol_basis();
           SgSymbol* symbolFromTable = statement->get_symbol_from_symbol_table();
-          assert(symbolFromTable != NULL);
-          assert(symbolFromTable == sp);
+          ROSE_ASSERT(symbolFromTable != NULL);
+          ROSE_ASSERT(symbolFromTable == sp);
         }
        else
         {
@@ -8556,13 +8563,13 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
             // mprintf ("In loop: p_iterator->second = %p = %s statement = %p = %s \n",p_iterator->second,p_iterator->second->class_name().c_str(),statement,statement->class_name().c_str());
             // SgNode* symbolBasis = p_iterator->second->get_symbol_basis();
                SgSymbol* symbolFromTable = initializedName->get_symbol_from_symbol_table();
-               assert(symbolFromTable != NULL);
-               assert(symbolFromTable == sp);
+               ROSE_ASSERT(symbolFromTable != NULL);
+               ROSE_ASSERT(symbolFromTable == sp);
              }
             else
              {
                mprintf ("Unknown symbol_base for input symbol sp = %p = %s sp->get_symbol_basis() = %p = %s \n",sp,sp->class_name().c_str(),sp->get_symbol_basis(),sp->get_symbol_basis()->class_name().c_str());
-               assert(false);
+               ROSE_ASSERT(false);
              }
         }
 #endif
@@ -8582,7 +8589,7 @@ SgSymbolTable::insert ( const SgName & nm , SgSymbol *sp )
   // Once we have p_iterator set via the name we don't typically have more than one iteration
      while (p_iterator != p_table->end() && get_table()->key_eq()((*p_iterator).first,nm))
         {
-          assert(p_iterator->second != NULL);
+          ROSE_ASSERT(p_iterator->second != NULL);
 #if 0
           mprintf ("In loop: p_iterator->second = %p statement = %p \n",p_iterator->second,statement);
           mprintf ("In loop: p_iterator->second = %p = %s statement = %p = %s \n",p_iterator->second,p_iterator->second->class_name().c_str(),statement,statement->class_name().c_str());
@@ -8623,7 +8630,7 @@ SgSymbolTable::remove_function_type( const SgName & name )
    {
   // This is non-destructive (does not delete the symbol, only removes it from the symbol table).
 
-     assert (p_table != NULL);
+     ROSE_ASSERT (p_table != NULL);
 
   // CH (4/8/2010): Use boost::unordered instead
      list<rose_hash_multimap::iterator> deleteList;
@@ -8633,7 +8640,7 @@ SgSymbolTable::remove_function_type( const SgName & name )
   // while (it != get_table()->end() && (*it).first == name)
      while (it != get_table()->end() && get_table()->key_eq()((*it).first,name))
         {
-          assert(it->second->variantT() == V_SgFunctionTypeSymbol);
+          ROSE_ASSERT(it->second->variantT() == V_SgFunctionTypeSymbol);
 
           deleteList.push_back(it);
           it++;
@@ -8669,8 +8676,8 @@ SgSymbolTable::remove_function_type( const SgName & name )
 SgSymbol*
 SgSymbolTable::find( const SgInitializedName* initializedName)
    {
-     assert(p_table != NULL);
-     assert(initializedName != NULL);
+     ROSE_ASSERT(p_table != NULL);
+     ROSE_ASSERT(initializedName != NULL);
 
 #define DEBUG_FIND_INITIALIZED_NAME_SYMBOL 0
 
@@ -8697,14 +8704,14 @@ SgSymbolTable::find( const SgInitializedName* initializedName)
   // while (p_iterator != p_table->end() && (*p_iterator).first == name)
      while (p_iterator != p_table->end() && get_table()->key_eq()((*p_iterator).first,name))
         {
-          assert(p_iterator->second != NULL);
+          ROSE_ASSERT(p_iterator->second != NULL);
           SgNode* symbolBasis = p_iterator->second->get_symbol_basis();
 
 #if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
           mprintf ("In loop: p_iterator->second = %p symbolBasis = %p initializedName = %p \n",p_iterator->second,symbolBasis,initializedName);
           mprintf ("In loop: symbolBasis->variantT() = %d statement->variantT() = %d \n",symbolBasis->variantT(),initializedName->variantT());
 #endif
-          assert(symbolBasis != NULL);
+          ROSE_ASSERT(symbolBasis != NULL);
           if (isSgInitializedName(symbolBasis) != NULL)
              {
 #if DEBUG_FIND_INITIALIZED_NAME_SYMBOL
@@ -8747,8 +8754,8 @@ SgSymbolTable::find( const SgInitializedName* initializedName)
 SgSymbol*
 SgSymbolTable::find( const SgFunctionType* functionType)
    {
-     assert(p_table != NULL);
-     assert(functionType != NULL);
+     ROSE_ASSERT(p_table != NULL);
+     ROSE_ASSERT(functionType != NULL);
 
 #if 0
      mprintf ("Inside of SgSymbolTable::find( const SgFunctionType* ): functionType = %p = %s \n",functionType,SageInterface::get_name(functionType).c_str());
@@ -8784,8 +8791,8 @@ SgSymbolTable::find( const SgFunctionType* functionType)
 SgSymbol*
 SgSymbolTable::find( const SgStatement* statement)
    {
-     assert(p_table != NULL);
-     assert(statement != NULL);
+     ROSE_ASSERT(p_table != NULL);
+     ROSE_ASSERT(statement != NULL);
 
 #define DEBUG_FIND_SYMBOL_FROM_STATEMENT 0
 
@@ -8811,7 +8818,7 @@ SgSymbolTable::find( const SgStatement* statement)
   // while (p_iterator != p_table->end() && (*p_iterator).first == name)
      while (p_iterator != p_table->end() && get_table()->key_eq()((*p_iterator).first,name))
         {
-          assert(p_iterator->second != NULL);
+          ROSE_ASSERT(p_iterator->second != NULL);
 #if DEBUG_FIND_SYMBOL_FROM_STATEMENT
           mprintf ("In loop: p_iterator->second = %p statement = %p \n",p_iterator->second,statement);
           mprintf ("In loop: p_iterator->second = %p = %s statement = %p = %s \n",p_iterator->second,p_iterator->second->class_name().c_str(),statement,statement->class_name().c_str());
@@ -8889,13 +8896,13 @@ SgSymbolTable::remove( const SgSymbol* symbol )
 
   // This is non-destructive (does not delete the symbol, only removes it from the symbol table).
 
-     assert (p_table != NULL);
+     ROSE_ASSERT (p_table != NULL);
 
   // DQ (11/20/2012): Make error checking dependent upon SYMBOL_TABLE_ERROR_CHECKING macro.
   // #if 1
 #if SYMBOL_TABLE_ERROR_CHECKING
   // This is an expensive linear time search of the symbol table!
-     assert(exists(symbol) == true);
+     ROSE_ASSERT(exists(symbol) == true);
 #endif
 
   // This is a virtual function call
@@ -8903,7 +8910,7 @@ SgSymbolTable::remove( const SgSymbol* symbol )
 #if 0
   // mprintf ("In SgSymbolTable::remove(SgSymbol* symbol = %p = %s = %s) from SgSymbolTable = %p \n",symbol,symbol->class_name().c_str(),SageInterface::get_name(symbol).c_str(),this);
      SgNode* symbolBasis = symbol->get_symbol_basis();
-     assert(symbolBasis != NULL);
+     ROSE_ASSERT(symbolBasis != NULL);
      mprintf ("In SgSymbolTable::remove(SgSymbol* symbol = %p = %s = %s) symbol_basis = %p = %s = %s from SgSymbolTable = %p \n",
           symbol,symbol->class_name().c_str(),SageInterface::get_name(symbol).c_str(),
           symbolBasis,symbolBasis->class_name().c_str(),SageInterface::get_name(symbolBasis).c_str(),this);
@@ -8937,7 +8944,7 @@ SgSymbolTable::remove( const SgSymbol* symbol )
 
        // DQ (2/19/2007): Added assertion to exit on error!  Enforcing this allows us to
        // make sure that the complexity is not linear in the size of the symbol table!
-          assert(false);
+          ROSE_ASSERT(false);
 
           rose_hash_multimap::iterator i = get_table()->begin();
           while ( (i != get_table()->end()) && (elementToDelete == get_table()->end()) )
@@ -8962,7 +8969,7 @@ SgSymbolTable::remove( const SgSymbol* symbol )
                     mprintf ("declarationStatement = %p = %s \n",declarationStatement,declarationStatement->class_name().c_str());
                     declarationStatement->get_startOfConstruct()->display("location of problem: debug");
                   }
-               assert(false);
+               ROSE_ASSERT(false);
              }
         }
 #endif
@@ -8973,13 +8980,13 @@ SgSymbolTable::remove( const SgSymbol* symbol )
      if (elementToDelete == get_table()->end())
         {
           mprintf ("Error: could not find symbol = %p name = %s in symbol table (failed to find symbol pointer under any name) \n",symbol,name.str());
-          assert(false);
+          ROSE_ASSERT(false);
         }
 #endif
 
 #if 1
   // DQ (8/15/2020): Original code before the chagne below.
-     assert(elementToDelete != get_table()->end());
+     ROSE_ASSERT(elementToDelete != get_table()->end());
 
   // DQ (5/9/2007): Moved to after the call to "p_symbolSet.erase(elementToDelete->second);"
   // get_table()->erase(elementToDelete);
@@ -9033,7 +9040,7 @@ SgSymbolTable::remove( const SgSymbol* symbol )
 bool
 SgSymbolTable::find(const SgName & nm, SgSymbol *sp)
    {
-     assert(p_table != NULL);
+     ROSE_ASSERT(p_table != NULL);
 
   // if(!p_table)
   //      return NULL;
@@ -9060,7 +9067,7 @@ SgAliasSymbol*
 SgSymbolTable::find_aliased_symbol(const SgName & nm, SgSymbol *sp)
    {
   // DQ (5/19/2013): This function finds the symbol for which the alias is sp, not the symbol to be returned being sp.
-     assert(p_table != NULL);
+     ROSE_ASSERT(p_table != NULL);
 
      ROSE_ASSERT(sp != NULL);
 
@@ -9098,7 +9105,7 @@ SgSymbolTable::find_aliased_symbol(const SgName & nm, SgSymbol *sp)
 bool
 SgSymbolTable::exists ( const SgName & nm ) const
    {
-     assert(p_table != NULL);
+     ROSE_ASSERT(p_table != NULL);
      return p_table->find(nm) != p_table->end();
    }
 
@@ -10692,7 +10699,7 @@ ReturnType* SgSymbolTable::find_symbol_with_type_support (const SgName & nm, con
 
   // DQ (5/20/2013): Newer implementation of the symbol table handling to account for the template type, SgRenameSymbol, and SgAliasSymbols (in that order).
 
-     assert(p_table != NULL);
+     ROSE_ASSERT(p_table != NULL);
 
 #if DEBUG_FIND_SYMBOL_WITH_TEMPLATE_ARGUMENTS
      mprintf ("---------------------------------------------------------------------------------- \n");
@@ -11129,7 +11136,7 @@ SgSymbolTable::findfirstany()
 SgSymbol*
 SgSymbolTable::find_any()
    {
-     assert(p_table != NULL);
+     ROSE_ASSERT(p_table != NULL);
      p_iterator = p_table->begin();
      p_no_name  = true;
      if(p_iterator != p_table->end())
@@ -11151,7 +11158,7 @@ SgSymbolTable::findfirstvar()
 SgVariableSymbol*
 SgSymbolTable::find_variable()
    {
-     assert(p_table != NULL);
+     ROSE_ASSERT(p_table != NULL);
 
      p_iterator = p_table->begin();
      p_no_name  = true;
@@ -11180,7 +11187,7 @@ SgSymbolTable::findfirstclass()
 SgClassSymbol*
 SgSymbolTable::find_class()
    {
-     assert(p_table != NULL);
+     ROSE_ASSERT(p_table != NULL);
      if (p_table)
         {
           p_iterator = p_table->begin();
@@ -11211,7 +11218,7 @@ SgSymbolTable::findfirstfunction()
 SgFunctionSymbol*
 SgSymbolTable::find_function()
    {
-     assert(p_table != NULL);
+     ROSE_ASSERT(p_table != NULL);
      if(p_table)
         {
           p_iterator = p_table->begin();
@@ -11237,7 +11244,7 @@ SgSymbolTable::find_function()
 SgFunctionSymbol*
 SgSymbolTable::find_function_type()
    {
-     assert(p_table != NULL);
+     ROSE_ASSERT(p_table != NULL);
      if(p_table)
         {
           p_iterator = p_table->begin();
@@ -11259,7 +11266,7 @@ SgSymbolTable::find_function_type()
 SgTypedefSymbol*
 SgSymbolTable::find_typedef()
    {
-     assert(p_table != NULL);
+     ROSE_ASSERT(p_table != NULL);
      if (p_table)
         {
           p_iterator = p_table->begin();
@@ -11280,7 +11287,7 @@ SgSymbolTable::find_typedef()
 SgEnumSymbol*
 SgSymbolTable::find_enum()
    {
-     assert(p_table != NULL);
+     ROSE_ASSERT(p_table != NULL);
      if (p_table)
         {
           p_iterator = p_table->begin();
@@ -11301,7 +11308,7 @@ SgSymbolTable::find_enum()
 SgEnumFieldSymbol*
 SgSymbolTable::find_enum_field()
    {
-     assert(p_table != NULL);
+     ROSE_ASSERT(p_table != NULL);
      if (p_table)
         {
           p_iterator = p_table->begin();
@@ -11322,7 +11329,7 @@ SgSymbolTable::find_enum_field()
 SgLabelSymbol*
 SgSymbolTable::find_label()
    {
-     assert(p_table != NULL);
+     ROSE_ASSERT(p_table != NULL);
      if (p_table)
         {
           p_iterator = p_table->begin();
@@ -11343,7 +11350,7 @@ SgSymbolTable::find_label()
 SgNamespaceSymbol*
 SgSymbolTable::find_namespace()
    {
-     assert(p_table != NULL);
+     ROSE_ASSERT(p_table != NULL);
      if (p_table)
         {
           p_iterator = p_table->begin();
@@ -11364,7 +11371,7 @@ SgSymbolTable::find_namespace()
 SgTemplateSymbol*
 SgSymbolTable::find_template()
    {
-     assert(p_table != NULL);
+     ROSE_ASSERT(p_table != NULL);
      if (p_table)
         {
           p_iterator = p_table->begin();
@@ -11410,7 +11417,7 @@ SgSymbolTable::nextany()
 SgSymbol*
 SgSymbolTable::next_any()
    {
-     assert(p_table != NULL);
+     ROSE_ASSERT(p_table != NULL);
      if(p_table)
         {
           p_iterator++;
@@ -11441,7 +11448,7 @@ SgSymbolTable::nextvar()
 SgVariableSymbol*
 SgSymbolTable::next_variable()
    {
-     assert(p_table != NULL);
+     ROSE_ASSERT(p_table != NULL);
      if (p_table != NULL)
         {
           p_iterator++;
@@ -11472,7 +11479,7 @@ SgSymbolTable::nextclass()
 SgClassSymbol*
 SgSymbolTable::next_class()
    {
-     assert(p_table != NULL);
+     ROSE_ASSERT(p_table != NULL);
      if(p_table)
         {
           p_iterator++; // go to next one
@@ -11503,7 +11510,7 @@ SgSymbolTable::nextfunc()
 SgFunctionSymbol*
 SgSymbolTable::next_function()
    {
-     assert(p_table != NULL);
+     ROSE_ASSERT(p_table != NULL);
      if(p_table)
         {
           p_iterator++;
@@ -11524,7 +11531,7 @@ SgSymbolTable::next_function()
 SgTypedefSymbol*
 SgSymbolTable::next_typedef()
    {
-     assert(p_table != NULL);
+     ROSE_ASSERT(p_table != NULL);
      if (p_table != NULL)
         {
           p_iterator++;
@@ -11547,7 +11554,7 @@ SgSymbolTable::next_typedef()
 SgEnumSymbol*
 SgSymbolTable::next_enum()
    {
-     assert(p_table != NULL);
+     ROSE_ASSERT(p_table != NULL);
      if(p_table)
         {
           p_iterator++;
@@ -11569,7 +11576,7 @@ SgSymbolTable::next_enum()
 SgEnumFieldSymbol*
 SgSymbolTable::next_enum_field()
    {
-     assert(p_table != NULL);
+     ROSE_ASSERT(p_table != NULL);
      if(p_table)
         {
           p_iterator++;
@@ -11590,7 +11597,7 @@ SgSymbolTable::next_enum_field()
 SgLabelSymbol*
 SgSymbolTable::next_label()
    {
-     assert(p_table != NULL);
+     ROSE_ASSERT(p_table != NULL);
      if (p_table != NULL)
         {
           p_iterator++;
@@ -11611,7 +11618,7 @@ SgSymbolTable::next_label()
 SgNamespaceSymbol*
 SgSymbolTable::next_namespace()
    {
-     assert(p_table != NULL);
+     ROSE_ASSERT(p_table != NULL);
      if (p_table != NULL)
         {
           p_iterator++;
@@ -11632,7 +11639,7 @@ SgSymbolTable::next_namespace()
 SgTemplateSymbol*
 SgSymbolTable::next_template()
    {
-     assert(p_table != NULL);
+     ROSE_ASSERT(p_table != NULL);
      if (p_table != NULL)
         {
           p_iterator++;
@@ -11657,7 +11664,7 @@ SgSymbolTable::next_template()
 SgSymbol*
 SgSymbolTable::operator[](const SgName & nm)
    {
-     assert(p_table != NULL);
+     ROSE_ASSERT(p_table != NULL);
      if (p_table != NULL)
         {
        // AJ (10/21/2004): Adjusted implementation to use new STL hash map interface
@@ -11675,7 +11682,7 @@ SgSymbolTable::operator[](const SgName & nm)
 int
 SgSymbolTable::size() const
    {
-     assert(p_table != NULL);
+     ROSE_ASSERT(p_table != NULL);
      return p_table->size();
    }
 
@@ -11684,14 +11691,14 @@ int
 SgSymbolTable::count(const SgName & nm) const
    {
   // DQ (1/30/2007): assertion added
-     assert(p_table != NULL);
+     ROSE_ASSERT(p_table != NULL);
      return p_table->count(nm);
    }
 
 int
 SgSymbolTable::count_aliases(const SgName & nm) const
    {
-     assert(p_table != NULL);
+     ROSE_ASSERT(p_table != NULL);
 
   // This is the fastest way (that I know of) to iterate over just those entries that match the key.
      std::pair<hash_iterator,hash_iterator> range = p_table->equal_range(nm);
@@ -11734,14 +11741,14 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
   // DQ (2/16/2006): This is a SgScopeStatement except for the SgSymbolTable used in the global function type symbol table
   // SgScopeStatement* parentNode = isSgScopeStatement(get_parent());
      SgNode* parentNode = get_parent();
-     assert(parentNode != NULL);
+     ROSE_ASSERT(parentNode != NULL);
      printf ("Symbol table has parent = %p = %s \n",parentNode,parentNode->class_name().c_str());
 
   // DQ (6/23/2005): It is not a problem for the global function table to not have a name!
   //   else
   //      assert (p_name.str() == NULL);
 
-     assert(p_table != NULL);
+     ROSE_ASSERT(p_table != NULL);
      if (p_table != NULL)
         {
        // AJ (10/21/2004): Adjusted implementation to use new STL hash map interface
@@ -11754,17 +11761,17 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
             // DQ: removed SgName casting operator to char*
             // cout << "[" << idx << "] " << (*i).first;
             // cout << "[" << idx << "] " << (*i).first.str();
-               assert ( isSgSymbol( (*i).second ) != NULL );
+               ROSE_ASSERT ( isSgSymbol( (*i).second ) != NULL );
 
             // printf ("Symbol number: %d (pair.first (SgName) = %s) pair.second (SgSymbol) sage_class_name() = %s \n",
             //      idx,(*i).first.str(),(*i).second->sage_class_name());
 
                SgSymbol* symbol = isSgSymbol((*i).second);
-               assert ( symbol != NULL );
+               ROSE_ASSERT ( symbol != NULL );
                SgType* type = symbol->get_type();
 
             // DQ (5/7/2004): modified to allow for get_type() to return NULL
-            // assert ( type != NULL );
+            // ROSE_ASSERT ( type != NULL );
 
                SgNamedType* namedType = isSgNamedType(type);
                SgName nameOfType;
@@ -11817,7 +11824,7 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
                SgNode* symbolBasis = i->second->get_symbol_basis();
                if (symbolBasis != NULL)
                   {
-                    assert(symbolBasis != NULL);
+                    ROSE_ASSERT(symbolBasis != NULL);
 
                     if (outputSymbolInfo == true)
                        {
@@ -11901,7 +11908,7 @@ SgSymbolTable::print( std::string label, VariantT nodeType )
         {
        // DQ (6/27/2005): I think this is an error (we should always have a valid symbol table)
           printf ("Pointer to symbol table is NULL \n");
-          assert(false);
+          ROSE_ASSERT(false);
         }
    }
 
@@ -11912,7 +11919,7 @@ SgSymbolTable::get_symbols() const
   // DQ (2/15/2007): generate a set of SgNode* so that we can use them for set difference against the delete list in AST merge.
      set<SgNode*> returnSet;
 
-     assert(p_table != NULL);
+     ROSE_ASSERT(p_table != NULL);
 // CH (4/8/2010): Use boost::unordered instead
 //#ifdef _MSCx_VER
 //     rose_hash::unordered_multimap<SgName, SgSymbol*>::iterator i = get_table()->begin();
@@ -11921,7 +11928,7 @@ SgSymbolTable::get_symbols() const
 //#endif
      while (i != p_table->end())
         {
-          assert(i->second != NULL);
+          ROSE_ASSERT(i->second != NULL);
           returnSet.insert(i->second);
 
           i++;
@@ -12004,7 +12011,7 @@ SgBaseClass::post_construction_initialization()
   // class declarations in ROSETTA, I was unable make this SgBaseClassModifier a
   // data member and was forced to handle it as a pointer).
      p_baseClassModifier = new SgBaseClassModifier();
-     assert ( p_baseClassModifier != NULL);
+     ROSE_ASSERT ( p_baseClassModifier != NULL);
 
   // DQ (5/12/2011): New support for name qualification.
      p_name_qualification_length     = 0;
@@ -12032,9 +12039,9 @@ SgBaseClass::SgBaseClass(const SgBaseClass& X)
   // DQ: initialize all values
      p_isDirectBaseClass = 0;
 
-     assert ( X.p_baseClassModifier != NULL);
+     ROSE_ASSERT ( X.p_baseClassModifier != NULL);
      p_baseClassModifier = new SgBaseClassModifier( *(X.p_baseClassModifier) );
-     assert ( p_baseClassModifier != NULL);
+     ROSE_ASSERT ( p_baseClassModifier != NULL);
 
   // DQ (5/12/2011): New support for name qualification.
      p_name_qualification_length     = X.p_name_qualification_length;
@@ -12064,8 +12071,8 @@ SgBaseClass::operator= (const SgBaseClass & X)
   // DQ (6/21/2005): Renamed to make this more clear
      p_isDirectBaseClass  = X.p_isDirectBaseClass;
 
-     assert (p_baseClassModifier   != NULL);
-     assert (X.p_baseClassModifier != NULL);
+     ROSE_ASSERT (p_baseClassModifier   != NULL);
+     ROSE_ASSERT (X.p_baseClassModifier != NULL);
      *p_baseClassModifier = *X.p_baseClassModifier;
 
   // DQ (5/12/2011): New support for name qualification.
@@ -12108,7 +12115,7 @@ SgBaseClass::operator< (const SgBaseClass&) const
 SgBaseClassModifier &
 SgBaseClass::get_baseClassModifier()
    {
-     assert ( p_baseClassModifier != NULL);
+     ROSE_ASSERT ( p_baseClassModifier != NULL);
      return *p_baseClassModifier;
    }
 #endif
@@ -12238,7 +12245,7 @@ SgSymbol*
 SgInitializedName::get_symbol_from_symbol_table() const
    {
      ROSE_ASSERT(get_scope() != NULL);
-  // assert(get_scope()->get_symbol_table() != NULL);
+  // ROSE_ASSERT(get_scope()->get_symbol_table() != NULL);
   // return get_scope()->get_symbol_table()->find(this);
      return get_scope()->find_symbol_from_declaration(this);
    }
