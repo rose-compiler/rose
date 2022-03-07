@@ -125,6 +125,7 @@ public:
   bool intraProcedural=false;
   int precisionLevel=0; // keeps default configuration (if =0 configurePrecisionOption does not change any settings)
   bool pointerSetsEnabled=false; // used in more precise pointer analysis
+  int domainAbstractionVariant=0; // default
   std::string csvReportModeString="generate";
 
   bool forkFunctionEnabled=false;

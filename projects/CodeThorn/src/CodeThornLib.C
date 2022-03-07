@@ -376,6 +376,8 @@ namespace CodeThorn {
       }
       EState::sharedPStates=ctOpt.sharedPStates;
       EState::fastPointerHashing=ctOpt.fastPointerHashing;
+      AbstractValue::pointerSetsEnabled=ctOpt.pointerSetsEnabled;
+      AbstractValue::domainAbstractionVariant=ctOpt.domainAbstractionVariant;
       return analyzer;
     }
 
