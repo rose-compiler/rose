@@ -1999,6 +1999,11 @@ HEADER_START
        //! Access function for symbol table specific to non-function types.
           static void set_globalTypeTable(SgTypeTable* globalTypeTable);
 
+     protected:
+          static std::vector<std::tuple<unsigned char*, unsigned, VariantT>> all_pools;
+     public:
+          static VariantT variantFromPool(SgNode const * n);
+
       /* \brief Mangled name cache for improved performance of mangled name generation
           This mangle name caching is implemented to support better performance.
        */
@@ -2970,6 +2975,16 @@ SgNode::cfgForEnd()
      ROSE_ASSERT (this != NULL);
      return VirtualCFG::CFGNode(this, this->cfgIndexForEnd());
    }
+
+VariantT SgNode::variantFromPool(SgNode const * n) {
+  for (std::tuple<unsigned char*, unsigned, VariantT> const & pool: all_pools) {
+    auto & base = std::get<0>(pool);
+    auto & size = std::get<1>(pool);
+    auto offset = ((unsigned char*)n - base);
+    if ( offset >= 0 && offset < size ) return std::get<2>(pool);
+  }
+  return (VariantT)0;
+}
 
 SOURCE_END
 
