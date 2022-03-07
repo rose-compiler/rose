@@ -1009,3 +1009,4 @@ SgAdaDigitsConstraint
 SgAdaAncestorInitializer
 SgAdaDeltaConstraint
 SgAdaSubroutineType
+SgAdaGenericInstanceSymbol
