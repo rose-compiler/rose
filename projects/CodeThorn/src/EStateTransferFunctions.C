@@ -115,7 +115,7 @@ namespace CodeThorn {
     estate->setLabel(label);
     estate->setCallString(cs);
     estate->setPState(pstate);
-    estate->io.recordNone(); // create NONE not bot by default // do NOT remove IO (reInit - is an update function)
+    estate->io.recordNone(); // create NONE not bot by default
     if(_analyzer->isActiveGlobalTopify()) {
 #if 1
       AbstractValueSet varSet=estate->pstate()->getVariableIds();

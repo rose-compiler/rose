@@ -236,7 +236,7 @@ void Solver18::run() {
 #if 1
     if(_analyzer->getFlow()->singleSuccessorIsPassThroughLabel(currentEStatePtr->label(),_analyzer->getLabeler())) {
       // transfer to successor
-      EStatePtr newEStatePtr=currentEStatePtr->clone();
+      EStatePtr newEStatePtr=currentEStatePtr->cloneWithoutIO();
       currentEStatePtr=newEStatePtr;
       bbClonedState=true;
       Flow outEdges=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
@@ -286,7 +286,7 @@ void Solver18::run() {
       EStatePtr oldEStatePtr=currentEStatePtr;
       setAbstractState(oldEStatePtr->label(),oldEStatePtr->getCallString(),oldEStatePtr);
       // store oldEStatePtr
-      currentEStatePtr=currentEStatePtr->clone();
+      currentEStatePtr=currentEStatePtr->cloneWithoutIO();
       //delete oldEStatePtr;
     }
 
@@ -302,7 +302,7 @@ void Solver18::run() {
         newEState=currentEStatePtr;
         bbClonedState=false;
       } else {
-        newEState=currentEStatePtr->clone();
+        newEState=currentEStatePtr->cloneWithoutIO();
       }
       ROSE_ASSERT(newEState);
       ROSE_ASSERT(newEState->pstate());

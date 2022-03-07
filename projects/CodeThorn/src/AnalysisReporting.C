@@ -195,9 +195,11 @@ namespace CodeThorn {
         }
         locationsCSVFileData<<endl;
       }
-      cout<<"constant true        locations: "<<setw(6)<<constTrueCnt<<endl;
-      cout<<"constant false       locations: "<<setw(6)<<constFalseCnt<<endl;
-      printSeparationLine();
+      if(ctOpt.status) {
+        cout<<"constant true        locations: "<<setw(6)<<constTrueCnt<<endl;
+        cout<<"constant false       locations: "<<setw(6)<<constFalseCnt<<endl;
+        printSeparationLine();
+      }
       string fileName=ctOpt.getAnalysisReportFileName(analysisSel);
       if(fileName.size()>0) {
         if(!CppStdUtilities::writeFile(ctOpt.csvReportModeString,fileName, locationsCSVFileData.str())) {

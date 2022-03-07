@@ -183,7 +183,9 @@ void CodeThorn::CTAnalysis::ensureToplogicSortFlowConsistency() {
     cerr<<"Error: checkToplogicSortFlowConsistency: "<<numFail<<" inconsistencies detected. Exiting."<<endl;
     exit(1);
   }
-  cout<<"INFO: ensureToplogicSortFlowConsistency: PASS"<<endl;
+  if(_ctOpt.status) {
+    cout<<"INFO: ensureToplogicSortFlowConsistency: PASS"<<endl;
+  }
 }
 
 bool CodeThorn::CTAnalysis::isPassThroughLabel(Label lab) {
