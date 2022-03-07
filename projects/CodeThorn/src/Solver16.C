@@ -46,7 +46,7 @@ void Solver16::initializeAbstractStatesFromWorkList() {
   }
   for(auto s : tmpWL) {
     // initialize abstractstate and push back to work list
-    _analyzer->setAbstractState(s->label(),s->callString,s);
+    _analyzer->setAbstractState(s->label(),s->getCallString(),s);
     _analyzer->addToWorkList(s);
   }
 }
@@ -147,7 +147,7 @@ void Solver16::run() {
         ROSE_ASSERT(threadNum>=0 && threadNum<=_analyzer->getOptionsRef().threads);
       } else {
         ROSE_ASSERT(currentEStatePtr0);
-        EStatePtr currentEStatePtr=_analyzer->getAbstractState(currentEStatePtr0->label(),currentEStatePtr0->callString);
+        EStatePtr currentEStatePtr=_analyzer->getAbstractState(currentEStatePtr0->label(),currentEStatePtr0->getCallString());
         ROSE_ASSERT(currentEStatePtr);
         Flow edgeSet=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
         //cout << "DEBUG: out-edgeSet size:"<<edgeSet.size()<<endl;
@@ -192,7 +192,7 @@ void Solver16::run() {
                   // performing merge
 #pragma omp critical(SUMMARY_STATES_MAP)
                   {
-                    EStatePtr abstractEState=_analyzer->getAbstractState(newEStatePtr->label(),newEStatePtr->callString);
+                    EStatePtr abstractEState=_analyzer->getAbstractState(newEStatePtr->label(),newEStatePtr->getCallString());
                     if(_analyzer->getEStateTransferFunctions()->isApproximatedBy(newEStatePtr,abstractEState)) {
                       // this is not a memory leak. newEStatePtr is
                       // stored in EStateSet and will be collected
@@ -210,7 +210,7 @@ void Solver16::run() {
                         // nothing to do, EState already exists
                       }
                       ROSE_ASSERT(newEStatePtr);
-                      _analyzer->setAbstractState(newEStatePtr->label(),newEStatePtr->callString,newEStatePtr);
+                      _analyzer->setAbstractState(newEStatePtr->label(),newEStatePtr->getCallString(),newEStatePtr);
                     }
                   }
                   _analyzer->addToWorkList(newEStatePtr);  

@@ -77,8 +77,8 @@ void Solver18::initializeAbstractStatesFromWorkList() {
   for(auto s : tmpWL) {
     // initialize abstractstate and push back to work lis
     ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(s->label()));
-    setAbstractState(s->label(),s->callString,s);
-    _workList->push(WorkListEntry(s->label(),s->callString));
+    setAbstractState(s->label(),s->getCallString(),s);
+    _workList->push(WorkListEntry(s->label(),s->getCallString()));
   }
   /* the other states are not initialized here because every context
      (cs) requires its own bottom element and contexts ar computedat
@@ -119,7 +119,7 @@ bool Solver18::getAbstractionConsistencyCheckFlag() {
 
 void Solver18::setAbstractState(CodeThorn::Label lab, CodeThorn::CallString cs, EStatePtr estate) {
   ROSE_ASSERT(lab==estate->label());
-  ROSE_ASSERT(cs==estate->callString);
+  ROSE_ASSERT(cs==estate->getCallString());
   ROSE_ASSERT(estate);
 
   if(_abstractionConsistencyCheckEnabled) {
@@ -323,7 +323,7 @@ void Solver18::run() {
         ROSE_ASSERT(newEStatePtr0->pstate());
         ROSE_ASSERT(newEStatePtr0->label()!=Labeler::NO_LABEL);
         Label lab=newEStatePtr0->label();
-        CallString cs=newEStatePtr0->callString;
+        CallString cs=newEStatePtr0->getCallString();
         if((!_analyzer->isFailedAssertEState(newEStatePtr0)&&!_analyzer->isVerificationErrorEState(newEStatePtr0))) {
           EStatePtr newEStatePtr=newEStatePtr0;
           ROSE_ASSERT(newEStatePtr);
@@ -349,7 +349,7 @@ void Solver18::run() {
             setAbstractState(lab,cs,abstractEStatePtr);
             delete newEStatePtr;
             ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(abstractEStatePtr->label()));
-            _workList->push(WorkListEntry(abstractEStatePtr->label(),abstractEStatePtr->callString));
+            _workList->push(WorkListEntry(abstractEStatePtr->label(),abstractEStatePtr->getCallString()));
 
           }
         }
