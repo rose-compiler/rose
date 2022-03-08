@@ -547,6 +547,18 @@ PState::const_iterator PState::end() const {
 
 // Lattice functions
 bool PState::isApproximatedBy(CodeThorn::PState& other) const {
+  switch(AbstractValue::domainAbstractionVariant) {
+  case 0:
+    return PState::isApproximatedBy0(other);
+  case 1:
+    return PState::isApproximatedBy1(other);
+  default:
+    cerr<<"Error: PState::isApproximatedBy: unsupported domain abstraction variant "<<AbstractValue::domainAbstractionVariant<<endl;
+    exit(1);
+  }
+}
+
+bool PState::isApproximatedBy0(CodeThorn::PState& other) const {
   // check if all values of 'this' are approximated by 'other'
   for(auto elem:*this) {
     auto iter=other.find(elem.first);
@@ -565,10 +577,28 @@ bool PState::isApproximatedBy(CodeThorn::PState& other) const {
   return true;
 }
 
+bool PState::isApproximatedBy1(CodeThorn::PState& other) const {
+  // check if all values of 'this' are approximated by 'other'
+  for(auto elem:*this) {
+    auto iter=other.find(elem.first);
+    if(iter!=other.end()) {
+      if(!AbstractValue::approximatedBy(elem.second,(*iter).second)) {
+        return false;
+      }
+    } else {
+      // a variable of 'this' is not in state of 'other'
+      return true; // assume top in this abstraction variant 1
+    }
+  }
+  // all values stored in memory locations of 'this' are approximated
+  // by values of the corresponding memory location in
+  // 'other'. TODO: if the memory location itself is a summary.
+  return true;
+}
+
 CodeThorn::PState PState::combine(CodeThorn::PState& p1, CodeThorn::PState& p2) {
   return combine(&p1,&p2);
 }
-
 
 CodeThorn::PState PState::combine(CodeThorn::PStatePtr p1, CodeThorn::PStatePtr p2) {
   CodeThorn::PState res;
@@ -614,7 +644,22 @@ CodeThorn::PState PState::combine(CodeThorn::PStatePtr p1, CodeThorn::PStatePtr 
   return res;
 }
 
+
 void PState::combineInPlace1st(CodeThorn::PStatePtr p1, CodeThorn::PStatePtr p2) {
+  switch(AbstractValue::domainAbstractionVariant) {
+  case 0:
+    PState::combineInPlace1st0(p1, p2);
+    return;
+  case 1:
+    PState::combineInPlace1st1(p1, p2);
+    return;
+  default:
+    cerr<<"Error: PState::combineInPlace1st: unknown domain abstraction variant "<<AbstractValue::domainAbstractionVariant<<endl;
+    exit(1);
+  }
+}
+
+void PState::combineInPlace1st0(CodeThorn::PStatePtr p1, CodeThorn::PStatePtr p2) {
   size_t numMatched=0;
   // record list of  updates before applying them, to not invalidate iterator
   std::list<std::pair<AbstractValue, AbstractValue> > updates;
@@ -649,6 +694,39 @@ void PState::combineInPlace1st(CodeThorn::PStatePtr p1, CodeThorn::PStatePtr p2)
       if(p1->find(elem2.first)==p1->end()) {
         cerr<<"Error: in-place combine: Element of PState2 "<<elem2.first.toString()<<" not in combined state."<<endl;
         exit(1);
+      }
+    }
+  }
+  p1->inPlaceGarbageCollection(); // only performs operations if domainAbstractionVariant>=1
+}
+
+void PState::combineInPlace1st1(CodeThorn::PStatePtr p1, CodeThorn::PStatePtr p2) {
+  size_t numMatched=0;
+  // record list of  updates before applying them, to not invalidate iterator
+  std::list<std::pair<AbstractValue, AbstractValue> > updates;
+  for(auto elem1:*p1) {
+    auto iter=(*p2).find(elem1.first);
+    if(iter!=(*p2).end()) {
+      // same memory location in both states: elem.first==(*iter).first
+      // combine values elem.second and (*iter).second
+      updates.push_back(make_pair(elem1.first,AbstractValue::combine(elem1.second,(*iter).second)));
+      numMatched++;
+    } else {
+      // a variable of 'p1' is not in state of 'p2', topify (only in this variant 1)
+      updates.push_back(make_pair(elem1.first,AbstractValue::combine(elem1.second,AbstractValue::createTop())));      
+    }
+  }
+  // add now updates of values of p2 which are not in p1
+  for(auto upd:updates) {
+    p1->writeToMemoryLocation(upd.first,upd.second);
+  }
+  // add elements that are only in p2 to res - this can only be the
+  // case if the number of matched elements above is different to p2.size()
+  if(numMatched!=(*p2).size()) {
+    for(auto elem2:*p2) {
+      // only add elements of p2 that are not in p1
+      if((*p1).find(elem2.first)==(*p1).end()) {
+        p1->writeToMemoryLocation(elem2.first,elem2.second);
       }
     }
   }

@@ -3009,12 +3009,12 @@ namespace CodeThorn {
           // required for the following index computation (nothing to do here)
         } else {
           if(arrayPtrValue.isTop()) {
-            //logger[ERROR]<<"@"<<SgNodeHelper::lineColumnNodeToString(node)<<" evalArrayReferenceOp: pointer is top. Pointer abstraction too coarse."<<endl;
-            // TODO: PRECISION 1
             res.result=CodeThorn::Top();
             notifyReadWriteListenersOnReading(estate->label(),estate->pstate(),arrayPtrValue);
             return res;
           } else {
+            // currently same as above
+            notifyReadWriteListenersOnReading(estate->label(),estate->pstate(),arrayPtrValue);
             res.result=CodeThorn::Top();
             return res;
           }
@@ -4175,6 +4175,7 @@ namespace CodeThorn {
     notifyReadWriteListenersOnWriting(lab,pstate,memLoc,newValue);
 
     if(memLoc.isTop()) {
+      // TODO1: model writing to arbitrary mem loc
       return;
     } else if(!pstate->memLocExists(memLoc)) {
       //SAWYER_MESG(logger[TRACE])<<"EStateTransferFunctions::writeToMemoryLocation: memloc does not exist"<<endl;
