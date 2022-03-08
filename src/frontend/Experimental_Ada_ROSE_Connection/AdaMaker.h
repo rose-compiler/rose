@@ -431,8 +431,14 @@ namespace Ada_ROSE_Translation
 
   /// creates an Ada task type declaration
   // \todo revisit Ada task symbol creation
+  // \{
   SgAdaTaskTypeDecl&
-  mkAdaTaskTypeDecl(const std::string& name, SgAdaTaskSpec& spec, SgScopeStatement& scope);
+  mkAdaTaskTypeDecl(const std::string& name, SgAdaTaskSpec* spec_opt, SgScopeStatement& scope);
+
+  SgAdaTaskTypeDecl&
+  mkAdaTaskTypeDecl(SgAdaTaskTypeDecl& nondef, SgAdaTaskSpec& spec, SgScopeStatement& scope);
+  // \}
+
 
   /// creates an Ada task declaration
   // \todo revisit Ada task symbol creation
@@ -463,8 +469,13 @@ namespace Ada_ROSE_Translation
 
   /// creates an Ada protected object type declaration
   // \todo revisit Ada protected object symbol creation
+  // \{
   SgAdaProtectedTypeDecl&
-  mkAdaProtectedTypeDecl(const std::string& name, SgAdaProtectedSpec& spec, SgScopeStatement& scope);
+  mkAdaProtectedTypeDecl(const std::string& name, SgAdaProtectedSpec* spec_opt, SgScopeStatement& scope);
+
+  SgAdaProtectedTypeDecl&
+  mkAdaProtectedTypeDecl(SgAdaProtectedTypeDecl& nondef, SgAdaProtectedSpec& spec, SgScopeStatement& scope);
+  // \}
 
   /// creates an Ada protected object declaration
   // \todo revisit Ada protected object symbol creation
@@ -642,10 +653,18 @@ namespace Ada_ROSE_Translation
   SgVariableDeclaration&
   mkExceptionDecl(const SgInitializedNamePtrList& vars, SgScopeStatement& scope);
 
-  /// creates a SgBaseClass object for an Ada record's parent
+  /// creates a SgBaseClass object for an Ada type
   /// \todo currently only direct base classes are represented in the Ast
+  /// \todo should we represent base classes and other base types uniformly
+  ///       e.g., BaseClassExp(TypeExpression(class_type)) ??
   SgBaseClass&
   mkRecordParent(SgClassDeclaration& n);
+
+  /// creates a SgBaseClassExp representation for a parent type that is not a class
+  ///   (i.e., typedef type or formal type argument).
+  /// \todo currently only direct base classes are represented in the Ast
+  SgExpBaseClass&
+  mkRecordParent(SgType& n);
 
   /// creates an Ada component clause (part of a record representation clause)
   SgAdaComponentClause&

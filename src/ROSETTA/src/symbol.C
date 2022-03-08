@@ -107,6 +107,9 @@ Grammar::setUpSymbols ()
      NEW_TERMINAL_MACRO ( AdaProtectedSymbol, "AdaProtectedSymbol", "ADA_PROTECTED_SYMBOL" );
      NEW_TERMINAL_MACRO ( AdaGenericSymbol,  "AdaGenericSymbol", "ADA_GENERIC_SYMBOL" );
 
+  // PP (02/24/2020)
+     NEW_TERMINAL_MACRO ( AdaGenericInstanceSymbol,  "AdaGenericInstanceSymbol", "ADA_GENERIC_INSTANCE_SYMBOL" );
+
   // PP (04/29/2021) Add symbol for renaming declarations
      NEW_TERMINAL_MACRO ( AdaRenamingSymbol, "AdaRenamingSymbol", "ADA_RENAMING_SYMBOL" );
 
@@ -118,7 +121,7 @@ Grammar::setUpSymbols ()
           IntrinsicSymbol  | ModuleSymbol           | InterfaceSymbol        | CommonSymbol       |
           AliasSymbol      | AsmBinaryAddressSymbol | AsmBinaryDataSymbol    | JavaLabelSymbol    |
           AdaPackageSymbol | AdaTaskSymbol          | AdaProtectedSymbol     | AdaRenamingSymbol  |
-          AdaGenericSymbol   /* | RenameSymbol */,
+          AdaGenericSymbol | AdaGenericInstanceSymbol  /* | RenameSymbol */,
           "Symbol","SymbolTag", false);
 #else
      NEW_NONTERMINAL_MACRO (Symbol,
@@ -128,7 +131,7 @@ Grammar::setUpSymbols ()
           IntrinsicSymbol  | ModuleSymbol           | InterfaceSymbol        | CommonSymbol       |
           AliasSymbol      |                                                   JavaLabelSymbol    |
           AdaPackageSymbol | AdaTaskSymbol          | AdaProtectedSymbol     | AdaRenamingSymbol  |
-          AdaGenericSymbol  /* | RenameSymbol */,
+          AdaGenericSymbol | AdaGenericInstanceSymbol /* | RenameSymbol */,
           "Symbol","SymbolTag", false);
 #endif
 
@@ -215,6 +218,9 @@ Grammar::setUpSymbols ()
                    CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      AdaGenericSymbol.setDataPrototype    ( "SgDeclarationStatement*",   "declaration", "= NULL",
+                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+
+     AdaGenericInstanceSymbol.setDataPrototype ( "SgAdaGenericInstanceDecl*",   "declaration", "= NULL",
                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 
      AdaRenamingSymbol.setDataPrototype ( "SgAdaRenamingDecl*",   "declaration", "= NULL",
@@ -467,6 +473,10 @@ Grammar::setUpSymbols ()
   // MS (05/01/21): Ada generics
      AdaGenericSymbol.setFunctionSource     ( "SOURCE_ADA_GENERIC_SYMBOL", "../Grammar/Symbol.code" );
      AdaGenericSymbol.setFunctionSource     ( "SOURCE_EMPTY_GET_TYPE", "../Grammar/Symbol.code" );
+
+  // PP (25/02/22): Add symbol for instantiations
+     AdaGenericInstanceSymbol.setFunctionSource     ( "SOURCE_ADA_GENERIC_INSTANCE_SYMBOL", "../Grammar/Symbol.code" );
+     AdaGenericInstanceSymbol.setFunctionSource     ( "SOURCE_EMPTY_GET_TYPE", "../Grammar/Symbol.code" );
 
      AdaRenamingSymbol.setFunctionSource    ( "SOURCE_ADA_RENAMING_SYMBOL", "../Grammar/Symbol.code" );
      AdaRenamingSymbol.setFunctionSource    ( "SOURCE_EMPTY_GET_TYPE", "../Grammar/Symbol.code" );
