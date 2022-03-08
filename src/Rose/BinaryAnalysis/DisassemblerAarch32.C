@@ -57,6 +57,7 @@ DisassemblerAarch32::init() {
     // Architecture independent ROSE disassembler properties
     REG_IP = registerDictionary()->findOrThrow("pc");
     REG_SP = registerDictionary()->findOrThrow("sp");
+    REG_SF = registerDictionary()->findOrThrow("fp");
     REG_LINK = registerDictionary()->findOrThrow("lr");
 
     // Build the Capstone context object, which must be explicitly closed in the destructor.
