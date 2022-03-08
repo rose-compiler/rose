@@ -3387,7 +3387,9 @@ DispatcherAarch32::maybeWriteRegister(const SValuePtr &enabled, RegisterDescript
     ASSERT_not_null(value);
     ASSERT_require(value->nBits() == reg.nBits());
 
+    operators()->isNoopRead(true);
     SValuePtr oldValue = operators()->readRegister(reg);
+    operators()->isNoopRead(false);
     SValuePtr toWrite = operators()->ite(enabled, value, oldValue);
     operators()->writeRegister(reg, toWrite);
 }
@@ -3400,7 +3402,9 @@ DispatcherAarch32::maybeWriteMemory(const SValuePtr &enabled, const SValuePtr &a
     ASSERT_not_null(value);
 
     SValuePtr dflt = operators()->undefined_(value->nBits());
+    operators()->isNoopRead(true);
     SValuePtr oldValue = operators()->readMemory(RegisterDescriptor(), address, dflt, operators()->boolean_(true));
+    operators()->isNoopRead(false);
     SValuePtr newValue = operators()->ite(enabled, value, oldValue);
     operators()->writeMemory(RegisterDescriptor(), address, newValue, operators()->boolean_(true));
 }
@@ -3411,7 +3415,9 @@ DispatcherAarch32::maybeWrite(const SValuePtr &enabled, SgAsmExpression *destina
     ASSERT_require(enabled->nBits() == 1);
     ASSERT_not_null(destination);
 
+    operators()->isNoopRead(true);
     SValuePtr oldValue = read(destination, value->nBits());
+    operators()->isNoopRead(false);
     SValuePtr toWrite = operators()->ite(enabled, value, oldValue);
     write(destination, toWrite);
 }
