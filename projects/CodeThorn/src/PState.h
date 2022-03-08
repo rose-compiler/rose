@@ -99,6 +99,8 @@ namespace CodeThorn {
     int32_t numApproximateMemRegions() const;
     bool hasEqualMemRegionApproximation(const PState& other) const;
 
+    size_t inPlaceGarbageCollection();
+    
   private:
     VariableIdSet _approximationVarIdSet;
     void conditionalApproximateRawWriteToMemoryLocation(AbstractValue abstractAddress, AbstractValue abstractValue,bool strongUpdate);

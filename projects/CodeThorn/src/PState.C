@@ -156,6 +156,24 @@ void PState::deleteVar(AbstractValue varId) {
   }
 }
 
+size_t PState::inPlaceGarbageCollection() {
+  if(AbstractValue::domainAbstractionVariant==1) {
+    // remove top elements (requires adapted combine operator)
+    PState::iterator i=begin();
+    size_t oldSize=size();
+    while(i!=end()) {
+      if(varIsTop((*i).first)) {
+        erase(i++);
+      } else {
+        ++i;
+      }
+    }
+    size_t diff=oldSize-size();
+    return diff;
+  }
+  return 0;
+}
+
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -634,4 +652,5 @@ void PState::combineInPlace1st(CodeThorn::PStatePtr p1, CodeThorn::PStatePtr p2)
       }
     }
   }
+  p1->inPlaceGarbageCollection(); // only performs operations if domainAbstractionVariant>=1
 }
