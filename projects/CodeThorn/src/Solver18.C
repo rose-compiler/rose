@@ -77,8 +77,8 @@ void Solver18::initializeAbstractStatesFromWorkList() {
   for(auto s : tmpWL) {
     // initialize abstractstate and push back to work lis
     ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(s->label()));
-    setAbstractState(s->label(),s->callString,s);
-    _workList->push(WorkListEntry(s->label(),s->callString));
+    setAbstractState(s->label(),s->getCallString(),s);
+    _workList->push(WorkListEntry(s->label(),s->getCallString()));
   }
   /* the other states are not initialized here because every context
      (cs) requires its own bottom element and contexts ar computedat
@@ -119,7 +119,7 @@ bool Solver18::getAbstractionConsistencyCheckFlag() {
 
 void Solver18::setAbstractState(CodeThorn::Label lab, CodeThorn::CallString cs, EStatePtr estate) {
   ROSE_ASSERT(lab==estate->label());
-  ROSE_ASSERT(cs==estate->callString);
+  ROSE_ASSERT(cs==estate->getCallString());
   ROSE_ASSERT(estate);
 
   if(_abstractionConsistencyCheckEnabled) {
@@ -160,11 +160,8 @@ void Solver18::setAbstractState(CodeThorn::Label lab, CodeThorn::CallString cs, 
 
 // creates bottom state
 EStatePtr Solver18::createBottomAbstractState(Label lab, CallString cs) {
-  InputOutput io;
-  io.recordBot();
-  EState estate(lab,cs,new PState(),io);
   ROSE_ASSERT(!createsTransitionSystem());
-  return new EState(estate);
+  return EState::createBottomEState(lab,cs);
 }
 
 size_t Solver18::checkDiff() {
@@ -239,7 +236,7 @@ void Solver18::run() {
 #if 1
     if(_analyzer->getFlow()->singleSuccessorIsPassThroughLabel(currentEStatePtr->label(),_analyzer->getLabeler())) {
       // transfer to successor
-      EStatePtr newEStatePtr=currentEStatePtr->clone();
+      EStatePtr newEStatePtr=currentEStatePtr->cloneWithoutIO();
       currentEStatePtr=newEStatePtr;
       bbClonedState=true;
       Flow outEdges=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
@@ -289,7 +286,7 @@ void Solver18::run() {
       EStatePtr oldEStatePtr=currentEStatePtr;
       setAbstractState(oldEStatePtr->label(),oldEStatePtr->getCallString(),oldEStatePtr);
       // store oldEStatePtr
-      currentEStatePtr=currentEStatePtr->clone();
+      currentEStatePtr=currentEStatePtr->cloneWithoutIO();
       //delete oldEStatePtr;
     }
 
@@ -305,7 +302,7 @@ void Solver18::run() {
         newEState=currentEStatePtr;
         bbClonedState=false;
       } else {
-        newEState=currentEStatePtr->clone();
+        newEState=currentEStatePtr->cloneWithoutIO();
       }
       ROSE_ASSERT(newEState);
       ROSE_ASSERT(newEState->pstate());
@@ -323,7 +320,7 @@ void Solver18::run() {
         ROSE_ASSERT(newEStatePtr0->pstate());
         ROSE_ASSERT(newEStatePtr0->label()!=Labeler::NO_LABEL);
         Label lab=newEStatePtr0->label();
-        CallString cs=newEStatePtr0->callString;
+        CallString cs=newEStatePtr0->getCallString();
         if((!_analyzer->isFailedAssertEState(newEStatePtr0)&&!_analyzer->isVerificationErrorEState(newEStatePtr0))) {
           EStatePtr newEStatePtr=newEStatePtr0;
           ROSE_ASSERT(newEStatePtr);
@@ -349,7 +346,7 @@ void Solver18::run() {
             setAbstractState(lab,cs,abstractEStatePtr);
             delete newEStatePtr;
             ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(abstractEStatePtr->label()));
-            _workList->push(WorkListEntry(abstractEStatePtr->label(),abstractEStatePtr->callString));
+            _workList->push(WorkListEntry(abstractEStatePtr->label(),abstractEStatePtr->getCallString()));
 
           }
         }

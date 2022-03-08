@@ -256,6 +256,8 @@ void FunctionCallMapping::computeFunctionCallMapping(SgNode* root) {
   collectRelevantNodes(root);
   SAWYER_MESG(logger[INFO])<< "Number of "<<" function call sites :" <<funCallList.size()<<endl;
   SAWYER_MESG(logger[INFO])<< "Number of "<<" function definitions:" <<funDefList.size()<<endl;
+
+  getFunctionIdMapping()->computeFunctionSymbolMapping(isSgProject(root));
   // ensure that an entry exists for every function call (even if it cannot be resolved)
   for (auto fc : funCallList) {
     mapping[fc]=make_pair(determineFunctionCallInfo(fc),FunctionCallTargetSet());
@@ -349,3 +351,6 @@ FunctionCallTargetSet FunctionCallMapping::resolveFunctionCall(SgFunctionCallExp
   return getFunctionCallTargetSet(funCall);
 }
 
+FunctionIdMapping* FunctionCallMapping::getFunctionIdMapping() {
+  return &_functionIdMapping;
+}
