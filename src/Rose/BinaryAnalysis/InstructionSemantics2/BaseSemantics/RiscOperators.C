@@ -28,16 +28,15 @@ operator<<(std::ostream &o, const RiscOperators::WithFormatter &x) {
     return o;
 }
 
-RiscOperators::RiscOperators()
-    : currentInsn_(NULL), nInsns_(0) {}
+RiscOperators::RiscOperators() {}
 
 RiscOperators::RiscOperators(const SValuePtr &protoval, const SmtSolverPtr &solver)
-    : protoval_(protoval), solver_(solver), currentInsn_(NULL), nInsns_(0) {
+    : protoval_(protoval), solver_(solver) {
     ASSERT_not_null(protoval_);
 }
 
 RiscOperators::RiscOperators(const StatePtr &state, const SmtSolverPtr &solver)
-    : currentState_(state), solver_(solver), currentInsn_(NULL), nInsns_(0) {
+    : currentState_(state), solver_(solver) {
     ASSERT_not_null(state);
     protoval_ = state->protoval();
 }
@@ -97,6 +96,7 @@ RiscOperators::startInstruction(SgAsmInstruction *insn) {
     SAWYER_MESG(mlog[TRACE]) <<"starting instruction " <<insn->toString() <<"\n";
     currentInsn_ = insn;
     ++nInsns_;
+    isNoopRead_ = false;
 };
 
 void
@@ -104,7 +104,8 @@ RiscOperators::finishInstruction(SgAsmInstruction *insn) {
     ASSERT_not_null(insn);
     ASSERT_require(currentInsn_==insn);
     hotPatch_.apply(shared_from_this());
-    currentInsn_ = NULL;
+    currentInsn_ = nullptr;
+    isNoopRead_ = false;
 };
 
 std::pair<SValuePtr /*low*/, SValuePtr /*high*/>

@@ -383,6 +383,18 @@ RiscOperators::currentInstruction() const
     return subdomain_->currentInstruction();
 }
 
+bool
+RiscOperators::isNoopRead() const {
+    checkSubdomain();
+    return subdomain_->isNoopRead();
+}
+
+void
+RiscOperators::isNoopRead(bool b) {
+    checkSubdomain();
+    subdomain_->isNoopRead(b);
+}
+
 void
 RiscOperators::startInstruction(SgAsmInstruction *insn) {
     BaseSemantics::RiscOperators::startInstruction(insn);
@@ -1174,7 +1186,7 @@ RiscOperators::fpRoundTowardZero(const BaseSemantics::SValuePtr &a, SgAsmFloatTy
 
 BaseSemantics::SValuePtr
 RiscOperators::readRegister(RegisterDescriptor a, const BaseSemantics::SValuePtr &b) {
-    before("readRegister", a, b);
+    before(std::string(subdomain_->isNoopRead() ? "[noopRead] " : "") + "readRegister", a, b);
     try {
         return check_width(after(subdomain_->readRegister(a, b)), a.nBits());
     } catch (const BaseSemantics::Exception &e) {
@@ -1218,7 +1230,7 @@ RiscOperators::writeRegister(RegisterDescriptor a, const BaseSemantics::SValuePt
 BaseSemantics::SValuePtr
 RiscOperators::readMemory(RegisterDescriptor a, const BaseSemantics::SValuePtr &b, const BaseSemantics::SValuePtr &c,
                           const BaseSemantics::SValuePtr &d) {
-    before("readMemory", a, b, c, d);
+    before(std::string(subdomain_->isNoopRead() ? "[noopRead] " : "") + "readMemory", a, b, c, d);
     try {
         return check_width(after(subdomain_->readMemory(a, b, c, d)), c->nBits());
     } catch (const BaseSemantics::Exception &e) {
