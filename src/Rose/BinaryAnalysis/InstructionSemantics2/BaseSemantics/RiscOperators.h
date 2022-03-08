@@ -55,10 +55,11 @@ private:
     StatePtr currentState_;                             // State upon which RISC operators operate
     StatePtr initialState_;                             // Lazily updated initial state; see readMemory
     SmtSolverPtr solver_;                               // Optional SMT solver
-    SgAsmInstruction *currentInsn_;                     // Current instruction, as set by latest startInstruction call
-    size_t nInsns_;                                     // Number of instructions processed
+    SgAsmInstruction *currentInsn_ = nullptr;           // Current instruction, as set by latest startInstruction call
+    size_t nInsns_ = 0;                                 // Number of instructions processed
     std::string name_;                                  // Name to use for debugging
     HotPatch hotPatch_;                                 // Adjustments to the semantic state after each instruction.
+    bool isNoopRead_ = false;                           // Read is part of a possible no-op read-then-write sequence
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // Serialization
@@ -77,6 +78,8 @@ private:
         s & BOOST_SERIALIZATION_NVP(name_);
         if (version >= 1)
             s & BOOST_SERIALIZATION_NVP(hotPatch_);
+        if (version >= 2)
+            s & BOOST_SERIALIZATION_NVP(isNoopRead_);
     }
 #endif
 
@@ -275,6 +278,23 @@ public:
     virtual void currentInstruction(SgAsmInstruction *insn) {
         currentInsn_ = insn;
     }
+    /** @} */
+
+    /** Property: No-op read.
+     *
+     *  This property can be set to indicate that the next read operation(s) are part of a possible read-then-write no-op
+     *  sequence. This property is normally reset at the beginning and end of each instruction by @ref startInstruction and
+     *  @ref finishInstruction.
+     *
+     *  For example, most ARM AArch32 A32 instructions are conditionally executed. Therefore any instruction that writes to
+     *  memory will either write a newly calculated value, or will write the original value. When expressed symbolically, the
+     *  expression is something like (writeMemory ADDRESS (ite CONDITION VALUE (readMemory ADDRESS))). In this case, the
+     *  readMemory is part of a read-then-write sequence that has no effect, and this no-op read property can be set in order
+     *  to express this intent to any analysis that might be triggered by memory reads.
+     *
+     * @{ */
+    virtual bool isNoopRead() const { return isNoopRead_; }
+    virtual void isNoopRead(bool b) { isNoopRead_ = b; }
     /** @} */
 
     /** Called at the beginning of every instruction.  This method is invoked every time the translation object begins
@@ -809,7 +829,7 @@ std::ostream& operator<<(std::ostream&, const RiscOperators::WithFormatter&);
 } // namespace
 } // namespace
 
-BOOST_CLASS_VERSION(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperators, 1);
+BOOST_CLASS_VERSION(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperators, 2);
 BOOST_CLASS_EXPORT_KEY(Rose::BinaryAnalysis::InstructionSemantics2::BaseSemantics::RiscOperators);
 
 #endif
