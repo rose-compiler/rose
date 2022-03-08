@@ -703,37 +703,76 @@ namespace
 
     void handle(SgAdaTaskTypeDecl& n)
     {
+      if (SgAdaTaskSpec* spec = n.get_definition())
+      {
       prn("task type ");
       prn(n.get_name());
-
-      SgAdaTaskSpec& spec = SG_DEREF(n.get_definition());
-
-      if (!spec.get_hasMembers())
+        if (!spec->get_hasMembers())
       {
         prn(STMT_SEP);
         return;
       }
 
       prn(" is\n");
-      stmt(&spec);
+        stmt(spec);
 
       prn("end ");
       prn(n.get_name());
+      }
+      else
+      {
+        // forward declaration
+        // \todo refactor code into a single location to handle these
+        prn("type ");
+        prn(n.get_name());
+
+        const bool requiresPrivate = si::ada::withPrivateDefinition(&n);
+        const bool requiresIs      = requiresPrivate || hasModifiers(n);
+
+        if (requiresIs)
+          prn(" is");
+
+        modifiers(n);
+
+        if (requiresPrivate)
+          prn(" private");
+      }
+
       prn(STMT_SEP);
     }
 
     void handle(SgAdaProtectedTypeDecl& n)
     {
+
+      if (SgAdaProtectedSpec* spec = n.get_definition())
+      {
       prn("protected type ");
       prn(n.get_name());
-
-      SgAdaProtectedSpec& spec = SG_DEREF(n.get_definition());
-
       prn(" is\n");
-      stmt(&spec);
+        stmt(spec);
 
       prn("end ");
       prn(n.get_name());
+      }
+      else
+      {
+        // forward declaration
+        // \todo refactor code into a single location to handle these
+        prn("type ");
+        prn(n.get_name());
+
+        const bool requiresPrivate = si::ada::withPrivateDefinition(&n);
+        const bool requiresIs      = requiresPrivate || hasModifiers(n);
+
+        if (requiresIs)
+          prn(" is");
+
+        modifiers(n);
+
+        if (requiresPrivate)
+          prn(" private");
+      }
+
       prn(STMT_SEP);
     }
 
@@ -883,10 +922,16 @@ namespace
       ScopeUpdateGuard    scopeGuard(unparser, info, n);
       SgStatementPtrList& stmts = n.get_statements();
       SgBasicBlock*       block = nullptr;
+      SgTryStmt*          trystmt = nullptr;
       Iterator            zz = stmts.end();
 
-      if (stmts.size()) block = isSgBasicBlock(stmts.back());
-      if (block) --zz;
+      if (stmts.size())
+      {
+        block = isSgBasicBlock(stmts.back());
+        trystmt = isSgTryStmt(stmts.back());
+      }
+
+      if (block || trystmt) --zz;
 
       list(stmts.begin(), zz);
 
@@ -895,6 +940,11 @@ namespace
         prn("begin\n");
         list(block->get_statements());
         // the block's end is printed in the parent
+      }
+      else if (trystmt)
+      {
+        prn("begin\n");
+        stmt(trystmt);
       }
     }
 
@@ -1547,27 +1597,37 @@ namespace
       return scopeQual(SG_DEREF(remote));
     }
 
-    void parentRecord(SgBaseClass& parentType)
+    void handle(SgBaseClass& n)
     {
-      SgClassDeclaration& decl   = SG_DEREF(parentType.get_base_class());
+      SgClassDeclaration& decl = SG_DEREF(n.get_base_class());
 
       prn(" new ");
-      prnNameQual(parentType, decl.get_scope());
+      prnNameQual(n, decl.get_scope());
       prn(decl.get_name());
       prn(" with");
     }
 
-    void parentRecord_opt(SgBaseClass* baserec)
+    void handle(SgExpBaseClass& n)
     {
-      if (baserec) parentRecord(*baserec);
+      prn(" new ");
+      // prnNameQual(parentType, decl.get_scope());
+      expr(n.get_base_class_exp());
+      prn(" with");
+    }
+
+    void parentRecord_opt(SgBaseClass* bc)
+    {
+      if (bc) support(bc);
     }
 
     void parentRecord_opt(SgClassDefinition& def)
     {
       SgBaseClassPtrList& parents = def.get_inheritances();
 
+      ROSE_ASSERT (parents.size() <= 1);
+
       if (parents.size() == 1)
-        parentRecord(SG_DEREF(parents.at(0)));
+        support(parents.at(0));
     }
 
     void printPendingDiscriminants()
@@ -1709,7 +1769,7 @@ namespace
     void handle(SgTryStmt& n)
     {
       // skip the block, just print the statements
-      const bool    requiresBeginEnd = !si::ada::isFunctionTryBlock(n);
+      const bool    requiresBeginEnd = !(si::ada::isFunctionTryBlock(n) || si::ada::isPackageTryBlock(n));
       SgBasicBlock& blk = SG_DEREF(isSgBasicBlock(n.get_body()));
 
       if (requiresBeginEnd) prn("begin\n");
@@ -1783,6 +1843,7 @@ namespace
     }
 
     void stmt(SgStatement* s, SgAdaDiscriminatedTypeDecl* d = nullptr);
+    void support(SgSupport* s);
 
     void expr(SgExpression* e)
     {
@@ -2183,32 +2244,72 @@ namespace
       res.renamedName() = n.get_name();
     }
 
+    void handle(const SgAdaPackageSpecDecl& n)
+    {
+      res = ReturnType{"package ", false /* does not require type */, n.get_name(), n.get_definition()};
+    }
+
+    void handle(const SgAdaPackageBodyDecl& n)
+    {
+      res = ReturnType{"package ", false /* does not require type */, n.get_name(), SG_DEREF(n.get_definition()).get_spec()};
+    }
+
     void handle(const SgAdaPackageSymbol& n)
     {
-      const SgDeclarationStatement* dcl = n.get_declaration();
-      const SgScopeStatement*       bdy = nullptr;
+      res = compute(n.get_declaration());
+    }
 
-      if (const SgAdaPackageSpecDecl* pkgspc = isSgAdaPackageSpecDecl(dcl))
-        bdy = pkgspc->get_definition();
-      else if (const SgAdaPackageBodyDecl* pkgbdy = isSgAdaPackageBodyDecl(dcl))
-        bdy = SG_DEREF(pkgbdy->get_definition()).get_spec();
+    void handle(const SgFunctionDeclaration& n)
+    {
+      std::string prefix = si::ada::isFunction(n.get_type()) ? "function " : "procedure ";
 
-      ROSE_ASSERT(bdy);
-      res = ReturnType{"package ", false /* does not require type */, n.get_name(), bdy};
+      res = ReturnType{prefix, false, n.get_name(), nullptr};
+    }
+
+    void handle(const SgAdaGenericDecl& n)
+    {
+      res = compute(n.get_declaration());
+    }
+
+    void handle(const SgAdaGenericSymbol& n)
+    {
+      // get the prefix from the declaration, then set the proper name.
+      res = compute(n.get_declaration());
+      res.renamedName() = n.get_name();
+    }
+
+    void handle(const SgAdaGenericInstanceDecl& n)
+    {
+      res = compute(n.get_declaration());
+    }
+
+    void handle(const SgAdaGenericInstanceSymbol& n)
+    {
+      // get the prefix from the declaration, then set the proper name.
+      res = compute(n.get_declaration());
+      res.renamedName() = n.get_name();
     }
 
     void handle(const SgVariableSymbol& n)
     {
-      SgInitializedName& el = SG_DEREF(n.get_declaration());
-
-      res = ReturnType{"", true /* requires type */, el.get_name(), nullptr};
+      res = ReturnType{"", true /* requires type */, n.get_name(), nullptr};
     }
+
+    static
+    RenamingSyntaxResult
+    compute(const SgNode* n);
   };
+
+  RenamingSyntaxResult
+  RenamingSyntax::compute(const SgNode* n)
+  {
+    return sg::dispatch(RenamingSyntax{}, n);
+  }
 
   RenamingSyntaxResult
   AdaStatementUnparser::renamingSyntax(SgSymbol* n)
   {
-    return sg::dispatch(RenamingSyntax{}, n);
+    return RenamingSyntax::compute(n);
   }
 
   bool isPrivate(SgDeclarationStatement& dcl)
@@ -2288,6 +2389,11 @@ namespace
     unparser.unparseAttachedPreprocessingInfo(s, info, PreprocessingInfo::inside);
     sg::dispatch(unparserWith(n), s);
     unparser.unparseAttachedPreprocessingInfo(s, info, PreprocessingInfo::after);
+  }
+
+  void AdaStatementUnparser::support(SgSupport* s)
+  {
+    sg::dispatch(*this, s);
   }
 
   struct ScopeName : sg::DispatchHandler<std::string>

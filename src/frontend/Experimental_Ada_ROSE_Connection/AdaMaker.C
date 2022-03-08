@@ -48,15 +48,16 @@ namespace
 
   /// \private
   /// links a first nondefining declaration to a definition and vice versa
-  void linkDeclDef(SgFunctionSymbol& funcsy, SgFunctionDeclaration& func)
+  template <class SageSymbol, class SageDeclarationStatement>
+  void linkDeclDef(SageSymbol& sym, SageDeclarationStatement& defdcl)
   {
-    SgFunctionDeclaration& sdcl = SG_DEREF(funcsy.get_declaration());
+    SageDeclarationStatement& nondef = dynamic_cast<SageDeclarationStatement&>(*sym.get_declaration());
 
     // defining and first non-defining must differ
-    ADA_ASSERT(&sdcl != &func);
+    ADA_ASSERT(&nondef != &defdcl);
 
-    sdcl.set_definingDeclaration(&func);
-    func.set_firstNondefiningDeclaration(&sdcl);
+    nondef.set_definingDeclaration(&defdcl);
+    defdcl.set_firstNondefiningDeclaration(&nondef);
   }
 
   /// \private
@@ -742,8 +743,10 @@ mkAdaGenericInstanceDecl(const std::string& name, SgDeclarationStatement& gendec
   SgAdaGenericInstanceDecl& sgnode = mkLocatedNode<SgAdaGenericInstanceDecl>(name,&gendecl,nullptr);
 
   sgnode.set_parent(&scope);
+  // PP (2/24/22): should this be set_definingDeclaration ?
   sgnode.set_firstNondefiningDeclaration(&sgnode);
 
+  scope.insert_symbol(name, &mkBareNode<SgAdaGenericInstanceSymbol>(&sgnode));
   return sgnode;
 }
 
@@ -771,7 +774,7 @@ mkAdaFormalTypeDecl(const std::string& name, SgScopeStatement& scope)
   sgnode.set_parent(&scope);
   sgnode.set_firstNondefiningDeclaration(&sgnode);
 
-  scope.insert_symbol(name, new SgAdaGenericSymbol(&sgnode));
+  scope.insert_symbol(name, &mkBareNode<SgAdaGenericSymbol>(&sgnode));
 
   return sgnode;
 }
@@ -836,11 +839,37 @@ namespace
 {
   template <class SageAdaConcurrentSymbol, class SageAdaConcurrentDecl, class SageAdaConcurrentSpec>
   SageAdaConcurrentDecl&
-  mkAdaConcurrentDeclInternal(const std::string& name, SageAdaConcurrentSpec& spec, SgScopeStatement& scope)
+  mkAdaConcurrentDeclInternal(const std::string& name, SageAdaConcurrentSpec* spec_opt, SgScopeStatement& scope)
   {
-    SageAdaConcurrentDecl& sgnode = mkLocatedNode<SageAdaConcurrentDecl>(name, &spec);
+    SageAdaConcurrentDecl& sgnode = mkLocatedNode<SageAdaConcurrentDecl>(name, spec_opt);
 
     scope.insert_symbol(name, &mkBareNode<SageAdaConcurrentSymbol>(&sgnode));
+
+    if (spec_opt)
+    {
+      spec_opt->set_parent(&sgnode);
+      sgnode.set_definingDeclaration(&sgnode);
+    }
+    else
+    {
+      sgnode.set_firstNondefiningDeclaration(&sgnode);
+    }
+
+    return sgnode;
+  }
+
+  template <class SageAdaConcurrentSymbol, class SageAdaConcurrentDecl, class SageAdaConcurrentSpec>
+  SageAdaConcurrentDecl&
+  mkAdaConcurrentDeclInternal(SageAdaConcurrentDecl& nondef, SageAdaConcurrentSpec& spec, SgScopeStatement& scope)
+  {
+    std::string              name   = nondef.get_name();
+    SageAdaConcurrentDecl& sgnode = mkLocatedNode<SageAdaConcurrentDecl>(name, &spec);
+    SgSymbol*                baseSy = nondef.search_for_symbol_from_symbol_table();
+    SageAdaConcurrentSymbol& sym    = dynamic_cast<SageAdaConcurrentSymbol&>(*baseSy);
+
+    //~ scope.insert_symbol(name, &mkBareNode<SageAdaConcurrentSymbol>(&sgnode));
+    sgnode.set_definingDeclaration(&sgnode);
+    linkDeclDef(sym, sgnode);
     spec.set_parent(&sgnode);
     return sgnode;
   }
@@ -848,27 +877,39 @@ namespace
 
 
 SgAdaTaskTypeDecl&
-mkAdaTaskTypeDecl(const std::string& name, SgAdaTaskSpec& spec, SgScopeStatement& scope)
+mkAdaTaskTypeDecl(const std::string& name, SgAdaTaskSpec* spec_opt, SgScopeStatement& scope)
 {
-  return mkAdaConcurrentDeclInternal<SgAdaTaskSymbol, SgAdaTaskTypeDecl>(name, spec, scope);
+  return mkAdaConcurrentDeclInternal<SgAdaTaskSymbol, SgAdaTaskTypeDecl>(name, spec_opt, scope);
+}
+
+SgAdaTaskTypeDecl&
+mkAdaTaskTypeDecl(SgAdaTaskTypeDecl& nondef, SgAdaTaskSpec& spec, SgScopeStatement& scope)
+{
+  return mkAdaConcurrentDeclInternal<SgAdaTaskSymbol>(nondef, spec, scope);
 }
 
 SgAdaTaskSpecDecl&
 mkAdaTaskSpecDecl(const std::string& name, SgAdaTaskSpec& spec, SgScopeStatement& scope)
 {
-  return mkAdaConcurrentDeclInternal<SgAdaTaskSymbol, SgAdaTaskSpecDecl>(name, spec, scope);
+  return mkAdaConcurrentDeclInternal<SgAdaTaskSymbol, SgAdaTaskSpecDecl>(name, &spec, scope);
 }
 
 SgAdaProtectedTypeDecl&
-mkAdaProtectedTypeDecl(const std::string& name, SgAdaProtectedSpec& spec, SgScopeStatement& scope)
+mkAdaProtectedTypeDecl(const std::string& name, SgAdaProtectedSpec* spec_opt, SgScopeStatement& scope)
 {
-  return mkAdaConcurrentDeclInternal<SgAdaProtectedSymbol, SgAdaProtectedTypeDecl>(name, spec, scope);
+  return mkAdaConcurrentDeclInternal<SgAdaProtectedSymbol, SgAdaProtectedTypeDecl>(name, spec_opt, scope);
+}
+
+SgAdaProtectedTypeDecl&
+mkAdaProtectedTypeDecl(SgAdaProtectedTypeDecl& nondef, SgAdaProtectedSpec& spec, SgScopeStatement& scope)
+{
+  return mkAdaConcurrentDeclInternal<SgAdaProtectedSymbol>(nondef, spec, scope);
 }
 
 SgAdaProtectedSpecDecl&
 mkAdaProtectedSpecDecl(const std::string& name, SgAdaProtectedSpec& spec, SgScopeStatement& scope)
 {
-  return mkAdaConcurrentDeclInternal<SgAdaProtectedSymbol, SgAdaProtectedSpecDecl>(name, spec, scope);
+  return mkAdaConcurrentDeclInternal<SgAdaProtectedSymbol, SgAdaProtectedSpecDecl>(name, &spec, scope);
 }
 
 namespace
@@ -1516,6 +1557,12 @@ mkPragmaDeclaration(const std::string& name, SgExprListExp& args)
   sgnode.set_firstNondefiningDeclaration(&sgnode);
 
   return sgnode;
+}
+
+SgExpBaseClass&
+mkRecordParent(SgType& n)
+{
+  return mkBareNode<SgExpBaseClass>(nullptr, true /* direct base */, &mkTypeExpression(n));
 }
 
 SgBaseClass&

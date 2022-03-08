@@ -1257,6 +1257,10 @@ namespace
       return;
     }
 
+    if (/*const SgAdaGenericInstanceSymbol* gensym* =*/ isSgAdaGenericInstanceSymbol(sym))
+      // \todo what needs to be done here?
+      return;
+
     if (/*const SgVariableSymbol* varsym =*/ isSgVariableSymbol(sym))
       return;
 
