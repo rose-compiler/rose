@@ -242,26 +242,6 @@ namespace
 
   /// @}
 
-  typedef std::pair<SgTryStmt*, std::reference_wrapper<SgBasicBlock> > TryBlockNodes;
-
-  /// if handlers are present, create an inner try block
-  /// \returns a pair where second indicates the current block
-  ///          and first a try (can be nullptr if no handlers exist)
-  TryBlockNodes
-  createTryBlockIfNeeded(bool hasHandlers, SgBasicBlock& outer)
-  {
-    if (!hasHandlers) return TryBlockNodes{nullptr, outer};
-
-    SgBasicBlock& tryBlock = mkBasicBlock();
-    SgTryStmt&    tryStmt  = mkTryStmt(tryBlock);
-
-    //~ link_parent_child(outer, as<SgStatement>(tryStmt), SgBasicBlock::append_statement);
-    outer.append_statement(&tryStmt);
-    ADA_ASSERT (tryStmt.get_parent() == &outer);
-
-    return TryBlockNodes{&tryStmt, tryBlock};
-  }
-
   /// gets the body of a function declaration \ref defdcl
   /// \pre defdcl is the defining declaration
   SgBasicBlock& getFunctionBody(SgFunctionDeclaration& defdcl)
@@ -712,33 +692,6 @@ namespace
   };
 
 
-/*
-  needed?
-
-  struct DeclareTaskType
-  {
-    DeclareTaskType(SgAdaTaskSpec& taskspec, AstContext astctx, bool privateItems)
-    : spec(taskspec), scope(astctx.scope()), privateElems(privateItems)
-    {}
-
-    void operator()(const NameData& nameelem)
-    {
-      const std::string& name = nameelem.first;
-      Element_ID         id   = nameelem.second;
-      SgAdaTaskTypeDecl& dcl  = mkAdaTaskTypeDecl(name, spec);
-
-      privatize(dcl, privateElems);
-      scope.append_statement(&dcl);
-      recordNode(asisTypes(), id, dcl);
-    }
-
-    SgAdaTaskSpec&    spec;
-    SgScopeStatement& scope;
-    bool              privateElems;
-  };
-*/
-
-
   using TypeModifierFn = std::function<SgType&(SgType&)>;
 
   SgType& tyIdentity(SgType& ty) { return ty; }
@@ -830,40 +783,6 @@ namespace
     return getAliased(elem.The_Union.Expression, ctx);
   }
 
-
-  //
-  // tasks
-
-  void
-  fillBody(Declaration_Struct& decl, SgAdaTaskBody& sgnode, AstContext ctx)
-  {
-    ADA_ASSERT (decl.Declaration_Kind == A_Task_Body_Declaration);
-
-    {
-      ElemIdRange    decls = idRange(decl.Body_Declarative_Items);
-
-      traverseIDs(decls, elemMap(), StmtCreator{ctx.scope(sgnode)});
-    }
-
-    {
-      ElemIdRange         stmts = idRange(decl.Body_Statements);
-      LabelAndLoopManager lblmgr;
-
-      traverseIDs(stmts, elemMap(), StmtCreator{ctx.scope(sgnode).labelsAndLoops(lblmgr)});
-    }
-  }
-
-  void
-  fillBody(Declaration_Struct& decl, SgAdaProtectedBody& sgnode, AstContext ctx)
-  {
-    ADA_ASSERT (decl.Declaration_Kind == A_Protected_Body_Declaration);
-
-    {
-      ElemIdRange decls = idRange(decl.Protected_Operation_Items);
-
-      traverseIDs(decls, elemMap(), StmtCreator{ctx.scope(sgnode)});
-    }
-  }
 
   std::pair<SgAdaTaskSpec*, DeferredBodyCompletion>
   getTaskSpec(Element_Struct& elem, AstContext ctx)
@@ -1573,6 +1492,136 @@ namespace
     return !decl.Has_Reverse;
   }
 
+  //
+  // combined block and declarative body handling
+
+  //~ using TryBlockNodes = std::pair<SgTryStmt*, std::reference_wrapper<SgBasicBlock> >;
+  using TryBlockNodes = std::pair<SgTryStmt*, std::reference_wrapper<SgScopeStatement> >;
+
+  SgScopeStatement&
+  createBlockIfNeeded(bool newStatementBlock, SgScopeStatement& outer)
+  {
+    if (!newStatementBlock) return outer;
+
+    SgBasicBlock& newblk = mkBasicBlock();
+
+    outer.append_statement(&newblk);
+    ROSE_ASSERT(newblk.get_parent() == &outer);
+    return newblk;
+  }
+
+  /// if handlers are present, create an inner try block
+  /// \param hasHandlers true if a block has handlers
+  /// \param requiresStmtBlock true if a new block is required
+  ///        even when no exception handlers are present. (e.g., for package body code section).
+  /// \param outer the current scope, in which the try or block will be created.
+  /// \returns a pair where second indicates the scope/block in which new statements will reside;
+  ///                       first is an optional try statement (can be nullptr if no handlers exist)
+  TryBlockNodes
+  createTryOrBlockIfNeeded(bool hasHandlers, bool requiresStmtBlock, SgScopeStatement& outer)
+  {
+    if (!hasHandlers) return TryBlockNodes{nullptr, createBlockIfNeeded(requiresStmtBlock, outer)};
+
+    SgBasicBlock& tryBlock = mkBasicBlock();
+    SgTryStmt&    tryStmt  = mkTryStmt(tryBlock);
+
+    //~ link_parent_child(outer, as<SgStatement>(tryStmt), SgBasicBlock::append_statement);
+    outer.append_statement(&tryStmt);
+    ADA_ASSERT (tryStmt.get_parent() == &outer);
+
+    return TryBlockNodes{&tryStmt, tryBlock};
+  }
+
+
+  // a simple block handler just traverses the statement list and adds them to the \ref blk.
+  void simpleBlockHandler(Statement_List bodyStatements, SgScopeStatement& blk, AstContext ctx)
+  {
+    ElemIdRange         range = idRange(bodyStatements);
+
+    traverseIDs(range, elemMap(), StmtCreator{ctx.scope(blk)});
+  }
+
+  // at some point loops, labels, gotos need to be patched up. In this case, we do that at the
+  //   end of a routine through the use of the LoopAndLabelManager
+  // \todo As I (PP) document this, I wonder whether this works for exception handlers..?
+  void routineBlockHandler(Statement_List bodyStatements, SgScopeStatement& blk, AstContext ctx)
+  {
+    LabelAndLoopManager lblmgr;
+    ElemIdRange         range = idRange(bodyStatements);
+
+    traverseIDs(range, elemMap(), StmtCreator{ctx.scope(blk).labelsAndLoops(lblmgr)});
+  }
+
+
+  // completes any block with exception handlers and pragmas attached
+  void completeHandledBlock( Statement_List bodyStatements,
+                             Exception_Handler_List exceptionHandlers,
+                             Pragma_Element_ID_List pragmas,
+                             std::function<void(Statement_List bodyStatements, SgScopeStatement& blk, AstContext ctx)> blockHandler,
+                             SgScopeStatement& dominantBlock,
+                             bool requiresStatementBlock,
+                             AstContext ctx
+                           )
+  {
+    ElemIdRange       hndlrs  = idRange(exceptionHandlers);
+    TryBlockNodes     trydata = createTryOrBlockIfNeeded(hndlrs.size() > 0, requiresStatementBlock, dominantBlock);
+    SgTryStmt*        trystmt = trydata.first;
+    SgScopeStatement& stmtblk = trydata.second;
+
+    blockHandler(bodyStatements, stmtblk, ctx);
+
+    if (trystmt)
+    {
+      traverseIDs(hndlrs, elemMap(), ExHandlerCreator{ctx.scope(dominantBlock), SG_DEREF(trystmt)});
+      placePragmas(pragmas, ctx, std::ref(dominantBlock), std::ref(stmtblk));
+    }
+    else
+    {
+      placePragmas(pragmas, ctx, std::ref(dominantBlock));
+    }
+  }
+
+
+  using BlockHandler = std::function<void(Statement_List bodyStatements, SgScopeStatement& blk, AstContext ctx)>;
+
+  // completes any block with declarative items and exception handlers and pragmas attached
+  void completeDeclarationsWithHandledBlock( Element_ID_List declarativeItems,
+                                             Statement_List bodyStatements,
+                                             Exception_Handler_List exceptionHandlers,
+                                             Pragma_Element_ID_List pragmas,
+                                             BlockHandler blockHandler,
+                                             SgScopeStatement& dominantBlock,
+                                             bool requiresStatementBlock,
+                                             AstContext ctx
+                                           )
+  {
+    ElemIdRange range = idRange(declarativeItems);
+
+    traverseIDs(range, elemMap(), ElemCreator{ctx.scope(dominantBlock)});
+
+    completeHandledBlock( bodyStatements,
+                          exceptionHandlers,
+                          pragmas,
+                          blockHandler,
+                          dominantBlock,
+                          requiresStatementBlock,
+                          ctx
+                        );
+  }
+
+  void completeRoutineBody(Declaration_Struct& decl, SgBasicBlock& declblk, AstContext ctx)
+  {
+    completeDeclarationsWithHandledBlock( decl.Body_Declarative_Items,
+                                          decl.Body_Statements,
+                                          decl.Body_Exception_Handlers,
+                                          decl.Pragmas,
+                                          routineBlockHandler,
+                                          declblk,
+                                          false /* same block for declarations and statements */,
+                                          ctx
+                                        );
+  }
+
   // handles elements that can appear in a statement context (from a ROSE point of view)
   //   besides statements this also includes declarations and clauses
   void handleStmt(Element_Struct& elem, AstContext ctx)
@@ -1747,30 +1796,18 @@ namespace
           logKind("A_Block_Statement");
 
           SgBasicBlock& sgnode   = mkBasicBlock();
-          ElemIdRange   blkDecls = idRange(stmt.Block_Declarative_Items);
-          ElemIdRange   blkStmts = idRange(stmt.Block_Statements);
-          ElemIdRange   exHndlrs = idRange(stmt.Block_Exception_Handlers);
-          //~ logInfo() << "block ex handlers: " << exHndlrs.size() << std::endl;
 
           completeStmt(sgnode, elem, ctx, stmt.Statement_Identifier);
-          traverseIDs(blkDecls, elemMap(), StmtCreator{ctx.scope(sgnode)});
 
-          TryBlockNodes trydata  = createTryBlockIfNeeded(exHndlrs.size() > 0, sgnode);
-          SgTryStmt*    tryblk   = trydata.first;
-          SgBasicBlock& block    = trydata.second;
-
-          traverseIDs(blkStmts, elemMap(), StmtCreator{ctx.scope(block)});
-
-          if (tryblk)
-          {
-            traverseIDs(exHndlrs, elemMap(), ExHandlerCreator{ctx.scope(sgnode), SG_DEREF(tryblk)});
-
-            placePragmas(stmt.Pragmas, ctx, std::ref(sgnode), std::ref(block));
-          }
-          else
-          {
-            placePragmas(stmt.Pragmas, ctx, std::ref(sgnode));
-          }
+          completeDeclarationsWithHandledBlock( stmt.Block_Declarative_Items,
+                                                stmt.Block_Statements,
+                                                stmt.Block_Exception_Handlers,
+                                                stmt.Pragmas,
+                                                simpleBlockHandler,
+                                                sgnode,
+                                                false /* same block for declarations and statements */,
+                                                ctx
+                                              );
 
           /* unused fields:
                 Element_ID                Corresponding_End_Name;
@@ -1876,14 +1913,20 @@ namespace
             SgBasicBlock&         block   = mkBasicBlock();
 
             sg::linkParentChild(sgnode, as<SgStatement>(block), &SgAdaAcceptStmt::set_body);
-            traverseIDs(stmts, elemMap(), StmtCreator{parmctx.scope(block)});
+
+            completeHandledBlock( stmt.Accept_Body_Statements,
+                                  stmt.Accept_Body_Exception_Handlers,
+                                  stmt.Pragmas,
+                                  simpleBlockHandler,
+                                  block,
+                                  false /* no separate block is needed */,
+                                  ctx
+                                );
           }
 
           /* unused fields:
-              Pragma_Element_ID_List       Pragmas;
               Element_ID                   Corresponding_End_Name;
               bool                         Is_Name_Repeated;
-              Statement_List               Accept_Body_Exception_Handlers;
               Declaration_ID               Corresponding_Entry;
           */
           break;
@@ -1926,7 +1969,7 @@ namespace
       case A_Raise_Statement:                   // 11.3
         {
           logKind("A_Raise_Statement");
-          SgExpression&   raised = getExprID(stmt.Raised_Exception, ctx);
+          SgExpression&   raised = getExprID_opt(stmt.Raised_Exception, ctx);
           SgStatement&    sgnode = mkRaiseStmt(raised);
 
           completeStmt(sgnode, elem, ctx);
@@ -2000,9 +2043,9 @@ namespace
       case A_Code_Statement:                    // 13.8 assembly
         {
           logKind("A_Code_Statement");
-
-
-
+          logError() << "A_Code_Statement (example sought!)" << std::endl;
+          // LOOKING FOR an example of a code statement in Asis
+          ADA_ASSERT(!FAIL_ON_ERROR(ctx));
           break;
         }
 
@@ -2276,8 +2319,24 @@ namespace
   };
 
 
-  std::pair<Element_ID, Type_Kinds>
-  queryDefinitionData(Element_Struct& complElem, AstContext ctx);
+  struct DefinitionDetails : std::tuple<Element_ID, Declaration_Kinds, Type_Kinds>
+  {
+    using base = std::tuple<Element_ID, Declaration_Kinds, Type_Kinds>;
+    using base::base;
+
+    // returns Asis ID
+    Element_ID id() const { return std::get<0>(*this); }
+
+    // returns the declaration kind
+    Element_ID declKind() const { return std::get<1>(*this); }
+
+    // returns the type kind (only valid for certain declarations)
+    Element_ID typeKind() const { return std::get<2>(*this); }
+  };
+
+
+  DefinitionDetails
+  queryDefinitionDetails(Element_Struct& complElem, AstContext ctx);
 
   Type_Kinds
   queryBaseDefinitionData(Definition_Struct& typeDefn, Type_Kinds tyKind, AstContext ctx)
@@ -2289,60 +2348,106 @@ namespace
     // derived enumeration types are handled differently ...
     //   so, if the representation is a derived enum, we change the tyKind;
     //   otherwise we keep the A_Derived_Type_Definition.
-    if (baseElem && (queryDefinitionData(*baseElem, ctx).second == An_Enumeration_Type_Definition))
+    if (baseElem)
+    {
+      DefinitionDetails detail = queryDefinitionDetails(*baseElem, ctx);
+
+      if (detail.typeKind() == An_Enumeration_Type_Definition)
       tyKind = An_Enumeration_Type_Definition;
+    }
 
     return tyKind;
   }
 
-  std::pair<Element_ID, Type_Kinds>
-  queryDefinitionData(Element_Struct& complElem, AstContext ctx)
+
+
+  DefinitionDetails
+  queryDefinitionDetails(Element_Struct& complElem, AstContext ctx)
   {
     ADA_ASSERT (complElem.Element_Kind == A_Declaration);
 
     Declaration_Struct& complDecl = complElem.The_Union.Declaration;
     NameData            declname  = singleName(complDecl, ctx);
 
-    ADA_ASSERT (  complDecl.Declaration_Kind == An_Ordinary_Type_Declaration
-              || complDecl.Declaration_Kind == A_Formal_Type_Declaration
-              );
-    logKind( complDecl.Declaration_Kind == An_Ordinary_Type_Declaration
-                        ? "An_Ordinary_Type_Declaration"
-                        : "A_Formal_Type_Declaration"
-           );
+    if (complDecl.Declaration_Kind == A_Task_Type_Declaration)
+    {
+      logKind("A_Task_Type_Declaration");
+
+      return DefinitionDetails{declname.id(), A_Task_Type_Declaration, Not_A_Type_Definition};
+    }
+
+
+    if (complDecl.Declaration_Kind == An_Ordinary_Type_Declaration)
+      logKind("An_Ordinary_Type_Declaration");
+    else if (complDecl.Declaration_Kind == A_Formal_Type_Declaration)
+      logKind("A_Formal_Type_Declaration");
+    else
+    {
+      logError() << "unexpected decl kind [queryDefinitionData]: " << complDecl.Declaration_Kind
+                    << std::endl;
+    }
 
     Element_Struct&     typeElem = retrieveAs(elemMap(), complDecl.Type_Declaration_View);
     ADA_ASSERT (typeElem.Element_Kind == A_Definition);
 
     Definition_Struct&  typeDefn = typeElem.The_Union.Definition;
 
-    // this is questionable, but how shall we deal with formal type definitions ..?
+    // \todo
+    // this is questionable, but how shall we deal with non-plain type definitions ..?
     Type_Kinds          resKind  = A_Derived_Type_Definition;
 
-    if (typeDefn.Definition_Kind == A_Type_Definition)
+    switch (typeDefn.Definition_Kind)
+    {
+      case A_Type_Definition:
     {
       resKind = typeDefn.The_Union.The_Type_Definition.Type_Kind;
 
       // look at the base of a derived type
       if (resKind == A_Derived_Type_Definition)
         resKind = queryBaseDefinitionData(typeDefn, resKind, ctx);
-    }
-    else
-    {
-      ADA_ASSERT (typeDefn.Definition_Kind == A_Formal_Type_Definition);
-      // not sure what we need to do here ...
+
+      break;
     }
 
-    return std::make_pair(declname.id(), resKind);
+      case A_Formal_Type_Definition:
+        break;
+
+      default:
+        logError() << "unexpected def kind [queryDefinitionData]: " << typeDefn.Definition_Kind
+                      << std::endl;
+        ROSE_ABORT();
+    }
+
+    return DefinitionDetails{declname.id(), complDecl.Declaration_Kind, resKind};
   }
 
   // find the element and type kind of the corresponding complete declaration
-  std::pair<Element_ID, Type_Kinds>
-  queryDefinitionDataID(Element_ID completeElementId, AstContext ctx)
+  DefinitionDetails
+  queryDefinitionDetailsID(Element_ID completeElementId, AstContext ctx)
   {
     Element_Struct& complElem = retrieveAs(elemMap(), completeElementId);
 
-    return queryDefinitionData(complElem, ctx);
+    return queryDefinitionDetails(complElem, ctx);
+  }
+
+
+  // In Asis forward declarations are represented as anonymous types.
+  // In ROSE forward declarations are represented with the same AST node type.
+  //   (e.g., a class is forward declared as a class not as typedef).
+  // In order to create the right ROSE AST node, the actual information of
+  //   the type in Asis is needed.
+  // This methods looks at the actual declared element and returns the
+  //   corresponding details.
+  // e.g.,
+  //   type T1;           -- This should become a first nondefining declaration in ROSE.
+  //                      -- To create the proper AST node, we need to know what
+  //                      -- T1 will be (in this case a task type).
+  //   task type T1 ...;
+  DefinitionDetails
+  queryDeclarationDetails(Declaration_Struct& decl, AstContext ctx)
+  {
+    //~ return queryDefinitionDetailsID(decl.Corresponding_Type_Completion, ctx);
+    return queryDefinitionDetailsID(decl.Corresponding_Type_Declaration, ctx);
   }
 
 
@@ -2355,8 +2460,7 @@ namespace
     logKind("A_Private_Extension_Definition");
 
     Private_Extension_Definition_Struct& ext = def.The_Union.The_Private_Extension_Definition;
-    SgClassDeclaration&                  parent = getParentRecordDeclID(ext.Ancestor_Subtype_Indication, ctx);
-    SgBaseClass&                         pardcl = mkRecordParent(parent);
+    SgBaseClass&                         pardcl = getParentTypeID(ext.Ancestor_Subtype_Indication, ctx);
 
     sg::linkParentChild(sgnode, pardcl, &SgClassDeclaration::set_adaParentType);
   }
@@ -2595,11 +2699,11 @@ namespace
 
 
   SgDeclarationStatement&
-  createOpaqueDecl(NameData adaname, Declaration_Struct& decl, Type_Kinds tyKind, AstContext ctx)
+  createOpaqueDecl(NameData adaname, Declaration_Struct& decl, const DefinitionDetails detail, AstContext ctx)
   {
-    SgDeclarationStatement* res = nullptr;
     SgScopeStatement&       scope = ctx.scope();
     Element_Struct*         typeview = nullptr;
+    SgDeclarationStatement* res = nullptr;
 
     if (!isInvalidId(decl.Type_Declaration_View))
     {
@@ -2607,7 +2711,11 @@ namespace
       ADA_ASSERT (typeview->Element_Kind == A_Definition);
     }
 
-    switch (tyKind)
+    if (detail.declKind() == A_Task_Type_Declaration)
+      res = &mkAdaTaskTypeDecl(adaname.ident, nullptr /* no spec */, scope);
+    else
+    {
+      switch (detail.typeKind())
     {
       case A_Derived_Type_Definition:
       case A_Signed_Integer_Type_Definition:
@@ -2645,10 +2753,11 @@ namespace
         }
 
       default:
-        logWarn() << "unhandled opaque type declaration: " << tyKind
+        logWarn() << "unhandled opaque type declaration: " << detail.typeKind()
                   << std::endl;
         ADA_ASSERT (!FAIL_ON_ERROR(ctx));
         res = &mkTypeDecl(adaname.ident, mkOpaqueType(), scope);
+      }
     }
 
     // \todo put declaration tags on
@@ -2752,15 +2861,12 @@ namespace
                           AstContext ctx
                         )
   {
-    typedef std::pair<Element_ID, Type_Kinds> DefinitionData;
-
     logTrace() << "\n  abstract: " << decl.Has_Abstract
                << "\n  limited: " << decl.Has_Limited
                << "\n  private: " << decl.Has_Private
                << std::endl;
 
-    //~ DefinitionData          defdata = queryDefinitionDataID(decl.Corresponding_Type_Completion, ctx);
-    DefinitionData          defdata = queryDefinitionDataID(decl.Corresponding_Type_Declaration, ctx);
+    DefinitionDetails       defdata = queryDeclarationDetails(decl, ctx);
     NameData                adaname = singleName(decl, ctx);
     ADA_ASSERT (adaname.fullName == adaname.ident);
 
@@ -2777,12 +2883,12 @@ namespace
 
     Element_ID              id     = adaname.id();
     SgScopeStatement&       scope  = SG_DEREF(parentScope);
-    SgDeclarationStatement& sgdecl = createOpaqueDecl(adaname, decl, defdata.second, ctx.scope(scope));
+    SgDeclarationStatement& sgdecl = createOpaqueDecl(adaname, decl, defdata, ctx.scope(scope));
 
     attachSourceLocation(sgdecl, elem, ctx);
     privatize(sgdecl, isPrivate);
     recordNode(asisTypes(), id, sgdecl);
-    recordNode(asisTypes(), defdata.first, sgdecl); // rec @ def
+    recordNode(asisTypes(), defdata.id(), sgdecl); // rec @ def
 
     if (!discr)
     {
@@ -2879,39 +2985,6 @@ namespace
       return isSgFunctionDeclaration(generic->get_declaration());
 
     return nullptr;
-  }
-
-  void completeRoutineBody(Declaration_Struct& decl, SgBasicBlock& declblk, AstContext ctx)
-  {
-    ElemIdRange             hndlrs  = idRange(decl.Body_Exception_Handlers);
-    //~ logInfo() << "block ex handlers: " << hndlrs.size() << std::endl;
-
-    {
-      ElemIdRange range = idRange(decl.Body_Declarative_Items);
-
-      traverseIDs(range, elemMap(), ElemCreator{ctx.scope(declblk)});
-    }
-
-    TryBlockNodes           trydata = createTryBlockIfNeeded(hndlrs.size() > 0, declblk);
-    SgTryStmt*              trystmt = trydata.first;
-    SgBasicBlock&           stmtblk = trydata.second;
-
-    {
-      LabelAndLoopManager lblmgr;
-      ElemIdRange         range = idRange(decl.Body_Statements);
-
-      traverseIDs(range, elemMap(), StmtCreator{ctx.scope(stmtblk).labelsAndLoops(lblmgr)});
-    }
-
-    if (trystmt)
-    {
-      traverseIDs(hndlrs, elemMap(), ExHandlerCreator{ctx.scope(declblk), SG_DEREF(trystmt)});
-      placePragmas(decl.Pragmas, ctx, std::ref(declblk), std::ref(stmtblk));
-    }
-    else
-    {
-      placePragmas(decl.Pragmas, ctx, std::ref(declblk));
-    }
   }
 
 
@@ -3310,6 +3383,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         outer.append_statement(&sgnode);
         ADA_ASSERT (sgnode.get_parent() == &outer);
 
+#if OLD_CODE_REPLACED_WITH_COMPLETE_CALL_UNDERNEATH
         // declarative items
         {
           ElemIdRange range = idRange(decl.Body_Declarative_Items);
@@ -3335,13 +3409,23 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
             placePragmas(decl.Pragmas, ctx, std::ref(pkgbody));
           }
         }
+#endif
 
+        const bool hasBodyStatements = idRange(decl.Body_Statements).size() > 0;
+
+        completeDeclarationsWithHandledBlock( decl.Body_Declarative_Items,
+                                              decl.Body_Statements,
+                                              decl.Body_Exception_Handlers,
+                                              decl.Pragmas,
+                                              routineBlockHandler,
+                                              pkgbody,
+                                              hasBodyStatements /* create new block for statements if needed */,
+                                              ctx
+                                            );
 
         /*
          * unused nodes:
-               Pragma_Element_ID_List         Pragmas;
                Element_ID                     Corresponding_End_Name;
-               Exception_Handler_List         Body_Exception_Handlers;
                Declaration_ID                 Body_Block_Statement;
                bool                           Is_Name_Repeated;
                bool                           Is_Subunit;
@@ -3942,16 +4026,24 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         auto               spec    = getProtectedSpecForProtectedType(decl, ctx);
         NameData           adaname = singleName(decl, ctx);
         ADA_ASSERT (adaname.fullName == adaname.ident);
-        SgAdaProtectedTypeDecl& sgnode  = mkAdaProtectedTypeDecl(adaname.fullName, SG_DEREF(spec.first), ctx.scope());
+
+
+        Element_ID              nameId  = adaname.id();
+        SgDeclarationStatement* incomp  = findFirst(asisTypes(), nameId);
+        SgAdaProtectedTypeDecl* nondef  = isSgAdaProtectedTypeDecl(incomp);
+        ADA_ASSERT(!incomp || nondef);
+
+        SgAdaProtectedTypeDecl& sgnode  = nondef ? mkAdaProtectedTypeDecl(*nondef, SG_DEREF(spec.first), ctx.scope())
+                                                 : mkAdaProtectedTypeDecl(adaname.fullName, spec.first, ctx.scope());
 
         attachSourceLocation(sgnode, elem, ctx);
         privatize(sgnode, isPrivate);
         ctx.scope().append_statement(&sgnode);
         ADA_ASSERT (sgnode.get_parent() == &ctx.scope());
-        recordNode(asisTypes(), adaname.id(), sgnode);
+        recordNode(asisTypes(), adaname.id(), sgnode, nondef != nullptr);
         recordNode(asisDecls(), adaname.id(), sgnode);
         recordNode(asisDecls(), elem.ID, sgnode);
-        spec.second();
+        spec.second(); // complete the body
 
         /* unused fields:
              bool                           Has_Protected;
@@ -3978,16 +4070,24 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         auto               spec    = getTaskSpecForTaskType(decl, ctx);
         NameData           adaname = singleName(decl, ctx);
         ADA_ASSERT (adaname.fullName == adaname.ident);
-        SgAdaTaskTypeDecl& sgnode  = mkAdaTaskTypeDecl(adaname.fullName, SG_DEREF(spec.first), ctx.scope());
+
+        Element_ID              nameId  = adaname.id();
+        SgDeclarationStatement* incomp  = findFirst(asisTypes(), nameId);
+        SgAdaTaskTypeDecl*      nondef  = isSgAdaTaskTypeDecl(incomp);
+        ADA_ASSERT(!incomp || nondef);
+
+        SgAdaTaskTypeDecl& sgnode  = nondef ? mkAdaTaskTypeDecl(*nondef, SG_DEREF(spec.first), ctx.scope())
+                                            : mkAdaTaskTypeDecl(adaname.fullName, spec.first, ctx.scope());
 
         attachSourceLocation(sgnode, elem, ctx);
         privatize(sgnode, isPrivate);
         ctx.scope().append_statement(&sgnode);
         ADA_ASSERT (sgnode.get_parent() == &ctx.scope());
-        recordNode(asisTypes(), adaname.id(), sgnode);
-        recordNode(asisDecls(), adaname.id(), sgnode);
+
+        recordNode(asisTypes(), nameId, sgnode, nondef != nullptr);
+        recordNode(asisDecls(), nameId, sgnode);
         recordNode(asisDecls(), elem.ID, sgnode);
-        spec.second();
+        spec.second(); // complete the body
         /* unused fields:
              bool                           Has_Task;
              Element_ID                     Corresponding_End_Name;
@@ -4026,7 +4126,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         /* unused fields:
              bool                           Has_Protected;
              Element_ID                     Corresponding_End_Name;
-             Definition_ID                  Object_Declaration_View
              bool                           Is_Name_Repeated;
              Declaration_ID                 Corresponding_Declaration
              Declaration_ID                 Corresponding_Body
@@ -4073,14 +4172,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgDeclarationStatement& podecl = lookupNode(asisDecls(), declID);
         ADA_ASSERT (adaname.fullName == adaname.ident);
 
-        // \todo \review not sure why a task body could be independently created
-        //~ SgDeclarationStatement* tskdecl = findNode(asisDecls(), declID);
-        //~ if (tskdecl == nullptr)
-          //~ logError() << adaname.fullName << " task body w/o decl" << std::endl;
-
-        //~ SgAdaTaskBodyDecl&      sgnode  = tskdecl ? mkAdaTaskBodyDecl(*tskdecl, tskbody, ctx.scope())
-                                                  //~ : mkAdaTaskBodyDecl(adaname.fullName, tskbody, ctx.scope());
-
         SgAdaProtectedBodyDecl& sgnode  = mkAdaProtectedBodyDecl(podecl, pobody, ctx.scope());
 
         attachSourceLocation(sgnode, elem, ctx);
@@ -4090,20 +4181,20 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         //~ recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
 
+        {
+          ElemIdRange decls = idRange(decl.Protected_Operation_Items);
+
+          traverseIDs(decls, elemMap(), StmtCreator{ctx.scope(pobody)});
+        }
+
         placePragmas(decl.Pragmas, ctx, std::ref(pobody));
 
-        fillBody(decl, pobody, ctx);
-
         /* unused fields:
-             bool                           Has_Task;
-             Pragma_Element_ID_List         Pragmas;
-             Element_ID                     Corresponding_End_Name;
-             Exception_Handler_List         Body_Exception_Handlers;
-             Declaration_ID                 Body_Block_Statement;
-             bool                           Is_Name_Repeated;
-             Declaration_ID                 Corresponding_Declaration;
-             bool                           Is_Subunit;
-             Declaration_ID                 Corresponding_Body_Stub;
+               bool                           Has_Protected
+               Element_ID                     Corresponding_End_Name
+               bool                           Is_Name_Repeated
+               bool                           Is_Subunit
+               Declaration_ID                 Corresponding_Body_Stub
         */
         break;
       }
@@ -4136,13 +4227,19 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         placePragmas(decl.Pragmas, ctx, std::ref(tskbody));
 
-        fillBody(decl, tskbody, ctx);
+        completeDeclarationsWithHandledBlock( decl.Body_Declarative_Items,
+                                              decl.Body_Statements,
+                                              decl.Body_Exception_Handlers,
+                                              decl.Pragmas,
+                                              routineBlockHandler,
+                                              tskbody,
+                                              false /* same block for declarations and statements */,
+                                              ctx
+                                            );
 
         /* unused fields:
              bool                           Has_Task;
-             Pragma_Element_ID_List         Pragmas;
              Element_ID                     Corresponding_End_Name;
-             Exception_Handler_List         Body_Exception_Handlers;
              Declaration_ID                 Body_Block_Statement;
              bool                           Is_Name_Repeated;
              Declaration_ID                 Corresponding_Declaration;
@@ -4682,6 +4779,10 @@ getQualName(Element_Struct& elem, AstContext ctx)
 
     return NameData{ ident, ident, ctx.scope(), elem };
   }
+
+  if (idex.Expression_Kind != A_Selected_Component)
+    logError() << "Unexpected Expression_kind [getQualName]: " << idex.Expression_Kind
+               << std::endl;
 
   ADA_ASSERT (idex.Expression_Kind == A_Selected_Component);
   logKind("A_Selected_Component");
