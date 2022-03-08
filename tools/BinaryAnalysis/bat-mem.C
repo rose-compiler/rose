@@ -24,17 +24,14 @@ namespace {
 
 Sawyer::Message::Facility mlog;
 
-enum OutputFormat { OUT_NONE, OUT_HEXDUMP, OUT_SRECORDS, OUT_BINARY, OUT_VXCORE };
+enum class OutputFormat { UNSPECIFIED, NONE, HEXDUMP, SRECORDS, BINARY, VXCORE };
 
 struct Settings {
-    SerialIo::Format stateFormat;
-    OutputFormat outputFormat;
-    SRecord::Syntax srecordSyntax;
+    SerialIo::Format stateFormat = SerialIo::BINARY;
+    OutputFormat outputFormat = OutputFormat::UNSPECIFIED;
+    SRecord::Syntax srecordSyntax = SRecord::SREC_MOTOROLA;
     std::string outputPrefix;
     std::vector<AddressInterval> where;
-
-    Settings()
-        : stateFormat(SerialIo::BINARY), outputFormat(OUT_NONE), srecordSyntax(SRecord::SREC_MOTOROLA) {}
 };
 
 // Parses the command-line and returns the name of the input file if any (the ROSE binary state).
@@ -52,18 +49,19 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
 
     output.insert(Switch("format", 'F')
                   .argument("fmt", enumParser<OutputFormat>(settings.outputFormat)
-                            ->with("none", OUT_NONE)
-                            ->with("hexdump", OUT_HEXDUMP)
-                            ->with("srecord", OUT_SRECORDS)
-                            ->with("srecords", OUT_SRECORDS)
-                            ->with("binary", OUT_BINARY)
-                            ->with("vxcore", OUT_VXCORE))
+                            ->with("none", OutputFormat::NONE)
+                            ->with("hexdump", OutputFormat::HEXDUMP)
+                            ->with("srecord", OutputFormat::SRECORDS)
+                            ->with("srecords", OutputFormat::SRECORDS)
+                            ->with("binary", OutputFormat::BINARY)
+                            ->with("vxcore", OutputFormat::VXCORE))
                   .doc("Style of output to use when dumping memory.  The choices are:"
 
                        "@named{none}{Don't dump any data; just show basic information about the memory map. This "
-                       "is the default.}"
+                       "is the default if no addresses are specified with @s{where}.}"
 
-                       "@named{hexdump}{Show the data in a format similar to the @man{hexdump}{1} command.}"
+                       "@named{hexdump}{Show the data in a format similar to the @man{hexdump}{1} command. This is "
+                       "the default if addresses are specified with @s{where}.}"
 
                        "@named{srecords}{Emit the data as Motorola S-Records.}"
 
@@ -114,6 +112,9 @@ parseCommandLine(int argc, char *argv[], P2::Engine &engine, Settings &settings)
     }
     if (settings.where.empty())
         settings.where.push_back(AddressInterval::whole());
+    if (OutputFormat::UNSPECIFIED == settings.outputFormat)
+        settings.outputFormat = settings.where.empty() ? OutputFormat::NONE : OutputFormat::HEXDUMP;
+
     return input.empty() ? boost::filesystem::path("-") : input[0];
 }
 
@@ -220,7 +221,7 @@ main(int argc, char *argv[]) {
     MemoryMap::Ptr map = partitioner.memoryMap();
     ASSERT_not_null(map);
 
-    if (OUT_NONE == settings.outputFormat) {
+    if (OutputFormat::NONE == settings.outputFormat) {
         switch (partitioner.memoryMap()->byteOrder()) {
             case ByteOrder::ORDER_LSB:
                 std::cout <<"default byte order is little-endian\n";
@@ -234,7 +235,7 @@ main(int argc, char *argv[]) {
         }
         partitioner.memoryMap()->dump(std::cout);
 
-    } else if (OUT_VXCORE == settings.outputFormat) {
+    } else if (OutputFormat::VXCORE == settings.outputFormat) {
         if (settings.outputPrefix.empty()) {
             mlog[FATAL] <<"an output file must be specified for binary output formats\n";
             exit(1);
@@ -259,15 +260,17 @@ main(int argc, char *argv[]) {
                 const MemoryMap::Segment &segment = inode->value();
 
                 switch (settings.outputFormat) {
-                    case OUT_NONE:
+                    case OutputFormat::UNSPECIFIED:
+                        ASSERT_not_reachable("should have been initialized in parseCommandLine");
+                    case OutputFormat::NONE:
                         ASSERT_not_reachable("handled already above");
-                    case OUT_HEXDUMP:
+                    case OutputFormat::HEXDUMP:
                         HexDumper()(settings, map, interval, std::cout);
                         break;
-                    case OUT_SRECORDS:
+                    case OutputFormat::SRECORDS:
                         SRecordDumper(settings.srecordSyntax)(settings, map, interval, std::cout);
                         break;
-                    case OUT_BINARY: {
+                    case OutputFormat::BINARY: {
                         boost::filesystem::path outputName = settings.outputPrefix +
                                                              StringUtility::addrToString(interval.least()).substr(2) +
                                                              ".data";
@@ -286,7 +289,7 @@ main(int argc, char *argv[]) {
                                   <<"::" <<outputName <<"\n\n";
                         break;
                     }
-                    case OUT_VXCORE:
+                    case OutputFormat::VXCORE:
                         ASSERT_not_reachable("handled above");
                 }
                 if (interval.greatest() == where.greatest())
