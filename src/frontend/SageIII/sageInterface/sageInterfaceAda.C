@@ -613,6 +613,19 @@ namespace ada
     return n && isFunctionTryBlock(*n);
   }
 
+  bool isPackageTryBlock(const SgTryStmt& n)
+  {
+    return isSgAdaPackageBody(n.get_parent());
+  }
+
+
+  bool isPackageTryBlock(const SgTryStmt* n)
+  {
+    return n && isFunctionTryBlock(*n);
+  }
+
+
+
 
   bool hasUnknownDiscriminants(const SgAdaDiscriminatedTypeDecl& n)
   {

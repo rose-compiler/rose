@@ -1078,8 +1078,7 @@ namespace sg
     GEN_VISIT(SgAdaAncestorInitializer)
     GEN_VISIT(SgAdaDeltaConstraint)
     GEN_VISIT(SgAdaSubroutineType)
-
-
+    GEN_VISIT(SgAdaGenericInstanceSymbol)
 
 #if WITH_BINARY_NODES
     GEN_VISIT(SgAsmNullInstruction)

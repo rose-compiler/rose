@@ -125,13 +125,23 @@ namespace ada
   SgStatementPtrList::const_iterator declarationLimit(const SgBasicBlock* block);
   /// @}
 
-  /// returns true iff \ref n is an Ada try block
+  /// returns true iff \ref n is an Ada function try block
   /// \note an ada try block is a function block, whose non-declarative
-  ///       range includes exactly one try stmt. In this case, the begin
-  ///       and end block-syntax can be omitted.
+  ///       range includes exactly one try stmt. In this case, the unparser
+  ///       can omit the separate begin and end statement.
   /// @{
   bool isFunctionTryBlock(const SgTryStmt& n);
   bool isFunctionTryBlock(const SgTryStmt* n);
+  /// @}
+
+
+  /// returns true iff \ref n is an Ada package try block
+  /// \note an ada try block is a function block, whose non-declarative
+  ///       range includes exactly one try stmt. In this case, the unparser
+  ///       can omit the separate begin and end statement.
+  /// @{
+  bool isPackageTryBlock(const SgTryStmt& n);
+  bool isPackageTryBlock(const SgTryStmt* n);
   /// @}
 
 
