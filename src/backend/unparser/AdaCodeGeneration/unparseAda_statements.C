@@ -2246,7 +2246,9 @@ namespace
 
     void handle(const SgAdaPackageSpecDecl& n)
     {
-      res = ReturnType{"package ", false /* does not require type */, n.get_name(), n.get_definition()};
+      std::string prefix = si::ada::isGenericDecl(n) ? "generic package " : "package ";
+
+      res = ReturnType{prefix, false /* does not require type */, n.get_name(), n.get_definition()};
     }
 
     void handle(const SgAdaPackageBodyDecl& n)
@@ -2261,7 +2263,9 @@ namespace
 
     void handle(const SgFunctionDeclaration& n)
     {
-      std::string prefix = si::ada::isFunction(n.get_type()) ? "function " : "procedure ";
+      std::string prefix = si::ada::isGenericDecl(n) ? "generic " : "";
+
+      prefix += si::ada::isFunction(n.get_type()) ? "function " : "procedure ";
 
       res = ReturnType{prefix, false, n.get_name(), nullptr};
     }
@@ -2293,6 +2297,12 @@ namespace
     void handle(const SgVariableSymbol& n)
     {
       res = ReturnType{"", true /* requires type */, n.get_name(), nullptr};
+    }
+
+    void handle(const SgFunctionSymbol& n)
+    {
+      res = compute(n.get_declaration());
+      // res.renamedName() = n.get_name();
     }
 
     static

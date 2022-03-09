@@ -178,6 +178,12 @@ namespace ada
   bool isDecimalFixedType(const SgType& ty);
   /// @}
 
+  /// returns if dcl is a generic declaration
+  /// @{
+  SgAdaGenericDecl* isGenericDecl(const SgDeclarationStatement& n);
+  SgAdaGenericDecl* isGenericDecl(const SgDeclarationStatement* n);
+  /// @}
+
 
   /// returns the SgAdaDiscriminatedTypeDecl iff \ref n is discriminated
   ///         null otherwise

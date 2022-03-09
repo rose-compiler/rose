@@ -4412,7 +4412,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
           aliased = gendcl->get_declaration();
 
         SgScopeStatement&       scope   = ctx.scope();
-        SgType*                 pkgtype = nullptr;
+        SgType*                 pkgtype = &mkTypeVoid(); // or nullptr?
         SgAdaRenamingDecl&      sgnode  = mkAdaRenamingDecl(adaname.ident, SG_DEREF(aliased), pkgtype, scope);
 
         recordNode(asisDecls(), elem.ID, sgnode);
@@ -4548,6 +4548,51 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         break;
       }
 
+    case A_Generic_Procedure_Renaming_Declaration: // 8.5.5(2)
+    case A_Generic_Function_Renaming_Declaration:  // 8.5.5(2)
+      {
+        // \todo consider folding the code into generic_package_renaming
+
+        logKind(decl.Declaration_Kind == A_Generic_Function_Renaming_Declaration
+                      ? "A_Generic_Function_Renaming_Declaration"
+                      : "A_Generic_Procedure_Renaming_Declaration"
+               );
+
+        NameData                adaname = singleName(decl, ctx);
+
+        if (isInvalidId(decl.Renamed_Entity))
+        {
+          logWarn() << "skipping unknown package renaming: " << adaname.ident << "/" << adaname.fullName
+                    << ": " << elem.ID << " / " << decl.Renamed_Entity
+                    << std::endl;
+          return;
+        }
+
+        SgDeclarationStatement* aliased = &getAliasedID(decl.Renamed_Entity, ctx);
+        SgFunctionDeclaration*  fundecl = getFunctionDeclaration(aliased);
+
+        if (fundecl) aliased = fundecl;
+
+        SgScopeStatement&       scope   = ctx.scope();
+        SgType*                 pkgtype = &mkTypeVoid(); // or nullptr or function type?
+        SgAdaRenamingDecl&      sgnode  = mkAdaRenamingDecl(adaname.ident, *aliased, pkgtype, scope);
+
+        recordNode(asisDecls(), elem.ID, sgnode);
+        recordNode(asisDecls(), adaname.id(), sgnode);
+
+        attachSourceLocation(sgnode, elem, ctx);
+        privatize(sgnode, isPrivate);
+        scope.append_statement(&sgnode);
+        ADA_ASSERT (sgnode.get_parent() == &scope);
+
+        /* unhandled field
+             Declaration_ID                 Corresponding_Declaration;
+             Expression_ID                  Corresponding_Base_Entity;
+        */
+        break;
+      }
+
+
     case A_Package_Instantiation:                  // 12.3(2)
     case A_Procedure_Instantiation:                // 12.3(2)
     case A_Function_Instantiation:                 // 12.3(2)
@@ -4624,8 +4669,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case An_Element_Iterator_Specification:        // 5.5.2    -> Trait_Kinds
     case A_Return_Variable_Specification:          // 6.5
     case A_Return_Constant_Specification:          // 6.5
-    case A_Generic_Procedure_Renaming_Declaration: // 8.5.5(2)
-    case A_Generic_Function_Renaming_Declaration:  // 8.5.5(2)
     case A_Package_Body_Stub:                      // 10.1.3(4)
     case A_Task_Body_Stub:                         // 10.1.3(5)
     case A_Protected_Body_Stub:                    // 10.1.3(6)
