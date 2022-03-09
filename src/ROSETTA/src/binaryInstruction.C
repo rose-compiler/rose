@@ -6362,7 +6362,7 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
         /** Property: Symbols.
          *
-         *  List of symbols contained in this symbol table.  The acual list is stored in a separate AST instead of being stored
+         *  List of symbols contained in this symbol table.  The actual list is stored in a separate AST instead of being stored
          *  directly in this node due to limitations of ROSETTA.
          *
          * @{ */
@@ -9430,8 +9430,6 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /*************************************************************************************************************************
@@ -9599,6 +9597,108 @@ void Grammar::setUpBinaryInstructions() {
     };
 #endif
 
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /*************************************************************************************************************************
+     *                                         JVM Constant Pool
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmJvmConstantPool);
+    IS_SERIALIZABLE(AsmJvmConstantPool);
+
+#ifdef DOCUMENTATION
+    /** Represents an JVM constant pool.
+     *
+     *  The JVM Constant Pool is itself a section.  The entries of the table are stored with the section they describe rather
+     *  than storing them all in the SgAsmSectionTable node.  We can reconstruct the JVM Section Table since sections have
+     *  unique ID numbers that are their original indices in the JVM Section Table. */
+    class SgAsmJvmConstantPool: public SgAsmGenericSection {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmJvmConstantPool);
+#if defined(SgAsmJvmConstantPool_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+        }
+#endif
+
+    public:
+#ifdef _MSC_VER
+# pragma pack (1)
+#endif
+        /* General format for all constant_pool table entries. All fields are big endian. */
+        struct cp_info {
+            uint8_t tag;                    /* Kind of constant denoted by the entry */
+
+            cp_info(uint8_t t) : tag{t} {
+            }
+
+            /* Constant pool tags */
+            enum info_e {
+                CONSTANT_Utf8 = 1,
+                CONSTANT_Integer = 3,
+                CONSTANT_Float = 4,
+                CONSTANT_Long = 5,
+                CONSTANT_Double = 6,
+                CONSTANT_Class = 7,
+                CONSTANT_String = 8,
+                CONSTANT_Fieldref = 9,
+                CONSTANT_Methodref = 10,
+                CONSTANT_InterfaceMethodref = 11,
+                CONSTANT_NameAndType = 12,
+                CONSTANT_MethodHandle = 15,
+                CONSTANT_MethodType = 16,
+                CONSTANT_Dynamic = 17,
+                CONSTANT_InvokeDynamic = 18,
+                CONSTANT_Module = 19,
+                CONSTANT_Package = 20
+            };
+        };
+
+        /* Specific format for constant_pool table entries. */
+        struct CONSTANT_Class_info : cp_info {
+            uint16_t name_index;
+            CONSTANT_Class_info(SgAsmGenericHeader* h);
+        };
+        struct CONSTANT_Methodref_info : cp_info {
+            uint16_t class_index;
+            uint16_t name_and_type_index;
+            CONSTANT_Methodref_info(SgAsmGenericHeader* h);
+        }
+#if !defined(SWIG) && !defined(_MSC_VER)
+        __attribute__((packed))
+#endif
+        ;
+#ifdef _MSC_VER
+# pragma pack ()
+#endif
+
+    public:
+        explicit SgAsmJvmConstantPool(SgAsmGenericHeader *fhdr)
+            : SgAsmGenericSection(fhdr->get_file(), fhdr) {
+        }
+
+        /** Parses a JVM Constant Pool.
+         *
+         *  Parses a JVM constant pool and constructs and parses all sections reachable from the table. The section is
+         *  extended as necessary based on the number of entries and the size of each entry. Returns a pointer to this
+         *  object. */
+        virtual SgAsmJvmConstantPool *parse() override;
+
+#endif // SgAsmJvmConstantPool_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -14951,7 +15051,8 @@ void Grammar::setUpBinaryInstructions() {
                           AsmGenericHeader | AsmElfSection | AsmElfSectionTable | AsmElfSegmentTable | AsmPESection |
                           AsmPESectionTable | AsmDOSExtendedHeader | AsmCoffSymbolTable | AsmNESection | AsmNESectionTable |
                           AsmNENameTable | AsmNEModuleTable | AsmNEStringTable | AsmNEEntryTable | AsmNERelocTable |
-                          AsmLESection | AsmLESectionTable | AsmLENameTable | AsmLEPageTable | AsmLEEntryTable | AsmLERelocTable,
+                          AsmLESection | AsmLESectionTable | AsmLENameTable | AsmLEPageTable | AsmLEEntryTable | AsmLERelocTable |
+                          AsmJvmConstantPool,
                           "AsmGenericSection", "AsmGenericSectionTag", true);
     AsmGenericSection.setCppCondition("!defined(DOCUMENTATION)");
     AsmGenericSection.setAutomaticGenerationOfDestructor(false);
@@ -16493,6 +16594,7 @@ void Grammar::setUpBinaryInstructions() {
             FAMILY_UNSPECIFIED,                         /**< Unspecified family. */
             FAMILY_DOS,                                 /**< Microsoft DOS format. */
             FAMILY_ELF,                                 /**< Unix Executable and Linking Format. */
+            FAMILY_JVM,                                 /**< Java Virtual Machine (JVM) format. */
             FAMILY_LE,                                  /**< Microsft Linear Executable format. */
             FAMILY_LX,                                  /**< OS/2 LX (Windows 9x VxD device drivers, extension of LE). */
             FAMILY_NE,                                  /**< Microsoft New Executable Format. */
@@ -16510,6 +16612,7 @@ void Grammar::setUpBinaryInstructions() {
             ABI_HPUX,                                   /**< HP/UX */
             ABI_IRIX,                                   /**< IRIX */
             ABI_HURD,                                   /**< GNU/Hurd */
+            ABI_JVM,                                    /**< Java Virtual Machine (JVM). */
             ABI_LINUX,                                  /**< GNU/Linux */
             ABI_MODESTO,                                /**< Novell Modesto */
             ABI_MONTEREY,                               /**< Monterey project */
@@ -16633,6 +16736,8 @@ void Grammar::setUpBinaryInstructions() {
             ISA_ARM_ARM11               = 0x090d,       /**< ARMv{6,6T2,6KZ,6K} cores */
             ISA_ARM_Cortex              = 0x090e,       /**< Cortex-{A8,A9,A9 MPCore,R4(F),M3,M1} cores */
             ISA_ARM_A64                 = 0x090f,       /**< ARM AArch64 A64 instruction set. */
+
+            ISA_JVM                     = 0x0a00,       /**< Java Virtual Machine (JVM) instruction set. */
 
             // Others, not yet incorporated into this enum
             ISA_OTHER_Family            = 0xf000,
@@ -16784,7 +16889,6 @@ void Grammar::setUpBinaryInstructions() {
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 
     /*************************************************************************************************************************
      *                                         Root of all binary IR classes
