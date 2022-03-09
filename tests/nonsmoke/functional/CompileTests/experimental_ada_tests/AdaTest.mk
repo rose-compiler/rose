@@ -183,6 +183,8 @@ ADA_TRANSLATOR_FAILING_TESTS :=        \
   generic_function_declaration.ads     \
   generic_package_declaration.ads      \
   generic_package_declaration.adb      \
+  generic_procedure_renaming_declaration.ads  \
+  generic_function_renaming_declaration.ads   \
   inherited_primitive_operation.adb    \
   io.ads                               \
   iterate_range.adb                    \
@@ -244,9 +246,7 @@ ROSE_FAILING_ADA_TESTS :=                           \
   aspect_spec.ads                                   \
   deref_test.adb                                    \
   delay_until.adb                                   \
-  generic_function_renaming_declaration.ads         \
   generic_package_renaming_declaration.adb          \
-  generic_procedure_renaming_declaration.ads        \
   mpiuse.ads
 
 # defines tests that are supported by ASIS
