@@ -71,9 +71,6 @@ namespace CallTargetSet
           SgClassType *, ClassHierarchyWrapper *, SgMemberFunctionDeclaration *, bool , bool includePureVirtualFunc = false );
 
   //! Returns the list of all constructors that may get called via an initialization.
-  //! FIXME: There is a bug in this function. 
-  //! Consider the inheritance hierarchy A -> B -> C (C inherits from B, B inherits from A).
-  //! Let C have an explicit constructor, without explictly calling B's constructor. We will only return the constructor for C
   std::vector<SgFunctionDeclaration*> solveConstructorInitializer ( SgConstructorInitializer* sgCtorInit);
 
   // Populates functionList with Properties of all functions that may get called.
@@ -217,13 +214,13 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
     BOOST_FOREACH(SgNode *node, fdecl_nodes) {
         SgFunctionDeclaration *fdecl = isSgFunctionDeclaration(node);
         SgFunctionDeclaration *unique = isSgFunctionDeclaration(fdecl->get_firstNondefiningDeclaration());
-#if 0
+#if 0 //debug
         printf ("In buildCallGraph(): loop over functions from memory pool: fdecl  = %p = %s name = %s \n",fdecl,fdecl->class_name().c_str(),fdecl->get_name().str());
         printf ("In buildCallGraph(): loop over functions from memory pool: unique = %p = %s name = %s \n",unique,unique->class_name().c_str(),unique->get_name().str());
 #endif
         if (isSelected(pred)(unique) && hasGraphNodeFor(unique) == NULL)
            {
-#if 0
+#if 0 //debug
             printf ("Collect function calls in unique function: unique = %p \n",unique);
 #endif
             FunctionData fdata(unique, project, &classHierarchy); // computes functions called by unique
@@ -233,10 +230,11 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
             graphNode->set_SgNode(unique);
             graphNodes[unique] = graphNode;
             graph->addNode(graphNode);
+            printf("Added function %s %x\n", functionName.c_str(), unique);
           }
          else
           {
-#if 0
+#if 0 //debug
             printf ("Function not selected for processing: unique = %p \n",unique);
             printf ("   --- isSelected(pred)(unique) = %s \n",isSelected(pred)(unique) ? "true" : "false");
             printf ("   --- graphNodes.find(unique)==graphNodes.end() = %s \n",graphNodes.find(unique)==graphNodes.end() ? "true" : "false");
@@ -246,6 +244,8 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
 
     // Add edges to the graph
     BOOST_FOREACH(FunctionData &currentFunction, callGraphData) {
+        SgFunctionDeclaration* curFuncDecl = currentFunction.functionDeclaration;
+        std::string curFuncName = curFuncDecl->get_qualified_name().getString();
         SgGraphNode * srcNode = hasGraphNodeFor(currentFunction.functionDeclaration);
         ROSE_ASSERT(srcNode != NULL);
         std::vector<SgFunctionDeclaration*> & callees = currentFunction.functionList;

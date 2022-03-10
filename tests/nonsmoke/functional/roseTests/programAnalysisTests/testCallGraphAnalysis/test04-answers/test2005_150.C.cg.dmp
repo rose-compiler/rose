@@ -1,3 +1,2 @@
 X < int > ::X ->
-X < int > ::X < double >  ->
-main ->
+main -> X < int > ::X

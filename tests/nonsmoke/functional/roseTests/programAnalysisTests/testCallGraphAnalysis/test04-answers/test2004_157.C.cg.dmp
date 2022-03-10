@@ -6,5 +6,5 @@ A::operator[] ->
 B < int > ::B ->
 B < int > ::B ->
 B < int > ::operator[] ->
-foo -> A::A A::A A::operator[] B < int > ::operator[] foobar
+foo -> A::A A::A A::operator[] B < int > ::B B < int > ::B B < int > ::operator[] foobar
 foobar ->

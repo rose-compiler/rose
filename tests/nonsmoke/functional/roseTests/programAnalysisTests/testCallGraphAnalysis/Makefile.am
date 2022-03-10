@@ -1,3 +1,50 @@
+# HOW this testing works:
+# Programs:
+#
+# testCG: Tests src/midend/programAnalysis/CallGraphAnalysis/CallGraph.C 
+#         Generates a completely text and name based CallGraph.  Used by test01, test03
+#
+# testCallGraph: Tests src/midend/programAnalysis/CallGraphAnalysis/CallGraph.C 
+#                Generates 3 graphs, AST, CallGraph, and colored Call Graph.  
+#                Does not appear to be used by ANY tests
+#
+# testNewCallGraph: Tests src/midend/programAnalysis/CallGraphAnalysis/newCallGraph.C
+#                   newCallGraph appears to be an attempt by Dan to make a global call
+#                   graph analysis that doesn't rely on merge or sqlite, but he seems to 
+#                   have forgotten about it.  So Maybe we should delete it?
+#                   Has to be explicitly with make testNewCG_1 testNewCG_2 testNewCG_3
+#                   But only tests that it doesn't crash, and doesn't check any output
+#                   Output is textCallgraph and binaryCallGraph, which just seem to be 
+#                   side effects of NewCallGraph
+#
+# virtualFctsTester: NOT USED
+#                    virtualFctsTester generates test files with virtual function calls
+#                    to see is the Call Graph handles virtual calls correctly.
+#                    example: virtualFctsTester  4 5 0.5 `pwd`/foo
+#
+# stressTestFactory: Precompiled in the source directory tests/nonsmoke/functional/roseTests/programAnalysisTests/testCallGraphAnalysis
+#                    It generates a test input file with X functions each of which 
+#                    calls all X functions, so, The call graph should be a complete graph,
+# Directories:
+#
+# test01: A single test with multiple files from the test01-specimens directory.  
+#         Does not check output, only checks that it doesn't crash!
+#         Uses testCG and produces Callgraph.cg.dmp and test01.passed
+#
+# test02: Uses stressTestFactory to produce 2 complete graphs, sT10 and sT100.
+#         Does not check output, only checks that it doesn't crash!
+#         Uses testCG and produces sT10.C, sT10.cmp.dmp, sT10.cg.dmp, and test02-10.passed
+#         Uses testCG and produces sT100.C, sT100.cmp.dmp, sT100.cg.dmp, and test02-100.passed
+#
+# test03: Uses testCG on a set of specimens in test03-specimens, diffs results against 
+#         test03-answers
+#
+# test04: DOES NOT CURRENTLY RUN on EDG 5.0, Leek updated it for EDG 6.0 and gcc > 5.
+#         Test the specimens in the CompileTests/Cxx_tests for which we have answers in the 
+#         test04-answers 
+#
+# -Jim Leek (2022/03/10)
+
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 MOSTLYCLEANFILES =
 EXTRA_DIST =
@@ -85,7 +132,7 @@ test02: test02-10.passed test02-100.passed
 
 Test03SpecimenDir = $(srcdir)/test03-specimens
 Test03AnswerDir = $(srcdir)/test03-answers
-Test03Specimens = test1.C test2.C  test3.C  test4.C  test5.C test7.C test6.C test8.C
+Test03Specimens = test01.C test02.C  test03.C  test04.C  test05.C test07.C test06.C test08.C test09.C test10.C
 Test03Targets = $(addprefix t3_, $(addsuffix .passed, $(Test03Specimens)))
 TEST_TARGETS += $(Test03Targets)
 
@@ -103,10 +150,10 @@ Test04AnswerDir = $(srcdir)/test04-answers
 Test04Specimens = $(notdir $(patsubst %.cg.dmp, %, $(wildcard $(Test04AnswerDir)/*.C.cg.dmp)))
 Test04Targets = $(addprefix t4_, $(addsuffix .passed, $(Test04Specimens)))
 
-# DQ (1/19/2017): These is a problem for GNU 4.9.
-# if !ROSE_USING_GCC_VERSION_LATER_5_1
-if !ROSE_USING_GCC_VERSION_LATER_4_9
-if !ROSE_USE_EDG_VERSION_5_0
+#EDG 5.0 has problems with some of the Cxx compile tests, so we have to skip that.
+#And I updated the tests to reflect changes after gcc 4.9.  -Jim Leek (2022/03/10)
+if !ROSE_USE_EDG_VERSION_5_0  
+if ROSE_USING_GCC_VERSION_LATER_4_9
 TEST_TARGETS += $(Test04Targets)
 endif
 endif
