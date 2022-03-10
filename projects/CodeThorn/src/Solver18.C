@@ -52,11 +52,11 @@ bool Solver18::isPassThroughLabel(Label lab) {
 
 bool Solver18::isUnreachableLabel(Label lab) {
   // if code is unreachable no state is computed for it. In this case no entry is found for this label (with any callstring).
-  return (_abstractCSStateMapMap.find(lab.getId())==_abstractCSStateMapMap.end())&&lab!=_analyzer->getFlow()->getStartLabel()&&!isPassThroughLabel(lab);
+  return !isReachableLabel(lab);
 }
 
 bool Solver18::isReachableLabel(Label lab) {
-  return !isUnreachableLabel(lab);
+  return isRegisteredTransferFunctionInvoked(lab);
 }
 
 void Solver18::dumpAbstractStateMapMap() {
@@ -196,6 +196,18 @@ bool Solver18::callStringExistsAtLabel(CallString& cs, Label lab) {
   }
 }
 
+void Solver18::registerTransferFunctionInvoked(Label lab) {
+  _transferFunctionInvoked.insert(lab);
+}
+bool Solver18::isRegisteredTransferFunctionInvoked(Label lab) {
+  return _transferFunctionInvoked.find(lab)!=_transferFunctionInvoked.end();
+}
+
+std::list<EStatePtr> Solver18::transferEdgeEStateInPlace(Edge e,EStatePtr currentEStatePtr) {
+  registerTransferFunctionInvoked(currentEStatePtr->label()); // in presence of pass-through optimization this is necessary to "remember" pass-through labels for which no state is stored
+  return _analyzer->transferEdgeEStateInPlace(e,currentEStatePtr);
+}
+
 void Solver18::run() {
   ROSE_ASSERT(_analyzer);
   if(_analyzer->getOptionsRef().status)
@@ -257,7 +269,7 @@ void Solver18::run() {
       ROSE_ASSERT(outEdges.size()==1);
       Edge e=*outEdges.begin();
       
-      auto newEStateList0=_analyzer->transferEdgeEStateInPlace(e,currentEStatePtr);
+      auto newEStateList0=transferEdgeEStateInPlace(e,currentEStatePtr);
       ROSE_ASSERT(newEStateList0.size()<=1);
       if(newEStateList0.size()==0) {
         delete currentEStatePtr;
@@ -271,7 +283,7 @@ void Solver18::run() {
         if(edgeSet0.size()==1) {
           Edge e=*edgeSet0.begin();
           list<EStatePtr> newEStateList0;
-          newEStateList0=_analyzer->transferEdgeEStateInPlace(e,currentEStatePtr);
+          newEStateList0=transferEdgeEStateInPlace(e,currentEStatePtr);
           pathLen++;
           ROSE_ASSERT(newEStateList0.size()<=1);
           if(newEStateList0.size()==1) {
@@ -300,7 +312,9 @@ void Solver18::run() {
       EStatePtr oldEStatePtr=currentEStatePtr;
       setAbstractState(oldEStatePtr->label(),oldEStatePtr->getCallString(),oldEStatePtr);
       // store oldEStatePtr
-      currentEStatePtr=currentEStatePtr->cloneWithoutIO();
+      //currentEStatePtr=currentEStatePtr->cloneWithoutIO();
+      _workList->push(WorkListEntry(currentEStatePtr->label(),currentEStatePtr->getCallString()));
+      continue;
     }
 
     Flow edgeSet=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
@@ -320,7 +334,7 @@ void Solver18::run() {
       ROSE_ASSERT(newEState);
       ROSE_ASSERT(newEState->pstate());
 
-      list<EStatePtr> newEStateList=_analyzer->transferEdgeEStateInPlace(e,newEState);
+      list<EStatePtr> newEStateList=transferEdgeEStateInPlace(e,newEState);
       if(newEStateList.size()==0) {
         delete newEState;
         continue;

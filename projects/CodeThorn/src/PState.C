@@ -462,7 +462,7 @@ void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
     conditionalApproximateRawWriteToMemoryLocation(abstractMemLoc,abstractValue,strongUpdate);
   } else if(abstractMemLoc.isTop()) {
     //skip (crude memory abstraction)
-    //combineValueAtAllMemoryLocations(abstractValue);
+    combineValueAtAllMemoryLocations(abstractValue);
   } else if(abstractMemLoc.isPtrSet()) {
     // call recursively for all values in the set
     //cout<<"DEBUG: ptr set recursion."<<endl;

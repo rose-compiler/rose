@@ -4160,8 +4160,9 @@ namespace CodeThorn {
     memLoc=conditionallyApplyArrayAbstraction(memLoc);
     notifyReadWriteListenersOnWriting(lab,pstate,memLoc,newValue);
 
-    if(memLoc.isTop()) {
+    if(memLoc.isTop()||memLoc.isBot()) {
       // TODO1: model writing to arbitrary mem loc
+      pstate->writeTopToAllMemoryLocations();
       return;
     } else if(!pstate->memLocExists(memLoc)) {
       //SAWYER_MESG(logger[TRACE])<<"EStateTransferFunctions::writeToMemoryLocation: memloc does not exist"<<endl;
