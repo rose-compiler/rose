@@ -710,6 +710,12 @@ namespace
     if (const SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(&n))
       return unitDefinition(SG_DEREF(gendcl->get_declaration()));
 
+    if (/*const SgAdaGenericInstanceDecl* gendcl =*/ isSgAdaGenericInstanceDecl(&n))
+    {
+      // \todo should be the body of the instantiation specification
+      return nullptr;
+    }
+
     // should not happen with a full Ada implemention
     //   SgImportStatement is used when the package is not available
     //   => do nothing for now

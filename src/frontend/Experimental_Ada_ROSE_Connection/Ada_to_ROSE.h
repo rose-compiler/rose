@@ -95,6 +95,9 @@ map_t<int, SgDeclarationStatement*>& asisDecls();
 /// returns a mapping from Element_ID to ROSE type declaration
 map_t<int, SgDeclarationStatement*>& asisTypes();
 
+/// returns a mapping from Element_ID to blocks
+map_t<int, SgBasicBlock*>& asisBlocks();
+
 //
 // the following functions provide access to elements that are
 // defined with the standard package, which is currently not
