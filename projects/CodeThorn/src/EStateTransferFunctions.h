@@ -292,7 +292,7 @@ namespace CodeThorn {
     bool isMemberVariable(CodeThorn::VariableId varId);
     // checks if value is a null pointer. If it is 0 it records a null pointer violation at provided label.
     // returns true if execution may continue, false if execution definitely does not continue.
-    bool checkAndRecordNullPointer(AbstractValue value, Label label);
+    bool checkAndRecordNullPointer(AbstractValue value, EStatePtr estate);
 
     enum InterpreterMode getInterpreterMode();
     void setInterpreterMode(enum InterpreterMode);

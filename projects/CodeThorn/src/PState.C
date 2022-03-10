@@ -551,7 +551,7 @@ bool PState::isApproximatedBy(CodeThorn::PState& other) const {
   case 0:
     return PState::isApproximatedBy0(other);
   case 1:
-    return PState::isApproximatedBy1(other);
+    return PState::isApproximatedBy0(other);
   default:
     cerr<<"Error: PState::isApproximatedBy: unsupported domain abstraction variant "<<AbstractValue::domainAbstractionVariant<<endl;
     exit(1);

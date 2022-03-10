@@ -152,11 +152,17 @@ namespace CodeThorn {
   }
 
   bool EStateTransferFunctions::isApproximatedBy(EStatePtr es1, EStatePtr es2) {
+    if(_analyzer->getOptionsRef().info.printTransferFunctionInfo) {
+      cout<<"transfer: isApproximatedBy("<<es1->label().toString()<<","<<es1->label().toString()<<") ==> "<<es1->isApproximatedBy(es2)<<endl;
+    }
     return es1->isApproximatedBy(es2);
   }
 
   // merges es2 into es1
   void EStateTransferFunctions::combineInPlace1st(EStatePtr es1, EStatePtr es2) {
+    if(_analyzer->getOptionsRef().info.printTransferFunctionInfo) {
+      cout<<"transfer: combineInPlace1st("<<es1->label().toString()<<","<<es1->label().toString()<<")"<<endl;
+    }
     ROSE_ASSERT(es1->label()==es2->label());
     if(es1->getCallString()!=es2->getCallString()) {
       if(_analyzer->getOptionOutputWarnings()) {
@@ -1835,13 +1841,7 @@ namespace CodeThorn {
             AbstractValue ptr=AbstractValue::createAddressOfArray(arrayVarId);
             if(pstate2->memLocExists(ptr)) {
               arrayPtrValue=readFromMemoryLocation(estate->label(),pstate2,ptr);
-              // convert integer to VariableId
-              if(arrayPtrValue.isTop()||arrayPtrValue.isBot()) {
-                SAWYER_MESG(logger[WARN])<<"Warning: "+nextNodeToAnalyze2->unparseToString()+arrayPtrValue.toString(getVariableIdMapping())+" array index is top or bot."<<endl;
-              }
-              // logger[DEBUG]<<"defering pointer-to-array: ptr:"<<getVariableIdMapping()->variableName(arrayVarId);
             } else {
-              SAWYER_MESG(logger[WARN])<<"Warning: lhs array access: pointer variable does not exist in PState:"+ptr.toString()<<endl;;
               arrayPtrValue=AbstractValue::createTop();
             }
           } else if(getVariableIdMapping()->isOfReferenceType(arrayVarId)) {
@@ -1849,7 +1849,6 @@ namespace CodeThorn {
             if(pstate2->memLocExists(ptr)) {
               arrayPtrValue=readFromReferenceMemoryLocation(estate->label(),pstate2,ptr);
             } else {
-              SAWYER_MESG(logger[WARN])<<"Warning: lhs array access: address of array does not exist in PState:"+ptr.toString()<<endl;;
               arrayPtrValue=AbstractValue::createTop();
             }
           } else {
@@ -1862,20 +1861,15 @@ namespace CodeThorn {
             arrayPtrValue=readFromMemoryLocation(estate->label(),pstate2,arrayVarId); // pointer value of array function parameter
           }
           AbstractValue elementSize=getMemoryRegionAbstractElementSize(arrayPtrValue);
-
-          if(elementSize.isTop()) {
-            logger[WARN]<<"evalAssignOpMemUpdates: element size is unknown (top). Array element address becomes top. arrayptrvalue:"<<arrayPtrValue.toString()<<endl;
-          }
-
           AbstractValue arrayElementAddr=AbstractValue::operatorAdd(arrayPtrValue,indexValue,elementSize);
           if(arrayElementAddr.isBot()) {
             // inaccessible memory location, return empty estate list
-            return memoryUpdateList;
+            //return memoryUpdateList;
           }
-          //cout<<"DEBUG: P10:"<<arrayPtrValue.toString()<<":"<<indexValue.toString()<<":"<<elementSize.toString()<<":"<<arrayElementAddr.toString()<<endl;
           memoryUpdateList.push_back(make_pair(estate,make_pair(arrayElementAddr,rhsRes.result)));
         } else if(isSgAddressOfOp(lhs)) {
           // address of op, need to compute an l-value and use as address
+          ROSE_ASSERT(false);
         } else {
           SingleEvalResult arrExpRes=evaluateExpression(arrExp,currentEState);
           AbstractValue arrPtrValue=arrExpRes.value();
@@ -1884,7 +1878,7 @@ namespace CodeThorn {
           AbstractValue elementSize=getMemoryRegionAbstractElementSize(arrPtrValue);
           AbstractValue arrayElementAddr=AbstractValue::operatorAdd(arrPtrValue,indexValue,elementSize);
           if(arrayElementAddr.isBot()) {
-            return memoryUpdateList; // inaccessible memory location, return empty estate list
+            //return memoryUpdateList; // inaccessible memory location, return empty estate list
           }
           memoryUpdateList.push_back(make_pair(estate,make_pair(arrayElementAddr,rhsRes.result)));
         }
@@ -1895,7 +1889,6 @@ namespace CodeThorn {
       AbstractValue lhsPointerValue=resLhs.result;
       if(lhsPointerValue.isNullPtr()) {
         notifyReadWriteListenersOnReading(estatePtr->label(),estatePtr->pstate(),lhsPointerValue);
-        //return estateList;
         if(_analyzer->getOptionsRef().nullPointerDereferenceKeepGoing) {
           // no state can follow, but as requested keep going without effect
         } else {
@@ -1914,18 +1907,15 @@ namespace CodeThorn {
           // skip write access, just create new state (no effect)
           // nothing to do, as it request to not update the state in this case
         } else {
-          SAWYER_MESG(logger[WARN])<<"not a pointer value (or top) in dereference operator: lhs-value:"<<lhsPointerValue.toLhsString(getVariableIdMapping())<<" lhs: "<<lhs->unparseToString()<<" : assuming change of any memory location."<<endl;
-          //recordPotentialNullPointerDereferenceLocation(estatePtr->label()); // notify?
           // specific case a pointer expr evaluates to top. Dereference operation
           // potentially modifies any memory location in the state.
           // iterate over all elements of the state and merge with rhs value
-          memoryUpdateList.push_back(make_pair(estatePtr,make_pair(lhsPointerValue,rhsRes.result))); // lhsPointerValue is TOP!!!
+          memoryUpdateList.push_back(make_pair(estatePtr,make_pair(lhsPointerValue,rhsRes.result)));
         }
       } else {
         memoryUpdateList.push_back(make_pair(estatePtr,make_pair(lhsPointerValue,rhsRes.result)));
       }
     } else {
-      //cout<<"DEBUG: else (no var, no ptr) ... "<<endl;
       if(_analyzer->getSkipArrayAccesses()&&isSgPointerDerefExp(lhs)) {
         SAWYER_MESG(logger[WARN])<<"skipping pointer dereference: "<<lhs->unparseToString()<<endl;
       } else {
@@ -3175,7 +3165,7 @@ namespace CodeThorn {
 
     // L->R : L evaluates to pointer value (address), R evaluates to offset value (a struct member always evaluates to an offset)
     AbstractValue referencedAddress=lhsResult.result;
-    bool continueExec=checkAndRecordNullPointer(referencedAddress, estate->label());
+    bool continueExec=checkAndRecordNullPointer(referencedAddress, estate);
     if(continueExec) {
       SAWYER_MESG(logger[TRACE])<<"ArrowOp: referencedAddress(lhs):"<<referencedAddress.toString(_variableIdMapping)<<endl;
       AbstractValue offset=rhsResult.result;
@@ -3241,14 +3231,15 @@ namespace CodeThorn {
     return res;
   }
 
-  // returns true if execution should continue, otherwise false
-  bool EStateTransferFunctions::checkAndRecordNullPointer(AbstractValue derefOperandValue, Label label) {
+  // returns true if it is definitely a null pointer
+  bool EStateTransferFunctions::checkAndRecordNullPointer(AbstractValue derefOperandValue, EStatePtr estate) {
     if(derefOperandValue.isTop()) {
-      return true;
-    } else if(derefOperandValue.isNullPtr()) {
+      notifyReadWriteListenersOnReading(estate->label(),estate->pstate(),derefOperandValue);      
       return false;
+    } else if(derefOperandValue.isNullPtr()) {
+      return true;
     }
-    return true;
+    return false;
   }
 
   SingleEvalResult EStateTransferFunctions::evalAddressOfOp(SgAddressOfOp* node,
@@ -3286,8 +3277,13 @@ namespace CodeThorn {
     }
 
     // null pointer check
-    bool continueExec=checkAndRecordNullPointer(derefOperandValue, estate->label());
-    if(continueExec) {
+    bool isDefinitelyNullPtr=checkAndRecordNullPointer(derefOperandValue, estate);
+    if(isDefinitelyNullPtr) {
+      SingleEvalResult empty;
+      notifyReadWriteListenersOnReading(estate->label(),estate->pstate(),derefOperandValue);
+      empty.init(estate,CodeThorn::Bot()); // indicates unreachable, could also mark state as unreachable
+      return empty;
+    } else {
       switch(mode) {
       case EStateTransferFunctions::MODE_VALUE :res.result=readFromMemoryLocation(estate->label(),estate->pstate(),derefOperandValue);break;
       case EStateTransferFunctions::MODE_ADDRESS:res.result=derefOperandValue;;break;
@@ -3296,16 +3292,6 @@ namespace CodeThorn {
         exit(1);
       }
       return res;
-    } else {
-      // Alternative to above null pointer dereference recording: build
-      // proper error state and check error state in solver.  once this
-      // is added above null pointer recording should be adapated to use
-      // the generated error state.
-      // TODO: create null-pointer deref error state
-      SingleEvalResult empty;
-      notifyReadWriteListenersOnReading(estate->label(),estate->pstate(),derefOperandValue);
-      empty.init(estate,CodeThorn::Bot()); // indicates unreachable, could also mark state as unreachable
-      return empty;
     }
   }
 

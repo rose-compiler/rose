@@ -117,6 +117,14 @@ bool Solver18::getAbstractionConsistencyCheckFlag() {
   return _abstractionConsistencyCheckEnabled;
 }
 
+void Solver18::setPassThroughOptimizationFlag(bool flag) {
+  _passThroughOptimizationEnabled=flag;
+}
+
+bool Solver18::getPassThroughOptimizationFlag() {
+  return _passThroughOptimizationEnabled;
+}
+
 void Solver18::setAbstractState(CodeThorn::Label lab, CodeThorn::CallString cs, EStatePtr estate) {
   ROSE_ASSERT(lab==estate->label());
   ROSE_ASSERT(cs==estate->getCallString());
@@ -189,11 +197,11 @@ bool Solver18::callStringExistsAtLabel(CallString& cs, Label lab) {
 }
 
 void Solver18::run() {
-  //setAbstractionConsistencyCheckFlag(true);
-  SAWYER_MESG(logger[INFO])<<"Running solver "<<getId()<<" (sharedpstates:"<<_analyzer->getOptionsRef().sharedPStates<<")"<<endl;
   ROSE_ASSERT(_analyzer);
+  if(_analyzer->getOptionsRef().status)
+    cout<<"Running solver "<<getId()<<" (pass-through states: "<<_passThroughOptimizationEnabled<<" abstraction check: "<<_abstractionConsistencyCheckEnabled<<" sharedpstates:"<<_analyzer->getOptionsRef().sharedPStates<<")"<<endl;
   if(_analyzer->getOptionsRef().abstractionMode==0) {
-    cerr<<"Error: abstraction mode is 0, but >= 1 required."<<endl;
+    cerr<<"Error: Solver18: abstraction mode is 0, but >= 1 required."<<endl;
     exit(1);
   }
   if(_analyzer->getOptionsRef().explorationMode!="topologic-sort") {
@@ -234,7 +242,7 @@ void Solver18::run() {
     bool bbClonedState=false;
     //cout<<"DEBUG: at: "<<currentEStatePtr->label().toString()<<endl;
 #if 1
-    if(_analyzer->getFlow()->singleSuccessorIsPassThroughLabel(currentEStatePtr->label(),_analyzer->getLabeler())) {
+    if(_passThroughOptimizationEnabled && _analyzer->getFlow()->singleSuccessorIsPassThroughLabel(currentEStatePtr->label(),_analyzer->getLabeler())) {
       // transfer to successor
       EStatePtr newEStatePtr=currentEStatePtr->cloneWithoutIO();
       currentEStatePtr=newEStatePtr;
@@ -251,7 +259,7 @@ void Solver18::run() {
       }
       ROSE_ASSERT(newEStateList0.size()==1);
       currentEStatePtr=*newEStateList0.begin();
-      while(true && isPassThroughLabel(currentEStatePtr->label())) {
+      while(_passThroughOptimizationEnabled && isPassThroughLabel(currentEStatePtr->label())) {
         //cout<<"DEBUG: pass through: "<<currentEStatePtr->label().toString()<<endl;
         Flow edgeSet0=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
         if(edgeSet0.size()==1) {
@@ -287,7 +295,6 @@ void Solver18::run() {
       setAbstractState(oldEStatePtr->label(),oldEStatePtr->getCallString(),oldEStatePtr);
       // store oldEStatePtr
       currentEStatePtr=currentEStatePtr->cloneWithoutIO();
-      //delete oldEStatePtr;
     }
 
     Flow edgeSet=_analyzer->getFlow()->outEdges(currentEStatePtr->label());

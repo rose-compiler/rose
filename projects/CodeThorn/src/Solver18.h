@@ -48,6 +48,8 @@ namespace CodeThorn {
     void dumpAbstractStateMapMap();
     void setAbstractionConsistencyCheckFlag(bool flag);
     bool getAbstractionConsistencyCheckFlag();
+    void setPassThroughOptimizationFlag(bool flag);
+    bool getPassThroughOptimizationFlag();
   private:
     static Sawyer::Message::Facility logger;
     static bool _diagnosticsInitialized;
@@ -64,6 +66,7 @@ namespace CodeThorn {
     size_t _numberOfStates=0;
     void printAllocationStats(string text);
     bool _abstractionConsistencyCheckEnabled=false; // slow, only used for debugging
+    bool _passThroughOptimizationEnabled=true;
   };
 
 } // end of namespace CodeThorn

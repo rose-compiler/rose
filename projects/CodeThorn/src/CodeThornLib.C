@@ -182,6 +182,7 @@ namespace CodeThorn {
       case 18 :  {
         Solver18* solver18= new Solver18(); 
         solver18->setAbstractionConsistencyCheckFlag(ctOpt.abstractionConsistencyCheck);
+        solver18->setPassThroughOptimizationFlag(ctOpt.passThroughOptimization);
         solver=solver18;
         break; // does not create a TS
       }
