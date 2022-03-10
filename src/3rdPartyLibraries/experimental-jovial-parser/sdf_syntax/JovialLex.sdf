@@ -19,6 +19,9 @@ exports
     CharacterTypeDesc          %% 2.1.1.5
     PointerTypeDesc            %% 2.1.1.7
     StrucSpecT                 %% 2.1.2.2
+    NPackSpec                  %% 2.1.2.3
+    MPackSpec                  %% 2.1.2.3
+    DPackSpec                  %% 2.1.2.3
     DefString                  %% 2.4
     ControlLetter              %% 4.2
     MODOperator                %% 5.1
@@ -62,6 +65,12 @@ exports
 %% 2.1.2.2
 %%
   'T'                       -> StrucSpecT
+
+%% 2.1.2.3
+%%
+  'N'                       -> NPackSpec
+  'M'                       -> MPackSpec
+  'D'                       -> DPackSpec
 
 %%%%%%%%%%
 %% 2.4 DEFINE DECLARATIONS
@@ -302,6 +311,10 @@ exports
 
     PointerTypeDesc   -/- [A-Za-z0-9]
     StrucSpecT        -/- [A-Za-z0-9]
+
+    NPackSpec         -/- [A-Za-z0-9]
+    MPackSpec         -/- [A-Za-z0-9]
+    DPackSpec         -/- [A-Za-z0-9]
 
     ControlLetter     -/- [A-Za-z0-9]
 

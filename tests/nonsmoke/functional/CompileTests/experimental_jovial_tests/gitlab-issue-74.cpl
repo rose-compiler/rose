@@ -1,0 +1,13 @@
+% Testing PackingSpecifier %
+START
+COMPOOL JUSTWHY;
+TYPE mpack'spec STATUS (V(m1),V(m2));
+TYPE npack'spec STATUS (V(n1),V(n2));
+TYPE dpack'spec STATUS (V(d1),V(d2));
+DEF BLOCK BLOCK1;
+BEGIN
+   TABLE mtable(1:4) T mpack'spec;
+   TABLE ntable(1:4) T npack'spec;
+   TABLE dtable(1:4) T dpack'spec;
+END
+TERM
