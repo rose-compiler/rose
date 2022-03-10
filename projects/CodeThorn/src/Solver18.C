@@ -199,7 +199,13 @@ bool Solver18::callStringExistsAtLabel(CallString& cs, Label lab) {
 void Solver18::run() {
   ROSE_ASSERT(_analyzer);
   if(_analyzer->getOptionsRef().status)
-    cout<<"Running solver "<<getId()<<" (pass-through states: "<<_passThroughOptimizationEnabled<<" abstraction check: "<<_abstractionConsistencyCheckEnabled<<" sharedpstates:"<<_analyzer->getOptionsRef().sharedPStates<<")"<<endl;
+    cout<<"Running solver "<<getId()
+        <<" (pass-through states:"<<_passThroughOptimizationEnabled
+        <<" domain abstr. variant:"<<AbstractValue::domainAbstractionVariant
+        <<" normalization level:"<<_analyzer->getOptionsRef().normalizeLevel
+        <<" abstraction check:"<<_abstractionConsistencyCheckEnabled
+        <<" sharedpstates:"<<_analyzer->getOptionsRef().sharedPStates
+        <<")"<<endl;
   if(_analyzer->getOptionsRef().abstractionMode==0) {
     cerr<<"Error: Solver18: abstraction mode is 0, but >= 1 required."<<endl;
     exit(1);
