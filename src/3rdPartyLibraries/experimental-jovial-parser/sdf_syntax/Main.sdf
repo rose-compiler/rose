@@ -828,9 +828,9 @@ context-free syntax
     OptTablePreset ';'
     OrdinaryTableBody          -> OrdinaryEntrySpecifier {cons("OrdinaryEntrySpecifierBody")}
 
-  'N'                          -> PackingSpecifier       {cons("PackingSpecifierN")}
-  'M'                          -> PackingSpecifier       {cons("PackingSpecifierM")}
-  'D'                          -> PackingSpecifier       {cons("PackingSpecifierD")}
+  NPackSpec                    -> PackingSpecifier       {cons("PackingSpecifier")}
+  MPackSpec                    -> PackingSpecifier       {cons("PackingSpecifier")}
+  DPackSpec                    -> PackingSpecifier       {cons("PackingSpecifier")}
 
   OrdinaryTableItemDeclaration -> OrdinaryTableBody
   'BEGIN'

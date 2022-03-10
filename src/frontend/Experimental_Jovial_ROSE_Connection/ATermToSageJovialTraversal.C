@@ -2090,13 +2090,13 @@ ATbool ATermToSageJovialTraversal::traverse_OptPackingSpecifier(ATerm term, Pack
    if (ATmatch(term, "no-packing-specifier()")) {
       packing_spec = e_packing_spec_unknown;
    }
-   else if (ATmatch(term, "PackingSpecifierN()")) {
+   else if (ATmatch(term, "PackingSpecifier(\"N\")")) {
       packing_spec = e_packing_spec_none;
    }
-   else if (ATmatch(term, "PackingSpecifierM()")) {
+   else if (ATmatch(term, "PackingSpecifier(\"M\")")) {
       packing_spec = e_packing_spec_mixed;
    }
-   else if (ATmatch(term, "PackingSpecifierD()")) {
+   else if (ATmatch(term, "PackingSpecifier(\"D\")")) {
       packing_spec = e_packing_spec_dense;
    }
    else return ATfalse;
