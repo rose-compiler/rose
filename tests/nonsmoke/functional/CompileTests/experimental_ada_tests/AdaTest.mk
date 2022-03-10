@@ -244,6 +244,7 @@ ROSE_PASSING_ADA_TESTS :=                           \
 
 ROSE_FAILING_ADA_TESTS :=                           \
   aspect_spec.ads                                   \
+  blockreference.adb                                \
   deref_test.adb                                    \
   delay_until.adb                                   \
   generic_package_renaming_declaration.adb          \

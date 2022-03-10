@@ -55,6 +55,8 @@ namespace
   /// stores a mapping from Element_ID to ROSE type declaration
   map_t<int, SgDeclarationStatement*> asisTypesMap;
 
+  map_t<int, SgBasicBlock*> asisBlocksMap;
+
   /// stores a mapping from string to builtin type nodes
   map_t<AdaIdentifier, SgType*> adaTypesMap;
 
@@ -68,13 +70,14 @@ namespace
 } // anonymous namespace
 
 //~ map_t<int, SgDeclarationStatement*>&        asisUnits() { return asisUnitsMap; }
-map_t<int, SgInitializedName*>&              asisVars()  { return asisVarsMap;  }
-map_t<int, SgInitializedName*>&              asisExcps() { return asisExcpsMap; }
-map_t<int, SgDeclarationStatement*>&         asisDecls() { return asisDeclsMap; }
-map_t<int, SgDeclarationStatement*>&         asisTypes() { return asisTypesMap; }
-map_t<AdaIdentifier, SgType*>&               adaTypes()  { return adaTypesMap;  }
-map_t<AdaIdentifier, SgInitializedName*>&    adaExcps()  { return adaExcpsMap;  }
-map_t<AdaIdentifier, SgAdaPackageSpecDecl*>& adaPkgs()   { return adaPkgsMap;   }
+map_t<int, SgInitializedName*>&              asisVars()   { return asisVarsMap;   }
+map_t<int, SgInitializedName*>&              asisExcps()  { return asisExcpsMap;  }
+map_t<int, SgDeclarationStatement*>&         asisDecls()  { return asisDeclsMap;  }
+map_t<int, SgDeclarationStatement*>&         asisTypes()  { return asisTypesMap;  }
+map_t<int, SgBasicBlock*>&                   asisBlocks() { return asisBlocksMap; }
+map_t<AdaIdentifier, SgType*>&               adaTypes()   { return adaTypesMap;   }
+map_t<AdaIdentifier, SgInitializedName*>&    adaExcps()   { return adaExcpsMap;   }
+map_t<AdaIdentifier, SgAdaPackageSpecDecl*>& adaPkgs()    { return adaPkgsMap;    }
 
 map_t<std::pair<const SgFunctionDeclaration*, const SgTypedefType*>, SgAdaInheritedFunctionSymbol*>&
 inheritedSymbols()
@@ -83,7 +86,7 @@ inheritedSymbols()
 }
 
 ASIS_element_id_to_ASIS_MapType&     elemMap()   { return asisMap;      }
-ASIS_element_id_to_ASIS_MapType&     unitMap()   { return asisMap;      }
+//~ ASIS_element_id_to_ASIS_MapType&     unitMap()   { return asisMap;      }
 
 
 //
@@ -307,12 +310,13 @@ namespace
   {
     //~ asisUnits().clear();
     elemMap().clear();
-    unitMap().clear();
+    //~ unitMap().clear();
 
     asisVars().clear();
     asisExcps().clear();
     asisDecls().clear();
     asisTypes().clear();
+    asisBlocks().clear();
     adaTypes().clear();
     adaExcps().clear();
     adaPkgs().clear();

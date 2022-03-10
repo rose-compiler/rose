@@ -1797,6 +1797,7 @@ namespace
 
           SgBasicBlock& sgnode   = mkBasicBlock();
 
+          recordNode(asisBlocks(), elem.ID, sgnode);
           completeStmt(sgnode, elem, ctx, stmt.Statement_Identifier);
 
           completeDeclarationsWithHandledBlock( stmt.Block_Declarative_Items,
@@ -2823,7 +2824,12 @@ namespace
     // many definitions are handled else where
     // here we want to convert the rest that can appear in declarative context
 
-    SgAdaDiscriminatedTypeDecl& sgnode = mkAdaDiscriminatedTypeDecl(ctx.scope());
+    SgScopeStatement&           scope  = ctx.scope();
+    SgAdaDiscriminatedTypeDecl& sgnode = mkAdaDiscriminatedTypeDecl(scope);
+
+    scope.append_statement(&sgnode);
+    ROSE_ASSERT(sgnode.get_parent());
+
     Definition_Struct&          def = elem.The_Union.Definition;
 
     if (def.Definition_Kind == A_Known_Discriminant_Part)
@@ -2875,9 +2881,6 @@ namespace
 
     if (discr)
     {
-      parentScope->append_statement(discr);
-      ROSE_ASSERT(discr->get_parent());
-
       parentScope = discr->get_discriminantScope();
     }
 
@@ -3810,9 +3813,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         if (discr)
         {
-          parentScope->append_statement(discr);
-          ROSE_ASSERT(discr->get_parent());
-
           parentScope = discr->get_discriminantScope();
         }
 
