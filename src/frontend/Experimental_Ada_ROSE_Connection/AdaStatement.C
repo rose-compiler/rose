@@ -3820,6 +3820,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         TypeData                ty   = getTypeFoundation(adaname.ident, decl, ctx.scope(scope));
         Element_ID              id   = adaname.id();
         SgDeclarationStatement* nondef = findFirst(asisTypes(), id);
+
         SgDeclarationStatement& sgdecl = sg::dispatch(TypeDeclMaker{adaname.ident, scope, ty, nondef}, &ty.sageNode());
 
         privatize(sgdecl, isPrivate);

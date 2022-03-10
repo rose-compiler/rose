@@ -594,11 +594,28 @@ namespace
           break;
         }
 
-      case Not_A_Unit:
-      case A_Package_Instance:
-
       case A_Procedure_Instance:
       case A_Function_Instance:
+      case A_Package_Instance:
+        {
+          if (adaUnit.Unit_Kind == A_Procedure_Instance)
+            logTrace() << "A A_Procedure_Instance";
+          else if (adaUnit.Unit_Kind == A_Function_Instance)
+            logTrace() << "A A_Function_Instance";
+          else
+            logTrace() << "A A_Package_Instance";
+
+          logTrace() << PrnUnitHeader(adaUnit)
+                     << std::endl;
+
+          ElemIdRange range = idRange(adaUnit.Context_Clause_Elements);
+
+          traverseIDs(range, elemMap(), ElemCreator{ctx});
+          handleElementID(adaUnit.Unit_Declaration, ctx);
+          break;
+        }
+
+      case Not_A_Unit:
 
       case A_Procedure_Renaming:
       case A_Function_Renaming:

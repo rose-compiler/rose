@@ -2189,22 +2189,22 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
 #if 0
           printf ("declaration = %p \n",declaration);
 #endif
-          if (declaration != NULL)
+
+          // PP (3/9/22)
+          // In Ada, discriminated type may not have been fully built yet.
+          //   this is because a the discriminated type obtains the name of the underlying
+          //   declaration.
+          if (declaration && !isSgAdaDiscriminatedTypeDecl(declaration))
              {
 #if 0
                printf ("Found a valid declaration = %p = %s \n",declaration,declaration->class_name().c_str());
 #endif
-               // PP (9/23/21)
-               // in Ada, discriminated type may not have been fully built yet.
-               //   this is because a the discriminated type obtains the name of the underlying
-               //   declaration.
-               ROSE_ASSERT(  declaration->get_firstNondefiningDeclaration() != NULL
-                          || SageInterface::is_Ada_language()
-                          );
+               ROSE_ASSERT(declaration->get_firstNondefiningDeclaration() != NULL);
+
             // parent_scope = declaration->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table();
                parent_scope = declaration->search_for_symbol_from_symbol_table();
 
-               ROSE_ASSERT(parent_scope != NULL || SageInterface::is_Ada_language());
+               ROSE_ASSERT(parent_scope != NULL);
              }
         }
 #endif
