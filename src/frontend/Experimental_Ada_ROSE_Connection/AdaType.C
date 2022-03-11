@@ -424,8 +424,22 @@ namespace
     return getRecordBody(def.The_Union.The_Record_Definition, ctx);
   }
 
-  SgClassDeclaration&
-  getParentRecordDecl(Definition_Struct& def, AstContext ctx)
+  struct BaseClassMaker : sg::DispatchHandler<SgBaseClass*>
+  {
+    void handle(SgNode& n)               { SG_UNEXPECTED_NODE(n); }
+    void handle(SgClassDeclaration& n)   { res = &mkRecordParent(n); }
+    void handle(SgAdaFormalTypeDecl& n)  { res = &mkRecordParent(SG_DEREF(n.get_type())); }
+    void handle(SgTypedefDeclaration& n) { res = &mkRecordParent(SG_DEREF(n.get_type())); }
+
+    // stop gap measure
+    void handle(SgTypeUnknown& n)        { res = &mkRecordParent(n); }
+
+    // unresolved
+    //~ void handle(SgTypeUnknown& n)       { res = &mkRecordParent(n); }
+  };
+
+  SgBaseClass&
+  getParentType(Definition_Struct& def, AstContext ctx)
   {
     ADA_ASSERT(def.Definition_Kind == A_Subtype_Indication);
 
@@ -438,15 +452,15 @@ namespace
     ADA_ASSERT(subelem.Element_Kind == An_Expression);
 
     SgNode*                    basenode = &getExprType(subelem.The_Union.Expression, ctx);
-    SgClassDeclaration*        res = isSgClassDeclaration(basenode);
+    SgBaseClass*               sgnode = sg::dispatch(BaseClassMaker{}, basenode);
 
-    if (res == nullptr)
+    if (sgnode == nullptr)
     {
-      logError() << "getParentRecordDecl: " << typeid(*basenode).name() << std::endl;
+      logError() << "getParentType: " << typeid(*basenode).name() << std::endl;
       ROSE_ABORT();
     }
 
-    return SG_DEREF(res);
+    return *sgnode;
   }
 
 
@@ -719,12 +733,11 @@ namespace
           logKind("A_Derived_Record_Extension_Definition");
 
           SgClassDefinition&  def    = getRecordBodyID(typenode.Record_Definition, ctx);
-          SgClassDeclaration& basecl = getParentRecordDeclID(typenode.Parent_Subtype_Indication, ctx);
-          SgBaseClass&        parent = mkRecordParent(basecl);
+          SgBaseClass&        parent = getParentTypeID(typenode.Parent_Subtype_Indication, ctx);
 
           sg::linkParentChild(def, parent, &SgClassDefinition::append_inheritance);
 
-          /*
+          /* unused fields:
           Declaration_List     Implicit_Inherited_Declarations;
           Declaration_List     Implicit_Inherited_Subprograms;
           Declaration          Corresponding_Parent_Subtype;
@@ -918,6 +931,7 @@ namespace
           //       a subtype w/ NoConstraint, or leave the original type?
           if (subtype.Subtype_Constraint)
           {
+            //~ SgAdaTypeConstraint& range = getConstraintID_opt(subtype.Subtype_Constraint, ctx);
             SgAdaTypeConstraint& range = getConstraintID(subtype.Subtype_Constraint, ctx);
 
             res = &mkAdaSubtype(SG_DEREF(res), range);
@@ -1280,13 +1294,13 @@ getDefinitionTypeID_opt(Element_ID defid, AstContext ctx)
   return getDefinitionTypeID(defid, ctx);
 }
 
-SgClassDeclaration&
-getParentRecordDeclID(Element_ID defid, AstContext ctx)
+SgBaseClass&
+getParentTypeID(Element_ID defid, AstContext ctx)
 {
   Element_Struct&     elem = retrieveAs(elemMap(), defid);
   ADA_ASSERT(elem.Element_Kind == A_Definition);
 
-  return getParentRecordDecl(elem.The_Union.Definition, ctx);
+  return getParentType(elem.The_Union.Definition, ctx);
 }
 
 TypeData

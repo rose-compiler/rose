@@ -55,6 +55,11 @@ class CFAnalysis {
   LabelSet functionCallLabels(Flow& flow);
   LabelSet functionEntryLabels(Flow& flow);
   LabelSet conditionLabels(Flow& flow);
+  LabelSet exprLabels(Flow& flow);
+  LabelSet exprOrDeclLabels(Flow& flow);
+
+  LabelSet addressTakenFunctions(Flow& flow);
+  
   // computes function exit label for a provided function entry label
   Label correspondingFunctionExitLabel(Label entryLabel);
   // computes function return label for a provided function call label
@@ -67,6 +72,9 @@ class CFAnalysis {
   LabelSet initialLabelsOfStmtsInBlockSet(SgNode* node);
   LabelSet labelsOfInterestSet();
 
+  Label entryLabelOfFunctionSymbol(SgFunctionSymbol* funSym);
+  Label entryLabelOfFunctionDefinition(SgFunctionDefinition* funDef);
+  
   /* computes call graph from an existing ICFG (flow). All edges are CALL_EDGEs.
    * the call graph contains disconnected subgraphs if the ICFG contained unrachable functions
    * the start label is set to be the same as in flow
@@ -171,8 +179,11 @@ protected:
   void createIntraProceduralCallEdges(Flow& flow, InterFlow& interFlow);
   bool _interProcedural=true;
   bool _withCplusplus=false;
+  typedef bool (Labeler::*LabelPredicate)(Label);
+  LabelSet computeLabelSet(LabelPredicate predicate, Flow& flow);
 
 private:
+  void computeFunctionDefinitionToEntryLabelMap(Flow& flow);
   SgStatement* getCaseOrDefaultBodyStmt(SgNode* node);
   Flow WhileAndDoWhileLoopFlow(SgNode* node, Flow edgeSet, EdgeType param1, EdgeType param2);
   CodeThorn::Labeler* labeler;
@@ -184,6 +195,7 @@ private:
   Flow _icfgFlow;
   InterFlow _interFlow;
   Flow _callGraph;
+  std::map<SgFunctionDefinition*,CodeThorn::Label> _functionDefinitionToEntryLabelMap;
   bool _strictChecking=false; // see DOM057 (gnu extension)
 };
 

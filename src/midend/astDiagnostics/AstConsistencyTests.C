@@ -3508,6 +3508,14 @@ TestAstSymbolTables::visit ( SgNode* node )
                          break;
                        }
 
+                    case V_SgAdaGenericInstanceSymbol:
+                       {
+                         SgAdaGenericInstanceSymbol* sy = isSgAdaGenericInstanceSymbol(symbol);
+
+                         ROSE_ASSERT(sy && sy->get_declaration() != NULL);
+                         break;
+                       }
+
                     case V_SgNonrealSymbol:
                        {
                          SgNonrealSymbol * nrsymbol = isSgNonrealSymbol(symbol);
@@ -4153,6 +4161,26 @@ TestExpressionTypes::visit ( SgNode* node )
                          SgEnumDeclaration* enumDeclaration = isSgEnumDeclaration(definingDeclaration);
                          ROSE_ASSERT(enumDeclaration->get_type() != NULL);
                          ROSE_ASSERT(enumDeclaration->get_scope() != NULL);
+                         break;
+                       }
+
+                    case V_SgAdaTaskTypeDecl:
+                       {
+                         SgAdaTaskTypeDecl* defdcl = isSgAdaTaskTypeDecl(definingDeclaration);
+
+                         ROSE_ASSERT(defdcl);
+                         ROSE_ASSERT(defdcl->get_type());
+                         ROSE_ASSERT(defdcl->get_scope());
+                         break;
+                       }
+
+                    case V_SgAdaProtectedTypeDecl:
+                       {
+                         SgAdaProtectedTypeDecl* defdcl = isSgAdaProtectedTypeDecl(definingDeclaration);
+
+                         ROSE_ASSERT(defdcl);
+                         ROSE_ASSERT(defdcl->get_type());
+                         ROSE_ASSERT(defdcl->get_scope());
                          break;
                        }
 

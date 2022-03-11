@@ -92,30 +92,30 @@ namespace CodeThorn {
 
   EState EStateTransferFunctions::createEState(Label label, CallString cs, PState pstate) {
     EState estate=createEStateInternal(label,pstate);
-    estate.callString=cs;
+    estate.setCallString(cs);
     estate.io.recordNone(); // create NONE not bot by default
     return estate;
   }
 
   EState EStateTransferFunctions::createEState(Label label, CallString cs, PState pstate, InputOutput io) {
     EState estate=createEStateInternal(label,pstate);
-    estate.callString=cs;
+    estate.setCallString(cs);
     estate.io=io;
     return estate;
   }
 
   EStatePtr EStateTransferFunctions::reInitEState(EStatePtr estate, Label label, CallString cs, PStatePtr pstate, InputOutput io) {
     estate->setLabel(label);
-    estate->callString=cs;
+    estate->setCallString(cs);
     estate->setPState(pstate);
     estate->io=io;
     return estate;
   }
   EStatePtr EStateTransferFunctions::reInitEState(EStatePtr estate, Label label, CallString cs, PStatePtr pstate) {
     estate->setLabel(label);
-    estate->callString=cs;
+    estate->setCallString(cs);
     estate->setPState(pstate);
-    estate->io.recordNone(); // create NONE not bot by default // do NOT remove IO (reInit - is an update function)
+    estate->io.recordNone(); // create NONE not bot by default
     if(_analyzer->isActiveGlobalTopify()) {
 #if 1
       AbstractValueSet varSet=estate->pstate()->getVariableIds();
@@ -158,18 +158,20 @@ namespace CodeThorn {
   // merges es2 into es1
   void EStateTransferFunctions::combineInPlace1st(EStatePtr es1, EStatePtr es2) {
     ROSE_ASSERT(es1->label()==es2->label());
-    if(es1->callString!=es2->callString) {
+    if(es1->getCallString()!=es2->getCallString()) {
       if(_analyzer->getOptionOutputWarnings()) {
         SAWYER_MESG(logger[WARN])<<"combining estates with different callstrings at label:"<<es1->label().toString()<<endl;
-        SAWYER_MESG(logger[WARN])<<"cs1: "<<es1->callString.toString()<<endl;
-        SAWYER_MESG(logger[WARN])<<"cs2: "<<es2->callString.toString()<<endl;
+        SAWYER_MESG(logger[WARN])<<"cs1: "<<es1->getCallString().toString()<<endl;
+        SAWYER_MESG(logger[WARN])<<"cs2: "<<es2->getCallString().toString()<<endl;
       }
     }
     InputOutput io;
     if(es1->io.isBot()) {
-      es1->io=es2->io;
+      es1->copy(es1,es2,false);
+      return;
     } else if(es2->io.isBot()) {
       // no update of es1 necessary
+      return;
     } else {
       ROSE_ASSERT(es1->io==es2->io);
     }
@@ -179,11 +181,11 @@ namespace CodeThorn {
   EState EStateTransferFunctions::combine(EStatePtr es1, EStatePtr es2) {
     ROSE_ASSERT(es1->label()==es2->label());
     //ROSE_ASSERT(es1->constraints()==es2->constraints()); // pointer equality
-    if(es1->callString!=es2->callString) {
+    if(es1->getCallString()!=es2->getCallString()) {
       if(_analyzer->getOptionOutputWarnings()) {
         SAWYER_MESG(logger[WARN])<<"combining estates with different callstrings at label:"<<es1->label().toString()<<endl;
-        SAWYER_MESG(logger[WARN])<<"cs1: "<<es1->callString.toString()<<endl;
-        SAWYER_MESG(logger[WARN])<<"cs2: "<<es2->callString.toString()<<endl;
+        SAWYER_MESG(logger[WARN])<<"cs1: "<<es1->getCallString().toString()<<endl;
+        SAWYER_MESG(logger[WARN])<<"cs2: "<<es2->getCallString().toString()<<endl;
       }
     }
     InputOutput io;
@@ -196,7 +198,7 @@ namespace CodeThorn {
       io=es1->io;
     }
 
-    return createEState(es1->label(),es1->callString,PState::combine(es1->pstate(),es2->pstate()),io);
+    return createEState(es1->label(),es1->getCallString(),PState::combine(es1->pstate(),es2->pstate()),io);
   }
 
   std::list<EStatePtr> EStateTransferFunctions::elistify() {
@@ -252,7 +254,7 @@ namespace CodeThorn {
           writeToMemoryLocation(lab,newPstate,
                                 AbstractValue::createAddressOfVariable(globalVarIdByName("output")),
                                 CodeThorn::AbstractValue(rers_result));
-          EStatePtr _eState=reInitEState(estate,edge.target(),estate->callString,newPstate,_io);
+          EStatePtr _eState=reInitEState(estate,edge.target(),estate->getCallString(),newPstate,_io);
           ROSE_ASSERT(_eState->io.isFailedAssertIO());
           return elistify(_eState);
         }
@@ -269,10 +271,10 @@ namespace CodeThorn {
           bool isLhsVar=checkIfVariableAndDetermineVarId(lhs,lhsVarId);
           ROSE_ASSERT(isLhsVar); // must hold
           writeToMemoryLocation(lab,pstate,AbstractValue::createAddressOfVariable(lhsVarId),AbstractValue(rers_result));
-          EStatePtr _eState=reInitEState(estate,edge.target(),estate->callString,pstate,newio);
+          EStatePtr _eState=reInitEState(estate,edge.target(),estate->getCallString(),pstate,newio);
           return elistify(_eState);
         } else {
-          EStatePtr _eState=reInitEState(estate,edge.target(),estate->callString,pstate,newio);
+          EStatePtr _eState=reInitEState(estate,edge.target(),estate->getCallString(),pstate,newio);
           return elistify(_eState);
         }
         SAWYER_MESG(logger[ERROR]) <<"PState:"<< pstate<<endl;
@@ -411,7 +413,7 @@ namespace CodeThorn {
     }
 
     // ad 4 call context (call string)
-    CallString cs=currentEState->callString;
+    CallString cs=currentEState->getCallString();
     if(_analyzer->getOptionContextSensitiveAnalysis()) {
        SAWYER_MESG(logger[TRACE])<<"transfer functioncall:"<<currentEState->label().toString()<<":"<<cs.toString()<<":"<<SgNodeHelper::sourceLocationAndNodeToString(funCall)<<endl;
       transferFunctionCallContextInPlace(cs, currentEState->label());
@@ -423,7 +425,7 @@ namespace CodeThorn {
   std::list<EStatePtr> EStateTransferFunctions::transferReturnStmt(Edge edge, EStatePtr estate) {
     Label lab=estate->label();
     EStatePtr currentEState=estate;
-    CallString cs=currentEState->callString;
+    CallString cs=currentEState->getCallString();
     PStatePtr currentPState=currentEState->pstate();
     ROSE_ASSERT(_analyzer);
     ROSE_ASSERT(_analyzer->getCFAnalyzer());
@@ -513,8 +515,8 @@ namespace CodeThorn {
     Label functionCallReturnLabel=edge.source();
     SgNode* node=getLabeler()->getNode(functionCallReturnLabel);
     Label functionCallLabel=getLabeler()->functionCallLabel(node);
-    SAWYER_MESG(logger[TRACE])<<"FunctionCallReturnTransfer: call: L"<<functionCallLabel.toString()<<": callret: L"<<functionCallReturnLabel.toString()<<" cs: "<<estate->callString.toString()<<endl;
-    CallString cs=currentEState->callString;
+    SAWYER_MESG(logger[TRACE])<<"FunctionCallReturnTransfer: call: L"<<functionCallLabel.toString()<<": callret: L"<<functionCallReturnLabel.toString()<<" cs: "<<estate->getCallString().toString()<<endl;
+    CallString cs=currentEState->getCallString();
     if(_analyzer->getOptionContextSensitiveAnalysis()) {
       if(getLabeler()->isExternalFunctionCallLabel(functionCallLabel)) {
         // nothing to do for external function call (label is not added
@@ -522,7 +524,7 @@ namespace CodeThorn {
         SAWYER_MESG(logger[TRACE])<<": external edge"<<endl;
       } else {
         std::pair<bool,CallString> resultPair=determinePathFeasibilityAndContext(cs,functionCallLabel);
-        SAWYER_MESG(logger[TRACE])<<"transfer functioncallreturn: call: L"<<functionCallLabel.toString()<<": callret: L"<<functionCallReturnLabel.toString()<<" cs: "<<estate->callString.toString()<<" : pathfeasibility:"<<resultPair.first<<" : ";
+        SAWYER_MESG(logger[TRACE])<<"transfer functioncallreturn: call: L"<<functionCallLabel.toString()<<": callret: L"<<functionCallReturnLabel.toString()<<" cs: "<<estate->getCallString().toString()<<" : pathfeasibility:"<<resultPair.first<<" : ";
         if(resultPair.first) SAWYER_MESG(logger[TRACE])<<resultPair.second.toString()<<endl;
         else SAWYER_MESG(logger[TRACE])<<"infeasible"<<endl;
           
@@ -554,7 +556,7 @@ namespace CodeThorn {
           if(funName==_rersHybridOutputFunctionName) {
             EStatePtr newEState=currentEState;
             newEState->setLabel(edge.target());
-            newEState->callString=cs;
+            newEState->setCallString(cs);
             return elistify(newEState);
           }
         }
@@ -591,7 +593,7 @@ namespace CodeThorn {
           if(funName==_rersHybridOutputFunctionName) {
             EStatePtr newEState=currentEState;
             newEState->setLabel(edge.target());
-            newEState->callString=cs;
+            newEState->setCallString(cs);
             return elistify(newEState);
           }
         }
@@ -746,7 +748,7 @@ namespace CodeThorn {
         newPState->erase(mapElIter);
       }
       // ad 3)
-      return elistify(reInitEState(currentEState,edge.target(),estate->callString,newPState));
+      return elistify(reInitEState(currentEState,edge.target(),estate->getCallString(),newPState));
     } else {
       logger[FATAL] << "no function definition associated with function exit label."<<endl;
       exit(1);
@@ -766,7 +768,7 @@ namespace CodeThorn {
 
   std::list<EStatePtr> EStateTransferFunctions::transferForkFunction(Edge edge, EStatePtr estate, SgFunctionCallExp* funCall) {
     EStatePtr currentEState=estate;
-    CallString cs=currentEState->callString;
+    CallString cs=currentEState->getCallString();
 
     SgExpressionPtrList& actualParameters=SgNodeHelper::getFunctionCallActualParameterList(funCall);
     SAWYER_MESG(logger[TRACE])<<getAnalyzer()->getOptionsRef().forkFunctionName<<" #args:"<<actualParameters.size()<<endl;
@@ -812,7 +814,7 @@ namespace CodeThorn {
 
   std::list<EStatePtr> EStateTransferFunctions::transferFunctionCallExternal(Edge edge, EStatePtr estate) {
     EStatePtr currentEState=estate;
-    CallString cs=currentEState->callString;
+    CallString cs=currentEState->getCallString();
 
     // handle special case for readwrite listener
 #pragma omp critical(VIOLATIONRECORDING)
@@ -875,7 +877,7 @@ namespace CodeThorn {
             PStatePtr newPState=currentEState->pstate();
             writeToMemoryLocation(currentEState->label(),newPState,AbstractValue::createAddressOfVariable(varId),AbstractValue(*i));
             newio.recordVariable(InputOutput::STDIN_VAR,varId);
-            EStatePtr newEState=reInitEState(currentEState,edge.target(),estate->callString,newPState,newio);
+            EStatePtr newEState=reInitEState(currentEState,edge.target(),estate->getCallString(),newPState,newio);
             resList.push_back(newEState);
             numState++;
           }
@@ -936,7 +938,7 @@ namespace CodeThorn {
         SAWYER_MESG(logger[TRACE])<<"EXTERNAL FUNCTION: "<<SgNodeHelper::getFunctionName(funCall)<<" result(added to state):"<<evalResult2.result.toString()<<endl;
 
         // create new estate with added return variable (for inter-procedural analysis)
-        CallString cs=evalResult2.estate->callString;
+        CallString cs=evalResult2.estate->getCallString();
         PStatePtr newPState=evalResult2.estate->pstate(); // same pstate object as currentEState, but possibly modified
         VariableId returnVarId;
 #pragma omp critical(VAR_ID_MAPPING)
@@ -960,7 +962,7 @@ namespace CodeThorn {
     SAWYER_MESG(logger[TRACE])<<"SWITCH CASE DEFAULT: "<<defaultStmt->unparseToString()<<endl;
 
     Label targetLabel=edge.target();
-    CallString cs=estate->callString;
+    CallString cs=estate->getCallString();
     PStatePtr newPState=estate->pstate();
     SgStatement* blockStmt=isSgBasicBlock(defaultStmt->get_parent());
     ROSE_ASSERT(blockStmt);
@@ -1029,7 +1031,7 @@ namespace CodeThorn {
   std::list<EStatePtr> EStateTransferFunctions::transferCaseOptionStmt(SgCaseOptionStmt* caseStmt,Edge edge, EStatePtr estate) {
     SAWYER_MESG(logger[TRACE])<<"CASESTMT: "<<caseStmt->unparseToString()<<endl;
     Label targetLabel=edge.target();
-    CallString cs=estate->callString;
+    CallString cs=estate->getCallString();
     PStatePtr newPState=estate->pstate();
     SgStatement* blockStmt=isSgBasicBlock(caseStmt->get_parent());
     ROSE_ASSERT(blockStmt);
@@ -1186,7 +1188,7 @@ namespace CodeThorn {
     // this builds a new estate (sets new target label)
     EStatePtr estate2=res.estate; // use return state from ++/-- TODO: investigate (otherwise use estate->)
     PStatePtr newPState=estate2->pstate();
-    CallString cs=estate->callString;
+    CallString cs=estate->getCallString();
     return elistify(reInitEState(estate2,edge.target(),cs,newPState));
   }
 
@@ -1196,7 +1198,7 @@ namespace CodeThorn {
       printTransferFunctionInfo(TransferFunctionCode::IncDec,nextNodeToAnalyze2,edge,estate);
     }
     EStatePtr currentEState=estate;
-    CallString cs=estate->callString;
+    CallString cs=estate->getCallString();
     SgNode* nextNodeToAnalyze3=SgNodeHelper::getUnaryOpChild(nextNodeToAnalyze2);
     VariableId var;
     if(checkIfVariableAndDetermineVarId(nextNodeToAnalyze3,var)) {
@@ -1257,7 +1259,7 @@ namespace CodeThorn {
   }
 
   EStatePtr EStateTransferFunctions::transferVariableDeclarationWithInitializerEState(SgVariableDeclaration* decl, SgInitializedName* initName, SgInitializer* initializer, VariableId initDeclVarId, EStatePtr currentEState, Label targetLabel) {
-    CallString cs=currentEState->callString;
+    CallString cs=currentEState->getCallString();
     Label label=currentEState->label();
     ROSE_ASSERT(currentEState->pstate());
     //cout<<"DEBUG: variable decl with initializer: "<<decl->unparseToString()<<":AST:"<<AstTerm::astTermWithNullValuesToString(initializer)<<endl;
@@ -1430,7 +1432,7 @@ namespace CodeThorn {
   }
       
   EStatePtr EStateTransferFunctions::transferVariableDeclarationWithoutInitializerEState(SgVariableDeclaration* decl, SgInitializedName* initName, VariableId initDeclVarId, EStatePtr currentEState, Label targetLabel) {
-    CallString cs=currentEState->callString;
+    CallString cs=currentEState->getCallString();
     Label label=currentEState->label();
     PStatePtr newPState=currentEState->pstate();
     ROSE_ASSERT(newPState);
@@ -1706,7 +1708,7 @@ namespace CodeThorn {
 
   list<EStatePtr> EStateTransferFunctions::transferTrueFalseEdge(SgNode* nextNodeToAnalyze2, Edge edge, EStatePtr estate) {
     EStatePtr currentEState=estate;
-    CallString cs=estate->callString;
+    CallString cs=estate->getCallString();
     Label newLabel;
     PStatePtr newPState;
     SingleEvalResult evalResult=evaluateExpression(nextNodeToAnalyze2,currentEState);
@@ -1763,7 +1765,7 @@ namespace CodeThorn {
   CodeThorn::EStateTransferFunctions::MemoryUpdateList
   CodeThorn::EStateTransferFunctions::evalAssignOpMemUpdates(SgAssignOp* nextNodeToAnalyze2, EStatePtr estatePtr) {
     MemoryUpdateList memoryUpdateList;
-    CallString cs=estatePtr->callString;
+    CallString cs=estatePtr->getCallString();
     EStatePtr currentEState=estatePtr;
     SgNode* lhs=SgNodeHelper::getLhs(nextNodeToAnalyze2);
     SgNode* rhs=SgNodeHelper::getRhs(nextNodeToAnalyze2);
@@ -3007,12 +3009,12 @@ namespace CodeThorn {
           // required for the following index computation (nothing to do here)
         } else {
           if(arrayPtrValue.isTop()) {
-            //logger[ERROR]<<"@"<<SgNodeHelper::lineColumnNodeToString(node)<<" evalArrayReferenceOp: pointer is top. Pointer abstraction too coarse."<<endl;
-            // TODO: PRECISION 1
             res.result=CodeThorn::Top();
             notifyReadWriteListenersOnReading(estate->label(),estate->pstate(),arrayPtrValue);
             return res;
           } else {
+            // currently same as above
+            notifyReadWriteListenersOnReading(estate->label(),estate->pstate(),arrayPtrValue);
             res.result=CodeThorn::Top();
             return res;
           }
@@ -3336,7 +3338,7 @@ namespace CodeThorn {
     for (auto p : pList) {
       EStatePtr estate=p.first;
       Label label=estate->label();
-      CallString cs=estate->callString;
+      CallString cs=estate->getCallString();
       PStatePtr newPState=estate->pstate();
       AbstractValue lhsAddress=p.second.first;
       AbstractValue rhsValue=p.second.second;
@@ -3344,7 +3346,7 @@ namespace CodeThorn {
       estateList.push_back(reInitEState(estate,targetLabel,cs,newPState));
     }
     if(estateList.size()==0) {
-      estateList.push_back(reInitEState(estate,targetLabel,estate->callString,estate->pstate()));
+      estateList.push_back(reInitEState(estate,targetLabel,estate->getCallString(),estate->pstate()));
     }
     return estateList;
   }
@@ -3354,7 +3356,7 @@ namespace CodeThorn {
     AbstractValue oldValue=readFromAnyMemoryLocation(estate->label(),estate->pstate(),address);
     AbstractValue elementSize=(oldValue.isPtr()?getMemoryRegionAbstractElementSize(oldValue):AbstractValue(1));
     AbstractValue newValue=AbstractValue::operatorAdd(oldValue,change,elementSize);
-    CallString cs=estate->callString;
+    CallString cs=estate->getCallString();
     PStatePtr newPState=estate->pstate();
     writeToAnyMemoryLocation(estate->label(),newPState,address,newValue);
     ROSE_ASSERT(_analyzer);
@@ -3368,7 +3370,7 @@ namespace CodeThorn {
     AbstractValue oldValue=readFromAnyMemoryLocation(estate->label(),estate->pstate(),address);
     AbstractValue elementSize=(oldValue.isPtr()?getMemoryRegionAbstractElementSize(oldValue):AbstractValue(1));
     AbstractValue newValue=AbstractValue::operatorAdd(oldValue,change,elementSize);
-    CallString cs=estate->callString;
+    CallString cs=estate->getCallString();
     PStatePtr newPState=estate->pstate();
     writeToAnyMemoryLocation(estate->label(),newPState,address,newValue);
     ROSE_ASSERT(_analyzer);
@@ -4173,6 +4175,7 @@ namespace CodeThorn {
     notifyReadWriteListenersOnWriting(lab,pstate,memLoc,newValue);
 
     if(memLoc.isTop()) {
+      // TODO1: model writing to arbitrary mem loc
       return;
     } else if(!pstate->memLocExists(memLoc)) {
       //SAWYER_MESG(logger[TRACE])<<"EStateTransferFunctions::writeToMemoryLocation: memloc does not exist"<<endl;
@@ -4335,7 +4338,7 @@ namespace CodeThorn {
   // does not exist in input program and the semantics are available in
   // the analyzer (e.g. malloc, strlen, etc.))
   list<EStatePtr> EStateTransferFunctions::evaluateFunctionCallArguments(Edge edge, SgFunctionCallExp* funCall, EStatePtr currentEState, bool useConstraints) {
-    CallString cs=currentEState->callString;
+    CallString cs=currentEState->getCallString();
     SAWYER_MESG(logger[TRACE]) <<"evaluating arguments of function call:"<<funCall->unparseToString()<<endl;
     SingleEvalResult evalResult=evalFunctionCallArguments(funCall, currentEState);
     PStatePtr newPState=evalResult.estate->pstate();

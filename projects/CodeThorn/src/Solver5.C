@@ -148,7 +148,7 @@ void Solver5::run() {
                   // performing merge
 #pragma omp critical(SUMMARY_STATES_MAP)
                   {
-                    EStatePtr abstractEState=_analyzer->getAbstractState(newEStatePtr->label(),newEStatePtr->callString);
+                    EStatePtr abstractEState=_analyzer->getAbstractState(newEStatePtr->label(),newEStatePtr->getCallString());
                     if(_analyzer->getEStateTransferFunctions()->isApproximatedBy(newEStatePtr,abstractEState)) {
                       // this is not a memory leak. newEStatePtr is
                       // stored in EStateSet and will be collected
@@ -180,10 +180,10 @@ void Solver5::run() {
                         // nothing to do, EState already exists
                       }
                       ROSE_ASSERT(newEStatePtr);
-                      _analyzer->setAbstractState(newEStatePtr->label(),newEStatePtr->callString,newEStatePtr);
+                      _analyzer->setAbstractState(newEStatePtr->label(),newEStatePtr->getCallString(),newEStatePtr);
 #if 0
                       if(id==checkId) {
-                        cout<<"@"<<id<<": MERGED SUM :"<<_analyzer->getAbstractState(newEStatePtr->label(),newEStatePtr->callString)->toString()<<endl;
+                        cout<<"@"<<id<<": MERGED SUM :"<<_analyzer->getAbstractState(newEStatePtr->label(),newEStatePtr->getCallString())->toString()<<endl;
                         cout<<"--------------------------------------------------"<<endl;
                       }
 #endif

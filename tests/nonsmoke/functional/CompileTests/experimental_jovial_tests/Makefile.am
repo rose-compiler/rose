@@ -352,6 +352,7 @@ COMPOOL_TESTCODES = \
  gitlab-issue-12.cpl                    \
  gitlab-issue-14.cpl                    \
  gitlab-issue-17.cpl                    \
+ gitlab-issue-74.cpl                    \
  beta.cpl                               \
  parttype.cpl
 

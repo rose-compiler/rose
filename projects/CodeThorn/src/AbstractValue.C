@@ -25,6 +25,7 @@ VariableIdMappingExtended* AbstractValue::_variableIdMapping=nullptr;
 bool AbstractValue::strictChecking=false;
 bool AbstractValue::byteMode=false;
 bool AbstractValue::pointerSetsEnabled=false;
+int AbstractValue::domainAbstractionVariant=0; // default
 
 using CodeThorn::logger;
 

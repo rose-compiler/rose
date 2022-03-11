@@ -125,6 +125,7 @@ public:
   bool intraProcedural=false;
   int precisionLevel=0; // keeps default configuration (if =0 configurePrecisionOption does not change any settings)
   bool pointerSetsEnabled=false; // used in more precise pointer analysis
+  int domainAbstractionVariant=0; // default
   std::string csvReportModeString="generate";
 
   bool forkFunctionEnabled=false;
@@ -136,7 +137,8 @@ public:
   bool readWriteTrace=false;
   
   bool keepErrorStates=false;
-
+  bool abstractionConsistencyCheck=false; // currently only supported in Solver18
+  
   // RERS C-subset program options
   struct Rers {
     std::string assertResultsOutputFileName;

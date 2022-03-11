@@ -25,6 +25,12 @@ struct CheckAllMembers : public ROSE_VisitTraversal {
   }
 };
 
+std::map<SgNode*, std::map<std::string, std::tuple<SgNode*,VariantT, SgNode*>>> consistency_details() {
+  CheckAllMembers cam;
+  cam.traverseMemoryPool();
+  return cam.results;
+}
+
 bool consistency(std::ostream & out) {
 #if DEBUG__ROSE_AST_CONSISTENCY
   printf("Rose::AST::consistency\n");
@@ -49,7 +55,7 @@ bool consistency(std::ostream & out) {
       auto const fld_freepointer = std::get<2>(m.second);
       if (fld_variant == 0) invalid_cnt++;
       else unalloc_cnt++;
-      out << "    " << (fld_variant == 0 ? "out-of-pools" : "unallocated") << " " << fld_name << " " << std::hex << fld_pointer << " " << fld_variant << " " << std::hex << fld_freepointer << std::endl;
+      out << "    " << (fld_variant == 0 ? "out-of-pools" : "unallocated") << " " << fld_name << " " << std::hex << fld_pointer << " " << std::dec << fld_variant << " " << std::hex << fld_freepointer << std::endl;
     }
   }
   if (node_cnt > 0) {

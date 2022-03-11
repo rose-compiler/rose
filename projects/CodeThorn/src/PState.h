@@ -86,7 +86,13 @@ namespace CodeThorn {
     PState::const_iterator end() const;
     void erase(PState::iterator);
     bool isApproximatedBy(CodeThorn::PState& other) const;
+  private:
+    bool isApproximatedBy0(CodeThorn::PState& other) const;
+    bool isApproximatedBy1(CodeThorn::PState& other) const;
+  public:
     static void combineInPlace1st(CodeThorn::PStatePtr p1, CodeThorn::PStatePtr p2);
+    static void combineInPlace1st0(CodeThorn::PStatePtr p1, CodeThorn::PStatePtr p2);
+    static void combineInPlace1st1(CodeThorn::PStatePtr p1, CodeThorn::PStatePtr p2);
     static CodeThorn::PState combine(CodeThorn::PStatePtr p1, CodeThorn::PStatePtr p2);
     static CodeThorn::PState combine(CodeThorn::PState& p1, CodeThorn::PState& p2);
     AbstractValueSet getVariableIds() const;
@@ -99,6 +105,8 @@ namespace CodeThorn {
     int32_t numApproximateMemRegions() const;
     bool hasEqualMemRegionApproximation(const PState& other) const;
 
+    size_t inPlaceGarbageCollection();
+    
   private:
     VariableIdSet _approximationVarIdSet;
     void conditionalApproximateRawWriteToMemoryLocation(AbstractValue abstractAddress, AbstractValue abstractValue,bool strongUpdate);

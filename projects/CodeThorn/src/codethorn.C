@@ -227,6 +227,11 @@ int main( int argc, char * argv[] ) {
       CodeThornLib::generateProgramStats(ctOpt,&originalProgramInfo,&normalizedProgramInfo, vimOrig);
     }
 
+    tc.startTimer();
+    optionallyGenerateCallGraphDotFile(ctOpt,analyzer);
+    tc.stopTimer(TimingCollector::callGraphDotFile);
+
+
     optionallyGenerateSourceProgramAndExit(ctOpt, project);
     optionallyGenerateExternalFunctionsFile(ctOpt, analyzer->getFunctionCallMapping());
     optionallyGenerateLineColumnCsv(ctOpt,project);
@@ -277,10 +282,6 @@ int main( int argc, char * argv[] ) {
     tc.startTimer();
     optionallyGenerateVerificationReports(ctOpt,analyzer);
     tc.stopTimer(TimingCollector::reportGeneration);
-
-    tc.startTimer();
-    optionallyGenerateCallGraphDotFile(ctOpt,analyzer);
-    tc.stopTimer(TimingCollector::callGraphDotFile);
 
     if(analyzer->getSolver()->createsTransitionSystem()) {
       runLTLAnalysis(ctOpt,ltlOpt,analyzer,tc);

@@ -78,6 +78,15 @@ rose_magic_scanner_LDFLAGS = $(ROSE_RPATHS)
 rose_magic_scanner_LDADD = $(ROSE_LIBS)
 
 #------------------------------------------------------------------------------------------------------------------------
+# Scans Java class files for methods
+
+bin_PROGRAMS += rose-java-method-scanner
+rose_java_method_scanner_SOURCES = javaMethodDiscovery.C
+rose_java_method_scanner_CPPFLAGS = $(ROSE_INCLUDES)
+rose_java_method_scanner_LDFLAGS = $(ROSE_RPATHS)
+rose_java_method_scanner_LDADD = $(ROSE_LIBS)
+
+#------------------------------------------------------------------------------------------------------------------------
 # Execute instructions
 
 bin_PROGRAMS += rose-simulate

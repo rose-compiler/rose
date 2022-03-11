@@ -24,6 +24,10 @@ if(enable-binary-analysis)
   target_link_libraries(rose-magic-scanner ROSE_DLL ${Boost_LIBRARIES})
   install(TARGETS rose-magic-scanner DESTINATION bin)
 
+  add_executable(rose-java-method-scanner javaMethodDiscovery.C)
+  target_link_libraries(rose-java-method-scanner ROSE_DLL ${Boost_LIBRARIES})
+  install(TARGETS rose-java-method-scanner DESTINATION bin)
+
   add_executable(rose-simulate simulate.C)
   target_link_libraries(rose-simulate ROSE_DLL ${Boost_LIBRARIES})
   install(TARGETS rose-simulate DESTINATION bin)
