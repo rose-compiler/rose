@@ -80,8 +80,8 @@ getDiscreteSubtypeID(Element_ID typeId, Element_ID constraintID, AstContext ctx)
 
 
 /// looks up the record declaration associated with \ref defid
-SgClassDeclaration&
-getParentRecordDeclID(Element_ID defid, AstContext ctx);
+SgBaseClass&
+getParentTypeID(Element_ID defid, AstContext ctx);
 
 TypeData
 getFormalTypeFoundation(const std::string& name, Declaration_Struct& decl, AstContext ctx);

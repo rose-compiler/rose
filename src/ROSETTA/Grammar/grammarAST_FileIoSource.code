@@ -371,6 +371,8 @@ void AST_FILE_IO::deleteMemoryPools( ) {
 
 $REPLACE_DELETEMEMORYPOOLS
 
+  SgNode::all_pools.clear();
+
    }
 
 void
