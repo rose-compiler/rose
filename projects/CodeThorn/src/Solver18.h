@@ -58,6 +58,7 @@ namespace CodeThorn {
 
     void initializeAbstractStatesFromWorkList();
     EStatePtr getAbstractState(CodeThorn::Label lab, CodeThorn::CallString cs);
+    // deletes state if already exists, maintains one map for each label to store different states for each callstring
     void setAbstractState(CodeThorn::Label lab, CallString cs, EStatePtr estate);
     EStatePtr createBottomAbstractState(Label lab, CallString cs);
     typedef std::unordered_map <CallString ,EStatePtr> AbstractCSStateMap;
@@ -67,7 +68,7 @@ namespace CodeThorn {
     void printAllocationStats(string text);
     bool _abstractionConsistencyCheckEnabled=false; // slow, only used for debugging
     bool _passThroughOptimizationEnabled=true;
-
+    
     std::list<EStatePtr> transferEdgeEStateInPlace(Edge e,EStatePtr currentEStatePtr);
     void registerTransferFunctionInvoked(Label lab);
     bool isRegisteredTransferFunctionInvoked(Label lab);

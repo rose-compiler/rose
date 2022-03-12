@@ -351,6 +351,7 @@ void Solver18::run() {
         if((!_analyzer->isFailedAssertEState(newEStatePtr0)&&!_analyzer->isVerificationErrorEState(newEStatePtr0))) {
           EStatePtr newEStatePtr=newEStatePtr0;
           ROSE_ASSERT(newEStatePtr);
+
           // performing merge
           EStatePtr abstractEStatePtr=getAbstractState(lab,cs);
           if(abstractEStatePtr==nullptr)
@@ -377,22 +378,6 @@ void Solver18::run() {
 
           }
         }
-        /*
-        if(((_analyzer->isFailedAssertEState(newEStatePtr0))||_analyzer->isVerificationErrorEState(newEStatePtr0))) {
-          // failed-assert end-state: do not add to work list but do add it to the transition graph
-          EStatePtr newEStatePtr=newEStatePtr0;
-          if(_analyzer->isVerificationErrorEState(newEStatePtr)) {
-            SAWYER_MESG(logger[TRACE]) <<"STATUS: detected verification error state ... terminating early"<<endl;
-            // set flag for terminating early
-            _analyzer->reachabilityResults.reachable(0);
-            _analyzer->_firstAssertionOccurences.push_back(pair<int, EStatePtr>(0, newEStatePtr));
-            terminateEarly=true;
-          } else if(_analyzer->isFailedAssertEState(newEStatePtr)) {
-            delete newEStatePtr;
-            continue;
-          } // end of failed assert handling
-        } // end of if
-        */
       } // end of loop on transfer function return-estates
     } // edge set iterator
     if(_analyzer->getOptionsRef().displayDiff && displayTransferCounter>=(size_t)_analyzer->getOptionsRef().displayDiff) {
@@ -410,6 +395,6 @@ void Solver18::run() {
     _analyzer->printStatusMessage(true);
     _analyzer->printStatusMessage("STATUS: analysis finished (worklist is empty).",true);
   }
-  EState::checkPointAllocationHistory();
+  //EState::checkPointAllocationHistory();
   _analyzer->printStatusMessage("STATUS: number of states stored: "+std::to_string(getNumberOfStates()),true);
 }

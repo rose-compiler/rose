@@ -119,14 +119,7 @@ void EState::EState::copy(EState* target, ConstEStatePtr source,bool sharedPStat
       target->_pstate=nullptr;
       //cout<<"DEBUG: ESTATE COPY: "<<&source-><<"=>"<<target<<": pstate: nullptr"<<" ==> nullptr"<<endl;
     } else {
-      target->_pstate=new PState();
-      for(auto iter=source->_pstate->begin(); iter!=source->_pstate->end();++iter) {
-	auto address=(*iter).first;
-	auto value=(*iter).second;
-	target->_pstate->writeToMemoryLocation(address,value);
-      }
-      //cout<<"DEBUG: ESTATE COPY: "<<&source-><<"=>"<<target<<": pstate:"<<source->pstate()<<" ==> "<<newPState<<endl;
-      //target->_pstate=newPState;
+      target->_pstate=new PState(*source->pstate()); // copy constructor
     }
   }
 }

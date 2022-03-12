@@ -560,6 +560,9 @@ bool PState::isApproximatedBy(CodeThorn::PState& other) const {
 
 bool PState::isApproximatedBy0(CodeThorn::PState& other) const {
   // check if all values of 'this' are approximated by 'other'
+  if(size()!=other.size())
+    return false;
+  
   for(auto elem:*this) {
     auto iter=other.find(elem.first);
     if(iter!=other.end()) {
@@ -709,26 +712,32 @@ void PState::combineInPlace1st1(CodeThorn::PStatePtr p1, CodeThorn::PStatePtr p2
     if(iter!=(*p2).end()) {
       // same memory location in both states: elem.first==(*iter).first
       // combine values elem.second and (*iter).second
-      updates.push_back(make_pair(elem1.first,AbstractValue::combine(elem1.second,(*iter).second)));
+      updates.push_back(make_pair(elem1.first,AbstractValue::combine(elem1.second,(*iter).second))); 
       numMatched++;
     } else {
-      // a variable of 'p1' is not in state of 'p2', topify (only in this variant 1)
+      // a variable of 'p1' is not in state of 'p2', topify (only in this variant 1), use tmp container to not invalidate iterator
       updates.push_back(make_pair(elem1.first,AbstractValue::combine(elem1.second,AbstractValue::createTop())));      
     }
   }
-  // add now updates of values of p2 which are not in p1
+  // add elements that are only in p2 to res - this can only be the
+  // case if the number of matched elements above is different to p2.size()
+  std::list<std::pair<AbstractValue, AbstractValue> > updates2;
+  //if(numMatched!=(*p2).size()) {
+  for(auto elem2:*p2) {
+    // only add elements of p2 that are not in p1
+    if((*p1).find(elem2.first)==(*p1).end()) {
+      //p1->writeToMemoryLocation(elem2.first,elem2.second);
+      updates2.push_back(make_pair(elem2.first,AbstractValue::combine(elem2.second,AbstractValue::createTop())));      
+    }
+  }
+  //}
+  // add now updates at addresses of p1 with are not in p2
   for(auto upd:updates) {
     p1->writeToMemoryLocation(upd.first,upd.second);
   }
-  // add elements that are only in p2 to res - this can only be the
-  // case if the number of matched elements above is different to p2.size()
-  if(numMatched!=(*p2).size()) {
-    for(auto elem2:*p2) {
-      // only add elements of p2 that are not in p1
-      if((*p1).find(elem2.first)==(*p1).end()) {
-        p1->writeToMemoryLocation(elem2.first,elem2.second);
-      }
-    }
+  // add now updates of values of p1 which are not in p2
+  for(auto upd:updates2) {
+    p1->writeToMemoryLocation(upd.first,upd.second);
   }
   p1->inPlaceGarbageCollection(); // only performs operations if domainAbstractionVariant>=1
 }
