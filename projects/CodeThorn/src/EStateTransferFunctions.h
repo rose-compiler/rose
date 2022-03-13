@@ -526,6 +526,9 @@ namespace CodeThorn {
     SingleEvalResult execFunctionCallScanf(SgFunctionCallExp* funCall, EStatePtr estate);
     std::string sourceLocationAndNodeToString(Label lab);
   private:
+    bool isTmpVar(VariableId varId);
+    void tmpVarCleanUp(EStatePtr estate, VariableId varId);
+    
     // outdated function, to be eliminated
     int computeNumberOfElements(SgVariableDeclaration* decl);
 

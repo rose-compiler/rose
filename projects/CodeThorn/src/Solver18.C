@@ -172,6 +172,10 @@ EStatePtr Solver18::createBottomAbstractState(Label lab, CallString cs) {
   return EState::createBottomEState(lab,cs);
 }
 
+bool Solver18::isBottomAbstractState(EStatePtr estate) {
+  return estate->isBottomEState();
+}
+
 size_t Solver18::checkDiff() {
   ROSE_ASSERT(EState::getDestructCount()<=EState::getConstructCount());
   ROSE_ASSERT(getNumberOfStates()<=(EState::getConstructCount()-EState::getDestructCount()));
@@ -205,7 +209,12 @@ bool Solver18::isRegisteredTransferFunctionInvoked(Label lab) {
 
 std::list<EStatePtr> Solver18::transferEdgeEStateInPlace(Edge e,EStatePtr currentEStatePtr) {
   registerTransferFunctionInvoked(currentEStatePtr->label()); // in presence of pass-through optimization this is necessary to "remember" pass-through labels for which no state is stored
-  return _analyzer->transferEdgeEStateInPlace(e,currentEStatePtr);
+  std::list<EStatePtr> list=_analyzer->transferEdgeEStateInPlace(e,currentEStatePtr);
+  return list;
+}
+
+bool Solver18::isJoinLabel(Label lab) {
+  return _analyzer->getFlow()->inEdges(lab).size()>1;
 }
 
 void Solver18::run() {
@@ -348,7 +357,7 @@ void Solver18::run() {
         ROSE_ASSERT(newEStatePtr0->label()!=Labeler::NO_LABEL);
         Label lab=newEStatePtr0->label();
         CallString cs=newEStatePtr0->getCallString();
-        if((!_analyzer->isFailedAssertEState(newEStatePtr0)&&!_analyzer->isVerificationErrorEState(newEStatePtr0))) {
+        if((true || (!_analyzer->isFailedAssertEState(newEStatePtr0)&&!_analyzer->isVerificationErrorEState(newEStatePtr0)))) {
           EStatePtr newEStatePtr=newEStatePtr0;
           ROSE_ASSERT(newEStatePtr);
 
@@ -359,22 +368,31 @@ void Solver18::run() {
 
           ROSE_ASSERT(abstractEStatePtr);
           ROSE_ASSERT(abstractEStatePtr->pstate());
-          if(_analyzer->getEStateTransferFunctions()->isApproximatedBy(newEStatePtr,abstractEStatePtr)) {
+          if(!isBottomAbstractState(abstractEStatePtr) && _analyzer->getEStateTransferFunctions()->isApproximatedBy(newEStatePtr,abstractEStatePtr)) {
             delete newEStatePtr; // new state does not contain new information, therefore it can be deleted
             newEStatePtr=nullptr;
           } else {
-            ROSE_ASSERT(abstractEStatePtr);
-            ROSE_ASSERT(abstractEStatePtr->pstate());
-            ROSE_ASSERT(newEStatePtr);
-            ROSE_ASSERT(newEStatePtr->pstate());
-            _analyzer->getEStateTransferFunctions()->combineInPlace1st(abstractEStatePtr,const_cast<EStatePtr>(newEStatePtr));
-            ROSE_ASSERT(abstractEStatePtr);
-            ROSE_ASSERT(abstractEStatePtr->pstate());
-
-            setAbstractState(lab,cs,abstractEStatePtr);
-            delete newEStatePtr;
-            ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(abstractEStatePtr->label()));
-            _workList->push(WorkListEntry(abstractEStatePtr->label(),abstractEStatePtr->getCallString()));
+            if(isJoinLabel(lab)) {
+              ROSE_ASSERT(abstractEStatePtr);
+              ROSE_ASSERT(abstractEStatePtr->pstate());
+              ROSE_ASSERT(newEStatePtr);
+              ROSE_ASSERT(newEStatePtr->pstate());
+              _analyzer->getEStateTransferFunctions()->combineInPlace1st(abstractEStatePtr,const_cast<EStatePtr>(newEStatePtr));
+              ROSE_ASSERT(abstractEStatePtr);
+              ROSE_ASSERT(abstractEStatePtr->pstate());
+              
+              setAbstractState(lab,cs,abstractEStatePtr);
+              delete newEStatePtr;
+              ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(abstractEStatePtr->label()));
+              _workList->push(WorkListEntry(abstractEStatePtr->label(),abstractEStatePtr->getCallString()));
+            } else {
+              setAbstractState(lab,cs,newEStatePtr);
+              if(isBottomAbstractState(abstractEStatePtr)) {
+                // only needs to be deleted if it is bottom estate (which was created above), otherwise it is deleted by setAbstractState
+                delete abstractEStatePtr;
+              }
+              _workList->push(WorkListEntry(newEStatePtr->label(),newEStatePtr->getCallString()));              
+            }
 
           }
         }

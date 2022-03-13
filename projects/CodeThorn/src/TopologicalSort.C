@@ -45,7 +45,7 @@ namespace CodeThorn {
       for(auto iter=flow.nodes_begin();iter!=flow.nodes_end();++iter) {
         Label lab=*iter;
         if(!visited[lab]) {
-          cout<<"TopSort: found non visited label (non-reachable):"<<lab.toString()<<endl;
+          cout<<"TopSort: found non visited label (non-reachable):"<<lab.toString()<<": "<<labeler.sourceLocationToString(lab,40,30)<<endl;
           semanticRevPostOrderTraversal(lab);
         }
       }

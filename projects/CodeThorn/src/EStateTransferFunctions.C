@@ -3574,6 +3574,21 @@ namespace CodeThorn {
     }
   }
 
+  bool EStateTransferFunctions::isTmpVar(VariableId varId) {
+    string varName=getVariableIdMapping()->variableName(varId);
+    return CppStdUtilities::isPrefix("__tmp",varName);
+  }
+
+  void EStateTransferFunctions::tmpVarCleanUp(EStatePtr estate, VariableId varId) {
+    // only solver18 guarantees that all estates can be modified
+    if(_analyzer->getSolver()->getId()==18) {
+      if(isTmpVar(varId)) {
+        estate->pstate()->deleteVar(varId);
+        //cout<<"DEBUG: tmpVarCleanUp: removed "<<varId.toString(getVariableIdMapping())<<" from state."<<endl;
+      }
+    }
+  }
+  
   SingleEvalResult EStateTransferFunctions::evalRValueVarRefExp(SgVarRefExp* node, EStatePtr estate, EvalMode mode) {
     if(mode==EStateTransferFunctions::MODE_EMPTY_STATE) {
       SingleEvalResult res;
@@ -3615,9 +3630,11 @@ namespace CodeThorn {
             res.result=readFromMemoryLocation(estate->label(),pstate,varId); // address of a reference is the value it contains
           } else {
             res.result=readFromReferenceMemoryLocation(estate->label(),pstate,varId);
+            tmpVarCleanUp(estate,varId);
           }
         } else {
           res.result=readFromMemoryLocation(estate->label(),pstate,varId);
+          tmpVarCleanUp(estate,varId);
         }
       }
       return res;

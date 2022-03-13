@@ -171,6 +171,16 @@ size_t PState::inPlaceGarbageCollection() {
     size_t diff=oldSize-size();
     return diff;
   }
+  if(AbstractValue::domainAbstractionVariant==2) {
+    // remove top elements (requires adapted combine operator)
+    PState::iterator i=begin();
+    size_t oldSize=size();
+    while(i!=end()) {
+      erase(i++);
+    }
+    size_t diff=oldSize-size();
+    return diff;
+  }
   return 0;
 }
 
@@ -551,6 +561,7 @@ bool PState::isApproximatedBy(CodeThorn::PState& other) const {
   case 0:
     return PState::isApproximatedBy0(other);
   case 1:
+  case 2:
     return PState::isApproximatedBy0(other);
   default:
     cerr<<"Error: PState::isApproximatedBy: unsupported domain abstraction variant "<<AbstractValue::domainAbstractionVariant<<endl;
@@ -654,6 +665,7 @@ void PState::combineInPlace1st(CodeThorn::PStatePtr p1, CodeThorn::PStatePtr p2)
     PState::combineInPlace1st0(p1, p2);
     return;
   case 1:
+  case 2:
     PState::combineInPlace1st1(p1, p2);
     return;
   default:

@@ -20,7 +20,8 @@ namespace CodeThorn {
     // used to determine if the call string is approximate
     bool isMaxLength();
     bool addLabel(CodeThorn::Label lab);
-
+    bool exists(CodeThorn::Label lab);
+    
     /** Removes the last label of the call string if it matches with the argument 'lab'.
         In case of success this function returns true, otherwise false.
         On a call string of length 0 it always returns false and no operation is performed.
