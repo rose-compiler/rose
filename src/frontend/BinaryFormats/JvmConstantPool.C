@@ -5,16 +5,45 @@
 
 #include <Rose/Diagnostics.h>
 
-// In order to efficiently (in terms of amount of code) parse a file format that's defined for a different architecture, we
-// need to occassionally take addresses of structs that don't follow alignment rules for this architecture.
-#pragma GCC diagnostic ignored "-Waddress-of-packed-member"
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+/* Should go in JvmConstantPool.h or JvmConstantPoolEntries.h? */
+
+/* Specific formats for constant_pool table entries. All fields are big endian. */
+// 4.4.1
+struct CONSTANT_Class_info : SgAsmJvmConstantPoolEntry {
+  uint16_t name_index;
+  CONSTANT_Class_info(SgAsmGenericHeader*);
+};
+
+// 4.4.2
+struct CONSTANT_Methodref_info : SgAsmJvmConstantPoolEntry {
+  uint16_t class_index;
+  uint16_t name_and_type_index;
+  CONSTANT_Methodref_info(SgAsmGenericHeader*);
+};
+
+// 4.4.6
+struct CONSTANT_NameAndType_info : SgAsmJvmConstantPoolEntry {
+  uint16_t name_index;
+  uint16_t descriptor_index;
+  CONSTANT_NameAndType_info(SgAsmGenericHeader*);
+};
+
+// 4.4.7
+struct CONSTANT_Utf8_info : SgAsmJvmConstantPoolEntry {
+  uint16_t length;
+  uint8_t* bytes;
+  CONSTANT_Utf8_info(SgAsmGenericHeader* h);
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 using namespace Rose::Diagnostics;
 using namespace ByteOrder;
 
-SgAsmJvmConstantPool::
+// 4.4.1
 CONSTANT_Class_info::CONSTANT_Class_info(SgAsmGenericHeader* h)
-  : SgAsmJvmConstantPool::cp_info{cp_info::CONSTANT_Class}
+  : SgAsmJvmConstantPoolEntry{CONSTANT_Class}
 {
   auto offset = h->get_offset();
   auto count = h->read_content(offset, &name_index, sizeof name_index);
@@ -26,9 +55,8 @@ CONSTANT_Class_info::CONSTANT_Class_info(SgAsmGenericHeader* h)
   h->set_offset(offset);
 }
 
-SgAsmJvmConstantPool::
 CONSTANT_Methodref_info::CONSTANT_Methodref_info(SgAsmGenericHeader* h)
-  : SgAsmJvmConstantPool::cp_info{cp_info::CONSTANT_Methodref}
+  : SgAsmJvmConstantPoolEntry{CONSTANT_Methodref}
 {
   auto offset = h->get_offset();
   auto count = h->read_content(offset, &class_index, sizeof class_index);
@@ -42,6 +70,51 @@ CONSTANT_Methodref_info::CONSTANT_Methodref_info(SgAsmGenericHeader* h)
   offset += count;
 
   std::cout << "CONSTANT_Methodref_info:" << class_index << ":" << name_and_type_index << std::endl;
+  h->set_offset(offset);
+}
+
+// 4.4.6
+CONSTANT_NameAndType_info::CONSTANT_NameAndType_info(SgAsmGenericHeader* h)
+  : SgAsmJvmConstantPoolEntry{CONSTANT_NameAndType}, name_index{0}, descriptor_index{0}
+{
+  auto offset = h->get_offset();
+
+  /* name_index */
+  auto count = h->read_content(offset, &name_index, sizeof name_index);
+  if (2 != count) std::cout << "Bad CONSTANT_NameAndType_info::name_index\n";
+  name_index = be_to_host(name_index);
+  offset += count;
+
+  /* descriptor_index */
+  count = h->read_content(offset, &descriptor_index, sizeof descriptor_index);
+  if (2 != count) std::cout << "Bad CONSTANT_NameAndType_info::descriptor_index\n";
+  descriptor_index = be_to_host(descriptor_index);
+  offset += count;
+
+  std::cout << "CONSTANT_NameAndType_info:" << name_index << ":" << descriptor_index << std::endl;
+  h->set_offset(offset);
+}
+
+// 4.4.7
+CONSTANT_Utf8_info::CONSTANT_Utf8_info(SgAsmGenericHeader* h)
+  : SgAsmJvmConstantPoolEntry{CONSTANT_Utf8}, length{0}, bytes{nullptr}
+{
+  auto offset = h->get_offset();
+
+  /* length */
+  auto count = h->read_content(offset, &length, sizeof length);
+  if (2 != count) std::cout << "Bad CONSTANT_Utf8_info::length\n";
+  length = be_to_host(length);
+  offset += count;
+
+  /* bytes string */
+  bytes = new uint8_t[length+1]; // null terminated strings are easier to use
+  count = h->read_content(offset, bytes, length);
+  if (length != count) std::cout << "Bad CONSTANT_Utf8_info::bytes\n";
+  bytes[length] = '\0';
+  offset += count;
+
+  std::cout << "CONSTANT_Utf8_info:" << length << ":" << bytes << std::endl;
   h->set_offset(offset);
 }
 
@@ -90,34 +163,87 @@ SgAsmJvmConstantPool* SgAsmJvmConstantPool::parse()
   if (2 != count) throw FormatError("Bad Java class file constant_pool_count");
   constant_pool_count = be_to_host(constant_pool_count);
   offset +=count;
-  std::cout << "SgAsmJvmConstantPool::parse() constant_pool_count is " << constant_pool_count << std::endl;
+  std::cout << "SgAsmJvmConstantPool::parse() constant_pool_count is " << constant_pool_count << "\n\n";
 
-  /* tag */
-  uint8_t tag;
-  count = header->read_content(offset, &tag, sizeof tag);
-  if (1 != count) throw FormatError("Bad Java class file tag");
-  tag = be_to_host(tag);
-  offset +=count;
+  SgAsmJvmConstantPoolEntry* entry{nullptr};
+  /* A constant_pool index is considered valid if it is greater than zero and less than constant_pool_count */
+  for (int ii = 1; ii < constant_pool_count; ii++) {
+    /* tag */
+    uint8_t tag;
+    count = header->read_content(offset, &tag, sizeof tag);
+    if (1 != count) throw FormatError("Bad Java class file tag");
 
-  header->set_offset(offset);
-  std::cout << "SgAsmJvmConstantPool::parse() header offset is " << header->get_offset() << std::endl;
+    offset +=count;
+    header->set_offset(offset);
 
-  switch (tag) {
-    case cp_info::CONSTANT_Methodref: {
-      std::cout << "SgAsmJvmConstantPool::parse() tag is CONSTANT_Methodref\n";
-      auto cpinfo = new CONSTANT_Methodref_info(header);
-      std::cout << "SgAsmJvmConstantPool::parse() header offset is " << header->get_offset() << std::endl;
-      if ((header->get_offset() - offset) != 4) {
-        throw FormatError("Bad Java CONSTANT_Methodref");
-      }
-      offset = header->get_offset();
-      break;
+    std::cout << ii << ":";
+    switch (tag) {
+      case SgAsmJvmConstantPoolEntry::CONSTANT_Class:
+        entry = new CONSTANT_Class_info(header);
+        if ((header->get_offset() - offset) != 2) {
+          throw FormatError("Bad Java CONSTANT_Class");
+        }
+        break;
+      case SgAsmJvmConstantPoolEntry::CONSTANT_Methodref:
+        entry = new CONSTANT_Methodref_info(header);
+        if ((header->get_offset() - offset) != 4) {
+          throw FormatError("Bad Java CONSTANT_Methodref");
+        }
+        break;
+      case SgAsmJvmConstantPoolEntry::CONSTANT_NameAndType:
+        entry = new CONSTANT_NameAndType_info(header);
+        break;
+      case SgAsmJvmConstantPoolEntry::CONSTANT_Utf8:
+        entry = new CONSTANT_Utf8_info(header);
+        break;
+      default:
+        std::cout << "SgAsmJvmConstantPool::parse() unknown tag " << (int) tag << std::endl;
+        return this;
     }
-    default:
-      std::cout << "SgAsmJvmConstantPool::parse() unknown tag " << (int) tag << std::endl;
+    offset = header->get_offset();
+    // TODO: This need to be a list
+    set_entry(entry);
   }
 
-  std::cout << "SgAsmJvmConstantPool::parse finished ...\n\n";
+// NOTE: refactor this once SgJavaClassFile exists
+#if 1
+  /* access_flags */
+  uint16_t access_flags;
+  count = read_content(offset, &access_flags, sizeof access_flags);
+  if (2 != count) std::cout << "Bad Java class file access_flags\n";
+  access_flags = be_to_host(access_flags);
+  offset += count;
+  std::cout << "\nSgAsmJvmConstantPool::access_flags " << access_flags << std::endl;
+
+  /* this_class */
+  uint16_t this_class;
+  count = read_content(offset, &this_class, sizeof this_class);
+  if (2 != count) std::cout << "Bad Java class file this_class\n";
+  this_class = be_to_host(this_class);
+  offset += count;
+  std::cout << "SgAsmJvmConstantPool::this_class " << this_class << std::endl;
+
+  /* super_class */
+  uint16_t super_class;
+  count = read_content(offset, &super_class, sizeof super_class);
+  if (2 != count) std::cout << "Bad Java class file super_class\n";
+  super_class = be_to_host(super_class);
+  offset += count;
+  std::cout << "SgAsmJvmConstantPool::super_class " << super_class << std::endl;
+
+  /* interfaces_count */
+  uint16_t interfaces_count;
+  count = read_content(offset, &interfaces_count, sizeof interfaces_count);
+  if (2 != count) std::cout << "Bad Java class file interfaces_count\n";
+  interfaces_count = be_to_host(interfaces_count);
+  offset += count;
+  std::cout << "SgAsmJvmConstantPool::interfaces_count " << interfaces_count << std::endl;
+
+  //TODO: what's up with the different offsets? And they are diff by 1!
+  //set_offset(offset);
+#endif
+
+  std::cout << "\nSgAsmJvmConstantPool::parse finished ...\n\n";
   return this;
 }
 

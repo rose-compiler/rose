@@ -910,6 +910,7 @@ AstNodeClass::evaluateType(std::string& varTypeString)
                  ( varTypeString == "SgAsmElfSegmentTableEntry::SegmentFlags" ) ||
                  ( varTypeString == "SgAsmElfDynamicEntry::EntryType") ||
                  ( varTypeString == "SgAsmElfRelocEntry::RelocType") ||
+                 ( varTypeString == "SgAsmJvmConstantPoolEntry::ConstantPoolKind") ||
                  ( varTypeString == "SgAsmNEEntryPoint::NEEntryFlags" ) ||
                  ( varTypeString == "SgAsmNERelocEntry::NERelocSrcType" ) ||
                  ( varTypeString == "SgAsmNERelocEntry::NERelocModifiers" ) ||
