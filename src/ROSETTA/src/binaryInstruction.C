@@ -8492,8 +8492,6 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 
-
-
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /*************************************************************************************************************************
@@ -8887,7 +8885,6 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
     };
 #endif
-
 
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -9619,6 +9616,20 @@ void Grammar::setUpBinaryInstructions() {
     public:
 #endif
 
+#ifdef DOCUMENTATION
+        /** Property: Entry.
+         *
+         *  Returns constant pool entry (temporary, should be list).
+         *
+         * @{ */
+        SgAsmConstantPoolEntry* get_entry() const;
+        void set_entry(SgAsmConstantPoolEntry*);
+        /** @} */
+#else
+        AsmJvmConstantPool.setDataPrototype("SgAsmJvmConstantPoolEntry*", "entry", "= nullptr",
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
         DECLARE_OTHERS(AsmJvmConstantPool);
 #if defined(SgAsmJvmConstantPool_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
@@ -9629,57 +9640,6 @@ void Grammar::setUpBinaryInstructions() {
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
         }
-#endif
-
-    public:
-#ifdef _MSC_VER
-# pragma pack (1)
-#endif
-        /* General format for all constant_pool table entries. All fields are big endian. */
-        struct cp_info {
-            uint8_t tag;                    /* Kind of constant denoted by the entry */
-
-            cp_info(uint8_t t) : tag{t} {
-            }
-
-            /* Constant pool tags */
-            enum info_e {
-                CONSTANT_Utf8 = 1,
-                CONSTANT_Integer = 3,
-                CONSTANT_Float = 4,
-                CONSTANT_Long = 5,
-                CONSTANT_Double = 6,
-                CONSTANT_Class = 7,
-                CONSTANT_String = 8,
-                CONSTANT_Fieldref = 9,
-                CONSTANT_Methodref = 10,
-                CONSTANT_InterfaceMethodref = 11,
-                CONSTANT_NameAndType = 12,
-                CONSTANT_MethodHandle = 15,
-                CONSTANT_MethodType = 16,
-                CONSTANT_Dynamic = 17,
-                CONSTANT_InvokeDynamic = 18,
-                CONSTANT_Module = 19,
-                CONSTANT_Package = 20
-            };
-        };
-
-        /* Specific format for constant_pool table entries. */
-        struct CONSTANT_Class_info : cp_info {
-            uint16_t name_index;
-            CONSTANT_Class_info(SgAsmGenericHeader* h);
-        };
-        struct CONSTANT_Methodref_info : cp_info {
-            uint16_t class_index;
-            uint16_t name_and_type_index;
-            CONSTANT_Methodref_info(SgAsmGenericHeader* h);
-        }
-#if !defined(SWIG) && !defined(_MSC_VER)
-        __attribute__((packed))
-#endif
-        ;
-#ifdef _MSC_VER
-# pragma pack ()
 #endif
 
     public:
@@ -9695,6 +9655,100 @@ void Grammar::setUpBinaryInstructions() {
         virtual SgAsmJvmConstantPool *parse() override;
 
 #endif // SgAsmJvmConstantPool_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /*************************************************************************************************************************
+     *                                         JVM Constant Pool Entry
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmJvmConstantPoolEntry);
+    IS_SERIALIZABLE(AsmJvmConstantPoolEntry);
+
+#ifdef DOCUMENTATION
+    /** Represents an entry in a JVM constant pool.
+     *
+     *  Constant pool entries are referenced by index starting at 1.
+     */
+    class SgAsmJvmConstantPoolEntry: public SgAsmNode {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Tag.
+         *
+         *  Returns an enum constant describing the kind of this entry in the pool.
+         *
+         * @{ */
+        ConstantPoolKind get_tag() const;
+        void set_tag(ConstantPoolKind);
+        /** @} */
+#else
+        AsmJvmConstantPoolEntry.setDataPrototype("SgAsmJvmConstantPoolEntry::ConstantPoolKind", "tag", "= SgAsmJvmConstantPoolEntry::ILLEGAL",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmJvmConstantPoolEntry);
+#if defined(SgAsmJvmConstantPoolEntry_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
+            s & BOOST_SERIALIZATION_NVP(p_tag);
+        }
+#endif
+
+    public:
+        /** Constant pool tags.
+         *
+         * These tags indicate the kind of constant denoted by the pool entry.
+         */
+        enum ConstantPoolKind {
+            ILLEGAL = 0,
+            CONSTANT_Utf8 = 1,
+            CONSTANT_Integer = 3,
+            CONSTANT_Float = 4,
+            CONSTANT_Long = 5,
+            CONSTANT_Double = 6,
+            CONSTANT_Class = 7,
+            CONSTANT_String = 8,
+            CONSTANT_Fieldref = 9,
+            CONSTANT_Methodref = 10,
+            CONSTANT_InterfaceMethodref = 11,
+            CONSTANT_NameAndType = 12,
+            CONSTANT_MethodHandle = 15,
+            CONSTANT_MethodType = 16,
+            CONSTANT_Dynamic = 17,
+            CONSTANT_InvokeDynamic = 18,
+            CONSTANT_Module = 19,
+            CONSTANT_Package = 20
+        };
+
+        /** Constructor creating an object ready to be initialized via parse(). */
+        explicit SgAsmJvmConstantPoolEntry(SgAsmJvmConstantPoolEntry::ConstantPoolKind tag)
+            : p_tag{tag} {
+        }
+
+        /** Initialize object by parsing the file.
+         *
+         * @{ */
+        void parse();
+        /** @} */
+
+        /** Convert constant pool entry kind to a string */
+        static std::string to_string(SgAsmJvmConstantPoolEntry::ConstantPoolKind);
+
+#endif // SgAsmJvmConstantPoolEntry_OTHERS
 
 #ifdef DOCUMENTATION
     };
@@ -16896,7 +16950,7 @@ void Grammar::setUpBinaryInstructions() {
 
     NEW_NONTERMINAL_MACRO(AsmNode,
                           AsmStatement | AsmExpression | AsmInterpretation | AsmOperandList | AsmType |
-                          AsmExecutableFileFormat | AsmInterpretationList | AsmGenericFileList,
+                          AsmExecutableFileFormat | AsmInterpretationList | AsmGenericFileList | AsmJvmConstantPoolEntry,
                           "AsmNode", "AsmNodeTag", false);
     AsmNode.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmNode);

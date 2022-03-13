@@ -211,6 +211,7 @@ SgAsmIntegerType
 SgAsmInterpretation
 SgAsmInterpretationList
 SgAsmJvmConstantPool
+SgAsmJvmConstantPoolEntry
 SgAsmLEEntryPoint
 SgAsmLEEntryTable
 SgAsmLEFileHeader

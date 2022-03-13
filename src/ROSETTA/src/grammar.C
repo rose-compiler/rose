@@ -1250,6 +1250,7 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
           (nodeName == "AsmElfSegmentTableEntry"    && variableNameString == "type")  ||
           (nodeName == "AsmElfRelocEntry"           && variableNameString == "type")  ||
           (nodeName == "AsmElfNoteEntry"            && variableNameString == "type")  ||
+          (nodeName == "AsmJvmConstantPoolEntry"    && variableNameString == "type")  ||
           (nodeName == "xxx"                        && variableNameString == "type")  ||
           (nodeName == "xxx"                        && variableNameString == "type")  ||
           (nodeName == "xxx"                        && variableNameString == "type")  ||
@@ -1400,6 +1401,7 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
           (nodeName == "TypeExpression"             && variableNameString == "type")  ||
           (nodeName == "AsmElfRelocEntry"           && variableNameString == "type")  ||
           (nodeName == "AsmElfNoteEntry"            && variableNameString == "type")  ||
+          (nodeName == "AsmJvmConstantPoolEntry"    && variableNameString == "type")  ||
           (nodeName == "xxx"                        && variableNameString == "type")  ||
           (nodeName == "xxx"                        && variableNameString == "type")  ||
           (nodeName == "xxx"                        && variableNameString == "type")  ||
