@@ -412,18 +412,6 @@ digraph "function_instantiation.adt" {
           <TR><TD ALIGN="LEFT">Statement_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">A_RETURN_STATEMENT</TD></TR>
           <TR><TD ALIGN="LEFT">Return_Expression     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2522234</TD></TR>
           </TABLE>> ];
-  Element_2522234
-      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
-          <TR><TD COLSPAN="3">Element_2522234</TD></TR>
-          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPRESSION</TD></TR>
-          <TR><TD ALIGN="LEFT">Is_Part_Of_Instance     </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
-          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 1343603023</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2521398</TD></TR>
-          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">function_instantiation.adb - 1:1 .. 0:0</TD></TR>
-          <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_INTEGER_LITERAL</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_82</TD></TR>
-          <TR><TD ALIGN="LEFT">Value_Image   </TD><TD> = </TD><TD ALIGN="LEFT">0</TD></TR>
-          </TABLE>> ];
   Element_2457104 -> Element_2431057
       [ label="Names ( 1)" ];
   Element_2457104 -> Element_2447105

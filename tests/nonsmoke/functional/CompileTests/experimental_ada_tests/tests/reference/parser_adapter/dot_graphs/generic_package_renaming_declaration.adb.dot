@@ -643,18 +643,6 @@ digraph "generic_package_renaming_declaration.adt" {
           <TR><TD ALIGN="LEFT">Corresponding_Name_Definition_List ( 1)          </TD><TD> = </TD><TD ALIGN="LEFT">Element_37057</TD></TR>
           <TR><TD ALIGN="LEFT">Corresponding_Name_Declaration        </TD><TD> = </TD><TD ALIGN="LEFT">Element_917082</TD></TR>
           </TABLE>> ];
-  Element_2578234
-      [ label=<<TABLE BORDER="0" CELLBORDER="0" CELLSPACING="0" CELLPADDING="0"> 
-          <TR><TD COLSPAN="3">Element_2578234</TD></TR>
-          <TR><TD ALIGN="LEFT">Element_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_EXPRESSION</TD></TR>
-          <TR><TD ALIGN="LEFT">Is_Part_Of_Instance     </TD><TD> = </TD><TD ALIGN="LEFT">TRUE</TD></TR>
-          <TR><TD ALIGN="LEFT">Hash  </TD><TD> = </TD><TD ALIGN="LEFT"> 1210762429</TD></TR>
-          <TR><TD ALIGN="LEFT">Enclosing_Element     </TD><TD> = </TD><TD ALIGN="LEFT">Element_2570099</TD></TR>
-          <TR><TD ALIGN="LEFT">Source  </TD><TD> = </TD><TD ALIGN="LEFT">generic_package_renaming_declaration.adb - 1:1 .. 0:0</TD></TR>
-          <TR><TD ALIGN="LEFT">Expression_Kind    </TD><TD> = </TD><TD ALIGN="LEFT">AN_INTEGER_LITERAL</TD></TR>
-          <TR><TD ALIGN="LEFT">Corresponding_Expression_Type        </TD><TD> = </TD><TD ALIGN="LEFT">Element_82</TD></TR>
-          <TR><TD ALIGN="LEFT">Value_Image   </TD><TD> = </TD><TD ALIGN="LEFT">0</TD></TR>
-          </TABLE>> ];
   Element_2300137 -> Element_2302386
       [ label="Generic_Actual_Part ( 1)" ];
   Element_2300137 -> Element_2299237
