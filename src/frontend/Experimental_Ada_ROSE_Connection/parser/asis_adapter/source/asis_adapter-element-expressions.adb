@@ -383,7 +383,8 @@ package body Asis_Adapter.Element.Expressions is
          Result.Expression_Kind := To_Expression_Kinds (Expression_Kind);
          Add_Corresponding_Expression_Type;
       end Add_Common_Items;
-
+ 
+      is_Instance : constant Boolean := Asis.Elements.Is_Part_Of_Instance (Element);
       use all type Asis.Expression_Kinds;
    begin
       If Expression_Kind /= Not_An_Expression then
@@ -398,11 +399,17 @@ package body Asis_Adapter.Element.Expressions is
             -- No more info:
             null;
          when An_Integer_Literal =>
-            Add_Value_Image;
+            if is_Instance /= True then
+              Add_Value_Image;
+            end if;
          when A_Real_Literal =>
-            Add_Value_Image;
+            if is_Instance /= True then
+              Add_Value_Image;
+            end if;
          when A_String_Literal =>
+--            if is_Instance /= True then
             Add_Value_Image;
+--            end if;
          when An_Identifier =>
             Add_Name_Image;
             Add_Corresponding_Name_Definition;
