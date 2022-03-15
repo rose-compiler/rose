@@ -1823,6 +1823,12 @@ Enter(SgEnumVal* &enum_val, const std::string &name, SgEnumDeclaration* enum_dec
          }
       }
    }
+
+   // Also add enum alias to global scope as StatusConstants are globally visible
+   auto global_scope = SI::getGlobalScope(scope);
+   auto alias_sym = new SgAliasSymbol(enum_field_symbol);
+   ROSE_ASSERT(global_scope && alias_sym);
+   global_scope->insert_symbol(name, alias_sym);
 }
 
 void SageTreeBuilder::
@@ -1973,10 +1979,10 @@ reset_forward_type_refs(const std::string &type_name, SgNamedType* type)
 void SageTreeBuilder::
 injectAliasSymbol(const std::string &name)
 {
-   SgClassDefinition* class_def = isSgClassDefinition(SageBuilder::topScopeStack());
+   auto top_scope = SB::topScopeStack();
+   auto class_def = isSgClassDefinition(top_scope);
    if (class_def) {
-      SgVariableSymbol*
-        var_sym = SageInterface::lookupVariableSymbolInParentScopes(SgName(name), SageBuilder::topScopeStack());
+      auto var_sym = SI::lookupVariableSymbolInParentScopes(SgName{name}, top_scope);
       ROSE_ASSERT(var_sym);
 
       SgJovialTableStatement* table_decl = isSgJovialTableStatement(class_def->get_declaration());
@@ -2005,7 +2011,7 @@ injectAliasSymbol(const std::string &name)
           scope = decl_scope;
         }
         else {
-          scope = SageInterface::getGlobalScope(table_decl);
+          scope = SI::getGlobalScope(table_decl);
         }
         ROSE_ASSERT(scope);
         scope->insert_symbol(SgName(name), alias_sym);
