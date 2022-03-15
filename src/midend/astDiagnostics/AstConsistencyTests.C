@@ -1160,6 +1160,7 @@ TestAstProperties::evaluateSynthesizedAttribute(SgNode* node, SynthesizedAttribu
                          break;
                        }
 
+                    case V_SgAdaUnitRefExp:
                     case V_SgAdaAttributeExp: // PP (01/22/21) as used by Ada Attributes
                        {
                          break;
