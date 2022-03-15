@@ -64,11 +64,13 @@ class FunctionCall {
     Partitioner2::FunctionPtr function_;
     rose_addr_t initialStackPointer_ = 0;
     rose_addr_t framePointerDelta_ = (rose_addr_t)(-4); // Normal frame pointer w.r.t. initial stack pointer
+    Sawyer::Optional<rose_addr_t> returnAddress_;
     Variables::StackVariables stackVariables_;
 
 public:
     ~FunctionCall();
-    FunctionCall(const Partitioner2::FunctionPtr&, rose_addr_t initialSp, const Variables::StackVariables&);
+    FunctionCall(const Partitioner2::FunctionPtr&, rose_addr_t initialSp, Sawyer::Optional<rose_addr_t> returnAddress,
+                 const Variables::StackVariables&);
 
     /** Property: The function called. */
     Partitioner2::FunctionPtr function() const;
@@ -89,6 +91,21 @@ public:
     rose_addr_t framePointerDelta() const;
     void framePointerDelta(rose_addr_t);
     /** @} */
+
+    /** Computed frame pointer.
+     *
+     *  This is the frame pointer computed from the initial stack pointer and the frame pointer delta. */
+    rose_addr_t framePointer(size_t nBits) const;
+
+    /** Address to which function returns
+     *
+     * @{ */
+    Sawyer::Optional<rose_addr_t> returnAddress() const;
+    void returnAddress(Sawyer::Optional<rose_addr_t>);
+    /** @} */
+
+    /** Some basic info about the function call. */
+    std::string printableName(size_t nBits) const;
 };
 
 /** Function call stack.
@@ -370,7 +387,7 @@ public: // Supporting functions
     void maybeInitCallStack(rose_addr_t insnVa);
 
     /** Push a function onto the call stack. */
-    void pushCallStack(const Partitioner2::FunctionPtr &callee, rose_addr_t initialSp);
+    void pushCallStack(const Partitioner2::FunctionPtr &callee, rose_addr_t initialSp, Sawyer::Optional<rose_addr_t> returnVa);
 
     /** Pop a function from the call stack.
      *
@@ -387,7 +404,7 @@ public: // Supporting functions
     size_t pruneCallStack();
 
     /** Print information about the function call stack. */
-    void printCallStack(std::ostream&);
+    void printCallStack(std::ostream&, const std::string &prefix);
 
     /** Assign a region to an expression.
      *

@@ -272,8 +272,8 @@ findStackVariable(const FunctionCallStack &callStack, const AddressInterval &loc
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 FunctionCall::FunctionCall(const Partitioner2::FunctionPtr &function, rose_addr_t initialStackPointer,
-                           const Variables::StackVariables &vars)
-    : function_(function), initialStackPointer_(initialStackPointer), stackVariables_(vars) {}
+                           Sawyer::Optional<rose_addr_t> returnAddress, const Variables::StackVariables &vars)
+    : function_(function), initialStackPointer_(initialStackPointer), returnAddress_(returnAddress), stackVariables_(vars) {}
 
 FunctionCall::~FunctionCall() {}
 
@@ -302,6 +302,29 @@ FunctionCall::framePointerDelta(rose_addr_t delta) {
     framePointerDelta_ = delta;
 }
 
+rose_addr_t
+FunctionCall::framePointer(size_t nBits) const {
+    rose_addr_t mask = BitOps::lowMask<rose_addr_t>(nBits);
+    return (initialStackPointer_ + framePointerDelta_) & mask;
+}
+
+Sawyer::Optional<rose_addr_t>
+FunctionCall::returnAddress() const {
+    return returnAddress_;
+}
+
+void
+FunctionCall::returnAddress(Sawyer::Optional<rose_addr_t> va) {
+    returnAddress_ = va;
+}
+
+std::string
+FunctionCall::printableName(size_t nBits) const {
+    return function()->printableName() +
+        " initSp=" + StringUtility::addrToString(initialStackPointer_) +
+        " frame=" + StringUtility::addrToString(framePointer(nBits)) +
+        " retVa=" + StringUtility::addrToString(returnAddress_);
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Instruction semantics values
@@ -700,24 +723,23 @@ RiscOperators::maybeInitCallStack(rose_addr_t insnVa) {
                 const RegisterDescriptor SP = partitioner_.instructionProvider().stackPointerRegister();
                 const BS::SValue::Ptr spSValue = peekRegister(SP, undefined_(SP.nBits()));
                 const rose_addr_t sp = spSValue->toUnsigned().get();      // must be concrete
-                pushCallStack(function, sp);
+                pushCallStack(function, sp, Sawyer::Nothing());
             }
         }
     }
 }
 
 void
-RiscOperators::pushCallStack(const P2::Function::Ptr &callee, rose_addr_t initialSp) {
+RiscOperators::pushCallStack(const P2::Function::Ptr &callee, rose_addr_t initialSp, Sawyer::Optional<rose_addr_t> returnVa) {
     if (computeMemoryRegions_) {
         FunctionCallStack &callStack = State::promote(currentState())->callStack();
+        const size_t nBits = partitioner_.instructionProvider().wordSize();
 
         while (!callStack.isEmpty() && callStack.top().initialStackPointer() <= initialSp) {
-            SAWYER_MESG(mlog[DEBUG]) <<"      returned from " <<callStack.top().function()->printableName() <<"\n";
+            const FunctionCall &fcall = callStack.top();
+            SAWYER_MESG(mlog[DEBUG]) <<"      returned from " <<fcall.printableName(nBits) <<"\n";
             callStack.pop();
         }
-
-        SAWYER_MESG(mlog[DEBUG]) <<"      called " <<callee->printableName() <<"\n";
-        SAWYER_MESG(mlog[DEBUG]) <<"        initial stack pointer = " <<StringUtility::addrToString(initialSp) <<"\n";
 
         // VariableFinder API is not thread safe, so we need to protect it
         Variables::StackVariables lvars;
@@ -727,12 +749,15 @@ RiscOperators::pushCallStack(const P2::Function::Ptr &callee, rose_addr_t initia
             lvars = variableFinder_unsync->findStackVariables(partitioner_, callee);
             frameSize = variableFinder_unsync->detectFrameAttributes(partitioner_, callee).size;
         }
-        callStack.push(FunctionCall(callee, initialSp, lvars));
-        if (frameSize)
+        callStack.push(FunctionCall(callee, initialSp, returnVa, lvars));
+        const std::string isa = partitioner_.instructionProvider().disassembler()->name();
+        if ("a32" == isa || "t32" == isa || "a64" == isa) {
+            callStack[0].framePointerDelta(-4);
+        } else if (frameSize) {
             callStack[0].framePointerDelta(-*frameSize);
+        }
 
-        if (mlog[DEBUG])
-            printCallStack(mlog[DEBUG]);
+        SAWYER_MESG(mlog[DEBUG]) <<"      called " <<callStack[0].printableName(nBits) <<"\n";
     }
 }
 
@@ -740,7 +765,12 @@ void
 RiscOperators::popCallStack() {
     FunctionCallStack &callStack = State::promote(currentState())->callStack();
     ASSERT_forbid(callStack.isEmpty());
-    SAWYER_MESG(mlog[DEBUG]) <<"    returned from " <<callStack.top().function()->printableName() <<"\n";
+    if (mlog[DEBUG]) {
+        const FunctionCall &fcall = callStack.top();
+        const size_t nBits = partitioner_.instructionProvider().wordSize();
+        mlog[DEBUG] <<"    returned from " <<fcall.printableName(nBits) <<"\n";
+    }
+
     Sawyer::Optional<rose_addr_t> poppedInitialSp = callStack.top().initialStackPointer();
     callStack.pop();
 
@@ -786,6 +816,8 @@ RiscOperators::popCallStack() {
             stackBoundary += 8;
         } else if (boost::starts_with(isaName, "ppc32") || boost::starts_with(isaName, "ppc64")) {
             // PowerPC function calls don't push a return value.
+        } else if ("a32" == isaName || "t32" == isaName || "a64" == isaName) {
+            // ARM AArch32 and AArch64 function calls don't push a return value
         } else {
             ASSERT_not_implemented("isaName = " + isaName);
         }
@@ -813,54 +845,109 @@ RiscOperators::pruneCallStack() {
     size_t nPopped = 0;
     if (computeMemoryRegions_) {
         FunctionCallStack &callStack = State::promote(currentState())->callStack();
+        const size_t nBits = partitioner_.instructionProvider().wordSize();
 
-        // Pop call frames that are beyond the current top of stack
+        // Pop functions whose initial stack pointer is beyond the end of the current stack.
         const RegisterDescriptor SP = partitioner_.instructionProvider().stackPointerRegister();
         auto sp = peekRegister(SP, undefined_(SP.nBits()))->toUnsigned();
         if (sp) {
-            Sawyer::Optional<rose_addr_t> poppedInitialSp; // initial stack pointer of last function to be popped
             while (!callStack.isEmpty() && callStack.top().initialStackPointer() < *sp) {
+                const FunctionCall &fcall = callStack.top();
+                SAWYER_MESG(mlog[DEBUG]) <<"    popping " <<fcall.printableName(nBits)
+                                         <<" because its initial stack pointer is beyond the current SP "
+                                         <<StringUtility::addrToString(*sp) <<"\n";
                 popCallStack();
                 ++nPopped;
             }
         }
 
-        // On ISAs that use a link register, if the current top of stack is the same as the initial stack pointer for the top
-        // callee, and the current instruction pointer is the same as the link register, then we must have just returned from
-        // that function, so pop it.
-        if (!callStack.isEmpty() && sp && callStack.top().initialStackPointer() == *sp) {
+        // Pop a function whose initial stack pointer is equal to the current stack pointer and whose return-to address
+        // is equal to the current instruction pointer.
+        if (!callStack.isEmpty()) {
+            const FunctionCall &fcall = callStack.top();
             const RegisterDescriptor IP = partitioner_.instructionProvider().instructionPointerRegister();
-            const RegisterDescriptor LR = partitioner_.instructionProvider().callReturnRegister();
-            if (IP && LR) {
+            auto ip = peekRegister(IP, undefined_(IP.nBits()))->toUnsigned();
+            auto funcRet = fcall.returnAddress();
+            if (ip && funcRet && *ip == *funcRet && sp && fcall.initialStackPointer() == *sp) {
+                SAWYER_MESG(mlog[DEBUG]) <<"    popping " <<fcall.printableName(nBits)
+                                         <<" because its initial stack pointer is equal to the current stack pointer"
+                                         <<" and its return address is equal to the current instruction pointer\n";
+                popCallStack();
+                ++nPopped;
+            }
+        }
+
+#if 0 // [Robb Matzke 2022-03-10]
+        // Architecture specific stuff
+        if (!callStack.isEmpty()) {
+            const FunctionCall &fcall = callStack.top();
+            const std::string isa = partitioner_.instructionProvider().disassembler()->name();
+            if ("a32" == isa || "t32" == isa || "a64" == isa) {
+                // ARM AArch32 or AArch64 instructions. Returning based on the current value of the link register (LR) is not
+                // possible because the LR is not a callee-saved register. The callee (function about to return) pushes the
+                // initial LR value onto the stack at the beginning, but instead of popping it back into the LR at the end, it
+                // pops it into the instruction pointer register (PC) directly in order to effect the return.
+                const RegisterDescriptor IP = partitioner_.instructionProvider().instructionPointerRegister();
                 auto ip = peekRegister(IP, undefined_(IP.nBits()))->toUnsigned();
-                auto lr = peekRegister(LR, undefined_(LR.nBits()))->toUnsigned();
-                if (ip && lr && *ip == *lr) {
+                auto funcRet = fcall.returnAddress();
+                if (ip && funcRet && *ip == *funcRet && sp && fcall.initialStackPointer() == *sp) {
+                    SAWYER_MESG(mlog[DEBUG]) <<"    popping " <<fcall.printableName(nBits)
+                                             <<" because its initial stack pointer is equal to the current stack pointer"
+                                             <<" and its return address is equal to the current instruction pointer\n";
                     popCallStack();
                     ++nPopped;
                 }
+
+            } else if (boost::starts_with(isa, "ppc32") || boost::starts_with(isa, "ppc64")) {
+                // PowerPC uses a link register which is a callee-saved register. The callee (function about to return) saves
+                // and restores the link register via the stack if necessary. When returning, it uses a branch instruction that
+                // branches to the address stored in the link register. Therfore, if the current top of stack is the same as
+                // the initial stack pointer for the top callee, and the current instruction pointer is the same as the link
+                // register, then we must have just returned from that function, so pop it.
+                if (sp && callStack.top().initialStackPointer() == *sp) {
+                    const RegisterDescriptor IP = partitioner_.instructionProvider().instructionPointerRegister();
+                    const RegisterDescriptor LR = partitioner_.instructionProvider().callReturnRegister();
+                    if (IP && LR) {
+                        auto ip = peekRegister(IP, undefined_(IP.nBits()))->toUnsigned();
+                        auto lr = peekRegister(LR, undefined_(LR.nBits()))->toUnsigned();
+                        if (ip && lr && *ip == *lr) {
+                            SAWYER_MESG(mlog[DEBUG]) <<"    popping " <<fcall.printableName(nBits)
+                                                     <<" because its initial stack pointer is equal to the current stack pointer"
+                                                     <<" and its return address, current instruction pointer, and link register"
+                                                     <<" are equal.\n";
+                            popCallStack();
+                            ++nPopped;
+                        }
+                    }
+                }
             }
         }
+#endif
     }
 
     return nPopped;
 }
 
 void
-RiscOperators::printCallStack(std::ostream &out) {
+RiscOperators::printCallStack(std::ostream &out, const std::string &prefix) {
     if (computeMemoryRegions_) {
         FunctionCallStack &callStack = State::promote(currentState())->callStack();
-        out <<"      function call stack:\n";
+        out <<prefix <<"function call stack:\n";
         if (callStack.isEmpty()) {
-            out <<"        empty\n";
+            out <<prefix <<"  empty\n";
         } else {
+            const size_t nBits = partitioner_.instructionProvider().wordSize();
             for (size_t i = callStack.size(); i > 0; --i) {
                 const FunctionCall &fcall = callStack[i-1];
-                out <<"        " <<fcall.function()->printableName()
-                    <<" initSp=" <<StringUtility::addrToString(fcall.initialStackPointer()) <<"\n";
+                out <<prefix <<"  " <<fcall.function()->printableName()
+                    <<" initSp=" <<StringUtility::addrToString(fcall.initialStackPointer())
+                    <<" fpDelta=" <<StringUtility::toHex(fcall.framePointerDelta())
+                    <<" frame=" <<StringUtility::addrToString(fcall.framePointer(nBits))
+                    <<" returnVa=" <<StringUtility::addrToString(fcall.returnAddress()) <<"\n";
                 for (const Variables::StackVariable &var: fcall.stackVariables().values()) {
                     AddressInterval where = shiftAddresses(fcall.initialStackPointer() + fcall.framePointerDelta(),
                                                            var.interval(), stackLimits_);
-                    out <<"          " <<var <<" at " <<StringUtility::addrToString(where) <<"\n";
+                    out <<prefix <<"    " <<var <<" at " <<StringUtility::addrToString(where) <<"\n";
                 }
             }
         }
@@ -954,7 +1041,7 @@ RiscOperators::finishInstruction(SgAsmInstruction *insn) {
                     const RegisterDescriptor SP = partitioner_.instructionProvider().stackPointerRegister();
                     const BS::SValue::Ptr spSValue = peekRegister(SP, undefined_(SP.nBits()));
                     if (auto sp = spSValue->toUnsigned())
-                        pushCallStack(callee, *sp);
+                        pushCallStack(callee, *sp, insn->get_address() + insn->get_size());
                 }
             }
         }
@@ -1068,11 +1155,22 @@ RiscOperators::writeRegister(RegisterDescriptor reg, const BS::SValue::Ptr &valu
         const RegisterDescriptor FP = partitioner_.instructionProvider().stackFrameRegister();
         FunctionCallStack &callStack = State::promote(currentState())->callStack();
         if (FP == reg && !callStack.isEmpty()) {
+            FunctionCall &fcall = callStack.top();
             if (auto fp = value->toUnsigned()) {
-                rose_addr_t delta = *fp - callStack.top().initialStackPointer();
-                callStack.top().framePointerDelta(delta);
-                SAWYER_MESG(mlog[DEBUG]) <<"    adjusted frame pointer within " <<callStack.top().function()->printableName()
-                                         <<" delta = " <<StringUtility::signedToHex2(delta, FP.nBits()) <<"\n";
+                if (*fp <= fcall.initialStackPointer()) { // probably part of a function call return instruction
+                    const size_t nBits = partitioner_.instructionProvider().wordSize();
+                    const rose_addr_t oldFp = fcall.framePointer(nBits);
+                    const rose_addr_t oldDelta = fcall.framePointerDelta();
+                    const rose_addr_t newDelta = *fp - fcall.initialStackPointer();
+
+                    fcall.framePointerDelta(newDelta);
+                    const rose_addr_t newFp = fcall.framePointer(nBits);
+                    SAWYER_MESG(mlog[DEBUG]) <<"    adjusted frame pointer within " <<fcall.function()->printableName()
+                                             <<" from " <<StringUtility::addrToString(oldFp)
+                                             <<" to " <<StringUtility::addrToString(newFp)
+                                             <<", delta from " <<StringUtility::signedToHex2(oldDelta, FP.nBits())
+                                             <<" to " <<StringUtility::signedToHex2(newDelta, FP.nBits()) <<"\n";
+                }
             }
         }
     }
@@ -1101,9 +1199,11 @@ RiscOperators::readMemory(RegisterDescriptor segreg, const BS::SValue::Ptr &addr
     }
 
     // Check the model and throw exception if violated.
-    checkNullAccess(adjustedVa, settings_.nullRead, IoMode::READ);
-    checkOobAccess(adjustedVa, settings_.oobRead, IoMode::READ, dflt->nBits() / 8);
-    checkUninitVar(adjustedVa, settings_.uninitVar, dflt->nBits() / 8);
+    if (!isNoopRead()) {
+        checkNullAccess(adjustedVa, settings_.nullRead, IoMode::READ);
+        checkOobAccess(adjustedVa, settings_.oobRead, IoMode::READ, dflt->nBits() / 8);
+        checkUninitVar(adjustedVa, settings_.uninitVar, dflt->nBits() / 8);
+    }
 
     // Read from memory map. If we know the address and that memory exists, then read the memory to obtain the default value
     // which we'll use to update the symbolic state in a moment.
@@ -1364,29 +1464,8 @@ SemanticCallbacks::preExecute(const ExecutionUnit::Ptr &unit, const BS::RiscOper
     ops->maybeInitCallStack(unit->address().orElse(0));
 
     // Debugging
-    if (mlog[DEBUG]) {
-        mlog[DEBUG] <<"  function call stack:\n";
-        const FunctionCallStack &callStack = State::promote(ops->currentState())->callStack();
-        const size_t nBits = partitioner_.instructionProvider().wordSize();
-        const rose_addr_t mask = BitOps::lowMask<rose_addr_t>(nBits);
-        for (size_t i = callStack.size(); i > 0; --i) { // print from earliest to most recent record, i.e., bottom up
-            const FunctionCall &call = callStack[i-1];
-            mlog[DEBUG] <<"    " <<call.function()->printableName() <<"\n";
-            mlog[DEBUG] <<"      initial stack pointer = " <<StringUtility::addrToString(call.initialStackPointer()) <<"\n";
-            mlog[DEBUG] <<"      frame pointer delta   = " <<StringUtility::toHex(call.framePointerDelta()) <<"\n";
-            const rose_addr_t framePointer = (call.initialStackPointer() + call.framePointerDelta()) & mask;
-            mlog[DEBUG] <<"      frame pointer         = " <<StringUtility::addrToString(framePointer) <<"\n";
-            for (const Variables::StackVariable &var: call.stackVariables().values()) {
-                const rose_addr_t varVa = (framePointer + (rose_addr_t)var.interval().least()) & mask;
-                ASSERT_require(var.maxSizeBytes() > 0);
-                const rose_addr_t varSize = std::min(mask-varVa, var.maxSizeBytes()-1) + 1; // careful for overflow
-                const AddressInterval varLoc = AddressInterval::baseSize(varVa, varSize);
-                mlog[DEBUG] <<"        va " <<StringUtility::addrToString(varLoc) <<" is " <<var.toString() <<"\n";
-            }
-        }
-        if (callStack.isEmpty())
-            mlog[DEBUG] <<"    empty\n";
-    }
+    if (mlog[DEBUG])
+        ops->printCallStack(mlog[DEBUG], "  ");
 
     return {};
 }
