@@ -1,7 +1,8 @@
 with Ada.Exceptions;
 with Ada.Text_IO;
 -- For int."+":
-with Interfaces.C;
+with Interfaces.C; use Interfaces.C;
+with Interfaces.C.Extensions; use Interfaces.C.Extensions;
 
 package body A_Nodes is
 
@@ -41,17 +42,21 @@ package body A_Nodes is
       Parent_Name : constant String := Module_Name;
       Module_Name : constant String := Parent_Name & ".Check_Element_Node";
       ID          : constant a_nodes_h.Element_ID := Element.ID;
+      Is_Part_Of_Instance : constant Extensions.bool := Element.Is_Part_Of_Instance;
       use type Interfaces.C.int;
    begin
       if This.Element_IDs.Contains (ID) then
-         raise Usage_Error with Module_Name &
+        raise Usage_Error with Module_Name &
            ": Tried to push second Element with ID => " & ID'Image;
+--         ATI.Put_Line ( "Warning: " & Module_Name  & " Tried to push second Element wih ID => " & ID'Image);
       else
          -- TODO: Remove when no longer needed for debug:
          --  Ada.Text_IO.Put_Line ("a_nodes.Check_Element_Node:  ID => " & ID'Image);
-         This.Element_IDs.Insert (ID);
-         if ID > This.Highest_Element_ID then
-            This.Highest_Element_ID := ID;
+         if Is_Part_Of_Instance = Extensions.False then
+            This.Element_IDs.Insert (ID);
+            if ID > This.Highest_Element_ID then
+               This.Highest_Element_ID := ID;
+            end if;
          end if;
       end if;
    end Check_Element_Node;
