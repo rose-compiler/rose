@@ -569,6 +569,7 @@ VariableFinder::detectFrameAttributes(const P2::Partitioner &partitioner, const 
         // See initializeFrameBoundaries for the visual representation of the stack frame
         frame.growthDirection = StackFrame::GROWS_DOWN;
         frame.maxOffset = 2 * partitioner.instructionProvider().wordSize() - 1;
+        frame.rule = "x86 general";
 
     } else if (isSgAsmPowerpcInstruction(firstInsn)) {
         frame.growthDirection = StackFrame::GROWS_DOWN;
@@ -591,8 +592,95 @@ VariableFinder::detectFrameAttributes(const P2::Partitioner &partitioner, const 
                 // The frame pointer will point to the bottom (least address) of the frame.
                 frame.minOffset = 0;
                 frame.maxOffset = *frame.size - 1;
+                frame.rule = "ppc: stwu r1, u32 [r1 - N]";
             }
         }
+
+#ifdef ROSE_ENABLE_ASM_AARCH32
+    } else if (isSgAsmAarch32Instruction(firstInsn)) {
+        frame.growthDirection = StackFrame::GROWS_DOWN;
+
+        const RegisterDescriptor REG_FP = partitioner.instructionProvider().registerDictionary()->findOrThrow("fp");
+        const RegisterDescriptor REG_SP = partitioner.instructionProvider().registerDictionary()->findOrThrow("sp");
+        const RegisterDescriptor REG_LR = partitioner.instructionProvider().registerDictionary()->findOrThrow("lr");
+
+        // If the first three instructions are:
+        //   push fp, lr
+        //   add fp, sp, 4
+        //   sub sp, N
+        // then the frame size is N + 8 bytes
+        SgAsmAarch32Instruction* insns[3] = {nullptr, nullptr, nullptr};
+        insns[0] = isSgAsmAarch32Instruction(firstInsn);
+        insns[1] = isSgAsmAarch32Instruction(partitioner.instructionProvider()[function->address() + 4]);
+        insns[2] = isSgAsmAarch32Instruction(partitioner.instructionProvider()[function->address() + 8]);
+        if (// push fp, lr
+            insns[0] && insns[0]->get_kind() == Aarch32InstructionKind::ARM_INS_PUSH &&
+            insns[0]->nOperands() == 2 &&
+            isSgAsmDirectRegisterExpression(insns[0]->operand(0)) &&
+            isSgAsmDirectRegisterExpression(insns[0]->operand(0))->get_descriptor() == REG_FP &&
+            isSgAsmDirectRegisterExpression(insns[0]->operand(1)) &&
+            isSgAsmDirectRegisterExpression(insns[0]->operand(1))->get_descriptor() == REG_LR &&
+            // add fp, sp, 4
+            insns[1] && insns[1]->get_kind() == Aarch32InstructionKind::ARM_INS_ADD &&
+            insns[1]->nOperands() == 3 &&
+            isSgAsmDirectRegisterExpression(insns[1]->operand(0)) &&
+            isSgAsmDirectRegisterExpression(insns[1]->operand(0))->get_descriptor() == REG_FP &&
+            isSgAsmDirectRegisterExpression(insns[1]->operand(1)) &&
+            isSgAsmDirectRegisterExpression(insns[1]->operand(1))->get_descriptor() == REG_SP &&
+            isSgAsmIntegerValueExpression(insns[1]->operand(2)) &&
+            isSgAsmIntegerValueExpression(insns[1]->operand(2))->get_absoluteValue() == 4 &&
+            // sub sp, sp, N
+            insns[2] && insns[2]->get_kind() == Aarch32InstructionKind::ARM_INS_SUB &&
+            insns[2]->nOperands() == 3 &&
+            isSgAsmDirectRegisterExpression(insns[2]->operand(0)) &&
+            isSgAsmDirectRegisterExpression(insns[2]->operand(0))->get_descriptor() == REG_SP &&
+            isSgAsmDirectRegisterExpression(insns[2]->operand(1)) &&
+            isSgAsmDirectRegisterExpression(insns[2]->operand(1))->get_descriptor() == REG_SP &&
+            isSgAsmIntegerValueExpression(insns[2]->operand(2))) {
+            // The frame pointer will point to one past the top (highest address) of the frame
+            int64_t n = boost::numeric_cast<int64_t>(isSgAsmIntegerValueExpression(insns[2]->operand(2))->get_absoluteValue());
+            frame.size = n + 8;
+            frame.maxOffset = 3;                        // lr_0 appears at the frame pointer, plus three bytes above the fp
+            frame.minOffset = -(n + 4);                 // entire frame except the lr_0 which appears on the stack at the fp
+            // Note that the string "<saved-lr>" is important and used by initializeFrameBoundaries
+            frame.rule = "aarch32: push fp, lr <saved-lr>; add fp, sp, 4; sub sp N";
+
+        } else if (// str fp, u32 [sp (after sp -= 4)]
+                   insns[0] &&
+                   insns[0]->get_kind() == Aarch32InstructionKind::ARM_INS_STR &&
+                   insns[0]->nOperands() == 2 &&
+                   isSgAsmDirectRegisterExpression(insns[0]->operand(0)) &&
+                   isSgAsmDirectRegisterExpression(insns[0]->operand(0))->get_descriptor() == REG_FP &&
+                   isSgAsmMemoryReferenceExpression(insns[0]->operand(1)) &&
+                   isSgAsmBinaryPreupdate(isSgAsmMemoryReferenceExpression(insns[0]->operand(1))->get_address()) &&
+                   isSgAsmDirectRegisterExpression(isSgAsmBinaryPreupdate(isSgAsmMemoryReferenceExpression(insns[0]->operand(1))->get_address())->get_lhs()) &&
+                   isSgAsmDirectRegisterExpression(isSgAsmBinaryPreupdate(isSgAsmMemoryReferenceExpression(insns[0]->operand(1))->get_address())->get_lhs())->get_descriptor() == REG_SP &&
+                   // add fp, sp, 0
+                   insns[1] &&
+                   insns[1]->get_kind() == Aarch32InstructionKind::ARM_INS_ADD &&
+                   insns[1]->nOperands() == 3 &&
+                   isSgAsmDirectRegisterExpression(insns[1]->operand(0)) &&
+                   isSgAsmDirectRegisterExpression(insns[1]->operand(0))->get_descriptor() == REG_FP &&
+                   isSgAsmDirectRegisterExpression(insns[1]->operand(1)) &&
+                   isSgAsmDirectRegisterExpression(insns[1]->operand(1))->get_descriptor() == REG_SP &&
+                   isSgAsmIntegerValueExpression(insns[1]->operand(2)) &&
+                   isSgAsmIntegerValueExpression(insns[1]->operand(2))->get_absoluteValue() == 0 &&
+                   // sub sp, sp, N
+                   insns[2] &&
+                   insns[2]->get_kind() == Aarch32InstructionKind::ARM_INS_SUB &&
+                   insns[2]->nOperands() == 3 &&
+                   isSgAsmDirectRegisterExpression(insns[2]->operand(0)) &&
+                   isSgAsmDirectRegisterExpression(insns[2]->operand(0))->get_descriptor() == REG_SP &&
+                   isSgAsmDirectRegisterExpression(insns[2]->operand(1)) &&
+                   isSgAsmDirectRegisterExpression(insns[2]->operand(1))->get_descriptor() == REG_SP &&
+                   isSgAsmIntegerValueExpression(insns[2]->operand(2))) {
+            int64_t n = boost::numeric_cast<int64_t>(isSgAsmIntegerValueExpression(insns[2]->operand(2))->get_absoluteValue());
+            frame.size = n + 4;
+            frame.maxOffset = 3;
+            frame.minOffset = -(n + 4);
+            frame.rule = "aarch32: str fp, u32 [sp (after sp -= 4)]; add fp, sp, 0; sub sp, sp N";
+        }
+#endif
     }
 
     return frame;
@@ -654,6 +742,29 @@ VariableFinder::initializeFrameBoundaries(const StackFrame &frame, const P2::Par
             // Everything else is above this boundary
             StackVariable::insertBoundary(boundaries, 2*wordNBytes, function->address());
         }
+
+#ifdef ROSE_ENABLE_ASM_AARCH32
+    } else if (isSgAsmAarch32Instruction(firstInsn)) {
+        // AArch32 stack frames are organized like this:
+        //
+        //                    :                           :
+        //                    :   (part of parent frame)  :
+        //                    :                           :
+        //                    +---(current frame)---------+
+        // current_frame: (0) | addr of parent frame      | 4 bytes
+        //                    | saved link register       | optional, 4 bytes
+        //                    | local variables           | variable size
+        //                    +---------------------------+
+        if (boost::contains(frame.rule, "<saved-lr>")) {
+            // The "push fp, lr" pushes 8 bytes calculated from the stack pointer, so we don't want this eight
+            // bytes to cross a frame variable boundary.
+            StackVariable::Boundary &returnPtr = StackVariable::insertBoundary(boundaries, -4, function->address());
+            returnPtr.purpose = StackVariable::Purpose::RETURN_ADDRESS;
+        } else {
+            StackVariable::Boundary &parentPtr = StackVariable::insertBoundary(boundaries, 0, function->address());
+            parentPtr.purpose = StackVariable::Purpose::FRAME_POINTER;
+        }
+#endif
     }
 }
 
@@ -694,6 +805,24 @@ VariableFinder::referencedFrameArea(const Partitioner2::Partitioner &partitioner
 
 std::set<int64_t>
 VariableFinder::findFrameOffsets(const StackFrame &frame, const P2::Partitioner &partitioner, SgAsmInstruction *insn) {
+    const RegisterDescriptor REG_SP = partitioner.instructionProvider().stackPointerRegister();
+
+#ifdef ROSE_ENABLE_ASM_AARCH32
+    // Look for ARM AArch32 "sub DEST_REG, fp, N" where DEST_REG is not the stack pointer register
+    if (isSgAsmAarch32Instruction(insn) &&
+        isSgAsmAarch32Instruction(insn)->get_kind() == Aarch32InstructionKind::ARM_INS_SUB &&
+        insn->nOperands() == 3 &&
+        isSgAsmDirectRegisterExpression(insn->operand(0)) &&
+        isSgAsmDirectRegisterExpression(insn->operand(0))->get_descriptor() != REG_SP &&
+        isSgAsmDirectRegisterExpression(insn->operand(1)) &&
+        isSgAsmDirectRegisterExpression(insn->operand(1))->get_descriptor() == frame.framePointerRegister &&
+        isSgAsmIntegerValueExpression(insn->operand(2))) {
+        std::set<int64_t> offsets;
+        offsets.insert(-isSgAsmIntegerValueExpression(insn->operand(2))->get_signedValue());
+        return offsets;
+    }
+#endif
+
     struct T: AstSimpleProcessing {
         std::set<int64_t> offsets;
         const StackFrame &frame;
@@ -703,7 +832,7 @@ VariableFinder::findFrameOffsets(const StackFrame &frame, const P2::Partitioner 
 
         void visit(SgNode *node) {
             if (SgAsmBinaryAdd *add = isSgAsmBinaryAdd(node)) {
-                // Look for (add (reg ival))
+                // Look for (add reg ival)
                 SgAsmDirectRegisterExpression *reg = isSgAsmDirectRegisterExpression(add->get_lhs());
                 SgAsmIntegerValueExpression *ival = isSgAsmIntegerValueExpression(add->get_rhs());
                 if (reg && ival &&
@@ -805,6 +934,8 @@ VariableFinder::findStackVariables(const P2::Partitioner &partitioner, const P2:
         if (frame.size)
             ASSERT_require(*frame.size == (*frame.maxOffset - *frame.minOffset) + 1);
     }
+    if (!frame.rule.empty())
+        SAWYER_MESG(debug) <<"  stack frame rule is \"" <<StringUtility::cEscape(frame.rule) <<"\"\n";
 
     // Sometimes the calling convention tells us what to expect on the frame.
     initializeFrameBoundaries(frame, partitioner, function, boundaries /*in,out*/);
