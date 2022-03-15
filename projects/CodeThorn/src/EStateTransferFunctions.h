@@ -170,9 +170,8 @@ namespace CodeThorn {
     typedef std::list<std::pair<EStatePtr,MemoryUpdatePair> > MemoryUpdateList;
     MemoryUpdateList evalAssignOpMemUpdates(SgAssignOp* assignOp, EStatePtr estate);
 
-    // functions for handling callstring contexts
-    void transferFunctionCallContextInPlace(CallString& cs, Label lab);
-
+    /* Modifies callstring. Returns false if recursion is detected, true in all other cases. */
+    bool transferFunctionCallContextInPlace(CallString& cs, Label lab);
     /* new, more general method, uses available callstrings in all states stored for a label to determine path feasibility
      * the returned callstring can be shorter or of same length
      */

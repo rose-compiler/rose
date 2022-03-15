@@ -1,7 +1,8 @@
 #define NULL 0
+#include <stdio.h>
 
 void printIntLine(int p) {
-  // do nothing
+  printf("%d",p);
 }
 
 static void goodG2BSink(int * data)

@@ -157,7 +157,9 @@ void PState::deleteVar(AbstractValue varId) {
 }
 
 size_t PState::inPlaceGarbageCollection() {
-  if(AbstractValue::domainAbstractionVariant==1) {
+  switch(AbstractValue::domainAbstractionVariant) {
+  case 0: break;
+  case 1: {
     // remove top elements (requires adapted combine operator)
     PState::iterator i=begin();
     size_t oldSize=size();
@@ -171,19 +173,27 @@ size_t PState::inPlaceGarbageCollection() {
     size_t diff=oldSize-size();
     return diff;
   }
-  if(AbstractValue::domainAbstractionVariant==2) {
-    // remove top elements (requires adapted combine operator)
-    PState::iterator i=begin();
-    size_t oldSize=size();
-    while(i!=end()) {
-      erase(i++);
-    }
-    size_t diff=oldSize-size();
-    return diff;
+  case 2:
+    // remove all elements (debug mode)
+    return removeAllElements();
+    break;
+  default:
+    cerr<<"Error: unknown GC mode "<<AbstractValue::domainAbstractionVariant<<". Exiting."<<endl;
+    exit(1);
+
   }
   return 0;
 }
 
+size_t PState::removeAllElements() {
+  PState::iterator i=begin();
+  size_t oldSize=size();
+  while(i!=end()) {
+    i=erase(i);
+  }
+  return oldSize-size();
+}
+  
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -542,8 +552,8 @@ PState::iterator PState::end() {
   return map<AbstractValue,CodeThorn::AbstractValue>::end();
 }
 
-void PState::erase(PState::iterator iter) {
-  map<AbstractValue,CodeThorn::AbstractValue>::erase(iter);
+PState::iterator PState::erase(PState::iterator iter) {
+  return map<AbstractValue,CodeThorn::AbstractValue>::erase(iter);
 }
 
 PState::const_iterator PState::begin() const {

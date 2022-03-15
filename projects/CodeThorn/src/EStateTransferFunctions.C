@@ -301,6 +301,7 @@ namespace CodeThorn {
   }
 
   std::list<EStatePtr> EStateTransferFunctions::transferFunctionCall(Edge edge, EStatePtr estate) {
+    //cout<<"DEBUG: transferFunctionCall:edge:"<<edge.toString()<<" estate label:"<<estate->label().toString()<<endl;
     // 1) obtain actual parameters from source
     // 2) obtain formal parameters from target
     // 3) eval each actual parameter and assign result to formal parameter in state
@@ -330,7 +331,12 @@ namespace CodeThorn {
     // member functino call (pointer)    : SgArrowExp(SgVarRefExp:p,SgMemberFunctionRefExp:m)
 
     // check if function pointer call (function=VarRefExp) [otherwise it is a direct function call: function=FunctionRefExp]
+    //cout<<"DEBUG: funexp: "<<funCall->get_function()->unparseToString()<< " : AST:"<<AstTerm::astTermWithNullValuesToString(funCall)<<endl;
     if(SgExpression* funExp=funCall->get_function()) {
+      if(SgPointerDerefExp* ptrDerefExp=isSgPointerDerefExp(funExp)) {
+        // ensure funExp is the actual function pointer (makes (*fp)(args) equivalent to: fp(args))
+        funExp=ptrDerefExp->get_operand();
+      }
       if(SgVarRefExp* varRefExp=isSgVarRefExp(funExp)) {
         // determine if the edge leads to the called function
         Label targetLabel=edge.target();
@@ -346,11 +352,11 @@ namespace CodeThorn {
             return elistify();
           } else {
             // continue on this path, function pointer is referring to the target label's function entry
-            //cout<<"Resolved function pointer"<<endl;
+            //cout<<"DEBUG: Resolved function pointer"<<endl;
           }
         } else {
-          //cerr<<"INFO: function pointer is top or bot. Not supported: "<<funCall->unparseToString()<<":"<<funcPtrVal.toString(getVariableIdMapping())<<endl;
           // continue but pass the information now to *all* outgoing static edges (maximum imprecision)
+          //cerr<<"DEBUG: function pointer is top or bot. Continue: "<<funCall->unparseToString()<<":"<<funcPtrVal.toString(getVariableIdMapping())<<endl;
         }
       }
     }
@@ -422,8 +428,14 @@ namespace CodeThorn {
     CallString cs=currentEState->getCallString();
     if(_analyzer->getOptionContextSensitiveAnalysis()) {
        SAWYER_MESG(logger[TRACE])<<"transfer functioncall:"<<currentEState->label().toString()<<":"<<cs.toString()<<":"<<SgNodeHelper::sourceLocationAndNodeToString(funCall)<<endl;
-      transferFunctionCallContextInPlace(cs, currentEState->label());
+       if(transferFunctionCallContextInPlace(cs, currentEState->label())) {
+         EStatePtr newEState=reInitEState(estate,edge.target(),cs,newPState);
+         return elistify(newEState);
+       } else {
+         return elistify(); // do not continue
+       }
     }
+    // default for non-context sensitive analysis
     EStatePtr newEState=reInitEState(estate,edge.target(),cs,newPState);
     return elistify(newEState);
   }
@@ -462,6 +474,7 @@ namespace CodeThorn {
       ROSE_ASSERT(solver18);
       size_t k=CallString::getMaxLength();
       if(cs.getLength()==0) {
+        // always return every context
         if(solver18->callStringExistsAtLabel(cs,functionCallLabel)) {
           return make_pair(true,cs);
         } else {
@@ -518,9 +531,14 @@ namespace CodeThorn {
     EStatePtr currentEState=estate;
 
     // determine functionCallLabel corresponding to functioncallReturnLabel.
+#if 0
     Label functionCallReturnLabel=edge.source();
     SgNode* node=getLabeler()->getNode(functionCallReturnLabel);
     Label functionCallLabel=getLabeler()->functionCallLabel(node);
+#else
+    Label functionCallReturnLabel=estate->label();
+    Label functionCallLabel=getLabeler()->getFunctionCallLabelFromReturnLabel(functionCallReturnLabel);
+#endif
     SAWYER_MESG(logger[TRACE])<<"FunctionCallReturnTransfer: call: L"<<functionCallLabel.toString()<<": callret: L"<<functionCallReturnLabel.toString()<<" cs: "<<estate->getCallString().toString()<<endl;
     CallString cs=currentEState->getCallString();
     if(_analyzer->getOptionContextSensitiveAnalysis()) {
@@ -1934,8 +1952,8 @@ namespace CodeThorn {
     return memoryUpdateList;
   }
 
-  void EStateTransferFunctions::transferFunctionCallContextInPlace(CallString& cs, Label lab) {
-    cs.addLabel(lab);
+  bool EStateTransferFunctions::transferFunctionCallContextInPlace(CallString& cs, Label lab) {
+    return cs.addLabel(lab);
   }
 
   void EStateTransferFunctions::transferFunctionCallReturnContextInPlaceOld(CallString& cs, Label lab) {
@@ -2031,8 +2049,17 @@ namespace CodeThorn {
   }
 
   list<EStatePtr> EStateTransferFunctions::transferEdgeEStateInPlace(Edge edge, EStatePtr estate) {
+    if(AbstractValue::domainAbstractionVariant==2) {
+      estate->pstate()->removeAllElements();
+    }
     pair<TransferFunctionCode,SgNode*> tfCodeNodePair=determineTransferFunctionCode(edge,estate);
-    return transferEdgeEStateDispatch(tfCodeNodePair.first,tfCodeNodePair.second,edge,estate);
+    list<EStatePtr> list=transferEdgeEStateDispatch(tfCodeNodePair.first,tfCodeNodePair.second,edge,estate);
+    if(AbstractValue::domainAbstractionVariant==2) {
+      for(auto estate : list) {
+        estate->pstate()->removeAllElements();
+      }
+    }
+    return list;
   }
 
   list<EStatePtr> EStateTransferFunctions::transferEdgeEState(Edge edge, EStatePtr estate) {

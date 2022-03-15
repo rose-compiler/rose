@@ -57,6 +57,9 @@ namespace CodeThorn {
     void deleteVar(AbstractValue varname);
     long memorySize() const;
 
+    // creates an empty state from an existing one (only used for testing)
+    size_t removeAllElements();
+
     void toStream(std::ostream& os) const;
     string toString() const;
     string toString(CodeThorn::VariableIdMapping* variableIdMapping) const;
@@ -84,7 +87,7 @@ namespace CodeThorn {
     PState::iterator end();
     PState::const_iterator begin() const;
     PState::const_iterator end() const;
-    void erase(PState::iterator);
+    PState::iterator erase(PState::iterator);
     bool isApproximatedBy(CodeThorn::PState& other) const;
   private:
     bool isApproximatedBy0(CodeThorn::PState& other) const;

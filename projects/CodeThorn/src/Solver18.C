@@ -250,7 +250,8 @@ void Solver18::run() {
     //_workList->print();
     auto p=_workList->top();
      _workList->pop();
-    // terminate early, ensure to stop all threads and empty the worklist (e.g. verification error found).
+     if(debugFlag) cout<<"DEBUG: WL pop:"<<p.label().toString()<<", "<<p.callString().toString()<<" : "<<_analyzer->getLabeler()->sourceLocationToString(p.label(),30,30)<<endl;
+     // terminate early, ensure to stop all threads and empty the worklist (e.g. verification error found).
     if(terminateEarly)
       continue;
     
@@ -267,8 +268,8 @@ void Solver18::run() {
     size_t pathLen=0;
     bool endStateFound=false;
     bool bbClonedState=false;
-    //cout<<"DEBUG: at: "<<currentEStatePtr->label().toString()<<endl;
-#if 1
+    if(debugFlag) cout<<"DEBUG: at: "<<currentEStatePtr->label().toString()<<endl;
+
     if(_passThroughOptimizationEnabled && _analyzer->getFlow()->singleSuccessorIsPassThroughLabel(currentEStatePtr->label(),_analyzer->getLabeler())) {
       // transfer to successor
       EStatePtr newEStatePtr=currentEStatePtr->cloneWithoutIO();
@@ -314,7 +315,6 @@ void Solver18::run() {
       ROSE_ASSERT(currentEStatePtr->pstate());
     }
     // last state of BB must be stored
-#endif
 
     if(bbClonedState) {
       // was cloned and modified in BB, create a clone, and store the current one
@@ -322,7 +322,8 @@ void Solver18::run() {
       setAbstractState(oldEStatePtr->label(),oldEStatePtr->getCallString(),oldEStatePtr);
       // store oldEStatePtr
       //currentEStatePtr=currentEStatePtr->cloneWithoutIO();
-      _workList->push(WorkListEntry(currentEStatePtr->label(),currentEStatePtr->getCallString()));
+      _workList->push(WorkListEntry(currentEStatePtr->label(),currentEStatePtr->getCallString())); 
+      if(debugFlag) cout<<"DEBUG: WL push (currES):"<<currentEStatePtr->label().toString()<<", "<<currentEStatePtr->getCallString().toString()<<" : "<<_analyzer->getLabeler()->sourceLocationToString(p.label(),30,30)<<endl;     
       continue;
     }
 
@@ -385,6 +386,7 @@ void Solver18::run() {
               delete newEStatePtr;
               ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(abstractEStatePtr->label()));
               _workList->push(WorkListEntry(abstractEStatePtr->label(),abstractEStatePtr->getCallString()));
+              if(debugFlag) cout<<"DEBUG: WL push (abstrES):"<<abstractEStatePtr->label().toString()<<", "<<abstractEStatePtr->getCallString().toString()<<" : "<<_analyzer->getLabeler()->sourceLocationToString(p.label(),30,30)<<endl;
             } else {
               setAbstractState(lab,cs,newEStatePtr);
               if(isBottomAbstractState(abstractEStatePtr)) {
@@ -392,6 +394,7 @@ void Solver18::run() {
                 delete abstractEStatePtr;
               }
               _workList->push(WorkListEntry(newEStatePtr->label(),newEStatePtr->getCallString()));              
+              if(debugFlag) cout<<"DEBUG: WL push(newES):"<<newEStatePtr->label().toString()<<", "<<newEStatePtr->getCallString().toString()<<" : "<<_analyzer->getLabeler()->sourceLocationToString(p.label(),30,30)<<endl;     
             }
 
           }

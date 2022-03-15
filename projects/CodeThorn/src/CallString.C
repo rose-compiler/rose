@@ -26,12 +26,12 @@ namespace CodeThorn {
 
   bool CallString::addLabel(CodeThorn::Label lab) {
     // exists is used to avoid that recursion adds labels up to length
-    if(getLength()<getMaxLength() && !exists(lab)) {
-      _callString.push_back(lab);
-      return true;
-    } else {
+    if(exists(lab))
       return false;
+    if(getLength()<getMaxLength()) {
+      _callString.push_back(lab);
     }
+    return true;
   }
 
   void CallString::removeLastLabel() {
