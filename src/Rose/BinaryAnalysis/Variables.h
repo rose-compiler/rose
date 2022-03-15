@@ -395,6 +395,7 @@ struct StackFrame {
     Sawyer::Optional<int64_t> maxOffset;                /**< Maximum frame offset w.r.t. frame pointer. */
     Sawyer::Optional<int64_t> minOffset;                /**< Minimum frame offset w.r.t. frame pointer. */
     Sawyer::Optional<uint64_t> size;                    /**< Size of the frame in bytes if known. */
+    std::string rule;                                   /**< Informal rule name used to detect frame characteristics. */
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
