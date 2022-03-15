@@ -289,7 +289,7 @@ Label Flow::getStartLabel() {
 bool Flow::isPassThroughLabel(Label lab, Labeler* labeler) {
   // function calls can return more than one state, therefore they cannot be pass-through states (in-place state updates)
   // all functioncallreturn states must be stored because the map is used for path feasibility checks
-  if(labeler->isFunctionCallLabel(lab)||labeler->isFunctionCallReturnLabel(lab))
+  if(labeler->isFunctionCallLabel(lab)||labeler->isFunctionCallReturnLabel(lab)||labeler->isFunctionEntryLabel(lab)||labeler->isFunctionExitLabel(lab))
      return false;
   //structural property (nodes inside blocks that can be analyzed by updating states in-place (similar to basic blocks)
   Flow inEdgeSet1=inEdges(lab);

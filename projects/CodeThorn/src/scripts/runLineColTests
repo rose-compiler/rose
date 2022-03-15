@@ -52,7 +52,7 @@ function runLineColTests {
 	        echo $COLORED_FAIL
                 ((numFail++))
 	    fi
-	    ./codethorn $benchmark --line-col-csv=$CT_OUTPUT_FILE2 -I $TESTDIR --normalize-level=2 --run-solver=no > /dev/null
+	    ./codethorn $benchmark --line-col-csv=$CT_OUTPUT_FILE2 -I $TESTDIR --normalize-level=1 --run-solver=no > /dev/null
             if [ ! $? -eq 0 ]
             then
 	        echo $COLORED_FAIL
@@ -84,7 +84,7 @@ function runLineColTests {
 #testFiles=`grep 'for\|while\|if' -L $TESTDIR/DOM*.C`
 #testFiles=`grep 'xxxx' -L $TESTDIR/DOM*.C`
 testNumbers=`echo {001..050}`
-numWarnExpected=11
+numWarnExpected=5
 numFailExpected=0
 echo -n "Line-Column normalization tests: " 
 runLineColTests

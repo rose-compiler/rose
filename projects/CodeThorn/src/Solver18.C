@@ -52,11 +52,11 @@ bool Solver18::isPassThroughLabel(Label lab) {
 
 bool Solver18::isUnreachableLabel(Label lab) {
   // if code is unreachable no state is computed for it. In this case no entry is found for this label (with any callstring).
-  return (_abstractCSStateMapMap.find(lab.getId())==_abstractCSStateMapMap.end())&&lab!=_analyzer->getFlow()->getStartLabel()&&!isPassThroughLabel(lab);
+  return !isReachableLabel(lab);
 }
 
 bool Solver18::isReachableLabel(Label lab) {
-  return !isUnreachableLabel(lab);
+  return isRegisteredTransferFunctionInvoked(lab);
 }
 
 void Solver18::dumpAbstractStateMapMap() {
@@ -117,6 +117,14 @@ bool Solver18::getAbstractionConsistencyCheckFlag() {
   return _abstractionConsistencyCheckEnabled;
 }
 
+void Solver18::setPassThroughOptimizationFlag(bool flag) {
+  _passThroughOptimizationEnabled=flag;
+}
+
+bool Solver18::getPassThroughOptimizationFlag() {
+  return _passThroughOptimizationEnabled;
+}
+
 void Solver18::setAbstractState(CodeThorn::Label lab, CodeThorn::CallString cs, EStatePtr estate) {
   ROSE_ASSERT(lab==estate->label());
   ROSE_ASSERT(cs==estate->getCallString());
@@ -164,6 +172,10 @@ EStatePtr Solver18::createBottomAbstractState(Label lab, CallString cs) {
   return EState::createBottomEState(lab,cs);
 }
 
+bool Solver18::isBottomAbstractState(EStatePtr estate) {
+  return estate->isBottomEState();
+}
+
 size_t Solver18::checkDiff() {
   ROSE_ASSERT(EState::getDestructCount()<=EState::getConstructCount());
   ROSE_ASSERT(getNumberOfStates()<=(EState::getConstructCount()-EState::getDestructCount()));
@@ -188,12 +200,35 @@ bool Solver18::callStringExistsAtLabel(CallString& cs, Label lab) {
   }
 }
 
+void Solver18::registerTransferFunctionInvoked(Label lab) {
+  _transferFunctionInvoked.insert(lab);
+}
+bool Solver18::isRegisteredTransferFunctionInvoked(Label lab) {
+  return _transferFunctionInvoked.find(lab)!=_transferFunctionInvoked.end();
+}
+
+std::list<EStatePtr> Solver18::transferEdgeEStateInPlace(Edge e,EStatePtr currentEStatePtr) {
+  registerTransferFunctionInvoked(currentEStatePtr->label()); // in presence of pass-through optimization this is necessary to "remember" pass-through labels for which no state is stored
+  std::list<EStatePtr> list=_analyzer->transferEdgeEStateInPlace(e,currentEStatePtr);
+  return list;
+}
+
+bool Solver18::isJoinLabel(Label lab) {
+  return _analyzer->getFlow()->inEdges(lab).size()>1;
+}
+
 void Solver18::run() {
-  //setAbstractionConsistencyCheckFlag(true);
-  SAWYER_MESG(logger[INFO])<<"Running solver "<<getId()<<" (sharedpstates:"<<_analyzer->getOptionsRef().sharedPStates<<")"<<endl;
   ROSE_ASSERT(_analyzer);
+  if(_analyzer->getOptionsRef().status)
+    cout<<"Running solver "<<getId()
+        <<" (pass-through states:"<<_passThroughOptimizationEnabled
+        <<" domain abstr. variant:"<<AbstractValue::domainAbstractionVariant
+        <<" normalization level:"<<_analyzer->getOptionsRef().normalizeLevel
+        <<" abstraction check:"<<_abstractionConsistencyCheckEnabled
+        <<" sharedpstates:"<<_analyzer->getOptionsRef().sharedPStates
+        <<")"<<endl;
   if(_analyzer->getOptionsRef().abstractionMode==0) {
-    cerr<<"Error: abstraction mode is 0, but >= 1 required."<<endl;
+    cerr<<"Error: Solver18: abstraction mode is 0, but >= 1 required."<<endl;
     exit(1);
   }
   if(_analyzer->getOptionsRef().explorationMode!="topologic-sort") {
@@ -215,7 +250,8 @@ void Solver18::run() {
     //_workList->print();
     auto p=_workList->top();
      _workList->pop();
-    // terminate early, ensure to stop all threads and empty the worklist (e.g. verification error found).
+     if(debugFlag) cout<<"DEBUG: WL pop:"<<p.label().toString()<<", "<<p.callString().toString()<<" : "<<_analyzer->getLabeler()->sourceLocationToString(p.label(),30,30)<<endl;
+     // terminate early, ensure to stop all threads and empty the worklist (e.g. verification error found).
     if(terminateEarly)
       continue;
     
@@ -232,9 +268,9 @@ void Solver18::run() {
     size_t pathLen=0;
     bool endStateFound=false;
     bool bbClonedState=false;
-    //cout<<"DEBUG: at: "<<currentEStatePtr->label().toString()<<endl;
-#if 1
-    if(_analyzer->getFlow()->singleSuccessorIsPassThroughLabel(currentEStatePtr->label(),_analyzer->getLabeler())) {
+    if(debugFlag) cout<<"DEBUG: at: "<<currentEStatePtr->label().toString()<<endl;
+
+    if(_passThroughOptimizationEnabled && _analyzer->getFlow()->singleSuccessorIsPassThroughLabel(currentEStatePtr->label(),_analyzer->getLabeler())) {
       // transfer to successor
       EStatePtr newEStatePtr=currentEStatePtr->cloneWithoutIO();
       currentEStatePtr=newEStatePtr;
@@ -243,7 +279,7 @@ void Solver18::run() {
       ROSE_ASSERT(outEdges.size()==1);
       Edge e=*outEdges.begin();
       
-      auto newEStateList0=_analyzer->transferEdgeEStateInPlace(e,currentEStatePtr);
+      auto newEStateList0=transferEdgeEStateInPlace(e,currentEStatePtr);
       ROSE_ASSERT(newEStateList0.size()<=1);
       if(newEStateList0.size()==0) {
         delete currentEStatePtr;
@@ -251,13 +287,13 @@ void Solver18::run() {
       }
       ROSE_ASSERT(newEStateList0.size()==1);
       currentEStatePtr=*newEStateList0.begin();
-      while(true && isPassThroughLabel(currentEStatePtr->label())) {
+      while(_passThroughOptimizationEnabled && isPassThroughLabel(currentEStatePtr->label())) {
         //cout<<"DEBUG: pass through: "<<currentEStatePtr->label().toString()<<endl;
         Flow edgeSet0=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
         if(edgeSet0.size()==1) {
           Edge e=*edgeSet0.begin();
           list<EStatePtr> newEStateList0;
-          newEStateList0=_analyzer->transferEdgeEStateInPlace(e,currentEStatePtr);
+          newEStateList0=transferEdgeEStateInPlace(e,currentEStatePtr);
           pathLen++;
           ROSE_ASSERT(newEStateList0.size()<=1);
           if(newEStateList0.size()==1) {
@@ -279,15 +315,16 @@ void Solver18::run() {
       ROSE_ASSERT(currentEStatePtr->pstate());
     }
     // last state of BB must be stored
-#endif
 
     if(bbClonedState) {
       // was cloned and modified in BB, create a clone, and store the current one
       EStatePtr oldEStatePtr=currentEStatePtr;
       setAbstractState(oldEStatePtr->label(),oldEStatePtr->getCallString(),oldEStatePtr);
       // store oldEStatePtr
-      currentEStatePtr=currentEStatePtr->cloneWithoutIO();
-      //delete oldEStatePtr;
+      //currentEStatePtr=currentEStatePtr->cloneWithoutIO();
+      _workList->push(WorkListEntry(currentEStatePtr->label(),currentEStatePtr->getCallString())); 
+      if(debugFlag) cout<<"DEBUG: WL push (currES):"<<currentEStatePtr->label().toString()<<", "<<currentEStatePtr->getCallString().toString()<<" : "<<_analyzer->getLabeler()->sourceLocationToString(p.label(),30,30)<<endl;     
+      continue;
     }
 
     Flow edgeSet=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
@@ -307,7 +344,7 @@ void Solver18::run() {
       ROSE_ASSERT(newEState);
       ROSE_ASSERT(newEState->pstate());
 
-      list<EStatePtr> newEStateList=_analyzer->transferEdgeEStateInPlace(e,newEState);
+      list<EStatePtr> newEStateList=transferEdgeEStateInPlace(e,newEState);
       if(newEStateList.size()==0) {
         delete newEState;
         continue;
@@ -321,9 +358,10 @@ void Solver18::run() {
         ROSE_ASSERT(newEStatePtr0->label()!=Labeler::NO_LABEL);
         Label lab=newEStatePtr0->label();
         CallString cs=newEStatePtr0->getCallString();
-        if((!_analyzer->isFailedAssertEState(newEStatePtr0)&&!_analyzer->isVerificationErrorEState(newEStatePtr0))) {
+        if((true || (!_analyzer->isFailedAssertEState(newEStatePtr0)&&!_analyzer->isVerificationErrorEState(newEStatePtr0)))) {
           EStatePtr newEStatePtr=newEStatePtr0;
           ROSE_ASSERT(newEStatePtr);
+
           // performing merge
           EStatePtr abstractEStatePtr=getAbstractState(lab,cs);
           if(abstractEStatePtr==nullptr)
@@ -331,41 +369,36 @@ void Solver18::run() {
 
           ROSE_ASSERT(abstractEStatePtr);
           ROSE_ASSERT(abstractEStatePtr->pstate());
-          if(_analyzer->getEStateTransferFunctions()->isApproximatedBy(newEStatePtr,abstractEStatePtr)) {
+          if(!isBottomAbstractState(abstractEStatePtr) && _analyzer->getEStateTransferFunctions()->isApproximatedBy(newEStatePtr,abstractEStatePtr)) {
             delete newEStatePtr; // new state does not contain new information, therefore it can be deleted
             newEStatePtr=nullptr;
           } else {
-            ROSE_ASSERT(abstractEStatePtr);
-            ROSE_ASSERT(abstractEStatePtr->pstate());
-            ROSE_ASSERT(newEStatePtr);
-            ROSE_ASSERT(newEStatePtr->pstate());
-            _analyzer->getEStateTransferFunctions()->combineInPlace1st(abstractEStatePtr,const_cast<EStatePtr>(newEStatePtr));
-            ROSE_ASSERT(abstractEStatePtr);
-            ROSE_ASSERT(abstractEStatePtr->pstate());
-
-            setAbstractState(lab,cs,abstractEStatePtr);
-            delete newEStatePtr;
-            ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(abstractEStatePtr->label()));
-            _workList->push(WorkListEntry(abstractEStatePtr->label(),abstractEStatePtr->getCallString()));
+            if(isJoinLabel(lab)) {
+              ROSE_ASSERT(abstractEStatePtr);
+              ROSE_ASSERT(abstractEStatePtr->pstate());
+              ROSE_ASSERT(newEStatePtr);
+              ROSE_ASSERT(newEStatePtr->pstate());
+              _analyzer->getEStateTransferFunctions()->combineInPlace1st(abstractEStatePtr,const_cast<EStatePtr>(newEStatePtr));
+              ROSE_ASSERT(abstractEStatePtr);
+              ROSE_ASSERT(abstractEStatePtr->pstate());
+              
+              setAbstractState(lab,cs,abstractEStatePtr);
+              delete newEStatePtr;
+              ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(abstractEStatePtr->label()));
+              _workList->push(WorkListEntry(abstractEStatePtr->label(),abstractEStatePtr->getCallString()));
+              if(debugFlag) cout<<"DEBUG: WL push (abstrES):"<<abstractEStatePtr->label().toString()<<", "<<abstractEStatePtr->getCallString().toString()<<" : "<<_analyzer->getLabeler()->sourceLocationToString(p.label(),30,30)<<endl;
+            } else {
+              setAbstractState(lab,cs,newEStatePtr);
+              if(isBottomAbstractState(abstractEStatePtr)) {
+                // only needs to be deleted if it is bottom estate (which was created above), otherwise it is deleted by setAbstractState
+                delete abstractEStatePtr;
+              }
+              _workList->push(WorkListEntry(newEStatePtr->label(),newEStatePtr->getCallString()));              
+              if(debugFlag) cout<<"DEBUG: WL push(newES):"<<newEStatePtr->label().toString()<<", "<<newEStatePtr->getCallString().toString()<<" : "<<_analyzer->getLabeler()->sourceLocationToString(p.label(),30,30)<<endl;     
+            }
 
           }
         }
-        /*
-        if(((_analyzer->isFailedAssertEState(newEStatePtr0))||_analyzer->isVerificationErrorEState(newEStatePtr0))) {
-          // failed-assert end-state: do not add to work list but do add it to the transition graph
-          EStatePtr newEStatePtr=newEStatePtr0;
-          if(_analyzer->isVerificationErrorEState(newEStatePtr)) {
-            SAWYER_MESG(logger[TRACE]) <<"STATUS: detected verification error state ... terminating early"<<endl;
-            // set flag for terminating early
-            _analyzer->reachabilityResults.reachable(0);
-            _analyzer->_firstAssertionOccurences.push_back(pair<int, EStatePtr>(0, newEStatePtr));
-            terminateEarly=true;
-          } else if(_analyzer->isFailedAssertEState(newEStatePtr)) {
-            delete newEStatePtr;
-            continue;
-          } // end of failed assert handling
-        } // end of if
-        */
       } // end of loop on transfer function return-estates
     } // edge set iterator
     if(_analyzer->getOptionsRef().displayDiff && displayTransferCounter>=(size_t)_analyzer->getOptionsRef().displayDiff) {
@@ -383,6 +416,6 @@ void Solver18::run() {
     _analyzer->printStatusMessage(true);
     _analyzer->printStatusMessage("STATUS: analysis finished (worklist is empty).",true);
   }
-  EState::checkPointAllocationHistory();
+  //EState::checkPointAllocationHistory();
   _analyzer->printStatusMessage("STATUS: number of states stored: "+std::to_string(getNumberOfStates()),true);
 }

@@ -242,6 +242,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("exit-on-hash-error",po::value< bool >(&ctOpt.exitOnHashError)->implicit_value(true), "Allows to disable fast pointer hashing of pstates and estates in transition graph.")
     ("reduce-stg",po::value< bool >(&ctOpt.reduceStg)->implicit_value(true), "Reduce state transition system graph to IO states (without LTL verification).")
     ("abstraction-check",po::value<bool>(&ctOpt.abstractionConsistencyCheck)->implicit_value(true), "Enable abstraction consistency check. Only used for debugging, slows down analysis significantly.")
+    ("pt-opt",po::value<bool>(&ctOpt.passThroughOptimization)->implicit_value(true), "Enable/Disable pass through optimization in Solver 18. Only used for debugging, slows down analysis significantly when turned off.")
     ;
 
   rersOptions.add_options()

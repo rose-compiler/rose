@@ -824,7 +824,7 @@ check-ltl-old: check-ltl-rers-different-versions
 # current tests all passing
 check-ltl-seq: check-ltl-start check-ltl-rers-topify-seq check-ltl-rers-array check-ltl-rers-arithmetic-seq check-ltl-rers-timeout-seq check-ltl-driven-seq
 
-check-ltl-par: check-ltl-rers-timeout-par check-ltl-rers-arithmetic-par check-reachability-par check-ltl-driven-par
+check-ltl-par: check-ltl-rers-timeout-par check-reachability-par check-ltl-driven-par
 
 check-ltl-start:
 	@echo ================================================================
@@ -840,7 +840,7 @@ check-ltl-rers-different-versions:
 check-ltl-rers-arithmetic-seq:
 	@$(srcdir)/scripts/runRersArithmeticProblemTest $(srcdir) $(top_builddir)/projects/CodeThorn/src 1
 
-#test the parallel analysis of RERS Problem1402 (4 threads, problem features arithmetic)
+#test the parallel analysis of RERS Problem1402 (4 threads, problem features arithmetic) - creates 140K+ states (works, but takes ~10 min to reduce)
 check-ltl-rers-arithmetic-par:
 	@$(srcdir)/scripts/runRersArithmeticProblemTest $(srcdir) $(top_builddir)/projects/CodeThorn/src 4
 

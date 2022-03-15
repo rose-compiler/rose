@@ -20,13 +20,18 @@ namespace CodeThorn {
     return getLength()==getMaxLength();
   }
 
+  bool CallString::exists(CodeThorn::Label lab) {
+    return std::find(_callString.begin(), _callString.end(), lab) != _callString.end();
+  }
+
   bool CallString::addLabel(CodeThorn::Label lab) {
+    // exists is used to avoid that recursion adds labels up to length
+    if(exists(lab))
+      return false;
     if(getLength()<getMaxLength()) {
       _callString.push_back(lab);
-      return true;
-    } else {
-      return false;
     }
+    return true;
   }
 
   void CallString::removeLastLabel() {

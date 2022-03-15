@@ -368,6 +368,11 @@ bool Labeler::isValidLabelIdRange(Label lab) {
   return lab.getId()<numberOfLabels();
 }
 
+std::string CLabeler::sourceLocationToString(Label lab, size_t maxFileNameLength, size_t maxSourceLength) {
+  SgNode* node=getNode(lab);
+  return SgNodeHelper::locationAndSourceCodeToString(node,maxFileNameLength, maxSourceLength);
+}
+
 SgNode* CLabeler::getNode(Label label) {
   if(!isValidLabelIdRange(label)) {
     stringstream ss;

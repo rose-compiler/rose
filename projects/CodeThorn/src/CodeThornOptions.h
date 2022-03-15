@@ -53,7 +53,7 @@ public:
     std::string icfgFileName;
     std::string callGraphFileName;
     std::string callGraphFileName2;
-    bool displayPassThroughLabel=false;
+    bool displayPassThroughLabel=true;
   } visualization;
 
   // experimental options
@@ -138,7 +138,8 @@ public:
   
   bool keepErrorStates=false;
   bool abstractionConsistencyCheck=false; // currently only supported in Solver18
-  
+  bool passThroughOptimization=true;
+
   // RERS C-subset program options
   struct Rers {
     std::string assertResultsOutputFileName;

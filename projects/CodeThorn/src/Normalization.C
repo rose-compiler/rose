@@ -715,15 +715,17 @@ void Normalization::normalizeCompoundAssignmentsInAst(SgNode* node) {
 }
 
 void Normalization::setFileInfo(SgLocatedNode* node, Sg_File_Info* info) {
-#if 0
+#if 1
   if(node && info) {
-    // check if valid file info already exists, if yes, do not change
+    // check if valid file info already exists and modify
     Sg_File_Info* fi=node->get_file_info();
-    if(fi) {
+    if(fi && info->get_line()>0) {
       fi->set_line(info->get_line());
       fi->set_col(info->get_col());
       fi->set_file_id(info->get_file_id());
       fi->setTransformation();
+    } else {
+      // set new file info?
     }
   }
 #endif
@@ -826,9 +828,13 @@ void Normalization::normalizeSwitchWithoutDefault(SgSwitchStatement* node) {
       for(SubExprTransformationList::iterator j=subExprTransformationList.begin();j!=subExprTransformationList.end();++j) {
         SgStatement* stmt=(*j).stmt;
         SgExpression* expr=(*j).expr;
-  Sg_File_Info* originalFileInfo=0;
-  if(expr)
-    originalFileInfo=expr->get_file_info();
+        Sg_File_Info* originalFileInfo=0;
+        if(expr)
+          originalFileInfo=expr->get_file_info();
+        else {
+          if(stmt)
+            originalFileInfo=stmt->get_file_info();
+        }
         SAWYER_MESG(logger[TRACE])<<"TRANSFORMATION "<<(*j).transformation<<" at "<<expr<<endl;
         switch((*j).transformation) {
         case Normalization::GEN_STMT_REMOVAL: {
@@ -844,7 +850,7 @@ void Normalization::normalizeSwitchWithoutDefault(SgSwitchStatement* node) {
           bool shareExpression=false;
           SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: stmt:"<<stmt->unparseToString()<<endl;
           SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: expr (SRC): "<<expr->unparseToString()<<endl;
-    SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: expr (AST): "<<AstTerm::astTermWithNullValuesToString(expr)<<endl;
+          SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: expr (AST): "<<AstTerm::astTermWithNullValuesToString(expr)<<endl;
           ROSE_ASSERT(expr->get_type());
           SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: expr type:"<<expr->get_type()<<endl;
           //SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: scope:"<<AstTerm::astTermWithNullValuesToString(scope)<<endl;
@@ -861,14 +867,14 @@ void Normalization::normalizeSwitchWithoutDefault(SgSwitchStatement* node) {
           SAWYER_MESG(logger[TRACE])<<"GEN_TMP_VAR_INIT: tmpVarDeclaration:"<<tmpVarDeclaration->unparseToString()<<endl;
           auto tmpVarReference=buildVarRefExpForVariableDeclaration(tmpVarDeclaration);
           ROSE_ASSERT(tmpVarReference);
-          //setFileInfo(tmpVarReference,originalFileInfo); // breaks some tests
+          setFileInfo(tmpVarReference,originalFileInfo); // breaks some tests
 
           // ii) insert tmp-var initializer
           insertNormalizedSubExpressionFragment(tmpVarDeclaration,stmt);
           // ii) replace use of expr with tmp-var and set file info of original AST
           bool deleteReplacedExpression=false;
           SgNodeHelper::replaceExpression(expr,tmpVarReference,deleteReplacedExpression);
-    setFileInfo(tmpVarReference,originalFileInfo);
+          setFileInfo(tmpVarReference,originalFileInfo);
           //SAWYER_MESG(logger[TRACE])<<"inserted: "<<tmpVarDeclaration->unparseToString()<<endl;
           break;
         }
@@ -888,7 +894,7 @@ void Normalization::normalizeSwitchWithoutDefault(SgSwitchStatement* node) {
           SgVariableDeclaration* tmpVarDeclaration=generateVarDecl((*j).tmpVarDeclType,scope);
           ROSE_ASSERT(tmpVarDeclaration);
           tmpVarDeclaration->set_parent(stmt->get_parent());
-    setFileInfo(tmpVarDeclaration,originalFileInfo);
+          setFileInfo(tmpVarDeclaration,originalFileInfo);
           SAWYER_MESG(logger[TRACE])<<"GENERATING TMP VAR DECL:tmpVarDeclaration:"<<tmpVarDeclaration->unparseToString()<<endl;
           // using declVarNr instead of tmpVarNr for control-flow operator transformations
           SAWYER_MESG(logger[TRACE])<<"add:"<<(*j).tmpVarNr<<endl;
@@ -902,7 +908,7 @@ void Normalization::normalizeSwitchWithoutDefault(SgSwitchStatement* node) {
             SgScopeStatement* scope=stmt->get_scope();
             SgVariableDeclaration* tmpVarDeclaration=generateFalseBoolVarDecl(scope);
             tmpVarDeclaration->set_parent(stmt->get_parent());
-      setFileInfo(tmpVarDeclaration,originalFileInfo);
+            setFileInfo(tmpVarDeclaration,originalFileInfo);
             ROSE_ASSERT(tmpVarDeclaration);
             // using declVarNr instead of tmpVarNr for control-flow operator transformations
             addToTmpVarMapping((*j).declVarNr,tmpVarDeclaration);
@@ -919,8 +925,8 @@ void Normalization::normalizeSwitchWithoutDefault(SgSwitchStatement* node) {
           SgStatement* false_body=(*j).falseBody;
           SgIfStmt* ifStmt=Normalization::generateIfElseStmt(cond,true_body,false_body);
 
-    // set line col file-info
-    setFileInfo(cond,originalFileInfo);
+          // set line col file-info
+          setFileInfo(cond,originalFileInfo);
 
           insertNormalizedSubExpressionFragment(ifStmt,stmt);
           break;
@@ -936,8 +942,8 @@ void Normalization::normalizeSwitchWithoutDefault(SgSwitchStatement* node) {
           SgStatement* false_body=(*j).falseBody;
           SgIfStmt* ifStmt=Normalization::generateBoolVarIfElseStmt(cond,varRefExp,true_body,false_body,scope);
 
-    // set line col file-info
-    setFileInfo(cond,originalFileInfo);
+          // set line col file-info
+          setFileInfo(cond,originalFileInfo);
 
           insertNormalizedSubExpressionFragment(ifStmt,stmt);
           break;
@@ -951,10 +957,10 @@ void Normalization::normalizeSwitchWithoutDefault(SgSwitchStatement* node) {
           SgStatement* true_body=(*j).trueBody;
           SgIfStmt* ifStmt=Normalization::generateBoolVarIfElseStmt(cond,varRefExp,true_body,0,scope);
 
-    // set line col file-info
-    setFileInfo(cond,originalFileInfo);
+          // set line col file-info
+          setFileInfo(cond,originalFileInfo);
 
-    insertNormalizedSubExpressionFragment(ifStmt,stmt);
+          insertNormalizedSubExpressionFragment(ifStmt,stmt);
           break;
         }
         case Normalization::GEN_LOG_OP_REPLACEMENT: {
@@ -963,8 +969,8 @@ void Normalization::normalizeSwitchWithoutDefault(SgSwitchStatement* node) {
             SgVariableDeclaration* decl=getVarDecl((*j).declVarNr);
             SgVarRefExp* varRefExp=SageBuilder::buildVarRefExp(decl);
 
-      // set line col file-info
-      //setFileInfo(varRefExp,originalFileInfo); // breaks?
+            // set line col file-info
+            setFileInfo(varRefExp,originalFileInfo); // breaks?
 
             SAWYER_MESG(logger[TRACE])<<"GEN_LOG_OP: REPLACING "<<expr->unparseToString()<<" with tmp var:"<<varRefExp->unparseToString()<<endl;
             SgNodeHelper::replaceExpression(expr,varRefExp);
@@ -978,7 +984,7 @@ void Normalization::normalizeSwitchWithoutDefault(SgSwitchStatement* node) {
           SgStatement* true_body=(*j).trueBody;
           SgStatement* false_body=(*j).falseBody;
           SgIfStmt* ifStmt=Normalization::generateIfElseStmt(cond,true_body,false_body);
-    setFileInfo(cond,originalFileInfo);
+          setFileInfo(cond,originalFileInfo);
           insertNormalizedSubExpressionFragment(ifStmt,stmt);
           break;
         }
@@ -986,14 +992,14 @@ void Normalization::normalizeSwitchWithoutDefault(SgSwitchStatement* node) {
           SAWYER_MESG(logger[TRACE])<<"GENERATING TMP VAR ASSIGNMENT:"<<endl;
           SAWYER_MESG(logger[TRACE])<<"TMP VAR:"<<(*j).lhsTmpVarNr<<":"<<(*j).rhsTmpVarNr<<endl;
           SgExprStatement* tmpVarAssignment=generateTmpVarAssignment((*j).lhsTmpVarNr,(*j).rhsTmpVarNr);
-    setFileInfo(tmpVarAssignment,originalFileInfo);
+          setFileInfo(tmpVarAssignment,originalFileInfo);
           insertNormalizedSubExpressionFragment(tmpVarAssignment,stmt);
           break;
         }
         case Normalization::GEN_TMP_VAR_ASSIGN_WITH_EXPR: {
           SAWYER_MESG(logger[TRACE])<<"GENERATING TMP VAR ASSIGNMENT WITH EXPR:"<<endl;
           SgExprStatement* tmpVarAssignment=generateTmpVarAssignmentWithExpr((*j).tmpVarNr,expr);
-    setFileInfo(tmpVarAssignment,originalFileInfo);
+          setFileInfo(tmpVarAssignment,originalFileInfo);
           insertNormalizedSubExpressionFragment(tmpVarAssignment,stmt);
           break;
         }

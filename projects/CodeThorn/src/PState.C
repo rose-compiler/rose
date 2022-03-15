@@ -157,7 +157,9 @@ void PState::deleteVar(AbstractValue varId) {
 }
 
 size_t PState::inPlaceGarbageCollection() {
-  if(AbstractValue::domainAbstractionVariant==1) {
+  switch(AbstractValue::domainAbstractionVariant) {
+  case 0: break;
+  case 1: {
     // remove top elements (requires adapted combine operator)
     PState::iterator i=begin();
     size_t oldSize=size();
@@ -171,9 +173,27 @@ size_t PState::inPlaceGarbageCollection() {
     size_t diff=oldSize-size();
     return diff;
   }
+  case 2:
+    // remove all elements (debug mode)
+    return removeAllElements();
+    break;
+  default:
+    cerr<<"Error: unknown GC mode "<<AbstractValue::domainAbstractionVariant<<". Exiting."<<endl;
+    exit(1);
+
+  }
   return 0;
 }
 
+size_t PState::removeAllElements() {
+  PState::iterator i=begin();
+  size_t oldSize=size();
+  while(i!=end()) {
+    i=erase(i);
+  }
+  return oldSize-size();
+}
+  
 /*! 
   * \author Markus Schordan
   * \date 2012.
@@ -462,7 +482,7 @@ void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
     conditionalApproximateRawWriteToMemoryLocation(abstractMemLoc,abstractValue,strongUpdate);
   } else if(abstractMemLoc.isTop()) {
     //skip (crude memory abstraction)
-    //combineValueAtAllMemoryLocations(abstractValue);
+    combineValueAtAllMemoryLocations(abstractValue);
   } else if(abstractMemLoc.isPtrSet()) {
     // call recursively for all values in the set
     //cout<<"DEBUG: ptr set recursion."<<endl;
@@ -532,8 +552,8 @@ PState::iterator PState::end() {
   return map<AbstractValue,CodeThorn::AbstractValue>::end();
 }
 
-void PState::erase(PState::iterator iter) {
-  map<AbstractValue,CodeThorn::AbstractValue>::erase(iter);
+PState::iterator PState::erase(PState::iterator iter) {
+  return map<AbstractValue,CodeThorn::AbstractValue>::erase(iter);
 }
 
 PState::const_iterator PState::begin() const {
@@ -551,7 +571,8 @@ bool PState::isApproximatedBy(CodeThorn::PState& other) const {
   case 0:
     return PState::isApproximatedBy0(other);
   case 1:
-    return PState::isApproximatedBy1(other);
+  case 2:
+    return PState::isApproximatedBy0(other);
   default:
     cerr<<"Error: PState::isApproximatedBy: unsupported domain abstraction variant "<<AbstractValue::domainAbstractionVariant<<endl;
     exit(1);
@@ -560,6 +581,9 @@ bool PState::isApproximatedBy(CodeThorn::PState& other) const {
 
 bool PState::isApproximatedBy0(CodeThorn::PState& other) const {
   // check if all values of 'this' are approximated by 'other'
+  if(size()!=other.size())
+    return false;
+  
   for(auto elem:*this) {
     auto iter=other.find(elem.first);
     if(iter!=other.end()) {
@@ -651,6 +675,7 @@ void PState::combineInPlace1st(CodeThorn::PStatePtr p1, CodeThorn::PStatePtr p2)
     PState::combineInPlace1st0(p1, p2);
     return;
   case 1:
+  case 2:
     PState::combineInPlace1st1(p1, p2);
     return;
   default:
@@ -709,26 +734,32 @@ void PState::combineInPlace1st1(CodeThorn::PStatePtr p1, CodeThorn::PStatePtr p2
     if(iter!=(*p2).end()) {
       // same memory location in both states: elem.first==(*iter).first
       // combine values elem.second and (*iter).second
-      updates.push_back(make_pair(elem1.first,AbstractValue::combine(elem1.second,(*iter).second)));
+      updates.push_back(make_pair(elem1.first,AbstractValue::combine(elem1.second,(*iter).second))); 
       numMatched++;
     } else {
-      // a variable of 'p1' is not in state of 'p2', topify (only in this variant 1)
+      // a variable of 'p1' is not in state of 'p2', topify (only in this variant 1), use tmp container to not invalidate iterator
       updates.push_back(make_pair(elem1.first,AbstractValue::combine(elem1.second,AbstractValue::createTop())));      
     }
   }
-  // add now updates of values of p2 which are not in p1
+  // add elements that are only in p2 to res - this can only be the
+  // case if the number of matched elements above is different to p2.size()
+  std::list<std::pair<AbstractValue, AbstractValue> > updates2;
+  //if(numMatched!=(*p2).size()) {
+  for(auto elem2:*p2) {
+    // only add elements of p2 that are not in p1
+    if((*p1).find(elem2.first)==(*p1).end()) {
+      //p1->writeToMemoryLocation(elem2.first,elem2.second);
+      updates2.push_back(make_pair(elem2.first,AbstractValue::combine(elem2.second,AbstractValue::createTop())));      
+    }
+  }
+  //}
+  // add now updates at addresses of p1 with are not in p2
   for(auto upd:updates) {
     p1->writeToMemoryLocation(upd.first,upd.second);
   }
-  // add elements that are only in p2 to res - this can only be the
-  // case if the number of matched elements above is different to p2.size()
-  if(numMatched!=(*p2).size()) {
-    for(auto elem2:*p2) {
-      // only add elements of p2 that are not in p1
-      if((*p1).find(elem2.first)==(*p1).end()) {
-        p1->writeToMemoryLocation(elem2.first,elem2.second);
-      }
-    }
+  // add now updates of values of p1 which are not in p2
+  for(auto upd:updates2) {
+    p1->writeToMemoryLocation(upd.first,upd.second);
   }
   p1->inPlaceGarbageCollection(); // only performs operations if domainAbstractionVariant>=1
 }

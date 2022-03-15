@@ -34,8 +34,8 @@ istream& CodeThorn::operator>>(istream& is, AbstractValue& value) {
   return is;
 }
 
-// default constructor
-AbstractValue::AbstractValue():valueType(AbstractValue::AV_BOT),extension(0) {}
+// default constructor (AV_UNDEFINED instead of AV_BOT)
+AbstractValue::AbstractValue():valueType(AbstractValue::AV_UNDEFINED),extension(0) {}
 
 // type conversion
 // TODO: represent value 'undefined' here

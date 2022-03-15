@@ -40,6 +40,12 @@ namespace CodeThorn {
       return !(e1==e2||e1<e2);
     }
   };
+  template<typename Element>
+  struct GeneralPriorityElementSmallerOp {
+    bool operator()(const GeneralPriorityElement<Element>& e1, const GeneralPriorityElement<Element>& e2) {
+      return e1<e2;
+    }
+  };
 
   template <typename Element>
 class GeneralPriorityWorkList : public GeneralWorkList<Element> {
@@ -60,7 +66,9 @@ class GeneralPriorityWorkList : public GeneralWorkList<Element> {
     void clear();
     typedef GeneralPriorityElement<Element> GeneralPriorityElementType;
     // min priority queue (smaller elements are orderered first)
-    typedef std::priority_queue <GeneralPriorityElementType,std::vector<GeneralPriorityElementType>,GeneralPriorityElementGreaterOp<Element> > ElementMinPriorityQueueType;
+    //typedef std::priority_queue <GeneralPriorityElementType,std::vector<GeneralPriorityElementType>,GeneralPriorityElementGreaterOp<Element> > ElementMinPriorityQueueType;
+    // use an ordered set to get a unique elements priority queue
+    typedef std::set <GeneralPriorityElementType,GeneralPriorityElementSmallerOp<Element> > ElementMinPriorityQueueType;
     //typedef std::priority_queue <GeneralPriorityElementType> ElementMaxPriorityQueueType;
     typedef ElementMinPriorityQueueType ElementPriorityQueueType;
     void print();
