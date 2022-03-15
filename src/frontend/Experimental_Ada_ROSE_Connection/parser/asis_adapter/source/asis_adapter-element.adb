@@ -499,25 +499,9 @@ package body Asis_Adapter.Element is
 
       use all type Asis.Element_Kinds;
       use all type Asis.Expression_Kinds;
-      is_Instance : Boolean := False;
    begin
       If Element_Kind /= Not_An_Element then
-         If Element_Kind = An_Expression then
-           declare
-             Expression_Kind : Asis.Expression_Kinds :=
-               Asis.Elements.Expression_Kind (Element);
-           begin 
-             if (Expression_Kind = An_Integer_Literal) or
-                (Expression_Kind = A_Real_Literal) then
---                (Expression_Kind = A_String_Literal) then 
-                  is_Instance := Asis.Elements.Is_Part_Of_Instance (Element); 
---                  Put_Debug;
-             end if;
-           end;
-         end if;
-         if is_Instance /= True then
-           Start_Output;
-         end if;
+         Start_Output;
       end if;
 
       case Element_Kind is
@@ -546,9 +530,7 @@ package body Asis_Adapter.Element is
             Exception_Handlers.Do_Pre_Child_Processing (Element, State);
       end case;
       --           Add_Enclosing_Element;
-      if is_Instance /= True then
-        Finish_Output;
-      end if;
+      Finish_Output;
    end Do_Pre_Child_Processing;
 
    procedure Do_Post_Child_Processing
@@ -561,21 +543,9 @@ package body Asis_Adapter.Element is
 
       use all type Asis.Element_Kinds;
       use all type Asis.Expression_Kinds;
-      is_Instance : Boolean := False;
 
    begin
       If Element_Kind /= Not_An_Element then
-         If Element_Kind = An_Expression then
-           declare
-             Expression_Kind : Asis.Expression_Kinds :=
-               Asis.Elements.Expression_Kind (Element);
-           begin 
-             if Expression_Kind = An_Integer_Literal then
-               is_Instance := Asis.Elements.Is_Part_Of_Instance (Element); 
-             end if;
-           end;
-         end if;
-         if is_Instance /= True then
       State.Outputs.Text.End_Line;
       State.Outputs.Text.Dedent;
       State.Outputs.Text.Put_Indented_Line
@@ -590,7 +560,6 @@ package body Asis_Adapter.Element is
          Definitions.Do_Post_Child_Processing (Element, State);
       end if;
       
-         end if;
       end if;
 
 
