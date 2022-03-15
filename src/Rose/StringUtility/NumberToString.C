@@ -134,6 +134,11 @@ addrToString(uint64_t value, size_t nbits) {
 }
 
 std::string
+addrToString(const Sawyer::Optional<uint64_t> &value, size_t nbits) {
+    return value ? addrToString(*value, nbits) : "none";
+}
+
+std::string
 addrToString(const Sawyer::Container::Interval<uint64_t> &interval, size_t nbits) {
     if (interval.isEmpty()) {
         return "[empty]";

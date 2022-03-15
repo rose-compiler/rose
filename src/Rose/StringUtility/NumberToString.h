@@ -88,6 +88,10 @@ ROSE_UTIL_API std::string addrToString(const Sawyer::Container::Interval<uint64_
 ROSE_UTIL_API std::string addrToString(const Sawyer::Container::IntervalSet<Sawyer::Container::Interval<uint64_t> > &iset,
                                        size_t nbits = 0);
 
+/** Convert an optional virtual address to a string.
+ *
+ *  Same as the non-optional version of this function, but prints the word "none" if the argument is @ref Sawyer::Nothing. */
+ROSE_UTIL_API std::string addrToString(const Sawyer::Optional<uint64_t>&, size_t nbits = 0);
 
 /** Convert a number to a binary string. */
 template<typename Unsigned>
