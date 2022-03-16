@@ -184,7 +184,8 @@ MemoryState::merge(const BaseSemantics::MemoryStatePtr &other, BaseSemantics::Ri
 void
 MemoryState::hash(Combinatorics::Hasher &hasher, BaseSemantics::RiscOperators*/*addrOps*/,
                   BaseSemantics::RiscOperators*/*valOps*/) const {
-    map_->hash(hasher);
+    if (map_)
+        map_->hash(hasher);
 }
 
 void
