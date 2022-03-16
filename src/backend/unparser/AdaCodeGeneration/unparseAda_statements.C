@@ -489,6 +489,13 @@ namespace
         res = unitDefinition(SG_DEREF(n.get_declaration()));
       }
 
+      void handle(const SgAdaGenericInstanceDecl&)
+      {
+        // should return the instantiated scope
+        //   while the Asis part is incomplete,
+        //   => return nothing for now
+      }
+
       void handle(const SgImportStatement&)
       {
         // should not happen with a full Ada implemention

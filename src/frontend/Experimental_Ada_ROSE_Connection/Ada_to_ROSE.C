@@ -2,6 +2,7 @@
 
 #include <type_traits>
 #include <algorithm>
+#include <boost/range/adaptor/reversed.hpp>
 
 #include "Rose/Diagnostics.h"
 #include "rose_config.h"
@@ -771,6 +772,7 @@ namespace
 
     el.second.marked = true;
 
+    // add the spec (package) or body (for routines w/o spec)
     for (const AdaIdentifier& depname : el.second.dependencies)
     {
       auto pos = m.find(UniqueUnitId{false, depname});
@@ -786,6 +788,15 @@ namespace
       }
 
       dfs(m, *pos, res);
+    }
+
+    // if this is a body, also add the spec as dependency
+    if (el.first.isbody)
+    {
+      auto pos = m.find(UniqueUnitId{false, el.first.name});
+
+      if (pos != m.end())
+        dfs(m, *pos, res);
     }
 
     res.push_back(el.second.unit);
@@ -851,12 +862,17 @@ namespace
   {
     using DependencyMap = std::map<UniqueUnitId, UnitEntry>;
     using IdEntryMap    = std::map<Unit_ID, DependencyMap::iterator> ;
+    using UnitVector    = std::vector<Unit_Struct_List_Struct*> ;
 
     DependencyMap deps;
     IdEntryMap    idmap;
+    UnitVector    allUnits;
 
     // build maps for all units
     for (Unit_Struct_List_Struct* unit = adaUnit; unit != nullptr; unit = unit->Next)
+      allUnits.push_back(unit);
+
+    for (Unit_Struct_List_Struct* unit : allUnits)
     {
       ADA_ASSERT(unit);
 
@@ -873,7 +889,7 @@ namespace
     }
 
     // link the units
-    for (Unit_Struct_List_Struct* unit = adaUnit; unit != nullptr; unit = unit->Next)
+    for (Unit_Struct_List_Struct* unit : allUnits)
     {
       IdEntryMap::iterator    uit = idmap.find(unit->Unit.ID);
       ADA_ASSERT(uit != idmap.end());
@@ -906,21 +922,29 @@ namespace
     std::vector<Unit_Struct*> res;
 
     // topo sort
-    for (DependencyMap::value_type& el : deps)
-      dfs(deps, el, res);
-
-  /*
-    // print all module dependencies
-    for (const DependencyMap::value_type& el : deps)
+    for (Unit_Struct_List_Struct* unit : allUnits)
     {
-      logWarn() << el.first << "\n  ";
+      DependencyMap::iterator pos = deps.find(uniqueUnitName(unit->Unit));
+
+      ROSE_ASSERT(pos != deps.end());
+      dfs(deps, *pos, res);
+    }
+
+    // print all module dependencies
+    for (Unit_Struct_List_Struct* unit : allUnits)
+    {
+      DependencyMap::iterator pos = deps.find(uniqueUnitName(unit->Unit));
+
+      ROSE_ASSERT(pos != deps.end());
+      DependencyMap::value_type& el = *pos;
+
+      logWarn() << el.first.name << "\n  ";
 
       for (const std::string& n : el.second.dependencies)
         logWarn() << n << ", ";
 
       logWarn() << std::endl << std::endl;
     }
-  */
 
     logTrace() << "\nTopologically sorted module processing order"
                << std::endl;

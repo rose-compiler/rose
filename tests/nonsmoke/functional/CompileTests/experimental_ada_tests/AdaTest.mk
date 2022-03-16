@@ -248,6 +248,7 @@ ROSE_FAILING_ADA_TESTS :=                           \
   deref_test.adb                                    \
   delay_until.adb                                   \
   generic_package_renaming_declaration.adb          \
+  subobj_renaming_declaration.adb                   \
   mpiuse.ads
 
 # defines tests that are supported by ASIS

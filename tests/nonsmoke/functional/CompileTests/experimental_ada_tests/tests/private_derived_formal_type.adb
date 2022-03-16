@@ -1,5 +1,5 @@
 
-PROCEDURE X IS
+PROCEDURE Private_Derived_formal_Type IS
 
      C3 : CONSTANT INTEGER := 3;
 
@@ -18,4 +18,4 @@ PROCEDURE X IS
 
 BEGIN
   null;
-END X;
+END;
