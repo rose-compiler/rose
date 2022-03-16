@@ -182,7 +182,7 @@ size_t Solver18::checkDiff() {
   return EState::getConstructCount()-EState::getDestructCount()-getNumberOfStates();
 }
 
-static bool debugFlag=true;
+static bool debugFlag=false;
 void Solver18::printAllocationStats(string text) {
   if(debugFlag) cout<<text<<EState::allocationStatsToString()<<": num states:"<<getNumberOfStates()<<endl;
 }
@@ -268,7 +268,6 @@ void Solver18::run() {
     size_t pathLen=0;
     bool endStateFound=false;
     bool bbClonedState=false;
-    if(debugFlag) cout<<"DEBUG: at: "<<currentEStatePtr->label().toString()<<endl;
 
     if(_passThroughOptimizationEnabled && _analyzer->getFlow()->singleSuccessorIsPassThroughLabel(currentEStatePtr->label(),_analyzer->getLabeler())) {
       // transfer to successor
@@ -324,7 +323,6 @@ void Solver18::run() {
       //currentEStatePtr=currentEStatePtr->cloneWithoutIO();
       _workList->push(WorkListEntry(currentEStatePtr->label(),currentEStatePtr->getCallString())); 
       if(debugFlag) cout<<"DEBUG: WL push (currES): ("<<currentEStatePtr->label().toString()<<", "<<currentEStatePtr->getCallString().toString()<<") : "<<_analyzer->getLabeler()->sourceLocationToString(p.label(),30,30)<<endl;     
-      if(debugFlag) {cout<<"DEBUG WL after: ";_workList->print();}
       continue;
     }
 
@@ -388,7 +386,6 @@ void Solver18::run() {
               ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(abstractEStatePtr->label()));
               _workList->push(WorkListEntry(abstractEStatePtr->label(),abstractEStatePtr->getCallString()));
               if(debugFlag) cout<<"DEBUG: WL push (abstrES): ("<<abstractEStatePtr->label().toString()<<", "<<abstractEStatePtr->getCallString().toString()<<") : "<<_analyzer->getLabeler()->sourceLocationToString(p.label(),30,30)<<endl;
-              if(debugFlag) {cout<<"DEBUG: WL after:";_workList->print();}
             } else {
               setAbstractState(lab,cs,newEStatePtr);
               if(isBottomAbstractState(abstractEStatePtr)) {
@@ -396,9 +393,7 @@ void Solver18::run() {
                 delete abstractEStatePtr;
               }
               if(debugFlag) cout<<"DEBUG: WL push(newES): ("<<newEStatePtr->label().toString()<<", "<<newEStatePtr->getCallString().toString()<<") : "<<_analyzer->getLabeler()->sourceLocationToString(p.label(),30,30)<<endl;     
-              if(debugFlag) {cout<<"DEBUG: WLbefore:";_workList->print();}
               _workList->push(WorkListEntry(newEStatePtr->label(),newEStatePtr->getCallString()));              
-              if(debugFlag) {cout<<"DEBUG: WL after:";_workList->print();}
             }
 
           }

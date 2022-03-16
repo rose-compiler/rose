@@ -7,8 +7,6 @@
 namespace CodeThorn {
   template<typename Element>
   bool operator<(const GeneralPriorityElement<Element>& e1, const GeneralPriorityElement<Element>& e2) {
-    std::cout<<"DEBUG:operator<:::"<<(e1.priority!=e2.priority)<<","<<(e1.priority<e2.priority)<<","<<(e1.data.callString()<e2.data.callString())<<std::endl;
-    std::cout<<"DEBUG:operator<:::"<<e1.toString()<<","<<e2.toString()<<std::endl;
     if(e1.priority!=e2.priority)
       return e1.priority<e2.priority;
     else
@@ -16,16 +14,11 @@ namespace CodeThorn {
   }
   template<typename Element>
   bool operator==(const GeneralPriorityElement<Element>& e1, const GeneralPriorityElement<Element>& e2) {
-    std::cout<<"DEBUG: set: ==operator:"<<std::endl;
-    std::cout<<"DEBUG: set: "<<e1.priority<<"=="<<e2.priority<<" :"<<e1.priority==e2.priority<<std::endl;
-    std::cout<<"DEBUG: set: "<<e1.data.callString()<<"=="<<e2.data.callString()<<" :"<<e1.data.callString()==e2.data.callString()<<std::endl;
     bool result=e1.priority==e2.priority && (e1.data.callString()==e2.data.callString())<<std::endl;
-    std::cout<<"DEBUG: set: result: "<<result<<std::endl;
     return e1.priority==e2.priority && (e1.data.callString()==e2.data.callString());
   }
   template<typename Element>
   bool operator!=(const GeneralPriorityElement<Element>& c1, const GeneralPriorityElement<Element>& c2) {
-    std::cout<<"DEBUG:operator!="<<std::endl;
     return !(c1==c2);
   }
 }

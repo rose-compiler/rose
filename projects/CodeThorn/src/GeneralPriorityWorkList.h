@@ -48,7 +48,7 @@ namespace CodeThorn {
   };
 
   template <typename Element>
-class GeneralPriorityWorkList : public GeneralWorkList<Element> {
+class GeneralPriorityWorkList {
   public:
     GeneralPriorityWorkList(CodeThorn::TopologicalSort::LabelToPriorityMap map);
     bool empty();
