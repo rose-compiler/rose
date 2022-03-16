@@ -182,7 +182,7 @@ size_t Solver18::checkDiff() {
   return EState::getConstructCount()-EState::getDestructCount()-getNumberOfStates();
 }
 
-static bool debugFlag=false;
+static bool debugFlag=true;
 void Solver18::printAllocationStats(string text) {
   if(debugFlag) cout<<text<<EState::allocationStatsToString()<<": num states:"<<getNumberOfStates()<<endl;
 }
@@ -247,7 +247,7 @@ void Solver18::run() {
   bool terminateEarly=false;
   _analyzer->printStatusMessage(true);
   while(!_workList->empty()) {
-    //_workList->print();
+    if(debugFlag) _workList->print();
     auto p=_workList->top();
      _workList->pop();
      if(debugFlag) cout<<"DEBUG: WL pop:"<<p.label().toString()<<", "<<p.callString().toString()<<" : "<<_analyzer->getLabeler()->sourceLocationToString(p.label(),30,30)<<endl;
@@ -323,7 +323,8 @@ void Solver18::run() {
       // store oldEStatePtr
       //currentEStatePtr=currentEStatePtr->cloneWithoutIO();
       _workList->push(WorkListEntry(currentEStatePtr->label(),currentEStatePtr->getCallString())); 
-      if(debugFlag) cout<<"DEBUG: WL push (currES):"<<currentEStatePtr->label().toString()<<", "<<currentEStatePtr->getCallString().toString()<<" : "<<_analyzer->getLabeler()->sourceLocationToString(p.label(),30,30)<<endl;     
+      if(debugFlag) cout<<"DEBUG: WL push (currES): ("<<currentEStatePtr->label().toString()<<", "<<currentEStatePtr->getCallString().toString()<<") : "<<_analyzer->getLabeler()->sourceLocationToString(p.label(),30,30)<<endl;     
+      if(debugFlag) {cout<<"DEBUG WL after: ";_workList->print();}
       continue;
     }
 
@@ -386,15 +387,18 @@ void Solver18::run() {
               delete newEStatePtr;
               ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(abstractEStatePtr->label()));
               _workList->push(WorkListEntry(abstractEStatePtr->label(),abstractEStatePtr->getCallString()));
-              if(debugFlag) cout<<"DEBUG: WL push (abstrES):"<<abstractEStatePtr->label().toString()<<", "<<abstractEStatePtr->getCallString().toString()<<" : "<<_analyzer->getLabeler()->sourceLocationToString(p.label(),30,30)<<endl;
+              if(debugFlag) cout<<"DEBUG: WL push (abstrES): ("<<abstractEStatePtr->label().toString()<<", "<<abstractEStatePtr->getCallString().toString()<<") : "<<_analyzer->getLabeler()->sourceLocationToString(p.label(),30,30)<<endl;
+              if(debugFlag) {cout<<"DEBUG: WL after:";_workList->print();}
             } else {
               setAbstractState(lab,cs,newEStatePtr);
               if(isBottomAbstractState(abstractEStatePtr)) {
                 // only needs to be deleted if it is bottom estate (which was created above), otherwise it is deleted by setAbstractState
                 delete abstractEStatePtr;
               }
+              if(debugFlag) cout<<"DEBUG: WL push(newES): ("<<newEStatePtr->label().toString()<<", "<<newEStatePtr->getCallString().toString()<<") : "<<_analyzer->getLabeler()->sourceLocationToString(p.label(),30,30)<<endl;     
+              if(debugFlag) {cout<<"DEBUG: WLbefore:";_workList->print();}
               _workList->push(WorkListEntry(newEStatePtr->label(),newEStatePtr->getCallString()));              
-              if(debugFlag) cout<<"DEBUG: WL push(newES):"<<newEStatePtr->label().toString()<<", "<<newEStatePtr->getCallString().toString()<<" : "<<_analyzer->getLabeler()->sourceLocationToString(p.label(),30,30)<<endl;     
+              if(debugFlag) {cout<<"DEBUG: WL after:";_workList->print();}
             }
 
           }

@@ -1995,15 +1995,26 @@ namespace CodeThorn {
     return tfCodeInfo[tfCode];
   }
 
+  uint32_t EStateTransferFunctions::topSortLabelPos(Label lab) {
+    TopologicalSort* topSort=getAnalyzer()->getTopologicalSort();
+    auto topSortLabelPos=topSort->getLabelPosition(lab);
+    return topSortLabelPos;
+  }
+  
+  string EStateTransferFunctions::labelPosInfoToString(Label lab) {
+    return std::to_string(topSortLabelPos(lab))+":"+"L"+lab.toString();
+  }
+    
   void EStateTransferFunctions::printTransferFunctionInfo(TransferFunctionCode tfCode, SgNode* node, Edge edge, EStatePtr estate) {
     stringstream ss;
-    ss<<"transfer: "<<std::setw(6)<<"L"+estate->label().toString()
+    ss<<"transfer: "<<labelPosInfoToString(edge.source())<<"=>"<<labelPosInfoToString(edge.target())
+      <<std::setw(6)<<"L"+estate->label().toString()
       <<" "<<estate->getCallStringRef().toString()
       <<": "<<std::setw(22)<<std::left<<transferFunctionCodeToString(tfCode)<<": ";
     if(getLabeler()->isFunctionEntryLabel(edge.source())||getLabeler()->isFunctionExitLabel(edge.source())) {
       ss<<SgNodeHelper::locationToString(node)<<": "<<SgNodeHelper::getFunctionName(node);
     } else {
-      ss<<SgNodeHelper::locationAndSourceCodeToString(node);
+      ss<<SgNodeHelper::locationAndSourceCodeToString(node,40,40);
     }
     #pragma omp critical (STATUS_MESSAGES)
     cout << ss.str()<<endl;
@@ -3610,7 +3621,7 @@ namespace CodeThorn {
     // only solver18 guarantees that all estates can be modified
     if(_analyzer->getSolver()->getId()==18) {
       if(isTmpVar(varId)) {
-        estate->pstate()->deleteVar(varId);
+        //estate->pstate()->deleteVar(varId);
         //cout<<"DEBUG: tmpVarCleanUp: removed "<<varId.toString(getVariableIdMapping())<<" from state."<<endl;
       }
     }
