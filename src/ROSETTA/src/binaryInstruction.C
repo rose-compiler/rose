@@ -9734,6 +9734,33 @@ void Grammar::setUpBinaryInstructions() {
             CONSTANT_Package = 20
         };
 
+        /** 4.4.1 CONSTANT_Class_info table entry. All fields are big endian. */
+        struct CONSTANT_Class_info {
+            uint8_t tag;
+            uint16_t name_index;
+        };
+
+        /** 4.4.2 CONSTANT_Methodref_info table entry. All fields are big endian. */
+        struct CONSTANT_Methodref_info {
+            uint8_t tag;
+            uint16_t class_index;
+            uint16_t name_and_type_index;
+        };
+
+        /** 4.4.6 CONSTANT_NameAndType_info table entry. All fields are big endian. */
+        struct CONSTANT_NameAndType_info {
+            uint8_t tag;
+            uint16_t name_index;
+            uint16_t descriptor_index;
+        };
+
+        /** 4.4.7 CONSTANT_Utf8_info table entry. All fields are big endian. */
+        struct CONSTANT_Utf8_info {
+            uint8_t tag;
+            uint16_t length;
+            uint8_t* bytes;
+        };
+
         /** Constructor creating an object ready to be initialized via parse(). */
         explicit SgAsmJvmConstantPoolEntry(SgAsmJvmConstantPoolEntry::ConstantPoolKind tag)
             : p_tag{tag} {
