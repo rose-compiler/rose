@@ -414,6 +414,9 @@ namespace
   void
   recordNode(map_t<KeyT, DclT*>& m, KeyT key, ValT& val, bool replace = false)
   {
+    if (key == 17172136 || key == 17585081)
+      logError() << "found " << key << std::endl;
+
     //~ ADA_ASSERT(replace || m.find(key) == m.end());
     if (!(replace || m.find(key) == m.end()))
     {

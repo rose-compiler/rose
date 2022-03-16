@@ -82,11 +82,12 @@ namespace
     template <class SageDecl>
     void def(SageDecl& n) { res = n.get_definition(); }
 
-    void handle(SgNode& n)               { SG_UNEXPECTED_NODE(n); }
-    void handle(SgAdaPackageSpecDecl& n) { def(n); }
-    void handle(SgAdaPackageBodyDecl& n) { def(n); }
-    void handle(SgAdaGenericDecl& n)     { def(n); }
+    void handle(SgNode& n)                   { SG_UNEXPECTED_NODE(n); }
+    void handle(SgAdaPackageSpecDecl& n)     { def(n); }
+    void handle(SgAdaPackageBodyDecl& n)     { def(n); }
+    void handle(SgAdaGenericDecl& n)         { def(n); }
     // \todo add handlers as needed
+    //~ void handle(SgAdaGenericInstanceDecl& n) { def(n); }
   };
 
 
@@ -3354,8 +3355,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         // we need to check if the SgAdaPackageSpecDecl is directly available
         // or if it is wrapped by an SgAdaGenericDecl node.
-        SgNode*               declnode = &lookupNode(asisDecls(), specID);
-        SgAdaPackageSpecDecl* specdcl  = isSgAdaPackageSpecDecl(declnode);
+        SgDeclarationStatement* declnode = &lookupNode(asisDecls(), specID);
+        SgAdaPackageSpecDecl*   specdcl  = isSgAdaPackageSpecDecl(declnode);
 
         if (!specdcl) {
           if (SgAdaGenericDecl* generic = isSgAdaGenericDecl(declnode)) {
@@ -4593,7 +4594,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         break;
       }
 
-
     case A_Package_Instantiation:                  // 12.3(2)
     case A_Procedure_Instantiation:                // 12.3(2)
     case A_Function_Instantiation:                 // 12.3(2)
@@ -4618,6 +4618,18 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         Element_Struct&           baseelem = basename.elem();
         Expression_Struct&        baseexpr = baseelem.The_Union.Expression;
         SgDeclarationStatement*   basedecl = findFirst(asisDecls(), baseexpr.Corresponding_Name_Declaration, baseexpr.Corresponding_Name_Definition);
+
+        if (basedecl == nullptr)
+        {
+          logError() << basename.ident << ": "
+                     << baseexpr.Corresponding_Name_Declaration << " and "
+                     << baseexpr.Corresponding_Name_Definition << " not found"
+                     << std::endl;
+
+          logError() << elemMap()[17172136]->Element_Kind
+                     << " / " << elemMap()[17585081]->Element_Kind
+                     << std::endl;
+        }
 
         // PP (2/2/22): the base decl can also be a renamed generic declaration
         SgAdaGenericInstanceDecl& sgnode   = mkAdaGenericInstanceDecl(adaname.ident, SG_DEREF(basedecl), outer);

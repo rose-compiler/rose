@@ -2196,11 +2196,13 @@ SageBuilder::buildTypedefDeclaration_nfi(const std::string& name, SgType* base_t
           //   declaration.
           if (declaration && !isSgAdaDiscriminatedTypeDecl(declaration))
              {
-#if 1
+#if 0
                mprintf ("Found a valid declaration = %p = %s \n",declaration,declaration->class_name().c_str());
 #endif
 
-               ROSE_ASSERT(declaration->get_firstNondefiningDeclaration() != NULL);
+               ROSE_ASSERT(  SageInterface::is_Ada_language()
+                          || (declaration->get_firstNondefiningDeclaration() != NULL)
+                          );
 
             // parent_scope = declaration->get_firstNondefiningDeclaration()->get_symbol_from_symbol_table();
                parent_scope = declaration->search_for_symbol_from_symbol_table();

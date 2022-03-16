@@ -1024,6 +1024,12 @@ namespace
         recordNameQualIfNeeded(n, decl.get_scope());
       }
 
+      void handle(const SgExpBaseClass&)
+      {
+        // \todo?
+      }
+
+
       //
       // expressions
 

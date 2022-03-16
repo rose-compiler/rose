@@ -432,10 +432,8 @@ namespace
     void handle(SgTypedefDeclaration& n) { res = &mkRecordParent(SG_DEREF(n.get_type())); }
 
     // stop gap measure
-    void handle(SgTypeUnknown& n)        { res = &mkRecordParent(n); }
-
-    // unresolved
-    //~ void handle(SgTypeUnknown& n)       { res = &mkRecordParent(n); }
+    void handle(SgType& n)               { res = &mkRecordParent(n); }
+    //~ void handle(SgTypeUnknown& n)        { res = &mkRecordParent(n); }
   };
 
   SgBaseClass&
