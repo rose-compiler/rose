@@ -14,7 +14,8 @@ namespace CodeThorn {
   }
   template<typename Element>
   bool operator==(const GeneralPriorityElement<Element>& e1, const GeneralPriorityElement<Element>& e2) {
-    return e1.priority==e2.priority && e1.data.callString()==e2.data.callString();
+    bool result=e1.priority==e2.priority && (e1.data.callString()==e2.data.callString())<<std::endl;
+    return e1.priority==e2.priority && (e1.data.callString()==e2.data.callString());
   }
   template<typename Element>
   bool operator!=(const GeneralPriorityElement<Element>& c1, const GeneralPriorityElement<Element>& c2) {

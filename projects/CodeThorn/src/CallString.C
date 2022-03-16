@@ -123,13 +123,13 @@ namespace CodeThorn {
       auto i1=_callString.begin();
       auto i2=other._callString.begin();
       while(i1!=_callString.end()) {
-        if(*i1>=*i2) {
-          return false;
+        if(*i1!=*i2) {
+          return *i1<*i2;
         }
         ++i1;
         ++i2;
       }
-      return true;
+      return false; // all labels are equal
     } else {
       return _callString.size()<other._callString.size();
     }

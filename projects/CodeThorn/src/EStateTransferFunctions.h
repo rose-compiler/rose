@@ -527,7 +527,9 @@ namespace CodeThorn {
   private:
     bool isTmpVar(VariableId varId);
     void tmpVarCleanUp(EStatePtr estate, VariableId varId);
-    
+    uint32_t topSortLabelPos(Label lab);
+    string labelPosInfoToString(Label lab);
+
     // outdated function, to be eliminated
     int computeNumberOfElements(SgVariableDeclaration* decl);
 
