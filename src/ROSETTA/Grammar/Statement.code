@@ -11901,7 +11901,7 @@ SgFunctionDeclaration::get_mangled_name() const
        // Compute a mangled name from this function's type
           SgName type_name;
           SgName ret_type_name;
-          const SgFunctionType* func_type = get_type();
+          SgFunctionType const * func_type = get_type();
           if (func_type != NULL)
              {
                type_name = func_type->get_mangled();
