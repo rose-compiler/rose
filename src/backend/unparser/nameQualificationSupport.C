@@ -966,6 +966,8 @@ namespace
       {
         handle(sg::asBaseType(n));
 
+        recordNameQualIfNeeded(n, n.get_scope());
+
         SgDeclarationStatement* basedecl = n.get_declaration();
 
         if (SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(basedecl))

@@ -4632,7 +4632,8 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         }
 
         // PP (2/2/22): the base decl can also be a renamed generic declaration
-        SgAdaGenericInstanceDecl& sgnode   = mkAdaGenericInstanceDecl(adaname.ident, SG_DEREF(basedecl), outer);
+        SgScopeStatement&         logicalScope = adaname.parent_scope();
+        SgAdaGenericInstanceDecl& sgnode   = mkAdaGenericInstanceDecl(adaname.ident, SG_DEREF(basedecl), logicalScope);
 
         {
           // generic actual part

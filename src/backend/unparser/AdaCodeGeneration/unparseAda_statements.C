@@ -999,6 +999,7 @@ namespace
       SgName                  name    = n.get_name();
       SgExprListExp*          args    = n.get_actual_parameters();
       SgDeclarationStatement* basedcl = n.get_declaration();
+      const std::string&      pkgqual = getQualification(n, n.get_scope());
 
       if (SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(basedcl))
         basedcl = gendcl->get_declaration();
@@ -1007,6 +1008,7 @@ namespace
       if (SgAdaPackageSpecDecl* pkg = isSgAdaPackageSpecDecl(basedcl)) {
         // package
         prn("package ");
+        prn(pkgqual);
         prn(name.getString());
         prn(" is new ");
         prnNameQual(n, *pkg, pkg->get_scope());
@@ -1014,6 +1016,7 @@ namespace
       } else if (SgAdaRenamingDecl* ren = isSgAdaRenamingDecl(basedcl)) {
         // renamed package
         prn("package ");
+        prn(pkgqual);
         prn(name.getString());
         prn(" is new ");
         prnNameQual(n, *ren, ren->get_scope());
@@ -1021,6 +1024,7 @@ namespace
       } else if (SgFunctionDeclaration* fn = isSgFunctionDeclaration(basedcl)) {
         // function/procedure
         prn(si::ada::isFunction(fn->get_type()) ? "function " : "procedure ");
+        prn(pkgqual);
         prn(name.getString());
         prn(" is new ");
         prnNameQual(n, *fn, fn->get_scope());
