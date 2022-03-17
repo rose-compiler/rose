@@ -1,7 +1,5 @@
 #include <sage3basic.h>
 
-// DQ (10/16/2010): This is needed to use the HAVE_SQLITE3 macro.
-// DQ (10/14/2010): This should only be included by source files that require it.
 // This fixed a reported bug which caused conflicts with autoconf macros (e.g. PACKAGE_BUGREPORT).
 // Interestingly it must be at the top of the list of include files.
 #include "rose_config.h"
@@ -1037,65 +1035,61 @@ Rose_STL_Container<SgFunctionDeclaration*> solveFunctionPointerCallsFunctional(S
 std::vector<SgFunctionDeclaration*>
 CallTargetSet::solveConstructorInitializer(SgConstructorInitializer* sgCtorInit)
 {
-    //FIXME: There is a bug in this function.
-    //Consider the inheritance hierarchy A -> B -> C (C inherits from B, B inherits from A).
-    //Let C have an explicit constructor, without explictly calling B's constructor. We will only return the constructor for C
-
-
     std::vector<SgFunctionDeclaration*> props;
     SgMemberFunctionDeclaration* memFunDecl = sgCtorInit->get_declaration();
 
     //It's possible to have a null constructor declaration, in case of compiler-generated
-    //default constructors.
-    if (memFunDecl == NULL || memFunDecl->get_file_info()->isCompilerGenerated())
-    {
-        //If there are superclasses, the constructors for those classes may have been called. We need to return them
-
-        //Sometimes constructor initializers appear for primitive types. (e.g. x() in a constructor initializer list)
-        if (sgCtorInit->get_class_decl() != NULL)
-        {
-            //The worklist contains classes that are initialized through compiler-generated default constructors
-            vector<SgClassDeclaration*> worklist;
-            worklist.push_back(sgCtorInit->get_class_decl());
-
-            while (!worklist.empty())
-            {
-                SgClassDeclaration* currClassDecl = worklist.back();
-                worklist.pop_back();
-
-                SgClassDeclaration* defClassDecl = isSgClassDeclaration(currClassDecl->get_definingDeclaration());
-                if(defClassDecl == NULL) { // Can get a NULL here if a primative type is being constructed.
-                  continue;                // For example, a pointer
-                }
-                SgClassDefinition* currClass = currClassDecl->get_definition();
-                if(currClass == NULL) { // Can get a NULL here if class is an anonymous compiler generated BaseClass
-                  continue;
-                }
-
-                foreach(SgBaseClass* baseClass, currClass->get_inheritances())
-                {
-                    ROSE_ASSERT(baseClass->get_base_class() != NULL);
-                    SgMemberFunctionDeclaration* constructorCalled = SageInterface::getDefaultConstructor(baseClass->get_base_class());
-
-                    if (constructorCalled != NULL && !constructorCalled->get_file_info()->isCompilerGenerated())
-                    {
-                        props.push_back(constructorCalled);
-                    }
-                    else
-                    {
-                        worklist.push_back(baseClass->get_base_class());
-                    }
-                }
-            }
-        }
-    }
-    else
+    //default constructors.  Since the below special handling is for 
+    //     (memFunDecl->get_file_info()->isCompilerGenerated() && 
+    //     !isSgTemplateInstantiationMemberFunctionDecl(memFunDecl) &&
+    //     !isSgTemplateMemberFunctionDecl(memFunDecl))
+    if (memFunDecl != NULL)
     {
         SgMemberFunctionDeclaration* decl = isSgMemberFunctionDeclaration(memFunDecl->get_firstNondefiningDeclaration());
         if (decl == NULL)
             decl = isSgMemberFunctionDeclaration(memFunDecl->get_definingDeclaration());
         ROSE_ASSERT(decl != NULL);
         props.push_back(decl);
+    }
+    
+    //If there are superclasses, the constructors for those classes may have been called. We need to return them
+    
+    //Sometimes constructor initializers appear for primitive types. (e.g. x() in a constructor initializer list)
+    if (sgCtorInit->get_class_decl() != NULL)
+    {
+        //The worklist contains classes that are initialized through compiler-generated default constructors
+        vector<SgClassDeclaration*> worklist;
+        worklist.push_back(sgCtorInit->get_class_decl());
+        
+        while (!worklist.empty())
+        {
+            SgClassDeclaration* currClassDecl = worklist.back();
+            worklist.pop_back();
+            
+            SgClassDeclaration* defClassDecl = isSgClassDeclaration(currClassDecl->get_definingDeclaration());
+            if(defClassDecl == NULL) { // Can get a NULL here if a primative type is being constructed.
+                continue;                // For example, a pointer
+            }
+            SgClassDefinition* currClass = defClassDecl->get_definition();
+            if(currClass == NULL) { // Can get a NULL here if class is an anonymous compiler generated BaseClass
+                continue;
+            }
+            
+            foreach(SgBaseClass* baseClass, currClass->get_inheritances())
+            {
+                ROSE_ASSERT(baseClass->get_base_class() != NULL);
+                SgMemberFunctionDeclaration* constructorCalled = SageInterface::getDefaultConstructor(baseClass->get_base_class());
+                if (constructorCalled != NULL)
+                {
+                    SgMemberFunctionDeclaration* constructorCalledUnique = isSgMemberFunctionDeclaration(constructorCalled->get_firstNondefiningDeclaration());
+                    props.push_back(constructorCalledUnique);
+                }
+                else
+                {
+                    worklist.push_back(baseClass->get_base_class());
+                }
+            }
+        }
     }
 
     return props;
