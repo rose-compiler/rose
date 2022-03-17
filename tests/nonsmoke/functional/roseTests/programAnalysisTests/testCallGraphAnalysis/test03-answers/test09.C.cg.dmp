@@ -1,0 +1,5 @@
+A::A ->
+C::C ->
+C::C ->
+main -> user_sysinit
+user_sysinit -> A::A C::C

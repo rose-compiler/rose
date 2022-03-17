@@ -1,4 +1,4 @@
 GraphNode::~GraphNode ->
-GroupGraphNode::ToString ->
+GroupGraphNode::ToString -> PtrSetWrap < GraphNode > ::Iterator::Iterator
 PtrSetWrap < GraphNode > ::Iterator::Current ->
 PtrSetWrap < GraphNode > ::Iterator::Iterator ->

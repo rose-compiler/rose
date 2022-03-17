@@ -2,4 +2,4 @@ A::A ->
 A::~A ->
 B::B ->
 B::~B ->
-main -> B::B
+main -> A::A B::B

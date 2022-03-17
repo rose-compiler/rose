@@ -1,4 +1,3 @@
 X < int > ::foobar ->
-X < int > ::foobar < double >  ->
-foo -> X < int > ::foobar X < int > ::foobar < double > 
+foo -> X < int > ::foobar
 main ->

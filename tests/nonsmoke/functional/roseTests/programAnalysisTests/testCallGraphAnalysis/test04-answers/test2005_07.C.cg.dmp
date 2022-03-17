@@ -16,6 +16,6 @@ A < int > ::operator& ->
 A < int > ::operator* ->
 A < int > ::operator-> ->
 A < int > ::operator[] ->
-fooError ->
-fooError ->
-fooError ->
+fooError -> A < A< int > > ::A
+fooError -> A < int > ::A
+fooError -> A < int > ::A

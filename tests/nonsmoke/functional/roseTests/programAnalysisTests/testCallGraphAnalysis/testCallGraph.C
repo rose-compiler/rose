@@ -25,6 +25,43 @@ std::string nodeLabel(SgGraphNode* node)
     return "some label";
 };
 
+/**
+ *  getTrueFilePath
+ *
+ *  Get the path of the file containing the provided Declaration
+ *  This is a special case to deal with when a function is defined as a 
+ *  template.  Instantiated templates are always compilerGenerated, so have
+ *  no file.  So we have to get the associated template and get its file.
+ *
+ * \param[in] funcDecl: A function declaration to get the filename of
+ *
+ **/
+std::string getTrueFilePath(SgFunctionDeclaration* inFuncDecl) {
+  //We need to figure out where the function originates, but that's different if it's a template so handle both cases
+  std::string filepathStr;
+  SgTemplateInstantiationFunctionDecl* tempIDecl = isSgTemplateInstantiationFunctionDecl(inFuncDecl);
+  SgTemplateInstantiationMemberFunctionDecl* tempIMDecl = isSgTemplateInstantiationMemberFunctionDecl(inFuncDecl);
+  if(tempIDecl) {  //is template
+    SgTemplateFunctionDeclaration* tempDecl = isSgTemplateFunctionDeclaration(tempIDecl->get_templateDeclaration());
+    SgFunctionDeclaration* defFuncDecl = isSgTemplateFunctionDeclaration(tempDecl->get_definingDeclaration());
+    filepathStr = defFuncDecl->get_file_info()->get_filename();
+  } else if(tempIMDecl) { //is template member
+    SgTemplateMemberFunctionDeclaration* tempDecl = isSgTemplateMemberFunctionDeclaration(tempIMDecl->get_templateDeclaration());
+    SgFunctionDeclaration* defFuncDecl = isSgTemplateMemberFunctionDeclaration(tempDecl->get_definingDeclaration());
+    filepathStr = defFuncDecl->get_file_info()->get_filename();
+  } else { //is NOT template
+      SgFunctionDeclaration* defDecl = isSgFunctionDeclaration(inFuncDecl->get_definingDeclaration());
+      if(defDecl == NULL) {
+          return "";
+      }
+      filepathStr = defDecl->get_file_info()->get_filename();
+  }
+  boost::filesystem::path filePath = boost::filesystem::weakly_canonical(filepathStr);  
+  return filePath.native();
+
+}
+
+
 struct OnlyCurrentDirectory : public std::unary_function<bool, SgFunctionDeclaration*>
 {
 
@@ -33,25 +70,27 @@ struct OnlyCurrentDirectory : public std::unary_function<bool, SgFunctionDeclara
         std::string stringToFilter = ROSE_COMPILE_TREE_PATH + std::string("/tests");
         std::string srcDir = ROSE_AUTOMAKE_TOP_SRCDIR;
 
-#if 0
-        printf("stringToFilter = %s \n", stringToFilter.c_str());
+//#if 0
+        printf("stringToFilter = %s %d\n", stringToFilter.c_str(), stringToFilter.size());
         printf("srcDir         = %s \n", srcDir.c_str());
-#endif
-        string sourceFilename = node->get_file_info()->get_filename();
+//#endif
+
+        string sourceFilename = getTrueFilePath(node);
         string sourceFilenameSubstring = sourceFilename.substr(0, stringToFilter.size());
         string sourceFilenameSrcdirSubstring = sourceFilename.substr(0, srcDir.size());
-#if 0
+//#if 0
+        printf("functionName                  = %s \n", node->get_qualified_name().getString().c_str());
         printf("sourceFilename                = %s \n", sourceFilename.c_str());
         printf("sourceFilenameSubstring       = %s \n", sourceFilenameSubstring.c_str());
         printf("sourceFilenameSrcdirSubstring = %s \n", sourceFilenameSrcdirSubstring.c_str());
-#endif
+//#endif
         // if (string(node->get_file_info()->get_filename()).substr(0,stringToFilter.size()) == stringToFilter  )
         if (sourceFilenameSubstring == stringToFilter)
             return true;
-        else
+//        else
             // if ( string(node->get_file_info()->get_filename()).substr(0,srcDir.size()) == srcDir )
-            if (sourceFilenameSrcdirSubstring == srcDir)
-            return true;
+//            if (sourceFilenameSrcdirSubstring == srcDir)
+//            return true;
         else
             return false;
     }

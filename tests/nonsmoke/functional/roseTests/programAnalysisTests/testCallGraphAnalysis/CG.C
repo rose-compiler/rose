@@ -25,7 +25,7 @@
 #include <vector>
 #include <stdlib.h>
 #include <fstream>
-#include<map>
+#include <map>
 
 using namespace std;
 

@@ -1,2 +1,3 @@
 Geometry::Dim2::numberOfDimensions ->
+Geometry::Field < MeshBase< PolygonalMeshTypeInfo > , Zone , Scalar > ::Field ->
 Geometry::FieldBase::~FieldBase ->

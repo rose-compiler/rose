@@ -1,3 +1,4 @@
-counted_base::add_ref -> use_count_is_zero::use_count_is_zero
+counted_base::add_ref -> use_count_is_zero::use_count_is_zero use_count_is_zero::use_count_is_zero
+use_count_is_zero::use_count_is_zero ->
 use_count_is_zero::use_count_is_zero ->
 use_count_is_zero::what ->
