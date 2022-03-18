@@ -37,14 +37,18 @@ namespace CodeThorn {
     void writeLocationsVerificationOverview(CodeThornOptions& ctOpt, std::ostream& os, CodeThorn::Labeler* labeler);
     void writeResultFile(CodeThornOptions& ctOpt, std::string fileName, CodeThorn::Labeler* labeler);
     void writeResultToStream(CodeThornOptions& ctOpt, std::ostream& stream, CodeThorn::Labeler* labeler);
-    void writeAllDefinitiveLocationsToStream(std::ostream& stream, CodeThorn::Labeler* labeler, bool qualifier, bool programLocation, bool sourceCode);
-    void writeAllPotentialLocationsToStream(std::ostream& stream, CodeThorn::Labeler* labeler, bool qualifier, bool programLocation, bool sourceCode);
-    void writeLocationsToStream(std::ostream& stream, CodeThorn::Labeler* labeler, LabelSet& set, std::string qualifier, bool programLocation, bool sourceCode);
+    void writeAllDefinitiveLocationsToStream(std::ostream& stream, CodeThorn::Labeler* labeler, bool qualifier, bool programLocation);
+    void writeAllPotentialLocationsToStream(std::ostream& stream, CodeThorn::Labeler* labeler, bool qualifier, bool programLocation);
+    void writeLocationsToStream(std::ostream& stream, CodeThorn::Labeler* labeler, LabelSet& set, std::string qualifier, bool programLocation);
 
     static std::string findOriginalProgramLocationOfLabel(CodeThorn::Labeler* labeler, CodeThorn::Label lab);
     static std::string findOriginalProgramLocationOfNode(SgNode* node);
     static std::string sourceCodeAtLabel(CodeThorn::Labeler* labeler, CodeThorn::Label lab);
     static std::string fileInfoAsFormattedProgramLocation(SgNode* node);
+
+    typedef std::string LineColString;
+    typedef std::set<std::string> SortedProgramLocationStringSet;
+    SortedProgramLocationStringSet createOriginalProgramLocationSet(LabelSet labSet, Labeler* labeler);
   private:
 
     // provide set of all locations (unused function)

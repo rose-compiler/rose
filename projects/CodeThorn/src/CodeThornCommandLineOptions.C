@@ -202,7 +202,6 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
 
     ("generate-reports",po::value< bool >(&ctOpt.generateReports)->implicit_value(true),"Enable generation of analysis report files.")
     ("file-path-prefix-to-remove", po::value< string >(&ctOpt.filePathPrefixToRemove))
-    ("report-source-column", po::value< bool >(&ctOpt.reportSourceColumn))
 
     ("null-pointer-file",po::value< string >(&ctOpt.nullPointerAnalysisFileName),"Perform null pointer analysis and write results to file [arg].")
     ("out-of-bounds-file",po::value< string >(&ctOpt.outOfBoundsAnalysisFileName),"Perform out-of-bounds analysis and write results to file [arg].")

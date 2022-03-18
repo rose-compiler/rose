@@ -3621,7 +3621,7 @@ namespace CodeThorn {
     // only solver18 guarantees that all estates can be modified
     if(_analyzer->getSolver()->getId()==18) {
       if(isTmpVar(varId)) {
-        //estate->pstate()->deleteVar(varId);
+        estate->pstate()->deleteVar(varId);
         //cout<<"DEBUG: tmpVarCleanUp: removed "<<varId.toString(getVariableIdMapping())<<" from state."<<endl;
       }
     }

@@ -93,7 +93,6 @@ public:
   std::string deadCodeAnalysisFileName="dead-code.csv";
   std::string constantConditionAnalysisFileName="opaque-predicate.csv";
   std::string filePathPrefixToRemove;
-  bool reportSourceColumn=false;
   bool generateReports=false;
 
   bool programStatsOnly=false;

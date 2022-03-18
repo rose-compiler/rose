@@ -82,7 +82,7 @@ namespace CodeThorn {
             LabelSet violatingLabels=report.falsifiedLocations();
             if(report.numDefinitiveLocations()>0) {
               ss<<"Proven errors in program:"<<endl;
-              report.writeAllDefinitiveLocationsToStream(cout,analyzer->getLabeler(),false,true,true);
+              report.writeAllDefinitiveLocationsToStream(cout,analyzer->getLabeler(),false,true);
             } else {
               LabelSet u=report.unverifiedLocations();
               if(u.size()==0) {
