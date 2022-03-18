@@ -624,8 +624,20 @@ namespace ada
     return n && isFunctionTryBlock(*n);
   }
 
+  SgAdaGenericDecl* isGenericDecl(const SgDeclarationStatement& n)
+  {
+    if (SgAdaGenericDefn* defn = isSgAdaGenericDefn(n.get_parent()))
+      return isSgAdaGenericDecl(defn->get_parent());
 
+    return nullptr;
+  }
 
+  SgAdaGenericDecl* isGenericDecl(const SgDeclarationStatement* n)
+  {
+    if (n == nullptr) return nullptr;
+
+    return isGenericDecl(*n);
+  }
 
   bool hasUnknownDiscriminants(const SgAdaDiscriminatedTypeDecl& n)
   {

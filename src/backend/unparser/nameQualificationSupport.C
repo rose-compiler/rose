@@ -710,6 +710,12 @@ namespace
     if (const SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(&n))
       return unitDefinition(SG_DEREF(gendcl->get_declaration()));
 
+    if (/*const SgAdaGenericInstanceDecl* gendcl =*/ isSgAdaGenericInstanceDecl(&n))
+    {
+      // \todo should be the body of the instantiation specification
+      return nullptr;
+    }
+
     // should not happen with a full Ada implemention
     //   SgImportStatement is used when the package is not available
     //   => do nothing for now
@@ -960,6 +966,8 @@ namespace
       {
         handle(sg::asBaseType(n));
 
+        recordNameQualIfNeeded(n, n.get_scope());
+
         SgDeclarationStatement* basedecl = n.get_declaration();
 
         if (SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(basedecl))
@@ -1018,6 +1026,12 @@ namespace
         recordNameQualIfNeeded(n, decl.get_scope());
       }
 
+      void handle(const SgExpBaseClass&)
+      {
+        // \todo?
+      }
+
+
       //
       // expressions
 
@@ -1044,12 +1058,7 @@ namespace
         recordNameQualIfNeeded(n, declOf(n).get_scope());
       }
 
-      // Ada's derived types "inherit" the primitive functions of their base type.
-      // Asis does not create new declaration for these functions, but instead links
-      // to the original operation functions. However, the scope qualification needs to
-      // be generated as if the functions were located in the scope of the derived type.
-      // \returns the assumed scope of a function declaration if scope qualification is needed
-      //          nullptr if no scope qualification is required
+      // \returns the scope of a function symbol
       const SgScopeStatement&
       assumedDeclarativeScope(const SgFunctionRefExp& n)
       {
@@ -1254,6 +1263,13 @@ namespace
         traversal.addRenamedScope(SG_DEREF(pkgbdy->get_definition()).get_spec(), &n);
       }
 
+      return;
+    }
+
+    if (const SgFunctionSymbol* fnsym = isSgFunctionSymbol(sym))
+    {
+      traversal.addRenamedScope(fnsym->get_scope(), &n);
+      // \todo what needs to be done here?
       return;
     }
 

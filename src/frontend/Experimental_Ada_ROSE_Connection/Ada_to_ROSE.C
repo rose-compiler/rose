@@ -2,6 +2,7 @@
 
 #include <type_traits>
 #include <algorithm>
+#include <boost/range/adaptor/reversed.hpp>
 
 #include "Rose/Diagnostics.h"
 #include "rose_config.h"
@@ -55,6 +56,8 @@ namespace
   /// stores a mapping from Element_ID to ROSE type declaration
   map_t<int, SgDeclarationStatement*> asisTypesMap;
 
+  map_t<int, SgBasicBlock*> asisBlocksMap;
+
   /// stores a mapping from string to builtin type nodes
   map_t<AdaIdentifier, SgType*> adaTypesMap;
 
@@ -68,13 +71,14 @@ namespace
 } // anonymous namespace
 
 //~ map_t<int, SgDeclarationStatement*>&        asisUnits() { return asisUnitsMap; }
-map_t<int, SgInitializedName*>&              asisVars()  { return asisVarsMap;  }
-map_t<int, SgInitializedName*>&              asisExcps() { return asisExcpsMap; }
-map_t<int, SgDeclarationStatement*>&         asisDecls() { return asisDeclsMap; }
-map_t<int, SgDeclarationStatement*>&         asisTypes() { return asisTypesMap; }
-map_t<AdaIdentifier, SgType*>&               adaTypes()  { return adaTypesMap;  }
-map_t<AdaIdentifier, SgInitializedName*>&    adaExcps()  { return adaExcpsMap;  }
-map_t<AdaIdentifier, SgAdaPackageSpecDecl*>& adaPkgs()   { return adaPkgsMap;   }
+map_t<int, SgInitializedName*>&              asisVars()   { return asisVarsMap;   }
+map_t<int, SgInitializedName*>&              asisExcps()  { return asisExcpsMap;  }
+map_t<int, SgDeclarationStatement*>&         asisDecls()  { return asisDeclsMap;  }
+map_t<int, SgDeclarationStatement*>&         asisTypes()  { return asisTypesMap;  }
+map_t<int, SgBasicBlock*>&                   asisBlocks() { return asisBlocksMap; }
+map_t<AdaIdentifier, SgType*>&               adaTypes()   { return adaTypesMap;   }
+map_t<AdaIdentifier, SgInitializedName*>&    adaExcps()   { return adaExcpsMap;   }
+map_t<AdaIdentifier, SgAdaPackageSpecDecl*>& adaPkgs()    { return adaPkgsMap;    }
 
 map_t<std::pair<const SgFunctionDeclaration*, const SgTypedefType*>, SgAdaInheritedFunctionSymbol*>&
 inheritedSymbols()
@@ -83,7 +87,7 @@ inheritedSymbols()
 }
 
 ASIS_element_id_to_ASIS_MapType&     elemMap()   { return asisMap;      }
-ASIS_element_id_to_ASIS_MapType&     unitMap()   { return asisMap;      }
+//~ ASIS_element_id_to_ASIS_MapType&     unitMap()   { return asisMap;      }
 
 
 //
@@ -307,12 +311,13 @@ namespace
   {
     //~ asisUnits().clear();
     elemMap().clear();
-    unitMap().clear();
+    //~ unitMap().clear();
 
     asisVars().clear();
     asisExcps().clear();
     asisDecls().clear();
     asisTypes().clear();
+    asisBlocks().clear();
     adaTypes().clear();
     adaExcps().clear();
     adaPkgs().clear();
@@ -594,11 +599,28 @@ namespace
           break;
         }
 
-      case Not_A_Unit:
-      case A_Package_Instance:
-
       case A_Procedure_Instance:
       case A_Function_Instance:
+      case A_Package_Instance:
+        {
+          if (adaUnit.Unit_Kind == A_Procedure_Instance)
+            logTrace() << "A A_Procedure_Instance";
+          else if (adaUnit.Unit_Kind == A_Function_Instance)
+            logTrace() << "A A_Function_Instance";
+          else
+            logTrace() << "A A_Package_Instance";
+
+          logTrace() << PrnUnitHeader(adaUnit)
+                     << std::endl;
+
+          ElemIdRange range = idRange(adaUnit.Context_Clause_Elements);
+
+          traverseIDs(range, elemMap(), ElemCreator{ctx});
+          handleElementID(adaUnit.Unit_Declaration, ctx);
+          break;
+        }
+
+      case Not_A_Unit:
 
       case A_Procedure_Renaming:
       case A_Function_Renaming:
@@ -750,6 +772,7 @@ namespace
 
     el.second.marked = true;
 
+    // add the spec (package) or body (for routines w/o spec)
     for (const AdaIdentifier& depname : el.second.dependencies)
     {
       auto pos = m.find(UniqueUnitId{false, depname});
@@ -765,6 +788,15 @@ namespace
       }
 
       dfs(m, *pos, res);
+    }
+
+    // if this is a body, also add the spec as dependency
+    if (el.first.isbody)
+    {
+      auto pos = m.find(UniqueUnitId{false, el.first.name});
+
+      if (pos != m.end())
+        dfs(m, *pos, res);
     }
 
     res.push_back(el.second.unit);
@@ -830,12 +862,17 @@ namespace
   {
     using DependencyMap = std::map<UniqueUnitId, UnitEntry>;
     using IdEntryMap    = std::map<Unit_ID, DependencyMap::iterator> ;
+    using UnitVector    = std::vector<Unit_Struct_List_Struct*> ;
 
     DependencyMap deps;
     IdEntryMap    idmap;
+    UnitVector    allUnits;
 
     // build maps for all units
     for (Unit_Struct_List_Struct* unit = adaUnit; unit != nullptr; unit = unit->Next)
+      allUnits.push_back(unit);
+
+    for (Unit_Struct_List_Struct* unit : allUnits)
     {
       ADA_ASSERT(unit);
 
@@ -852,7 +889,7 @@ namespace
     }
 
     // link the units
-    for (Unit_Struct_List_Struct* unit = adaUnit; unit != nullptr; unit = unit->Next)
+    for (Unit_Struct_List_Struct* unit : allUnits)
     {
       IdEntryMap::iterator    uit = idmap.find(unit->Unit.ID);
       ADA_ASSERT(uit != idmap.end());
@@ -885,21 +922,29 @@ namespace
     std::vector<Unit_Struct*> res;
 
     // topo sort
-    for (DependencyMap::value_type& el : deps)
-      dfs(deps, el, res);
-
-  /*
-    // print all module dependencies
-    for (const DependencyMap::value_type& el : deps)
+    for (Unit_Struct_List_Struct* unit : allUnits)
     {
-      logWarn() << el.first << "\n  ";
+      DependencyMap::iterator pos = deps.find(uniqueUnitName(unit->Unit));
+
+      ROSE_ASSERT(pos != deps.end());
+      dfs(deps, *pos, res);
+    }
+
+    // print all module dependencies
+    for (Unit_Struct_List_Struct* unit : allUnits)
+    {
+      DependencyMap::iterator pos = deps.find(uniqueUnitName(unit->Unit));
+
+      ROSE_ASSERT(pos != deps.end());
+      DependencyMap::value_type& el = *pos;
+
+      logWarn() << el.first.name << "\n  ";
 
       for (const std::string& n : el.second.dependencies)
         logWarn() << n << ", ";
 
       logWarn() << std::endl << std::endl;
     }
-  */
 
     logTrace() << "\nTopologically sorted module processing order"
                << std::endl;
