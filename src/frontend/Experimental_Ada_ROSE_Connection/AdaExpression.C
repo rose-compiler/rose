@@ -482,8 +482,9 @@ namespace
     void handle(const SgAdaProtectedSpecDecl&) { res = false; }
     void handle(const SgAdaPackageSpecDecl&)   { res = false; }
     void handle(const SgImportStatement&)      { res = false; }
-    //~ void handle(const SgFunctionDeclaration&)  { res = false; }
     void handle(const SgAdaRenamingDecl&)      { res = false; }
+    //~ void handle(const SgFunctionDeclaration&)  { res = false; }
+    void handle(const SgBasicBlock&)           { res = false; }
   };
 
 
@@ -498,11 +499,13 @@ namespace
 
     if (expr.Expression_Kind == An_Identifier)
     {
-      const SgDeclarationStatement* dcl = getDecl_opt(expr, ctx);
+      const SgStatement* stmt = getDecl_opt(expr, ctx);
+
+      if (stmt == nullptr) stmt = findFirst(asisBlocks(), expr.Corresponding_Name_Declaration);
 
       // \note getDecl_opt does not retrieve variable declarations
       //       => assuming a is a variable of record: a.x (the dcl for a would be nullptr)
-      return dcl == nullptr || sg::dispatch(RoseRequiresScopeQual{}, dcl);
+      return stmt == nullptr || sg::dispatch(RoseRequiresScopeQual{}, stmt);
       //~ return dcl != nullptr && sg::dispatch(RoseRequiresScopeQual(), dcl);
     }
 

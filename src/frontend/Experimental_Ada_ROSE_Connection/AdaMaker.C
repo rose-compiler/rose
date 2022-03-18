@@ -742,7 +742,8 @@ mkAdaGenericInstanceDecl(const std::string& name, SgDeclarationStatement& gendec
 
   SgAdaGenericInstanceDecl& sgnode = mkLocatedNode<SgAdaGenericInstanceDecl>(name,&gendecl,nullptr);
 
-  sgnode.set_parent(&scope);
+  //~ sgnode.set_parent(&scope);
+  sgnode.set_scope(&scope);
   // PP (2/24/22): should this be set_definingDeclaration ?
   sgnode.set_firstNondefiningDeclaration(&sgnode);
 
