@@ -3016,7 +3016,9 @@ namespace CodeThorn {
           notifyReadWriteListenersOnReading(estate->label(),const_pstate,arrayPtrValue);
           res.result=CodeThorn::Top();
           res.estate->io.recordVerificationError();
-          return res;
+          if(!_analyzer->getOptionsRef().nullPointerDereferenceKeepGoing) {
+            return res;
+          }
         }
         AbstractValue indexExprResultValue=indexExprResult.value();
         AbstractValue elementSize=getMemoryRegionAbstractElementSize(arrayPtrValue);
@@ -3028,10 +3030,12 @@ namespace CodeThorn {
           // dereference. An error-state recording this property is
           // created to allow analysis of errors on the programs
           // transition graph. In addition the property is also recorded in the _nullPointerDereferenceLocations list.
-          res.result=CodeThorn::Top(); // consider returning bot here?
+          res.result=CodeThorn::Top();
           // verification error states are detected in the solver and no successor states are computed.
           res.estate->io.recordVerificationError();
-          return res;
+          if(!_analyzer->getOptionsRef().nullPointerDereferenceKeepGoing) {
+            return res;
+          }
         }
         if(pstate2->memLocExists(arrayPtrValue)) {
           // required for the following index computation (nothing to do here)
@@ -3200,11 +3204,12 @@ namespace CodeThorn {
       res.result=CodeThorn::Top();
       return res;
     }
-
+    SAWYER_MESG(logger[TRACE])<<"ArrowOp: "<<node->unparseToString()<<"lhsResult(address): "<<lhsResult.result.toString()<< " rhsResult(offset):"<<rhsResult.result.toString()<<" mode:"<<mode<<endl;
     // L->R : L evaluates to pointer value (address), R evaluates to offset value (a struct member always evaluates to an offset)
     AbstractValue referencedAddress=lhsResult.result;
-    bool continueExec=checkAndRecordNullPointer(referencedAddress, estate);
-    if(continueExec) {
+    bool isDefinitelyNullPtr=checkAndRecordNullPointer(referencedAddress, estate);
+    SAWYER_MESG(logger[TRACE])<<"ArrowOp: continue exec:"<<isDefinitelyNullPtr<<endl;
+    if(!isDefinitelyNullPtr) {
       SAWYER_MESG(logger[TRACE])<<"ArrowOp: referencedAddress(lhs):"<<referencedAddress.toString(_variableIdMapping)<<endl;
       AbstractValue offset=rhsResult.result;
       AbstractValue denotedAddress=AbstractValue::operatorAdd(referencedAddress,offset); // data member offset
@@ -3224,6 +3229,7 @@ namespace CodeThorn {
       }
       return res;
     } else {
+      SAWYER_MESG(logger[TRACE])<<"ArrowOp: "<<" null pointer deref."<<endl;
       SingleEvalResult empty;
       notifyReadWriteListenersOnReading(estate->label(),estate->pstate(),referencedAddress);
       empty.init(estate,CodeThorn::Bot()); // indicates unreachable, could also mark state as unreachable
@@ -3275,6 +3281,7 @@ namespace CodeThorn {
       notifyReadWriteListenersOnReading(estate->label(),estate->pstate(),derefOperandValue);      
       return false;
     } else if(derefOperandValue.isNullPtr()) {
+      notifyReadWriteListenersOnReading(estate->label(),estate->pstate(),derefOperandValue);      
       return true;
     }
     return false;
@@ -3621,7 +3628,7 @@ namespace CodeThorn {
     // only solver18 guarantees that all estates can be modified
     if(_analyzer->getSolver()->getId()==18) {
       if(isTmpVar(varId)) {
-        //estate->pstate()->deleteVar(varId);
+        estate->pstate()->deleteVar(varId);
         //cout<<"DEBUG: tmpVarCleanUp: removed "<<varId.toString(getVariableIdMapping())<<" from state."<<endl;
       }
     }
@@ -3650,7 +3657,7 @@ namespace CodeThorn {
       int offset=AbstractValue::getVariableIdMapping()->getOffset(varId);
       ROSE_ASSERT(_variableIdMapping);
       SAWYER_MESG(logger[TRACE])<<"evalRValueVarRefExp: evalRValueVarRefExp STRUCT member: "<<_variableIdMapping->variableName(varId)<<" offset: "<<offset<<endl;
-      res.result=AbstractValue(offset); // TODO BYTEMODE ?
+      res.result=AbstractValue(offset);
       return res;
     }
     // TODO: as rvalue it represents the entire class
@@ -4202,7 +4209,7 @@ namespace CodeThorn {
     // optimization of temporary single local vars (guaranteed to be used only once, introduced by normalization)
     if(memLoc.isPtr()) {
       VariableId varId=memLoc.getVariableId();
-      if(isTemporarySingleLocalVar(varId)) {
+      if(_analyzer->getOptionsRef().temporaryLocalVarOptFlag && isTemporarySingleLocalVar(varId)) {
        pstate->deleteVar(varId); // optimization
       }
     }

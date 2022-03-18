@@ -239,6 +239,7 @@ void CodeThorn::CTAnalysis::setWorkLists(ExplorationMode explorationMode) {
       if(_ctOpt.status) cout<<"STATUS: creating topologic sort of "<<getFlow()->size()<<" labels ... "<<flush;
       auto cg=getCFAnalyzer()->getCallGraph();
       _topologicalSort=new TopologicalSort(*getLabeler(),*getFlow(),cg);
+      _topologicalSort->setReverseFunctionOrdering(true);
       ROSE_ASSERT(_topologicalSort);
       _topologicalSort->computeLabelToPriorityMap();
 #if 0

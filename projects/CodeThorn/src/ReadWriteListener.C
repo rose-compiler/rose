@@ -20,5 +20,11 @@ namespace CodeThorn {
   }
   void ReadWriteListener::functionCallExternal(Edge edge, EStatePtr estate) {
   }
+    void ReadWriteListener::setLabeler(Labeler* labeler) {
+    _labeler=labeler;
+  }
 
+  Labeler* ReadWriteListener::getLabeler() {
+    return _labeler;
+  }
 }

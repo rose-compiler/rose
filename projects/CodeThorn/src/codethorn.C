@@ -251,16 +251,23 @@ int main( int argc, char * argv[] ) {
     CodeThorn::optionallyInitializePatternSearchSolver(ctOpt,analyzer,tc);
     AbstractValue::pointerSetsEnabled=ctOpt.pointerSetsEnabled;
 
-    if(ctOpt.constantConditionAnalysisFileName.size()>0) {
-      analyzer->getEStateTransferFunctions()->registerReadWriteListener(new ConstantConditionAnalysis(),"constant-condition");
-    }
+    // register RW listeners
+    ROSE_ASSERT(analyzer->getLabeler());
     if(ctOpt.generateReports) {
       auto memViolationAnalysis=new MemoryViolationAnalysis();
-      memViolationAnalysis->setEStateTransferFunctions(analyzer->getEStateTransferFunctions()); // temporary until reports are moved
+      memViolationAnalysis->setEStateTransferFunctions(analyzer->getEStateTransferFunctions());
+      memViolationAnalysis->setLabeler(analyzer->getLabeler());
       analyzer->getEStateTransferFunctions()->registerReadWriteListener(memViolationAnalysis,"memory-violation");
     }
+    if(ctOpt.constantConditionAnalysisFileName.size()>0) {
+      auto ccAna=new ConstantConditionAnalysis();
+      ccAna->setLabeler(analyzer->getLabeler());
+      analyzer->getEStateTransferFunctions()->registerReadWriteListener(ccAna,"constant-condition");
+    }
     if(ctOpt.readWriteTrace) {
-      analyzer->getEStateTransferFunctions()->registerReadWriteListener(new ReadWriteTraceAnalysis(),"read-write-trace");
+      auto rwTrace=new ReadWriteTraceAnalysis();
+      rwTrace->setLabeler(analyzer->getLabeler());
+      analyzer->getEStateTransferFunctions()->registerReadWriteListener(rwTrace,"read-write-trace");
     }
 
     if(ctOpt.runSolver) {

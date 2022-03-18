@@ -12,6 +12,14 @@ namespace CodeThorn {
   TopologicalSort::TopologicalSort(Labeler& labeler0, Flow& flow0, Flow* callGraph0):labeler(labeler0),flow(flow0), callGraph(callGraph0) {
   }
 
+  void TopologicalSort::setReverseFunctionOrdering(bool flag) {
+    _reverseFunctionOrdering=flag;
+  }
+
+  bool TopologicalSort::getReverseFunctionOrdering() {
+    return _reverseFunctionOrdering;
+  }
+
   void TopologicalSort::createTopologicallySortedLabelList() {
     if(revPostOrderList.size()==0) {
       Label startLab=flow.getStartLabel();
@@ -21,9 +29,16 @@ namespace CodeThorn {
         std::list<Label> postOrderList;
         computePostOrder(startLab,*callGraph, postOrderList);
         // reverse post order sorting of functions (each function is also topologically sorted)
-        for (auto revit=postOrderList.rbegin(); revit!=postOrderList.rend();++revit) {
-          Label label=*revit;
-          semanticRevPostOrderTraversal(label);
+        if(getReverseFunctionOrdering()) {
+          for (auto revit=postOrderList.rbegin(); revit!=postOrderList.rend();++revit) {
+            Label label=*revit;
+            semanticRevPostOrderTraversal(label);
+          }
+        } else {
+          for (auto it=postOrderList.begin(); it!=postOrderList.end();++it) {
+            Label label=*it;
+            semanticRevPostOrderTraversal(label);
+          }
         }
       } else {
         // likely inefficient, without call graph, top-sort functions starting with main and then in some "random" order
