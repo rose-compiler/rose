@@ -163,6 +163,14 @@ size_t ProgramLocationsReport::numTotalRecordedLocations() {
   return (potentialLocations+definitiveLocations).size();
 }
 
+ProgramLocationsReport::SortedProgramLocationStringSet ProgramLocationsReport::createOriginalProgramLocationSet(LabelSet labSet, Labeler* labeler) {
+  SortedProgramLocationStringSet lcSet;
+  for(auto lab : labSet) {
+    lcSet.insert(findOriginalProgramLocationOfLabel(labeler,lab));
+  }
+  return lcSet;
+}
+
 void CodeThorn::ProgramLocationsReport::writeResultFile(CodeThornOptions& ctOpt, string fileName, CodeThorn::Labeler* labeler) {
   string writeMode=ctOpt.csvReportModeString;
   std::ofstream myfile;
@@ -174,15 +182,14 @@ void CodeThorn::ProgramLocationsReport::writeResultFile(CodeThornOptions& ctOpt,
     cerr<<"Error: unknown write mode: "<<writeMode<<endl;
     exit(1);
   }
+
   if(myfile.good()) {
-    for(auto lab : definitiveLocations) {
-      myfile<<"definitive,"<<findOriginalProgramLocationOfLabel(labeler,lab);
-      myfile<<","<<sourceCodeAtLabel(labeler,lab);
+    for(auto loc : createOriginalProgramLocationSet(definitiveLocations, labeler)) {
+      myfile<<"definitive,"<<loc;
       myfile<<endl;
     }
-    for(auto lab : potentialLocations) {
-      myfile<<"potential,"<<findOriginalProgramLocationOfLabel(labeler,lab);
-      myfile<<","<<sourceCodeAtLabel(labeler,lab);
+    for(auto loc : createOriginalProgramLocationSet(potentialLocations, labeler)) {
+      myfile<<"potential,"<<loc;
       myfile<<endl;
     }
     myfile.close();
@@ -192,38 +199,26 @@ void CodeThorn::ProgramLocationsReport::writeResultFile(CodeThornOptions& ctOpt,
 }
 
 void CodeThorn::ProgramLocationsReport::writeResultToStream(CodeThornOptions& ctOpt, std::ostream& stream, CodeThorn::Labeler* labeler) {
-  writeAllDefinitiveLocationsToStream(stream,labeler,true,true,ctOpt.reportSourceColumn);
-  writeAllPotentialLocationsToStream(stream,labeler,true,true,ctOpt.reportSourceColumn);
+  writeAllDefinitiveLocationsToStream(stream,labeler,true,true);
+  writeAllPotentialLocationsToStream(stream,labeler,true,true);
 }
 
-void CodeThorn::ProgramLocationsReport::writeAllDefinitiveLocationsToStream(std::ostream& stream, CodeThorn::Labeler* labeler, bool qualifier, bool programLocation, bool sourceCode) {
-  writeLocationsToStream(stream,labeler,definitiveLocations,"definitive",true,sourceCode);
-}
-void CodeThorn::ProgramLocationsReport::writeAllPotentialLocationsToStream(std::ostream& stream, CodeThorn::Labeler* labeler, bool qualifier, bool programLocation, bool sourceCode) {
-  writeLocationsToStream(stream,labeler,definitiveLocations,"definitive",true,sourceCode);
+void CodeThorn::ProgramLocationsReport::writeAllDefinitiveLocationsToStream(std::ostream& stream, CodeThorn::Labeler* labeler, bool qualifier, bool programLocation) {
+  writeLocationsToStream(stream,labeler,definitiveLocations,"definitive",true);
 }
 
-void CodeThorn::ProgramLocationsReport::writeLocationsToStream(std::ostream& stream, CodeThorn::Labeler* labeler, LabelSet& set, string qualifier, bool programLocation, bool sourceCode) {
-  for(auto lab : set) {
+void CodeThorn::ProgramLocationsReport::writeAllPotentialLocationsToStream(std::ostream& stream, CodeThorn::Labeler* labeler, bool qualifier, bool programLocation) {
+  writeLocationsToStream(stream,labeler,potentialLocations,"potential",true);
+}
+
+void CodeThorn::ProgramLocationsReport::writeLocationsToStream(std::ostream& stream, CodeThorn::Labeler* labeler, LabelSet& set, string qualifier, bool programLocation) {
+  for(auto loc : createOriginalProgramLocationSet(set,labeler)) {
     if(qualifier.size()>0)
       stream<<qualifier;
-    if(qualifier.size()>0&&(programLocation||sourceCode))
+    if(qualifier.size()>0&&(programLocation))
       stream<<": ";
     if(programLocation) {
-      if(lab.isValid()) {
-        stream<<this->findOriginalProgramLocationOfLabel(labeler,lab);
-      } else {
-        stream<<"?:?";
-      }
-    }
-    if(programLocation&&sourceCode)
-      stream<<": ";
-    if(sourceCode) {
-      if(lab.isValid()) {
-        stream<<sourceCodeAtLabel(labeler,lab);
-      } else {
-        stream<<"invalid_label_error1";
-      }
+      stream<<loc;
     }
     stream<<endl;
   }
@@ -242,11 +237,11 @@ void ProgramLocationsReport::writeLocationsVerificationOverview(CodeThornOptions
   int t=int_n+d;
   os<<std::fixed<<std::setprecision(2);
   //os<<"Reachable verified locations  : "<<setw(6)<<f+v<<" ["<<setw(6)<<(f+v)/n*100.0<<"%]"<<endl;
-  os<<"Verified  (definitely safe)    locations: "<<setw(6)<< v <<" ["<<setw(6)<<v/n*100.0<<"%]"<<endl;
-  os<<"Violated  (definitely unsafe)  locations: "<<setw(6)<< f <<" ["<<setw(6)<<f/n*100.0<<"%]"<<endl;
-  os<<"Undecided (potentially unsafe) locations: "<<setw(6)<< u <<" ["<<setw(6)<<u/n*100.0<<"%]"<<endl;
-  //os<<"Total reachable locations     : "<<setw(6)<<int_n<<" ["<<setw(6)<<n/t*100.0<<"%]"<<endl;
-  os<<"Dead      (unreachable)        locations: "<<setw(6)<<d<<" ["<<setw(6)<<(double)d/t*100.0<<"%]"<<endl;
+  os<<"Verified  (definitely safe)    locations: "<<setw(6)<< v <<" ["<<setw(6)<<v/n*100.0<<"% of reachable]"<<endl;
+  os<<"Violated  (definitely unsafe)  locations: "<<setw(6)<< f <<" ["<<setw(6)<<f/n*100.0<<"% of reachable]"<<endl;
+  os<<"Undecided (potentially unsafe) locations: "<<setw(6)<< u <<" ["<<setw(6)<<u/n*100.0<<"% of reachable]"<<endl;
+  os<<"Total     (reachable)          locations: "<<setw(6)<<int_n<<" ["<<setw(6)<<n/t*100.0<<"% of total]"<<endl;
+  os<<"Dead      (unreachable)        locations: "<<setw(6)<<d<<" ["<<setw(6)<<(double)d/t*100.0<<"% of total]"<<endl;
   os<<"Total                          locations: "<<setw(6)<<t<<endl;
 #if 0
   os<<"Detected Errors:"<<endl;

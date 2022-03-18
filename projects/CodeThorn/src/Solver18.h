@@ -48,6 +48,8 @@ namespace CodeThorn {
     void dumpAbstractStateMapMap();
     void setAbstractionConsistencyCheckFlag(bool flag);
     bool getAbstractionConsistencyCheckFlag();
+    void setPassThroughOptimizationFlag(bool flag);
+    bool getPassThroughOptimizationFlag();
   private:
     static Sawyer::Message::Facility logger;
     static bool _diagnosticsInitialized;
@@ -56,14 +58,23 @@ namespace CodeThorn {
 
     void initializeAbstractStatesFromWorkList();
     EStatePtr getAbstractState(CodeThorn::Label lab, CodeThorn::CallString cs);
+    // deletes state if already exists, maintains one map for each label to store different states for each callstring
     void setAbstractState(CodeThorn::Label lab, CallString cs, EStatePtr estate);
     EStatePtr createBottomAbstractState(Label lab, CallString cs);
+    bool isBottomAbstractState(EStatePtr estate);
     typedef std::unordered_map <CallString ,EStatePtr> AbstractCSStateMap;
     std::unordered_map< int, AbstractCSStateMap > _abstractCSStateMapMap;
     // number of active states stored in _abstractCSStateMapMap (computed incrementally by setAbstractState)
     size_t _numberOfStates=0;
     void printAllocationStats(string text);
     bool _abstractionConsistencyCheckEnabled=false; // slow, only used for debugging
+    bool _passThroughOptimizationEnabled=true;
+    bool isJoinLabel(Label lab);
+    std::list<EStatePtr> transferEdgeEStateInPlace(Edge e,EStatePtr currentEStatePtr);
+    void registerTransferFunctionInvoked(Label lab);
+    bool isRegisteredTransferFunctionInvoked(Label lab);
+    
+    LabelSet _transferFunctionInvoked; // labels for which a transfer function has been invoked
   };
 
 } // end of namespace CodeThorn

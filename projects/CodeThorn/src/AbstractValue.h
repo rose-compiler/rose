@@ -251,6 +251,7 @@ public:
   static CodeThorn::VariableIdMappingExtended* _variableIdMapping;
   static bool byteMode; // computes byte offset for array and struct elements
   static bool pointerSetsEnabled;
+  static int domainAbstractionVariant; // available: 1
 };
 
  ostream& operator<<(ostream& os, const AbstractValue& value);

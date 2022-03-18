@@ -213,6 +213,7 @@ void checkTypes() {
 
   }
 
+#if 0
   {
     cout << "------------------------------------------"<<endl;
     cout << "RUNNING CHECKS FOR CONSTRAINT TYPE:"<<endl;
@@ -318,6 +319,8 @@ void checkTypes() {
       }
     }
   }
+#endif
+  
   {  
     cout << "------------------------------------------"<<endl;
     cout << "RUNNING CHECKS FOR NUMBER LATTICE:"<<endl;

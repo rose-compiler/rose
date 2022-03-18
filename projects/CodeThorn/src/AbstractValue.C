@@ -25,6 +25,7 @@ VariableIdMappingExtended* AbstractValue::_variableIdMapping=nullptr;
 bool AbstractValue::strictChecking=false;
 bool AbstractValue::byteMode=false;
 bool AbstractValue::pointerSetsEnabled=false;
+int AbstractValue::domainAbstractionVariant=0; // default
 
 using CodeThorn::logger;
 
@@ -33,8 +34,8 @@ istream& CodeThorn::operator>>(istream& is, AbstractValue& value) {
   return is;
 }
 
-// default constructor
-AbstractValue::AbstractValue():valueType(AbstractValue::AV_BOT),extension(0) {}
+// default constructor (AV_UNDEFINED instead of AV_BOT)
+AbstractValue::AbstractValue():valueType(AbstractValue::AV_UNDEFINED),extension(0) {}
 
 // type conversion
 // TODO: represent value 'undefined' here

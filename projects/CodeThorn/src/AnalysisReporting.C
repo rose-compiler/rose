@@ -82,7 +82,7 @@ namespace CodeThorn {
             LabelSet violatingLabels=report.falsifiedLocations();
             if(report.numDefinitiveLocations()>0) {
               ss<<"Proven errors in program:"<<endl;
-              report.writeAllDefinitiveLocationsToStream(cout,analyzer->getLabeler(),false,true,true);
+              report.writeAllDefinitiveLocationsToStream(cout,analyzer->getLabeler(),false,true);
             } else {
               LabelSet u=report.unverifiedLocations();
               if(u.size()==0) {
@@ -195,9 +195,11 @@ namespace CodeThorn {
         }
         locationsCSVFileData<<endl;
       }
-      cout<<"constant true        locations: "<<setw(6)<<constTrueCnt<<endl;
-      cout<<"constant false       locations: "<<setw(6)<<constFalseCnt<<endl;
-      printSeparationLine();
+      if(ctOpt.status) {
+        cout<<"constant true        locations: "<<setw(6)<<constTrueCnt<<endl;
+        cout<<"constant false       locations: "<<setw(6)<<constFalseCnt<<endl;
+        printSeparationLine();
+      }
       string fileName=ctOpt.getAnalysisReportFileName(analysisSel);
       if(fileName.size()>0) {
         if(!CppStdUtilities::writeFile(ctOpt.csvReportModeString,fileName, locationsCSVFileData.str())) {

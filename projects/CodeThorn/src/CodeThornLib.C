@@ -94,7 +94,7 @@ using namespace Sawyer::Message;
 
 using namespace Sawyer::Message;
 
-static std::string CodeThornLibraryVersion="1.13.50";
+static std::string CodeThornLibraryVersion="1.13.51";
 
 // handler for generating backtrace
 void codethornBackTraceHandler(int sig) {
@@ -179,8 +179,12 @@ namespace CodeThorn {
       case 17 :  {  
         solver = new Solver17(); break; // does not create a TS
       }
-      case 18 :  {  
-        solver = new Solver18(); break; // does not create a TS
+      case 18 :  {
+        Solver18* solver18= new Solver18(); 
+        solver18->setAbstractionConsistencyCheckFlag(ctOpt.abstractionConsistencyCheck);
+        solver18->setPassThroughOptimizationFlag(ctOpt.passThroughOptimization);
+        solver=solver18;
+        break; // does not create a TS
       }
       case 19 :  {  
         solver = new Solver19(); break; // does not create a TS
@@ -373,6 +377,8 @@ namespace CodeThorn {
       }
       EState::sharedPStates=ctOpt.sharedPStates;
       EState::fastPointerHashing=ctOpt.fastPointerHashing;
+      AbstractValue::pointerSetsEnabled=ctOpt.pointerSetsEnabled;
+      AbstractValue::domainAbstractionVariant=ctOpt.domainAbstractionVariant;
       return analyzer;
     }
 

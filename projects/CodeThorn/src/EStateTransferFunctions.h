@@ -170,9 +170,8 @@ namespace CodeThorn {
     typedef std::list<std::pair<EStatePtr,MemoryUpdatePair> > MemoryUpdateList;
     MemoryUpdateList evalAssignOpMemUpdates(SgAssignOp* assignOp, EStatePtr estate);
 
-    // functions for handling callstring contexts
-    void transferFunctionCallContextInPlace(CallString& cs, Label lab);
-
+    /* Modifies callstring. Returns false if recursion is detected, true in all other cases. */
+    bool transferFunctionCallContextInPlace(CallString& cs, Label lab);
     /* new, more general method, uses available callstrings in all states stored for a label to determine path feasibility
      * the returned callstring can be shorter or of same length
      */
@@ -292,7 +291,7 @@ namespace CodeThorn {
     bool isMemberVariable(CodeThorn::VariableId varId);
     // checks if value is a null pointer. If it is 0 it records a null pointer violation at provided label.
     // returns true if execution may continue, false if execution definitely does not continue.
-    bool checkAndRecordNullPointer(AbstractValue value, Label label);
+    bool checkAndRecordNullPointer(AbstractValue value, EStatePtr estate);
 
     enum InterpreterMode getInterpreterMode();
     void setInterpreterMode(enum InterpreterMode);
@@ -526,6 +525,11 @@ namespace CodeThorn {
     SingleEvalResult execFunctionCallScanf(SgFunctionCallExp* funCall, EStatePtr estate);
     std::string sourceLocationAndNodeToString(Label lab);
   private:
+    bool isTmpVar(VariableId varId);
+    void tmpVarCleanUp(EStatePtr estate, VariableId varId);
+    uint32_t topSortLabelPos(Label lab);
+    string labelPosInfoToString(Label lab);
+
     // outdated function, to be eliminated
     int computeNumberOfElements(SgVariableDeclaration* decl);
 

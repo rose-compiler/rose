@@ -1,6 +1,3 @@
-/*************************************************************
- * Author   : Markus Schordan                                *
- *************************************************************/
 
 #include "sage3basic.h"
 #include "EState.h"
@@ -68,6 +65,17 @@ EState::~EState() {
   _destructCount++;
 }
 
+EStatePtr EState::createBottomEState(Label lab, CallString cs) {
+  InputOutput io;
+  io.recordBot();
+  EState estate(lab,cs,new PState(),io);
+  return new EState(estate);
+}
+
+bool EState::isBottomEState() {
+  return io.isBot();
+}
+
 uint64_t EState::getConstructCount() {
   return _constructCount;
 }
@@ -111,14 +119,7 @@ void EState::EState::copy(EState* target, ConstEStatePtr source,bool sharedPStat
       target->_pstate=nullptr;
       //cout<<"DEBUG: ESTATE COPY: "<<&source-><<"=>"<<target<<": pstate: nullptr"<<" ==> nullptr"<<endl;
     } else {
-      target->_pstate=new PState();
-      for(auto iter=source->_pstate->begin(); iter!=source->_pstate->end();++iter) {
-	auto address=(*iter).first;
-	auto value=(*iter).second;
-	target->_pstate->writeToMemoryLocation(address,value);
-      }
-      //cout<<"DEBUG: ESTATE COPY: "<<&source-><<"=>"<<target<<": pstate:"<<source->pstate()<<" ==> "<<newPState<<endl;
-      //target->_pstate=newPState;
+      target->_pstate=new PState(*source->pstate()); // copy constructor
     }
   }
 }
@@ -166,20 +167,12 @@ string EState::predicateToString(VariableIdMapping* variableIdMapping) const {
   return s;
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2017.
- */
 std::string EState::programPosToString(Labeler* labeler) const {
   Label lab=this->label();
   SgNode* node=labeler->getNode(lab);
   return node->unparseToString();
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 // define order for EState elements (necessary for EStateSet)
 // only used in SpotState
 bool CodeThorn::operator<(const EState& e1, const EState& e2) {
@@ -244,20 +237,12 @@ EStateId EStateSet::estateId(const EState estate) const {
   return NO_ESTATE;
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 string EStateSet::estateIdString(EStatePtr estate) const {
   stringstream ss;
   ss<<estateId(estate);
   return ss.str();
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 CodeThorn::InputOutput::OpType EState::ioOp() const {
   return io.op;
 }
@@ -284,11 +269,6 @@ CodeThorn::AbstractValue EState::determineUniqueIOValue() const {
   return value;
 }
 
-
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 int EStateSet::numberOfIoTypeEStates(InputOutput::OpType op) const {
   int counter=0;
   for(EStateSet::const_iterator i=begin();i!=end();++i) {
@@ -298,10 +278,6 @@ int EStateSet::numberOfIoTypeEStates(InputOutput::OpType op) const {
   return counter;
 } 
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 int EStateSet::numberOfConstEStates(VariableIdMapping* vid) const {
   int counter=0;
   for(EStateSet::const_iterator i=begin();i!=end();++i) {
@@ -311,10 +287,6 @@ int EStateSet::numberOfConstEStates(VariableIdMapping* vid) const {
   return counter;
 } 
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 string EState::toString() const {
   stringstream ss;
   ss << "EState";
@@ -331,10 +303,6 @@ string EState::toString() const {
   return ss.str();
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 string EState::toString(VariableIdMapping* vim) const {
   stringstream ss;
   ss << "EState";
@@ -349,10 +317,6 @@ string EState::toString(VariableIdMapping* vim) const {
   return ss.str();
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 string EState::toHTML() const {
   stringstream ss;
   string nl = " <BR />\n";
@@ -403,10 +367,6 @@ bool EState::isRersTopified(VariableIdMapping* vim) const {
   assert(0);
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 string EStateList::toString() {
   stringstream ss;
   ss<<"EStateWorkList=[";
@@ -419,10 +379,6 @@ string EStateList::toString() {
   return ss.str();
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 string EStateSet::toString(VariableIdMapping* variableIdMapping) const {
   stringstream ss;
   ss<<"EStateSet={";

@@ -6,11 +6,21 @@
 
 namespace CodeThorn {
   template<typename Element>
-bool operator<(const GeneralPriorityElement<Element>& e1, const GeneralPriorityElement<Element>& e2) { return e1.priority<e2.priority; }
+  bool operator<(const GeneralPriorityElement<Element>& e1, const GeneralPriorityElement<Element>& e2) {
+    if(e1.priority!=e2.priority)
+      return e1.priority<e2.priority;
+    else
+      return e1.data.callString()<e2.data.callString(); // if priority is the same the cs defines the order
+  }
   template<typename Element>
-bool operator==(const GeneralPriorityElement<Element>& e1, const GeneralPriorityElement<Element>& e2) { return e1.priority==e2.priority; }
+  bool operator==(const GeneralPriorityElement<Element>& e1, const GeneralPriorityElement<Element>& e2) {
+    bool result=e1.priority==e2.priority && (e1.data.callString()==e2.data.callString())<<std::endl;
+    return e1.priority==e2.priority && (e1.data.callString()==e2.data.callString());
+  }
   template<typename Element>
-bool operator!=(const GeneralPriorityElement<Element>& c1, const GeneralPriorityElement<Element>& c2) { return !(c1==c2); }
+  bool operator!=(const GeneralPriorityElement<Element>& c1, const GeneralPriorityElement<Element>& c2) {
+    return !(c1==c2);
+  }
 }
 
 template<typename Element>
@@ -49,25 +59,25 @@ void CodeThorn::GeneralPriorityWorkList<Element>::push(Element el) {
     std::cerr<<"Warning: push_front: priority=0 for label:"<<el.label().toString()<<std::endl;
     //exit(1);
   }
-  _list.push(GeneralPriorityElement<Element>(priority,el));
+  _list.insert(GeneralPriorityElement<Element>(priority,el));
 }
 
 template<typename Element>
 Element CodeThorn::GeneralPriorityWorkList<Element>::top() {
-    auto priElem=_list.top();
-    int priority=priElem.priority;
-    //std::cout<<"DEBUG: EPWL: front(): pri:"<<el.priority<<" data:"<<el.data<<std::endl;
-    if(false && priority==0) {
-      std::cerr<<"Error: top: priority=0 for estate lab:"<<priElem.data.label().toString()<<std::endl;
-      exit(1);
-    }
-    return priElem.data;
+  auto priElem=*_list.begin();
+  int priority=priElem.priority;
+  //std::cout<<"DEBUG: EPWL: front(): pri:"<<el.priority<<" data:"<<el.data<<std::endl;
+  if(false && priority==0) {
+    std::cerr<<"Error: top: priority=0 for estate lab:"<<priElem.data.label().toString()<<std::endl;
+    exit(1);
+  }
+  return priElem.data;
 }
 
 template<typename Element>
 void CodeThorn::GeneralPriorityWorkList<Element>::pop() {
   // there is only one pop method since the work list is priority list
-  _list.pop();
+  _list.erase(_list.begin());
 }
 
 template<typename Element>
@@ -93,19 +103,10 @@ void CodeThorn::GeneralPriorityWorkList<Element>::pop_front() {
 
 template<typename Element>
 void CodeThorn::GeneralPriorityWorkList<Element>::print() {
-  std::list<GeneralPriorityElementType> tmpList;
   std::cout<<"WL: "<<size()<<": [";
-  while(!empty()) {
-    auto p=_list.top();
-    pop();
-    std::cout<<"pri:"<<p.priority<<" data:"<<p.toString()<<", ";
-    tmpList.push_back(p);
+  for(auto p : _list) {
+    std::cout<<p.toString()<<", ";
   }
-  std::cout<<"]"<<std::endl;
-  while(!tmpList.empty()) {
-    auto p=tmpList.front();
-    tmpList.pop_front();
-    _list.push(GeneralPriorityElement<Element>(p.priority,p.data));
-  }
+  std::cout<<std::endl;
 }
 

@@ -1,9 +1,10 @@
 #ifndef CONSTANT_CONDITION_ANALYSIS_H 
 #define CONSTANT_CONDITION_ANALYSIS_H 
 
-//#include "ReadWriteListener.h"
-#include "EStateTransferFunctions.h"
 #include <map>
+
+#include "EStateTransferFunctions.h"
+#include "ReadWriteListener.h"
 #include "BoolLattice.h"
 
 class ConstantConditionAnalysis : public ReadWriteListener {

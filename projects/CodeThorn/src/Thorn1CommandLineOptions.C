@@ -83,7 +83,6 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("internal-checks", po::value< bool >(&ctOpt.internalChecks)->default_value(false)->implicit_value(true), "Run internal consistency checks (without input program).")
     ("report-file-path",po::value< string >(&ctOpt.reportFilePath),"Sets file path for all reports.")
     ("file-path-prefix-to-remove", po::value< string >(&ctOpt.filePathPrefixToRemove))
-    ("report-source-column", po::value< bool >(&ctOpt.reportSourceColumn))
     ("log-level",po::value< string >(&ctOpt.logLevel)->default_value("none,>=error"),"Set the log level (\"x,>=y\" with x,y in: (none|info|warn|trace|error|fatal|debug)).")
     ("version,v",po::value< bool >(&ctOpt.displayVersion)->default_value(false)->implicit_value(true), "Display the program version.")
     ;

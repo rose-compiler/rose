@@ -1,7 +1,8 @@
 #define NULL 0
+#include <stdio.h>
 
 void printIntLine(int p) {
-  // do nothing
+  printf("%d",p);
 }
 
 static void goodG2BSink(int * data)
@@ -14,7 +15,7 @@ static void goodG2B()
 {
     int * data;
     int tmpData = 5;
-    void (*funcPtr) (int *) = goodG2BSink;
+    void (*funcPtr) (int *)= goodG2BSink;
     /* FIX: Initialize data */
     {
         data = &tmpData;
@@ -36,10 +37,15 @@ static void goodB2GSink(int * data)
     }
 }
 
+static void goodFakeSink(int* data) {
+
+}
+  
 static void goodB2G()
 {
     int * data;
-    void (*funcPtr) (int *) = goodB2GSink;
+    void (*funcPtr) (int *);
+    funcPtr= goodB2GSink;
     /* POTENTIAL FLAW: Set data to NULL */
     data = NULL;
     funcPtr(data);

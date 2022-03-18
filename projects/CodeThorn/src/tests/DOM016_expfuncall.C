@@ -6,7 +6,7 @@ int f() {
 // function call inside expression
 int main() {
   int x;
-  x=f()+1;
+  x=f()+1; // initializes x (requires normalization)
   printf("x:%d\n",x);
   return 0;
 }

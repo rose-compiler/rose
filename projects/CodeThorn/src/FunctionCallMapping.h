@@ -7,6 +7,7 @@
 #include "Labeler.h"
 #include "FunctionCallTarget.h"
 #include "ClassHierarchyGraph.h"
+#include "FunctionIdMapping.h"
 
 #include "FunctionCallMapping2.h"
 
@@ -69,7 +70,7 @@ namespace CodeThorn {
     
     static std::string funDefTypeToString(SgFunctionDefinition* fn);
     bool isValidMapping();
-
+    FunctionIdMapping* getFunctionIdMapping();
   protected:
     FunctionCallInfo* getFunctionCallInfoPtrUnsafe(SgFunctionCallExp*);
     FunctionCallTargetSet* getFunctionCallTargetSetPtrUnsafe(SgFunctionCallExp*);
@@ -78,6 +79,8 @@ namespace CodeThorn {
     std::vector<SgFunctionCallExp*> funCallList;
     std::vector<SgFunctionDefinition*> funDefList;
     std::unordered_map<SgFunctionCallExp*,std::pair<FunctionCallInfo,FunctionCallTargetSet> > mapping;
+
+    FunctionIdMapping _functionIdMapping;
     
   private:
     unsigned int _matchMode; // init in constructor

@@ -12,6 +12,14 @@ namespace CodeThorn {
   TopologicalSort::TopologicalSort(Labeler& labeler0, Flow& flow0, Flow* callGraph0):labeler(labeler0),flow(flow0), callGraph(callGraph0) {
   }
 
+  void TopologicalSort::setReverseFunctionOrdering(bool flag) {
+    _reverseFunctionOrdering=flag;
+  }
+
+  bool TopologicalSort::getReverseFunctionOrdering() {
+    return _reverseFunctionOrdering;
+  }
+
   void TopologicalSort::createTopologicallySortedLabelList() {
     if(revPostOrderList.size()==0) {
       Label startLab=flow.getStartLabel();
@@ -20,8 +28,17 @@ namespace CodeThorn {
       if(callGraph) {
         std::list<Label> postOrderList;
         computePostOrder(startLab,*callGraph, postOrderList);
-        for (auto label : postOrderList) {
-          semanticRevPostOrderTraversal(label);
+        // reverse post order sorting of functions (each function is also topologically sorted)
+        if(getReverseFunctionOrdering()) {
+          for (auto revit=postOrderList.rbegin(); revit!=postOrderList.rend();++revit) {
+            Label label=*revit;
+            semanticRevPostOrderTraversal(label);
+          }
+        } else {
+          for (auto it=postOrderList.begin(); it!=postOrderList.end();++it) {
+            Label label=*it;
+            semanticRevPostOrderTraversal(label);
+          }
         }
       } else {
         // likely inefficient, without call graph, top-sort functions starting with main and then in some "random" order
@@ -45,7 +62,7 @@ namespace CodeThorn {
       for(auto iter=flow.nodes_begin();iter!=flow.nodes_end();++iter) {
         Label lab=*iter;
         if(!visited[lab]) {
-          cout<<"TopSort: found non visited label (non-reachable):"<<lab.toString()<<endl;
+          cout<<"TopSort: found non visited label (non-reachable):"<<lab.toString()<<": "<<labeler.sourceLocationToString(lab,40,30)<<endl;
           semanticRevPostOrderTraversal(lab);
         }
       }
@@ -119,7 +136,6 @@ namespace CodeThorn {
     
   // computes reverse post-order of labels in revPostOrderList
   void TopologicalSort::semanticRevPostOrderTraversal(Label lab) {
-
     // this is used to allow for invalid edges (whoes target is an invalid labell)
     if(!lab.isValid())
       return;
@@ -142,6 +158,10 @@ namespace CodeThorn {
       if(callReturnLabel.isValid()) {
         semanticRevPostOrderTraversal(callReturnLabel);
       }
+    }
+    else if(labeler.isFunctionExitLabel(lab)) {
+      // sorting has to end at exit label because it is done for each function separately
+      // label is entered in result list at the end of function (post-order)
     }
 #if 0
     else if(labeler.isFunctionCallLabel(lab)) {
@@ -193,8 +213,8 @@ namespace CodeThorn {
         }
       }
     }
-    else
 #endif
+    else
 
       {
       // for all other nodes use default traversal order

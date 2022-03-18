@@ -53,7 +53,7 @@ public:
     std::string icfgFileName;
     std::string callGraphFileName;
     std::string callGraphFileName2;
-    bool displayPassThroughLabel=false;
+    bool displayPassThroughLabel=true;
   } visualization;
 
   // experimental options
@@ -93,7 +93,6 @@ public:
   std::string deadCodeAnalysisFileName="dead-code.csv";
   std::string constantConditionAnalysisFileName="opaque-predicate.csv";
   std::string filePathPrefixToRemove;
-  bool reportSourceColumn=false;
   bool generateReports=false;
 
   bool programStatsOnly=false;
@@ -125,6 +124,7 @@ public:
   bool intraProcedural=false;
   int precisionLevel=0; // keeps default configuration (if =0 configurePrecisionOption does not change any settings)
   bool pointerSetsEnabled=false; // used in more precise pointer analysis
+  int domainAbstractionVariant=0; // default
   std::string csvReportModeString="generate";
 
   bool forkFunctionEnabled=false;
@@ -136,7 +136,10 @@ public:
   bool readWriteTrace=false;
   
   bool keepErrorStates=false;
-
+  bool abstractionConsistencyCheck=false; // currently only supported in Solver18
+  bool passThroughOptimization=true;
+  bool temporaryLocalVarOptFlag=true;
+  
   // RERS C-subset program options
   struct Rers {
     std::string assertResultsOutputFileName;

@@ -202,7 +202,6 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
 
     ("generate-reports",po::value< bool >(&ctOpt.generateReports)->implicit_value(true),"Enable generation of analysis report files.")
     ("file-path-prefix-to-remove", po::value< string >(&ctOpt.filePathPrefixToRemove))
-    ("report-source-column", po::value< bool >(&ctOpt.reportSourceColumn))
 
     ("null-pointer-file",po::value< string >(&ctOpt.nullPointerAnalysisFileName),"Perform null pointer analysis and write results to file [arg].")
     ("out-of-bounds-file",po::value< string >(&ctOpt.outOfBoundsAnalysisFileName),"Perform out-of-bounds analysis and write results to file [arg].")
@@ -234,12 +233,16 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("precision",po::value< int >(&ctOpt.precisionLevel),"Option for selecting level of precision.")
     ("csv-report-mode",po::value< std::string >(&ctOpt.csvReportModeString)->default_value(CppStdUtilities::getFileGenerateModeSelector()),"Report file mode: generate|append.")
     ("pointer-sets", po::value< bool >(&ctOpt.pointerSetsEnabled)->default_value(false)->implicit_value(true), "Enable sets of pointers in abstract pointer analysis.")
+    ("domain-variant", po::value< int >(&ctOpt.domainAbstractionVariant), "Enable sets of pointers in abstract pointer analysis.")
     ("fork-function-enabled",po::value< bool >(&ctOpt.forkFunctionEnabled),"sets fork function name (also requires --set-fork-function-name)")
     ("fork-function-name",po::value< std::string >(&ctOpt.forkFunctionName),"sets fork function name (also requires --fork-function-enabled)")
     ("shared-pstates",po::value< bool >(&ctOpt.sharedPStates)->implicit_value(true), "Allows to disable shared pstates in estates.")
     ("fast-pointer-hashing",po::value< bool >(&ctOpt.fastPointerHashing)->implicit_value(true), "Allows to disable fast pointer hashing of pstates and estates in transition graph.")
     ("exit-on-hash-error",po::value< bool >(&ctOpt.exitOnHashError)->implicit_value(true), "Allows to disable fast pointer hashing of pstates and estates in transition graph.")
     ("reduce-stg",po::value< bool >(&ctOpt.reduceStg)->implicit_value(true), "Reduce state transition system graph to IO states (without LTL verification).")
+    ("abstraction-check",po::value<bool>(&ctOpt.abstractionConsistencyCheck)->implicit_value(true), "Enable abstraction consistency check. Only used for debugging, slows down analysis significantly.")
+    ("pass-through-opt",po::value<bool>(&ctOpt.passThroughOptimization)->implicit_value(true), "Enable/Disable pass through optimization in Solver 18. Only used for debugging, slows down analysis significantly when turned off.")
+    ("temp-var-opt",po::value<bool>(&ctOpt.temporaryLocalVarOptFlag)->implicit_value(true), "Enable/Disable temporary var optimization in Solver 18. Only used for debugging, slows down analysis significantly when turned off.")
     ;
 
   rersOptions.add_options()

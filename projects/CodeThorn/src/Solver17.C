@@ -35,7 +35,7 @@ void Solver17::initializeAbstractStatesFromWorkList() {
   for(auto s : tmpWL) {
     // initialize abstractstate and push back to work lis
     ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(s->label()));
-    _analyzer->setAbstractState(s->label(),s->callString,new EState(*s)); // ensure summary states are never added to the worklist
+    _analyzer->setAbstractState(s->label(),s->getCallString(),new EState(*s)); // ensure summary states are never added to the worklist
     _analyzer->addToWorkList(s);
   }
 }
@@ -65,7 +65,7 @@ void Solver17::run() {
     ROSE_ASSERT(currentEStatePtr0);
     ROSE_ASSERT(currentEStatePtr0->label().isValid());
     ROSE_ASSERT(_analyzer->getLabeler()->isValidLabelIdRange(currentEStatePtr0->label()));
-    EStatePtr currentEStatePtr=_analyzer->getAbstractState(currentEStatePtr0->label(),currentEStatePtr0->callString);
+    EStatePtr currentEStatePtr=_analyzer->getAbstractState(currentEStatePtr0->label(),currentEStatePtr0->getCallString());
     ROSE_ASSERT(currentEStatePtr);
     
     Flow edgeSet=_analyzer->getFlow()->outEdges(currentEStatePtr->label());
@@ -84,7 +84,7 @@ void Solver17::run() {
           // performing merge
           bool addToWorkListFlag=false;
           Label lab=newEStatePtr->label();
-          CallString cs=newEStatePtr->callString;
+          CallString cs=newEStatePtr->getCallString();
           EStatePtr abstractEStatePtr=_analyzer->getAbstractState(lab,cs);
           ROSE_ASSERT(abstractEStatePtr);
           if(_analyzer->getEStateTransferFunctions()->isApproximatedBy(newEStatePtr,abstractEStatePtr)) {

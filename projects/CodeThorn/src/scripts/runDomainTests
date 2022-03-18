@@ -139,7 +139,7 @@ function level3Test {
     testNumbers+=" 051 052"
     # 053 is a C code
     testNumbers+=" 053"
-    numWarnExpected=7
+    numWarnExpected=9
     numFailExpected=0
     # solver 5 is required for level3
     #testNumbers=027

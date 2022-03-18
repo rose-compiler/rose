@@ -18,12 +18,13 @@ namespace CodeThorn {
 
   void ReadWriteTraceAnalysis::readingFromMemoryLocation(Label lab, PStatePtr pstate, AbstractValue& memLoc) {
     ROSE_ASSERT(AbstractValue::_variableIdMapping);
-    cout<<"RW TRACE: @"<<lab.toString()<<": READ: @"<< memLoc.toString(AbstractValue::_variableIdMapping)<<endl;
+    AbstractValue val=pstate->readFromMemoryLocation(memLoc);
+    cout<<"RW TRACE: @"<<lab.toString()<<": READ: @"<< memLoc.toString(AbstractValue::_variableIdMapping)<<" => "<<val.toString(AbstractValue::_variableIdMapping)<<" LOC:"<<getLabeler()->sourceLocationToString(lab,30,30)<<endl;
   }
 
   void ReadWriteTraceAnalysis::writingToMemoryLocation(Label lab, PState* pstate, AbstractValue& memLoc, AbstractValue& newValue) {
     ROSE_ASSERT(AbstractValue::_variableIdMapping);
-    cout<<"RW TRACE: @"<<lab.toString()<<": WRITE: @"<< memLoc.toString(AbstractValue::_variableIdMapping)<<" = "<<newValue<<endl;
+    cout<<"RW TRACE: @"<<lab.toString()<<": WRITE: @"<< memLoc.toString(AbstractValue::_variableIdMapping)<<" = "<<newValue<<" LOC:"<<getLabeler()->sourceLocationToString(lab,30,30)<<endl;
   }
 
 }
