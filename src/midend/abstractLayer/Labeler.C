@@ -368,6 +368,11 @@ bool Labeler::isValidLabelIdRange(Label lab) {
   return lab.getId()<numberOfLabels();
 }
 
+std::string CLabeler::sourceLocationToString(Label lab, size_t maxFileNameLength, size_t maxSourceLength) {
+  SgNode* node=getNode(lab);
+  return SgNodeHelper::locationAndSourceCodeToString(node,maxFileNameLength, maxSourceLength);
+}
+
 SgNode* CLabeler::getNode(Label label) {
   if(!isValidLabelIdRange(label)) {
     stringstream ss;
@@ -538,6 +543,22 @@ bool CLabeler::isSwitchExprLabel(Label lab) {
     if(loc) {
       return isSgSwitchStatement(loc->get_parent());
     }
+  }
+  return false;
+}
+
+bool CLabeler::isExprLabel(Label lab) {
+  SgNode* node=getNode(lab);
+  if(SgLocatedNode* loc=isSgLocatedNode(node)) {
+    return isSgExprStatement(loc)||isSgExpression(loc);
+  }
+  return false;
+}
+
+bool CLabeler::isExprOrDeclLabel(Label lab) {
+  SgNode* node=getNode(lab);
+  if(SgLocatedNode* loc=isSgLocatedNode(node)) {
+    return isExprLabel(lab)||isSgDeclarationStatement(loc);
   }
   return false;
 }

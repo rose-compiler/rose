@@ -29,7 +29,6 @@ class LabelProperty {
    LabelProperty(SgNode* node, LabelType labelType, VariableIdMapping* variableIdMapping);
    std::string toString();
    SgNode* getNode();
-
    bool isFunctionCallLabel();
    bool isFunctionCallReturnLabel();
    bool isFunctionEntryLabel();
@@ -126,6 +125,7 @@ class Labeler {
      this can only be the case if label is erroneously higher than the number of labeled nodes or NO_LABEL.
   */
   virtual SgNode* getNode(Label label) = 0;
+  virtual std::string sourceLocationToString(Label lab, size_t maxFileNameLength, size_t maxSourceLength) =0;
   virtual size_t numberOfLabels() = 0;
   virtual std::string toString() = 0;
   virtual Label functionCallLabel(SgNode* node) = 0;
@@ -158,6 +158,8 @@ class Labeler {
   virtual bool isConditionLabel(Label lab) = 0;
   virtual bool isLoopConditionLabel(Label lab) = 0;
   virtual bool isSwitchExprLabel(Label lab) = 0;
+  virtual bool isExprLabel(Label lab) = 0;
+  virtual bool isExprOrDeclLabel(Label lab) = 0;
 
   /** tests if @ref call and @ref ret are call and return labels of
    *  the same function call
@@ -226,6 +228,7 @@ class CLabeler : public Labeler {
      this can only be the case if label is erroneously higher than the number of labeled nodes or NO_LABEL.
   */
   SgNode* getNode(Label label) override;
+  std::string sourceLocationToString(Label lab, size_t maxFileNameLength, size_t maxSourceLength);
   size_t numberOfLabels() override;
   std::string toString() override;
   Label functionCallLabel(SgNode* node) override;
@@ -258,6 +261,8 @@ class CLabeler : public Labeler {
   bool isConditionLabel(Label lab) override;
   bool isLoopConditionLabel(Label lab) override;
   bool isSwitchExprLabel(Label lab) override;
+  bool isExprLabel(Label lab) override;
+  bool isExprOrDeclLabel(Label lab) override;
 
   /** tests if @ref call and @ref ret are call and return labels of
    *  the same function call
