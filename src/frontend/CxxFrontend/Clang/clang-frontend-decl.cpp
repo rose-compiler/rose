@@ -505,7 +505,17 @@ bool ClangToSageTranslator::VisitFileScopeAsmDecl(clang::FileScopeAsmDecl * file
 #endif
     bool res = true;
 
-    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+    clang::StringLiteral* AsmStringLiteral = file_scope_asm_decl->getAsmString();
+    llvm::StringRef AsmStringRef = AsmStringLiteral->getString();
+
+#if DEBUG_VISIT_DECL
+    std::cerr << "AsmStringRef:" << static_cast<std::string>(AsmStringRef) << std::endl;
+#endif
+    SgAsmStmt* asmStmt = SageBuilder::buildAsmStatement(static_cast<std::string>(AsmStringRef)); 
+    asmStmt->set_firstNondefiningDeclaration(asmStmt);
+    asmStmt->set_definingDeclaration(asmStmt);
+    asmStmt->set_parent(SageBuilder::topScopeStack());
+    *node = asmStmt;
 
     return VisitDecl(file_scope_asm_decl, node) && res;
 }
