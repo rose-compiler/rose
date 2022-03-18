@@ -138,7 +138,8 @@ public:
   bool keepErrorStates=false;
   bool abstractionConsistencyCheck=false; // currently only supported in Solver18
   bool passThroughOptimization=true;
-
+  bool temporaryLocalVarOptFlag=true;
+  
   // RERS C-subset program options
   struct Rers {
     std::string assertResultsOutputFileName;

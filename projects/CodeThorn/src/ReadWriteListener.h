@@ -27,7 +27,10 @@ namespace CodeThorn {
     virtual void trueFalseEdgeEvaluation(Edge edge, SingleEvalResult& evalResult , EStatePtr estate);
 
     virtual void functionCallExternal(Edge edge, EStatePtr estate);
-
+    void setLabeler(Labeler* labeler);
+    Labeler* getLabeler();
+  private:
+    Labeler* _labeler=0;
   };
 }
 
