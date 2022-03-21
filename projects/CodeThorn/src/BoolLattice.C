@@ -1,9 +1,3 @@
-
-// -*- mode: C++; coding: utf-8; -*-
-/*************************************************************
- * Author   : Markus Schordan                                *
- *************************************************************/
-
 #include "sage3basic.h"
 #include "BoolLattice.h"
 #include "AbstractValue.h"

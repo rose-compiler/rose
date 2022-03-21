@@ -1,7 +1,3 @@
-/*************************************************************
- * Author   : Markus Schordan                                *
- *************************************************************/
-
 #include "sage3basic.h"
 
 #include "ConstraintRepresentation.h"
@@ -13,10 +9,6 @@
 using namespace std;
 using namespace CodeThorn;
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 void Constraint::negate() {
   switch(op()) {
   case EQ_VAR_CONST: _op=NEQ_VAR_CONST;break;
@@ -30,19 +22,11 @@ void Constraint::negate() {
   }
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 Constraint::ConstraintOp Constraint::op() const { return _op; }
 AbstractValue Constraint::lhsVar() const {
   return _lhsVar; 
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 AbstractValue Constraint::rhsVar() const {
   if(isVarVarOp())
     return _rhsVar;
@@ -50,10 +34,6 @@ AbstractValue Constraint::rhsVar() const {
     throw CodeThorn::Exception( "Error: Constraint::rhsVar failed  (not a var-var operator).");
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 AbstractValue Constraint::rhsVal() const {
   if(isVarValOp()) {
     return _rhsVar;
@@ -62,47 +42,27 @@ AbstractValue Constraint::rhsVal() const {
   }
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 bool Constraint::isVarVarOp() const {
     return (_op==EQ_VAR_VAR || _op==NEQ_VAR_VAR);
   }
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
+
 bool Constraint::isVarValOp() const {
   bool iseq=(_op==EQ_VAR_CONST || _op==NEQ_VAR_CONST);
   return iseq;
 }
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
+
 bool Constraint::isEquation() const {
   return (_op==EQ_VAR_VAR || _op==EQ_VAR_CONST);
 }
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
+
 bool Constraint::isInequation() const {
   return (_op==NEQ_VAR_VAR || _op==NEQ_VAR_CONST);
 }
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
+
 bool Constraint::isDisequation() const {
   return ( _op==DEQ);
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 bool CodeThorn::operator<(const Constraint& c1, const Constraint& c2) {
   if(c1.lhsVar()!=c2.lhsVar())
     return c1.lhsVar()<c2.lhsVar();
@@ -127,10 +87,6 @@ bool CodeThorn::operator<(const Constraint& c1, const Constraint& c2) {
   throw CodeThorn::Exception( "Error: Constraint::operator< failed.");
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 bool CodeThorn::operator==(const Constraint& c1, const Constraint& c2) {
   if(c1.isDisequation()&&c2.isDisequation()) {
     return true;
@@ -146,26 +102,14 @@ bool CodeThorn::operator==(const Constraint& c1, const Constraint& c2) {
   }
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 bool CodeThorn::operator!=(const Constraint& c1, const Constraint& c2) {
   return !(c1==c2);
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 Constraint::Constraint() {
   initialize();
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 Constraint::Constraint(ConstraintOp op0,AbstractValue lhs, AbstractValue rhs):_op(op0),_lhsVar(lhs),_rhsVar(rhs) {
   //cout<<"DEBUG: Constraint::Constraint("<<op0<<","<<lhs.toString()<<","<<rhs.toString()<<endl;
   switch(op0) {
@@ -186,10 +130,6 @@ Constraint::Constraint(ConstraintOp op0,AbstractValue lhs, AbstractValue rhs):_o
   }
 } 
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 string Constraint::toString() const {
   stringstream ss;
   if(isDisequation())
@@ -204,10 +144,6 @@ string Constraint::toString() const {
   return ss.str();
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 string Constraint::toString(VariableIdMapping* variableIdMapping) const {
   stringstream ss;
   if(isDisequation())
@@ -222,10 +158,6 @@ string Constraint::toString(VariableIdMapping* variableIdMapping) const {
   return ss.str();
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 string Constraint::toAssertionString(VariableIdMapping* variableIdMapping) const {
   stringstream ss;
   if(isDisequation())
@@ -240,10 +172,6 @@ string Constraint::toAssertionString(VariableIdMapping* variableIdMapping) const
   return ss.str();
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 void Constraint::toStreamAsTuple(ostream& os) {
   os<<"(";
   os<<_op;
@@ -268,18 +196,10 @@ void Constraint::toStreamAsTuple(ostream& os) {
   os<<")";
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 void Constraint::toStream(ostream& os) {
   os<<toString();
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 string Constraint::operatorStringFromStream(istream& is) {
   stringstream opss;
   string op;
@@ -296,10 +216,6 @@ string Constraint::operatorStringFromStream(istream& is) {
   }
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 void Constraint::initialize() {
   _op=Constraint::UNDEFINED;
   AbstractValue varId;
@@ -307,10 +223,6 @@ void Constraint::initialize() {
   _rhsVar=varId;
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 string Constraint::opToString() const {
   switch(op()) {
   case EQ_VAR_VAR:
@@ -324,10 +236,6 @@ string Constraint::opToString() const {
   }
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 void Constraint::swapVars() {
   if(!isVarVarOp()) {
     throw CodeThorn::Exception( "Error: Constraint::swapVars on non var-var constraint.");
@@ -355,10 +263,6 @@ ConstraintSet ConstraintSet::constraintsOfVariable(AbstractValue varId) const {
 }
 
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 void ConstraintSet::addAssignEqVarVar(AbstractValue lhsVar, AbstractValue rhsVar) {
   // move removes all constraints on target var. arg1rhsVar->arg2lhsVar
   if(lhsVar==rhsVar)
@@ -367,10 +271,6 @@ void ConstraintSet::addAssignEqVarVar(AbstractValue lhsVar, AbstractValue rhsVar
   addEqVarVar(lhsVar,rhsVar);
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 void ConstraintSet::addEqVarVar(AbstractValue lhsVar, AbstractValue rhsVar) {
   // move removes all constraints on target var. arg1rhsVar->arg2lhsVar
   if(lhsVar==rhsVar)
@@ -402,10 +302,6 @@ ConstraintSet ConstraintSet::invertedConstraints() {
   return result;
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 void ConstraintSet::invertConstraints() {
   cerr << "WARNING: inverting constraints is not finished yet."<<endl;
   for(ConstraintSet::iterator i=begin();i!=end();) {
@@ -432,10 +328,6 @@ void ConstraintSet::invertConstraints() {
 }
 #endif 
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 void  ConstraintSet::moveConstConstraints(AbstractValue fromVarId, AbstractValue toVarId) {
   if(fromVarId==toVarId)
     return; // duplication not necessary
@@ -449,10 +341,6 @@ void  ConstraintSet::moveConstConstraints(AbstractValue fromVarId, AbstractValue
   eraseConstConstraints(fromVarId);
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 void ConstraintSet::eraseConstConstraints(AbstractValue varId)  {
   ConstraintSet::iterator i=begin();
   while(i!=end()) {
@@ -463,10 +351,6 @@ void ConstraintSet::eraseConstConstraints(AbstractValue varId)  {
   }
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 void  ConstraintSet::deleteAndMoveConstConstraints(AbstractValue fromVarId, AbstractValue toVarId) {
   if(fromVarId==toVarId)
     return; // duplication not necessary
@@ -474,10 +358,6 @@ void  ConstraintSet::deleteAndMoveConstConstraints(AbstractValue fromVarId, Abst
   moveConstConstraints(fromVarId,toVarId);
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 void  ConstraintSet::duplicateConstConstraints(AbstractValue varId1, AbstractValue varId2) {
   if(varId1==varId2)
     return; // duplication not necessary
@@ -495,10 +375,6 @@ void  ConstraintSet::duplicateConstConstraints(AbstractValue varId1, AbstractVal
   }
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 bool ConstraintSet::disequalityExists() const {
   // disequality is normalized and always represented as 
   // a set with one element of type DIS.
@@ -509,18 +385,11 @@ bool ConstraintSet::disequalityExists() const {
   }
   return found;
 }
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
+
 void ConstraintSet::addDisequality() {
   addConstraint(DISEQUALITYCONSTRAINT);
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 void ConstraintSet::addConstraint(Constraint c) {
   // we have to look which version of constraint already exists. Three cases are possible:
   // a) at most one const-equality constraint for the dedicated variable
@@ -635,32 +504,19 @@ void ConstraintSet::addConstraint(Constraint c) {
   //set<Constraint>::insert(c);
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 void ConstraintSet::eraseConstraint(set<Constraint>::iterator i) {
   assert(i!=end());
   set<Constraint>::erase(i);
 }
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
+
 void ConstraintSet::eraseConstraint(Constraint c) {
   set<Constraint>::erase(c);
 }
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
+
 void ConstraintSet::insertConstraint(Constraint c) {
   set<Constraint>::insert(c);
 }
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
+
 void ConstraintSet::eraseEqWithLhsVar(AbstractValue v) {
   set<Constraint>::iterator i=begin();
   while(i!=end()) {
@@ -671,10 +527,6 @@ void ConstraintSet::eraseEqWithLhsVar(AbstractValue v) {
   }
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 long ConstraintSet::numberOfConstConstraints(AbstractValue var) {
   long cnt=0;
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
@@ -683,10 +535,6 @@ long ConstraintSet::numberOfConstConstraints(AbstractValue var) {
   return cnt;
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 #if 1
 ConstraintSet CodeThorn::operator+(ConstraintSet s1, ConstraintSet s2) {
   ConstraintSet result=s1;
@@ -704,28 +552,16 @@ ConstraintSet ConstraintSet::operator+(ConstraintSet& s2) {
 }
 #endif
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 ConstraintSet& ConstraintSet::operator+=(ConstraintSet& s2) {
   for(ConstraintSet::iterator i2=s2.begin();i2!=s2.end();++i2)
     addConstraint(*i2);
   return *this;
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 bool ConstraintSet::constraintExists(Constraint::ConstraintOp op) const { 
   return constraintsWithOp(op).size()>0;
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 ConstraintSet ConstraintSet::constraintsWithOp(Constraint::ConstraintOp op) const { 
   ConstraintSet cs;
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
@@ -735,19 +571,11 @@ ConstraintSet ConstraintSet::constraintsWithOp(Constraint::ConstraintOp op) cons
   return cs;
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 bool ConstraintSet::constraintExists(Constraint::ConstraintOp op, AbstractValue varId, AbstractValue intVal) const { 
   Constraint tmp(op,varId,intVal);
   return constraintExists(tmp);
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 bool ConstraintSet::constraintExists(const Constraint& tmp) const { 
   Constraint tmp2=tmp;
   tmp2.setLhsVar(equalityMaintainer.determineDedicatedElement(tmp.lhsVar()));
@@ -755,10 +583,6 @@ bool ConstraintSet::constraintExists(const Constraint& tmp) const {
   return foundElemIter!=end();
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 ConstraintSet ConstraintSet::findSpecificSet(Constraint::ConstraintOp op, AbstractValue varId) const {
   ConstraintSet cs;
   // find op-constraint for variable varname
@@ -770,10 +594,6 @@ ConstraintSet ConstraintSet::findSpecificSet(Constraint::ConstraintOp op, Abstra
   return cs;
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 ConstraintSet::iterator ConstraintSet::findSpecific(Constraint::ConstraintOp op, AbstractValue varId) const {
   // find op-constraint for variable varname
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
@@ -783,10 +603,6 @@ ConstraintSet::iterator ConstraintSet::findSpecific(Constraint::ConstraintOp op,
   return end();
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 AbstractValue ConstraintSet::varAbstractValue(const AbstractValue varId) const {
   AbstractValue c;
   AbstractValue dedicatedVarId=equalityMaintainer.determineDedicatedElement(varId);
@@ -799,18 +615,10 @@ AbstractValue ConstraintSet::varAbstractValue(const AbstractValue varId) const {
   }
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 std::set<AbstractValue> ConstraintSet::getEqVars(const AbstractValue varId) const {
   return equalityMaintainer.equalElements(varId);
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 ListOfAValue ConstraintSet::getEqVarConst(const AbstractValue varId) const {
   ListOfAValue s;
   AbstractValue dedicatedVarId=equalityMaintainer.determineDedicatedElement(varId);
@@ -822,10 +630,6 @@ ListOfAValue ConstraintSet::getEqVarConst(const AbstractValue varId) const {
   return s;
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 ListOfAValue ConstraintSet::getNeqVarConst(const AbstractValue varId) const {
   ListOfAValue s;
   AbstractValue dedicatedVarId=equalityMaintainer.determineDedicatedElement(varId);
@@ -836,10 +640,6 @@ ListOfAValue ConstraintSet::getNeqVarConst(const AbstractValue varId) const {
   return s;
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 void ConstraintSet::removeAllConstraintsOfVar(AbstractValue varId) {
   // case 1: variable is a dedicated variable in a set with #set>=2
   // => find new dedicated variable and move all information and remove all
@@ -875,10 +675,6 @@ void ConstraintSet::removeAllConstraintsOfVar(AbstractValue varId) {
   }
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 string ConstraintSet::toString() const {
   stringstream ss;
   ss<<"{";
@@ -890,11 +686,6 @@ string ConstraintSet::toString() const {
   ss<<"}";
   return ss.str();
 }
-
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 
 string ConstraintSet::toStringWithoutBraces(VariableIdMapping* vim) const {
   stringstream ss;
@@ -914,10 +705,6 @@ string ConstraintSet::toString(VariableIdMapping* vim) const {
   return ss.str();
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 string ConstraintSet::toAssertionString(VariableIdMapping* vim) const {
   stringstream ss;
   for(set<Constraint>::iterator i=begin();i!=end();++i) {
@@ -929,10 +716,6 @@ string ConstraintSet::toAssertionString(VariableIdMapping* vim) const {
 }
 
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 long ConstraintSet::memorySize() const {
   long mem=0;
   for(ConstraintSet::iterator i=begin();i!=end();++i) {
@@ -941,10 +724,6 @@ long ConstraintSet::memorySize() const {
   return mem+sizeof(*this);
 }
 
-/*! 
-  * \author MarkusSchordan
-  * \date 2012.
- */
 // strict weak ordering on two sets
 bool CodeThorn::operator<(const ConstraintSet& s1, const ConstraintSet& s2) {
   if(s1.size()!=s2.size())

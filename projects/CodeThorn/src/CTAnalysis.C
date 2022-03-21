@@ -1,6 +1,3 @@
-/*************************************************************
- * Author   : Markus Schordan                                *
- *************************************************************/
 
 #include "sage3basic.h"
 #include "Labeler.h"
@@ -743,16 +740,29 @@ void CodeThorn::CTAnalysis::runAnalysisPhase2Sub1(TimingCollector& tc) {
     }
   } else {
     // intra-procedural analysis, each function is analyzed separately
+#if 0
+    // improved version to also consider reachability in call graph + function address taken + fork function calls (TODO)
+    auto callGraph=getCFAnalyzer()->getCallGraph();
+    Label startLabel=callGraph->getStartLabel();
+    if(!startLabel.isValid()) {
+      cerr<<"Error: intra-procedural analysis: no valid start label provided. Exiting."<<endl;
+      exit(1);
+    }
+    LabelSet reachableEntryLabels=callGraph->reachableNodes(startLabel);
+    LabelSet startLabels=reachableEntryLabels;
+#else    
     LabelSet entryLabels=getCFAnalyzer()->functionEntryLabels(*getFlow());
     setTotalNumberOfFunctions(entryLabels.size());
+    LabelSet startLabels=entryLabels;
+#endif
+
     ROSE_ASSERT(estateWorkListCurrent);
     //if(_ctOpt.status) cout<<"STATUS: intra-procedural analysis: entryLabels: "<<entryLabels.size()
     //			  <<" initial work list length: "<<estateWorkListCurrent->size()<<endl;
     // intra-procedural analysis initial states
     ROSE_ASSERT(!getModeLTLDriven());
     eraseWorkList();
-    LabelSet startLabels=getCFAnalyzer()->functionEntryLabels(*getFlow());
-      
+
     size_t numStartLabels=startLabels.size();
     printStatusMessage("STATUS: intra-procedural analysis with "+std::to_string(getTotalNumberOfFunctions())+" functions.",true);
     long int fCnt=1;
@@ -1541,13 +1551,6 @@ void CodeThorn::CTAnalysis::runAnalysisPhase1Sub1(SgProject* root, TimingCollect
       exit(0);
     }
     ROSE_ASSERT(getFlow());
-    /* TODO TODAY: 
-       1) store start label set in CTAnalysis: move initialization of start state into phase 2 (otherwise intra-proce cannot operate on each label)
-       2) modify runAnalysisPhase2 to iterate over each entrylabel and add it as startlabel
-       3) set timeout for solver16
-       4) function analyssis report: record in runAnalysisPhase2 which function finished, and which one did not (-> set all labels to unknown)
-    */
-    //getFlow()->setStartLabelSet(entryLabels);
     // set one label as start label (intra-proc loop will continue with 2nd label)
     getFlow()->setStartLabel(*entryLabels.begin());
   }
@@ -1763,11 +1766,6 @@ void CodeThorn::CTAnalysis::swapStgWithBackup() {
   backupTransitionGraph = tTemp;
 }
 
-
-/*!
-  * \author Markus Schordan
-  * \date 2019.
- */
 
 #define FAST_GRAPH_REDUCE
 void CodeThorn::CTAnalysis::reduceStg(function<bool(EStatePtr)> predicate) {

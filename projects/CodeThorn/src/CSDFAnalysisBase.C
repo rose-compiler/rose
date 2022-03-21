@@ -1,7 +1,3 @@
-/*************************************************************
- * Author   : Markus Schordan                                *
- *************************************************************/
-
 #include "sage3basic.h"
 #include "CSDFAnalysisBase.h"
 #include "AstUtility.h"

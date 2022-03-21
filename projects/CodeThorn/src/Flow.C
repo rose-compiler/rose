@@ -705,10 +705,6 @@ size_t Flow::deleteEdges(EdgeType edgeType) {
   return numDeleted;
 }
 
-/*!
-  * \author Markus Schordan
-  * \date 2013.
- */
 size_t Flow::deleteEdges(Flow& edges) {
   // MS: this function is supposed to allow a subset of edges of the very same graph as parameter
   // hence, we must be careful about iterator semantics

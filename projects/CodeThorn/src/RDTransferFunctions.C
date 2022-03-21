@@ -28,11 +28,6 @@ bool hasDereferenceOperation(SgExpression* exp) {
 RDTransferFunctions::RDTransferFunctions() {
 }
 
-/*!
-  * \author Markus Schordan
-  * \date 2013.
- */
-
 SgNode* determineDef(SgNode* node, bool lhs) {
   VariantT nodeType=node->variantT();
   if(isSgCompoundAssignOp(node)||isSgAssignOp(node)) {
@@ -92,10 +87,6 @@ void RDTransferFunctions::transferExpression(Label lab, SgExpression* node, Latt
   //VariableIdSet defVarIds=AstUtility::defVariables(node,*getVariableIdMapping(), _pointerAnalysisInterface);
 }
 
-/*!
-  * \author Markus Schordan
-  * \date 2013.
- */
 //NOTE: missing: UD must take uses in initializers into account
 void RDTransferFunctions::transferDeclaration(Label lab, SgVariableDeclaration* declnode, Lattice& element0) {
   RDLattice& element=dynamic_cast<RDLattice&>(element0);
@@ -105,10 +96,6 @@ void RDTransferFunctions::transferDeclaration(Label lab, SgVariableDeclaration* 
   element.insertPair(lab,var);
 }
 
-/*!
-  * \author Markus Schordan
-  * \date 2013.
- */
 void RDTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments,Lattice& element0) {
   RDLattice& element=dynamic_cast<RDLattice&>(element0);
 
@@ -136,10 +123,6 @@ void RDTransferFunctions::transferFunctionCallReturn(Label lab, VariableId lhsVa
   element.removeAllPairsWithVariableId(resVarId);
 }
 
-/*!
-  * \author Markus Schordan
-  * \date 2013, 2015.
- */
 void RDTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element0) {
   RDLattice& element=dynamic_cast<RDLattice&>(element0);
 
@@ -163,10 +146,6 @@ void RDTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition*
   }
 }
 
-/*!
-  * \author Markus Schordan
-  * \date 2013.
- */
 void RDTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* callExp, VariableIdSet& localVariablesInFunction, Lattice& element0) {
   RDLattice& element=dynamic_cast<RDLattice&>(element0);
 

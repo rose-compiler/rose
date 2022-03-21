@@ -101,6 +101,7 @@ string CodeThorn::ProgramLocationsReport::fileInfoAsFormattedProgramLocation(SgN
   return SgNodeHelper::sourceFilenameToString(node)+","+SgNodeHelper::sourceLineColumnToString(node);
 }
   
+// not used anymore
 string CodeThorn::ProgramLocationsReport::sourceCodeAtLabel(Labeler* labeler, Label lab) {
   if(lab.isValid()) {
     SgNode* node=labeler->getNode(lab);

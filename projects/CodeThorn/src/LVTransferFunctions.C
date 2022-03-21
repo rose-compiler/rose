@@ -9,10 +9,6 @@ using namespace std;
 CodeThorn::LVTransferFunctions::LVTransferFunctions() {
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2014.
- */
 void CodeThorn::LVTransferFunctions::transferExpression(Label lab, SgExpression* node, Lattice& element0) {
   LVLattice& element=dynamic_cast<LVLattice&>(element0);
 
@@ -40,10 +36,6 @@ void CodeThorn::LVTransferFunctions::transferExpression(Label lab, SgExpression*
   }
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2014.
- */
 void CodeThorn::LVTransferFunctions::transferDeclaration(Label lab, SgVariableDeclaration* declnode, Lattice& element0) {
   LVLattice& element=dynamic_cast<LVLattice&>(element0);
 
@@ -69,10 +61,6 @@ void CodeThorn::LVTransferFunctions::transferDeclaration(Label lab, SgVariableDe
   }
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2014.
- */
 void CodeThorn::LVTransferFunctions::transferFunctionCall(Label lab,  SgFunctionCallExp* callExp, SgExpressionPtrList& arguments,Lattice& element0) {
   LVLattice& element=dynamic_cast<LVLattice&>(element0);
 
@@ -88,10 +76,6 @@ void CodeThorn::LVTransferFunctions::transferFunctionCall(Label lab,  SgFunction
   }
 
 }
-/*! 
-  * \author Markus Schordan
-  * \date 2014.
- */
 
 void CodeThorn::LVTransferFunctions::transferFunctionCallReturn(Label lab, VariableId lhsVarId, SgFunctionCallExp* callExp, Lattice& element0) {
   LVLattice& element=dynamic_cast<LVLattice&>(element0);
@@ -105,10 +89,7 @@ void CodeThorn::LVTransferFunctions::transferFunctionCallReturn(Label lab, Varia
   element.insertVariableId(resVarId);
 
 }
-/*! 
-  * \author Markus Schordan
-  * \date 2014.
- */
+
 void CodeThorn::LVTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element0) {
   LVLattice& element=dynamic_cast<LVLattice&>(element0);
 
@@ -130,10 +111,6 @@ void CodeThorn::LVTransferFunctions::transferFunctionEntry(Label lab, SgFunction
   }
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2014.
- */
 void CodeThorn::LVTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* callExp, VariableIdSet& localVariablesInFunction, Lattice& element0) {
   LVLattice& element=dynamic_cast<LVLattice&>(element0);
   // kill return variable

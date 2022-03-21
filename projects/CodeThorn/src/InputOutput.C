@@ -1,7 +1,3 @@
-/*************************************************************
- * Author   : Markus Schordan                                *
- *************************************************************/
-
 #include "sage3basic.h"
 
 #include "InputOutput.h"
@@ -38,10 +34,6 @@ namespace CodeThorn {
     op=NONE;
   }
 
-  /*! 
-   * \author Markus Schordan
-   * \date 2012.
-   */
   void InputOutput::recordVariable(OpType op0,AbstractValue varId) {
     switch(op0) {
     case STDIN_VAR:
@@ -56,26 +48,14 @@ namespace CodeThorn {
     val=CodeThorn::Bot();
   }
 
-  /*! 
-   * \author Markus Schordan
-   * \date 2012.
-   */
   void InputOutput::recordFailedAssert() {
     op=FAILED_ASSERT;
   }
 
-  /*! 
-   * \author Markus Schordan
-   * \date 2015.
-   */
   void InputOutput::recordVerificationError() {
     op=VERIFICATION_ERROR;
   }
 
-  /*! 
-   * \author Markus Schordan
-   * \date 2012.
-   */
   void InputOutput::recordConst(OpType op0,AbstractValue constvalue) {
     ROSE_ASSERT(op0==STDOUT_CONST || op0==STDERR_CONST);
     op=op0;
@@ -88,10 +68,7 @@ namespace CodeThorn {
     AbstractValue abstractConstValue(value);
     recordConst(op0,abstractConstValue);
   }
-  /*! 
-   * \author Markus Schordan
-   * \date 2012.
-   */
+
   string InputOutput::toString() const {
     string str;
     switch(op) {
@@ -110,10 +87,6 @@ namespace CodeThorn {
     return str;
   }
 
-  /*! 
-   * \author Markus Schordan
-   * \date 2012.
-   */
   string InputOutput::toString(VariableIdMapping* variableIdMapping) const {
     string str;
     string varName=var.toString(variableIdMapping);
@@ -134,10 +107,6 @@ namespace CodeThorn {
     return str;
   }
 
-  /*! 
-   * \author Markus Schordan
-   * \date 2012.
-   */
   bool operator<(const InputOutput& c1, const InputOutput& c2) {
     if(c1.op!=c2.op)
       return c1.op<c2.op;
@@ -146,18 +115,10 @@ namespace CodeThorn {
     return CodeThorn::strictWeakOrderingIsSmaller(c1.val,c2.val);
   }
 
-  /*! 
-   * \author Markus Schordan
-   * \date 2012.
-   */
   bool operator==(const InputOutput& c1, const InputOutput& c2) {
     return c1.op==c2.op && c1.var==c2.var && (CodeThorn::strictWeakOrderingIsEqual(c1.val,c2.val));
   }
 
-  /*! 
-   * \author Markus Schordan
-   * \date 2012.
-   */
   bool operator!=(const InputOutput& c1, const InputOutput& c2) {
     return !(c1==c2);
   }

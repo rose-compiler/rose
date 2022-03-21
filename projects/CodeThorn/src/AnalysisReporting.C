@@ -131,20 +131,24 @@ namespace CodeThorn {
   void AnalysisReporting::generateDeadCodeLocationsVerificationReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer, LabelSet& unreachable) {
     if(ctOpt.deadCodeAnalysisFileName.size()>0) {
       stringstream locationsCSVFileData;
+      std::set<string> locations; // use set to get sorted unique locations
       for(auto lab : unreachable) {
         ROSE_ASSERT(analyzer->getLabeler());
 	ROSE_ASSERT(lab.isValid());
         SgNode* node=analyzer->getLabeler()->getNode(lab);
+        string loc;
         if(node) {
-          locationsCSVFileData<<ProgramLocationsReport::findOriginalProgramLocationOfLabel(analyzer->getLabeler(),lab);
+          loc=ProgramLocationsReport::findOriginalProgramLocationOfLabel(analyzer->getLabeler(),lab);
         } else {
-          locationsCSVFileData<<"unknown-location"<<endl;
+          loc="unknown-location";
         }
-        locationsCSVFileData<<endl;
+        locations.insert(loc);
       }
-      string s=locationsCSVFileData.str();
+      for(auto sloc : locations) {
+        locationsCSVFileData<<sloc<<endl;
+      }
       string fileName=ctOpt.reportFilePath+"/"+ctOpt.deadCodeAnalysisFileName;
-      if(!CppStdUtilities::writeFile(ctOpt.csvReportModeString, fileName, s)) {
+      if(!CppStdUtilities::writeFile(ctOpt.csvReportModeString, fileName, locationsCSVFileData.str())) {
         cerr<<"Error: cannot write file "<<fileName<<endl;
       } else {
         if(!ctOpt.quiet)

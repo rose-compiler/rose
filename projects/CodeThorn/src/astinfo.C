@@ -1,5 +1,3 @@
-// Author: Markus Schordan, 2013.
-
 #include <boost/program_options.hpp>
 #include <iostream>
 

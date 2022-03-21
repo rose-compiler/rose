@@ -22,10 +22,6 @@ int Solver5::getId() {
   return 5;
 }
     
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 void Solver5::run() {
   //SAWYER_MESG(logger[INFO])<<"Running solver "<<getId()<<endl;
   //_analyzer->_analysisTimer.start(); // is started in runSolver now
