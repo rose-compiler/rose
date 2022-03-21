@@ -201,6 +201,14 @@ EOF
 echo
 rose-matrix-slave-health -F$FORMAT |indent
 
+echo
+paragraph <<EOF
+Sometimes slaves have intermittent or recurring problems related to setting up the test environment.
+This table reports setup failures by slave and operating system.
+EOF
+echo
+rose-matrix-query -F$FORMAT status=setup slave.a os.a id.a reporting_time first_error |indent
+
 ####################################################################################################
 echo
 echo
