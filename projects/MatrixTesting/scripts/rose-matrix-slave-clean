@@ -1,0 +1,9 @@
+#!/bin/bash
+set -ex
+
+rm -rf var/rose-portability-testing/spock/var/installed
+rm -rf var/rose-portability-testing/rose-installed
+
+docker container rm $(docker container ls -a |cut -d' ' -f1 |tail +2)
+
+docker image prune --all --force

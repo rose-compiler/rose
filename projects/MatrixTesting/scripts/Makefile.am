@@ -8,4 +8,5 @@ bin_SCRIPTS =					\
 	rose-matrix-show-latest			\
 	rose-matrix-slave-run			\
 	rose-matrix-slave-babysit		\
+	rose-matrix-slave-clean			\
 	rose-matrix-status
