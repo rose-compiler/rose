@@ -6198,7 +6198,9 @@ ATbool ATermToSageJovialTraversal::traverse_Variable(ATerm term, SgExpression* &
    // Look for other possibilities
    //
    } else if (traverse_Dereference(term, var)) {
-     // MATCHED ItemDereference/TableDereference -> Item/Table -> NamedVariable
+     // MATCHED Dereference -> ItemDereference -> Item -> NamedVariable
+   } else if (traverse_TableDereference(term, var)) {
+     // MATCHED TableDereference
    } else if (traverse_TableItem(term, var)) {
      // MATCHED TableItem
    } else if (traverse_BitFunctionVariable(term, var)) {
@@ -6285,7 +6287,7 @@ ATbool ATermToSageJovialTraversal::traverse_TableItem(ATerm term, SgExpression* 
          }
       }
 
-   // Grammar could be better designed (Dereference is a TableDereference here)
+   // Grammar could be better designed (Dereference is a TableDereference here (may have changed?))
       if (traverse_TableDereference(t_tblderef, deref_var)) {
          // MATCHED TableDereference
       }
@@ -6392,6 +6394,13 @@ ATbool ATermToSageJovialTraversal::traverse_TableDereference(ATerm term, SgExpre
 
    ROSE_ASSERT(table_array_ref);
    setSourcePosition(table_array_ref, term);
+
+   // There needs to be a dereference (for a function call?)
+   if (!fun_symbol) {
+     table_array_ref = SageBuilder::buildPointerDerefExp(table_array_ref);
+     ROSE_ASSERT(table_array_ref);
+     setSourcePosition(table_array_ref, term);
+   }
 
    return ATtrue;
 }
