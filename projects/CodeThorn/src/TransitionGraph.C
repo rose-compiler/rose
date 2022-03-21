@@ -7,11 +7,6 @@
 
 using namespace CodeThorn;
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
-
 Transition::Transition(EStatePtr source,Edge edge, EStatePtr target)
   :source(source),edge(edge),target(target) {
 }
@@ -46,10 +41,6 @@ bool TransitionEqualToPred::operator()(Transition* t1, Transition* t2) const {
   return t1->source==t2->source && t1->target==t2->target && t1->edge==t2->edge;
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 TransitionGraph::TransitionGraph():
   _startLabel(Label()),
   _numberOfNodes(0),
@@ -70,20 +61,12 @@ LabelSet TransitionGraph::labelSetOfIoOperations(InputOutput::OpType op) {
   return lset;
 } 
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 void TransitionGraph::reduceEStates(set<EStatePtr> toReduce) {
   for(set<EStatePtr>::const_iterator i=toReduce.begin();i!=toReduce.end();++i) { 
     reduceEState(*i);
   }
 }
 
-/*! 
- * \author Markus Schordan
- * \date 2019 (linear algorithm for IO reduction)
- */         
 void TransitionGraph::reduceEStates3(function<bool(EStatePtr)> predicate) {
   const size_t reportingInterval=10000;
   EStatePtrSet states=estateSet();
@@ -105,11 +88,6 @@ void TransitionGraph::reduceEStates3(function<bool(EStatePtr)> predicate) {
   }
   cout<<"STATUS: reduced "<<numReduced<<" states."<<endl;
 }
-
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 
 TransitionGraph::TransitionPtrSet TransitionGraph::inEdges(EStatePtr estate) {
   ROSE_ASSERT(estate);
@@ -143,10 +121,6 @@ TransitionGraph::TransitionPtrSet TransitionGraph::inEdges(EStatePtr estate) {
 }
 
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 // MS: we definitely need to cache all the results or use a proper graph structure
 TransitionGraph::TransitionPtrSet TransitionGraph::outEdges(EStatePtr estate) {
   ROSE_ASSERT(estate);
@@ -205,10 +179,6 @@ EStatePtrSet TransitionGraph::succ(EStatePtr estate) {
 
 
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 void TransitionGraph::reduceEState(EStatePtr estate) {
   assert(0);
   /* description of essential operations:
@@ -233,26 +203,14 @@ void TransitionGraph::reduceEState(EStatePtr estate) {
   }
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 bool CodeThorn::operator==(const Transition& t1, const Transition& t2) {
   return t1.source==t2.source && t1.edge==t2.edge && t1.target==t2.target;
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 bool CodeThorn::operator!=(const Transition& t1, const Transition& t2) {
   return !(t1==t2);
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 bool CodeThorn::operator<(const Transition& t1, const Transition& t2) {
   if(t1.source!=t2.source)
     return t1.source<t2.source;
@@ -261,10 +219,6 @@ bool CodeThorn::operator<(const Transition& t1, const Transition& t2) {
   return t1.target<t2.target;
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 void TransitionGraph::add(Transition trans) {
   const Transition* transp=processNewOrExisting(trans);
   assert(transp!=0);
@@ -275,10 +229,6 @@ void TransitionGraph::add(Transition trans) {
   }
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 void TransitionGraph::erase(TransitionGraph::iterator transiter) {
   const Transition* transp=determine(**transiter);
   assert(transp!=0);
@@ -287,10 +237,6 @@ void TransitionGraph::erase(TransitionGraph::iterator transiter) {
   HSetMaintainer<Transition,TransitionHashFun,TransitionEqualToPred>::erase(transiter);
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 void TransitionGraph::erase(const Transition trans) {
   const Transition* transp=determine(trans);
   assert(transp!=0);
@@ -310,10 +256,6 @@ void TransitionGraph::eliminateEState(EStatePtr estate) {
   // we only represent edges, nothing else to do
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 string TransitionGraph::toString(VariableIdMapping* variableIdMapping) const {
   string s;
   size_t cnt=0;
@@ -325,10 +267,6 @@ string TransitionGraph::toString(VariableIdMapping* variableIdMapping) const {
   return s;
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 set<EStatePtr> TransitionGraph::estateSetOfLabel(Label lab) {
   set<EStatePtr> estateSet;
   for(TransitionGraph::iterator j=begin();j!=end();++j) {
@@ -340,10 +278,6 @@ set<EStatePtr> TransitionGraph::estateSetOfLabel(Label lab) {
   return estateSet;
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 bool TransitionGraph::checkConsistency() {
   bool ok=true;
   size_t cnt=0;
@@ -369,10 +303,7 @@ const Transition* TransitionGraph::hasSelfEdge(EStatePtr estate) {
   // checking in edges only is sufficient because a self edge must be both
   return 0;
 }
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
+
 void TransitionGraph::reduceEState2(EStatePtr estate) {
   /* description of essential operations:
    *   inedges: (n_i,b)
@@ -437,10 +368,6 @@ void TransitionGraph::reduceEState2(EStatePtr estate) {
   }
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 // later, we may want to maintain this set with every graph-operation (turning the linear access to constant)
 set<EStatePtr> TransitionGraph::estateSet() {
   _recomputedestateSet.clear();
@@ -532,10 +459,6 @@ size_t TransitionGraph::memorySize() const {
   return mem + sizeof(*this);  // TODO: check if sizeof(base class HSetMaintainer) is now counted twice
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 void TransitionGraph::setStartEState(EStatePtr estate) {
   ROSE_ASSERT(getModeLTLDriven());
   _startEState=estate;

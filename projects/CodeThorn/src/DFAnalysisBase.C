@@ -1,7 +1,3 @@
-/*************************************************************
- * Author   : Markus Schordan                                *
- *************************************************************/
-
 #include "sage3basic.h"
 #include "DFAnalysisBase.h"
 #include "AstUtility.h"
@@ -197,11 +193,6 @@ namespace CodeThorn
     computeAllPostInfo();
   }
 
-  /*!
-   * \author Markus Schordan
-   * \date 2018.
-   */
-
   void DFAnalysisBase::setSkipUnknownFunctionCalls(bool defer) {
     _skipSelectedFunctionCalls=defer;
     if(_transferFunctions) {
@@ -221,11 +212,6 @@ namespace CodeThorn
     // elem ignored in default function
     return new DFAstAttribute();
   }
-
-  /*!
-   * \author Markus Schordan
-   * \date 2012.
-   */
 
   void DFAnalysisBase::attachInfoToAst(string attributeName,bool inInfo) {
     computeAllPreInfo();
@@ -279,19 +265,9 @@ namespace CodeThorn
     }
   }
 
-  /*!
-   * \author Markus Schordan
-   * \date 2012.
-   */
-
   void DFAnalysisBase::attachInInfoToAst(string attributeName) {
     attachInfoToAst(attributeName,true);
   }
-
-  /*!
-   * \author Markus Schordan
-   * \date 2012.
-   */
 
   void DFAnalysisBase::attachOutInfoToAst(string attributeName) {
     attachInfoToAst(attributeName,false);

@@ -43,7 +43,7 @@ namespace CodeThorn {
 
     static std::string findOriginalProgramLocationOfLabel(CodeThorn::Labeler* labeler, CodeThorn::Label lab);
     static std::string findOriginalProgramLocationOfNode(SgNode* node);
-    static std::string sourceCodeAtLabel(CodeThorn::Labeler* labeler, CodeThorn::Label lab);
+    static std::string sourceCodeAtLabel(CodeThorn::Labeler* labeler, CodeThorn::Label lab); // not used anymore, obsolete
     static std::string fileInfoAsFormattedProgramLocation(SgNode* node);
 
     typedef std::string LineColString;

@@ -6,7 +6,6 @@
 using namespace std;
 
 namespace CodeThorn {
-  // Author: Markus Schordan, 2020.
   TopologicalSort::TopologicalSort(Labeler& labeler0, Flow& flow0):labeler(labeler0),flow(flow0) {
   }
   TopologicalSort::TopologicalSort(Labeler& labeler0, Flow& flow0, Flow* callGraph0):labeler(labeler0),flow(flow0), callGraph(callGraph0) {

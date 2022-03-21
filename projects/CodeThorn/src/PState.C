@@ -142,10 +142,6 @@ long PState::memorySize() const {
   return mem+sizeof(*this);
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 void PState::deleteVar(AbstractValue varId) {
   PState::iterator i=begin();
   while(i!=end()) {
@@ -194,28 +190,16 @@ size_t PState::removeAllElements() {
   return oldSize-size();
 }
   
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 bool PState::varExists(AbstractValue av0) const {
   // variables are represented by their address. Therefore memLocExists is equivalent.
   return memLocExists(av0);
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 bool PState::memLocExists(AbstractValue memLoc0) const {
   AbstractValue memLoc1=AbstractValue::conditionallyApplyArrayAbstraction(memLoc0);
   return find(memLoc1)!=end();
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 bool PState::varIsConst(AbstractValue varId) const {
   PState::const_iterator i=find(varId);
   if(i!=end()) {
@@ -238,29 +222,18 @@ bool PState::varIsTop(AbstractValue varId) const {
     return false; // throw CodeThorn::Exception("Error: PState::varIsConst : variable does not exist.";
   }
 }
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
+
 string PState::varValueToString(AbstractValue av) const {
   stringstream ss;
   AbstractValue val=varValue(av);
   return val.toString();
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 void PState::writeTopToAllMemoryLocations() {
   CodeThorn::AbstractValue val=CodeThorn::Top();
   writeValueToAllMemoryLocations(val);
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2019.
- */
 void PState::combineValueAtAllMemoryLocations(AbstractValue val) {
   for(PState::iterator i=begin();i!=end();++i) {
     AbstractValue memLoc=(*i).first;
@@ -271,10 +244,6 @@ void PState::combineValueAtAllMemoryLocations(AbstractValue val) {
   }
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 void PState::writeValueToAllMemoryLocations(CodeThorn::AbstractValue val) {
   for(PState::iterator i=begin();i!=end();++i) {
     AbstractValue av=(*i).first;
@@ -305,18 +274,10 @@ AbstractValueSet PState::getVariableIds() const {
   return varIdSet;
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 PStateId PStateSet::pstateId(PStatePtr pstate) {
   return pstateId(*pstate);
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 PStateId PStateSet::pstateId(const PState pstate) {
   PStateId xid=0;
   // MS: TODO: we may want to use the new function id(pstate) here
@@ -329,19 +290,13 @@ PStateId PStateSet::pstateId(const PState pstate) {
   return NO_STATE;
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */string PStateSet::pstateIdString(PStatePtr pstate) {
+
+string PStateSet::pstateIdString(PStatePtr pstate) {
   stringstream ss;
   ss<<pstateId(pstate);
   return ss.str();
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 string PStateSet::toString() {
   stringstream ss;
   ss << "@"<<this<<": PStateSet={";
@@ -355,10 +310,6 @@ string PStateSet::toString() {
   return ss.str();
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 ostream& CodeThorn::operator<<(ostream& os, const PState& pState) {
   pState.toStream(os);
   return os;
@@ -425,10 +376,6 @@ bool PState::hasEqualMemRegionApproximation(const PState& other) const {
   return _approximationVarIdSet==other._approximationVarIdSet;
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2014.
- */
 AbstractValue PState::varValue(AbstractValue memLoc) const {
   if(memLoc.isPtrSet()) {
     // reading from set of values, combined all and return

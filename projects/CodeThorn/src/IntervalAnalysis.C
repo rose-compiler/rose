@@ -1,4 +1,3 @@
-// Author: Markus Schordan, 2013.
 
 #include "sage3basic.h"
 #include "CollectionOperators.h"

@@ -922,10 +922,6 @@ Flow CFAnalysis::flow(SgNode* s1, SgNode* s2) {
   return flow12;
 }
 
-/*!
-  * \author Markus Schordan
-  * \date 2013.
- */
 int CFAnalysis::inlineTrivialFunctions(Flow& flow) {
   // 1) compute all functions that are called exactly once (i.e. number of pred in ICFG is 1)
   //    AND have the number of formal parameters is 0 AND have void return type.

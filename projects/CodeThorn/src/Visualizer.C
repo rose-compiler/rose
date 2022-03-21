@@ -1,7 +1,3 @@
-/*************************************************************
- * Author   : Markus Schordan                                *
- *************************************************************/
-
 #include "sage3basic.h"
 #include "CodeThornCommandLineOptions.h"
 #include "Visualizer.h"

@@ -52,10 +52,6 @@ void Solver16::initializeAbstractStatesFromWorkList() {
 }
 
 
-/*! 
-  * \author Markus Schordan
-  * \date 2012.
- */
 void Solver16::run() {
   SAWYER_MESG(logger[INFO])<<"Running solver "<<getId()<<endl;
   ROSE_ASSERT(_analyzer);

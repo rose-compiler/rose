@@ -1,7 +1,3 @@
-/*************************************************************
- * Author   : Markus Schordan                                *
- *************************************************************/
-
 #include "Miscellaneous2.h"
 #include <cctype>
 #include <cstdlib>

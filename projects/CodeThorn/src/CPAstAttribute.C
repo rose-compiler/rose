@@ -8,11 +8,6 @@
 
 using namespace AstUtility;
 
-/*! 
-  * \author Markus Schordan
-  * \date 2013.
- */
-
 bool CPAstAttribute::isConstantInteger(VariableId varId) {
   ROSE_ASSERT(_elem);
   return _elem->isUniqueConst(varId);

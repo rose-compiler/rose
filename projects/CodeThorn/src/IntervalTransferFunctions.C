@@ -21,10 +21,6 @@ CodeThorn::IntervalTransferFunctions::~IntervalTransferFunctions() {
     delete _cppExprEvaluator;
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2015.
- */
 void CodeThorn::IntervalTransferFunctions::transferSwitchCase(Label lab,SgStatement* condStmt, SgCaseOptionStmt* caseStmt,Lattice& pstate) {
   IntervalPropertyState& ips=dynamic_cast<IntervalPropertyState&>(pstate);
   if(isSgExprStatement(condStmt)) {
@@ -87,10 +83,6 @@ void CodeThorn::IntervalTransferFunctions::transferSwitchCase(Label lab,SgStatem
   }
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2015.
- */
 void CodeThorn::IntervalTransferFunctions::transferCondition(Edge edge, Lattice& pstate) {
   IntervalPropertyState& ips=dynamic_cast<IntervalPropertyState&>(pstate);
   Label lab0=edge.source();
@@ -121,10 +113,6 @@ void CodeThorn::IntervalTransferFunctions::transferCondition(Edge edge, Lattice&
   }
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2015.
- */
 void CodeThorn::IntervalTransferFunctions::transferExpression(Label lab, SgExpression* node, Lattice& pstate) {
   // schroder3 (2016-08-25): Added if to ignore SgNullExpressions (e.g. ";;")
   if(!isSgNullExpression(node)) {
@@ -139,10 +127,6 @@ void CodeThorn::IntervalTransferFunctions::transferReturnStmtExpr(Label lab, SgE
   ips.setVariable(resVarId,res);
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2015.
- */
 CodeThorn::NumberIntervalLattice CodeThorn::IntervalTransferFunctions::evalExpression(Label lab, SgExpression* node, Lattice& pstate) {
   //ROSE_ASSERT(getVariableIdMapping()); TODO
   NumberIntervalLattice niLattice;
@@ -160,10 +144,6 @@ CodeThorn::NumberIntervalLattice CodeThorn::IntervalTransferFunctions::evalExpre
   return niLattice;
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2015.
- */
 void CodeThorn::IntervalTransferFunctions::transferDeclaration(Label lab, SgVariableDeclaration* declnode, Lattice& element) {
   ROSE_ASSERT(this!=0);
   SgInitializedName* node=SgNodeHelper::getInitializedNameOfVariableDeclaration(declnode);
@@ -188,10 +168,6 @@ void CodeThorn::IntervalTransferFunctions::transferDeclaration(Label lab, SgVari
 }
 
 
-/*! 
-  * \author Markus Schordan
-  * \date 2015.
- */
 void CodeThorn::IntervalTransferFunctions::transferFunctionCall(Label lab, SgFunctionCallExp* callExp, SgExpressionPtrList& arguments,Lattice& element) {
   int paramNr=0;
   IntervalPropertyState& ips=dynamic_cast<IntervalPropertyState&>(element);
@@ -213,10 +189,7 @@ void CodeThorn::IntervalTransferFunctions::transferFunctionCall(Label lab, SgFun
     }
   }
 }
-/*! 
-  * \author Markus Schordan
-  * \date 2015.
- */
+
 void CodeThorn::IntervalTransferFunctions::transferFunctionCallReturn(Label lab, SgVarRefExp* lhsVar, SgFunctionCallExp* callExp, Lattice& element) {
   IntervalPropertyState& ips=dynamic_cast<IntervalPropertyState&>(element);
   if(isSgCompoundAssignOp(callExp->get_parent())) {
@@ -235,10 +208,6 @@ void CodeThorn::IntervalTransferFunctions::transferFunctionCallReturn(Label lab,
   ips.removeVariable(resVarId);
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2015.
- */
 void CodeThorn::IntervalTransferFunctions::transferFunctionEntry(Label lab, SgFunctionDefinition* funDef,SgInitializedNamePtrList& formalParameters, Lattice& element) {
   // generate Intervals for each parameter variable
   int paramNr=0;
@@ -258,10 +227,6 @@ void CodeThorn::IntervalTransferFunctions::transferFunctionEntry(Label lab, SgFu
   }
 }
 
-/*! 
-  * \author Markus Schordan
-  * \date 2015.
- */
 void CodeThorn::IntervalTransferFunctions::transferFunctionExit(Label lab, SgFunctionDefinition* funDef, VariableIdSet& localVariablesInFunction, Lattice& element) {
   // remove all declared variables at function exit (including function parameter variables)
   for(VariableIdSet::iterator i=localVariablesInFunction.begin();i!=localVariablesInFunction.end();++i) {

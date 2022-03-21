@@ -21,8 +21,6 @@
 
 using namespace Sawyer::Message;
 
-// Author: Markus Schordan, 2018
-
 using namespace std;
 using namespace Rose;
 using namespace Sawyer::Message;
