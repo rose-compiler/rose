@@ -1692,7 +1692,7 @@ context-free syntax
     Subscript                 -> TableEntry            {cons("TableEntry"), reject} %% Makes AMBIGUOUS with TableItem
 
   TableDereference
-    Subscript                 -> TableEntry            {cons("TableEntry")}
+    Subscript                 -> TableEntry            {cons("TableEntry"), reject} %% Makes AMBIGUOUS with TableDereference
 
   ItemName
     OptBlockDereference       -> BlockItem             {cons("BlockItem"), reject} %% AMBIGUOUS with BlockTable
