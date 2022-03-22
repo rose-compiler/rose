@@ -204,7 +204,7 @@ namespace CodeThorn {
         cout<<"constant false       locations: "<<setw(6)<<constFalseCnt<<endl;
         printSeparationLine();
       }
-      string fileName=ctOpt.getAnalysisReportFileName(analysisSel);
+      string fileName=ctOpt.reportFilePath+"/"+ctOpt.getAnalysisReportFileName(analysisSel);
       if(fileName.size()>0) {
         if(!CppStdUtilities::writeFile(ctOpt.csvReportModeString,fileName, locationsCSVFileData.str())) {
           cerr<<"Error: cannot write file "<<fileName<<endl;

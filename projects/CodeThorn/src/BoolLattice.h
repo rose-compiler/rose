@@ -31,16 +31,12 @@ namespace CodeThorn {
 
 /*!
   \brief Serves as bot value in analysis.
-  \date 2012
-  \author Markus Schordan
  */
   class Bot {
   };
 
 /*!
   \brief Implements semantic functions of a boolean lattice.
-  \date 2012
-  \author Markus Schordan, Adrian Prantl
   \details All lattice domain operators are implemented as overloaded functions.
  */
 class BoolLattice {
