@@ -1,5 +1,6 @@
 #include "sage3basic.h"
 #include "clang-frontend-private.hpp"
+#include "clang-to-rose-support.hpp" 
 
 SgNode * ClangToSageTranslator::Traverse(clang::Stmt * stmt) {
     if (stmt == NULL)
@@ -689,13 +690,184 @@ bool ClangToSageTranslator::VisitAsmStmt(clang::AsmStmt * asm_stmt, SgNode ** no
     return VisitStmt(asm_stmt, node) && res;
 }
 
+
 bool ClangToSageTranslator::VisitGCCAsmStmt(clang::GCCAsmStmt * gcc_asm_stmt, SgNode ** node) {
 #if DEBUG_VISIT_STMT
     std::cerr << "ClangToSageTranslator::VisitGCCAsmStmt" << std::endl;
 #endif
     bool res = true;
 
-    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+    unsigned asmNumInput = gcc_asm_stmt->getNumInputs(); 
+    unsigned asmNumOutput = gcc_asm_stmt->getNumOutputs(); 
+    unsigned asmClobber = gcc_asm_stmt->getNumClobbers(); 
+
+    clang::StringLiteral* AsmStringLiteral = gcc_asm_stmt->getAsmString();
+    llvm::StringRef AsmStringRef = AsmStringLiteral->getString();
+
+    std::cout << "input op:" << asmNumInput << " output op: " << asmNumOutput<< std::endl;
+#if DEBUG_VISIT_DECL
+    std::cerr << "AsmStringRef:" << static_cast<std::string>(AsmStringRef) << std::endl;
+#endif
+
+    SgAsmStmt* asmStmt = SageBuilder::buildAsmStatement(static_cast<std::string>(AsmStringRef)); 
+    asmStmt->set_firstNondefiningDeclaration(asmStmt);
+    asmStmt->set_definingDeclaration(asmStmt);
+    asmStmt->set_parent(SageBuilder::topScopeStack());
+    asmStmt->set_useGnuExtendedFormat(true);
+
+
+    // Pei-Hung (03/22/2022)  The clobber string is available.
+    // The implementation adding clobber into ROSE AST is not in place.
+    for(unsigned i=0; i < asmClobber; ++i)
+    {
+      std::string clobberStr = static_cast<std::string>(gcc_asm_stmt->getClobber(i));
+#if DEBUG_VISIT_DECL
+      std::cerr << "AsmOp clobber["<< i<<  "]: " << clobberStr << std::endl;
+#endif
+    }
+
+    // Pei-Hung (03/22/2022) use regular expression to check the first modifier, + and =, for ouput Ops.  
+    // Then the second modifier for both input and output Ops.  The rest is for constraints.
+    // regex_match should report 4 matched results:
+    // 1. the whole matched string
+    // 2. first modifier: =, +, or empty
+    // 3. second modifier: empty or &, %, *, #, ?, !
+    // 4. The constraint
+    std::regex e ("([\\=\\+]*)([\\&\\%\\*\\#\\?\\!]*)(.+)", std::regex_constants::ECMAScript | std::regex_constants::icase);
+
+    // process output
+    for(unsigned i=0; i < asmNumOutput; ++i)
+    {
+      SgNode* tmp_node = Traverse(gcc_asm_stmt->getOutputExpr(i));
+      SgExpression * outputExpr = isSgExpression(tmp_node);
+      ROSE_ASSERT(outputExpr != NULL);
+
+      std::string outputConstraintStr = static_cast<std::string>(gcc_asm_stmt->getOutputConstraint(i));
+// Clang's constraint is equivalent to ROSE's modifier + operand constraints 
+#if DEBUG_VISIT_DECL
+      std::cerr << "AsmOp output constraint["<< i<<  "]: " << outputConstraintStr << std::endl;
+#endif
+
+      std::smatch sm; 
+      std::regex_match (outputConstraintStr,sm,e);
+#if DEBUG_VISIT_DECL
+        std::cout << "string literal: "<< outputConstraintStr  <<"  with " << sm.size() << " matches\n";
+        if(sm.size())
+          std::cout << "the matches were: ";
+        for (unsigned i=0; i<sm.size(); ++i) {
+          std::cout << "[" << sm[i] << "] \n";
+        }
+        if(sm.size())
+          std::cout << std::endl;
+#endif
+
+      SgAsmOp::asm_operand_constraint_enum constraint = (SgAsmOp::asm_operand_constraint_enum) SgAsmOp::e_any;
+      SgAsmOp::asm_operand_modifier_enum   modifiers  = (SgAsmOp::asm_operand_modifier_enum)   SgAsmOp::e_unknown;
+      SgAsmOp* sageAsmOp = new SgAsmOp(constraint,modifiers,outputExpr);
+      outputExpr->set_parent(sageAsmOp);
+
+      sageAsmOp->set_recordRawAsmOperandDescriptions(false);
+
+      // set as an output AsmOp
+      sageAsmOp->set_isOutputOperand (true);
+
+      ROSE_ASSERT(sm.size() == 4);
+
+      unsigned modifierVal = static_cast<int>(modifiers);
+      if(!sm[1].str().empty())
+        modifierVal += static_cast<int>(get_sgAsmOperandModifier(sm[1].str()));
+
+      if(!sm[2].str().empty())
+        modifierVal += static_cast<int>(get_sgAsmOperandModifier(sm[2].str()));
+     
+      sageAsmOp->set_modifiers(static_cast<SgAsmOp::asm_operand_modifier_enum>(modifierVal));
+
+      // set constraint
+      sageAsmOp->set_constraint(get_sgAsmOperandConstraint(sm[3].str()));
+      sageAsmOp->set_constraintString(sm[3]);
+
+
+      Sg_File_Info * start_fi = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
+      start_fi->setCompilerGenerated();
+      sageAsmOp->set_startOfConstruct(start_fi);
+
+      Sg_File_Info * end_fi   = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
+      end_fi->setCompilerGenerated();
+      sageAsmOp->set_endOfConstruct(end_fi);
+      
+      asmStmt->get_operands().push_back(sageAsmOp);
+      sageAsmOp->set_parent(asmStmt);
+    }
+
+    // process input
+    for(unsigned i=0; i < asmNumInput; ++i)
+    {
+      SgNode* tmp_node = Traverse(gcc_asm_stmt->getInputExpr(i));
+      SgExpression * inputExpr = isSgExpression(tmp_node);
+      ROSE_ASSERT(inputExpr != NULL);
+
+      std::string inputConstraintStr = static_cast<std::string>(gcc_asm_stmt->getInputConstraint(i));
+// Clang's constraint is equivalent to ROSE's modifier + operand constraints 
+#if DEBUG_VISIT_DECL
+      std::cerr << "AsmOp input constraint["<< i<<  "]: " << inputConstraintStr << std::endl;
+#endif
+
+      std::smatch sm; 
+      std::regex_match (inputConstraintStr,sm,e);
+#if DEBUG_VISIT_DECL
+        std::cout << "string literal: "<< inputConstraintStr  <<"  with " << sm.size() << " matches\n";
+        if(sm.size())
+          std::cout << "the matches were: ";
+        for (unsigned i=0; i<sm.size(); ++i) {
+          std::cout << "[" << sm[i] << "] \n";
+        }
+        if(sm.size())
+          std::cout << std::endl;
+#endif
+
+      SgAsmOp::asm_operand_constraint_enum constraint = (SgAsmOp::asm_operand_constraint_enum) SgAsmOp::e_any;
+      SgAsmOp::asm_operand_modifier_enum   modifiers  = (SgAsmOp::asm_operand_modifier_enum)   SgAsmOp::e_unknown;
+      SgAsmOp* sageAsmOp = new SgAsmOp(constraint,modifiers,inputExpr);
+      inputExpr->set_parent(sageAsmOp);
+
+      sageAsmOp->set_recordRawAsmOperandDescriptions(false);
+
+      // set as an input AsmOp
+      sageAsmOp->set_isOutputOperand (false);
+
+      ROSE_ASSERT(sm.size() == 4);
+
+      unsigned modifierVal = static_cast<int>(modifiers);
+
+      // "+" and "=" should not be part of the input AsmOp.  Skip checking sm[1] for the inputs.
+
+//      if(!sm[1].str().empty())
+//        modifierVal += static_cast<int>(get_sgAsmOperandModifier(sm[1].str()));
+//        modifiers &= get_sgAsmOperandModifier(sm[1].str());
+
+      if(!sm[2].str().empty())
+        modifierVal += static_cast<int>(get_sgAsmOperandModifier(sm[2].str()));
+     
+      sageAsmOp->set_modifiers(static_cast<SgAsmOp::asm_operand_modifier_enum>(modifierVal));
+
+      // set constraint
+      sageAsmOp->set_constraint(get_sgAsmOperandConstraint(sm[3].str()));
+      sageAsmOp->set_constraintString(sm[3]);
+
+
+      Sg_File_Info * start_fi = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
+      start_fi->setCompilerGenerated();
+      sageAsmOp->set_startOfConstruct(start_fi);
+
+      Sg_File_Info * end_fi   = Sg_File_Info::generateDefaultFileInfoForCompilerGeneratedNode();
+      end_fi->setCompilerGenerated();
+      sageAsmOp->set_endOfConstruct(end_fi);
+      
+      asmStmt->get_operands().push_back(sageAsmOp);
+      sageAsmOp->set_parent(asmStmt);
+    }
+    *node = asmStmt;
+
     return VisitStmt(gcc_asm_stmt, node) && res;
 }
 
