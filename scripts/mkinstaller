@@ -27,21 +27,21 @@ $foundInDir  = "";
 
 $mkinstaller_ver_major = "2";
 $mkinstaller_ver_minor = "6";
-$mkinstaller_ver_build = "11";
+$mkinstaller_ver_build = "18";
 $mkinstaller_ver_patch = "1";
-$mkinstaller_ver_name  = "2.6.11.1";
-$mkinstaller_ver_time  = "11Aug2021,14:28:15z";
-$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.11.1 - 11Aug2021,14:28:15z";
+$mkinstaller_ver_name  = "2.6.18.1";
+$mkinstaller_ver_time  = "18Mar2022,00:48:03z";
+$mkinstaller_ver_id    = "@(#)mkinstaller 2.6.18.1 - 18Mar2022,00:48:03z";
 
 # MyUniqueFileId: d34be5e4-1cfc-49b6-d988-25ab878c795f
 
 $perl_library_ver_major = "2";
 $perl_library_ver_minor = "0";
-$perl_library_ver_build = "6";
-$perl_library_ver_patch = "1";
-$perl_library_ver_name  = "2.0.6.1";
-$perl_library_ver_time  = "19Jun2021,02:05:59z";
-$perl_library_ver_id    = "@(#)perl_library 2.0.6.1 - 19Jun2021,02:05:59z";
+$perl_library_ver_build = "10";
+$perl_library_ver_patch = "";
+$perl_library_ver_name  = "2.0.10";
+$perl_library_ver_time  = " 8Feb2022,18:05:49z";
+$perl_library_ver_id    = "@(#)perl_library 2.0.10 -  8Feb2022,18:05:49z";
 
 #{------------------------------------------------------------------------------
 #
@@ -100,29 +100,29 @@ $TBG_LIB_PFX    = "lib";
 #
 #---------------------------------------
 
-$TBG_PREFIX     = "/net/wci-home.llnl.gov/vol/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4";
-$TBG_BinDir     = "/net/wci-home.llnl.gov/vol/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/bin";
-$TBG_HtmlDir    = "/net/wci-home.llnl.gov/vol/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html";
-$TBG_Html1Dir   = "/net/wci-home.llnl.gov/vol/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html1";
-$TBG_Html2Dir   = "/net/wci-home.llnl.gov/vol/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html2";
-$TBG_Html3Dir   = "/net/wci-home.llnl.gov/vol/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html3";
-$TBG_Html4Dir   = "/net/wci-home.llnl.gov/vol/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html4";
-$TBG_Html5Dir   = "/net/wci-home.llnl.gov/vol/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html5";
-$TBG_Html6Dir   = "/net/wci-home.llnl.gov/vol/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html6";
-$TBG_Html7Dir   = "/net/wci-home.llnl.gov/vol/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html7";
-$TBG_Html8Dir   = "/net/wci-home.llnl.gov/vol/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html8";
-$TBG_IncludeDir = "/net/wci-home.llnl.gov/vol/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/include";
-$TBG_LibDir     = "/net/wci-home.llnl.gov/vol/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/lib";
-$TBG_ManDir     = "/net/wci-home.llnl.gov/vol/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man";
-$TBG_Man1Dir    = "/net/wci-home.llnl.gov/vol/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man1";
-$TBG_Man2Dir    = "/net/wci-home.llnl.gov/vol/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man2";
-$TBG_Man3Dir    = "/net/wci-home.llnl.gov/vol/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man3";
-$TBG_Man4Dir    = "/net/wci-home.llnl.gov/vol/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man4";
-$TBG_Man5Dir    = "/net/wci-home.llnl.gov/vol/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man5";
-$TBG_Man6Dir    = "/net/wci-home.llnl.gov/vol/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man6";
-$TBG_Man7Dir    = "/net/wci-home.llnl.gov/vol/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man7";
-$TBG_Man8Dir    = "/net/wci-home.llnl.gov/vol/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man8";
-$TBG_SrcDir     = "/net/wci-home.llnl.gov/vol/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/src";
+$TBG_PREFIX     = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4";
+$TBG_BinDir     = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/bin";
+$TBG_HtmlDir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html";
+$TBG_Html1Dir   = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html1";
+$TBG_Html2Dir   = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html2";
+$TBG_Html3Dir   = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html3";
+$TBG_Html4Dir   = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html4";
+$TBG_Html5Dir   = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html5";
+$TBG_Html6Dir   = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html6";
+$TBG_Html7Dir   = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html7";
+$TBG_Html8Dir   = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/html/html8";
+$TBG_IncludeDir = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/include";
+$TBG_LibDir     = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/lib";
+$TBG_ManDir     = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man";
+$TBG_Man1Dir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man1";
+$TBG_Man2Dir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man2";
+$TBG_Man3Dir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man3";
+$TBG_Man4Dir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man4";
+$TBG_Man5Dir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man5";
+$TBG_Man6Dir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man6";
+$TBG_Man7Dir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man7";
+$TBG_Man8Dir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/man/man8";
+$TBG_SrcDir     = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/src";
 
 #----------------------------------------
 #
@@ -130,12 +130,12 @@ $TBG_SrcDir     = "/net/wci-home.llnl.gov/vol/home/reus1/opt/totebag/x86_64_linu
 #
 #----------------------------------------
 
-$TBG_DataDir    = "/net/wci-home.llnl.gov/vol/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/data";
-$TBG_DocDir     = "/net/wci-home.llnl.gov/vol/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/doc";
-$TBG_DocTextDir = "/net/wci-home.llnl.gov/vol/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/doc/text";
-$TBG_FontDir    = "/net/wci-home.llnl.gov/vol/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/fonts";
-$TBG_IconDir    = "/net/wci-home.llnl.gov/vol/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/icons";
-$TBG_ImageDir   = "/net/wci-home.llnl.gov/vol/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/images";
+$TBG_DataDir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/data";
+$TBG_DocDir     = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/doc";
+$TBG_DocTextDir = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/doc/text";
+$TBG_FontDir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/fonts";
+$TBG_IconDir    = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/icons";
+$TBG_ImageDir   = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4/images";
 $TBG_WWWDir     = "";
 
 #}------------------------------------------------------------------------------
@@ -16371,15 +16371,15 @@ sub pKit_basename {
 #
 #  see: totebag/src/pKit/checkDebugEnvVars.psub
 #
-#  Dated: 12Oct2020 pKit_checkDebugEnvVars
+#  Dated: 29Sep2021 pKit_checkDebugEnvVars
 #
 #----------------------------------------------------------------------------
 
-$debugging          = 0;    # These are "globals" (boo hiss...)
-$debugging_app      = 0;
+$debugging          = 0;    # These are "globals" (boo hiss...). Note that
+$debugging_app      = 0;    # they lack a pKit_ prefix.
 $dbgOutVia          = "";
 $dbgOutToPathname   = "";
-# DBGOUT            = ...
+# DBGOUT            = ...   # Don't know how to "declare" a FileHandle
 
 sub pKit_checkDebugEnvVars {
    my $scriptName = shift;
@@ -18209,6 +18209,8 @@ EOF
 #                   "std"       DDMMMYYYY hh:mm:ss     similar to: zulu --revision
 #                   "std-at"    DDMMMYYYY at hh:mm:ss  similar to: zulu --revision but with "at"
 #                   "std-comma" DDMMMYYYY,hh:mm:ss     similar to: zulu --revision but with a comma
+#                   "std-dash"  DDMMMYYYY,hh:mm:ss     similar to: zulu --revision but with a dash
+#                   "std-file"  YYYY.MM.DD-hh.mm.ss    similar to: zulu -v but with dots and a dash
 #                   "verbose"   YYYY-MM-DD,hh:mm:ss    similar to: zulu -v
 #
 #     asLocal    A "boolean", if 1 then the output string is to be in local
@@ -18217,7 +18219,7 @@ EOF
 #
 #  see: totebag/src/pKit/convertTimeToDateTime.psub
 #
-#  Dated: 01Jul2020 pKit_convertTimeToDateTime
+#  Dated: 20Sep2021 pKit_convertTimeToDateTime
 #
 #-------------------------------------------------------------------------------
 
@@ -18295,6 +18297,12 @@ sub pKit_convertTimeToDateTime {
    }
    elsif ($format =~ /^std-comma$/i) {
       $result  = sprintf "%02d%3s%04d,%02d:%02d:%02d$tz", $mday,$theMonth,$theYear, $hour,$min,$sec;
+   }
+   elsif ($format =~ /^std-dash$/i) {
+      $result  = sprintf "%02d%3s%04d-%02d:%02d:%02d$tz", $mday,$theMonth,$theYear, $hour,$min,$sec;
+   }
+   elsif ($format =~ /^std-file$/i) {
+      $result  = sprintf "%04d-%02d-%02d,%02d:%02d:%02d$tz", $theYear,$mon+1,$mday, $hour,$min,$sec;
    }
    elsif ($format =~ /^verbose$/i) {
       $result  = sprintf "%04d-%02d-%02d,%02d:%02d:%02d$tz", $theYear,$mon+1,$mday, $hour,$min,$sec;
@@ -18756,13 +18764,13 @@ sub pKit_dumpTextfileToHandle {
 #
 #  see: totebag/src/pKit/dumpTextfileToSTDERR.psub
 #
-#  Dated: 01Jul2020 pKit_dumpTextfileToSTDERR
+#  Dated: 29Sep2021 pKit_dumpTextfileToSTDERR
 #
 #-------------------------------------------------------------------------------
 
 sub pKit_dumpTextfileToSTDERR {
-   my $pathname  = shift;
-   my $prefix    = shift;
+   my $pathname = shift;
+   my $prefix   = shift;
    return pKit_dumpTextfileToHandle(*STDERR,$pathname,$prefix);
 }
 
@@ -20746,7 +20754,7 @@ sub pKit_getTotebagId {
    #
    #---------------------------------------
 
-   my $TBG_PrefixDir  = "/net/wci-home.llnl.gov/vol/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4";
+   my $TBG_PrefixDir  = "/home/reus1/opt/totebag/x86_64_linux3.10.rhel7x.gnu4";
 
    #}--------------------------------------
 
@@ -20780,7 +20788,7 @@ sub pKit_getTotebagId {
    #
    #---------------------------------------
 
-   my $TBG_uniqueId = "4d4bfc2805736fdabf6d6e0402322f63b34c54d68259801d8325cd297adedb25";
+   my $TBG_uniqueId = "cbaf8f4292c5d1531fe86f7cf52dc8e9e989a46e88691f33da948b4063f178bb";
 
    #}--------------------------------------
 
@@ -20830,7 +20838,7 @@ sub pKit_getWorkingDirectory {
 #
 #  Get a reasonable type name for the hardware.
 #
-#  COllect, map, and return the hardware type. Mapping the string reported
+#  Collect, map, and return the hardware type. Mapping the string reported
 #  by [uname -m] to something more reasonable...
 #
 #     UNIX-like (uses uname)
@@ -20872,7 +20880,7 @@ sub pKit_getWorkingDirectory {
 #
 #  see: totebag/src/pKit/idTheHardware.psub
 #
-#  Dated: 04Jul2020 pKit_idTheHardware
+#  Dated: 29Sep2021 pKit_idTheHardware
 #
 #-------------------------------------------------------------------------------
 
@@ -25497,7 +25505,7 @@ EOF1
    |                           \%0D\%0A
    |                           Replace this with your message, provide as much detail as you can.\%0D\%0A
    |                    ">totebagware.bugs
-   |            </a> with questions. <br>
+   |            </a> to report problems. <br>
    |            <br>
    |            <a href="mailto:totebagware.more\@gmail.com
    |                     ?subject=Enhance: mkinstaller -- ...
@@ -25509,7 +25517,7 @@ EOF1
    |                           \%0D\%0A
    |                           Replace this with your message, provide as much detail as you can.\%0D\%0A
    |                    ">totebagware.more
-   |            </a> with questions. <br>
+   |            </a> to request enhancements. <br>
    |            <br>
    |         </blockquote>
    |         Be sure to provide as much information as possible.
