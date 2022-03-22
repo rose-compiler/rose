@@ -381,6 +381,9 @@ ROSE_DLL_API SgTypeMatrix* buildMatrixType();
 //! Build a tuple of types. Useful for a function returning multiple variables of different types
 ROSE_DLL_API SgTypeTuple* buildTupleType(SgType *t1 = NULL, SgType *t2 = NULL, SgType *t3 = NULL, SgType *t4 = NULL, SgType *t5 = NULL, SgType *t6 = NULL, SgType *t7 = NULL, SgType *t8 = NULL, SgType *t9 = NULL, SgType *t10 = NULL);
 
+//! Build a non real type used for template parameter. Internally a SgNorealDecl is also built.
+ROSE_DLL_API SgNonrealType* buildNonrealType(const SgName & name);
+
 //@}
 
 //--------------------------------------------------------------
@@ -1382,6 +1385,9 @@ SgActualArgumentExpression* buildActualArgumentExpression_nfi(SgName arg_name, S
 ROSE_DLL_API SgDeleteExp* buildDeleteExp(SgExpression *target, bool is_array = false, bool need_global_specifier = false, SgFunctionDeclaration *deleteOperatorDeclaration = NULL);
 SgDeleteExp* buildDeleteExp_nfi(SgExpression *target, bool is_array = false, bool need_global_specifier = false, SgFunctionDeclaration *deleteOperatorDeclaration = NULL);
 
+//! Build a scope statement. Used to build SgNonrealDecl and SgNonrealType
+SgDeclarationScope* buildDeclarationScope();
+
 //! Build a class definition scope statement
 // SgClassDefinition* buildClassDefinition(SgClassDeclaration *d = NULL);
 ROSE_DLL_API SgClassDefinition* buildClassDefinition(SgClassDeclaration *d = NULL, bool buildTemplateInstantiation = false);
@@ -1401,9 +1407,11 @@ SgTemplateClassDefinition* buildTemplateClassDefinition(SgTemplateClassDeclarati
 ROSE_DLL_API SgClassDeclaration* buildNondefiningClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, bool buildTemplateInstantiation, SgTemplateArgumentPtrList* templateArgumentsList);
 
 // DQ (8/11/2013): We need to hand in both the SgTemplateParameterPtrList and the SgTemplateArgumentPtrList because class templates can be partially specialized.
-// DQ (11/29/2011): Adding template declaration support to the AST.
-// SgTemplateClassDeclaration* buildNondefiningTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope);
+//! DQ (11/29/2011): Adding template declaration support to the AST.
 ROSE_DLL_API SgTemplateClassDeclaration* buildNondefiningTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList);
+
+//!buildNondefiningTemplateClassDeclaration()
+ROSE_DLL_API SgTemplateClassDeclaration* buildNondefiningTemplateClassDeclaration(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList);
 
 //! DQ (11/7/2009): Added functions to build C++ class.
 ROSE_DLL_API SgClassDeclaration* buildNondefiningClassDeclaration ( SgName name, SgScopeStatement* scope );
@@ -1446,8 +1454,10 @@ ROSE_DLL_API SgClassDeclaration* buildClassDeclaration_nfi(const SgName& name, S
 
 // DQ (8/11/2013): I think that the specification of both SgTemplateParameterPtrList and SgTemplateArgumentPtrList is redundant with the nonDefiningDecl (which is a required parameter).
 // DQ (11/19/2011): Added to support template class declaration using EDG 4.x support (to support the template declarations directly in the AST).
-// SgTemplateClassDeclaration* buildTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateClassDeclaration* nonDefiningDecl );
 ROSE_DLL_API SgTemplateClassDeclaration* buildTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateClassDeclaration* nonDefiningDecl,
+                                                                           SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList );
+//! Build tempplate class declaration
+ROSE_DLL_API SgTemplateClassDeclaration* buildTemplateClassDeclaration(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateClassDeclaration* nonDefiningDecl,
                                                                            SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList );
 
 //! Build a Jovial define directive declaration statement
