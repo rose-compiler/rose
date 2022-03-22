@@ -11945,6 +11945,17 @@ SgTypeTuple* SageBuilder::buildTupleType(SgType *t1, SgType *t2, SgType *t3, SgT
   return result;
 }
 
+//! Build a non real type used for template parameter. Internally a SgNorealDecl is also built.
+SgNonrealType* SageBuilder::buildNonrealType(const SgName & name)
+{
+
+  SgDeclarationScope * nrscope = buildDeclarationScope();
+  SgNonrealDecl * nrdecl = buildNonrealDecl (name, nrscope);
+  nrdecl->set_parent(nrscope);
+  nrdecl->set_is_template_param (true);
+  return nrdecl->get_type();
+}
+
 SgRangeExp* SageBuilder::buildRangeExp(SgExpression *start)
 {
   SgRangeExp *result = new SgRangeExp();
@@ -12272,7 +12283,15 @@ SageBuilder::buildNamespaceDefinition(SgNamespaceDeclarationStatement* d)
     return result;
   }
 
-
+//! Build a scope statement. Used to build SgNonrealDecl and SgNonrealType
+SgDeclarationScope* SageBuilder::buildDeclarationScope()
+{
+  SgDeclarationScope * nonreal_decl_scope = new SgDeclarationScope();
+  SageInterface::setSourcePosition(nonreal_decl_scope);
+  nonreal_decl_scope->get_startOfConstruct()->setCompilerGenerated();
+  nonreal_decl_scope->get_endOfConstruct()->setCompilerGenerated();
+  return nonreal_decl_scope;
+}
 
 SgClassDefinition*
 SageBuilder::buildClassDefinition(SgClassDeclaration *d/*= NULL*/, bool buildTemplateInstantiation )
@@ -15110,8 +15129,14 @@ SageBuilder::buildTemplateClassDefinition(SgTemplateClassDeclaration *d /*= NULL
     return result;
   }
 
+SgTemplateClassDeclaration*
+SageBuilder::buildNondefiningTemplateClassDeclaration(const SgName& XXX_name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList )
+{
+  SgTemplateClassDeclaration* res = buildNondefiningTemplateClassDeclaration_nfi (XXX_name, kind, scope, templateParameterList, templateSpecializationArgumentList);
+  setSourcePositionForTransformation(res);
+  return res;
+}
 
-// SgTemplateClassDeclaration * SageBuilder::buildTemplateClassDeclaration_nfi(SgName & name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateClassDeclaration* nonDefiningDecl )
 // SgTemplateClassDeclaration * SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope )
 SgTemplateClassDeclaration*
 SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList )
@@ -15470,8 +15495,15 @@ SageBuilder::buildNondefiningTemplateClassDeclaration_nfi(const SgName& XXX_name
      return nondefdecl;
    }
 
-// SgTemplateClassDeclaration * SageBuilder::buildTemplateClassDeclaration_nfi(SgName & name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateClassDeclaration* nonDefiningDecl )
-// SgTemplateClassDeclaration * SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateClassDeclaration* nonDefiningDecl )
+SgTemplateClassDeclaration *
+SageBuilder::buildTemplateClassDeclaration(const SgName& XXX_name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateClassDeclaration* nonDefiningDecl,
+                                               SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList )
+{
+  SgTemplateClassDeclaration * res = buildTemplateClassDeclaration_nfi (XXX_name, kind, scope, nonDefiningDecl, templateParameterList, templateSpecializationArgumentList);
+  setSourcePositionForTransformation (res);
+  return res; 
+}
+
 SgTemplateClassDeclaration *
 SageBuilder::buildTemplateClassDeclaration_nfi(const SgName& XXX_name, SgClassDeclaration::class_types kind, SgScopeStatement* scope, SgTemplateClassDeclaration* nonDefiningDecl,
                                                SgTemplateParameterPtrList* templateParameterList, SgTemplateArgumentPtrList* templateSpecializationArgumentList )
