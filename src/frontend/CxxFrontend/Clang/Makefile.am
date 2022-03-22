@@ -23,7 +23,8 @@ libroseClangFrontend_la_SOURCES      = \
   clang-to-dot.cpp \
   clang-to-dot-decl.cpp \
   clang-to-dot-stmt.cpp \
-  clang-to-dot-type.cpp 
+  clang-to-dot-type.cpp \ 
+  clang-to-rose-support.cpp 
 libroseClangFrontend_la_LDFLAGS      = $(CLANG_LDFLAGS)
 libroseClangFrontend_la_CXXFLAGS     = $(CLANG_CXXFLAGS)
 
