@@ -66,7 +66,6 @@ void
 WorkerStatus::updateFileNow() {
     if (!workers_.empty() && lseek(fd_, 0, SEEK_SET) == 0) {
         const time_t now = time(nullptr);
-        const auto tm = *std::localtime(&now);
 
         time_t earliestChange = workers_[0].stateChange;
         for (size_t i = 1; i < workers_.size(); ++i)
@@ -76,7 +75,7 @@ WorkerStatus::updateFileNow() {
         std::ostringstream key;
         key <<"Status updated "
 #if defined(__GNUC__) && __GNUC__ >= 5
-            <<std::put_time(&tm, "%Y-%m-%d %H:%M:%S %Z") <<"\n"
+            <<std::put_time(std::localtime(&now), "%Y-%m-%d %H:%M:%S %Z") <<"\n"
 #else // GCC-4 doesn't fully support C++11, so just say something generic. GCC-4 is used by RHEL-6 which is no longer supported anyway.
             <<" some time ago (sorry, not a C++11 compiler)\n"
 #endif
