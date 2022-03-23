@@ -2012,6 +2012,13 @@ unparse_operand_constraint (SgAsmOp::asm_operand_constraint_enum constraint)
      static char asm_operand_constraint_letters[(int)SgAsmOp::e_last + 1] = 
    {
   /* aoc_invalid */             '@',
+  /* aoc_end_of_constraint */   ',',
+  /* aoc_mod_earlyclobber */    '&',
+  /* aoc_mod_commutative_ops */ '%',
+  /* aoc_mod_ignore */          '#',
+  /* aoc_mod_ignore_char */     '*',
+  /* aoc_mod_disparage_slightly */ '?',
+  /* aoc_mod_disparage_severely */ '!',
   /* aoc_any */                 'X',
   /* aoc_general */             'g',
   /* aoc_match_0 */             '0',
@@ -2027,6 +2034,7 @@ unparse_operand_constraint (SgAsmOp::asm_operand_constraint_enum constraint)
   /* aoc_reg_integer */         'r',
   /* aoc_reg_float */           'f',
   /* aoc_mem_any */             'm',
+  /* aoc_mem_load */            'p',
   /* aoc_mem_offset */          'o',
   /* aoc_mem_nonoffset */       'V',
   /* aoc_mem_autoinc */         '>',
@@ -2047,6 +2055,7 @@ unparse_operand_constraint (SgAsmOp::asm_operand_constraint_enum constraint)
   // DQ (8/10/2006): Change case of register name, but I'm unclear if
   // this required for any others (OK for GNU, but required for Intel).
   /* aoc_reg_q */               'q',
+  /* aoc_reg_Q */               'Q',
   /* aoc_reg_ad */              'A',
   /* aoc_reg_float_tos */       't',
   /* aoc_reg_float_second */    'u',
@@ -2134,6 +2143,11 @@ Unparse_ExprStmt::unparse_register_name (SgInitializedName::asm_register_name_en
   /* register_flags */   "flags",
   /* register_fpsr */    "fpsr",
   /* register_dirflag */ "dirflag",
+  /* register_f16 */     "xmm16",
+  /* register_f17 */     "xmm17",
+  /* register_f18 */     "xmm18",
+  /* register_f19 */     "xmm19",
+  /* register_f20 */     "xmm20",
   /* e_unrecognized_register */ "unrecognized",
   /* e_last_register */    "last"
    };
