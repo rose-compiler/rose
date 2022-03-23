@@ -9619,15 +9619,30 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef DOCUMENTATION
         /** Property: Entry.
          *
-         *  Returns constant pool entry (temporary, should be list).
+         *  Returns constant pool entry at given index
          *
+         *  Index starts at one.
          * @{ */
-        SgAsmConstantPoolEntry* get_entry() const;
-        void set_entry(SgAsmConstantPoolEntry*);
+        SgAsmConstantPoolEntry* get_entry(size_t index) const;
         /** @} */
 #else
         AsmJvmConstantPool.setDataPrototype("SgAsmJvmConstantPoolEntry*", "entry", "= nullptr",
-                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+                                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: List of constant pool entries.
+         *
+         *  This property points to an AST node that contains the list rather than being a list directly because of limitations
+         *  of ROSETTA.
+         *
+         * @{ */
+        SgAsmJvmConstantPoolEntryList* get_entries() const;
+        void set_entries(SgAsmJvmConstantPoolEntryList*);
+        /** @} */
+#else
+        AsmJvmConstantPool.setDataPrototype("SgAsmJvmConstantPoolEntryList*", "entries", "= nullptr",
+                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
 
         DECLARE_OTHERS(AsmJvmConstantPool);
@@ -9663,6 +9678,51 @@ void Grammar::setUpBinaryInstructions() {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    DECLARE_LEAF_CLASS(AsmJvmConstantPoolEntryList);
+    IS_SERIALIZABLE(AsmJvmConstantPoolEntryList);
+
+#ifdef DOCUMENTATION
+    /** List of JVM constant pool entries.
+     *
+     *  The only purpose of this node is to hold a list which, due to ROSETTA limitations, cannot be contained in the objects
+     *  that actually need it. */
+    class SgAsmJvmConstantPoolEntryList: public SgAsmNode {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: List of entries.
+         *
+         * @{ */
+        const SgAsmJvmConstantPoolEntryPtrList& get_entries() const;
+        void set_entries(const SgAsmJvmConstantPoolEntryPtrList&);
+        /** @} */
+#else
+        AsmJvmConstantPoolEntryList.setDataPrototype("SgAsmJvmConstantPoolEntryPtrList", "entries", "",
+                                                NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL,
+                                                NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmJvmConstantPoolEntryList);
+#if defined(SgAsmJvmConstantPoolEntryList_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
+            s & BOOST_SERIALIZATION_NVP(p_entries);
+        }
+#endif
+#endif // SgAsmJvmConstantPoolEntryList_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     /*************************************************************************************************************************
      *                                         JVM Constant Pool Entry
      *************************************************************************************************************************/
@@ -9694,6 +9754,53 @@ void Grammar::setUpBinaryInstructions() {
         AsmJvmConstantPoolEntry.setDataPrototype("SgAsmJvmConstantPoolEntry::ConstantPoolKind", "tag", "= SgAsmJvmConstantPoolEntry::ILLEGAL",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
+
+#ifdef DOCUMENTATION
+        /** Properties: Member variables of entries in the constant pool
+         *
+         *    uint32_t bytes
+         *    uint32_t hi_bytes
+         *    uint32_t low_bytes
+         *    uint16_t bootstrap_method_attr_index;
+         *    uint16_t class_index
+         *    uint16_t descriptor_index
+         *    uint16_t name_index
+         *    uint16_t name_and_type_index
+         *    uint16_t reference_index
+         *    uint8_t  reference_kind
+         *    uint16_t string_index
+         *    uint16_t length
+         *    uint8_t* utf8_bytes (ROSE type used is "const char*"
+         */
+#else
+        AsmJvmConstantPoolEntry.setDataPrototype("uint32_t", "bytes", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+        AsmJvmConstantPoolEntry.setDataPrototype("uint32_t", "hi_bytes", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+        AsmJvmConstantPoolEntry.setDataPrototype("uint32_t", "low_bytes", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+        AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "bootstrap_method_attr_index", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+        AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "class_index", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+        AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "descriptor_index", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+        AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "name_index", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+        AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "name_and_type_index", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+        AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "reference_index", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+        AsmJvmConstantPoolEntry.setDataPrototype("uint8_t",  "reference_kind", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+        AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "string_index", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+        AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "length", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+        AsmJvmConstantPoolEntry.setDataPrototype("const char*", "utf8_bytes", "= nullptr",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
 
         DECLARE_OTHERS(AsmJvmConstantPoolEntry);
 #if defined(SgAsmJvmConstantPoolEntry_OTHERS) || defined(DOCUMENTATION)
@@ -9740,11 +9847,37 @@ void Grammar::setUpBinaryInstructions() {
             uint16_t name_index;
         };
 
-        /** 4.4.2 CONSTANT_Methodref_info table entry. All fields are big endian. */
+        /** 4.4.2 CONSTANT_String_info table entry. All fields are big endian. */
+        struct CONSTANT_String_info {
+            uint8_t tag;
+            uint16_t string_index;
+        };
+
+        /** 4.4.3 CONSTANT_Methodref_info table entry. All fields are big endian. */
         struct CONSTANT_Methodref_info {
             uint8_t tag;
             uint16_t class_index;
             uint16_t name_and_type_index;
+        };
+
+        /** 4.4.4 CONSTANT_Integer_info table entry. All fields are big endian. */
+        struct CONSTANT_Integer_info {
+            uint8_t tag;
+            uint32_t bytes;
+        };
+        struct CONSTANT_Float_info {
+            uint8_t tag;
+            uint32_t bytes;
+        };
+        struct CONSTANT_Long_info {
+            uint8_t tag;
+            uint32_t hi_bytes;
+            uint32_t low_bytes;
+        };
+        struct CONSTANT_Double_info {
+            uint8_t tag;
+            uint32_t hi_bytes;
+            uint32_t low_bytes;
         };
 
         /** 4.4.6 CONSTANT_NameAndType_info table entry. All fields are big endian. */
@@ -9761,16 +9894,58 @@ void Grammar::setUpBinaryInstructions() {
             uint8_t* bytes;
         };
 
+        /** 4.4.8 CONSTANT_MethodHandle_info table entry. All fields are big endian. */
+        struct CONSTANT_MethodHandle_info {
+            uint8_t tag;
+            uint8_t reference_kind;
+            uint16_t reference_index;
+        };
+
+        /** 4.4.9 CONSTANT_MethodType_info table entry. All fields are big endian. */
+        struct CONSTANT_MethodType_info {
+            uint8_t tag;
+            uint16_t descriptor_index;
+        };
+
+        /** 4.4.10 CONSTANT_Dynamic_info table entry. All fields are big endian. */
+        struct CONSTANT_Dynamic_info {
+            uint8_t tag;
+            uint16_t bootstrap_method_attr_index;
+            uint16_t name_and_type_index;
+        };
+        struct CONSTANT_InvokeDynamic_info {
+            uint8_t tag;
+            uint16_t bootstrap_method_attr_index;
+            uint16_t name_and_type_index;
+        };
+
+        /** 4.4.11 CONSTANT_Module_info table entry. All fields are big endian. */
+        struct CONSTANT_Module_info {
+            uint8_t tag;
+            uint16_t name_index;
+        };
+
+        /** 4.4.12 CONSTANT_Package_info table entry. All fields are big endian. */
+        struct CONSTANT_Package_info {
+            uint8_t tag;
+            uint16_t name_index;
+        };
+
         /** Constructor creating an object ready to be initialized via parse(). */
         explicit SgAsmJvmConstantPoolEntry(SgAsmJvmConstantPoolEntry::ConstantPoolKind tag)
-            : p_tag{tag} {
+          : p_tag{tag}, p_name_index{0}, p_class_index{0}, p_name_and_type_index{0}, p_length{0},
+            p_utf8_bytes{nullptr}
+        {
         }
 
-        /** Initialize object by parsing the file.
+        /** Initialize a constant pool entry by parsing the file.
          *
          * @{ */
-        void parse();
+        SgAsmJvmConstantPoolEntry* parse(SgAsmJvmConstantPool* pool);
         /** @} */
+
+        /** Print some debugging information */
+        void dump(std::ostream &os, int index);
 
         /** Convert constant pool entry kind to a string */
         static std::string to_string(SgAsmJvmConstantPoolEntry::ConstantPoolKind);
@@ -16977,7 +17152,8 @@ void Grammar::setUpBinaryInstructions() {
 
     NEW_NONTERMINAL_MACRO(AsmNode,
                           AsmStatement | AsmExpression | AsmInterpretation | AsmOperandList | AsmType |
-                          AsmExecutableFileFormat | AsmInterpretationList | AsmGenericFileList | AsmJvmConstantPoolEntry,
+                          AsmExecutableFileFormat | AsmInterpretationList | AsmGenericFileList |
+                          AsmJvmConstantPoolEntry | AsmJvmConstantPoolEntryList,
                           "AsmNode", "AsmNodeTag", false);
     AsmNode.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmNode);

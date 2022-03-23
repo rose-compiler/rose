@@ -6,121 +6,274 @@
 #include <Rose/Diagnostics.h>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/* Should go in JvmConstantPool.h or JvmConstantPoolEntries.h? */
-
-/* Specific formats for constant_pool table entries. All fields are big endian. */
-// 4.4.1
-struct CONSTANT_Class_info : SgAsmJvmConstantPoolEntry {
-  uint16_t name_index;
-  CONSTANT_Class_info(SgAsmGenericHeader*);
-};
-
-// 4.4.2
-struct CONSTANT_Methodref_info : SgAsmJvmConstantPoolEntry {
-  uint16_t class_index;
-  uint16_t name_and_type_index;
-  CONSTANT_Methodref_info(SgAsmGenericHeader*);
-};
-
-// 4.4.6
-struct CONSTANT_NameAndType_info : SgAsmJvmConstantPoolEntry {
-  uint16_t name_index;
-  uint16_t descriptor_index;
-  CONSTANT_NameAndType_info(SgAsmGenericHeader*);
-};
-
-// 4.4.7
-struct CONSTANT_Utf8_info : SgAsmJvmConstantPoolEntry {
-  uint16_t length;
-  uint8_t* bytes;
-  CONSTANT_Utf8_info(SgAsmGenericHeader* h);
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 using namespace Rose::Diagnostics;
 using namespace ByteOrder;
 
-// 4.4.1
-CONSTANT_Class_info::CONSTANT_Class_info(SgAsmGenericHeader* h)
-  : SgAsmJvmConstantPoolEntry{CONSTANT_Class}
-{
-  auto offset = h->get_offset();
-  auto count = h->read_content(offset, &name_index, sizeof name_index);
-  if (2 != count) std::cout << "Bad CONSTANT_Class_info::name_index\n";
-  name_index = be_to_host(name_index);
-  offset += count;
+using PoolEntry = SgAsmJvmConstantPoolEntry;
 
-  std::cout << "CONSTANT_Class_info:" << name_index << std::endl;
-  h->set_offset(offset);
+std::string PoolEntry::to_string(PoolEntry::ConstantPoolKind kind)
+{
+  switch (kind) {
+    case PoolEntry::CONSTANT_Utf8:               return "CONSTANT_Utf8";
+    case PoolEntry::CONSTANT_Integer:            return "CONSTANT_Integer";
+    case PoolEntry::CONSTANT_Float:              return "CONSTANT_Float";
+    case PoolEntry::CONSTANT_Long:               return "CONSTANT_Long";
+    case PoolEntry::CONSTANT_Double:             return "CONSTANT_Double";
+    case PoolEntry::CONSTANT_Class:              return "CONSTANT_Class";
+    case PoolEntry::CONSTANT_String:             return "CONSTANT_String";
+    case PoolEntry::CONSTANT_Fieldref:           return "CONSTANT_Fieldref";
+    case PoolEntry::CONSTANT_Methodref:          return "CONSTANT_Methodref";
+    case PoolEntry::CONSTANT_InterfaceMethodref: return "CONSTANT_InterfaceMethodref";
+    case PoolEntry::CONSTANT_NameAndType:        return "CONSTANT_NameAndType";
+    case PoolEntry::CONSTANT_MethodHandle:       return "CONSTANT_MethodHandle";
+    case PoolEntry::CONSTANT_MethodType:         return "CONSTANT_MethodType";
+    case PoolEntry::CONSTANT_Dynamic:            return "CONSTANT_Dynamic";
+    case PoolEntry::CONSTANT_InvokeDynamic:      return "CONSTANT_InvokeDynamic";
+    case PoolEntry::CONSTANT_Module:             return "CONSTANT_Module";
+    case PoolEntry::CONSTANT_Package:            return "CONSTANT_Package";
+    default: return "Unknown constant pool kind";
+  }
 }
 
-CONSTANT_Methodref_info::CONSTANT_Methodref_info(SgAsmGenericHeader* h)
-  : SgAsmJvmConstantPoolEntry{CONSTANT_Methodref}
+std::string cp_tag(PoolEntry* entry)
 {
-  auto offset = h->get_offset();
-  auto count = h->read_content(offset, &class_index, sizeof class_index);
-  if (2 != count) std::cout << "Bad CONSTANT_Methodref_info::class_index\n";
-  class_index = be_to_host(class_index);
-  offset += count;
-
-  count = h->read_content(offset, &name_and_type_index, sizeof name_and_type_index);
-  if (2 != count) std::cout << "Bad CONSTANT_Methodref_info::name_and_type_index\n";
-  name_and_type_index = be_to_host(name_and_type_index);
-  offset += count;
-
-  std::cout << "CONSTANT_Methodref_info:" << class_index << ":" << name_and_type_index << std::endl;
-  h->set_offset(offset);
+  return PoolEntry::to_string(entry->get_tag());
 }
 
-// 4.4.6
-CONSTANT_NameAndType_info::CONSTANT_NameAndType_info(SgAsmGenericHeader* h)
-  : SgAsmJvmConstantPoolEntry{CONSTANT_NameAndType}, name_index{0}, descriptor_index{0}
+void PoolEntry::dump(std::ostream &os, int index)
 {
-  auto offset = h->get_offset();
+  os << index << ":" << cp_tag(this) << "_info";
 
-  /* name_index */
-  auto count = h->read_content(offset, &name_index, sizeof name_index);
-  if (2 != count) std::cout << "Bad CONSTANT_NameAndType_info::name_index\n";
-  name_index = be_to_host(name_index);
-  offset += count;
-
-  /* descriptor_index */
-  count = h->read_content(offset, &descriptor_index, sizeof descriptor_index);
-  if (2 != count) std::cout << "Bad CONSTANT_NameAndType_info::descriptor_index\n";
-  descriptor_index = be_to_host(descriptor_index);
-  offset += count;
-
-  std::cout << "CONSTANT_NameAndType_info:" << name_index << ":" << descriptor_index << std::endl;
-  h->set_offset(offset);
+  switch (get_tag()) {
+    case PoolEntry::CONSTANT_Utf8:
+      os << ":" << get_length();
+      os << ":" << std::string{get_utf8_bytes(), get_length()};
+      break;
+    case PoolEntry::CONSTANT_Integer:
+    case PoolEntry::CONSTANT_Float:
+      os << ":" << get_bytes();
+      break;
+    case PoolEntry::CONSTANT_Long:
+    case PoolEntry::CONSTANT_Double:
+      os << ":" << get_hi_bytes();
+      os << ":" << get_low_bytes();
+      break;
+    case PoolEntry::CONSTANT_Class:
+    case PoolEntry::CONSTANT_Module:
+    case PoolEntry::CONSTANT_Package:
+      os << ":" << get_name_index();
+      break;
+    case PoolEntry::CONSTANT_String:
+      os << ":" << get_string_index();
+      break;
+    case PoolEntry::CONSTANT_Fieldref:
+    case PoolEntry::CONSTANT_Methodref:
+    case PoolEntry::CONSTANT_InterfaceMethodref:
+      os << ":" << get_class_index();
+      os << ":" << get_name_and_type_index();
+      break;
+    case PoolEntry::CONSTANT_NameAndType:
+      os << ":" << get_name_index();
+      os << ":" << get_descriptor_index();
+      break;
+    case PoolEntry::CONSTANT_MethodHandle:
+      os << ":" << get_reference_kind();
+      os << ":" << get_reference_index();
+      break;
+    case PoolEntry::CONSTANT_MethodType:
+      os << ":" << get_descriptor_index();
+      break;
+    case PoolEntry::CONSTANT_Dynamic:
+    case PoolEntry::CONSTANT_InvokeDynamic:
+      os << ":" << get_bootstrap_method_attr_index();
+      os << ":" << get_name_and_type_index();
+      break;
+    default:
+      os << ":" <<  "Unknown tag";
+      break;
+  }
+  os << std::endl;
 }
 
-// 4.4.7
-CONSTANT_Utf8_info::CONSTANT_Utf8_info(SgAsmGenericHeader* h)
-  : SgAsmJvmConstantPoolEntry{CONSTANT_Utf8}, length{0}, bytes{nullptr}
+PoolEntry* PoolEntry::parse(SgAsmJvmConstantPool* pool)
 {
+  size_t count;
+  uint16_t name_index;
+  auto h{pool->get_header()};
   auto offset = h->get_offset();
 
-  /* length */
-  auto count = h->read_content(offset, &length, sizeof length);
-  if (2 != count) std::cout << "Bad CONSTANT_Utf8_info::length\n";
-  length = be_to_host(length);
-  offset += count;
+  switch (get_tag()) {
+    case PoolEntry::CONSTANT_Class: // 4.4.1  CONSTANT_Class_info table entry
+    case PoolEntry::CONSTANT_Module: // 4.4.11 CONSTANT_Module_info table entry
+    case PoolEntry::CONSTANT_Package: // 4.4.12 CONSTANT_Package_info table entry
+      /* name_index */
+      count = h->read_content(offset, &p_name_index, sizeof p_name_index);
+      if (2 != count) {
+        throw SgAsmJvmConstantPool::FormatError("Bad CONSTANT_{Class,Module,Package}_info::name_index");
+      }
+      p_name_index = be_to_host(p_name_index);
+      offset += count;
+      break;
 
-  /* bytes string */
-  bytes = new uint8_t[length+1]; // null terminated strings are easier to use
-  count = h->read_content(offset, bytes, length);
-  if (length != count) std::cout << "Bad CONSTANT_Utf8_info::bytes\n";
-  bytes[length] = '\0';
-  offset += count;
+    case PoolEntry::CONSTANT_String: // 4.4.2 CONSTANT_String_info table entry
+      /* string_index */
+      count = h->read_content(offset, &p_string_index, sizeof p_string_index);
+      if (2 != count) {
+        throw SgAsmJvmConstantPool::FormatError("Bad CONSTANT_String_info::string_index");
+      }
+      p_string_index = be_to_host(p_string_index);
+      offset += count;
+      break;
 
-  std::cout << "CONSTANT_Utf8_info:" << length << ":" << bytes << std::endl;
+    case PoolEntry::CONSTANT_Fieldref: // 4.4.3 CONSTANT_Fieldref_info table entry
+    case PoolEntry::CONSTANT_Methodref: // 4.4.3 CONSTANT_Methodref_info table entry
+    case PoolEntry::CONSTANT_InterfaceMethodref: // 4.4.3 CONSTANT_InterfeceMethodref_info table entry
+      /* class_index */
+      count = h->read_content(offset, &p_class_index, sizeof p_class_index);
+      if (2 != count) {
+        throw SgAsmJvmConstantPool::FormatError("Bad CONSTANT_{Field,Method,InterfaceMethod}ref_info::class_index");
+      }
+      p_class_index = be_to_host(p_class_index);
+      offset += count;
+      /* name_and_type_index */
+      count = h->read_content(offset, &p_name_and_type_index, sizeof p_name_and_type_index);
+      if (2 != count) {
+        throw SgAsmJvmConstantPool::FormatError("Bad CONSTANT_{Field,Method,InterfaceMethod}ref_info::name_and_type_index");
+      }
+      p_name_and_type_index = be_to_host(p_name_and_type_index);
+      offset += count;
+      break;
+
+    case PoolEntry::CONSTANT_Integer: // 4.4.4 CONSTANT_Integer_info table entry
+    case PoolEntry::CONSTANT_Float: // 4.4.4 CONSTANT_Float_info table entry
+      /* bytes */
+      count = h->read_content(offset, &p_bytes, sizeof p_bytes);
+      if (4 != count) {
+        throw SgAsmJvmConstantPool::FormatError("Bad CONSTANT_{Integer,Float}_info::bytes");
+      }
+      p_bytes = be_to_host(p_bytes);
+      offset += count;
+      break;
+
+    case PoolEntry::CONSTANT_Long: // 4.4.5 CONSTANT_Long_info table entry
+    case PoolEntry::CONSTANT_Double: // 4.4.5 CONSTANT_Double_info table entry
+      /* hi_bytes */
+      count = h->read_content(offset, &p_hi_bytes, sizeof p_hi_bytes);
+      if (4 != count) {
+        throw SgAsmJvmConstantPool::FormatError("Bad CONSTANT_{Integer,Float}_info::hi_bytes");
+      }
+      p_hi_bytes = be_to_host(p_hi_bytes);
+      offset += count;
+      /* low_bytes */
+      count = h->read_content(offset, &p_low_bytes, sizeof p_low_bytes);
+      if (4 != count) {
+        throw SgAsmJvmConstantPool::FormatError("Bad CONSTANT_{Integer,Float}_info::low_bytes");
+      }
+      p_low_bytes = be_to_host(p_low_bytes);
+      offset += count;
+      break;
+
+    case PoolEntry::CONSTANT_NameAndType: // 4.4.6 CONSTANT_NameAndType_info table entry
+      /* name_index */
+      count = h->read_content(offset, &p_name_index, sizeof p_name_index);
+      if (2 != count) {
+        throw SgAsmJvmConstantPool::FormatError("Bad CONSTANT_NameAndType_info::name_index");
+      }
+      p_name_index = be_to_host(p_name_index);
+      offset += count;
+      /* descriptor_index */
+      count = h->read_content(offset, &p_descriptor_index, sizeof p_descriptor_index);
+      if (2 != count) {
+        throw SgAsmJvmConstantPool::FormatError("Bad CONSTANT_NameAndType_info::descriptor_index");
+      }
+      p_descriptor_index = be_to_host(p_descriptor_index);
+      offset += count;
+      break;
+
+    case PoolEntry::CONSTANT_Utf8: // 4.4.7 CONSTANT_Utf8_info table entry
+    {
+      char* bytes{nullptr};
+      /* length */
+      count = h->read_content(offset, &p_length, sizeof p_length);
+      if (2 != count) {
+        throw SgAsmJvmConstantPool::FormatError("Bad CONSTANT_Utf8_info::length");
+      }
+      p_length = be_to_host(p_length);
+      offset += count;
+      /* bytes string */
+      bytes = new char[p_length];
+      count = h->read_content(offset, bytes, p_length);
+      if (p_length != count) {
+        throw SgAsmJvmConstantPool::FormatError("Bad CONSTANT_Utf8_info::bytes");
+      }
+      set_utf8_bytes(bytes);
+      offset += count;
+      break;
+    }
+
+    case PoolEntry::CONSTANT_MethodHandle: // 4.4.8 CONSTANT_MethodHandle_info table entry
+      /* reference_kind */
+      count = h->read_content(offset, &p_reference_kind, sizeof p_reference_kind);
+      if (1 != count) {
+        throw SgAsmJvmConstantPool::FormatError("Bad CONSTANT_MethodHandle_info::reference_kind");
+      }
+      p_reference_kind = be_to_host(p_reference_kind);
+      offset += count;
+      /* reference_index */
+      count = h->read_content(offset, &p_reference_index, sizeof p_reference_index);
+      if (2 != count) {
+        throw SgAsmJvmConstantPool::FormatError("Bad CONSTANT_{Field,Method,InterfaceMethod}ref_info::reference_index");
+      }
+      p_reference_index = be_to_host(p_reference_index);
+      offset += count;
+      break;
+
+    case PoolEntry::CONSTANT_MethodType: // 4.4.9 CONSTANT_MethodType_info table entry
+      /* descriptor_index */
+      count = h->read_content(offset, &p_descriptor_index, sizeof p_descriptor_index);
+      if (2 != count) {
+        throw SgAsmJvmConstantPool::FormatError("Bad CONSTANT_MethodType_info::descriptor_index");
+      }
+      p_descriptor_index = be_to_host(p_descriptor_index);
+      offset += count;
+      break;
+
+    case PoolEntry::CONSTANT_Dynamic: // 4.4.10 CONSTANT_Dynamic_info table entry
+    case PoolEntry::CONSTANT_InvokeDynamic: // 4.4.10 CONSTANT_InvokeDynamic_info table entry
+      /* bootstrap_method_attr_index */
+      count = h->read_content(offset, &p_bootstrap_method_attr_index, sizeof p_bootstrap_method_attr_index);
+      if (2 != count) {
+        throw SgAsmJvmConstantPool::FormatError("Bad CONSTANT_{Dynamic,InvokeDynamic}_info::bootstrap_method_attr_index");
+      }
+      p_bootstrap_method_attr_index = be_to_host(p_bootstrap_method_attr_index);
+      offset += count;
+      /* name_and_type_index */
+      count = h->read_content(offset, &p_name_and_type_index, sizeof p_name_and_type_index);
+      if (2 != count) {
+        throw SgAsmJvmConstantPool::FormatError("Bad CONSTANT_{Dynamic,InvokeDynamic}_info::name_and_type_index");
+      }
+      p_name_and_type_index = be_to_host(p_name_and_type_index);
+      offset += count;
+      break;
+
+    default:
+      set_tag(PoolEntry::ILLEGAL);
+  }
+
   h->set_offset(offset);
+  set_parent(pool);
+
+  return this;
 }
 
 SgAsmJvmConstantPool* SgAsmJvmConstantPool::parse()
 {
   std::cout << "SgAsmJvmConstantPool::parse() ...\n";
+
+  //TODO: move to a constructor
+  p_entries = new SgAsmJvmConstantPoolEntryList;
+  p_entries->set_parent(this);
 
   auto header = get_header();
   rose_addr_t offset = header->get_offset();
@@ -165,8 +318,8 @@ SgAsmJvmConstantPool* SgAsmJvmConstantPool::parse()
   offset +=count;
   std::cout << "SgAsmJvmConstantPool::parse() constant_pool_count is " << constant_pool_count << "\n\n";
 
-  SgAsmJvmConstantPoolEntry* entry{nullptr};
-  /* A constant_pool index is considered valid if it is greater than zero and less than constant_pool_count */
+  PoolEntry* entry{nullptr};
+  // A constant_pool index is considered valid if it is greater than zero and less than constant_pool_count
   for (int ii = 1; ii < constant_pool_count; ii++) {
     /* tag */
     uint8_t tag;
@@ -176,33 +329,28 @@ SgAsmJvmConstantPool* SgAsmJvmConstantPool::parse()
     offset +=count;
     header->set_offset(offset);
 
-    std::cout << ii << ":";
-    switch (tag) {
-      case SgAsmJvmConstantPoolEntry::CONSTANT_Class:
-        entry = new CONSTANT_Class_info(header);
-        if ((header->get_offset() - offset) != 2) {
-          throw FormatError("Bad Java CONSTANT_Class");
-        }
-        break;
-      case SgAsmJvmConstantPoolEntry::CONSTANT_Methodref:
-        entry = new CONSTANT_Methodref_info(header);
-        if ((header->get_offset() - offset) != 4) {
-          throw FormatError("Bad Java CONSTANT_Methodref");
-        }
-        break;
-      case SgAsmJvmConstantPoolEntry::CONSTANT_NameAndType:
-        entry = new CONSTANT_NameAndType_info(header);
-        break;
-      case SgAsmJvmConstantPoolEntry::CONSTANT_Utf8:
-        entry = new CONSTANT_Utf8_info(header);
-        break;
-      default:
-        std::cout << "SgAsmJvmConstantPool::parse() unknown tag " << (int) tag << std::endl;
-        return this;
+    // Create and initialize (parse) a new entry
+    auto kind = static_cast<PoolEntry::ConstantPoolKind>(tag);
+    entry = new PoolEntry(kind);
+    entry->parse(this);
+
+    // Store the new entry
+    p_entries->get_entries().push_back(entry);
+
+    // If this is CONSTANT_Long or CONSTANT_Double, skip wasted entry for long and doubles (see note from standard below)
+    // 4.4.5 "In retrospect, making 8-byte constants take two constant pool entries was a poor choice."
+    //
+    if (kind == PoolEntry::CONSTANT_Long || kind == PoolEntry::CONSTANT_Double) {
+      // TODO: Need to create and store an empty entry
+      ii += 1;
     }
     offset = header->get_offset();
-    // TODO: This need to be a list
-    set_entry(entry);
+  }
+
+  // Dump constant pool entries
+  int ii{1};
+  for (PoolEntry* entry : get_entries()->get_entries()) {
+    entry->dump(std::cout, ii++);
   }
 
 // NOTE: refactor this once SgJavaClassFile exists
