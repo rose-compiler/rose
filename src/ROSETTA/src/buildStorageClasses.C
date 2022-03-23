@@ -608,7 +608,7 @@ AstNodeClass::evaluateType(std::string& varTypeString)
      AstNodeClass::TypeEvaluation returnType;
      unsigned int length = varTypeString.size();
      bool typeIsStarPointer = ( varTypeString.find("*") != std::string::npos) ;
-     if ( varTypeString == "const char*" )
+     if ( varTypeString == "const char*" || varTypeString == "const unsigned char*")
         {
           varTypeString =  varTypeString.substr( 6,  varTypeString.size()-1 ) ;
           returnType = CONST_CHAR_POINTER;
@@ -633,7 +633,6 @@ AstNodeClass::evaluateType(std::string& varTypeString)
           returnType = ROSE_HASH_MULTIMAP;
         }
   // DQ (4/25/2009): Removed pointer type to this type.
-  // else if ( varTypeString == "rose_graph_hash_multimap*" )
      else if ( varTypeString == "rose_graph_hash_multimap" )
         {
           returnType = ROSE_GRAPH_HASH_MULTIMAP;
