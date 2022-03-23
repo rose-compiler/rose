@@ -88,7 +88,7 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("with-counterexamples", po::value< bool >(&ltlOpt.withCounterExamples)->default_value(false)->implicit_value(true), "Add counterexample I/O traces to the analysis results. Applies to reachable assertions and falsified LTL properties (uses RERS-specific alphabet).")
     ("with-assert-counterexamples", po::value< bool >(&ltlOpt.withAssertCounterExamples)->default_value(false)->implicit_value(true), "Report counterexamples leading to failing assertion states.")
     ("with-ltl-counterexamples", po::value< bool >(&ltlOpt.withLTLCounterExamples)->default_value(false)->implicit_value(true), "Report counterexamples that violate LTL properties.")
-    ("report-file-path",po::value< string >(&ctOpt.reportFilePath),"Sets file path for all reports.")
+    ("report-dir",po::value< string >(&ctOpt.reportFilePath),"Sets file path for all reports.")
     ;
 
   hiddenOptions.add_options()
@@ -197,8 +197,8 @@ CodeThorn::CommandLineOptions& parseCommandLine(int argc, char* argv[], Sawyer::
     ("null-pointer",po::value< bool >(&ctOpt.nullPointerAnalysis)->default_value(false)->implicit_value(true),"Perform null pointer analysis and print results.")
     ("out-of-bounds",po::value< bool >(&ctOpt.outOfBoundsAnalysis)->default_value(false)->implicit_value(true),"Perform out-of-bounds analysis and print results.")
     ("uninitialized",po::value< bool >(&ctOpt.uninitializedMemoryAnalysis)->default_value(false)->implicit_value(true),"Perform uninitialized analysis and print results.")
-    ("dead-code",po::value< bool >(&ctOpt.deadCodeAnalysis)->default_value(false)->implicit_value(true),"Perform uninitialized analysis and print results.")
     ("opaque-predicates",po::value< bool >(&ctOpt.constantConditionAnalysis)->default_value(false)->implicit_value(true),"Perform uninitialized analysis and print results.")
+    ("dead-code",po::value< bool >(&ctOpt.deadCodeAnalysis)->default_value(false)->implicit_value(true),"Perform dead code analysis and print results.")
 
     ("generate-reports",po::value< bool >(&ctOpt.generateReports)->implicit_value(true),"Enable generation of analysis report files.")
     ("file-path-prefix-to-remove", po::value< string >(&ctOpt.filePathPrefixToRemove))

@@ -87,11 +87,11 @@ public:
   bool reduceStg=false; // calls analyzer->reduceStgToInOutStates();
 
   std::string reportFilePath=".";
-  std::string nullPointerAnalysisFileName="null-pointer.csv";
-  std::string outOfBoundsAnalysisFileName="out-of-bounds.csv";
-  std::string uninitializedMemoryAnalysisFileName="uninitialized.csv";
-  std::string deadCodeAnalysisFileName="dead-code.csv";
-  std::string constantConditionAnalysisFileName="opaque-predicate.csv";
+  std::string nullPointerAnalysisFileName="null-pointer.csv"; // used if different to default
+  std::string outOfBoundsAnalysisFileName="out-of-bounds.csv"; //used if different to default
+  std::string uninitializedMemoryAnalysisFileName="uninitialized.csv";//used if different to default
+  std::string deadCodeAnalysisFileName="dead-code-locations.csv"; // only checked to be !=0
+  std::string constantConditionAnalysisFileName="opaque-predicate.csv"; // only checked to be !=0
   std::string filePathPrefixToRemove;
   bool generateReports=false;
 

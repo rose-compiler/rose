@@ -2026,7 +2026,14 @@ std::string CodeThorn::CTAnalysis::internalAnalysisReportToString() {
     ss<<"Total number of functions     : "<<totalIntraFunctions<<" ("<<getTotalNumberOfFunctions()<<")"<<endl;
   } else {
     ss<<"Inter-procedural analysis"<<endl;     
-    ss<<"Recursive call graph    : "<<getTopologicalSort()->isRecursive()<<endl;
+
+    ss<<"Recursive call graph    : ";
+    if(auto topSort=getTopologicalSort())
+      ss<<topSort->isRecursive()<<endl;
+    else
+      ss<<"not created";
+    ss<<endl;
+
     ss<<"Call string length limit: "<<_ctOpt.callStringLength<<endl;
     ss<<"Max call string length  : "<<getEStateTransferFunctions()->getMaxCSLength()<<endl;
     ss<<"Max state size          : "<<getEStateTransferFunctions()->getMaxStateSize()<<endl;
