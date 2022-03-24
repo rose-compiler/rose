@@ -40,6 +40,19 @@ namespace CodeThorn {
 
   std::ostream& operator<<(std::ostream& os, const Label& label);
 
+  class LabelSet : public std::set<Label> {
+  public:
+    LabelSet operator+(LabelSet& s2);
+    LabelSet& operator+=(LabelSet& s2);
+    LabelSet operator-(LabelSet& s2);
+    LabelSet& operator-=(LabelSet& s2);
+    
+    std::string toString();
+    bool isElement(Label lab);
+  };
+
+  typedef std::set<LabelSet> LabelSetSet;
+
 } // end namespace
 
 #endif

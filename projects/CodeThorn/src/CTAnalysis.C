@@ -430,14 +430,27 @@ void CodeThorn::CTAnalysis::setOptionOutputWarnings(bool flag) {
 }
 
 bool CodeThorn::CTAnalysis::isUnreachableLabel(Label lab) {
-  // if code is unreachable no state is computed for it. In this case no entry is found for this label 
+  // (1) if code is unreachable no state is computed for it. In this case no entry is found for this label 
+  bool isUnreachable;
   if(getSolver()->getId()==18) {
     // solver 18 uses its own states
     Solver18* solver18=dynamic_cast<CodeThorn::Solver18*>(getSolver());
     ROSE_ASSERT(solver18);
-    return solver18->isUnreachableLabel(lab);
+    isUnreachable=solver18->isUnreachableLabel(lab);
+  } else {
+    isUnreachable=_abstractCSStateMapMap.find(lab.getId())==_abstractCSStateMapMap.end()&&(lab!=getFlow()->getStartLabel());
   }
-  return _abstractCSStateMapMap.find(lab.getId())==_abstractCSStateMapMap.end()&&(lab!=getFlow()->getStartLabel());
+
+  // (2) unreachable in the ICFG (excluded from analysis)
+  bool isCfgUnreachable=false;
+  if(auto topSort=getTopologicalSort()) {
+    LabelSet u=topSort->unreachableLabels();
+    isCfgUnreachable=(u.find(lab)!=u.end());
+  }
+  // (3) take into account that Flow is optimized by excluding BlockBeginEnd nodes
+  bool isBlockBeginEndLabel=getLabeler()->isBlockBeginLabel(lab)||getLabeler()->isBlockEndLabel(lab);
+
+  return (isUnreachable || isCfgUnreachable) && !isBlockBeginEndLabel;
 }
 
 bool CodeThorn::CTAnalysis::isReachableLabel(Label lab) {
@@ -2026,7 +2039,14 @@ std::string CodeThorn::CTAnalysis::internalAnalysisReportToString() {
     ss<<"Total number of functions     : "<<totalIntraFunctions<<" ("<<getTotalNumberOfFunctions()<<")"<<endl;
   } else {
     ss<<"Inter-procedural analysis"<<endl;     
-    ss<<"Recursive call graph    : "<<getTopologicalSort()->isRecursive()<<endl;
+
+    ss<<"Recursive call graph    : ";
+    if(auto topSort=getTopologicalSort())
+      ss<<topSort->isRecursive()<<endl;
+    else
+      ss<<"not created";
+    ss<<endl;
+
     ss<<"Call string length limit: "<<_ctOpt.callStringLength<<endl;
     ss<<"Max call string length  : "<<getEStateTransferFunctions()->getMaxCSLength()<<endl;
     ss<<"Max state size          : "<<getEStateTransferFunctions()->getMaxStateSize()<<endl;

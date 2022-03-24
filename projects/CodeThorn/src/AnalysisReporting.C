@@ -147,7 +147,7 @@ namespace CodeThorn {
       for(auto sloc : locations) {
         locationsCSVFileData<<sloc<<endl;
       }
-      string fileName=ctOpt.reportFilePath+"/"+ctOpt.deadCodeAnalysisFileName;
+      string fileName=ctOpt.reportFilePath+"/"+"dead-code-locations.csv";
       if(!CppStdUtilities::writeFile(ctOpt.csvReportModeString, fileName, locationsCSVFileData.str())) {
         cerr<<"Error: cannot write file "<<fileName<<endl;
       } else {
@@ -204,7 +204,7 @@ namespace CodeThorn {
         cout<<"constant false       locations: "<<setw(6)<<constFalseCnt<<endl;
         printSeparationLine();
       }
-      string fileName=ctOpt.getAnalysisReportFileName(analysisSel);
+      string fileName=ctOpt.reportFilePath+"/"+ctOpt.getAnalysisReportFileName(analysisSel);
       if(fileName.size()>0) {
         if(!CppStdUtilities::writeFile(ctOpt.csvReportModeString,fileName, locationsCSVFileData.str())) {
           cerr<<"Error: cannot write file "<<fileName<<endl;
@@ -501,6 +501,7 @@ namespace CodeThorn {
   }
 
   void AnalysisReporting::generateInternalAnalysisReport(CodeThornOptions& ctOpt, CodeThorn::CTAnalysis* analyzer) {
+    ROSE_ASSERT(analyzer);
     string report=analyzer->internalAnalysisReportToString();
     string fileName=ctOpt.reportFilePath+"/"+ctOpt.internalAnalysisReportFileName;
     if(!CppStdUtilities::writeFile(ctOpt.csvReportModeString, fileName, report)) {

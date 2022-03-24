@@ -682,11 +682,10 @@ AbstractValue AbstractValue::operatorLess(AbstractValue other) const {
       return AbstractValue::createTop();
     }
   }
-  if(!(isConstInt()&&other.isConstInt())) {
-    SAWYER_MESG(logger[WARN])<<"operatorLess: "<<toString()<<" < "<<other.toString()<<" - assuming arbitrary result."<<endl;
-    return AbstractValue::createTop();
+  if(isConstInt()&&other.isConstInt()) {
+    return getIntValue()<other.getIntValue();
   }
-  return getIntValue()<other.getIntValue();
+  return AbstractValue::createTop();
 }
 
 AbstractValue AbstractValue::operatorLessOrEq(AbstractValue other) const {
@@ -696,8 +695,10 @@ AbstractValue AbstractValue::operatorLessOrEq(AbstractValue other) const {
     return other;
   if(other.isBot())
     return *this;
-  assert(isConstInt()&&other.isConstInt());
-  return getIntValue()<=other.getIntValue();
+  if(isConstInt()&&other.isConstInt()) {
+    return getIntValue()<=other.getIntValue();
+  }
+  return AbstractValue::createTop();
 }
 
 AbstractValue AbstractValue::operatorMoreOrEq(AbstractValue other) const {
@@ -707,8 +708,9 @@ AbstractValue AbstractValue::operatorMoreOrEq(AbstractValue other) const {
     return other;
   if(other.isBot())
     return *this;
-  assert(isConstInt()&&other.isConstInt());
-  return getIntValue()>=other.getIntValue();
+  if(isConstInt()&&other.isConstInt())
+    return getIntValue()>=other.getIntValue();
+  return AbstractValue::createTop();
 }
 
 AbstractValue AbstractValue::operatorMore(AbstractValue other) const {
@@ -718,8 +720,10 @@ AbstractValue AbstractValue::operatorMore(AbstractValue other) const {
     return other;
   if(other.isBot())
     return *this;
-  assert(isConstInt()&&other.isConstInt());
-  return getIntValue()>other.getIntValue();
+  if(isConstInt()&&other.isConstInt()) {
+    return getIntValue()>other.getIntValue();
+  }
+  return AbstractValue::createTop();
 }
 
 AbstractValue AbstractValue::operatorBitwiseOr(AbstractValue other) const {
@@ -729,8 +733,9 @@ AbstractValue AbstractValue::operatorBitwiseOr(AbstractValue other) const {
     return other;
   if(other.isBot())
     return *this;
-  assert(isConstInt()&&other.isConstInt());
-  return getIntValue()|other.getIntValue();
+  if(isConstInt()&&other.isConstInt())
+    return getIntValue()|other.getIntValue();
+  return AbstractValue::createTop();
 }
 
 AbstractValue AbstractValue::operatorBitwiseXor(AbstractValue other) const {
@@ -740,8 +745,9 @@ AbstractValue AbstractValue::operatorBitwiseXor(AbstractValue other) const {
     return other;
   if(other.isBot())
     return *this;
-  assert(isConstInt()&&other.isConstInt());
-  return getIntValue()^other.getIntValue();
+  if(isConstInt()&&other.isConstInt())
+    return getIntValue()^other.getIntValue();
+  return AbstractValue::createTop();
 }
 
 AbstractValue AbstractValue::operatorBitwiseAnd(AbstractValue other) const {
@@ -751,15 +757,17 @@ AbstractValue AbstractValue::operatorBitwiseAnd(AbstractValue other) const {
     return other;
   if(other.isBot())
     return *this;
-  assert(isConstInt()&&other.isConstInt());
-  return getIntValue()&other.getIntValue();
+  if(isConstInt()&&other.isConstInt())
+    return getIntValue()&other.getIntValue();
+  return AbstractValue::createTop();  
 }
 
 AbstractValue AbstractValue::operatorBitwiseComplement() const {
   if(isTop()||isBot())
     return *this;
-  assert(isConstInt());
-  return ~getIntValue();
+  if(isConstInt())
+    return ~getIntValue();
+  return AbstractValue::createTop();  
 }
 
 AbstractValue AbstractValue::operatorBitwiseShiftLeft(AbstractValue other) const {
@@ -769,8 +777,9 @@ AbstractValue AbstractValue::operatorBitwiseShiftLeft(AbstractValue other) const
     return *this;
   if(other.isBot())
     return *this;
-  assert(isConstInt()&&other.isConstInt());
-  return getIntValue()<<other.getIntValue();
+  if(isConstInt()&&other.isConstInt())
+    return getIntValue()<<other.getIntValue();
+  return AbstractValue::createTop();  
 }
 
 AbstractValue AbstractValue::operatorBitwiseShiftRight(AbstractValue other) const {
@@ -780,8 +789,9 @@ AbstractValue AbstractValue::operatorBitwiseShiftRight(AbstractValue other) cons
     return *this;
   if(other.isBot())
     return *this;
-  assert(isConstInt()&&other.isConstInt());
-  return getIntValue()>>other.getIntValue();
+  if(isConstInt()&&other.isConstInt())
+    return getIntValue()>>other.getIntValue();
+  return AbstractValue::createTop();
 }
 
 string AbstractValue::toLhsString(CodeThorn::VariableIdMapping* vim) const {
@@ -1539,4 +1549,3 @@ AbstractValueSet& CodeThorn::operator+=(AbstractValueSet& s1, AbstractValueSet& 
   }
   return s1;
 }
-

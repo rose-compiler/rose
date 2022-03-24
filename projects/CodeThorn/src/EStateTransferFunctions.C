@@ -791,6 +791,7 @@ namespace CodeThorn {
   }
 
   std::list<EStatePtr> EStateTransferFunctions::transferForkFunction(Edge edge, EStatePtr estate, SgFunctionCallExp* funCall) {
+    //cout<<"DEBUG: transfer fork function:"<<funCall->unparseToString()<<endl;
     EStatePtr currentEState=estate;
     CallString cs=currentEState->getCallString();
 
@@ -802,9 +803,12 @@ namespace CodeThorn {
       ++pIter;
     }
     SgExpression* actualParameterExpr=*pIter;
+    //cout<<"DEBUG: transfer fork function: ESTATE1:"<<currentEState->toString()<<endl;
     // general case: the argument is an arbitrary expression (including a single variable)
     SingleEvalResult evalResult=evaluateExpression(actualParameterExpr,currentEState);
+    //cout<<"DEBUG: transfer fork function: ESTATE2:"<<currentEState->toString()<<endl;
     AbstractValue arg5Value=evalResult.value();
+    //cout<<"DEBUG: transfer fork function: arg5: "<<arg5Value.toString()<<endl;
     // this result value has to be a function pointer value, create a state (representing the fork), and continue with current state
     if(!arg5Value.isFunctionPtr()) {
       // case where no source exists for function pointer
@@ -865,7 +869,7 @@ namespace CodeThorn {
 
     SgFunctionCallExp* funCall=SgNodeHelper::Pattern::matchFunctionCall(nextNodeToAnalyze1);
     _analyzer->recordExternalFunctionCall(funCall);
-    evaluateFunctionCallArguments(edge,funCall,currentEState,false);
+    //evaluateFunctionCallArguments(edge,funCall,currentEState,false);
 
     CTIOLabeler* ctioLabeler=dynamic_cast<CTIOLabeler*>(_analyzer->getLabeler());
     ROSE_ASSERT(ctioLabeler);
@@ -947,10 +951,11 @@ namespace CodeThorn {
       string funName=SgNodeHelper::getFunctionName(funCall);
       if(getAnalyzer()->getOptionsRef().forkFunctionEnabled) {
         if(funName==getAnalyzer()->getOptionsRef().forkFunctionName) {
-          return transferForkFunction(edge,currentEState,funCall);
+          return transferForkFunction(edge,currentEState,funCall); // evaluates arguments by itself
         }
       }
 
+      //evaluateFunctionCallArguments(edge,funCall,currentEState,false); // evaluate for side-effects. transferForkFunction 
       if(isFunctionCallWithAssignmentFlag) {
         // here only the specific format x=f(...) can exist
         SgAssignOp* assignOp=isSgAssignOp(AstUtility::findExprNodeInAstUpwards(V_SgAssignOp,funCall));
@@ -3626,7 +3631,7 @@ namespace CodeThorn {
 
   void EStateTransferFunctions::tmpVarCleanUp(EStatePtr estate, VariableId varId) {
     // only solver18 guarantees that all estates can be modified
-    if(_analyzer->getSolver()->getId()==18) {
+    if(_analyzer->getSolver()->getId()==18 && _analyzer->getOptionsRef().temporaryLocalVarOptFlag) {
       if(isTmpVar(varId)) {
         estate->pstate()->deleteVar(varId);
         //cout<<"DEBUG: tmpVarCleanUp: removed "<<varId.toString(getVariableIdMapping())<<" from state."<<endl;

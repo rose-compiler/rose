@@ -186,6 +186,14 @@ namespace
 }
 #endif /* OBSOLETE_CODE */
 
+LabelSet CLabeler::getLabelSet(set<SgNode*>& nodeSet) {
+  LabelSet lset;
+  for(set<SgNode*>::iterator i=nodeSet.begin();i!=nodeSet.end();++i) {
+    lset.insert(getLabel(*i));
+  }
+  return lset;
+}
+
 // returns number of labels to be associated with node
 int CLabeler::numberOfAssociatedLabels(SgNode* node) {
   if(node==0)
@@ -644,56 +652,6 @@ Label CLabeler::getFunctionCallLabelFromReturnLabel(Label ret)
 LabelProperty CLabeler::getProperty(Label lab)
 {
   return mappingLabelToLabelProperty.at(lab.getId());
-}
-
-LabelSet CLabeler::getLabelSet(set<SgNode*>& nodeSet) {
-  LabelSet lset;
-  for(set<SgNode*>::iterator i=nodeSet.begin();i!=nodeSet.end();++i) {
-    lset.insert(getLabel(*i));
-  }
-  return lset;
-}
-
-LabelSet LabelSet::operator+(LabelSet& s2) {
-  LabelSet result;
-  result=*this;
-  result+=s2;
-  return result;
-}
-
-LabelSet& LabelSet::operator+=(LabelSet& s2) {
-  for(LabelSet::iterator i2=s2.begin();i2!=s2.end();++i2)
-    insert(*i2);
-  return *this;
-}
-
-LabelSet LabelSet::operator-(LabelSet& s2) {
-  LabelSet result;
-  result=*this;
-  result-=s2;
-  return result;
-}
-
-LabelSet& LabelSet::operator-=(LabelSet& s2) {
-  for(LabelSet::iterator i2=s2.begin();i2!=s2.end();++i2)
-    erase(*i2);
-  return *this;
-}
-
-std::string LabelSet::toString() {
-  std::stringstream ss;
-   ss<<"{";
-   for(LabelSet::iterator i=begin();i!=end();++i) {
-     if(i!=begin())
-       ss<<",";
-     ss<<*i;
-   }
-   ss<<"}";
-   return ss.str();
-}
-
-bool LabelSet::isElement(Label lab) {
-  return find(lab)!=end();
 }
 
 std::string CLabeler::toString() {
