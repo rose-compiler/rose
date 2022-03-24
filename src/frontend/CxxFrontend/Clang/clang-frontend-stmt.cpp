@@ -724,6 +724,12 @@ bool ClangToSageTranslator::VisitGCCAsmStmt(clang::GCCAsmStmt * gcc_asm_stmt, Sg
 #if DEBUG_VISIT_DECL
       std::cerr << "AsmOp clobber["<< i<<  "]: " << clobberStr << std::endl;
 #endif
+      // Pei-Hung "cc" clobber is skipped by EDG
+      if(clobberStr.compare(0, sizeof(clobberStr), "cc") == 0)
+        continue;
+  
+      SgInitializedName::asm_register_name_enum sageRegisterName = get_sgAsmRegister(clobberStr);
+      asmStmt->get_clobberRegisterList().push_back(sageRegisterName);
     }
 
     // Pei-Hung (03/22/2022) use regular expression to check the first modifier, + and =, for ouput Ops.  
