@@ -82,23 +82,6 @@ class LabelProperty {
    bool _isExternalFunctionCallLabel;
 };
 
-/*!
-  * \author Markus Schordan
-  * \date 2012.
- */
-class LabelSet : public std::set<Label> {
- public:
-  LabelSet operator+(LabelSet& s2);
-  LabelSet& operator+=(LabelSet& s2);
-  LabelSet operator-(LabelSet& s2);
-  LabelSet& operator-=(LabelSet& s2);
-
-  std::string toString();
-  bool isElement(Label lab);
-};
-
-typedef std::set<LabelSet> LabelSetSet;
-
 class Labeler {
  public:
   static Label NO_LABEL; // default initialized label (used to check for non-existing labels)
