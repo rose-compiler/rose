@@ -4,6 +4,7 @@
 #include <list>
 #include <map>
 #include <unordered_set>
+#include <set>
 
 #include "Label.h"
 
@@ -29,6 +30,7 @@ namespace CodeThorn {
     bool isRecursive();
     void setReverseFunctionOrdering(bool flag);
     bool getReverseFunctionOrdering();
+    LabelSet unreachableLabels();
   private:
     void computePostOrder(Label start, Flow& flow, std::list<Label>& list, std::set<Label>& visited);
     // computes reverse post-order of labels in revPostOrderList
@@ -41,6 +43,7 @@ namespace CodeThorn {
     std::map<Label,bool> visited;
     std::list<Label> callLabels;
     std::list<Label> revPostOrderList;
+    LabelSet _unreachable; // nodes found to be unreachable in the provided Flow graph
     LabelToPriorityMap _map;
     bool _recursiveCG=false;
     bool _reverseFunctionOrdering=true;

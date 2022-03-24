@@ -19,6 +19,10 @@ namespace CodeThorn {
     return _reverseFunctionOrdering;
   }
 
+  LabelSet TopologicalSort::unreachableLabels() {
+    return _unreachable;
+  }
+
   void TopologicalSort::createTopologicallySortedLabelList() {
     if(revPostOrderList.size()==0) {
       Label startLab=flow.getStartLabel();
@@ -57,11 +61,12 @@ namespace CodeThorn {
           semanticRevPostOrderTraversal(lab);
         }
       }
-      // DEBUG do one more traversal to find chunks that are not included in the sort yet
+      // do one more traversal to find unreachable labels. Those labels are not included in the topsort, because they can never be reached in the provided Flow graph.
       for(auto iter=flow.nodes_begin();iter!=flow.nodes_end();++iter) {
         Label lab=*iter;
         if(!visited[lab]) {
-          cout<<"TopSort: found non visited label (non-reachable):"<<lab.toString()<<": "<<labeler.sourceLocationToString(lab,40,30)<<endl;
+          cout<<"TopSort: found unreachable label:"<<lab.toString()<<": "<<labeler.sourceLocationToString(lab,40,30)<<endl;
+          _unreachable.insert(lab);
           semanticRevPostOrderTraversal(lab);
         }
       }
@@ -150,72 +155,16 @@ namespace CodeThorn {
       semanticRevPostOrderTraversal(flow.outEdgeOfType(lab,EDGE_FALSE).target());
       // true edge leads to loop body, sort it first
       semanticRevPostOrderTraversal(flow.outEdgeOfType(lab,EDGE_TRUE).target());
-    }
-    else if(labeler.isFunctionCallLabel(lab)) {
+    } else if(labeler.isFunctionCallLabel(lab)) {
       // do no inter-proc top sort, only sort each function, therefore go to callreturn lab immediately
       Label callReturnLabel=labeler.getFunctionCallReturnLabelFromCallLabel(lab);
       if(callReturnLabel.isValid()) {
         semanticRevPostOrderTraversal(callReturnLabel);
       }
-    }
-    else if(labeler.isFunctionExitLabel(lab)) {
+    } else if(labeler.isFunctionExitLabel(lab)) {
       // sorting has to end at exit label because it is done for each function separately
       // label is entered in result list at the end of function (post-order)
-    }
-#if 0
-    else if(labeler.isFunctionCallLabel(lab)) {
-      // call edge leads to function, sort it first
-      Flow callFlow=flow.outEdgesOfType(lab,EDGE_CALL);
-      if(callFlow.size()==1) {
-	for(auto callEdge:callFlow) {
-	  callLabels.push_back(lab);
-          auto callStringBefore=callLabels;
-	  semanticRevPostOrderTraversal(callEdge.target());
-          callLabels=callStringBefore; // in cases where it hits already analyzed functions in the called function, the callstring is not reduced
-	  Label callReturnLabel=labeler.getFunctionCallReturnLabelFromCallLabel(lab);
-	  semanticRevPostOrderTraversal(callReturnLabel);
-	}
-      }
-      if(callFlow.size()>1) {
-	// handle callreturn node for multi-target nodes, continue directly to callreturn label
-	Label callReturnLabel=labeler.getFunctionCallReturnLabelFromCallLabel(lab);
-	if(callReturnLabel.isValid()) {
-	  semanticRevPostOrderTraversal(callReturnLabel);
-	}
-      }
-      Label callReturnLabel=flow.outEdgeOfType(lab,EDGE_EXTERNAL).target();
-      if(callReturnLabel.isValid()) {
-        semanticRevPostOrderTraversal(callReturnLabel);
-      }
-    }
-    else if(labeler.isFunctionExitLabel(lab)) {
-      // exit node needs to match the corresponding call node since
-      // every function is visited at most once, a stack is sufficient
-      // to track this information read only to obtain label. The
-      // label is removed from the list when the traversal returns
-      // from the call (see above case for FunctionCallLabel)
-      if(callLabels.size()>0) {
-        Label callLabel=callLabels.back(); // read only
-        // make sure the traversal returns to the call site. Note, a
-        // function is visited at most once.
-	callLabels.pop_back();
-        Label callReturnLabel=labeler.getFunctionCallReturnLabelFromCallLabel(callLabel);
-        LabelSet succ=flow.succ(lab);
-        if(callReturnLabel.isValid()) {
-	  // only continue for callreturn label, all others will be visited from other calls
-          semanticRevPostOrderTraversal(callReturnLabel);
-        }
-        } else {
-        // in case the call context has length zero
-        for(auto slab : flow.succ(lab)) {
-          semanticRevPostOrderTraversal(slab);
-        }
-      }
-    }
-#endif
-    else
-
-      {
+    } else {
       // for all other nodes use default traversal order
       for(auto slab : flow.succ(lab)) {
         semanticRevPostOrderTraversal(slab);
