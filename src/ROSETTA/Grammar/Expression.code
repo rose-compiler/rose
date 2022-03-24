@@ -1767,15 +1767,35 @@ HEADER_ASM_OP_START
           enum asm_operand_constraint_enum
              {
                e_invalid = 0,
+               e_end_of_constraint,/*!< ,: For cases with multiple constraints, indicates
+                                           the end of the current constraint (other
+                                           constraints may follow); represented by a comma
+                                           in the input stream. */
+               /* modifiers */
+               /* Note that these are parsed, but not acted upon by the front end. */
+               e_mod_earlyclobber, /*!< &: modified early, cannot overlap inputs */
+               e_mod_commutative_ops,
+                                   /*!< %: operands are commutative */
+               e_mod_ignore,       /*!< #: ignore the rest of this constraint */
+               e_mod_ignore_char,  /*!< *: ignore following character when choosing
+                                           register preferences */
+               e_mod_disparage_slightly,
+                                   /*!< ?: disparage alternative slightly */
+               e_mod_disparage_severely,
+                                   /*!< !: disparage alternative severely */
+            /* misc */
                e_any,              /*!< X: unconstrained */
                e_general,          /*!< g: r or i or m */
-               e_match_0, aoc_match_1, aoc_match_2, aoc_match_3, aoc_match_4,
-               e_match_5, aoc_match_6, aoc_match_7, aoc_match_8, aoc_match_9, /*!< 0-9: same as a previous operand */
+               e_match_0, e_match_1, e_match_2, e_match_3, e_match_4,
+               e_match_5, e_match_6, e_match_7, e_match_8, e_match_9, 
+                                   /*!< 0-9: same as a previous operand */
             /* registers constraints */
                e_reg_integer,      /*!< r: any integer register */
                e_reg_float,        /*!< f: any float register */
             /* memory constraints */
                e_mem_any,          /*!< m: any memory location */
+               e_mem_load,         /* p: any memory location that is valid for a load/
+                                           push operation */
                e_mem_offset,       /*!< o: memory location, if (val + sizeof(object))
                                            is also acceptable in this context */
                e_mem_nonoffset,    /*!< V: m but not o */
@@ -1796,7 +1816,9 @@ HEADER_ASM_OP_START
                e_reg_si,           /*!< s: si */
                e_reg_di,           /*!< d: di */
                e_reg_legacy,       /*!< R: ax bx cx dx si di bp sp (avail. on non-x86-64) */
-               e_reg_q,            /*!< Q: ax bx cx dx (non-x86-64), same as 'r' (x86-64) */
+               e_reg_q,            /* q: ax bx cx dx, lower part only (non-x86-64),
+                                           same as 'r' (x86-64) */
+               e_reg_Q,            /* Q: ax bx cx dx (non-x86-64), same as 'r' (x86-64) */
                e_reg_ad,           /*!< A: ax dx */
                e_reg_float_tos,    /*!< t: %st(0) */
                e_reg_float_second, /*!< u: %st(1) */
