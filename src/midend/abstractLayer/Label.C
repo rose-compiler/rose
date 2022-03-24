@@ -85,3 +85,49 @@ ostream& CodeThorn::operator<<(ostream& os, const Label& label) {
   os<<label.toString();
   return os;
 }
+
+namespace CodeThorn {
+
+  LabelSet LabelSet::operator+(LabelSet& s2) {
+    LabelSet result;
+    result=*this;
+    result+=s2;
+    return result;
+  }
+
+  LabelSet& LabelSet::operator+=(LabelSet& s2) {
+    for(LabelSet::iterator i2=s2.begin();i2!=s2.end();++i2)
+      insert(*i2);
+    return *this;
+  }
+
+  LabelSet LabelSet::operator-(LabelSet& s2) {
+    LabelSet result;
+    result=*this;
+    result-=s2;
+    return result;
+  }
+
+  LabelSet& LabelSet::operator-=(LabelSet& s2) {
+    for(LabelSet::iterator i2=s2.begin();i2!=s2.end();++i2)
+      erase(*i2);
+    return *this;
+  }
+
+  std::string LabelSet::toString() {
+    std::stringstream ss;
+    ss<<"{";
+    for(LabelSet::iterator i=begin();i!=end();++i) {
+      if(i!=begin())
+        ss<<",";
+      ss<<*i;
+    }
+    ss<<"}";
+    return ss.str();
+  }
+
+  bool LabelSet::isElement(Label lab) {
+    return find(lab)!=end();
+  }
+
+} // end of namespace
