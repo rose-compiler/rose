@@ -5123,6 +5123,11 @@ HEADER_INITIALIZED_NAME_START
                e_register_flags,
                e_register_fpsr,
                e_register_dirflag,      /*!< control registers */
+               e_register_f16,
+               e_register_f17,
+               e_register_f18,
+               e_register_f19,
+               e_register_f20,
                e_unrecognized_register, /*!< used to represent an unrecognized register. */
                e_last_register
              };
