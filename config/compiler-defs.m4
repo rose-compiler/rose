@@ -227,6 +227,14 @@ AC_DEFUN([GET_CXX_VERSION_INFO],[
                 #echo "CXX_VERSION_MAJOR = $CXX_VERSION_MAJOR"
                 #echo "CXX_VERSION_MINOR = $CXX_VERSION_MINOR"
                 #echo "CXX_VERSION_PATCH = $CXX_VERSION_PATCH"
+            else
+                # Pei-Hung (03/25/2022): this is the case using custom-build Clang on Mac
+                if test "x$OS_vendor" = xapple; then
+                    CXX_VERSION_MAJOR=`${srcdir}/config/getAppleClangMajorVersionNumber.sh`
+                    CXX_VERSION_MINOR=`${srcdir}/config/getAppleClangMinorVersionNumber.sh`
+                    CXX_VERSION_PATCH=`${srcdir}/config/getAppleClangPatchVersionNumber.sh`
+
+                fi
             fi
             ;;
 

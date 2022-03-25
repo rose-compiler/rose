@@ -594,6 +594,10 @@ librose_la_LDFLAGS += -fno-rtti
 
 librose_la_DEPENDENCIES = $(libroseLibraries)
 
+if OS_MACOSX
+  librose_la_LDFLAGS += $(ROSE_LINK_RPATHS) 
+endif
+
 # if ROSE_USE_OPEN_FORTRAN_PARSER
 # librose_la_DEPENDENCIES += OpenFortranParser-${OFP_VERSION}.jar
 # endif
@@ -632,7 +636,7 @@ rose_config_LDADD = $(ROSE_LIBS)
 
 if ROSE_USE_INTERNAL_JAVA_SUPPORT
 if OS_MACOSX
-  rose_config_LDFLAGS += -Xlinker -rpath -Xlinker $(JAVA_JVM_PATH)
+  rose_config_LDFLAGS += $(ROSE_LINK_RPATHS) 
 endif
 endif
 
@@ -756,7 +760,7 @@ endif
 
 if ROSE_USE_INTERNAL_JAVA_SUPPORT
 if OS_MACOSX
-  ROSEBIN_LDFLAGS += -Xlinker -rpath -Xlinker $(JAVA_JVM_PATH)
+  ROSEBIN_LDFLAGS += $(ROSE_LINK_RPATHS) 
 endif
 endif
 

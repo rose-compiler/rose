@@ -168,23 +168,31 @@ AC_MSG_NOTICE([testing value of FC = "$FC"])
 # BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`echo|$BACKEND_CXX_COMPILER -dumpversion | cut -d\. -f2`
 
   AC_MSG_NOTICE([BACKEND_CXX_COMPILER = "$BACKEND_CXX_COMPILER"])
-  if test x$BACKEND_CXX_COMPILER == xclang; then
+  if test x$BACKEND_CXX_COMPILER == xclang++; then
     AC_MSG_NOTICE([detected Clang compiler for backend compiler with ROSE])
 
+    if test "x$OS_vendor" = xapple; then
+      BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`${srcdir}/config/getAppleClangMajorVersionNumber.sh`
+      BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`${srcdir}/config/getAppleClangMinorVersionNumber.sh`
+
+    else
     # `echo|clang --version`
 
-  # BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`clang --version | grep -Po '(?<=version )[^;]+' | cut -d\. -f1`
-  # BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`clang --version | grep -Po '(?<=version )[^;]+' | cut -d\. -f2`
+  # BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`clang++ --version | grep -Po '(?<=version )[^;]+' | cut -d\. -f1`
+  # BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`clang++ --version | grep -Po '(?<=version )[^;]+' | cut -d\. -f2`
   # BACKEND_GCC_MAJOR=`echo|$BACKEND_CXX_COMPILER -v |& grep -Po '(?<=version )[^;]+' | cut -d\. -f1 | cut -d\( -f1`
   # BACKEND_GCC_MINOR=`echo|$BACKEND_CXX_COMPILER -v |& grep -Po '(?<=version )[^;]+' | cut -d\. -f2 | cut -d\( -f1`
   # ${srcdir}/config/syntax.sh
     BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER=`${srcdir}/config/getClangMajorVersionNumber.sh`
     BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER=`${srcdir}/config/getClangMinorVersionNumber.sh`
 
+    fi 
+
     AC_MSG_NOTICE([(clang) C++ back-end compiler major version number = "$BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER"])
     AC_MSG_NOTICE([(clang) C++ back-end compiler minor version number = "$BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER"])
 
    # exit 1
+
   else
 
   # DQ (12/3/2016): Note that even if the backend compiler is specified to be GNU, on a Mac OSX system this will be clang.
