@@ -233,101 +233,301 @@ SgInitializedName::asm_register_name_enum get_sgAsmRegister(std::string reg)
      result = SgInitializedName::e_memory_register;
    else if(reg.compare(0, sizeof(reg), "ax") == 0)
      result = SgInitializedName::e_register_a;
+   else if(reg.compare(0, sizeof(reg), "al") == 0)
+     result = SgInitializedName::e_register_a;
+   else if(reg.compare(0, sizeof(reg), "ah") == 0)
+     result = SgInitializedName::e_register_a;
+   else if(reg.compare(0, sizeof(reg), "eax") == 0)
+     result = SgInitializedName::e_register_a;
+   else if(reg.compare(0, sizeof(reg), "rax") == 0)
+     result = SgInitializedName::e_register_a;
+   else if(reg.compare(0, sizeof(reg), "0") == 0)
+     result = SgInitializedName::e_register_a;
    else if(reg.compare(0, sizeof(reg), "bx") == 0)
+     result = SgInitializedName::e_register_b;
+   else if(reg.compare(0, sizeof(reg), "bl") == 0)
+     result = SgInitializedName::e_register_b;
+   else if(reg.compare(0, sizeof(reg), "bh") == 0)
+     result = SgInitializedName::e_register_b;
+   else if(reg.compare(0, sizeof(reg), "ebx") == 0)
+     result = SgInitializedName::e_register_b;
+   else if(reg.compare(0, sizeof(reg), "rbx") == 0)
+     result = SgInitializedName::e_register_b;
+   else if(reg.compare(0, sizeof(reg), "3") == 0)
      result = SgInitializedName::e_register_b;
    else if(reg.compare(0, sizeof(reg), "cx") == 0)
      result = SgInitializedName::e_register_c;
+   else if(reg.compare(0, sizeof(reg), "cl") == 0)
+     result = SgInitializedName::e_register_c;
+   else if(reg.compare(0, sizeof(reg), "ch") == 0)
+     result = SgInitializedName::e_register_c;
+   else if(reg.compare(0, sizeof(reg), "ecx") == 0)
+     result = SgInitializedName::e_register_c;
+   else if(reg.compare(0, sizeof(reg), "rcx") == 0)
+     result = SgInitializedName::e_register_c;
+   else if(reg.compare(0, sizeof(reg), "2") == 0)
+     result = SgInitializedName::e_register_c;
    else if(reg.compare(0, sizeof(reg), "dx") == 0)
+     result = SgInitializedName::e_register_d;
+   else if(reg.compare(0, sizeof(reg), "dl") == 0)
+     result = SgInitializedName::e_register_d;
+   else if(reg.compare(0, sizeof(reg), "dh") == 0)
+     result = SgInitializedName::e_register_d;
+   else if(reg.compare(0, sizeof(reg), "edx") == 0)
+     result = SgInitializedName::e_register_d;
+   else if(reg.compare(0, sizeof(reg), "rdx") == 0)
+     result = SgInitializedName::e_register_d;
+   else if(reg.compare(0, sizeof(reg), "1") == 0)
      result = SgInitializedName::e_register_d;
    else if(reg.compare(0, sizeof(reg), "si") == 0)
      result = SgInitializedName::e_register_si;
+   else if(reg.compare(0, sizeof(reg), "esi") == 0)
+     result = SgInitializedName::e_register_si;
+   else if(reg.compare(0, sizeof(reg), "rsi") == 0)
+     result = SgInitializedName::e_register_si;
+   else if(reg.compare(0, sizeof(reg), "sil") == 0)
+     result = SgInitializedName::e_register_si;
+   else if(reg.compare(0, sizeof(reg), "4") == 0)
+     result = SgInitializedName::e_register_si;
    else if(reg.compare(0, sizeof(reg), "di") == 0)
+     result = SgInitializedName::e_register_di;
+   else if(reg.compare(0, sizeof(reg), "edi") == 0)
+     result = SgInitializedName::e_register_di;
+   else if(reg.compare(0, sizeof(reg), "rdi") == 0)
+     result = SgInitializedName::e_register_di;
+   else if(reg.compare(0, sizeof(reg), "dil") == 0)
+     result = SgInitializedName::e_register_di;
+   else if(reg.compare(0, sizeof(reg), "5") == 0)
      result = SgInitializedName::e_register_di;
    else if(reg.compare(0, sizeof(reg), "bp") == 0)
      result = SgInitializedName::e_register_bp;
+   else if(reg.compare(0, sizeof(reg), "ebp") == 0)
+     result = SgInitializedName::e_register_bp;
+   else if(reg.compare(0, sizeof(reg), "rbp") == 0)
+     result = SgInitializedName::e_register_bp;
+   else if(reg.compare(0, sizeof(reg), "bpl") == 0)
+     result = SgInitializedName::e_register_bp;
+   else if(reg.compare(0, sizeof(reg), "6") == 0)
+     result = SgInitializedName::e_register_bp;
    else if(reg.compare(0, sizeof(reg), "sp") == 0)
+     result = SgInitializedName::e_register_sp;
+   else if(reg.compare(0, sizeof(reg), "esp") == 0)
+     result = SgInitializedName::e_register_sp;
+   else if(reg.compare(0, sizeof(reg), "rsp") == 0)
+     result = SgInitializedName::e_register_sp;
+   else if(reg.compare(0, sizeof(reg), "spl") == 0)
+     result = SgInitializedName::e_register_sp;
+   else if(reg.compare(0, sizeof(reg), "7") == 0)
      result = SgInitializedName::e_register_sp;
    else if(reg.compare(0, sizeof(reg), "r8") == 0)
      result = SgInitializedName::e_register_r8;
+   else if(reg.compare(0, sizeof(reg), "r8b") == 0)
+     result = SgInitializedName::e_register_r8;
+   else if(reg.compare(0, sizeof(reg), "r8w") == 0)
+     result = SgInitializedName::e_register_r8;
+   else if(reg.compare(0, sizeof(reg), "r8d") == 0)
+     result = SgInitializedName::e_register_r8;
+   else if(reg.compare(0, sizeof(reg), "37") == 0)
+     result = SgInitializedName::e_register_r8;
    else if(reg.compare(0, sizeof(reg), "r9") == 0)
+     result = SgInitializedName::e_register_r9;
+   else if(reg.compare(0, sizeof(reg), "r9b") == 0)
+     result = SgInitializedName::e_register_r9;
+   else if(reg.compare(0, sizeof(reg), "r9w") == 0)
+     result = SgInitializedName::e_register_r9;
+   else if(reg.compare(0, sizeof(reg), "r9d") == 0)
+     result = SgInitializedName::e_register_r9;
+   else if(reg.compare(0, sizeof(reg), "38") == 0)
      result = SgInitializedName::e_register_r9;
    else if(reg.compare(0, sizeof(reg), "r10") == 0)
      result = SgInitializedName::e_register_r10;
+   else if(reg.compare(0, sizeof(reg), "r10b") == 0)
+     result = SgInitializedName::e_register_r10;
+   else if(reg.compare(0, sizeof(reg), "r10w") == 0)
+     result = SgInitializedName::e_register_r10;
+   else if(reg.compare(0, sizeof(reg), "r10d") == 0)
+     result = SgInitializedName::e_register_r10;
+   else if(reg.compare(0, sizeof(reg), "39") == 0)
+     result = SgInitializedName::e_register_r10;
    else if(reg.compare(0, sizeof(reg), "r11") == 0)
+     result = SgInitializedName::e_register_r11;
+   else if(reg.compare(0, sizeof(reg), "r11b") == 0)
+     result = SgInitializedName::e_register_r11;
+   else if(reg.compare(0, sizeof(reg), "r11w") == 0)
+     result = SgInitializedName::e_register_r11;
+   else if(reg.compare(0, sizeof(reg), "r11d") == 0)
+     result = SgInitializedName::e_register_r11;
+   else if(reg.compare(0, sizeof(reg), "40") == 0)
      result = SgInitializedName::e_register_r11;
    else if(reg.compare(0, sizeof(reg), "r12") == 0)
      result = SgInitializedName::e_register_r12;
+   else if(reg.compare(0, sizeof(reg), "r12b") == 0)
+     result = SgInitializedName::e_register_r12;
+   else if(reg.compare(0, sizeof(reg), "r12w") == 0)
+     result = SgInitializedName::e_register_r12;
+   else if(reg.compare(0, sizeof(reg), "r12d") == 0)
+     result = SgInitializedName::e_register_r12;
+   else if(reg.compare(0, sizeof(reg), "41") == 0)
+     result = SgInitializedName::e_register_r12;
    else if(reg.compare(0, sizeof(reg), "r13") == 0)
+     result = SgInitializedName::e_register_r13;
+   else if(reg.compare(0, sizeof(reg), "r13b") == 0)
+     result = SgInitializedName::e_register_r13;
+   else if(reg.compare(0, sizeof(reg), "r13d") == 0)
+     result = SgInitializedName::e_register_r13;
+   else if(reg.compare(0, sizeof(reg), "r13w") == 0)
+     result = SgInitializedName::e_register_r13;
+   else if(reg.compare(0, sizeof(reg), "42") == 0)
      result = SgInitializedName::e_register_r13;
    else if(reg.compare(0, sizeof(reg), "r14") == 0)
      result = SgInitializedName::e_register_r14;
+   else if(reg.compare(0, sizeof(reg), "r14b") == 0)
+     result = SgInitializedName::e_register_r14;
+   else if(reg.compare(0, sizeof(reg), "r14d") == 0)
+     result = SgInitializedName::e_register_r14;
+   else if(reg.compare(0, sizeof(reg), "r14w") == 0)
+     result = SgInitializedName::e_register_r14;
+   else if(reg.compare(0, sizeof(reg), "43") == 0)
+     result = SgInitializedName::e_register_r14;
    else if(reg.compare(0, sizeof(reg), "r15") == 0)
+     result = SgInitializedName::e_register_r15;
+   else if(reg.compare(0, sizeof(reg), "r15b") == 0)
+     result = SgInitializedName::e_register_r15;
+   else if(reg.compare(0, sizeof(reg), "r15d") == 0)
+     result = SgInitializedName::e_register_r15;
+   else if(reg.compare(0, sizeof(reg), "r15w") == 0)
+     result = SgInitializedName::e_register_r15;
+   else if(reg.compare(0, sizeof(reg), "44") == 0)
      result = SgInitializedName::e_register_r15;
    else if(reg.compare(0, sizeof(reg), "st") == 0)
      result = SgInitializedName::e_register_st0;
    else if(reg.compare(0, sizeof(reg), "st(1)") == 0)
      result = SgInitializedName::e_register_st1;
+   else if(reg.compare(0, sizeof(reg), "st1") == 0)
+     result = SgInitializedName::e_register_st1;
    else if(reg.compare(0, sizeof(reg), "st(2)") == 0)
+     result = SgInitializedName::e_register_st2;
+   else if(reg.compare(0, sizeof(reg), "st2") == 0)
      result = SgInitializedName::e_register_st2;
    else if(reg.compare(0, sizeof(reg), "st(3)") == 0)
      result = SgInitializedName::e_register_st3;
+   else if(reg.compare(0, sizeof(reg), "st3") == 0)
+     result = SgInitializedName::e_register_st3;
    else if(reg.compare(0, sizeof(reg), "st(4)") == 0)
+     result = SgInitializedName::e_register_st4;
+   else if(reg.compare(0, sizeof(reg), "st4") == 0)
      result = SgInitializedName::e_register_st4;
    else if(reg.compare(0, sizeof(reg), "st(5)") == 0)
      result = SgInitializedName::e_register_st5;
+   else if(reg.compare(0, sizeof(reg), "st5") == 0)
+     result = SgInitializedName::e_register_st5;
    else if(reg.compare(0, sizeof(reg), "st(6)") == 0)
+     result = SgInitializedName::e_register_st6;
+   else if(reg.compare(0, sizeof(reg), "st6") == 0)
      result = SgInitializedName::e_register_st6;
    else if(reg.compare(0, sizeof(reg), "st(7)") == 0)
      result = SgInitializedName::e_register_st7;
+   else if(reg.compare(0, sizeof(reg), "st7") == 0)
+     result = SgInitializedName::e_register_st7;
    else if(reg.compare(0, sizeof(reg), "mm0") == 0)
+     result = SgInitializedName::e_register_mm0;
+   else if(reg.compare(0, sizeof(reg), "29") == 0)
      result = SgInitializedName::e_register_mm0;
    else if(reg.compare(0, sizeof(reg), "mm1") == 0)
      result = SgInitializedName::e_register_mm1;
+   else if(reg.compare(0, sizeof(reg), "30") == 0)
+     result = SgInitializedName::e_register_mm1;
    else if(reg.compare(0, sizeof(reg), "mm2") == 0)
+     result = SgInitializedName::e_register_mm2;
+   else if(reg.compare(0, sizeof(reg), "31") == 0)
      result = SgInitializedName::e_register_mm2;
    else if(reg.compare(0, sizeof(reg), "mm3") == 0)
      result = SgInitializedName::e_register_mm3;
+   else if(reg.compare(0, sizeof(reg), "32") == 0)
+     result = SgInitializedName::e_register_mm3;
    else if(reg.compare(0, sizeof(reg), "mm4") == 0)
+     result = SgInitializedName::e_register_mm4;
+   else if(reg.compare(0, sizeof(reg), "33") == 0)
      result = SgInitializedName::e_register_mm4;
    else if(reg.compare(0, sizeof(reg), "mm5") == 0)
      result = SgInitializedName::e_register_mm5;
+   else if(reg.compare(0, sizeof(reg), "34") == 0)
+     result = SgInitializedName::e_register_mm5;
    else if(reg.compare(0, sizeof(reg), "mm6") == 0)
+     result = SgInitializedName::e_register_mm6;
+   else if(reg.compare(0, sizeof(reg), "35") == 0)
      result = SgInitializedName::e_register_mm6;
    else if(reg.compare(0, sizeof(reg), "mm7") == 0)
      result = SgInitializedName::e_register_mm7;
+   else if(reg.compare(0, sizeof(reg), "36") == 0)
+     result = SgInitializedName::e_register_mm7;
    else if(reg.compare(0, sizeof(reg), "xmm0") == 0)
+     result = SgInitializedName::e_register_f0;
+   else if(reg.compare(0, sizeof(reg), "21") == 0)
      result = SgInitializedName::e_register_f0;
    else if(reg.compare(0, sizeof(reg), "xmm1") == 0)
      result = SgInitializedName::e_register_f1;
+   else if(reg.compare(0, sizeof(reg), "22") == 0)
+     result = SgInitializedName::e_register_f2;
    else if(reg.compare(0, sizeof(reg), "xmm2") == 0)
+     result = SgInitializedName::e_register_f2;
+   else if(reg.compare(0, sizeof(reg), "23") == 0)
      result = SgInitializedName::e_register_f2;
    else if(reg.compare(0, sizeof(reg), "xmm3") == 0)
      result = SgInitializedName::e_register_f3;
+   else if(reg.compare(0, sizeof(reg), "24") == 0)
+     result = SgInitializedName::e_register_f3;
    else if(reg.compare(0, sizeof(reg), "xmm4") == 0)
+     result = SgInitializedName::e_register_f4;
+   else if(reg.compare(0, sizeof(reg), "25") == 0)
      result = SgInitializedName::e_register_f4;
    else if(reg.compare(0, sizeof(reg), "xmm5") == 0)
      result = SgInitializedName::e_register_f5;
+   else if(reg.compare(0, sizeof(reg), "26") == 0)
+     result = SgInitializedName::e_register_f5;
    else if(reg.compare(0, sizeof(reg), "xmm6") == 0)
+     result = SgInitializedName::e_register_f6;
+   else if(reg.compare(0, sizeof(reg), "27") == 0)
      result = SgInitializedName::e_register_f6;
    else if(reg.compare(0, sizeof(reg), "xmm7") == 0)
      result = SgInitializedName::e_register_f7;
+   else if(reg.compare(0, sizeof(reg), "28") == 0)
+     result = SgInitializedName::e_register_f7;
    else if(reg.compare(0, sizeof(reg), "xmm8") == 0)
+     result = SgInitializedName::e_register_f8;
+   else if(reg.compare(0, sizeof(reg), "45") == 0)
      result = SgInitializedName::e_register_f8;
    else if(reg.compare(0, sizeof(reg), "xmm9") == 0)
      result = SgInitializedName::e_register_f9;
+   else if(reg.compare(0, sizeof(reg), "46") == 0)
+     result = SgInitializedName::e_register_f9;
    else if(reg.compare(0, sizeof(reg), "xmm10") == 0)
+     result = SgInitializedName::e_register_f10;
+   else if(reg.compare(0, sizeof(reg), "47") == 0)
      result = SgInitializedName::e_register_f10;
    else if(reg.compare(0, sizeof(reg), "xmm11") == 0)
      result = SgInitializedName::e_register_f11;
+   else if(reg.compare(0, sizeof(reg), "48") == 0)
+     result = SgInitializedName::e_register_f11;
    else if(reg.compare(0, sizeof(reg), "xmm12") == 0)
+     result = SgInitializedName::e_register_f12;
+   else if(reg.compare(0, sizeof(reg), "49") == 0)
      result = SgInitializedName::e_register_f12;
    else if(reg.compare(0, sizeof(reg), "xmm13") == 0)
      result = SgInitializedName::e_register_f13;
+   else if(reg.compare(0, sizeof(reg), "50") == 0)
+     result = SgInitializedName::e_register_f13;
    else if(reg.compare(0, sizeof(reg), "xmm14") == 0)
+     result = SgInitializedName::e_register_f14;
+   else if(reg.compare(0, sizeof(reg), "51") == 0)
      result = SgInitializedName::e_register_f14;
    else if(reg.compare(0, sizeof(reg), "xmm15") == 0)
      result = SgInitializedName::e_register_f15;
+   else if(reg.compare(0, sizeof(reg), "52") == 0)
+     result = SgInitializedName::e_register_f15;
    else if(reg.compare(0, sizeof(reg), "flags") == 0)
+     result = SgInitializedName::e_register_flags;
+   else if(reg.compare(0, sizeof(reg), "cc") == 0)
      result = SgInitializedName::e_register_flags;
    else if(reg.compare(0, sizeof(reg), "fpsr") == 0)
      result = SgInitializedName::e_register_fpsr;
