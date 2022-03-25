@@ -392,7 +392,7 @@ namespace Ada_ROSE_Translation
   /// \param scope  the scope of which this declaration is a part.
   ///        e.g., LLNL.Rose for a package LLNL.Rose.Ada
   /// \note
-  ///    A package LLNL.Rose.Ada can be declated in the global scope. In this case
+  ///    A package LLNL.Rose.Ada can be declared in the global scope. In this case
   ///    the scope of LLNL.Rose is still the parent scope.
   SgAdaPackageSpecDecl&
   mkAdaPackageSpecDecl(const std::string& name, SgScopeStatement& scope);
@@ -425,9 +425,22 @@ namespace Ada_ROSE_Translation
   SgAdaRenamingDecl&
   mkAdaRenamingDecl(const std::string& name, SgInitializedName& ini, SgType* ty, SgScopeStatement& scope);
 
-  /// creates an Ada package body declaration
+  /// creates a nondefining Ada package body declaration.
+  /// \param specdcl    the package specification
+  /// \details
+  ///    Used to create package body stubs. Other nondefining package body declarations
+  ///    are automatically created.
   SgAdaPackageBodyDecl&
-  mkAdaPackageBodyDecl(SgAdaPackageSpecDecl& specdcl);
+  mkAdaPackageBodyDecl_nondef(SgAdaPackageSpecDecl& specdcl, SgScopeStatement& scope);
+
+  /// creates an Ada package body declaration
+  /// \param specdcl    the package specification
+  /// \param nondef_opt an optional nondefining declaration
+  /// \details
+  ///    if nondef_opt == nullptr, a nondefining declaration will be automatically created (
+  ///    \todo THIS IS NOT YET IMPLEMENTED.
+  SgAdaPackageBodyDecl&
+  mkAdaPackageBodyDecl(SgAdaPackageSpecDecl& specdcl, SgAdaPackageBodyDecl* nondef_opt, SgScopeStatement& scope);
 
   /// creates an Ada task type declaration
   // \todo revisit Ada task symbol creation
@@ -446,18 +459,25 @@ namespace Ada_ROSE_Translation
   mkAdaTaskSpecDecl(const std::string& name, SgAdaTaskSpec& spec, SgScopeStatement& scope);
 
   /// creates an Ada task body declaration
-  /// \param tskdecl the corresponding tasl declaration which can either be of type SgAdaTaskSpecDecl
-  ///                or of type SgAdaTaskTypeDecl.
-  /// \param tskbody the task body
-  /// \param scope   the enclosing scope
+  /// \param tskdecl     the corresponding tasl declaration which can either be of type SgAdaTaskSpecDecl
+  ///                    or of type SgAdaTaskTypeDecl.
+  /// \param scope       the logically enclosing scope
   SgAdaTaskBodyDecl&
-  mkAdaTaskBodyDecl(SgDeclarationStatement& tskdecl, SgAdaTaskBody& tskbody, SgScopeStatement& scope);
+  mkAdaTaskBodyDecl_nondef(SgDeclarationStatement& tskdecl, SgScopeStatement& scope);
 
-  /// creates an independent task body with name \ref name, body \ref body, in scope \ref scope.
-  // \todo not sure why a task body can independently exist without prior declaration.
-  //       maybe this function is not needed.
-  //~ SgAdaTaskBodyDecl&
-  //~ mkAdaTaskBodyDecl(const std::string& name, SgAdaTaskBody& tskbody, SgScopeStatement& scope);
+  /// creates an Ada task body declaration
+  /// \param tskdecl     the corresponding tasl declaration which can either be of type SgAdaTaskSpecDecl
+  ///                    or of type SgAdaTaskTypeDecl.
+  /// \param nondef_opt  optionally, an earlier nondefining declaration (separate body stub).
+  /// \param tskbody     the optional task body. If no task body is specified, the declaration will be created
+  ///                    as nondefining declaration (i.e., for separated body stubs)
+  /// \param scope       the logically enclosing scope
+  SgAdaTaskBodyDecl&
+  mkAdaTaskBodyDecl( SgDeclarationStatement& tskdecl,
+                     SgAdaTaskBodyDecl* nondef_opt,
+                     SgAdaTaskBody& tskbody,
+                     SgScopeStatement& scope
+                   );
 
   /// creates an empty task specification definition node
   SgAdaTaskSpec&
@@ -482,13 +502,28 @@ namespace Ada_ROSE_Translation
   SgAdaProtectedSpecDecl&
   mkAdaProtectedSpecDecl(const std::string& name, SgAdaProtectedSpec& spec, SgScopeStatement& scope);
 
-  /// creates an Ada protected object body declaration
-  /// \param tskdecl the corresponding tasl declaration which can either be of type SgAdaProtectedSpecDecl
-  ///                or of type SgAdaProtectedTypeDecl.
-  /// \param tskbody the protected object body
-  /// \param scope   the enclosing scope
+  /// creates a nondefining Ada protected object body declaration
+  /// \param podecl     the corresponding tasl declaration which can either be of type SgAdaProtectedSpecDecl
+  ///                   or of type SgAdaProtectedTypeDecl.
+  /// \param scope      the logically enclosing scope
   SgAdaProtectedBodyDecl&
-  mkAdaProtectedBodyDecl(SgDeclarationStatement& podecl, SgAdaProtectedBody& pobody, SgScopeStatement& scope);
+  mkAdaProtectedBodyDecl_nondef(SgDeclarationStatement& podecl, SgScopeStatement& scope);
+
+  /// creates a defining Ada protected object body declaration
+  /// \param podecl     the corresponding tasl declaration which can either be of type SgAdaProtectedSpecDecl
+  ///                   or of type SgAdaProtectedTypeDecl.
+  /// \param nondef_opt Optionally, an earlier nondefining declaration (separate body stub).
+  /// \param pobody     an optional protected body. If no body is specified, the declaration will be created
+  ///                   as nondefining declaration (i.e., for separated body stubs)
+  /// \param scope      the logically enclosing scope
+  /// \details
+  ///    \todo CREATE A NONDEFINING DECLARATION if nondef == nullptr
+  SgAdaProtectedBodyDecl&
+  mkAdaProtectedBodyDecl( SgDeclarationStatement& podecl,
+                          SgAdaProtectedBodyDecl* nondef_opt,
+                          SgAdaProtectedBody&     pobody,
+                          SgScopeStatement&       scope
+                        );
 
   /// creates an empty protected object specification definition node
   SgAdaProtectedSpec&
@@ -502,7 +537,7 @@ namespace Ada_ROSE_Translation
   SgFunctionParameterList&
   mkFunctionParameterList();
 
-  /// creates a function/procedure declaration
+  /// creates a nondefining function/procedure declaration
   /// \param nm       name of the function/procedure
   /// \param scope    the enclosing scope
   /// \param retty    return type of a function (SgTypeVoid for procedures)
@@ -510,13 +545,27 @@ namespace Ada_ROSE_Translation
   ///                 the function parameter scope have been constructed. The task of complete
   ///                 is to fill these objects with function parameters.
   SgFunctionDeclaration&
-  mkProcedureDecl( const std::string& name,
-                   SgScopeStatement& scope,
-                   SgType& retty,
-                   std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
-                 );
+  mkProcedureDecl_nondef( const std::string& name,
+                          SgScopeStatement& scope,
+                          SgType& retty,
+                          std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
+                        );
 
   /// creates a secondary function/procedure declaration
+  /// \param ndef     the first nondefining declaration
+  /// \param scope    the enclosing scope
+  /// \param retty    return type of a function (SgTypeVoid for procedures)
+  /// \param complete a functor that is called after the function parameter list and
+  ///                 the function parameter scope have been constructed. The task of complete
+  ///                 is to fill these objects with function parameters.
+  SgFunctionDeclaration&
+  mkProcedureDecl_nondef( SgFunctionDeclaration& ndef,
+                          SgScopeStatement& scope,
+                          SgType& retty,
+                          std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
+                        );
+
+  /// creates a defining function/procedure declaration
   /// \param ndef     the first nondefining declaration
   /// \param scope    the enclosing scope
   /// \param retty    return type of a function (SgTypeVoid for procedures)
@@ -530,21 +579,7 @@ namespace Ada_ROSE_Translation
                    std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
                  );
 
-  /// creates a function/procedure declaration
-  /// \param ndef     the first nondefining declaration
-  /// \param scope    the enclosing scope
-  /// \param retty    return type of a function (SgTypeVoid for procedures)
-  /// \param complete a functor that is called after the function parameter list and
-  ///                 the function parameter scope have been constructed. The task of complete
-  ///                 is to fill these objects with function parameters.
-  SgFunctionDeclaration&
-  mkProcedureDefn( SgFunctionDeclaration& ndef,
-                   SgScopeStatement& scope,
-                   SgType& retty,
-                   std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
-                 );
-
-  /// creates a function/procedure definition and a corresponding non-defining declaration
+  /// creates a defining function/procedure definition and a corresponding non-defining declaration
   /// \param nm       the function/procedure name
   /// \param scope    the enclosing scope
   /// \param retty    return type of a function (SgTypeVoid for procedures)
@@ -555,7 +590,7 @@ namespace Ada_ROSE_Translation
   ///                       non-defining declaration.
   /// \returns the defining declaration
   SgFunctionDeclaration&
-  mkProcedureDefn( const std::string& name,
+  mkProcedureDecl( const std::string& name,
                    SgScopeStatement& scope,
                    SgType& retty,
                    std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete

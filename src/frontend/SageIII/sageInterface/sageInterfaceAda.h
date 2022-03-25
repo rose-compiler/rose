@@ -192,6 +192,18 @@ namespace ada
   SgAdaDiscriminatedTypeDecl* getAdaDiscriminatedTypeDecl(const SgDeclarationStatement* n);
   /// @}
 
+  /// tests if the declaration \ref decl corresponds to a stub (aka separated unit)
+  /// @{
+  bool hasSeparatedBody(const SgDeclarationStatement& dcl);
+  bool hasSeparatedBody(const SgDeclarationStatement* dcl);
+  /// @}
+
+  /// returns true iff \ref n is a unit definition that has been separated
+  /// @{
+  bool isSeparatedBody(const SgDeclarationStatement& n);
+  bool isSeparatedBody(const SgDeclarationStatement* n);
+  /// @}
+
   /// Details of expression aggregates
   struct AggregateInfo : std::tuple< SgAdaAncestorInitializer*,
                                      SgExpressionPtrList::const_iterator,

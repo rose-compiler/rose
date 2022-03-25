@@ -962,6 +962,21 @@ namespace
           computeNameQualForShared(n, n.get_orig_return_type());
       }
 
+      void handle(const SgAdaTaskBodyDecl& n)
+      {
+        handle(sg::asBaseType(n));
+
+        recordNameQualIfNeeded(n, n.get_scope());
+      }
+
+      void handle(const SgAdaProtectedBodyDecl& n)
+      {
+        handle(sg::asBaseType(n));
+
+        recordNameQualIfNeeded(n, n.get_scope());
+      }
+
+
       void handle(const SgAdaGenericInstanceDecl& n)
       {
         handle(sg::asBaseType(n));
