@@ -455,186 +455,88 @@ namespace
   {
     std::string unitFile{adaUnit.Text_Name};
     AstContext  ctx = context.sourceFileName(unitFile);
+    bool        processUnit   = true;
+    bool        logParentUnit = false;
+    bool        logBodyUnit   = false;
+    std::string kindName;
+
+  //  A_Procedure,
+  //  A_Function,
+  //  A_Package,
+  //  A_Generic_Procedure,
+  //  A_Generic_Function,
+  //  A_Generic_Package,
+  //  A_Procedure_Instance,
+  //  A_Function_Instance,
+  //  A_Package_Instance,
+  //  A_Procedure_Renaming,
+  //  A_Function_Renaming,
+  //  A_Package_Renaming,
+  //  A_Generic_Procedure_Renaming,
+  //  A_Generic_Function_Renaming,
+  //  A_Generic_Package_Renaming,
+  //  A_Procedure_Body,
+  //  A_Function_Body,
+  //  A_Package_Body,
+
+  //  A_Procedure,
+  //  A_Function,
+  //  A_Package,
+  //  A_Generic_Procedure,
+  //  A_Generic_Function,
+  //  A_Generic_Package,
 
     // dispatch based on unit kind
     switch (adaUnit.Unit_Kind)
     {
       case A_Generic_Procedure:
+        kindName = "A_Generic_Procedure"; logParentUnit = true; logBodyUnit = true;
+        break;
+
       case A_Generic_Function:
+        kindName = "A_Generic_Function"; logParentUnit = true; logBodyUnit = true;
+        break;
+
       case A_Function:
+        kindName = "A_Function"; logParentUnit = true; logBodyUnit = true;
+        break;
+
       case A_Procedure:
-        {
-          std::string kindName;
-
-               if (adaUnit.Unit_Kind == A_Function)          kindName = "function";
-          else if (adaUnit.Unit_Kind == A_Procedure)         kindName = "procedure";
-          else if (adaUnit.Unit_Kind == A_Generic_Function)  kindName = "generic function";
-          else if (adaUnit.Unit_Kind == A_Generic_Procedure) kindName = "generic procedure";
-
-          logTrace() << "A " << kindName
-                     << PrnUnitHeader(adaUnit)
-                     << "\n " << adaUnit.Corresponding_Parent_Declaration << " (Corresponding_Parent_Declaration)"
-                     << "\n " << adaUnit.Corresponding_Body << " (Corresponding_Body)"
-                     << std::endl;
-
-          ElemIdRange range = idRange(adaUnit.Context_Clause_Elements);
-
-          traverseIDs(range, elemMap(), ElemCreator{ctx});
-          handleElementID(adaUnit.Unit_Declaration, ctx);
-
-          /* unused optional elems:
-               Unit_ID             Corresponding_Parent_Declaration
-               Unit_ID             Corresponding_Declaration;
-               Unit_ID             Corresponding_Body;
-               Unit_List           Subunits;
-          */
-
-          break;
-        }
-
-      case A_Procedure_Body_Subunit:
-      case A_Function_Body_Subunit:
-      case A_Function_Body:
-      case A_Procedure_Body:
-        {
-          const char* kind = "A_Procedure_Body_Subunit";
-
-          if (adaUnit.Unit_Kind == A_Function_Body)
-            kind = "A_Function_Body";
-          else if (adaUnit.Unit_Kind == A_Procedure_Body)
-            kind = "A_Procedure_Body";
-          else if (adaUnit.Unit_Kind == A_Function_Body_Subunit)
-            kind = "A_Function_Body_Subunit";
-
-          logTrace() << kind
-                     << PrnUnitHeader(adaUnit)
-                     << std::endl;
-          ElemIdRange range = idRange(adaUnit.Context_Clause_Elements);
-
-          traverseIDs(range, elemMap(), ElemCreator{ctx});
-          handleElementID(adaUnit.Unit_Declaration, ctx);
-
-          /* unused optional elems:
-             A_Function_Body && A_Procedure_Body
-               Unit_ID             Corresponding_Parent_Declaration;
-               Unit_ID             Corresponding_Declaration;
-               Unit_List           Subunits;
-             A_Procedure_Body_Subunit && A_Function_Body_Subunit
-               Unit_List           Subunits;
-               Unit_ID Corresponding_Subunit_Parent_Body
-          */
-
-
-          break;
-        }
+        kindName = "A_Procedure"; logParentUnit = true; logBodyUnit = true;
+        break;
 
       case A_Generic_Package:
+        kindName = "A_Generic_Package"; logParentUnit = true; logBodyUnit = true;
+        break;
+
       case A_Package:
-        {
-          logTrace() << "A package"
-                     << PrnUnitHeader(adaUnit)
-                     << std::endl;
+        kindName = "A_Package"; logParentUnit = true; logBodyUnit = true;
+        break;
 
-          ElemIdRange elemRange = idRange(adaUnit.Context_Clause_Elements);
-          UnitIdRange unitRange = idRange(adaUnit.Corresponding_Children);
+      case A_Procedure_Body_Subunit:     kindName = "A_Procedure_Body_Subunit"; break;
+      case A_Function_Body_Subunit:      kindName = "A_Function_Body_Subunit"; break;
+      case A_Package_Body_Subunit:       kindName = "A_Package_Body_Subunit"; break;
+      case A_Function_Body:              kindName = "A_Function_Body"; break;
+      case A_Procedure_Body:             kindName = "A_Procedure_Body"; break;
+      case A_Package_Body:               kindName = "A_Package_Body"; break;
+      case A_Procedure_Instance:         kindName = "A_Procedure_Instance"; logParentUnit = true; break;
+      case A_Function_Instance:          kindName = "A_Function_Instance"; logParentUnit = true; break;
+      case A_Package_Instance:           kindName = "A_Package_Instance"; logParentUnit = true; break;
+      case A_Task_Body_Subunit:          kindName = "A_Task_Body_Subunit"; break;
+      case A_Protected_Body_Subunit:     kindName = "A_Protected_Body_Subunit"; break;
+      case A_Procedure_Renaming:         kindName = "A_Procedure_Renaming"; logParentUnit = true; break;
+      case A_Generic_Package_Renaming:   kindName = "A_Generic_Package_Renaming"; logParentUnit = true; break;
+      case A_Package_Renaming:           kindName = "A_Package_Renaming"; logParentUnit = true; break;
+      case A_Function_Renaming:          kindName = "A_Function_Renaming"; logParentUnit = true; break;
+      case A_Generic_Procedure_Renaming: kindName = "A_Generic_Procedure_Renaming"; logParentUnit = true; break;
+      case A_Generic_Function_Renaming:  kindName = "A_Generic_Function_Renaming"; logParentUnit = true; break;
 
-          if (elemRange.size() || unitRange.size())
-          {
-            (unitRange.size() ? logWarn() : logInfo())
-               << "   elems# " << elemRange.size()
-               << "\n    subs# " << unitRange.size()
-               << std::endl;
-
-            traverseIDs(elemRange, elemMap(), ElemCreator{ctx});
-
-            // units seem to be included in the elements
-            // \todo double check this
-            //~ traverseIDs(unitRange, unitMap(), UnitCreator(ctx));
-          }
-
-          handleElementID(adaUnit.Unit_Declaration, ctx);
-
-          /* unused fields:
-          */
-          break;
-        }
-
-      case A_Package_Body:
-        {
-          logTrace() << "A package body"
-                     << PrnUnitHeader(adaUnit)
-                     << std::endl;
-
-          ElemIdRange elemRange = idRange(adaUnit.Context_Clause_Elements);
-          UnitIdRange unitRange = idRange(adaUnit.Corresponding_Children);
-
-          if (elemRange.size() || unitRange.size())
-          {
-            (unitRange.size() ? logWarn() : logInfo())
-                 << "   elems# " << elemRange.size()
-                 << "\n    subs# " << unitRange.size()
-                 << std::endl;
-
-            traverseIDs(elemRange, elemMap(), ElemCreator{ctx});
-            // units seem to be included in the elements
-            // \todo double check this
-            //~ traverseIDs(unitRange, unitMap(), UnitCreator(ctx));
-          }
-
-          handleElementID(adaUnit.Unit_Declaration, ctx);
-          break;
-        }
-
-      case A_Generic_Package_Renaming:
-      case A_Package_Renaming:
-        {
-          logTrace() << "A " << (adaUnit.Unit_Kind == A_Package_Renaming ? "" : "generic") << " pkg renaming"
-                     << PrnUnitHeader(adaUnit)
-                     << std::endl;
-
-          ElemIdRange range = idRange(adaUnit.Context_Clause_Elements);
-
-          traverseIDs(range, elemMap(), ElemCreator{ctx});
-          handleElementID(adaUnit.Unit_Declaration, ctx);
-          break;
-        }
-
-      case A_Procedure_Instance:
-      case A_Function_Instance:
-      case A_Package_Instance:
-        {
-          if (adaUnit.Unit_Kind == A_Procedure_Instance)
-            logTrace() << "A A_Procedure_Instance";
-          else if (adaUnit.Unit_Kind == A_Function_Instance)
-            logTrace() << "A A_Function_Instance";
-          else
-            logTrace() << "A A_Package_Instance";
-
-          logTrace() << PrnUnitHeader(adaUnit)
-                     << std::endl;
-
-          ElemIdRange range = idRange(adaUnit.Context_Clause_Elements);
-
-          traverseIDs(range, elemMap(), ElemCreator{ctx});
-          handleElementID(adaUnit.Unit_Declaration, ctx);
-          break;
-        }
 
       case Not_A_Unit:
-
-      case A_Procedure_Renaming:
-      case A_Function_Renaming:
-
-      case A_Generic_Procedure_Renaming:
-      case A_Generic_Function_Renaming:
 
       //  A unit interpreted only as the completion of a function: or a unit
       //  interpreted as both the declaration and body of a library
       //  function. Reference Manual 10.1.4(4)
-
-      case A_Package_Body_Subunit:
-      case A_Task_Body_Subunit:
-      case A_Protected_Body_Subunit:
 
       case A_Nonexistent_Declaration:
       //  A unit that does not exist but is:
@@ -664,8 +566,27 @@ namespace
       case An_Unknown_Unit:
 
       default:
+        processUnit = false;
         logWarn() << "unit kind unhandled: " << adaUnit.Unit_Kind << std::endl;
         ADA_ASSERT(!FAIL_ON_ERROR(ctx));
+    }
+
+    if (processUnit)
+    {
+      logTrace()   << "A " << kindName
+                   << PrnUnitHeader(adaUnit);
+      if (logParentUnit)
+        logTrace() << "\n " << adaUnit.Corresponding_Parent_Declaration << " (Corresponding_Parent_Declaration)";
+
+      if (logBodyUnit)
+        logTrace() << "\n " << adaUnit.Corresponding_Body << " (Corresponding_Body)";
+
+      logTrace()   << std::endl;
+
+      ElemIdRange range = idRange(adaUnit.Context_Clause_Elements);
+
+      traverseIDs(range, elemMap(), ElemCreator{ctx});
+      handleElementID(adaUnit.Unit_Declaration, ctx);
     }
   }
 

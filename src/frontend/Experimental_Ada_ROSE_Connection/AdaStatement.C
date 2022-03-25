@@ -252,13 +252,20 @@ namespace
     return SG_DEREF(SG_DEREF(def).get_body());
   }
 
-  /// sets the override flag in \ref sgmod
-  void setOverride(SgDeclarationModifier& sgmod, bool isOverride)
+  /// sets the override flag in \ref dcl
+  void setOverride(SgDeclarationStatement& dcl, bool isOverride)
   {
-    if (isOverride)
-      sgmod.setOverride();
-    else
-      sgmod.unsetOverride();
+    SgDeclarationModifier& sgmod = dcl.get_declarationModifier();
+
+    if (isOverride) sgmod.setOverride(); else sgmod.unsetOverride();
+  }
+
+  /// sets the override flag in \ref dcl
+  void setAdaSeparate(SgDeclarationStatement& dcl, bool isSeparate)
+  {
+    SgDeclarationModifier& sgmod = dcl.get_declarationModifier();
+
+    if (isSeparate) sgmod.setAdaSeparate(); else sgmod.unsetAdaSeparate();
   }
 
   /// creates a deep-copyW of \ref exp
@@ -2718,47 +2725,47 @@ namespace
     else
     {
       switch (detail.typeKind())
-    {
-      case A_Derived_Type_Definition:
-      case A_Signed_Integer_Type_Definition:
-      case A_Modular_Type_Definition:
-      case A_Floating_Point_Definition:
-      case A_Decimal_Fixed_Point_Definition:
-      case An_Access_Type_Definition:
-      case An_Ordinary_Fixed_Point_Definition:// \todo untested
-      case An_Unconstrained_Array_Definition: // \todo untested
-      case A_Constrained_Array_Definition:    // \todo untested
-        {
+      {
+        case A_Derived_Type_Definition:
+        case A_Signed_Integer_Type_Definition:
+        case A_Modular_Type_Definition:
+        case A_Floating_Point_Definition:
+        case A_Decimal_Fixed_Point_Definition:
+        case An_Access_Type_Definition:
+        case An_Ordinary_Fixed_Point_Definition:// \todo untested
+        case An_Unconstrained_Array_Definition: // \todo untested
+        case A_Constrained_Array_Definition:    // \todo untested
+          {
+            res = &mkTypeDecl(adaname.ident, mkOpaqueType(), scope);
+            break;
+          }
+
+        case An_Enumeration_Type_Definition:
+          {
+            SgEnumDeclaration& sgnode = mkEnumDecl(adaname.ident, scope);
+
+            res = &sgnode;
+            break;
+          }
+
+        case A_Record_Type_Definition:
+        case A_Derived_Record_Extension_Definition:
+        case A_Tagged_Record_Type_Definition:
+          {
+            SgClassDeclaration& sgnode = mkRecordDecl(adaname.ident, scope);
+
+            if (typeview)
+              setParentRecordConstraintIfAvail(sgnode, typeview->The_Union.Definition, ctx);
+
+            res = &sgnode;
+            break;
+          }
+
+        default:
+          logWarn() << "unhandled opaque type declaration: " << detail.typeKind()
+                    << std::endl;
+          ADA_ASSERT (!FAIL_ON_ERROR(ctx));
           res = &mkTypeDecl(adaname.ident, mkOpaqueType(), scope);
-          break;
-        }
-
-      case An_Enumeration_Type_Definition:
-        {
-          SgEnumDeclaration& sgnode = mkEnumDecl(adaname.ident, scope);
-
-          res = &sgnode;
-          break;
-        }
-
-      case A_Record_Type_Definition:
-      case A_Derived_Record_Extension_Definition:
-      case A_Tagged_Record_Type_Definition:
-        {
-          SgClassDeclaration& sgnode = mkRecordDecl(adaname.ident, scope);
-
-          if (typeview)
-            setParentRecordConstraintIfAvail(sgnode, typeview->The_Union.Definition, ctx);
-
-          res = &sgnode;
-          break;
-        }
-
-      default:
-        logWarn() << "unhandled opaque type declaration: " << detail.typeKind()
-                  << std::endl;
-        ADA_ASSERT (!FAIL_ON_ERROR(ctx));
-        res = &mkTypeDecl(adaname.ident, mkOpaqueType(), scope);
       }
     }
 
@@ -2783,8 +2790,8 @@ namespace
                 std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
               )
   {
-    return nondef ? mkProcedureDefn(*nondef, SG_DEREF(nondef->get_scope()), rettype, std::move(complete))
-                  : mkProcedureDefn(name,    scope, rettype, std::move(complete));
+    return nondef ? mkProcedureDecl(*nondef, SG_DEREF(nondef->get_scope()), rettype, std::move(complete))
+                  : mkProcedureDecl(name,    scope, rettype, std::move(complete));
   }
 
 
@@ -2796,8 +2803,8 @@ namespace
                 std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
               )
   {
-    return nondef ? mkProcedureDecl(*nondef, scope, rettype, std::move(complete))
-                  : mkProcedureDecl(name,    scope, rettype, std::move(complete));
+    return nondef ? mkProcedureDecl_nondef(*nondef, scope, rettype, std::move(complete))
+                  : mkProcedureDecl_nondef(name,    scope, rettype, std::move(complete));
   }
 
   void completeDiscriminatedDecl( SgAdaDiscriminatedTypeDecl& sgnode,
@@ -3373,12 +3380,18 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         }
 
         // unhandled package bodies
-        if (specdcl == nullptr) break;
+        ADA_ASSERT(specdcl != nullptr);
 
-        SgAdaPackageBodyDecl& sgnode  = mkAdaPackageBodyDecl(SG_DEREF(specdcl));
-        SgAdaPackageBody&     pkgbody = SG_DEREF(sgnode.get_definition());
+        SgDeclarationStatement* ndef    = findFirst(asisDecls(), decl.Corresponding_Body_Stub);
+        SgAdaPackageBodyDecl*   nondef  = isSgAdaPackageBodyDecl(ndef);
+        ADA_ASSERT(!ndef || nondef); // ndef => nondef
 
-        //~ recordNode(asisDecls(), elem.ID, sgnode);
+        NameData                adaname = singleName(decl, ctx);
+        SgScopeStatement&       logicalScope = adaname.parent_scope();
+        SgAdaPackageBodyDecl&   sgnode  = mkAdaPackageBodyDecl(SG_DEREF(specdcl), nondef, logicalScope);
+        SgAdaPackageBody&       pkgbody = SG_DEREF(sgnode.get_definition());
+
+        recordNode(asisDecls(), elem.ID, sgnode);
         //~ recordNode(asisDecls(), adaname.id(), sgnode);
 
         sgnode.set_scope(specdcl->get_scope());
@@ -3386,34 +3399,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         attachSourceLocation(sgnode, elem, ctx);
         outer.append_statement(&sgnode);
         ADA_ASSERT (sgnode.get_parent() == &outer);
-
-#if OLD_CODE_REPLACED_WITH_COMPLETE_CALL_UNDERNEATH
-        // declarative items
-        {
-          ElemIdRange range = idRange(decl.Body_Declarative_Items);
-
-          traverseIDs(range, elemMap(), ElemCreator{ctx.scope(pkgbody)});
-        }
-
-        // statements
-        {
-          ElemIdRange range = idRange(decl.Body_Statements);
-
-          if (range.size())
-          {
-            LabelAndLoopManager lblmgr;
-            SgBasicBlock&       pkgblock = mkBasicBlock();
-
-            pkgbody.append_statement(&pkgblock);
-            traverseIDs(range, elemMap(), StmtCreator{ctx.scope(pkgblock).labelsAndLoops(lblmgr)});
-            placePragmas(decl.Pragmas, ctx, std::ref(pkgbody), std::ref(pkgblock));
-          }
-          else
-          {
-            placePragmas(decl.Pragmas, ctx, std::ref(pkgbody));
-          }
-        }
-#endif
 
         const bool hasBodyStatements = idRange(decl.Body_Statements).size() > 0;
 
@@ -3547,13 +3532,17 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
         // PP (10/20/21): changed scoping for packages and procedures/functions
         //                the generic proc/func is declared in the logical parent scope
-        // was: SgFunctionDeclaration&  fundec     = mkProcedureDecl(adaname.fullName, gen_defn, rettype, ParameterCompletion{params, ctx});
-        SgFunctionDeclaration&  fundec     = mkProcedureDecl(adaname.ident, logicalScope, rettype, ParameterCompletion{params, ctx});
+        // was: SgFunctionDeclaration&  fundec     = mkProcedureDecl_nondef(adaname.fullName, gen_defn, rettype, ParameterCompletion{params, ctx});
+        SgFunctionDeclaration&  fundec     = mkProcedureDecl_nondef( adaname.ident,
+                                                                     logicalScope,
+                                                                     rettype,
+                                                                     ParameterCompletion{params, ctx}
+                                                                   );
 
         sgnode.set_declaration(&fundec);
         fundec.set_parent(&gen_defn);
 
-        setOverride(fundec.get_declarationModifier(), decl.Is_Overriding_Declaration);
+        setOverride(fundec, decl.Is_Overriding_Declaration);
 
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
@@ -3601,9 +3590,13 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                                                 : mkTypeVoid();
 
         SgScopeStatement&      logicalScope = adaname.parent_scope();
-        SgFunctionDeclaration& sgnode  = mkProcedureDecl(adaname.ident, logicalScope, rettype, ParameterCompletion{params, ctx});
+        SgFunctionDeclaration& sgnode  = mkProcedureDecl_nondef( adaname.ident,
+                                                                 logicalScope,
+                                                                 rettype,
+                                                                 ParameterCompletion{params, ctx}
+                                                               );
 
-        setOverride(sgnode.get_declarationModifier(), decl.Is_Overriding_Declaration);
+        setOverride(sgnode, decl.Is_Overriding_Declaration);
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
 
@@ -3653,8 +3646,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ADA_ASSERT (adaname.fullName == adaname.ident);
         SgDeclarationStatement* ndef    = findFirst(asisDecls(), decl.Corresponding_Declaration, decl.Corresponding_Body_Stub);
         SgFunctionDeclaration*  nondef  = getFunctionDeclaration(ndef);
-
-        ADA_ASSERT (nondef || !ndef);
+        ADA_ASSERT(!ndef || nondef); // ndef => nondef
 
         SgScopeStatement&       logicalScope = adaname.parent_scope();
         SgFunctionDeclaration&  sgnode  = createFunDef(nondef, adaname.ident, logicalScope, rettype, ParameterCompletion{params, ctx});
@@ -3687,50 +3679,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         break;
       }
 
-    case A_Function_Body_Stub:                     // 10.1.3(3)
-    case A_Procedure_Body_Stub:                    // 10.1.3(3)
-      {
-        const bool isFunc  = decl.Declaration_Kind == A_Function_Body_Stub;
-
-        logKind(isFunc ? "A_Function_Body_Stub" : "A_Procedure_Body_Stub");
-
-        SgScopeStatement&       outer   = ctx.scope();
-        NameData                adaname = singleName(decl, ctx);
-        ElemIdRange             params  = idRange(decl.Parameter_Profile);
-        SgType&                 rettype = isFunc ? getDeclTypeID(decl.Result_Profile, ctx)
-                                                 : mkTypeVoid();
-
-        ADA_ASSERT (adaname.fullName == adaname.ident);
-        SgDeclarationStatement* ndef    = findFirst(asisDecls(), decl.Corresponding_Declaration);
-        SgFunctionDeclaration*  nondef  = getFunctionDeclaration(ndef);
-
-        ADA_ASSERT (nondef || !ndef);
-
-        SgScopeStatement&       logicalScope = adaname.parent_scope();
-        SgFunctionDeclaration&  sgnode  = createFunDcl(nondef, adaname.ident, logicalScope, rettype, ParameterCompletion{params, ctx});
-
-        sgnode.get_declarationModifier().setAdaSeparate();
-
-        recordNode(asisDecls(), elem.ID, sgnode);
-        recordNode(asisDecls(), adaname.id(), sgnode);
-        privatize(sgnode, isPrivate);
-        attachSourceLocation(sgnode, elem, ctx);
-        outer.append_statement(&sgnode);
-        ADA_ASSERT (sgnode.get_parent() == &outer);
-
-        /* unhandled field
-           bool                           Is_Overriding_Declaration;
-           bool                           Is_Not_Overriding_Declaration;
-           Declaration_ID                 Corresponding_Subunit
-           bool                           Is_Dispatching_Operation
-
-         +func:
-           bool                           Is_Not_Null_Return
-
-           break;
-        */
-        break;
-      }
 
 
     case An_Incomplete_Type_Declaration:           // 3.2.1(2):3.10(2)
@@ -3907,7 +3855,11 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgScopeStatement&     logicalScope = adaname.parent_scope();
 
         // create a function declaration for formal function/procedure declaration.
-        SgFunctionDeclaration& sgnode = mkProcedureDecl(adaname.ident, logicalScope, rettype, ParameterCompletion{range, ctx});
+        SgFunctionDeclaration& sgnode = mkProcedureDecl_nondef( adaname.ident,
+                                                                logicalScope,
+                                                                rettype,
+                                                                ParameterCompletion{range, ctx}
+                                                              );
         sgnode.set_ada_formal_subprogram_decl(true);
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
@@ -4074,9 +4026,9 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ADA_ASSERT (adaname.fullName == adaname.ident);
 
         Element_ID              nameId  = adaname.id();
-        SgDeclarationStatement* incomp  = findFirst(asisTypes(), nameId);
-        SgAdaTaskTypeDecl*      nondef  = isSgAdaTaskTypeDecl(incomp);
-        ADA_ASSERT(!incomp || nondef);
+        SgDeclarationStatement* ndef    = findFirst(asisTypes(), nameId);
+        SgAdaTaskTypeDecl*      nondef  = isSgAdaTaskTypeDecl(ndef);
+        ADA_ASSERT(!ndef || nondef); // ndef => nondef
 
         SgAdaTaskTypeDecl& sgnode  = nondef ? mkAdaTaskTypeDecl(*nondef, SG_DEREF(spec.first), ctx.scope())
                                             : mkAdaTaskTypeDecl(adaname.fullName, spec.first, ctx.scope());
@@ -4168,18 +4120,21 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         logKind("A_Protected_Body_Declaration");
 
-        SgAdaProtectedBody&     pobody = mkAdaProtectedBody();
+        SgScopeStatement&       outer   = ctx.scope();
+        SgAdaProtectedBody&     pobody  = mkAdaProtectedBody();
         NameData                adaname = singleName(decl, ctx);
-        Element_ID              declID  = decl.Corresponding_Declaration;
-        SgDeclarationStatement& podecl = lookupNode(asisDecls(), declID);
-        ADA_ASSERT (adaname.fullName == adaname.ident);
+        SgDeclarationStatement* ndef    = findFirst(asisDecls(), decl.Corresponding_Body_Stub);
+        SgAdaProtectedBodyDecl* nondef  = isSgAdaProtectedBodyDecl(ndef);
+        ADA_ASSERT(!ndef || nondef); // ndef => nondef
 
-        SgAdaProtectedBodyDecl& sgnode  = mkAdaProtectedBodyDecl(podecl, pobody, ctx.scope());
+        SgDeclarationStatement& podecl  = lookupNode(asisDecls(), decl.Corresponding_Declaration);
+        SgScopeStatement&       logicalScope = adaname.parent_scope();
+        SgAdaProtectedBodyDecl& sgnode  = mkAdaProtectedBodyDecl(podecl, nondef, pobody, logicalScope);
 
         attachSourceLocation(sgnode, elem, ctx);
         privatize(sgnode, isPrivate);
-        ctx.scope().append_statement(&sgnode);
-        ADA_ASSERT (sgnode.get_parent() == &ctx.scope());
+        outer.append_statement(&sgnode);
+        ADA_ASSERT (sgnode.get_parent() == &outer);
         //~ recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
 
@@ -4196,7 +4151,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                Element_ID                     Corresponding_End_Name
                bool                           Is_Name_Repeated
                bool                           Is_Subunit
-               Declaration_ID                 Corresponding_Body_Stub
         */
         break;
       }
@@ -4205,29 +4159,26 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
       {
         logKind("A_Task_Body_Declaration");
 
+        SgScopeStatement&       outer   = ctx.scope();
         SgAdaTaskBody&          tskbody = mkAdaTaskBody();
         NameData                adaname = singleName(decl, ctx);
+        SgDeclarationStatement* ndef    = findFirst(asisDecls(), decl.Corresponding_Body_Stub);
+        SgAdaTaskBodyDecl*      nondef  = isSgAdaTaskBodyDecl(ndef);
+        ADA_ASSERT(!ndef || nondef); // ndef => nondef
+
         SgDeclarationStatement& tskdecl = lookupNode(asisDecls(), decl.Corresponding_Declaration);
-        ADA_ASSERT (adaname.fullName == adaname.ident);
 
-        // \todo \review not sure why a task body could be independently created
-        //~ SgDeclarationStatement* tskdecl = findNode(asisDecls(), decl.Corresponding_Declaration);
-        //~ if (tskdecl == nullptr)
-          //~ logError() << adaname.fullName << " task body w/o decl" << std::endl;
-
-        //~ SgAdaTaskBodyDecl&      sgnode  = tskdecl ? mkAdaTaskBodyDecl(*tskdecl, tskbody, ctx.scope())
-                                                  //~ : mkAdaTaskBodyDecl(adaname.fullName, tskbody, ctx.scope());
-
-        SgAdaTaskBodyDecl&      sgnode  = mkAdaTaskBodyDecl(tskdecl, tskbody, ctx.scope());
+        // ADA_ASSERT (adaname.fullName == adaname.ident);
+        SgScopeStatement&       logicalScope = adaname.parent_scope();
+        SgAdaTaskBodyDecl&      sgnode  = mkAdaTaskBodyDecl(tskdecl, nondef, tskbody, logicalScope);
 
         attachSourceLocation(sgnode, elem, ctx);
         privatize(sgnode, isPrivate);
-        ctx.scope().append_statement(&sgnode);
-        ADA_ASSERT (sgnode.get_parent() == &ctx.scope());
+        outer.append_statement(&sgnode);
+        ADA_ASSERT (sgnode.get_parent() == &outer);
+
         //~ recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
-
-        placePragmas(decl.Pragmas, ctx, std::ref(tskbody));
 
         completeDeclarationsWithHandledBlock( decl.Body_Declarative_Items,
                                               decl.Body_Statements,
@@ -4244,9 +4195,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
              Element_ID                     Corresponding_End_Name;
              Declaration_ID                 Body_Block_Statement;
              bool                           Is_Name_Repeated;
-             Declaration_ID                 Corresponding_Declaration;
              bool                           Is_Subunit;
-             Declaration_ID                 Corresponding_Body_Stub;
         */
         break;
       }
@@ -4321,6 +4270,130 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
              Element_ID                     Corresponding_End_Name
              Declaration_ID                 Body_Block_Statement
              bool                           Is_Name_Repeated
+        */
+        break;
+      }
+
+    case A_Function_Body_Stub:                     // 10.1.3(3)
+    case A_Procedure_Body_Stub:                    // 10.1.3(3)
+      {
+        const bool isFunc  = decl.Declaration_Kind == A_Function_Body_Stub;
+
+        logKind(isFunc ? "A_Function_Body_Stub" : "A_Procedure_Body_Stub");
+
+        SgScopeStatement&       outer   = ctx.scope();
+        NameData                adaname = singleName(decl, ctx);
+        ElemIdRange             params  = idRange(decl.Parameter_Profile);
+        SgType&                 rettype = isFunc ? getDeclTypeID(decl.Result_Profile, ctx)
+                                                 : mkTypeVoid();
+
+        ADA_ASSERT (adaname.fullName == adaname.ident);
+        SgDeclarationStatement* ndef    = findFirst(asisDecls(), decl.Corresponding_Declaration);
+        SgFunctionDeclaration*  nondef  = getFunctionDeclaration(ndef);
+        ADA_ASSERT(!ndef || nondef); // ndef => nondef
+
+        SgScopeStatement&       logicalScope = adaname.parent_scope();
+        SgFunctionDeclaration&  sgnode  = createFunDcl(nondef, adaname.ident, logicalScope, rettype, ParameterCompletion{params, ctx});
+
+        setAdaSeparate(sgnode, true /* separate */);
+
+        recordNode(asisDecls(), elem.ID, sgnode);
+        recordNode(asisDecls(), adaname.id(), sgnode);
+        privatize(sgnode, isPrivate);
+        attachSourceLocation(sgnode, elem, ctx);
+        outer.append_statement(&sgnode);
+        ADA_ASSERT (sgnode.get_parent() == &outer);
+
+        /* unhandled field
+           bool                           Is_Overriding_Declaration;
+           bool                           Is_Not_Overriding_Declaration;
+           Declaration_ID                 Corresponding_Subunit
+           bool                           Is_Dispatching_Operation
+
+         +func:
+           bool                           Is_Not_Null_Return
+
+           break;
+        */
+        break;
+      }
+
+    case A_Task_Body_Stub:                         // 10.1.3(5)
+      {
+        logKind("A_Task_Body_Stub");
+
+        SgScopeStatement&       outer   = ctx.scope();
+        NameData                adaname = singleName(decl, ctx);
+        SgDeclarationStatement& tskdecl = lookupNode(asisDecls(), decl.Corresponding_Declaration);
+        SgScopeStatement&       logicalScope = adaname.parent_scope();
+        SgAdaTaskBodyDecl&      sgnode  = mkAdaTaskBodyDecl_nondef(tskdecl, logicalScope);
+
+        setAdaSeparate(sgnode, true /* separate */);
+
+        recordNode(asisDecls(), elem.ID, sgnode);
+        recordNode(asisDecls(), adaname.id(), sgnode);
+        privatize(sgnode, isPrivate);
+        attachSourceLocation(sgnode, elem, ctx);
+        outer.append_statement(&sgnode);
+        ADA_ASSERT (sgnode.get_parent() == &outer);
+
+        /* unhandled field
+            bool                           Has_Task;
+            Declaration_ID                 Corresponding_Subunit;
+        */
+        break;
+      }
+
+    case A_Protected_Body_Stub:                    // 10.1.3(6)
+      {
+        logKind("A_Protected_Body_Stub");
+
+        // \todo combine code with A_Task_Body_Stub
+        SgScopeStatement&       outer   = ctx.scope();
+        NameData                adaname = singleName(decl, ctx);
+        SgDeclarationStatement& podecl  = lookupNode(asisDecls(), decl.Corresponding_Declaration);
+        SgScopeStatement&       logicalScope = adaname.parent_scope();
+        SgAdaProtectedBodyDecl& sgnode  = mkAdaProtectedBodyDecl_nondef(podecl, logicalScope);
+
+        setAdaSeparate(sgnode, true /* separate */);
+
+        recordNode(asisDecls(), elem.ID, sgnode);
+        recordNode(asisDecls(), adaname.id(), sgnode);
+        privatize(sgnode, isPrivate);
+        attachSourceLocation(sgnode, elem, ctx);
+        outer.append_statement(&sgnode);
+        ADA_ASSERT (sgnode.get_parent() == &outer);
+
+        /* unhandled field
+            bool                           Has_Protected;
+            Declaration_ID                 Corresponding_Subunit;
+        */
+        break;
+      }
+
+    case A_Package_Body_Stub:                      // 10.1.3(4)
+      {
+        logKind("A_Package_Body_Stub");
+
+        // \todo combine code with A_Task_Body_Stub
+        SgScopeStatement&       outer    = ctx.scope();
+        NameData                adaname  = singleName(decl, ctx);
+        SgDeclarationStatement& declnode = lookupNode(asisDecls(), decl.Corresponding_Declaration);
+        SgAdaPackageSpecDecl*   specdcl  = isSgAdaPackageSpecDecl(&declnode);
+        SgScopeStatement&       logicalScope = adaname.parent_scope();
+        SgAdaPackageBodyDecl&   sgnode   = mkAdaPackageBodyDecl_nondef(SG_DEREF(specdcl), logicalScope);
+
+        setAdaSeparate(sgnode, true /* separate */);
+
+        recordNode(asisDecls(), elem.ID, sgnode);
+        recordNode(asisDecls(), adaname.id(), sgnode);
+        privatize(sgnode, isPrivate);
+        attachSourceLocation(sgnode, elem, ctx);
+        outer.append_statement(&sgnode);
+        ADA_ASSERT (sgnode.get_parent() == &outer);
+        /* unhandled field
+            Declaration_ID                 Corresponding_Declaration;
+            Declaration_ID                 Corresponding_Subunit;
         */
         break;
       }
@@ -4449,7 +4522,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                                                                        outer,
                                                                        rettype,
                                                                        ParameterCompletion{range, ctx});
-        setOverride(sgnode.get_declarationModifier(), decl.Is_Overriding_Declaration);
+        setOverride(sgnode, decl.Is_Overriding_Declaration);
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
 
@@ -4678,15 +4751,12 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         ROSE_ABORT();
       }
 
-    case Not_A_Declaration: /* break; */           // An unexpected element
-    case A_Generalized_Iterator_Specification:     // 5.5.2    -> Trait_Kinds
-    case An_Element_Iterator_Specification:        // 5.5.2    -> Trait_Kinds
-    case A_Return_Variable_Specification:          // 6.5
-    case A_Return_Constant_Specification:          // 6.5
-    case A_Package_Body_Stub:                      // 10.1.3(4)
-    case A_Task_Body_Stub:                         // 10.1.3(5)
-    case A_Protected_Body_Stub:                    // 10.1.3(6)
-    case A_Formal_Incomplete_Type_Declaration:
+    case Not_A_Declaration:                        // An unexpected element
+    case A_Generalized_Iterator_Specification:     // 5.5.2    -> Trait_Kinds (Ada 2012)
+    case An_Element_Iterator_Specification:        // 5.5.2    -> Trait_Kinds (Ada 2012)
+    case A_Return_Variable_Specification:          // 6.5 (Ada 2005)
+    case A_Return_Constant_Specification:          // 6.5 (Ada 2005)
+    case A_Formal_Incomplete_Type_Declaration:     // (Ada 2012)
     case A_Formal_Package_Declaration:             // 12.7(2)
     case A_Formal_Package_Declaration_With_Box:    // 12.7(3)
     default:

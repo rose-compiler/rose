@@ -581,6 +581,12 @@ namespace
     /// prints name qualification with an anchor point \ref ref
     void prnNameQual(const SgLocatedNode& ref, const SgNode& n, SgScopeStatement* scope);
 
+    /// prints name qualification using separate syntax (i.e., separate(name.qualification)).
+    /// \{
+    void prnSeparateQual(const std::string& qual);
+    void prnSeparateQual(const SgDeclarationStatement& n, SgScopeStatement* scope);
+    /// \}
+
     //
     // sequences
 
@@ -786,6 +792,8 @@ namespace
     template <class SageAdaConcurrentBodyDecl>
     void handleConcurrentBodyDecl(SageAdaConcurrentBodyDecl& n, const std::string& prefix)
     {
+      prnSeparateQual(n, n.get_scope());
+
       prn(prefix);
       prn(n.get_name());
       prn(" is\n");
@@ -900,17 +908,19 @@ namespace
 
     void handle(SgAdaPackageBodyDecl& n)
     {
-      const std::string& pkgqual = getQualification(n, n.get_scope());
+      const bool         separated = si::ada::isSeparatedBody(n);
+      const std::string& pkgqual   = getQualification(n, n.get_scope());
 
+      if (separated) prnSeparateQual(pkgqual);
       prn("package body ");
-      prn(pkgqual);
+      if (!separated) prn(pkgqual);
       prn(n.get_name());
       prn(" is\n");
 
       stmt(n.get_definition());
 
       prn("end ");
-      prn(pkgqual);
+      if (!separated) prn(pkgqual);
       prn(n.get_name());
       prn(STMT_SEP);
     }
@@ -1828,14 +1838,7 @@ namespace
 
     void handle(SgFunctionDeclaration& n)
     {
-      const std::string& parent = getQualification(n, n.get_scope());
-
-      if (parent.size())
-      {
-        prn("separate(");
-        prn(parent.substr(0, parent.size()-1)); // remove the trailing '.'
-        prn(")\n");
-      }
+      prnSeparateQual(n, n.get_scope());
 
       const bool      isFunc  = si::ada::isFunction(n.get_type());
       std::string     keyword = isFunc ? "function" : "procedure";
@@ -1899,16 +1902,14 @@ namespace
   {
     static const std::string NOQUAL;
 
-    if (USE_COMPUTED_NAME_QUALIFICATION_STMT)
-    {
-      using Iterator = std::map<SgNode*, std::string>::const_iterator;
+    if (!USE_COMPUTED_NAME_QUALIFICATION_STMT)
+      return scopeQual(scope);
 
-      const Iterator pos = qualMap.find(const_cast<SgNode*>(&n));
+    using Iterator = std::map<SgNode*, std::string>::const_iterator;
 
-      return (pos != qualMap.end()) ? pos->second : NOQUAL;
-    }
+    const Iterator pos = qualMap.find(const_cast<SgNode*>(&n));
 
-    return scopeQual(scope);
+    return (pos != qualMap.end()) ? pos->second : NOQUAL;
   }
 
   std::string
@@ -1921,6 +1922,21 @@ namespace
   void AdaStatementUnparser::prnNameQual(const SgNode& n, SgScopeStatement* scope)
   {
     prn(getQualification(n, scope));
+  }
+
+  void AdaStatementUnparser::prnSeparateQual(const std::string& qual)
+  {
+    if (qual.size() == 0)
+      return;
+
+    prn("separate(");
+    prn(qual.substr(0, qual.size()-1)); // remove the trailing '.'
+    prn(")\n");
+  }
+
+  void AdaStatementUnparser::prnSeparateQual(const SgDeclarationStatement& n, SgScopeStatement* scope)
+  {
+    prnSeparateQual(getQualification(n, n.get_scope()));
   }
 
   void AdaStatementUnparser::prnNameQual(const SgLocatedNode& ref, const SgNode& n, SgScopeStatement* scope)
@@ -2091,6 +2107,9 @@ namespace
 
     prn(keyword);
     prn(" ");
+    // \todo do we need to qualify the name?
+    //       note, separated bodies have qualified names, but they are printed before
+    //       in handle (SgFunctionDeclaration&).
     prn(name);
 
     SgAdaEntryDecl* adaEntry = isSgAdaEntryDecl(&n);

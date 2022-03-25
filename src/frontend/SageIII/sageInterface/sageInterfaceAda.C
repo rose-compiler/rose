@@ -1146,6 +1146,26 @@ namespace ada
     return std::find_if(begin, end, ConditionChange{variantInfo(prevVariant)});
   }
 
+  bool hasSeparatedBody(const SgDeclarationStatement& dcl)
+  {
+    return dcl.get_declarationModifier().isAdaSeparate();
+  }
+
+  bool hasSeparatedBody(const SgDeclarationStatement* dcl)
+  {
+    return dcl && hasSeparatedBody(*dcl);
+  }
+
+  bool isSeparatedBody(const SgDeclarationStatement& n)
+  {
+    return hasSeparatedBody(n.get_firstNondefiningDeclaration());
+  }
+
+  bool isSeparatedBody(const SgDeclarationStatement* n)
+  {
+    return n && isSeparatedBody(*n);
+  }
+
 
 
   // ******
