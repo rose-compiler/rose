@@ -16,17 +16,25 @@ int main (int argc, char *argv[])
   SgGlobal *globalScope = getFirstGlobalScope (project);
   ROSE_ASSERT (globalScope);
 
+  SgSourceFile* sfile= getEnclosingSourceFile (globalScope);
+  sfile->set_unparse_template_ast(true);
 
   SgTemplateParameterPtrList plist;
-  SgTemplateParameter *  tpar= buildTemplateParameter (SgTemplateParameter::type_parameter, buildNonrealType(SgName("T")));
+  SgType * t_par1_type= buildNonrealType(SgName("T"), globalScope);
+  SgTemplateParameter *  tpar= buildTemplateParameter (SgTemplateParameter::type_parameter, t_par1_type);
   plist.push_back(tpar);
 
   SgTemplateArgumentPtrList alist; 
 
   SgTemplateClassDeclaration* decl = buildTemplateClassDeclaration(SgName("Element"), SgClassDeclaration::e_class, globalScope, NULL, &plist, &alist );
-  setOneSourcePositionForTransformation(decl);
+//  setOneSourcePositionForTransformation(decl);
 
   appendStatement (decl, globalScope);
+
+  // build members inside the template
+  SgTemplateClassDefinition *def = isSgTemplateClassDefinition(decl->get_definition());
+  SgTemplateVariableDeclaration* t_var_decl = buildTemplateVariableDeclaration(SgName("Value"), t_par1_type, NULL, def );
+  appendStatement (t_var_decl, def);
 
   // extra stuff for testing
   SgVariableDeclaration *varDecl = buildVariableDeclaration(SgName ("i"), buildIntType(), NULL, globalScope);
@@ -35,9 +43,6 @@ int main (int argc, char *argv[])
 
 
 #if 0  
-  // build member variables inside the structure
-  SgClassDefinition *def = decl->get_definition();
-  ROSE_ASSERT (topScopeStack());
 
   // build a member function prototype of the construct
   SgInitializedName* arg1 = buildInitializedName(SgName("x"), buildIntType());

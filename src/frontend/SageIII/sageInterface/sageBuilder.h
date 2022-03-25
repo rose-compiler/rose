@@ -382,7 +382,7 @@ ROSE_DLL_API SgTypeMatrix* buildMatrixType();
 ROSE_DLL_API SgTypeTuple* buildTupleType(SgType *t1 = NULL, SgType *t2 = NULL, SgType *t3 = NULL, SgType *t4 = NULL, SgType *t5 = NULL, SgType *t6 = NULL, SgType *t7 = NULL, SgType *t8 = NULL, SgType *t9 = NULL, SgType *t10 = NULL);
 
 //! Build a non real type used for template parameter. Internally a SgNorealDecl is also built.
-ROSE_DLL_API SgNonrealType* buildNonrealType(const SgName & name);
+ROSE_DLL_API SgNonrealType* buildNonrealType(const SgName & name,  SgScopeStatement* scope);
 
 //@}
 
@@ -1032,8 +1032,10 @@ buildVariableDefinition_nfi (SgVariableDeclaration* decl, SgInitializedName* ini
 // appears in header files of applications using ROSE's header files.
 // DQ (12/6/2011): Adding support for template declarations into the AST.
 // SgTemplateDeclaration*
-// SgVariableDeclaration* buildTemplateVariableDeclaration_nfi(const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope);
 ROSE_DLL_API SgTemplateVariableDeclaration* buildTemplateVariableDeclaration_nfi(const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope);
+
+//! Build template variable declarations
+ROSE_DLL_API SgTemplateVariableDeclaration* buildTemplateVariableDeclaration(const SgName & name, SgType *type, SgInitializer *varInit, SgScopeStatement* scope);
 
 //!Build a typedef declaration, such as: typedef int myint;  typedef struct A {..} s_A;
 ROSE_DLL_API SgTypedefDeclaration*
@@ -1386,7 +1388,7 @@ ROSE_DLL_API SgDeleteExp* buildDeleteExp(SgExpression *target, bool is_array = f
 SgDeleteExp* buildDeleteExp_nfi(SgExpression *target, bool is_array = false, bool need_global_specifier = false, SgFunctionDeclaration *deleteOperatorDeclaration = NULL);
 
 //! Build a scope statement. Used to build SgNonrealDecl and SgNonrealType
-SgDeclarationScope* buildDeclarationScope();
+ROSE_DLL_API SgDeclarationScope* buildDeclarationScope( SgScopeStatement* scope);
 
 //! Build a class definition scope statement
 // SgClassDefinition* buildClassDefinition(SgClassDeclaration *d = NULL);
