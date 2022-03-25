@@ -2026,6 +2026,14 @@ SageBuilder::buildVariableDefinition_nfi (SgVariableDeclaration* decl, SgInitial
 }
 
 
+SgTemplateVariableDeclaration*
+SageBuilder::buildTemplateVariableDeclaration (const SgName & name, SgType* type, SgInitializer * varInit, SgScopeStatement* scope)
+{
+  SgTemplateVariableDeclaration* res = buildTemplateVariableDeclaration_nfi(name, type, varInit, scope);
+  setOneSourcePositionForTransformation(res);
+  return res; 
+}
+
 // DQ (12/6/2011): Adding support for template declarations into the AST.
 // SgTemplateDeclaration*
 // SgVariableDeclaration*
@@ -11946,10 +11954,10 @@ SgTypeTuple* SageBuilder::buildTupleType(SgType *t1, SgType *t2, SgType *t3, SgT
 }
 
 //! Build a non real type used for template parameter. Internally a SgNorealDecl is also built.
-SgNonrealType* SageBuilder::buildNonrealType(const SgName & name)
+SgNonrealType* SageBuilder::buildNonrealType(const SgName & name, SgScopeStatement* scope)
 {
 
-  SgDeclarationScope * nrscope = buildDeclarationScope();
+  SgDeclarationScope * nrscope = buildDeclarationScope(scope);
   SgNonrealDecl * nrdecl = buildNonrealDecl (name, nrscope);
   nrdecl->set_parent(nrscope);
   nrdecl->set_is_template_param (true);
@@ -12284,12 +12292,13 @@ SageBuilder::buildNamespaceDefinition(SgNamespaceDeclarationStatement* d)
   }
 
 //! Build a scope statement. Used to build SgNonrealDecl and SgNonrealType
-SgDeclarationScope* SageBuilder::buildDeclarationScope()
+SgDeclarationScope* SageBuilder::buildDeclarationScope(SgScopeStatement* scope)
 {
   SgDeclarationScope * nonreal_decl_scope = new SgDeclarationScope();
   SageInterface::setSourcePosition(nonreal_decl_scope);
   nonreal_decl_scope->get_startOfConstruct()->setCompilerGenerated();
   nonreal_decl_scope->get_endOfConstruct()->setCompilerGenerated();
+  nonreal_decl_scope->set_parent(scope);
   return nonreal_decl_scope;
 }
 
