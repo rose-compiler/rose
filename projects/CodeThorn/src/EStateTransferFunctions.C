@@ -3028,7 +3028,6 @@ namespace CodeThorn {
         AbstractValue indexExprResultValue=indexExprResult.value();
         AbstractValue elementSize=getMemoryRegionAbstractElementSize(arrayPtrValue);
         AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexExprResultValue,elementSize);
-        //cout<<"DEBUG: array reference value + index val: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
         if(arrayPtrPlusIndexValue.isNullPtr()) {
           notifyReadWriteListenersOnReading(estate->label(),const_pstate,arrayPtrPlusIndexValue);
           // there is no state following a definitive null pointer
@@ -3949,9 +3948,15 @@ namespace CodeThorn {
     // create two cases: (i) allocation successful, (ii) allocation fails (null pointer is returned, and no memory is allocated).
     SingleEvalResult res;
     static int memorylocid=0; // to be integrated in VariableIdMapping
-    memorylocid++;
     stringstream ss;
-    ss<<"$MEM"<<memorylocid;
+    // get label of funCall and use label as name to ensure it's reused for same location in program
+    if(_analyzer->getOptionsRef().abstractionMode==1) {
+      Label fCallLab=_analyzer->getLabeler()->getLabel(funCall); // for __builtin_alloca no label exists. currently NO_LABEL_ID is used for allocas and considered shared
+      ss<<"$MEM"<<fCallLab.toString();
+    } else {
+      memorylocid++;
+      ss<<"$MEM"<<memorylocid;
+    }
     ROSE_ASSERT(_variableIdMapping);
     SgExpressionPtrList& argsList=SgNodeHelper::getFunctionCallActualParameterList(funCall);
     if(argsList.size()==1) {
@@ -3970,8 +3975,13 @@ namespace CodeThorn {
 
       // create 2nd memory state for null pointer (requires extended domain, not active)
       VariableId memLocVarId=_variableIdMapping->createAndRegisterNewMemoryRegion(ss.str(),memoryRegionSize);
+      _variableIdMapping->setElementSize(memLocVarId,1); // malloc default for char (size=1)
       AbstractValue allocatedMemoryPtr=AbstractValue::createAddressOfArray(memLocVarId);
+      if(_analyzer->getOptionsRef().abstractionMode==1) {
+        allocatedMemoryPtr.setAbstractFlag(true);
+      }
       SAWYER_MESG(logger[TRACE])<<"function call malloc: allocated at: "<<allocatedMemoryPtr.toString()<<endl;
+      writeUndefToMemoryLocation(estate->label(), estate->pstate(),allocatedMemoryPtr); // explitly reserve memory in state (array abstraction is considered)'
       res.init(estate,allocatedMemoryPtr);
       ROSE_ASSERT(allocatedMemoryPtr.isPtr());
       //cout<<"Generated malloc-allocated mem-chunk pointer is OK."<<endl;
@@ -4229,7 +4239,7 @@ namespace CodeThorn {
 
     if(memLoc.isTop()||memLoc.isBot()) {
       // TODO1: model writing to arbitrary mem loc
-      pstate->writeTopToAllMemoryLocations();
+      pstate->writeTopToAllPotentialMemoryLocations();
       return;
     } else if(!pstate->memLocExists(memLoc)) {
       //SAWYER_MESG(logger[TRACE])<<"EStateTransferFunctions::writeToMemoryLocation: memloc does not exist"<<endl;

@@ -69,6 +69,7 @@ namespace CodeThorn {
     string memoryValueToDotString(AbstractValue varId, VariableIdMapping* vim) const;
 
     void writeTopToAllMemoryLocations();
+    void writeTopToAllPotentialMemoryLocations();
     void combineValueAtAllMemoryLocations(CodeThorn::AbstractValue val);
     void writeValueToAllMemoryLocations(CodeThorn::AbstractValue val);  
     void reserveMemoryLocation(AbstractValue varId);
