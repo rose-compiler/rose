@@ -143,7 +143,7 @@ package body Lal_Adapter.Context is
 
       This.Load_Project_And_Setup_Context (Project_File_Name);
       This.Parse_Input_File (Input_File_Name);
-      -- Process dependencies first, so that declarations come before 
+      -- TODO: Process dependencies first, so that declarations come before 
       -- references?  Actually, we don't know if the dependencies will be 
       -- traversed in dependency order themselves!
       This.Process_Top_Unit (Outputs);
