@@ -655,15 +655,15 @@ package body Lal_Adapter.Unit is
          return LALCO.Into;
       end Process_Node;
 
-      Traverse_Visit_Status : LALCO.Visit_Status := LALCO.Stop;
-      Dependencies : constant LAL.Compilation_Unit_Array :=
+      Traverse_Visit_Status         : LALCO.Visit_Status := LALCO.Stop;
+      Dependencies                  : constant LAL.Compilation_Unit_Array :=
         LAL.P_Unit_Dependencies (The_Compilation_Unit);
-      File_Name_First_Line_Col : constant String :=
+      File_Name_First_Line_Col      : constant String :=
         Text.Image (The_Compilation_Unit.Full_Sloc_Image);
       Kind_File_Name_Line_Col_Range : constant String :=
         The_Compilation_Unit.Image;
 
-       procedure Start_Output is
+      procedure Start_Output is
            Default_Node  : Dot.Node_Stmt.Class; -- Initialized
            Default_Label : Dot.HTML_Like_Labels.Class; -- Initialized
         begin
