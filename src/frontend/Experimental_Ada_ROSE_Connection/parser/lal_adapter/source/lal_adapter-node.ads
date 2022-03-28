@@ -92,7 +92,7 @@ private
    -- Make type and operations directly visible:
    type Element_ID_List is new Element_ID_Lists.List with null record;
 
-   type Class (Trace : Boolean := False) is tagged limited -- Initialized
+   type Class (Trace : Boolean := False) is  new Lal_Adapter.Class with -- Initialized
       record
          -- Current, in-progress intermediate output products:
          -- Used when making dot edges to child nodes:
@@ -106,12 +106,6 @@ private
 
          -- Used when making dot edges to child nodes.  Treated s a stack:
          Element_IDs : Element_ID_List;
-         -- I would like to just pass Outputs through and not store it in the
-         -- object, since it is all pointers and we don't need to store their
-         -- values between calls to Traverse. Outputs has to go into
-         -- Add_To_Dot_Label, though, so we'll put it in the object and pass
-         -- the object to Add_To_Dot_Label:
-         Outputs : Output_Accesses_Record; -- Initialized
       end record;
 
    -- Helper methods for use by children:

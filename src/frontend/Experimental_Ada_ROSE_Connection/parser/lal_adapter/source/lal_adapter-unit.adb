@@ -634,7 +634,7 @@ package body Lal_Adapter.Unit is
 --
 
    procedure Process_Wanted_Compilation_Unit
-     (This             : in out Class;
+     (This                 : in out Class;
       The_Compilation_Unit : in LAL.Compilation_Unit)
    is
       Parent_Name : constant String := Module_Name;
@@ -644,7 +644,7 @@ package body Lal_Adapter.Unit is
 
       function Process_Node
         (Node : in LAL.Ada_Node'Class)
-      return LALCO.Visit_Status
+         return LALCO.Visit_Status
       is
          Node_Processor : Lal_Adapter.Node.Class; -- Initialized
       begin -- Process_Node
@@ -770,13 +770,12 @@ package body Lal_Adapter.Unit is
       is
          Full_Sloc_Image : constant string := Text.Image (Unit.Full_Sloc_Image);
       begin
-         -- This is how I found out there is a space on the end:
+         -- This is how I found out there is a space on the end of "__standard:1:1: ":
          --  Log ("Full_Sloc_Image => """ & Full_Sloc_Image & """");
          return Full_Sloc_Image = "__standard:1:1: ";
       end Is_Standard;
 
    begin -- Process
-      -- Save Outputs for use by Add_To_Dot_Label:
       This.Outputs := Outputs;
 
       if not Is_Standard (Unit) then

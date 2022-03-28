@@ -45,8 +45,7 @@ package body Lal_Adapter.Context is
 
 
    procedure Process_Top_Unit
-     (This    : in out Class;
-      Outputs : in     Output_Accesses_Record)
+     (This : in out Class)
    is
       Parent_Name : constant String := Module_Name;
       Module_Name : constant String := Parent_Name & ".Process_Top_Unit";
@@ -54,18 +53,17 @@ package body Lal_Adapter.Context is
       Auto : Logging.Auto_Logger; -- Logs BEGIN and END
    begin
       This.Top_Compilation_Unit :=
-        LAL.As_Compilation_Unit(This.Top_Unit.Root);
+        LAL.As_Compilation_Unit (This.Top_Unit.Root);
       declare
          Unit_Processor : Lal_Adapter.Unit.Class; -- Initialized
       begin
-         Unit_Processor.Process (This.Top_Compilation_Unit, Outputs);
+         Unit_Processor.Process (This.Top_Compilation_Unit, This.Outputs);
       end;
    end Process_Top_Unit;
 
 
    procedure Process_Dependencies
-     (This    : in out Class;
-      Outputs : in     Output_Accesses_Record)
+     (This    : in out Class)
    is
       Parent_Name : constant String := Module_Name;
       Module_Name : constant String := Parent_Name & ".Process_Dependencies";
@@ -80,7 +78,7 @@ package body Lal_Adapter.Context is
             declare
                Unit_Processor : Lal_Adapter.Unit.Class; -- Initialized
             begin
-               Unit_Processor.Process (Dependency, Outputs);
+               Unit_Processor.Process (Dependency, This.Outputs);
             end;
          end loop;
       end;
@@ -133,9 +131,12 @@ package body Lal_Adapter.Context is
    begin -- Process
       Log ("Project_File_Name    => """ & Project_File_Name & """");
       Log ("Input_File_Name      => """ & Input_File_Name & """");
+      This.Outputs := Outputs;
 
-      Outputs.Graph.Set_ID ("""" & Input_File_Name & """");
-      Outputs.A_Nodes.Set
+      -- TODO: Move up to .Tool?
+      This.Outputs.Graph.Set_ID ("""" & Input_File_Name & """");
+      -- TODO: Move up to .Tool?
+      This.Outputs.A_Nodes.Set
         (Context =>
            (Name        => To_Chars_Ptr (Project_File_Name),
             Parameters  => To_Chars_Ptr (String'("")),
@@ -146,8 +147,8 @@ package body Lal_Adapter.Context is
       -- TODO: Process dependencies first, so that declarations come before 
       -- references?  Actually, we don't know if the dependencies will be 
       -- traversed in dependency order themselves!
-      This.Process_Top_Unit (Outputs);
-      This.Process_Dependencies (Outputs);
+      This.Process_Top_Unit;
+      This.Process_Dependencies;
    exception
       when X : External_Error | Internal_Error | Usage_Error =>
          raise;

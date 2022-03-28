@@ -4,6 +4,18 @@ package body Lal_Adapter is
 
    package Acc renames Ada.Characters.Conversions;
 
+   ------------
+   -- EXPORTED:
+   ------------
+   procedure Initialize
+     (This : in out Output_Accesses_Record) is
+   begin
+      This.Text := new Indented_Text.Class;
+      This.Graph := Dot.Graphs.Create (Is_Digraph => True,
+                                               Is_Strict  => False);
+      This.A_Nodes := new A_Nodes.Class;
+   end Initialize;
+
    -----------
    -- PRIVATE:
    -----------
@@ -78,37 +90,37 @@ package body Lal_Adapter is
       return Dot.ID_Type is
      (Dot.To_ID_Type (To_String (Id, Kind)));
 
-   ------------
-   -- EXPORTED:
-   ------------
+   -----------
+   -- PRIVATE:
+   -----------
    procedure Add_To_Dot_Label
-     (Dot_Label : in out Dot.HTML_Like_Labels.Class;
-      Outputs   : in     Output_Accesses_Record;
+     (This      : in     Class;
+      Dot_Label : in out Dot.HTML_Like_Labels.Class;
       Value     : in     String) is
    begin
       Dot_Label.Add_3_Col_Cell(Value);
-      Outputs.Text.Put_Indented_Line (Value);
+      This.Outputs.Text.Put_Indented_Line (Value);
    end;
 
-   ------------
-   -- EXPORTED:
-   ------------
+   -----------
+   -- PRIVATE:
+   -----------
    procedure Add_To_Dot_Label
-     (Dot_Label : in out Dot.HTML_Like_Labels.Class;
-      Outputs   : in     Output_Accesses_Record;
+     (This      : in     Class;
+      Dot_Label : in out Dot.HTML_Like_Labels.Class;
       Name      : in     String;
       Value     : in     String) is
    begin
       Dot_Label.Add_Eq_Row (L => Name, R => Value);
-      Outputs.Text.Put_Indented_Line (Name & " => " & Value);
+      This.Outputs.Text.Put_Indented_Line (Name & " => " & Value);
    end;
 
-   ------------
-   -- EXPORTED:
-   ------------
+   -----------
+   -- PRIVATE:
+   -----------
    procedure Add_To_Dot_Label
-     (Dot_Label : in out Dot.HTML_Like_Labels.Class;
-      Outputs   : in     Output_Accesses_Record;
+     (This      : in     Class;
+      Dot_Label : in out Dot.HTML_Like_Labels.Class;
       Name      : in     String;
       Value     : in     Boolean) is
    begin
@@ -117,16 +129,16 @@ package body Lal_Adapter is
             Value_String : constant String := Value'Image;
          begin
             Dot_Label.Add_Eq_Row (L => Name, R => Value_String);
-            Outputs.Text.Put_Indented_Line (Name & " => " & Value_String);
+            This.Outputs.Text.Put_Indented_Line (Name & " => " & Value_String);
          end;
       end if;
    end;
 
-   ------------
-   -- EXPORTED:
-   ------------
+   -----------
+   -- PRIVATE:
+   -----------
    procedure Add_Dot_Edge
-     (Outputs   : in     Output_Accesses_Record;
+     (This      : in     Class;
       From      : in     IC.int;
       From_Kind : in     ID_Kind;
       To        : in     IC.int;
@@ -141,7 +153,7 @@ package body Lal_Adapter is
          Edge_Stmt.Attr_List.Add_Assign_To_First_Attr
            (Name  => "label",
             Value => Label);
-         Outputs.Graph.Append_Stmt (new Dot.Edges.Stmts.Class'(Edge_Stmt));
+         This.Outputs.Graph.Append_Stmt (new Dot.Edges.Stmts.Class'(Edge_Stmt));
       end if;
    end Add_Dot_Edge;
 
