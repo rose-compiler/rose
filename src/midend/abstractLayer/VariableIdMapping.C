@@ -548,7 +548,6 @@ VariableId VariableIdMapping::idForArrayRef(SgPntrArrRefExp* ref)
   return result;
 }
 
-
 bool VariableIdMapping::isHeapMemoryRegionId(VariableId varId) {
   return isTemporaryVariableId(varId);
 }
@@ -601,7 +600,19 @@ CodeThorn::VariableId VariableIdMapping::createAndRegisterNewMemoryRegion(std::s
   SgSymbol* sym=createAndRegisterNewSymbol(name);
   VariableId varId=variableId(sym);
   setNumberOfElements(varId,regionSize);
+  ROSE_ASSERT(memoryRegionNameToRegionIdMapping.find(name)==memoryRegionNameToRegionIdMapping.end());
+  memoryRegionNameToRegionIdMapping[name]=varId;
   return varId;
+}
+
+CodeThorn::VariableId VariableIdMapping::getMemoryRegionIdByName(std::string name) {
+  auto iter=memoryRegionNameToRegionIdMapping.find(name);
+  if(iter!=memoryRegionNameToRegionIdMapping.end()) {
+    return memoryRegionNameToRegionIdMapping[name];
+  } else {
+    VariableId defaultInvalidVarId;
+    return defaultInvalidVarId;
+  }
 }
 
 void VariableIdMapping::registerNewArraySymbol(SgSymbol* sym, TypeSize arraySize) {
