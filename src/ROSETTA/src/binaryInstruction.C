@@ -9742,13 +9742,14 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 #ifdef DOCUMENTATION
-        /** Property: Tag.
+        /** Property: tag
          *
-         *  Returns an enum constant describing the kind of this entry in the pool.
+         *  Enum constant describing the kind of this entry in the pool.
          *
          * @{ */
         ConstantPoolKind get_tag() const;
         void set_tag(ConstantPoolKind);
+        private: SgAsmJvmConstantPoolEntry::ConstantPoolKind p_tag;
         /** @} */
 #else
         AsmJvmConstantPoolEntry.setDataPrototype("SgAsmJvmConstantPoolEntry::ConstantPoolKind", "tag", "= SgAsmJvmConstantPoolEntry::ILLEGAL",
@@ -9756,51 +9757,199 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 #ifdef DOCUMENTATION
-        /** Properties: Member variables of entries in the constant pool
+        /** Property: bytes
          *
-         *    uint32_t bytes
-         *    uint32_t hi_bytes
-         *    uint32_t low_bytes
-         *    uint16_t bootstrap_method_attr_index;
-         *    uint16_t class_index
-         *    uint16_t descriptor_index
-         *    uint16_t name_index
-         *    uint16_t name_and_type_index
-         *    uint16_t reference_index
-         *    uint8_t  reference_kind
-         *    uint16_t string_index
-         *    uint16_t length
-         *    uint8_t* utf8_bytes (ROSE type used is "const char*"
-         */
+         *  The bytes item of the CONSTANT_Integer_info structure represents the value of the int constant.
+         *  The bytes item of the CONSTANT_Float_info structure represents the value of the float constant
+         *   in IEEE 754 binary32 floating-point format.
+         *
+         * @{ */
+        uint32_t get_bytes() const;
+        void set_bytes(uint32_t);
+        protected: uint32_t p_bytes;
+        /** @} */
 #else
         AsmJvmConstantPoolEntry.setDataPrototype("uint32_t", "bytes", "= 0",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Properties: hi_bytes, low_bytes
+         *
+         *  The unsigned high_bytes and low_bytes items of the CONSTANT_Long_info structure together represent the
+         *   value of the long constant.
+         *  The unsigned high_bytes and low_bytes items of the CONSTANT_Double_info structure together represent the
+         *   the double value in IEEE 754 binary64 floating-point format.
+         *
+         * @{ */
+        uint32_t get_hi_bytes() const;
+        void set_hi_bytes(uint32_t);
+        protected: uint32_t p_hi_bytes;
+
+        uint32_t get_low_bytes() const;
+        void set_low_bytes(uint32_t);
+        protected: uint32_t p_low_bytes;
+        /** @} */
+#else
         AsmJvmConstantPoolEntry.setDataPrototype("uint32_t", "hi_bytes", "= 0",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
         AsmJvmConstantPoolEntry.setDataPrototype("uint32_t", "low_bytes", "= 0",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: bootstrap_method_attr_index
+         *
+         *  The bootstrap_method_attr_index item is an index into the bootstrap_methods array of the bootstrap method table
+         *    of this class file.  Present in CONSTANT_Dynamic_info and CONSTANT_Dynamic_info structs.
+         *
+         * @{ */
+        uint16_t get_bootstrap_method_attr_index() const;
+        void set_bootstrap_method_attr_index(uint16_t);
+        protected: uint16_t p_bootstrap_method_attr_index;
+        /** @} */
+#else
         AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "bootstrap_method_attr_index", "= 0",
-                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-        AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "class_index", "= 0",
-                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-        AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "descriptor_index", "= 0",
-                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-        AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "name_index", "= 0",
-                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-        AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "name_and_type_index", "= 0",
-                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-        AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "reference_index", "= 0",
-                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-        AsmJvmConstantPoolEntry.setDataPrototype("uint8_t",  "reference_kind", "= 0",
-                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-        AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "string_index", "= 0",
-                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-        AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "length", "= 0",
-                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-        AsmJvmConstantPoolEntry.setDataPrototype("const char*", "utf8_bytes", "= nullptr",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
+#ifdef DOCUMENTATION
+        /** Property: class_index
+         *
+         *  The value of the class_index item must be a valid index into the constant_pool table (see JVM documentation).
+         *    Present in CONSTANT_Fieldref_info, CONSTANT_Methodref_info, and CONSTANT_InterfaceMethodref_info table entries.
+         *
+         * @{ */
+        uint16_t get_class_index() const;
+        void set_class_index(uint16_t);
+        protected: uint16_t p_class_index;
+        /** @} */
+#else
+        AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "class_index", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: descriptor_index
+         *
+         *  The value of the descriptor_index item must be a valid index into the constant_pool table (see JVM documentation).
+         *    Present in CONSTANT_NameAndType_info and CONSTANT_MethodHandle_info table entries.
+         *
+         * @{ */
+        uint16_t get_descriptor_index() const;
+        void set_descriptor_index(uint16_t);
+        protected: uint16_t p_descriptor_index;
+        /** @} */
+#else
+        AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "descriptor_index", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: name_index
+         *
+         *  The value of the name_index item must be a valid index into the constant_pool table (see JVM documentation).
+         *    Present in CONSTANT_Class_info, CONSTANT_NameAndType_info, CONSTANT_Module_info, and CONSTANT_Package_info
+         *    table entries.
+         *
+         * @{ */
+        uint16_t get_name_index() const;
+        void set_name_index(uint16_t);
+        protected: uint16_t p_name_index;
+#else
+        AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "name_index", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: name_and_type_index
+         *
+         *  The value of the name_and_type_index item must be a valid index into the constant_pool table (see JVM documentation).
+         *    Present in CONSTANT_Fieldref_info, CONSTANT_Methodref_info, CONSTANT_InterfaceMethodref_info,
+         *    CONSTANT_Dynamic_info, and CONSTANT_InvokeDynamic_info table entries.
+         *
+         * @{ */
+        uint16_t get_name_and_type_index() const;
+        void set_name_and_type_index(uint16_t);
+        protected: uint16_t p_name_and_type_index;
+#else
+        AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "name_and_type_index", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: reference_index
+         *
+         *  The value of the reference_index item must be a valid index into the constant_pool table (see JVM documentation).
+         *    Present in CONSTANT_MethodHandle_info table entries.
+         *
+         * @{ */
+        uint16_t get_reference_index() const;
+        void set_reference_index(uint16_t);
+        protected: uint16_t p_reference_index;
+#else
+        AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "reference_index", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: reference_kind
+         *
+         *  The value of the reference_kind item must be in the range 1 to 9. The value denotes the kind of a
+         *    CONSTANT_MethodHandle_info table entry.
+         *
+         * @{ */
+        uint8_t get_reference_kind() const;
+        void set_reference_kind(uint8_t);
+        protected: uint8_t p_reference_kind;
+#else
+        AsmJvmConstantPoolEntry.setDataPrototype("uint8_t",  "reference_kind", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: string_index
+         *
+         *  The value of the string_index item must be a valid index into the constant_pool table (see JVM documentation).
+         *    Present in CONSTANT_String_info table entries.
+         *
+         * @{ */
+        uint16_t get_string_index() const;
+        void set_string_index(uint16_t);
+        protected: uint16_t p_string_index;
+#else
+        AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "string_index", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: length
+         *
+         *  The value of the length item gives the number of bytes in the bytes array (not the length of the
+         *  resulting string).  Present in CONSTANT_Utf8_info table entries.
+         *
+         * @{ */
+        uint16_t get_length() const;
+        void set_length(uint16_t);
+        protected: uint16_t p_length;
+#else
+        AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "length", "= 0",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: utf8_bytes (bytes in CONSTANT_Utf8_info structure).
+         *
+         *  The bytes array contains the bytes of the string. Present in CONSTANT_Utf8_info table entries.
+         *
+         * @{ */
+        const char* get_utf8_bytes() const;
+        void set_utf8_bytes(const char*);
+        protected: char* p_utf8_bytes;
+#else
+        AsmJvmConstantPoolEntry.setDataPrototype("const char*", "utf8_bytes", "= nullptr",
+                                                 NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
 
         DECLARE_OTHERS(AsmJvmConstantPoolEntry);
 #if defined(SgAsmJvmConstantPoolEntry_OTHERS) || defined(DOCUMENTATION)
@@ -9841,23 +9990,39 @@ void Grammar::setUpBinaryInstructions() {
             CONSTANT_Package = 20
         };
 
+#ifdef DOCUMENTATION
+        /** These following structs are documented below to indicate which fields are active for each tag
+         *    of an SgAsmJvmConstantPoolEntry instance. Other fields may not be accessed.
+         */
+#endif
         /** 4.4.1 CONSTANT_Class_info table entry. All fields are big endian. */
         struct CONSTANT_Class_info {
             uint8_t tag;
             uint16_t name_index;
         };
 
-        /** 4.4.2 CONSTANT_String_info table entry. All fields are big endian. */
-        struct CONSTANT_String_info {
+        /** 4.4.2 CONSTANT_Fieldref_info, CONSTANT_Methodref_info, and CONSTANT_InterfaceMethodref_info table
+                   entries. All fields are big endian. */
+        struct CONSTANT_Fieldref_info {
             uint8_t tag;
-            uint16_t string_index;
+            uint16_t class_index;
+            uint16_t name_and_type_index;
         };
-
-        /** 4.4.3 CONSTANT_Methodref_info table entry. All fields are big endian. */
         struct CONSTANT_Methodref_info {
             uint8_t tag;
             uint16_t class_index;
             uint16_t name_and_type_index;
+        };
+        struct CONSTANT_InterfaceMethodref_info {
+            uint8_t tag;
+            uint16_t class_index;
+            uint16_t name_and_type_index;
+        };
+
+        /** 4.4.3 CONSTANT_String_info table entry. All fields are big endian. */
+        struct CONSTANT_String_info {
+            uint8_t tag;
+            uint16_t string_index;
         };
 
         /** 4.4.4 CONSTANT_Integer_info table entry. All fields are big endian. */
@@ -9932,11 +10097,7 @@ void Grammar::setUpBinaryInstructions() {
         };
 
         /** Constructor creating an object ready to be initialized via parse(). */
-        explicit SgAsmJvmConstantPoolEntry(SgAsmJvmConstantPoolEntry::ConstantPoolKind tag)
-          : p_tag{tag}, p_name_index{0}, p_class_index{0}, p_name_and_type_index{0}, p_length{0},
-            p_utf8_bytes{nullptr}
-        {
-        }
+        explicit SgAsmJvmConstantPoolEntry(SgAsmJvmConstantPoolEntry::ConstantPoolKind tag);
 
         /** Initialize a constant pool entry by parsing the file.
          *

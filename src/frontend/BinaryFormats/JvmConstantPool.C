@@ -12,6 +12,14 @@ using namespace ByteOrder;
 
 using PoolEntry = SgAsmJvmConstantPoolEntry;
 
+// Constructor creating an object ready to be initialized via parse().
+SgAsmJvmConstantPoolEntry::SgAsmJvmConstantPoolEntry(PoolEntry::ConstantPoolKind tag)
+  : p_tag{tag}, p_bytes{0}, p_hi_bytes{0}, p_low_bytes{0}, p_bootstrap_method_attr_index{0}, p_class_index{0},
+    p_descriptor_index{0}, p_name_index{0}, p_name_and_type_index{0}, p_reference_index{0}, p_reference_kind{0},
+    p_string_index{0}, p_length{0}, p_utf8_bytes{nullptr}
+{
+}
+
 std::string PoolEntry::to_string(PoolEntry::ConstantPoolKind kind)
 {
   switch (kind) {
@@ -337,11 +345,13 @@ SgAsmJvmConstantPool* SgAsmJvmConstantPool::parse()
     // Store the new entry
     p_entries->get_entries().push_back(entry);
 
-    // If this is CONSTANT_Long or CONSTANT_Double, skip wasted entry for long and doubles (see note from standard below)
+    // If this is CONSTANT_Long or CONSTANT_Double, store index location with empty entry
     // 4.4.5 "In retrospect, making 8-byte constants take two constant pool entries was a poor choice."
     //
     if (kind == PoolEntry::CONSTANT_Long || kind == PoolEntry::CONSTANT_Double) {
-      // TODO: Need to create and store an empty entry
+      // Create and store an empty entry (using ILLEGAL tag)
+      entry = new PoolEntry(PoolEntry::ILLEGAL);
+      p_entries->get_entries().push_back(entry);
       ii += 1;
     }
     offset = header->get_offset();
