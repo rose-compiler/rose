@@ -1,5 +1,3 @@
-private with Libadalang.Analysis;
-
 with A_Nodes;
 with Dot;
 private with Lal_Adapter.Node;
@@ -18,13 +16,12 @@ package Lal_Adapter.Context is
       Outputs        : in     Output_Accesses_Record);
 
 private
-   package LAL renames Libadalang.Analysis;
 
    -- For debuggng:
    Parent_Name : constant String := Module_Name;
    Module_Name : constant String := Parent_Name & ".Context";
 
-   type Class is tagged limited -- Initialized
+   type Class is new Lal_Adapter.Class with -- Initialized
       record
          Lal_Context          : LAL.Analysis_Context := LAL.No_Analysis_Context;
          Top_Unit             : LAL.Analysis_Unit    := LAL.No_Analysis_Unit;

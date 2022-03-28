@@ -94,9 +94,9 @@ package body Lal_Adapter.Node is
      (This  : in out Class;
       Value : in     String) is
    begin
-      Add_To_Dot_Label (Dot_Label => This.Dot_Label,
-                        Outputs   => This.Outputs,
-                        Value     => Value);
+      This.Add_To_Dot_Label 
+        (Dot_Label => This.Dot_Label,
+         Value     => Value);
    end Add_To_Dot_Label;
 
    procedure Add_To_Dot_Label
@@ -104,10 +104,10 @@ package body Lal_Adapter.Node is
       Name  : in     String;
       Value : in     String) is
    begin
-      Add_To_Dot_Label (Dot_Label => This.Dot_Label,
-                        Outputs   => This.Outputs,
-                        Name      => Name,
-                        Value     => Value);
+      This.Add_To_Dot_Label 
+        (Dot_Label => This.Dot_Label,
+         Name      => Name,
+         Value     => Value);
    end Add_To_Dot_Label;
 
    procedure Add_To_Dot_Label
@@ -115,7 +115,9 @@ package body Lal_Adapter.Node is
       Name  : in     String;
       Value : in     a_nodes_h.Element_ID) is
    begin
-      This.Add_To_Dot_Label (Name, To_String (Value));
+      This.Add_To_Dot_Label 
+        (Name  => Name, 
+         Value => To_String (Value));
    end Add_To_Dot_Label;
 
    procedure Add_To_Dot_Label
@@ -123,10 +125,10 @@ package body Lal_Adapter.Node is
       Name  : in     String;
       Value : in     Boolean) is
    begin
-      Add_To_Dot_Label (Dot_Label => This.Dot_Label,
-                        Outputs   => This.Outputs,
-                        Name      => Name,
-                        Value     => Value);
+      This.Add_To_Dot_Label 
+        (Dot_Label => This.Dot_Label,
+         Name      => Name,
+         Value     => Value);
    end Add_To_Dot_Label;
 
    procedure Add_Dot_Edge
@@ -136,12 +138,12 @@ package body Lal_Adapter.Node is
       Label : in     String)
    is
    begin
-      Add_Dot_Edge (Outputs   => This.Outputs,
-                    From      => From,
-                    From_Kind => Element_ID_Kind,
-                    To        => To,
-                    To_Kind   => Element_ID_Kind,
-                    Label     => Label);
+      This.Add_Dot_Edge 
+        (From      => From,
+         From_Kind => Element_ID_Kind,
+         To        => To,
+         To_Kind   => Element_ID_Kind,
+         Label     => Label);
    end Add_Dot_Edge;
 
    procedure Add_To_Dot_Label_And_Edge
@@ -149,10 +151,13 @@ package body Lal_Adapter.Node is
       Label : in     String;
       To    : in     a_nodes_h.Element_ID) is
    begin
-      This.Add_To_Dot_Label (Label, To_String (To));
-      This.Add_Dot_Edge (From  => This.Element_IDs.First_Element,
-                         To    => To,
-                         Label => Label);
+      This.Add_To_Dot_Label 
+        (Name  => Label, 
+         Value => To_String (To));
+      This.Add_Dot_Edge 
+        (From  => This.Element_IDs.First_Element,
+         To    => To,
+         Label => Label);
    end Add_To_Dot_Label_And_Edge;
 
    procedure Add_Not_Implemented
@@ -161,12 +166,13 @@ package body Lal_Adapter.Node is
    begin
       if Ada_Version <= Supported_Ada_Version then
          This.Add_To_Dot_Label
-           ("LIBADALANG_PROCESSING", String'("NOT_IMPLEMENTED_COMPLETELY"));
+           (Name  => "LIBADALANG_PROCESSING", 
+            Value => String'("NOT_IMPLEMENTED_COMPLETELY"));
          This.Outputs.A_Nodes.Add_Not_Implemented;
       else
          This.Add_To_Dot_Label
-           ("LIBADALANG_PROCESSING",
-            Ada_Version'Image & "_FEATURE_NOT_IMPLEMENTED_IN_" &
+           (Name  => "LIBADALANG_PROCESSING",
+            Value => Ada_Version'Image & "_FEATURE_NOT_IMPLEMENTED_IN_" &
              Supported_Ada_Version'Image);
       end if;
    end Add_Not_Implemented;
