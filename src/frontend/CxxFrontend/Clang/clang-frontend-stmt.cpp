@@ -705,7 +705,7 @@ bool ClangToSageTranslator::VisitGCCAsmStmt(clang::GCCAsmStmt * gcc_asm_stmt, Sg
     llvm::StringRef AsmStringRef = AsmStringLiteral->getString();
 
     std::cout << "input op:" << asmNumInput << " output op: " << asmNumOutput<< std::endl;
-#if DEBUG_VISIT_DECL
+#if DEBUG_VISIT_STMT
     std::cerr << "AsmStringRef:" << static_cast<std::string>(AsmStringRef) << std::endl;
 #endif
 
@@ -721,7 +721,7 @@ bool ClangToSageTranslator::VisitGCCAsmStmt(clang::GCCAsmStmt * gcc_asm_stmt, Sg
     for(unsigned i=0; i < asmClobber; ++i)
     {
       std::string clobberStr = static_cast<std::string>(gcc_asm_stmt->getClobber(i));
-#if DEBUG_VISIT_DECL
+#if DEBUG_VISIT_STMT
       std::cerr << "AsmOp clobber["<< i<<  "]: " << clobberStr << std::endl;
 #endif
       // Pei-Hung "cc" clobber is skipped by EDG
@@ -750,13 +750,13 @@ bool ClangToSageTranslator::VisitGCCAsmStmt(clang::GCCAsmStmt * gcc_asm_stmt, Sg
 
       std::string outputConstraintStr = static_cast<std::string>(gcc_asm_stmt->getOutputConstraint(i));
 // Clang's constraint is equivalent to ROSE's modifier + operand constraints 
-#if DEBUG_VISIT_DECL
+#if DEBUG_VISIT_STMT
       std::cerr << "AsmOp output constraint["<< i<<  "]: " << outputConstraintStr << std::endl;
 #endif
 
       std::smatch sm; 
       std::regex_match (outputConstraintStr,sm,e);
-#if DEBUG_VISIT_DECL
+#if DEBUG_VISIT_STMT
         std::cout << "string literal: "<< outputConstraintStr  <<"  with " << sm.size() << " matches\n";
         if(sm.size())
           std::cout << "the matches were: ";
@@ -814,13 +814,13 @@ bool ClangToSageTranslator::VisitGCCAsmStmt(clang::GCCAsmStmt * gcc_asm_stmt, Sg
 
       std::string inputConstraintStr = static_cast<std::string>(gcc_asm_stmt->getInputConstraint(i));
 // Clang's constraint is equivalent to ROSE's modifier + operand constraints 
-#if DEBUG_VISIT_DECL
+#if DEBUG_VISIT_STMT
       std::cerr << "AsmOp input constraint["<< i<<  "]: " << inputConstraintStr << std::endl;
 #endif
 
       std::smatch sm; 
       std::regex_match (inputConstraintStr,sm,e);
-#if DEBUG_VISIT_DECL
+#if DEBUG_VISIT_STMT
         std::cout << "string literal: "<< inputConstraintStr  <<"  with " << sm.size() << " matches\n";
         if(sm.size())
           std::cout << "the matches were: ";
