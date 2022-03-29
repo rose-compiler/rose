@@ -66,6 +66,8 @@
 // Note that this is required to define the Sg_File_Info_XXX symbols (need for file I/O)
 #include "Cxx_GrammarMemoryPoolSupport.h"
 
+#include "Rose/AST/cmdline.h"
+
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;
 using namespace Rose;
@@ -732,6 +734,9 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
      if (SageBuilder::SourcePositionClassificationMode == SageBuilder::e_sourcePositionFrontendConstruction)
        SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionTransformation);
 
+     Rose::AST::graphviz.frontend.exec(project);
+     Rose::AST::checker.frontend.exec(project);
+
   // Connect to Ast Plugin Mechanism
 #ifdef _MSC_VER
     if ( SgProject::get_verbose() >= 1 )
@@ -864,6 +869,8 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
   // signal(SIG_DFL,NULL);
      signal(SIGABRT,SIG_DFL);
 #endif
+     Rose::AST::graphviz.backend.exec(project);
+     Rose::AST::checker.backend.exec(project);
 
      std::string const & astfile_out = project->get_astfile_out();
      if (astfile_out != "") {
