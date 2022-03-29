@@ -472,7 +472,8 @@ bool ClangToSageTranslator::VisitEmptyDecl(clang::EmptyDecl * empty_decl, SgNode
 #endif
     bool res = true;
 
-    ROSE_ASSERT(FAIL_TODO == 0); // TODO
+    // (3/29/2022) Pei-Hung it seems to be okay just skip processing EmptyDecl
+    // as SgBasicBlock allows no decl/stmt stored in it.
 
     return VisitDecl(empty_decl, node) && res;
 }
