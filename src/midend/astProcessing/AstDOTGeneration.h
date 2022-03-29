@@ -15,6 +15,7 @@ class ROSE_DLL_API AstDOTGeneration : public DOTGeneration<SgNode*>
          //traverse full AST , nodes which represent code from include files . name postfix does not need an ending "."
           void generate(SgProject* node, traversalType tt=TOPDOWNBOTTOMUP, std::string filenamePostfix="");
           void generate(SgNode* node,  std::string filename, traversalType tt = TOPDOWNBOTTOMUP,std::string filenamePostfix = "");
+          void generate(SgProject* project, std::string const & filename);
 
        // DQ (12/20/2018): Added support to exclude template instantiations to make the graphs more tractable within large C++ applications.
        // traverse the subtree of AST which represents the files specified on the command line
@@ -43,6 +44,8 @@ class ROSE_DLL_API AstDOTGeneration : public DOTGeneration<SgNode*>
        // DQ (7/27/2008): Added support to eliminate IR nodes in DOT graphs 
        // (to tailor the presentation of information about ASTs).
           bool commentOutNodeInGraph(SgNode* node);
+
+          bool skip_write_during_traversal{false};
    };
 
 

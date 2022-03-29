@@ -4,6 +4,8 @@
 include $(top_srcdir)/config/Makefile.for.ROSE.includes.and.libs
 AUTOMAKE_OPTIONS = nostdinc subdir-objects
 
+SUBDIRS=AST
+
 # LicenseString.h is included by CommandLine/License.C but is not installed.
 #
 CommandLine/LicenseString.h: $(top_srcdir)/LicenseInformation/ROSE_BSD_License.txt

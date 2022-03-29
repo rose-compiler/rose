@@ -12,6 +12,8 @@
 #include "keep_going.h"
 #include "FileUtility.h"
 #include <Rose/Diagnostics.h>
+#include "Rose/AST/cmdline.h"
+
 #include "Outliner.hh"
 
 #include <boost/foreach.hpp>
@@ -363,6 +365,15 @@ CommandlineProcessing::isOptionTakingSecondParameter( string argument )
           // AST I/O
           argument == "-rose:ast:read" ||
           argument == "-rose:ast:write" ||
+          argument == "-rose:ast:merge" ||
+          argument == "-rose:ast:graphviz:when" ||
+          argument == "-rose:ast:graphviz:mode" ||
+          argument == "-rose:ast:graphviz:out" ||
+          argument == "-rose:ast:checker:when" ||
+          argument == "-rose:ast:checker:mode" ||
+          argument == "-rose:ast:checker:effect" ||
+          argument == "-rose:ast:checker:log" ||
+          argument == "-rose:ast:checker:save" ||
 
           // TOO1 (2/13/2014): Starting to refactor CLI handling into separate namespaces
           Rose::Cmdline::Unparser::OptionRequiresArgument(argument) ||
@@ -633,6 +644,24 @@ incrementPosition:
 
      return sourceFileList;
    }
+
+static std::string const & __str_id(std::string const & str) { return str; }
+
+template <typename T, typename F=decltype(__str_id)>
+static void split_string(std::string const & str, T & res, char sep = ',', F & f = __str_id) {
+  size_t pos = 0;
+  size_t prev = 0;
+  while (pos < str.size()) {
+    if (str[pos] == sep) {
+      res.push_back(f(str.substr(prev, pos-prev)));
+      pos++;
+      prev = pos;
+    } else {
+      pos++;
+    }
+  }
+  res.push_back(f(str.substr(prev, pos-prev)));
+}
 
 /*-----------------------------------------------------------------------------
  *  namespace SgProject {
@@ -1576,22 +1605,9 @@ SgProject::processCommandLine(const vector<string>& input_argv)
 
      // `-rose:ast:read in0.ast,in2.ast` (extension does not matter)
      std::string rose_ast_option_param;
+     std::vector<std::string> rose_ast_option_param_split;
      if (CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList, "-rose:", "(ast:read)", rose_ast_option_param, true) == true ) {
-       size_t pos = 0;
-       size_t prev = 0;
-       while (pos < rose_ast_option_param.size()) {
-         if (rose_ast_option_param[pos] == ',') {
-           std::string astfile = rose_ast_option_param.substr(prev, pos-prev);
-           p_astfiles_in.push_back(astfile);
-           pos++;
-           prev = pos;
-         } else {
-           pos++;
-         }
-       }
-       std::string astfile = rose_ast_option_param.substr(prev, pos-prev);
-       p_astfiles_in.push_back(astfile);
-
+       split_string(rose_ast_option_param, p_astfiles_in);
        p_ast_merge = true;
      }
 
@@ -1604,6 +1620,106 @@ SgProject::processCommandLine(const vector<string>& input_argv)
      // `-rose:ast:merge`
      if ( CommandlineProcessing::isOption(local_commandLineArgumentList,"-rose:","(ast:merge)",true) == true ) {
        p_ast_merge = true;
+     }
+
+  // AST to GraphViz
+
+     if (CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList, "-rose:ast:graphviz:", "(when)", rose_ast_option_param, true) == true ) {
+       if (rose_ast_option_param == "both" || rose_ast_option_param=="frontend") {
+         Rose::AST::graphviz.frontend.on = true;
+       }
+       if (rose_ast_option_param == "both" || rose_ast_option_param=="backend") {
+         Rose::AST::graphviz.backend.on = true;
+       }
+     }
+
+     if (CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList, "-rose:ast:graphviz:", "(mode)", rose_ast_option_param, true) == true ) {
+       rose_ast_option_param_split.clear();
+       split_string(rose_ast_option_param, rose_ast_option_param_split);
+       unsigned idx = 0;
+       if (Rose::AST::graphviz.frontend.on) {
+         Rose::AST::graphviz.frontend.mode = Rose::AST::graphviz_t::__mode(rose_ast_option_param_split[idx++]);
+       }
+       if (Rose::AST::graphviz.backend.on) {
+         Rose::AST::graphviz.backend.mode = Rose::AST::graphviz_t::__mode(rose_ast_option_param_split[rose_ast_option_param_split.size() == 1 ? 0 : idx]);
+       }
+     }
+
+     if (CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList, "-rose:ast:graphviz:", "(out)", rose_ast_option_param, true) == true ) {
+       rose_ast_option_param_split.clear();
+       split_string(rose_ast_option_param, rose_ast_option_param_split);
+       unsigned idx = 0;
+       if (Rose::AST::graphviz.frontend.on) {
+         Rose::AST::graphviz.frontend.out = rose_ast_option_param_split[idx++];
+       }
+       if (Rose::AST::graphviz.backend.on) {
+         ROSE_ASSERT(rose_ast_option_param_split.size() == idx + 1);
+         Rose::AST::graphviz.backend.out = rose_ast_option_param_split[idx];
+       }
+     }
+
+  // AST Checker
+
+     if (CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList, "-rose:ast:checker:", "(when)", rose_ast_option_param, true) == true ) {
+       if (rose_ast_option_param == "both" || rose_ast_option_param=="frontend") {
+         Rose::AST::checker.frontend.on = true;
+       }
+       if (rose_ast_option_param == "both" || rose_ast_option_param=="backend") {
+         Rose::AST::checker.backend.on = true;
+       }
+     }
+
+     if (CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList, "-rose:ast:checker:", "(mode)", rose_ast_option_param, true) == true ) {
+       rose_ast_option_param_split.clear();
+       split_string(rose_ast_option_param, rose_ast_option_param_split);
+       unsigned idx = 0;
+       if (Rose::AST::checker.frontend.on) {
+         Rose::AST::checker.frontend.modes.clear();
+         split_string(rose_ast_option_param_split[idx++], Rose::AST::checker.frontend.modes, ':', Rose::AST::checker_t::__mode);
+       }
+       if (Rose::AST::checker.backend.on) {
+         Rose::AST::checker.backend.modes.clear();
+         idx = rose_ast_option_param_split.size() == 1 ? 0 : idx;
+         split_string(rose_ast_option_param_split[idx], Rose::AST::checker.backend.modes, ':', Rose::AST::checker_t::__mode);
+       }
+     }
+
+     if (CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList, "-rose:ast:checker:", "(effect)", rose_ast_option_param, true) == true ) {
+       rose_ast_option_param_split.clear();
+       split_string(rose_ast_option_param, rose_ast_option_param_split);
+       unsigned idx = 0;
+       if (Rose::AST::checker.frontend.on) {
+         Rose::AST::checker.frontend.effect = Rose::AST::checker_t::__effect(rose_ast_option_param_split[idx++]);
+       }
+       if (Rose::AST::checker.backend.on) {
+         Rose::AST::checker.backend.effect = Rose::AST::checker_t::__effect(rose_ast_option_param_split[rose_ast_option_param_split.size() == 1 ? 0 : idx]);
+       }
+     }
+
+     if (CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList, "-rose:ast:checker:", "(log)", rose_ast_option_param, true) == true ) {
+       rose_ast_option_param_split.clear();
+       split_string(rose_ast_option_param, rose_ast_option_param_split);
+       unsigned idx = 0;
+       if (Rose::AST::checker.frontend.on) {
+         Rose::AST::checker.frontend.log = rose_ast_option_param_split[idx++];
+       }
+       if (Rose::AST::checker.backend.on) {
+         ROSE_ASSERT(rose_ast_option_param_split.size() == idx + 1);
+         Rose::AST::checker.backend.log = rose_ast_option_param_split[idx];
+       }
+     }
+
+     if (CommandlineProcessing::isOptionWithParameter(local_commandLineArgumentList, "-rose:ast:checker:", "(save)", rose_ast_option_param, true) == true ) {
+       rose_ast_option_param_split.clear();
+       split_string(rose_ast_option_param, rose_ast_option_param_split);
+       unsigned idx = 0;
+       if (Rose::AST::checker.frontend.on) {
+         Rose::AST::checker.frontend.save = rose_ast_option_param_split[idx++];
+       }
+       if (Rose::AST::checker.backend.on) {
+         ROSE_ASSERT(rose_ast_option_param_split.size() == idx + 1);
+         Rose::AST::checker.backend.save = rose_ast_option_param_split[idx];
+       }
      }
 
   // Verbose ?
@@ -3400,6 +3516,46 @@ SgFile::usage ( int status )
 "                             Output AST file (extension does *not* matter).\n"
 "                             Evaluated in the backend before any file unparsing or backend compiler calls.\n"
 "     -rose:ast:merge         Merges ASTs from different source files (always true when -rose:ast:read is used)\n"
+"\n"
+"AST to GraphViz:\n"
+"     -rose:ast:graphviz:when off|frontend|backend|both\n"
+"                             When to generate the graph (off by default).\n"
+"                             \"frontend\" refers to after the frontend but before any midend (or plugin) runs.\n"
+"                                  It shows the AST as it was read.\n"
+"                             \"backend\" refers to after all midend (or plugin) have been run.\n"
+"                                  It shows the AST as it will be unparsed.\n"
+"     -rose:ast:graphviz:mode tree|graph\n"
+"                             Whether to generate the basic AST or the complete graph (AST + symbols + types)\n"
+"                             The graph mode will show *all* nodes: you must use self-contained reproducers\n"
+"                                 (using -DSKIP_ROSE_BUILTIN_DECLARATIONS -- can be multiple source/header but no system headers).\n"
+"     -rose:ast:graphviz:out rose-ast-frontend.dot,rose-ast-backend.dot\n"
+"                             Name of the output file (comma separted files if when=both).\n"
+"                             Default is rose-ast.dot if when is not both, else it is rose-ast-frontend.dot and rose-ast-backend.dot\n"
+"\n"
+"AST checking:\n"
+"     -rose:ast:checker:when off|frontend|backend|both\n"
+"                             When to check the AST (off by default).\n"
+"                             \"frontend\" refers to after the frontend but before any midend (or plugin) runs.\n"
+"                                  It checks the AST as it was read.\n"
+"                             \"backend\" refers to after all midend (or plugin) have been run.\n"
+"                                  It checks the AST as it will be unparsed.\n"
+"     -rose:ast:checker:mode ll,ast\n"
+"                             Comma-separated selection of checkers:\n"
+"                               * ll: low-level AST checks (pointer validity)\n"
+"                               * ast: construction rules (such as declarations, symbols, and types graphs)\n"
+"                             Default is \"ll,ast\"\n"
+"     -rose:ast:checker:effect none|summary|report|fail\n"
+"                             Control the effect of detecting defect:.\n"
+"                               * none: no visible effect but log/save might still get triggered.\n"
+"                               * summary|report: display a summary or full log on std::cerr.\n"
+"                               * fail: display a summary on std::cerr then abort.\n"
+"     -rose:ast:checker:log filename.log\n"
+"                             Output log file *iff* any defect is found (no log if missing).\n"
+"                             Comma separated if when=both.\n"
+"     -rose:ast:checker:save filename\n"
+"                             Causes the whole AST and check results to be saved as filename.ast and filename.json.\n"
+"                             *iff* any defect is found.\n"
+"                             Comma separated if when=both.\n"
 "\n"
 "Plugin Mode:\n"
 "     -rose:plugin_lib <shared_lib_filename>\n"
@@ -5878,6 +6034,11 @@ SgFile::stripRoseCommandLineOptions ( vector<string> & argv )
   // AST I/O
      optionCount = sla(argv, "-rose:ast:", "($)", "merge",1);
      optionCount = sla(argv, "-rose:ast:", "($)^", "(read|write)",&integerOption,1);
+
+  // AST to Graphviz
+     optionCount = sla(argv, "-rose:ast:graphviz:", "($)^", "(when|mode|out)",&integerOption,1);
+  // AST Checker
+     optionCount = sla(argv, "-rose:ast:checker:", "($)^", "(when|mode|effect|log|save)",&integerOption,1);
 
   // DQ (12/9/2016): Eliminating a warning that we want to be an error: -Werror=unused-but-set-variable.
      ROSE_ASSERT(optionCount >= 0);

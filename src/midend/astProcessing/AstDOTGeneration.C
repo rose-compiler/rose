@@ -29,6 +29,17 @@
 using namespace std;                                    // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace Rose;                                   // until this file is all moved into the rose namespace
 
+void AstDOTGeneration::generate(SgProject * project, std::string const & filename) {
+     init();
+     traversal=TOPDOWNBOTTOMUP;
+     skip_write_during_traversal = true;
+
+     DOTInheritedAttribute ia;
+     traverse(project,ia);
+
+     dotrep.writeToFileAsGraph(filename);
+   }
+
 void
 AstDOTGeneration::generate(SgNode* node, string filename, traversalType tt, string filenamePostfix)
    {
@@ -912,9 +923,8 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
              }
         }
 
-
-
-     switch(node->variantT())
+     if (!skip_write_during_traversal) {
+       switch(node->variantT())
         {
        // DQ (9/1/2008): Added case for output of SgProject rooted DOT file.
        // This allows source code and binary files to be combined into the same DOT file.
@@ -1011,6 +1021,7 @@ AstDOTGeneration::evaluateSynthesizedAttribute(SgNode* node, DOTInheritedAttribu
                break;
              }
         }
+     }
 
      d.node = node;
      return d;
