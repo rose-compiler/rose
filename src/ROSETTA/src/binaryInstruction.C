@@ -9865,7 +9865,7 @@ void Grammar::setUpBinaryInstructions() {
      *
      *  The only purpose of this node is to hold a list which, due to ROSETTA limitations, cannot be contained in the objects
      *  that actually need it. */
-    class SgAsmJvmConstantPoolEntryList: public SgAsmNode {
+    class SgAsmJvmConstantPoolEntryList: public SgAsmJvmNode {
     public:
 #endif
 
@@ -9918,7 +9918,7 @@ void Grammar::setUpBinaryInstructions() {
      *
      *  Constant pool entries are referenced by index starting at 1.
      */
-    class SgAsmJvmConstantPoolEntry: public SgAsmNode {
+    class SgAsmJvmConstantPoolEntry: public SgAsmJvmNode {
     public:
 #endif
 
@@ -17511,13 +17511,48 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /*************************************************************************************************************************
+     *                                      Root of a branch of JVM IR classes
+     *************************************************************************************************************************/
+
+    NEW_NONTERMINAL_MACRO(AsmJvmNode,
+                          AsmJvmConstantPoolEntry | AsmJvmConstantPoolEntryList,
+                          "AsmJvmNode", "AsmJvmNodeTag", false);
+    AsmJvmNode.setCppCondition("!defined(DOCUMENTATION)");
+    IS_SERIALIZABLE(AsmJvmNode);
+
+#ifdef DOCUMENTATION
+    /** Base class for JVM branch of binary analysis IR nodes. */
+    class SgAsmJvmNode: public SgAsmNode {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmJvmNode);
+#if defined(SgAsmJvmNode_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgNode);
+        }
+#endif
+#endif // SgAsmJvmNode_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /*************************************************************************************************************************
      *                                         Root of all binary IR classes
      *************************************************************************************************************************/
 
     NEW_NONTERMINAL_MACRO(AsmNode,
                           AsmStatement | AsmExpression | AsmInterpretation | AsmOperandList | AsmType |
                           AsmExecutableFileFormat | AsmInterpretationList | AsmGenericFileList |
-                          AsmJvmConstantPoolEntry | AsmJvmConstantPoolEntryList,
+                          AsmJvmNode,
                           "AsmNode", "AsmNodeTag", false);
     AsmNode.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmNode);
