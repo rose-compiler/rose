@@ -12,6 +12,14 @@ using namespace ByteOrder;
 
 using PoolEntry = SgAsmJvmConstantPoolEntry;
 
+SgAsmJvmConstantPool::SgAsmJvmConstantPool(SgAsmGenericHeader* fhdr)
+  : SgAsmGenericSection(fhdr->get_file(), fhdr)
+{
+  std::cout << "SgAsmJvmConstantPool::ctor() ...\n";
+  p_entries = new SgAsmJvmConstantPoolEntryList;
+  p_entries->set_parent(this);
+}
+
 // Constructor creating an object ready to be initialized via parse().
 SgAsmJvmConstantPoolEntry::SgAsmJvmConstantPoolEntry(PoolEntry::ConstantPoolKind tag)
   : p_tag{tag}, p_bytes{0}, p_hi_bytes{0}, p_low_bytes{0}, p_bootstrap_method_attr_index{0}, p_class_index{0},
@@ -266,7 +274,7 @@ PoolEntry* PoolEntry::parse(SgAsmJvmConstantPool* pool)
       break;
 
     default:
-      set_tag(PoolEntry::ILLEGAL);
+      set_tag(PoolEntry::EMPTY);
   }
 
   h->set_offset(offset);
@@ -349,8 +357,8 @@ SgAsmJvmConstantPool* SgAsmJvmConstantPool::parse()
     // 4.4.5 "In retrospect, making 8-byte constants take two constant pool entries was a poor choice."
     //
     if (kind == PoolEntry::CONSTANT_Long || kind == PoolEntry::CONSTANT_Double) {
-      // Create and store an empty entry (using ILLEGAL tag)
-      entry = new PoolEntry(PoolEntry::ILLEGAL);
+      // Create and store an empty entry
+      entry = new PoolEntry(PoolEntry::EMPTY);
       p_entries->get_entries().push_back(entry);
       ii += 1;
     }
