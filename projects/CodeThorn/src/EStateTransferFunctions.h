@@ -525,6 +525,7 @@ namespace CodeThorn {
     SingleEvalResult execFunctionCallScanf(SgFunctionCallExp* funCall, EStatePtr estate);
     std::string sourceLocationAndNodeToString(Label lab);
   private:
+    AbstractValue createNewMemoryRegionIdAndPointerToIt(std::string name, int memoryRegionSize);
     bool isTmpVar(VariableId varId);
     void tmpVarCleanUp(EStatePtr estate, VariableId varId);
     uint32_t topSortLabelPos(Label lab);

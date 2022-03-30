@@ -23,7 +23,10 @@ namespace CodeThorn {
     //cout<<"MEM CHECK: @"<<lab.toString()<<": READ: @"<< memLoc.toString()<<endl;
     auto violation=checkMemoryAddress(memLoc);
     // check uninitialized value read from memory location
-    if(pstate->memLocExists(memLoc)) {
+    if(memLoc.isUndefined()) {
+      // indirect access
+      violation.insert(ACCESS_POTENTIALLY_UNINIT);
+    } else if(pstate->memLocExists(memLoc)) {
       auto val=pstate->readFromMemoryLocation(memLoc);
       if(val.isUndefined()) {
         if(val.isAbstract()) {

@@ -1322,12 +1322,12 @@ namespace CodeThorn {
     }
     if(getVariableIdMapping()->isOfClassType(initDeclVarId)) {
       SAWYER_MESG(logger[WARN])<<"initialization of structs not supported yet (not added to state) "<<SgNodeHelper::sourceFilenameLineColumnToString(decl)<<endl;
-      // TODO: for(offset(membervar) : membervars {initialize(address(initDeclVarId)+offset,eval(initializer+));}
-      //AbstractValue pointerVal=AbstractValue::createAddressOfVariable(initDeclVarId);
-      // TODO: STRUCT VARIABLE DECLARATION
-      //reserveMemoryLocation(label,newPState,pointerVal);
-      PStatePtr newPState=currentEState->pstate();
-      return reInitEState(currentEState,targetLabel,cs,newPState);
+      // for(offset(membervar) : membervars {initialize(address(initDeclVarId)+offset,eval(initializer+));}
+      AbstractValue pointerVal=AbstractValue::createAddressOfVariable(initDeclVarId);
+      // STRUCT VARIABLE DECLARATION (reservative: revserve one abstract memory location)
+      PStatePtr pstate=currentEState->pstate();
+      reserveMemoryLocation(label,pstate,pointerVal);
+      return reInitEState(currentEState,targetLabel,cs,pstate);
     }
     if(getVariableIdMapping()->isOfReferenceType(initDeclVarId)) {
       SAWYER_MESG(logger[TRACE])<<"initialization of reference 1:"<<SgNodeHelper::sourceFilenameLineColumnToString(decl)<<endl;
@@ -3028,7 +3028,6 @@ namespace CodeThorn {
         AbstractValue indexExprResultValue=indexExprResult.value();
         AbstractValue elementSize=getMemoryRegionAbstractElementSize(arrayPtrValue);
         AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexExprResultValue,elementSize);
-        //cout<<"DEBUG: array reference value + index val: "<<arrayPtrPlusIndexValue.toString(_variableIdMapping)<<endl;
         if(arrayPtrPlusIndexValue.isNullPtr()) {
           notifyReadWriteListenersOnReading(estate->label(),const_pstate,arrayPtrPlusIndexValue);
           // there is no state following a definitive null pointer
@@ -3945,13 +3944,28 @@ namespace CodeThorn {
     return res;
   }
 
+  AbstractValue EStateTransferFunctions::createNewMemoryRegionIdAndPointerToIt(string name, int memoryRegionSize) {
+    // create new memory region id
+    VariableId memLocVarId=_variableIdMapping->createAndRegisterNewMemoryRegion(name,memoryRegionSize);
+    _variableIdMapping->setElementSize(memLocVarId,1); // malloc default for char (size=1)
+    AbstractValue allocatedMemoryPtr=AbstractValue::createAddressOfArray(memLocVarId);
+    allocatedMemoryPtr.setAbstractFlag(true);
+    return allocatedMemoryPtr;
+  }
+
   SingleEvalResult EStateTransferFunctions::evalFunctionCallMalloc(SgFunctionCallExp* funCall, EStatePtr estate) {
     // create two cases: (i) allocation successful, (ii) allocation fails (null pointer is returned, and no memory is allocated).
     SingleEvalResult res;
     static int memorylocid=0; // to be integrated in VariableIdMapping
-    memorylocid++;
     stringstream ss;
-    ss<<"$MEM"<<memorylocid;
+    // get label of funCall and use label as name to ensure it's reused for same location in program
+    if(_analyzer->getOptionsRef().abstractionMode==1) {
+      Label fCallLab=_analyzer->getLabeler()->getLabel(funCall); // for __builtin_alloca no label exists. currently NO_LABEL_ID is used for allocas and considered shared
+      ss<<"$MEM"<<fCallLab.toString();
+    } else {
+      memorylocid++;
+      ss<<"$MEM"<<memorylocid;
+    }
     ROSE_ASSERT(_variableIdMapping);
     SgExpressionPtrList& argsList=SgNodeHelper::getFunctionCallActualParameterList(funCall);
     if(argsList.size()==1) {
@@ -3968,21 +3982,25 @@ namespace CodeThorn {
         memoryRegionSize=0;
       }
 
-      // create 2nd memory state for null pointer (requires extended domain, not active)
-      VariableId memLocVarId=_variableIdMapping->createAndRegisterNewMemoryRegion(ss.str(),memoryRegionSize);
-      AbstractValue allocatedMemoryPtr=AbstractValue::createAddressOfArray(memLocVarId);
+      AbstractValue allocatedMemoryPtr;
+      if(_analyzer->getOptionsRef().abstractionMode==1) {
+        VariableId memRegionId=_variableIdMapping->getMemoryRegionIdByName(ss.str());
+        if(!memRegionId.isValid()) {
+          allocatedMemoryPtr=createNewMemoryRegionIdAndPointerToIt(ss.str(),memoryRegionSize);
+          writeUndefToMemoryLocation(estate->label(), estate->pstate(),allocatedMemoryPtr); // explitly reserve memory in state (array abstraction is considered)'
+        } else {
+          // use existing memory region id
+          allocatedMemoryPtr=AbstractValue::createAddressOfArray(memRegionId);
+          allocatedMemoryPtr.setAbstractFlag(true);
+        }
+      } else {
+        // concrete mode, always alloc new memory (can use same name for different regions, since the name is not used in concrete node)
+        allocatedMemoryPtr=createNewMemoryRegionIdAndPointerToIt(ss.str(),memoryRegionSize);
+        writeUndefToMemoryLocation(estate->label(), estate->pstate(),allocatedMemoryPtr); // explitly reserve memory in state (array abstraction is considered)'
+      }
       SAWYER_MESG(logger[TRACE])<<"function call malloc: allocated at: "<<allocatedMemoryPtr.toString()<<endl;
       res.init(estate,allocatedMemoryPtr);
       ROSE_ASSERT(allocatedMemoryPtr.isPtr());
-      //cout<<"Generated malloc-allocated mem-chunk pointer is OK."<<endl;
-      // create resList with two states now
-#if 0
-      // (ii) add memory allocation case: null pointer (allocation failed)
-      SingleEvalResult resNullPtr;
-      AbstractValue nullPtr=AbstractValue::createNullPtr();
-      resNullPtr.init(estate,nullPtr);
-      // TODO: return resNullPtr as well
-#endif
       return res;
     } else {
       cerr<<"WARNING: unknown malloc/alloc function "<<funCall->unparseToString()<<" (ignored)"<<endl;
@@ -4229,7 +4247,7 @@ namespace CodeThorn {
 
     if(memLoc.isTop()||memLoc.isBot()) {
       // TODO1: model writing to arbitrary mem loc
-      pstate->writeTopToAllMemoryLocations();
+      pstate->writeTopToAllPotentialMemoryLocations();
       return;
     } else if(!pstate->memLocExists(memLoc)) {
       //SAWYER_MESG(logger[TRACE])<<"EStateTransferFunctions::writeToMemoryLocation: memloc does not exist"<<endl;

@@ -50,6 +50,7 @@ namespace CodeThorn {
     bool isTemporaryVariableId(VariableId varId);
     bool isTemporaryVariableIdSymbol(SgSymbol* sym);
     bool isHeapMemoryRegionId(VariableId varId);
+    VariableId getMemoryRegionIdByName(std::string name);
 
     // delete a unique variable symbol (should be used together with createUniqueVariableSymbol)
     void deleteUniqueTemporaryVariableId(VariableId uniqueVarSym);
@@ -205,7 +206,7 @@ namespace CodeThorn {
       SgExpression* getInitializer();
       SgType* getType(); // this abstracts away the problem of having multiple declarations of the same variable (extern, global, etc.)
       SgVariableDeclaration* getVarDecl();
-
+  
     private:
       std::set<SgVariableDeclaration*> _varDecls;
       SgExpression* _initializer; // is maintained as cached value
@@ -230,7 +231,8 @@ namespace CodeThorn {
     // used for mapping in both directions
     std::map<SgSymbol*,VariableId> mappingSymToVarId;
     std::map<VariableId,VariableIdInfo> mappingVarIdToInfo;
-
+    std::map<std::string,VariableId> memoryRegionNameToRegionIdMapping;
+    
   public:
     VariableIdInfo getVariableIdInfo(VariableId vid);
     VariableIdInfo* getVariableIdInfoPtr(VariableId vid);
