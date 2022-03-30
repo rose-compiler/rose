@@ -602,7 +602,7 @@ JvmEngine::parseCommandLine(const std::vector<std::string> &args, const std::str
   //   3. Construct jfh=SgAsmJvmFileHeader using parsed jcf
   //   4. Parse using constructed jfh (jfh->parse()) /* */
 
-// NOTE: Temporary untilSgAsmJavaClassFile created
+// NOTE: Temporary until SgAsmJavaClassFile created
 #if 1
   auto gf = new SgAsmGenericFile{};
   gf->parse(fileName); /* this loads file into memory, does no reading of file */
@@ -610,7 +610,7 @@ JvmEngine::parseCommandLine(const std::vector<std::string> &args, const std::str
   header->parse(); /* does little parsing of file */
 
   auto pool = new SgAsmJvmConstantPool(header);
-  // std::cout << "JvmEngine::parseCommandLine: is_JVM: " << SgAsmJavaClassFile::is_JVM(jcf) << std::endl;
+  ROSE_ASSERT(pool->get_entries());
   pool->parse();
 #else
   auto jcf = new SgAsmJavaClassFile(fileName);

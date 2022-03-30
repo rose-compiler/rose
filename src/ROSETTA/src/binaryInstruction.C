@@ -5508,6 +5508,182 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 
+#undef JVM_IGNORE_SERIALIZATION
+#undef JVM_IGNORE_FILE_HEADER
+#ifdef JVM_IGNORE_FILE_HEADER
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /*************************************************************************************************************************
+     *                                         JVM File Header
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmJvmFileHeader);
+    IS_SERIALIZABLE(AsmJvmFileHeader);
+
+#ifdef DOCUMENTATION
+    /** Represents the file header of an JVM binary container.
+     *
+     *  The file header contains information that the Java Virtual Machine (JVM) uses to find the various parts within the
+     *  container. Most of the object properties are defined in the official JVM specification and their documentation is not
+     *  replicated here.
+     */
+    class SgAsmJvmFileHeader: public SgAsmGenericHeader {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Minor version.
+         *
+         *  Minor version number of this class file.
+         *
+         * @{ */
+        uint16_t get_minor_version() const;
+        void set_minor_version(uint16_t);
+        protected: uint16_t p_minor_version;
+        /** @} */
+#else
+        AsmJvmFileHeader.setDataPrototype("uint16_t", "minor_version", "= 0",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Major version.
+         *
+         *  Major version number of this class file.
+         *
+         * @{ */
+        uint16_t get_major_version() const;
+        void set_major_version(uint16_t);
+        protected: uint16_t p_major_version;
+        /** @} */
+#else
+        AsmJvmFileHeader.setDataPrototype("uint16_t", "major_version", "= 0",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Access flags.
+         *
+         *  Mask of flags used to denote access permissions and properties of this class or interface.
+         *
+         * @{ */
+        uint16_t get_access_flags() const;
+        void set_access_flags(uint16_t);
+        protected: uint16_t p_access_flags;
+        /** @} */
+#else
+        AsmJvmFileHeader.setDataPrototype("uint16_t", "access_flags", "= 0",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: This class index.
+         *
+         *  Index into constant pool table for this class or interface.
+         *
+         * @{ */
+        uint16_t get_this_class() const;
+        void set_this_class(uint16_t);
+        protected: uint16_t p_this_class;
+        /** @} */
+#else
+        AsmJvmFileHeader.setDataPrototype("uint16_t", "this_class", "= 0",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Super class.
+         *
+         *  Index into constant pool table for direct super class of this class or interface.
+         *
+         * @{ */
+        uint16_t get_super_class() const;
+        void set_super_class(uint16_t);
+        protected: uint16_t p_super_class;
+        /** @} */
+#else
+        AsmJvmFileHeader.setDataPrototype("uint16_t", "super_class", "= 0",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Constant pool.
+         *
+         *  Points to the AST node that represents the JVM constant pool. The constant pool is a table of structures
+         *  (see 4.4) representing various string constants, class and interface names, field names, and other constants
+         *  that are referred to within the ClassFile structure and its substructures. The format of each constant-pool
+         *  table entry is indicated by its first "tag" byte.
+         *
+         * @{ */
+        SgAsmJvmConstantPool* get_constant_pool() const;
+        void set_constant_pool(SgAsmJvmConstantPool*);
+        protected: SgAsmJvmConstantPool* p_constant_pool;
+        /** @} */
+#else
+        AsmJvmFileHeader.setDataPrototype("SgAsmJvmConstantPool*", "constant_pool", "= nullptr",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#undef JVM_IGNORE_SEGMENT_TABLE
+#ifdef JVM_IGNORE_SEGMENT_TABLE
+
+#ifdef DOCUMENTATION
+        /** Property: Segment table.
+         *
+         *  Points to the AST node that represents the JVM segment table that describes each segment of the file. Segments
+         *  describe how parts of the file are mapped into virtual memory by the loader.
+         *
+         * @{ */
+        SgAsmElfSegmentTable* get_segment_table() const;
+        void set_segment_table(SgAsmElfSegmentTable*);
+        /** @} */
+#else
+        AsmJvmFileHeader.setDataPrototype("SgAsmJvmSegmentTable*", "segment_table", "= NULL",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#endif // JVM_IGNORE_SEGMENT_TABLE
+
+        DECLARE_OTHERS(AsmJvmFileHeader);
+#if defined(SgAsmJvmFileHeader_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericHeader);
+#ifdef JVM_IGNORE_SERIALIZATION
+            s & BOOST_SERIALIZATION_NVP(p_minor_version);
+            s & BOOST_SERIALIZATION_NVP(p_major_version);
+            s & BOOST_SERIALIZATION_NVP(p_access_flags);
+            s & BOOST_SERIALIZATION_NVP(p_this_class);
+            s & BOOST_SERIALIZATION_NVP(p_super_class);
+            s & BOOST_SERIALIZATION_NVP(p_constant_pool);
+#endif
+        }
+#endif
+
+    public:
+        /** Construct a new JVM File Header with default values; ready to be initialized via parse(). */
+        explicit SgAsmJvmFileHeader(SgAsmGenericFile *f);
+
+        /** Parse header from file.
+         *
+         *  Initialize this header with information parsed from the file and construct and parse everything that's reachable
+         *  from the header. Since the size of the ELF File Header is determined by the contents of the ELF File Header as
+         *  stored in the file, the size of the ELF File Header will be adjusted upward if necessary. */
+        virtual SgAsmJvmFileHeader* parse() override;
+
+#endif // SgAsmJvmFileHeader_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+#endif//JVM_IGNORE_FILE_HEADER
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -9625,9 +9801,6 @@ void Grammar::setUpBinaryInstructions() {
          * @{ */
         SgAsmConstantPoolEntry* get_entry(size_t index) const;
         /** @} */
-#else
-        AsmJvmConstantPool.setDataPrototype("SgAsmJvmConstantPoolEntry*", "entry", "= nullptr",
-                                            NO_CONSTRUCTOR_PARAMETER, NO_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
 #ifdef DOCUMENTATION
@@ -9639,6 +9812,7 @@ void Grammar::setUpBinaryInstructions() {
          * @{ */
         SgAsmJvmConstantPoolEntryList* get_entries() const;
         void set_entries(SgAsmJvmConstantPoolEntryList*);
+        protected: SgAsmConstantPoolEntryList* p_entries;
         /** @} */
 #else
         AsmJvmConstantPool.setDataPrototype("SgAsmJvmConstantPoolEntryList*", "entries", "= nullptr",
@@ -9654,13 +9828,18 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
+#ifdef JVM_IGNORE_SERIALIZATION
+            s & BOOST_SERIALIZATION_NVP(p_entries);
+#endif
         }
 #endif
 
     public:
-        explicit SgAsmJvmConstantPool(SgAsmGenericHeader *fhdr)
-            : SgAsmGenericSection(fhdr->get_file(), fhdr) {
-        }
+#ifdef JVM_IGNORE_FILE_HEADER
+        explicit SgAsmJvmConstantPool(SgAsmJvmFileHeader *fhdr);
+#else
+        explicit SgAsmJvmConstantPool(SgAsmGenericHeader *fhdr);
+#endif
 
         /** Parses a JVM Constant Pool.
          *
@@ -9712,7 +9891,9 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
+#ifdef JVM_IGNORE_SERIALIZATION
             s & BOOST_SERIALIZATION_NVP(p_entries);
+#endif
         }
 #endif
 #endif // SgAsmJvmConstantPoolEntryList_OTHERS
@@ -9752,7 +9933,7 @@ void Grammar::setUpBinaryInstructions() {
         private: SgAsmJvmConstantPoolEntry::ConstantPoolKind p_tag;
         /** @} */
 #else
-        AsmJvmConstantPoolEntry.setDataPrototype("SgAsmJvmConstantPoolEntry::ConstantPoolKind", "tag", "= SgAsmJvmConstantPoolEntry::ILLEGAL",
+        AsmJvmConstantPoolEntry.setDataPrototype("SgAsmJvmConstantPoolEntry::ConstantPoolKind", "tag", "= SgAsmJvmConstantPoolEntry::EMPTY",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
@@ -9960,7 +10141,22 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
+#ifdef JVM_IGNORE_SERIALIZATION
             s & BOOST_SERIALIZATION_NVP(p_tag);
+            s & BOOST_SERIALIZATION_NVP(p_bytes);
+            s & BOOST_SERIALIZATION_NVP(p_hi_bytes);
+            s & BOOST_SERIALIZATION_NVP(p_low_bytes);
+            s & BOOST_SERIALIZATION_NVP(p_bootstrap_method_attr_index);
+            s & BOOST_SERIALIZATION_NVP(p_class_index);
+            s & BOOST_SERIALIZATION_NVP(p_descriptor_index);
+            s & BOOST_SERIALIZATION_NVP(p_name_index);
+            s & BOOST_SERIALIZATION_NVP(p_name_and_type_index);
+            s & BOOST_SERIALIZATION_NVP(p_reference_index);
+            s & BOOST_SERIALIZATION_NVP(p_reference_kind);
+            s & BOOST_SERIALIZATION_NVP(p_string_index);
+            s & BOOST_SERIALIZATION_NVP(p_length);
+            s & BOOST_SERIALIZATION_NVP(p_utf8_bytes);
+#endif
         }
 #endif
 
@@ -9970,7 +10166,7 @@ void Grammar::setUpBinaryInstructions() {
          * These tags indicate the kind of constant denoted by the pool entry.
          */
         enum ConstantPoolKind {
-            ILLEGAL = 0,
+            EMPTY = 0,
             CONSTANT_Utf8 = 1,
             CONSTANT_Integer = 3,
             CONSTANT_Float = 4,
@@ -14814,9 +15010,16 @@ void Grammar::setUpBinaryInstructions() {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#ifdef JVM_IGNORE_SEGMENT_TABLE
+    NEW_NONTERMINAL_MACRO(AsmGenericHeader,
+                          AsmPEFileHeader | AsmLEFileHeader | AsmNEFileHeader | AsmDOSFileHeader | AsmElfFileHeader |
+                          AsmJvmFileHeader,
+                          "AsmGenericHeader", "AsmGenericHeaderTag", true);
+#else
     NEW_NONTERMINAL_MACRO(AsmGenericHeader,
                           AsmPEFileHeader | AsmLEFileHeader | AsmNEFileHeader | AsmDOSFileHeader | AsmElfFileHeader,
                           "AsmGenericHeader", "AsmGenericHeaderTag", true);
+#endif
     AsmGenericHeader.setCppCondition("!defined(DOCUMENTATION)");
     AsmGenericHeader.setAutomaticGenerationOfDestructor(false);
     IS_SERIALIZABLE(AsmGenericHeader);
