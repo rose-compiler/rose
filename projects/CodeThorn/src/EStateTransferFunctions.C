@@ -706,13 +706,9 @@ namespace CodeThorn {
       if(_analyzer->getOptionsRef().precisionLevel==1) {
         size_t numFunctions=_analyzer->getTotalNumberOfFunctions();
         _analyzer->printStatusMessage("Analyzing function #"+std::to_string(_functionsAnalyzedNum)+" of "+std::to_string(numFunctions)+": ");
-        _functionsAnalyzedNum++;
       } else if(_analyzer->getOptionsRef().precisionLevel>=2) {
         _analyzer->printStatusMessage(std::to_string(_functionsAnalyzedNum)+". ");
-        _functionsAnalyzedNum++;
         auto stateSize=estate->pstate()->stateSize();
-        updateMaxStateSize(stateSize);
-        updateMaxCSLength(estate->getCallStringLength());
         _analyzer->printStatusMessage("Analyzing function (cslen="+std::to_string(estate->getCallStringLength())+") (state size:"+to_string(stateSize)+" max:"+std::to_string(_maxStateSize)+"): ");
       }
       if(_analyzer->getOptionsRef().precisionLevel>0)
@@ -727,7 +723,14 @@ namespace CodeThorn {
     if(funDef) {
       string functionName=SgNodeHelper::getFunctionName(node);
       string fileName=SgNodeHelper::sourceFilenameToString(node);
+
+      // update counters and stats used in status messages
+      _functionsAnalyzedNum++;
+      auto stateSize=estate->pstate()->stateSize();
+      updateMaxStateSize(stateSize);
+      updateMaxCSLength(estate->getCallStringLength());
       transferFunctionEntryPrintStatus(edge,estate,functionName,fileName);
+
       SgInitializedNamePtrList& formalParameters=SgNodeHelper::getFunctionDefinitionFormalParameterList(funDef);
       SAWYER_MESG(logger[TRACE])<<"Function:"<<functionName<<" Parameters: "<<formalParameters.size()<<endl;
       for(auto fParam : formalParameters) {

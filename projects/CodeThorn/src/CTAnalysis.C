@@ -2040,9 +2040,9 @@ std::string CodeThorn::CTAnalysis::internalAnalysisReportToString() {
   } else {
     ss<<"Inter-procedural analysis"<<endl;     
 
-    ss<<"Recursive call graph    : ";
+    ss<<"Cyclic call graph    : ";
     if(auto topSort=getTopologicalSort())
-      ss<<topSort->isRecursive()<<endl;
+      ss<<(topSort->isRecursive()?"yes":"no");
     else
       ss<<"not created";
     ss<<endl;
