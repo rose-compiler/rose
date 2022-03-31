@@ -210,9 +210,11 @@ SgAsmIntegerValueExpression
 SgAsmIntegerType
 SgAsmInterpretation
 SgAsmInterpretationList
+SgAsmJvmAttribute
 SgAsmJvmConstantPool
 SgAsmJvmConstantPoolEntry
 SgAsmJvmConstantPoolEntryList
+SgAsmJvmConstantValue
 SgAsmJvmInstruction
 SgAsmJvmNode
 SgAsmLEEntryPoint

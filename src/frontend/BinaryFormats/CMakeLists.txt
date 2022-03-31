@@ -30,6 +30,7 @@ add_library(roseBinaryFormats OBJECT
   ElfSymbolVersion.C
 
   ### Java Virtual Machine Format (JVM) ###
+  JvmAttribute.C
   JvmConstantPool.C
 
   ### Microsoft Windows PE Format */
