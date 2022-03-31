@@ -5728,8 +5728,6 @@ void Grammar::setUpBinaryInstructions() {
             s & BOOST_SERIALIZATION_NVP(p_this_class);
             s & BOOST_SERIALIZATION_NVP(p_super_class);
             s & BOOST_SERIALIZATION_NVP(p_constant_pool);
-#ifdef JVM_IGNORE_SERIALIZATION
-#endif
         }
 #endif
 
@@ -9896,8 +9894,6 @@ void Grammar::setUpBinaryInstructions() {
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
             s & BOOST_SERIALIZATION_NVP(p_entries);
-#ifdef JVM_IGNORE_SERIALIZATION
-#endif
         }
 #endif
 
@@ -9959,8 +9955,6 @@ void Grammar::setUpBinaryInstructions() {
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
             s & BOOST_SERIALIZATION_NVP(p_entries);
-#ifdef JVM_IGNORE_SERIALIZATION
-#endif
         }
 #endif
 #endif // SgAsmJvmConstantPoolEntryList_OTHERS
@@ -10193,7 +10187,7 @@ void Grammar::setUpBinaryInstructions() {
          * @{ */
         const char* get_utf8_bytes() const;
         void set_utf8_bytes(const char*);
-        protected: char* p_utf8_bytes;
+        protected: const char* p_utf8_bytes;
 #else
         AsmJvmConstantPoolEntry.setDataPrototype("const char*", "utf8_bytes", "= nullptr",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -10208,7 +10202,6 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
-#ifdef JVM_IGNORE_SERIALIZATION
             s & BOOST_SERIALIZATION_NVP(p_tag);
             s & BOOST_SERIALIZATION_NVP(p_bytes);
             s & BOOST_SERIALIZATION_NVP(p_hi_bytes);
@@ -10222,6 +10215,7 @@ void Grammar::setUpBinaryInstructions() {
             s & BOOST_SERIALIZATION_NVP(p_reference_kind);
             s & BOOST_SERIALIZATION_NVP(p_string_index);
             s & BOOST_SERIALIZATION_NVP(p_length);
+#ifdef JVM_IGNORE_SERIALIZATION
             s & BOOST_SERIALIZATION_NVP(p_utf8_bytes);
 #endif
         }
@@ -10375,6 +10369,157 @@ void Grammar::setUpBinaryInstructions() {
         static std::string to_string(SgAsmJvmConstantPoolEntry::ConstantPoolKind);
 
 #endif // SgAsmJvmConstantPoolEntry_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /*************************************************************************************************************************
+     *                                       JVM ConstantValue attribute
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmJvmConstantValue);
+    IS_SERIALIZABLE(AsmJvmConstantValue);
+
+#ifdef DOCUMENTATION
+    /** JVM ConstantValue attribute.
+     *
+     *  A ConstantValue attribute represents the value of a constant expression, see
+     *  section 4.7.2 of the JVM documentation.
+     */
+    class SgAsmJvmConstantValue: public SgAsmJvmAttribute {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: constantvalue_index
+         *
+         *  The value of the constantvalue_index item must be a valid index into the constant_pool table
+         *  (see JVM documentation).
+         *
+         * @{ */
+        uint16_t get_constantvalue_index() const;
+        void set_constantvalue_index(uint16_t);
+        protected: uint16_t p_constantvalue_index;
+        /** @} */
+#else
+        AsmJvmConstantValue.setDataPrototype("uint16_t", "constantvalue_index", "= 0",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmJvmConstantValue);
+#if defined(SgAsmJvmConstantValue_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
+            s & BOOST_SERIALIZATION_NVP(p_constantvalue_index);
+        }
+#endif
+
+    public:
+        /** Initialize an attribute by parsing the file.
+         *
+         * @{ */
+        virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool) override;
+        /** @} */
+
+        /** Print some debugging information */
+        virtual void dump(std::ostream &os) override;
+
+#endif // SgAsmJvmConstantValue_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /*************************************************************************************************************************
+     *                                      Root of JVM Attribute classes
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    NEW_NONTERMINAL_MACRO(AsmJvmAttribute,
+                          AsmJvmConstantValue,
+                          "AsmJvmAttribute", "AsmJvmAttributeTag", false);
+    AsmJvmAttribute.setCppCondition("!defined(DOCUMENTATION)");
+    IS_SERIALIZABLE(AsmJvmAttribute);
+
+#ifdef DOCUMENTATION
+    /** Base class for a JVM attribute.
+     *
+     */
+    class SgAsmJvmAttribute: public SgAsmJvmNode {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: attribute_name_index
+         *
+         *  The value of the attribute_name_index item must be a valid index into the constant_pool table
+         *  (see JVM documentation).
+         *
+         * @{ */
+        uint16_t get_attribute_name_index() const;
+        void set_attribute_name_index(uint16_t);
+        protected: uint16_t p_attribute_name_index;
+        /** @} */
+#else
+        AsmJvmAttribute.setDataPrototype("uint16_t", "attribute_name_index", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: attribute_length
+         *
+         *  The value of the attribute_length item indicates the length of the attribute, not including the
+         *  attribute_name_index nor attribute_length.
+         *
+         * @{ */
+        uint32_t get_attribute_length() const;
+        void set_attribute_length(uint32_t);
+        protected: uint32_t p_attribute_length;
+#else
+        AsmJvmAttribute.setDataPrototype("uint32_t", "attribute_length", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmJvmAttribute);
+#if defined(SgAsmJvmAttribute_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
+            s & BOOST_SERIALIZATION_NVP(p_attribute_name_index);
+            s & BOOST_SERIALIZATION_NVP(p_attribute_length);
+        }
+#endif
+
+    public:
+        /** Initialize an attribute by parsing the file.
+         *
+         * @{ */
+        virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool);
+        /** @} */
+
+        /** Print some debugging information */
+        virtual void dump(std::ostream &os);
+
+#endif // SgAsmJvmAttribute_OTHERS
 
 #ifdef DOCUMENTATION
     };
@@ -17582,7 +17727,7 @@ void Grammar::setUpBinaryInstructions() {
      *************************************************************************************************************************/
 
     NEW_NONTERMINAL_MACRO(AsmJvmNode,
-                          AsmJvmConstantPoolEntry | AsmJvmConstantPoolEntryList,
+                          AsmJvmAttribute | AsmJvmConstantPoolEntry | AsmJvmConstantPoolEntryList,
                           "AsmJvmNode", "AsmJvmNodeTag", false);
     AsmJvmNode.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmJvmNode);
