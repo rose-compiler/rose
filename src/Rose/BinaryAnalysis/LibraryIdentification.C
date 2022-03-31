@@ -258,6 +258,7 @@ void
 LibraryIdentification::connect(const std::string &url) {
     libraryCache_.clear();
     db_ = Sawyer::Database::Connection::fromUri(url);
+    checkVersion();
     upgradeDatabase();
 
     // Check that tables exist by reading from them. An exception is thrown if they don't exist or something is wrong.
@@ -270,7 +271,17 @@ LibraryIdentification::connect(const std::string &url) {
 void
 LibraryIdentification::createDatabase(const std::string &url) {
     db_ = Sawyer::Database::Connection::fromUri(url);
+    checkVersion();
     createTables();
+}
+
+void
+LibraryIdentification::checkVersion() {
+    if (db_.isOpen() && db_.driverName() == "sqlite") {
+#if defined(SQLITE_VERSION_NUMBER) && defined(SQLITE_VERSION) && SQLITE_VERSION_NUMBER < 3024000
+        throw Exception("SQLite version 3.24.0 or later is required (you have " SQLITE_VERSION ")");
+#endif
+    }
 }
 
 void

@@ -364,6 +364,9 @@ public:
     static size_t nInsns(const Partitioner2::Partitioner&, const Partitioner2::FunctionPtr&);
 
 private:
+    // Throws an Exception if the database driver version is not adequate.
+    void checkVersion();
+
     // Returns the database version number if there is one.
     Sawyer::Optional<unsigned> version();
 
