@@ -569,7 +569,7 @@ VariableFinder::detectFrameAttributes(const P2::Partitioner &partitioner, const 
         // See initializeFrameBoundaries for the visual representation of the stack frame
         frame.growthDirection = StackFrame::GROWS_DOWN;
         frame.maxOffset = 2 * partitioner.instructionProvider().wordSize() - 1;
-        frame.rule = "x86 general";
+        frame.rule = "x86: general";
 
     } else if (isSgAsmPowerpcInstruction(firstInsn)) {
         frame.growthDirection = StackFrame::GROWS_DOWN;
@@ -594,6 +594,32 @@ VariableFinder::detectFrameAttributes(const P2::Partitioner &partitioner, const 
                 frame.maxOffset = *frame.size - 1;
                 frame.rule = "ppc: stwu r1, u32 [r1 - N]";
             }
+        }
+
+    } else if (auto m68k = isSgAsmM68kInstruction(firstInsn)) {
+        frame.growthDirection = StackFrame::GROWS_DOWN;
+
+        const RegisterDescriptor REG_FP = partitioner.instructionProvider().stackFrameRegister();
+
+        // If this m68k function starts with "link.w fp, -N" then the frame size is 4 + 4 + N since the caller has pushed the
+        // return address and this function pushes the old frame pointer register r6 and then reserves N additional bytes in
+        // the frame.
+        if (REG_FP &&
+            m68k->get_kind() == m68k_link &&
+            m68k->nOperands() == 2 &&
+            isSgAsmDirectRegisterExpression(m68k->operand(0)) &&
+            isSgAsmDirectRegisterExpression(m68k->operand(0))->get_descriptor() == REG_FP &&
+            isSgAsmIntegerValueExpression(m68k->operand(1))) {
+            int64_t n = isSgAsmIntegerValueExpression(m68k->operand(1))->get_signedValue();
+            ASSERT_require(n <= 0);
+            frame.size = 4 /* previously pushed return address */ + 4 /* pushed frame pointer */ + (-n);
+            frame.maxOffset = 7;                        // return address and frame pointer
+            frame.minOffset = n;                        // negative offset for space reserved by this insn
+            frame.rule = "m68k: link a6, N";
+        } else {
+            frame.size = 4 /* previously pushed return address */;
+            frame.maxOffset = 3;
+            frame.rule = "m68kkf general";
         }
 
 #ifdef ROSE_ENABLE_ASM_AARCH32
@@ -743,6 +769,27 @@ VariableFinder::initializeFrameBoundaries(const StackFrame &frame, const P2::Par
             StackVariable::insertBoundary(boundaries, 2*wordNBytes, function->address());
         }
 
+    } else if (isSgAsmM68kInstruction(firstInsn)) {
+        // Motorola 68000 family of processors
+        //
+        //                    :                           :
+        //                    :   (part of parent frame)  :
+        //                    :                           :
+        //                    +---(current frame)---------+
+        //                (1) | return address            | 4 bytes
+        // current_frame: (0) | addr of parent frame      | 4 bytes
+        //                    :                           :
+        StackVariable::Boundary &parentPtr = StackVariable::insertBoundary(boundaries, 0, function->address());
+        parentPtr.purpose = StackVariable::Purpose::FRAME_POINTER;
+
+        StackVariable::Boundary &returnPtr = StackVariable::insertBoundary(boundaries, 4, function->address());
+        returnPtr.purpose = StackVariable::Purpose::RETURN_ADDRESS;
+
+        if (frame.minOffset && *frame.minOffset < 0) {
+            StackVariable::Boundary &bottom = StackVariable::insertBoundary(boundaries, *frame.minOffset, function->address());
+            bottom.purpose = StackVariable::Purpose::UNKNOWN;
+        }
+
 #ifdef ROSE_ENABLE_ASM_AARCH32
     } else if (isSgAsmAarch32Instruction(firstInsn)) {
         // AArch32 stack frames are organized like this:
@@ -752,8 +799,8 @@ VariableFinder::initializeFrameBoundaries(const StackFrame &frame, const P2::Par
         //                    :                           :
         //                    +---(current frame)---------+
         // current_frame: (0) | addr of parent frame      | 4 bytes
-        //                    | saved link register       | optional, 4 bytes
-        //                    | local variables           | variable size
+        //               (-1) | saved link register       | optional, 4 bytes
+        //               (-2) | local variables           | variable size
         //                    +---------------------------+
         if (boost::contains(frame.rule, "<saved-lr>")) {
             // The "push fp, lr" pushes 8 bytes calculated from the stack pointer, so we don't want this eight
@@ -963,8 +1010,16 @@ VariableFinder::findStackVariables(const P2::Partitioner &partitioner, const P2:
         VarSearchSemantics::RiscOperatorsPtr ops =
             VarSearchSemantics::RiscOperators::instance(frame, partitioner, boundaries /*in,out*/);
         S2::BaseSemantics::DispatcherPtr cpu = partitioner.newDispatcher(ops);
-        for (SgAsmInstruction *insn: bb->instructions())
-            cpu->processInstruction(insn);
+        for (SgAsmInstruction *insn: bb->instructions()) {
+            try {
+                cpu->processInstruction(insn);
+            } catch (const S2::BaseSemantics::Exception &e) {
+                debug <<"    semantic failure for " <<insn->toString() <<": " <<e.what() <<"\n";
+                break;
+            } catch (...) {
+                debug <<"    semantic failure for " <<insn->toString() <<"\n";
+            }
+        }
     }
 
     // Sort and prune the boundaries so we have just those that are in the frame.
