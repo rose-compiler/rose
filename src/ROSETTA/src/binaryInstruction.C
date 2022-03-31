@@ -658,6 +658,72 @@ void Grammar::setUpBinaryInstructions() {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    DECLARE_LEAF_CLASS(AsmJvmInstruction);
+    IS_SERIALIZABLE(AsmJvmInstruction);
+    DECLARE_HEADERS(AsmJvmInstruction);
+#if defined(SgAsmJvmInstruction_HEADERS) || defined(DOCUMENTATION)
+    #include <Rose/BinaryAnalysis/InstructionEnumsJvm.h>
+#endif // SgAsmJvmInstruction_HEADERS
+
+#ifdef DOCUMENTATION
+    /** Represents one JVS machine instruction. */
+    class SgAsmJvmInstruction: public SgAsmInstruction {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Instruction kind.
+         *
+         *  Returns an enum constant describing the JVM instruction. These enum constants correspond roughly 1:1 with
+         *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind.
+         *
+         * @{ */
+        Rose::BinaryAnalysis::JvmInstructionKind get_kind() const;
+        void set_kind(Rose::BinaryAnalysis::JvmInstructionKind);
+        protected Rose::BinaryAnalysis::JvmInstructionKind p_kind;
+        /** @} */
+#else
+        AsmJvmInstruction.setDataPrototype("Rose::BinaryAnalysis::JvmInstructionKind", "kind",
+                                            "= Rose::BinaryAnalysis::JvmInstructionKind::unknown",
+                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE,
+                                            COPY_DATA);
+#endif
+
+        DECLARE_OTHERS(AsmJvmInstruction);
+#if defined(SgAsmJvmInstruction_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmInstruction);
+            s & BOOST_SERIALIZATION_NVP(p_kind);
+        }
+#endif
+
+    public:
+        // Overrides are documented in the base class
+        virtual std::string description() const override;
+        virtual bool terminatesBasicBlock() override;
+        virtual bool isFunctionCallFast(const std::vector<SgAsmInstruction*> &insns,
+                                        rose_addr_t *target/*out*/, rose_addr_t *ret/*out*/) override;
+        virtual bool isFunctionCallSlow(const std::vector<SgAsmInstruction*>&,
+                                        rose_addr_t *target, rose_addr_t *ret) override;
+        virtual bool isFunctionReturnFast(const std::vector<SgAsmInstruction*> &insns) override;
+        virtual bool isFunctionReturnSlow(const std::vector<SgAsmInstruction*> &insns) override;
+        virtual Rose::BinaryAnalysis::AddressSet getSuccessors(bool &complete) override;
+        virtual bool isUnknown() const override;
+        virtual Sawyer::Optional<rose_addr_t> branchTarget() override;
+        virtual unsigned get_anyKind() const override;
+#endif // SgAsmJvmInstruction_OTHERS
+#ifdef DOCUMENTATION
+    };
+#endif
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     DECLARE_LEAF_CLASS(AsmMipsInstruction);
     IS_SERIALIZABLE(AsmMipsInstruction);
     DECLARE_HEADERS(AsmMipsInstruction);
@@ -844,7 +910,8 @@ void Grammar::setUpBinaryInstructions() {
 #ifdef ROSE_ENABLE_ASM_AARCH64
                           | AsmAarch64Instruction
 #endif
-                          | AsmPowerpcInstruction | AsmMipsInstruction | AsmM68kInstruction | AsmNullInstruction,
+                          | AsmPowerpcInstruction | AsmJvmInstruction | AsmMipsInstruction | AsmM68kInstruction
+                          | AsmNullInstruction,
                           "AsmInstruction", "AsmInstructionTag", true);
     AsmInstruction.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmInstruction);
@@ -5655,13 +5722,13 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericHeader);
-#ifdef JVM_IGNORE_SERIALIZATION
             s & BOOST_SERIALIZATION_NVP(p_minor_version);
             s & BOOST_SERIALIZATION_NVP(p_major_version);
             s & BOOST_SERIALIZATION_NVP(p_access_flags);
             s & BOOST_SERIALIZATION_NVP(p_this_class);
             s & BOOST_SERIALIZATION_NVP(p_super_class);
             s & BOOST_SERIALIZATION_NVP(p_constant_pool);
+#ifdef JVM_IGNORE_SERIALIZATION
 #endif
         }
 #endif
@@ -9828,8 +9895,8 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericSection);
-#ifdef JVM_IGNORE_SERIALIZATION
             s & BOOST_SERIALIZATION_NVP(p_entries);
+#ifdef JVM_IGNORE_SERIALIZATION
 #endif
         }
 #endif
@@ -9891,8 +9958,8 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
-#ifdef JVM_IGNORE_SERIALIZATION
             s & BOOST_SERIALIZATION_NVP(p_entries);
+#ifdef JVM_IGNORE_SERIALIZATION
 #endif
         }
 #endif

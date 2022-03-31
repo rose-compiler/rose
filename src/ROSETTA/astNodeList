@@ -213,6 +213,7 @@ SgAsmInterpretationList
 SgAsmJvmConstantPool
 SgAsmJvmConstantPoolEntry
 SgAsmJvmConstantPoolEntryList
+SgAsmJvmInstruction
 SgAsmJvmNode
 SgAsmLEEntryPoint
 SgAsmLEEntryTable
