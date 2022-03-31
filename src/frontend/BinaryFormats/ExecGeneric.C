@@ -220,6 +220,7 @@ SgAsmExecutableFileFormat::to_string(SgAsmExecutableFileFormat::ExecFamily famil
         case FAMILY_LX:           return "OS/2 Extended Linear Executable (LX)";
         case FAMILY_NE:           return "Microsoft New Executable (NE)";
         case FAMILY_PE:           return "Microsoft Portable Executable (PE)";
+        case FAMILY_JVM:          return "Java virtual machine";
     };
 
     return "unknown exec family (" + StringUtility::unsignedToHex(family) + ")";
@@ -248,6 +249,7 @@ SgAsmExecutableFileFormat::to_string(SgAsmExecutableFileFormat::ExecABI abi) {
         case ABI_SYSV:        return "SysV R4";
         case ABI_TRU64:       return "Compaq TRU64 UNIX";
         case ABI_WIN386:      return "Microsoft Windows";
+        case ABI_JVM:         return "Java virtual machine";
     };
 
     return "unknown abi (" + StringUtility::unsignedToHex(abi) + ")";

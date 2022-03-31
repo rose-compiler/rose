@@ -713,7 +713,7 @@ doInline(SgFunctionCallExp* funcall, bool allowRecursion)
            lambdaFuncClassCopy->set_firstNondefiningDeclaration(lambdaFuncClassCopy);
            lambdaFuncClassCopy->set_parent(funbody_copy);
            lambdaFuncClassCopy->set_scope(funbody_copy);
-           SgClassType* class_type = SgClassType::createType(lambdaFuncClassCopy);
+           (void) SgClassType::createType(lambdaFuncClassCopy);
            setOneSourcePositionForTransformation(lambdaFuncClassCopy);
            SgClassDefinition* lambdaClassDef = SageBuilder::buildClassDefinition();
 

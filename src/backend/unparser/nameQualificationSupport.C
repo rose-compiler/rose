@@ -13595,8 +13595,8 @@ NameQualificationTraversal::evaluateInheritedAttribute(SgNode* n, NameQualificat
 #endif
 
 #if 1
-                         std::list<SgClassType*>::iterator classChain_first = classChain.begin();
 #if (DEBUG_NAME_QUALIFICATION_LEVEL > 3)
+                         std::list<SgClassType*>::iterator classChain_first = classChain.begin();
                          mfprintf(mlog [ WARN ] ) ("(*classChain_first)->get_name().str() = %s \n",(*classChain_first)->get_name().str());
 #endif
 #if 0

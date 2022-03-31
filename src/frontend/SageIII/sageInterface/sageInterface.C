@@ -25287,7 +25287,9 @@ static void serialize(SgNode* node, string& prefix, bool hasRemaining, ostringst
 
   std::vector<SgNode* > children = node->get_traversalSuccessorContainer();
   int total_count = children.size();
+#if 0
   int current_index=0;
+#endif
 
   int last_non_null_child_idx =-1;
   for (int i = (int) (children.size())-1; i>=0; i--)
