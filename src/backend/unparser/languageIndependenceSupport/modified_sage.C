@@ -1693,7 +1693,8 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
 
      if ( (isSgTemplateInstantiationDecl(decl_stmt)               != NULL) ||
        // DQ (1/3/2016): Adding support for template variable declarations.
-          (isSgTemplateVariableDeclaration(decl_stmt)             != NULL) ||
+       // TV (03/31/2022): FIXME that is broken. It seems that there are no template argument attached to the SgTemplateVariableDeclaration but that could be a good predicate
+       // (isSgTemplateVariableDeclaration(decl_stmt)             != NULL) ||
           (isSgTemplateInstantiationFunctionDecl(decl_stmt)       != NULL) ||
           (isSgTemplateInstantiationMemberFunctionDecl(decl_stmt) != NULL) )
         {
@@ -3355,8 +3356,8 @@ Unparse_MOD_SAGE::printColorCodes ( SgNode* node, bool openState, vector< pair<b
 void Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier2 ( SgDeclarationStatement* decl_stmt ) 
    {
      if (isSgTemplateInstantiationDecl(decl_stmt)
-      // DQ (1/3/2015): Added support for template variables (instantiations are represented similarly to non-instantiations (but we might have to fix this).
-         || isSgTemplateVariableDeclaration(decl_stmt)
+      // DQ (1/3/2015): Added support for template variables (instantiations are represented similarly to non-instantiations (but we might have to fix this).   
+      // || isSgTemplateVariableDeclaration(decl_stmt)
 
          || isSgTemplateInstantiationFunctionDecl(decl_stmt)
          || isSgTemplateInstantiationMemberFunctionDecl(decl_stmt)) 

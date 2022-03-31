@@ -12520,14 +12520,6 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
      T* template_stmt = dynamic_cast<T*>(stmt);
      ASSERT_not_null(template_stmt);
 
-#if 0
-     printf ("Note: In unparseTemplateDeclarationStatment_support(): Using the saved template declaration as a string to output the template declaration (AST for the template declaration is also now available in the AST) \n");
-#endif
-
-#if 0
-     curprint("/* In unparseTemplateDeclarationStatment_support(): calling unparseAttachedPreprocessingInfo() */ \n");
-#endif
-
   // DQ (1/28/2013): This helps handle cases such as "#if 1 void foo () #endif { }"
      unparseAttachedPreprocessingInfo(template_stmt, info, PreprocessingInfo::inside);
 
@@ -12538,13 +12530,9 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
   // Check to see if this is an object defined within a class
      ASSERT_not_null(template_stmt->get_parent());
      SgClassDefinition *cdefn = isSgClassDefinition(template_stmt->get_parent());
-     if (cdefn != NULL)
-        {
-          if (cdefn->get_declaration()->get_class_type() == SgClassDeclaration::e_class)
-             {
-               info.set_CheckAccess();
-             }
-        }
+     if (cdefn != NULL && cdefn->get_declaration()->get_class_type() == SgClassDeclaration::e_class) {
+       info.set_CheckAccess();
+     }
 
   // Output access modifiers
      unp->u_sage->printSpecifier1(template_stmt, info);
@@ -12555,411 +12543,224 @@ Unparse_ExprStmt::unparseTemplateDeclarationStatment_support(SgStatement* stmt, 
           curprint(string("export "));
         }
 
-     bool string_represents_function_body = false;
+     // Five cases to consider: TODO this a template function, don't we already know that?
+
      SgTemplateClassDeclaration*          templateClassDeclaration          = isSgTemplateClassDeclaration(stmt);
      SgTemplateFunctionDeclaration*       templateFunctionDeclaration       = isSgTemplateFunctionDeclaration(stmt);
      SgTemplateMemberFunctionDeclaration* templateMemberFunctionDeclaration = isSgTemplateMemberFunctionDeclaration(stmt);
      SgTemplateVariableDeclaration*       templateVariableDeclaration       = isSgTemplateVariableDeclaration(stmt);
      SgTemplateTypedefDeclaration*        templateTypedefDeclaration        = isSgTemplateTypedefDeclaration(stmt);
-     if (templateFunctionDeclaration != NULL)
-        {
-#if 0
-          printf ("This is a SgTemplateFunctionDeclaration \n");
-#endif
-          string_represents_function_body = templateFunctionDeclaration->get_string_represents_function_body();
-        }
-       else
-        {
-          if (templateMemberFunctionDeclaration != NULL)
-             {
-#if 0
-               printf ("This is a SgTemplateMemberFunctionDeclaration \n");
-#endif
-               string_represents_function_body = templateMemberFunctionDeclaration->get_string_represents_function_body();
-            // template_function_name = templateMemberFunctionDeclaration->get_name();
-#if 0
-               printf ("This is a SgTemplateMemberFunctionDeclaration:  string_represents_function_body = %s \n",string_represents_function_body ? "true" : "false");
-#endif
-#if 0
-            // DQ (1/20/2016): Added mechanism to output the EDG normalized template member functions (unclear if this will work).
-               if (string_represents_function_body == false)
-                  {
-                    unparseMFuncDeclStmt(templateMemberFunctionDeclaration, info);
-                  }
-#endif
+
+     ROSE_ASSERT(
+       templateClassDeclaration != nullptr          ||
+       templateFunctionDeclaration != nullptr       ||
+       templateMemberFunctionDeclaration != nullptr ||
+       templateVariableDeclaration != nullptr       ||
+       templateTypedefDeclaration != nullptr
+     );
+
+     // Unparsing template from the AST can be controlled at the sourcefile or declaration level (for functions and method only)
+
+     SgSourceFile * sourcefile = info.get_current_source_file();
+     bool unparse_template_from_ast = sourcefile != NULL && sourcefile->get_unparse_template_ast();
+     unparse_template_from_ast |= ((templateFunctionDeclaration != NULL) && (templateFunctionDeclaration->get_unparse_template_ast() == true));
+     unparse_template_from_ast |= ((templateMemberFunctionDeclaration != NULL) && (templateMemberFunctionDeclaration->get_unparse_template_ast() == true));
+
+     if (unparse_template_from_ast) {
+       SgTemplateClassDeclaration * assoc_tpl_class_decl = nullptr;
+       if (templateMemberFunctionDeclaration) {
+         assoc_tpl_class_decl = isSgTemplateClassDeclaration(templateMemberFunctionDeclaration->get_associatedClassDeclaration());
+       } else if (templateVariableDeclaration) {
+         ROSE_ASSERT(templateVariableDeclaration->get_variables().size() == 1);
+         auto * iname = templateVariableDeclaration->get_variables()[0];
+         assoc_tpl_class_decl = iname->get_scope() ? isSgTemplateClassDeclaration(iname->get_scope()->get_parent()) : nullptr;
+       } else if (templateClassDeclaration || templateTypedefDeclaration) {
+         assoc_tpl_class_decl = template_stmt->get_scope() ? isSgTemplateClassDeclaration(template_stmt->get_scope()->get_parent()) : nullptr;
+       }
+//     std::cout << "assoc_tpl_class_decl = " << std::hex << assoc_tpl_class_decl << " : " << (assoc_tpl_class_decl ? assoc_tpl_class_decl->class_name() : "") << std::endl;
+
+       SgNode * parent = stmt->get_parent();
+       if (!isSgTemplateClassDefinition(parent)) {
+         // FIXME unparse nested headers in the wrong order
+         while (assoc_tpl_class_decl != nullptr) {
+           unparseTemplateHeader(assoc_tpl_class_decl,info);
+           assoc_tpl_class_decl = assoc_tpl_class_decl->get_scope() ? isSgTemplateClassDeclaration(assoc_tpl_class_decl->get_scope()->get_parent()) : nullptr;
+         }
+       }
+
+       unparseTemplateHeader(template_stmt, info);
+
+       SgUnparse_Info ninfo(info);
+
+       if (templateClassDeclaration != NULL) {
+         ninfo.unset_SkipSemiColon();
+         ninfo.set_declstatement_ptr(NULL);
+         ninfo.set_declstatement_ptr(templateClassDeclaration);
+
+         SgClassDefinition * class_defn = templateClassDeclaration->get_definition();
+         if (class_defn != NULL) {
+           unparseClassDefnStmt(templateClassDeclaration->get_definition(), ninfo);
+         } else {
+           SgClassDeclaration::class_types class_type = templateClassDeclaration->get_class_type();
+           switch (class_type) {
+             case SgClassDeclaration::e_class:              curprint("class ");  break;
+             case SgClassDeclaration::e_struct:             curprint("struct "); break;
+             case SgClassDeclaration::e_union:              curprint("union ");  break;
+             case SgClassDeclaration::e_template_parameter: curprint(" ");       break;
+             default: {
+               printf ("Error: default reached in unparseClassDeclStmt() \n");
+               ROSE_ABORT();
              }
-            else
-             {
-               if (templateVariableDeclaration != NULL)
-                  {
-                 // DQ (7/6/2015): Markus suggested that this might be an unhandled case, but it is not clear it needs to be processed, for now let's detect it.
-#if 0
-                    printf ("Note: In unparseTemplateDeclarationStatment_support(): Found a SgTemplateVariableDeclaration = %p = %s (not handled) \n",stmt,stmt->class_name().c_str());
-#endif
-#if 0
-                    printf ("templateVariableDeclaration->get_string().is_null() = %s \n",templateVariableDeclaration->get_string().is_null() ? "true" : "false");
-                    printf ("templateVariableDeclaration->get_string() = %s \n",templateVariableDeclaration->get_string().str());
-#endif
+           }
 
-                 // DQ (1/4/2016): Note that this is the case of a instantiation for a template variable, we don't yet have 
-                 // a concept like this in the ROSE IR.  It would be just a SgVariableDeclaration, I think; however we isolate 
-                 // it out as a SgTemplateVariabelDeclaration and just don't have an associated string for the template and 
-                 // it is put into both the instantiation of the template class and the global scope.  We supress it from being 
-                 // output in the global scope (since that does not compile and is somewhat redundant with output in the class, 
-                 // except that it is what would be required for a non-template class).
-                    if (templateVariableDeclaration->get_string().is_null() == true)
-                       {
-#if 0
-                         printf ("Calling the base class support function unparseVarDeclStmt() to unparse the variable declaration as a non-template \n");
-                         printf ("templateVariableDeclaration->get_parent() = %p = %s \n",templateVariableDeclaration->get_parent(),templateVariableDeclaration->get_parent()->class_name().c_str());
-#endif
-                      // DQ (1/4/2016): Only output the variable declaration that is NOT in the global scope (where it exists).
-                      // unparseVarDeclStmt(templateVariableDeclaration,info);
-                         if (isSgGlobal(templateVariableDeclaration->get_parent()) == NULL)
-                            {
-                              unparseVarDeclStmt(templateVariableDeclaration,info);
-                            }
-#if 0
-                         printf ("DONE: Calling the base class support function unparseVarDeclStmt() to unparse the variable declaration as a non-template \n");
-#endif
-                       }
-                  }
-                 else
-                  {
-                 // This is likely a SgTemplateClassDeclaration???
-                    if (isSgTemplateClassDeclaration(stmt) == NULL)
-                       {
-                      // DQ (9/12/2016): We want to know if this is something other than a SgTemplateClassDeclaration or SgTemplateTypedefDeclaration (C++11 feature).
-                         if (templateTypedefDeclaration == NULL)
-                            {
-                              printf ("Note: In unparseTemplateDeclarationStatment_support(): What is this if not a template function or template member function stmt = %p = %s \n",stmt,stmt->class_name().c_str());
-                            }
-                           else
-                            {
-                           // DQ (2/19/2019): Added comment and changed predicate to use templateTypedefDeclaration and avoid compiler warning.
-#if 0
-                              printf ("Is there some support required for templateTypedefDeclaration = %p  \n",templateTypedefDeclaration);
-#endif
-#if 0
-                              printf ("Exiting as a test! \n");
-                              ROSE_ABORT();
-#endif
-                            }
-                       }
-                  }
-             }
-        }
+           SgName class_name = templateClassDeclaration->get_name();
+           curprint(class_name.getString().c_str());
+         }
 
-#if 0
-     printf ("In unparseTemplateDeclarationStatment_support(): string_represents_function_body = %s \n",string_represents_function_body ? "true" : "false");
-#endif
+         ninfo.set_declstatement_ptr(NULL);
 
-#if 0
-     printf ("template_stmt->get_string().str() = %s \n",template_stmt->get_string().str());
-#endif
+         if (!info.SkipSemiColon()) curprint(";");
 
-#if 0
-     if (templateFunctionDeclaration != NULL)
-        {
-          printf ("This is a SgTemplateFunctionDeclaration = %p \n",templateFunctionDeclaration);
-          SgDeclarationStatement* definingDeclaration = templateFunctionDeclaration->get_definingDeclaration();
-          printf (" --- definingDeclaration = %p \n",definingDeclaration);
-        }
-       else
-        {
-          if (templateMemberFunctionDeclaration != NULL)
-             {
-               printf ("This is a SgTemplateMemberFunctionDeclaration = %p \n",templateMemberFunctionDeclaration);
-               SgDeclarationStatement* definingDeclaration = templateMemberFunctionDeclaration->get_definingDeclaration();
-               printf (" --- definingDeclaration = %p \n",definingDeclaration);
-             }
-        }
-#endif
+       } else if (templateFunctionDeclaration != NULL || templateMemberFunctionDeclaration != NULL) {
+         SgFunctionDeclaration * functionDeclaration = (SgFunctionDeclaration *)stmt;
 
-  // DQ (1/21/2004): Use the string class to simplify the previous version of the code
-     string templateString = template_stmt->get_string().str();
+         SgType * rtype = functionDeclaration->get_type()->get_return_type();
+         unparseReturnType (functionDeclaration,rtype,ninfo);
 
-  // DQ (12//13/2015): The handling of "__decltype" in non-c++11 mode is a problem because EDG normalizes
-  // this in the template string to be "decltype" which is not recognized by the backend compiler.
-#if 0
-     info.display("denormalize template string for decltype");
-#endif
+         ninfo.unset_SkipSemiColon();
+         ninfo.set_declstatement_ptr(NULL);
+         ninfo.set_declstatement_ptr(functionDeclaration);
 
-     SgSourceFile* sourcefile = info.get_current_source_file();
-  // ASSERT_not_null(sourcefile);
-     if (sourcefile == NULL)
-        {
-#if 0
-          printf ("NOTE: source file not available in SgUnparse_Info in unparseTemplateDeclarationStatment_support(): stmt = %p = %s \n",stmt,stmt->class_name().c_str());
-#endif
-        }
+         unparse_helper(functionDeclaration, ninfo);
 
-  // DQ (10/23/2016): Allow C++14 support to behave the same as C++11 support below.
-  // We only do this denormalization if we are not using C++11 or later version of C++.
-  // if (sourcefile->get_Cxx11_only() == false)
-  // if (sourcefile != NULL && sourcefile->get_Cxx11_only() == false)
-     if (sourcefile != NULL && sourcefile->get_Cxx11_only() == false && sourcefile->get_Cxx14_only() == false)
-        {
-          ROSE_ASSERT(sourcefile->get_Cxx14_only() == false);
-#if 0
-          printf ("Intercept the template string: \n");
-          printf ("templateString = %s \n",templateString.c_str());
-#endif
-       // Substitute " decltype" with " __decltype" to fix this.
-       // templateString.subst(" decltype"," __decltype");
-          string denormalizedTemplateString = replaceString (templateString," decltype"," __decltype");
+         ninfo.set_declstatement_ptr(NULL);
 
-       // DQ (4/18/2018): Added denormalization of __ALIGNOF__ to __alignof__ name for operator.
-       // Not clear if this is only a C++11 issue or a C++14 issue as well.
-       // denormalizedTemplateString = replaceString (denormalizedTemplateString," __ALIGNOF__"," __alignof__");
-#if 0
-          printf ("denormalizedTemplateString = %s \n",denormalizedTemplateString.c_str());
-#endif
-          templateString = denormalizedTemplateString;
-        }
+         if (rtype != NULL) {
+           SgUnparse_Info ninfo3(ninfo);
+           ninfo3.set_isTypeSecondPart();
 
-  // DQ (4/18/2018): Added denormalization of __ALIGNOF__ to __alignof__ name for operator.
-  // Not clear if this is only a C++11 issue or a C++14 issue as well.
-     string denormalizedAlignofTemplateString = replaceString (templateString," __ALIGNOF__"," __alignof__");
+           unp->u_type->unparseType(rtype, ninfo3);
+         }
+
+         if (templateMemberFunctionDeclaration != NULL) {
+           unparseTrailingFunctionModifiers(templateMemberFunctionDeclaration,ninfo);
+         }
+
+         SgFunctionDefinition * functionDefn = functionDeclaration->get_definition();
+         if (functionDefn != NULL) {
+           SgBasicBlock * body = functionDefn->get_body();
+           unparseStatement(body, info);
+         }
+
+         if (functionDefn == NULL && !info.SkipSemiColon()) curprint(";");
+
+       } else if (templateVariableDeclaration != NULL) {
+         unparseVarDeclStmt(templateVariableDeclaration, info);
+       } else {
+         printf("Error: unexpected node variant: %s\n", stmt->class_name().c_str());
+         ROSE_ABORT();
+       }
+       curprint ("\n");
+     } else if (templateVariableDeclaration != NULL) {
+       // DQ (1/4/2016): Note that this is the case of a instantiation for a template variable, we don't yet have 
+       // a concept like this in the ROSE IR.  It would be just a SgVariableDeclaration, I think; however we isolate 
+       // it out as a SgTemplateVariabelDeclaration and just don't have an associated string for the template and 
+       // it is put into both the instantiation of the template class and the global scope.  We supress it from being 
+       // output in the global scope (since that does not compile and is somewhat redundant with output in the class, 
+       // except that it is what would be required for a non-template class).
+       if (templateVariableDeclaration->get_string().is_null() == true) {
+         // DQ (1/4/2016): Only output the variable declaration that is NOT in the global scope (where it exists).
+         // unparseVarDeclStmt(templateVariableDeclaration,info);
+         if (isSgGlobal(templateVariableDeclaration->get_parent()) == NULL) {
+           unparseVarDeclStmt(templateVariableDeclaration,info);
+         }
+       }
+     } else {
+       // Unparsing done from saved string
+       string templateString = template_stmt->get_string().str();
+
+       // Substitute " decltype" with " __decltype". Only if we are not using C++11 or later version of C++.
+       if (sourcefile != NULL && sourcefile->get_Cxx11_only() == false && sourcefile->get_Cxx14_only() == false) {
+         templateString = replaceString (templateString," decltype"," __decltype");
+       }
+
+       // Substitute " __ALIGNOF__" with " __alignof__"
+       templateString = replaceString (templateString," __ALIGNOF__"," __alignof__");
+
+    // DQ (8/10/2020): Adding support to denormalize the C++ attributes.
+       templateString = replaceString(templateString,"[ [","[[");
+       templateString = replaceString(templateString,"] ]","]]");
 
 #if 0
-     printf ("denormalizedAlignofTemplateString = %s \n",denormalizedAlignofTemplateString.c_str());
+       printf ("denormalizedAttributeTemplateString = %s \n",templateString.c_str());
 #endif
 
-     templateString = denormalizedAlignofTemplateString;
+       bool string_represents_function_body = ( templateFunctionDeclaration != NULL &&
+                                                    templateFunctionDeclaration->get_string_represents_function_body() ) ||
+                                              ( templateMemberFunctionDeclaration != NULL &&
+                                                     templateMemberFunctionDeclaration->get_string_represents_function_body() );
 
-  // DQ (8/10/2020): Adding support to denormalize the C++ attributes.
-     string denormalizedAttributeTemplateString_tmp = replaceString (templateString,"[ [","[[");
-     string denormalizedAttributeTemplateString = replaceString (denormalizedAttributeTemplateString_tmp,"] ]","]]");
+       if (string_represents_function_body == true) {
+         // DQ (9/7/2014): This is the special case (to output template member and non-member function declarations after EDG normalization 
+         // to move then out of a template class declaration.
+         SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(template_stmt);
+         ASSERT_not_null(functionDeclaration);
+         ROSE_ASSERT(functionDeclaration->isNormalizedTemplateFunction());
 
-#if 0
-     printf ("denormalizedAttributeTemplateString = %s \n",denormalizedAttributeTemplateString.c_str());
-#endif
+         ASSERT_not_null(templateMemberFunctionDeclaration);
 
-     templateString = denormalizedAttributeTemplateString;
+         // TV (10/08/2018): temporary switch for ROSE-1392 (relies on template unparsing from AST)
+         if (sourcefile->get_unparse_edg_normalized_method_ROSE_1392()) {
+           SgDeclarationStatement * assoc_decl = templateMemberFunctionDeclaration->get_associatedClassDeclaration();
+           SgTemplateClassDeclaration * assoc_tpl_class_decl = isSgTemplateClassDeclaration(assoc_decl);
 
-  // DQ (10/27/2020): Added support to activate unparsing from the AST on a declaration by declaration basis.
-  // if (sourcefile != NULL && sourcefile->get_unparse_template_ast() == true)
-     bool unparse_function_template        = ((templateFunctionDeclaration != NULL) && (templateFunctionDeclaration->get_unparse_template_ast() == true));
-     bool unparse_member_function_template = ((templateMemberFunctionDeclaration != NULL) && (templateMemberFunctionDeclaration->get_unparse_template_ast() == true));
+           SgNode * parent = templateMemberFunctionDeclaration->get_parent();
+           SgTemplateClassDefinition * parent_is_tpl_class_defn = isSgTemplateClassDefinition(parent);
 
-     bool unparse_template_from_ast = unparse_function_template || unparse_member_function_template;
+           if (assoc_tpl_class_decl != NULL && parent_is_tpl_class_defn == NULL) {
+             unparseTemplateHeader(assoc_tpl_class_decl,info);
+           }
 
-#if 0
-     printf ("unparse_function_template        = %s \n",unparse_function_template ? "true" : "false");
-     printf ("unparse_member_function_template = %s \n",unparse_member_function_template ? "true" : "false");
-     printf ("unparse_template_from_ast        = %s \n",unparse_template_from_ast ? "true" : "false");
-#endif
+           unparseTemplateHeader(templateMemberFunctionDeclaration,info);
 
-     if ((sourcefile != NULL && sourcefile->get_unparse_template_ast() == true) || (unparse_template_from_ast == true))
-        {
-#if 0
-          printf ("Case of template member function unparsing from the AST \n");
-#endif
-          if (templateMemberFunctionDeclaration != NULL) 
-             {
-               SgDeclarationStatement * assoc_decl = templateMemberFunctionDeclaration->get_associatedClassDeclaration();
-               SgTemplateClassDeclaration * assoc_tpl_class_decl = isSgTemplateClassDeclaration(assoc_decl);
+           SgUnparse_Info ninfo(info);
 
-               SgNode * parent = templateMemberFunctionDeclaration->get_parent();
-               SgTemplateClassDefinition * parent_is_tpl_class_defn = isSgTemplateClassDefinition(parent);
+           SgType * rtype = NULL;
+           unparseReturnType(functionDeclaration, rtype, ninfo);
 
-               if (assoc_tpl_class_decl != NULL && parent_is_tpl_class_defn == NULL) 
-                  {
-                    unparseTemplateHeader(assoc_tpl_class_decl,info);
-                  }
-             }
+           ninfo.set_declstatement_ptr(NULL);
+           ninfo.set_declstatement_ptr(functionDeclaration);
 
-          unparseTemplateHeader(template_stmt,info);
+           unparse_helper(functionDeclaration, ninfo);
 
-          SgUnparse_Info ninfo(info);
+           ninfo.set_declstatement_ptr(NULL);
 
-          if (templateClassDeclaration != NULL) 
-             {
-               ninfo.unset_SkipSemiColon();
-               ninfo.set_declstatement_ptr(NULL);
-               ninfo.set_declstatement_ptr(templateClassDeclaration);
+           if (rtype != NULL) {
+             SgUnparse_Info ninfo3(ninfo);
+             ninfo3.set_isTypeSecondPart();
 
-               SgClassDefinition * class_defn = templateClassDeclaration->get_definition();
-               if (class_defn != NULL) 
-                  {
-                    unparseClassDefnStmt(templateClassDeclaration->get_definition(), ninfo);
-                  }
-                 else 
-                  {
-                    SgClassDeclaration::class_types class_type = templateClassDeclaration->get_class_type();
+             unp->u_type->unparseType(rtype, ninfo3);
+           }
 
-                    switch (class_type)
-                       {
-                         case SgClassDeclaration::e_class :
-                            {
-                              curprint("class ");
-                              break;
-                            }
-                         case SgClassDeclaration::e_struct :
-                            {
-                              curprint("struct ");
-                              break;
-                            }
-                         case SgClassDeclaration::e_union :
-                            {
-                              curprint("union ");
-                              break;
-                            }
-                         case SgClassDeclaration::e_template_parameter :
-                            {
-                              curprint(" ");
-                              break;
-                            }
-                         default:
-                            {
-                              printf ("Error: default reached in unparseClassDeclStmt() \n");
-                              ROSE_ABORT();
-                            }
-                       }
+           unparseTrailingFunctionModifiers(templateMemberFunctionDeclaration,ninfo);
 
-                    SgName class_name = templateClassDeclaration->get_name();
-                    curprint(class_name.getString().c_str());
-                  }
-
-               ninfo.set_declstatement_ptr(NULL);
-
-               if (!info.SkipSemiColon())
-                    curprint(";");
-             }
-            else 
-             {
-               if (templateFunctionDeclaration != NULL || templateMemberFunctionDeclaration != NULL) 
-                  {
-                    SgFunctionDeclaration * functionDeclaration = isSgFunctionDeclaration(stmt);
-                    ASSERT_not_null(functionDeclaration);
-
-                    SgType * rtype = functionDeclaration->get_type()->get_return_type();
-                    unparseReturnType (functionDeclaration,rtype,ninfo);
-
-                    ninfo.unset_SkipSemiColon();
-                    ninfo.set_declstatement_ptr(NULL);
-                    ninfo.set_declstatement_ptr(functionDeclaration);
-
-                    unparse_helper(functionDeclaration, ninfo);
-
-                    ninfo.set_declstatement_ptr(NULL);
-
-                    if (rtype != NULL) 
-                       {
-                         SgUnparse_Info ninfo3(ninfo);
-                         ninfo3.set_isTypeSecondPart();
-
-                         unp->u_type->unparseType(rtype, ninfo3);
-                       }
-
-                    if (templateMemberFunctionDeclaration != NULL) 
-                       {
-                         unparseTrailingFunctionModifiers(templateMemberFunctionDeclaration,ninfo);
-                       }
-
-                    SgFunctionDefinition * functionDefn = functionDeclaration->get_definition();
-                    if (functionDefn != NULL) 
-                       {
-                         SgBasicBlock * body = functionDefn->get_body();
-                         unparseStatement(body, info);
-                       }
-
-                    if (functionDefn == NULL && !info.SkipSemiColon()) 
-                       {
-                         curprint(";");
-                       }
-                  }
-                 else 
-                  {
-                    if (templateVariableDeclaration != NULL) 
-                       {
-                         ROSE_ABORT(); // TODO
-                       }
-                      else 
-                       {
-                         printf("Error: unexpected node variant: %s\n", stmt->class_name().c_str());
-                         ROSE_ABORT();
-                       }
-                  }
-             }
-
-          curprint ("\n");
-        }
-       else 
-        {
-          if (string_represents_function_body == true) 
-             {
-            // DQ (9/7/2014): This is the special case (to output template member and non-member function declarations after EDG normalization 
-            // to move then out of a template class declaration.
-               SgFunctionDeclaration* functionDeclaration = isSgFunctionDeclaration(template_stmt);
-               ASSERT_not_null(functionDeclaration);
-               ROSE_ASSERT(functionDeclaration->isNormalizedTemplateFunction());
-
-               ASSERT_not_null(templateMemberFunctionDeclaration);
-
-            // TV (10/08/2018): temporary switch for ROSE-1392 (relies on template unparsing from AST)
-               if (sourcefile->get_unparse_edg_normalized_method_ROSE_1392()) 
-                  {
-                    SgDeclarationStatement * assoc_decl = templateMemberFunctionDeclaration->get_associatedClassDeclaration();
-                    SgTemplateClassDeclaration * assoc_tpl_class_decl = isSgTemplateClassDeclaration(assoc_decl);
-
-                    SgNode * parent = templateMemberFunctionDeclaration->get_parent();
-                    SgTemplateClassDefinition * parent_is_tpl_class_defn = isSgTemplateClassDefinition(parent);
-
-                    if (assoc_tpl_class_decl != NULL && parent_is_tpl_class_defn == NULL)
-                       {
-                         unparseTemplateHeader(assoc_tpl_class_decl,info);
-                       }
-
-                    unparseTemplateHeader(templateMemberFunctionDeclaration,info);
-
-                    SgUnparse_Info ninfo(info);
-
-                    SgType *rtype = NULL;
-                    unparseReturnType (functionDeclaration,rtype,ninfo);
-
-                    ninfo.set_declstatement_ptr(NULL);
-                    ninfo.set_declstatement_ptr(functionDeclaration);
-
-                    unparse_helper(functionDeclaration, ninfo);
-
-                    ninfo.set_declstatement_ptr(NULL);
-
-                    if (rtype != NULL)
-                       {
-                         SgUnparse_Info ninfo3(ninfo);
-                         ninfo3.set_isTypeSecondPart();
-
-                         unp->u_type->unparseType(rtype, ninfo3);
-                       }
-
-                    unparseTrailingFunctionModifiers(templateMemberFunctionDeclaration,ninfo);
-
-                    curprint(string("\n") + templateString + string("\n"));
-                  }
-             }
-            else
-             {
-            // DQ (9/7/2014): This is the typical case.
+           curprint(string("\n") + templateString + string("\n"));
+         }
+       } else {
 #if OUTPUT_PLACEHOLDER_COMMENTS_FOR_SUPRESSED_TEMPLATE_IR_NODES
-            // DQ (4/5/2018): For debugging, output something so that we know why nothing is output.
-               if (templateString.size() == 0)
-                  {
-                    curprint (" /* Output the templateString: templateString.size() = " + StringUtility::numberToString(templateString.size()) + " */ ");
-                  }
+         // DQ (4/5/2018): For debugging, output something so that we know why nothing is output.
+         if (templateString.size() == 0)
+            {
+              curprint (" /* Output the templateString: templateString.size() = " + StringUtility::numberToString(templateString.size()) + " */ ");
+            }
 #endif
-#if 0
-               printf ("In unparseTemplateDeclarationStatment_support(): Output the templateString = %s \n",templateString.c_str());
-#endif
-            // printf ("template_stmt->get_template_kind() = %d \n",template_stmt->get_template_kind());
-               curprint(string("\n") + templateString);
-             }
-        }
+         curprint(string("\n") + templateString);
+       }
+     }
 
 #if 0
-      printf ("Leaving unparseTemplateDeclarationStatment_support(stmt = %p = %s) \n",stmt,stmt->class_name().c_str());
-      curprint (" /* Leaving unparseTemplateDeclarationStatment_support() */ \n");
+     printf ("Leaving unparseTemplateDeclarationStatment_support(stmt = %p = %s) \n",stmt,stmt->class_name().c_str());
+     curprint (" /* Leaving unparseTemplateDeclarationStatment_support() */ \n");
 #endif
    }
  
