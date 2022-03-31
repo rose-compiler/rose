@@ -73,6 +73,10 @@ target_sources(roseUtil INTERFACE
   $<TARGET_OBJECTS:util_stringSupport>
   $<TARGET_OBJECTS:util_support>
   $<TARGET_OBJECTS:util_graphs>)
+if(SQLITE3_FOUND_LIB)
+  target_link_libraries(roseUtil INTERFACE ${SQLITE3_LIBRARY})
+endif()
+
 
 ########### install files ###############
 install(FILES
