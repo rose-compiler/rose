@@ -1445,6 +1445,7 @@ SemanticCallbacks::createSolver() {
     if (solverName.empty() || "none" == solverName)
         solverName = "best";
     auto solver = SmtSolver::instance(solverName);
+    ASSERT_not_null2(solver, "do you have an SMT solver configured? solverName=" + solverName);
 
     if (settings_.solverMemoization) {
         if (!smtMemoizer_)

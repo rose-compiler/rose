@@ -274,7 +274,7 @@ Engine::step() {
     ASSERT_require2(ops->initialState() == nullptr, "initial states are not supported during model checking");
     ASSERT_require2(ops->currentState() == nullptr, "please remove the current state for added safety");
     SmtSolver::Ptr solver = semantics_->createSolver();
-    ASSERT_not_null(ops);
+    ASSERT_not_null(solver);
 
     // Do one step of work if work is immediately available
     bool retval = false;
