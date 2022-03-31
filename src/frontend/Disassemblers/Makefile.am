@@ -10,7 +10,7 @@ libroseDisassemblers_la_DEPENDENCIES =
 libroseDisassemblers_la_SOURCES = SgAsmBlock.C SgAsmFunction.C					\
 	SgAsmInstruction.C SgAsmAarch32Instruction.C						\
 	SgAsmAarch64Instruction.C SgAsmPowerpcInstruction.C					\
-	SgAsmX86Instruction.C SgAsmMipsInstruction.C						\
+	SgAsmX86Instruction.C SgAsmJvmInstruction.C SgAsmMipsInstruction.C			\
 	SgAsmM68kInstruction.C SgAsmNullInstruction.C						\
 	SgAsmExecutableFileFormat.C x86InstructionProperties.C					\
 	SgAsmInterpretation.C SgAsmIntegerValueExpression.C					\

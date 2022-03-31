@@ -356,6 +356,15 @@ static std::string toStringForRTI(SgJovialTableStatement::WordsPerEntry &e) {
 static std::string toStringForRTI(SgJovialTableType::StructureSpecifier &e) {
   return std::to_string(static_cast<int>(e));
 }
+#ifdef ROSE_ENABLE_BINARY_ANALYSIS
+static std::string toStringForRTI(Rose::BinaryAnalysis::JvmInstructionKind &e) {
+  std::ostringstream os;
+  Rose::BinaryAnalysis::JvmInstructionKind kind = Rose::BinaryAnalysis::JvmInstructionKind::nop;
+  int intKind = static_cast<int>(kind);
+  os << intKind;
+  return std::to_string(static_cast<int>(e));
+}
+#endif
 
 #if 0
 // None of these seem to be used

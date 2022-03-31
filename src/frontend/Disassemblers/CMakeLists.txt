@@ -8,7 +8,8 @@ add_library(roseDisassemblers OBJECT Assembler.C AssemblerX86.C
   SgAsmExpression.C SgAsmFloatValueExpression.C SgAsmFunction.C
   SgAsmInstruction.C SgAsmAarch32Instruction.C
   SgAsmIntegerValueExpression.C SgAsmInterpretation.C SgAsmType.C
-  SgAsmM68kInstruction.C SgAsmMipsInstruction.C SgAsmNullInstruction.C
+  SgAsmM68kInstruction.C SgAsmJvmInstruction.C
+  SgAsmMipsInstruction.C SgAsmNullInstruction.C
   SgAsmPowerpcInstruction.C SgAsmX86Instruction.C
   x86InstructionProperties.C)
 

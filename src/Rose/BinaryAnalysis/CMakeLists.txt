@@ -92,6 +92,7 @@ install(FILES
   InstructionCache.h
   InstructionEnumsAarch32.h
   InstructionEnumsAarch64.h
+  InstructionEnumsJvm.h
   InstructionEnumsM68k.h
   InstructionEnumsMips.h
   InstructionEnumsPowerpc.h
