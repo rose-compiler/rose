@@ -196,6 +196,7 @@ Disassembler::isaNames() {
     v.push_back("a64");                                 // AArch64 A64
 #endif
     v.push_back("coldfire");
+    v.push_back("i286");
     v.push_back("i386");
     v.push_back("m68040");
     v.push_back("mips-be");
@@ -248,6 +249,8 @@ Disassembler::lookup(const std::string &name)
         retval = new DisassemblerMips(ByteOrder::ORDER_MSB);
     } else if (name == "mips-le") {
         retval = new DisassemblerMips(ByteOrder::ORDER_LSB);
+    } else if (name == "i286") {
+        retval = new DisassemblerX86(2);
     } else if (name == "i386") {
         retval = new DisassemblerX86(4);
     } else if (name == "amd64") {
