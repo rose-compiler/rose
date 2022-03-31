@@ -38,13 +38,27 @@ public:
     static Ptr instance();
 
 public:
-    /** Command-line switches to adjust settings.
+    /** Command-line switches to adjust debug settings.
      *
-     *  Returns a switch group describing the command line switches that adjust the data members of this object.
-     *  This object must not be deleted before the returned switch group is used to parse a command-line.
+     *  Returns a switch group describing the command-line switches that adjust the data members of this object that are
+     *  related to debugging features. This object must not be deleted before the returned switch group is used to parse a
+     *  command-line.
+     *
+     *  See also, @ref commandLineModelSwitches.
      *
      *  Thread safety: This method is not thread safe. */
-    Sawyer::CommandLine::SwitchGroup commandLineSwitches();
+    Sawyer::CommandLine::SwitchGroup commandLineDebugSwitches();
+
+    /** Command-line switches to adjust model settings.
+     *
+     *  Returns a switch group describing the command-line switches that adjust the data members of this object that are
+     *  related to model checker features.  This object must not be deleted before the returned switch group is used to parse a
+     *  command-line.
+     *
+     *  See also, @ref commandLineDebugSwitches.
+     *
+     *  Thread safety: This method is not thread safe. */
+    Sawyer::CommandLine::SwitchGroup commandLineModelSwitches();
 };
 
 

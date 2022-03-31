@@ -50,9 +50,21 @@ struct Settings {
 
 class SemanticCallbacks;
 
+/** Command-line switches for debug settings.
+ *
+ *  Inserts some switches into the specified switch group. */
+void commandLineDebugSwitches(Sawyer::CommandLine::SwitchGroup&, Settings&);
+
+/** Command-line switches for model settings.
+ *
+ *  Returns a description of command-line switches that can be used to initialize the specified settings object. Switches
+ *  related to debugging are not included in the return value (see also, @ref commandLineDebugSwitches). */
+Sawyer::CommandLine::SwitchGroup commandLineModelSwitches(Settings&);
+
 /** Command-line switches for settings.
  *
- *  Returns a description of command-line switches that can be used to initialize the specified settings object. */
+ *  Returns a description of command-line switches that can be used to initialize the specified settings object. Debug switches
+ *  are included in the return value. */
 Sawyer::CommandLine::SwitchGroup commandLineSwitches(Settings&);
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

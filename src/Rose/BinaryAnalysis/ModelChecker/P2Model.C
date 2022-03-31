@@ -35,8 +35,21 @@ namespace BinaryAnalysis {
 namespace ModelChecker {
 namespace P2Model {
 
+void
+commandLineDebugSwitches(Sawyer::CommandLine::SwitchGroup &sg, Settings &settings) {
+    using Rose::CommandLine::insertBooleanSwitch;
+    insertBooleanSwitch(sg, "debug-null-deref", settings.debugNull,
+                        "If this feature is enabled, then the diagnostic output (if it is also enabled) "
+                        "will include information about null pointer dereference checking, such as the "
+                        "symbolic address being checked.");
+
+    insertBooleanSwitch(sg, "debug-semantic-operations", settings.traceSemantics,
+                        "If enabled, then each low-level instruction semantic operation is emitted to the diagnostic output "
+                        "(if it is also enabled).");
+}
+
 Sawyer::CommandLine::SwitchGroup
-commandLineSwitches(Settings &settings) {
+commandLineModelSwitches(Settings &settings) {
     using namespace Sawyer::CommandLine;
     using Rose::CommandLine::insertBooleanSwitch;
     SwitchGroup sg("Model settings");
@@ -143,7 +156,7 @@ commandLineSwitches(Settings &settings) {
                    "@named{may}{Find cases where an uninitialized variable might be read." +
                    std::string(TestMode::MAY == settings.uninitVar ? " This is the default." : "") + "}"
 
-                   "@named{must}{Find casew where an uninitialized variable read must necessarily occur." +
+                   "@named{must}{Find cases where an uninitialized variable read must necessarily occur." +
                    std::string(TestMode::MUST == settings.uninitVar ? " This is the default." : "") + "}"));
 
     sg.insert(Switch("max-null-page")
@@ -169,21 +182,19 @@ commandLineSwitches(Settings &settings) {
                    "to answer questions about aliasing." +
                    std::string(Settings::MemoryType::MAP == settings.memoryType ? " This is the default." : "") + "}"));
 
-    insertBooleanSwitch(sg, "debug-null-deref", settings.debugNull,
-                        "If this feature is enabled, then the diagnostic output (if it is also enabled) "
-                        "will include information about null pointer dereference checking, such as the "
-                        "symbolic address being checked.");
-
-    insertBooleanSwitch(sg, "debug-semantic-operations", settings.traceSemantics,
-                        "If enabled, then each low-level instruction semantic operation is emitted to the diagnostic output "
-                        "(if it is also enabled).");
-
     insertBooleanSwitch(sg, "solver-memoization", settings.solverMemoization,
                         "Causes the SMT solvers (per thread) to memoize their results. In other words, they remember the "
                         "sets of assertions and if the same set appears a second time it will return the same answer as the "
                         "first time without actually calling the SMT solver.  This can sometimes reduce the amount of time "
                         "spent solving, but uses more memory.");
 
+    return sg;
+}
+
+Sawyer::CommandLine::SwitchGroup
+commandLineSwitches(Settings &settings) {
+    Sawyer::CommandLine::SwitchGroup sg = commandLineModelSwitches(settings);
+    commandLineDebugSwitches(sg, settings);
     return sg;
 }
 
