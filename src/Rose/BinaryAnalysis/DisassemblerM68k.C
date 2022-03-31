@@ -4857,12 +4857,13 @@ DisassemblerM68k::init()
     registerDictionary(regdict);
     REG_IP = registerDictionary()->findOrThrow("pc");
     REG_SP = registerDictionary()->findOrThrow("a7");
+    REG_SF = registerDictionary()->findOrThrow("a6");
 
     p_proto_dispatcher = InstructionSemantics2::DispatcherM68k::instance();
     p_proto_dispatcher->addressWidth(32);
     p_proto_dispatcher->registerDictionary(regdict);
 
-    wordSizeBytes(2);
+    wordSizeBytes(4);
     instructionAlignment_ = 2;
     byteOrder(ByteOrder::ORDER_MSB);
     callingConventions(CallingConvention::dictionaryM68k());
