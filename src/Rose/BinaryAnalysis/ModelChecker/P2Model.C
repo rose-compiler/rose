@@ -751,7 +751,7 @@ RiscOperators::pushCallStack(const P2::Function::Ptr &callee, rose_addr_t initia
         }
         callStack.push(FunctionCall(callee, initialSp, returnVa, lvars));
         const std::string isa = partitioner_.instructionProvider().disassembler()->name();
-        if ("a32" == isa || "t32" == isa || "a64" == isa) {
+        if ("a32" == isa || "t32" == isa || "a64" == isa || "coldfire" == isa) {
             callStack[0].framePointerDelta(-4);
         } else if (frameSize) {
             callStack[0].framePointerDelta(-*frameSize);
@@ -818,11 +818,14 @@ RiscOperators::popCallStack() {
             // PowerPC function calls don't push a return value.
         } else if ("a32" == isaName || "t32" == isaName || "a64" == isaName) {
             // ARM AArch32 and AArch64 function calls don't push a return value
+        } else if ("coldfire" == isaName) {
+            // m68k pops the return value from the stack
+            stackBoundary += 4;
         } else {
             ASSERT_not_implemented("isaName = " + isaName);
         }
 
-        const size_t wordSize = partitioner_.instructionProvider().wordSize();
+        const size_t wordSize = partitioner_.instructionProvider().stackPointerRegister().nBits();
         ASSERT_require(wordSize > 8 && wordSize <= 64);
         SymbolicExpr::Ptr highBoundaryExclusive = SymbolicExpr::makeIntegerConstant(wordSize, stackBoundary);
         SymbolicExpr::Ptr lowBoundaryInclusive = SymbolicExpr::makeIntegerConstant(wordSize, stackLimits_.least());
@@ -1163,13 +1166,15 @@ RiscOperators::writeRegister(RegisterDescriptor reg, const BS::SValue::Ptr &valu
                     const rose_addr_t oldDelta = fcall.framePointerDelta();
                     const rose_addr_t newDelta = *fp - fcall.initialStackPointer();
 
-                    fcall.framePointerDelta(newDelta);
-                    const rose_addr_t newFp = fcall.framePointer(nBits);
-                    SAWYER_MESG(mlog[DEBUG]) <<"    adjusted frame pointer within " <<fcall.function()->printableName()
-                                             <<" from " <<StringUtility::addrToString(oldFp)
-                                             <<" to " <<StringUtility::addrToString(newFp)
-                                             <<", delta from " <<StringUtility::signedToHex2(oldDelta, FP.nBits())
-                                             <<" to " <<StringUtility::signedToHex2(newDelta, FP.nBits()) <<"\n";
+                    if (newDelta != oldDelta) {
+                        fcall.framePointerDelta(newDelta);
+                        const rose_addr_t newFp = fcall.framePointer(nBits);
+                        SAWYER_MESG(mlog[DEBUG]) <<"    adjusted frame pointer within " <<fcall.function()->printableName()
+                                                 <<" from " <<StringUtility::addrToString(oldFp)
+                                                 <<" to " <<StringUtility::addrToString(newFp)
+                                                 <<", delta from " <<StringUtility::signedToHex2(oldDelta, FP.nBits())
+                                                 <<" to " <<StringUtility::signedToHex2(newDelta, FP.nBits()) <<"\n";
+                    }
                 }
             }
         }
