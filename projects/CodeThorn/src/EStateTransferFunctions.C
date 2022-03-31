@@ -1661,7 +1661,7 @@ namespace CodeThorn {
           // this data is only used by globalVarIdByName to determine rers 'output' variable name in binary mode
           globalVarName2VarIdMapping[getVariableIdMapping()->variableName(getVariableIdMapping()->variableId(decl))]=getVariableIdMapping()->variableId(decl);
         } else {
-          //cout<<"DEBUG: init global decl: 0 !!!"<<endl;
+          //cout<<"DEBUG: init global decl: 0"<<endl;
         }
       }
       if(getAnalyzer()->getOptionsRef().status) {
@@ -1771,7 +1771,7 @@ namespace CodeThorn {
       }
       newEStateList.push_back(reInitEState(estate,newLabel,cs,newPState));
     } else if((evalResult.isFalse() && edge.isType(EDGE_TRUE)) || (evalResult.isTrue() && edge.isType(EDGE_FALSE))) {
-      // we determined not to be on an execution path, therefore do nothing (do not add any result to resultlist)
+      // determined not to be on an execution path, therefore do nothing (do not add any result to resultlist)
       //cout<<"DEBUG: not on feasable execution path. skipping."<<endl;
     } else {
       // all other cases (assume evaluating to true or false, sane as top)
@@ -1888,6 +1888,7 @@ namespace CodeThorn {
           }
           AbstractValue elementSize=getMemoryRegionAbstractElementSize(arrayPtrValue);
           AbstractValue arrayElementAddr=AbstractValue::operatorAdd(arrayPtrValue,indexValue,elementSize);
+          cout<<"DEBUG6: arrayPtrValue("<<arrayPtrValue.toString()<<")+indexValue("<<indexValue.toString()<<") => arrayElementAddr:"<<arrayElementAddr.toString()<<endl;
           if(arrayElementAddr.isBot()) {
             // inaccessible memory location, return empty estate list
             //return memoryUpdateList;
@@ -3031,6 +3032,7 @@ namespace CodeThorn {
         AbstractValue indexExprResultValue=indexExprResult.value();
         AbstractValue elementSize=getMemoryRegionAbstractElementSize(arrayPtrValue);
         AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexExprResultValue,elementSize);
+        //cout<<"DEBUG5: arrayPtrValue("<<arrayPtrValue.toString()<<")+indexExprResultValue("<<indexExprResultValue<<") => "<<arrayPtrPlusIndexValue.toString()<<endl;
         if(arrayPtrPlusIndexValue.isNullPtr()) {
           notifyReadWriteListenersOnReading(estate->label(),const_pstate,arrayPtrPlusIndexValue);
           // there is no state following a definitive null pointer
