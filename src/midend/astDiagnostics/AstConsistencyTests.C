@@ -4884,7 +4884,6 @@ TestParentPointersInMemoryPool::visit(SgNode* node)
      printf ("##### TestParentPointersInMemoryPool::visit(node = %p = %s) \n",node,node->sage_class_name());
 #endif
 
-     SgType*        type        = isSgType(node);
      SgSymbol*      symbol      = isSgSymbol(node);
      SgLocatedNode* locatedNode = isSgLocatedNode(node);
      SgSupport*     support     = isSgSupport(node);
