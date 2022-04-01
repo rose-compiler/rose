@@ -218,6 +218,8 @@ SgAsmJvmConstantValue
 SgAsmJvmInstruction
 SgAsmJvmFileHeader
 SgAsmJvmNode
+SgAsmJvmSignature
+SgAsmJvmSourceFile
 SgAsmLEEntryPoint
 SgAsmLEEntryTable
 SgAsmLEFileHeader
