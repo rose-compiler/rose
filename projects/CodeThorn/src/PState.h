@@ -25,11 +25,6 @@ namespace CodeThorn {
   
   typedef PState* PStatePtr; // allow for in-place updates, no longer const; old version: const PState* PStatePtr;
 
-  /*! 
-   * \author Markus Schordan
-   * \date 2012.
-   */
-  
   // private inharitance ensures PState is only used through methods defined here
   class PState : private std::map<AbstractValue,CodeThorn::AbstractValue> {
   public:
@@ -67,6 +62,9 @@ namespace CodeThorn {
     std::string dotNodeIdString(std::string prefix, AbstractValue av) const;
     std::set<std::string> getDotNodeIdStrings(std::string prefix) const;
     string memoryValueToDotString(AbstractValue varId, VariableIdMapping* vim) const;
+
+    // allows to set the representation of arbitrary memory for the domain. If not set, 'top' is used by default
+    void initializeArbitraryMemory(AbstractValue addr, AbstractValue value);
 
     void writeTopToAllMemoryLocations();
     void writeTopToAllPotentialMemoryLocations();

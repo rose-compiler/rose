@@ -1409,10 +1409,12 @@ EStatePtr CodeThorn::CTAnalysis::createInitialEState(SgProject* root, Label slab
   transitionGraph.setAnalyzer(this);
 
   EStatePtr estate=new EState(slab,initialPStateStored);
+  _estateTransferFunctions->initializeArbitraryMemory(estate);
 
   ROSE_ASSERT(_estateTransferFunctions);
   _estateTransferFunctions->initializeGlobalVariables(root, estate);
   SAWYER_MESG(logger[INFO]) <<"Initial state: number of entries:"<<estate->pstate()->stateSize()<<endl;
+
   
   // initialize summary states map for abstract model checking mode
   initializeAbstractStates(initialPStateStored);

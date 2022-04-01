@@ -1661,7 +1661,7 @@ namespace CodeThorn {
           // this data is only used by globalVarIdByName to determine rers 'output' variable name in binary mode
           globalVarName2VarIdMapping[getVariableIdMapping()->variableName(getVariableIdMapping()->variableId(decl))]=getVariableIdMapping()->variableId(decl);
         } else {
-          //cout<<"DEBUG: init global decl: 0 !!!"<<endl;
+          //cout<<"DEBUG: init global decl: 0"<<endl;
         }
       }
       if(getAnalyzer()->getOptionsRef().status) {
@@ -1674,6 +1674,13 @@ namespace CodeThorn {
     }
   }
 
+  void EStateTransferFunctions::initializeArbitraryMemory(EStatePtr estate) {
+    ROSE_ASSERT(getVariableIdMapping());
+    AbstractValue memAddr=createNewMemoryRegionIdAndPointerToIt("$arbitraryMemory",-1); // arbitrary memory is of arbitrary size 
+    AbstractValue::setPointerToArbitraryMemory(memAddr);
+    estate->pstate()->initializeArbitraryMemory(memAddr,AbstractValue::createTop()); // arbitrary memory has arbitrary values
+  }
+  
   VariableId EStateTransferFunctions::globalVarIdByName(std::string varName) {
     return globalVarName2VarIdMapping[varName];
   }
@@ -1771,7 +1778,7 @@ namespace CodeThorn {
       }
       newEStateList.push_back(reInitEState(estate,newLabel,cs,newPState));
     } else if((evalResult.isFalse() && edge.isType(EDGE_TRUE)) || (evalResult.isTrue() && edge.isType(EDGE_FALSE))) {
-      // we determined not to be on an execution path, therefore do nothing (do not add any result to resultlist)
+      // determined not to be on an execution path, therefore do nothing (do not add any result to resultlist)
       //cout<<"DEBUG: not on feasable execution path. skipping."<<endl;
     } else {
       // all other cases (assume evaluating to true or false, sane as top)
@@ -1888,6 +1895,7 @@ namespace CodeThorn {
           }
           AbstractValue elementSize=getMemoryRegionAbstractElementSize(arrayPtrValue);
           AbstractValue arrayElementAddr=AbstractValue::operatorAdd(arrayPtrValue,indexValue,elementSize);
+          //cout<<"DEBUG6: arrayPtrValue("<<arrayPtrValue.toString()<<")+indexValue("<<indexValue.toString()<<") => arrayElementAddr:"<<arrayElementAddr.toString()<<endl;
           if(arrayElementAddr.isBot()) {
             // inaccessible memory location, return empty estate list
             //return memoryUpdateList;
@@ -3031,6 +3039,7 @@ namespace CodeThorn {
         AbstractValue indexExprResultValue=indexExprResult.value();
         AbstractValue elementSize=getMemoryRegionAbstractElementSize(arrayPtrValue);
         AbstractValue arrayPtrPlusIndexValue=AbstractValue::operatorAdd(arrayPtrValue,indexExprResultValue,elementSize);
+        //cout<<"DEBUG5: arrayPtrValue("<<arrayPtrValue.toString()<<")+indexExprResultValue("<<indexExprResultValue<<") => "<<arrayPtrPlusIndexValue.toString()<<endl;
         if(arrayPtrPlusIndexValue.isNullPtr()) {
           notifyReadWriteListenersOnReading(estate->label(),const_pstate,arrayPtrPlusIndexValue);
           // there is no state following a definitive null pointer
@@ -3948,9 +3957,13 @@ namespace CodeThorn {
   }
 
   AbstractValue EStateTransferFunctions::createNewMemoryRegionIdAndPointerToIt(string name, int memoryRegionSize) {
-    // create new memory region id
-    VariableId memLocVarId=_variableIdMapping->createAndRegisterNewMemoryRegion(name,memoryRegionSize);
-    _variableIdMapping->setElementSize(memLocVarId,1); // malloc default for char (size=1)
+    // check if memory region is reused
+    VariableId memLocVarId=_variableIdMapping->getMemoryRegionIdByName(name);
+    if(!memLocVarId.isValid()) {
+      // create new memory region id
+      memLocVarId=_variableIdMapping->createAndRegisterNewMemoryRegion(name,memoryRegionSize);
+      _variableIdMapping->setElementSize(memLocVarId,1); // malloc default for char (size=1)
+    }
     AbstractValue allocatedMemoryPtr=AbstractValue::createAddressOfArray(memLocVarId);
     allocatedMemoryPtr.setAbstractFlag(true);
     return allocatedMemoryPtr;

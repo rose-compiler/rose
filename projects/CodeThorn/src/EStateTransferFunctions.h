@@ -182,6 +182,8 @@ namespace CodeThorn {
     
     CodeThorn::VariableIdSet determineUsedGlobalVars(SgProject* root, CodeThorn::VariableIdSet& setOfGlobalVars);
     void initializeGlobalVariables(SgProject* root, EStatePtr estate);
+    void initializeArbitraryMemory(EStatePtr estate);
+    
     // modifies PState with written initializers
     EStatePtr transferVariableDeclarationEState(SgVariableDeclaration* decl,EStatePtr currentEState, Label targetLabel);
     EStatePtr transferVariableDeclarationWithInitializerEState(SgVariableDeclaration* decl, SgInitializedName* initName, SgInitializer* initializer, VariableId initDeclVarId, EStatePtr currentEState, Label targetLabel);
