@@ -913,7 +913,12 @@ namespace
         handle(sg::asBaseType(n));
 
         recordNameQualIfNeeded(n, n.get_scope());
-        recordParentScopeVisibility(SG_DEREF(n.get_definition()).get_spec());
+
+        // \todo consider moving this into a handler for SgAdaPackageBody
+        //~ if (SgAdaPackageBody* bdy = n.get_definition())
+          //~ recordParentScopeVisibility(bdy->get_spec());
+
+        recordParentScopeVisibility(n.get_scope());
       }
 
       void handle(const SgImportStatement& n)
@@ -983,6 +988,19 @@ namespace
 
         recordNameQualIfNeeded(n, n.get_scope());
 
+        SgDeclarationStatement* basedecl = n.get_declaration();
+
+        if (SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(basedecl))
+          basedecl = gendcl->get_declaration();
+
+        computeNameQualForDeclLink(n, SG_DEREF(basedecl));
+      }
+
+      void handle(const SgAdaFormalPackageDecl& n)
+      {
+        handle(sg::asBaseType(n));
+
+        // PP not needed: recordNameQualIfNeeded(n, n.get_scope());
         SgDeclarationStatement* basedecl = n.get_declaration();
 
         if (SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(basedecl))

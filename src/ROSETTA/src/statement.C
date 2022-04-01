@@ -573,6 +573,7 @@ Grammar::setUpStatements ()
      NEW_TERMINAL_MACRO (AdaGenericDecl,        "AdaGenericDecl", "ADA_GENERIC_DECL" );
      NEW_TERMINAL_MACRO (AdaGenericInstanceDecl,"AdaGenericInstanceDecl", "ADA_GENERIC_INSTANCE_DECL" );
      NEW_TERMINAL_MACRO (AdaFormalTypeDecl,     "AdaFormalTypeDecl", "ADA_FORMAL_TYPE_DECL_STMT" );
+     NEW_TERMINAL_MACRO (AdaFormalPackageDecl,  "AdaFormalPackageDecl", "ADA_FORMAL_PACKAGE_DECL_STMT" );
   // PP (07/14/20): Adding Ada discriminated type declarations
      NEW_TERMINAL_MACRO (AdaDiscriminatedTypeDecl, "AdaDiscriminatedTypeDecl", "ADA_DISCRIMINATED_TYPE_DECL" );
 
@@ -597,7 +598,8 @@ Grammar::setUpStatements ()
           AdaProtectedSpecDecl                    | AdaProtectedBodyDecl      | AdaProtectedTypeDecl         |
           AdaRepresentationClause                 | AdaComponentClause        | AdaAttributeClause           |
           AdaEnumRepresentationClause             | AdaGenericDecl            | AdaFormalTypeDecl            |
-          AdaDiscriminatedTypeDecl                | AdaGenericInstanceDecl  /*| ClassPropertyList |*/,
+          AdaDiscriminatedTypeDecl                | AdaGenericInstanceDecl    | AdaFormalPackageDecl
+          /*| ClassPropertyList |*/,
           "DeclarationStatement", "DECL_STMT", false);
 
 
@@ -3132,6 +3134,7 @@ Grammar::setUpStatements ()
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AdaPackageBodyDecl.setDataPrototype ( "SgAdaPackageBody*", "definition", "= NULL",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
+     // \todo PP could we compute the scope from the AdaPackageSpecDecl instead?
      AdaPackageBodyDecl.setDataPrototype ( "SgScopeStatement*", "scope", "= NULL",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 /*
@@ -3165,6 +3168,17 @@ Grammar::setUpStatements ()
      AdaFormalTypeDecl.setDataPrototype ( "SgAdaFormalType*", "type", "= NULL",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
+
+     AdaFormalPackageDecl.setFunctionPrototype ( "HEADER_ADA_FORMAL_PACKAGE_DECL_STATEMENT", "../Grammar/Statement.code" );
+     AdaFormalPackageDecl.setDataPrototype ( "SgName", "name", "=\"\"",
+                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     // PP (3/31/22) like AdaGenericInstanceDecl, AdaFormalPackageDecl refers to a generic package, but that could also be
+     //              a package renaming declaration. => use SgDeclarationStatement
+     AdaFormalPackageDecl.setDataPrototype ( "SgDeclarationStatement*", "declaration", "= nullptr",
+                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaFormalPackageDecl.setDataPrototype ( "SgExprListExp*", "actual_parameters", "= NULL",
+                                             CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
      AdaGenericInstanceDecl.setFunctionPrototype ( "HEADER_ADA_GENERIC_INSTANCE_DECL", "../Grammar/Statement.code" );
      AdaGenericInstanceDecl.setDataPrototype ( "SgName", "name", "=\"\"",
                                                CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -3178,6 +3192,8 @@ Grammar::setUpStatements ()
                                                NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AdaGenericInstanceDecl.setDataPrototype ( "SgScopeStatement*", "scope", "= nullptr",
                                            NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+
+
 
      // tasks
      AdaTaskSpecDecl.setFunctionPrototype  ( "HEADER_ADA_TASK_SPEC_DECL_STATEMENT", "../Grammar/Statement.code" );
@@ -4451,6 +4467,7 @@ Grammar::setUpStatements ()
      AdaGenericDefn.setFunctionSource ( "SOURCE_ADA_GENERIC_DEFN", "../Grammar/Statement.code" );
      AdaGenericInstanceDecl.setFunctionSource ( "SOURCE_ADA_GENERIC_INSTANCE_DECL", "../Grammar/Statement.code" );
      AdaFormalTypeDecl.setFunctionSource ( "SOURCE_ADA_FORMAL_TYPE_DECL_STATEMENT", "../Grammar/Statement.code" );
+     AdaFormalPackageDecl.setFunctionSource ( "SOURCE_ADA_FORMAL_PACKAGE_DECL_STATEMENT", "../Grammar/Statement.code" );
 
   // DQ (3/22/2019): Adding EmptyDeclaration to support addition of comments and CPP directives that will permit
   // token-based unparsing to work with greater precision. For example, used to add an include directive with

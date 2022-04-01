@@ -1303,6 +1303,7 @@ generate_override_keyword( AstNodeClass & node, GrammarString & data )
           (nodeName == "AdaPackageBodyDecl"         && variableNameString == "name")  ||
           (nodeName == "AdaPackageSpecDecl"         && variableNameString == "name")  ||
           (nodeName == "AdaFormalTypeDecl"          && variableNameString == "name")  ||
+          (nodeName == "AdaFormalPackageDecl"       && variableNameString == "name")  ||
           (nodeName == "AdaTaskBodyDecl"            && variableNameString == "name")  ||
           (nodeName == "AdaTaskSpecDecl"            && variableNameString == "name")  ||
           (nodeName == "AdaTaskTypeDecl"            && variableNameString == "name")  ||
@@ -1453,6 +1454,7 @@ generate_override_keyword_for_set_functions( AstNodeClass & node, GrammarString 
           (nodeName == "AdaPackageBodyDecl"         && variableNameString == "name")  ||
           (nodeName == "AdaPackageSpecDecl"         && variableNameString == "name")  ||
           (nodeName == "AdaFormalTypeDecl"          && variableNameString == "name")  ||
+          (nodeName == "AdaFormalPackageDecl"       && variableNameString == "name")  ||
           (nodeName == "AdaTaskBodyDecl"            && variableNameString == "name")  ||
           (nodeName == "AdaTaskSpecDecl"            && variableNameString == "name")  ||
           (nodeName == "AdaTaskTypeDecl"            && variableNameString == "name")  ||

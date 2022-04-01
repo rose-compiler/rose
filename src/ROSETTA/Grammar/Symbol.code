@@ -1528,6 +1528,24 @@ SgAdaGenericInstanceSymbol::get_symbol_basis() const
 }
 SOURCE_ADA_GENERIC_INSTANCE_SYMBOL_END
 
+SOURCE_ADA_FORMAL_PACKAGE_SYMBOL_START
+SgName
+SgAdaFormalPackageSymbol::get_name() const
+{
+  SgAdaFormalPackageDecl* dcl = get_declaration();
+  ROSE_ASSERT(dcl);
+
+  return dcl->get_name();
+}
+
+SgNode*
+SgAdaFormalPackageSymbol::get_symbol_basis() const
+{
+  return get_declaration();
+}
+SOURCE_ADA_FORMAL_PACKAGE_SYMBOL_END
+
+
 SOURCE_ADA_TASK_SYMBOL_START
 SgName
 SgAdaTaskSymbol::get_name() const
