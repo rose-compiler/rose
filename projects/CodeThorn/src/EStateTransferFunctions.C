@@ -344,7 +344,7 @@ namespace CodeThorn {
         AbstractValue varAddress=AbstractValue::createAddressOfVariable(varId);
         AbstractValue funcPtrVal=readFromMemoryLocation(currentLabel,estate->pstate(),varAddress);
         //cout<<"DEBUG: function pointer value: "<<funcPtrVal.toString(getVariableIdMapping())<<": isFunPtr:"<<funcPtrVal.isFunctionPtr()<<endl;
-        if(funcPtrVal.isFunctionPtr()&&!funcPtrVal.isTop()&&!funcPtrVal.isBot()) {
+        if(funcPtrVal.isFunctionPtr()&&!funcPtrVal.isTop()&&!funcPtrVal.isPointerToArbitraryMemory()&&!funcPtrVal.isBot()) {
           Label  funTargetLabel=funcPtrVal.getLabel();
           if(funTargetLabel!=targetLabel) {
             //infeasable path
@@ -355,6 +355,8 @@ namespace CodeThorn {
             //cout<<"DEBUG: Resolved function pointer"<<endl;
           }
         } else {
+          // must call listener for potential null pointer dereference
+          notifyReadWriteListenersOnReading(estate->label(),estate->pstate(),funcPtrVal);
           // continue but pass the information now to *all* outgoing static edges (maximum imprecision)
           //cerr<<"DEBUG: function pointer is top or bot. Continue: "<<funCall->unparseToString()<<":"<<funcPtrVal.toString(getVariableIdMapping())<<endl;
         }
@@ -1181,7 +1183,7 @@ namespace CodeThorn {
   }
 
   AbstractValue EStateTransferFunctions::getMemoryRegionAbstractElementSize(AbstractValue memLoc) {
-    if(memLoc.isTop()||memLoc.isBot()||memLoc.isNullPtr())
+    if(memLoc.isTop()||memLoc.isPointerToArbitraryMemory()||memLoc.isBot()||memLoc.isNullPtr())
       return AbstractValue::createTop();
     VariableId memId=memLoc.getVariableId();
     CodeThorn::TypeSize elementSize=_variableIdMapping->getElementSize(memId);
@@ -1678,7 +1680,7 @@ namespace CodeThorn {
     ROSE_ASSERT(getVariableIdMapping());
     AbstractValue memAddr=createNewMemoryRegionIdAndPointerToIt("$arbitraryMemory",-1); // arbitrary memory is of arbitrary size 
     AbstractValue::setPointerToArbitraryMemory(memAddr);
-    estate->pstate()->initializeArbitraryMemory(memAddr,AbstractValue::createTop()); // arbitrary memory has arbitrary values
+    estate->pstate()->initializeArbitraryMemory(memAddr,AbstractValue::createUndefined()); // arbitrary memory has arbitrary values
   }
   
   VariableId EStateTransferFunctions::globalVarIdByName(std::string varName) {
@@ -1781,7 +1783,7 @@ namespace CodeThorn {
       // determined not to be on an execution path, therefore do nothing (do not add any result to resultlist)
       //cout<<"DEBUG: not on feasable execution path. skipping."<<endl;
     } else {
-      // all other cases (assume evaluating to true or false, sane as top)
+      // all other cases (assume evaluating to true or false, same as top)
       // pass on EState
       newLabel=edge.target();
       newPState=evalResult.estate->pstate();
@@ -1929,7 +1931,7 @@ namespace CodeThorn {
           // no state can follow
           return memoryUpdateList;
         }
-      } else if(lhsPointerValue.isTop()) {
+      } else if(lhsPointerValue.isTop()||lhsPointerValue.isPointerToArbitraryMemory()) {
         //recordPotentialNullPointerDereferenceLocation(estatePtr->label()); // notify?
         // specific case a pointer expr evaluates to top. Dereference operation
         // potentially modifies any memory location in the state.
@@ -2605,7 +2607,7 @@ namespace CodeThorn {
     SgExpression* cond=condExp->get_conditional_exp();
     SingleEvalResult condResult=evaluateExpression(cond,estate);
     SingleEvalResult singleResult=condResult;
-    if(singleResult.result.isTop()) {
+    if(singleResult.result.isTop()||singleResult.result.isPointerToArbitraryMemory()) {
       EStatePtr temporaryFalseBranchEState=estate->cloneWithoutIO();
       SgExpression* trueBranch=condExp->get_true_exp();
       SingleEvalResult trueBranchResult=evaluateExpression(trueBranch,estate);
@@ -2643,6 +2645,7 @@ namespace CodeThorn {
       // short circuit semantics
       if(lhsResult.isTrue()
          ||lhsResult.isTop()
+         ||lhsResult.isPointerToArbitraryMemory()
          ||lhsResult.isBot()
          ||((lhsResult.result.isPtr()||lhsResult.result.isFunctionPtr())&&!lhsResult.result.isNullPtr())
          ||lhsResult.result.isRef() // this can be refined to access the referenced value and check that it is not 0
@@ -2662,7 +2665,7 @@ namespace CodeThorn {
       break;
     }
     case V_SgOrOp: {
-      if(lhsResult.isFalse()||lhsResult.isTop()||lhsResult.isBot()) {
+      if(lhsResult.isFalse()||lhsResult.isTop()||lhsResult.isPointerToArbitraryMemory()||lhsResult.isBot()) {
         SgNode* rhs=SgNodeHelper::getRhs(node);
         SingleEvalResult rhsResult=evaluateExpression(rhs,estate,mode);
         return evalOrOp(isSgOrOp(node),lhsResult,rhsResult,estate,mode);
@@ -2999,7 +3002,7 @@ namespace CodeThorn {
           // in case it is a pointer retrieve pointer value
           if(pstate2->varExists(arrayVarId)) {
             arrayPtrValue=readFromMemoryLocation(estate->label(),pstate2,arrayVarId); // pointer value (without index)
-            if(!(arrayPtrValue.isTop()||arrayPtrValue.isBot()||arrayPtrValue.isPtr()||arrayPtrValue.isNullPtr())) {
+            if(!(arrayPtrValue.isTop()||arrayPtrValue.isPointerToArbitraryMemory()||arrayPtrValue.isBot()||arrayPtrValue.isPtr()||arrayPtrValue.isNullPtr())) {
               logger[ERROR]<<"@"<<SgNodeHelper::lineColumnNodeToString(node)<<": value not a pointer value: "<<arrayPtrValue.toString()<<endl;
               logger[ERROR]<<estate->toString(_variableIdMapping)<<endl;
               exit(1);
@@ -3056,7 +3059,7 @@ namespace CodeThorn {
         if(pstate2->memLocExists(arrayPtrValue)) {
           // required for the following index computation (nothing to do here)
         } else {
-          if(arrayPtrValue.isTop()) {
+          if(arrayPtrValue.isTop()||arrayPtrValue.isPointerToArbitraryMemory()) {
             res.result=CodeThorn::Top();
             notifyReadWriteListenersOnReading(estate->label(),estate->pstate(),arrayPtrValue);
             return res;
@@ -3293,7 +3296,7 @@ namespace CodeThorn {
 
   // returns true if it is definitely a null pointer
   bool EStateTransferFunctions::checkAndRecordNullPointer(AbstractValue derefOperandValue, EStatePtr estate) {
-    if(derefOperandValue.isTop()) {
+    if(derefOperandValue.isTop()||derefOperandValue.isPointerToArbitraryMemory()) {
       notifyReadWriteListenersOnReading(estate->label(),estate->pstate(),derefOperandValue);      
       return false;
     } else if(derefOperandValue.isNullPtr()) {
@@ -4043,7 +4046,7 @@ namespace CodeThorn {
 
   // returns size, or -1 (=any) in case pointer is top.
   int EStateTransferFunctions::getMemoryRegionNumElements(CodeThorn::AbstractValue ptrToRegion) {
-    if(ptrToRegion.isTop()) {
+    if(ptrToRegion.isTop()||ptrToRegion.isPointerToArbitraryMemory()) {
       return -1;
     }
     ROSE_ASSERT(ptrToRegion.isPtr());
@@ -4054,7 +4057,7 @@ namespace CodeThorn {
   }
 
   int EStateTransferFunctions::getMemoryRegionElementSize(CodeThorn::AbstractValue ptrToRegion) {
-    if(ptrToRegion.isTop()) {
+    if(ptrToRegion.isTop()||ptrToRegion.isPointerToArbitraryMemory()) {
       return -1;
     }
     ROSE_ASSERT(ptrToRegion.isPtr());
@@ -4066,7 +4069,7 @@ namespace CodeThorn {
 
 
   enum MemoryAccessBounds EStateTransferFunctions::checkMemoryAccessBounds(AbstractValue address) {
-    if(address.isTop()) {
+    if(address.isTop()||address.isPointerToArbitraryMemory()) {
       return ACCESS_POTENTIALLY_OUTSIDE_BOUNDS;
     } if(address.isBot()) {
       return ACCESS_NON_EXISTING;

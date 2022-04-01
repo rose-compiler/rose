@@ -39,6 +39,7 @@ namespace CodeThorn {
     AbstractValue value() {return result;}
     bool isConstInt() {return result.isConstInt();}
     bool isTop() {return result.isTop();}
+    bool isPointerToArbitraryMemory() { return result.isPointerToArbitraryMemory();}
     bool isTrue() {return result.isTrue();}
     bool isFalse() {return result.isFalse();}
     bool isBot() {return result.isBot();}

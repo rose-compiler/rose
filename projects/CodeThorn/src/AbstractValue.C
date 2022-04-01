@@ -1206,7 +1206,7 @@ AbstractValue AbstractValue::operatorAdd(AbstractValue& a,AbstractValue& b) {
   }
 }
 AbstractValue AbstractValue::operatorSub(AbstractValue& a,AbstractValue& b) {
-  if(a.isTop() || b.isTop())
+  if(a.isTop() || b.isTop() || a.isPointerToArbitraryMemory() || b.isPointerToArbitraryMemory())
     return Top();
   if(a.isBot())
     return b;
@@ -1400,7 +1400,8 @@ AbstractValue AbstractValue::combine(AbstractValue val1, AbstractValue val2) {
          &&val1.getIntValue()==val2.getIntValue()) {
         return val1;
       } else if(!val1.isNullPtr()&&!val2.isNullPtr()&&val1.isPtr()&&val2.isPtr()) {
-        return AbstractValue::getPointerToArbitraryMemory();
+        return AbstractValue::getPointerToArbitraryMemory(); // TODO100
+        //return AbstractValue::createTop();
       } else {
         if(AbstractValue::pointerSetsEnabled) {
           // promote to ptr set in case the values are not equal (handled above)
