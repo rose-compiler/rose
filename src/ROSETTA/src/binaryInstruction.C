@@ -5576,8 +5576,7 @@ void Grammar::setUpBinaryInstructions() {
 
 
 #undef JVM_IGNORE_SERIALIZATION
-#undef JVM_IGNORE_FILE_HEADER
-#ifdef JVM_IGNORE_FILE_HEADER
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /*************************************************************************************************************************
@@ -5728,6 +5727,8 @@ void Grammar::setUpBinaryInstructions() {
             s & BOOST_SERIALIZATION_NVP(p_this_class);
             s & BOOST_SERIALIZATION_NVP(p_super_class);
             s & BOOST_SERIALIZATION_NVP(p_constant_pool);
+#ifdef JVM_IGNORE_SERIALIZATION
+#endif
         }
 #endif
 
@@ -5748,7 +5749,6 @@ void Grammar::setUpBinaryInstructions() {
     };
 #endif
 
-#endif//JVM_IGNORE_FILE_HEADER
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -9898,11 +9898,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     public:
-#ifdef JVM_IGNORE_FILE_HEADER
         explicit SgAsmJvmConstantPool(SgAsmJvmFileHeader *fhdr);
-#else
-        explicit SgAsmJvmConstantPool(SgAsmGenericHeader *fhdr);
-#endif
 
         /** Parses a JVM Constant Pool.
          *
@@ -15222,16 +15218,10 @@ void Grammar::setUpBinaryInstructions() {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifdef JVM_IGNORE_SEGMENT_TABLE
     NEW_NONTERMINAL_MACRO(AsmGenericHeader,
                           AsmPEFileHeader | AsmLEFileHeader | AsmNEFileHeader | AsmDOSFileHeader | AsmElfFileHeader |
                           AsmJvmFileHeader,
                           "AsmGenericHeader", "AsmGenericHeaderTag", true);
-#else
-    NEW_NONTERMINAL_MACRO(AsmGenericHeader,
-                          AsmPEFileHeader | AsmLEFileHeader | AsmNEFileHeader | AsmDOSFileHeader | AsmElfFileHeader,
-                          "AsmGenericHeader", "AsmGenericHeaderTag", true);
-#endif
     AsmGenericHeader.setCppCondition("!defined(DOCUMENTATION)");
     AsmGenericHeader.setAutomaticGenerationOfDestructor(false);
     IS_SERIALIZABLE(AsmGenericHeader);
