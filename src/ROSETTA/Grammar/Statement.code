@@ -3548,6 +3548,12 @@ SgName get_qualified_name() const;
 bool hasExplicitScope() const override;
 HEADER_ADA_FORMAL_TYPE_DECL_STATEMENT_END
 
+HEADER_ADA_FORMAL_PACKAGE_DECL_STATEMENT_START
+SgSymbol* get_symbol_from_symbol_table() const override;
+SgName get_mangled_name() const override;
+SgName get_qualified_name() const;
+HEADER_ADA_FORMAL_PACKAGE_DECL_STATEMENT_END
+
 HEADER_ADA_GENERIC_DEFN_START
   SgName get_mangled_name() const override;
   SgName get_qualified_name() const override;
@@ -20744,7 +20750,10 @@ SgAdaFormalTypeDecl::get_symbol_from_symbol_table() const
 SgName
 SgAdaFormalTypeDecl::get_mangled_name() const
 {
-  return "ada$generic$decl";
+  std::string mangled = "ada$formal$type$";
+
+  mangled += get_name();
+  return mangled;
 }
 
 SgName
@@ -20762,6 +20771,32 @@ SgAdaFormalTypeDecl::get_qualified_name() const
 
 bool SgAdaFormalTypeDecl::hasExplicitScope() const { return true; }
 SOURCE_ADA_FORMAL_TYPE_DECL_STATEMENT_END
+
+SOURCE_ADA_FORMAL_PACKAGE_DECL_STATEMENT_START
+void SgAdaFormalPackageDecl::post_construction_initialization() {}
+
+SgSymbol* SgAdaFormalPackageDecl::get_symbol_from_symbol_table() const
+{
+  SgScopeStatement* scope = get_scope();
+
+  ROSE_ASSERT(scope);
+  return scope->find_symbol_from_declaration(this);
+}
+
+SgName SgAdaFormalPackageDecl::get_mangled_name() const
+{
+  std::string mangled = "ada$formal$pkg$";
+
+  mangled += get_name();
+  return mangled;
+}
+
+SgName SgAdaFormalPackageDecl::get_qualified_name() const
+{
+  return "ada$formal$pkg$PLACEHOLDER";
+}
+SOURCE_ADA_FORMAL_PACKAGE_DECL_STATEMENT_END
+
 
 SOURCE_ADA_GENERIC_DEFN_START
 void SgAdaGenericDefn::post_construction_initialization() {}

@@ -628,7 +628,6 @@ namespace
           break;
         }
 
-
       case A_Formal_Constrained_Array_Definition:    // 3.6(5)
         {
           formalBaseType = &createConstrainedArrayType(typenode, ctx);

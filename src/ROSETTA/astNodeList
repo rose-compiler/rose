@@ -1020,3 +1020,5 @@ SgAdaAncestorInitializer
 SgAdaDeltaConstraint
 SgAdaSubroutineType
 SgAdaGenericInstanceSymbol
+SgAdaFormalPackageDecl
+SgAdaFormalPackageSymbol

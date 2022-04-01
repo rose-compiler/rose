@@ -404,6 +404,15 @@ namespace Ada_ROSE_Translation
   SgAdaGenericInstanceDecl&
   mkAdaGenericInstanceDecl(const std::string& name, SgDeclarationStatement& gendecl, SgScopeStatement& scope);
 
+
+  /// creates an Ada formal package declaration
+  /// \param name    name of the instantiation
+  /// \param gendecl the underlying generic declaration (or renamed generic declaration)
+  /// \param args    the generic arguments
+  /// \param scope   the parent scope
+  SgAdaFormalPackageDecl&
+  mkAdaFormalPackageDecl(const std::string& name, SgDeclarationStatement& gendecl, SgExprListExp& args, SgScopeStatement& scope);
+
   /// creates an Ada generic declaration
   SgAdaGenericDecl&
   mkAdaGenericDecl(SgScopeStatement& scope);

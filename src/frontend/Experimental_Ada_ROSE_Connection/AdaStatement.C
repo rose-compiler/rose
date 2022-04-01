@@ -2408,15 +2408,15 @@ namespace
     switch (typeDefn.Definition_Kind)
     {
       case A_Type_Definition:
-    {
-      resKind = typeDefn.The_Union.The_Type_Definition.Type_Kind;
+      {
+        resKind = typeDefn.The_Union.The_Type_Definition.Type_Kind;
 
-      // look at the base of a derived type
-      if (resKind == A_Derived_Type_Definition)
-        resKind = queryBaseDefinitionData(typeDefn, resKind, ctx);
+        // look at the base of a derived type
+        if (resKind == A_Derived_Type_Definition)
+          resKind = queryBaseDefinitionData(typeDefn, resKind, ctx);
 
-      break;
-    }
+        break;
+      }
 
       case A_Formal_Type_Definition:
         break;
@@ -3643,7 +3643,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgType&                 rettype = isFunc ? getDeclTypeID(decl.Result_Profile, ctx)
                                                  : mkTypeVoid();
 
-        ADA_ASSERT (adaname.fullName == adaname.ident);
         SgDeclarationStatement* ndef    = findFirst(asisDecls(), decl.Corresponding_Declaration, decl.Corresponding_Body_Stub);
         SgFunctionDeclaration*  nondef  = getFunctionDeclaration(ndef);
         ADA_ASSERT(!ndef || nondef); // ndef => nondef
@@ -4660,7 +4659,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         scope.append_statement(&sgnode);
         ADA_ASSERT (sgnode.get_parent() == &scope);
 
-        /* unhandled field
+        /* unused field
              Declaration_ID                 Corresponding_Declaration;
              Expression_ID                  Corresponding_Base_Entity;
         */
@@ -4691,7 +4690,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         Element_Struct&           baseelem = basename.elem();
         Expression_Struct&        baseexpr = baseelem.The_Union.Expression;
         SgDeclarationStatement*   basedecl = findFirst(asisDecls(), baseexpr.Corresponding_Name_Declaration, baseexpr.Corresponding_Name_Definition);
-
+#if 0
         if (basedecl == nullptr)
         {
           logError() << basename.ident << ": "
@@ -4703,7 +4702,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                      << " / " << elemMap()[17585081]->Element_Kind
                      << std::endl;
         }
-
+#endif
         // PP (2/2/22): the base decl can also be a renamed generic declaration
         SgScopeStatement&         logicalScope = adaname.parent_scope();
         SgAdaGenericInstanceDecl& sgnode   = mkAdaGenericInstanceDecl(adaname.ident, SG_DEREF(basedecl), logicalScope);
@@ -4724,8 +4723,58 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         outer.append_statement(&sgnode);
         ADA_ASSERT (sgnode.get_parent() == &outer);
 
+        /* unused field
+             Declaration_ID                 Corresponding_Declaration;
+             Declaration_ID                 Corresponding_Body;
+        */
         break;
       }
+
+    case A_Formal_Package_Declaration:             // 12.7(2)
+    case A_Formal_Package_Declaration_With_Box:    // 12.7(3)
+      {
+        if (decl.Declaration_Kind == A_Formal_Package_Declaration)
+          logKind("A_Formal_Package_Declaration");
+        else
+          logKind("A_Formal_Package_Declaration_With_Box");
+
+        // \todo consider merging the code with A_Package_Instantiation above
+        NameData                  adaname = singleName(decl, ctx);
+
+        // re basedecl see MS comment on A_Package_Instantiation above
+        NameData                  basename = getNameID(decl.Generic_Unit_Name, ctx);
+        Element_Struct&           baseelem = basename.elem();
+        Expression_Struct&        baseexpr = baseelem.The_Union.Expression;
+        SgDeclarationStatement*   basedecl = findFirst(asisDecls(), baseexpr.Corresponding_Name_Declaration, baseexpr.Corresponding_Name_Definition);
+
+        // generic actual part
+        SgScopeStatement&         scope    = ctx.scope();
+        ElemIdRange               range    = idRange(decl.Generic_Actual_Part);
+        SgExprListExp&            args     = traverseIDs(range, elemMap(), ArgListCreator{ctx});
+
+        if (decl.Declaration_Kind == A_Formal_Package_Declaration_With_Box)
+          args.append_expression(&mkAdaBoxExp());
+
+        // PP (3/31/22): In contrast to the instantiations above (check correctness),
+        //               the scope should be the current (generic parameter) scope.
+        SgAdaFormalPackageDecl&   sgnode   = mkAdaFormalPackageDecl(adaname.ident, SG_DEREF(basedecl), args, scope);
+
+        recordNode(asisDecls(), elem.ID, sgnode);
+        recordNode(asisDecls(), adaname.id(), sgnode);
+
+        attachSourceLocation(sgnode, elem, ctx);
+        //~ privatize(sgnode, isPrivate);
+        scope.append_statement(&sgnode);
+        ADA_ASSERT (sgnode.get_parent() == &scope);
+
+        /* unused field
+             Declaration_ID                 Corresponding_Declaration;
+          +  A_Formal_Package_Declaration
+             Declaration_ID                 Corresponding_Body;
+        */
+        break;
+      }
+
 
     case An_Entry_Index_Specification:             // 9.5.2(2)
       {
@@ -4757,8 +4806,6 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
     case A_Return_Variable_Specification:          // 6.5 (Ada 2005)
     case A_Return_Constant_Specification:          // 6.5 (Ada 2005)
     case A_Formal_Incomplete_Type_Declaration:     // (Ada 2012)
-    case A_Formal_Package_Declaration:             // 12.7(2)
-    case A_Formal_Package_Declaration_With_Box:    // 12.7(3)
     default:
       logWarn() << "unhandled declaration kind: " << decl.Declaration_Kind << std::endl;
       ADA_ASSERT (!FAIL_ON_ERROR(ctx));

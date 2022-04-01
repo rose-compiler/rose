@@ -511,17 +511,14 @@ mkWithClause(SgExpressionPtrList imported)
 SgUsingDeclarationStatement&
 mkUseClause(SgDeclarationStatement& used)
 {
-  SgUsingDeclarationStatement& sgnode = mkBareNode<SgUsingDeclarationStatement>(&used, nullptr);
-
-  markCompilerGenerated(sgnode);
-  return sgnode;
+  return mkLocatedNode<SgUsingDeclarationStatement>(&used, nullptr);
 }
 
 
 SgAdaExitStmt&
 mkAdaExitStmt(SgStatement& loop, SgExpression& cond, bool explicitLoopName)
 {
-  SgAdaExitStmt& sgnode = mkBareNode<SgAdaExitStmt>(&loop, &cond, explicitLoopName);
+  SgAdaExitStmt& sgnode = mkLocatedNode<SgAdaExitStmt>(&loop, &cond, explicitLoopName);
 
   cond.set_parent(&sgnode);
   return sgnode;
@@ -559,7 +556,7 @@ mkWhenOthersPath(SgBasicBlock& blk)
 SgAdaDelayStmt&
 mkAdaDelayStmt(SgExpression& timeExp, bool relativeTime)
 {
-  SgAdaDelayStmt& sgnode = mkBareNode<SgAdaDelayStmt>(&timeExp, relativeTime);
+  SgAdaDelayStmt& sgnode = mkLocatedNode<SgAdaDelayStmt>(&timeExp, relativeTime);
 
   sg::linkParentChild(sgnode, timeExp, &SgAdaDelayStmt::set_time);
   return sgnode;
@@ -570,7 +567,7 @@ namespace
   SgProcessControlStatement&
   mkProcessControlStatement(SgExpression& code, SgProcessControlStatement::control_enum kind)
   {
-    SgProcessControlStatement& sgnode = mkBareNode<SgProcessControlStatement>(&code);
+    SgProcessControlStatement& sgnode = mkLocatedNode<SgProcessControlStatement>(&code);
 
     code.set_parent(&sgnode);
     sgnode.set_control_kind(kind);
@@ -742,7 +739,6 @@ mkAdaGenericInstanceDecl(const std::string& name, SgDeclarationStatement& gendec
 
   SgAdaGenericInstanceDecl& sgnode = mkLocatedNode<SgAdaGenericInstanceDecl>(name,&gendecl,nullptr);
 
-  //~ sgnode.set_parent(&scope);
   sgnode.set_scope(&scope);
   // PP (2/24/22): should this be set_definingDeclaration ?
   sgnode.set_firstNondefiningDeclaration(&sgnode);
@@ -750,6 +746,21 @@ mkAdaGenericInstanceDecl(const std::string& name, SgDeclarationStatement& gendec
   scope.insert_symbol(name, &mkBareNode<SgAdaGenericInstanceSymbol>(&sgnode));
   return sgnode;
 }
+
+SgAdaFormalPackageDecl&
+mkAdaFormalPackageDecl(const std::string& name, SgDeclarationStatement& gendecl, SgExprListExp& args, SgScopeStatement& scope)
+{
+  ROSE_ASSERT(  isSgAdaGenericDecl(&gendecl)
+             || isSgAdaRenamingDecl(&gendecl)
+             );
+
+  SgAdaFormalPackageDecl& sgnode = mkLocatedNode<SgAdaFormalPackageDecl>(name, &gendecl, &args);
+
+  sgnode.set_firstNondefiningDeclaration(&sgnode);
+  scope.insert_symbol(name, &mkBareNode<SgAdaFormalPackageSymbol>(&sgnode));
+  return sgnode;
+}
+
 
 SgAdaGenericDecl&
 mkAdaGenericDecl(SgScopeStatement& scope)
@@ -844,7 +855,7 @@ mkAdaPackageBodyDecl_nondef(SgAdaPackageSpecDecl& specdcl, SgScopeStatement& sco
 {
   SgAdaPackageBodyDecl& sgnode  = mkLocatedNode<SgAdaPackageBodyDecl>(specdcl.get_name(), nullptr);
 
-  sgnode.set_parent(&scope); // needed?
+  sgnode.set_scope(&scope);
 
   insertBodySymbol_opt<SgAdaPackageSymbol>(sgnode, scope);
   return sgnode;
@@ -857,7 +868,7 @@ mkAdaPackageBodyDecl(SgAdaPackageSpecDecl& specdcl, SgAdaPackageBodyDecl* nondef
   SgAdaPackageBodyDecl& sgnode  = mkLocatedNode<SgAdaPackageBodyDecl>(specdcl.get_name(), &pkgbody);
   SgAdaPackageSpec&     pkgspec = SG_DEREF( specdcl.get_definition() );
 
-  sgnode.set_parent(&scope); // needed?
+  sgnode.set_scope(&scope);
   pkgbody.set_parent(&sgnode);
   pkgspec.set_body(&pkgbody);
   pkgbody.set_spec(&pkgspec);
@@ -1115,10 +1126,10 @@ namespace
 
 
   /// \private
-  /// helps to create a procedure definition:
+  /// helps to create a procedure/function definition by creating the definition
   ///   attaches the definition to the declaration and returns the *function body*.
   SgFunctionDefinition&
-  mkProcDefn()
+  mkProcDecl()
   {
     //~ SgFunctionDefinition& sgnode = mkLocatedNode<SgFunctionDefinition>(&dcl, nullptr);
     SgBasicBlock&         body   = mkBasicBlock();
@@ -1131,9 +1142,9 @@ namespace
   }
 
   /// \private
-  /// helps to create a procedure definition as declaration
+  /// helps to create a nondefining function declaration by creating a scope for parameters
   SgFunctionParameterScope&
-  mkProcDecl()
+  mkProcDecl_nondef()
   {
     return mkScopeStmt<SgFunctionParameterScope>(&mkFileInfo());
   }
@@ -1172,7 +1183,7 @@ mkAdaSubroutineType( SgType& retty,
                    )
 {
   SgFunctionParameterList&  lst       = mkFunctionParameterList();
-  SgFunctionParameterScope& parmScope = mkProcDecl();
+  SgFunctionParameterScope& parmScope = mkProcDecl_nondef();
 
   complete(lst, parmScope);
 
@@ -1195,7 +1206,7 @@ mkProcedureDecl_nondef( const std::string& nm,
                         std::function<void(SgFunctionParameterList&, SgScopeStatement&)> complete
                       )
 {
-  return mkProcedureInternal(nm, scope, retty, std::move(complete), mkProcDecl);
+  return mkProcedureInternal(nm, scope, retty, std::move(complete), mkProcDecl_nondef);
 }
 
 SgFunctionDeclaration&
@@ -1206,7 +1217,7 @@ mkProcedureDecl_nondef( SgFunctionDeclaration& ndef,
                       )
 {
   SgName                 nm     = ndef.get_name();
-  SgFunctionDeclaration& sgnode = mkProcedureInternal(nm, scope, retty, std::move(complete), mkProcDecl);
+  SgFunctionDeclaration& sgnode = mkProcedureInternal(nm, scope, retty, std::move(complete), mkProcDecl_nondef);
   SgSymbol*              baseSy = ndef.search_for_symbol_from_symbol_table();
   SgFunctionSymbol&      funcSy = SG_DEREF(isSgFunctionSymbol(baseSy));
 
@@ -1225,7 +1236,7 @@ mkProcedureDecl( SgFunctionDeclaration& ndef,
                )
 {
   SgName                 nm     = ndef.get_name();
-  SgFunctionDeclaration& sgnode = mkProcedureInternal(nm, scope, retty, std::move(complete), mkProcDefn);
+  SgFunctionDeclaration& sgnode = mkProcedureInternal(nm, scope, retty, std::move(complete), mkProcDecl);
   SgSymbol*              baseSy = ndef.search_for_symbol_from_symbol_table();
   SgFunctionSymbol&      funcSy = SG_DEREF(isSgFunctionSymbol(baseSy));
 
@@ -1340,7 +1351,7 @@ mkAdaEntryDecl( const std::string& name,
 
                                return res;
                              };
-  SgAdaEntryDecl& sgnode = mkAdaEntryDeclInternal( name, scope, completeParams, genIndex, mkProcDecl);
+  SgAdaEntryDecl& sgnode = mkAdaEntryDeclInternal( name, scope, completeParams, genIndex, mkProcDecl_nondef);
 
   sgnode.set_firstNondefiningDeclaration(&sgnode);
 
@@ -1354,9 +1365,9 @@ mkAdaEntryDefn( SgAdaEntryDecl& ndef,
                 std::function<SgInitializedName&(SgScopeStatement&)> genIndex
               )
 {
-  SgAdaEntryDecl&        sgnode = mkAdaEntryDeclInternal(ndef.get_name(), scope, completeParams, genIndex, mkProcDefn);
-  SgSymbol*              baseSy = ndef.search_for_symbol_from_symbol_table();
-  SgFunctionSymbol&      funcSy = SG_DEREF(isSgFunctionSymbol(baseSy));
+  SgAdaEntryDecl&   sgnode = mkAdaEntryDeclInternal(ndef.get_name(), scope, completeParams, genIndex, mkProcDecl);
+  SgSymbol*         baseSy = ndef.search_for_symbol_from_symbol_table();
+  SgFunctionSymbol& funcSy = SG_DEREF(isSgFunctionSymbol(baseSy));
 
   sgnode.set_definingDeclaration(&sgnode);
   sgnode.unsetForward();

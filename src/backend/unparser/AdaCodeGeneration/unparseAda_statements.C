@@ -796,8 +796,16 @@ namespace
 
       prn(prefix);
       prn(n.get_name());
-      prn(" is\n");
 
+      if (si::ada::hasSeparatedBody(n))
+      {
+        // separate declarations are nondefining
+        prn(" is separate");
+        prn(STMT_SEP);
+        return;
+      }
+
+      prn(" is\n");
       stmt(n.get_definition());
 
       prn(" ");
@@ -915,8 +923,16 @@ namespace
       prn("package body ");
       if (!separated) prn(pkgqual);
       prn(n.get_name());
-      prn(" is\n");
 
+      if (si::ada::hasSeparatedBody(n))
+      {
+        // separate declarations are nondefining
+        prn(" is separate");
+        prn(STMT_SEP);
+        return;
+      }
+
+      prn(" is\n");
       stmt(n.get_definition());
 
       prn("end ");
@@ -965,42 +981,13 @@ namespace
       }
     }
 
-    // MS: modeled on enumInit()
-    void associationEntry(SgExpression* n)
+    void associationList(SgExprListExp& exprlst)
     {
-      if (SgActualArgumentExpression* e = isSgActualArgumentExpression(n))
-        {
-          SgName name = e->get_argument_name();
-          SgExpression *exp = e->get_expression();
-          prn(name.getString());
-          prn("=>");
-          expr(exp);
-        }
-      else if (SgExpression* e = isSgExpression(n))
-        {
-          expr(e);
-        }
-      else
-        {
-          // should not reach this
-          ROSE_ABORT();
-        }
-    }
-
-    // MS: modeled on enuminiList()
-    void associationList(SgExpressionPtrList& lst)
-    {
+      SgExpressionPtrList& lst = exprlst.get_expressions();
       if (lst.empty()) return;
 
       prn("(");
-      associationEntry(lst[0]);
-
-      for (size_t i = 1; i < lst.size(); ++i)
-        {
-          prn(", ");
-          associationEntry(lst[i]);
-        }
-
+      expr(&exprlst);
       prn(")");
     }
 
@@ -1046,7 +1033,7 @@ namespace
         // renamed generic function?
       }
 
-      associationList(args->get_expressions());
+      associationList(SG_DEREF(args));
       prn(STMT_SEP);
     }
 
@@ -1228,6 +1215,35 @@ namespace
       }
       prn(";\n");
     }
+
+    void handle(SgAdaFormalPackageDecl& n)
+    {
+      SgDeclarationStatement* basedcl = n.get_declaration();
+
+      prn("with package ");
+      prn(n.get_name());
+      prn(" is new ");
+
+      if (SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(basedcl))
+        basedcl = gendcl->get_declaration();
+
+      // determine which kind of generic instance this is
+      if (SgAdaPackageSpecDecl* pkg = isSgAdaPackageSpecDecl(basedcl)) {
+        // package
+        prnNameQual(n, *pkg, pkg->get_scope());
+        prn(pkg->get_name().getString());
+      } else if (SgAdaRenamingDecl* ren = isSgAdaRenamingDecl(basedcl)) {
+        // renamed package
+        prnNameQual(n, *ren, ren->get_scope());
+        prn(ren->get_name().getString());
+      }
+
+      prn("(");
+      expr(n.get_actual_parameters());
+      prn(")");
+      prn(STMT_SEP);
+    }
+
 
     void handle(SgAdaGenericDecl& n)
     {
