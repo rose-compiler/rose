@@ -12,7 +12,7 @@ using namespace ByteOrder;
 
 using PoolEntry = SgAsmJvmConstantPoolEntry;
 
-SgAsmJvmConstantPool::SgAsmJvmConstantPool(SgAsmGenericHeader* fhdr)
+SgAsmJvmConstantPool::SgAsmJvmConstantPool(SgAsmJvmFileHeader* fhdr)
   : SgAsmGenericSection(fhdr->get_file(), fhdr)
 {
   std::cout << "SgAsmJvmConstantPool::ctor() ...\n";
@@ -48,6 +48,9 @@ std::string PoolEntry::to_string(PoolEntry::ConstantPoolKind kind)
     case PoolEntry::CONSTANT_InvokeDynamic:      return "CONSTANT_InvokeDynamic";
     case PoolEntry::CONSTANT_Module:             return "CONSTANT_Module";
     case PoolEntry::CONSTANT_Package:            return "CONSTANT_Package";
+    case PoolEntry::EMPTY:
+      // Ignore this entry as it is empty
+      return std::string{""};
     default: return "Unknown constant pool kind";
   }
 }
@@ -59,7 +62,9 @@ std::string cp_tag(PoolEntry* entry)
 
 void PoolEntry::dump(std::ostream &os, int index)
 {
-  os << index << ":" << cp_tag(this) << "_info";
+  if (get_tag() != PoolEntry::EMPTY) {
+    os << index << ":" << cp_tag(this) << "_info";
+  }
 
   switch (get_tag()) {
     case PoolEntry::CONSTANT_Utf8:
@@ -104,6 +109,9 @@ void PoolEntry::dump(std::ostream &os, int index)
     case PoolEntry::CONSTANT_InvokeDynamic:
       os << ":" << get_bootstrap_method_attr_index();
       os << ":" << get_name_and_type_index();
+      break;
+    case PoolEntry::EMPTY:
+      os << index << ":" << "Empty";
       break;
     default:
       os << ":" <<  "Unknown tag";
@@ -285,56 +293,23 @@ PoolEntry* PoolEntry::parse(SgAsmJvmConstantPool* pool)
 
 SgAsmJvmConstantPool* SgAsmJvmConstantPool::parse()
 {
-  std::cout << "SgAsmJvmConstantPool::parse() ...\n";
-
-  //TODO: move to a constructor
-  p_entries = new SgAsmJvmConstantPoolEntryList;
-  p_entries->set_parent(this);
-
+  PoolEntry* entry{nullptr};
   auto header = get_header();
   rose_addr_t offset = header->get_offset();
 
+  std::cout << "SgAsmJvmConstantPool::parse() ...\n";
+  std::cout << "SgAsmJvmConstantPool::parse() header class name is " << header->class_name() << std::endl;
   std::cout << "SgAsmJvmConstantPool::parse() this offset is " << get_offset() << std::endl;
   std::cout << "SgAsmJvmConstantPool::parse() header offset is " << offset << std::endl;
 
-// NOTE: refactor this once SgJavaClassFile exists
-#if 1
-  /* Ensure magic number in file is correct */
-  unsigned char magic[4];
-  auto count = read_content(offset, magic, sizeof magic);
-  if (4!=count || 0xCA!=magic[0] || 0xFE!=magic[1] || 0xBA!=magic[2] || 0xBE!=magic[3]) {
-    std::cout << "Bad Java class file magic number\n";
-  }
-  offset += count;
-
-  /* Minor version */
-  uint16_t minor_version;
-  count = read_content(offset, &minor_version, sizeof minor_version);
-  if (2 != count) std::cout << "Bad Java class file minor version\n";
-  minor_version = be_to_host(minor_version);
-  offset += count;
-  std::cout << "SgAsmJvmConstantPool::parse() offset is " << get_offset() << std::endl;
-
-  /* Major version */
-  uint16_t major_version;
-  count = read_content(offset, &major_version, sizeof major_version);
-  if (2 != count) std::cout << "Bad Java class file major version\n";
-  major_version = be_to_host(major_version);
-  offset += count;
-
-  set_offset(offset);
-  std::cout << "SgAsmJvmConstantPool::parse() offset is " << get_offset() << std::endl;
-#endif
-
   /* Constant pool count */
   uint16_t constant_pool_count;
-  count = header->read_content(offset, &constant_pool_count, sizeof constant_pool_count);
+  auto count = header->read_content(offset, &constant_pool_count, sizeof constant_pool_count);
   if (2 != count) throw FormatError("Bad Java class file constant_pool_count");
   constant_pool_count = be_to_host(constant_pool_count);
   offset +=count;
   std::cout << "SgAsmJvmConstantPool::parse() constant_pool_count is " << constant_pool_count << "\n\n";
 
-  PoolEntry* entry{nullptr};
   // A constant_pool index is considered valid if it is greater than zero and less than constant_pool_count
   for (int ii = 1; ii < constant_pool_count; ii++) {
     /* tag */
@@ -370,44 +345,6 @@ SgAsmJvmConstantPool* SgAsmJvmConstantPool::parse()
   for (PoolEntry* entry : get_entries()->get_entries()) {
     entry->dump(std::cout, ii++);
   }
-
-// NOTE: refactor this once SgJavaClassFile exists
-#if 1
-  /* access_flags */
-  uint16_t access_flags;
-  count = read_content(offset, &access_flags, sizeof access_flags);
-  if (2 != count) std::cout << "Bad Java class file access_flags\n";
-  access_flags = be_to_host(access_flags);
-  offset += count;
-  std::cout << "\nSgAsmJvmConstantPool::access_flags " << access_flags << std::endl;
-
-  /* this_class */
-  uint16_t this_class;
-  count = read_content(offset, &this_class, sizeof this_class);
-  if (2 != count) std::cout << "Bad Java class file this_class\n";
-  this_class = be_to_host(this_class);
-  offset += count;
-  std::cout << "SgAsmJvmConstantPool::this_class " << this_class << std::endl;
-
-  /* super_class */
-  uint16_t super_class;
-  count = read_content(offset, &super_class, sizeof super_class);
-  if (2 != count) std::cout << "Bad Java class file super_class\n";
-  super_class = be_to_host(super_class);
-  offset += count;
-  std::cout << "SgAsmJvmConstantPool::super_class " << super_class << std::endl;
-
-  /* interfaces_count */
-  uint16_t interfaces_count;
-  count = read_content(offset, &interfaces_count, sizeof interfaces_count);
-  if (2 != count) std::cout << "Bad Java class file interfaces_count\n";
-  interfaces_count = be_to_host(interfaces_count);
-  offset += count;
-  std::cout << "SgAsmJvmConstantPool::interfaces_count " << interfaces_count << std::endl;
-
-  //TODO: what's up with the different offsets? And they are diff by 1!
-  //set_offset(offset);
-#endif
 
   std::cout << "\nSgAsmJvmConstantPool::parse finished ...\n\n";
   return this;

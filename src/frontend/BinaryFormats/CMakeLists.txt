@@ -32,6 +32,7 @@ add_library(roseBinaryFormats OBJECT
   ### Java Virtual Machine Format (JVM) ###
   JvmAttribute.C
   JvmConstantPool.C
+  JvmFileHeader.C
 
   ### Microsoft Windows PE Format */
   PeExport.C
