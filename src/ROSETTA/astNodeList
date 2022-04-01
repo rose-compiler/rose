@@ -216,6 +216,7 @@ SgAsmJvmConstantPoolEntry
 SgAsmJvmConstantPoolEntryList
 SgAsmJvmConstantValue
 SgAsmJvmInstruction
+SgAsmJvmFileHeader
 SgAsmJvmNode
 SgAsmLEEntryPoint
 SgAsmLEEntryTable

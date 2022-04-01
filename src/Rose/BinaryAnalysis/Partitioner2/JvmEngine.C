@@ -606,17 +606,26 @@ JvmEngine::parseCommandLine(const std::vector<std::string> &args, const std::str
 #if 1
   auto gf = new SgAsmGenericFile{};
   gf->parse(fileName); /* this loads file into memory, does no reading of file */
-  auto header = new SgAsmGenericHeader(gf);
-  header->parse(); /* does little parsing of file */
+  auto header = new SgAsmJvmFileHeader(gf);
+  ROSE_ASSERT(header == gf->get_header(SgAsmGenericFile::FAMILY_JVM));
 
-  auto pool = new SgAsmJvmConstantPool(header);
-  ROSE_ASSERT(pool->get_entries());
-  pool->parse();
+  auto gh = gf->get_header(SgAsmGenericFile::FAMILY_JVM);
+  std::cout << "--> header class is " << header->class_name() << ":" << header << std::endl;
+  std::cout << "--> generic header class is " << gh->class_name() << ":" << gh << std::endl;
+
+  header->parse();
+  // Not sure we need SgAsmJavaClassFile
+  //  gf->add_header(header);
+  gh = gf->get_header(SgAsmGenericFile::FAMILY_JVM);
+  std::cout << "--> header class is " << header->class_name() << ":" << header << std::endl;
+  std::cout << "--> generic header class is " << gh->class_name() << ":" << gh << std::endl;
+  ROSE_ASSERT(header == gf->get_header(SgAsmGenericFile::FAMILY_JVM));
 #else
   auto jcf = new SgAsmJavaClassFile(fileName);
   std::cout << "JvmEngine::parseCommandLine: is_JVM: " << SgAsmJavaClassFile::is_JVM(jcf) << std::endl;
   jcf->parse(fileName);
 #endif
+
 #endif
 
   return Sawyer::CommandLine::ParserResult{};
