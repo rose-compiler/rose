@@ -488,6 +488,10 @@ void PState::rawWriteAtMemoryLocation(AbstractValue abstractAddress, AbstractVal
   //cout<<"DEBUG: rawrite: done."<<endl;
 }
 
+void PState::initializeArbitraryMemory(AbstractValue memAddr, AbstractValue memValue) {
+  rawWriteAtMemoryLocation(memAddr,memValue);
+}
+
 void PState::rawCombineAtMemoryLocation(AbstractValue abstractMemLoc,
                                      AbstractValue abstractValue) {
   ROSE_ASSERT(!abstractMemLoc.isAVSet());

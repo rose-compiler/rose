@@ -1674,6 +1674,13 @@ namespace CodeThorn {
     }
   }
 
+  void EStateTransferFunctions::initializeArbitraryMemory(EStatePtr estate) {
+    ROSE_ASSERT(getVariableIdMapping());
+    AbstractValue memAddr=createNewMemoryRegionIdAndPointerToIt("$arbitraryMemory",-1); // arbitrary memory is of arbitrary size 
+    AbstractValue::setPointerToArbitraryMemory(memAddr);
+    estate->pstate()->initializeArbitraryMemory(memAddr,AbstractValue::createTop()); // arbitrary memory has arbitrary values
+  }
+  
   VariableId EStateTransferFunctions::globalVarIdByName(std::string varName) {
     return globalVarName2VarIdMapping[varName];
   }
@@ -1888,7 +1895,7 @@ namespace CodeThorn {
           }
           AbstractValue elementSize=getMemoryRegionAbstractElementSize(arrayPtrValue);
           AbstractValue arrayElementAddr=AbstractValue::operatorAdd(arrayPtrValue,indexValue,elementSize);
-          cout<<"DEBUG6: arrayPtrValue("<<arrayPtrValue.toString()<<")+indexValue("<<indexValue.toString()<<") => arrayElementAddr:"<<arrayElementAddr.toString()<<endl;
+          //cout<<"DEBUG6: arrayPtrValue("<<arrayPtrValue.toString()<<")+indexValue("<<indexValue.toString()<<") => arrayElementAddr:"<<arrayElementAddr.toString()<<endl;
           if(arrayElementAddr.isBot()) {
             // inaccessible memory location, return empty estate list
             //return memoryUpdateList;
@@ -3950,9 +3957,13 @@ namespace CodeThorn {
   }
 
   AbstractValue EStateTransferFunctions::createNewMemoryRegionIdAndPointerToIt(string name, int memoryRegionSize) {
-    // create new memory region id
-    VariableId memLocVarId=_variableIdMapping->createAndRegisterNewMemoryRegion(name,memoryRegionSize);
-    _variableIdMapping->setElementSize(memLocVarId,1); // malloc default for char (size=1)
+    // check if memory region is reused
+    VariableId memLocVarId=_variableIdMapping->getMemoryRegionIdByName(name);
+    if(!memLocVarId.isValid()) {
+      // create new memory region id
+      memLocVarId=_variableIdMapping->createAndRegisterNewMemoryRegion(name,memoryRegionSize);
+      _variableIdMapping->setElementSize(memLocVarId,1); // malloc default for char (size=1)
+    }
     AbstractValue allocatedMemoryPtr=AbstractValue::createAddressOfArray(memLocVarId);
     allocatedMemoryPtr.setAbstractFlag(true);
     return allocatedMemoryPtr;

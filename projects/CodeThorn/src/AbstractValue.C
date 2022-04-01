@@ -21,6 +21,7 @@ bool AbstractValue::strictChecking=false;
 bool AbstractValue::byteMode=false;
 bool AbstractValue::pointerSetsEnabled=false;
 int AbstractValue::domainAbstractionVariant=0; // default
+AbstractValue AbstractValue::_pointerToArbitraryMemory=AbstractValue::createBot(); // default bottom element (feature is activated by set-function)
 
 using CodeThorn::logger;
 
@@ -113,6 +114,20 @@ AbstractValue::AbstractValue(bool val) {
     valueType=AbstractValue::AV_INTEGER;
     intValue=0;
   }
+}
+
+void AbstractValue::setPointerToArbitraryMemory(AbstractValue ptr) {
+  ROSE_ASSERT(ptr.isPtr());
+  AbstractValue::_pointerToArbitraryMemory=ptr;
+}
+
+AbstractValue AbstractValue::getPointerToArbitraryMemory() {
+  // by default bot
+  return AbstractValue::_pointerToArbitraryMemory;
+}
+
+bool AbstractValue::isPointerToArbitraryMemory() {
+  return *this==getPointerToArbitraryMemory();
 }
 
 void AbstractValue::setVariableIdMapping(VariableIdMappingExtended* varIdMapping) {
@@ -1150,6 +1165,16 @@ AbstractValue AbstractValue::operatorSub(AbstractValue& a,AbstractValue& b, Abst
 }
 
 AbstractValue AbstractValue::operatorAdd(AbstractValue& a,AbstractValue& b) {
+  if(a.isPointerToArbitraryMemory())
+    return a;
+  if(b.isPointerToArbitraryMemory())
+    return b;
+  if((a.isPtr()&&b.isTop())||(b.isPtr()&&a.isTop())) {
+    auto amp=AbstractValue::getPointerToArbitraryMemory();
+    if(!amp.isBot()) {
+      return amp;
+    }
+  }
   if(a.isTop() || b.isTop())
     return Top();
   if(a.isBot())
@@ -1374,6 +1399,8 @@ AbstractValue AbstractValue::combine(AbstractValue val1, AbstractValue val2) {
       if(val1.getVariableId()==val2.getVariableId()
          &&val1.getIntValue()==val2.getIntValue()) {
         return val1;
+      } else if(!val1.isNullPtr()&&!val2.isNullPtr()&&val1.isPtr()&&val2.isPtr()) {
+        return AbstractValue::getPointerToArbitraryMemory();
       } else {
         if(AbstractValue::pointerSetsEnabled) {
           // promote to ptr set in case the values are not equal (handled above)

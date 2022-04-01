@@ -159,6 +159,11 @@ class AbstractValue {
   static AbstractValue createTop();
   static AbstractValue createBot();
   static AbstractValue createAbstractValuePtrSet(AbstractValueSet*);
+
+  static void setPointerToArbitraryMemory(AbstractValue);
+  static AbstractValue getPointerToArbitraryMemory();
+  bool isPointerToArbitraryMemory();
+  
   void setAbstractValueSetPtr(AbstractValueSet* avPtr);
   AbstractValueSet* getAbstractValueSet() const;
 
@@ -182,7 +187,7 @@ class AbstractValue {
   friend istream& operator>>(istream& os, AbstractValue& value);
   void fromStream(istream& is);
 
-    int getIntValue() const;
+  int getIntValue() const;
   long int getLongIntValue() const;
   float getFloatValue() const;
   double getDoubleValue() const;
@@ -252,6 +257,9 @@ public:
   static bool byteMode; // computes byte offset for array and struct elements
   static bool pointerSetsEnabled;
   static int domainAbstractionVariant; // available: 1
+
+  // set/get functions exist
+  static AbstractValue _pointerToArbitraryMemory; // if set-function is used, this feature is enabled in the domain for pointer operations
 };
 
  ostream& operator<<(ostream& os, const AbstractValue& value);
