@@ -594,6 +594,12 @@ VariableFinder::detectFrameAttributes(const P2::Partitioner &partitioner, const 
                 frame.maxOffset = *frame.size - 1;
                 frame.rule = "ppc: stwu r1, u32 [r1 - N]";
             }
+
+        } else {
+            frame.size = 8;
+            frame.minOffset = 0;
+            frame.maxOffset = 7;
+            frame.rule = "ppc: general";
         }
 
     } else if (auto m68k = isSgAsmM68kInstruction(firstInsn)) {
@@ -619,7 +625,8 @@ VariableFinder::detectFrameAttributes(const P2::Partitioner &partitioner, const 
         } else {
             frame.size = 4 /* previously pushed return address */;
             frame.maxOffset = 3;
-            frame.rule = "m68kkf general";
+            frame.minOffset = 0;
+            frame.rule = "m68k: general";
         }
 
 #ifdef ROSE_ENABLE_ASM_AARCH32
@@ -705,6 +712,12 @@ VariableFinder::detectFrameAttributes(const P2::Partitioner &partitioner, const 
             frame.maxOffset = 3;
             frame.minOffset = -(n + 4);
             frame.rule = "aarch32: str fp, u32 [sp (after sp -= 4)]; add fp, sp, 0; sub sp, sp N";
+
+        } else {
+            frame.size = 8;
+            frame.maxOffset = 3;
+            frame.minOffset = -4;
+            frame.rule = "aarch32: general";
         }
 #endif
     }
@@ -1049,7 +1062,9 @@ VariableFinder::findStackVariables(const P2::Partitioner &partitioner, const P2:
         }
 
         // Create the variable
-        ASSERT_require(maxOffset >= boundary.frameOffset);
+        ASSERT_require2(maxOffset >= boundary.frameOffset,
+                        "maxOffset=" + boost::lexical_cast<std::string>(maxOffset) +
+                        ", boundary.frameOffset=" + boost::lexical_cast<std::string>(boundary.frameOffset));
         const OffsetInterval where = OffsetInterval::hull(boundary.frameOffset, maxOffset);
         rose_addr_t varMaxSize = (uint64_t)maxOffset + 1u - (uint64_t)boundary.frameOffset;
         StackVariable lvar(function, boundary.frameOffset, varMaxSize, boundary.purpose, boundary.definingInsns);
