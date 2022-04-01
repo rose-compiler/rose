@@ -642,10 +642,10 @@ Engine::execute(const Path::Ptr &path, const BS::RiscOperators::Ptr &ops, const 
     ASSERT_forbid(path->isEmpty());
 
     if (mlog[DEBUG]) {
-        mlog[DEBUG] <<"  current path:\n";
         auto nodes = path->nodes();
+        mlog[DEBUG] <<"  current path id=" <<nodes.back()->id() <<" hash=" <<StringUtility::addrToString(path->hash()) <<":\n";
         for (size_t i = 0; i < nodes.size(); ++i)
-            SAWYER_MESG(mlog[DEBUG]) <<boost::format("    node %-3d: %s\n") % i % nodes[i]->printableName();
+            SAWYER_MESG(mlog[DEBUG]) <<boost::format("    node %-3d id=%010d: %s\n") % i % nodes[i]->id() % nodes[i]->printableName();
     }
 
     if (mlog[DEBUG] && settings()->showAssertions)
