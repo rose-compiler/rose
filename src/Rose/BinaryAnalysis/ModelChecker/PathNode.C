@@ -26,7 +26,7 @@ PathNode::PathNode(const ExecutionUnit::Ptr &unit)
 PathNode::PathNode(const Ptr &parent, const ExecutionUnit::Ptr &unit, const SymbolicExpr::Ptr &assertion,
                    const SmtSolver::Evidence &evidence, const BS::State::Ptr &parentOutgoingState)
     : parent_(parent), executionUnit_(unit),  incomingState_(parentOutgoingState), assertions_{assertion},
-      evidence_(evidence), id_(Sawyer::fastRandomIndex(UINT64_MAX)) {
+      evidence_(evidence), id_(Sawyer::fastRandomIndex(UINT32_MAX)) {
     ASSERT_not_null(unit);
     ASSERT_not_null(parent);
     ASSERT_not_null(assertion);
@@ -49,7 +49,7 @@ PathNode::instance(const Ptr &parent, const ExecutionUnit::Ptr &unit, const Symb
     return Ptr(new PathNode(parent, unit, assertion, evidence, parentOutgoingState));
 }
 
-uint64_t
+uint32_t
 PathNode::id() const {
     SAWYER_THREAD_TRAITS::LockGuard lock(mutex_);
     return id_;

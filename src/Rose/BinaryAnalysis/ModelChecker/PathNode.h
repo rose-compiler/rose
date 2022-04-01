@@ -48,7 +48,7 @@ private:
     std::vector<SymbolicExpr::Ptr> assertions_;                    // assertions for the model checker for this node of the path
     SmtSolver::Evidence evidence_;                                 // SMT evidence that path to and including this node is feasible
     std::vector<TagPtr> tags_;                                     // tags associated with this node of the path
-    uint64_t id_ = 0;                                              // a random path ID number
+    uint32_t id_ = 0;                                              // a random path ID number
     double processingTime_ = NAN;                                  // time required to execute and extend this node
     double sortKey_ = NAN;                                         // field for user-defined sorting
 
@@ -92,7 +92,7 @@ public:
      *  Every node has a randomly generated identifier.
      *
      *  Thread safety: This property accessor is thread safe. */
-    uint64_t id() const;
+    uint32_t id() const;
 
     /** Property: Key for user-defined sorting.
      *
