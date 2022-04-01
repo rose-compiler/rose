@@ -439,7 +439,7 @@ void PState::writeToMemoryLocation(AbstractValue abstractMemLoc,
     // writing bot to memory (bot->top conversion)
     abstractValue=AbstractValue(CodeThorn::Top()); // INVESTIGATE
     conditionalApproximateRawWriteToMemoryLocation(abstractMemLoc,abstractValue,strongUpdate);
-  } else if(abstractMemLoc.isTop()) {
+  } else if(abstractMemLoc.isTop()/*||abstractMemLoc.isPointerToArbitraryMemory()*/) {
     //skip (crude memory abstraction)
     combineValueAtAllMemoryLocations(abstractValue);
   } else if(abstractMemLoc.isPtrSet()) {

@@ -49,9 +49,12 @@ namespace CodeThorn {
     MemoryViolationAnalysis::MemoryAccessViolationSet resultList;
     // MemoryViolationAnalysis::MemoryAccessViolationType::ACCESS_ERROR;
     // check memLoc w.r.t. AbstractValue::getVariableIdMapping()
+    //cout<<"DEBUG: checkMemoryAddress: "<<address.toString()<<endl;
     ROSE_ASSERT(AbstractValue::_variableIdMapping);
     if(address.isTop()) {
       resultList.insert(ACCESS_POTENTIALLY_NP);
+      resultList.insert(ACCESS_POTENTIALLY_OUTSIDE_BOUNDS);
+    } if(address.isPointerToArbitraryMemory()) {
       resultList.insert(ACCESS_POTENTIALLY_OUTSIDE_BOUNDS);
     } if(address.isBot()) {
       resultList.insert(ACCESS_NON_EXISTING);
