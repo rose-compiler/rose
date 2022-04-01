@@ -9949,7 +9949,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
-            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
             s & BOOST_SERIALIZATION_NVP(p_entries);
         }
 #endif
@@ -10197,7 +10197,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
-            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
             s & BOOST_SERIALIZATION_NVP(p_tag);
             s & BOOST_SERIALIZATION_NVP(p_bytes);
             s & BOOST_SERIALIZATION_NVP(p_hi_bytes);
@@ -10374,7 +10374,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /*************************************************************************************************************************
-     *                                       JVM ConstantValue attribute
+     *                                  JVM ConstantValue attribute (section 4.7.2)
      *************************************************************************************************************************/
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -10416,13 +10416,13 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
-            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
             s & BOOST_SERIALIZATION_NVP(p_constantvalue_index);
         }
 #endif
 
     public:
-        /** Initialize an attribute by parsing the file.
+        /** Initialize the attribute by parsing the file.
          *
          * @{ */
         virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool) override;
@@ -10441,13 +10441,147 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /*************************************************************************************************************************
+     *                                  JVM Signature attribute (section 4.7.9)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmJvmSignature);
+    IS_SERIALIZABLE(AsmJvmSignature);
+
+#ifdef DOCUMENTATION
+    /** JVM Signature attribute.
+     *
+     *  A Signature attribute stores a signature for a class, interface, constructor, method,
+     *  field, or record component, see section 4.7.9 of the JVM documentation.
+     */
+    class SgAsmJvmSignature: public SgAsmJvmAttribute {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: signature_index
+         *
+         *  The value of the signature_index item must be a valid index into the constant_pool table
+         *  (see JVM documentation).
+         *
+         * @{ */
+        uint16_t get_signature_index() const;
+        void set_signature_index(uint16_t);
+        protected: uint16_t p_signature_index;
+        /** @} */
+#else
+        AsmJvmSignature.setDataPrototype("uint16_t", "signature_index", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmJvmSignature);
+#if defined(SgAsmJvmSignature_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
+            s & BOOST_SERIALIZATION_NVP(p_signature_index);
+        }
+#endif
+
+    public:
+        /** Initialize the attribute by parsing the file.
+         *
+         * @{ */
+        virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool) override;
+        /** @} */
+
+        /** Print some debugging information */
+        virtual void dump(std::ostream &os) override;
+
+#endif // SgAsmJvmSignature_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /*************************************************************************************************************************
+     *                                  JVM SourceFile attribute (section 4.7.10)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmJvmSourceFile);
+    IS_SERIALIZABLE(AsmJvmSourceFile);
+
+#ifdef DOCUMENTATION
+    /** JVM SourceFile attribute.
+     *
+     *  A SourceFile attribute stores an index to the name of the class file, see
+     *  section 4.7.10 of the JVM documentation.
+     */
+    class SgAsmJvmSourceFile: public SgAsmJvmAttribute {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: sourcefile_index
+         *
+         *  The value of the sourcefile_index item must be a valid index into the constant_pool table
+         *  (see JVM documentation).
+         *
+         * @{ */
+        uint16_t get_sourcefile_index() const;
+        void set_sourcefile_index(uint16_t);
+        protected: uint16_t p_sourcefile_index;
+        /** @} */
+#else
+        AsmJvmSourceFile.setDataPrototype("uint16_t", "sourcefile_index", "= 0",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmJvmSourceFile);
+#if defined(SgAsmJvmSourceFile_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
+            s & BOOST_SERIALIZATION_NVP(p_sourcefile_index);
+        }
+#endif
+
+    public:
+        /** Initialize the attribute by parsing the file.
+         *
+         * @{ */
+        virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool) override;
+        /** @} */
+
+        /** Print some debugging information */
+        virtual void dump(std::ostream &os) override;
+
+#endif // SgAsmJvmSourceFile_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /*************************************************************************************************************************
      *                                      Root of JVM Attribute classes
      *************************************************************************************************************************/
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     NEW_NONTERMINAL_MACRO(AsmJvmAttribute,
-                          AsmJvmConstantValue,
+                          AsmJvmConstantValue | AsmJvmSignature | AsmJvmSourceFile,
                           "AsmJvmAttribute", "AsmJvmAttributeTag", false);
     AsmJvmAttribute.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmJvmAttribute);
@@ -10499,7 +10633,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
-            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
             s & BOOST_SERIALIZATION_NVP(p_attribute_name_index);
             s & BOOST_SERIALIZATION_NVP(p_attribute_length);
         }
@@ -17736,7 +17870,7 @@ void Grammar::setUpBinaryInstructions() {
 
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
-            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgNode);
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmNode);
         }
 #endif
 #endif // SgAsmJvmNode_OTHERS
