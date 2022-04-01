@@ -230,7 +230,7 @@ CallGraphBuilder::buildCallGraph(Predicate pred)
             graphNode->set_SgNode(unique);
             graphNodes[unique] = graphNode;
             graph->addNode(graphNode);
-            printf("Added function %s %x\n", functionName.c_str(), unique);
+            printf("Added function %s %p\n", functionName.c_str(), unique);
           }
          else
           {

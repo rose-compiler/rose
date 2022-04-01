@@ -106,8 +106,7 @@ void AstPostProcessing (SgNode* node)
 
           case V_SgDirectory:
              {
-               SgDirectory* directory = isSgDirectory(node);
-               ROSE_ASSERT(directory != NULL);
+               ROSE_ASSERT(isSgDirectory(node));
 
                printf ("SgDirectory support not implemented in AstPostProcessing \n");
                ROSE_ABORT();
@@ -132,8 +131,7 @@ void AstPostProcessing (SgNode* node)
        // Test for a binary executable, object file, etc.
           case V_SgBinaryComposite:
              {
-               SgBinaryComposite* file = isSgBinaryComposite(node);
-               ROSE_ASSERT(file != NULL);
+               ROSE_ASSERT(isSgBinaryComposite(node));
 
                printf ("Error: AstPostProcessing of SgBinaryFile is not defined \n");
                ROSE_ABORT();

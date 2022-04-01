@@ -137,8 +137,7 @@ MaxSourceExtents::SourceExtentsTraversal::evaluateSynthesizedAttribute (SgNode* 
 #if DEBUG_evaluateSynthesizedAttribute
                printf ("   ---   --- child = %p = %s = %s \n",childAttributes[i].node,child_name.c_str(),childAttributes[i].node->class_name().c_str());
 #endif
-               SgLocatedNode* child_locatedNode = isSgLocatedNode(childAttributes[i].node);
-               ROSE_ASSERT(child_locatedNode != NULL);
+               ROSE_ASSERT(isSgLocatedNode(childAttributes[i].node));
 
             // bool child_isCompilerGenerated = child_locatedNode->isCompilerGenerated();
 
