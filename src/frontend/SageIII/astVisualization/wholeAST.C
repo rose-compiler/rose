@@ -12,9 +12,6 @@
    #include "AsmUnparser_compat.h"
 #endif
 
-#ifndef ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
-   #include "merge.h"
-#endif
 // **********************************************************
 // **********************************************************
 //       Source code which can be more later

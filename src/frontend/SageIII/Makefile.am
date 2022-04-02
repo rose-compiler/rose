@@ -17,7 +17,7 @@ fSageSupportPath=sage_support#
 if ROSE_USE_INTERNAL_FRONTEND_DEVELOPMENT
    SUBDIRS = astFixup astPostProcessing sageInterface astVisualization virtualCFG includeDirectivesProcessing
 else
-   SUBDIRS = astFileIO astMerge astFixup astPostProcessing sageInterface virtualCFG astTokenStream astHiddenTypeAndDeclarationLists astVisualization astFromString includeDirectivesProcessing
+   SUBDIRS = astFileIO astFixup astPostProcessing sageInterface virtualCFG astTokenStream astHiddenTypeAndDeclarationLists astVisualization astFromString includeDirectivesProcessing
 endif
 
 # DQ (12/29/2009): This is only used to handle generated code as smaller files.
@@ -246,7 +246,6 @@ nodist_libsage3_la_SOURCES = $(GENERATED_SOURCE)
 
 if ROSE_USE_BOOST_WAVE
 libsage3_la_LIBADD= \
-  astMerge/libastMerge.la \
   astFileIO/libastFileIO.la \
   astFixup/libastFixup.la \
   astPostProcessing/libastPostProcessing.la \
@@ -259,7 +258,6 @@ libsage3_la_LIBADD= \
   astTokenStream/libastTokenStream.la
 else
 libsage3_la_LIBADD= \
-  astMerge/libastMerge.la \
   astFileIO/libastFileIO.la \
   astFixup/libastFixup.la \
   astPostProcessing/libastPostProcessing.la \

@@ -1,7 +1,7 @@
 
 #include "sage3basic.h"
 
-#include "fixupTraversal.h"
+#include "Rose/AST/fixupTraversal.h"
 
 #if !defined(ROSE_PEDANTIC_FIXUP_CONSTANT_FOLDING)
 #  define ROSE_PEDANTIC_FIXUP_CONSTANT_FOLDING 0

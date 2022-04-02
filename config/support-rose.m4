@@ -2244,7 +2244,6 @@ src/frontend/SageIII/astFileIO/Makefile
 src/frontend/SageIII/astFixup/Makefile
 src/frontend/SageIII/astFromString/Makefile
 src/frontend/SageIII/astHiddenTypeAndDeclarationLists/Makefile
-src/frontend/SageIII/astMerge/Makefile
 src/frontend/SageIII/astPostProcessing/Makefile
 src/frontend/SageIII/astTokenStream/Makefile
 src/frontend/SageIII/astVisualization/Makefile

@@ -1,6 +1,6 @@
 
 #include "sage3basic.h"
-#include "fixupTraversal.h"
+#include "Rose/AST/fixupTraversal.h"
 
 #define DEBUG_LinkAcrossFiles 0
 

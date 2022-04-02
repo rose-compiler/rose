@@ -118,7 +118,6 @@ set(rose_LIB_SRCS
   $<TARGET_OBJECTS:roseDisassemblers>
   $<TARGET_OBJECTS:roseBinaryFormats>
   $<TARGET_OBJECTS:roseAsmUnparser>
-  $<TARGET_OBJECTS:astMerge>
   $<TARGET_OBJECTS:astFixup>
   $<TARGET_OBJECTS:midend>
   $<TARGET_OBJECTS:abstractHandle>

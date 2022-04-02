@@ -372,7 +372,6 @@ ROSE_INCLUDES_WITHOUT_BOOST_ISYSTEM_PATH = \
      -I$(top_srcdir)/src/frontend/SageIII \
      -I$(top_srcdir)/src/frontend/SageIII/astFixup \
      -I$(top_srcdir)/src/frontend/SageIII/astPostProcessing \
-     -I$(top_srcdir)/src/frontend/SageIII/astMerge \
      -I$(top_srcdir)/src/frontend/SageIII/astVisualization \
      -I$(top_srcdir)/src/frontend/SageIII/astFileIO \
      -I$(top_srcdir)/src/frontend/SageIII/sageInterface \

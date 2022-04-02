@@ -1,6 +1,6 @@
 
 #include "sage3basic.h"
-#include "fixupTraversal.h"
+#include "Rose/AST/fixupTraversal.h"
 #include "AST_FILE_IO.h"
 
 #define DEBUG_DeleteDisconnectedNode 0

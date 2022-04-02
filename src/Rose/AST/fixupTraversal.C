@@ -1,6 +1,6 @@
 
 #include "sage3basic.h"
-#include "fixupTraversal.h"
+#include "Rose/AST/fixupTraversal.h"
 
 using namespace std;
 

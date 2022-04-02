@@ -1,7 +1,7 @@
 
 #include "sage3basic.h"
 
-#include "merge.h"
+#include "Rose/AST/io.h"
 
 #define TAKE_MEMPOOL_SNAPSHOT 0
 #if TAKE_MEMPOOL_SNAPSHOT
