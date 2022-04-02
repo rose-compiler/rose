@@ -61,12 +61,12 @@
 // DQ (9/8/2017): Debugging ROSE_ASSERT. Call sighandler_t signal(int signum, sighandler_t handler);
 #include<signal.h>
 
+#include "Rose/AST/io.h"
+#include "Rose/AST/cmdline.h"
+
 #include "AST_FILE_IO.h"
-#include "merge.h"
 // Note that this is required to define the Sg_File_Info_XXX symbols (need for file I/O)
 #include "Cxx_GrammarMemoryPoolSupport.h"
-
-#include "Rose/AST/cmdline.h"
 
 // DQ (12/31/2005): This is OK if not declared in a header file
 using namespace std;

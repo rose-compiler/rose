@@ -1,0 +1,7 @@
+include_rules
+
+# FIXME: this should produce libRoseAST
+run $(librose_compile) checker.C graphviz.C merge.C fixupTraversal.C link.C delete.C share.C load.C consistency.C
+
+# FIXME: these header should go to Rose/AST
+run $(public_header) cmdline.h graphviz.h checker.h merge.h fixupTraversal.h
