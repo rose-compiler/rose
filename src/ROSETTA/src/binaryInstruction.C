@@ -5727,8 +5727,6 @@ void Grammar::setUpBinaryInstructions() {
             s & BOOST_SERIALIZATION_NVP(p_this_class);
             s & BOOST_SERIALIZATION_NVP(p_super_class);
             s & BOOST_SERIALIZATION_NVP(p_constant_pool);
-#ifdef JVM_IGNORE_SERIALIZATION
-#endif
         }
 #endif
 
@@ -5742,6 +5740,9 @@ void Grammar::setUpBinaryInstructions() {
          *  from the header. Since the size of the ELF File Header is determined by the contents of the ELF File Header as
          *  stored in the file, the size of the ELF File Header will be adjusted upward if necessary. */
         virtual SgAsmJvmFileHeader* parse() override;
+
+        /** Returns true if a cursory look at the file indicates that it could be a JVM class file. */
+        static bool is_JVM(SgAsmGenericFile*);
 
 #endif // SgAsmJvmFileHeader_OTHERS
 
@@ -10650,6 +10651,56 @@ void Grammar::setUpBinaryInstructions() {
         virtual void dump(std::ostream &os);
 
 #endif // SgAsmJvmAttribute_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /*************************************************************************************************************************
+     *                                           JVM-Java Class File
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmJavaClassFile);
+    IS_SERIALIZABLE(AsmJavaClassFile);
+
+#ifdef DOCUMENTATION
+    /** Java Class File.
+     *
+     *  This node represents the contents of a Java class file for JVM executables.
+     *  See JVM documentation for more information.
+     */
+    class SgAsmJavaClassFile: public SgAsmExecutableFileFormat /*SgAsmGenericFile*/ {
+    public:
+#endif
+
+        DECLARE_OTHERS(AsmJavaClassFile);
+#if defined(SgAsmJavaClassFile_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat /*SgAsmGenericFile*/);
+        }
+#endif
+
+    public:
+        /** Initialize the object by parsing the class file.
+         *
+         * @{ */
+        /*virtual*/ SgAsmJavaClassFile * parse(std::string file_name) /*override*/;
+        /** @} */
+
+        /** Print some debugging information */
+        void dump(std::ostream &os);
+
+#endif // SgAsmJavaClassFile_OTHERS
 
 #ifdef DOCUMENTATION
     };
@@ -17464,6 +17515,7 @@ void Grammar::setUpBinaryInstructions() {
                           AsmElfSymverNeededAuxList | AsmPEImportDirectory | AsmPESectionTableEntry |
                           AsmPEExportDirectory | AsmPERVASizePair | AsmCoffSymbolList | AsmPERVASizePairList |
                           AsmElfEHFrameEntryCI |
+                          AsmJavaClassFile |
                           AsmPEImportDirectoryList | AsmNEEntryPoint | AsmNERelocEntry | AsmNESectionTableEntry |
                           AsmElfEHFrameEntryCIList | AsmLEPageTableEntry | AsmLEEntryPoint | AsmLESectionTableEntry |
                           AsmElfEHFrameEntryFDList | AsmDwarfInformation | AsmPEImportItem | AsmPEImportItemList,
