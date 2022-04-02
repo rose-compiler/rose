@@ -143,18 +143,6 @@ SgAsmJvmFileHeader::parse()
 
   std::cout << "SgAsmJvmFileHeader::p_super_class " << p_super_class << std::endl;
 
-  /* interfaces_count */
-  uint16_t interfaces_count;
-  count = read_content(offset, &interfaces_count, sizeof interfaces_count);
-  if (2 != count) {
-    throw FormatError("Bad Java class file interfaces_count");
-  }
-  interfaces_count = be_to_host(interfaces_count);
-  offset += count;
-  set_offset(offset);
-
-  std::cout << "SgAsmJvmFileHeader::interfaces_count " << interfaces_count << std::endl;
-
   return this;
 }
 
@@ -179,9 +167,9 @@ SgAsmJvmFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
   char p[4096];
   if (idx>=0) {
-    sprintf(p, "%sPvmFileHeader[%zd].", prefix, idx);
+    sprintf(p, "%sJvmFileHeader[%zd].", prefix, idx);
   } else {
-    sprintf(p, "%sPvmFileHeader.", prefix);
+    sprintf(p, "%sJvmFileHeader.", prefix);
   }
   int w = std::max(1, DUMP_FIELD_WIDTH-(int)strlen(p));
 
@@ -192,7 +180,8 @@ SgAsmJvmFileHeader::dump(FILE *f, const char *prefix, ssize_t idx) const
 }
 
 bool
-is_JVM(SgAsmGenericFile* file) {
+SgAsmJvmFileHeader::is_JVM(SgAsmGenericFile* file)
+{
   ROSE_ASSERT(file != nullptr);
 
   /* Turn off byte reference tracking for the duration of this function. We don't want our testing the file contents to
