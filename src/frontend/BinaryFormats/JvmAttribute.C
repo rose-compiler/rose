@@ -10,13 +10,35 @@
 using namespace Rose::Diagnostics;
 using namespace ByteOrder;
 
-#if 0
-SgAsmJvmAttribute::SgAsmJvmAttribute(SgAsmGenericHeader* fhdr)
-  : SgAsmGenericSection(fhdr->get_file(), fhdr)
+SgAsmJvmAttribute::SgAsmJvmAttribute(const SgAsmJvmConstantPool* pool)
 {
   std::cout << "SgAsmJvmAttribute::ctor() ...\n";
 }
-#endif
+
+SgAsmJvmAttribute* SgAsmJvmAttribute::create_attribute(SgAsmJvmConstantPool* pool)
+{
+  SgAsmGenericHeader* header{pool->get_header()};
+  rose_addr_t offset{header->get_offset()};
+  uint16_t attribute_name_index;
+
+  std::cout << "SgAsmJvmAttribute::createAttribute() ...\n";
+  std::cout << "SgAsmJvmAttribute:createAttribute() offset is " << offset << std::endl;
+
+  // attribute_name_index
+  //
+  auto count = header->read_content(offset, &attribute_name_index, sizeof attribute_name_index);
+  if (2 != count) {
+    //throw FormatError("Bad Java class file attribute_name_index");
+    ROSE_ASSERT(false && "Bad Java class file attribute_name_index");
+  }
+  attribute_name_index = be_to_host(attribute_name_index);
+  offset += count;
+  // Don't advance offset, just need to see what attribute type to create?
+  // header->set_offset(offset);
+
+  std::cout << "SgAsmJvmAttribute::attribute_name_index " << attribute_name_index << std::endl;
+
+}
 
 SgAsmJvmAttribute* SgAsmJvmAttribute::parse(SgAsmJvmConstantPool* pool)
 {

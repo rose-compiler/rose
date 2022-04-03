@@ -52,6 +52,14 @@ SgAsmJavaClassFile::~SgAsmJavaClassFile()
 }
 #endif
 
+const SgAsmJvmConstantPool* SgAsmJavaClassFile::get_constant_pool() const
+{
+  SgAsmJvmConstantPool* pool{nullptr};
+  ROSE_ASSERT(pool && "TODO: Get this from header?");
+
+  return pool;
+}
+
 #if 0
 bool
 SgAsmJavaClassFile::is_JVM(SgAsmGenericFile* file)
@@ -104,6 +112,9 @@ SgAsmJavaClassFile::parse(std::string fileName)
   std::cout << "--> generic header class is " << gh->class_name() << ":" << gh << std::endl;
   ROSE_ASSERT(header == gf->get_header(SgAsmGenericFile::FAMILY_JVM));
 
+  auto pool = header->get_constant_pool();
+  ROSE_ASSERT(pool && "JVM constant pool is a nullptr");
+
   rose_addr_t offset{gh->get_offset()};
   std::cout << "SgAsmJvmClassFile::parse() offset is " << offset << std::endl;
 
@@ -122,7 +133,7 @@ SgAsmJavaClassFile::parse(std::string fileName)
   // TeMPorary
   ROSE_ASSERT(interfaces_count == 0);
 
-  // Fields sections
+  // Fields
   //
   uint16_t fields_count;
   count = gh->read_content(offset, &fields_count, sizeof fields_count);
@@ -137,7 +148,7 @@ SgAsmJavaClassFile::parse(std::string fileName)
   // TeMPorary
   ROSE_ASSERT(fields_count == 0);
 
-  // Methods sections
+  // Methods
   //
   uint16_t methods_count;
   count = gh->read_content(offset, &methods_count, sizeof methods_count);
@@ -149,6 +160,14 @@ SgAsmJavaClassFile::parse(std::string fileName)
   gh->set_offset(offset);
 
   std::cout << "SgAsmJvmFileHeader::methods_count " << methods_count << std::endl;
+
+  //  for (int i; i < methods_count; i++) {
+  SgAsmJvmMethod* method = new SgAsmJvmMethod(this, gh);
+  method->parse(pool);
+    // }
+
+  // Attributes
+  //
 
 //erasmus
 #if 0

@@ -34,6 +34,7 @@ add_library(roseBinaryFormats OBJECT
   JvmAttribute.C
   JvmConstantPool.C
   JvmFileHeader.C
+  JvmMethod.C
 
   ### Microsoft Windows PE Format */
   PeExport.C
