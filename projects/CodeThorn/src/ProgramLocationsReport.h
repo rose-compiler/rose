@@ -48,7 +48,7 @@ namespace CodeThorn {
 
     typedef std::string LineColString;
     typedef std::set<std::string> SortedProgramLocationStringSet;
-    SortedProgramLocationStringSet createOriginalProgramLocationSet(LabelSet labSet, Labeler* labeler);
+    static SortedProgramLocationStringSet createOriginalProgramLocationSet(LabelSet labSet, Labeler* labeler);
   private:
 
     // provide set of all locations (unused function)
