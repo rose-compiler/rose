@@ -1,7 +1,6 @@
 
 #include "sage3basic.h"
 
-#include "Rose/AST/graphviz.h"
 #include "Rose/AST/cmdline.h"
 
 #include "wholeAST_API.h"

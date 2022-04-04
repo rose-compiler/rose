@@ -1,5 +1,5 @@
 add_library(RoseAST OBJECT
-  cmdline.C graphviz.C checker.C fixupTraversal.C merge.C link.C delete.C share.C load.C consistency.C)
+  graphviz.C fixupTraversal.C io/merge.C io/link.C io/delete.C io/share.C io/load.C checker/consistency.C checker/checker.C)
 
 add_dependencies(RoseAST rosetta_generated)
 
@@ -7,5 +7,5 @@ add_dependencies(RoseAST rosetta_generated)
 ########### install files ###############
 
 install(FILES
-  cmdline.h graphviz.h checker.h merge.h fixupTraversal.h
+  cmdline.h io.h checker.h fixupTraversal.h
   DESTINATION ${INCLUDE_INSTALL_DIR}/Rose/AST)
