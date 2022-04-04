@@ -599,6 +599,14 @@ void Normalization::hoistBranchInitStatementsInAst(SgNode* node)
     }
   }
 
+void Normalization::resetLineColInfo(SgLocatedNode* locNode, SgNodeHelper::LineColPair lcPair) {
+  if(locNode) {
+    if(auto fileInfoPtr=locNode->get_file_info()) {
+      fileInfoPtr->set_line(lcPair.first);
+      fileInfoPtr->set_col(lcPair.second);          
+    }
+  }
+}
   // transformation: if(C) ... => T t=C; if(t) ...
    // transformation: switch(C) ... => T t=C; switch(t) ...
   // while/do-while/for: (see below)
@@ -615,21 +623,24 @@ void Normalization::hoistBranchInitStatementsInAst(SgNode* node)
 
     if(isSgIfStmt(stmt)||isSgSwitchStatement(stmt)) {
       if(SgExpression* condExpr=isSgExpression(condNode)) {
-      // (i) build tmp var with cond as initializer
-      SgScopeStatement* scope=stmt->get_scope();
-      auto tmpVarDeclaration=buildVariableDeclarationWithInitializerForExpression(condExpr, scope);
-      tmpVarDeclaration->set_parent(scope);
-      ROSE_ASSERT(tmpVarDeclaration!= 0);
-      SAWYER_MESG(logger[TRACE])<<"hoistCondition:"<<tmpVarDeclaration->unparseToString()<<endl;
-      auto tmpVarReference=buildVarRefExpForVariableDeclaration(tmpVarDeclaration);
+        // (i) build tmp var with cond as initializer
+        SgScopeStatement* scope=stmt->get_scope();
+        auto tmpVarDeclaration=buildVariableDeclarationWithInitializerForExpression(condExpr, scope);
+        tmpVarDeclaration->set_parent(scope);
+        ROSE_ASSERT(tmpVarDeclaration!= 0);
+        SAWYER_MESG(logger[TRACE])<<"hoistCondition:"<<tmpVarDeclaration->unparseToString()<<endl;
+        auto tmpVarReference=buildVarRefExpForVariableDeclaration(tmpVarDeclaration);
 
-      // (ii) replace cond with new tmp-varref
-      bool deleteReplacedExpression=false;
-      SgNodeHelper::replaceExpression(condExpr,tmpVarReference,deleteReplacedExpression);
+        // (ii) replace cond with new tmp-varref
+        bool deleteReplacedExpression=false;
+        // reset line/col info in tmp var (from original cond)
+        SgNodeHelper::LineColPair lcPair=SgNodeHelper::lineColumnPair(condExpr);
+        resetLineColInfo(tmpVarReference,lcPair);
+        SgNodeHelper::replaceExpression(condExpr,tmpVarReference,deleteReplacedExpression);
 
-      // (iii) insert declaration with initializer before stmt
-      // cases if and switch
-      SageInterface::insertStatementBefore(stmt, tmpVarDeclaration);
+        // (iii) insert declaration with initializer before stmt
+        // cases if and switch
+        SageInterface::insertStatementBefore(stmt, tmpVarDeclaration);
       } else if(SgVariableDeclaration* condVarDecl=isSgVariableDeclaration(condNode)) {
         cerr<<"Error at "<<SgNodeHelper::sourceFilenameLineColumnToString(stmt)<<endl;
         cerr<<"Error: Normalization: Variable declaration in condition of if statement. Not supported yet:"<<condVarDecl->unparseToString()<<endl;
@@ -654,6 +665,8 @@ void Normalization::hoistBranchInitStatementsInAst(SgNode* node)
         cerr<<"Error: Normalization: Variable declaration in condition of while or do-while statement. Not supported yet."<<endl;
         exit(1);
       }
+      
+      SgNodeHelper::LineColPair lcPair=SgNodeHelper::lineColumnPair(oldWhileCond); // preserve original lin/col info
       SgExprStatement* exprStmt=SageBuilder::buildExprStatement(SageBuilder::buildIntValHex(1));
       SgNodeHelper::setCond(stmt,exprStmt);
       exprStmt->set_parent(stmt);
@@ -679,9 +692,11 @@ void Normalization::hoistBranchInitStatementsInAst(SgNode* node)
       }
 
       ROSE_ASSERT(negatedOldWhileCond);
+      resetLineColInfo(negatedOldWhileCond,lcPair);
       SgIfStmt* ifStmt=SageBuilder::buildIfStmt(negatedOldWhileCond,
                                                 SageBuilder::buildBreakStmt(),
                                                 0);
+      resetLineColInfo(ifStmt,lcPair);
       SgScopeStatement* body=isSgScopeStatement(SgNodeHelper::getLoopBody(stmt));
       ROSE_ASSERT(body);
       // (iii) insert if-statement

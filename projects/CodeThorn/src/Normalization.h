@@ -14,6 +14,7 @@ class SgSwitchStatement;
 
 #include "NormalizationOp.h"
 #include "NormalizationInliner.h"
+#include "SgNodeHelper.h"
 
 namespace CodeThorn {
   
@@ -366,7 +367,8 @@ namespace CodeThorn {
     static std::string labelPrefix;
 
     std::list<NormalizationOp*> loweringSequence;
-
+    void resetLineColInfo(SgLocatedNode* locNode, SgNodeHelper::LineColPair lcPair);
+    
     void removeDefaultInliner();
     CodeThorn::InlinerBase* _inliner=0;
     bool _defaultInliner=true;
