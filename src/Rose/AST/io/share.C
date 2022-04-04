@@ -185,7 +185,7 @@ struct NameBasedSharing : public ROSE_VisitTraversal {
   }
 };
 
-void shareRedundantNodes(SgProject * project) {
+void share(SgProject * project) {
   NameBasedSharing nbs;
   nbs.apply();
 }

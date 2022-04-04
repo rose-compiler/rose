@@ -227,9 +227,10 @@ void merge(SgProject * project) {
 #if DEBUG__ROSE_AST_MERGE
   printf("Rose::AST::merge: project = %x\n", project);
 #endif
-  TimingPerformance timer ("AST merge:");
 
+  TimingPerformance timer ("AST merge:");
   int nodes_start = numberOfNodes();
+
 #if ENABLE_plot_links
   { std::ofstream ofs("mergelink-before.dot"); plot_links(ofs); }
 #endif
@@ -237,7 +238,8 @@ void merge(SgProject * project) {
   Rose::MemPool::snapshot("mempool-astmerge-before.csv");
 #endif
 
-  shareRedundantNodes(project);
+  Rose::AST::share(project);
+
 #if ENABLE_plot_links
   { std::ofstream ofs("mergelink-shared.dot"); plot_links(ofs); }
 #endif
@@ -245,7 +247,7 @@ void merge(SgProject * project) {
   Rose::MemPool::snapshot("mempool-astmerge-shared.csv");
 #endif
 
-  deleteIslands(project);
+  Rose::AST::prune(project);
 
 #if ENABLE_plot_links
   { std::ofstream ofs("mergelink-pruned.dot"); plot_links(ofs); }
@@ -254,7 +256,7 @@ void merge(SgProject * project) {
   Rose::MemPool::snapshot("mempool-astmerge-pruned.csv");
 #endif
 
-  link(project);
+  Rose::AST::link(project);
 
 #if ENABLE_plot_links
   { std::ofstream ofs("mergelink-linked.dot"); plot_links(ofs); }

@@ -14,17 +14,15 @@ void checker_t::exec(SgProject * project) const {
 
   unsigned issues = 0;
   for (auto mode: modes) {
-    switch (mode) {
-      case Mode::ll: {
-        // TODO
-        break;
-      }
-      case Mode::ast: {
-        // TODO
-        break;
-      }
-      default:
-        ROSE_ABORT();
+    switch (mode) { // TODO
+      case Mode::all:                      break;
+      case Mode::integrity:                break;
+      case Mode::integrity_edges:          break;
+      case Mode::integrity_declarations:   break;
+      case Mode::integrity_symbols:        break;
+      case Mode::integrity_types:          break;
+      case Mode::consistency:              break;
+      default:                ROSE_ABORT();
     }
   }
   if (log.size() > 0) {
@@ -54,10 +52,20 @@ void checker_t::exec(SgProject * project) const {
   }
 }
 checker_t::Mode checker_t::__mode(std::string const & str) {
-  if (str == "ll") {
-    return Mode::ll;
-  } else if (str == "ast") {
-    return Mode::ast;
+  if (str == "all") {
+    return Mode::all;
+  } else if (str == "integrity") {
+    return Mode::integrity;
+  } else if (str == "integrity_edges") {
+    return Mode::integrity_edges;
+  } else if (str == "integrity_declarations") {
+    return Mode::integrity_declarations;
+  } else if (str == "integrity_symbols") {
+    return Mode::integrity_symbols;
+  } else if (str == "integrity_types") {
+    return Mode::integrity_types;
+  } else if (str == "consistency") {
+    return Mode::consistency;
   } else {
     return Mode::unknown;
   }

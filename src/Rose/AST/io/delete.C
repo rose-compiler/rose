@@ -140,7 +140,7 @@ struct DeleteDisconnectedNode : public ROSE_VisitTraversal {
   }
 };
 
-void deleteIslands(SgProject * project) {
+void prune(SgProject * project) {
   DeleteDisconnectedNode ddn;
   ddn.apply(project);
 }
