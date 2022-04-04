@@ -77,6 +77,7 @@ class AbstractValue {
   // should use this function to model the semantics of an undefined value.
   bool isUndefined() const; 
   bool isTop() const;
+  bool isTopOrArbitraryMemPtr() const;
   bool isTrue() const;
   bool isFalse() const;
   bool isBot() const;
@@ -162,7 +163,7 @@ class AbstractValue {
 
   static void setPointerToArbitraryMemory(AbstractValue);
   static AbstractValue getPointerToArbitraryMemory();
-  bool isPointerToArbitraryMemory();
+  bool isPointerToArbitraryMemory() const;
   
   void setAbstractValueSetPtr(AbstractValueSet* avPtr);
   AbstractValueSet* getAbstractValueSet() const;
