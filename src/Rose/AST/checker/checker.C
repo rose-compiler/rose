@@ -1,90 +1,45 @@
 
 #include "sage3basic.h"
+#include "AST_FILE_IO.h"
 
 #include "Rose/AST/checker.h"
-#include "Rose/AST/cmdline.h"
+#include "Rose/AST/defect.h"
 
-namespace Rose {
-namespace AST {
+namespace Rose { namespace AST { namespace Defects {
 
-__when_T<checker_t> checker;
+std::set<defect_t<Kind::any> *> defect_t<Kind::any>::all;
 
-void checker_t::exec(SgProject * project) const {
-  if (!on) return;
+defect_t<Kind::any>::defect_t(Kind kind_) : kind(kind_) {}
 
-  unsigned issues = 0;
-  for (auto mode: modes) {
-    switch (mode) { // TODO
-      case Mode::all:                      break;
-      case Mode::integrity:                break;
-      case Mode::integrity_edges:          break;
-      case Mode::integrity_declarations:   break;
-      case Mode::integrity_symbols:        break;
-      case Mode::integrity_types:          break;
-      case Mode::consistency:              break;
-      default:                ROSE_ABORT();
-    }
-  }
-  if (log.size() > 0) {
-    // TODO
-  }
-  if (save.size() > 0) {
-    // TODO
-  }
-  if (issues > 0) {
-    switch (effect) {
-      case Effect::none: break;
-      case Effect::summary: {
-        // TODO
-        break;
-      }
-      case Effect::report: {
-        // TODO
-        break;
-      }
-      case Effect::fail: {
-        // TODO
-        break;
-      }
-      default:
-        ROSE_ABORT();
-    }
-  }
-}
-checker_t::Mode checker_t::__mode(std::string const & str) {
-  if (str == "all") {
-    return Mode::all;
-  } else if (str == "integrity") {
-    return Mode::integrity;
-  } else if (str == "integrity_edges") {
-    return Mode::integrity_edges;
-  } else if (str == "integrity_declarations") {
-    return Mode::integrity_declarations;
-  } else if (str == "integrity_symbols") {
-    return Mode::integrity_symbols;
-  } else if (str == "integrity_types") {
-    return Mode::integrity_types;
-  } else if (str == "consistency") {
-    return Mode::consistency;
-  } else {
-    return Mode::unknown;
-  }
+void defect_t<Kind::any>::clear() {
+  for (auto d: all) delete d;
+  all.clear();
 }
 
-checker_t::Effect checker_t::__effect(std::string const & str) {
-  if (str == "none") {
-    return Effect::none;
-  } else if (str == "summary") {
-    return Effect::summary;
-  } else if (str == "report") {
-    return Effect::report;
-  } else if (str == "fail") {
-    return Effect::fail;
-  } else {
-    return Effect::unknown;
-  }
+void defect_t<Kind::any>::display(std::ostream & out) {
+  // TODO
 }
 
+} } }
+
+namespace Rose { namespace AST { namespace Checker {
+
+bool all(SgProject * project) {
+  return integrity(project) && consistency(project);
 }
+
+bool integrity(SgProject * project) {
+  bool res = integrity_edges(project);
+  if (!res) return false;
+  res &= integrity_declarations(project);
+  res &= integrity_symbols(project);
+  res &= integrity_types(project);
+  return res;
 }
+
+bool consistency(SgProject * project) {
+  return true; // TODO
+}
+
+} } }
 

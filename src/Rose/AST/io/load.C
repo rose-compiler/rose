@@ -12,8 +12,7 @@
 
 using namespace std;
 
-namespace Rose {
-namespace AST {
+namespace Rose { namespace AST { namespace IO {
 
 static void mergeSymbolTable(SgSymbolTable * gst, SgSymbolTable * st) {
   SgSymbolTable::BaseHashType* iht = st->get_table();
@@ -123,13 +122,13 @@ void load(SgProject * project, std::list<std::string> const & astfiles) {
 #if DEBUG__ROSE_AST_LOAD
   printf(" -- gtt = %p\n", gtt);
 #endif
-  SgNode::set_globalTypeTable(NULL);
+  SgNode::set_globalTypeTable(nullptr);
 
   SgFunctionTypeTable * gftt = SgNode::get_globalFunctionTypeTable();
 #if DEBUG__ROSE_AST_LOAD
   printf(" -- gftt = %p\n", gftt);
 #endif
-  SgNode::set_globalFunctionTypeTable(NULL);
+  SgNode::set_globalFunctionTypeTable(nullptr);
 
   std::map<int, std::string> gf2n = Sg_File_Info::get_fileidtoname_map();
   std::map<std::string, int> gn2f = Sg_File_Info::get_nametofileid_map();
@@ -212,6 +211,5 @@ void load(SgProject * project, std::list<std::string> const & astfiles) {
 #endif
 }
 
-}
-}
+} } }
 

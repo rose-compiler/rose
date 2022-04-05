@@ -1,6 +1,5 @@
 
 #include "sage3basic.h"
-#include "Rose/AST/fixupTraversal.h"
 #include "AST_FILE_IO.h"
 
 #define DEBUG_DeleteDisconnectedNode 0
@@ -11,8 +10,10 @@
 #  include "memory-pool-snapshot.h"
 #endif
 
-namespace Rose {
-namespace AST {
+// EDG as persistent caches that need to be cleared
+namespace EDG_ROSE_Translation { void clear_global_caches(); }
+
+namespace Rose { namespace AST { namespace IO {
 
 // Prevent double deletes by traversing the various subtree in a top down fashion
 static void ordered_delete(std::vector<SgNode*> const & deletes) {
@@ -82,6 +83,9 @@ struct DeleteAllNode : public ROSE_VisitTraversal {
   void apply() {
     traverseMemoryPool();
     ordered_delete(deletes);
+    SgNode::set_globalFunctionTypeTable(nullptr);
+    SgNode::set_globalTypeTable(nullptr);
+    EDG_ROSE_Translation::clear_global_caches();
   }
 };
 
@@ -134,6 +138,7 @@ struct DeleteDisconnectedNode : public ROSE_VisitTraversal {
     recursive_saves(project);
     recursive_saves(SgNode::get_globalFunctionTypeTable());
     recursive_saves(SgNode::get_globalTypeTable());
+    // FIXME should we include EDG_ROSE_Translation::edg_include_file_map
 
     traverseMemoryPool();
     ordered_delete(deletes);
@@ -145,6 +150,5 @@ void prune(SgProject * project) {
   ddn.apply(project);
 }
 
-}
-}
+} } }
 

@@ -1,10 +1,10 @@
 
 #include "sage3basic.h"
-#include "Rose/AST/fixupTraversal.h"
+#include "Rose/AST/utils.h"
 
 #define DEBUG_LinkAcrossFiles 0
 
-namespace Rose { namespace AST {
+namespace Rose { namespace AST { namespace IO {
 
 ///////// Utility code
 
@@ -318,7 +318,7 @@ class LinkAcrossFiles {
         delete t;
       }
 
-      fixupTraversal(node_repl_map); // FIXME before or after delete?
+      Rose::AST::Utils::edgePointerReplacement(node_repl_map); // FIXME before or after delete?
     }
 };
 
@@ -858,5 +858,5 @@ void link(SgProject * project) {
   lvaf.apply(project);
 }
 
-} }
+} } }
 

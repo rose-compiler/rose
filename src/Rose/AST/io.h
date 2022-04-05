@@ -14,6 +14,9 @@ namespace Rose {
 //! Collection of functionalities performing global operations on the AST.
 namespace AST {
 
+//! Function used to load, merge, prune, link, delete
+namespace IO {
+
 /**
  * \brief Load ASTs that have been saved to files.
  *
@@ -79,8 +82,7 @@ ROSE_DLL_API void clear();
  */
 ROSE_DLL_API void free();
 
-}
-}
+} } }
 
 #endif /* __ROSE_AST_IO_H__ */
 

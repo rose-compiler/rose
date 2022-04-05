@@ -721,12 +721,12 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
 
      std::list<std::string> const & astfiles = project->get_astfiles_in();
      if (astfiles.size() > 0) {
-       Rose::AST::load(project, astfiles);
+       Rose::AST::IO::load(project, astfiles);
        ROSE_ASSERT(project->get_ast_merge());
      }
 
      if (project->get_ast_merge()) {
-       Rose::AST::merge(project);
+       Rose::AST::IO::merge(project);
      }
 
   // Set the mode to be transformation, mostly for Fortran. Liao 8/1/2013
@@ -734,8 +734,8 @@ frontend (const std::vector<std::string>& argv, bool frontendConstantFolding )
      if (SageBuilder::SourcePositionClassificationMode == SageBuilder::e_sourcePositionFrontendConstruction)
        SageBuilder::setSourcePositionClassificationMode(SageBuilder::e_sourcePositionTransformation);
 
-     Rose::AST::graphviz.frontend.exec(project);
-     Rose::AST::checker.frontend.exec(project);
+     Rose::AST::cmdline::graphviz.frontend.exec(project);
+     Rose::AST::cmdline::checker.frontend.exec(project);
 
   // Connect to Ast Plugin Mechanism
 #ifdef _MSC_VER
@@ -869,8 +869,8 @@ backend ( SgProject* project, UnparseFormatHelp *unparseFormatHelp, UnparseDeleg
   // signal(SIG_DFL,NULL);
      signal(SIGABRT,SIG_DFL);
 #endif
-     Rose::AST::graphviz.backend.exec(project);
-     Rose::AST::checker.backend.exec(project);
+     Rose::AST::cmdline::graphviz.backend.exec(project);
+     Rose::AST::cmdline::checker.backend.exec(project);
 
      std::string const & astfile_out = project->get_astfile_out();
      if (astfile_out != "") {

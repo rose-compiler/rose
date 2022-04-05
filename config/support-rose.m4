@@ -2475,6 +2475,7 @@ tests/nonsmoke/functional/roseTests/astInterfaceTests/Makefile
 tests/nonsmoke/functional/roseTests/astInterfaceTests/typeEquivalenceTests/Makefile
 tests/nonsmoke/functional/roseTests/astInterfaceTests/unitTests/Makefile
 tests/nonsmoke/functional/roseTests/astLValueTests/Makefile
+tests/nonsmoke/functional/roseTests/astMempoolTests/Makefile
 tests/nonsmoke/functional/roseTests/astMergeTests/Makefile
 tests/nonsmoke/functional/roseTests/astOutliningTests/Makefile
 tests/nonsmoke/functional/roseTests/astPerformanceTests/Makefile

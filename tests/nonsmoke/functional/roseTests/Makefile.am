@@ -13,7 +13,7 @@ if !USING_INTEL_COMPILER
 
 if ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 
-   SUBDIRS += astMergeTests astPerformanceTests \
+   SUBDIRS += astMempoolTests astMergeTests astPerformanceTests \
               astProcessingTests astQueryTests astRewriteTests \
               astSymbolTableTests astSnippetTests \
               programTransformationTests \
