@@ -126,7 +126,7 @@ AbstractValue AbstractValue::getPointerToArbitraryMemory() {
   return AbstractValue::_pointerToArbitraryMemory;
 }
 
-bool AbstractValue::isPointerToArbitraryMemory() {
+bool AbstractValue::isPointerToArbitraryMemory() const {
   return *this==getPointerToArbitraryMemory();
 }
 
@@ -331,6 +331,7 @@ std::string AbstractValue::valueTypeToString() const {
 // undefined values.
 bool AbstractValue::isUndefined() const {return valueType==AbstractValue::AV_UNDEFINED;}
 bool AbstractValue::isTop() const {return valueType==AbstractValue::AV_TOP||isUndefined();}
+bool AbstractValue::isTopOrArbitraryMemPtr() const {return isTop()||isPointerToArbitraryMemory();}
 bool AbstractValue::isTrue() const {return valueType==AbstractValue::AV_INTEGER && intValue!=0;}
 bool AbstractValue::isFalse() const {return valueType==AbstractValue::AV_INTEGER && intValue==0;}
 bool AbstractValue::isBot() const {return valueType==AbstractValue::AV_BOT;}
@@ -344,7 +345,7 @@ bool AbstractValue::isPtrSet() const {return (isAVSet());}
 bool AbstractValue::isAVSet() const {return (valueType==AbstractValue::AV_SET);}
 bool AbstractValue::isFunctionPtr() const {return (valueType==AbstractValue::AV_FUN_PTR);}
 bool AbstractValue::isRef() const {return (valueType==AbstractValue::AV_REF);}
-bool AbstractValue::isNullPtr() const {return (valueType==AbstractValue::AV_INTEGER && intValue==0 && !isAbstract());}
+bool AbstractValue::isNullPtr() const {return (valueType==AbstractValue::AV_INTEGER && intValue==0 && !isAbstract() && !isPointerToArbitraryMemory());}
 
 bool AbstractValue::isAbstract() const {
   if(isTop()||_abstractionFlag)
@@ -666,11 +667,13 @@ AbstractValue AbstractValue::operatorEq(AbstractValue other) const {
     return *this;
   } else if(isPtr() && other.isPtr()) {
     // element type size is not relevant in byteMode when comparing pointers
+    if(isPointerToArbitraryMemory()|| other.isPointerToArbitraryMemory())
+      return CodeThorn::Top();
     return AbstractValue(variableId==other.variableId && intValue==other.intValue /*&& getTypeSize()==other.getTypeSize()*/);
   } else if(isConstInt() && other.isConstInt()) {
     // includes case for two null pointer values
     return AbstractValue(intValue==other.intValue /*&& getTypeSize()==other.getTypeSize()*/);
-  } else if((isPtr() && other.isNullPtr()) || (isNullPtr() && other.isPtr()) ) {
+  } else if((!isNullPtr() && other.isNullPtr()) || (isNullPtr() && !other.isNullPtr()) ) {
     return AbstractValue(0);
   } else {
     return AbstractValue(Top()); // all other cases can be true or false
@@ -682,7 +685,7 @@ AbstractValue AbstractValue::operatorNotEq(AbstractValue other) const {
 }
 
 AbstractValue AbstractValue::operatorLess(AbstractValue other) const {
-  if(isTop()||other.isTop())
+  if(isTopOrArbitraryMemPtr()||other.isTopOrArbitraryMemPtr())
     return Top();
   if(isBot())
     return other;
@@ -704,7 +707,7 @@ AbstractValue AbstractValue::operatorLess(AbstractValue other) const {
 }
 
 AbstractValue AbstractValue::operatorLessOrEq(AbstractValue other) const {
-  if(isTop()||other.isTop())
+  if(isTopOrArbitraryMemPtr()||other.isTopOrArbitraryMemPtr())
     return Top();
   if(isBot())
     return other;
@@ -717,7 +720,7 @@ AbstractValue AbstractValue::operatorLessOrEq(AbstractValue other) const {
 }
 
 AbstractValue AbstractValue::operatorMoreOrEq(AbstractValue other) const {
-  if(isTop()||other.isTop())
+  if(isTopOrArbitraryMemPtr()||other.isTopOrArbitraryMemPtr())
     return Top();
   if(isBot())
     return other;
@@ -729,7 +732,7 @@ AbstractValue AbstractValue::operatorMoreOrEq(AbstractValue other) const {
 }
 
 AbstractValue AbstractValue::operatorMore(AbstractValue other) const {
-  if(isTop()||other.isTop())
+  if(isTopOrArbitraryMemPtr()||other.isTopOrArbitraryMemPtr())
     return Top();
   if(isBot())
     return other;
@@ -742,7 +745,7 @@ AbstractValue AbstractValue::operatorMore(AbstractValue other) const {
 }
 
 AbstractValue AbstractValue::operatorBitwiseOr(AbstractValue other) const {
-  if(isTop()||other.isTop())
+  if(isTopOrArbitraryMemPtr()||other.isTopOrArbitraryMemPtr())
     return Top();
   if(isBot())
     return other;
@@ -754,7 +757,7 @@ AbstractValue AbstractValue::operatorBitwiseOr(AbstractValue other) const {
 }
 
 AbstractValue AbstractValue::operatorBitwiseXor(AbstractValue other) const {
-  if(isTop()||other.isTop())
+  if(isTopOrArbitraryMemPtr()||other.isTopOrArbitraryMemPtr())
     return Top();
   if(isBot())
     return other;
@@ -766,7 +769,7 @@ AbstractValue AbstractValue::operatorBitwiseXor(AbstractValue other) const {
 }
 
 AbstractValue AbstractValue::operatorBitwiseAnd(AbstractValue other) const {
-  if(isTop()||other.isTop())
+  if(isTopOrArbitraryMemPtr()||other.isTopOrArbitraryMemPtr())
     return Top();
   if(isBot())
     return other;
@@ -778,7 +781,7 @@ AbstractValue AbstractValue::operatorBitwiseAnd(AbstractValue other) const {
 }
 
 AbstractValue AbstractValue::operatorBitwiseComplement() const {
-  if(isTop()||isBot())
+  if(isTopOrArbitraryMemPtr()||isBot())
     return *this;
   if(isConstInt())
     return ~getIntValue();
@@ -786,7 +789,7 @@ AbstractValue AbstractValue::operatorBitwiseComplement() const {
 }
 
 AbstractValue AbstractValue::operatorBitwiseShiftLeft(AbstractValue other) const {
-  if(isTop()||other.isTop())
+  if(isTopOrArbitraryMemPtr()||other.isTopOrArbitraryMemPtr())
     return Top();
   if(isBot())
     return *this;
@@ -798,7 +801,7 @@ AbstractValue AbstractValue::operatorBitwiseShiftLeft(AbstractValue other) const
 }
 
 AbstractValue AbstractValue::operatorBitwiseShiftRight(AbstractValue other) const {
-  if(isTop()||other.isTop())
+  if(isTopOrArbitraryMemPtr()||other.isTopOrArbitraryMemPtr())
     return Top();
   if(isBot())
     return *this;
@@ -1206,7 +1209,7 @@ AbstractValue AbstractValue::operatorAdd(AbstractValue& a,AbstractValue& b) {
   }
 }
 AbstractValue AbstractValue::operatorSub(AbstractValue& a,AbstractValue& b) {
-  if(a.isTop() || b.isTop() || a.isPointerToArbitraryMemory() || b.isPointerToArbitraryMemory())
+  if(a.isTopOrArbitraryMemPtr() || b.isTopOrArbitraryMemPtr())
     return Top();
   if(a.isBot())
     return b;
@@ -1269,7 +1272,7 @@ AbstractValue AbstractValue::topOrError(std::string errorMsg) const {
 }
 
 AbstractValue AbstractValue::operatorMul(AbstractValue& a,AbstractValue& b) {
-  if(a.isTop() || b.isTop())
+  if(a.isTopOrArbitraryMemPtr() || b.isTopOrArbitraryMemPtr())
     return Top();
   if(a.isBot())
     return b;
@@ -1285,7 +1288,7 @@ AbstractValue AbstractValue::operatorMul(AbstractValue& a,AbstractValue& b) {
   return createTop();
 }
 AbstractValue AbstractValue::operatorDiv(AbstractValue& a,AbstractValue& b) {
-  if(a.isTop() || b.isTop())
+  if(a.isTopOrArbitraryMemPtr() || b.isTopOrArbitraryMemPtr())
     return Top();
   if(a.isBot())
     return b;
@@ -1302,7 +1305,7 @@ AbstractValue AbstractValue::operatorDiv(AbstractValue& a,AbstractValue& b) {
 }
 
 AbstractValue AbstractValue::operatorMod(AbstractValue& a,AbstractValue& b) {
-  if(a.isTop() || b.isTop())
+  if(a.isTopOrArbitraryMemPtr() || b.isTopOrArbitraryMemPtr())
     return Top();
   if(a.isBot())
     return b;
@@ -1326,6 +1329,8 @@ bool AbstractValue::approximatedBy(AbstractValue val1, AbstractValue val2) {
   } else if(val1.isTop() && val2.isTop()) {
     // this case is necessary because AV_TOP and AV_UNDEFINED need to be treated the same
     // and isTop also includes isUndefined (in its definition).
+    return true;
+  } else if(val1.isPointerToArbitraryMemory() && val2.isTopOrArbitraryMemPtr()) {
     return true;
   } else if(val1.valueType==val2.valueType) {
     switch(val1.valueType) {

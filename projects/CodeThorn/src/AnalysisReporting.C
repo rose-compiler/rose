@@ -167,7 +167,10 @@ namespace CodeThorn {
       stringstream locationsCSVFileData;
       std::uint32_t constTrueCnt=0;
       std::uint32_t constFalseCnt=0;
+
+      std::set<string> resultSet; // use set to get sorted unique locations
       for(auto p : map) {
+        string entry;
         Label lab=p.first;
         BoolLattice value=p.second;
         if(value.isTop()) {
@@ -179,26 +182,30 @@ namespace CodeThorn {
         SgNode* parent=node->get_parent();
         if(isSgWhileStmt(parent))
           continue;
+        entry="opaque-predicate,";
         if(value.isTrue()) {
           constTrueCnt++;
-          locationsCSVFileData<<"opaque-predicate,";
-          locationsCSVFileData<<"true,";
+          entry+="true,";
         } else if(value.isFalse()){
           constFalseCnt++;
-          locationsCSVFileData<<"opaque-predicate,";
-          locationsCSVFileData<<"false,";
+          entry+="false,";
         } else {
           // bot?
           continue;
         }
         if(node) {
           //cout<<lab.toString()<<","<<value<<endl;
-          locationsCSVFileData<<ProgramLocationsReport::findOriginalProgramLocationOfLabel(analyzer->getLabeler(),lab);
+          entry+=ProgramLocationsReport::findOriginalProgramLocationOfLabel(analyzer->getLabeler(),lab);
         } else {
-          locationsCSVFileData<<"unknown-location"<<endl;
+          entry+="unknown-location";
         }
-        locationsCSVFileData<<endl;
+        resultSet.insert(entry);
       }
+      // generate file
+      for(auto s : resultSet) {
+        locationsCSVFileData<<s<<endl;
+      }
+        
       if(ctOpt.status) {
         cout<<"constant true        locations: "<<setw(6)<<constTrueCnt<<endl;
         cout<<"constant false       locations: "<<setw(6)<<constFalseCnt<<endl;
