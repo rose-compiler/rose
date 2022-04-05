@@ -161,9 +161,18 @@ void nodeTraversal::visit(SgNode* n)
         {
           PreprocessingInfo::DirectiveType  directive =  (*i)->getTypeOfDirective();
           //std::cout << PreprocessingInfo::directiveTypeName (directive) << " : " << (*i)->getString() << std::endl;
+          o << n->variantT() << ":" << n->class_name() << " (" << PreprocessingInfo::relativePositionName((*i)->getRelativePosition()) << "):" << PreprocessingInfo::directiveTypeName (directive) << ":" << (*i)->getString();
+/*  Keep the following code in case we need to print only content from partial of the list
+      
           switch(directive)
           {
             case PreprocessingInfo::DirectiveType::CpreprocessorUnknownDeclaration:
+            case PreprocessingInfo::DirectiveType::C_StyleComment:
+            case PreprocessingInfo::DirectiveType::CplusplusStyleComment:
+            case PreprocessingInfo::DirectiveType::FortranStyleComment:
+            case PreprocessingInfo::DirectiveType::F90StyleComment:
+            case PreprocessingInfo::DirectiveType::AdaStyleComment:
+            case PreprocessingInfo::DirectiveType::JovialStyleComment:
             case PreprocessingInfo::DirectiveType::CpreprocessorBlankLine:
             case PreprocessingInfo::DirectiveType::CpreprocessorIncludeDeclaration:
             case PreprocessingInfo::DirectiveType::CpreprocessorIncludeNextDeclaration:
@@ -180,11 +189,23 @@ void nodeTraversal::visit(SgNode* n)
             case PreprocessingInfo::DirectiveType::CpreprocessorErrorDeclaration:
             case PreprocessingInfo::DirectiveType::CpreprocessorWarningDeclaration:
             case PreprocessingInfo::DirectiveType::CpreprocessorEmptyDeclaration:
+            case PreprocessingInfo::DirectiveType::CSkippedToken:
+            case PreprocessingInfo::DirectiveType::CMacroCall:
+            case PreprocessingInfo::DirectiveType::CMacroCallStatement:
+            case PreprocessingInfo::DirectiveType::LineReplacement:
+            case PreprocessingInfo::DirectiveType::ClinkageSpecificationStart:
+            case PreprocessingInfo::DirectiveType::ClinkageSpecificationEnd:
+            case PreprocessingInfo::DirectiveType::CpreprocessorIdentDeclaration:
+            case PreprocessingInfo::DirectiveType::CpreprocessorCompilerGeneratedLinemarker:
+            case PreprocessingInfo::DirectiveType::RawText:
+            case PreprocessingInfo::DirectiveType::CpreprocessorEnd_ifDeclaration:
+            case PreprocessingInfo::DirectiveType::LastDirectiveType:
               o << n->variantT() << ":" << n->class_name() << " (" << PreprocessingInfo::relativePositionName((*i)->getRelativePosition()) << "):" << PreprocessingInfo::directiveTypeName (directive) << ":" << (*i)->getString();
               break;
             default :
               ;
           }
+*/
         }
         if(!o.str().empty())        
         {
