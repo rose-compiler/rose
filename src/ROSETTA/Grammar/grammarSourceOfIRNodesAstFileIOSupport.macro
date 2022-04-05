@@ -205,6 +205,7 @@ void $CLASSNAME::deleteMemoryPool() {
     ROSE_FREE(p);
   }
   $CLASSNAME::next_node = nullptr;
+  $CLASSNAME::pools.clear();
 }
 
 // DQ (4/30/2006): New version of code added (from Jochen) to fix bug in

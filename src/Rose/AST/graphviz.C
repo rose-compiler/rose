@@ -5,8 +5,7 @@
 
 #include "wholeAST_API.h"
 
-namespace Rose {
-namespace AST {
+namespace Rose { namespace AST { namespace cmdline {
 
 __when_T<graphviz_t> graphviz;
 
@@ -40,6 +39,5 @@ graphviz_t::Mode graphviz_t::__mode(std::string const & str) {
   }
 }
 
-}
-}
+} } }
 

@@ -11,7 +11,7 @@
 
 #include "SgNodeHelper.h" //Markus's helper functions
 
-#include "Rose/AST/fixupTraversal.h"
+#include "Rose/AST/utils.h"
 
 #include "sageInterface.h"
 
@@ -5042,17 +5042,17 @@ SageInterface::fixupReferencesToSymbols( const SgScopeStatement* this_scope,  Sg
 
 #if 0
      printf ("\n\n************************************************************\n");
-     printf ("fixupReferencesToSymbols(this_scope = %p copy_scope = %p = %s = %s): calling fixupSubtreeTraversal() \n",this_scope,copy_scope,copy_scope->class_name().c_str(),get_name(copy_scope).c_str());
+     printf ("fixupReferencesToSymbols(this_scope = %p copy_scope = %p = %s = %s): calling Utils::edgePointerReplacement() \n",this_scope,copy_scope,copy_scope->class_name().c_str(),get_name(copy_scope).c_str());
 #endif
 
-     Rose::AST::fixupSubtreeTraversal(copy_scope,replacementMap);
+     Rose::AST::Utils::edgePointerReplacement(copy_scope,replacementMap);
 
 #if 0
-     printf ("fixupReferencesToSymbols(): calling fixupSubtreeTraversal(): DONE \n");
+     printf ("fixupReferencesToSymbols(): calling Utils::edgePointerReplacement(): DONE \n");
      printf ("************************************************************\n\n");
 
      printf ("\n\n After replacementMapTraversal(): intermediateDeleteSet: \n");
-     displaySet(intermediateDeleteSet,"After fixupTraversal");
+     displaySet(intermediateDeleteSet,"After Utils::edgePointerReplacement");
 
      printf ("After fixup: this_symbolTable->get_table()->size() = %" PRIuPTR " \n",this_symbolTable->get_table()->size());
      printf ("After fixup: copy_symbolTable->get_table()->size() = %" PRIuPTR " \n",copy_symbolTable->get_table()->size());
@@ -20177,17 +20177,17 @@ SageInterface::appendStatementWithDependentDeclaration( SgDeclarationStatement* 
   // on the outlined function, I think).
 #if 0
      printf ("\n\n************************************************************\n");
-     printf ("Calling fixupSubtreeTraversal() \n");
+     printf ("Calling Utils::edgePointerReplacement() \n");
 #endif
 
-     Rose::AST::fixupSubtreeTraversal(outlinedFile,replacementMap);
+     Rose::AST::Utils::edgePointerReplacement(outlinedFile,replacementMap);
 
 #if 0
-     printf ("Calling fixupSubtreeTraversal(): DONE \n");
+     printf ("Calling Utils::edgePointerReplacement(): DONE \n");
      printf ("************************************************************\n\n");
 
      printf ("\n\n After replacementMapTraversal(): intermediateDeleteSet: \n");
-     displaySet(intermediateDeleteSet,"After fixupTraversal");
+     displaySet(intermediateDeleteSet,"After Utils::edgePointerReplacement");
 #endif
 
   // Repeated test from above

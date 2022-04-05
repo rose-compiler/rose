@@ -1,9 +1,8 @@
 
 #include "sage3basic.h"
-#include "Rose/AST/fixupTraversal.h"
+#include "Rose/AST/utils.h"
 
-namespace Rose {
-namespace AST {
+namespace Rose { namespace AST { namespace IO {
 
 #define DEBUG_NameBasedSharing 0
 
@@ -181,7 +180,7 @@ struct NameBasedSharing : public ROSE_VisitTraversal {
       }
     }
 
-    fixupTraversal(replacements);
+    Rose::AST::Utils::edgePointerReplacement(replacements);
   }
 };
 
@@ -190,6 +189,5 @@ void share(SgProject * project) {
   nbs.apply();
 }
 
-}
-}
+} } }
 

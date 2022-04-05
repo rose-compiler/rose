@@ -25,7 +25,7 @@ int main( int argc, char * argv[] ) {
   auto status = backend(project);
 
 #if !defined(_WIN32) && !defined(__CYGWIN__)
-  Rose::AST::free();
+  Rose::AST::IO::free();
 #endif
 
   return status;

@@ -7,8 +7,10 @@
 
 class SgProject;
 
-namespace Rose {
-namespace AST {
+namespace Rose { namespace AST {
+
+//! Controls for command-line options that uses function the Rose::AST namespace
+namespace cmdline {
 
   //! A simple template to facilitate configuration of modules that can be run after the frontend or before the backend.
   template <typename T>
@@ -69,7 +71,5 @@ namespace AST {
   };
   extern __when_T<checker_t> checker; //!< Used by the -rose:ast:checker:XXX options
 
-}
-}
-
+} } }
 #endif /* __ROSE_AST_CMDLINE_H__ */

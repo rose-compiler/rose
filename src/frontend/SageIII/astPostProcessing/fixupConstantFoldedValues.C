@@ -1,7 +1,7 @@
 
 #include "sage3basic.h"
 
-#include "Rose/AST/fixupTraversal.h"
+#include "Rose/AST/utils.h"
 
 #if !defined(ROSE_PEDANTIC_FIXUP_CONSTANT_FOLDING)
 #  define ROSE_PEDANTIC_FIXUP_CONSTANT_FOLDING 0
@@ -224,12 +224,7 @@ void removeConstantFoldedValue(SgProject * project) {
   // Some visited links could be seen as last element of a chain that has been cut by mistake.
   std::set<SgExpression *> seen_in_ot_chain; 
 
-#if defined(__cpp_range_based_for) && __cpp_range_based_for >= 200907
   for (auto child: cet.originals) {
-#else
-  for (std::set<SgExpression *>::iterator it = cet.originals.begin(); it != cet.originals.end(); it++) {
-    SgExpression * child = *it;
-#endif
     // Check that it is the actual original tree of a *potential* chain of substitutions
     //    Note: I am not sure chain of substitutions occur with latest version of EDG
     if (child->get_originalExpressionTree() == NULL && seen_in_ot_chain.find(child) == seen_in_ot_chain.end()) {
@@ -277,10 +272,7 @@ void removeConstantFoldedValue(SgProject * project) {
 
       if (replace_folded_by_child) {
         child->set_parent(folded->get_parent()); // prevent replacement from creating self loop if child is direct descendant of folded
-#if 0
-        printf ("child = %p = %s \n",child,child->class_name().c_str());
-#endif
-#if 1
+
      // DQ (7/23/2020): Only required now for C++11 code using EDG 6.0 and GNU 10.1 (see Cxx11_tests/test2015_02.C).
      // DQ (7/18/2020): Added support to permit Cxx11_tests/test2020_69.C to pass.
         SgLambdaExp* lambdaExp = isSgLambdaExp(child);
@@ -289,44 +281,28 @@ void removeConstantFoldedValue(SgProject * project) {
              replace_set[folded] = child;
              delete_set.insert(folded);
            }
-#else
-        replace_set[folded] = child;
-        delete_set.insert(folded);
-#endif
       } else {
         delete_set.insert(child);
       }
     }
   }
 
-  Rose::AST::fixupTraversal(replace_set);
+  Rose::AST::Utils::edgePointerReplacement(replace_set);
 
-#if defined(__cpp_range_based_for) && __cpp_range_based_for >= 200907
   for (auto expr: delete_set) {
-#else
-  for (std::set<SgExpression *>::iterator it = delete_set.begin(); it != delete_set.end(); it++) {
-    SgExpression * expr = *it;
-#endif
     deleteExpressionAndOriginalExpressionTree(expr);
   }
 }
 
 struct RemoveOriginalExpressionTrees : public ROSE_VisitTraversal {
   void visit (SgNode* node) {
-    ROSE_ASSERT(node != NULL);
+    ROSE_ASSERT(node != nullptr);
 
     SgExpression * exp = isSgExpression(node);
-#if 0
-    printf ("In RemoveOriginalExpressionTrees::visit(): node = %p = %s \n",node,node->class_name().c_str());
-#endif
-
-    if (exp != NULL) {
+    if (exp != nullptr) {
       SgExpression * oet = exp->get_originalExpressionTree();
-      if (oet != NULL) {
-#if 0
-        printf ("In RemoveOriginalExpressionTrees::visit(): calling deleteExpressionAndOriginalExpressionTree()oet = %p = %s \n",oet,oet->class_name().c_str());
-#endif
-        exp->set_originalExpressionTree(NULL);
+      if (oet != nullptr) {
+        exp->set_originalExpressionTree(nullptr);
         deleteExpressionAndOriginalExpressionTree(oet);
       }
     }

@@ -12,8 +12,7 @@
 
 using namespace std;
 
-namespace Rose {
-namespace AST {
+namespace Rose { namespace AST { namespace IO {
 
 #if ENABLE_plot_links
 
@@ -238,7 +237,7 @@ void merge(SgProject * project) {
   Rose::MemPool::snapshot("mempool-astmerge-before.csv");
 #endif
 
-  Rose::AST::share(project);
+  Rose::AST::IO::share(project);
 
 #if ENABLE_plot_links
   { std::ofstream ofs("mergelink-shared.dot"); plot_links(ofs); }
@@ -247,7 +246,7 @@ void merge(SgProject * project) {
   Rose::MemPool::snapshot("mempool-astmerge-shared.csv");
 #endif
 
-  Rose::AST::prune(project);
+  Rose::AST::IO::prune(project);
 
 #if ENABLE_plot_links
   { std::ofstream ofs("mergelink-pruned.dot"); plot_links(ofs); }
@@ -256,7 +255,7 @@ void merge(SgProject * project) {
   Rose::MemPool::snapshot("mempool-astmerge-pruned.csv");
 #endif
 
-  Rose::AST::link(project);
+  Rose::AST::IO::link(project);
 
 #if ENABLE_plot_links
   { std::ofstream ofs("mergelink-linked.dot"); plot_links(ofs); }
@@ -294,6 +293,5 @@ void merge(SgProject * project) {
 #endif
 }
 
-}
-}
+} } }
 
