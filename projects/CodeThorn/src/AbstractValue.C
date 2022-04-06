@@ -331,7 +331,7 @@ std::string AbstractValue::valueTypeToString() const {
 // undefined values.
 bool AbstractValue::isUndefined() const {return valueType==AbstractValue::AV_UNDEFINED;}
 bool AbstractValue::isTop() const {return valueType==AbstractValue::AV_TOP||isUndefined();}
-bool AbstractValue::isTopOrArbitraryMemPtr() const {return isTop()||isPointerToArbitraryMemory();}
+bool AbstractValue::isTopOrArbitraryMemPtr() const {return isTop()||isPointerToArbitraryMemory()||isAbstract();}
 bool AbstractValue::isTrue() const {return valueType==AbstractValue::AV_INTEGER && intValue!=0;}
 bool AbstractValue::isFalse() const {return valueType==AbstractValue::AV_INTEGER && intValue==0;}
 bool AbstractValue::isBot() const {return valueType==AbstractValue::AV_BOT;}
@@ -666,10 +666,18 @@ AbstractValue AbstractValue::operatorEq(AbstractValue other) const {
   } else if(other.valueType==AV_BOT) { 
     return *this;
   } else if(isPtr() && other.isPtr()) {
-    // element type size is not relevant in byteMode when comparing pointers
-    if(isPointerToArbitraryMemory()|| other.isPointerToArbitraryMemory())
+    // if any of the two is an abitrary mem loc, it's unknown whether they are equal
+    if(isPointerToArbitraryMemory()||other.isPointerToArbitraryMemory()) {
       return CodeThorn::Top();
-    return AbstractValue(variableId==other.variableId && intValue==other.intValue /*&& getTypeSize()==other.getTypeSize()*/);
+    }
+    // if they refer to different memory regions they are definitely different
+    if(variableId!=other.variableId) {
+      return AbstractValue(0);
+    }
+    if(!isAbstract()&&!other.isAbstract()) {
+      return AbstractValue(variableId==other.variableId && intValue==other.intValue /*&& getTypeSize()==other.getTypeSize()*/);
+    }
+    return CodeThorn::Top();
   } else if(isConstInt() && other.isConstInt()) {
     // includes case for two null pointer values
     return AbstractValue(intValue==other.intValue /*&& getTypeSize()==other.getTypeSize()*/);
