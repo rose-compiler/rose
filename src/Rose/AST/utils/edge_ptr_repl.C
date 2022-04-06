@@ -2,8 +2,6 @@
 #include "sage3basic.h"
 #include "Rose/AST/utils.h"
 
-using namespace std;
-
 namespace Rose { namespace AST { namespace Utils {
 
 template <typename HandlerT, typename TraveralT>
@@ -14,7 +12,9 @@ struct EdgeTraversal : public TraveralT {
   Handler handler;
 
   template <typename... Args>
-  EdgeTraversal(Args... args) : handler(args...) {}
+  EdgeTraversal(Args&&... args) : handler(std::forward<Args>(args)...) {}
+
+  virtual ~EdgeTraversal() {}
 
   void visit(SgNode* node) {
     node->processDataMemberReferenceToPointers(&handler);
@@ -25,26 +25,29 @@ template <typename HandlerT> using EdgeMempoolTraversal = EdgeTraversal<HandlerT
 template <typename HandlerT> using EdgeTreeTraversal = EdgeTraversal<HandlerT, SgSimpleProcessing>;
 
 struct EdgeReplacer : public SimpleReferenceToPointerHandler {
-  const std::map<SgNode*, SgNode*> & rmap;
+  replacement_map_t const & rmap;
 
-  EdgeReplacer(const std::map<SgNode*, SgNode*> & rmap_): rmap(rmap_) {}
+  EdgeReplacer(replacement_map_t const & rmap_): rmap(rmap_) {}
+
+  virtual ~EdgeReplacer() {}
 
   virtual void operator()(SgNode* & key, const SgName& debugStringName, bool /* traverse */) {
-    if (key != NULL) {
+    if (key != nullptr) {
       auto it = rmap.find(key);
       if (it != rmap.end() && key != it->second) {
-        key = it->second;
+        SgNode * r = it->second;
+        key = r;
       }
     }
   }
 };
 
-void edgePointerReplacement(const std::map<SgNode*, SgNode*> & rmap) {
+void edgePointerReplacement(replacement_map_t const & rmap) {
   EdgeMempoolTraversal<EdgeReplacer> traversal(rmap);
   traversal.traverseMemoryPool();
 }
 
-void edgePointerReplacement(SgNode* subtree, const std::map<SgNode*, SgNode*> & rmap) {
+void edgePointerReplacement(SgNode * subtree, replacement_map_t const & rmap) {
   EdgeTreeTraversal<EdgeReplacer> traversal(rmap);
   traversal.traverse(subtree, preorder);
 }
