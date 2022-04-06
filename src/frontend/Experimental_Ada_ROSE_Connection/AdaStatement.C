@@ -765,6 +765,7 @@ namespace
     handleNumVarCstDecl(elem, dcl, ctx, isPrivate, varty, nullptr, varMaker);
   }
 
+/*
   SgDeclarationStatement&
   getAliasedID(Element_ID declid, AstContext ctx);
 
@@ -790,7 +791,7 @@ namespace
 
     return getAliased(elem.The_Union.Expression, ctx);
   }
-
+*/
 
   std::pair<SgAdaTaskSpec*, DeferredBodyCompletion>
   getTaskSpec(Element_Struct& elem, AstContext ctx)
@@ -2154,7 +2155,7 @@ namespace
         Element_Struct&            impEl    = imported.elem();
         Element_ID                 impID    = asisExpression(impEl).Corresponding_Name_Declaration;
         SgExpression*              res      = &getExpr(impEl, ctx);
-        SgScopeStatement&          scope = ctx.scope();
+        SgScopeStatement&          scope    = ctx.scope();
 
         if (SgVarRefExp* varref = isSgVarRefExp(res))
         {
@@ -2941,6 +2942,7 @@ namespace
     return &mkExprListExp(reslst);
   }
 
+/*
   // compare SgAdaType::getExceptionBase
   std::pair<SgInitializedName*, SgAdaRenamingDecl*>
   getObjectBase(Element_Struct& el, AstContext ctx)
@@ -2978,6 +2980,7 @@ namespace
     init.set_scope(&ctx.scope());
     return std::make_pair(&init, nullptr);
   }
+*/
 
   // returns a function declaration statement for a declaration statement
   //   checks if the function is an Ada generic function, where the declaration
@@ -4480,14 +4483,16 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
           return;
         }
 
+/*
         SgDeclarationStatement* aliased = &getAliasedID(decl.Renamed_Entity, ctx);
 
         if (SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(aliased))
           aliased = gendcl->get_declaration();
-
+*/
+        SgExpression&           renamed = getExprID(decl.Renamed_Entity, ctx);
         SgScopeStatement&       scope   = ctx.scope();
         SgType*                 pkgtype = &mkTypeVoid(); // or nullptr?
-        SgAdaRenamingDecl&      sgnode  = mkAdaRenamingDecl(adaname.ident, SG_DEREF(aliased), pkgtype, scope);
+        SgAdaRenamingDecl&      sgnode  = mkAdaRenamingDecl(adaname.ident, renamed, pkgtype, scope);
 
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
@@ -4552,29 +4557,27 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case An_Object_Renaming_Declaration:           // 8.5.1(2)
       {
-        using ObjBasePair = std::pair<SgInitializedName*, SgAdaRenamingDecl*>;
+        //~ using ObjBasePair = std::pair<SgInitializedName*, SgAdaRenamingDecl*>;
 
         logKind("An_Object_Renaming_Declaration");
 
         NameData           adaname = singleName(decl, ctx);
-        if (isInvalidId(decl.Renamed_Entity))
-        {
-          logWarn() << "skipping unknown renaming: " << adaname.ident << "/" << adaname.fullName
-                    << ": " << elem.ID << " / " << decl.Renamed_Entity
-                    << std::endl;
-          return;
-        }
-
-        Declaration_Struct& asisDecl = elem.The_Union.Declaration;
+/*
         Element_Struct&     renamed_entity_elem = retrieveAs(elemMap(), decl.Renamed_Entity);
         ObjBasePair         objpair = getObjectBase(renamed_entity_elem, ctx);
         ADA_ASSERT (objpair.first || objpair.second);
 
         SgScopeStatement&   scope   = ctx.scope();
-        SgType&             ty      = getDeclTypeID(asisDecl.Object_Declaration_View, ctx);
         SgAdaRenamingDecl&  sgnode  = objpair.first
                                          ? mkAdaRenamingDecl(adaname.ident, *objpair.first,  &ty, scope)
                                          : mkAdaRenamingDecl(adaname.ident, *objpair.second, &ty, scope);
+*/
+
+        SgScopeStatement&   scope   = ctx.scope();
+        Declaration_Struct& asisDcl = elem.The_Union.Declaration;
+        SgType&             ty      = getDeclTypeID(asisDcl.Object_Declaration_View, ctx);
+        SgExpression&       renamed = getExprID(decl.Renamed_Entity, ctx);
+        SgAdaRenamingDecl&  sgnode  = mkAdaRenamingDecl(adaname.ident, renamed, &ty, scope);
 
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
@@ -4588,12 +4591,12 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case An_Exception_Renaming_Declaration:        // 8.5.2(2)
       {
-        using ExBasePair = std::pair<SgInitializedName*, SgAdaRenamingDecl*>;
+        //~ using ExBasePair = std::pair<SgInitializedName*, SgAdaRenamingDecl*>;
 
         logKind("An_Exception_Renaming_Declaration");
 
         NameData           adaname = singleName(decl, ctx);
-
+/*
         if (isInvalidId(decl.Renamed_Entity))
         {
           logWarn() << "skipping unknown exception renaming: " << adaname.ident << "/" << adaname.fullName
@@ -4611,6 +4614,14 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                    = expair.first
                        ? mkAdaRenamingDecl(adaname.ident, *expair.first,  expair.first->get_type(),  scope)
                        : mkAdaRenamingDecl(adaname.ident, *expair.second, expair.second->get_type(), scope);
+*/
+
+        SgScopeStatement&  scope   = ctx.scope();
+        SgExpression&      renamed = getExprID(decl.Renamed_Entity, ctx);
+        SgType&            excty    = lookupNode(adaTypes(), AdaIdentifier{"Exception"});
+
+        // ADA_ASSERT(renamed.get_type() == &excty); \todo not sure why this does not hold...
+        SgAdaRenamingDecl& sgnode  = mkAdaRenamingDecl(adaname.ident, renamed, &excty, scope);
 
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
@@ -4633,7 +4644,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                );
 
         NameData                adaname = singleName(decl, ctx);
-
+/*
         if (isInvalidId(decl.Renamed_Entity))
         {
           logWarn() << "skipping unknown package renaming: " << adaname.ident << "/" << adaname.fullName
@@ -4646,10 +4657,12 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgFunctionDeclaration*  fundecl = getFunctionDeclaration(aliased);
 
         if (fundecl) aliased = fundecl;
+*/
 
+        SgExpression&           renamed = getExprID(decl.Renamed_Entity, ctx);
         SgScopeStatement&       scope   = ctx.scope();
         SgType*                 pkgtype = &mkTypeVoid(); // or nullptr or function type?
-        SgAdaRenamingDecl&      sgnode  = mkAdaRenamingDecl(adaname.ident, *aliased, pkgtype, scope);
+        SgAdaRenamingDecl&      sgnode  = mkAdaRenamingDecl(adaname.ident, renamed, pkgtype, scope);
 
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);

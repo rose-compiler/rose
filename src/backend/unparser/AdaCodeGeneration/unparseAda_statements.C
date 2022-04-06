@@ -390,18 +390,18 @@ namespace
     return std::make_pair(std::string("<<"), std::string(">> "));
   }
 
-  struct RenamingSyntaxResult : std::tuple<std::string, bool, std::string, const SgScopeStatement*>
+  struct RenamingSyntaxResult : std::tuple<std::string, bool, const SgScopeStatement*>
   {
-      using base = std::tuple<std::string, bool, std::string, const SgScopeStatement*>;
+      using base = std::tuple<std::string, bool, const SgScopeStatement*>;
       using base::base;
 
       const std::string&      prefixSyntax() const { return std::get<0>(*this); }
       bool                    withType()     const { return std::get<1>(*this); }
-      const std::string&      renamedName()  const { return std::get<2>(*this); }
-      const SgScopeStatement* body()         const { return std::get<3>(*this); }
+      const SgScopeStatement* body()         const { return std::get<2>(*this); }
+      //~ const std::string&      renamedName()  const { return std::get<3>(*this); }
 
       // mutators
-      std::string& renamedName() { return std::get<2>(*this); }
+      //~ std::string& renamedName() { return std::get<3>(*this); }
   };
 
   struct ImportedUnitResult : std::tuple<std::string, const SgDeclarationStatement*, const SgAdaRenamingDecl*>
@@ -618,7 +618,7 @@ namespace
 
     static
     RenamingSyntaxResult
-    renamingSyntax(SgSymbol* n);
+    renamingSyntax(SgExpression* n);
 
     void startPrivateIfNeeded(SgDeclarationStatement* n);
 
@@ -1039,7 +1039,7 @@ namespace
 
     void handle(SgAdaRenamingDecl& n)
     {
-      SgSymbol*            orig     = n.get_renamed();
+      SgExpression*        orig     = n.get_renamed();
       RenamingSyntaxResult renamed  = renamingSyntax(orig);
       std::string          newName  = n.get_name();
 
@@ -1053,8 +1053,8 @@ namespace
       }
 
       prn(" renames ");
-      prnNameQual(n, orig->get_scope());
-      prn(renamed.renamedName());
+      //~ prnNameQual(n, orig->get_scope());
+      expr(orig);
       prn(STMT_SEP);
 
       if (renamed.body())
@@ -1430,7 +1430,7 @@ namespace
 
       if (const SgAdaRenamingDecl* rendcl = imported.renamingDecl())
       {
-        SgSymbol*            orig     = rendcl->get_renamed();
+        SgExpression*        orig     = rendcl->get_renamed();
         RenamingSyntaxResult renamed  = renamingSyntax(orig);
 
         if (const SgScopeStatement* renscope = renamed.body())
@@ -2287,19 +2287,21 @@ namespace
       SgAdaRenamingDecl& dcl = SG_DEREF(n.get_declaration());
 
       res = AdaStatementUnparser::renamingSyntax(dcl.get_renamed());
-      res.renamedName() = n.get_name();
+      //~ res.renamedName() = n.get_name();
     }
 
     void handle(const SgAdaPackageSpecDecl& n)
     {
       std::string prefix = si::ada::isGenericDecl(n) ? "generic package " : "package ";
 
-      res = ReturnType{prefix, false /* does not require type */, n.get_name(), n.get_definition()};
+      res = ReturnType{prefix, false /* does not require type */, n.get_definition()};
+      //~ res = ReturnType{prefix, false /* does not require type */, n.get_name(), n.get_definition()};
     }
 
     void handle(const SgAdaPackageBodyDecl& n)
     {
-      res = ReturnType{"package ", false /* does not require type */, n.get_name(), SG_DEREF(n.get_definition()).get_spec()};
+      res = ReturnType{"package ", false /* does not require type */, SG_DEREF(n.get_definition()).get_spec()};
+      //~ res = ReturnType{"package ", false /* does not require type */, n.get_name(), SG_DEREF(n.get_definition()).get_spec()};
     }
 
     void handle(const SgAdaPackageSymbol& n)
@@ -2313,7 +2315,8 @@ namespace
 
       prefix += si::ada::isFunction(n.get_type()) ? "function " : "procedure ";
 
-      res = ReturnType{prefix, false, n.get_name(), nullptr};
+      res = ReturnType{prefix, false, nullptr};
+      //~ res = ReturnType{prefix, false, n.get_name(), nullptr};
     }
 
     void handle(const SgAdaGenericDecl& n)
@@ -2321,35 +2324,39 @@ namespace
       res = compute(n.get_declaration());
     }
 
-    void handle(const SgAdaGenericSymbol& n)
-    {
-      // get the prefix from the declaration, then set the proper name.
-      res = compute(n.get_declaration());
-      res.renamedName() = n.get_name();
-    }
-
     void handle(const SgAdaGenericInstanceDecl& n)
     {
       res = compute(n.get_declaration());
     }
 
-    void handle(const SgAdaGenericInstanceSymbol& n)
+    //
+    // expression refs
+
+    void handle(const SgAdaUnitRefExp& n)
     {
       // get the prefix from the declaration, then set the proper name.
-      res = compute(n.get_declaration());
-      res.renamedName() = n.get_name();
+      res = compute(n.get_decl());
+      //~ res.renamedName() = n.get_name();
     }
 
-    void handle(const SgVariableSymbol& n)
+    void handle(const SgVarRefExp&)
     {
-      res = ReturnType{"", true /* requires type */, n.get_name(), nullptr};
+      //~ res = ReturnType{"", true /* requires type */, n.get_name(), nullptr};
+      res = ReturnType{"", true /* requires type */, nullptr};
     }
 
-    void handle(const SgFunctionSymbol& n)
+    void handle(const SgFunctionRefExp& n)
     {
-      res = compute(n.get_declaration());
+      res = compute(n.getAssociatedFunctionDeclaration());
       // res.renamedName() = n.get_name();
     }
+
+    void handle(const SgExpression&)
+    {
+      // object renaming
+      res = ReturnType{"", true /* requires type */, nullptr};
+    }
+
 
     static
     RenamingSyntaxResult
@@ -2363,7 +2370,7 @@ namespace
   }
 
   RenamingSyntaxResult
-  AdaStatementUnparser::renamingSyntax(SgSymbol* n)
+  AdaStatementUnparser::renamingSyntax(SgExpression* n)
   {
     return RenamingSyntax::compute(n);
   }
