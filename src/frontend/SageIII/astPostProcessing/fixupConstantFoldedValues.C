@@ -214,7 +214,7 @@ void removeConstantFoldedValue(SgProject * project) {
   }
 #endif
 
-  std::map<SgNode *, SgNode *> replace_set;
+  std::map<SgNode *, SgNode *> replace_map;
   std::set<SgExpression *> delete_set;
 
   delete_set.insert(cet.disconnected.begin(), cet.disconnected.end());
@@ -270,24 +270,23 @@ void removeConstantFoldedValue(SgProject * project) {
         replace_folded_by_child = false;
       }
 
+      // DQ (7/23/2020): Only required now for C++11 code using EDG 6.0 and GNU 10.1 (see Cxx11_tests/test2015_02.C).
+      // DQ (7/18/2020): Added support to permit Cxx11_tests/test2020_69.C to pass.
+      // TV: moved that to not break the pattern
+      replace_folded_by_child &= !isSgLambdaExp(child);
+
       if (replace_folded_by_child) {
         child->set_parent(folded->get_parent()); // prevent replacement from creating self loop if child is direct descendant of folded
 
-     // DQ (7/23/2020): Only required now for C++11 code using EDG 6.0 and GNU 10.1 (see Cxx11_tests/test2015_02.C).
-     // DQ (7/18/2020): Added support to permit Cxx11_tests/test2020_69.C to pass.
-        SgLambdaExp* lambdaExp = isSgLambdaExp(child);
-        if (lambdaExp == NULL)
-           {
-             replace_set[folded] = child;
-             delete_set.insert(folded);
-           }
+        replace_map[folded] = child;
+        delete_set.insert(folded);
       } else {
         delete_set.insert(child);
       }
     }
   }
 
-  Rose::AST::Utils::edgePointerReplacement(replace_set);
+  Rose::AST::Utils::edgePointerReplacement(replace_map);
 
   for (auto expr: delete_set) {
     deleteExpressionAndOriginalExpressionTree(expr);
