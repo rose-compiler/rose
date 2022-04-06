@@ -268,14 +268,30 @@ namespace
     if (isSeparate) sgmod.setAdaSeparate(); else sgmod.unsetAdaSeparate();
   }
 
-  /// creates a deep-copyW of \ref exp
-  /// if \ref exp is null, null will be returned
+  /// creates an initializer for a variable/parameter declaration if needed
+  /// \param lst the subset of completed variable declarations
+  /// \param exp the original initializing expression
+  /// \param initializeFromFirst true, if secondary variables should be initialized from the primary
+  /// \param ctx the context
+  /// \details
+  ///    consider a variable or parameter declaration of the form.
+  ///      a,b : Integer := InitExpr
+  ///    for variable declarations (initializeFromFirst) the C-style AST looks like:
+  ///      int a = InitExpr, int b = a
+  ///    for parameter declarations (!initializeFromFirst) the C-style AST looks like:
+  ///      int a = InitExpr, int b = clone(InitExpr)
+  ///      Here side-effects of executing InitExpr twice NEED TO BE CONSIDERED.
   SgExpression*
-  cloneIfNeeded(SgExpression* exp, bool required)
+  createInit(SgInitializedNamePtrList& lst, SgExpression* exp, bool initializeFromFirst, AstContext ctx)
   {
-    if (!required) return exp;
+    // the first variable declarations gets the original initializer
+    if ((exp == nullptr) || lst.empty()) return exp;
 
-    exp = si::deepCopy(exp);
+    // secondary variable declarations are either initialized from the first (variables)
+    //   or from a clone (parameters).
+    // \todo NOTE: cloning the expression may produce side-effects.
+    exp = initializeFromFirst ? sb::buildVarRefExp(lst.front(), &ctx.scope())
+                              : si::deepCopy(exp);
 
     // \todo use a traversal to set all children nodes to compiler generated
     markCompilerGenerated(SG_DEREF(exp));
@@ -289,26 +305,27 @@ namespace
   /// \param dcltype  the type of all initialized name
   /// \param initexpr the initializer (if it exists) that will be cloned for each
   ///                 of the initialized names.
+  /// \param initializeFromFirst if true, secondary initialized names are initialized from the first
+  ///                            otherwise, clone the initexpr
   SgInitializedNamePtrList
   constructInitializedNamePtrList( AstContext ctx,
                                    std::map<int, SgInitializedName*>& m,
                                    const NameCreator::result_container& names,
                                    SgType& dcltype,
-                                   SgExpression* initexpr
+                                   SgExpression* initexpr,
+                                   bool initializeFromFirst = false
                                  )
   {
     SgInitializedNamePtrList lst;
-    int                      num      = names.size();
 
-    for (int i = 0; i < num; ++i)
+    for (const NameData& obj : names)
     {
-      const NameCreator::result_container::value_type obj = names.at(i);
-
       ADA_ASSERT (obj.fullName == obj.ident);
 
       const std::string& name = obj.fullName;
       Element_ID         id   = obj.id();
-      SgInitializedName& dcl  = mkInitializedName(name, dcltype, cloneIfNeeded(initexpr, initexpr && (i != 0)));
+      SgExpression*      init = createInit(lst, initexpr, initializeFromFirst, ctx);
+      SgInitializedName& dcl  = mkInitializedName(name, dcltype, init);
 
       attachSourceLocation(dcl, retrieveAs(elemMap(), id), ctx);
 
@@ -382,12 +399,7 @@ namespace
     if (decl.Initialization_Expression == 0)
       return nullptr;
 
-    SgExpression& res = getExprID_opt(decl.Initialization_Expression, ctx);
-
-    //  \todo this fails ...
-    //        discuss with DQ expression types
-    //~ if (expectedType) res.set_explicitly_stored_type(expectedType);
-    return &res;
+    return &getExprID(decl.Initialization_Expression, ctx);
   }
 
   SgType&
@@ -434,8 +446,12 @@ namespace
     SgType&                  basety   = getDeclTypeID(asisDecl.Object_Declaration_View, ctx);
     const bool               aliased  = (asisDecl.Declaration_Kind == A_Parameter_Specification) && asisDecl.Has_Aliased;
     SgType&                  parmtype = aliased ? mkAliasedType(basety) : basety;
-    SgInitializedNamePtrList dclnames = constructInitializedNamePtrList( ctx, asisVars(), names,
-                                                                         parmtype, getVarInit(asisDecl, &parmtype, ctx)
+    SgInitializedNamePtrList dclnames = constructInitializedNamePtrList( ctx,
+                                                                         asisVars(),
+                                                                         names,
+                                                                         parmtype,
+                                                                         getVarInit(asisDecl, &parmtype, ctx),
+                                                                         false /* do not reuse first initialized name */
                                                                        );
     SgVariableDeclaration&   sgnode   = mkParameter(dclnames, getMode(asisDecl.Mode_Kind), ctx.scope());
 
@@ -497,8 +513,12 @@ namespace
     ElemIdRange              range    = idRange(asisDecl.Names);
     name_container           names    = allNames(range, ctx);
     SgType&                  basety   = getDeclTypeID(asisDecl.Object_Declaration_View, ctx);
-    SgInitializedNamePtrList dclnames = constructInitializedNamePtrList( ctx, asisVars(), names,
-                                                                         basety, getVarInit(asisDecl, &basety, ctx)
+    SgInitializedNamePtrList dclnames = constructInitializedNamePtrList( ctx,
+                                                                         asisVars(),
+                                                                         names,
+                                                                         basety,
+                                                                         getVarInit(asisDecl, &basety, ctx),
+                                                                         false /* handle like parameters ??? */
                                                                        );
     SgVariableDeclaration&   sgnode   = mkVarDecl(dclnames, ctx.scope());
 
@@ -730,8 +750,12 @@ namespace
     ElemIdRange              range    = idRange(decl.Names);
     name_container           names    = allNames(range, ctx);
     SgScopeStatement&        scope    = ctx.scope();
-    SgInitializedNamePtrList dclnames = constructInitializedNamePtrList( ctx, asisVars(), names,
-                                                                         dclType, getVarInit(decl, expectedType, ctx)
+    SgInitializedNamePtrList dclnames = constructInitializedNamePtrList( ctx,
+                                                                         asisVars(),
+                                                                         names,
+                                                                         dclType,
+                                                                         getVarInit(decl, expectedType, ctx),
+                                                                         true /* reuse first initialized name for secondary inits */
                                                                        );
     SgVariableDeclaration&   vardcl   = varMaker(dclnames, scope);
 
