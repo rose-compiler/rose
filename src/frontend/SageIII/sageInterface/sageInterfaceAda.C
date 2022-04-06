@@ -686,19 +686,26 @@ namespace ada
   }
 
 
-  SgAdaPackageSymbol* renamedPackageSymbol(const SgAdaRenamingDecl& n)
+  SgAdaPackageSpecDecl* renamedPackage(const SgAdaRenamingDecl& n)
   {
-    SgSymbol* sym = n.get_renamed();
+    SgExpression* ren = n.get_renamed();
 
-    if (SgAdaRenamingSymbol* rensym = isSgAdaRenamingSymbol(sym))
-      return renamedPackageSymbol(rensym->get_declaration());
+    // multiple levels of renaming declarations
+    if (SgAdaRenamingRefExp* renref = isSgAdaRenamingRefExp(ren))
+      return renamedPackage(renref->get_decl());
 
-    return isSgAdaPackageSymbol(sym);
+    //~ if (SgAdaRenamingSymbol* rensym = isSgAdaRenamingSymbol(sym))
+      //~ return renamedPackageSymbol(rensym->get_declaration());
+
+    if (SgAdaUnitRefExp* unitref = isSgAdaUnitRefExp(ren))
+      return isSgAdaPackageSpecDecl(unitref->get_decl());
+
+    return nullptr;
   }
 
-  SgAdaPackageSymbol* renamedPackageSymbol(const SgAdaRenamingDecl* n)
+  SgAdaPackageSpecDecl* renamedPackage(const SgAdaRenamingDecl* n)
   {
-    return n ? renamedPackageSymbol(*n) : nullptr;
+    return n ? renamedPackage(*n) : nullptr;
   }
 
   bool isFunction(const SgFunctionType& ty)
