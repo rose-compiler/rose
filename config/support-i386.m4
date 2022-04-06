@@ -26,16 +26,16 @@ AC_DEFUN([ROSE_SUPPORT_I386],[
 
 		dnl Method 1: Perhaps the compiler creates this kind of executable by default?
 		if (test "$ac_cv_enable_i386" = no &&
-		    $CC $CFLAGS -o $RSI386_TEMP $RSI386_TEMP.c &&
-		    $RSI386_TEMP &&
+		    $CC $CFLAGS -o $RSI386_TEMP $RSI386_TEMP.c 2>&AS_MESSAGE_LOG_FD &&
+		    $RSI386_TEMP 2>&AS_MESSAGE_LOG_FD &&
 		    file $RSI386_TEMP |grep 32-bit |grep -q Intel); then
 			$ac_cv_enable_i386=
 		fi
 
 		dnl Method 2: Perhaps the "-m32" switch will work
 		if (test "$ac_cv_enable_i386" = no &&
-		    $CC -m32 $CFLAGS -o $RSI386_TEMP $RSI386_TEMP.c &&
-		    $RSI386_TEMP &&
+		    $CC -m32 $CFLAGS -o $RSI386_TEMP $RSI386_TEMP.c 2>&AS_MESSAGE_LOG_FD &&
+		    $RSI386_TEMP 2>&AS_MESSAGE_LOG_FD &&
                     file $RSI386_TEMP |grep 32-bit |grep -q Intel); then
 			ac_cv_enable_i386="-m32"
 		fi
@@ -48,8 +48,8 @@ AC_DEFUN([ROSE_SUPPORT_I386],[
 	elif test "$ac_cv_enable_i386" != "no"; then
 		dnl Check that what the user specified actually dos work...
 		if ($CC $ac_cv_enable_i386 $CFLAGS -o $RSI386_TEMP $RSI386_TEMP.c &&
-		    $RSI386_TEMP &&
-		    file $RSI386_TEMP |grep 32-bit |grep -q Intel); then
+		    $RSI386_TEMP 2>&AS_MESSAGE_LOG_FD &&
+		    file $RSI386_TEMP 2>&AS_MESSAGE_LOG_FD |grep 32-bit |grep -q Intel); then
 			: all ok
 		else
 			AC_MSG_RESULT($ac_cv_enable_i386)
