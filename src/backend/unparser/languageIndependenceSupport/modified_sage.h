@@ -109,7 +109,7 @@ class Unparse_MOD_SAGE
        // void outputExternLinkageSpecifier ( SgDeclarationStatement* decl_stmt );
           void outputExternLinkageSpecifier ( SgDeclarationStatement* decl_stmt, SgUnparse_Info& info );
 
-          void outputTemplateSpecializationSpecifier ( SgDeclarationStatement* decl_stmt );
+          void outputTemplateSpecializationSpecifier ( SgDeclarationStatement* decl_stmt, SgUnparse_Info& info );
 
 
        // DQ (10/25/2006): Support for color code to identify errors in source code position, 

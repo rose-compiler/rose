@@ -12480,9 +12480,37 @@ Unparse_ExprStmt::unparseTemplateVariableDeclStmt(SgStatement* stmt, SgUnparse_I
      unparseTemplateDeclarationStatment_support<SgTemplateVariableDeclaration>(stmt,info);
    }
 
+#if 0
+template <typename T> constexpr bool is_template_declaration = std::is_same<T, SgTemplateClassDeclaration>::value &&
+                                                               std::is_same<T, SgTemplateFunctionDeclaration>::value &&
+                                                               std::is_same<T, SgTemplateMemberFunctionDeclaration>::value &&
+                                                               std::is_same<T, SgTemplateTypedefDeclaration>::value &&
+                                                               std::is_same<T, SgTemplateVariableDeclaration>::value;
+
+template <typename T> constexpr bool is_template_instantiation = std::is_same<T, SgTemplateInstantiationDecl>::value &&
+                                                                 std::is_same<T, SgTemplateInstantiationFunctionDecl>::value &&
+                                                                 std::is_same<T, SgTemplateInstantiationMemberFunctionDecl>::value &&
+                                                                 std::is_same<T, SgTemplateInstantiationTypedefDeclaration>::value &&
+                                                                 std::is_same<T, SgVariableDeclaration>::value;
+
+template<class T, std::enable_if_t<is_template_declaration> * = nullptr>
+static bool templateHeaderNeedUnparsing(T* decl) {
+  return decl->get_templateParameters().empty();
+}
+
+template<class T, std::enable_if_t<is_template_instantiation> * = nullptr>
+static bool templateHeaderNeedUnparsing(T* decl) {
+  return true;
+}
+#endif
+
+#define DEBUG_unparseTemplateHeader 1
+
 template<class T>
-void
-Unparse_ExprStmt::unparseTemplateHeader(T* decl, SgUnparse_Info& info) {
+void Unparse_ExprStmt::unparseTemplateHeader(T* decl, SgUnparse_Info& info) {
+#if DEBUG_unparseTemplateHeader
+  printf ("In unparseTemplateHeader(decl = %p = %s) \n", decl, decl->class_name().c_str());
+#endif
   if (!decl->get_templateParameters().empty()) {
     curprint("template ");
     SgTemplateParameterPtrList tlist =  decl->get_templateParameters ();

@@ -3,4 +3,7 @@
 #include "fixupTypeReferences.h"
 
 void FixupTypeReferencesOnMemoryPool::visit(SgNode*) {}
+namespace EDG_ROSE_Translation {
+  void clear_global_caches() {}
+}
 
