@@ -1663,7 +1663,7 @@ Unparse_MOD_SAGE::outputExternLinkageSpecifier ( SgDeclarationStatement* decl_st
 
 
 void
-Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement* decl_stmt )
+Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement* decl_stmt, SgUnparse_Info& info )
    {
 
 #define DEBUG_TEMPLATE_SPECIALIZATION 0
@@ -1679,22 +1679,21 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
          return;
        }
 
-#if 0
-     if ( (isSgTemplateInstantiationDecl(decl_stmt) != NULL) ||
-          (isSgTemplateInstantiationFunctionDecl(decl_stmt) != NULL) ||
-          (isSgTemplateInstantiationMemberFunctionDecl(decl_stmt) != NULL) )
-        {
+  // DQ (1/3/2016): Adding support for template variable declarations.
+  // TV (03/31/2022): FIXME that is broken: we need to find a predicate for template variable instantiation in the absence of specialized node
+     if (isSgTemplateVariableDeclaration(decl_stmt) != NULL) {
+       SgTemplateVariableDeclaration * tvdecl = (SgTemplateVariableDeclaration *)decl_stmt;
 
-#error "DEAD CODE!"
+       SgSourceFile * sourcefile = info.get_current_source_file();
+       bool unparse_template_from_ast = sourcefile != NULL && sourcefile->get_unparse_template_ast();
+       unparse_template_from_ast |= tvdecl->get_unparse_template_ast() == true;
 
-          curprint( "template<> ");
-        }
-#else
+       if (!unparse_template_from_ast) {
+         curprint( "template <> ");
+       }
+     }
 
      if ( (isSgTemplateInstantiationDecl(decl_stmt)               != NULL) ||
-       // DQ (1/3/2016): Adding support for template variable declarations.
-       // TV (03/31/2022): FIXME that is broken. It seems that there are no template argument attached to the SgTemplateVariableDeclaration but that could be a good predicate
-       // (isSgTemplateVariableDeclaration(decl_stmt)             != NULL) ||
           (isSgTemplateInstantiationFunctionDecl(decl_stmt)       != NULL) ||
           (isSgTemplateInstantiationMemberFunctionDecl(decl_stmt) != NULL) )
         {
@@ -1869,7 +1868,6 @@ Unparse_MOD_SAGE::outputTemplateSpecializationSpecifier ( SgDeclarationStatement
 #if DEBUG_TEMPLATE_SPECIALIZATION
      curprint( "\n/* Leaving outputTemplateSpecializationSpecifier() */ ");
 #endif
-#endif
    }
 
 void
@@ -1883,7 +1881,7 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
 
 #ifdef __GNUC__
    #if (BACKEND_CXX_COMPILER_MAJOR_VERSION_NUMBER == 3) && (BACKEND_CXX_COMPILER_MINOR_VERSION_NUMBER < 4)
-     outputTemplateSpecializationSpecifier(decl_stmt);
+     outputTemplateSpecializationSpecifier(decl_stmt,info);
 
   // DQ (8/15/2020): Adding support for state so that we can avoid nested extern "C" specifications.
   // outputExternLinkageSpecifier(decl_stmt);
@@ -1910,7 +1908,7 @@ Unparse_MOD_SAGE::printSpecifier2(SgDeclarationStatement* decl_stmt, SgUnparse_I
      outputExternLinkageSpecifier(decl_stmt,info);
    #endif
 
-     outputTemplateSpecializationSpecifier(decl_stmt);
+     outputTemplateSpecializationSpecifier(decl_stmt,info);
    #endif
 #else
 #ifndef _MSC_VER
