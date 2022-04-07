@@ -53,6 +53,9 @@ libastPostProcessing_la_SOURCES      = \
 if !ROSE_BUILD_CXX_LANGUAGE_SUPPORT
 libastPostProcessing_la_SOURCES += dummy.C
 endif
+if ROSE_USE_CLANG_FRONTEND
+libastPostProcessing_la_SOURCES += dummy.C
+endif
 
 libastPostProcessing_la_LIBADD       = 
 libastPostProcessing_la_DEPENDENCIES = 
