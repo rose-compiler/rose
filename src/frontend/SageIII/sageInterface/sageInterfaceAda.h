@@ -237,11 +237,11 @@ namespace ada
   /// @}
 
 
-  /// returns a package symbol if the declaration \ref n renames a package
+  /// returns a package spec decl if the declaration \ref n renames a package
   /// returns nullptr otherwise
   /// @{
-  SgAdaPackageSymbol* renamedPackageSymbol(const SgAdaRenamingDecl& n);
-  SgAdaPackageSymbol* renamedPackageSymbol(const SgAdaRenamingDecl* n);
+  SgAdaPackageSpecDecl* renamedPackage(const SgAdaRenamingDecl& n);
+  SgAdaPackageSpecDecl* renamedPackage(const SgAdaRenamingDecl* n);
   /// @}
 
 

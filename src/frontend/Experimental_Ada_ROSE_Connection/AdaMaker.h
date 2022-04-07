@@ -419,20 +419,14 @@ namespace Ada_ROSE_Translation
 
   /// creates an Ada renaming declaration
   /// \param name    the new name
-  /// \param aliased the aliased declaration
-  /// \param ty      the type, if any of the declaration
+  /// \param renamed an expression indicating a renamed expression.
+  /// \param ty_opt  the type, if any of the declaration
   /// \param scope   the scope of the renaming decl
-  /// \note the idx is assumed to be 0.
+  /// \details
+  ///   renamed is an expression to accomodate references to to array subsections
+  ///   in addition to variables, variables, packages, exceptions, etc.
   SgAdaRenamingDecl&
-  mkAdaRenamingDecl(const std::string& name, SgDeclarationStatement& aliased, SgType* ty, SgScopeStatement& scope);
-
-  /// creates an Ada renaming declaration
-  /// \param name    the new name
-  /// \param aliased the aliased initialized name
-  /// \param ty      the type, if any of the declaration
-  /// \param scope   the scope of the renaming decl
-  SgAdaRenamingDecl&
-  mkAdaRenamingDecl(const std::string& name, SgInitializedName& ini, SgType* ty, SgScopeStatement& scope);
+  mkAdaRenamingDecl(const std::string& name, SgExpression& renamed, SgType* ty_opt, SgScopeStatement& scope);
 
   /// creates a nondefining Ada package body declaration.
   /// \param specdcl    the package specification

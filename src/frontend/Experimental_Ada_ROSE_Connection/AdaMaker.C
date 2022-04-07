@@ -792,34 +792,17 @@ mkAdaFormalTypeDecl(const std::string& name, SgScopeStatement& scope)
 }
 
 
-namespace
-{
-  template <class SageNode>
-  SgAdaRenamingDecl&
-  mkAdaRenamingDeclInternal(const std::string& name, SageNode& renamed, SgType* ty, SgScopeStatement& scope)
-  {
-    if (ty == nullptr) ty = &mkTypeVoid();
-
-    SgSymbol&          origsy = SG_DEREF(renamed.search_for_symbol_from_symbol_table());
-    SgAdaRenamingDecl& sgnode = mkLocatedNode<SgAdaRenamingDecl>(name, &origsy, ty);
-
-    sgnode.set_parent(&scope);
-    sgnode.set_firstNondefiningDeclaration(&sgnode);
-    scope.insert_symbol(name, &mkBareNode<SgAdaRenamingSymbol>(&sgnode));
-    return sgnode;
-  }
-}
-
 SgAdaRenamingDecl&
-mkAdaRenamingDecl(const std::string& name, SgDeclarationStatement& dcl, SgType* ty, SgScopeStatement& scope)
+mkAdaRenamingDecl(const std::string& name, SgExpression& renamed, SgType* ty, SgScopeStatement& scope)
 {
-  return mkAdaRenamingDeclInternal(name, dcl, ty, scope);
-}
+  if (ty == nullptr) ty = &mkTypeVoid();
 
-SgAdaRenamingDecl&
-mkAdaRenamingDecl(const std::string& name, SgInitializedName& ini, SgType* ty, SgScopeStatement& scope)
-{
-  return mkAdaRenamingDeclInternal(name, ini, ty, scope);
+  SgAdaRenamingDecl& sgnode = mkLocatedNode<SgAdaRenamingDecl>(name, &renamed, ty);
+
+  sgnode.set_parent(&scope);
+  sgnode.set_firstNondefiningDeclaration(&sgnode);
+  scope.insert_symbol(name, &mkBareNode<SgAdaRenamingSymbol>(&sgnode));
+  return sgnode;
 }
 
 

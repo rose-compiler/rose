@@ -708,7 +708,7 @@ HEADER_ADA_RENAMING_REF_EXPRESSION_START
 HEADER_ADA_RENAMING_REF_EXPRESSION_END
 
 HEADER_ADA_ATTRIBUTE_EXPRESSION_START
-HEADER_LIST_DECLARATIONS
+//~ HEADER_LIST_DECLARATIONS
 //~ SgType* get_type() const override;
 HEADER_ADA_ATTRIBUTE_EXPRESSION_END
 
@@ -1787,7 +1787,7 @@ HEADER_ASM_OP_START
                e_any,              /*!< X: unconstrained */
                e_general,          /*!< g: r or i or m */
                e_match_0, e_match_1, e_match_2, e_match_3, e_match_4,
-               e_match_5, e_match_6, e_match_7, e_match_8, e_match_9, 
+               e_match_5, e_match_6, e_match_7, e_match_8, e_match_9,
                                    /*!< 0-9: same as a previous operand */
             /* registers constraints */
                e_reg_integer,      /*!< r: any integer register */
@@ -2204,7 +2204,8 @@ SgExpression::post_construction_initialization()
 int
 SgExpression::replace_expression(SgExpression *,SgExpression *)
    {
-     printf ("Error: base class  SgExpression::replace_expression called, likely a mistake! \n");
+     cerr << "Call to undefined $CLASSNAME::replace_expression(): aborting" << endl;
+     cerr << "dynamic type: " << this->class_name() << endl;
      ROSE_ASSERT(false);
      return 0;
    }
@@ -4471,32 +4472,11 @@ SgType* SgAdaRenamingRefExp::get_type() const
   SgAdaRenamingDecl* decl = get_decl();
   ROSE_ASSERT(decl);
 
-  SgSymbol* sy = decl->get_renamed();
-  ROSE_ASSERT(sy);
+  SgExpression* ren = decl->get_renamed();
+  ROSE_ASSERT(ren);
 
-  while (SgAdaRenamingSymbol* rensy = isSgAdaRenamingSymbol(sy))
-  {
-    decl = rensy->get_declaration();
-    ROSE_ASSERT(decl);
-
-    sy = decl->get_renamed();
-  }
-
-  if (SgVariableSymbol* varsy = isSgVariableSymbol(sy))
-  {
-    SgInitializedName* var = varsy->get_declaration();
-
-    ROSE_ASSERT(var);
-    return var->get_type();
-  }
-
-
-  // not sure what to do for packages
-  //   renamed functions are handled else where
-  ROSE_ASSERT(isSgAdaPackageSymbol(sy));
-  return SgTypeVoid::createType();
+  return ren->get_type();
 }
-
 SOURCE_ADA_RENAMING_REF_EXPRESSION_END
 
 
@@ -4507,7 +4487,7 @@ SgType* SgAdaAttributeExp::get_type() const
   //       ==> introduce type as a member?
   return SgTypeUnknown::createType(NULL);
 }
-
+/*
 void
 SgAdaAttributeExp::append_arg(SgExpression* expr)
 {
@@ -4515,7 +4495,7 @@ SgAdaAttributeExp::append_arg(SgExpression* expr)
 
   p_args->append_expression(expr);
 }
-
+*/
 SOURCE_ADA_ATTRIBUTE_EXPRESSION_END
 
 
