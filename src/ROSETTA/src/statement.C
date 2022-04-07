@@ -3247,8 +3247,14 @@ Grammar::setUpStatements ()
      AdaRenamingDecl.setFunctionPrototype  ( "HEADER_ADA_RENAMING_DECL_STATEMENT", "../Grammar/Statement.code" );
      AdaRenamingDecl.setDataPrototype ( "SgName", "name", "= \"\"",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-     AdaRenamingDecl.setDataPrototype ( "SgSymbol*", "renamed", "= nullptr",
-                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     // PP (4/6/21): renamed initially was designed to rename another declaration. To make it work for
+     //              initialized names and 'real' declarations, the symbol was used as common denominator.
+     //              Ada allows to rename array elements and ranges, which is why a symbol is insufficient.
+     //              Thus the AST type of renamed was changed to SgExpression.
+     //~ AdaRenamingDecl.setDataPrototype ( "SgSymbol*", "renamed", "= nullptr",
+                                           //~ CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+     AdaRenamingDecl.setDataPrototype ( "SgExpression*", "renamed", "= nullptr",
+                                           CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
      AdaRenamingDecl.setDataPrototype ( "SgType*", "type", "= nullptr",
                                            CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 

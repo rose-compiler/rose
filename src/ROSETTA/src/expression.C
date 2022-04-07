@@ -1354,8 +1354,8 @@ Grammar::setUpExpressions ()
                                       CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 
      AdaAttributeExp.setFunctionPrototype ( "HEADER_ADA_ATTRIBUTE_EXPRESSION", "../Grammar/Expression.code" );
-     AdaAttributeExp.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );
-     AdaAttributeExp.editSubstitute       ( "LIST_NAME", "arg" );
+     //~ AdaAttributeExp.editSubstitute       ( "HEADER_LIST_DECLARATIONS", "HEADER_LIST_FUNCTIONS", "../Grammar/Expression.code" );
+     //~ AdaAttributeExp.editSubstitute       ( "LIST_NAME", "arg" );
      AdaAttributeExp.setDataPrototype ( "SgName", "attribute", "",
                                         CONSTRUCTOR_PARAMETER, BUILD_FLAG_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
      AdaAttributeExp.setDataPrototype ( "SgExpression*", "object", "= NULL",

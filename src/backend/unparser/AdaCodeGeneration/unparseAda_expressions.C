@@ -514,6 +514,11 @@ namespace
 
     void handle(SgAdaUnitRefExp& n)
     {
+      if (USE_COMPUTED_NAME_QUALIFICATION_EXPR)
+        prnNameQual(n);
+      else
+        prn(scopeQual(SG_DEREF(n.get_decl()).get_scope()));
+
       // really needed?
       prn(nameOfUnitRef(n.get_decl()));
     }

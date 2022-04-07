@@ -268,14 +268,30 @@ namespace
     if (isSeparate) sgmod.setAdaSeparate(); else sgmod.unsetAdaSeparate();
   }
 
-  /// creates a deep-copyW of \ref exp
-  /// if \ref exp is null, null will be returned
+  /// creates an initializer for a variable/parameter declaration if needed
+  /// \param lst the subset of completed variable declarations
+  /// \param exp the original initializing expression
+  /// \param initializeFromFirst true, if secondary variables should be initialized from the primary
+  /// \param ctx the context
+  /// \details
+  ///    consider a variable or parameter declaration of the form.
+  ///      a,b : Integer := InitExpr
+  ///    for variable declarations (initializeFromFirst) the C-style AST looks like:
+  ///      int a = InitExpr, int b = a
+  ///    for parameter declarations (!initializeFromFirst) the C-style AST looks like:
+  ///      int a = InitExpr, int b = clone(InitExpr)
+  ///      Here side-effects of executing InitExpr twice NEED TO BE CONSIDERED.
   SgExpression*
-  cloneIfNeeded(SgExpression* exp, bool required)
+  createInit(SgInitializedNamePtrList& lst, SgExpression* exp, bool initializeFromFirst, AstContext ctx)
   {
-    if (!required) return exp;
+    // the first variable declarations gets the original initializer
+    if ((exp == nullptr) || lst.empty()) return exp;
 
-    exp = si::deepCopy(exp);
+    // secondary variable declarations are either initialized from the first (variables)
+    //   or from a clone (parameters).
+    // \todo NOTE: cloning the expression may produce side-effects.
+    exp = initializeFromFirst ? sb::buildVarRefExp(lst.front(), &ctx.scope())
+                              : si::deepCopy(exp);
 
     // \todo use a traversal to set all children nodes to compiler generated
     markCompilerGenerated(SG_DEREF(exp));
@@ -289,26 +305,27 @@ namespace
   /// \param dcltype  the type of all initialized name
   /// \param initexpr the initializer (if it exists) that will be cloned for each
   ///                 of the initialized names.
+  /// \param initializeFromFirst if true, secondary initialized names are initialized from the first
+  ///                            otherwise, clone the initexpr
   SgInitializedNamePtrList
   constructInitializedNamePtrList( AstContext ctx,
                                    std::map<int, SgInitializedName*>& m,
                                    const NameCreator::result_container& names,
                                    SgType& dcltype,
-                                   SgExpression* initexpr
+                                   SgExpression* initexpr,
+                                   bool initializeFromFirst = false
                                  )
   {
     SgInitializedNamePtrList lst;
-    int                      num      = names.size();
 
-    for (int i = 0; i < num; ++i)
+    for (const NameData& obj : names)
     {
-      const NameCreator::result_container::value_type obj = names.at(i);
-
       ADA_ASSERT (obj.fullName == obj.ident);
 
       const std::string& name = obj.fullName;
       Element_ID         id   = obj.id();
-      SgInitializedName& dcl  = mkInitializedName(name, dcltype, cloneIfNeeded(initexpr, initexpr && (i != 0)));
+      SgExpression*      init = createInit(lst, initexpr, initializeFromFirst, ctx);
+      SgInitializedName& dcl  = mkInitializedName(name, dcltype, init);
 
       attachSourceLocation(dcl, retrieveAs(elemMap(), id), ctx);
 
@@ -382,12 +399,7 @@ namespace
     if (decl.Initialization_Expression == 0)
       return nullptr;
 
-    SgExpression& res = getExprID_opt(decl.Initialization_Expression, ctx);
-
-    //  \todo this fails ...
-    //        discuss with DQ expression types
-    //~ if (expectedType) res.set_explicitly_stored_type(expectedType);
-    return &res;
+    return &getExprID(decl.Initialization_Expression, ctx);
   }
 
   SgType&
@@ -434,8 +446,12 @@ namespace
     SgType&                  basety   = getDeclTypeID(asisDecl.Object_Declaration_View, ctx);
     const bool               aliased  = (asisDecl.Declaration_Kind == A_Parameter_Specification) && asisDecl.Has_Aliased;
     SgType&                  parmtype = aliased ? mkAliasedType(basety) : basety;
-    SgInitializedNamePtrList dclnames = constructInitializedNamePtrList( ctx, asisVars(), names,
-                                                                         parmtype, getVarInit(asisDecl, &parmtype, ctx)
+    SgInitializedNamePtrList dclnames = constructInitializedNamePtrList( ctx,
+                                                                         asisVars(),
+                                                                         names,
+                                                                         parmtype,
+                                                                         getVarInit(asisDecl, &parmtype, ctx),
+                                                                         false /* do not reuse first initialized name */
                                                                        );
     SgVariableDeclaration&   sgnode   = mkParameter(dclnames, getMode(asisDecl.Mode_Kind), ctx.scope());
 
@@ -497,8 +513,12 @@ namespace
     ElemIdRange              range    = idRange(asisDecl.Names);
     name_container           names    = allNames(range, ctx);
     SgType&                  basety   = getDeclTypeID(asisDecl.Object_Declaration_View, ctx);
-    SgInitializedNamePtrList dclnames = constructInitializedNamePtrList( ctx, asisVars(), names,
-                                                                         basety, getVarInit(asisDecl, &basety, ctx)
+    SgInitializedNamePtrList dclnames = constructInitializedNamePtrList( ctx,
+                                                                         asisVars(),
+                                                                         names,
+                                                                         basety,
+                                                                         getVarInit(asisDecl, &basety, ctx),
+                                                                         false /* handle like parameters ??? */
                                                                        );
     SgVariableDeclaration&   sgnode   = mkVarDecl(dclnames, ctx.scope());
 
@@ -730,8 +750,12 @@ namespace
     ElemIdRange              range    = idRange(decl.Names);
     name_container           names    = allNames(range, ctx);
     SgScopeStatement&        scope    = ctx.scope();
-    SgInitializedNamePtrList dclnames = constructInitializedNamePtrList( ctx, asisVars(), names,
-                                                                         dclType, getVarInit(decl, expectedType, ctx)
+    SgInitializedNamePtrList dclnames = constructInitializedNamePtrList( ctx,
+                                                                         asisVars(),
+                                                                         names,
+                                                                         dclType,
+                                                                         getVarInit(decl, expectedType, ctx),
+                                                                         true /* reuse first initialized name for secondary inits */
                                                                        );
     SgVariableDeclaration&   vardcl   = varMaker(dclnames, scope);
 
@@ -765,6 +789,7 @@ namespace
     handleNumVarCstDecl(elem, dcl, ctx, isPrivate, varty, nullptr, varMaker);
   }
 
+/*
   SgDeclarationStatement&
   getAliasedID(Element_ID declid, AstContext ctx);
 
@@ -790,7 +815,7 @@ namespace
 
     return getAliased(elem.The_Union.Expression, ctx);
   }
-
+*/
 
   std::pair<SgAdaTaskSpec*, DeferredBodyCompletion>
   getTaskSpec(Element_Struct& elem, AstContext ctx)
@@ -2154,7 +2179,7 @@ namespace
         Element_Struct&            impEl    = imported.elem();
         Element_ID                 impID    = asisExpression(impEl).Corresponding_Name_Declaration;
         SgExpression*              res      = &getExpr(impEl, ctx);
-        SgScopeStatement&          scope = ctx.scope();
+        SgScopeStatement&          scope    = ctx.scope();
 
         if (SgVarRefExp* varref = isSgVarRefExp(res))
         {
@@ -2941,6 +2966,7 @@ namespace
     return &mkExprListExp(reslst);
   }
 
+/*
   // compare SgAdaType::getExceptionBase
   std::pair<SgInitializedName*, SgAdaRenamingDecl*>
   getObjectBase(Element_Struct& el, AstContext ctx)
@@ -2978,6 +3004,7 @@ namespace
     init.set_scope(&ctx.scope());
     return std::make_pair(&init, nullptr);
   }
+*/
 
   // returns a function declaration statement for a declaration statement
   //   checks if the function is an Ada generic function, where the declaration
@@ -4480,14 +4507,16 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
           return;
         }
 
+/*
         SgDeclarationStatement* aliased = &getAliasedID(decl.Renamed_Entity, ctx);
 
         if (SgAdaGenericDecl* gendcl = isSgAdaGenericDecl(aliased))
           aliased = gendcl->get_declaration();
-
+*/
+        SgExpression&           renamed = getExprID(decl.Renamed_Entity, ctx);
         SgScopeStatement&       scope   = ctx.scope();
         SgType*                 pkgtype = &mkTypeVoid(); // or nullptr?
-        SgAdaRenamingDecl&      sgnode  = mkAdaRenamingDecl(adaname.ident, SG_DEREF(aliased), pkgtype, scope);
+        SgAdaRenamingDecl&      sgnode  = mkAdaRenamingDecl(adaname.ident, renamed, pkgtype, scope);
 
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
@@ -4552,29 +4581,27 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case An_Object_Renaming_Declaration:           // 8.5.1(2)
       {
-        using ObjBasePair = std::pair<SgInitializedName*, SgAdaRenamingDecl*>;
+        //~ using ObjBasePair = std::pair<SgInitializedName*, SgAdaRenamingDecl*>;
 
         logKind("An_Object_Renaming_Declaration");
 
         NameData           adaname = singleName(decl, ctx);
-        if (isInvalidId(decl.Renamed_Entity))
-        {
-          logWarn() << "skipping unknown renaming: " << adaname.ident << "/" << adaname.fullName
-                    << ": " << elem.ID << " / " << decl.Renamed_Entity
-                    << std::endl;
-          return;
-        }
-
-        Declaration_Struct& asisDecl = elem.The_Union.Declaration;
+/*
         Element_Struct&     renamed_entity_elem = retrieveAs(elemMap(), decl.Renamed_Entity);
         ObjBasePair         objpair = getObjectBase(renamed_entity_elem, ctx);
         ADA_ASSERT (objpair.first || objpair.second);
 
         SgScopeStatement&   scope   = ctx.scope();
-        SgType&             ty      = getDeclTypeID(asisDecl.Object_Declaration_View, ctx);
         SgAdaRenamingDecl&  sgnode  = objpair.first
                                          ? mkAdaRenamingDecl(adaname.ident, *objpair.first,  &ty, scope)
                                          : mkAdaRenamingDecl(adaname.ident, *objpair.second, &ty, scope);
+*/
+
+        SgScopeStatement&   scope   = ctx.scope();
+        Declaration_Struct& asisDcl = elem.The_Union.Declaration;
+        SgType&             ty      = getDeclTypeID(asisDcl.Object_Declaration_View, ctx);
+        SgExpression&       renamed = getExprID(decl.Renamed_Entity, ctx);
+        SgAdaRenamingDecl&  sgnode  = mkAdaRenamingDecl(adaname.ident, renamed, &ty, scope);
 
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
@@ -4588,12 +4615,12 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
 
     case An_Exception_Renaming_Declaration:        // 8.5.2(2)
       {
-        using ExBasePair = std::pair<SgInitializedName*, SgAdaRenamingDecl*>;
+        //~ using ExBasePair = std::pair<SgInitializedName*, SgAdaRenamingDecl*>;
 
         logKind("An_Exception_Renaming_Declaration");
 
         NameData           adaname = singleName(decl, ctx);
-
+/*
         if (isInvalidId(decl.Renamed_Entity))
         {
           logWarn() << "skipping unknown exception renaming: " << adaname.ident << "/" << adaname.fullName
@@ -4611,6 +4638,14 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                    = expair.first
                        ? mkAdaRenamingDecl(adaname.ident, *expair.first,  expair.first->get_type(),  scope)
                        : mkAdaRenamingDecl(adaname.ident, *expair.second, expair.second->get_type(), scope);
+*/
+
+        SgScopeStatement&  scope   = ctx.scope();
+        SgExpression&      renamed = getExprID(decl.Renamed_Entity, ctx);
+        SgType&            excty    = lookupNode(adaTypes(), AdaIdentifier{"Exception"});
+
+        // ADA_ASSERT(renamed.get_type() == &excty); \todo not sure why this does not hold...
+        SgAdaRenamingDecl& sgnode  = mkAdaRenamingDecl(adaname.ident, renamed, &excty, scope);
 
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);
@@ -4633,7 +4668,7 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
                );
 
         NameData                adaname = singleName(decl, ctx);
-
+/*
         if (isInvalidId(decl.Renamed_Entity))
         {
           logWarn() << "skipping unknown package renaming: " << adaname.ident << "/" << adaname.fullName
@@ -4646,10 +4681,12 @@ void handleDeclaration(Element_Struct& elem, AstContext ctx, bool isPrivate)
         SgFunctionDeclaration*  fundecl = getFunctionDeclaration(aliased);
 
         if (fundecl) aliased = fundecl;
+*/
 
+        SgExpression&           renamed = getExprID(decl.Renamed_Entity, ctx);
         SgScopeStatement&       scope   = ctx.scope();
         SgType*                 pkgtype = &mkTypeVoid(); // or nullptr or function type?
-        SgAdaRenamingDecl&      sgnode  = mkAdaRenamingDecl(adaname.ident, *aliased, pkgtype, scope);
+        SgAdaRenamingDecl&      sgnode  = mkAdaRenamingDecl(adaname.ident, renamed, pkgtype, scope);
 
         recordNode(asisDecls(), elem.ID, sgnode);
         recordNode(asisDecls(), adaname.id(), sgnode);

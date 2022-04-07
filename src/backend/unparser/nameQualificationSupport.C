@@ -813,13 +813,13 @@ namespace
       void addVisibleScope(const SgScopeStatement* scope);
 
       /// records renaming iff the renamed entity is associated with a scope.
-      /// \param sy renamed symbol
-      /// \param n  the current renaming declaration
+      /// \param e reference to renamed unit, exception, object, etc.
+      /// \param n the current renaming declaration
       /// \details
       ///   - does not record variable renamings
-      ///   - in most cases n.get_renamed() == sy, except when the renamed declaration
+      ///   - in most cases n.get_renamed() == e, except when the renamed declaration
       ///     was itself a renaming (recursive call).
-      void addRenamedScopeIfNeeded(const SgSymbol* sy, const SgAdaRenamingDecl& n);
+      void addRenamedScopeIfNeeded(const SgExpression* e, const SgAdaRenamingDecl& n);
 
       /// records a use declaration of \ref scope iff \ref n is associated with a scope.
       void addUsedScopeIfNeeded(const SgDeclarationStatement* n);
@@ -857,11 +857,11 @@ namespace
       {
         handle(sg::asBaseType(n));
 
-        SgSymbol& orig = SG_DEREF(n.get_renamed());
+        SgExpression& orig = SG_DEREF(n.get_renamed());
 
-        recordNameQualIfNeeded(n, orig.get_scope());
+        //~ recordNameQualIfNeeded(n, orig.get_scope());
         computeNameQualForShared(n, n.get_type());
-        addRenamedScopeIfNeeded(n.get_renamed(), n);
+        addRenamedScopeIfNeeded(&orig, n);
       }
 
       void handle(const SgTypedefDeclaration& n)
@@ -1085,6 +1085,12 @@ namespace
           recordNameQualIfNeeded(n, declOf(n).get_scope());
       }
 
+      void handle(const SgAdaUnitRefExp& n)
+      {
+        if (!elideNameQualification(n))
+          recordNameQualIfNeeded(n, declOf(n).get_scope());
+      }
+
       void handle(const SgAdaRenamingRefExp& n)
       {
         //~ if (!elideNameQualification(n))
@@ -1223,7 +1229,7 @@ namespace
 
       void handle(const SgAdaRenamingDecl& n)
       {
-        if (SageInterface::ada::renamedPackageSymbol(n))
+        if (SageInterface::ada::renamedPackage(n))
           resetAdaContextIfNeeded(n);
       }
 
@@ -1272,48 +1278,50 @@ namespace
   }
 
   void
-  AdaPreNameQualifier::addRenamedScopeIfNeeded(const SgSymbol* sym, const SgAdaRenamingDecl& n)
+  AdaPreNameQualifier::addRenamedScopeIfNeeded(const SgExpression* e, const SgAdaRenamingDecl& n)
   {
-    if (const SgAdaRenamingSymbol* rensym = isSgAdaRenamingSymbol(sym))
+    if (const SgAdaRenamingRefExp* renref = isSgAdaRenamingRefExp(e))
     {
-      addRenamedScopeIfNeeded(SG_DEREF(rensym->get_declaration()).get_renamed(), n);
+      addRenamedScopeIfNeeded(SG_DEREF(renref->get_decl()).get_renamed(), n);
       return ;
     }
 
-    if (const SgAdaPackageSymbol* pkgsym = isSgAdaPackageSymbol(sym))
+    if (const SgAdaUnitRefExp* unitref = isSgAdaUnitRefExp(e))
     {
-      const SgDeclarationStatement* dcl = pkgsym->get_declaration();
+      const SgDeclarationStatement* dcl = unitref->get_decl();
 
       if (const SgAdaPackageSpecDecl* pkgspc = isSgAdaPackageSpecDecl(dcl))
-      {
-        //~ std::cerr << "+ renamed1 " << pkgspc->get_definition() << std::endl;
         traversal.addRenamedScope(pkgspc->get_definition(), &n);
-      }
-
-      if (const SgAdaPackageBodyDecl* pkgbdy = isSgAdaPackageBodyDecl(dcl))
-      {
-        //~ std::cerr << "+ renamed2 " << pkgbdy->get_definition() << std::endl;
+      else if (const SgAdaPackageBodyDecl* pkgbdy = isSgAdaPackageBodyDecl(dcl))
         traversal.addRenamedScope(SG_DEREF(pkgbdy->get_definition()).get_spec(), &n);
-      }
 
+      // other unit refs?
       return;
     }
 
-    if (const SgFunctionSymbol* fnsym = isSgFunctionSymbol(sym))
+    if (const SgFunctionRefExp* funref = isSgFunctionRefExp(e))
     {
-      traversal.addRenamedScope(fnsym->get_scope(), &n);
+      SgFunctionSymbol& funsym = SG_DEREF(funref->get_symbol());
+
+      traversal.addRenamedScope(funsym.get_scope(), &n);
       // \todo what needs to be done here?
       return;
     }
 
-    if (/*const SgAdaGenericInstanceSymbol* gensym* =*/ isSgAdaGenericInstanceSymbol(sym))
-      // \todo what needs to be done here?
+    if (/*const SgAdaTaskRefExp* tskref =*/ isSgAdaTaskRefExp(e))
       return;
 
-    if (/*const SgVariableSymbol* varsym =*/ isSgVariableSymbol(sym))
+    if (/*const SgAdaProtectedRefExp* tskref =*/ isSgAdaProtectedRefExp(e))
       return;
 
-    SG_UNEXPECTED_NODE(SG_DEREF(sym));
+    if (/*const SgTypeExpression* tskref =*/ isSgTypeExpression(e))
+      return;
+
+    if (/*const SgVariableSymbol* varsym =*/ isSgVarRefExp(e))
+      return;
+
+    // \todo fill in other cases that do not require any special handling
+    SG_UNEXPECTED_NODE(SG_DEREF(e));
   }
 
   void
