@@ -1605,7 +1605,13 @@ namespace
 
     if (trystmt)
     {
-      traverseIDs(hndlrs, elemMap(), ExHandlerCreator{ctx.scope(dominantBlock), SG_DEREF(trystmt)});
+      {
+        LabelAndLoopManager lblmgr;
+
+        // maybe the LabelAndLoopManager is only needed if it does not already exist..
+        traverseIDs(hndlrs, elemMap(), ExHandlerCreator{ctx.scope(dominantBlock).labelsAndLoops(lblmgr), SG_DEREF(trystmt)});
+      }
+
       placePragmas(pragmas, ctx, std::ref(dominantBlock), std::ref(stmtblk));
     }
     else

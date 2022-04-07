@@ -1308,6 +1308,10 @@ namespace
       return;
     }
 
+    // \todo for now the expected types are listed separately to understand
+    //       what kind of types can possibly occur here.
+    //       in the long run, just returning should be sufficient.
+
     if (/*const SgAdaTaskRefExp* tskref =*/ isSgAdaTaskRefExp(e))
       return;
 
@@ -1320,7 +1324,15 @@ namespace
     if (/*const SgVariableSymbol* varsym =*/ isSgVarRefExp(e))
       return;
 
-    // \todo fill in other cases that do not require any special handling
+    if (/*const SgPntrArrRefExp* arref =*/ isSgPntrArrRefExp(e))
+      return;
+
+    if (/*const SgDotExp* fldref =*/ isSgDotExp(e))
+      return;
+
+    if (/*const SgPointerDerefExp* ptrref =*/ isSgPointerDerefExp(e))
+      return;
+
     SG_UNEXPECTED_NODE(SG_DEREF(e));
   }
 
