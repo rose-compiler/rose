@@ -1170,8 +1170,10 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
 
              SgClassDeclaration* nondefining_classDeclaration_copy =
                  isSgClassDeclaration(classDeclaration_copy->get_firstNondefiningDeclaration());
+#ifndef NDEBUG
              SgClassDeclaration* nondefining_classDeclaration_original =
                  isSgClassDeclaration(classDeclaration_original->get_firstNondefiningDeclaration());
+#endif
              ROSE_ASSERT(nondefining_classDeclaration_copy->get_type() != nondefining_classDeclaration_original->get_type());
              if (nondefining_classDeclaration_copy->get_type() != classDeclaration_copy->get_type())
                 {
@@ -1183,12 +1185,14 @@ Snippet::insertRelatedThingsForC(SgStatement *insertionPoint)
 
              ROSE_ASSERT(classDeclaration_copy->get_definingDeclaration() !=
                          classDeclaration_original->get_definingDeclaration());
+#ifndef NDEBUG
              SgClassDeclaration* defining_classDeclaration_copy =
                  isSgClassDeclaration(classDeclaration_copy->get_definingDeclaration());
              SgClassDeclaration* defining_classDeclaration_original =
                  isSgClassDeclaration(classDeclaration_original->get_definingDeclaration());
              ROSE_ASSERT(defining_classDeclaration_original->get_type() == nondefining_classDeclaration_original->get_type());
              ROSE_ASSERT(defining_classDeclaration_copy->get_type() == nondefining_classDeclaration_copy->get_type());
+#endif
            }
 
         file->addInsertionRecord(SnippetInsertion(declCopy, decl, topInsertionPoint));
