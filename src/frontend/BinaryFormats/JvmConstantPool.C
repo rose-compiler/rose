@@ -21,14 +21,40 @@ SgAsmJvmConstantPool::SgAsmJvmConstantPool(SgAsmJvmFileHeader* fhdr)
 }
 
 // Constructor creating an object ready to be initialized via parse().
-SgAsmJvmConstantPoolEntry::SgAsmJvmConstantPoolEntry(PoolEntry::ConstantPoolKind tag)
+SgAsmJvmConstantPoolEntry::SgAsmJvmConstantPoolEntry(PoolEntry::Kind tag)
   : p_tag{tag}, p_bytes{0}, p_hi_bytes{0}, p_low_bytes{0}, p_bootstrap_method_attr_index{0}, p_class_index{0},
     p_descriptor_index{0}, p_name_index{0}, p_name_and_type_index{0}, p_reference_index{0}, p_reference_kind{0},
     p_string_index{0}, p_length{0}, p_utf8_bytes{nullptr}
 {
 }
 
-std::string PoolEntry::to_string(PoolEntry::ConstantPoolKind kind)
+SgAsmJvmConstantPoolEntry* SgAsmJvmConstantPool::get_entry(size_t index) const
+{
+  SgAsmJvmConstantPoolEntry* entry{nullptr};
+  auto entries{get_entries()->get_entries()};
+
+  if (index > 0 && index < entries.size()) {
+    // Indices starts at one
+    entry = entries[index-1];
+  }
+  else {
+    throw FormatError("Invalid index");
+  }
+  return entry;
+}
+
+std::string SgAsmJvmConstantPool::get_utf8_string(size_t index) const
+{
+  SgAsmJvmConstantPoolEntry* entry{get_entry(index)};
+  if (entry && entry->get_tag() == PoolEntry::CONSTANT_Utf8) {
+    return std::string{entry->get_utf8_bytes(), entry->get_length()};
+  }
+  else {
+    throw FormatError("Invalid CONSTANT_Utf8 entry at requested index");
+  }
+}
+
+std::string PoolEntry::to_string(PoolEntry::Kind kind)
 {
   switch (kind) {
     case PoolEntry::CONSTANT_Utf8:               return "CONSTANT_Utf8";
@@ -321,7 +347,7 @@ SgAsmJvmConstantPool* SgAsmJvmConstantPool::parse()
     header->set_offset(offset);
 
     // Create and initialize (parse) a new entry
-    auto kind = static_cast<PoolEntry::ConstantPoolKind>(tag);
+    auto kind = static_cast<PoolEntry::Kind>(tag);
     entry = new PoolEntry(kind);
     entry->parse(this);
 

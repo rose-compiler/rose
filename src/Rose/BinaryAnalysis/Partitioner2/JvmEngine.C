@@ -579,30 +579,30 @@ JvmEngine::parseCommandLine(const std::vector<std::string> &args, const std::str
   //   4. Parse using constructed jfh
 
   // How about
-  //   1. Create jcf=SgAsmJavaClassFile
-  //   2. Parse using SgAsmJavaClassFile (jcf->parse(fileName)) /* does little parsing of file */
+  //   1. Create jcf=SgAsmJvmClassFile
+  //   2. Parse using SgAsmJvmClassFile (jcf->parse(fileName)) /* does little parsing of file */
   //   3. Construct jfh=SgAsmJvmFileHeader using parsed jcf
   //   4. Parse using constructed jfh (jfh->parse()) /* */
 
   SgAsmGenericFile* gf = new SgAsmGenericFile();
   gf->parse(fileName);
-  std::cout << "JvmEngine::parseCommandLine: is_JVM: " << SgAsmJavaClassFile::is_JVM(gf) << std::endl;
-  if (SgAsmJavaClassFile::is_JVM(gf)) {
-    auto jcf = new SgAsmJavaClassFile(gf);
+  std::cout << "JvmEngine::parseCommandLine: is_JVM: " << SgAsmJvmClassFile::is_JVM(gf) << std::endl;
+  if (SgAsmJvmClassFile::is_JVM(gf)) {
+    auto jcf = new SgAsmJvmClassFile(gf);
     jcf->parse();
   }
 
 #else
   // Do this
-  //   1. Create jcf=SgAsmJavaClassFile(fileName) /* the only public constructor */
+  //   1. Create jcf=SgAsmJvmClassFile(fileName) /* the only public constructor */
   //       a. gf = SgAsmGenericFile{}
   //       b. gf->parse(fileName) /* this loads file into memory, does no reading of file */
   //       c. header = new SgAsmPvmFileHeader(gf)
-  //   2. Parse using SgAsmJavaClassFile (jcf->parse(fileName)) /* does little parsing of file */
+  //   2. Parse using SgAsmJvmClassFile (jcf->parse(fileName)) /* does little parsing of file */
   //   3. Construct jfh=SgAsmJvmFileHeader using parsed jcf
   //   4. Parse using constructed jfh (jfh->parse()) /* */
 
-// NOTE: Temporary until SgAsmJavaClassFile created
+// NOTE: Temporary until SgAsmJvmClassFile created
 #if 0
   auto gf = new SgAsmGenericFile{};
   gf->parse(fileName); /* this loads file into memory, does no reading of file */
@@ -614,7 +614,7 @@ JvmEngine::parseCommandLine(const std::vector<std::string> &args, const std::str
   std::cout << "--> generic header class is " << gh->class_name() << ":" << gh << std::endl;
 
   header->parse();
-  // Not sure we need SgAsmJavaClassFile
+  // Not sure we need SgAsmJvmClassFile
   //  gf->add_header(header);
   gh = gf->get_header(SgAsmGenericFile::FAMILY_JVM);
   std::cout << "--> header class is " << header->class_name() << ":" << header << std::endl;
@@ -623,8 +623,8 @@ JvmEngine::parseCommandLine(const std::vector<std::string> &args, const std::str
 
 #else
   // Doesn't do much, may need a constructor with filename so that can call is_JVM?
-  auto jcf = new SgAsmJavaClassFile();
-  //  std::cout << "JvmEngine::parseCommandLine: is_JVM: " << SgAsmJavaClassFile::is_JVM(jcf) << std::endl;
+  auto jcf = new SgAsmJvmClassFile();
+  //  std::cout << "JvmEngine::parseCommandLine: is_JVM: " << SgAsmJvmClassFile::is_JVM(jcf) << std::endl;
 
   // This should load entire class file
   jcf->parse(fileName);

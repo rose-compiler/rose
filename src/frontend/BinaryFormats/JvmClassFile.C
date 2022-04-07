@@ -1,18 +1,80 @@
-/* JVM (Java) class file header (SgAsmJavaClassFile and related classes) */
+/* JVM (Java) class file header (SgAsmJvmClassFile and related classes) */
 #include <featureTests.h>
 #ifdef ROSE_ENABLE_BINARY_ANALYSIS
 #include "sage3basic.h"
 
 #include <Rose/Diagnostics.h>
+#include "JvmClassFile.h"
 
 using namespace Rose::Diagnostics;
 using namespace ByteOrder;
 
+#ifdef JVM
+namespace Jvm {
+#endif
+
+#ifdef JVM
+template <typename T>
+size_t read_jvm_value(const SgAsmJvmConstantPool* pool, T &value, bool advance_offset)
+{
+  SgAsmGenericHeader* header{pool->get_header()};
+  rose_addr_t offset{header->get_offset()};
+
+  std::cout << "read_jvm_value: offset is " << offset << std::endl;
+
+  size_t count = header->read_content(offset, &value, sizeof(T));
+  if (count != sizeof(T)) {
+    //throw FormatError("Error reading JVM value");
+    ROSE_ASSERT(false && "Error reading JVM value");
+  }
+  value = be_to_host(value);
+  if (advance_offset) header->set_offset(offset + count);
+  return count;
+}
+#endif
+
+size_t read_jvm_bytes(const SgAsmJvmConstantPool* pool, char* &bytes)
+{
+  SgAsmGenericHeader* header{pool->get_header()};
+  rose_addr_t offset{header->get_offset()};
+  uint32_t length;
+
+  std::cout << "read_jvm_bytes: offset is " << offset << std::endl;
+
+  /* read length of the array */
+  size_t count = header->read_content(offset, &length, sizeof(length));
+  if (count != sizeof(length)) {
+    //throw FormatError("Error reading JVM bytes array length");
+    ROSE_ASSERT(false && "Error reading JVM bytes array length");
+  }
+  length = be_to_host(length);
+  offset += count;
+  header->set_offset(offset);
+
+  /* allocate memory for array */
+  bytes = new char[length];
+
+  /* read array */
+  count = header->read_content(offset, bytes, length);
+  if (count != length) {
+    //throw FormatError("Error reading JVM bytes array");
+    ROSE_ASSERT(false && "Error reading JVM bytes array");
+  }
+  offset += count;
+  header->set_offset(offset);
+
+  return count;
+}
+
+#ifdef JVM
+}// namespace Jvm
+#endif
+
 #if 0
-SgAsmJavaClassFile::SgAsmJavaClassFile(const std::string &fileName)
+SgAsmJvmClassFile::SgAsmJvmClassFile(const std::string &fileName)
   : SgAsmGenericFile{}
 {
-  std::cout << "SgAsmJavaClassFile::SgAsmJavaClassFile ...\n";
+  std::cout << "SgAsmJvmClassFile::SgAsmJvmClassFile ...\n";
 
   /* Parse the generic file to load the file */
   SgAsmGenericFile::parse(fileName);  
@@ -20,7 +82,7 @@ SgAsmJavaClassFile::SgAsmJavaClassFile(const std::string &fileName)
   // What am I???
   //  set_sex(ByteOrder::ORDER_MSB);
   //
-  std::cout << "isSgAsmJavaClassFile is " << isSgAsmJavaClassFile(this) << "\n";
+  std::cout << "isSgAsmJvmClassFile is " << isSgAsmJvmClassFile(this) << "\n";
   std::cout << "isSgAsmGenericFile is " << isSgAsmGenericFile(this) << "\n";
   std::cout << "isSgAsmGenericHeader is " << isSgAsmGenericHeader(this) << "\n";
   std::cout << "isSgAsmGenericSection is " << isSgAsmGenericSection(this) << "\n";
@@ -40,29 +102,21 @@ SgAsmJavaClassFile::SgAsmJavaClassFile(const std::string &fileName)
 
   std::cout << "  same " << same << std::endl;
 
-  std::cout << "SgAsmJavaClassFile::ctor() finished ...\n";
+  std::cout << "SgAsmJvmClassFile::ctor() finished ...\n";
 }
 #endif
 
 #if 0
-SgAsmJavaClassFile::~SgAsmJavaClassFile()
+SgAsmJvmClassFile::~SgAsmJvmClassFile()
 {
-  std::cout << "~SgAsmJavaClassFile:: ...\n";
+  std::cout << "~SgAsmJvmClassFile:: ...\n";
   if (p_header_section) delete p_header_section;
 }
 #endif
 
-const SgAsmJvmConstantPool* SgAsmJavaClassFile::get_constant_pool() const
-{
-  SgAsmJvmConstantPool* pool{nullptr};
-  ROSE_ASSERT(pool && "TODO: Get this from header?");
-
-  return pool;
-}
-
 #if 0
 bool
-SgAsmJavaClassFile::is_JVM(SgAsmGenericFile* file)
+SgAsmJvmClassFile::is_JVM(SgAsmGenericFile* file)
 {
   /* Turn off byte reference tracking for the duration of this function. We don't want our testing the file contents to
    * affect the list of bytes that we've already referenced or which we might reference later. */
@@ -83,18 +137,18 @@ SgAsmJavaClassFile::is_JVM(SgAsmGenericFile* file)
 }
 #endif
 
-SgAsmJavaClassFile*
-SgAsmJavaClassFile::parse(std::string fileName)
+SgAsmJvmClassFile*
+SgAsmJvmClassFile::parse(std::string fileName)
 {
   // Maybe NOT below
   /* Note the parent class was parsed during construction to set up file parameters */
 
-  std::cout << "SgAsmJavaClassFile::parse()\n";
+  std::cout << "SgAsmJvmClassFile::parse()\n";
 
   // GenericFile needed temporarily until inherit from it?
   auto gf = new SgAsmGenericFile{};
   gf->parse(fileName); /* this loads file into memory, does no reading of file */
-  //  std::cout << "SgAsmJavaClassFile::parse() is_JVM: " << SgAsmJvmFileHeader::is_JVM(gf) << std::endl;
+  //  std::cout << "SgAsmJvmClassFile::parse() is_JVM: " << SgAsmJvmFileHeader::is_JVM(gf) << std::endl;
 
   auto header = new SgAsmJvmFileHeader(gf);
   ROSE_ASSERT(header == gf->get_header(SgAsmGenericFile::FAMILY_JVM));
@@ -104,24 +158,65 @@ SgAsmJavaClassFile::parse(std::string fileName)
   std::cout << "--> generic header class is " << gh->class_name() << ":" << gh << std::endl;
 
   header->parse();
+  std::cout << "SgAsmJvmClassFile::parse(): finished parsing header\n";
 
-  // Not sure we need SgAsmJavaClassFile
+  // Not sure we need SgAsmJvmClassFile
   //  gf->add_header(header);
   gh = gf->get_header(SgAsmGenericFile::FAMILY_JVM);
+  ROSE_ASSERT(gh);
   std::cout << "--> header class is " << header->class_name() << ":" << header << std::endl;
   std::cout << "--> generic header class is " << gh->class_name() << ":" << gh << std::endl;
   ROSE_ASSERT(header == gf->get_header(SgAsmGenericFile::FAMILY_JVM));
 
-  auto pool = header->get_constant_pool();
-  ROSE_ASSERT(pool && "JVM constant pool is a nullptr");
+  /* Constant pool */
+  p_constant_pool = new SgAsmJvmConstantPool(header);
+  p_constant_pool->set_parent(this);
 
-  rose_addr_t offset{gh->get_offset()};
+  auto pool = get_constant_pool();
+  pool->parse();
+
+  auto offset = header->get_offset();
+  std::cout << "SgAsmJvmClassFile::parse() offset is " << header->get_offset() << std::endl;
+
+  /* p_access_flags */
+  auto count = gf->read_content(offset, &p_access_flags, sizeof p_access_flags);
+  if (2 != count) {
+    throw FormatError("Bad Java class file access_flags");
+  }
+  p_access_flags = be_to_host(p_access_flags);
+  offset += count;
+  header->set_offset(offset);
+
+  std::cout << "SgAsmJvmClassFile::p_access_flags " << p_access_flags << std::endl;
+
+  /* this_class */
+  count = gf->read_content(offset, &p_this_class, sizeof p_this_class);
+  if (2 != count) {
+    throw FormatError("Bad Java class file this_class");
+  }
+  p_this_class = be_to_host(p_this_class);
+  offset += count;
+  header->set_offset(offset);
+
+  std::cout << "SgAsmJvmClassFile::p_this_class " << p_this_class << std::endl;
+
+  /* super_class */
+  count = gf->read_content(offset, &p_super_class, sizeof p_super_class);
+  if (2 != count) {
+    throw FormatError("Bad Java class file super_class");
+  }
+  p_super_class = be_to_host(p_super_class);
+  offset += count;
+  header->set_offset(offset);
+
+  std::cout << "SgAsmJvmClassFile::p_super_class " << p_super_class << std::endl;
+
   std::cout << "SgAsmJvmClassFile::parse() offset is " << offset << std::endl;
 
   // Interface sections
   //
   uint16_t interfaces_count;
-  auto count = gh->read_content(offset, &interfaces_count, sizeof interfaces_count);
+  count = gf->read_content(offset, &interfaces_count, sizeof interfaces_count);
   if (2 != count) {
     throw FormatError("Bad Java class file interfaces_count");
   }
@@ -129,14 +224,14 @@ SgAsmJavaClassFile::parse(std::string fileName)
   offset += count;
   gh->set_offset(offset);
 
-  std::cout << "SgAsmJvmFileHeader::interfaces_count " << interfaces_count << std::endl;
+  std::cout << "SgAsmJvmClassFile::interfaces_count " << interfaces_count << std::endl;
   // TeMPorary
   ROSE_ASSERT(interfaces_count == 0);
 
   // Fields
   //
   uint16_t fields_count;
-  count = gh->read_content(offset, &fields_count, sizeof fields_count);
+  count = gf->read_content(offset, &fields_count, sizeof fields_count);
   if (2 != count) {
     throw FormatError("Bad Java class file fields_count");
   }
@@ -144,14 +239,14 @@ SgAsmJavaClassFile::parse(std::string fileName)
   offset += count;
   gh->set_offset(offset);
 
-  std::cout << "SgAsmJvmFileHeader::fields_count " << fields_count << std::endl;
+  std::cout << "SgAsmJvmClassFile::fields_count " << fields_count << std::endl;
   // TeMPorary
   ROSE_ASSERT(fields_count == 0);
 
   // Methods
   //
   uint16_t methods_count;
-  count = gh->read_content(offset, &methods_count, sizeof methods_count);
+  count = gf->read_content(offset, &methods_count, sizeof methods_count);
   if (2 != count) {
     throw FormatError("Bad Java class file methods_count");
   }
@@ -159,7 +254,7 @@ SgAsmJavaClassFile::parse(std::string fileName)
   offset += count;
   gh->set_offset(offset);
 
-  std::cout << "SgAsmJvmFileHeader::methods_count " << methods_count << std::endl;
+  std::cout << "SgAsmJvmClassFile::methods_count " << methods_count << std::endl;
 
   //  for (int i; i < methods_count; i++) {
   SgAsmJvmMethod* method = new SgAsmJvmMethod(this, gh);
@@ -199,16 +294,16 @@ SgAsmJavaClassFile::parse(std::string fileName)
 
 #if 0
   const SgCharList &magic = get_magic();
-  std::cout << "SgAsmJavaClassFile::parse(): magic size is " << magic.size() << std::endl;;
+  std::cout << "SgAsmJvmClassFile::parse(): magic size is " << magic.size() << std::endl;;
 #endif
 
   //erasmus:TODO: JavaClassLoader stuff here I believe (yeah)
   //  1. Read magic, major, minor for now
   //  2. sex = ByteOrder::ORDER_MSB;
 
-  std::cout << "WARNING: SgAsmJavaClassFile::parse():1\n";
+  std::cout << "WARNING: SgAsmJvmClassFile::parse():1\n";
 
-  std::cout << "SgAsmJavaClassFile::parse() finished ...\n";
+  std::cout << "SgAsmJvmClassFile::parse() finished ...\n";
 
   //erasmus:NOTE: Don't need disk format because it's the only one
 
@@ -405,20 +500,20 @@ SgAsmJavaClassFile::parse(std::string fileName)
  // SgAsmGenericHeader old stuff
 #if 0
 bool
-SgAsmJavaClassFile::reallocate()
+SgAsmJvmClassFile::reallocate()
 {
   /* Do not reallocate this file header. */
   return false;
 }
 
 void
-SgAsmJavaClassFile::unparse(std::ostream &f) const
+SgAsmJvmClassFile::unparse(std::ostream &f) const
 {
   /* Do not unparse to this file. */
 }
 
 void
-SgAsmJavaClassFile::dump(FILE *f, const char *prefix, ssize_t idx) const
+SgAsmJvmClassFile::dump(FILE *f, const char *prefix, ssize_t idx) const
 {
   char p[4096];
   if (idx>=0) {
@@ -435,4 +530,4 @@ SgAsmJavaClassFile::dump(FILE *f, const char *prefix, ssize_t idx) const
 }
 #endif // SgAsmGenericHeader old stuff
 
-#endif
+#endif // ROSE_ENABLE_BINARY_ANALYSIS

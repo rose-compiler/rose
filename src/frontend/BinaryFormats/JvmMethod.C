@@ -10,10 +10,15 @@
 using namespace Rose::Diagnostics;
 using namespace ByteOrder;
 
-SgAsmJvmMethod::SgAsmJvmMethod(SgAsmJavaClassFile* jcf, SgAsmGenericHeader* fhdr)
+SgAsmJvmMethod::SgAsmJvmMethod(SgAsmJvmClassFile* jcf, SgAsmGenericHeader* fhdr)
   : SgAsmGenericSection(fhdr->get_file(), fhdr)
 {
   std::cout << "SgAsmJvmMethod::ctor() ...\n";
+
+  p_attributes = new SgAsmJvmAttributeList;
+//p_entries    = new SgAsmJvmConstantPoolEntryList;
+  p_attributes->set_parent(this);
+
   set_parent(jcf);
 }
 
@@ -21,7 +26,7 @@ SgAsmJvmMethod* SgAsmJvmMethod::parse(SgAsmJvmConstantPool* pool)
 {
   std::cout << "SgAsmJvmMethod::parse() ...\n";
 
-  auto jcf = dynamic_cast<SgAsmJavaClassFile*>(get_parent());
+  auto jcf = dynamic_cast<SgAsmJvmClassFile*>(get_parent());
   ROSE_ASSERT(jcf);
 #ifdef PUT_BACK
   auto pool = jcf->get_constant_pool();
@@ -83,6 +88,7 @@ SgAsmJvmMethod* SgAsmJvmMethod::parse(SgAsmJvmConstantPool* pool)
   //TODO:loop
   if (attributes_count) {
     auto attribute = SgAsmJvmAttribute::create_attribute(pool);
+    attribute->parse(pool);
   }
 
   std::cout << "SgAsmJvmMethod::parse() exit ... \n\n";
