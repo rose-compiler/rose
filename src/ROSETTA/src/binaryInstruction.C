@@ -678,9 +678,11 @@ void Grammar::setUpBinaryInstructions() {
          *  instruction mnemonics. Each architecture has its own set of enum constants. See also, getAnyKind.
          *
          * @{ */
+     public:
         Rose::BinaryAnalysis::JvmInstructionKind get_kind() const;
         void set_kind(Rose::BinaryAnalysis::JvmInstructionKind);
-        protected Rose::BinaryAnalysis::JvmInstructionKind p_kind;
+     protected:
+        Rose::BinaryAnalysis::JvmInstructionKind p_kind;
         /** @} */
 #else
         AsmJvmInstruction.setDataPrototype("Rose::BinaryAnalysis::JvmInstructionKind", "kind",
@@ -5605,9 +5607,11 @@ void Grammar::setUpBinaryInstructions() {
          *  Minor version number of this class file.
          *
          * @{ */
+     public:
         uint16_t get_minor_version() const;
         void set_minor_version(uint16_t);
-        protected: uint16_t p_minor_version;
+     protected:
+        uint16_t p_minor_version;
         /** @} */
 #else
         AsmJvmFileHeader.setDataPrototype("uint16_t", "minor_version", "= 0",
@@ -5620,97 +5624,16 @@ void Grammar::setUpBinaryInstructions() {
          *  Major version number of this class file.
          *
          * @{ */
+     public:
         uint16_t get_major_version() const;
         void set_major_version(uint16_t);
-        protected: uint16_t p_major_version;
+     protected:
+        uint16_t p_major_version;
         /** @} */
 #else
         AsmJvmFileHeader.setDataPrototype("uint16_t", "major_version", "= 0",
                                           NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
-
-#ifdef DOCUMENTATION
-        /** Property: Access flags.
-         *
-         *  Mask of flags used to denote access permissions and properties of this class or interface.
-         *
-         * @{ */
-        uint16_t get_access_flags() const;
-        void set_access_flags(uint16_t);
-        protected: uint16_t p_access_flags;
-        /** @} */
-#else
-        AsmJvmFileHeader.setDataPrototype("uint16_t", "access_flags", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
-
-#ifdef DOCUMENTATION
-        /** Property: This class index.
-         *
-         *  Index into constant pool table for this class or interface.
-         *
-         * @{ */
-        uint16_t get_this_class() const;
-        void set_this_class(uint16_t);
-        protected: uint16_t p_this_class;
-        /** @} */
-#else
-        AsmJvmFileHeader.setDataPrototype("uint16_t", "this_class", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
-
-#ifdef DOCUMENTATION
-        /** Property: Super class.
-         *
-         *  Index into constant pool table for direct super class of this class or interface.
-         *
-         * @{ */
-        uint16_t get_super_class() const;
-        void set_super_class(uint16_t);
-        protected: uint16_t p_super_class;
-        /** @} */
-#else
-        AsmJvmFileHeader.setDataPrototype("uint16_t", "super_class", "= 0",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
-
-#ifdef DOCUMENTATION
-        /** Property: Constant pool.
-         *
-         *  Points to the AST node that represents the JVM constant pool. The constant pool is a table of structures
-         *  (see 4.4) representing various string constants, class and interface names, field names, and other constants
-         *  that are referred to within the ClassFile structure and its substructures. The format of each constant-pool
-         *  table entry is indicated by its first "tag" byte.
-         *
-         * @{ */
-        SgAsmJvmConstantPool* get_constant_pool() const;
-        void set_constant_pool(SgAsmJvmConstantPool*);
-        protected: SgAsmJvmConstantPool* p_constant_pool;
-        /** @} */
-#else
-        AsmJvmFileHeader.setDataPrototype("SgAsmJvmConstantPool*", "constant_pool", "= nullptr",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
-
-#undef JVM_IGNORE_SEGMENT_TABLE
-#ifdef JVM_IGNORE_SEGMENT_TABLE
-
-#ifdef DOCUMENTATION
-        /** Property: Segment table.
-         *
-         *  Points to the AST node that represents the JVM segment table that describes each segment of the file. Segments
-         *  describe how parts of the file are mapped into virtual memory by the loader.
-         *
-         * @{ */
-        SgAsmElfSegmentTable* get_segment_table() const;
-        void set_segment_table(SgAsmElfSegmentTable*);
-        /** @} */
-#else
-        AsmJvmFileHeader.setDataPrototype("SgAsmJvmSegmentTable*", "segment_table", "= NULL",
-                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
-#endif
-
-#endif // JVM_IGNORE_SEGMENT_TABLE
 
         DECLARE_OTHERS(AsmJvmFileHeader);
 #if defined(SgAsmJvmFileHeader_OTHERS) || defined(DOCUMENTATION)
@@ -5723,10 +5646,6 @@ void Grammar::setUpBinaryInstructions() {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmGenericHeader);
             s & BOOST_SERIALIZATION_NVP(p_minor_version);
             s & BOOST_SERIALIZATION_NVP(p_major_version);
-            s & BOOST_SERIALIZATION_NVP(p_access_flags);
-            s & BOOST_SERIALIZATION_NVP(p_this_class);
-            s & BOOST_SERIALIZATION_NVP(p_super_class);
-            s & BOOST_SERIALIZATION_NVP(p_constant_pool);
         }
 #endif
 
@@ -9859,26 +9778,17 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 #ifdef DOCUMENTATION
-        /** Property: Entry.
-         *
-         *  Returns constant pool entry at given index
-         *
-         *  Index starts at one.
-         * @{ */
-        SgAsmJvmConstantPoolEntry* get_entry(size_t index) const;
-        /** @} */
-#endif
-
-#ifdef DOCUMENTATION
         /** Property: List of constant pool entries.
          *
          *  This property points to an AST node that contains the list rather than being a list directly because of limitations
          *  of ROSETTA.
          *
          * @{ */
+     public:
         SgAsmJvmConstantPoolEntryList* get_entries() const;
         void set_entries(SgAsmJvmConstantPoolEntryList*);
-        protected: SgAsmJvmConstantPoolEntryList* p_entries;
+     protected:
+        SgAsmJvmConstantPoolEntryList* p_entries;
         /** @} */
 #else
         AsmJvmConstantPool.setDataPrototype("SgAsmJvmConstantPoolEntryList*", "entries", "= nullptr",
@@ -9899,7 +9809,7 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
     public:
-        explicit SgAsmJvmConstantPool(SgAsmJvmFileHeader *fhdr);
+        explicit SgAsmJvmConstantPool(SgAsmJvmFileHeader* fhdr);
 
         /** Parses a JVM Constant Pool.
          *
@@ -9907,6 +9817,20 @@ void Grammar::setUpBinaryInstructions() {
          *  extended as necessary based on the number of entries and the size of each entry. Returns a pointer to this
          *  object. */
         virtual SgAsmJvmConstantPool *parse() override;
+
+        /** Returns constant pool entry at given index.
+         *
+         *  Index starts at one.
+         * @{ */
+        SgAsmJvmConstantPoolEntry* get_entry(size_t index) const;
+        /** @} */
+
+        /** Return a string at the given index.
+         *
+         *  Throws an error if the index is invalid or if the constant pool entry
+         *  at the index is not a CONSTANT_Utf8_info.
+         */
+        std::string get_utf8_string(size_t index) const;
 
 #endif // SgAsmJvmConstantPool_OTHERS
 
@@ -9933,8 +9857,11 @@ void Grammar::setUpBinaryInstructions() {
         /** Property: List of entries.
          *
          * @{ */
+     public:
         const SgAsmJvmConstantPoolEntryPtrList& get_entries() const;
         void set_entries(const SgAsmJvmConstantPoolEntryPtrList&);
+     protected:
+        SgAsmJvmConstantPoolEntryPtrList & p_entries;
         /** @} */
 #else
         AsmJvmConstantPoolEntryList.setDataPrototype("SgAsmJvmConstantPoolEntryPtrList", "entries", "",
@@ -9986,12 +9913,14 @@ void Grammar::setUpBinaryInstructions() {
          *  Enum constant describing the kind of this entry in the pool.
          *
          * @{ */
-        ConstantPoolKind get_tag() const;
-        void set_tag(ConstantPoolKind);
-        private: SgAsmJvmConstantPoolEntry::ConstantPoolKind p_tag;
+     public:
+        SgAsmJvmConstantPoolEntry::Kind get_tag() const;
+        void set_tag(SgAsmJvmConstantPoolEntry::Kind);
+     protected:
+        SgAsmJvmConstantPoolEntry::Kind p_tag;
         /** @} */
 #else
-        AsmJvmConstantPoolEntry.setDataPrototype("SgAsmJvmConstantPoolEntry::ConstantPoolKind", "tag", "= SgAsmJvmConstantPoolEntry::EMPTY",
+        AsmJvmConstantPoolEntry.setDataPrototype("SgAsmJvmConstantPoolEntry::Kind", "tag", "= SgAsmJvmConstantPoolEntry::EMPTY",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
 #endif
 
@@ -10003,9 +9932,11 @@ void Grammar::setUpBinaryInstructions() {
          *   in IEEE 754 binary32 floating-point format.
          *
          * @{ */
+     public:
         uint32_t get_bytes() const;
         void set_bytes(uint32_t);
-        protected: uint32_t p_bytes;
+     protected:
+        uint32_t p_bytes;
         /** @} */
 #else
         AsmJvmConstantPoolEntry.setDataPrototype("uint32_t", "bytes", "= 0",
@@ -10021,13 +9952,17 @@ void Grammar::setUpBinaryInstructions() {
          *   the double value in IEEE 754 binary64 floating-point format.
          *
          * @{ */
+     public:
         uint32_t get_hi_bytes() const;
         void set_hi_bytes(uint32_t);
-        protected: uint32_t p_hi_bytes;
+     protected:
+        uint32_t p_hi_bytes;
 
+     public:
         uint32_t get_low_bytes() const;
         void set_low_bytes(uint32_t);
-        protected: uint32_t p_low_bytes;
+     protected:
+        uint32_t p_low_bytes;
         /** @} */
 #else
         AsmJvmConstantPoolEntry.setDataPrototype("uint32_t", "hi_bytes", "= 0",
@@ -10043,9 +9978,11 @@ void Grammar::setUpBinaryInstructions() {
          *    of this class file.  Present in CONSTANT_Dynamic_info and CONSTANT_Dynamic_info structs.
          *
          * @{ */
+     public:
         uint16_t get_bootstrap_method_attr_index() const;
         void set_bootstrap_method_attr_index(uint16_t);
-        protected: uint16_t p_bootstrap_method_attr_index;
+     protected:
+        uint16_t p_bootstrap_method_attr_index;
         /** @} */
 #else
         AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "bootstrap_method_attr_index", "= 0",
@@ -10059,9 +9996,11 @@ void Grammar::setUpBinaryInstructions() {
          *    Present in CONSTANT_Fieldref_info, CONSTANT_Methodref_info, and CONSTANT_InterfaceMethodref_info table entries.
          *
          * @{ */
+     public:
         uint16_t get_class_index() const;
         void set_class_index(uint16_t);
-        protected: uint16_t p_class_index;
+     protected:
+        uint16_t p_class_index;
         /** @} */
 #else
         AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "class_index", "= 0",
@@ -10075,9 +10014,11 @@ void Grammar::setUpBinaryInstructions() {
          *    Present in CONSTANT_NameAndType_info and CONSTANT_MethodHandle_info table entries.
          *
          * @{ */
+     public:
         uint16_t get_descriptor_index() const;
         void set_descriptor_index(uint16_t);
-        protected: uint16_t p_descriptor_index;
+     protected:
+        uint16_t p_descriptor_index;
         /** @} */
 #else
         AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "descriptor_index", "= 0",
@@ -10092,9 +10033,11 @@ void Grammar::setUpBinaryInstructions() {
          *    table entries.
          *
          * @{ */
+     public:
         uint16_t get_name_index() const;
         void set_name_index(uint16_t);
-        protected: uint16_t p_name_index;
+     protected:
+        uint16_t p_name_index;
 #else
         AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "name_index", "= 0",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -10108,9 +10051,11 @@ void Grammar::setUpBinaryInstructions() {
          *    CONSTANT_Dynamic_info, and CONSTANT_InvokeDynamic_info table entries.
          *
          * @{ */
+     public:
         uint16_t get_name_and_type_index() const;
         void set_name_and_type_index(uint16_t);
-        protected: uint16_t p_name_and_type_index;
+     protected:
+        uint16_t p_name_and_type_index;
 #else
         AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "name_and_type_index", "= 0",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -10123,9 +10068,11 @@ void Grammar::setUpBinaryInstructions() {
          *    Present in CONSTANT_MethodHandle_info table entries.
          *
          * @{ */
+     public:
         uint16_t get_reference_index() const;
         void set_reference_index(uint16_t);
-        protected: uint16_t p_reference_index;
+     protected:
+        uint16_t p_reference_index;
 #else
         AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "reference_index", "= 0",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -10138,9 +10085,11 @@ void Grammar::setUpBinaryInstructions() {
          *    CONSTANT_MethodHandle_info table entry.
          *
          * @{ */
+     public:
         uint8_t get_reference_kind() const;
         void set_reference_kind(uint8_t);
-        protected: uint8_t p_reference_kind;
+     protected:
+        uint8_t p_reference_kind;
 #else
         AsmJvmConstantPoolEntry.setDataPrototype("uint8_t",  "reference_kind", "= 0",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -10153,9 +10102,11 @@ void Grammar::setUpBinaryInstructions() {
          *    Present in CONSTANT_String_info table entries.
          *
          * @{ */
+     public:
         uint16_t get_string_index() const;
         void set_string_index(uint16_t);
-        protected: uint16_t p_string_index;
+     protected:
+        uint16_t p_string_index;
 #else
         AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "string_index", "= 0",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -10168,9 +10119,11 @@ void Grammar::setUpBinaryInstructions() {
          *  resulting string).  Present in CONSTANT_Utf8_info table entries.
          *
          * @{ */
+     public:
         uint16_t get_length() const;
         void set_length(uint16_t);
-        protected: uint16_t p_length;
+     protected:
+        uint16_t p_length;
 #else
         AsmJvmConstantPoolEntry.setDataPrototype("uint16_t", "length", "= 0",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -10182,9 +10135,11 @@ void Grammar::setUpBinaryInstructions() {
          *  The bytes array contains the bytes of the string. Present in CONSTANT_Utf8_info table entries.
          *
          * @{ */
+     public:
         const char* get_utf8_bytes() const;
         void set_utf8_bytes(const char*);
-        protected: const char* p_utf8_bytes;
+     protected:
+        const char* p_utf8_bytes;
 #else
         AsmJvmConstantPoolEntry.setDataPrototype("const char*", "utf8_bytes", "= nullptr",
                                                  NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -10223,7 +10178,7 @@ void Grammar::setUpBinaryInstructions() {
          *
          * These tags indicate the kind of constant denoted by the pool entry.
          */
-        enum ConstantPoolKind {
+        enum Kind {
             EMPTY = 0,
             CONSTANT_Utf8 = 1,
             CONSTANT_Integer = 3,
@@ -10351,7 +10306,7 @@ void Grammar::setUpBinaryInstructions() {
         };
 
         /** Constructor creating an object ready to be initialized via parse(). */
-        explicit SgAsmJvmConstantPoolEntry(SgAsmJvmConstantPoolEntry::ConstantPoolKind tag);
+        explicit SgAsmJvmConstantPoolEntry(SgAsmJvmConstantPoolEntry::Kind tag);
 
         /** Initialize a constant pool entry by parsing the file.
          *
@@ -10363,7 +10318,7 @@ void Grammar::setUpBinaryInstructions() {
         void dump(std::ostream &os, int index);
 
         /** Convert constant pool entry kind to a string */
-        static std::string to_string(SgAsmJvmConstantPoolEntry::ConstantPoolKind);
+        static std::string to_string(SgAsmJvmConstantPoolEntry::Kind);
 
 #endif // SgAsmJvmConstantPoolEntry_OTHERS
 
@@ -10400,9 +10355,11 @@ void Grammar::setUpBinaryInstructions() {
          *  (see JVM documentation).
          *
          * @{ */
+     public:
         uint16_t get_constantvalue_index() const;
         void set_constantvalue_index(uint16_t);
-        protected: uint16_t p_constantvalue_index;
+     protected:
+        uint16_t p_constantvalue_index;
         /** @} */
 #else
         AsmJvmConstantValue.setDataPrototype("uint16_t", "constantvalue_index", "= 0",
@@ -10442,6 +10399,131 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /*************************************************************************************************************************
+     *                                  JVM Code attribute (section 4.7.2)
+     *************************************************************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmJvmCodeAttribute);
+    IS_SERIALIZABLE(AsmJvmCodeAttribute);
+
+#ifdef DOCUMENTATION
+    /** JVM Code attribute.
+     *
+     *  A Code attribute contains the Java Virtual Machine instructions and auxiliary
+     *  information for a method, including an instance initialization method and a
+     *  class or interface initialization method, see section 4.7.3 of the JVM documentation.
+     */
+    class SgAsmJvmCodeAttribute: public SgAsmJvmAttribute {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: max_stack
+         *
+         *  The value of the max_stack item gives the maximum depth of the operand
+         *  stack of this method at any point during execution of the method.
+         *
+         * @{ */
+     public:
+        uint16_t get_max_stack() const;
+        void set_max_stack(uint16_t);
+     protected:
+        uint16_t p_max_stack;
+        /** @} */
+#else
+        AsmJvmCodeAttribute.setDataPrototype("uint16_t", "max_stack", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                             BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: max_locals
+         *
+         *  The value of the max_locals item gives the number of local variables in the local
+         *  variable array allocated upon invocation of this method.
+         *
+         * @{ */
+     public:
+        uint16_t get_max_locals() const;
+        void set_max_locals(uint16_t);
+     protected:
+        uint16_t p_max_locals;
+        /** @} */
+#else
+        AsmJvmCodeAttribute.setDataPrototype("uint16_t", "max_locals", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                             BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: code_length
+         *
+         *  The value of the code_length item gives the number of local variables in the local
+         *  variable array allocated upon invocation of this method.
+         *
+         * @{ */
+     public:
+        uint32_t get_code_length() const;
+        void set_code_length(uint32_t);
+     protected:
+        uint32_t p_code_length;
+        /** @} */
+#else
+        AsmJvmCodeAttribute.setDataPrototype("uint32_t", "code_length", "= 0", NO_CONSTRUCTOR_PARAMETER,
+                                             BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: code
+         *
+         *  The code array gives the actual bytes of Java Virtual Machine code that
+         *  implement the method.
+         *
+         * @{ */
+     public:
+        const char* get_code() const;
+        void set_code(const char*);
+     protected:
+        const char* p_code;
+#else
+        AsmJvmCodeAttribute.setDataPrototype("const char*", "code", "= nullptr", NO_CONSTRUCTOR_PARAMETER,
+                                             BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmJvmCodeAttribute);
+#if defined(SgAsmJvmCodeAttribute_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmAttribute);
+            s & BOOST_SERIALIZATION_NVP(p_max_stack);
+            s & BOOST_SERIALIZATION_NVP(p_max_locals);
+            s & BOOST_SERIALIZATION_NVP(p_code_length);
+        }
+#endif
+
+    public:
+        /** Initialize the attribute by parsing the file.
+         *
+         * @{ */
+        virtual SgAsmJvmAttribute* parse(SgAsmJvmConstantPool* pool) override;
+        /** @} */
+
+        /** Print some debugging information */
+        virtual void dump(std::ostream &os) override;
+
+#endif // SgAsmJvmCodeAttribute_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    /*************************************************************************************************************************
      *                                  JVM Signature attribute (section 4.7.9)
      *************************************************************************************************************************/
 
@@ -10467,9 +10549,11 @@ void Grammar::setUpBinaryInstructions() {
          *  (see JVM documentation).
          *
          * @{ */
+     public:
         uint16_t get_signature_index() const;
         void set_signature_index(uint16_t);
-        protected: uint16_t p_signature_index;
+     protected:
+        uint16_t p_signature_index;
         /** @} */
 #else
         AsmJvmSignature.setDataPrototype("uint16_t", "signature_index", "= 0",
@@ -10534,9 +10618,11 @@ void Grammar::setUpBinaryInstructions() {
          *  (see JVM documentation).
          *
          * @{ */
+     public:
         uint16_t get_sourcefile_index() const;
         void set_sourcefile_index(uint16_t);
-        protected: uint16_t p_sourcefile_index;
+     protected:
+        uint16_t p_sourcefile_index;
         /** @} */
 #else
         AsmJvmSourceFile.setDataPrototype("uint16_t", "sourcefile_index", "= 0",
@@ -10582,7 +10668,7 @@ void Grammar::setUpBinaryInstructions() {
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     NEW_NONTERMINAL_MACRO(AsmJvmAttribute,
-                          AsmJvmConstantValue | AsmJvmSignature | AsmJvmSourceFile,
+                          AsmJvmCodeAttribute | AsmJvmConstantValue | AsmJvmSignature | AsmJvmSourceFile,
                           "AsmJvmAttribute", "AsmJvmAttributeTag", false);
     AsmJvmAttribute.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmJvmAttribute);
@@ -10602,9 +10688,11 @@ void Grammar::setUpBinaryInstructions() {
          *  (see JVM documentation).
          *
          * @{ */
+     public:
         uint16_t get_attribute_name_index() const;
         void set_attribute_name_index(uint16_t);
-        protected: uint16_t p_attribute_name_index;
+     protected:
+        uint16_t p_attribute_name_index;
         /** @} */
 #else
         AsmJvmAttribute.setDataPrototype("uint16_t", "attribute_name_index", "= 0",
@@ -10618,9 +10706,11 @@ void Grammar::setUpBinaryInstructions() {
          *  attribute_name_index nor attribute_length.
          *
          * @{ */
+     public:
         uint32_t get_attribute_length() const;
         void set_attribute_length(uint32_t);
-        protected: uint32_t p_attribute_length;
+     protected:
+        uint32_t p_attribute_length;
 #else
         AsmJvmAttribute.setDataPrototype("uint32_t", "attribute_length", "= 0",
                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
@@ -10666,6 +10756,54 @@ void Grammar::setUpBinaryInstructions() {
     };
 #endif
 
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    DECLARE_LEAF_CLASS(AsmJvmAttributeList);
+    IS_SERIALIZABLE(AsmJvmAttributeList);
+
+#ifdef DOCUMENTATION
+    /** List of JVM attributes.
+     *
+     *  The only purpose of this node is to hold a list which, due to ROSETTA limitations, cannot be contained in the objects
+     *  that actually need it. */
+    class SgAsmJvmAttributeList: public SgAsmJvmNode {
+    public:
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: List of attributes.
+         *
+         * @{ */
+     public:
+        const SgAsmJvmAttributePtrList& get_attributes() const;
+        void set_attributes(const SgAsmJvmAttributePtrList&);
+     protected
+        SgAsmJvmAttributePtrList & p_attributes;
+        /** @} */
+#else
+        AsmJvmAttributeList.setDataPrototype("SgAsmJvmAttributePtrList", "attributes", "",
+                                             NO_CONSTRUCTOR_PARAMETER, BUILD_LIST_ACCESS_FUNCTIONS, NO_TRAVERSAL,
+                                             NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmJvmAttributeList);
+#if defined(SgAsmJvmAttributeList_OTHERS) || defined(DOCUMENTATION)
+#ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
+    private:
+        friend class boost::serialization::access;
+
+        template<class S>
+        void serialize(S &s, const unsigned /*version*/) {
+            s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmJvmNode);
+            s & BOOST_SERIALIZATION_NVP(p_attributes);
+        }
+#endif
+#endif // SgAsmJvmAttributeList_OTHERS
+
+#ifdef DOCUMENTATION
+    };
+#endif
+
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -10695,9 +10833,11 @@ void Grammar::setUpBinaryInstructions() {
          *  permission to and properties of this method (see JVM documentation).
          *
          * @{ */
+     public:
         uint16_t get_access_flags() const;
         void set_access_flags(uint16_t);
-        protected: uint16_t p_access_flags;
+     protected:
+        uint16_t p_access_flags;
         /** @} */
 #else
         AsmJvmMethod.setDataPrototype("uint16_t", "access_flags", "= 0",
@@ -10711,9 +10851,11 @@ void Grammar::setUpBinaryInstructions() {
          *  (see JVM documentation).
          *
          * @{ */
+     public:
         uint16_t get_name_index() const;
         void set_name_index(uint16_t);
-        protected: uint16_t p_name_index;
+     protected:
+        uint16_t p_name_index;
         /** @} */
 #else
         AsmJvmMethod.setDataPrototype("uint16_t", "name_index", "= 0",
@@ -10727,9 +10869,11 @@ void Grammar::setUpBinaryInstructions() {
          *  (see JVM documentation).
          *
          * @{ */
+     public:
         uint16_t get_descriptor_index() const;
         void set_descriptor_index(uint16_t);
-        protected: uint16_t p_descriptor_index;
+     protected:
+        uint16_t p_descriptor_index;
         /** @} */
 #else
         AsmJvmMethod.setDataPrototype("uint16_t", "descriptor_index", "= 0",
@@ -10737,20 +10881,19 @@ void Grammar::setUpBinaryInstructions() {
 #endif
 
 #ifdef DOCUMENTATION
-        /** Method attributes.
-         *
+        /** Property: List of attributes.
          *
          * @{ */
-/*TODO*/uint16_t get_attributes() const;
-/*TODO*/void set_attributes(uint16_t);
-/*TODO*/protected: uint16_t p_attributes;
+     public:
+        SgAsmJvmAttributeList* get_attributes() const;
+        void set_attributes(SgAsmJvmAttributeList*);
+     protected
+        SgAsmJvmAttributeList* p_attributes;
         /** @} */
 #else
-        //        AsmJvmMethod.setDataPrototype("AttributeList", "attributes", "= 0",
-        //                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+        AsmJvmMethod.setDataPrototype("SgAsmJvmAttributeList*", "attributes", "= nullptr",
+                                      NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, DEF_TRAVERSAL, NO_DELETE);
 #endif
-
-//TODO: attributes
 
         DECLARE_OTHERS(AsmJvmMethod);
 #if defined(SgAsmJvmMethod_OTHERS) || defined(DOCUMENTATION)
@@ -10764,12 +10907,12 @@ void Grammar::setUpBinaryInstructions() {
             s & BOOST_SERIALIZATION_NVP(p_access_flags);
             s & BOOST_SERIALIZATION_NVP(p_name_index);
             s & BOOST_SERIALIZATION_NVP(p_descriptor_index);
-//TODO      s & BOOST_SERIALIZATION_NVP(p_attriutes);
+            s & BOOST_SERIALIZATION_NVP(p_attributes);
         }
 #endif
 
     public:
-        explicit SgAsmJvmMethod(SgAsmJavaClassFile*, /*temporary*/SgAsmGenericHeader* fhdr);
+        explicit SgAsmJvmMethod(SgAsmJvmClassFile*, /*temporary*/SgAsmGenericHeader* fhdr);
 
     public:
         /** Initialize the method by parsing the file.
@@ -10796,8 +10939,8 @@ void Grammar::setUpBinaryInstructions() {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    DECLARE_LEAF_CLASS(AsmJavaClassFile);
-    IS_SERIALIZABLE(AsmJavaClassFile);
+    DECLARE_LEAF_CLASS(AsmJvmClassFile);
+    IS_SERIALIZABLE(AsmJvmClassFile);
 
 #ifdef DOCUMENTATION
     /** Java Class File.
@@ -10805,12 +10948,83 @@ void Grammar::setUpBinaryInstructions() {
      *  This node represents the contents of a Java class file for JVM executables.
      *  See JVM documentation for more information.
      */
-    class SgAsmJavaClassFile: public SgAsmExecutableFileFormat /*SgAsmGenericFile*/ {
+    class SgAsmJvmClassFile: public SgAsmExecutableFileFormat /*SgAsmGenericFile*/ {
     public:
 #endif
 
-        DECLARE_OTHERS(AsmJavaClassFile);
-#if defined(SgAsmJavaClassFile_OTHERS) || defined(DOCUMENTATION)
+#ifdef DOCUMENTATION
+        /** Property: Access flags.
+         *
+         *  Mask of flags used to denote access permissions and properties of this class or interface.
+         *
+         * @{ */
+     public:
+        uint16_t get_access_flags() const;
+        void set_access_flags(uint16_t);
+     protected:
+        uint16_t p_access_flags;
+        /** @} */
+#else
+        AsmJvmClassFile.setDataPrototype("uint16_t", "access_flags", "= 0",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: This class index.
+         *
+         *  Index into constant pool table for this class or interface.
+         *
+         * @{ */
+     public:
+        uint16_t get_this_class() const;
+        void set_this_class(uint16_t);
+     protected:
+        uint16_t p_this_class;
+        /** @} */
+#else
+        AsmJvmClassFile.setDataPrototype("uint16_t", "this_class", "= 0",
+                                          NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Super class.
+         *
+         *  Index into constant pool table for direct super class of this class or interface.
+         *
+         * @{ */
+     public:
+        uint16_t get_super_class() const;
+        void set_super_class(uint16_t);
+     protected:
+        uint16_t p_super_class;
+        /** @} */
+#else
+        AsmJvmClassFile.setDataPrototype("uint16_t", "super_class", "= 0",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+#ifdef DOCUMENTATION
+        /** Property: Constant pool.
+         *
+         *  Points to the AST node that represents the JVM constant pool. The constant pool is a table of structures
+         *  (see 4.4) representing various string constants, class and interface names, field names, and other constants
+         *  that are referred to within the ClassFile structure and its substructures. The format of each constant-pool
+         *  table entry is indicated by its first "tag" byte.
+         *
+         * @{ */
+     public:
+        const SgAsmJvmConstantPool* get_constant_pool() const;
+        void set_constant_pool(SgAsmJvmConstantPool*);
+     protected:
+        SgAsmJvmConstantPool* p_constant_pool;
+        /** @} */
+#else
+        AsmJvmClassFile.setDataPrototype("SgAsmJvmConstantPool*", "constant_pool", "= nullptr",
+                                         NO_CONSTRUCTOR_PARAMETER, BUILD_ACCESS_FUNCTIONS, NO_TRAVERSAL, NO_DELETE);
+#endif
+
+        DECLARE_OTHERS(AsmJvmClassFile);
+#if defined(SgAsmJvmClassFile_OTHERS) || defined(DOCUMENTATION)
 #ifdef ROSE_HAVE_BOOST_SERIALIZATION_LIB
     private:
         friend class boost::serialization::access;
@@ -10818,6 +11032,10 @@ void Grammar::setUpBinaryInstructions() {
         template<class S>
         void serialize(S &s, const unsigned /*version*/) {
             s & BOOST_SERIALIZATION_BASE_OBJECT_NVP(SgAsmExecutableFileFormat /*SgAsmGenericFile*/);
+            s & BOOST_SERIALIZATION_NVP(p_access_flags);
+            s & BOOST_SERIALIZATION_NVP(p_this_class);
+            s & BOOST_SERIALIZATION_NVP(p_super_class);
+            s & BOOST_SERIALIZATION_NVP(p_constant_pool);
         }
 #endif
 
@@ -10825,16 +11043,13 @@ void Grammar::setUpBinaryInstructions() {
         /** Initialize the object by parsing the class file.
          *
          * @{ */
-        /*virtual*/ SgAsmJavaClassFile * parse(std::string file_name) /*override*/;
+        /*virtual*/ SgAsmJvmClassFile * parse(std::string file_name) /*override*/;
         /** @} */
 
         /** Print some debugging information */
         void dump(std::ostream &os);
 
-        /** Return a pointer to the constant pool for this class file */
-        const SgAsmJvmConstantPool* get_constant_pool() const;
-
-#endif // SgAsmJavaClassFile_OTHERS
+#endif // SgAsmJvmClassFile_OTHERS
 
 #ifdef DOCUMENTATION
     };
@@ -17649,7 +17864,7 @@ void Grammar::setUpBinaryInstructions() {
                           AsmElfSymverNeededAuxList | AsmPEImportDirectory | AsmPESectionTableEntry |
                           AsmPEExportDirectory | AsmPERVASizePair | AsmCoffSymbolList | AsmPERVASizePairList |
                           AsmElfEHFrameEntryCI |
-                          AsmJavaClassFile |
+                          AsmJvmClassFile |
                           AsmPEImportDirectoryList | AsmNEEntryPoint | AsmNERelocEntry | AsmNESectionTableEntry |
                           AsmElfEHFrameEntryCIList | AsmLEPageTableEntry | AsmLEEntryPoint | AsmLESectionTableEntry |
                           AsmElfEHFrameEntryFDList | AsmDwarfInformation | AsmPEImportItem | AsmPEImportItemList,
@@ -18037,7 +18252,7 @@ void Grammar::setUpBinaryInstructions() {
      *************************************************************************************************************************/
 
     NEW_NONTERMINAL_MACRO(AsmJvmNode,
-                          AsmJvmAttribute | AsmJvmConstantPoolEntry | AsmJvmConstantPoolEntryList,
+                          AsmJvmAttribute | AsmJvmAttributeList | AsmJvmConstantPoolEntry | AsmJvmConstantPoolEntryList,
                           "AsmJvmNode", "AsmJvmNodeTag", false);
     AsmJvmNode.setCppCondition("!defined(DOCUMENTATION)");
     IS_SERIALIZABLE(AsmJvmNode);
