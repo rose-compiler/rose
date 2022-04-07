@@ -210,8 +210,10 @@ SgAsmIntegerValueExpression
 SgAsmIntegerType
 SgAsmInterpretation
 SgAsmInterpretationList
-SgAsmJavaClassFile
+SgAsmJvmClassFile
 SgAsmJvmAttribute
+SgAsmJvmAttributeList
+SgAsmJvmCodeAttribute
 SgAsmJvmMethod
 SgAsmJvmConstantPool
 SgAsmJvmConstantPoolEntry

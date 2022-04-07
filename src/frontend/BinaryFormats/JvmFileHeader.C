@@ -9,8 +9,7 @@ using namespace Rose::Diagnostics;
 using namespace ByteOrder;
 
 SgAsmJvmFileHeader::SgAsmJvmFileHeader(SgAsmGenericFile* f)
-  : SgAsmGenericHeader{f}, p_minor_version{0}, p_major_version{0},
-    p_access_flags{0}, p_this_class{0}, p_super_class{0}
+  : SgAsmGenericHeader{f}, p_minor_version{0}, p_major_version{0}
 {
   std::cout << "SgAsmJvmFileHeader::ctor() ...\n";
 
@@ -41,11 +40,6 @@ SgAsmJvmFileHeader::SgAsmJvmFileHeader(SgAsmGenericFile* f)
 
   p_isa = ISA_JVM;
 
-  /* Constant pool */
-  auto pool = new SgAsmJvmConstantPool(this);
-  set_constant_pool(pool);
-  pool->set_parent(this);
-
   std::cout << "SgAsmJvmFileHeader::ctor() finished ...\n\n";
 }
 
@@ -66,8 +60,6 @@ SgAsmJvmFileHeader::parse()
 
   std::cout << "SgAsmJvmFileHeader::parse() offset is " << offset << std::endl;
 
-// NOTE: refactor this once SgJavaClassFile exists (maybe)
-#if 1
   /* Ensure magic number in file is correct */
   unsigned char magic[4];
   auto count = read_content(offset, magic, sizeof magic);
@@ -77,7 +69,6 @@ SgAsmJvmFileHeader::parse()
   }
   offset += count;
   set_offset(offset);
-#endif
 
   /* Minor version */
   count = read_content(offset, &p_minor_version, sizeof p_minor_version);
@@ -102,46 +93,12 @@ SgAsmJvmFileHeader::parse()
   std::cout << "SgAsmJvmFileHeader::parse() offset is " << get_offset() << std::endl;
   std::cout << "SgAsmJvmFileHeader::parse() major, minor: " << p_major_version << "," << p_minor_version << std::endl;
 
+  ROSE_ASSERT(p_exec_format != nullptr);
   p_exec_format->set_version(p_major_version);
   p_exec_format->set_is_current_version(true);
   p_exec_format->set_abi_version(p_major_version);
 
-  get_constant_pool()->parse();
-  offset = get_offset();
-  std::cout << "SgAsmJvmFileHeader::parse() offset is " << get_offset() << std::endl;
-
-  /* p_access_flags */
-  count = read_content(offset, &p_access_flags, sizeof p_access_flags);
-  if (2 != count) {
-    throw FormatError("Bad Java class file access_flags");
-  }
-  p_access_flags = be_to_host(p_access_flags);
-  offset += count;
-  set_offset(offset);
-
-  std::cout << "SgAsmJvmFileHeader::p_access_flags " << p_access_flags << std::endl;
-
-  /* this_class */
-  count = read_content(offset, &p_this_class, sizeof p_this_class);
-  if (2 != count) {
-    throw FormatError("Bad Java class file this_class");
-  }
-  p_this_class = be_to_host(p_this_class);
-  offset += count;
-  set_offset(offset);
-
-  std::cout << "SgAsmJvmFileHeader::p_this_class " << p_this_class << std::endl;
-
-  /* super_class */
-  count = read_content(offset, &p_super_class, sizeof p_super_class);
-  if (2 != count) {
-    throw FormatError("Bad Java class file super_class");
-  }
-  p_super_class = be_to_host(p_super_class);
-  offset += count;
-  set_offset(offset);
-
-  std::cout << "SgAsmJvmFileHeader::p_super_class " << p_super_class << std::endl;
+  std::cout << "SgAsmJvmFileHeader::parse() finished ...\n";
 
   return this;
 }
