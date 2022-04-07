@@ -93,7 +93,8 @@ void nodeTraversal::getNamedTypeInfo(SgNamedType* namedType)
          //if(enable_verbose || enable_debug)
          {
            std::ostringstream o;
-           o <<  tempArgType->variantT() <<":" << tempArgType->class_name();
+           //o <<  tempArgType->variantT() <<":" << tempArgType->class_name();
+           o << tempArgType->class_name();
            if(enable_verbose)
                cout << o.str() << endl; 
            //cout << "## " << n->variantT() <<":" << n->class_name() << " " << locatedNode->getFilenameString()  << endl;
@@ -139,7 +140,8 @@ void nodeTraversal::visit(SgNode* n)
       //if(enable_verbose || enable_debug)
       {
         std::ostringstream o;
-        o <<  n->variantT() <<":" << n->class_name();
+        //o <<  n->variantT() <<":" << n->class_name();
+        o << n->class_name();
         if(isSgValueExp(n) != nullptr)
         {
           SgValueExp* valueExp = isSgValueExp(n);
@@ -161,7 +163,8 @@ void nodeTraversal::visit(SgNode* n)
         {
           PreprocessingInfo::DirectiveType  directive =  (*i)->getTypeOfDirective();
           //std::cout << PreprocessingInfo::directiveTypeName (directive) << " : " << (*i)->getString() << std::endl;
-          o << n->variantT() << ":" << n->class_name() << " (" << PreprocessingInfo::relativePositionName((*i)->getRelativePosition()) << "):" << PreprocessingInfo::directiveTypeName (directive) << ":" << (*i)->getString();
+          //o << n->variantT() << ":" << n->class_name() << " (" << PreprocessingInfo::relativePositionName((*i)->getRelativePosition()) << "):" << PreprocessingInfo::directiveTypeName (directive) << ":" << (*i)->getString();
+          o << n->class_name() << " (" << PreprocessingInfo::relativePositionName((*i)->getRelativePosition()) << "):" << PreprocessingInfo::directiveTypeName (directive) << ":" << (*i)->getString();
 /*  Keep the following code in case we need to print only content from partial of the list
       
           switch(directive)
@@ -229,7 +232,8 @@ void nodeTraversal::visit(SgNode* n)
           //if(enable_verbose || enable_debug)
           {
             std::ostringstream o;
-            o <<  varType->variantT() <<":" << varType->class_name();
+            //o <<  varType->variantT() <<":" << varType->class_name();
+            o << varType->class_name();
             if(enable_verbose)
                 cout << o.str() << endl; 
             //cout << "## " << n->variantT() <<":" << n->class_name() << " " << locatedNode->getFilenameString()  << endl;
@@ -251,7 +255,8 @@ void nodeTraversal::visit(SgNode* n)
          //if(enable_verbose || enable_debug)
          {
            std::ostringstream o;
-           o <<  basetype->variantT() <<":" << basetype->class_name();
+           //o <<  basetype->variantT() <<":" << basetype->class_name();
+           o << basetype->class_name();
            if(enable_verbose)
                cout << o.str() << endl; 
            //cout << "## " << n->variantT() <<":" << n->class_name() << " " << locatedNode->getFilenameString()  << endl;
@@ -275,7 +280,8 @@ void nodeTraversal::visit(SgNode* n)
           //if(enable_verbose || enable_debug)
           {
             std::ostringstream o;
-            o <<  varType->variantT() <<":funcArgType:" << varType->class_name();
+            //o <<  varType->variantT() <<":funcArgType:" << varType->class_name();
+            o <<"funcArgType:" << varType->class_name();
             if(enable_verbose)
                 cout << o.str() << endl; 
             //cout << "## " << n->variantT() <<":" << n->class_name() << " " << locatedNode->getFilenameString()  << endl;
