@@ -708,7 +708,7 @@ HEADER_ADA_RENAMING_REF_EXPRESSION_START
 HEADER_ADA_RENAMING_REF_EXPRESSION_END
 
 HEADER_ADA_ATTRIBUTE_EXPRESSION_START
-HEADER_LIST_DECLARATIONS
+//~ HEADER_LIST_DECLARATIONS
 //~ SgType* get_type() const override;
 HEADER_ADA_ATTRIBUTE_EXPRESSION_END
 
@@ -2204,7 +2204,8 @@ SgExpression::post_construction_initialization()
 int
 SgExpression::replace_expression(SgExpression *,SgExpression *)
    {
-     printf ("Error: base class  SgExpression::replace_expression called, likely a mistake! \n");
+     cerr << "Call to undefined $CLASSNAME::replace_expression(): aborting" << endl;
+     cerr << "dynamic type: " << this->class_name() << endl;
      ROSE_ASSERT(false);
      return 0;
    }
@@ -4486,7 +4487,7 @@ SgType* SgAdaAttributeExp::get_type() const
   //       ==> introduce type as a member?
   return SgTypeUnknown::createType(NULL);
 }
-
+/*
 void
 SgAdaAttributeExp::append_arg(SgExpression* expr)
 {
@@ -4494,7 +4495,7 @@ SgAdaAttributeExp::append_arg(SgExpression* expr)
 
   p_args->append_expression(expr);
 }
-
+*/
 SOURCE_ADA_ATTRIBUTE_EXPRESSION_END
 
 
