@@ -4264,8 +4264,7 @@ namespace CodeThorn {
     memLoc=conditionallyApplyArrayAbstraction(memLoc);
     notifyReadWriteListenersOnWriting(lab,pstate,memLoc,newValue);
 
-    if(memLoc.isTop()||memLoc.isBot()) {
-      // TODO1: model writing to arbitrary mem loc
+    if(memLoc.isTop()||memLoc.isBot()||memLoc.isPointerToArbitraryMemory()) {
       pstate->writeTopToAllPotentialMemoryLocations();
       return;
     } else if(!pstate->memLocExists(memLoc)) {
