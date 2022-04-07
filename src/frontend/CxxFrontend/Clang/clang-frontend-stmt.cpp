@@ -2351,14 +2351,28 @@ bool ClangToSageTranslator::VisitCompoundLiteralExpr(clang::CompoundLiteralExpr 
 
     SgNode * tmp_node = Traverse(compound_literal->getInitializer());
     SgExprListExp * expr = isSgExprListExp(tmp_node);
-
     ROSE_ASSERT(expr != NULL);
 
     SgType * type = buildTypeFromQualifiedType(compound_literal->getType());
-
     ROSE_ASSERT(type != NULL);
 
-    *node = SageBuilder::buildCompoundInitializer_nfi(expr, type);
+    SgAggregateInitializer * initializer = SageBuilder::buildAggregateInitializer_nfi(expr,type);
+
+    initializer->set_uses_compound_literal(true);
+
+    SgName name = std::string("compound_literal_") + Rose::StringUtility::numberToString(compound_literal);
+    SgInitializedName* iname = SageBuilder::buildInitializedName_nfi(name, type, initializer);
+
+    SgScopeStatement* scope = SageBuilder::topScopeStack();
+    iname->set_scope(scope);
+    iname->set_parent(scope);
+
+    SgVariableSymbol * vsym = new SgVariableSymbol(iname);
+    ROSE_ASSERT(vsym != nullptr);
+
+    scope->insert_symbol(name,vsym);
+
+    *node = SageBuilder::buildCompoundLiteralExp_nfi(vsym);
 
     return VisitExpr(compound_literal, node);
 }
