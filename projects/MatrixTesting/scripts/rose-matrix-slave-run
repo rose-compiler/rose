@@ -211,7 +211,7 @@ matrix-test-docker() {
     echo "================================================================================"
     echo
 
-    if ! docker run hello-world; then
+    if ! docker run --rm hello-world; then
 	echo
 	echo "$arg0: if the error says \"permission denied while trying to connect to the"
 	echo "    Docker daemon socket\", then you probably need to add $(whoami) to"
