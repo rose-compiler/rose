@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OPTIONS="--normalize-level=1 --ignore-unknown-functions --report-only-file-name"
+OPTIONS="--normalize-level=1 --ignore-unknown-functions --generate-reports=yes --precision=2 --solver=18 --exploration-mode=topologic-sort --abstraction-mode=1 --array-abstraction-index=0"
 
 # test 1-9: normalization: YES
 # test 10:  normalization: NO
@@ -13,21 +13,28 @@ echo "------------------------------------------------"
 BENCH_PASS=0
 BENCH_FAIL=0
 
-testNumbers1=`echo {001..007}`
-testNumbers2=`echo {009..013}`
+testNumbers1=`echo {001..008}`
+testNumbers2=`echo {009..015}`
 testNumbers="$testNumbers1 $testNumbers2"
+
 echo "Scheduled tests: $testNumbers"
-echo "Skipping DC008."
+
+REPORT_DIR=test
+mkdir -p $REPORT_DIR
+
+
+function runtests {    
 for testNumber in $testNumbers; do
-    benchmarkprefix=$TESTDIR/DC${testNumber};
-    for benchmark in ${benchmarkprefix}_*.C; do
+    benchmarkprefix=$TESTDIR/${testprefix}${testNumber};
+    for benchmark in ${benchmarkprefix}_*.c; do
         rm -f tmptest.csv
         rm -f tmptest_col1.csv
         rm -f test${p}_col1.csv
         benchmarkname=$(basename $benchmark)
-        echo -n "Testing $benchmarkname : "
-        ./analyterix --csv-deadcode-unreachable=$benchmarkname.csv ${OPTIONS} $benchmark > /dev/null
-        diff $benchmarkname.csv $TESTDIR/$benchmarkname.csv
+        printf "Testing %-44s : " "$benchmarkname"
+        ./codethorn ${OPTIONS} --report-dir=$REPORT_DIR $benchmark > /dev/null
+        dclines=`grep -v gcc_HEADERS $REPORT_DIR/dead-code-locations.csv | wc -l | cut -f1 -d' '`
+        #diff $benchmarkname.csv $TESTDIR/$benchmarkname.csv
         #cut -d, -f1 $benchmarkname.csv | sort > $benchmarkname.line.csv
         #cut -d, -f1 $TESTDIR/$benchmarkname.csv |sort > ${benchmarkname}_ref.line.csv
         #diff $benchmarkname.line.csv ${benchmarkname}_ref.line.csv
@@ -36,8 +43,14 @@ for testNumber in $testNumbers; do
 	    echo "FAIL"
             exit 1
         else
-	    echo "PASS"
+	    printf "PASS: %s unreachable locations\n" "$dclines"
         fi
     done
 done
+}
+
+testNumbers=`echo {001..015}`
+testprefix=DC
+runtests
+
 rm -rf DC*.csv

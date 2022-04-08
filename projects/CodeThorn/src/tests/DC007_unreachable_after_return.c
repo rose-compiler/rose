@@ -1,5 +1,7 @@
 #include <stdio.h>
 
+// dummy is not called (dead code)
+
 void dummy() {
 }
 
@@ -39,4 +41,13 @@ void h(int x)
     x=2;
   }
   x=3;
+}
+
+int main() {
+  h(3);
+  g2();
+  g1();
+  f1();
+  f2();
+  return 0;
 }

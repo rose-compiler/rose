@@ -1,0 +1,60 @@
+#!/bin/bash
+
+OPTIONS="--normalize-level=1 --ignore-unknown-functions --generate-reports=yes --precision=2 --solver=18 --exploration-mode=topologic-sort --abstraction-mode=1 --array-abstraction-index=0"
+
+# test 1-9: normalization: YES
+# test 10:  normalization: NO
+
+TESTDIR=$1
+echo "------------------------------------------------"
+echo "running No-Constant-Condition TESTS"
+echo "------------------------------------------------"
+
+BENCH_PASS=0
+BENCH_FAIL=0
+
+REPORT_DIR=test
+mkdir -p $REPORT_DIR
+
+function runtests {    
+    NUM_PASS=0
+    NUM_FAIL=0
+    for testNumber in $testNumbers; do
+        benchmarkprefix=$TESTDIR/${testprefix}${testNumber};
+        for benchmark in ${benchmarkprefix}*.c; do
+            rm -f tmptest.csv
+            rm -f tmptest_col1.csv
+            rm -f test${p}_col1.csv
+            benchmarkname=$(basename $benchmark)
+            printf "Testing %-44s : " "$benchmarkname"
+            ./codethorn ${OPTIONS} --report-dir=$REPORT_DIR $benchmark > /dev/null
+            cclines=`grep -v gcc_HEADERS $REPORT_DIR/opaque-predicate.csv | wc -l | cut -f1 -d' '`
+            if [ ! $? -eq 0 ]
+            then
+	        echo "FAIL"
+                exit 1
+            else
+                if [ $cclines -eq 0 ]
+                then
+	            printf "PASS (%s constant conditions)\n" "$cclines"
+                    NUM_PASS=$((NUM_PASS+1))
+                else
+                    printf "FAIL (%s constant conditions)\n" "$cclines"
+                    NUM_FAIL=$((NUM_FAIL+1))
+                fi
+            fi
+        done
+    done
+    if [ $NUM_FAIL -ge 1 ];
+    then
+        echo "$NUM_FAIL tests failed. Exiting."
+        exit 1
+    else
+        echo "All $NUM_PASS No-Constant-Condition tests passed."
+    fi
+}
+
+testNumbers=`echo {001..002}`
+testprefix=NOCC
+echo "Scheduled tests: $testNumbers"
+runtests
