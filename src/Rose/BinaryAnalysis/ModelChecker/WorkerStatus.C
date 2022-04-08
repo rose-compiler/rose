@@ -74,10 +74,12 @@ WorkerStatus::updateFileNow() {
 
         std::ostringstream key;
         key <<"Status updated "
-#if defined(__GNUC__) && __GNUC__ >= 5
+#if defined(__GNUC__) && __GNUC__ < 5 && !defined(__clang__)
+            // GCC-4 doesn't fully support C++11, so just say something generic. GCC-4 is used by RHEL-6 which is no longer supported anyway.
+            // LLVM clang++ compiler advertises itself as GCC-4.2.1, which is not a full C++11 compiler.
+            <<"some time ago (sorry, compiler lacks full C++11 support)\n"
+#else
             <<std::put_time(std::localtime(&now), "%Y-%m-%d %H:%M:%S %Z") <<"\n"
-#else // GCC-4 doesn't fully support C++11, so just say something generic. GCC-4 is used by RHEL-6 which is no longer supported anyway.
-            <<" some time ago (sorry, not a C++11 compiler)\n"
 #endif
             <<"Key: \033[34mstarting\033[33m waiting\033[32m running\033[31m finished\033[0m\n"
             <<"Each bar represents " <<StringUtility::plural(maxDelta, "seconds") <<" of elapsed time since last state change\n"
