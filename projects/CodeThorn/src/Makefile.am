@@ -863,7 +863,7 @@ check-ltl-rers-timeout-seq:
 
 #test the analysis of RERS Problem1402 and terminate after 3 seconds, 4 threads
 check-ltl-rers-timeout-par:
-	@$(srcdir)/scripts/runRersTimeoutTest $(srcdir) $(top_builddir)/projects/CodeThorn/src 1 2
+	@$(srcdir)/scripts/runRersTimeoutTest $(srcdir) $(top_builddir)/projects/CodeThorn/src 0 2
 
 #one test for the loop-aware-sync analysis (solver 12, ISoLA'16 paper)
 check-ltl-rers-loop-aware-sync:
