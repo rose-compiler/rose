@@ -1,9 +1,23 @@
 #!/bin/bash
 set -ex
 
-rm -rf var/rose-portability-testing/spock/var/installed
-rm -rf var/rose-portability-testing/rose-installed
+FULL_CLEANUP=yes
+[ "$1" = "quick" ] && FULL_CLEANUP=
 
-docker container rm $(docker container ls -a |cut -d' ' -f1 |tail +2)
+if [ -n "$FULL_CLEANUP" ]; then
+    # Clean up everything that can be easily regenerated
+    rm -rf var/rose-portability-testing/spock/var/installed
+    rm -rf var/rose-portability-testing/spock/bin
+    rm -rf var/rose-portability-testing/rose-installed
 
-docker image prune --all --force
+    docker container ls -a |cut -d' ' -f1 |tail +2 |xargs -r docker container rm
+    docker image prune --all --force
+else
+    # Clean up less than usual
+    #   * keep RMC/Spock for the host
+    #   * keep Docker containers and (used) images, but not docker RMC/Spock
+    #   * keep the ROSE source tree
+    rm -rf var/rose-portability-testing/spock/var/installed/mx-*
+    rm -rf var/rose-portability-testing/spock/bin/mx-*
+    docker image prune --force
+fi
