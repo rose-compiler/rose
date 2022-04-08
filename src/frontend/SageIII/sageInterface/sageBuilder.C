@@ -16830,6 +16830,10 @@ SageBuilder::buildFile(const std::string& inputFileName, const std::string& outp
      Rose_STL_Container<std::string> arglist;
      int nextErrorCode = 0;
 
+#if 0
+     bool set_header_file_unparsing_optimization = false;
+#endif
+
   // DQ (11/10/2019): Shared nodes between existing files that are copied need to be marked as shared.
      bool isCopyOfExistingFile_testForSharedNodes = false;
      SgFile* fileBeingCopied = NULL;
